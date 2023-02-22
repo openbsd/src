@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.15 2023/02/22 05:25:47 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.16 2023/02/22 05:46:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -242,6 +242,11 @@ struct bn_gencb_st {
 
 /* The least significant word of a BIGNUM. */
 #define BN_lsw(n) (((n)->top == 0) ? (BN_ULONG) 0 : (n)->d[0])
+
+BN_ULONG bn_add(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len,
+    const BN_ULONG *b, int b_len);
+BN_ULONG bn_sub(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len,
+    const BN_ULONG *b, int b_len);
 
 void bn_mul_normal(BN_ULONG *r, BN_ULONG *a, int na, BN_ULONG *b, int nb);
 void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b);

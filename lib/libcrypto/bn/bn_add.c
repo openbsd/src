@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.23 2023/02/16 04:42:20 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.24 2023/02/22 05:46:37 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,9 +66,6 @@
 #include "bn_local.h"
 #include "bn_internal.h"
 
-BN_ULONG bn_add(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b);
-BN_ULONG bn_sub(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b);
-
 /*
  * bn_add_words() computes (carry:r[i]) = a[i] + b[i] + carry, where a and b
  * are both arrays of words. Any carry resulting from the addition is returned.
@@ -102,6 +99,53 @@ bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 		r++;
 		n--;
 	}
+	return carry;
+}
+#endif
+
+/*
+ * bn_add() computes (carry:r[i]) = a[i] + b[i] + carry, where a and b are both
+ * arrays of words (r may be the same as a or b). The length of a and b may
+ * differ, while r must be at least max(a_len, b_len) in length. Any carry
+ * resulting from the addition is returned.
+ */
+#ifndef HAVE_BN_ADD
+BN_ULONG
+bn_add(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len, const BN_ULONG *b,
+    int b_len)
+{
+	int min_len, diff_len;
+	BN_ULONG carry = 0;
+
+	if ((min_len = a_len) > b_len)
+		min_len = b_len;
+
+	diff_len = a_len - b_len;
+
+	carry = bn_add_words(r, a, b, min_len);
+
+	a += min_len;
+	b += min_len;
+	r += min_len;
+
+	/* XXX - consider doing four at a time to match bn_add_words(). */
+	while (diff_len < 0) {
+		/* Compute r[0] = 0 + b[0] + carry. */
+		bn_addw(b[0], carry, &carry, &r[0]);
+		diff_len++;
+		b++;
+		r++;
+	}
+
+	/* XXX - consider doing four at a time to match bn_add_words(). */
+	while (diff_len > 0) {
+		/* Compute r[0] = a[0] + 0 + carry. */
+		bn_addw(a[0], carry, &carry, &r[0]);
+		diff_len--;
+		a++;
+		r++;
+	}
+
 	return carry;
 }
 #endif
@@ -145,81 +189,46 @@ bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 #endif
 
 /*
- * bn_add() computes a + b, storing the result in r (which may be the same as a
- * or b). The caller must ensure that r has been expanded to max(a->top, b->top)
- * words. Any carry resulting from the addition is returned.
- */
-#ifndef HAVE_BN_ADD
-BN_ULONG
-bn_add(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b)
-{
-	BN_ULONG *rp, carry, t1, t2;
-	const BN_ULONG *ap, *bp;
-	int max, min, dif;
-
-	if (a->top < b->top) {
-		const BIGNUM *tmp;
-
-		tmp = a;
-		a = b;
-		b = tmp;
-	}
-	max = a->top;
-	min = b->top;
-	dif = max - min;
-
-	ap = a->d;
-	bp = b->d;
-	rp = r->d;
-
-	carry = bn_add_words(rp, ap, bp, min);
-	rp += min;
-	ap += min;
-
-	while (dif) {
-		dif--;
-		t1 = *(ap++);
-		t2 = (t1 + carry) & BN_MASK2;
-		*(rp++) = t2;
-		carry &= (t2 == 0);
-	}
-
-	return carry;
-}
-#endif
-
-/*
- * bn_sub() computes a - b, storing the result in r (which may be the same as a
- * or b). The caller must ensure that the number of words in a is greater than
- * or equal to the number of words in b and that r has been expanded to
- * a->top words. Any borrow resulting from the subtraction is returned.
+ * bn_sub() computes (borrow:r[i]) = a[i] - b[i] - borrow, where a and b are both
+ * arrays of words (r may be the same as a or b). The length of a and b may
+ * differ, while r must be at least max(a_len, b_len) in length. Any borrow
+ * resulting from the subtraction is returned.
  */
 #ifndef HAVE_BN_SUB
 BN_ULONG
-bn_sub(BIGNUM *r, int rn, const BIGNUM *a, const BIGNUM *b)
+bn_sub(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len, const BN_ULONG *b,
+    int b_len)
 {
-	BN_ULONG t1, t2, borrow, *rp;
-	const BN_ULONG *ap, *bp;
-	int max, min, dif;
+	int min_len, diff_len;
+	BN_ULONG borrow = 0;
 
-	max = a->top;
-	min = b->top;
-	dif = max - min;
+	if ((min_len = a_len) > b_len)
+		min_len = b_len;
 
-	ap = a->d;
-	bp = b->d;
-	rp = r->d;
+	diff_len = a_len - b_len;
 
-	borrow = bn_sub_words(rp, ap, bp, min);
-	ap += min;
-	rp += min;
+	borrow = bn_sub_words(r, a, b, min_len);
 
-	while (dif) {
-		dif--;
-		t1 = *(ap++);
-		t2 = (t1 - borrow) & BN_MASK2;
-		*(rp++) = t2;
-		borrow &= (t1 == 0);
+	a += min_len;
+	b += min_len;
+	r += min_len;
+
+	/* XXX - consider doing four at a time to match bn_sub_words. */
+	while (diff_len < 0) {
+		/* Compute r[0] = 0 - b[0] - borrow. */
+		bn_subw(0 - b[0], borrow, &borrow, &r[0]);
+		diff_len++;
+		b++;
+		r++;
+	}
+
+	/* XXX - consider doing four at a time to match bn_sub_words. */
+	while (diff_len > 0) {
+		/* Compute r[0] = a[0] - 0 - borrow. */
+		bn_subw(a[0], borrow, &borrow, &r[0]);
+		diff_len--;
+		a++;
+		r++;
 	}
 
 	return borrow;
@@ -239,7 +248,7 @@ BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	if (!bn_wexpand(r, rn + 1))
 		return 0;
 
-	carry = bn_add(r, rn, a, b);
+	carry = bn_add(r->d, rn, a->d, a->top, b->d, b->top);
 	r->d[rn] = carry;
 
 	r->top = rn + (carry & 1);
@@ -263,7 +272,7 @@ BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	if (!bn_wexpand(r, rn))
 		return 0;
 
-	borrow = bn_sub(r, rn, a, b);
+	borrow = bn_sub(r->d, rn, a->d, a->top, b->d, b->top);
 	if (borrow > 0) {
 		BNerror(BN_R_ARG2_LT_ARG3);
 		return 0;
