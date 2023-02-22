@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.45 2023/02/22 05:25:47 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.46 2023/02/22 06:00:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,7 +201,7 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 	if (!BN_copy(&mont->N, mod))
 		 goto err;
 	mont->N.neg = 0;
-	mont->ri = (BN_num_bits(mod) + (BN_BITS2 - 1)) / BN_BITS2 * BN_BITS2;
+	mont->ri = ((BN_num_bits(mod) + BN_BITS2 - 1) / BN_BITS2) * BN_BITS2;
 	if (mont->ri * 2 < mont->ri)
 		goto err;
 
