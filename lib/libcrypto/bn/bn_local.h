@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.16 2023/02/22 05:46:37 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.17 2023/02/22 05:57:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -264,8 +264,6 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
 void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b,
     int n, int tna, int tnb, BN_ULONG *t);
 void bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t);
-BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
-    int cl, int dl);
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, const BN_ULONG *n0, int num);
 
