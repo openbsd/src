@@ -1,4 +1,4 @@
-.\" $OpenBSD: __thrsigdivert.2,v 1.5 2016/08/21 13:31:21 schwarze Exp $
+.\" $OpenBSD: __thrsigdivert.2,v 1.6 2023/02/22 06:54:13 guenther Exp $
 .\"
 .\" Copyright (c) 2012 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,15 +14,15 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 21 2016 $
+.Dd $Mdocdate: February 22 2023 $
 .Dt __THRSIGDIVERT 2
 .Os
 .Sh NAME
 .Nm __thrsigdivert
 .Nd synchronously accept a signal
 .Sh SYNOPSIS
-.In sys/signal.h
 .In sys/time.h
+.In signal.h
 .Ft int
 .Fn __thrsigdivert "sigset_t set" "siginfo_t *info" "const struct timespec *timeout"
 .Sh DESCRIPTION
