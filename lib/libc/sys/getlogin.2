@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.23 2023/02/22 06:31:51 guenther Exp $
+.\"	$OpenBSD: getlogin.2,v 1.24 2023/02/22 06:39:39 guenther Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -157,7 +157,7 @@ will succeed unless:
 .It Bq Er EFAULT
 The
 .Fa name
-parameter points to an
+argument points to an
 invalid address.
 .El
 .Pp
@@ -177,7 +177,7 @@ may return the following errors:
 .It Bq Er EINVAL
 The
 .Fa name
-parameter
+argument
 pointed to a string that was too long.
 Login names are limited to
 .Dv LOGIN_NAME_MAX-1
