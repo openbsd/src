@@ -1,4 +1,4 @@
-.\" $OpenBSD: __get_tcb.2,v 1.6 2016/03/30 06:58:06 jmc Exp $
+.\" $OpenBSD: __get_tcb.2,v 1.7 2023/02/22 06:31:51 guenther Exp $
 .\"
 .\" Copyright (c) 2011 Philip Guenther <guenther@openbsd.org>
 .\"
@@ -14,13 +14,13 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 30 2016 $
+.Dd $Mdocdate: February 22 2023 $
 .Dt __GET_TCB 2
 .Os
 .Sh NAME
 .Nm __get_tcb ,
 .Nm __set_tcb
-.Nd get and set the address of the thread control block of the current thread
+.Nd get or set the address of the thread control block of the current thread
 .Sh SYNOPSIS
 .Ft void *
 .Fn __get_tcb "void"
