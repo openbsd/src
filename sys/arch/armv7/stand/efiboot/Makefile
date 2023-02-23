@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2022/12/30 06:44:35 jca Exp $
+#	$OpenBSD: Makefile,v 1.19 2023/02/23 19:48:22 miod Exp $
 
 NOMAN=		#
 
@@ -44,7 +44,7 @@ SRCS+=	adler32.c crc32.c inflate.c inftrees.c
 CPPFLAGS+=	-nostdinc
 CPPFLAGS+=	-I${S} -I. -I${.CURDIR}
 CPPFLAGS+=	-I${EFIDIR}/include -I${EFIDIR}/include/arm
-CPPFLAGS+=	-D_STANDALONE
+CPPFLAGS+=	-D_STANDALONE -DBOOT_STTY
 CPPFLAGS+=	-DSMALL -DSLOW -DNOBYFOUR -D__INTERNAL_LIBSA_CREAD
 CPPFLAGS+=	-DNEEDS_HEAP_H
 COPTS+=		-ffreestanding -fno-stack-protector

@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.46 2020/06/14 16:00:11 deraadt Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.47 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -30,8 +30,6 @@
 #include <machine/biosvar.h>
 
 #define	EXEC_ELF
-
-#define	DEFAULT_KERNEL_ADDRESS	0
 
 struct i386_boot_probes {
 	char *name;

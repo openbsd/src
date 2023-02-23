@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.1 2021/04/28 19:01:00 drahn Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.2 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2008 Mark Kettenis
@@ -17,8 +17,6 @@
  */
 
 #include <lib/libsa/stand.h>
-
-#define DEFAULT_KERNEL_ADDRESS  0
 
 #ifdef DEBUG
 #define DPRINTF(x)      printf x;

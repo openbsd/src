@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.56 2021/10/26 16:29:49 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.57 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Dale Rahn
@@ -75,7 +75,6 @@ boot(dev_t bootdev)
 	strlcpy(cmd.image, kernelfile, sizeof(cmd.image));
 	cmd.boothowto = 0;
 	cmd.conf = "/etc/boot.conf";
-	cmd.addr = (void *)DEFAULT_KERNEL_ADDRESS;
 	cmd.timeout = boottimeout;
 
 	if (upgrade()) {
@@ -125,7 +124,7 @@ boot(dev_t bootdev)
 		bootprompt = 1;	/* allow reselect should we fail */
 
 		printf("booting %s: ", cmd.path);
-		marks[MARK_START] = (u_long)cmd.addr;
+		marks[MARK_START] = 0;
 		if ((fd = loadfile(cmd.path, marks, LOAD_ALL)) != -1) {
 
 		        /* Prevent re-upgrade: chmod a-x bsd.upgrade */

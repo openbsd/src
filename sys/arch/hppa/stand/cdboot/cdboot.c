@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.15 2019/10/29 02:55:51 deraadt Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.16 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -84,10 +84,9 @@ boot(dev_t dev)
 	rc4_keysetup(&randomctx, rnddata, sizeof rnddata);
 	rc4_skip(&randomctx, 1536);
 
-	marks[MARK_START] = (u_long)DEFAULT_KERNEL_ADDRESS;
+	marks[MARK_START] = 0;
 	if (!loadfile(path, marks, LOAD_KERNEL)) {
-		marks[MARK_END] = ALIGN(marks[MARK_END] -
-		    (u_long)DEFAULT_KERNEL_ADDRESS);
+		marks[MARK_END] = ALIGN(marks[MARK_END]);
 		fcacheall();
 
 		__asm("mtctl %r0, %cr17");

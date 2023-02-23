@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2020/10/03 06:22:20 gkoehler Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2023/02/23 19:48:22 miod Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -215,25 +215,4 @@ run_loadfile(uint64_t *marks, int howto)
 	chain((void *)entry, bootline, ssym, esym);
 
 	_rtt();
-}
-
-int
-cnspeed(dev_t dev, int sp)
-{
-	return CONSPEED;
-}
-
-char ttyname_buf[8];
-
-char *
-ttyname(int fd)
-{
-        snprintf(ttyname_buf, sizeof ttyname_buf, "ofc0");
-	return ttyname_buf;
-}
-
-dev_t
-ttydev(char *name)
-{
-	return makedev(0,0);
 }

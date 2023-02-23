@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.18 2019/05/10 12:49:58 claudio Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.19 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -45,7 +45,6 @@ struct cmd_state {
 	char image[MAXPATHLEN - 16]; /* image */
 	int  boothowto; /* howto */
 	char *conf; /* /etc/boot.conf normally */
-	void *addr; /* load here */
 	int timeout;
 
 	char path[MAXPATHLEN]; /* buffer for pathname compose */

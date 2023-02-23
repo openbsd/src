@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.53 2022/12/30 06:50:27 jca Exp $
+#	$OpenBSD: Makefile.inc,v 1.54 2023/02/23 19:48:22 miod Exp $
 
 CFLAGS=${DEBUG} ${COPTS} -Oz -Wall -Werror
-CFLAGS+=	-ffreestanding -fno-stack-protector -DMDRANDOM
+CFLAGS+=	-ffreestanding -fno-stack-protector -DMDRANDOM -DBOOT_STTY
 CPPFLAGS+=-I${S} -I${SADIR}/libsa -I. -I${.CURDIR}
 SACFLAGS=-D_STANDALONE
 DEBUGFLAGS=

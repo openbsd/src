@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.16 2020/12/09 18:10:18 krw Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.17 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -30,8 +30,6 @@
 
 #define	EXEC_ELF
 #define	EXEC_SOM
-
-#define	DEFAULT_KERNEL_ADDRESS	0
 
 extern dev_t bootdev;
 

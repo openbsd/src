@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.9 2022/08/24 17:35:15 miod Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.10 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Shalayeff
@@ -18,10 +18,6 @@
  */
 
 #include <lib/libsa/stand.h>
-
-#define	EXEC_ELF
-
-#define	DEFAULT_KERNEL_ADDRESS	0
 
 #define	PCLOCK	33333333
 

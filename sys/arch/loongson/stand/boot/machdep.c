@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 2014/07/13 09:26:08 jasper Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2010 Miodrag Vallat.
@@ -53,29 +53,6 @@ int	is_gdium;
 int	boot_rd;
 
 extern int bootprompt;
-
-/*
- * Console
- */
-
-int
-cnspeed(dev_t dev, int sp)
-{
-	return CONSPEED;
-}
-
-char *
-ttyname(int fd)
-{
-	return "pmon console";
-}
-
-dev_t
-ttydev(char *name)
-{
-	/* we do not support any other console than pmon */
-	return NODEV;
-}
 
 /*
  * Configuration and device path aerobics

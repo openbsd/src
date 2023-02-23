@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.7 2012/10/30 14:06:29 jsing Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.8 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -28,8 +28,6 @@
 
 #include <lib/libsa/stand.h>
 #include <machine/biosvar.h>
-
-#define	DEFAULT_KERNEL_ADDRESS	0
 
 struct i386_boot_probes {
 	char *name;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.69 2022/06/27 20:22:26 miod Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.70 2023/02/23 19:48:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -43,7 +43,9 @@ static int Xhexdump(void);
 static int Xls(void);
 static int Xnop(void);
 static int Xreboot(void);
+#ifdef BOOT_STTY
 static int Xstty(void);
+#endif
 static int Xtime(void);
 #ifdef MACHINE_CMD
 static int Xmachine(void);
@@ -70,7 +72,9 @@ const struct cmd_table cmd_table[] = {
 #endif
 	{"reboot", CMDT_CMD, Xreboot},
 	{"set",    CMDT_SET, Xset},
+#ifdef BOOT_STTY
 	{"stty",   CMDT_CMD, Xstty},
+#endif
 	{"time",   CMDT_CMD, Xtime},
 	{NULL, 0},
 };
@@ -389,6 +393,7 @@ Xecho(void)
 	return 0;
 }
 
+#ifdef BOOT_STTY
 static int
 Xstty(void)
 {
@@ -417,6 +422,7 @@ Xstty(void)
 	}
 	return 0;
 }
+#endif
 
 static int
 Xtime(void)

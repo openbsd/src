@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.11 2023/01/27 13:58:17 aoyama Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.12 2023/02/23 19:48:22 miod Exp $	*/
 /*	$NetBSD: init_main.c,v 1.6 2013/03/05 15:34:53 tsutsui Exp $	*/
 
 /*
@@ -267,30 +267,6 @@ _rtt(void)
 	*(volatile unsigned int *)RESET_CPU_ALL = 0;
 	for (;;) ;
 	/* NOTREACHED */
-}
-
-
-/*
- * "machine tty" command to select a different console is not supported,
- * console device selection is performed using the DIP switches.
- */
-
-int
-cnspeed(dev_t dev, int sp)
-{
-	return 9600;
-}
-
-char *
-ttyname(int fd)
-{
-	return "console";
-}
-
-dev_t
-ttydev(char *name)
-{
-	return NODEV;
 }
 
 /*
