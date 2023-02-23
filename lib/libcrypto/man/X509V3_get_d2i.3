@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509V3_get_d2i.3,v 1.19 2021/07/12 14:54:00 schwarze Exp $
+.\" $OpenBSD: X509V3_get_d2i.3,v 1.20 2023/02/23 18:12:32 job Exp $
 .\" full merge up to: OpenSSL ff7fbfd5 Nov 2 11:52:01 2015 +0000
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 12 2021 $
+.Dd $Mdocdate: February 23 2023 $
 .Dt X509V3_GET_D2I 3
 .Os
 .Sh NAME
@@ -65,7 +65,8 @@
 .Nm X509_REVOKED_add1_ext_i2d ,
 .Nm X509_get0_extensions ,
 .Nm X509_CRL_get0_extensions ,
-.Nm X509_REVOKED_get0_extensions
+.Nm X509_REVOKED_get0_extensions ,
+.Nm X509_get0_uids
 .Nd X509 extension decode and encode functions
 .Sh SYNOPSIS
 .In openssl/x509v3.h
@@ -150,6 +151,12 @@
 .Ft const STACK_OF(X509_EXTENSION) *
 .Fo X509_REVOKED_get0_extensions
 .Fa "const X509_REVOKED *r"
+.Fc
+.Ft void
+.Fo X509_get0_uids
+.Fa "const X509 *x"
+.Fa "const ASN1_BIT_STRING **piuid"
+.Fa "const ASN1_BIT_STRING **psuid"
 .Fc
 .Sh DESCRIPTION
 .Fn X509V3_get_d2i
@@ -300,6 +307,16 @@ if the extension is not found, occurs multiple times or cannot be
 decoded.
 It is possible to determine the precise reason by checking the value of
 .Pf * Fa crit .
+.Pp
+.Fn X509_get0_uids
+sets
+.Fa *piuid
+and
+.Fa *psuid
+to the issuer and subject unique identifiers of certificate
+.Fa x
+or NULL if the fields are not present.
+These fields are rarely used.
 .Sh SUPPORTED EXTENSIONS
 The following sections contain a list of all supported extensions
 including their name and NID.
@@ -449,3 +466,7 @@ and
 .Fn X509_REVOKED_get0_extensions
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 6.3 .
+.Pp
+.Fn X509_get0_uids
+first appeared in OpenSSL 1.1.0 and has been available since
+.Ox 7.3 .

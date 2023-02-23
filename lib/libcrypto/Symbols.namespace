@@ -341,6 +341,7 @@ _libre_X509_TRUST_set
 _libre_X509_NAME_oneline
 _libre_X509_get0_extensions
 _libre_X509_get0_tbs_sigalg
+_libre_X509_get0_uids
 _libre_X509_set_version
 _libre_X509_get_version
 _libre_X509_set_serialNumber
