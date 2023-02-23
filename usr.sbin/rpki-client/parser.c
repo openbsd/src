@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.85 2023/02/23 09:50:40 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.86 2023/02/23 13:06:42 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -210,46 +210,47 @@ proc_parser_mft_check(const char *fn, struct mft *p)
 }
 
 /*
- * Load the correct CRL using the info from the MFT.
+ * Load the CRL from loc using the info from the MFT.
  */
 static struct crl *
-parse_load_crl_from_mft(struct entity *entp, struct mft *mft, char **crlfile)
+parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
+    char **crlfile)
 {
 	struct crl	*crl = NULL;
 	unsigned char	*f = NULL;
 	char		*fn = NULL;
 	size_t		 flen;
-	enum location	 loc = DIR_TEMP;
 
-	while (1) {
-		fn = parse_filepath(entp->repoid, entp->path, mft->crl, loc);
-		if (fn == NULL)
-			goto next;
+	*crlfile = NULL;
 
-		f = load_file(fn, &flen);
-		if (f == NULL && errno != ENOENT)
+	fn = parse_filepath(entp->repoid, entp->path, mft->crl, loc);
+	if (fn == NULL)
+		goto out;
+
+	f = load_file(fn, &flen);
+	if (f == NULL) {
+		if (errno != ENOENT)
 			warn("parse file %s", fn);
-		if (f == NULL)
-			goto next;
-		if (!valid_hash(f, flen, mft->crlhash, sizeof(mft->crlhash)))
-			goto next;
-		crl = crl_parse(fn, f, flen);
-
-next:
-		free(f);
-		f = NULL;
-
-		if (crl != NULL) {
-			*crlfile = fn;
-			return crl;
-		}
-		free(fn);
-		fn = NULL;
-		if (loc == DIR_TEMP)
-			loc = DIR_VALID;
-		else
-			return NULL;
+		goto out;
 	}
+
+	if (!valid_hash(f, flen, mft->crlhash, sizeof(mft->crlhash)))
+		goto out;
+
+	crl = crl_parse(fn, f, flen);
+	if (crl == NULL)
+		goto out;
+
+	*crlfile = fn;
+	free(f);
+
+	return crl;
+
+ out:
+	free(f);
+	free(fn);
+
+	return NULL;
 }
 
 /*
@@ -286,7 +287,9 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	}
 	free(der);
 
-	*crl = parse_load_crl_from_mft(entp, mft, crlfile);
+	*crl = parse_load_crl_from_mft(entp, mft, DIR_TEMP, crlfile);
+	if (*crl == NULL)
+		*crl = parse_load_crl_from_mft(entp, mft, DIR_VALID, crlfile);
 
 	a = valid_ski_aki(*file, &auths, mft->ski, mft->aki);
 	if (!valid_x509(*file, ctx, x509, a, *crl, errstr)) {
