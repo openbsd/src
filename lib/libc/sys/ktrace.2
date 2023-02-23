@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.2,v 1.42 2022/12/27 17:10:06 jmc Exp $
+.\"	$OpenBSD: ktrace.2,v 1.43 2023/02/23 01:34:27 deraadt Exp $
 .\"	$NetBSD: ktrace.2,v 1.2 1995/02/27 12:33:58 cgd Exp $
 .\"
 .\" Copyright (c) 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)ktrace.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd $Mdocdate: December 27 2022 $
+.Dd $Mdocdate: February 23 2023 $
 .Dt KTRACE 2
 .Os
 .Sh NAME
@@ -38,8 +38,6 @@
 .Nd process tracing
 .Sh SYNOPSIS
 .In sys/types.h
-.In sys/time.h
-.In sys/uio.h
 .In sys/ktrace.h
 .Ft int
 .Fn ktrace "const char *tracefile" "int ops" "int trpoints" "pid_t pid"
