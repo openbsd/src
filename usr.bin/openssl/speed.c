@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.29 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: speed.c,v 1.30 2023/02/23 14:55:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1515,7 +1515,7 @@ speed_main(int argc, char **argv)
 			}
 			d = Time_F(STOP);
 			BIO_printf(bio_err, mr ? "+R1:%ld:%d:%.2f\n"
-			    : "%ld %d bit private RSA's in %.2fs\n",
+			    : "%ld %d bit private RSA in %.2fs\n",
 			    count, rsa_bits[j], d);
 			rsa_results[j][0] = d / (double) count;
 			rsa_count = count;
@@ -1544,7 +1544,7 @@ speed_main(int argc, char **argv)
 			}
 			d = Time_F(STOP);
 			BIO_printf(bio_err, mr ? "+R2:%ld:%d:%.2f\n"
-			    : "%ld %d bit public RSA's in %.2fs\n",
+			    : "%ld %d bit public RSA in %.2fs\n",
 			    count, rsa_bits[j], d);
 			rsa_results[j][1] = d / (double) count;
 		}
@@ -1970,7 +1970,7 @@ pkey_print_message(const char *str, const char *str2, long num,
     int bits, int tm)
 {
 	BIO_printf(bio_err, mr ? "+DTP:%d:%s:%s:%d\n"
-	    : "Doing %d bit %s %s's for %ds: ", bits, str, str2, tm);
+	    : "Doing %d bit %s %s for %ds: ", bits, str, str2, tm);
 	(void) BIO_flush(bio_err);
 	alarm(tm);
 }
@@ -1979,7 +1979,7 @@ static void
 print_result(int alg, int run_no, int count, double time_used)
 {
 	BIO_printf(bio_err, mr ? "+R:%d:%s:%f\n"
-	    : "%d %s's in %.2fs\n", count, names[alg], time_used);
+	    : "%d %s in %.2fs\n", count, names[alg], time_used);
 	results[alg][run_no] = ((double) count) / time_used * lengths[run_no];
 }
 
