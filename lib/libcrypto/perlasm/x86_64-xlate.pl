@@ -553,9 +553,10 @@ my %globals;
 		/\.section/ && do { my $v=undef;
 				    $line =~ s/([^,]*).*/$1/;
 				    $line = ".CRT\$XCU" if ($line eq ".init");
+				    $line = ".rdata" if ($line eq ".rodata");
 				    if ($nasm) {
 					$v="section	$line";
-					if ($line=~/\.([px])data/) {
+					if ($line=~/\.([prx])data/) {
 					    $v.=" rdata align=";
 					    $v.=$1 eq "p"? 4 : 8;
 					} elsif ($line=~/\.CRT\$/i) {
@@ -564,7 +565,7 @@ my %globals;
 				    } else {
 					$v="$current_segment\tENDS\n" if ($current_segment);
 					$v.="$line\tSEGMENT";
-					if ($line=~/\.([px])data/) {
+					if ($line=~/\.([prx])data/) {
 					    $v.=" READONLY";
 					    $v.=" ALIGN(".($1 eq "p" ? 4 : 8).")" if ($masm>=$masmref);
 					} elsif ($line=~/\.CRT\$/i) {
