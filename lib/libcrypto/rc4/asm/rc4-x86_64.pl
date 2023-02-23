@@ -524,7 +524,7 @@ RC4_options:
 .asciz	"rc4(8x,char)"
 .asciz	"rc4(16x,int)"
 .align	64
-.previous
+.text
 .size	RC4_options,.-RC4_options
 ___
 

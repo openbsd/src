@@ -2937,7 +2937,7 @@ _bsaes_const:
 	.quad	0x6363636363636363, 0x6363636363636363
 .align	64
 .size	_bsaes_const,.-_bsaes_const
-.previous
+.text
 ___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,

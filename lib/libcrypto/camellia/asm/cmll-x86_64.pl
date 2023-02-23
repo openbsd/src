@@ -625,7 +625,7 @@ $_ivp="40(%rsp)";
 $_rsp="48(%rsp)";
 
 $code.=<<___;
-.previous
+.text
 .globl	Camellia_cbc_encrypt
 .type	Camellia_cbc_encrypt,\@function,6
 .align	16

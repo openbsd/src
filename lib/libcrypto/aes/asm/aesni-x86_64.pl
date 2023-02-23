@@ -2731,7 +2731,7 @@ $code.=<<___;
 .Lxts_magic:
 	.long	0x87,0,1,0
 .align	64
-.previous
+.text
 ___
 
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,

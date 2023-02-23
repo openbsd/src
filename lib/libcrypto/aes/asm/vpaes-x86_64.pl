@@ -1063,7 +1063,7 @@ _vpaes_consts:
 	.quad	0x12D7560F93441D00, 0xCA4B8159D8C58E9C
 .align	64
 .size	_vpaes_consts,.-_vpaes_consts
-.previous
+.text
 ___
 
 if ($win64) {
