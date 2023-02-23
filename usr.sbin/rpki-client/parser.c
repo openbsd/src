@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.84 2023/02/21 17:06:52 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.85 2023/02/23 09:50:40 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -213,7 +213,7 @@ proc_parser_mft_check(const char *fn, struct mft *p)
  * Load the correct CRL using the info from the MFT.
  */
 static struct crl *
-parse_load_crl_from_mft(struct entity *entp, struct mft *mft)
+parse_load_crl_from_mft(struct entity *entp, struct mft *mft, char **crlfile)
 {
 	struct crl	*crl = NULL;
 	unsigned char	*f = NULL;
@@ -237,12 +237,14 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft)
 
 next:
 		free(f);
-		free(fn);
 		f = NULL;
-		fn = NULL;
 
-		if (crl != NULL)
+		if (crl != NULL) {
+			*crlfile = fn;
 			return crl;
+		}
+		free(fn);
+		fn = NULL;
 		if (loc == DIR_TEMP)
 			loc = DIR_VALID;
 		else
@@ -258,7 +260,7 @@ next:
  */
 static struct mft *
 proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
-    struct crl **crl, const char **errstr)
+    struct crl **crl, char **crlfile, const char **errstr)
 {
 	struct mft	*mft;
 	X509		*x509;
@@ -267,6 +269,7 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	size_t		 len;
 
 	*crl = NULL;
+	*crlfile = NULL;
 	*errstr = NULL;
 
 	*file = parse_filepath(entp->repoid, entp->path, entp->file, loc);
@@ -283,7 +286,7 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	}
 	free(der);
 
-	*crl = parse_load_crl_from_mft(entp, mft);
+	*crl = parse_load_crl_from_mft(entp, mft, crlfile);
 
 	a = valid_ski_aki(*file, &auths, mft->ski, mft->aki);
 	if (!valid_x509(*file, ctx, x509, a, *crl, errstr)) {
@@ -291,6 +294,8 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 		mft_free(mft);
 		crl_free(*crl);
 		*crl = NULL;
+		free(*crlfile);
+		*crlfile = NULL;
 		return NULL;
 	}
 	X509_free(x509);
@@ -347,17 +352,19 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
  * Load the most recent MFT by opening both options and comparing the two.
  */
 static char *
-proc_parser_mft(struct entity *entp, struct mft **mp)
+proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile)
 {
 	struct mft	*mft1 = NULL, *mft2 = NULL;
-	struct crl	*crl, *crl1 = NULL, *crl2 = NULL;
-	char		*file, *file1 = NULL, *file2 = NULL;
+	struct crl	*crl, *crl1, *crl2;
+	char		*file, *file1, *file2, *crl1file, *crl2file;
 	const char	*err1, *err2;
 
 	*mp = NULL;
 
-	mft1 = proc_parser_mft_pre(entp, DIR_VALID, &file1, &crl1, &err1);
-	mft2 = proc_parser_mft_pre(entp, DIR_TEMP, &file2, &crl2, &err2);
+	mft1 = proc_parser_mft_pre(entp, DIR_VALID, &file1, &crl1, &crl1file,
+	    &err1);
+	mft2 = proc_parser_mft_pre(entp, DIR_TEMP, &file2, &crl2, &crl2file,
+	    &err2);
 
 	/* overload error from temp file if it is set */
 	if (mft1 == NULL && mft2 == NULL)
@@ -367,17 +374,21 @@ proc_parser_mft(struct entity *entp, struct mft **mp)
 	if (mft_compare(mft1, mft2) == 1) {
 		mft_free(mft2);
 		crl_free(crl2);
+		free(crl2file);
 		free(file2);
 		*mp = proc_parser_mft_post(file1, mft1, entp->path, err1);
 		crl = crl1;
 		file = file1;
+		*crlfile = crl1file;
 	} else {
 		mft_free(mft1);
 		crl_free(crl1);
+		free(crl1file);
 		free(file1);
 		*mp = proc_parser_mft_post(file2, mft2, entp->path, err2);
 		crl = crl2;
 		file = file2;
+		*crlfile = crl2file;
 	}
 
 	if (*mp != NULL) {
@@ -612,7 +623,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 	struct ibuf	*b;
 	unsigned char	*f;
 	size_t		 flen;
-	char		*file;
+	char		*file, *crlfile;
 	int		 c;
 
 	while ((entp = TAILQ_FIRST(q)) != NULL) {
@@ -664,22 +675,29 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			 * it here.
 			 */
 			break;
-		case RTYPE_CRL:
-			/*
-			 * CRLs are already loaded with the MFT so nothing
-			 * really needs to be done here.
-			 */
-			file = parse_filepath(entp->repoid, entp->path,
-			    entp->file, entp->location);
-			io_str_buffer(b, file);
-			break;
 		case RTYPE_MFT:
-			file = proc_parser_mft(entp, &mft);
+			file = proc_parser_mft(entp, &mft, &crlfile);
 			io_str_buffer(b, file);
 			c = (mft != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (mft != NULL)
 				mft_buffer(b, mft);
+
+			/* Push valid CRL together with the MFT. */
+			if (crlfile != NULL) {
+				enum rtype type;
+				struct ibuf *b2;
+
+				b2 = io_new_buffer();
+				type = RTYPE_CRL;
+				io_simple_buffer(b2, &type, sizeof(type));
+				io_simple_buffer(b2, &entp->repoid,
+				    sizeof(entp->repoid));
+				io_str_buffer(b2, crlfile);
+				free(crlfile);
+
+				io_close_buffer(msgq, b2);
+			}
 			mft_free(mft);
 			break;
 		case RTYPE_ROA:
@@ -712,6 +730,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			io_str_buffer(b, file);
 			proc_parser_tak(file, f, flen);
 			break;
+		case RTYPE_CRL:
 		default:
 			file = parse_filepath(entp->repoid, entp->path,
 			    entp->file, entp->location);

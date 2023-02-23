@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.231 2023/01/13 08:58:36 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.232 2023/02/23 09:50:40 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -383,7 +383,7 @@ queue_add_from_mft(const struct mft *mft)
 	for (i = 0; i < mft->filesz; i++) {
 		f = &mft->files[i];
 
-		if (f->type == RTYPE_INVALID)
+		if (f->type == RTYPE_INVALID || f->type == RTYPE_CRL)
 			continue;
 
 		if (mft->path != NULL)
@@ -605,6 +605,8 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
+		/* CRLs are sent together with MFT and not accounted for */
+		entity_queue++;
 		break;
 	case RTYPE_ROA:
 		io_read_buf(b, &c, sizeof(c));
