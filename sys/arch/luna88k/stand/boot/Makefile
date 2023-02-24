@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2023/02/15 12:43:32 aoyama Exp $
+#	$OpenBSD: Makefile,v 1.17 2023/02/24 23:36:11 aoyama Exp $
 #	$NetBSD: Makefile,v 1.9 2013/01/22 15:48:40 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
@@ -7,6 +7,7 @@ MANSUBDIR=luna88k
 
 .if ${MACHINE} == "luna88k"
 PROG=   boot
+INSTALL_STRIP=
 
 S= ${.CURDIR}/../../../..
 
@@ -64,9 +65,6 @@ LIBS=	${SALIB} ${ZLIB} ${KERNLIB}
 ${PROG}: ${LDSCRIPT} ${OBJS} ${LIBS}
 	${LD} ${LINKFORMAT} -x -o ${PROG}.elf ${OBJS} ${LIBS}
 	${OBJCOPY} -S -O a.out-m88k-openbsd --impure ${PROG}.elf ${PROG}
-
-install: ${PROG}
-	install -m 555 -g bin -o bin ${PROG} ${DESTDIR}${MDEC_DIR}
 
 CLEANFILES+=	${PROG}.elf
 
