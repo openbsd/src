@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100_subr.c,v 1.29 2023/01/12 20:39:37 nicm Exp $ */
+/* $OpenBSD: wsemul_vt100_subr.c,v 1.30 2023/02/26 15:09:53 miod Exp $ */
 /* $NetBSD: wsemul_vt100_subr.c,v 1.7 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -457,11 +457,15 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		    ERASECOLS(edp->ccol, n, edp->bkgdattr));
 		break;
 	case 'A': /* CUU */
-		edp->crow -= min(DEF1_ARG(0), ROWS_ABOVE);
+		n = ROWS_ABOVE;
+		if (n > 0)
+			edp->crow -= min(DEF1_ARG(0), n);
 		CHECK_DW;
 		break;
 	case 'B': /* CUD */
-		edp->crow += min(DEF1_ARG(0), ROWS_BELOW);
+		n = ROWS_BELOW;
+		if (n > 0)
+			edp->crow += min(DEF1_ARG(0), n);
 		CHECK_DW;
 		break;
 	case 'C': /* CUF */
@@ -488,21 +492,22 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		break;
 	case 'L': /* IL insert line */
 	case 'M': /* DL delete line */
-	    {
-		int savscrstartrow, savscrnrows;
+		if (edp->crow >= edp->scrreg_startrow &&
+		    edp->crow < edp->scrreg_startrow + edp->scrreg_nrows) {
+			int savscrstartrow, savscrnrows;
 
-		n = min(DEF1_ARG(0), ROWS_BELOW + 1);
-		savscrstartrow = edp->scrreg_startrow;
-		savscrnrows = edp->scrreg_nrows;
-		edp->scrreg_nrows -= ROWS_ABOVE;
-		edp->scrreg_startrow = edp->crow;
-		if (c == 'L')
-			rc = wsemul_vt100_scrolldown(edp, n);
-		else
-			rc = wsemul_vt100_scrollup(edp, n);
-		edp->scrreg_startrow = savscrstartrow;
-		edp->scrreg_nrows = savscrnrows;
-	    }
+			n = min(DEF1_ARG(0), ROWS_BELOW + 1);
+			savscrstartrow = edp->scrreg_startrow;
+			savscrnrows = edp->scrreg_nrows;
+			edp->scrreg_nrows -= ROWS_ABOVE;
+			edp->scrreg_startrow = edp->crow;
+			if (c == 'L')
+				rc = wsemul_vt100_scrolldown(edp, n);
+			else
+				rc = wsemul_vt100_scrollup(edp, n);
+			edp->scrreg_startrow = savscrstartrow;
+			edp->scrreg_nrows = savscrnrows;
+		} /* else not within scrolling region, ignore the sequence */
 		break;
 	case 'P': /* DCH delete character */
 		n = min(DEF1_ARG(0), COLS_LEFT + 1);
@@ -676,9 +681,11 @@ wsemul_vt100_handle_csi(struct wsemul_vt100_emuldata *edp,
 		    {
 			char buf[20];
 			int row;
-			if (edp->flags & VTFL_DECOM)
+			if (edp->flags & VTFL_DECOM) {
 				row = ROWS_ABOVE;
-			else
+				if (row < 0)
+					row = 0;
+			} else
 				row = edp->crow;
 			n = snprintf(buf, sizeof buf, "\033[%d;%dR",
 				    row + 1, edp->ccol + 1);
@@ -839,13 +846,17 @@ wsemul_vt100_handle_dcs(struct wsemul_vt100_emuldata *edp)
 		if (edp->tabs != NULL) {
 			memset(edp->tabs, 0, edp->ncols);
 			pos = 0;
+			if (edp->dcsarg == NULL)
+				goto out;
 			for (i = 0; i < edp->dcspos; i++) {
 				char c = edp->dcsarg[i];
 				switch (c) {
 				case '0': case '1': case '2': case '3':
 				case '4': case '5': case '6': case '7':
 				case '8': case '9':
-					pos = pos * 10 + (edp->dcsarg[i] - '0');
+					pos = pos * 10 + (c - '0');
+					if (pos > edp->ncols)
+						goto out;
 					break;
 				case '/':
 					if (pos > 0)
@@ -869,6 +880,7 @@ wsemul_vt100_handle_dcs(struct wsemul_vt100_emuldata *edp)
 #endif
 		break;
 	}
+out:
 	edp->dcstype = 0;
 }
 
