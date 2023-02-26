@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgpio.c,v 1.7 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: rkgpio.c,v 1.8 2023/02/26 12:37:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -31,6 +31,7 @@
 #include <dev/ofw/fdt.h>
 
 /* Registers. */
+
 #define GPIO_SWPORTA_DR		0x0000
 #define GPIO_SWPORTA_DDR	0x0004
 #define GPIO_INTEN		0x0030
@@ -42,6 +43,22 @@
 #define GPIO_DEBOUNCE		0x0048
 #define GPIO_PORTS_EOI		0x004c
 #define GPIO_EXT_PORTA		0x0050
+
+#define GPIO_SWPORT_DR_L	0x0000
+#define GPIO_SWPORT_DR_H	0x0004
+#define GPIO_SWPORT_DDR_L	0x0008
+#define GPIO_SWPORT_DDR_H	0x000c
+#define GPIO_INT_EN_L		0x0010
+#define GPIO_INT_EN_H		0x0014
+#define GPIO_INT_MASK_L		0x0018
+#define GPIO_INT_MASK_H		0x001c
+#define GPIO_INT_TYPE_L		0x0020
+#define GPIO_INT_TYPE_H		0x0024
+#define GPIO_INT_POLARITY_L	0x0028
+#define GPIO_INT_POLARITY_H	0x002c
+#define GPIO_EXT_PORT		0x0070
+#define GPIO_VER_ID		0x0078
+#define  GPIO_VER_ID_RK3568	0x0101157C
 
 #define GPIO_NUM_PINS		32
 
@@ -70,6 +87,7 @@ struct rkgpio_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	int			sc_node;
+	uint32_t		sc_ver_id;
 
 	void			*sc_ih;
 	int			sc_ipl;
@@ -132,6 +150,8 @@ rkgpio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	sc->sc_ver_id = HREAD4(sc, GPIO_VER_ID);
+
 	sc->sc_gc.gc_node = faa->fa_node;
 	sc->sc_gc.gc_cookie = sc;
 	sc->sc_gc.gc_config_pin = rkgpio_config_pin;
@@ -140,8 +160,15 @@ rkgpio_attach(struct device *parent, struct device *self, void *aux)
 	gpio_controller_register(&sc->sc_gc);
 
 	sc->sc_ipl = IPL_NONE;
-	HWRITE4(sc, GPIO_INTMASK, ~0);
-	HWRITE4(sc, GPIO_INTEN, ~0);
+	if (sc->sc_ver_id == GPIO_VER_ID_RK3568) {
+		HWRITE4(sc, GPIO_INT_MASK_L, ~0);
+		HWRITE4(sc, GPIO_INT_MASK_H, ~0);
+		HWRITE4(sc, GPIO_INT_EN_L, ~0);
+		HWRITE4(sc, GPIO_INT_EN_H, ~0);
+	} else {
+		HWRITE4(sc, GPIO_INTMASK, ~0);
+		HWRITE4(sc, GPIO_INTEN, ~0);
+	}
 
 	sc->sc_ic.ic_node = faa->fa_node;
 	sc->sc_ic.ic_cookie = sc;
@@ -160,14 +187,22 @@ rkgpio_config_pin(void *cookie, uint32_t *cells, int config)
 {
 	struct rkgpio_softc *sc = cookie;
 	uint32_t pin = cells[0];
+	uint32_t reg;
 
 	if (pin >= GPIO_NUM_PINS)
 		return;
 
-	if (config & GPIO_CONFIG_OUTPUT)
-		HSET4(sc, GPIO_SWPORTA_DDR, (1 << pin));
-	else
-		HCLR4(sc, GPIO_SWPORTA_DDR, (1 << pin));
+	if (sc->sc_ver_id == GPIO_VER_ID_RK3568) {
+		reg = (1 << (pin % 16)) << 16;
+		if (config & GPIO_CONFIG_OUTPUT)
+			reg |= (1 << (pin % 16));
+		HWRITE4(sc, GPIO_SWPORT_DDR_L + (pin / 16) * 4, reg);
+	} else {
+		if (config & GPIO_CONFIG_OUTPUT)
+			HSET4(sc, GPIO_SWPORTA_DDR, (1 << pin));
+		else
+			HCLR4(sc, GPIO_SWPORTA_DDR, (1 << pin));
+	}
 }
 
 int
@@ -182,7 +217,10 @@ rkgpio_get_pin(void *cookie, uint32_t *cells)
 	if (pin >= GPIO_NUM_PINS)
 		return 0;
 
-	reg = HREAD4(sc, GPIO_EXT_PORTA);
+	if (sc->sc_ver_id == GPIO_VER_ID_RK3568)
+		reg = HREAD4(sc, GPIO_EXT_PORT);
+	else
+		reg = HREAD4(sc, GPIO_EXT_PORTA);
 	val = (reg >> pin) & 1;
 	if (flags & GPIO_ACTIVE_LOW)
 		val = !val;
@@ -195,16 +233,24 @@ rkgpio_set_pin(void *cookie, uint32_t *cells, int val)
 	struct rkgpio_softc *sc = cookie;
 	uint32_t pin = cells[0];
 	uint32_t flags = cells[1];
+	uint32_t reg;
 
 	if (pin >= GPIO_NUM_PINS)
 		return;
 
 	if (flags & GPIO_ACTIVE_LOW)
 		val = !val;
-	if (val)
-		HSET4(sc, GPIO_SWPORTA_DR, (1 << pin));
-	else
-		HCLR4(sc, GPIO_SWPORTA_DR, (1 << pin));
+	if (sc->sc_ver_id == GPIO_VER_ID_RK3568) {
+		reg = (1 << (pin % 16)) << 16;
+		if (val)
+			reg |= (1 << (pin % 16));
+		HWRITE4(sc, GPIO_SWPORT_DR_L + (pin / 16) * 4, reg);
+	} else {
+		if (val)
+			HSET4(sc, GPIO_SWPORTA_DR, (1 << pin));
+		else
+			HCLR4(sc, GPIO_SWPORTA_DR, (1 << pin));
+	}
 }
 
 int
@@ -240,11 +286,11 @@ void *
 rkgpio_intr_establish(void *cookie, int *cells, int ipl,
     struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
 {
-	struct rkgpio_softc	*sc = (struct rkgpio_softc *)cookie;
-	struct intrhand		*ih;
-	int			 irqno = cells[0];
-	int			 level = cells[1];
-	int			 s;
+	struct rkgpio_softc *sc = (struct rkgpio_softc *)cookie;
+	struct intrhand *ih;
+	int irqno = cells[0];
+	int level = cells[1];
+	int s;
 
 	if (irqno < 0 || irqno >= GPIO_NUM_PINS)
 		panic("%s: bogus irqnumber %d: %s", __func__,
@@ -280,29 +326,59 @@ rkgpio_intr_establish(void *cookie, int *cells, int ipl,
 
 	rkgpio_recalc_ipl(sc);
 
-	switch (level) {
-	case 1: /* rising */
-		HSET4(sc, GPIO_INTTYPE_LEVEL, 1 << irqno);
-		HSET4(sc, GPIO_INT_POLARITY, 1 << irqno);
-		break;
-	case 2: /* falling */
-		HSET4(sc, GPIO_INTTYPE_LEVEL, 1 << irqno);
-		HCLR4(sc, GPIO_INT_POLARITY, 1 << irqno);
-		break;
-	case 4: /* high */
-		HCLR4(sc, GPIO_INTTYPE_LEVEL, 1 << irqno);
-		HSET4(sc, GPIO_INT_POLARITY, 1 << irqno);
-		break;
-	case 8: /* low */
-		HCLR4(sc, GPIO_INTTYPE_LEVEL, 1 << irqno);
-		HCLR4(sc, GPIO_INT_POLARITY, 1 << irqno);
-		break;
-	default:
-		panic("%s: unsupported trigger type", __func__);
-	}
+	if (sc->sc_ver_id == GPIO_VER_ID_RK3568) {
+		uint32_t bit = (1 << (irqno % 16));
+		uint32_t mask = bit << 16;
+		bus_size_t off = (irqno / 16) * 4;
 
-	HCLR4(sc, GPIO_SWPORTA_DDR, 1 << irqno);
-	HCLR4(sc, GPIO_INTMASK, 1 << irqno);
+		switch (level) {
+		case 1: /* rising */
+			HWRITE4(sc, GPIO_INT_TYPE_L + off * 4, mask | bit);
+			HWRITE4(sc, GPIO_INT_POLARITY_L + off * 4, mask | bit);
+			break;
+		case 2: /* falling */
+			HWRITE4(sc, GPIO_INT_TYPE_L + off * 4, mask | bit);
+			HWRITE4(sc, GPIO_INT_POLARITY_L + off * 4, mask);
+			break;
+		case 4: /* high */
+			HWRITE4(sc, GPIO_INT_TYPE_L + off * 4, mask);
+			HWRITE4(sc, GPIO_INT_POLARITY_L + off * 4, mask | bit);
+			break;
+		case 8: /* low */
+			HWRITE4(sc, GPIO_INT_TYPE_L + off * 4, mask);
+			HWRITE4(sc, GPIO_INT_POLARITY_L + off * 4, mask);
+			break;
+		default:
+			panic("%s: unsupported trigger type", __func__);
+		}
+
+		HWRITE4(sc, GPIO_SWPORT_DDR_L + off, mask);
+		HWRITE4(sc, GPIO_INT_MASK_L + off, mask);
+	} else {
+		switch (level) {
+		case 1: /* rising */
+			HSET4(sc, GPIO_INTTYPE_LEVEL, 1 << irqno);
+			HSET4(sc, GPIO_INT_POLARITY, 1 << irqno);
+			break;
+		case 2: /* falling */
+			HSET4(sc, GPIO_INTTYPE_LEVEL, 1 << irqno);
+			HCLR4(sc, GPIO_INT_POLARITY, 1 << irqno);
+			break;
+		case 4: /* high */
+			HCLR4(sc, GPIO_INTTYPE_LEVEL, 1 << irqno);
+			HSET4(sc, GPIO_INT_POLARITY, 1 << irqno);
+			break;
+		case 8: /* low */
+			HCLR4(sc, GPIO_INTTYPE_LEVEL, 1 << irqno);
+			HCLR4(sc, GPIO_INT_POLARITY, 1 << irqno);
+			break;
+		default:
+			panic("%s: unsupported trigger type", __func__);
+		}
+
+		HCLR4(sc, GPIO_SWPORTA_DDR, 1 << irqno);
+		HCLR4(sc, GPIO_INTMASK, 1 << irqno);
+	}
 
 	splx(s);
 	return (ih);
@@ -311,9 +387,12 @@ rkgpio_intr_establish(void *cookie, int *cells, int ipl,
 void
 rkgpio_intr_disestablish(void *cookie)
 {
-	struct intrhand		*ih = cookie;
-	struct rkgpio_softc	*sc = ih->ih_sc;
-	int			 s;
+	struct intrhand *ih = cookie;
+	struct rkgpio_softc *sc = ih->ih_sc;
+	uint32_t bit = (1 << (ih->ih_irq % 16));
+	uint32_t mask = bit << 16;
+	bus_size_t off = (ih->ih_irq / 16) * 4;
+	int s;
 
 	s = splhigh();
 
@@ -322,7 +401,10 @@ rkgpio_intr_disestablish(void *cookie)
 	    ih->ih_name);
 #endif
 
-	HSET4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
+	if (sc->sc_ver_id == GPIO_VER_ID_RK3568)
+		HWRITE4(sc, GPIO_INT_MASK_L + off, mask | bit);
+	else
+		HSET4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
 
 	sc->sc_handlers[ih->ih_irq] = NULL;
 	if (ih->ih_name != NULL)
@@ -337,10 +419,10 @@ rkgpio_intr_disestablish(void *cookie)
 void
 rkgpio_recalc_ipl(struct rkgpio_softc *sc)
 {
-	struct intrhand		*ih;
-	int			 pin;
-	int			 max = IPL_NONE;
-	int			 min = IPL_HIGH;
+	struct intrhand	*ih;
+	int max = IPL_NONE;
+	int min = IPL_HIGH;
+	int pin;
 
 	for (pin = 0; pin < GPIO_NUM_PINS; pin++) {
 		ih = sc->sc_handlers[pin];
@@ -372,32 +454,44 @@ rkgpio_recalc_ipl(struct rkgpio_softc *sc)
 void
 rkgpio_intr_enable(void *cookie)
 {
-	struct intrhand		*ih = cookie;
-	struct rkgpio_softc	*sc = ih->ih_sc;
-	int			 s;
+	struct intrhand	*ih = cookie;
+	struct rkgpio_softc *sc = ih->ih_sc;
+	uint32_t bit = (1 << (ih->ih_irq % 16));
+	uint32_t mask = bit << 16;
+	bus_size_t off = (ih->ih_irq / 16) * 4;
+	int s;
 
 	s = splhigh();
-	HCLR4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
+	if (sc->sc_ver_id == GPIO_VER_ID_RK3568)
+		HWRITE4(sc, GPIO_INT_MASK_L + off, mask);
+	else
+		HCLR4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
 	splx(s);
 }
 
 void
 rkgpio_intr_disable(void *cookie)
 {
-	struct intrhand		*ih = cookie;
-	struct rkgpio_softc	*sc = ih->ih_sc;
-	int			 s;
+	struct intrhand *ih = cookie;
+	struct rkgpio_softc *sc = ih->ih_sc;
+	uint32_t bit = (1 << (ih->ih_irq % 16));
+	uint32_t mask = bit << 16;
+	bus_size_t off = (ih->ih_irq / 16) * 4;
+	int s;
 
 	s = splhigh();
-	HSET4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
+	if (sc->sc_ver_id == GPIO_VER_ID_RK3568)
+		HWRITE4(sc, GPIO_INT_MASK_L + off, mask | bit);
+	else
+		HSET4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
 	splx(s);
 }
 
 void
 rkgpio_intr_barrier(void *cookie)
 {
-	struct intrhand		*ih = cookie;
-	struct rkgpio_softc	*sc = ih->ih_sc;
+	struct intrhand *ih = cookie;
+	struct rkgpio_softc *sc = ih->ih_sc;
 
 	intr_barrier(sc->sc_ih);
 }
