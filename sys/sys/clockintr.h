@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.1 2022/11/05 19:29:46 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.2 2023/02/26 23:00:42 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -54,6 +54,21 @@ intrclock_trigger(struct intrclock *ic)
 }
 
 /*
+ * Schedulable clock interrupt callback.
+ *
+ * Struct member protections:
+ *
+ *	I	Immutable after initialization.
+ *	o	Owned by a single CPU.
+ */
+struct clockintr_queue;
+struct clockintr {
+	uint64_t cl_expiration;				/* [o] dispatch time */
+	void (*cl_func)(struct clockintr *, void *);	/* [I] callback */
+	struct clockintr_queue *cl_queue;		/* [I] parent queue */
+};
+
+/*
  * Per-CPU clock interrupt state.
  *
  * Struct member protections:
@@ -62,10 +77,11 @@ intrclock_trigger(struct intrclock *ic)
  *	o	Owned by a single CPU.
  */
 struct clockintr_queue {
+	uint64_t cq_uptime;		/* [o] cached uptime */
 	uint64_t cq_next;		/* [o] next event expiration */
-	uint64_t cq_next_hardclock;	/* [o] next hardclock expiration */
-	uint64_t cq_next_schedclock;	/* [o] next schedclock expiration */
-	uint64_t cq_next_statclock;	/* [o] next statclock expiration */
+	struct clockintr *cq_hardclock;	/* [o] hardclock handle */
+	struct clockintr *cq_schedclock;/* [o] schedclock handle, if any */
+	struct clockintr *cq_statclock;	/* [o] statclock handle */
 	struct intrclock cq_intrclock;	/* [I] local interrupt clock */
 	struct clockintr_stat cq_stat;	/* [o] dispatch statistics */
 	volatile u_int cq_gen;		/* [o] cq_stat update generation */ 

@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.2 2022/12/31 00:48:53 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.3 2023/02/26 23:00:42 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -22,6 +22,7 @@
 #include <sys/atomic.h>
 #include <sys/clockintr.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/stdint.h>
 #include <sys/sysctl.h>
@@ -51,6 +52,15 @@ uint32_t prof_avg;			/* [I] average profhz period (ns) */
 uint32_t prof_min;			/* [I] minimum profhz period (ns) */
 uint32_t prof_mask;			/* [I] set of allowed offsets */
 
+uint64_t clockintr_advance(struct clockintr *, uint64_t);
+struct clockintr *clockintr_establish(struct clockintr_queue *,
+    void (*)(struct clockintr *, void *));
+uint64_t clockintr_expiration(const struct clockintr *);
+void clockintr_hardclock(struct clockintr *, void *);
+uint64_t clockintr_nsecuptime(const struct clockintr *);
+void clockintr_schedclock(struct clockintr *, void *);
+void clockintr_schedule(struct clockintr *, uint64_t);
+void clockintr_statclock(struct clockintr *, void *);
 void clockintr_statvar_init(int, uint32_t *, uint32_t *, uint32_t *);
 uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
 
@@ -92,13 +102,28 @@ clockintr_init(u_int flags)
 void
 clockintr_cpu_init(const struct intrclock *ic)
 {
-	uint64_t multiplier, now;
+	uint64_t multiplier = 0, offset;
 	struct cpu_info *ci = curcpu();
 	struct clockintr_queue *cq = &ci->ci_queue;
 
 	KASSERT(ISSET(clockintr_flags, CL_INIT));
 
 	if (!ISSET(cq->cq_flags, CL_CPU_INIT)) {
+		cq->cq_next = 0;
+		cq->cq_hardclock = clockintr_establish(cq, clockintr_hardclock);
+		if (cq->cq_hardclock == NULL)
+			panic("%s: failed to establish hardclock", __func__);
+		cq->cq_statclock = clockintr_establish(cq, clockintr_statclock);
+		if (cq->cq_statclock == NULL)
+			panic("%s: failed to establish statclock", __func__);
+		if (schedhz != 0) {
+			cq->cq_schedclock = clockintr_establish(cq,
+			    clockintr_schedclock);
+			if (cq->cq_schedclock == NULL) {
+				panic("%s: failed to establish schedclock",
+				    __func__);
+			}
+		}
 		if (ic != NULL) {
 			cq->cq_intrclock = *ic;
 			SET(cq->cq_flags, CL_CPU_INTRCLOCK);
@@ -111,14 +136,12 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 * the hardclock and statclock so they don't all happen at once.
 	 * If we have no intrclock it doesn't matter, we have no control
 	 * anyway.  The primary CPU's starting offset is always zero, so
-	 * set multiplier to zero.
+	 * leave the multiplier zero.
 	 */
 	if (!CPU_IS_PRIMARY(ci) && ISSET(cq->cq_flags, CL_CPU_INTRCLOCK))
 		multiplier = CPU_INFO_UNIT(ci);
-	else
-		multiplier = 0;
 
-	now = nsecuptime();
+	cq->cq_uptime = nsecuptime();
 
 	/*
 	 * The first time we do this, the primary CPU cannot skip any
@@ -126,19 +149,21 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 * the global tick value is advanced during inittodr(9) on our
 	 * behalf.
 	 */
-	if (!CPU_IS_PRIMARY(ci) || ISSET(cq->cq_flags, CL_CPU_INIT)) {
-		cq->cq_next_hardclock = hardclock_period / ncpus * multiplier;
-		nsec_advance(&cq->cq_next_hardclock, hardclock_period, now);
-	}
+	offset = hardclock_period / ncpus * multiplier;
+	clockintr_schedule(cq->cq_hardclock, offset);
+	if (!CPU_IS_PRIMARY(ci) || ISSET(cq->cq_flags, CL_CPU_INIT))
+		clockintr_advance(cq->cq_hardclock, hardclock_period);
 
 	/*
 	 * We can always advance the statclock and schedclock.
 	 */
-	cq->cq_next_statclock = stat_avg / ncpus * multiplier;
-	nsec_advance(&cq->cq_next_statclock, stat_avg, now);
+	offset = statclock_avg / ncpus * multiplier;
+	clockintr_schedule(cq->cq_statclock, offset);
+	clockintr_advance(cq->cq_statclock, statclock_avg);
 	if (ISSET(clockintr_flags, CL_SCHEDCLOCK)) {
-		cq->cq_next_schedclock = schedclock_period / ncpus * multiplier;
-		nsec_advance(&cq->cq_next_schedclock, schedclock_period, now);
+		offset = schedclock_period / ncpus * multiplier;
+		clockintr_schedule(cq->cq_schedclock, offset);
+		clockintr_advance(cq->cq_schedclock, schedclock_period);
 	}
 
 	SET(cq->cq_flags, CL_CPU_INIT);
@@ -164,12 +189,10 @@ clockintr_trigger(void)
 int
 clockintr_dispatch(void *frame)
 {
-	uint64_t count, i, lateness, now, run = 0, start;
+	uint64_t lateness, run = 0, start;
 	struct cpu_info *ci = curcpu();
 	struct clockintr_queue *cq = &ci->ci_queue;
-	struct proc *p = curproc;
-	uint32_t mask, min, off;
-	u_int gen, ogen;
+	u_int ogen;
 
 	if (cq->cq_dispatch != 0)
 		panic("%s: recursive dispatch", __func__);
@@ -182,66 +205,45 @@ clockintr_dispatch(void *frame)
 	 * If we arrived too early we have nothing to do.
 	 */
 	start = nsecuptime();
-	now = start;
-	if (now < cq->cq_next)
+	cq->cq_uptime = start;
+	if (cq->cq_uptime < cq->cq_next)
 		goto done;
-	lateness = now - cq->cq_next;
+	lateness = start - cq->cq_next;
 
 	/*
 	 * Dispatch expired events.
 	 */
 again:
 	/* hardclock */
-	count = nsec_advance(&cq->cq_next_hardclock, hardclock_period, now);
-	for (i = 0; i < count; i++)
-		hardclock(frame);
-	run += count;
+	if (cq->cq_hardclock->cl_expiration <= cq->cq_uptime) {
+		cq->cq_hardclock->cl_func(cq->cq_hardclock, frame);
+		run++;
+	}
 
 	/* statclock */
-	if (ISSET(clockintr_flags, CL_RNDSTAT)) {
-		do {
-			gen = statclock_gen;
-			membar_consumer();
-			min = statclock_min;
-			mask = statclock_mask;
-			membar_consumer();
-		} while (gen == 0 || gen != statclock_gen);
-		count = 0;
-		while (cq->cq_next_statclock <= now) {
-			while ((off = (random() & mask)) == 0)
-				continue;
-			cq->cq_next_statclock += min + off;
-			count++;
-		}
-	} else {
-		count = nsec_advance(&cq->cq_next_statclock, statclock_avg,
-		    now);
+	if (cq->cq_statclock->cl_expiration <= cq->cq_uptime) {
+		cq->cq_statclock->cl_func(cq->cq_statclock, frame);
+		run++;
 	}
-	for (i = 0; i < count; i++)
-		statclock(frame);
-	run += count;
 
 	/* schedclock */
 	if (ISSET(clockintr_flags, CL_SCHEDCLOCK)) {
-		count = nsec_advance(&cq->cq_next_schedclock,
-		    schedclock_period, now);
-		if (p != NULL) {
-			for (i = 0; i < count; i++)
-				schedclock(p);
+		if (cq->cq_schedclock->cl_expiration <= cq->cq_uptime) {
+			cq->cq_schedclock->cl_func(cq->cq_schedclock, frame);
+			run++;
 		}
-		run += count;
 	}
 
 	/* Run the dispatch again if the next event has already expired. */
-	cq->cq_next = cq->cq_next_hardclock;
-	if (cq->cq_next_statclock < cq->cq_next)
-		cq->cq_next = cq->cq_next_statclock;
+	cq->cq_next = cq->cq_hardclock->cl_expiration;
+	if (cq->cq_statclock->cl_expiration < cq->cq_next)
+		cq->cq_next = cq->cq_statclock->cl_expiration;
 	if (ISSET(clockintr_flags, CL_SCHEDCLOCK)) {
-		if (cq->cq_next_schedclock < cq->cq_next)
-			cq->cq_next = cq->cq_next_schedclock;
+		if (cq->cq_schedclock->cl_expiration < cq->cq_next)
+			cq->cq_next = cq->cq_schedclock->cl_expiration;
 	}
-	now = nsecuptime();
-	if (cq->cq_next <= now)
+	cq->cq_uptime = nsecuptime();
+	if (cq->cq_next <= cq->cq_uptime)
 		goto again;
 
 	/*
@@ -250,20 +252,20 @@ again:
 done:
 	/* Rearm the interrupt clock if we have one. */
 	if (ISSET(cq->cq_flags, CL_CPU_INTRCLOCK))
-		intrclock_rearm(&cq->cq_intrclock, cq->cq_next - now);
+		intrclock_rearm(&cq->cq_intrclock, cq->cq_next - cq->cq_uptime);
 
 	/* Update our stats. */
 	ogen = cq->cq_gen;
 	cq->cq_gen = 0;
 	membar_producer();
-	cq->cq_stat.cs_dispatched += now - start;
+	cq->cq_stat.cs_dispatched += cq->cq_uptime - start;
 	if (run > 0) {
 		cq->cq_stat.cs_lateness += lateness;
 		cq->cq_stat.cs_prompt++;
 		cq->cq_stat.cs_run += run;
 	} else {
 		cq->cq_stat.cs_early++;
-		cq->cq_stat.cs_earliness += cq->cq_next - now;
+		cq->cq_stat.cs_earliness += cq->cq_next - cq->cq_uptime;
 	}
 	membar_producer();
 	cq->cq_gen = MAX(1, ogen + 1);
@@ -273,6 +275,39 @@ done:
 	cq->cq_dispatch = 0;
 
 	return run > 0;
+}
+
+uint64_t
+clockintr_advance(struct clockintr *cl, uint64_t period)
+{
+	return nsec_advance(&cl->cl_expiration, period,
+	    cl->cl_queue->cq_uptime);
+}
+
+struct clockintr *
+clockintr_establish(struct clockintr_queue *cq,
+    void (*func)(struct clockintr *, void *))
+{
+	struct clockintr *cl;
+
+	cl = malloc(sizeof *cl, M_DEVBUF, M_NOWAIT | M_ZERO);
+	if (cl == NULL)
+		return NULL;
+	cl->cl_func = func;
+	cl->cl_queue = cq;
+	return cl;
+}
+
+uint64_t
+clockintr_expiration(const struct clockintr *cl)
+{
+	return cl->cl_expiration;
+}
+
+void
+clockintr_schedule(struct clockintr *cl, uint64_t expiration)
+{
+	cl->cl_expiration = expiration;
 }
 
 /*
@@ -337,6 +372,67 @@ clockintr_setstatclockrate(int freq)
 	statclock_gen = MAX(1, ogen + 1);
 
 	mtx_leave(&clockintr_mtx);
+}
+
+uint64_t
+clockintr_nsecuptime(const struct clockintr *cl)
+{
+	return cl->cl_queue->cq_uptime;
+}
+
+void
+clockintr_hardclock(struct clockintr *cl, void *frame)
+{
+	uint64_t count, i;
+
+	count = clockintr_advance(cl, hardclock_period);
+	for (i = 0; i < count; i++)
+		hardclock(frame);
+}
+
+void
+clockintr_schedclock(struct clockintr *cl, void *unused)
+{
+	uint64_t count, i;
+	struct proc *p = curproc;
+
+	count = clockintr_advance(cl, schedclock_period);
+	if (p != NULL) {
+		for (i = 0; i < count; i++)
+			schedclock(p);
+	}
+}
+
+void
+clockintr_statclock(struct clockintr *cl, void *frame)
+{
+	uint64_t count, expiration, i, uptime;
+	uint32_t mask, min, off;
+	u_int gen;
+
+	if (ISSET(clockintr_flags, CL_RNDSTAT)) {
+		do {
+			gen = statclock_gen;
+			membar_consumer();
+			min = statclock_min;
+			mask = statclock_mask;
+			membar_consumer();
+		} while (gen == 0 || gen != statclock_gen);
+		count = 0;
+		expiration = clockintr_expiration(cl);
+		uptime = clockintr_nsecuptime(cl);
+		while (expiration <= uptime) {
+			while ((off = (random() & mask)) == 0)
+				continue;
+			expiration += min + off;
+			count++;
+		}
+		clockintr_schedule(cl, expiration);
+	} else {
+		count = clockintr_advance(cl, statclock_avg);
+	}
+	for (i = 0; i < count; i++)
+		statclock(frame);
 }
 
 /*
@@ -413,7 +509,7 @@ sysctl_clockintr(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 
-void db_show_clockintr(uint64_t, u_int, const char *);
+void db_show_clockintr(const struct clockintr *, u_int);
 void db_show_clockintr_cpu(struct cpu_info *);
 
 void
@@ -440,19 +536,24 @@ db_show_clockintr_cpu(struct cpu_info *ci)
 	struct clockintr_queue *cq = &ci->ci_queue;
 	u_int cpu = CPU_INFO_UNIT(ci);
 
-	db_show_clockintr(cq->cq_next_hardclock, cpu, "hardclock");
-	db_show_clockintr(cq->cq_next_statclock, cpu, "statclock");
-	if (ISSET(clockintr_flags, CL_SCHEDCLOCK))
-		db_show_clockintr(cq->cq_next_schedclock, cpu, "schedclock");
+	db_show_clockintr(cq->cq_hardclock, cpu);
+	db_show_clockintr(cq->cq_statclock, cpu);
+	if (cq->cq_schedclock != NULL)
+		db_show_clockintr(cq->cq_schedclock, cpu);
 }
 
 void
-db_show_clockintr(uint64_t expiration, u_int cpu, const char *name)
+db_show_clockintr(const struct clockintr *cl, u_int cpu)
 {
 	struct timespec ts;
+	char *name;
+	db_expr_t offset;
 
-	NSEC_TO_TIMESPEC(expiration, &ts);
-	db_printf("%10lld.%09ld  %3u  %s\n", ts.tv_sec, ts.tv_nsec, cpu, name);
+	NSEC_TO_TIMESPEC(cl->cl_expiration, &ts);
+	db_find_sym_and_offset((vaddr_t)cl->cl_func, &name, &offset);
+	if (name == NULL)
+		name = "?";
+	db_printf("%10lld.%09ld  %3u  %s", ts.tv_sec, ts.tv_nsec, cpu, name);
 }
 
 #endif /* DDB */
