@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.14 2023/01/14 17:02:57 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.15 2023/02/26 13:28:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -253,6 +253,7 @@ struct dwge_softc {
 	int			sc_phyloc;
 	int			sc_force_thresh_dma_mode;
 	int			sc_enh_desc;
+	int			sc_defrag;
 
 	struct dwge_dmamem	*sc_txring;
 	struct dwge_buf		*sc_txbuf;
@@ -405,6 +406,16 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 		if (feature & GMAC_HW_FEATURE_ENHDESSEL)
 			sc->sc_enh_desc = 1;
 	}
+
+	/*
+	 * The GMAC on the StarFive JH7100 (core version 3.70)
+	 * sometimes transmits corrupted packets.  The exact
+	 * conditions under which this happens are unclear, but
+	 * defragmenting mbufs before transmitting them fixes the
+	 * issue.
+	 */
+	if (OF_is_compatible(faa->fa_node, "starfive,jh7100-gmac"))
+		sc->sc_defrag = 1;
 
 	/* Power up PHY. */
 	phy_supply = OF_getpropint(faa->fa_node, "phy-supply", 0);
@@ -1251,6 +1262,11 @@ dwge_encap(struct dwge_softc *sc, struct mbuf *m, int *idx, int *used)
 
 	cur = frag = *idx;
 	map = sc->sc_txbuf[cur].tb_map;
+
+	if (sc->sc_defrag) {
+		if (m_defrag(m, M_DONTWAIT))
+			return (ENOBUFS);
+	}
 
 	if (bus_dmamap_load_mbuf(sc->sc_dmat, map, m, BUS_DMA_NOWAIT)) {
 		if (m_defrag(m, M_DONTWAIT))
