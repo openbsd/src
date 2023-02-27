@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.276 2022/12/27 17:31:09 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.277 2023/02/27 06:47:54 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1515,42 +1515,38 @@ ofree(struct dir_info **argpool, void *p, int clear, int check, size_t argsz)
 		unmap(pool, p, PAGEROUND(sz), clear ? argsz : 0);
 		delete(pool, r);
 	} else {
+		void *tmp;
+		u_int i;
+
 		/* Validate and optionally canary check */
 		struct chunk_info *info = (struct chunk_info *)r->size;
 		if (info->size != sz)
 			wrterror(pool, "internal struct corrupt");
 		find_chunknum(pool, info, p, mopts.chunk_canaries);
-		if (!clear) {
-			void *tmp;
-			int i;
 
-			if (mopts.malloc_freecheck) {
-				for (i = 0; i <= MALLOC_DELAYED_CHUNK_MASK; i++)
-					if (p == pool->delayed_chunks[i])
-						wrterror(pool,
-						    "double free %p", p);
-			}
-			junk_free(pool->malloc_junk, p, sz);
-			i = getrbyte(pool) & MALLOC_DELAYED_CHUNK_MASK;
-			tmp = p;
-			p = pool->delayed_chunks[i];
-			if (tmp == p)
-				wrterror(pool, "double free %p", tmp);
-			pool->delayed_chunks[i] = tmp;
-			if (p != NULL) {
-				r = find(pool, p);
-				REALSIZE(sz, r);
-				if (r != NULL)
-					validate_junk(pool, p, sz);
-			}
-		} else if (argsz > 0) {
-			r = find(pool, p);
-			explicit_bzero(p, argsz);
+		if (mopts.malloc_freecheck) {
+			for (i = 0; i <= MALLOC_DELAYED_CHUNK_MASK; i++)
+				if (p == pool->delayed_chunks[i])
+					wrterror(pool,
+					    "double free %p", p);
 		}
+		if (clear && argsz > 0)
+			explicit_bzero(p, argsz);
+		junk_free(pool->malloc_junk, p, sz);
+
+		i = getrbyte(pool) & MALLOC_DELAYED_CHUNK_MASK;
+		tmp = p;
+		p = pool->delayed_chunks[i];
+		if (tmp == p)
+			wrterror(pool, "double free %p", p);
+		pool->delayed_chunks[i] = tmp;
 		if (p != NULL) {
+			r = find(pool, p);
 			if (r == NULL)
 				wrterror(pool,
 				    "bogus pointer (double free?) %p", p);
+			REALSIZE(sz, r);
+			validate_junk(pool, p, sz);
 			free_bytes(pool, r, p);
 		}
 	}
