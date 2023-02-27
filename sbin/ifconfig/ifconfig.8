@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.389 2023/02/27 13:30:59 stsp Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.390 2023/02/27 14:53:38 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -2034,9 +2034,10 @@ device will try to establish a data connection with the service provider.
 .Op Oo Fl Oc Ns Cm link0
 .Op Oo Fl Oc Ns Cm link1
 .Op Cm maxaddr Ar size
+.Op Oo Fl Oc Ns Cm protected Ar child-iface ids
 .Op Cm rule Ar filtering-rule
 .Op Cm rulefile Ar filename
-.Op Oo Fl Oc Ns Cm protected Ar child-iface ids
+.Op Cm rules Ar interface
 .Op Cm static Ar interface Ar address
 .Op Cm timeout Ar time
 .Op Cm up
