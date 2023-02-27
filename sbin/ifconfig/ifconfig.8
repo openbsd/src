@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.388 2022/12/23 07:16:54 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.389 2023/02/27 13:30:59 stsp Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: December 23 2022 $
+.Dd $Mdocdate: February 27 2023 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -2026,12 +2026,20 @@ device will try to establish a data connection with the service provider.
 .Op Cm add Ar child-iface
 .Op Cm addspan Ar child-iface
 .Op Cm del Ar child-iface
+.Op Cm deladdr Ar address
 .Op Cm delspan Ar child-iface
 .Op Oo Fl Oc Ns Cm discover Ar child-iface
+.Op Cm flushrule Ar interface
 .Op Oo Fl Oc Ns Cm learn Ar child-iface
 .Op Oo Fl Oc Ns Cm link0
 .Op Oo Fl Oc Ns Cm link1
+.Op Cm maxaddr Ar size
+.Op Cm rule Ar filtering-rule
+.Op Cm rulefile Ar filename
 .Op Oo Fl Oc Ns Cm protected Ar child-iface ids
+.Op Cm static Ar interface Ar address
+.Op Cm timeout Ar time
+.Op Cm up
 .Ek
 .nr nS 0
 .Pp
@@ -2050,6 +2058,10 @@ as a span port on the bridge.
 .It Cm del Ar child-iface
 Remove the member
 .Ar child-iface .
+.It Cm deladdr Ar address
+Delete
+.Ar address
+from the cache.
 .It Cm delspan Ar child-iface
 Delete
 .Ar child-iface
@@ -2076,6 +2088,9 @@ packet with a destination address found on the interface's segment.
 This, in combination with static address cache entries,
 prevents potentially sensitive packets from being sent on
 segments that have no need to see the packet.
+.It Cm flushrule Ar interface
+Remove all Ethernet MAC filtering rules from
+.Ar interface .
 .It Cm learn Ar child-iface
 Mark
 .Ar child-iface
@@ -2114,6 +2129,87 @@ Interfaces do not belong to any protected domain by default.
 Remove
 .Ar child-iface
 from all protected domains.
+.It Cm maxaddr Ar size
+Set the address cache size to
+.Ar size .
+The default is 100 entries.
+.It Xo
+.Cm rule
+.Cm block Ns | Ns Cm pass
+.Op Cm in | out
+.Cm on Ar interface
+.Op Cm src Ar lladdr
+.Op Cm dst Ar lladdr
+.Bk -words
+.Op Cm tag Ar tagname
+.Oo
+.Cm arp Ns | Ns Cm rarp Op Cm request | reply
+.Op Cm sha Ar lladdr
+.Op Cm spa Ar ipaddr
+.Op Cm tha Ar lladdr
+.Op Cm tpa Ar ipaddr
+.Oc
+.Ek
+.Xc
+Add a filtering rule to an interface.
+Rules have a similar syntax to those in
+.Xr pf.conf 5 .
+Rules can be used to selectively
+.Cm block
+or
+.Cm pass
+frames based on Ethernet
+MAC addresses or to
+.Cm tag
+packets for
+.Xr pf 4
+to filter on.
+.Pp
+.Xr arp 4
+packets can be matched with the
+.Cm arp
+keyword for regular packets and
+.Cm rarp
+for reverse arp.
+.Cm request
+and
+.Cm reply
+limit matches to requests or replies.
+The source and target host addresses can be matched with the
+.Cm sha
+and
+.Cm tha
+keywords,
+and the protocol addresses with
+.Cm spa
+and
+.Cm tpa .
+.Pp
+Rules are processed in the order in which they were added to the interface.
+The first rule matched takes the action (block or pass)
+and, if given, the tag of the rule.
+If no source or destination address is specified, the
+rule will match all frames (good for creating a catchall policy).
+.It Cm rulefile Ar filename
+Load a set of rules from the file
+.Ar filename .
+.It Cm rules Ar interface
+Display the active filtering rules in use on
+.Ar interface .
+.It Cm static Ar interface Ar address
+Add a static entry into the address cache pointing to
+.Ar interface .
+Static entries are never aged out of the cache or replaced, even if the address
+is seen on a different interface.
+.It Cm timeout Ar time
+Set the timeout, in seconds, for addresses in the cache to
+.Ar time .
+The default is 240 seconds.
+If
+.Ar time
+is set to zero, then entries will not be expired.
+.It Cm up
+Start forwarding packets.
 .El
 .Sh VLAN
 .nr nS 1
