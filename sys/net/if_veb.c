@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_veb.c,v 1.29 2022/06/01 17:34:13 sashan Exp $ */
+/*	$OpenBSD: if_veb.c,v 1.30 2023/02/27 09:35:32 jan Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1464,6 +1464,8 @@ veb_add_port(struct veb_softc *sc, const struct ifbreq *req, unsigned int span)
 		error = ENOMEM;
 		goto put;
 	}
+
+	ifsettso(ifp0, 0);
 
 	p->p_ifp0 = ifp0;
 	p->p_veb = sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.683 2022/11/23 16:57:37 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.684 2023/02/27 09:35:32 jan Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2056,43 +2056,20 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 			ifr->ifr_flags &= ~IFXF_WOL;
 			error = ENOTSUP;
 		}
+#endif
 
 		if (ISSET(ifp->if_capabilities, IFCAP_TSO) &&
 		    ISSET(ifr->ifr_flags, IFXF_TSO) !=
 		    ISSET(ifp->if_xflags, IFXF_TSO)) {
-			struct ifreq ifrq;
-
-			s = splnet();
-
 			if (ISSET(ifr->ifr_flags, IFXF_TSO))
-				ifp->if_xflags |= IFXF_TSO;
+				ifsettso(ifp, 1);
 			else
-				ifp->if_xflags &= ~IFXF_TSO;
-
-			NET_ASSERT_LOCKED();	/* for ioctl */
-			KERNEL_ASSERT_LOCKED();	/* for if_flags */
-
-			if (ISSET(ifp->if_flags, IFF_UP)) {
-				/* go down for a moment... */
-				ifp->if_flags &= ~IFF_UP;
-				ifrq.ifr_flags = ifp->if_flags;
-				(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
-				    (caddr_t)&ifrq);
-
-				/* ... and up again */
-				ifp->if_flags |= IFF_UP;
-				ifrq.ifr_flags = ifp->if_flags;
-				(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
-				    (caddr_t)&ifrq);
-			}
-
-			splx(s);
+				ifsettso(ifp, 0);
 		} else if (!ISSET(ifp->if_capabilities, IFCAP_TSO) &&
 		    ISSET(ifr->ifr_flags, IFXF_TSO)) {
 			ifr->ifr_flags &= ~IFXF_TSO;
 			error = ENOTSUP;
 		}
-#endif
 
 		if (error == 0)
 			ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
@@ -3133,6 +3110,38 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 	}
 
 	return (error);
+}
+
+/* Set/clear TSO flag and restart interface if needed. */
+void
+ifsettso(struct ifnet *ifp, int on)
+{
+	struct ifreq ifrq;
+	int s = splnet();
+
+	NET_ASSERT_LOCKED();	/* for ioctl */
+	KERNEL_ASSERT_LOCKED();	/* for if_flags */
+
+	if (on && !ISSET(ifp->if_xflags, IFXF_TSO))
+		SET(ifp->if_xflags, IFXF_TSO);
+	else if (!on && ISSET(ifp->if_xflags, IFXF_TSO))
+		CLR(ifp->if_xflags, IFXF_TSO);
+	else
+		goto out;
+
+	if (ISSET(ifp->if_flags, IFF_UP)) {
+		/* go down for a moment... */
+		CLR(ifp->if_flags, IFF_UP);
+		ifrq.ifr_flags = ifp->if_flags;
+		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
+
+		/* ... and up again */
+		SET(ifp->if_flags, IFF_UP);
+		ifrq.ifr_flags = ifp->if_flags;
+		(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifrq);
+	}
+ out:
+	splx(s);
 }
 
 void
