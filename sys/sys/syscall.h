@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.260 2023/02/25 09:56:17 mvs Exp $	*/
+/*	$OpenBSD: syscall.h,v 1.261 2023/02/27 00:58:38 deraadt Exp $	*/
 
 /*
  * System call numbers.
@@ -22,7 +22,7 @@
 /* syscall: "write" ret: "ssize_t" args: "int" "const void *" "size_t" */
 #define	SYS_write	4
 
-/* syscall: "open" ret: "int" args: "const char *" "int" "..." */
+/* syscall: "open" ret: "int" args: "const char *" "int" "..." "mode_t" */
 #define	SYS_open	5
 
 /* syscall: "close" ret: "int" args: "int" */
@@ -169,7 +169,7 @@
 /* syscall: "fstat" ret: "int" args: "int" "struct stat *" */
 #define	SYS_fstat	53
 
-/* syscall: "ioctl" ret: "int" args: "int" "u_long" "..." */
+/* syscall: "ioctl" ret: "int" args: "int" "u_long" "..." "void *" */
 #define	SYS_ioctl	54
 
 /* syscall: "reboot" ret: "int" args: "int" */
@@ -283,7 +283,7 @@
 /* syscall: "nanosleep" ret: "int" args: "const struct timespec *" "struct timespec *" */
 #define	SYS_nanosleep	91
 
-/* syscall: "fcntl" ret: "int" args: "int" "int" "..." */
+/* syscall: "fcntl" ret: "int" args: "int" "int" "..." "void *" */
 #define	SYS_fcntl	92
 
 /* syscall: "accept4" ret: "int" args: "int" "struct sockaddr *" "socklen_t *" "int" */
@@ -702,7 +702,7 @@
 /* syscall: "mknodat" ret: "int" args: "int" "const char *" "mode_t" "dev_t" */
 #define	SYS_mknodat	320
 
-/* syscall: "openat" ret: "int" args: "int" "const char *" "int" "..." */
+/* syscall: "openat" ret: "int" args: "int" "const char *" "int" "..." "mode_t" */
 #define	SYS_openat	321
 
 /* syscall: "readlinkat" ret: "ssize_t" args: "int" "const char *" "char *" "size_t" */
