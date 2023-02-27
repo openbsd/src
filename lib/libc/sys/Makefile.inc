@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.172 2023/02/21 14:39:35 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.173 2023/02/27 14:59:33 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -22,6 +22,23 @@ SRCS+=	ptrace.c semctl.c \
 
 # stack protector helper functions
 SRCS+=	stack_protector.c
+
+# Extract execve stub size for static binary pinsyscall(2) in dlfcn/init.c
+SRCS+=	_execvesize.c
+CLEANFILES+=_execvesize.c
+_execvesize.c: execve.o execve.po
+	readelf -s execve.po | awk \
+	    '/ execve$$/{ printf("#ifdef _PROFILE\nconst int _execve_size = %d;\n", $$3); }' > $@
+	readelf -s execve.o | awk \
+	    '/ execve$$/{ printf("#else\nconst int _execve_size = %d;\n#endif\n", $$3); }' >> $@
+
+# _libc_preinit() needs to know if compiled with or without profiling
+_execvesize.po:
+	@echo "${COMPILE.c} -D_PROFILE ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${DFLAGS} -D_PROFILE ${.IMPSRC} -o ${.TARGET}.o
+	@-mv $@.d $*.d
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
 
 # cancelation details
 SRCS+=	canceled.c
