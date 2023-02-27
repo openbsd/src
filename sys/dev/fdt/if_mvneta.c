@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.27 2022/07/19 21:49:22 jmatthew Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.28 2023/02/27 09:59:46 jmatthew Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -742,6 +742,7 @@ mvneta_attach_deferred(struct device *self)
 {
 	struct mvneta_softc *sc = (struct mvneta_softc *) self;
 	struct ifnet *ifp = &sc->sc_ac.ac_if;
+	int mii_flags = 0;
 
 	if (!sc->sc_fixed_link) {
 		sc->sc_mdio = mii_byphandle(sc->sc_phy);
@@ -750,8 +751,22 @@ mvneta_attach_deferred(struct device *self)
 			return;
 		}
 
+		switch (sc->sc_phy_mode) {
+		case PHY_MODE_1000BASEX:
+			mii_flags |= MIIF_IS_1000X;
+			break;
+		case PHY_MODE_SGMII:
+			mii_flags |= MIIF_SGMII;
+			break;
+		case PHY_MODE_RGMII_ID:
+			mii_flags |= MIIF_RXID | MIIF_TXID;
+			break;
+		default:
+			break;
+		}
+
 		mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
-		    MII_OFFSET_ANY, 0);
+		    MII_OFFSET_ANY, mii_flags);
 		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 			printf("%s: no PHY found!\n", self->dv_xname);
 			ifmedia_add(&sc->sc_mii.mii_media,
