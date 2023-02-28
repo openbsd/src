@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.132 2023/02/28 10:43:21 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.133 2023/02/28 10:45:46 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -529,15 +529,26 @@ var nids = map[string]int{
 	"brainpoolP320t1": C.NID_brainpoolP320t1,
 	"brainpoolP384t1": C.NID_brainpoolP384t1,
 	"brainpoolP512t1": C.NID_brainpoolP512t1,
+	"secp160k1":       C.NID_secp160k1,
+	"secp160r1":       C.NID_secp160r1,
+	"secp160r2":       C.NID_secp160r2,
+	"secp192k1":       C.NID_secp192k1,
+	"secp192r1":       C.NID_X9_62_prime192v1, // RFC 8422, Table 4, p.32
 	"secp224k1":       C.NID_secp224k1,
 	"secp224r1":       C.NID_secp224r1,
 	"secp256k1":       C.NID_secp256k1,
 	"P-256K":          C.NID_secp256k1,
 	"secp256r1":       C.NID_X9_62_prime256v1, // RFC 8422, Table 4, p.32
 	"P-256":           C.NID_X9_62_prime256v1,
+	"sect283k1":       C.NID_sect283k1,
+	"sect283r1":       C.NID_sect283r1,
 	"secp384r1":       C.NID_secp384r1,
 	"P-384":           C.NID_secp384r1,
+	"sect409k1":       C.NID_sect409k1,
+	"sect409r1":       C.NID_sect409r1,
 	"secp521r1":       C.NID_secp521r1,
+	"sect571k1":       C.NID_sect571k1,
+	"sect571r1":       C.NID_sect571r1,
 	"P-521":           C.NID_secp521r1,
 	"SHA-1":           C.NID_sha1,
 	"SHA-224":         C.NID_sha224,
