@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.131 2022/11/18 18:32:14 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.132 2023/02/28 10:43:21 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -1649,6 +1649,11 @@ func runECDHTest(nid int, variant testVariant, wt *wycheproofTestECDH) bool {
 }
 
 func runECDHTestGroup(algorithm string, variant testVariant, wtg *wycheproofTestGroupECDH) bool {
+	if wtg.Curve == "FRP256v1" {
+		fmt.Printf("INFO: Skipping %v test group %v with curve %v and %v encoding...\n", algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
+		return true
+	}
+
 	fmt.Printf("Running %v test group %v with curve %v and %v encoding...\n",
 		algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
 
