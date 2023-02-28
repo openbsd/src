@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-isoclns.c,v 1.15 2021/12/01 18:28:46 deraadt Exp $	*/
+/*	$OpenBSD: print-isoclns.c,v 1.16 2023/02/28 10:04:50 claudio Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -88,7 +88,7 @@ isoclns_print(const u_char *p, u_int length, u_int caplen,
 		/* isis_print(&p, &length); */
 		printf(" len=%d ", length);
 		if (caplen > 1)
-			default_print_unaligned(p, caplen);
+			default_print(p, caplen);
 		break;
 
 	case NULLNS:
@@ -107,7 +107,7 @@ isoclns_print(const u_char *p, u_int length, u_int caplen,
 			    etheraddr_string(edst));
 		printf(" len=%d ", length);
 		if (caplen > 1)
-			default_print_unaligned(p, caplen);
+			default_print(p, caplen);
 		break;
 	}
 }

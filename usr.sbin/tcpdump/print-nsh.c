@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-nsh.c,v 1.1 2019/12/03 01:43:33 dlg Exp $ */
+/*	$OpenBSD: print-nsh.c,v 1.2 2023/02/28 10:04:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -214,7 +214,7 @@ nsh_print(const u_char *p, u_int length)
 	}
 
 	if (vflag)
-		default_print_unaligned(p, length);
+		default_print(p, l);
 
 	return;
 trunc:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-llc.c,v 1.22 2020/01/24 22:46:37 procter Exp $	*/
+/*	$OpenBSD: print-llc.c,v 1.23 2023/02/28 10:04:50 claudio Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -219,7 +219,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		printf("%s/%c", m, f);
 
 		if (caplen < 6) {
-			default_print_unaligned(p, caplen);
+			default_print(p, caplen);
 			return (0);
 		}
 		p += 3;
@@ -248,7 +248,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 	} else {
 		char f;
 		if (caplen < 4) {
-			default_print_unaligned(p, caplen);
+			default_print(p, caplen);
 			return (0);
 		}
 		llc.llcis = ntohs(llc.llcis);

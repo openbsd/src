@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.97 2022/07/09 23:24:44 halex Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.98 2023/02/28 10:04:50 claudio Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -632,43 +632,14 @@ default_print_ascii(const u_char *cp, unsigned int length)
 	}
 }
 
-/* Like default_print() but data need not be aligned */
-void
-default_print_unaligned(const u_char *cp, u_int length)
-{
-	u_int i, s;
-	int nshorts;
-
-	if (Xflag) {
-		/* dump the buffer in `emacs-hexl' style */
-		default_print_hexl(cp, length);
-	} else if (Aflag) {
-		/* dump the text in the buffer */
-		default_print_ascii(cp, length);
-	} else {
-		/* dump the buffer in old tcpdump style */
-		nshorts = (u_int) length / sizeof(u_short);
-		i = 0;
-		while (--nshorts >= 0) {
-			if ((i++ % 8) == 0)
-				printf("\n\t\t\t");
-			s = *cp++;
-			printf(" %02x%02x", s, *cp++);
-		}
-		if (length & 1) {
-			if ((i % 8) == 0)
-				printf("\n\t\t\t");
-			printf(" %02x", *cp);
-		}
-	}
-}
-
 void
 default_print(const u_char *bp, u_int length)
 {
-	const u_short *sp;
 	u_int i;
 	int nshorts;
+
+	if (snapend - bp < length)
+		length = snapend - bp;
 
 	if (Xflag) {
 		/* dump the buffer in `emacs-hexl' style */
@@ -677,23 +648,23 @@ default_print(const u_char *bp, u_int length)
 		/* dump the text in the buffer */
 		default_print_ascii(bp, length);
 	} else {
+		u_short sp;
+
 		/* dump the buffer in old tcpdump style */
-		if ((long)bp & 1) {
-			default_print_unaligned(bp, length);
-			return;
-		}
-		sp = (u_short *)bp;
 		nshorts = (u_int) length / sizeof(u_short);
 		i = 0;
 		while (--nshorts >= 0) {
 			if ((i++ % 8) == 0)
 				printf("\n\t\t\t");
-			printf(" %04x", ntohs(*sp++));
+
+			sp = (u_short)*bp++ << 8;
+			sp |= *bp++;
+			printf(" %04x", sp);
 		}
 		if (length & 1) {
 			if ((i % 8) == 0)
 				printf("\n\t\t\t");
-			printf(" %02x", *(u_char *)sp);
+			printf(" %02x", *bp);
 		}
 	}
 }
