@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.3 2023/03/01 11:16:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -153,7 +153,7 @@ struct evp_cipher_st {
 	    const unsigned char *iv, int enc);	/* init key */
 	int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	    const unsigned char *in, size_t inl);/* encrypt/decrypt data */
-	void (*cleanup)(EVP_CIPHER_CTX *); /* cleanup ctx */
+	int (*cleanup)(EVP_CIPHER_CTX *); /* cleanup ctx */
 	int ctx_size;		/* how big ctx->cipher_data needs to be */
 	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Populate a ASN1_TYPE with parameters */
 	int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Get parameters from a ASN1_TYPE */
