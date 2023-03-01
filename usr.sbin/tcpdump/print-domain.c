@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-domain.c,v 1.27 2020/01/24 22:46:36 procter Exp $	*/
+/*	$OpenBSD: print-domain.c,v 1.28 2023/03/01 08:15:58 claudio Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -652,8 +652,7 @@ ns_print(const u_char *bp, u_int length, int is_mdns)
 			if (arcount > 0)
 				goto trunc;
 		}
-	}
-	else {
+	} else {
 		/* this is a request */
 		printf("%d%s%s%s", EXTRACT_16BITS(&np->id), ns_ops[DNS_OPCODE(np)],
 		    DNS_RD(np) ? "+" : "",
