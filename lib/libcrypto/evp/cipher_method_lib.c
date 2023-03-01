@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_method_lib.c,v 1.7 2023/03/01 11:25:25 tb Exp $ */
+/*	$OpenBSD: cipher_method_lib.c,v 1.8 2023/03/01 11:27:37 tb Exp $ */
 /*
  * Written by Richard Levitte (levitte@openssl.org) for the OpenSSL project
  * 2015.
@@ -83,8 +83,7 @@ EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
 {
 	EVP_CIPHER *copy;
 
-	if ((copy = EVP_CIPHER_meth_new(cipher->nid, cipher->block_size,
-	    cipher->key_len)) == NULL)
+	if ((copy = calloc(1, sizeof(*copy))) == NULL)
 		return NULL;
 
 	*copy = *cipher;
