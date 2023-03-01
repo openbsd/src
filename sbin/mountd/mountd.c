@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.89 2020/08/06 17:57:32 naddy Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.90 2023/03/01 23:27:46 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -793,7 +793,7 @@ mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 
 		/* Check in the exports list */
 		sigprocmask(SIG_BLOCK, &sighup_mask, NULL);
-		ep = ex_search(&fsb.f_fsid);
+		ep = bad ? NULL : ex_search(&fsb.f_fsid);
 		hostset = defset = 0;
 		if (ep && (chk_host(ep->ex_defdir, saddr, &defset, &hostset) ||
 		    ((dp = dirp_search(ep->ex_dirl, dirpath)) &&
