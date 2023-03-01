@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.112 2022/11/13 14:04:13 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.113 2023/03/01 11:17:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -406,6 +406,30 @@ unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
 #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
 unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
 #define EVP_CIPHER_CTX_mode(e)		(EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)
+
+#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
+EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
+EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
+void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
+
+int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len);
+int EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags);
+int EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher, int ctx_size);
+int EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
+    int (*init)(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc));
+int EVP_CIPHER_meth_set_do_cipher(EVP_CIPHER *cipher,
+    int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t inl));
+int EVP_CIPHER_meth_set_cleanup(EVP_CIPHER *cipher,
+    int (*cleanup)(EVP_CIPHER_CTX *));
+int EVP_CIPHER_meth_set_set_asn1_params(EVP_CIPHER *cipher,
+    int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *));
+int EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
+    int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *));
+int EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
+    int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr));
+#endif /* LIBRESSL_INTERNAL || LIBRESSL_NEXT_API */
 
 EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *engine,
     const unsigned char *private_key, size_t len);
