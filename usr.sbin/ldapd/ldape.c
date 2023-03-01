@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldape.c,v 1.36 2021/12/19 12:19:31 claudio Exp $ */
+/*	$OpenBSD: ldape.c,v 1.37 2023/03/01 08:17:53 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -433,7 +433,7 @@ ldape(int debug, int verbose, char *csockpath)
 
 			if (tls_configure(l->tls, l->ssl->config)) {
 				log_warnx("ldape: %s", tls_error(l->tls));
-				fatal("ldape: couldn't configure tls");
+				fatalx("ldape: couldn't configure tls");
 			}
 		}
 	}
