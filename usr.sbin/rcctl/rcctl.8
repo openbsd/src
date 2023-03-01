@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcctl.8,v 1.43 2022/12/22 19:53:24 kn Exp $
+.\"	$OpenBSD: rcctl.8,v 1.44 2023/03/01 17:27:45 ajacoutot Exp $
 .\"
 .\" Copyright (c) 2014 Antoine Jacoutot <ajacoutot@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2022 $
+.Dd $Mdocdate: March 1 2023 $
 .Dt RCCTL 8
 .Os
 .Sh NAME
@@ -154,8 +154,7 @@ If
 .Ar variable
 is already set,
 .Ar daemon Ns _ Ns Ar variable
-is reset to the optionally provided arguments.
-or to its default value.
+is reset to the optionally provided arguments or to its default value.
 .Pp
 The
 .Cm status
