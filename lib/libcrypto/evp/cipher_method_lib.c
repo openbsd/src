@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_method_lib.c,v 1.5 2023/03/01 11:07:25 tb Exp $ */
+/*	$OpenBSD: cipher_method_lib.c,v 1.6 2023/03/01 11:08:37 tb Exp $ */
 /*
  * Written by Richard Levitte (levitte@openssl.org) for the OpenSSL project
  * 2015.
@@ -116,10 +116,8 @@ EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher, int ctx_size)
 
 int
 EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
-    int (*init)(EVP_CIPHER_CTX *ctx,
-	const unsigned char *key,
-	const unsigned char *iv,
-	int enc))
+    int (*init)(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc))
 {
 	cipher->init = init;
 	return 1;
@@ -127,10 +125,8 @@ EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
 
 int
 EVP_CIPHER_meth_set_do_cipher(EVP_CIPHER *cipher,
-    int (*do_cipher)(EVP_CIPHER_CTX *ctx,
-	unsigned char *out,
-	const unsigned char *in,
-	size_t inl))
+    int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, size_t inl))
 {
 	cipher->do_cipher = do_cipher;
 	return 1;
@@ -146,8 +142,7 @@ EVP_CIPHER_meth_set_cleanup(EVP_CIPHER *cipher,
 
 int
 EVP_CIPHER_meth_set_set_asn1_params(EVP_CIPHER *cipher,
-    int (*set_asn1_parameters)(EVP_CIPHER_CTX *,
-	ASN1_TYPE *))
+    int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *))
 {
 	cipher->set_asn1_parameters = set_asn1_parameters;
 	return 1;
@@ -155,8 +150,7 @@ EVP_CIPHER_meth_set_set_asn1_params(EVP_CIPHER *cipher,
 
 int
 EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
-    int (*get_asn1_parameters)(EVP_CIPHER_CTX *,
-	ASN1_TYPE *))
+    int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *))
 {
 	cipher->get_asn1_parameters = get_asn1_parameters;
 	return 1;
@@ -164,8 +158,7 @@ EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
 
 int
 EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
-    int (*ctrl)(EVP_CIPHER_CTX *, int type,
-	int arg, void *ptr))
+    int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr))
 {
 	cipher->ctrl = ctrl;
 	return 1;
