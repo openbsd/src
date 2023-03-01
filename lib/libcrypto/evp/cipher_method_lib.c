@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_method_lib.c,v 1.3 2023/03/01 11:04:17 tb Exp $ */
+/*	$OpenBSD: cipher_method_lib.c,v 1.4 2023/03/01 11:06:23 tb Exp $ */
 /*
  * Written by Richard Levitte (levitte@openssl.org) for the OpenSSL project
  * 2015.
@@ -158,44 +158,3 @@ int EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
     cipher->ctrl = ctrl;
     return 1;
 }
-
-
-int (*EVP_CIPHER_meth_get_init(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
-                                                          const unsigned char *key,
-                                                          const unsigned char *iv,
-                                                          int enc)
-{
-    return cipher->init;
-}
-int (*EVP_CIPHER_meth_get_do_cipher(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
-                                                               unsigned char *out,
-                                                               const unsigned char *in,
-                                                               size_t inl)
-{
-    return cipher->do_cipher;
-}
-
-int (*EVP_CIPHER_meth_get_cleanup(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *)
-{
-    return cipher->cleanup;
-}
-
-int (*EVP_CIPHER_meth_get_set_asn1_params(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
-                                                                     ASN1_TYPE *)
-{
-    return cipher->set_asn1_parameters;
-}
-
-int (*EVP_CIPHER_meth_get_get_asn1_params(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
-                                                               ASN1_TYPE *)
-{
-    return cipher->get_asn1_parameters;
-}
-
-int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
-                                                          int type, int arg,
-                                                          void *ptr)
-{
-    return cipher->ctrl;
-}
-
