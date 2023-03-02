@@ -1,4 +1,4 @@
-/*	$OpenBSD: evptest.c,v 1.11 2021/11/18 21:18:28 tb Exp $	*/
+/*	$OpenBSD: evptest.c,v 1.12 2023/03/02 20:24:51 tb Exp $	*/
 /* Written by Ben Laurie, 2001 */
 /*
  * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
@@ -58,6 +58,8 @@
 #endif
 #include <openssl/err.h>
 #include <openssl/conf.h>
+
+int verbose;
 
 static void
 hexdump(FILE *f, const char *title, const unsigned char *s, int l)
@@ -147,13 +149,15 @@ test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
 	const unsigned char *eiv;
 	int outl, outl2;
 
-	printf("Testing cipher %s%s\n", EVP_CIPHER_name(c),
-	    (encdec == 1 ? "(encrypt)" : (encdec == 0 ? "(decrypt)" : "(encrypt/decrypt)")));
-	hexdump(stdout, "Key",key,kn);
-	if (in)
-		hexdump(stdout, "IV",iv,in);
-	hexdump(stdout, "Plaintext",plaintext,pn);
-	hexdump(stdout, "Ciphertext",ciphertext,cn);
+	if (verbose) {
+		printf("Testing cipher %s%s\n", EVP_CIPHER_name(c),
+		    (encdec == 1 ? "(encrypt)" : (encdec == 0 ? "(decrypt)" : "(encrypt/decrypt)")));
+		hexdump(stdout, "Key",key,kn);
+		if (in)
+			hexdump(stdout, "IV",iv,in);
+		hexdump(stdout, "Plaintext",plaintext,pn);
+		hexdump(stdout, "Ciphertext",ciphertext,cn);
+	}
 
 	if (kn != EVP_CIPHER_key_length(c)) {
 		fprintf(stderr, "Key length doesn't match, got %d expected %lu\n",kn,
@@ -240,7 +244,8 @@ test1(const EVP_CIPHER *c, const unsigned char *key, int kn,
 
 	EVP_CIPHER_CTX_free(ctx);
 
-	printf("\n");
+	if (verbose)
+		printf("\n");
 }
 
 static int
@@ -272,9 +277,11 @@ test_digest(const char *digest, const unsigned char *plaintext, int pn,
 	if (!d)
 		return 0;
 
-	printf("Testing digest %s\n",EVP_MD_name(d));
-	hexdump(stdout, "Plaintext",plaintext,pn);
-	hexdump(stdout, "Digest",ciphertext,cn);
+	if (verbose) {
+		printf("Testing digest %s\n",EVP_MD_name(d));
+		hexdump(stdout, "Plaintext",plaintext,pn);
+		hexdump(stdout, "Digest",ciphertext,cn);
+	}
 
 	if ((ctx = EVP_MD_CTX_new()) == NULL) {
 		fprintf(stderr, "EVP_CIPHER_CTX_new failed\n");
@@ -310,8 +317,8 @@ test_digest(const char *digest, const unsigned char *plaintext, int pn,
 		hexdump(stderr, "Expected",ciphertext,cn);
 		exit(103);
 	}
-
-	printf("\n");
+	if (verbose)
+		printf("\n");
 
 	return 1;
 }
@@ -322,9 +329,14 @@ main(int argc, char **argv)
 	const char *szTestFile;
 	FILE *f;
 
-	if (argc != 2) {
+	if (argc != 2 && argc != 3) {
 		fprintf(stderr, "%s <test file>\n",argv[0]);
 		exit(1);
+	}
+	if (argc == 3 && strcmp(argv[1], "-v") == 0) {
+		verbose = 1;
+		argv++;
+		argc--;
 	}
 
 	szTestFile = argv[1];
@@ -390,45 +402,52 @@ main(int argc, char **argv)
 		if (!test_cipher(cipher, key, kn, iv, in, plaintext, pn, ciphertext, cn, encdec) &&
 		    !test_digest(cipher, plaintext, pn, ciphertext, cn)) {
 #ifdef OPENSSL_NO_AES
-			if (strstr(cipher, "AES") == cipher) {
-				fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
+			if (strstr(cipher, "AES") == cipher && verbose) {
+				if (verbose)
+					fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 				continue;
 			}
 #endif
 #ifdef OPENSSL_NO_DES
-			if (strstr(cipher, "DES") == cipher) {
-				fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
+			if (strstr(cipher, "DES") == cipher && verbose) {
+				if (verbose)
+					fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 				continue;
 			}
 #endif
 #ifdef OPENSSL_NO_RC4
-			if (strstr(cipher, "RC4") == cipher) {
-				fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
+			if (strstr(cipher, "RC4") == cipher && verbose) {
+				if (verbose)
+					fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 				continue;
 			}
 #endif
 #ifdef OPENSSL_NO_CAMELLIA
-			if (strstr(cipher, "CAMELLIA") == cipher) {
-				fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
+			if (strstr(cipher, "CAMELLIA") == cipher && verbose) {
+				if (verbose)
+					fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 				continue;
 			}
 #endif
 #ifdef OPENSSL_NO_SEED
 			if (strstr(cipher, "SEED") == cipher) {
-				fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
+				if (verbose)
+					fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 				continue;
 			}
 #endif
 #ifdef OPENSSL_NO_CHACHA
 			if (strstr(cipher, "ChaCha") == cipher) {
-				fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
+				if (verbose)
+					fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 				continue;
 			}
 #endif
 #ifdef OPENSSL_NO_GOST
 			if (strstr(cipher, "md_gost") == cipher ||
 			    strstr(cipher, "streebog") == cipher) {
-				fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
+				if (verbose)
+					fprintf(stdout, "Cipher disabled, skipping %s\n", cipher);
 				continue;
 			}
 #endif
