@@ -1289,6 +1289,8 @@
 ./usr/share/man/man4/armv7/imxtemp.4
 ./usr/share/man/man4/armv7/intc.4
 ./usr/share/man/man4/armv7/intro.4
+./usr/share/man/man4/armv7/mvodog.4
+./usr/share/man/man4/armv7/mvortc.4
 ./usr/share/man/man4/armv7/omap.4
 ./usr/share/man/man4/armv7/omclock.4
 ./usr/share/man/man4/armv7/omcm.4
