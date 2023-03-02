@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmstest.c,v 1.6 2023/03/02 21:07:21 tb Exp $	*/
+/*	$OpenBSD: cmstest.c,v 1.7 2023/03/02 21:08:14 tb Exp $	*/
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -29,7 +29,7 @@ static int verbose = 0;
 
 static const char cms_msg[] = "Hello CMS!\r\n";
 
-static const char cms_ca_1[] = \
+static const char cms_ca_1[] =
     "-----BEGIN CERTIFICATE-----\n"
     "MIICqDCCAZACCQD8ebR8e4kdvjANBgkqhkiG9w0BAQsFADAWMRQwEgYDVQQDDAtU\n"
     "ZXN0IENNUyBDQTAeFw0xOTA1MTExNTUzNTNaFw0yOTA1MDgxNTUzNTNaMBYxFDAS\n"
@@ -48,7 +48,7 @@ static const char cms_ca_1[] = \
     "aaACIcEs48gnTRWc\n"
     "-----END CERTIFICATE-----\n";
 
-static const char cms_cert_1[] = \
+static const char cms_cert_1[] =
     "-----BEGIN CERTIFICATE-----\n"
     "MIICpDCCAYwCAQMwDQYJKoZIhvcNAQEFBQAwFjEUMBIGA1UEAwwLVGVzdCBDTVMg\n"
     "Q0EwHhcNMTkwNTExMTU1MzU0WhcNMjkwNTA4MTU1MzU0WjAaMRgwFgYDVQQDDA9U\n"
@@ -67,7 +67,7 @@ static const char cms_cert_1[] = \
     "6WWvmmz+rC0=\n"
     "-----END CERTIFICATE-----\n";
 
-static const char cms_key_1[] = \
+static const char cms_key_1[] =
     "-----BEGIN PRIVATE KEY-----\n"
     "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDDMLSuy+tc0Awf\n"
     "rlszgHJ3z7UEpJSn5mcKxquFnEC5DtchgQJ+cj5VFvB9A9G98ykQ0IrHXNUTbS2y\n"
