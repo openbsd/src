@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2022/11/11 12:02:34 beck Exp $
+#	$OpenBSD: Makefile,v 1.16 2023/03/02 21:15:14 tb Exp $
 
 PROGS =	constraints verify x509attribute x509name x509req_ext callback
 PROGS += expirecallback callbackfailures
@@ -9,21 +9,13 @@ LDADD_constraints = ${CRYPTO_INT}
 LDADD_verify = ${CRYPTO_INT}
 
 WARNINGS =	Yes
-CFLAGS +=	-DLIBRESSL_INTERNAL -Wall -Werror -I$(BSDSRCDIR)/lib/libcrypto/x509
-CFLAGS += 	-I$(BSDSRCDIR)/lib/libcrypto/bytestring
+CFLAGS +=	-DLIBRESSL_INTERNAL -Wall -Werror
+CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/x509
+CFLAGS += 	-I${.CURDIR}/../../../../lib/libcrypto/bytestring
 
 SUBDIR += bettertls rfc3779
 
-REGRESS_TARGETS += regress-verify
-REGRESS_TARGETS += regress-constraints
-REGRESS_TARGETS += regress-x509attribute
-REGRESS_TARGETS += regress-x509name
-REGRESS_TARGETS += regress-x509req_ext
-REGRESS_TARGETS += regress-callback
-REGRESS_TARGETS += regress-expirecallback
-REGRESS_TARGETS += regress-callbackfailures
-
-CLEANFILES +=	x509name.result callbackout
+CLEANFILES +=	x509name.result callback.out
 
 .if make(clean) || make(cleandir)
 . if ${.OBJDIR} != ${.CURDIR}
@@ -32,31 +24,22 @@ CLEANFILES +=	x509name.result callbackout
 . endif
 .endif
 
-regress-verify: verify
+run-regress-verify: verify
 	perl ${.CURDIR}/make-dir-roots.pl ${.CURDIR}/../certs .
 	./verify ${.CURDIR}/../certs
 
-regress-constraints: constraints
-	./constraints
-
-regress-x509attribute: x509attribute
-	./x509attribute
-
-regress-x509name: x509name
+run-regress-x509name: x509name
 	./x509name > x509name.result
 	diff -u ${.CURDIR}/x509name.expected x509name.result
 
-regress-x509req_ext: x509req_ext
-	./x509req_ext
-
-regress-callback: callback
+run-regress-callback: callback
 	./callback ${.CURDIR}/../certs
 	perl ${.CURDIR}/callback.pl callback.out
 
-regress-expirecallback: expirecallback
+run-regress-expirecallback: expirecallback
 	./expirecallback ${.CURDIR}/../certs
 
-regress-callbackfailures: callbackfailures
+run-regress-callbackfailures: callbackfailures
 	./callbackfailures ${.CURDIR}/../certs
 
 .include <bsd.regress.mk>
