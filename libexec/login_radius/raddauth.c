@@ -1,4 +1,4 @@
-/*	$OpenBSD: raddauth.c,v 1.30 2019/06/28 13:32:53 deraadt Exp $	*/
+/*	$OpenBSD: raddauth.c,v 1.31 2023/03/02 16:13:57 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -451,17 +451,21 @@ rad_recv(char *state, char *challenge, u_char *req_vector)
 	struct sockaddr_in sin;
 	u_char recv_vector[AUTH_VECTOR_LEN], test_vector[AUTH_VECTOR_LEN];
 	MD5_CTX context;
+	ssize_t total_length;
 
 	salen = sizeof(sin);
 
 	alarm(timeout);
-	if ((recvfrom(sockfd, &auth, sizeof(auth), 0,
-	    (struct sockaddr *)&sin, &salen)) < AUTH_HDR_LEN) {
+	total_length = recvfrom(sockfd, &auth, sizeof(auth), 0,
+	    (struct sockaddr *)&sin, &salen);
+	alarm(0);
+	if (total_length < AUTH_HDR_LEN) {
 		if (timedout)
 			return(-1);
 		errx(1, "bogus auth packet from server");
 	}
-	alarm(0);
+	if (ntohs(auth.length) > total_length)
+		errx(1, "bogus auth packet from server");
 
 	if (sin.sin_addr.s_addr != auth_server)
 		errx(1, "bogus authentication server");
