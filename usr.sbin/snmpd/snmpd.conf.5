@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.61 2022/08/23 08:56:21 martijn Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.62 2023/03/02 17:09:54 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 23 2022 $
+.Dd $Mdocdate: March 2 2023 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
 .Nm snmpd.conf
-.Nd Simple Network Management Protocol daemon configuration file
+.Nd SNMP daemon configuration file
 .Sh DESCRIPTION
 .Nm
 is the configuration file for the
@@ -153,7 +153,7 @@ set requires at least one
 statement.
 .It Ic agentx Oo Ic path Ar path Oc Oo Ic owner Ar owner Oc Oo group Ar group Oc Oo Ic mode Ar mode Oc
 Set up an agentx master socket at
-.Ar path 
+.Ar path
 and defaults to
 .Pa /var/agentx/master .
 Socket owner, group, and permissions can be set with

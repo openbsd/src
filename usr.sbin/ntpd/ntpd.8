@@ -1,4 +1,4 @@
-.\" $OpenBSD: ntpd.8,v 1.48 2022/11/06 09:12:03 ajacoutot Exp $
+.\" $OpenBSD: ntpd.8,v 1.49 2023/03/02 17:09:53 jmc Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,12 +14,12 @@
 .\" AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2022 $
+.Dd $Mdocdate: March 2 2023 $
 .Dt NTPD 8
 .Os
 .Sh NAME
 .Nm ntpd
-.Nd Network Time Protocol daemon
+.Nd Network Time Protocol (NTP) daemon
 .Sh SYNOPSIS
 .Nm ntpd
 .Bk -words
@@ -83,7 +83,7 @@ option, all calls to
 .Xr adjtime 2
 will be logged.
 .Pp
-At boot, 
+At boot,
 .Nm
 will stay for a maximum of 15 seconds in the foreground and make efforts to
 verify and correct the time if constraints are configured and
