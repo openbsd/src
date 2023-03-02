@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.129 2023/03/02 09:39:45 jmatthew Exp $
+#	$OpenBSD: RAMDISK,v 1.130 2023/03/02 09:59:29 jmatthew Exp $
 
 machine		armv7 arm
 
@@ -186,6 +186,8 @@ mvpcie*		at fdt?
 pci*		at mvpcie?
 mvpxa*		at fdt?
 sdmmc*		at mvpxa?
+mvodog*		at fdt?
+mvortc*		at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1
