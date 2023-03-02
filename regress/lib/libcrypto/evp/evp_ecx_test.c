@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_ecx_test.c,v 1.4 2022/11/23 22:52:25 tb Exp $ */
+/*	$OpenBSD: evp_ecx_test.c,v 1.5 2023/03/02 20:04:42 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -24,7 +24,7 @@
 
 #include "curve25519_internal.h"
 
-static const uint8_t ed25519_priv_key_1[] = \
+static const uint8_t ed25519_priv_key_1[] =
     "-----BEGIN PRIVATE KEY-----\n"
     "MC4CAQAwBQYDK2VwBCIEIIkDg89yB70IpUXsAZieCcCDE2ig9nin9JJWpDQoCup8\n"
     "-----END PRIVATE KEY-----\n";
@@ -36,7 +36,7 @@ const uint8_t ed25519_raw_priv_key_1[] = {
 	0x92, 0x56, 0xa4, 0x34, 0x28, 0x0a, 0xea, 0x7c,
 };
 
-static const uint8_t ed25519_pub_key_1[] = \
+static const uint8_t ed25519_pub_key_1[] =
     "-----BEGIN PUBLIC KEY-----\n"
     "MCowBQYDK2VwAyEA1vxPpbnoC7G8vFmRjYVXUU2aln3hUZEgfW1atlTHF/o=\n"
     "-----END PUBLIC KEY-----\n";
@@ -66,7 +66,7 @@ static const uint8_t signature_1[] = {
 	0x33, 0x6b, 0xf3, 0x57, 0x93, 0xd4, 0xc1, 0x07,
 };
 
-static const uint8_t x25519_priv_key_1[] = \
+static const uint8_t x25519_priv_key_1[] =
     "-----BEGIN PRIVATE KEY-----\n"
     "MC4CAQAwBQYDK2VuBCIEICi6rzFFJb02mi6sopELeshEi2vr68ul4bzEHPOz+K1o\n"
     "-----END PRIVATE KEY-----\n";
@@ -78,7 +78,7 @@ const uint8_t x25519_raw_priv_key_1[] = {
 	0xbc, 0xc4, 0x1c, 0xf3, 0xb3, 0xf8, 0xad, 0x68,
 };
 
-static const uint8_t x25519_pub_key_1[] = \
+static const uint8_t x25519_pub_key_1[] =
     "-----BEGIN PUBLIC KEY-----\n"
     "MCowBQYDK2VuAyEAu4WHXnAQL2YfonJhuoEO9PM2WwXjveApPmCXSiDnf1M=\n"
     "-----END PUBLIC KEY-----\n";
@@ -90,7 +90,7 @@ static const uint8_t x25519_raw_pub_key_1[] = {
 	0x3e, 0x60, 0x97, 0x4a, 0x20, 0xe7, 0x7f, 0x53,
 };
 
-static const uint8_t x25519_priv_key_2[] = \
+static const uint8_t x25519_priv_key_2[] =
     "-----BEGIN PRIVATE KEY-----\n"
     "MC4CAQAwBQYDK2VuBCIEIAg9Jbp/Ma0TO4r179WGGiv+VnGxGNRh4VNrHUij7Ql/\n"
     "-----END PRIVATE KEY-----\n";
@@ -102,7 +102,7 @@ static const uint8_t x25519_raw_priv_key_2[] = {
 	0x53, 0x6b, 0x1d, 0x48, 0xa3, 0xed, 0x09, 0x7f,
 };
 
-static const uint8_t x25519_pub_key_2[] = \
+static const uint8_t x25519_pub_key_2[] =
     "-----BEGIN PUBLIC KEY-----\n"
     "MCowBQYDK2VuAyEABvksGQRgsUXEK5CaniVZ59pPvDoABgBSdAM+EF0Q9Cw=\n"
     "-----END PUBLIC KEY-----\n";
