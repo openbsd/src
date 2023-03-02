@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmstest.c,v 1.5 2022/06/22 09:56:45 tb Exp $	*/
+/*	$OpenBSD: cmstest.c,v 1.6 2023/03/02 21:07:21 tb Exp $	*/
 /*
  * Copyright (c) 2019 Joel Sing <jsing@openbsd.org>
  *
@@ -118,6 +118,7 @@ test_cms_encrypt_decrypt(void)
 	BIO *bio_out = NULL;
 	X509 *cert = NULL;
 	size_t len;
+	long mem_len;
 	char *p;
 	int failed = 1;
 
@@ -166,21 +167,26 @@ test_cms_encrypt_decrypt(void)
 		goto failure;
 	}
 
-	if ((len = BIO_get_mem_data(bio_mem, &p)) != strlen(cms_msg)) {
-		fprintf(stderr, "FAIL: CMS decrypt returned %zu bytes, "
-		    "want %zu bytes\n", len, strlen(cms_msg));
+	if ((mem_len = BIO_get_mem_data(bio_mem, &p)) <= 0) {
+		fprintf(stderr, "FAIL: BIO_get_mem_data returned %ld\n",
+		    mem_len);
+		goto failure;
+	}
+	if ((len = strlen(cms_msg)) != (size_t)mem_len) {
+		fprintf(stderr, "FAIL: CMS decrypt returned %ld bytes, "
+		    "want %zu bytes\n", mem_len, len);
 		fprintf(stderr, "Got CMS data:\n");
-		hexdump(p, len);
+		hexdump(p, mem_len);
 		fprintf(stderr, "Want CMS data:\n");
-		hexdump(cms_msg, strlen(cms_msg));
+		hexdump(cms_msg, len);
 		goto failure;
 	}
 	if (memcmp(p, cms_msg, len) != 0) {
 		fprintf(stderr, "FAIL: CMS decrypt message differs");
 		fprintf(stderr, "Got CMS data:\n");
-		hexdump(p, len);
+		hexdump(p, mem_len);
 		fprintf(stderr, "Want CMS data:\n");
-		hexdump(cms_msg, strlen(cms_msg));
+		hexdump(cms_msg, len);
 		goto failure;
 	}
 
@@ -209,6 +215,7 @@ test_cms_sign_verify(void)
 	X509 *cert = NULL;
 	X509 *ca = NULL;
 	size_t len;
+	long mem_len;
 	char *p;
 	int failed = 1;
 
@@ -267,21 +274,26 @@ test_cms_sign_verify(void)
 		goto failure;
 	}
 
-	if ((len = BIO_get_mem_data(bio_mem, &p)) != strlen(cms_msg)) {
-		fprintf(stderr, "FAIL: CMS verify returned %zu bytes, "
-		    "want %zu bytes\n", len, strlen(cms_msg));
+	if ((mem_len = BIO_get_mem_data(bio_mem, &p)) <= 0) {
+		fprintf(stderr, "FAIL: BIO_get_mem_data returned %ld\n",
+		    mem_len);
+		goto failure;
+	}
+	if ((len = strlen(cms_msg)) != (size_t)mem_len) {
+		fprintf(stderr, "FAIL: CMS verify returned %ld bytes, "
+		    "want %zu bytes\n", mem_len, len);
 		fprintf(stderr, "Got CMS data:\n");
-		hexdump(p, len);
+		hexdump(p, mem_len);
 		fprintf(stderr, "Want CMS data:\n");
-		hexdump(cms_msg, strlen(cms_msg));
+		hexdump(cms_msg, len);
 		goto failure;
 	}
 	if (memcmp(p, cms_msg, len) != 0) {
 		fprintf(stderr, "FAIL: CMS verify message differs");
 		fprintf(stderr, "Got CMS data:\n");
-		hexdump(p, len);
+		hexdump(p, mem_len);
 		fprintf(stderr, "Want CMS data:\n");
-		hexdump(cms_msg, strlen(cms_msg));
+		hexdump(cms_msg, len);
 		goto failure;
 	}
 
