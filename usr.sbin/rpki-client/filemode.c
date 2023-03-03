@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.19 2023/01/06 16:06:43 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.20 2023/03/03 16:19:05 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -257,6 +257,22 @@ find_tal(struct cert *cert)
 	return NULL;
 }
 
+static void
+print_certification_path(const char *crl, const char *aia, const struct auth *a)
+{
+	if (crl != NULL)
+		printf("Certification path:       %s\n", crl);
+	if (aia != NULL)
+		printf("                          %s\n", aia);
+
+	for (; a != NULL; a = a->parent) {
+		if (a->cert->crl != NULL)
+			printf("                          %s\n", a->cert->crl);
+		if (a->cert->aia != NULL)
+			printf("                          %s\n", a->cert->aia);
+	}
+}
+
 /*
  * Parse file passed with -f option.
  */
@@ -417,7 +433,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 		x509_get_crl(x509, file, &crl_uri);
 		parse_load_crl(crl_uri);
-		free(crl_uri);
 		if (auth_find(&auths, aki) == NULL)
 			parse_load_certchain(aia);
 		a = auth_find(&auths, aki);
@@ -441,16 +456,29 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 				break;
 			}
 		}
-		if (status)
+		if (status) {
+			if ((outformats & FORMAT_JSON) == 0)
+				printf("              ");
 			printf("OK");
-		else {
+			if ((outformats & FORMAT_JSON) == 0) {
+				printf("\n");
+				print_certification_path(crl_uri, aia, a);
+			}
+		} else {
+			if ((outformats & FORMAT_JSON) == 0)
+				printf("              ");
 			printf("Failed");
 			if (errstr != NULL)
 				printf(", %s", errstr);
+			if ((outformats & FORMAT_JSON) == 0)
+				printf("\n");
 		}
+		free(crl_uri);
 	} else if (is_ta) {
 		if ((tal = find_tal(cert)) != NULL) {
 			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
+			if ((outformats & FORMAT_JSON) == 0)
+				printf("              ");
 			if (cert != NULL)
 				printf("OK");
 			else
@@ -458,7 +486,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			if (outformats & FORMAT_JSON)
 				printf("\",\n\t\"tal\": \"%s", tal->descr);
 			else
-				printf("\nTAL: %s", tal->descr);
+				printf("\nTAL:                      %s\n",
+				    tal->descr);
 			tal = NULL;
 		} else {
 			cert_free(cert);
@@ -470,8 +499,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	if (outformats & FORMAT_JSON)
 		printf("\"\n}\n");
 	else {
-		printf("\n");
-
 		if (x509 == NULL)
 			goto out;
 		if (type == RTYPE_TAL || type == RTYPE_CRL)
