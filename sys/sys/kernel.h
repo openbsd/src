@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.h,v 1.25 2021/01/13 16:28:50 cheloha Exp $	*/
+/*	$OpenBSD: kernel.h,v 1.26 2023/03/03 20:16:44 cheloha Exp $	*/
 /*	$NetBSD: kernel.h,v 1.11 1995/03/03 01:24:16 cgd Exp $	*/
 
 /*-
@@ -56,3 +56,7 @@ extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
 extern int lbolt;		/* once a second sleep address */
+
+#ifndef HZ
+#define HZ 100
+#endif

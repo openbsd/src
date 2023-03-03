@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.106 2023/02/04 19:33:03 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.107 2023/03/03 20:16:44 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -86,11 +86,11 @@ int	stathz;
 int	schedhz;
 int	profhz;
 int	profprocs;
-int	ticks;
+int	ticks = INT_MAX - (15 * 60 * HZ);
 static int psdiv, pscnt;		/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 
-volatile unsigned long jiffies;		/* XXX Linux API for drm(4) */
+volatile unsigned long jiffies = ULONG_MAX - (10 * 60 * HZ);
 
 /*
  * Initialize clock frequencies and start both clocks running.
@@ -98,9 +98,6 @@ volatile unsigned long jiffies;		/* XXX Linux API for drm(4) */
 void
 initclocks(void)
 {
-	ticks = INT_MAX - (15 * 60 * hz);
-	jiffies = ULONG_MAX - (10 * 60 * hz);
-
 	/*
 	 * Set divisors to 1 (normal case) and let the machine-specific
 	 * code do its bit.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.47 2022/04/13 10:08:10 sthen Exp $	*/
+/*	$OpenBSD: param.c,v 1.48 2023/03/03 20:16:44 cheloha Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -69,9 +69,6 @@
  * Compiled with -DHZ=xx -DMAXUSERS=xx
  */
 
-#ifndef HZ
-#define	HZ 100
-#endif
 int	hz = HZ;
 int	tick = 1000000 / HZ;
 int	tick_nsec = 1000000000 / HZ;
