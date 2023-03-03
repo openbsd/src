@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.112 2023/03/02 17:11:33 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.113 2023/03/03 08:08:15 jsg Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: March 3 2023 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -344,7 +344,7 @@ modifier.
 .Xc
 Broadcast a list of up to five nameserver address proposals to
 .Xr resolvd 8 ,
-which is used to update the list of namservers for the given interface in
+which is used to update the list of nameservers for the given interface in
 .Xr resolv.conf 5 .
 If no address is given,
 a request to remove the nameservers for the given interface is sent.
