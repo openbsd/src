@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpdump.c,v 1.98 2023/02/28 10:04:50 claudio Exp $	*/
+/*	$OpenBSD: tcpdump.c,v 1.99 2023/03/03 13:03:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -55,6 +55,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/pfvar.h>
+#include "extract.h"
 #include "pfctl.h"
 #include "pfctl_parser.h"
 #include "privsep.h"
@@ -657,8 +658,8 @@ default_print(const u_char *bp, u_int length)
 			if ((i++ % 8) == 0)
 				printf("\n\t\t\t");
 
-			sp = (u_short)*bp++ << 8;
-			sp |= *bp++;
+			sp = EXTRACT_16BITS(bp);
+			bp += sizeof(sp);
 			printf(" %04x", sp);
 		}
 		if (length & 1) {
