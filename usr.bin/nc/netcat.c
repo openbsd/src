@@ -1549,7 +1549,7 @@ connection_info(const char *host, const char *port, const char *proto,
 	if (!nflag && !xflag && strcmp(host, ipaddr) != 0)
 		fprintf(stderr, " (%s)", ipaddr);
 
-	fprintf(stderr, " %s port [%s/%s] succeeded!\n", port, proto, service);
+	fprintf(stderr, " port %s [%s/%s] succeeded!\n", port, proto, service);
 }
 
 void
