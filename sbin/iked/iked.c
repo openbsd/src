@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.62 2021/12/01 16:42:12 deraadt Exp $	*/
+/*	$OpenBSD: iked.c,v 1.63 2023/03/04 22:22:50 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -66,20 +66,23 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	int		 c;
-	int		 debug = 0, verbose = 0;
-	int		 opts = 0;
-	enum natt_mode	 natt_mode = NATT_DEFAULT;
-	in_port_t	 port = IKED_NATT_PORT;
-	const char	*conffile = IKED_CONFIG;
-	const char	*sock = IKED_SOCKET;
-	const char	*errstr;
-	struct iked	*env = NULL;
-	struct privsep	*ps;
+	int			 c;
+	int			 debug = 0, verbose = 0;
+	int			 opts = 0;
+	enum natt_mode		 natt_mode = NATT_DEFAULT;
+	in_port_t		 port = IKED_NATT_PORT;
+	const char		*conffile = IKED_CONFIG;
+	const char		*sock = IKED_SOCKET;
+	const char		*errstr, *title = NULL;
+	struct iked		*env = NULL;
+	struct privsep		*ps;
+	enum privsep_procid	 proc_id = PROC_PARENT;
+	int			 proc_instance = 0;
+	int			 argc0 = argc;
 
 	log_init(1, LOG_DAEMON);
 
-	while ((c = getopt(argc, argv, "6D:df:np:Ss:TtvV")) != -1) {
+	while ((c = getopt(argc, argv, "6D:df:I:nP:p:Ss:TtvV")) != -1) {
 		switch (c) {
 		case '6':
 			log_warnx("the -6 option is ignored and will be "
@@ -96,9 +99,21 @@ main(int argc, char *argv[])
 		case 'f':
 			conffile = optarg;
 			break;
+		case 'I':
+			proc_instance = strtonum(optarg, 0,
+			    PROC_MAX_INSTANCES, &errstr);
+			if (errstr)
+				fatalx("invalid process instance");
+			break;
 		case 'n':
 			debug = 1;
 			opts |= IKED_OPT_NOACTION;
+			break;
+		case 'P':
+			title = optarg;
+			proc_id = proc_getid(procs, nitems(procs), title);
+			if (proc_id == PROC_MAX)
+				fatalx("invalid process name");
 			break;
 		case 'p':
 			if (natt_mode == NATT_DISABLE)
@@ -136,8 +151,10 @@ main(int argc, char *argv[])
 		}
 	}
 
+	/* log to stderr until daemonized */
+	log_init(debug ? debug : 1, LOG_DAEMON);
+
 	argc -= optind;
-	argv += optind;
 	if (argc > 0)
 		usage();
 
@@ -156,6 +173,7 @@ main(int argc, char *argv[])
 		errx(1, "config file exceeds PATH_MAX");
 
 	ca_sslinit();
+	group_init();
 	policy_init(env);
 
 	/* check for root privileges */
@@ -174,16 +192,17 @@ main(int argc, char *argv[])
 	if (opts & IKED_OPT_NOACTION)
 		ps->ps_noaction = 1;
 
-	if (!debug && daemon(0, 0) == -1)
-		err(1, "failed to daemonize");
+	ps->ps_instance = proc_instance;
+	if (title != NULL)
+		ps->ps_title[proc_id] = title;
 
-	group_init();
-
-	ps->ps_ninstances = 1;
-	proc_init(ps, procs, nitems(procs));
+	/* only the parent returns */
+	proc_init(ps, procs, nitems(procs), debug, argc0, argv, proc_id);
 
 	setproctitle("parent");
 	log_procinit("parent");
+	if (!debug && daemon(0, 0) == -1)
+		err(1, "failed to daemonize");
 
 	event_init();
 
@@ -201,7 +220,7 @@ main(int argc, char *argv[])
 	signal_add(&ps->ps_evsigpipe, NULL);
 	signal_add(&ps->ps_evsigusr1, NULL);
 
-	proc_listen(ps, procs, nitems(procs));
+	proc_connect(ps);
 
 	vroute_init(env);
 

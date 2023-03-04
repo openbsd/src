@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.208 2022/12/03 22:34:35 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.209 2023/03/04 22:22:50 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -738,14 +738,21 @@ struct privsep_proc {
 	enum privsep_procid	 p_id;
 	int			(*p_cb)(int, struct privsep_proc *,
 				    struct imsg *);
-	pid_t			(*p_init)(struct privsep *,
+	void			(*p_init)(struct privsep *,
 				    struct privsep_proc *);
 	const char		*p_chroot;
+	struct passwd		*p_pw;
 	struct privsep		*p_ps;
-	struct iked		*p_env;
 	void			(*p_shutdown)(struct privsep_proc *);
-	unsigned int		 p_instance;
 };
+
+struct privsep_fd {
+	enum privsep_procid		 pf_procid;
+	unsigned int			 pf_instance;
+};
+
+#define PROC_PARENT_SOCK_FILENO 3
+#define PROC_MAX_INSTANCES      32
 
 struct iked_ocsp_entry {
 	TAILQ_ENTRY(iked_ocsp_entry) ioe_entry;	/* next request */
@@ -869,7 +876,7 @@ struct ipsec_mode {
 void	 parent_reload(struct iked *, int, const char *);
 
 /* control.c */
-pid_t	 control(struct privsep *, struct privsep_proc *);
+void	 control(struct privsep *, struct privsep_proc *);
 int	 control_init(struct privsep *, struct control_sock *);
 int	 control_listen(struct control_sock *);
 
@@ -1042,7 +1049,7 @@ int vroute_getroute(struct iked *, struct imsg *);
 int vroute_getcloneroute(struct iked *, struct imsg *);
 
 /* ikev2.c */
-pid_t	 ikev2(struct privsep *, struct privsep_proc *);
+void	 ikev2(struct privsep *, struct privsep_proc *);
 void	 ikev2_recv(struct iked *, struct iked_message *);
 void	 ikev2_init_ike_sa(struct iked *, void *);
 int	 ikev2_policy2id(struct iked_static_id *, struct iked_id *, int);
@@ -1159,7 +1166,7 @@ int	 pfkey_socket(struct iked *);
 void	 pfkey_init(struct iked *, int fd);
 
 /* ca.c */
-pid_t	 caproc(struct privsep *, struct privsep_proc *);
+void	 caproc(struct privsep *, struct privsep_proc *);
 int	 ca_setreq(struct iked *, struct iked_sa *, struct iked_static_id *,
 	    uint8_t, uint8_t, uint8_t *, size_t, enum privsep_procid);
 int	 ca_setcert(struct iked *, struct iked_sahdr *, struct iked_id *,
@@ -1182,11 +1189,12 @@ void	 timer_add(struct iked *, struct iked_timer *, int);
 void	 timer_del(struct iked *, struct iked_timer *);
 
 /* proc.c */
-void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int);
+void	 proc_init(struct privsep *, struct privsep_proc *, unsigned int, int,
+	    int, char **, enum privsep_procid);
 void	 proc_kill(struct privsep *);
-void	 proc_listen(struct privsep *, struct privsep_proc *, size_t);
+void	 proc_connect(struct privsep *);
 void	 proc_dispatch(int, short event, void *);
-pid_t	 proc_run(struct privsep *, struct privsep_proc *,
+void	 proc_run(struct privsep *, struct privsep_proc *,
 	    struct privsep_proc *, unsigned int,
 	    void (*)(struct privsep *, struct privsep_proc *, void *), void *);
 void	 imsg_event_add(struct imsgev *);
@@ -1208,6 +1216,9 @@ struct imsgbuf *
 	 proc_ibuf(struct privsep *, enum privsep_procid, int);
 struct imsgev *
 	 proc_iev(struct privsep *, enum privsep_procid, int);
+enum privsep_procid
+	 proc_getid(struct privsep_proc *, unsigned int, const char *);
+int	 proc_flush_imsg(struct privsep *, enum privsep_procid, int);
 
 /* util.c */
 int	 socket_af(struct sockaddr *, in_port_t);

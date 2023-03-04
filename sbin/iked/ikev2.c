@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.362 2023/02/08 20:10:34 tb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.363 2023/03/04 22:22:50 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -196,10 +196,10 @@ static struct privsep_proc procs[] = {
 	{ "control",	PROC_CONTROL,	ikev2_dispatch_control }
 };
 
-pid_t
+void
 ikev2(struct privsep *ps, struct privsep_proc *p)
 {
-	return (proc_run(ps, p, procs, nitems(procs), ikev2_run, NULL));
+	proc_run(ps, p, procs, nitems(procs), ikev2_run, NULL);
 }
 
 void
@@ -220,7 +220,14 @@ ikev2_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 void
 ikev2_shutdown(struct privsep_proc *p)
 {
-	struct iked		*env = p->p_env;
+	struct iked		*env;
+
+	if (p->p_ps == NULL)
+		return;
+
+	env = p->p_ps->ps_env;
+	if (env == NULL)
+		return;
 
 	ibuf_release(env->sc_certreq);
 	env->sc_certreq = NULL;
@@ -230,7 +237,7 @@ ikev2_shutdown(struct privsep_proc *p)
 int
 ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->p_env;
+	struct iked		*env = p->p_ps->ps_env;
 	struct iked_sa		*sa, *satmp;
 	struct iked_policy	*pol, *old;
 
@@ -306,7 +313,7 @@ ikev2_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->p_env;
+	struct iked		*env = p->p_ps->ps_env;
 	struct iked_sahdr	 sh;
 	struct iked_sa		*sa;
 	uint8_t			 type;
@@ -506,7 +513,7 @@ ikev2_dispatch_cert(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 ikev2_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked		*env = p->p_env;
+	struct iked		*env = p->p_ps->ps_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_CTL_RESET_ID:
