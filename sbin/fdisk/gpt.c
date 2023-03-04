@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.84 2023/03/04 14:47:18 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.85 2023/03/04 23:09:15 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -481,11 +481,13 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 		}
 	}
 
-	if (start > end)
-		printf("partition %u first LBA is > last LBA\n", pn);
-	if (start < gh.gh_lba_start || end > gh.gh_lba_end)
-		printf("partition %u extends beyond usable LBA range of %s\n",
-		    pn, disk.dk_name);
+	if (uuid_is_nil(&gp[pn].gp_type, NULL) == 0) {
+		if (start > end)
+			printf("partition %u first LBA is > last LBA\n", pn);
+		if (start < gh.gh_lba_start || end > gh.gh_lba_end)
+			printf("partition %u extends beyond usable LBA range "
+			    "of %s\n", pn, disk.dk_name);
+	}
 }
 
 int
