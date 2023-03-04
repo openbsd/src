@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgpio.c,v 1.8 2023/02/26 12:37:58 kettenis Exp $	*/
+/*	$OpenBSD: rkgpio.c,v 1.9 2023/03/04 22:54:35 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -58,7 +58,9 @@
 #define GPIO_INT_POLARITY_H	0x002c
 #define GPIO_EXT_PORT		0x0070
 #define GPIO_VER_ID		0x0078
-#define  GPIO_VER_ID_RK3568	0x0101157C
+#define  GPIO_VER_ID_1_0	0x00000000
+#define  GPIO_VER_ID_2_0	0x01000c2b
+#define  GPIO_VER_ID_2_1	0x0101157c
 
 #define GPIO_NUM_PINS		32
 
@@ -87,7 +89,7 @@ struct rkgpio_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	int			sc_node;
-	uint32_t		sc_ver_id;
+	int			sc_version;
 
 	void			*sc_ih;
 	int			sc_ipl;
@@ -135,6 +137,7 @@ rkgpio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rkgpio_softc *sc = (struct rkgpio_softc *)self;
 	struct fdt_attach_args *faa = aux;
+	uint32_t ver_id;
 
 	if (faa->fa_nreg < 1) {
 		printf(": no registers\n");
@@ -150,7 +153,19 @@ rkgpio_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_ver_id = HREAD4(sc, GPIO_VER_ID);
+	ver_id = HREAD4(sc, GPIO_VER_ID);
+	switch (ver_id) {
+	case GPIO_VER_ID_1_0:
+		sc->sc_version = 1;
+		break;
+	case GPIO_VER_ID_2_0:
+	case GPIO_VER_ID_2_1:
+		sc->sc_version = 2;
+		break;
+	default:
+		printf(": unknown version 0x%08x\n", ver_id);
+		return;
+	}
 
 	sc->sc_gc.gc_node = faa->fa_node;
 	sc->sc_gc.gc_cookie = sc;
@@ -160,7 +175,7 @@ rkgpio_attach(struct device *parent, struct device *self, void *aux)
 	gpio_controller_register(&sc->sc_gc);
 
 	sc->sc_ipl = IPL_NONE;
-	if (sc->sc_ver_id == GPIO_VER_ID_RK3568) {
+	if (sc->sc_version == 2) {
 		HWRITE4(sc, GPIO_INT_MASK_L, ~0);
 		HWRITE4(sc, GPIO_INT_MASK_H, ~0);
 		HWRITE4(sc, GPIO_INT_EN_L, ~0);
@@ -192,7 +207,7 @@ rkgpio_config_pin(void *cookie, uint32_t *cells, int config)
 	if (pin >= GPIO_NUM_PINS)
 		return;
 
-	if (sc->sc_ver_id == GPIO_VER_ID_RK3568) {
+	if (sc->sc_version == 2) {
 		reg = (1 << (pin % 16)) << 16;
 		if (config & GPIO_CONFIG_OUTPUT)
 			reg |= (1 << (pin % 16));
@@ -217,7 +232,7 @@ rkgpio_get_pin(void *cookie, uint32_t *cells)
 	if (pin >= GPIO_NUM_PINS)
 		return 0;
 
-	if (sc->sc_ver_id == GPIO_VER_ID_RK3568)
+	if (sc->sc_version == 2)
 		reg = HREAD4(sc, GPIO_EXT_PORT);
 	else
 		reg = HREAD4(sc, GPIO_EXT_PORTA);
@@ -240,7 +255,7 @@ rkgpio_set_pin(void *cookie, uint32_t *cells, int val)
 
 	if (flags & GPIO_ACTIVE_LOW)
 		val = !val;
-	if (sc->sc_ver_id == GPIO_VER_ID_RK3568) {
+	if (sc->sc_version == 2) {
 		reg = (1 << (pin % 16)) << 16;
 		if (val)
 			reg |= (1 << (pin % 16));
@@ -326,7 +341,7 @@ rkgpio_intr_establish(void *cookie, int *cells, int ipl,
 
 	rkgpio_recalc_ipl(sc);
 
-	if (sc->sc_ver_id == GPIO_VER_ID_RK3568) {
+	if (sc->sc_version == 2) {
 		uint32_t bit = (1 << (irqno % 16));
 		uint32_t mask = bit << 16;
 		bus_size_t off = (irqno / 16) * 4;
@@ -401,7 +416,7 @@ rkgpio_intr_disestablish(void *cookie)
 	    ih->ih_name);
 #endif
 
-	if (sc->sc_ver_id == GPIO_VER_ID_RK3568)
+	if (sc->sc_version == 2)
 		HWRITE4(sc, GPIO_INT_MASK_L + off, mask | bit);
 	else
 		HSET4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
@@ -462,7 +477,7 @@ rkgpio_intr_enable(void *cookie)
 	int s;
 
 	s = splhigh();
-	if (sc->sc_ver_id == GPIO_VER_ID_RK3568)
+	if (sc->sc_version == 2)
 		HWRITE4(sc, GPIO_INT_MASK_L + off, mask);
 	else
 		HCLR4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
@@ -480,7 +495,7 @@ rkgpio_intr_disable(void *cookie)
 	int s;
 
 	s = splhigh();
-	if (sc->sc_ver_id == GPIO_VER_ID_RK3568)
+	if (sc->sc_version == 2)
 		HWRITE4(sc, GPIO_INT_MASK_L + off, mask | bit);
 	else
 		HSET4(sc, GPIO_INTMASK, 1 << ih->ih_irq);
