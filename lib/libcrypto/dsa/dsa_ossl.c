@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.49 2023/03/04 21:06:17 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.50 2023/03/04 21:30:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,6 +92,16 @@ DSA_OpenSSL(void)
 	return &openssl_dsa_meth;
 }
 
+/*
+ * Since DSA parameters are entirely arbitrary and checking them to be
+ * consistent is very expensive, we cannot do so on every sign operation.
+ * Instead, cap the number of retries so we do not loop indefinitely if
+ * the generator of the multiplicative group happens to be nilpotent.
+ * The probability of needing a retry with valid parameters is negligible,
+ * so trying 32 times is amply enough.
+ */
+#define DSA_MAX_SIGN_ITERATIONS		32
+
 static DSA_SIG *
 dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 {
@@ -100,6 +110,7 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	BN_CTX *ctx = NULL;
 	int reason = ERR_R_BN_LIB;
 	DSA_SIG *ret = NULL;
+	int attempts = 0;
 	int noredo = 0;
 
 	if (!dsa_check_key(dsa)) {
@@ -185,6 +196,10 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	if (BN_is_zero(r) || BN_is_zero(s)) {
 		if (noredo) {
 			reason = DSA_R_NEED_NEW_SETUP_VALUES;
+			goto err;
+		}
+		if (++attempts > DSA_MAX_SIGN_ITERATIONS) {
+			reason = DSA_R_INVALID_PARAMETERS;
 			goto err;
 		}
 		goto redo;
