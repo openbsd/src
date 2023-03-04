@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.29 2011/01/15 04:35:34 kevlo Exp $
+.\"	$OpenBSD: mii.4,v 1.30 2023/03/04 23:32:40 kettenis Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2011 $
+.Dd $Mdocdate: March 4 2023 $
 .Dt MII 4
 .Os
 .Sh NAME
@@ -69,6 +69,7 @@
 .Cd "ukphy* at mii?"
 .Cd "urlphy* at mii?"
 .Cd "xmphy* at mii?"
+.Cd "ytphy* at mii?"
 .Sh DESCRIPTION
 Media Independent Interface is an IEEE standard serial bus for
 connecting MACs (network controllers) to PHYs (physical media
@@ -137,4 +138,5 @@ program.
 .Xr ukphy 4 ,
 .Xr urlphy 4 ,
 .Xr xmphy 4 ,
+.Xt ytphy 4 ,
 .Xr ifconfig 8
