@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.2 2023/03/04 14:38:00 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.3 2023/03/04 14:53:23 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -459,9 +459,6 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM 
 int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
 int ec_GFp_nistp256_have_precompute_mult(const EC_GROUP *group);
 
-#ifdef ECP_NISTZ256_ASM
-const EC_METHOD *EC_GFp_nistz256_method(void);
-#endif
 
 /* EC_METHOD definitions */
 
