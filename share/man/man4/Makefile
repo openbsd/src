@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.831 2023/02/13 19:33:51 kettenis Exp $
+#	$OpenBSD: Makefile,v 1.832 2023/03/04 22:44:27 kettenis Exp $
 
 MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	acpi.4 acpiac.4 acpials.4 acpiasus.4 acpibat.4 \
@@ -112,7 +112,7 @@ MAN=	aac.4 abcrtc.4 abl.4 ac97.4 acphy.4 acrtc.4 \
 	wg.4 wi.4 witness.4 wpi.4 wscons.4 wsdisplay.4 wskbd.4 wsmouse.4 \
 	wsmux.4 \
 	xbf.4 xe.4 xen.4 xf86.4 xge.4 xhci.4 xl.4 xmphy.4 xnf.4 xspd.4 \
-	yds.4 zero.4 zyd.4
+	yds.4 ytphy.4 zero.4 zyd.4
 
 SUBDIR=	man4.alpha man4.amd64 man4.arm64 man4.armv7 \
 	man4.hppa man4.i386 man4.landisk man4.loongson man4.luna88k \
