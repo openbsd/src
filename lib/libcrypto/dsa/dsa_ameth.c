@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.41 2023/03/04 21:08:14 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.42 2023/03/04 21:42:49 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -504,7 +504,7 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 {
 	DSA *dsa;
 	BN_CTX *ctx = NULL;
-	BIGNUM *j, *p1, *newp1, *powg;
+	BIGNUM *result;
 
 	if ((dsa = d2i_DSAPrivateKey(NULL, pder, derlen)) == NULL) {
 		DSAerror(ERR_R_DSA_LIB);
@@ -519,30 +519,19 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 
 	BN_CTX_start(ctx);
 
+	if ((result = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
 	/*
-	 * Check that p and q are consistent with each other.
+	 * Check that p and q are consistent with each other. dsa_check_key()
+	 * ensures that 1 < q < p. Now check that q divides p - 1.
 	 */
-	if ((j = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((p1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((newp1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((powg = BN_CTX_get(ctx)) == NULL)
-		goto err;
 
-	/* p1 = p - 1 */
-	if (BN_sub(p1, dsa->p, BN_value_one()) == 0)
+	if (!BN_sub(result, dsa->p, BN_value_one()))
 		goto err;
-
-	/* j = (p - 1) / q */
-	if (BN_div_ct(j, NULL, p1, dsa->q, ctx) == 0)
+	if (!BN_mod_ct(result, result, dsa->q, ctx))
 		goto err;
-
-	/* q * j should == p - 1 */
-	if (BN_mul(newp1, dsa->q, j, ctx) == 0)
-		goto err;
-	if (BN_cmp(newp1, p1) != 0) {
+	if (!BN_is_zero(result)) {
 		DSAerror(DSA_R_BAD_Q_VALUE);
 		goto err;
 	}
@@ -553,10 +542,10 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	 * Once we know that q is prime, this is enough.
 	 */
 
-	if (!BN_mod_exp_ct(powg, dsa->g, dsa->q, dsa->p, ctx))
+	if (!BN_mod_exp_ct(result, dsa->g, dsa->q, dsa->p, ctx))
 		goto err;
-	if (BN_cmp(powg, BN_value_one()) != 0) {
-		DSAerror(DSA_R_PARAMETER_ENCODING_ERROR); /* XXX */
+	if (BN_cmp(result, BN_value_one()) != 0) {
+		DSAerror(DSA_R_INVALID_PARAMETERS);
 		goto err;
 	}
 
