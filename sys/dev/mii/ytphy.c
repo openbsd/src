@@ -1,7 +1,7 @@
-/*	$OpenBSD: ytphy.c,v 1.1 2023/03/04 22:35:28 kettenis Exp $	*/
+/*	$OpenBSD: ytphy.c,v 1.2 2023/03/04 22:40:37 kettenis Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
- * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
+ * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
