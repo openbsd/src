@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.14 2022/12/10 10:56:16 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.15 2023/03/04 12:13:11 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -374,7 +374,7 @@ link_chains_at(size_t i, size_t j, int use_bio_push)
 	/* The two chains A[] and B[] are split into three disjoint pieces. */
 	if (nitems(A) + nitems(B) != new_len + oldtail_len + oldhead_len) {
 		fprintf(stderr, "%s case (%zu, %zu) inconsistent lengths: "
-		    "%zu + %zu + %zu != %zu + %zu\n", fn, i, j,
+		    "%zu + %zu != %zu + %zu + %zu\n", fn, i, j,
 		    nitems(A), nitems(B), new_len, oldtail_len, oldhead_len);
 		goto err;
 	}
