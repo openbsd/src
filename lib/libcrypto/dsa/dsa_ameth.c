@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.40 2023/03/04 21:02:21 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.41 2023/03/04 21:08:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -506,9 +506,9 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	BN_CTX *ctx = NULL;
 	BIGNUM *j, *p1, *newp1, *powg;
 
-	if (!(dsa = d2i_DSAPrivateKey(NULL, pder, derlen))) {
+	if ((dsa = d2i_DSAPrivateKey(NULL, pder, derlen)) == NULL) {
 		DSAerror(ERR_R_DSA_LIB);
-		return 0;
+		goto err;
 	}
 
 	if (!dsa_check_key(dsa))
