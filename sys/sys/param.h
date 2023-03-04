@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.139 2022/07/20 15:12:39 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.140 2023/03/04 14:49:37 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,8 +41,8 @@
 #define BSD4_3	1
 #define BSD4_4	1
 
-#define OpenBSD	202210		/* OpenBSD version (year & month). */
-#define OpenBSD7_2 1		/* OpenBSD 7.2 */
+#define OpenBSD	202304		/* OpenBSD version (year & month). */
+#define OpenBSD7_3 1		/* OpenBSD 7.3 */
 
 #include <sys/_null.h>
 
