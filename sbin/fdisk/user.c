@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.84 2022/07/25 17:45:16 krw Exp $	*/
+/*	$OpenBSD: user.c,v 1.85 2023/03/04 21:22:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -117,7 +117,7 @@ USER_print_disk(const int verbosity)
 {
 	struct mbr		mbr;
 	uint64_t		lba_self, lba_firstembr;
-	int			i;
+	unsigned int		i;
 
 	lba_self = lba_firstembr = 0;
 
@@ -160,7 +160,7 @@ USER_print_disk(const int verbosity)
 
 		MBR_print(&mbr, "s");
 
-		for (lba_self = i = 0; i < 4; i++)
+		for (lba_self = i = 0; i < nitems(mbr.mbr_prt); i++)
 			if (mbr.mbr_prt[i].prt_id == DOSPTYP_EXTEND ||
 			    mbr.mbr_prt[i].prt_id == DOSPTYP_EXTENDL) {
 				lba_self = mbr.mbr_prt[i].prt_bs;

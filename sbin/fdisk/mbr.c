@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.121 2022/07/26 14:30:37 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.122 2023/03/04 21:22:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -145,7 +145,7 @@ mbr_to_dos_mbr(const struct mbr *mbr, struct dos_mbr *dos_mbr)
 void
 MBR_print(const struct mbr *mbr, const char *units)
 {
-	int			i;
+	unsigned int		i;
 
 	DISK_printgeometry("s");
 
@@ -153,7 +153,7 @@ MBR_print(const struct mbr *mbr, const char *units)
 	printf("Signature: 0x%X\n", (int)mbr->mbr_signature);
 	PRT_print_parthdr();
 
-	for (i = 0; i < NDOSPART; i++)
+	for (i = 0; i < nitems(mbr->mbr_prt); i++)
 		PRT_print_part(i, &mbr->mbr_prt[i], units);
 }
 
@@ -198,7 +198,7 @@ MBR_valid_prt(const struct mbr *mbr)
 		return 1;	/* All zeros struct dos_mbr is editable. */
 
 	nprt = 0;
-	for (i = 0; i < NDOSPART; i++) {
+	for (i = 0; i < nitems(mbr->mbr_prt); i++) {
 		bs = mbr->mbr_prt[i].prt_bs;
 		ns = mbr->mbr_prt[i].prt_ns;
 		id = mbr->mbr_prt[i].prt_id;
