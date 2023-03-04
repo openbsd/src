@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.190 2023/02/16 14:44:48 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.191 2023/03/04 22:48:00 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -355,6 +355,7 @@ rgephy*		at mii?			# Realtek 8169S/8110S PHY
 rlphy*		at mii?			# Realtek 8139 internal PHYs
 ukphy*		at mii?			# "unknown" PHYs
 urlphy*		at mii?			# Realtek RTL8150L internal PHY
+ytphy*		at mii?			# MotorComm YT8511 PHY
 
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
