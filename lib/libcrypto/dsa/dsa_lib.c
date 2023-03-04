@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.39 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.40 2023/03/04 20:54:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -422,4 +422,77 @@ int
 DSA_bits(const DSA *dsa)
 {
 	return BN_num_bits(dsa->p);
+}
+
+int
+dsa_check_key(const DSA *dsa)
+{
+	int p_bits, q_bits;
+
+	if (dsa->p == NULL || dsa->q == NULL || dsa->g == NULL) {
+		DSAerror(DSA_R_MISSING_PARAMETERS);
+		return 0;
+	}
+
+	/* Checking that p and q are primes is expensive. Check they are odd. */
+	if (!BN_is_odd(dsa->p) || !BN_is_odd(dsa->q)) {
+		DSAerror(DSA_R_INVALID_PARAMETERS);
+		return 0;
+	}
+
+	/* FIPS 186-4: 1 < g < p. */
+	if (BN_cmp(dsa->g, BN_value_one()) <= 0 ||
+	    BN_cmp(dsa->g, dsa->p) >= 0) {
+		DSAerror(DSA_R_INVALID_PARAMETERS);
+		return 0;
+	}
+
+	/* We know p and g are positive. The next two checks imply q > 0. */
+	if (BN_is_negative(dsa->q)) {
+		DSAerror(DSA_R_BAD_Q_VALUE);
+		return 0;
+	}
+
+	/* FIPS 186-4 only allows three sizes for q. */
+	q_bits = BN_num_bits(dsa->q);
+	if (q_bits != 160 && q_bits != 224 && q_bits != 256) {
+		DSAerror(DSA_R_BAD_Q_VALUE);
+		return 0;
+	}
+
+	/*
+	 * XXX - FIPS 186-4 only allows 1024, 2048, and 3072 bits for p.
+	 * Cap the size to reduce DoS risks. Poor defaults make keys with
+	 * incorrect p sizes >= 512 bits common, so only enforce a weak
+	 * lower bound.
+	 */
+	p_bits = BN_num_bits(dsa->p);
+	if (p_bits > OPENSSL_DSA_MAX_MODULUS_BITS) {
+		DSAerror(DSA_R_MODULUS_TOO_LARGE);
+		return 0;
+	}
+	if (p_bits < 512) {
+		DSAerror(DSA_R_INVALID_PARAMETERS);
+		return 0;
+	}
+
+	/* The public key must be in the multiplicative group (mod p). */
+	if (dsa->pub_key != NULL) {
+		if (BN_cmp(dsa->pub_key, BN_value_one()) <= 0 ||
+		    BN_cmp(dsa->pub_key, dsa->p) >= 0) {
+			DSAerror(DSA_R_INVALID_PARAMETERS);
+			return 0;
+		}
+	}
+
+	/* The private key must be nonzero and in GF(q). */
+	if (dsa->priv_key != NULL) {
+		if (BN_cmp(dsa->priv_key, BN_value_one()) <= 0 ||
+		    BN_cmp(dsa->priv_key, dsa->q) >= 0) {
+			DSAerror(DSA_R_INVALID_PARAMETERS);
+			return 0;
+		}
+	}
+
+	return 1;
 }

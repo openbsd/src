@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_local.h,v 1.1 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: dsa_local.h,v 1.2 2023/03/04 20:54:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
@@ -114,5 +114,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
 	unsigned char *seed_out,
 	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+
+int dsa_check_key(const DSA *dsa);
 
 __END_HIDDEN_DECLS
