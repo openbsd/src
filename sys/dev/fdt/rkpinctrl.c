@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpinctrl.c,v 1.10 2023/02/26 12:39:48 kettenis Exp $	*/
+/*	$OpenBSD: rkpinctrl.c,v 1.11 2023/03/04 22:51:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -35,6 +35,40 @@
 #include <arm64/dev/simplebusvar.h>
 #endif
 
+/* Pin numbers (from devicetree bindings) */
+#define RK_PA0		0
+#define RK_PA1		1
+#define RK_PA2		2
+#define RK_PA3		3
+#define RK_PA4		4
+#define RK_PA5		5
+#define RK_PA6		6
+#define RK_PA7		7
+#define RK_PB0		8
+#define RK_PB1		9
+#define RK_PB2		10
+#define RK_PB3		11
+#define RK_PB4		12
+#define RK_PB5		13
+#define RK_PB6		14
+#define RK_PB7		15
+#define RK_PC0		16
+#define RK_PC1		17
+#define RK_PC2		18
+#define RK_PC3		19
+#define RK_PC4		20
+#define RK_PC5		21
+#define RK_PC6		22
+#define RK_PC7		23
+#define RK_PD0		24
+#define RK_PD1		25
+#define RK_PD2		26
+#define RK_PD3		27
+#define RK_PD4		28
+#define RK_PD5		29
+#define RK_PD6		30
+#define RK_PD7		31
+
 /* RK3288 registers */
 #define RK3288_GRF_GPIO1A_IOMUX		0x0000
 #define RK3288_PMUGRF_GPIO0A_IOMUX	0x0084
@@ -58,6 +92,18 @@
 #define RK3568_PMUGRF_GPIO0A_P		0x0020
 #define RK3568_PMUGRF_GPIO0A_IE		0x0030
 #define RK3568_PMUGRF_GPIO0A_DS_0	0x0070
+
+struct rockchip_route_table {
+	u_int bank : 3;
+	u_int idx : 5;
+	u_int mux : 3;
+	u_int grf : 1;
+#define ROUTE_GRF	0
+#define ROUTE_PMU	1
+	uint16_t reg;
+	uint32_t val;
+#define ROUTE_VAL(bit, val)	((0x3 << (bit)) << 16 | ((val) << (bit)))
+};
 
 struct rkpinctrl_softc {
 	struct simplebus_softc	sc_sbus;
@@ -807,6 +853,110 @@ rk3568_schmitt(uint32_t bank, uint32_t idx, uint32_t phandle)
 	return -1;
 }
 
+struct rockchip_route_table rk3568_route_table[] = {
+	{ 0, RK_PB7, 1, ROUTE_PMU, 0x0110, ROUTE_VAL(0, 0) }, /* PWM0 M0 */
+	{ 0, RK_PC7, 2, ROUTE_PMU, 0x0110, ROUTE_VAL(0, 1) }, /* PWM0 M1 */
+	{ 0, RK_PC0, 1, ROUTE_PMU, 0x0110, ROUTE_VAL(2, 0) }, /* PWM1 M0 */
+	{ 0, RK_PB5, 4, ROUTE_PMU, 0x0110, ROUTE_VAL(2, 1) }, /* PWM1 M1 */
+	{ 0, RK_PC1, 1, ROUTE_PMU, 0x0110, ROUTE_VAL(4, 0) }, /* PWM2 M0 */
+	{ 0, RK_PB6, 4, ROUTE_PMU, 0x0110, ROUTE_VAL(4, 1) }, /* PWM2 M1 */
+
+	{ 3, RK_PB1, 3, ROUTE_GRF, 0x0300, ROUTE_VAL(8, 0) }, /* GMAC1 M0 */
+	{ 4, RK_PA7, 3, ROUTE_GRF, 0x0300, ROUTE_VAL(8, 1) }, /* GMAC1 M1 */
+	{ 0, RK_PB6, 1, ROUTE_GRF, 0x0300, ROUTE_VAL(14, 0) }, /* I2C2 M0 */
+	{ 4, RK_PB4, 1, ROUTE_GRF, 0x0300, ROUTE_VAL(14, 1) }, /* I2C2 M1 */
+
+	{ 1, RK_PA0, 1, ROUTE_GRF, 0x0304, ROUTE_VAL(0, 0) }, /* I2C3 M0 */
+	{ 3, RK_PB6, 4, ROUTE_GRF, 0x0304, ROUTE_VAL(0, 1) }, /* I2C3 M1 */
+	{ 4, RK_PB2, 1, ROUTE_GRF, 0x0304, ROUTE_VAL(2, 0) }, /* I2C4 M0 */
+	{ 2, RK_PB1, 2, ROUTE_GRF, 0x0304, ROUTE_VAL(2, 1) }, /* I2C4 M1 */
+	{ 3, RK_PB4, 4, ROUTE_GRF, 0x0304, ROUTE_VAL(4, 0) }, /* I2C5 M0 */
+	{ 4, RK_PD0, 2, ROUTE_GRF, 0x0304, ROUTE_VAL(4, 1) }, /* I2C5 M1 */
+	{ 3, RK_PB1, 5, ROUTE_GRF, 0x0304, ROUTE_VAL(14, 0) }, /* PWM8 M0 */
+	{ 1, RK_PD5, 4, ROUTE_GRF, 0x0304, ROUTE_VAL(14, 1) }, /* PWM8 M1 */
+	
+	{ 3, RK_PB2, 5, ROUTE_GRF, 0x0308, ROUTE_VAL(0, 0) }, /* PWM9 M0 */
+	{ 1, RK_PD6, 4, ROUTE_GRF, 0x0308, ROUTE_VAL(0, 1) }, /* PWM9 M1 */
+	{ 3, RK_PB5, 5, ROUTE_GRF, 0x0308, ROUTE_VAL(2, 0) }, /* PWM10 M0 */
+	{ 2, RK_PA1, 2, ROUTE_GRF, 0x0308, ROUTE_VAL(2, 1) }, /* PWM10 M1 */
+	{ 3, RK_PB6, 5, ROUTE_GRF, 0x0308, ROUTE_VAL(4, 0) }, /* PWM11 M0 */
+	{ 4, RK_PC0, 3, ROUTE_GRF, 0x0308, ROUTE_VAL(4, 1) }, /* PWM11 M1 */
+	{ 3, RK_PB7, 2, ROUTE_GRF, 0x0308, ROUTE_VAL(6, 0) }, /* PWM12 M0 */
+	{ 4, RK_PC5, 1, ROUTE_GRF, 0x0308, ROUTE_VAL(6, 1) }, /* PWM12 M1 */
+	{ 3, RK_PC0, 2, ROUTE_GRF, 0x0308, ROUTE_VAL(8, 0) }, /* PWM13 M0 */
+	{ 4, RK_PC6, 1, ROUTE_GRF, 0x0308, ROUTE_VAL(8, 1) }, /* PWM13 M1 */
+	{ 3, RK_PC4, 1, ROUTE_GRF, 0x0308, ROUTE_VAL(10, 0) }, /* PWM14 M0 */
+	{ 4, RK_PC2, 1, ROUTE_GRF, 0x0308, ROUTE_VAL(10, 1) }, /* PWM14 M1 */
+	{ 3, RK_PC5, 1, ROUTE_GRF, 0x0308, ROUTE_VAL(12, 0) }, /* PWM15 M0 */
+	{ 4, RK_PC3, 1, ROUTE_GRF, 0x0308, ROUTE_VAL(12, 1) }, /* PWM15 M1 */
+	{ 3, RK_PD2, 3, ROUTE_GRF, 0x0308, ROUTE_VAL(14, 0) }, /* SDMMC2 M0 */
+	{ 3, RK_PA5, 5, ROUTE_GRF, 0x0308, ROUTE_VAL(14, 1) }, /* SDMMC2 M1 */
+
+	{ 2, RK_PB4, 2, ROUTE_GRF, 0x030c, ROUTE_VAL(8, 0) }, /* UART1 M0 */
+	{ 3, RK_PD6, 4, ROUTE_GRF, 0x030c, ROUTE_VAL(8, 1) }, /* UART1 M1 */
+	{ 0, RK_PD1, 1, ROUTE_GRF, 0x030c, ROUTE_VAL(10, 0) }, /* UART2 M0 */
+	{ 1, RK_PD5, 2, ROUTE_GRF, 0x030c, ROUTE_VAL(10, 1) }, /* UART2 M1 */
+	{ 1, RK_PA1, 2, ROUTE_GRF, 0x030c, ROUTE_VAL(12, 0) }, /* UART3 M0 */
+	{ 3, RK_PB7, 4, ROUTE_GRF, 0x030c, ROUTE_VAL(12, 1) }, /* UART3 M1 */
+	{ 1, RK_PA6, 2, ROUTE_GRF, 0x030c, ROUTE_VAL(14, 0) }, /* UART4 M0 */
+	{ 3, RK_PB2, 4, ROUTE_GRF, 0x030c, ROUTE_VAL(14, 1) }, /* UART4 M1 */
+
+	{ 2, RK_PA2, 3, ROUTE_GRF, 0x0310, ROUTE_VAL(0, 0) }, /* UART5 M0 */
+	{ 3, RK_PC2, 4, ROUTE_GRF, 0x0310, ROUTE_VAL(0, 1) }, /* UART5 M1 */
+	{ 2, RK_PA4, 3, ROUTE_GRF, 0x0310, ROUTE_VAL(2, 0) }, /* UART6 M0 */
+	{ 1, RK_PD5, 3, ROUTE_GRF, 0x0310, ROUTE_VAL(2, 1) }, /* UART6 M1 */
+	{ 2, RK_PA6, 3, ROUTE_GRF, 0x0310, ROUTE_VAL(4, 0) }, /* UART7 M0 */
+	{ 3, RK_PC4, 4, ROUTE_GRF, 0x0310, ROUTE_VAL(4, 1) }, /* UART7 M1 */
+	{ 4, RK_PA2, 4, ROUTE_GRF, 0x0310, ROUTE_VAL(4, 2) }, /* UART7 M2 */
+	{ 2, RK_PC5, 3, ROUTE_GRF, 0x0310, ROUTE_VAL(6, 0) }, /* UART8 M0 */
+	{ 2, RK_PD7, 4, ROUTE_GRF, 0x0310, ROUTE_VAL(6, 1) }, /* UART8 M1 */
+	{ 2, RK_PB0, 3, ROUTE_GRF, 0x0310, ROUTE_VAL(8, 0) }, /* UART9 M0 */
+	{ 4, RK_PC5, 4, ROUTE_GRF, 0x0310, ROUTE_VAL(8, 1) }, /* UART9 M1 */
+	{ 4, RK_PA4, 4, ROUTE_GRF, 0x0310, ROUTE_VAL(8, 2) }, /* UART9 M2 */
+	{ 1, RK_PA2, 1, ROUTE_GRF, 0x0310, ROUTE_VAL(10, 0) }, /* I2S1 M0 */
+	{ 3, RK_PC6, 4, ROUTE_GRF, 0x0310, ROUTE_VAL(10, 1) }, /* I2S1 M1 */
+	{ 2, RK_PD0, 5, ROUTE_GRF, 0x0310, ROUTE_VAL(10, 2) }, /* I2S1 M2 */
+	{ 2, RK_PC1, 1, ROUTE_GRF, 0x0310, ROUTE_VAL(12, 0) }, /* I2S2 M0 */
+	{ 4, RK_PB6, 5, ROUTE_GRF, 0x0310, ROUTE_VAL(12, 1) }, /* I2S2 M1 */
+	{ 3, RK_PA2, 4, ROUTE_GRF, 0x0310, ROUTE_VAL(14, 0) }, /* I2S3 M0 */
+	{ 4, RK_PC2, 5, ROUTE_GRF, 0x0310, ROUTE_VAL(14, 1) }, /* I2S3 M1 */
+
+	{ 0, RK_PA5, 3, ROUTE_GRF, 0x0314, ROUTE_VAL(2, 0) }, /* PCIE20 M0 */
+	{ 2, RK_PD0, 4, ROUTE_GRF, 0x0314, ROUTE_VAL(2, 1) }, /* PCIE20 M1 */
+	{ 1, RK_PB0, 4, ROUTE_GRF, 0x0314, ROUTE_VAL(2, 2) }, /* PCIE20 M2 */
+	{ 0, RK_PA4, 3, ROUTE_GRF, 0x0314, ROUTE_VAL(4, 0) }, /* PCIE30X1 M0 */
+	{ 2, RK_PD2, 4, ROUTE_GRF, 0x0314, ROUTE_VAL(4, 1) }, /* PCIE30X1 M1 */
+	{ 1, RK_PA5, 4, ROUTE_GRF, 0x0314, ROUTE_VAL(4, 2) }, /* PCIE30X1 M2 */
+	{ 0, RK_PA6, 2, ROUTE_GRF, 0x0314, ROUTE_VAL(6, 0) }, /* PCIE30X2 M0 */
+	{ 2, RK_PD4, 4, ROUTE_GRF, 0x0314, ROUTE_VAL(6, 1) }, /* PCIE30X2 M1 */
+	{ 4, RK_PC2, 4, ROUTE_GRF, 0x0314, ROUTE_VAL(6, 2) }, /* PCIE30X2 M2 */
+};
+
+void
+rk3568_route(struct rkpinctrl_softc *sc, uint32_t *pins)
+{
+	struct rockchip_route_table *route = NULL;
+	struct regmap *rm;
+	int bank = pins[0];
+	int idx = pins[1];
+	int mux = pins[2];
+	int i;
+
+	for (i = 0; i < nitems(rk3568_route_table); i++) {
+		if (bank == rk3568_route_table[i].bank &&
+		    idx == rk3568_route_table[i].idx &&
+		    mux == rk3568_route_table[i].mux) {
+			route = &rk3568_route_table[i];
+			break;
+		}
+	}
+	if (route == NULL)
+		return;
+
+	rm = route->grf ? sc->sc_pmu : sc->sc_grf;
+	regmap_write_4(rm, route->reg, route->val);
+}
+
 int
 rk3568_pinctrl(uint32_t phandle, void *cookie)
 {
@@ -866,6 +1016,7 @@ rk3568_pinctrl(uint32_t phandle, void *cookie)
 		s = splhigh();
 
 		/* IOMUX control */
+		rk3568_route(sc, &pins[i]);
 		off = bank * 0x20 + (idx / 4) * 0x04;
 		mask = (0x7 << ((idx % 4) * 4));
 		bits = (mux << ((idx % 4) * 4));
