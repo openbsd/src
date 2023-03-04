@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.39 2023/01/11 04:39:42 jsing Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.40 2023/03/04 21:02:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -118,6 +118,12 @@ dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		goto err;
 	}
 
+	/* We can only check for key consistency if we have parameters. */
+	if (ptype == V_ASN1_SEQUENCE) {
+		if (!dsa_check_key(dsa))
+			goto err;
+	}
+
 	ASN1_INTEGER_free(public_key);
 	EVP_PKEY_assign_DSA(pkey, dsa);
 	return 1;
@@ -215,6 +221,11 @@ dsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 		DSAerror(DSA_R_BN_ERROR);
 		goto dsaerr;
 	}
+
+	/* Check the key for basic consistency before doing expensive things. */
+	if (!dsa_check_key(dsa))
+		goto dsaerr;
+
 	/* Calculate public key */
 	if (!(dsa->pub_key = BN_new())) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
@@ -456,6 +467,10 @@ dsa_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 		DSAerror(ERR_R_DSA_LIB);
 		return 0;
 	}
+	if (!dsa_check_key(dsa)) {
+		DSA_free(dsa);
+		return 0;
+	}
 	EVP_PKEY_assign_DSA(pkey, dsa);
 	return 1;
 }
@@ -490,30 +505,14 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	DSA *dsa;
 	BN_CTX *ctx = NULL;
 	BIGNUM *j, *p1, *newp1, *powg;
-	int qbits;
 
 	if (!(dsa = d2i_DSAPrivateKey(NULL, pder, derlen))) {
 		DSAerror(ERR_R_DSA_LIB);
 		return 0;
 	}
 
-	/* FIPS 186-3 allows only three different sizes for q. */
-	qbits = BN_num_bits(dsa->q);
-	if (qbits != 160 && qbits != 224 && qbits != 256) {
-		DSAerror(DSA_R_BAD_Q_VALUE);
+	if (!dsa_check_key(dsa))
 		goto err;
-	}
-	if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
-		DSAerror(DSA_R_MODULUS_TOO_LARGE);
-		goto err;
-	}
-
-	/* Check that 1 < g < p. */
-	if (BN_cmp(dsa->g, BN_value_one()) <= 0 ||
-	    BN_cmp(dsa->g, dsa->p) >= 0) {
-		DSAerror(DSA_R_PARAMETER_ENCODING_ERROR); /* XXX */
-		goto err;
-	}
 
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
