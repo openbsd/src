@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.22 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.23 2023/03/04 14:38:00 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -124,8 +124,8 @@ ec_GFp_mont_group_init(EC_GROUP *group)
 	int ok;
 
 	ok = ec_GFp_simple_group_init(group);
-	group->field_data1 = NULL;
-	group->field_data2 = NULL;
+	group->mont_ctx = NULL;
+	group->mont_one = NULL;
 	return ok;
 }
 
@@ -133,10 +133,10 @@ ec_GFp_mont_group_init(EC_GROUP *group)
 void
 ec_GFp_mont_group_finish(EC_GROUP *group)
 {
-	BN_MONT_CTX_free(group->field_data1);
-	group->field_data1 = NULL;
-	BN_free(group->field_data2);
-	group->field_data2 = NULL;
+	BN_MONT_CTX_free(group->mont_ctx);
+	group->mont_ctx = NULL;
+	BN_free(group->mont_one);
+	group->mont_one = NULL;
 	ec_GFp_simple_group_finish(group);
 }
 
@@ -144,10 +144,10 @@ ec_GFp_mont_group_finish(EC_GROUP *group)
 void
 ec_GFp_mont_group_clear_finish(EC_GROUP *group)
 {
-	BN_MONT_CTX_free(group->field_data1);
-	group->field_data1 = NULL;
-	BN_clear_free(group->field_data2);
-	group->field_data2 = NULL;
+	BN_MONT_CTX_free(group->mont_ctx);
+	group->mont_ctx = NULL;
+	BN_clear_free(group->mont_one);
+	group->mont_one = NULL;
 	ec_GFp_simple_group_clear_finish(group);
 }
 
@@ -155,32 +155,32 @@ ec_GFp_mont_group_clear_finish(EC_GROUP *group)
 int
 ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
-	BN_MONT_CTX_free(dest->field_data1);
-	dest->field_data1 = NULL;
-	BN_clear_free(dest->field_data2);
-	dest->field_data2 = NULL;
+	BN_MONT_CTX_free(dest->mont_ctx);
+	dest->mont_ctx = NULL;
+	BN_clear_free(dest->mont_one);
+	dest->mont_one = NULL;
 
 	if (!ec_GFp_simple_group_copy(dest, src))
 		return 0;
 
-	if (src->field_data1 != NULL) {
-		dest->field_data1 = BN_MONT_CTX_new();
-		if (dest->field_data1 == NULL)
+	if (src->mont_ctx != NULL) {
+		dest->mont_ctx = BN_MONT_CTX_new();
+		if (dest->mont_ctx == NULL)
 			return 0;
-		if (!BN_MONT_CTX_copy(dest->field_data1, src->field_data1))
+		if (!BN_MONT_CTX_copy(dest->mont_ctx, src->mont_ctx))
 			goto err;
 	}
-	if (src->field_data2 != NULL) {
-		dest->field_data2 = BN_dup(src->field_data2);
-		if (dest->field_data2 == NULL)
+	if (src->mont_one != NULL) {
+		dest->mont_one = BN_dup(src->mont_one);
+		if (dest->mont_one == NULL)
 			goto err;
 	}
 	return 1;
 
  err:
-	if (dest->field_data1 != NULL) {
-		BN_MONT_CTX_free(dest->field_data1);
-		dest->field_data1 = NULL;
+	if (dest->mont_ctx != NULL) {
+		BN_MONT_CTX_free(dest->mont_ctx);
+		dest->mont_ctx = NULL;
 	}
 	return 0;
 }
@@ -195,10 +195,10 @@ ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 	BIGNUM *one = NULL;
 	int ret = 0;
 
-	BN_MONT_CTX_free(group->field_data1);
-	group->field_data1 = NULL;
-	BN_free(group->field_data2);
-	group->field_data2 = NULL;
+	BN_MONT_CTX_free(group->mont_ctx);
+	group->mont_ctx = NULL;
+	BN_free(group->mont_one);
+	group->mont_one = NULL;
 	if (ctx == NULL) {
 		ctx = new_ctx = BN_CTX_new();
 		if (ctx == NULL)
@@ -217,18 +217,18 @@ ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 	if (!BN_to_montgomery(one, BN_value_one(), mont, ctx))
 		goto err;
 
-	group->field_data1 = mont;
+	group->mont_ctx = mont;
 	mont = NULL;
-	group->field_data2 = one;
+	group->mont_one = one;
 	one = NULL;
 
 	ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
 
 	if (!ret) {
-		BN_MONT_CTX_free(group->field_data1);
-		group->field_data1 = NULL;
-		BN_free(group->field_data2);
-		group->field_data2 = NULL;
+		BN_MONT_CTX_free(group->mont_ctx);
+		group->mont_ctx = NULL;
+		BN_free(group->mont_one);
+		group->mont_one = NULL;
 	}
  err:
 	BN_CTX_free(new_ctx);
@@ -242,11 +242,11 @@ int
 ec_GFp_mont_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
-	if (group->field_data1 == NULL) {
+	if (group->mont_ctx == NULL) {
 		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
-	return BN_mod_mul_montgomery(r, a, b, group->field_data1, ctx);
+	return BN_mod_mul_montgomery(r, a, b, group->mont_ctx, ctx);
 }
 
 
@@ -254,11 +254,11 @@ int
 ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
-	if (group->field_data1 == NULL) {
+	if (group->mont_ctx == NULL) {
 		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
-	return BN_mod_mul_montgomery(r, a, a, group->field_data1, ctx);
+	return BN_mod_mul_montgomery(r, a, a, group->mont_ctx, ctx);
 }
 
 
@@ -266,11 +266,11 @@ int
 ec_GFp_mont_field_encode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
-	if (group->field_data1 == NULL) {
+	if (group->mont_ctx == NULL) {
 		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
-	return BN_to_montgomery(r, a, (BN_MONT_CTX *) group->field_data1, ctx);
+	return BN_to_montgomery(r, a, group->mont_ctx, ctx);
 }
 
 
@@ -278,22 +278,22 @@ int
 ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
-	if (group->field_data1 == NULL) {
+	if (group->mont_ctx == NULL) {
 		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
-	return BN_from_montgomery(r, a, group->field_data1, ctx);
+	return BN_from_montgomery(r, a, group->mont_ctx, ctx);
 }
 
 
 int
 ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
 {
-	if (group->field_data2 == NULL) {
+	if (group->mont_one == NULL) {
 		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
-	if (!BN_copy(r, group->field_data2))
+	if (!BN_copy(r, group->mont_one))
 		return 0;
 	return 1;
 }
