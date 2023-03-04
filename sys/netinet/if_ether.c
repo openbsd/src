@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.256 2023/01/31 13:41:54 mvs Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.257 2023/03/04 09:03:34 kn Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -105,7 +105,8 @@ struct niqueue arpinq = NIQUEUE_INITIALIZER(50, NETISR_ARP);
 /* llinfo_arp live time, rt_llinfo and RTF_LLINFO are protected by arp_mtx */
 struct mutex arp_mtx = MUTEX_INITIALIZER(IPL_SOFTNET);
 
-LIST_HEAD(, llinfo_arp) arp_list; /* [mN] list of all llinfo_arp structures */
+LIST_HEAD(, llinfo_arp) arp_list =
+    LIST_HEAD_INITIALIZER(arp_list);	/* [mN] list of llinfo_arp structures */
 struct	pool arp_pool;		/* [I] pool for llinfo_arp structures */
 int	arp_maxtries = 5;	/* [I] arp requests before set to rejected */
 int	la_hold_total;		/* [a] packets currently in the arp queue */
