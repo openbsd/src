@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.48 2023/02/13 09:21:35 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.49 2023/03/04 21:06:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,8 +102,8 @@ dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	DSA_SIG *ret = NULL;
 	int noredo = 0;
 
-	if (dsa->p == NULL || dsa->q == NULL || dsa->g == NULL) {
-		reason = DSA_R_MISSING_PARAMETERS;
+	if (!dsa_check_key(dsa)) {
+		reason = DSA_R_INVALID_PARAMETERS;
 		goto err;
 	}
 
@@ -218,10 +218,8 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	int q_bits;
 	int ret = 0;
 
-	if (dsa->p == NULL || dsa->q == NULL || dsa->g == NULL) {
-		DSAerror(DSA_R_MISSING_PARAMETERS);
-		return 0;
-	}
+	if (!dsa_check_key(dsa))
+		goto err;
 
 	if ((r = BN_new()) == NULL)
 		goto err;
@@ -325,21 +323,8 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 	int qbits;
 	int ret = -1;
 
-	if (dsa->p == NULL || dsa->q == NULL || dsa->g == NULL) {
-		DSAerror(DSA_R_MISSING_PARAMETERS);
-		return -1;
-	}
-
-	/* FIPS 186-3 allows only three different sizes for q. */
-	qbits = BN_num_bits(dsa->q);
-	if (qbits != 160 && qbits != 224 && qbits != 256) {
-		DSAerror(DSA_R_BAD_Q_VALUE);
-		return -1;
-	}
-	if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS) {
-		DSAerror(DSA_R_MODULUS_TOO_LARGE);
-		return -1;
-	}
+	if (!dsa_check_key(dsa))
+		goto err;
 
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
@@ -370,8 +355,9 @@ dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 
 	/*
 	 * If the digest length is greater than the size of q use the
-	 * BN_num_bits(dsa->q) leftmost bits of the digest, see FIPS 186-3, 4.2.
+	 * BN_num_bits(dsa->q) leftmost bits of the digest, see FIPS 186-4, 4.2.
 	 */
+	qbits = BN_num_bits(dsa->q);
 	if (dgst_len > (qbits >> 3))
 		dgst_len = (qbits >> 3);
 
