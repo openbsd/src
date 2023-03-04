@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.165 2022/09/11 11:47:55 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.166 2023/03/04 14:47:18 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -43,7 +43,7 @@ int		 parsepn(const char *);
 
 int		 ask_num(const char *, int, int, int);
 int		 ask_pid(const int);
-struct uuid	*ask_uuid(const struct uuid *);
+const struct uuid *ask_uuid(const struct uuid *);
 
 extern const unsigned char	manpage[];
 extern const int		manpage_sz;
@@ -586,7 +586,7 @@ ask_pid(const int dflt)
 	}
 }
 
-struct uuid *
+const struct uuid *
 ask_uuid(const struct uuid *olduuid)
 {
 	static struct uuid	 uuid;

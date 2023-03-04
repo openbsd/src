@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.83 2022/09/15 15:05:58 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.84 2023/03/04 14:47:18 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -45,7 +45,7 @@ struct mbr		gmbr;
 struct gpt_header	gh;
 struct gpt_partition	gp[NGPTPARTITIONS];
 
-struct gpt_partition	**sort_gpt(void);
+const struct gpt_partition * const *sort_gpt(void);
 int			  lba_start_cmp(const void *e1, const void *e2);
 int			  lba_free(uint64_t *, uint64_t *);
 int			  add_partition(const uint8_t *, const char *, uint64_t);
@@ -777,11 +777,11 @@ gp_lba_start_cmp(const void *e1, const void *e2)
 		return 0;
 }
 
-struct gpt_partition **
+const struct gpt_partition * const *
 sort_gpt(void)
 {
-	static struct gpt_partition	*sgp[NGPTPARTITIONS+2];
-	unsigned int			 i, pn;
+	static const struct gpt_partition	*sgp[NGPTPARTITIONS+2];
+	unsigned int				 i, pn;
 
 	memset(sgp, 0, sizeof(sgp));
 
@@ -804,9 +804,9 @@ sort_gpt(void)
 int
 lba_free(uint64_t *start, uint64_t *end)
 {
-	struct gpt_partition	**sgp;
-	uint64_t		  bs, bigbs, nextbs, ns;
-	unsigned int		  i;
+	const struct gpt_partition * const *sgp;
+	uint64_t			  bs, bigbs, nextbs, ns;
+	unsigned int			  i;
 
 	sgp = sort_gpt();
 	if (sgp == NULL)
@@ -883,9 +883,9 @@ GPT_get_lba_start(const unsigned int pn)
 int
 GPT_get_lba_end(const unsigned int pn)
 {
-	struct gpt_partition	**sgp;
-	uint64_t		  bs, nextbs, ns;
-	unsigned int		  i;
+	const struct gpt_partition	* const *sgp;
+	uint64_t			  bs, nextbs, ns;
+	unsigned int			  i;
 
 	sgp = sort_gpt();
 	if (sgp == NULL)
