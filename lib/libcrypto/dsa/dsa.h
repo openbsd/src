@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.39 2022/07/12 14:42:49 kn Exp $ */
+/* $OpenBSD: dsa.h,v 1.40 2023/03/04 20:47:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -272,6 +272,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 100
 #define DSA_R_DECODE_ERROR				 104
 #define DSA_R_INVALID_DIGEST_TYPE			 106
+#define DSA_R_INVALID_PARAMETERS			 112
 #define DSA_R_MISSING_PARAMETERS			 101
 #define DSA_R_MODULUS_TOO_LARGE				 103
 #define DSA_R_NEED_NEW_SETUP_VALUES			 110
