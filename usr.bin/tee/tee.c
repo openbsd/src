@@ -1,4 +1,4 @@
-/*	$OpenBSD: tee.c,v 1.14 2021/12/13 18:33:23 cheloha Exp $	*/
+/*	$OpenBSD: tee.c,v 1.15 2023/03/04 00:00:25 cheloha Exp $	*/
 /*	$NetBSD: tee.c,v 1.5 1994/12/09 01:43:39 jtc Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ main(int argc, char *argv[])
 	buf = malloc(BSIZE);
 	if (buf == NULL)
 		err(1, NULL);
-	while ((rval = read(STDIN_FILENO, buf, BSIZE)) > 0) {
+	while ((rval = read(STDIN_FILENO, buf, BSIZE)) != 0 && rval != -1) {
 		SLIST_FOREACH(p, &head, next) {
 			for (n = 0; n < rval; n += wval) {
 				wval = write(p->fd, buf + n, rval - n);
