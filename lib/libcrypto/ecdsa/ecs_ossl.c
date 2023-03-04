@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.27 2023/03/04 21:37:37 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.28 2023/03/04 21:39:34 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -168,8 +168,13 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		goto err;
 	}
 
+	/* Reject curves with an order that is smaller than 80 bits. */
+	if ((order_bits = BN_num_bits(order)) < 80) {
+		ECDSAerror(EC_R_INVALID_GROUP_ORDER);
+		goto err;
+	}
+
 	/* Preallocate space. */
-	order_bits = BN_num_bits(order);
 	if (!BN_set_bit(k, order_bits) ||
 	    !BN_set_bit(r, order_bits) ||
 	    !BN_set_bit(X, order_bits))
