@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.26 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.27 2023/03/04 21:37:37 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -255,6 +255,14 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp
 	return ecdsa->meth->ecdsa_sign_setup(eckey, ctx_in, kinvp, rp);
 }
 
+
+/*
+ * It is too expensive to check curve parameters on every sign operation.
+ * Instead, cap the number of retries. A single retry is very unlikely, so
+ * allowing 32 retries is amply enough.
+ */
+#define ECDSA_MAX_SIGN_ITERATIONS		32
+
 static ECDSA_SIG *
 ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey)
@@ -266,6 +274,7 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 	const EC_GROUP *group;
 	ECDSA_SIG  *ret;
 	ECDSA_DATA *ecdsa;
+	int attempts = 0;
 	int ok = 0;
 
 	ecdsa = ecdsa_check(eckey);
@@ -378,6 +387,11 @@ ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 			 */
 			if (in_kinv != NULL && in_r != NULL) {
 				ECDSAerror(ECDSA_R_NEED_NEW_SETUP_VALUES);
+				goto err;
+			}
+
+			if (++attempts > ECDSA_MAX_SIGN_ITERATIONS) {
+				ECDSAerror(EC_R_WRONG_CURVE_PARAMETERS);
 				goto err;
 			}
 		} else
