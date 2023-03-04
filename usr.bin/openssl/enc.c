@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.25 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: enc.c,v 1.26 2023/03/04 21:58:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -304,6 +304,22 @@ static const struct option enc_options[] = {
 };
 
 static void
+skip_aead_and_xts(const OBJ_NAME *name, void *arg)
+{
+	const EVP_CIPHER *cipher;
+
+	if ((cipher = EVP_get_cipherbyname(name->name)) == NULL)
+		return;
+
+	if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
+		return;
+	if (EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE)
+		return;
+
+	show_cipher(name, arg);
+}
+
+static void
 enc_usage(void)
 {
 	int n = 0;
@@ -318,7 +334,7 @@ enc_usage(void)
 	fprintf(stderr, "\n");
 
 	fprintf(stderr, "Valid ciphername values:\n\n");
-	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, show_cipher, &n);
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, skip_aead_and_xts, &n);
 	fprintf(stderr, "\n");
 }
 
@@ -410,6 +426,18 @@ enc_main(int argc, char **argv)
 			goto end;
 		}
 		enc_config.keystr = buf;
+	}
+
+	if (enc_config.cipher != NULL &&
+	    (EVP_CIPHER_flags(enc_config.cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0) {
+		BIO_printf(bio_err, "enc does not support AEAD ciphers\n");
+		goto end;
+	}
+
+	if (enc_config.cipher != NULL &&
+	    EVP_CIPHER_mode(enc_config.cipher) == EVP_CIPH_XTS_MODE) {
+		BIO_printf(bio_err, "enc does not support XTS mode\n");
+		goto end;
 	}
 
 	if (enc_config.md != NULL &&
