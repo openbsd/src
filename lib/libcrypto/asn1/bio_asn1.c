@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.17 2022/01/14 08:40:57 tb Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.18 2023/03/04 11:58:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -254,7 +254,7 @@ asn1_bio_write(BIO *b, const char *in , int inl)
 				wrmax = inl;
 			ret = BIO_write(b->next_bio, in, wrmax);
 			if (ret <= 0)
-				break;
+				goto done;
 			wrlen += ret;
 			ctx->copylen -= ret;
 			in += ret;
