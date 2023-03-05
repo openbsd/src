@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.28 2022/03/26 12:43:11 tb Exp $
+.\"	$OpenBSD: dpb.1,v 1.29 2023/03/05 10:41:59 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2022 $
+.Dd $Mdocdate: March 5 2023 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -1059,16 +1059,33 @@ interrupt
 .Nm
 while it is building a large port, or if you remove a lock after fixing a
 problem.
-.Sh TAGS FOR BUILDING KDE
-Currently, kde3 and kde4 can't be built simultaneously.
-Conflicting ports have been annotated with
-DPB_PROPERTIES=tag:kde3 ,
-DPB_PROPERTIES=tag:kde4
+.Sh TAGS FOR EXCLUSIVE BUILDS
+Back when we had kde3 and kde4, they couldn't be built simultaneously,
+and a single host had to be exclusively building kde3 or kde4 ports at
+a given moment.
+.Pp
+Conflicting ports had been annotated with
+.Ev DPB_PROPERTIES Ns = Ns Ar tag:kde3 ,
+.Ev DPB_PROPERTIES Ns = Ns Ar tag:kde4
 respectively.
 .Pp
+.Pp
+More generally, with
+.Ev DPB_PROPERTIES Ns = Ns Ar tag:A ,
+.Ev DPB_PROPERTIES Ns = Ns Ar tag:B ,
 .Nm
-now keeps track of those tags, and will postpone ports with the wrong
-tag while a given host is used by the other tag.
+will keep track of tags.
+For instance, if host
+.Ar X
+is building ports tagged with
+.Ar A ,
+then any port with tag
+.Ar B
+will be prevented from building on
+.Ar X
+until the next
+.Ar junk
+phase.
 .Pp
 This heavily relies on the
 .Ar junk
@@ -1081,19 +1098,19 @@ This
 .Sq force-junk
 stage is actually implemented as a pseudo path called
 .Ar junk-proxy ,
-which only does junk.
+which does only junk.
 .Pp
 In order for builds to proceed gracefully, machines should start
-in a clean slate, without kde3 or kde4 installed.
+in a clean slate, without any of the problematic ports installed.
 .Pp
-As a special-case, failing ports with a kde3 or kde4 tag will not
+As a special-case, failing ports with a tag will not
 interfere with clean-up, so that hosts do not get locked down to
 a specific tag.
 This also means that their dependencies
 may vanish before human intervention addresses the problem.
 .Pp
-This is supposed to be a temporary hack, as kde4 is large and
-having official packages helps a great deal in debugging it.
+This is supposed to be an exceptional hack, helpful while porters
+figure out how to remove the deadlock.
 .Sh EXTERNAL CONTROL
 By default
 .Po
