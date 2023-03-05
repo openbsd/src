@@ -1,4 +1,4 @@
-.\" $OpenBSD: locale.1,v 1.8 2020/04/17 10:45:04 schwarze Exp $
+.\" $OpenBSD: locale.1,v 1.9 2023/03/05 10:11:29 ajacoutot Exp $
 .\"
 .\" Copyright 2016, 2020 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright 2013 Stefan Sperling <stsp@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 17 2020 $
+.Dd $Mdocdate: March 5 2023 $
 .Dt LOCALE 1
 .Os
 .Sh NAME
@@ -29,6 +29,12 @@ If the
 .Nm
 utility is invoked without any arguments, the current locale
 configuration is shown.
+Values for categories that are not set in the environment or that are
+overriden by
+.Ev LANG
+or
+.Ev LC_ALL
+are displayed between double quotes.
 .Pp
 The options are as follows:
 .Bl -tag -width charmap
