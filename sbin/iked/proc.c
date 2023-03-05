@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.37 2023/03/04 22:22:51 tobhe Exp $	*/
+/*	$OpenBSD: proc.c,v 1.38 2023/03/05 22:17:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -476,7 +476,7 @@ proc_shutdown(struct privsep_proc *p)
 	struct privsep	*ps = p->p_ps;
 
 	if (p->p_shutdown != NULL)
-		(*p->p_shutdown)(p);
+		(*p->p_shutdown)();
 
 	proc_close(ps);
 

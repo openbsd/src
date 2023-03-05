@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.63 2023/03/04 22:22:50 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.64 2023/03/05 22:17:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -46,6 +46,8 @@ int	 parent_dispatch_ca(int, struct privsep_proc *, struct imsg *);
 int	 parent_dispatch_control(int, struct privsep_proc *, struct imsg *);
 int	 parent_dispatch_ikev2(int, struct privsep_proc *, struct imsg *);
 int	 parent_configure(struct iked *);
+
+struct iked	*iked_env;
 
 static struct privsep_proc procs[] = {
 	{ "ca",		PROC_CERT,	parent_dispatch_ca, caproc, IKED_CA },
@@ -161,6 +163,7 @@ main(int argc, char *argv[])
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
+	iked_env = env;
 	env->sc_opts = opts;
 	env->sc_nattmode = natt_mode;
 	env->sc_nattport = port;
@@ -421,7 +424,7 @@ parent_sig_handler(int sig, short event, void *arg)
 int
 parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked	*env = p->p_ps->ps_env;
+	struct iked	*env = iked_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_OCSP_FD:
@@ -437,7 +440,7 @@ parent_dispatch_ca(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 parent_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked	*env = p->p_ps->ps_env;
+	struct iked	*env = iked_env;
 	int		 v;
 	char		*str = NULL;
 	unsigned int	 type = imsg->hdr.type;
@@ -476,7 +479,7 @@ parent_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 int
 parent_dispatch_ikev2(int fd, struct privsep_proc *p, struct imsg *imsg)
 {
-	struct iked	*env = p->p_ps->ps_env;
+	struct iked	*env = iked_env;
 
 	switch (imsg->hdr.type) {
 	case IMSG_IF_ADDADDR:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.209 2023/03/04 22:22:50 tobhe Exp $	*/
+/*	$OpenBSD: iked.h,v 1.210 2023/03/05 22:17:22 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -743,7 +743,7 @@ struct privsep_proc {
 	const char		*p_chroot;
 	struct passwd		*p_pw;
 	struct privsep		*p_ps;
-	void			(*p_shutdown)(struct privsep_proc *);
+	void			(*p_shutdown)(void);
 };
 
 struct privsep_fd {
@@ -874,6 +874,8 @@ struct ipsec_mode {
 
 /* iked.c */
 void	 parent_reload(struct iked *, int, const char *);
+
+extern struct iked	*iked_env;
 
 /* control.c */
 void	 control(struct privsep *, struct privsep_proc *);
