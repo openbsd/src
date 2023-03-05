@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.31 2022/11/11 17:07:38 joshua Exp $ */
+/* $OpenBSD: cms.c,v 1.32 2023/03/05 13:08:22 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -225,7 +225,7 @@ cms_opt_inkey(char *arg)
 		cms_config.keyfile = arg;
 		return (0);
 	}
-	
+
 	if (cms_config.signerfile == NULL) {
 		BIO_puts(bio_err, "Illegal -inkey without -signer\n");
 		return (1);
@@ -1469,7 +1469,7 @@ cms_main(int argc, char **argv)
 			struct cms_key_param *kparam;
 			int tflags = cms_config.flags;
 			X509 *x;
-		       
+
 			if ((x = sk_X509_value(cms_config.encerts, i)) == NULL)
 				goto end;
 			for (kparam = cms_config.key_first; kparam != NULL;
