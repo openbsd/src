@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgpio.c,v 1.9 2023/03/04 22:54:35 kettenis Exp $	*/
+/*	$OpenBSD: rkgpio.c,v 1.10 2023/03/05 14:45:07 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -321,7 +321,7 @@ rkgpio_intr_establish(void *cookie, int *cells, int ipl,
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = ipl;
+	ih->ih_ipl = ipl & IPL_IRQMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 	ih->ih_level = level;

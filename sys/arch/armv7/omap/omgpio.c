@@ -1,4 +1,4 @@
-/* $OpenBSD: omgpio.c,v 1.14 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: omgpio.c,v 1.15 2023/03/05 14:45:07 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -671,7 +671,7 @@ omgpio_intr_establish(struct omgpio_softc *sc, unsigned int gpio, int level, int
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = level;
+	ih->ih_ipl = level & IPL_IRQMASK;
 	ih->ih_gpio = gpio;
 	ih->ih_irq = gpio + 512;
 	ih->ih_name = name;

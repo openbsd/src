@@ -1,4 +1,4 @@
-/* $OpenBSD: imxgpio.c,v 1.6 2021/10/24 17:52:26 mpi Exp $ */
+/* $OpenBSD: imxgpio.c,v 1.7 2023/03/05 14:45:07 patrick Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
@@ -255,7 +255,7 @@ imxgpio_intr_establish(void *cookie, int *cells, int ipl,
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = ipl;
+	ih->ih_ipl = ipl & IPL_IRQMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 	ih->ih_level = level;
