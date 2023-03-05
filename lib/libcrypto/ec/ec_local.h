@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.5 2023/03/05 16:11:36 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.6 2023/03/05 16:31:01 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -433,8 +433,6 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
 int ec_GF2m_have_precompute_mult(const EC_GROUP *group);
 
-#ifndef OPENSSL_EC_NISTP_64_GCC_128
-
 /* EC_METHOD definitions */
 
 struct ec_key_method_st {
@@ -472,7 +470,5 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
     const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
     const ECDSA_SIG *sig, EC_KEY *eckey);
-
-#endif
 
 __END_HIDDEN_DECLS
