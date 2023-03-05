@@ -1,4 +1,4 @@
-/*	$OpenBSD: rktemp.c,v 1.11 2022/10/20 20:35:57 kettenis Exp $	*/
+/*	$OpenBSD: rktemp.c,v 1.12 2023/03/05 09:57:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -32,8 +32,9 @@
 #include <dev/ofw/fdt.h>
 
 /* Registers */
-#define TSADC_USER_CON		0x0000
-#define TSADC_AUTO_CON		0x0004
+#define TSADC_USER_CON			0x0000
+#define  TSADC_USER_CON_INTER_PD_SOC_SHIFT	6
+#define TSADC_AUTO_CON			0x0004
 #define  TSADC_AUTO_CON_TSHUT_POLARITY	(1 << 8)
 #define  TSADC_AUTO_CON_SRC3_EN		(1 << 7)
 #define  TSADC_AUTO_CON_SRC2_EN		(1 << 6)
@@ -41,7 +42,7 @@
 #define  TSADC_AUTO_CON_SRC0_EN		(1 << 4)
 #define  TSADC_AUTO_CON_TSADC_Q_SEL	(1 << 1)
 #define  TSADC_AUTO_CON_AUTO_EN		(1 << 0)
-#define TSADC_INT_EN		0x0008
+#define TSADC_INT_EN			0x0008
 #define  TSADC_INT_EN_TSHUT_2CRU_EN_SRC3	(1 << 11)
 #define  TSADC_INT_EN_TSHUT_2CRU_EN_SRC2	(1 << 10)
 #define  TSADC_INT_EN_TSHUT_2CRU_EN_SRC1	(1 << 9)
@@ -50,25 +51,32 @@
 #define  TSADC_INT_EN_TSHUT_2GPIO_EN_SRC2	(1 << 6)
 #define  TSADC_INT_EN_TSHUT_2GPIO_EN_SRC1	(1 << 5)
 #define  TSADC_INT_EN_TSHUT_2GPIO_EN_SRC0	(1 << 4)
-#define TSADC_INT_PD		0x000c
+#define TSADC_INT_PD			0x000c
 #define  TSADC_INT_PD_TSHUT_O_SRC0		(1 << 4)
 #define  TSADC_INT_PD_TSHUT_O_SRC1		(1 << 5)
 #define  TSADC_INT_PD_TSHUT_O_SRC2		(1 << 6)
 #define  TSADC_INT_PD_TSHUT_O_SRC3		(1 << 7)
-#define TSADC_DATA0		0x0020
-#define TSADC_DATA1		0x0024
-#define TSADC_DATA2		0x0028
-#define TSADC_DATA3		0x002c
-#define TSADC_COMP0_INT		0x0030
-#define TSADC_COMP1_INT		0x0034
-#define TSADC_COMP2_INT		0x0038
-#define TSADC_COMP3_INT		0x003c
-#define TSADC_COMP0_SHUT	0x0040
-#define TSADC_COMP1_SHUT	0x0044
-#define TSADC_COMP2_SHUT	0x0048
-#define TSADC_COMP3_SHUT	0x004c
-#define TSADC_AUTO_PERIOD	0x0068
-#define TSADC_AUTO_PERIOD_HT	0x006c
+#define TSADC_DATA0			0x0020
+#define TSADC_DATA1			0x0024
+#define TSADC_DATA2			0x0028
+#define TSADC_DATA3			0x002c
+#define TSADC_COMP0_INT			0x0030
+#define TSADC_COMP1_INT			0x0034
+#define TSADC_COMP2_INT			0x0038
+#define TSADC_COMP3_INT			0x003c
+#define TSADC_COMP0_SHUT		0x0040
+#define TSADC_COMP1_SHUT		0x0044
+#define TSADC_COMP2_SHUT		0x0048
+#define TSADC_COMP3_SHUT		0x004c
+#define TSADC_HIGHT_INT_DEBOUNCE	0x0060
+#define TSADC_HIGHT_TSHUT_DEBOUNCE	0x0064
+#define TSADC_AUTO_PERIOD		0x0068
+#define TSADC_AUTO_PERIOD_HT		0x006c
+
+/* RK3568 */
+#define RK3568_GRF_TSADC_CON		0x0600
+#define  RK3568_GRF_TSADC_EN		(1 << 8)
+#define  RK3568_GRF_TSADC_ANA_REG(idx)	(1 << (idx))
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -244,6 +252,7 @@ struct rktemp_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	int			sc_node;
 
 	const struct rktemp_entry *sc_temps;
 	int			sc_ntemps;
@@ -266,6 +275,7 @@ struct cfdriver rktemp_cd = {
 	NULL, "rktemp", DV_DULL
 };
 
+void	rktemp_rk3568_init(struct rktemp_softc *);
 int32_t rktemp_calc_code(struct rktemp_softc *, int32_t);
 int32_t rktemp_calc_temp(struct rktemp_softc *, int32_t);
 int	rktemp_valid(struct rktemp_softc *, int32_t);
@@ -292,7 +302,8 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 	const char *const *names;
 	uint32_t mode, polarity, temp;
 	uint32_t auto_con, int_en;
-	int node = faa->fa_node;
+	uint32_t inter_pd_soc;
+	int auto_period, auto_period_ht;
 	int i;
 
 	if (faa->fa_nreg < 1) {
@@ -301,6 +312,8 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_iot = faa->fa_iot;
+	sc->sc_node = faa->fa_node;
+
 	if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 	    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
 		printf(": can't map registers\n");
@@ -309,47 +322,72 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	if (OF_is_compatible(node, "rockchip,rk3288-tsadc")) {
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3288-tsadc")) {
 		sc->sc_temps = rk3288_temps;
 		sc->sc_ntemps = nitems(rk3288_temps);
 		sc->sc_nsensors = 3;
 		names = rk3288_names;
-	} else if (OF_is_compatible(node, "rockchip,rk3308-tsadc")) {
+		inter_pd_soc = 13;
+		auto_period = 250;	/* 250 ms */
+		auto_period_ht = 50;	/* 50 ms */
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk3308-tsadc")) {
 		sc->sc_temps = rk3328_temps;
 		sc->sc_ntemps = nitems(rk3328_temps);
 		sc->sc_nsensors = 2;
 		names = rk3308_names;
-	} else if (OF_is_compatible(node, "rockchip,rk3328-tsadc")) {
+		inter_pd_soc = 13;
+		auto_period = 1875;	/* 2.5 ms */
+		auto_period_ht = 1875;	/* 2.5 ms */
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk3328-tsadc")) {
 		sc->sc_temps = rk3328_temps;
 		sc->sc_ntemps = nitems(rk3328_temps);
 		sc->sc_nsensors = 1;
 		names = rk3328_names;
-	} else if (OF_is_compatible(node, "rockchip,rk3399-tsadc")) {
+		inter_pd_soc = 13;
+		auto_period = 1875;	/* 2.5 ms */
+		auto_period_ht = 1875;	/* 2.5 ms */
+	} else if (OF_is_compatible(sc->sc_node, "rockchip,rk3399-tsadc")) {
 		sc->sc_temps = rk3399_temps;
 		sc->sc_ntemps = nitems(rk3399_temps);
 		sc->sc_nsensors = 2;
 		names = rk3399_names;
+		inter_pd_soc = 13;
+		auto_period = 1875;	/* 2.5 ms */
+		auto_period_ht = 1875;	/* 2.5 ms */
 	} else {
 		sc->sc_temps = rk3568_temps;
 		sc->sc_ntemps = nitems(rk3568_temps);
 		sc->sc_nsensors = 2;
 		names = rk3568_names;
+		inter_pd_soc = 63;	/* 97 us */
+		auto_period = 1622;	/* 2.5 ms */
+		auto_period_ht = 1622;	/* 2.5 ms */
 	}
 
-	pinctrl_byname(node, "init");
+	pinctrl_byname(sc->sc_node, "init");
 
-	clock_set_assigned(node);
-	clock_enable(node, "tsadc");
-	clock_enable(node, "apb_pclk");
+	clock_set_assigned(sc->sc_node);
+	clock_enable(sc->sc_node, "tsadc");
+	clock_enable(sc->sc_node, "apb_pclk");
 
 	/* Reset the TS-ADC controller block. */
-	reset_assert(node, "tsadc-apb");
+	reset_assert(sc->sc_node, "tsadc-apb");
 	delay(10);
-	reset_deassert(node, "tsadc-apb");
+	reset_deassert(sc->sc_node, "tsadc-apb");
 
-	mode = OF_getpropint(node, "rockchip,hw-tshut-mode", 1);
-	polarity = OF_getpropint(node, "rockchip,hw-tshut-polarity", 0);
-	temp = OF_getpropint(node, "rockchip,hw-tshut-temp", 95000);
+	mode = OF_getpropint(sc->sc_node, "rockchip,hw-tshut-mode", 1);
+	polarity = OF_getpropint(sc->sc_node, "rockchip,hw-tshut-polarity", 0);
+	temp = OF_getpropint(sc->sc_node, "rockchip,hw-tshut-temp", 95000);
+
+	HWRITE4(sc, TSADC_USER_CON,
+	    inter_pd_soc << TSADC_USER_CON_INTER_PD_SOC_SHIFT);
+	HWRITE4(sc, TSADC_AUTO_PERIOD, auto_period);
+	HWRITE4(sc, TSADC_AUTO_PERIOD_HT, auto_period_ht);
+	HWRITE4(sc, TSADC_HIGHT_INT_DEBOUNCE, 4);
+	HWRITE4(sc, TSADC_HIGHT_TSHUT_DEBOUNCE, 4);
+
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-tsadc"))
+		rktemp_rk3568_init(sc);
 
 	auto_con = HREAD4(sc, TSADC_AUTO_CON);
 	auto_con |= TSADC_AUTO_CON_TSADC_Q_SEL;
@@ -379,7 +417,7 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 	}
 	HWRITE4(sc, TSADC_INT_EN, int_en);
 
-	pinctrl_byname(faa->fa_node, "default");
+	pinctrl_byname(sc->sc_node, "default");
 
 	/* Finally turn on the ADC. */
 	auto_con |= TSADC_AUTO_CON_AUTO_EN;
@@ -398,10 +436,33 @@ rktemp_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, rktemp_refresh_sensors, 5);
 
-	sc->sc_ts.ts_node = node;
+	sc->sc_ts.ts_node = sc->sc_node;
 	sc->sc_ts.ts_cookie = sc;
 	sc->sc_ts.ts_get_temperature = rktemp_get_temperature;
 	thermal_sensor_register(&sc->sc_ts);
+}
+
+void
+rktemp_rk3568_init(struct rktemp_softc *sc)
+{
+	struct regmap *rm;
+	uint32_t grf;
+	int i;
+
+	grf = OF_getpropint(sc->sc_node, "rockchip,grf", 0);
+	rm = regmap_byphandle(grf);
+	if (rm == 0)
+		return;
+	
+	regmap_write_4(rm, RK3568_GRF_TSADC_CON,
+	    RK3568_GRF_TSADC_EN << 16 | RK3568_GRF_TSADC_EN);
+	delay(15);
+	for (i = 0; i <= 2; i++) {
+		regmap_write_4(rm, RK3568_GRF_TSADC_CON,
+		    RK3568_GRF_TSADC_ANA_REG(i) << 16 |
+		    RK3568_GRF_TSADC_ANA_REG(i));
+	}
+	delay(100);
 }
 
 int32_t
