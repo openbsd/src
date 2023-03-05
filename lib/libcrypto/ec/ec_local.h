@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.3 2023/03/04 14:53:23 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.4 2023/03/05 16:06:14 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -426,13 +426,6 @@ int ec_GF2m_simple_points_make_affine(const EC_GROUP *, size_t num, EC_POINT *[]
 int ec_GF2m_simple_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 int ec_GF2m_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
 int ec_GF2m_simple_field_div(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-
-
-/* method functions in ec2_mult.c */
-int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
-int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
-int ec_GF2m_have_precompute_mult(const EC_GROUP *group);
 
 /* method functions in ec2_mult.c */
 int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
