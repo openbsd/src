@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmpic.c,v 1.5 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: mvmpic.c,v 1.6 2023/03/05 04:30:08 jmatthew Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -257,7 +257,7 @@ mpic_intr_establish(void *cookie, int *cells, int level,
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
-	ih->ih_ipl = level;
+	ih->ih_ipl = level & IPL_IRQMASK;
 	ih->ih_irq = irqno;
 	ih->ih_name = name;
 	ih->ih_sc = sc;
