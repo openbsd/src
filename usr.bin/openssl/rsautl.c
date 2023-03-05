@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.19 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: rsautl.c,v 1.20 2023/03/05 13:12:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -75,7 +75,7 @@
 #define KEY_PUBKEY	2
 #define KEY_CERT	3
 
-struct {
+static struct {
 	int asn1parse;
 	int hexdump;
 	char *infile;

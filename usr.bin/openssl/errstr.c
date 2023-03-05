@@ -1,4 +1,4 @@
-/* $OpenBSD: errstr.c,v 1.8 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: errstr.c,v 1.9 2023/03/05 13:12:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,7 +68,7 @@
 #include <openssl/lhash.h>
 #include <openssl/ssl.h>
 
-struct {
+static struct {
 	int stats;
 } errstr_config;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: genpkey.c,v 1.14 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: genpkey.c,v 1.15 2023/03/05 13:12:53 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -68,7 +68,7 @@
 static int init_keygen_file(BIO * err, EVP_PKEY_CTX **pctx, const char *file);
 static int genpkey_cb(EVP_PKEY_CTX * ctx);
 
-struct {
+static struct {
 	const EVP_CIPHER *cipher;
 	EVP_PKEY_CTX **ctx;
 	int do_param;

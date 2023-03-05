@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.36 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: s_time.c,v 1.37 2023/03/05 13:12:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,7 +98,7 @@ static SSL_CTX *tm_ctx = NULL;
 static const SSL_METHOD *s_time_meth = NULL;
 static long bytes_read = 0;
 
-struct {
+static struct {
 	int bugs;
 	char *CAfile;
 	char *CApath;

@@ -1,4 +1,4 @@
-/* $OpenBSD: dhparam.c,v 1.15 2022/11/11 17:07:38 joshua Exp $ */
+/* $OpenBSD: dhparam.c,v 1.16 2023/03/05 13:12:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -131,7 +131,7 @@
 
 #define DEFBITS	2048
 
-struct {
+static struct {
 	int C;
 	int check;
 	int dsaparam;
