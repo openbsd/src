@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.155 2023/03/06 10:24:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.156 2023/03/06 10:28:04 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -449,6 +449,8 @@ int	iwx_enable_mgmt_queue(struct iwx_softc *);
 int	iwx_rs_rval2idx(uint8_t);
 uint16_t iwx_rs_ht_rates(struct iwx_softc *, struct ieee80211_node *, int);
 uint16_t iwx_rs_vht_rates(struct iwx_softc *, struct ieee80211_node *, int);
+int	iwx_rs_init_v3(struct iwx_softc *, struct iwx_node *);
+int	iwx_rs_init_v4(struct iwx_softc *, struct iwx_node *);
 int	iwx_rs_init(struct iwx_softc *, struct iwx_node *);
 int	iwx_enable_data_tx_queues(struct iwx_softc *);
 int	iwx_phy_ctxt_update(struct iwx_softc *, struct iwx_phy_ctxt *,
@@ -7562,11 +7564,11 @@ iwx_rs_vht_rates(struct iwx_softc *sc, struct ieee80211_node *ni, int num_ss)
 }
 
 int
-iwx_rs_init(struct iwx_softc *sc, struct iwx_node *in)
+iwx_rs_init_v3(struct iwx_softc *sc, struct iwx_node *in)
 {
 	struct ieee80211_node *ni = &in->in_ni;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
-	struct iwx_tlc_config_cmd cfg_cmd;
+	struct iwx_tlc_config_cmd_v3 cfg_cmd;
 	uint32_t cmd_id;
 	int i;
 	size_t cmd_size = sizeof(cfg_cmd);
@@ -7583,16 +7585,16 @@ iwx_rs_init(struct iwx_softc *sc, struct iwx_node *in)
 
 	if (ni->ni_flags & IEEE80211_NODE_VHT) {
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_VHT;
-		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_HT_BW_NONE_160] =
+		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_vht_rates(sc, ni, 1));
-		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_HT_BW_NONE_160] =
+		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_vht_rates(sc, ni, 2));
 	} else if (ni->ni_flags & IEEE80211_NODE_HT) {
 		cfg_cmd.mode = IWX_TLC_MNG_MODE_HT;
-		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_HT_BW_NONE_160] =
+		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_ht_rates(sc, ni,
 		    IEEE80211_HT_RATESET_SISO));
-		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_HT_BW_NONE_160] =
+		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
 		    htole16(iwx_rs_ht_rates(sc, ni,
 		    IEEE80211_HT_RATESET_MIMO2));
 	} else
@@ -7627,6 +7629,86 @@ iwx_rs_init(struct iwx_softc *sc, struct iwx_node *in)
 
 	cmd_id = iwx_cmd_id(IWX_TLC_MNG_CONFIG_CMD, IWX_DATA_PATH_GROUP, 0);
 	return iwx_send_cmd_pdu(sc, cmd_id, IWX_CMD_ASYNC, cmd_size, &cfg_cmd);
+}
+
+int
+iwx_rs_init_v4(struct iwx_softc *sc, struct iwx_node *in)
+{
+	struct ieee80211_node *ni = &in->in_ni;
+	struct ieee80211_rateset *rs = &ni->ni_rates;
+	struct iwx_tlc_config_cmd_v4 cfg_cmd;
+	uint32_t cmd_id;
+	int i;
+	size_t cmd_size = sizeof(cfg_cmd);
+
+	memset(&cfg_cmd, 0, sizeof(cfg_cmd));
+
+	for (i = 0; i < rs->rs_nrates; i++) {
+		uint8_t rval = rs->rs_rates[i] & IEEE80211_RATE_VAL;
+		int idx = iwx_rs_rval2idx(rval);
+		if (idx == -1)
+			return EINVAL;
+		cfg_cmd.non_ht_rates |= (1 << idx);
+	}
+
+	if (ni->ni_flags & IEEE80211_NODE_VHT) {
+		cfg_cmd.mode = IWX_TLC_MNG_MODE_VHT;
+		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
+		    htole16(iwx_rs_vht_rates(sc, ni, 1));
+		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
+		    htole16(iwx_rs_vht_rates(sc, ni, 2));
+	} else if (ni->ni_flags & IEEE80211_NODE_HT) {
+		cfg_cmd.mode = IWX_TLC_MNG_MODE_HT;
+		cfg_cmd.ht_rates[IWX_TLC_NSS_1][IWX_TLC_MCS_PER_BW_80] =
+		    htole16(iwx_rs_ht_rates(sc, ni,
+		    IEEE80211_HT_RATESET_SISO));
+		cfg_cmd.ht_rates[IWX_TLC_NSS_2][IWX_TLC_MCS_PER_BW_80] =
+		    htole16(iwx_rs_ht_rates(sc, ni,
+		    IEEE80211_HT_RATESET_MIMO2));
+	} else
+		cfg_cmd.mode = IWX_TLC_MNG_MODE_NON_HT;
+
+	cfg_cmd.sta_id = IWX_STATION_ID;
+	if (in->in_phyctxt->vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80)
+		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_80MHZ;
+	else if (in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCA ||
+	    in->in_phyctxt->sco == IEEE80211_HTOP0_SCO_SCB)
+		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_40MHZ;
+	else
+		cfg_cmd.max_ch_width = IWX_TLC_MNG_CH_WIDTH_20MHZ;
+	cfg_cmd.chains = IWX_TLC_MNG_CHAIN_A_MSK | IWX_TLC_MNG_CHAIN_B_MSK;
+	if (ni->ni_flags & IEEE80211_NODE_VHT)
+		cfg_cmd.max_mpdu_len = htole16(3895);
+	else
+		cfg_cmd.max_mpdu_len = htole16(3839);
+	if (ni->ni_flags & IEEE80211_NODE_HT) {
+		if (ieee80211_node_supports_ht_sgi20(ni)) {
+			cfg_cmd.sgi_ch_width_supp |= (1 <<
+			    IWX_TLC_MNG_CH_WIDTH_20MHZ);
+		}
+		if (ieee80211_node_supports_ht_sgi40(ni)) {
+			cfg_cmd.sgi_ch_width_supp |= (1 <<
+			    IWX_TLC_MNG_CH_WIDTH_40MHZ);
+		}
+	}
+	if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
+	    ieee80211_node_supports_vht_sgi80(ni))
+		cfg_cmd.sgi_ch_width_supp |= (1 << IWX_TLC_MNG_CH_WIDTH_80MHZ);
+
+	cmd_id = iwx_cmd_id(IWX_TLC_MNG_CONFIG_CMD, IWX_DATA_PATH_GROUP, 0);
+	return iwx_send_cmd_pdu(sc, cmd_id, IWX_CMD_ASYNC, cmd_size, &cfg_cmd);
+}
+
+int
+iwx_rs_init(struct iwx_softc *sc, struct iwx_node *in)
+{
+	int cmd_ver;
+
+	cmd_ver = iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_TLC_MNG_CONFIG_CMD);
+	if (cmd_ver == 4)
+		return iwx_rs_init_v4(sc, in);
+	return iwx_rs_init_v3(sc, in);
 }
 
 void

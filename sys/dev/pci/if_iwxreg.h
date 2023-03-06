@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.43 2023/03/06 10:24:15 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.44 2023/03/06 10:28:04 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -5109,14 +5109,14 @@ enum {
  * @IWX_TLC_MNG_CH_WIDTH_40MHZ: 40MHZ channel
  * @IWX_TLC_MNG_CH_WIDTH_80MHZ: 80MHZ channel
  * @IWX_TLC_MNG_CH_WIDTH_160MHZ: 160MHZ channel
- * @IWX_TLC_MNG_CH_WIDTH_LAST: maximum value
+ * @IWX_TLC_MNG_CH_WIDTH_320MHZ: 320MHZ channel
  */
 enum iwx_tlc_mng_cfg_cw {
 	IWX_TLC_MNG_CH_WIDTH_20MHZ,
 	IWX_TLC_MNG_CH_WIDTH_40MHZ,
 	IWX_TLC_MNG_CH_WIDTH_80MHZ,
 	IWX_TLC_MNG_CH_WIDTH_160MHZ,
-	IWX_TLC_MNG_CH_WIDTH_LAST = IWX_TLC_MNG_CH_WIDTH_160MHZ,
+	IWX_TLC_MNG_CH_WIDTH_320MHZ,
 };
 
 /**
@@ -5134,8 +5134,7 @@ enum iwx_tlc_mng_cfg_cw {
  * @IWX_TLC_MNG_MODE_HT: enable HT
  * @IWX_TLC_MNG_MODE_VHT: enable VHT
  * @IWX_TLC_MNG_MODE_HE: enable HE
- * @IWX_TLC_MNG_MODE_INVALID: invalid value
- * @IWX_TLC_MNG_MODE_NUM: a count of possible modes
+ * @IWX_TLC_MNG_MODE_EHT: enable EHT
  */
 enum iwx_tlc_mng_cfg_mode {
 	IWX_TLC_MNG_MODE_CCK = 0,
@@ -5144,8 +5143,7 @@ enum iwx_tlc_mng_cfg_mode {
 	IWX_TLC_MNG_MODE_HT,
 	IWX_TLC_MNG_MODE_VHT,
 	IWX_TLC_MNG_MODE_HE,
-	IWX_TLC_MNG_MODE_INVALID,
-	IWX_TLC_MNG_MODE_NUM = IWX_TLC_MNG_MODE_INVALID,
+	IWX_TLC_MNG_MODE_EHT,
 };
 
 /**
@@ -5183,11 +5181,23 @@ enum iwx_tlc_mng_ht_rates {
 #define IWX_TLC_NSS_2	1
 #define IWX_TLC_NSS_MAX	2
 
-#define IWX_TLC_HT_BW_NONE_160	0
-#define IWX_TLC_HT_BW_160	1
 
 /**
- * struct iwx_tlc_config_cmd - TLC configuration
+ * IWX_TLC_MCS_PER_BW - mcs index per BW
+ * @IWX_TLC_MCS_PER_BW_80: mcs for bw - 20Hhz, 40Hhz, 80Hhz
+ * @IWX_TLC_MCS_PER_BW_160: mcs for bw - 160Mhz
+ * @IWX_TLC_MCS_PER_BW_320: mcs for bw - 320Mhz
+ * @IWX_TLC_MCS_PER_BW_NUM_V3: number of entries up to version 3
+ * @IWX_TLC_MCS_PER_BW_NUM_V4: number of entries from version 4
+ */
+#define IWX_TLC_MCS_PER_BW_80	0
+#define IWX_TLC_MCS_PER_BW_160	1
+#define IWX_TLC_MCS_PER_BW_320  2
+#define IWX_TLC_MCS_PER_BW_NUM_V3	(IWX_TLC_MCS_PER_BW_160 + 1)
+#define IWX_TLC_MCS_PER_BW_NUM_V4	(IWX_TLC_MCS_PER_BW_320 + 1)
+
+/**
+ * struct iwx_tlc_config_cmd_v3 - TLC configuration version 3
  * @sta_id: station id
  * @reserved1: reserved
  * @max_ch_width: max supported channel width from @enum iwx_tlc_mng_cfg_cw
@@ -5196,16 +5206,16 @@ enum iwx_tlc_mng_ht_rates {
  * @amsdu: 1 = TX amsdu is supported, 0 = not supported
  * @flags: bitmask of IWX_TLC_MNG_CFG_*
  * @non_ht_rates: bitmap of supported legacy rates
- * @ht_rates: bitmap of &enum iwx_tlc_mng_ht_rates, per <nss, channel-width>
+ * @ht_rates: MCS index 0 - 11, per <nss, channel-width>
  *	      pair (0 - 80mhz width and below, 1 - 160mhz).
  * @max_mpdu_len: max MPDU length, in bytes
  * @sgi_ch_width_supp: bitmap of SGI support per channel width
- *		       use (1 << @enum iwx_tlc_mng_cfg_cw)
+ *		       use (1 << IWX_TLC_MNG_CFG_CW_*)
  * @reserved2: reserved
  * @max_tx_op: max TXOP in uSecs for all AC (BK, BE, VO, VI),
  *	       set zero for no limit.
  */
-struct iwx_tlc_config_cmd {
+struct iwx_tlc_config_cmd_v3 {
 	uint8_t sta_id;
 	uint8_t reserved1[3];
 	uint8_t max_ch_width;
@@ -5214,12 +5224,43 @@ struct iwx_tlc_config_cmd {
 	uint8_t amsdu;
 	uint16_t flags;
 	uint16_t non_ht_rates;
-	uint16_t ht_rates[IWX_TLC_NSS_MAX][2];
+	uint16_t ht_rates[IWX_TLC_NSS_MAX][IWX_TLC_MCS_PER_BW_NUM_V3];
 	uint16_t max_mpdu_len;
 	uint8_t sgi_ch_width_supp;
 	uint8_t reserved2;
 	uint32_t max_tx_op;
 } __packed; /* TLC_MNG_CONFIG_CMD_API_S_VER_3 */
+
+/**
+ * struct iwx_tlc_config_cmd_v4 - TLC configuration
+ * @sta_id: station id
+ * @reserved1: reserved
+ * @max_ch_width: max supported channel width from @enum iwx_tlc_mng_cfg_cw
+ * @mode: &enum iwx_tlc_mng_cfg_mode
+ * @chains: bitmask of IWX_TLC_MNG_CHAIN_*_MSK
+ * @sgi_ch_width_supp: bitmap of SGI support per channel width
+ *		       use (1 << IWX_TLC_MNG_CFG_CW_*)
+ * @flags: bitmask of IWX_TLC_MNG_CFG_*
+ * @non_ht_rates: bitmap of supported legacy rates
+ * @ht_rates: MCS index 0 - 11, per <nss, channel-width>
+ *	      pair (0 - 80mhz width and below, 1 - 160mhz, 2 - 320mhz).
+ * @max_mpdu_len: max MPDU length, in bytes
+ * @max_tx_op: max TXOP in uSecs for all AC (BK, BE, VO, VI),
+ *	       set zero for no limit.
+ */
+struct iwx_tlc_config_cmd_v4 {
+	uint8_t sta_id;
+	uint8_t reserved1[3];
+	uint8_t max_ch_width;
+	uint8_t mode;
+	uint8_t chains;
+	uint8_t sgi_ch_width_supp;
+	uint16_t flags;
+	uint16_t non_ht_rates;
+	uint16_t ht_rates[IWX_TLC_NSS_MAX][IWX_TLC_MCS_PER_BW_NUM_V4];
+	uint16_t max_mpdu_len;
+	uint16_t max_tx_op;
+} __packed; /* TLC_MNG_CONFIG_CMD_API_S_VER_4 */
 
 /**
  * @IWX_TLC_NOTIF_FLAG_RATE: last initial rate update
@@ -5233,7 +5274,8 @@ struct iwx_tlc_config_cmd {
  * @sta_id: station id
  * @reserved: reserved
  * @flags: bitmap of notifications reported
- * @rate: current initial rate
+ * @rate: current initial rate; using rate_n_flags version 1 if notification
+ *  version is < 3 at run-time, else rate_n_flags version 2
  * @amsdu_size: Max AMSDU size, in bytes
  * @amsdu_enabled: bitmap for per-TID AMSDU enablement
  */
