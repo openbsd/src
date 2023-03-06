@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mii.4,v 1.31 2023/03/05 03:17:04 jsg Exp $
+.\"	$OpenBSD: mii.4,v 1.32 2023/03/06 06:56:49 jmc Exp $
 .\"	$NetBSD: mii.4,v 1.1 1998/11/04 05:21:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 5 2023 $
+.Dd $Mdocdate: March 6 2023 $
 .Dt MII 4
 .Os
 .Sh NAME
@@ -96,47 +96,12 @@ hme0 at sbus0 slot 1 offset 0x8c00000 pri 7: address 08:00:20:22:86:b8 rev 34
 nsphy0 at hme0 phy 1: DP83840 10/100 PHY, rev. 1
 .Ed
 .Pp
+Supported media types for the PHY can be displayed or set using the
 .Xr ifconfig 8
-can be used to display the media types supported by the PHY.
-These media types are valid media keywords for use with the
-.Xr ifconfig 8
-program.
+.Cm media
+keyword.
 .Sh SEE ALSO
-.Xr acphy 4 ,
-.Xr amphy 4 ,
-.Xr atphy 4 ,
-.Xr bmtphy 4 ,
-.Xr brgphy 4 ,
-.Xr ciphy 4 ,
-.Xr dcphy 4 ,
-.Xr eephy 4 ,
-.Xr etphy 4 ,
-.Xr exphy 4 ,
-.Xr gentbi 4 ,
-.Xr icsphy 4 ,
 .Xr ifmedia 4 ,
-.Xr inphy 4 ,
 .Xr intro 4 ,
-.Xr iophy 4 ,
-.Xr ipgphy 4 ,
-.Xr jmphy 4 ,
-.Xr luphy 4 ,
-.Xr lxtphy 4 ,
-.Xr mtdphy 4 ,
 .Xr netintro 4 ,
-.Xr nsgphy 4 ,
-.Xr nsphy 4 ,
-.Xr nsphyter 4 ,
-.Xr qsphy 4 ,
-.Xr rdcphy 4 ,
-.Xr rgephy 4 ,
-.Xr rlphy 4 ,
-.Xr sqphy 4 ,
-.Xr tlphy 4 ,
-.Xr tqphy 4 ,
-.Xr txphy 4 ,
-.Xr ukphy 4 ,
-.Xr urlphy 4 ,
-.Xr xmphy 4 ,
-.Xr ytphy 4 ,
 .Xr ifconfig 8
