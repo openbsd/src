@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.65 2023/02/16 14:34:34 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.66 2023/03/06 21:00:41 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -186,15 +186,17 @@ out:
 
 /*
  * Parse X509v3 subject key identifier (SKI), RFC 6487 sec. 4.8.2.
- * Returns the SKI or NULL if it could not be parsed.
- * The SKI is formatted as a hex string.
+ * The SKI must be the SHA1 hash of the Subject Public Key.
+ * Returns the SKI formatted as hex string, or NULL if it couldn't be parsed.
  */
 int
 x509_get_ski(X509 *x, const char *fn, char **ski)
 {
-	const unsigned char	*d;
+	const unsigned char	*d, *spk;
 	ASN1_OCTET_STRING	*os;
-	int			 dsz, crit, rc = 0;
+	X509_PUBKEY		*pubkey;
+	unsigned char		 spkd[SHA_DIGEST_LENGTH];
+	int			 crit, dsz, spkz, rc = 0;
 
 	*ski = NULL;
 	os = X509_get_ext_d2i(x, NID_subject_key_identifier, &crit, NULL);
@@ -216,9 +218,28 @@ x509_get_ski(X509 *x, const char *fn, char **ski)
 		goto out;
 	}
 
+	if ((pubkey = X509_get_X509_PUBKEY(x)) == NULL) {
+		warnx("%s: X509_get_X509_PUBKEY", fn);
+		goto out;
+	}
+	if (!X509_PUBKEY_get0_param(NULL, &spk, &spkz, NULL, pubkey)) {
+		warnx("%s: X509_PUBKEY_get0_param", fn);
+		goto out;
+	}
+
+	if (!EVP_Digest(spk, spkz, spkd, NULL, EVP_sha1(), NULL)) {
+		warnx("%s: EVP_Digest failed", fn);
+		goto out;
+	}
+
+	if (memcmp(spkd, d, dsz) != 0) {
+		warnx("%s: SKI does not match SHA1 hash of SPK", fn);
+		goto out;
+	}
+
 	*ski = hex_encode(d, dsz);
 	rc = 1;
-out:
+ out:
 	ASN1_OCTET_STRING_free(os);
 	return rc;
 }
