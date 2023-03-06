@@ -1,4 +1,4 @@
-.\" $OpenBSD: RSA_get0_key.3,v 1.6 2019/07/13 17:26:38 schwarze Exp $
+.\" $OpenBSD: RSA_get0_key.3,v 1.7 2023/03/06 13:05:32 tb Exp $
 .\" selective merge up to: OpenSSL 665d899f Aug 2 02:19:43 2017 +0800
 .\"
 .\" This file is a derived work.
@@ -65,15 +65,23 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2019 $
+.Dd $Mdocdate: March 6 2023 $
 .Dt RSA_GET0_KEY 3
 .Os
 .Sh NAME
 .Nm RSA_get0_key ,
+.Nm RSA_get0_n ,
+.Nm RSA_get0_e ,
+.Nm RSA_get0_d ,
 .Nm RSA_set0_key ,
 .Nm RSA_get0_factors ,
+.Nm RSA_get0_p ,
+.Nm RSA_get0_q ,
 .Nm RSA_set0_factors ,
 .Nm RSA_get0_crt_params ,
+.Nm RSA_get0_dmp1 ,
+.Nm RSA_get0_dmq1 ,
+.Nm RSA_get0_iqmp ,
 .Nm RSA_set0_crt_params ,
 .Nm RSA_clear_flags ,
 .Nm RSA_test_flags ,
@@ -88,6 +96,18 @@
 .Fa "const BIGNUM **e"
 .Fa "const BIGNUM **d"
 .Fc
+.Ft "const BIGNUM *"
+.Fo RSA_get0_n
+.Fa "const RSA *r"
+.Fc
+.Ft "const BIGNUM *"
+.Fo RSA_get0_e
+.Fa "const RSA *r"
+.Fc
+.Ft "const BIGNUM *"
+.Fo RSA_get0_d
+.Fa "const RSA *r"
+.Fc
 .Ft int
 .Fo RSA_set0_key
 .Fa "RSA *r"
@@ -101,6 +121,14 @@
 .Fa "const BIGNUM **p"
 .Fa "const BIGNUM **q"
 .Fc
+.Ft "const BIGNUM *"
+.Fo RSA_get0_p
+.Fa "const RSA *r"
+.Fc
+.Ft "const BIGNUM *"
+.Fo RSA_get0_q
+.Fa "const RSA *r"
+.Fc
 .Ft int
 .Fo RSA_set0_factors
 .Fa "RSA *r"
@@ -113,6 +141,18 @@
 .Fa "const BIGNUM **dmp1"
 .Fa "const BIGNUM **dmq1"
 .Fa "const BIGNUM **iqmp"
+.Fc
+.Ft "const BIGNUM *"
+.Fo RSA_get0_dmp1
+.Fa "const RSA *r"
+.Fc
+.Ft "const BIGNUM *"
+.Fo RSA_get0_dmq1
+.Fa "const RSA *r"
+.Fc
+.Ft "const BIGNUM *"
+.Fo RSA_get0_iqmp
+.Fa "const RSA *r"
 .Fc
 .Ft int
 .Fo RSA_set0_crt_params
@@ -263,6 +303,31 @@ If needed, duplicate the received value using
 .Xr BN_dup 3
 and pass the duplicate.
 .Pp
+Any of the values
+.Fa n ,
+.Fa e ,
+.Fa d ,
+.Fa p ,
+.Fa q ,
+.Fa dmp1 ,
+.Fa dmq1 ,
+and
+.Fa iqmp
+can also be retrieved separately by the corresponding functions
+.Fn RSA_get0_n ,
+.Fn RSA_get0_e ,
+.Fn RSA_get0_d ,
+.Fn RSA_get0_p ,
+.Fn RSA_get0_q ,
+.Fn RSA_get0_dmp1 ,
+.Fn RSA_get0_dmq1 ,
+and
+.Fn RSA_get0_iqmp ,
+respectively.
+The pointers are owned by the
+.Vt RSA
+object.
+.Pp
 .Fn RSA_clear_flags
 clears the specified
 .Fa flags
@@ -338,6 +403,21 @@ and
 .Dv RSA_FLAG_THREAD_SAFE
 are defined for compatibility with existing code but have no effect.
 .Sh RETURN VALUES
+.Fn RSA_get0_n ,
+.Fn RSA_get0_e ,
+.Fn RSA_get0_d ,
+.Fn RSA_get0_p ,
+.Fn RSA_get0_q ,
+.Fn RSA_get0_dmp1 ,
+.Fn RSA_get0_dmq1 ,
+and
+.Fn RSA_get0_iqmp
+return a pointer owned by the
+.Vt RSA
+object if the corresponding value has been set,
+otherwise they return
+.Dv NULL .
+.Pp
 .Fn RSA_set0_key ,
 .Fn RSA_set0_factors ,
 and
@@ -359,6 +439,29 @@ are set.
 .Xr RSA_print 3 ,
 .Xr RSA_size 3
 .Sh HISTORY
-These functions first appeared in OpenSSL 1.1.0
+.Fn RSA_get0_key ,
+.Fn RSA_set0_key ,
+.Fn RSA_get0_factors ,
+.Fn RSA_set0_factors ,
+.Fn RSA_get0_crt_params ,
+.Fn RSA_set0_crt_params ,
+.Fn RSA_clear_flags ,
+.Fn RSA_test_flags ,
+and
+.Fn RSA_set_flags
+first appeared in OpenSSL 1.1.0
 and have been available since
 .Ox 6.3 .
+.Pp
+.Fn RSA_get0_n ,
+.Fn RSA_get0_e ,
+.Fn RSA_get0_d ,
+.Fn RSA_get0_p ,
+.Fn RSA_get0_q ,
+.Fn RSA_get0_dmp1 ,
+.Fn RSA_get0_dmq1 ,
+and
+.Fn RSA_get0_iqmp
+first appeared in OpenSSL 1.1.1
+and have been available since
+.Ox 7.1 .
