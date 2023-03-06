@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.28 2021/11/07 15:50:15 deraadt Exp $
+#	$OpenBSD: disktab,v 1.29 2023/03/06 18:12:47 krw Exp $
 
 mini34|gzip bsd.rd disk image 4.4.6875MB:\
 	:dt=rdroot:se#512:nt#1:ns#64:nc#160:\
@@ -36,11 +36,9 @@ floppy|floppy3|3in|3.5in High Density Floppy:\
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:dt=rdroot:se#512:nt#2:ns#140:nc#16:\
 	:pa#4480:oa#0:ta=4.2BSD:ba#4096:fa#512:\
-	:pb#0:ob#0:tb=swap:\
 	:pc#4480:oc#0:
 
 rdrootb|ramdiskroot|RAM-disk root FS image:\
 	:dt=rdroot:se#512:nt#2:ns#230:nc#16:\
 	:pa#7360:oa#0:ta=4.2BSD:ba#4096:fa#512:\
-	:pb#0:ob#0:tb=swap:\
 	:pc#7360:oc#0:
