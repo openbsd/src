@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.168 2023/03/06 11:37:14 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.169 2023/03/06 11:42:11 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -5552,7 +5552,7 @@ uint8_t
 iwx_get_vht_ctrl_pos(struct ieee80211com *ic, struct ieee80211_channel *chan)
 {
 	int center_idx = ic->ic_bss->ni_vht_chan_center_freq_idx0;
-	int primary_idx = ieee80211_chan2ieee(ic, ic->ic_bss->ni_chan);
+	int primary_idx = ic->ic_bss->ni_primary_chan;
 	/*
 	 * The FW is expected to check the control channel position only
 	 * when in HT/VHT and the channel width is not 20MHz. Return
