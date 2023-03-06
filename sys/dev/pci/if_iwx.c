@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.167 2023/03/06 11:33:57 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.168 2023/03/06 11:37:14 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8577,14 +8577,14 @@ iwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 	struct iwx_softc *sc = ic->ic_softc;
 	struct iwx_add_sta_key_cmd cmd;
 
-	if ((sc->sc_flags & IWX_FLAG_STA_ACTIVE) == 0)
-		return;
-
 	if (k->k_cipher != IEEE80211_CIPHER_CCMP) {
 		/* Fallback to software crypto for other ciphers. */
                 ieee80211_delete_key(ic, ni, k);
 		return;
 	}
+
+	if ((sc->sc_flags & IWX_FLAG_STA_ACTIVE) == 0)
+		return;
 
 	memset(&cmd, 0, sizeof(cmd));
 
