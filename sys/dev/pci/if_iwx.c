@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.165 2023/03/06 11:28:01 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.166 2023/03/06 11:30:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10133,6 +10133,10 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		}
 
 		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP, IWX_RLC_CONFIG_CMD):
+			break;
+
+		/* undocumented notification from iwx-ty-a0-gf-a0-77 image */
+		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP, 0xf8):
 			break;
 
 		case IWX_WIDE_ID(IWX_REGULATORY_AND_NVM_GROUP,
