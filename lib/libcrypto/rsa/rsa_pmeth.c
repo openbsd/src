@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.34 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.35 2023/03/06 08:31:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -326,12 +326,16 @@ pkey_rsa_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
 			return -1;
 		}
 	} else {
+		int ret;
+
 		if (!setup_tbuf(rctx, ctx))
 			return -1;
-		rslen = RSA_public_decrypt(siglen, sig, rctx->tbuf, rsa,
-		    rctx->pad_mode);
-		if (rslen == 0)
+
+		if ((ret = RSA_public_decrypt(siglen, sig, rctx->tbuf, rsa,
+		    rctx->pad_mode)) <= 0)
 			return 0;
+
+		rslen = ret;
 	}
 
 	if (rslen != tbslen || timingsafe_bcmp(tbs, rctx->tbuf, rslen))
