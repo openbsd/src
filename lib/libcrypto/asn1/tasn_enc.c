@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.28 2023/03/06 08:08:31 tb Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.29 2023/03/06 12:00:27 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -106,27 +106,28 @@ static int
 asn1_item_flags_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it,
     int flags)
 {
-	if (out && !*out) {
-		unsigned char *p, *buf;
-		int len, len2;
-		len = ASN1_item_ex_i2d(&val, NULL, it, -1, flags);
-		if (len <= 0)
-			return len;
-		buf = malloc(len);
-		if (!buf)
-			return -1;
-		p = buf;
-		len2 = ASN1_item_ex_i2d(&val, &p, it, -1, flags);
-		if (len2 != len) {
-			freezero(buf, len);
-			ASN1error(ASN1_R_LENGTH_ERROR);
-			return -1;
-		}
-		*out = buf;
+	unsigned char *p, *buf;
+	int len;
+
+	if (out == NULL || *out != NULL)
+		return ASN1_item_ex_i2d(&val, out, it, -1, flags);
+
+	if ((len = ASN1_item_ex_i2d(&val, NULL, it, -1, flags)) <= 0)
 		return len;
+
+	if ((buf = calloc(1, len)) == NULL)
+		return -1;
+
+	p = buf;
+	if (ASN1_item_ex_i2d(&val, &p, it, -1, flags) != len) {
+		freezero(buf, len);
+		ASN1error(ASN1_R_LENGTH_ERROR);
+		return -1;
 	}
 
-	return ASN1_item_ex_i2d(&val, out, it, -1, flags);
+	*out = buf;
+
+	return len;
 }
 
 /* Encode an item, taking care of IMPLICIT tagging (if any).
