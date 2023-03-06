@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.164 2023/03/06 11:21:24 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.165 2023/03/06 11:28:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7436,14 +7436,16 @@ iwx_mac_ctxt_cmd_fill_sta(struct iwx_softc *sc, struct iwx_node *in,
 	tsf = letoh64(tsf);
 
 	sta->is_assoc = htole32(assoc);
-	sta->dtim_time = htole32(ni->ni_rstamp + dtim_off);
-	sta->dtim_tsf = htole64(tsf + dtim_off);
+	if (assoc) {
+		sta->dtim_time = htole32(ni->ni_rstamp + dtim_off);
+		sta->dtim_tsf = htole64(tsf + dtim_off);
+		sta->assoc_beacon_arrive_time = htole32(ni->ni_rstamp);
+	}
 	sta->bi = htole32(ni->ni_intval);
 	sta->dtim_interval = htole32(ni->ni_intval * ni->ni_dtimperiod);
 	sta->data_policy = htole32(0);
 	sta->listen_interval = htole32(10);
 	sta->assoc_id = htole32(ni->ni_associd);
-	sta->assoc_beacon_arrive_time = htole32(ni->ni_rstamp);
 }
 
 int
@@ -7476,15 +7478,14 @@ iwx_mac_ctxt_cmd(struct iwx_softc *sc, struct iwx_node *in, uint32_t action,
 		    IWX_MAC_FILTER_IN_BEACON |
 		    IWX_MAC_FILTER_IN_PROBE_REQUEST |
 		    IWX_MAC_FILTER_IN_CRC32);
-	} else if (!assoc || !ni->ni_associd || !ni->ni_dtimperiod)
+	} else if (!assoc || !ni->ni_associd || !ni->ni_dtimperiod) {
 		/* 
 		 * Allow beacons to pass through as long as we are not
 		 * associated or we do not have dtim period information.
 		 */
 		cmd.filter_flags |= htole32(IWX_MAC_FILTER_IN_BEACON);
-	else
-		iwx_mac_ctxt_cmd_fill_sta(sc, in, &cmd.sta, assoc);
-
+	}
+	iwx_mac_ctxt_cmd_fill_sta(sc, in, &cmd.sta, assoc);
 	return iwx_send_cmd_pdu(sc, IWX_MAC_CONTEXT_CMD, 0, sizeof(cmd), &cmd);
 }
 
