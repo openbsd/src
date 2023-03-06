@@ -1,4 +1,4 @@
-.\" $OpenBSD: DH_get0_pqg.3,v 1.6 2022/07/13 21:51:35 schwarze Exp $
+.\" $OpenBSD: DH_get0_pqg.3,v 1.7 2023/03/06 13:25:46 tb Exp $
 .\" selective merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,13 +48,18 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 13 2022 $
+.Dd $Mdocdate: March 6 2023 $
 .Dt DH_GET0_PQG 3
 .Os
 .Sh NAME
 .Nm DH_get0_pqg ,
+.Nm DH_get0_p ,
+.Nm DH_get0_q ,
+.Nm DH_get0_g ,
 .Nm DH_set0_pqg ,
 .Nm DH_get0_key ,
+.Nm DH_get0_pub_key ,
+.Nm DH_get0_priv_key ,
 .Nm DH_set0_key ,
 .Nm DH_clear_flags ,
 .Nm DH_test_flags ,
@@ -71,6 +76,18 @@
 .Fa "const BIGNUM **q"
 .Fa "const BIGNUM **g"
 .Fc
+.Ft "const BIGNUM *"
+.Fo DH_get0_p
+.Fa "const DH *dh"
+.Fc
+.Ft "const BIGNUM *"
+.Fo DH_get0_q
+.Fa "const DH *dh"
+.Fc
+.Ft "const BIGNUM *"
+.Fo DH_get0_g
+.Fa "const DH *dh"
+.Fc
 .Ft int
 .Fo DH_set0_pqg
 .Fa "DH *dh"
@@ -83,6 +100,14 @@
 .Fa "const DH *dh"
 .Fa "const BIGNUM **pub_key"
 .Fa "const BIGNUM **priv_key"
+.Fc
+.Ft "const BIGNUM *"
+.Fo DH_get0_pub_key
+.Fa "const DH *dh"
+.Fc
+.Ft "const BIGNUM *"
+.Fo DH_get0_priv_key
+.Fa "const DH *dh"
 .Fc
 .Ft int
 .Fo DH_set0_key
@@ -211,6 +236,25 @@ If needed, duplicate the received values using
 .Xr BN_dup 3
 and pass the duplicates.
 .Pp
+Any of the values
+.Fa p ,
+.Fa q ,
+.Fa g ,
+.Fa pub_key ,
+and
+.Fa priv_key
+can also be retrieved separately by the corresponding functions
+.Fn DH_get0_p ,
+.Fn DH_get0_q ,
+.Fn DH_get0_g ,
+.Fn DH_get0_pub_key ,
+and
+.Fn DH_get0_priv_key ,
+respectively.
+The pointers are owned by the
+.Vt DH
+object.
+.Pp
 .Fn DH_clear_flags
 clears the specified
 .Fa flags
@@ -236,6 +280,17 @@ sets the optional length attribute of
 indicating the length of the secret exponent (private key) in bits.
 If the length attribute is non-zero, it is used, otherwise it is ignored.
 .Sh RETURN VALUES
++.Fn DH_get0_p ,
++.Fn DH_get0_q ,
++.Fn DH_get0_g ,
++.Fn DH_get0_pub_key ,
++and
++.Fn DH_get0_priv_key ,
++return a pointer owned by the
++.Vt DH
++object if the corresponding value has been set,
++otherwise they return
++.Dv NULL .
 .Fn DH_set0_pqg ,
 .Fn DH_set0_key ,
 and
@@ -269,6 +324,26 @@ if no engine was set for this object.
 .Xr DH_size 3 ,
 .Xr DHparams_print 3
 .Sh HISTORY
-These functions first appeared in OpenSSL 1.1.0
+.Fn DH_get0_pqg ,
+.Fn DH_set0_pqg ,
+.Fn DH_get0_key ,
+.Fn DH_set0_key ,
+.Fn DH_clear_flags ,
+.Fn DH_test_flags ,
+.Fn DH_set_flags ,
+.Fn DH_get0_engine ,
+and
+.Fn DH_set_length
+first appeared in OpenSSL 1.1.0
 and have been available since
 .Ox 6.3 .
+.Pp
+.Fn DH_get0_p ,
+.Fn DH_get0_q ,
+.Fn DH_get0_g ,
+.Fn DH_get0_pub_key ,
+and
+.Fn DH_get0_priv_key
+first appeared in OpenSSL 1.1.1
+and have been available since
+.Ox 7.1 .
