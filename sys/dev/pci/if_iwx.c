@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.162 2023/03/06 11:08:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.163 2023/03/06 11:18:37 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -447,6 +447,7 @@ void	iwx_bgscan_done_task(void *);
 int	iwx_umac_scan_abort(struct iwx_softc *);
 int	iwx_scan_abort(struct iwx_softc *);
 int	iwx_enable_mgmt_queue(struct iwx_softc *);
+int	iwx_disable_mgmt_queue(struct iwx_softc *);
 int	iwx_rs_rval2idx(uint8_t);
 uint16_t iwx_rs_ht_rates(struct iwx_softc *, struct ieee80211_node *, int);
 uint16_t iwx_rs_vht_rates(struct iwx_softc *, struct ieee80211_node *, int);
@@ -2815,31 +2816,52 @@ int
 iwx_enable_txq(struct iwx_softc *sc, int sta_id, int qid, int tid,
     int num_slots)
 {
-	struct iwx_tx_queue_cfg_cmd cmd;
 	struct iwx_rx_packet *pkt;
 	struct iwx_tx_queue_cfg_rsp *resp;
+	struct iwx_tx_queue_cfg_cmd cmd_v0;
+	struct iwx_scd_queue_cfg_cmd cmd_v3;
 	struct iwx_host_cmd hcmd = {
-		.id = IWX_SCD_QUEUE_CFG,
 		.flags = IWX_CMD_WANT_RESP,
 		.resp_pkt_len = sizeof(*pkt) + sizeof(*resp),
 	};
 	struct iwx_tx_ring *ring = &sc->txq[qid];
-	int err, fwqid;
+	int err, fwqid, cmd_ver;
 	uint32_t wr_idx;
 	size_t resp_len;
 
 	iwx_reset_tx_ring(sc, ring);
 
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.sta_id = sta_id;
-	cmd.tid = tid;
-	cmd.flags = htole16(IWX_TX_QUEUE_CFG_ENABLE_QUEUE);
-	cmd.cb_size = htole32(IWX_TFD_QUEUE_CB_SIZE(num_slots));
-	cmd.byte_cnt_addr = htole64(ring->bc_tbl.paddr);
-	cmd.tfdq_addr = htole64(ring->desc_dma.paddr);
-
-	hcmd.data[0] = &cmd;
-	hcmd.len[0] = sizeof(cmd);
+	cmd_ver = iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_SCD_QUEUE_CONFIG_CMD);
+	if (cmd_ver == 0 || cmd_ver == IWX_FW_CMD_VER_UNKNOWN) {
+		memset(&cmd_v0, 0, sizeof(cmd_v0));
+		cmd_v0.sta_id = sta_id;
+		cmd_v0.tid = tid;
+		cmd_v0.flags = htole16(IWX_TX_QUEUE_CFG_ENABLE_QUEUE);
+		cmd_v0.cb_size = htole32(IWX_TFD_QUEUE_CB_SIZE(num_slots));
+		cmd_v0.byte_cnt_addr = htole64(ring->bc_tbl.paddr);
+		cmd_v0.tfdq_addr = htole64(ring->desc_dma.paddr);
+		hcmd.id = IWX_SCD_QUEUE_CFG;
+		hcmd.data[0] = &cmd_v0;
+		hcmd.len[0] = sizeof(cmd_v0);
+	} else if (cmd_ver == 3) {
+		memset(&cmd_v3, 0, sizeof(cmd_v3));
+		cmd_v3.operation = htole32(IWX_SCD_QUEUE_ADD);
+		cmd_v3.u.add.tfdq_dram_addr = htole64(ring->desc_dma.paddr);
+		cmd_v3.u.add.bc_dram_addr = htole64(ring->bc_tbl.paddr);
+		cmd_v3.u.add.cb_size = htole32(IWX_TFD_QUEUE_CB_SIZE(num_slots));
+		cmd_v3.u.add.flags = htole32(0);
+		cmd_v3.u.add.sta_mask = htole32(1 << sta_id);
+		cmd_v3.u.add.tid = tid;
+		hcmd.id = IWX_WIDE_ID(IWX_DATA_PATH_GROUP,
+		    IWX_SCD_QUEUE_CONFIG_CMD);
+		hcmd.data[0] = &cmd_v3;
+		hcmd.len[0] = sizeof(cmd_v3);
+	} else {
+		printf("%s: unsupported SCD_QUEUE_CFG command version %d\n",
+		    DEVNAME(sc), cmd_ver);
+		return ENOTSUP;
+	}
 
 	err = iwx_send_cmd(sc, &hcmd);
 	if (err)
@@ -2847,14 +2869,12 @@ iwx_enable_txq(struct iwx_softc *sc, int sta_id, int qid, int tid,
 
 	pkt = hcmd.resp_pkt;
 	if (!pkt || (pkt->hdr.flags & IWX_CMD_FAILED_MSK)) {
-		DPRINTF(("SCD_QUEUE_CFG command failed\n"));
 		err = EIO;
 		goto out;
 	}
 
 	resp_len = iwx_rx_packet_payload_len(pkt);
 	if (resp_len != sizeof(*resp)) {
-		DPRINTF(("SCD_QUEUE_CFG returned %zu bytes, expected %zu bytes\n", resp_len, sizeof(*resp)));
 		err = EIO;
 		goto out;
 	}
@@ -2865,14 +2885,11 @@ iwx_enable_txq(struct iwx_softc *sc, int sta_id, int qid, int tid,
 
 	/* Unlike iwlwifi, we do not support dynamic queue ID assignment. */
 	if (fwqid != qid) {
-		DPRINTF(("requested qid %d but %d was assigned\n", qid, fwqid));
 		err = EIO;
 		goto out;
 	}
 
 	if (wr_idx != ring->cur_hw) {
-		DPRINTF(("fw write index is %d but ring is %d\n",
-		    wr_idx, ring->cur_hw));
 		err = EIO;
 		goto out;
 	}
@@ -2887,27 +2904,44 @@ out:
 int
 iwx_disable_txq(struct iwx_softc *sc, int sta_id, int qid, uint8_t tid)
 {
-	struct iwx_tx_queue_cfg_cmd cmd;
 	struct iwx_rx_packet *pkt;
 	struct iwx_tx_queue_cfg_rsp *resp;
+	struct iwx_tx_queue_cfg_cmd cmd_v0;
+	struct iwx_scd_queue_cfg_cmd cmd_v3;
 	struct iwx_host_cmd hcmd = {
-		.id = IWX_SCD_QUEUE_CFG,
 		.flags = IWX_CMD_WANT_RESP,
 		.resp_pkt_len = sizeof(*pkt) + sizeof(*resp),
 	};
 	struct iwx_tx_ring *ring = &sc->txq[qid];
-	int err;
+	int err, cmd_ver;
 
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.sta_id = sta_id;
-	cmd.tid = tid;
-	cmd.flags = htole16(0); /* clear "queue enabled" flag */
-	cmd.cb_size = htole32(0);
-	cmd.byte_cnt_addr = htole64(0);
-	cmd.tfdq_addr = htole64(0);
-
-	hcmd.data[0] = &cmd;
-	hcmd.len[0] = sizeof(cmd);
+	cmd_ver = iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_SCD_QUEUE_CONFIG_CMD);
+	if (cmd_ver == 0 || cmd_ver == IWX_FW_CMD_VER_UNKNOWN) {
+		memset(&cmd_v0, 0, sizeof(cmd_v0));
+		cmd_v0.sta_id = sta_id;
+		cmd_v0.tid = tid;
+		cmd_v0.flags = htole16(0); /* clear "queue enabled" flag */
+		cmd_v0.cb_size = htole32(0);
+		cmd_v0.byte_cnt_addr = htole64(0);
+		cmd_v0.tfdq_addr = htole64(0);
+		hcmd.id = IWX_SCD_QUEUE_CFG,
+		hcmd.data[0] = &cmd_v0;
+		hcmd.len[0] = sizeof(cmd_v0);
+	} else if (cmd_ver == 3) {
+		memset(&cmd_v3, 0, sizeof(cmd_v3));
+		cmd_v3.operation = htole32(IWX_SCD_QUEUE_REMOVE);
+		cmd_v3.u.remove.sta_mask = htole32(1 << sta_id);
+		cmd_v3.u.remove.tid = tid;
+		hcmd.id = IWX_WIDE_ID(IWX_DATA_PATH_GROUP,
+		    IWX_SCD_QUEUE_CONFIG_CMD);
+		hcmd.data[0] = &cmd_v3;
+		hcmd.len[0] = sizeof(cmd_v3);
+	} else {
+		printf("%s: unsupported SCD_QUEUE_CFG command version %d\n",
+		    DEVNAME(sc), cmd_ver);
+		return ENOTSUP;
+	}
 
 	err = iwx_send_cmd(sc, &hcmd);
 	if (err)
@@ -2915,7 +2949,6 @@ iwx_disable_txq(struct iwx_softc *sc, int sta_id, int qid, uint8_t tid)
 
 	pkt = hcmd.resp_pkt;
 	if (!pkt || (pkt->hdr.flags & IWX_CMD_FAILED_MSK)) {
-		DPRINTF(("SCD_QUEUE_CFG command failed\n"));
 		err = EIO;
 		goto out;
 	}
@@ -6757,7 +6790,7 @@ iwx_rm_sta(struct iwx_softc *sc, struct iwx_node *in)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni = &in->in_ni;
-	int err, i;
+	int err, i, cmd_ver;
 
 	err = iwx_flush_sta(sc, in);
 	if (err) {
@@ -6765,6 +6798,33 @@ iwx_rm_sta(struct iwx_softc *sc, struct iwx_node *in)
 		    DEVNAME(sc), err);
 		return err;
 	}
+
+	/*
+	 * New SCD_QUEUE_CONFIG API requires explicit queue removal
+	 * before a station gets removed.
+	 */
+	cmd_ver = iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_SCD_QUEUE_CONFIG_CMD);
+	if (cmd_ver != 0 && cmd_ver != IWX_FW_CMD_VER_UNKNOWN) {
+		err = iwx_disable_mgmt_queue(sc);
+		if (err)
+			return err;
+		for (i = IWX_FIRST_AGG_TX_QUEUE;
+		    i < IWX_LAST_AGG_TX_QUEUE; i++) {
+			struct iwx_tx_ring *ring = &sc->txq[i];
+			if ((sc->qenablemsk & (1 << i)) == 0)
+				continue;
+			err = iwx_disable_txq(sc, IWX_STATION_ID,
+			    ring->qid, ring->tid);
+			if (err) {
+				printf("%s: could not disable Tx queue %d "
+				    "(error %d)\n", DEVNAME(sc), ring->qid,
+				    err);
+				return err;
+			}
+		}
+	}
+
 	err = iwx_rm_sta_cmd(sc, in);
 	if (err) {
 		printf("%s: could not remove STA (error %d)\n",
@@ -7653,6 +7713,30 @@ iwx_enable_mgmt_queue(struct iwx_softc *sc)
 }
 
 int
+iwx_disable_mgmt_queue(struct iwx_softc *sc)
+{
+	int err, cmd_ver;
+
+	/* Explicit removal is only required with old SCD_QUEUE_CFG command. */
+	cmd_ver = iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_SCD_QUEUE_CONFIG_CMD);
+	if (cmd_ver == 0 || cmd_ver == IWX_FW_CMD_VER_UNKNOWN)
+		return 0;
+
+	sc->first_data_qid = IWX_DQA_CMD_QUEUE + 1;
+
+	err = iwx_disable_txq(sc, IWX_STATION_ID, sc->first_data_qid,
+	    IWX_MGMT_TID);
+	if (err) {
+		printf("%s: could not disable Tx queue %d (error %d)\n",
+		    DEVNAME(sc), sc->first_data_qid, err);
+		return err;
+	}
+
+	return 0;
+}
+
+int
 iwx_rs_rval2idx(uint8_t rval)
 {
 	/* Firmware expects indices which match our 11g rate set. */
@@ -8092,7 +8176,7 @@ iwx_auth(struct iwx_softc *sc)
 
 	err = iwx_clear_statistics(sc);
 	if (err)
-		goto rm_sta;
+		goto rm_mgmt_queue;
 
 	/*
 	 * Prevent the FW from wandering off channel during association
@@ -8103,6 +8187,9 @@ iwx_auth(struct iwx_softc *sc)
 	else
 		duration = IEEE80211_DUR_TU; 
 	return iwx_schedule_session_protection(sc, in, duration);
+rm_mgmt_queue:
+	if (generation == sc->sc_generation)
+		iwx_disable_mgmt_queue(sc);
 rm_sta:
 	if (generation == sc->sc_generation) {
 		iwx_rm_sta_cmd(sc, in);
@@ -9880,6 +9967,8 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			break;
 		}
 
+		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP,
+		    IWX_SCD_QUEUE_CONFIG_CMD):
 		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP,
 		    IWX_RX_BAID_ALLOCATION_CONFIG_CMD):
 		case IWX_WIDE_ID(IWX_MAC_CONF_GROUP,

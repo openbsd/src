@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.50 2023/03/06 11:08:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.51 2023/03/06 11:18:37 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -2008,6 +2008,7 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_RLC_CONFIG_CMD	0x08
 #define IWX_TLC_MNG_CONFIG_CMD	0x0f
 #define IWX_RX_BAID_ALLOCATION_CONFIG_CMD	0x16
+#define IWX_SCD_QUEUE_CONFIG_CMD	0x17
 #define IWX_RX_NO_DATA_NOTIF	0xf5
 #define IWX_TLC_MNG_UPDATE_NOTIF 0xf7
 
@@ -5427,6 +5428,57 @@ struct iwx_rx_baid_cfg_cmd {
 struct iwx_rx_baid_cfg_resp {
 	uint32_t baid;
 }; /* RX_BAID_ALLOCATION_RESPONSE_API_S_VER_1 */
+
+/**
+ * scheduler queue operation
+ * @IWX_SCD_QUEUE_ADD: allocate a new queue
+ * @IWX_SCD_QUEUE_REMOVE: remove a queue
+ * @IWX_SCD_QUEUE_MODIFY: modify a queue
+ */
+#define IWX_SCD_QUEUE_ADD	0
+#define IWX_SCD_QUEUE_REMOVE	1
+#define IWX_SCD_QUEUE_MODIFY	2
+
+/**
+ * struct iwx_scd_queue_cfg_cmd - scheduler queue allocation command
+ * @operation: the operation, see &enum iwl_scd_queue_cfg_operation
+ * @u.add.sta_mask: station mask
+ * @u.add.tid: TID
+ * @u.add.reserved: reserved
+ * @u.add.flags: flags from &enum iwl_tx_queue_cfg_actions, except
+ *	%TX_QUEUE_CFG_ENABLE_QUEUE is not valid
+ * @u.add.cb_size: size code
+ * @u.add.bc_dram_addr: byte-count table IOVA
+ * @u.add.tfdq_dram_addr: TFD queue IOVA
+ * @u.remove.sta_mask: station mask of queue to remove
+ * @u.remove.tid: TID of queue to remove
+ * @u.modify.old_sta_mask: old station mask for modify
+ * @u.modify.tid: TID of queue to modify
+ * @u.modify.new_sta_mask: new station mask for modify
+ */
+struct iwx_scd_queue_cfg_cmd {
+	uint32_t operation;
+	union {
+		struct {
+			uint32_t sta_mask;
+			uint8_t tid;
+			uint8_t reserved[3];
+			uint32_t flags;
+			uint32_t cb_size;
+			uint64_t bc_dram_addr;
+			uint64_t tfdq_dram_addr;
+		} __packed add; /* TX_QUEUE_CFG_CMD_ADD_API_S_VER_1 */
+		struct {
+			uint32_t sta_mask;
+			uint32_t tid;
+		} __packed remove; /* TX_QUEUE_CFG_CMD_REMOVE_API_S_VER_1 */
+		struct {
+			uint32_t old_sta_mask;
+			uint32_t tid;
+			uint32_t new_sta_mask;
+		} __packed modify; /* TX_QUEUE_CFG_CMD_MODIFY_API_S_VER_1 */
+	} __packed u; /* TX_QUEUE_CFG_CMD_OPERATION_API_U_VER_1 */
+} __packed; /* TX_QUEUE_CFG_CMD_API_S_VER_3 */
 
 /**
  * Options for TLC config flags
