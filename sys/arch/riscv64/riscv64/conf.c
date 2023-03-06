@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.16 2023/01/24 13:29:51 jca Exp $	*/
+/*	$OpenBSD: conf.c,v 1.17 2023/03/06 17:20:06 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -253,7 +253,7 @@ int
 iskmemdev(dev_t dev)
 {
 
-	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
+	return (major(dev) == mem_no && minor(dev) < 2);
 }
 
 /*

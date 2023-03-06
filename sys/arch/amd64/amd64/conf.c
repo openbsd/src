@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.77 2023/01/14 12:11:10 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.78 2023/03/06 17:20:05 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -313,7 +313,7 @@ int
 iskmemdev(dev_t dev)
 {
 
-	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
+	return (major(dev) == mem_no && minor(dev) < 2);
 }
 
 /*

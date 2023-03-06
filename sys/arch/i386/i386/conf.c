@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.175 2023/01/30 10:49:04 jsg Exp $	*/
+/*	$OpenBSD: conf.c,v 1.176 2023/03/06 17:20:06 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -309,7 +309,7 @@ dev_t	swapdev = makedev(1, 0);
 int
 iskmemdev(dev_t dev)
 {
-	return (major(dev) == mem_no && (minor(dev) < 2 || minor(dev) == 14));
+	return (major(dev) == mem_no && minor(dev) < 2);
 }
 
 /*
