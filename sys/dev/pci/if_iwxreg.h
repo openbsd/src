@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.47 2023/03/06 10:52:16 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.48 2023/03/06 11:00:41 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -4305,14 +4305,32 @@ struct iwx_mac_data_ibss {
 } __packed; /* IBSS_MAC_DATA_API_S_VER_1 */
 
 /**
+ * enum iwx_mac_data_policy - policy of the data path for this MAC
+ * @TWT_SUPPORTED: twt is supported
+ * @MORE_DATA_ACK_SUPPORTED: AP supports More Data Ack according to
+ *	paragraph 9.4.1.17 in P802.11ax_D4 specification. Used for TWT
+ *	early termination detection.
+ * @FLEXIBLE_TWT_SUPPORTED: AP supports flexible TWT schedule
+ * @PROTECTED_TWT_SUPPORTED: AP supports protected TWT frames (with 11w)
+ * @BROADCAST_TWT_SUPPORTED: AP and STA support broadcast TWT
+ * @COEX_HIGH_PRIORITY_ENABLE: high priority mode for BT coex, to be used
+ *	during 802.1X negotiation (and allowed during 4-way-HS)
+ */
+#define IWX_TWT_SUPPORTED BIT		(1 << 0)
+#define IWX_MORE_DATA_ACK_SUPPORTED	(1 << 1)
+#define	IWX_FLEXIBLE_TWT_SUPPORTED	(1 << 2)
+#define IWX_PROTECTED_TWT_SUPPORTED	(1 << 3)
+#define IWX_BROADCAST_TWT_SUPPORTED	(1 << 4)
+#define IWX_COEX_HIGH_PRIORITY_ENABLE	(1 << 5)
+
+/**
  * struct iwx_mac_data_sta - configuration data for station MAC context
  * @is_assoc: 1 for associated state, 0 otherwise
  * @dtim_time: DTIM arrival time in system time
  * @dtim_tsf: DTIM arrival time in TSF
  * @bi: beacon interval in TU, applicable only when associated
- * @bi_reciprocal: 2^32 / bi , applicable only when associated
+ * @data_policy: see &enum iwl_mac_data_policy
  * @dtim_interval: DTIM interval in TU, applicable only when associated
- * @dtim_reciprocal: 2^32 / dtim_interval , applicable only when associated
  * @listen_interval: in beacon intervals, applicable only when associated
  * @assoc_id: unique ID assigned by the AP during association
  */
@@ -4321,13 +4339,13 @@ struct iwx_mac_data_sta {
 	uint32_t dtim_time;
 	uint64_t dtim_tsf;
 	uint32_t bi;
-	uint32_t bi_reciprocal;
+	uint32_t reserved1;
 	uint32_t dtim_interval;
-	uint32_t dtim_reciprocal;
+	uint32_t data_policy;
 	uint32_t listen_interval;
 	uint32_t assoc_id;
 	uint32_t assoc_beacon_arrive_time;
-} __packed; /* IWX_STA_MAC_DATA_API_S_VER_1 */
+} __packed; /* IWX_STA_MAC_DATA_API_S_VER_2 */
 
 /**
  * struct iwx_mac_data_go - configuration data for P2P GO MAC context

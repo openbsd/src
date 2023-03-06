@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.159 2023/03/06 10:52:16 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.160 2023/03/06 11:00:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7294,9 +7294,8 @@ iwx_mac_ctxt_cmd_fill_sta(struct iwx_softc *sc, struct iwx_node *in,
 	sta->dtim_time = htole32(ni->ni_rstamp + dtim_off);
 	sta->dtim_tsf = htole64(tsf + dtim_off);
 	sta->bi = htole32(ni->ni_intval);
-	sta->bi_reciprocal = htole32(iwx_reciprocal(ni->ni_intval));
 	sta->dtim_interval = htole32(ni->ni_intval * ni->ni_dtimperiod);
-	sta->dtim_reciprocal = htole32(iwx_reciprocal(sta->dtim_interval));
+	sta->data_policy = htole32(0);
 	sta->listen_interval = htole32(10);
 	sta->assoc_id = htole32(ni->ni_associd);
 	sta->assoc_beacon_arrive_time = htole32(ni->ni_rstamp);
