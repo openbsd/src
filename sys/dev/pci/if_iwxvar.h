@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.39 2023/03/06 10:48:05 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.40 2023/03/06 11:08:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -758,7 +758,6 @@ struct iwx_softc {
 
 	struct iwx_rx_phy_info sc_last_phy_info;
 	int sc_ampdu_ref;
-#define IWX_MAX_BAID	32
 	struct iwx_rxba_data sc_rxba_data[IWX_MAX_BAID];
 
 	uint32_t sc_time_event_uid;

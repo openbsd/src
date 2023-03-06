@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.161 2023/03/06 11:03:29 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.162 2023/03/06 11:08:56 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -3317,25 +3317,84 @@ iwx_reorder_timer_expired(void *arg)
 
 #define IWX_MAX_RX_BA_SESSIONS 16
 
-void
-iwx_sta_rx_agg(struct iwx_softc *sc, struct ieee80211_node *ni, uint8_t tid,
-    uint16_t ssn, uint16_t winsize, int timeout_val, int start)
+struct iwx_rxba_data *
+iwx_find_rxba_data(struct iwx_softc *sc, uint8_t tid)
 {
-	struct ieee80211com *ic = &sc->sc_ic;
+	int i;
+
+	for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
+		if (sc->sc_rxba_data[i].baid ==
+		    IWX_RX_REORDER_DATA_INVALID_BAID)
+			continue;
+		if (sc->sc_rxba_data[i].tid == tid)
+			return &sc->sc_rxba_data[i];
+	}
+
+	return NULL;
+}
+
+int
+iwx_sta_rx_agg_baid_cfg_cmd(struct iwx_softc *sc, struct ieee80211_node *ni,
+    uint8_t tid, uint16_t ssn, uint16_t winsize, int timeout_val, int start,
+    uint8_t *baid)
+{
+	struct iwx_rx_baid_cfg_cmd cmd;
+	uint32_t new_baid = 0;
+	int err;
+
+	splassert(IPL_NET);
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	if (start) {
+		cmd.action = IWX_RX_BAID_ACTION_ADD;
+		cmd.alloc.sta_id_mask = htole32(1 << IWX_STATION_ID);
+		cmd.alloc.tid = tid;
+		cmd.alloc.ssn = htole16(ssn);
+		cmd.alloc.win_size = htole16(winsize);
+	} else {
+		struct iwx_rxba_data *rxba;
+
+		rxba = iwx_find_rxba_data(sc, tid);
+		if (rxba == NULL)
+			return ENOENT;
+		*baid = rxba->baid;
+
+		cmd.action = IWX_RX_BAID_ACTION_REMOVE;
+		if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+		    IWX_RX_BAID_ALLOCATION_CONFIG_CMD) == 1) {
+			cmd.remove_v1.baid = rxba->baid;
+		} else {
+			cmd.remove.sta_id_mask = htole32(1 << IWX_STATION_ID);
+			cmd.remove.tid = tid;
+		}
+	}
+
+	err = iwx_send_cmd_pdu_status(sc, IWX_WIDE_ID(IWX_DATA_PATH_GROUP,
+	    IWX_RX_BAID_ALLOCATION_CONFIG_CMD), sizeof(cmd), &cmd, &new_baid);
+	if (err)
+		return err;
+
+	if (start) {
+		if (new_baid >= nitems(sc->sc_rxba_data))
+			return ERANGE;
+		*baid = new_baid;
+	}
+
+	return 0;
+}
+
+int
+iwx_sta_rx_agg_sta_cmd(struct iwx_softc *sc, struct ieee80211_node *ni,
+    uint8_t tid, uint16_t ssn, uint16_t winsize, int timeout_val, int start,
+    uint8_t *baid)
+{
 	struct iwx_add_sta_cmd cmd;
 	struct iwx_node *in = (void *)ni;
-	int err, s;
+	int err;
 	uint32_t status;
-	struct iwx_rxba_data *rxba = NULL;
-	uint8_t baid = 0;
- 
-	s = splnet();
 
-	if (start && sc->sc_rx_ba_sessions >= IWX_MAX_RX_BA_SESSIONS) {
-		ieee80211_addba_req_refuse(ic, ni, tid);
-		splx(s);
-		return;
-	}
+	splassert(IPL_NET);
 
 	memset(&cmd, 0, sizeof(cmd));
 
@@ -3349,6 +3408,13 @@ iwx_sta_rx_agg(struct iwx_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 		cmd.add_immediate_ba_ssn = htole16(ssn);
 		cmd.rx_ba_window = htole16(winsize);
 	} else {
+		struct iwx_rxba_data *rxba;
+
+		rxba = iwx_find_rxba_data(sc, tid);
+		if (rxba == NULL)
+			return ENOENT;
+		*baid = rxba->baid;
+
 		cmd.remove_immediate_ba_tid = (uint8_t)tid;
 	}
 	cmd.modify_mask = start ? IWX_STA_MODIFY_ADD_BA_TID :
@@ -3357,30 +3423,60 @@ iwx_sta_rx_agg(struct iwx_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 	status = IWX_ADD_STA_SUCCESS;
 	err = iwx_send_cmd_pdu_status(sc, IWX_ADD_STA, sizeof(cmd), &cmd,
 	    &status);
+	if (err)
+		return err;
 
-	if (err || (status & IWX_ADD_STA_STATUS_MASK) != IWX_ADD_STA_SUCCESS) {
-		if (start)
-			ieee80211_addba_req_refuse(ic, ni, tid);
+	if ((status & IWX_ADD_STA_STATUS_MASK) != IWX_ADD_STA_SUCCESS)
+		return EIO;
+
+	if (!(status & IWX_ADD_STA_BAID_VALID_MASK))
+		return EINVAL;
+
+	if (start) {
+		*baid = (status & IWX_ADD_STA_BAID_MASK) >>
+		    IWX_ADD_STA_BAID_SHIFT;
+		if (*baid == IWX_RX_REORDER_DATA_INVALID_BAID ||
+		    *baid >= nitems(sc->sc_rxba_data))
+			return ERANGE;
+	}
+
+	return 0;
+}
+
+void
+iwx_sta_rx_agg(struct iwx_softc *sc, struct ieee80211_node *ni, uint8_t tid,
+    uint16_t ssn, uint16_t winsize, int timeout_val, int start)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	int err, s;
+	struct iwx_rxba_data *rxba = NULL;
+	uint8_t baid = 0;
+
+	s = splnet();
+
+	if (start && sc->sc_rx_ba_sessions >= IWX_MAX_RX_BA_SESSIONS) {
+		ieee80211_addba_req_refuse(ic, ni, tid);
 		splx(s);
 		return;
 	}
 
+	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_BAID_ML_SUPPORT)) {
+		err = iwx_sta_rx_agg_baid_cfg_cmd(sc, ni, tid, ssn, winsize,
+		    timeout_val, start, &baid);
+	} else {
+		err = iwx_sta_rx_agg_sta_cmd(sc, ni, tid, ssn, winsize,
+		    timeout_val, start, &baid);
+	}
+	if (err) {
+		ieee80211_addba_req_refuse(ic, ni, tid);
+		splx(s);
+		return;
+	}
+
+	rxba = &sc->sc_rxba_data[baid];
+
 	/* Deaggregation is done in hardware. */
 	if (start) {
-		if (!(status & IWX_ADD_STA_BAID_VALID_MASK)) {
-			ieee80211_addba_req_refuse(ic, ni, tid);
-			splx(s);
-			return;
-		}
-		baid = (status & IWX_ADD_STA_BAID_MASK) >>
-		    IWX_ADD_STA_BAID_SHIFT;
-		if (baid == IWX_RX_REORDER_DATA_INVALID_BAID ||
-		    baid >= nitems(sc->sc_rxba_data)) {
-			ieee80211_addba_req_refuse(ic, ni, tid);
-			splx(s);
-			return;
-		}
-		rxba = &sc->sc_rxba_data[baid];
 		if (rxba->baid != IWX_RX_REORDER_DATA_INVALID_BAID) {
 			ieee80211_addba_req_refuse(ic, ni, tid);
 			splx(s);
@@ -3401,19 +3497,8 @@ iwx_sta_rx_agg(struct iwx_softc *sc, struct ieee80211_node *ni, uint8_t tid,
 			ba = &ni->ni_rx_ba[tid];
 			ba->ba_timeout_val = 0;
 		}
-	} else {
-		int i;
-		for (i = 0; i < nitems(sc->sc_rxba_data); i++) {
-			rxba = &sc->sc_rxba_data[i];
-			if (rxba->baid ==
-			    IWX_RX_REORDER_DATA_INVALID_BAID)
-				continue;
-			if (rxba->tid != tid)
-				continue;
-			iwx_clear_reorder_buffer(sc, rxba);
-			break;
-		}
-	}
+	} else
+		iwx_clear_reorder_buffer(sc, rxba);
 
 	if (start) {
 		sc->sc_rx_ba_sessions++;
@@ -9795,6 +9880,8 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			break;
 		}
 
+		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP,
+		    IWX_RX_BAID_ALLOCATION_CONFIG_CMD):
 		case IWX_WIDE_ID(IWX_MAC_CONF_GROUP,
 		    IWX_SESSION_PROTECTION_CMD):
 		case IWX_WIDE_ID(IWX_REGULATORY_AND_NVM_GROUP,

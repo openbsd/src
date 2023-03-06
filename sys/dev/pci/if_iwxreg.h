@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.49 2023/03/06 11:03:29 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.50 2023/03/06 11:08:56 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1387,6 +1387,7 @@ enum msix_ivar_for_cause {
 #define IWX_UCODE_TLV_CAPA_PROTECTED_TWT		56
 #define IWX_UCODE_TLV_CAPA_FW_RESET_HANDSHAKE		57
 #define IWX_UCODE_TLV_CAPA_PASSIVE_6GHZ_SCAN		58
+#define IWX_UCODE_TLV_CAPA_BAID_ML_SUPPORT		63
 #define IWX_UCODE_TLV_CAPA_EXTENDED_DTS_MEASURE		64
 #define IWX_UCODE_TLV_CAPA_SHORT_PM_TIMEOUTS		65
 #define IWX_UCODE_TLV_CAPA_BT_MPLUT_SUPPORT		67
@@ -2006,6 +2007,7 @@ struct iwx_tx_queue_cfg_rsp {
 #define IWX_DQA_ENABLE_CMD	0x00
 #define IWX_RLC_CONFIG_CMD	0x08
 #define IWX_TLC_MNG_CONFIG_CMD	0x0f
+#define IWX_RX_BAID_ALLOCATION_CONFIG_CMD	0x16
 #define IWX_RX_NO_DATA_NOTIF	0xf5
 #define IWX_TLC_MNG_UPDATE_NOTIF 0xf7
 
@@ -5344,6 +5346,87 @@ struct iwx_rlc_config_cmd {
 	uint8_t reserved[3];
 } __packed; /* RLC_CONFIG_CMD_API_S_VER_2 */
 
+#define IWX_MAX_BAID_OLD	16 /* MAX_IMMEDIATE_BA_API_D_VER_2 */
+#define IWX_MAX_BAID		32 /* MAX_IMMEDIATE_BA_API_D_VER_3 */
+
+/**
+ * BAID allocation/config action
+ * @IWX_RX_BAID_ACTION_ADD: add a new BAID session
+ * @IWX_RX_BAID_ACTION_MODIFY: modify the BAID session
+ * @IWX_RX_BAID_ACTION_REMOVE: remove the BAID session
+ */
+#define IWX_RX_BAID_ACTION_ADD		0
+#define IWX_RX_BAID_ACTION_MODIFY	1
+#define IWX_RX_BAID_ACTION_REMOVE	2
+/*  RX_BAID_ALLOCATION_ACTION_E_VER_1 */
+
+/**
+ * struct iwx_rx_baid_cfg_cmd_alloc - BAID allocation data
+ * @sta_id_mask: station ID mask
+ * @tid: the TID for this session
+ * @reserved: reserved
+ * @ssn: the starting sequence number
+ * @win_size: RX BA session window size
+ */
+struct iwx_rx_baid_cfg_cmd_alloc {
+	uint32_t sta_id_mask;
+	uint8_t tid;
+	uint8_t reserved[3];
+	uint16_t ssn;
+	uint16_t win_size;
+} __packed; /* RX_BAID_ALLOCATION_ADD_CMD_API_S_VER_1 */
+
+/**
+ * struct iwx_rx_baid_cfg_cmd_modify - BAID modification data
+ * @old_sta_id_mask: old station ID mask
+ * @new_sta_id_mask: new station ID mask
+ * @tid: TID of the BAID
+ */
+struct iwx_rx_baid_cfg_cmd_modify {
+	uint32_t old_sta_id_mask;
+	uint32_t new_sta_id_mask;
+	uint32_t tid;
+} __packed; /* RX_BAID_ALLOCATION_MODIFY_CMD_API_S_VER_2 */
+
+/**
+ * struct iwx_rx_baid_cfg_cmd_remove_v1 - BAID removal data
+ * @baid: the BAID to remove
+ */
+struct iwx_rx_baid_cfg_cmd_remove_v1 {
+	uint32_t baid;
+} __packed; /* RX_BAID_ALLOCATION_REMOVE_CMD_API_S_VER_1 */
+
+/**
+ * struct iwx_rx_baid_cfg_cmd_remove - BAID removal data
+ * @sta_id_mask: the station mask of the BAID to remove
+ * @tid: the TID of the BAID to remove
+ */
+struct iwx_rx_baid_cfg_cmd_remove {
+	uint32_t sta_id_mask;
+	uint32_t tid;
+} __packed; /* RX_BAID_ALLOCATION_REMOVE_CMD_API_S_VER_2 */
+
+/**
+ * struct iwx_rx_baid_cfg_cmd - BAID allocation/config command
+ * @action: the action, from &enum iwx_rx_baid_action
+ */
+struct iwx_rx_baid_cfg_cmd {
+	uint32_t action;
+	union {
+		struct iwx_rx_baid_cfg_cmd_alloc alloc;
+		struct iwx_rx_baid_cfg_cmd_modify modify;
+		struct iwx_rx_baid_cfg_cmd_remove_v1 remove_v1;
+		struct iwx_rx_baid_cfg_cmd_remove remove;
+	}; /* RX_BAID_ALLOCATION_OPERATION_API_U_VER_2 */
+} __packed; /* RX_BAID_ALLOCATION_CONFIG_CMD_API_S_VER_2 */
+
+/**
+ * struct iwx_rx_baid_cfg_resp - BAID allocation response
+ * @baid: the allocated BAID
+ */
+struct iwx_rx_baid_cfg_resp {
+	uint32_t baid;
+}; /* RX_BAID_ALLOCATION_RESPONSE_API_S_VER_1 */
 
 /**
  * Options for TLC config flags
