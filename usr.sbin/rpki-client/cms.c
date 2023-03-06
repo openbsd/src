@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.27 2023/02/21 10:18:47 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.28 2023/03/06 09:14:29 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -194,7 +194,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	}
 	X509_ALGOR_get0(&obj, NULL, NULL, psig);
 	nid = OBJ_obj2nid(obj);
-	/* RFC7395 last paragraph of section 2 specifies the allowed psig */
+	/* RFC7935 last paragraph of section 2 specifies the allowed psig */
 	if (nid != NID_rsaEncryption && nid != NID_sha256WithRSAEncryption) {
 		warnx("%s: RFC 6488: wrong signature algorithm %s, want %s",
 		    fn, OBJ_nid2ln(nid), OBJ_nid2ln(NID_rsaEncryption));
