@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.47 2021/09/02 11:36:47 semarie Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.48 2023/03/06 17:39:54 miod Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -309,6 +309,28 @@ struct valinfo ibm_attr_names[] = {
 	{ 11, "Calibration Retry Count" },
 	{ 12, "Device Power Cycle Count" },
 	{ 13, "Soft Read Error Rate" },
+	{ 100, "Erase/Program Cycles" },
+	{ 103, "Translation Table Rebuild" },
+	{ 160, "Uncorrectable Error Count" },
+	{ 170, "Reserved Block Count" },
+	{ 171, "Program Fail Count" },
+	{ 172, "Erase Fail Count" },
+	{ 173, "Wear Worst Case Erase Count" },
+	{ 174, "Power-Off Retract Count" },
+	{ 175, "Program Fail Count" },
+	{ 176, "Erase Fail Count" },
+	{ 177, "Wear Leveling Count" },
+	{ 178, "Used Reserved Block Count" },
+	{ 179, "Used Reserved Block Count Total" },
+	{ 180, "Unused Reserved Block Count Total" },
+	{ 181, "Program Fail Count Total" },
+	{ 182, "Erase Fail Count" },
+	{ 183, "Runtime Bad Block" },
+	{ 184, "End-to-End error" },
+	{ 185, "Head Stability" },
+	{ 186, "Induced Op-Vibration Detection" },
+	{ 187, "Reported Uncorrectable Errors" },
+	{ 188, "Command Timeout" },
 	{ 189, "High Fly Writes" },
 	{ 190, "Airflow Temperature" },
 	{ 191, "G-Sense Error Rate" },
@@ -341,8 +363,15 @@ struct valinfo ibm_attr_names[] = {
 	{ 228, "Power-Off Retract Count" },
 	{ 230, "GMR Head Amplitude" },
 	{ 231, "Temperature" },
+	{ 232, "Available reserved space" },
+	{ 233, "Media wearout indicator" },
+	{ 235, "Power-Off Retract Count" },
 	{ 240, "Head Flying Hours" },
+	{ 241, "Total LBAs Written" },
+	{ 242, "Total LBAs Read" },
+	{ 249, "NAND Writes (1GB)" },
 	{ 250, "Read Error Retry Rate" },
+	{ 254, "Free Fall Sensor" },
 	{ 0, NULL },
 };
 
