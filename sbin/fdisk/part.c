@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.131 2022/08/29 07:19:14 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.132 2023/03/06 17:42:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -191,7 +191,7 @@ const struct gpt_type		gpt_types[] = {
 	{ 0xA8, 0, "MacOS X",
 	  "55465300-0000-11aa-aa11-00306543ecac" },
 	{ 0xA9, 0, "NetBSD",
-	  "516e7cb4-6ecf-11d6-8ff8-00022d09712b" },
+	  "49f48d5a-b10e-11dc-b99b-0019d1879648" },
 	{ 0xAB, 0, "MacOS X boot",
 	  "426f6f74-0000-11aa-aa11-00306543ecac" },
 	{ 0xAF, 0, "MacOS X HFS+",
@@ -210,6 +210,8 @@ const struct gpt_type		gpt_types[] = {
 	  "6a85cf4d-1dd2-11b2-99a6-080020736631" },
 	{ 0xEB, 0, "BeOS/i386",
 	  "42465331-3ba3-10f1-802a-4861696b7521" },
+	{ 0xEC, 0, "Legacy MBR",
+	  "024dee41-33e7-11d3-9d69-0008c781f39f" },
 	{ 0xEF, 0, "EFI Sys",
 	  "c12a7328-f81f-11d2-ba4b-00a0c93ec93b" },
 };
