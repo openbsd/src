@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.85 2023/03/04 23:09:15 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.86 2023/03/06 13:24:40 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -124,14 +124,16 @@ int
 protective_mbr(const struct mbr *mbr)
 {
 	struct dos_partition	dp[NDOSPART], dos_partition;
-	int			i;
+	unsigned int		i;
 
 	if (mbr->mbr_lba_self != 0)
 		return -1;
 
-	for (i = 0; i < NDOSPART; i++) {
-		PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self,
-		    mbr->mbr_lba_firstembr, &dos_partition);
+	for (i = 0; i < nitems(dp); i++) {
+		memset(&dos_partition, 0, sizeof(dos_partition));
+		if (i < nitems(mbr->mbr_prt))
+			PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self,
+			    mbr->mbr_lba_firstembr, &dos_partition);
 		memcpy(&dp[i], &dos_partition, sizeof(dp[i]));
 	}
 
