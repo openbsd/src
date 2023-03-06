@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsemul_subr.c,v 1.1 2013/10/18 22:06:41 miod Exp $	*/
+/*	$OpenBSD: wsemul_subr.c,v 1.2 2023/03/06 17:14:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2013 Miodrag Vallat.
@@ -15,6 +15,36 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * Part of the UTF-8 state machine logic borrowed from citrus_utf8.c
+ * under the following licence:
+ */
+/*-
+ * Copyright (c) 2002-2004 Tim J. Robbins
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -38,29 +68,25 @@ int
 wsemul_getchar(const u_char **inbuf, u_int *inlen,
     struct wsemul_inputstate *state, int allow_utf8)
 {
-#ifndef HAVE_UTF8_SUPPORT
 	u_int len = *inlen;
 	const u_char *buf = *inbuf;
+#ifdef HAVE_UTF8_SUPPORT
+	int rc;
+	u_int32_t tmpchar, lbound;
+	u_int mbleft;
+#endif
 
 	if (len == 0)
-		return (EAGAIN);
+		return EAGAIN;
 
+#ifndef HAVE_UTF8_SUPPORT
 	state->inchar = *buf++;
 	state->mbleft = 0;
 	len--;
 	*inlen = len;
 	*inbuf = buf;
-	return (0);
+	return 0;
 #else
-	u_int len = *inlen;
-	const u_char *buf = *inbuf;
-	int rc = EAGAIN;
-	u_int32_t tmpchar;
-	u_int mbleft;
-
-	if (len == 0)
-		return (rc);
-
 	/*
 	 * If we do not allow multibyte sequences, process as quickly
 	 * as possible.
@@ -71,10 +97,12 @@ wsemul_getchar(const u_char **inbuf, u_int *inlen,
 		len--;
 		*inlen = len;
 		*inbuf = buf;
-		return (0);
+		return 0;
 	}
 
+	rc = EAGAIN;
 	tmpchar = state->inchar;
+	lbound = state->lbound;
 	mbleft = state->mbleft;
 
 	while (len != 0) {
@@ -87,19 +115,22 @@ wsemul_getchar(const u_char **inbuf, u_int *inlen,
 		 */
 
 		if (mbleft != 0) {
-			if ((frag & 0xc0) != 0x80) {
-				/* Abort the sequence and continue */
-				mbleft = 0;
-				tmpchar = 0;
-				rc = EILSEQ;
-			} else {
-				tmpchar = (tmpchar << 6) | (frag & 0x3f);
-				mbleft--;
-				if (mbleft == 0) {
-					rc = 0;
-					break;
-				}
+			if ((frag & 0xc0) != 0x80)
+				goto invalid;
+
+			tmpchar = (tmpchar << 6) | (frag & 0x3f);
+			mbleft--;
+			if (mbleft == 0) {
+				if (tmpchar < lbound)
+					goto invalid;
+				if (tmpchar >= 0xd800 && tmpchar < 0xe000)
+					goto invalid;
+				if (tmpchar >= 0x110000)
+					goto invalid;
+				rc = 0;
+				break;
 			}
+			continue;
 		}
 
 		/*
@@ -113,41 +144,38 @@ wsemul_getchar(const u_char **inbuf, u_int *inlen,
 			break;
 		}
 
-		if (frag == 0xfe || frag == 0xff || (frag & 0x40) == 0) {
-			/* Abort the sequence and continue */
-			mbleft = 0;
-			tmpchar = 0;
-			rc = EILSEQ;
-		} else {
-			frag &= ~(0x80 | 0x40);
+		if ((frag & 0xe0) == 0xc0) {
+			frag &= 0x1f;
 			mbleft = 1;
-
-			if (frag & 0x20) {
-				frag &= ~0x20;
-				mbleft++;
-			}
-			if (frag & 0x10) {
-				frag &= ~0x10;
-				mbleft++;
-			}
-			if (frag & 0x08) {
-				frag &= ~0x08;
-				mbleft++;
-			}
-			if (frag & 0x04) {
-				frag &= ~0x04;
-				mbleft++;
-			}
-
-			tmpchar = frag;
+			lbound = 0x80;
+		} else if ((frag & 0xf0) == 0xe0) {
+			frag &= 0x0f;
+			mbleft = 2;
+			lbound = 0x800;
+		} else if ((frag & 0xf8) == 0xf0) {
+			frag &= 0x07;
+			mbleft = 3;
+			lbound = 0x10000;
+		} else {
+			goto invalid;
 		}
+
+		tmpchar = frag;
+		state->lbound = lbound;
+		continue;
+
+invalid:
+		/* Abort the ill-formed sequence and continue */
+		mbleft = 0;
+		tmpchar = 0;
+		rc = EILSEQ;
 	}
 
 	state->inchar = tmpchar;
 	state->mbleft = mbleft;
 	*inlen = len;
 	*inbuf = buf;
-	return (rc);
+	return rc;
 #endif
 }
 
@@ -659,7 +687,7 @@ wsemul_local_translate(u_int32_t unisym, kbd_t layout, u_char *out)
 
 /*
  * Keysym to UTF-8 sequence translation function.
- * The out buffer is at least 6 characters long.
+ * The out buffer is at least 4 characters long.
  */
 int
 wsemul_utf8_translate(u_int32_t unisym, kbd_t layout, u_char *out,
@@ -671,28 +699,27 @@ wsemul_utf8_translate(u_int32_t unisym, kbd_t layout, u_char *out,
 	u_int pos, length, headpat;
 
 	if (!allow_utf8)
-		return (wsemul_local_translate(unisym, layout, out));
+		return wsemul_local_translate(unisym, layout, out);
 
-	if (unisym >= 0x80000000) {
-		return (0);
-	} else if (unisym > 0x04000000) {
-		headpat = 0xfc;
-		length = 6;
-	} else if (unisym > 0x00200000) {
-		headpat = 0xf8;
-		length = 5;
-	} else if (unisym > 0x00010000) {
-		headpat = 0xf0;
-		length = 4;
-	} else if (unisym > 0x00000800) {
-		headpat = 0xe0;
-		length = 3;
-	} else if (unisym > 0x00000080) {
+	if (unisym < 0x80) {
+		/* Fast path for plain ASCII characters. */
+		*out = (u_char)unisym;
+		return 1;
+	}
+
+	if (unisym < 0x800) {
 		headpat = 0xc0;
 		length = 2;
+	} else if (unisym < 0x10000) {
+		if (unisym >= 0xd800 && unisym < 0xe000)
+			return 0;
+		headpat = 0xe0;
+		length = 3;
 	} else {
-		headpat = 0x00;
-		length = 1;
+		if (unisym >= 0x110000)
+			return 0;
+		headpat = 0xf0;
+		length = 4;
 	}
 
 	for (pos = length - 1; pos > 0; pos--) {
@@ -701,6 +728,6 @@ wsemul_utf8_translate(u_int32_t unisym, kbd_t layout, u_char *out,
 	}
 	out[0] = headpat | unisym;
 
-	return (length);
+	return length;
 #endif
 }

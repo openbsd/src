@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.34 2020/05/25 09:55:49 jsg Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.35 2023/03/06 17:14:44 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -118,7 +118,7 @@ struct wsemul_sun_emuldata {
 	struct wsemul_inputstate kstate;	/* kernel input state */
 
 #ifdef HAVE_UTF8_SUPPORT
-	u_char translatebuf[6];
+	u_char translatebuf[4];
 #else
 	u_char translatebuf[1];
 #endif
@@ -185,8 +185,10 @@ wsemul_sun_reset(struct wsemul_sun_emuldata *edp)
 	edp->bgcol = WSCOL_WHITE;
 	edp->scrolldist = 1;
 	edp->instate.inchar = 0;
+	edp->instate.lbound = 0;
 	edp->instate.mbleft = 0;
 	edp->kstate.inchar = 0;
+	edp->kstate.lbound = 0;
 	edp->kstate.mbleft = 0;
 }
 
