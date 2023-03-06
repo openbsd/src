@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.102 2023/02/21 10:18:47 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.103 2023/03/06 16:04:52 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -648,6 +648,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	X509			*x = NULL;
 	X509_EXTENSION		*ext = NULL;
 	ASN1_OBJECT		*obj;
+	EVP_PKEY		*pkey;
 	struct parse		 p;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
@@ -747,6 +748,13 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 
 	switch (p.res->purpose) {
 	case CERT_PURPOSE_CA:
+		if ((pkey = X509_get0_pubkey(x)) == NULL) {
+			warnx("%s: X509_get0_pubkey failed", p.fn);
+			goto out;
+		}
+		if (!valid_ca_pkey(p.fn, pkey))
+			goto out;
+
 		if (X509_get_key_usage(x) != (KU_KEY_CERT_SIGN | KU_CRL_SIGN)) {
 			warnx("%s: RFC 6487 section 4.8.4: key usage violation",
 			    p.fn);

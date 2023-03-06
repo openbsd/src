@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.54 2023/01/18 18:12:20 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.55 2023/03/06 16:04:52 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -588,3 +588,44 @@ valid_uuid(const char *s)
 	}
 }
 
+int
+valid_ca_pkey(const char *fn, EVP_PKEY *pkey)
+{
+	RSA		*rsa;
+	const BIGNUM	*rsa_e;
+	int		 key_bits;
+
+	if (pkey == NULL) {
+		warnx("%s: failure, pkey is NULL", fn);
+		return 0;
+	}
+
+	if (EVP_PKEY_base_id(pkey) != EVP_PKEY_RSA) {
+		warnx("%s: Expected EVP_PKEY_RSA, got %d", fn,
+		    EVP_PKEY_base_id(pkey));
+		return 0;
+	}
+
+	if ((key_bits = EVP_PKEY_bits(pkey)) != 2048) {
+		warnx("%s: RFC 7935: expected 2048-bit modulus, got %d bits",
+		    fn, key_bits);
+		return 0;
+	}
+
+	if ((rsa = EVP_PKEY_get0_RSA(pkey)) == NULL) {
+		warnx("%s: failed to extract RSA public key", fn);
+		return 0;
+	}
+
+	if ((rsa_e = RSA_get0_e(rsa)) == NULL) {
+		warnx("%s: failed to get RSA exponent", fn);
+		return 0;
+	}
+
+	if (!BN_is_word(rsa_e, 65537)) {
+		warnx("%s: incorrect exponent (e) in RSA public key", fn);
+		return 0;
+	}
+
+	return 1;
+}
