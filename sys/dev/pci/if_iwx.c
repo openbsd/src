@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.154 2023/03/06 10:16:16 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.155 2023/03/06 10:24:15 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9474,6 +9474,7 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		case IWX_ALIVE: {
 			struct iwx_alive_resp_v4 *resp4;
 			struct iwx_alive_resp_v5 *resp5;
+			struct iwx_alive_resp_v6 *resp6;
 
 			DPRINTF(("%s: firmware alive\n", __func__));
 			sc->sc_uc.uc_ok = 0;
@@ -9483,6 +9484,31 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			 * versions we need to check the size.
 			 */
 			 if (iwx_lookup_notif_ver(sc, IWX_LEGACY_GROUP,
+			    IWX_ALIVE) == 6) {
+				SYNC_RESP_STRUCT(resp6, pkt);
+				if (iwx_rx_packet_payload_len(pkt) !=
+				    sizeof(*resp6)) {
+					sc->sc_uc.uc_intr = 1;
+					wakeup(&sc->sc_uc);
+					break;
+				}
+				sc->sc_uc.uc_lmac_error_event_table[0] = le32toh(
+				    resp6->lmac_data[0].dbg_ptrs.error_event_table_ptr);
+				sc->sc_uc.uc_lmac_error_event_table[1] = le32toh(
+				    resp6->lmac_data[1].dbg_ptrs.error_event_table_ptr);
+				sc->sc_uc.uc_log_event_table = le32toh(
+				    resp6->lmac_data[0].dbg_ptrs.log_event_table_ptr);
+				sc->sc_uc.uc_umac_error_event_table = le32toh(
+				    resp6->umac_data.dbg_ptrs.error_info_addr);
+				sc->sc_sku_id[0] =
+				    le32toh(resp6->sku_id.data[0]);
+				sc->sc_sku_id[1] =
+				    le32toh(resp6->sku_id.data[1]);
+				sc->sc_sku_id[2] =
+				    le32toh(resp6->sku_id.data[2]);
+				if (resp6->status == IWX_ALIVE_STATUS_OK)
+					sc->sc_uc.uc_ok = 1;
+			 } else if (iwx_lookup_notif_ver(sc, IWX_LEGACY_GROUP,
 			    IWX_ALIVE) == 5) {
 				SYNC_RESP_STRUCT(resp5, pkt);
 				if (iwx_rx_packet_payload_len(pkt) !=
