@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.163 2023/03/06 11:18:37 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.164 2023/03/06 11:21:24 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -2978,14 +2978,14 @@ iwx_post_alive(struct iwx_softc *sc)
 
 int
 iwx_schedule_session_protection(struct iwx_softc *sc, struct iwx_node *in,
-    uint32_t duration)
+    uint32_t duration_tu)
 {
 	struct iwx_session_prot_cmd cmd = {
 		.id_and_color = htole32(IWX_FW_CMD_ID_AND_COLOR(in->in_id,
 		    in->in_color)),
 		.action = htole32(IWX_FW_CTXT_ACTION_ADD),
 		.conf_id = htole32(IWX_SESSION_PROTECT_CONF_ASSOC),
-		.duration_tu = htole32(duration * IEEE80211_DUR_TU),
+		.duration_tu = htole32(duration_tu),
 	};
 	uint32_t cmd_id;
 	int err;
@@ -8183,9 +8183,9 @@ iwx_auth(struct iwx_softc *sc)
 	 * by "protecting" the session with a time event.
 	 */
 	if (in->in_ni.ni_intval)
-		duration = in->in_ni.ni_intval * 2;
+		duration = in->in_ni.ni_intval * 9;
 	else
-		duration = IEEE80211_DUR_TU; 
+		duration = 900; 
 	return iwx_schedule_session_protection(sc, in, duration);
 rm_mgmt_queue:
 	if (generation == sc->sc_generation)
