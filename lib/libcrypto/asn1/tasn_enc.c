@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.27 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.28 2023/03/06 08:08:31 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -108,7 +108,7 @@ asn1_item_flags_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it,
 {
 	if (out && !*out) {
 		unsigned char *p, *buf;
-		int len;
+		int len, len2;
 		len = ASN1_item_ex_i2d(&val, NULL, it, -1, flags);
 		if (len <= 0)
 			return len;
@@ -116,7 +116,12 @@ asn1_item_flags_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it,
 		if (!buf)
 			return -1;
 		p = buf;
-		ASN1_item_ex_i2d(&val, &p, it, -1, flags);
+		len2 = ASN1_item_ex_i2d(&val, &p, it, -1, flags);
+		if (len2 != len) {
+			freezero(buf, len);
+			ASN1error(ASN1_R_LENGTH_ERROR);
+			return -1;
+		}
 		*out = buf;
 		return len;
 	}
