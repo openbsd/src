@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.48 2023/03/06 11:00:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.49 2023/03/06 11:03:29 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -3395,13 +3395,13 @@ struct iwx_phy_context_cmd {
 	/* COMMON_INDEX_HDR_API_S_VER_1 */
 	uint32_t id_and_color;
 	uint32_t action;
-	/* PHY_CONTEXT_DATA_API_S_VER_3 */
+	/* PHY_CONTEXT_DATA_API_S_VER_3, PHY_CONTEXT_DATA_API_S_VER_4 */
 	struct iwx_fw_channel_info_v1 ci;
 	uint32_t lmac_id;
-	uint32_t rxchain_info;
+	uint32_t rxchain_info; /* reserved in _VER_4 */
 	uint32_t dsp_cfg_flags;
 	uint32_t reserved;
-} __packed; /* PHY_CONTEXT_CMD_API_VER_3 */
+} __packed; /* PHY_CONTEXT_CMD_API_VER_3, PHY_CONTEXT_CMD_API_VER_4 */
 
 /* TODO: complete missing documentation */
 /**

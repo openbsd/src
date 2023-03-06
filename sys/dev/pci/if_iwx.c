@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.160 2023/03/06 11:00:41 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.161 2023/03/06 11:03:29 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -379,10 +379,10 @@ void	iwx_rx_bmiss(struct iwx_softc *, struct iwx_rx_packet *,
 	    struct iwx_rx_data *);
 int	iwx_binding_cmd(struct iwx_softc *, struct iwx_node *, uint32_t);
 uint8_t	iwx_get_vht_ctrl_pos(struct ieee80211com *, struct ieee80211_channel *);
-int	iwx_phy_ctxt_cmd_uhb_v3(struct iwx_softc *, struct iwx_phy_ctxt *, uint8_t,
-	    uint8_t, uint32_t, uint8_t, uint8_t);
-int	iwx_phy_ctxt_cmd_v3(struct iwx_softc *, struct iwx_phy_ctxt *, uint8_t,
-	    uint8_t, uint32_t, uint8_t, uint8_t);
+int	iwx_phy_ctxt_cmd_uhb_v3_v4(struct iwx_softc *, struct iwx_phy_ctxt *,
+	    uint8_t, uint8_t, uint32_t, uint8_t, uint8_t, int);
+int	iwx_phy_ctxt_cmd_v3_v4(struct iwx_softc *, struct iwx_phy_ctxt *,
+	    uint8_t, uint8_t, uint32_t, uint8_t, uint8_t, int);
 int	iwx_phy_ctxt_cmd(struct iwx_softc *, struct iwx_phy_ctxt *, uint8_t,
 	    uint8_t, uint32_t, uint32_t, uint8_t, uint8_t);
 int	iwx_send_cmd(struct iwx_softc *, struct iwx_host_cmd *);
@@ -5463,9 +5463,9 @@ iwx_get_vht_ctrl_pos(struct ieee80211com *ic, struct ieee80211_channel *chan)
 }
 
 int
-iwx_phy_ctxt_cmd_uhb_v3(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
+iwx_phy_ctxt_cmd_uhb_v3_v4(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
     uint8_t chains_static, uint8_t chains_dynamic, uint32_t action, uint8_t sco,
-    uint8_t vht_chan_width)
+    uint8_t vht_chan_width, int cmdver)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwx_phy_context_cmd_uhb cmd;
@@ -5507,7 +5507,7 @@ iwx_phy_ctxt_cmd_uhb_v3(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 		cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
 	}
 
-	if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	if (cmdver < 4 && iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
 	    IWX_RLC_CONFIG_CMD) != 2) {
 		idle_cnt = chains_static;
 		active_cnt = chains_dynamic;
@@ -5523,9 +5523,9 @@ iwx_phy_ctxt_cmd_uhb_v3(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 }
 
 int
-iwx_phy_ctxt_cmd_v3(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
+iwx_phy_ctxt_cmd_v3_v4(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
     uint8_t chains_static, uint8_t chains_dynamic, uint32_t action, uint8_t sco,
-    uint8_t vht_chan_width)
+    uint8_t vht_chan_width, int cmdver)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct iwx_phy_context_cmd cmd;
@@ -5567,7 +5567,7 @@ iwx_phy_ctxt_cmd_v3(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 		cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
 	}
 
-	if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	if (cmdver < 4 && iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
 	    IWX_RLC_CONFIG_CMD) != 2) {
 		idle_cnt = chains_static;
 		active_cnt = chains_dynamic;
@@ -5590,8 +5590,8 @@ iwx_phy_ctxt_cmd(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 	int cmdver;
 
 	cmdver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP, IWX_PHY_CONTEXT_CMD);
-	if (cmdver != 3) {
-		printf("%s: firmware does not support phy-context-cmd v3\n",
+	if (cmdver != 3 && cmdver != 4) {
+		printf("%s: firmware does not support phy-context-cmd v3/v4\n",
 		    DEVNAME(sc));
 		return ENOTSUP;
 	}
@@ -5604,12 +5604,12 @@ iwx_phy_ctxt_cmd(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 	 * variant of the phy context command.
 	 */
 	if (isset(sc->sc_enabled_capa, IWX_UCODE_TLV_CAPA_ULTRA_HB_CHANNELS)) {
-		return iwx_phy_ctxt_cmd_uhb_v3(sc, ctxt, chains_static,
-		    chains_dynamic, action, sco, vht_chan_width);
+		return iwx_phy_ctxt_cmd_uhb_v3_v4(sc, ctxt, chains_static,
+		    chains_dynamic, action, sco, vht_chan_width, cmdver);
 	}
 
-	return iwx_phy_ctxt_cmd_v3(sc, ctxt, chains_static, chains_dynamic,
-	    action, sco, vht_chan_width);
+	return iwx_phy_ctxt_cmd_v3_v4(sc, ctxt, chains_static, chains_dynamic,
+	    action, sco, vht_chan_width, cmdver);
 }
 
 int
