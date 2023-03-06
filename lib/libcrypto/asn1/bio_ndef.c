@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.11 2021/12/25 13:17:48 jsing Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.12 2023/03/06 19:10:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -178,29 +178,34 @@ ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 static int
 ndef_prefix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 {
-	NDEF_SUPPORT *ndef_aux;
+	NDEF_SUPPORT **pndef_aux = parg;
 
-	if (!parg)
+	if (pndef_aux == NULL || *pndef_aux == NULL)
 		return 0;
 
-	ndef_aux = *(NDEF_SUPPORT **)parg;
+	free((*pndef_aux)->derbuf);
+	(*pndef_aux)->derbuf = NULL;
 
-	free(ndef_aux->derbuf);
-
-	ndef_aux->derbuf = NULL;
 	*pbuf = NULL;
 	*plen = 0;
+
 	return 1;
 }
 
 static int
 ndef_suffix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 {
-	NDEF_SUPPORT **pndef_aux = (NDEF_SUPPORT **)parg;
+	NDEF_SUPPORT **pndef_aux = parg;
+
+	/* Ensure ndef_prefix_free() won't fail, so we won't leak *pndef_aux. */
+	if (pndef_aux == NULL || *pndef_aux == NULL)
+		return 0;
 	if (!ndef_prefix_free(b, pbuf, plen, parg))
 		return 0;
+
 	free(*pndef_aux);
 	*pndef_aux = NULL;
+
 	return 1;
 }
 
