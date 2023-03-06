@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.103 2023/03/06 16:04:52 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.104 2023/03/06 16:58:41 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -647,9 +647,12 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	size_t			 i;
 	X509			*x = NULL;
 	X509_EXTENSION		*ext = NULL;
+	const X509_ALGOR	*palg;
+	const ASN1_OBJECT	*cobj;
 	ASN1_OBJECT		*obj;
 	EVP_PKEY		*pkey;
 	struct parse		 p;
+	int			 nid;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
@@ -673,6 +676,19 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	/* Cache X509v3 extensions, see X509_check_ca(3). */
 	if (X509_check_purpose(x, -1, -1) <= 0) {
 		cryptowarnx("%s: could not cache X509v3 extensions", p.fn);
+		goto out;
+	}
+
+	X509_get0_signature(NULL, &palg, x);
+	if (palg == NULL) {
+		cryptowarnx("%s: X509_get0_signature", p.fn);
+		goto out;
+	}
+	X509_ALGOR_get0(&cobj, NULL, NULL, palg);
+	if ((nid = OBJ_obj2nid(cobj)) != NID_sha256WithRSAEncryption) {
+		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
+		    fn, OBJ_nid2ln(nid),
+		    OBJ_nid2ln(NID_sha256WithRSAEncryption));
 		goto out;
 	}
 

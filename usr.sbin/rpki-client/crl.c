@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.22 2023/02/21 10:18:47 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.23 2023/03/06 16:58:41 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -20,6 +20,8 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <openssl/x509.h>
+
 #include "extern.h"
 
 struct crl *
@@ -27,8 +29,10 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 {
 	const unsigned char	*oder;
 	struct crl		*crl;
+	const X509_ALGOR	*palg;
+	const ASN1_OBJECT	*cobj;
 	const ASN1_TIME		*at;
-	int			 rc = 0;
+	int			 nid, rc = 0;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
@@ -44,6 +48,19 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 	}
 	if (der != oder + len) {
 		warnx("%s: %td bytes trailing garbage", fn, oder + len - der);
+		goto out;
+	}
+
+	X509_CRL_get0_signature(crl->x509_crl, NULL, &palg);
+	if (palg == NULL) {
+		cryptowarnx("%s: X509_CRL_get0_signature", fn);
+		goto out;
+	}
+	X509_ALGOR_get0(&cobj, NULL, NULL, palg);
+	if ((nid = OBJ_obj2nid(cobj)) != NID_sha256WithRSAEncryption) {
+		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
+		    fn, OBJ_nid2ln(nid),
+		    OBJ_nid2ln(NID_sha256WithRSAEncryption));
 		goto out;
 	}
 
