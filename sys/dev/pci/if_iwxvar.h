@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.40 2023/03/06 11:08:56 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.41 2023/03/06 11:53:24 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -471,21 +471,21 @@ struct iwx_device_cfg {
 };
 
 /* Firmware listed here must be available in fw_update(8). */
-#define IWX_CC_A_FW	    	"iwx-cc-a0-67"
-#define IWX_TY_A_GF_A_FW	"iwx-ty-a0-gf-a0-67"
+#define IWX_CC_A_FW	    	"iwx-cc-a0-77"
+#define IWX_TY_A_GF_A_FW	"iwx-ty-a0-gf-a0-77"
 #define IWX_TY_A_GF_A_PNVM	"iwx-ty-a0-gf-a0.pnvm"
-#define IWX_QU_B_HR_B_FW	"iwx-Qu-b0-hr-b0-63"
-#define IWX_QU_B_JF_B_FW	"iwx-Qu-b0-jf-b0-63"
-#define IWX_QU_C_HR_B_FW	"iwx-Qu-c0-hr-b0-63"
-#define IWX_QU_C_JF_B_FW	"iwx-Qu-c0-jf-b0-63"
-#define IWX_QUZ_A_HR_B_FW	"iwx-QuZ-a0-hr-b0-67"
-#define IWX_QUZ_A_JF_B_FW	"iwx-QuZ-a0-jf-b0-63"
-#define IWX_SO_A_GF_A_FW	"iwx-so-a0-gf-a0-67"
+#define IWX_QU_B_HR_B_FW	"iwx-Qu-b0-hr-b0-77"
+#define IWX_QU_B_JF_B_FW	"iwx-Qu-b0-jf-b0-77"
+#define IWX_QU_C_HR_B_FW	"iwx-Qu-c0-hr-b0-77"
+#define IWX_QU_C_JF_B_FW	"iwx-Qu-c0-jf-b0-77"
+#define IWX_QUZ_A_HR_B_FW	"iwx-QuZ-a0-hr-b0-77"
+#define IWX_QUZ_A_JF_B_FW	"iwx-QuZ-a0-jf-b0-77"
+#define IWX_SO_A_GF_A_FW	"iwx-so-a0-gf-a0-77"
 #define IWX_SO_A_GF_A_PNVM	"iwx-so-a0-gf-a0.pnvm"
-#define IWX_SO_A_GF4_A_FW	"iwx-so-a0-gf4-a0-67"
+#define IWX_SO_A_GF4_A_FW	"iwx-so-a0-gf4-a0-77"
 #define IWX_SO_A_GF4_A_PNVM	"iwx-so-a0-gf4-a0.pnvm"
-#define IWX_SO_A_HR_B_FW	"iwx-so-a0-hr-b0-64"
-#define IWX_SO_A_JF_B_FW	"iwx-so-a0-jf-b0-64"
+#define IWX_SO_A_HR_B_FW	"iwx-so-a0-hr-b0-77"
+#define IWX_SO_A_JF_B_FW	"iwx-so-a0-jf-b0-77"
 
 const struct iwx_device_cfg iwx_9560_quz_a0_jf_b0_cfg = {
 	.fw_name = IWX_QUZ_A_JF_B_FW,
