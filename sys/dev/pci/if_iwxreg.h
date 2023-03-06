@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.46 2023/03/06 10:48:05 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.47 2023/03/06 10:52:16 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -2004,6 +2004,7 @@ struct iwx_tx_queue_cfg_rsp {
 
 /* DATA_PATH group subcommand IDs */
 #define IWX_DQA_ENABLE_CMD	0x00
+#define IWX_RLC_CONFIG_CMD	0x08
 #define IWX_TLC_MNG_CONFIG_CMD	0x0f
 #define IWX_RX_NO_DATA_NOTIF	0xf5
 #define IWX_TLC_MNG_UPDATE_NOTIF 0xf7
@@ -5271,6 +5272,60 @@ enum {
  */
 #define IWX_LQ_FLAG_DYNAMIC_BW_POS          6
 #define IWX_LQ_FLAG_DYNAMIC_BW_MSK          (1 << IWX_LQ_FLAG_DYNAMIC_BW_POS)
+
+#define IWX_RLC_CHAIN_INFO_DRIVER_FORCE		(1 << 0)
+#define IWL_RLC_CHAIN_INFO_VALID		0x000e
+#define IWL_RLC_CHAIN_INFO_FORCE		0x0070
+#define IWL_RLC_CHAIN_INFO_FORCE_MIMO		0x0380
+#define IWL_RLC_CHAIN_INFO_COUNT		0x0c00
+#define IWL_RLC_CHAIN_INFO_MIMO_COUNT		0x3000
+
+/**
+ * struct iwx_rlc_properties - RLC properties
+ * @rx_chain_info: RX chain info, IWX_RLC_CHAIN_INFO_*
+ * @reserved: reserved
+ */
+struct iwx_rlc_properties {
+	uint32_t rx_chain_info;
+	uint32_t reserved;
+} __packed; /* RLC_PROPERTIES_S_VER_1 */
+
+#define IWX_SAD_MODE_ENABLED		(1 << 0)
+#define IWX_SAD_MODE_DEFAULT_ANT_MSK	0x6
+#define IWX_SAD_MODE_DEFAULT_ANT_FW	0x0
+#define IWX_SAD_MODE_DEFAULT_ANT_A	0x2
+#define IWX_SAD_MODE_DEFAULT_ANT_B	0x4
+
+/**
+ * struct iwx_sad_properties - SAD properties
+ * @chain_a_sad_mode: chain A SAD mode, IWX_SAD_MODE_*
+ * @chain_b_sad_mode: chain B SAD mode, IWX_SAD_MODE_*
+ * @mac_id: MAC index
+ * @reserved: reserved
+ */
+struct iwx_sad_properties {
+	uint32_t chain_a_sad_mode;
+	uint32_t chain_b_sad_mode;
+	uint32_t mac_id;
+	uint32_t reserved;
+} __packed;
+
+/**
+ * struct iwx_rlc_config_cmd - RLC configuration
+ * @phy_id: PHY index
+ * @rlc: RLC properties, &struct iwx_rlc_properties
+ * @sad: SAD (single antenna diversity) options, &struct iwx_sad_properties
+ * @flags: flags, IWX_RLC_FLAGS_*
+ * @reserved: reserved
+ */
+struct iwx_rlc_config_cmd {
+	uint32_t phy_id;
+	struct iwx_rlc_properties rlc;
+	struct iwx_sad_properties sad;
+	uint8_t flags;
+	uint8_t reserved[3];
+} __packed; /* RLC_CONFIG_CMD_API_S_VER_2 */
+
 
 /**
  * Options for TLC config flags

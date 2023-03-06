@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.158 2023/03/06 10:48:05 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.159 2023/03/06 10:52:16 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -454,6 +454,8 @@ int	iwx_rs_init_v3(struct iwx_softc *, struct iwx_node *);
 int	iwx_rs_init_v4(struct iwx_softc *, struct iwx_node *);
 int	iwx_rs_init(struct iwx_softc *, struct iwx_node *);
 int	iwx_enable_data_tx_queues(struct iwx_softc *);
+int	iwx_phy_send_rlc(struct iwx_softc *, struct iwx_phy_ctxt *,
+	    uint8_t, uint8_t);
 int	iwx_phy_ctxt_update(struct iwx_softc *, struct iwx_phy_ctxt *,
 	    struct ieee80211_channel *, uint8_t, uint8_t, uint32_t, uint8_t,
 	    uint8_t);
@@ -5505,13 +5507,17 @@ iwx_phy_ctxt_cmd_uhb_v3(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 		cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
 	}
 
-	idle_cnt = chains_static;
-	active_cnt = chains_dynamic;
-	cmd.rxchain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
-	    IWX_PHY_RX_CHAIN_VALID_POS);
-	cmd.rxchain_info |= htole32(idle_cnt << IWX_PHY_RX_CHAIN_CNT_POS);
-	cmd.rxchain_info |= htole32(active_cnt <<
-	    IWX_PHY_RX_CHAIN_MIMO_CNT_POS);
+	if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_RLC_CONFIG_CMD) != 2) {
+		idle_cnt = chains_static;
+		active_cnt = chains_dynamic;
+		cmd.rxchain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
+		    IWX_PHY_RX_CHAIN_VALID_POS);
+		cmd.rxchain_info |= htole32(idle_cnt <<
+		    IWX_PHY_RX_CHAIN_CNT_POS);
+		cmd.rxchain_info |= htole32(active_cnt <<
+		    IWX_PHY_RX_CHAIN_MIMO_CNT_POS);
+	}
 
 	return iwx_send_cmd_pdu(sc, IWX_PHY_CONTEXT_CMD, 0, sizeof(cmd), &cmd);
 }
@@ -5561,13 +5567,17 @@ iwx_phy_ctxt_cmd_v3(struct iwx_softc *sc, struct iwx_phy_ctxt *ctxt,
 		cmd.ci.ctrl_pos = IWX_PHY_VHT_CTRL_POS_1_BELOW;
 	}
 
-	idle_cnt = chains_static;
-	active_cnt = chains_dynamic;
-	cmd.rxchain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
-	    IWX_PHY_RX_CHAIN_VALID_POS);
-	cmd.rxchain_info |= htole32(idle_cnt << IWX_PHY_RX_CHAIN_CNT_POS);
-	cmd.rxchain_info |= htole32(active_cnt <<
-	    IWX_PHY_RX_CHAIN_MIMO_CNT_POS);
+	if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_RLC_CONFIG_CMD) != 2) {
+		idle_cnt = chains_static;
+		active_cnt = chains_dynamic;
+		cmd.rxchain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
+		    IWX_PHY_RX_CHAIN_VALID_POS);
+		cmd.rxchain_info |= htole32(idle_cnt <<
+		    IWX_PHY_RX_CHAIN_CNT_POS);
+		cmd.rxchain_info |= htole32(active_cnt <<
+		    IWX_PHY_RX_CHAIN_MIMO_CNT_POS);
+	}
 
 	return iwx_send_cmd_pdu(sc, IWX_PHY_CONTEXT_CMD, 0, sizeof(cmd), &cmd);
 }
@@ -7857,6 +7867,30 @@ iwx_rs_update(struct iwx_softc *sc, struct iwx_tlc_update_notif *notif)
 }
 
 int
+iwx_phy_send_rlc(struct iwx_softc *sc, struct iwx_phy_ctxt *phyctxt,
+    uint8_t chains_static, uint8_t chains_dynamic)
+{
+	struct iwx_rlc_config_cmd cmd;
+	uint32_t cmd_id;
+	uint8_t active_cnt, idle_cnt;
+
+	memset(&cmd, 0, sizeof(cmd));
+
+	idle_cnt = chains_static;
+	active_cnt = chains_dynamic;
+
+	cmd.phy_id = htole32(phyctxt->id),
+	cmd.rlc.rx_chain_info = htole32(iwx_fw_valid_rx_ant(sc) <<
+	    IWX_PHY_RX_CHAIN_VALID_POS);
+	cmd.rlc.rx_chain_info |= htole32(idle_cnt << IWX_PHY_RX_CHAIN_CNT_POS);
+	cmd.rlc.rx_chain_info |= htole32(active_cnt <<
+	    IWX_PHY_RX_CHAIN_MIMO_CNT_POS);
+
+	cmd_id = iwx_cmd_id(IWX_RLC_CONFIG_CMD, IWX_DATA_PATH_GROUP, 2);
+	return iwx_send_cmd_pdu(sc, cmd_id, 0, sizeof(cmd), &cmd);
+}
+
+int
 iwx_phy_ctxt_update(struct iwx_softc *sc, struct iwx_phy_ctxt *phyctxt,
     struct ieee80211_channel *chan, uint8_t chains_static,
     uint8_t chains_dynamic, uint32_t apply_time, uint8_t sco,
@@ -7900,6 +7934,12 @@ iwx_phy_ctxt_update(struct iwx_softc *sc, struct iwx_phy_ctxt *phyctxt,
 
 	phyctxt->sco = sco;
 	phyctxt->vht_chan_width = vht_chan_width;
+
+	if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_RLC_CONFIG_CMD) == 2)
+		return iwx_phy_send_rlc(sc, phyctxt,
+		    chains_static, chains_dynamic);
+
 	return 0;
 }
 
@@ -8864,6 +8904,15 @@ iwx_init_hw(struct iwx_softc *sc)
 			printf("%s: could not add phy context %d (error %d)\n",
 			    DEVNAME(sc), i, err);
 			goto err;
+		}
+		if (iwx_lookup_cmd_ver(sc, IWX_DATA_PATH_GROUP,
+		    IWX_RLC_CONFIG_CMD) == 2) {
+			err = iwx_phy_send_rlc(sc, &sc->sc_phyctxt[i], 1, 1);
+			if (err) {
+				printf("%s: could not configure RLC for PHY "
+				    "%d (error %d)\n", DEVNAME(sc), i, err);
+				goto err;
+			}
 		}
 	}
 
@@ -9906,6 +9955,9 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 				iwx_rs_update(sc, notif);
 			break;
 		}
+
+		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP, IWX_RLC_CONFIG_CMD):
+			break;
 
 		case IWX_WIDE_ID(IWX_REGULATORY_AND_NVM_GROUP,
 		    IWX_PNVM_INIT_COMPLETE):
