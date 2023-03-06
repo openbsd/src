@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.41 2023/02/14 12:14:07 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.42 2023/03/06 10:16:16 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -1574,8 +1574,13 @@ struct iwx_ucode_header {
 #define IWX_UCODE_TLV_PNVM_VERSION		62
 #define IWX_UCODE_TLV_PNVM_SKU			64
 
+#define IWX_UCODE_TLV_SEC_TABLE_ADDR		66
+#define IWX_UCODE_TLV_D3_KEK_KCK_ADDR		67
+#define IWX_UCODE_TLV_CURRENT_PC		68
+
 #define IWX_UCODE_TLV_CONST_BASE		0x100
 #define IWX_UCODE_TLV_FW_NUM_STATIONS		(IWX_UCODE_TLV_CONST_BASE + 0)
+#define IWX_UCODE_TLV_FW_NUM_BEACONS		(IWX_UCODE_TLV_CONST_BASE + 2)
 
 #define IWX_UCODE_TLV_DEBUG_BASE	0x1000005
 #define IWX_UCODE_TLV_TYPE_DEBUG_INFO		(IWX_UCODE_TLV_DEBUG_BASE + 0)

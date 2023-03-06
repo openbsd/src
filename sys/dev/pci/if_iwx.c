@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.153 2023/02/19 12:23:27 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.154 2023/03/06 10:16:16 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -1537,6 +1537,7 @@ iwx_read_firmware(struct iwx_softc *sc)
 		case IWX_UCODE_TLV_FW_FSEQ_VERSION:
 		case IWX_UCODE_TLV_PHY_INTEGRATION_VERSION:
 		case IWX_UCODE_TLV_FW_NUM_STATIONS:
+		case IWX_UCODE_TLV_FW_NUM_BEACONS:
 			break;
 
 		/* undocumented TLVs found in iwx-cc-a0-46 image */
@@ -1556,10 +1557,21 @@ iwx_read_firmware(struct iwx_softc *sc)
 		case IWX_UCODE_TLV_TYPE_REGIONS:
 		case IWX_UCODE_TLV_TYPE_TRIGGERS:
 		case IWX_UCODE_TLV_TYPE_CONF_SET:
+		case IWX_UCODE_TLV_SEC_TABLE_ADDR:
+		case IWX_UCODE_TLV_D3_KEK_KCK_ADDR:
+		case IWX_UCODE_TLV_CURRENT_PC:
 			break;
 
 		/* undocumented TLV found in iwx-cc-a0-67 image */
 		case 0x100000b:
+			break;
+
+		/* undocumented TLV found in iwx-ty-a0-gf-a0-73 image */
+		case 0x101:
+			break;
+
+		/* undocumented TLV found in iwx-ty-a0-gf-a0-77 image */
+		case 0x100000c:
 			break;
 
 		default:
