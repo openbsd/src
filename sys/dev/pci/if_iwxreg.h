@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxreg.h,v 1.44 2023/03/06 10:28:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwxreg.h,v 1.45 2023/03/06 10:31:58 stsp Exp $	*/
 
 /*-
  * Based on BSD-licensed source modules in the Linux iwlwifi driver,
@@ -4902,7 +4902,7 @@ enum {
 #define IWX_RATE_INVM_PLCP	0xff
 
 /*
- * rate_n_flags bit fields
+ * rate_n_flags bit fields version 1
  *
  * The 32-bit value has different layouts in the low 8 bites depending on the
  * format. There are three formats, HT, VHT and legacy (11abg, with subformats
@@ -4920,15 +4920,15 @@ enum {
 
 /* Bit 8: (1) HT format, (0) legacy or VHT format */
 #define IWX_RATE_MCS_HT_POS 8
-#define IWX_RATE_MCS_HT_MSK (1 << IWX_RATE_MCS_HT_POS)
+#define IWX_RATE_MCS_HT_MSK_V1 (1 << IWX_RATE_MCS_HT_POS)
 
 /* Bit 9: (1) CCK, (0) OFDM.  HT (bit 8) must be "0" for this bit to be valid */
-#define IWX_RATE_MCS_CCK_POS 9
-#define IWX_RATE_MCS_CCK_MSK (1 << IWX_RATE_MCS_CCK_POS)
+#define IWX_RATE_MCS_CCK_POS_V1 9
+#define IWX_RATE_MCS_CCK_MSK_V1 (1 << IWX_RATE_MCS_CCK_POS_V1)
 
 /* Bit 26: (1) VHT format, (0) legacy format in bits 8:0 */
-#define IWX_RATE_MCS_VHT_POS 26
-#define IWX_RATE_MCS_VHT_MSK (1 << IWX_RATE_MCS_VHT_POS)
+#define IWX_RATE_MCS_VHT_POS_V1 26
+#define IWX_RATE_MCS_VHT_MSK_V1 (1 << IWX_RATE_MCS_VHT_POS_V1)
 
 
 /*
@@ -4954,15 +4954,16 @@ enum {
  * streams and 16-23 have three streams. We could also support MCS 32
  * which is the duplicate 20 MHz MCS (bit 5 set, all others zero.)
  */
-#define IWX_RATE_HT_MCS_RATE_CODE_MSK	0x7
-#define IWX_RATE_HT_MCS_NSS_POS             3
-#define IWX_RATE_HT_MCS_NSS_MSK             (3 << IWX_RATE_HT_MCS_NSS_POS)
+#define IWX_RATE_HT_MCS_RATE_CODE_MSK_V1	0x7
+#define IWX_RATE_HT_MCS_NSS_POS_V1             3
+#define IWX_RATE_HT_MCS_NSS_MSK_V1             (3 << IWX_RATE_HT_MCS_NSS_POS_V1)
+#define IWX_RATE_HT_MCS_MIMO2_MSK_V1           (1 << IWX_RATE_HT_MCS_NSS_POS_V1)
 
 /* Bit 10: (1) Use Green Field preamble */
 #define IWX_RATE_HT_MCS_GF_POS		10
 #define IWX_RATE_HT_MCS_GF_MSK		(1 << IWX_RATE_HT_MCS_GF_POS)
 
-#define IWX_RATE_HT_MCS_INDEX_MSK		0x3f
+#define IWX_RATE_HT_MCS_INDEX_MSK_V1		0x3f
 
 /*
  * Very High-throughput (VHT) rate format for bits 7:0
@@ -4978,6 +4979,7 @@ enum {
 #define IWX_RATE_VHT_MCS_RATE_CODE_MSK	0xf
 #define IWX_RATE_VHT_MCS_NSS_POS		4
 #define IWX_RATE_VHT_MCS_NSS_MSK		(3 << IWX_RATE_VHT_MCS_NSS_POS)
+#define IWX_RATE_VHT_MCS_MIMO2_MSK		(1 << IWX_RATE_VHT_MCS_NSS_POS)
 
 /*
  * Legacy OFDM rate format for bits 7:0
@@ -5001,56 +5003,95 @@ enum {
  *        110)  11 Mbps
  * (bit 7 is 0)
  */
-#define IWX_RATE_LEGACY_RATE_MSK 0xff
+#define IWX_RATE_LEGACY_RATE_MSK_V1 0xff
 
+/* Bit 10 - OFDM HE */
+#define IWX_RATE_MCS_HE_POS_V1	10
+#define IWX_RATE_MCS_HE_MSK_V1	(1 << RATE_MCS_HE_POS_V1)
 
 /*
  * Bit 11-12: (0) 20MHz, (1) 40MHz, (2) 80MHz, (3) 160MHz
  * 0 and 1 are valid for HT and VHT, 2 and 3 only for VHT
  */
 #define IWX_RATE_MCS_CHAN_WIDTH_POS		11
-#define IWX_RATE_MCS_CHAN_WIDTH_MSK		(3 << IWX_RATE_MCS_CHAN_WIDTH_POS)
-#define IWX_RATE_MCS_CHAN_WIDTH_20		(0 << IWX_RATE_MCS_CHAN_WIDTH_POS)
-#define IWX_RATE_MCS_CHAN_WIDTH_40		(1 << IWX_RATE_MCS_CHAN_WIDTH_POS)
-#define IWX_RATE_MCS_CHAN_WIDTH_80		(2 << IWX_RATE_MCS_CHAN_WIDTH_POS)
-#define IWX_RATE_MCS_CHAN_WIDTH_160		(3 << IWX_RATE_MCS_CHAN_WIDTH_POS)
+#define IWX_RATE_MCS_CHAN_WIDTH_MSK_V1		(3 << IWX_RATE_MCS_CHAN_WIDTH_POS)
+#define IWX_RATE_MCS_CHAN_WIDTH_20_V1		(0 << IWX_RATE_MCS_CHAN_WIDTH_POS)
+#define IWX_RATE_MCS_CHAN_WIDTH_40_V1		(1 << IWX_RATE_MCS_CHAN_WIDTH_POS)
+#define IWX_RATE_MCS_CHAN_WIDTH_80_V1		(2 << IWX_RATE_MCS_CHAN_WIDTH_POS)
+#define IWX_RATE_MCS_CHAN_WIDTH_160_V1		(3 << IWX_RATE_MCS_CHAN_WIDTH_POS)
 
 /* Bit 13: (1) Short guard interval (0.4 usec), (0) normal GI (0.8 usec) */
-#define IWX_RATE_MCS_SGI_POS		13
-#define IWX_RATE_MCS_SGI_MSK		(1 << IWX_RATE_MCS_SGI_POS)
+#define IWX_RATE_MCS_SGI_POS_V1		13
+#define IWX_RATE_MCS_SGI_MSK_V1		(1 << IWX_RATE_MCS_SGI_POS_V1)
 
-/* Bit 14-16: Antenna selection (1) Ant A, (2) Ant B, (4) Ant C */
+/* Bit 14-16: Antenna selection (1) Ant A, (2) Ant B, (4) Ant C (unused) */
 #define IWX_RATE_MCS_ANT_POS		14
 #define IWX_RATE_MCS_ANT_A_MSK		(1 << IWX_RATE_MCS_ANT_POS)
 #define IWX_RATE_MCS_ANT_B_MSK		(2 << IWX_RATE_MCS_ANT_POS)
-#define IWX_RATE_MCS_ANT_C_MSK		(4 << IWX_RATE_MCS_ANT_POS)
 #define IWX_RATE_MCS_ANT_AB_MSK		(IWX_RATE_MCS_ANT_A_MSK | \
 					 IWX_RATE_MCS_ANT_B_MSK)
-#define IWX_RATE_MCS_ANT_ABC_MSK		(IWX_RATE_MCS_ANT_AB_MSK | \
-					 IWX_RATE_MCS_ANT_C_MSK)
 #define IWX_RATE_MCS_ANT_MSK		IWX_RATE_MCS_ANT_ABC_MSK
-#define IWX_RATE_MCS_ANT_NUM 3
+#define IWX_RATE_MCS_ANT_NUM 2
 
-/* Bit 17-18: (0) SS, (1) SS*2 */
+/* Bit 17: (0) SS, (1) SS*2 */
 #define IWX_RATE_MCS_STBC_POS		17
 #define IWX_RATE_MCS_STBC_MSK		(1 << IWX_RATE_MCS_STBC_POS)
+
+/* Bit 18: OFDM-HE dual carrier mode */
+#define IWX_RATE_HE_DUAL_CARRIER_MODE	18
+#define IWX_RATE_HE_DUAL_CARRIER_MODE_MSK (1 << IWX_RATE_HE_DUAL_CARRIER_MODE)
 
 /* Bit 19: (0) Beamforming is off, (1) Beamforming is on */
 #define IWX_RATE_MCS_BF_POS			19
 #define IWX_RATE_MCS_BF_MSK			(1 << IWX_RATE_MCS_BF_POS)
 
-/* Bit 20: (0) ZLF is off, (1) ZLF is on */
-#define IWX_RATE_MCS_ZLF_POS		20
-#define IWX_RATE_MCS_ZLF_MSK		(1 << IWX_RATE_MCS_ZLF_POS)
+/*
+ * Bit 20-21: HE LTF type and guard interval
+ * HE (ext) SU:
+ *	0			1xLTF+0.8us
+ *	1			2xLTF+0.8us
+ *	2			2xLTF+1.6us
+ *	3 & SGI (bit 13) clear	4xLTF+3.2us
+ *	3 & SGI (bit 13) set	4xLTF+0.8us
+ * HE MU:
+ *	0			4xLTF+0.8us
+ *	1			2xLTF+0.8us
+ *	2			2xLTF+1.6us
+ *	3			4xLTF+3.2us
+ * HE TRIG:
+ *	0			1xLTF+1.6us
+ *	1			2xLTF+1.6us
+ *	2			4xLTF+3.2us
+ *	3			(does not occur)
+ */
+#define IWX_RATE_MCS_HE_GI_LTF_POS	20
+#define IWX_RATE_MCS_HE_GI_LTF_MSK_V1	(3 << IWX_RATE_MCS_HE_GI_LTF_POS)
+
+/* Bit 22-23: HE type. (0) SU, (1) SU_EXT, (2) MU, (3) trigger based */
+#define IWX_RATE_MCS_HE_TYPE_POS_V1	22
+#define IWX_RATE_MCS_HE_TYPE_SU_V1	(0 << IWX_RATE_MCS_HE_TYPE_POS_V1)
+#define IWX_RATE_MCS_HE_TYPE_EXT_SU_V1	(1 << IWX_RATE_MCS_HE_TYPE_POS_V1)
+#define IWX_RATE_MCS_HE_TYPE_MU_V1	(2 << IWX_RATE_MCS_HE_TYPE_POS_V1)
+#define IWX_RATE_MCS_HE_TYPE_TRIG_V1	(3 << IWX_RATE_MCS_HE_TYPE_POS_V1)
+#define IWX_RATE_MCS_HE_TYPE_MSK_V1	(3 << IWX_RATE_MCS_HE_TYPE_POS_V1)
 
 /* Bit 24-25: (0) 20MHz (no dup), (1) 2x20MHz, (2) 4x20MHz, 3 8x20MHz */
-#define IWX_RATE_MCS_DUP_POS		24
-#define IWX_RATE_MCS_DUP_MSK		(3 << IWX_RATE_MCS_DUP_POS)
+#define IWX_RATE_MCS_DUP_POS_V1		24
+#define IWX_RATE_MCS_DUP_MSK_V1		(3 << IWX_RATE_MCS_DUP_POS_V1)
 
 /* Bit 27: (1) LDPC enabled, (0) LDPC disabled */
-#define IWX_RATE_MCS_LDPC_POS		27
-#define IWX_RATE_MCS_LDPC_MSK		(1 << IWX_RATE_MCS_LDPC_POS)
+#define IWX_RATE_MCS_LDPC_POS_V1	27
+#define IWX_RATE_MCS_LDPC_MSK_V1	(1 << IWX_RATE_MCS_LDPC_POS_V1)
 
+/* Bit 28: (1) 106-tone RX (8 MHz RU), (0) normal bandwidth */
+#define IWX_RATE_MCS_HE_106T_POS_V1	28
+#define IWX_RATE_MCS_HE_106T_MSK_V1	(1 << IWX_RATE_MCS_HE_106T_POS_V1)
+
+/* Bit 30-31: (1) RTS, (2) CTS */
+#define IWX_RATE_MCS_RTS_REQUIRED_POS  (30)
+#define IWX_RATE_MCS_RTS_REQUIRED_MSK  (1 << IWX_RATE_MCS_RTS_REQUIRED_POS)
+#define IWX_RATE_MCS_CTS_REQUIRED_POS  (31)
+#define IWX_RATE_MCS_CTS_REQUIRED_MSK  (1 << IWX_RATE_MCS_CTS_REQUIRED_POS)
 
 /* Link Quality definitions */
 

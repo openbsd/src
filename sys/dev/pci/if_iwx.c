@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.156 2023/03/06 10:28:04 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.157 2023/03/06 10:31:58 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -554,7 +554,7 @@ int
 iwx_is_mimo_ht_plcp(uint8_t ht_plcp)
 {
 	return (ht_plcp != IWX_RATE_HT_SISO_MCS_INV_PLCP &&
-	    (ht_plcp & IWX_RATE_HT_MCS_NSS_MSK));
+	    (ht_plcp & IWX_RATE_HT_MCS_NSS_MSK_V1));
 }
 
 int
@@ -4556,14 +4556,14 @@ iwx_rx_frame(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 		tap->wr_dbm_antsignal = (int8_t)rxi->rxi_rssi;
 		tap->wr_dbm_antnoise = (int8_t)sc->sc_noise;
 		tap->wr_tsft = device_timestamp;
-		if (rate_n_flags & IWX_RATE_MCS_HT_MSK) {
+		if (rate_n_flags & IWX_RATE_MCS_HT_MSK_V1) {
 			uint8_t mcs = (rate_n_flags &
-			    (IWX_RATE_HT_MCS_RATE_CODE_MSK |
-			    IWX_RATE_HT_MCS_NSS_MSK));
+			    (IWX_RATE_HT_MCS_RATE_CODE_MSK_V1 |
+			    IWX_RATE_HT_MCS_NSS_MSK_V1));
 			tap->wr_rate = (0x80 | mcs);
 		} else {
 			uint8_t rate = (rate_n_flags &
-			    IWX_RATE_LEGACY_RATE_MSK);
+			    IWX_RATE_LEGACY_RATE_MSK_V1);
 			switch (rate) {
 			/* CCK rates. */
 			case  10: tap->wr_rate =   2; break;
@@ -5876,7 +5876,7 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 	else
 		rate_flags = IWX_RATE_MCS_ANT_A_MSK;
 	if (IWX_RIDX_IS_CCK(ridx))
-		rate_flags |= IWX_RATE_MCS_CCK_MSK;
+		rate_flags |= IWX_RATE_MCS_CCK_MSK_V1;
 	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
  	    type == IEEE80211_FC0_TYPE_DATA &&
 	    rinfo->ht_plcp != IWX_RATE_HT_SISO_MCS_INV_PLCP) {
@@ -5890,23 +5890,23 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 		    ieee80211_node_supports_ht_chan40(ni))
 			sco = (ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK);
 		if (ni->ni_flags & IEEE80211_NODE_VHT)
-			rate_flags |= IWX_RATE_MCS_VHT_MSK; 
+			rate_flags |= IWX_RATE_MCS_VHT_MSK_V1; 
 		else
-			rate_flags |= IWX_RATE_MCS_HT_MSK; 
+			rate_flags |= IWX_RATE_MCS_HT_MSK_V1; 
 		if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80 &&
 		    in->in_phyctxt != NULL &&
 		    in->in_phyctxt->vht_chan_width == vht_chan_width) {
-			rate_flags |= IWX_RATE_MCS_CHAN_WIDTH_80;
+			rate_flags |= IWX_RATE_MCS_CHAN_WIDTH_80_V1;
 			if (ieee80211_node_supports_vht_sgi80(ni))
-				rate_flags |= IWX_RATE_MCS_SGI_MSK;
+				rate_flags |= IWX_RATE_MCS_SGI_MSK_V1;
 		} else if ((sco == IEEE80211_HTOP0_SCO_SCA || 
 		    sco == IEEE80211_HTOP0_SCO_SCB) &&
 		    in->in_phyctxt != NULL && in->in_phyctxt->sco == sco) {
-			rate_flags |= IWX_RATE_MCS_CHAN_WIDTH_40;
+			rate_flags |= IWX_RATE_MCS_CHAN_WIDTH_40_V1;
 			if (ieee80211_node_supports_ht_sgi40(ni))
-				rate_flags |= IWX_RATE_MCS_SGI_MSK;
+				rate_flags |= IWX_RATE_MCS_SGI_MSK_V1;
 		} else if (ieee80211_node_supports_ht_sgi20(ni))
-			rate_flags |= IWX_RATE_MCS_SGI_MSK;
+			rate_flags |= IWX_RATE_MCS_SGI_MSK_V1;
 		*rate_n_flags = rate_flags | rinfo->ht_plcp;
 	} else
 		*rate_n_flags = rate_flags | rinfo->plcp;
@@ -7725,16 +7725,17 @@ iwx_rs_update(struct iwx_softc *sc, struct iwx_tlc_update_notif *notif)
 		return;
 
 	rate_n_flags = le32toh(notif->rate);
-	if (rate_n_flags & IWX_RATE_MCS_VHT_MSK) {
-		ni->ni_txmcs = (rate_n_flags & IWX_RATE_VHT_MCS_RATE_CODE_MSK);
+	if (rate_n_flags & IWX_RATE_MCS_VHT_MSK_V1) {
+		ni->ni_txmcs = (rate_n_flags &
+		    IWX_RATE_VHT_MCS_RATE_CODE_MSK);
 		ni->ni_vht_ss = ((rate_n_flags & IWX_RATE_VHT_MCS_NSS_MSK) >>
 		    IWX_RATE_VHT_MCS_NSS_POS) + 1;
-	} else if (rate_n_flags & IWX_RATE_MCS_HT_MSK) {
+	} else if (rate_n_flags & IWX_RATE_MCS_HT_MSK_V1) {
 		ni->ni_txmcs = (rate_n_flags &
-		    (IWX_RATE_HT_MCS_RATE_CODE_MSK |
-		    IWX_RATE_HT_MCS_NSS_MSK));
+		    (IWX_RATE_HT_MCS_RATE_CODE_MSK_V1 |
+		    IWX_RATE_HT_MCS_NSS_MSK_V1));
 	} else {
-		uint8_t plcp = (rate_n_flags & IWX_RATE_LEGACY_RATE_MSK);
+		uint8_t plcp = (rate_n_flags & IWX_RATE_LEGACY_RATE_MSK_V1);
 		uint8_t rval = 0;
 		for (i = IWX_RATE_1M_INDEX; i < nitems(iwx_rates); i++) {
 			if (iwx_rates[i].plcp == plcp) {
