@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.54 2022/11/11 17:07:38 joshua Exp $ */
+/* $OpenBSD: ca.c,v 1.55 2023/03/06 14:32:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -207,63 +207,63 @@ static struct {
 	char *startdate;
 	char *subj;
 	int verbose;
-} ca_config;
+} cfg;
 
 static int
 ca_opt_chtype_utf8(void)
 {
-	ca_config.chtype = MBSTRING_UTF8;
+	cfg.chtype = MBSTRING_UTF8;
 	return (0);
 }
 
 static int
 ca_opt_crl_ca_compromise(char *arg)
 {
-	ca_config.rev_arg = arg;
-	ca_config.rev_type = REV_CA_COMPROMISE;
+	cfg.rev_arg = arg;
+	cfg.rev_type = REV_CA_COMPROMISE;
 	return (0);
 }
 
 static int
 ca_opt_crl_compromise(char *arg)
 {
-	ca_config.rev_arg = arg;
-	ca_config.rev_type = REV_KEY_COMPROMISE;
+	cfg.rev_arg = arg;
+	cfg.rev_type = REV_KEY_COMPROMISE;
 	return (0);
 }
 
 static int
 ca_opt_crl_hold(char *arg)
 {
-	ca_config.rev_arg = arg;
-	ca_config.rev_type = REV_HOLD;
+	cfg.rev_arg = arg;
+	cfg.rev_type = REV_HOLD;
 	return (0);
 }
 
 static int
 ca_opt_crl_reason(char *arg)
 {
-	ca_config.rev_arg = arg;
-	ca_config.rev_type = REV_CRL_REASON;
+	cfg.rev_arg = arg;
+	cfg.rev_type = REV_CRL_REASON;
 	return (0);
 }
 
 static int
 ca_opt_in(char *arg)
 {
-	ca_config.infile = arg;
-	ca_config.req = 1;
+	cfg.infile = arg;
+	cfg.req = 1;
 	return (0);
 }
 
 static int
 ca_opt_infiles(int argc, char **argv, int *argsused)
 {
-	ca_config.infiles_num = argc - 1;
-	if (ca_config.infiles_num < 1)
+	cfg.infiles_num = argc - 1;
+	if (cfg.infiles_num < 1)
 		return (1);
-	ca_config.infiles = argv + 1;
-	ca_config.req = 1;
+	cfg.infiles = argv + 1;
+	cfg.req = 1;
 	*argsused = argc;
 	return (0);
 }
@@ -271,19 +271,19 @@ ca_opt_infiles(int argc, char **argv, int *argsused)
 static int
 ca_opt_revoke(char *arg)
 {
-	ca_config.infile = arg;
-	ca_config.dorevoke = 1;
+	cfg.infile = arg;
+	cfg.dorevoke = 1;
 	return (0);
 }
 
 static int
 ca_opt_sigopt(char *arg)
 {
-	if (ca_config.sigopts == NULL)
-		ca_config.sigopts = sk_OPENSSL_STRING_new_null();
-	if (ca_config.sigopts == NULL)
+	if (cfg.sigopts == NULL)
+		cfg.sigopts = sk_OPENSSL_STRING_new_null();
+	if (cfg.sigopts == NULL)
 		return (1);
-	if (!sk_OPENSSL_STRING_push(ca_config.sigopts, arg))
+	if (!sk_OPENSSL_STRING_push(cfg.sigopts, arg))
 		return (1);
 	return (0);
 }
@@ -291,16 +291,16 @@ ca_opt_sigopt(char *arg)
 static int
 ca_opt_spkac(char *arg)
 {
-	ca_config.spkac_file = arg;
-	ca_config.req = 1;
+	cfg.spkac_file = arg;
+	cfg.req = 1;
 	return (0);
 }
 
 static int
 ca_opt_ss_cert(char *arg)
 {
-	ca_config.ss_cert_file = arg;
-	ca_config.req = 1;
+	cfg.ss_cert_file = arg;
+	cfg.req = 1;
 	return (0);
 }
 
@@ -309,27 +309,27 @@ static const struct option ca_options[] = {
 		.name = "batch",
 		.desc = "Operate in batch mode",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.batch,
+		.opt.flag = &cfg.batch,
 	},
 	{
 		.name = "cert",
 		.argname = "file",
 		.desc = "File containing the CA certificate",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.certfile,
+		.opt.arg = &cfg.certfile,
 	},
 	{
 		.name = "config",
 		.argname = "file",
 		.desc = "Specify an alternative configuration file",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.configfile,
+		.opt.arg = &cfg.configfile,
 	},
 	{
 		.name = "create_serial",
 		.desc = "If reading serial fails, create a new random serial",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.create_serial,
+		.opt.flag = &cfg.create_serial,
 	},
 	{
 		.name = "crl_CA_compromise",
@@ -367,62 +367,62 @@ static const struct option ca_options[] = {
 		.argname = "days",
 		.desc = "Number of days before the next CRL is due",
 		.type = OPTION_ARG_LONG,
-		.opt.lvalue = &ca_config.crldays,
+		.opt.lvalue = &cfg.crldays,
 	},
 	{
 		.name = "crlexts",
 		.argname = "section",
 		.desc = "CRL extension section (override value in config file)",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.crl_ext,
+		.opt.arg = &cfg.crl_ext,
 	},
 	{
 		.name = "crlhours",
 		.argname = "hours",
 		.desc = "Number of hours before the next CRL is due",
 		.type = OPTION_ARG_LONG,
-		.opt.lvalue = &ca_config.crlhours,
+		.opt.lvalue = &cfg.crlhours,
 	},
 	{
 		.name = "crlsec",
 		.argname = "seconds",
 		.desc = "Number of seconds before the next CRL is due",
 		.type = OPTION_ARG_LONG,
-		.opt.lvalue = &ca_config.crlsec,
+		.opt.lvalue = &cfg.crlsec,
 	},
 	{
 		.name = "days",
 		.argname = "arg",
 		.desc = "Number of days to certify the certificate for",
 		.type = OPTION_ARG_LONG,
-		.opt.lvalue = &ca_config.days,
+		.opt.lvalue = &cfg.days,
 	},
 	{
 		.name = "enddate",
 		.argname = "YYMMDDHHMMSSZ",
 		.desc = "Certificate validity notAfter (overrides -days)",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.enddate,
+		.opt.arg = &cfg.enddate,
 	},
 	{
 		.name = "extensions",
 		.argname = "section",
 		.desc = "Extension section (override value in config file)",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.extensions,
+		.opt.arg = &cfg.extensions,
 	},
 	{
 		.name = "extfile",
 		.argname = "file",
 		.desc = "Configuration file with X509v3 extentions to add",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.extfile,
+		.opt.arg = &cfg.extfile,
 	},
 	{
 		.name = "gencrl",
 		.desc = "Generate a new CRL",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.gencrl,
+		.opt.flag = &cfg.gencrl,
 	},
 	{
 		.name = "in",
@@ -443,93 +443,93 @@ static const struct option ca_options[] = {
 		.argname = "password",
 		.desc = "Key to decode the private key if it is encrypted",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.key,
+		.opt.arg = &cfg.key,
 	},
 	{
 		.name = "keyfile",
 		.argname = "file",
 		.desc = "Private key file",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.keyfile,
+		.opt.arg = &cfg.keyfile,
 	},
 	{
 		.name = "keyform",
 		.argname = "fmt",
 		.desc = "Private key file format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &ca_config.keyform,
+		.opt.value = &cfg.keyform,
 	},
 	{
 		.name = "md",
 		.argname = "alg",
 		.desc = "Message digest to use",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.md,
+		.opt.arg = &cfg.md,
 	},
 	{
 		.name = "msie_hack",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.msie_hack,
+		.opt.flag = &cfg.msie_hack,
 	},
 	{
 		.name = "multivalue-rdn",
 		.desc = "Enable support for multivalued RDNs",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.multirdn,
+		.opt.flag = &cfg.multirdn,
 	},
 	{
 		.name = "name",
 		.argname = "section",
 		.desc = "Specifies the configuration file section to use",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.section,
+		.opt.arg = &cfg.section,
 	},
 	{
 		.name = "noemailDN",
 		.desc = "Do not add the EMAIL field to the DN",
 		.type = OPTION_VALUE,
-		.opt.value = &ca_config.email_dn,
+		.opt.value = &cfg.email_dn,
 		.value = 0,
 	},
 	{
 		.name = "notext",
 		.desc = "Do not print the generated certificate",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.notext,
+		.opt.flag = &cfg.notext,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outdir",
 		.argname = "directory",
 		.desc = " Directory to output certificates to",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.outdir,
+		.opt.arg = &cfg.outdir,
 	},
 	{
 		.name = "passin",
 		.argname = "src",
 		.desc = "Private key input password source",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.passargin,
+		.opt.arg = &cfg.passargin,
 	},
 	{
 		.name = "policy",
 		.argname = "name",
 		.desc = "The CA 'policy' to support",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.policy,
+		.opt.arg = &cfg.policy,
 	},
 	{
 		.name = "preserveDN",
 		.desc = "Do not re-order the DN",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.preserve,
+		.opt.flag = &cfg.preserve,
 	},
 	{
 		.name = "revoke",
@@ -542,7 +542,7 @@ static const struct option ca_options[] = {
 		.name = "selfsign",
 		.desc = "Sign a certificate using the key associated with it",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.selfsign,
+		.opt.flag = &cfg.selfsign,
 	},
 	{
 		.name = "sigopt",
@@ -570,27 +570,27 @@ static const struct option ca_options[] = {
 		.argname = "YYMMDDHHMMSSZ",
 		.desc = "Certificate validity notBefore",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.startdate,
+		.opt.arg = &cfg.startdate,
 	},
 	{
 		.name = "status",
 		.argname = "serial",
 		.desc = "Shows certificate status given the serial number",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.serial_status,
+		.opt.arg = &cfg.serial_status,
 	},
 	{
 		.name = "subj",
 		.argname = "arg",
 		.desc = "Use arg instead of request's subject",
 		.type = OPTION_ARG,
-		.opt.arg = &ca_config.subj,
+		.opt.arg = &cfg.subj,
 	},
 	{
 		.name = "updatedb",
 		.desc = "Updates db for expired certificates",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.doupdatedb,
+		.opt.flag = &cfg.doupdatedb,
 	},
 	{
 		.name = "utf8",
@@ -602,7 +602,7 @@ static const struct option ca_options[] = {
 		.name = "verbose",
 		.desc = "Verbose output during processing",
 		.type = OPTION_FLAG,
-		.opt.flag = &ca_config.verbose,
+		.opt.flag = &cfg.verbose,
 	},
 	{ NULL },
 };
@@ -690,11 +690,11 @@ ca_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&ca_config, 0, sizeof(ca_config));
-	ca_config.email_dn = 1;
-	ca_config.keyform = FORMAT_PEM;
-	ca_config.chtype = MBSTRING_ASC;
-	ca_config.rev_type = REV_NONE;
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.email_dn = 1;
+	cfg.keyform = FORMAT_PEM;
+	cfg.chtype = MBSTRING_ASC;
+	cfg.rev_type = REV_NONE;
 
 	conf = NULL;
 
@@ -705,37 +705,37 @@ ca_main(int argc, char **argv)
 
 	/*****************************************************************/
 	tofree = NULL;
-	if (ca_config.configfile == NULL)
-		ca_config.configfile = getenv("OPENSSL_CONF");
-	if (ca_config.configfile == NULL) {
+	if (cfg.configfile == NULL)
+		cfg.configfile = getenv("OPENSSL_CONF");
+	if (cfg.configfile == NULL) {
 		if ((tofree = make_config_name()) == NULL) {
 			BIO_printf(bio_err, "error making config file name\n");
 			goto err;
 		}
-		ca_config.configfile = tofree;
+		cfg.configfile = tofree;
 	}
 	BIO_printf(bio_err, "Using configuration from %s\n",
-	    ca_config.configfile);
+	    cfg.configfile);
 	conf = NCONF_new(NULL);
-	if (NCONF_load(conf, ca_config.configfile, &errorline) <= 0) {
+	if (NCONF_load(conf, cfg.configfile, &errorline) <= 0) {
 		if (errorline <= 0)
 			BIO_printf(bio_err,
 			    "error loading the config file '%s'\n",
-			    ca_config.configfile);
+			    cfg.configfile);
 		else
 			BIO_printf(bio_err,
 			    "error on line %ld of config file '%s'\n",
-			    errorline, ca_config.configfile);
+			    errorline, cfg.configfile);
 		goto err;
 	}
 	free(tofree);
 	tofree = NULL;
 
 	/* Lets get the config section we are using */
-	if (ca_config.section == NULL) {
-		ca_config.section = NCONF_get_string(conf, BASE_SECTION,
+	if (cfg.section == NULL) {
+		cfg.section = NCONF_get_string(conf, BASE_SECTION,
 		    ENV_DEFAULT_CA);
-		if (ca_config.section == NULL) {
+		if (cfg.section == NULL) {
 			lookup_fail(BASE_SECTION, ENV_DEFAULT_CA);
 			goto err;
 		}
@@ -765,7 +765,7 @@ ca_main(int argc, char **argv)
 			goto err;
 		}
 	}
-	f = NCONF_get_string(conf, ca_config.section, STRING_MASK);
+	f = NCONF_get_string(conf, cfg.section, STRING_MASK);
 	if (f == NULL)
 		ERR_clear_error();
 
@@ -774,15 +774,15 @@ ca_main(int argc, char **argv)
 		    "Invalid global string mask setting %s\n", f);
 		goto err;
 	}
-	if (ca_config.chtype != MBSTRING_UTF8) {
-		f = NCONF_get_string(conf, ca_config.section, UTF8_IN);
+	if (cfg.chtype != MBSTRING_UTF8) {
+		f = NCONF_get_string(conf, cfg.section, UTF8_IN);
 		if (f == NULL)
 			ERR_clear_error();
 		else if (strcmp(f, "yes") == 0)
-			ca_config.chtype = MBSTRING_UTF8;
+			cfg.chtype = MBSTRING_UTF8;
 	}
 	db_attr.unique_subject = 1;
-	p = NCONF_get_string(conf, ca_config.section, ENV_UNIQUE_SUBJECT);
+	p = NCONF_get_string(conf, cfg.section, ENV_UNIQUE_SUBJECT);
 	if (p != NULL) {
 		db_attr.unique_subject = parse_yesno(p, 1);
 	} else
@@ -798,10 +798,10 @@ ca_main(int argc, char **argv)
 	}
 	/*****************************************************************/
 	/* report status of cert with serial number given on command line */
-	if (ca_config.serial_status) {
-		if ((dbfile = NCONF_get_string(conf, ca_config.section,
+	if (cfg.serial_status) {
+		if ((dbfile = NCONF_get_string(conf, cfg.section,
 		    ENV_DATABASE)) == NULL) {
-			lookup_fail(ca_config.section, ENV_DATABASE);
+			lookup_fail(cfg.section, ENV_DATABASE);
 			goto err;
 		}
 		db = load_index(dbfile, &db_attr);
@@ -811,47 +811,47 @@ ca_main(int argc, char **argv)
 		if (!index_index(db))
 			goto err;
 
-		if (get_certificate_status(ca_config.serial_status, db) != 1)
+		if (get_certificate_status(cfg.serial_status, db) != 1)
 			BIO_printf(bio_err, "Error verifying serial %s!\n",
-			    ca_config.serial_status);
+			    cfg.serial_status);
 		goto err;
 	}
 	/*****************************************************************/
 	/* we definitely need a private key, so let's get it */
 
-	if ((ca_config.keyfile == NULL) &&
-	    ((ca_config.keyfile = NCONF_get_string(conf, ca_config.section,
+	if ((cfg.keyfile == NULL) &&
+	    ((cfg.keyfile = NCONF_get_string(conf, cfg.section,
 	    ENV_PRIVATE_KEY)) == NULL)) {
-		lookup_fail(ca_config.section, ENV_PRIVATE_KEY);
+		lookup_fail(cfg.section, ENV_PRIVATE_KEY);
 		goto err;
 	}
-	if (ca_config.key == NULL) {
+	if (cfg.key == NULL) {
 		free_key = 1;
-		if (!app_passwd(bio_err, ca_config.passargin, NULL,
-		    &ca_config.key, NULL)) {
+		if (!app_passwd(bio_err, cfg.passargin, NULL,
+		    &cfg.key, NULL)) {
 			BIO_printf(bio_err, "Error getting password\n");
 			goto err;
 		}
 	}
-	pkey = load_key(bio_err, ca_config.keyfile, ca_config.keyform, 0,
-	    ca_config.key, "CA private key");
-	if (ca_config.key != NULL)
-		explicit_bzero(ca_config.key, strlen(ca_config.key));
+	pkey = load_key(bio_err, cfg.keyfile, cfg.keyform, 0,
+	    cfg.key, "CA private key");
+	if (cfg.key != NULL)
+		explicit_bzero(cfg.key, strlen(cfg.key));
 	if (pkey == NULL) {
 		/* load_key() has already printed an appropriate message */
 		goto err;
 	}
 	/*****************************************************************/
 	/* we need a certificate */
-	if (!ca_config.selfsign || ca_config.spkac_file != NULL ||
-	    ca_config.ss_cert_file != NULL || ca_config.gencrl) {
-		if ((ca_config.certfile == NULL) &&
-		    ((ca_config.certfile = NCONF_get_string(conf,
-		    ca_config.section, ENV_CERTIFICATE)) == NULL)) {
-			lookup_fail(ca_config.section, ENV_CERTIFICATE);
+	if (!cfg.selfsign || cfg.spkac_file != NULL ||
+	    cfg.ss_cert_file != NULL || cfg.gencrl) {
+		if ((cfg.certfile == NULL) &&
+		    ((cfg.certfile = NCONF_get_string(conf,
+		    cfg.section, ENV_CERTIFICATE)) == NULL)) {
+			lookup_fail(cfg.section, ENV_CERTIFICATE);
 			goto err;
 		}
-		x509 = load_cert(bio_err, ca_config.certfile, FORMAT_PEM, NULL,
+		x509 = load_cert(bio_err, cfg.certfile, FORMAT_PEM, NULL,
 		    "CA certificate");
 		if (x509 == NULL)
 			goto err;
@@ -862,21 +862,21 @@ ca_main(int argc, char **argv)
 			goto err;
 		}
 	}
-	if (!ca_config.selfsign)
+	if (!cfg.selfsign)
 		x509p = x509;
 
 	f = NCONF_get_string(conf, BASE_SECTION, ENV_PRESERVE);
 	if (f == NULL)
 		ERR_clear_error();
 	if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
-		ca_config.preserve = 1;
+		cfg.preserve = 1;
 	f = NCONF_get_string(conf, BASE_SECTION, ENV_MSIE_HACK);
 	if (f == NULL)
 		ERR_clear_error();
 	if ((f != NULL) && ((*f == 'y') || (*f == 'Y')))
-		ca_config.msie_hack = 1;
+		cfg.msie_hack = 1;
 
-	f = NCONF_get_string(conf, ca_config.section, ENV_NAMEOPT);
+	f = NCONF_get_string(conf, cfg.section, ENV_NAMEOPT);
 
 	if (f != NULL) {
 		if (!set_name_ex(&nameopt, f)) {
@@ -888,7 +888,7 @@ ca_main(int argc, char **argv)
 	} else
 		ERR_clear_error();
 
-	f = NCONF_get_string(conf, ca_config.section, ENV_CERTOPT);
+	f = NCONF_get_string(conf, cfg.section, ENV_CERTOPT);
 
 	if (f != NULL) {
 		if (!set_cert_ex(&certopt, f)) {
@@ -900,7 +900,7 @@ ca_main(int argc, char **argv)
 	} else
 		ERR_clear_error();
 
-	f = NCONF_get_string(conf, ca_config.section, ENV_EXTCOPY);
+	f = NCONF_get_string(conf, cfg.section, ENV_EXTCOPY);
 
 	if (f != NULL) {
 		if (!set_ext_copy(&ext_copy, f)) {
@@ -913,9 +913,9 @@ ca_main(int argc, char **argv)
 
 	/*****************************************************************/
 	/* lookup where to write new certificates */
-	if (ca_config.outdir == NULL && ca_config.req) {
-		if ((ca_config.outdir = NCONF_get_string(conf,
-		    ca_config.section, ENV_NEW_CERTS_DIR)) == NULL) {
+	if (cfg.outdir == NULL && cfg.req) {
+		if ((cfg.outdir = NCONF_get_string(conf,
+		    cfg.section, ENV_NEW_CERTS_DIR)) == NULL) {
 			BIO_printf(bio_err, "output directory %s not defined\n",
 			    ENV_NEW_CERTS_DIR);
 			goto err;
@@ -923,9 +923,9 @@ ca_main(int argc, char **argv)
 	}
 	/*****************************************************************/
 	/* we need to load the database file */
-	if ((dbfile = NCONF_get_string(conf, ca_config.section,
+	if ((dbfile = NCONF_get_string(conf, cfg.section,
 	    ENV_DATABASE)) == NULL) {
-		lookup_fail(ca_config.section, ENV_DATABASE);
+		lookup_fail(cfg.section, ENV_DATABASE);
 		goto err;
 	}
 	db = load_index(dbfile, &db_attr);
@@ -976,7 +976,7 @@ ca_main(int argc, char **argv)
 			p++;
 		}
 	}
-	if (ca_config.verbose) {
+	if (cfg.verbose) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 		TXT_DB_write(out, db->db);
 		BIO_printf(bio_err, "%d entries loaded from the database\n",
@@ -988,8 +988,8 @@ ca_main(int argc, char **argv)
 
 	/*****************************************************************/
 	/* Update the db file for expired certificates */
-	if (ca_config.doupdatedb) {
-		if (ca_config.verbose)
+	if (cfg.doupdatedb) {
+		if (cfg.verbose)
 			BIO_printf(bio_err, "Updating %s ...\n", dbfile);
 
 		i = do_updatedb(db);
@@ -997,7 +997,7 @@ ca_main(int argc, char **argv)
 			BIO_printf(bio_err, "Malloc failure\n");
 			goto err;
 		} else if (i == 0) {
-			if (ca_config.verbose)
+			if (cfg.verbose)
 				BIO_printf(bio_err,
 				    "No entries found to mark expired\n");
 		} else {
@@ -1007,92 +1007,92 @@ ca_main(int argc, char **argv)
 			if (!rotate_index(dbfile, "new", "old"))
 				goto err;
 
-			if (ca_config.verbose)
+			if (cfg.verbose)
 				BIO_printf(bio_err,
 				    "Done. %d entries marked as expired\n", i);
 		}
 	}
 	/*****************************************************************/
 	/* Read extentions config file                                   */
-	if (ca_config.extfile != NULL) {
+	if (cfg.extfile != NULL) {
 		extconf = NCONF_new(NULL);
-		if (NCONF_load(extconf, ca_config.extfile, &errorline) <= 0) {
+		if (NCONF_load(extconf, cfg.extfile, &errorline) <= 0) {
 			if (errorline <= 0)
 				BIO_printf(bio_err,
 				    "ERROR: loading the config file '%s'\n",
-				    ca_config.extfile);
+				    cfg.extfile);
 			else
 				BIO_printf(bio_err,
 				    "ERROR: on line %ld of config file '%s'\n",
-				    errorline, ca_config.extfile);
+				    errorline, cfg.extfile);
 			ret = 1;
 			goto err;
 		}
-		if (ca_config.verbose)
+		if (cfg.verbose)
 			BIO_printf(bio_err,
 			    "Successfully loaded extensions file %s\n",
-			    ca_config.extfile);
+			    cfg.extfile);
 
 		/* We can have sections in the ext file */
-		if (ca_config.extensions == NULL &&
-		    (ca_config.extensions = NCONF_get_string(extconf, "default",
+		if (cfg.extensions == NULL &&
+		    (cfg.extensions = NCONF_get_string(extconf, "default",
 		    "extensions")) == NULL)
-			ca_config.extensions = "default";
+			cfg.extensions = "default";
 	}
 	/*****************************************************************/
-	if (ca_config.req || ca_config.gencrl) {
-		if (ca_config.outfile != NULL) {
-			if (BIO_write_filename(Sout, ca_config.outfile) <= 0) {
-				perror(ca_config.outfile);
+	if (cfg.req || cfg.gencrl) {
+		if (cfg.outfile != NULL) {
+			if (BIO_write_filename(Sout, cfg.outfile) <= 0) {
+				perror(cfg.outfile);
 				goto err;
 			}
 		} else {
 			BIO_set_fp(Sout, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 		}
 	}
-	if ((ca_config.md == NULL) &&
-	    ((ca_config.md = NCONF_get_string(conf, ca_config.section,
+	if ((cfg.md == NULL) &&
+	    ((cfg.md = NCONF_get_string(conf, cfg.section,
 	    ENV_DEFAULT_MD)) == NULL)) {
-		lookup_fail(ca_config.section, ENV_DEFAULT_MD);
+		lookup_fail(cfg.section, ENV_DEFAULT_MD);
 		goto err;
 	}
-	if (strcmp(ca_config.md, "default") == 0) {
+	if (strcmp(cfg.md, "default") == 0) {
 		int def_nid;
 		if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
 			BIO_puts(bio_err, "no default digest\n");
 			goto err;
 		}
-		ca_config.md = (char *) OBJ_nid2sn(def_nid);
-		if (ca_config.md == NULL)
+		cfg.md = (char *) OBJ_nid2sn(def_nid);
+		if (cfg.md == NULL)
 			goto err;
 	}
-	if ((dgst = EVP_get_digestbyname(ca_config.md)) == NULL) {
+	if ((dgst = EVP_get_digestbyname(cfg.md)) == NULL) {
 		BIO_printf(bio_err,
-		    "%s is an unsupported message digest type\n", ca_config.md);
+		    "%s is an unsupported message digest type\n", cfg.md);
 		goto err;
 	}
-	if (ca_config.req) {
-		if ((ca_config.email_dn == 1) &&
-		    ((tmp_email_dn = NCONF_get_string(conf, ca_config.section,
+	if (cfg.req) {
+		if ((cfg.email_dn == 1) &&
+		    ((tmp_email_dn = NCONF_get_string(conf, cfg.section,
 		    ENV_DEFAULT_EMAIL_DN)) != NULL)) {
 			if (strcmp(tmp_email_dn, "no") == 0)
-				ca_config.email_dn = 0;
+				cfg.email_dn = 0;
 		}
-		if (ca_config.verbose)
+		if (cfg.verbose)
 			BIO_printf(bio_err, "message digest is %s\n",
 			    OBJ_nid2ln(EVP_MD_type(dgst)));
-		if ((ca_config.policy == NULL) &&
-		    ((ca_config.policy = NCONF_get_string(conf,
-		    ca_config.section, ENV_POLICY)) == NULL)) {
-			lookup_fail(ca_config.section, ENV_POLICY);
+		if ((cfg.policy == NULL) &&
+		    ((cfg.policy = NCONF_get_string(conf,
+		    cfg.section, ENV_POLICY)) == NULL)) {
+			lookup_fail(cfg.section, ENV_POLICY);
 			goto err;
 		}
-		if (ca_config.verbose)
-			BIO_printf(bio_err, "policy is %s\n", ca_config.policy);
+		if (cfg.verbose)
+			BIO_printf(bio_err, "policy is %s\n", cfg.policy);
 
-		if ((serialfile = NCONF_get_string(conf, ca_config.section,
+		if ((serialfile = NCONF_get_string(conf, cfg.section,
 		    ENV_SERIAL)) == NULL) {
-			lookup_fail(ca_config.section, ENV_SERIAL);
+			lookup_fail(cfg.section, ENV_SERIAL);
 			goto err;
 		}
 		if (extconf == NULL) {
@@ -1100,59 +1100,59 @@ ca_main(int argc, char **argv)
 			 * no '-extfile' option, so we look for extensions in
 			 * the main configuration file
 			 */
-			if (ca_config.extensions == NULL) {
-				ca_config.extensions = NCONF_get_string(conf,
-				    ca_config.section, ENV_EXTENSIONS);
-				if (ca_config.extensions == NULL)
+			if (cfg.extensions == NULL) {
+				cfg.extensions = NCONF_get_string(conf,
+				    cfg.section, ENV_EXTENSIONS);
+				if (cfg.extensions == NULL)
 					ERR_clear_error();
 			}
-			if (ca_config.extensions != NULL) {
+			if (cfg.extensions != NULL) {
 				/* Check syntax of file */
 				X509V3_CTX ctx;
 				X509V3_set_ctx_test(&ctx);
 				X509V3_set_nconf(&ctx, conf);
 				if (!X509V3_EXT_add_nconf(conf, &ctx,
-				    ca_config.extensions, NULL)) {
+				    cfg.extensions, NULL)) {
 					BIO_printf(bio_err,
 					    "Error Loading extension section %s\n",
-					    ca_config.extensions);
+					    cfg.extensions);
 					ret = 1;
 					goto err;
 				}
 			}
 		}
-		if (ca_config.startdate == NULL) {
-			ca_config.startdate = NCONF_get_string(conf,
-			    ca_config.section, ENV_DEFAULT_STARTDATE);
-			if (ca_config.startdate == NULL)
+		if (cfg.startdate == NULL) {
+			cfg.startdate = NCONF_get_string(conf,
+			    cfg.section, ENV_DEFAULT_STARTDATE);
+			if (cfg.startdate == NULL)
 				ERR_clear_error();
 		}
-		if (ca_config.startdate == NULL)
-			ca_config.startdate = "today";
+		if (cfg.startdate == NULL)
+			cfg.startdate = "today";
 
-		if (ca_config.enddate == NULL) {
-			ca_config.enddate = NCONF_get_string(conf,
-			    ca_config.section, ENV_DEFAULT_ENDDATE);
-			if (ca_config.enddate == NULL)
+		if (cfg.enddate == NULL) {
+			cfg.enddate = NCONF_get_string(conf,
+			    cfg.section, ENV_DEFAULT_ENDDATE);
+			if (cfg.enddate == NULL)
 				ERR_clear_error();
 		}
-		if (ca_config.days == 0 && ca_config.enddate == NULL) {
-			if (!NCONF_get_number(conf, ca_config.section,
-				ENV_DEFAULT_DAYS, &ca_config.days))
-				ca_config.days = 0;
+		if (cfg.days == 0 && cfg.enddate == NULL) {
+			if (!NCONF_get_number(conf, cfg.section,
+				ENV_DEFAULT_DAYS, &cfg.days))
+				cfg.days = 0;
 		}
-		if (ca_config.enddate == NULL && ca_config.days == 0) {
+		if (cfg.enddate == NULL && cfg.days == 0) {
 			BIO_printf(bio_err,
 			    "cannot lookup how many days to certify for\n");
 			goto err;
 		}
-		if ((serial = load_serial(serialfile, ca_config.create_serial,
+		if ((serial = load_serial(serialfile, cfg.create_serial,
 		    NULL)) == NULL) {
 			BIO_printf(bio_err,
 			    "error while loading serial number\n");
 			goto err;
 		}
-		if (ca_config.verbose) {
+		if (cfg.verbose) {
 			if (BN_is_zero(serial))
 				BIO_printf(bio_err,
 				    "next serial number is 00\n");
@@ -1164,25 +1164,25 @@ ca_main(int argc, char **argv)
 				free(f);
 			}
 		}
-		if ((attribs = NCONF_get_section(conf, ca_config.policy)) ==
+		if ((attribs = NCONF_get_section(conf, cfg.policy)) ==
 		    NULL) {
 			BIO_printf(bio_err, "unable to find 'section' for %s\n",
-			    ca_config.policy);
+			    cfg.policy);
 			goto err;
 		}
 		if ((cert_sk = sk_X509_new_null()) == NULL) {
 			BIO_printf(bio_err, "Memory allocation failure\n");
 			goto err;
 		}
-		if (ca_config.spkac_file != NULL) {
+		if (cfg.spkac_file != NULL) {
 			total++;
-			j = certify_spkac(&x, ca_config.spkac_file, pkey, x509,
-			    dgst, ca_config.sigopts, attribs, db, serial,
-			    ca_config.subj, ca_config.chtype,
-			    ca_config.multirdn, ca_config.email_dn,
-			    ca_config.startdate, ca_config.enddate,
-			    ca_config.days, ca_config.extensions, conf,
-			    ca_config.verbose, certopt, nameopt, default_op,
+			j = certify_spkac(&x, cfg.spkac_file, pkey, x509,
+			    dgst, cfg.sigopts, attribs, db, serial,
+			    cfg.subj, cfg.chtype,
+			    cfg.multirdn, cfg.email_dn,
+			    cfg.startdate, cfg.enddate,
+			    cfg.days, cfg.extensions, conf,
+			    cfg.verbose, certopt, nameopt, default_op,
 			    ext_copy);
 			if (j < 0)
 				goto err;
@@ -1196,21 +1196,21 @@ ca_main(int argc, char **argv)
 					    "Memory allocation failure\n");
 					goto err;
 				}
-				if (ca_config.outfile != NULL) {
+				if (cfg.outfile != NULL) {
 					output_der = 1;
-					ca_config.batch = 1;
+					cfg.batch = 1;
 				}
 			}
 		}
-		if (ca_config.ss_cert_file != NULL) {
+		if (cfg.ss_cert_file != NULL) {
 			total++;
-			j = certify_cert(&x, ca_config.ss_cert_file, pkey, x509,
-			    dgst, ca_config.sigopts, attribs, db, serial,
-			    ca_config.subj, ca_config.chtype,
-			    ca_config.multirdn, ca_config.email_dn,
-			    ca_config.startdate, ca_config.enddate,
-			    ca_config.days, ca_config.batch,
-			    ca_config.extensions, conf, ca_config.verbose,
+			j = certify_cert(&x, cfg.ss_cert_file, pkey, x509,
+			    dgst, cfg.sigopts, attribs, db, serial,
+			    cfg.subj, cfg.chtype,
+			    cfg.multirdn, cfg.email_dn,
+			    cfg.startdate, cfg.enddate,
+			    cfg.days, cfg.batch,
+			    cfg.extensions, conf, cfg.verbose,
 			    certopt, nameopt, default_op, ext_copy);
 			if (j < 0)
 				goto err;
@@ -1226,17 +1226,17 @@ ca_main(int argc, char **argv)
 				}
 			}
 		}
-		if (ca_config.infile != NULL) {
+		if (cfg.infile != NULL) {
 			total++;
-			j = certify(&x, ca_config.infile, pkey, x509p, dgst,
-			    ca_config.sigopts, attribs, db, serial,
-			    ca_config.subj, ca_config.chtype,
-			    ca_config.multirdn, ca_config.email_dn,
-			    ca_config.startdate, ca_config.enddate,
-			    ca_config.days, ca_config.batch,
-			    ca_config.extensions, conf, ca_config.verbose,
+			j = certify(&x, cfg.infile, pkey, x509p, dgst,
+			    cfg.sigopts, attribs, db, serial,
+			    cfg.subj, cfg.chtype,
+			    cfg.multirdn, cfg.email_dn,
+			    cfg.startdate, cfg.enddate,
+			    cfg.days, cfg.batch,
+			    cfg.extensions, conf, cfg.verbose,
 			    certopt, nameopt, default_op, ext_copy,
-			    ca_config.selfsign);
+			    cfg.selfsign);
 			if (j < 0)
 				goto err;
 			if (j > 0) {
@@ -1251,17 +1251,17 @@ ca_main(int argc, char **argv)
 				}
 			}
 		}
-		for (i = 0; i < ca_config.infiles_num; i++) {
+		for (i = 0; i < cfg.infiles_num; i++) {
 			total++;
-			j = certify(&x, ca_config.infiles[i], pkey, x509p, dgst,
-			    ca_config.sigopts, attribs, db, serial,
-			    ca_config.subj, ca_config.chtype,
-			    ca_config.multirdn, ca_config.email_dn,
-			    ca_config.startdate, ca_config.enddate,
-			    ca_config.days, ca_config.batch,
-			    ca_config.extensions, conf, ca_config.verbose,
+			j = certify(&x, cfg.infiles[i], pkey, x509p, dgst,
+			    cfg.sigopts, attribs, db, serial,
+			    cfg.subj, cfg.chtype,
+			    cfg.multirdn, cfg.email_dn,
+			    cfg.startdate, cfg.enddate,
+			    cfg.days, cfg.batch,
+			    cfg.extensions, conf, cfg.verbose,
 			    certopt, nameopt, default_op, ext_copy,
-			    ca_config.selfsign);
+			    cfg.selfsign);
 			if (j < 0)
 				goto err;
 			if (j > 0) {
@@ -1282,7 +1282,7 @@ ca_main(int argc, char **argv)
 		 */
 
 		if (sk_X509_num(cert_sk) > 0) {
-			if (!ca_config.batch) {
+			if (!cfg.batch) {
 				char answer[10];
 
 				BIO_printf(bio_err,
@@ -1313,7 +1313,7 @@ ca_main(int argc, char **argv)
 			if (!save_index(dbfile, "new", db))
 				goto err;
 		}
-		if (ca_config.verbose)
+		if (cfg.verbose)
 			BIO_printf(bio_err, "writing new certificates\n");
 		for (i = 0; i < sk_X509_num(cert_sk); i++) {
 			ASN1_INTEGER *serialNumber;
@@ -1334,7 +1334,7 @@ ca_main(int argc, char **argv)
 				serialstr = strdup("00");
 			if (serialstr != NULL) {
 				k = snprintf(pempath, sizeof(pempath),
-				    "%s/%s.pem", ca_config.outdir, serialstr);
+				    "%s/%s.pem", cfg.outdir, serialstr);
 				free(serialstr);
 				if (k < 0 || k >= sizeof(pempath)) {
 					BIO_printf(bio_err,
@@ -1346,7 +1346,7 @@ ca_main(int argc, char **argv)
 				    "memory allocation failed\n");
 				goto err;
 			}
-			if (ca_config.verbose)
+			if (cfg.verbose)
 				BIO_printf(bio_err, "writing %s\n", pempath);
 
 			if (BIO_write_filename(Cout, pempath) <= 0) {
@@ -1354,10 +1354,10 @@ ca_main(int argc, char **argv)
 				goto err;
 			}
 			if (!write_new_certificate(Cout, x, 0,
-			    ca_config.notext))
+			    cfg.notext))
 				goto err;
 			if (!write_new_certificate(Sout, x, output_der,
-			    ca_config.notext))
+			    cfg.notext))
 				goto err;
 		}
 
@@ -1373,29 +1373,29 @@ ca_main(int argc, char **argv)
 		}
 	}
 	/*****************************************************************/
-	if (ca_config.gencrl) {
+	if (cfg.gencrl) {
 		int crl_v2 = 0;
-		if (ca_config.crl_ext == NULL) {
-			ca_config.crl_ext = NCONF_get_string(conf,
-			    ca_config.section, ENV_CRLEXT);
-			if (ca_config.crl_ext == NULL)
+		if (cfg.crl_ext == NULL) {
+			cfg.crl_ext = NCONF_get_string(conf,
+			    cfg.section, ENV_CRLEXT);
+			if (cfg.crl_ext == NULL)
 				ERR_clear_error();
 		}
-		if (ca_config.crl_ext != NULL) {
+		if (cfg.crl_ext != NULL) {
 			/* Check syntax of file */
 			X509V3_CTX ctx;
 			X509V3_set_ctx_test(&ctx);
 			X509V3_set_nconf(&ctx, conf);
-			if (!X509V3_EXT_add_nconf(conf, &ctx, ca_config.crl_ext,
+			if (!X509V3_EXT_add_nconf(conf, &ctx, cfg.crl_ext,
 			    NULL)) {
 				BIO_printf(bio_err,
 				    "Error Loading CRL extension section %s\n",
-				    ca_config.crl_ext);
+				    cfg.crl_ext);
 				ret = 1;
 				goto err;
 			}
 		}
-		if ((crlnumberfile = NCONF_get_string(conf, ca_config.section,
+		if ((crlnumberfile = NCONF_get_string(conf, cfg.section,
 		    ENV_CRLNUMBER)) != NULL)
 			if ((crlnumber = load_serial(crlnumberfile, 0,
 			    NULL)) == NULL) {
@@ -1403,23 +1403,23 @@ ca_main(int argc, char **argv)
 				    "error while loading CRL number\n");
 				goto err;
 			}
-		if (!ca_config.crldays && !ca_config.crlhours &&
-		    !ca_config.crlsec) {
-			if (!NCONF_get_number(conf, ca_config.section,
-			    ENV_DEFAULT_CRL_DAYS, &ca_config.crldays))
-				ca_config.crldays = 0;
-			if (!NCONF_get_number(conf, ca_config.section,
-			    ENV_DEFAULT_CRL_HOURS, &ca_config.crlhours))
-				ca_config.crlhours = 0;
+		if (!cfg.crldays && !cfg.crlhours &&
+		    !cfg.crlsec) {
+			if (!NCONF_get_number(conf, cfg.section,
+			    ENV_DEFAULT_CRL_DAYS, &cfg.crldays))
+				cfg.crldays = 0;
+			if (!NCONF_get_number(conf, cfg.section,
+			    ENV_DEFAULT_CRL_HOURS, &cfg.crlhours))
+				cfg.crlhours = 0;
 			ERR_clear_error();
 		}
-		if ((ca_config.crldays == 0) && (ca_config.crlhours == 0) &&
-		    (ca_config.crlsec == 0)) {
+		if ((cfg.crldays == 0) && (cfg.crlhours == 0) &&
+		    (cfg.crlsec == 0)) {
 			BIO_printf(bio_err,
 			    "cannot lookup how long until the next CRL is issued\n");
 			goto err;
 		}
-		if (ca_config.verbose)
+		if (cfg.verbose)
 			BIO_printf(bio_err, "making CRL\n");
 		if ((crl = X509_CRL_new()) == NULL)
 			goto err;
@@ -1430,8 +1430,8 @@ ca_main(int argc, char **argv)
 			goto err;
 		if (!X509_CRL_set_lastUpdate(crl, tmptm))
 			goto err;
-		if (X509_time_adj_ex(tmptm, ca_config.crldays,
-		    ca_config.crlhours * 60 * 60 + ca_config.crlsec, NULL) ==
+		if (X509_time_adj_ex(tmptm, cfg.crldays,
+		    cfg.crlhours * 60 * 60 + cfg.crlsec, NULL) ==
 		    NULL) {
 			BIO_puts(bio_err, "error setting CRL nextUpdate\n");
 			goto err;
@@ -1475,19 +1475,19 @@ ca_main(int argc, char **argv)
 		X509_CRL_sort(crl);
 
 		/* we now have a CRL */
-		if (ca_config.verbose)
+		if (cfg.verbose)
 			BIO_printf(bio_err, "signing CRL\n");
 
 		/* Add any extensions asked for */
 
-		if (ca_config.crl_ext != NULL || crlnumberfile != NULL) {
+		if (cfg.crl_ext != NULL || crlnumberfile != NULL) {
 			X509V3_CTX crlctx;
 			X509V3_set_ctx(&crlctx, x509, NULL, NULL, crl, 0);
 			X509V3_set_nconf(&crlctx, conf);
 
-			if (ca_config.crl_ext != NULL)
+			if (cfg.crl_ext != NULL)
 				if (!X509V3_EXT_CRL_add_nconf(conf, &crlctx,
-				    ca_config.crl_ext, crl))
+				    cfg.crl_ext, crl))
 					goto err;
 			if (crlnumberfile != NULL) {
 				tmpserial = BN_to_ASN1_INTEGER(crlnumber, NULL);
@@ -1504,7 +1504,7 @@ ca_main(int argc, char **argv)
 					goto err;
 			}
 		}
-		if (ca_config.crl_ext != NULL || crl_v2) {
+		if (cfg.crl_ext != NULL || crl_v2) {
 			if (!X509_CRL_set_version(crl, 1))
 				goto err;	/* version 2 CRL */
 		}
@@ -1517,7 +1517,7 @@ ca_main(int argc, char **argv)
 		crlnumber = NULL;
 
 		if (!do_X509_CRL_sign(bio_err, crl, pkey, dgst,
-		    ca_config.sigopts))
+		    cfg.sigopts))
 			goto err;
 
 		if (!PEM_write_bio_X509_CRL(Sout, crl))
@@ -1529,18 +1529,18 @@ ca_main(int argc, char **argv)
 
 	}
 	/*****************************************************************/
-	if (ca_config.dorevoke) {
-		if (ca_config.infile == NULL) {
+	if (cfg.dorevoke) {
+		if (cfg.infile == NULL) {
 			BIO_printf(bio_err, "no input files\n");
 			goto err;
 		} else {
 			X509 *revcert;
-			revcert = load_cert(bio_err, ca_config.infile,
-			    FORMAT_PEM, NULL, ca_config.infile);
+			revcert = load_cert(bio_err, cfg.infile,
+			    FORMAT_PEM, NULL, cfg.infile);
 			if (revcert == NULL)
 				goto err;
-			j = do_revoke(revcert, db, ca_config.rev_type,
-			    ca_config.rev_arg);
+			j = do_revoke(revcert, db, cfg.rev_type,
+			    cfg.rev_arg);
 			if (j <= 0)
 				goto err;
 			X509_free(revcert);
@@ -1570,11 +1570,11 @@ ca_main(int argc, char **argv)
 	if (ret)
 		ERR_print_errors(bio_err);
 	if (free_key)
-		free(ca_config.key);
+		free(cfg.key);
 	BN_free(serial);
 	BN_free(crlnumber);
 	free_index(db);
-	sk_OPENSSL_STRING_free(ca_config.sigopts);
+	sk_OPENSSL_STRING_free(cfg.sigopts);
 	EVP_PKEY_free(pkey);
 	X509_free(x509);
 	X509_CRL_free(crl);
@@ -1778,7 +1778,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		if (obj == NULL)
 			goto err;
 
-		if (ca_config.msie_hack) {
+		if (cfg.msie_hack) {
 			/* assume all type should be strings */
 			nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(ne));
 			if (nid == NID_undef)
@@ -1940,7 +1940,7 @@ do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 		}
 	}
 
-	if (ca_config.preserve) {
+	if (cfg.preserve) {
 		X509_NAME_free(subject);
 		/* subject=X509_NAME_dup(X509_REQ_get_subject_name(req)); */
 		subject = X509_NAME_dup(name);

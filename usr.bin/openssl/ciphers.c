@@ -1,4 +1,4 @@
-/* $OpenBSD: ciphers.c,v 1.17 2023/03/05 13:12:53 tb Exp $ */
+/* $OpenBSD: ciphers.c,v 1.18 2023/03/06 14:32:05 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -29,65 +29,65 @@ static struct {
 	int use_supported;
 	int verbose;
 	int version;
-} ciphers_config;
+} cfg;
 
 static const struct option ciphers_options[] = {
 	{
 		.name = "h",
 		.type = OPTION_FLAG,
-		.opt.flag = &ciphers_config.usage,
+		.opt.flag = &cfg.usage,
 	},
 	{
 		.name = "?",
 		.type = OPTION_FLAG,
-		.opt.flag = &ciphers_config.usage,
+		.opt.flag = &cfg.usage,
 	},
 	{
 		.name = "s",
 		.desc = "Only list ciphers that are supported by the TLS method",
 		.type = OPTION_FLAG,
-		.opt.flag = &ciphers_config.use_supported,
+		.opt.flag = &cfg.use_supported,
 	},
 	{
 		.name = "tls1",
 		.desc = "Use TLS protocol version 1",
 		.type = OPTION_VALUE,
-		.opt.value = &ciphers_config.version,
+		.opt.value = &cfg.version,
 		.value = TLS1_VERSION,
 	},
 	{
 		.name = "tls1_1",
 		.desc = "Use TLS protocol version 1.1",
 		.type = OPTION_VALUE,
-		.opt.value = &ciphers_config.version,
+		.opt.value = &cfg.version,
 		.value = TLS1_1_VERSION,
 	},
 	{
 		.name = "tls1_2",
 		.desc = "Use TLS protocol version 1.2",
 		.type = OPTION_VALUE,
-		.opt.value = &ciphers_config.version,
+		.opt.value = &cfg.version,
 		.value = TLS1_2_VERSION,
 	},
 	{
 		.name = "tls1_3",
 		.desc = "Use TLS protocol version 1.3",
 		.type = OPTION_VALUE,
-		.opt.value = &ciphers_config.version,
+		.opt.value = &cfg.version,
 		.value = TLS1_3_VERSION,
 	},
 	{
 		.name = "v",
 		.desc = "Provide cipher listing",
 		.type = OPTION_VALUE,
-		.opt.value = &ciphers_config.verbose,
+		.opt.value = &cfg.verbose,
 		.value = 1,
 	},
 	{
 		.name = "V",
 		.desc = "Provide cipher listing with cipher suite values",
 		.type = OPTION_VALUE,
-		.opt.value = &ciphers_config.verbose,
+		.opt.value = &cfg.verbose,
 		.value = 2,
 	},
 	{ NULL },
@@ -119,7 +119,7 @@ ciphers_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&ciphers_config, 0, sizeof(ciphers_config));
+	memset(&cfg, 0, sizeof(cfg));
 
 	if (options_parse(argc, argv, ciphers_options, &cipherlist,
 	    NULL) != 0) {
@@ -127,7 +127,7 @@ ciphers_main(int argc, char **argv)
 		return (1);
 	}
 
-	if (ciphers_config.usage) {
+	if (cfg.usage) {
 		ciphers_usage();
 		return (1);
 	}
@@ -135,12 +135,12 @@ ciphers_main(int argc, char **argv)
 	if ((ssl_ctx = SSL_CTX_new(TLS_method())) == NULL)
 		goto err;
 
-	if (ciphers_config.version != 0) {
+	if (cfg.version != 0) {
 		if (!SSL_CTX_set_min_proto_version(ssl_ctx,
-		    ciphers_config.version))
+		    cfg.version))
 			goto err;
 		if (!SSL_CTX_set_max_proto_version(ssl_ctx,
-		    ciphers_config.version))
+		    cfg.version))
 			goto err;
 	}
 
@@ -152,7 +152,7 @@ ciphers_main(int argc, char **argv)
 	if ((ssl = SSL_new(ssl_ctx)) == NULL)
 		goto err;
 
-	if (ciphers_config.use_supported) {
+	if (cfg.use_supported) {
 		if ((supported_ciphers =
 		    SSL_get1_supported_ciphers(ssl)) == NULL)
 			goto err;
@@ -164,12 +164,12 @@ ciphers_main(int argc, char **argv)
 
 	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
 		cipher = sk_SSL_CIPHER_value(ciphers, i);
-		if (ciphers_config.verbose == 0) {
+		if (cfg.verbose == 0) {
 			fprintf(stdout, "%s%s", (i ? ":" : ""),
 			    SSL_CIPHER_get_name(cipher));
 			continue;
 		}
-		if (ciphers_config.verbose > 1) {
+		if (cfg.verbose > 1) {
 			value = SSL_CIPHER_get_value(cipher);
 			fprintf(stdout, "%-*s0x%02X,0x%02X - ", 10, "",
 			    ((value >> 8) & 0xff), (value & 0xff));
@@ -182,7 +182,7 @@ ciphers_main(int argc, char **argv)
 		fprintf(stdout, "%s", desc);
 		free(desc);
 	}
-	if (ciphers_config.verbose == 0)
+	if (cfg.verbose == 0)
 		fprintf(stdout, "\n");
 
 	goto done;

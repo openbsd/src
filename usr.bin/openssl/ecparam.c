@@ -1,4 +1,4 @@
-/* $OpenBSD: ecparam.c,v 1.22 2022/11/11 17:07:38 joshua Exp $ */
+/* $OpenBSD: ecparam.c,v 1.23 2023/03/06 14:32:06 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -107,21 +107,21 @@ static struct {
 	char *outfile;
 	int outformat;
 	int text;
-} ecparam_config;
+} cfg;
 
 static int
 ecparam_opt_form(char *arg)
 {
 	if (strcmp(arg, "compressed") == 0)
-		ecparam_config.form = POINT_CONVERSION_COMPRESSED;
+		cfg.form = POINT_CONVERSION_COMPRESSED;
 	else if (strcmp(arg, "uncompressed") == 0)
-		ecparam_config.form = POINT_CONVERSION_UNCOMPRESSED;
+		cfg.form = POINT_CONVERSION_UNCOMPRESSED;
 	else if (strcmp(arg, "hybrid") == 0)
-		ecparam_config.form = POINT_CONVERSION_HYBRID;
+		cfg.form = POINT_CONVERSION_HYBRID;
 	else
 		return (1);
 
-	ecparam_config.new_form = 1;
+	cfg.new_form = 1;
 	return (0);
 }
 
@@ -129,13 +129,13 @@ static int
 ecparam_opt_enctype(char *arg)
 {
 	if (strcmp(arg, "explicit") == 0)
-		ecparam_config.asn1_flag = 0;
+		cfg.asn1_flag = 0;
 	else if (strcmp(arg, "named_curve") == 0)
-		ecparam_config.asn1_flag = OPENSSL_EC_NAMED_CURVE;
+		cfg.asn1_flag = OPENSSL_EC_NAMED_CURVE;
 	else
 		return (1);
 
-	ecparam_config.new_asn1_flag = 1;
+	cfg.new_asn1_flag = 1;
 	return (0);
 }
 
@@ -144,13 +144,13 @@ static const struct option ecparam_options[] = {
 		.name = "C",
 		.desc = "Convert the EC parameters into C code",
 		.type = OPTION_FLAG,
-		.opt.flag = &ecparam_config.C,
+		.opt.flag = &cfg.C,
 	},
 	{
 		.name = "check",
 		.desc = "Validate the elliptic curve parameters",
 		.type = OPTION_FLAG,
-		.opt.flag = &ecparam_config.check,
+		.opt.flag = &cfg.check,
 	},
 	{
 		.name = "conv_form",
@@ -165,61 +165,61 @@ static const struct option ecparam_options[] = {
 		.desc = "Generate an EC private key using the specified "
 		    "parameters",
 		.type = OPTION_FLAG,
-		.opt.flag = &ecparam_config.genkey,
+		.opt.flag = &cfg.genkey,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file to read parameters from (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &ecparam_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "format",
 		.desc = "Input format (DER or PEM)",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &ecparam_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "list_curves",
 		.desc = "Print list of all currently implemented EC "
 		    "parameter names",
 		.type = OPTION_FLAG,
-		.opt.flag = &ecparam_config.list_curves,
+		.opt.flag = &cfg.list_curves,
 	},
 	{
 		.name = "name",
 		.argname = "curve",
 		.desc = "Use the EC parameters with the specified name",
 		.type = OPTION_ARG,
-		.opt.arg = &ecparam_config.curve_name,
+		.opt.arg = &cfg.curve_name,
 	},
 	{
 		.name = "no_seed",
 		.desc = "Do not output seed with explicit parameter encoding",
 		.type = OPTION_FLAG,
-		.opt.flag = &ecparam_config.no_seed,
+		.opt.flag = &cfg.no_seed,
 	},
 	{
 		.name = "noout",
 		.desc = "Do not output encoded version of EC parameters",
 		.type = OPTION_FLAG,
-		.opt.flag = &ecparam_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file to write parameters to (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &ecparam_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER or PEM)",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &ecparam_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "param_enc",
@@ -233,7 +233,7 @@ static const struct option ecparam_options[] = {
 		.name = "text",
 		.desc = "Print out the EC parameters in human readable form",
 		.type = OPTION_FLAG,
-		.opt.flag = &ecparam_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{NULL},
 };
@@ -264,11 +264,11 @@ ecparam_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&ecparam_config, 0, sizeof(ecparam_config));
-	ecparam_config.asn1_flag = OPENSSL_EC_NAMED_CURVE;
-	ecparam_config.form = POINT_CONVERSION_UNCOMPRESSED;
-	ecparam_config.informat = FORMAT_PEM;
-	ecparam_config.outformat = FORMAT_PEM;
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.asn1_flag = OPENSSL_EC_NAMED_CURVE;
+	cfg.form = POINT_CONVERSION_UNCOMPRESSED;
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, ecparam_options, NULL, NULL) != 0) {
 		ecparam_usage();
@@ -281,24 +281,24 @@ ecparam_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (ecparam_config.infile == NULL)
+	if (cfg.infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
-		if (BIO_read_filename(in, ecparam_config.infile) <= 0) {
-			perror(ecparam_config.infile);
+		if (BIO_read_filename(in, cfg.infile) <= 0) {
+			perror(cfg.infile);
 			goto end;
 		}
 	}
-	if (ecparam_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, ecparam_config.outfile) <= 0) {
-			perror(ecparam_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
 
-	if (ecparam_config.list_curves) {
+	if (cfg.list_curves) {
 		EC_builtin_curve *curves = NULL;
 		size_t crv_len = 0;
 		size_t n = 0;
@@ -331,7 +331,7 @@ ecparam_main(int argc, char **argv)
 		ret = 0;
 		goto end;
 	}
-	if (ecparam_config.curve_name != NULL) {
+	if (cfg.curve_name != NULL) {
 		int nid;
 
 		/*
@@ -339,36 +339,36 @@ ecparam_main(int argc, char **argv)
 		 * secp256r1 (which are the same as the curves prime192v1 and
 		 * prime256v1 defined in X9.62)
 		 */
-		if (!strcmp(ecparam_config.curve_name, "secp192r1")) {
+		if (!strcmp(cfg.curve_name, "secp192r1")) {
 			BIO_printf(bio_err, "using curve name prime192v1 "
 			    "instead of secp192r1\n");
 			nid = NID_X9_62_prime192v1;
-		} else if (!strcmp(ecparam_config.curve_name, "secp256r1")) {
+		} else if (!strcmp(cfg.curve_name, "secp256r1")) {
 			BIO_printf(bio_err, "using curve name prime256v1 "
 			    "instead of secp256r1\n");
 			nid = NID_X9_62_prime256v1;
 		} else
-			nid = OBJ_sn2nid(ecparam_config.curve_name);
+			nid = OBJ_sn2nid(cfg.curve_name);
 
 		if (nid == 0)
-			nid = EC_curve_nist2nid(ecparam_config.curve_name);
+			nid = EC_curve_nist2nid(cfg.curve_name);
 
 		if (nid == 0) {
 			BIO_printf(bio_err, "unknown curve name (%s)\n",
-			    ecparam_config.curve_name);
+			    cfg.curve_name);
 			goto end;
 		}
 		group = EC_GROUP_new_by_curve_name(nid);
 		if (group == NULL) {
 			BIO_printf(bio_err, "unable to create curve (%s)\n",
-			    ecparam_config.curve_name);
+			    cfg.curve_name);
 			goto end;
 		}
-		EC_GROUP_set_asn1_flag(group, ecparam_config.asn1_flag);
-		EC_GROUP_set_point_conversion_form(group, ecparam_config.form);
-	} else if (ecparam_config.informat == FORMAT_ASN1) {
+		EC_GROUP_set_asn1_flag(group, cfg.asn1_flag);
+		EC_GROUP_set_point_conversion_form(group, cfg.form);
+	} else if (cfg.informat == FORMAT_ASN1) {
 		group = d2i_ECPKParameters_bio(in, NULL);
-	} else if (ecparam_config.informat == FORMAT_PEM) {
+	} else if (cfg.informat == FORMAT_PEM) {
 		group = PEM_read_bio_ECPKParameters(in, NULL, NULL, NULL);
 	} else {
 		BIO_printf(bio_err, "bad input format specified\n");
@@ -381,20 +381,20 @@ ecparam_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (ecparam_config.new_form)
-		EC_GROUP_set_point_conversion_form(group, ecparam_config.form);
+	if (cfg.new_form)
+		EC_GROUP_set_point_conversion_form(group, cfg.form);
 
-	if (ecparam_config.new_asn1_flag)
-		EC_GROUP_set_asn1_flag(group, ecparam_config.asn1_flag);
+	if (cfg.new_asn1_flag)
+		EC_GROUP_set_asn1_flag(group, cfg.asn1_flag);
 
-	if (ecparam_config.no_seed)
+	if (cfg.no_seed)
 		EC_GROUP_set_seed(group, NULL, 0);
 
-	if (ecparam_config.text) {
+	if (cfg.text) {
 		if (!ECPKParameters_print(out, group, 0))
 			goto end;
 	}
-	if (ecparam_config.check) {
+	if (cfg.check) {
 		BIO_printf(bio_err, "checking elliptic curve parameters: ");
 		if (!EC_GROUP_check(group, NULL)) {
 			BIO_printf(bio_err, "failed\n");
@@ -403,7 +403,7 @@ ecparam_main(int argc, char **argv)
 			BIO_printf(bio_err, "ok\n");
 
 	}
-	if (ecparam_config.C) {
+	if (cfg.C) {
 		size_t buf_len = 0, tmp_len = 0;
 		const EC_POINT *point;
 		int is_prime, len = 0;
@@ -516,10 +516,10 @@ ecparam_main(int argc, char **argv)
 		BIO_printf(out, "\t\t}\n");
 		BIO_printf(out, "\treturn(group);\n\t}\n");
 	}
-	if (!ecparam_config.noout) {
-		if (ecparam_config.outformat == FORMAT_ASN1)
+	if (!cfg.noout) {
+		if (cfg.outformat == FORMAT_ASN1)
 			i = i2d_ECPKParameters_bio(out, group);
-		else if (ecparam_config.outformat == FORMAT_PEM)
+		else if (cfg.outformat == FORMAT_PEM)
 			i = PEM_write_bio_ECPKParameters(out, group);
 		else {
 			BIO_printf(bio_err, "bad output format specified for"
@@ -533,7 +533,7 @@ ecparam_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (ecparam_config.genkey) {
+	if (cfg.genkey) {
 		EC_KEY *eckey = EC_KEY_new();
 
 		if (eckey == NULL)
@@ -548,9 +548,9 @@ ecparam_main(int argc, char **argv)
 			EC_KEY_free(eckey);
 			goto end;
 		}
-		if (ecparam_config.outformat == FORMAT_ASN1)
+		if (cfg.outformat == FORMAT_ASN1)
 			i = i2d_ECPrivateKey_bio(out, eckey);
-		else if (ecparam_config.outformat == FORMAT_PEM)
+		else if (cfg.outformat == FORMAT_PEM)
 			i = PEM_write_bio_ECPrivateKey(out, eckey, NULL,
 			    NULL, 0, NULL, NULL);
 		else {

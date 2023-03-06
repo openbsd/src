@@ -1,4 +1,4 @@
-/* $OpenBSD: crl.c,v 1.16 2022/11/11 17:07:38 joshua Exp $ */
+/* $OpenBSD: crl.c,v 1.17 2023/03/06 14:32:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,7 +86,7 @@ static struct {
 	int outformat;
 	int text;
 	int verify;
-} crl_config;
+} cfg;
 
 static const struct option crl_options[] = {
 	{
@@ -94,109 +94,109 @@ static const struct option crl_options[] = {
 		.argname = "file",
 		.desc = "Verify the CRL using certificates in the given file",
 		.type = OPTION_ARG,
-		.opt.arg = &crl_config.cafile,
+		.opt.arg = &cfg.cafile,
 	},
 	{
 		.name = "CApath",
 		.argname = "path",
 		.desc = "Verify the CRL using certificates in the given path",
 		.type = OPTION_ARG,
-		.opt.arg = &crl_config.capath,
+		.opt.arg = &cfg.capath,
 	},
 	{
 		.name = "crlnumber",
 		.desc = "Print the CRL number",
 		.type = OPTION_FLAG_ORD,
-		.opt.flag = &crl_config.crlnumber,
+		.opt.flag = &cfg.crlnumber,
 	},
 	{
 		.name = "fingerprint",
 		.desc = "Print the CRL fingerprint",
 		.type = OPTION_FLAG_ORD,
-		.opt.flag = &crl_config.fingerprint,
+		.opt.flag = &cfg.fingerprint,
 	},
 	{
 		.name = "hash",
 		.desc = "Print the hash of the issuer name",
 		.type = OPTION_FLAG_ORD,
-		.opt.flag = &crl_config.hash,
+		.opt.flag = &cfg.hash,
 	},
 	{
 		.name = "hash_old",
 		.desc = "Print an old-style (MD5) hash of the issuer name",
 		.type = OPTION_FLAG_ORD,
-		.opt.flag = &crl_config.hash_old,
+		.opt.flag = &cfg.hash_old,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file to read from (stdin if unspecified)",
 		.type = OPTION_ARG,
-		.opt.arg = &crl_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "format",
 		.desc = "Input format (DER or PEM)",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &crl_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "issuer",
 		.desc = "Print the issuer name",
 		.type = OPTION_FLAG_ORD,
-		.opt.flag = &crl_config.issuer,
+		.opt.flag = &cfg.issuer,
 	},
 	{
 		.name = "lastupdate",
 		.desc = "Print the lastUpdate field",
 		.type = OPTION_FLAG_ORD,
-		.opt.flag = &crl_config.lastupdate,
+		.opt.flag = &cfg.lastupdate,
 	},
 	{
 		.name = "nameopt",
 		.argname = "options",
 		.desc = "Specify certificate name options",
 		.type = OPTION_ARG,
-		.opt.arg = &crl_config.nameopt,
+		.opt.arg = &cfg.nameopt,
 	},
 	{
 		.name = "nextupdate",
 		.desc = "Print the nextUpdate field",
 		.type = OPTION_FLAG_ORD,
-		.opt.flag = &crl_config.nextupdate,
+		.opt.flag = &cfg.nextupdate,
 	},
 	{
 		.name = "noout",
 		.desc = "Do not output the encoded version of the CRL",
 		.type = OPTION_FLAG,
-		.opt.flag = &crl_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file to write to (stdout if unspecified)",
 		.type = OPTION_ARG,
-		.opt.arg = &crl_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER or PEM)",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &crl_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "text",
 		.desc = "Print out the CRL in text form",
 		.type = OPTION_FLAG,
-		.opt.flag = &crl_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{
 		.name = "verify",
 		.desc = "Verify the signature on the CRL",
 		.type = OPTION_FLAG,
-		.opt.flag = &crl_config.verify,
+		.opt.flag = &cfg.verify,
 	},
 	{NULL},
 };
@@ -243,23 +243,23 @@ crl_main(int argc, char **argv)
 
 	digest = EVP_sha256();
 
-	memset(&crl_config, 0, sizeof(crl_config));
-	crl_config.informat = FORMAT_PEM;
-	crl_config.outformat = FORMAT_PEM;
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, crl_options, &digest_name, NULL) != 0) {
 		crl_usage();
 		goto end;
 	}
 
-	if (crl_config.cafile != NULL || crl_config.capath != NULL)
-		crl_config.verify = 1;
+	if (cfg.cafile != NULL || cfg.capath != NULL)
+		cfg.verify = 1;
 
-	if (crl_config.nameopt != NULL) {
-		if (set_name_ex(&nmflag, crl_config.nameopt) != 1) {
+	if (cfg.nameopt != NULL) {
+		if (set_name_ex(&nmflag, cfg.nameopt) != 1) {
 			fprintf(stderr,
 			    "Invalid -nameopt argument '%s'\n",
-			    crl_config.nameopt);
+			    cfg.nameopt);
 			goto end;
 		}
 	}
@@ -273,18 +273,18 @@ crl_main(int argc, char **argv)
 		}
 	}
 
-	x = load_crl(crl_config.infile, crl_config.informat);
+	x = load_crl(cfg.infile, cfg.informat);
 	if (x == NULL)
 		goto end;
 
-	if (crl_config.verify) {
+	if (cfg.verify) {
 		store = X509_STORE_new();
 		if (store == NULL)
 			goto end;
 		lookup = X509_STORE_add_lookup(store, X509_LOOKUP_file());
 		if (lookup == NULL)
 			goto end;
-		if (!X509_LOOKUP_load_file(lookup, crl_config.cafile,
+		if (!X509_LOOKUP_load_file(lookup, cfg.cafile,
 		    X509_FILETYPE_PEM))
 			X509_LOOKUP_load_file(lookup, NULL,
 			    X509_FILETYPE_DEFAULT);
@@ -292,7 +292,7 @@ crl_main(int argc, char **argv)
 		lookup = X509_STORE_add_lookup(store, X509_LOOKUP_hash_dir());
 		if (lookup == NULL)
 			goto end;
-		if (!X509_LOOKUP_add_dir(lookup, crl_config.capath,
+		if (!X509_LOOKUP_add_dir(lookup, cfg.capath,
 		    X509_FILETYPE_PEM))
 			X509_LOOKUP_add_dir(lookup, NULL,
 			    X509_FILETYPE_DEFAULT);
@@ -335,11 +335,11 @@ crl_main(int argc, char **argv)
 
 	/* Print requested information the order that the flags were given. */
 	for (i = 1; i <= argc; i++) {
-		if (crl_config.issuer == i) {
+		if (cfg.issuer == i) {
 			print_name(bio_out, "issuer=",
 			    X509_CRL_get_issuer(x), nmflag);
 		}
-		if (crl_config.crlnumber == i) {
+		if (cfg.crlnumber == i) {
 			ASN1_INTEGER *crlnum;
 			crlnum = X509_CRL_get_ext_d2i(x,
 			    NID_crl_number, NULL, NULL);
@@ -351,23 +351,23 @@ crl_main(int argc, char **argv)
 				BIO_puts(bio_out, "<NONE>");
 			BIO_printf(bio_out, "\n");
 		}
-		if (crl_config.hash == i) {
+		if (cfg.hash == i) {
 			BIO_printf(bio_out, "%08lx\n",
 			    X509_NAME_hash(X509_CRL_get_issuer(x)));
 		}
 #ifndef OPENSSL_NO_MD5
-		if (crl_config.hash_old == i) {
+		if (cfg.hash_old == i) {
 			BIO_printf(bio_out, "%08lx\n",
 			    X509_NAME_hash_old(X509_CRL_get_issuer(x)));
 		}
 #endif
-		if (crl_config.lastupdate == i) {
+		if (cfg.lastupdate == i) {
 			BIO_printf(bio_out, "lastUpdate=");
 			ASN1_TIME_print(bio_out,
 			    X509_CRL_get_lastUpdate(x));
 			BIO_printf(bio_out, "\n");
 		}
-		if (crl_config.nextupdate == i) {
+		if (cfg.nextupdate == i) {
 			BIO_printf(bio_out, "nextUpdate=");
 			if (X509_CRL_get_nextUpdate(x))
 				ASN1_TIME_print(bio_out,
@@ -376,7 +376,7 @@ crl_main(int argc, char **argv)
 				BIO_printf(bio_out, "NONE");
 			BIO_printf(bio_out, "\n");
 		}
-		if (crl_config.fingerprint == i) {
+		if (cfg.fingerprint == i) {
 			int j;
 			unsigned int n;
 			unsigned char md[EVP_MAX_MD_SIZE];
@@ -399,25 +399,25 @@ crl_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (crl_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, crl_config.outfile) <= 0) {
-			perror(crl_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
 
-	if (crl_config.text)
+	if (cfg.text)
 		X509_CRL_print(out, x);
 
-	if (crl_config.noout) {
+	if (cfg.noout) {
 		ret = 0;
 		goto end;
 	}
-	if (crl_config.outformat == FORMAT_ASN1)
+	if (cfg.outformat == FORMAT_ASN1)
 		i = (int) i2d_X509_CRL_bio(out, x);
-	else if (crl_config.outformat == FORMAT_PEM)
+	else if (cfg.outformat == FORMAT_PEM)
 		i = PEM_write_bio_X509_CRL(out, x);
 	else {
 		BIO_printf(bio_err,

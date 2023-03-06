@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.26 2023/03/05 13:12:53 tb Exp $ */
+/* $OpenBSD: req.c,v 1.27 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -168,26 +168,26 @@ static struct {
 	int verbose;
 	int verify;
 	int x509;
-} req_config;
+} cfg;
 
 static int
 req_opt_addext(char *arg)
 {
 	int i;
 
-	if (req_config.addexts == NULL) {
-		req_config.addexts = (LHASH_OF(OPENSSL_STRING) *)lh_new(
+	if (cfg.addexts == NULL) {
+		cfg.addexts = (LHASH_OF(OPENSSL_STRING) *)lh_new(
 		    (LHASH_HASH_FN_TYPE)ext_name_hash,
 		    (LHASH_COMP_FN_TYPE)ext_name_cmp);
-		req_config.addext_bio = BIO_new(BIO_s_mem());
-		if (req_config.addexts == NULL ||
-		    req_config.addext_bio == NULL)
+		cfg.addext_bio = BIO_new(BIO_s_mem());
+		if (cfg.addexts == NULL ||
+		    cfg.addext_bio == NULL)
 			return (1);
 	}
-	i = duplicated(req_config.addexts, arg);
+	i = duplicated(cfg.addexts, arg);
 	if (i == 1)
 		return (1);
-	if (i < 0 || BIO_printf(req_config.addext_bio, "%s\n", arg) < 0)
+	if (i < 0 || BIO_printf(cfg.addext_bio, "%s\n", arg) < 0)
 		return (1);
 
 	return (0);
@@ -198,11 +198,11 @@ req_opt_days(char *arg)
 {
 	const char *errstr;
 
-	req_config.days = strtonum(arg, 1, INT_MAX, &errstr);
+	cfg.days = strtonum(arg, 1, INT_MAX, &errstr);
 	if (errstr != NULL) {
 		BIO_printf(bio_err, "bad -days %s, using 0: %s\n",
 		    arg, errstr);
-		req_config.days = 30;
+		cfg.days = 30;
 	}
 	return (0);
 }
@@ -215,7 +215,7 @@ req_opt_digest(int argc, char **argv, int *argsused)
 	if (*name++ != '-')
 		return (1);
 
-	if ((req_config.digest = EVP_get_digestbyname(name)) == NULL)
+	if ((cfg.digest = EVP_get_digestbyname(name)) == NULL)
 		return (1);
 
 	*argsused = 1;
@@ -225,15 +225,15 @@ req_opt_digest(int argc, char **argv, int *argsused)
 static int
 req_opt_newkey(char *arg)
 {
-	req_config.keyalg = arg;
-	req_config.newreq = 1;
+	cfg.keyalg = arg;
+	cfg.newreq = 1;
 	return (0);
 }
 
 static int
 req_opt_nameopt(char *arg)
 {
-	if (!set_name_ex(&req_config.nmflag, arg))
+	if (!set_name_ex(&cfg.nmflag, arg))
 		return (1);
 	return (0);
 }
@@ -241,11 +241,11 @@ req_opt_nameopt(char *arg)
 static int
 req_opt_pkeyopt(char *arg)
 {
-	if (req_config.pkeyopts == NULL)
-		req_config.pkeyopts = sk_OPENSSL_STRING_new_null();
-	if (req_config.pkeyopts == NULL)
+	if (cfg.pkeyopts == NULL)
+		cfg.pkeyopts = sk_OPENSSL_STRING_new_null();
+	if (cfg.pkeyopts == NULL)
 		return (1);
-	if (!sk_OPENSSL_STRING_push(req_config.pkeyopts, arg))
+	if (!sk_OPENSSL_STRING_push(cfg.pkeyopts, arg))
 		return (1);
 	return (0);
 }
@@ -253,7 +253,7 @@ req_opt_pkeyopt(char *arg)
 static int
 req_opt_reqopt(char *arg)
 {
-	if (!set_cert_ex(&req_config.reqflag, arg))
+	if (!set_cert_ex(&cfg.reqflag, arg))
 		return (1);
 	return (0);
 }
@@ -261,8 +261,8 @@ req_opt_reqopt(char *arg)
 static int
 req_opt_set_serial(char *arg)
 {
-	req_config.serial = s2i_ASN1_INTEGER(NULL, arg);
-	if (req_config.serial == NULL)
+	cfg.serial = s2i_ASN1_INTEGER(NULL, arg);
+	if (cfg.serial == NULL)
 		return (1);
 	return (0);
 }
@@ -270,11 +270,11 @@ req_opt_set_serial(char *arg)
 static int
 req_opt_sigopt(char *arg)
 {
-	if (req_config.sigopts == NULL)
-		req_config.sigopts = sk_OPENSSL_STRING_new_null();
-	if (req_config.sigopts == NULL)
+	if (cfg.sigopts == NULL)
+		cfg.sigopts = sk_OPENSSL_STRING_new_null();
+	if (cfg.sigopts == NULL)
 		return (1);
-	if (!sk_OPENSSL_STRING_push(req_config.sigopts, arg))
+	if (!sk_OPENSSL_STRING_push(cfg.sigopts, arg))
 		return (1);
 	return (0);
 }
@@ -282,7 +282,7 @@ req_opt_sigopt(char *arg)
 static int
 req_opt_utf8(void)
 {
-	req_config.chtype = MBSTRING_UTF8;
+	cfg.chtype = MBSTRING_UTF8;
 	return (0);
 }
 
@@ -298,14 +298,14 @@ static const struct option req_options[] = {
 		.name = "batch",
 		.desc = "Operate in batch mode",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.batch,
+		.opt.flag = &cfg.batch,
 	},
 	{
 		.name = "config",
 		.argname = "file",
 		.desc = "Configuration file to use as request template",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.template,
+		.opt.arg = &cfg.template,
 	},
 	{
 		.name = "days",
@@ -319,54 +319,54 @@ static const struct option req_options[] = {
 		.argname = "section",
 		.desc = "Config section to use for certificate extensions",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.extensions,
+		.opt.arg = &cfg.extensions,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "format",
 		.desc = "Input format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &req_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "key",
 		.argname = "file",
 		.desc = "Private key file",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.keyfile,
+		.opt.arg = &cfg.keyfile,
 	},
 	{
 		.name = "keyform",
 		.argname = "format",
 		.desc = "Private key format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &req_config.keyform,
+		.opt.value = &cfg.keyform,
 	},
 	{
 		.name = "keyout",
 		.argname = "file",
 		.desc = "Private key output file",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.keyout,
+		.opt.arg = &cfg.keyout,
 	},
 	{
 		.name = "modulus",
 		.desc = "Print RSA modulus",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.modulus,
+		.opt.flag = &cfg.modulus,
 	},
 	{
 		.name = "multivalue-rdn",
 		.desc = "Enable support for multivalued RDNs",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.multirdn,
+		.opt.flag = &cfg.multirdn,
 	},
 	{
 		.name = "nameopt",
@@ -379,13 +379,13 @@ static const struct option req_options[] = {
 		.name = "new",
 		.desc = "New request",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.newreq,
+		.opt.flag = &cfg.newreq,
 	},
 	{
 		.name = "newhdr",
 		.desc = "Include 'NEW' in header lines",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.newhdr,
+		.opt.flag = &cfg.newhdr,
 	},
 	{
 		.name = "newkey",
@@ -398,41 +398,41 @@ static const struct option req_options[] = {
 		.name = "nodes",
 		.desc = "Do not encrypt output private key",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.nodes,
+		.opt.flag = &cfg.nodes,
 	},
 	{
 		.name = "noout",
 		.desc = "Do not output request",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &req_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "passin",
 		.argname = "source",
 		.desc = "Private key input password source",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.passargin,
+		.opt.arg = &cfg.passargin,
 	},
 	{
 		.name = "passout",
 		.argname = "source",
 		.desc = "Private key output password source",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.passargout,
+		.opt.arg = &cfg.passargout,
 	},
 	{
 		.name = "pkeyopt",
@@ -445,14 +445,14 @@ static const struct option req_options[] = {
 		.name = "pubkey",
 		.desc = "Output the public key",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.pubkey,
+		.opt.flag = &cfg.pubkey,
 	},
 	{
 		.name = "reqexts",
 		.argname = "section",
 		.desc = "Config section to use for request extensions",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.req_exts,
+		.opt.arg = &cfg.req_exts,
 	},
 	{
 		.name = "reqopt",
@@ -480,19 +480,19 @@ static const struct option req_options[] = {
 		.argname = "name",
 		.desc = "Set or modify the request subject",
 		.type = OPTION_ARG,
-		.opt.arg = &req_config.subj,
+		.opt.arg = &cfg.subj,
 	},
 	{
 		.name = "subject",
 		.desc = "Output the subject of the request",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.subject,
+		.opt.flag = &cfg.subject,
 	},
 	{
 		.name = "text",
 		.desc = "Print request in text form",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{
 		.name = "utf8",
@@ -504,19 +504,19 @@ static const struct option req_options[] = {
 		.name = "verbose",
 		.desc = "Verbose",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.verbose,
+		.opt.flag = &cfg.verbose,
 	},
 	{
 		.name = "verify",
 		.desc = "Verify signature on request",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.verify,
+		.opt.flag = &cfg.verify,
 	},
 	{
 		.name = "x509",
 		.desc = "Output an X.509 structure instead of a certificate request",
 		.type = OPTION_FLAG,
-		.opt.flag = &req_config.x509,
+		.opt.flag = &cfg.x509,
 	},
 	{
 		.name = NULL,
@@ -568,15 +568,15 @@ req_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&req_config, 0, sizeof(req_config));
+	memset(&cfg, 0, sizeof(cfg));
 
-	req_config.chtype = MBSTRING_ASC;
-	req_config.days = 30;
-	req_config.digest = EVP_sha256();
-	req_config.newkey = -1;
-	req_config.informat = FORMAT_PEM;
-	req_config.keyform = FORMAT_PEM;
-	req_config.outformat = FORMAT_PEM;
+	cfg.chtype = MBSTRING_ASC;
+	cfg.days = 30;
+	cfg.digest = EVP_sha256();
+	cfg.newkey = -1;
+	cfg.informat = FORMAT_PEM;
+	cfg.keyform = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, req_options, NULL, NULL) != 0) {
 		req_usage();
@@ -586,19 +586,19 @@ req_main(int argc, char **argv)
 	req_conf = NULL;
 	cipher = EVP_aes_256_cbc();
 
-	if (!app_passwd(bio_err, req_config.passargin, req_config.passargout, &passin, &passout)) {
+	if (!app_passwd(bio_err, cfg.passargin, cfg.passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
 	}
-	if (req_config.template != NULL) {
+	if (cfg.template != NULL) {
 		long errline = -1;
 
-		if (req_config.verbose)
-			BIO_printf(bio_err, "Using configuration from %s\n", req_config.template);
+		if (cfg.verbose)
+			BIO_printf(bio_err, "Using configuration from %s\n", cfg.template);
 		if ((req_conf = NCONF_new(NULL)) == NULL)
 			goto end;
-		if(!NCONF_load(req_conf, req_config.template, &errline)) {
-			BIO_printf(bio_err, "error on line %ld of %s\n", errline, req_config.template);
+		if(!NCONF_load(req_conf, cfg.template, &errline)) {
+			BIO_printf(bio_err, "error on line %ld of %s\n", errline, cfg.template);
 			goto end;
 		}
 	} else {
@@ -606,21 +606,21 @@ req_main(int argc, char **argv)
 
 		if (req_conf == NULL) {
 			BIO_printf(bio_err, "Unable to load config info from %s\n", default_config_file);
-			if (req_config.newreq)
+			if (cfg.newreq)
 				goto end;
-		} else if (req_config.verbose)
+		} else if (cfg.verbose)
 			BIO_printf(bio_err, "Using configuration from %s\n",
 			    default_config_file);
 	}
 
-	if (req_config.addext_bio != NULL) {
+	if (cfg.addext_bio != NULL) {
 		long errline = -1;
-		if (req_config.verbose)
+		if (cfg.verbose)
 			BIO_printf(bio_err,
 			    "Using additional configuration from command line\n");
 		if ((addext_conf = NCONF_new(NULL)) == NULL)
 			goto end;
-		if (!NCONF_load_bio(addext_conf, req_config.addext_bio, &errline)) {
+		if (!NCONF_load_bio(addext_conf, cfg.addext_bio, &errline)) {
 			BIO_printf(bio_err,
 			    "req: Error on line %ld of config input\n",
 			    errline);
@@ -658,22 +658,22 @@ req_main(int argc, char **argv)
 			ERR_clear_error();
 		if (p != NULL) {
 			if ((md_alg = EVP_get_digestbyname(p)) != NULL)
-				req_config.digest = md_alg;
+				cfg.digest = md_alg;
 		}
 	}
-	if (!req_config.extensions) {
-		req_config.extensions = NCONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
-		if (!req_config.extensions)
+	if (!cfg.extensions) {
+		cfg.extensions = NCONF_get_string(req_conf, SECTION, V3_EXTENSIONS);
+		if (!cfg.extensions)
 			ERR_clear_error();
 	}
-	if (req_config.extensions) {
+	if (cfg.extensions) {
 		/* Check syntax of file */
 		X509V3_CTX ctx;
 		X509V3_set_ctx_test(&ctx);
 		X509V3_set_nconf(&ctx, req_conf);
-		if (!X509V3_EXT_add_nconf(req_conf, &ctx, req_config.extensions, NULL)) {
+		if (!X509V3_EXT_add_nconf(req_conf, &ctx, cfg.extensions, NULL)) {
 			BIO_printf(bio_err,
-			    "Error Loading extension section %s\n", req_config.extensions);
+			    "Error Loading extension section %s\n", cfg.extensions);
 			goto end;
 		}
 	}
@@ -706,27 +706,27 @@ req_main(int argc, char **argv)
 		BIO_printf(bio_err, "Invalid global string mask setting %s\n", p);
 		goto end;
 	}
-	if (req_config.chtype != MBSTRING_UTF8) {
+	if (cfg.chtype != MBSTRING_UTF8) {
 		p = NCONF_get_string(req_conf, SECTION, UTF8_IN);
 		if (!p)
 			ERR_clear_error();
 		else if (!strcmp(p, "yes"))
-			req_config.chtype = MBSTRING_UTF8;
+			cfg.chtype = MBSTRING_UTF8;
 	}
-	if (!req_config.req_exts) {
-		req_config.req_exts = NCONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
-		if (!req_config.req_exts)
+	if (!cfg.req_exts) {
+		cfg.req_exts = NCONF_get_string(req_conf, SECTION, REQ_EXTENSIONS);
+		if (!cfg.req_exts)
 			ERR_clear_error();
 	}
-	if (req_config.req_exts) {
+	if (cfg.req_exts) {
 		/* Check syntax of file */
 		X509V3_CTX ctx;
 		X509V3_set_ctx_test(&ctx);
 		X509V3_set_nconf(&ctx, req_conf);
-		if (!X509V3_EXT_add_nconf(req_conf, &ctx, req_config.req_exts, NULL)) {
+		if (!X509V3_EXT_add_nconf(req_conf, &ctx, cfg.req_exts, NULL)) {
 			BIO_printf(bio_err,
 			    "Error Loading request extension section %s\n",
-			    req_config.req_exts);
+			    cfg.req_exts);
 			goto end;
 		}
 	}
@@ -735,8 +735,8 @@ req_main(int argc, char **argv)
 	if ((in == NULL) || (out == NULL))
 		goto end;
 
-	if (req_config.keyfile != NULL) {
-		pkey = load_key(bio_err, req_config.keyfile, req_config.keyform, 0, passin,
+	if (cfg.keyfile != NULL) {
+		pkey = load_key(bio_err, cfg.keyfile, cfg.keyform, 0, passin,
 		    "Private Key");
 		if (!pkey) {
 			/*
@@ -746,31 +746,31 @@ req_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (req_config.newreq && (pkey == NULL)) {
-		if (!NCONF_get_number(req_conf, SECTION, BITS, &req_config.newkey)) {
-			req_config.newkey = DEFAULT_KEY_LENGTH;
+	if (cfg.newreq && (pkey == NULL)) {
+		if (!NCONF_get_number(req_conf, SECTION, BITS, &cfg.newkey)) {
+			cfg.newkey = DEFAULT_KEY_LENGTH;
 		}
-		if (req_config.keyalg) {
-			genctx = set_keygen_ctx(bio_err, req_config.keyalg, &pkey_type, &req_config.newkey,
+		if (cfg.keyalg) {
+			genctx = set_keygen_ctx(bio_err, cfg.keyalg, &pkey_type, &cfg.newkey,
 			    &keyalgstr);
 			if (!genctx)
 				goto end;
 		}
-		if (req_config.newkey < MIN_KEY_LENGTH && (pkey_type == EVP_PKEY_RSA || pkey_type == EVP_PKEY_DSA)) {
+		if (cfg.newkey < MIN_KEY_LENGTH && (pkey_type == EVP_PKEY_RSA || pkey_type == EVP_PKEY_DSA)) {
 			BIO_printf(bio_err, "private key length is too short,\n");
-			BIO_printf(bio_err, "it needs to be at least %d bits, not %ld\n", MIN_KEY_LENGTH, req_config.newkey);
+			BIO_printf(bio_err, "it needs to be at least %d bits, not %ld\n", MIN_KEY_LENGTH, cfg.newkey);
 			goto end;
 		}
 		if (!genctx) {
-			genctx = set_keygen_ctx(bio_err, NULL, &pkey_type, &req_config.newkey,
+			genctx = set_keygen_ctx(bio_err, NULL, &pkey_type, &cfg.newkey,
 			    &keyalgstr);
 			if (!genctx)
 				goto end;
 		}
-		if (req_config.pkeyopts) {
+		if (cfg.pkeyopts) {
 			char *genopt;
-			for (i = 0; i < sk_OPENSSL_STRING_num(req_config.pkeyopts); i++) {
-				genopt = sk_OPENSSL_STRING_value(req_config.pkeyopts, i);
+			for (i = 0; i < sk_OPENSSL_STRING_num(cfg.pkeyopts); i++) {
+				genopt = sk_OPENSSL_STRING_value(cfg.pkeyopts, i);
 				if (pkey_ctrl_string(genctx, genopt) <= 0) {
 					BIO_printf(bio_err,
 					    "parameter error \"%s\"\n",
@@ -781,7 +781,7 @@ req_main(int argc, char **argv)
 			}
 		}
 		BIO_printf(bio_err, "Generating a %ld bit %s private key\n",
-		    req_config.newkey, keyalgstr);
+		    cfg.newkey, keyalgstr);
 
 		EVP_PKEY_CTX_set_cb(genctx, genpkey_cb);
 		EVP_PKEY_CTX_set_app_data(genctx, bio_err);
@@ -793,18 +793,18 @@ req_main(int argc, char **argv)
 		EVP_PKEY_CTX_free(genctx);
 		genctx = NULL;
 
-		if (req_config.keyout == NULL) {
-			req_config.keyout = NCONF_get_string(req_conf, SECTION, KEYFILE);
-			if (req_config.keyout == NULL)
+		if (cfg.keyout == NULL) {
+			cfg.keyout = NCONF_get_string(req_conf, SECTION, KEYFILE);
+			if (cfg.keyout == NULL)
 				ERR_clear_error();
 		}
-		if (req_config.keyout == NULL) {
+		if (cfg.keyout == NULL) {
 			BIO_printf(bio_err, "writing new private key to stdout\n");
 			BIO_set_fp(out, stdout, BIO_NOCLOSE);
 		} else {
-			BIO_printf(bio_err, "writing new private key to '%s'\n", req_config.keyout);
-			if (BIO_write_filename(out, req_config.keyout) <= 0) {
-				perror(req_config.keyout);
+			BIO_printf(bio_err, "writing new private key to '%s'\n", cfg.keyout);
+			if (BIO_write_filename(out, cfg.keyout) <= 0) {
+				perror(cfg.keyout);
 				goto end;
 			}
 		}
@@ -818,7 +818,7 @@ req_main(int argc, char **argv)
 		}
 		if ((p != NULL) && (strcmp(p, "no") == 0))
 			cipher = NULL;
-		if (req_config.nodes)
+		if (cfg.nodes)
 			cipher = NULL;
 
 		i = 0;
@@ -835,19 +835,19 @@ req_main(int argc, char **argv)
 		}
 		BIO_printf(bio_err, "-----\n");
 	}
-	if (!req_config.newreq) {
-		if (req_config.infile == NULL)
+	if (!cfg.newreq) {
+		if (cfg.infile == NULL)
 			BIO_set_fp(in, stdin, BIO_NOCLOSE);
 		else {
-			if (BIO_read_filename(in, req_config.infile) <= 0) {
-				perror(req_config.infile);
+			if (BIO_read_filename(in, cfg.infile) <= 0) {
+				perror(cfg.infile);
 				goto end;
 			}
 		}
 
-		if (req_config.informat == FORMAT_ASN1)
+		if (cfg.informat == FORMAT_ASN1)
 			req = d2i_X509_REQ_bio(in, NULL);
-		else if (req_config.informat == FORMAT_PEM)
+		else if (cfg.informat == FORMAT_PEM)
 			req = PEM_read_bio_X509_REQ(in, NULL, NULL, NULL);
 		else {
 			BIO_printf(bio_err, "bad input format specified for X509 request\n");
@@ -858,7 +858,7 @@ req_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (req_config.newreq || req_config.x509) {
+	if (cfg.newreq || cfg.x509) {
 		if (pkey == NULL) {
 			BIO_printf(bio_err, "you need to specify a private key\n");
 			goto end;
@@ -868,14 +868,14 @@ req_main(int argc, char **argv)
 			if (req == NULL) {
 				goto end;
 			}
-			i = make_REQ(req, pkey, req_config.subj, req_config.multirdn, !req_config.x509, req_config.chtype);
-			req_config.subj = NULL;	/* done processing '-subj' option */
+			i = make_REQ(req, pkey, cfg.subj, cfg.multirdn, !cfg.x509, cfg.chtype);
+			cfg.subj = NULL;	/* done processing '-subj' option */
 			if (!i) {
 				BIO_printf(bio_err, "problems making Certificate Request\n");
 				goto end;
 			}
 		}
-		if (req_config.x509) {
+		if (cfg.x509) {
 			EVP_PKEY *tmppkey;
 
 			X509V3_CTX ext_ctx;
@@ -883,11 +883,11 @@ req_main(int argc, char **argv)
 				goto end;
 
 			/* Set version to V3 */
-			if ((req_config.extensions != NULL || addext_conf != NULL) &&
+			if ((cfg.extensions != NULL || addext_conf != NULL) &&
 			    !X509_set_version(x509ss, 2))
 				goto end;
-			if (req_config.serial) {
-				if (!X509_set_serialNumber(x509ss, req_config.serial))
+			if (cfg.serial) {
+				if (!X509_set_serialNumber(x509ss, cfg.serial))
 					goto end;
 			} else {
 				if (!rand_serial(NULL,
@@ -899,7 +899,7 @@ req_main(int argc, char **argv)
 				goto end;
 			if (!X509_gmtime_adj(X509_get_notBefore(x509ss), 0))
 				goto end;
-			if (!X509_time_adj_ex(X509_get_notAfter(x509ss), req_config.days, 0, NULL))
+			if (!X509_time_adj_ex(X509_get_notAfter(x509ss), cfg.days, 0, NULL))
 				goto end;
 			if (!X509_set_subject_name(x509ss, X509_REQ_get_subject_name(req)))
 				goto end;
@@ -914,11 +914,11 @@ req_main(int argc, char **argv)
 			X509V3_set_nconf(&ext_ctx, req_conf);
 
 			/* Add extensions */
-			if (req_config.extensions && !X509V3_EXT_add_nconf(req_conf,
-				&ext_ctx, req_config.extensions, x509ss)) {
+			if (cfg.extensions && !X509V3_EXT_add_nconf(req_conf,
+				&ext_ctx, cfg.extensions, x509ss)) {
 				BIO_printf(bio_err,
 				    "Error Loading extension section %s\n",
-				    req_config.extensions);
+				    cfg.extensions);
 				goto end;
 			}
 			if (addext_conf != NULL &&
@@ -928,7 +928,7 @@ req_main(int argc, char **argv)
 				    "Error Loading command line extensions\n");
 				goto end;
 			}
-			i = do_X509_sign(bio_err, x509ss, pkey, req_config.digest, req_config.sigopts);
+			i = do_X509_sign(bio_err, x509ss, pkey, cfg.digest, cfg.sigopts);
 			if (!i) {
 				ERR_print_errors(bio_err);
 				goto end;
@@ -942,11 +942,11 @@ req_main(int argc, char **argv)
 			X509V3_set_nconf(&ext_ctx, req_conf);
 
 			/* Add extensions */
-			if (req_config.req_exts && !X509V3_EXT_REQ_add_nconf(req_conf,
-				&ext_ctx, req_config.req_exts, req)) {
+			if (cfg.req_exts && !X509V3_EXT_REQ_add_nconf(req_conf,
+				&ext_ctx, cfg.req_exts, req)) {
 				BIO_printf(bio_err,
 				    "Error Loading extension section %s\n",
-				    req_config.req_exts);
+				    cfg.req_exts);
 				goto end;
 			}
 			if (addext_conf != NULL &&
@@ -956,33 +956,33 @@ req_main(int argc, char **argv)
 				    "Error Loading command line extensions\n");
 				goto end;
 			}
-			i = do_X509_REQ_sign(bio_err, req, pkey, req_config.digest, req_config.sigopts);
+			i = do_X509_REQ_sign(bio_err, req, pkey, cfg.digest, cfg.sigopts);
 			if (!i) {
 				ERR_print_errors(bio_err);
 				goto end;
 			}
 		}
 	}
-	if (req_config.subj && req_config.x509) {
+	if (cfg.subj && cfg.x509) {
 		BIO_printf(bio_err, "Cannot modify certificate subject\n");
 		goto end;
 	}
-	if (req_config.subj && !req_config.x509) {
-		if (req_config.verbose) {
+	if (cfg.subj && !cfg.x509) {
+		if (cfg.verbose) {
 			BIO_printf(bio_err, "Modifying Request's Subject\n");
-			print_name(bio_err, "old subject=", X509_REQ_get_subject_name(req), req_config.nmflag);
+			print_name(bio_err, "old subject=", X509_REQ_get_subject_name(req), cfg.nmflag);
 		}
-		if (build_subject(req, req_config.subj, req_config.chtype, req_config.multirdn) == 0) {
+		if (build_subject(req, cfg.subj, cfg.chtype, cfg.multirdn) == 0) {
 			BIO_printf(bio_err, "ERROR: cannot modify subject\n");
 			ex = 1;
 			goto end;
 		}
 
-		if (req_config.verbose) {
-			print_name(bio_err, "new subject=", X509_REQ_get_subject_name(req), req_config.nmflag);
+		if (cfg.verbose) {
+			print_name(bio_err, "new subject=", X509_REQ_get_subject_name(req), cfg.nmflag);
 		}
 	}
-	if (req_config.verify && !req_config.x509) {
+	if (cfg.verify && !cfg.x509) {
 		EVP_PKEY *pubkey = pkey;
 
 		if (pubkey == NULL)
@@ -998,24 +998,24 @@ req_main(int argc, char **argv)
 		} else		/* if (i > 0) */
 			BIO_printf(bio_err, "verify OK\n");
 	}
-	if (req_config.noout && !req_config.text && !req_config.modulus && !req_config.subject && !req_config.pubkey) {
+	if (cfg.noout && !cfg.text && !cfg.modulus && !cfg.subject && !cfg.pubkey) {
 		ex = 0;
 		goto end;
 	}
-	if (req_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if ((req_config.keyout != NULL) && (strcmp(req_config.outfile, req_config.keyout) == 0))
-			i = (int) BIO_append_filename(out, req_config.outfile);
+		if ((cfg.keyout != NULL) && (strcmp(cfg.outfile, cfg.keyout) == 0))
+			i = (int) BIO_append_filename(out, cfg.outfile);
 		else
-			i = (int) BIO_write_filename(out, req_config.outfile);
+			i = (int) BIO_write_filename(out, cfg.outfile);
 		if (!i) {
-			perror(req_config.outfile);
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
 
-	if (req_config.pubkey) {
+	if (cfg.pubkey) {
 		EVP_PKEY *tpubkey;
 
 		if ((tpubkey = X509_REQ_get0_pubkey(req)) == NULL) {
@@ -1025,22 +1025,22 @@ req_main(int argc, char **argv)
 		}
 		PEM_write_bio_PUBKEY(out, tpubkey);
 	}
-	if (req_config.text) {
-		if (req_config.x509)
-			X509_print_ex(out, x509ss, req_config.nmflag, req_config.reqflag);
+	if (cfg.text) {
+		if (cfg.x509)
+			X509_print_ex(out, x509ss, cfg.nmflag, cfg.reqflag);
 		else
-			X509_REQ_print_ex(out, req, req_config.nmflag, req_config.reqflag);
+			X509_REQ_print_ex(out, req, cfg.nmflag, cfg.reqflag);
 	}
-	if (req_config.subject) {
-		if (req_config.x509)
-			print_name(out, "subject=", X509_get_subject_name(x509ss), req_config.nmflag);
+	if (cfg.subject) {
+		if (cfg.x509)
+			print_name(out, "subject=", X509_get_subject_name(x509ss), cfg.nmflag);
 		else
-			print_name(out, "subject=", X509_REQ_get_subject_name(req), req_config.nmflag);
+			print_name(out, "subject=", X509_REQ_get_subject_name(req), cfg.nmflag);
 	}
-	if (req_config.modulus) {
+	if (cfg.modulus) {
 		EVP_PKEY *tpubkey;
 
-		if (req_config.x509)
+		if (cfg.x509)
 			tpubkey = X509_get0_pubkey(x509ss);
 		else
 			tpubkey = X509_REQ_get0_pubkey(req);
@@ -1059,11 +1059,11 @@ req_main(int argc, char **argv)
 			fprintf(stdout, "Wrong Algorithm type");
 		fprintf(stdout, "\n");
 	}
-	if (!req_config.noout && !req_config.x509) {
-		if (req_config.outformat == FORMAT_ASN1)
+	if (!cfg.noout && !cfg.x509) {
+		if (cfg.outformat == FORMAT_ASN1)
 			i = i2d_X509_REQ_bio(out, req);
-		else if (req_config.outformat == FORMAT_PEM) {
-			if (req_config.newhdr)
+		else if (cfg.outformat == FORMAT_PEM) {
+			if (cfg.newhdr)
 				i = PEM_write_bio_X509_REQ_NEW(out, req);
 			else
 				i = PEM_write_bio_X509_REQ(out, req);
@@ -1076,10 +1076,10 @@ req_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (!req_config.noout && req_config.x509 && (x509ss != NULL)) {
-		if (req_config.outformat == FORMAT_ASN1)
+	if (!cfg.noout && cfg.x509 && (x509ss != NULL)) {
+		if (cfg.outformat == FORMAT_ASN1)
 			i = i2d_X509_bio(out, x509ss);
-		else if (req_config.outformat == FORMAT_PEM)
+		else if (cfg.outformat == FORMAT_PEM)
 			i = PEM_write_bio_X509(out, x509ss);
 		else {
 			BIO_printf(bio_err, "bad output format specified for outfile\n");
@@ -1098,25 +1098,25 @@ req_main(int argc, char **argv)
 	if ((req_conf != NULL) && (req_conf != config))
 		NCONF_free(req_conf);
 	NCONF_free(addext_conf);
-	BIO_free(req_config.addext_bio);
+	BIO_free(cfg.addext_bio);
 	BIO_free(in);
 	BIO_free_all(out);
 	EVP_PKEY_free(pkey);
 	if (genctx)
 		EVP_PKEY_CTX_free(genctx);
-	if (req_config.pkeyopts)
-		sk_OPENSSL_STRING_free(req_config.pkeyopts);
-	if (req_config.sigopts)
-		sk_OPENSSL_STRING_free(req_config.sigopts);
-	lh_OPENSSL_STRING_doall(req_config.addexts, (LHASH_DOALL_FN_TYPE)exts_cleanup);
-	lh_OPENSSL_STRING_free(req_config.addexts);
+	if (cfg.pkeyopts)
+		sk_OPENSSL_STRING_free(cfg.pkeyopts);
+	if (cfg.sigopts)
+		sk_OPENSSL_STRING_free(cfg.sigopts);
+	lh_OPENSSL_STRING_doall(cfg.addexts, (LHASH_DOALL_FN_TYPE)exts_cleanup);
+	lh_OPENSSL_STRING_free(cfg.addexts);
 	free(keyalgstr);
 	X509_REQ_free(req);
 	X509_free(x509ss);
-	ASN1_INTEGER_free(req_config.serial);
-	if (req_config.passargin && passin)
+	ASN1_INTEGER_free(cfg.serial);
+	if (cfg.passargin && passin)
 		free(passin);
-	if (req_config.passargout && passout)
+	if (cfg.passargout && passout)
 		free(passout);
 	OBJ_cleanup();
 
@@ -1222,7 +1222,7 @@ prompt_info(X509_REQ * req,
 	X509_NAME *subj;
 	subj = X509_REQ_get_subject_name(req);
 
-	if (!req_config.batch) {
+	if (!cfg.batch) {
 		BIO_printf(bio_err, "You are about to be asked to enter information that will be incorporated\n");
 		BIO_printf(bio_err, "into your certificate request.\n");
 		BIO_printf(bio_err, "What you are about to enter is what is called a Distinguished Name or a DN.\n");
@@ -1316,7 +1316,7 @@ prompt_info(X509_REQ * req,
 		}
 		if (attribs) {
 			if ((attr_sk != NULL) && (sk_CONF_VALUE_num(attr_sk) > 0) &&
-			    (!req_config.batch)) {
+			    (!cfg.batch)) {
 				BIO_printf(bio_err,
 				    "\nPlease enter the following 'extra' attributes\n");
 				BIO_printf(bio_err,
@@ -1452,7 +1452,7 @@ add_DN_object(X509_NAME * n, char *text, const char *def, char *value,
 	int i, ret = 0;
 	char buf[1024];
  start:
-	if (!req_config.batch)
+	if (!cfg.batch)
 		BIO_printf(bio_err, "%s [%s]:", text, def);
 	(void) BIO_flush(bio_err);
 	if (value != NULL) {
@@ -1461,7 +1461,7 @@ add_DN_object(X509_NAME * n, char *text, const char *def, char *value,
 		BIO_printf(bio_err, "%s\n", value);
 	} else {
 		buf[0] = '\0';
-		if (!req_config.batch) {
+		if (!cfg.batch) {
 			if (!fgets(buf, sizeof buf, stdin))
 				return 0;
 		} else {
@@ -1505,7 +1505,7 @@ add_attribute_object(X509_REQ * req, char *text, const char *def,
 	static char buf[1024];
 
  start:
-	if (!req_config.batch)
+	if (!cfg.batch)
 		BIO_printf(bio_err, "%s [%s]:", text, def);
 	(void) BIO_flush(bio_err);
 	if (value != NULL) {
@@ -1514,7 +1514,7 @@ add_attribute_object(X509_REQ * req, char *text, const char *def,
 		BIO_printf(bio_err, "%s\n", value);
 	} else {
 		buf[0] = '\0';
-		if (!req_config.batch) {
+		if (!cfg.batch) {
 			if (!fgets(buf, sizeof buf, stdin))
 				return 0;
 		} else {

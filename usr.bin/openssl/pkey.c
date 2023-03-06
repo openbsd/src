@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.18 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: pkey.c,v 1.19 2023/03/06 14:32:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -80,7 +80,7 @@ static struct {
 	int pubout;
 	int pubtext;
 	int text;
-} pkey_config;
+} cfg;
 
 static int
 pkey_opt_cipher(int argc, char **argv, int *argsused)
@@ -90,7 +90,7 @@ pkey_opt_cipher(int argc, char **argv, int *argsused)
 	if (*name++ != '-')
 		return (1);
 
-	if ((pkey_config.cipher = EVP_get_cipherbyname(name)) == NULL) {
+	if ((cfg.cipher = EVP_get_cipherbyname(name)) == NULL) {
 		BIO_printf(bio_err, "Unknown cipher %s\n", name);
 		return (1);
 	}
@@ -104,87 +104,87 @@ static const struct option pkey_options[] = {
 		.name = "check",
 		.desc = "Check validity of key",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkey_config.check,
+		.opt.flag = &cfg.check,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &pkey_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "format",
 		.desc = "Input format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &pkey_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "noout",
 		.desc = "Do not print encoded version of the key",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkey_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &pkey_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &pkey_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "passin",
 		.argname = "src",
 		.desc = "Input file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &pkey_config.passargin,
+		.opt.arg = &cfg.passargin,
 	},
 	{
 		.name = "passout",
 		.argname = "src",
 		.desc = "Output file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &pkey_config.passargout,
+		.opt.arg = &cfg.passargout,
 	},
 	{
 		.name = "pubcheck",
 		.desc = "Check validity of public key",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkey_config.pubcheck,
+		.opt.flag = &cfg.pubcheck,
 	},
 	{
 		.name = "pubin",
 		.desc = "Expect a public key (default private key)",
 		.type = OPTION_VALUE,
 		.value = 1,
-		.opt.value = &pkey_config.pubin,
+		.opt.value = &cfg.pubin,
 	},
 	{
 		.name = "pubout",
 		.desc = "Output a public key (default private key)",
 		.type = OPTION_VALUE,
 		.value = 1,
-		.opt.value = &pkey_config.pubout,
+		.opt.value = &cfg.pubout,
 	},
 	{
 		.name = "text",
 		.desc = "Print the public/private key in plain text",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkey_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{
 		.name = "text_pub",
 		.desc = "Print out only public key in plain text",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkey_config.pubtext,
+		.opt.flag = &cfg.pubtext,
 	},
 	{
 		.name = NULL,
@@ -226,61 +226,61 @@ pkey_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&pkey_config, 0, sizeof(pkey_config));
-	pkey_config.informat = FORMAT_PEM;
-	pkey_config.outformat = FORMAT_PEM;
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, pkey_options, NULL, NULL) != 0) {
 		pkey_usage();
 		goto end;
 	}
 
-	if (pkey_config.pubtext)
-		pkey_config.text = 1;
-	if (pkey_config.pubin)
-		pkey_config.pubout = pkey_config.pubtext = 1;
+	if (cfg.pubtext)
+		cfg.text = 1;
+	if (cfg.pubin)
+		cfg.pubout = cfg.pubtext = 1;
 
-	if (!app_passwd(bio_err, pkey_config.passargin, pkey_config.passargout,
+	if (!app_passwd(bio_err, cfg.passargin, cfg.passargout,
 	    &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
 	}
-	if (pkey_config.outfile) {
-		if (!(out = BIO_new_file(pkey_config.outfile, "wb"))) {
+	if (cfg.outfile) {
+		if (!(out = BIO_new_file(cfg.outfile, "wb"))) {
 			BIO_printf(bio_err,
-			    "Can't open output file %s\n", pkey_config.outfile);
+			    "Can't open output file %s\n", cfg.outfile);
 			goto end;
 		}
 	} else {
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
 	}
 
-	if (pkey_config.pubin)
-		pkey = load_pubkey(bio_err, pkey_config.infile,
-		    pkey_config.informat, 1, passin, "Public Key");
+	if (cfg.pubin)
+		pkey = load_pubkey(bio_err, cfg.infile,
+		    cfg.informat, 1, passin, "Public Key");
 	else
-		pkey = load_key(bio_err, pkey_config.infile,
-		    pkey_config.informat, 1, passin, "key");
+		pkey = load_key(bio_err, cfg.infile,
+		    cfg.informat, 1, passin, "key");
 	if (!pkey)
 		goto end;
 
-	if (pkey_config.check) {
+	if (cfg.check) {
 		if (!pkey_check(out, pkey, EVP_PKEY_check, "Key pair"))
 			goto end;
-	} else if (pkey_config.pubcheck) {
+	} else if (cfg.pubcheck) {
 		if (!pkey_check(out, pkey, EVP_PKEY_public_check, "Public key"))
 			goto end;
 	}
 
-	if (!pkey_config.noout) {
-		if (pkey_config.outformat == FORMAT_PEM) {
-			if (pkey_config.pubout)
+	if (!cfg.noout) {
+		if (cfg.outformat == FORMAT_PEM) {
+			if (cfg.pubout)
 				PEM_write_bio_PUBKEY(out, pkey);
 			else
 				PEM_write_bio_PrivateKey(out, pkey,
-				    pkey_config.cipher, NULL, 0, NULL, passout);
-		} else if (pkey_config.outformat == FORMAT_ASN1) {
-			if (pkey_config.pubout)
+				    cfg.cipher, NULL, 0, NULL, passout);
+		} else if (cfg.outformat == FORMAT_ASN1) {
+			if (cfg.pubout)
 				i2d_PUBKEY_bio(out, pkey);
 			else
 				i2d_PrivateKey_bio(out, pkey);
@@ -290,8 +290,8 @@ pkey_main(int argc, char **argv)
 		}
 
 	}
-	if (pkey_config.text) {
-		if (pkey_config.pubtext)
+	if (cfg.text) {
+		if (cfg.pubtext)
 			EVP_PKEY_print_public(out, pkey, 0, NULL);
 		else
 			EVP_PKEY_print_private(out, pkey, 0, NULL);

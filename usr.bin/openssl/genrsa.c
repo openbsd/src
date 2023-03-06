@@ -1,4 +1,4 @@
-/* $OpenBSD: genrsa.c,v 1.21 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: genrsa.c,v 1.22 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,7 +90,7 @@ static struct {
 	unsigned long f4;
 	char *outfile;
 	char *passargout;
-} genrsa_config;
+} cfg;
 
 static int
 set_public_exponent(int argc, char **argv, int *argsused)
@@ -98,9 +98,9 @@ set_public_exponent(int argc, char **argv, int *argsused)
 	char *option = argv[0];
 
 	if (strcmp(option, "-3") == 0)
-		genrsa_config.f4 = 3;
+		cfg.f4 = 3;
 	else if (strcmp(option, "-f4") == 0 || strcmp(option, "-F4") == 0)
-		genrsa_config.f4 = RSA_F4;
+		cfg.f4 = RSA_F4;
 	else
 		return (1);
 
@@ -150,7 +150,7 @@ set_enc(int argc, char **argv, int *argsused)
 	if (*name++ != '-')
 		return (1);
 
-	if ((genrsa_config.enc = get_cipher_by_name(name)) == NULL)
+	if ((cfg.enc = get_cipher_by_name(name)) == NULL)
 		return (1);
 
 	*argsused = 1;
@@ -243,14 +243,14 @@ static const struct option genrsa_options[] = {
 		.argname = "file",
 		.desc = "Output the key to 'file'",
 		.type = OPTION_ARG,
-		.opt.arg = &genrsa_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "passout",
 		.argname = "arg",
 		.desc = "Output file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &genrsa_config.passargout,
+		.opt.arg = &cfg.passargout,
 	},
 	{ NULL },
 };
@@ -300,8 +300,8 @@ genrsa_main(int argc, char **argv)
 		goto err;
 	}
 
-	memset(&genrsa_config, 0, sizeof(genrsa_config));
-	genrsa_config.f4 = RSA_F4;
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.f4 = RSA_F4;
 
 	if (options_parse(argc, argv, genrsa_options, &numbits, NULL) != 0) {
 		genrsa_usage();
@@ -314,17 +314,17 @@ genrsa_main(int argc, char **argv)
 		goto err;
 	}
 
-	if (!app_passwd(bio_err, NULL, genrsa_config.passargout, NULL,
+	if (!app_passwd(bio_err, NULL, cfg.passargout, NULL,
 	    &passout)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto err;
 	}
 
-	if (genrsa_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, genrsa_config.outfile) <= 0) {
-			perror(genrsa_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto err;
 		}
 	}
@@ -335,7 +335,7 @@ genrsa_main(int argc, char **argv)
 	if (!rsa)
 		goto err;
 
-	if (!BN_set_word(bn, genrsa_config.f4) ||
+	if (!BN_set_word(bn, cfg.f4) ||
 	    !RSA_generate_key_ex(rsa, num, bn, cb))
 		goto err;
 
@@ -348,8 +348,8 @@ genrsa_main(int argc, char **argv)
 	{
 		PW_CB_DATA cb_data;
 		cb_data.password = passout;
-		cb_data.prompt_info = genrsa_config.outfile;
-		if (!PEM_write_bio_RSAPrivateKey(out, rsa, genrsa_config.enc,
+		cb_data.prompt_info = cfg.outfile;
+		if (!PEM_write_bio_RSAPrivateKey(out, rsa, cfg.enc,
 		    NULL, 0, password_callback, &cb_data))
 			goto err;
 	}

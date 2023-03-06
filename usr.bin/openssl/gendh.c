@@ -1,4 +1,4 @@
-/* $OpenBSD: gendh.c,v 1.13 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: gendh.c,v 1.14 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,7 +89,7 @@ static int dh_cb(int p, int n, BN_GENCB *cb);
 static struct {
 	int g;
 	char *outfile;
-} gendh_config;
+} cfg;
 
 static const struct option gendh_options[] = {
 	{
@@ -98,21 +98,21 @@ static const struct option gendh_options[] = {
 		    "(default)",
 		.type = OPTION_VALUE,
 		.value = 2,
-		.opt.value = &gendh_config.g,
+		.opt.value = &cfg.g,
 	},
 	{
 		.name = "5",
 		.desc = "Generate DH parameters with a generator value of 5",
 		.type = OPTION_VALUE,
 		.value = 5,
-		.opt.value = &gendh_config.g,
+		.opt.value = &cfg.g,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &gendh_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{ NULL },
 };
@@ -146,9 +146,9 @@ gendh_main(int argc, char **argv)
 
 	BN_GENCB_set(cb, dh_cb, bio_err);
 
-	memset(&gendh_config, 0, sizeof(gendh_config));
+	memset(&cfg, 0, sizeof(cfg));
 
-	gendh_config.g = 2;
+	cfg.g = 2;
 
 	if (options_parse(argc, argv, gendh_options, &strbits, NULL) != 0) {
 		gendh_usage();
@@ -169,21 +169,21 @@ gendh_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (gendh_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, gendh_config.outfile) <= 0) {
-			perror(gendh_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
 
 	BIO_printf(bio_err, "Generating DH parameters, %d bit long safe prime,"
-	    " generator %d\n", numbits, gendh_config.g);
+	    " generator %d\n", numbits, cfg.g);
 	BIO_printf(bio_err, "This is going to take a long time\n");
 
 	if (((dh = DH_new()) == NULL) ||
-	    !DH_generate_parameters_ex(dh, numbits, gendh_config.g, cb))
+	    !DH_generate_parameters_ex(dh, numbits, cfg.g, cb))
 		goto end;
 
 	if (!PEM_write_bio_DHparams(out, dh))

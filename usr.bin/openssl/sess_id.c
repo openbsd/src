@@ -1,4 +1,4 @@
-/* $OpenBSD: sess_id.c,v 1.11 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: sess_id.c,v 1.12 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,62 +78,62 @@ static struct {
 	char *outfile;
 	int outformat;
 	int text;
-} sess_id_config;
+} cfg;
 
 static const struct option sess_id_options[] = {
 	{
 		.name = "cert",
 		.desc = "Output certificate if present in session",
 		.type = OPTION_FLAG,
-		.opt.flag = &sess_id_config.cert,
+		.opt.flag = &cfg.cert,
 	},
 	{
 		.name = "context",
 		.argname = "id",
 		.desc = "Set the session ID context for output",
 		.type = OPTION_ARG,
-		.opt.arg = &sess_id_config.context,
+		.opt.arg = &cfg.context,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &sess_id_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "format",
 		.desc = "Input format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &sess_id_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "noout",
 		.desc = "Do not output the encoded session info",
 		.type = OPTION_FLAG,
-		.opt.flag = &sess_id_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &sess_id_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &sess_id_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "text",
 		.desc = "Print various public or private key components in"
 		    " plain text",
 		.type = OPTION_FLAG,
-		.opt.flag = &sess_id_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{ NULL }
 };
@@ -163,62 +163,62 @@ sess_id_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&sess_id_config, 0, sizeof(sess_id_config));
+	memset(&cfg, 0, sizeof(cfg));
 
-	sess_id_config.informat = FORMAT_PEM;
-	sess_id_config.outformat = FORMAT_PEM;
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, sess_id_options, NULL, NULL) != 0) {
 		sess_id_usage();
 		return (1);
 	}
 
-	x = load_sess_id(sess_id_config.infile, sess_id_config.informat);
+	x = load_sess_id(cfg.infile, cfg.informat);
 	if (x == NULL) {
 		goto end;
 	}
 	peer = SSL_SESSION_get0_peer(x);
 
-	if (sess_id_config.context) {
-		size_t ctx_len = strlen(sess_id_config.context);
+	if (cfg.context) {
+		size_t ctx_len = strlen(cfg.context);
 		if (ctx_len > SSL_MAX_SID_CTX_LENGTH) {
 			BIO_printf(bio_err, "Context too long\n");
 			goto end;
 		}
 		SSL_SESSION_set1_id_context(x,
-		    (unsigned char *)sess_id_config.context, ctx_len);
+		    (unsigned char *)cfg.context, ctx_len);
 	}
 
-	if (!sess_id_config.noout || sess_id_config.text) {
+	if (!cfg.noout || cfg.text) {
 		out = BIO_new(BIO_s_file());
 		if (out == NULL) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		if (sess_id_config.outfile == NULL) {
+		if (cfg.outfile == NULL) {
 			BIO_set_fp(out, stdout, BIO_NOCLOSE);
 		} else {
-			if (BIO_write_filename(out, sess_id_config.outfile)
+			if (BIO_write_filename(out, cfg.outfile)
 			    <= 0) {
-				perror(sess_id_config.outfile);
+				perror(cfg.outfile);
 				goto end;
 			}
 		}
 	}
-	if (sess_id_config.text) {
+	if (cfg.text) {
 		SSL_SESSION_print(out, x);
 
-		if (sess_id_config.cert) {
+		if (cfg.cert) {
 			if (peer == NULL)
 				BIO_puts(out, "No certificate present\n");
 			else
 				X509_print(out, peer);
 		}
 	}
-	if (!sess_id_config.noout && !sess_id_config.cert) {
-		if (sess_id_config.outformat == FORMAT_ASN1)
+	if (!cfg.noout && !cfg.cert) {
+		if (cfg.outformat == FORMAT_ASN1)
 			i = i2d_SSL_SESSION_bio(out, x);
-		else if (sess_id_config.outformat == FORMAT_PEM)
+		else if (cfg.outformat == FORMAT_PEM)
 			i = PEM_write_bio_SSL_SESSION(out, x);
 		else {
 			BIO_printf(bio_err,
@@ -229,11 +229,11 @@ sess_id_main(int argc, char **argv)
 			BIO_printf(bio_err, "unable to write SSL_SESSION\n");
 			goto end;
 		}
-	} else if (!sess_id_config.noout && (peer != NULL)) {
+	} else if (!cfg.noout && (peer != NULL)) {
 		/* just print the certificate */
-		if (sess_id_config.outformat == FORMAT_ASN1)
+		if (cfg.outformat == FORMAT_ASN1)
 			i = (int) i2d_X509_bio(out, peer);
-		else if (sess_id_config.outformat == FORMAT_PEM)
+		else if (cfg.outformat == FORMAT_PEM)
 			i = PEM_write_bio_X509(out, peer);
 		else {
 			BIO_printf(bio_err,

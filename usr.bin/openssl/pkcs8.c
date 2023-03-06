@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.15 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.16 2023/03/06 14:32:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -79,12 +79,12 @@ static struct {
 	char *passargout;
 	int pbe_nid;
 	int topk8;
-} pkcs8_config;
+} cfg;
 
 static int
 pkcs8_opt_v1(char *arg)
 {
-	if ((pkcs8_config.pbe_nid = OBJ_txt2nid(arg)) == NID_undef) {
+	if ((cfg.pbe_nid = OBJ_txt2nid(arg)) == NID_undef) {
 		fprintf(stderr, "Unknown PBE algorithm '%s'\n", arg);
 		return (1);
 	}
@@ -95,7 +95,7 @@ pkcs8_opt_v1(char *arg)
 static int
 pkcs8_opt_v2(char *arg)
 {
-	if ((pkcs8_config.cipher = EVP_get_cipherbyname(arg)) == NULL) {
+	if ((cfg.cipher = EVP_get_cipherbyname(arg)) == NULL) {
 		fprintf(stderr, "Unknown cipher '%s'\n", arg);
 		return (1);
 	}
@@ -109,62 +109,62 @@ static const struct option pkcs8_options[] = {
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &pkcs8_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "der | pem",
 		.desc = "Input format (default PEM)",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &pkcs8_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "nocrypt",
 		.desc = "Use or expect unencrypted private key",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkcs8_config.nocrypt,
+		.opt.flag = &cfg.nocrypt,
 	},
 	{
 		.name = "noiter",
 		.desc = "Use 1 as iteration count",
 		.type = OPTION_VALUE,
 		.value = 1,
-		.opt.value = &pkcs8_config.iter,
+		.opt.value = &cfg.iter,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &pkcs8_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "der | pem",
 		.desc = "Output format (default PEM)",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &pkcs8_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "passin",
 		.argname = "source",
 		.desc = "Input file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &pkcs8_config.passargin,
+		.opt.arg = &cfg.passargin,
 	},
 	{
 		.name = "passout",
 		.argname = "source",
 		.desc = "Output file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &pkcs8_config.passargout,
+		.opt.arg = &cfg.passargout,
 	},
 	{
 		.name = "topk8",
 		.desc = "Read traditional format key and write PKCS#8 format"
 		    " key",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkcs8_config.topk8,
+		.opt.flag = &cfg.topk8,
 	},
 	{
 		.name = "v1",
@@ -208,48 +208,48 @@ pkcs8_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&pkcs8_config, 0, sizeof(pkcs8_config));
+	memset(&cfg, 0, sizeof(cfg));
 
-	pkcs8_config.iter = PKCS12_DEFAULT_ITER;
-	pkcs8_config.informat = FORMAT_PEM;
-	pkcs8_config.outformat = FORMAT_PEM;
-	pkcs8_config.pbe_nid = -1;
+	cfg.iter = PKCS12_DEFAULT_ITER;
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
+	cfg.pbe_nid = -1;
 
 	if (options_parse(argc, argv, pkcs8_options, NULL, NULL) != 0) {
 		pkcs8_usage();
 		return (1);
 	}
 
-	if (!app_passwd(bio_err, pkcs8_config.passargin,
-	    pkcs8_config.passargout, &passin, &passout)) {
+	if (!app_passwd(bio_err, cfg.passargin,
+	    cfg.passargout, &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
 	}
-	if ((pkcs8_config.pbe_nid == -1) && !pkcs8_config.cipher)
-		pkcs8_config.pbe_nid = NID_pbeWithMD5AndDES_CBC;
+	if ((cfg.pbe_nid == -1) && !cfg.cipher)
+		cfg.pbe_nid = NID_pbeWithMD5AndDES_CBC;
 
-	if (pkcs8_config.infile) {
-		if (!(in = BIO_new_file(pkcs8_config.infile, "rb"))) {
+	if (cfg.infile) {
+		if (!(in = BIO_new_file(cfg.infile, "rb"))) {
 			BIO_printf(bio_err,
 			    "Can't open input file '%s'\n",
-			    pkcs8_config.infile);
+			    cfg.infile);
 			goto end;
 		}
 	} else
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
 
-	if (pkcs8_config.outfile) {
-		if (!(out = BIO_new_file(pkcs8_config.outfile, "wb"))) {
+	if (cfg.outfile) {
+		if (!(out = BIO_new_file(cfg.outfile, "wb"))) {
 			BIO_printf(bio_err, "Can't open output file '%s'\n",
-			    pkcs8_config.outfile);
+			    cfg.outfile);
 			goto end;
 		}
 	} else {
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
 	}
-	if (pkcs8_config.topk8) {
-		pkey = load_key(bio_err, pkcs8_config.infile,
-		    pkcs8_config.informat, 1, passin, "key");
+	if (cfg.topk8) {
+		pkey = load_key(bio_err, cfg.infile,
+		    cfg.informat, 1, passin, "key");
 		if (!pkey)
 			goto end;
 		if (!(p8inf = EVP_PKEY2PKCS8(pkey))) {
@@ -257,10 +257,10 @@ pkcs8_main(int argc, char **argv)
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-		if (pkcs8_config.nocrypt) {
-			if (pkcs8_config.outformat == FORMAT_PEM)
+		if (cfg.nocrypt) {
+			if (cfg.outformat == FORMAT_PEM)
 				PEM_write_bio_PKCS8_PRIV_KEY_INFO(out, p8inf);
-			else if (pkcs8_config.outformat == FORMAT_ASN1)
+			else if (cfg.outformat == FORMAT_ASN1)
 				i2d_PKCS8_PRIV_KEY_INFO_bio(out, p8inf);
 			else {
 				BIO_printf(bio_err,
@@ -276,16 +276,16 @@ pkcs8_main(int argc, char **argv)
 				    "Enter Encryption Password:", 1))
 					goto end;
 			}
-			if (!(p8 = PKCS8_encrypt(pkcs8_config.pbe_nid,
-			    pkcs8_config.cipher, p8pass, strlen(p8pass),
-			    NULL, 0, pkcs8_config.iter, p8inf))) {
+			if (!(p8 = PKCS8_encrypt(cfg.pbe_nid,
+			    cfg.cipher, p8pass, strlen(p8pass),
+			    NULL, 0, cfg.iter, p8inf))) {
 				BIO_printf(bio_err, "Error encrypting key\n");
 				ERR_print_errors(bio_err);
 				goto end;
 			}
-			if (pkcs8_config.outformat == FORMAT_PEM)
+			if (cfg.outformat == FORMAT_PEM)
 				PEM_write_bio_PKCS8(out, p8);
-			else if (pkcs8_config.outformat == FORMAT_ASN1)
+			else if (cfg.outformat == FORMAT_ASN1)
 				i2d_PKCS8_bio(out, p8);
 			else {
 				BIO_printf(bio_err,
@@ -297,20 +297,20 @@ pkcs8_main(int argc, char **argv)
 		ret = 0;
 		goto end;
 	}
-	if (pkcs8_config.nocrypt) {
-		if (pkcs8_config.informat == FORMAT_PEM)
+	if (cfg.nocrypt) {
+		if (cfg.informat == FORMAT_PEM)
 			p8inf = PEM_read_bio_PKCS8_PRIV_KEY_INFO(in, NULL,
 			    NULL, NULL);
-		else if (pkcs8_config.informat == FORMAT_ASN1)
+		else if (cfg.informat == FORMAT_ASN1)
 			p8inf = d2i_PKCS8_PRIV_KEY_INFO_bio(in, NULL);
 		else {
 			BIO_printf(bio_err, "Bad format specified for key\n");
 			goto end;
 		}
 	} else {
-		if (pkcs8_config.informat == FORMAT_PEM)
+		if (cfg.informat == FORMAT_PEM)
 			p8 = PEM_read_bio_PKCS8(in, NULL, NULL, NULL);
-		else if (pkcs8_config.informat == FORMAT_ASN1)
+		else if (cfg.informat == FORMAT_ASN1)
 			p8 = d2i_PKCS8_bio(in, NULL);
 		else {
 			BIO_printf(bio_err, "Bad format specified for key\n");
@@ -342,10 +342,10 @@ pkcs8_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (pkcs8_config.outformat == FORMAT_PEM)
+	if (cfg.outformat == FORMAT_PEM)
 		PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL,
 		    passout);
-	else if (pkcs8_config.outformat == FORMAT_ASN1)
+	else if (cfg.outformat == FORMAT_ASN1)
 		i2d_PrivateKey_bio(out, pkey);
 	else {
 		BIO_printf(bio_err, "Bad format specified for key\n");

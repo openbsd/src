@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.c,v 1.17 2022/11/11 17:07:38 joshua Exp $ */
+/* $OpenBSD: dsa.c,v 1.18 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,7 +87,7 @@ static struct {
 	int pubout;
 	int pvk_encr;
 	int text;
-} dsa_config;
+} cfg;
 
 static int
 dsa_opt_enc(int argc, char **argv, int *argsused)
@@ -97,7 +97,7 @@ dsa_opt_enc(int argc, char **argv, int *argsused)
 	if (*name++ != '-')
 		return (1);
 
-	if ((dsa_config.enc = EVP_get_cipherbyname(name)) != NULL) {
+	if ((cfg.enc = EVP_get_cipherbyname(name)) != NULL) {
 		*argsused = 1;
 		return (0);
 	}
@@ -111,7 +111,7 @@ static const struct option dsa_options[] = {
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &dsa_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
@@ -119,87 +119,87 @@ static const struct option dsa_options[] = {
 		.desc = "Input format (PEM (default) or any other supported"
 		    " format)",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &dsa_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "modulus",
 		.desc = "Print the DSA public value",
 		.type = OPTION_FLAG,
-		.opt.flag = &dsa_config.modulus,
+		.opt.flag = &cfg.modulus,
 	},
 	{
 		.name = "noout",
 		.desc = "No output",
 		.type = OPTION_FLAG,
-		.opt.flag = &dsa_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &dsa_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER, MSBLOB, PEM (default) or PVK)",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &dsa_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "passin",
 		.argname = "source",
 		.desc = "Input file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &dsa_config.passargin,
+		.opt.arg = &cfg.passargin,
 	},
 	{
 		.name = "passout",
 		.argname = "source",
 		.desc = "Output file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &dsa_config.passargout,
+		.opt.arg = &cfg.passargout,
 	},
 	{
 		.name = "pubin",
 		.desc = "Read a public key from the input file instead of"
 		    " private key",
 		.type = OPTION_FLAG,
-		.opt.flag = &dsa_config.pubin,
+		.opt.flag = &cfg.pubin,
 	},
 	{
 		.name = "pubout",
 		.desc = "Output a public key instead of private key",
 		.type = OPTION_FLAG,
-		.opt.flag = &dsa_config.pubout,
+		.opt.flag = &cfg.pubout,
 	},
 	{
 		.name = "pvk-none",
 		.desc = "PVK encryption level",
 		.type = OPTION_VALUE,
 		.value = 0,
-		.opt.value = &dsa_config.pvk_encr,
+		.opt.value = &cfg.pvk_encr,
 	},
 	{
 		.name = "pvk-strong",
 		.desc = "PVK encryption level (default)",
 		.type = OPTION_VALUE,
 		.value = 2,
-		.opt.value = &dsa_config.pvk_encr,
+		.opt.value = &cfg.pvk_encr,
 	},
 	{
 		.name = "pvk-weak",
 		.desc = "PVK encryption level",
 		.type = OPTION_VALUE,
 		.value = 1,
-		.opt.value = &dsa_config.pvk_encr,
+		.opt.value = &cfg.pvk_encr,
 	},
 	{
 		.name = "text",
 		.desc = "Print the key in text form",
 		.type = OPTION_FLAG,
-		.opt.flag = &dsa_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{
 		.name = NULL,
@@ -241,18 +241,18 @@ dsa_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&dsa_config, 0, sizeof(dsa_config));
+	memset(&cfg, 0, sizeof(cfg));
 
-	dsa_config.pvk_encr = 2;
-	dsa_config.informat = FORMAT_PEM;
-	dsa_config.outformat = FORMAT_PEM;
+	cfg.pvk_encr = 2;
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, dsa_options, NULL, NULL) != 0) {
 		dsa_usage();
 		goto end;
 	}
 
-	if (!app_passwd(bio_err, dsa_config.passargin, dsa_config.passargout,
+	if (!app_passwd(bio_err, cfg.passargin, cfg.passargout,
 	    &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
@@ -264,11 +264,11 @@ dsa_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (dsa_config.infile == NULL)
+	if (cfg.infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
-		if (BIO_read_filename(in, dsa_config.infile) <= 0) {
-			perror(dsa_config.infile);
+		if (BIO_read_filename(in, cfg.infile) <= 0) {
+			perror(cfg.infile);
 			goto end;
 		}
 	}
@@ -278,12 +278,12 @@ dsa_main(int argc, char **argv)
 	{
 		EVP_PKEY *pkey;
 
-		if (dsa_config.pubin)
-			pkey = load_pubkey(bio_err, dsa_config.infile,
-			    dsa_config.informat, 1, passin, "Public Key");
+		if (cfg.pubin)
+			pkey = load_pubkey(bio_err, cfg.infile,
+			    cfg.informat, 1, passin, "Public Key");
 		else
-			pkey = load_key(bio_err, dsa_config.infile,
-			    dsa_config.informat, 1, passin, "Private Key");
+			pkey = load_key(bio_err, cfg.infile,
+			    cfg.informat, 1, passin, "Private Key");
 
 		if (pkey) {
 			dsa = EVP_PKEY_get1_DSA(pkey);
@@ -295,51 +295,51 @@ dsa_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (dsa_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, dsa_config.outfile) <= 0) {
-			perror(dsa_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
 
-	if (dsa_config.text) {
+	if (cfg.text) {
 		if (!DSA_print(out, dsa, 0)) {
-			perror(dsa_config.outfile);
+			perror(cfg.outfile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
-	if (dsa_config.modulus) {
+	if (cfg.modulus) {
 		fprintf(stdout, "Public Key=");
 		BN_print(out, DSA_get0_pub_key(dsa));
 		fprintf(stdout, "\n");
 	}
-	if (dsa_config.noout)
+	if (cfg.noout)
 		goto end;
 	BIO_printf(bio_err, "writing DSA key\n");
-	if (dsa_config.outformat == FORMAT_ASN1) {
-		if (dsa_config.pubin || dsa_config.pubout)
+	if (cfg.outformat == FORMAT_ASN1) {
+		if (cfg.pubin || cfg.pubout)
 			i = i2d_DSA_PUBKEY_bio(out, dsa);
 		else
 			i = i2d_DSAPrivateKey_bio(out, dsa);
-	} else if (dsa_config.outformat == FORMAT_PEM) {
-		if (dsa_config.pubin || dsa_config.pubout)
+	} else if (cfg.outformat == FORMAT_PEM) {
+		if (cfg.pubin || cfg.pubout)
 			i = PEM_write_bio_DSA_PUBKEY(out, dsa);
 		else
-			i = PEM_write_bio_DSAPrivateKey(out, dsa, dsa_config.enc,
+			i = PEM_write_bio_DSAPrivateKey(out, dsa, cfg.enc,
 			    NULL, 0, NULL, passout);
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_RC4)
-	} else if (dsa_config.outformat == FORMAT_MSBLOB ||
-	    dsa_config.outformat == FORMAT_PVK) {
+	} else if (cfg.outformat == FORMAT_MSBLOB ||
+	    cfg.outformat == FORMAT_PVK) {
 		EVP_PKEY *pk;
 		pk = EVP_PKEY_new();
 		EVP_PKEY_set1_DSA(pk, dsa);
-		if (dsa_config.outformat == FORMAT_PVK)
-			i = i2b_PVK_bio(out, pk, dsa_config.pvk_encr, 0,
+		if (cfg.outformat == FORMAT_PVK)
+			i = i2b_PVK_bio(out, pk, cfg.pvk_encr, 0,
 			    passout);
-		else if (dsa_config.pubin || dsa_config.pubout)
+		else if (cfg.pubin || cfg.pubout)
 			i = i2b_PublicKey_bio(out, pk);
 		else
 			i = i2b_PrivateKey_bio(out, pk);

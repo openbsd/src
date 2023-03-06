@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.c,v 1.25 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: ts.c,v 1.26 2023/03/06 14:32:06 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -138,7 +138,7 @@ static struct {
 	int token_in;
 	int token_out;
 	char *untrusted;
-} ts_config;
+} cfg;
 
 static int
 ts_opt_md(int argc, char **argv, int *argsused)
@@ -148,7 +148,7 @@ ts_opt_md(int argc, char **argv, int *argsused)
 	if (*name++ != '-')
 		return (1);
 
-	if ((ts_config.md = EVP_get_digestbyname(name)) == NULL)
+	if ((cfg.md = EVP_get_digestbyname(name)) == NULL)
 		return (1);
 
 	*argsused = 1;
@@ -158,27 +158,27 @@ ts_opt_md(int argc, char **argv, int *argsused)
 static int
 ts_opt_query(void)
 {
-	if (ts_config.mode != CMD_NONE)
+	if (cfg.mode != CMD_NONE)
 		return (1);
-	ts_config.mode = CMD_QUERY;
+	cfg.mode = CMD_QUERY;
 	return (0);
 }
 
 static int
 ts_opt_reply(void)
 {
-	if (ts_config.mode != CMD_NONE)
+	if (cfg.mode != CMD_NONE)
 		return (1);
-	ts_config.mode = CMD_REPLY;
+	cfg.mode = CMD_REPLY;
 	return (0);
 }
 
 static int
 ts_opt_verify(void)
 {
-	if (ts_config.mode != CMD_NONE)
+	if (cfg.mode != CMD_NONE)
 		return (1);
-	ts_config.mode = CMD_VERIFY;
+	cfg.mode = CMD_VERIFY;
 	return (0);
 }
 
@@ -188,89 +188,89 @@ static const struct option ts_options[] = {
 		.argname = "file",
 		.desc = "Certificate Authority file",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.ca_file,
+		.opt.arg = &cfg.ca_file,
 	},
 	{
 		.name = "CApath",
 		.argname = "path",
 		.desc = "Certificate Authority path",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.ca_path,
+		.opt.arg = &cfg.ca_path,
 	},
 	{
 		.name = "cert",
 		.desc = "Include signing certificate in the response",
 		.type = OPTION_FLAG,
-		.opt.flag = &ts_config.cert,
+		.opt.flag = &cfg.cert,
 	},
 	{
 		.name = "chain",
 		.argname = "file",
 		.desc = "PEM certificates that will be included in the response",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.chain,
+		.opt.arg = &cfg.chain,
 	},
 	{
 		.name = "config",
 		.argname = "file",
 		.desc = "Specify an alternative configuration file",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.configfile,
+		.opt.arg = &cfg.configfile,
 	},
 	{
 		.name = "data",
 		.argname = "file",
 		.desc = "Data file for which the time stamp request needs to be created",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.data,
+		.opt.arg = &cfg.data,
 	},
 	{
 		.name = "digest",
 		.argname = "arg",
 		.desc = "Specify the message imprint explicitly without the data file",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.digest,
+		.opt.arg = &cfg.digest,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.in,
+		.opt.arg = &cfg.in,
 	},
 	{
 		.name = "inkey",
 		.argname = "file",
 		.desc = "Input key file",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.inkey,
+		.opt.arg = &cfg.inkey,
 	},
 	{
 		.name = "no_nonce",
 		.desc = "Specify no nonce in the request",
 		.type = OPTION_FLAG,
-		.opt.flag = &ts_config.no_nonce,
+		.opt.flag = &cfg.no_nonce,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.out,
+		.opt.arg = &cfg.out,
 	},
 	{
 		.name = "passin",
 		.argname = "src",
 		.desc = "Private key password source",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.passin,
+		.opt.arg = &cfg.passin,
 	},
 	{
 		.name = "policy",
 		.argname = "object_id",
 		.desc = "Policy for the TSA to use when creating the time stamp token",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.policy,
+		.opt.arg = &cfg.policy,
 	},
 	{
 		.name = "query",
@@ -283,7 +283,7 @@ static const struct option ts_options[] = {
 		.argname = "file",
 		.desc = "File containing a DER-encoded time stamp request",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.queryfile,
+		.opt.arg = &cfg.queryfile,
 	},
 	{
 		.name = "reply",
@@ -296,39 +296,39 @@ static const struct option ts_options[] = {
 		.argname = "arg",
 		.desc = "TSA section containing the settings for response generation",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.section,
+		.opt.arg = &cfg.section,
 	},
 	{
 		.name = "signer",
 		.argname = "file",
 		.desc = "Signer certificate file",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.signer,
+		.opt.arg = &cfg.signer,
 	},
 	{
 		.name = "text",
 		.desc = "Output in human-readable text format",
 		.type = OPTION_FLAG,
-		.opt.flag = &ts_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{
 		.name = "token_in",
 		.desc = "Input is a DER-encoded time stamp token",
 		.type = OPTION_FLAG,
-		.opt.flag = &ts_config.token_in,
+		.opt.flag = &cfg.token_in,
 	},
 	{
 		.name = "token_out",
 		.desc = "Output is a DER-encoded time stamp token",
 		.type = OPTION_FLAG,
-		.opt.flag = &ts_config.token_out,
+		.opt.flag = &cfg.token_out,
 	},
 	{
 		.name = "untrusted",
 		.argname = "file",
 		.desc = "File containing untrusted certificates",
 		.type = OPTION_ARG,
-		.opt.arg = &ts_config.untrusted,
+		.opt.arg = &cfg.untrusted,
 	},
 	{
 		.name = "verify",
@@ -382,15 +382,15 @@ ts_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&ts_config, 0, sizeof(ts_config));
-	ts_config.mode = CMD_NONE;
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.mode = CMD_NONE;
 
 	if (options_parse(argc, argv, ts_options, NULL, NULL) != 0)
 		goto usage;
 
 	/* Get the password if required. */
-	if (ts_config.mode == CMD_REPLY && ts_config.passin != NULL &&
-	    !app_passwd(bio_err, ts_config.passin, NULL, &password, NULL)) {
+	if (cfg.mode == CMD_REPLY && cfg.passin != NULL &&
+	    !app_passwd(bio_err, cfg.passin, NULL, &password, NULL)) {
 		BIO_printf(bio_err, "Error getting password.\n");
 		goto cleanup;
 	}
@@ -398,7 +398,7 @@ ts_main(int argc, char **argv)
 	 * Check consistency of parameters and execute the appropriate
 	 * function.
 	 */
-	switch (ts_config.mode) {
+	switch (cfg.mode) {
 	case CMD_NONE:
 		goto usage;
 	case CMD_QUERY:
@@ -406,50 +406,50 @@ ts_main(int argc, char **argv)
 		 * Data file and message imprint cannot be specified at the
 		 * same time.
 		 */
-		ret = ts_config.data != NULL && ts_config.digest != NULL;
+		ret = cfg.data != NULL && cfg.digest != NULL;
 		if (ret)
 			goto usage;
 		/* Load the config file for possible policy OIDs. */
-		conf = load_config_file(ts_config.configfile);
-		ret = !query_command(ts_config.data, ts_config.digest,
-		    ts_config.md, ts_config.policy, ts_config.no_nonce,
-		    ts_config.cert, ts_config.in, ts_config.out,
-		    ts_config.text);
+		conf = load_config_file(cfg.configfile);
+		ret = !query_command(cfg.data, cfg.digest,
+		    cfg.md, cfg.policy, cfg.no_nonce,
+		    cfg.cert, cfg.in, cfg.out,
+		    cfg.text);
 		break;
 	case CMD_REPLY:
-		conf = load_config_file(ts_config.configfile);
-		if (ts_config.in == NULL) {
-			ret = !(ts_config.queryfile != NULL && conf != NULL &&
-			    !ts_config.token_in);
+		conf = load_config_file(cfg.configfile);
+		if (cfg.in == NULL) {
+			ret = !(cfg.queryfile != NULL && conf != NULL &&
+			    !cfg.token_in);
 			if (ret)
 				goto usage;
 		} else {
 			/* 'in' and 'queryfile' are exclusive. */
-			ret = !(ts_config.queryfile == NULL);
+			ret = !(cfg.queryfile == NULL);
 			if (ret)
 				goto usage;
 		}
 
-		ret = !reply_command(conf, ts_config.section,
-		    ts_config.queryfile, password, ts_config.inkey,
-		    ts_config.signer, ts_config.chain, ts_config.policy,
-		    ts_config.in, ts_config.token_in, ts_config.out,
-		    ts_config.token_out, ts_config.text);
+		ret = !reply_command(conf, cfg.section,
+		    cfg.queryfile, password, cfg.inkey,
+		    cfg.signer, cfg.chain, cfg.policy,
+		    cfg.in, cfg.token_in, cfg.out,
+		    cfg.token_out, cfg.text);
 		break;
 	case CMD_VERIFY:
-		ret = !(((ts_config.queryfile != NULL && ts_config.data == NULL &&
-		    ts_config.digest == NULL) ||
-		    (ts_config.queryfile == NULL && ts_config.data != NULL &&
-		    ts_config.digest == NULL) ||
-		    (ts_config.queryfile == NULL && ts_config.data == NULL &&
-		    ts_config.digest != NULL)) &&
-		    ts_config.in != NULL);
+		ret = !(((cfg.queryfile != NULL && cfg.data == NULL &&
+		    cfg.digest == NULL) ||
+		    (cfg.queryfile == NULL && cfg.data != NULL &&
+		    cfg.digest == NULL) ||
+		    (cfg.queryfile == NULL && cfg.data == NULL &&
+		    cfg.digest != NULL)) &&
+		    cfg.in != NULL);
 		if (ret)
 			goto usage;
 
-		ret = !verify_command(ts_config.data, ts_config.digest,
-		    ts_config.queryfile, ts_config.in, ts_config.token_in,
-		    ts_config.ca_path, ts_config.ca_file, ts_config.untrusted);
+		ret = !verify_command(cfg.data, cfg.digest,
+		    cfg.queryfile, cfg.in, cfg.token_in,
+		    cfg.ca_path, cfg.ca_file, cfg.untrusted);
 	}
 
 	goto cleanup;

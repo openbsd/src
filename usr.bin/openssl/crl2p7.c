@@ -1,4 +1,4 @@
-/* $OpenBSD: crl2p7.c,v 1.10 2022/11/11 17:07:38 joshua Exp $ */
+/* $OpenBSD: crl2p7.c,v 1.11 2023/03/06 14:32:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,18 +83,18 @@ static struct {
 	int nocrl;
 	char *outfile;
 	int outformat;
-} crl2p7_config;
+} cfg;
 
 static int
 crl2p7_opt_certfile(char *arg)
 {
-	if (crl2p7_config.certflst == NULL)
-		crl2p7_config.certflst = sk_OPENSSL_STRING_new_null();
-	if (crl2p7_config.certflst == NULL) {
+	if (cfg.certflst == NULL)
+		cfg.certflst = sk_OPENSSL_STRING_new_null();
+	if (cfg.certflst == NULL) {
 		fprintf(stderr, "out of memory\n");
 		return (1);
 	}
-	if (!sk_OPENSSL_STRING_push(crl2p7_config.certflst, arg)) {
+	if (!sk_OPENSSL_STRING_push(cfg.certflst, arg)) {
 		fprintf(stderr, "out of memory\n");
 		return (1);
 	}
@@ -115,34 +115,34 @@ static const struct option crl2p7_options[] = {
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &crl2p7_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "format",
 		.desc = "Input format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &crl2p7_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "nocrl",
 		.desc = "Do not read CRL from input or include CRL in output",
 		.type = OPTION_FLAG,
-		.opt.flag = &crl2p7_config.nocrl,
+		.opt.flag = &cfg.nocrl,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &crl2p7_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &crl2p7_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{ NULL },
 };
@@ -174,10 +174,10 @@ crl2pkcs7_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&crl2p7_config, 0, sizeof(crl2p7_config));
+	memset(&cfg, 0, sizeof(cfg));
 
-	crl2p7_config.informat = FORMAT_PEM;
-	crl2p7_config.outformat = FORMAT_PEM;
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, crl2p7_options, NULL, NULL) != 0) {
 		crl2p7_usage();
@@ -190,19 +190,19 @@ crl2pkcs7_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (!crl2p7_config.nocrl) {
-		if (crl2p7_config.infile == NULL)
+	if (!cfg.nocrl) {
+		if (cfg.infile == NULL)
 			BIO_set_fp(in, stdin, BIO_NOCLOSE);
 		else {
-			if (BIO_read_filename(in, crl2p7_config.infile) <= 0) {
-				perror(crl2p7_config.infile);
+			if (BIO_read_filename(in, cfg.infile) <= 0) {
+				perror(cfg.infile);
 				goto end;
 			}
 		}
 
-		if (crl2p7_config.informat == FORMAT_ASN1)
+		if (cfg.informat == FORMAT_ASN1)
 			crl = d2i_X509_CRL_bio(in, NULL);
-		else if (crl2p7_config.informat == FORMAT_PEM)
+		else if (cfg.informat == FORMAT_PEM)
 			crl = PEM_read_bio_X509_CRL(in, NULL, NULL, NULL);
 		else {
 			BIO_printf(bio_err,
@@ -236,9 +236,9 @@ crl2pkcs7_main(int argc, char **argv)
 		goto end;
 	p7s->cert = cert_stack;
 
-	if (crl2p7_config.certflst) {
-		for (i = 0; i < sk_OPENSSL_STRING_num(crl2p7_config.certflst); i++) {
-			certfile = sk_OPENSSL_STRING_value(crl2p7_config.certflst, i);
+	if (cfg.certflst) {
+		for (i = 0; i < sk_OPENSSL_STRING_num(cfg.certflst); i++) {
+			certfile = sk_OPENSSL_STRING_value(cfg.certflst, i);
 			if (add_certs_from_file(cert_stack, certfile) < 0) {
 				BIO_printf(bio_err,
 				    "error loading certificates\n");
@@ -248,20 +248,20 @@ crl2pkcs7_main(int argc, char **argv)
 		}
 	}
 
-	sk_OPENSSL_STRING_free(crl2p7_config.certflst);
+	sk_OPENSSL_STRING_free(cfg.certflst);
 
-	if (crl2p7_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, crl2p7_config.outfile) <= 0) {
-			perror(crl2p7_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
 
-	if (crl2p7_config.outformat == FORMAT_ASN1)
+	if (cfg.outformat == FORMAT_ASN1)
 		i = i2d_PKCS7_bio(out, p7);
-	else if (crl2p7_config.outformat == FORMAT_PEM)
+	else if (cfg.outformat == FORMAT_PEM)
 		i = PEM_write_bio_PKCS7(out, p7);
 	else {
 		BIO_printf(bio_err,

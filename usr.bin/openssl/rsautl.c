@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.20 2023/03/05 13:12:53 tb Exp $ */
+/* $OpenBSD: rsautl.c,v 1.21 2023/03/06 14:32:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -87,131 +87,131 @@ static struct {
 	char *passargin;
 	int rev;
 	int rsa_mode;
-} rsautl_config;
+} cfg;
 
 static const struct option rsautl_options[] = {
 	{
 		.name = "asn1parse",
 		.desc = "ASN.1 parse the output data",
 		.type = OPTION_FLAG,
-		.opt.flag = &rsautl_config.asn1parse,
+		.opt.flag = &cfg.asn1parse,
 	},
 	{
 		.name = "certin",
 		.desc = "Input is a certificate containing an RSA public key",
 		.type = OPTION_VALUE,
 		.value = KEY_CERT,
-		.opt.value = &rsautl_config.key_type,
+		.opt.value = &cfg.key_type,
 	},
 	{
 		.name = "decrypt",
 		.desc = "Decrypt the input data using RSA private key",
 		.type = OPTION_VALUE,
 		.value = RSA_DECRYPT,
-		.opt.value = &rsautl_config.rsa_mode,
+		.opt.value = &cfg.rsa_mode,
 	},
 	{
 		.name = "encrypt",
 		.desc = "Encrypt the input data using RSA public key",
 		.type = OPTION_VALUE,
 		.value = RSA_ENCRYPT,
-		.opt.value = &rsautl_config.rsa_mode,
+		.opt.value = &cfg.rsa_mode,
 	},
 	{
 		.name = "hexdump",
 		.desc = "Hex dump the output data",
 		.type = OPTION_FLAG,
-		.opt.flag = &rsautl_config.hexdump,
+		.opt.flag = &cfg.hexdump,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &rsautl_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inkey",
 		.argname = "file",
 		.desc = "Input key file",
 		.type = OPTION_ARG,
-		.opt.arg = &rsautl_config.keyfile,
+		.opt.arg = &cfg.keyfile,
 	},
 	{
 		.name = "keyform",
 		.argname = "fmt",
 		.desc = "Input key format (DER, TXT or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &rsautl_config.keyform,
+		.opt.value = &cfg.keyform,
 	},
 	{
 		.name = "oaep",
 		.desc = "Use PKCS#1 OAEP padding",
 		.type = OPTION_VALUE,
 		.value = RSA_PKCS1_OAEP_PADDING,
-		.opt.value = &rsautl_config.pad,
+		.opt.value = &cfg.pad,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &rsautl_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "passin",
 		.argname = "arg",
 		.desc = "Key password source",
 		.type = OPTION_ARG,
-		.opt.arg = &rsautl_config.passargin,
+		.opt.arg = &cfg.passargin,
 	},
 	{
 		.name = "pkcs",
 		.desc = "Use PKCS#1 v1.5 padding (default)",
 		.type = OPTION_VALUE,
 		.value = RSA_PKCS1_PADDING,
-		.opt.value = &rsautl_config.pad,
+		.opt.value = &cfg.pad,
 	},
 	{
 		.name = "pubin",
 		.desc = "Input is an RSA public key",
 		.type = OPTION_VALUE,
 		.value = KEY_PUBKEY,
-		.opt.value = &rsautl_config.key_type,
+		.opt.value = &cfg.key_type,
 	},
 	{
 		.name = "raw",
 		.desc = "Use no padding",
 		.type = OPTION_VALUE,
 		.value = RSA_NO_PADDING,
-		.opt.value = &rsautl_config.pad,
+		.opt.value = &cfg.pad,
 	},
 	{
 		.name = "rev",
 		.desc = "Reverse the input data",
 		.type = OPTION_FLAG,
-		.opt.flag = &rsautl_config.rev,
+		.opt.flag = &cfg.rev,
 	},
 	{
 		.name = "sign",
 		.desc = "Sign the input data using RSA private key",
 		.type = OPTION_VALUE,
 		.value = RSA_SIGN,
-		.opt.value = &rsautl_config.rsa_mode,
+		.opt.value = &cfg.rsa_mode,
 	},
 	{
 		.name = "verify",
 		.desc = "Verify the input data using RSA public key",
 		.type = OPTION_VALUE,
 		.value = RSA_VERIFY,
-		.opt.value = &rsautl_config.rsa_mode,
+		.opt.value = &cfg.rsa_mode,
 	},
 	{
 		.name = "x931",
 		.desc = "Use ANSI X9.31 padding",
 		.type = OPTION_VALUE,
 		.value = RSA_X931_PADDING,
-		.opt.value = &rsautl_config.pad,
+		.opt.value = &cfg.pad,
 	},
 
 	{NULL},
@@ -249,44 +249,44 @@ rsautl_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&rsautl_config, 0, sizeof(rsautl_config));
-	rsautl_config.keyform = FORMAT_PEM;
-	rsautl_config.key_type = KEY_PRIVKEY;
-	rsautl_config.pad = RSA_PKCS1_PADDING;
-	rsautl_config.rsa_mode = RSA_VERIFY;
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.keyform = FORMAT_PEM;
+	cfg.key_type = KEY_PRIVKEY;
+	cfg.pad = RSA_PKCS1_PADDING;
+	cfg.rsa_mode = RSA_VERIFY;
 
 	if (options_parse(argc, argv, rsautl_options, NULL, NULL) != 0) {
 		rsautl_usage();
 		return (1);
 	}
 
-	if (rsautl_config.rsa_mode == RSA_SIGN ||
-	    rsautl_config.rsa_mode == RSA_DECRYPT)
+	if (cfg.rsa_mode == RSA_SIGN ||
+	    cfg.rsa_mode == RSA_DECRYPT)
 		need_priv = 1;
 
-	if (need_priv && rsautl_config.key_type != KEY_PRIVKEY) {
+	if (need_priv && cfg.key_type != KEY_PRIVKEY) {
 		BIO_printf(bio_err, "A private key is needed for this operation\n");
 		goto end;
 	}
-	if (!app_passwd(bio_err, rsautl_config.passargin, NULL, &passin, NULL)) {
+	if (!app_passwd(bio_err, cfg.passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
 	}
 
-	switch (rsautl_config.key_type) {
+	switch (cfg.key_type) {
 	case KEY_PRIVKEY:
-		pkey = load_key(bio_err, rsautl_config.keyfile,
-		    rsautl_config.keyform, 0, passin, "Private Key");
+		pkey = load_key(bio_err, cfg.keyfile,
+		    cfg.keyform, 0, passin, "Private Key");
 		break;
 
 	case KEY_PUBKEY:
-		pkey = load_pubkey(bio_err, rsautl_config.keyfile,
-		    rsautl_config.keyform, 0, NULL, "Public Key");
+		pkey = load_pubkey(bio_err, cfg.keyfile,
+		    cfg.keyform, 0, NULL, "Public Key");
 		break;
 
 	case KEY_CERT:
-		x = load_cert(bio_err, rsautl_config.keyfile,
-		    rsautl_config.keyform, NULL, "Certificate");
+		x = load_cert(bio_err, cfg.keyfile,
+		    cfg.keyform, NULL, "Certificate");
 		if (x) {
 			pkey = X509_get_pubkey(x);
 			X509_free(x);
@@ -305,8 +305,8 @@ rsautl_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (rsautl_config.infile) {
-		if (!(in = BIO_new_file(rsautl_config.infile, "rb"))) {
+	if (cfg.infile) {
+		if (!(in = BIO_new_file(cfg.infile, "rb"))) {
 			BIO_printf(bio_err, "Error Reading Input File\n");
 			ERR_print_errors(bio_err);
 			goto end;
@@ -314,8 +314,8 @@ rsautl_main(int argc, char **argv)
 	} else
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
 
-	if (rsautl_config.outfile) {
-		if (!(out = BIO_new_file(rsautl_config.outfile, "wb"))) {
+	if (cfg.outfile) {
+		if (!(out = BIO_new_file(cfg.outfile, "wb"))) {
 			BIO_printf(bio_err, "Error Reading Output File\n");
 			ERR_print_errors(bio_err);
 			goto end;
@@ -343,7 +343,7 @@ rsautl_main(int argc, char **argv)
 		BIO_printf(bio_err, "Error reading input Data\n");
 		exit(1);
 	}
-	if (rsautl_config.rev) {
+	if (cfg.rev) {
 		int i;
 		unsigned char ctmp;
 		for (i = 0; i < rsa_inlen / 2; i++) {
@@ -353,25 +353,25 @@ rsautl_main(int argc, char **argv)
 		}
 	}
 
-	switch (rsautl_config.rsa_mode) {
+	switch (cfg.rsa_mode) {
 	case RSA_VERIFY:
 		rsa_outlen = RSA_public_decrypt(rsa_inlen, rsa_in, rsa_out,
-		    rsa, rsautl_config.pad);
+		    rsa, cfg.pad);
 		break;
 
 	case RSA_SIGN:
 		rsa_outlen = RSA_private_encrypt(rsa_inlen, rsa_in, rsa_out,
-		    rsa, rsautl_config.pad);
+		    rsa, cfg.pad);
 		break;
 
 	case RSA_ENCRYPT:
 		rsa_outlen = RSA_public_encrypt(rsa_inlen, rsa_in, rsa_out,
-		    rsa, rsautl_config.pad);
+		    rsa, cfg.pad);
 		break;
 
 	case RSA_DECRYPT:
 		rsa_outlen = RSA_private_decrypt(rsa_inlen, rsa_in, rsa_out,
-		    rsa, rsautl_config.pad);
+		    rsa, cfg.pad);
 		break;
 	}
 
@@ -381,11 +381,11 @@ rsautl_main(int argc, char **argv)
 		goto end;
 	}
 	ret = 0;
-	if (rsautl_config.asn1parse) {
+	if (cfg.asn1parse) {
 		if (!ASN1_parse_dump(out, rsa_out, rsa_outlen, 1, -1)) {
 			ERR_print_errors(bio_err);
 		}
-	} else if (rsautl_config.hexdump)
+	} else if (cfg.hexdump)
 		BIO_dump(out, (char *) rsa_out, rsa_outlen);
 	else
 		BIO_write(out, rsa_out, rsa_outlen);

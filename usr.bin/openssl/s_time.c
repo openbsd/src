@@ -1,4 +1,4 @@
-/* $OpenBSD: s_time.c,v 1.37 2023/03/05 13:12:53 tb Exp $ */
+/* $OpenBSD: s_time.c,v 1.38 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -113,42 +113,42 @@ static struct {
 	int verify;
 	int verify_depth;
 	char *www_path;
-} s_time_config;
+} cfg;
 
 static const struct option s_time_options[] = {
 	{
 		.name = "bugs",
 		.desc = "Enable workarounds for known SSL/TLS bugs",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_time_config.bugs,
+		.opt.flag = &cfg.bugs,
 	},
 	{
 		.name = "CAfile",
 		.argname = "file",
 		.desc = "File containing trusted certificates in PEM format",
 		.type = OPTION_ARG,
-		.opt.arg = &s_time_config.CAfile,
+		.opt.arg = &cfg.CAfile,
 	},
 	{
 		.name = "CApath",
 		.argname = "path",
 		.desc = "Directory containing trusted certificates",
 		.type = OPTION_ARG,
-		.opt.arg = &s_time_config.CApath,
+		.opt.arg = &cfg.CApath,
 	},
 	{
 		.name = "cert",
 		.argname = "file",
 		.desc = "Client certificate to use, if one is requested",
 		.type = OPTION_ARG,
-		.opt.arg = &s_time_config.certfile,
+		.opt.arg = &cfg.certfile,
 	},
 	{
 		.name = "cipher",
 		.argname = "list",
 		.desc = "List of cipher suites to send to the server",
 		.type = OPTION_ARG,
-		.opt.arg = &s_time_config.cipher,
+		.opt.arg = &cfg.cipher,
 	},
 	{
 		.name = "connect",
@@ -156,39 +156,39 @@ static const struct option s_time_options[] = {
 		.desc = "Host and port to connect to (default "
 		    SSL_CONNECT_NAME ")",
 		.type = OPTION_ARG,
-		.opt.arg = &s_time_config.host,
+		.opt.arg = &cfg.host,
 	},
 	{
 		.name = "key",
 		.argname = "file",
 		.desc = "Client private key to use, if one is required",
 		.type = OPTION_ARG,
-		.opt.arg = &s_time_config.keyfile,
+		.opt.arg = &cfg.keyfile,
 	},
 	{
 		.name = "nbio",
 		.desc = "Use non-blocking I/O",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_time_config.nbio,
+		.opt.flag = &cfg.nbio,
 	},
 	{
 		.name = "new",
 		.desc = "Use a new session ID for each connection",
 		.type = OPTION_VALUE,
-		.opt.value = &s_time_config.perform,
+		.opt.value = &cfg.perform,
 		.value = 1,
 	},
 	{
 		.name = "no_shutdown",
 		.desc = "Shut down the connection without notifying the server",
 		.type = OPTION_FLAG,
-		.opt.flag = &s_time_config.no_shutdown,
+		.opt.flag = &cfg.no_shutdown,
 	},
 	{
 		.name = "reuse",
 		.desc = "Reuse the same session ID for each connection",
 		.type = OPTION_VALUE,
-		.opt.value = &s_time_config.perform,
+		.opt.value = &cfg.perform,
 		.value = 2,
 	},
 	{
@@ -196,21 +196,21 @@ static const struct option s_time_options[] = {
 		.argname = "seconds",
 		.desc = "Duration to perform timing tests for (default 30)",
 		.type = OPTION_ARG_TIME,
-		.opt.tvalue = &s_time_config.maxtime,
+		.opt.tvalue = &cfg.maxtime,
 	},
 	{
 		.name = "verify",
 		.argname = "depth",
 		.desc = "Enable peer certificate verification with given depth",
 		.type = OPTION_ARG_INT,
-		.opt.value = &s_time_config.verify_depth,
+		.opt.value = &cfg.verify_depth,
 	},
 	{
 		.name = "www",
 		.argname = "page",
 		.desc = "Page to GET from the server (default none)",
 		.type = OPTION_ARG,
-		.opt.arg = &s_time_config.www_path,
+		.opt.arg = &cfg.www_path,
 	},
 	{ NULL },
 };
@@ -245,27 +245,27 @@ s_time_main(int argc, char **argv)
 
 	verify_depth = 0;
 
-	memset(&s_time_config, 0, sizeof(s_time_config));
+	memset(&cfg, 0, sizeof(cfg));
 
-	s_time_config.host = SSL_CONNECT_NAME;
-	s_time_config.maxtime = SECONDS;
-	s_time_config.perform = 3;
-	s_time_config.verify = SSL_VERIFY_NONE;
-	s_time_config.verify_depth = -1;
+	cfg.host = SSL_CONNECT_NAME;
+	cfg.maxtime = SECONDS;
+	cfg.perform = 3;
+	cfg.verify = SSL_VERIFY_NONE;
+	cfg.verify_depth = -1;
 
 	if (options_parse(argc, argv, s_time_options, NULL, NULL) != 0) {
 		s_time_usage();
 		goto end;
 	}
 
-	if (s_time_config.verify_depth >= 0) {
-		s_time_config.verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
-		verify_depth = s_time_config.verify_depth;
+	if (cfg.verify_depth >= 0) {
+		cfg.verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
+		verify_depth = cfg.verify_depth;
 		BIO_printf(bio_err, "verify depth is %d\n", verify_depth);
 	}
 
-	if (s_time_config.www_path != NULL &&
-	    strlen(s_time_config.www_path) > MYBUFSIZ - 100) {
+	if (cfg.www_path != NULL &&
+	    strlen(cfg.www_path) > MYBUFSIZ - 100) {
 		BIO_printf(bio_err, "-www option too long\n");
 		goto end;
 	}
@@ -275,25 +275,25 @@ s_time_main(int argc, char **argv)
 
 	SSL_CTX_set_quiet_shutdown(tm_ctx, 1);
 
-	if (s_time_config.bugs)
+	if (cfg.bugs)
 		SSL_CTX_set_options(tm_ctx, SSL_OP_ALL);
 
-	if (s_time_config.cipher != NULL) {
-		if (!SSL_CTX_set_cipher_list(tm_ctx, s_time_config.cipher)) {
+	if (cfg.cipher != NULL) {
+		if (!SSL_CTX_set_cipher_list(tm_ctx, cfg.cipher)) {
 			BIO_printf(bio_err, "error setting cipher list\n");
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	}
 
-	SSL_CTX_set_verify(tm_ctx, s_time_config.verify, NULL);
+	SSL_CTX_set_verify(tm_ctx, cfg.verify, NULL);
 
-	if (!set_cert_stuff(tm_ctx, s_time_config.certfile,
-	    s_time_config.keyfile))
+	if (!set_cert_stuff(tm_ctx, cfg.certfile,
+	    cfg.keyfile))
 		goto end;
 
-	if ((!SSL_CTX_load_verify_locations(tm_ctx, s_time_config.CAfile,
-	    s_time_config.CApath)) ||
+	if ((!SSL_CTX_load_verify_locations(tm_ctx, cfg.CAfile,
+	    cfg.CApath)) ||
 	    (!SSL_CTX_set_default_verify_paths(tm_ctx))) {
 		/*
 		 * BIO_printf(bio_err,"error setting default verify
@@ -304,9 +304,9 @@ s_time_main(int argc, char **argv)
 	}
 
 	/* Loop and time how long it takes to make connections */
-	if (s_time_config.perform & 1) {
+	if (cfg.perform & 1) {
 		printf("Collecting connection statistics for %lld seconds\n",
-		    (long long)s_time_config.maxtime);
+		    (long long)cfg.maxtime);
 		if (benchmark(0))
 			goto end;
 	}
@@ -314,7 +314,7 @@ s_time_main(int argc, char **argv)
 	 * Now loop and time connections using the same session id over and
 	 * over
 	 */
-	if (s_time_config.perform & 2) {
+	if (cfg.perform & 2) {
 		printf("\n\nNow timing with session id reuse.\n");
 		if (benchmark(1))
 			goto end;
@@ -348,7 +348,7 @@ run_test(SSL *scon)
 
 	if ((conn = BIO_new(BIO_s_connect())) == NULL)
 		return 0;
-	BIO_set_conn_hostname(conn, s_time_config.host);
+	BIO_set_conn_hostname(conn, cfg.host);
 	SSL_set_connect_state(scon);
 	SSL_set_bio(scon, conn, conn);
 	for (;;) {
@@ -372,9 +372,9 @@ run_test(SSL *scon)
 			ERR_print_errors(bio_err);
 		return 0;
 	}
-	if (s_time_config.www_path != NULL) {
+	if (cfg.www_path != NULL) {
 		retval = snprintf(buf, sizeof buf,
-		    "GET %s HTTP/1.0\r\n\r\n", s_time_config.www_path);
+		    "GET %s HTTP/1.0\r\n\r\n", cfg.www_path);
 		if (retval < 0 || retval >= sizeof buf) {
 			fprintf(stderr, "URL too long\n");
 			return 0;
@@ -384,7 +384,7 @@ run_test(SSL *scon)
 		while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
 			bytes_read += i;
 	}
-	if (s_time_config.no_shutdown)
+	if (cfg.no_shutdown)
 		SSL_set_shutdown(scon, SSL_SENT_SHUTDOWN |
 		    SSL_RECEIVED_SHUTDOWN);
 	else
@@ -436,7 +436,7 @@ benchmark(int reuse_session)
 	app_timer_user(TM_RESET);
 	for (;;) {
 		elapsed = app_timer_real(TM_GET);
-		if (elapsed > s_time_config.maxtime)
+		if (elapsed > cfg.maxtime)
 			break;
 		if (scon == NULL) {
 			if ((scon = SSL_new(tm_ctx)) == NULL)

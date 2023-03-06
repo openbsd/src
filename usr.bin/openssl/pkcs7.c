@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.c,v 1.13 2023/02/08 07:59:24 tb Exp $ */
+/* $OpenBSD: pkcs7.c,v 1.14 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,7 +79,7 @@ static struct {
 	int p7_print;
 	int print_certs;
 	int text;
-} pkcs7_config;
+} cfg;
 
 static const struct option pkcs7_options[] = {
 	{
@@ -87,52 +87,52 @@ static const struct option pkcs7_options[] = {
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &pkcs7_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "format",
 		.desc = "Input format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &pkcs7_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "noout",
 		.desc = "Do not output encoded version of PKCS#7 structure",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkcs7_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &pkcs7_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &pkcs7_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "print",
 		.desc = "Output ASN.1 representation of PKCS#7 structure",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkcs7_config.p7_print,
+		.opt.flag = &cfg.p7_print,
 	},
 	{
 		.name = "print_certs",
 		.desc = "Print out any certificates or CRLs contained in file",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkcs7_config.print_certs,
+		.opt.flag = &cfg.print_certs,
 	},
 	{
 		.name = "text",
 		.desc = "Print out full certificate details",
 		.type = OPTION_FLAG,
-		.opt.flag = &pkcs7_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{ NULL },
 };
@@ -159,10 +159,10 @@ pkcs7_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&pkcs7_config, 0, sizeof(pkcs7_config));
+	memset(&cfg, 0, sizeof(cfg));
 
-	pkcs7_config.informat = FORMAT_PEM;
-	pkcs7_config.outformat = FORMAT_PEM;
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, pkcs7_options, NULL, NULL) != 0) {
 		pkcs7_usage();
@@ -175,18 +175,18 @@ pkcs7_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (pkcs7_config.infile == NULL)
+	if (cfg.infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
-		if (BIO_read_filename(in, pkcs7_config.infile) <= 0) {
-			perror(pkcs7_config.infile);
+		if (BIO_read_filename(in, cfg.infile) <= 0) {
+			perror(cfg.infile);
 			goto end;
 		}
 	}
 
-	if (pkcs7_config.informat == FORMAT_ASN1)
+	if (cfg.informat == FORMAT_ASN1)
 		p7 = d2i_PKCS7_bio(in, NULL);
-	else if (pkcs7_config.informat == FORMAT_PEM)
+	else if (cfg.informat == FORMAT_PEM)
 		p7 = PEM_read_bio_PKCS7(in, NULL, NULL, NULL);
 	else {
 		BIO_printf(bio_err, "bad input format specified for pkcs7 object\n");
@@ -197,19 +197,19 @@ pkcs7_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (pkcs7_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, pkcs7_config.outfile) <= 0) {
-			perror(pkcs7_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
 
-	if (pkcs7_config.p7_print)
+	if (cfg.p7_print)
 		PKCS7_print_ctx(out, p7, 0, NULL);
 
-	if (pkcs7_config.print_certs) {
+	if (cfg.print_certs) {
 		STACK_OF(X509) * certs = NULL;
 		STACK_OF(X509_CRL) * crls = NULL;
 
@@ -236,12 +236,12 @@ pkcs7_main(int argc, char **argv)
 
 			for (i = 0; i < sk_X509_num(certs); i++) {
 				x = sk_X509_value(certs, i);
-				if (pkcs7_config.text)
+				if (cfg.text)
 					X509_print(out, x);
 				else
 					dump_cert_text(out, x);
 
-				if (!pkcs7_config.noout)
+				if (!cfg.noout)
 					PEM_write_bio_X509(out, x);
 				BIO_puts(out, "\n");
 			}
@@ -254,7 +254,7 @@ pkcs7_main(int argc, char **argv)
 
 				X509_CRL_print(out, crl);
 
-				if (!pkcs7_config.noout)
+				if (!cfg.noout)
 					PEM_write_bio_X509_CRL(out, crl);
 				BIO_puts(out, "\n");
 			}
@@ -262,10 +262,10 @@ pkcs7_main(int argc, char **argv)
 		ret = 0;
 		goto end;
 	}
-	if (!pkcs7_config.noout) {
-		if (pkcs7_config.outformat == FORMAT_ASN1)
+	if (!cfg.noout) {
+		if (cfg.outformat == FORMAT_ASN1)
 			i = i2d_PKCS7_bio(out, p7);
-		else if (pkcs7_config.outformat == FORMAT_PEM)
+		else if (cfg.outformat == FORMAT_PEM)
 			i = PEM_write_bio_PKCS7(out, p7);
 		else {
 			BIO_printf(bio_err, "bad output format specified for outfile\n");

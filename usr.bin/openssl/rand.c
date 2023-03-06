@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.16 2023/03/05 13:12:53 tb Exp $ */
+/* $OpenBSD: rand.c,v 1.17 2023/03/06 14:32:06 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -66,27 +66,27 @@ static struct {
 	int base64;
 	int hex;
 	char *outfile;
-} rand_config;
+} cfg;
 
 static const struct option rand_options[] = {
 	{
 		.name = "base64",
 		.desc = "Perform base64 encoding on output",
 		.type = OPTION_FLAG,
-		.opt.flag = &rand_config.base64,
+		.opt.flag = &cfg.base64,
 	},
 	{
 		.name = "hex",
 		.desc = "Hexadecimal output",
 		.type = OPTION_FLAG,
-		.opt.flag = &rand_config.hex,
+		.opt.flag = &cfg.hex,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Write to the given file instead of standard output",
 		.type = OPTION_ARG,
-		.opt.arg = &rand_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{NULL},
 };
@@ -114,7 +114,7 @@ rand_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&rand_config, 0, sizeof(rand_config));
+	memset(&cfg, 0, sizeof(cfg));
 
 	if (options_parse(argc, argv, rand_options, &num_bytes, NULL) != 0) {
 		rand_usage();
@@ -128,7 +128,7 @@ rand_main(int argc, char **argv)
 	} else
 		badopt = 1;
 
-	if (rand_config.hex && rand_config.base64)
+	if (cfg.hex && cfg.base64)
 		badopt = 1;
 
 	if (badopt) {
@@ -139,13 +139,13 @@ rand_main(int argc, char **argv)
 	out = BIO_new(BIO_s_file());
 	if (out == NULL)
 		goto err;
-	if (rand_config.outfile != NULL)
-		r = BIO_write_filename(out, rand_config.outfile);
+	if (cfg.outfile != NULL)
+		r = BIO_write_filename(out, cfg.outfile);
 	else
 		r = BIO_set_fp(out, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 	if (r <= 0)
 		goto err;
-	if (rand_config.base64) {
+	if (cfg.base64) {
 		BIO *b64 = BIO_new(BIO_f_base64());
 		if (b64 == NULL)
 			goto err;
@@ -160,7 +160,7 @@ rand_main(int argc, char **argv)
 		if (chunk > (int) sizeof(buf))
 			chunk = sizeof(buf);
 		arc4random_buf(buf, chunk);
-		if (rand_config.hex) {
+		if (cfg.hex) {
 			for (i = 0; i < chunk; i++)
 				BIO_printf(out, "%02x", buf[i]);
 		} else
@@ -168,7 +168,7 @@ rand_main(int argc, char **argv)
 		num -= chunk;
 	}
 
-	if (rand_config.hex)
+	if (cfg.hex)
 		BIO_puts(out, "\n");
 	(void) BIO_flush(out);
 

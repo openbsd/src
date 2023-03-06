@@ -1,4 +1,4 @@
-/* $OpenBSD: gendsa.c,v 1.16 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: gendsa.c,v 1.17 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,7 +78,7 @@ static struct {
 	const EVP_CIPHER *enc;
 	char *outfile;
 	char *passargout;
-} gendsa_config;
+} cfg;
 
 static const EVP_CIPHER *get_cipher_by_name(char *name)
 {
@@ -122,7 +122,7 @@ set_enc(int argc, char **argv, int *argsused)
 	if (*name++ != '-')
 		return (1);
 
-	if ((gendsa_config.enc = get_cipher_by_name(name)) == NULL)
+	if ((cfg.enc = get_cipher_by_name(name)) == NULL)
 		return (1);
 
 	*argsused = 1;
@@ -197,14 +197,14 @@ static const struct option gendsa_options[] = {
 		.argname = "file",
 		.desc = "Output the key to 'file'",
 		.type = OPTION_ARG,
-		.opt.arg = &gendsa_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "passout",
 		.argname = "src",
 		.desc = "Output file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &gendsa_config.passargout,
+		.opt.arg = &cfg.passargout,
 	},
 	{ NULL },
 };
@@ -234,7 +234,7 @@ gendsa_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&gendsa_config, 0, sizeof(gendsa_config));
+	memset(&cfg, 0, sizeof(cfg));
 
 	if (options_parse(argc, argv, gendsa_options, &dsaparams, NULL) != 0) {
 		gendsa_usage();
@@ -245,7 +245,7 @@ gendsa_main(int argc, char **argv)
 		gendsa_usage();
 		goto end;
 	}
-	if (!app_passwd(bio_err, NULL, gendsa_config.passargout, NULL,
+	if (!app_passwd(bio_err, NULL, cfg.passargout, NULL,
 	    &passout)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
@@ -266,11 +266,11 @@ gendsa_main(int argc, char **argv)
 	if (out == NULL)
 		goto end;
 
-	if (gendsa_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, gendsa_config.outfile) <= 0) {
-			perror(gendsa_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
@@ -280,7 +280,7 @@ gendsa_main(int argc, char **argv)
 	if (!DSA_generate_key(dsa))
 		goto end;
 
-	if (!PEM_write_bio_DSAPrivateKey(out, dsa, gendsa_config.enc, NULL, 0,
+	if (!PEM_write_bio_DSAPrivateKey(out, dsa, cfg.enc, NULL, 0,
 	    NULL, passout))
 		goto end;
 	ret = 0;

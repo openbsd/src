@@ -1,4 +1,4 @@
-/* $OpenBSD: errstr.c,v 1.9 2023/03/05 13:12:53 tb Exp $ */
+/* $OpenBSD: errstr.c,v 1.10 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,14 +70,14 @@
 
 static struct {
 	int stats;
-} errstr_config;
+} cfg;
 
 static const struct option errstr_options[] = {
 	{
 		.name = "stats",
 		.desc = "Print debugging statistics for the hash table",
 		.type = OPTION_FLAG,
-		.opt.flag = &errstr_config.stats,
+		.opt.flag = &cfg.stats,
 	},
 	{ NULL },
 };
@@ -103,14 +103,14 @@ errstr_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&errstr_config, 0, sizeof(errstr_config));
+	memset(&cfg, 0, sizeof(cfg));
 
 	if (options_parse(argc, argv, errstr_options, NULL, &argsused) != 0) {
 		errstr_usage();
 		return (1);
 	}
 
-	if (errstr_config.stats) {
+	if (cfg.stats) {
 		BIO *out;
 
 		if ((out = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL) {

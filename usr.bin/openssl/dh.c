@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.c,v 1.14 2022/11/11 17:07:38 joshua Exp $ */
+/* $OpenBSD: dh.c,v 1.15 2023/03/06 14:32:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -83,60 +83,60 @@ static struct {
 	char *outfile;
 	int outformat;
 	int text;
-} dh_config;
+} cfg;
 
 static const struct option dh_options[] = {
 	{
 		.name = "C",
 		.desc = "Convert DH parameters into C code",
 		.type = OPTION_FLAG,
-		.opt.flag = &dh_config.C,
+		.opt.flag = &cfg.C,
 	},
 	{
 		.name = "check",
 		.desc = "Check the DH parameters",
 		.type = OPTION_FLAG,
-		.opt.flag = &dh_config.check,
+		.opt.flag = &cfg.check,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &dh_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "format",
 		.desc = "Input format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &dh_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "noout",
 		.desc = "No output",
 		.type = OPTION_FLAG,
-		.opt.flag = &dh_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &dh_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &dh_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "text",
 		.desc = "Print a text form of the DH parameters",
 		.type = OPTION_FLAG,
-		.opt.flag = &dh_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{ NULL },
 };
@@ -163,10 +163,10 @@ dh_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&dh_config, 0, sizeof(dh_config));
+	memset(&cfg, 0, sizeof(cfg));
 
-	dh_config.informat = FORMAT_PEM;
-	dh_config.outformat = FORMAT_PEM;
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, dh_options, NULL, NULL) != 0) {
 		dh_usage();
@@ -179,26 +179,26 @@ dh_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (dh_config.infile == NULL)
+	if (cfg.infile == NULL)
 		BIO_set_fp(in, stdin, BIO_NOCLOSE);
 	else {
-		if (BIO_read_filename(in, dh_config.infile) <= 0) {
-			perror(dh_config.infile);
+		if (BIO_read_filename(in, cfg.infile) <= 0) {
+			perror(cfg.infile);
 			goto end;
 		}
 	}
-	if (dh_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, dh_config.outfile) <= 0) {
-			perror(dh_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
 
-	if (dh_config.informat == FORMAT_ASN1)
+	if (cfg.informat == FORMAT_ASN1)
 		dh = d2i_DHparams_bio(in, NULL);
-	else if (dh_config.informat == FORMAT_PEM)
+	else if (cfg.informat == FORMAT_PEM)
 		dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
 	else {
 		BIO_printf(bio_err, "bad input format specified\n");
@@ -209,10 +209,10 @@ dh_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (dh_config.text) {
+	if (cfg.text) {
 		DHparams_print(out, dh);
 	}
-	if (dh_config.check) {
+	if (cfg.check) {
 		if (!DH_check(dh, &i)) {
 			ERR_print_errors(bio_err);
 			goto end;
@@ -228,7 +228,7 @@ dh_main(int argc, char **argv)
 		if (i == 0)
 			printf("DH parameters appear to be ok.\n");
 	}
-	if (dh_config.C) {
+	if (cfg.C) {
 		unsigned char *data;
 		int len, l, bits;
 
@@ -271,10 +271,10 @@ dh_main(int argc, char **argv)
 		printf("\treturn(dh);\n\t}\n");
 		free(data);
 	}
-	if (!dh_config.noout) {
-		if (dh_config.outformat == FORMAT_ASN1)
+	if (!cfg.noout) {
+		if (cfg.outformat == FORMAT_ASN1)
 			i = i2d_DHparams_bio(out, dh);
-		else if (dh_config.outformat == FORMAT_PEM)
+		else if (cfg.outformat == FORMAT_PEM)
 			i = PEM_write_bio_DHparams(out, dh);
 		else {
 			BIO_printf(bio_err, "bad output format specified for outfile\n");

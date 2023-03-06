@@ -1,4 +1,4 @@
-/* $OpenBSD: spkac.c,v 1.12 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: spkac.c,v 1.13 2023/03/06 14:32:06 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999. Based on an original idea by Massimiliano Pala
  * (madwolf@openca.org).
@@ -84,7 +84,7 @@ static struct {
 	char *spkac;
 	char *spksect;
 	int verify;
-} spkac_config;
+} cfg;
 
 static const struct option spkac_options[] = {
 	{
@@ -92,54 +92,54 @@ static const struct option spkac_options[] = {
 		.argname = "string",
 		.desc = "Specify challenge string if SPKAC is generated",
 		.type = OPTION_ARG,
-		.opt.arg = &spkac_config.challenge,
+		.opt.arg = &cfg.challenge,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &spkac_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "key",
 		.argname = "file",
 		.desc = "Create SPKAC using private key file",
 		.type = OPTION_ARG,
-		.opt.arg = &spkac_config.keyfile,
+		.opt.arg = &cfg.keyfile,
 	},
 	{
 		.name = "noout",
 		.desc = "Do not print text version of SPKAC",
 		.type = OPTION_FLAG,
-		.opt.flag = &spkac_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &spkac_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "passin",
 		.argname = "src",
 		.desc = "Input file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &spkac_config.passargin,
+		.opt.arg = &cfg.passargin,
 	},
 	{
 		.name = "pubkey",
 		.desc = "Output public key of an SPKAC (not used if creating)",
 		.type = OPTION_FLAG,
-		.opt.flag = &spkac_config.pubkey,
+		.opt.flag = &cfg.pubkey,
 	},
 	{
 		.name = "spkac",
 		.argname = "name",
 		.desc = "SPKAC name (default \"SPKAC\")",
 		.type = OPTION_ARG,
-		.opt.arg = &spkac_config.spkac,
+		.opt.arg = &cfg.spkac,
 	},
 	{
 		.name = "spksect",
@@ -147,13 +147,13 @@ static const struct option spkac_options[] = {
 		.desc = "Name of the section containing SPKAC (default"
 		" \"default\")",
 		.type = OPTION_ARG,
-		.opt.arg = &spkac_config.spksect,
+		.opt.arg = &cfg.spksect,
 	},
 	{
 		.name = "verify",
 		.desc = "Verify digital signature on supplied SPKAC",
 		.type = OPTION_FLAG,
-		.opt.flag = &spkac_config.verify,
+		.opt.flag = &cfg.verify,
 	},
 	{ NULL }
 };
@@ -186,32 +186,32 @@ spkac_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&spkac_config, 0, sizeof(spkac_config));
-	spkac_config.spkac = "SPKAC";
-	spkac_config.spksect = "default";
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.spkac = "SPKAC";
+	cfg.spksect = "default";
 
 	if (options_parse(argc, argv, spkac_options, NULL, NULL) != 0) {
 		spkac_usage();
 		return (1);
 	}
 
-	if (!app_passwd(bio_err, spkac_config.passargin, NULL, &passin, NULL)) {
+	if (!app_passwd(bio_err, cfg.passargin, NULL, &passin, NULL)) {
 		BIO_printf(bio_err, "Error getting password\n");
 		goto end;
 	}
 
-	if (spkac_config.keyfile) {
+	if (cfg.keyfile) {
 		pkey = load_key(bio_err,
-		    strcmp(spkac_config.keyfile, "-") ? spkac_config.keyfile
+		    strcmp(cfg.keyfile, "-") ? cfg.keyfile
 		    : NULL, FORMAT_PEM, 1, passin, "private key");
 		if (!pkey) {
 			goto end;
 		}
 		spki = NETSCAPE_SPKI_new();
-		if (spkac_config.challenge)
+		if (cfg.challenge)
 			ASN1_STRING_set(spki->spkac->challenge,
-			    spkac_config.challenge,
-			    (int) strlen(spkac_config.challenge));
+			    cfg.challenge,
+			    (int) strlen(cfg.challenge));
 		NETSCAPE_SPKI_set_pubkey(spki, pkey);
 		NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
 		spkstr = NETSCAPE_SPKI_b64_encode(spki);
@@ -221,8 +221,8 @@ spkac_main(int argc, char **argv)
 			goto end;
 		}
 
-		if (spkac_config.outfile)
-			out = BIO_new_file(spkac_config.outfile, "w");
+		if (cfg.outfile)
+			out = BIO_new_file(cfg.outfile, "w");
 		else
 			out = BIO_new_fp(stdout, BIO_NOCLOSE);
 
@@ -236,8 +236,8 @@ spkac_main(int argc, char **argv)
 		free(spkstr);
 		goto end;
 	}
-	if (spkac_config.infile)
-		in = BIO_new_file(spkac_config.infile, "r");
+	if (cfg.infile)
+		in = BIO_new_file(cfg.infile, "r");
 	else
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
 
@@ -254,12 +254,12 @@ spkac_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	spkstr = NCONF_get_string(conf, spkac_config.spksect,
-	    spkac_config.spkac);
+	spkstr = NCONF_get_string(conf, cfg.spksect,
+	    cfg.spkac);
 
 	if (!spkstr) {
 		BIO_printf(bio_err, "Can't find SPKAC called \"%s\"\n",
-		    spkac_config.spkac);
+		    cfg.spkac);
 		ERR_print_errors(bio_err);
 		goto end;
 	}
@@ -270,8 +270,8 @@ spkac_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (spkac_config.outfile)
-		out = BIO_new_file(spkac_config.outfile, "w");
+	if (cfg.outfile)
+		out = BIO_new_file(cfg.outfile, "w");
 	else {
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
 	}
@@ -281,10 +281,10 @@ spkac_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (!spkac_config.noout)
+	if (!cfg.noout)
 		NETSCAPE_SPKI_print(out, spki);
 	pkey = NETSCAPE_SPKI_get_pubkey(spki);
-	if (spkac_config.verify) {
+	if (cfg.verify) {
 		i = NETSCAPE_SPKI_verify(spki, pkey);
 		if (i > 0)
 			BIO_printf(bio_err, "Signature OK\n");
@@ -294,7 +294,7 @@ spkac_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (spkac_config.pubkey)
+	if (cfg.pubkey)
 		PEM_write_bio_PUBKEY(out, pkey);
 
 	ret = 0;

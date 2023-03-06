@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.c,v 1.17 2022/11/11 17:07:39 joshua Exp $ */
+/* $OpenBSD: rsa.c,v 1.18 2023/03/06 14:32:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,7 +89,7 @@ static struct {
 	int pubout;
 	int pvk_encr;
 	int text;
-} rsa_config;
+} cfg;
 
 static int
 rsa_opt_cipher(int argc, char **argv, int *argsused)
@@ -99,7 +99,7 @@ rsa_opt_cipher(int argc, char **argv, int *argsused)
 	if (*name++ != '-')
 		return (1);
 
-	if ((rsa_config.enc = EVP_get_cipherbyname(name)) == NULL) {
+	if ((cfg.enc = EVP_get_cipherbyname(name)) == NULL) {
 		fprintf(stderr, "Invalid cipher '%s'\n", name);
 		return (1);
 	}
@@ -113,111 +113,111 @@ static const struct option rsa_options[] = {
 		.name = "check",
 		.desc = "Check consistency of RSA private key",
 		.type = OPTION_FLAG,
-		.opt.flag = &rsa_config.check,
+		.opt.flag = &cfg.check,
 	},
 	{
 		.name = "in",
 		.argname = "file",
 		.desc = "Input file (default stdin)",
 		.type = OPTION_ARG,
-		.opt.arg = &rsa_config.infile,
+		.opt.arg = &cfg.infile,
 	},
 	{
 		.name = "inform",
 		.argname = "format",
 		.desc = "Input format (DER, NET or PEM (default))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &rsa_config.informat,
+		.opt.value = &cfg.informat,
 	},
 	{
 		.name = "modulus",
 		.desc = "Print the RSA key modulus",
 		.type = OPTION_FLAG,
-		.opt.flag = &rsa_config.modulus,
+		.opt.flag = &cfg.modulus,
 	},
 	{
 		.name = "noout",
 		.desc = "Do not print encoded version of the key",
 		.type = OPTION_FLAG,
-		.opt.flag = &rsa_config.noout,
+		.opt.flag = &cfg.noout,
 	},
 	{
 		.name = "out",
 		.argname = "file",
 		.desc = "Output file (default stdout)",
 		.type = OPTION_ARG,
-		.opt.arg = &rsa_config.outfile,
+		.opt.arg = &cfg.outfile,
 	},
 	{
 		.name = "outform",
 		.argname = "format",
 		.desc = "Output format (DER, NET or PEM (default PEM))",
 		.type = OPTION_ARG_FORMAT,
-		.opt.value = &rsa_config.outformat,
+		.opt.value = &cfg.outformat,
 	},
 	{
 		.name = "passin",
 		.argname = "src",
 		.desc = "Input file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &rsa_config.passargin,
+		.opt.arg = &cfg.passargin,
 	},
 	{
 		.name = "passout",
 		.argname = "src",
 		.desc = "Output file passphrase source",
 		.type = OPTION_ARG,
-		.opt.arg = &rsa_config.passargout,
+		.opt.arg = &cfg.passargout,
 	},
 	{
 		.name = "pubin",
 		.desc = "Expect a public key (default private key)",
 		.type = OPTION_VALUE,
 		.value = 1,
-		.opt.value = &rsa_config.pubin,
+		.opt.value = &cfg.pubin,
 	},
 	{
 		.name = "pubout",
 		.desc = "Output a public key (default private key)",
 		.type = OPTION_VALUE,
 		.value = 1,
-		.opt.value = &rsa_config.pubout,
+		.opt.value = &cfg.pubout,
 	},
 	{
 		.name = "pvk-none",
 		.type = OPTION_VALUE,
 		.value = 0,
-		.opt.value = &rsa_config.pvk_encr,
+		.opt.value = &cfg.pvk_encr,
 	},
 	{
 		.name = "pvk-strong",
 		.type = OPTION_VALUE,
 		.value = 2,
-		.opt.value = &rsa_config.pvk_encr,
+		.opt.value = &cfg.pvk_encr,
 	},
 	{
 		.name = "pvk-weak",
 		.type = OPTION_VALUE,
 		.value = 1,
-		.opt.value = &rsa_config.pvk_encr,
+		.opt.value = &cfg.pvk_encr,
 	},
 	{
 		.name = "RSAPublicKey_in",
 		.type = OPTION_VALUE,
 		.value = 2,
-		.opt.value = &rsa_config.pubin,
+		.opt.value = &cfg.pubin,
 	},
 	{
 		.name = "RSAPublicKey_out",
 		.type = OPTION_VALUE,
 		.value = 2,
-		.opt.value = &rsa_config.pubout,
+		.opt.value = &cfg.pubout,
 	},
 	{
 		.name = "text",
 		.desc = "Print in plain text in addition to encoded",
 		.type = OPTION_FLAG,
-		.opt.flag = &rsa_config.text,
+		.opt.flag = &cfg.text,
 	},
 	{
 		.name = NULL,
@@ -260,22 +260,22 @@ rsa_main(int argc, char **argv)
 		exit(1);
 	}
 
-	memset(&rsa_config, 0, sizeof(rsa_config));
-	rsa_config.pvk_encr = 2;
-	rsa_config.informat = FORMAT_PEM;
-	rsa_config.outformat = FORMAT_PEM;
+	memset(&cfg, 0, sizeof(cfg));
+	cfg.pvk_encr = 2;
+	cfg.informat = FORMAT_PEM;
+	cfg.outformat = FORMAT_PEM;
 
 	if (options_parse(argc, argv, rsa_options, NULL, NULL) != 0) {
 		rsa_usage();
 		goto end;
 	}
 
-	if (!app_passwd(bio_err, rsa_config.passargin, rsa_config.passargout,
+	if (!app_passwd(bio_err, cfg.passargin, cfg.passargout,
 	    &passin, &passout)) {
 		BIO_printf(bio_err, "Error getting passwords\n");
 		goto end;
 	}
-	if (rsa_config.check && rsa_config.pubin) {
+	if (cfg.check && cfg.pubin) {
 		BIO_printf(bio_err, "Only private keys can be checked\n");
 		goto end;
 	}
@@ -284,21 +284,21 @@ rsa_main(int argc, char **argv)
 	{
 		EVP_PKEY *pkey;
 
-		if (rsa_config.pubin) {
+		if (cfg.pubin) {
 			int tmpformat = -1;
-			if (rsa_config.pubin == 2) {
-				if (rsa_config.informat == FORMAT_PEM)
+			if (cfg.pubin == 2) {
+				if (cfg.informat == FORMAT_PEM)
 					tmpformat = FORMAT_PEMRSA;
-				else if (rsa_config.informat == FORMAT_ASN1)
+				else if (cfg.informat == FORMAT_ASN1)
 					tmpformat = FORMAT_ASN1RSA;
 			} else
-				tmpformat = rsa_config.informat;
+				tmpformat = cfg.informat;
 
-			pkey = load_pubkey(bio_err, rsa_config.infile,
+			pkey = load_pubkey(bio_err, cfg.infile,
 			    tmpformat, 1, passin, "Public Key");
 		} else
-			pkey = load_key(bio_err, rsa_config.infile,
-			    rsa_config.informat, 1, passin, "Private Key");
+			pkey = load_key(bio_err, cfg.infile,
+			    cfg.informat, 1, passin, "Private Key");
 
 		if (pkey != NULL)
 			rsa = EVP_PKEY_get1_RSA(pkey);
@@ -309,27 +309,27 @@ rsa_main(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
-	if (rsa_config.outfile == NULL) {
+	if (cfg.outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
 	} else {
-		if (BIO_write_filename(out, rsa_config.outfile) <= 0) {
-			perror(rsa_config.outfile);
+		if (BIO_write_filename(out, cfg.outfile) <= 0) {
+			perror(cfg.outfile);
 			goto end;
 		}
 	}
 
-	if (rsa_config.text)
+	if (cfg.text)
 		if (!RSA_print(out, rsa, 0)) {
-			perror(rsa_config.outfile);
+			perror(cfg.outfile);
 			ERR_print_errors(bio_err);
 			goto end;
 		}
-	if (rsa_config.modulus) {
+	if (cfg.modulus) {
 		BIO_printf(out, "Modulus=");
 		BN_print(out, RSA_get0_n(rsa));
 		BIO_printf(out, "\n");
 	}
-	if (rsa_config.check) {
+	if (cfg.check) {
 		int r = RSA_check_key(rsa);
 
 		if (r == 1)
@@ -353,38 +353,38 @@ rsa_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (rsa_config.noout) {
+	if (cfg.noout) {
 		ret = 0;
 		goto end;
 	}
 	BIO_printf(bio_err, "writing RSA key\n");
-	if (rsa_config.outformat == FORMAT_ASN1) {
-		if (rsa_config.pubout || rsa_config.pubin) {
-			if (rsa_config.pubout == 2)
+	if (cfg.outformat == FORMAT_ASN1) {
+		if (cfg.pubout || cfg.pubin) {
+			if (cfg.pubout == 2)
 				i = i2d_RSAPublicKey_bio(out, rsa);
 			else
 				i = i2d_RSA_PUBKEY_bio(out, rsa);
 		} else
 			i = i2d_RSAPrivateKey_bio(out, rsa);
-	} else if (rsa_config.outformat == FORMAT_PEM) {
-		if (rsa_config.pubout || rsa_config.pubin) {
-			if (rsa_config.pubout == 2)
+	} else if (cfg.outformat == FORMAT_PEM) {
+		if (cfg.pubout || cfg.pubin) {
+			if (cfg.pubout == 2)
 				i = PEM_write_bio_RSAPublicKey(out, rsa);
 			else
 				i = PEM_write_bio_RSA_PUBKEY(out, rsa);
 		} else
 			i = PEM_write_bio_RSAPrivateKey(out, rsa,
-			    rsa_config.enc, NULL, 0, NULL, passout);
+			    cfg.enc, NULL, 0, NULL, passout);
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
-	} else if (rsa_config.outformat == FORMAT_MSBLOB ||
-	    rsa_config.outformat == FORMAT_PVK) {
+	} else if (cfg.outformat == FORMAT_MSBLOB ||
+	    cfg.outformat == FORMAT_PVK) {
 		EVP_PKEY *pk;
 		pk = EVP_PKEY_new();
 		EVP_PKEY_set1_RSA(pk, rsa);
-		if (rsa_config.outformat == FORMAT_PVK)
-			i = i2b_PVK_bio(out, pk, rsa_config.pvk_encr, 0,
+		if (cfg.outformat == FORMAT_PVK)
+			i = i2b_PVK_bio(out, pk, cfg.pvk_encr, 0,
 			    passout);
-		else if (rsa_config.pubin || rsa_config.pubout)
+		else if (cfg.pubin || cfg.pubout)
 			i = i2b_PublicKey_bio(out, pk);
 		else
 			i = i2b_PrivateKey_bio(out, pk);
