@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwxvar.h,v 1.38 2023/03/06 10:16:17 stsp Exp $	*/
+/*	$OpenBSD: if_iwxvar.h,v 1.39 2023/03/06 10:48:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014 genua mbh <info@genua.de>
@@ -712,6 +712,7 @@ struct iwx_softc {
 #define IWX_MAX_FW_CMD_VERSIONS	704
 	struct iwx_fw_cmd_version cmd_versions[IWX_MAX_FW_CMD_VERSIONS];
 	int n_cmd_versions;
+	int sc_rate_n_flags_version;
 
 	int sc_intmask;
 	int sc_flags;
@@ -745,8 +746,6 @@ struct iwx_softc {
 	size_t	bgscan_unref_arg_size;
 
 	int sc_scan_last_antenna;
-
-	int sc_fixed_ridx;
 
 	int sc_staid;
 	int sc_nodecolor;

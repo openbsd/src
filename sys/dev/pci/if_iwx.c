@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.157 2023/03/06 10:31:58 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.158 2023/03/06 10:48:05 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -235,7 +235,6 @@ const int iwx_mcs2ridx[] = {
 uint8_t	iwx_lookup_cmd_ver(struct iwx_softc *, uint8_t, uint8_t);
 uint8_t	iwx_lookup_notif_ver(struct iwx_softc *, uint8_t, uint8_t);
 int	iwx_is_mimo_ht_plcp(uint8_t);
-int	iwx_is_mimo_mcs(int);
 int	iwx_store_cscheme(struct iwx_softc *, uint8_t *, size_t);
 int	iwx_alloc_fw_monitor_block(struct iwx_softc *, uint8_t, uint8_t);
 int	iwx_alloc_fw_monitor(struct iwx_softc *, uint8_t);
@@ -395,6 +394,8 @@ int	iwx_send_cmd_pdu_status(struct iwx_softc *, uint32_t, uint16_t,
 	    const void *, uint32_t *);
 void	iwx_free_resp(struct iwx_softc *, struct iwx_host_cmd *);
 void	iwx_cmd_done(struct iwx_softc *, int, int, int);
+uint32_t iwx_fw_rateidx_ofdm(uint8_t);
+uint32_t iwx_fw_rateidx_cck(uint8_t);
 const struct iwx_rate *iwx_tx_fill_cmd(struct iwx_softc *, struct iwx_node *,
 	    struct ieee80211_frame *, uint16_t *, uint32_t *);
 void	iwx_tx_update_byte_tbl(struct iwx_softc *, struct iwx_tx_ring *, int,
@@ -553,16 +554,21 @@ iwx_lookup_notif_ver(struct iwx_softc *sc, uint8_t grp, uint8_t cmd)
 int
 iwx_is_mimo_ht_plcp(uint8_t ht_plcp)
 {
-	return (ht_plcp != IWX_RATE_HT_SISO_MCS_INV_PLCP &&
-	    (ht_plcp & IWX_RATE_HT_MCS_NSS_MSK_V1));
-}
+	switch (ht_plcp) {
+	case IWX_RATE_HT_MIMO2_MCS_8_PLCP:
+	case IWX_RATE_HT_MIMO2_MCS_9_PLCP:
+	case IWX_RATE_HT_MIMO2_MCS_10_PLCP:
+	case IWX_RATE_HT_MIMO2_MCS_11_PLCP:
+	case IWX_RATE_HT_MIMO2_MCS_12_PLCP:
+	case IWX_RATE_HT_MIMO2_MCS_13_PLCP:
+	case IWX_RATE_HT_MIMO2_MCS_14_PLCP:
+	case IWX_RATE_HT_MIMO2_MCS_15_PLCP:
+		return 1;
+	default:
+		break;
+	}
 
-int
-iwx_is_mimo_mcs(int mcs)
-{
-	int ridx = iwx_mcs2ridx[mcs];
-	return iwx_is_mimo_ht_plcp(iwx_rates[ridx].ht_plcp);
-	
+	return 0;
 }
 
 int
@@ -2922,7 +2928,17 @@ out:
 void
 iwx_post_alive(struct iwx_softc *sc)
 {
+	int txcmd_ver;
+
 	iwx_ict_reset(sc);
+
+	txcmd_ver = iwx_lookup_notif_ver(sc, IWX_LONG_GROUP, IWX_TX_CMD) ;
+	if (txcmd_ver != IWX_FW_CMD_VER_UNKNOWN && txcmd_ver > 6)
+		sc->sc_rate_n_flags_version = 2;
+	else
+		sc->sc_rate_n_flags_version = 1;
+
+	txcmd_ver = iwx_lookup_cmd_ver(sc, IWX_LONG_GROUP, IWX_TX_CMD);
 }
 
 int
@@ -4538,6 +4554,8 @@ iwx_rx_frame(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 	if (sc->sc_drvbpf != NULL) {
 		struct iwx_rx_radiotap_header *tap = &sc->sc_rxtap;
 		uint16_t chan_flags;
+		int have_legacy_rate = 1;
+		uint8_t mcs, rate;
 
 		tap->wr_flags = 0;
 		if (is_shortpre)
@@ -4556,14 +4574,36 @@ iwx_rx_frame(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 		tap->wr_dbm_antsignal = (int8_t)rxi->rxi_rssi;
 		tap->wr_dbm_antnoise = (int8_t)sc->sc_noise;
 		tap->wr_tsft = device_timestamp;
-		if (rate_n_flags & IWX_RATE_MCS_HT_MSK_V1) {
-			uint8_t mcs = (rate_n_flags &
+		if (sc->sc_rate_n_flags_version >= 2) {
+			uint32_t mod_type = (rate_n_flags &
+			    IWX_RATE_MCS_MOD_TYPE_MSK);
+			const struct ieee80211_rateset *rs = NULL;
+			uint32_t ridx;
+			have_legacy_rate = (mod_type == IWX_RATE_MCS_CCK_MSK ||
+			    mod_type == IWX_RATE_MCS_LEGACY_OFDM_MSK);
+			mcs = (rate_n_flags & IWX_RATE_HT_MCS_CODE_MSK);
+			ridx = (rate_n_flags & IWX_RATE_LEGACY_RATE_MSK);
+			if (mod_type == IWX_RATE_MCS_CCK_MSK)
+				rs = &ieee80211_std_rateset_11b;
+			else if (mod_type == IWX_RATE_MCS_LEGACY_OFDM_MSK)
+				rs = &ieee80211_std_rateset_11a;
+			if (rs && ridx < rs->rs_nrates) {
+				rate = (rs->rs_rates[ridx] &
+				    IEEE80211_RATE_VAL);
+			} else
+				rate = 0;
+		} else {
+			have_legacy_rate = ((rate_n_flags &
+			    (IWX_RATE_MCS_HT_MSK_V1 |
+			    IWX_RATE_MCS_VHT_MSK_V1)) == 0);
+			mcs = (rate_n_flags &
 			    (IWX_RATE_HT_MCS_RATE_CODE_MSK_V1 |
 			    IWX_RATE_HT_MCS_NSS_MSK_V1));
+			rate = (rate_n_flags & IWX_RATE_LEGACY_RATE_MSK_V1);
+		}
+		if (!have_legacy_rate) {
 			tap->wr_rate = (0x80 | mcs);
 		} else {
-			uint8_t rate = (rate_n_flags &
-			    IWX_RATE_LEGACY_RATE_MSK_V1);
 			switch (rate) {
 			/* CCK rates. */
 			case  10: tap->wr_rate =   2; break;
@@ -5827,6 +5867,36 @@ iwx_cmd_done(struct iwx_softc *sc, int qid, int idx, int code)
 		ring->queued--;
 }
 
+uint32_t
+iwx_fw_rateidx_ofdm(uint8_t rval)
+{
+	/* Firmware expects indices which match our 11a rate set. */
+	const struct ieee80211_rateset *rs = &ieee80211_std_rateset_11a;
+	int i;
+
+	for (i = 0; i < rs->rs_nrates; i++) {
+		if ((rs->rs_rates[i] & IEEE80211_RATE_VAL) == rval)
+			return i;
+	}
+
+	return 0;
+}
+
+uint32_t
+iwx_fw_rateidx_cck(uint8_t rval)
+{
+	/* Firmware expects indices which match our 11b rate set. */
+	const struct ieee80211_rateset *rs = &ieee80211_std_rateset_11b;
+	int i;
+
+	for (i = 0; i < rs->rs_nrates; i++) {
+		if ((rs->rs_rates[i] & IEEE80211_RATE_VAL) == rval)
+			return i;
+	}
+
+	return 0;
+}
+
 /*
  * Determine the Tx command flags and Tx rate+flags to use.
  * Return the selected Tx rate.
@@ -5842,6 +5912,7 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 	int type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	int min_ridx = iwx_rval2ridx(ieee80211_min_basic_rate(ic));
 	int ridx, rate_flags;
+	uint8_t rval;
 
 	*flags = 0;
 
@@ -5850,16 +5921,9 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 		/* for non-data, use the lowest supported rate */
 		ridx = min_ridx;
 		*flags |= IWX_TX_FLAGS_CMD_RATE;
-	} else if (ic->ic_fixed_mcs != -1) {
-		ridx = sc->sc_fixed_ridx;
-		*flags |= IWX_TX_FLAGS_CMD_RATE;
-	} else if (ic->ic_fixed_rate != -1) {
-		ridx = sc->sc_fixed_ridx;
-		*flags |= IWX_TX_FLAGS_CMD_RATE;
 	} else if (ni->ni_flags & IEEE80211_NODE_HT) {
 		ridx = iwx_mcs2ridx[ni->ni_txmcs];
 	} else {
-		uint8_t rval;
 		rval = (rs->rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL);
 		ridx = iwx_rval2ridx(rval);
 		if (ridx < min_ridx)
@@ -5871,45 +5935,42 @@ iwx_tx_fill_cmd(struct iwx_softc *sc, struct iwx_node *in,
 		*flags |= IWX_TX_FLAGS_HIGH_PRI;
 
 	rinfo = &iwx_rates[ridx];
-	if (iwx_is_mimo_ht_plcp(rinfo->ht_plcp))
-		rate_flags = IWX_RATE_MCS_ANT_AB_MSK;
-	else
-		rate_flags = IWX_RATE_MCS_ANT_A_MSK;
-	if (IWX_RIDX_IS_CCK(ridx))
-		rate_flags |= IWX_RATE_MCS_CCK_MSK_V1;
-	if ((ni->ni_flags & IEEE80211_NODE_HT) &&
- 	    type == IEEE80211_FC0_TYPE_DATA &&
-	    rinfo->ht_plcp != IWX_RATE_HT_SISO_MCS_INV_PLCP) {
-		uint8_t sco = IEEE80211_HTOP0_SCO_SCN;
-		uint8_t vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_HT;
-		if ((ni->ni_flags & IEEE80211_NODE_VHT) &&
-		    IEEE80211_CHAN_80MHZ_ALLOWED(ni->ni_chan) &&
-		    ieee80211_node_supports_vht_chan80(ni))
-			vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_80;
-		else if (IEEE80211_CHAN_40MHZ_ALLOWED(ni->ni_chan) &&
-		    ieee80211_node_supports_ht_chan40(ni))
-			sco = (ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK);
-		if (ni->ni_flags & IEEE80211_NODE_VHT)
-			rate_flags |= IWX_RATE_MCS_VHT_MSK_V1; 
+
+	/*
+	 * Do not fill rate_n_flags if firmware controls the Tx rate.
+	 * For data frames we rely on Tx rate scaling in firmware by default.
+	 */
+	if ((*flags & IWX_TX_FLAGS_CMD_RATE) == 0) {
+		*rate_n_flags = 0;
+		return rinfo;
+	}
+
+	/*
+	 * Forcing a CCK/OFDM legacy rate is important for management frames.
+	 * Association will only succeed if we do this correctly.
+	 */
+	rate_flags = IWX_RATE_MCS_ANT_A_MSK;
+	if (IWX_RIDX_IS_CCK(ridx)) {
+		if (sc->sc_rate_n_flags_version >= 2)
+			rate_flags |= IWX_RATE_MCS_CCK_MSK;
 		else
-			rate_flags |= IWX_RATE_MCS_HT_MSK_V1; 
-		if (vht_chan_width == IEEE80211_VHTOP0_CHAN_WIDTH_80 &&
-		    in->in_phyctxt != NULL &&
-		    in->in_phyctxt->vht_chan_width == vht_chan_width) {
-			rate_flags |= IWX_RATE_MCS_CHAN_WIDTH_80_V1;
-			if (ieee80211_node_supports_vht_sgi80(ni))
-				rate_flags |= IWX_RATE_MCS_SGI_MSK_V1;
-		} else if ((sco == IEEE80211_HTOP0_SCO_SCA || 
-		    sco == IEEE80211_HTOP0_SCO_SCB) &&
-		    in->in_phyctxt != NULL && in->in_phyctxt->sco == sco) {
-			rate_flags |= IWX_RATE_MCS_CHAN_WIDTH_40_V1;
-			if (ieee80211_node_supports_ht_sgi40(ni))
-				rate_flags |= IWX_RATE_MCS_SGI_MSK_V1;
-		} else if (ieee80211_node_supports_ht_sgi20(ni))
-			rate_flags |= IWX_RATE_MCS_SGI_MSK_V1;
-		*rate_n_flags = rate_flags | rinfo->ht_plcp;
+			rate_flags |= IWX_RATE_MCS_CCK_MSK_V1;
+	} else if (sc->sc_rate_n_flags_version >= 2)
+		rate_flags |= IWX_RATE_MCS_LEGACY_OFDM_MSK;
+
+	rval = (rs->rs_rates[ni->ni_txrate] & IEEE80211_RATE_VAL);
+	if (sc->sc_rate_n_flags_version >= 2) {
+		if (rate_flags & IWX_RATE_MCS_LEGACY_OFDM_MSK) {
+			rate_flags |= (iwx_fw_rateidx_ofdm(rval) &
+			    IWX_RATE_LEGACY_RATE_MSK);
+		} else {
+			rate_flags |= (iwx_fw_rateidx_cck(rval) &
+			    IWX_RATE_LEGACY_RATE_MSK);
+		}
 	} else
-		*rate_n_flags = rate_flags | rinfo->plcp;
+		rate_flags |= rinfo->plcp;
+
+	*rate_n_flags = rate_flags;
 
 	return rinfo;
 }
@@ -7718,39 +7779,78 @@ iwx_rs_update(struct iwx_softc *sc, struct iwx_tlc_update_notif *notif)
 	struct ieee80211_node *ni = ic->ic_bss;
 	struct ieee80211_rateset *rs = &ni->ni_rates;
 	uint32_t rate_n_flags;
-	int i;
+	uint8_t plcp, rval;
+	int i, cmd_ver, rate_n_flags_ver2 = 0;
 
 	if (notif->sta_id != IWX_STATION_ID ||
 	    (le32toh(notif->flags) & IWX_TLC_NOTIF_FLAG_RATE) == 0)
 		return;
 
 	rate_n_flags = le32toh(notif->rate);
-	if (rate_n_flags & IWX_RATE_MCS_VHT_MSK_V1) {
-		ni->ni_txmcs = (rate_n_flags &
-		    IWX_RATE_VHT_MCS_RATE_CODE_MSK);
-		ni->ni_vht_ss = ((rate_n_flags & IWX_RATE_VHT_MCS_NSS_MSK) >>
-		    IWX_RATE_VHT_MCS_NSS_POS) + 1;
-	} else if (rate_n_flags & IWX_RATE_MCS_HT_MSK_V1) {
-		ni->ni_txmcs = (rate_n_flags &
-		    (IWX_RATE_HT_MCS_RATE_CODE_MSK_V1 |
-		    IWX_RATE_HT_MCS_NSS_MSK_V1));
+
+	cmd_ver = iwx_lookup_notif_ver(sc, IWX_DATA_PATH_GROUP,
+	    IWX_TLC_MNG_UPDATE_NOTIF);
+	if (cmd_ver != IWX_FW_CMD_VER_UNKNOWN && cmd_ver >= 3)
+		rate_n_flags_ver2 = 1;
+	if (rate_n_flags_ver2) {
+		uint32_t mod_type = (rate_n_flags & IWX_RATE_MCS_MOD_TYPE_MSK);
+		if (mod_type == IWX_RATE_MCS_VHT_MSK) {
+			ni->ni_txmcs = (rate_n_flags &
+			    IWX_RATE_HT_MCS_CODE_MSK);
+			ni->ni_vht_ss = ((rate_n_flags &
+			    IWX_RATE_MCS_NSS_MSK) >>
+			    IWX_RATE_MCS_NSS_POS) + 1;
+			return;
+		} else if (mod_type == IWX_RATE_MCS_HT_MSK) {
+			ni->ni_txmcs = IWX_RATE_HT_MCS_INDEX(rate_n_flags);
+			return;
+		}
 	} else {
-		uint8_t plcp = (rate_n_flags & IWX_RATE_LEGACY_RATE_MSK_V1);
-		uint8_t rval = 0;
+		if (rate_n_flags & IWX_RATE_MCS_VHT_MSK_V1) {
+			ni->ni_txmcs = (rate_n_flags &
+			    IWX_RATE_VHT_MCS_RATE_CODE_MSK);
+			ni->ni_vht_ss = ((rate_n_flags &
+			    IWX_RATE_VHT_MCS_NSS_MSK) >>
+			    IWX_RATE_VHT_MCS_NSS_POS) + 1;
+			return;
+		} else if (rate_n_flags & IWX_RATE_MCS_HT_MSK_V1) {
+			ni->ni_txmcs = (rate_n_flags &
+			    (IWX_RATE_HT_MCS_RATE_CODE_MSK_V1 |
+			    IWX_RATE_HT_MCS_NSS_MSK_V1));
+			return;
+		}
+	}
+
+	if (rate_n_flags_ver2) {
+		const struct ieee80211_rateset *rs;
+		uint32_t ridx = (rate_n_flags & IWX_RATE_LEGACY_RATE_MSK);
+		if (rate_n_flags & IWX_RATE_MCS_LEGACY_OFDM_MSK)
+			rs = &ieee80211_std_rateset_11a;
+		else
+			rs = &ieee80211_std_rateset_11b;
+		if (ridx < rs->rs_nrates)
+			rval = (rs->rs_rates[ridx] & IEEE80211_RATE_VAL);
+		else
+			rval = 0;
+	} else {
+		plcp = (rate_n_flags & IWX_RATE_LEGACY_RATE_MSK_V1);
+
+		rval = 0;
 		for (i = IWX_RATE_1M_INDEX; i < nitems(iwx_rates); i++) {
 			if (iwx_rates[i].plcp == plcp) {
 				rval = iwx_rates[i].rate;
 				break;
 			}
 		}
-		if (rval) {
-			uint8_t rv;
-			for (i = 0; i < rs->rs_nrates; i++) {
-				rv = rs->rs_rates[i] & IEEE80211_RATE_VAL;
-				if (rv == rval) {
-					ni->ni_txrate = i;
-					break;
-				}
+	}
+
+	if (rval) {
+		uint8_t rv;
+		for (i = 0; i < rs->rs_nrates; i++) {
+			rv = rs->rs_rates[i] & IEEE80211_RATE_VAL;
+			if (rv == rval) {
+				ni->ni_txrate = i;
+				break;
 			}
 		}
 	}
@@ -8290,26 +8390,11 @@ iwx_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
 int
 iwx_media_change(struct ifnet *ifp)
 {
-	struct iwx_softc *sc = ifp->if_softc;
-	struct ieee80211com *ic = &sc->sc_ic;
-	uint8_t rate, ridx;
 	int err;
 
 	err = ieee80211_media_change(ifp);
 	if (err != ENETRESET)
 		return err;
-
-	if (ic->ic_fixed_mcs != -1)
-		sc->sc_fixed_ridx = iwx_mcs2ridx[ic->ic_fixed_mcs];
-	else if (ic->ic_fixed_rate != -1) {
-		rate = ic->ic_sup_rates[ic->ic_curmode].
-		    rs_rates[ic->ic_fixed_rate] & IEEE80211_RATE_VAL;
-		/* Map 802.11 rate to HW rate index. */
-		for (ridx = 0; ridx <= IWX_RIDX_MAX; ridx++)
-			if (iwx_rates[ridx].rate == rate)
-				break;
-		sc->sc_fixed_ridx = ridx;
-	}
 
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 	    (IFF_UP | IFF_RUNNING)) {
