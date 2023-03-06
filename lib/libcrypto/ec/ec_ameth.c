@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.36 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.37 2023/03/06 08:37:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -976,7 +976,7 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 		goto err;
 
 	penclen = CMS_SharedInfo_encode(&penc, wrap_alg, ukm, keylen);
-	if (!penclen)
+	if (penclen <= 0)
 		goto err;
 
 	if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, penc, penclen) <= 0)
@@ -988,7 +988,7 @@ ecdh_cms_encrypt(CMS_RecipientInfo *ri)
 	 * of another AlgorithmIdentifier.
 	 */
 	penclen = i2d_X509_ALGOR(wrap_alg, &penc);
-	if (!penc || !penclen)
+	if (penclen <= 0)
 		goto err;
 	wrap_str = ASN1_STRING_new();
 	if (wrap_str == NULL)
