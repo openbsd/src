@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.28 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.29 2023/03/07 05:35:13 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -123,7 +123,8 @@ EC_GF2m_simple_method(void)
 }
 
 
-/* Initialize a GF(2^m)-based EC_GROUP structure.
+/*
+ * Initialize a GF(2^m)-based EC_GROUP structure.
  * Note that all other members are handled by EC_GROUP_new.
  */
 int
@@ -136,7 +137,8 @@ ec_GF2m_simple_group_init(EC_GROUP *group)
 }
 
 
-/* Free a GF(2^m)-based EC_GROUP structure.
+/*
+ * Free a GF(2^m)-based EC_GROUP structure.
  * Note that all other members are handled by EC_GROUP_free.
  */
 void
@@ -148,7 +150,8 @@ ec_GF2m_simple_group_finish(EC_GROUP *group)
 }
 
 
-/* Clear and free a GF(2^m)-based EC_GROUP structure.
+/*
+ * Clear and free a GF(2^m)-based EC_GROUP structure.
  * Note that all other members are handled by EC_GROUP_clear_free.
  */
 void
@@ -166,7 +169,8 @@ ec_GF2m_simple_group_clear_finish(EC_GROUP *group)
 }
 
 
-/* Copy a GF(2^m)-based EC_GROUP structure.
+/*
+ * Copy a GF(2^m)-based EC_GROUP structure.
  * Note that all other members are handled by EC_GROUP_copy.
  */
 int
@@ -235,7 +239,8 @@ ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 }
 
 
-/* Get the curve parameters of an EC_GROUP structure.
+/*
+ * Get the curve parameters of an EC_GROUP structure.
  * If p, a, or b are NULL then there values will not be set but the method will return with success.
  */
 int
@@ -271,7 +276,8 @@ ec_GF2m_simple_group_get_degree(const EC_GROUP *group)
 }
 
 
-/* Checks the discriminant of the curve.
+/*
+ * Checks the discriminant of the curve.
  * y^2 + x*y = x^3 + a*x^2 + b is an elliptic curve <=> b != 0 (mod p)
  */
 int
@@ -360,7 +366,8 @@ ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 }
 
 
-/* Set an EC_POINT to the point at infinity.
+/*
+ * Set an EC_POINT to the point at infinity.
  * A point at infinity is represented by having Z=0.
  */
 int
@@ -372,7 +379,8 @@ ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 }
 
 
-/* Set the coordinates of an EC_POINT using affine coordinates.
+/*
+ * Set the coordinates of an EC_POINT using affine coordinates.
  * Note that the simple implementation only uses affine coordinates.
  */
 int
@@ -401,7 +409,8 @@ ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *poi
 }
 
 
-/* Gets the affine coordinates of an EC_POINT.
+/*
+ * Gets the affine coordinates of an EC_POINT.
  * Note that the simple implementation only uses affine coordinates.
  */
 int
@@ -434,7 +443,8 @@ ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
 	return ret;
 }
 
-/* Computes a + b and stores the result in r.  r could be a or b, a could be b.
+/*
+ * Computes a + b and stores the result in r.  r could be a or b, a could be b.
  * Uses algorithm A.10.2 of IEEE P1363.
  */
 int
@@ -554,7 +564,8 @@ ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 }
 
 
-/* Computes 2 * a and stores the result in r.  r could be a.
+/*
+ * Computes 2 * a and stores the result in r.  r could be a.
  * Uses algorithm A.10.2 of IEEE P1363.
  */
 int
@@ -585,7 +596,8 @@ ec_GF2m_simple_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 }
 
 
-/* Determines whether the given EC_POINT is an actual point on the curve defined
+/*
+ * Determines whether the given EC_POINT is an actual point on the curve defined
  * in the EC_GROUP.  A point is valid if it satisfies the Weierstrass equation:
  *      y^2 + x*y = x^3 + a*x^2 + b.
  */
@@ -647,7 +659,8 @@ ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX 
 }
 
 
-/* Indicates whether two points are equal.
+/*
+ * Indicates whether two points are equal.
  * Return values:
  *  -1   error
  *   0   equal (in affine coordinates)
