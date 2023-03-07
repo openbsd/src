@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.37 2023/03/06 08:37:24 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.38 2023/03/07 07:01:35 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -814,7 +814,7 @@ ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 		goto err;
 
 	plen = CMS_SharedInfo_encode(&der, kekalg, ukm, keylen);
-	if (!plen)
+	if (plen <= 0)
 		goto err;
 
 	if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, der, plen) <= 0)
