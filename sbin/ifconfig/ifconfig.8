@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.390 2023/02/27 14:53:38 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.391 2023/03/07 20:09:47 jan Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: February 27 2023 $
+.Dd $Mdocdate: March 7 2023 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -501,6 +501,11 @@ such as
 .Xr aggr 4 ,
 and
 .Xr carp 4 .
+It is not possible to use TSO with interfaces attached to a
+.Xr bridge 4 ,
+.Xr veb 4 ,
+or
+.Xr tpmr 4 .
 Changing this option will re-initialize the network interface.
 .It Cm -tso
 Disable TSO.

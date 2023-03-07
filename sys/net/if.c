@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.684 2023/02/27 09:35:32 jan Exp $	*/
+/*	$OpenBSD: if.c,v 1.685 2023/03/07 20:09:48 jan Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2058,18 +2058,9 @@ ifioctl(struct socket *so, u_long cmd, caddr_t data, struct proc *p)
 		}
 #endif
 
-		if (ISSET(ifp->if_capabilities, IFCAP_TSO) &&
-		    ISSET(ifr->ifr_flags, IFXF_TSO) !=
-		    ISSET(ifp->if_xflags, IFXF_TSO)) {
-			if (ISSET(ifr->ifr_flags, IFXF_TSO))
-				ifsettso(ifp, 1);
-			else
-				ifsettso(ifp, 0);
-		} else if (!ISSET(ifp->if_capabilities, IFCAP_TSO) &&
-		    ISSET(ifr->ifr_flags, IFXF_TSO)) {
-			ifr->ifr_flags &= ~IFXF_TSO;
-			error = ENOTSUP;
-		}
+		if (ISSET(ifr->ifr_flags, IFXF_TSO) !=
+		    ISSET(ifp->if_xflags, IFXF_TSO))
+			error = ifsettso(ifp, ISSET(ifr->ifr_flags, IFXF_TSO));
 
 		if (error == 0)
 			ifp->if_xflags = (ifp->if_xflags & IFXF_CANTCHANGE) |
@@ -3113,18 +3104,27 @@ ifpromisc(struct ifnet *ifp, int pswitch)
 }
 
 /* Set/clear TSO flag and restart interface if needed. */
-void
+int
 ifsettso(struct ifnet *ifp, int on)
 {
 	struct ifreq ifrq;
+	int error = 0;
 	int s = splnet();
 
 	NET_ASSERT_LOCKED();	/* for ioctl */
 	KERNEL_ASSERT_LOCKED();	/* for if_flags */
 
-	if (on && !ISSET(ifp->if_xflags, IFXF_TSO))
+	if (on && !ISSET(ifp->if_xflags, IFXF_TSO)) {
+		if (!ISSET(ifp->if_capabilities, IFCAP_TSO)) {
+			error = ENOTSUP;
+			goto out;
+		}
+		if (ether_brport_isset(ifp)) {
+			error = EBUSY;
+			goto out;
+		}
 		SET(ifp->if_xflags, IFXF_TSO);
-	else if (!on && ISSET(ifp->if_xflags, IFXF_TSO))
+	} else if (!on && ISSET(ifp->if_xflags, IFXF_TSO))
 		CLR(ifp->if_xflags, IFXF_TSO);
 	else
 		goto out;
@@ -3142,6 +3142,8 @@ ifsettso(struct ifnet *ifp, int on)
 	}
  out:
 	splx(s);
+
+	return error;
 }
 
 void
