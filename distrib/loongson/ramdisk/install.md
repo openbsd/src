@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.31 2022/08/10 17:37:48 miod Exp $
+#	$OpenBSD: install.md,v 1.32 2023/03/07 17:37:26 kn Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -86,8 +86,7 @@ md_prep_fdisk() {
 				;;
 			esac
 			echo "done."
-			disklabel $_disk 2>/dev/null | grep -q "^  i:" || disklabel -w -d $_disk
-			newfs -qt ext2fs $_o ${_disk}i
+			installboot -p $_disk
 			break ;;
 		[eE]*)
 			# Manually configure the MBR.
