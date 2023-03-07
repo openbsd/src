@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.48 2023/03/07 06:05:06 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.49 2023/03/07 06:15:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -305,27 +305,12 @@ BN_MONT_CTX_set_locked(BN_MONT_CTX **pmctx, int lock, const BIGNUM *mod,
 
 static int bn_montgomery_reduce(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mctx);
 
-int
-BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
+static int
+bn_mod_mul_montgomery_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mctx, BN_CTX *ctx)
 {
 	BIGNUM *tmp;
 	int ret = 0;
-
-#if defined(OPENSSL_BN_ASM_MONT)
-	int num = mctx->N.top;
-
-	if (num > 1 && a->top == num && b->top == num) {
-		if (!bn_wexpand(r, num))
-			return (0);
-		if (bn_mul_mont(r->d, a->d, b->d, mctx->N.d, mctx->n0, num)) {
-			r->top = num;
-			bn_correct_top(r);
-			BN_set_negative(r, a->neg ^ b->neg);
-			return (1);
-		}
-	}
-#endif
 
 	BN_CTX_start(ctx);
 
@@ -351,11 +336,54 @@ BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	return ret;
 }
 
+#ifndef OPENSSL_BN_ASM_MONT
 int
-BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont, BN_CTX *ctx)
+bn_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
+    BN_MONT_CTX *mctx, BN_CTX *ctx)
+{
+	return bn_mod_mul_montgomery_simple(r, a, b, mctx, ctx);
+}
+#else
+
+int
+bn_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
+    BN_MONT_CTX *mctx, BN_CTX *ctx)
+{
+	if (mctx->N.top <= 1 || a->top != mctx->N.top || b->top != mctx->N.top)
+		return bn_mod_mul_montgomery_simple(r, a, b, mctx, ctx);
+
+	if (!bn_wexpand(r, mctx->N.top))
+		return 0;
+
+	/*
+	 * Legacy bn_mul_mont() can indicate that we should "fallback" to
+	 * another implementation.
+	 */
+	if (!bn_mul_mont(r->d, a->d, b->d, mctx->N.d, mctx->n0, mctx->N.top))
+		return bn_mod_mul_montgomery_simple(r, a, b, mctx, ctx);
+
+	r->top = mctx->N.top;
+	bn_correct_top(r);
+
+	BN_set_negative(r, a->neg ^ b->neg);
+
+	return (1);
+}
+#endif
+
+int
+BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
+    BN_MONT_CTX *mctx, BN_CTX *ctx)
+{
+	/* Compute r = aR * bR * R^-1 mod N = abR mod N */
+	return bn_mod_mul_montgomery(r, a, b, mctx, ctx);
+}
+
+int
+BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mctx, BN_CTX *ctx)
 {
 	/* Compute r = a * R * R * R^-1 mod N = aR mod N */
-	return BN_mod_mul_montgomery(r, a, &mont->RR, mont, ctx);
+	return bn_mod_mul_montgomery(r, a, &mctx->RR, mctx, ctx);
 }
 
 /*
