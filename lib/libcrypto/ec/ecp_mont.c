@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.23 2023/03/04 14:38:00 jsing Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.24 2023/03/07 05:28:12 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -65,6 +65,15 @@
 
 #include "ec_local.h"
 
+static void
+ec_GFp_mont_group_clear(EC_GROUP *group)
+{
+	BN_MONT_CTX_free(group->mont_ctx);
+	group->mont_ctx = NULL;
+
+	BN_free(group->mont_one);
+	group->mont_one = NULL;
+}
 
 const EC_METHOD *
 EC_GFp_mont_method(void)
@@ -133,10 +142,7 @@ ec_GFp_mont_group_init(EC_GROUP *group)
 void
 ec_GFp_mont_group_finish(EC_GROUP *group)
 {
-	BN_MONT_CTX_free(group->mont_ctx);
-	group->mont_ctx = NULL;
-	BN_free(group->mont_one);
-	group->mont_one = NULL;
+	ec_GFp_mont_group_clear(group);
 	ec_GFp_simple_group_finish(group);
 }
 
@@ -144,10 +150,7 @@ ec_GFp_mont_group_finish(EC_GROUP *group)
 void
 ec_GFp_mont_group_clear_finish(EC_GROUP *group)
 {
-	BN_MONT_CTX_free(group->mont_ctx);
-	group->mont_ctx = NULL;
-	BN_clear_free(group->mont_one);
-	group->mont_one = NULL;
+	ec_GFp_mont_group_clear(group);
 	ec_GFp_simple_group_clear_finish(group);
 }
 
@@ -155,10 +158,7 @@ ec_GFp_mont_group_clear_finish(EC_GROUP *group)
 int
 ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
-	BN_MONT_CTX_free(dest->mont_ctx);
-	dest->mont_ctx = NULL;
-	BN_clear_free(dest->mont_one);
-	dest->mont_one = NULL;
+	ec_GFp_mont_group_clear(dest);
 
 	if (!ec_GFp_simple_group_copy(dest, src))
 		return 0;
@@ -195,10 +195,8 @@ ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 	BIGNUM *one = NULL;
 	int ret = 0;
 
-	BN_MONT_CTX_free(group->mont_ctx);
-	group->mont_ctx = NULL;
-	BN_free(group->mont_one);
-	group->mont_one = NULL;
+	ec_GFp_mont_group_clear(group);
+
 	if (ctx == NULL) {
 		ctx = new_ctx = BN_CTX_new();
 		if (ctx == NULL)
@@ -224,12 +222,9 @@ ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 
 	ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
 
-	if (!ret) {
-		BN_MONT_CTX_free(group->mont_ctx);
-		group->mont_ctx = NULL;
-		BN_free(group->mont_one);
-		group->mont_one = NULL;
-	}
+	if (!ret)
+		ec_GFp_mont_group_clear(group);
+
  err:
 	BN_CTX_free(new_ctx);
 	BN_MONT_CTX_free(mont);
