@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.55 2021/10/22 12:30:54 bluhm Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.56 2023/03/07 17:43:59 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -308,7 +308,6 @@ print_sa(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	    sa->sadb_sa_replay, print_flags(sa->sadb_sa_flags));
 }
 
-/* ARGSUSED1 */
 static void
 print_addr(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -340,7 +339,6 @@ print_addr(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	}
 }
 
-/* ARGSUSED1 */
 static void
 print_key(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -356,7 +354,6 @@ print_key(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	}
 }
 
-/* ARGSUSED1 */
 static void
 print_life(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -384,7 +381,6 @@ print_proto(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 		    proto->sadb_protocol_proto, proto->sadb_protocol_flags);
 }
 
-/* ARGSUSED1 */
 static void
 print_flow(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -490,7 +486,6 @@ print_alg(struct sadb_alg *alg, u_int8_t ext_type)
 	    alg->sadb_alg_minbits, alg->sadb_alg_maxbits);
 }
 
-/* ARGSUSED1 */
 static void
 print_supp(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -510,7 +505,6 @@ print_supp(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	}
 }
 
-/* ARGSUSED1 */
 static void
 print_comb(struct sadb_comb *comb, struct sadb_msg *msg, int opts)
 {
@@ -538,7 +532,6 @@ print_comb(struct sadb_comb *comb, struct sadb_msg *msg, int opts)
 #endif
 }
 
-/* ARGSUSED1 */
 static void
 print_prop(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -553,7 +546,6 @@ print_prop(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 		print_comb(comb, msg, opts);
 }
 
-/* ARGSUSED1 */
 static void
 print_sens(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -565,7 +557,6 @@ print_sens(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	    sens->sadb_sens_integ_level);
 }
 
-/* ARGSUSED1 */
 static void
 print_spir(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -575,7 +566,6 @@ print_spir(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	    spirange->sadb_spirange_min, spirange->sadb_spirange_max);
 }
 
-/* ARGSUSED1 */
 static void
 print_ident(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -586,7 +576,6 @@ print_ident(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	    ident->sadb_ident_id, (char *)(ident + 1));
 }
 
-/* ARGSUSED1 */
 static void
 print_policy(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -595,7 +584,6 @@ print_policy(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	printf("seq %u", x_policy->sadb_x_policy_seq);
 }
 
-/* ARGSUSED1 */
 static void
 print_udpenc(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -604,7 +592,6 @@ print_udpenc(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	printf("udpencap port %u", ntohs(x_udpencap->sadb_x_udpencap_port));
 }
 
-/* ARGSUSED1 */
 static void
 print_rdomain(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
@@ -891,7 +878,6 @@ pfkey_print_sa(struct sadb_msg *msg, int opts)
 	fflush(stdout);
 }
 
-/* ARGSUSED1 */
 void
 pfkey_monitor_sa(struct sadb_msg *msg, int opts)
 {
