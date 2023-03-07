@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.33 2023/03/06 18:12:48 krw Exp $
+#	$OpenBSD: disktab,v 1.34 2023/03/07 16:41:08 krw Exp $
 
 mini34|gzip bsd.rd disk image 4.34375MB:\
 	:dt=rdroot:se#512:nt#1:ns#64:nc#132:\
@@ -18,13 +18,11 @@ install240|install.img disk image 240MB:\
 floppy288|3in|3.5in High Density Floppy, 2.88MB:\
 	:dt=floppy:se#512:nt#2:ns#36:nc#80:\
 	:pa#5760:oa#0:ba#4096:fa#512:ta=4.2BSD: \
-	:pb#5760:ob#0:\
 	:pc#5760:oc#0:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:dt=floppy:se#512:nt#2:ns#18:nc#80:\
 	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD: \
-	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
 
 floppy5|5in|5.25in High Density Floppy:\

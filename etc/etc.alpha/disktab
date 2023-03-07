@@ -1,4 +1,4 @@
-#	$OpenBSD: disktab,v 1.24 2018/09/20 15:19:36 deraadt Exp $
+#	$OpenBSD: disktab,v 1.25 2023/03/07 16:41:08 krw Exp $
 
 fakeramdisk:\
 	:dt=rdroot:se#512:nt#1:ns#32:nc#190:\
@@ -8,7 +8,6 @@ fakeramdisk:\
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:dt=floppy:se#512:nt#2:ns#18:nc#80:\
 	:pa#2880:oa#0:ba#4096:fa#512:ta=4.2BSD: \
-	:pb#2880:ob#0:\
 	:pc#2880:oc#0:
 
 rdroot:\
