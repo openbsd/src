@@ -1,4 +1,4 @@
-.\" $OpenBSD: DSA_get0_pqg.3,v 1.6 2023/03/06 13:18:38 tb Exp $
+.\" $OpenBSD: DSA_get0_pqg.3,v 1.7 2023/03/07 06:15:07 tb Exp $
 .\" full merge up to: OpenSSL e90fc053 Jul 15 09:39:45 2017 -0400
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 6 2023 $
+.Dd $Mdocdate: March 7 2023 $
 .Dt DSA_GET0_PQG 3
 .Os
 .Sh NAME
@@ -223,16 +223,16 @@ Any of the values
 .Fa p ,
 .Fa q ,
 .Fa g ,
-.Fa priv_key ,
+.Fa pub_key ,
 and
-.Fa pub_key
+.Fa priv_key
 can also be retrieved separately by the corresponding functions
 .Fn DSA_get0_p ,
 .Fn DSA_get0_q ,
 .Fn DSA_get0_g ,
-.Fn DSA_get0_priv_key ,
-and
 .Fn DSA_get0_pub_key ,
+and
+.Fn DSA_get0_priv_key ,
 respectively.
 The pointers are owned by the
 .Vt DSA
