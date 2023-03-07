@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.8 2023/03/07 05:45:14 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.9 2023/03/07 05:50:59 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -371,43 +371,13 @@ int ec_GFp_simple_mul_double_nonct(const EC_GROUP *, EC_POINT *r, const BIGNUM *
 
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
 
-/* method functions in ec2_smpl.c */
-int ec_GF2m_simple_group_init(EC_GROUP *);
-void ec_GF2m_simple_group_finish(EC_GROUP *);
-void ec_GF2m_simple_group_clear_finish(EC_GROUP *);
-int ec_GF2m_simple_group_copy(EC_GROUP *, const EC_GROUP *);
-int ec_GF2m_simple_group_set_curve(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-int ec_GF2m_simple_group_get_curve(const EC_GROUP *, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *);
-int ec_GF2m_simple_group_get_degree(const EC_GROUP *);
-int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *, BN_CTX *);
-int ec_GF2m_simple_point_init(EC_POINT *);
-void ec_GF2m_simple_point_finish(EC_POINT *);
-void ec_GF2m_simple_point_clear_finish(EC_POINT *);
-int ec_GF2m_simple_point_copy(EC_POINT *, const EC_POINT *);
-int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *, EC_POINT *);
-int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *, EC_POINT *,
-	const BIGNUM *x, const BIGNUM *y, BN_CTX *);
-int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *, const EC_POINT *,
-	BIGNUM *x, BIGNUM *y, BN_CTX *);
 int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *, EC_POINT *,
 	const BIGNUM *x, int y_bit, BN_CTX *);
 size_t ec_GF2m_simple_point2oct(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
 	unsigned char *buf, size_t len, BN_CTX *);
 int ec_GF2m_simple_oct2point(const EC_GROUP *, EC_POINT *,
 	const unsigned char *buf, size_t len, BN_CTX *);
-int ec_GF2m_simple_add(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
-int ec_GF2m_simple_dbl(const EC_GROUP *, EC_POINT *r, const EC_POINT *a, BN_CTX *);
-int ec_GF2m_simple_invert(const EC_GROUP *, EC_POINT *, BN_CTX *);
-int ec_GF2m_simple_is_at_infinity(const EC_GROUP *, const EC_POINT *);
-int ec_GF2m_simple_is_on_curve(const EC_GROUP *, const EC_POINT *, BN_CTX *);
-int ec_GF2m_simple_cmp(const EC_GROUP *, const EC_POINT *a, const EC_POINT *b, BN_CTX *);
-int ec_GF2m_simple_make_affine(const EC_GROUP *, EC_POINT *, BN_CTX *);
-int ec_GF2m_simple_points_make_affine(const EC_GROUP *, size_t num, EC_POINT *[], BN_CTX *);
-int ec_GF2m_simple_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-int ec_GF2m_simple_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
-int ec_GF2m_simple_field_div(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
 
-/* method functions in ec2_mult.c */
 int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
 int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
