@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1230 2023/02/21 12:56:50 kn Exp $
+#	$OpenBSD: install.sub,v 1.1231 2023/03/07 17:29:42 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -340,6 +340,8 @@ get_dkdevs_root() {
 		for _d in $_disks; do
 			is_rootdisk "$_d" || _disks=$(rmel "$_d" $_disks)
 		done
+	else
+		_disks=$(rmel "$CRYPTODISK" $_disks)
 	fi
 	echo $_disks
 }
@@ -2395,6 +2397,8 @@ get_rootinfo() {
 		case $resp in
 		"?")	diskinfo $(get_dkdevs);;
 		'')	;;
+		$CRYPTODISK)
+			echo "$resp is used for root disk encryption.";;
 		*)	# Translate $resp to disk dev name in case it is a DUID.
 			# get_dkdev_name bounces back the disk dev name if not.
 			_dkdev=$(get_dkdev_name "$resp")
@@ -3053,6 +3057,50 @@ do_autoinstall() {
 	exec reboot
 }
 
+encrypt_root() {
+	local _chunk _tries=0
+	local _q="Encrypt the root disk? (disk, 'no' or '?' for details)"
+
+	[[ $MDBOOTSR == y ]] || return
+
+	# The interactive bioctl(8) passphrase prompt requires a TTY.
+	$AI && return
+
+	# Do not even try if softraid is in use already,
+	# e.g. auto-assembled at boot or done in (S)hell.
+	[[ -z $(get_softraid_disks) ]] || return
+
+	while :; do
+		echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
+		_ask "$_q" no || continue
+		case $resp in
+		'?')	cat <<'__EOT'
+
+Create a passphrase protected CRYPTO softraid volume to be used as root disk.
+
+__EOT
+			diskinfo $(get_dkdevs);;
+		'')	;;
+		no)	return;;
+		*)	isin "$resp" $(get_dkdevs) && break
+			echo 'No such disk.';;
+		esac
+	done
+	_chunk=$resp
+	log_answers "$_q" $_chunk
+
+	make_dev $_chunk
+	md_prep_fdisk $_chunk softraid
+	echo 'RAID *' | disklabel -w -A -T- $_chunk
+
+	until bioctl -c C -l ${_chunk}a softraid0 >/dev/null; do
+		# Most likely botched passphrases, silently retry twice.
+		((++_tries < 3)) || exit
+	done
+
+        CRYPTODISK=$_chunk
+}
+
 do_install() {
 	local _rootkey _rootpass
 
@@ -3105,6 +3153,8 @@ do_install() {
 	set_timezone /var/tzlist
 
 	echo
+
+	encrypt_root
 
 	# Get information about ROOTDISK, etc.
 	get_rootinfo
@@ -3485,8 +3535,12 @@ umount -af >/dev/null 2>&1
 #	md_prep_disklabel()	  - put an OpenBSD disklabel on the disk
 #	md_consoleinfo()	  - set CDEV, CTTY, CSPEED, CPROM
 #
+# The following functions can be provided if required:
+#	md_prep_fdisk()           - put a partition table on the disk
+#
 # The following variables can be provided if required:
 #	MDEFI       - set to 'y' on archs that support GPT partitioning
+#	MDBOOTSR    - set to 'y' on archs that support boot from softraid volumes
 #	MDFSOPT     - newfs options for non-root partitions, '-O2' assumed if not provided
 #	MDROOTFSOPT - newfs options for the root partition, '-O2' assumed if not provided
 #	MDSETS	    - list of files to add to DEFAULT and ALLSETS
@@ -3516,6 +3570,7 @@ INSTALL_METHOD=
 NIFS=0
 export PS1="$MODE# "
 PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
+CRYPTODISK=
 ROOTDEV=
 ROOTDISK=
 SETDIR="$VNAME/$ARCH"

@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.7 2023/02/06 08:41:00 kn Exp $
+#	$OpenBSD: install.md,v 1.8 2023/03/07 17:29:42 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 # machine dependent section of installation/upgrade script.
 #
 
+MDBOOTSR=y
 NCPU=$(sysctl -n hw.ncpufound)
 
 md_installboot() {
