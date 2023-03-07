@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.47 2023/02/28 12:29:57 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.48 2023/03/07 06:05:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -302,59 +302,6 @@ BN_MONT_CTX_set_locked(BN_MONT_CTX **pmctx, int lock, const BIGNUM *mod,
  done:
 	return mctx;
 }
-
-#ifdef OPENSSL_NO_ASM
-#ifdef OPENSSL_BN_ASM_MONT
-int
-bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-    const BN_ULONG *np, const BN_ULONG *n0p, int num)
-{
-	BN_ULONG c0, c1, *tp, n0 = *n0p;
-	int i = 0, j;
-
-	tp = calloc(num + 2, sizeof(BN_ULONG));
-	if (tp == NULL)
-		return 0;
-
-	for (i = 0; i < num; i++) {
-		c0 = bn_mul_add_words(tp, ap, num, bp[i]);
-		c1 = (tp[num] + c0) & BN_MASK2;
-		tp[num] = c1;
-		tp[num + 1] = (c1 < c0 ? 1 : 0);
-
-		c0 = bn_mul_add_words(tp, np, num, tp[0] * n0);
-		c1 = (tp[num] + c0) & BN_MASK2;
-		tp[num] = c1;
-		tp[num + 1] += (c1 < c0 ? 1 : 0);
-		for (j = 0; j <= num; j++)
-			tp[j] = tp[j + 1];
-	}
-
-	if (tp[num] != 0 || tp[num - 1] >= np[num - 1]) {
-		c0 = bn_sub_words(rp, tp, np, num);
-		if (tp[num] != 0 || c0 == 0) {
-			goto out;
-		}
-	}
-	memcpy(rp, tp, num * sizeof(BN_ULONG));
-out:
-	freezero(tp, (num + 2) * sizeof(BN_ULONG));
-	return 1;
-}
-#else /* !OPENSSL_BN_ASM_MONT */
-int
-bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
-    const BN_ULONG *np, const BN_ULONG *n0, int num)
-{
-	/*
-	 * Return value of 0 indicates that multiplication/convolution was not
-	 * performed to signal the caller to fall down to alternative/original
-	 * code-path.
-	 */
-	return 0;
-}
-#endif /* !OPENSSL_BN_ASM_MONT */
-#endif /* OPENSSL_NO_ASM */
 
 static int bn_montgomery_reduce(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mctx);
 
