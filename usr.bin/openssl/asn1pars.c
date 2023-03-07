@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.13 2023/03/06 14:32:05 tb Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.14 2023/03/07 05:53:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -267,7 +267,7 @@ asn1parse_main(int argc, char **argv)
 
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());
-	if ((in == NULL) || (out == NULL)) {
+	if (in == NULL || out == NULL) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
@@ -291,8 +291,8 @@ asn1parse_main(int argc, char **argv)
 		}
 	}
 
-	if (cfg.derfile) {
-		if (!(derout = BIO_new_file(cfg.derfile, "wb"))) {
+	if (cfg.derfile != NULL) {
+		if ((derout = BIO_new_file(cfg.derfile, "wb")) == NULL) {
 			BIO_printf(bio_err, "problems opening %s\n",
 			    cfg.derfile);
 			ERR_print_errors(bio_err);
@@ -302,17 +302,15 @@ asn1parse_main(int argc, char **argv)
 	if ((buf = BUF_MEM_new()) == NULL)
 		goto end;
 	if (!BUF_MEM_grow(buf, BUFSIZ * 8))
-		goto end;	/* Pre-allocate :-) */
+		goto end;
 
-	if (cfg.genstr || cfg.genconf) {
-		num = do_generate(bio_err, cfg.genstr,
-		    cfg.genconf, buf);
+	if (cfg.genstr != NULL || cfg.genconf) {
+		num = do_generate(bio_err, cfg.genstr, cfg.genconf, buf);
 		if (num < 0) {
 			ERR_print_errors(bio_err);
 			goto end;
 		}
 	} else {
-
 		if (cfg.informat == FORMAT_PEM) {
 			BIO *tmp;
 
@@ -337,21 +335,18 @@ asn1parse_main(int argc, char **argv)
 
 	/* If any structs to parse go through in sequence */
 
-	if (sk_OPENSSL_STRING_num(cfg.osk)) {
+	if (sk_OPENSSL_STRING_num(cfg.osk) > 0) {
 		tmpbuf = (unsigned char *) str;
 		tmplen = num;
-		for (i = 0; i < sk_OPENSSL_STRING_num(cfg.osk);
-		     i++) {
+		for (i = 0; i < sk_OPENSSL_STRING_num(cfg.osk); i++) {
 			ASN1_TYPE *atmp;
 			int typ;
-			j = strtonum(
-			    sk_OPENSSL_STRING_value(cfg.osk, i),
+			j = strtonum(sk_OPENSSL_STRING_value(cfg.osk, i),
 			    1, INT_MAX, &errstr);
 			if (errstr) {
 				BIO_printf(bio_err,
 				    "'%s' is an invalid number: %s\n",
-				    sk_OPENSSL_STRING_value(cfg.osk,
-				    i), errstr);
+				    sk_OPENSSL_STRING_value(cfg.osk, i), errstr);
 				continue;
 			}
 			tmpbuf += j;
@@ -366,8 +361,7 @@ asn1parse_main(int argc, char **argv)
 				goto end;
 			}
 			typ = ASN1_TYPE_get(at);
-			if ((typ == V_ASN1_OBJECT) ||
-			    (typ == V_ASN1_NULL)) {
+			if (typ == V_ASN1_OBJECT || typ == V_ASN1_NULL) {
 				BIO_printf(bio_err, "Can't parse %s type\n",
 				    typ == V_ASN1_NULL ? "NULL" : "OBJECT");
 				ERR_print_errors(bio_err);
@@ -386,10 +380,9 @@ asn1parse_main(int argc, char **argv)
 	}
 	num -= cfg.offset;
 
-	if ((cfg.length == 0) ||
-	    ((long)cfg.length > num))
+	if (cfg.length == 0 || (long)cfg.length > num)
 		cfg.length = (unsigned int) num;
-	if (derout) {
+	if (derout != NULL) {
 		if (BIO_write(derout, str + cfg.offset,
 		    cfg.length) != (int)cfg.length) {
 			BIO_printf(bio_err, "Error writing output\n");
@@ -397,11 +390,8 @@ asn1parse_main(int argc, char **argv)
 			goto end;
 		}
 	}
-	if (!cfg.noout &&
-	    !ASN1_parse_dump(out,
-	    (unsigned char *)&(str[cfg.offset]),
-	    cfg.length, cfg.indent,
-	    cfg.dump)) {
+	if (!cfg.noout && !ASN1_parse_dump(out,
+	    (unsigned char *)&str[cfg.offset], cfg.length, cfg.indent, cfg.dump)) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
