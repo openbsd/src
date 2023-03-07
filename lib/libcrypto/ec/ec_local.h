@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.7 2023/03/07 05:41:18 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.8 2023/03/07 05:45:14 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -370,13 +370,6 @@ int ec_GFp_simple_mul_double_nonct(const EC_GROUP *, EC_POINT *r, const BIGNUM *
 	const BIGNUM *p_scalar, const EC_POINT *point, BN_CTX *);
 
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
-
-/* method functions in ecp_nist.c */
-int ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src);
-int ec_GFp_nist_group_set_curve(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-int ec_GFp_nist_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-int ec_GFp_nist_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
-
 
 /* method functions in ec2_smpl.c */
 int ec_GF2m_simple_group_init(EC_GROUP *);
