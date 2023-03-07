@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.9 2023/02/17 05:13:34 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.10 2023/03/07 05:57:01 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -362,10 +362,10 @@ bn_mulw_addtw(BN_ULONG a, BN_ULONG b, BN_ULONG c2, BN_ULONG c1, BN_ULONG c0,
 #endif
 
 /*
- * bn_mulw_addtw() computes (r2:r1:r0) = 2 * a * b + (c2:c1:c0), where a and b
- * are single words and (c2:c1:c0) is a triple word, producing a triple word
- * result. The caller must ensure that the inputs provided do not result in c2
- * overflowing.
+ * bn_mul2_mulw_addtw() computes (r2:r1:r0) = 2 * a * b + (c2:c1:c0), where a
+ * and b are single words and (c2:c1:c0) is a triple word, producing a triple
+ * word result. The caller must ensure that the inputs provided do not result
+ * in c2 overflowing.
  */
 #ifndef HAVE_BN_MUL2_MULW_ADDTW
 static inline void
