@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.20 2023/03/03 16:19:05 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.21 2023/03/07 14:49:32 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -421,8 +421,12 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 	if (outformats & FORMAT_JSON)
 		printf("\t\"validation\": \"");
-	else
-		printf("Validation: ");
+	else {
+		if (type == RTYPE_CRL)
+			printf("Validation:               N/A\n");
+		else
+			printf("Validation: ");
+	}
 
 	if (aia != NULL) {
 		struct auth *a;
