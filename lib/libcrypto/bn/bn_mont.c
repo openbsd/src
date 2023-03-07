@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.51 2023/03/07 06:28:36 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.52 2023/03/07 09:42:09 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -345,19 +345,22 @@ void
 bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, BN_ULONG *tp, BN_ULONG n0, int n_len)
 {
-	BN_ULONG carry, mask;
-	int i;
+	BN_ULONG carry1, carry2, mask, w, x;
+	int i, j;
 
-	for (i = 0; i < n_len * 2 + 2; i++)
+	for (i = 0; i <= n_len; i++)
 		tp[i] = 0;
 
 	for (i = 0; i < n_len; i++) {
-		carry = bn_mul_add_words(tp, ap, n_len, bp[i]);
-		bn_addw(tp[n_len], carry, &tp[n_len + 1], &tp[n_len]);
-
-		carry = bn_mul_add_words(tp, np, n_len, tp[0] * n0);
-		bn_addw(tp[n_len], carry, &carry, &tp[n_len]);
-		bn_addw(tp[n_len + 1], carry, &carry, &tp[n_len + 1]);
+		/* Compute new t[0] * n0, as we need it inside the loop. */
+		w = (ap[0] * bp[i] + tp[0]) * n0;
+	
+		carry1 = carry2 = 0;
+		for (j = 0; j < n_len; j++) {
+			bn_mulw_addw_addw(ap[j], bp[i], tp[j], carry1, &carry1, &x);
+			bn_mulw_addw_addw(np[j], w, x, carry2, &carry2, &tp[j]);
+		}
+		bn_addw_addw(carry1, carry2, tp[n_len], &tp[n_len + 1], &tp[n_len]);
 
 		tp++;
 	}
