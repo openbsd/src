@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.39 2022/11/27 22:04:59 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.40 2023/03/07 10:24:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -37,6 +37,7 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/ofw_power.h>
+#include <dev/ofw/ofw_regulator.h>
 #include <dev/ofw/fdt.h>
 
 /* Registers */
@@ -1227,6 +1228,26 @@ dwpcie_fu740_init(struct dwpcie_softc *sc)
 int
 dwpcie_rk3568_init(struct dwpcie_softc *sc)
 {
+	uint32_t *reset_gpio;
+	ssize_t reset_gpiolen;
+
+	reset_assert_all(sc->sc_node);
+	regulator_enable(OF_getpropint(sc->sc_node, "vpcie3v3-supply", 0));
+	phy_enable(sc->sc_node, "pcie-phy");
+	reset_deassert_all(sc->sc_node);
+
+	clock_enable_all(sc->sc_node);
+
+	reset_gpiolen = OF_getproplen(sc->sc_node, "reset-gpios");
+	if (reset_gpiolen > 0) {
+		reset_gpio = malloc(reset_gpiolen, M_TEMP, M_WAITOK);
+		OF_getpropintarray(sc->sc_node, "reset-gpios", reset_gpio,
+		    reset_gpiolen);
+		gpio_controller_config_pin(reset_gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(reset_gpio, 1);
+		free(reset_gpio, M_TEMP, reset_gpiolen);
+	}
+
 	sc->sc_num_viewport = 8;
 
 	return 0;
