@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.113 2023/03/03 08:08:15 jsg Exp $
+.\"	$OpenBSD: route.8,v 1.114 2023/03/07 07:54:59 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 3 2023 $
+.Dd $Mdocdate: March 7 2023 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -209,7 +209,6 @@ destination regardless of source.
 .Fl mplslabel in Ar label
 .Fl push Ns | Ns Fl pop Ns | Ns Fl swap
 .Op Fl out Ar label
-.Fl inet Ar nexthop
 .Xc
 For MPLS routes,
 specify an ingress LSR to associate a particular label to an IPv4/IPv6 route.
@@ -224,8 +223,11 @@ Additionally, one of the following operations must be used:
 .Fl pop
 or
 .Fl swap .
-Route's nexthop can be specified with the modifier
-.Fl inet .
+The route's gateway can be specified using the
+.Fl inet
+or
+.Fl inet6
+modifier before the address.
 .Pp
 .It Fl netmask Ar mask
 .It Fl prefixlen Ar len
