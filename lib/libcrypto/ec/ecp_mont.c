@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.24 2023/03/07 05:28:12 jsing Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.25 2023/03/07 05:41:18 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -75,59 +75,7 @@ ec_GFp_mont_group_clear(EC_GROUP *group)
 	group->mont_one = NULL;
 }
 
-const EC_METHOD *
-EC_GFp_mont_method(void)
-{
-	static const EC_METHOD ret = {
-		.flags = EC_FLAGS_DEFAULT_OCT,
-		.field_type = NID_X9_62_prime_field,
-		.group_init = ec_GFp_mont_group_init,
-		.group_finish = ec_GFp_mont_group_finish,
-		.group_clear_finish = ec_GFp_mont_group_clear_finish,
-		.group_copy = ec_GFp_mont_group_copy,
-		.group_set_curve = ec_GFp_mont_group_set_curve,
-		.group_get_curve = ec_GFp_simple_group_get_curve,
-		.group_get_degree = ec_GFp_simple_group_get_degree,
-		.group_order_bits = ec_group_simple_order_bits,
-		.group_check_discriminant =
-		    ec_GFp_simple_group_check_discriminant,
-		.point_init = ec_GFp_simple_point_init,
-		.point_finish = ec_GFp_simple_point_finish,
-		.point_clear_finish = ec_GFp_simple_point_clear_finish,
-		.point_copy = ec_GFp_simple_point_copy,
-		.point_set_to_infinity = ec_GFp_simple_point_set_to_infinity,
-		.point_set_Jprojective_coordinates =
-		    ec_GFp_simple_set_Jprojective_coordinates,
-		.point_get_Jprojective_coordinates =
-		    ec_GFp_simple_get_Jprojective_coordinates,
-		.point_set_affine_coordinates =
-		    ec_GFp_simple_point_set_affine_coordinates,
-		.point_get_affine_coordinates =
-		    ec_GFp_simple_point_get_affine_coordinates,
-		.add = ec_GFp_simple_add,
-		.dbl = ec_GFp_simple_dbl,
-		.invert = ec_GFp_simple_invert,
-		.is_at_infinity = ec_GFp_simple_is_at_infinity,
-		.is_on_curve = ec_GFp_simple_is_on_curve,
-		.point_cmp = ec_GFp_simple_cmp,
-		.make_affine = ec_GFp_simple_make_affine,
-		.points_make_affine = ec_GFp_simple_points_make_affine,
-		.mul_generator_ct = ec_GFp_simple_mul_generator_ct,
-		.mul_single_ct = ec_GFp_simple_mul_single_ct,
-		.mul_double_nonct = ec_GFp_simple_mul_double_nonct,
-		.field_mul = ec_GFp_mont_field_mul,
-		.field_sqr = ec_GFp_mont_field_sqr,
-		.field_encode = ec_GFp_mont_field_encode,
-		.field_decode = ec_GFp_mont_field_decode,
-		.field_set_to_one = ec_GFp_mont_field_set_to_one,
-		.blind_coordinates = ec_GFp_simple_blind_coordinates,
-	};
-
-	return &ret;
-}
-
-
-int
+static int
 ec_GFp_mont_group_init(EC_GROUP *group)
 {
 	int ok;
@@ -138,24 +86,21 @@ ec_GFp_mont_group_init(EC_GROUP *group)
 	return ok;
 }
 
-
-void
+static void
 ec_GFp_mont_group_finish(EC_GROUP *group)
 {
 	ec_GFp_mont_group_clear(group);
 	ec_GFp_simple_group_finish(group);
 }
 
-
-void
+static void
 ec_GFp_mont_group_clear_finish(EC_GROUP *group)
 {
 	ec_GFp_mont_group_clear(group);
 	ec_GFp_simple_group_clear_finish(group);
 }
 
-
-int
+static int
 ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
 	ec_GFp_mont_group_clear(dest);
@@ -185,8 +130,7 @@ ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	return 0;
 }
 
-
-int
+static int
 ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
@@ -232,8 +176,7 @@ ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 	return ret;
 }
 
-
-int
+static int
 ec_GFp_mont_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
@@ -244,8 +187,7 @@ ec_GFp_mont_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 	return BN_mod_mul_montgomery(r, a, b, group->mont_ctx, ctx);
 }
 
-
-int
+static int
 ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
@@ -256,8 +198,7 @@ ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 	return BN_mod_mul_montgomery(r, a, a, group->mont_ctx, ctx);
 }
 
-
-int
+static int
 ec_GFp_mont_field_encode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
@@ -268,8 +209,7 @@ ec_GFp_mont_field_encode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 	return BN_to_montgomery(r, a, group->mont_ctx, ctx);
 }
 
-
-int
+static int
 ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
@@ -280,8 +220,7 @@ ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 	return BN_from_montgomery(r, a, group->mont_ctx, ctx);
 }
 
-
-int
+static int
 ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
 {
 	if (group->mont_one == NULL) {
@@ -291,4 +230,54 @@ ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
 	if (!BN_copy(r, group->mont_one))
 		return 0;
 	return 1;
+}
+
+static const EC_METHOD ec_GFp_mont_method = {
+	.flags = EC_FLAGS_DEFAULT_OCT,
+	.field_type = NID_X9_62_prime_field,
+	.group_init = ec_GFp_mont_group_init,
+	.group_finish = ec_GFp_mont_group_finish,
+	.group_clear_finish = ec_GFp_mont_group_clear_finish,
+	.group_copy = ec_GFp_mont_group_copy,
+	.group_set_curve = ec_GFp_mont_group_set_curve,
+	.group_get_curve = ec_GFp_simple_group_get_curve,
+	.group_get_degree = ec_GFp_simple_group_get_degree,
+	.group_order_bits = ec_group_simple_order_bits,
+	.group_check_discriminant = ec_GFp_simple_group_check_discriminant,
+	.point_init = ec_GFp_simple_point_init,
+	.point_finish = ec_GFp_simple_point_finish,
+	.point_clear_finish = ec_GFp_simple_point_clear_finish,
+	.point_copy = ec_GFp_simple_point_copy,
+	.point_set_to_infinity = ec_GFp_simple_point_set_to_infinity,
+	.point_set_Jprojective_coordinates =
+	    ec_GFp_simple_set_Jprojective_coordinates,
+	.point_get_Jprojective_coordinates =
+	    ec_GFp_simple_get_Jprojective_coordinates,
+	.point_set_affine_coordinates =
+	    ec_GFp_simple_point_set_affine_coordinates,
+	.point_get_affine_coordinates =
+	    ec_GFp_simple_point_get_affine_coordinates,
+	.add = ec_GFp_simple_add,
+	.dbl = ec_GFp_simple_dbl,
+	.invert = ec_GFp_simple_invert,
+	.is_at_infinity = ec_GFp_simple_is_at_infinity,
+	.is_on_curve = ec_GFp_simple_is_on_curve,
+	.point_cmp = ec_GFp_simple_cmp,
+	.make_affine = ec_GFp_simple_make_affine,
+	.points_make_affine = ec_GFp_simple_points_make_affine,
+	.mul_generator_ct = ec_GFp_simple_mul_generator_ct,
+	.mul_single_ct = ec_GFp_simple_mul_single_ct,
+	.mul_double_nonct = ec_GFp_simple_mul_double_nonct,
+	.field_mul = ec_GFp_mont_field_mul,
+	.field_sqr = ec_GFp_mont_field_sqr,
+	.field_encode = ec_GFp_mont_field_encode,
+	.field_decode = ec_GFp_mont_field_decode,
+	.field_set_to_one = ec_GFp_mont_field_set_to_one,
+	.blind_coordinates = ec_GFp_simple_blind_coordinates,
+};
+
+const EC_METHOD *
+EC_GFp_mont_method(void)
+{
+	return &ec_GFp_mont_method;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.6 2023/03/05 16:31:01 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.7 2023/03/07 05:41:18 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -368,19 +368,6 @@ int ec_GFp_simple_mul_single_ct(const EC_GROUP *, EC_POINT *r, const BIGNUM *sca
 	const EC_POINT *point, BN_CTX *);
 int ec_GFp_simple_mul_double_nonct(const EC_GROUP *, EC_POINT *r, const BIGNUM *g_scalar,
 	const BIGNUM *p_scalar, const EC_POINT *point, BN_CTX *);
-
-
-/* method functions in ecp_mont.c */
-int ec_GFp_mont_group_init(EC_GROUP *);
-int ec_GFp_mont_group_set_curve(EC_GROUP *, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-void ec_GFp_mont_group_finish(EC_GROUP *);
-void ec_GFp_mont_group_clear_finish(EC_GROUP *);
-int ec_GFp_mont_group_copy(EC_GROUP *, const EC_GROUP *);
-int ec_GFp_mont_field_mul(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *);
-int ec_GFp_mont_field_sqr(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
-int ec_GFp_mont_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
-int ec_GFp_mont_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a, BN_CTX *);
-int ec_GFp_mont_field_set_to_one(const EC_GROUP *, BIGNUM *r, BN_CTX *);
 
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
 
