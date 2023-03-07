@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.37 2022/06/27 12:31:38 tb Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.38 2023/03/07 09:27:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,14 +194,14 @@ DH_free(DH *r)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, r, &r->ex_data);
 
-	BN_clear_free(r->p);
-	BN_clear_free(r->g);
-	BN_clear_free(r->q);
-	BN_clear_free(r->j);
+	BN_free(r->p);
+	BN_free(r->g);
+	BN_free(r->q);
+	BN_free(r->j);
 	free(r->seed);
-	BN_clear_free(r->counter);
-	BN_clear_free(r->pub_key);
-	BN_clear_free(r->priv_key);
+	BN_free(r->counter);
+	BN_free(r->pub_key);
+	BN_free(r->priv_key);
 	free(r);
 }
 

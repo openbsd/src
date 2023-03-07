@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.30 2023/03/07 05:50:59 jsing Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.31 2023/03/07 09:27:10 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -107,9 +107,9 @@ ec_GF2m_simple_group_finish(EC_GROUP *group)
 static void
 ec_GF2m_simple_group_clear_finish(EC_GROUP *group)
 {
-	BN_clear_free(&group->field);
-	BN_clear_free(&group->a);
-	BN_clear_free(&group->b);
+	BN_free(&group->field);
+	BN_free(&group->a);
+	BN_free(&group->b);
 	group->poly[0] = 0;
 	group->poly[1] = 0;
 	group->poly[2] = 0;
@@ -285,9 +285,9 @@ ec_GF2m_simple_point_finish(EC_POINT *point)
 static void
 ec_GF2m_simple_point_clear_finish(EC_POINT *point)
 {
-	BN_clear_free(&point->X);
-	BN_clear_free(&point->Y);
-	BN_clear_free(&point->Z);
+	BN_free(&point->X);
+	BN_free(&point->Y);
+	BN_free(&point->Z);
 	point->Z_is_one = 0;
 }
 

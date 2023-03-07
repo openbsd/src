@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.40 2023/03/04 20:54:52 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.41 2023/03/07 09:27:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,13 +200,13 @@ DSA_free(DSA *r)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
 
-	BN_clear_free(r->p);
-	BN_clear_free(r->q);
-	BN_clear_free(r->g);
-	BN_clear_free(r->pub_key);
-	BN_clear_free(r->priv_key);
-	BN_clear_free(r->kinv);
-	BN_clear_free(r->r);
+	BN_free(r->p);
+	BN_free(r->q);
+	BN_free(r->g);
+	BN_free(r->pub_key);
+	BN_free(r->priv_key);
+	BN_free(r->kinv);
+	BN_free(r->r);
 	free(r);
 }
 

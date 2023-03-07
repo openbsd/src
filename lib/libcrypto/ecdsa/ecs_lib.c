@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.15 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.16 2023/03/07 09:27:10 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -221,7 +221,7 @@ ECDSA_size(const EC_KEY *r)
 		ret = 0;
 
  err:
-	BN_clear_free(order);
+	BN_free(order);
 
 	return ret;
 }

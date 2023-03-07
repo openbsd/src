@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.19 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.20 2023/03/07 09:27:10 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -180,10 +180,10 @@ BN_BLINDING_free(BN_BLINDING *r)
 	if (r == NULL)
 		return;
 
-	BN_clear_free(r->A);
-	BN_clear_free(r->Ai);
-	BN_clear_free(r->e);
-	BN_clear_free(r->mod);
+	BN_free(r->A);
+	BN_free(r->Ai);
+	BN_free(r->e);
+	BN_free(r->mod);
 	free(r);
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_lib.c,v 1.44 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rsa_lib.c,v 1.45 2023/03/07 09:27:10 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -200,14 +200,14 @@ RSA_free(RSA *r)
 
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, r, &r->ex_data);
 
-	BN_clear_free(r->n);
-	BN_clear_free(r->e);
-	BN_clear_free(r->d);
-	BN_clear_free(r->p);
-	BN_clear_free(r->q);
-	BN_clear_free(r->dmp1);
-	BN_clear_free(r->dmq1);
-	BN_clear_free(r->iqmp);
+	BN_free(r->n);
+	BN_free(r->e);
+	BN_free(r->d);
+	BN_free(r->p);
+	BN_free(r->q);
+	BN_free(r->dmp1);
+	BN_free(r->dmq1);
+	BN_free(r->iqmp);
 	BN_BLINDING_free(r->blinding);
 	BN_BLINDING_free(r->mt_blinding);
 	RSA_PSS_PARAMS_free(r->pss);

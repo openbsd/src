@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.39 2023/03/07 05:54:40 jsing Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.40 2023/03/07 09:27:10 jsing Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -102,9 +102,9 @@ ec_GFp_simple_group_finish(EC_GROUP *group)
 void
 ec_GFp_simple_group_clear_finish(EC_GROUP *group)
 {
-	BN_clear_free(&group->field);
-	BN_clear_free(&group->a);
-	BN_clear_free(&group->b);
+	BN_free(&group->field);
+	BN_free(&group->a);
+	BN_free(&group->b);
 }
 
 int
@@ -324,9 +324,9 @@ ec_GFp_simple_point_finish(EC_POINT *point)
 void
 ec_GFp_simple_point_clear_finish(EC_POINT *point)
 {
-	BN_clear_free(&point->X);
-	BN_clear_free(&point->Y);
-	BN_clear_free(&point->Z);
+	BN_free(&point->X);
+	BN_free(&point->Y);
+	BN_free(&point->Z);
 	point->Z_is_one = 0;
 }
 
@@ -1324,7 +1324,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *po
 		 * locally!
 		 */
 		for (i = pow2 / 2 - 1; i > 0; i--) {
-			BN_clear_free(heap[i]);
+			BN_free(heap[i]);
 		}
 		free(heap);
 	}

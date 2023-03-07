@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.48 2023/02/07 09:00:48 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.49 2023/03/07 09:27:10 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -149,8 +149,8 @@ EC_GROUP_clear_free(EC_GROUP *group)
 	EC_EX_DATA_clear_free_all_data(&group->extra_data);
 
 	EC_POINT_clear_free(group->generator);
-	BN_clear_free(&group->order);
-	BN_clear_free(&group->cofactor);
+	BN_free(&group->order);
+	BN_free(&group->cofactor);
 
 	freezero(group->seed, group->seed_len);
 	freezero(group, sizeof *group);

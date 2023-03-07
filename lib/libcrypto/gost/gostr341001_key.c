@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.11 2023/01/15 13:58:44 tb Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.12 2023/03/07 09:27:10 jsing Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -103,7 +103,7 @@ GOST_KEY_free(GOST_KEY *r)
 
 	EC_GROUP_free(r->group);
 	EC_POINT_free(r->pub_key);
-	BN_clear_free(r->priv_key);
+	BN_free(r->priv_key);
 
 	freezero(r, sizeof(GOST_KEY));
 }
@@ -256,7 +256,7 @@ GOST_KEY_get0_private_key(const GOST_KEY *key)
 int
 GOST_KEY_set_private_key(GOST_KEY *key, const BIGNUM *priv_key)
 {
-	BN_clear_free(key->priv_key);
+	BN_free(key->priv_key);
 	key->priv_key = BN_dup(priv_key);
 	return (key->priv_key == NULL) ? 0 : 1;
 }
@@ -310,12 +310,12 @@ GOST_KEY_get_size(const GOST_KEY *r)
 		return 0;
 
 	if (EC_GROUP_get_order(group, order, NULL) == 0) {
-		BN_clear_free(order);
+		BN_free(order);
 		return 0;
 	}
 
 	i = BN_num_bytes(order);
-	BN_clear_free(order);
+	BN_free(order);
 	return (i);
 }
 #endif
