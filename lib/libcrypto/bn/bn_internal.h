@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.10 2023/03/07 05:57:01 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.11 2023/03/07 09:35:55 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -347,11 +347,9 @@ static inline void
 bn_mulw_addtw(BN_ULONG a, BN_ULONG b, BN_ULONG c2, BN_ULONG c1, BN_ULONG c0,
     BN_ULONG *out_r2, BN_ULONG *out_r1, BN_ULONG *out_r0)
 {
-	BN_ULONG carry, r2, r1, r0, x1, x0;
+	BN_ULONG carry, r2, r1, r0, x1;
 
-	bn_mulw(a, b, &x1, &x0);
-	bn_addw(c0, x0, &carry, &r0);
-	x1 += carry;
+	bn_mulw_addw(a, b, c0, &x1, &r0);
 	bn_addw(c1, x1, &carry, &r1);
 	r2 = c2 + carry;
 
