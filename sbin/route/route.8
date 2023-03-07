@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.114 2023/03/07 07:54:59 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.115 2023/03/07 10:58:39 kn Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -87,6 +87,7 @@ The commands are as follows:
 .Nm route
 .Op Fl dnqtv
 .Op Fl T Ar rtable
+.Tg
 .Cm add
 .Op Ar modifier
 .Ar destination
@@ -96,6 +97,7 @@ The commands are as follows:
 .Nm route
 .Op Fl dnqtv
 .Op Fl T Ar rtable
+.Tg
 .Cm change
 .Op Ar modifier
 .Ar destination
@@ -261,6 +263,8 @@ Note that priority 1 is reserved for kernel use.
 .Nm route
 .Op Fl dnqtv
 .Op Fl T Ar rtable
+.Tg delete
+.Tg
 .Cm del Ns Op Cm ete
 .Ar destination
 .Op Fl priority Ar n
@@ -275,6 +279,7 @@ and/or a gateway.
 .It Xo
 .Nm route
 .Op Fl T Ar rtable
+.Tg
 .Cm exec
 .Op Ar command ...
 .Xc
@@ -287,6 +292,7 @@ option.
 .Nm route
 .Op Fl nqv
 .Op Fl T Ar rtable
+.Tg
 .Cm flush
 .Op Ar family
 .Op Fl iface Ar ifname
@@ -306,6 +312,7 @@ modifiers.
 .Nm route
 .Op Fl nv
 .Op Fl T Ar rtable
+.Tg
 .Cm get
 .Ar destination
 .Op Fl priority Ar n
@@ -322,6 +329,7 @@ and/or a gateway.
 .Nm
 .Op Fl n
 .Op Fl T Ar rtable
+.Tg
 .Cm monitor
 .Op Ar family
 .Op Fl iface
@@ -340,6 +348,7 @@ modifier.
 .Ic route
 .Op Fl dtv
 .Op Fl T Ar rtable
+.Tg
 .Cm nameserver
 .Ar interface
 .Op Ar address ...
@@ -355,6 +364,7 @@ a request to remove the nameservers for the given interface is sent.
 .Nm route
 .Op Fl nv
 .Op Fl T Ar rtable
+.Tg
 .Cm show
 .Op Ar family
 .Op Fl gateway
@@ -417,6 +427,7 @@ The mapping between letters and flags is:
 .It Xo
 .Ic route
 .Op Fl T Ar rtable
+.Tg
 .Cm sourceaddr
 .Op Fl inet Ns | Ns Fl inet6
 .Op Fl ifp Ar ifname
