@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.53 2021/01/27 05:03:25 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.54 2023/03/08 04:43:06 guenther Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -204,7 +204,6 @@ argtoi(int flag, char *req, char *str, int base)
 /*
  * Check the specified filesystem.
  */
-/* ARGSUSED */
 int
 checkfilesys(char *filesys, char *mntpt, long auxdata, int child)
 {

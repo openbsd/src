@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_otus.c,v 1.71 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_otus.c,v 1.72 2023/03/08 04:43:08 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2009 Damien Bergamini <damien.bergamini@free.fr>
@@ -963,7 +963,6 @@ otus_newassoc(struct ieee80211com *ic, struct ieee80211_node *ni, int isnew)
 	}
 }
 
-/* ARGSUSED */
 void
 otus_intr(struct usbd_xfer *xfer, void *priv, usbd_status status)
 {
@@ -1570,7 +1569,6 @@ otus_updateedca(struct ieee80211com *ic)
 	otus_do_async(ic->ic_softc, otus_updateedca_cb, NULL, 0);
 }
 
-/* ARGSUSED */
 void
 otus_updateedca_cb(struct otus_softc *sc, void *arg)
 {
@@ -1634,7 +1632,6 @@ otus_updateslot(struct ieee80211com *ic)
 	otus_do_async(ic->ic_softc, otus_updateslot_cb, NULL, 0);
 }
 
-/* ARGSUSED */
 void
 otus_updateslot_cb(struct otus_softc *sc, void *arg)
 {

@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.47 2022/04/06 18:59:29 naddy Exp $ */
+/* $OpenBSD: pckbd.c,v 1.48 2023/03/08 04:43:08 guenther Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1029,7 +1029,6 @@ pckbd_cnattach(pckbc_tag_t kbctag)
 	return (0);
 }
 
-/* ARGSUSED */
 void
 pckbd_cngetc(void *v, u_int *type, int *data)
 {

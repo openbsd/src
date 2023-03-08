@@ -1,4 +1,4 @@
-/*	$OpenBSD: hostapd.c,v 1.41 2019/07/03 03:24:03 deraadt Exp $	*/
+/*	$OpenBSD: hostapd.c,v 1.42 2023/03/08 04:43:13 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Reyk Floeter <reyk@openbsd.org>
@@ -291,7 +291,6 @@ hostapd_udp_init(struct hostapd_config *cfg)
 	}
 }
 
-/* ARGSUSED */
 void
 hostapd_sig_handler(int sig, short event, void *arg)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.50 2019/06/28 13:32:49 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.51 2023/03/08 04:43:14 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -637,7 +637,6 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 	exit(0);
 }
 
-/* ARGSUSED */
 void
 reap(int signo)
 {

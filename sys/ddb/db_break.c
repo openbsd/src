@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_break.c,v 1.22 2020/10/15 03:13:59 deraadt Exp $	*/
+/*	$OpenBSD: db_break.c,v 1.23 2023/03/08 04:43:07 guenther Exp $	*/
 /*	$NetBSD: db_break.c,v 1.7 1996/03/30 22:30:03 christos Exp $	*/
 
 /*
@@ -238,7 +238,6 @@ db_list_breakpoints(void)
 }
 
 /* Delete breakpoint */
-/*ARGSUSED*/
 void
 db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -246,7 +245,6 @@ db_delete_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 /* Set breakpoint with skip count */
-/*ARGSUSED*/
 void
 db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -257,7 +255,6 @@ db_breakpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 /* list breakpoints */
-/*ARGSUSED*/
 void
 db_listbreak_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {

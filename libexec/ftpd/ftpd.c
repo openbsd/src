@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.232 2021/05/23 17:01:21 jan Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.233 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -608,7 +608,6 @@ main(int argc, char *argv[])
 /*
  * Signal handlers.
  */
-/*ARGSUSED*/
 static void
 lostconn(int signo)
 {
@@ -1978,7 +1977,6 @@ nack(const char *s)
 	reply(502, "%s command not implemented.", s);
 }
 
-/* ARGSUSED */
 void
 yyerror(char *s)
 {
@@ -2157,7 +2155,6 @@ dologout(int status)
 	_exit(status);
 }
 
-/*ARGSUSED*/
 static void
 sigurg(int signo)
 {
@@ -2719,7 +2716,6 @@ out:
 	}
 }
 
-/*ARGSUSED*/
 static void
 reapchild(int signo)
 {

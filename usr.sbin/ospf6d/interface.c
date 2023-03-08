@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.29 2020/05/27 09:03:56 denis Exp $ */
+/*	$OpenBSD: interface.c,v 1.30 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -303,7 +303,6 @@ if_start(struct ospfd_conf *xconf, struct iface *iface)
 }
 
 /* timers */
-/* ARGSUSED */
 void
 if_hello_timer(int fd, short event, void *arg)
 {
@@ -336,7 +335,6 @@ if_stop_hello_timer(struct iface *iface)
 		fatal("if_stop_hello_timer");
 }
 
-/* ARGSUSED */
 void
 if_wait_timer(int fd, short event, void *arg)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.24 2022/01/28 06:33:27 guenther Exp $ */
+/*	$OpenBSD: process.c,v 1.25 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -334,7 +334,6 @@ mopNextLoad(u_char *dst, u_char *src, u_char new_count, int trans)
 			warnx("pfWrite() error");
 }
 
-/* ARGSUSED */
 void
 mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *idx, u_char *dst,
     u_char *src, int trans, u_short len)
@@ -462,7 +461,6 @@ mopProcessDL(FILE *fd, struct if_info *ii, u_char *pkt, int *idx, u_char *dst,
 	}
 }
 
-/* ARGSUSED */
 void
 mopProcessRC(FILE *fd, struct if_info *ii, u_char *pkt, int *idx, u_char dst,
     u_char *src, int trans, u_short len)

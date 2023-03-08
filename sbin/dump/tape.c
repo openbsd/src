@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.47 2021/01/21 00:16:36 mortimer Exp $	*/
+/*	$OpenBSD: tape.c,v 1.48 2023/03/08 04:43:06 guenther Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -192,7 +192,6 @@ dumpblock(daddr_t blkno, int size)
 
 int	nogripe = 0;
 
-/* ARGSUSED */
 void
 tperror(int signo)
 {
@@ -216,7 +215,6 @@ tperror(int signo)
 	Exit(X_REWRITE);
 }
 
-/* ARGSUSED */
 void
 sigpipe(int signo)
 {
@@ -255,7 +253,6 @@ do_stats(void)
  *	(derived from optr.c::timeest())
  * XXX not safe
  */
-/* ARGSUSED */
 void
 statussig(int signo)
 {
@@ -698,7 +695,6 @@ restore_check_point:
 	}
 }
 
-/* ARGSUSED */
 void
 dumpabort(int signo)
 {
@@ -729,7 +725,6 @@ Exit(int status)
 /*
  * proceed - handler for SIGUSR2, used to synchronize IO between the slaves.
  */
-/* ARGSUSED */
 void
 proceed(int signo)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_powerpc.c,v 1.12 2021/12/01 21:45:19 deraadt Exp $	*/
+/*	$OpenBSD: kvm_powerpc.c,v 1.13 2023/03/08 04:43:05 guenther Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -59,7 +59,6 @@ _kvm_freevtop(kvm_t *kd)
 	kd->vmst = NULL;
 }
 
-/*ARGSUSED*/
 int
 _kvm_initvtop(kvm_t *kd)
 {
@@ -67,7 +66,6 @@ _kvm_initvtop(kvm_t *kd)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 {
@@ -75,7 +73,6 @@ _kvm_kvatop(kvm_t *kd, u_long va, paddr_t *pa)
 	return (0);
 }
 
-/*ARGSUSED*/
 off_t
 _kvm_pa2off(kvm_t *kd, paddr_t pa)
 {

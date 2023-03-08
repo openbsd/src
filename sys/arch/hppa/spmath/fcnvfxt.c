@@ -1,4 +1,4 @@
-/*	$OpenBSD: fcnvfxt.c,v 1.8 2010/07/30 18:05:23 kettenis Exp $	*/
+/*	$OpenBSD: fcnvfxt.c,v 1.9 2023/03/08 04:43:07 guenther Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -23,7 +23,6 @@
  *  Convert single floating-point to single fixed-point format
  *  with truncated result
  */
-/*ARGSUSED*/
 int
 sgl_to_sgl_fcnvfxt(srcptr, null, dstptr, status)
 	sgl_floating_point *srcptr, *null;
@@ -86,7 +85,6 @@ sgl_to_sgl_fcnvfxt(srcptr, null, dstptr, status)
 /*
  *  Single Floating-point to Double Fixed-point
  */
-/*ARGSUSED*/
 int
 sgl_to_dbl_fcnvfxt(srcptr, null, dstptr, status)
 	sgl_floating_point *srcptr, *null;
@@ -160,7 +158,6 @@ sgl_to_dbl_fcnvfxt(srcptr, null, dstptr, status)
 /*
  *  Double Floating-point to Single Fixed-point
  */
-/*ARGSUSED*/
 int
 dbl_to_sgl_fcnvfxt(srcptr, null, dstptr, status)
 	dbl_floating_point *srcptr, *null;
@@ -224,7 +221,6 @@ dbl_to_sgl_fcnvfxt(srcptr, null, dstptr, status)
 /*
  *  Double Floating-point to Double Fixed-point
  */
-/*ARGSUSED*/
 int
 dbl_to_dbl_fcnvfxt(srcptr, null, dstptr, status)
 	dbl_floating_point *srcptr, *null;

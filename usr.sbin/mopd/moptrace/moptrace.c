@@ -1,4 +1,4 @@
-/*	$OpenBSD: moptrace.c,v 1.13 2015/02/09 23:00:14 deraadt Exp $ */
+/*	$OpenBSD: moptrace.c,v 1.14 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -112,7 +112,6 @@ Usage()
 /*
  * Process incoming packages.
  */
-/* ARGSUSED */
 void
 mopProcess(struct if_info *ii, u_char *pkt)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.39 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: popen.c,v 1.40 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -336,7 +336,6 @@ delchild(struct child *cp)
 	child_freelist = cp;
 }
 
-/* ARGSUSED */
 void
 sigchild(int signo)
 {

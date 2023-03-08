@@ -9,7 +9,7 @@
  *
  * S/Key misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.35 2019/01/25 00:19:26 millert Exp $
+ * $OpenBSD: skeysubr.c,v 1.36 2023/03/08 04:43:05 guenther Exp $
  */
 
 #include <stdio.h>
@@ -214,7 +214,6 @@ readskey(char *buf, int n)
 }
 
 /* Signal handler for trapping ^C */
-/*ARGSUSED*/
 static void
 trapped(int sig)
 {

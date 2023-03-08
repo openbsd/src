@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd.c,v 1.15 2022/12/04 23:50:51 cheloha Exp $	*/
+/*	$OpenBSD: lockd.c,v 1.16 2023/03/08 04:43:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -188,7 +188,6 @@ main(int argc, char *argv[])
 }
 
 static void
-/*ARGSUSED*/
 sigalarm_handler(int s)
 {
 	grace_expired = 1;

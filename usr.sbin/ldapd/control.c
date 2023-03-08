@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.17 2021/04/20 21:11:56 dv Exp $	*/
+/*	$OpenBSD: control.c,v 1.18 2023/03/08 04:43:13 guenther Exp $	*/
 
 /*
  * Copyright (c) 2010 Martin Hedenfalk <martin@bzero.se>
@@ -117,7 +117,6 @@ control_cleanup(struct control_sock *cs)
 	event_del(&cs->cs_evt);
 }
 
-/* ARGSUSED */
 void
 control_accept(int listenfd, short event, void *arg)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.76 2022/12/26 19:16:02 jmc Exp $	*/
+/*	$OpenBSD: extend.c,v 1.77 2023/03/08 04:43:11 guenther Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -32,7 +32,6 @@ static int	 bindkey(KEYMAP **, const char *, KCHAR *, int);
 /*
  * Insert a string, mainly for use from macros (created by selfinsert).
  */
-/* ARGSUSED */
 int
 insert(int f, int n)
 {
@@ -461,7 +460,6 @@ dobindkey(KEYMAP *map, const char *func, const char *str)
 /*
  * This function modifies the fundamental keyboard map.
  */
-/* ARGSUSED */
 int
 bindtokey(int f, int n)
 {
@@ -471,7 +469,6 @@ bindtokey(int f, int n)
 /*
  * This function modifies the current mode's keyboard map.
  */
-/* ARGSUSED */
 int
 localbind(int f, int n)
 {
@@ -482,7 +479,6 @@ localbind(int f, int n)
 /*
  * This function redefines a key in any keymap.
  */
-/* ARGSUSED */
 int
 redefine_key(int f, int n)
 {
@@ -505,14 +501,12 @@ redefine_key(int f, int n)
 	return (dobind(mp, buf, FALSE));
 }
 
-/* ARGSUSED */
 int
 unbindtokey(int f, int n)
 {
 	return (dobind(fundamental_map, "Global unset key: ", TRUE));
 }
 
-/* ARGSUSED */
 int
 localunbind(int f, int n)
 {
@@ -573,7 +567,6 @@ extend(int f, int n)
  * Use strlen for length of line, assume user is not typing in a '\0' in the
  * modeline. llen only used for foundparen() so old-school will be ok.
  */
-/* ARGSUSED */
 int
 evalexpr(int f, int n)
 {
@@ -594,7 +587,6 @@ evalexpr(int f, int n)
  * evalbuffer - evaluate the current buffer as line commands. Useful for
  * testing startup files.
  */
-/* ARGSUSED */
 int
 evalbuffer(int f, int n)
 {
@@ -625,7 +617,6 @@ evalbuffer(int f, int n)
  * evalfile - go get a file and evaluate it as line commands. You can
  *	go get your own startup file if need be.
  */
-/* ARGSUSED */
 int
 evalfile(int f, int n)
 {

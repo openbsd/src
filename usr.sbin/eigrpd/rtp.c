@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtp.c,v 1.7 2016/09/02 16:44:33 renato Exp $ */
+/*	$OpenBSD: rtp.c,v 1.8 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -248,7 +248,6 @@ rtp_send_ack(struct nbr *nbr)
 
 /* timers */
 
-/* ARGSUSED */
 static void
 rtp_retrans_timer(int fd, short event, void *arg)
 {
@@ -286,7 +285,6 @@ rtp_retrans_stop_timer(struct packet *pkt)
 		fatal("rtp_retrans_stop_timer");
 }
 
-/* ARGSUSED */
 void
 rtp_ack_timer(int fd, short event, void *arg)
 {

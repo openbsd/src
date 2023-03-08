@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.22 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.23 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -281,7 +281,6 @@ ttystop(int s)
 	errno = save_errno;
 }
 
-/*ARGSUSED*/
 void
 ttyint(int s)
 {

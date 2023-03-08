@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.73 2021/05/31 16:18:01 jan Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.74 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -1170,7 +1170,6 @@ get_line(char *s, int n)
 	return (0);
 }
 
-/*ARGSUSED*/
 void
 toolong(int signo)
 {

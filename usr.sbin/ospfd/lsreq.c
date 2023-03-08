@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsreq.c,v 1.23 2021/11/03 21:40:03 sthen Exp $ */
+/*	$OpenBSD: lsreq.c,v 1.24 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -189,7 +189,6 @@ ls_req_list_empty(struct nbr *nbr)
 }
 
 /* timers */
-/* ARGSUSED */
 void
 ls_req_tx_timer(int fd, short event, void *arg)
 {

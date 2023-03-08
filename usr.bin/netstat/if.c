@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.80 2022/09/08 13:18:47 kn Exp $	*/
+/*	$OpenBSD: if.c,v 1.81 2023/03/08 04:43:12 guenther Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -442,7 +442,6 @@ loop:
  * Called if an interval expires before sidewaysintpr has completed a loop.
  * Sets a flag to not wait for the alarm.
  */
-/* ARGSUSED */
 static void
 catchalarm(int signo)
 {

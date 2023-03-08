@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.c,v 1.112 2021/03/26 15:02:10 lum Exp $ */
+/* $OpenBSD: buffer.c,v 1.113 2023/03/08 04:43:11 guenther Exp $ */
 
 /* This file is in the public domain. */
 
@@ -29,7 +29,6 @@ static int usebufname(const char *);
 /* Flag for global working dir */
 extern int globalwd;
 
-/* ARGSUSED */
 int
 togglereadonlyall(int f, int n)
 {
@@ -51,7 +50,6 @@ togglereadonlyall(int f, int n)
 	return (TRUE);
 }
 
-/* ARGSUSED */
 int
 togglereadonly(int f, int n)
 {
@@ -102,7 +100,6 @@ usebufname(const char *bufp)
  * from some other window.  *scratch* is the default alternate
  * buffer.
  */
-/* ARGSUSED */
 int
 usebuffer(int f, int n)
 {
@@ -124,7 +121,6 @@ usebuffer(int f, int n)
 /*
  * pop to buffer asked for by the user.
  */
-/* ARGSUSED */
 int
 poptobuffer(int f, int n)
 {
@@ -163,7 +159,6 @@ poptobuffer(int f, int n)
  * if the buffer has been changed). Then free the header
  * line and the buffer header. Bound to "C-x k".
  */
-/* ARGSUSED */
 int
 killbuffer_cmd(int f, int n)
 {
@@ -255,7 +250,6 @@ killbuffer(struct buffer *bp)
 /*
  * Save some buffers - just call anycb with the arg flag.
  */
-/* ARGSUSED */
 int
 savebuffers(int f, int n)
 {
@@ -302,7 +296,6 @@ static struct KEYMAPE (2) listbufmap = {
  * then pops the data onto the screen. Bound to
  * "C-x C-b".
  */
-/* ARGSUSED */
 int
 listbuffers(int f, int n)
 {
@@ -763,7 +756,6 @@ popbuf(struct buffer *bp, int flags)
 /*
  * Insert another buffer at dot.  Very useful.
  */
-/* ARGSUSED */
 int
 bufferinsert(int f, int n)
 {
@@ -819,7 +811,6 @@ bufferinsert(int f, int n)
 /*
  * Turn off the dirty bit on this buffer.
  */
-/* ARGSUSED */
 int
 notmodified(int f, int n)
 {
@@ -919,7 +910,6 @@ checkdirty(struct buffer *bp)
 /*
  * Revert the current buffer to whatever is on disk.
  */
-/* ARGSUSED */
 int
 revertbuffer(int f, int n)
 {
@@ -975,7 +965,6 @@ dorevert(void)
 /*
  * Diff the current buffer to what is on disk.
  */
-/*ARGSUSED */
 int
 diffbuffer(int f, int n)
 {

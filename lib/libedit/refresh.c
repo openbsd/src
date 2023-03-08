@@ -1,4 +1,4 @@
-/*	$OpenBSD: refresh.c,v 1.22 2018/10/11 15:19:09 millert Exp $	*/
+/*	$OpenBSD: refresh.c,v 1.23 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: refresh.c,v 1.50 2016/05/02 16:35:17 christos Exp $	*/
 
 /*-
@@ -352,7 +352,6 @@ re_goto_bottom(EditLine *el)
  *	at dat, maximum length of d is dlen
  */
 static void
-/*ARGSUSED*/
 re_insert(EditLine *el __attribute__((__unused__)),
     wchar_t *d, int dat, int dlen, wchar_t *s, int num)
 {
@@ -403,7 +402,6 @@ re_insert(EditLine *el __attribute__((__unused__)),
  *	delete num characters d at dat, maximum length of d is dlen
  */
 static void
-/*ARGSUSED*/
 re_delete(EditLine *el __attribute__((__unused__)),
     wchar_t *d, int dat, int dlen, int num)
 {

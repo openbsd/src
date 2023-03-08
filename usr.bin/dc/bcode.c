@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.62 2017/12/29 08:16:55 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.63 2023/03/08 04:43:10 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -216,7 +216,6 @@ static const struct jump_entry jump_table_data[] = {
 #define nitems(a)	(sizeof((a)) / sizeof((a)[0]))
 #endif
 
-/* ARGSUSED */
 static void
 sighandler(int ignored)
 {

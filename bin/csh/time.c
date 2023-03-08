@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.17 2018/09/18 06:56:09 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.18 2023/03/08 04:43:04 guenther Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/03/21 13:55:25 mycroft Exp $	*/
 
 /*-
@@ -57,7 +57,6 @@ settimes(void)
  * prefix to another command
  */
 void
-/*ARGSUSED*/
 dotime(Char **v, struct command *t)
 {
     struct timespec timedol;
@@ -74,7 +73,6 @@ dotime(Char **v, struct command *t)
  * donice is only called when it on the line by itself or with a +- value
  */
 void
-/*ARGSUSED*/
 donice(Char **v, struct command *t)
 {
     Char *cp;

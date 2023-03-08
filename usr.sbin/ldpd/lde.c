@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde.c,v 1.75 2021/01/19 15:23:25 claudio Exp $ */
+/*	$OpenBSD: lde.c,v 1.76 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -65,7 +65,6 @@ struct nbr_tree		 lde_nbrs = RB_INITIALIZER(&lde_nbrs);
 static struct imsgev	*iev_ldpe;
 static struct imsgev	*iev_main;
 
-/* ARGSUSED */
 static void
 lde_sig_handler(int sig, short event, void *arg)
 {
@@ -185,7 +184,6 @@ lde_imsg_compose_ldpe(int type, uint32_t peerid, pid_t pid, void *data,
 	     -1, data, datalen));
 }
 
-/* ARGSUSED */
 static void
 lde_dispatch_imsg(int fd, short event, void *bula)
 {
@@ -376,7 +374,6 @@ lde_dispatch_imsg(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 static void
 lde_dispatch_parent(int fd, short event, void *bula)
 {

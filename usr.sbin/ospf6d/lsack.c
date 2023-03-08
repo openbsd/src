@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsack.c,v 1.9 2021/11/03 21:40:03 sthen Exp $ */
+/*	$OpenBSD: lsack.c,v 1.10 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -231,7 +231,6 @@ ls_ack_list_empty(struct iface *iface)
 }
 
 /* timers */
-/* ARGSUSED */
 void
 ls_ack_tx_timer(int fd, short event, void *arg)
 {

@@ -1,4 +1,4 @@
-/* $OpenBSD: undo.c,v 1.58 2016/09/05 08:10:58 lum Exp $ */
+/* $OpenBSD: undo.c,v 1.59 2023/03/08 04:43:11 guenther Exp $ */
 /*
  * This file is in the public domain
  */
@@ -381,7 +381,6 @@ undo_add_change(struct line *lp, int offset, int size)
 /*
  * Show the undo records for the current buffer in a new buffer.
  */
-/* ARGSUSED */
 int
 undo_dump(int f, int n)
 {
@@ -479,7 +478,6 @@ undo_dump(int f, int n)
  * two undo actions, we make it point back at the topmost record. This is
  * how we handle redoing.
  */
-/* ARGSUSED */
 int
 undo(int f, int n)
 {

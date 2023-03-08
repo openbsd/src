@@ -1,4 +1,4 @@
-/*	$OpenBSD: terminal.c,v 1.19 2019/08/07 04:22:16 yasuoka Exp $	*/
+/*	$OpenBSD: terminal.c,v 1.20 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: terminal.c,v 1.17 2016/02/15 15:35:03 christos Exp $	*/
 
 /*-
@@ -1268,7 +1268,6 @@ terminal_writec(EditLine *el, wint_t c)
  *	Print the current termcap characteristics
  */
 protected int
-/*ARGSUSED*/
 terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
     const wchar_t **argv __attribute__((__unused__)))
 {
@@ -1310,7 +1309,6 @@ terminal_telltc(EditLine *el, int argc __attribute__((__unused__)),
  *	Change the current terminal characteristics
  */
 protected int
-/*ARGSUSED*/
 terminal_settc(EditLine *el, int argc __attribute__((__unused__)),
     const wchar_t **argv)
 {
@@ -1389,7 +1387,6 @@ terminal_settc(EditLine *el, int argc __attribute__((__unused__)),
  *	Get the current terminal characteristics
  */
 protected int
-/*ARGSUSED*/
 terminal_gettc(EditLine *el, int argc __attribute__((__unused__)), char **argv)
 {
 	const struct termcapstr *ts;
@@ -1443,7 +1440,6 @@ terminal_gettc(EditLine *el, int argc __attribute__((__unused__)), char **argv)
  *	Print the termcap string out with variable substitution
  */
 protected int
-/*ARGSUSED*/
 terminal_echotc(EditLine *el, int argc __attribute__((__unused__)),
     const wchar_t **argv)
 {

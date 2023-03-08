@@ -1,4 +1,4 @@
-/*	$OpenBSD: vi.c,v 1.28 2019/09/04 00:00:49 asou Exp $	*/
+/*	$OpenBSD: vi.c,v 1.29 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: vi.c,v 1.33 2011/02/17 16:44:48 joerg Exp $	*/
 
 /*-
@@ -122,7 +122,6 @@ cv_paste(EditLine *el, wint_t c)
  *	[p]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_paste_next(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -135,7 +134,6 @@ vi_paste_next(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[P]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_paste_prev(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -148,7 +146,6 @@ vi_paste_prev(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[B]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_prev_big_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -173,7 +170,6 @@ vi_prev_big_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[b]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -198,7 +194,6 @@ vi_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[W]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_next_big_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -222,7 +217,6 @@ vi_next_big_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[w]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_next_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -277,7 +271,6 @@ vi_change_case(EditLine *el, wint_t c)
  *	[c]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_change_meta(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -294,7 +287,6 @@ vi_change_meta(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[I]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_insert_at_bol(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -310,7 +302,6 @@ vi_insert_at_bol(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[r]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_replace_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -329,7 +320,6 @@ vi_replace_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[R]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_replace_mode(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -345,7 +335,6 @@ vi_replace_mode(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[s]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_substitute_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -360,7 +349,6 @@ vi_substitute_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[S]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_substitute_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -378,7 +366,6 @@ vi_substitute_line(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[C]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_change_to_eol(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -396,7 +383,6 @@ vi_change_to_eol(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[i]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_insert(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -411,7 +397,6 @@ vi_insert(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[a]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_add(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	int ret;
@@ -436,7 +421,6 @@ vi_add(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[A]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_add_at_eol(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -452,7 +436,6 @@ vi_add_at_eol(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[d]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_delete_meta(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -465,7 +448,6 @@ vi_delete_meta(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[E]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_end_big_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -489,7 +471,6 @@ vi_end_big_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[e]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_end_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -513,7 +494,6 @@ vi_end_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[u]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_undo(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	c_undo_t un = el->el_chared.c_undo;
@@ -540,7 +520,6 @@ vi_undo(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[<ESC>]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_command_mode(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -585,7 +564,6 @@ vi_zero(EditLine *el, wint_t c)
  *	[^H] in insert mode only
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_delete_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -603,7 +581,6 @@ vi_delete_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^D]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_list_or_eof(EditLine *el, wint_t c)
 {
 
@@ -640,7 +617,6 @@ vi_list_or_eof(EditLine *el, wint_t c)
  *	[^U]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_kill_line_prev(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *kp, *cp;
@@ -661,7 +637,6 @@ vi_kill_line_prev(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[?]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_search_prev(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -674,7 +649,6 @@ vi_search_prev(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[/]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_search_next(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -687,7 +661,6 @@ vi_search_next(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[n]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_repeat_search_next(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -702,7 +675,6 @@ vi_repeat_search_next(EditLine *el, wint_t c __attribute__((__unused__)))
  *	Vi repeat current search in the opposite search direction
  *	[N]
  */
-/*ARGSUSED*/
 protected el_action_t
 vi_repeat_search_prev(EditLine *el, wint_t c __attribute__((__unused__)))
 {
@@ -721,7 +693,6 @@ vi_repeat_search_prev(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[f]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_next_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	return cv_csearch(el, CHAR_FWD, -1, el->el_state.argument, 0);
@@ -733,7 +704,6 @@ vi_next_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[F]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	return cv_csearch(el, CHAR_BACK, -1, el->el_state.argument, 0);
@@ -745,7 +715,6 @@ vi_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[t]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_to_next_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	return cv_csearch(el, CHAR_FWD, -1, el->el_state.argument, 1);
@@ -757,7 +726,6 @@ vi_to_next_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[T]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_to_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	return cv_csearch(el, CHAR_BACK, -1, el->el_state.argument, 1);
@@ -769,7 +737,6 @@ vi_to_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[;]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_repeat_next_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -783,7 +750,6 @@ vi_repeat_next_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[,]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_repeat_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	el_action_t r;
@@ -801,7 +767,6 @@ vi_repeat_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[%]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_match(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	const wchar_t match_chars[] = L"()[]{}";
@@ -848,7 +813,6 @@ vi_match(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[U]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_undo_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -862,7 +826,6 @@ vi_undo_line(EditLine *el, wint_t c __attribute__((__unused__)))
  * NB netbsd vi goes to screen column 'n', posix says nth character
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_to_column(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -876,7 +839,6 @@ vi_to_column(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[Y]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_yank_end(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -890,7 +852,6 @@ vi_yank_end(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[y]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_yank(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -902,7 +863,6 @@ vi_yank(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[#]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_comment_out(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -924,7 +884,6 @@ __weakref_visible char *my_get_alias_text(const char *)
     __weak_reference(get_alias_text);
 #endif
 protected el_action_t
-/*ARGSUSED*/
 vi_alias(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 #ifdef __weak_reference
@@ -954,7 +913,6 @@ vi_alias(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[G]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_to_history_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	int sv_event_no = el->el_history.eventno;
@@ -999,7 +957,6 @@ vi_to_history_line(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[v]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_histedit(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	int fd;
@@ -1088,7 +1045,6 @@ vi_histedit(EditLine *el, wint_t c __attribute__((__unused__)))
  * '_' in vi means 'entire current line', so 'cc' is a synonym for 'c_'
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_history_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	const wchar_t *wp = HIST_FIRST(el);
@@ -1138,7 +1094,6 @@ vi_history_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[.]
  */
 protected el_action_t
-/*ARGSUSED*/
 vi_redo(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	c_redo_t *r = &el->el_chared.c_redo;

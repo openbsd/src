@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.19 2017/11/17 20:48:30 jca Exp $	*/
+/*	$OpenBSD: chap.c,v 1.20 2023/03/08 04:43:14 guenther Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -768,7 +768,6 @@ ChapGenChallenge(cstate)
  * ChapSendResponse - send a response packet with values as specified
  * in *cstate.
  */
-/* ARGSUSED */
 static void
 ChapSendResponse(cstate)
     chap_state *cstate;

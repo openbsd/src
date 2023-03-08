@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_dual.c,v 1.30 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: rde_dual.c,v 1.31 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -483,7 +483,6 @@ reply_outstanding_remove(struct reply_node *reply)
 	free(reply);
 }
 
-/* ARGSUSED */
 static void
 reply_active_timer(int fd, short event, void *arg)
 {
@@ -516,7 +515,6 @@ reply_active_stop_timer(struct reply_node *reply)
 		fatal("reply_active_stop_timer");
 }
 
-/* ARGSUSED */
 static void
 reply_sia_timer(int fd, short event, void *arg)
 {

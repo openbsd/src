@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpe.c,v 1.87 2022/12/20 20:06:47 martijn Exp $	*/
+/*	$OpenBSD: snmpe.c,v 1.88 2023/03/08 04:43:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -96,7 +96,6 @@ snmpe(struct privsep *ps, struct privsep_proc *p)
 	proc_run(ps, p, procs, nitems(procs), snmpe_init, NULL);
 }
 
-/* ARGSUSED */
 void
 snmpe_init(struct privsep *ps, struct privsep_proc *p, void *arg)
 {

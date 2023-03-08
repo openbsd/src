@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.30 2020/10/15 03:14:00 deraadt Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.31 2023/03/08 04:43:07 guenther Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /*
@@ -224,7 +224,6 @@ db_single_step(db_regs_t *regs)
 }
 
 /* single-step */
-/*ARGSUSED*/
 void
 db_single_step_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -245,7 +244,6 @@ db_single_step_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 /* trace and print until call/return */
-/*ARGSUSED*/
 void
 db_trace_until_call_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif)
@@ -262,7 +260,6 @@ db_trace_until_call_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 	db_cmd_loop_done = 1;
 }
 
-/*ARGSUSED*/
 void
 db_trace_until_matching_cmd(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif)
@@ -281,7 +278,6 @@ db_trace_until_matching_cmd(db_expr_t addr, int have_addr, db_expr_t count,
 }
 
 /* continue */
-/*ARGSUSED*/
 void
 db_continue_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.29 2021/01/02 20:32:20 millert Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.30 2023/03/08 04:43:05 guenther Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001, 2004 Todd C. Miller <millert@openbsd.org>
@@ -237,7 +237,6 @@ main(int argc, char *argv[])
 	exit(1);
 }
 
-/* ARGSUSED */
 void
 quit(int signo)
 {
@@ -245,7 +244,6 @@ quit(int signo)
 	_exit(1);
 }
 
-/* ARGSUSED */
 void
 suspend(int signo)
 {

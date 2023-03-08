@@ -1,4 +1,4 @@
-/*	$OpenBSD: lde_lib.c,v 1.70 2022/12/28 21:30:17 jmc Exp $ */
+/*	$OpenBSD: lde_lib.c,v 1.71 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -885,7 +885,6 @@ lde_wildcard_apply(struct map *wcard, struct fec *fec, struct lde_map *me)
 
 /* garbage collector timer: timer to remove dead entries from the LIB */
 
-/* ARGSUSED */
 void
 lde_gc_timer(int fd, short event, void *arg)
 {

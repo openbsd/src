@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.90 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.91 2023/03/08 04:43:09 guenther Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -88,7 +88,6 @@ ext2fs_create(void *v)
 /*
  * Mknod vnode call
  */
-/* ARGSUSED */
 int
 ext2fs_mknod(void *v)
 {
@@ -128,7 +127,6 @@ ext2fs_mknod(void *v)
  *
  * Just check the APPEND flag.
  */
-/* ARGSUSED */
 int
 ext2fs_open(void *v)
 {
@@ -159,7 +157,6 @@ ext2fs_access(void *v)
 			ip->i_e2fs_gid, mode, ap->a_cred));
 }
 
-/* ARGSUSED */
 int
 ext2fs_getattr(void *v)
 {
@@ -1215,7 +1212,6 @@ bad:
 /*
  * Synch an open file.
  */
-/* ARGSUSED */
 int
 ext2fs_fsync(void *v)
 {

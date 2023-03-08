@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.34 2020/08/30 22:23:47 mortimer Exp $	*/
+/*	$OpenBSD: proc.c,v 1.35 2023/03/08 04:43:04 guenther Exp $	*/
 /*	$NetBSD: proc.c,v 1.9 1995/04/29 23:21:33 mycroft Exp $	*/
 
 /*-
@@ -344,7 +344,6 @@ pjwait(struct process *pp)
  * dowait - wait for all processes to finish
  */
 void
-/*ARGSUSED*/
 dowait(Char **v, struct command *t)
 {
     struct process *pp;
@@ -831,7 +830,6 @@ ptprint(struct process *tp)
  * dojobs - print all jobs
  */
 void
-/*ARGSUSED*/
 dojobs(Char **v, struct command *t)
 {
     struct process *pp;
@@ -859,7 +857,6 @@ dojobs(Char **v, struct command *t)
  * dofg - builtin - put the job into the foreground
  */
 void
-/*ARGSUSED*/
 dofg(Char **v, struct command *t)
 {
     struct process *pp;
@@ -877,7 +874,6 @@ dofg(Char **v, struct command *t)
  * %... - builtin - put the job into the foreground
  */
 void
-/*ARGSUSED*/
 dofg1(Char **v, struct command *t)
 {
     struct process *pp;
@@ -892,7 +888,6 @@ dofg1(Char **v, struct command *t)
  * dobg - builtin - put the job into the background
  */
 void
-/*ARGSUSED*/
 dobg(Char **v, struct command *t)
 {
     struct process *pp;
@@ -909,7 +904,6 @@ dobg(Char **v, struct command *t)
  * %... & - builtin - put the job into the background
  */
 void
-/*ARGSUSED*/
 dobg1(Char **v, struct command *t)
 {
     struct process *pp;
@@ -922,7 +916,6 @@ dobg1(Char **v, struct command *t)
  * dostop - builtin - stop the job
  */
 void
-/*ARGSUSED*/
 dostop(Char **v, struct command *t)
 {
     pkill(++v, SIGSTOP);
@@ -932,7 +925,6 @@ dostop(Char **v, struct command *t)
  * dokill - builtin - superset of kill (1)
  */
 void
-/*ARGSUSED*/
 dokill(Char **v, struct command *t)
 {
     int signum = SIGTERM;
@@ -1218,7 +1210,6 @@ pgetcurr(struct process *pp)
  * donotify - flag the job so as to report termination asynchronously
  */
 void
-/*ARGSUSED*/
 donotify(Char **v, struct command *t)
 {
     struct process *pp;

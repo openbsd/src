@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vfsops.c,v 1.96 2022/09/01 13:45:26 krw Exp $	*/
+/*	$OpenBSD: cd9660_vfsops.c,v 1.97 2023/03/08 04:43:08 guenther Exp $	*/
 /*	$NetBSD: cd9660_vfsops.c,v 1.26 1997/06/13 15:38:58 pk Exp $	*/
 
 /*-
@@ -522,7 +522,6 @@ out:
  * Make a filesystem operational.
  * Nothing to do at the moment.
  */
-/* ARGSUSED */
 int
 cd9660_start(struct mount *mp, int flags, struct proc *p)
 {
@@ -582,7 +581,6 @@ cd9660_root(struct mount *mp, struct vnode **vpp)
 /*
  * Do operations associated with quotas, not supported
  */
-/* ARGSUSED */
 int
 cd9660_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg,
     struct proc *p)
@@ -614,7 +612,6 @@ cd9660_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 cd9660_sync(struct mount *mp, int waitfor, int stall, struct ucred *cred,
     struct proc *p)
@@ -639,7 +636,6 @@ struct ifid {
 	long	ifid_start;
 };
 
-/* ARGSUSED */
 int
 cd9660_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
@@ -904,7 +900,6 @@ retry:
 /*
  * Vnode pointer to File handle
  */
-/* ARGSUSED */
 int
 cd9660_vptofh(struct vnode *vp, struct fid *fhp)
 {

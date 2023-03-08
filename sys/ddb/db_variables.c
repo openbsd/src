@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_variables.c,v 1.21 2020/10/15 03:14:00 deraadt Exp $	*/
+/*	$OpenBSD: db_variables.c,v 1.22 2023/03/08 04:43:07 guenther Exp $	*/
 /*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
 
 /*
@@ -124,7 +124,6 @@ db_write_variable(struct db_variable *vp, db_expr_t *valuep)
 		(*func)(vp, valuep, DB_VAR_SET);
 }
 
-/*ARGSUSED*/
 void
 db_set_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {

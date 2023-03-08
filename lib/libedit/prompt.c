@@ -1,4 +1,4 @@
-/*	$OpenBSD: prompt.c,v 1.13 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: prompt.c,v 1.14 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: prompt.c,v 1.25 2016/04/11 18:56:31 christos Exp $	*/
 
 /*-
@@ -48,7 +48,6 @@ static wchar_t	*prompt_default_r(EditLine *);
  *	Just a default prompt, in case the user did not provide one
  */
 static wchar_t *
-/*ARGSUSED*/
 prompt_default(EditLine *el __attribute__((__unused__)))
 {
 	static wchar_t a[3] = L"? ";
@@ -61,7 +60,6 @@ prompt_default(EditLine *el __attribute__((__unused__)))
  *	Just a default rprompt, in case the user did not provide one
  */
 static wchar_t *
-/*ARGSUSED*/
 prompt_default_r(EditLine *el __attribute__((__unused__)))
 {
 	static wchar_t a[1] = L"";
@@ -130,7 +128,6 @@ prompt_init(EditLine *el)
  *	Clean up the prompt stuff
  */
 protected void
-/*ARGSUSED*/
 prompt_end(EditLine *el __attribute__((__unused__)))
 {
 }

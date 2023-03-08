@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.31 2021/01/21 00:16:36 mortimer Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.32 2023/03/08 04:43:06 guenther Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -98,7 +98,6 @@ rmthost(char *host)
 	return (1);
 }
 
-/* ARGSUSED */
 static void
 rmtconnaborted(int signo)
 {

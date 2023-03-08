@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.22 2016/05/22 23:09:56 schwarze Exp $	*/
+/*	$OpenBSD: common.c,v 1.23 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: common.c,v 1.24 2009/12/30 22:37:40 christos Exp $	*/
 
 /*-
@@ -52,7 +52,6 @@
  *	[^D]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_end_of_file(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -109,7 +108,6 @@ ed_insert(EditLine *el, wint_t c)
  *	[M-^?] [^W]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_delete_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *cp, *p, *kp;
@@ -137,7 +135,6 @@ ed_delete_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^D] [x]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_delete_next_char(EditLine *el, wint_t c)
 {
 #ifdef notdef			/* XXX */
@@ -187,7 +184,6 @@ ed_delete_next_char(EditLine *el, wint_t c)
  *	[^K] [^K]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_kill_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *kp, *cp;
@@ -208,7 +204,6 @@ ed_kill_line(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^E] [^E]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_move_to_end(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -231,7 +226,6 @@ ed_move_to_end(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^A] [^A]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_move_to_beg(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -280,7 +274,6 @@ ed_transpose_chars(EditLine *el, wint_t c)
  *	[^F] [^F]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_next_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *lim = el->el_line.lastchar;
@@ -309,7 +302,6 @@ ed_next_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[M-b] [b]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -335,7 +327,6 @@ ed_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^B] [^B]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -430,7 +421,6 @@ ed_argument_digit(EditLine *el, wint_t c)
  *	Bound to keys that are not assigned
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_unassigned(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -443,7 +433,6 @@ ed_unassigned(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^C ^O ^Q ^S ^Z ^\ ^]] [^C ^O ^Q ^S ^\]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_ignore(EditLine *el __attribute__((__unused__)),
 	      wint_t c __attribute__((__unused__)))
 {
@@ -457,7 +446,6 @@ ed_ignore(EditLine *el __attribute__((__unused__)),
  *	[^J]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_newline(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -473,7 +461,6 @@ ed_newline(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^?]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_delete_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -493,7 +480,6 @@ ed_delete_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^L]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_clear_screen(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -508,7 +494,6 @@ ed_clear_screen(EditLine *el, wint_t c __attribute__((__unused__)))
  *	^R
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_redisplay(EditLine *el __attribute__((__unused__)),
 	     wint_t c __attribute__((__unused__)))
 {
@@ -522,7 +507,6 @@ ed_redisplay(EditLine *el __attribute__((__unused__)),
  *	[^G]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_start_over(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -536,7 +520,6 @@ ed_start_over(EditLine *el, wint_t c __attribute__((__unused__)))
  *	Placeholder for external keys
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_sequence_lead_in(EditLine *el __attribute__((__unused__)),
 		    wint_t c __attribute__((__unused__)))
 {
@@ -550,7 +533,6 @@ ed_sequence_lead_in(EditLine *el __attribute__((__unused__)),
  *	[^P] [k]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	char beep = 0;
@@ -587,7 +569,6 @@ ed_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^N] [j]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_next_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	el_action_t beep = CC_REFRESH, rval;
@@ -614,7 +595,6 @@ ed_next_history(EditLine *el, wint_t c __attribute__((__unused__)))
  *	next search history [M-P] [K]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	const wchar_t *hp;
@@ -682,7 +662,6 @@ ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[M-N] [J]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_search_next_history(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	const wchar_t *hp;
@@ -736,7 +715,6 @@ ed_search_next_history(EditLine *el, wint_t c __attribute__((__unused__)))
  *	Could be [k] [^p]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_prev_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *ptr;
@@ -779,7 +757,6 @@ ed_prev_line(EditLine *el, wint_t c __attribute__((__unused__)))
  *	Could be [j] [^n]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_next_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *ptr;
@@ -813,7 +790,6 @@ ed_next_line(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[M-X] [:]
  */
 protected el_action_t
-/*ARGSUSED*/
 ed_command(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t tmpbuf[EL_BUFSIZ];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.110 2022/12/04 23:50:50 cheloha Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.111 2023/03/08 04:43:13 guenther Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -75,7 +75,6 @@ void do_etc_file(const char *file);
 void error(const char *fmt, const char *arg);
 void set_driver_messages(int fd, int mode);
 
-/* ARGSUSED */
 void
 sigexit(int signo)
 {

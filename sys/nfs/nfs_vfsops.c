@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vfsops.c,v 1.127 2022/08/12 14:30:53 visa Exp $	*/
+/*	$OpenBSD: nfs_vfsops.c,v 1.128 2023/03/08 04:43:09 guenther Exp $	*/
 /*	$NetBSD: nfs_vfsops.c,v 1.46.4.1 1996/05/25 22:40:35 fvdl Exp $	*/
 
 /*
@@ -550,7 +550,6 @@ nfs_decode_args(struct nfsmount *nmp, struct nfs_args *argp,
  * doing the sockargs() call because sockargs() allocates an mbuf and
  * an error after that means that I have to release the mbuf.
  */
-/* ARGSUSED */
 int
 nfs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
@@ -835,7 +834,6 @@ loop:
  * NFS flat namespace lookup.
  * Currently unsupported.
  */
-/* ARGSUSED */
 int
 nfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
@@ -899,7 +897,6 @@ nfs_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 /*
  * At this point, this should never happen
  */
-/* ARGSUSED */
 int
 nfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
@@ -909,7 +906,6 @@ nfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 /*
  * Vnode pointer to File handle, should never happen either
  */
-/* ARGSUSED */
 int
 nfs_vptofh(struct vnode *vp, struct fid *fhp)
 {
@@ -919,7 +915,6 @@ nfs_vptofh(struct vnode *vp, struct fid *fhp)
 /*
  * Vfs start routine, a no-op.
  */
-/* ARGSUSED */
 int
 nfs_start(struct mount *mp, int flags, struct proc *p)
 {
@@ -929,7 +924,6 @@ nfs_start(struct mount *mp, int flags, struct proc *p)
 /*
  * Do operations associated with quotas, not supported
  */
-/* ARGSUSED */
 int
 nfs_quotactl(struct mount *mp, int cmd, uid_t uid, caddr_t arg, struct proc *p)
 {

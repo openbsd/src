@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.18 2021/11/03 21:40:03 sthen Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.19 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -387,7 +387,6 @@ nbr_find_id(struct iface *iface, u_int32_t rtr_id)
 }
 
 /* timers */
-/* ARGSUSED */
 void
 nbr_itimer(int fd, short event, void *arg)
 {
@@ -430,7 +429,6 @@ nbr_reset_itimer(struct nbr *nbr)
 		fatal("nbr_reset_itimer");
 }
 
-/* ARGSUSED */
 void
 nbr_adj_timer(int fd, short event, void *arg)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpd.c,v 1.68 2021/09/06 13:32:18 deraadt Exp $ */
+/*	$OpenBSD: ldpd.c,v 1.69 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -73,7 +73,6 @@ static struct imsgev	*iev_lde;
 static pid_t		 ldpe_pid;
 static pid_t		 lde_pid;
 
-/* ARGSUSED */
 static void
 main_sig_handler(int sig, short event, void *arg)
 {
@@ -369,7 +368,6 @@ start_child(enum ldpd_process p, char *argv0, int fd, int debug, int verbose,
 }
 
 /* imsg handling */
-/* ARGSUSED */
 static void
 main_dispatch_ldpe(int fd, short event, void *bula)
 {
@@ -450,7 +448,6 @@ main_dispatch_ldpe(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 static void
 main_dispatch_lde(int fd, short event, void *bula)
 {

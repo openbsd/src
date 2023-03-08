@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.44 2022/05/24 16:24:31 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.45 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -27,7 +27,6 @@
  * position display; it does not truncate just because the screen does.
  * This is normally bound to "C-x =".
  */
-/* ARGSUSED */
 int
 showcpos(int f, int n)
 {
@@ -126,7 +125,6 @@ getcolpos(struct mgwin *wp)
  * Normally bound to "C-t".  This always works within a line, so "WFEDIT"
  * is good enough.
  */
-/* ARGSUSED */
 int
 twiddle(int f, int n)
 {
@@ -180,7 +178,6 @@ twiddle(int f, int n)
  * subcommand processors.  They even handle the looping.  Normally this
  * is bound to "C-o".
  */
-/* ARGSUSED */
 int
 openline(int f, int n)
 {
@@ -208,7 +205,6 @@ openline(int f, int n)
 /*
  * Insert a newline.
  */
-/* ARGSUSED */
 int
 enewline(int f, int n)
 {
@@ -232,7 +228,6 @@ enewline(int f, int n)
  * the line. Normally this command is bound to "C-x C-o". Any argument is
  * ignored.
  */
-/* ARGSUSED */
 int
 deblank(int f, int n)
 {
@@ -269,7 +264,6 @@ justone(int f, int n)
 /*
  * Delete any whitespace around dot.
  */
-/* ARGSUSED */
 int
 delwhite(int f, int n)
 {
@@ -352,7 +346,6 @@ deltrailwhite(int f, int n)
  * right number of tabs and spaces.  Return TRUE if all ok.  Return FALSE if
  * one of the subcommands failed. Normally bound to "C-m".
  */
-/* ARGSUSED */
 int
 lfindent(int f, int n)
 {
@@ -430,7 +423,6 @@ indent(int f, int n)
  * If any argument is present, it kills rather than deletes, to prevent loss
  * of text if typed with a big argument.  Normally bound to "C-d".
  */
-/* ARGSUSED */
 int
 forwdel(int f, int n)
 {
@@ -452,7 +444,6 @@ forwdel(int f, int n)
  * other functions.  Just move the cursor back, and delete forwards.  Like
  * delete forward, this actually does a kill if presented with an argument.
  */
-/* ARGSUSED */
 int
 backdel(int f, int n)
 {
@@ -474,7 +465,6 @@ backdel(int f, int n)
 }
 
 #ifdef	NOTAB
-/* ARGSUSED */
 int
 space_to_tabstop(int f, int n)
 {

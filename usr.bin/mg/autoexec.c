@@ -1,4 +1,4 @@
-/* $OpenBSD: autoexec.c,v 1.18 2021/04/21 14:45:28 lum Exp $ */
+/* $OpenBSD: autoexec.c,v 1.19 2023/03/08 04:43:11 guenther Exp $ */
 /* this file is in the public domain */
 /* Author: Vincent Labrecque <vincent@openbsd.org>	April 2002 */
 
@@ -93,7 +93,6 @@ add_autoexec(const char *pattern, const char *func)
  * function to execute when a file matching the specified pattern
  * is read into a buffer.
 */
-/* ARGSUSED */
 int
 auto_execute(int f, int n)
 {

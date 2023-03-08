@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.101 2022/10/15 17:01:14 op Exp $	*/
+/*	$OpenBSD: dired.c,v 1.102 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -228,7 +228,6 @@ dired_init(void)
 	dobindkey(fundamental_map, "dired", "^Xd");
 }
 
-/* ARGSUSED */
 int
 dired(int f, int n)
 {
@@ -257,7 +256,6 @@ dired(int f, int n)
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
-/* ARGSUSED */
 int
 d_otherwindow(int f, int n)
 {
@@ -289,7 +287,6 @@ d_otherwindow(int f, int n)
 	return (TRUE);
 }
 
-/* ARGSUSED */
 int
 d_del(int f, int n)
 {
@@ -309,7 +306,6 @@ d_del(int f, int n)
 	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
 }
 
-/* ARGSUSED */
 int
 d_undel(int f, int n)
 {
@@ -327,7 +323,6 @@ d_undel(int f, int n)
 	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
 }
 
-/* ARGSUSED */
 int
 d_undelbak(int f, int n)
 {
@@ -345,7 +340,6 @@ d_undelbak(int f, int n)
 	return (d_warpdot(curwp->w_dotp, &curwp->w_doto));
 }
 
-/* ARGSUSED */
 int
 d_findfile(int f, int n)
 {
@@ -369,7 +363,6 @@ d_findfile(int f, int n)
 	return (readin(fname));
 }
 
-/* ARGSUSED */
 int
 d_ffotherwindow(int f, int n)
 {
@@ -391,7 +384,6 @@ d_ffotherwindow(int f, int n)
 	return (readin(fname));
 }
 
-/* ARGSUSED */
 int
 d_expunge(int f, int n)
 {
@@ -448,7 +440,6 @@ d_expunge(int f, int n)
 	return (TRUE);
 }
 
-/* ARGSUSED */
 int
 d_copy(int f, int n)
 {
@@ -507,7 +498,6 @@ d_copy(int f, int n)
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
-/* ARGSUSED */
 int
 d_rename(int f, int n)
 {
@@ -567,7 +557,6 @@ d_rename(int f, int n)
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
-/* ARGSUSED */
 void
 reaper(int signo __attribute__((unused)))
 {
@@ -581,7 +570,6 @@ reaper(int signo __attribute__((unused)))
 /*
  * Pipe the currently selected file through a shell command.
  */
-/* ARGSUSED */
 int
 d_shell_command(int f, int n)
 {
@@ -730,7 +718,6 @@ out:
 	return ret;
 }
 
-/* ARGSUSED */
 int
 d_create_directory(int f, int n)
 {
@@ -747,7 +734,6 @@ d_create_directory(int f, int n)
 	return (showbuffer(bp, curwp, WFFULL | WFMODE));
 }
 
-/* ARGSUSED */
 int
 d_killbuffer_cmd(int f, int n)
 {

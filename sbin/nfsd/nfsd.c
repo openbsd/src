@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.40 2020/01/22 06:24:08 tedu Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.41 2023/03/08 04:43:06 guenther Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -329,7 +329,6 @@ usage(void)
 	exit(1);
 }
 
-/* ARGSUSED */
 void
 nonfs(int signo)
 {
@@ -340,7 +339,6 @@ nonfs(int signo)
 	errno = save_errno;
 }
 
-/* ARGSUSED */
 void
 reapchild(int signo)
 {

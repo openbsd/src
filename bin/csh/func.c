@@ -1,4 +1,4 @@
-/*    $OpenBSD: func.c,v 1.40 2021/07/02 15:34:27 deraadt Exp $       */
+/*    $OpenBSD: func.c,v 1.41 2023/03/08 04:43:04 guenther Exp $       */
 /*    $NetBSD: func.c,v 1.11 1996/02/09 02:28:29 christos Exp $       */
 
 /*-
@@ -114,7 +114,6 @@ func(struct command *t, struct biltins *bp)
 }
 
 void
-/*ARGSUSED*/
 doonintr(Char **v, struct command *t)
 {
     Char *cp;
@@ -148,7 +147,6 @@ doonintr(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 donohup(Char **v, struct command *t)
 {
     if (intty)
@@ -159,7 +157,6 @@ donohup(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 dozip(Char **v, struct command *t)
 {
     ;
@@ -172,7 +169,6 @@ prvars(void)
 }
 
 void
-/*ARGSUSED*/
 doalias(Char **v, struct command *t)
 {
     struct varent *vp;
@@ -199,14 +195,12 @@ doalias(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 unalias(Char **v, struct command *t)
 {
     unset1(v, &aliases);
 }
 
 void
-/*ARGSUSED*/
 dologout(Char **v, struct command *t)
 {
     islogin();
@@ -214,7 +208,6 @@ dologout(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 dologin(Char **v, struct command *t)
 {
     islogin();
@@ -287,14 +280,12 @@ reexecute(struct command *kp)
 }
 
 void
-/*ARGSUSED*/
 doelse(Char **v, struct command *t)
 {
     search(T_ELSE, 0, NULL);
 }
 
 void
-/*ARGSUSED*/
 dogoto(Char **v, struct command *t)
 {
     Char   *lp;
@@ -327,7 +318,6 @@ gotolab(Char *lab)
 }
 
 void
-/*ARGSUSED*/
 doswitch(Char **v, struct command *t)
 {
     Char *cp, *lp;
@@ -345,7 +335,6 @@ doswitch(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 dobreak(Char **v, struct command *t)
 {
     if (whyles)
@@ -355,7 +344,6 @@ dobreak(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 doexit(Char **v, struct command *t)
 {
     if (chkstop == 0 && (intty || intact) && evalvec == 0)
@@ -375,7 +363,6 @@ doexit(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 doforeach(Char **v, struct command *t)
 {
     Char *cp, *sp;
@@ -417,7 +404,6 @@ doforeach(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 dowhile(Char **v, struct command *t)
 {
     int status;
@@ -477,7 +463,6 @@ preread(void)
 }
 
 void
-/*ARGSUSED*/
 doend(Char **v, struct command *t)
 {
     if (!whyles)
@@ -487,7 +472,6 @@ doend(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 docontin(Char **v, struct command *t)
 {
     if (!whyles)
@@ -541,7 +525,6 @@ dorepeat(Char **v, struct command *kp)
 }
 
 void
-/*ARGSUSED*/
 doswbrk(Char **v, struct command *t)
 {
     search(T_BRKSW, 0, NULL);
@@ -829,14 +812,12 @@ wfree(void)
 }
 
 void
-/*ARGSUSED*/
 doecho(Char **v, struct command *t)
 {
     xecho(' ', v);
 }
 
 void
-/*ARGSUSED*/
 doglob(Char **v, struct command *t)
 {
     xecho(0, v);
@@ -890,7 +871,6 @@ xecho(int sep, Char **v)
 }
 
 void
-/*ARGSUSED*/
 dosetenv(Char **v, struct command *t)
 {
     Char   *vp, *lp;
@@ -920,7 +900,6 @@ dosetenv(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 dounsetenv(Char **v, struct command *t)
 {
     Char  **ep, *p, *n, *name;
@@ -1011,7 +990,6 @@ Unsetenv(Char *name)
 }
 
 void
-/*ARGSUSED*/
 doumask(Char **v, struct command *t)
 {
     Char *cp = v[1];
@@ -1078,7 +1056,6 @@ findlim(Char *cp)
 }
 
 void
-/*ARGSUSED*/
 dolimit(Char **v, struct command *t)
 {
     struct limits *lp;
@@ -1184,7 +1161,6 @@ limtail(Char *cp, char *str)
 	stderror(ERR_BADSCALE, origstr);
 }
 
-/*ARGSUSED*/
 static void
 plim(struct limits *lp, Char hard)
 {
@@ -1207,7 +1183,6 @@ plim(struct limits *lp, Char hard)
 }
 
 void
-/*ARGSUSED*/
 dounlimit(Char **v, struct command *t)
 {
     struct limits *lp;
@@ -1261,7 +1236,6 @@ setlim(struct limits *lp, Char hard, rlim_t limit)
 }
 
 void
-/*ARGSUSED*/
 dosuspend(Char **v, struct command *t)
 {
     int     ctpgrp;
@@ -1307,7 +1281,6 @@ retry:
 static Char **gv = NULL;
 
 void
-/*ARGSUSED*/
 doeval(Char **v, struct command *t)
 {
     Char  **oevalvec;

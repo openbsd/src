@@ -1,4 +1,4 @@
-/*	$OpenBSD: spawn.c,v 1.12 2015/03/19 21:22:15 bcallah Exp $	*/
+/*	$OpenBSD: spawn.c,v 1.13 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -20,7 +20,6 @@
  * shell supports POSIX job control.  If the terminal supports an alternate
  * screen, we will switch to it.
  */
-/* ARGSUSED */
 int
 spawncli(int f, int n)
 {

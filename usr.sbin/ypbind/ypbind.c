@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypbind.c,v 1.77 2022/12/28 21:30:19 jmc Exp $ */
+/*	$OpenBSD: ypbind.c,v 1.78 2023/03/08 04:43:15 guenther Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996, 1997, 1998 Theo de Raadt <deraadt@openbsd.org>
@@ -118,7 +118,6 @@ u_int32_t unique_xid(struct _dom_binding *ypdb);
  * declare sun's interface insufficient and roll our own.
  */
 
-/*ARGSUSED*/
 static void *
 ypbindproc_null_2x(SVCXPRT *transp, void *argp, CLIENT *clnt)
 {
@@ -128,7 +127,6 @@ ypbindproc_null_2x(SVCXPRT *transp, void *argp, CLIENT *clnt)
 	return (void *)&res;
 }
 
-/*ARGSUSED*/
 static struct ypbind_resp *
 ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 {
@@ -211,7 +209,6 @@ ypbindproc_domain_2x(SVCXPRT *transp, domainname *argp, CLIENT *clnt)
 	return &res;
 }
 
-/*ARGSUSED*/
 static bool_t *
 ypbindproc_setdom_2x(SVCXPRT *transp, struct ypbind_setdom *argp, CLIENT *clnt)
 {

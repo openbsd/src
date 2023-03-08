@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtrmt.c,v 1.24 2019/07/03 03:24:01 deraadt Exp $	*/
+/*	$OpenBSD: mtrmt.c,v 1.25 2023/03/08 04:43:04 guenther Exp $	*/
 /*	$NetBSD: mtrmt.c,v 1.2 1996/03/06 06:22:07 scottr Exp $	*/
 
 /*-
@@ -84,7 +84,6 @@ rmthost(char *host)
 	return (1);
 }
 
-/* ARGSUSED */
 static void
 sigrmtconnaborted(int signo)
 {

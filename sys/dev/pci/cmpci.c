@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmpci.c,v 1.52 2022/10/26 20:19:08 kn Exp $	*/
+/*	$OpenBSD: cmpci.c,v 1.53 2023/03/08 04:43:08 guenther Exp $	*/
 /*	$NetBSD: cmpci.c,v 1.25 2004/10/26 06:32:20 xtraeme Exp $	*/
 
 /*
@@ -802,7 +802,6 @@ cmpci_set_params(void *handle, int setmode, int usemode,
 	return 0;
 }
 
-/* ARGSUSED */
 int
 cmpci_round_blocksize(void *handle, int block)
 {
@@ -1745,7 +1744,6 @@ cmpci_get_port(void *handle, mixer_ctrl_t *cp)
 	return 0;
 }
 
-/* ARGSUSED */
 size_t
 cmpci_round_buffersize(void *handle, int direction, size_t bufsize)
 {

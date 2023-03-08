@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.51 2022/05/24 16:42:19 op Exp $	*/
+/*	$OpenBSD: basic.c,v 1.52 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain */
 
@@ -26,7 +26,6 @@
 /*
  * Go to beginning of line.
  */
-/* ARGSUSED */
 int
 gotobol(int f, int n)
 {
@@ -43,7 +42,6 @@ gotobol(int f, int n)
  * 0. Error if you try to move back from
  * the beginning of the buffer.
  */
-/* ARGSUSED */
 int
 backchar(int f, int n)
 {
@@ -72,7 +70,6 @@ backchar(int f, int n)
 /*
  * Go to end of line.
  */
-/* ARGSUSED */
 int
 gotoeol(int f, int n)
 {
@@ -89,7 +86,6 @@ gotoeol(int f, int n)
  * 0. Error if you try to move forward
  * from the end of the buffer.
  */
-/* ARGSUSED */
 int
 forwchar(int f, int n)
 {
@@ -182,7 +178,6 @@ gotoeob(int f, int n)
  * actually do it. The last command controls how
  * the goal column is set.
  */
-/* ARGSUSED */
 int
 forwline(int f, int n)
 {
@@ -226,7 +221,6 @@ forwline(int f, int n)
  * call your alternate. Figure out the new line and
  * call "movedot" to perform the motion.
  */
-/* ARGSUSED */
 int
 backline(int f, int n)
 {
@@ -311,7 +305,6 @@ getgoal(struct line *dlp)
  * the window is zapped, we have to do a hard
  * update and get it back.
  */
-/* ARGSUSED */
 int
 forwpage(int f, int n)
 {
@@ -355,7 +348,6 @@ forwpage(int f, int n)
  * hard update is done because the top line in
  * the window is zapped.
  */
-/* ARGSUSED */
 int
 backpage(int f, int n)
 {
@@ -460,7 +452,6 @@ isetmark(void)
  * to the value of dot. A message is written to
  * the echo line.  (ewprintf knows about macros)
  */
-/* ARGSUSED */
 int
 setmark(int f, int n)
 {
@@ -470,7 +461,6 @@ setmark(int f, int n)
 }
 
 /* Clear the mark, if set. */
-/* ARGSUSED */
 int
 clearmark(int f, int n)
 {
@@ -491,7 +481,6 @@ clearmark(int f, int n)
  * that moves the mark about. The only possible
  * error is "no mark".
  */
-/* ARGSUSED */
 int
 swapmark(int f, int n)
 {
@@ -521,7 +510,6 @@ swapmark(int f, int n)
  * it is the line number, else prompt for a line number
  * to use.
  */
-/* ARGSUSED */
 int
 gotoline(int f, int n)
 {

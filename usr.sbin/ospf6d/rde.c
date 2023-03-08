@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.90 2022/01/20 14:03:32 naddy Exp $ */
+/*	$OpenBSD: rde.c,v 1.91 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -93,7 +93,6 @@ static struct imsgev	*iev_main;
 struct rde_nbr		*nbrself;
 struct lsa_tree		 asext_tree;
 
-/* ARGSUSED */
 void
 rde_sig_handler(int sig, short event, void *arg)
 {
@@ -256,7 +255,6 @@ rde_imsg_compose_ospfe(int type, u_int32_t peerid, pid_t pid, void *data,
 	    data, datalen));
 }
 
-/* ARGSUSED */
 void
 rde_dispatch_imsg(int fd, short event, void *bula)
 {
@@ -636,7 +634,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 void
 rde_dispatch_parent(int fd, short event, void *bula)
 {

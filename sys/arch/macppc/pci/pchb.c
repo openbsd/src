@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.16 2022/03/13 12:33:01 mpi Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.17 2023/03/08 04:43:07 guenther Exp $	*/
 /*	$NetBSD: pchb.c,v 1.4 2000/01/25 07:19:11 tsubai Exp $	*/
 
 /*-
@@ -103,7 +103,6 @@ pchbmatch(struct device *parent, void *cf, void *aux)
 	return (0);
 }
 
-/*ARGSUSED*/
 void
 pchbattach(struct device *parent, struct device  *self, void *aux)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.128 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: control.c,v 1.129 2023/03/08 04:43:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -269,7 +269,6 @@ control_listen(void)
 	event_add(&control_state.ev, NULL);
 }
 
-/* ARGSUSED */
 static void
 control_accept(int listenfd, short event, void *arg)
 {
@@ -407,7 +406,6 @@ control_digest_update(const char *key, size_t value, int incr)
 	}
 }
 
-/* ARGSUSED */
 static void
 control_dispatch_ext(struct mproc *p, struct imsg *imsg)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.102 2019/06/22 15:03:43 lum Exp $	*/
+/*	$OpenBSD: file.c,v 1.103 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -24,7 +24,6 @@ size_t xdirname(char *, const char *, size_t);
  * Insert a file into the current buffer.  Real easy - just call the
  * insertfile routine with the file name.
  */
-/* ARGSUSED */
 int
 fileinsert(int f, int n)
 {
@@ -50,7 +49,6 @@ fileinsert(int f, int n)
  * if you can find it, just switch to the buffer.  If you cannot find the
  * file, create a new buffer, read in the text, and switch to the new buffer.
  */
-/* ARGSUSED */
 int
 filevisit(int f, int n)
 {
@@ -90,7 +88,6 @@ filevisit(int f, int n)
  * buffer is killed before the switch. If the kill fails, or is aborted,
  * revert to the original file.
  */
-/* ARGSUSED */
 int
 filevisitalt(int f, int n)
 {
@@ -153,7 +150,6 @@ filevisitro(int f, int n)
  * Pop to a file in the other window.  Same as the last function, but uses
  * popbuf instead of showbuffer.
  */
-/* ARGSUSED */
 int
 poptofile(int f, int n)
 {
@@ -506,7 +502,6 @@ cleanup:
  * This handling of file names is different from the earlier versions and
  * is more compatible with Gosling EMACS than with ITS EMACS.
  */
-/* ARGSUSED */
 int
 filewrite(int f, int n)
 {
@@ -567,7 +562,6 @@ filewrite(int f, int n)
  */
 static int	makebackup = TRUE;
 
-/* ARGSUSED */
 int
 filesave(int f, int n)
 {
@@ -638,7 +632,6 @@ buffsave(struct buffer *bp)
  * is given, sets makebackup to true, so backups are made.  If an argument is
  * given, no backup files are made when saving a new version of a file.
  */
-/* ARGSUSED */
 int
 makebkfile(int f, int n)
 {

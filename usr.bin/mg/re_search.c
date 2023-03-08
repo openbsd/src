@@ -1,4 +1,4 @@
-/*	$OpenBSD: re_search.c,v 1.36 2021/04/22 19:50:55 lum Exp $	*/
+/*	$OpenBSD: re_search.c,v 1.37 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -51,7 +51,6 @@ static int	 countmatches(int);
  * found, move "." to just after the matched characters.  display does all
  * the hard stuff.  If not found, it just prints a message.
  */
-/* ARGSUSED */
 int
 re_forwsearch(int f, int n)
 {
@@ -75,7 +74,6 @@ re_forwsearch(int f, int n)
  * pointing at the first character of the pattern [the last character that
  * was matched].
  */
-/* ARGSUSED */
 int
 re_backsearch(int f, int n)
 {
@@ -100,7 +98,6 @@ re_backsearch(int f, int n)
  * XXX: This code has problems -- some incompatibility(?) with extend.c causes
  * match to fail when it should not.
  */
-/* ARGSUSED */
 int
 re_searchagain(int f, int n)
 {
@@ -135,7 +132,6 @@ static regmatch_t	regex_match[RE_NMATCH];
  * Re-Query Replace.
  *	Replace strings selectively.  Does a search and replace operation.
  */
-/* ARGSUSED */
 int
 re_queryrepl(int f, int n)
 {
@@ -498,7 +494,6 @@ re_readpattern(char *re_prompt)
  * Cause case to not matter in searches.  This is the default.	If called
  * with argument cause case to matter.
  */
-/* ARGSUSED*/
 int
 setcasefold(int f, int n)
 {
@@ -521,7 +516,6 @@ setcasefold(int f, int n)
 /*
  * Delete all lines after dot that contain a string matching regex.
  */
-/* ARGSUSED */
 int
 delmatchlines(int f, int n)
 {
@@ -538,7 +532,6 @@ delmatchlines(int f, int n)
 /*
  * Delete all lines after dot that don't contain a string matching regex.
  */
-/* ARGSUSED */
 int
 delnonmatchlines(int f, int n)
 {
@@ -598,7 +591,6 @@ killmatches(int cond)
 /*
  * Count lines matching regex.
  */
-/* ARGSUSED */
 int
 cntmatchlines(int f, int n)
 {
@@ -614,7 +606,6 @@ cntmatchlines(int f, int n)
 /*
  * Count lines that fail to match regex.
  */
-/* ARGSUSED */
 int
 cntnonmatchlines(int f, int n)
 {

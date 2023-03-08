@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.39 2021/03/20 09:00:49 lum Exp $	*/
+/*	$OpenBSD: tty.c,v 1.40 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -51,7 +51,6 @@ int			 tceeol;
 int			 tcinsl;
 int			 tcdell;
 
-/* ARGSUSED */
 static void
 winchhandler(int sig)
 {
@@ -440,7 +439,6 @@ ttresize(void)
 /*
  * fake char output for charcost()
  */
-/* ARGSUSED */
 static int
 fakec(int c)
 {

@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.107 2023/02/11 23:07:26 deraadt Exp $ */
+/* $OpenBSD: trap.c,v 1.108 2023/03/08 04:43:07 guenther Exp $ */
 /* $NetBSD: trap.c,v 1.52 2000/05/24 16:48:33 thorpej Exp $ */
 
 /*-
@@ -201,7 +201,6 @@ printtrap(const unsigned long a0, const unsigned long a1,
  * to make the code a bit cleaner and more representative of the
  * Alpha architecture.
  */
-/*ARGSUSED*/
 void
 trap(a0, a1, a2, entry, framep)
 	const unsigned long a0, a1, a2, entry;

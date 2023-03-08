@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.163 2021/01/18 00:51:15 mortimer Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.164 2023/03/08 04:43:12 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -67,7 +67,6 @@ struct wklhead temp_files;
 void sighdlr(int);
 static void  rcs_attach_symbol(RCSFILE *, const char *);
 
-/* ARGSUSED */
 void
 sighdlr(int sig)
 {

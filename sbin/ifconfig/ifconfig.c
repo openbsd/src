@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.461 2023/01/18 21:57:10 stsp Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.462 2023/03/08 04:43:06 guenther Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1240,7 +1240,6 @@ printif(char *name, int ifaliases)
 	}
 }
 
-/*ARGSUSED*/
 void
 clone_create(const char *addr, int param)
 {
@@ -1253,7 +1252,6 @@ clone_create(const char *addr, int param)
 		err(1, "SIOCIFCREATE");
 }
 
-/*ARGSUSED*/
 void
 clone_destroy(const char *addr, int param)
 {
@@ -1319,7 +1317,6 @@ list_cloners(void)
 #define MASK	2
 #define DSTADDR	3
 
-/*ARGSUSED*/
 void
 setifaddr(const char *addr, int param)
 {
@@ -1349,7 +1346,6 @@ setifrtlabel(const char *label, int d)
 }
 #endif
 
-/* ARGSUSED */
 void
 setifnetmask(const char *addr, int ignored)
 {
@@ -1357,7 +1353,6 @@ setifnetmask(const char *addr, int ignored)
 	explicit_prefix = 1;
 }
 
-/* ARGSUSED */
 void
 setifbroadaddr(const char *addr, int ignored)
 {
@@ -1365,7 +1360,6 @@ setifbroadaddr(const char *addr, int ignored)
 }
 
 #ifndef SMALL
-/* ARGSUSED */
 void
 setifdesc(const char *val, int ignored)
 {
@@ -1374,7 +1368,6 @@ setifdesc(const char *val, int ignored)
 		warn("SIOCSIFDESCR");
 }
 
-/* ARGSUSED */
 void
 unsetifdesc(const char *noval, int ignored)
 {
@@ -1383,7 +1376,6 @@ unsetifdesc(const char *noval, int ignored)
 		warn("SIOCSIFDESCR");
 }
 
-/* ARGSUSED */
 void
 setifipdst(const char *addr, int ignored)
 {
@@ -1395,7 +1387,6 @@ setifipdst(const char *addr, int ignored)
 #endif
 
 #define rqtosa(x) (&(((struct ifreq *)(afp->x))->ifr_addr))
-/*ARGSUSED*/
 void
 notealias(const char *addr, int param)
 {
@@ -1410,7 +1401,6 @@ notealias(const char *addr, int param)
 		clearaddr = 0;
 }
 
-/*ARGSUSED*/
 void
 setifdstaddr(const char *addr, int param)
 {
@@ -1424,7 +1414,6 @@ setifdstaddr(const char *addr, int param)
  * of the ifreq structure, which may confuse other parts of ifconfig.
  * Make a private copy so we can avoid that.
  */
-/* ARGSUSED */
 void
 setifflags(const char *vname, int value)
 {
@@ -1447,7 +1436,6 @@ setifflags(const char *vname, int value)
 		err(1, "SIOCSIFFLAGS");
 }
 
-/* ARGSUSED */
 void
 setifxflags(const char *vname, int value)
 {
@@ -1608,7 +1596,6 @@ settemporary(const char *cmd, int val)
 }
 
 #ifndef SMALL
-/* ARGSUSED */
 void
 setifmetric(const char *val, int ignored)
 {
@@ -1624,7 +1611,6 @@ setifmetric(const char *val, int ignored)
 }
 #endif
 
-/* ARGSUSED */
 void
 setifmtu(const char *val, int d)
 {
@@ -1639,7 +1625,6 @@ setifmtu(const char *val, int d)
 		warn("SIOCSIFMTU");
 }
 
-/* ARGSUSED */
 void
 setifllprio(const char *val, int d)
 {
@@ -1654,7 +1639,6 @@ setifllprio(const char *val, int d)
 		warn("SIOCSIFLLPRIO");
 }
 
-/* ARGSUSED */
 void
 setifgroup(const char *group_name, int dummy)
 {
@@ -1679,7 +1663,6 @@ setifgroup(const char *group_name, int dummy)
 	}
 }
 
-/* ARGSUSED */
 void
 unsetifgroup(const char *group_name, int dummy)
 {
@@ -2035,7 +2018,6 @@ setifnwkey(const char *val, int d)
 		err(1, "SIOCS80211NWKEY");
 }
 
-/* ARGSUSED */
 void
 setifwpa(const char *val, int d)
 {
@@ -2056,7 +2038,6 @@ setifwpa(const char *val, int d)
 		err(1, "SIOCS80211WPAPARMS");
 }
 
-/* ARGSUSED */
 void
 setifwpaprotos(const char *val, int d)
 {
@@ -2097,7 +2078,6 @@ setifwpaprotos(const char *val, int d)
 		err(1, "SIOCS80211WPAPARMS");
 }
 
-/* ARGSUSED */
 void
 setifwpaakms(const char *val, int d)
 {
@@ -2161,7 +2141,6 @@ getwpacipher(const char *name)
 	return IEEE80211_WPA_CIPHER_NONE;
 }
 
-/* ARGSUSED */
 void
 setifwpaciphers(const char *val, int d)
 {
@@ -2198,7 +2177,6 @@ setifwpaciphers(const char *val, int d)
 		err(1, "SIOCS80211WPAPARMS");
 }
 
-/* ARGSUSED */
 void
 setifwpagroupcipher(const char *val, int d)
 {
@@ -2328,7 +2306,6 @@ setifchan(const char *val, int d)
 		warn("SIOCS80211CHANNEL");
 }
 
-/* ARGSUSED */
 void
 setifscan(const char *val, int d)
 {
@@ -2372,7 +2349,6 @@ unsetifnwflag(const char *val, int d)
 	setifnwflag(val, 1);
 }
 
-/* ARGSUSED */
 void
 setifpowersave(const char *val, int d)
 {
@@ -2895,7 +2871,6 @@ process_media_commands(void)
 		err(1, "SIOCSIFMEDIA");
 }
 
-/* ARGSUSED */
 void
 setmedia(const char *val, int d)
 {
@@ -2939,7 +2914,6 @@ setmedia(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
-/* ARGSUSED */
 void
 setmediamode(const char *val, int d)
 {
@@ -3002,7 +2976,6 @@ setmediaopt(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
-/* ARGSUSED */
 void
 unsetmediaopt(const char *val, int d)
 {
@@ -3027,7 +3000,6 @@ unsetmediaopt(const char *val, int d)
 	/* Media will be set after other processing is complete. */
 }
 
-/* ARGSUSED */
 void
 setmediainst(const char *val, int d)
 {
@@ -3253,7 +3225,6 @@ print_tunnel(const struct if_laddrreq *req)
 	}
 }
 
-/* ARGSUSED */
 static void
 phys_status(int force)
 {
@@ -3528,7 +3499,6 @@ status(int link, struct sockaddr_dl *sdl, int ls, int ifaliases)
 #endif
 }
 
-/* ARGSUSED */
 void
 in_status(int force)
 {
@@ -3589,7 +3559,6 @@ in_status(int force)
 	putchar('\n');
 }
 
-/* ARGSUSED */
 void
 setifprefixlen(const char *addr, int d)
 {
@@ -3814,7 +3783,6 @@ settunneladdr(const char *addr, int ignored)
 	freeaddrinfo(res);
 }
 
-/* ARGSUSED */
 void
 deletetunnel(const char *ignored, int alsoignored)
 {
@@ -4021,7 +3989,6 @@ mpls_status(void)
 	printf("\n");
 }
 
-/* ARGSUSED */
 void
 setmplslabel(const char *val, int d)
 {
@@ -4195,7 +4162,6 @@ setvnetid(const char *id, int param)
 		warn("SIOCSVNETID");
 }
 
-/* ARGSUSED */
 void
 delvnetid(const char *ignored, int alsoignored)
 {
@@ -4244,7 +4210,6 @@ setifparent(const char *id, int param)
 		warn("SIOCSIFPARENT");
 }
 
-/* ARGSUSED */
 void
 delifparent(const char *ignored, int alsoignored)
 {
@@ -4708,7 +4673,6 @@ carp_status(void)
 	}
 }
 
-/* ARGSUSED */
 void
 setcarp_passwd(const char *val, int d)
 {
@@ -4727,7 +4691,6 @@ setcarp_passwd(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
-/* ARGSUSED */
 void
 setcarp_vhid(const char *val, int d)
 {
@@ -4752,7 +4715,6 @@ setcarp_vhid(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
-/* ARGSUSED */
 void
 setcarp_advskew(const char *val, int d)
 {
@@ -4776,7 +4738,6 @@ setcarp_advskew(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
-/* ARGSUSED */
 void
 setcarp_advbase(const char *val, int d)
 {
@@ -4800,7 +4761,6 @@ setcarp_advbase(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
-/* ARGSUSED */
 void
 setcarppeer(const char *val, int d)
 {
@@ -4851,7 +4811,6 @@ unsetcarppeer(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
-/* ARGSUSED */
 void
 setcarp_state(const char *val, int d)
 {
@@ -4875,7 +4834,6 @@ setcarp_state(const char *val, int d)
 		err(1, "SIOCSVH");
 }
 
-/* ARGSUSED */
 void
 setcarpdev(const char *val, int d)
 {
@@ -4979,7 +4937,6 @@ setpfsync_syncdev(const char *val, int d)
 		err(1, "SIOCSETPFSYNC");
 }
 
-/* ARGSUSED */
 void
 unsetpfsync_syncdev(const char *val, int d)
 {
@@ -4997,7 +4954,6 @@ unsetpfsync_syncdev(const char *val, int d)
 		err(1, "SIOCSETPFSYNC");
 }
 
-/* ARGSUSED */
 void
 setpfsync_syncpeer(const char *val, int d)
 {
@@ -5031,7 +4987,6 @@ setpfsync_syncpeer(const char *val, int d)
 	freeaddrinfo(peerres);
 }
 
-/* ARGSUSED */
 void
 unsetpfsync_syncpeer(const char *val, int d)
 {
@@ -5049,7 +5004,6 @@ unsetpfsync_syncpeer(const char *val, int d)
 		err(1, "SIOCSETPFSYNC");
 }
 
-/* ARGSUSED */
 void
 setpfsync_maxupd(const char *val, int d)
 {
@@ -5394,7 +5348,6 @@ notime:
 	putchar('\n');
 }
 
-/* ARGSUSED */
 void
 setpppoe_dev(const char *val, int d)
 {
@@ -5410,7 +5363,6 @@ setpppoe_dev(const char *val, int d)
 		err(1, "PPPOESETPARMS");
 }
 
-/* ARGSUSED */
 void
 setpppoe_svc(const char *val, int d)
 {
@@ -5429,7 +5381,6 @@ setpppoe_svc(const char *val, int d)
 		err(1, "PPPOESETPARMS");
 }
 
-/* ARGSUSED */
 void
 setpppoe_ac(const char *val, int d)
 {
@@ -6438,7 +6389,6 @@ in_getaddr(const char *s, int which)
 		errx(1, "%s: non-contiguous mask", s);
 }
 
-/* ARGSUSED */
 void
 in_getprefix(const char *plen, int which)
 {
@@ -6704,7 +6654,6 @@ sec2str(time_t total)
 	return (result);
 }
 
-/*ARGSUSED*/
 void
 setiflladdr(const char *addr, int param)
 {

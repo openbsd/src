@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.25 2020/08/30 22:23:47 mortimer Exp $	*/
+/*	$OpenBSD: dir.c,v 1.26 2023/03/08 04:43:04 guenther Exp $	*/
 /*	$NetBSD: dir.c,v 1.9 1995/03/21 09:02:42 cgd Exp $	*/
 
 /*-
@@ -174,7 +174,6 @@ skipargs(Char ***v, char *str)
  * dodirs - list all directories in directory loop
  */
 void
-/*ARGSUSED*/
 dodirs(Char **v, struct command *t)
 {
     skipargs(&v, "");
@@ -318,7 +317,6 @@ dnormalize(Char *cp)
  * dochngd - implement chdir command.
  */
 void
-/*ARGSUSED*/
 dochngd(Char **v, struct command *t)
 {
     Char *cp;
@@ -465,7 +463,6 @@ dfollow(Char *cp)
  *	with numeric argument (+n) bring it to top.
  */
 void
-/*ARGSUSED*/
 dopushd(Char **v, struct command *t)
 {
     struct directory *dp;
@@ -547,7 +544,6 @@ dfind(Char *cp)
  *	with a numeric argument just discard it.
  */
 void
-/*ARGSUSED*/
 dopopd(Char **v, struct command *t)
 {
     struct directory *dp, *p = NULL;

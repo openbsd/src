@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.c,v 1.49 2022/01/28 05:15:05 guenther Exp $	*/
+/*	$OpenBSD: csh.c,v 1.50 2023/03/08 04:43:04 guenther Exp $	*/
 /*	$NetBSD: csh.c,v 1.14 1995/04/29 23:21:28 mycroft Exp $	*/
 
 /*-
@@ -946,7 +946,6 @@ Char   *jobargv[2] = {STRjobs, 0};
  * and finally go through the normal error mechanism, which
  * gets a chance to make the shell go away.
  */
-/* ARGSUSED */
 void
 pintr(int notused)
 {
@@ -1148,7 +1147,6 @@ process(bool catch)
 }
 
 void
-/*ARGSUSED*/
 dosource(Char **v, struct command *t)
 {
     Char *f;

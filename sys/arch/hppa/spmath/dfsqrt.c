@@ -1,4 +1,4 @@
-/*	$OpenBSD: dfsqrt.c,v 1.7 2003/04/10 17:27:58 mickey Exp $	*/
+/*	$OpenBSD: dfsqrt.c,v 1.8 2023/03/08 04:43:07 guenther Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -21,7 +21,6 @@
  *  Double Floating-point Square Root
  */
 
-/*ARGSUSED*/
 int
 dbl_fsqrt(srcptr, null, dstptr, status)
 	dbl_floating_point *srcptr, *null, *dstptr;

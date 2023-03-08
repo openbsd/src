@@ -1,4 +1,4 @@
-/*	$OpenBSD: watchdogd.c,v 1.15 2015/01/16 06:40:22 deraadt Exp $ */
+/*	$OpenBSD: watchdogd.c,v 1.16 2023/03/08 04:43:15 guenther Exp $ */
 
 /*
  * Copyright (c) 2005 Marc Balmer <mbalmer@openbsd.org>
@@ -44,7 +44,6 @@ usage(void)
 	exit(1);
 }
 
-/* ARGSUSED */
 void
 sighdlr(int signum)
 {

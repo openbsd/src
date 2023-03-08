@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_rrip.c,v 1.16 2021/03/05 07:10:06 jsg Exp $	*/
+/*	$OpenBSD: cd9660_rrip.c,v 1.17 2023/03/08 04:43:08 guenther Exp $	*/
 /*	$NetBSD: cd9660_rrip.c,v 1.17 1997/01/24 00:27:32 cgd Exp $	*/
 
 /*-
@@ -314,7 +314,6 @@ cd9660_rrip_pclink(void *v, ISO_RRIP_ANALYZE *ana)
 /*
  * Relocated directory
  */
-/*ARGSUSED*/
 static int
 cd9660_rrip_reldir(void *v, ISO_RRIP_ANALYZE *ana)
 {

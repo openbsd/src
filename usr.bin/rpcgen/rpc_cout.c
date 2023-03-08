@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_cout.c,v 1.28 2016/12/22 16:42:55 krw Exp $	*/
+/*	$OpenBSD: rpc_cout.c,v 1.29 2023/03/08 04:43:12 guenther Exp $	*/
 /*	$NetBSD: rpc_cout.c,v 1.6 1996/10/01 04:13:53 cgd Exp $	*/
 
 /*
@@ -301,7 +301,6 @@ print_ifstat(indent, prefix, type, rel, amax, objname, name)
 	print_ifclose(indent);
 }
 
-/* ARGSUSED */
 static void
 emit_enum(def)
 	definition *def;

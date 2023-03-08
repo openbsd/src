@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.104 2023/01/16 22:08:50 jmatthew Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.105 2023/03/08 04:43:08 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -900,7 +900,6 @@ urtwn_calib_to(void *arg)
 	usbd_ref_decr(sc->sc_udev);
 }
 
-/* ARGSUSED */
 void
 urtwn_calib_cb(struct urtwn_softc *sc, void *arg)
 {
@@ -1000,7 +999,6 @@ urtwn_updateslot(struct ieee80211com *ic)
 	urtwn_do_async(sc, urtwn_updateslot_cb, NULL, 0);
 }
 
-/* ARGSUSED */
 void
 urtwn_updateslot_cb(struct urtwn_softc *sc, void *arg)
 {
@@ -1020,7 +1018,6 @@ urtwn_updateedca(struct ieee80211com *ic)
 	urtwn_do_async(sc, urtwn_updateedca_cb, NULL, 0);
 }
 
-/* ARGSUSED */
 void
 urtwn_updateedca_cb(struct urtwn_softc *sc, void *arg)
 {

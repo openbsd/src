@@ -1,4 +1,4 @@
-/*	$OpenBSD: window.c,v 1.36 2015/11/18 18:21:06 jasper Exp $	*/
+/*	$OpenBSD: window.c,v 1.37 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -42,7 +42,6 @@ new_window(struct buffer *bp)
  * bottom.  If it is 0 the window is centered (this is what the standard
  * redisplay code does).
  */
-/* ARGSUSED */
 int
 reposition(int f, int n)
 {
@@ -72,7 +71,6 @@ redraw(int f, int n)
 	return (do_redraw(f, n, FALSE));
 }
 
-/* ARGSUSED */
 int
 do_redraw(int f, int n, int force)
 {
@@ -108,7 +106,6 @@ do_redraw(int f, int n, int force)
  * window. There are no real errors, although the command does nothing if
  * there is only 1 window on the screen.
  */
-/* ARGSUSED */
 int
 nextwind(int f, int n)
 {
@@ -127,7 +124,6 @@ nextwind(int f, int n)
  * current window. There are no errors, although the command does not do
  * a lot if there is only 1 window.
  */
-/* ARGSUSED */
 int
 prevwind(int f, int n)
 {
@@ -151,7 +147,6 @@ prevwind(int f, int n)
  * structures right if the destruction of a window makes a buffer become
  * undisplayed.
  */
-/* ARGSUSED */
 int
 onlywind(int f, int n)
 {
@@ -206,7 +201,6 @@ onlywind(int f, int n)
  * structure for the new window.
  * If called with a FFOTHARG, flags on the new window are set to 'n'.
  */
-/* ARGSUSED */
 int
 splitwind(int f, int n)
 {
@@ -297,7 +291,6 @@ splitwind(int f, int n)
  * to do all the hard work.  You don't just set "force reframe" because dot
  * would move.
  */
-/* ARGSUSED */
 int
 enlargewind(int f, int n)
 {
@@ -404,7 +397,6 @@ shrinkwind(int f, int n)
  * Delete current window. Call shrink-window to do the screen updating, then
  * throw away the window.
  */
-/* ARGSUSED */
 int
 delwind(int f, int n)
 {

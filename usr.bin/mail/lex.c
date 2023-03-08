@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.42 2021/10/24 21:24:16 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.43 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -682,7 +682,6 @@ newfileinfo(int omsgCount)
 /*
  * Print the current version number.
  */
-/*ARGSUSED*/
 int
 pversion(void *v)
 {

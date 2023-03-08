@@ -1,4 +1,4 @@
-/*	$OpenBSD: lockd_lock.c,v 1.11 2022/12/28 21:30:18 jmc Exp $	*/
+/*	$OpenBSD: lockd_lock.c,v 1.12 2023/03/08 04:43:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -171,7 +171,6 @@ lock_lookup(struct file_lock *newfl, int flags)
  */
 
 struct nlm4_holder *
-/*ARGSUSED*/
 testlock(struct nlm4_lock *lock, int flags)
 {
 	struct file_lock *fl;
@@ -430,7 +429,6 @@ lfree(struct file_lock *fl)
 }
 
 void
-/*ARGSUSED*/
 sigchild_handler(int sig)
 {
 	int sstatus;
@@ -604,7 +602,6 @@ do_lock(struct file_lock *fl, int block)
 }
 
 void
-/*ARGSUSED*/
 send_granted(struct file_lock *fl, int opcode)
 {
 	CLIENT *cli;

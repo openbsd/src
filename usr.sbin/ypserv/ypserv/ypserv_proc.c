@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.29 2015/01/16 06:40:23 deraadt Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.30 2023/03/08 04:43:15 guenther Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -56,7 +56,6 @@ static char *True = "true";
 static char *False = "FALSE";
 #define TORF(N) ((N) ? True : False)
 
-/*ARGSUSED*/
 void *
 ypproc_null_2_svc(void *argp, struct svc_req *rqstp)
 {
@@ -276,7 +275,6 @@ ypproc_xfr_2_svc(ypreq_xfr *argp, struct svc_req *rqstp)
 	return (&res);
 }
 
-/*ARGSUSED*/
 void *
 ypproc_clear_2_svc(void *argp, struct svc_req *rqstp)
 {
@@ -511,7 +509,6 @@ bail:
 	return (&res);
 }
 
-/*ARGSUSED*/
 void *
 ypoldproc_null_1_svc(void *argp, struct svc_req *rqstp)
 {

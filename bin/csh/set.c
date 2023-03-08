@@ -1,4 +1,4 @@
-/*	$OpenBSD: set.c,v 1.24 2022/01/28 05:15:05 guenther Exp $	*/
+/*	$OpenBSD: set.c,v 1.25 2023/03/08 04:43:04 guenther Exp $	*/
 /*	$NetBSD: set.c,v 1.8 1995/03/21 18:35:52 mycroft Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@ static void	 balance(struct varent *, int, int);
  */
 
 void
-/*ARGSUSED*/
 doset(Char **v, struct command *t)
 {
     Char *p;
@@ -198,7 +197,6 @@ getvx(Char *vp, int subscr)
 }
 
 void
-/*ARGSUSED*/
 dolet(Char **v, struct command *t)
 {
     Char *p;
@@ -456,7 +454,6 @@ found:
 }
 
 void
-/*ARGSUSED*/
 unset(Char **v, struct command *t)
 {
     unset1(v, &shvhed);
@@ -544,7 +541,6 @@ setNS(Char *cp)
 }
 
 void
-/*ARGSUSED*/
 shift(Char **v, struct command *t)
 {
     struct varent *argv;

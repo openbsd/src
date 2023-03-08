@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.49 2022/12/26 19:16:02 jmc Exp $	*/
+/*	$OpenBSD: display.c,v 1.50 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -102,7 +102,6 @@ extern int globalwd;
  * Since we don't have variables (we probably should) these are command
  * processors for changing the values of mode flags.
  */
-/* ARGSUSED */
 int
 linenotoggle(int f, int n)
 {
@@ -116,7 +115,6 @@ linenotoggle(int f, int n)
 	return (TRUE);
 }
 
-/* ARGSUSED */
 int
 colnotoggle(int f, int n)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.37 2022/12/04 23:50:49 cheloha Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.38 2023/03/08 04:43:12 guenther Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -414,7 +414,6 @@ printhdr(void)
  * Called if an interval expires before sidewaysintpr has completed a loop.
  * Sets a flag to not wait for the alarm.
  */
-/* ARGSUSED */
 void
 catchalarm(int signo)
 {

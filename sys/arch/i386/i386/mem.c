@@ -1,5 +1,5 @@
 /*	$NetBSD: mem.c,v 1.31 1996/05/03 19:42:19 christos Exp $	*/
-/*	$OpenBSD: mem.c,v 1.55 2023/01/30 10:49:05 jsg Exp $ */
+/*	$OpenBSD: mem.c,v 1.56 2023/03/08 04:43:07 guenther Exp $ */
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -70,7 +70,6 @@ struct mem_range_softc mem_range_softc;
 static int mem_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
 #endif
 
-/*ARGSUSED*/
 int
 mmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -103,7 +102,6 @@ mmopen(dev_t dev, int flag, int mode, struct proc *p)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 mmclose(dev_t dev, int flag, int mode, struct proc *p)
 {

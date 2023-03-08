@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.40 2019/01/22 16:16:26 otto Exp $	*/
+/*	$OpenBSD: optr.c,v 1.41 2023/03/08 04:43:06 guenther Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -128,7 +128,6 @@ char lastmsg[BUFSIZ];
  *	sleep for 2 minutes in case nobody comes to satisfy dump
  * XXX not safe
  */
-/* ARGSUSED */
 void
 alarmcatch(int signo)
 {
@@ -158,7 +157,6 @@ alarmcatch(int signo)
 /*
  *	Here if an inquisitive operator interrupts the dump program
  */
-/* ARGSUSED */
 void
 interrupt(int signo)
 {

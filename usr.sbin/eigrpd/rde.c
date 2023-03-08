@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.24 2021/01/19 10:53:25 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.25 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -50,7 +50,6 @@ struct eigrpd_conf	*rdeconf;
 static struct imsgev	*iev_eigrpe;
 static struct imsgev	*iev_main;
 
-/* ARGSUSED */
 static void
 rde_sig_handler(int sig, short event, void *arg)
 {
@@ -161,7 +160,6 @@ rde_imsg_compose_eigrpe(int type, uint32_t peerid, pid_t pid, void *data,
 	    data, datalen));
 }
 
-/* ARGSUSED */
 static void
 rde_dispatch_imsg(int fd, short event, void *bula)
 {
@@ -295,7 +293,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 static void
 rde_dispatch_parent(int fd, short event, void *bula)
 {

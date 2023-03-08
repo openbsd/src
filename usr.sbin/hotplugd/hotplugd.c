@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplugd.c,v 1.18 2022/12/04 23:50:50 cheloha Exp $	*/
+/*	$OpenBSD: hotplugd.c,v 1.19 2023/03/08 04:43:13 guenther Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -173,7 +173,6 @@ exec_script(const char *file, int class, char *name)
 	}
 }
 
-/* ARGSUSED */
 void
 sigchild(int signum)
 {
@@ -211,7 +210,6 @@ sigchild(int signum)
 	errno = saved_errno;
 }
 
-/* ARGSUSED */
 void
 sigquit(int signum)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hist.c,v 1.18 2017/04/12 18:24:37 tb Exp $	*/
+/*	$OpenBSD: hist.c,v 1.19 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: hist.c,v 1.28 2016/04/11 00:50:13 christos Exp $	*/
 
 /*-
@@ -188,7 +188,6 @@ hist_command(EditLine *el, int argc, const wchar_t **argv)
  *	Return 0 for failure, 1 for success.
  */
 protected int
-/*ARGSUSED*/
 hist_enlargebuf(EditLine *el, size_t oldsz, size_t newsz)
 {
 	wchar_t *newbuf;

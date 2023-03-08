@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.39 2022/02/22 17:35:01 deraadt Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.40 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -251,7 +251,6 @@ usage(void)
 	exit(1);
 }
 
-/* ARGSUSED */
 static void
 no_ktrace(int signo)
 {

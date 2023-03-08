@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.70 2019/06/28 13:32:48 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.71 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Renato Westphal <renato@openbsd.org>
@@ -437,7 +437,6 @@ kr_change_egress_label(int af, int was_implicit)
 	}
 }
 
-/* ARGSUSED */
 static void
 kr_dispatch_msg(int fd, short event, void *bula)
 {

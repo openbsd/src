@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo_vnops.c,v 1.101 2023/01/27 18:46:34 mvs Exp $	*/
+/*	$OpenBSD: fifo_vnops.c,v 1.102 2023/03/08 04:43:08 guenther Exp $	*/
 /*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
 
 /*
@@ -139,7 +139,6 @@ const struct filterops fifoexcept_filtops = {
  * Open called to set up a new instance of a fifo or
  * to find an active instance of a fifo.
  */
-/* ARGSUSED */
 int
 fifo_open(void *v)
 {
@@ -233,7 +232,6 @@ bad:
 /*
  * Vnode op for read
  */
-/* ARGSUSED */
 int
 fifo_read(void *v)
 {
@@ -264,7 +262,6 @@ fifo_read(void *v)
 /*
  * Vnode op for write
  */
-/* ARGSUSED */
 int
 fifo_write(void *v)
 {
@@ -287,7 +284,6 @@ fifo_write(void *v)
 /*
  * Device ioctl operation.
  */
-/* ARGSUSED */
 int
 fifo_ioctl(void *v)
 {
@@ -325,7 +321,6 @@ fifo_inactive(void *v)
 /*
  * Device close routine
  */
-/* ARGSUSED */
 int
 fifo_close(void *v)
 {
@@ -440,7 +435,6 @@ fifo_pathconf(void *v)
 /*
  * Fifo failed operation
  */
-/*ARGSUSED*/
 int
 fifo_ebadf(void *v)
 {
@@ -451,7 +445,6 @@ fifo_ebadf(void *v)
 /*
  * Fifo advisory byte-level locks.
  */
-/* ARGSUSED */
 int
 fifo_advlock(void *v)
 {

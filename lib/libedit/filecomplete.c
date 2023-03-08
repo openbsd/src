@@ -1,4 +1,4 @@
-/*	$OpenBSD: filecomplete.c,v 1.12 2016/04/11 20:43:33 schwarze Exp $ */
+/*	$OpenBSD: filecomplete.c,v 1.13 2023/03/08 04:43:05 guenther Exp $ */
 /*	$NetBSD: filecomplete.c,v 1.22 2010/12/02 04:42:46 dholland Exp $	*/
 
 /*-
@@ -545,7 +545,6 @@ fn_complete(EditLine *el,
 /*
  * el-compatible wrapper around rl_complete; needed for key binding
  */
-/* ARGSUSED */
 unsigned char
 _el_fn_complete(EditLine *el, int ch __attribute__((__unused__)))
 {

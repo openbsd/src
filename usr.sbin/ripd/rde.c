@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.24 2021/01/19 10:20:47 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.25 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -52,7 +52,6 @@ int	rde_imsg_compose_ripe(int, u_int32_t, pid_t, void *, u_int16_t);
 int	rde_check_route(struct rip_route *);
 void	triggered_update(struct rt_node *);
 
-/* ARGSUSED */
 void
 rde_sig_handler(int sig, short event, void *arg)
 {
@@ -187,7 +186,6 @@ rde_imsg_compose_ripe(int type, u_int32_t peerid, pid_t pid, void *data,
 		    data, datalen));
 }
 
-/* ARGSUSED */
 void
 rde_dispatch_imsg(int fd, short event, void *bula)
 {
@@ -288,7 +286,6 @@ rde_dispatch_imsg(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 void
 rde_dispatch_parent(int fd, short event, void *bula)
 {

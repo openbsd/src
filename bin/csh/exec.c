@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.21 2018/09/18 06:56:09 deraadt Exp $	*/
+/*	$OpenBSD: exec.c,v 1.22 2023/03/08 04:43:04 guenther Exp $	*/
 /*	$NetBSD: exec.c,v 1.9 1996/09/30 20:03:54 christos Exp $	*/
 
 /*-
@@ -97,7 +97,6 @@ static int	iscommand(Char *);
 
 
 void
-/*ARGSUSED*/
 doexec(Char **v, struct command *t)
 {
     Char *dp, **pv, **av, *sav;
@@ -340,7 +339,6 @@ texec(Char *sf, Char **st)
     }
 }
 
-/*ARGSUSED*/
 void
 execash(Char **t, struct command *kp)
 {
@@ -420,7 +418,6 @@ xechoit(Char **t)
 }
 
 void
-/*ARGSUSED*/
 dohash(Char **v, struct command *t)
 {
     DIR    *dirp;
@@ -458,14 +455,12 @@ dohash(Char **v, struct command *t)
 }
 
 void
-/*ARGSUSED*/
 dounhash(Char **v, struct command *t)
 {
     havhash = 0;
 }
 
 void
-/*ARGSUSED*/
 hashstat(Char **v, struct command *t)
 {
     if (hits + misses)
@@ -585,7 +580,6 @@ executable(Char *dir, Char *name, bool dir_ok)
  *  West-Germany
  * Thanks!!
  */
-/*ARGSUSED*/
 void
 dowhich(Char **v, struct command *c)
 {

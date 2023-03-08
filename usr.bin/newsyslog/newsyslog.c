@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.112 2019/06/28 13:35:02 deraadt Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.113 2023/03/08 04:43:12 guenther Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003 Todd C. Miller <millert@openbsd.org>
@@ -1097,7 +1097,6 @@ cleanup:
 	return (1);
 }
 
-/* ARGSUSED */
 void
 child_killer(int signo)
 {

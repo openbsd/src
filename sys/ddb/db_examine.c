@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_examine.c,v 1.27 2020/01/09 15:18:58 bluhm Exp $	*/
+/*	$OpenBSD: db_examine.c,v 1.28 2023/03/08 04:43:07 guenther Exp $	*/
 /*	$NetBSD: db_examine.c,v 1.11 1996/03/30 22:30:07 christos Exp $	*/
 
 /*
@@ -56,7 +56,6 @@ void db_search(vaddr_t, int, db_expr_t, db_expr_t, db_expr_t);
  * should print:
  *  	address:  01  23  45  67
  */
-/*ARGSUSED*/
 void
 db_examine_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -239,7 +238,6 @@ db_examine(vaddr_t addr, char *fmt, int count)
  */
 char	db_print_format = 'x';
 
-/*ARGSUSED*/
 void
 db_print_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -325,7 +323,6 @@ db_strlcpy(char *dst, const char *src, size_t siz)
  * Search for a value in memory.
  * Syntax: search [/bhl] addr value [mask] [,count]
  */
-/*ARGSUSED*/
 void
 db_search_cmd(db_expr_t daddr, int have_addr, db_expr_t dcount, char *modif)
 {

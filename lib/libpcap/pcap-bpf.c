@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap-bpf.c,v 1.38 2021/09/10 00:00:55 deraadt Exp $	*/
+/*	$OpenBSD: pcap-bpf.c,v 1.39 2023/03/08 04:43:05 guenther Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -195,7 +195,6 @@ pcap_sendpacket(pcap_t *p, const u_char *buf, int size)
 	return (pcap_inject(p, buf, size) == -1 ? -1 : 0);
 }
 
-/* ARGSUSED */
 static __inline int
 bpf_open(pcap_t *p)
 {

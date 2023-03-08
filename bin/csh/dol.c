@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.26 2019/06/28 05:35:34 deraadt Exp $	*/
+/*	$OpenBSD: dol.c,v 1.27 2023/03/08 04:43:04 guenther Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -810,7 +810,6 @@ Dtestq(int c)
  * Unit 0 should have been closed before this call.
  */
 void
-/*ARGSUSED*/
 heredoc(Char *term)
 {
     int c;

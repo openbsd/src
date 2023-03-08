@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.21 2021/11/03 21:40:03 sthen Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.22 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -435,7 +435,6 @@ ls_retrans_list_clr(struct nbr *nbr)
 	nbr->ls_ret_cnt = 0;
 }
 
-/* ARGSUSED */
 void
 ls_retrans_timer(int fd, short event, void *bula)
 {

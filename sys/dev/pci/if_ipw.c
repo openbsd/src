@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ipw.c,v 1.132 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_ipw.c,v 1.133 2023/03/08 04:43:08 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1127,7 +1127,6 @@ ipw_cmd(struct ipw_softc *sc, uint32_t type, void *data, uint32_t len)
 	return error;
 }
 
-/* ARGSUSED */
 int
 ipw_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni, int type,
     int arg1, int arg2)

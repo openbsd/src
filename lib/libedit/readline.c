@@ -1,4 +1,4 @@
-/*	$OpenBSD: readline.c,v 1.29 2019/08/14 08:31:00 asou Exp $	*/
+/*	$OpenBSD: readline.c,v 1.30 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: readline.c,v 1.91 2010/08/28 15:44:59 christos Exp $	*/
 
 /*-
@@ -178,7 +178,6 @@ static int		 _rl_event_read_char(EditLine *, wchar_t *);
 static void		 _rl_update_pos(void);
 
 
-/* ARGSUSED */
 static char *
 _get_prompt(EditLine *el __attribute__((__unused__)))
 {
@@ -210,7 +209,6 @@ _move_history(int op)
  * read one key from user defined input function
  */
 static int
-/*ARGSUSED*/
 _getc_function(EditLine *el __attribute__((__unused__)), wchar_t *c)
 {
 	int i;
@@ -1674,7 +1672,6 @@ history_search_prefix(const char *str, int direction)
  * search for event in history containing str, starting at offset
  * abs(pos); continue backward, if pos<0, forward otherwise
  */
-/* ARGSUSED */
 int
 history_search_pos(const char *str,
 		   int direction __attribute__((__unused__)), int pos)
@@ -1757,7 +1754,6 @@ username_completion_function(const char *text, int state)
 /*
  * el-compatible wrapper to send TSTP on ^Z
  */
-/* ARGSUSED */
 static unsigned char
 _el_rl_tstp(EditLine *el __attribute__((__unused__)), int ch __attribute__((__unused__)))
 {
@@ -1778,7 +1774,6 @@ rl_display_match_list(char **matches, int len, int max)
 }
 
 static const char *
-/*ARGSUSED*/
 _rl_completion_append_character_function(const char *dummy
     __attribute__((__unused__)))
 {
@@ -1792,7 +1787,6 @@ _rl_completion_append_character_function(const char *dummy
 /*
  * complete word at current point
  */
-/* ARGSUSED */
 int
 rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 {
@@ -1824,7 +1818,6 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 }
 
 
-/* ARGSUSED */
 static unsigned char
 _el_rl_complete(EditLine *el __attribute__((__unused__)), int ch)
 {
@@ -1874,7 +1867,6 @@ rl_read_key(void)
 /*
  * reset the terminal
  */
-/* ARGSUSED */
 void
 rl_reset_terminal(const char *p __attribute__((__unused__)))
 {
@@ -1920,7 +1912,6 @@ rl_insert_text(const char *text)
 	return (int)strlen(text);
 }
 
-/*ARGSUSED*/
 int
 rl_newline(int count, int c)
 {
@@ -1930,7 +1921,6 @@ rl_newline(int count, int c)
 	return rl_insert(1, '\n');
 }
 
-/*ARGSUSED*/
 static unsigned char
 rl_bind_wrapper(EditLine *el, unsigned char c)
 {
@@ -2026,7 +2016,6 @@ rl_get_previous_history(int count, int key)
 }
 
 void
-/*ARGSUSED*/
 rl_prep_terminal(int meta_flag)
 {
 	el_set(e, EL_PREP_TERM, 1);
@@ -2245,7 +2234,6 @@ history_get_history_state(void)
 }
 
 int
-/*ARGSUSED*/
 rl_kill_text(int from, int to)
 {
 	return 0;
@@ -2264,20 +2252,17 @@ rl_get_keymap(void)
 }
 
 void
-/*ARGSUSED*/
 rl_set_keymap(Keymap k)
 {
 }
 
 int
-/*ARGSUSED*/
 rl_generic_bind(int type, const char * keyseq, const char * data, Keymap k)
 {
 	return 0;
 }
 
 int
-/*ARGSUSED*/
 rl_bind_key_in_map(int key, rl_command_func_t *fun, Keymap k)
 {
 	return 0;
@@ -2296,7 +2281,6 @@ rl_on_new_line(void)
 }
 
 int
-/*ARGSUSED*/
 rl_set_keyboard_input_timeout(int u __attribute__((__unused__)))
 {
 	return 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.36 2023/03/05 22:17:22 tobhe Exp $	*/
+/*	$OpenBSD: control.c,v 1.37 2023/03/08 04:43:06 guenther Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -152,7 +152,6 @@ control_listen(struct control_sock *cs)
 	return (0);
 }
 
-/* ARGSUSED */
 void
 control_accept(int listenfd, short event, void *arg)
 {
@@ -239,7 +238,6 @@ control_close(int fd, struct control_sock *cs)
 	free(c);
 }
 
-/* ARGSUSED */
 void
 control_dispatch_imsg(int fd, short event, void *arg)
 {

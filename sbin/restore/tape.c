@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.52 2021/01/21 00:16:36 mortimer Exp $	*/
+/*	$OpenBSD: tape.c,v 1.53 2023/03/08 04:43:07 guenther Exp $	*/
 /*	$NetBSD: tape.c,v 1.26 1997/04/15 07:12:25 lukem Exp $	*/
 
 /*
@@ -743,7 +743,6 @@ xtrfile(char *buf, size_t size)
 /*
  * Skip over a hole in a file.
  */
-/* ARGSUSED */
 static void
 xtrskip(char *buf, size_t size)
 {
@@ -770,7 +769,6 @@ xtrlnkfile(char *buf, size_t size)
 /*
  * Skip over a hole in a symbolic link (should never happen).
  */
-/* ARGSUSED */
 static void
 xtrlnkskip(char *buf, size_t size)
 {
@@ -792,7 +790,6 @@ xtrmap(char *buf, size_t size)
 /*
  * Skip over a hole in a bit map (should never happen).
  */
-/* ARGSUSED */
 static void
 xtrmapskip(char *buf, size_t size)
 {
@@ -804,7 +801,6 @@ xtrmapskip(char *buf, size_t size)
 /*
  * Noop, when an extraction function is not needed.
  */
-/* ARGSUSED */
 void
 xtrnull(char *buf, size_t size)
 {

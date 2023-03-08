@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.160 2023/02/11 23:07:27 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.161 2023/03/08 04:43:07 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -512,7 +512,6 @@ ast(struct trapframe *frame)
  * syscall(frame):
  *	System call request from POSIX system call gate interface to kernel.
  */
-/*ARGSUSED*/
 void
 syscall(struct trapframe *frame)
 {

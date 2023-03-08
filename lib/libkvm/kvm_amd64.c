@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_amd64.c,v 1.15 2021/12/01 16:53:28 deraadt Exp $	*/
+/*	$OpenBSD: kvm_amd64.c,v 1.16 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: kvm_x86_64.c,v 1.3 2002/06/05 22:01:55 fvdl Exp $	*/
 
 /*-
@@ -68,7 +68,6 @@ _kvm_freevtop(kvm_t *kd)
 	kd->vmst = NULL;
 }
 
-/*ARGSUSED*/
 int
 _kvm_initvtop(kvm_t *kd)
 {

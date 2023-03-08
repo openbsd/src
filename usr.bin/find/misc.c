@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.17 2020/09/30 16:37:12 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.18 2023/03/08 04:43:11 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -142,7 +142,6 @@ ereallocarray(void *oldp, size_t sz1, size_t sz2)
  * show_path --
  *	called on SIGINFO
  */
-/* ARGSUSED */
 void
 show_path(int signo)
 {

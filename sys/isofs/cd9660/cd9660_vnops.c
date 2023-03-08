@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.93 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.94 2023/03/08 04:43:08 guenther Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -125,7 +125,6 @@ cd9660_setattr(void *v)
  *
  * Nothing to do.
  */
-/* ARGSUSED */
 int
 cd9660_open(void *v)
 {
@@ -137,7 +136,6 @@ cd9660_open(void *v)
  *
  * Update the times on the inode on writeable file systems.
  */
-/* ARGSUSED */
 int
 cd9660_close(void *v)
 {
@@ -282,7 +280,6 @@ cd9660_read(void *v)
 	return (error);
 }
 
-/* ARGSUSED */
 int
 cd9660_ioctl(void *v)
 {
@@ -294,7 +291,6 @@ cd9660_ioctl(void *v)
  *
  * NB Currently unsupported.
  */
-/* ARGSUSED */
 int
 cd9660_mmap(void *v)
 {
@@ -307,7 +303,6 @@ cd9660_mmap(void *v)
  *
  * Nothing to do, so just return.
  */
-/* ARGSUSED */
 int
 cd9660_seek(void *v)
 {
@@ -740,7 +735,6 @@ cd9660_strategy(void *v)
 /*
  * Print out the contents of an inode.
  */
-/*ARGSUSED*/
 int
 cd9660_print(void *v)
 {

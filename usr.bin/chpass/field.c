@@ -1,4 +1,4 @@
-/*	$OpenBSD: field.c,v 1.14 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: field.c,v 1.15 2023/03/08 04:43:10 guenther Exp $	*/
 /*	$NetBSD: field.c,v 1.3 1995/03/26 04:55:28 glass Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 
 #include "chpass.h"
 
-/* ARGSUSED */
 int
 p_login(char *p, struct passwd *pw, ENTRY *ep)
 {
@@ -75,7 +74,6 @@ p_login(char *p, struct passwd *pw, ENTRY *ep)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 p_passwd(char *p, struct passwd *pw, ENTRY *ep)
 {
@@ -89,7 +87,6 @@ p_passwd(char *p, struct passwd *pw, ENTRY *ep)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 p_uid(char *p, struct passwd *pw, ENTRY *ep)
 {
@@ -109,7 +106,6 @@ p_uid(char *p, struct passwd *pw, ENTRY *ep)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 p_gid(char *p, struct passwd *pw, ENTRY *ep)
 {
@@ -138,7 +134,6 @@ p_gid(char *p, struct passwd *pw, ENTRY *ep)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 p_class(char *p, struct passwd *pw, ENTRY *ep)
 {
@@ -152,7 +147,6 @@ p_class(char *p, struct passwd *pw, ENTRY *ep)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 p_change(char *p, struct passwd *pw, ENTRY *ep)
 {
@@ -162,7 +156,6 @@ p_change(char *p, struct passwd *pw, ENTRY *ep)
 	return (1);
 }
 
-/* ARGSUSED */
 int
 p_expire(char *p, struct passwd *pw, ENTRY *ep)
 {
@@ -172,7 +165,6 @@ p_expire(char *p, struct passwd *pw, ENTRY *ep)
 	return (1);
 }
 
-/* ARGSUSED */
 int
 p_gecos(char *p, struct passwd *pw, ENTRY *ep)
 {
@@ -185,7 +177,6 @@ p_gecos(char *p, struct passwd *pw, ENTRY *ep)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 p_hdir(char *p, struct passwd *pw, ENTRY *ep)
 {
@@ -200,7 +191,6 @@ p_hdir(char *p, struct passwd *pw, ENTRY *ep)
 	return (0);
 }
 
-/* ARGSUSED */
 int
 p_shell(char *p, struct passwd *pw, ENTRY *ep)
 {

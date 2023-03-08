@@ -1,4 +1,4 @@
-/* $OpenBSD: tc_bus_mem.c,v 1.17 2010/04/04 12:49:27 miod Exp $ */
+/* $OpenBSD: tc_bus_mem.c,v 1.18 2023/03/08 04:43:07 guenther Exp $ */
 /* $NetBSD: tc_bus_mem.c,v 1.25 2001/09/04 05:31:28 thorpej Exp $ */
 
 /*
@@ -235,7 +235,6 @@ tc_bus_mem_init(memv)
 	return (h);
 }
 
-/* ARGSUSED */
 int
 tc_mem_map(v, memaddr, memsize, flags, memhp)
 	void *v;
@@ -260,7 +259,6 @@ tc_mem_map(v, memaddr, memsize, flags, memhp)
 	return (0);
 }
 
-/* ARGSUSED */
 void
 tc_mem_unmap(v, memh, memsize)
 	void *v;

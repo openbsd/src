@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.108 2022/09/15 12:47:10 millert Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.109 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -298,7 +298,6 @@ bad:
 	return (NULL);
 }
 
-/* ARGSUSED */
 void
 cmdabort(int signo)
 {
@@ -557,7 +556,6 @@ getreply(int expecteof)
 #ifndef SMALL
 jmp_buf	sendabort;
 
-/* ARGSUSED */
 void
 abortsend(int signo)
 {
@@ -853,7 +851,6 @@ abort:
 
 jmp_buf	recvabort;
 
-/* ARGSUSED */
 void
 abortrecv(int signo)
 {
@@ -1702,7 +1699,6 @@ dataconn(const char *lmode)
 	return (fdopen(data, lmode));
 }
 
-/* ARGSUSED */
 void
 psummary(int signo)
 {
@@ -1713,7 +1709,6 @@ psummary(int signo)
 	errno = save_errno;
 }
 
-/* ARGSUSED */
 void
 psabort(int signo)
 {
@@ -1809,7 +1804,6 @@ pswitch(int flag)
 	}
 }
 
-/* ARGSUSED */
 void
 abortpt(int signo)
 {
@@ -1945,7 +1939,6 @@ abort:
 }
 
 #ifndef SMALL
-/* ARGSUSED */
 void
 reset(int argc, char *argv[])
 {
@@ -2013,7 +2006,6 @@ gunique(const char *local)
 
 jmp_buf forceabort;
 
-/* ARGSUSED */
 static void
 abortforce(int signo)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripe.c,v 1.30 2021/01/19 10:20:47 claudio Exp $ */
+/*	$OpenBSD: ripe.c,v 1.31 2023/03/08 04:43:15 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -49,7 +49,6 @@ struct ripd_conf	*oeconf = NULL;
 static struct imsgev	*iev_main;
 static struct imsgev	*iev_rde;
 
-/* ARGSUSED */
 void
 ripe_sig_handler(int sig, short event, void *bula)
 {
@@ -220,7 +219,6 @@ ripe_imsg_compose_rde(int type, u_int32_t peerid, pid_t pid,
 	    data, datalen));
 }
 
-/* ARGSUSED */
 void
 ripe_dispatch_main(int fd, short event, void *bula)
 {
@@ -299,7 +297,6 @@ ripe_dispatch_main(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 void
 ripe_dispatch_rde(int fd, short event, void *bula)
 {

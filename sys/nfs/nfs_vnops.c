@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.190 2022/08/12 14:30:53 visa Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.191 2023/03/08 04:43:09 guenther Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -3013,7 +3013,6 @@ loop:
  * Fake it. For v3 we could ask the server, but such code
  * hasn't been written yet.
  */
-/* ARGSUSED */
 int
 nfs_pathconf(void *v)
 {

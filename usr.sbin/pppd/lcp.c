@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcp.c,v 1.13 2015/12/14 03:25:59 mmcc Exp $	*/
+/*	$OpenBSD: lcp.c,v 1.14 2023/03/08 04:43:14 guenther Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -417,7 +417,6 @@ lcp_rprotrej(f, inp, len)
 /*
  * lcp_protrej - A Protocol-Reject was received.
  */
-/*ARGSUSED*/
 static void
 lcp_protrej(unit)
     int unit;

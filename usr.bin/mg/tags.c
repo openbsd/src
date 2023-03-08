@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.18 2022/12/26 19:16:02 jmc Exp $	*/
+/*	$OpenBSD: tags.c,v 1.19 2023/03/08 04:43:11 guenther Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -70,7 +70,6 @@ ctagcmp(struct ctag *s, struct ctag *t)
  * on first use. If a filename is already recorded, ask user to retain
  * already loaded tags (if any) and unload them if user chooses not to.
  */
-/* ARGSUSED */
 int
 tagsvisit(int f, int n)
 {
@@ -204,7 +203,6 @@ unloadtags(void)
  * buffername onto stack, load the file with tag definition into a new
  * buffer and position dot at the pattern.
  */
-/*ARGSUSED */
 int
 pushtag(char *tok)
 {
@@ -263,7 +261,6 @@ pushtag(char *tok)
 /*
  * If tag stack is not empty pop stack and jump to recorded buffer, dot.
  */
-/* ARGSUSED */
 int
 poptag(int f, int n)
 {

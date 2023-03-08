@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.225 2022/11/03 04:56:47 guenther Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.226 2023/03/08 04:43:08 guenther Exp $	*/
 
 /*
  * Copyright (c) 2011,2020 Theo de Raadt.
@@ -242,7 +242,6 @@ add_entropy_words(const u_int32_t *buf, u_int n)
  * queue and entries from the consumer end of the queue which are
  * likely to have collected more damage.
  */
-/* ARGSUSED */
 void
 dequeue_randomness(void *v)
 {
@@ -616,7 +615,6 @@ arc4random_uniform(u_int32_t upper_bound)
 	return r % upper_bound;
 }
 
-/* ARGSUSED */
 void
 rnd_init(void *null)
 {

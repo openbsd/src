@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.49 2021/03/01 10:51:14 lum Exp $	*/
+/*	$OpenBSD: grep.c,v 1.50 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain */
 
@@ -61,7 +61,6 @@ grep_init(void)
 	maps_add((KEYMAP *)&compilemap, "compile");
 }
 
-/* ARGSUSED */
 static int
 grep(int f, int n)
 {
@@ -87,7 +86,6 @@ grep(int f, int n)
 	return (TRUE);
 }
 
-/* ARGSUSED */
 int
 compile(int f, int n)
 {
@@ -116,7 +114,6 @@ compile(int f, int n)
 }
 
 /* id-utils foo. */
-/* ARGSUSED */
 static int
 gid(int f, int n)
 {
@@ -253,7 +250,6 @@ compile_mode(const char *name, const char *command)
 	return (bp);
 }
 
-/* ARGSUSED */
 static int
 compile_goto_error(int f, int n)
 {
@@ -321,7 +317,6 @@ fail:
 	return (FALSE);
 }
 
-/* ARGSUSED */
 int
 next_error(int f, int n)
 {
@@ -347,7 +342,6 @@ next_error(int f, int n)
  * Since we don't have variables (we probably should) these are command
  * processors for changing the values of mode flags.
  */
-/* ARGSUSED */
 int
 globalwdtoggle(int f, int n)
 {

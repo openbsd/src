@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_readwrite.c,v 1.45 2019/11/27 16:12:13 beck Exp $	*/
+/*	$OpenBSD: ext2fs_readwrite.c,v 1.46 2023/03/08 04:43:09 guenther Exp $	*/
 /*	$NetBSD: ext2fs_readwrite.c,v 1.16 2001/02/27 04:37:47 chs Exp $	*/
 
 /*-
@@ -59,7 +59,6 @@ static int	ext4_ext_read(struct vnode *, struct inode *, struct m_ext2fs *, stru
 /*
  * Vnode op for reading.
  */
-/* ARGSUSED */
 int
 ext2fs_read(void *v)
 {

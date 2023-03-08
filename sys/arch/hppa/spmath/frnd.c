@@ -1,4 +1,4 @@
-/*	$OpenBSD: frnd.c,v 1.8 2003/04/10 17:27:58 mickey Exp $	*/
+/*	$OpenBSD: frnd.c,v 1.9 2023/03/08 04:43:07 guenther Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -24,7 +24,6 @@
  *  Single Floating-point Round to Integer
  */
 
-/*ARGSUSED*/
 int
 sgl_frnd(srcptr, null, dstptr, status)
 	sgl_floating_point *srcptr, *null, *dstptr;
@@ -127,7 +126,6 @@ sgl_frnd(srcptr, null, dstptr, status)
  *  Double Floating-point Round to Integer
  */
 
-/*ARGSUSED*/
 int
 dbl_frnd(srcptr, null, dstptr, status)
 	dbl_floating_point *srcptr, *null, *dstptr;
@@ -229,7 +227,6 @@ dbl_frnd(srcptr, null, dstptr, status)
 	return(NOEXCEPTION);
 }
 
-/*ARGSUSED*/
 int
 quad_frnd(srcptr, null, dstptr, status)
 	quad_floating_point *srcptr, *null, *dstptr;

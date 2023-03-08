@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfsqrt.c,v 1.7 2003/04/10 17:27:59 mickey Exp $	*/
+/*	$OpenBSD: sfsqrt.c,v 1.8 2023/03/08 04:43:07 guenther Exp $	*/
 /*
   (c) Copyright 1986 HEWLETT-PACKARD COMPANY
   To anyone who acknowledges that this file is provided "AS IS"
@@ -21,7 +21,6 @@
  *  Single Floating-point Square Root
  */
 
-/*ARGSUSED*/
 int
 sgl_fsqrt(srcptr, null, dstptr, status)
 	sgl_floating_point *srcptr, *null, *dstptr;

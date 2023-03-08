@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.116 2023/02/08 08:20:54 tb Exp $ */
+/*	$OpenBSD: kroute.c,v 1.117 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -455,7 +455,6 @@ kr_fib_update_prio(u_int8_t fib_prio)
 	kr_state.fib_prio = fib_prio;
  }
 
-/* ARGSUSED */
 void
 kr_dispatch_msg(int fd, short event, void *bula)
 {

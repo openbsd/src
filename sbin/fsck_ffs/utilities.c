@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.54 2020/07/13 06:52:53 otto Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.55 2023/03/08 04:43:06 guenther Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -551,7 +551,6 @@ getpathname(char *namebuf, size_t namebuflen, ino_t curdir, ino_t ino)
 	memmove(namebuf, cp, (size_t)(&namebuf[PATH_MAX] - cp));
 }
 
-/*ARGSUSED*/
 void
 catch(int signo)
 {
@@ -564,7 +563,6 @@ catch(int signo)
  * a special exit after filesystem checks complete
  * so that reboot sequence may be interrupted.
  */
-/*ARGSUSED*/
 void
 catchquit(int signo)
 {
@@ -581,7 +579,6 @@ catchquit(int signo)
  * Ignore a single quit signal; wait and flush just in case.
  * Used by child processes in preen.
  */
-/*ARGSUSED*/
 void
 voidquit(int signo)
 {
@@ -634,7 +631,6 @@ dofix(struct inodesc *idesc, char *msg)
 int (* info_fn)(char *, size_t) = NULL;
 char *info_filesys = "?";
 
-/*ARGSUSED*/
 void
 catchinfo(int signo)
 {

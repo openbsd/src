@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mtw.c,v 1.7 2022/07/28 00:56:02 kevlo Exp $	*/
+/*	$OpenBSD: if_mtw.c,v 1.8 2023/03/08 04:43:08 guenther Exp $	*/
 /*
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
  * Copyright (c) 2013-2014 Kevin Lo
@@ -1657,7 +1657,6 @@ mtw_updateedca(struct ieee80211com *ic)
 	mtw_do_async(ic->ic_softc, mtw_updateedca_cb, NULL, 0);
 }
 
-/* ARGSUSED */
 void
 mtw_updateedca_cb(struct mtw_softc *sc, void *arg)
 {
@@ -1706,7 +1705,6 @@ mtw_updateslot(struct ieee80211com *ic)
 	mtw_do_async(ic->ic_softc, mtw_updateslot_cb, NULL, 0);
 }
 
-/* ARGSUSED */
 void
 mtw_updateslot_cb(struct mtw_softc *sc, void *arg)
 {
@@ -1899,7 +1897,6 @@ mtw_calibrate_to(void *arg)
 	/* next timeout will be rescheduled in the calibration task */
 }
 
-/* ARGSUSED */
 void
 mtw_calibrate_cb(struct mtw_softc *sc, void *arg)
 {

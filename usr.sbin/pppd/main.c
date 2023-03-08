@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.55 2021/10/24 21:24:19 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.56 2023/03/08 04:43:14 guenther Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -735,7 +735,6 @@ die(status)
 /*
  * cleanup - restore anything which needs to be restored before we exit
  */
-/* ARGSUSED */
 static void
 cleanup()
 {
@@ -952,7 +951,6 @@ hup(sig)
  *
  * Indicates that we should initiate a graceful disconnect and exit.
  */
-/*ARGSUSED*/
 static void
 term(sig)
     int sig;
@@ -992,7 +990,6 @@ chld(sig)
  *
  * Toggle debug flag.
  */
-/*ARGSUSED*/
 static void
 toggle_debug(sig)
     int sig;
@@ -1011,7 +1008,6 @@ toggle_debug(sig)
  *
  * Try to (re)negotiate compression.
  */
-/*ARGSUSED*/
 static void
 open_ccp(sig)
     int sig;

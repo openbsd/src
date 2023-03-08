@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.67 2021/01/19 09:54:08 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.68 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -52,7 +52,6 @@ static struct imsgev	*iev_main;
 static struct imsgev	*iev_rde;
 int			 oe_nofib;
 
-/* ARGSUSED */
 void
 ospfe_sig_handler(int sig, short event, void *bula)
 {
@@ -240,7 +239,6 @@ ospfe_imsg_compose_rde(int type, u_int32_t peerid, pid_t pid,
 	    data, datalen));
 }
 
-/* ARGSUSED */
 void
 ospfe_dispatch_main(int fd, short event, void *bula)
 {
@@ -427,7 +425,6 @@ ospfe_dispatch_main(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 void
 ospfe_dispatch_rde(int fd, short event, void *bula)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.84 2019/11/18 04:37:35 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.85 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -88,7 +88,6 @@
 /*
  * Set ascii transfer type.
  */
-/*ARGSUSED*/
 void
 setascii(int argc, char *argv[])
 {
@@ -100,7 +99,6 @@ setascii(int argc, char *argv[])
 /*
  * Set file transfer mode.
  */
-/*ARGSUSED*/
 void
 setftmode(int argc, char *argv[])
 {
@@ -112,7 +110,6 @@ setftmode(int argc, char *argv[])
 /*
  * Set file transfer format.
  */
-/*ARGSUSED*/
 void
 setform(int argc, char *argv[])
 {
@@ -124,7 +121,6 @@ setform(int argc, char *argv[])
 /*
  * Set file transfer structure.
  */
-/*ARGSUSED*/
 void
 setstruct(int argc, char *argv[])
 {
@@ -467,7 +463,6 @@ onoff(int bool)
 /*
  * Show status.
  */
-/*ARGSUSED*/
 void
 status(int argc, char *argv[])
 {
@@ -552,7 +547,6 @@ togglevar(int argc, char *argv[], int *var, const char *mesg)
 /*
  * Set beep on cmd completed mode.
  */
-/*ARGSUSED*/
 void
 setbell(int argc, char *argv[])
 {
@@ -563,7 +557,6 @@ setbell(int argc, char *argv[])
 /*
  * Set command line editing
  */
-/*ARGSUSED*/
 void
 setedit(int argc, char *argv[])
 {
@@ -575,7 +568,6 @@ setedit(int argc, char *argv[])
 /*
  * Toggle use of IPv4 EPSV/EPRT
  */
-/*ARGSUSED*/
 void
 setepsv4(int argc, char *argv[])
 {
@@ -587,7 +579,6 @@ setepsv4(int argc, char *argv[])
 /*
  * Turn on packet tracing.
  */
-/*ARGSUSED*/
 void
 settrace(int argc, char *argv[])
 {
@@ -598,7 +589,6 @@ settrace(int argc, char *argv[])
 /*
  * Toggle hash mark printing during transfers, or set hash mark bytecount.
  */
-/*ARGSUSED*/
 void
 sethash(int argc, char *argv[])
 {
@@ -636,7 +626,6 @@ sethash(int argc, char *argv[])
 /*
  * Turn on printing of server echo's.
  */
-/*ARGSUSED*/
 void
 setverbose(int argc, char *argv[])
 {
@@ -647,7 +636,6 @@ setverbose(int argc, char *argv[])
 /*
  * Toggle PORT/LPRT cmd use before each data connection.
  */
-/*ARGSUSED*/
 void
 setport(int argc, char *argv[])
 {
@@ -658,7 +646,6 @@ setport(int argc, char *argv[])
 /*
  * Toggle transfer progress bar.
  */
-/*ARGSUSED*/
 void
 setprogress(int argc, char *argv[])
 {
@@ -669,7 +656,6 @@ setprogress(int argc, char *argv[])
 /*
  * Turn on interactive prompting during mget, mput, and mdelete.
  */
-/*ARGSUSED*/
 void
 setprompt(int argc, char *argv[])
 {
@@ -680,7 +666,6 @@ setprompt(int argc, char *argv[])
 /*
  * Toggle gate-ftp mode, or set gate-ftp server
  */
-/*ARGSUSED*/
 void
 setgate(int argc, char *argv[])
 {
@@ -724,7 +709,6 @@ setgate(int argc, char *argv[])
 /*
  * Toggle metacharacter interpretation on local file names.
  */
-/*ARGSUSED*/
 void
 setglob(int argc, char *argv[])
 {
@@ -735,7 +719,6 @@ setglob(int argc, char *argv[])
 /*
  * Toggle preserving modification times on retrieved files.
  */
-/*ARGSUSED*/
 void
 setpreserve(int argc, char *argv[])
 {
@@ -746,7 +729,6 @@ setpreserve(int argc, char *argv[])
 /*
  * Set debugging mode on/off and/or set level of debugging.
  */
-/*ARGSUSED*/
 void
 setdebug(int argc, char *argv[])
 {
@@ -975,7 +957,6 @@ usage:
 /*
  * Do a shell escape
  */
-/*ARGSUSED*/
 void
 shell(int argc, char *argv[])
 {
@@ -1083,7 +1064,6 @@ user(int argc, char *argv[])
 /*
  * Print working directory on remote machine.
  */
-/*ARGSUSED*/
 void
 pwd(int argc, char *argv[])
 {
@@ -1103,7 +1083,6 @@ pwd(int argc, char *argv[])
 /*
  * Print working directory on local machine.
  */
-/* ARGSUSED */
 void
 lpwd(int argc, char *argv[])
 {
@@ -1277,7 +1256,6 @@ rmthelp(int argc, char *argv[])
 /*
  * Terminate session and exit.
  */
-/*ARGSUSED*/
 void
 quit(int argc, char *argv[])
 {
@@ -1310,7 +1288,6 @@ account(int argc, char *argv[])
 
 jmp_buf abortprox;
 
-/* ARGSUSED */
 void
 proxabort(int signo)
 {
@@ -1478,7 +1455,6 @@ setrunique(int argc, char *argv[])
 }
 
 /* change directory to parent directory */
-/* ARGSUSED */
 void
 cdup(int argc, char *argv[])
 {
@@ -1521,7 +1497,6 @@ restart(int argc, char *argv[])
 /*
  * Show remote system type
  */
-/* ARGSUSED */
 void
 syst(int argc, char *argv[])
 {

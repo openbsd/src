@@ -1,4 +1,4 @@
-/*	$OpenBSD: search.c,v 1.49 2022/12/26 19:16:02 jmc Exp $	*/
+/*	$OpenBSD: search.c,v 1.50 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -56,7 +56,6 @@ int		srch_lastdir = SRCH_NOPR;	/* Last search flags.	 */
  * characters, and display does all the hard stuff.  If not found, it just
  * prints a message.
  */
-/* ARGSUSED */
 int
 forwsearch(int f, int n)
 {
@@ -79,7 +78,6 @@ forwsearch(int f, int n)
  * left pointing at the first character of the pattern [the last character
  * that was matched].
  */
-/* ARGSUSED */
 int
 backsearch(int f, int n)
 {
@@ -101,7 +99,6 @@ backsearch(int f, int n)
  * search command. The direction has been saved in "srch_lastdir", so you
  * know which way to go.
  */
-/* ARGSUSED */
 int
 searchagain(int f, int n)
 {
@@ -130,7 +127,6 @@ searchagain(int f, int n)
  * Use incremental searching, initially in the forward direction.
  * isearch ignores any explicit arguments.
  */
-/* ARGSUSED */
 int
 forwisearch(int f, int n)
 {
@@ -145,7 +141,6 @@ forwisearch(int f, int n)
  * Use incremental searching, initially in the reverse direction.
  * isearch ignores any explicit arguments.
  */
-/* ARGSUSED */
 int
 backisearch(int f, int n)
 {
@@ -558,7 +553,6 @@ is_dspl(char *i_prompt, int flag)
  * Query Replace.
  *	Replace strings selectively.  Does a search and replace operation.
  */
-/* ARGSUSED */
 int
 queryrepl(int f, int n)
 {
@@ -640,7 +634,6 @@ stopsearch:
 /*
  * Replace string globally without individual prompting.
  */
-/* ARGSUSED */
 int
 replstr(int f, int n)
 {

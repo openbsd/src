@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.67 2022/08/23 20:37:16 cheloha Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.68 2023/03/08 04:43:08 guenther Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -78,7 +78,6 @@ static struct denode *msdosfs_hashget(dev_t, uint32_t, uint32_t);
 static int msdosfs_hashins(struct denode *);
 static void msdosfs_hashrem(struct denode *);
 
-/*ARGSUSED*/
 int
 msdosfs_init(struct vfsconf *vfsp)
 {

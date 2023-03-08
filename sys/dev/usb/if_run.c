@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_run.c,v 1.137 2022/05/10 08:20:36 stsp Exp $	*/
+/*	$OpenBSD: if_run.c,v 1.138 2023/03/08 04:43:08 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2008-2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1869,7 +1869,6 @@ run_updateedca(struct ieee80211com *ic)
 	run_do_async(ic->ic_softc, run_updateedca_cb, NULL, 0);
 }
 
-/* ARGSUSED */
 void
 run_updateedca_cb(struct run_softc *sc, void *arg)
 {
@@ -2076,7 +2075,6 @@ run_calibrate_to(void *arg)
 	/* next timeout will be rescheduled in the calibration task */
 }
 
-/* ARGSUSED */
 void
 run_calibrate_cb(struct run_softc *sc, void *arg)
 {
@@ -3762,7 +3760,6 @@ run_updateslot(struct ieee80211com *ic)
 	run_do_async(ic->ic_softc, run_updateslot_cb, NULL, 0);
 }
 
-/* ARGSUSED */
 void
 run_updateslot_cb(struct run_softc *sc, void *arg)
 {

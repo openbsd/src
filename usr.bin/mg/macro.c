@@ -1,4 +1,4 @@
-/*	$OpenBSD: macro.c,v 1.17 2022/12/26 19:16:02 jmc Exp $	*/
+/*	$OpenBSD: macro.c,v 1.18 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -24,7 +24,6 @@ struct line *maclcur;
 
 union macrodef macro[MAXMACRO];
 
-/* ARGSUSED */
 int
 definemacro(int f, int n)
 {
@@ -54,7 +53,6 @@ definemacro(int f, int n)
 	return (macrodef = TRUE);
 }
 
-/* ARGSUSED */
 int
 finishmacro(int f, int n)
 {
@@ -66,7 +64,6 @@ finishmacro(int f, int n)
 	return (FALSE);
 }
 
-/* ARGSUSED */
 int
 executemacro(int f, int n)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.30 2021/10/24 21:24:20 deraadt Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.31 2023/03/08 04:43:05 guenther Exp $	*/
 
 /*
  * Copyright (c) 2004 Moritz Jodeit <moritz@openbsd.org>
@@ -394,7 +394,6 @@ sig_pass_to_slave(int signo)
 	errno = olderrno;
 }
 
-/* ARGSUSED */
 void
 sig_chld(int signo)
 {

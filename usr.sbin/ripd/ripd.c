@@ -1,4 +1,4 @@
-/*	$OpenBSD: ripd.c,v 1.36 2021/09/06 13:32:18 deraadt Exp $ */
+/*	$OpenBSD: ripd.c,v 1.37 2023/03/08 04:43:15 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -75,7 +75,6 @@ usage(void)
 	exit(1);
 }
 
-/* ARGSUSED */
 void
 main_sig_handler(int sig, short event, void *arg)
 {
@@ -304,7 +303,6 @@ ripd_shutdown(void)
 }
 
 /* imsg handling */
-/* ARGSUSED */
 void
 main_dispatch_ripe(int fd, short event, void *bula)
 {
@@ -384,7 +382,6 @@ main_dispatch_ripe(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 void
 main_dispatch_rde(int fd, short event, void *bula)
 {

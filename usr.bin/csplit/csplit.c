@@ -1,4 +1,4 @@
-/*	$OpenBSD: csplit.c,v 1.11 2022/12/22 19:53:22 kn Exp $	*/
+/*	$OpenBSD: csplit.c,v 1.12 2023/03/08 04:43:10 guenther Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp $	*/
 
 /*-
@@ -219,7 +219,6 @@ usage(void)
 	exit(1);
 }
 
-/* ARGSUSED */
 void
 handlesig(int sig)
 {

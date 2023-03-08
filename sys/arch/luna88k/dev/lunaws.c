@@ -1,4 +1,4 @@
-/*	$OpenBSD: lunaws.c,v 1.15 2017/11/03 06:54:06 aoyama Exp $	*/
+/*	$OpenBSD: lunaws.c,v 1.16 2023/03/08 04:43:07 guenther Exp $	*/
 /* $NetBSD: lunaws.c,v 1.6 2002/03/17 19:40:42 atatat Exp $ */
 
 /*-
@@ -229,7 +229,6 @@ ws_submatch_mouse(struct device *parent, void *match, void *aux)
 
 #endif
 
-/*ARGSUSED*/
 void
 wsintr(void *arg)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.29 2023/02/08 08:24:29 tb Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.30 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -68,7 +68,6 @@ shell(void *v)
 /*
  * Fork an interactive shell.
  */
-/*ARGSUSED*/
 int
 dosh(void *v)
 {
@@ -531,7 +530,6 @@ diction(const void *a, const void *b)
 /*
  * The do nothing command for comments.
  */
-/*ARGSUSED*/
 int
 null(void *v)
 {

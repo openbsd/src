@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.41 2022/06/26 05:20:42 visa Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.42 2023/03/08 04:43:08 guenther Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -99,7 +99,6 @@ const struct vops dead_vops = {
 /*
  * Open always fails as if device did not exist.
  */
-/* ARGSUSED */
 int
 dead_open(void *v)
 {
@@ -109,7 +108,6 @@ dead_open(void *v)
 /*
  * Vnode op for read
  */
-/* ARGSUSED */
 int
 dead_read(void *v)
 {
@@ -128,7 +126,6 @@ dead_read(void *v)
 /*
  * Vnode op for write
  */
-/* ARGSUSED */
 int
 dead_write(void *v)
 {
@@ -142,7 +139,6 @@ dead_write(void *v)
 /*
  * Device ioctl operation.
  */
-/* ARGSUSED */
 int
 dead_ioctl(void *v)
 {
@@ -234,7 +230,6 @@ dead_bmap(void *v)
 /*
  * Print out the contents of a dead vnode.
  */
-/* ARGSUSED */
 int
 dead_print(void *v)
 {
@@ -245,7 +240,6 @@ dead_print(void *v)
 /*
  * Empty vnode failed operation
  */
-/*ARGSUSED*/
 int
 dead_ebadf(void *v)
 {

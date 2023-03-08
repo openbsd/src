@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.97 2022/09/19 21:14:38 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.98 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*-
@@ -721,7 +721,6 @@ foregroundproc(void)
 	    ctty_pgrp == pgrp));
 }
 
-/* ARGSUSED */
 static void
 updateprogressmeter(int signo)
 {
@@ -1007,7 +1006,6 @@ list_vertical(StringList *sl)
 /*
  * Update the global ttywidth value, using TIOCGWINSZ.
  */
-/* ARGSUSED */
 void
 setttywidth(int signo)
 {

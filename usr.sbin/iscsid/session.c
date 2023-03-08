@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.8 2015/12/05 06:37:24 mmcc Exp $ */
+/*	$OpenBSD: session.c,v 1.9 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 2011 Claudio Jeker <claudio@openbsd.org>
@@ -246,7 +246,6 @@ struct {
 	{ 0, 0, NULL }
 };
 
-/* ARGSUSED */
 void
 session_fsm_callback(int fd, short event, void *arg)
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yank.c,v 1.15 2021/03/01 10:51:14 lum Exp $	*/
+/*	$OpenBSD: yank.c,v 1.16 2023/03/08 04:43:11 guenther Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -148,7 +148,6 @@ kchunk(char *cp1, RSIZE chunk, int kflag)
  * it kills any text before dot on the current line, then it kills back
  * abs(arg) lines.
  */
-/* ARGSUSED */
 int
 killline(int f, int n)
 {
@@ -220,7 +219,6 @@ done:
  * bug associated with a yank when dot is on the top line of the window
  * (nothing moves, because all of the new text landed off screen).
  */
-/* ARGSUSED */
 int
 yank(int f, int n)
 {

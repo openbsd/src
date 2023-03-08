@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldpe.c,v 1.80 2021/01/19 15:59:25 claudio Exp $ */
+/*	$OpenBSD: ldpe.c,v 1.81 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 2013, 2016 Renato Westphal <renato@openbsd.org>
@@ -50,7 +50,6 @@ static struct imsgev	*iev_main;
 static struct imsgev	*iev_lde;
 static struct event	 pfkey_ev;
 
-/* ARGSUSED */
 static void
 ldpe_sig_handler(int sig, short event, void *bula)
 {
@@ -208,7 +207,6 @@ ldpe_imsg_compose_lde(int type, uint32_t peerid, pid_t pid, void *data,
 	    data, datalen));
 }
 
-/* ARGSUSED */
 static void
 ldpe_dispatch_main(int fd, short event, void *bula)
 {
@@ -485,7 +483,6 @@ ldpe_dispatch_main(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 static void
 ldpe_dispatch_lde(int fd, short event, void *bula)
 {
@@ -619,7 +616,6 @@ ldpe_dispatch_lde(int fd, short event, void *bula)
 	}
 }
 
-/* ARGSUSED */
 static void
 ldpe_dispatch_pfkey(int fd, short event, void *bula)
 {

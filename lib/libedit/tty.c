@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.27 2016/05/06 13:12:52 schwarze Exp $	*/
+/*	$OpenBSD: tty.c,v 1.28 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: tty.c,v 1.34 2011/01/27 23:11:40 christos Exp $	*/
 
 /*-
@@ -580,7 +580,6 @@ tty_init(EditLine *el)
  *	Restore the tty to its original settings
  */
 protected void
-/*ARGSUSED*/
 tty_end(EditLine *el)
 {
 	if (el->el_flags & EDIT_DISABLED)
@@ -1144,7 +1143,6 @@ tty_noquotemode(EditLine *el)
  *	Stty builtin
  */
 protected int
-/*ARGSUSED*/
 tty_stty(EditLine *el, int argc __attribute__((__unused__)),
     const wchar_t **argv)
 {

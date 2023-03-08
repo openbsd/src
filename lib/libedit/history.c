@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.28 2016/04/11 21:17:29 schwarze Exp $	*/
+/*	$OpenBSD: history.c,v 1.29 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: history.c,v 1.37 2010/01/03 18:27:10 christos Exp $	*/
 
 /*-
@@ -449,7 +449,6 @@ history_deldata_nth(history_t *h, TYPE(HistEvent) *ev,
 /* history_def_del():
  *	Delete element hp of the h list
  */
-/* ARGSUSED */
 static int
 history_def_del(void *p, TYPE(HistEvent) *ev __attribute__((__unused__)),
     const int num)
@@ -467,7 +466,6 @@ history_def_del(void *p, TYPE(HistEvent) *ev __attribute__((__unused__)),
 /* history_def_delete():
  *	Delete element hp of the h list
  */
-/* ARGSUSED */
 static void
 history_def_delete(history_t *h,
 		   TYPE(HistEvent) *ev __attribute__((__unused__)), hentry_t *hp)
@@ -547,7 +545,6 @@ history_def_enter(void *p, TYPE(HistEvent) *ev, const Char *str)
 /* history_def_init():
  *	Default history initialization function
  */
-/* ARGSUSED */
 static int
 history_def_init(void **p, TYPE(HistEvent) *ev __attribute__((__unused__)), int n)
 {

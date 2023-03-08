@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.18 2018/04/26 12:42:51 guenther Exp $ */
+/*	$OpenBSD: pf.c,v 1.19 2023/03/08 04:43:13 guenther Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -63,7 +63,6 @@ extern int promisc;
  * In this case the driver can handle both Ethernet type II and
  * IEEE 802.3 frames (SNAP) in a single pfOpen.
  */
-/* ARGSUSED */
 int
 pfTrans(char *interface)
 {
@@ -73,7 +72,6 @@ pfTrans(char *interface)
 /*
  * Open and initialize packet filter.
  */
-/* ARGSUSED */
 int
 pfInit(char *interface, int mode, u_short protocol, int typ)
 {
@@ -157,7 +155,6 @@ pfInit(char *interface, int mode, u_short protocol, int typ)
 /*
  * Add a Multicast address to the interface
  */
-/* ARGSUSED */
 int
 pfAddMulti(int s, char *interface, char *addr)
 {
@@ -190,7 +187,6 @@ pfAddMulti(int s, char *interface, char *addr)
 /*
  * Delete a Multicast address from the interface
  */
-/* ARGSUSED */
 int
 pfDelMulti(int s, char *interface, char *addr)
 {

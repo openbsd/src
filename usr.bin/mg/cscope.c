@@ -1,4 +1,4 @@
-/*	$OpenBSD: cscope.c,v 1.21 2022/05/24 16:42:19 op Exp $	*/
+/*	$OpenBSD: cscope.c,v 1.22 2023/03/08 04:43:11 guenther Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -78,7 +78,6 @@ static const char *ltrim(const char *);
 /*
  * Find this symbol. Bound to C-c s s
  */
-/* ARGSUSED */
 int
 cssymbol(int f, int n)
 {
@@ -88,7 +87,7 @@ cssymbol(int f, int n)
 /*
  * Find this global definition. Bound to C-c s d
  */
-/* ARGSUSED */int
+int
 csdefinition(int f, int n)
 {
 	return (do_cscope(CSDEFINITION));
@@ -97,7 +96,6 @@ csdefinition(int f, int n)
 /*
  * Find functions called by this function. Bound to C-c s l
  */
-/* ARGSUSED */
 int
 csfuncalled(int f, int n)
 {
@@ -107,7 +105,6 @@ csfuncalled(int f, int n)
 /*
  * Find functions calling this function. Bound to C-c s c
  */
-/* ARGSUSED */
 int
 cscallerfuncs(int f, int n)
 {
@@ -117,7 +114,6 @@ cscallerfuncs(int f, int n)
 /*
  * Find this text. Bound to C-c s t
  */
-/* ARGSUSED */
 int
 csfindtext(int f, int n)
 {
@@ -127,7 +123,6 @@ csfindtext(int f, int n)
 /*
  * Find this egrep pattern. Bound to C-c s e
  */
-/* ARGSUSED */
 int
 csegrep(int f, int n)
 {
@@ -137,7 +132,6 @@ csegrep(int f, int n)
 /*
  * Find this file. Bound to C-c s f
  */
-/* ARGSUSED */
 int
 csfindfile(int f, int n)
 {
@@ -147,7 +141,6 @@ csfindfile(int f, int n)
 /*
  * Find files #including this file. Bound to C-c s i
  */
-/* ARGSUSED */
 int
 csfindinc(int f, int n)
 {
@@ -158,7 +151,6 @@ csfindinc(int f, int n)
  * Create list of files to index in the given directory
  * using cscope-indexer.
  */
-/* ARGSUSED */
 int
 cscreatelist(int f, int n)
 {
@@ -229,7 +221,6 @@ cscreatelist(int f, int n)
 /*
  * Next Symbol. Bound to C-c s n
  */
-/* ARGSUSED */
 int
 csnextmatch(int f, int n)
 {
@@ -263,7 +254,6 @@ csnextmatch(int f, int n)
 /*
  * Previous Symbol. Bound to C-c s p
  */
-/* ARGSUSED */
 int
 csprevmatch(int f, int n)
 {

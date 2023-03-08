@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpcinfo.c,v 1.15 2019/06/28 13:35:03 deraadt Exp $	*/
+/*	$OpenBSD: rpcinfo.c,v 1.16 2023/03/08 04:43:12 guenther Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -543,7 +543,6 @@ pmapdump(int argc, char **argv)
  * to get a unique list of responses the output of rpcinfo should
  * be piped through sort(1) and then uniq(1).
  */
-/*ARGSUSED*/
 bool_t
 reply_proc(caddr_t res, struct sockaddr_in *who)
 {

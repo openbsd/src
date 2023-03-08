@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.25 2019/03/19 13:26:27 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.26 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -567,7 +567,6 @@ fmt(char *str, struct name *np, FILE *fo, int comma)
 /*
  * Save the outgoing mail on the passed file.
  */
-/*ARGSUSED*/
 int
 savemail(char *name, FILE *fi)
 {
@@ -605,7 +604,6 @@ savemail(char *name, FILE *fi)
 	return(0);
 }
 
-/*ARGSUSED*/
 void
 sendint(int s)
 {

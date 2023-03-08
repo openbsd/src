@@ -1,4 +1,4 @@
-/*	$OpenBSD: small.c,v 1.12 2019/11/18 04:37:35 deraadt Exp $	*/
+/*	$OpenBSD: small.c,v 1.13 2023/03/08 04:43:11 guenther Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -186,7 +186,6 @@ char *stype[] = {
 /*
  * Set binary transfer type.
  */
-/*ARGSUSED*/
 void
 setbinary(int argc, char *argv[])
 {
@@ -298,7 +297,6 @@ freegetit:
 }
 
 /* XXX - Signal race. */
-/* ARGSUSED */
 void
 mabort(int signo)
 {
@@ -508,7 +506,6 @@ cd(int argc, char *argv[])
 /*
  * Terminate session, but don't exit.
  */
-/* ARGSUSED */
 void
 disconnect(int argc, char *argv[])
 {

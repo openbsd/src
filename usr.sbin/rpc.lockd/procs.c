@@ -1,4 +1,4 @@
-/*	$OpenBSD: procs.c,v 1.15 2015/01/16 06:40:20 deraadt Exp $	*/
+/*	$OpenBSD: procs.c,v 1.16 2023/03/08 04:43:15 guenther Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -568,7 +568,6 @@ nlm_granted_msg_1_svc(nlm_testargs *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm_test_res_1_svc(nlm_testres *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -582,7 +581,6 @@ nlm_test_res_1_svc(nlm_testres *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm_lock_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -597,7 +595,6 @@ nlm_lock_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm_cancel_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -611,7 +608,6 @@ nlm_cancel_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm_unlock_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -625,7 +621,6 @@ nlm_unlock_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm_granted_res_1_svc(nlm_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -717,7 +712,6 @@ nlm_nm_lock_3_svc(nlm_lockargs *arg, struct svc_req *rqstp)
  *		using monitored locks.
  */
 void *
-/*ARGSUSED*/
 nlm_free_all_3_svc(nlm_notify *arg, struct svc_req *rqstp)
 {
 	static char dummy;
@@ -976,7 +970,6 @@ nlm4_granted_msg_4_svc(nlm4_testargs *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm4_test_res_4_svc(nlm4_testres *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -990,7 +983,6 @@ nlm4_test_res_4_svc(nlm4_testres *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm4_lock_res_4_svc(nlm4_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -1005,7 +997,6 @@ nlm4_lock_res_4_svc(nlm4_res *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm4_cancel_res_4_svc(nlm4_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -1019,7 +1010,6 @@ nlm4_cancel_res_4_svc(nlm4_res *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm4_unlock_res_4_svc(nlm4_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -1033,7 +1023,6 @@ nlm4_unlock_res_4_svc(nlm4_res *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm4_granted_res_4_svc(nlm4_res *arg, struct svc_req *rqstp)
 {
 	if (debug_level)
@@ -1125,7 +1114,6 @@ nlm4_nm_lock_4_svc(nlm4_lockargs *arg, struct svc_req *rqstp)
  *		using monitored locks.
  */
 void *
-/*ARGSUSED*/
 nlm4_free_all_4_svc(nlm_notify *arg, struct svc_req *rqstp)
 {
 	static char dummy;
@@ -1141,7 +1129,6 @@ nlm4_free_all_4_svc(nlm_notify *arg, struct svc_req *rqstp)
  * Returns:	Nothing
  */
 void *
-/*ARGSUSED*/
 nlm_sm_notify_0_svc(struct nlm_sm_status *arg, struct svc_req *rqstp)
 {
 	static char dummy;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: i2c_bitbang.c,v 1.4 2013/04/20 14:27:09 kettenis Exp $	*/
+/*	$OpenBSD: i2c_bitbang.c,v 1.5 2023/03/08 04:43:08 guenther Exp $	*/
 /*	$NetBSD: i2c_bitbang.c,v 1.1 2003/09/30 00:35:31 thorpej Exp $	*/
 
 /*
@@ -75,7 +75,6 @@ i2c_wait_for_scl(void *v, i2c_bitbang_ops_t ops)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 i2c_bitbang_send_start(void *v, int flags, i2c_bitbang_ops_t ops)
 {
@@ -94,7 +93,6 @@ i2c_bitbang_send_start(void *v, int flags, i2c_bitbang_ops_t ops)
 	return (0);
 }
 
-/*ARGSUSED*/
 int
 i2c_bitbang_send_stop(void *v, int flags, i2c_bitbang_ops_t ops)
 {

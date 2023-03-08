@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: date.y,v 1.14 2016/08/26 09:02:54 guenther Exp $	*/
+/*	$OpenBSD: date.y,v 1.15 2023/03/08 04:43:12 guenther Exp $	*/
 
 /*
 **  Originally written by Steven M. Bellovin <smb@research.att.com> while
@@ -871,7 +871,6 @@ date_parse(const char *p)
 }
 
 #if defined(TEST)
-/* ARGSUSED */
 int
 main(int argc, char **argv)
 {

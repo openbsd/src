@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.117 2022/08/12 14:30:53 visa Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.118 2023/03/08 04:43:09 guenther Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -1003,7 +1003,6 @@ ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 /*
  * Vnode pointer to File handle
  */
-/* ARGSUSED */
 int
 ext2fs_vptofh(struct vnode *vp, struct fid *fhp)
 {

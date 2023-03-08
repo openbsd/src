@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.39 2019/12/02 21:47:54 cheloha Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.40 2023/03/08 04:43:15 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -302,7 +302,6 @@ dotrace(caddr_t tcpcb)
 /*
  * Tcp debug routines
  */
-/*ARGSUSED*/
 void
 tcp_trace(short act, short ostate, struct tcpcb *tp,
     struct tcpiphdr *ti, struct tcpipv6hdr *ti6, int req)

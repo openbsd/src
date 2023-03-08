@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.147 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.148 2023/03/08 04:43:08 guenther Exp $	*/
 
 /*-
  * Copyright (c) 2004-2008
@@ -1241,7 +1241,6 @@ iwi_cmd(struct iwi_softc *sc, uint8_t type, void *data, uint8_t len, int async)
 	return async ? 0 : tsleep_nsec(sc, PCATCH, "iwicmd", SEC_TO_NSEC(1));
 }
 
-/* ARGSUSED */
 int
 iwi_send_mgmt(struct ieee80211com *ic, struct ieee80211_node *ni, int type,
     int arg1, int arg2)

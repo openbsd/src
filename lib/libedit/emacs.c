@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.17 2016/05/06 13:12:52 schwarze Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.18 2023/03/08 04:43:05 guenther Exp $	*/
 /*	$NetBSD: emacs.c,v 1.35 2016/04/18 17:01:19 christos Exp $	*/
 
 /*-
@@ -49,7 +49,6 @@
  *	[^D]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_delete_or_list(EditLine *el, wint_t c)
 {
 
@@ -85,7 +84,6 @@ em_delete_or_list(EditLine *el, wint_t c)
  *	[M-d]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_delete_next_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *cp, *p, *kp;
@@ -114,7 +112,6 @@ em_delete_next_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^Y]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_yank(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *kp, *cp;
@@ -150,7 +147,6 @@ em_yank(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^U]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_kill_line(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *kp, *cp;
@@ -172,7 +168,6 @@ em_kill_line(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^W]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_kill_region(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *kp, *cp;
@@ -205,7 +200,6 @@ em_kill_region(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[M-W]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_copy_region(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *kp, *cp;
@@ -254,7 +248,6 @@ em_gosmacs_transpose(EditLine *el, wint_t c)
  *	[M-f]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_next_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	if (el->el_line.cursor == el->el_line.lastchar)
@@ -279,7 +272,6 @@ em_next_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[M-u]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_upper_case(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *cp, *ep;
@@ -303,7 +295,6 @@ em_upper_case(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[M-c]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_capitol_case(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *cp, *ep;
@@ -335,7 +326,6 @@ em_capitol_case(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[M-l]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_lower_case(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *cp, *ep;
@@ -359,7 +349,6 @@ em_lower_case(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^@]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_set_mark(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -373,7 +362,6 @@ em_set_mark(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^X^X]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_exchange_mark(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *cp;
@@ -390,7 +378,6 @@ em_exchange_mark(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^U]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_universal_argument(EditLine *el, wint_t c __attribute__((__unused__)))
 {				/* multiply current argument by 4 */
 
@@ -407,7 +394,6 @@ em_universal_argument(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[<ESC>]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_meta_next(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -420,7 +406,6 @@ em_meta_next(EditLine *el, wint_t c __attribute__((__unused__)))
  *	Switch from insert to overwrite mode or vice versa
  */
 protected el_action_t
-/*ARGSUSED*/
 em_toggle_overwrite(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -434,7 +419,6 @@ em_toggle_overwrite(EditLine *el, wint_t c __attribute__((__unused__)))
  *	Copy current word to cursor
  */
 protected el_action_t
-/*ARGSUSED*/
 em_copy_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 	wchar_t *cp, *oldc, *dp;
@@ -461,7 +445,6 @@ em_copy_prev_word(EditLine *el, wint_t c __attribute__((__unused__)))
  *	Emacs incremental next search
  */
 protected el_action_t
-/*ARGSUSED*/
 em_inc_search_next(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -474,7 +457,6 @@ em_inc_search_next(EditLine *el, wint_t c __attribute__((__unused__)))
  *	Emacs incremental reverse search
  */
 protected el_action_t
-/*ARGSUSED*/
 em_inc_search_prev(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 
@@ -488,7 +470,6 @@ em_inc_search_prev(EditLine *el, wint_t c __attribute__((__unused__)))
  *	[^?]
  */
 protected el_action_t
-/*ARGSUSED*/
 em_delete_prev_char(EditLine *el, wint_t c __attribute__((__unused__)))
 {
 

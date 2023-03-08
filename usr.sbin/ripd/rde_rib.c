@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.5 2007/10/24 20:38:03 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.6 2023/03/08 04:43:14 guenther Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -72,7 +72,6 @@ route_start_garbage(struct rt_node *rn)
 	}
 }
 
-/* ARGSUSED */
 void
 route_action_timeout(int fd, short event, void *arg)
 {
@@ -89,7 +88,6 @@ route_action_timeout(int fd, short event, void *arg)
 	rde_send_change_kroute(r);
 }
 
-/* ARGSUSED */
 void
 route_action_garbage(int fd, short event, void *arg)
 {

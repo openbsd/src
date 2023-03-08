@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_serv.c,v 1.121 2022/05/27 11:10:54 mpi Exp $	*/
+/*	$OpenBSD: nfs_serv.c,v 1.122 2023/03/08 04:43:09 guenther Exp $	*/
 /*     $NetBSD: nfs_serv.c,v 1.34 1997/05/12 23:37:12 fvdl Exp $       */
 
 /*
@@ -2780,7 +2780,6 @@ nfsmout:
 /*
  * Null operation, used by clients to ping server
  */
-/* ARGSUSED */
 int
 nfsrv_null(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
     struct proc *procp, struct mbuf **mrq)
@@ -2801,7 +2800,6 @@ nfsrv_null(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
 /*
  * No operation, used for obsolete procedures
  */
-/* ARGSUSED */
 int
 nfsrv_noop(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp,
     struct proc *procp, struct mbuf **mrq)

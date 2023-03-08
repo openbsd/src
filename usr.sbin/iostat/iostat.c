@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.46 2022/12/28 20:56:37 cheloha Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.47 2023/03/08 04:43:13 guenther Exp $	*/
 /*	$NetBSD: iostat.c,v 1.10 1996/10/25 18:21:58 scottr Exp $	*/
 
 /*
@@ -214,7 +214,6 @@ sigalarm(int signo)
 {
 }
 
-/*ARGSUSED*/
 static void
 sigheader(int signo)
 {

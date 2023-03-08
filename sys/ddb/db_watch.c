@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.18 2020/10/15 03:14:00 deraadt Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.19 2023/03/08 04:43:07 guenther Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /*
@@ -146,7 +146,6 @@ db_list_watchpoints(void)
 }
 
 /* Delete watchpoint */
-/*ARGSUSED*/
 void
 db_deletewatch_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -154,7 +153,6 @@ db_deletewatch_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 /* Set watchpoint */
-/*ARGSUSED*/
 void
 db_watchpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
@@ -171,7 +169,6 @@ db_watchpoint_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 }
 
 /* list watchpoints */
-/*ARGSUSED*/
 void
 db_listwatch_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {

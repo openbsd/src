@@ -1,4 +1,4 @@
-/*	$OpenBSD: bell.c,v 1.6 2021/05/06 12:44:21 lum Exp $	*/
+/*	$OpenBSD: bell.c,v 1.7 2023/03/08 04:43:11 guenther Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -65,7 +65,6 @@ dobeep(void)
 	}
 }
 
-/* ARGSUSED */
 int
 toggleaudiblebell(int f, int n)
 {
@@ -77,7 +76,6 @@ toggleaudiblebell(int f, int n)
 	return (TRUE);
 }
 
-/* ARGSUSED */
 int
 togglevisiblebell(int f, int n)
 {
