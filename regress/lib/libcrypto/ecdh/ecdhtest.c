@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdhtest.c,v 1.12 2021/12/29 22:58:40 tb Exp $	*/
+/*	$OpenBSD: ecdhtest.c,v 1.13 2023/03/08 16:51:42 tb Exp $	*/
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -312,7 +312,7 @@ mk_eckey(int nid, const unsigned char *p, size_t plen)
 		goto err;
 	ok = 1;
 err:
-	BN_clear_free(priv);
+	BN_free(priv);
 	EC_POINT_free(pub);
 	if (!ok) {
 		EC_KEY_free(k);
