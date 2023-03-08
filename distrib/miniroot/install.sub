@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1231 2023/03/07 17:29:42 kn Exp $
+#	$OpenBSD: install.sub,v 1.1232 2023/03/08 11:52:20 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1247,10 +1247,11 @@ ieee80211_scan() {
 # Configure 802.11 interface $1 and append ifconfig options to hostname.if $2.
 # Ask the user for the access point ESSID, the security protocol and a secret.
 ieee80211_config() {
-	local _if=$1 _hn=$2 _prompt _nwid _haswpa=0 _err
+	local _if=$1 _hn=$2 _prompt _nwid _haswep=0 _haswpa=0 _err
 
-	# Reset 802.11 settings and determine wpa capability.
-	ifconfig $_if -nwid -nwkey
+	# Reset 802.11 settings and determine WEP and WPA capabilities.
+	ifconfig $_if -nwid
+	ifconfig $_if -nwkey 2>/dev/null && _haswep=1
 	ifconfig $_if -wpa 2>/dev/null && _haswpa=1
 
 	# Empty scan cache.
@@ -1275,17 +1276,18 @@ ieee80211_config() {
 	# 'any' implies that only open access points are considered.
 	if [[ $_nwid != any ]]; then
 
-		_prompt="Security protocol? (O)pen, (W)EP"
+		_prompt="Security protocol? (O)pen"
+		((_haswep == 1)) && _prompt="$_prompt, (W)EP"
 		((_haswpa == 1)) && _prompt="$_prompt, WPA-(P)SK"
 		while :; do
 			ask_until "$_prompt" "O"
-			case "$_haswpa-$resp" in
-			?-[Oo]) # No further questions
+			case "${_haswep}${_haswpa}-${resp}" in
+			??-[Oo]) # No further questions
 				ifconfig $_if join "$_nwid"
 				quote join "$_nwid" >>$_hn
 				break
 				;;
-			?-[Ww])	ask_passphrase "WEP key?"
+			1?-[Ww])	ask_passphrase "WEP key?"
 				# Make sure ifconfig accepts the key.
 				if _err=$(ifconfig $_if join "$_nwid" nwkey "$_passphrase" 2>&1) &&
 					[[ -z $_err ]]; then
@@ -1294,7 +1296,7 @@ ieee80211_config() {
 				fi
 				echo "$_err"
 				;;
-			1-[Pp])	ask_passphrase "WPA passphrase?"
+			?1-[Pp])	ask_passphrase "WPA passphrase?"
 				# Make sure ifconfig accepts the key.
 				if ifconfig $_if join "$_nwid" wpakey "$_passphrase"; then
 					quote join "$_nwid" wpakey "$_passphrase" >>$_hn
