@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.136 2023/03/08 05:17:33 jsing Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.137 2023/03/08 05:41:08 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -88,6 +88,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"unsafe"
 )
@@ -121,9 +122,7 @@ func (variant testVariant) String() string {
 	return variants[variant]
 }
 
-var acceptableAudit = false
-var acceptableComments map[string]int
-var acceptableFlags map[string]int
+var testc *testCoordinator
 
 type wycheproofJWKPublic struct {
 	Crv string `json:"crv"`
@@ -2776,156 +2775,160 @@ func runTestVectors(path string, variant testVariant) bool {
 	fmt.Printf("Loaded Wycheproof test vectors for %v with %d tests from %q\n",
 		wtv.Algorithm, wtv.NumberOfTests, filepath.Base(path))
 
-	var wtg interface{}
-	switch wtv.Algorithm {
-	case "AES-CBC-PKCS5":
-		wtg = &wycheproofTestGroupAesCbcPkcs5{}
-	case "AES-CCM":
-		wtg = &wycheproofTestGroupAead{}
-	case "AES-CMAC":
-		wtg = &wycheproofTestGroupAesCmac{}
-	case "AES-GCM":
-		wtg = &wycheproofTestGroupAead{}
-	case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
-		wtg = &wycheproofTestGroupAead{}
-	case "DSA":
-		wtg = &wycheproofTestGroupDSA{}
-	case "ECDH":
-		switch variant {
-		case Webcrypto:
-			wtg = &wycheproofTestGroupECDHWebCrypto{}
-		default:
-			wtg = &wycheproofTestGroupECDH{}
-		}
-	case "ECDSA":
-		switch variant {
-		case Webcrypto:
-			wtg = &wycheproofTestGroupECDSAWebCrypto{}
-		default:
-			wtg = &wycheproofTestGroupECDSA{}
-		}
-	case "EDDSA":
-		wtg = &wycheproofTestGroupEdDSA{}
-	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
-		wtg = &wycheproofTestGroupHkdf{}
-	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512":
-		wtg = &wycheproofTestGroupHmac{}
-	case "KW":
-		wtg = &wycheproofTestGroupKW{}
-	case "PrimalityTest":
-		wtg = &wycheproofTestGroupPrimality{}
-	case "RSAES-OAEP":
-		wtg = &wycheproofTestGroupRsaesOaep{}
-	case "RSAES-PKCS1-v1_5":
-		wtg = &wycheproofTestGroupRsaesPkcs1{}
-	case "RSASSA-PSS":
-		wtg = &wycheproofTestGroupRsassa{}
-	case "RSASSA-PKCS1-v1_5", "RSASig":
-		wtg = &wycheproofTestGroupRSA{}
-	case "XDH", "X25519":
-		wtg = &wycheproofTestGroupX25519{}
-	default:
-		log.Printf("INFO: Unknown test vector algorithm %q", wtv.Algorithm)
-		return false
-	}
-
 	success := true
-	for _, tg := range wtv.TestGroups {
-		if err := json.Unmarshal(tg, wtg); err != nil {
-			log.Fatalf("Failed to unmarshal test groups JSON: %v", err)
-		}
-		switch wtv.Algorithm {
-		case "AES-CBC-PKCS5":
-			if !runAesCbcPkcs5TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCbcPkcs5)) {
-				success = false
-			}
-		case "AES-CCM":
-			if !runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
-				success = false
-			}
-		case "AES-CMAC":
-			if !runAesCmacTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCmac)) {
-				success = false
-			}
-		case "AES-GCM":
-			if !runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
-				success = false
-			}
-		case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
-			if !runChaCha20Poly1305TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead)) {
-				success = false
-			}
-		case "DSA":
-			if !runDSATestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupDSA)) {
-				success = false
-			}
-		case "ECDH":
-			switch variant {
-			case Webcrypto:
-				if !runECDHWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDHWebCrypto)) {
-					success = false
+	for i := range wtv.TestGroups {
+		testc.runTest(func() bool {
+			var wtg interface{}
+			switch wtv.Algorithm {
+			case "AES-CBC-PKCS5":
+				wtg = &wycheproofTestGroupAesCbcPkcs5{}
+			case "AES-CCM":
+				wtg = &wycheproofTestGroupAead{}
+			case "AES-CMAC":
+				wtg = &wycheproofTestGroupAesCmac{}
+			case "AES-GCM":
+				wtg = &wycheproofTestGroupAead{}
+			case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
+				wtg = &wycheproofTestGroupAead{}
+			case "DSA":
+				wtg = &wycheproofTestGroupDSA{}
+			case "ECDH":
+				switch variant {
+				case Webcrypto:
+					wtg = &wycheproofTestGroupECDHWebCrypto{}
+				default:
+					wtg = &wycheproofTestGroupECDH{}
 				}
+			case "ECDSA":
+				switch variant {
+				case Webcrypto:
+					wtg = &wycheproofTestGroupECDSAWebCrypto{}
+				default:
+					wtg = &wycheproofTestGroupECDSA{}
+				}
+			case "EDDSA":
+				wtg = &wycheproofTestGroupEdDSA{}
+			case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
+				wtg = &wycheproofTestGroupHkdf{}
+			case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512":
+				wtg = &wycheproofTestGroupHmac{}
+			case "KW":
+				wtg = &wycheproofTestGroupKW{}
+			case "PrimalityTest":
+				wtg = &wycheproofTestGroupPrimality{}
+			case "RSAES-OAEP":
+				wtg = &wycheproofTestGroupRsaesOaep{}
+			case "RSAES-PKCS1-v1_5":
+				wtg = &wycheproofTestGroupRsaesPkcs1{}
+			case "RSASSA-PSS":
+				wtg = &wycheproofTestGroupRsassa{}
+			case "RSASSA-PKCS1-v1_5", "RSASig":
+				wtg = &wycheproofTestGroupRSA{}
+			case "XDH", "X25519":
+				wtg = &wycheproofTestGroupX25519{}
 			default:
-				if !runECDHTestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupECDH)) {
-					success = false
-				}
+				log.Printf("INFO: Unknown test vector algorithm %q", wtv.Algorithm)
+				return false
 			}
-		case "ECDSA":
-			switch variant {
-			case Webcrypto:
-				if !runECDSAWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSAWebCrypto)) {
-					success = false
+
+			if err := json.Unmarshal(wtv.TestGroups[i], wtg); err != nil {
+				log.Fatalf("Failed to unmarshal test groups JSON: %v", err)
+			}
+			switch wtv.Algorithm {
+			case "AES-CBC-PKCS5":
+				return runAesCbcPkcs5TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCbcPkcs5))
+			case "AES-CCM":
+				return runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead))
+			case "AES-CMAC":
+				return runAesCmacTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCmac))
+			case "AES-GCM":
+				return runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead))
+			case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
+				return runChaCha20Poly1305TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead))
+			case "DSA":
+				return runDSATestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupDSA))
+			case "ECDH":
+				switch variant {
+				case Webcrypto:
+					return runECDHWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDHWebCrypto))
+				default:
+					return runECDHTestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupECDH))
 				}
+			case "ECDSA":
+				switch variant {
+				case Webcrypto:
+					return runECDSAWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSAWebCrypto))
+				default:
+					return runECDSATestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupECDSA))
+				}
+			case "EDDSA":
+				return runEdDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupEdDSA))
+			case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
+				return runHkdfTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHkdf))
+			case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512":
+				return runHmacTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHmac))
+			case "KW":
+				return runKWTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupKW))
+			case "PrimalityTest":
+				return runPrimalityTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupPrimality))
+			case "RSAES-OAEP":
+				return runRsaesOaepTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsaesOaep))
+			case "RSAES-PKCS1-v1_5":
+				return runRsaesPkcs1TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsaesPkcs1))
+			case "RSASSA-PSS":
+				return runRsassaTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsassa))
+			case "RSASSA-PKCS1-v1_5", "RSASig":
+				return runRSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSA))
+			case "XDH", "X25519":
+				return runX25519TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupX25519))
 			default:
-				if !runECDSATestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupECDSA)) {
-					success = false
-				}
+				log.Fatalf("Unknown test vector algorithm %q", wtv.Algorithm)
+				return false
 			}
-		case "EDDSA":
-			if !runEdDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupEdDSA)) {
-				success = false
-			}
-		case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
-			if !runHkdfTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHkdf)) {
-				success = false
-			}
-		case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512":
-			if !runHmacTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHmac)) {
-				success = false
-			}
-		case "KW":
-			if !runKWTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupKW)) {
-				success = false
-			}
-		case "PrimalityTest":
-			if !runPrimalityTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupPrimality)) {
-				success = false
-			}
-		case "RSAES-OAEP":
-			if !runRsaesOaepTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsaesOaep)) {
-				success = false
-			}
-		case "RSAES-PKCS1-v1_5":
-			if !runRsaesPkcs1TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsaesPkcs1)) {
-				success = false
-			}
-		case "RSASSA-PSS":
-			if !runRsassaTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsassa)) {
-				success = false
-			}
-		case "RSASSA-PKCS1-v1_5", "RSASig":
-			if !runRSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSA)) {
-				success = false
-			}
-		case "XDH", "X25519":
-			if !runX25519TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupX25519)) {
-				success = false
-			}
-		default:
-			log.Fatalf("Unknown test vector algorithm %q", wtv.Algorithm)
+		})
+	}
+	for _ = range wtv.TestGroups {
+		result := <-testc.resultCh
+		if !result {
+			success = false
 		}
 	}
 	return success
+}
+
+type testCoordinator struct {
+	testFuncCh chan func() bool
+	resultCh   chan bool
+}
+
+func newTestCoordinator() *testCoordinator {
+	runnerCount := runtime.NumCPU()
+	tc := &testCoordinator{
+		testFuncCh: make(chan func() bool, runnerCount),
+		resultCh:   make(chan bool, 1024),
+	}
+	for i := 0; i < runnerCount; i++ {
+		go tc.testRunner(tc.testFuncCh, tc.resultCh)
+	}
+	return tc
+}
+
+func (tc *testCoordinator) testRunner(testFuncCh <-chan func() bool, resultCh chan<- bool) {
+	for testFunc := range testFuncCh {
+		select {
+		case resultCh <- testFunc():
+		default:
+			log.Fatal("result channel is full")
+		}
+	}
+}
+
+func (tc *testCoordinator) runTest(testFunc func() bool) {
+	tc.testFuncCh <- testFunc
+}
+
+func (tc *testCoordinator) shutdown() {
+	close(tc.testFuncCh)
 }
 
 func main() {
@@ -2970,6 +2973,8 @@ func main() {
 
 	success := true
 
+	testc = newTestCoordinator()
+
 	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sha3|sha512_(224|256))_`)
 
 	for _, test := range tests {
@@ -2990,6 +2995,8 @@ func main() {
 			}
 		}
 	}
+
+	testc.shutdown()
 
 	if !success {
 		os.Exit(1)
