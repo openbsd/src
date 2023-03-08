@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.137 2023/03/08 05:41:08 jsing Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.138 2023/03/08 06:12:52 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -90,6 +90,7 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"sync"
 	"unsafe"
 )
 
@@ -2973,6 +2974,14 @@ func main() {
 
 	success := true
 
+	var wg sync.WaitGroup
+
+	vectorsRateLimitCh := make(chan bool, 4)
+	for i := 0; i < cap(vectorsRateLimitCh); i++ {
+		vectorsRateLimitCh <- true
+	}
+	resultCh := make(chan bool, 1024)
+
 	testc = newTestCoordinator()
 
 	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sha3|sha512_(224|256))_`)
@@ -2990,9 +2999,26 @@ func main() {
 				fmt.Printf("INFO: Skipping tests from \"%s\"\n", strings.TrimPrefix(tv, testVectorPath+"/"))
 				continue
 			}
-			if !runTestVectors(tv, test.variant) {
-				success = false
-			}
+			wg.Add(1)
+			<-vectorsRateLimitCh
+			go func(tv string, variant testVariant) {
+				select {
+				case resultCh <- runTestVectors(tv, variant):
+				default:
+					log.Fatal("result channel is full")
+				}
+				vectorsRateLimitCh <- true
+				wg.Done()
+			}(tv, test.variant)
+		}
+	}
+
+	wg.Wait()
+	close(resultCh)
+
+	for result := range resultCh {
+		if !result {
+			success = false
 		}
 	}
 
