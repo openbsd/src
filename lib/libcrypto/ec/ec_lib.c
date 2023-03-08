@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.50 2023/03/08 05:45:31 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.51 2023/03/08 06:47:30 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -117,7 +117,7 @@ EC_GROUP_new(const EC_METHOD *meth)
 void
 EC_GROUP_free(EC_GROUP *group)
 {
-	if (group != NULL)
+	if (group == NULL)
 		return;
 
 	if (group->meth->group_finish != NULL)
@@ -136,7 +136,7 @@ EC_GROUP_free(EC_GROUP *group)
 void
 EC_GROUP_clear_free(EC_GROUP *group)
 {
-	return EC_GROUP_free(group);
+	EC_GROUP_free(group);
 }
 
 int
@@ -836,7 +836,7 @@ EC_POINT_new(const EC_GROUP *group)
 void
 EC_POINT_free(EC_POINT *point)
 {
-	if (point != NULL)
+	if (point == NULL)
 		return;
 
 	if (point->meth->point_finish != NULL)
@@ -848,7 +848,7 @@ EC_POINT_free(EC_POINT *point)
 void
 EC_POINT_clear_free(EC_POINT *point)
 {
-	return EC_POINT_free(point);
+	EC_POINT_free(point);
 }
 
 int
