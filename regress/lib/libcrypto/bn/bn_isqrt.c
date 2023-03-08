@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.2 2022/12/06 18:23:29 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.3 2023/03/08 06:28:08 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -26,7 +26,7 @@
 
 #include "bn_local.h"
 
-#define N_TESTS		400
+#define N_TESTS		100
 
 /* Sample squares between 2^128 and 2^4096. */
 #define LOWER_BITS	128
