@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.30 2022/12/26 07:18:51 jmc Exp $ */
+/* $OpenBSD: ec.h,v 1.31 2023/03/08 05:45:31 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -198,7 +198,9 @@ void EC_GROUP_free(EC_GROUP *group);
 /** Clears and frees a EC_GROUP object
  *  \param  group  EC_GROUP object to be cleared and freed.
  */
+#ifndef LIBRESSL_INTERNAL
 void EC_GROUP_clear_free(EC_GROUP *group);
+#endif
 
 /** Copies EC_GROUP objects. Note: both EC_GROUPs must use the same EC_METHOD.
  *  \param  dst  destination EC_GROUP object
@@ -425,7 +427,9 @@ void EC_POINT_free(EC_POINT *point);
 /** Clears and frees a EC_POINT object
  *  \param  point  EC_POINT object to be cleared and freed
  */
+#ifndef LIBRESSL_INTERNAL
 void EC_POINT_clear_free(EC_POINT *point);
+#endif
 
 /** Copies EC_POINT object
  *  \param  dst  destination EC_POINT object

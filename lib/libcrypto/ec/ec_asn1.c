@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.40 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.41 2023/03/08 05:45:31 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1236,7 +1236,7 @@ ec_asn1_parameters2group(const ECPARAMETERS *params)
 
  err:
 	if (!ok) {
-		EC_GROUP_clear_free(ret);
+		EC_GROUP_free(ret);
 		ret = NULL;
 	}
 	BN_free(p);
@@ -1299,7 +1299,7 @@ d2i_ECPKParameters(EC_GROUP ** a, const unsigned char **in, long len)
 	}
 
 	if (a != NULL) {
-		EC_GROUP_clear_free(*a);
+		EC_GROUP_free(*a);
 		*a = group;
 	}
 
@@ -1347,7 +1347,7 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 		ret = *a;
 
 	if (priv_key->parameters) {
-		EC_GROUP_clear_free(ret->group);
+		EC_GROUP_free(ret->group);
 		ret->group = ec_asn1_pkparameters2group(priv_key->parameters);
 	}
 	if (ret->group == NULL) {
@@ -1371,7 +1371,7 @@ d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
 	}
 
 	if (ret->pub_key)
-		EC_POINT_clear_free(ret->pub_key);
+		EC_POINT_free(ret->pub_key);
 	ret->pub_key = EC_POINT_new(ret->group);
 	if (ret->pub_key == NULL) {
 		ECerror(ERR_R_EC_LIB);

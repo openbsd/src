@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_print.c,v 1.10 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: ec_print.c,v 1.11 2023/03/08 05:45:31 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -110,7 +110,7 @@ EC_POINT_bn2point(const EC_GROUP *group,
 
 	if (!EC_POINT_oct2point(group, ret, buf, buf_len, ctx)) {
 		if (point == NULL)
-			EC_POINT_clear_free(ret);
+			EC_POINT_free(ret);
 		free(buf);
 		return NULL;
 	}

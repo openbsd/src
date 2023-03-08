@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.49 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.50 2023/03/08 05:45:31 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -117,38 +117,15 @@ EC_GROUP_new(const EC_METHOD *meth)
 void
 EC_GROUP_free(EC_GROUP *group)
 {
-	if (!group)
+	if (group != NULL)
 		return;
 
-	if (group->meth->group_finish != 0)
-		group->meth->group_finish(group);
-
-	EC_EX_DATA_free_all_data(&group->extra_data);
-
-	EC_POINT_free(group->generator);
-	BN_free(&group->order);
-	BN_free(&group->cofactor);
-
-	free(group->seed);
-
-	free(group);
-}
-
-
-void
-EC_GROUP_clear_free(EC_GROUP *group)
-{
-	if (!group)
-		return;
-
-	if (group->meth->group_clear_finish != 0)
-		group->meth->group_clear_finish(group);
-	else if (group->meth->group_finish != 0)
+	if (group->meth->group_finish != NULL)
 		group->meth->group_finish(group);
 
 	EC_EX_DATA_clear_free_all_data(&group->extra_data);
 
-	EC_POINT_clear_free(group->generator);
+	EC_POINT_free(group->generator);
 	BN_free(&group->order);
 	BN_free(&group->cofactor);
 
@@ -156,6 +133,11 @@ EC_GROUP_clear_free(EC_GROUP *group)
 	freezero(group, sizeof *group);
 }
 
+void
+EC_GROUP_clear_free(EC_GROUP *group)
+{
+	return EC_GROUP_free(group);
+}
 
 int
 EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
@@ -195,7 +177,7 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 			return 0;
 	} else {
 		/* src->generator == NULL */
-		EC_POINT_clear_free(dest->generator);
+		EC_POINT_free(dest->generator);
 		dest->generator = NULL;
 	}
 
@@ -851,32 +833,23 @@ EC_POINT_new(const EC_GROUP *group)
 	return ret;
 }
 
-
 void
 EC_POINT_free(EC_POINT *point)
 {
-	if (!point)
+	if (point != NULL)
 		return;
 
-	if (point->meth->point_finish != 0)
+	if (point->meth->point_finish != NULL)
 		point->meth->point_finish(point);
-	free(point);
-}
 
+	freezero(point, sizeof *point);
+}
 
 void
 EC_POINT_clear_free(EC_POINT *point)
 {
-	if (!point)
-		return;
-
-	if (point->meth->point_clear_finish != 0)
-		point->meth->point_clear_finish(point);
-	else if (point->meth->point_finish != 0)
-		point->meth->point_finish(point);
-	freezero(point, sizeof *point);
+	return EC_POINT_free(point);
 }
-
 
 int
 EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)

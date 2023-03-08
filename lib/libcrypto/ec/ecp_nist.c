@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nist.c,v 1.23 2023/03/08 04:50:27 jsing Exp $ */
+/* $OpenBSD: ecp_nist.c,v 1.24 2023/03/08 05:45:31 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -171,7 +171,6 @@ static const EC_METHOD ec_GFp_nist_method = {
 	.field_type = NID_X9_62_prime_field,
 	.group_init = ec_GFp_simple_group_init,
 	.group_finish = ec_GFp_simple_group_finish,
-	.group_clear_finish = ec_GFp_simple_group_clear_finish,
 	.group_copy = ec_GFp_nist_group_copy,
 	.group_set_curve = ec_GFp_nist_group_set_curve,
 	.group_get_curve = ec_GFp_simple_group_get_curve,
@@ -180,7 +179,6 @@ static const EC_METHOD ec_GFp_nist_method = {
 	.group_check_discriminant = ec_GFp_simple_group_check_discriminant,
 	.point_init = ec_GFp_simple_point_init,
 	.point_finish = ec_GFp_simple_point_finish,
-	.point_clear_finish = ec_GFp_simple_point_clear_finish,
 	.point_copy = ec_GFp_simple_point_copy,
 	.point_set_to_infinity = ec_GFp_simple_point_set_to_infinity,
 	.point_set_Jprojective_coordinates =

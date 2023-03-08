@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.32 2023/03/08 04:50:27 jsing Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.33 2023/03/08 05:45:31 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -89,23 +89,11 @@ ec_GF2m_simple_group_init(EC_GROUP *group)
 }
 
 /*
- * Free a GF(2^m)-based EC_GROUP structure.
+ * Clear and free a GF(2^m)-based EC_GROUP structure.
  * Note that all other members are handled by EC_GROUP_free.
  */
 static void
 ec_GF2m_simple_group_finish(EC_GROUP *group)
-{
-	BN_free(&group->field);
-	BN_free(&group->a);
-	BN_free(&group->b);
-}
-
-/*
- * Clear and free a GF(2^m)-based EC_GROUP structure.
- * Note that all other members are handled by EC_GROUP_clear_free.
- */
-static void
-ec_GF2m_simple_group_clear_finish(EC_GROUP *group)
 {
 	BN_free(&group->field);
 	BN_free(&group->a);
@@ -272,18 +260,9 @@ ec_GF2m_simple_point_init(EC_POINT *point)
 	return 1;
 }
 
-/* Frees an EC_POINT. */
-static void
-ec_GF2m_simple_point_finish(EC_POINT *point)
-{
-	BN_free(&point->X);
-	BN_free(&point->Y);
-	BN_free(&point->Z);
-}
-
 /* Clears and frees an EC_POINT. */
 static void
-ec_GF2m_simple_point_clear_finish(EC_POINT *point)
+ec_GF2m_simple_point_finish(EC_POINT *point)
 {
 	BN_free(&point->X);
 	BN_free(&point->Y);
@@ -727,7 +706,6 @@ static const EC_METHOD ec_GF2m_simple_method = {
 	.field_type = NID_X9_62_characteristic_two_field,
 	.group_init = ec_GF2m_simple_group_init,
 	.group_finish = ec_GF2m_simple_group_finish,
-	.group_clear_finish = ec_GF2m_simple_group_clear_finish,
 	.group_copy = ec_GF2m_simple_group_copy,
 	.group_set_curve = ec_GF2m_simple_group_set_curve,
 	.group_get_curve = ec_GF2m_simple_group_get_curve,
@@ -736,7 +714,6 @@ static const EC_METHOD ec_GF2m_simple_method = {
 	.group_check_discriminant = ec_GF2m_simple_group_check_discriminant,
 	.point_init = ec_GF2m_simple_point_init,
 	.point_finish = ec_GF2m_simple_point_finish,
-	.point_clear_finish = ec_GF2m_simple_point_clear_finish,
 	.point_copy = ec_GF2m_simple_point_copy,
 	.point_set_to_infinity = ec_GF2m_simple_point_set_to_infinity,
 	.point_set_affine_coordinates =

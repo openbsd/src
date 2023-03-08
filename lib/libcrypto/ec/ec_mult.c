@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.27 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.28 2023/03/08 05:45:31 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -172,7 +172,7 @@ ec_pre_comp_clear_free(void *pre_)
 		EC_POINT **p;
 
 		for (p = pre->points; *p != NULL; p++) {
-			EC_POINT_clear_free(*p);
+			EC_POINT_free(*p);
 			explicit_bzero(p, sizeof *p);
 		}
 		free(pre->points);
@@ -694,7 +694,7 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	}
 	if (val != NULL) {
 		for (v = val; *v != NULL; v++)
-			EC_POINT_clear_free(*v);
+			EC_POINT_free(*v);
 		free(val);
 	}
 	free(val_sub);
