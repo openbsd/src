@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.85 2023/01/07 05:24:59 guenther Exp $	*/
+/*	$OpenBSD: print.c,v 1.86 2023/03/08 14:47:02 tobhe Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -182,7 +182,7 @@ command(const struct pinfo *pi, VARENT *ve)
 				}
 				putchar('(');
 				left--;
-				left -= print_comm_name(kp, left, 0);
+				left = print_comm_name(kp, left, 0);
 				if (left == 0)
 					return;
 				putchar(')');
@@ -193,7 +193,7 @@ command(const struct pinfo *pi, VARENT *ve)
 				putchar(' ');
 				left--;
 			}
-			left -= print_comm_name(kp, left, 0);
+			left = print_comm_name(kp, left, 0);
 		}
 	}
 	if (ve->next != NULL)
