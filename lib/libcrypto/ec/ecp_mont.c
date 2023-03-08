@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.25 2023/03/07 05:41:18 jsing Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.26 2023/03/08 04:50:27 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -233,7 +233,6 @@ ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
 }
 
 static const EC_METHOD ec_GFp_mont_method = {
-	.flags = EC_FLAGS_DEFAULT_OCT,
 	.field_type = NID_X9_62_prime_field,
 	.group_init = ec_GFp_mont_group_init,
 	.group_finish = ec_GFp_mont_group_finish,
@@ -257,6 +256,10 @@ static const EC_METHOD ec_GFp_mont_method = {
 	    ec_GFp_simple_point_set_affine_coordinates,
 	.point_get_affine_coordinates =
 	    ec_GFp_simple_point_get_affine_coordinates,
+	.point_set_compressed_coordinates =
+	    ec_GFp_simple_set_compressed_coordinates,
+	.point2oct = ec_GFp_simple_point2oct,
+	.oct2point = ec_GFp_simple_oct2point,
 	.add = ec_GFp_simple_add,
 	.dbl = ec_GFp_simple_dbl,
 	.invert = ec_GFp_simple_invert,

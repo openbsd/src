@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.31 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.32 2023/03/08 04:50:27 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -724,7 +724,6 @@ ec_GF2m_simple_field_div(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 }
 
 static const EC_METHOD ec_GF2m_simple_method = {
-	.flags = EC_FLAGS_DEFAULT_OCT,
 	.field_type = NID_X9_62_characteristic_two_field,
 	.group_init = ec_GF2m_simple_group_init,
 	.group_finish = ec_GF2m_simple_group_finish,
@@ -744,6 +743,10 @@ static const EC_METHOD ec_GF2m_simple_method = {
 	    ec_GF2m_simple_point_set_affine_coordinates,
 	.point_get_affine_coordinates =
 	    ec_GF2m_simple_point_get_affine_coordinates,
+	.point_set_compressed_coordinates =
+	    ec_GF2m_simple_set_compressed_coordinates,
+	.point2oct = ec_GF2m_simple_point2oct,
+	.oct2point = ec_GF2m_simple_oct2point,
 	.add = ec_GF2m_simple_add,
 	.dbl = ec_GF2m_simple_dbl,
 	.invert = ec_GF2m_simple_invert,

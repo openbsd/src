@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.9 2023/03/07 05:50:59 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.10 2023/03/08 04:50:27 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -86,17 +86,7 @@ __BEGIN_HIDDEN_DECLS
 # endif
 #endif
 
-/* Use default functions for poin2oct, oct2point and compressed coordinates */
-#define EC_FLAGS_DEFAULT_OCT	0x1
-
 struct ec_method_st {
-
-	/*
-	 * Methods and members exposed directly by the public API.
-	 */
-
-	int flags;
-
 	int field_type;
 
 	int (*group_init)(EC_GROUP *);

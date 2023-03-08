@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nist.c,v 1.22 2023/03/07 05:45:14 jsing Exp $ */
+/* $OpenBSD: ecp_nist.c,v 1.23 2023/03/08 04:50:27 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -168,7 +168,6 @@ ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
 }
 
 static const EC_METHOD ec_GFp_nist_method = {
-	.flags = EC_FLAGS_DEFAULT_OCT,
 	.field_type = NID_X9_62_prime_field,
 	.group_init = ec_GFp_simple_group_init,
 	.group_finish = ec_GFp_simple_group_finish,
@@ -192,6 +191,10 @@ static const EC_METHOD ec_GFp_nist_method = {
 	    ec_GFp_simple_point_set_affine_coordinates,
 	.point_get_affine_coordinates =
 	    ec_GFp_simple_point_get_affine_coordinates,
+	.point_set_compressed_coordinates =
+	    ec_GFp_simple_set_compressed_coordinates,
+	.point2oct = ec_GFp_simple_point2oct,
+	.oct2point = ec_GFp_simple_oct2point,
 	.add = ec_GFp_simple_add,
 	.dbl = ec_GFp_simple_dbl,
 	.invert = ec_GFp_simple_invert,
