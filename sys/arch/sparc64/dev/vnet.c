@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnet.c,v 1.66 2022/07/25 14:48:24 kn Exp $	*/
+/*	$OpenBSD: vnet.c,v 1.67 2023/03/09 10:29:04 claudio Exp $	*/
 /*
  * Copyright (c) 2009, 2015 Mark Kettenis
  *
@@ -54,8 +54,11 @@
 #define DPRINTF(x)
 #endif
 
-#define VNET_TX_ENTRIES		32
-#define VNET_RX_ENTRIES		32
+#define VNET_BUF_SIZE		2048
+
+/* 128 * 64 = 8192 which is a full page */
+#define VNET_TX_ENTRIES		128
+#define VNET_RX_ENTRIES		128
 
 struct vnet_attr_info {
 	struct vio_msg_tag	tag;
@@ -304,7 +307,8 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Each interface gets its own pool.
 	 */
-	pool_init(&sc->sc_pool, 2048, 0, IPL_NET, 0, sc->sc_dv.dv_xname, NULL);
+	pool_init(&sc->sc_pool, VNET_BUF_SIZE, 0, IPL_NET, 0,
+	    sc->sc_dv.dv_xname, NULL);
 
 	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
@@ -314,7 +318,6 @@ vnet_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = vnet_start;
 	ifp->if_watchdog = vnet_watchdog;
 	strlcpy(ifp->if_xname, sc->sc_dv.dv_xname, IFNAMSIZ);
-	ifq_set_maxlen(&ifp->if_snd, 31); /* XXX */
 
 	ifmedia_init(&sc->sc_media, 0, vnet_media_change, vnet_media_status);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
@@ -725,14 +728,14 @@ vnet_rx_vio_desc_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 
 	switch(tag->stype) {
 	case VIO_SUBTYPE_INFO:
-		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
-		if (buf == NULL) {
+		nbytes = roundup(dm->nbytes, 8);
+		if (nbytes > VNET_BUF_SIZE) {
 			ifp->if_ierrors++;
 			goto skip;
 		}
-		nbytes = roundup(dm->nbytes, 8);
 
-		if (dm->nbytes > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
+		buf = pool_get(&sc->sc_pool, PR_NOWAIT|PR_ZERO);
+		if (buf == NULL) {
 			ifp->if_ierrors++;
 			goto skip;
 		}
@@ -822,7 +825,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_IN, cookie,
 			    desc_pa, nbytes, &nbytes);
 			if (err != H_EOK) {
-				printf("hv_ldc_copy_in %d\n", err);
+				printf("hv_ldc_copy in %d\n", err);
 				break;
 			}
 
@@ -857,7 +860,7 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			err = hv_ldc_copy(lc->lc_id, LDC_COPY_OUT, cookie,
 			    desc_pa, nbytes, &nbytes);
 			if (err != H_EOK)
-				printf("hv_ldc_copy_out %d\n", err);
+				printf("hv_ldc_copy out %d\n", err);
 
 			ack_end_idx = idx;
 			if (++idx == sc->sc_peer_dring_nentries)
@@ -897,12 +900,12 @@ vnet_rx_vio_dring_data(struct vnet_softc *sc, struct vio_msg_tag *tag)
 			sc->sc_tx_cons++;
 			cons = sc->sc_tx_cons & (sc->sc_vd->vd_nentries - 1);
 		}
-
+ 
+		KERNEL_LOCK();
 		count = sc->sc_tx_prod - sc->sc_tx_cons;
 		if (count > 0 && sc->sc_peer_state != VIO_DP_ACTIVE)
 			vnet_send_dring_data(sc, cons);
 
-		KERNEL_LOCK();
 		if (count < (sc->sc_vd->vd_nentries - 1))
 			ifq_clr_oactive(&ifp->if_snd);
 		if (count == 0)
@@ -1138,6 +1141,12 @@ vnet_start(struct ifnet *ifp)
 			break;
 		}
 
+		if (m->m_pkthdr.len > VNET_BUF_SIZE - VNET_ETHER_ALIGN) {
+			ifp->if_oerrors++;
+			pool_put(&sc->sc_pool, buf);
+			m_freem(m);
+			break;
+		}
 		m_copydata(m, 0, m->m_pkthdr.len, buf + VNET_ETHER_ALIGN);
 
 #if NBPFILTER > 0
@@ -1163,9 +1172,9 @@ vnet_start(struct ifnet *ifp)
 		sc->sc_vd->vd_desc[prod].ncookies = 1;
 		sc->sc_vd->vd_desc[prod].cookie[0].addr =
 		    map->lm_next << PAGE_SHIFT | (pa & PAGE_MASK);
-		sc->sc_vd->vd_desc[prod].cookie[0].size = 2048;
-		membar_producer();
-		sc->sc_vd->vd_desc[prod].hdr.dstate = VIO_DESC_READY;
+		sc->sc_vd->vd_desc[prod].cookie[0].size = VNET_BUF_SIZE;
+		if (prod != start)
+			sc->sc_vd->vd_desc[prod].hdr.dstate = VIO_DESC_READY;
 
 		sc->sc_vsd[prod].vsd_map_idx = map->lm_next;
 		sc->sc_vsd[prod].vsd_buf = buf;
@@ -1176,11 +1185,14 @@ vnet_start(struct ifnet *ifp)
 		m_freem(m);
 	}
 
-	membar_producer();
 
-	if (start != prod && sc->sc_peer_state != VIO_DP_ACTIVE) {
-		vnet_send_dring_data(sc, start);
-		ifp->if_timer = 5;
+	if (start != prod) {
+		membar_producer();
+		sc->sc_vd->vd_desc[start].hdr.dstate = VIO_DESC_READY;
+		if (sc->sc_peer_state != VIO_DP_ACTIVE) {
+			vnet_send_dring_data(sc, start);
+			ifp->if_timer = 10;
+		}
 	}
 }
 
@@ -1251,7 +1263,7 @@ vnet_start_desc(struct ifnet *ifp)
 		dm.ncookies = 1;
 		dm.cookie[0].addr =
 			map->lm_next << PAGE_SHIFT | (pa & PAGE_MASK);
-		dm.cookie[0].size = 2048;
+		dm.cookie[0].size = VNET_BUF_SIZE;
 		vnet_sendmsg(sc, &dm, sizeof(dm));
 
 		sc->sc_tx_prod++;
