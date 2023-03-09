@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpfdesc.h,v 1.47 2022/07/09 12:48:21 visa Exp $	*/
+/*	$OpenBSD: bpfdesc.h,v 1.48 2023/03/09 05:56:58 dlg Exp $	*/
 /*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
 
 /*
@@ -79,6 +79,7 @@ struct bpf_d {
 
 	struct bpf_if  *bd_bif;		/* interface descriptor */
 	uint64_t	bd_rtout;	/* [m] Read timeout in nanoseconds */
+	uint64_t	bd_wtout;	/* [m] Wait time in nanoseconds */
 	u_long		bd_nreaders;	/* [m] # threads asleep in bpfread() */
 	struct bpf_program_smr
 		       *bd_rfilter;	/* read filter code */
@@ -88,8 +89,7 @@ struct bpf_d {
 	u_long		bd_dcount;	/* number of packets dropped */
 
 	u_char		bd_promisc;	/* true if listening promiscuously */
-	u_char		bd_state;	/* idle, waiting, or timed out */
-	u_char		bd_immediate;	/* true to return on packet arrival */
+	u_char		bd_state;	/* [m] idle, waiting, or timed out */
 	u_char		bd_locked;	/* true if descriptor is locked */
 	u_char		bd_fildrop;	/* true if filtered packets will be dropped */
 	u_char		bd_dirfilt;	/* direction filter */
@@ -103,7 +103,8 @@ struct bpf_d {
 	int		bd_unit;	/* logical unit number */
 	LIST_ENTRY(bpf_d) bd_list;	/* descriptor list */
 
-	struct task	bd_wake_task;	/* delay pgsigio() and selwakeup() */
+	struct task	bd_wake_task;	/* defer pgsigio() and selwakeup() */
+	struct timeout	bd_wait_tmo;	/* delay wakeup after catching pkt */
 
 	struct smr_entry
 			bd_smr;

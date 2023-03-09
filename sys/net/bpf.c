@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.220 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.221 2023/03/09 05:56:58 dlg Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -77,6 +77,10 @@
 
 #define BPF_BUFSIZE 32768
 
+#define BPF_S_IDLE	0
+#define BPF_S_WAIT	1
+#define BPF_S_DONE	2
+
 #define PRINET  26			/* interruptible */
 
 /*
@@ -101,6 +105,7 @@ int	bpf_setif(struct bpf_d *, struct ifreq *);
 int	bpfkqfilter(dev_t, struct knote *);
 void	bpf_wakeup(struct bpf_d *);
 void	bpf_wakeup_cb(void *);
+void	bpf_wait_cb(void *);
 int	_bpf_mtap(caddr_t, const struct mbuf *, const struct mbuf *, u_int);
 void	bpf_catchpacket(struct bpf_d *, u_char *, size_t, size_t,
 	    const struct bpf_hdr *);
@@ -392,11 +397,13 @@ bpfopen(dev_t dev, int flag, int mode, struct proc *p)
 	bd->bd_sig = SIGIO;
 	mtx_init(&bd->bd_mtx, IPL_NET);
 	task_set(&bd->bd_wake_task, bpf_wakeup_cb, bd);
+	timeout_set(&bd->bd_wait_tmo, bpf_wait_cb, bd);
 	smr_init(&bd->bd_smr);
 	sigio_init(&bd->bd_sigio);
 	klist_init_mutex(&bd->bd_klist, &bd->bd_mtx);
 
 	bd->bd_rtout = 0;	/* no timeout by default */
+	bd->bd_wtout = INFSLP;	/* wait for the buffer to fill by default */
 
 	refcnt_init(&bd->bd_refcnt);
 	LIST_INSERT_HEAD(&bpf_d_list, bd, bd_list);
@@ -435,6 +442,7 @@ bpfclose(dev_t dev, int flag, int mode, struct proc *p)
 	(d)->bd_hbuf = (d)->bd_sbuf; \
 	(d)->bd_hlen = (d)->bd_slen; \
 	(d)->bd_sbuf = (d)->bd_fbuf; \
+	(d)->bd_state = BPF_S_IDLE; \
 	(d)->bd_slen = 0; \
 	(d)->bd_fbuf = NULL;
 
@@ -492,7 +500,7 @@ bpfread(dev_t dev, struct uio *uio, int ioflag)
 			ROTATE_BUFFERS(d);
 			break;
 		}
-		if (d->bd_immediate && d->bd_slen != 0) {
+		if (d->bd_state == BPF_S_DONE) {
 			/*
 			 * A packet(s) either arrived since the previous
 			 * read or arrived while we were asleep.
@@ -611,6 +619,21 @@ bpf_wakeup_cb(void *xd)
 	bpf_put(d);
 }
 
+void
+bpf_wait_cb(void *xd)
+{
+	struct bpf_d *d = xd;
+
+	mtx_enter(&d->bd_mtx);
+	if (d->bd_state == BPF_S_WAIT) {
+		d->bd_state = BPF_S_DONE;
+		bpf_wakeup(d);
+	}
+	mtx_leave(&d->bd_mtx);
+
+	bpf_put(d);
+}
+
 int
 bpfwrite(dev_t dev, struct uio *uio, int ioflag)
 {
@@ -674,15 +697,62 @@ bpf_resetd(struct bpf_d *d)
 	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
 	KASSERT(d->bd_in_uiomove == 0);
 
+	if (timeout_del(&d->bd_wait_tmo))
+		bpf_put(d);
+
 	if (d->bd_hbuf != NULL) {
 		/* Free the hold buffer. */
 		d->bd_fbuf = d->bd_hbuf;
 		d->bd_hbuf = NULL;
 	}
+	d->bd_state = BPF_S_IDLE;
 	d->bd_slen = 0;
 	d->bd_hlen = 0;
 	d->bd_rcount = 0;
 	d->bd_dcount = 0;
+}
+
+static int
+bpf_set_wtout(struct bpf_d *d, uint64_t wtout)
+{
+	mtx_enter(&d->bd_mtx);
+	d->bd_wtout = wtout;
+	mtx_leave(&d->bd_mtx);
+
+	return (0);
+}
+
+static int
+bpf_set_wtimeout(struct bpf_d *d, const struct timeval *tv)
+{
+	uint64_t nsec;
+
+	if (tv->tv_sec < 0 || !timerisvalid(tv))
+		return (EINVAL);
+
+	nsec = TIMEVAL_TO_NSEC(tv);
+	if (nsec > MAXTSLP)
+		return (EOVERFLOW);
+
+	return (bpf_set_wtout(d, nsec));
+}
+
+static int
+bpf_get_wtimeout(struct bpf_d *d, struct timeval *tv)
+{
+	uint64_t nsec;
+
+	mtx_enter(&d->bd_mtx);
+	nsec = d->bd_wtout;
+	mtx_leave(&d->bd_mtx);
+
+	if (nsec == INFSLP)
+		return (ENXIO);
+
+	memset(tv, 0, sizeof(*tv));
+	NSEC_TO_TIMEVAL(nsec, tv);
+
+	return (0);
 }
 
 /*
@@ -698,6 +768,9 @@ bpf_resetd(struct bpf_d *d)
  *  BIOCSETIF		Set interface.
  *  BIOCSRTIMEOUT	Set read timeout.
  *  BIOCGRTIMEOUT	Get read timeout.
+ *  BIOCSWTIMEOUT	Set wait timeout.
+ *  BIOCGWTIMEOUT	Get wait timeout.
+ *  BIOCDWTIMEOUT	Del wait timeout.
  *  BIOCGSTATS		Get packet stats.
  *  BIOCIMMEDIATE	Set immediate mode.
  *  BIOCVERSION		Get filter language version.
@@ -720,6 +793,7 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		case BIOCGDLTLIST:
 		case BIOCGETIF:
 		case BIOCGRTIMEOUT:
+		case BIOCGWTIMEOUT:
 		case BIOCGSTATS:
 		case BIOCVERSION:
 		case BIOCGRSIG:
@@ -727,6 +801,8 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		case FIONREAD:
 		case BIOCLOCK:
 		case BIOCSRTIMEOUT:
+		case BIOCSWTIMEOUT:
+		case BIOCDWTIMEOUT:
 		case BIOCIMMEDIATE:
 		case TIOCGPGRP:
 		case BIOCGDIRFILT:
@@ -933,7 +1009,20 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	 * Set immediate mode.
 	 */
 	case BIOCIMMEDIATE:
-		d->bd_immediate = *(u_int *)addr;
+		error = bpf_set_wtout(d, *(int *)addr ? 0 : INFSLP);
+		break;
+
+	/*
+	 * Wait timeout.
+	 */
+	case BIOCSWTIMEOUT:
+		error = bpf_set_wtimeout(d, (const struct timeval *)addr);
+		break;
+	case BIOCGWTIMEOUT:
+		error = bpf_get_wtimeout(d, (struct timeval *)addr);
+		break;
+	case BIOCDWTIMEOUT:
+		error = bpf_set_wtout(d, INFSLP);
 		break;
 
 	case BIOCVERSION:
@@ -1193,7 +1282,7 @@ filt_bpfread(struct knote *kn, long hint)
 	MUTEX_ASSERT_LOCKED(&d->bd_mtx);
 
 	kn->kn_data = d->bd_hlen;
-	if (d->bd_immediate)
+	if (d->bd_wtout == 0)
 		kn->kn_data += d->bd_slen;
 
 	return (kn->kn_data > 0);
@@ -1510,6 +1599,11 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 			++d->bd_dcount;
 			return;
 		}
+
+		/* cancel pending wtime */
+		if (timeout_del(&d->bd_wait_tmo))
+			bpf_put(d);
+
 		ROTATE_BUFFERS(d);
 		do_wakeup = 1;
 		curlen = 0;
@@ -1530,12 +1624,27 @@ bpf_catchpacket(struct bpf_d *d, u_char *pkt, size_t pktlen, size_t snaplen,
 	bpf_mcopy(pkt, (u_char *)bh + hdrlen, bh->bh_caplen);
 	d->bd_slen = curlen + totlen;
 
-	if (d->bd_immediate) {
+	switch (d->bd_wtout) {
+	case 0:
 		/*
 		 * Immediate mode is set.  A packet arrived so any
 		 * reads should be woken up.
 		 */
+		if (d->bd_state == BPF_S_IDLE)
+			d->bd_state = BPF_S_DONE;
 		do_wakeup = 1;
+		break;
+	case INFSLP:
+		break;
+	default:
+		if (d->bd_state == BPF_S_IDLE) {
+			d->bd_state = BPF_S_WAIT;
+
+			bpf_get(d);
+			if (!timeout_add_nsec(&d->bd_wait_tmo, d->bd_wtout))
+				bpf_put(d);
+		}
+		break;
 	}
 
 	if (do_wakeup)
