@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.160 2023/03/09 13:12:19 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.161 2023/03/09 17:21:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -329,11 +329,13 @@ void			 rtr_config_prep(void);
 void			 rtr_config_merge(void);
 void			 rtr_config_keep(struct rtr_session *);
 void			 rtr_roa_merge(struct roa_tree *);
+void			 rtr_aspa_merge(struct aspa_tree *);
 void			 rtr_shutdown(void);
 void			 rtr_show(struct rtr_session *, pid_t);
 
 /* rtr.c */
-void	roa_insert(struct roa_tree *, struct roa *);
+void	rtr_roa_insert(struct roa_tree *, struct roa *);
+void	rtr_aspa_insert(struct aspa_tree *, struct aspa_set *);
 void	rtr_main(int, int);
 void	rtr_imsg_compose(int, uint32_t, pid_t, void *, size_t);
 void	rtr_recalc(void);

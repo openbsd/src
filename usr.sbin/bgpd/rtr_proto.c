@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.12 2023/02/02 20:31:37 job Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.13 2023/03/09 17:21:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -35,6 +35,7 @@ struct rtr_header {
 	uint32_t	length;
 };
 
+#define RTR_MAX_VERSION		2
 #define RTR_MAX_LEN		2048
 #define RTR_DEFAULT_REFRESH	3600
 #define RTR_DEFAULT_RETRY	600
@@ -51,6 +52,7 @@ enum rtr_pdu_type {
 	CACHE_RESET = 8,
 	ROUTER_KEY = 9,
 	ERROR_REPORT = 10,
+	ASPA = 11,
 };
 
 #define FLAG_ANNOUNCE	0x1
@@ -71,6 +73,16 @@ struct rtr_ipv6 {
 	uint8_t		zero;
 	uint32_t	prefix[4];
 	uint32_t	asnum;
+};
+
+#define FLAG_AFI_V6	0x1
+#define FLAG_AFI_MASK	FLAG_AFI_V6
+struct rtr_aspa {
+	uint8_t		flags;
+	uint8_t		afi_flags;
+	uint16_t	cnt;
+	uint32_t	cas;
+	uint32_t	spas[0];
 };
 
 struct rtr_endofdata {
@@ -94,6 +106,7 @@ enum rtr_event {
 	RTR_EVNT_CACHE_RESET,
 	RTR_EVNT_NO_DATA,
 	RTR_EVNT_RESET_AND_CLOSE,
+	RTR_EVNT_UNSUPP_PROTO_VERSION,
 };
 
 static const char *rtr_eventnames[] = {
@@ -110,6 +123,7 @@ static const char *rtr_eventnames[] = {
 	"cache reset received",
 	"no data",
 	"connection closed with reset",
+	"unsupported protocol version",
 };
 
 enum rtr_state {
@@ -117,19 +131,23 @@ enum rtr_state {
 	RTR_STATE_ERROR,
 	RTR_STATE_IDLE,
 	RTR_STATE_ACTIVE,
+	RTR_STATE_NEGOTIATION,
 };
 
 static const char *rtr_statenames[] = {
 	"closed",
 	"error",
 	"idle",
-	"active"
+	"active",
+	"negotiation",
 };
 
 struct rtr_session {
 	TAILQ_ENTRY(rtr_session)	entry;
 	char				descr[PEER_DESCR_LEN];
 	struct roa_tree			roa_set;
+	struct aspa_tree		aspa_v4;
+	struct aspa_tree		aspa_v6;
 	struct ibuf_read		r;
 	struct msgbuf			w;
 	struct timer_head		timers;
@@ -146,6 +164,7 @@ struct rtr_session {
 	enum rtr_error			last_recv_error;
 	char				last_sent_msg[REASON_LEN];
 	char				last_recv_msg[REASON_LEN];
+	uint8_t				version;
 };
 
 TAILQ_HEAD(, rtr_session) rtrs = TAILQ_HEAD_INITIALIZER(rtrs);
@@ -184,6 +203,8 @@ log_rtr_type(enum rtr_pdu_type type)
 		return "router key";
 	case ERROR_REPORT:
 		return "error report";
+	case ASPA:
+		return "aspa pdu";
 	default:
 		snprintf(buf, sizeof(buf), "unknown %u", type);
 		return buf;
@@ -191,7 +212,8 @@ log_rtr_type(enum rtr_pdu_type type)
 };
 
 static struct ibuf *
-rtr_newmsg(enum rtr_pdu_type type, uint32_t len, uint16_t session_id)
+rtr_newmsg(struct rtr_session *rs, enum rtr_pdu_type type, uint32_t len,
+    uint16_t session_id)
 {
 	struct ibuf *buf;
 	struct rtr_header rh;
@@ -205,7 +227,7 @@ rtr_newmsg(enum rtr_pdu_type type, uint32_t len, uint16_t session_id)
 		return NULL;
 
 	memset(&rh, 0, sizeof(rh));
-	rh.version = 1;
+	rh.version = rs->version;
 	rh.type = type;
 	rh.session_id = htons(session_id);
 	rh.length = htonl(len);
@@ -236,7 +258,8 @@ rtr_send_error(struct rtr_session *rs, enum rtr_error err, char *msg,
 
 	rtr_fsm(rs, RTR_EVNT_SEND_ERROR);
 
-	buf = rtr_newmsg(ERROR_REPORT, 2 * sizeof(hdrlen) + len + mlen, err);
+	buf = rtr_newmsg(rs, ERROR_REPORT, 2 * sizeof(hdrlen) + len + mlen,
+	    err);
 	if (buf == NULL) {
 		log_warn("rtr %s: send error report", log_rtr(rs));
 		return;
@@ -260,7 +283,7 @@ rtr_reset_query(struct rtr_session *rs)
 {
 	struct ibuf *buf;
 
-	buf = rtr_newmsg(RESET_QUERY, 0, 0);
+	buf = rtr_newmsg(rs, RESET_QUERY, 0, 0);
 	if (buf == NULL) {
 		log_warn("rtr %s: send reset query", log_rtr(rs));
 		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
@@ -275,7 +298,7 @@ rtr_serial_query(struct rtr_session *rs)
 	struct ibuf *buf;
 	uint32_t s;
 
-	buf = rtr_newmsg(SERIAL_QUERY, sizeof(s), rs->session_id);
+	buf = rtr_newmsg(rs, SERIAL_QUERY, sizeof(s), rs->session_id);
 	if (buf == NULL) {
 		log_warn("rtr %s: send serial query", log_rtr(rs));
 		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
@@ -304,9 +327,10 @@ rtr_parse_header(struct rtr_session *rs, void *buf,
 
 	memcpy(&rh, buf, sizeof(rh));
 
-	if (rh.version != 1) {
-		log_warnx("rtr %s: received message with unsupported version",
-		    log_rtr(rs));
+	if (rh.version != rs->version && rh.type != ERROR_REPORT) {
+ badversion:
+		log_warnx("rtr %s: received %s message: unexpected version %d",
+		    log_rtr(rs), log_rtr_type(rh.type), rh.version);
 		rtr_send_error(rs, UNEXP_PROTOCOL_VERS, NULL, &rh, sizeof(rh));
 		return -1;
 	}
@@ -314,7 +338,7 @@ rtr_parse_header(struct rtr_session *rs, void *buf,
 	*msgtype = rh.type;
 	*msglen = ntohl(rh.length);
 
-	switch (*msgtype) {
+	switch (rh.type) {
 	case SERIAL_NOTIFY:
 		session_id = rs->session_id;
 		len = 12;
@@ -343,19 +367,23 @@ rtr_parse_header(struct rtr_session *rs, void *buf,
 		len = 8;
 		break;
 	case ROUTER_KEY:
+		if (rs->version < 1)
+			goto badversion;
 		len = 36;	/* XXX probably too small, but we ignore it */
 		/* FALLTHROUGH */
 	case ERROR_REPORT:
 		if (*msglen > RTR_MAX_LEN) {
+ toobig:
 			log_warnx("rtr %s: received %s: msg too big: %zu byte",
-			    log_rtr(rs), log_rtr_type(*msgtype), *msglen);
+			    log_rtr(rs), log_rtr_type(rh.type), *msglen);
 			rtr_send_error(rs, CORRUPT_DATA, "too big",
 			    &rh, sizeof(rh));
 			return -1;
 		}
 		if (*msglen < len) {
+ toosmall:
 			log_warnx("rtr %s: received %s: msg too small: "
-			    "%zu byte", log_rtr(rs), log_rtr_type(*msgtype),
+			    "%zu byte", log_rtr(rs), log_rtr_type(rh.type),
 			    *msglen);
 			rtr_send_error(rs, CORRUPT_DATA, "too small",
 			    &rh, sizeof(rh));
@@ -366,16 +394,28 @@ rtr_parse_header(struct rtr_session *rs, void *buf,
 		 * use the field for different things.
 		 */
 		return 0;
+	case ASPA:
+		if (rs->version < 2)
+			goto badversion;
+		session_id = 0;
+		/* unlike all other messages ASPA is variable sized */
+		if (*msglen > RTR_MAX_LEN)
+			goto toobig;
+		if (*msglen < sizeof(struct rtr_aspa))
+			goto toosmall;
+		/* len must be a multiple of 4 */
+		len = *msglen & ~0x3;
+		break;
 	default:
-		log_warnx("rtr %s: received unknown message: type %u",
-		    log_rtr(rs), *msgtype);
+		log_warnx("rtr %s: received unknown message: type %s",
+		    log_rtr(rs), log_rtr_type(rh.type));
 		rtr_send_error(rs, UNSUPP_PDU_TYPE, NULL, &rh, sizeof(rh));
 		return -1;
 	}
 
 	if (len != *msglen) {
 		log_warnx("rtr %s: received %s: illegal len: %zu byte not %u",
-		    log_rtr(rs), log_rtr_type(*msgtype), *msglen, len);
+		    log_rtr(rs), log_rtr_type(rh.type), *msglen, len);
 		rtr_send_error(rs, CORRUPT_DATA, "bad length",
 		    &rh, sizeof(rh));
 		return -1;
@@ -383,11 +423,11 @@ rtr_parse_header(struct rtr_session *rs, void *buf,
 
 	if (session_id != ntohs(rh.session_id)) {
 		/* ignore SERIAL_NOTIFY during startup */
-		if (rs->session_id == -1 && *msgtype == SERIAL_NOTIFY)
+		if (rs->session_id == -1 && rh.type == SERIAL_NOTIFY)
 			return 0;
 
 		log_warnx("rtr %s: received %s: bad session_id: %d != %d",
-		    log_rtr(rs), log_rtr_type(*msgtype), ntohs(rh.session_id),
+		    log_rtr(rs), log_rtr_type(rh.type), ntohs(rh.session_id),
 		    session_id);
 		rtr_send_error(rs, CORRUPT_DATA, "bad session_id",
 		    &rh, sizeof(rh));
@@ -413,7 +453,7 @@ rtr_parse_notify(struct rtr_session *rs, uint8_t *buf, size_t len)
 static int
 rtr_parse_cache_response(struct rtr_session *rs, uint8_t *buf, size_t len)
 {
-	if (rs->state != RTR_STATE_IDLE) {
+	if (rs->state != RTR_STATE_IDLE && rs->state != RTR_STATE_NEGOTIATION) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(CACHE_RESPONSE));
 		return -1;
@@ -561,6 +601,98 @@ rtr_parse_ipv6_prefix(struct rtr_session *rs, uint8_t *buf, size_t len)
 }
 
 static int
+rtr_parse_aspa(struct rtr_session *rs, uint8_t *buf, size_t len)
+{
+	struct rtr_aspa rtr_aspa;
+	struct aspa_tree *aspatree;
+	struct aspa_set *aspa, *a;
+	size_t offset;
+	uint16_t cnt, i;
+	uint8_t aid;
+
+	memcpy(&rtr_aspa, buf + sizeof(struct rtr_header), sizeof(rtr_aspa));
+	offset = sizeof(struct rtr_header) + sizeof(rtr_aspa);
+	cnt = ntohs(rtr_aspa.cnt);
+	if (len != offset + cnt * sizeof(uint32_t)) {
+		log_warnx("rtr %s: received %s: bad pdu len",
+		    log_rtr(rs), log_rtr_type(ASPA));
+		rtr_send_error(rs, CORRUPT_DATA, "bad len", buf, len);
+		return -1;
+	}
+
+	if (rs->state != RTR_STATE_ACTIVE) {
+		log_warnx("rtr %s: received %s: out of context",
+		    log_rtr(rs), log_rtr_type(ASPA));
+		rtr_send_error(rs, CORRUPT_DATA, NULL, buf, len);
+		return -1;
+	}
+
+	if (rtr_aspa.afi_flags & FLAG_AFI_V6) {
+		aid = AID_INET6;
+		aspatree = &rs->aspa_v6;
+	} else {
+		aid = AID_INET;
+		aspatree = &rs->aspa_v4;
+	}
+
+	/* create aspa_set entry from the rtr aspa pdu */
+	if ((aspa = calloc(1, sizeof(*aspa))) == NULL) {
+		log_warn("rtr %s: received %s",
+		    log_rtr(rs), log_rtr_type(ASPA));
+		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
+		return -1;
+	}
+	aspa->as = ntohl(rtr_aspa.cas);
+	aspa->num = cnt;
+	if (cnt > 0) {
+		if ((aspa->tas = calloc(cnt, sizeof(uint32_t))) == NULL ||
+		    (aspa->tas_aid = calloc(cnt, 1)) == NULL) {
+			free_aspa(aspa);
+			log_warn("rtr %s: received %s",
+			    log_rtr(rs), log_rtr_type(ASPA));
+			rtr_send_error(rs, INTERNAL_ERROR, "out of memory",
+			    NULL, 0);
+			return -1;
+		}
+		for (i = 0; i < cnt; i++) {
+			aspa->tas[i] = ntohl(rtr_aspa.spas[i]);
+			aspa->tas_aid[i] = aid;
+		}
+	}
+
+	if (rtr_aspa.flags & FLAG_ANNOUNCE) {
+		a = RB_INSERT(aspa_tree, aspatree, aspa);
+		if (a != NULL) {
+			RB_REMOVE(aspa_tree, aspatree, a);
+			free_aspa(a);
+
+			if (RB_INSERT(aspa_tree, aspatree, aspa) != NULL) {
+				log_warnx("rtr %s: received %s: corrupt tree",
+				    log_rtr(rs), log_rtr_type(ASPA));
+				rtr_send_error(rs, INTERNAL_ERROR,
+				    "corrupt aspa tree", NULL, 0);
+				free_aspa(aspa);
+				return -1;
+			}
+		}
+	} else {
+		a = RB_FIND(aspa_tree, aspatree, aspa);
+		if (a == NULL) {
+			log_warnx("rtr %s: received %s: unknown withdrawal",
+			    log_rtr(rs), log_rtr_type(ASPA));
+			rtr_send_error(rs, UNK_REC_WDRAWL, NULL, buf, len);
+			free_aspa(aspa);
+			return -1;
+		}
+		RB_REMOVE(aspa_tree, aspatree, a);
+		free_aspa(a);
+		free_aspa(aspa);
+	}
+
+	return 0;
+}
+
+static int
 rtr_parse_end_of_data(struct rtr_session *rs, uint8_t *buf, size_t len)
 {
 	struct rtr_endofdata eod;
@@ -675,22 +807,23 @@ rtr_parse_error(struct rtr_session *rs, uint8_t *buf, size_t len)
 
 	if (errcode == NO_DATA_AVAILABLE) {
 		rtr_fsm(rs, RTR_EVNT_NO_DATA);
-	} else {
-		rtr_fsm(rs, RTR_EVNT_RESET_AND_CLOSE);
-		rs->last_recv_error = errcode;
-		if (str)
-			strlcpy(rs->last_recv_msg, str,
-			    sizeof(rs->last_recv_msg));
-		else
-			memset(rs->last_recv_msg, 0,
-			    sizeof(rs->last_recv_msg));
-
 		free(str);
-		return -1;
+		return 0;
 	}
-	free(str);
+	if (errcode == UNSUPP_PROTOCOL_VERS)
+		rtr_fsm(rs, RTR_EVNT_UNSUPP_PROTO_VERSION);
+	else
+		rtr_fsm(rs, RTR_EVNT_RESET_AND_CLOSE);
+	rs->last_recv_error = errcode;
+	if (str)
+		strlcpy(rs->last_recv_msg, str,
+		    sizeof(rs->last_recv_msg));
+	else
+		memset(rs->last_recv_msg, 0,
+		    sizeof(rs->last_recv_msg));
 
-	return 0;
+	free(str);
+	return -1;
 }
 
 /*
@@ -767,6 +900,11 @@ rtr_process_msg(struct rtr_session *rs)
 				/* no need to send back an error */
 				return;
 			break;
+		case ASPA:
+			if (rtr_parse_aspa(rs, rptr, msglen) == -1) {
+				return;
+			}
+			break;
 		default:
 			log_warnx("rtr %s: received %s: unexpected pdu type",
 			    log_rtr(rs), log_rtr_type(msgtype));
@@ -790,6 +928,36 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 	enum rtr_state prev_state = rs->state;
 
 	switch (event) {
+	case RTR_EVNT_UNSUPP_PROTO_VERSION:
+		if (rs->state == RTR_STATE_NEGOTIATION) {
+			if (rs->version > 0)
+				rs->version--;
+			else {
+				/*
+				 * can't downgrade anymore, fail connection
+				 * RFC requires to send the error with our
+				 * highest version number.
+				 */
+				rs->version = RTR_MAX_VERSION;
+				log_warnx("rtr %s: version negotiation failed",
+				    log_rtr(rs));
+				rtr_send_error(rs, UNSUPP_PROTOCOL_VERS,
+				    NULL, NULL, 0);
+				return;
+			}
+
+			/* flush buffers */
+			msgbuf_clear(&rs->w);
+			rs->r.wpos = 0;
+			close(rs->fd);
+			rs->fd = -1;
+
+			/* retry connection with lower version */
+			timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
+			rtr_imsg_compose(IMSG_SOCKET_CONN, rs->id, 0, NULL, 0);
+			break;
+		}
+		/* FALLTHROUGH */
 	case RTR_EVNT_RESET_AND_CLOSE:
 		rs->state = RTR_STATE_ERROR;
 		/* FALLTHROUGH */
@@ -798,6 +966,8 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 			/* reset session */
 			rs->session_id = -1;
 			free_roatree(&rs->roa_set);
+			free_aspatree(&rs->aspa_v4);
+			free_aspatree(&rs->aspa_v6);
 			rtr_recalc();
 		}
 		if (rs->state != RTR_STATE_CLOSED) {
@@ -844,12 +1014,15 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		break;
 	case RTR_EVNT_TIMER_EXPIRE:
 		free_roatree(&rs->roa_set);
+		free_aspatree(&rs->aspa_v4);
+		free_aspatree(&rs->aspa_v6);
 		rtr_recalc();
 		break;
 	case RTR_EVNT_CACHE_RESPONSE:
 		rs->state = RTR_STATE_ACTIVE;
 		timer_stop(&rs->timers, Timer_Rtr_Refresh);
 		timer_stop(&rs->timers, Timer_Rtr_Retry);
+		/* XXX start timer to limit active time */
 		break;
 	case RTR_EVNT_END_OF_DATA:
 		/* start refresh and expire timers */
@@ -862,6 +1035,8 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		/* reset session and retry after a quick wait */
 		rs->session_id = -1;
 		free_roatree(&rs->roa_set);
+		free_aspatree(&rs->aspa_v4);
+		free_aspatree(&rs->aspa_v6);
 		rtr_recalc();
 		timer_set(&rs->timers, Timer_Rtr_Retry,
 		    arc4random_uniform(10));
@@ -871,6 +1046,7 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
 		/* stop refresh timer just to be sure */
 		timer_stop(&rs->timers, Timer_Rtr_Refresh);
+		rs->state = RTR_STATE_IDLE;
 		break;
 	case RTR_EVNT_SEND_ERROR:
 		rs->state = RTR_STATE_ERROR;
@@ -904,14 +1080,14 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 		return;
 	}
 	if (pfd->revents & POLLOUT && rs->w.queued) {
-		if ((error = ibuf_write(&rs->w)) <= 0 && errno != EAGAIN) {
-			if (error == 0)
-				log_warnx("rtr %s: Connection closed",
-				    log_rtr(rs));
-			else if (error == -1)
+		if ((error = ibuf_write(&rs->w)) == -1) {
+			if (errno != EAGAIN) {
 				log_warn("rtr %s: write error", log_rtr(rs));
+				rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
+			}
+		}
+		if (error == 0) {
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
-			return;
 		}
 		if (rs->w.queued == 0 && rs->state == RTR_STATE_ERROR)
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
@@ -926,7 +1102,6 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 			return;
 		}
 		if (n == 0) {
-			log_warnx("rtr %s: Connection closed", log_rtr(rs));
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 			return;
 		}
@@ -1037,12 +1212,15 @@ rtr_new(uint32_t id, char *descr)
 		fatal("RTR session %s", descr);
 
 	RB_INIT(&rs->roa_set);
+	RB_INIT(&rs->aspa_v4);
+	RB_INIT(&rs->aspa_v6);
 	TAILQ_INIT(&rs->timers);
 	msgbuf_init(&rs->w);
 
 	strlcpy(rs->descr, descr, sizeof(rs->descr));
 	rs->id = id;
 	rs->session_id = -1;
+	rs->version = RTR_MAX_VERSION;
 	rs->refresh = RTR_DEFAULT_REFRESH;
 	rs->retry = RTR_DEFAULT_RETRY;
 	rs->expire = RTR_DEFAULT_EXPIRE;
@@ -1081,21 +1259,25 @@ rtr_free(struct rtr_session *rs)
 	rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	timer_remove_all(&rs->timers);
 	free_roatree(&rs->roa_set);
+	free_aspatree(&rs->aspa_v4);
+	free_aspatree(&rs->aspa_v6);
 	free(rs);
 }
 
 void
 rtr_open(struct rtr_session *rs, int fd)
 {
-	if (rs->state != RTR_STATE_CLOSED) {
+	if (rs->state != RTR_STATE_CLOSED &&
+	    rs->state != RTR_STATE_NEGOTIATION) {
 		log_warnx("rtr %s: bad session state", log_rtr(rs));
 		rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	}
 
-	log_debug("rtr %s: connection opened", log_rtr(rs));
+	if (rs->state == RTR_STATE_CLOSED)
+		rs->version = RTR_MAX_VERSION;
 
 	rs->fd = rs->w.fd = fd;
-	rs->state = RTR_STATE_IDLE;
+	rs->state = RTR_STATE_NEGOTIATION;
 	rtr_fsm(rs, RTR_EVNT_CON_OPEN);
 }
 
@@ -1134,7 +1316,21 @@ rtr_roa_merge(struct roa_tree *rt)
 
 	TAILQ_FOREACH(rs, &rtrs, entry) {
 		RB_FOREACH(roa, roa_tree, &rs->roa_set)
-			roa_insert(rt, roa);
+			rtr_roa_insert(rt, roa);
+	}
+}
+
+void
+rtr_aspa_merge(struct aspa_tree *at)
+{
+	struct rtr_session *rs;
+	struct aspa_set *aspa;
+
+	TAILQ_FOREACH(rs, &rtrs, entry) {
+		RB_FOREACH(aspa, aspa_tree, &rs->aspa_v4)
+			rtr_aspa_insert(at, aspa);
+		RB_FOREACH(aspa, aspa_tree, &rs->aspa_v6)
+			rtr_aspa_insert(at, aspa);
 	}
 }
 
@@ -1158,6 +1354,7 @@ rtr_show(struct rtr_session *rs, pid_t pid)
 	memset(&msg, 0, sizeof(msg));
 
 	/* descr, remote_addr, local_addr and remote_port set by parent */
+	msg.version = rs->version;
 	msg.serial = rs->serial;
 	msg.refresh = rs->refresh;
 	msg.retry = rs->retry;

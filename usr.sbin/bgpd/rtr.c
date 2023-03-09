@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.11 2023/01/20 09:54:43 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.12 2023/03/09 17:21:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -100,7 +100,7 @@ rtr_expire_aspa(time_t now)
 }
 
 void
-roa_insert(struct roa_tree *rt, struct roa *in)
+rtr_roa_insert(struct roa_tree *rt, struct roa *in)
 {
 	struct roa *roa;
 
@@ -110,6 +110,70 @@ roa_insert(struct roa_tree *rt, struct roa *in)
 	if (RB_INSERT(roa_tree, rt, roa) != NULL)
 		/* just ignore duplicates */
 		free(roa);
+}
+
+/*
+ * Add an asnum to the aspa_set. The aspa_set is sorted by asnum.
+ * The aid is altered to AID_UNSPEC (match for both v4 and v6) if
+ * the current aid and the one passed do not match.
+ */
+static void
+aspa_set_entry(struct aspa_set *aspa, uint32_t asnum, uint8_t aid)
+{
+	uint32_t i, num, *newtas;
+	uint8_t *newtasaid;
+
+	if (aid != AID_UNSPEC && aid != AID_INET && aid != AID_INET6)
+		fatalx("aspa set with invalid AFI %s", aid2str(aid));
+
+	for (i = 0; i < aspa->num; i++) {
+		if (asnum < aspa->tas[i])
+			break;
+		if (asnum == aspa->tas[i]) {
+			if (aspa->tas_aid[i] != aid)
+				aspa->tas_aid[i] = AID_UNSPEC;
+			return;
+		}
+	}
+
+	num = aspa->num + 1;
+	newtas = recallocarray(aspa->tas, aspa->num, num, sizeof(uint32_t));
+	newtasaid = recallocarray(aspa->tas_aid, aspa->num, num, 1);
+	if (newtas == NULL || newtasaid == NULL)
+		fatal("aspa_set merge");
+
+	if (i < aspa->num) {
+		memmove(newtas + i + 1, newtas + i,
+		    (aspa->num - i) * sizeof(uint32_t));
+		memmove(newtasaid + i + 1, newtasaid + i, (aspa->num - i));
+	}
+	newtas[i] = asnum;
+	newtasaid[i] = aid;
+
+	aspa->num = num;
+	aspa->tas = newtas;
+	aspa->tas_aid = newtasaid;
+}
+
+/*
+ * Insert and merge an aspa_set into the aspa_tree at.
+ */
+void
+rtr_aspa_insert(struct aspa_tree *at, struct aspa_set *mergeset)
+{
+	struct aspa_set *aspa, needle = { .as = mergeset->as };
+	uint32_t i;
+
+	aspa = RB_FIND(aspa_tree, at, &needle);
+	if (aspa == NULL) {
+		if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
+			fatal("aspa insert");
+		aspa->as = mergeset->as;
+		RB_INSERT(aspa_tree, at, aspa);
+	}
+
+	for (i = 0; i < mergeset->num; i++)
+		aspa_set_entry(aspa, mergeset->tas[i], mergeset->tas_aid[i]);
 }
 
 void
@@ -294,7 +358,7 @@ rtr_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
 			    sizeof(*roa))
 				fatalx("IMSG_RECONF_ROA_ITEM bad len");
-			roa_insert(&nconf->roa, imsg.data);
+			rtr_roa_insert(&nconf->roa, imsg.data);
 			break;
 		case IMSG_RECONF_ASPA:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -418,67 +482,6 @@ rtr_imsg_compose(int type, uint32_t id, pid_t pid, void *data, size_t datalen)
 }
 
 /*
- * Add an asnum to the aspa_set. The aspa_set is sorted by asnum.
- * The aid is altered into a bitmask to simplify the merge of entries
- * that just use a different aid.
- */
-static void
-aspa_set_entry(struct aspa_set *aspa, uint32_t asnum, uint8_t aid)
-{
-	uint32_t i, num, *newtas;
-	uint8_t *newtasaid;
-
-	if (aid != AID_UNSPEC && aid != AID_INET && aid != AID_INET6)
-		fatalx("aspa set with invalid AFI %s", aid2str(aid));
-
-	for (i = 0; i < aspa->num; i++) {
-		if (asnum < aspa->tas[i] || aspa->tas[i] == 0)
-			break;
-		if (asnum == aspa->tas[i]) {
-			if (aspa->tas_aid[i] != aid)
-				aspa->tas_aid[i] = AID_UNSPEC;
-			return;
-		}
-	}
-
-	num = aspa->num + 1;
-	newtas = recallocarray(aspa->tas, aspa->num, num, sizeof(uint32_t));
-	newtasaid = recallocarray(aspa->tas_aid, aspa->num, num, 1);
-	if (newtas == NULL || newtasaid == NULL)
-		fatal("aspa_set merge");
-
-	if (i < aspa->num) {
-		memmove(newtas + i + 1, newtas + i,
-		    (aspa->num - i) * sizeof(uint32_t));
-		memmove(newtasaid + i + 1, newtasaid + i, (aspa->num - i));
-	}
-	newtas[i] = asnum;
-	newtasaid[i] = aid;
-
-	aspa->num = num;
-	aspa->tas = newtas;
-	aspa->tas_aid = newtasaid;
-}
-
-static void
-rtr_aspa_merge_set(struct aspa_tree *a, struct aspa_set *mergeset)
-{
-	struct aspa_set *aspa, needle = { .as = mergeset->as };
-	uint32_t i;
-
-	aspa = RB_FIND(aspa_tree, a, &needle);
-	if (aspa == NULL) {
-		if ((aspa = calloc(1, sizeof(*aspa))) == NULL)
-			fatal("aspa insert");
-		aspa->as = mergeset->as;
-		RB_INSERT(aspa_tree, a, aspa);
-	}
-
-	for (i = 0; i < mergeset->num; i++)
-		aspa_set_entry(aspa, mergeset->tas[i], mergeset->tas_aid[i]);
-}
-
-/*
  * Compress aspa_set tas_aid into the bitfield used by the RDE.
  * Returns the size of tas and tas_aid bitfield required for this aspa_set.
  * At the same time tas_aid is overwritten with the bitmasks or cleared
@@ -543,7 +546,7 @@ rtr_recalc(void)
 	RB_INIT(&at);
 
 	RB_FOREACH(roa, roa_tree, &conf->roa)
-		roa_insert(&rt, roa);
+		rtr_roa_insert(&rt, roa);
 	rtr_roa_merge(&rt);
 
 	imsg_compose(ibuf_rde, IMSG_RECONF_ROA_SET, 0, 0, -1, NULL, 0);
@@ -554,7 +557,8 @@ rtr_recalc(void)
 	free_roatree(&rt);
 
 	RB_FOREACH(aspa, aspa_tree, &conf->aspa)
-		rtr_aspa_merge_set(&at, aspa);
+		rtr_aspa_insert(&at, aspa);
+	rtr_aspa_merge(&at);
 
 	RB_FOREACH(aspa, aspa_tree, &at) {
 		ap.datasize += rtr_aspa_set_prep(aspa);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.462 2023/03/09 13:12:19 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.463 2023/03/09 17:21:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -538,7 +538,7 @@ struct rtr_config {
 	struct bgpd_addr		remote_addr;
 	struct bgpd_addr		local_addr;
 	uint32_t			id;
-	in_addr_t			remote_port;
+	uint16_t			remote_port;
 };
 
 struct ctl_show_rtr {
@@ -550,7 +550,8 @@ struct ctl_show_rtr {
 	uint32_t		retry;
 	uint32_t		expire;
 	int			session_id;
-	in_addr_t		remote_port;
+	uint16_t		remote_port;
+	uint8_t			version;
 	enum rtr_error		last_sent_error;
 	enum rtr_error		last_recv_error;
 	char			last_sent_msg[REASON_LEN];
