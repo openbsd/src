@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.36 2023/01/31 14:32:43 job Exp $ */
+/*	$OpenBSD: output.c,v 1.37 2023/03/09 13:13:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -281,6 +281,8 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	printf("\n");
 	if (p->conf.descr[0])
 		printf(" Description: %s\n", p->conf.descr);
+	if (p->conf.ebgp && p->conf.role != ROLE_NONE)
+		printf(" Role: %s\n", log_policy(p->conf.role));
 	if (p->conf.max_prefix) {
 		printf(" Max-prefix: %u", p->conf.max_prefix);
 		if (p->conf.max_prefix_restart)
@@ -330,7 +332,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	}
 	if (hascapamp || hascapaap || p->capa.peer.grestart.restart ||
 	    p->capa.peer.refresh || p->capa.peer.enhanced_rr ||
-	    p->capa.peer.as4byte || p->capa.peer.role_ena) {
+	    p->capa.peer.as4byte || p->capa.peer.policy) {
 		printf("  Neighbor capabilities:\n");
 		if (hascapamp)
 			show_neighbor_capa_mp(&p->capa.peer);
@@ -344,10 +346,10 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 			show_neighbor_capa_restart(&p->capa.peer);
 		if (hascapaap)
 			show_neighbor_capa_add_path(&p->capa.peer);
-		if (p->capa.peer.role_ena)
+		if (p->capa.peer.policy)
 			printf("    Open Policy role %s (local %s)\n",
-			    log_policy(p->capa.peer.role),
-			    log_policy(p->capa.ann.role));
+			    log_policy(p->remote_role),
+			    log_policy(p->conf.role));
 	}
 
 	hascapamp = 0;
@@ -360,7 +362,7 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 	}
 	if (hascapamp || hascapaap || p->capa.neg.grestart.restart ||
 	    p->capa.neg.refresh || p->capa.neg.enhanced_rr ||
-	    p->capa.neg.as4byte || p->capa.neg.role_ena) {
+	    p->capa.neg.as4byte || p->capa.neg.policy) {
 		printf("  Negotiated capabilities:\n");
 		if (hascapamp)
 			show_neighbor_capa_mp(&p->capa.neg);
@@ -374,10 +376,10 @@ show_neighbor_full(struct peer *p, struct parse_result *res)
 			show_neighbor_capa_restart(&p->capa.neg);
 		if (hascapaap)
 			show_neighbor_capa_add_path(&p->capa.neg);
-		if (p->capa.neg.role_ena)
+		if (p->capa.neg.policy)
 			printf("    Open Policy role %s (local %s)\n",
-			    log_policy(p->capa.neg.role),
-			    log_policy(p->capa.ann.role));
+			    log_policy(p->remote_role),
+			    log_policy(p->conf.role));
 	}
 	printf("\n");
 

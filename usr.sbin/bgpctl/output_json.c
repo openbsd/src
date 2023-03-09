@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.29 2023/01/24 11:29:34 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.30 2023/03/09 13:13:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -125,10 +125,9 @@ json_neighbor_capabilities(struct capabilities *capa)
 		json_do_end();
 	}
 
-	if (capa->role_ena) {
-		json_do_printf("open_policy_role", "%s%s",
-		    log_policy(capa->role),
-		    capa->role_ena == 2 ? " enforce" : "");
+	if (capa->policy) {
+		json_do_printf("open_policy", "%s",
+		    capa->policy == 2 ? "enforce" : "present");
 	}
 
 	json_do_end();
@@ -248,6 +247,9 @@ json_neighbor_full(struct peer *p)
 	json_do_bool("ttl_security", p->conf.ttlsec);
 	json_do_uint("holdtime", p->conf.holdtime);
 	json_do_uint("min_holdtime", p->conf.min_holdtime);
+	if (p->conf.ebgp && p->conf.role != ROLE_NONE)
+		json_do_printf("role", "%s",
+		    log_policy(p->conf.role));
 
 	/* capabilities */
 	json_do_bool("announce_capabilities", p->conf.announce_capa);
@@ -296,6 +298,12 @@ json_neighbor_full(struct peer *p)
 		/* capabilities */
 		json_neighbor_capabilities(&p->capa.neg);
 
+		if (p->conf.ebgp && p->conf.role != ROLE_NONE) {
+			json_do_printf("remote_role", "%s",
+			    log_policy(p->remote_role));
+			json_do_printf("local_role", "%s",
+			    log_policy(p->conf.role));
+		}
 		json_do_end();
 	}
 }
