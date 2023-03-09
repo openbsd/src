@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bpf.4,v 1.44 2022/09/11 06:38:11 jmc Exp $
+.\"	$OpenBSD: bpf.4,v 1.45 2023/03/09 06:01:40 dlg Exp $
 .\"     $NetBSD: bpf.4,v 1.7 1995/09/27 18:31:50 thorpej Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
@@ -23,7 +23,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: March 9 2023 $
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -220,6 +220,8 @@ The allowable ioctls are
 .Dv BIOCIMMEDIATE ,
 .Dv BIOCLOCK ,
 .Dv BIOCSRTIMEOUT ,
+.Dv BIOCSWTIMEOUT ,
+.Dv BIOCDWTIMEOUT ,
 .Dv BIOCVERSION ,
 .Dv TIOCGPGRP ,
 and
@@ -301,6 +303,18 @@ This is useful for programs like
 .Xr rarpd 8 ,
 which must respond to messages in real time.
 The default for a new file is off.
+.Pp
+.It Dv BIOCSWTIMEOUT Fa "struct timeval *"
+.It Dv BIOCGWTIMEOUT Fa "struct timeval *"
+.It Dv BIOCDWTIMEOUT
+Sets, gets, or deletes (resets) the wait timeout parameter.
+The
+.Ar timeval
+specifies the length of time to wait between receiving a packet and
+the kernel buffer becoming readable.
+By default, or when reset, the wait timeout is infinite, meaning
+the age of packets in the kernel buffer does not make the buffer
+readable.
 .Pp
 .It Dv BIOCSETF Fa "struct bpf_program *"
 Sets the filter program used by the kernel to discard uninteresting packets.
