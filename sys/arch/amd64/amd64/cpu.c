@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.164 2023/01/20 16:01:04 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.165 2023/03/09 13:17:28 jsg Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -433,7 +433,7 @@ cpu_match(struct device *parent, void *match, void *aux)
 }
 
 void	cpu_idle_mwait_cycle(void);
-void	cpu_init_mwait(struct cpu_softc *);
+void	cpu_init_mwait(struct cpu_softc *, struct cpu_info *);
 
 u_int	cpu_mwait_size, cpu_mwait_states;
 
@@ -471,7 +471,7 @@ cpu_idle_mwait_cycle(void)
 }
 
 void
-cpu_init_mwait(struct cpu_softc *sc)
+cpu_init_mwait(struct cpu_softc *sc, struct cpu_info *ci)
 {
 	unsigned int smallest, largest, extensions, c_substates;
 
@@ -482,6 +482,11 @@ cpu_init_mwait(struct cpu_softc *sc)
 	CPUID(0x5, smallest, largest, extensions, cpu_mwait_states);
 	smallest &= 0xffff;
 	largest  &= 0xffff;
+
+	/* mask out states C6/C7 in 31:24 for CHT45 errata */
+	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
+	    ci->ci_family == 0x06 && ci->ci_model == 0x4c)
+		cpu_mwait_states &= 0x00ffffff;
 
 	printf("%s: mwait min=%u, max=%u", sc->sc_dev.dv_xname,
 	    smallest, largest);
@@ -620,7 +625,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #endif /* MTRR */
 		/* XXX SP fpuinit(ci) is done earlier */
 		cpu_init(ci);
-		cpu_init_mwait(sc);
+		cpu_init_mwait(sc, ci);
 		break;
 
 	case CPU_ROLE_BP:
@@ -647,7 +652,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #if NIOAPIC > 0
 		ioapic_bsp_id = caa->cpu_apicid;
 #endif
-		cpu_init_mwait(sc);
+		cpu_init_mwait(sc, ci);
 		break;
 
 	case CPU_ROLE_AP:
