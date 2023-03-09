@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.4 2023/03/09 15:48:51 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.5 2023/03/09 18:53:24 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -237,8 +237,7 @@ tak_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
 
-	cms = cms_parse_validate(x509, fn, der, len, tak_oid, &cmsz,
-	    &signtime);
+	cms = cms_parse_validate(x509, fn, der, len, tak_oid, &cmsz, &signtime);
 	if (cms == NULL)
 		return NULL;
 

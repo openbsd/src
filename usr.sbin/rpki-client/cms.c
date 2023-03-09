@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.30 2023/03/09 09:46:21 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.31 2023/03/09 18:53:24 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -87,7 +87,7 @@ cms_get_signtime(const char *fn, X509_ATTRIBUTE *attr, time_t *signtime)
 	}
 
 	return 1;
-}	
+}
 
 static int
 cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
