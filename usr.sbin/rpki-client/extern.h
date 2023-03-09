@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.169 2023/03/09 09:46:21 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.170 2023/03/09 12:54:28 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -333,6 +333,7 @@ struct gbr {
 	char		*sia; /* SIA signedObject */
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
+	time_t		 expires; /* Not After of the GBR EE */
 };
 
 struct aspa_provider {

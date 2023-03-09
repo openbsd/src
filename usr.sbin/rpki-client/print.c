@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.28 2023/03/09 09:46:21 job Exp $ */
+/*	$OpenBSD: print.c,v 1.29 2023/03/09 12:54:28 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -498,6 +498,7 @@ gbr_print(const X509 *x, const struct gbr *p)
 		if (p->signtime != 0)
 			printf("\t\"signing_time\": %lld,\n",
 			    (long long)p->signtime);
+		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"vcard\": \"");
 		for (i = 0; i < strlen(p->vcard); i++) {
 			if (p->vcard[i] == '"')
@@ -519,6 +520,7 @@ gbr_print(const X509 *x, const struct gbr *p)
 		if (p->signtime != 0)
 			printf("Signing time:             %s\n",
 			    time2str(p->signtime));
+		printf("GBR valid until:          %s\n", time2str(p->expires));
 		printf("vcard:\n%s", p->vcard);
 	}
 }

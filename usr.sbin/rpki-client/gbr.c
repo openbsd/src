@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.21 2023/03/09 09:46:21 job Exp $ */
+/*	$OpenBSD: gbr.c,v 1.22 2023/03/09 12:54:28 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -46,6 +46,7 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	size_t		 cmsz;
 	unsigned char	*cms;
 	time_t		 signtime;
+	const ASN1_TIME	*at;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
@@ -74,6 +75,16 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	    p.res->ski == NULL) {
 		warnx("%s: RFC 6487 section 4.8: "
 		    "missing AIA, AKI, SIA or SKI X509 extension", fn);
+		goto out;
+	}
+
+	at = X509_get0_notAfter(*x509);
+	if (at == NULL) {
+		warnx("%s: X509_get0_notAfter failed", fn);
+		goto out;
+	}
+	if (!x509_get_time(at, &p.res->expires)) {
+		warnx("%s: ASN1_time_parse failed", fn);
 		goto out;
 	}
 
