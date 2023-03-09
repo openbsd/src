@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1232 2023/03/08 11:52:20 kn Exp $
+#	$OpenBSD: install.sub,v 1.1233 2023/03/09 19:49:57 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1765,7 +1765,7 @@ install_files() {
 	if [[ $MODE == upgrade ]]; then
 		if isin base$VERSION.tgz $_get_sets; then
 			rm -f /mnt/usr/share/relink/usr/lib/*
-			rm -rf /mnt/usr/lib/libLLVM.so.[012].0
+			rm -rf /mnt/usr/lib/libLLVM.so.[0-6].0
 			rm -rf /mnt/usr/libdata/perl5
 		fi
 		if isin comp$VERSION.tgz $_get_sets; then
