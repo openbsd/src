@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.441 2023/01/30 16:51:34 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.442 2023/03/09 13:12:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1642,7 +1642,7 @@ peeropts	: REMOTEAS as4number	{
 			curpeer->conf.eval.maxpaths = $6;
 		}
 		| ANNOUNCE POLICY enforce {
-			curpeer->conf.capabilities.role_ena = $3;
+			curpeer->conf.capabilities.policy = $3;
 		}
 		| ROLE STRING {
 			if (strcmp($2, "provider") == 0) {
@@ -4284,6 +4284,7 @@ alloc_peer(void)
 	p->conf.capabilities.refresh = 1;
 	p->conf.capabilities.grestart.restart = 1;
 	p->conf.capabilities.as4byte = 1;
+	p->conf.capabilities.policy = 1;
 	p->conf.local_as = conf->as;
 	p->conf.local_short_as = conf->short_as;
 	p->conf.remote_port = BGP_PORT;
@@ -4736,12 +4737,13 @@ neighbor_consistent(struct peer *p)
 	}
 
 	/* BGP role and RFC 9234 role are only valid for EBGP neighbors */
-	if (p->conf.ebgp) {
-		if (p->conf.role == ROLE_NONE)
-			p->conf.capabilities.role_ena = 0;
-		p->conf.capabilities.role = p->conf.role;
-	} else
+	if (!p->conf.ebgp) {
 		p->conf.role = ROLE_NONE;
+		p->conf.capabilities.policy = 0;
+	} else if (p->conf.role == ROLE_NONE) {
+		/* no role, no policy capability */
+		p->conf.capabilities.policy = 0;
+	}
 
 	/* check for duplicate peer definitions */
 	RB_FOREACH(xp, peer_head, new_peers)

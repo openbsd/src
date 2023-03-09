@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.593 2023/02/13 18:07:53 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.594 2023/03/09 13:12:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1242,7 +1242,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 	uint16_t		 withdrawn_len;
 	uint16_t		 attrpath_len;
 	uint16_t		 nlri_len;
-	uint8_t			 aid, prefixlen, safi, subtype, role;
+	uint8_t			 aid, prefixlen, safi, subtype;
 	uint32_t		 fas, pathid;
 
 	p = imsg->data;
@@ -1321,26 +1321,6 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			    rde_update_err(peer, ERR_UPDATE, ERR_UPD_ASPATH,
 				    NULL, 0);
 			    goto done;
-			}
-		}
-
-		/* inject open policy OTC attribute if needed */
-		if (peer_has_open_policy(peer, &role) &&
-		    (state.aspath.flags & F_ATTR_OTC) == 0) {
-			uint32_t tmp;
-			switch (role) {
-			case CAPA_ROLE_PROVIDER:
-			case CAPA_ROLE_RS:
-			case CAPA_ROLE_PEER:
-				tmp = htonl(peer->conf.remote_as);
-				if (attr_optadd(&state.aspath,
-				    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_OTC,
-				    &tmp, sizeof(tmp)) == -1) {
-					rde_update_err(peer, ERR_UPDATE,
-					    ERR_UPD_ATTRLIST, NULL, 0);
-					goto done;
-				}
-				state.aspath.flags |= F_ATTR_OTC;
 			}
 		}
 
@@ -1520,6 +1500,28 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			    NULL, 0);
 			goto done;
 		}
+
+		/* inject open policy OTC attribute if needed */
+		if ((state.aspath.flags & F_ATTR_OTC) == 0) {
+			uint32_t tmp;
+			switch (peer->role) {
+			case ROLE_CUSTOMER:
+			case ROLE_RS_CLIENT:
+			case ROLE_PEER:
+				tmp = htonl(peer->conf.remote_as);
+				if (attr_optadd(&state.aspath,
+				    ATTR_OPTIONAL|ATTR_TRANSITIVE, ATTR_OTC,
+				    &tmp, sizeof(tmp)) == -1) {
+					rde_update_err(peer, ERR_UPDATE,
+					    ERR_UPD_ATTRLIST, NULL, 0);
+					goto done;
+				}
+				state.aspath.flags |= F_ATTR_OTC;
+				break;
+			default:
+				break;
+			}
+		}
 	}
 	while (nlri_len > 0) {
 		if (peer_has_add_path(peer, AID_INET, CAPA_AP_RECV)) {
@@ -1578,6 +1580,34 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    NULL, 0);
 			goto done;
+		}
+
+		if (aid == AID_INET6) {
+			/* inject open policy OTC attribute if needed */
+			if ((state.aspath.flags & F_ATTR_OTC) == 0) {
+				uint32_t tmp;
+				switch (peer->role) {
+				case ROLE_CUSTOMER:
+				case ROLE_RS_CLIENT:
+				case ROLE_PEER:
+					tmp = htonl(peer->conf.remote_as);
+					if (attr_optadd(&state.aspath,
+					    ATTR_OPTIONAL|ATTR_TRANSITIVE,
+					    ATTR_OTC, &tmp,
+					    sizeof(tmp)) == -1) {
+						rde_update_err(peer, ERR_UPDATE,
+						    ERR_UPD_ATTRLIST, NULL, 0);
+						goto done;
+					}
+					state.aspath.flags |= F_ATTR_OTC;
+					break;
+				default:
+					break;
+				}
+			}
+		} else {
+			/* Only IPv4 and IPv6 unicast do OTC handling */
+			state.aspath.flags &= ~F_ATTR_OTC_LOOP;
 		}
 
 		/* unlock the previously locked nexthop, it is no longer used */
@@ -1824,7 +1854,7 @@ rde_attr_parse(u_char *p, uint16_t len, struct rde_peer *peer,
 	int		 error;
 	uint16_t	 attr_len, nlen;
 	uint16_t	 plen = 0;
-	uint8_t		 flags, type, role, tmp8;
+	uint8_t		 flags, type, tmp8;
 
 	if (len < 3) {
 bad_len:
@@ -2160,20 +2190,19 @@ bad_flags:
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL|ATTR_TRANSITIVE,
 		    ATTR_PARTIAL))
 			goto bad_flags;
-		if (peer_has_open_policy(peer, &role)) {
-			switch (role) {
-			case CAPA_ROLE_CUSTOMER:
-			case CAPA_ROLE_RS_CLIENT:
-				a->flags |= F_ATTR_OTC_LOOP | F_ATTR_PARSE_ERR;
-				break;
-			case CAPA_ROLE_PEER:
-				memcpy(&tmp32, p, sizeof(tmp32));
-				tmp32 = ntohl(tmp32);
-				if (tmp32 != peer->conf.remote_as)
-					a->flags |= F_ATTR_OTC_LOOP |
-					    F_ATTR_PARSE_ERR;
-				break;
-			}
+		switch (peer->role) {
+		case ROLE_PROVIDER:
+		case ROLE_RS:
+			a->flags |= F_ATTR_OTC_LOOP;
+			break;
+		case ROLE_PEER:
+			memcpy(&tmp32, p, sizeof(tmp32));
+			tmp32 = ntohl(tmp32);
+			if (tmp32 != peer->conf.remote_as)
+				a->flags |= F_ATTR_OTC_LOOP;
+			break;
+		default:
+			break;
 		}
 		a->flags |= F_ATTR_OTC;
 		goto optattr;

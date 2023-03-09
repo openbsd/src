@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.29 2023/02/13 18:07:53 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.30 2023/03/09 13:12:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -59,13 +59,6 @@ peer_has_add_path(struct rde_peer *peer, uint8_t aid, int mode)
 		return 0;
 	}
 	return (peer->capa.add_path[aid] & mode);
-}
-
-int
-peer_has_open_policy(struct rde_peer *peer, uint8_t *role)
-{
-	*role = peer->capa.role;
-	return (peer->capa.role_ena != 0);
 }
 
 int

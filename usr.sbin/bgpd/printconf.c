@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.163 2023/01/24 14:13:12 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.164 2023/03/09 13:12:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -847,9 +847,9 @@ print_announce(struct peer_config *p, const char *c)
 			printf(" max %d", p->eval.maxpaths);
 		printf("\n");
 	}
-	if (p->capabilities.role_ena) {
+	if (p->capabilities.policy) {
 		printf("%s\tannounce policy %s\n", c,
-		    p->capabilities.role_ena == 2 ? "enforce" : "yes");
+		    p->capabilities.policy == 2 ? "enforce" : "yes");
 	}
 }
 

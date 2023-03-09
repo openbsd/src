@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.283 2023/02/13 18:07:53 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.284 2023/03/09 13:12:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -400,7 +400,6 @@ int		rde_match_peer(struct rde_peer *, struct ctl_neighbor *);
 /* rde_peer.c */
 int		 peer_has_as4byte(struct rde_peer *);
 int		 peer_has_add_path(struct rde_peer *, uint8_t, int);
-int		 peer_has_open_policy(struct rde_peer *, uint8_t *);
 int		 peer_accept_no_as_set(struct rde_peer *);
 void		 peer_init(void);
 void		 peer_shutdown(void);

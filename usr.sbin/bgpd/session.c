@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.441 2023/02/14 15:37:45 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.442 2023/03/09 13:12:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1475,10 +1475,12 @@ session_open(struct peer *p)
 		errs += session_capa_add(opb, CAPA_REFRESH, 0);
 
 	/* BGP open policy, RFC 9234, only for ebgp sessions */
-	if (p->conf.ebgp && p->capa.ann.role_ena &&
-	    p->capa.ann.role != ROLE_NONE) {
+	if (p->conf.ebgp && p->capa.ann.policy &&
+	    p->conf.role != ROLE_NONE &&
+	    (p->capa.ann.mp[AID_INET] || p->capa.ann.mp[AID_INET6] ||
+	    mpcapa == 0)) {
 		uint8_t val;
-		val = role2capa(p->capa.ann.role);
+		val = role2capa(p->conf.role);
 		errs += session_capa_add(opb, CAPA_ROLE, 1);
 		errs += ibuf_add(opb, &val, 1);
 	}
@@ -2515,9 +2517,15 @@ parse_notification(struct peer *peer)
 				    "disabling route refresh capability");
 				break;
 			case CAPA_ROLE:
-				peer->capa.ann.role_ena = 0;
-				log_peer_warnx(&peer->conf,
-				    "disabling role capability");
+				if (peer->capa.ann.policy == 1) {
+					peer->capa.ann.policy = 0;
+					log_peer_warnx(&peer->conf,
+					    "disabling role capability");
+				} else {
+					log_peer_warnx(&peer->conf,
+					    "role capability enforced, "
+					    "not disabling");
+				}
 				break;
 			case CAPA_RESTART:
 				peer->capa.ann.grestart.restart = 0;
@@ -2660,11 +2668,13 @@ parse_capabilities(struct peer *peer, u_char *d, uint16_t dlen, uint32_t *as)
 				    "Bad role capability length: %u", capa_len);
 				break;
 			}
-			if (!peer->conf.ebgp)
+			if (!peer->conf.ebgp) {
 				log_peer_warnx(&peer->conf,
 				    "Received role capability on iBGP session");
-			peer->capa.peer.role_ena = 1;
-			peer->capa.peer.role = capa2role(*capa_val);
+				break;
+			}
+			peer->capa.peer.policy = 1;
+			peer->remote_role = capa2role(*capa_val);
 			break;
 		case CAPA_RESTART:
 			if (capa_len == 2) {
@@ -2880,40 +2890,40 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 	 * See RFC 9234, section 4.2.
 	 * These checks should only happen on ebgp sessions.
 	 */
-	if (p->capa.ann.role_ena != 0 && p->capa.peer.role_ena != 0 &&
+	if (p->capa.ann.policy != 0 && p->capa.peer.policy != 0 &&
 	    p->conf.ebgp) {
-		switch (p->capa.ann.role) {
+		switch (p->conf.role) {
 		case ROLE_PROVIDER:
-			if (p->capa.peer.role != ROLE_CUSTOMER)
+			if (p->remote_role != ROLE_CUSTOMER)
 				goto fail;
 			break;
 		case ROLE_RS:
-			if (p->capa.peer.role != ROLE_RS_CLIENT)
+			if (p->remote_role != ROLE_RS_CLIENT)
 				goto fail;
 			break;
 		case ROLE_RS_CLIENT:
-			if (p->capa.peer.role != ROLE_RS)
+			if (p->remote_role != ROLE_RS)
 				goto fail;
 			break;
 		case ROLE_CUSTOMER:
-			if (p->capa.peer.role != ROLE_PROVIDER)
+			if (p->remote_role != ROLE_PROVIDER)
 				goto fail;
 			break;
 		case ROLE_PEER:
-			if (p->capa.peer.role != ROLE_PEER)
+			if (p->remote_role != ROLE_PEER)
 				goto fail;
 			break;
 		default:
  fail:
 			log_peer_warnx(&p->conf, "open policy role mismatch: "
-			    "%s vs %s", log_policy(p->capa.ann.role),
-			    log_policy(p->capa.peer.role));
+			    "our role %s, their role %s",
+			    log_policy(p->conf.role),
+			    log_policy(p->remote_role));
 			*suberr = ERR_OPEN_ROLE;
 			return (-1);
 		}
-		p->capa.neg.role_ena = 1;
-		p->capa.neg.role = p->capa.peer.role;
-	} else if (p->capa.ann.role_ena == 2 && p->conf.ebgp) {
+		p->capa.neg.policy = 1;
+	} else if (p->capa.ann.policy == 2 && p->conf.ebgp) {
 		/* enforce presence of open policy role capability */
 		log_peer_warnx(&p->conf, "open policy role enforced but "
 		    "not present");

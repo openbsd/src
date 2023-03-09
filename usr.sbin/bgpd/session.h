@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.159 2023/02/09 13:43:23 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.160 2023/03/09 13:12:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -243,6 +243,7 @@ struct peer {
 	enum session_state	 state;
 	enum session_state	 prev_state;
 	enum reconf_action	 reconf_action;
+	enum role		 remote_role;
 	uint16_t		 short_as;
 	uint16_t		 holdtime;
 	uint16_t		 local_port;

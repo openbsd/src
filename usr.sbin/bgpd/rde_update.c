@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.156 2023/02/13 18:07:53 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.157 2023/03/09 13:12:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -66,7 +66,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 
 	if (asp == NULL || asp->flags & F_ATTR_PARSE_ERR)
 		fatalx("try to send out a botched path");
-	if (asp->flags & F_ATTR_LOOP)
+	if (asp->flags & (F_ATTR_LOOP | F_ATTR_OTC_LOOP))
 		fatalx("try to send out a looped path");
 
 	if (peer == frompeer)
@@ -104,27 +104,28 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 
 /* RFC9234 open policy handling */
 static int
-up_enforce_open_policy(struct rde_peer *peer, struct filterstate *state)
+up_enforce_open_policy(struct rde_peer *peer, struct filterstate *state,
+    uint8_t aid)
 {
-	uint8_t role;
-
-	if (!peer_has_open_policy(peer, &role))
+	/* only for IPv4 and IPv6 unicast */
+	if (aid != AID_INET && aid != AID_INET6)
 		return 0;
 
 	/*
 	 * do not propagate (consider it filtered) if OTC is present and
-	 * neighbor role is peer, provider or rs.
+	 * local role is peer, customer or rs-client.
 	 */
-	if (role == CAPA_ROLE_PEER || role == CAPA_ROLE_PROVIDER ||
-	    role == CAPA_ROLE_RS)
+	if (peer->role == ROLE_PEER || peer->role == ROLE_CUSTOMER ||
+	    peer->role == ROLE_RS_CLIENT)
 		if (state->aspath.flags & F_ATTR_OTC)
-			return (1);
+			return 1;
 
 	/*
-	 * add OTC attribute if not present for peers, customers and rs-clients.
+	 * add OTC attribute if not present towards peers, customers and
+	 * rs-clients (local roles peer, provider, rs).
 	 */
-	if (role == CAPA_ROLE_PEER || role == CAPA_ROLE_CUSTOMER ||
-	    role == CAPA_ROLE_RS_CLIENT)
+	if (peer->role == ROLE_PEER || peer->role == ROLE_PROVIDER ||
+	    peer->role == ROLE_RS)
 		if ((state->aspath.flags & F_ATTR_OTC) == 0) {
 			uint32_t tmp;
 
@@ -172,7 +173,7 @@ up_process_prefix(struct filter_head *rules, struct rde_peer *peer,
 	}
 
 	/* Open Policy Check: acts like an output filter */
-	if (up_enforce_open_policy(peer, &state)) {
+	if (up_enforce_open_policy(peer, &state, addr->aid)) {
 		rde_filterstate_clean(&state);
 		return UP_FILTERED;
 	}

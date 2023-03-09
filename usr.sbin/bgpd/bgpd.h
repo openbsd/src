@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.461 2023/02/09 13:43:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.462 2023/03/09 13:12:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -398,13 +398,12 @@ struct capabilities {
 		int8_t	flags[AID_MAX];	/* graceful restart per AID flags */
 		int8_t	restart;	/* graceful restart, RFC 4724 */
 	}	grestart;
-	enum role role;			/* Open Policy, RFC 9234 */
 	int8_t	mp[AID_MAX];		/* multiprotocol extensions, RFC 4760 */
 	int8_t	add_path[AID_MAX];	/* ADD_PATH, RFC 7911 */
 	int8_t	refresh;		/* route refresh, RFC 2918 */
 	int8_t	as4byte;		/* 4-byte ASnum, RFC 4893 */
 	int8_t	enhanced_rr;		/* enhanced route refresh, RFC 7313 */
-	int8_t	role_ena;		/* 1 for enable, 2 for enforce */
+	int8_t	policy;			/* Open Policy, RFC 9234, 2 = enforce */
 };
 
 /* flags for RFC 4724 - graceful restart */
