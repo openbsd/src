@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.3 2023/03/09 09:46:21 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.4 2023/03/09 15:48:51 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -231,18 +231,20 @@ tak_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	unsigned char		*cms;
 	size_t			 cmsz;
 	const ASN1_TIME		*at;
+	time_t			 signtime;
 	int			 rc = 0;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
 
 	cms = cms_parse_validate(x509, fn, der, len, tak_oid, &cmsz,
-	    &p.res->signtime);
+	    &signtime);
 	if (cms == NULL)
 		return NULL;
 
 	if ((p.res = calloc(1, sizeof(struct tak))) == NULL)
 		err(1, NULL);
+	p.res->signtime = signtime;
 
 	if (!x509_get_aia(*x509, fn, &p.res->aia))
 		goto out;
