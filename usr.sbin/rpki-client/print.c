@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.27 2023/03/07 14:49:32 job Exp $ */
+/*	$OpenBSD: print.c,v 1.28 2023/03/09 09:46:21 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -379,6 +379,9 @@ mft_print(const X509 *x, const struct mft *p)
 		printf("\t\"aia\": \"%s\",\n", p->aia);
 		printf("\t\"sia\": \"%s\",\n", p->sia);
 		printf("\t\"manifest_number\": \"%s\",\n", p->seqnum);
+		if (p->signtime != 0)
+			printf("\t\"signing_time\": %lld,\n",
+			    (long long)p->signtime);
 		printf("\t\"valid_since\": %lld,\n", (long long)p->valid_since);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->valid_until);
 	} else {
@@ -388,6 +391,9 @@ mft_print(const X509 *x, const struct mft *p)
 		printf("Authority info access:    %s\n", p->aia);
 		printf("Subject info access:      %s\n", p->sia);
 		printf("Manifest Number:          %s\n", p->seqnum);
+		if (p->signtime != 0)
+			printf("Signing time:             %s\n",
+			    time2str(p->signtime));
 		printf("Manifest valid since:     %s\n", time2str(p->valid_since));
 		printf("Manifest valid until:     %s\n", time2str(p->valid_until));
 		printf("Files and hashes:         ");
@@ -434,6 +440,9 @@ roa_print(const X509 *x, const struct roa *p)
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
 		printf("\t\"sia\": \"%s\",\n", p->sia);
+		if (p->signtime != 0)
+			printf("\t\"signing_time\": %lld,\n",
+			    (long long)p->signtime);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 	} else {
 		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
@@ -441,6 +450,9 @@ roa_print(const X509 *x, const struct roa *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		printf("Authority info access:    %s\n", p->aia);
 		printf("Subject info access:      %s\n", p->sia);
+		if (p->signtime != 0)
+			printf("Signing time:             %s\n",
+			    time2str(p->signtime));
 		printf("ROA valid until:          %s\n", time2str(p->expires));
 		printf("asID:                     %u\n", p->asid);
 		printf("IP address blocks:        ");
@@ -483,6 +495,9 @@ gbr_print(const X509 *x, const struct gbr *p)
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
 		printf("\t\"sia\": \"%s\",\n", p->sia);
+		if (p->signtime != 0)
+			printf("\t\"signing_time\": %lld,\n",
+			    (long long)p->signtime);
 		printf("\t\"vcard\": \"");
 		for (i = 0; i < strlen(p->vcard); i++) {
 			if (p->vcard[i] == '"')
@@ -501,6 +516,9 @@ gbr_print(const X509 *x, const struct gbr *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		printf("Authority info access:    %s\n", p->aia);
 		printf("Subject info access:      %s\n", p->sia);
+		if (p->signtime != 0)
+			printf("Signing time:             %s\n",
+			    time2str(p->signtime));
 		printf("vcard:\n%s", p->vcard);
 	}
 }
@@ -518,6 +536,9 @@ rsc_print(const X509 *x, const struct rsc *p)
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		x509_print(x);
 		printf("\t\"aia\": \"%s\",\n", p->aia);
+		if (p->signtime != 0)
+			printf("\t\"signing_time\": %lld,\n",
+			    (long long)p->signtime);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"signed_with_resources\": [\n");
 	} else {
@@ -525,6 +546,9 @@ rsc_print(const X509 *x, const struct rsc *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		x509_print(x);
 		printf("Authority info access:    %s\n", p->aia);
+		if (p->signtime != 0)
+			printf("Signing time:             %s\n",
+			    time2str(p->signtime));
 		printf("RSC valid until:          %s\n", time2str(p->expires));
 		printf("Signed with resources:    ");
 	}
@@ -644,6 +668,9 @@ aspa_print(const X509 *x, const struct aspa *p)
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
 		printf("\t\"sia\": \"%s\",\n", p->sia);
+		if (p->signtime != 0)
+			printf("\t\"signing_time\": %lld,\n",
+			    (long long)p->signtime);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"customer_asid\": %u,\n", p->custasid);
 		printf("\t\"provider_set\": [\n");
@@ -665,6 +692,9 @@ aspa_print(const X509 *x, const struct aspa *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		printf("Authority info access:    %s\n", p->aia);
 		printf("Subject info access:      %s\n", p->sia);
+		if (p->signtime != 0)
+			printf("Signing time:             %s\n",
+			    time2str(p->signtime));
 		printf("ASPA valid until:         %s\n", time2str(p->expires));
 		printf("Customer AS:              %u\n", p->custasid);
 		printf("Provider Set:             ");
@@ -749,6 +779,9 @@ tak_print(const X509 *x, const struct tak *p)
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
 		printf("\t\"sia\": \"%s\",\n", p->sia);
+		if (p->signtime != 0)
+			printf("\t\"signing_time\": %lld,\n",
+			    (long long)p->signtime);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"takeys\": [\n");
 	} else {
@@ -757,6 +790,9 @@ tak_print(const X509 *x, const struct tak *p)
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		printf("Authority info access:    %s\n", p->aia);
 		printf("Subject info access:      %s\n", p->sia);
+		if (p->signtime != 0)
+			printf("Signing time:             %s\n",
+			    time2str(p->signtime));
 		printf("TAK valid until:          %s\n", time2str(p->expires));
 	}
 
@@ -790,6 +826,9 @@ geofeed_print(const X509 *x, const struct geofeed *p)
 		x509_print(x);
 		printf("\t\"aki\": \"%s\",\n", pretty_key_id(p->aki));
 		printf("\t\"aia\": \"%s\",\n", p->aia);
+		if (p->signtime != 0)
+			printf("\t\"signing_time\": %lld,\n",
+			    (long long)p->signtime);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"records\": [\n");
 	} else {
@@ -797,6 +836,9 @@ geofeed_print(const X509 *x, const struct geofeed *p)
 		x509_print(x);
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
 		printf("Authority info access:    %s\n", p->aia);
+		if (p->signtime != 0)
+			printf("Signing time:             %s\n",
+			    time2str(p->signtime));
 		printf("Geofeed valid until:      %s\n", time2str(p->expires));
 		printf("Geofeed CSV records:\n");
 	}

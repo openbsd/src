@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.82 2022/12/01 10:24:28 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.83 2023/03/09 09:46:21 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -353,17 +353,20 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	size_t		 cmsz;
 	unsigned char	*cms;
 	char		*crldp = NULL, *crlfile;
+	time_t		 signtime;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
 
-	cms = cms_parse_validate(x509, fn, der, len, mft_oid, &cmsz);
+	cms = cms_parse_validate(x509, fn, der, len, mft_oid, &cmsz,
+	    &signtime);
 	if (cms == NULL)
 		return NULL;
 	assert(*x509 != NULL);
 
 	if ((p.res = calloc(1, sizeof(struct mft))) == NULL)
 		err(1, NULL);
+	p.res->signtime = signtime;
 
 	if (!x509_get_aia(*x509, fn, &p.res->aia))
 		goto out;

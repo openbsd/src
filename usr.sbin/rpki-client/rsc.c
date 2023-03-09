@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.19 2022/11/26 17:14:40 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.20 2023/03/09 09:46:21 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -384,7 +384,8 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
 
-	cms = cms_parse_validate(x509, fn, der, len, rsc_oid, &cmsz);
+	cms = cms_parse_validate(x509, fn, der, len, rsc_oid, &cmsz,
+	    &p.res->signtime);
 	if (cms == NULL)
 		return NULL;
 

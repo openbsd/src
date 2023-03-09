@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.168 2023/03/06 16:04:52 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.169 2023/03/09 09:46:21 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -209,6 +209,7 @@ struct mft {
 	char		*ski; /* SKI */
 	char		*crl; /* CRL file name */
 	unsigned char	 crlhash[SHA256_DIGEST_LENGTH];
+	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 valid_since;
 	time_t		 valid_until;
 	size_t		 filesz; /* number of filenames */
@@ -243,6 +244,7 @@ struct roa {
 	char		*aki; /* AKI */
 	char		*sia; /* SIA signedObject */
 	char		*ski; /* SKI */
+	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 expires; /* do not use after */
 };
 
@@ -266,6 +268,7 @@ struct rsc {
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
+	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 expires; /* Not After of the RSC EE */
 };
 
@@ -294,6 +297,7 @@ struct tak {
 	char		*aki; /* AKI */
 	char		*sia; /* SIA signed Object */
 	char		*ski; /* SKI */
+	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 expires; /* Not After of the TAK EE */
 };
 
@@ -314,6 +318,7 @@ struct geofeed {
 	char		*aia; /* AIA */
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
+	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 expires; /* Not After of the Geofeed EE */
 	int		 valid; /* all resources covered */
 };
@@ -327,6 +332,7 @@ struct gbr {
 	char		*aki; /* AKI */
 	char		*sia; /* SIA signedObject */
 	char		*ski; /* SKI */
+	time_t		 signtime; /* CMS signing-time attribute */
 };
 
 struct aspa_provider {
@@ -347,6 +353,7 @@ struct aspa {
 	uint32_t		 custasid; /* the customerASID */
 	struct aspa_provider	*providers; /* the providers */
 	size_t			 providersz; /* number of providers */
+	time_t			 signtime; /* CMS signing-time attribute */
 	time_t			 expires; /* NotAfter of the ASPA EE cert */
 };
 
@@ -665,10 +672,10 @@ int		 valid_ca_pkey(const char *, EVP_PKEY *);
 /* Working with CMS. */
 unsigned char	*cms_parse_validate(X509 **, const char *,
 		    const unsigned char *, size_t,
-		    const ASN1_OBJECT *, size_t *);
+		    const ASN1_OBJECT *, size_t *, time_t *);
 int		 cms_parse_validate_detached(X509 **, const char *,
 		    const unsigned char *, size_t,
-		    const ASN1_OBJECT *, BIO *);
+		    const ASN1_OBJECT *, BIO *, time_t *);
 
 /* Work with RFC 3779 IP addresses, prefixes, ranges. */
 
