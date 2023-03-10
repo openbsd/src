@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.66 2023/02/26 12:39:07 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.67 2023/03/10 10:54:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -299,6 +299,7 @@ void	rk3399_pmu_reset(void *, uint32_t *, int);
 void	rk3568_init(struct rkclock_softc *);
 uint32_t rk3568_get_frequency(void *, uint32_t *);
 int	rk3568_set_frequency(void *, uint32_t *, uint32_t);
+int	rk3568_set_parent(void *, uint32_t *, uint32_t *);
 void	rk3568_enable(void *, uint32_t *, int);
 void	rk3568_reset(void *, uint32_t *, int);
 
@@ -359,7 +360,7 @@ const struct rkclock_compat rkclock_compat[] = {
 	{
 		"rockchip,rk3568-cru", 1, rk3568_init,
 		rk3568_enable, rk3568_get_frequency,
-		rk3568_set_frequency, NULL,
+		rk3568_set_frequency, rk3568_set_parent,
 		rk3568_reset
 	},
 	{
@@ -3492,6 +3493,38 @@ rk3568_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	}
 
 	return rkclock_set_frequency(sc, idx, freq);
+}
+
+int
+rk3568_set_parent(void *cookie, uint32_t *cells, uint32_t *pcells)
+{
+	struct rkclock_softc *sc = cookie;
+	char buf[64] = {};
+	int len, node;
+
+	if (pcells[0] != sc->sc_phandle) {
+		node = OF_getnodebyphandle(pcells[0]);
+		if (node == 0)
+			return -1;
+		len = OF_getproplen(node, "clock-output-names");
+		if (len <= 0 || len > sizeof(buf))
+			return -1;
+		OF_getprop(node, "clock-output-names", buf, sizeof(buf));
+
+		if (strcmp(buf, "gmac0_clkin") == 0) {
+			return rkclock_set_parent(sc, cells[0],
+			    RK3568_GMAC0_CLKIN);
+		}
+		if (strcmp(buf, "gmac1_clkin") == 0) {
+			return rkclock_set_parent(sc, cells[0],
+			    RK3568_GMAC1_CLKIN);
+		}
+
+		printf("%s: 0x%08x 0x%08x\n", __func__, cells[0], pcells[0]);
+		return -1;
+	}
+
+	return rkclock_set_parent(sc, cells[0], pcells[1]);
 }
 
 void
