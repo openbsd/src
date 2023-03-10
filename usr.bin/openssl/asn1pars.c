@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.14 2023/03/07 05:53:17 tb Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.15 2023/03/10 09:44:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -361,9 +361,10 @@ asn1parse_main(int argc, char **argv)
 				goto end;
 			}
 			typ = ASN1_TYPE_get(at);
-			if (typ == V_ASN1_OBJECT || typ == V_ASN1_NULL) {
+			if (typ == V_ASN1_BOOLEAN || typ == V_ASN1_NULL ||
+			    typ == V_ASN1_OBJECT) {
 				BIO_printf(bio_err, "Can't parse %s type\n",
-				    typ == V_ASN1_NULL ? "NULL" : "OBJECT");
+				    ASN1_tag2str(typ));
 				ERR_print_errors(bio_err);
 				goto end;
 			}
