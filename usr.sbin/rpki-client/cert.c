@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.104 2023/03/06 16:58:41 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.105 2023/03/10 12:02:11 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -755,6 +755,8 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	if (!x509_get_aia(x, p.fn, &p.res->aia))
 		goto out;
 	if (!x509_get_crl(x, p.fn, &p.res->crl))
+		goto out;
+	if (!x509_get_notbefore(x, p.fn, &p.res->notbefore))
 		goto out;
 	if (!x509_get_expire(x, p.fn, &p.res->expires))
 		goto out;

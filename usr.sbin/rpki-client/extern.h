@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.170 2023/03/09 12:54:28 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.171 2023/03/10 12:02:11 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -139,6 +139,7 @@ struct cert {
 	enum cert_purpose	 purpose; /* BGPSec or CA */
 	char		*pubkey; /* Subject Public Key Info */
 	X509		*x509; /* the cert */
+	time_t		 notbefore; /* cert's Not Before */
 	time_t		 expires; /* do not use after */
 };
 
@@ -245,6 +246,7 @@ struct roa {
 	char		*sia; /* SIA signedObject */
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
+	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 expires; /* do not use after */
 };
 
@@ -269,6 +271,7 @@ struct rsc {
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
+	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 expires; /* Not After of the RSC EE */
 };
 
@@ -298,6 +301,7 @@ struct tak {
 	char		*sia; /* SIA signed Object */
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
+	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 expires; /* Not After of the TAK EE */
 };
 
@@ -319,6 +323,7 @@ struct geofeed {
 	char		*aki; /* AKI */
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
+	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 expires; /* Not After of the Geofeed EE */
 	int		 valid; /* all resources covered */
 };
@@ -333,6 +338,7 @@ struct gbr {
 	char		*sia; /* SIA signedObject */
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
+	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 expires; /* Not After of the GBR EE */
 };
 
@@ -355,6 +361,7 @@ struct aspa {
 	struct aspa_provider	*providers; /* the providers */
 	size_t			 providersz; /* number of providers */
 	time_t			 signtime; /* CMS signing-time attribute */
+	time_t		 	 notbefore; /* EE cert's Not Before */
 	time_t			 expires; /* NotAfter of the ASPA EE cert */
 };
 
@@ -806,6 +813,7 @@ int		 x509_get_aia(X509 *, const char *, char **);
 int		 x509_get_aki(X509 *, const char *, char **);
 int		 x509_get_sia(X509 *, const char *, char **);
 int		 x509_get_ski(X509 *, const char *, char **);
+int		 x509_get_notbefore(X509 *, const char *, time_t *);
 int		 x509_get_expire(X509 *, const char *, time_t *);
 int		 x509_get_crl(X509 *, const char *, char **);
 char		*x509_crl_get_aki(X509_CRL *, const char *);

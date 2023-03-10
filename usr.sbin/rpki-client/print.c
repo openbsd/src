@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.29 2023/03/09 12:54:28 job Exp $ */
+/*	$OpenBSD: print.c,v 1.30 2023/03/10 12:02:11 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -182,6 +182,7 @@ cert_print(const struct cert *p)
 			printf("\t\"notify_url\": \"%s\",\n", p->notify);
 		if (p->pubkey != NULL)
 			printf("\t\"router_key\": \"%s\",\n", p->pubkey);
+		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"subordinate_resources\": [\n");
 	} else {
@@ -201,11 +202,16 @@ cert_print(const struct cert *p)
 		if (p->pubkey != NULL) {
 			printf("BGPsec ECDSA public key:  %s\n",
 			    p->pubkey);
+			printf("Router key valid since:   %s\n",
+			    time2str(p->notbefore));
 			printf("Router key valid until:   %s\n",
 			    time2str(p->expires));
-		} else
+		} else {
+			printf("Certificate valid since:  %s\n",
+			    time2str(p->notbefore));
 			printf("Certificate valid until:  %s\n",
 			    time2str(p->expires));
+		}
 		printf("Subordinate resources:    ");
 	}
 
@@ -443,6 +449,7 @@ roa_print(const X509 *x, const struct roa *p)
 		if (p->signtime != 0)
 			printf("\t\"signing_time\": %lld,\n",
 			    (long long)p->signtime);
+		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 	} else {
 		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
@@ -453,6 +460,8 @@ roa_print(const X509 *x, const struct roa *p)
 		if (p->signtime != 0)
 			printf("Signing time:             %s\n",
 			    time2str(p->signtime));
+		printf("ROA valid since:          %s\n",
+		    time2str(p->notbefore));
 		printf("ROA valid until:          %s\n", time2str(p->expires));
 		printf("asID:                     %u\n", p->asid);
 		printf("IP address blocks:        ");
@@ -498,6 +507,7 @@ gbr_print(const X509 *x, const struct gbr *p)
 		if (p->signtime != 0)
 			printf("\t\"signing_time\": %lld,\n",
 			    (long long)p->signtime);
+		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"vcard\": \"");
 		for (i = 0; i < strlen(p->vcard); i++) {
@@ -520,6 +530,8 @@ gbr_print(const X509 *x, const struct gbr *p)
 		if (p->signtime != 0)
 			printf("Signing time:             %s\n",
 			    time2str(p->signtime));
+		printf("GBR valid since:          %s\n",
+		    time2str(p->notbefore));
 		printf("GBR valid until:          %s\n", time2str(p->expires));
 		printf("vcard:\n%s", p->vcard);
 	}
@@ -541,6 +553,7 @@ rsc_print(const X509 *x, const struct rsc *p)
 		if (p->signtime != 0)
 			printf("\t\"signing_time\": %lld,\n",
 			    (long long)p->signtime);
+		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"signed_with_resources\": [\n");
 	} else {
@@ -551,6 +564,8 @@ rsc_print(const X509 *x, const struct rsc *p)
 		if (p->signtime != 0)
 			printf("Signing time:             %s\n",
 			    time2str(p->signtime));
+		printf("RSC valid since:          %s\n",
+		    time2str(p->notbefore));
 		printf("RSC valid until:          %s\n", time2str(p->expires));
 		printf("Signed with resources:    ");
 	}
@@ -673,6 +688,7 @@ aspa_print(const X509 *x, const struct aspa *p)
 		if (p->signtime != 0)
 			printf("\t\"signing_time\": %lld,\n",
 			    (long long)p->signtime);
+		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"customer_asid\": %u,\n", p->custasid);
 		printf("\t\"provider_set\": [\n");
@@ -697,6 +713,8 @@ aspa_print(const X509 *x, const struct aspa *p)
 		if (p->signtime != 0)
 			printf("Signing time:             %s\n",
 			    time2str(p->signtime));
+		printf("ASPA valid since:         %s\n",
+		    time2str(p->notbefore));
 		printf("ASPA valid until:         %s\n", time2str(p->expires));
 		printf("Customer AS:              %u\n", p->custasid);
 		printf("Provider Set:             ");
@@ -784,6 +802,7 @@ tak_print(const X509 *x, const struct tak *p)
 		if (p->signtime != 0)
 			printf("\t\"signing_time\": %lld,\n",
 			    (long long)p->signtime);
+		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"takeys\": [\n");
 	} else {
@@ -795,6 +814,8 @@ tak_print(const X509 *x, const struct tak *p)
 		if (p->signtime != 0)
 			printf("Signing time:             %s\n",
 			    time2str(p->signtime));
+		printf("TAK valid since:          %s\n",
+		    time2str(p->notbefore));
 		printf("TAK valid until:          %s\n", time2str(p->expires));
 	}
 
@@ -831,6 +852,7 @@ geofeed_print(const X509 *x, const struct geofeed *p)
 		if (p->signtime != 0)
 			printf("\t\"signing_time\": %lld,\n",
 			    (long long)p->signtime);
+		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->expires);
 		printf("\t\"records\": [\n");
 	} else {
@@ -841,6 +863,8 @@ geofeed_print(const X509 *x, const struct geofeed *p)
 		if (p->signtime != 0)
 			printf("Signing time:             %s\n",
 			    time2str(p->signtime));
+		printf("Geofeed valid since:      %s\n",
+		    time2str(p->notbefore));
 		printf("Geofeed valid until:      %s\n", time2str(p->expires));
 		printf("Geofeed CSV records:\n");
 	}

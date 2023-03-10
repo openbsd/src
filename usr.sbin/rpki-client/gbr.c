@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.23 2023/03/09 18:53:24 tb Exp $ */
+/*	$OpenBSD: gbr.c,v 1.24 2023/03/10 12:02:11 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -46,7 +46,6 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	size_t		 cmsz;
 	unsigned char	*cms;
 	time_t		 signtime;
-	const ASN1_TIME	*at;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
@@ -77,15 +76,10 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	at = X509_get0_notAfter(*x509);
-	if (at == NULL) {
-		warnx("%s: X509_get0_notAfter failed", fn);
+	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	}
-	if (!x509_get_time(at, &p.res->expires)) {
-		warnx("%s: ASN1_time_parse failed", fn);
+	if (!x509_get_expire(*x509, fn, &p.res->expires))
 		goto out;
-	}
 
 	if (!x509_inherits(*x509)) {
 		warnx("%s: RFC 3779 extension not set to inherit", fn);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.21 2023/03/09 15:40:41 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.22 2023/03/10 12:02:11 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -377,7 +377,6 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	struct parse		 p;
 	unsigned char		*cms;
 	size_t			 cmsz;
-	const ASN1_TIME		*at;
 	struct cert		*cert = NULL;
 	time_t			 signtime;
 	int			 rc = 0;
@@ -406,16 +405,11 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	at = X509_get0_notAfter(*x509);
-	if (at == NULL) {
-		warnx("%s: X509_get0_notAfter failed", fn);
+	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	}
-	if (!x509_get_time(at, &p.res->expires)) {
-		warnx("%s: ASN1_time_parse failed", fn);
+	if (!x509_get_expire(*x509, fn, &p.res->expires))
 		goto out;
-	}
-
+	
 	if (X509_get_ext_by_NID(*x509, NID_sinfo_access, -1) != -1) {
 		warnx("%s: RSC: EE cert must not have an SIA extension", fn);
 		goto out;

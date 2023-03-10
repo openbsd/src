@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.5 2023/03/09 18:53:24 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.6 2023/03/10 12:02:11 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -230,7 +230,6 @@ tak_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	struct parse		 p;
 	unsigned char		*cms;
 	size_t			 cmsz;
-	const ASN1_TIME		*at;
 	time_t			 signtime;
 	int			 rc = 0;
 
@@ -260,15 +259,10 @@ tak_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	at = X509_get0_notAfter(*x509);
-	if (at == NULL) {
-		warnx("%s: X509_get0_notAfter failed", fn);
+	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	}
-	if (!x509_get_time(at, &p.res->expires)) {
-		warnx("%s: ASN1_time_parse failed", fn);
+	if (!x509_get_expire(*x509, fn, &p.res->expires))
 		goto out;
-	}
 
 	if (!x509_inherits(*x509)) {
 		warnx("%s: RFC 3779 extension not set to inherit", fn);

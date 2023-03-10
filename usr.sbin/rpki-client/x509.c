@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.66 2023/03/06 21:00:41 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.67 2023/03/10 12:02:11 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -483,6 +483,26 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 	*sia = NULL;
 	AUTHORITY_INFO_ACCESS_free(info);
 	return 0;
+}
+
+/*
+ * Extract the notBefore of a certificate.
+ */
+int
+x509_get_notbefore(X509 *x, const char *fn, time_t *tt)
+{
+	const ASN1_TIME	*at;
+
+	at = X509_get0_notBefore(x);
+	if (at == NULL) {
+		warnx("%s: X509_get0_notBefore failed", fn);
+		return 0;
+	}
+	if (!x509_get_time(at, tt)) {
+		warnx("%s: ASN1_time_parse failed", fn);
+		return 0;
+	}
+	return 1;
 }
 
 /*

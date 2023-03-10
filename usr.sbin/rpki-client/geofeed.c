@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.11 2023/03/09 09:46:21 job Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.12 2023/03/10 12:02:11 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -110,7 +110,6 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 	size_t		 b64sz = 0;
 	unsigned char	*der = NULL;
 	size_t		 dersz;
-	const ASN1_TIME	*at;
 	struct cert	*cert = NULL;
 	int		 rpki_signature_seen = 0, end_signature_seen = 0;
 	int		 rc = 0;
@@ -248,15 +247,10 @@ geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
 		goto out;
 	}
 
-	at = X509_get0_notAfter(*x509);
-	if (at == NULL) {
-		warnx("%s: X509_get0_notAfter failed", fn);
+	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	}
-	if (!x509_get_time(at, &p.res->expires)) {
-		warnx("%s: ASN1_time_parse failed", fn);
+	if (!x509_get_expire(*x509, fn, &p.res->expires))
 		goto out;
-	}
 
 	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
 		goto out;

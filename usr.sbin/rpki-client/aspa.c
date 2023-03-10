@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.12 2023/03/09 09:46:21 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.13 2023/03/10 12:02:11 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -188,7 +188,6 @@ aspa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	struct parse	 p;
 	size_t		 cmsz;
 	unsigned char	*cms;
-	const ASN1_TIME	*at;
 	struct cert	*cert = NULL;
 	time_t		 signtime;
 	int		 rc = 0;
@@ -226,15 +225,10 @@ aspa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
-	at = X509_get0_notAfter(*x509);
-	if (at == NULL) {
-		warnx("%s: X509_get0_notAfter failed", fn);
+	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	}
-	if (!x509_get_time(at, &p.res->expires)) {
-		warnx("%s: ASN1_time_parse failed", fn);
+	if (!x509_get_expire(*x509, fn, &p.res->expires))
 		goto out;
-	}
 
 	if (x509_any_inherits(*x509)) {
 		warnx("%s: inherit elements not allowed in EE cert", fn);
