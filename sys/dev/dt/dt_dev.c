@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.24 2023/03/10 11:04:26 claudio Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.25 2023/03/10 22:14:32 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -129,6 +129,7 @@ int	dtioctl(dev_t, u_long, caddr_t, int, struct proc *);
 struct	dt_softc *dtlookup(int);
 
 int	dt_ioctl_list_probes(struct dt_softc *, struct dtioc_probe *);
+int	dt_ioctl_get_args(struct dt_softc *, struct dtioc_arg *);
 int	dt_ioctl_get_stats(struct dt_softc *, struct dtioc_stat *);
 int	dt_ioctl_record_start(struct dt_softc *);
 void	dt_ioctl_record_stop(struct dt_softc *);
@@ -281,6 +282,8 @@ dtioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	switch (cmd) {
 	case DTIOCGPLIST:
 		return dt_ioctl_list_probes(sc, (struct dtioc_probe *)addr);
+	case DTIOCGARGS:
+		return dt_ioctl_get_args(sc, (struct dtioc_arg *)addr);
 	case DTIOCGSTATS:
 		return dt_ioctl_get_stats(sc, (struct dtioc_stat *)addr);
 	case DTIOCRECORD:
@@ -369,12 +372,12 @@ dt_ioctl_list_probes(struct dt_softc *sc, struct dtioc_probe *dtpr)
 		return 0;
 
 	dtpi = dtpr->dtpr_probes;
-	memset(&info, 0, sizeof(info));
 	SIMPLEQ_FOREACH(dtp, &dt_probe_list, dtp_next) {
 		if (size < sizeof(*dtpi)) {
 			error = ENOSPC;
 			break;
 		}
+		memset(&info, 0, sizeof(info));
 		info.dtpi_pbn = dtp->dtp_pbn;
 		info.dtpi_nargs = dtp->dtp_nargs;
 		strlcpy(info.dtpi_prov, dtp->dtp_prov->dtpv_name,
@@ -386,7 +389,63 @@ dt_ioctl_list_probes(struct dt_softc *sc, struct dtioc_probe *dtpr)
 			break;
 		size -= sizeof(*dtpi);
 		dtpi++;
-	};
+	}
+
+	return error;
+}
+
+int
+dt_ioctl_get_args(struct dt_softc *sc, struct dtioc_arg *dtar)
+{
+	struct dtioc_arg_info info, *dtai;
+	struct dt_probe *dtp;
+	size_t size, n, t;
+	uint32_t pbn;
+	int error = 0;
+
+	pbn = dtar->dtar_pbn;
+	if (pbn == 0 || pbn > dt_nprobes)
+		return EINVAL;
+
+	SIMPLEQ_FOREACH(dtp, &dt_probe_list, dtp_next) {
+		if (pbn == dtp->dtp_pbn)
+			break;
+	}
+	if (dtp == NULL)
+		return EINVAL;
+
+	if (dtp->dtp_sysnum != 0) {
+		/* currently not supported for system calls */
+		dtar->dtar_size = 0;
+		return 0;
+	}
+
+	size = dtar->dtar_size;
+	dtar->dtar_size = dtp->dtp_nargs * sizeof(*dtar);
+	if (size == 0)
+		return 0;
+
+	t = 0;
+	dtai = dtar->dtar_args;
+	for (n = 0; n < dtp->dtp_nargs; n++) {
+		if (size < sizeof(*dtai)) {
+			error = ENOSPC;
+			break;
+		}
+		if (n >= DTMAXARGTYPES || dtp->dtp_argtype[n] == NULL)
+			continue;
+		memset(&info, 0, sizeof(info));
+		info.dtai_pbn = dtp->dtp_pbn;
+		info.dtai_argn = t++;
+		strlcpy(info.dtai_argtype, dtp->dtp_argtype[n],
+		    sizeof(info.dtai_argtype));
+		error = copyout(&info, dtai, sizeof(*dtai));
+		if (error)
+			break;
+		size -= sizeof(*dtai);
+		dtai++;
+	}
+	dtar->dtar_size = t * sizeof(*dtar);
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.14 2022/06/28 09:32:27 bluhm Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.15 2023/03/10 22:14:32 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -37,6 +37,7 @@
  * Maximum number of arguments passed to a function.
  */
 #define DTMAXFUNCARGS	10
+#define DTMAXARGTYPES	5
 
 /*
  * Event state: where to store information when a probe fires.
@@ -114,6 +115,18 @@ struct dtioc_probe {
 	struct dtioc_probe_info	*dtpr_probes;	/* array of probe info */
 };
 
+struct dtioc_arg_info {
+	uint32_t	dtai_pbn;		/* probe number */
+	uint8_t		dtai_argn;		/* arguments number */
+	char		dtai_argtype[DTNAMESIZE];
+};
+
+struct dtioc_arg {
+	uint32_t		 dtar_pbn;	/* probe number */
+	size_t			 dtar_size;	/* size of the buffer */
+	struct dtioc_arg_info	*dtar_args;	/* array of arg info */
+};
+
 struct dtioc_req {
 	uint32_t		 dtrq_pbn;	/* probe number */
 	struct dt_filter	 dtrq_filter;	/* probe filter */
@@ -128,11 +141,10 @@ struct dtioc_stat {
 
 #define DTIOCGPLIST	_IOWR('D', 1, struct dtioc_probe)
 #define DTIOCGSTATS	_IOR('D', 2, struct dtioc_stat)
-
 #define DTIOCRECORD	_IOW('D', 3, int)
 #define DTIOCPRBENABLE	_IOW('D', 4, struct dtioc_req)
 #define DTIOCPRBDISABLE	 _IOW('D', 5, struct dtioc_req)
-
+#define DTIOCGARGS	_IOWR('D', 6, struct dtioc_arg)
 
 #ifdef _KERNEL
 
@@ -219,7 +231,8 @@ struct dt_probe {
 
 	/* Provider specific fields. */
 	int			 dtp_sysnum;	/* [I] related # of syscall */
-	const char		*dtp_argtype[5];/* [I] type of arguments */
+	const char		*dtp_argtype[DTMAXARGTYPES];
+						/* [I] type of arguments */
 	int			 dtp_nargs;	/* [I] # of arguments */
 	vaddr_t			 dtp_addr;	/* [I] address of breakpoint */
 };
