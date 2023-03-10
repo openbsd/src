@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.113 2023/03/01 11:17:22 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.114 2023/03/10 16:41:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -407,7 +407,6 @@ unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
 unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
 #define EVP_CIPHER_CTX_mode(e)		(EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)
 
-#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
 EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
 void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
@@ -429,7 +428,6 @@ int EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
     int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *));
 int EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
     int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr));
-#endif /* LIBRESSL_INTERNAL || LIBRESSL_NEXT_API */
 
 EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *engine,
     const unsigned char *private_key, size_t len);
