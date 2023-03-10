@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1233 2023/03/09 19:49:57 naddy Exp $
+#	$OpenBSD: install.sub,v 1.1234 2023/03/10 10:33:40 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -557,8 +557,15 @@ unlock() {
 
 # Add a trap to kill the dmesg listener co-process on exit of the installer.
 retrap() {
-	trap '_cppid=$(</tmp/cppid); if [ -n $_cppid ]; then kill -KILL -$_cppid 2>/dev/null; rm -f /tmp/cppid; fi; echo; stty echo; exit 0' \
-		INT EXIT TERM
+	trap '
+		if [[ -f /tmp/cppid ]]; then
+			kill -KILL -"$(</tmp/cppid)" 2>/dev/null
+			rm -f /tmp/cppid
+		fi
+		echo
+		stty echo
+		exit 0
+	' INT EXIT TERM
 }
 
 # Start a listener process looking for dmesg changes which indicates a possible
