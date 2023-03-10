@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.364 2023/03/05 22:17:22 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.365 2023/03/10 19:26:06 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6421,6 +6421,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	uint16_t		 encrid = 0, integrid = 0, groupid = 0;
 	size_t			 encrlen = 0, integrlen = 0;
 	int			 esn = 0;
+	int			 ret = -1;
 
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
 		if (csa->csa_rekey || csa->csa_loaded)
@@ -6438,7 +6439,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 			log_debug("%s: failed to load CHILD SA spi %s",
 			    __func__, print_spi(csa->csa_spi.spi,
 			    csa->csa_spi.spi_size));
-			return (-1);
+			goto done;
 		}
 		if (ipcomp) {
 			if (pfkey_sa_add(env, ipcomp, csa) != 0) {
@@ -6514,7 +6515,7 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 
 		if (pfkey_flow_add(env, flow) != 0) {
 			log_debug("%s: failed to load flow", __func__);
-			return (-1);
+			goto done;
 		}
 
 		if ((oflow = RB_FIND(iked_flows, &env->sc_activeflows, flow))
@@ -6582,9 +6583,12 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	if (ibuf_strlen(flowbuf))
 		log_info("%s: loaded flows: %.*s", SPI_SA(sa, __func__),
 		    ibuf_strlen(flowbuf), ibuf_data(flowbuf));
+
+	ret = 0;
+ done:
 	ibuf_release(spibuf);
 	ibuf_release(flowbuf);
-	return (0);
+	return (ret);
 }
 
 int
