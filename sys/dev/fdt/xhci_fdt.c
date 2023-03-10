@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.21 2022/12/24 12:36:06 patrick Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.22 2023/03/10 10:22:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -129,6 +129,7 @@ xhci_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set up power and clocks */
 	power_domain_enable(sc->sc_node);
+	reset_deassert_all(sc->sc_node);
 	clock_set_assigned(sc->sc_node);
 	clock_enable_all(sc->sc_node);
 
