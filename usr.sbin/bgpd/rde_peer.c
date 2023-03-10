@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.30 2023/03/09 13:12:19 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.31 2023/03/10 07:57:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -38,8 +38,6 @@ struct iq {
 	struct imsg		imsg;
 };
 
-extern struct filter_head	*out_rules;
-
 int
 peer_has_as4byte(struct rde_peer *peer)
 {
@@ -68,7 +66,7 @@ peer_accept_no_as_set(struct rde_peer *peer)
 }
 
 void
-peer_init(void)
+peer_init(struct filter_head *rules)
 {
 	struct peer_config pc;
 
@@ -78,7 +76,7 @@ peer_init(void)
 	snprintf(pc.descr, sizeof(pc.descr), "LOCAL");
 	pc.id = PEER_ID_SELF;
 
-	peerself = peer_add(PEER_ID_SELF, &pc);
+	peerself = peer_add(PEER_ID_SELF, &pc, rules);
 	peerself->state = PEER_UP;
 }
 
@@ -132,13 +130,13 @@ peer_match(struct ctl_neighbor *n, uint32_t peerid)
 
 	for (; peer != NULL; peer = RB_NEXT(peer_tree, &peertable, peer)) {
 		if (rde_match_peer(peer, n))
-			return (peer);
+			return peer;
 	}
-	return (NULL);
+	return NULL;
 }
 
 struct rde_peer *
-peer_add(uint32_t id, struct peer_config *p_conf)
+peer_add(uint32_t id, struct peer_config *p_conf, struct filter_head *rules)
 {
 	struct rde_peer		*peer;
 	int			 conflict;
@@ -164,6 +162,8 @@ peer_add(uint32_t id, struct peer_config *p_conf)
 	peer->flags = peer->conf.flags;
 	SIMPLEQ_INIT(&peer->imsg_queue);
 
+	peer_apply_out_filter(peer, rules);
+
 	/*
 	 * Assign an even random unique transmit path id.
 	 * Odd path_id_tx numbers are for peers using add-path recv.
@@ -185,6 +185,32 @@ peer_add(uint32_t id, struct peer_config *p_conf)
 		fatalx("rde peer table corrupted");
 
 	return (peer);
+}
+
+struct filter_head *
+peer_apply_out_filter(struct rde_peer *peer, struct filter_head *rules)
+{
+	struct filter_head *old;
+	struct filter_rule *fr, *new;
+
+	old = peer->out_rules;
+	if ((peer->out_rules = malloc(sizeof(*peer->out_rules))) == NULL)
+		fatal(NULL);
+	TAILQ_INIT(peer->out_rules);
+
+	TAILQ_FOREACH(fr, rules, entry) {
+		if (rde_filter_skip_rule(peer, fr))
+			continue;
+
+		if ((new = malloc(sizeof(*new))) == NULL)
+			fatal(NULL);
+		memcpy(new, fr, sizeof(*new));
+		filterset_copy(&fr->set, &new->set);
+
+		TAILQ_INSERT_TAIL(peer->out_rules, new, entry);
+	}
+
+	return old;
 }
 
 static inline int
@@ -231,17 +257,16 @@ peer_generate_update(struct rde_peer *peer, struct rib_entry *re,
 	/* handle peers with add-path */
 	if (peer_has_add_path(peer, aid, CAPA_AP_SEND)) {
 		if (peer->eval.mode == ADDPATH_EVAL_ALL)
-			up_generate_addpath_all(out_rules, peer, re,
-			    newpath, oldpath);
+			up_generate_addpath_all(peer, re, newpath, oldpath);
 		else
-			up_generate_addpath(out_rules, peer, re);
+			up_generate_addpath(peer, re);
 		return;
 	}
 
 	/* skip regular peers if the best path didn't change */
 	if (mode == EVAL_ALL && (peer->flags & PEERFLAG_EVALUATE_ALL) == 0)
 		return;
-	up_generate_updates(out_rules, peer, re);
+	up_generate_updates(peer, re);
 }
 
 void
@@ -362,6 +387,7 @@ rde_up_dump_upcall(struct rib_entry *re, void *ptr)
 	if ((p = prefix_best(re)) == NULL)
 		/* no eligible prefix, not even for 'evaluate all' */
 		return;
+
 	peer_generate_update(peer, re, NULL, NULL, 0);
 }
 
@@ -449,6 +475,9 @@ peer_down(struct rde_peer *peer, void *bula)
 	peer->stats.prefix_cnt = 0;
 	peer->stats.prefix_out_cnt = 0;
 
+	/* free filters */
+	filterlist_free(peer->out_rules);
+
 	RB_REMOVE(peer_tree, &peertable, peer);
 	free(peer);
 }
@@ -531,7 +560,7 @@ peer_dump(struct rde_peer *peer, uint8_t aid)
 		if (peer->capa.grestart.restart)
 			prefix_add_eor(peer, aid);
 	} else if (peer->export_type == EXPORT_DEFAULT_ROUTE) {
-		up_generate_default(out_rules, peer, aid);
+		up_generate_default(peer, aid);
 		rde_up_dump_done(peer, aid);
 	} else {
 		if (rib_dump_new(peer->loc_rib_id, aid, RDE_RUNNER_ROUNDS, peer,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.284 2023/03/09 13:12:19 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.285 2023/03/10 07:57:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -88,6 +88,7 @@ struct rde_peer {
 	struct prefix_index		 adj_rib_out;
 	struct prefix_tree		 updates[AID_MAX];
 	struct prefix_tree		 withdraws[AID_MAX];
+	struct filter_head		*out_rules;
 	time_t				 staletime[AID_MAX];
 	uint32_t			 remote_bgpid; /* host byte order! */
 	uint32_t			 path_id_tx;
@@ -401,12 +402,14 @@ int		rde_match_peer(struct rde_peer *, struct ctl_neighbor *);
 int		 peer_has_as4byte(struct rde_peer *);
 int		 peer_has_add_path(struct rde_peer *, uint8_t, int);
 int		 peer_accept_no_as_set(struct rde_peer *);
-void		 peer_init(void);
+void		 peer_init(struct filter_head *);
 void		 peer_shutdown(void);
 void		 peer_foreach(void (*)(struct rde_peer *, void *), void *);
 struct rde_peer	*peer_get(uint32_t);
 struct rde_peer *peer_match(struct ctl_neighbor *, uint32_t);
-struct rde_peer	*peer_add(uint32_t, struct peer_config *);
+struct rde_peer	*peer_add(uint32_t, struct peer_config *, struct filter_head *);
+struct filter_head	*peer_apply_out_filter(struct rde_peer *,
+			    struct filter_head *);
 
 void		 rde_generate_updates(struct rib_entry *, struct prefix *,
 		    struct prefix *, enum eval_mode);
@@ -532,14 +535,14 @@ void		 prefix_evaluate_nexthop(struct prefix *, enum nexthop_state,
 
 /* rde_filter.c */
 void	rde_apply_set(struct filter_set_head *, struct rde_peer *,
-	    struct rde_peer *, struct filterstate *, uint8_t);
+	    struct rde_peer *, struct filterstate *, u_int8_t);
 void	rde_filterstate_init(struct filterstate *);
 void	rde_filterstate_prep(struct filterstate *, struct prefix *);
 void	rde_filterstate_copy(struct filterstate *, struct filterstate *);
 void	rde_filterstate_set_vstate(struct filterstate *, uint8_t, uint8_t);
 void	rde_filterstate_clean(struct filterstate *);
-int	rde_filter_equal(struct filter_head *, struct filter_head *,
-	    struct rde_peer *);
+int	rde_filter_skip_rule(struct rde_peer *, struct filter_rule *);
+int	rde_filter_equal(struct filter_head *, struct filter_head *);
 void	rde_filter_calc_skip_steps(struct filter_head *);
 enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
 	    struct rde_peer *, struct bgpd_addr *, uint8_t,
@@ -727,15 +730,11 @@ int		 nexthop_compare(struct nexthop *, struct nexthop *);
 
 /* rde_update.c */
 void		 up_init(struct rde_peer *);
-void		 up_generate_updates(struct filter_head *, struct rde_peer *,
-		    struct rib_entry *);
-void		 up_generate_addpath(struct filter_head *, struct rde_peer *,
-		    struct rib_entry *);
-void		 up_generate_addpath_all(struct filter_head *,
-		    struct rde_peer *, struct rib_entry *, struct prefix *,
-		    struct prefix *);
-void		 up_generate_default(struct filter_head *, struct rde_peer *,
-		    uint8_t);
+void		 up_generate_updates(struct rde_peer *, struct rib_entry *);
+void		 up_generate_addpath(struct rde_peer *, struct rib_entry *);
+void		 up_generate_addpath_all(struct rde_peer *, struct rib_entry *,
+		    struct prefix *, struct prefix *);
+void		 up_generate_default(struct rde_peer *, uint8_t);
 int		 up_is_eor(struct rde_peer *, uint8_t);
 int		 up_dump_withdraws(u_char *, int, struct rde_peer *, uint8_t);
 int		 up_dump_mp_unreach(u_char *, int, struct rde_peer *, uint8_t);

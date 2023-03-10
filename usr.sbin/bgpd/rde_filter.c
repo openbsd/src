@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.133 2023/01/24 14:13:12 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.134 2023/03/10 07:57:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -319,7 +319,7 @@ rde_filter_match(struct filter_rule *f, struct rde_peer *peer,
 }
 
 /* return true when the rule f can never match for this peer */
-static int
+int
 rde_filter_skip_rule(struct rde_peer *peer, struct filter_rule *f)
 {
 	/* if any of the two is unset then rule can't be skipped */
@@ -350,8 +350,7 @@ rde_filter_skip_rule(struct rde_peer *peer, struct filter_rule *f)
 }
 
 int
-rde_filter_equal(struct filter_head *a, struct filter_head *b,
-    struct rde_peer *peer)
+rde_filter_equal(struct filter_head *a, struct filter_head *b)
 {
 	struct filter_rule	*fa, *fb;
 	struct rde_prefixset	*psa, *psb, *osa, *osb;
@@ -362,16 +361,6 @@ rde_filter_equal(struct filter_head *a, struct filter_head *b,
 	fb = b ? TAILQ_FIRST(b) : NULL;
 
 	while (fa != NULL || fb != NULL) {
-		/* skip all rules with wrong peer */
-		if (rde_filter_skip_rule(peer, fa)) {
-			fa = TAILQ_NEXT(fa, entry);
-			continue;
-		}
-		if (rde_filter_skip_rule(peer, fb)) {
-			fb = TAILQ_NEXT(fb, entry);
-			continue;
-		}
-
 		/* compare the two rules */
 		if ((fa == NULL && fb != NULL) || (fa != NULL && fb == NULL))
 			/* new rule added or removed */
@@ -805,12 +794,12 @@ rde_filter_calc_skip_steps(struct filter_head *rules)
 	for (i = 0; i < RDE_FILTER_SKIP_COUNT; ++i)
 		head[i] = cur;
 	while (cur != NULL) {
+		if (cur->peer.peerid != prev->peer.peerid)
+			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_PEERID);
 		if (cur->peer.groupid != prev->peer.groupid)
 			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_GROUPID);
 		if (cur->peer.remote_as != prev->peer.remote_as)
 			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_REMOTE_AS);
-		if (cur->peer.peerid != prev->peer.peerid)
-			RDE_FILTER_SET_SKIP_STEPS(RDE_FILTER_SKIP_PEERID);
 		prev = cur;
 		cur = TAILQ_NEXT(cur, entry);
 	}
@@ -848,6 +837,10 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 	f = TAILQ_FIRST(rules);
 	while (f != NULL) {
 		RDE_FILTER_TEST_ATTRIB(
+		    (f->peer.peerid &&
+		     f->peer.peerid != peer->conf.id),
+		     f->skip[RDE_FILTER_SKIP_PEERID]);
+		RDE_FILTER_TEST_ATTRIB(
 		    (f->peer.groupid &&
 		     f->peer.groupid != peer->conf.groupid),
 		     f->skip[RDE_FILTER_SKIP_GROUPID]);
@@ -855,10 +848,6 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 		    (f->peer.remote_as &&
 		     f->peer.remote_as != peer->conf.remote_as),
 		     f->skip[RDE_FILTER_SKIP_REMOTE_AS]);
-		RDE_FILTER_TEST_ATTRIB(
-		    (f->peer.peerid &&
-		     f->peer.peerid != peer->conf.id),
-		     f->skip[RDE_FILTER_SKIP_PEERID]);
 
 		if (rde_filter_match(f, peer, from, state, prefix, plen)) {
 			rde_apply_set(&f->set, peer, from, state, prefix->aid);

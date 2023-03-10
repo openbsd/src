@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.594 2023/03/09 13:12:19 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.595 2023/03/10 07:57:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -198,16 +198,15 @@ rde_main(int debug, int verbose)
 	imsg_init(ibuf_main, 3);
 
 	/* initialize the RIB structures */
+	if ((out_rules = calloc(1, sizeof(struct filter_head))) == NULL)
+		fatal(NULL);
+	TAILQ_INIT(out_rules);
+
 	pt_init();
-	peer_init();
+	peer_init(out_rules);
 
 	/* make sure the default RIBs are setup */
 	rib_new("Adj-RIB-In", 0, F_RIB_NOFIB | F_RIB_NOEVALUATE);
-
-	out_rules = calloc(1, sizeof(struct filter_head));
-	if (out_rules == NULL)
-		fatal(NULL);
-	TAILQ_INIT(out_rules);
 
 	conf = new_config();
 	log_info("route decision engine ready");
@@ -396,7 +395,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
 			    sizeof(struct peer_config))
 				fatalx("incorrect size of session request");
-			peer = peer_add(imsg.hdr.peerid, imsg.data);
+			peer = peer_add(imsg.hdr.peerid, imsg.data, out_rules);
 			/* make sure rde_eval_all is on if needed. */
 			if (peer->conf.flags & PEERFLAG_EVALUATE_ALL)
 				rde_eval_all = 1;
@@ -896,6 +895,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			if ((rib = rib_byid(rib_find(r->rib))) == NULL) {
 				log_warnx("IMSG_RECONF_FILTER: filter rule "
 				    "for nonexistent rib %s", r->rib);
+				filterset_free(&r->set);
 				free(r);
 				break;
 			}
@@ -911,8 +911,9 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 					rib->in_rules_tmp = nr;
 				}
 				TAILQ_INSERT_TAIL(nr, r, entry);
-			} else
+			} else {
 				TAILQ_INSERT_TAIL(out_rules_tmp, r, entry);
+			}
 			break;
 		case IMSG_RECONF_PREFIX_SET:
 		case IMSG_RECONF_ORIGIN_SET:
@@ -3559,19 +3560,14 @@ rde_reload_done(void)
 	rde_mark_prefixsets_dirty(&originsets_old, &conf->rde_originsets);
 	as_sets_mark_dirty(&as_sets_old, &conf->as_sets);
 
-	/*
-	 * make the new filter rules the active one but keep the old for
-	 * softrconfig. This is needed so that changes happening are using
-	 * the right filters.
-	 */
-	fh = out_rules;
-	out_rules = out_rules_tmp;
-	out_rules_tmp = fh;
-
-	rde_filter_calc_skip_steps(out_rules);
 
 	/* make sure that rde_eval_all is correctly set after a config change */
 	rde_eval_all = 0;
+
+	/* Make the new outbound filter rules the active one. */
+	filterlist_free(out_rules);
+	out_rules = out_rules_tmp;
+	out_rules_tmp = NULL;
 
 	/* check if filter changed */
 	RB_FOREACH(peer, peer_tree, &peertable) {
@@ -3641,12 +3637,17 @@ rde_reload_done(void)
 			softreconfig++;	/* account for the running flush */
 			continue;
 		}
-		if (!rde_filter_equal(out_rules, out_rules_tmp, peer)) {
+
+		/* reapply outbound filters for this peer */
+		fh = peer_apply_out_filter(peer, out_rules);
+
+		if (!rde_filter_equal(peer->out_rules, fh)) {
 			char *p = log_fmt_peer(&peer->conf);
 			log_debug("out filter change: reloading peer %s", p);
 			free(p);
 			peer->reconf_out = 1;
 		}
+		filterlist_free(fh);
 	}
 
 	/* bring ribs in sync */
@@ -3696,8 +3697,7 @@ rde_reload_done(void)
 			rib->state = RECONF_KEEP;
 			/* FALLTHROUGH */
 		case RECONF_KEEP:
-			if (rde_filter_equal(rib->in_rules,
-			    rib->in_rules_tmp, NULL))
+			if (rde_filter_equal(rib->in_rules, rib->in_rules_tmp))
 				/* rib is in sync */
 				break;
 			log_debug("in filter change: reloading RIB %s",
@@ -3717,8 +3717,6 @@ rde_reload_done(void)
 		rib->in_rules_tmp = NULL;
 	}
 
-	filterlist_free(out_rules_tmp);
-	out_rules_tmp = NULL;
 	/* old filters removed, free all sets */
 	free_rde_prefixsets(&prefixsets_old);
 	free_rde_prefixsets(&originsets_old);
@@ -3789,8 +3787,7 @@ rde_softreconfig_in_done(void *arg, uint8_t dummy)
 				/* just resend the default route */
 				for (aid = 0; aid < AID_MAX; aid++) {
 					if (peer->capa.mp[aid])
-						up_generate_default(out_rules,
-						    peer, aid);
+						up_generate_default(peer, aid);
 				}
 				peer->reconf_out = 0;
 			} else

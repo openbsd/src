@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.463 2023/03/09 17:21:21 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.464 2023/03/10 07:57:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1111,11 +1111,10 @@ struct filter_rule {
 	struct filter_peers		peer;
 	struct filter_match		match;
 	struct filter_set_head		set;
-#define RDE_FILTER_SKIP_DIR		0
+#define RDE_FILTER_SKIP_PEERID		0
 #define RDE_FILTER_SKIP_GROUPID		1
 #define RDE_FILTER_SKIP_REMOTE_AS	2
-#define RDE_FILTER_SKIP_PEERID		3
-#define RDE_FILTER_SKIP_COUNT		4
+#define RDE_FILTER_SKIP_COUNT		3
 	struct filter_rule		*skip[RDE_FILTER_SKIP_COUNT];
 	enum filter_actions		action;
 	enum directions			dir;
