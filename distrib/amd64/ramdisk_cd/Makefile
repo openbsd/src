@@ -1,8 +1,7 @@
-#	$OpenBSD: Makefile,v 1.35 2022/03/07 21:43:00 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.36 2023/03/10 20:16:53 krw Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		11392
-FSDISKTYPE=	mini34
 CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
