@@ -1,4 +1,4 @@
-/* $OpenBSD: a_type.c,v 1.23 2021/12/25 12:19:16 jsing Exp $ */
+/* $OpenBSD: a_type.c,v 1.24 2023/03/10 09:56:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -104,10 +104,14 @@ ASN1_TYPE_free(ASN1_TYPE *a)
 int
 ASN1_TYPE_get(const ASN1_TYPE *a)
 {
-	if ((a->value.ptr != NULL) || (a->type == V_ASN1_NULL))
-		return (a->type);
-	else
-		return (0);
+	/* Special non-pointer types. */
+	if (a->type == V_ASN1_BOOLEAN || a->type == V_ASN1_NULL )
+		return a->type;
+
+	if (a->value.ptr != NULL)
+		return a->type;
+
+	return 0;
 }
 
 void
