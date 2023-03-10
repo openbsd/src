@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.18 2023/03/04 11:58:29 tb Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.19 2023/03/10 11:55:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -177,6 +177,12 @@ asn1_bio_free(BIO *b)
 	ctx = (BIO_ASN1_BUF_CTX *) b->ptr;
 	if (ctx == NULL)
 		return 0;
+
+	if (ctx->prefix_free != NULL)
+		ctx->prefix_free(b, &ctx->ex_buf, &ctx->ex_len, &ctx->ex_arg);
+	if (ctx->suffix_free != NULL)
+		ctx->suffix_free(b, &ctx->ex_buf, &ctx->ex_len, &ctx->ex_arg);
+
 	free(ctx->buf);
 	free(ctx);
 	b->init = 0;
