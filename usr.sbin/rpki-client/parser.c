@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.86 2023/02/23 13:06:42 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.87 2023/03/10 12:44:56 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -152,16 +152,16 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	/*
 	 * Check CRL to figure out the soonest transitive expiry moment
 	 */
-	if (crl != NULL && roa->expires > crl->expires)
-		roa->expires = crl->expires;
+	if (crl != NULL && roa->notafter > crl->nextupdate)
+		roa->notafter = crl->nextupdate;
 
 	/*
 	 * Scan the cert tree to figure out the soonest transitive
 	 * expiry moment
 	 */
 	for (; a != NULL; a = a->parent) {
-		if (roa->expires > a->cert->expires)
-			roa->expires = a->cert->expires;
+		if (roa->notafter > a->cert->notafter)
+			roa->notafter = a->cert->notafter;
 	}
 
 	return roa;
@@ -541,12 +541,12 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len)
 
 	aspa->talid = a->cert->talid;
 
-	if (crl != NULL && aspa->expires > crl->expires)
-		aspa->expires = crl->expires;
+	if (crl != NULL && aspa->notafter > crl->nextupdate)
+		aspa->notafter = crl->nextupdate;
 
 	for (; a != NULL; a = a->parent) {
-		if (aspa->expires > a->cert->expires)
-			aspa->expires = a->cert->expires;
+		if (aspa->notafter > a->cert->notafter)
+			aspa->notafter = a->cert->notafter;
 	}
 
 	return aspa;

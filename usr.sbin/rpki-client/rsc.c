@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.22 2023/03/10 12:02:11 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.23 2023/03/10 12:44:56 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -407,7 +407,7 @@ rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	if (!x509_get_expire(*x509, fn, &p.res->expires))
+	if (!x509_get_notafter(*x509, fn, &p.res->notafter))
 		goto out;
 	
 	if (X509_get_ext_by_NID(*x509, NID_sinfo_access, -1) != -1) {

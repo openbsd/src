@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.6 2023/03/10 12:02:11 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.7 2023/03/10 12:44:56 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -261,7 +261,7 @@ tak_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	if (!x509_get_expire(*x509, fn, &p.res->expires))
+	if (!x509_get_notafter(*x509, fn, &p.res->notafter))
 		goto out;
 
 	if (!x509_inherits(*x509)) {

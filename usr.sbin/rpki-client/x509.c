@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.67 2023/03/10 12:02:11 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.68 2023/03/10 12:44:56 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -506,10 +506,10 @@ x509_get_notbefore(X509 *x, const char *fn, time_t *tt)
 }
 
 /*
- * Extract the expire time (not-after) of a certificate.
+ * Extract the notAfter from a certificate.
  */
 int
-x509_get_expire(X509 *x, const char *fn, time_t *tt)
+x509_get_notafter(X509 *x, const char *fn, time_t *tt)
 {
 	const ASN1_TIME	*at;
 

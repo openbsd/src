@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.171 2023/03/10 12:02:11 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.172 2023/03/10 12:44:56 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -140,7 +140,7 @@ struct cert {
 	char		*pubkey; /* Subject Public Key Info */
 	X509		*x509; /* the cert */
 	time_t		 notbefore; /* cert's Not Before */
-	time_t		 expires; /* do not use after */
+	time_t		 notafter; /* cert's Not After */
 };
 
 /*
@@ -247,7 +247,7 @@ struct roa {
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 expires; /* do not use after */
+	time_t		 notafter; /* EE cert's Not After */
 };
 
 struct rscfile {
@@ -272,7 +272,7 @@ struct rsc {
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 expires; /* Not After of the RSC EE */
+	time_t		 notafter; /* Not After of the RSC EE */
 };
 
 /*
@@ -302,7 +302,7 @@ struct tak {
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 expires; /* Not After of the TAK EE */
+	time_t		 notafter; /* Not After of the TAK EE */
 };
 
 /*
@@ -324,7 +324,7 @@ struct geofeed {
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 expires; /* Not After of the Geofeed EE */
+	time_t		 notafter; /* Not After of the Geofeed EE */
 	int		 valid; /* all resources covered */
 };
 
@@ -339,7 +339,7 @@ struct gbr {
 	char		*ski; /* SKI */
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
-	time_t		 expires; /* Not After of the GBR EE */
+	time_t		 notafter; /* Not After of the GBR EE */
 };
 
 struct aspa_provider {
@@ -362,7 +362,7 @@ struct aspa {
 	size_t			 providersz; /* number of providers */
 	time_t			 signtime; /* CMS signing-time attribute */
 	time_t		 	 notbefore; /* EE cert's Not Before */
-	time_t			 expires; /* NotAfter of the ASPA EE cert */
+	time_t			 notafter; /* notAfter of the ASPA EE cert */
 };
 
 /*
@@ -426,8 +426,8 @@ struct crl {
 	RB_ENTRY(crl)	 entry;
 	char		*aki;
 	X509_CRL	*x509_crl;
-	time_t		 issued;	/* do not use before */
-	time_t		 expires;	/* do not use after */
+	time_t		 lastupdate;	/* do not use before */
+	time_t		 nextupdate;	/* do not use after */
 };
 /*
  * Tree of CRLs sorted by uri
@@ -814,7 +814,7 @@ int		 x509_get_aki(X509 *, const char *, char **);
 int		 x509_get_sia(X509 *, const char *, char **);
 int		 x509_get_ski(X509 *, const char *, char **);
 int		 x509_get_notbefore(X509 *, const char *, time_t *);
-int		 x509_get_expire(X509 *, const char *, time_t *);
+int		 x509_get_notafter(X509 *, const char *, time_t *);
 int		 x509_get_crl(X509 *, const char *, char **);
 char		*x509_crl_get_aki(X509_CRL *, const char *);
 char		*x509_get_pubkey(X509 *, const char *);

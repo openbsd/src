@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.13 2023/03/10 12:02:11 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.14 2023/03/10 12:44:56 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -227,7 +227,7 @@ aspa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	if (!x509_get_expire(*x509, fn, &p.res->expires))
+	if (!x509_get_notafter(*x509, fn, &p.res->notafter))
 		goto out;
 
 	if (x509_any_inherits(*x509)) {
@@ -283,7 +283,7 @@ aspa_buffer(struct ibuf *b, const struct aspa *p)
 {
 	io_simple_buffer(b, &p->valid, sizeof(p->valid));
 	io_simple_buffer(b, &p->custasid, sizeof(p->custasid));
-	io_simple_buffer(b, &p->expires, sizeof(p->expires));
+	io_simple_buffer(b, &p->notafter, sizeof(p->notafter));
 
 	io_simple_buffer(b, &p->providersz, sizeof(size_t));
 	io_simple_buffer(b, p->providers,
@@ -309,7 +309,7 @@ aspa_read(struct ibuf *b)
 
 	io_read_buf(b, &p->valid, sizeof(p->valid));
 	io_read_buf(b, &p->custasid, sizeof(p->custasid));
-	io_read_buf(b, &p->expires, sizeof(p->expires));
+	io_read_buf(b, &p->notafter, sizeof(p->notafter));
 
 	io_read_buf(b, &p->providersz, sizeof(size_t));
 	if ((p->providers = calloc(p->providersz,
@@ -355,7 +355,7 @@ aspa_insert_vaps(struct vap_tree *tree, struct aspa *aspa, struct repo *rp)
 	if ((v = calloc(1, sizeof(*v))) == NULL)
 		err(1, NULL);
 	v->custasid = aspa->custasid;
-	v->expires = aspa->expires;
+	v->expires = aspa->notafter;
 
 	if ((found = RB_INSERT(vap_tree, tree, v)) != NULL) {
 		if (found->expires > v->expires)

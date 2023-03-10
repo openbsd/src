@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.24 2023/03/10 12:02:11 job Exp $ */
+/*	$OpenBSD: gbr.c,v 1.25 2023/03/10 12:44:56 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -78,7 +78,7 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	if (!x509_get_expire(*x509, fn, &p.res->expires))
+	if (!x509_get_notafter(*x509, fn, &p.res->notafter))
 		goto out;
 
 	if (!x509_inherits(*x509)) {

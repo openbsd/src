@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.62 2023/03/10 12:02:11 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.63 2023/03/10 12:44:56 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -243,7 +243,7 @@ roa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	if (!x509_get_notbefore(*x509, fn, &p.res->notbefore))
 		goto out;
-	if (!x509_get_expire(*x509, fn, &p.res->expires))
+	if (!x509_get_notafter(*x509, fn, &p.res->notafter))
 		goto out;
 
 	if (!roa_parse_econtent(cms, cmsz, &p))
@@ -310,7 +310,7 @@ roa_buffer(struct ibuf *b, const struct roa *p)
 	io_simple_buffer(b, &p->asid, sizeof(p->asid));
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
 	io_simple_buffer(b, &p->ipsz, sizeof(p->ipsz));
-	io_simple_buffer(b, &p->expires, sizeof(p->expires));
+	io_simple_buffer(b, &p->notafter, sizeof(p->notafter));
 
 	io_simple_buffer(b, p->ips, p->ipsz * sizeof(p->ips[0]));
 
@@ -336,7 +336,7 @@ roa_read(struct ibuf *b)
 	io_read_buf(b, &p->asid, sizeof(p->asid));
 	io_read_buf(b, &p->talid, sizeof(p->talid));
 	io_read_buf(b, &p->ipsz, sizeof(p->ipsz));
-	io_read_buf(b, &p->expires, sizeof(p->expires));
+	io_read_buf(b, &p->notafter, sizeof(p->notafter));
 
 	if ((p->ips = calloc(p->ipsz, sizeof(struct roa_ip))) == NULL)
 		err(1, NULL);
@@ -373,7 +373,7 @@ roa_insert_vrps(struct vrp_tree *tree, struct roa *roa, struct repo *rp)
 			v->repoid = repo_id(rp);
 		else
 			v->repoid = 0;
-		v->expires = roa->expires;
+		v->expires = roa->notafter;
 
 		/*
 		 * Check if a similar VRP already exists in the tree.
