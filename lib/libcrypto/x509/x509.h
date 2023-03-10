@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.93 2023/02/23 18:12:32 job Exp $ */
+/* $OpenBSD: x509.h,v 1.94 2023/03/10 16:43:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -400,9 +400,7 @@ STACK_OF(X509_REVOKED) *X509_CRL_get_REVOKED(X509_CRL *crl);
 void X509_CRL_get0_signature(const X509_CRL *crl, const ASN1_BIT_STRING **psig,
     const X509_ALGOR **palg);
 
-#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
 const X509_ALGOR *X509_CRL_get0_tbs_sigalg(const X509_CRL *crl);
-#endif
 
 int X509_REQ_get_signature_nid(const X509_REQ *req);
 
@@ -771,10 +769,8 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it,
 #endif
 
 const STACK_OF(X509_EXTENSION) *X509_get0_extensions(const X509 *x);
-#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
 void		X509_get0_uids(const X509 *x, const ASN1_BIT_STRING **piuid,
 		    const ASN1_BIT_STRING **psuid);
-#endif
 const X509_ALGOR *X509_get0_tbs_sigalg(const X509 *x);
 int 		X509_set_version(X509 *x, long version);
 long		X509_get_version(const X509 *x);
