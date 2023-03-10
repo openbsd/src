@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.68 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: btrace.c,v 1.69 2023/03/10 23:02:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -61,7 +61,7 @@ char			*read_btfile(const char *, size_t *);
  * Retrieve & parse probe information.
  */
 void			 dtpi_cache(int);
-void			 dtpi_print_list(void);
+void			 dtpi_print_list(int);
 const char		*dtpi_func(struct dtioc_probe_info *);
 int			 dtpi_is_unit(const char *);
 struct dtioc_probe_info	*dtpi_get_by_value(const char *, const char *,
@@ -72,7 +72,7 @@ struct dtioc_probe_info	*dtpi_get_by_value(const char *, const char *,
  */
 void			 rules_do(int);
 void			 rules_setup(int);
-void			 rules_apply(struct dt_evt *);
+void			 rules_apply(int, struct dt_evt *);
 void			 rules_teardown(int);
 void			 rule_eval(struct bt_rule *, struct dt_evt *);
 void			 rule_printmaps(struct bt_rule *);
@@ -114,6 +114,7 @@ void			 debug_dump_filter(struct bt_rule *);
 
 struct dtioc_probe_info	*dt_dtpis;	/* array of available probes */
 size_t			 dt_ndtpi;	/* # of elements in the array */
+struct dtioc_arg_info  **dt_args;	/* array of probe arguments */
 
 struct dt_evt		 bt_devt;	/* fake event for BEGIN/END */
 uint64_t		 bt_filtered;	/* # of events filtered out */
@@ -207,7 +208,7 @@ main(int argc, char *argv[])
 
 	if (showprobes) {
 		dtpi_cache(fd);
-		dtpi_print_list();
+		dtpi_print_list(fd);
 	}
 
 	if (!TAILQ_EMPTY(&g_rules))
@@ -256,18 +257,6 @@ read_btfile(const char *filename, size_t *len)
 	return fcontent;
 }
 
-static int
-dtpi_cmp(const void *a, const void *b)
-{
-	const struct dtioc_probe_info *ai = a, *bi = b;
-
-	if (ai->dtpi_pbn > bi->dtpi_pbn)
-		return 1;
-	if (ai->dtpi_pbn < bi->dtpi_pbn)
-		return -1;
-	return 0;
-}
-
 void
 dtpi_cache(int fd)
 {
@@ -280,28 +269,65 @@ dtpi_cache(int fd)
 	if (ioctl(fd, DTIOCGPLIST, &dtpr))
 		err(1, "DTIOCGPLIST");
 
-	dt_ndtpi = (dtpr.dtpr_size / sizeof(*dt_dtpis));
+	dt_ndtpi = dtpr.dtpr_size / sizeof(*dt_dtpis);
 	dt_dtpis = reallocarray(NULL, dt_ndtpi, sizeof(*dt_dtpis));
 	if (dt_dtpis == NULL)
-		err(1, "malloc");
+		err(1, NULL);
 
 	dtpr.dtpr_probes = dt_dtpis;
 	if (ioctl(fd, DTIOCGPLIST, &dtpr))
 		err(1, "DTIOCGPLIST");
-
-	qsort(dt_dtpis, dt_ndtpi, sizeof(*dt_dtpis), dtpi_cmp);
 }
 
 void
-dtpi_print_list(void)
+dtai_cache(int fd, struct dtioc_probe_info *dtpi)
+{
+	struct dtioc_arg dtar;
+
+	if (dt_args == NULL) {
+		dt_args = calloc(dt_ndtpi, sizeof(*dt_args));
+		if (dt_args == NULL)
+			err(1, NULL);
+	}
+
+	if (dt_args[dtpi->dtpi_pbn - 1] != NULL)
+		return;
+
+	dt_args[dtpi->dtpi_pbn - 1] = reallocarray(NULL, dtpi->dtpi_nargs,
+	    sizeof(**dt_args));
+	if (dt_args[dtpi->dtpi_pbn - 1] == NULL)
+		err(1, NULL);
+
+	dtar.dtar_pbn = dtpi->dtpi_pbn;
+	dtar.dtar_size = dtpi->dtpi_nargs * sizeof(**dt_args);
+	dtar.dtar_args = dt_args[dtpi->dtpi_pbn - 1];
+	if (ioctl(fd, DTIOCGARGS, &dtar))
+		err(1, "DTIOCGARGS");
+}
+
+void
+dtpi_print_list(int fd)
 {
 	struct dtioc_probe_info *dtpi;
-	size_t i;
+	struct dtioc_arg_info *dtai;
+	size_t i, j;
 
 	dtpi = dt_dtpis;
 	for (i = 0; i < dt_ndtpi; i++, dtpi++) {
-		printf("%s:%s:%s\n", dtpi->dtpi_prov, dtpi_func(dtpi),
+		printf("%s:%s:%s", dtpi->dtpi_prov, dtpi_func(dtpi),
 		    dtpi->dtpi_name);
+		if (strncmp(dtpi->dtpi_prov, "tracepoint", DTNAMESIZE) == 0) {
+			dtai_cache(fd, dtpi);
+			dtai = dt_args[dtpi->dtpi_pbn - 1];
+			printf("(");
+			for (j = 0; j < dtpi->dtpi_nargs; j++, dtai++) {
+				if (j > 0)
+					printf(", ");
+				printf("%s", dtai->dtai_argtype);
+			}
+			printf(")");
+		}
+		printf("\n");
 	}
 }
 
@@ -365,15 +391,6 @@ dtpi_get_by_value(const char *prov, const char *func, const char *name)
 	return NULL;
 }
 
-static struct dtioc_probe_info *
-dtpi_get_by_id(unsigned int pbn)
-{
-	struct dtioc_probe_info d;
-
-	d.dtpi_pbn = pbn;
-	return bsearch(&d, dt_dtpis, dt_ndtpi, sizeof(*dt_dtpis), dtpi_cmp);
-}
-
 void
 rules_do(int fd)
 {
@@ -408,7 +425,7 @@ rules_do(int fd)
 			err(1, "incorrect read");
 
 		for (i = 0; i < rlen / sizeof(struct dt_evt); i++)
-			rules_apply(&devtbuf[i]);
+			rules_apply(fd, &devtbuf[i]);
 	}
 
 	rules_teardown(fd);
@@ -530,7 +547,7 @@ rules_setup(int fd)
 }
 
 void
-rules_apply(struct dt_evt *dtev)
+rules_apply(int fd, struct dt_evt *dtev)
 {
 	struct bt_rule *r;
 	struct bt_probe *bp;
@@ -541,6 +558,7 @@ rules_apply(struct dt_evt *dtev)
 			    bp->bp_pbn != dtev->dtev_pbn)
 				continue;
 
+			dtai_cache(fd, &dt_dtpis[dtev->dtev_pbn - 1]);
 			rule_eval(r, dtev);
 		}
 	}
@@ -723,9 +741,24 @@ const char *
 builtin_arg(struct dt_evt *dtev, enum bt_argtype dat)
 {
 	static char buf[sizeof("18446744073709551615")]; /* UINT64_MAX */
+	unsigned int argn;
+	struct dtioc_arg_info *dtai;
+	const char *argtype, *fmt;
+	long value;
 
-	snprintf(buf, sizeof(buf), "%lu",
-	    dtev->dtev_args[dat - B_AT_BI_ARG0]);
+	dtai = dt_args[dtev->dtev_pbn - 1];
+	argn = dat - B_AT_BI_ARG0;
+	argtype = dtai[argn].dtai_argtype;
+
+	if (strncmp(argtype, "int", DTNAMESIZE) == 0) {
+		fmt = "%d";
+		value = (int)dtev->dtev_args[argn];
+	} else {
+		fmt = "%lu";
+		value = dtev->dtev_args[argn];
+	}
+
+	snprintf(buf, sizeof(buf), fmt, dtev->dtev_args[argn]);
 
 	return buf;
 }
@@ -1524,7 +1557,7 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = buf;
 		break;
 	case B_AT_BI_PROBE:
-		dtpi = dtpi_get_by_id(dtev->dtev_pbn);
+		dtpi = &dt_dtpis[dtev->dtev_pbn - 1];
 		if (dtpi != NULL)
 			snprintf(buf, sizeof(buf), "%s:%s:%s",
 			    dtpi->dtpi_prov, dtpi_func(dtpi), dtpi->dtpi_name);
