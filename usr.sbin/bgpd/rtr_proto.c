@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.13 2023/03/09 17:21:21 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.14 2023/03/11 10:04:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -129,6 +129,7 @@ static const char *rtr_eventnames[] = {
 enum rtr_state {
 	RTR_STATE_CLOSED,
 	RTR_STATE_ERROR,
+	/* sessions with a state below this line will poll for incoming data */
 	RTR_STATE_IDLE,
 	RTR_STATE_ACTIVE,
 	RTR_STATE_NEGOTIATION,
@@ -211,6 +212,17 @@ log_rtr_type(enum rtr_pdu_type type)
 	}
 };
 
+static void
+rtr_reset_cache(struct rtr_session *rs)
+{
+	/* reset session */
+	rs->session_id = -1;
+	timer_stop(&rs->timers, Timer_Rtr_Expire);
+	free_roatree(&rs->roa_set);
+	free_aspatree(&rs->aspa_v4);
+	free_aspatree(&rs->aspa_v6);
+}
+
 static struct ibuf *
 rtr_newmsg(struct rtr_session *rs, enum rtr_pdu_type type, uint32_t len,
     uint16_t session_id)
@@ -256,8 +268,6 @@ rtr_send_error(struct rtr_session *rs, enum rtr_error err, char *msg,
 	} else
 		memset(rs->last_sent_msg, 0, sizeof(rs->last_sent_msg));
 
-	rtr_fsm(rs, RTR_EVNT_SEND_ERROR);
-
 	buf = rtr_newmsg(rs, ERROR_REPORT, 2 * sizeof(hdrlen) + len + mlen,
 	    err);
 	if (buf == NULL) {
@@ -276,10 +286,12 @@ rtr_send_error(struct rtr_session *rs, enum rtr_error err, char *msg,
 
 	log_warnx("rtr %s: sending error report[%u] %s", log_rtr(rs), err,
 	    msg ? msg : "");
+
+	rtr_fsm(rs, RTR_EVNT_SEND_ERROR);
 }
 
 static void
-rtr_reset_query(struct rtr_session *rs)
+rtr_send_reset_query(struct rtr_session *rs)
 {
 	struct ibuf *buf;
 
@@ -293,7 +305,7 @@ rtr_reset_query(struct rtr_session *rs)
 }
 
 static void
-rtr_serial_query(struct rtr_session *rs)
+rtr_send_serial_query(struct rtr_session *rs)
 {
 	struct ibuf *buf;
 	uint32_t s;
@@ -440,9 +452,11 @@ rtr_parse_header(struct rtr_session *rs, void *buf,
 static int
 rtr_parse_notify(struct rtr_session *rs, uint8_t *buf, size_t len)
 {
-	if (rs->state == RTR_STATE_ACTIVE) {
-		log_warnx("rtr %s: received %s: while active (ignored)",
-		    log_rtr(rs), log_rtr_type(SERIAL_NOTIFY));
+	if (rs->state == RTR_STATE_ACTIVE ||
+	    rs->state == RTR_STATE_NEGOTIATION) {
+		log_warnx("rtr %s: received %s: while in state %s (ignored)",
+		    log_rtr(rs), log_rtr_type(SERIAL_NOTIFY),
+		    rtr_statenames[rs->state]);
 		return 0;
 	}
 
@@ -707,13 +721,13 @@ rtr_parse_end_of_data(struct rtr_session *rs, uint8_t *buf, size_t len)
 		return -1;
 	}
 
-	memcpy(&eod, buf, sizeof(eod));
-
 	if (rs->state != RTR_STATE_ACTIVE) {
 		log_warnx("rtr %s: received %s: out of context",
 		    log_rtr(rs), log_rtr_type(END_OF_DATA));
 		return -1;
 	}
+
+	memcpy(&eod, buf, sizeof(eod));
 
 	rs->serial = ntohl(eod.serial);
 	/* validate timer values to be in the right range */
@@ -946,11 +960,13 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 				return;
 			}
 
-			/* flush buffers */
-			msgbuf_clear(&rs->w);
-			rs->r.wpos = 0;
-			close(rs->fd);
-			rs->fd = -1;
+			if (rs->fd != -1) {
+				/* flush buffers */
+				msgbuf_clear(&rs->w);
+				rs->r.wpos = 0;
+				close(rs->fd);
+				rs->fd = -1;
+			}
 
 			/* retry connection with lower version */
 			timer_set(&rs->timers, Timer_Rtr_Retry, rs->retry);
@@ -959,18 +975,16 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		}
 		/* FALLTHROUGH */
 	case RTR_EVNT_RESET_AND_CLOSE:
-		rs->state = RTR_STATE_ERROR;
+		rtr_reset_cache(rs);
+		rtr_recalc();
 		/* FALLTHROUGH */
 	case RTR_EVNT_CON_CLOSE:
-		if (rs->state == RTR_STATE_ERROR) {
-			/* reset session */
-			rs->session_id = -1;
-			free_roatree(&rs->roa_set);
-			free_aspatree(&rs->aspa_v4);
-			free_aspatree(&rs->aspa_v6);
-			rtr_recalc();
+		if (rs->state == RTR_STATE_NEGOTIATION) {
+			/* consider any close event as a version failure. */
+			rtr_fsm(rs, RTR_EVNT_UNSUPP_PROTO_VERSION);
+			break;
 		}
-		if (rs->state != RTR_STATE_CLOSED) {
+		if (rs->fd != -1) {
 			/* flush buffers */
 			msgbuf_clear(&rs->w);
 			rs->r.wpos = 0;
@@ -999,9 +1013,9 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 	case RTR_EVNT_CON_OPEN:
 		timer_stop(&rs->timers, Timer_Rtr_Retry);
 		if (rs->session_id == -1)
-			rtr_reset_query(rs);
+			rtr_send_reset_query(rs);
 		else
-			rtr_serial_query(rs);
+			rtr_send_serial_query(rs);
 		break;
 	case RTR_EVNT_SERIAL_NOTIFY:
 		/* schedule a refresh after a quick wait */
@@ -1010,12 +1024,10 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		break;
 	case RTR_EVNT_TIMER_REFRESH:
 		/* send serial query */
-		rtr_serial_query(rs);
+		rtr_send_serial_query(rs);
 		break;
 	case RTR_EVNT_TIMER_EXPIRE:
-		free_roatree(&rs->roa_set);
-		free_aspatree(&rs->aspa_v4);
-		free_aspatree(&rs->aspa_v6);
+		rtr_reset_cache(rs);
 		rtr_recalc();
 		break;
 	case RTR_EVNT_CACHE_RESPONSE:
@@ -1032,12 +1044,9 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		rtr_recalc();
 		break;
 	case RTR_EVNT_CACHE_RESET:
-		/* reset session and retry after a quick wait */
-		rs->session_id = -1;
-		free_roatree(&rs->roa_set);
-		free_aspatree(&rs->aspa_v4);
-		free_aspatree(&rs->aspa_v6);
+		rtr_reset_cache(rs);
 		rtr_recalc();
+		/* retry after a quick wait */
 		timer_set(&rs->timers, Timer_Rtr_Retry,
 		    arc4random_uniform(10));
 		break;
@@ -1049,6 +1058,8 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		rs->state = RTR_STATE_IDLE;
 		break;
 	case RTR_EVNT_SEND_ERROR:
+		rtr_reset_cache(rs);
+		rtr_recalc();
 		rs->state = RTR_STATE_ERROR;
 		/* flush receive buffer */
 		rs->r.wpos = 0;
@@ -1086,9 +1097,8 @@ rtr_dispatch_msg(struct pollfd *pfd, struct rtr_session *rs)
 				rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 			}
 		}
-		if (error == 0) {
+		if (error == 0)
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
-		}
 		if (rs->w.queued == 0 && rs->state == RTR_STATE_ERROR)
 			rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	}
@@ -1256,11 +1266,9 @@ rtr_free(struct rtr_session *rs)
 	if (rs == NULL)
 		return;
 
+	rtr_reset_cache(rs);
 	rtr_fsm(rs, RTR_EVNT_CON_CLOSE);
 	timer_remove_all(&rs->timers);
-	free_roatree(&rs->roa_set);
-	free_aspatree(&rs->aspa_v4);
-	free_aspatree(&rs->aspa_v6);
 	free(rs);
 }
 
