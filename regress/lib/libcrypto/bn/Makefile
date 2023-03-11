@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.21 2023/01/31 05:13:28 jsing Exp $
+#	$OpenBSD: Makefile,v 1.22 2023/03/11 14:04:21 jsing Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -15,6 +15,7 @@ PROGS +=	bn_shift
 PROGS +=	bn_test
 PROGS +=	bn_to_string
 PROGS +=	bn_unit
+PROGS +=	bn_word
 
 STATIC_LINK +=	bn_isqrt
 STATIC_LINK +=	bn_mod_exp
