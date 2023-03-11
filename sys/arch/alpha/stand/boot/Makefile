@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 2020/03/11 09:59:31 otto Exp $
+#	$OpenBSD: Makefile,v 1.26 2023/03/11 20:49:33 miod Exp $
 #	$NetBSD: Makefile,v 1.17 1997/04/17 07:27:46 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -27,16 +27,16 @@ SRCS+=	loadfile.c arc4.c ufs2.c
 DEFNS= -DCOMPAT_UFS
 
 AFLAGS += -DASSEMBLER ${DEFNS} -fno-pie
-CPPFLAGS += -I${.CURDIR}/../../../../lib/libsa -I${.CURDIR}/../.. -I${S} ${DEFNS}
+CPPFLAGS += -I${.CURDIR}/../.. -I${S} ${DEFNS}
 CFLAGS = -Oz -Werror -mno-fp-regs -fno-pie \
 	-msmall-data -msmall-text
 
 ${PROG}.nosym: ${PROG}.sym
 	cp ${PROG}.sym ${PROG}.nosym
-	strip ${PROG}.nosym
+	${STRIP} ${PROG}.nosym
 
 ${PROG}: ${PROG}.nosym
-	objcopy --output-target=binary ${PROG}.nosym ${PROG}
+	${OBJCOPY} --output-target=binary ${PROG}.nosym ${PROG}
 
 .include <bsd.prog.mk>
 

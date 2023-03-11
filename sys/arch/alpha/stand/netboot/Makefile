@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.18 2021/07/02 03:10:19 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2023/03/11 20:49:33 miod Exp $
 #	$NetBSD: Makefile,v 1.11 1997/04/17 07:27:50 thorpej Exp $
 
 S=	${.CURDIR}/../../../..
@@ -18,7 +18,7 @@ BINMODE= 444
 
 BOOT_RELOC = ${PRIMARY_LOAD_ADDRESS}
 
-CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym
+CLEANFILES+= vers.c vers.o ${PROG}.sym ${PROG}.nosym ${PROG}.mop
 
 .PATH:  ${S}/lib/libkern/arch/alpha ${S}/lib/libkern
 SRCS+=  bzero.c __divqu.S strlen.c __remqu.S __remq.S __remlu.S
@@ -34,10 +34,10 @@ CFLAGS = -Werror -mno-fp-regs -fno-pie
 
 ${PROG}.nosym: ${PROG}.sym
 	cp ${PROG}.sym ${PROG}.nosym
-	strip ${PROG}.nosym
+	${STRIP} ${PROG}.nosym
 
 ${PROG} ${PROG}.mop: ${PROG}.nosym
-	objcopy --output-target=binary ${PROG}.nosym ${PROG}
+	${OBJCOPY} --output-target=binary ${PROG}.nosym ${PROG}
 	mopa.out ${PROG}.nosym ${PROG}.mop
 
 realinstall:

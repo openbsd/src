@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.15 2014/04/13 08:35:27 brad Exp $
+#	$OpenBSD: Makefile.inc,v 1.16 2023/03/11 20:49:33 miod Exp $
 #	$NetBSD: Makefile.inc,v 1.8 1997/04/06 08:39:38 cgd Exp $
 
 BINDIR=			/usr/mdec
@@ -24,3 +24,6 @@ EXTRACFLAGS+=		-DHEAP_LIMIT="0x${HEAP_LIMIT}"
 CFLAGS+=		-fno-stack-protector -fno-builtin-printf \
 			-fno-builtin-vprintf -fno-builtin-putchar \
 			-fno-builtin-puts -fno-builtin-exit
+
+OBJCOPY?=		objcopy
+STRIP?=			strip
