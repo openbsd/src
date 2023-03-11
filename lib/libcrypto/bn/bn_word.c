@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.19 2023/03/11 14:13:11 jsing Exp $ */
+/* $OpenBSD: bn_word.c,v 1.20 2023/03/11 14:14:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -131,6 +131,10 @@ BN_div_word(BIGNUM *a, BN_ULONG w)
 	if ((a->top > 0) && (a->d[a->top - 1] == 0))
 		a->top--;
 	ret >>= j;
+
+	/* Set negative again, to handle -0 case. */
+	BN_set_negative(a, a->neg);
+
 	return (ret);
 }
 
