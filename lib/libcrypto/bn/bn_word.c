@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.18 2023/02/13 04:25:37 jsing Exp $ */
+/* $OpenBSD: bn_word.c,v 1.19 2023/03/11 14:13:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,7 +152,7 @@ BN_add_word(BIGNUM *a, BN_ULONG w)
 	if (a->neg) {
 		a->neg = 0;
 		i = BN_sub_word(a, w);
-		BN_set_negative(a, 1);
+		BN_set_negative(a, !a->neg);
 		return (i);
 	}
 	for (i = 0; w != 0 && i < a->top; i++) {
@@ -189,7 +189,7 @@ BN_sub_word(BIGNUM *a, BN_ULONG w)
 	if (a->neg) {
 		a->neg = 0;
 		i = BN_add_word(a, w);
-		BN_set_negative(a, 1);
+		BN_set_negative(a, !a->neg);
 		return (i);
 	}
 
