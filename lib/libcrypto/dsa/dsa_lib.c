@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.41 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.42 2023/03/11 15:29:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -487,7 +487,7 @@ dsa_check_key(const DSA *dsa)
 
 	/* The private key must be nonzero and in GF(q). */
 	if (dsa->priv_key != NULL) {
-		if (BN_cmp(dsa->priv_key, BN_value_one()) <= 0 ||
+		if (BN_cmp(dsa->priv_key, BN_value_one()) < 0 ||
 		    BN_cmp(dsa->priv_key, dsa->q) >= 0) {
 			DSAerror(DSA_R_INVALID_PARAMETERS);
 			return 0;
