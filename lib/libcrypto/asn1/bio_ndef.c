@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.13 2023/03/11 15:50:13 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.14 2023/03/11 15:56:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -105,14 +105,14 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 	const ASN1_AUX *aux = it->funcs;
 	ASN1_STREAM_ARG sarg;
 
-	if (!aux || !aux->asn1_cb) {
+	if (aux == NULL || aux->asn1_cb == NULL) {
 		ASN1error(ASN1_R_STREAMING_NOT_SUPPORTED);
 		return NULL;
 	}
 	ndef_aux = malloc(sizeof(NDEF_SUPPORT));
 	asn_bio = BIO_new(BIO_f_asn1());
 
-	if (!ndef_aux || !asn_bio)
+	if (ndef_aux == NULL || asn_bio == NULL)
 		goto err;
 
 	if ((out = BIO_push(asn_bio, out)) == NULL)
