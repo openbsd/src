@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.138 2023/03/08 06:12:52 jsing Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.139 2023/03/11 14:27:37 jsing Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -3023,6 +3023,8 @@ func main() {
 	}
 
 	testc.shutdown()
+
+	C.OPENSSL_cleanup()
 
 	if !success {
 		os.Exit(1)
