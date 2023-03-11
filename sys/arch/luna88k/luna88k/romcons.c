@@ -1,3 +1,4 @@
+/*	$OpenBSD: romcons.c,v 1.2 2023/03/11 10:33:27 aoyama Exp $	*/
 /*
  * Copyright (c) 2022 Kenji Aoyama
  *
