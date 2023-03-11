@@ -77,6 +77,7 @@ OPENSSL_cleanup(void)
 	/* This currently calls init... */
 	ERR_free_strings();
 
+	CRYPTO_cleanup_all_ex_data();
 	ENGINE_cleanup();
 	EVP_cleanup();
 	x509_issuer_cache_free();
