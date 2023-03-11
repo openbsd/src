@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.12 2023/03/06 19:10:14 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.13 2023/03/11 15:50:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -101,7 +101,7 @@ BIO *
 BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 {
 	NDEF_SUPPORT *ndef_aux = NULL;
-	BIO *asn_bio = NULL;
+	BIO *asn_bio = NULL, *pop_bio = NULL;
 	const ASN1_AUX *aux = it->funcs;
 	ASN1_STREAM_ARG sarg;
 
@@ -112,12 +112,12 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 	ndef_aux = malloc(sizeof(NDEF_SUPPORT));
 	asn_bio = BIO_new(BIO_f_asn1());
 
-	/* ASN1 bio needs to be next to output BIO */
-
-	out = BIO_push(asn_bio, out);
-
-	if (!ndef_aux || !asn_bio || !out)
+	if (!ndef_aux || !asn_bio)
 		goto err;
+
+	if ((out = BIO_push(asn_bio, out)) == NULL)
+		goto err;
+	pop_bio = asn_bio;
 
 	BIO_asn1_set_prefix(asn_bio, ndef_prefix, ndef_prefix_free);
 	BIO_asn1_set_suffix(asn_bio, ndef_suffix, ndef_suffix_free);
@@ -144,6 +144,7 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 	return sarg.ndef_bio;
 
  err:
+	BIO_pop(pop_bio);
 	BIO_free(asn_bio);
 	free(ndef_aux);
 	return NULL;
