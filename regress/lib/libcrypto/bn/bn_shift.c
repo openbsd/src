@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_shift.c,v 1.8 2023/02/13 04:00:39 jsing Exp $ */
+/*	$OpenBSD: bn_shift.c,v 1.9 2023/03/11 14:02:26 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -512,7 +512,7 @@ struct benchmark {
 	void (*func)(BIGNUM *);
 };
 
-struct benchmark benchmarks[] = {
+static const struct benchmark benchmarks[] = {
 	{
 		.desc = "BN_lshift1()",
 		.func = benchmark_bn_lshift1,
