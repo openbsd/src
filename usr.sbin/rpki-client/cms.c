@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.31 2023/03/09 18:53:24 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.32 2023/03/12 11:45:52 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -69,6 +69,7 @@ cms_get_signtime(const char *fn, X509_ATTRIBUTE *attr, time_t *signtime)
 	const char		*time_str = "UTCtime";
 	int			 time_type = V_ASN1_UTCTIME;
 
+	*signtime = 0;
 	at = X509_ATTRIBUTE_get0_data(attr, 0, time_type, NULL);
 	if (at == NULL) {
 		time_str = "GeneralizedTime";
@@ -113,6 +114,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	*xp = NULL;
 	if (rsz != NULL)
 		*rsz = 0;
+	*signtime = 0;
 
 	/* just fail for empty buffers, the warning was printed elsewhere */
 	if (der == NULL)
