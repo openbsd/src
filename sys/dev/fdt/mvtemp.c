@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvtemp.c,v 1.3 2022/06/28 23:43:12 naddy Exp $	*/
+/*	$OpenBSD: mvtemp.c,v 1.4 2023/03/12 10:46:27 jmatthew Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -78,7 +78,11 @@ const struct mvtemp_compat mvtemp_compat[] = {
 	{
 		"marvell,armada-cp110-thermal", (1 << 10),
 		mvtemp_cp110_init, mvtemp_cp110_calc_temp,
-	}
+	},
+	{
+		"marvell,armada380-thermal", (1 << 10),
+		mvtemp_cp110_init, mvtemp_cp110_calc_temp,
+	},
 };
 
 void	mvtemp_refresh_sensors(void *);
