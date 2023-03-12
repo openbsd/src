@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.21 2023/03/07 14:49:32 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.22 2023/03/12 12:11:45 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -281,16 +281,16 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 {
 	static int num;
 	X509 *x509 = NULL;
+	struct aspa *aspa = NULL;
 	struct cert *cert = NULL;
 	struct crl *crl = NULL;
+	struct gbr *gbr = NULL;
+	struct geofeed *geofeed = NULL;
 	struct mft *mft = NULL;
 	struct roa *roa = NULL;
-	struct gbr *gbr = NULL;
-	struct tal *tal = NULL;
 	struct rsc *rsc = NULL;
-	struct aspa *aspa = NULL;
 	struct tak *tak = NULL;
-	struct geofeed *geofeed = NULL;
+	struct tal *tal = NULL;
 	char *aia = NULL, *aki = NULL;
 	char filehash[SHA256_DIGEST_LENGTH];
 	char *hash;
@@ -330,6 +330,14 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	type = rtype_from_file_extension(file);
 
 	switch (type) {
+	case RTYPE_ASPA:
+		aspa = aspa_parse(&x509, file, buf, len);
+		if (aspa == NULL)
+			break;
+		aspa_print(x509, aspa);
+		aia = aspa->aia;
+		aki = aspa->aki;
+		break;
 	case RTYPE_CER:
 		cert = cert_parse_pre(file, buf, len);
 		if (cert == NULL)
@@ -360,14 +368,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		aia = mft->aia;
 		aki = mft->aki;
 		break;
-	case RTYPE_ROA:
-		roa = roa_parse(&x509, file, buf, len);
-		if (roa == NULL)
-			break;
-		roa_print(x509, roa);
-		aia = roa->aia;
-		aki = roa->aki;
-		break;
 	case RTYPE_GBR:
 		gbr = gbr_parse(&x509, file, buf, len);
 		if (gbr == NULL)
@@ -376,11 +376,21 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		aia = gbr->aia;
 		aki = gbr->aki;
 		break;
-	case RTYPE_TAL:
-		tal = tal_parse(file, buf, len);
-		if (tal == NULL)
+	case RTYPE_GEOFEED:
+		geofeed = geofeed_parse(&x509, file, buf, len);
+		if (geofeed == NULL)
 			break;
-		tal_print(tal);
+		geofeed_print(x509, geofeed);
+		aia = geofeed->aia;
+		aki = geofeed->aki;
+		break;
+	case RTYPE_ROA:
+		roa = roa_parse(&x509, file, buf, len);
+		if (roa == NULL)
+			break;
+		roa_print(x509, roa);
+		aia = roa->aia;
+		aki = roa->aki;
 		break;
 	case RTYPE_RSC:
 		rsc = rsc_parse(&x509, file, buf, len);
@@ -390,14 +400,6 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		aia = rsc->aia;
 		aki = rsc->aki;
 		break;
-	case RTYPE_ASPA:
-		aspa = aspa_parse(&x509, file, buf, len);
-		if (aspa == NULL)
-			break;
-		aspa_print(x509, aspa);
-		aia = aspa->aia;
-		aki = aspa->aki;
-		break;
 	case RTYPE_TAK:
 		tak = tak_parse(&x509, file, buf, len);
 		if (tak == NULL)
@@ -406,13 +408,11 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		aia = tak->aia;
 		aki = tak->aki;
 		break;
-	case RTYPE_GEOFEED:
-		geofeed = geofeed_parse(&x509, file, buf, len);
-		if (geofeed == NULL)
+	case RTYPE_TAL:
+		tal = tal_parse(file, buf, len);
+		if (tal == NULL)
 			break;
-		geofeed_print(x509, geofeed);
-		aia = geofeed->aia;
-		aki = geofeed->aki;
+		tal_print(tal);
 		break;
 	default:
 		printf("%s: unsupported file type\n", file);
@@ -444,17 +444,17 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 		if ((status = valid_x509(file, ctx, x509, a, c, &errstr))) {
 			switch (type) {
-			case RTYPE_ROA:
-				status = roa->valid;
-				break;
-			case RTYPE_RSC:
-				status = rsc->valid;
-				break;
 			case RTYPE_ASPA:
 				status = aspa->valid;
 				break;
 			case RTYPE_GEOFEED:
 				status = geofeed->valid;
+				break;
+			case RTYPE_ROA:
+				status = roa->valid;
+				break;
+			case RTYPE_RSC:
+				status = rsc->valid;
 				break;
 			default:
 				break;
@@ -521,16 +521,16 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
  out:
 	X509_free(x509);
+	aspa_free(aspa);
 	cert_free(cert);
 	crl_free(crl);
+	gbr_free(gbr);
+	geofeed_free(geofeed);
 	mft_free(mft);
 	roa_free(roa);
-	gbr_free(gbr);
-	tal_free(tal);
 	rsc_free(rsc);
-	aspa_free(aspa);
 	tak_free(tak);
-	geofeed_free(geofeed);
+	tal_free(tal);
 }
 
 /*
