@@ -1,7 +1,9 @@
-#	$OpenBSD: RAMDISK,v 1.27 2020/03/27 14:34:51 otto Exp $
+#	$OpenBSD: RAMDISK,v 1.28 2023/03/12 22:18:58 cheloha Exp $
 
 machine		landisk	sh
 maxusers	4
+
+option		HZ=64
 
 option		SMALL_KERNEL
 option		NO_PROPOLICE

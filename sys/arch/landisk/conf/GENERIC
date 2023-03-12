@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.59 2021/08/22 06:26:28 deraadt Exp $
+# $OpenBSD: GENERIC,v 1.60 2023/03/12 22:18:58 cheloha Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -12,6 +12,8 @@
 machine		landisk	sh
 include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
+
+option		HZ=64
 
 option	 	SH4			# processor family; MANDATORY
 option 		SH7751R			# processor type; MANDATORY

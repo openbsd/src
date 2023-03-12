@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.12 2022/12/06 01:19:35 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.13 2023/03/12 22:18:58 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.32 2006/09/05 11:09:36 uwe Exp $	*/
 
 /*-
@@ -48,9 +48,6 @@
 
 #define	NWDOG 0
 
-#ifndef HZ
-#define	HZ		64
-#endif
 #define	MINYEAR		2002	/* "today" */
 #define	SH_RTC_CLOCK	16384	/* Hz */
 
@@ -258,7 +255,6 @@ cpu_initclocks(void)
 		panic("No PCLOCK information.");
 
 	/* Set global variables. */
-	hz = HZ;
 	tick = 1000000 / hz;
 	tick_nsec = 1000000000 / hz;
 
