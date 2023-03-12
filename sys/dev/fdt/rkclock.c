@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.67 2023/03/10 10:54:29 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.68 2023/03/12 14:29:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -186,6 +186,7 @@
 #define RK3568_PMUCRU_HPLL_CON(i)	(0x0040 + (i) * 4)
 #define RK3568_PMUCRU_MODE_CON		0x0080
 #define RK3568_PMUCRU_CLKSEL_CON(i)	(0x0100 + (i) * 4)
+#define RK3568_PMUCRU_GATE_CON(i)	(0x0180 + (i) * 4)
 
 /* RK3588 registers */
 #define RK3588_CRU_AUPLL_CON(i)		(0x00180 + (i) * 4)
@@ -3564,6 +3565,51 @@ const struct rkclock rk3568_pmu_clocks[] = {
 		{ 0, 0, RK3568_XIN24M }
 	},
 	{
+		RK3568_CLK_PCIEPHY0_OSC0, 0, 0, 0,
+		{ RK3568_XIN24M }
+	},
+	{
+		RK3568_CLK_PCIEPHY0_DIV, RK3568_PMUCRU_CLKSEL_CON(9),
+		0, DIV(2, 0),
+		{ RK3568_PPLL_PH0 }
+	},
+	{
+		RK3568_CLK_PCIEPHY0_REF, RK3568_PMUCRU_CLKSEL_CON(9),
+		SEL(3, 3), 0,
+		{ RK3568_CLK_PCIEPHY0_OSC0, RK3568_CLK_PCIEPHY0_DIV },
+		SET_PARENT
+	},
+	{
+		RK3568_CLK_PCIEPHY1_OSC0, 0, 0, 0,
+		{ RK3568_XIN24M }
+	},
+	{
+		RK3568_CLK_PCIEPHY1_DIV, RK3568_PMUCRU_CLKSEL_CON(9),
+		0, DIV(6, 4),
+		{ RK3568_PPLL_PH0 }
+	},
+	{
+		RK3568_CLK_PCIEPHY1_REF, RK3568_PMUCRU_CLKSEL_CON(9),
+		SEL(7, 7), 0,
+		{ RK3568_CLK_PCIEPHY1_OSC0, RK3568_CLK_PCIEPHY1_DIV },
+		SET_PARENT
+	},
+	{
+		RK3568_CLK_PCIEPHY2_OSC0, 0, 0, 0,
+		{ RK3568_XIN24M }
+	},
+	{
+		RK3568_CLK_PCIEPHY2_DIV, RK3568_PMUCRU_CLKSEL_CON(9),
+		0, DIV(10, 8),
+		{ RK3568_PPLL_PH0 }
+	},
+	{
+		RK3568_CLK_PCIEPHY2_REF, RK3568_PMUCRU_CLKSEL_CON(9),
+		SEL(11, 11), 0,
+		{ RK3568_CLK_PCIEPHY2_OSC0, RK3568_CLK_PCIEPHY2_DIV },
+		SET_PARENT
+	},
+	{
 		RK3568_CLK_PDPMU, RK3568_PMUCRU_CLKSEL_CON(2),
 		SEL(15, 15), 0,
 		{ RK3568_PLL_PPLL, 0 }
@@ -3576,6 +3622,16 @@ const struct rkclock rk3568_pmu_clocks[] = {
 void
 rk3568_pmu_init(struct rkclock_softc *sc)
 {
+	int i;
+
+	/* The code below assumes all clocks are enabled.  Check this!. */
+	for (i = 0; i <= 2; i++) {
+		if (HREAD4(sc, RK3568_PMUCRU_GATE_CON(i)) != 0x00000000) {
+			printf("CRU_GATE_CON%d: 0x%08x\n", i,
+			    HREAD4(sc, RK3568_CRU_GATE_CON(i)));
+		}
+	}
+
 	sc->sc_clocks = rk3568_pmu_clocks;
 }
 
@@ -3656,6 +3712,9 @@ rk3568_pmu_get_frequency(void *cookie, uint32_t *cells)
 		return rk3328_get_pll(sc, RK3568_PMUCRU_PPLL_CON(0));
 	case RK3568_PLL_HPLL:
 		return rk3328_get_pll(sc, RK3568_PMUCRU_HPLL_CON(0));
+	case RK3568_PPLL_PH0:
+		idx = RK3568_PLL_PPLL;
+		return rk3568_get_frequency(sc, &idx) / 2;
 	case RK3568_XIN24M:
 		return 24000000;
 	default:
@@ -3689,6 +3748,9 @@ rk3568_pmu_enable(void *cookie, uint32_t *cells, int on)
 	uint32_t idx = cells[0];
 
 	switch (idx) {
+	case RK3568_CLK_PCIEPHY0_REF:
+	case RK3568_CLK_PCIEPHY1_REF:
+	case RK3568_CLK_PCIEPHY2_REF:
 	case RK3568_CLK_I2C0:
 	case RK3568_SCLK_UART0:
 	case RK3568_PCLK_I2C0:

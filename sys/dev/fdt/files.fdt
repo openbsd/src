@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.179 2023/02/14 08:26:59 kettenis Exp $
+#	$OpenBSD: files.fdt,v 1.180 2023/03/12 14:29:50 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -340,6 +340,10 @@ file	dev/ic/anxdp.c			rkanxdp
 device	rkclock
 attach	rkclock at fdt
 file	dev/fdt/rkclock.c		rkclock
+
+device	rkcomphy
+attach	rkcomphy at fdt
+file	dev/fdt/rkcomphy.c
 
 device	rkdrm: drmbase, wsemuldisplaydev, rasops15, rasops16, rasops24, rasops32
 attach	rkdrm at fdt

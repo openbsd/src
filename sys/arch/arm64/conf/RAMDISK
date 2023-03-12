@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.191 2023/03/04 22:48:00 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.192 2023/03/12 14:29:50 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -221,6 +221,7 @@ sfp*		at fdt?
 rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
+rkcomphy*	at fdt? early 1
 rktcphy*	at fdt? early 1
 rkemmcphy*	at fdt?
 rkgpio*		at fdt?
