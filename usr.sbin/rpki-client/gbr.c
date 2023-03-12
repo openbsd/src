@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.25 2023/03/10 12:44:56 job Exp $ */
+/*	$OpenBSD: gbr.c,v 1.26 2023/03/12 11:46:35 tb Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -45,7 +45,7 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	struct parse	 p;
 	size_t		 cmsz;
 	unsigned char	*cms;
-	time_t		 signtime;
+	time_t		 signtime = 0;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;

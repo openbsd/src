@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.84 2023/03/09 18:53:24 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.85 2023/03/12 11:46:35 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -353,7 +353,7 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	size_t		 cmsz;
 	unsigned char	*cms;
 	char		*crldp = NULL, *crlfile;
-	time_t		 signtime;
+	time_t		 signtime = 0;
 
 	memset(&p, 0, sizeof(struct parse));
 	p.fn = fn;
