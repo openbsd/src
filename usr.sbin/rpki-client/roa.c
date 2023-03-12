@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.64 2023/03/12 11:46:35 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.65 2023/03/12 11:54:56 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -310,7 +310,7 @@ roa_buffer(struct ibuf *b, const struct roa *p)
 	io_simple_buffer(b, &p->asid, sizeof(p->asid));
 	io_simple_buffer(b, &p->talid, sizeof(p->talid));
 	io_simple_buffer(b, &p->ipsz, sizeof(p->ipsz));
-	io_simple_buffer(b, &p->notafter, sizeof(p->notafter));
+	io_simple_buffer(b, &p->expires, sizeof(p->expires));
 
 	io_simple_buffer(b, p->ips, p->ipsz * sizeof(p->ips[0]));
 
@@ -336,7 +336,7 @@ roa_read(struct ibuf *b)
 	io_read_buf(b, &p->asid, sizeof(p->asid));
 	io_read_buf(b, &p->talid, sizeof(p->talid));
 	io_read_buf(b, &p->ipsz, sizeof(p->ipsz));
-	io_read_buf(b, &p->notafter, sizeof(p->notafter));
+	io_read_buf(b, &p->expires, sizeof(p->expires));
 
 	if ((p->ips = calloc(p->ipsz, sizeof(struct roa_ip))) == NULL)
 		err(1, NULL);
@@ -373,7 +373,7 @@ roa_insert_vrps(struct vrp_tree *tree, struct roa *roa, struct repo *rp)
 			v->repoid = repo_id(rp);
 		else
 			v->repoid = 0;
-		v->expires = roa->notafter;
+		v->expires = roa->expires;
 
 		/*
 		 * Check if a similar VRP already exists in the tree.

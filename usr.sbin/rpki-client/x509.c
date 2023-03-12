@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.68 2023/03/10 12:44:56 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.69 2023/03/12 11:54:56 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -829,4 +829,26 @@ x509_convert_seqnum(const char *fn, const ASN1_INTEGER *i)
  out:
 	BN_free(seqnum);
 	return s;
+}
+
+/*
+ * Find the closest expiry moment by walking the chain of authorities.
+ */
+time_t
+x509_find_expires(time_t notafter, struct auth *a, struct crl_tree *crlt)
+{
+	struct crl	*crl;
+	time_t		 expires;
+
+	expires = notafter;
+
+	for (; a != NULL; a = a->parent) {
+		if (expires > a->cert->notafter)
+			expires = a->cert->notafter;
+		crl = crl_get(crlt, a);
+		if (crl != NULL && expires > crl->nextupdate)
+			expires = crl->nextupdate;
+	}
+
+	return expires;
 }

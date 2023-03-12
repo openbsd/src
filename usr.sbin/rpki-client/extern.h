@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.172 2023/03/10 12:44:56 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.173 2023/03/12 11:54:56 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -248,6 +248,7 @@ struct roa {
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 notafter; /* EE cert's Not After */
+	time_t		 expires; /* Transitive expiry moment */
 };
 
 struct rscfile {
@@ -363,6 +364,7 @@ struct aspa {
 	time_t			 signtime; /* CMS signing-time attribute */
 	time_t		 	 notbefore; /* EE cert's Not Before */
 	time_t			 notafter; /* notAfter of the ASPA EE cert */
+	time_t			 expires; /* Transitive expiry moment */
 };
 
 /*
@@ -825,6 +827,7 @@ int		 x509_location(const char *, const char *, const char *,
 		    GENERAL_NAME *, char **);
 int		 x509_inherits(X509 *);
 int		 x509_any_inherits(X509 *);
+time_t		 x509_find_expires(time_t, struct auth *, struct crl_tree *);
 
 /* printers */
 char		*time2str(time_t);

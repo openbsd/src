@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.85 2023/03/12 11:46:35 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.86 2023/03/12 11:54:56 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -76,7 +76,7 @@ ASN1_SEQUENCE(FileAndHash) = {
 } ASN1_SEQUENCE_END(FileAndHash);
 
 ASN1_SEQUENCE(Manifest) = {
-	ASN1_EXP_OPT(Manifest, version, ASN1_INTEGER, 0),
+	ASN1_IMP_OPT(Manifest, version, ASN1_INTEGER, 0),
 	ASN1_SIMPLE(Manifest, manifestNumber, ASN1_INTEGER),
 	ASN1_SIMPLE(Manifest, thisUpdate, ASN1_GENERALIZEDTIME),
 	ASN1_SIMPLE(Manifest, nextUpdate, ASN1_GENERALIZEDTIME),
