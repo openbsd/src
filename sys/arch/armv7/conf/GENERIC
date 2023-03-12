@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.141 2023/03/02 09:59:29 jmatthew Exp $
+#	$OpenBSD: GENERIC,v 1.142 2023/03/12 10:50:06 jmatthew Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -202,6 +202,7 @@ mvpxa*		at fdt?
 sdmmc*		at mvpxa?
 mvodog*		at fdt?
 mvortc*		at fdt?
+mvtemp*		at fdt?
 
 # Rockchip SoCs
 rkclock*	at fdt? early 1
