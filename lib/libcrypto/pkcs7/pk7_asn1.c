@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_asn1.c,v 1.15 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: pk7_asn1.c,v 1.16 2023/03/12 17:29:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -163,6 +163,7 @@ pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 	case ASN1_OP_STREAM_PRE:
 		if (PKCS7_stream(&sarg->boundary, *pp7) <= 0)
 			return 0;
+		/* FALLTHROUGH */
 
 	case ASN1_OP_DETACHED_PRE:
 		sarg->ndef_bio = PKCS7_dataInit(*pp7, sarg->out);
