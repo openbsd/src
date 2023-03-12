@@ -1,4 +1,4 @@
-/* $OpenBSD: a_print.c,v 1.11 2014/07/11 08:44:47 jsing Exp $ */
+/* $OpenBSD: a_print.c,v 1.12 2023/03/12 11:49:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,7 +72,7 @@ ASN1_PRINTABLE_type(const unsigned char *s, int len)
 	if (s == NULL)
 		return (V_ASN1_PRINTABLESTRING);
 
-	while ((*s) && (len-- != 0)) {
+	while (len-- > 0 && *s != '\0') {
 		c= *(s++);
 		if (!(((c >= 'a') && (c <= 'z')) ||
 		    ((c >= 'A') && (c <= 'Z')) ||
