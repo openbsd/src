@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.16 2023/03/11 16:29:48 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.17 2023/03/13 07:31:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -116,7 +116,7 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 	if ((asn_bio = BIO_new(BIO_f_asn1())) == NULL)
 		goto err;
 
-	if ((out = BIO_push(asn_bio, out)) == NULL)
+	if (BIO_push(asn_bio, out) == NULL)
 		goto err;
 	pop_bio = asn_bio;
 
@@ -127,7 +127,7 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 	 * ASN1 structure needs.
 	 */
 
-	sarg.out = out;
+	sarg.out = asn_bio;
 	sarg.ndef_bio = NULL;
 	sarg.boundary = NULL;
 
@@ -138,7 +138,7 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 	ndef_aux->it = it;
 	ndef_aux->ndef_bio = sarg.ndef_bio;
 	ndef_aux->boundary = sarg.boundary;
-	ndef_aux->out = out;
+	ndef_aux->out = asn_bio;
 
 	BIO_ctrl(asn_bio, BIO_C_SET_EX_ARG, 0, ndef_aux);
 
