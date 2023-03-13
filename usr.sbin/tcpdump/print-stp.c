@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-stp.c,v 1.10 2021/12/01 18:28:46 deraadt Exp $	*/
+/*	$OpenBSD: print-stp.c,v 1.11 2023/03/13 14:58:01 mbuhl Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -99,6 +99,8 @@ stp_print(p, len)
 	else if (p[0] == LLCSAP_SNAP && p[1] == LLCSAP_SNAP && p[2] == LLC_UI) {
 		proto = STP_PROTO_SSTP;
 		printf("SSTP");
+		if (len < 8)
+			goto truncated;
 		p += 5;
 		len -= 5;
 	} else {
