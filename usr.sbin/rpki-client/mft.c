@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.88 2023/03/13 10:39:03 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.89 2023/03/13 19:54:36 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -413,6 +413,12 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 
 	if (mft_parse_econtent(cms, cmsz, &p) == 0)
 		goto out;
+
+	if (p.res->signtime > p.res->nextupdate) {
+		warnx("%s: dating issue: CMS signing-time after MFT nextUpdate",
+		    fn);
+		goto out;
+	}
 
 	rc = 1;
 out:
