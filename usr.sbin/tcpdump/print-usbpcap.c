@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-usbpcap.c,v 1.5 2020/03/23 09:38:26 patrick Exp $ */
+/*	$OpenBSD: print-usbpcap.c,v 1.6 2023/03/13 13:36:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2018 Martin Pieuchot <mpi@openbsd.org>
@@ -41,26 +41,25 @@ void	 usbpcap_print_request_type(uByte);
 void
 usbpcap_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 {
-	u_int length = h->len;
 	u_int caplen = h->caplen;
 	const struct usbpcap_pkt_hdr *uph;
 	u_int16_t hdrlen;
 
 	ts_print(&h->ts);
 
-	/* check length */
-	if (caplen < sizeof(uint16_t) || length < sizeof(*uph))
-		goto trunc;
+	/* set required globals */
+	snapend = p + caplen;
 
+	/* check length */
 	uph = (struct usbpcap_pkt_hdr *)p;
+	TCHECK(uph->uph_hlen);
 	hdrlen = letoh16(uph->uph_hlen);
 	if (hdrlen < sizeof(*uph)) {
 		printf("[usb: invalid header length %u!]", hdrlen);
 		goto out;
 	}
 
-	if (caplen < hdrlen)
-		goto trunc;
+	TCHECK(uph[0]);
 
 	printf("bus %u %c addr %u: ep%u",
 	    letoh16(uph->uph_bus),
@@ -74,9 +73,12 @@ usbpcap_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 
 	printf(" dlen=%u", letoh32(uph->uph_dlen));
 
+	TCHECK2(uph[0], hdrlen);
+
 	if (uph->uph_xfertype == USBPCAP_TRANSFER_CONTROL) {
 		struct usbpcap_ctl_hdr *ctl_hdr = (struct usbpcap_ctl_hdr *)p;
 
+		TCHECK(ctl_hdr->uch_stage);
 		if (ctl_hdr->uch_stage < nitems(usbpcap_control_stages))
 			printf(" stage=%s",
 			    usbpcap_control_stages[ctl_hdr->uch_stage]);
@@ -84,13 +86,19 @@ usbpcap_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 			printf(" stage=?");
 
 		if (ctl_hdr->uch_stage == USBPCAP_CONTROL_STAGE_SETUP) {
+			usb_device_request_t *req;
+
+			req = (usb_device_request_t *)
+			    (p + sizeof(struct usbpcap_ctl_hdr));
+
 			/* Setup packets must be 8 bytes in size as per
 			 * 9.3 USB Device Requests. */
-			if (letoh32(uph->uph_dlen != 8))
-				goto trunc;
-
-			usb_device_request_t *req = (usb_device_request_t *)
-			    (p + sizeof(struct usbpcap_ctl_hdr));
+			if (letoh32(uph->uph_dlen != 8)) {
+				printf("[usb: invalid data length %u!]",
+				   letoh32(uph->uph_dlen));
+				goto out;
+			}
+			TCHECK(req[0]);
 
 			usbpcap_print_request_type(req->bmRequestType);
 
@@ -110,13 +118,17 @@ usbpcap_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		}
 	}
 
-	if (xflag)
-		default_print(p + sizeof(*uph), length - sizeof(*uph));
+	if (xflag) {
+		if (eflag)
+			default_print(p, caplen);
+		else
+			default_print(p + hdrlen, caplen - hdrlen);
+	}
 out:
 	putchar('\n');
 	return;
 trunc:
-	printf("[|usb]");
+	printf("[|usb]\n");
 }
 
 void
