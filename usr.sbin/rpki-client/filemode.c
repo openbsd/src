@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.26 2023/03/13 19:51:49 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.27 2023/03/13 20:55:14 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -483,6 +483,9 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		switch (type) {
 		case RTYPE_ASPA:
 			aspa_print(x509, aspa);
+			break;
+		case RTYPE_CER:
+			cert_print(cert);
 			break;
 		case RTYPE_GBR:
 			gbr_print(x509, gbr);
