@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.16 2023/02/23 19:48:22 miod Exp $	*/
+/*	$OpenBSD: vars.c,v 1.17 2023/03/13 20:19:22 miod Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -176,6 +176,12 @@ Xtty(void)
 }
 #endif
 
+#ifdef __alpha__
+#define	ASKNAME_LETTER 'n'
+#else
+#define	ASKNAME_LETTER 'a'
+#endif
+
 static int
 Xhowto(void)
 {
@@ -183,7 +189,7 @@ Xhowto(void)
 		if (cmd.boothowto) {
 			putchar('-');
 			if (cmd.boothowto & RB_ASKNAME)
-				putchar('a');
+				putchar(ASKNAME_LETTER);
 			if (cmd.boothowto & RB_CONFIG)
 				putchar('c');
 			if (cmd.boothowto & RB_SINGLE)
@@ -208,7 +214,7 @@ bootparse(int i)
 		if (*cp == '-') {
 			while (*++cp) {
 				switch (*cp) {
-				case 'a':
+				case ASKNAME_LETTER:
 					howto |= RB_ASKNAME;
 					break;
 				case 'c':
