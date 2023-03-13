@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.22 2023/03/12 12:11:45 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.23 2023/03/13 13:42:01 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -292,6 +292,11 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct tak *tak = NULL;
 	struct tal *tal = NULL;
 	char *aia = NULL, *aki = NULL;
+	char *crl_uri = NULL;
+	struct auth *a;
+	struct crl *c;
+	const char *errstr = NULL;
+	int status = 0;
 	char filehash[SHA256_DIGEST_LENGTH];
 	char *hash;
 	enum rtype type;
@@ -419,22 +424,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		break;
 	}
 
-	if (outformats & FORMAT_JSON)
-		printf("\t\"validation\": \"");
-	else {
-		if (type == RTYPE_CRL)
-			printf("Validation:               N/A\n");
-		else
-			printf("Validation: ");
-	}
-
 	if (aia != NULL) {
-		struct auth *a;
-		struct crl *c;
-		const char *errstr;
-		char *crl_uri;
-		int status;
-
 		x509_get_crl(x509, file, &crl_uri);
 		parse_load_crl(crl_uri);
 		if (auth_find(&auths, aki) == NULL)
@@ -460,45 +450,44 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 				break;
 			}
 		}
-		if (status) {
-			if ((outformats & FORMAT_JSON) == 0)
-				printf("              ");
-			printf("OK");
-			if ((outformats & FORMAT_JSON) == 0) {
-				printf("\n");
-				print_certification_path(crl_uri, aia, a);
-			}
-		} else {
-			if ((outformats & FORMAT_JSON) == 0)
-				printf("              ");
-			printf("Failed");
-			if (errstr != NULL)
-				printf(", %s", errstr);
-			if ((outformats & FORMAT_JSON) == 0)
-				printf("\n");
-		}
-		free(crl_uri);
 	} else if (is_ta) {
 		if ((tal = find_tal(cert)) != NULL) {
 			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
-			if ((outformats & FORMAT_JSON) == 0)
-				printf("              ");
-			if (cert != NULL)
-				printf("OK");
-			else
-				printf("Failed");
+			status = (cert != NULL);
 			if (outformats & FORMAT_JSON)
-				printf("\",\n\t\"tal\": \"%s", tal->descr);
+				printf("\n\t\"tal\": \"%s\",\n", tal->descr);
 			else
-				printf("\nTAL:                      %s\n",
+				printf("TAL:                      %s\n",
 				    tal->descr);
 			tal = NULL;
 		} else {
 			cert_free(cert);
 			cert = NULL;
-			printf("Failed");
+			status = 0;
 		}
 	}
+
+	if (outformats & FORMAT_JSON)
+		printf("\t\"validation\": \"");
+	else
+		printf("Validation:               ");
+
+	if (status)
+		printf("OK");
+	else {
+		if (aia == NULL)
+			printf("N/A");
+		else {
+			printf("Failed");
+			if (errstr != NULL)
+				printf(", %s", errstr);
+		}
+	}
+	
+	if ((outformats & FORMAT_JSON) == 0)
+		printf("\n");
+	else if (status && aia != NULL)
+		print_certification_path(crl_uri, aia, a);
 
 	if (outformats & FORMAT_JSON)
 		printf("\"\n}\n");
@@ -520,6 +509,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	}
 
  out:
+	free(crl_uri);
 	X509_free(x509);
 	aspa_free(aspa);
 	cert_free(cert);
