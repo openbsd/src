@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.24 2023/03/13 15:50:40 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.25 2023/03/13 18:02:58 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -258,10 +258,10 @@ find_tal(struct cert *cert)
 }
 
 static void
-print_certification_path(const char *crl, const char *aia, const struct auth *a)
+print_signature_path(const char *crl, const char *aia, const struct auth *a)
 {
 	if (crl != NULL)
-		printf("Certification path:       %s\n", crl);
+		printf("Signature path:           %s\n", crl);
 	if (aia != NULL)
 		printf("                          %s\n", aia);
 
@@ -293,6 +293,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	struct tal *tal = NULL;
 	char *aia = NULL, *aki = NULL;
 	char *crl_uri = NULL;
+	time_t *expires = NULL, *notafter = NULL;
 	struct auth *a;
 	struct crl *c;
 	const char *errstr = NULL;
@@ -339,9 +340,10 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		aspa = aspa_parse(&x509, file, buf, len);
 		if (aspa == NULL)
 			break;
-		aspa_print(x509, aspa);
 		aia = aspa->aia;
 		aki = aspa->aki;
+		expires = &aspa->expires;
+		notafter = &aspa->notafter;
 		break;
 	case RTYPE_CER:
 		cert = cert_parse_pre(file, buf, len);
@@ -393,9 +395,10 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		roa = roa_parse(&x509, file, buf, len);
 		if (roa == NULL)
 			break;
-		roa_print(x509, roa);
 		aia = roa->aia;
 		aki = roa->aki;
+		expires = &roa->expires;
+		notafter = &roa->notafter;
 		break;
 	case RTYPE_RSC:
 		rsc = rsc_parse(&x509, file, buf, len);
@@ -467,6 +470,22 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		}
 	}
 
+	if (expires != NULL) {
+		if (status)
+			*expires = x509_find_expires(*notafter, a, &crlt);
+
+		switch (type) {
+		case RTYPE_ASPA:
+			aspa_print(x509, aspa);
+			break;
+		case RTYPE_ROA:
+			roa_print(x509, roa);
+			break;
+		default:
+			break;
+		}
+	}
+
 	if (outformats & FORMAT_JSON)
 		printf("\t\"validation\": \"");
 	else
@@ -489,8 +508,12 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	else {
 		printf("\n");
 
-		if (status && aia != NULL)
-			print_certification_path(crl_uri, aia, a);
+		if (status && aia != NULL) {
+			print_signature_path(crl_uri, aia, a);
+			if (expires != NULL)
+				printf("Signature path expires:   %s\n",
+				    time2str(*expires));
+		}
 
 		if (x509 == NULL)
 			goto out;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.32 2023/03/13 09:24:37 job Exp $ */
+/*	$OpenBSD: print.c,v 1.33 2023/03/13 18:02:58 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -453,6 +453,8 @@ roa_print(const X509 *x, const struct roa *p)
 			    (long long)p->signtime);
 		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->notafter);
+		if (p->expires)
+			printf("\t\"expires\": %lld,\n", (long long)p->expires);
 	} else {
 		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
 		x509_print(x);
@@ -692,6 +694,8 @@ aspa_print(const X509 *x, const struct aspa *p)
 			    (long long)p->signtime);
 		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->notafter);
+		if (p->expires)
+			printf("\t\"expires\": %lld,\n", (long long)p->expires);
 		printf("\t\"customer_asid\": %u,\n", p->custasid);
 		printf("\t\"provider_set\": [\n");
 		for (i = 0; i < p->providersz; i++) {
