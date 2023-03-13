@@ -1,4 +1,4 @@
-/*	$OpenBSD: qs.c,v 1.3 2023/02/03 10:10:36 job Exp $ */
+/*	$OpenBSD: qs.c,v 1.4 2023/03/13 17:31:28 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -55,6 +55,8 @@ const struct qs {
 	{ QS_SHORTER, "or-shorter", ONE },
 	{ QS_ERROR, "error", ONE },
 	{ QS_AVS, "avs", AVS },
+	{ QS_INVALID, "invalid", ONE },
+	{ QS_LEAKED, "leaked", ONE },
 	{ 0, NULL }
 };
 
@@ -380,13 +382,19 @@ qs_argv(char **argv, size_t argc, size_t len, struct lg_ctx *ctx, int barenbr)
 		if (argc < len)
 			argv[argc++] = ctx->qs_args[QS_AVS].string;
 	}
-	/* BEST and ERROR are exclusive */
+	/* BEST, ERROR, INVALID and LEAKED are exclusive */
 	if (ctx->qs_args[QS_BEST].one) {
 		if (argc < len)
 			argv[argc++] = "best";
 	} else if (ctx->qs_args[QS_ERROR].one) {
 		if (argc < len)
 			argv[argc++] = "error";
+	} else if (ctx->qs_args[QS_INVALID].one) {
+		if (argc < len)
+			argv[argc++] = "invalid";
+	} else if (ctx->qs_args[QS_LEAKED].one) {
+		if (argc < len)
+			argv[argc++] = "leaked";
 	}
 
 	/* prefix must be last for show rib */
