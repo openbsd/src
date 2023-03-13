@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.289 2023/01/24 11:29:34 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.290 2023/03/13 16:59:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -711,7 +711,7 @@ fmt_flags(uint32_t flags, int sum)
 	if (sum) {
 		if (flags & F_PREF_INVALID)
 			*p++ = 'E';
-		if (flags & F_PREF_OTC_LOOP)
+		if (flags & F_PREF_OTC_LEAK)
 			*p++ = 'L';
 		if (flags & F_PREF_ANNOUNCE)
 			*p++ = 'A';
@@ -737,8 +737,8 @@ fmt_flags(uint32_t flags, int sum)
 
 		if (flags & F_PREF_INVALID)
 			strlcat(buf, ", invalid", sizeof(buf));
-		if (flags & F_PREF_OTC_LOOP)
-			strlcat(buf, ", otc loop", sizeof(buf));
+		if (flags & F_PREF_OTC_LEAK)
+			strlcat(buf, ", otc leak", sizeof(buf));
 		if (flags & F_PREF_STALE)
 			strlcat(buf, ", stale", sizeof(buf));
 		if (flags & F_PREF_ELIGIBLE)

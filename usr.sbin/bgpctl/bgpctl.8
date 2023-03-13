@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.105 2023/03/02 17:09:52 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.106 2023/03/13 16:59:22 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: March 13 2023 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -387,17 +387,10 @@ are defined:
 .It Cm best
 Alias for
 .Ic selected .
-.It Cm error
-Show only prefixes which are marked invalid and were treated as withdrawn.
-.It Cm selected
-Show only selected routes.
-.It Cm ssv
-Show each RIB entry as a single line, with fields separated by semicolons.
-Only works if
-.Cm detail
-is specified.
 .It Cm detail
 Show more detailed output for matching routes.
+.It Cm error
+Show only prefixes which are marked invalid and were treated as withdrawn.
 .It Ar family
 Limit the output to the given address family.
 .It Cm in
@@ -405,11 +398,22 @@ Show routes from the unfiltered Adj-RIB-In.
 The
 .Cm neighbor
 needs to be specified.
+.It Cm invalid
+Show only routes which are not eligible.
+.It Cm leaked
+Show only routes where a route leak was detected.
 .It Cm out
 Show the filtered routes sent to a neighbor.
 The
 .Cm neighbor
 needs to be specified.
+.It Cm selected
+Show only selected routes.
+.It Cm ssv
+Show each RIB entry as a single line, with fields separated by semicolons.
+Only works if
+.Cm detail
+is specified.
 .El
 .Pp
 Options are silently ignored when used together with
