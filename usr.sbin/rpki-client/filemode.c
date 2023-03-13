@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.23 2023/03/13 13:42:01 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.24 2023/03/13 15:50:40 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -483,15 +483,15 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 				printf(", %s", errstr);
 		}
 	}
-	
-	if ((outformats & FORMAT_JSON) == 0)
-		printf("\n");
-	else if (status && aia != NULL)
-		print_certification_path(crl_uri, aia, a);
 
 	if (outformats & FORMAT_JSON)
 		printf("\"\n}\n");
 	else {
+		printf("\n");
+
+		if (status && aia != NULL)
+			print_certification_path(crl_uri, aia, a);
+
 		if (x509 == NULL)
 			goto out;
 		if (type == RTYPE_TAL || type == RTYPE_CRL)
