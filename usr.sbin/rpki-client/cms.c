@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.32 2023/03/12 11:45:52 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.33 2023/03/13 19:46:55 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -109,6 +109,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	int				 i, nattrs, nid;
 	int				 has_ct = 0, has_md = 0, has_st = 0,
 					 has_bst = 0;
+	time_t				 notafter;
 	int				 rc = 0;
 
 	*xp = NULL;
@@ -300,6 +301,14 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	/* Cache X509v3 extensions, see X509_check_ca(3). */
 	if (X509_check_purpose(*xp, -1, -1) <= 0) {
 		cryptowarnx("%s: could not cache X509v3 extensions", fn);
+		goto out;
+	}
+
+	if (!x509_get_notafter(*xp, fn, &notafter))
+		goto out;
+	if (*signtime > notafter) {
+		warnx("%s: dating issue: CMS signing-time after X.509 notAfter",
+		    fn);
 		goto out;
 	}
 
