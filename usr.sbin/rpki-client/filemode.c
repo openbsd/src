@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.27 2023/03/13 20:55:14 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.28 2023/03/13 21:01:06 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -464,7 +464,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
 			status = (cert != NULL);
 			if (outformats & FORMAT_JSON)
-				printf("\n\t\"tal\": \"%s\",\n", tal->descr);
+				printf("\t\"tal\": \"%s\",\n", tal->descr);
 			else
 				printf("TAL:                      %s\n",
 				    tal->descr);
@@ -477,7 +477,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	}
 
 	if (expires != NULL) {
-		if (status)
+		if (status && aia != NULL)
 			*expires = x509_find_expires(*notafter, a, &crlt);
 
 		switch (type) {
