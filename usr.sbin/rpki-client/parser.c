@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.88 2023/03/12 11:54:56 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.89 2023/03/13 09:24:37 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -313,15 +313,15 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
 	}
 
 	/* check that now is not before from */
-	if (now < mft->valid_since) {
+	if (now < mft->thisupdate) {
 		warnx("%s: mft not yet valid %s", file,
-		    time2str(mft->valid_since));
+		    time2str(mft->thisupdate));
 		mft->stale = 1;
 	}
 	/* check that now is not after until */
-	if (now > mft->valid_until) {
+	if (now > mft->nextupdate) {
 		warnx("%s: mft expired on %s", file,
-		    time2str(mft->valid_until));
+		    time2str(mft->nextupdate));
 		mft->stale = 1;
 	}
 

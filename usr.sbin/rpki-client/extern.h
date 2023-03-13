@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.173 2023/03/12 11:54:56 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.174 2023/03/13 09:24:37 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -211,8 +211,8 @@ struct mft {
 	char		*crl; /* CRL file name */
 	unsigned char	 crlhash[SHA256_DIGEST_LENGTH];
 	time_t		 signtime; /* CMS signing-time attribute */
-	time_t		 valid_since;
-	time_t		 valid_until;
+	time_t		 thisupdate; /* from the eContent */
+	time_t		 nextupdate; /* from the eContent */
 	size_t		 filesz; /* number of filenames */
 	unsigned int	 repoid;
 	int		 stale; /* if a stale manifest */
