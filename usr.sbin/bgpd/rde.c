@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.595 2023/03/10 07:57:15 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.596 2023/03/13 16:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1608,7 +1608,7 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 			}
 		} else {
 			/* Only IPv4 and IPv6 unicast do OTC handling */
-			state.aspath.flags &= ~F_ATTR_OTC_LOOP;
+			state.aspath.flags &= ~F_ATTR_OTC_LEAK;
 		}
 
 		/* unlock the previously locked nexthop, it is no longer used */
@@ -2194,13 +2194,13 @@ bad_flags:
 		switch (peer->role) {
 		case ROLE_PROVIDER:
 		case ROLE_RS:
-			a->flags |= F_ATTR_OTC_LOOP;
+			a->flags |= F_ATTR_OTC_LEAK;
 			break;
 		case ROLE_PEER:
 			memcpy(&tmp32, p, sizeof(tmp32));
 			tmp32 = ntohl(tmp32);
 			if (tmp32 != peer->conf.remote_as)
-				a->flags |= F_ATTR_OTC_LOOP;
+				a->flags |= F_ATTR_OTC_LEAK;
 			break;
 		default:
 			break;
@@ -2678,8 +2678,8 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	if (prefix_eligible(p))
 		rib.flags |= F_PREF_ELIGIBLE;
 	/* otc loop includes parse err so skip the latter if the first is set */
-	if (asp->flags & F_ATTR_OTC_LOOP)
-		rib.flags |= F_PREF_OTC_LOOP;
+	if (asp->flags & F_ATTR_OTC_LEAK)
+		rib.flags |= F_PREF_OTC_LEAK;
 	else if (asp->flags & F_ATTR_PARSE_ERR)
 		rib.flags |= F_PREF_INVALID;
 	staletime = peer->staletime[p->pt->aid];
@@ -2772,6 +2772,11 @@ rde_dump_filter(struct prefix *p, struct ctl_show_rib_request *req, int adjout)
 		return;
 	if ((req->flags & F_CTL_INVALID) &&
 	    (asp->flags & F_ATTR_PARSE_ERR) == 0)
+		return;
+	if ((req->flags & F_CTL_INELIGIBLE) && prefix_eligible(p))
+		return;
+	if ((req->flags & F_CTL_LEAKED) &&
+	    (asp->flags & F_ATTR_OTC_LEAK) == 0)
 		return;
 	if ((req->flags & F_CTL_HAS_PATHID)) {
 		/* Match against the transmit path id if adjout is used.  */

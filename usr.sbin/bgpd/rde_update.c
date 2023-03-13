@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.158 2023/03/10 07:57:16 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.159 2023/03/13 16:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -66,7 +66,7 @@ up_test_update(struct rde_peer *peer, struct prefix *p)
 
 	if (asp == NULL || asp->flags & F_ATTR_PARSE_ERR)
 		fatalx("try to send out a botched path");
-	if (asp->flags & (F_ATTR_LOOP | F_ATTR_OTC_LOOP))
+	if (asp->flags & (F_ATTR_LOOP | F_ATTR_OTC_LEAK))
 		fatalx("try to send out a looped path");
 
 	if (peer == frompeer)

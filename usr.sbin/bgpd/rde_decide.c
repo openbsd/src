@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.100 2023/03/09 13:12:19 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.101 2023/03/13 16:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -488,7 +488,7 @@ prefix_eligible(struct prefix *p)
 
 	/* The aspath needs to be loop and error free */
 	if (asp == NULL ||
-	    asp->flags & (F_ATTR_LOOP|F_ATTR_OTC_LOOP|F_ATTR_PARSE_ERR))
+	    asp->flags & (F_ATTR_LOOP|F_ATTR_OTC_LEAK|F_ATTR_PARSE_ERR))
 		return 0;
 
 	/* The nexthop must be valid. */

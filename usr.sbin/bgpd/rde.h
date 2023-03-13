@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.285 2023/03/10 07:57:15 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.286 2023/03/13 16:52:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -203,7 +203,7 @@ struct rde_community {
 #define	F_PREFIX_ANNOUNCED	0x00400
 #define	F_ANN_DYNAMIC		0x00800
 #define	F_ATTR_OTC		0x01000	/* OTC present */
-#define	F_ATTR_OTC_LOOP		0x02000 /* otc loop, not eligible */
+#define	F_ATTR_OTC_LEAK		0x02000 /* otc leak, not eligible */
 #define	F_ATTR_PARSE_ERR	0x10000 /* parse error, not eligible */
 #define	F_ATTR_LINKED		0x20000 /* if set path is on various lists */
 
