@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.231 2023/03/02 17:09:53 jmc Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.232 2023/03/13 16:39:29 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: March 13 2023 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -1333,6 +1333,8 @@ Bind the neighbor to the specified RIB.
 .Pp
 .It Ic role Ar role
 Set the local role for this eBGP session.
+Setting a role is required for ASPA verification, the open poilicy role
+capability and Only-To-Customer (OTC) attribute of RFC 9234.
 The role can be one of
 .Ar none ,
 .Ar provider ,
@@ -1346,6 +1348,8 @@ If the role is set to
 the
 .Ic announce Ic policy
 will also be disabled.
+On iBGP session the role setting is ignored and forced to
+.Ar none .
 .Pp
 .It Ic route-reflector Op Ar address
 Act as an RFC 4456
