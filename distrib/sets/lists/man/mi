@@ -1872,6 +1872,7 @@
 ./usr/share/man/man4/riscv64/stfpinctrl.4
 ./usr/share/man/man4/rkanxdp.4
 ./usr/share/man/man4/rkclock.4
+./usr/share/man/man4/rkcomphy.4
 ./usr/share/man/man4/rkdrm.4
 ./usr/share/man/man4/rkdwhdmi.4
 ./usr/share/man/man4/rkdwusb.4
