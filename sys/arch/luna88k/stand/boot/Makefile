@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2023/02/24 23:36:11 aoyama Exp $
+#	$OpenBSD: Makefile,v 1.18 2023/03/13 11:59:39 aoyama Exp $
 #	$NetBSD: Makefile,v 1.9 2013/01/22 15:48:40 tsutsui Exp $
 #	@(#)Makefile	8.2 (Berkeley) 8/15/93
 
@@ -36,6 +36,7 @@ SRCS+=	sio.c
 SRCS+=	bmc.c bmd.c font.c kbd.c
 SRCS+=	sc.c sd.c
 SRCS+=	ufs_disksubr.c
+SRCS+=	cmd_luna88k.c
 SRCS+=	logo.c
 
 # netboot support

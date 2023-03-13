@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.2 2023/02/23 19:48:22 miod Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.3 2023/03/13 11:59:39 aoyama Exp $	*/
 
 /* public domain */
 
@@ -7,3 +7,5 @@
 void devboot(dev_t, char *);
 void machdep(void);
 void run_loadfile(uint64_t *, int);
+
+#define	MACHINE_CMD	cmd_machine	/* we have luna88k-specific commands */
