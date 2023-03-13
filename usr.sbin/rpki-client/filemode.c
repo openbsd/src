@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.25 2023/03/13 18:02:58 job Exp $ */
+/*	$OpenBSD: filemode.c,v 1.26 2023/03/13 19:51:49 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -354,12 +354,13 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			cert = cert_parse(file, cert);
 		if (cert == NULL)
 			break;
-		cert_print(cert);
 		aia = cert->aia;
 		aki = cert->aki;
 		x509 = cert->x509;
 		if (X509_up_ref(x509) == 0)
 			errx(1, "%s: X509_up_ref failed", __func__);
+		expires = &cert->expires;
+		notafter = &cert->notafter;
 		break;
 	case RTYPE_CRL:
 		crl = crl_parse(file, buf, len);
@@ -371,25 +372,28 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		mft = mft_parse(&x509, file, buf, len);
 		if (mft == NULL)
 			break;
-		mft_print(x509, mft);
 		aia = mft->aia;
 		aki = mft->aki;
+		expires = &mft->expires;
+		notafter = &mft->nextupdate;
 		break;
 	case RTYPE_GBR:
 		gbr = gbr_parse(&x509, file, buf, len);
 		if (gbr == NULL)
 			break;
-		gbr_print(x509, gbr);
 		aia = gbr->aia;
 		aki = gbr->aki;
+		expires = &gbr->expires;
+		notafter = &gbr->notafter;
 		break;
 	case RTYPE_GEOFEED:
 		geofeed = geofeed_parse(&x509, file, buf, len);
 		if (geofeed == NULL)
 			break;
-		geofeed_print(x509, geofeed);
 		aia = geofeed->aia;
 		aki = geofeed->aki;
+		expires = &geofeed->expires;
+		notafter = &geofeed->notafter;
 		break;
 	case RTYPE_ROA:
 		roa = roa_parse(&x509, file, buf, len);
@@ -404,17 +408,19 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		rsc = rsc_parse(&x509, file, buf, len);
 		if (rsc == NULL)
 			break;
-		rsc_print(x509, rsc);
 		aia = rsc->aia;
 		aki = rsc->aki;
+		expires = &rsc->expires;
+		notafter = &rsc->notafter;
 		break;
 	case RTYPE_TAK:
 		tak = tak_parse(&x509, file, buf, len);
 		if (tak == NULL)
 			break;
-		tak_print(x509, tak);
 		aia = tak->aia;
 		aki = tak->aki;
+		expires = &tak->expires;
+		notafter = &tak->notafter;
 		break;
 	case RTYPE_TAL:
 		tal = tal_parse(file, buf, len);
@@ -478,8 +484,23 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		case RTYPE_ASPA:
 			aspa_print(x509, aspa);
 			break;
+		case RTYPE_GBR:
+			gbr_print(x509, gbr);
+			break;
+		case RTYPE_GEOFEED:
+			geofeed_print(x509, geofeed);
+			break;
+		case RTYPE_MFT:
+			mft_print(x509, mft);
+			break;
 		case RTYPE_ROA:
 			roa_print(x509, roa);
+			break;
+		case RTYPE_RSC:
+			rsc_print(x509, rsc);
+			break;
+		case RTYPE_TAK:
+			tak_print(x509, tak);
 			break;
 		default:
 			break;

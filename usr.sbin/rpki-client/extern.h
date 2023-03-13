@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.174 2023/03/13 09:24:37 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.175 2023/03/13 19:51:49 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -141,6 +141,7 @@ struct cert {
 	X509		*x509; /* the cert */
 	time_t		 notbefore; /* cert's Not Before */
 	time_t		 notafter; /* cert's Not After */
+	time_t		 expires; /* when the signature path expires */
 };
 
 /*
@@ -213,6 +214,7 @@ struct mft {
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 thisupdate; /* from the eContent */
 	time_t		 nextupdate; /* from the eContent */
+	time_t		 expires; /* when the signature path expires */
 	size_t		 filesz; /* number of filenames */
 	unsigned int	 repoid;
 	int		 stale; /* if a stale manifest */
@@ -248,7 +250,7 @@ struct roa {
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 notafter; /* EE cert's Not After */
-	time_t		 expires; /* Transitive expiry moment */
+	time_t		 expires; /* when the signature path expires */
 };
 
 struct rscfile {
@@ -274,6 +276,7 @@ struct rsc {
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 notafter; /* Not After of the RSC EE */
+	time_t		 expires; /* when the signature path expires */
 };
 
 /*
@@ -304,6 +307,7 @@ struct tak {
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 notafter; /* Not After of the TAK EE */
+	time_t		 expires; /* when the signature path expires */
 };
 
 /*
@@ -326,6 +330,7 @@ struct geofeed {
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 notafter; /* Not After of the Geofeed EE */
+	time_t		 expires; /* when the signature path expires */
 	int		 valid; /* all resources covered */
 };
 
@@ -341,6 +346,7 @@ struct gbr {
 	time_t		 signtime; /* CMS signing-time attribute */
 	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 notafter; /* Not After of the GBR EE */
+	time_t		 expires; /* when the signature path expires */
 };
 
 struct aspa_provider {
@@ -364,7 +370,7 @@ struct aspa {
 	time_t			 signtime; /* CMS signing-time attribute */
 	time_t		 	 notbefore; /* EE cert's Not Before */
 	time_t			 notafter; /* notAfter of the ASPA EE cert */
-	time_t			 expires; /* Transitive expiry moment */
+	time_t			 expires; /* when the signature path expires */
 };
 
 /*

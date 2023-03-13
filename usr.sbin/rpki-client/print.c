@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.33 2023/03/13 18:02:58 job Exp $ */
+/*	$OpenBSD: print.c,v 1.34 2023/03/13 19:51:49 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -184,6 +184,8 @@ cert_print(const struct cert *p)
 			printf("\t\"router_key\": \"%s\",\n", p->pubkey);
 		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->notafter);
+		if (p->expires)
+			printf("\t\"expires\": %lld,\n", (long long)p->expires);
 		printf("\t\"subordinate_resources\": [\n");
 	} else {
 		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
@@ -392,6 +394,8 @@ mft_print(const X509 *x, const struct mft *p)
 			    (long long)p->signtime);
 		printf("\t\"valid_since\": %lld,\n", (long long)p->thisupdate);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->nextupdate);
+		if (p->expires)
+			printf("\t\"expires\": %lld,\n", (long long)p->expires);
 	} else {
 		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
 		printf("Authority key identifier: %s\n", pretty_key_id(p->aki));
@@ -513,6 +517,8 @@ gbr_print(const X509 *x, const struct gbr *p)
 			    (long long)p->signtime);
 		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->notafter);
+		if (p->expires)
+			printf("\t\"expires\": %lld,\n", (long long)p->expires);
 		printf("\t\"vcard\": \"");
 		for (i = 0; i < strlen(p->vcard); i++) {
 			if (p->vcard[i] == '"')
@@ -559,6 +565,8 @@ rsc_print(const X509 *x, const struct rsc *p)
 			    (long long)p->signtime);
 		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->notafter);
+		if (p->expires)
+			printf("\t\"expires\": %lld,\n", (long long)p->expires);
 		printf("\t\"signed_with_resources\": [\n");
 	} else {
 		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
@@ -810,6 +818,8 @@ tak_print(const X509 *x, const struct tak *p)
 			    (long long)p->signtime);
 		printf("\t\"valid_since\": %lld,\n", (long long)p->notbefore);
 		printf("\t\"valid_until\": %lld,\n", (long long)p->notafter);
+		if (p->expires)
+			printf("\t\"expires\": %lld,\n", (long long)p->expires);
 		printf("\t\"takeys\": [\n");
 	} else {
 		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
