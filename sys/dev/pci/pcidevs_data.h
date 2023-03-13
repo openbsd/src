@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2024 2023/02/15 06:08:18 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2025 2023/03/13 07:30:11 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -25354,6 +25354,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_KINGSTON, PCI_PRODUCT_KINGSTON_A2000,
 	    "A2000",
+	},
+	{
+	    PCI_VENDOR_KINGSTON, PCI_PRODUCT_KINGSTON_NV2,
+	    "NV2",
 	},
 	{
 	    PCI_VENDOR_KIOXIA, PCI_PRODUCT_KIOXIA_BG4,
