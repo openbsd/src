@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.69 2023/03/12 11:54:56 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.70 2023/03/14 07:09:11 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -375,11 +375,18 @@ x509_get_aia(X509 *x, const char *fn, char **aia)
 	if (info == NULL)
 		return 1;
 
+	if ((X509_get_extension_flags(x) & EXFLAG_SS) != 0) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA must be absent from "
+		    "a self-signed certificate", fn);
+		goto out;
+	}
+
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.7: "
 		    "AIA: extension not non-critical", fn);
 		goto out;
 	}
+
 	if (sk_ACCESS_DESCRIPTION_num(info) != 1) {
 		warnx("%s: RFC 6487 section 4.8.7: AIA: "
 		    "want 1 element, have %d", fn,
