@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.4 2023/03/09 03:50:38 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.5 2023/03/14 00:11:58 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -537,7 +537,7 @@ sysctl_clockintr(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 
-void db_show_clockintr(const struct clockintr *, u_int);
+void db_show_clockintr(const struct clockintr *, const char *, u_int);
 void db_show_clockintr_cpu(struct cpu_info *);
 
 void
@@ -551,7 +551,7 @@ db_show_all_clockintr(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	db_printf("%20s\n", "UPTIME");
 	db_printf("%10lld.%09ld\n", now.tv_sec, now.tv_nsec);
 	db_printf("\n");
-	db_printf("%20s  %3s  %s\n", "EXPIRATION", "CPU", "NAME");
+	db_printf("%20s  %5s  %3s  %s\n", "EXPIRATION", "STATE", "CPU", "NAME");
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ISSET(ci->ci_queue.cq_flags, CL_CPU_INIT))
 			db_show_clockintr_cpu(ci);
@@ -566,17 +566,17 @@ db_show_clockintr_cpu(struct cpu_info *ci)
 	u_int cpu = CPU_INFO_UNIT(ci);
 
 	if (cq->cq_running != NULL)
-		db_show_clockintr(cq->cq_running, cpu);
+		db_show_clockintr(cq->cq_running, "run", cpu);
 	TAILQ_FOREACH(elm, &cq->cq_pend, cl_plink)
-		db_show_clockintr(elm, cpu);
+		db_show_clockintr(elm, "pend", cpu);
 	TAILQ_FOREACH(elm, &cq->cq_est, cl_elink) {
 		if (!ISSET(elm->cl_flags, CLST_PENDING))
-			db_show_clockintr(elm, cpu);
+			db_show_clockintr(elm, "est", cpu);
 	}
 }
 
 void
-db_show_clockintr(const struct clockintr *cl, u_int cpu)
+db_show_clockintr(const struct clockintr *cl, const char *state, u_int cpu)
 {
 	struct timespec ts;
 	char *name;
@@ -586,7 +586,8 @@ db_show_clockintr(const struct clockintr *cl, u_int cpu)
 	db_find_sym_and_offset((vaddr_t)cl->cl_func, &name, &offset);
 	if (name == NULL)
 		name = "?";
-	db_printf("%10lld.%09ld  %3u  %s", ts.tv_sec, ts.tv_nsec, cpu, name);
+	db_printf("%10lld.%09ld  %5s  %3u  %s\n",
+	    ts.tv_sec, ts.tv_nsec, state, cpu, name);
 }
 
 #endif /* DDB */
