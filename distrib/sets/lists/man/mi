@@ -2355,6 +2355,7 @@
 ./usr/share/man/man8/accton.8
 ./usr/share/man/man8/acpidump.8
 ./usr/share/man/man8/alpha/MAKEDEV.8
+./usr/share/man/man8/alpha/boot.8
 ./usr/share/man/man8/alpha/boot_alpha.8
 ./usr/share/man/man8/alpha/installboot.8
 ./usr/share/man/man8/alpha/setnetbootinfo.8
