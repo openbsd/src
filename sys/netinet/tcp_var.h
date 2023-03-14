@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.162 2022/12/13 18:10:55 claudio Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.163 2023/03/14 00:24:05 yasuoka Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -644,8 +644,7 @@ tcp_now(void)
 	return (getnsecruntime() / 1000000);
 }
 
-#define TCP_TIME_MSEC(_ms)	(_ms)	/* tcp_now() is in milliseconds */
-#define TCP_TIME(_sec)		((_sec) * 1000)
+#define TCP_TIME(_sec)	((_sec) * 1000)	/* tcp_now() is in milliseconds */
 
 extern	struct mutex tcp_timer_mtx;
 extern	const struct pr_usrreqs tcp_usrreqs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.216 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.217 2023/03/14 00:24:05 yasuoka Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -155,9 +155,6 @@ const struct pr_usrreqs tcp6_usrreqs = {
 
 const struct sysctl_bounded_args tcpctl_vars[] = {
 	{ TCPCTL_RFC1323, &tcp_do_rfc1323, 0, 1 },
-	{ TCPCTL_KEEPINITTIME, &tcptv_keep_init, 1, 3 * TCPTV_KEEP_INIT },
-	{ TCPCTL_KEEPIDLE, &tcp_keepidle, 1, 5 * TCPTV_KEEP_IDLE },
-	{ TCPCTL_KEEPINTVL, &tcp_keepintvl, 1, 3 * TCPTV_KEEPINTVL },
 	{ TCPCTL_SACK, &tcp_do_sack, 0, 1 },
 	{ TCPCTL_MSSDFLT, &tcp_mssdflt, TCP_MSS, 65535 },
 	{ TCPCTL_RSTPPSLIMIT, &tcp_rst_ppslim, 1, 1000 * 1000 },
@@ -672,7 +669,7 @@ tcp_connect(struct socket *so, struct mbuf *nam)
 	soisconnecting(so);
 	tcpstat_inc(tcps_connattempt);
 	tp->t_state = TCPS_SYN_SENT;
-	TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcptv_keep_init));
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
 	tcp_set_iss_tsm(tp);
 	tcp_sendseqinit(tp);
 	tp->snd_last = tp->snd_una;
@@ -1110,7 +1107,7 @@ tcp_usrclosed(struct tcpcb *tp)
 		 * not left in FIN_WAIT_2 forever.
 		 */
 		if (tp->t_state == TCPS_FIN_WAIT_2)
-			TCP_TIMER_ARM(tp, TCPT_2MSL, TCP_TIME(tcp_maxidle));
+			TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
 	}
 	return (tp);
 }
@@ -1373,6 +1370,36 @@ tcp_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (ENOTDIR);
 
 	switch (name[0]) {
+	case TCPCTL_KEEPINITTIME:
+		NET_LOCK();
+		nval = tcptv_keep_init / TCP_TIME(1);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen, &nval,
+		    1, 3 * (TCPTV_KEEP_INIT / TCP_TIME(1)));
+		if (!error)
+			tcptv_keep_init = TCP_TIME(nval);
+		NET_UNLOCK();
+		return (error);
+
+	case TCPCTL_KEEPIDLE:
+		NET_LOCK();
+		nval = tcp_keepidle / TCP_TIME(1);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen, &nval,
+		    1, 5 * (TCPTV_KEEP_IDLE / TCP_TIME(1)));
+		if (!error)
+			tcp_keepidle = TCP_TIME(nval);
+		NET_UNLOCK();
+		return (error);
+
+	case TCPCTL_KEEPINTVL:
+		NET_LOCK();
+		nval = tcp_keepintvl / TCP_TIME(1);
+		error = sysctl_int_bounded(oldp, oldlenp, newp, newlen, &nval,
+		    1, 3 * (TCPTV_KEEPINTVL / TCP_TIME(1)));
+		if (!error)
+			tcp_keepintvl = TCP_TIME(nval);
+		NET_UNLOCK();
+		return (error);
+
 	case TCPCTL_BADDYNAMIC:
 		NET_LOCK();
 		error = sysctl_struct(oldp, oldlenp, newp, newlen,

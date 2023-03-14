@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.386 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.387 2023/03/14 00:24:05 yasuoka Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -867,7 +867,7 @@ findpcb:
 	 */
 	tp->t_rcvtime = now;
 	if (TCPS_HAVEESTABLISHED(tp->t_state))
-		TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcp_keepidle));
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
 	if (tp->sack_enable)
 		tcp_del_sackholes(tp, th); /* Delete stale SACK holes */
@@ -1177,7 +1177,7 @@ findpcb:
 			soisconnected(so);
 			tp->t_flags &= ~TF_BLOCKOUTPUT;
 			tp->t_state = TCPS_ESTABLISHED;
-			TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcp_keepidle));
+			TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 			/* Do window scaling on this connection? */
 			if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 				(TF_RCVD_SCALE|TF_REQ_SCALE)) {
@@ -1463,7 +1463,7 @@ trimthenstep6:
 		soisconnected(so);
 		tp->t_flags &= ~TF_BLOCKOUTPUT;
 		tp->t_state = TCPS_ESTABLISHED;
-		TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcp_keepidle));
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 		/* Do window scaling? */
 		if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 			(TF_RCVD_SCALE|TF_REQ_SCALE)) {
@@ -1798,8 +1798,7 @@ trimthenstep6:
 					tp->t_flags |= TF_BLOCKOUTPUT;
 					soisdisconnected(so);
 					tp->t_flags &= ~TF_BLOCKOUTPUT;
-					TCP_TIMER_ARM(tp, TCPT_2MSL,
-					    TCP_TIME(tcp_maxidle));
+					TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_maxidle);
 				}
 				tp->t_state = TCPS_FIN_WAIT_2;
 			}
@@ -1815,8 +1814,7 @@ trimthenstep6:
 			if (ourfinisacked) {
 				tp->t_state = TCPS_TIME_WAIT;
 				tcp_canceltimers(tp);
-				TCP_TIMER_ARM(tp, TCPT_2MSL,
-				    TCP_TIME(2 * TCPTV_MSL));
+				TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 				tp->t_flags |= TF_BLOCKOUTPUT;
 				soisdisconnected(so);
 				tp->t_flags &= ~TF_BLOCKOUTPUT;
@@ -1842,7 +1840,7 @@ trimthenstep6:
 		 * it and restart the finack timer.
 		 */
 		case TCPS_TIME_WAIT:
-			TCP_TIMER_ARM(tp, TCPT_2MSL, TCP_TIME(2 * TCPTV_MSL));
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 			goto dropafterack;
 		}
 	}
@@ -2018,7 +2016,7 @@ dodata:							/* XXX */
 		case TCPS_FIN_WAIT_2:
 			tp->t_state = TCPS_TIME_WAIT;
 			tcp_canceltimers(tp);
-			TCP_TIMER_ARM(tp, TCPT_2MSL, TCP_TIME(2 * TCPTV_MSL));
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 			tp->t_flags |= TF_BLOCKOUTPUT;
 			soisdisconnected(so);
 			tp->t_flags &= ~TF_BLOCKOUTPUT;
@@ -2028,7 +2026,7 @@ dodata:							/* XXX */
 		 * In TIME_WAIT state restart the 2 MSL time_wait timer.
 		 */
 		case TCPS_TIME_WAIT:
-			TCP_TIMER_ARM(tp, TCPT_2MSL, TCP_TIME(2 * TCPTV_MSL));
+			TCP_TIMER_ARM(tp, TCPT_2MSL, 2 * TCPTV_MSL);
 			break;
 		}
 	}
@@ -3356,7 +3354,7 @@ syn_cache_timer(void *arg)
 	 * than the keep alive timer would allow, expire it.
 	 */
 	sc->sc_rxttot += sc->sc_rxtcur;
-	if (sc->sc_rxttot >= TCP_TIME(tcptv_keep_init))
+	if (sc->sc_rxttot >= tcptv_keep_init)
 		goto dropit;
 
 	tcpstat_inc(tcps_sc_retransmitted);
@@ -3631,7 +3629,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 	tp->t_sndtime = now;
 	tp->t_rcvacktime = now;
 	tp->t_sndacktime = now;
-	TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcptv_keep_init));
+	TCP_TIMER_ARM(tp, TCPT_KEEP, tcptv_keep_init);
 	tcpstat_inc(tcps_accepts);
 
 	tcp_mss(tp, sc->sc_peermaxseg);	 /* sets t_maxseg */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.c,v 1.71 2022/11/07 11:22:55 yasuoka Exp $	*/
+/*	$OpenBSD: tcp_timer.c,v 1.72 2023/03/14 00:24:05 yasuoka Exp $	*/
 /*	$NetBSD: tcp_timer.c,v 1.14 1996/02/13 23:44:09 christos Exp $	*/
 
 /*
@@ -423,7 +423,7 @@ tcp_timer_persist(void *arg)
 		rto = tp->t_rttmin;
 	now = tcp_now();
 	if (tp->t_rxtshift == TCP_MAXRXTSHIFT &&
-	    ((now - tp->t_rcvtime) >= TCP_TIME(tcp_maxpersistidle) ||
+	    ((now - tp->t_rcvtime) >= tcp_maxpersistidle ||
 	    (now - tp->t_rcvtime) >= rto * tcp_totbackoff)) {
 		tcpstat_inc(tcps_persistdrop);
 		tp = tcp_drop(tp, ETIMEDOUT);
@@ -467,8 +467,8 @@ tcp_timer_keep(void *arg)
 
 		maxidle = READ_ONCE(tcp_maxidle);
 		now = tcp_now();
-		if ((maxidle > 0) && ((now - tp->t_rcvtime) >=
-		    TCP_TIME(tcp_keepidle + maxidle)))
+		if ((maxidle > 0) &&
+		    ((now - tp->t_rcvtime) >= tcp_keepidle + maxidle))
 			goto dropit;
 		/*
 		 * Send a packet designed to force a response
@@ -485,9 +485,9 @@ tcp_timer_keep(void *arg)
 		tcpstat_inc(tcps_keepprobe);
 		tcp_respond(tp, mtod(tp->t_template, caddr_t),
 		    NULL, tp->rcv_nxt, tp->snd_una - 1, 0, 0, now);
-		TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcp_keepintvl));
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepintvl);
 	} else
-		TCP_TIMER_ARM(tp, TCPT_KEEP, TCP_TIME(tcp_keepidle));
+		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 	if (otp)
 		tcp_trace(TA_TIMER, ostate, tp, otp, NULL, TCPT_KEEP, 0);
  out:
@@ -524,8 +524,8 @@ tcp_timer_2msl(void *arg)
 	maxidle = READ_ONCE(tcp_maxidle);
 	now = tcp_now();
 	if (tp->t_state != TCPS_TIME_WAIT &&
-	    ((maxidle == 0) || ((now - tp->t_rcvtime) <= TCP_TIME(maxidle))))
-		TCP_TIMER_ARM(tp, TCPT_2MSL, TCP_TIME(tcp_keepintvl));
+	    ((maxidle == 0) || ((now - tp->t_rcvtime) <= maxidle)))
+		TCP_TIMER_ARM(tp, TCPT_2MSL, tcp_keepintvl);
 	else
 		tp = tcp_close(tp);
 	if (otp)
