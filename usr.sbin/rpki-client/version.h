@@ -1,3 +1,3 @@
-/* $OpenBSD: version.h,v 1.14 2022/12/05 21:02:52 claudio Exp $ */
+/* $OpenBSD: version.h,v 1.15 2023/03/14 13:31:16 claudio Exp $ */
 
-#define RPKI_VERSION	"8.2"
+#define RPKI_VERSION	"8.3"
