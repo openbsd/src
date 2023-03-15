@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.63 2022/12/27 17:10:07 jmc Exp $
+ * $OpenBSD: skeylogin.c,v 1.64 2023/03/15 17:01:35 millert Exp $
  */
 
 #ifdef	QUOTA
@@ -436,8 +436,8 @@ skey_fakeprompt(char *username, char *skeyprompt)
 			if (isalpha((unsigned char)*p) &&
 			    isupper((unsigned char)*p))
 				*p = (char)tolower((unsigned char)*p);
-	if (*p && pbuf - p < 4)
-		(void)strncpy(p, "asjd", 4 - (pbuf - p));
+	if (*p && p - pbuf < 4)
+		(void)strncpy(p, "asjd", 4 - (p - pbuf));
 	pbuf[4] = '\0';
 
 	/* Hash the username if possible */
