@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.19 2023/03/15 06:28:55 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.20 2023/03/15 06:30:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -117,11 +117,20 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 		goto err;
 	pop_bio = asn_bio;
 
+	/*
+	 * Set up prefix and suffix handlers first. This ensures that ndef_aux
+	 * is freed as part of asn_bio once it is the asn_bio's ex_arg.
+	 */
 	if (BIO_asn1_set_prefix(asn_bio, ndef_prefix, ndef_prefix_free) <= 0)
 		goto err;
 	if (BIO_asn1_set_suffix(asn_bio, ndef_suffix, ndef_suffix_free) <= 0)
 		goto err;
 
+	/*
+	 * Allocate early to avoid the tricky cleanup after the asn1_cb().
+	 * Ownership of ndef_aux is transferred to asn_bio in BIO_ctrl().
+	 * Keep a reference to populate it after callback success.
+	 */
 	if ((ndef_aux = calloc(1, sizeof(*ndef_aux))) == NULL)
 		goto err;
 	if (BIO_ctrl(asn_bio, BIO_C_SET_EX_ARG, 0, ndef_aux) <= 0) {
@@ -129,8 +138,9 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 		goto err;
 	}
 
-	/* Now let callback prepend any digest, cipher etc BIOs
-	 * ASN1 structure needs.
+	/*
+	 * The callback prepends BIOs to the chain starting at asn_bio for
+	 * digest, cipher, etc. The resulting chain starts at sarg.ndef_bio.
 	 */
 
 	sarg.out = asn_bio;
