@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp_zero.c,v 1.1 2022/12/02 17:33:38 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp_zero.c,v 1.2 2023/03/15 00:41:04 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -49,12 +49,12 @@ static const struct mod_exp_zero_test {
     (sizeof(mod_exp_zero_test_data) / sizeof(mod_exp_zero_test_data[0]))
 
 static void
-print_failure(const BIGNUM *result, const BIGNUM *a, const char *name)
+print_failure(const BIGNUM *got, const BIGNUM *a, const char *name)
 {
 	fprintf(stderr, "%s test failed for a = ", name);
 	BN_print_fp(stderr, a);
 	fprintf(stderr, "\nwant 0, got ");
-	BN_print_fp(stderr, result);
+	BN_print_fp(stderr, got);
 	fprintf(stderr, "\n");
 }
 
@@ -63,7 +63,7 @@ bn_mod_exp_zero_test(const struct mod_exp_zero_test *test, BN_CTX *ctx,
     int use_random)
 {
 	const BIGNUM *one;
-	BIGNUM *a, *p, *result;
+	BIGNUM *a, *p, *got;
 	int failed = 1;
 
 	BN_CTX_start(ctx);
@@ -72,7 +72,7 @@ bn_mod_exp_zero_test(const struct mod_exp_zero_test *test, BN_CTX *ctx,
 		errx(1, "BN_CTX_get");
 	if ((p = BN_CTX_get(ctx)) == NULL)
 		errx(1, "BN_CTX_get");
-	if ((result = BN_CTX_get(ctx)) == NULL)
+	if ((got = BN_CTX_get(ctx)) == NULL)
 		errx(1, "BN_CTX_get");
 
 	one = BN_value_one();
@@ -85,21 +85,21 @@ bn_mod_exp_zero_test(const struct mod_exp_zero_test *test, BN_CTX *ctx,
 	}
 
 	if (test->mod_exp_fn != NULL) {
-		if (!test->mod_exp_fn(result, a, p, one, ctx)) {
+		if (!test->mod_exp_fn(got, a, p, one, ctx)) {
 			fprintf(stderr, "%s failed\n", test->name);
 			ERR_print_errors_fp(stderr);
 			goto err;
 		}
 	} else {
-		if (!test->mod_exp_mont_fn(result, a, p, one, ctx, NULL)) {
+		if (!test->mod_exp_mont_fn(got, a, p, one, ctx, NULL)) {
 			fprintf(stderr, "%s failed\n", test->name);
 			ERR_print_errors_fp(stderr);
 			goto err;
 		}
 	}
 
-	if (!BN_is_zero(result)) {
-		print_failure(result, a, test->name);
+	if (!BN_is_zero(got)) {
+		print_failure(got, a, test->name);
 		goto err;
 	}
 
@@ -116,27 +116,27 @@ bn_mod_exp_zero_word_test(BN_CTX *ctx)
 {
 	const char *name = "BN_mod_exp_mont_word";
 	const BIGNUM *one;
-	BIGNUM *p, *result;
+	BIGNUM *p, *got;
 	int failed = 1;
 
 	BN_CTX_start(ctx);
 
 	if ((p = BN_CTX_get(ctx)) == NULL)
 		errx(1, "BN_CTX_get");
-	if ((result = BN_CTX_get(ctx)) == NULL)
+	if ((got = BN_CTX_get(ctx)) == NULL)
 		errx(1, "BN_CTX_get");
 
 	one = BN_value_one();
 	BN_zero(p);
 
-	if (!BN_mod_exp_mont_word(result, 1, p, one, ctx, NULL)) {
+	if (!BN_mod_exp_mont_word(got, 1, p, one, ctx, NULL)) {
 		fprintf(stderr, "%s failed\n", name);
 		ERR_print_errors_fp(stderr);
 		goto err;
 	}
 
-	if (!BN_is_zero(result)) {
-		print_failure(result, one, name);
+	if (!BN_is_zero(got)) {
+		print_failure(got, one, name);
 		goto err;
 	}
 
