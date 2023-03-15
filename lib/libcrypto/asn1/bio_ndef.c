@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.18 2023/03/15 06:22:42 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.19 2023/03/15 06:28:55 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -110,9 +110,6 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 		goto err;
 	}
 
-	if ((ndef_aux = calloc(1, sizeof(NDEF_SUPPORT))) == NULL)
-		goto err;
-
 	if ((asn_bio = BIO_new(BIO_f_asn1())) == NULL)
 		goto err;
 
@@ -124,6 +121,13 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 		goto err;
 	if (BIO_asn1_set_suffix(asn_bio, ndef_suffix, ndef_suffix_free) <= 0)
 		goto err;
+
+	if ((ndef_aux = calloc(1, sizeof(*ndef_aux))) == NULL)
+		goto err;
+	if (BIO_ctrl(asn_bio, BIO_C_SET_EX_ARG, 0, ndef_aux) <= 0) {
+		free(ndef_aux);
+		goto err;
+	}
 
 	/* Now let callback prepend any digest, cipher etc BIOs
 	 * ASN1 structure needs.
@@ -142,14 +146,11 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 	ndef_aux->boundary = sarg.boundary;
 	ndef_aux->out = asn_bio;
 
-	BIO_ctrl(asn_bio, BIO_C_SET_EX_ARG, 0, ndef_aux);
-
 	return sarg.ndef_bio;
 
  err:
 	BIO_pop(pop_bio);
 	BIO_free(asn_bio);
-	free(ndef_aux);
 	return NULL;
 }
 
