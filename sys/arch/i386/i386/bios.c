@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.128 2023/01/30 10:49:04 jsg Exp $	*/
+/*	$OpenBSD: bios.c,v 1.129 2023/03/15 08:20:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-2001 Michael Shalayeff
@@ -125,6 +125,7 @@ const char *smbios_uninfo[] = {
 
 
 char smbios_bios_date[64];
+char smbios_bios_version[64];
 char smbios_board_vendor[64];
 char smbios_board_prod[64];
 char smbios_board_serial[64];
@@ -291,9 +292,16 @@ biosattach(struct device *parent, struct device *self, void *aux)
 					printf(" vendor %s",
 					    fixstring(scratch));
 				if ((smbios_get_string(&bios, sb->version,
-				    scratch, sizeof(scratch))) != NULL)
-					printf(" version \"%s\"",
-					    fixstring(scratch));
+				    scratch, sizeof(scratch))) != NULL) {
+					sminfop = fixstring(scratch);
+					if (sminfop != NULL) {
+						strlcpy(smbios_bios_version,
+						    sminfop,
+						    sizeof(smbios_bios_version));
+						printf(" version \"%s\"",
+						    sminfop);
+					}
+				}
 				if ((smbios_get_string(&bios, sb->release,
 				    scratch, sizeof(scratch))) != NULL) {
 					sminfop = fixstring(scratch);
