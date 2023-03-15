@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.115 2023/03/07 10:58:39 kn Exp $
+.\"	$OpenBSD: route.8,v 1.116 2023/03/15 22:39:58 jmc Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 7 2023 $
+.Dd $Mdocdate: March 15 2023 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -429,14 +429,13 @@ The mapping between letters and flags is:
 .Op Fl T Ar rtable
 .Tg
 .Cm sourceaddr
-.Op Fl inet Ns | Ns Fl inet6
 .Op Fl ifp Ar ifname
 .Op Ar address
 .Xc
 Set the preferred source address.
 If
 .Ar address
-is omitted, the preferred source address is printed, if set.
+is omitted, the preferred source addresses are printed.
 If
 .Fl ifp
 is used, the address assigned to the interface
