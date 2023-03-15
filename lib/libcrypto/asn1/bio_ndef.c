@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.17 2023/03/13 07:31:09 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.18 2023/03/15 06:22:42 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -120,8 +120,10 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 		goto err;
 	pop_bio = asn_bio;
 
-	BIO_asn1_set_prefix(asn_bio, ndef_prefix, ndef_prefix_free);
-	BIO_asn1_set_suffix(asn_bio, ndef_suffix, ndef_suffix_free);
+	if (BIO_asn1_set_prefix(asn_bio, ndef_prefix, ndef_prefix_free) <= 0)
+		goto err;
+	if (BIO_asn1_set_suffix(asn_bio, ndef_suffix, ndef_suffix_free) <= 0)
+		goto err;
 
 	/* Now let callback prepend any digest, cipher etc BIOs
 	 * ASN1 structure needs.
