@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.4 2022/11/26 16:08:52 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.5 2023/03/15 06:34:07 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -740,6 +740,8 @@ pkey_ecx_digestsign(EVP_MD_CTX *md_ctx, unsigned char *out_sig,
 	if (!ED25519_sign(out_sig, message, message_len, ecx_key->pub_key,
 	    ecx_key->priv_key))
 		return 0;
+
+	*out_sig_len = ecx_sig_size(pkey_ctx->pkey);
 
 	return 1;
 }
