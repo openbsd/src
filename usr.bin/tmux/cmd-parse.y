@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-parse.y,v 1.49 2022/10/25 09:12:05 nicm Exp $ */
+/* $OpenBSD: cmd-parse.y,v 1.50 2023/03/15 08:15:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1615,13 +1615,24 @@ yylex_token(int ch)
 
 	for (;;) {
 		/* EOF or \n are always the end of the token. */
-		if (ch == EOF || (state == NONE && ch == '\n'))
+		if (ch == EOF) {
+			log_debug("%s: end at EOF", __func__);
 			break;
+		}
+		if (state == NONE && ch == '\n') {
+			log_debug("%s: end at EOL", __func__);
+			break;
+		}
 
 		/* Whitespace or ; or } ends a token unless inside quotes. */
-		if ((ch == ' ' || ch == '\t' || ch == ';' || ch == '}') &&
-		    state == NONE)
+		if (state == NONE && (ch == ' ' || ch == '\t')) {
+			log_debug("%s: end at WS", __func__);
 			break;
+		}
+		if (state == NONE && (ch == ';' || ch == '}')) {
+			log_debug("%s: end at %c", __func__, ch);
+			break;
+		}
 
 		/*
 		 * Spaces and comments inside quotes after \n are removed but

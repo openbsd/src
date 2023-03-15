@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.58 2023/01/08 23:34:46 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.59 2023/03/15 08:15:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -96,6 +96,22 @@ args_copy_value(struct args_value *to, struct args_value *from)
 		to->string = xstrdup(from->string);
 		break;
 	}
+}
+
+/* Type to string. */
+static const char *
+args_type_to_string (enum args_type type)
+{
+	switch (type)
+	{
+	case ARGS_NONE:
+		return "NONE";
+	case ARGS_STRING:
+		return "STRING";
+	case ARGS_COMMANDS:
+		return "COMMANDS";
+	}
+	return "INVALID";
 }
 
 /* Get value as string. */
@@ -250,8 +266,8 @@ args_parse(const struct args_parse *parse, struct args_value *values,
 			value = &values[i];
 
 			s = args_value_as_string(value);
-			log_debug("%s: %u = %s (type %d)", __func__, i, s,
-			    value->type);
+			log_debug("%s: %u = %s (type %s)", __func__, i, s,
+			    args_type_to_string (value->type));
 
 			if (parse->cb != NULL) {
 				type = parse->cb(args, args->count, cause);
@@ -796,6 +812,8 @@ args_make_commands(struct args_command_state *state, int argc, char **argv,
 	}
 
 	cmd = xstrdup(state->cmd);
+	log_debug("%s: %s", __func__, cmd);
+	cmd_log_argv(argc, argv, __func__);
 	for (i = 0; i < argc; i++) {
 		new_cmd = cmd_template_replace(cmd, argv[i], i + 1);
 		log_debug("%s: %%%u %s: %s", __func__, i + 1, argv[i], new_cmd);

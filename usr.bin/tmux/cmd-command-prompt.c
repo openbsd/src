@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-command-prompt.c,v 1.65 2022/05/30 12:55:25 nicm Exp $ */
+/* $OpenBSD: cmd-command-prompt.c,v 1.66 2023/03/15 08:15:39 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -179,10 +179,10 @@ cmd_command_prompt_callback(struct client *c, void *data, const char *s,
 
 	if (s == NULL)
 		goto out;
+
 	if (done) {
 		if (cdata->flags & PROMPT_INCREMENTAL)
 			goto out;
-
 		cmd_append_argv(&cdata->argc, &cdata->argv, s);
 		if (++cdata->current != cdata->count) {
 			prompt = &cdata->prompts[cdata->current];
@@ -193,8 +193,11 @@ cmd_command_prompt_callback(struct client *c, void *data, const char *s,
 
 	argc = cdata->argc;
 	argv = cmd_copy_argv(cdata->argc, cdata->argv);
-	cmd_append_argv(&argc, &argv, s);
+	if (!done)
+		cmd_append_argv(&argc, &argv, s);
+
 	if (done) {
+		cmd_free_argv(cdata->argc, cdata->argv);
 		cdata->argc = argc;
 		cdata->argv = cmd_copy_argv(argc, argv);
 	}
