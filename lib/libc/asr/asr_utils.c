@@ -1,4 +1,4 @@
-/*	$OpenBSD: asr_utils.c,v 1.20 2022/12/27 17:10:06 jmc Exp $	*/
+/*	$OpenBSD: asr_utils.c,v 1.21 2023/03/15 22:12:00 millert Exp $	*/
 /*
  * Copyright (c) 2009-2012	Eric Faurot	<eric@faurot.net>
  *
@@ -123,7 +123,7 @@ dname_expand(const unsigned char *data, size_t len, size_t offset,
 
 	for (; (n = data[offset]); ) {
 		if ((n & 0xc0) == 0xc0) {
-			if (offset + 2 > len)
+			if (offset + 1 >= len)
 				return (-1);
 			ptr = 256 * (n & ~0xc0) + data[offset + 1];
 			if (ptr >= start)
@@ -133,7 +133,7 @@ dname_expand(const unsigned char *data, size_t len, size_t offset,
 			offset = start = ptr;
 			continue;
 		}
-		if (offset + n + 1 > len)
+		if (offset + n + 1 >= len)
 			return (-1);
 
 		if (dname_check_label(data + offset + 1, n) == -1)
