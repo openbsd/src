@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.43 2022/12/16 13:41:55 schwarze Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.44 2023/03/15 06:14:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -380,10 +380,9 @@ BIO_write(BIO *b, const void *in, int inl)
 	size_t writebytes = 0;
 	int ret;
 
-	if (b == NULL) {
-		BIOerror(ERR_R_PASSED_NULL_PARAMETER);
-		return (-1);
-	}
+	/* Not an error. Things like SMIME_text() assume that this succeeds. */
+	if (b == NULL)
+		return (0);
 
 	if (inl <= 0)
 		return (0);
