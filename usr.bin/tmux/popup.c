@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.47 2023/01/20 21:36:00 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.48 2023/03/15 19:23:22 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -253,6 +253,7 @@ popup_draw_cb(struct client *c, void *data, struct screen_redraw_ctx *rctx)
 		tty_draw_line(tty, &s, 0, i, pd->sx, px, py + i, &defaults,
 		    palette);
 	}
+	screen_free(&s);
 	if (pd->md != NULL) {
 		c->overlay_check = NULL;
 		c->overlay_data = NULL;
