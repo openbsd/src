@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.11 2022/12/08 07:18:47 tb Exp $	*/
+/*	$OpenBSD: bn_mod_exp.c,v 1.12 2023/03/15 04:26:23 jsing Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,6 +89,15 @@ static const struct mod_exp_test {
 #define N_MOD_EXP_FN (sizeof(mod_exp_fn) / sizeof(mod_exp_fn[0]))
 
 static int
+rand_neg(void)
+{
+	static unsigned int neg = 0;
+	static int sign[8] = { 0, 0, 0, 1, 1, 0, 1, 1 };
+
+	return (sign[(neg++) % 8]);
+}
+
+static int
 test_mod_exp(const BIGNUM *result_simple, const BIGNUM *a, const BIGNUM *b,
     const BIGNUM *m, BN_CTX *ctx, const struct mod_exp_test *test)
 {
@@ -161,14 +170,18 @@ main(int argc, char *argv[])
 	if ((result_simple = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	for (i = 0; i < 200; i++) {
+	for (i = 0; i < 1000; i++) {
 		c = arc4random() % BN_BITS - BN_BITS2;
 		if (!BN_rand(a, NUM_BITS + c, 0, 0))
 			goto err;
 
+		BN_set_negative(a, rand_neg());
+
 		c = arc4random() % BN_BITS - BN_BITS2;
 		if (!BN_rand(b, NUM_BITS + c, 0, 0))
 			goto err;
+
+		BN_set_negative(b, rand_neg());
 
 		c = arc4random() % BN_BITS - BN_BITS2;
 		if (!BN_rand(m, NUM_BITS + c, 0, 1))
