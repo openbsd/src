@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.96 2023/02/10 14:34:16 visa Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.97 2023/03/15 08:24:56 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -490,15 +490,21 @@ dmi_first_match(const struct dmi_system_id *sysid)
 
 #if NBIOS > 0
 extern char smbios_bios_date[];
+extern char smbios_bios_version[];
 #endif
 
 const char *
 dmi_get_system_info(int slot)
 {
-	WARN_ON(slot != DMI_BIOS_DATE);
 #if NBIOS > 0
-	if (slot == DMI_BIOS_DATE)
+	switch (slot) {
+	case DMI_BIOS_DATE:
 		return smbios_bios_date;
+	case DMI_BIOS_VERSION:
+		return smbios_bios_version;
+	default:
+		printf("%s slot %d not handled\n", __func__, slot);
+	}
 #endif
 	return NULL;
 }
