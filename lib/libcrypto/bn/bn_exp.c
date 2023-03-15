@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.37 2023/02/03 05:30:49 jsing Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.38 2023/03/15 04:30:20 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -459,12 +459,9 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 #endif
 
 	/* prepare a^1 in Montgomery domain */
-	if (a->neg || BN_ucmp(a, m) >= 0) {
-		if (!BN_mod_ct(&am, a,m, ctx))
-			goto err;
-		if (!BN_to_montgomery(&am, &am, mont, ctx))
-			goto err;
-	} else if (!BN_to_montgomery(&am, a,mont, ctx))
+	if (!BN_nnmod(&am, a, m, ctx))
+		goto err;
+	if (!BN_to_montgomery(&am, &am, mont, ctx))
 		goto err;
 
 #if defined(OPENSSL_BN_ASM_MONT5)
