@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.419 2023/02/10 14:34:16 visa Exp $ */
+/* $OpenBSD: acpi.c,v 1.420 2023/03/15 13:01:40 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2963,6 +2963,12 @@ acpi_attach_deps(struct acpi_softc *sc, struct aml_node *node)
 
 	for (i = 0; i < res.length; i++) {
 		val = res.v_package[i];
+		if (val->type == AML_OBJTYPE_NAMEREF) {
+			node = aml_searchrel(node,
+			    aml_getname(val->v_nameref));
+			if (node)
+				val = node->value;
+		}
 		if (val->type == AML_OBJTYPE_OBJREF)
 			val = val->v_objref.ref;
 		if (val->type != AML_OBJTYPE_DEVICE)
