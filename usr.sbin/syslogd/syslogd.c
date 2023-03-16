@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.276 2022/12/28 21:30:19 jmc Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.277 2023/03/16 18:22:08 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -1950,6 +1950,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		msghdr.msg_iovlen = IOVCNT;
 		if (sendmsg(f->f_file, &msghdr, 0) == -1) {
 			switch (errno) {
+			case EACCES:
 			case EADDRNOTAVAIL:
 			case EHOSTDOWN:
 			case EHOSTUNREACH:
