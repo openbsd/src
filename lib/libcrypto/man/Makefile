@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.242 2022/12/23 15:59:34 schwarze Exp $
+# $OpenBSD: Makefile,v 1.243 2023/03/16 15:06:17 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -173,6 +173,7 @@ MAN=	\
 	ESS_SIGNING_CERT_new.3 \
 	EVP_AEAD_CTX_init.3 \
 	EVP_BytesToKey.3 \
+	EVP_CIPHER_meth_new.3 \
 	EVP_DigestInit.3 \
 	EVP_DigestSignInit.3 \
 	EVP_DigestVerifyInit.3 \
