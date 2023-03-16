@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get0_signature.3,v 1.7 2021/07/06 16:05:44 schwarze Exp $
+.\" $OpenBSD: X509_get0_signature.3,v 1.8 2023/03/16 12:01:47 job Exp $
 .\" selective merge up to:
 .\" OpenSSL man3/X509_get0_signature 2f7a2520 Apr 25 17:28:08 2017 +0100
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 6 2021 $
+.Dd $Mdocdate: March 16 2023 $
 .Dt X509_GET0_SIGNATURE 3
 .Os
 .Sh NAME
@@ -74,6 +74,7 @@
 .Nm X509_REQ_get0_signature ,
 .Nm X509_CRL_get0_signature ,
 .Nm X509_get0_tbs_sigalg ,
+.Nm X509_CRL_get0_tbs_sigalg ,
 .Nm X509_get_signature_type ,
 .Nm X509_get_signature_nid ,
 .Nm X509_REQ_get_signature_nid ,
@@ -102,6 +103,10 @@
 .Ft const X509_ALGOR *
 .Fo X509_get0_tbs_sigalg
 .Fa "const X509 *x"
+.Fc
+.Ft const X509_ALGOR *
+.Fo X509_CRL_get0_tbs_sigalg
+.Fa "const X509_CRL *crl"
 .Fc
 .Ft int
 .Fo X509_get_signature_type
@@ -135,8 +140,13 @@ or
 .Fa crl ,
 respectively.
 .Fn X509_get0_tbs_sigalg
-returns the signature algorithm in the signed portion of
-.Fa x .
+and
+.Fn X509_CRL_get0_tbs_sigalg
+return the signature algorithm in the signed portion of
+.Fa x
+or
+.Fa crl ,
+respectively.
 The values returned are internal pointers
 that must not be freed by the caller.
 .Pp
@@ -197,3 +207,7 @@ and
 first appeared in OpenSSL 1.1.0.
 All these functions have been available since
 .Ox 6.3 .
+.Pp
+.Fn X509_CRL_get0_tbs_sigalg
+first appeared in LibreSSL 3.7.1 and has been available since
+.Ox 7.3 .
