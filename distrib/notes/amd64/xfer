@@ -1,11 +1,11 @@
-dnl	$OpenBSD: xfer,v 1.16 2019/08/01 19:42:52 jmc Exp $
+dnl	$OpenBSD: xfer,v 1.17 2023/03/16 18:04:07 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM
 	FFS partitions
 	DOS (FAT) partitions
-dnl	EXT2 partitions
-dnl	Remote NFS partition
+	EXT2 partitions (NOT supported if booting from floppy)
+	Remote NFS partition (NOT supported if booting from floppy)
 	HTTP
 
 If you can't (or don't want to) boot off a CD-ROM, you can use a floppy
@@ -43,6 +43,6 @@ Creating a PXE network bootable setup using OpenBSD or other Unix-like system:
 
 OpenBSDXferShortPrelude
 
-dnl OpenBSDXferNFS
-dnl
+OpenBSDXferNFS
+
 OpenBSDXferFFS

@@ -1,6 +1,4 @@
-dnl	$OpenBSD: whatis,v 1.4 2019/04/24 13:26:15 visa Exp $
+dnl	$OpenBSD: whatis,v 1.5 2023/03/16 18:04:08 miod Exp $
 
 OpenBSD/MACHINE is a port intended to run on MIPS64-based systems that utilize
 the Cavium OCTEON, OCTEON Plus, OCTEON II, and OCTEON III system on chips.
-OpenBSD/MACHINE initially aims to provide support for the Portwell CAM-0100,
-Ubiquiti Networks EdgeRouter LITE / PoE, and D-Link DSR-500.

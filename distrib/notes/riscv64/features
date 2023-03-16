@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.2 2021/06/19 03:10:17 jsg Exp $
+dnl	$OpenBSD: features,v 1.3 2023/03/16 18:04:08 miod Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -21,7 +21,7 @@ dnl (i.e. md_consoleinfo is not empty)
 define({:-MDSERCONS-:},)dnl
 dnl
 dnl define if SMP kernels are provided
-define({:-MDSMP-:},)dnl
+define({:-MDSMP-:},1)dnl
 dnl
 dnl define if shared libraries are provided
 define({:-MDSO-:},1)dnl
@@ -31,10 +31,10 @@ define({:-MDTZ-:},1)dnl
 dnl
 dnl define if glass console is possible
 dnl (XXX does not imply availability of X servers though)
-dnl define({:-MDX-:},)dnl
+define({:-MDX-:},)dnl
 dnl
 dnl define if the X server can't start until machdep.allow_aperture is set
-dnl define({:-MDXAPERTURE-:},)dnl
+define({:-MDXAPERTURE-:},)dnl
 dnl
 dnl define if the X server can start without a configuration file
-dnl define({:-MDXDM-:},)dnl
+define({:-MDXDM-:},)dnl

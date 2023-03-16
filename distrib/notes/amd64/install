@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.19 2016/02/16 14:48:43 krw Exp $
+dnl	$OpenBSD: install,v 1.20 2023/03/16 18:04:07 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk.  The easiest way,
@@ -28,12 +28,10 @@ OpenBSDInstallPart2
 	If some action doesn't eventually happen, or the spinning cursor
 	has stopped and nothing further has happened, either your boot
 	floppy is bad or you are having hardware problems. If trying
-	another floppy disk doesn't help, try booting after disabling your
-	CPU's internal and external caches (if any).  If it still doesn't
-	work, OpenBSD probably can't be run on your hardware.  This can
-	probably be considered a bug, so you might want to report it.  If
-	you do, please {:-include-:} as many details about your system
-	configuration as you can.
+	another floppy disk doesn't help, OpenBSD probably can't be run on
+	your hardware.  This can probably be considered a bug, so you might
+	want to report it.  If you do, please {:-include-:} as many details
+	about your system configuration as you can.
 
 OpenBSDInstallPart3
 

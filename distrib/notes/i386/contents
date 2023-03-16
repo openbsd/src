@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.80 2022/09/19 04:29:55 jsg Exp $
+dnl	$OpenBSD: contents,v 1.81 2023/03/16 18:04:08 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -38,18 +38,18 @@ OpenBSDfloppydesc(single,The)
 
 DistributionDescription(eight)
 
-OpenBSDbase(238511290,479799296)
+OpenBSDbase(242768735,476588310)
 
-OpenBSDcomp(40782880,148858880)
+OpenBSDcomp(41180663,141739256)
 
-OpenBSDgame(2757814,6639616)
+OpenBSDgame(2757900,6332862)
 
-OpenBSDman(7793027,32843776)
+OpenBSDman(8020003,30950143)
 
-OpenBSDxbase(48260256,133365760)
+OpenBSDxbase(52182908,144782097)
 
-OpenBSDxfont(23519021,38381568)
+OpenBSDxfont(23519117,35818896)
 
-OpenBSDxserv(14644521,38502400)
+OpenBSDxserv(14624695,38357920)
 
-OpenBSDxshare(4669241,30439424)
+OpenBSDxshare(4694339,24958258)

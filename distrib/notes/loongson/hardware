@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.12 2021/01/16 09:08:09 visa Exp $
+dnl	$OpenBSD: hardware,v 1.13 2023/03/16 18:04:08 miod Exp $
 The following machines are supported by OpenBSD/MACHINE:
 
 	Lemote Fuloong 2F
@@ -15,10 +15,10 @@ The following machines are supported by OpenBSD/MACHINE:
 	  all onboard devices (keyboard, trackpad, display, SD card reader,
 	  USB ports, Ethernet adapter, wireless network adapter, audio,
 	  webcam on the 8.9" model, battery and power information) are
-	  supported; suspend/resume is also supported.
+	  supported.
+dnl do not mention suspend/resume until it gets fixed.
 
 	Gdium Liberty 1000
 	  all onboard devices (keyboard, trackpad, display, SD card reader,
 	  USB ports, Ethernet adapter, wireless network adapter,
-	  battery information) are supported except for the audio controller;
-	  suspend/resume is not supported yet.
+	  battery information) are supported except for the audio controller.

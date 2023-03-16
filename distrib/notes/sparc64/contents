@@ -1,10 +1,10 @@
-dnl	$OpenBSD: contents,v 1.56 2022/09/19 04:29:56 jsg Exp $
+dnl	$OpenBSD: contents,v 1.57 2023/03/16 18:04:08 miod Exp $
 TopPart
 
 OpenBSDminiroot
 			It can be copied to the swap partition of an existing
-			OpenBSD, Solaris, NetBSD, or Linux installation to
-			allow installing or upgrading to OpenBSD OSREV.
+			OpenBSD or Solaris installation to allow installing
+			or upgrading to OpenBSD OSREV.
 
 OpenBSDfloppy
 			This floppy image will boot on some SBus-based
@@ -30,9 +30,10 @@ OpenBSDrd
 
 OpenBSDinstalliso
 
+OpenBSDinstallfs
+
 OpenBSDcd
 
-	installboot	The OpenBSD/MACHINE boot loader installation program.
 	bootblk		The OpenBSD/MACHINE boot block.
 	ofwboot		The OpenBSD/MACHINE secondary boot loader.
 	ofwboot.net	The OpenBSD/MACHINE network boot loader.
@@ -48,18 +49,18 @@ OpenBSDfloppydesc(two,Each,s)
 
 DistributionDescription(eight)
 
-OpenBSDbase(196130365,464799744)
+OpenBSDbase(198247474,465523925)
 
-OpenBSDcomp(79563695,303706112)
+OpenBSDcomp(80159223,296518479)
 
-OpenBSDgame(2910381,7479296)
+OpenBSDgame(2911259,7140710)
 
-OpenBSDman(7799738,32860160)
+OpenBSDman(8026239,30965601)
 
-OpenBSDxbase(43859576,142434304)
+OpenBSDxbase(44293858,141811302)
 
-OpenBSDxfont(23519028,38381568)
+OpenBSDxfont(23519071,35818896)
 
-OpenBSDxserv(10952605,31709184)
+OpenBSDxserv(10928337,32012268)
 
-OpenBSDxshare(4670097,30439424)
+OpenBSDxshare(4695574,24958269)

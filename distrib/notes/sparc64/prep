@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.25 2015/03/27 20:50:40 miod Exp $
+dnl	$OpenBSD: prep,v 1.26 2023/03/16 18:04:08 miod Exp $
 If your UltraSPARC machine is somewhat old, it might need a firmware update
 before it can be used under OpenBSD. You are advised to try to install
 OpenBSD first; if it can't boot or fails mysteriously, you might need to
@@ -84,5 +84,5 @@ Firmware update information can be found at
   http://www.oracle.com/technetwork/systems/patches/firmware/release-history-jsp-138416.html
 -:})dnl
 
-Follow the patch installation notes very carefully. You will need to open
+Follow the patch installation notes very carefully. You may need to open
 your machine in order to apply this patch.

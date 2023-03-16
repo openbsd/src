@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.56 2021/12/25 17:26:13 tj Exp $
+dnl	$OpenBSD: INSTALL,v 1.57 2023/03/16 18:04:07 miod Exp $
 include(INCLUDE/../m4.common)dnl
 includeit(features)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
@@ -101,12 +101,14 @@ Getting the OpenBSD System onto Useful Media:
 includeit(xfer)
 
 
+ifelse(MACHINE,powerpc64,,{:-dnl
 Preparing your System for OpenBSD Installation:
 -----------------------------------------------
 
 includeit(prep)
 
 
+-:})dnl
 Installing the OpenBSD System:
 ------------------------------
 

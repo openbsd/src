@@ -1,7 +1,4 @@
-dnl	$OpenBSD: prep,v 1.16 2022/09/12 10:16:09 jsg Exp $
-Please be aware that OpenBSD support for this platform is far from
-complete.
-
+dnl	$OpenBSD: prep,v 1.17 2023/03/16 18:04:08 miod Exp $
 To perform an installation you must be able to interact with the
 console of the machine.  In some cases this can be done by an attached
 monitor and keyboard.  In others a serial console is required.
@@ -85,10 +82,9 @@ Install on Apple Silicon:
 
 Install on Raspberry Pi:
 
-  As of OpenBSD 6.9, the standard miniroot supports at least the
-  Raspberry Pi 3 and 4 with no additional firmware.  Some devices may
-  not be functional with Pi 3+.  It is recommended that you install
-  to a USB storage device.
+  The standard miniroot supports at least the Raspberry Pi 3 and 4 with
+  no additional firmware.  Some devices may not be functional with Pi 3+.
+  It is recommended that you install to a USB storage device.
 
   The default system console is on the TTL serial interface on the
   TXD/RXD/GND pins of the https://pinout.xyz/ header on the board.

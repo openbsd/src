@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.35 2022/09/12 10:16:09 jsg Exp $
+dnl	$OpenBSD: prep,v 1.36 2023/03/16 18:04:07 miod Exp $
 OpenBSD/MACHINE requires the SRM console.  Some alphas come with
 the AlphaBIOS (also known as the ARC firmware on older machines) instead;
 this is what Windows NT uses. It is fairly simple to replace the AlphaBIOS
@@ -25,15 +25,7 @@ Switching your MACHINE to SRM console:
 
     You can get replacement firmware either from a firmware update CD-ROM,
     which can be downloaded from
-	ftp://ftp.hp.com/pub/alphaserver/firmware/v73.zip
-    However, this CD-ROM image only supports AlphaServer DS10, DS20, DS20L,
-    and ES40.  Firmware update for other models can be picked individually
-    via FTP from
-	ftp://ftp.hp.com/pub/alphaserver/firmware/retired_platforms/
-
-    Please refer to
-	http://h18002.www1.hp.com/alphaserver/firmware/index.html
-    for more information.
+        https://archive.org/details/alphafwupcds
 
     Note that, on most models, upgrading the firmware requires a jumper
     to be moved on the motherboards; refer to the firmware update
@@ -48,9 +40,7 @@ AXPpci33 Motherboard specific notes:
     edition). Although ftp.digital.com does not exist anymore, a few
     copies of this document are scattered across various ftp servers
     on the globe, such as
-	ftp://ftp.uniroma2.it/Digital/support/axppci/design_guide.ps.Z
-    or
-        http://vt100.net/mirror/mds-199909/cd1/alpha/axpcidgc.pdf
+        https://manx-docs.org/collections/antonio/dec/MDS-2000-01/cd1/ALPHA/AXPCIDGC.PDF
     
     Note that there are two flavors of PC serial connectors.  If you
     have the wrong kind, you won't get any output from the serial console.
@@ -92,28 +82,23 @@ Using the SRM console:
 
 	boot_file
 		Name of the kernel to boot.  If this variable is empty,
-		"bsd" will be loaded.  Note that this variable does not
-		exist in all versions of the SRM console, in which case
-		you need to always boot manually and specify a kernel
-		filename if it differs from "bsd".
-
-	boot_osflags
-		Flags to pass to the kernel (there is no need to prefix
-		them with a `-' dash sign).
+		the default "bsd" will be loaded.  Note that this variable
+		does not exist in all versions of the SRM console.
 
     To see a list of all variables on your machine, use the "show"
     command with no arguments.  If there are too many of them, you
     might want to page with "show | more".
 
-    You can bypass the boot_file and boot_osflags values from the command
-    prompt, with the -fi (to override boot_file) and -fl (to override
-    boot_osflags) options. For example,
+    You can bypass the boot_file value from the command prompt, with the
+    -fi option. For example,
 
-	boot -fi bsd -fl c dka0
+	boot -fi bsd.rd dka0
 
-    will boot the "bsd" kernel with the "c" flag on dka0.  However, some
-    versions of the SRM console (mainly on DEC 3000 series) will only let
-    you specify uppercase filenames.
+    will boot the "bsd.rd" kernel on dka0.  However, some versions of the
+    SRM console (mainly on DEC 3000 series) will only let you specify
+    uppercase filenames. It is preferred to boot without any particular
+    option, and enter the correct filename at the boot loader "boot>"
+    prompt.
 
 USB support on the XP1000:
 
@@ -142,8 +127,7 @@ EISA configuration:
 
     Redistributing ECU is not allowed, however a copy of it can be
     downloaded from:
-
-    ftp://ftp.hp.com/pub/alphaserver/firmware/other/utility/ecu/ntecuv111a.zip
+      https://archive.org/details/digitalecudisk
 
     Extract this archive to a newly FAT-formatted 3"1/2 floppy disk to get
     a pristine ECU disk.
