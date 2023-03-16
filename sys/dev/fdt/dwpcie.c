@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.40 2023/03/07 10:24:11 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.41 2023/03/16 18:33:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -170,6 +170,19 @@
 #define  ANATOP_PLLOUT_CTL_SEL_MASK			0xf
 #define ANATOP_PLLOUT_DIV			0x7c
 #define  ANATOP_PLLOUT_DIV_SYSPLL1			0x7
+
+/* Rockchip */
+#define PCIE_CLIENT_GENERAL_CON			0x0000
+#define  PCIE_CLIENT_DEV_TYPE_RC		((0xf << 4) << 16 | (0x4 << 4))
+#define  PCIE_CLIENT_LINK_REQ_RST_GRT		((1 << 3) << 16 | (1 << 3))
+#define  PCIE_CLIENT_APP_LTSSM_ENABLE		((1 << 2) << 16 | (1 << 2))
+#define PCIE_CLIENT_HOT_RESET_CTRL		0x0180
+#define  PCIE_CLIENT_APP_LTSSM_ENABLE_ENHANCE	((1 << 4) << 16 | (1 << 4))
+#define PCIE_CLIENT_LTSSM_STATUS		0x0300
+#define  PCIE_CLIENT_RDLH_LINK_UP		(1 << 17)
+#define  PCIE_CLIENT_SMLH_LINK_UP		(1 << 16)
+#define  PCIE_CLIENT_LTSSM_MASK			(0x1f << 0)
+#define  PCIE_CLIENT_LTSSM_UP			(0x11 << 0)
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -377,6 +390,17 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	if (OF_is_compatible(faa->fa_node, "amlogic,g12a-pcie")) {
 		glue = OF_getindex(faa->fa_node, "cfg", "reg-names");
+		if (glue < 0 || glue >= faa->fa_nreg) {
+			printf(": no glue registers\n");
+			return;
+		}
+
+		sc->sc_glue_base = faa->fa_reg[glue].addr;
+		sc->sc_glue_size = faa->fa_reg[glue].size;
+	}
+
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie")) {
+		glue = OF_getindex(faa->fa_node, "apb", "reg-names");
 		if (glue < 0 || glue >= faa->fa_nreg) {
 			printf(": no glue registers\n");
 			return;
@@ -1226,17 +1250,42 @@ dwpcie_fu740_init(struct dwpcie_softc *sc)
 }
 
 int
+dwpcie_rk3568_link_up(struct dwpcie_softc *sc)
+{
+	uint32_t reg;
+
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_glue_ioh,
+	    PCIE_CLIENT_LTSSM_STATUS);
+	if ((reg & PCIE_CLIENT_SMLH_LINK_UP) &&
+	    (reg & PCIE_CLIENT_RDLH_LINK_UP) &&
+	    (reg & PCIE_CLIENT_LTSSM_MASK) == PCIE_CLIENT_LTSSM_UP)
+		return 1;
+	return 0;
+}
+
+int
 dwpcie_rk3568_init(struct dwpcie_softc *sc)
 {
 	uint32_t *reset_gpio;
 	ssize_t reset_gpiolen;
+	int error, timo;
+
+	sc->sc_num_viewport = 8;
+
+	if (bus_space_map(sc->sc_iot, sc->sc_glue_base,
+	    sc->sc_glue_size, 0, &sc->sc_glue_ioh))
+		return ENOMEM;
 
 	reset_assert_all(sc->sc_node);
+	/* Power must be enabled before initializing the PHY. */
 	regulator_enable(OF_getpropint(sc->sc_node, "vpcie3v3-supply", 0));
 	phy_enable(sc->sc_node, "pcie-phy");
 	reset_deassert_all(sc->sc_node);
 
 	clock_enable_all(sc->sc_node);
+
+	if (dwpcie_rk3568_link_up(sc))
+		return 0;
 
 	reset_gpiolen = OF_getproplen(sc->sc_node, "reset-gpios");
 	if (reset_gpiolen > 0) {
@@ -1245,12 +1294,50 @@ dwpcie_rk3568_init(struct dwpcie_softc *sc)
 		    reset_gpiolen);
 		gpio_controller_config_pin(reset_gpio, GPIO_CONFIG_OUTPUT);
 		gpio_controller_set_pin(reset_gpio, 1);
-		free(reset_gpio, M_TEMP, reset_gpiolen);
 	}
 
-	sc->sc_num_viewport = 8;
+	bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+	    PCIE_CLIENT_HOT_RESET_CTRL, PCIE_CLIENT_APP_LTSSM_ENABLE_ENHANCE);
+	bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+	    PCIE_CLIENT_GENERAL_CON, PCIE_CLIENT_DEV_TYPE_RC);
 
-	return 0;
+	/* Assert PERST#. */
+	if (reset_gpiolen > 0)
+		gpio_controller_set_pin(reset_gpio, 0);
+
+	/* Enable LTSSM. */
+	bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh, PCIE_CLIENT_GENERAL_CON,
+	    PCIE_CLIENT_LINK_REQ_RST_GRT | PCIE_CLIENT_APP_LTSSM_ENABLE);
+
+	/*
+	 * PERST# must remain asserted for at least 100us after the
+	 * reference clock becomes stable.  But also has to remain
+	 * active at least 100ms after power up.  Since we may have
+	 * just powered on the device, play it safe and use 100ms.
+	 */
+	delay(100000);
+
+	/* Deassert PERST#. */
+	if (reset_gpiolen > 0)
+		gpio_controller_set_pin(reset_gpio, 1);
+
+	/* Wait for the link to come up. */
+	for (timo = 100; timo > 0; timo--) {
+		if (dwpcie_rk3568_link_up(sc))
+			break;
+		delay(10000);
+	}
+	if (timo == 0) {
+		error = ETIMEDOUT;
+		goto err;
+	}
+
+	error = 0;
+err:
+	if (reset_gpiolen > 0)
+		free(reset_gpio, M_TEMP, reset_gpiolen);
+	
+	return error;
 }
 
 int
