@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_set_verify.3,v 1.4 2023/03/16 15:21:44 job Exp $
+.\" $OpenBSD: X509_STORE_CTX_set_verify.3,v 1.5 2023/03/16 15:45:38 job Exp $
 .\"
 .\" Copyright (c) 2021, 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -175,7 +175,7 @@ if that function was not called on the
 .Fn X509_STORE_CTX_get_check_issued
 returns the
 .Fn check_issued
-function set on the
+function pointer set on the
 .Vt X509_STORE_CTX .
 This is either the
 .Fn check_issued
