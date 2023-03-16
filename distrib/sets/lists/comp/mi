@@ -1919,6 +1919,7 @@
 ./usr/share/man/man3/ESS_SIGNING_CERT_new.3
 ./usr/share/man/man3/EVP_AEAD_CTX_init.3
 ./usr/share/man/man3/EVP_BytesToKey.3
+./usr/share/man/man3/EVP_CIPHER_meth_new.3
 ./usr/share/man/man3/EVP_DigestInit.3
 ./usr/share/man/man3/EVP_DigestSignInit.3
 ./usr/share/man/man3/EVP_DigestVerifyInit.3
