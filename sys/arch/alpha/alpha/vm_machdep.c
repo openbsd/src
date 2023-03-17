@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.49 2022/10/25 15:15:38 guenther Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.50 2023/03/17 19:20:19 miod Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -133,8 +133,10 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	 */
 	if (p1 != curproc && p1 != &proc0)
 		panic("cpu_fork: curproc");
+#ifdef DEBUG
 	if ((up->u_pcb.pcb_hw.apcb_flags & ALPHA_PCB_FLAGS_FEN) != 0)
 		printf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
+#endif
 #endif
 
 	/*
