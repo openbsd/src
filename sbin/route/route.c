@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.264 2023/03/15 08:43:51 claudio Exp $	*/
+/*	$OpenBSD: route.c,v 1.265 2023/03/17 16:11:09 claudio Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -487,6 +487,10 @@ setsource(int argc, char **argv)
 	unsigned int ifindex = 0;
 
 	cmd = argv[0];
+
+	if (argc == 1)
+		printsource(AF_UNSPEC, tableid);
+
 	while (--argc > 0) {
 		if (**(++argv)== '-') {
 			switch (key = keyword(1 + *argv)) {
@@ -505,14 +509,14 @@ setsource(int argc, char **argv)
 				if (ifindex == 0)
 					errx(1, "no such interface %s", *argv);
 				break;
+			default:
+				usage(NULL);
 			}
 		} else
 			break;
 	}
 
-	if (argc <= 0 && ifindex == 0)
-		printsource(AF_UNSPEC, tableid);
-	if (argc > 1 && ifindex == 0)
+	if (!(argc == 1 && ifindex == 0) && !(argc == 0 && ifindex != 0))
 		usage(NULL);
 
 	if (uid)
