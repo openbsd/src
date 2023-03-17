@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.14 2023/03/11 10:04:59 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.15 2023/03/17 11:14:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -82,7 +82,7 @@ struct rtr_aspa {
 	uint8_t		afi_flags;
 	uint16_t	cnt;
 	uint32_t	cas;
-	uint32_t	spas[0];
+	/* array of spas with cnt elements follows */
 };
 
 struct rtr_endofdata {
@@ -669,7 +669,10 @@ rtr_parse_aspa(struct rtr_session *rs, uint8_t *buf, size_t len)
 			return -1;
 		}
 		for (i = 0; i < cnt; i++) {
-			aspa->tas[i] = ntohl(rtr_aspa.spas[i]);
+			uint32_t tas;
+			memcpy(&tas, buf + offset + i * sizeof(tas),
+			    sizeof(tas));
+			aspa->tas[i] = ntohl(tas);
 			aspa->tas_aid[i] = aid;
 		}
 	}
