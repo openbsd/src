@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.68 2022/02/03 17:18:22 guenther Exp $
+.\"	$OpenBSD: malloc.9,v 1.69 2023/03/17 19:44:15 millert Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 3 2022 $
+.Dd $Mdocdate: March 17 2023 $
 .Dt MALLOC 9
 .Os
 .Sh NAME
@@ -173,6 +173,8 @@ VFS mount structs.
 NFS request headers.
 .It Dv M_NFSMNT
 NFS mount structures.
+.It Dv M_LOG
+Messages in kernel log stash.
 .It Dv M_VNODE
 Dynamically allocated vnodes.
 .It Dv M_DQUOT
