@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.23 2023/03/18 09:04:05 tb Exp $
+#	$OpenBSD: Makefile,v 1.24 2023/03/18 09:09:11 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
 PROGS +=	bn_isqrt
+PROGS +=	bn_mod_exp
 PROGS +=	bn_mod_exp2_mont
-PROGS +=	bn_mod_exp_zero
 PROGS +=	bn_mod_sqrt
 PROGS +=	bn_mont
 PROGS +=	bn_mul_div
@@ -17,7 +17,7 @@ PROGS +=	bn_unit
 PROGS +=	bn_word
 
 STATIC_LINK +=	bn_isqrt
-STATIC_LINK +=	bn_mod_exp_zero
+STATIC_LINK +=	bn_mod_exp
 STATIC_LINK +=	bn_primes
 STATIC_LINK +=	bn_rand_interval
 STATIC_LINK +=	bn_test
