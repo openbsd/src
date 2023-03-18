@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.14 2023/03/18 09:09:11 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.15 2023/03/18 13:04:02 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -29,9 +29,9 @@
 
 static const struct mod_exp_zero_test {
 	const char *name;
-	int (*mod_exp_fn)(BIGNUM *,const BIGNUM *, const BIGNUM *,
+	int (*mod_exp_fn)(BIGNUM *, const BIGNUM *, const BIGNUM *,
 	    const BIGNUM *, BN_CTX *);
-	int (*mod_exp_mont_fn)(BIGNUM *,const BIGNUM *, const BIGNUM *,
+	int (*mod_exp_mont_fn)(BIGNUM *, const BIGNUM *, const BIGNUM *,
 	    const BIGNUM *, BN_CTX *, BN_MONT_CTX *);
 } mod_exp_zero_test_data[] = {
 	INIT_MOD_EXP_FN(BN_mod_exp),
@@ -180,9 +180,9 @@ run_bn_mod_exp_zero_tests(void)
 
 static const struct mod_exp_test {
 	const char *name;
-	int (*mod_exp_fn)(BIGNUM *,const BIGNUM *, const BIGNUM *,
+	int (*mod_exp_fn)(BIGNUM *, const BIGNUM *, const BIGNUM *,
 	    const BIGNUM *, BN_CTX *);
-	int (*mod_exp_mont_fn)(BIGNUM *,const BIGNUM *, const BIGNUM *,
+	int (*mod_exp_mont_fn)(BIGNUM *, const BIGNUM *, const BIGNUM *,
 	    const BIGNUM *, BN_CTX *, BN_MONT_CTX *);
 } mod_exp_fn[] = {
 	INIT_MOD_EXP_FN(BN_mod_exp),
