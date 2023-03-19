@@ -1,4 +1,4 @@
-/*	$OpenBSD: mda_variables.c,v 1.7 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: mda_variables.c,v 1.8 2023/03/19 01:43:11 millert Exp $	*/
 
 /*
  * Copyright (c) 2011-2017 Gilles Chehade <gilles@poolp.org>
@@ -51,7 +51,7 @@ mda_expand_token(char *dest, size_t len, const char *token,
 {
 	char		rtoken[MAXTOKENLEN];
 	char		tmp[EXPAND_BUFFER];
-	const char     *string;
+	const char     *string = NULL;
 	char	       *lbracket, *rbracket, *content, *sep, *mods;
 	ssize_t		i;
 	ssize_t		begoff, endoff;
@@ -159,6 +159,8 @@ mda_expand_token(char *dest, size_t len, const char *token,
 		return -1;
 
 	if (string != tmp) {
+		if (string == NULL)
+			return -1;
 		if (strlcpy(tmp, string, sizeof tmp) >= sizeof tmp)
 			return -1;
 		string = tmp;
