@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_subr.c,v 1.65 2023/01/31 15:18:56 deraadt Exp $	*/
+/*	$OpenBSD: exec_subr.c,v 1.66 2023/03/19 20:32:13 kettenis Exp $	*/
 /*	$NetBSD: exec_subr.c,v 1.9 1994/12/04 03:10:42 mycroft Exp $	*/
 
 /*
@@ -383,7 +383,7 @@ vmcmd_randomize(struct proc *p, struct exec_vmcmd *cmd)
 int
 exec_setup_stack(struct proc *p, struct exec_package *epp)
 {
-	vaddr_t sgap;
+	vsize_t dist = 0;
 
 #ifdef MACHINE_STACK_GROWS_UP
 	epp->ep_maxsaddr = USRSTACK;
@@ -394,18 +394,26 @@ exec_setup_stack(struct proc *p, struct exec_package *epp)
 #endif
 	epp->ep_ssize = round_page(lim_cur(RLIMIT_STACK));
 
+#ifdef VM_MIN_STACK_ADDRESS
+	dist = USRSTACK - MAXSSIZ - MAXSSIZ_GUARD - VM_MIN_STACK_ADDRESS;
+	if (dist >> PAGE_SHIFT > 0xffffffff)
+		dist = (vsize_t)arc4random() << PAGE_SHIFT;
+	else
+		dist = (vsize_t)arc4random_uniform(dist >> PAGE_SHIFT) << PAGE_SHIFT;
+#else
 	if (stackgap_random != 0) {
-		sgap = arc4random() & (stackgap_random - 1);
-		sgap = trunc_page(sgap);
+		dist = arc4random() & (stackgap_random - 1);
+		dist = trunc_page(dist);
+	}
+#endif
 
 #ifdef MACHINE_STACK_GROWS_UP
-		epp->ep_maxsaddr += sgap;
-		epp->ep_minsaddr += sgap;
+	epp->ep_maxsaddr += dist;
+	epp->ep_minsaddr += dist;
 #else
-		epp->ep_maxsaddr -= sgap;
-		epp->ep_minsaddr -= sgap;
+	epp->ep_maxsaddr -= dist;
+	epp->ep_minsaddr -= dist;
 #endif
-	}
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to

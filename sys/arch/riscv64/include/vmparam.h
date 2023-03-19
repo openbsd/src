@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 2022/03/22 06:47:38 miod Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 2023/03/19 20:32:13 kettenis Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -175,6 +175,9 @@
 #define	VM_MINUSER_ADDRESS	(VM_MIN_USER_ADDRESS)
 // XXX OpenBSD/arm64 saves 8 * PAGE_SIZE at top of VM_MAXUSER_ADDRESS. Why?
 #define	VM_MAXUSER_ADDRESS	(VM_MAX_USER_ADDRESS)
+#ifdef _KERNEL
+#define	VM_MIN_STACK_ADDRESS	(VM_MAXUSER_ADDRESS * 3 / 4)
+#endif
 
 #define	KERNBASE		(VM_MIN_KERNEL_ADDRESS)
 

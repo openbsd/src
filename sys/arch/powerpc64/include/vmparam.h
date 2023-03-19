@@ -46,5 +46,8 @@
 #define	VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
 #define VM_MAXUSER_ADDRESS	0xbffffffffffff000UL
 #define VM_MAX_ADDRESS		0xffffffffffffffffUL
+#ifdef _KERNEL
+#define VM_MIN_STACK_ADDRESS	0x9000000000000000UL
+#endif
 #define VM_MIN_KERNEL_ADDRESS	0xc000000000000000UL
 #define VM_MAX_KERNEL_ADDRESS	0xc0000007ffffffffUL

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.29 2016/12/23 12:38:16 visa Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.30 2023/03/19 20:32:13 kettenis Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.5 1994/10/26 21:10:10 cgd Exp $	*/
 
 /*
@@ -99,6 +99,9 @@
 #define VM_MIN_ADDRESS		((vaddr_t)0x0000000000004000L)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0x0000010000000000L)
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
+#ifdef _KERNEL
+#define VM_MIN_STACK_ADDRESS	((vaddr_t)0x000000c000000000L)
+#endif
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0xc000000000000000L)
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xc000000040000000L)
 

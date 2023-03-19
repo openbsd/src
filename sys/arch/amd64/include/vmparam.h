@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.22 2019/01/03 18:59:27 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.23 2023/03/19 20:32:13 kettenis Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 2003/04/26 18:39:49 fvdl Exp $	*/
 
 /*-
@@ -94,6 +94,9 @@
 #define VM_MIN_ADDRESS		PAGE_SIZE
 #define VM_MAXUSER_ADDRESS	0x00007f7fffffc000
 #define VM_MAX_ADDRESS		0x00007fbfdfeff000
+#ifdef _KERNEL
+#define VM_MIN_STACK_ADDRESS	0x0000600000000000
+#endif
 #define VM_MIN_KERNEL_ADDRESS	0xffff800000000000
 #define VM_MAX_KERNEL_ADDRESS	0xffff800100000000
 
