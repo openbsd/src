@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.2 2023/02/15 14:10:58 kettenis Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.3 2023/03/19 08:41:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -32,6 +32,7 @@
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/timeout.h>
+#include <sys/task.h>
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
@@ -248,8 +249,9 @@ dwqe_reset_phy(struct dwqe_softc *sc)
 #define  RK3568_GMAC_TXCLK_DLY_ENA		((1 << 0) << 16 | (1 << 0))
 #define  RK3568_GMAC_RXCLK_DLY_ENA		((1 << 1) << 16 | (1 << 1))
 
-
-void	dwqe_mii_statchg_rockchip(struct device *);
+void	dwqe_mii_statchg_rk3568_task(void *);
+void	dwqe_mii_statchg_rk3568(struct device *);
+void	dwqe_mii_statchg_rk3588(struct device *);
 
 void
 dwqe_setup_rockchip(struct dwqe_softc *sc)
@@ -277,13 +279,45 @@ dwqe_setup_rockchip(struct dwqe_softc *sc)
 		    RK3568_GMAC_PHY_INTF_SEL_RGMII |
 		    RK3568_GMAC_TXCLK_DLY_ENA |
 		    RK3568_GMAC_RXCLK_DLY_ENA);
-	}
 
-	sc->sc_mii.mii_statchg = dwqe_mii_statchg_rockchip;
+		task_set(&sc->sc_statchg_task,
+		    dwqe_mii_statchg_rk3568_task, sc);
+		sc->sc_mii.mii_statchg = dwqe_mii_statchg_rk3568;
+	} else {
+		sc->sc_mii.mii_statchg = dwqe_mii_statchg_rk3588;
+	}
 }
 
 void
-dwqe_mii_statchg_rockchip(struct device *self)
+dwqe_mii_statchg_rk3568_task(void *arg)
+{
+	struct dwqe_softc *sc = arg;
+
+	dwqe_mii_statchg(&sc->sc_dev);
+
+	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+	case IFM_10_T:
+		clock_set_frequency(sc->sc_node, "clk_mac_speed", 2500000);
+		break;
+	case IFM_100_TX:
+		clock_set_frequency(sc->sc_node, "clk_mac_speed", 25000000);
+		break;
+	case IFM_1000_T:
+		clock_set_frequency(sc->sc_node, "clk_mac_speed", 125000000);
+		break;
+	}
+}
+
+void
+dwqe_mii_statchg_rk3568(struct device *self)
+{
+	struct dwqe_softc *sc = (void *)self;
+
+	task_add(systq, &sc->sc_statchg_task);
+}
+
+void
+dwqe_mii_statchg_rk3588(struct device *self)
 {
 	struct dwqe_softc *sc = (void *)self;
 	struct regmap *rm;
@@ -300,24 +334,14 @@ dwqe_mii_statchg_rockchip(struct device *self)
 	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
 	case IFM_10_T:
 		gmac_clk_sel = sc->sc_clk_sel_2_5;
-		if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-gmac"))
-			clock_set_frequency(sc->sc_node, "clk_mac_speed",
-			    2500000);
 		break;
 	case IFM_100_TX:
 		gmac_clk_sel = sc->sc_clk_sel_25;
-		if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-gmac"))
-			clock_set_frequency(sc->sc_node, "clk_mac_speed",
-			    25000000);
 		break;
 	case IFM_1000_T:
 		gmac_clk_sel = sc->sc_clk_sel_125;
-		if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-gmac"))
-			clock_set_frequency(sc->sc_node, "clk_mac_speed",
-			    125000000);
 		break;
 	}
 
-	if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-gmac"))
-		regmap_write_4(rm, sc->sc_clk_sel, gmac_clk_sel);
+	regmap_write_4(rm, sc->sc_clk_sel, gmac_clk_sel);
 }
