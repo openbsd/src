@@ -209,6 +209,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 
 	/* GC 11.0.2, DCN 3.2.1, dGPU, "Navi 33" */
 	{0x1002, 0x7480 },
+	{0x1002, 0x7483 },
 
 	/* GC 11.0.3, DCN 3.2.0, dGPU */
 	/* GC 11.0.4, DCN 3.1.4, APU */
