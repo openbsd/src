@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.69 2023/03/19 09:32:11 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.70 2023/03/19 10:18:17 dlg Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -318,6 +318,7 @@ void	rk3588_reset(void *, uint32_t *, int);
 
 struct rkclock_compat {
 	const char *compat;
+	const char *name;
 	int	assign;
 	void	(*init)(struct rkclock_softc *);
 	void	(*enable)(void *, uint32_t *, int);
@@ -329,49 +330,49 @@ struct rkclock_compat {
 
 const struct rkclock_compat rkclock_compat[] = {
 	{
-		"rockchip,rk3288-cru", 0, rk3288_init,
+		"rockchip,rk3288-cru", NULL, 0, rk3288_init,
 		rk3288_enable, rk3288_get_frequency,
 		rk3288_set_frequency, NULL,
 		rk3288_reset
 	},
 	{
-		"rockchip,rk3308-cru", 1, rk3308_init,
+		"rockchip,rk3308-cru", NULL, 1, rk3308_init,
 		rk3308_enable, rk3308_get_frequency,
 		rk3308_set_frequency, rk3308_set_parent,
 		rk3308_reset
 	},
 	{
-		"rockchip,rk3328-cru", 1, rk3328_init,
+		"rockchip,rk3328-cru", NULL, 1, rk3328_init,
 		rk3328_enable, rk3328_get_frequency,
 		rk3328_set_frequency, rk3328_set_parent,
 		rk3328_reset
 	},
 	{
-		"rockchip,rk3399-cru", 1, rk3399_init,
+		"rockchip,rk3399-cru", NULL, 1, rk3399_init,
 		rk3399_enable, rk3399_get_frequency,
 		rk3399_set_frequency, rk3399_set_parent,
 		rk3399_reset
 	},
 	{
-		"rockchip,rk3399-pmucru", 1, rk3399_pmu_init,
+		"rockchip,rk3399-pmucru", NULL, 1, rk3399_pmu_init,
 		rk3399_pmu_enable, rk3399_pmu_get_frequency,
 		rk3399_pmu_set_frequency, NULL,
 		rk3399_pmu_reset
 	},
 	{
-		"rockchip,rk3568-cru", 1, rk3568_init,
+		"rockchip,rk3568-cru", "CRU", 1, rk3568_init,
 		rk3568_enable, rk3568_get_frequency,
 		rk3568_set_frequency, rk3568_set_parent,
 		rk3568_reset
 	},
 	{
-		"rockchip,rk3568-pmucru", 1, rk3568_pmu_init,
+		"rockchip,rk3568-pmucru", "PMUCRU", 1, rk3568_pmu_init,
 		rk3568_pmu_enable, rk3568_pmu_get_frequency,
 		rk3568_pmu_set_frequency, NULL,
 		rk3568_pmu_reset
 	},
 	{
-		"rockchip,rk3588-cru", 1, rk3588_init,
+		"rockchip,rk3588-cru", NULL, 1, rk3588_init,
 		rk3588_enable, rk3588_get_frequency,
 		rk3588_set_frequency, NULL,
 		rk3588_reset
@@ -415,8 +416,6 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 	grf = OF_getpropint(faa->fa_node, "rockchip,grf", 0);
 	sc->sc_grf = regmap_byphandle(grf);
 
-	printf("\n");
-
 	sc->sc_phandle = OF_getpropint(faa->fa_node, "phandle", 0);
 
 	for (i = 0; i < nitems(rkclock_compat); i++) {
@@ -425,6 +424,11 @@ rkclock_attach(struct device *parent, struct device *self, void *aux)
 		}
 	}
 	KASSERT(i < nitems(rkclock_compat));
+
+	if (rkclock_compat[i].name != NULL)
+		printf(": %s", rkclock_compat[i].name);
+
+	printf("\n");
 
 	if (rkclock_compat[i].init)
 		rkclock_compat[i].init(sc);
@@ -557,7 +561,8 @@ rkclock_set_frequency(struct rkclock_softc *sc, uint32_t idx, uint32_t freq)
 
 	clk = rkclock_lookup(sc, idx);
 	if (clk == NULL) {
-		printf("%s: 0x%08x\n", __func__, idx);
+		printf("%s(%s, %u, %u)\n", __func__, sc->sc_dev.dv_xname,
+		    idx, freq);
 		return -1;
 	}
 
@@ -569,7 +574,8 @@ rkclock_set_frequency(struct rkclock_softc *sc, uint32_t idx, uint32_t freq)
 		mux = (reg & clk->sel_mask) >> sel_shift;
 
 	if (clk->parents[mux] == 0) {
-		printf("%s: parent 0x%08x\n", __func__, idx);
+		printf("%s(%s, %u, %u) parent\n", __func__,
+		    sc->sc_dev.dv_xname, idx, freq);
 		return 0;
 	}
 
