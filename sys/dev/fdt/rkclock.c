@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.68 2023/03/12 14:29:50 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.69 2023/03/19 09:32:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -3095,6 +3095,12 @@ const struct rkclock rk3568_clocks[] = {
 		  RK3568_CPLL_100M, RK3568_CPLL_50M, RK3568_CLK_OSC0_DIV_750K }
 	},
 	{
+		RK3568_CLK_SDMMC2, RK3568_CRU_CLKSEL_CON(32),
+		SEL(10, 8), 0,
+		{ RK3568_XIN24M, RK3568_GPLL_400M, RK3568_GPLL_300M,
+		  RK3568_CPLL_100M, RK3568_CPLL_50M, RK3568_CLK_OSC0_DIV_750K }
+	},
+	{
 		RK3568_ACLK_GMAC0, 0, 0, 0,
 		{ RK3568_ACLK_PHP }
 	},
@@ -3751,6 +3757,8 @@ rk3568_pmu_enable(void *cookie, uint32_t *cells, int on)
 	case RK3568_CLK_PCIEPHY0_REF:
 	case RK3568_CLK_PCIEPHY1_REF:
 	case RK3568_CLK_PCIEPHY2_REF:
+	case RK3568_CLK_PCIE30PHY_REF_M:
+	case RK3568_CLK_PCIE30PHY_REF_N:
 	case RK3568_CLK_I2C0:
 	case RK3568_SCLK_UART0:
 	case RK3568_PCLK_I2C0:
