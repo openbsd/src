@@ -1,4 +1,4 @@
-.\" $OpenBSD: bwfm.4,v 1.20 2023/03/16 06:57:11 kn Exp $
+.\" $OpenBSD: bwfm.4,v 1.21 2023/03/21 22:31:17 patrick Exp $
 .\"
 .\" Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 16 2023 $
+.Dd $Mdocdate: March 21 2023 $
 .Dt BWFM 4
 .Os
 .Sh NAME
 .Nm bwfm
-.Nd Broadcom and Cypress IEEE 802.11a/ac/b/g/n wireless network device
+.Nd Broadcom and Cypress IEEE 802.11a/ac/ax/b/g/n wireless network device
 .Sh SYNOPSIS
 .Cd "bwfm* at pci?"
 .Cd "bwfm* at sdmmc?"
@@ -58,6 +58,8 @@ driver:
 .It BCM43569 Ta 2GHz/5GHz Ta 11ac Ta 2x2 Ta USB
 .It BCM43602 Ta 2GHz/5GHz Ta 11ac Ta 3x3 Ta PCI
 .It BCM4371 Ta 2GHz/5GHz Ta 11ac Ta 2x2 Ta PCI
+.It BCM4378 Ta 2GHz/5GHz Ta 11ax Ta 2x2 Ta PCI
+.It BCM4387 Ta 2GHz/5GHz Ta 11ax Ta 2x2 Ta PCI
 .El
 .Pp
 These are the modes the
