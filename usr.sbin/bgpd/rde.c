@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.596 2023/03/13 16:52:42 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.597 2023/03/21 14:52:36 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2117,7 +2117,7 @@ bad_flags:
 			goto bad_flags;
 		goto optattr;
 	case ATTR_MP_REACH_NLRI:
-		if (attr_len < 4)
+		if (attr_len < 5)
 			goto bad_len;
 		if (!CHECK_FLAGS(flags, ATTR_OPTIONAL, 0))
 			goto bad_flags;
@@ -2310,7 +2310,7 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 	totlen = 1;
 	len--;
 
-	if (nhlen > len)
+	if (nhlen + 1 > len)
 		return (-1);
 
 	memset(&nexthop, 0, sizeof(nexthop));
