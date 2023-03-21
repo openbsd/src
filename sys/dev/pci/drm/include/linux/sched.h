@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.4 2021/07/07 02:38:36 jsg Exp $	*/
+/*	$OpenBSD: sched.h,v 1.5 2023/03/21 09:44:35 jsg Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  *
@@ -23,7 +23,6 @@
 #include <sys/kernel.h>
 #include <sys/stdint.h>
 #include <sys/mutex.h>
-#include <linux/wait.h>
 #include <linux/hrtimer.h>
 #include <linux/sem.h>
 

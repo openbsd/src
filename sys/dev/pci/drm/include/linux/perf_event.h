@@ -5,6 +5,7 @@
 
 #include <linux/ftrace.h>
 #include <linux/file.h> /* via security.h -> kernel_read_file.h */
+#include <linux/seq_file.h> /* via linux/cgroup.h */
 
 struct pmu {
 };

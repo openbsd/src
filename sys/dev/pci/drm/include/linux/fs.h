@@ -14,6 +14,7 @@
 #include <linux/wait_bit.h>
 #include <linux/err.h>
 #include <linux/sched/signal.h>	/* via percpu-rwsem.h -> rcuwait.h */
+#include <linux/slab.h>
 
 struct address_space;
 struct seq_file;

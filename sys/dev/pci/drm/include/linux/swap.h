@@ -6,7 +6,6 @@
 /*
  * normally clock.h would be indirectly included via
  *
- * linux/swap.h
  * linux/memcontrol.h
  * linux/writeback.h
  * linux/blk-cgroup.h
@@ -17,7 +16,7 @@
 
 /*
  * normally module.h would be indirectly included via
- * linux/swap.h
+ *
  * linux/memcontrol.h
  * linux/cgroup.h
  * linux/cgroup-defs.h

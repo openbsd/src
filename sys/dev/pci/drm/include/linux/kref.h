@@ -1,4 +1,4 @@
-/*	$OpenBSD: kref.h,v 1.5 2023/01/01 01:34:58 jsg Exp $	*/
+/*	$OpenBSD: kref.h,v 1.6 2023/03/21 09:44:35 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -20,9 +20,6 @@
 
 #include <sys/types.h>
 #include <sys/rwlock.h>
-#include <sys/atomic.h>
-#include <linux/atomic.h>
-#include <linux/compiler.h>
 #include <linux/refcount.h>
 #include <linux/spinlock.h>
 

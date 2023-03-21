@@ -5,6 +5,7 @@
 
 #include <linux/bug.h>
 #include <linux/string.h>
+#include <linux/fs.h>
 
 struct seq_file {
 };

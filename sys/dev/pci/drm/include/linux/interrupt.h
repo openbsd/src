@@ -9,8 +9,9 @@
 #include <linux/hardirq.h>
 #include <linux/irqflags.h>
 #include <linux/atomic.h>
-#include <linux/compiler.h>
 #include <linux/irqreturn.h>
+
+struct seq_file;
 
 #define IRQF_SHARED	0
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: workqueue.h,v 1.9 2023/01/01 01:34:58 jsg Exp $	*/
+/*	$OpenBSD: workqueue.h,v 1.10 2023/03/21 09:44:35 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -25,7 +25,6 @@
 #include <linux/bitops.h>
 #include <linux/atomic.h>
 #include <linux/rcupdate.h>
-#include <linux/kernel.h>
 #include <linux/lockdep.h>
 #include <linux/timer.h>
 

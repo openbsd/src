@@ -11,10 +11,10 @@
 #include <machine/cpu.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_glue.h>
-#include <linux/fs.h>
+#include <lib/libkern/libkern.h> /* for flsl */
 #include <linux/shrinker.h>
 #include <linux/overflow.h>
-#include <asm/pgtable.h>
+#include <linux/pgtable.h>
 
 #define PageHighMem(x)	0
 
