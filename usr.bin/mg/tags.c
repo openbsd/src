@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.21 2023/03/22 18:18:35 op Exp $	*/
+/*	$OpenBSD: tags.c,v 1.22 2023/03/22 19:42:41 op Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -367,17 +367,18 @@ strip(char *s, size_t len)
  * l, and can be freed during cleanup.
  */
 int
-addctag(char *l)
+addctag(char *s)
 {
 	struct ctag *t = NULL;
+	char *l;
 
 	if ((t = malloc(sizeof(struct ctag))) == NULL) {
 		dobeep();
 		ewprintf("Out of memory");
 		goto cleanup;
 	}
-	t->tag = l;
-	if ((l = strchr(l, '\t')) == NULL)
+	t->tag = s;
+	if ((l = strchr(s, '\t')) == NULL)
 		goto cleanup;
 	*l++ = '\0';
 	t->fname = l;
@@ -391,7 +392,7 @@ addctag(char *l)
 	return (TRUE);
 cleanup:
 	free(t);
-	free(l);
+	free(s);
 	return (FALSE);
 }
 
