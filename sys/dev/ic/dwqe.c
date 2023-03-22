@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.2 2023/02/15 14:10:58 kettenis Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.3 2023/03/22 21:41:28 jsg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -160,9 +160,9 @@ dwqe_attach(struct dwqe_softc *sc)
 	mode |= sc->sc_txpbl << GMAC_CHAN_TX_CONTROL_PBL_SHIFT;
 	mode |= GMAC_CHAN_TX_CONTROL_OSP;
 	dwqe_write(sc, GMAC_CHAN_TX_CONTROL(0), mode);
+	mode = dwqe_read(sc, GMAC_CHAN_RX_CONTROL(0));
 	mode &= ~GMAC_CHAN_RX_CONTROL_RPBL_MASK;
 	mode |= sc->sc_rxpbl << GMAC_CHAN_RX_CONTROL_RPBL_SHIFT;
-	mode = dwqe_read(sc, GMAC_CHAN_RX_CONTROL(0));
 	dwqe_write(sc, GMAC_CHAN_RX_CONTROL(0), mode);
 
 	/* Configure AXI master. */
