@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnxt.c,v 1.37 2022/06/27 10:02:20 bluhm Exp $	*/
+/*	$OpenBSD: if_bnxt.c,v 1.38 2023/03/22 17:01:07 denis Exp $	*/
 /*-
  * Broadcom NetXtreme-C/E network driver.
  *
@@ -725,11 +725,11 @@ deintr:
 free_resp:
 	bnxt_dmamem_free(sc, sc->sc_cmd_resp);
 unmap_2:
-	bus_space_unmap(sc->sc_hwrm_t, sc->sc_hwrm_h, sc->sc_hwrm_s);
-	sc->sc_hwrm_s = 0;
-unmap_1:
 	bus_space_unmap(sc->sc_db_t, sc->sc_db_h, sc->sc_db_s);
 	sc->sc_db_s = 0;
+unmap_1:
+	bus_space_unmap(sc->sc_hwrm_t, sc->sc_hwrm_h, sc->sc_hwrm_s);
+	sc->sc_hwrm_s = 0;
 }
 
 void
