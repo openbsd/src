@@ -1,4 +1,4 @@
-# $OpenBSD: southamerica,v 1.78 2022/11/30 17:59:46 millert Exp $
+# $OpenBSD: southamerica,v 1.79 2023/03/23 16:12:11 millert Exp $
 # tzdb data for South America and environs
 
 # This file is in the public domain, so clarified as of
@@ -209,7 +209,7 @@ Rule	Arg	2008	only	-	Oct	Sun>=15	0:00	1:00	-
 # Hora de verano para la República Argentina
 # http://buenasiembra.com.ar/esoterismo/astrologia/hora-de-verano-de-la-republica-argentina-27.html
 # says that standard time in Argentina from 1894-10-31
-# to 1920-05-01 was -4:16:48.25.  Go with this more-precise value
+# to 1920-05-01 was -4:16:48.25.  Go with this more precise value
 # over Shanks & Pottenger.  It is upward compatible with Milne, who
 # says Córdoba time was -4:16:48.2.
 
