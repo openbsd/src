@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.70 2023/03/19 10:18:17 dlg Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.71 2023/03/23 13:15:02 jsg Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1382,7 +1382,7 @@ rk3308_get_rtc32k(struct rkclock_softc *sc)
 	uint32_t reg, mux, pll, div_con;
 
 	reg = HREAD4(sc, RK3308_CRU_CLKSEL_CON(2));
-	mux = (reg & 0x30) >> 8;
+	mux = (reg & 0x300) >> 8;
 	if (mux != 3) {
 		printf("%s: RTC32K not using clk_32k_div\n", __func__);
 		return 0;
