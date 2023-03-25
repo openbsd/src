@@ -1,5 +1,5 @@
 #!/bin/perl
-# 	$OpenBSD: bn_prime.pl,v 1.10 2023/03/25 11:28:55 tb Exp $
+# 	$OpenBSD: bn_prime.pl,v 1.11 2023/03/25 11:35:02 tb Exp $
 #
 # Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
 # All rights reserved.
@@ -56,6 +56,11 @@
 # derivative of this code cannot be changed.  i.e. this code cannot simply be
 # copied and put under another distribution licence
 # [including the GNU Public Licence.]
+
+use strict;
+use warnings;
+
+my ($i, $num, $p, $s, @primes);
 
 $num = 2048;
 $num = $ARGV[0] if $#ARGV >= 0;
