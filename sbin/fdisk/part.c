@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.135 2023/03/25 19:37:34 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.136 2023/03/25 22:00:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,6 +36,12 @@ struct mbr_type {
 	char	*mt_name;
 };
 
+/*
+* MBR type sources:
+*	OpenBSD Historical usage
+* 	https://en.wikipedia.org/wiki/Partition_type#List_of_partition_IDs
+*	https://www.win.tue.nl/~aeb/partitions/partition_types-1.html
+*/
 const struct mbr_type		mbr_types[] = {
 	{ 0x00, "unused"	},   /* unused */
 	{ 0x01, "DOS FAT-12"	},   /* Primary DOS with 12 bit FAT */
@@ -143,6 +149,17 @@ struct gpt_type {
 	char	 gt_guid[UUID_STR_LEN + 1];
 };
 
+/*
+ * GPT GUID sources:
+ *
+ * UEFI: UEFI Specification 2.9, March 2021, Section 5.3.3, Table 5.7
+ * Wikipedia: https://en.wikipedia.org/wiki/GUID_Partition_Table
+ * NetBSD: /usr/src/sys/sys/disklabel_gpt.h
+ * FreeBSD: /usr/src/sys/sys/disk/gpt.h.
+ * DragonFlyBSD: /usr/src/sys/sys/disk/gpt.h.
+ * Systemd:https://uapi-group.org/specifications/specs/discoverable_partitions_specification/
+ *         https://www.freedesktop.org/software/systemd/man/systemd-gpt-auto-generator.html
+ */
 const struct gpt_type		gpt_types[] = {
 	{ 0x00, 0, "unused",
 	  "00000000-0000-0000-0000-000000000000" },
