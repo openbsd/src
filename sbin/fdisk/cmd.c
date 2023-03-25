@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.167 2023/03/04 21:22:51 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.168 2023/03/25 15:05:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -266,14 +266,14 @@ gsetpid(const int pn)
 
 	if (PRT_protected_guid(&gp[pn].gp_type)) {
 		printf("can't edit partition type %s\n",
-		    PRT_uuid_to_sname(&gp[pn].gp_type));
+		    PRT_uuid_to_name(&gp[pn].gp_type));
 		return -1;
 	}
 
 	gp[pn].gp_type = *ask_uuid(&gp[pn].gp_type);
 	if (PRT_protected_guid(&gp[pn].gp_type)) {
 		printf("can't change partition type to %s\n",
-		    PRT_uuid_to_sname(&gp[pn].gp_type));
+		    PRT_uuid_to_name(&gp[pn].gp_type));
 		return -1;
 	}
 

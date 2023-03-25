@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.132 2023/03/06 17:42:39 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.133 2023/03/25 15:05:45 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -33,7 +33,7 @@
 
 struct mbr_type {
 	int	mt_type;
-	char	mt_sname[14];
+	char	mt_name[14];
 };
 
 const struct mbr_type		mbr_types[] = {
@@ -139,7 +139,7 @@ struct gpt_type {
 	int	gt_attr;
 #define	GTATTR_PROTECT		(1 << 0)
 #define	GTATTR_PROTECT_EFISYS	(1 << 1)
-	char	gt_sname[14];
+	char	gt_name[14];
 	char	gt_guid[UUID_STR_LEN + 1];
 };
 
@@ -252,7 +252,7 @@ ascii_id(const int id)
 
 	for (i = 0; i < nitems(mbr_types); i++) {
 		if (mbr_types[i].mt_type == id)
-			return mbr_types[i].mt_sname;
+			return mbr_types[i].mt_name;
 	}
 
 	return unknown;
@@ -301,12 +301,12 @@ PRT_print_mbrtypes(void)
 	for (i = 0; i < idrows; i++) {
 		for (cidx = i; cidx < i + idrows * 3; cidx += idrows) {
 			printf("%02X %-*s", mbr_types[cidx].mt_type,
-			    (int)sizeof(mbr_types[cidx].mt_sname) + 1,
-			    mbr_types[cidx].mt_sname);
+			    (int)sizeof(mbr_types[cidx].mt_name) + 1,
+			    mbr_types[cidx].mt_name);
 		}
 		if (cidx < nitems(mbr_types))
 			printf("%02X %s", mbr_types[cidx].mt_type,
-			    mbr_types[cidx].mt_sname);
+			    mbr_types[cidx].mt_name);
 		printf("\n");
 	}
 }
@@ -322,12 +322,12 @@ PRT_print_gpttypes(void)
 	for (i = 0; i < idrows; i++) {
 		for (cidx = i; cidx < i + idrows * 3; cidx += idrows) {
 			printf("%02X %-*s", gpt_types[cidx].gt_type,
-			    (int)sizeof(gpt_types[cidx].gt_sname) + 1,
-			    gpt_types[cidx].gt_sname);
+			    (int)sizeof(gpt_types[cidx].gt_name) + 1,
+			    gpt_types[cidx].gt_name);
 		}
 		if (cidx < nitems(gpt_types))
 			printf("%02X %s", gpt_types[cidx].gt_type,
-			    gpt_types[cidx].gt_sname);
+			    gpt_types[cidx].gt_name);
 		printf("\n");
 	}
 }
@@ -469,7 +469,7 @@ PRT_lba_to_chs(const struct prt *prt, struct chs *start, struct chs *end)
 }
 
 const char *
-PRT_uuid_to_sname(const struct uuid *uuid)
+PRT_uuid_to_name(const struct uuid *uuid)
 {
 	static char		 typename[UUID_STR_LEN + 1];
 	const uint8_t		 gpt_uuid_msdos[] = GPT_UUID_MSDOS;
@@ -484,7 +484,7 @@ PRT_uuid_to_sname(const struct uuid *uuid)
 
 	gt = find_gpt_type(uuid);
 	if (gt != NULL)
-		return gt->gt_sname;
+		return gt->gt_name;
 
 	uuid_to_string(uuid, &uuidstr, &status);
 	if (status == uuid_s_ok)
