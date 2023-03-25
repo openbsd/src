@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.266 2023/03/25 15:59:23 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.267 2023/03/25 16:01:37 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1274,14 +1274,12 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		log(LOG_DEBUG, "%s: %s: route contains no ND information\n",
 		    __func__, inet_ntop(AF_INET6,
 		    &satosin6(rt_key(rt))->sin6_addr, addr, sizeof(addr)));
-		m_freem(m);
-		return (EINVAL);
+		goto bad;
 	}
 
 	if (rt->rt_gateway->sa_family != AF_LINK) {
 		printf("%s: something odd happens\n", __func__);
-		m_freem(m);
-		return (EINVAL);
+		goto bad;
 	}
 
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
@@ -1321,8 +1319,7 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 			    __func__,
 			    inet_ntop(AF_INET6, &satosin6(dst)->sin6_addr,
 				addr, sizeof(addr)));
-			m_freem(m);
-			return (EINVAL);
+			goto bad;
 		}
 
 		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
@@ -1349,6 +1346,10 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		nd6_ns_output(ifp, NULL, &satosin6(dst)->sin6_addr, ln, 0);
 	}
 	return (EAGAIN);
+
+bad:
+	m_freem(m);
+	return (EINVAL);
 }
 
 int
