@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.h,v 1.24 2022/07/25 17:45:16 krw Exp $	*/
+/*	$OpenBSD: user.h,v 1.25 2023/03/25 20:34:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -15,9 +15,6 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#define	LINEBUFSZ	100
-#define	HELPBUFSZ	80
 
 void		USER_edit(const uint64_t, const uint64_t);
 void		USER_print_disk(const int);
