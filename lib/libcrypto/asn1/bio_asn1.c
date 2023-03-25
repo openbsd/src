@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.20 2023/03/25 10:41:52 tb Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.21 2023/03/25 10:45:20 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -163,7 +163,7 @@ asn1_bio_new(BIO *b)
 	ctx->state = ASN1_STATE_START;
 
 	b->init = 1;
-	b->ptr = (char *)ctx;
+	b->ptr = ctx;
 	b->flags = 0;
 
 	return 1;
@@ -172,9 +172,8 @@ asn1_bio_new(BIO *b)
 static int
 asn1_bio_free(BIO *b)
 {
-	BIO_ASN1_BUF_CTX *ctx;
+	BIO_ASN1_BUF_CTX *ctx = b->ptr;
 
-	ctx = (BIO_ASN1_BUF_CTX *) b->ptr;
 	if (ctx == NULL)
 		return 0;
 
@@ -200,8 +199,8 @@ asn1_bio_write(BIO *b, const char *in , int inl)
 
 	if (!in || (inl < 0) || (b->next_bio == NULL))
 		return 0;
-	ctx = (BIO_ASN1_BUF_CTX *) b->ptr;
-	if (ctx == NULL)
+
+	if ((ctx = b->ptr) == NULL)
 		return 0;
 
 	wrlen = 0;
@@ -366,8 +365,7 @@ asn1_bio_ctrl(BIO *b, int cmd, long arg1, void *arg2)
 	BIO_ASN1_EX_FUNCS *ex_func;
 	long ret = 1;
 
-	ctx = (BIO_ASN1_BUF_CTX *) b->ptr;
-	if (ctx == NULL)
+	if ((ctx = b->ptr) == NULL)
 		return 0;
 	switch (cmd) {
 
