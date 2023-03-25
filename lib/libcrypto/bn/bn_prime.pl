@@ -1,5 +1,5 @@
 #!/bin/perl
-# 	$OpenBSD: bn_prime.pl,v 1.9 2023/03/25 11:09:58 tb Exp $
+# 	$OpenBSD: bn_prime.pl,v 1.10 2023/03/25 11:28:55 tb Exp $
 #
 # Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
 # All rights reserved.
@@ -57,25 +57,26 @@
 # copied and put under another distribution licence
 # [including the GNU Public Licence.]
 
-$num=2048;
-$num=$ARGV[0] if ($#ARGV >= 0);
+$num = 2048;
+$num = $ARGV[0] if $#ARGV >= 0;
 
 # The 6543rd prime is 2^16 + 1.
 die "$num must be smaller than 6543" if $num >= 6543;
 
-push(@primes,2);
-$p=1;
-loop: while ($#primes < $num-1)
-	{
-	$p+=2;
-	$s=int(sqrt($p));
+push(@primes, 2);
+$p = 1;
 
-	for ($i=0; defined($primes[$i]) && $primes[$i]<=$s; $i++)
-		{
-		next loop if (($p%$primes[$i]) == 0);
-		}
-	push(@primes,$p);
+loop:
+while ($#primes < $num-1) {
+	$p += 2;
+	$s = int(sqrt($p));
+
+	for ($i = 0; defined($primes[$i]) && $primes[$i] <= $s; $i++) {
+		next loop if $p % $primes[$i] == 0;
 	}
+	die "\$primes[$i] is too large: $primes[$i]" if $primes[$i] > 65535;
+	push(@primes, $p);
+}
 
 printf("/*\t\$" . "OpenBSD" . "\$ */\n");
 print <<\EOF;
@@ -87,14 +88,7 @@ EOF
 
 print "#include \"bn_prime.h\"\n\n";
 print "const uint16_t primes[NUMPRIMES] = {";
-for ($i=0; $i <= $#primes; $i++)
-	{
-	if ((($i%8) == 0)) {
-		printf("\n\t")
-	} else {
-		printf(" ");
-	}
-	die "\$primes[$i] is too large: $primes[$i]" if $primes[$i] > 65535;
-	printf("%5d,",$primes[$i]);
-	}
+for ($i = 0; $i <= $#primes; $i++) {
+	printf("%s%5d,", $i % 8 == 0 ? "\n\t" : " ", $primes[$i]);
+}
 print "\n};\n";
