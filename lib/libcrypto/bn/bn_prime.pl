@@ -4,6 +4,9 @@
 $num=2048;
 $num=$ARGV[0] if ($#ARGV >= 0);
 
+# The 6543rd prime is 2^16 + 1.
+die "$num must be smaller than 6543" if $num >= 6543;
+
 push(@primes,2);
 $p=1;
 loop: while ($#primes < $num-1)
@@ -46,6 +49,7 @@ for ($i=0; $i <= $#primes; $i++)
 	} else {
 		printf(" ");
 	}
+	die "\$primes[$i] is too large: $primes[$i]" if $primes[$i] > 65535;
 	printf("%5d,",$primes[$i]);
 	}
 print "\n};\n";
