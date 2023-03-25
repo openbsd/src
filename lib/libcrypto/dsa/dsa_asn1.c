@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_asn1.c,v 1.29 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: dsa_asn1.c,v 1.30 2023/03/25 09:09:28 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -61,6 +61,7 @@
 
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/err.h>
 
