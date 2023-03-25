@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.134 2023/03/25 15:58:44 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.135 2023/03/25 19:37:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -217,7 +217,7 @@ const struct gpt_type		gpt_types[] = {
 };
 
 const struct gpt_type	*find_gpt_type(const struct uuid *);
-const char		*ascii_id(const int);
+const struct mbr_type	*find_mbr_type(const int);
 int			 uuid_attr(const struct uuid *);
 
 const struct gpt_type *
@@ -244,18 +244,17 @@ find_gpt_type(const struct uuid *uuid)
 		return NULL;
 }
 
-const char *
-ascii_id(const int id)
+const struct mbr_type *
+find_mbr_type(const int id)
 {
-	static char		unknown[] = "<Unknown ID>";
-	int			i;
+	unsigned int			i;
 
 	for (i = 0; i < nitems(mbr_types); i++) {
 		if (mbr_types[i].mt_type == id)
-			return mbr_types[i].mt_name;
+			return &mbr_types[i];
 	}
 
-	return unknown;
+	return NULL;
 }
 
 int
@@ -409,11 +408,13 @@ void
 PRT_print_part(const int num, const struct prt *prt, const char *units)
 {
 	const struct unit_type	*ut;
+	const struct mbr_type	*mt;
 	struct chs		 start, end;
 	double			 size;
 
 	size = units_size(units, prt->prt_ns, &ut);
 	PRT_lba_to_chs(prt, &start, &end);
+	mt = find_mbr_type(prt->prt_id);
 
 	printf("%c%1d: %.2X %6llu %3u %3u - %6llu %3u %3u "
 	    "[%12llu:%12.0f%s] %s\n",
@@ -421,7 +422,7 @@ PRT_print_part(const int num, const struct prt *prt, const char *units)
 	    num, prt->prt_id,
 	    start.chs_cyl, start.chs_head, start.chs_sect,
 	    end.chs_cyl, end.chs_head, end.chs_sect,
-	    prt->prt_bs, size, ut->ut_abbr, ascii_id(prt->prt_id));
+	    prt->prt_bs, size, ut->ut_abbr, mt ? mt->mt_name : "<Unknown ID>");
 
 	if (prt->prt_bs >= DL_GETDSIZE(&dl))
 		printf("partition %d starts beyond the end of %s\n", num,
