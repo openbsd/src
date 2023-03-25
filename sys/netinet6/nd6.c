@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.265 2023/01/24 20:06:16 claudio Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.266 2023/03/25 15:59:23 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1247,16 +1247,18 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	struct sockaddr_dl *sdl;
 	struct rtentry *rt;
 	struct llinfo_nd6 *ln = NULL;
+	time_t uptime;
 
 	if (m->m_flags & M_MCAST) {
 		ETHER_MAP_IPV6_MULTICAST(&satosin6(dst)->sin6_addr, desten);
 		return (0);
 	}
 
+	uptime = getuptime();
 	rt = rt_getll(rt0);
 
 	if (ISSET(rt->rt_flags, RTF_REJECT) &&
-	    (rt->rt_expire == 0 || getuptime() < rt->rt_expire)) {
+	    (rt->rt_expire == 0 || rt->rt_expire > uptime)) {
 		m_freem(m);
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
