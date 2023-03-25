@@ -1,5 +1,5 @@
 #!/bin/perl
-# bn_prime.pl
+# 	$OpenBSD: bn_prime.pl,v 1.8 2023/03/25 11:03:45 tb Exp $
 
 $num=2048;
 $num=$ARGV[0] if ($#ARGV >= 0);
