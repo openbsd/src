@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.3 2023/03/19 08:41:49 kettenis Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.4 2023/03/25 10:14:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -69,7 +69,7 @@ const struct cfattach dwqe_fdt_ca = {
 	sizeof(struct dwqe_softc), dwqe_fdt_match, dwqe_fdt_attach
 };
 
-void	dwqe_reset_phy(struct dwqe_softc *);
+void	dwqe_reset_phy(struct dwqe_softc *, uint32_t);
 
 int
 dwqe_fdt_match(struct device *parent, void *cfdata, void *aux)
@@ -140,7 +140,7 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 		regulator_enable(phy_supply);
 
 	/* Reset PHY */
-	dwqe_reset_phy(sc);
+	dwqe_reset_phy(sc, phy);
 
 	sc->sc_clk = clock_get_frequency(faa->fa_node, "stmmaceth");
 	if (sc->sc_clk > 500000000)
@@ -206,26 +206,39 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-dwqe_reset_phy(struct dwqe_softc *sc)
+dwqe_reset_phy(struct dwqe_softc *sc, uint32_t phy)
 {
 	uint32_t *gpio;
 	uint32_t delays[3];
 	int active = 1;
-	int len;
+	int node, len;
 
-	len = OF_getproplen(sc->sc_node, "snps,reset-gpio");
-	if (len <= 0)
-		return;
+	node = OF_getnodebyphandle(phy);
+	if (node && OF_getproplen(node, "reset-gpios") > 0) {
+		len = OF_getproplen(node, "reset-gpios");
 
-	gpio = malloc(len, M_TEMP, M_WAITOK);
+		gpio = malloc(len, M_TEMP, M_WAITOK);
 
-	/* Gather information. */
-	OF_getpropintarray(sc->sc_node, "snps,reset-gpio", gpio, len);
-	if (OF_getpropbool(sc->sc_node, "snps-reset-active-low"))
-		active = 0;
-	delays[0] = delays[1] = delays[2] = 0;
-	OF_getpropintarray(sc->sc_node, "snps,reset-delays-us", delays,
-	    sizeof(delays));
+		/* Gather information. */
+		OF_getpropintarray(node, "reset-gpios", gpio, len);
+		delays[0] = OF_getpropint(node, "reset-deassert-us", 0);
+		delays[1] = OF_getpropint(node, "reset-assert-us", 0);
+		delays[2] = OF_getpropint(node, "reset-deassert-us", 0);
+	} else {
+		len = OF_getproplen(sc->sc_node, "snps,reset-gpio");
+		if (len <= 0)
+			return;
+
+		gpio = malloc(len, M_TEMP, M_WAITOK);
+
+		/* Gather information. */
+		OF_getpropintarray(sc->sc_node, "snps,reset-gpio", gpio, len);
+		if (OF_getpropbool(sc->sc_node, "snps-reset-active-low"))
+			active = 0;
+		delays[0] = delays[1] = delays[2] = 0;
+		OF_getpropintarray(sc->sc_node, "snps,reset-delays-us", delays,
+		    sizeof(delays));
+	}
 
 	/* Perform reset sequence. */
 	gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
