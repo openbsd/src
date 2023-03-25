@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.133 2023/03/25 15:05:45 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.134 2023/03/25 15:58:44 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -32,8 +32,8 @@
 #include "gpt.h"
 
 struct mbr_type {
-	int	mt_type;
-	char	mt_name[14];
+	int	 mt_type;
+	char	*mt_name;
 };
 
 const struct mbr_type		mbr_types[] = {
@@ -135,12 +135,12 @@ const struct mbr_type		mbr_types[] = {
 };
 
 struct gpt_type {
-	int	gt_type;
-	int	gt_attr;
+	int	 gt_type;
+	int	 gt_attr;
 #define	GTATTR_PROTECT		(1 << 0)
 #define	GTATTR_PROTECT_EFISYS	(1 << 1)
-	char	gt_name[14];
-	char	gt_guid[UUID_STR_LEN + 1];
+	char	*gt_name;
+	char	 gt_guid[UUID_STR_LEN + 1];
 };
 
 const struct gpt_type		gpt_types[] = {
@@ -291,7 +291,7 @@ PRT_protected_guid(const struct uuid *uuid)
 }
 
 void
-PRT_print_mbrtypes(void)
+PRT_print_mbrmenu(void)
 {
 	unsigned int		cidx, i, idrows;
 
@@ -300,8 +300,7 @@ PRT_print_mbrtypes(void)
 	printf("Choose from the following Partition id values:\n");
 	for (i = 0; i < idrows; i++) {
 		for (cidx = i; cidx < i + idrows * 3; cidx += idrows) {
-			printf("%02X %-*s", mbr_types[cidx].mt_type,
-			    (int)sizeof(mbr_types[cidx].mt_name) + 1,
+			printf("%02X %-15s", mbr_types[cidx].mt_type,
 			    mbr_types[cidx].mt_name);
 		}
 		if (cidx < nitems(mbr_types))
@@ -312,7 +311,7 @@ PRT_print_mbrtypes(void)
 }
 
 void
-PRT_print_gpttypes(void)
+PRT_print_gptmenu(void)
 {
 	unsigned int		cidx, i, idrows;
 
@@ -321,8 +320,7 @@ PRT_print_gpttypes(void)
 	printf("Choose from the following Partition id values:\n");
 	for (i = 0; i < idrows; i++) {
 		for (cidx = i; cidx < i + idrows * 3; cidx += idrows) {
-			printf("%02X %-*s", gpt_types[cidx].gt_type,
-			    (int)sizeof(gpt_types[cidx].gt_name) + 1,
+			printf("%02X %-15s", gpt_types[cidx].gt_type,
 			    gpt_types[cidx].gt_name);
 		}
 		if (cidx < nitems(gpt_types))
