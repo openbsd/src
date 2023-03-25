@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.19 2023/03/10 11:55:38 tb Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.20 2023/03/25 10:41:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -458,11 +458,12 @@ asn1_bio_get_ex(BIO *b, int cmd, asn1_ps_func **ex_func,
 	BIO_ASN1_EX_FUNCS extmp;
 	int ret;
 
-	ret = BIO_ctrl(b, cmd, 0, &extmp);
-	if (ret > 0) {
-		*ex_func = extmp.ex_func;
-		*ex_free_func = extmp.ex_free_func;
-	}
+	if ((ret = BIO_ctrl(b, cmd, 0, &extmp)) <= 0)
+		return ret;
+
+	*ex_func = extmp.ex_func;
+	*ex_free_func = extmp.ex_free_func;
+
 	return ret;
 }
 
