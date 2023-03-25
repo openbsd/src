@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.36 2023/02/06 08:41:00 kn Exp $
+#	$OpenBSD: install.md,v 1.37 2023/03/25 18:29:37 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ md_installboot() {
 		;;
 	pine64)
 		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=${_disk}c \
-		    bs=1024 seek=8 >/dev/null 2>&1
+		    bs=1024 seek=8 status=none
 		;;
 	rpi)
 		mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
