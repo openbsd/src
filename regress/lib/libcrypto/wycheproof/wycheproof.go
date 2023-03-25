@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.139 2023/03/11 14:27:37 jsing Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.140 2023/03/25 09:17:14 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -1253,12 +1253,6 @@ func runChaCha20Poly1305Test(algorithm string, wt *wycheproofTestAead) bool {
 	}
 	if msgLen == 0 {
 		msg = append(msg, 0)
-	}
-	if ctLen == 0 {
-		msg = append(ct, 0)
-	}
-	if tagLen == 0 {
-		msg = append(tag, 0)
 	}
 
 	ctx := C.EVP_AEAD_CTX_new()
