@@ -137,7 +137,6 @@ head_file(const char *path, long linecnt, long bytecnt, int need_header)
 		if ((bytecnt != -1 || ch == '\n') && --count == 0)
 			break;
 	}
-
 	if (ferror(fp)) {
 		warn("%s", name);
 		status = 1;
