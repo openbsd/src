@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.71 2023/03/23 13:15:02 jsg Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.72 2023/03/26 10:41:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -2749,19 +2749,22 @@ rk3399_set_armclk(struct rkclock_softc *sc, bus_size_t clksel, uint32_t freq)
 }
 
 uint32_t
-rk3399_get_frac(struct rkclock_softc *sc, int parent, bus_size_t base)
+rk3399_get_frac(struct rkclock_softc *sc, uint32_t parent, bus_size_t base)
 {
-	uint32_t frac;
+	uint32_t parent_freq, frac;
 	uint16_t n, d;
 
 	frac = HREAD4(sc, base);
 	n = frac >> 16;
 	d = frac & 0xffff;
-	return ((uint64_t)rkclock_get_frequency(sc, parent) * n) / d;
+	if (n == 0 || d == 0)
+		n = d = 1;
+	parent_freq = sc->sc_cd.cd_get_frequency(sc, &parent);
+	return ((uint64_t)parent_freq * n) / d;
 }
 
 int
-rk3399_set_frac(struct rkclock_softc *sc, int parent, bus_size_t base,
+rk3399_set_frac(struct rkclock_softc *sc, uint32_t parent, bus_size_t base,
     uint32_t freq)
 {
 	uint32_t n, d;
@@ -2770,7 +2773,7 @@ rk3399_set_frac(struct rkclock_softc *sc, int parent, bus_size_t base,
 	uint32_t a, tmp;
 
 	n = freq;
-	d = rkclock_get_frequency(sc, parent);
+	d = sc->sc_cd.cd_get_frequency(sc, &parent);
 
 	/*
 	 * The denominator needs to be at least 20 times the numerator
@@ -3567,6 +3570,12 @@ rk3568_reset(void *cookie, uint32_t *cells, int on)
 
 const struct rkclock rk3568_pmu_clocks[] = {
 	{
+		RK3568_CLK_RTC_32K, RK3568_PMUCRU_CLKSEL_CON(0),
+		SEL(7, 6), 0,
+		{ 0, RK3568_XIN32K, RK3568_CLK_RTC32K_FRAC },
+		SET_PARENT
+	},
+	{
 		RK3568_CLK_I2C0, RK3568_PMUCRU_CLKSEL_CON(3),
 		0, DIV(15, 7),
 		{ RK3568_CLK_PDPMU }
@@ -3724,9 +3733,14 @@ rk3568_pmu_get_frequency(void *cookie, uint32_t *cells)
 		return rk3328_get_pll(sc, RK3568_PMUCRU_PPLL_CON(0));
 	case RK3568_PLL_HPLL:
 		return rk3328_get_pll(sc, RK3568_PMUCRU_HPLL_CON(0));
+	case RK3568_CLK_RTC32K_FRAC:
+		return rk3399_get_frac(sc, RK3568_XIN24M,
+		    RK3568_PMUCRU_CLKSEL_CON(1));
 	case RK3568_PPLL_PH0:
 		idx = RK3568_PLL_PPLL;
 		return rk3568_get_frequency(sc, &idx) / 2;
+	case RK3568_XIN32K:
+		return 32768;
 	case RK3568_XIN24M:
 		return 24000000;
 	default:
@@ -3747,6 +3761,9 @@ rk3568_pmu_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 		return rk3568_pmu_set_pll(sc, RK3568_PMUCRU_PPLL_CON(0), freq);
 	case RK3568_PLL_HPLL:
 		return rk3568_pmu_set_pll(sc, RK3568_PMUCRU_HPLL_CON(0), freq);
+	case RK3568_CLK_RTC32K_FRAC:
+		return rk3399_set_frac(sc, RK3568_XIN24M,
+		    RK3568_PMUCRU_CLKSEL_CON(1), freq);
 	default:
 		break;
 	}
