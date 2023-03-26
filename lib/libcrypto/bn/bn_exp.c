@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.39 2023/03/26 18:49:48 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.40 2023/03/26 18:52:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -682,12 +682,9 @@ BN_mod_exp_mont_internal(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIG
 			goto err;
 	}
 
-	if (a->neg || BN_ucmp(a, m) >= 0) {
-		if (!BN_nnmod(val[0], a,m, ctx))
-			goto err;
-		aa = val[0];
-	} else
-		aa = a;
+	if (!BN_nnmod(val[0], a,m, ctx))
+		goto err;
+	aa = val[0];
 	if (BN_is_zero(aa)) {
 		BN_zero(rr);
 		ret = 1;
@@ -1205,12 +1202,9 @@ BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	/*
 	 * Build table for a1:   val1[i] := a1^(2*i + 1) mod m  for i = 0 .. 2^(window1-1)
 	 */
-	if (a1->neg || BN_ucmp(a1, m) >= 0) {
-		if (!BN_nnmod(val1[0], a1, m, ctx))
-			goto err;
-		a_mod_m = val1[0];
-	} else
-		a_mod_m = a1;
+	if (!BN_nnmod(val1[0], a1, m, ctx))
+		goto err;
+	a_mod_m = val1[0];
 	if (BN_is_zero(a_mod_m)) {
 		BN_zero(rr);
 		ret = 1;
@@ -1236,12 +1230,9 @@ BN_mod_exp2_mont(BIGNUM *rr, const BIGNUM *a1, const BIGNUM *p1,
 	/*
 	 * Build table for a2:   val2[i] := a2^(2*i + 1) mod m  for i = 0 .. 2^(window2-1)
 	 */
-	if (a2->neg || BN_ucmp(a2, m) >= 0) {
-		if (!BN_nnmod(val2[0], a2, m, ctx))
-			goto err;
-		a_mod_m = val2[0];
-	} else
-		a_mod_m = a2;
+	if (!BN_nnmod(val2[0], a2, m, ctx))
+		goto err;
+	a_mod_m = val2[0];
 	if (BN_is_zero(a_mod_m)) {
 		BN_zero(rr);
 		ret = 1;
