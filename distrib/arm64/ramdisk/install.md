@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.37 2023/03/25 18:29:37 kn Exp $
+#	$OpenBSD: install.md,v 1.38 2023/03/26 19:25:16 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,14 +55,9 @@ md_installboot() {
 
 	case $_plat in
 	apple)
-		if [[ -d /etc/firmware/apple ]]; then
-			(cd /etc/firmware
-				pax -rw apple /mnt/etc/firmware)
-		fi
-		if [[ -d /etc/firmware/apple-bwfm ]]; then
-			(cd /etc/firmware
-				pax -rw apple-bwfm /mnt/etc/firmware)
-		fi
+		(cd /etc/firmware; for _dir in apple{,-bwfm}; do
+			[[ -d $_dir ]] && pax -rw $_dir /mnt/etc/firmware
+		done)
 		;;
 	pine64)
 		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=${_disk}c \
