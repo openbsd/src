@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1dgst.c,v 1.21 2023/03/26 19:22:35 jsing Exp $ */
+/* $OpenBSD: sha1dgst.c,v 1.22 2023/03/26 19:30:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,7 +92,7 @@
 #ifndef SHA1_ASM
 static
 #endif
-void sha1_block_data_order (SHA_CTX *c, const void *p, size_t num);
+void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 
 #include "md32_common.h"
 
@@ -188,7 +188,7 @@ SHA1_Init(SHA_CTX *c)
 #if !defined(SHA1_ASM)
 #include <endian.h>
 static void
-HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
+sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 {
 	const unsigned char *data = p;
 	unsigned MD32_REG_T A, B,C, D,E, T, l;
@@ -417,7 +417,7 @@ HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
 
 #if !defined(SHA1_ASM)
 static void
-HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
+sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 {
 	const unsigned char *data = p;
 	unsigned MD32_REG_T A, B,C, D,E, T, l;
