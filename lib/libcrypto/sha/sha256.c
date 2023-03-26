@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.12 2023/03/26 16:40:07 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.13 2023/03/26 17:06:14 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -21,6 +21,7 @@ int
 SHA224_Init(SHA256_CTX *c)
 {
 	memset (c, 0, sizeof(*c));
+
 	c->h[0] = 0xc1059ed8UL;
 	c->h[1] = 0x367cd507UL;
 	c->h[2] = 0x3070dd17UL;
@@ -29,7 +30,9 @@ SHA224_Init(SHA256_CTX *c)
 	c->h[5] = 0x68581511UL;
 	c->h[6] = 0x64f98fa7UL;
 	c->h[7] = 0xbefa4fa4UL;
+
 	c->md_len = SHA224_DIGEST_LENGTH;
+
 	return 1;
 }
 
@@ -37,6 +40,7 @@ int
 SHA256_Init(SHA256_CTX *c)
 {
 	memset (c, 0, sizeof(*c));
+
 	c->h[0] = 0x6a09e667UL;
 	c->h[1] = 0xbb67ae85UL;
 	c->h[2] = 0x3c6ef372UL;
@@ -45,7 +49,9 @@ SHA256_Init(SHA256_CTX *c)
 	c->h[5] = 0x9b05688cUL;
 	c->h[6] = 0x1f83d9abUL;
 	c->h[7] = 0x5be0cd19UL;
+
 	c->md_len = SHA256_DIGEST_LENGTH;
+
 	return 1;
 }
 
@@ -57,10 +63,13 @@ SHA224(const unsigned char *d, size_t n, unsigned char *md)
 
 	if (md == NULL)
 		md = m;
+
 	SHA224_Init(&c);
 	SHA256_Update(&c, d, n);
 	SHA256_Final(md, &c);
+
 	explicit_bzero(&c, sizeof(c));
+
 	return (md);
 }
 
@@ -72,10 +81,13 @@ SHA256(const unsigned char *d, size_t n, unsigned char *md)
 
 	if (md == NULL)
 		md = m;
+
 	SHA256_Init(&c);
 	SHA256_Update(&c, d, n);
 	SHA256_Final(md, &c);
+
 	explicit_bzero(&c, sizeof(c));
+
 	return (md);
 }
 
@@ -130,9 +142,9 @@ SHA224_Final(unsigned char *md, SHA256_CTX *c)
 #define	HASH_FINAL		SHA256_Final
 #define	HASH_BLOCK_DATA_ORDER	sha256_block_data_order
 #ifndef SHA256_ASM
-				static
+static
 #endif
-				void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
+void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
 
 #include "md32_common.h"
 
@@ -232,7 +244,6 @@ sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
 		ctx->h[5] += f;
 		ctx->h[6] += g;
 		ctx->h[7] += h;
-
 	}
 }
 

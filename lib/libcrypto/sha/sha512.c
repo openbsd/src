@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.17 2023/03/26 16:40:07 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.18 2023/03/26 17:06:14 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved
  * according to the OpenSSL license [found in ../../LICENSE].
@@ -239,7 +239,7 @@ SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
 int
 SHA384_Update(SHA512_CTX *c, const void *data, size_t len)
 {
-	return SHA512_Update (c, data, len);
+	return SHA512_Update(c, data, len);
 }
 
 void
@@ -250,7 +250,7 @@ SHA512_Transform(SHA512_CTX *c, const unsigned char *data)
 		memcpy(c->u.p, data, sizeof(c->u.p)),
 		    data = c->u.p;
 #endif
-	sha512_block_data_order (c, data, 1);
+	sha512_block_data_order(c, data, 1);
 }
 
 unsigned char *
@@ -261,10 +261,13 @@ SHA384(const unsigned char *d, size_t n, unsigned char *md)
 
 	if (md == NULL)
 		md = m;
+
 	SHA384_Init(&c);
 	SHA512_Update(&c, d, n);
 	SHA512_Final(md, &c);
+
 	explicit_bzero(&c, sizeof(c));
+
 	return (md);
 }
 
@@ -276,10 +279,13 @@ SHA512(const unsigned char *d, size_t n, unsigned char *md)
 
 	if (md == NULL)
 		md = m;
+
 	SHA512_Init(&c);
 	SHA512_Update(&c, d, n);
 	SHA512_Final(md, &c);
+
 	explicit_bzero(&c, sizeof(c));
+
 	return (md);
 }
 
