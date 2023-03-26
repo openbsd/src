@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.16 2023/03/26 14:50:23 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.17 2023/03/26 18:46:23 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -27,6 +27,24 @@
 #define INIT_MOD_EXP_FN(f) { .name = #f, .mod_exp_fn = (f), }
 #define INIT_MOD_EXP_MONT_FN(f) { .name = #f, .mod_exp_mont_fn = (f), }
 
+static int
+bn_mod_exp2_mont_first(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *mctx)
+{
+	const BIGNUM *one = BN_value_one();
+
+	return BN_mod_exp2_mont(r, a, p, one, one, m, ctx, mctx);
+}
+
+static int
+bn_mod_exp2_mont_second(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *mctx)
+{
+	const BIGNUM *one = BN_value_one();
+
+	return BN_mod_exp2_mont(r, one, one, a, p, m, ctx, mctx);
+}
+
 static const struct mod_exp_zero_test {
 	const char *name;
 	int (*mod_exp_fn)(BIGNUM *, const BIGNUM *, const BIGNUM *,
@@ -43,6 +61,8 @@ static const struct mod_exp_zero_test {
 	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_ct),
 	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_consttime),
 	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_nonct),
+	INIT_MOD_EXP_MONT_FN(bn_mod_exp2_mont_first),
+	INIT_MOD_EXP_MONT_FN(bn_mod_exp2_mont_second),
 };
 
 #define N_MOD_EXP_ZERO_TESTS \
@@ -193,6 +213,8 @@ static const struct mod_exp_test {
 	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_ct),
 	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_consttime),
 	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_nonct),
+	INIT_MOD_EXP_MONT_FN(bn_mod_exp2_mont_first),
+	INIT_MOD_EXP_MONT_FN(bn_mod_exp2_mont_second),
 };
 
 #define N_MOD_EXP_FN (sizeof(mod_exp_fn) / sizeof(mod_exp_fn[0]))
