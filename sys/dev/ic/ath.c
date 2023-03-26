@@ -1,4 +1,4 @@
-/*      $OpenBSD: ath.c,v 1.123 2022/04/21 21:03:02 stsp Exp $  */
+/*      $OpenBSD: ath.c,v 1.124 2023/03/26 08:45:27 jsg Exp $  */
 /*	$NetBSD: ath.c,v 1.37 2004/08/18 21:59:39 dyoung Exp $	*/
 
 /*-
@@ -308,11 +308,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	timeout_set(&sc->sc_cal_to, ath_calibrate, sc);
 	timeout_set(&sc->sc_rssadapt_to, ath_rssadapt_updatestats, sc);
 
-#ifdef __FreeBSD__
-	ATH_TXBUF_LOCK_INIT(sc);
-	ATH_TXQ_LOCK_INIT(sc);
-#endif
-
 	ATH_TASK_INIT(&sc->sc_txtask, ath_tx_proc, sc);
 	ATH_TASK_INIT(&sc->sc_rxtask, ath_rx_proc, sc);
 	ATH_TASK_INIT(&sc->sc_rxorntask, ath_rxorn_proc, sc);
@@ -352,9 +347,6 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ifp->if_start = ath_start;
 	ifp->if_watchdog = ath_watchdog;
 	ifp->if_ioctl = ath_ioctl;
-#ifndef __OpenBSD__
-	ifp->if_stop = ath_stop;		/* XXX */
-#endif
 	ifq_set_maxlen(&ifp->if_snd, ATH_TXBUF * ATH_TXDESC);
 
 	ic->ic_softc = sc;
@@ -472,10 +464,6 @@ ath_detach(struct ath_softc *sc, int flags)
 	if_detach(ifp);
 
 	splx(s);
-#ifdef __FreeBSD__
-	ATH_TXBUF_LOCK_DESTROY(sc);
-	ATH_TXQ_LOCK_DESTROY(sc);
-#endif
 
 	return 0;
 }
@@ -983,15 +971,6 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-#ifdef __FreeBSD__
-		/*
-		 * The upper layer has already installed/removed
-		 * the multicast address(es), just recalculate the
-		 * multicast filter for the card.
-		 */
-		if (ifp->if_flags & IFF_RUNNING)
-			ath_mode_init(sc);
-#endif
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(ifr, &sc->sc_ic.ic_ac) :
 		    ether_delmulti(ifr, &sc->sc_ic.ic_ac);
@@ -1189,13 +1168,6 @@ ath_getmbuf(int flags, int type, u_int pktlen)
 	struct mbuf *m;
 
 	KASSERT(pktlen <= MCLBYTES, ("802.11 packet too large: %u", pktlen));
-#ifdef __FreeBSD__
-	if (pktlen <= MHLEN) {
-		MGETHDR(m, flags, type);
-	} else {
-		m = m_getcl(flags, type, M_PKTHDR);
-	}
-#else
 	MGETHDR(m, flags, type);
 	if (m != NULL && pktlen > MHLEN) {
 		MCLGET(m, flags);
@@ -1204,7 +1176,6 @@ ath_getmbuf(int flags, int type, u_int pktlen)
 			m = NULL;
 		}
 	}
-#endif
 	return m;
 }
 

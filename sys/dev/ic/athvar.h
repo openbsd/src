@@ -1,4 +1,4 @@
-/*      $OpenBSD: athvar.h,v 1.35 2020/10/11 07:05:28 mpi Exp $  */
+/*      $OpenBSD: athvar.h,v 1.36 2023/03/26 08:45:27 jsg Exp $  */
 /*	$NetBSD: athvar.h,v 1.10 2004/08/10 01:03:53 dyoung Exp $	*/
 
 /*-
@@ -194,15 +194,11 @@ typedef struct ath_task {
 } ath_task_t;
 
 struct ath_softc {
-#ifndef __FreeBSD__
 	struct device		sc_dev;
-#endif
 	struct ieee80211com	sc_ic;		/* IEEE 802.11 common */
-#ifndef __FreeBSD__
 	int			(*sc_enable)(struct ath_softc *);
 	void			(*sc_disable)(struct ath_softc *);
 	void			(*sc_power)(struct ath_softc *, int);
-#endif
 	int			(*sc_newstate)(struct ieee80211com *,
 					enum ieee80211_state, int);
 	void			(*sc_node_free)(struct ieee80211com *,
@@ -213,16 +209,10 @@ struct ath_softc {
 	void			(*sc_recv_mgmt)(struct ieee80211com *,
 				    struct mbuf *, struct ieee80211_node *,
 				    struct ieee80211_rxinfo *, int);
-#ifdef __FreeBSD__
-	device_t		sc_dev;
-#endif
 	bus_space_tag_t		sc_st;		/* bus space tag */
 	bus_space_handle_t	sc_sh;		/* bus space handle */
 	bus_size_t		sc_ss;		/* bus space size */
 	bus_dma_tag_t		sc_dmat;	/* bus DMA tag */
-#ifdef __FreeBSD__
-	struct mtx		sc_mtx;		/* master lock (recursive) */
-#endif
 	struct ath_hal		*sc_ah;		/* Atheros HAL */
 	unsigned int		sc_invalid : 1,	/* disable hardware accesses */
 				sc_doani : 1,	/* dynamic noise immunity */
@@ -274,13 +264,7 @@ struct ath_softc {
 	u_int32_t		*sc_txlink;	/* link ptr in last TX desc */
 	int			sc_tx_timer;	/* transmit timeout */
 	TAILQ_HEAD(, ath_buf)	sc_txbuf;	/* transmit buffer */
-#ifdef __FreeBSD__
-	struct mtx		sc_txbuflock;	/* txbuf lock */
-#endif
 	TAILQ_HEAD(, ath_buf)	sc_txq;		/* transmitting queue */
-#ifdef __FreeBSD__
-	struct mtx		sc_txqlock;	/* lock on txq and txlink */
-#endif
 	ath_task_t		sc_txtask;	/* tx int processing */
 
 	u_int			sc_bhalq;	/* HAL q for outgoing beacons */
@@ -289,22 +273,15 @@ struct ath_softc {
 	ath_task_t		sc_swbatask;	/* swba int processing */
 	ath_task_t		sc_bmisstask;	/* bmiss int processing */
 
-#ifdef __OpenBSD__
 	struct timeval		sc_last_ch;
 	struct timeout		sc_cal_to;
 	struct timeval		sc_last_beacon;
 	struct timeout		sc_scan_to;
 	struct timeout		sc_rssadapt_to;
-#else
-	struct callout		sc_cal_ch;	/* callout handle for cals */
-	struct callout		sc_scan_ch;	/* callout handle for scan */
-#endif
 	struct ath_stats	sc_stats;	/* interface statistics */
 	HAL_MIB_STATS		sc_mib_stats;	/* MIB counter statistics */
 
-#ifndef __FreeBSD__
 	u_int			sc_flags;	/* misc flags */
-#endif
 
 	u_int8_t                sc_broadcast_addr[IEEE80211_ADDR_LEN];
 
@@ -352,7 +329,6 @@ enum {
 /*
  * Wrapper code
  */
-#ifndef __FreeBSD__
 #undef KASSERT
 #define KASSERT(cond, complaint) if (!(cond)) panic complaint
 
@@ -361,7 +337,6 @@ enum {
 #define ATH_GPIO		0x0004		/* gpio device attached */
 
 #define	ATH_IS_ENABLED(sc)	((sc)->sc_flags & ATH_ENABLED)
-#endif
 
 #define	ATH_LOCK_INIT(_sc) \
 	mtx_init(&(_sc)->sc_mtx, device_get_nameunit((_sc)->sc_dev), \
