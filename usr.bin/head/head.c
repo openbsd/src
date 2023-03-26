@@ -37,7 +37,7 @@
 #include <errno.h>
 #include <unistd.h>
 
-int head_file(const char *, long, int);
+int head_file(const char *, long, long, int);
 static void usage(void);
 
 /*
@@ -51,7 +51,8 @@ main(int argc, char *argv[])
 {
 	const char *errstr;
 	int	ch;
-	long	linecnt = 10;
+	long	linecnt = -1;
+	long	bytecnt = -1;
 	int	status = 0;
 
 	if (pledge("stdio rpath", NULL) == -1)
@@ -67,12 +68,17 @@ main(int argc, char *argv[])
 		argv++;
 	}
 
-	while ((ch = getopt(argc, argv, "n:")) != -1) {
+	while ((ch = getopt(argc, argv, "n:c:")) != -1) {
 		switch (ch) {
 		case 'n':
 			linecnt = strtonum(optarg, 1, LONG_MAX, &errstr);
 			if (errstr != NULL)
-				errx(1, "count is %s: %s", errstr, optarg);
+				errx(1, "line count is %s: %s", errstr, optarg);
+			break;
+		case 'c':
+			bytecnt = strtonum(optarg, 1, LONG_MAX, &errstr);
+			if (errstr != NULL)
+				errx(1, "byte count is %s: %s", errstr, optarg);
 			break;
 		default:
 			usage();
@@ -80,26 +86,33 @@ main(int argc, char *argv[])
 	}
 	argc -= optind, argv += optind;
 
+	if (linecnt != -1 && bytecnt != -1)
+		errx(1, "cannot specify both line and byte counts");
+	if (linecnt == -1 && bytecnt == -1)
+		linecnt = 10;
+
 	if (argc == 0) {
 		if (pledge("stdio", NULL) == -1)
 			err(1, "pledge");
 
-		status = head_file(NULL, linecnt, 0);
+		status = head_file(NULL, linecnt, bytecnt, 0);
 	} else {
-		for (; *argv != NULL; argv++)
-			status |= head_file(*argv, linecnt, argc > 1);
+		for (; *argv != NULL; argv++) {
+			status |= head_file(*argv, linecnt, bytecnt, argc > 1);
+		}
 	}
 
 	return status;
 }
 
 int
-head_file(const char *path, long count, int need_header)
+head_file(const char *path, long linecnt, long bytecnt, int need_header)
 {
 	const char *name;
 	FILE *fp;
 	int ch, status = 0;
 	static int first = 1;
+	long count = (linecnt != -1) ? linecnt : bytecnt;
 
 	if (path != NULL) {
 		name = path;
@@ -122,9 +135,10 @@ head_file(const char *path, long count, int need_header)
 	while ((ch = getc(fp)) != EOF) {
 		if (putchar(ch) == EOF)
 			err(1, "stdout");
-		if (ch == '\n' && --count == 0)
+		if ((bytecnt != -1 || ch == '\n') && --count == 0)
 			break;
 	}
+
 	if (ferror(fp)) {
 		warn("%s", name);
 		status = 1;
