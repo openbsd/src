@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.138 2023/03/26 13:12:33 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.139 2023/03/26 16:23:58 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -311,7 +311,7 @@ PRT_protected_guid(const struct uuid *uuid)
 }
 
 void
-PRT_print_mbrmenu(void)
+PRT_print_mbrmenu(char *lbuf, size_t lbuflen)
 {
 	unsigned int		cidx, i, idrows;
 
@@ -328,10 +328,12 @@ PRT_print_mbrmenu(void)
 			    mbr_types[cidx].mt_name);
 		printf("\n");
 	}
+
+	memset(lbuf, 0, lbuflen);	/* Just continue. */
 }
 
 void
-PRT_print_gptmenu(void)
+PRT_print_gptmenu(char *lbuf, size_t lbuflen)
 {
 	unsigned int		cidx, i, idrows;
 
@@ -348,6 +350,8 @@ PRT_print_gptmenu(void)
 			    gpt_types[cidx].gt_name);
 		printf("\n");
 	}
+
+	memset(lbuf, 0, lbuflen);	/* Just continue. */
 }
 
 void
