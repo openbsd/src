@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.15 2023/03/18 13:04:02 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.16 2023/03/26 14:50:23 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -282,6 +282,7 @@ test_mod_exp(const BIGNUM *want, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, const struct mod_exp_test *test)
 {
 	BIGNUM *got;
+	int mod_exp_ret;
 	int ret = 0;
 
 	BN_CTX_start(ctx);
@@ -290,11 +291,11 @@ test_mod_exp(const BIGNUM *want, const BIGNUM *a, const BIGNUM *p,
 		goto err;
 
 	if (test->mod_exp_fn != NULL)
-		ret = test->mod_exp_fn(got, a, p, m, ctx);
+		mod_exp_ret = test->mod_exp_fn(got, a, p, m, ctx);
 	else
-		ret = test->mod_exp_mont_fn(got, a, p, m, ctx, NULL);
+		mod_exp_ret = test->mod_exp_mont_fn(got, a, p, m, ctx, NULL);
 
-	if (!ret)
+	if (!mod_exp_ret)
 		errx(1, "%s() failed", test->name);
 
 	if (BN_cmp(want, got) != 0) {
