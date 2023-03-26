@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.17 2023/03/26 18:46:23 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.18 2023/03/26 18:54:08 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -23,6 +23,8 @@
 #include <openssl/err.h>
 
 #include "bn_local.h"
+
+#define N_MOD_EXP_TESTS		400
 
 #define INIT_MOD_EXP_FN(f) { .name = #f, .mod_exp_fn = (f), }
 #define INIT_MOD_EXP_MONT_FN(f) { .name = #f, .mod_exp_mont_fn = (f), }
@@ -195,8 +197,6 @@ run_bn_mod_exp_zero_tests(void)
 
 	return failed;
 }
-
-#define N_MOD_EXP_TESTS	400
 
 static const struct mod_exp_test {
 	const char *name;
