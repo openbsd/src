@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.136 2023/03/25 22:00:28 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.137 2023/03/26 12:19:54 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -160,35 +160,38 @@ struct gpt_type {
  * Systemd:https://uapi-group.org/specifications/specs/discoverable_partitions_specification/
  *         https://www.freedesktop.org/software/systemd/man/systemd-gpt-auto-generator.html
  */
+
+#define MICROSOFT_BASIC_DATA_GUID	"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"
+
 const struct gpt_type		gpt_types[] = {
 	{ 0x00, 0, "unused",
 	  "00000000-0000-0000-0000-000000000000" },
 	{ 0x01, 0, "FAT12",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x04, 0, "FAT16S",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x06, 0, "FAT16B",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x07, 0, "NTFS",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x0B, 0, "FAT32",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x0C, 0, "FAT32L",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x0D, GTATTR_PROTECT, "BIOS Boot",
 	  "21686148-6449-6e6f-744e-656564454649" },
 	{ 0x0E, 0, "FAT16L",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x11, 0, "OS/2 hidden",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x14, 0, "OS/2 hidden",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x16, 0, "OS/2 hidden",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x17, 0, "OS/2 hidden",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x1C, 0, "ThinkPad Rec",
-	  "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7" },
+	  MICROSOFT_BASIC_DATA_GUID },
 	{ 0x27, 0, "Win Recovery",
 	  "de94bba4-06d1-4d40-a16a-bfd50179d6ac" },
 	{ 0x42, 0, "LinuxSwap DR",
