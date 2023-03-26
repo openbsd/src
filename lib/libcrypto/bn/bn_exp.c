@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.40 2023/03/26 18:52:29 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.41 2023/03/26 19:09:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -409,9 +409,10 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	BN_CTX_start(ctx);
 
-	/* Allocate a montgomery context if it was not supplied by the caller.
+	/*
+	 * Allocate a Montgomery context if it was not supplied by the caller.
 	 * If this is not done, things will break in the montgomery part.
- 	 */
+	 */
 	if (in_mont != NULL)
 		mont = in_mont;
 	else {
@@ -1100,7 +1101,7 @@ BN_mod_exp_internal(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m
 	 * standard algorithm:
 	 *
 	 *   BN_mod_exp_mont   33 .. 40 %  [AMD K6-2, Linux, debug configuration]
-         *                     55 .. 77 %  [UltraSparc processor, but
+	 *                     55 .. 77 %  [UltraSparc processor, but
 	 *                                  debug-solaris-sparcv8-gcc conf.]
 	 *
 	 *   BN_mod_exp_recp   50 .. 70 %  [AMD K6-2, Linux, debug configuration]

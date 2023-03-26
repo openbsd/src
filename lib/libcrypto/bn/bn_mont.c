@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.52 2023/03/07 09:42:09 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.53 2023/03/26 19:09:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -354,7 +354,7 @@ bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *b
 	for (i = 0; i < n_len; i++) {
 		/* Compute new t[0] * n0, as we need it inside the loop. */
 		w = (ap[0] * bp[i] + tp[0]) * n0;
-	
+
 		carry1 = carry2 = 0;
 		for (j = 0; j < n_len; j++) {
 			bn_mulw_addw_addw(ap[j], bp[i], tp[j], carry1, &carry1, &x);
