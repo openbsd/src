@@ -97,9 +97,8 @@ main(int argc, char *argv[])
 
 		status = head_file(NULL, linecnt, bytecnt, 0);
 	} else {
-		for (; *argv != NULL; argv++) {
+		for (; *argv != NULL; argv++)
 			status |= head_file(*argv, linecnt, bytecnt, argc > 1);
-		}
 	}
 
 	return status;
