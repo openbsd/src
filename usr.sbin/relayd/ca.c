@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.40 2022/11/10 00:44:12 mbuhl Exp $	*/
+/*	$OpenBSD: ca.c,v 1.41 2023/03/26 18:04:47 tb Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -27,8 +27,9 @@
 #include <imsg.h>
 
 #include <openssl/bio.h>
-#include <openssl/pem.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/engine.h>
 
