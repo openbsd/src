@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.18 2023/03/26 18:54:08 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.19 2023/03/26 18:57:04 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -280,8 +280,8 @@ generate_test_triple(int reduce, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 }
 
 static void
-dump_results(const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
-    const BIGNUM *got, const BIGNUM *want, const char *name)
+dump_exp_results(const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
+    const BIGNUM *want, const BIGNUM *got, const char *name)
 {
 	printf("BN_mod_exp_simple() and %s() disagree", name);
 
@@ -321,7 +321,7 @@ test_mod_exp(const BIGNUM *want, const BIGNUM *a, const BIGNUM *p,
 		errx(1, "%s() failed", test->name);
 
 	if (BN_cmp(want, got) != 0) {
-		dump_results(a, p, m, want, got, test->name);
+		dump_exp_results(a, p, m, want, got, test->name);
 		goto err;
 	}
 
