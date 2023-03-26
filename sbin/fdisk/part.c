@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.137 2023/03/26 12:19:54 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.138 2023/03/26 13:12:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -161,7 +161,8 @@ struct gpt_type {
  *         https://www.freedesktop.org/software/systemd/man/systemd-gpt-auto-generator.html
  */
 
-#define MICROSOFT_BASIC_DATA_GUID	"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"
+#define	EFI_SYSTEM_PARTITION_GUID	"c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
+#define	MICROSOFT_BASIC_DATA_GUID	"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"
 
 const struct gpt_type		gpt_types[] = {
 	{ 0x00, 0, "unused",
@@ -233,7 +234,7 @@ const struct gpt_type		gpt_types[] = {
 	{ 0xEC, 0, "Legacy MBR",
 	  "024dee41-33e7-11d3-9d69-0008c781f39f" },
 	{ 0xEF, 0, "EFI Sys",
-	  "c12a7328-f81f-11d2-ba4b-00a0c93ec93b" },
+	  EFI_SYSTEM_PARTITION_GUID },
 };
 
 const struct gpt_type	*find_gpt_type(const struct uuid *);
@@ -299,7 +300,7 @@ PRT_protected_guid(const struct uuid *uuid)
 	if (gt && gt->gt_attr & GTATTR_PROTECT)
 		return 1;
 
-	if (gt && gt->gt_type == DOSPTYP_EFISYS) {
+	if (gt && strcasecmp(gt->gt_guid, EFI_SYSTEM_PARTITION_GUID) == 0) {
 		for (pn = 0; pn < gh.gh_part_num; pn++) {
 			if (uuid_attr(&gp[pn].gp_type) & GTATTR_PROTECT_EFISYS)
 				return 1;
