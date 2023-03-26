@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.131 2023/01/14 03:28:51 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.132 2023/03/26 18:12:45 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -216,6 +216,7 @@ const struct {
 	{ SEFF0EDX_SRBDS_CTRL,	"SRBDS_CTRL" },
 	{ SEFF0EDX_MD_CLEAR,	"MD_CLEAR" },
 	{ SEFF0EDX_TSXFA,	"TSXFA" },
+	{ SEFF0EDX_IBT,		"IBT" },
 	{ SEFF0EDX_IBRS,	"IBRS,IBPB" },
 	{ SEFF0EDX_STIBP,	"STIBP" },
 	{ SEFF0EDX_L1DF,	"L1DF" },
