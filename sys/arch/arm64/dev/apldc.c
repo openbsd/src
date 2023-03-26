@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.5 2023/03/05 14:45:07 patrick Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.6 2023/03/26 09:34:06 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -995,15 +995,17 @@ apldchidev_attachhook(struct device *self)
 		len = OF_getproplen(node, "firmware-name");
 		if (len <= 0)
 			return;
-		firmware_name = malloc(len, M_DEVBUF, M_WAITOK);
+		firmware_name = malloc(len, M_TEMP, M_WAITOK);
 		OF_getprop(node, "firmware-name", firmware_name, len);
 
 		error = loadfirmware(firmware_name, &ucode, &ucode_size);
 		if (error) {
 			printf("%s: error %d, could not read firmware %s\n",
 			    sc->sc_dev.dv_xname, error, firmware_name);
+			free(firmware_name, M_TEMP, len);
 			return;
 		}
+		free(firmware_name, M_TEMP, len);
 
 		hdr = (struct mtp_fwhdr *)ucode;
 		if (sizeof(hdr) > ucode_size ||
