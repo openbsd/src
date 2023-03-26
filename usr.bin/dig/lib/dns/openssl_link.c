@@ -61,7 +61,7 @@ dst__openssl_destroy(void) {
 	EVP_cleanup();
 	CRYPTO_cleanup_all_ex_data();
 	ERR_clear_error();
-	ERR_remove_state(0);
+	ERR_remove_thread_state(NULL);
 	ERR_free_strings();
 
 }
