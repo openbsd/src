@@ -1,5 +1,5 @@
-#!/bin/perl
-# 	$OpenBSD: bn_prime.pl,v 1.11 2023/03/25 11:35:02 tb Exp $
+#!/usr/bin/perl
+# 	$OpenBSD: bn_prime.pl,v 1.12 2023/03/26 08:04:57 tb Exp $
 #
 # Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
 # All rights reserved.
@@ -72,13 +72,14 @@ push(@primes, 2);
 $p = 1;
 
 loop:
-while ($#primes < $num-1) {
+while ($#primes < $num - 1) {
 	$p += 2;
 	$s = int(sqrt($p));
 
 	for ($i = 0; defined($primes[$i]) && $primes[$i] <= $s; $i++) {
 		next loop if $p % $primes[$i] == 0;
 	}
+
 	die "\$primes[$i] is too large: $primes[$i]" if $primes[$i] > 65535;
 	push(@primes, $p);
 }
