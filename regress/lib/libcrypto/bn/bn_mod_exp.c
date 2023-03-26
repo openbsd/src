@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.23 2023/03/26 20:09:14 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.24 2023/03/26 20:13:26 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -24,8 +24,8 @@
 
 #include "bn_local.h"
 
-#define N_MOD_EXP_TESTS		400
-#define N_MOD_EXP2_TESTS	100
+#define N_MOD_EXP_TESTS		100
+#define N_MOD_EXP2_TESTS	50
 
 #define INIT_MOD_EXP_FN(f) { .name = #f, .mod_exp_fn = (f), }
 #define INIT_MOD_EXP_MONT_FN(f) { .name = #f, .mod_exp_mont_fn = (f), }
@@ -404,9 +404,10 @@ bn_mod_exp_test(int reduce, BIGNUM *want, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 	if (!generate_test_triple(reduce, a, p, m, ctx))
 		errx(1, "generate_test_triple");
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < 8; i++) {
 		BN_set_negative(a, i & 1);
 		BN_set_negative(p, (i >> 1) & 1);
+		BN_set_negative(m, (i >> 2) & 1);
 
 		if ((BN_mod_exp_simple(want, a, p, m, ctx)) <= 0)
 			errx(1, "BN_mod_exp_simple");
@@ -521,11 +522,12 @@ bn_mod_exp2_test(int reduce, BIGNUM *want, BIGNUM *got, BIGNUM *a1, BIGNUM *p1,
 	if (!generate_test_quintuple(reduce, a1, p1, a2, p2, m, ctx))
 		errx(1, "generate_test_quintuple");
 
-	for (i = 0; i < 16; i++) {
+	for (i = 0; i < 32; i++) {
 		BN_set_negative(a1, i & 1);
 		BN_set_negative(p1, (i >> 1) & 1);
 		BN_set_negative(a2, (i >> 2) & 1);
 		BN_set_negative(p2, (i >> 3) & 1);
+		BN_set_negative(m, (i >> 4) & 1);
 
 		if (!bn_mod_exp2_simple(want, a1, p1, a2, p2, m, ctx))
 			errx(1, "BN_mod_exp_simple");
