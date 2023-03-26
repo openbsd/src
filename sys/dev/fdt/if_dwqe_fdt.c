@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.4 2023/03/25 10:14:58 kettenis Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.5 2023/03/26 21:44:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -64,6 +64,8 @@
 int	dwqe_fdt_match(struct device *, void *, void *);
 void	dwqe_fdt_attach(struct device *, struct device *, void *);
 void	dwqe_setup_rockchip(struct dwqe_softc *);
+void	dwqe_mii_statchg_rk3568(struct device *);
+void	dwqe_mii_statchg_rk3588(struct device *);
 
 const struct cfattach dwqe_fdt_ca = {
 	sizeof(struct dwqe_softc), dwqe_fdt_match, dwqe_fdt_attach
@@ -134,6 +136,10 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	}
 	delay(5000);
 
+	/* Do hardware specific initializations. */
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
+		dwqe_setup_rockchip(sc);
+
 	/* Power up PHY. */
 	phy_supply = OF_getpropint(faa->fa_node, "phy-supply", 0);
 	if (phy_supply)
@@ -195,9 +201,10 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (dwqe_attach(sc) != 0)
 		return;
 
-	/* Do hardware specific initializations. */
 	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
-		dwqe_setup_rockchip(sc);
+		sc->sc_mii.mii_statchg = dwqe_mii_statchg_rk3568;
+	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3588-gmac"))
+		sc->sc_mii.mii_statchg = dwqe_mii_statchg_rk3588;
 
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_NET | IPL_MPSAFE,
 	    dwqe_intr, sc, sc->sc_dev.dv_xname);
@@ -263,8 +270,6 @@ dwqe_reset_phy(struct dwqe_softc *sc, uint32_t phy)
 #define  RK3568_GMAC_RXCLK_DLY_ENA		((1 << 1) << 16 | (1 << 1))
 
 void	dwqe_mii_statchg_rk3568_task(void *);
-void	dwqe_mii_statchg_rk3568(struct device *);
-void	dwqe_mii_statchg_rk3588(struct device *);
 
 void
 dwqe_setup_rockchip(struct dwqe_softc *sc)
@@ -295,9 +300,6 @@ dwqe_setup_rockchip(struct dwqe_softc *sc)
 
 		task_set(&sc->sc_statchg_task,
 		    dwqe_mii_statchg_rk3568_task, sc);
-		sc->sc_mii.mii_statchg = dwqe_mii_statchg_rk3568;
-	} else {
-		sc->sc_mii.mii_statchg = dwqe_mii_statchg_rk3588;
 	}
 }
 
