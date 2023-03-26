@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.22 2023/03/26 19:56:28 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.23 2023/03/26 20:09:14 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -87,6 +87,7 @@ bn_mod_exp_zero_test(const struct mod_exp_zero_test *test, BN_CTX *ctx,
 {
 	const BIGNUM *one;
 	BIGNUM *a, *p, *got;
+	int mod_exp_ret;
 	int failed = 1;
 
 	BN_CTX_start(ctx);
@@ -108,17 +109,15 @@ bn_mod_exp_zero_test(const struct mod_exp_zero_test *test, BN_CTX *ctx,
 	}
 
 	if (test->mod_exp_fn != NULL) {
-		if (!test->mod_exp_fn(got, a, p, one, ctx)) {
-			fprintf(stderr, "%s failed\n", test->name);
-			ERR_print_errors_fp(stderr);
-			goto err;
-		}
+		mod_exp_ret = test->mod_exp_fn(got, a, p, one, ctx);
 	} else {
-		if (!test->mod_exp_mont_fn(got, a, p, one, ctx, NULL)) {
-			fprintf(stderr, "%s failed\n", test->name);
-			ERR_print_errors_fp(stderr);
-			goto err;
-		}
+		mod_exp_ret = test->mod_exp_mont_fn(got, a, p, one, ctx, NULL);
+	}
+
+	if (!mod_exp_ret) {
+		fprintf(stderr, "%s failed\n", test->name);
+		ERR_print_errors_fp(stderr);
+		goto err;
 	}
 
 	if (!BN_is_zero(got)) {
@@ -542,6 +541,7 @@ bn_mod_exp2_test(int reduce, BIGNUM *want, BIGNUM *got, BIGNUM *a1, BIGNUM *p1,
 
 	return failed;
 }
+
 static int
 run_bn_mod_exp2_tests(void)
 {
