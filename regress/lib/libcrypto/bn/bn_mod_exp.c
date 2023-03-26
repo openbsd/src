@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.24 2023/03/26 20:13:26 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.25 2023/03/26 22:09:08 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -589,6 +589,30 @@ run_bn_mod_exp2_tests(void)
 	return failed;
 }
 
+/*
+ * Small test for a crash reported by Guido Vranken, fixed in bn_exp2.c r1.13.
+ * https://github.com/openssl/openssl/issues/17648
+ */
+
+static int
+test_bn_mod_exp2_mont_crash(void)
+{
+	BIGNUM *m;
+	int failed = 0;
+
+	if ((m = BN_new()) == NULL)
+		errx(1, "BN_new");
+
+	if (BN_mod_exp2_mont(NULL, NULL, NULL, NULL, NULL, m, NULL, NULL)) {
+		fprintf(stderr, "BN_mod_exp2_mont succeeded\n");
+		failed |= 1;
+	}
+
+	BN_free(m);
+
+	return failed;
+}
+
 int
 main(void)
 {
@@ -597,6 +621,7 @@ main(void)
 	failed |= run_bn_mod_exp_zero_tests();
 	failed |= run_bn_mod_exp_tests();
 	failed |= run_bn_mod_exp2_tests();
+	failed |= test_bn_mod_exp2_mont_crash();
 
 	return failed;
 }
