@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1dgst.c,v 1.17 2023/03/26 19:02:40 jsing Exp $ */
+/* $OpenBSD: sha1dgst.c,v 1.18 2023/03/26 19:04:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,19 +56,15 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/opensslconf.h>
-
-#include <openssl/crypto.h>
-
-#if !defined(OPENSSL_NO_SHA1) && !defined(OPENSSL_NO_SHA)
-
-#include <openssl/opensslv.h>
-
 #include <stdlib.h>
 #include <string.h>
 
 #include <openssl/opensslconf.h>
+
+#include <openssl/crypto.h>
 #include <openssl/sha.h>
+
+#if !defined(OPENSSL_NO_SHA1) && !defined(OPENSSL_NO_SHA)
 
 #define DATA_ORDER_IS_BIG_ENDIAN
 
