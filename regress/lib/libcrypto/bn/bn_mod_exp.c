@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.21 2023/03/26 19:01:59 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.22 2023/03/26 19:56:28 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -569,7 +569,7 @@ run_bn_mod_exp2_tests(void)
 	if ((want = BN_CTX_get(ctx)) == NULL)
 		errx(1, "want = BN_CTX_get()");
 	if ((got = BN_CTX_get(ctx)) == NULL)
-		errx(1, "want = BN_CTX_get()");
+		errx(1, "got = BN_CTX_get()");
 
 	reduce = 0;
 	for (i = 0; i < N_MOD_EXP_TESTS; i++)
