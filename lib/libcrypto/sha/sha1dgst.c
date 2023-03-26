@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1dgst.c,v 1.19 2023/03/26 19:19:28 jsing Exp $ */
+/* $OpenBSD: sha1dgst.c,v 1.20 2023/03/26 19:21:13 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,12 +80,12 @@
 	ll=(c)->h4; HOST_l2c(ll,(s));	\
 	} while (0)
 
-# define HASH_UPDATE             	SHA1_Update
-# define HASH_TRANSFORM          	SHA1_Transform
-# define HASH_FINAL              	SHA1_Final
-# define HASH_INIT			SHA1_Init
-# define HASH_BLOCK_DATA_ORDER   	sha1_block_data_order
-# define Xupdate(a,ix,ia,ib,ic,id)	( (a)=(ia^ib^ic^id),	\
+#define HASH_UPDATE             	SHA1_Update
+#define HASH_TRANSFORM          	SHA1_Transform
+#define HASH_FINAL              	SHA1_Final
+#define HASH_INIT			SHA1_Init
+#define HASH_BLOCK_DATA_ORDER   	sha1_block_data_order
+#define Xupdate(a,ix,ia,ib,ic,id)	( (a)=(ia^ib^ic^id),	\
 					  ix=(a)=ROTATE((a),1)	\
 					)
 
