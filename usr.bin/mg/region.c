@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.40 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: region.c,v 1.41 2023/03/27 17:53:17 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -470,11 +470,9 @@ shellcommand(int f, int n)
 	return shellcmdoutput(argv, NULL, 0);
 }
 
-
 int
 shellcmdoutput(char* const argv[], char* const text, int len)
 {
-
 	struct buffer *bp;
 	char	*shellp;
 	int	 ret;
@@ -567,7 +565,7 @@ iomux(int fd, char* const text, int len, struct buffer *outbp)
 	pfd[0].fd = fd;
 
 	/* There is nothing to write if len is zero
-	 * but the cmd's output should be read so shutdown 
+	 * but the cmd's output should be read so shutdown
 	 * the socket for writing only and don't wait for POLLOUT
 	 */
 	if (len == 0) {
@@ -588,7 +586,7 @@ iomux(int fd, char* const text, int len, struct buffer *outbp)
 	}
 	close(fd);
 
-	/* In case if last line doesn't have a '\n' add the leftover 
+	/* In case if last line doesn't have a '\n' add the leftover
 	 * characters to buffer.
 	 */
 	if (leftover[0] != '\0') {
@@ -608,7 +606,7 @@ iomux(int fd, char* const text, int len, struct buffer *outbp)
 }
 
 /*
- * Write some text from region to fd. Once done shutdown the 
+ * Write some text from region to fd. Once done shutdown the
  * write end.
  */
 void
@@ -629,7 +627,7 @@ pwriteout(int fd, char **text, int *len)
 
 	*text += w;
 	if (*len <= 0)
-		shutdown(fd, SHUT_WR);		
+		shutdown(fd, SHUT_WR);
 }
 
 /*
