@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.41 2023/03/27 17:53:17 op Exp $	*/
+/*	$OpenBSD: region.c,v 1.42 2023/03/27 17:54:20 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -454,7 +454,6 @@ piperegion(int f, int n)
 int
 shellcommand(int f, int n)
 {
-
 	char *cmd, cmdbuf[NFILEN];
 	char *argv[] = {"sh", "-c", (char *) NULL, (char *) NULL};
 
