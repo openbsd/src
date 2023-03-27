@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.26 2023/03/27 08:52:57 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.27 2023/03/27 09:01:08 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -404,7 +404,7 @@ bn_mod_exp_test(int reduce, BIGNUM *want, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 	if (!generate_test_triple(reduce, a, p, m, ctx))
 		errx(1, "generate_test_triple");
 
-	for (i = 0; i < 8; i++) {
+	for (i = 0; i < 8 && !failed; i++) {
 		BN_set_negative(a, i & 1);
 		BN_set_negative(p, (i >> 1) & 1);
 		BN_set_negative(m, (i >> 2) & 1);
@@ -447,11 +447,11 @@ run_bn_mod_exp_tests(void)
 		errx(1, "want = BN_CTX_get()");
 
 	reduce = 0;
-	for (i = 0; i < N_MOD_EXP_TESTS; i++)
+	for (i = 0; i < N_MOD_EXP_TESTS && !failed; i++)
 		failed |= bn_mod_exp_test(reduce, want, a, p, m, ctx);
 
 	reduce = 1;
-	for (i = 0; i < N_MOD_EXP_TESTS; i++)
+	for (i = 0; i < N_MOD_EXP_TESTS && !failed; i++)
 		failed |= bn_mod_exp_test(reduce, want, a, p, m, ctx);
 
 	BN_CTX_end(ctx);
@@ -522,7 +522,7 @@ bn_mod_exp2_test(int reduce, BIGNUM *want, BIGNUM *got, BIGNUM *a1, BIGNUM *p1,
 	if (!generate_test_quintuple(reduce, a1, p1, a2, p2, m, ctx))
 		errx(1, "generate_test_quintuple");
 
-	for (i = 0; i < 32; i++) {
+	for (i = 0; i < 32 && !failed; i++) {
 		BN_set_negative(a1, i & 1);
 		BN_set_negative(p1, (i >> 1) & 1);
 		BN_set_negative(a2, (i >> 2) & 1);
@@ -574,12 +574,12 @@ run_bn_mod_exp2_tests(void)
 		errx(1, "got = BN_CTX_get()");
 
 	reduce = 0;
-	for (i = 0; i < N_MOD_EXP_TESTS; i++)
+	for (i = 0; i < N_MOD_EXP_TESTS && !failed; i++)
 		failed |= bn_mod_exp2_test(reduce, want, got, a1, p1, a2, p2, m,
 		    ctx);
 
 	reduce = 1;
-	for (i = 0; i < N_MOD_EXP_TESTS; i++)
+	for (i = 0; i < N_MOD_EXP_TESTS && !failed; i++)
 		failed |= bn_mod_exp2_test(reduce, want, got, a1, p1, a2, p2, m,
 		    ctx);
 
