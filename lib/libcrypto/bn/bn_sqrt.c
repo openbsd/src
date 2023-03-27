@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqrt.c,v 1.15 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: bn_sqrt.c,v 1.16 2023/03/27 10:25:02 tb Exp $ */
 /* Written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * and Bodo Moeller for the OpenSSL project. */
 /* ====================================================================
@@ -209,7 +209,7 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		if (!BN_mod_mul(x, x, t, p, ctx))
 			goto end;
 
-		if (!BN_copy(ret, x))
+		if (!bn_copy(ret, x))
 			goto end;
 		err = 0;
 		goto vrfy;
@@ -217,7 +217,7 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	/* e > 2, so we really have to use the Tonelli/Shanks algorithm.
 	 * First, find some  y  that is not a square. */
-	if (!BN_copy(q, p)) /* use 'q' as temp */
+	if (!bn_copy(q, p)) /* use 'q' as temp */
 		goto end;
 	q->neg = 0;
 	i = 2;
@@ -344,7 +344,7 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		 */
 
 		if (BN_is_one(b)) {
-			if (!BN_copy(ret, x))
+			if (!bn_copy(ret, x))
 				goto end;
 			err = 0;
 			goto vrfy;
@@ -368,7 +368,7 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		}
 
 		/* t := y^2^(e - i - 1) */
-		if (!BN_copy(t, y))
+		if (!bn_copy(t, y))
 			goto end;
 		for (j = e - i - 1; j > 0; j--) {
 			if (!BN_mod_sqr(t, t, p, ctx))

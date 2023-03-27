@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.22 2023/03/27 10:21:23 tb Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.23 2023/03/27 10:25:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -314,7 +314,7 @@ BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	 *      A == gcd(a,n);
 	 */
 
-	if (!BN_copy(R, A))
+	if (!bn_copy(R, A))
 		goto err;
 	ret = R;
 err:
@@ -524,7 +524,7 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	if (BN_is_one(A)) {
 		/* Y*a == 1  (mod |n|) */
 		if (!Y->neg && BN_ucmp(Y, n) < 0) {
-			if (!BN_copy(R, Y))
+			if (!bn_copy(R, Y))
 				goto err;
 		} else {
 			if (!BN_nnmod(R, Y, n, ctx))
@@ -779,7 +779,7 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 					if (!BN_lshift(tmp, X, 2))
 						goto err;
 				} else if (D->top == 1) {
-					if (!BN_copy(tmp, X))
+					if (!bn_copy(tmp, X))
 						goto err;
 					if (!BN_mul_word(tmp, D->d[0]))
 						goto err;
@@ -815,7 +815,7 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 	if (BN_is_one(A)) {
 		/* Y*a == 1  (mod |n|) */
 		if (!Y->neg && BN_ucmp(Y, n) < 0) {
-			if (!BN_copy(R, Y))
+			if (!bn_copy(R, Y))
 				goto err;
 		} else {
 			if (!BN_nnmod(R, Y,n, ctx))

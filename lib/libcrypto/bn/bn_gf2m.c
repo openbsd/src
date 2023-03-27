@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.31 2023/03/27 10:20:27 tb Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.32 2023/03/27 10:25:02 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -643,7 +643,7 @@ BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	if (BN_is_zero(u))
 		goto err;
 
-	if (!BN_copy(v, p))
+	if (!bn_copy(v, p))
 		goto err;
 #if 0
 	if (!BN_one(b))
@@ -773,7 +773,7 @@ BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	}
 #endif
 
-	if (!BN_copy(r, b))
+	if (!bn_copy(r, b))
 		goto err;
 	ret = 1;
 
@@ -865,7 +865,7 @@ BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x, const BIGNUM *p,
 		goto err;
 	if (!BN_GF2m_mod(a, x, p))
 		goto err;
-	if (!BN_copy(b, p))
+	if (!bn_copy(b, p))
 		goto err;
 
 	while (!BN_is_odd(a)) {
@@ -912,7 +912,7 @@ BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *y, const BIGNUM *x, const BIGNUM *p,
 		}
 	} while (1);
 
-	if (!BN_copy(r, u))
+	if (!bn_copy(r, u))
 		goto err;
 	ret = 1;
 
@@ -985,7 +985,7 @@ BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const int p[],
 				goto err;
 		}
 	}
-	if (!BN_copy(r, u))
+	if (!bn_copy(r, u))
 		goto err;
 	ret = 1;
 
@@ -1117,7 +1117,7 @@ BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
 	if (p[0] & 0x1) /* m is odd */
 	{
 		/* compute half-trace of a */
-		if (!BN_copy(z, a))
+		if (!bn_copy(z, a))
 			goto err;
 		for (j = 1; j <= (p[0] - 1) / 2; j++) {
 			if (!BN_GF2m_mod_sqr_arr(z, z, p, ctx))
@@ -1143,7 +1143,7 @@ BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
 			if (!BN_GF2m_mod_arr(rho, rho, p))
 				goto err;
 			BN_zero(z);
-			if (!BN_copy(w, rho))
+			if (!bn_copy(w, rho))
 				goto err;
 			for (j = 1; j <= p[0] - 1; j++) {
 				if (!BN_GF2m_mod_sqr_arr(z, z, p, ctx))
@@ -1174,7 +1174,7 @@ BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[],
 		goto err;
 	}
 
-	if (!BN_copy(r, z))
+	if (!bn_copy(r, z))
 		goto err;
 
 	ret = 1;

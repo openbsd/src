@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.30 2023/03/27 10:21:23 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.31 2023/03/27 10:25:02 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -200,12 +200,12 @@ ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 		 * code path used in the constant time implementations
 		 * elsewhere.
 		 *
-		 * TODO: revisit the BN_copy aiming for a memory access agnostic
+		 * TODO: revisit the bn_copy aiming for a memory access agnostic
 		 * conditional copy.
 		 */
 		if (!BN_add(r, k, order) ||
 		    !BN_add(X, r, order) ||
-		    !BN_copy(k, BN_num_bits(r) > order_bits ? r : X))
+		    !bn_copy(k, BN_num_bits(r) > order_bits ? r : X))
 			goto err;
 
 		BN_set_flags(k, BN_FLG_CONSTTIME);

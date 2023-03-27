@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.43 2023/03/27 10:22:47 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.44 2023/03/27 10:25:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -816,7 +816,7 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 			(BN_mod_ct(t, r, m, ctx) && (swap_tmp = r, r = t, t = swap_tmp, 1))))
 		/* BN_MOD_MUL_WORD is only used with 'w' large,
 		 * so the BN_ucmp test is probably more overhead
-		 * than always using BN_mod (which uses BN_copy if
+		 * than always using BN_mod (which uses bn_copy if
 		 * a similar test returns true). */
 		/* We can use BN_mod and do not need BN_nnmod because our
 		 * accumulator is never negative (the result of BN_mod does
@@ -985,7 +985,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 
 	if (m->neg) {
 		/* ignore sign of 'm' */
-		if (!BN_copy(aa, m))
+		if (!bn_copy(aa, m))
 			goto err;
 		aa->neg = 0;
 		if (BN_RECP_CTX_set(&recp, aa, ctx) <= 0)

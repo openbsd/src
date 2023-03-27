@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.54 2023/03/27 10:21:23 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.55 2023/03/27 10:25:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,9 +166,9 @@ BN_MONT_CTX_copy(BN_MONT_CTX *dst, BN_MONT_CTX *src)
 	if (dst == src)
 		return dst;
 
-	if (!BN_copy(&dst->RR, &src->RR))
+	if (!bn_copy(&dst->RR, &src->RR))
 		return NULL;
-	if (!BN_copy(&dst->N, &src->N))
+	if (!bn_copy(&dst->N, &src->N))
 		return NULL;
 
 	dst->ri = src->ri;
@@ -198,7 +198,7 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 	/* Save modulus and determine length of R. */
 	if (BN_is_zero(mod))
 		goto err;
-	if (!BN_copy(&mont->N, mod))
+	if (!bn_copy(&mont->N, mod))
 		 goto err;
 	mont->N.neg = 0;
 	mont->ri = ((BN_num_bits(mod) + BN_BITS2 - 1) / BN_BITS2) * BN_BITS2;

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.51 2023/03/08 06:47:30 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.52 2023/03/27 10:25:02 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -181,9 +181,9 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 		dest->generator = NULL;
 	}
 
-	if (!BN_copy(&dest->order, &src->order))
+	if (!bn_copy(&dest->order, &src->order))
 		return 0;
-	if (!BN_copy(&dest->cofactor, &src->cofactor))
+	if (!bn_copy(&dest->cofactor, &src->cofactor))
 		return 0;
 
 	dest->curve_name = src->curve_name;
@@ -279,7 +279,7 @@ ec_guess_cofactor(EC_GROUP *group)
 		if (!BN_set_bit(q, BN_num_bits(&group->field) - 1))
 			goto err;
 	} else {
-		if (!BN_copy(q, &group->field))
+		if (!bn_copy(q, &group->field))
 			goto err;
 	}
 
@@ -357,12 +357,12 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 	if (!EC_POINT_copy(group->generator, generator))
 		return 0;
 
-	if (!BN_copy(&group->order, order))
+	if (!bn_copy(&group->order, order))
 		return 0;
 
 	/* Either take the provided positive cofactor, or try to compute it. */
 	if (cofactor != NULL && !BN_is_zero(cofactor)) {
-		if (!BN_copy(&group->cofactor, cofactor))
+		if (!bn_copy(&group->cofactor, cofactor))
 			return 0;
 	} else if (!ec_guess_cofactor(group))
 		return 0;
@@ -387,7 +387,7 @@ EC_GROUP_get0_generator(const EC_GROUP *group)
 int
 EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
 {
-	if (!BN_copy(order, &group->order))
+	if (!bn_copy(order, &group->order))
 		return 0;
 
 	return !BN_is_zero(order);
@@ -402,7 +402,7 @@ EC_GROUP_order_bits(const EC_GROUP *group)
 int
 EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
 {
-	if (!BN_copy(cofactor, &group->cofactor))
+	if (!bn_copy(cofactor, &group->cofactor))
 		return 0;
 
 	return !BN_is_zero(&group->cofactor);

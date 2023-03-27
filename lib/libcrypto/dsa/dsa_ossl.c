@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.50 2023/03/04 21:30:23 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.51 2023/03/27 10:25:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -282,13 +282,13 @@ dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	 * small timing information leakage.  We then choose the sum that is
 	 * one bit longer than the modulus.
 	 *
-	 * TODO: revisit the BN_copy aiming for a memory access agnostic
+	 * TODO: revisit the bn_copy aiming for a memory access agnostic
 	 * conditional copy.
 	 */
 
 	if (!BN_add(l, k, dsa->q) ||
 	    !BN_add(m, l, dsa->q) ||
-	    !BN_copy(k, BN_num_bits(l) > q_bits ? l : m))
+	    !bn_copy(k, BN_num_bits(l) > q_bits ? l : m))
 		goto err;
 
 	if (dsa->meth->bn_mod_exp != NULL) {

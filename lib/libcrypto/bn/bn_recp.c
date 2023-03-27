@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_recp.c,v 1.18 2023/02/13 04:25:37 jsing Exp $ */
+/* $OpenBSD: bn_recp.c,v 1.19 2023/03/27 10:25:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,7 +99,7 @@ BN_RECP_CTX_free(BN_RECP_CTX *recp)
 int
 BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
 {
-	if (!BN_copy(&(recp->N), d))
+	if (!bn_copy(&(recp->N), d))
 		return 0;
 	BN_zero(&(recp->Nr));
 	recp->num_bits = BN_num_bits(d);
@@ -160,7 +160,7 @@ BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, BN_RECP_CTX *recp,
 
 	if (BN_ucmp(m, &(recp->N)) < 0) {
 		BN_zero(d);
-		if (!BN_copy(r, m)) {
+		if (!bn_copy(r, m)) {
 			BN_CTX_end(ctx);
 			return 0;
 		}

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.33 2023/03/08 05:45:31 jsing Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.34 2023/03/27 10:25:02 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -115,11 +115,11 @@ ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
 	int i;
 
-	if (!BN_copy(&dest->field, &src->field))
+	if (!bn_copy(&dest->field, &src->field))
 		return 0;
-	if (!BN_copy(&dest->a, &src->a))
+	if (!bn_copy(&dest->a, &src->a))
 		return 0;
-	if (!BN_copy(&dest->b, &src->b))
+	if (!bn_copy(&dest->b, &src->b))
 		return 0;
 	dest->poly[0] = src->poly[0];
 	dest->poly[1] = src->poly[1];
@@ -146,7 +146,7 @@ ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 	int ret = 0, i;
 
 	/* group->field */
-	if (!BN_copy(&group->field, p))
+	if (!bn_copy(&group->field, p))
 		goto err;
 	i = BN_GF2m_poly2arr(&group->field, group->poly, 6) - 1;
 	if ((i != 5) && (i != 3)) {
@@ -185,15 +185,15 @@ ec_GF2m_simple_group_get_curve(const EC_GROUP *group,
 	int ret = 0;
 
 	if (p != NULL) {
-		if (!BN_copy(p, &group->field))
+		if (!bn_copy(p, &group->field))
 			return 0;
 	}
 	if (a != NULL) {
-		if (!BN_copy(a, &group->a))
+		if (!bn_copy(a, &group->a))
 			goto err;
 	}
 	if (b != NULL) {
-		if (!BN_copy(b, &group->b))
+		if (!bn_copy(b, &group->b))
 			goto err;
 	}
 	ret = 1;
@@ -274,11 +274,11 @@ ec_GF2m_simple_point_finish(EC_POINT *point)
 static int
 ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 {
-	if (!BN_copy(&dest->X, &src->X))
+	if (!bn_copy(&dest->X, &src->X))
 		return 0;
-	if (!BN_copy(&dest->Y, &src->Y))
+	if (!bn_copy(&dest->Y, &src->Y))
 		return 0;
-	if (!BN_copy(&dest->Z, &src->Z))
+	if (!bn_copy(&dest->Z, &src->Z))
 		return 0;
 	dest->Z_is_one = src->Z_is_one;
 
@@ -310,13 +310,13 @@ ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *poi
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
 	}
-	if (!BN_copy(&point->X, x))
+	if (!bn_copy(&point->X, x))
 		goto err;
 	BN_set_negative(&point->X, 0);
-	if (!BN_copy(&point->Y, y))
+	if (!bn_copy(&point->Y, y))
 		goto err;
 	BN_set_negative(&point->Y, 0);
-	if (!BN_copy(&point->Z, BN_value_one()))
+	if (!bn_copy(&point->Z, BN_value_one()))
 		goto err;
 	BN_set_negative(&point->Z, 0);
 	point->Z_is_one = 1;
@@ -345,12 +345,12 @@ ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
 		return 0;
 	}
 	if (x != NULL) {
-		if (!BN_copy(x, &point->X))
+		if (!bn_copy(x, &point->X))
 			goto err;
 		BN_set_negative(x, 0);
 	}
 	if (y != NULL) {
-		if (!BN_copy(y, &point->Y))
+		if (!bn_copy(y, &point->Y))
 			goto err;
 		BN_set_negative(y, 0);
 	}
@@ -406,18 +406,18 @@ ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 		goto err;
 
 	if (a->Z_is_one) {
-		if (!BN_copy(x0, &a->X))
+		if (!bn_copy(x0, &a->X))
 			goto err;
-		if (!BN_copy(y0, &a->Y))
+		if (!bn_copy(y0, &a->Y))
 			goto err;
 	} else {
 		if (!EC_POINT_get_affine_coordinates(group, a, x0, y0, ctx))
 			goto err;
 	}
 	if (b->Z_is_one) {
-		if (!BN_copy(x1, &b->X))
+		if (!bn_copy(x1, &b->X))
 			goto err;
-		if (!BN_copy(y1, &b->Y))
+		if (!bn_copy(y1, &b->Y))
 			goto err;
 	} else {
 		if (!EC_POINT_get_affine_coordinates(group, b, x1, y1, ctx))
@@ -647,9 +647,9 @@ ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 
 	if (!EC_POINT_get_affine_coordinates(group, point, x, y, ctx))
 		goto err;
-	if (!BN_copy(&point->X, x))
+	if (!bn_copy(&point->X, x))
 		goto err;
-	if (!BN_copy(&point->Y, y))
+	if (!bn_copy(&point->Y, y))
 		goto err;
 	if (!BN_one(&point->Z))
 		goto err;

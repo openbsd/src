@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.27 2023/03/08 05:45:31 jsing Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.28 2023/03/27 10:25:02 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -220,7 +220,7 @@ ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r, BN_CTX *ctx)
 		ECerror(EC_R_NOT_INITIALIZED);
 		return 0;
 	}
-	if (!BN_copy(r, group->mont_one))
+	if (!bn_copy(r, group->mont_one))
 		return 0;
 	return 1;
 }

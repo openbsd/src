@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.20 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.21 2023/03/27 10:25:02 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -244,7 +244,7 @@ BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 		return (0);
 
 	if (r != NULL) {
-		if (!BN_copy(r, b->Ai))
+		if (!bn_copy(r, b->Ai))
 			ret = 0;
 	}
 

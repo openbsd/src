@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.31 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: ec_key.c,v 1.32 2023/03/27 10:25:02 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -172,7 +172,7 @@ EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 			if (dest->priv_key == NULL)
 				return NULL;
 		}
-		if (!BN_copy(dest->priv_key, src->priv_key))
+		if (!bn_copy(dest->priv_key, src->priv_key))
 			return NULL;
 	}
 	/* copy method/extra data */

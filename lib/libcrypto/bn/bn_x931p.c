@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_x931p.c,v 1.15 2022/12/26 07:18:51 jmc Exp $ */
+/* $OpenBSD: bn_x931p.c,v 1.16 2023/03/27 10:25:02 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -73,7 +73,7 @@ bn_x931_derive_pi(BIGNUM *pi, const BIGNUM *Xpi, BN_CTX *ctx, BN_GENCB *cb)
 {
 	int i = 0, is_prime;
 
-	if (!BN_copy(pi, Xpi))
+	if (!bn_copy(pi, Xpi))
 		return 0;
 	if (!BN_is_odd(pi) && !BN_add_word(pi, 1))
 		return 0;
@@ -170,7 +170,7 @@ BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2, const BIGNUM *Xp,
 	for (;;) {
 		int i = 1;
 		BN_GENCB_call(cb, 0, i++);
-		if (!BN_copy(pm1, p))
+		if (!bn_copy(pm1, p))
 			goto err;
 		if (!BN_sub_word(pm1, 1))
 			goto err;

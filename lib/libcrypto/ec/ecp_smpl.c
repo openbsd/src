@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.42 2023/03/08 05:45:31 jsing Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.43 2023/03/27 10:25:02 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -102,11 +102,11 @@ ec_GFp_simple_group_finish(EC_GROUP *group)
 int
 ec_GFp_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
-	if (!BN_copy(&dest->field, &src->field))
+	if (!bn_copy(&dest->field, &src->field))
 		return 0;
-	if (!BN_copy(&dest->a, &src->a))
+	if (!bn_copy(&dest->a, &src->a))
 		return 0;
-	if (!BN_copy(&dest->b, &src->b))
+	if (!bn_copy(&dest->b, &src->b))
 		return 0;
 
 	dest->a_is_minus3 = src->a_is_minus3;
@@ -137,7 +137,7 @@ ec_GFp_simple_group_set_curve(EC_GROUP *group,
 		goto err;
 
 	/* group->field */
-	if (!BN_copy(&group->field, p))
+	if (!bn_copy(&group->field, p))
 		goto err;
 	BN_set_negative(&group->field, 0);
 
@@ -147,7 +147,7 @@ ec_GFp_simple_group_set_curve(EC_GROUP *group,
 	if (group->meth->field_encode) {
 		if (!group->meth->field_encode(group, &group->a, tmp_a, ctx))
 			goto err;
-	} else if (!BN_copy(&group->a, tmp_a))
+	} else if (!bn_copy(&group->a, tmp_a))
 		goto err;
 
 	/* group->b */
@@ -177,7 +177,7 @@ ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNU
 	BN_CTX *new_ctx = NULL;
 
 	if (p != NULL) {
-		if (!BN_copy(p, &group->field))
+		if (!bn_copy(p, &group->field))
 			return 0;
 	}
 	if (a != NULL || b != NULL) {
@@ -197,11 +197,11 @@ ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNU
 			}
 		} else {
 			if (a != NULL) {
-				if (!BN_copy(a, &group->a))
+				if (!bn_copy(a, &group->a))
 					goto err;
 			}
 			if (b != NULL) {
-				if (!BN_copy(b, &group->b))
+				if (!bn_copy(b, &group->b))
 					goto err;
 			}
 		}
@@ -252,9 +252,9 @@ ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 		if (!group->meth->field_decode(group, b, &group->b, ctx))
 			goto err;
 	} else {
-		if (!BN_copy(a, &group->a))
+		if (!bn_copy(a, &group->a))
 			goto err;
-		if (!BN_copy(b, &group->b))
+		if (!bn_copy(b, &group->b))
 			goto err;
 	}
 
@@ -317,11 +317,11 @@ ec_GFp_simple_point_finish(EC_POINT *point)
 int
 ec_GFp_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
 {
-	if (!BN_copy(&dest->X, &src->X))
+	if (!bn_copy(&dest->X, &src->X))
 		return 0;
-	if (!BN_copy(&dest->Y, &src->Y))
+	if (!bn_copy(&dest->Y, &src->Y))
 		return 0;
-	if (!BN_copy(&dest->Z, &src->Z))
+	if (!bn_copy(&dest->Z, &src->Z))
 		return 0;
 	dest->Z_is_one = src->Z_is_one;
 
@@ -416,15 +416,15 @@ ec_GFp_simple_get_Jprojective_coordinates(const EC_GROUP *group,
 		}
 	} else {
 		if (x != NULL) {
-			if (!BN_copy(x, &point->X))
+			if (!bn_copy(x, &point->X))
 				goto err;
 		}
 		if (y != NULL) {
-			if (!BN_copy(y, &point->Y))
+			if (!bn_copy(y, &point->Y))
 				goto err;
 		}
 		if (z != NULL) {
-			if (!BN_copy(z, &point->Z))
+			if (!bn_copy(z, &point->Z))
 				goto err;
 		}
 	}
@@ -499,11 +499,11 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT
 			}
 		} else {
 			if (x != NULL) {
-				if (!BN_copy(x, &point->X))
+				if (!bn_copy(x, &point->X))
 					goto err;
 			}
 			if (y != NULL) {
-				if (!BN_copy(y, &point->Y))
+				if (!bn_copy(y, &point->Y))
 					goto err;
 			}
 		}
@@ -606,9 +606,9 @@ ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const E
 
 	/* n1, n2 */
 	if (b->Z_is_one) {
-		if (!BN_copy(n1, &a->X))
+		if (!bn_copy(n1, &a->X))
 			goto end;
-		if (!BN_copy(n2, &a->Y))
+		if (!bn_copy(n2, &a->Y))
 			goto end;
 		/* n1 = X_a */
 		/* n2 = Y_a */
@@ -628,9 +628,9 @@ ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const E
 
 	/* n3, n4 */
 	if (a->Z_is_one) {
-		if (!BN_copy(n3, &b->X))
+		if (!bn_copy(n3, &b->X))
 			goto end;
-		if (!BN_copy(n4, &b->Y))
+		if (!bn_copy(n4, &b->Y))
 			goto end;
 		/* n3 = X_b */
 		/* n4 = Y_b */
@@ -681,14 +681,14 @@ ec_GFp_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, const E
 
 	/* Z_r */
 	if (a->Z_is_one && b->Z_is_one) {
-		if (!BN_copy(&r->Z, n5))
+		if (!bn_copy(&r->Z, n5))
 			goto end;
 	} else {
 		if (a->Z_is_one) {
-			if (!BN_copy(n0, &b->Z))
+			if (!bn_copy(n0, &b->Z))
 				goto end;
 		} else if (b->Z_is_one) {
-			if (!BN_copy(n0, &a->Z))
+			if (!bn_copy(n0, &a->Z))
 				goto end;
 		} else {
 			if (!field_mul(group, n0, &a->Z, &b->Z, ctx))
@@ -832,7 +832,7 @@ ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX 
 
 	/* Z_r */
 	if (a->Z_is_one) {
-		if (!BN_copy(n0, &a->Y))
+		if (!bn_copy(n0, &a->Y))
 			goto err;
 	} else {
 		if (!field_mul(group, n0, &a->Y, &a->Z, ctx))
@@ -1214,11 +1214,11 @@ ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *po
 
 		if (heap[2 * i] != NULL) {
 			if ((heap[2 * i + 1] == NULL) || BN_is_zero(heap[2 * i + 1])) {
-				if (!BN_copy(heap[i], heap[2 * i]))
+				if (!bn_copy(heap[i], heap[2 * i]))
 					goto err;
 			} else {
 				if (BN_is_zero(heap[2 * i])) {
-					if (!BN_copy(heap[i], heap[2 * i + 1]))
+					if (!bn_copy(heap[i], heap[2 * i + 1]))
 						goto err;
 				} else {
 					if (!group->meth->field_mul(group, heap[i],
@@ -1256,12 +1256,12 @@ ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *po
 				goto err;
 			if (!group->meth->field_mul(group, tmp1, heap[i / 2], heap[i], ctx))
 				goto err;
-			if (!BN_copy(heap[i], tmp0))
+			if (!bn_copy(heap[i], tmp0))
 				goto err;
-			if (!BN_copy(heap[i + 1], tmp1))
+			if (!bn_copy(heap[i + 1], tmp1))
 				goto err;
 		} else {
-			if (!BN_copy(heap[i], heap[i / 2]))
+			if (!bn_copy(heap[i], heap[i / 2]))
 				goto err;
 		}
 	}
@@ -1473,7 +1473,7 @@ ec_GFp_simple_mul_ct(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	    !bn_wexpand(lambda, group_top + 2))
 		goto err;
 
-	if (!BN_copy(k, scalar))
+	if (!bn_copy(k, scalar))
 		goto err;
 
 	BN_set_flags(k, BN_FLG_CONSTTIME);

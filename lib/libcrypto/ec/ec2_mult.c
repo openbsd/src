@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_mult.c,v 1.15 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ec2_mult.c,v 1.16 2023/03/27 10:25:02 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -137,7 +137,7 @@ gf2m_Madd(const EC_GROUP *group, const BIGNUM *x, BIGNUM *x1, BIGNUM *z1,
 	if ((t2 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (!BN_copy(t1, x))
+	if (!bn_copy(t1, x))
 		goto err;
 	if (!group->meth->field_mul(group, x1, x1, z2, ctx))
 		goto err;
@@ -183,7 +183,7 @@ gf2m_Mxy(const EC_GROUP *group, const BIGNUM *x, const BIGNUM *y, BIGNUM *x1,
 		return 1;
 	}
 	if (BN_is_zero(z2)) {
-		if (!BN_copy(x2, x))
+		if (!bn_copy(x2, x))
 			return 0;
 		if (!BN_GF2m_add(z2, x, y))
 			return 0;

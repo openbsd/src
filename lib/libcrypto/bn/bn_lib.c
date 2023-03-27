@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.77 2023/03/27 08:37:33 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.78 2023/03/27 10:25:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -333,7 +333,7 @@ BN_dup(const BIGNUM *a)
 	t = BN_new();
 	if (t == NULL)
 		return NULL;
-	if (!BN_copy(t, a)) {
+	if (!bn_copy(t, a)) {
 		BN_free(t);
 		return NULL;
 	}
