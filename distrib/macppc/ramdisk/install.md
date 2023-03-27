@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.76 2022/09/11 04:38:28 gkoehler Exp $
+#	$OpenBSD: install.md,v 1.77 2023/03/27 19:43:36 kn Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -74,7 +74,7 @@ __EOT
 		case $resp in
 		[wW]*)
 			echo -n "Creating a 1MB DOS partition and an OpenBSD partition for rest of $_disk..."
-			dd if=/dev/zero of=/dev/r${_disk}c bs=1m count=1
+			dd if=/dev/zero of=/dev/r${_disk}c bs=1m count=1 status=none
 			fdisk -iy -b "2048@1:06" $_disk >/dev/null
 			echo "done."
 			break ;;
