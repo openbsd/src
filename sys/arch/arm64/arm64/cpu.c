@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.86 2023/02/20 00:01:16 patrick Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.87 2023/03/27 17:49:13 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -731,6 +731,23 @@ cpu_identify(struct cpu_info *ci)
 		printf("%sDIT", sep);
 		sep = ",";
 	}
+
+	/*
+	 * ID_AA64PFR0
+	 */
+	id = READ_SPECIALREG(id_aa64pfr1_el1);
+
+	if (ID_AA64PFR1_BT(id) >= ID_AA64PFR1_BT_IMPL) {
+		printf("%sBT", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64PFR1_SBSS(id) >= ID_AA64PFR1_SBSS_PSTATE) {
+		printf("%sSBSS", sep);
+		sep = ",";
+	}
+	if (ID_AA64PFR1_SBSS(id) >= ID_AA64PFR1_SBSS_PSTATE_MSR)
+		printf("+MSR");
 
 #ifdef CPU_DEBUG
 	id = READ_SPECIALREG(id_aa64afr0_el1);
