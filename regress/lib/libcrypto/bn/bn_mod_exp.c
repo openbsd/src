@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.25 2023/03/26 22:09:08 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.26 2023/03/27 08:52:57 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -261,7 +261,7 @@ generate_test_triple(int reduce, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 	if ((mmodified = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (BN_copy(mmodified, m) == NULL)
+	if (!bn_copy(mmodified, m))
 		goto err;
 
 	multiple = arc4random_uniform(1023) + 2;
@@ -319,7 +319,7 @@ generate_test_quintuple(int reduce, BIGNUM *a1, BIGNUM *p1,
 	if ((mmodified = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (BN_copy(mmodified, m) == NULL)
+	if (!bn_copy(mmodified, m))
 		goto err;
 
 	multiple = arc4random_uniform(16) + 2;

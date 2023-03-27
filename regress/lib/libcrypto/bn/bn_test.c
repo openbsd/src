@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.2 2022/12/06 18:23:29 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.3 2023/03/27 08:52:57 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -425,7 +425,7 @@ test_sub(BIO *bp)
 	for (i = 0; i < num0 + num1; i++) {
 		if (i < num1) {
 			CHECK_GOTO(BN_bntest_rand(a, 512, 0, 0));
-			CHECK_GOTO(BN_copy(b, a));
+			CHECK_GOTO(bn_copy(b, a));
 			if (BN_set_bit(a, i) == 0) {
 				rc = 0;
 				break;
@@ -491,7 +491,7 @@ test_div(BIO *bp, BN_CTX *ctx)
 	for (i = 0; i < num0 + num1; i++) {
 		if (i < num1) {
 			CHECK_GOTO(BN_bntest_rand(a, 400, 0, 0));
-			CHECK_GOTO(BN_copy(b, a));
+			CHECK_GOTO(bn_copy(b, a));
 			CHECK_GOTO(BN_lshift(a, a, i));
 			CHECK_GOTO(BN_add_word(a, i));
 		} else
@@ -576,7 +576,7 @@ test_div_word(BIO *bp)
 			s = BN_get_word(b);
 		} while (!s);
 
-		if (!BN_copy(b, a)) {
+		if (!bn_copy(b, a)) {
 			rc = 0;
 			break;
 		}
@@ -655,7 +655,7 @@ test_div_recp(BIO *bp, BN_CTX *ctx)
 	for (i = 0; i < num0 + num1; i++) {
 		if (i < num1) {
 			CHECK_GOTO(BN_bntest_rand(a, 400, 0, 0));
-			CHECK_GOTO(BN_copy(b, a));
+			CHECK_GOTO(bn_copy(b, a));
 			CHECK_GOTO(BN_lshift(a, a, i));
 			CHECK_GOTO(BN_add_word(a, i));
 		} else
@@ -1561,7 +1561,7 @@ test_gf2m_add(BIO *bp)
 
 	for (i = 0; i < num0; i++) {
 		CHECK_GOTO(BN_rand(a, 512, 0, 0));
-		CHECK_GOTO(BN_copy(b, BN_value_one()));
+		CHECK_GOTO(bn_copy(b, BN_value_one()));
 		BN_set_negative(a, rand_neg());
 		BN_set_negative(b, rand_neg());
 		CHECK_GOTO(BN_GF2m_add(c, a, b));
@@ -1763,7 +1763,7 @@ test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(a, 1024, 0, 0));
 		for (j = 0; j < 2; j++) {
 			CHECK_GOTO(BN_GF2m_mod_sqr(c, a, b[j], ctx));
-			CHECK_GOTO(BN_copy(d, a));
+			CHECK_GOTO(bn_copy(d, a));
 			CHECK_GOTO(BN_GF2m_mod_mul(d, a, d, b[j], ctx));
 #if 0 /* make test uses ouput in bc but bc can't handle GF(2^m) arithmetic */
 			if (bp != NULL) {
@@ -2199,7 +2199,7 @@ test_kron(BIO *bp, BN_CTX *ctx)
 		BN_set_negative(a, rand_neg());
 
 		/* t := (|b|-1)/2  (note that b is odd) */
-		if (!BN_copy(t, b))
+		if (!bn_copy(t, b))
 			goto err;
 		BN_set_negative(t, 0);
 		if (!BN_sub_word(t, 1))
@@ -2449,7 +2449,7 @@ test_lshift1(BIO *bp)
 			break;
 		}
 
-		CHECK_GOTO(BN_copy(a, b));
+		CHECK_GOTO(bn_copy(a, b));
 	}
  err:
 	BN_free(a);
@@ -2543,7 +2543,7 @@ test_rshift1(BIO *bp)
 			rc = 0;
 			break;
 		}
-		CHECK_GOTO(BN_copy(a, b));
+		CHECK_GOTO(bn_copy(a, b));
 	}
  err:
 	BN_free(a);
