@@ -35,15 +35,6 @@
 
 /* #define SK_DEBUG 1 */
 
-/* Compatibility with OpenSSH 1.0.x */
-#if (OPENSSL_VERSION_NUMBER < 0x10100000L)
-#define ECDSA_SIG_get0(sig, pr, ps) \
-	do { \
-		(*pr) = sig->r; \
-		(*ps) = sig->s; \
-	} while (0)
-#endif
-
 #if SSH_SK_VERSION_MAJOR != 0x000a0000
 # error SK API has changed, sk-dummy.c needs an update
 #endif
