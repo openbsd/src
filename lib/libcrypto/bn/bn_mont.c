@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.53 2023/03/26 19:09:42 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.54 2023/03/27 10:21:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -561,7 +561,7 @@ BN_from_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mctx, BN_CTX *ctx)
 
 	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if (BN_copy(tmp, a) == NULL)
+	if (!bn_copy(tmp, a))
 		goto err;
 	if (!bn_montgomery_reduce(r, tmp, mctx))
 		goto err;

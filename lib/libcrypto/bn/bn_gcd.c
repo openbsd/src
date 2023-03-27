@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.21 2023/01/21 09:21:11 jsing Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.22 2023/03/27 10:21:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,9 +221,9 @@ BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	if (!BN_one(X))
 		goto err;
 	BN_zero(Y);
-	if (BN_copy(B, a) == NULL)
+	if (!bn_copy(B, a))
 		goto err;
-	if (BN_copy(A, n) == NULL)
+	if (!bn_copy(A, n))
 		goto err;
 	A->neg = 0;
 
@@ -337,9 +337,9 @@ BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (BN_copy(a, in_a) == NULL)
+	if (!bn_copy(a, in_a))
 		goto err;
-	if (BN_copy(b, in_b) == NULL)
+	if (!bn_copy(b, in_b))
 		goto err;
 	a->neg = 0;
 	b->neg = 0;
@@ -353,7 +353,7 @@ BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 	if (t == NULL)
 		goto err;
 
-	if (BN_copy(r, t) == NULL)
+	if (!bn_copy(r, t))
 		goto err;
 	ret = 1;
 
@@ -419,9 +419,9 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	if (!BN_one(X))
 		goto err;
 	BN_zero(Y);
-	if (BN_copy(B, a) == NULL)
+	if (!bn_copy(B, a))
 		goto err;
-	if (BN_copy(A, n) == NULL)
+	if (!bn_copy(A, n))
 		goto err;
 	A->neg = 0;
 
@@ -582,9 +582,9 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 	if (!BN_one(X))
 		goto err;
 	BN_zero(Y);
-	if (BN_copy(B, a) == NULL)
+	if (!bn_copy(B, a))
 		goto err;
-	if (BN_copy(A, n) == NULL)
+	if (!bn_copy(A, n))
 		goto err;
 	A->neg = 0;
 	if (B->neg || (BN_ucmp(B, A) >= 0)) {

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.41 2023/03/26 19:09:42 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.42 2023/03/27 10:21:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -142,12 +142,12 @@ BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	if (rr == NULL || v == NULL)
 		goto err;
 
-	if (BN_copy(v, a) == NULL)
+	if (!bn_copy(v, a))
 		goto err;
 	bits = BN_num_bits(p);
 
 	if (BN_is_odd(p)) {
-		if (BN_copy(rr, a) == NULL)
+		if (!bn_copy(rr, a))
 			goto err;
 	} else {
 		if (!BN_one(rr))

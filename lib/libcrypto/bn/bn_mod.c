@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.19 2023/02/03 05:15:40 jsing Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.20 2023/03/27 10:21:23 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -264,7 +264,7 @@ BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m, BN_CTX *ctx)
 	if (BN_is_negative(m)) {
 		if ((abs_m = BN_CTX_get(ctx)) == NULL)
 			goto err;
-		if (BN_copy(abs_m, m) == NULL)
+		if (!bn_copy(abs_m, m))
 			goto err;
 		BN_set_negative(abs_m, 0);
 		m = abs_m;
@@ -288,7 +288,7 @@ BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)
 {
 	int max_shift;
 
-	if (BN_copy(r, a) == NULL)
+	if (!bn_copy(r, a))
 		return 0;
 
 	while (n > 0) {
