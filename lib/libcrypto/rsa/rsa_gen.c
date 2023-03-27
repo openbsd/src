@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_gen.c,v 1.26 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rsa_gen.c,v 1.27 2023/03/27 10:22:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -131,7 +131,8 @@ rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	if (!rsa->iqmp && ((rsa->iqmp = BN_new()) == NULL))
 		goto err;
 
-	BN_copy(rsa->e, e_value);
+	if (!bn_copy(rsa->e, e_value))
+		goto err;
 
 	/* generate p and q */
 	for (;;) {

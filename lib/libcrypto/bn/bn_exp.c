@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.42 2023/03/27 10:21:23 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.43 2023/03/27 10:22:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,8 +165,10 @@ BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	ret = 1;
 
 err:
-	if (r != rr && rr != NULL)
-		BN_copy(r, rr);
+	if (r != rr && rr != NULL) {
+		if (!bn_copy(r, rr))
+			ret = 0;
+	}
 	BN_CTX_end(ctx);
 	return (ret);
 }
