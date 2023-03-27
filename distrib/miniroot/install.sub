@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1235 2023/03/25 18:27:28 kn Exp $
+#	$OpenBSD: install.sub,v 1.1236 2023/03/27 06:15:43 tb Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -2931,9 +2931,13 @@ finish_up() {
 	fi
 
 	echo -n "Making all device nodes..."
-	# Make sure any devices we found during probe are created in the
-	# installed system.
-	(cd /mnt/dev; sh MAKEDEV $(get_dkdevs) $(get_cddevs) all)
+	(cd /mnt/dev; sh MAKEDEV all
+		# Make sure any devices we found during probe are created in the
+		# installed system.
+		for _dev in $(get_dkdevs) $(get_cddevs); do
+			sh MAKEDEV $_dev
+		done
+	)
 	echo " done."
 
 	# We may run some programs in chroot, and some of them might be
