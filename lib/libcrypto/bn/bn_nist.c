@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_nist.c,v 1.24 2022/11/30 01:47:19 jsing Exp $ */
+/* $OpenBSD: bn_nist.c,v 1.25 2023/03/27 08:41:35 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -479,7 +479,7 @@ BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		BN_zero(r);
 		return 1;
 	} else if (i > 0)
-		return (r == a) ? 1 : (BN_copy(r , a) != NULL);
+		return bn_copy(r, a);
 
 	if (r != a) {
 		if (!bn_wexpand(r, BN_NIST_192_TOP))
@@ -628,7 +628,7 @@ BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		BN_zero(r);
 		return 1;
 	} else if (i > 0)
-		return (r == a) ? 1 : (BN_copy(r, a) != NULL);
+		return bn_copy(r, a);
 
 	if (r != a) {
 		if (!bn_wexpand(r, BN_NIST_224_TOP))
@@ -812,7 +812,7 @@ BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		BN_zero(r);
 		return 1;
 	} else if (i > 0)
-		return (r == a) ? 1 : (BN_copy(r, a) != NULL);
+		return bn_copy(r, a);
 
 	if (r != a) {
 		if (!bn_wexpand(r, BN_NIST_256_TOP))
@@ -1044,7 +1044,7 @@ BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		BN_zero(r);
 		return 1;
 	} else if (i > 0)
-		return (r == a) ? 1 : (BN_copy(r, a) != NULL);
+		return bn_copy(r, a);
 
 	if (r != a) {
 		if (!bn_wexpand(r, BN_NIST_384_TOP))
@@ -1296,7 +1296,7 @@ BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 		BN_zero(r);
 		return 1;
 	} else if (i > 0)
-		return (r == a) ? 1 : (BN_copy(r, a) != NULL);
+		return bn_copy(r, a);
 
 	if (r != a) {
 		if (!bn_wexpand(r, BN_NIST_521_TOP))
