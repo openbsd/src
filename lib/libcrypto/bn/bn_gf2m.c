@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gf2m.c,v 1.30 2023/03/27 08:49:34 tb Exp $ */
+/* $OpenBSD: bn_gf2m.c,v 1.31 2023/03/27 10:20:27 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -967,7 +967,7 @@ BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const int p[],
 		return BN_one(r);
 
 	if (BN_abs_is_word(b, 1))
-		return BN_copy(r, a) != NULL;
+		return bn_copy(r, a);
 
 	BN_CTX_start(ctx);
 	if ((u = BN_CTX_get(ctx)) == NULL)
