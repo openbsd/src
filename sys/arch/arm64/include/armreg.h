@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.26 2022/12/23 17:46:49 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.27 2023/03/27 19:02:48 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -165,6 +165,7 @@
 #define	ESR_ELx_EXCEPTION(esr)	(((esr) & ESR_ELx_EC_MASK) >> ESR_ELx_EC_SHIFT)
 #define	 EXCP_UNKNOWN		0x00	/* Unkwn exception */
 #define	 EXCP_FP_SIMD		0x07	/* FP/SIMD trap */
+#define	 EXCP_BRANCH_TGT	0x0d	/* Branch target exception */
 #define	 EXCP_ILL_STATE		0x0e	/* Illegal execution state */
 #define	 EXCP_SVC		0x15	/* SVC trap */
 #define	 EXCP_MSR		0x18	/* MSR/MRS trap */

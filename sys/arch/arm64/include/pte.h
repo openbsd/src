@@ -1,4 +1,4 @@
-/* $OpenBSD: pte.h,v 1.7 2021/02/28 21:28:33 patrick Exp $ */
+/* $OpenBSD: pte.h,v 1.8 2023/03/27 19:02:48 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -43,6 +43,7 @@
 #define		ATTR_SW_WIRED	(1UL << 55)
 #define		ATTR_UXN	(1UL << 54)
 #define		ATTR_PXN	(1UL << 53)
+#define		ATTR_GP		(1UL << 50)
 #define		ATTR_nG		(1 << 11)
 #define		ATTR_AF		(1 << 10)
 #define		ATTR_SH(x)	((x) << 8)

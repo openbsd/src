@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.11 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.12 2023/03/27 19:02:48 kettenis Exp $	*/
 /*	$NetBSD: asm.h,v 1.4 2001/07/16 05:43:32 matt Exp $	*/
 
 /*
@@ -125,11 +125,11 @@
 # define RETGUARD_SYMBOL(x)
 #endif
 
-#define	ENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
-#define	ENTRY_NP(y)	_ENTRY(y)
-#define	ENTRY_NB(y)	_ENTRY_NB(y); _PROF_PROLOGUE
-#define	ASENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
-#define	ASENTRY_NP(y)	_ENTRY(y)
+#define	ENTRY(y)	_ENTRY(y); bti c; _PROF_PROLOGUE
+#define	ENTRY_NP(y)	_ENTRY(y); bti c
+#define	ENTRY_NB(y)	_ENTRY_NB(y); bti c; _PROF_PROLOGUE
+#define	ASENTRY(y)	_ENTRY(y); bti c; _PROF_PROLOGUE
+#define	ASENTRY_NP(y)	_ENTRY(y); bti c
 #define	END(y)		.size y, . - y
 #define EENTRY(sym)	 .globl  sym; sym:
 #define EEND(sym)
