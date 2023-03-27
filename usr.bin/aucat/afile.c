@@ -365,7 +365,7 @@ afile_wav_readhdr(struct afile *f)
 	if (!afile_readhdr(f, &riff, sizeof(struct wav_riff)))
 		return 0;
 	if (memcmp(&riff.id, &wav_id_riff, 4) != 0 ||
-	    memcmp(&riff.type, &wav_id_wave, 4)) {
+	    memcmp(&riff.type, &wav_id_wave, 4) != 0) {
 		log_puts(f->path);
 		log_puts(": not a .wav file\n");
 		return 0;
