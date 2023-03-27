@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.213 2023/02/10 14:01:43 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.214 2023/03/27 08:31:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -131,6 +131,12 @@ static int
 screen_write_set_client_cb(struct tty_ctx *ttyctx, struct client *c)
 {
 	struct window_pane	*wp = ttyctx->arg;
+
+	if (ttyctx->allow_invisible_panes) {
+		if (session_has(c->session, wp->window))
+			return (1);
+		return (0);
+	}
 
 	if (c->session->curw->window != wp->window)
 		return (0);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.427 2023/01/12 18:49:11 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.428 2023/03/27 08:31:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -33,8 +33,6 @@
 #include "tmux.h"
 
 static int	tty_log_fd = -1;
-
-static int	tty_client_ready(struct client *);
 
 static void	tty_set_italics(struct tty *);
 static int	tty_try_colour(struct tty *, int, const char *);
@@ -1607,11 +1605,21 @@ tty_sync_end(struct tty *tty)
 }
 
 static int
-tty_client_ready(struct client *c)
+tty_client_ready(const struct tty_ctx *ctx, struct client *c)
 {
 	if (c->session == NULL || c->tty.term == NULL)
 		return (0);
-	if (c->flags & (CLIENT_REDRAWWINDOW|CLIENT_SUSPENDED))
+	if (c->flags & CLIENT_SUSPENDED)
+		return (0);
+
+	/*
+	 * If invisible panes are allowed (used for passthrough), don't care if
+	 * redrawing or frozen.
+	 */
+	if (ctx->allow_invisible_panes)
+		return (1);
+
+	if (c->flags & CLIENT_REDRAWWINDOW)
 		return (0);
 	if (c->tty.flags & TTY_FREEZE)
 		return (0);
@@ -1628,21 +1636,14 @@ tty_write(void (*cmdfn)(struct tty *, const struct tty_ctx *),
 	if (ctx->set_client_cb == NULL)
 		return;
 	TAILQ_FOREACH(c, &clients, entry) {
-		if (ctx->allow_invisible_panes) {
-		    if (c->session == NULL ||
-			c->tty.term == NULL ||
-			c->flags & CLIENT_SUSPENDED)
-			    continue;
-		} else {
-			if (!tty_client_ready(c))
-				continue;
+		if (tty_client_ready(ctx, c)) {
 			state = ctx->set_client_cb(ctx, c);
 			if (state == -1)
 				break;
 			if (state == 0)
 				continue;
+			cmdfn(&c->tty, ctx);
 		}
-		cmdfn(&c->tty, ctx);
 	}
 }
 
