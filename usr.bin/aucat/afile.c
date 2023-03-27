@@ -406,7 +406,7 @@ afile_wav_readhdr(struct afile *f)
 		pos += sizeof(struct wav_chunk) + csize;
 		if (lseek(f->fd, sizeof(riff) + pos, SEEK_SET) == -1) {
 			log_puts(f->path);
-			log_puts(": filed to seek to chunk\n");
+			log_puts(": failed to seek to chunk\n");
 			return 0;
 		}
 	}
@@ -600,7 +600,7 @@ afile_aiff_readhdr(struct afile *f)
 
 		if (lseek(f->fd, sizeof(form) + pos, SEEK_SET) == -1) {
 			log_puts(f->path);
-			log_puts(": filed to seek to chunk\n");
+			log_puts(": failed to seek to chunk\n");
 			return 0;
 		}
 	}
