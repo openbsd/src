@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.311 2023/02/07 10:21:01 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.312 2023/03/27 08:47:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1885,6 +1885,18 @@ format_cb_pane_input_off(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for pane_unseen_changes. */
+static void *
+format_cb_pane_unseen_changes(struct format_tree *ft)
+{
+	if (ft->wp != NULL) {
+		if (ft->wp->flags & PANE_UNSEENCHANGES)
+			return (xstrdup("1"));
+		return (xstrdup("0"));
+	}
+	return (NULL);
+}
+
 /* Callback for pane_last. */
 static void *
 format_cb_pane_last(struct format_tree *ft)
@@ -2952,6 +2964,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "pane_tty", FORMAT_TABLE_STRING,
 	  format_cb_pane_tty
+	},
+	{ "pane_unseen_changes", FORMAT_TABLE_STRING,
+	  format_cb_pane_unseen_changes
 	},
 	{ "pane_width", FORMAT_TABLE_STRING,
 	  format_cb_pane_width

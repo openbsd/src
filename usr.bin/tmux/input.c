@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.213 2023/01/03 11:43:24 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.214 2023/03/27 08:47:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -970,6 +970,10 @@ input_parse_buffer(struct window_pane *wp, u_char *buf, size_t len)
 
 	window_update_activity(wp->window);
 	wp->flags |= PANE_CHANGED;
+
+	/* Flag new input while in a mode. */
+	if (!TAILQ_EMPTY(&wp->modes))
+		wp->flags |= PANE_UNSEENCHANGES;
 
 	/* NULL wp if there is a mode set as don't want to update the tty. */
 	if (TAILQ_EMPTY(&wp->modes))

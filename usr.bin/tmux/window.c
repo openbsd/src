@@ -1,4 +1,4 @@
-/* $OpenBSD: window.c,v 1.284 2023/01/08 22:17:04 nicm Exp $ */
+/* $OpenBSD: window.c,v 1.285 2023/03/27 08:47:57 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1120,6 +1120,7 @@ window_pane_reset_mode(struct window_pane *wp)
 
 	next = TAILQ_FIRST(&wp->modes);
 	if (next == NULL) {
+		wp->flags &= ~PANE_UNSEENCHANGES;
 		log_debug("%s: no next mode", __func__);
 		wp->screen = &wp->base;
 	} else {
