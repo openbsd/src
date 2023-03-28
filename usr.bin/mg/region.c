@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.43 2023/03/28 08:01:40 op Exp $	*/
+/*	$OpenBSD: region.c,v 1.44 2023/03/28 14:47:28 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -34,7 +34,7 @@ static	int	iomux(int, char * const, int, struct buffer *);
 static	int	preadin(int, struct buffer *);
 static	void	pwriteout(int, char **, int *);
 static	int	setsize(struct region *, RSIZE);
-static	int	shellcmdoutput(char * const[], char * const, int);
+static	int	shellcmdoutput(char * const, char * const, int);
 
 /*
  * Kill the region.  Ask "getregion" to figure out the bounds of the region.
@@ -415,7 +415,6 @@ piperegion(int f, int n)
 	struct region region;
 	int len;
 	char *cmd, cmdbuf[NFILEN], *text;
-	char *argv[] = {"sh", "-c", (char *) NULL, (char *) NULL};
 
 	/* C-u M-| is not supported yet */
 	if (n > 1)
@@ -431,8 +430,6 @@ piperegion(int f, int n)
 	    EFNEW | EFCR)) == NULL || (cmd[0] == '\0'))
 		return (ABORT);
 
-	argv[2] = cmd;
-
 	if (getregion(&region) != TRUE)
 		return (FALSE);
 
@@ -446,7 +443,7 @@ piperegion(int f, int n)
 
 	region_get_data(&region, text, len);
 
-	return shellcmdoutput(argv, text, len);
+	return shellcmdoutput(cmd, text, len);
 }
 
 /*
@@ -456,7 +453,6 @@ int
 shellcommand(int f, int n)
 {
 	char *cmd, cmdbuf[NFILEN];
-	char *argv[] = {"sh", "-c", (char *) NULL, (char *) NULL};
 
 	if (n > 1)
 		return (ABORT);
@@ -465,15 +461,14 @@ shellcommand(int f, int n)
 	    EFNEW | EFCR)) == NULL || (cmd[0] == '\0'))
 		return (ABORT);
 
-	argv[2] = cmd;
-
-	return shellcmdoutput(argv, NULL, 0);
+	return shellcmdoutput(cmd, NULL, 0);
 }
 
 int
-shellcmdoutput(char* const argv[], char* const text, int len)
+shellcmdoutput(char* const cmd, char* const text, int len)
 {
 	struct buffer *bp;
+	char	*argv[] = {NULL, "-c", cmd, NULL};
 	char	*shellp;
 	int	 ret;
 
@@ -486,6 +481,11 @@ shellcmdoutput(char* const argv[], char* const text, int len)
 
 	if ((shellp = getenv("SHELL")) == NULL)
 		shellp = _PATH_BSHELL;
+
+	if ((argv[0] = strrchr(shellp, '/')) != NULL)
+		argv[0]++;
+	else
+		argv[0] = shellp;
 
 	ret = pipeio(shellp, argv, text, len, bp);
 
