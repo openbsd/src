@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.467 2023/03/28 12:15:23 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.468 2023/03/28 13:30:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -183,15 +183,6 @@ extern const struct aid aid_vals[];
 	{ AFI_IPv4, AF_INET, SAFI_MPLSVPN, "IPv4 vpn" },	\
 	{ AFI_IPv6, AF_INET6, SAFI_MPLSVPN, "IPv6 vpn" }	\
 }
-
-#define AID_PTSIZE	{				\
-	0,						\
-	sizeof(struct pt_entry4),			\
-	sizeof(struct pt_entry6),			\
-	sizeof(struct pt_entry_vpn4),			\
-	sizeof(struct pt_entry_vpn6)			\
-}
-
 
 #define BGP_MPLS_BOS	0x01
 

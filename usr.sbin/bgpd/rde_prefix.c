@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.43 2023/03/28 12:06:15 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.44 2023/03/28 13:30:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -48,7 +48,55 @@
 static struct pt_entry	*pt_alloc(struct pt_entry *);
 static void		 pt_free(struct pt_entry *);
 
-size_t	pt_sizes[AID_MAX] = AID_PTSIZE;
+struct pt_entry4 {
+	RB_ENTRY(pt_entry)		 pt_e;
+	uint8_t				 aid;
+	uint8_t				 prefixlen;
+	uint16_t			 refcnt;
+	struct in_addr			 prefix4;
+};
+
+struct pt_entry6 {
+	RB_ENTRY(pt_entry)		 pt_e;
+	uint8_t				 aid;
+	uint8_t				 prefixlen;
+	uint16_t			 refcnt;
+	struct in6_addr			 prefix6;
+};
+
+struct pt_entry_vpn4 {
+	RB_ENTRY(pt_entry)		 pt_e;
+	uint8_t				 aid;
+	uint8_t				 prefixlen;
+	uint16_t			 refcnt;
+	struct in_addr			 prefix4;
+	uint64_t			 rd;
+	uint8_t				 labelstack[21];
+	uint8_t				 labellen;
+	uint8_t				 pad1;
+	uint8_t				 pad2;
+};
+
+struct pt_entry_vpn6 {
+	RB_ENTRY(pt_entry)		 pt_e;
+	uint8_t				 aid;
+	uint8_t				 prefixlen;
+	uint16_t			 refcnt;
+	struct in6_addr			 prefix6;
+	uint64_t			 rd;
+	uint8_t				 labelstack[21];
+	uint8_t				 labellen;
+	uint8_t				 pad1;
+	uint8_t				 pad2;
+};
+
+size_t	pt_sizes[AID_MAX] = {
+	0,
+	sizeof(struct pt_entry4),
+	sizeof(struct pt_entry6),
+	sizeof(struct pt_entry_vpn4),
+	sizeof(struct pt_entry_vpn6)
+};
 
 RB_HEAD(pt_tree, pt_entry);
 RB_PROTOTYPE(pt_tree, pt_entry, pt_e, pt_prefix_cmp);

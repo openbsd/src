@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.286 2023/03/13 16:52:42 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.287 2023/03/28 13:30:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -266,48 +266,7 @@ struct pt_entry {
 	uint8_t				 aid;
 	uint8_t				 prefixlen;
 	uint16_t			 refcnt;
-};
-
-struct pt_entry4 {
-	RB_ENTRY(pt_entry)		 pt_e;
-	uint8_t				 aid;
-	uint8_t				 prefixlen;
-	uint16_t			 refcnt;
-	struct in_addr			 prefix4;
-};
-
-struct pt_entry6 {
-	RB_ENTRY(pt_entry)		 pt_e;
-	uint8_t				 aid;
-	uint8_t				 prefixlen;
-	uint16_t			 refcnt;
-	struct in6_addr			 prefix6;
-};
-
-struct pt_entry_vpn4 {
-	RB_ENTRY(pt_entry)		 pt_e;
-	uint8_t				 aid;
-	uint8_t				 prefixlen;
-	uint16_t			 refcnt;
-	struct in_addr			 prefix4;
-	uint64_t			 rd;
-	uint8_t				 labelstack[21];
-	uint8_t				 labellen;
-	uint8_t				 pad1;
-	uint8_t				 pad2;
-};
-
-struct pt_entry_vpn6 {
-	RB_ENTRY(pt_entry)		 pt_e;
-	uint8_t				 aid;
-	uint8_t				 prefixlen;
-	uint16_t			 refcnt;
-	struct in6_addr			 prefix6;
-	uint64_t			 rd;
-	uint8_t				 labelstack[21];
-	uint8_t				 labellen;
-	uint8_t				 pad1;
-	uint8_t				 pad2;
+	uint8_t				 data[4]; /* data depending on aid */
 };
 
 struct prefix {
