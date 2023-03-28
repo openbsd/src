@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.37 2023/03/09 13:13:14 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.38 2023/03/28 12:07:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -32,8 +32,6 @@
 
 #include "bgpctl.h"
 #include "parser.h"
-
-const size_t  pt_sizes[AID_MAX] = AID_PTSIZE;
 
 static void
 show_head(struct parse_result *res)
@@ -994,10 +992,10 @@ show_rib_mem(struct rde_memstats *stats)
 	for (i = 0; i < AID_MAX; i++) {
 		if (stats->pt_cnt[i] == 0)
 			continue;
-		pts += stats->pt_cnt[i] * pt_sizes[i];
+		pts += stats->pt_size[i];
 		printf("%10lld %s network entries using %s of memory\n",
 		    stats->pt_cnt[i], aid_vals[i].name,
-		    fmt_mem(stats->pt_cnt[i] * pt_sizes[i]));
+		    fmt_mem(stats->pt_size[i]));
 	}
 	printf("%10lld rib entries using %s of memory\n",
 	    stats->rib_cnt, fmt_mem(stats->rib_cnt *

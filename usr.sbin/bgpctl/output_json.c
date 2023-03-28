@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.30 2023/03/09 13:13:14 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.31 2023/03/28 12:07:09 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -939,9 +939,9 @@ json_rib_mem(struct rde_memstats *stats)
 	for (i = 0; i < AID_MAX; i++) {
 		if (stats->pt_cnt[i] == 0)
 			continue;
-		pts += stats->pt_cnt[i] * pt_sizes[i];
+		pts += stats->pt_size[i];
 		json_rib_mem_element(aid_vals[i].name, stats->pt_cnt[i],
-		    stats->pt_cnt[i] * pt_sizes[i], UINT64_MAX);
+		    stats->pt_size[i], UINT64_MAX);
 	}
 	json_rib_mem_element("rib", stats->rib_cnt,
 	    stats->rib_cnt * sizeof(struct rib_entry), UINT64_MAX);
