@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.111 2022/12/28 21:30:16 jmc Exp $ */
+/*	$OpenBSD: mrt.c,v 1.112 2023/03/28 09:52:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -688,19 +688,14 @@ fail:
 int
 mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 {
-	char		 pbuf[260];
-	struct ibuf	*hbuf = NULL, *nbuf = NULL, *apbuf = NULL;
+	struct ibuf	*hbuf = NULL, *nbuf = NULL, *apbuf = NULL, *pbuf;
 	struct bgpd_addr addr;
 	size_t		 hlen, len;
 	uint16_t	 subtype, apsubtype, nump, apnump, afi;
 	uint8_t		 safi;
-	int		 plen;
 
-	pt_getaddr(re->prefix, &addr);
-	plen = prefix_write(pbuf, sizeof(pbuf), &addr, re->prefix->prefixlen,
-	    0);
-	if (plen == -1) {
-		log_warnx("%s: prefix_write error", __func__);
+	if ((pbuf = ibuf_dynamic(0, UINT_MAX)) == NULL) {
+		log_warn("%s: ibuf_dynamic", __func__);
 		return -1;
 	}
 
@@ -724,15 +719,19 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 		apsubtype = MRT_DUMP_V2_RIB_GENERIC_ADDPATH;
 		aid2afi(re->prefix->aid, &afi, &safi);
 
-		/* prepend 3-bytes AFI/SAFI */
-		memmove(pbuf + 3, pbuf, plen);
-		plen += 3;
-		afi = ntohs(afi);
-		memcpy(pbuf, &afi, sizeof(afi));
-		pbuf[2] = safi;
+		/* first add 3-bytes AFI/SAFI */
+		DUMP_SHORT(pbuf, afi);
+		DUMP_BYTE(pbuf, safi);
 		break;
 	}
-	hlen = sizeof(snum) + sizeof(nump) + plen;
+
+	pt_getaddr(re->prefix, &addr);
+	if (prefix_writebuf(pbuf, &addr, re->prefix->prefixlen) == -1) {
+		log_warnx("%s: prefix_writebuf error", __func__);
+		goto fail;
+	}
+
+	hlen = sizeof(snum) + sizeof(nump) + ibuf_size(pbuf);
 
 	if (mrt_dump_entry_v2_rib(re, &nbuf, &apbuf, &nump, &apnump))
 		goto fail;
@@ -744,7 +743,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 			goto fail;
 
 		DUMP_LONG(hbuf, snum);
-		if (ibuf_add(hbuf, pbuf, plen) == -1) {
+		if (ibuf_add(hbuf, pbuf->buf, ibuf_size(pbuf)) == -1) {
 			log_warn("%s: ibuf_add error", __func__);
 			goto fail;
 		}
@@ -763,7 +762,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 			goto fail;
 
 		DUMP_LONG(hbuf, snum);
-		if (ibuf_add(hbuf, pbuf, plen) == -1) {
+		if (ibuf_add(hbuf, pbuf->buf, ibuf_size(pbuf)) == -1) {
 			log_warn("%s: ibuf_add error", __func__);
 			goto fail;
 		}
@@ -775,11 +774,13 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 		apbuf = NULL;
 	}
 
+	ibuf_free(pbuf);
 	return (0);
 fail:
 	ibuf_free(apbuf);
 	ibuf_free(nbuf);
 	ibuf_free(hbuf);
+	ibuf_free(pbuf);
 	return (-1);
 }
 
