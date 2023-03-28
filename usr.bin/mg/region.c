@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.42 2023/03/27 17:54:20 op Exp $	*/
+/*	$OpenBSD: region.c,v 1.43 2023/03/28 08:01:40 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -15,6 +15,7 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdio.h>
@@ -483,7 +484,8 @@ shellcmdoutput(char* const argv[], char* const text, int len)
 		return (FALSE);
 	}
 
-	shellp = getenv("SHELL");
+	if ((shellp = getenv("SHELL")) == NULL)
+		shellp = _PATH_BSHELL;
 
 	ret = pipeio(shellp, argv, text, len, bp);
 
@@ -529,8 +531,6 @@ pipeio(const char* const path, char* const argv[], char* const text, int len,
 		if (dup2(s[1], STDOUT_FILENO) == -1)
 			_exit(1);
 		if (dup2(s[1], STDERR_FILENO) == -1)
-			_exit(1);
-		if (path == NULL)
 			_exit(1);
 
 		execv(path, argv);
