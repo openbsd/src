@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.42 2022/08/17 15:15:26 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.43 2023/03/28 12:06:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -310,6 +310,7 @@ pt_alloc(struct pt_entry *op)
 	if (p == NULL)
 		fatal("pt_alloc");
 	rdemem.pt_cnt[op->aid]++;
+	rdemem.pt_size[op->aid] += pt_sizes[op->aid];
 	memcpy(p, op, pt_sizes[op->aid]);
 
 	return (p);
@@ -319,5 +320,6 @@ static void
 pt_free(struct pt_entry *pte)
 {
 	rdemem.pt_cnt[pte->aid]--;
+	rdemem.pt_size[pte->aid] -= pt_sizes[pte->aid];
 	free(pte);
 }
