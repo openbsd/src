@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.25 2022/01/14 09:19:19 tb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.26 2023/03/28 16:32:42 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -420,10 +420,8 @@ ec_init(struct group *group)
 		return (-1);
 	if (!EC_KEY_generate_key(group->ec))
 		return (-1);
-	if (!EC_KEY_check_key(group->ec)) {
-		EC_KEY_free(group->ec);
+	if (!EC_KEY_check_key(group->ec))
 		return (-1);
-	}
 	return (0);
 }
 
