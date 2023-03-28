@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.108 2023/03/26 09:39:46 jsg Exp $ */
+/* $OpenBSD: bwfm.c,v 1.109 2023/03/28 14:01:42 jsg Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1649,7 +1649,6 @@ bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *sc, int ifidx,
 
 	if (bwfm_proto_bcdc_txctl(sc, reqid, (char *)dcmd, &size)) {
 		DPRINTF(("%s: tx failed\n", DEVNAME(sc)));
-		free(dcmd, M_TEMP, size);
 		return ret;
 	}
 
@@ -1690,7 +1689,6 @@ bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *sc, int ifidx,
 
 	if (bwfm_proto_bcdc_txctl(sc, reqid, (char *)dcmd, &size)) {
 		DPRINTF(("%s: txctl failed\n", DEVNAME(sc)));
-		free(dcmd, M_TEMP, size);
 		return ret;
 	}
 
@@ -1715,7 +1713,6 @@ bwfm_proto_bcdc_txctl(struct bwfm_softc *sc, int reqid, char *buf, size_t *len)
 
 	if (sc->sc_bus_ops->bs_txctl(sc, ctl)) {
 		DPRINTF(("%s: tx failed\n", DEVNAME(sc)));
-		free(ctl, M_TEMP, sizeof(*ctl));
 		return 1;
 	}
 
