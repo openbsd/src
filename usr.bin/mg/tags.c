@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.23 2023/03/22 22:09:37 op Exp $	*/
+/*	$OpenBSD: tags.c,v 1.24 2023/03/28 21:33:21 tb Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -388,8 +388,10 @@ addctag(char *s)
 	if (*l == '\0')
 		goto cleanup;
 	t->pat = strip(l, strlen(l));
-	if (RB_INSERT(tagtree, &tags, t) != NULL)
-		goto cleanup;
+	if (RB_INSERT(tagtree, &tags, t) != NULL) {
+		free(t);
+		free(s);
+	}
 	return (TRUE);
 cleanup:
 	free(t);
