@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.161 2023/03/09 17:21:21 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.162 2023/03/28 12:15:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -201,6 +201,7 @@ enum Timer {
 	Timer_Rtr_Refresh,
 	Timer_Rtr_Retry,
 	Timer_Rtr_Expire,
+	Timer_Rtr_Active,
 	Timer_Max
 };
 
@@ -334,6 +335,8 @@ void			 rtr_shutdown(void);
 void			 rtr_show(struct rtr_session *, pid_t);
 
 /* rtr.c */
+void	rtr_sem_acquire(int);
+void	rtr_sem_release(int);
 void	rtr_roa_insert(struct roa_tree *, struct roa *);
 void	rtr_aspa_insert(struct aspa_tree *, struct aspa_set *);
 void	rtr_main(int, int);

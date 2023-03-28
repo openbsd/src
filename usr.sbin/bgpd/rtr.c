@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.12 2023/03/09 17:21:21 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.13 2023/03/28 12:15:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -40,6 +40,7 @@ static struct imsgbuf		*ibuf_main;
 static struct imsgbuf		*ibuf_rde;
 static struct bgpd_config	*conf, *nconf;
 static struct timer_head	 expire_timer;
+static int			 rtr_recalc_semaphore;
 
 static void
 rtr_sighdlr(int sig)
@@ -57,6 +58,20 @@ rtr_sighdlr(int sig)
 #define PFD_PIPE_COUNT	2
 
 #define EXPIRE_TIMEOUT	300
+
+void
+rtr_sem_acquire(int cnt)
+{
+	rtr_recalc_semaphore += cnt;
+}
+
+void
+rtr_sem_release(int cnt)
+{
+	rtr_recalc_semaphore -= cnt;
+	if (rtr_recalc_semaphore < 0)
+		fatalx("rtr recalc semaphore underflow");
+}
 
 /*
  * Every EXPIRE_TIMEOUT seconds traverse the static roa-set table and expire
@@ -541,6 +556,9 @@ rtr_recalc(void)
 	struct roa *roa, *nr;
 	struct aspa_set *aspa;
 	struct aspa_prep ap = { 0 };
+
+	if (rtr_recalc_semaphore > 0)
+		return;
 
 	RB_INIT(&rt);
 	RB_INIT(&at);

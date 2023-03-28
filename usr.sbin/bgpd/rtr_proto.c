@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.15 2023/03/17 11:14:10 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.16 2023/03/28 12:15:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -40,6 +40,7 @@ struct rtr_header {
 #define RTR_DEFAULT_REFRESH	3600
 #define RTR_DEFAULT_RETRY	600
 #define RTR_DEFAULT_EXPIRE	7200
+#define RTR_DEFAULT_ACTIVE	60
 
 enum rtr_pdu_type {
 	SERIAL_NOTIFY = 0,
@@ -99,6 +100,7 @@ enum rtr_event {
 	RTR_EVNT_TIMER_REFRESH,
 	RTR_EVNT_TIMER_RETRY,
 	RTR_EVNT_TIMER_EXPIRE,
+	RTR_EVNT_TIMER_ACTIVE,
 	RTR_EVNT_SEND_ERROR,
 	RTR_EVNT_SERIAL_NOTIFY,
 	RTR_EVNT_CACHE_RESPONSE,
@@ -116,6 +118,7 @@ static const char *rtr_eventnames[] = {
 	"refresh timer expired",
 	"retry timer expired",
 	"expire timer expired",
+	"activity timer expired",
 	"sent error",
 	"serial notify received",
 	"cache response received",
@@ -157,8 +160,10 @@ struct rtr_session {
 	uint32_t			refresh;
 	uint32_t			retry;
 	uint32_t			expire;
+	uint32_t			active;
 	int				session_id;
 	int				fd;
+	int				active_lock;
 	enum rtr_state			state;
 	enum reconf_action		reconf_action;
 	enum rtr_error			last_sent_error;
@@ -1033,18 +1038,30 @@ rtr_fsm(struct rtr_session *rs, enum rtr_event event)
 		rtr_reset_cache(rs);
 		rtr_recalc();
 		break;
+	case RTR_EVNT_TIMER_ACTIVE:
+		log_warnx("rtr %s: activity timer fired", log_rtr(rs));
+		rtr_sem_release(rs->active_lock);
+		rtr_recalc();
+		rs->active_lock = 0;
+		break;
 	case RTR_EVNT_CACHE_RESPONSE:
 		rs->state = RTR_STATE_ACTIVE;
 		timer_stop(&rs->timers, Timer_Rtr_Refresh);
 		timer_stop(&rs->timers, Timer_Rtr_Retry);
-		/* XXX start timer to limit active time */
+		timer_set(&rs->timers, Timer_Rtr_Active, rs->active);
+		/* prevent rtr_recalc from running while active */
+		rs->active_lock = 1;
+		rtr_sem_acquire(rs->active_lock);
 		break;
 	case RTR_EVNT_END_OF_DATA:
 		/* start refresh and expire timers */
 		timer_set(&rs->timers, Timer_Rtr_Refresh, rs->refresh);
 		timer_set(&rs->timers, Timer_Rtr_Expire, rs->expire);
+		timer_stop(&rs->timers, Timer_Rtr_Active);
 		rs->state = RTR_STATE_IDLE;
+		rtr_sem_release(rs->active_lock);
 		rtr_recalc();
+		rs->active_lock = 0;
 		break;
 	case RTR_EVNT_CACHE_RESET:
 		rtr_reset_cache(rs);
@@ -1164,6 +1181,9 @@ rtr_check_events(struct pollfd *pfds, size_t npfds)
 			case Timer_Rtr_Expire:
 				rtr_fsm(rs, RTR_EVNT_TIMER_EXPIRE);
 				break;
+			case Timer_Rtr_Active:
+				rtr_fsm(rs, RTR_EVNT_TIMER_ACTIVE);
+				break;
 			default:
 				fatalx("King Bula lost in time");
 			}
@@ -1237,6 +1257,7 @@ rtr_new(uint32_t id, char *descr)
 	rs->refresh = RTR_DEFAULT_REFRESH;
 	rs->retry = RTR_DEFAULT_RETRY;
 	rs->expire = RTR_DEFAULT_EXPIRE;
+	rs->active = RTR_DEFAULT_ACTIVE;
 	rs->state = RTR_STATE_CLOSED;
 	rs->reconf_action = RECONF_REINIT;
 	rs->last_recv_error = NO_ERROR;

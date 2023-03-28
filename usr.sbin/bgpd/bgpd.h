@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.466 2023/03/28 12:06:15 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.467 2023/03/28 12:15:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1639,6 +1639,7 @@ static const char * const timernames[] = {
 	"RTR RefreshTimer",
 	"RTR RetryTimer",
 	"RTR ExpireTimer",
+	"RTR ActiveTimer",
 	""
 };
 
