@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.45 2023/03/28 15:17:34 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.46 2023/03/28 17:47:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -21,6 +21,7 @@
 
 #include <endian.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -162,6 +163,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 	switch (prefix->aid) {
 	case AID_INET:
 		memset(&pte4, 0, sizeof(pte4));
+		pte4.refcnt = USHRT_MAX;
 		pte4.aid = prefix->aid;
 		if (prefixlen > 32)
 			fatalx("pt_fill: bad IPv4 prefixlen");
@@ -170,6 +172,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		return ((struct pt_entry *)&pte4);
 	case AID_INET6:
 		memset(&pte6, 0, sizeof(pte6));
+		pte6.refcnt = USHRT_MAX;
 		pte6.aid = prefix->aid;
 		if (prefixlen > 128)
 			fatalx("pt_fill: bad IPv6 prefixlen");
@@ -178,6 +181,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		return ((struct pt_entry *)&pte6);
 	case AID_VPN_IPv4:
 		memset(&pte_vpn4, 0, sizeof(pte_vpn4));
+		pte_vpn4.refcnt = USHRT_MAX;
 		pte_vpn4.aid = prefix->aid;
 		if (prefixlen > 32)
 			fatalx("pt_fill: bad IPv4 prefixlen");
@@ -190,6 +194,7 @@ pt_fill(struct bgpd_addr *prefix, int prefixlen)
 		return ((struct pt_entry *)&pte_vpn4);
 	case AID_VPN_IPv6:
 		memset(&pte_vpn6, 0, sizeof(pte_vpn6));
+		pte_vpn6.refcnt = USHRT_MAX;
 		pte_vpn6.aid = prefix->aid;
 		if (prefixlen > 128)
 			fatalx("pt_get: bad IPv6 prefixlen");
@@ -360,6 +365,7 @@ pt_alloc(struct pt_entry *op)
 	rdemem.pt_cnt[op->aid]++;
 	rdemem.pt_size[op->aid] += pt_sizes[op->aid];
 	memcpy(p, op, pt_sizes[op->aid]);
+	p->refcnt = 0;
 
 	return (p);
 }
