@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.159 2023/03/13 16:52:42 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.160 2023/03/28 15:17:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -836,7 +836,6 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
     struct rde_peer *peer, int withdraw)
 {
 	struct prefix	*p, *np;
-	struct bgpd_addr addr;
 	uint32_t	 pathid;
 	int		 r, wpos = 0, done = 0;
 
@@ -848,9 +847,8 @@ up_dump_prefix(u_char *buf, int len, struct prefix_tree *prefix_head,
 			memcpy(buf + wpos, &pathid, sizeof(pathid));
 			wpos += sizeof(pathid);
 		}
-		pt_getaddr(p->pt, &addr);
-		if ((r = prefix_write(buf + wpos, len - wpos,
-		    &addr, p->pt->prefixlen, withdraw)) == -1) {
+		if ((r = pt_write(buf + wpos, len - wpos, p->pt,
+		    withdraw)) == -1) {
 			if (peer_has_add_path(peer, p->pt->aid, CAPA_AP_SEND))
 				wpos -= sizeof(pathid);
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.287 2023/03/28 13:30:31 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.288 2023/03/28 15:17:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -517,6 +517,8 @@ struct pt_entry *pt_add(struct bgpd_addr *, int);
 void	 pt_remove(struct pt_entry *);
 struct pt_entry	*pt_lookup(struct bgpd_addr *);
 int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
+int	 pt_write(u_char *, int, struct pt_entry *, int);
+int	 pt_writebuf(struct ibuf *, struct pt_entry *);
 
 static inline struct pt_entry *
 pt_ref(struct pt_entry *pt)
@@ -602,8 +604,6 @@ int		 prefix_dump_subtree(struct rde_peer *, struct bgpd_addr *,
 		    uint8_t, unsigned int, void *,
 		    void (*)(struct prefix *, void *),
 		    void (*)(void *, uint8_t), int (*)(void *));
-int		 prefix_write(u_char *, int, struct bgpd_addr *, uint8_t, int);
-int		 prefix_writebuf(struct ibuf *, struct bgpd_addr *, uint8_t);
 struct prefix	*prefix_bypeer(struct rib_entry *, struct rde_peer *,
 		    uint32_t);
 void		 prefix_destroy(struct prefix *);

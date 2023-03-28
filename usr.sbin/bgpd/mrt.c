@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.112 2023/03/28 09:52:08 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.113 2023/03/28 15:17:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -387,7 +387,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 {
 	struct ibuf	*buf, *hbuf = NULL, *h2buf = NULL;
 	struct nexthop	*n;
-	struct bgpd_addr addr, nexthop, *nh;
+	struct bgpd_addr nexthop, *nh;
 	uint16_t	 len;
 	uint8_t		 aid;
 
@@ -445,17 +445,15 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 	/* originated timestamp */
 	DUMP_LONG(h2buf, time(NULL) - (getmonotime() - p->lastchange));
 
-	pt_getaddr(p->pt, &addr);
-
 	n = prefix_nexthop(p);
 	if (n == NULL) {
 		memset(&nexthop, 0, sizeof(struct bgpd_addr));
-		nexthop.aid = addr.aid;
+		nexthop.aid = p->pt->aid;
 		nh = &nexthop;
 	} else
 		nh = &n->exit_nexthop;
 
-	switch (addr.aid) {
+	switch (p->pt->aid) {
 	case AID_INET:
 		DUMP_SHORT(h2buf, AFI_IPv4);	/* afi */
 		DUMP_BYTE(h2buf, SAFI_UNICAST);	/* safi */
@@ -495,8 +493,8 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 		goto fail;
 	}
 
-	if (prefix_writebuf(h2buf, &addr, p->pt->prefixlen) == -1) {
-		log_warnx("%s: prefix_writebuf error", __func__);
+	if (pt_writebuf(h2buf, p->pt) == -1) {
+		log_warnx("%s: pt_writebuf error", __func__);
 		goto fail;
 	}
 
@@ -689,7 +687,6 @@ int
 mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 {
 	struct ibuf	*hbuf = NULL, *nbuf = NULL, *apbuf = NULL, *pbuf;
-	struct bgpd_addr addr;
 	size_t		 hlen, len;
 	uint16_t	 subtype, apsubtype, nump, apnump, afi;
 	uint8_t		 safi;
@@ -725,9 +722,8 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 		break;
 	}
 
-	pt_getaddr(re->prefix, &addr);
-	if (prefix_writebuf(pbuf, &addr, re->prefix->prefixlen) == -1) {
-		log_warnx("%s: prefix_writebuf error", __func__);
+	if (pt_writebuf(pbuf, re->prefix) == -1) {
+		log_warnx("%s: pt_writebuf error", __func__);
 		goto fail;
 	}
 

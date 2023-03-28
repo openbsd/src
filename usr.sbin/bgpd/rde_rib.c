@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.255 2023/02/09 13:43:23 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.256 2023/03/28 15:17:34 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1425,86 +1425,6 @@ prefix_dump_subtree(struct rde_peer *peer, struct bgpd_addr *subtree,
 		prefix_dump_r(ctx);
 
 	return 0;
-}
-
-/* dump a prefix into specified buffer */
-int
-prefix_write(u_char *buf, int len, struct bgpd_addr *prefix, uint8_t plen,
-    int withdraw)
-{
-	int	totlen, psize;
-
-	switch (prefix->aid) {
-	case AID_INET:
-	case AID_INET6:
-		totlen = PREFIX_SIZE(plen);
-
-		if (totlen > len)
-			return (-1);
-		*buf++ = plen;
-		memcpy(buf, &prefix->ba, totlen - 1);
-		return (totlen);
-	case AID_VPN_IPv4:
-	case AID_VPN_IPv6:
-		totlen = PREFIX_SIZE(plen) + sizeof(prefix->rd);
-		psize = PREFIX_SIZE(plen) - 1;
-		plen += sizeof(prefix->rd) * 8;
-		if (withdraw) {
-			/* withdraw have one compat label as placeholder */
-			totlen += 3;
-			plen += 3 * 8;
-		} else {
-			totlen += prefix->labellen;
-			plen += prefix->labellen * 8;
-		}
-
-		if (totlen > len)
-			return (-1);
-		*buf++ = plen;
-		if (withdraw) {
-			/* magic compatibility label as per rfc8277 */
-			*buf++ = 0x80;
-			*buf++ = 0x0;
-			*buf++ = 0x0;
-		} else {
-			memcpy(buf, &prefix->labelstack,
-			    prefix->labellen);
-			buf += prefix->labellen;
-		}
-		memcpy(buf, &prefix->rd, sizeof(prefix->rd));
-		buf += sizeof(prefix->rd);
-		memcpy(buf, &prefix->ba, psize);
-		return (totlen);
-	default:
-		return (-1);
-	}
-}
-
-int
-prefix_writebuf(struct ibuf *buf, struct bgpd_addr *prefix, uint8_t plen)
-{
-	int	 totlen;
-	void	*bptr;
-
-	switch (prefix->aid) {
-	case AID_INET:
-	case AID_INET6:
-		totlen = PREFIX_SIZE(plen);
-		break;
-	case AID_VPN_IPv4:
-	case AID_VPN_IPv6:
-		totlen = PREFIX_SIZE(plen) + sizeof(prefix->rd) +
-		    prefix->labellen;
-		break;
-	default:
-		return (-1);
-	}
-
-	if ((bptr = ibuf_reserve(buf, totlen)) == NULL)
-		return (-1);
-	if (prefix_write(bptr, totlen, prefix, plen, 0) == -1)
-		return (-1);
-	return (0);
 }
 
 /*
