@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.26 2023/03/29 10:42:34 op Exp $	*/
+/*	$OpenBSD: tags.c,v 1.27 2023/03/29 19:09:04 op Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -229,8 +229,11 @@ poptag(int f, int n)
 	}
 	s = SLIST_FIRST(&shead);
 	SLIST_REMOVE_HEAD(&shead, entry);
-	if (loadbuffer(s->bname) == FALSE)
+	if (loadbuffer(s->bname) == FALSE) {
+		free(s->bname);
+		free(s);
 		return (FALSE);
+	}
 	curwp->w_dotline = s->dotline;
 	curwp->w_doto = s->doto;
 
