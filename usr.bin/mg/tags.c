@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.24 2023/03/28 21:33:21 tb Exp $	*/
+/*	$OpenBSD: tags.c,v 1.25 2023/03/29 07:29:17 op Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -39,7 +39,6 @@ static void              unloadtags(void);
 #define DEFAULTFN "tags"
 
 char *tagsfn = NULL;
-int  loaded  = FALSE;
 
 /* ctags(1) entries are parsed and maintained in a tree. */
 struct ctag {
@@ -66,15 +65,13 @@ ctagcmp(struct ctag *s, struct ctag *t)
 }
 
 /*
- * Record the filename that contain tags to be used while loading them
- * on first use. If a filename is already recorded, ask user to retain
- * already loaded tags (if any) and unload them if user chooses not to.
+ * Load a tags file.  If a tags file is already loaded, ask the user to
+ * retain loaded tags (i any) and unload them if the user chooses not to.
  */
 int
 tagsvisit(int f, int n)
 {
 	char fname[NFILEN], *bufp, *temp;
-	struct stat sb;
 
 	if (getbufcwd(fname, sizeof(fname)) == FALSE)
 		fname[0] = '\0';
@@ -89,20 +86,6 @@ tagsvisit(int f, int n)
 	    NFILEN, EFFILE | EFCR | EFNEW | EFDEF, DEFAULTFN);
 	if (bufp == NULL)
 		return (ABORT);
-
-	if (stat(bufp, &sb) == -1) {
-		dobeep();
-		ewprintf("stat: %s", strerror(errno));
-		return (FALSE);
-	} else if (S_ISREG(sb.st_mode) == 0) {
-		dobeep();
-		ewprintf("Not a regular file");
-		return (FALSE);
-	} else if (access(bufp, R_OK) == -1) {
-		dobeep();
-		ewprintf("Cannot access file %s", bufp);
-		return (FALSE);
-	}
 
 	if (tagsfn == NULL) {
 		if (bufp[0] == '\0') {
@@ -131,8 +114,14 @@ tagsvisit(int f, int n)
 			ewprintf("Starting a new list of tags table");
 			unloadtags();
 		}
-		loaded = FALSE;
 	}
+
+	if (loadtags(tagsfn) == FALSE) {
+		free(tagsfn);
+		tagsfn = NULL;
+		return (FALSE);
+	}
+
 	return (TRUE);
 }
 
@@ -170,14 +159,6 @@ findtag(int f, int n)
 	if (tagsfn == NULL)
 		if ((ret = tagsvisit(f, n)) != TRUE)
 			return (ret);
-	if (!loaded) {
-		if (loadtags(tagsfn) == FALSE) {
-			free(tagsfn);
-			tagsfn = NULL;
-			return (FALSE);
-		}
-		loaded = TRUE;
-	}
 	return pushtag(tok);
 }
 
@@ -300,12 +281,25 @@ poptag(int f, int n)
 int
 loadtags(const char *fn)
 {
+	struct stat sb;
 	char *l;
 	FILE *fd;
 
 	if ((fd = fopen(fn, "r")) == NULL) {
 		dobeep();
 		ewprintf("Unable to open tags file: %s", fn);
+		return (FALSE);
+	}
+	if (fstat(fileno(fd), &sb) == -1) {
+		dobeep();
+		ewprintf("fstat: %s", strerror(errno));
+		fclose(fd);
+		return (FALSE);
+	}
+	if (!S_ISREG(sb.st_mode)) {
+		dobeep();
+		ewprintf("Not a regular file");
+		fclose(fd);
 		return (FALSE);
 	}
 	while ((l = fparseln(fd, NULL, NULL, "\\\\\0",
