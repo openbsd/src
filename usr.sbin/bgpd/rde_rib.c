@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.256 2023/03/28 15:17:34 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.257 2023/03/29 10:46:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -873,12 +873,12 @@ prefix_get(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
  */
 struct prefix *
 prefix_adjout_get(struct rde_peer *peer, uint32_t path_id_tx,
-    struct bgpd_addr *prefix, int prefixlen)
+    struct pt_entry *pte)
 {
 	struct prefix xp;
 
 	memset(&xp, 0, sizeof(xp));
-	xp.pt = pt_fill(prefix, prefixlen);
+	xp.pt = pte;
 	xp.path_id_tx = path_id_tx;
 
 	return RB_FIND(prefix_index, &peer->adj_rib_out, &xp);
@@ -889,13 +889,12 @@ prefix_adjout_get(struct rde_peer *peer, uint32_t path_id_tx,
  * Returns NULL if not found.
  */
 struct prefix *
-prefix_adjout_lookup(struct rde_peer *peer, struct bgpd_addr *prefix,
-    int prefixlen)
+prefix_adjout_first(struct rde_peer *peer, struct pt_entry *pte)
 {
 	struct prefix xp, *np;
 
 	memset(&xp, 0, sizeof(xp));
-	xp.pt = pt_fill(prefix, prefixlen);
+	xp.pt = pte;
 
 	np = RB_NFIND(prefix_index, &peer->adj_rib_out, &xp);
 	if (np == NULL || pt_prefix_cmp(np->pt, xp.pt) != 0)
@@ -915,6 +914,16 @@ prefix_adjout_next(struct rde_peer *peer, struct prefix *p)
 	if (np == NULL || np->pt != p->pt)
 		return NULL;
 	return np;
+}
+
+/*
+ * Lookup addr/prefixlen in the peer prefix_index. Returns first match.
+ * Returns NULL if not found.
+ */
+struct prefix *
+prefix_adjout_lookup(struct rde_peer *peer, struct bgpd_addr *addr, int plen)
+{
+	return prefix_adjout_first(peer, pt_fill(addr, plen));
 }
 
 /*
@@ -1124,8 +1133,7 @@ prefix_add_eor(struct rde_peer *peer, uint8_t aid)
  */
 void
 prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
-    struct filterstate *state, struct bgpd_addr *prefix, int prefixlen,
-    uint32_t path_id_tx)
+    struct filterstate *state, struct pt_entry *pte, uint32_t path_id_tx)
 {
 	struct rde_aspath *asp;
 	struct rde_community *comm;
@@ -1135,10 +1143,7 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 		/* initially mark DEAD so code below is skipped */
 		p->flags |= PREFIX_FLAG_ADJOUT | PREFIX_FLAG_DEAD;
 
-		p->pt = pt_get(prefix, prefixlen);
-		if (p->pt == NULL)
-			p->pt = pt_add(prefix, prefixlen);
-		pt_ref(p->pt);
+		p->pt = pt_ref(pte);
 		p->peer = peer;
 		p->path_id_tx = path_id_tx;
 
@@ -1170,7 +1175,7 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 
 		/* if pending update unhook it before it is unlinked */
 		if (p->flags & PREFIX_FLAG_UPDATE) {
-			RB_REMOVE(prefix_tree, &peer->updates[prefix->aid], p);
+			RB_REMOVE(prefix_tree, &peer->updates[pte->aid], p);
 			peer->stats.pending_update--;
 		}
 
@@ -1179,7 +1184,7 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 		peer->stats.prefix_out_cnt--;
 	}
 	if (p->flags & PREFIX_FLAG_WITHDRAW) {
-		RB_REMOVE(prefix_tree, &peer->withdraws[prefix->aid], p);
+		RB_REMOVE(prefix_tree, &peer->withdraws[pte->aid], p);
 		peer->stats.pending_withdraw--;
 	}
 
@@ -1213,7 +1218,7 @@ prefix_adjout_update(struct prefix *p, struct rde_peer *peer,
 	if (p->flags & PREFIX_FLAG_MASK)
 		fatalx("%s: bad flags %x", __func__, p->flags);
 	p->flags |= PREFIX_FLAG_UPDATE;
-	if (RB_INSERT(prefix_tree, &peer->updates[prefix->aid], p) != NULL)
+	if (RB_INSERT(prefix_tree, &peer->updates[pte->aid], p) != NULL)
 		fatalx("%s: RB tree invariant violated", __func__);
 	peer->stats.pending_update++;
 }

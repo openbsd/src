@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.288 2023/03/28 15:17:34 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.289 2023/03/29 10:46:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -580,19 +580,20 @@ void		 path_put(struct rde_aspath *);
 struct prefix	*prefix_get(struct rib *, struct rde_peer *, uint32_t,
 		    struct bgpd_addr *, int);
 struct prefix	*prefix_adjout_get(struct rde_peer *, uint32_t,
-		    struct bgpd_addr *, int);
-struct prefix	*prefix_match(struct rde_peer *, struct bgpd_addr *);
-struct prefix	*prefix_adjout_match(struct rde_peer *, struct bgpd_addr *);
+		    struct pt_entry *);
+struct prefix	*prefix_adjout_first(struct rde_peer *, struct pt_entry *);
+struct prefix	*prefix_adjout_next(struct rde_peer *, struct prefix *);
 struct prefix	*prefix_adjout_lookup(struct rde_peer *, struct bgpd_addr *,
 		    int);
-struct prefix	*prefix_adjout_next(struct rde_peer *, struct prefix *);
+struct prefix	*prefix_adjout_match(struct rde_peer *, struct bgpd_addr *);
+struct prefix	*prefix_match(struct rde_peer *, struct bgpd_addr *);
 int		 prefix_update(struct rib *, struct rde_peer *, uint32_t,
 		    uint32_t, struct filterstate *, struct bgpd_addr *, int);
 int		 prefix_withdraw(struct rib *, struct rde_peer *, uint32_t,
 		    struct bgpd_addr *, int);
 void		 prefix_add_eor(struct rde_peer *, uint8_t);
 void		 prefix_adjout_update(struct prefix *, struct rde_peer *,
-		    struct filterstate *, struct bgpd_addr *, int, uint32_t);
+		    struct filterstate *, struct pt_entry *, uint32_t);
 void		 prefix_adjout_withdraw(struct prefix *);
 void		 prefix_adjout_destroy(struct prefix *);
 void		 prefix_adjout_dump(struct rde_peer *, void *,

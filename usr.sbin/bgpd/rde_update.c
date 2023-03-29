@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.160 2023/03/28 15:17:34 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.161 2023/03/29 10:46:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -150,10 +150,10 @@ up_enforce_open_policy(struct rde_peer *peer, struct filterstate *state,
  * - UP_EXCLUDED if prefix was excluded because of up_test_update()
  */
 static enum up_state
-up_process_prefix(struct rde_peer *peer, struct prefix *new, struct prefix *p,
-    struct bgpd_addr *addr, uint8_t plen)
+up_process_prefix(struct rde_peer *peer, struct prefix *new, struct prefix *p)
 {
 	struct filterstate state;
+	struct bgpd_addr addr;
 	int excluded = 0;
 
 	/*
@@ -166,14 +166,15 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new, struct prefix *p,
 		excluded = 1;
 
 	rde_filterstate_prep(&state, new);
-	if (rde_filter(peer->out_rules, peer, prefix_peer(new), addr, plen,
-	    &state) == ACTION_DENY) {
+	pt_getaddr(new->pt, &addr);
+	if (rde_filter(peer->out_rules, peer, prefix_peer(new), &addr,
+	    new->pt->prefixlen, &state) == ACTION_DENY) {
 		rde_filterstate_clean(&state);
 		return UP_FILTERED;
 	}
 
 	/* Open Policy Check: acts like an output filter */
-	if (up_enforce_open_policy(peer, &state, addr->aid)) {
+	if (up_enforce_open_policy(peer, &state, new->pt->aid)) {
 		rde_filterstate_clean(&state);
 		return UP_FILTERED;
 	}
@@ -185,10 +186,10 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new, struct prefix *p,
 
 	/* from here on we know this is an update */
 	if (p == (void *)-1)
-		p = prefix_adjout_get(peer, new->path_id_tx, addr, plen);
+		p = prefix_adjout_get(peer, new->path_id_tx, new->pt);
 
-	up_prep_adjout(peer, &state, addr->aid);
-	prefix_adjout_update(p, peer, &state, addr, plen, new->path_id_tx);
+	up_prep_adjout(peer, &state, new->pt->aid);
+	prefix_adjout_update(p, peer, &state, new->pt, new->path_id_tx);
 	rde_filterstate_clean(&state);
 
 	/* max prefix checker outbound */
@@ -208,18 +209,13 @@ up_process_prefix(struct rde_peer *peer, struct prefix *new, struct prefix *p,
 void
 up_generate_updates(struct rde_peer *peer, struct rib_entry *re)
 {
-	struct bgpd_addr	addr;
 	struct prefix		*new, *p;
-	uint8_t			prefixlen;
 
-	pt_getaddr(re->prefix, &addr);
-	prefixlen = re->prefix->prefixlen;
-
-	p = prefix_adjout_lookup(peer, &addr, prefixlen);
+	p = prefix_adjout_first(peer, re->prefix);
 
 	new = prefix_best(re);
 	while (new != NULL) {
-		switch (up_process_prefix(peer, new, p, &addr, prefixlen)) {
+		switch (up_process_prefix(peer, new, p)) {
 		case UP_OK:
 		case UP_ERR_LIMIT:
 			return;
@@ -251,16 +247,11 @@ done:
 void
 up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 {
-	struct bgpd_addr	addr;
 	struct prefix		*head, *new, *p;
-	uint8_t			prefixlen;
 	int			maxpaths = 0, extrapaths = 0, extra;
 	int			checkmode = 1;
 
-	pt_getaddr(re->prefix, &addr);
-	prefixlen = re->prefix->prefixlen;
-
-	head = prefix_adjout_lookup(peer, &addr, prefixlen);
+	head = prefix_adjout_first(peer, re->prefix);
 
 	/* mark all paths as stale */
 	for (p = head; p != NULL; p = prefix_adjout_next(peer, p))
@@ -310,8 +301,7 @@ up_generate_addpath(struct rde_peer *peer, struct rib_entry *re)
 			}
 		}
 
-		switch (up_process_prefix(peer, new, (void *)-1, &addr,
-		    prefixlen)) {
+		switch (up_process_prefix(peer, new, (void *)-1)) {
 		case UP_OK:
 			maxpaths++;
 			extrapaths += extra;
@@ -345,13 +335,8 @@ void
 up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
     struct prefix *new, struct prefix *old)
 {
-	struct bgpd_addr	addr;
 	struct prefix		*p, *head = NULL;
-	uint8_t			prefixlen;
 	int			all = 0;
-
-	pt_getaddr(re->prefix, &addr);
-	prefixlen = re->prefix->prefixlen;
 
 	/*
 	 * if old and new are NULL then insert all prefixes from best,
@@ -359,7 +344,7 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 	 */
 	if (old == NULL && new == NULL) {
 		/* mark all paths as stale */
-		head = prefix_adjout_lookup(peer, &addr, prefixlen);
+		head = prefix_adjout_first(peer, re->prefix);
 		for (p = head; p != NULL; p = prefix_adjout_next(peer, p))
 			p->flags |= PREFIX_FLAG_STALE;
 
@@ -369,15 +354,14 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 
 	if (old != NULL) {
 		/* withdraw stale paths */
-		p = prefix_adjout_get(peer, old->path_id_tx, &addr, prefixlen);
+		p = prefix_adjout_get(peer, old->path_id_tx, old->pt);
 		if (p != NULL)
 			prefix_adjout_withdraw(p);
 	}
 
 	/* add new path (or multiple if all is set) */
 	while (new != NULL) {
-		switch (up_process_prefix(peer, new, (void *)-1, &addr,
-		    prefixlen)) {
+		switch (up_process_prefix(peer, new, (void *)-1)) {
 		case UP_OK:
 		case UP_FILTERED:
 		case UP_EXCLUDED:
@@ -405,10 +389,6 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 	}
 }
 
-struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
-void rib_remove(struct rib_entry *);
-int rib_empty(struct rib_entry *);
-
 /* send a default route to the specified peer */
 void
 up_generate_default(struct rde_peer *peer, uint8_t aid)
@@ -417,6 +397,7 @@ up_generate_default(struct rde_peer *peer, uint8_t aid)
 	struct filterstate	 state;
 	struct rde_aspath	*asp;
 	struct prefix		*p;
+	struct pt_entry		*pte;
 	struct bgpd_addr	 addr;
 
 	if (peer->capa.mp[aid] == 0)
@@ -447,7 +428,11 @@ up_generate_default(struct rde_peer *peer, uint8_t aid)
 	}
 
 	up_prep_adjout(peer, &state, addr.aid);
-	prefix_adjout_update(p, peer, &state, &addr, 0, 0);
+	/* can't use pt_fill here since prefix_adjout_update keeps a ref */
+	pte = pt_get(&addr, 0);
+	if (pte == NULL)
+		pte = pt_add(&addr, 0);
+	prefix_adjout_update(p, peer, &state, pte, 0);
 	rde_filterstate_clean(&state);
 
 	/* max prefix checker outbound */
