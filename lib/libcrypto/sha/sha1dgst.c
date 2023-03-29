@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1dgst.c,v 1.23 2023/03/29 04:24:08 jsing Exp $ */
+/* $OpenBSD: sha1dgst.c,v 1.24 2023/03/29 05:03:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -158,29 +158,6 @@ SHA1_Init(SHA_CTX *c)
 	(f)=xa+(e)+K_60_79+ROTATE((a),5)+F_60_79((b),(c),(d)); \
 	(b)=ROTATE((b),30);
 
-#ifdef X
-#undef X
-#endif
-#ifndef MD32_XARRAY
-  /*
-   * Originally X was an array. As it's automatic it's natural
-   * to expect RISC compiler to accommodate at least part of it in
-   * the register bank, isn't it? Unfortunately not all compilers
-   * "find" this expectation reasonable:-( On order to make such
-   * compilers generate better code I replace X[] with a bunch of
-   * X0, X1, etc. See the function body below...
-   *					<appro@fy.chalmers.se>
-   */
-# define X(i)	XX##i
-#else
-  /*
-   * However! Some compilers (most notably HP C) get overwhelmed by
-   * that many local variables so that we have to have the way to
-   * fall down to the original behavior.
-   */
-# define X(i)	XX[i]
-#endif
-
 #if !defined(SHA1_ASM)
 #include <endian.h>
 static void
@@ -188,12 +165,8 @@ sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 {
 	const unsigned char *data = p;
 	unsigned MD32_REG_T A, B,C, D,E, T, l;
-#ifndef MD32_XARRAY
-	unsigned MD32_REG_T XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
-	    XX8, XX9, XX10, XX11, XX12, XX13, XX14, XX15;
-#else
-	SHA_LONG	XX[16];
-#endif
+	unsigned MD32_REG_T X0, X1, X2, X3, X4, X5, X6, X7,
+	    X8, X9, X10, X11, X12, X13, X14, X15;
 
 	A = c->h0;
 	B = c->h1;
@@ -207,159 +180,159 @@ sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 		    sizeof(SHA_LONG) == 4 && ((size_t)p % 4) == 0) {
 			const SHA_LONG *W = (const SHA_LONG *)data;
 
-			X( 0) = W[0];
-			X( 1) = W[1];
-			BODY_00_15( 0, A,B, C,D, E,T, X( 0));
-			X( 2) = W[2];
-			BODY_00_15( 1, T,A, B,C, D,E, X( 1));
-			X( 3) = W[3];
-			BODY_00_15( 2, E,T, A,B, C,D, X( 2));
-			X( 4) = W[4];
-			BODY_00_15( 3, D,E, T,A, B,C, X( 3));
-			X( 5) = W[5];
-			BODY_00_15( 4, C,D, E,T, A,B, X( 4));
-			X( 6) = W[6];
-			BODY_00_15( 5, B,C, D,E, T,A, X( 5));
-			X( 7) = W[7];
-			BODY_00_15( 6, A,B, C,D, E,T, X( 6));
-			X( 8) = W[8];
-			BODY_00_15( 7, T,A, B,C, D,E, X( 7));
-			X( 9) = W[9];
-			BODY_00_15( 8, E,T, A,B, C,D, X( 8));
-			X(10) = W[10];
-			BODY_00_15( 9, D,E, T,A, B,C, X( 9));
-			X(11) = W[11];
-			BODY_00_15(10, C,D, E,T, A,B, X(10));
-			X(12) = W[12];
-			BODY_00_15(11, B,C, D,E, T,A, X(11));
-			X(13) = W[13];
-			BODY_00_15(12, A,B, C,D, E,T, X(12));
-			X(14) = W[14];
-			BODY_00_15(13, T,A, B,C, D,E, X(13));
-			X(15) = W[15];
-			BODY_00_15(14, E,T, A,B, C,D, X(14));
-			BODY_00_15(15, D,E, T,A, B,C, X(15));
+			X0 = W[0];
+			X1 = W[1];
+			BODY_00_15( 0, A,B, C,D, E,T, X0);
+			X2 = W[2];
+			BODY_00_15( 1, T,A, B,C, D,E, X1);
+			X3 = W[3];
+			BODY_00_15( 2, E,T, A,B, C,D, X2);
+			X4 = W[4];
+			BODY_00_15( 3, D,E, T,A, B,C, X3);
+			X5 = W[5];
+			BODY_00_15( 4, C,D, E,T, A,B, X4);
+			X6 = W[6];
+			BODY_00_15( 5, B,C, D,E, T,A, X5);
+			X7 = W[7];
+			BODY_00_15( 6, A,B, C,D, E,T, X6);
+			X8 = W[8];
+			BODY_00_15( 7, T,A, B,C, D,E, X7);
+			X9 = W[9];
+			BODY_00_15( 8, E,T, A,B, C,D, X8);
+			X10 = W[10];
+			BODY_00_15( 9, D,E, T,A, B,C, X9);
+			X11 = W[11];
+			BODY_00_15(10, C,D, E,T, A,B, X10);
+			X12 = W[12];
+			BODY_00_15(11, B,C, D,E, T,A, X11);
+			X13 = W[13];
+			BODY_00_15(12, A,B, C,D, E,T, X12);
+			X14 = W[14];
+			BODY_00_15(13, T,A, B,C, D,E, X13);
+			X15 = W[15];
+			BODY_00_15(14, E,T, A,B, C,D, X14);
+			BODY_00_15(15, D,E, T,A, B,C, X15);
 
 			data += SHA_CBLOCK;
 		} else {
 			HOST_c2l(data, l);
-			X( 0) = l;
+			X0 = l;
 			HOST_c2l(data, l);
-			X( 1) = l;
-			BODY_00_15( 0, A,B, C,D, E,T, X( 0));
+			X1 = l;
+			BODY_00_15( 0, A,B, C,D, E,T, X0);
 			HOST_c2l(data, l);
-			X( 2) = l;
-			BODY_00_15( 1, T,A, B,C, D,E, X( 1));
+			X2 = l;
+			BODY_00_15( 1, T,A, B,C, D,E, X1);
 			HOST_c2l(data, l);
-			X( 3) = l;
-			BODY_00_15( 2, E,T, A,B, C,D, X( 2));
+			X3 = l;
+			BODY_00_15( 2, E,T, A,B, C,D, X2);
 			HOST_c2l(data, l);
-			X( 4) = l;
-			BODY_00_15( 3, D,E, T,A, B,C, X( 3));
+			X4 = l;
+			BODY_00_15( 3, D,E, T,A, B,C, X3);
 			HOST_c2l(data, l);
-			X( 5) = l;
-			BODY_00_15( 4, C,D, E,T, A,B, X( 4));
+			X5 = l;
+			BODY_00_15( 4, C,D, E,T, A,B, X4);
 			HOST_c2l(data, l);
-			X( 6) = l;
-			BODY_00_15( 5, B,C, D,E, T,A, X( 5));
+			X6 = l;
+			BODY_00_15( 5, B,C, D,E, T,A, X5);
 			HOST_c2l(data, l);
-			X( 7) = l;
-			BODY_00_15( 6, A,B, C,D, E,T, X( 6));
+			X7 = l;
+			BODY_00_15( 6, A,B, C,D, E,T, X6);
 			HOST_c2l(data, l);
-			X( 8) = l;
-			BODY_00_15( 7, T,A, B,C, D,E, X( 7));
+			X8 = l;
+			BODY_00_15( 7, T,A, B,C, D,E, X7);
 			HOST_c2l(data, l);
-			X( 9) = l;
-			BODY_00_15( 8, E,T, A,B, C,D, X( 8));
+			X9 = l;
+			BODY_00_15( 8, E,T, A,B, C,D, X8);
 			HOST_c2l(data, l);
-			X(10) = l;
-			BODY_00_15( 9, D,E, T,A, B,C, X( 9));
+			X10 = l;
+			BODY_00_15( 9, D,E, T,A, B,C, X9);
 			HOST_c2l(data, l);
-			X(11) = l;
-			BODY_00_15(10, C,D, E,T, A,B, X(10));
+			X11 = l;
+			BODY_00_15(10, C,D, E,T, A,B, X10);
 			HOST_c2l(data, l);
-			X(12) = l;
-			BODY_00_15(11, B,C, D,E, T,A, X(11));
+			X12 = l;
+			BODY_00_15(11, B,C, D,E, T,A, X11);
 			HOST_c2l(data, l);
-			X(13) = l;
-			BODY_00_15(12, A,B, C,D, E,T, X(12));
+			X13 = l;
+			BODY_00_15(12, A,B, C,D, E,T, X12);
 			HOST_c2l(data, l);
-			X(14) = l;
-			BODY_00_15(13, T,A, B,C, D,E, X(13));
+			X14 = l;
+			BODY_00_15(13, T,A, B,C, D,E, X13);
 			HOST_c2l(data, l);
-			X(15) = l;
-			BODY_00_15(14, E,T, A,B, C,D, X(14));
-			BODY_00_15(15, D,E, T,A, B,C, X(15));
+			X15 = l;
+			BODY_00_15(14, E,T, A,B, C,D, X14);
+			BODY_00_15(15, D,E, T,A, B,C, X15);
 		}
 
-		BODY_16_19(16, C,D, E,T, A,B, X( 0), X( 0), X( 2), X( 8), X(13));
-		BODY_16_19(17, B,C, D,E, T,A, X( 1), X( 1), X( 3), X( 9), X(14));
-		BODY_16_19(18, A,B, C,D, E,T, X( 2), X( 2), X( 4), X(10), X(15));
-		BODY_16_19(19, T,A, B,C, D,E, X( 3), X( 3), X( 5), X(11), X( 0));
+		BODY_16_19(16, C,D, E,T, A,B, X0, X0, X2, X8, X13);
+		BODY_16_19(17, B,C, D,E, T,A, X1, X1, X3, X9, X14);
+		BODY_16_19(18, A,B, C,D, E,T, X2, X2, X4, X10, X15);
+		BODY_16_19(19, T,A, B,C, D,E, X3, X3, X5, X11, X0);
 
-		BODY_20_31(20, E,T, A,B, C,D, X( 4), X( 4), X( 6), X(12), X( 1));
-		BODY_20_31(21, D,E, T,A, B,C, X( 5), X( 5), X( 7), X(13), X( 2));
-		BODY_20_31(22, C,D, E,T, A,B, X( 6), X( 6), X( 8), X(14), X( 3));
-		BODY_20_31(23, B,C, D,E, T,A, X( 7), X( 7), X( 9), X(15), X( 4));
-		BODY_20_31(24, A,B, C,D, E,T, X( 8), X( 8), X(10), X( 0), X( 5));
-		BODY_20_31(25, T,A, B,C, D,E, X( 9), X( 9), X(11), X( 1), X( 6));
-		BODY_20_31(26, E,T, A,B, C,D, X(10), X(10), X(12), X( 2), X( 7));
-		BODY_20_31(27, D,E, T,A, B,C, X(11), X(11), X(13), X( 3), X( 8));
-		BODY_20_31(28, C,D, E,T, A,B, X(12), X(12), X(14), X( 4), X( 9));
-		BODY_20_31(29, B,C, D,E, T,A, X(13), X(13), X(15), X( 5), X(10));
-		BODY_20_31(30, A,B, C,D, E,T, X(14), X(14), X( 0), X( 6), X(11));
-		BODY_20_31(31, T,A, B,C, D,E, X(15), X(15), X( 1), X( 7), X(12));
+		BODY_20_31(20, E,T, A,B, C,D, X4, X4, X6, X12, X1);
+		BODY_20_31(21, D,E, T,A, B,C, X5, X5, X7, X13, X2);
+		BODY_20_31(22, C,D, E,T, A,B, X6, X6, X8, X14, X3);
+		BODY_20_31(23, B,C, D,E, T,A, X7, X7, X9, X15, X4);
+		BODY_20_31(24, A,B, C,D, E,T, X8, X8, X10, X0, X5);
+		BODY_20_31(25, T,A, B,C, D,E, X9, X9, X11, X1, X6);
+		BODY_20_31(26, E,T, A,B, C,D, X10, X10, X12, X2, X7);
+		BODY_20_31(27, D,E, T,A, B,C, X11, X11, X13, X3, X8);
+		BODY_20_31(28, C,D, E,T, A,B, X12, X12, X14, X4, X9);
+		BODY_20_31(29, B,C, D,E, T,A, X13, X13, X15, X5, X10);
+		BODY_20_31(30, A,B, C,D, E,T, X14, X14, X0, X6, X11);
+		BODY_20_31(31, T,A, B,C, D,E, X15, X15, X1, X7, X12);
 
-		BODY_32_39(32, E,T, A,B, C,D, X( 0), X( 2), X( 8), X(13));
-		BODY_32_39(33, D,E, T,A, B,C, X( 1), X( 3), X( 9), X(14));
-		BODY_32_39(34, C,D, E,T, A,B, X( 2), X( 4), X(10), X(15));
-		BODY_32_39(35, B,C, D,E, T,A, X( 3), X( 5), X(11), X( 0));
-		BODY_32_39(36, A,B, C,D, E,T, X( 4), X( 6), X(12), X( 1));
-		BODY_32_39(37, T,A, B,C, D,E, X( 5), X( 7), X(13), X( 2));
-		BODY_32_39(38, E,T, A,B, C,D, X( 6), X( 8), X(14), X( 3));
-		BODY_32_39(39, D,E, T,A, B,C, X( 7), X( 9), X(15), X( 4));
+		BODY_32_39(32, E,T, A,B, C,D, X0, X2, X8, X13);
+		BODY_32_39(33, D,E, T,A, B,C, X1, X3, X9, X14);
+		BODY_32_39(34, C,D, E,T, A,B, X2, X4, X10, X15);
+		BODY_32_39(35, B,C, D,E, T,A, X3, X5, X11, X0);
+		BODY_32_39(36, A,B, C,D, E,T, X4, X6, X12, X1);
+		BODY_32_39(37, T,A, B,C, D,E, X5, X7, X13, X2);
+		BODY_32_39(38, E,T, A,B, C,D, X6, X8, X14, X3);
+		BODY_32_39(39, D,E, T,A, B,C, X7, X9, X15, X4);
 
-		BODY_40_59(40, C,D, E,T, A,B, X( 8), X(10), X( 0), X( 5));
-		BODY_40_59(41, B,C, D,E, T,A, X( 9), X(11), X( 1), X( 6));
-		BODY_40_59(42, A,B, C,D, E,T, X(10), X(12), X( 2), X( 7));
-		BODY_40_59(43, T,A, B,C, D,E, X(11), X(13), X( 3), X( 8));
-		BODY_40_59(44, E,T, A,B, C,D, X(12), X(14), X( 4), X( 9));
-		BODY_40_59(45, D,E, T,A, B,C, X(13), X(15), X( 5), X(10));
-		BODY_40_59(46, C,D, E,T, A,B, X(14), X( 0), X( 6), X(11));
-		BODY_40_59(47, B,C, D,E, T,A, X(15), X( 1), X( 7), X(12));
-		BODY_40_59(48, A,B, C,D, E,T, X( 0), X( 2), X( 8), X(13));
-		BODY_40_59(49, T,A, B,C, D,E, X( 1), X( 3), X( 9), X(14));
-		BODY_40_59(50, E,T, A,B, C,D, X( 2), X( 4), X(10), X(15));
-		BODY_40_59(51, D,E, T,A, B,C, X( 3), X( 5), X(11), X( 0));
-		BODY_40_59(52, C,D, E,T, A,B, X( 4), X( 6), X(12), X( 1));
-		BODY_40_59(53, B,C, D,E, T,A, X( 5), X( 7), X(13), X( 2));
-		BODY_40_59(54, A,B, C,D, E,T, X( 6), X( 8), X(14), X( 3));
-		BODY_40_59(55, T,A, B,C, D,E, X( 7), X( 9), X(15), X( 4));
-		BODY_40_59(56, E,T, A,B, C,D, X( 8), X(10), X( 0), X( 5));
-		BODY_40_59(57, D,E, T,A, B,C, X( 9), X(11), X( 1), X( 6));
-		BODY_40_59(58, C,D, E,T, A,B, X(10), X(12), X( 2), X( 7));
-		BODY_40_59(59, B,C, D,E, T,A, X(11), X(13), X( 3), X( 8));
+		BODY_40_59(40, C,D, E,T, A,B, X8, X10, X0, X5);
+		BODY_40_59(41, B,C, D,E, T,A, X9, X11, X1, X6);
+		BODY_40_59(42, A,B, C,D, E,T, X10, X12, X2, X7);
+		BODY_40_59(43, T,A, B,C, D,E, X11, X13, X3, X8);
+		BODY_40_59(44, E,T, A,B, C,D, X12, X14, X4, X9);
+		BODY_40_59(45, D,E, T,A, B,C, X13, X15, X5, X10);
+		BODY_40_59(46, C,D, E,T, A,B, X14, X0, X6, X11);
+		BODY_40_59(47, B,C, D,E, T,A, X15, X1, X7, X12);
+		BODY_40_59(48, A,B, C,D, E,T, X0, X2, X8, X13);
+		BODY_40_59(49, T,A, B,C, D,E, X1, X3, X9, X14);
+		BODY_40_59(50, E,T, A,B, C,D, X2, X4, X10, X15);
+		BODY_40_59(51, D,E, T,A, B,C, X3, X5, X11, X0);
+		BODY_40_59(52, C,D, E,T, A,B, X4, X6, X12, X1);
+		BODY_40_59(53, B,C, D,E, T,A, X5, X7, X13, X2);
+		BODY_40_59(54, A,B, C,D, E,T, X6, X8, X14, X3);
+		BODY_40_59(55, T,A, B,C, D,E, X7, X9, X15, X4);
+		BODY_40_59(56, E,T, A,B, C,D, X8, X10, X0, X5);
+		BODY_40_59(57, D,E, T,A, B,C, X9, X11, X1, X6);
+		BODY_40_59(58, C,D, E,T, A,B, X10, X12, X2, X7);
+		BODY_40_59(59, B,C, D,E, T,A, X11, X13, X3, X8);
 
-		BODY_60_79(60, A,B, C,D, E,T, X(12), X(14), X( 4), X( 9));
-		BODY_60_79(61, T,A, B,C, D,E, X(13), X(15), X( 5), X(10));
-		BODY_60_79(62, E,T, A,B, C,D, X(14), X( 0), X( 6), X(11));
-		BODY_60_79(63, D,E, T,A, B,C, X(15), X( 1), X( 7), X(12));
-		BODY_60_79(64, C,D, E,T, A,B, X( 0), X( 2), X( 8), X(13));
-		BODY_60_79(65, B,C, D,E, T,A, X( 1), X( 3), X( 9), X(14));
-		BODY_60_79(66, A,B, C,D, E,T, X( 2), X( 4), X(10), X(15));
-		BODY_60_79(67, T,A, B,C, D,E, X( 3), X( 5), X(11), X( 0));
-		BODY_60_79(68, E,T, A,B, C,D, X( 4), X( 6), X(12), X( 1));
-		BODY_60_79(69, D,E, T,A, B,C, X( 5), X( 7), X(13), X( 2));
-		BODY_60_79(70, C,D, E,T, A,B, X( 6), X( 8), X(14), X( 3));
-		BODY_60_79(71, B,C, D,E, T,A, X( 7), X( 9), X(15), X( 4));
-		BODY_60_79(72, A,B, C,D, E,T, X( 8), X(10), X( 0), X( 5));
-		BODY_60_79(73, T,A, B,C, D,E, X( 9), X(11), X( 1), X( 6));
-		BODY_60_79(74, E,T, A,B, C,D, X(10), X(12), X( 2), X( 7));
-		BODY_60_79(75, D,E, T,A, B,C, X(11), X(13), X( 3), X( 8));
-		BODY_60_79(76, C,D, E,T, A,B, X(12), X(14), X( 4), X( 9));
-		BODY_60_79(77, B,C, D,E, T,A, X(13), X(15), X( 5), X(10));
-		BODY_60_79(78, A,B, C,D, E,T, X(14), X( 0), X( 6), X(11));
-		BODY_60_79(79, T,A, B,C, D,E, X(15), X( 1), X( 7), X(12));
+		BODY_60_79(60, A,B, C,D, E,T, X12, X14, X4, X9);
+		BODY_60_79(61, T,A, B,C, D,E, X13, X15, X5, X10);
+		BODY_60_79(62, E,T, A,B, C,D, X14, X0, X6, X11);
+		BODY_60_79(63, D,E, T,A, B,C, X15, X1, X7, X12);
+		BODY_60_79(64, C,D, E,T, A,B, X0, X2, X8, X13);
+		BODY_60_79(65, B,C, D,E, T,A, X1, X3, X9, X14);
+		BODY_60_79(66, A,B, C,D, E,T, X2, X4, X10, X15);
+		BODY_60_79(67, T,A, B,C, D,E, X3, X5, X11, X0);
+		BODY_60_79(68, E,T, A,B, C,D, X4, X6, X12, X1);
+		BODY_60_79(69, D,E, T,A, B,C, X5, X7, X13, X2);
+		BODY_60_79(70, C,D, E,T, A,B, X6, X8, X14, X3);
+		BODY_60_79(71, B,C, D,E, T,A, X7, X9, X15, X4);
+		BODY_60_79(72, A,B, C,D, E,T, X8, X10, X0, X5);
+		BODY_60_79(73, T,A, B,C, D,E, X9, X11, X1, X6);
+		BODY_60_79(74, E,T, A,B, C,D, X10, X12, X2, X7);
+		BODY_60_79(75, D,E, T,A, B,C, X11, X13, X3, X8);
+		BODY_60_79(76, C,D, E,T, A,B, X12, X14, X4, X9);
+		BODY_60_79(77, B,C, D,E, T,A, X13, X15, X5, X10);
+		BODY_60_79(78, A,B, C,D, E,T, X14, X0, X6, X11);
+		BODY_60_79(79, T,A, B,C, D,E, X15, X1, X7, X12);
 
 		c->h0 = (c->h0 + E)&0xffffffffL;
 		c->h1 = (c->h1 + T)&0xffffffffL;
