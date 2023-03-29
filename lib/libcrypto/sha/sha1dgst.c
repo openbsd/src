@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1dgst.c,v 1.22 2023/03/26 19:30:45 jsing Exp $ */
+/* $OpenBSD: sha1dgst.c,v 1.23 2023/03/29 04:24:08 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -96,21 +96,17 @@ void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 
 #include "md32_common.h"
 
-#define INIT_DATA_h0 0x67452301UL
-#define INIT_DATA_h1 0xefcdab89UL
-#define INIT_DATA_h2 0x98badcfeUL
-#define INIT_DATA_h3 0x10325476UL
-#define INIT_DATA_h4 0xc3d2e1f0UL
-
 int
 SHA1_Init(SHA_CTX *c)
 {
-	memset (c, 0, sizeof(*c));
-	c->h0 = INIT_DATA_h0;
-	c->h1 = INIT_DATA_h1;
-	c->h2 = INIT_DATA_h2;
-	c->h3 = INIT_DATA_h3;
-	c->h4 = INIT_DATA_h4;
+	memset(c, 0, sizeof(*c));
+
+	c->h0 = 0x67452301UL;
+	c->h1 = 0xefcdab89UL;
+	c->h2 = 0x98badcfeUL;
+	c->h3 = 0x10325476UL;
+	c->h4 = 0xc3d2e1f0UL;
+
 	return 1;
 }
 
