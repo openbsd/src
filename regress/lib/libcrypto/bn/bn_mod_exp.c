@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.29 2023/03/29 06:50:51 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.30 2023/03/29 06:53:49 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -169,7 +169,7 @@ bn_mod_exp_zero_word_test(BN_CTX *ctx)
 }
 
 static int
-run_bn_mod_exp_zero_tests(void)
+test_bn_mod_exp_zero(void)
 {
 	BN_CTX *ctx;
 	size_t i;
@@ -399,7 +399,7 @@ bn_mod_exp_test(int reduce, BIGNUM *want, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 }
 
 static int
-run_bn_mod_exp_tests(void)
+test_bn_mod_exp(void)
 {
 	BIGNUM *a, *p, *m, *want;
 	BN_CTX *ctx;
@@ -520,7 +520,7 @@ bn_mod_exp2_test(int reduce, BIGNUM *want, BIGNUM *got, BIGNUM *a, BIGNUM *p,
 }
 
 static int
-run_bn_mod_exp2_tests(void)
+test_bn_mod_exp2(void)
 {
 	BIGNUM *a, *p, *b, *q, *m, *want, *got;
 	BN_CTX *ctx;
@@ -591,9 +591,9 @@ main(void)
 {
 	int failed = 0;
 
-	failed |= run_bn_mod_exp_zero_tests();
-	failed |= run_bn_mod_exp_tests();
-	failed |= run_bn_mod_exp2_tests();
+	failed |= test_bn_mod_exp_zero();
+	failed |= test_bn_mod_exp();
+	failed |= test_bn_mod_exp2();
 	failed |= test_bn_mod_exp2_mont_crash();
 
 	return failed;
