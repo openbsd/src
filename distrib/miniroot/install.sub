@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1236 2023/03/27 06:15:43 tb Exp $
+#	$OpenBSD: install.sub,v 1.1237 2023/03/29 17:40:24 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1432,7 +1432,7 @@ v4_defroute() {
 	[[ -n $_dr ]] && isin "$_dr_if" $(get_ifs dhcp) && return
 
 	while :; do
-		ask_until "Default IPv4 route? (IPv4 address or none)" "$_dr"
+		ask_until "Default IPv4 route? (IPv4 address or 'none')" "$_dr"
 		[[ $resp == none ]] && break
 		route delete -inet default >/dev/null 2>&1
 		if route -n add -inet -host default "$resp"; then
