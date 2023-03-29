@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.31 2023/03/29 07:29:11 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.32 2023/03/29 07:38:16 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -416,13 +416,13 @@ dump_exp2_results(const BIGNUM *a, const BIGNUM *p, const BIGNUM *b,
 	printf("\ngot:  ");
 	BN_print_fp(stdout, got);
 
-	printf("\na1: ");
+	printf("\na: ");
 	BN_print_fp(stdout, a);
-	printf("\np1: ");
+	printf("\np: ");
 	BN_print_fp(stdout, p);
-	printf("\na2: ");
+	printf("\nb: ");
 	BN_print_fp(stdout, b);
-	printf("\np2: ");
+	printf("\nq: ");
 	BN_print_fp(stdout, q);
 	printf("\nm: ");
 	BN_print_fp(stdout, m);
