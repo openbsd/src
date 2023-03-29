@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.468 2023/03/28 13:30:31 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.469 2023/03/29 14:35:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -162,7 +162,7 @@ struct aid {
 	uint16_t	 afi;
 	sa_family_t	 af;
 	uint8_t		 safi;
-	char		*name;
+	const char	*name;
 };
 
 extern const struct aid aid_vals[];
