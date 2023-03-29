@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.23 2023/03/29 05:11:37 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.24 2023/03/29 05:27:02 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -153,7 +153,7 @@ static const SHA_LONG64 K512[80] = {
 
 #if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 # if defined(__x86_64) || defined(__x86_64__)
-#  define ROTR(a,n)	({ SHA_LONG64 ret;		\
+#  define ROTR(a, n)	({ SHA_LONG64 ret;		\
 				asm ("rorq %1,%0"	\
 				: "=r"(ret)		\
 				: "J"(n),"0"(a)		\
@@ -170,7 +170,7 @@ static const SHA_LONG64 K512[80] = {
 				: "0"(lo),"1"(hi));		\
 				((SHA_LONG64)hi)<<32|lo;	})
 # elif (defined(_ARCH_PPC) && defined(__64BIT__)) || defined(_ARCH_PPC64)
-#  define ROTR(a,n)	({ SHA_LONG64 ret;		\
+#  define ROTR(a, n)	({ SHA_LONG64 ret;		\
 				asm ("rotrdi %0,%1,%2"	\
 				: "=r"(ret)		\
 				: "r"(a),"K"(n)); ret;	})
@@ -178,12 +178,12 @@ static const SHA_LONG64 K512[80] = {
 #endif
 
 #ifndef PULL64
-#define B(x,j)    (((SHA_LONG64)(*(((const unsigned char *)(&x))+j)))<<((7-j)*8))
-#define PULL64(x) (B(x,0)|B(x,1)|B(x,2)|B(x,3)|B(x,4)|B(x,5)|B(x,6)|B(x,7))
+#define B(x, j)		(((SHA_LONG64)(*(((const unsigned char *)(&x))+j)))<<((7-j)*8))
+#define PULL64(x)	(B(x,0)|B(x,1)|B(x,2)|B(x,3)|B(x,4)|B(x,5)|B(x,6)|B(x,7))
 #endif
 
 #ifndef ROTR
-#define ROTR(x,s)	(((x)>>s) | (x)<<(64-s))
+#define ROTR(x, s)	(((x)>>s) | (x)<<(64-s))
 #endif
 
 #define Sigma0(x)	(ROTR((x),28) ^ ROTR((x),34) ^ ROTR((x),39))
@@ -191,8 +191,8 @@ static const SHA_LONG64 K512[80] = {
 #define sigma0(x)	(ROTR((x),1)  ^ ROTR((x),8)  ^ ((x)>>7))
 #define sigma1(x)	(ROTR((x),19) ^ ROTR((x),61) ^ ((x)>>6))
 
-#define Ch(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
-#define Maj(x,y,z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+#define Ch(x, y, z)	(((x) & (y)) ^ ((~(x)) & (z)))
+#define Maj(x, y, z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
 
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
@@ -204,8 +204,8 @@ static void
 sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
 {
 	const SHA_LONG64 *W = in;
-	SHA_LONG64	A, E, T;
-	SHA_LONG64	X[9 + 80], *F;
+	SHA_LONG64 A, E, T;
+	SHA_LONG64 X[9 + 80], *F;
 	int i;
 
 	while (num--) {
@@ -262,8 +262,8 @@ static void
 sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
 {
 	const SHA_LONG64 *W = in;
-	SHA_LONG64	a, b,c, d,e, f,g, h,s0, s1, T1, T2;
-	SHA_LONG64	X[16];
+	SHA_LONG64 a, b, c, d, e, f, g, h, s0, s1, T1, T2;
+	SHA_LONG64 X[16];
 	int i;
 
 	while (num--) {
@@ -329,23 +329,23 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
 
 #else
 
-#define	ROUND_00_15(i,a,b,c,d,e,f,g,h)		do {	\
-	T1 += h + Sigma1(e) + Ch(e,f,g) + K512[i];	\
-	h = Sigma0(a) + Maj(a,b,c);			\
-	d += T1;	h += T1;		} while (0)
+#define	ROUND_00_15(i, a, b, c, d, e, f, g, h)		do {	\
+	T1 += h + Sigma1(e) + Ch(e, f, g) + K512[i];	\
+	h = Sigma0(a) + Maj(a, b, c);			\
+	d += T1;	h += T1;			} while (0)
 
-#define	ROUND_16_80(i,j,a,b,c,d,e,f,g,h,X)	do {	\
+#define	ROUND_16_80(i, j, a, b, c, d, e, f, g, h, X)	do {	\
 	s0 = X[(j+1)&0x0f];	s0 = sigma0(s0);	\
 	s1 = X[(j+14)&0x0f];	s1 = sigma1(s1);	\
 	T1 = X[(j)&0x0f] += s0 + s1 + X[(j+9)&0x0f];	\
-	ROUND_00_15(i+j,a,b,c,d,e,f,g,h);		} while (0)
+	ROUND_00_15(i+j, a, b, c, d, e, f, g, h);	} while (0)
 
 static void
 sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
 {
 	const SHA_LONG64 *W = in;
-	SHA_LONG64	a, b,c, d,e, f,g, h,s0, s1, T1;
-	SHA_LONG64	X[16];
+	SHA_LONG64 a, b, c, d, e, f, g, h, s0, s1, T1;
+	SHA_LONG64 X[16];
 	int i;
 
 	while (num--) {
@@ -361,89 +361,89 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
 
 #if BYTE_ORDER == BIG_ENDIAN
 		T1 = X[0] = W[0];
-		ROUND_00_15(0, a,b, c,d, e,f, g, h);
+		ROUND_00_15(0, a, b, c, d, e, f, g, h);
 		T1 = X[1] = W[1];
-		ROUND_00_15(1, h,a, b,c, d,e, f, g);
+		ROUND_00_15(1, h, a, b, c, d, e, f, g);
 		T1 = X[2] = W[2];
-		ROUND_00_15(2, g,h, a,b, c,d, e, f);
+		ROUND_00_15(2, g, h, a, b, c, d, e, f);
 		T1 = X[3] = W[3];
-		ROUND_00_15(3, f,g, h,a, b,c, d, e);
+		ROUND_00_15(3, f, g, h, a, b, c, d, e);
 		T1 = X[4] = W[4];
-		ROUND_00_15(4, e,f, g,h, a,b, c, d);
+		ROUND_00_15(4, e, f, g, h, a, b, c, d);
 		T1 = X[5] = W[5];
-		ROUND_00_15(5, d,e, f,g, h,a, b, c);
+		ROUND_00_15(5, d, e, f, g, h, a, b, c);
 		T1 = X[6] = W[6];
-		ROUND_00_15(6, c,d, e,f, g,h, a, b);
+		ROUND_00_15(6, c, d, e, f, g, h, a, b);
 		T1 = X[7] = W[7];
-		ROUND_00_15(7, b,c, d,e, f,g, h, a);
+		ROUND_00_15(7, b, c, d, e, f, g, h, a);
 		T1 = X[8] = W[8];
-		ROUND_00_15(8, a,b, c,d, e,f, g, h);
+		ROUND_00_15(8, a, b, c, d, e, f, g, h);
 		T1 = X[9] = W[9];
-		ROUND_00_15(9, h,a, b,c, d,e, f, g);
+		ROUND_00_15(9, h, a, b, c, d, e, f, g);
 		T1 = X[10] = W[10];
-		ROUND_00_15(10, g,h, a,b, c,d, e, f);
+		ROUND_00_15(10, g, h, a, b, c, d, e, f);
 		T1 = X[11] = W[11];
-		ROUND_00_15(11, f,g, h,a, b,c, d, e);
+		ROUND_00_15(11, f, g, h, a, b, c, d, e);
 		T1 = X[12] = W[12];
-		ROUND_00_15(12, e,f, g,h, a,b, c, d);
+		ROUND_00_15(12, e, f, g, h, a, b, c, d);
 		T1 = X[13] = W[13];
-		ROUND_00_15(13, d,e, f,g, h,a, b, c);
+		ROUND_00_15(13, d, e, f, g, h, a, b, c);
 		T1 = X[14] = W[14];
-		ROUND_00_15(14, c,d, e,f, g,h, a, b);
+		ROUND_00_15(14, c, d, e, f, g, h, a, b);
 		T1 = X[15] = W[15];
-		ROUND_00_15(15, b,c, d,e, f,g, h, a);
+		ROUND_00_15(15, b, c, d, e, f, g, h, a);
 #else
 		T1 = X[0] = PULL64(W[0]);
-		ROUND_00_15(0, a,b, c,d, e,f, g, h);
+		ROUND_00_15(0, a, b, c, d, e, f, g, h);
 		T1 = X[1] = PULL64(W[1]);
-		ROUND_00_15(1, h,a, b,c, d,e, f, g);
+		ROUND_00_15(1, h, a, b, c, d, e, f, g);
 		T1 = X[2] = PULL64(W[2]);
-		ROUND_00_15(2, g,h, a,b, c,d, e, f);
+		ROUND_00_15(2, g, h, a, b, c, d, e, f);
 		T1 = X[3] = PULL64(W[3]);
-		ROUND_00_15(3, f,g, h,a, b,c, d, e);
+		ROUND_00_15(3, f, g, h, a, b, c, d, e);
 		T1 = X[4] = PULL64(W[4]);
-		ROUND_00_15(4, e,f, g,h, a,b, c, d);
+		ROUND_00_15(4, e, f, g, h, a, b, c, d);
 		T1 = X[5] = PULL64(W[5]);
-		ROUND_00_15(5, d,e, f,g, h,a, b, c);
+		ROUND_00_15(5, d, e, f, g, h, a, b, c);
 		T1 = X[6] = PULL64(W[6]);
-		ROUND_00_15(6, c,d, e,f, g,h, a, b);
+		ROUND_00_15(6, c, d, e, f, g, h, a, b);
 		T1 = X[7] = PULL64(W[7]);
-		ROUND_00_15(7, b,c, d,e, f,g, h, a);
+		ROUND_00_15(7, b, c, d, e, f, g, h, a);
 		T1 = X[8] = PULL64(W[8]);
-		ROUND_00_15(8, a,b, c,d, e,f, g, h);
+		ROUND_00_15(8, a, b, c, d, e, f, g, h);
 		T1 = X[9] = PULL64(W[9]);
-		ROUND_00_15(9, h,a, b,c, d,e, f, g);
+		ROUND_00_15(9, h, a, b, c, d, e, f, g);
 		T1 = X[10] = PULL64(W[10]);
-		ROUND_00_15(10, g,h, a,b, c,d, e, f);
+		ROUND_00_15(10, g, h, a, b, c, d, e, f);
 		T1 = X[11] = PULL64(W[11]);
-		ROUND_00_15(11, f,g, h,a, b,c, d, e);
+		ROUND_00_15(11, f, g, h, a, b, c, d, e);
 		T1 = X[12] = PULL64(W[12]);
-		ROUND_00_15(12, e,f, g,h, a,b, c, d);
+		ROUND_00_15(12, e, f, g, h, a, b, c, d);
 		T1 = X[13] = PULL64(W[13]);
-		ROUND_00_15(13, d,e, f,g, h,a, b, c);
+		ROUND_00_15(13, d, e, f, g, h, a, b, c);
 		T1 = X[14] = PULL64(W[14]);
-		ROUND_00_15(14, c,d, e,f, g,h, a, b);
+		ROUND_00_15(14, c, d, e, f, g, h, a, b);
 		T1 = X[15] = PULL64(W[15]);
-		ROUND_00_15(15, b,c, d,e, f,g, h, a);
+		ROUND_00_15(15, b, c, d, e, f, g, h, a);
 #endif
 
 		for (i = 16; i < 80; i += 16) {
-			ROUND_16_80(i, 0, a,b, c,d, e,f, g,h, X);
-			ROUND_16_80(i, 1, h,a, b,c, d,e, f,g, X);
-			ROUND_16_80(i, 2, g,h, a,b, c,d, e,f, X);
-			ROUND_16_80(i, 3, f,g, h,a, b,c, d,e, X);
-			ROUND_16_80(i, 4, e,f, g,h, a,b, c,d, X);
-			ROUND_16_80(i, 5, d,e, f,g, h,a, b,c, X);
-			ROUND_16_80(i, 6, c,d, e,f, g,h, a,b, X);
-			ROUND_16_80(i, 7, b,c, d,e, f,g, h,a, X);
-			ROUND_16_80(i, 8, a,b, c,d, e,f, g,h, X);
-			ROUND_16_80(i, 9, h,a, b,c, d,e, f,g, X);
-			ROUND_16_80(i, 10, g,h, a,b, c,d, e,f, X);
-			ROUND_16_80(i, 11, f,g, h,a, b,c, d,e, X);
-			ROUND_16_80(i, 12, e,f, g,h, a,b, c,d, X);
-			ROUND_16_80(i, 13, d,e, f,g, h,a, b,c, X);
-			ROUND_16_80(i, 14, c,d, e,f, g,h, a,b, X);
-			ROUND_16_80(i, 15, b,c, d,e, f,g, h,a, X);
+			ROUND_16_80(i, 0, a, b, c, d, e, f, g, h, X);
+			ROUND_16_80(i, 1, h, a, b, c, d, e, f, g, X);
+			ROUND_16_80(i, 2, g, h, a, b, c, d, e, f, X);
+			ROUND_16_80(i, 3, f, g, h, a, b, c, d, e, X);
+			ROUND_16_80(i, 4, e, f, g, h, a, b, c, d, X);
+			ROUND_16_80(i, 5, d, e, f, g, h, a, b, c, X);
+			ROUND_16_80(i, 6, c, d, e, f, g, h, a, b, X);
+			ROUND_16_80(i, 7, b, c, d, e, f, g, h, a, X);
+			ROUND_16_80(i, 8, a, b, c, d, e, f, g, h, X);
+			ROUND_16_80(i, 9, h, a, b, c, d, e, f, g, X);
+			ROUND_16_80(i, 10, g, h, a, b, c, d, e, f, X);
+			ROUND_16_80(i, 11, f, g, h, a, b, c, d, e, X);
+			ROUND_16_80(i, 12, e, f, g, h, a, b, c, d, X);
+			ROUND_16_80(i, 13, d, e, f, g, h, a, b, c, X);
+			ROUND_16_80(i, 14, c, d, e, f, g, h, a, b, X);
+			ROUND_16_80(i, 15, b, c, d, e, f, g, h, a, X);
 		}
 
 		ctx->h[0] += a;
