@@ -1,4 +1,4 @@
-/*	$OpenBSD: tags.c,v 1.25 2023/03/29 07:29:17 op Exp $	*/
+/*	$OpenBSD: tags.c,v 1.26 2023/03/29 10:42:34 op Exp $	*/
 
 /*
  * This file is in the public domain.
@@ -37,8 +37,6 @@ static char              *strip(char *, size_t);
 static void              unloadtags(void);
 
 #define DEFAULTFN "tags"
-
-char *tagsfn = NULL;
 
 /* ctags(1) entries are parsed and maintained in a tree. */
 struct ctag {
@@ -87,42 +85,18 @@ tagsvisit(int f, int n)
 	if (bufp == NULL)
 		return (ABORT);
 
-	if (tagsfn == NULL) {
-		if (bufp[0] == '\0') {
-			if ((tagsfn = strdup(fname)) == NULL) {
-				dobeep();
-				ewprintf("Out of memory");
-				return (FALSE);
-			}
-		} else {
-			/* bufp points to local variable, so duplicate. */
-			if ((tagsfn = strdup(bufp)) == NULL) {
-				dobeep();
-				ewprintf("Out of memory");
-				return (FALSE);
-			}
-		}
-	} else {
-		if ((temp = strdup(bufp)) == NULL) {
-			dobeep();
-			ewprintf("Out of memory");
-			return (FALSE);
-		}
-		free(tagsfn);
-		tagsfn = temp;
+	if (!RB_EMPTY(&tags)) {
 		if (eyorn("Keep current list of tags table also") == FALSE) {
 			ewprintf("Starting a new list of tags table");
 			unloadtags();
 		}
 	}
 
-	if (loadtags(tagsfn) == FALSE) {
-		free(tagsfn);
-		tagsfn = NULL;
-		return (FALSE);
-	}
+	temp = bufp;
+	if (temp[0] == '\0')
+		temp = fname;
 
-	return (TRUE);
+	return (loadtags(temp));
 }
 
 /*
@@ -156,7 +130,7 @@ findtag(int f, int n)
 		return (FALSE);
 	}
 
-	if (tagsfn == NULL)
+	if (RB_EMPTY(&tags))
 		if ((ret = tagsvisit(f, n)) != TRUE)
 			return (ret);
 	return pushtag(tok);
@@ -328,7 +302,6 @@ closetags(void)
 		free(s);
 	}
 	unloadtags();
-	free(tagsfn);
 }
 
 /*
