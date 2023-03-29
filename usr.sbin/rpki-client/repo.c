@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.41 2022/12/28 21:30:18 jmc Exp $ */
+/*	$OpenBSD: repo.c,v 1.42 2023/03/29 17:03:29 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1012,18 +1012,18 @@ ta_lookup(int id, struct tal *tal)
 
 	/* Look up in repository table. (Lookup should actually fail here) */
 	SLIST_FOREACH(rp, &repos, entry) {
-		if (strcmp(rp->repouri, tal->descr) == 0)
+		if (strcmp(rp->repouri, tal->uri[0]) == 0)
 			return rp;
 	}
 
 	rp = repo_alloc(id);
 	rp->basedir = repo_dir(tal->descr, "ta", 0);
-	if ((rp->repouri = strdup(tal->descr)) == NULL)
+	if ((rp->repouri = strdup(tal->uri[0])) == NULL)
 		err(1, NULL);
 
 	/* check if sync disabled ... */
 	if (noop) {
-		logx("ta/%s: using cache", rp->repouri);
+		logx("%s: using cache", rp->basedir);
 		entityq_flush(&rp->queue, rp);
 		return rp;
 	}
