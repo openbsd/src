@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.141 2023/03/29 15:55:34 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.142 2023/03/29 19:34:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -141,7 +141,7 @@ const struct mbr_type		mbr_types[] = {
 };
 
 struct gpt_type {
-	int	 gt_type;
+	int	 gt_menuid;
 	int	 gt_attr;
 #define	GTATTR_PROTECT		(1 << 0)
 #define	GTATTR_PROTECT_EFISYS	(1 << 1)
@@ -342,11 +342,11 @@ PRT_print_gptmenu(char *lbuf, size_t lbuflen)
 	printf("Choose from the following Partition id values:\n");
 	for (i = 0; i < idrows; i++) {
 		for (cidx = i; cidx < i + idrows * 3; cidx += idrows) {
-			printf("%02X %-15s", gpt_types[cidx].gt_type,
+			printf("%02X %-15s", gpt_types[cidx].gt_menuid,
 			    gpt_types[cidx].gt_name);
 		}
 		if (cidx < nitems(gpt_types))
-			printf("%02X %s", gpt_types[cidx].gt_type,
+			printf("%02X %s", gpt_types[cidx].gt_menuid,
 			    gpt_types[cidx].gt_name);
 		printf("\n");
 	}
@@ -521,7 +521,7 @@ PRT_uuid_to_name(const struct uuid *uuid)
 }
 
 int
-PRT_uuid_to_type(const struct uuid *uuid)
+PRT_uuid_to_menuid(const struct uuid *uuid)
 {
 	const struct gpt_type	*gt;
 
@@ -529,11 +529,11 @@ PRT_uuid_to_type(const struct uuid *uuid)
 	if (gt == NULL)
 		return -1;
 	else
-		return gt->gt_type;
+		return gt->gt_menuid;
 }
 
 const struct uuid *
-PRT_type_to_guid(const int type)
+PRT_menuid_to_guid(const int menuid)
 {
 	static struct uuid	guid;
 	int			i, entries;
@@ -544,7 +544,7 @@ PRT_type_to_guid(const int type)
 	entries = nitems(gpt_types);
 
 	for (i = 0; i < entries; i++) {
-		if (gpt_types[i].gt_type == type)
+		if (gpt_types[i].gt_menuid == menuid)
 			break;
 	}
 	if (i < entries)
