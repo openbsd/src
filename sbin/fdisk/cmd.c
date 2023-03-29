@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.170 2023/03/26 16:23:58 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.171 2023/03/29 14:20:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -594,24 +594,18 @@ ask_uuid(const struct uuid *olduuid)
 	char			 lbuf[LINEBUFSZ];
 	char			*dflt = NULL;
 	uint32_t		 status;
-	int			 num = 0;
+	int			 num;
 
-	uuid = *olduuid;
-	if (uuid_is_nil(&uuid, NULL) == 0) {
-		num = PRT_uuid_to_type(&uuid);
-		if (num == 0) {
-			uuid_to_string(&uuid, &dflt, &status);
-			if (status != uuid_s_ok) {
-				printf("uuid_to_string() failed\n");
-				goto done;
-			}
-		}
-	}
-	if (dflt == NULL) {
-		if (asprintf(&dflt, "%X", num) == -1) {
-			warn("asprintf()");
+	num = PRT_uuid_to_type(olduuid);
+	if (num == -1) {
+		uuid_to_string(olduuid, &dflt, &status);
+		if (status != uuid_s_ok) {
+			printf("uuid_to_string() failed\n");
 			goto done;
 		}
+	} else if (asprintf(&dflt, "%X", num) == -1) {
+		warn("asprintf()");
+		goto done;
 	}
 
 	for (;;) {

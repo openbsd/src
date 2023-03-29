@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.139 2023/03/26 16:23:58 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.140 2023/03/29 14:20:50 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -527,7 +527,7 @@ PRT_uuid_to_type(const struct uuid *uuid)
 
 	gt = find_gpt_type(uuid);
 	if (gt == NULL)
-		return 0;
+		return -1;
 	else
 		return gt->gt_type;
 }
