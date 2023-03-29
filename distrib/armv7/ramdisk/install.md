@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.53 2023/03/28 23:09:08 kn Exp $
+#	$OpenBSD: install.md,v 1.54 2023/03/29 00:16:14 kn Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,7 +34,7 @@
 MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
-	local _disk=/dev/$1 _mdec _plat
+	local _disk=$1 _mdec _plat
 
 	case $(sysctl -n hw.product) in
 	*AM335x*)			_plat=am335x;;
@@ -53,7 +53,7 @@ md_installboot() {
 	fi
 
 	# Apply some final tweaks on selected platforms
-	mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
+	mount ${MOUNT_ARGS_msdos} /dev/${_disk}i /mnt/mnt
 
 	_mdec=/usr/mdec/$_plat
 
@@ -63,9 +63,9 @@ md_installboot() {
 		;;
 	cubox|wandboard)
 		cp $_mdec/*.dtb /mnt/mnt/
-		dd if=$_mdec/SPL of=${_disk}c bs=1024 seek=1 \
+		dd if=$_mdec/SPL of=/dev/${_disk}c bs=1024 seek=1 \
 		    status=none
-		dd if=$_mdec/u-boot.img of=${_disk}c bs=1024 seek=69 \
+		dd if=$_mdec/u-boot.img of=/dev/${_disk}c bs=1024 seek=69 \
 		    status=none
 		;;
 	nitrogen)
@@ -81,7 +81,7 @@ md_installboot() {
 		;;
 	cubie)
 		cp $_mdec/*.dtb /mnt/mnt/
-		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=${_disk}c \
+		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=/dev/${_disk}c \
 		    bs=1024 seek=8 status=none
 		;;
 	esac

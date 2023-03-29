@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.38 2023/03/26 19:25:16 kn Exp $
+#	$OpenBSD: install.md,v 1.39 2023/03/29 00:16:14 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ NCPU=$(sysctl -n hw.ncpufound)
 MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
-	local _disk=/dev/$1 _mdec _plat
+	local _disk=$1 _mdec _plat
 
 	case $(sysctl -n machdep.compatible) in
 	apple,*)		_plat=apple;;
@@ -60,11 +60,11 @@ md_installboot() {
 		done)
 		;;
 	pine64)
-		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=${_disk}c \
+		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=/dev/${_disk}c \
 		    bs=1024 seek=8 status=none
 		;;
 	rpi)
-		mount ${MOUNT_ARGS_msdos} ${_disk}i /mnt/mnt
+		mount ${MOUNT_ARGS_msdos} /dev/${_disk}i /mnt/mnt
 		cp $_mdec/{bootcode.bin,start*.elf,fixup*.dat,*.dtb} /mnt/mnt/
 		cp $_mdec/u-boot.bin /mnt/mnt/
 		mkdir -p /mnt/mnt/overlays
