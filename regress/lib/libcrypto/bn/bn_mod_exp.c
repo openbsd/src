@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.30 2023/03/29 06:53:49 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.31 2023/03/29 07:29:11 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -199,6 +199,9 @@ generate_bn(BIGNUM *bn, int avg_bits, int deviate, int force_odd)
 {
 	int bits;
 
+	if (bn == NULL)
+		return 1;
+
 	if (avg_bits <= 0 || deviate <= 0 || deviate >= avg_bits)
 		return 0;
 
@@ -208,55 +211,8 @@ generate_bn(BIGNUM *bn, int avg_bits, int deviate, int force_odd)
 }
 
 static int
-generate_test_triple(int reduce, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
-{
-	BIGNUM *mmodified;
-	BN_ULONG multiple;
-	int avg = 2 * BN_BITS, deviate = BN_BITS / 2;
-	int ret = 0;
-
-	if (!generate_bn(a, avg, deviate, 0))
-		return 0;
-
-	if (!generate_bn(p, avg, deviate, 0))
-		return 0;
-
-	if (!generate_bn(m, avg, deviate, 1))
-		return 0;
-
-	if (reduce)
-		return BN_mod(a, a, m, ctx);
-
-	/*
-	 * Add a random multiple of m to a to test unreduced exponentiation.
-	 */
-
-	BN_CTX_start(ctx);
-
-	if ((mmodified = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	if (!bn_copy(mmodified, m))
-		goto err;
-
-	multiple = arc4random_uniform(1023) + 2;
-
-	if (!BN_mul_word(mmodified, multiple))
-		goto err;
-
-	if (!BN_add(a, a, mmodified))
-		goto err;
-
-	ret = 1;
- err:
-	BN_CTX_end(ctx);
-
-	return ret;
-}
-
-static int
-generate_test_quintuple(int reduce, BIGNUM *a, BIGNUM *p,
-    BIGNUM *b, BIGNUM *q, BIGNUM *m, BN_CTX *ctx)
+generate_test_quintuple(int reduce, BIGNUM *a, BIGNUM *p, BIGNUM *b, BIGNUM *q,
+    BIGNUM *m, BN_CTX *ctx)
 {
 	BIGNUM *mmodified;
 	BN_ULONG multiple;
@@ -282,6 +238,9 @@ generate_test_quintuple(int reduce, BIGNUM *a, BIGNUM *p,
 		if (!BN_mod(a, a, m, ctx))
 			return 0;
 
+		if (b == NULL)
+			return 1;
+
 		return BN_mod(b, b, m, ctx);
 	}
 
@@ -305,14 +264,25 @@ generate_test_quintuple(int reduce, BIGNUM *a, BIGNUM *p,
 	if (!BN_add(a, a, mmodified))
 		goto err;
 
+	if (b == NULL)
+		goto done;
+
 	if (!BN_add(b, b, mmodified))
 		goto err;
 
+ done:
 	ret = 1;
+
  err:
 	BN_CTX_end(ctx);
 
 	return ret;
+}
+
+static int
+generate_test_triple(int reduce, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
+{
+	return generate_test_quintuple(reduce, a, p, NULL, NULL, m, ctx);
 }
 
 static void
