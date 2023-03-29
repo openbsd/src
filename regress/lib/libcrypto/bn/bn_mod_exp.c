@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.27 2023/03/27 09:01:08 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.28 2023/03/29 06:32:53 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -280,34 +280,34 @@ generate_test_triple(int reduce, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 }
 
 static int
-generate_test_quintuple(int reduce, BIGNUM *a1, BIGNUM *p1,
-    BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx)
+generate_test_quintuple(int reduce, BIGNUM *a, BIGNUM *p,
+    BIGNUM *b, BIGNUM *q, BIGNUM *m, BN_CTX *ctx)
 {
 	BIGNUM *mmodified;
 	BN_ULONG multiple;
 	int avg = 2 * BN_BITS, deviate = BN_BITS / 2;
 	int ret = 0;
 
-	if (!generate_bn(a1, avg, deviate, 0))
+	if (!generate_bn(a, avg, deviate, 0))
 		return 0;
 
-	if (!generate_bn(p1, avg, deviate, 0))
+	if (!generate_bn(p, avg, deviate, 0))
 		return 0;
 
-	if (!generate_bn(a2, avg, deviate, 0))
+	if (!generate_bn(b, avg, deviate, 0))
 		return 0;
 
-	if (!generate_bn(p2, avg, deviate, 0))
+	if (!generate_bn(q, avg, deviate, 0))
 		return 0;
 
 	if (!generate_bn(m, avg, deviate, 1))
 		return 0;
 
 	if (reduce) {
-		if (!BN_mod(a1, a1, m, ctx))
+		if (!BN_mod(a, a, m, ctx))
 			return 0;
 
-		return BN_mod(a2, a2, m, ctx);
+		return BN_mod(b, b, m, ctx);
 	}
 
 	/*
@@ -327,10 +327,10 @@ generate_test_quintuple(int reduce, BIGNUM *a1, BIGNUM *p1,
 	if (!BN_mul_word(mmodified, multiple))
 		goto err;
 
-	if (!BN_add(a1, a1, mmodified))
+	if (!BN_add(a, a, mmodified))
 		goto err;
 
-	if (!BN_add(a2, a2, mmodified))
+	if (!BN_add(b, b, mmodified))
 		goto err;
 
 	ret = 1;
@@ -405,7 +405,7 @@ bn_mod_exp_test(int reduce, BIGNUM *want, BIGNUM *a, BIGNUM *p, BIGNUM *m,
 		errx(1, "generate_test_triple");
 
 	for (i = 0; i < 8 && !failed; i++) {
-		BN_set_negative(a, i & 1);
+		BN_set_negative(a, (i >> 0) & 1);
 		BN_set_negative(p, (i >> 1) & 1);
 		BN_set_negative(m, (i >> 2) & 1);
 
@@ -461,8 +461,8 @@ run_bn_mod_exp_tests(void)
 }
 
 static void
-dump_exp2_results(const BIGNUM *a1, const BIGNUM *p1, const BIGNUM *a2,
-    const BIGNUM *p2, const BIGNUM *m, const BIGNUM *want, const BIGNUM *got)
+dump_exp2_results(const BIGNUM *a, const BIGNUM *p, const BIGNUM *b,
+    const BIGNUM *q, const BIGNUM *m, const BIGNUM *want, const BIGNUM *got)
 {
 	printf("BN_mod_exp_simple() and BN_mod_exp2_mont() disagree");
 
@@ -472,21 +472,21 @@ dump_exp2_results(const BIGNUM *a1, const BIGNUM *p1, const BIGNUM *a2,
 	BN_print_fp(stdout, got);
 
 	printf("\na1: ");
-	BN_print_fp(stdout, a1);
+	BN_print_fp(stdout, a);
 	printf("\np1: ");
-	BN_print_fp(stdout, p1);
+	BN_print_fp(stdout, p);
 	printf("\na2: ");
-	BN_print_fp(stdout, a2);
+	BN_print_fp(stdout, b);
 	printf("\np2: ");
-	BN_print_fp(stdout, p2);
+	BN_print_fp(stdout, q);
 	printf("\nm: ");
 	BN_print_fp(stdout, m);
 	printf("\n\n");
 }
 
 static int
-bn_mod_exp2_simple(BIGNUM *out, const BIGNUM *a1, const BIGNUM *p1,
-    const BIGNUM *a2, const BIGNUM *p2, const BIGNUM *m, BN_CTX *ctx)
+bn_mod_exp2_simple(BIGNUM *out, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *b, const BIGNUM *q, const BIGNUM *m, BN_CTX *ctx)
 {
 	BIGNUM *fact1, *fact2;
 	int ret = 0;
@@ -498,9 +498,9 @@ bn_mod_exp2_simple(BIGNUM *out, const BIGNUM *a1, const BIGNUM *p1,
 	if ((fact2 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (!BN_mod_exp_simple(fact1, a1, p1, m, ctx))
+	if (!BN_mod_exp_simple(fact1, a, p, m, ctx))
 		goto err;
-	if (!BN_mod_exp_simple(fact2, a2, p2, m, ctx))
+	if (!BN_mod_exp_simple(fact2, b, q, m, ctx))
 		goto err;
 	if (!BN_mod_mul(out, fact1, fact2, m, ctx))
 		goto err;
@@ -513,30 +513,30 @@ bn_mod_exp2_simple(BIGNUM *out, const BIGNUM *a1, const BIGNUM *p1,
 }
 
 static int
-bn_mod_exp2_test(int reduce, BIGNUM *want, BIGNUM *got, BIGNUM *a1, BIGNUM *p1,
-    BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx)
+bn_mod_exp2_test(int reduce, BIGNUM *want, BIGNUM *got, BIGNUM *a, BIGNUM *p,
+    BIGNUM *b, BIGNUM *q, BIGNUM *m, BN_CTX *ctx)
 {
 	size_t i;
 	int failed = 0;
 
-	if (!generate_test_quintuple(reduce, a1, p1, a2, p2, m, ctx))
+	if (!generate_test_quintuple(reduce, a, p, b, q, m, ctx))
 		errx(1, "generate_test_quintuple");
 
 	for (i = 0; i < 32 && !failed; i++) {
-		BN_set_negative(a1, i & 1);
-		BN_set_negative(p1, (i >> 1) & 1);
-		BN_set_negative(a2, (i >> 2) & 1);
-		BN_set_negative(p2, (i >> 3) & 1);
+		BN_set_negative(a, (i >> 0) & 1);
+		BN_set_negative(p, (i >> 1) & 1);
+		BN_set_negative(b, (i >> 2) & 1);
+		BN_set_negative(q, (i >> 3) & 1);
 		BN_set_negative(m, (i >> 4) & 1);
 
-		if (!bn_mod_exp2_simple(want, a1, p1, a2, p2, m, ctx))
+		if (!bn_mod_exp2_simple(want, a, p, b, q, m, ctx))
 			errx(1, "BN_mod_exp_simple");
 
-		if (!BN_mod_exp2_mont(got, a1, p1, a2, p2, m, ctx, NULL))
+		if (!BN_mod_exp2_mont(got, a, p, b, q, m, ctx, NULL))
 			errx(1, "BN_mod_exp2_mont");
 
 		if (BN_cmp(want, got) != 0) {
-			dump_exp2_results(a1, p1, a2, p2, m, want, got);
+			dump_exp2_results(a, p, b, q, m, want, got);
 			failed |= 1;
 		}
 	}
@@ -547,7 +547,7 @@ bn_mod_exp2_test(int reduce, BIGNUM *want, BIGNUM *got, BIGNUM *a1, BIGNUM *p1,
 static int
 run_bn_mod_exp2_tests(void)
 {
-	BIGNUM *a1, *p1, *a2, *p2, *m, *want, *got;
+	BIGNUM *a, *p, *b, *q, *m, *want, *got;
 	BN_CTX *ctx;
 	int i;
 	int reduce;
@@ -558,14 +558,14 @@ run_bn_mod_exp2_tests(void)
 
 	BN_CTX_start(ctx);
 
-	if ((a1 = BN_CTX_get(ctx)) == NULL)
-		errx(1, "a1 = BN_CTX_get()");
-	if ((p1 = BN_CTX_get(ctx)) == NULL)
-		errx(1, "p1 = BN_CTX_get()");
-	if ((a2 = BN_CTX_get(ctx)) == NULL)
-		errx(1, "a2 = BN_CTX_get()");
-	if ((p2 = BN_CTX_get(ctx)) == NULL)
-		errx(1, "p2 = BN_CTX_get()");
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		errx(1, "a = BN_CTX_get()");
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		errx(1, "p = BN_CTX_get()");
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		errx(1, "b = BN_CTX_get()");
+	if ((q = BN_CTX_get(ctx)) == NULL)
+		errx(1, "q = BN_CTX_get()");
 	if ((m = BN_CTX_get(ctx)) == NULL)
 		errx(1, "m = BN_CTX_get()");
 	if ((want = BN_CTX_get(ctx)) == NULL)
@@ -575,13 +575,11 @@ run_bn_mod_exp2_tests(void)
 
 	reduce = 0;
 	for (i = 0; i < N_MOD_EXP_TESTS && !failed; i++)
-		failed |= bn_mod_exp2_test(reduce, want, got, a1, p1, a2, p2, m,
-		    ctx);
+		failed |= bn_mod_exp2_test(reduce, want, got, a, p, b, q, m, ctx);
 
 	reduce = 1;
 	for (i = 0; i < N_MOD_EXP_TESTS && !failed; i++)
-		failed |= bn_mod_exp2_test(reduce, want, got, a1, p1, a2, p2, m,
-		    ctx);
+		failed |= bn_mod_exp2_test(reduce, want, got, a, p, b, q, m, ctx);
 
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
