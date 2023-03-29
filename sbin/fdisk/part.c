@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.140 2023/03/29 14:20:50 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.141 2023/03/29 15:55:34 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -550,7 +550,7 @@ PRT_type_to_guid(const int type)
 	if (i < entries)
 		uuid_from_string(gpt_types[i].gt_guid, &guid, &status);
 	if (i == entries || status != uuid_s_ok)
-		uuid_from_string(gpt_types[0].gt_guid, &guid, &status);
+		uuid_create_nil(&guid, NULL);
 
 	return &guid;
 }
