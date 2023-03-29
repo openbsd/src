@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.33 2023/03/29 07:46:40 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.34 2023/03/29 10:36:14 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -16,8 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <stdio.h>
 #include <err.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <openssl/bn.h>
 #include <openssl/err.h>
@@ -71,13 +72,27 @@ static const struct mod_exp_test {
 #define N_MOD_EXP_FN (sizeof(mod_exp_fn) / sizeof(mod_exp_fn[0]))
 
 static void
-print_failure(const BIGNUM *got, const BIGNUM *a, const char *name)
+bn_print(const char *name, const BIGNUM *bn)
 {
-	fprintf(stderr, "%s test failed for a = ", name);
-	BN_print_fp(stderr, a);
-	fprintf(stderr, "\nwant 0, got ");
-	BN_print_fp(stderr, got);
+	size_t len;
+	int pad = 0;
+
+	len = strlen(name);
+	if (len < 7)
+		pad = 6 - len;
+
+	fprintf(stderr, "%s: %*s", name, pad, "");
+	BN_print_fp(stderr, bn);
 	fprintf(stderr, "\n");
+}
+
+static void
+print_zero_test_failure(const BIGNUM *got, const BIGNUM *a, const char *name)
+{
+	fprintf(stderr, "%s() zero test failed:\n", name);
+
+	bn_print("a", a);
+	bn_print("got", got);
 }
 
 static int
@@ -119,7 +134,7 @@ bn_mod_exp_zero_test(const struct mod_exp_test *test, BN_CTX *ctx, int use_rando
 	}
 
 	if (!BN_is_zero(got)) {
-		print_failure(got, a, test->name);
+		print_zero_test_failure(got, a, test->name);
 		goto err;
 	}
 
@@ -156,7 +171,7 @@ bn_mod_exp_zero_word_test(BN_CTX *ctx)
 	}
 
 	if (!BN_is_zero(got)) {
-		print_failure(got, one, name);
+		print_zero_test_failure(got, one, name);
 		goto err;
 	}
 
@@ -289,29 +304,22 @@ static void
 dump_results(const BIGNUM *a, const BIGNUM *p, const BIGNUM *b, const BIGNUM *q,
     const BIGNUM *m, const BIGNUM *want, const BIGNUM *got, const char *name)
 {
-	printf("BN_mod_exp_simple() and %s() disagree", name);
+	fprintf(stderr, "BN_mod_exp_simple() and %s() disagree:\n", name);
 
-	printf("\nwant: ");
-	BN_print_fp(stdout, want);
-	printf("\ngot:  ");
-	BN_print_fp(stdout, got);
+	bn_print("want", want);
+	bn_print("got", got);
 
-	printf("\na: ");
-	BN_print_fp(stdout, a);
-	printf("\np: ");
-	BN_print_fp(stdout, p);
+	bn_print("a", a);
+	bn_print("p", p);
 
 	if (b != NULL) {
-		printf("\nb: ");
-		BN_print_fp(stdout, b);
-		printf("\nq: ");
-		BN_print_fp(stdout, q);
+		bn_print("b", b);
+		bn_print("q", q);
 	}
 
-	printf("\nm: ");
-	BN_print_fp(stdout, m);
+	bn_print("m", m);
 
-	printf("\n\n");
+	fprintf(stderr, "\n");
 }
 
 static int
