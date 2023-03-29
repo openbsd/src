@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.28 2023/03/29 06:32:53 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.29 2023/03/29 06:50:51 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -48,13 +48,13 @@ bn_mod_exp2_mont_second(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	return BN_mod_exp2_mont(r, one, one, a, p, m, ctx, mctx);
 }
 
-static const struct mod_exp_zero_test {
+static const struct mod_exp_test {
 	const char *name;
 	int (*mod_exp_fn)(BIGNUM *, const BIGNUM *, const BIGNUM *,
 	    const BIGNUM *, BN_CTX *);
 	int (*mod_exp_mont_fn)(BIGNUM *, const BIGNUM *, const BIGNUM *,
 	    const BIGNUM *, BN_CTX *, BN_MONT_CTX *);
-} mod_exp_zero_test_data[] = {
+} mod_exp_fn[] = {
 	INIT_MOD_EXP_FN(BN_mod_exp),
 	INIT_MOD_EXP_FN(BN_mod_exp_ct),
 	INIT_MOD_EXP_FN(BN_mod_exp_nonct),
@@ -68,8 +68,7 @@ static const struct mod_exp_zero_test {
 	INIT_MOD_EXP_MONT_FN(bn_mod_exp2_mont_second),
 };
 
-#define N_MOD_EXP_ZERO_TESTS \
-    (sizeof(mod_exp_zero_test_data) / sizeof(mod_exp_zero_test_data[0]))
+#define N_MOD_EXP_FN (sizeof(mod_exp_fn) / sizeof(mod_exp_fn[0]))
 
 static void
 print_failure(const BIGNUM *got, const BIGNUM *a, const char *name)
@@ -82,8 +81,7 @@ print_failure(const BIGNUM *got, const BIGNUM *a, const char *name)
 }
 
 static int
-bn_mod_exp_zero_test(const struct mod_exp_zero_test *test, BN_CTX *ctx,
-    int use_random)
+bn_mod_exp_zero_test(const struct mod_exp_test *test, BN_CTX *ctx, int use_random)
 {
 	const BIGNUM *one;
 	BIGNUM *a, *p, *got;
@@ -182,14 +180,12 @@ run_bn_mod_exp_zero_tests(void)
 		errx(1, "BN_CTX_new");
 
 	use_random = 1;
-	for (i = 0; i < N_MOD_EXP_ZERO_TESTS; i++)
-		failed |= bn_mod_exp_zero_test(&mod_exp_zero_test_data[i], ctx,
-		    use_random);
+	for (i = 0; i < N_MOD_EXP_FN; i++)
+		failed |= bn_mod_exp_zero_test(&mod_exp_fn[i], ctx, use_random);
 
 	use_random = 0;
-	for (i = 0; i < N_MOD_EXP_ZERO_TESTS; i++)
-		failed |= bn_mod_exp_zero_test(&mod_exp_zero_test_data[i], ctx,
-		    use_random);
+	for (i = 0; i < N_MOD_EXP_FN; i++)
+		failed |= bn_mod_exp_zero_test(&mod_exp_fn[i], ctx, use_random);
 
 	failed |= bn_mod_exp_zero_word_test(ctx);
 
@@ -197,27 +193,6 @@ run_bn_mod_exp_zero_tests(void)
 
 	return failed;
 }
-
-static const struct mod_exp_test {
-	const char *name;
-	int (*mod_exp_fn)(BIGNUM *, const BIGNUM *, const BIGNUM *,
-	    const BIGNUM *, BN_CTX *);
-	int (*mod_exp_mont_fn)(BIGNUM *, const BIGNUM *, const BIGNUM *,
-	    const BIGNUM *, BN_CTX *, BN_MONT_CTX *);
-} mod_exp_fn[] = {
-	INIT_MOD_EXP_FN(BN_mod_exp),
-	INIT_MOD_EXP_FN(BN_mod_exp_ct),
-	INIT_MOD_EXP_FN(BN_mod_exp_nonct),
-	INIT_MOD_EXP_FN(BN_mod_exp_recp),
-	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont),
-	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_ct),
-	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_consttime),
-	INIT_MOD_EXP_MONT_FN(BN_mod_exp_mont_nonct),
-	INIT_MOD_EXP_MONT_FN(bn_mod_exp2_mont_first),
-	INIT_MOD_EXP_MONT_FN(bn_mod_exp2_mont_second),
-};
-
-#define N_MOD_EXP_FN (sizeof(mod_exp_fn) / sizeof(mod_exp_fn[0]))
 
 static int
 generate_bn(BIGNUM *bn, int avg_bits, int deviate, int force_odd)
