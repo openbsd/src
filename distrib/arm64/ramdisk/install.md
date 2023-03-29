@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.40 2023/03/29 00:25:47 kn Exp $
+#	$OpenBSD: install.md,v 1.41 2023/03/29 16:20:17 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ md_installboot() {
 	case $(sysctl -n machdep.compatible) in
 	apple,*)		_plat=apple;;
 	pine64,pine64*(+))	_plat=pine64;;
-	raspberrypi,*)		_plat=rpi;
+	raspberrypi,*)		_plat=rpi;;
 	esac
 
 	if ! installboot -r /mnt ${1}; then
