@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.32 2023/03/29 07:38:16 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.33 2023/03/29 07:46:40 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -286,8 +286,8 @@ generate_test_triple(int reduce, BIGNUM *a, BIGNUM *p, BIGNUM *m, BN_CTX *ctx)
 }
 
 static void
-dump_exp_results(const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
-    const BIGNUM *want, const BIGNUM *got, const char *name)
+dump_results(const BIGNUM *a, const BIGNUM *p, const BIGNUM *b, const BIGNUM *q,
+    const BIGNUM *m, const BIGNUM *want, const BIGNUM *got, const char *name)
 {
 	printf("BN_mod_exp_simple() and %s() disagree", name);
 
@@ -300,8 +300,17 @@ dump_exp_results(const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	BN_print_fp(stdout, a);
 	printf("\np: ");
 	BN_print_fp(stdout, p);
+
+	if (b != NULL) {
+		printf("\nb: ");
+		BN_print_fp(stdout, b);
+		printf("\nq: ");
+		BN_print_fp(stdout, q);
+	}
+
 	printf("\nm: ");
 	BN_print_fp(stdout, m);
+
 	printf("\n\n");
 }
 
@@ -327,7 +336,7 @@ test_mod_exp(const BIGNUM *want, const BIGNUM *a, const BIGNUM *p,
 		errx(1, "%s() failed", test->name);
 
 	if (BN_cmp(want, got) != 0) {
-		dump_exp_results(a, p, m, want, got, test->name);
+		dump_results(a, p, NULL, NULL, m, want, got, test->name);
 		goto err;
 	}
 
@@ -405,30 +414,6 @@ test_bn_mod_exp(void)
 	return failed;
 }
 
-static void
-dump_exp2_results(const BIGNUM *a, const BIGNUM *p, const BIGNUM *b,
-    const BIGNUM *q, const BIGNUM *m, const BIGNUM *want, const BIGNUM *got)
-{
-	printf("BN_mod_exp_simple() and BN_mod_exp2_mont() disagree");
-
-	printf("\nwant: ");
-	BN_print_fp(stdout, want);
-	printf("\ngot:  ");
-	BN_print_fp(stdout, got);
-
-	printf("\na: ");
-	BN_print_fp(stdout, a);
-	printf("\np: ");
-	BN_print_fp(stdout, p);
-	printf("\nb: ");
-	BN_print_fp(stdout, b);
-	printf("\nq: ");
-	BN_print_fp(stdout, q);
-	printf("\nm: ");
-	BN_print_fp(stdout, m);
-	printf("\n\n");
-}
-
 static int
 bn_mod_exp2_simple(BIGNUM *out, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *b, const BIGNUM *q, const BIGNUM *m, BN_CTX *ctx)
@@ -481,7 +466,7 @@ bn_mod_exp2_test(int reduce, BIGNUM *want, BIGNUM *got, BIGNUM *a, BIGNUM *p,
 			errx(1, "BN_mod_exp2_mont");
 
 		if (BN_cmp(want, got) != 0) {
-			dump_exp2_results(a, p, b, q, m, want, got);
+			dump_results(a, p, b, q, m, want, got, "BN_mod_exp2_mont");
 			failed |= 1;
 		}
 	}
