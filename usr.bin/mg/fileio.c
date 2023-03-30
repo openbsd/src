@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.109 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.110 2023/03/30 07:26:15 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -339,7 +339,7 @@ startupfile(char *suffix, char *conffile)
 		goto nohome;
 
 	if (conffile != NULL) {
-		(void)strncpy(file, conffile, NFILEN);
+		(void)strlcpy(file, conffile, NFILEN);
 	} else if (suffix == NULL) {
 		ret = snprintf(file, sizeof(file), _PATH_MG_STARTUP, home);
 		if (ret < 0 || ret >= sizeof(file))
