@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.93 2023/03/30 19:00:02 op Exp $	*/
+/*	$OpenBSD: main.c,v 1.94 2023/03/30 19:01:25 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -111,9 +111,9 @@ main(int argc, char **argv)
 	}
 	if ((ffp = startupfile(NULL, conffile, file, sizeof(file))) == NULL &&
 	    conffile != NULL) {
-                fprintf(stderr, "%s: Problem with file: %s\n", __progname,
+		fprintf(stderr, "%s: Problem with file: %s\n", __progname,
 		    conffile);
-                exit(1);
+		exit(1);
 	}
 
 	argc -= optind;
