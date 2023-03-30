@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.79 2023/01/09 20:32:21 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.80 2023/03/30 15:09:01 kn Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -845,7 +845,7 @@ initarm(struct arm64_bootparams *abp)
 	startpa = trunc_page((paddr_t)config);
 	endpa = round_page((paddr_t)config + sizeof(struct fdt_head));
 	for (pa = startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
+		pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
 	fh = (void *)(vstart + ((paddr_t)config - startpa));
 	if (betoh32(fh->fh_magic) != FDT_MAGIC || betoh32(fh->fh_size) == 0)
 		panic("%s: no FDT", __func__);
@@ -853,7 +853,7 @@ initarm(struct arm64_bootparams *abp)
 	/* Map the remainder of the FDT. */
 	endpa = round_page((paddr_t)config + betoh32(fh->fh_size));
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE)
-		pmap_kenter_cache(va, pa, PROT_READ, PMAP_CACHE_WB);
+		pmap_kenter_cache(va, pa, PROT_READ | PROT_WRITE, PMAP_CACHE_WB);
 	config = (void *)(vstart + ((paddr_t)config - startpa));
 	vstart = va;
 
