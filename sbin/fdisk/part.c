@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.142 2023/03/29 19:34:49 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.143 2023/03/30 14:38:26 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -536,20 +536,16 @@ const struct uuid *
 PRT_menuid_to_guid(const int menuid)
 {
 	static struct uuid	guid;
-	int			i, entries;
+	int			i;
 	uint32_t		status = uuid_s_ok;
 
-	memset(&guid, 0, sizeof(guid));
-
-	entries = nitems(gpt_types);
-
-	for (i = 0; i < entries; i++) {
-		if (gpt_types[i].gt_menuid == menuid)
+	for (i = 0; i < nitems(gpt_types); i++) {
+		if (gpt_types[i].gt_menuid == menuid) {
+			uuid_from_string(gpt_types[i].gt_guid, &guid, &status);
 			break;
+		}
 	}
-	if (i < entries)
-		uuid_from_string(gpt_types[i].gt_guid, &guid, &status);
-	if (i == entries || status != uuid_s_ok)
+	if (i == nitems(gpt_types) || status != uuid_s_ok)
 		uuid_create_nil(&guid, NULL);
 
 	return &guid;
