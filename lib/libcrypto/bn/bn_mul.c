@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.35 2023/03/27 10:22:47 tb Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.36 2023/03/30 14:28:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -786,10 +786,8 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 
 	BN_set_negative(rr, a->neg ^ b->neg);
 
-	if (r != rr) {
-		if (!bn_copy(r, rr))
-			goto err;
-	}
+	if (!bn_copy(r, rr))
+		goto err;
  done:
 	ret = 1;
  err:
