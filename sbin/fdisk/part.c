@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.143 2023/03/30 14:38:26 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.144 2023/03/30 22:53:39 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -146,7 +146,7 @@ struct gpt_type {
 #define	GTATTR_PROTECT		(1 << 0)
 #define	GTATTR_PROTECT_EFISYS	(1 << 1)
 	char	*gt_name;
-	char	 gt_guid[UUID_STR_LEN + 1];
+	char	*gt_guid;
 };
 
 /*
@@ -161,8 +161,8 @@ struct gpt_type {
  *         https://www.freedesktop.org/software/systemd/man/systemd-gpt-auto-generator.html
  */
 
-#define	EFI_SYSTEM_PARTITION_GUID	"c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
-#define	MICROSOFT_BASIC_DATA_GUID	"ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"
+char * const EFI_SYSTEM_PARTITION_GUID = "c12a7328-f81f-11d2-ba4b-00a0c93ec93b";
+char * const MICROSOFT_BASIC_DATA_GUID = "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7";
 
 const struct gpt_type		gpt_types[] = {
 	{ 0x00, 0, "unused",
@@ -251,8 +251,7 @@ find_gpt_type(const struct uuid *uuid)
 	uuid_to_string(uuid, &uuidstr, &status);
 	if (status == uuid_s_ok) {
 		for (i = 0; i < nitems(gpt_types); i++) {
-			if (memcmp(gpt_types[i].gt_guid, uuidstr,
-			    sizeof(gpt_types[i].gt_guid)) == 0)
+			if (strcasecmp(gpt_types[i].gt_guid, uuidstr) == 0)
 				break;
 		}
 	} else
