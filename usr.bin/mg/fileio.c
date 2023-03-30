@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.110 2023/03/30 07:26:15 op Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.111 2023/03/30 19:00:02 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -328,10 +328,10 @@ adjustname(const char *fn, int slashslash)
  * the terminal driver in particular), accepts a suffix to be appended
  * to the startup file name.
  */
-char *
-startupfile(char *suffix, char *conffile)
+FILE *
+startupfile(char *suffix, char *conffile, char *path, size_t len)
 {
-	static char	 file[NFILEN];
+	FILE		*ffp;
 	char		*home;
 	int		 ret;
 
@@ -339,34 +339,40 @@ startupfile(char *suffix, char *conffile)
 		goto nohome;
 
 	if (conffile != NULL) {
-		(void)strlcpy(file, conffile, NFILEN);
+		(void)strlcpy(path, conffile, len);
 	} else if (suffix == NULL) {
-		ret = snprintf(file, sizeof(file), _PATH_MG_STARTUP, home);
-		if (ret < 0 || ret >= sizeof(file))
+		ret = snprintf(path, len, _PATH_MG_STARTUP, home);
+		if (ret < 0 || ret >= len)
 			return (NULL);
 	} else {
-		ret = snprintf(file, sizeof(file), _PATH_MG_TERM, home, suffix);
-		if (ret < 0 || ret >= sizeof(file))
+		ret = snprintf(path, len, _PATH_MG_TERM, home, suffix);
+		if (ret < 0 || ret >= len)
 			return (NULL);
 	}
 
-	if (access(file, R_OK) == 0)
-		return (file);
+	ret = ffropen(&ffp, path, NULL);
+	if (ret == FIOSUC)
+		return (ffp);
+	if (ret == FIODIR)
+		(void)ffclose(ffp, NULL);
 nohome:
 #ifdef STARTUPFILE
 	if (suffix == NULL) {
-		ret = snprintf(file, sizeof(file), "%s", STARTUPFILE);
-		if (ret < 0 || ret >= sizeof(file))
+		ret = snprintf(path, len, "%s", STARTUPFILE);
+		if (ret < 0 || ret >= len)
 			return (NULL);
 	} else {
-		ret = snprintf(file, sizeof(file), "%s%s", STARTUPFILE,
+		ret = snprintf(path, len, "%s%s", STARTUPFILE,
 		    suffix);
-		if (ret < 0 || ret >= sizeof(file))
+		if (ret < 0 || ret >= len)
 			return (NULL);
 	}
 
-	if (access(file, R_OK) == 0)
-		return (file);
+	ret = ffropen(&ffp, path, NULL);
+	if (ret == FIOSUC)
+		return (ffp);
+	if (ret == FIODIR)
+		(void)ffclose(ffp, NULL);
 #endif /* STARTUPFILE */
 	return (NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.77 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: extend.c,v 1.78 2023/03/30 19:00:02 op Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -620,37 +620,36 @@ evalbuffer(int f, int n)
 int
 evalfile(int f, int n)
 {
+	FILE	*ffp;
 	char	 fname[NFILEN], *bufp;
+	int	 ret;
 
 	if ((bufp = eread("Load file: ", fname, NFILEN,
 	    EFNEW | EFCR)) == NULL)
 		return (ABORT);
-	else if (bufp[0] == '\0')
+	if (bufp[0] == '\0')
 		return (FALSE);
-	return (load(fname));
+	if ((bufp = adjustname(fname, TRUE)) == NULL)
+		return (FALSE);
+	ret = ffropen(&ffp, bufp, NULL);
+	if (ret == FIODIR)
+		(void)ffclose(ffp, NULL);
+	if (ret != FIOSUC)
+		return (FALSE);
+	ret = load(ffp, bufp);
+	(void)ffclose(ffp, NULL);
+	return (ret);
 }
 
 /*
  * load - go load the file name we got passed.
  */
 int
-load(const char *fname)
+load(FILE *ffp, const char *fname)
 {
-	int	 s = TRUE, line, ret;
+	int	 s = TRUE, line;
 	int	 nbytes = 0;
 	char	 excbuf[BUFSIZE], fncpy[NFILEN];
-	FILE    *ffp;
-
-	if ((fname = adjustname(fname, TRUE)) == NULL)
-		/* just to be careful */
-		return (FALSE);
-
-	ret = ffropen(&ffp, fname, NULL);
-	if (ret != FIOSUC) {
-		if (ret == FIODIR)
-			(void)ffclose(ffp, NULL);
-		return (FALSE);
-	}
 
 	/* keep a note of fname in case of errors in loaded file. */
 	(void)strlcpy(fncpy, fname, sizeof(fncpy));
@@ -666,7 +665,6 @@ load(const char *fname)
 			break;
 		}
 	}
-	(void)ffclose(ffp, NULL);
 	excbuf[nbytes] = '\0';
 	if (s != FIOEOF || (nbytes && excline(excbuf, nbytes, ++line) != TRUE))
 		return (FALSE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.92 2023/03/30 08:07:07 op Exp $	*/
+/*	$OpenBSD: main.c,v 1.93 2023/03/30 19:00:02 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -62,6 +62,8 @@ usage()
 int
 main(int argc, char **argv)
 {
+	FILE		*ffp;
+	char		 file[NFILEN];
 	char		*cp, *conffile = NULL, *init_fcn_name = NULL;
 	char		*batchfile = NULL;
 	PF		 init_fcn = NULL;
@@ -107,7 +109,8 @@ main(int argc, char **argv)
 		pty_init();
 		conffile = batchfile;
 	}
-	if (conffile != NULL && access(conffile, R_OK) != 0) {
+	if ((ffp = startupfile(NULL, conffile, file, sizeof(file))) == NULL &&
+	    conffile != NULL) {
                 fprintf(stderr, "%s: Problem with file: %s\n", __progname,
 		    conffile);
                 exit(1);
@@ -159,8 +162,10 @@ main(int argc, char **argv)
 	update(CMODE);
 
 	/* user startup file. */
-	if ((cp = startupfile(NULL, conffile)) != NULL)
-		(void)load(cp);
+	if (ffp != NULL) {
+		(void)load(ffp, file);
+		ffclose(ffp, NULL);
+	}
 
 	if (batch)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttykbd.c,v 1.21 2023/03/30 08:07:07 op Exp $	*/
+/*	$OpenBSD: ttykbd.c,v 1.22 2023/03/30 19:00:02 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -31,7 +31,8 @@ char	*keystrings[] = {NULL};
 void
 ttykeymapinit(void)
 {
-	char	*cp;
+	char	*cp, file[NFILEN];
+	FILE	*ffp;
 
 	/* Bind keypad function keys. */
 	if (key_left)
@@ -57,10 +58,11 @@ ttykeymapinit(void)
 	if (key_dc)
 		dobindkey(fundamental_map, "delete-char", key_dc);
 
-	if ((cp = getenv("TERM"))) {
-		if (((cp = startupfile(cp, NULL)) != NULL) &&
-		    (load(cp) != TRUE))
+	if ((cp = getenv("TERM")) != NULL &&
+	    (ffp = startupfile(cp, NULL, file, sizeof(file))) != NULL) {
+		if (load(ffp, file) != TRUE)
 			ewprintf("Error reading key initialization file");
+		(void)ffclose(ffp, NULL);
 	}
 	if (keypad_xmit)
 		/* turn on keypad */
