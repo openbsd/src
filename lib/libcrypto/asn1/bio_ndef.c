@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.20 2023/03/15 06:30:21 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.21 2023/03/30 14:23:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -161,6 +161,7 @@ BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
  err:
 	BIO_pop(pop_bio);
 	BIO_free(asn_bio);
+
 	return NULL;
 }
 
