@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.91 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: main.c,v 1.92 2023/03/30 08:07:07 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -293,7 +293,7 @@ pty_init(void)
 	memset(&ws, 0, sizeof(ws));
 	ws.ws_col = 80,
 	ws.ws_row = 24;
-	
+
 	openpty(&master, &slave, NULL, NULL, &ws);
 	login_tty(slave);
 
