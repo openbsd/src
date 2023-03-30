@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.44 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.45 2023/03/30 14:21:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -120,57 +120,58 @@
 /* maximum precomputation table size for *variable* sliding windows */
 #define TABLE_SIZE	32
 
-/* this one works - simple but works */
+/* Calculates r = a^p by successive squaring of a. Not constant time. */
 int
 BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 {
-	int i, bits, ret = 0;
-	BIGNUM *v, *rr;
+	BIGNUM *rr, *v;
+	int i;
+	int ret = 0;
 
 	if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0) {
-		/* BN_FLG_CONSTTIME only supported by BN_mod_exp_mont() */
 		BNerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
 	}
 
 	BN_CTX_start(ctx);
-	if ((r == a) || (r == p))
+
+	if ((v = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	rr = r;
+	if (r == a || r == p)
 		rr = BN_CTX_get(ctx);
-	else
-		rr = r;
-	v = BN_CTX_get(ctx);
-	if (rr == NULL || v == NULL)
+	if (rr == NULL)
 		goto err;
 
-	if (!bn_copy(v, a))
+	if (!BN_one(rr))
 		goto err;
-	bits = BN_num_bits(p);
-
 	if (BN_is_odd(p)) {
 		if (!bn_copy(rr, a))
 			goto err;
-	} else {
-		if (!BN_one(rr))
-			goto err;
 	}
 
-	for (i = 1; i < bits; i++) {
+	if (!bn_copy(v, a))
+		goto err;
+
+	for (i = 1; i < BN_num_bits(p); i++) {
 		if (!BN_sqr(v, v, ctx))
 			goto err;
-		if (BN_is_bit_set(p, i)) {
-			if (!BN_mul(rr, rr, v, ctx))
-				goto err;
-		}
+		if (!BN_is_bit_set(p, i))
+			continue;
+		if (!BN_mul(rr, rr, v, ctx))
+			goto err;
 	}
+
+	if (!bn_copy(r, rr))
+		goto err;
+
 	ret = 1;
 
-err:
-	if (r != rr && rr != NULL) {
-		if (!bn_copy(r, rr))
-			ret = 0;
-	}
+ err:
 	BN_CTX_end(ctx);
-	return (ret);
+
+	return ret;
 }
 
 /* The old fallback, simple version :-) */
