@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.86 2022/03/31 17:27:13 naddy Exp $
+.\"	$OpenBSD: csh.1,v 1.87 2023/03/30 16:00:47 op Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)csh.1	8.2 (Berkeley) 1/21/94
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: March 30 2023 $
 .Dt CSH 1
 .Os
 .Sh NAME
@@ -1792,9 +1792,7 @@ Lists the active jobs; the
 option lists process IDs in addition to the normal information.
 .Pp
 .It Ic kill % Ns Ar job
-.It Ic kill
-.Op Fl s Ar signal_name
-.Ar pid
+.It Ic kill Oo Fl s Ar signal_name Oc Ar pid
 .It Ic kill Fl sig Ar pid ...
 .It Ic kill Fl l Op exit_status
 Sends either the
