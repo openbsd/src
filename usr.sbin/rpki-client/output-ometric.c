@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-ometric.c,v 1.1 2022/12/15 12:02:29 claudio Exp $ */
+/*	$OpenBSD: output-ometric.c,v 1.2 2023/03/30 15:29:15 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
@@ -26,11 +26,13 @@
 #include "ometric.h"
 #include "version.h"
 
-struct ometric *rpki_info, *rpki_completion_time, *rpki_duration;
-struct ometric *rpki_repo, *rpki_obj, *rpki_ta_obj;
-struct ometric *rpki_repo_obj, *rpki_repo_duration, *rpki_repo_state;
+static struct ometric *rpki_info, *rpki_completion_time, *rpki_duration;
+static struct ometric *rpki_repo, *rpki_obj, *rpki_ta_obj;
+static struct ometric *rpki_repo_obj, *rpki_repo_duration;
+static struct ometric *rpki_repo_state, *rpki_repo_proto;
 
 static const char * const repo_states[2] = { "failed", "synced" };
+static const char * const repo_protos[3] = { "rrdp", "rsync", "https" };
 
 static void
 set_common_stats(const struct repostats *in, struct ometric *metric,
@@ -118,6 +120,8 @@ repo_stats(const struct repo *rp, const struct repostats *in, void *arg)
 	set_common_stats(in, rpki_repo_obj, ol);
 	ometric_set_timespec(rpki_repo_duration, &in->sync_time, ol);
 	ometric_set_state(rpki_repo_state, repo_states[repo_synced(rp)], ol);
+	if (repo_synced(rp))
+		ometric_set_state(rpki_repo_proto, repo_proto(rp), ol);
 	olabels_free(ol);
 }
 
@@ -158,6 +162,10 @@ output_ometric(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	    sizeof(repo_states) / sizeof(repo_states[0]),
 	    "rpki_client_repository_state",
 	    "repository state");
+	rpki_repo_proto = ometric_new_state(repo_protos,
+	    sizeof(repo_protos) / sizeof(repo_protos[0]),
+	    "rpki_client_repository_protos",
+	    "used protocol to sync repository");
 
 	/*
 	 * Dump statistics

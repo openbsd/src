@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.42 2023/03/29 17:03:29 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.43 2023/03/30 15:29:15 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1203,6 +1203,27 @@ repo_synced(const struct repo *rp)
 	    !(rp->rrdp == NULL && rp->rsync == NULL && rp->ta == NULL))
 		return 1;
 	return 0;
+}
+
+/*
+ * Return the protocol string "rrdp", "rsync", "https" which was used to sync.
+ * Result is only correct if repository was properly synced.
+ */
+const char *
+repo_proto(const struct repo *rp)
+{
+
+	if (rp->ta != NULL) {
+		const struct tarepo *tr = rp->ta;
+		if (tr->uriidx < tr->urisz && 
+		    strncasecmp(tr->uri[tr->uriidx], "rsync://", 8) == 0)
+			return "rsync";
+		else
+			return "https";
+	}
+	if (rp->rrdp != NULL)
+		return "rrdp";
+	return "rsync";
 }
 
 /*
