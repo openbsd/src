@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.47 2023/03/30 12:11:18 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.48 2023/03/30 13:25:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -50,49 +50,49 @@ static struct pt_entry	*pt_alloc(struct pt_entry *, int len);
 static void		 pt_free(struct pt_entry *);
 
 struct pt_entry4 {
-	RB_ENTRY(pt_entry)		 pt_e;
-	uint8_t				 aid;
-	uint8_t				 prefixlen;
-	uint16_t			 len;
-	uint32_t			 refcnt;
-	struct in_addr			 prefix4;
+	RB_ENTRY(pt_entry)		pt_e;
+	uint8_t				aid;
+	uint8_t				prefixlen;
+	uint16_t			len;
+	uint32_t			refcnt;
+	struct in_addr			prefix4;
 };
 
 struct pt_entry6 {
-	RB_ENTRY(pt_entry)		 pt_e;
-	uint8_t				 aid;
-	uint8_t				 prefixlen;
-	uint16_t			 len;
-	uint32_t			 refcnt;
-	struct in6_addr			 prefix6;
+	RB_ENTRY(pt_entry)		pt_e;
+	uint8_t				aid;
+	uint8_t				prefixlen;
+	uint16_t			len;
+	uint32_t			refcnt;
+	struct in6_addr			prefix6;
 };
 
 struct pt_entry_vpn4 {
-	RB_ENTRY(pt_entry)		 pt_e;
-	uint8_t				 aid;
-	uint8_t				 prefixlen;
-	uint16_t			 len;
-	uint32_t			 refcnt;
-	uint64_t			 rd;
-	struct in_addr			 prefix4;
-	uint8_t				 labelstack[21];
-	uint8_t				 labellen;
-	uint8_t				 pad1;
-	uint8_t				 pad2;
+	RB_ENTRY(pt_entry)		pt_e;
+	uint8_t				aid;
+	uint8_t				prefixlen;
+	uint16_t			len;
+	uint32_t			refcnt;
+	uint64_t			rd;
+	struct in_addr			prefix4;
+	uint8_t				labelstack[21];
+	uint8_t				labellen;
+	uint8_t				pad1;
+	uint8_t				pad2;
 };
 
 struct pt_entry_vpn6 {
-	RB_ENTRY(pt_entry)		 pt_e;
-	uint8_t				 aid;
-	uint8_t				 prefixlen;
-	uint16_t			 len;
-	uint32_t			 refcnt;
-	uint64_t			 rd;
-	struct in6_addr			 prefix6;
-	uint8_t				 labelstack[21];
-	uint8_t				 labellen;
-	uint8_t				 pad1;
-	uint8_t				 pad2;
+	RB_ENTRY(pt_entry)		pt_e;
+	uint8_t				aid;
+	uint8_t				prefixlen;
+	uint16_t			len;
+	uint32_t			refcnt;
+	uint64_t			rd;
+	struct in6_addr			prefix6;
+	uint8_t				labelstack[21];
+	uint8_t				labellen;
+	uint8_t				pad1;
+	uint8_t				pad2;
 };
 
 
