@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.41 2022/11/30 12:42:24 tb Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.42 2023/03/30 17:20:53 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -1120,7 +1120,8 @@ _dsa_verify_prepare(struct iked_dsa *dsa, uint8_t **sigp, size_t *lenp,
 {
 	ECDSA_SIG	*obj = NULL;
 	uint8_t		*ptr = NULL;
-	size_t		 bnlen, len, off;
+	size_t		 bnlen, off;
+	ssize_t		 len;
 	int		 ret = -1;
 	BIGNUM		*r = NULL, *s = NULL;
 
@@ -1156,7 +1157,7 @@ _dsa_verify_prepare(struct iked_dsa *dsa, uint8_t **sigp, size_t *lenp,
 		    (r = BN_bin2bn(*sigp, bnlen, NULL)) == NULL ||
 		    (s = BN_bin2bn(*sigp+bnlen, bnlen, NULL)) == NULL ||
 		    ECDSA_SIG_set0(obj, r, s) == 0 ||
-		    (len = i2d_ECDSA_SIG(obj, &ptr)) == 0)
+		    (len = i2d_ECDSA_SIG(obj, &ptr)) <= 0)
 			goto done;
 		r = s = NULL;
 		*lenp = len;
