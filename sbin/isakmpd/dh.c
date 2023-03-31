@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.26 2023/03/28 16:32:42 tb Exp $	*/
+/*	$OpenBSD: dh.c,v 1.27 2023/03/31 07:28:46 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -64,8 +64,10 @@ struct group_id ike_groups[] = {
 	    "FFFFFFFFFFFFFFFF",
 	    "02"
 	},
+#ifndef OPENSSL_NO_EC2M
 	{ GROUP_EC2N, 3, 155, NULL, NULL, NID_ipsec3 },
 	{ GROUP_EC2N, 4, 185, NULL, NULL, NID_ipsec4 },
+#endif
 	{ GROUP_MODP, 5, 1536,
 	    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
 	    "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
@@ -277,7 +279,9 @@ group_get(u_int32_t id)
 		group->exchange = modp_create_exchange;
 		group->shared = modp_create_shared;
 		break;
+#ifndef OPENSSL_NO_EC2M
 	case GROUP_EC2N:
+#endif
 	case GROUP_ECP:
 		group->init = ec_init;
 		group->getlen = ec_getlen;
