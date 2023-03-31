@@ -1,4 +1,4 @@
-.\" $OpenBSD: igc.4,v 1.1 2021/11/02 08:39:23 patrick Exp $
+.\" $OpenBSD: igc.4,v 1.2 2023/03/31 02:20:21 kevlo Exp $
 .\"
 .\" Copyright (c) 2021 Patrick Wildt <patrick@blueri.se>
 .\"
@@ -14,18 +14,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 2 2021 $
+.Dd $Mdocdate: March 31 2023 $
 .Dt IGC 4
 .Os
 .Sh NAME
 .Nm igc
-.Nd Intel I225 1Gb/2.5Gb Ethernet device
+.Nd Intel I225/I226 1Gb/2.5Gb Ethernet device
 .Sh SYNOPSIS
 .Cd "igc* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports Intel I225 series Ethernet devices.
+driver supports Intel I225 / I226 series Ethernet devices.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
