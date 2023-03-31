@@ -1,10 +1,10 @@
-/*	$OpenBSD: miidevs.h,v 1.134 2022/04/19 03:26:52 kevlo Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.135 2023/03/31 13:37:41 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: miidevs,v 1.131 2022/04/19 03:26:33 kevlo Exp 
+ *	OpenBSD: miidevs,v 1.132 2023/03/31 13:37:02 kettenis Exp 
  */
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
@@ -433,6 +433,8 @@
 /* Realtek PHYs */
 #define	MII_MODEL_xxREALTEK_RTL8251	0x0000
 #define	MII_STR_xxREALTEK_RTL8251	"RTL8251 PHY"
+#define	MII_MODEL_xxREALTEK_RTL8211FVD	0x0007
+#define	MII_STR_xxREALTEK_RTL8211FVD	"RTL8211F-VD PHY"
 #define	MII_MODEL_xxREALTEK_RTL8201E	0x0008
 #define	MII_STR_xxREALTEK_RTL8201E	"RTL8201E 10/100 PHY"
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
