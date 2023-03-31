@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.198 2023/01/21 11:23:23 mvs Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.199 2023/03/31 12:35:24 jsg Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -73,7 +73,6 @@
  *      s       socket lock
  */
 
-struct rwlock unp_lock = RWLOCK_INITIALIZER("unplock");
 struct rwlock unp_df_lock = RWLOCK_INITIALIZER("unpdflk");
 struct rwlock unp_gc_lock = RWLOCK_INITIALIZER("unpgclk");
 
@@ -340,7 +339,7 @@ uipc_bind(struct socket *so, struct mbuf *nam, struct proc *p)
 	unp->unp_flags |= UNP_BINDING;
 
 	/*
-	 * Enforce `i_lock' -> `unplock' because fifo subsystem
+	 * Enforce `i_lock' -> `solock' because fifo subsystem
 	 * requires it. The socket can't be closed concurrently
 	 * because the file descriptor reference is still held.
 	 */
@@ -831,7 +830,7 @@ unp_connect(struct socket *so, struct mbuf *nam, struct proc *p)
 	unp->unp_flags |= UNP_CONNECTING;
 
 	/*
-	 * Enforce `i_lock' -> `unplock' because fifo subsystem
+	 * Enforce `i_lock' -> `solock' because fifo subsystem
 	 * requires it. The socket can't be closed concurrently
 	 * because the file descriptor reference is still held.
 	 */
