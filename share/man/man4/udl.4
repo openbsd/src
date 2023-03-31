@@ -1,4 +1,4 @@
-.\" $OpenBSD: udl.4,v 1.21 2017/10/17 22:47:58 schwarze Exp $
+.\" $OpenBSD: udl.4,v 1.22 2023/03/31 13:48:34 jmc Exp $
 .\"
 .\" Copyright (c) 2009 Marcus Glocker <mglocker@openbsd.org>
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 17 2017 $
+.Dd $Mdocdate: March 31 2023 $
 .Dt UDL 4
 .Os
 .Sh NAME
 .Nm udl
-.Nd DisplayLink DL-120 / DL-160 USB display devices
+.Nd DisplayLink DL-120/DL-160 USB display devices
 .Sh SYNOPSIS
 .Cd "udl* at uhub?"
 .Cd "wsdisplay* at udl?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports USB display devices based on the DisplayLink DL-120 / DL-160
+driver supports USB display devices based on the DisplayLink DL-120/DL-160
 graphic chip.
 .Sh HARDWARE
 The following devices should work:
