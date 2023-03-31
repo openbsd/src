@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.172 2023/03/29 19:34:49 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.173 2023/03/31 13:11:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -264,14 +264,14 @@ gsetpid(const int pn)
 	GPT_print_parthdr(TERSE);
 	GPT_print_part(pn, "s", TERSE);
 
-	if (PRT_protected_guid(&gp[pn].gp_type)) {
+	if (PRT_protected_uuid(&gp[pn].gp_type)) {
 		printf("can't edit partition type %s\n",
 		    PRT_uuid_to_name(&gp[pn].gp_type));
 		return -1;
 	}
 
 	gp[pn].gp_type = *ask_uuid(&gp[pn].gp_type);
-	if (PRT_protected_guid(&gp[pn].gp_type)) {
+	if (PRT_protected_uuid(&gp[pn].gp_type)) {
 		printf("can't change partition type to %s\n",
 		    PRT_uuid_to_name(&gp[pn].gp_type));
 		return -1;
@@ -636,7 +636,7 @@ ask_uuid(const struct uuid *olduuid)
 			uuid_create_nil(&uuid, NULL);
 			goto done;
 		default:
-			uuid = *PRT_menuid_to_guid(menuid);
+			uuid = *PRT_menuid_to_uuid(menuid);
 			if (uuid_is_nil(&uuid, NULL) == 0)
 				goto done;
 			printf("'%s' has no associated UUID\n", lbuf);

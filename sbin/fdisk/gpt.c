@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.87 2023/03/25 15:05:45 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.88 2023/03/31 13:11:41 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -619,7 +619,7 @@ init_gp(const int how)
 		memset(&gp, 0, sizeof(gp));
 	else {
 		for (pn = 0; pn < gh.gh_part_num; pn++) {
-			if (PRT_protected_guid(&gp[pn].gp_type) ||
+			if (PRT_protected_uuid(&gp[pn].gp_type) ||
 			    (gp[pn].gp_attrs & GPTPARTATTR_REQUIRED))
 				continue;
 			memset(&gp[pn], 0, sizeof(gp[pn]));
