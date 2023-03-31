@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_unit.c,v 1.3 2023/02/14 15:08:15 tb Exp $ */
+/*	$OpenBSD: bn_unit.c,v 1.4 2023/03/31 19:40:08 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -92,6 +92,163 @@ test_bn_num_bits_word(void)
 	return failed;
 }
 
+#define BN_FLG_ALL_KNOWN \
+    (BN_FLG_STATIC_DATA | BN_FLG_CONSTTIME | BN_FLG_MALLOCED)
+
+static int
+bn_check_expected_flags(const BIGNUM *bn, int expected, const char *fn,
+    const char *descr)
+{
+	int flags, got;
+	int ret = 1;
+
+	flags = BN_get_flags(bn, BN_FLG_ALL_KNOWN);
+
+	if ((got = flags & expected) != expected) {
+		fprintf(stderr, "%s: %s: expected flags: want %x, got %x\n",
+		    fn, descr, expected, got);
+		ret = 0;
+	}
+
+	if ((got = flags & ~expected) != 0) {
+		fprintf(stderr, "%s: %s: unexpected flags: want %x, got %x\n",
+		    fn, descr, 0, got);
+		ret = 0;
+	}
+
+	return ret;
+}
+
+static int
+test_bn_copy_copies_flags(void)
+{
+	BIGNUM *dst, *src;
+	int failed = 0;
+
+	if ((dst = BN_new()) == NULL)
+		errx(1, "%s: src = BN_new()", __func__);
+
+	if (!bn_check_expected_flags(dst, BN_FLG_MALLOCED,
+	    __func__, "dst after BN_new"))
+		failed |= 1;
+
+	if (BN_copy(dst, BN_value_one()) == NULL)
+		errx(1, "%s: bn_copy()", __func__);
+
+	if (!bn_check_expected_flags(dst, BN_FLG_MALLOCED,
+	    __func__, "dst after bn_copy"))
+		failed |= 1;
+
+	if ((src = BN_new()) == NULL)
+		errx(1, "%s: src = BN_new()", __func__);
+
+	BN_set_flags(src, BN_FLG_CONSTTIME);
+
+	if (!bn_check_expected_flags(src, BN_FLG_MALLOCED | BN_FLG_CONSTTIME,
+	    __func__, "src after BN_set_flags"))
+		failed |= 1;
+
+	if (!BN_set_word(src, 57))
+		errx(1, "%s: BN_set_word(src, 57)", __func__);
+
+	if (BN_copy(dst, src) == NULL)
+		errx(1, "%s: BN_copy(dst, src)", __func__);
+
+	if (BN_cmp(src, dst) != 0) {
+		fprintf(stderr, "copy not equal to original\n");
+		failed |= 1;
+	}
+
+	if (!bn_check_expected_flags(dst, BN_FLG_MALLOCED | BN_FLG_CONSTTIME,
+	    __func__, "dst after BN_copy(dst, src)"))
+		failed |= 1;
+
+	BN_free(dst);
+	BN_free(src);
+
+	return failed;
+}
+
+static int
+test_bn_copy_consttime_is_sticky(void)
+{
+	BIGNUM *src, *dst;
+	int failed = 0;
+
+	if ((src = BN_new()) == NULL)
+		errx(1, "%s: src = BN_new()", __func__);
+
+	if (!bn_check_expected_flags(src, BN_FLG_MALLOCED,
+	    __func__, "src after BN_new"))
+		failed |= 1;
+
+	if ((dst = BN_new()) == NULL)
+		errx(1, "%s: dst = BN_new()", __func__);
+
+	if (!bn_check_expected_flags(dst, BN_FLG_MALLOCED,
+	    __func__, "dst after BN_new"))
+		failed |= 1;
+
+	BN_set_flags(dst, BN_FLG_CONSTTIME);
+
+	if (!bn_check_expected_flags(dst, BN_FLG_MALLOCED | BN_FLG_CONSTTIME,
+	    __func__, "src after BN_new"))
+		failed |= 1;
+
+	if (BN_copy(dst, BN_value_one()) == NULL)
+		errx(1, "%s: bn_copy()", __func__);
+
+	if (!bn_check_expected_flags(dst, BN_FLG_MALLOCED | BN_FLG_CONSTTIME,
+	    __func__, "dst after bn_copy"))
+		failed |= 1;
+
+	BN_free(dst);
+	BN_free(src);
+
+	return failed;
+}
+
+static int
+test_bn_dup_consttime_is_sticky(void)
+{
+	BIGNUM *src, *dst;
+	int failed = 0;
+
+	if (!bn_check_expected_flags(BN_value_one(), BN_FLG_STATIC_DATA,
+	    __func__, "flags on BN_value_one()"))
+		failed |= 1;
+
+	if ((dst = BN_dup(BN_value_one())) == NULL)
+		errx(1, "%s: dst = BN_dup(BN_value_one())", __func__);
+
+	if (!bn_check_expected_flags(dst, BN_FLG_MALLOCED,
+	    __func__, "dst after BN_dup(BN_value_one())"))
+		failed |= 1;
+
+	BN_free(dst);
+
+	if ((src = BN_new()) == NULL)
+		errx(1, "%s: src = BN_new()", __func__);
+
+	BN_set_flags(src, BN_FLG_CONSTTIME);
+
+	if (!bn_check_expected_flags(src, BN_FLG_MALLOCED | BN_FLG_CONSTTIME,
+	    __func__, "src after BN_new"))
+		failed |= 1;
+
+	if ((dst = BN_dup(src)) == NULL)
+		errx(1, "%s: dst = BN_dup(src)", __func__);
+
+	if (!bn_check_expected_flags(dst, BN_FLG_MALLOCED | BN_FLG_CONSTTIME,
+	    __func__, "dst after bn_copy"))
+		failed |= 1;
+
+	BN_free(dst);
+	BN_free(src);
+
+	return failed;
+}
+
 int
 main(void)
 {
@@ -99,6 +256,9 @@ main(void)
 
 	failed |= test_bn_print_null_derefs();
 	failed |= test_bn_num_bits_word();
+	failed |= test_bn_copy_copies_flags();
+	failed |= test_bn_copy_consttime_is_sticky();
+	failed |= test_bn_dup_consttime_is_sticky();
 
 	return failed;
 }
