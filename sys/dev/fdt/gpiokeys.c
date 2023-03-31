@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpiokeys.c,v 1.2 2022/11/07 20:28:23 patrick Exp $	*/
+/*	$OpenBSD: gpiokeys.c,v 1.3 2023/03/31 12:07:54 kn Exp $	*/
 /*
  * Copyright (c) 2021 Klemens Nanni <kn@openbsd.org>
  *
@@ -140,7 +140,7 @@ gpiokeys_attach(struct device *parent, struct device *self, void *aux)
 		}
 
 		if (label) {
-			printf("%s \"%s\"", have_labels ? ":" : ",", label);
+			printf("%s \"%s\"", have_labels ? "," : ":", label);
 			free(label, M_TEMP, len);
 			have_labels = 1;
 		}
