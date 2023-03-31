@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2026 2023/03/19 09:38:06 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2027 2023/03/31 08:16:30 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -378,6 +378,7 @@
 #define	PCI_VENDOR_DCI	0x6666		/* Decision Computer */
 #define	PCI_VENDOR_QUANCOM	0x8008		/* Quancom Informationssysteme */
 #define	PCI_VENDOR_INTEL	0x8086		/* Intel */
+#define	PCI_VENDOR_WANGXUN	0x8088		/* Beijing WangXun Technology */
 #define	PCI_VENDOR_INNOTEK	0x80ee		/* InnoTek */
 #define	PCI_VENDOR_SIGMATEL	0x8384		/* Sigmatel */
 #define	PCI_VENDOR_WINBOND2	0x8c4a		/* Winbond */
@@ -9623,6 +9624,10 @@
 #define	PCI_PRODUCT_WCH2_CH351	0x2273		/* CH351 */
 #define	PCI_PRODUCT_WCH2_CH382_2	0x3250		/* CH382 */
 #define	PCI_PRODUCT_WCH2_CH382_1	0x3253		/* CH382 */
+
+/* Beijing WangXun Technology products */
+#define	PCI_PRODUCT_WANGXUN_WX1860A2	0x0101		/* WX1860A2 */
+#define	PCI_PRODUCT_WANGXUN_WX1860AL1	0x010b		/* WX1860AL1 */
 
 /* Western Digital products */
 #define	PCI_PRODUCT_WD_WD33C193A	0x0193		/* WD33C193A */

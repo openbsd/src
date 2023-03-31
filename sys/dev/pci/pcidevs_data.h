@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2026 2023/03/19 09:38:06 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2027 2023/03/31 08:16:30 kevlo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -34520,6 +34520,14 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CH382",
 	},
 	{
+	    PCI_VENDOR_WANGXUN, PCI_PRODUCT_WANGXUN_WX1860A2,
+	    "WX1860A2",
+	},
+	{
+	    PCI_VENDOR_WANGXUN, PCI_PRODUCT_WANGXUN_WX1860AL1,
+	    "WX1860AL1",
+	},
+	{
 	    PCI_VENDOR_WD, PCI_PRODUCT_WD_WD33C193A,
 	    "WD33C193A",
 	},
@@ -36050,6 +36058,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_INTEL,
 	    "Intel",
+	},
+	{
+	    PCI_VENDOR_WANGXUN,
+	    "Beijing WangXun Technology",
 	},
 	{
 	    PCI_VENDOR_INNOTEK,
