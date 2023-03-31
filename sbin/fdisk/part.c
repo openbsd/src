@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.145 2023/03/31 13:11:41 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.146 2023/03/31 14:41:08 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -440,7 +440,7 @@ PRT_print_part(const int num, const struct prt *prt, const char *units)
 	PRT_lba_to_chs(prt, &start, &end);
 	mt = find_mbr_type(prt->prt_id);
 
-	printf("%c%1d: %.2X %6llu %3u %3u - %6llu %3u %3u " "[%12llu:%12.0f%s] "
+	printf("%c%1d: %.2X %6llu %3u %3u - %6llu %3u %3u [%12llu:%12.0f%s] "
 	    "%s\n", (prt->prt_flag == DOSACTIVE) ? '*' : ' ', num, prt->prt_id,
 	    start.chs_cyl, start.chs_head, start.chs_sect,
 	    end.chs_cyl, end.chs_head, end.chs_sect,
