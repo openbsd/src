@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_asn1.c,v 1.1 2023/03/26 19:14:11 tb Exp $ */
+/*	$OpenBSD: bio_asn1.c,v 1.2 2023/03/31 06:07:44 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -21,9 +21,65 @@
 #include <stdlib.h>
 
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/bio.h>
-#include <openssl/pkcs7.h>
+#include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/pkcs7.h>
+
+/*
+ * Minimal reproducer for the BIO_new_NDEF() write after free fixed in
+ * bio_ndef.c r1.13.
+ */
+
+static int
+waf_cb(int op, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
+{
+	return 0;
+}
+
+static const ASN1_AUX WAF_aux = {
+	.asn1_cb = waf_cb,
+};
+
+static const ASN1_ITEM WAF_it = {
+	.funcs = &WAF_aux,
+};
+
+static int
+test_bio_new_ndef_waf(void)
+{
+	BIO *out = NULL;
+	int failed = 1;
+
+	if ((out = BIO_new(BIO_s_mem())) == NULL)
+		goto err;
+
+	/*
+	 * BIO_new_NDEF() pushes out onto asn_bio. The waf_cb() call fails.
+	 * Prior to bio_ndef.c r1.13, asn_bio was freed and out->prev_bio
+	 * still pointed to it.
+	 */
+
+	if (BIO_new_NDEF(out, NULL, &WAF_it) != NULL) {
+		fprintf(stderr, "%s: BIO_new_NDEF succeeded\n", __func__);
+		goto err;
+	}
+
+	/*
+	 * If out->prev_bio != NULL, this writes to out->prev_bio->next_bio.
+	 * After bio_ndef.c r1.13, out is an isolated BIO, so this is a noop.
+	 */
+
+	BIO_pop(out);
+
+	failed = 0;
+
+ err:
+	BIO_free(out);
+
+	return failed;
+}
 
 /*
  * test_prefix_leak() leaks before asn/bio_asn1.c r1.19.
@@ -167,6 +223,7 @@ main(void)
 {
 	int failed = 0;
 
+	failed |= test_bio_new_ndef_waf();
 	failed |= test_prefix_leak();
 	failed |= test_infinite_loop();
 
