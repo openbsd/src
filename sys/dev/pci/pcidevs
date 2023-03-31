@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2026 2023/03/19 09:38:06 jsg Exp $
+$OpenBSD: pcidevs,v 1.2027 2023/03/31 08:16:30 kevlo Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -373,6 +373,7 @@ vendor	C4T		0x6374	c't Magazin
 vendor	DCI		0x6666	Decision Computer
 vendor	QUANCOM		0x8008	Quancom Informationssysteme
 vendor	INTEL		0x8086	Intel
+vendor	WANGXUN		0x8088	Beijing WangXun Technology
 vendor	INNOTEK		0x80ee	InnoTek
 vendor	SIGMATEL	0x8384	Sigmatel
 vendor	WINBOND2	0x8c4a	Winbond
@@ -9618,6 +9619,10 @@ product WCH CH352		0x3253	CH352
 product WCH2 CH351		0x2273	CH351
 product WCH2 CH382_2		0x3250	CH382
 product WCH2 CH382_1		0x3253	CH382
+
+/* Beijing WangXun Technology products */
+product WANGXUN WX1860A2	0x0101	WX1860A2
+product WANGXUN WX1860AL1	0x010b	WX1860AL1
 
 /* Western Digital products */
 product WD WD33C193A		0x0193	WD33C193A
