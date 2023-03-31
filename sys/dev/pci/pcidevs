@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2027 2023/03/31 08:16:30 kevlo Exp $
+$OpenBSD: pcidevs,v 1.2028 2023/03/31 20:28:48 kn Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -344,6 +344,7 @@ vendor	SYMPHONY2	0x1c1c	Symphony Labs
 vendor	SKHYNIX		0x1c5c	SK hynix
 vendor	ADATA		0x1cc1	ADATA Technology
 vendor	UMIS		0x1cc4	Union Memory
+vendor	BAIKAL		0x1d39	Baikal Electronics
 vendor	AQUANTIA	0x1d6a	Aquantia
 vendor	ROCKCHIP	0x1d87	Rockchip
 vendor	TEKRAM2		0x1de1	Tekram
@@ -2421,6 +2422,9 @@ product AVM T1			0x1200	PRI T1 ISDN
 
 /* AWT products */
 product AWT RT2890		0x1059	RT2890
+
+/* Baikal products */
+product BAIKAL BE_M1000		0x8060	BE-M1000
 
 /* Belkin Components products */
 product BELKIN F5D6000		0xec00	F5D6000
