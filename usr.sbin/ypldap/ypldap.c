@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.c,v 1.23 2022/08/22 08:02:02 jmatthew Exp $ */
+/*	$OpenBSD: ypldap.c,v 1.24 2023/03/31 03:38:26 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -392,7 +392,7 @@ main_dispatch_client(int fd, short events, void *p)
 			if (env->update_trashed)
 				break;
 
-			(void)memcpy(&ir, imsg.data, sizeof(ir));
+			(void)memcpy(&ir, imsg.data, n - IMSG_HEADER_SIZE);
 			if ((ue = calloc(1, sizeof(*ue))) == NULL ||
 			    (ue->ue_line = strdup(ir.ir_line)) == NULL) {
 				/*
@@ -418,7 +418,7 @@ main_dispatch_client(int fd, short events, void *p)
 			if (env->update_trashed)
 				break;
 
-			(void)memcpy(&ir, imsg.data, sizeof(ir));
+			(void)memcpy(&ir, imsg.data, n - IMSG_HEADER_SIZE);
 			if ((ge = calloc(1, sizeof(*ge))) == NULL ||
 			    (ge->ge_line = strdup(ir.ir_line)) == NULL) {
 				/*

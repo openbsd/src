@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.46 2022/10/13 04:55:33 jmatthew Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.47 2023/03/31 03:38:26 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -567,7 +567,8 @@ client_search_idm(struct env *env, struct idm *idm, struct aldap *al,
 
 			if (client_build_req(idm, &ir, m, min_attr, max_attr) == 0)
 				imsg_compose_event(env->sc_iev, type, 0, 0, -1,
-				    &ir, sizeof(ir));
+				    &ir, sizeof(ir.ir_key) +
+				    strlen(ir.ir_line) + 1);
 
 			aldap_freemsg(m);	
 		}
