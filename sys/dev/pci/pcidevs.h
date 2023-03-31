@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2027 2023/03/31 08:16:30 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.2028 2023/03/31 20:28:48 kn Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -349,6 +349,7 @@
 #define	PCI_VENDOR_SKHYNIX	0x1c5c		/* SK hynix */
 #define	PCI_VENDOR_ADATA	0x1cc1		/* ADATA Technology */
 #define	PCI_VENDOR_UMIS	0x1cc4		/* Union Memory */
+#define	PCI_VENDOR_BAIKAL	0x1d39		/* Baikal Electronics */
 #define	PCI_VENDOR_AQUANTIA	0x1d6a		/* Aquantia */
 #define	PCI_VENDOR_ROCKCHIP	0x1d87		/* Rockchip */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
@@ -2426,6 +2427,9 @@
 
 /* AWT products */
 #define	PCI_PRODUCT_AWT_RT2890	0x1059		/* RT2890 */
+
+/* Baikal products */
+#define	PCI_PRODUCT_BAIKAL_BE_M1000	0x8060		/* BE-M1000 */
 
 /* Belkin Components products */
 #define	PCI_PRODUCT_BELKIN_F5D6000	0xec00		/* F5D6000 */

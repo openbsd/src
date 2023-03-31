@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2027 2023/03/31 08:16:30 kevlo Exp 
+ *	OpenBSD: pcidevs,v 1.2028 2023/03/31 20:28:48 kn Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -7762,6 +7762,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AWT, PCI_PRODUCT_AWT_RT2890,
 	    "RT2890",
+	},
+	{
+	    PCI_VENDOR_BAIKAL, PCI_PRODUCT_BAIKAL_BE_M1000,
+	    "BE-M1000",
 	},
 	{
 	    PCI_VENDOR_BELKIN, PCI_PRODUCT_BELKIN_F5D6000,
@@ -35942,6 +35946,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_UMIS,
 	    "Union Memory",
+	},
+	{
+	    PCI_VENDOR_BAIKAL,
+	    "Baikal Electronics",
 	},
 	{
 	    PCI_VENDOR_AQUANTIA,
