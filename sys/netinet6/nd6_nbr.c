@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.142 2023/01/06 14:17:15 kn Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.143 2023/03/31 19:43:33 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -322,7 +322,8 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		goto freeit;
 	}
 
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_NEIGHBOR_SOLICIT, 0);
+	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_NEIGHBOR_SOLICIT,
+	    0);
 
 	nd6_na_output(ifp, &saddr6, &taddr6,
 	    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
@@ -378,8 +379,8 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
 #ifdef DIAGNOSTIC
 	if (max_linkhdr + maxlen >= MCLBYTES) {
-		printf("%s: max_linkhdr + maxlen >= MCLBYTES "
-		    "(%d + %d > %d)\n", __func__, max_linkhdr, maxlen, MCLBYTES);
+		printf("%s: max_linkhdr + maxlen >= MCLBYTES (%d + %d > %d)\n",
+		    __func__, max_linkhdr, maxlen, MCLBYTES);
 		panic("%s: insufficient MCLBYTES", __func__);
 		/* NOTREACHED */
 	}
@@ -847,7 +848,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 
  freeit:
- 	rtfree(rt);
+	rtfree(rt);
 	m_freem(m);
 	if_put(ifp);
 	return;
@@ -895,8 +896,8 @@ nd6_na_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	maxlen += (sizeof(struct nd_opt_hdr) + ifp->if_addrlen + 7) & ~7;
 #ifdef DIAGNOSTIC
 	if (max_linkhdr + maxlen >= MCLBYTES) {
-		printf("%s: max_linkhdr + maxlen >= MCLBYTES "
-		    "(%d + %d > %d)\n", __func__, max_linkhdr, maxlen, MCLBYTES);
+		printf("%s: max_linkhdr + maxlen >= MCLBYTES (%d + %d > %d)\n",
+		    __func__, max_linkhdr, maxlen, MCLBYTES);
 		panic("%s: insufficient MCLBYTES", __func__);
 		/* NOTREACHED */
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.267 2023/03/25 16:01:37 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.268 2023/03/31 19:43:32 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -804,7 +804,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		ln->ln_rt = rt;
 		/* this is required for "ndp" command. - shin */
 		if (req == RTM_ADD) {
-		        /*
+			/*
 			 * gate should have some valid AF_LINK entry,
 			 * and ln expire should have some lifetime
 			 * which is specified by ndp command.
@@ -812,7 +812,7 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
 		} else {
-		        /*
+			/*
 			 * When req == RTM_RESOLVE, rt is created and
 			 * initialized in rtrequest(), so rt_expire is 0.
 			 */
