@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.78 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.79 2023/03/31 19:39:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -378,6 +378,9 @@ BN_copy(BIGNUM *a, const BIGNUM *b)
 #else
 	memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
 #endif
+
+	/* Copy constant time flag from b, but make it sticky on a. */
+	a->flags |= b->flags & BN_FLG_CONSTTIME;
 
 	a->top = b->top;
 	a->neg = b->neg;
