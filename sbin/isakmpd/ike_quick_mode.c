@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.114 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.115 2023/03/31 20:16:55 tb Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -893,6 +893,8 @@ initiator_send_HASH_SA_NONCE(struct message *msg)
 	/* Generate optional KEY_EXCH payload.  */
 	if (group_desc > 0) {
 		ie->group = group_get(group_desc);
+		if (!ie->group)
+			return -1;
 		ie->g_x_len = dh_getlen(ie->group);
 
 		if (ipsec_gen_g_x(msg)) {
