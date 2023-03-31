@@ -1,4 +1,4 @@
-/*	$OpenBSD: umsm.c,v 1.122 2022/08/23 08:12:30 jsg Exp $	*/
+/*	$OpenBSD: umsm.c,v 1.123 2023/03/31 23:55:45 dlg Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>
@@ -293,53 +293,56 @@ int
 umsm_match(struct device *parent, void *match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
+	const struct umsm_type *umsmt;
 	usb_interface_descriptor_t *id;
 	uint16_t flag;
 
 	if (uaa->iface == NULL)
 		return UMATCH_NONE;
 
+	umsmt = umsm_lookup(uaa->vendor, uaa->product);
+	if (umsmt == NULL)
+		return UMATCH_NONE;
+
 	/*
 	 * Some devices (eg Huawei E220) have multiple interfaces and some
 	 * of them are of class umass. Don't claim ownership in such case.
 	 */
-	if (umsm_lookup(uaa->vendor, uaa->product) != NULL) {
-		id = usbd_get_interface_descriptor(uaa->iface);
-		flag = umsm_lookup(uaa->vendor, uaa->product)->umsm_flag;
 
-		if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
-			/*
-			 * Some high-speed modems require special care.
-			 */
-			if (flag & DEV_HUAWEI) {
-				if (uaa->ifaceno != 2)
-					return UMATCH_VENDOR_IFACESUBCLASS;
-				else
-					return UMATCH_NONE;
-			} else if (flag & DEV_UMASS) {
-				return UMATCH_VENDOR_IFACESUBCLASS;
-			} else if (flag & DEV_TRUINSTALL) {
-				return UMATCH_VENDOR_IFACESUBCLASS;
-			} else
-				return UMATCH_NONE;
+	id = usbd_get_interface_descriptor(uaa->iface);
+	flag = umsmt->umsm_flag;
+
+	if (id == NULL || id->bInterfaceClass == UICLASS_MASS) {
 		/*
-		 * Some devices have interfaces which fail to attach but in
-		 * addition seem to make the remaining interfaces unusable. Only
-		 * attach whitelisted interfaces in this case.
+		 * Some high-speed modems require special care.
 		 */
-		} else if ((uaa->vendor == USB_VENDOR_MEDIATEK &&
-			    uaa->product == USB_PRODUCT_MEDIATEK_DC_4COM) &&
-			   !(id->bInterfaceClass == UICLASS_VENDOR &&
-			    ((id->bInterfaceSubClass == 0x02 &&
-			      id->bInterfaceProtocol == 0x01) ||
-			     (id->bInterfaceSubClass == 0x00 &&
-			      id->bInterfaceProtocol == 0x00)))) {
-			return UMATCH_NONE;
-		} else
+		if (flag & DEV_HUAWEI) {
+			if (uaa->ifaceno != 2)
+				return UMATCH_VENDOR_IFACESUBCLASS;
+			else
+				return UMATCH_NONE;
+		} else if (flag & DEV_UMASS) {
 			return UMATCH_VENDOR_IFACESUBCLASS;
+		} else if (flag & DEV_TRUINSTALL) {
+			return UMATCH_VENDOR_IFACESUBCLASS;
+		} else
+			return UMATCH_NONE;
+	/*
+	 * Some devices have interfaces which fail to attach but in
+	 * addition seem to make the remaining interfaces unusable. Only
+	 * attach whitelisted interfaces in this case.
+	 */
+	} else if ((uaa->vendor == USB_VENDOR_MEDIATEK &&
+		    uaa->product == USB_PRODUCT_MEDIATEK_DC_4COM) &&
+		   !(id->bInterfaceClass == UICLASS_VENDOR &&
+		    ((id->bInterfaceSubClass == 0x02 &&
+		      id->bInterfaceProtocol == 0x01) ||
+		     (id->bInterfaceSubClass == 0x00 &&
+		      id->bInterfaceProtocol == 0x00)))) {
+		return UMATCH_NONE;
 	}
 
-	return UMATCH_NONE;
+	return UMATCH_VENDOR_IFACESUBCLASS;
 }
 
 void
