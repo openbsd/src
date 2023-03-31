@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.193 2023/03/19 11:18:11 kettenis Exp $
+# $OpenBSD: RAMDISK,v 1.194 2023/03/31 19:50:45 mglocker Exp $
 
 machine		arm64
 maxusers	4
@@ -49,6 +49,7 @@ ehci*		at acpi?
 ohci*		at acpi?
 pluart*		at acpi?
 sdhc*		at acpi?
+ufshci*		at acpi?
 xhci*		at acpi?
 simplebus*	at fdt?
 
