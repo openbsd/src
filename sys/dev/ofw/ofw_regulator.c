@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.16 2022/02/14 12:54:43 jsg Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.17 2023/04/01 08:37:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -30,9 +30,13 @@
 LIST_HEAD(, regulator_device) regulator_devices =
 	LIST_HEAD_INITIALIZER(regulator_devices);
 
+LIST_HEAD(, regulator_notifier) regulator_notifiers =
+	LIST_HEAD_INITIALIZER(regulator_notifiers);
+
 int regulator_type(int);
 uint32_t regulator_gpio_get(int);
 int regulator_gpio_set(int, uint32_t);
+void regulator_do_notify(uint32_t, uint32_t);
 
 void
 regulator_register(struct regulator_device *rd)
@@ -73,6 +77,15 @@ regulator_register(struct regulator_device *rd)
 		return;
 
 	LIST_INSERT_HEAD(&regulator_devices, rd, rd_list);
+
+	if (rd->rd_get_voltage) {
+		regulator_do_notify(rd->rd_phandle,
+		    regulator_get_voltage(rd->rd_phandle));
+	}
+	if (rd->rd_get_current) {
+		regulator_do_notify(rd->rd_phandle,
+		    regulator_get_current(rd->rd_phandle));
+	}
 }
 
 int
@@ -224,12 +237,16 @@ regulator_set_voltage(uint32_t phandle, uint32_t voltage)
 		return EINVAL;
 
 	if (rd && rd->rd_set_voltage) {
+		regulator_do_notify(rd->rd_phandle, voltage);
+
 		old = rd->rd_get_voltage(rd->rd_cookie);
 		error = rd->rd_set_voltage(rd->rd_cookie, voltage);
 		if (voltage > old && rd->rd_ramp_delay > 0) {
 			delta = voltage - old;
 			delay(howmany(delta, rd->rd_ramp_delay));
 		}
+
+		regulator_do_notify(rd->rd_phandle, voltage);
 		return error;
 	}
 
@@ -299,12 +316,16 @@ regulator_set_current(uint32_t phandle, uint32_t current)
 		return EINVAL;
 
 	if (rd && rd->rd_set_current) {
+		regulator_do_notify(rd->rd_phandle, current);
+
 		old = rd->rd_get_current(rd->rd_cookie);
 		error = rd->rd_set_current(rd->rd_cookie, current);
 		if (current > old && rd->rd_ramp_delay > 0) {
 			delta = current - old;
 			delay(howmany(delta, rd->rd_ramp_delay));
 		}
+
+		regulator_do_notify(rd->rd_phandle, current);
 		return error;
 	}
 
@@ -375,6 +396,7 @@ regulator_gpio_get(int node)
 int
 regulator_gpio_set(int node, uint32_t value)
 {
+	uint32_t phandle = OF_getpropint(node, "phandle", 0);
 	uint32_t *gpio, *gpios, *states;
 	uint32_t min, max;
 	uint32_t idx;
@@ -422,6 +444,8 @@ regulator_gpio_set(int node, uint32_t value)
 	if (i >= slen / (2 * sizeof(uint32_t)))
 		return EINVAL;
 
+	regulator_do_notify(phandle, value);
+	
 	i = 0;
 	gpio = gpios;
 	while (gpio && gpio < gpios + (glen / sizeof(uint32_t))) {
@@ -430,8 +454,27 @@ regulator_gpio_set(int node, uint32_t value)
 		i++;
 	}
 
+	regulator_do_notify(phandle, value);
+
 	free(gpios, M_TEMP, glen);
 	free(states, M_TEMP, slen);
 
 	return 0;
+}
+
+void
+regulator_notify(struct regulator_notifier *rn)
+{
+	LIST_INSERT_HEAD(&regulator_notifiers, rn, rn_list);
+}
+
+void
+regulator_do_notify(uint32_t phandle, uint32_t value)
+{
+	struct regulator_notifier *rn;
+
+	LIST_FOREACH(rn, &regulator_notifiers, rn_list) {
+		if (rn->rn_phandle == phandle)
+			rn->rn_notify(rn->rn_cookie, value);
+	}
 }

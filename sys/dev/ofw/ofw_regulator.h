@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.h,v 1.7 2019/02/20 07:36:37 patrick Exp $	*/
+/*	$OpenBSD: ofw_regulator.h,v 1.8 2023/04/01 08:37:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -43,5 +43,15 @@ uint32_t regulator_get_voltage(uint32_t);
 int	regulator_set_voltage(uint32_t, uint32_t);
 uint32_t regulator_get_current(uint32_t);
 int	regulator_set_current(uint32_t, uint32_t);
+
+struct regulator_notifier {
+	uint32_t rn_phandle;
+	void	*rn_cookie;
+	void	(*rn_notify)(void *, uint32_t);
+
+	LIST_ENTRY(regulator_notifier) rn_list;
+};
+
+void	regulator_notify(struct regulator_notifier *);
 
 #endif /* _DEV_OFW_REGULATOR_H_ */
