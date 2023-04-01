@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.278 2023/03/25 15:22:06 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.279 2023/04/01 18:47:51 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1554,11 +1554,25 @@ ofree(struct dir_info **argpool, void *p, int clear, int check, size_t argsz)
 		find_chunknum(pool, info, p, mopts.chunk_canaries);
 
 		if (mopts.malloc_freecheck) {
-			for (i = 0; i <= MALLOC_DELAYED_CHUNK_MASK; i++)
-				if (p == pool->delayed_chunks[i])
+			for (i = 0; i <= MALLOC_DELAYED_CHUNK_MASK; i++) {
+				tmp = pool->delayed_chunks[i];
+				if (tmp == p)
 					wrterror(pool,
 					    "double free %p", p);
+				if (tmp != NULL) {
+					size_t tmpsz;
+
+					r = find(pool, tmp);
+					if (r == NULL)
+						wrterror(pool,
+						    "bogus pointer ("
+						    "double free?) %p", tmp);
+					REALSIZE(tmpsz, r);
+					validate_junk(pool, tmp, tmpsz);
+				}
+			}
 		}
+
 		if (clear && argsz > 0)
 			explicit_bzero(p, argsz);
 		junk_free(pool->malloc_junk, p, sz);
@@ -1574,8 +1588,10 @@ ofree(struct dir_info **argpool, void *p, int clear, int check, size_t argsz)
 			if (r == NULL)
 				wrterror(pool,
 				    "bogus pointer (double free?) %p", p);
-			REALSIZE(sz, r);
-			validate_junk(pool, p, sz);
+			if (!mopts.malloc_freecheck) {
+				REALSIZE(sz, r);
+				validate_junk(pool, p, sz);
+			}
 			free_bytes(pool, r, p);
 		}
 	}

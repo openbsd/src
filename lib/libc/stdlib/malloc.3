@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.129 2022/03/31 17:27:16 naddy Exp $
+.\"	$OpenBSD: malloc.3,v 1.130 2023/04/01 18:47:51 otto Exp $
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: April 1 2023 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -293,7 +293,8 @@ order to have any effect.
 .It Cm F
 .Dq Freecheck .
 Enable more extensive double free and use after free detection.
-All chunks in the delayed free list will be checked for double frees.
+All chunks in the delayed free list will be checked for double frees and
+write after frees.
 Unused pages on the freelist are read and write protected to
 cause a segmentation fault upon access.
 .It Cm G
