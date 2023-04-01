@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.79 2023/03/31 19:39:15 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.80 2023/04/01 12:44:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -209,15 +209,19 @@ BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags)
 	dest->flags = dest_flags;
 }
 
+static const BN_ULONG bn_value_one_data = 1;
+static const BIGNUM bn_value_one = {
+	.d = (BN_ULONG *)&bn_value_one_data,
+	.top = 1,
+	.dmax = 1,
+	.neg = 0,
+	.flags = BN_FLG_STATIC_DATA,
+};
+
 const BIGNUM *
 BN_value_one(void)
 {
-	static const BN_ULONG data_one = 1L;
-	static const BIGNUM const_one = {
-		(BN_ULONG *)&data_one, 1, 1, 0, BN_FLG_STATIC_DATA
-	};
-
-	return (&const_one);
+	return &bn_value_one;
 }
 
 #ifndef HAVE_BN_WORD_CLZ
