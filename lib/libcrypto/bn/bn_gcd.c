@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.23 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.24 2023/04/01 11:08:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,6 +180,50 @@ err:
 	return (NULL);
 }
 
+int
+BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
+{
+	BIGNUM *a, *b, *t;
+	int ret = 0;
+
+
+	BN_CTX_start(ctx);
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if (!bn_copy(a, in_a))
+		goto err;
+	if (!bn_copy(b, in_b))
+		goto err;
+	a->neg = 0;
+	b->neg = 0;
+
+	if (BN_cmp(a, b) < 0) {
+		t = a;
+		a = b;
+		b = t;
+	}
+	t = euclid(a, b);
+	if (t == NULL)
+		goto err;
+
+	if (!bn_copy(r, t))
+		goto err;
+	ret = 1;
+
+err:
+	BN_CTX_end(ctx);
+	return (ret);
+}
+
+int
+BN_gcd_nonct(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
+{
+	return BN_gcd(r, in_a, in_b, ctx);
+}
+
 /*
  * BN_gcd_no_branch is a special version of BN_mod_inverse_no_branch.
  * that returns the GCD.
@@ -325,55 +369,11 @@ err:
 }
 
 int
-BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
-{
-	BIGNUM *a, *b, *t;
-	int ret = 0;
-
-
-	BN_CTX_start(ctx);
-	if ((a = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((b = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	if (!bn_copy(a, in_a))
-		goto err;
-	if (!bn_copy(b, in_b))
-		goto err;
-	a->neg = 0;
-	b->neg = 0;
-
-	if (BN_cmp(a, b) < 0) {
-		t = a;
-		a = b;
-		b = t;
-	}
-	t = euclid(a, b);
-	if (t == NULL)
-		goto err;
-
-	if (!bn_copy(r, t))
-		goto err;
-	ret = 1;
-
-err:
-	BN_CTX_end(ctx);
-	return (ret);
-}
-
-int
 BN_gcd_ct(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 {
 	if (BN_gcd_no_branch(r, in_a, in_b, ctx) == NULL)
 		return 0;
 	return 1;
-}
-
-int
-BN_gcd_nonct(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
-{
-	return BN_gcd(r, in_a, in_b, ctx);
 }
 
 /* BN_mod_inverse_no_branch is a special version of BN_mod_inverse.
