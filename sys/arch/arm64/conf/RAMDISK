@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.194 2023/03/31 19:50:45 mglocker Exp $
+# $OpenBSD: RAMDISK,v 1.195 2023/04/01 08:39:54 kettenis Exp $
 
 machine		arm64
 maxusers	4
@@ -221,6 +221,7 @@ sfp*		at fdt?
 # Rockchip SoCs
 rkclock*	at fdt? early 1
 rkgrf*		at fdt? early 1
+rkiovd*		at fdt? early 1
 rkpinctrl*	at fdt? early 1
 rkpciephy*	at fdt? early 1
 rkcomphy*	at fdt? early 1
