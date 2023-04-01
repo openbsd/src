@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.22 2022/12/23 19:25:22 dv Exp $  */
+/*	$OpenBSD: vioscsi.c,v 1.23 2023/04/01 06:39:03 jsg Exp $  */
 
 /*
  * Copyright (c) 2017 Carlos Cardenas <ccardenas@openbsd.org>
@@ -1333,6 +1333,7 @@ vioscsi_handle_read_toc(struct vioscsi_dev *dev,
 	toc_data_len = toc_data_p - toc_data;
 	_lto2b((uint32_t)toc_data_len - 2, toc_data);
 
+	memset(&resp, 0, sizeof(resp));
 	vioscsi_prepare_resp(&resp, VIRTIO_SCSI_S_OK, SCSI_OK, 0, 0, 0);
 
 	/* Move index for response */
