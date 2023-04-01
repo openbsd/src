@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.53 2023/03/08 04:43:10 guenther Exp $	*/
+/*	$OpenBSD: function.c,v 1.54 2023/04/01 05:27:44 tb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -123,7 +123,7 @@ find_parsenum(PLAN *plan, char *option, char *vp, char *endch)
 {
 	long long value;
 	char *endchar, *str;	/* Pointer to character ending conversion. */
-    
+
 	/* Determine comparison from leading + or -. */
 	str = vp;
 	switch (*str) {
@@ -139,7 +139,7 @@ find_parsenum(PLAN *plan, char *option, char *vp, char *endch)
 		plan->flags = F_EQUAL;
 		break;
 	}
-    
+
 	/*
 	 * Convert the string with strtoll().  Note, if strtoll() returns
 	 * zero and endchar points to the beginning of the string we know
@@ -206,7 +206,7 @@ f_atime(PLAN *plan, FTSENT *entry)
 	COMPARE((now - entry->fts_statp->st_atime +
 	    SECSPERDAY - 1) / SECSPERDAY, plan->sec_data);
 }
- 
+
 PLAN *
 c_atime(char *arg, char ***ignored, int unused)
 {
@@ -261,7 +261,7 @@ f_ctime(PLAN *plan, FTSENT *entry)
 	COMPARE((now - entry->fts_statp->st_ctime +
 	    SECSPERDAY - 1) / SECSPERDAY, plan->sec_data);
 }
- 
+
 PLAN *
 c_ctime(char *arg, char ***ignored, int unused)
 {
@@ -287,7 +287,7 @@ f_always_true(PLAN *plan, FTSENT *entry)
 {
 	return (1);
 }
- 
+
 PLAN *
 c_depth(char *ignore, char ***ignored, int unused)
 {
@@ -352,7 +352,7 @@ c_delete(char *ignore, char ***ignored, int unused)
 
 	return (palloc(N_DELETE, f_delete));
 }
- 
+
 /*
  * -empty functions --
  *
@@ -491,8 +491,8 @@ run_f_exec(PLAN *plan)
 	plan->ep_bxp[plan->ep_narg] = NULL;
 
 	/* Don't mix output of command with find output. */
- 	fflush(stdout);
- 	fflush(stderr);
+	fflush(stdout);
+	fflush(stderr);
 
 	switch (pid = vfork()) {
 	case -1:
@@ -528,7 +528,7 @@ run_f_exec(PLAN *plan)
 	if (rval)
 		plan->ep_rval = rval;
 }
- 
+
 /*
  * c_exec --
  *	build three parallel arrays, one with pointers to the strings passed
@@ -552,7 +552,7 @@ c_exec(char *unused, char ***argvp, int isok)
 		errx(1, "%s: cannot open \".\"", isok ? "-ok" : "-exec");
 
 	isoutput = 1;
-    
+
 	new = palloc(N_EXEC, f_exec);
 	if (isok)
 		new->flags |= F_NEEDOK;
@@ -621,8 +621,8 @@ c_exec(char *unused, char ***argvp, int isok)
 		     argv < ap;
 		     ++argv, ++cnt) {
 			c += strlen(*argv) + 1;
- 			new->e_argv[cnt] = *argv;
- 		}
+			new->e_argv[cnt] = *argv;
+		}
 		if (arg_max < 4 * 1024 + c)
 			errx(1, "-exec: no space left to run child command");
 		bufsize = arg_max - 4 * 1024 - c;
@@ -655,13 +655,13 @@ c_exec(char *unused, char ***argvp, int isok)
 			}
 		}
 		new->e_orig[cnt] = NULL;
- 	}
+	}
 
 	new->e_argv[cnt] = NULL;
 	*argvp = argv + 1;
 	return (new);
 }
- 
+
 /*
  * -execdir utility [arg ... ] ; functions --
  *
@@ -726,7 +726,7 @@ f_execdir(PLAN *plan, FTSENT *entry)
 	pid = waitpid(pid, &status, 0);
 	return (pid != -1 && WIFEXITED(status) && !WEXITSTATUS(status));
 }
- 
+
 /*
  * c_execdir --
  *	build three parallel arrays, one with pointers to the strings passed
@@ -743,7 +743,7 @@ c_execdir(char *ignored, char ***argvp, int unused)
 
 	ftsoptions &= ~FTS_NOSTAT;
 	isoutput = 1;
-    
+
 	new = palloc(N_EXECDIR, f_execdir);
 
 	for (ap = argv = *argvp;; ++ap) {
@@ -822,7 +822,7 @@ c_flags(char *flags_str, char ***ignored, int unused)
 	new->fl_mask = flags | notflags;
 	return (new);
 }
- 
+
 /*
  * -follow functions --
  *
@@ -837,7 +837,7 @@ c_follow(char *ignore, char ***ignored, int unused)
 
 	return (palloc(N_FOLLOW, f_always_true));
 }
- 
+
 /*
  * -fstype functions --
  *
@@ -871,8 +871,8 @@ f_fstype(PLAN *plan, FTSENT *entry)
 			p[0] = '.';
 			save[1] = p[1];
 			p[1] = '\0';
-			
-		} else 
+
+		} else
 			p = NULL;
 
 		if (statfs(entry->fts_accpath, &sb))
@@ -894,21 +894,21 @@ f_fstype(PLAN *plan, FTSENT *entry)
 	}
 	switch (plan->flags) {
 	case F_MTFLAG:
-		return (val & plan->mt_data);	
+		return (val & plan->mt_data);
 	case F_MTTYPE:
 		return (strncmp(fstype, plan->c_data, MFSNAMELEN) == 0);
 	default:
 		abort();
 	}
 }
- 
+
 PLAN *
 c_fstype(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
-    
+
 	new = palloc(N_FSTYPE, f_fstype);
 	switch (*arg) {
 	case 'l':
@@ -931,7 +931,7 @@ c_fstype(char *arg, char ***ignored, int unused)
 	new->c_data = arg;
 	return (new);
 }
- 
+
 /*
  * -group gname functions --
  *
@@ -944,13 +944,13 @@ f_group(PLAN *plan, FTSENT *entry)
 {
 	return (entry->fts_statp->st_gid == plan->g_data);
 }
- 
+
 PLAN *
 c_group(char *gname, char ***ignored, int unused)
 {
 	PLAN *new;
 	gid_t gid;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
 
 	if (gid_from_group(gname, &gid) == -1) {
@@ -960,7 +960,7 @@ c_group(char *gname, char ***ignored, int unused)
 		if (errstr)
 			errx(1, "-group: %s: no such group", gname);
 	}
-    
+
 	new = palloc(N_GROUP, f_group);
 	new->g_data = gid;
 	return (new);
@@ -976,15 +976,15 @@ f_inum(PLAN *plan, FTSENT *entry)
 {
 	COMPARE(entry->fts_statp->st_ino, plan->i_data);
 }
- 
+
 PLAN *
 c_inum(char *arg, char ***ignored, int unused)
 {
 	long long inum;
 	PLAN *new;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
-    
+
 	new = palloc(N_INUM, f_inum);
 	inum = find_parsenum(new, "-inum", arg, NULL);
 	if (inum != (ino_t)inum)
@@ -992,7 +992,7 @@ c_inum(char *arg, char ***ignored, int unused)
 	new->i_data = inum;
 	return (new);
 }
- 
+
 /*
  * -links n functions --
  *
@@ -1003,15 +1003,15 @@ f_links(PLAN *plan, FTSENT *entry)
 {
 	COMPARE(entry->fts_statp->st_nlink, plan->l_data);
 }
- 
+
 PLAN *
 c_links(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 	long long nlink;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
-    
+
 	new = palloc(N_LINKS, f_links);
 	nlink = find_parsenum(new, "-links", arg, NULL);
 	if (nlink != (nlink_t)nlink)
@@ -1019,7 +1019,7 @@ c_links(char *arg, char ***ignored, int unused)
 	new->l_data = nlink;
 	return (new);
 }
- 
+
 /*
  * -ls functions --
  *
@@ -1031,13 +1031,13 @@ f_ls(PLAN *plan, FTSENT *entry)
 	printlong(entry->fts_path, entry->fts_accpath, entry->fts_statp);
 	return (1);
 }
- 
+
 PLAN *
 c_ls(char *ignore, char ***ignored, int unused)
 {
 	ftsoptions &= ~FTS_NOSTAT;
 	isoutput = 1;
-    
+
 	return (palloc(N_LS, f_ls));
 }
 
@@ -1108,7 +1108,7 @@ f_mtime(PLAN *plan, FTSENT *entry)
 	COMPARE((now - entry->fts_statp->st_mtime + SECSPERDAY - 1) /
 	    SECSPERDAY, plan->sec_data);
 }
- 
+
 PLAN *
 c_mtime(char *arg, char ***ignored, int unused)
 {
@@ -1161,7 +1161,7 @@ f_name(PLAN *plan, FTSENT *entry)
 {
 	return (!fnmatch(plan->c_data, entry->fts_name, 0));
 }
- 
+
 PLAN *
 c_name(char *pattern, char ***ignored, int unused)
 {
@@ -1176,14 +1176,14 @@ c_name(char *pattern, char ***ignored, int unused)
  * -iname functions --
  *
  *	Similar to -name, but does case insensitive matching
- *	
+ *
  */
 int
 f_iname(PLAN *plan, FTSENT *entry)
 {
 	return (!fnmatch(plan->c_data, entry->fts_name, FNM_CASEFOLD));
 }
- 
+
 PLAN *
 c_iname(char *pattern, char ***ignored, int unused)
 {
@@ -1193,7 +1193,7 @@ c_iname(char *pattern, char ***ignored, int unused)
 	new->c_data = pattern;
 	return (new);
 }
- 
+
 /*
  * -newer file functions --
  *
@@ -1209,13 +1209,13 @@ f_newer(PLAN *plan, FTSENT *entry)
 	    (entry->fts_statp->st_mtimespec.tv_sec == plan->t_data.tv_sec &&
 	    entry->fts_statp->st_mtimespec.tv_nsec > plan->t_data.tv_nsec));
 }
- 
+
 PLAN *
 c_newer(char *filename, char ***ignored, int unused)
 {
 	PLAN *new;
 	struct stat sb;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
 
 	if (stat(filename, &sb))
@@ -1224,7 +1224,7 @@ c_newer(char *filename, char ***ignored, int unused)
 	memcpy(&new->t_data, &sb.st_mtimespec, sizeof(struct timespec));
 	return (new);
 }
- 
+
 /*
  * -anewer file functions --
  *
@@ -1240,13 +1240,13 @@ f_anewer(PLAN *plan, FTSENT *entry)
 	    (entry->fts_statp->st_atimespec.tv_sec == plan->t_data.tv_sec &&
 	    entry->fts_statp->st_atimespec.tv_nsec > plan->t_data.tv_nsec));
 }
- 
+
 PLAN *
 c_anewer(char *filename, char ***ignored, int unused)
 {
 	PLAN *new;
 	struct stat sb;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
 
 	if (stat(filename, &sb))
@@ -1255,7 +1255,7 @@ c_anewer(char *filename, char ***ignored, int unused)
 	memcpy(&new->t_data, &sb.st_atimespec, sizeof(struct timespec));
 	return (new);
 }
- 
+
 /*
  * -cnewer file functions --
  *
@@ -1271,13 +1271,13 @@ f_cnewer(PLAN *plan, FTSENT *entry)
 	    (entry->fts_statp->st_ctimespec.tv_sec == plan->t_data.tv_sec &&
 	    entry->fts_statp->st_ctimespec.tv_nsec > plan->t_data.tv_nsec));
 }
- 
+
 PLAN *
 c_cnewer(char *filename, char ***ignored, int unused)
 {
 	PLAN *new;
 	struct stat sb;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
 
 	if (stat(filename, &sb))
@@ -1286,7 +1286,7 @@ c_cnewer(char *filename, char ***ignored, int unused)
 	memcpy(&new->t_data, &sb.st_ctimespec, sizeof(struct timespec));
 	return (new);
 }
- 
+
 /*
  * -nogroup functions --
  *
@@ -1298,7 +1298,7 @@ f_nogroup(PLAN *plan, FTSENT *entry)
 {
 	return (group_from_gid(entry->fts_statp->st_gid, 1) ? 0 : 1);
 }
- 
+
 PLAN *
 c_nogroup(char *ignore, char ***ignored, int unused)
 {
@@ -1306,7 +1306,7 @@ c_nogroup(char *ignore, char ***ignored, int unused)
 
 	return (palloc(N_NOGROUP, f_nogroup));
 }
- 
+
 /*
  * -nouser functions --
  *
@@ -1318,7 +1318,7 @@ f_nouser(PLAN *plan, FTSENT *entry)
 {
 	return (user_from_uid(entry->fts_statp->st_uid, 1) ? 0 : 1);
 }
- 
+
 PLAN *
 c_nouser(char *ignore, char ***ignored, int unused)
 {
@@ -1326,7 +1326,7 @@ c_nouser(char *ignore, char ***ignored, int unused)
 
 	return (palloc(N_NOUSER, f_nouser));
 }
- 
+
 /*
  * -path functions --
  *
@@ -1338,7 +1338,7 @@ f_path(PLAN *plan, FTSENT *entry)
 {
 	return (!fnmatch(plan->c_data, entry->fts_path, 0));
 }
- 
+
 PLAN *
 c_path(char *pattern, char ***ignored, int unused)
 {
@@ -1348,7 +1348,7 @@ c_path(char *pattern, char ***ignored, int unused)
 	new->c_data = pattern;
 	return (new);
 }
- 
+
 /*
  * -perm functions --
  *
@@ -1369,7 +1369,7 @@ f_perm(PLAN *plan, FTSENT *entry)
 		return (mode == plan->m_data);
 	/* NOTREACHED */
 }
- 
+
 PLAN *
 c_perm(char *perm, char ***ignored, int unused)
 {
@@ -1392,7 +1392,7 @@ c_perm(char *perm, char ***ignored, int unused)
 	free(set);
 	return (new);
 }
- 
+
 /*
  * -print functions --
  *
@@ -1413,7 +1413,7 @@ f_print0(PLAN *plan, FTSENT *entry)
 	(void)fputc('\0', stdout);
 	return(1);
 }
- 
+
 PLAN *
 c_print(char *ignore, char ***ignored, int unused)
 {
@@ -1429,7 +1429,7 @@ c_print0(char *ignore, char ***ignored, int unused)
 
 	return(palloc(N_PRINT0, f_print0));
 }
- 
+
 /*
  * -prune functions --
  *
@@ -1443,13 +1443,13 @@ f_prune(PLAN *plan, FTSENT *entry)
 		err(1, "%s", entry->fts_path);
 	return (1);
 }
- 
+
 PLAN *
 c_prune(char *ignore, char ***ignored, int unused)
 {
 	return (palloc(N_PRUNE, f_prune));
 }
- 
+
 /*
  * -size n[c] functions --
  *
@@ -1469,13 +1469,13 @@ f_size(PLAN *plan, FTSENT *entry)
 	    FIND_SIZE : entry->fts_statp->st_size;
 	COMPARE(size, plan->o_data);
 }
- 
+
 PLAN *
 c_size(char *arg, char ***ignored, int unused)
 {
 	PLAN *new;
 	char endch;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_SIZE, f_size);
@@ -1485,7 +1485,7 @@ c_size(char *arg, char ***ignored, int unused)
 		divsize = 0;
 	return (new);
 }
- 
+
 /*
  * -type c functions --
  *
@@ -1498,13 +1498,13 @@ f_type(PLAN *plan, FTSENT *entry)
 {
 	return ((entry->fts_statp->st_mode & S_IFMT) == plan->m_data);
 }
- 
+
 PLAN *
 c_type(char *typestring, char ***ignored, int unused)
 {
 	PLAN *new;
 	mode_t  mask;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
 
 	switch (typestring[0]) {
@@ -1532,12 +1532,12 @@ c_type(char *typestring, char ***ignored, int unused)
 	default:
 		errx(1, "-type: %s: unknown type", typestring);
 	}
-    
+
 	new = palloc(N_TYPE, f_type);
 	new->m_data = mask;
 	return (new);
 }
- 
+
 /*
  * -user uname functions --
  *
@@ -1550,13 +1550,13 @@ f_user(PLAN *plan, FTSENT *entry)
 {
 	return (entry->fts_statp->st_uid == plan->u_data);
 }
- 
+
 PLAN *
 c_user(char *username, char ***ignored, int unused)
 {
 	PLAN *new;
 	uid_t uid;
-    
+
 	ftsoptions &= ~FTS_NOSTAT;
 
 	if (uid_from_user(username, &uid) == -1) {
@@ -1571,7 +1571,7 @@ c_user(char *username, char ***ignored, int unused)
 	new->u_data = uid;
 	return (new);
 }
- 
+
 /*
  * -xdev functions --
  *
@@ -1601,7 +1601,7 @@ f_expr(PLAN *plan, FTSENT *entry)
 	    p && (state = (p->eval)(p, entry)); p = p->next);
 	return (state);
 }
- 
+
 /*
  * N_OPENPAREN and N_CLOSEPAREN nodes are temporary place markers.  They are
  * eliminated during phase 2 of find_formplan() --- the '(' node is converted
@@ -1612,13 +1612,13 @@ c_openparen(char *ignore, char ***ignored, int unused)
 {
 	return (palloc(N_OPENPAREN, (int (*)(PLAN *, FTSENT *))-1));
 }
- 
+
 PLAN *
 c_closeparen(char *ignore, char ***ignored, int unused)
 {
 	return (palloc(N_CLOSEPAREN, (int (*)(PLAN *, FTSENT *))-1));
 }
- 
+
 /*
  * ! expression functions --
  *
@@ -1634,13 +1634,13 @@ f_not(PLAN *plan, FTSENT *entry)
 	    p && (state = (p->eval)(p, entry)); p = p->next);
 	return (!state);
 }
- 
+
 PLAN *
 c_not(char *ignore, char ***ignored, int unused)
 {
 	return (palloc(N_NOT, f_not));
 }
- 
+
 /*
  * expression -o expression functions --
  *
@@ -1677,7 +1677,7 @@ c_or(char *ignore, char ***ignored, int unused)
  *	and if so, clean it up as appropriate.
  *
  *	At the moment, only N_EXEC has state. Two kinds: 1)
- * 	lists of files to feed to subprocesses 2) State on exit
+ *	lists of files to feed to subprocesses 2) State on exit
  *	status of past subprocesses.
  */
 int
