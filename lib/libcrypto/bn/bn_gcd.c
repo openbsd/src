@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.24 2023/04/01 11:08:43 tb Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.25 2023/04/01 11:10:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -176,7 +176,7 @@ euclid(BIGNUM *a, BIGNUM *b)
 	}
 	return (a);
 
-err:
+ err:
 	return (NULL);
 }
 
@@ -213,7 +213,7 @@ BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 		goto err;
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
 	return (ret);
 }
@@ -361,7 +361,7 @@ BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	if (!bn_copy(R, A))
 		goto err;
 	ret = R;
-err:
+ err:
 	if ((ret == NULL) && (in == NULL))
 		BN_free(R);
 	BN_CTX_end(ctx);
@@ -536,7 +536,7 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	}
 	ret = R;
 
-err:
+ err:
 	if ((ret == NULL) && (in == NULL))
 		BN_free(R);
 	BN_CTX_end(ctx);
@@ -827,7 +827,7 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 	}
 	ret = R;
 
-err:
+ err:
 	if ((ret == NULL) && (in == NULL))
 		BN_free(R);
 	BN_CTX_end(ctx);
