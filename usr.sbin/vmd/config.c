@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.68 2023/02/22 10:04:45 mbuhl Exp $	*/
+/*	$OpenBSD: config.c,v 1.69 2023/04/02 02:04:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -451,10 +451,10 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	}
 
 	/* Open TTY */
-	if (vm->vm_ttyname == NULL) {
+	if (vm->vm_ttyname[0] == '\0') {
 		if (vm_opentty(vm) == -1) {
 			log_warn("%s: can't open tty %s", __func__,
-			    vm->vm_ttyname == NULL ? "" : vm->vm_ttyname);
+			    vm->vm_ttyname[0] == '\0' ? "" : vm->vm_ttyname);
 			goto fail;
 		}
 	}

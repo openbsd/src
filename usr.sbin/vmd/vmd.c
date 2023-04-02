@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.138 2023/01/28 14:40:53 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.139 2023/04/02 02:04:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -489,7 +489,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 		memcpy(&vir, imsg->data, sizeof(vir));
 		if ((vm = vm_getbyvmid(vir.vir_info.vir_id)) != NULL) {
 			memset(vir.vir_ttyname, 0, sizeof(vir.vir_ttyname));
-			if (vm->vm_ttyname != NULL)
+			if (vm->vm_ttyname[0] != '\0')
 				strlcpy(vir.vir_ttyname, vm->vm_ttyname,
 				    sizeof(vir.vir_ttyname));
 			log_debug("%s: running vm: %d, vm_state: 0x%x",
@@ -1789,8 +1789,11 @@ vm_opentty(struct vmd_vm *vm)
 
 	vm->vm_tty = ptm.cfd;
 	close(ptm.sfd);
-	if ((vm->vm_ttyname = strdup(ptm.sn)) == NULL)
+	if (strlcpy(vm->vm_ttyname, ptm.sn, sizeof(vm->vm_ttyname))
+	    >= sizeof(vm->vm_ttyname)) {
+		log_warnx("%s: truncated ttyname", __func__);
 		goto fail;
+	}
 
 	uid = vm->vm_uid;
 	gid = vm->vm_params.vmc_owner.gid;
@@ -1858,8 +1861,7 @@ vm_closetty(struct vmd_vm *vm)
 		close(vm->vm_tty);
 		vm->vm_tty = -1;
 	}
-	free(vm->vm_ttyname);
-	vm->vm_ttyname = NULL;
+	memset(&vm->vm_ttyname, 0, sizeof(vm->vm_ttyname));
 }
 
 void
@@ -1954,4 +1956,3 @@ vm_terminate(struct vmd_vm *vm, const char *caller)
 		vm_remove(vm, caller);
 	}
 }
-

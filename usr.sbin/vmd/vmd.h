@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.114 2023/01/28 14:40:53 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.115 2023/04/02 02:04:10 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -286,7 +286,7 @@ struct vmd_vm {
 	int			 vm_cdrom;
 	int			 vm_disks[VM_MAX_DISKS_PER_VM][VM_MAX_BASE_PER_DISK];
 	struct vmd_if		 vm_ifs[VM_MAX_NICS_PER_VM];
-	char			*vm_ttyname;
+	char			 vm_ttyname[VM_TTYNAME_MAX];
 	int			 vm_tty;
 	uint32_t		 vm_peerid;
 	/* When set, VM was defined in a config file */
