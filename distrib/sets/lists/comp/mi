@@ -580,6 +580,7 @@
 ./usr/include/dev/pci/if_myxreg.h
 ./usr/include/dev/pci/if_nfereg.h
 ./usr/include/dev/pci/if_nfevar.h
+./usr/include/dev/pci/if_ngbereg.h
 ./usr/include/dev/pci/if_ngereg.h
 ./usr/include/dev/pci/if_ocereg.h
 ./usr/include/dev/pci/if_rgereg.h

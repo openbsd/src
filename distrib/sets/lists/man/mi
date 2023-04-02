@@ -1731,6 +1731,7 @@
 ./usr/share/man/man4/nep.4
 ./usr/share/man/man4/netintro.4
 ./usr/share/man/man4/nfe.4
+./usr/share/man/man4/ngbe.4
 ./usr/share/man/man4/nge.4
 ./usr/share/man/man4/nmea.4
 ./usr/share/man/man4/nsclpcsio.4
