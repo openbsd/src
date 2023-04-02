@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1238 2023/04/01 23:24:46 kn Exp $
+#	$OpenBSD: install.sub,v 1.1239 2023/04/02 00:58:07 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -304,7 +304,7 @@ scan_disknames() {
 }
 
 # Return list of disks with softraid chunks, optionally limited to the volume $1.
-get_softraid_disks() {
+get_softraid_chunks() {
 	local _device=${1:-softraid0}
 
 	bioctl $_device 2>/dev/null | sed -n 's/.*<\(.*\).>$/\1/p'
@@ -327,7 +327,7 @@ get_cddevs() {
 get_dkdevs_uninitialized() {
 	local _disks=$(get_dkdevs) _d
 
-	for _d in $DISKS_DONE $(get_softraid_disks); do
+	for _d in $DISKS_DONE $(get_softraid_chunks); do
 		_disks=$(rmel "$_d" $_disks)
 	done
 	bsort $_disks
@@ -342,7 +342,7 @@ get_dkdevs_root() {
 			is_rootdisk "$_d" || _disks=$(rmel "$_d" $_disks)
 		done
 	else
-		_disks=$(rmel "$CRYPTODISK" $_disks)
+		_disks=$(rmel "$CRYPTOCHUNK" $_disks)
 	fi
 	echo $_disks
 }
@@ -2407,7 +2407,7 @@ get_rootinfo() {
 		case $resp in
 		"?")	diskinfo $(get_dkdevs);;
 		'')	;;
-		$CRYPTODISK)
+		$CRYPTOCHUNK)
 			echo "$resp is used for root disk encryption.";;
 		*)	# Translate $resp to disk dev name in case it is a DUID.
 			# get_dkdev_name bounces back the disk dev name if not.
@@ -2959,7 +2959,7 @@ finish_up() {
 
 	# In case root is on a softraid volume, make sure all underlying
 	# device nodes exist before installing boot-blocks on disk.
-	make_dev $(get_softraid_disks $ROOTDISK)
+	make_dev $(get_softraid_chunks $ROOTDISK)
 	md_installboot $ROOTDISK
 
 	chmod og-rwx /mnt/bsd{,.mp,.rd} 2>/dev/null
@@ -3078,7 +3078,7 @@ encrypt_root() {
 
 	# Do not even try if softraid is in use already,
 	# e.g. auto-assembled at boot or done in (S)hell.
-	[[ -z $(get_softraid_disks) ]] || return
+	[[ -z $(get_softraid_chunks) ]] || return
 
 	while :; do
 		echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
@@ -3108,7 +3108,7 @@ __EOT
 		((++_tries < 3)) || exit
 	done
 
-        CRYPTODISK=$_chunk
+        CRYPTOCHUNK=$_chunk
 }
 
 do_install() {
@@ -3580,7 +3580,7 @@ INSTALL_METHOD=
 NIFS=0
 export PS1="$MODE# "
 PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
-CRYPTODISK=
+CRYPTOCHUNK=
 ROOTDEV=
 ROOTDISK=
 SETDIR="$VNAME/$ARCH"
