@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephy.c,v 1.41 2022/04/06 18:59:29 naddy Exp $	*/
+/*	$OpenBSD: rgephy.c,v 1.42 2023/04/02 11:28:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -89,6 +89,8 @@ static const struct mii_phydesc rgephys[] = {
 	  MII_STR_xxREALTEK_RTL8169S },
 	{ MII_OUI_xxREALTEK,		MII_MODEL_xxREALTEK_RTL8251,
 	  MII_STR_xxREALTEK_RTL8251 },
+	{ MII_OUI_xxREALTEK,		MII_MODEL_xxREALTEK_RTL8211FVD,
+	  MII_STR_xxREALTEK_RTL8211FVD },
 
 	{ 0,			0,
 	  NULL },
@@ -255,7 +257,9 @@ setit:
 				sc->mii_ticks = 0;
 				break;
 			}
-		} else if (sc->mii_rev == RGEPHY_8211F) {
+		} else if (sc->mii_model == MII_MODEL_xxREALTEK_RTL8211FVD ||
+		    (sc->mii_model == MII_MODEL_xxREALTEK_RTL8169S &&
+		     sc->mii_rev == RGEPHY_8211F)) {
 			reg = PHY_READ(sc, RGEPHY_F_SR);
 			if (reg & RGEPHY_F_SR_LINK) {
 				sc->mii_ticks = 0;
@@ -314,7 +318,9 @@ rgephy_status(struct mii_softc *sc)
 		bmsr = PHY_READ(sc, RL_GMEDIASTAT);
 		if (bmsr & RL_GMEDIASTAT_LINK)
 			mii->mii_media_status |= IFM_ACTIVE;
-	} else if (sc->mii_rev == RGEPHY_8211F) {
+	} else if (sc->mii_model == MII_MODEL_xxREALTEK_RTL8211FVD ||
+	    (sc->mii_model == MII_MODEL_xxREALTEK_RTL8169S &&
+	     sc->mii_rev == RGEPHY_8211F)) {
 		bmsr = PHY_READ(sc, RGEPHY_F_SR);
 		if (bmsr & RGEPHY_F_SR_LINK)
 			mii->mii_media_status |= IFM_ACTIVE;
@@ -353,7 +359,9 @@ rgephy_status(struct mii_softc *sc)
 			    IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
-	} else if (sc->mii_rev == RGEPHY_8211F) {
+	} else if (sc->mii_model == MII_MODEL_xxREALTEK_RTL8211FVD ||
+	    (sc->mii_model == MII_MODEL_xxREALTEK_RTL8169S &&
+	     sc->mii_rev == RGEPHY_8211F)) {
 		bmsr = PHY_READ(sc, RGEPHY_F_SR);
 		if (RGEPHY_F_SR_SPEED(bmsr) == RGEPHY_F_SR_SPEED_1000MBPS)
 			mii->mii_media_active |= IFM_1000_T;
@@ -418,7 +426,7 @@ rgephy_loop(struct mii_softc *sc)
 	u_int32_t bmsr;
 	int i;
 
-	if (sc->mii_model != MII_MODEL_xxREALTEK_RTL8251 &&
+	if (sc->mii_model == MII_MODEL_xxREALTEK_RTL8169S &&
 	    sc->mii_rev < 2) {
 		PHY_WRITE(sc, MII_BMCR, BMCR_PDOWN);
 		DELAY(1000);
@@ -449,7 +457,7 @@ rgephy_load_dspcode(struct mii_softc *sc)
 {
 	int val;
 
-	if (sc->mii_model == MII_MODEL_xxREALTEK_RTL8251 ||
+	if (sc->mii_model != MII_MODEL_xxREALTEK_RTL8169S ||
 	    sc->mii_rev > 1)
 		return;
 
