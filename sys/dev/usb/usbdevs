@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.752 2022/11/09 10:03:04 robert Exp $
+$OpenBSD: usbdevs,v 1.753 2023/04/02 17:01:48 miod Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3528,7 +3528,7 @@ product PAPOUCH GOLIATH_MSR	0x8005	GOLIATH MSR
 product PARA RT3070		0x8888	RT3070
 
 /* PC Sensors products */
-product PCSENSORS TEMPER	0x2107	TEMPer
+product PCSENSORS TEMPER	0x2107	TEMPer sensor
 
 /* Pegatron products */
 product PEGATRON RT2870		0x0002	RT2870
@@ -4629,6 +4629,7 @@ product WAVESENSE JAZZ		0xaaaa	Jazz blood glucose meter
 product WCH CH341		0x5523	CH341 serial/parallel
 product WCH2 CH341A		0x5523	CH341A serial/parallel
 product WCH2 CH340		0x7523	CH340 serial/parallel
+product	WCH2 TEMPER		0xe025	TEMPer sensor
 
 /* WIENER Plein & Baus products */
 product WIENERPLEINBAUS PL512	0x0010	PL512 PSU
