@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.1 2023/02/04 23:11:59 mglocker Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.2 2023/04/02 08:53:01 anton Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -658,7 +658,7 @@ ufshci_utr_cmd_lun(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.hdr.tc = UPIU_TC_I2T_COMMAND;
 	ucd->cmd.hdr.flags = (1 << 6); /* Bit-5 = Write, Bit-6 = Read */
 	ucd->cmd.hdr.lun = 0;
-	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);;
+	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);
 	ucd->cmd.hdr.cmd_set_type = 0; /* SCSI command */
 	ucd->cmd.hdr.query = 0;
 	ucd->cmd.hdr.response = 0;
@@ -767,7 +767,7 @@ ufshci_utr_cmd_inquiry(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.hdr.tc = UPIU_TC_I2T_COMMAND;
 	ucd->cmd.hdr.flags = (1 << 6); /* Bit-5 = Write, Bit-6 = Read */
 	ucd->cmd.hdr.lun = 0;
-	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);;
+	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);
 	ucd->cmd.hdr.cmd_set_type = 0; /* SCSI command */
 	ucd->cmd.hdr.query = 0;
 	ucd->cmd.hdr.response = 0;
@@ -876,7 +876,7 @@ ufshci_utr_cmd_capacity16(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.hdr.tc = UPIU_TC_I2T_COMMAND;
 	ucd->cmd.hdr.flags = (1 << 6); /* Bit-5 = Write, Bit-6 = Read */
 	ucd->cmd.hdr.lun = 0;
-	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);;
+	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);
 	ucd->cmd.hdr.cmd_set_type = 0; /* SCSI command */
 	ucd->cmd.hdr.query = 0;
 	ucd->cmd.hdr.response = 0;
@@ -989,7 +989,7 @@ ufshci_utr_cmd_capacity(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.hdr.tc = UPIU_TC_I2T_COMMAND;
 	ucd->cmd.hdr.flags = (1 << 6); /* Bit-5 = Write, Bit-6 = Read */
 	ucd->cmd.hdr.lun = 0;
-	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);;
+	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);
 	ucd->cmd.hdr.cmd_set_type = 0; /* SCSI command */
 	ucd->cmd.hdr.query = 0;
 	ucd->cmd.hdr.response = 0;
@@ -1101,7 +1101,7 @@ ufshci_utr_cmd_read(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.hdr.tc = UPIU_TC_I2T_COMMAND;
 	ucd->cmd.hdr.flags = (1 << 6); /* Bit-5 = Write, Bit-6 = Read */
 	ucd->cmd.hdr.lun = 0;
-	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);;
+	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);
 	ucd->cmd.hdr.cmd_set_type = 0; /* SCSI command */
 	ucd->cmd.hdr.query = 0;
 	ucd->cmd.hdr.response = 0;
@@ -1215,7 +1215,7 @@ ufshci_utr_cmd_write(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.hdr.tc = UPIU_TC_I2T_COMMAND;
 	ucd->cmd.hdr.flags = (1 << 5); /* Bit-5 = Write, Bit-6 = Read */
 	ucd->cmd.hdr.lun = 0;
-	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);;
+	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);
 	ucd->cmd.hdr.cmd_set_type = 0; /* SCSI command */
 	ucd->cmd.hdr.query = 0;
 	ucd->cmd.hdr.response = 0;
@@ -1328,7 +1328,7 @@ ufshci_utr_cmd_sync(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.hdr.tc = UPIU_TC_I2T_COMMAND;
 	ucd->cmd.hdr.flags = 0; /* No data transfer */
 	ucd->cmd.hdr.lun = 0;
-	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);;
+	ucd->cmd.hdr.taskid = ufshci_get_taskid(sc);
 	ucd->cmd.hdr.cmd_set_type = 0; /* SCSI command */
 	ucd->cmd.hdr.query = 0;
 	ucd->cmd.hdr.response = 0;
