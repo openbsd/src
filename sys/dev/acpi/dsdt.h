@@ -1,4 +1,4 @@
-/* $OpenBSD: dsdt.h,v 1.79 2021/03/10 21:49:55 patrick Exp $ */
+/* $OpenBSD: dsdt.h,v 1.80 2023/04/02 11:32:48 jsg Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -387,6 +387,8 @@ enum acpi_osi {
 	OSI_WIN_10_1809,
 	OSI_WIN_10_1903,
 	OSI_WIN_10_2004,
+	OSI_WIN_11,
+	OSI_WIN_11_22H2
 };
 
 #define AML_VALID_OSI		\
@@ -413,7 +415,9 @@ enum acpi_osi {
 	"Windows 2018",		\
 	"Windows 2018.2",	\
 	"Windows 2019",		\
-	"Windows 2020"
+	"Windows 2020",		\
+	"Windows 2021",		\
+	"Windows 2022"
 
 extern enum acpi_osi acpi_max_osi;	/* most recent Win version FW knows */
 
