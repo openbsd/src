@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.148 2023/04/01 14:18:29 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.149 2023/04/02 18:44:13 miod Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -160,30 +160,30 @@ struct gpt_type {
  *         https://www.freedesktop.org/software/systemd/man/systemd-gpt-auto-generator.html
  */
 
-char * const UNUSED_GUID		= "00000000-0000-0000-0000-000000000000";
-char * const LEGACY_MBR_GUID		= "024dee41-33e7-11d3-9d69-0008c781f39f";
-char * const LINUX_SWAP_GUID		= "0657fd6d-a4ab-43c4-84e5-0933c84b4f4f";
-char * const LINUX_FILES_GUID		= "0fc63daf-8483-4772-8e79-3d69d8477de4";
-char * const BIOS_BOOT_GUID		= "21686148-6449-6e6f-744e-656564454649";
-char * const HIFIVE_BBL_GUID		= "2e54b353-1271-4842-806f-e436d6af6985";
-char * const BEOS_I386_GUID		= "42465331-3ba3-10f1-802a-4861696b7521";
-char * const MACOS_X_BOOT_GUID		= "426f6f74-0000-11aa-aa11-00306543ecac";
-char * const MACOS_X_HFS_GUID		= "48465300-0000-11aa-aa11-00306543ecac";
-char * const NETBSD_GUID		= "49f48d5a-b10e-11dc-b99b-0019d1879648";
-char * const FREEBSD_GUID		= "516e7cb4-6ecf-11d6-8ff8-00022d09712b";
-char * const APFS_RECOVERY_GUID		= "52637672-7900-11aa-aa11-00306543ecac";
-char * const MACOS_X_GUID		= "55465300-0000-11aa-aa11-00306543ecac";
-char * const HIFIVE_FSBL_GUID		= "5b193300-fc78-40cd-8002-e86c45580b47";
-char * const APFS_ISC_GUID		= "69646961-6700-11aa-aa11-00306543ecac";
-char * const SOLARIS_GUID		= "6a85cf4d-1dd2-11b2-99a6-080020736631";
-char * const APFS_GUID			= "7c3457ef-0000-11aa-aa11-00306543ecac";
-char * const OPENBSD_GUID		= "824cc7a0-36a8-11e3-890a-952519ad3f61";
-char * const LINUXSWAP_DR_GUID		= "af9b60a0-1431-4f62-bc68-3311714a69ad";
-char * const EFI_SYSTEM_PARTITION_GUID	= "c12a7328-f81f-11d2-ba4b-00a0c93ec93b";
-char * const WIN_RECOVERY_GUID		= "de94bba4-06d1-4d40-a16a-bfd50179d6ac";
-char * const LINUX_LVM_GUID		= "e6d6d379-f507-44c2-a23c-238f2a3df928";
-char * const MICROSOFT_BASIC_DATA_GUID	= "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7";
-char * const CHROME_KERNEL_GUID		= "fe3a2a5d-4f32-41a7-b725-accc3285a309";
+#define UNUSED_GUID		"00000000-0000-0000-0000-000000000000"
+#define LEGACY_MBR_GUID		"024dee41-33e7-11d3-9d69-0008c781f39f"
+#define LINUX_SWAP_GUID		"0657fd6d-a4ab-43c4-84e5-0933c84b4f4f"
+#define LINUX_FILES_GUID	"0fc63daf-8483-4772-8e79-3d69d8477de4"
+#define BIOS_BOOT_GUID		"21686148-6449-6e6f-744e-656564454649"
+#define HIFIVE_BBL_GUID		"2e54b353-1271-4842-806f-e436d6af6985"
+#define BEOS_I386_GUID		"42465331-3ba3-10f1-802a-4861696b7521"
+#define MACOS_X_BOOT_GUID	"426f6f74-0000-11aa-aa11-00306543ecac"
+#define MACOS_X_HFS_GUID	"48465300-0000-11aa-aa11-00306543ecac"
+#define NETBSD_GUID		"49f48d5a-b10e-11dc-b99b-0019d1879648"
+#define FREEBSD_GUID		"516e7cb4-6ecf-11d6-8ff8-00022d09712b"
+#define APFS_RECOVERY_GUID	"52637672-7900-11aa-aa11-00306543ecac"
+#define MACOS_X_GUID		"55465300-0000-11aa-aa11-00306543ecac"
+#define HIFIVE_FSBL_GUID	"5b193300-fc78-40cd-8002-e86c45580b47"
+#define APFS_ISC_GUID		"69646961-6700-11aa-aa11-00306543ecac"
+#define SOLARIS_GUID		"6a85cf4d-1dd2-11b2-99a6-080020736631"
+#define APFS_GUID		"7c3457ef-0000-11aa-aa11-00306543ecac"
+#define OPENBSD_GUID		"824cc7a0-36a8-11e3-890a-952519ad3f61"
+#define LINUXSWAP_DR_GUID	"af9b60a0-1431-4f62-bc68-3311714a69ad"
+#define EFI_SYSTEM_PARTITION_GUID "c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
+#define WIN_RECOVERY_GUID	"de94bba4-06d1-4d40-a16a-bfd50179d6ac"
+#define LINUX_LVM_GUID		"e6d6d379-f507-44c2-a23c-238f2a3df928"
+#define MICROSOFT_BASIC_DATA_GUID "ebd0a0a2-b9e5-4433-87c0-68b6b72699c7"
+#define CHROME_KERNEL_GUID	"fe3a2a5d-4f32-41a7-b725-accc3285a309"
 
 const struct gpt_type		gpt_types[] = {
 	{ 0,
