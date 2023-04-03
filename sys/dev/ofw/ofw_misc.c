@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.40 2023/04/03 01:34:06 dlg Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.41 2023/04/03 01:40:32 dlg Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -250,7 +250,7 @@ phy_next_phy(uint32_t *cells)
 }
 
 int
-phy_enable_idx(int node, int idx)
+phy_enable_prop_idx(int node, char *prop, int idx)
 {
 	uint32_t *phys;
 	uint32_t *phy;
@@ -262,7 +262,7 @@ phy_enable_idx(int node, int idx)
 		return -1;
 
 	phys = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, "phys", phys, len);
+	OF_getpropintarray(node, prop, phys, len);
 
 	phy = phys;
 	while (phy && phy < phys + (len / sizeof(uint32_t))) {
@@ -276,6 +276,12 @@ phy_enable_idx(int node, int idx)
 
 	free(phys, M_TEMP, len);
 	return rv;
+}
+
+int
+phy_enable_idx(int node, int idx)
+{
+	return (phy_enable_prop_idx(node, "phys", idx));
 }
 
 int

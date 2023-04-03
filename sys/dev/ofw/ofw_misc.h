@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.28 2023/04/03 01:30:33 dlg Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.29 2023/04/03 01:40:32 dlg Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -68,6 +68,7 @@ struct phy_device {
 
 void	phy_register(struct phy_device *);
 
+int	phy_enable_prop_idx(int, char *, int);
 int	phy_enable_idx(int, int);
 int	phy_enable(int, const char *);
 
