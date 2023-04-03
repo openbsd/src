@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.27 2022/12/12 19:18:25 kettenis Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.28 2023/04/03 01:30:33 dlg Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -29,6 +29,23 @@ struct regmap *regmap_byphandle(uint32_t);
 
 uint32_t regmap_read_4(struct regmap *, bus_size_t);
 void	regmap_write_4(struct regmap *, bus_size_t, uint32_t);
+
+/* Interface support */
+
+struct ifnet;
+
+struct if_device {
+	int		 if_node;
+	struct ifnet	*if_ifp;
+
+	LIST_ENTRY(if_device) if_list;
+	uint32_t	 if_phandle;
+};
+
+void	if_register(struct if_device *);
+
+struct ifnet *if_bynode(int);
+struct ifnet *if_byphandle(uint32_t);
 
 /* PHY support */
 
