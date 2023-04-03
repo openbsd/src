@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.49 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.50 2023/04/03 13:38:18 millert Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -232,6 +232,8 @@ acpibtn_notify(struct aml_node *node, int notify_type, void *arg)
 		if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
 		    "_LID", 0, NULL, &lid))
 			return (0);
+		if (sc->sc_sens.value == lid)
+			break;
 		sc->sc_sens.value = lid;
 
 		if (lid != 0)
