@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.75 2023/03/30 14:47:25 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.76 2023/04/03 10:48:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -918,6 +918,9 @@ addr2sa(const struct bgpd_addr *addr, uint16_t port, socklen_t *len)
 		sa_in6->sin6_scope_id = addr->scope_id;
 		*len = sizeof(struct sockaddr_in6);
 		break;
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		return (NULL);
 	}
 
 	return ((struct sockaddr *)&ss);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.442 2023/03/09 13:12:19 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.443 2023/04/03 10:48:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -213,7 +213,7 @@ typedef struct {
 %}
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE FIBPRIORITY RTABLE
-%token	NONE UNICAST VPN RD EXPORT EXPORTTRGT IMPORTTRGT DEFAULTROUTE
+%token	NONE UNICAST VPN FLOWSPEC RD EXPORT EXPORTTRGT IMPORTTRGT DEFAULTROUTE
 %token	RDE RIB EVALUATE IGNORE COMPARE RTR PORT
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
@@ -1995,6 +1995,7 @@ family		: IPV4	{ $$ = AFI_IPv4; }
 safi		: NONE		{ $$ = SAFI_NONE; }
 		| UNICAST	{ $$ = SAFI_UNICAST; }
 		| VPN		{ $$ = SAFI_MPLSVPN; }
+		| FLOWSPEC	{ $$ = SAFI_FLOWSPEC; }
 		;
 
 nettype		: STATIC { $$ = 1; }
@@ -3200,6 +3201,7 @@ lookup(char *s)
 		{ "ext-community",	EXTCOMMUNITY},
 		{ "fib-priority",	FIBPRIORITY},
 		{ "fib-update",		FIBUPDATE},
+		{ "flowspec",		FLOWSPEC},
 		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.469 2023/03/29 14:35:38 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.470 2023/04/03 10:48:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -152,11 +152,13 @@ enum reconf_action {
 #define	AFI_IPv6	2
 
 /* Subsequent Address Family Identifier as per RFC 4760 */
-#define	SAFI_NONE	0
-#define	SAFI_UNICAST	1
-#define	SAFI_MULTICAST	2
-#define	SAFI_MPLS	4
-#define	SAFI_MPLSVPN	128
+#define	SAFI_NONE		0
+#define	SAFI_UNICAST		1
+#define	SAFI_MULTICAST		2
+#define	SAFI_MPLS		4
+#define	SAFI_MPLSVPN		128
+#define	SAFI_FLOWSPEC		133
+#define	SAFI_VPNFLOWSPEC	134
 
 struct aid {
 	uint16_t	 afi;
@@ -172,7 +174,9 @@ extern const struct aid aid_vals[];
 #define	AID_INET6	2
 #define	AID_VPN_IPv4	3
 #define	AID_VPN_IPv6	4
-#define	AID_MAX		5
+#define	AID_FLOWSPECv4	5
+#define	AID_FLOWSPECv6	6
+#define	AID_MAX		7
 #define	AID_MIN		1	/* skip AID_UNSPEC since that is a dummy */
 
 #define AID_VALS	{					\
@@ -181,7 +185,9 @@ extern const struct aid aid_vals[];
 	{ AFI_IPv4, AF_INET, SAFI_UNICAST, "IPv4 unicast" },	\
 	{ AFI_IPv6, AF_INET6, SAFI_UNICAST, "IPv6 unicast" },	\
 	{ AFI_IPv4, AF_INET, SAFI_MPLSVPN, "IPv4 vpn" },	\
-	{ AFI_IPv6, AF_INET6, SAFI_MPLSVPN, "IPv6 vpn" }	\
+	{ AFI_IPv6, AF_INET6, SAFI_MPLSVPN, "IPv6 vpn" },	\
+	{ AFI_IPv4, AF_INET, SAFI_FLOWSPEC, "IPv4 flowspec" },	\
+	{ AFI_IPv6, AF_INET6, SAFI_FLOWSPEC, "IPv6 flowspec" },	\
 }
 
 #define BGP_MPLS_BOS	0x01
@@ -1004,18 +1010,22 @@ struct filter_peers {
 #define EXT_COMMUNITY_IANA		0x80
 #define EXT_COMMUNITY_NON_TRANSITIVE	0x40
 #define EXT_COMMUNITY_VALUE		0x3f
-/* extended types transitive */
+/* extended transitive types */
 #define EXT_COMMUNITY_TRANS_TWO_AS	0x00	/* 2 octet AS specific */
 #define EXT_COMMUNITY_TRANS_IPV4	0x01	/* IPv4 specific */
 #define EXT_COMMUNITY_TRANS_FOUR_AS	0x02	/* 4 octet AS specific */
 #define EXT_COMMUNITY_TRANS_OPAQUE	0x03	/* opaque ext community */
 #define EXT_COMMUNITY_TRANS_EVPN	0x06	/* EVPN RFC 7432 */
-/* extended types non-transitive */
+/* extended non-transitive types */
 #define EXT_COMMUNITY_NON_TRANS_TWO_AS	0x40	/* 2 octet AS specific */
 #define EXT_COMMUNITY_NON_TRANS_IPV4	0x41	/* IPv4 specific */
 #define EXT_COMMUNITY_NON_TRANS_FOUR_AS	0x42	/* 4 octet AS specific */
 #define EXT_COMMUNITY_NON_TRANS_OPAQUE	0x43	/* opaque ext community */
 #define EXT_COMMUNITY_UNKNOWN		-1
+/* generic transitive types */
+#define EXT_COMMUNITY_GEN_TWO_AS	0x80	/* 2 octet AS specific */
+#define EXT_COMMUNITY_GEN_IPV4		0x81	/* IPv4 specific */
+#define EXT_COMMUNITY_GEN_FOUR_AS	0x82	/* 4 octet AS specific */
 
 /* BGP Origin Validation State Extended Community RFC 8097 */
 #define EXT_COMMUNITY_SUBTYPE_OVS	0
@@ -1063,10 +1073,48 @@ struct ext_comm_pairs {
 	{ EXT_COMMUNITY_TRANS_EVPN, 0x01, "esi-lab" },		\
 	{ EXT_COMMUNITY_TRANS_EVPN, 0x02, "esi-rt" },		\
 								\
+	{ EXT_COMMUNITY_GEN_TWO_AS, 0x06, "flow-rate" },	\
+	{ EXT_COMMUNITY_GEN_TWO_AS, 0x0c, "flow-pps" },		\
+	{ EXT_COMMUNITY_GEN_TWO_AS, 0x07, "flow-action" },	\
+	{ EXT_COMMUNITY_GEN_TWO_AS, 0x08, "flow-rt-redir" },	\
+	{ EXT_COMMUNITY_GEN_IPV4,   0x08, "flow-rt-redir" },	\
+	{ EXT_COMMUNITY_GEN_FOUR_AS, 0x08, "flow-rt-redir" },	\
+	{ EXT_COMMUNITY_GEN_TWO_AS, 0x09, "flow-dscp" },	\
+								\
 	{ 0 }							\
 }
 
 extern const struct ext_comm_pairs iana_ext_comms[];
+
+/* BGP flowspec defines RFC 8955 and 8956 */
+#define FLOWSPEC_LEN_LIMIT		0xf0
+#define FLOWSPEC_OP_EOL			0x80
+#define FLOWSPEC_OP_AND			0x40
+#define FLOWSPEC_OP_LEN_MASK		0x30
+#define FLOWSPEC_OP_LEN_SHIFT		4
+#define FLOWSPEC_OP_LEN(op)					\
+	(1 << (((op) & FLOWSPEC_OP_LEN_MASK) >> FLOWSPEC_OP_LEN_SHIFT))
+#define FLOWSPEC_OP_NUM_LT		0x04
+#define FLOWSPEC_OP_NUM_GT		0x02
+#define FLOWSPEC_OP_NUM_EQ		0x01
+#define FLOWSPEC_OP_BIT_NOT		0x02
+#define FLOWSPEC_OP_BIT_MATCH		0x01
+
+#define FLOWSPEC_TYPE_MIN		1
+#define FLOWSPEC_TYPE_DEST		1
+#define FLOWSPEC_TYPE_SOURCE		2
+#define FLOWSPEC_TYPE_PROTO		3
+#define FLOWSPEC_TYPE_PORT		4
+#define FLOWSPEC_TYPE_DST_PORT		5
+#define FLOWSPEC_TYPE_SRC_PORT		6
+#define FLOWSPEC_TYPE_ICMP_TYPE		7
+#define FLOWSPEC_TYPE_ICMP_CODE		8
+#define FLOWSPEC_TYPE_TCP_FLAGS		9
+#define FLOWSPEC_TYPE_PKT_LEN		10
+#define FLOWSPEC_TYPE_DSCP		11
+#define FLOWSPEC_TYPE_FRAG		12
+#define FLOWSPEC_TYPE_FLOW		13
+#define FLOWSPEC_TYPE_MAX		13
 
 struct filter_prefix {
 	struct bgpd_addr	addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.598 2023/03/28 08:32:42 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.599 2023/04/03 10:48:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1474,9 +1474,14 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 					goto done;
 				}
 				break;
+			case AID_FLOWSPECv4:
+			case AID_FLOWSPECv6:
+				/* ignore flowspec for now */
 			default:
 				/* ignore unsupported multiprotocol AF */
-				break;
+				mpp += mplen;
+				mplen = 0;
+				continue;
 			}
 
 			mpp += pos;
@@ -1674,9 +1679,14 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 					goto done;
 				}
 				break;
+			case AID_FLOWSPECv4:
+			case AID_FLOWSPECv6:
+				/* ignore flowspec for now */
 			default:
 				/* ignore unsupported multiprotocol AF */
-				break;
+				mpp += mplen;
+				mplen = 0;
+				continue;
 			}
 
 			mpp += pos;
@@ -2314,7 +2324,6 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 		return (-1);
 
 	memset(&nexthop, 0, sizeof(nexthop));
-	nexthop.aid = aid;
 	switch (aid) {
 	case AID_INET6:
 		/*
@@ -2326,19 +2335,11 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 		 * traffic.
 		 */
 		if (nhlen != 16 && nhlen != 32) {
-			log_warnx("bad multiprotocol nexthop, bad size");
-			return (-1);
-		}
-		memcpy(&nexthop.v6.s6_addr, data, 16);
-		break;
-	case AID_VPN_IPv6:
-		if (nhlen != 24) {
-			log_warnx("bad multiprotocol nexthop, bad size %d",
+			log_warnx("bad %s nexthop, bad size %d", aid2str(aid),
 			    nhlen);
 			return (-1);
 		}
-		memcpy(&nexthop.v6, data + sizeof(uint64_t),
-		    sizeof(nexthop.v6));
+		memcpy(&nexthop.v6.s6_addr, data, 16);
 		nexthop.aid = AID_INET6;
 		break;
 	case AID_VPN_IPv4:
@@ -2356,24 +2357,43 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 		 * AID_VPN_IPv4 in nexthop and kroute.
 		 */
 		if (nhlen != 12) {
-			log_warnx("bad multiprotocol nexthop, bad size");
+			log_warnx("bad %s nexthop, bad size %d", aid2str(aid),
+			    nhlen);
 			return (-1);
 		}
 		nexthop.aid = AID_INET;
 		memcpy(&nexthop.v4, data + sizeof(uint64_t),
 		    sizeof(nexthop.v4));
 		break;
+	case AID_VPN_IPv6:
+		if (nhlen != 24) {
+			log_warnx("bad %s nexthop, bad size %d", aid2str(aid),
+			    nhlen);
+			return (-1);
+		}
+		memcpy(&nexthop.v6, data + sizeof(uint64_t),
+		    sizeof(nexthop.v6));
+		nexthop.aid = AID_INET6;
+		break;
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		/* nexthop must be 0 and ignored for flowspec */
+		if (nhlen != 0) {
+			log_warnx("bad %s nexthop, bad size %d", aid2str(aid),
+			    nhlen);
+			return (-1);
+		}
+		/* also ignore reserved (old SNPA) field as per RFC4760 */
+		return (totlen + 1);
 	default:
 		log_warnx("bad multiprotocol nexthop, bad AID");
 		return (-1);
 	}
 
-	nexthop_unref(state->nexthop);	/* just to be sure */
 	state->nexthop = nexthop_get(&nexthop);
 
 	/* ignore reserved (old SNPA) field as per RFC4760 */
 	totlen += nhlen + 1;
-	data += nhlen + 1;
 
 	return (totlen);
 }
