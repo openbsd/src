@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.11 2023/02/20 11:31:16 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.12 2023/04/03 18:59:47 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2023 Miodrag Vallat.
@@ -497,7 +497,7 @@ sti_pcirom_walk(struct sti_softc *sc, bus_space_tag_t romt,
 			break;
 		}
 
-		bus_space_read_region_1(romt, romh, dsoffs,
+		bus_space_read_region_1(romt, romh, offs + dsoffs,
 		    (uint8_t *)&ds, sizeof ds);
 		/* convert sizes to host endianness */
 		ds.dslen = letoh16(ds.dslen);
