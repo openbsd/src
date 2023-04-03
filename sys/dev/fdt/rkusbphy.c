@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkusbphy.c,v 1.1 2023/04/02 01:21:39 dlg Exp $ */
+/*	$OpenBSD: rkusbphy.c,v 1.2 2023/04/03 01:21:31 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -40,24 +40,53 @@
 
 struct rkusbphy_reg {
 	bus_size_t			r_offs;
+	unsigned int			r_shift;
+	uint32_t			r_mask;
+	uint32_t			r_set;
 };
 
 struct rkusbphy_port_regs {
-	struct rkusbphy_reg		pr_phy_sus;
-	struct rkusbphy_reg		pr_bvalid_det_en;
+	struct rkusbphy_reg		phy_enable;
+};
+
+struct rkusbphy_regs {
+	struct rkusbphy_reg		clk_enable;
+
+	struct rkusbphy_port_regs	otg;
+	struct rkusbphy_port_regs	host;
 };
 
 struct rkusbphy_chip {
-	bus_addr_t			c_base_addr;
-	struct rkusbphy_port_regs	c_regs;
+	bus_addr_t			 c_base_addr;
+	const struct rkusbphy_regs	*c_regs;
+};
+
+/*
+ * RK3568 has two USB2PHY nodes that have a GRF each. Each GRF has
+ * the same register layout.
+ */
+
+static const struct rkusbphy_regs rkusbphy_rk3568_regs = {
+	/*				shift,	mask,	set */
+	.clk_enable =	{ 0x0008,	4,	0x1,	0x0 },
+
+	.otg = {
+		.phy_enable =	{ 0x0000,	0,	0x1ff,	0x1d2 },
+	},
+
+	.host = {
+		.phy_enable =	{ 0x0004,	0,	0x1ff,	0x1d2 },
+	},
 };
 
 static const struct rkusbphy_chip rkusbphy_rk3568[] = {
 	{
 		.c_base_addr = 0xfe8a0000,
+		.c_regs = &rkusbphy_rk3568_regs,
 	},
 	{
 		.c_base_addr = 0xfe8b0000,
+		.c_regs = &rkusbphy_rk3568_regs,
 	},
 };
 
@@ -67,20 +96,32 @@ static const struct rkusbphy_chip rkusbphy_rk3568[] = {
 
 struct rkusbphy_softc {
 	struct device			 sc_dev;
-	const struct rkusbphy_chip	*sc_chip;
+	const struct rkusbphy_regs	*sc_regs;
 	struct regmap			*sc_grf;
 	int				 sc_node;
+
+	int				 sc_running;
 
 	struct phy_device		 sc_otg_phy;
 	struct phy_device		 sc_host_phy;
 };
 #define DEVNAME(_sc) ((_sc)->sc_dev.dv_xname)
 
-static int	rkusbphy_match(struct device *, void *, void *);
-static void	rkusbphy_attach(struct device *, struct device *, void *);
+static int		rkusbphy_match(struct device *, void *, void *);
+static void		rkusbphy_attach(struct device *, struct device *,
+			    void *);
 
-static int	rkusbphy_otg_phy_enable(void *, uint32_t *);
-static int	rkusbphy_host_phy_enable(void *, uint32_t *);
+static uint32_t		rkusbphy_rd(struct rkusbphy_softc *,
+			    const struct rkusbphy_reg *);
+static int		rkusbphy_isset(struct rkusbphy_softc *,
+			    const struct rkusbphy_reg *);
+static void		rkusbphy_wr(struct rkusbphy_softc *,
+			    const struct rkusbphy_reg *, uint32_t);
+static void		rkusbphy_set(struct rkusbphy_softc *,
+			    const struct rkusbphy_reg *);
+
+static int		rkusbphy_otg_phy_enable(void *, uint32_t *);
+static int		rkusbphy_host_phy_enable(void *, uint32_t *);
 
 struct rkusbphy_port_config {
 	const char			*pc_name;
@@ -160,11 +201,11 @@ rkusbphy_attach(struct device *parent, struct device *self, void *aux)
 		const struct rkusbphy_chip *c = &id->id_chips[i];
 		if (faa->fa_reg[0].addr == c->c_base_addr) {
 			printf(": phy %zu\n", i);
-			sc->sc_chip = c;
+			sc->sc_regs = c->c_regs;
 			break;
 		}
 	}
-	if (sc->sc_chip == NULL) {
+	if (sc->sc_regs == NULL) {
 		printf(": unknown base address 0x%llu\n", faa->fa_reg[0].addr);
 		return;
 	}
@@ -179,10 +220,43 @@ rkusbphy_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	reset_assert_all(sc->sc_node);
-
 	rkusbphy_register(sc, &sc->sc_otg_phy, &rkusbphy_otg_config);
 	rkusbphy_register(sc, &sc->sc_host_phy, &rkusbphy_host_config);
+}
+
+static uint32_t
+rkusbphy_rd(struct rkusbphy_softc *sc, const struct rkusbphy_reg *r)
+{
+	uint32_t v;
+
+	if (r->r_mask == 0)
+		return (0);
+
+	v = regmap_read_4(sc->sc_grf, r->r_offs);
+
+	return ((v >> r->r_shift) & r->r_mask);
+}
+
+static int
+rkusbphy_isset(struct rkusbphy_softc *sc, const struct rkusbphy_reg *r)
+{
+	return (rkusbphy_rd(sc, r) == r->r_set);
+}
+
+static void
+rkusbphy_wr(struct rkusbphy_softc *sc, const struct rkusbphy_reg *r, uint32_t v)
+{
+	if (r->r_mask == 0)
+		return;
+
+	regmap_write_4(sc->sc_grf, r->r_offs,
+	    (r->r_mask << (r->r_shift + 16)) | (v << r->r_shift));
+}
+
+static void
+rkusbphy_set(struct rkusbphy_softc *sc, const struct rkusbphy_reg *r)
+{
+	rkusbphy_wr(sc, r, r->r_set);
 }
 
 static void
@@ -213,6 +287,17 @@ rkusbphy_phy_supply(struct rkusbphy_softc *sc, int node)
 {
 	int phandle;
 
+	if (!sc->sc_running) {
+		clock_enable(sc->sc_node, "phyclk");
+		if (!rkusbphy_isset(sc, &sc->sc_regs->clk_enable)) {
+			rkusbphy_set(sc, &sc->sc_regs->clk_enable);
+
+			delay(1200);
+		}
+
+		sc->sc_running = 1;
+	}
+
 	phandle = OF_getpropint(node, "phy-supply", 0);
 	if (phandle == 0)
 		return;
@@ -227,6 +312,9 @@ rkusbphy_otg_phy_enable(void *cookie, uint32_t *cells)
 
 	rkusbphy_phy_supply(sc, sc->sc_otg_phy.pd_node);
 
+	rkusbphy_set(sc, &sc->sc_regs->otg.phy_enable);
+	delay(1500);
+
 	return (EINVAL);
 }
 
@@ -236,6 +324,9 @@ rkusbphy_host_phy_enable(void *cookie, uint32_t *cells)
 	struct rkusbphy_softc *sc = cookie;
 
 	rkusbphy_phy_supply(sc, sc->sc_host_phy.pd_node);
+
+	rkusbphy_set(sc, &sc->sc_regs->host.phy_enable);
+	delay(1500);
 
 	return (EINVAL);
 }
