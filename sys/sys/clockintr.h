@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.3 2023/03/09 03:50:38 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.4 2023/04/03 00:20:24 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -32,6 +32,7 @@ struct clockintr_stat {
 
 #ifdef _KERNEL
 
+#include <sys/mutex.h>
 #include <sys/queue.h>
 
 /*
@@ -62,16 +63,16 @@ intrclock_trigger(struct intrclock *ic)
  * Struct member protections:
  *
  *	I	Immutable after initialization.
- *	o	Owned by a single CPU.
+ *	m	Parent queue mutex (cl_queue->cq_mtx).
  */
 struct clockintr_queue;
 struct clockintr {
-	uint64_t cl_expiration;				/* [o] dispatch time */
-	TAILQ_ENTRY(clockintr) cl_elink;		/* [o] cq_est glue */
-	TAILQ_ENTRY(clockintr) cl_plink;		/* [o] cq_pend glue */
+	uint64_t cl_expiration;				/* [m] dispatch time */
+	TAILQ_ENTRY(clockintr) cl_elink;		/* [m] cq_est glue */
+	TAILQ_ENTRY(clockintr) cl_plink;		/* [m] cq_pend glue */
 	void (*cl_func)(struct clockintr *, void *);	/* [I] callback */
 	struct clockintr_queue *cl_queue;		/* [I] parent queue */
-	u_int cl_flags;					/* [o] CLST_* flags */
+	u_int cl_flags;					/* [m] CLST_* flags */
 };
 
 #define CLST_PENDING	0x00000001		/* scheduled to run */
@@ -81,14 +82,17 @@ struct clockintr {
  *
  * Struct member protections:
  *
+ *	a	Modified atomically.
  *	I	Immutable after initialization.
+ *	m	Per-queue mutex (cq_mtx).
  *	o	Owned by a single CPU.
  */
 struct clockintr_queue {
+	struct mutex cq_mtx;		/* [a] per-queue mutex */
 	uint64_t cq_uptime;		/* [o] cached uptime */
-	TAILQ_HEAD(, clockintr) cq_est;	/* [o] established clockintr list */
-	TAILQ_HEAD(, clockintr) cq_pend;/* [o] pending clockintr list */
-	struct clockintr *cq_running;	/* [o] running clockintr */
+	TAILQ_HEAD(, clockintr) cq_est;	/* [m] established clockintr list */
+	TAILQ_HEAD(, clockintr) cq_pend;/* [m] pending clockintr list */
+	struct clockintr *cq_running;	/* [m] running clockintr */
 	struct clockintr *cq_hardclock;	/* [o] hardclock handle */
 	struct clockintr *cq_schedclock;/* [o] schedclock handle, if any */
 	struct clockintr *cq_statclock;	/* [o] statclock handle */
