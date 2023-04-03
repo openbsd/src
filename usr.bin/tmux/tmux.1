@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.917 2023/03/27 08:47:57 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.918 2023/04/03 07:39:37 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2023 $
+.Dd $Mdocdate: April 3 2023 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1278,7 +1278,10 @@ behave like
 .Ic attach-session
 if
 .Ar session-name
-already exists; in this case,
+already exists;
+if
+.Fl A
+is given,
 .Fl D
 behaves like
 .Fl d
