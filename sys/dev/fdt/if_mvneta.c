@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.28 2023/02/27 09:59:46 jmatthew Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.29 2023/04/03 01:46:18 dlg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -174,6 +174,8 @@ struct mvneta_softc {
 	int			 sc_link;
 	int			 sc_sfp;
 	int			 sc_node;
+
+	struct if_device	 sc_ifd;
 
 #if NKSTAT > 0
 	struct mutex		 sc_kstat_lock;
@@ -807,6 +809,10 @@ mvneta_attach_deferred(struct device *self)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp);
+
+	sc->sc_ifd.if_node = sc->sc_node;
+	sc->sc_ifd.if_ifp = ifp;
+	if_register(&sc->sc_ifd);
 
 #if NKSTAT > 0
 	mvneta_kstat_attach(sc);
