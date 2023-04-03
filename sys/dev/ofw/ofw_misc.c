@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.39 2023/04/03 01:30:32 dlg Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.40 2023/04/03 01:34:06 dlg Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -151,6 +151,9 @@ struct ifnet *
 if_byphandle(uint32_t phandle)
 {
 	struct if_device *ifd;
+
+	if (phandle == 0)
+		return (NULL);
 
 	LIST_FOREACH(ifd, &if_devices, if_list) {
 		if (ifd->if_phandle == phandle)
