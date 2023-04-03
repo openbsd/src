@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_fdt.c,v 1.22 2023/03/10 10:22:55 kettenis Exp $	*/
+/*	$OpenBSD: xhci_fdt.c,v 1.23 2023/04/03 01:55:00 dlg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -362,30 +362,14 @@ xhci_init_phy(struct xhci_fdt_softc *sc, uint32_t *cells)
 }
 
 void
-xhci_init_phys(struct xhci_fdt_softc *sc)
+xhci_phy_enable(struct xhci_fdt_softc *sc, char *name)
 {
 	uint32_t *phys;
 	uint32_t *phy;
-	uint32_t usb_phy;
-	int len, idx;
+	int idx, len;
 
-	/*
-	 * Legacy binding; assume there only is a single USB PHY.
-	 */
-	usb_phy = OF_getpropint(sc->sc_node, "usb-phy", 0);
-	if (usb_phy) {
-		xhci_init_phy(sc, &usb_phy);
-		return;
-	}
-
-	/*
-	 * Generic PHY binding; only initialize USB 3 PHY for now.
-	 */
-	idx = OF_getindex(sc->sc_node, "usb3-phy", "phy-names");
+	idx = OF_getindex(sc->sc_node, name, "phy-names");
 	if (idx < 0)
-		return;
-
-	if (phy_enable_idx(sc->sc_node, idx) != ENXIO)
 		return;
 
 	len = OF_getproplen(sc->sc_node, "phys");
@@ -407,6 +391,26 @@ xhci_init_phys(struct xhci_fdt_softc *sc)
 		idx--;
 	}
 	free(phys, M_TEMP, len);
+}
+
+void
+xhci_init_phys(struct xhci_fdt_softc *sc)
+{
+	int rv;
+
+	rv = phy_enable_prop_idx(sc->sc_node, "usb-phy", 0);
+	if (rv != 0) {
+		rv = phy_enable(sc->sc_node, "usb2-phy");
+		if (rv != 0)
+			xhci_phy_enable(sc, "usb2-phy");
+	}
+
+	rv = phy_enable_prop_idx(sc->sc_node, "usb-phy", 1);
+	if (rv != 0) {
+		rv = phy_enable(sc->sc_node, "usb3-phy");
+		if (rv != 0)
+			xhci_phy_enable(sc, "usb3-phy");
+	}
 }
 
 /*
