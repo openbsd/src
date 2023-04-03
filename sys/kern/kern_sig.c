@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.305 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.306 2023/04/03 11:57:50 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -2018,31 +2018,32 @@ single_thread_check_locked(struct proc *p, int deep, int s)
 
 	SCHED_ASSERT_LOCKED();
 
-	if (pr->ps_single != NULL && pr->ps_single != p) {
-		do {
-			/* if we're in deep, we need to unwind to the edge */
-			if (deep) {
-				if (pr->ps_flags & PS_SINGLEUNWIND)
-					return (ERESTART);
-				if (pr->ps_flags & PS_SINGLEEXIT)
-					return (EINTR);
-			}
+	if (pr->ps_single == NULL || pr->ps_single == p)
+		return (0);
 
-			if (atomic_dec_int_nv(&pr->ps_singlecount) == 0)
-				wakeup(&pr->ps_singlecount);
+	do {
+		/* if we're in deep, we need to unwind to the edge */
+		if (deep) {
+			if (pr->ps_flags & PS_SINGLEUNWIND)
+				return (ERESTART);
+			if (pr->ps_flags & PS_SINGLEEXIT)
+				return (EINTR);
+		}
 
-			if (pr->ps_flags & PS_SINGLEEXIT) {
-				SCHED_UNLOCK(s);
-				KERNEL_LOCK();
-				exit1(p, 0, 0, EXIT_THREAD_NOCHECK);
-				/* NOTREACHED */
-			}
+		if (atomic_dec_int_nv(&pr->ps_singlecount) == 0)
+			wakeup(&pr->ps_singlecount);
 
-			/* not exiting and don't need to unwind, so suspend */
-			p->p_stat = SSTOP;
-			mi_switch();
-		} while (pr->ps_single != NULL);
-	}
+		if (pr->ps_flags & PS_SINGLEEXIT) {
+			SCHED_UNLOCK(s);
+			KERNEL_LOCK();
+			exit1(p, 0, 0, EXIT_THREAD_NOCHECK);
+			/* NOTREACHED */
+		}
+
+		/* not exiting and don't need to unwind, so suspend */
+		p->p_stat = SSTOP;
+		mi_switch();
+	} while (pr->ps_single != NULL);
 
 	return (0);
 }
