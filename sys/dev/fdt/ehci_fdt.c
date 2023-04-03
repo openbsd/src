@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci_fdt.c,v 1.9 2022/05/23 11:37:22 dlg Exp $ */
+/*	$OpenBSD: ehci_fdt.c,v 1.10 2023/04/03 01:57:41 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -30,6 +30,7 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/ofw_pinctrl.h>
 #include <dev/ofw/ofw_regulator.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/usb/usb.h>
@@ -252,6 +253,9 @@ ehci_init_phys(struct ehci_fdt_softc *sc)
 	uint32_t *phys;
 	uint32_t *phy;
 	int len;
+
+	if (phy_enable(sc->sc_node, "usb") == 0)
+		return;
 
 	len = OF_getproplen(sc->sc_node, "phys");
 	if (len <= 0)
