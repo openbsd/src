@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.443 2023/04/03 10:48:00 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.444 2023/04/04 16:01:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -89,24 +89,6 @@ struct sym {
 int		 symset(const char *, const char *, int);
 char		*symget(const char *);
 
-static struct bgpd_config	*conf;
-static struct network_head	*netconf;
-static struct peer_head		*new_peers, *cur_peers;
-static struct rtr_config_head	*cur_rtrs;
-static struct peer		*curpeer;
-static struct peer		*curgroup;
-static struct rde_rib		*currib;
-static struct l3vpn		*curvpn;
-static struct prefixset		*curpset, *curoset;
-static struct roa_tree		*curroatree;
-static struct rtr_config	*currtr;
-static struct filter_head	*filter_l;
-static struct filter_head	*peerfilter_l;
-static struct filter_head	*groupfilter_l;
-static struct filter_rule	*curpeer_filter[2];
-static struct filter_rule	*curgroup_filter[2];
-static int			 noexpires;
-
 struct filter_rib_l {
 	struct filter_rib_l	*next;
 	char			 name[PEER_DESCR_LEN];
@@ -179,6 +161,24 @@ static void	 add_roa_set(struct prefixset_item *, uint32_t, uint8_t,
 static struct rtr_config	*get_rtr(struct bgpd_addr *);
 static int	 insert_rtr(struct rtr_config *);
 static int	 merge_aspa_set(uint32_t, struct aspa_tas_l *, time_t);
+
+static struct bgpd_config	*conf;
+static struct network_head	*netconf;
+static struct peer_head		*new_peers, *cur_peers;
+static struct rtr_config_head	*cur_rtrs;
+static struct peer		*curpeer;
+static struct peer		*curgroup;
+static struct rde_rib		*currib;
+static struct l3vpn		*curvpn;
+static struct prefixset		*curpset, *curoset;
+static struct roa_tree		*curroatree;
+static struct rtr_config	*currtr;
+static struct filter_head	*filter_l;
+static struct filter_head	*peerfilter_l;
+static struct filter_head	*groupfilter_l;
+static struct filter_rule	*curpeer_filter[2];
+static struct filter_rule	*curgroup_filter[2];
+static int			 noexpires;
 
 typedef struct {
 	union {
@@ -278,6 +278,8 @@ grammar		: /* empty */
 		| grammar origin_set '\n'
 		| grammar rtr '\n'
 		| grammar rib '\n'
+		| grammar network '\n'
+		| grammar mrtdump '\n'
 		| grammar conf_main '\n'
 		| grammar l3vpn '\n'
 		| grammar neighbor '\n'
@@ -807,7 +809,6 @@ conf_main	: AS as4number		{
 			}
 			free($2);
 		}
-		| network
 		| DUMP STRING STRING optnumber		{
 			int action;
 
@@ -868,7 +869,6 @@ conf_main	: AS as4number		{
 			free($3);
 			free($5);
 		}
-		| mrtdump
 		| RDE STRING EVALUATE		{
 			if (!strcmp($2, "route-age"))
 				conf->flags |= BGPD_FLAG_DECISION_ROUTEAGE;
@@ -1151,8 +1151,8 @@ inout		: IN		{ $$ = 1; }
 		| OUT		{ $$ = 0; }
 		;
 
-restricted	: RESTRICTED	{ $$ = 1; }
-		| /* nothing */	{ $$ = 0; }
+restricted	: /* empty */	{ $$ = 0; }
+		| RESTRICTED	{ $$ = 1; }
 		;
 
 address		: STRING		{
