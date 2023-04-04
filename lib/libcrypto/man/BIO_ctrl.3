@@ -1,7 +1,25 @@
-.\"	$OpenBSD: BIO_ctrl.3,v 1.16 2022/08/18 18:42:13 tb Exp $
-.\"	OpenSSL b055fceb Thu Oct 20 09:56:18 2016 +0100
+.\" $OpenBSD: BIO_ctrl.3,v 1.17 2023/04/04 17:10:37 schwarze Exp $
+.\" full merge up to: OpenSSL 24a535eaf Tue Sep 22 13:14:20 2020 +0100
+.\" selective merge up to: OpenSSL 0c5bc96f Tue Mar 15 13:57:22 2022 +0000
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2016 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 18 2022 $
+.Dd $Mdocdate: April 4 2023 $
 .Dt BIO_CTRL 3
 .Os
 .Sh NAME
@@ -75,7 +93,7 @@
 .In openssl/bio.h
 .Ft long
 .Fo BIO_ctrl
-.Fa "BIO *bp"
+.Fa "BIO *b"
 .Fa "int cmd"
 .Fa "long larg"
 .Fa "void *parg"
@@ -84,17 +102,17 @@
 .Fo BIO_callback_ctrl
 .Fa "BIO *b"
 .Fa "int cmd"
-.Fa "BIO_info_cb cb"
+.Fa "BIO_info_cb *cb"
 .Fc
 .Ft char *
 .Fo BIO_ptr_ctrl
-.Fa "BIO *bp"
+.Fa "BIO *b"
 .Fa "int cmd"
 .Fa "long larg"
 .Fc
 .Ft long
 .Fo BIO_int_ctrl
-.Fa "BIO *bp"
+.Fa "BIO *b"
 .Fa "int cmd"
 .Fa "long larg"
 .Fa "int iarg"
@@ -175,6 +193,54 @@ Macros specific to a particular type of BIO
 are described in the specific BIO's manual page
 as well as any special features of the standard calls.
 .Pp
+Depending on the
+.Fa cmd
+and on the type of
+.Fa b ,
+.Fn BIO_ctrl
+may have a read-only effect on
+.Fa b
+or change data in
+.Fa b
+or in its sub-structures.
+It may also have a side effect of changing the memory pointed to by
+.Fa parg .
+.Pp
+.Fn BIO_callback_ctrl
+does not call
+.Fn BIO_ctrl
+but instead requires that the BIO type of
+.Fa b
+provides a dedicated
+.Fa callback_ctrl
+function pointer, which is built into the library for some standard BIO
+types and can be provided with
+.Xr BIO_meth_set_callback_ctrl 3
+for application-defined BIO types.
+.Pp
+.Fn BIO_ptr_ctrl
+calls
+.Fn BIO_ctrl
+with
+.Fa parg
+pointing to the location of a temporary pointer variable initialized to
+.Dv NULL .
+.Pp
+.Fn BIO_int_ctrl
+calls
+.Fn BIO_ctrl
+with
+.Fa parg
+pointing to the location of a temporary
+.Vt int
+variable initialized to
+.Fa iarg .
+If
+.Fn BIO_ctrl
+changes the value stored at
+.Pf * Fa parg ,
+the new value is ignored.
+.Pp
 .Fn BIO_reset
 typically resets a BIO to some initial state.
 In the case of file related BIOs, for example,
@@ -234,6 +300,46 @@ and
 are macros which call
 .Fn BIO_ctrl .
 .Sh RETURN VALUES
+The meaning of the return values of
+.Fn BIO_ctrl ,
+.Fn BIO_callback_ctrl ,
+and
+.Fn BIO_int_ctrl
+depends on both the type of
+.Fa b
+and on the
+.Fa cmd .
+If
+.Fa b
+is a
+.Dv NULL
+pointer, no action occurs and 0 is returned.
+The return value \-2 usually indicates a fatal error.
+In particular, it is returned if the
+.Fa cmd
+is unsupported by the type of
+.Fa b .
+If a callback was installed with
+.Xr BIO_set_callback_ex 3
+or
+.Xr BIO_set_callback 3
+and returns a negative value, that value is returned.
+.Pp
+.Fn BIO_ptr_ctrl
+returns
+.Dv NULL
+if the
+.Fn BIO_ctrl
+call returns a negative value or does not change
+.Pf * Fa parg ,
+or the pointer it puts into
+.Pf * Fa parg
+otherwise.
+.Pp
+.Fn BIO_int_ctrl
+returns the return value of
+.Fn BIO_ctrl .
+.Pp
 .Fn BIO_reset
 normally returns 1 for success and 0 or -1 for failure.
 File BIOs are an exception, returning 0 for success and -1 for failure.
@@ -295,7 +401,7 @@ to the next BIO in the chain.
 This often means there is no need to locate the required BIO for
 a particular operation: it can be called on a chain and it will
 be automatically passed to the relevant BIO.
-However this can cause unexpected results.
+However, this can cause unexpected results.
 For example no current filter BIOs implement
 .Fn BIO_seek ,
 but this may still succeed if the chain ends
