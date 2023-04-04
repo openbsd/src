@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.42 2023/04/03 10:51:50 kn Exp $
+#	$OpenBSD: install.md,v 1.43 2023/04/04 08:31:35 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ NCPU=$(sysctl -n hw.ncpufound)
 MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
-	local _disk=$1 _mdec _plat
+	local _disk=$1 _chunks _bootdisk _mdec _plat
 
 	case $(sysctl -n machdep.compatible) in
 	apple,*)		_plat=apple;;
@@ -59,19 +59,22 @@ md_installboot() {
 		done)
 		;;
 	rpi)
-		mount ${MOUNT_ARGS_msdos} /dev/${_disk}i /mnt/mnt
-		cp $_mdec/{bootcode.bin,start*.elf,fixup*.dat,*.dtb} /mnt/mnt/
-		cp $_mdec/u-boot.bin /mnt/mnt/
-		mkdir -p /mnt/mnt/overlays
-		cp $_mdec/disable-bt.dtbo /mnt/mnt/overlays
-		if [[ ! -f /mnt/mnt/config.txt ]]; then
-			cat > /mnt/mnt/config.txt<<-__EOT
-				arm_64bit=1
-				enable_uart=1
-				dtoverlay=disable-bt
-				kernel=u-boot.bin
-			__EOT
-		fi
+		_chunks=$(get_softraid_chunks)
+		for _bootdisk in ${_chunks:-$_disk}; do
+			mount ${MOUNT_ARGS_msdos} /dev/${_bootdisk}i /mnt/mnt
+			cp $_mdec/{bootcode.bin,start*.elf,fixup*.dat,*.dtb} /mnt/mnt/
+			cp $_mdec/u-boot.bin /mnt/mnt/
+			mkdir -p /mnt/mnt/overlays
+			cp $_mdec/disable-bt.dtbo /mnt/mnt/overlays
+			if [[ ! -f /mnt/mnt/config.txt ]]; then
+				cat > /mnt/mnt/config.txt<<-__EOT
+					arm_64bit=1
+					enable_uart=1
+					dtoverlay=disable-bt
+					kernel=u-boot.bin
+				__EOT
+			fi
+		done
 		umount /mnt/mnt
 		;;
 	esac
