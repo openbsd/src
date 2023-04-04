@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndp.c,v 1.107 2022/12/28 21:30:17 jmc Exp $	*/
+/*	$OpenBSD: ndp.c,v 1.108 2023/04/04 21:18:04 bluhm Exp $	*/
 /*	$KAME: ndp.c,v 1.101 2002/07/17 08:46:33 itojun Exp $	*/
 
 /*
@@ -137,8 +137,7 @@ static int rdomain;
 int
 main(int argc, char *argv[])
 {
-	int		 ch;
-	int		 mode = 0;
+	int		 ch, mode = 0, error = 0;
 	char		*arg = NULL;
 	const char	*errstr;
 
@@ -209,7 +208,7 @@ main(int argc, char *argv[])
 		if (argc != 0) {
 			usage();
 		}
-		delete(arg);
+		error = delete(arg);
 		break;
 	case 'f':
 		if (argc != 0)
@@ -232,7 +231,7 @@ main(int argc, char *argv[])
 		get(argv[0]);
 		break;
 	}
-	exit(0);
+	return (error);
 }
 
 /*
@@ -414,46 +413,46 @@ get(const char *host)
 int
 delete(const char *host)
 {
-	struct sockaddr_in6 *sin = &sin_m;
-	struct rt_msghdr *rtm = &m_rtmsg.m_rtm;
+	struct sockaddr_in6 *sin;
+	struct rt_msghdr *rtm;
 	struct sockaddr_dl *sdl;
 
+	sin = &sin_m;
+	rtm = &m_rtmsg.m_rtm;
+
 	getsocket();
-	sin_m = blank_sin;
+	sin_m = blank_sin;		/* struct copy */
 	if (parse_host(host, sin))
 		return 1;
 	if (rtget(&sin, &sdl)) {
-		errx(1, "RTM_GET(%s) failed", host);
+		warn("%s", host);
+		return 1;
 	}
-
 	if (IN6_ARE_ADDR_EQUAL(&sin->sin6_addr, &sin_m.sin6_addr) &&
 	    sin->sin6_scope_id == sin_m.sin6_scope_id) {
 		if (sdl->sdl_family == AF_LINK && rtm->rtm_flags & RTF_LLINFO) {
 			if (rtm->rtm_flags & RTF_LOCAL)
-				return (0);
-			if (!(rtm->rtm_flags & RTF_GATEWAY))
+				return 0;
+			if ((rtm->rtm_flags & RTF_GATEWAY) == 0)
 				goto delete;
 		}
 		/*
 		 * IPv4 arp command retries with sin_other = SIN_PROXY here.
 		 */
-		warnx("delete: cannot delete non-NDP entry");
+		warnx("delete: cannot locate %s", host);
 		return 1;
 	}
 
 delete:
 	if (sdl->sdl_family != AF_LINK) {
 		printf("cannot locate %s\n", host);
-		return (1);
+		return 1;
 	}
-	if (rtmsg(RTM_DELETE) == 0) {
-		getnameinfo((struct sockaddr *)sin,
-		    sin->sin6_len, host_buf,
-		    sizeof(host_buf), NULL, 0,
-		    (nflag ? NI_NUMERICHOST : 0));
-		printf("%s (%s) deleted\n", host, host_buf);
-	}
-
+	if (rtmsg(RTM_DELETE))
+		return 1;
+	getnameinfo((struct sockaddr *)sin, sin->sin6_len, host_buf,
+	    sizeof(host_buf), NULL, 0, (nflag ? NI_NUMERICHOST : 0));
+	printf("%s (%s) deleted\n", host, host_buf);
 	return 0;
 }
 

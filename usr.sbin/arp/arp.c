@@ -1,4 +1,4 @@
-/*	$OpenBSD: arp.c,v 1.88 2019/09/16 20:49:28 kn Exp $ */
+/*	$OpenBSD: arp.c,v 1.89 2023/04/04 21:18:04 bluhm Exp $ */
 /*	$NetBSD: arp.c,v 1.12 1995/04/24 13:25:18 cgd Exp $ */
 
 /*
@@ -408,17 +408,17 @@ delete(const char *host)
 	getsocket();
 	sin_m = blank_sin;		/* struct copy */
 	if (parse_host(host, &sin->sin_addr))
-		return (1);
+		return 1;
 tryagain:
 	if (rtget(&sin, &sdl)) {
 		warn("%s", host);
-		return (1);
+		return 1;
 	}
 	if (sin->sin_addr.s_addr == sin_m.sin_addr.s_addr) {
 		if (sdl->sdl_family == AF_LINK && rtm->rtm_flags & RTF_LLINFO) {
 			if (rtm->rtm_flags & RTF_LOCAL)
-				return (0);
-		    	if (!(rtm->rtm_flags & RTF_GATEWAY))
+				return 0;
+			if ((rtm->rtm_flags & RTF_GATEWAY) == 0)
 				switch (sdl->sdl_type) {
 				case IFT_ETHER:
 				case IFT_FDDI:
@@ -432,8 +432,8 @@ tryagain:
 	}
 
 	if (sin_m.sin_other & SIN_PROXY) {
-		warnx("delete: can't locate %s", host);
-		return (1);
+		warnx("delete: cannot locate %s", host);
+		return 1;
 	} else {
 		sin_m.sin_other = SIN_PROXY;
 		goto tryagain;
@@ -441,12 +441,12 @@ tryagain:
 delete:
 	if (sdl->sdl_family != AF_LINK) {
 		printf("cannot locate %s\n", host);
-		return (1);
+		return 1;
 	}
 	if (rtmsg(RTM_DELETE))
-		return (1);
+		return 1;
 	printf("%s (%s) deleted\n", host, inet_ntoa(sin->sin_addr));
-	return (0);
+	return 0;
 }
 
 /*
