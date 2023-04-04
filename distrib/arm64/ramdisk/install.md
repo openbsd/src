@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.43 2023/04/04 08:31:35 kn Exp $
+#	$OpenBSD: install.md,v 1.44 2023/04/04 08:39:40 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 # machine dependent section of installation/upgrade script.
 #
 
+MDBOOTSR=y
 NCPU=$(sysctl -n hw.ncpufound)
 MOUNT_ARGS_msdos="-o-l"
 
