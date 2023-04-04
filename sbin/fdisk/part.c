@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.149 2023/04/02 18:44:13 miod Exp $	*/
+/*	$OpenBSD: part.c,v 1.150 2023/04/04 21:43:06 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -144,7 +144,7 @@ struct gpt_type {
 	int	 gt_attr;
 #define	GTATTR_PROTECT		(1 << 0)
 #define	GTATTR_PROTECT_EFISYS	(1 << 1)
-	char	*gt_desc;
+	char	*gt_desc;	/* NULL == try menu name (a.k.a. mi_name) */
 	char	*gt_guid;
 };
 
@@ -186,78 +186,37 @@ struct gpt_type {
 #define CHROME_KERNEL_GUID	"fe3a2a5d-4f32-41a7-b725-accc3285a309"
 
 const struct gpt_type		gpt_types[] = {
-	{ 0,
-	  NULL,				/* Unused */
-	  UNUSED_GUID },
-	{ 0,
-	  NULL,				/* Legacy MBR */
-	  LEGACY_MBR_GUID },
-	{ 0,
-	  NULL,				/* Linux swap */
-	  LINUX_SWAP_GUID },
-	{ 0,
-	  NULL,				/* Linux files* */
-	  LINUX_FILES_GUID },
 	{ GTATTR_PROTECT,
-	  NULL,				/* BIOS Boot */
-	  BIOS_BOOT_GUID },
+	     NULL,	/* BIOS Boot */		BIOS_BOOT_GUID },
 	{ GTATTR_PROTECT,
-	  NULL,				/* HiFive BBL */
-	  HIFIVE_BBL_GUID },
-	{ 0,
-	  NULL,				/* BeOS/i386 */
-	  BEOS_I386_GUID },
-	{ 0,
-	  NULL,				/* MacOS X boot */
-	  MACOS_X_BOOT_GUID },
-	{ 0,
-	   NULL,				/* MacOS X HFS+ */
-	  MACOS_X_HFS_GUID },
-	{ 0,
-	  NULL,				/* NetBSD */
-	  NETBSD_GUID },
-	{ 0,
-	  NULL,				/* FreeBSD */
-	  FREEBSD_GUID },
-	{ GTATTR_PROTECT | GTATTR_PROTECT_EFISYS,
-	  NULL,				/* APFS Recovery */
-	  APFS_RECOVERY_GUID },
-	{ 0,
-	  NULL,				/* MacOS X */
-	  MACOS_X_GUID },
+	     NULL,	/* HiFive BBL */	HIFIVE_BBL_GUID },
 	{ GTATTR_PROTECT,
-	  NULL,				/* HiFive FSBL */
-	  HIFIVE_FSBL_GUID },
+	     NULL,	/* HiFive FSBL */	HIFIVE_FSBL_GUID },
 	{ GTATTR_PROTECT | GTATTR_PROTECT_EFISYS,
-	  NULL,				/* APFS ISC */
-	  APFS_ISC_GUID },
-	{ 0,
-	  NULL,				/* Solaris */
-	  SOLARIS_GUID },
+	     NULL,	/* APFS Recovery */	APFS_RECOVERY_GUID },
 	{ GTATTR_PROTECT | GTATTR_PROTECT_EFISYS,
-	  NULL,				/* APFS */
-	  APFS_GUID },
-	{ 0,
-	  NULL,				/* OpenBSD */
-	  OPENBSD_GUID },
-	{ 0,
-	  NULL,				/* LinuxSwap DR */
-	  LINUXSWAP_DR_GUID },
-	{ 0,
-	  NULL,				/* EFI Sys */
-	  EFI_SYSTEM_PARTITION_GUID },
-	{ 0,
-	  NULL,				/* Win Recovery*/
-	  WIN_RECOVERY_GUID },
-	{ 0,
-	  NULL,				/* Linux VM */
-	  LINUX_LVM_GUID },
-	{ 0,
-	  NULL,				/* Microsoft basic data */
-	  MICROSOFT_BASIC_DATA_GUID },
-	{ 0,
-	  NULL,				/* ChromeKernel */
-	  CHROME_KERNEL_GUID },
+	     NULL,	/* APFS ISC */		APFS_ISC_GUID },
+	{ GTATTR_PROTECT | GTATTR_PROTECT_EFISYS,
+	     NULL,	/* APFS */		APFS_GUID },
+
+	{ 0, NULL,	/* Unused */		UNUSED_GUID },
+	{ 0, NULL,	/* Legacy MBR */	LEGACY_MBR_GUID },
+	{ 0, NULL,	/* Linux swap */	LINUX_SWAP_GUID },
+	{ 0, NULL,	/* Linux files* */	LINUX_FILES_GUID },
+	{ 0, NULL,	/* MacOS X */		MACOS_X_GUID },
+	{ 0, NULL,	/* Solaris */		SOLARIS_GUID },
+	{ 0, NULL,	/* BeOS/i386 */		BEOS_I386_GUID },
+	{ 0, NULL,	/* MacOS X boot */	MACOS_X_BOOT_GUID },
+	{ 0, NULL,	/* MacOS X HFS+ */	MACOS_X_HFS_GUID },
+	{ 0, NULL,	/* NetBSD */		NETBSD_GUID },
+	{ 0, NULL,	/* FreeBSD */		FREEBSD_GUID },
+	{ 0, NULL,	/* OpenBSD */		OPENBSD_GUID },
+	{ 0, NULL,	/* LinuxSwap DR */	LINUXSWAP_DR_GUID },
+	{ 0, NULL,	/* EFI Sys */		EFI_SYSTEM_PARTITION_GUID },
+	{ 0, NULL,	/* Win Recovery*/	WIN_RECOVERY_GUID },
+	{ 0, NULL,	/* Linux VM */		LINUX_LVM_GUID },
+	{ 0, NULL,	/* MS basic data */	MICROSOFT_BASIC_DATA_GUID },
+	{ 0, NULL,	/* ChromeKernel */	CHROME_KERNEL_GUID },
 };
 
 struct menu_item {
