@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.7 2023/04/03 17:40:51 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.8 2023/04/04 21:49:10 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -54,6 +54,7 @@ uint32_t prof_min;			/* [I] minimum profhz period (ns) */
 uint32_t prof_mask;			/* [I] set of allowed offsets */
 
 uint64_t clockintr_advance(struct clockintr *, uint64_t);
+void clockintr_cancel_locked(struct clockintr *);
 struct clockintr *clockintr_establish(struct clockintr_queue *,
     void (*)(struct clockintr *, void *));
 uint64_t clockintr_expiration(const struct clockintr *);
@@ -236,8 +237,7 @@ clockintr_dispatch(void *frame)
 			if (cq->cq_uptime < cl->cl_expiration)
 				break;
 		}
-		TAILQ_REMOVE(&cq->cq_pend, cl, cl_plink);
-		CLR(cl->cl_flags, CLST_PENDING);
+		clockintr_cancel_locked(cl);
 		cq->cq_running = cl;
 		mtx_leave(&cq->cq_mtx);
 
@@ -295,9 +295,23 @@ clockintr_advance(struct clockintr *cl, uint64_t period)
 	mtx_enter(&cq->cq_mtx);
 	expiration = cl->cl_expiration;
 	count = nsec_advance(&expiration, period, cq->cq_uptime);
+	if (ISSET(cl->cl_flags, CLST_PENDING))
+		clockintr_cancel_locked(cl);
 	clockintr_schedule_locked(cl, expiration);
 	mtx_leave(&cq->cq_mtx);
 	return count;
+}
+
+void
+clockintr_cancel_locked(struct clockintr *cl)
+{
+	struct clockintr_queue *cq = cl->cl_queue;
+
+	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
+	KASSERT(ISSET(cl->cl_flags, CLST_PENDING));
+
+	TAILQ_REMOVE(&cq->cq_pend, cl, cl_plink);
+	CLR(cl->cl_flags, CLST_PENDING);
 }
 
 struct clockintr *
@@ -336,6 +350,8 @@ clockintr_schedule(struct clockintr *cl, uint64_t expiration)
 	struct clockintr_queue *cq = cl->cl_queue;
 
 	mtx_enter(&cq->cq_mtx);
+	if (ISSET(cl->cl_flags, CLST_PENDING))
+		clockintr_cancel_locked(cl);
 	clockintr_schedule_locked(cl, expiration);
 	mtx_leave(&cq->cq_mtx);
 }
@@ -347,11 +363,7 @@ clockintr_schedule_locked(struct clockintr *cl, uint64_t expiration)
 	struct clockintr_queue *cq = cl->cl_queue;
 
 	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
-
-	if (ISSET(cl->cl_flags, CLST_PENDING)) {
-		TAILQ_REMOVE(&cq->cq_pend, cl, cl_plink);
-		CLR(cl->cl_flags, CLST_PENDING);
-	}
+	KASSERT(!ISSET(cl->cl_flags, CLST_PENDING));
 
 	cl->cl_expiration = expiration;
 	TAILQ_FOREACH(elm, &cq->cq_pend, cl_plink) {
