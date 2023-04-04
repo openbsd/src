@@ -66,6 +66,7 @@ OPENSSL_ia32_cpuid:
 	mov	%eax,%r10d
 	mov	\$0x80000001,%eax
 	cpuid
+	or	%ecx,%r9d
 	and	\$IA32CAP_MASK1_AMD_XOP,%r9d	# isolate AMD XOP bit
 	or	\$1,%r9d			# make sure %r9d is not zero
 
