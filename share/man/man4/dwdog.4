@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dwdog.4,v 1.2 2018/04/01 10:22:06 jmc Exp $
+.\"	$OpenBSD: dwdog.4,v 1.3 2023/04/04 00:38:38 jsg Exp $
 .\"
 .\" Copyright (c) 2018 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,18 +14,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 1 2018 $
+.Dd $Mdocdate: April 4 2023 $
 .Dt DWDOG 4
 .Os
 .Sh NAME
 .Nm dwdog
-.Nd Synopsys Designware watchdog timer
+.Nd Synopsys DesignWare watchdog timer
 .Sh SYNOPSIS
 .Cd "dwdog* at fdt?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Synopsys Designware watchdog timer,
+driver provides support for the Synopsys DesignWare watchdog timer,
 which is built into various SoCs.
 .Sh SEE ALSO
 .Xr intro 4 ,
