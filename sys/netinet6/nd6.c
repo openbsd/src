@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.268 2023/03/31 19:43:32 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.269 2023/04/05 10:40:37 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -250,14 +250,18 @@ void
 nd6_timer(void *unused)
 {
 	struct llinfo_nd6 *ln, *nln;
-	time_t expire = getuptime() + nd6_gctimer;
+	time_t uptime, expire;
 	int secs;
 
 	NET_LOCK();
+
+	uptime = getuptime();
+	expire = uptime + nd6_gctimer;
+
 	TAILQ_FOREACH_SAFE(ln, &nd6_list, ln_list, nln) {
 		struct rtentry *rt = ln->ln_rt;
 
-		if (rt->rt_expire && rt->rt_expire <= getuptime())
+		if (rt->rt_expire && rt->rt_expire <= uptime)
 			if (nd6_llinfo_timer(rt))
 				continue;
 
@@ -265,11 +269,11 @@ nd6_timer(void *unused)
 			expire = rt->rt_expire;
 	}
 
-	secs = expire - getuptime();
+	secs = expire - uptime;
 	if (secs < 0)
 		secs = 0;
 	if (!TAILQ_EMPTY(&nd6_list)) {
-		nd6_timer_next = getuptime() + secs;
+		nd6_timer_next = uptime + secs;
 		timeout_add_sec(&nd6_timer_to, secs);
 	}
 
@@ -369,7 +373,6 @@ void
 nd6_expire_timer_update(struct in6_ifaddr *ia6)
 {
 	time_t expire_time = INT64_MAX;
-	int secs;
 
 	if (ia6->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME)
 		expire_time = ia6->ia6_lifetime.ia6t_expire;
@@ -392,6 +395,8 @@ nd6_expire_timer_update(struct in6_ifaddr *ia6)
 
 	if (!timeout_pending(&nd6_expire_timeout) ||
 	    nd6_expire_next > expire_time) {
+		int secs;
+
 		secs = expire_time - getuptime();
 		if (secs < 0)
 			secs = 0;
