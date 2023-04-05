@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.444 2023/04/04 16:01:54 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.445 2023/04/05 08:04:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -243,7 +243,7 @@ typedef struct {
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
 %type	<v.number>		asnumber as4number as4number_any optnumber
-%type	<v.number>		espah family safi restart origincode nettype
+%type	<v.number>		espah af safi restart origincode nettype
 %type	<v.number>		yesno inout restricted expires enforce
 %type	<v.number>		validity aspa_validity
 %type	<v.number>		addpathextra addpathmax
@@ -639,7 +639,7 @@ aspa_tas	: as4number_any {
 			$$->aid = AID_UNSPEC;
 			$$->num = 1;
 		}
-		| as4number_any family {
+		| as4number_any af {
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				fatal(NULL);
 			$$->as = $1;
@@ -1085,14 +1085,14 @@ network		: NETWORK prefix filter_set	{
 			free($3);
 			free($4);
 		}
-		| NETWORK family RTLABEL STRING filter_set	{
+		| NETWORK af RTLABEL STRING filter_set	{
 			struct network	*n;
 
 			if ((n = calloc(1, sizeof(struct network))) == NULL)
 				fatal("new_network");
 			if (afi2aid($2, SAFI_UNICAST, &n->net.prefix.aid) ==
 			    -1) {
-				yyerror("unknown family");
+				yyerror("unknown address family");
 				filterset_free($5);
 				free($5);
 				YYERROR;
@@ -1104,7 +1104,7 @@ network		: NETWORK prefix filter_set	{
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
 		}
-		| NETWORK family PRIORITY NUMBER filter_set	{
+		| NETWORK af PRIORITY NUMBER filter_set	{
 			struct network	*n;
 			if (!kr_check_prio($4)) {
 				yyerror("priority %lld out of range", $4);
@@ -1115,7 +1115,7 @@ network		: NETWORK prefix filter_set	{
 				fatal("new_network");
 			if (afi2aid($2, SAFI_UNICAST, &n->net.prefix.aid) ==
 			    -1) {
-				yyerror("unknown family");
+				yyerror("unknown address family");
 				filterset_free($5);
 				free($5);
 				YYERROR;
@@ -1127,14 +1127,14 @@ network		: NETWORK prefix filter_set	{
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
 		}
-		| NETWORK family nettype filter_set	{
+		| NETWORK af nettype filter_set	{
 			struct network	*n;
 
 			if ((n = calloc(1, sizeof(struct network))) == NULL)
 				fatal("new_network");
 			if (afi2aid($2, SAFI_UNICAST, &n->net.prefix.aid) ==
 			    -1) {
-				yyerror("unknown family");
+				yyerror("unknown address family");
 				filterset_free($4);
 				free($4);
 				YYERROR;
@@ -1553,7 +1553,7 @@ peeropts	: REMOTEAS as4number	{
 			}
 			curpeer->conf.min_holdtime = $3;
 		}
-		| ANNOUNCE family safi {
+		| ANNOUNCE af safi {
 			uint8_t		aid, safi;
 			uint16_t	afi;
 
@@ -1988,7 +1988,7 @@ restart		: /* nada */		{ $$ = 0; }
 		}
 		;
 
-family		: IPV4	{ $$ = AFI_IPv4; }
+af		: IPV4	{ $$ = AFI_IPv4; }
 		| IPV6	{ $$ = AFI_IPv6; }
 		;
 
