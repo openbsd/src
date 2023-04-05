@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.8 2023/04/04 21:49:10 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.9 2023/04/05 00:23:06 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -54,6 +54,7 @@ uint32_t prof_min;			/* [I] minimum profhz period (ns) */
 uint32_t prof_mask;			/* [I] set of allowed offsets */
 
 uint64_t clockintr_advance(struct clockintr *, uint64_t);
+void clockintr_cancel(struct clockintr *);
 void clockintr_cancel_locked(struct clockintr *);
 struct clockintr *clockintr_establish(struct clockintr_queue *,
     void (*)(struct clockintr *, void *));
@@ -300,6 +301,17 @@ clockintr_advance(struct clockintr *cl, uint64_t period)
 	clockintr_schedule_locked(cl, expiration);
 	mtx_leave(&cq->cq_mtx);
 	return count;
+}
+
+void
+clockintr_cancel(struct clockintr *cl)
+{
+	struct clockintr_queue *cq = cl->cl_queue;
+
+	mtx_enter(&cq->cq_mtx);
+	if (ISSET(cl->cl_flags, CLST_PENDING))
+		clockintr_cancel_locked(cl);
+	mtx_leave(&cq->cq_mtx);
 }
 
 void
