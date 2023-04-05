@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.685 2023/03/07 20:09:48 jan Exp $	*/
+/*	$OpenBSD: if.c,v 1.686 2023/04/05 19:35:23 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -750,6 +750,27 @@ if_enqueue_ifq(struct ifnet *ifp, struct mbuf *m)
 	ifq_start(ifq);
 
 	return (0);
+}
+
+void
+if_mqoutput(struct ifnet *ifp, struct mbuf_queue *mq, unsigned int *total,
+    struct sockaddr *dst, struct rtentry *rt)
+{
+	struct mbuf_list ml;
+	struct mbuf *m;
+	unsigned int len;
+
+	mq_delist(mq, &ml);
+	len = ml_len(&ml);
+	while ((m = ml_dequeue(&ml)) != NULL)
+		ifp->if_output(ifp, m, rt_key(rt), rt);
+
+	/* XXXSMP we also discard if other CPU enqueues */
+	if (mq_len(mq) > 0) {
+		/* mbuf is back in queue. Discard. */
+		atomic_sub_int(total, len + mq_purge(mq));
+	} else
+		atomic_sub_int(total, len);
 }
 
 void

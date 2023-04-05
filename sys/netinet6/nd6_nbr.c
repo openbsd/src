@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.143 2023/03/31 19:43:33 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.144 2023/04/05 19:35:23 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -451,23 +451,14 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		 * - if taddr is link local saddr6 must be link local as well
 		 * Otherwise, we perform the source address selection as usual.
 		 */
-		struct ip6_hdr *hip6;		/* hold ip6 */
-		struct in6_addr *saddr6;
+		if (ln != NULL)
+			src_sa.sin6_addr = ln->ln_saddr6;
 
-		if (ln && ln->ln_hold) {
-			hip6 = mtod(ln->ln_hold, struct ip6_hdr *);
-			if (sizeof(*hip6) <= ln->ln_hold->m_len) {
-				saddr6 = &hip6->ip6_src;
-				if (saddr6 && IN6_IS_ADDR_LINKLOCAL(taddr6) &&
-				    !IN6_IS_ADDR_LINKLOCAL(saddr6))
-					saddr6 = NULL;
-			} else
-				saddr6 = NULL;
-		} else
-			saddr6 = NULL;
-		if (saddr6 && in6ifa_ifpwithaddr(ifp, saddr6))
-			src_sa.sin6_addr = *saddr6;
-		else {
+		if (!IN6_IS_ADDR_LINKLOCAL(taddr6) ||
+		    IN6_IS_ADDR_UNSPECIFIED(&src_sa.sin6_addr) ||
+		    IN6_IS_ADDR_LINKLOCAL(&src_sa.sin6_addr) ||
+		    !in6ifa_ifpwithaddr(ifp, &src_sa.sin6_addr)) {
+
 			struct rtentry *rt;
 
 			rt = rtalloc(sin6tosa(&dst_sa), RT_RESOLVE,
@@ -832,20 +823,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	}
 	rt->rt_flags &= ~RTF_REJECT;
 	ln->ln_asked = 0;
-	if (ln->ln_hold) {
-		struct mbuf *n = ln->ln_hold;
-		ln->ln_hold = NULL;
-		/*
-		 * we assume ifp is not a loopback here, so just set the 2nd
-		 * argument as the 1st one.
-		 */
-		ifp->if_output(ifp, n, rt_key(rt), rt);
-		if (ln->ln_hold == n) {
-			/* n is back in ln_hold. Discard. */
-			m_freem(ln->ln_hold);
-			ln->ln_hold = NULL;
-		}
-	}
+	if_mqoutput(ifp, &ln->ln_mq, &ln_hold_total, rt_key(rt), rt);
 
  freeit:
 	rtfree(rt);

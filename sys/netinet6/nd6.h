@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.95 2023/01/06 14:35:34 kn Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.96 2023/04/05 19:35:23 bluhm Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -81,12 +81,17 @@ struct	in6_ndireq {
 struct	llinfo_nd6 {
 	TAILQ_ENTRY(llinfo_nd6)	ln_list;
 	struct	rtentry *ln_rt;
-	struct	mbuf *ln_hold;	/* last packet until resolved/timeout */
+	struct	mbuf_queue ln_mq;	/* hold packets until resolved */
+	struct	in6_addr ln_saddr6;	/* source of prompting packet */
 	long	ln_asked;	/* number of queries already sent for addr */
 	int	ln_byhint;	/* # of times we made it reachable by UL hint */
 	short	ln_state;	/* reachability state */
 	short	ln_router;	/* 2^0: ND6 router bit */
 };
+#define LN_HOLD_QUEUE 10
+#define LN_HOLD_TOTAL 100
+
+extern int ln_hold_total;
 
 #define ND6_LLINFO_PERMANENT(n)	((n)->ln_rt->rt_expire == 0)
 
