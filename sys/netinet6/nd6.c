@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.270 2023/04/05 19:35:23 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.271 2023/04/05 21:51:47 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -87,7 +87,7 @@ int nd6_debug = 0;
 TAILQ_HEAD(llinfo_nd6_head, llinfo_nd6) nd6_list;
 struct	pool nd6_pool;		/* pool for llinfo_nd6 structures */
 int	nd6_inuse;
-int	ln_hold_total;		/* [a] packets currently in the nd6 queue */
+unsigned int	ln_hold_total;	/* [a] packets currently in the nd6 queue */
 
 void nd6_timer(void *);
 void nd6_slowtimo(void *);

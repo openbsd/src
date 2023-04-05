@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.51 2021/01/11 13:28:53 bluhm Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.52 2023/04/05 21:51:47 bluhm Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 /*
@@ -504,7 +504,8 @@ struct icmp6stat {
 #define ICMPV6CTL_REDIRTIMEOUT	3	/* redirect cache time */
 #define ICMPV6CTL_ND6_DELAY	8
 #define ICMPV6CTL_ND6_UMAXTRIES	9
-#define ICMPV6CTL_ND6_MMAXTRIES		10
+#define ICMPV6CTL_ND6_MMAXTRIES	10
+#define ICMPV6CTL_ND6_QUEUED	11
 #define ICMPV6CTL_NODEINFO	13
 #define ICMPV6CTL_ERRPPSLIMIT	14	/* ICMPv6 error pps limitation */
 #define ICMPV6CTL_ND6_MAXNUDHINT	15
@@ -525,7 +526,7 @@ struct icmp6stat {
 	{ "nd6_delay", CTLTYPE_INT }, \
 	{ "nd6_umaxtries", CTLTYPE_INT }, \
 	{ "nd6_mmaxtries", CTLTYPE_INT }, \
-	{ 0, 0 }, \
+	{ "nd6_queued", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "errppslimit", CTLTYPE_INT }, \

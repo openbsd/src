@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.247 2022/12/10 23:45:51 kn Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.248 2023/04/05 21:51:47 bluhm Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -1900,6 +1900,11 @@ icmp6_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 
 	case ICMPV6CTL_STATS:
 		error = icmp6_sysctl_icmp6stat(oldp, oldlenp, newp);
+		break;
+
+	case ICMPV6CTL_ND6_QUEUED:
+		error = sysctl_rdint(oldp, oldlenp, newp,
+		    atomic_load_int(&ln_hold_total));
 		break;
 
 	default:

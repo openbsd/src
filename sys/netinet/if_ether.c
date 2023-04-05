@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.259 2023/04/05 19:35:23 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.260 2023/04/05 21:51:47 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -109,7 +109,7 @@ LIST_HEAD(, llinfo_arp) arp_list =
     LIST_HEAD_INITIALIZER(arp_list);	/* [mN] list of llinfo_arp structures */
 struct	pool arp_pool;		/* [I] pool for llinfo_arp structures */
 int	arp_maxtries = 5;	/* [I] arp requests before set to rejected */
-int	la_hold_total;		/* [a] packets currently in the arp queue */
+unsigned int	la_hold_total;	/* [a] packets currently in the arp queue */
 
 #ifdef NFSCLIENT
 /* revarp state */

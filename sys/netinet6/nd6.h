@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.96 2023/04/05 19:35:23 bluhm Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.97 2023/04/05 21:51:47 bluhm Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ struct	llinfo_nd6 {
 #define LN_HOLD_QUEUE 10
 #define LN_HOLD_TOTAL 100
 
-extern int ln_hold_total;
+extern unsigned int ln_hold_total;
 
 #define ND6_LLINFO_PERMANENT(n)	((n)->ln_rt->rt_expire == 0)
 
