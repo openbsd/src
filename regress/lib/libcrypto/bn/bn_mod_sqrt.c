@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_sqrt.c,v 1.4 2023/04/05 07:17:44 tb Exp $ */
+/*	$OpenBSD: bn_mod_sqrt.c,v 1.5 2023/04/05 07:52:25 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -150,10 +150,12 @@ bn_mod_sqrt_test(void)
  * residues. These exercise the non-deterministic path of Tonelli-Shanks.
  */
 
+#define N_SMALL_SQUARE_TESTS 100
+
 static const struct p_is_1_mod_8_tests {
 	const char *p;
 	int first_non_square;
-	const char *sqrt[100];
+	const char *sqrt[N_SMALL_SQUARE_TESTS];
 } p_is_1_mod_8_tests[] = {
 	{
 		.p = "d7a6133d89b7a840ec0d80d2ee197849",
@@ -1696,7 +1698,7 @@ bn_mod_sqrt_p_is_1_mod_8_test(const struct p_is_1_mod_8_tests *test,
 	if (!BN_hex2bn(&p, test->p))
 		errx(1, "BN_hex2bn");
 
-	for (i = 0; i < 100; i++) {
+	for (i = 0; i < N_SMALL_SQUARE_TESTS; i++) {
 		if (!BN_set_word(a, i))
 			errx(1, "BN_set_word");
 
