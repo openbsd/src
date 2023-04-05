@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.279 2023/04/01 18:47:51 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.280 2023/04/05 06:25:38 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -221,6 +221,7 @@ struct malloc_readonly {
 	u_int	chunk_canaries;		/* use canaries after chunks? */
 	int	internal_funcs;		/* use better recallocarray/freezero? */
 	u_int	def_maxcache;		/* free pages we cache */
+	u_int	junk_loc;		/* variation in location of junk */
 	size_t	malloc_guard;		/* use guard pages after allocations? */
 #ifdef MALLOC_STATS
 	int	malloc_stats;		/* dump statistics at end */
@@ -493,6 +494,7 @@ omalloc_init(void)
 
 	while ((mopts.malloc_canary = arc4random()) == 0)
 		;
+	mopts.junk_loc = arc4random();
 	if (mopts.chunk_canaries)
 		do {
 			mopts.chunk_canaries = arc4random();
@@ -676,7 +678,9 @@ junk_free(int junk, void *p, size_t sz)
 		if (step == 0)
 			step = 1;
 	}
-	for (i = 0; i < sz; i += step)
+	/* Do not always put the free junk bytes in the same spot.
+	   There is modulo bias here, but we ignore that. */
+	for (i = mopts.junk_loc % step; i < sz; i += step)
 		lp[i] = SOME_FREEJUNK_ULL;
 }
 
@@ -696,7 +700,8 @@ validate_junk(struct dir_info *pool, void *p, size_t sz)
 		if (step == 0)
 			step = 1;
 	}
-	for (i = 0; i < sz; i += step) {
+	/* see junk_free */
+	for (i = mopts.junk_loc % step; i < sz; i += step) {
 		if (lp[i] != SOME_FREEJUNK_ULL)
 			wrterror(pool, "write after free %p", p);
 	}
