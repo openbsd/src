@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.271 2023/04/05 21:51:47 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.272 2023/04/05 23:01:03 kn Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1254,12 +1254,15 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		return (0);
 	}
 
+	/* XXXSMP there is a MP race in nd6_resolve() */
+	KERNEL_LOCK();
 	uptime = getuptime();
 	rt = rt_getll(rt0);
 
 	if (ISSET(rt->rt_flags, RTF_REJECT) &&
 	    (rt->rt_expire == 0 || rt->rt_expire > uptime)) {
 		m_freem(m);
+		KERNEL_UNLOCK();
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 
@@ -1323,6 +1326,7 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		}
 
 		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
+		KERNEL_UNLOCK();
 		return (0);
 	}
 
@@ -1355,10 +1359,12 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
 		nd6_ns_output(ifp, NULL, &satosin6(dst)->sin6_addr, ln, 0);
 	}
+	KERNEL_UNLOCK();
 	return (EAGAIN);
 
 bad:
 	m_freem(m);
+	KERNEL_UNLOCK();
 	return (EINVAL);
 }
 
