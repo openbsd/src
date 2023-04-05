@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.57 2023/04/05 11:30:12 tb Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.58 2023/04/05 11:31:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,10 +226,11 @@ RSA_eay_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
 		goto err;
 	}
 
-	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
+	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC) {
 		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n,
 		    CRYPTO_LOCK_RSA, rsa->n, ctx))
 			goto err;
+	}
 
 	if (!rsa->meth->bn_mod_exp(ret, f, rsa->e, rsa->n, ctx,
 	    rsa->_method_mod_n))
@@ -656,10 +657,11 @@ RSA_eay_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
 		goto err;
 	}
 
-	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
+	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC) {
 		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n,
 		    CRYPTO_LOCK_RSA, rsa->n, ctx))
 			goto err;
+	}
 
 	if (!rsa->meth->bn_mod_exp(ret, f, rsa->e, rsa->n, ctx,
 	    rsa->_method_mod_n))
@@ -736,10 +738,11 @@ RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 		}
 	}
 
-	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC)
+	if (rsa->flags & RSA_FLAG_CACHE_PUBLIC) {
 		if (!BN_MONT_CTX_set_locked(&rsa->_method_mod_n,
 		    CRYPTO_LOCK_RSA, rsa->n, ctx))
 			goto err;
+	}
 
 	/* compute I mod q */
 	BN_init(&c);
