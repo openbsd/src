@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.445 2023/04/05 08:04:28 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.446 2023/04/05 08:37:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -37,6 +37,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
+#include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -161,6 +162,7 @@ static void	 add_roa_set(struct prefixset_item *, uint32_t, uint8_t,
 static struct rtr_config	*get_rtr(struct bgpd_addr *);
 static int	 insert_rtr(struct rtr_config *);
 static int	 merge_aspa_set(uint32_t, struct aspa_tas_l *, time_t);
+static int	 getservice(char *);
 
 static struct bgpd_config	*conf;
 static struct network_head	*netconf;
@@ -247,6 +249,7 @@ typedef struct {
 %type	<v.number>		yesno inout restricted expires enforce
 %type	<v.number>		validity aspa_validity
 %type	<v.number>		addpathextra addpathmax
+%type	<v.number>		port
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -692,12 +695,7 @@ rtropt		: DESCR STRING		{
 			}
 			currtr->local_addr = $2;
 		}
-		| PORT NUMBER {
-			if ($2 < 1 || $2 > USHRT_MAX) {
-				yyerror("port must be between %u and %u",
-				    1, USHRT_MAX);
-				YYERROR;
-			}
+		| PORT port {
 			currtr->remote_port = $2;
 		}
 		;
@@ -750,15 +748,9 @@ conf_main	: AS as4number		{
 			memcpy(&la->sa, sa, la->sa_len);
 			TAILQ_INSERT_TAIL(conf->listen_addrs, la, entry);
 		}
-		| LISTEN ON address PORT NUMBER	{
+		| LISTEN ON address PORT port	{
 			struct listen_addr	*la;
 			struct sockaddr		*sa;
-
-			if ($5 < 1 || $5 > USHRT_MAX) {
-				yyerror("port must be between %u and %u",
-				    1, USHRT_MAX);
-				YYERROR;
-			}
 
 			if ((la = calloc(1, sizeof(struct listen_addr))) ==
 			    NULL)
@@ -1144,6 +1136,24 @@ network		: NETWORK prefix filter_set	{
 			free($4);
 
 			TAILQ_INSERT_TAIL(netconf, n, entry);
+		}
+		;
+
+port		: NUMBER			{
+			if ($1 < 1 || $1 > USHRT_MAX) {
+				yyerror("port must be between %u and %u",
+				    1, USHRT_MAX);
+				YYERROR;
+			}
+			$$ = $1;
+		}
+		| STRING			{
+			if (($$ = getservice($1)) == -1) {
+				yyerror("unknown port '%s'", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
 		}
 		;
 
@@ -1954,12 +1964,7 @@ peeropts	: REMOTEAS as4number	{
 			else
 				curpeer->conf.flags &= ~PEERFLAG_NO_AS_SET;
 		}
-		| PORT NUMBER {
-			if ($2 < 1 || $2 > USHRT_MAX) {
-				yyerror("port must be between %u and %u",
-				    1, USHRT_MAX);
-				YYERROR;
-			}
+		| PORT port {
 			curpeer->conf.remote_port = $2;
 		}
 		| RDE EVALUATE STRING {
@@ -5151,4 +5156,17 @@ merge_aspa_set(uint32_t as, struct aspa_tas_l *tas, time_t expires)
 		aspa->expires = expires;
 
 	return 0;
+}
+
+static int
+getservice(char *n)
+{
+	struct servent	*s;
+
+	s = getservbyname(n, "tcp");
+	if (s == NULL)
+		s = getservbyname(n, "udp");
+	if (s == NULL)
+		return -1;
+	return s->s_port;
 }
