@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.43 2023/03/30 20:07:49 kn Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.44 2023/04/05 10:48:12 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1306,6 +1306,8 @@ dwpcie_rk3568_init(struct dwpcie_softc *sc)
 	/* Assert PERST#. */
 	if (reset_gpiolen > 0)
 		gpio_controller_set_pin(reset_gpio, 0);
+
+	dwpcie_link_config(sc);
 
 	/* Enable LTSSM. */
 	bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh, PCIE_CLIENT_GENERAL_CON,
