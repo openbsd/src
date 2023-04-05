@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.36 2020/11/03 21:49:42 patrick Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.37 2023/04/05 10:45:07 kettenis Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -152,9 +152,10 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_DOPAUSE	0x0100		/* advertise PAUSE capability */
 #define	MIIF_IS_HPNA	0x0200		/* is a HomePNA device */
 #define	MIIF_FORCEANEG	0x0400		/* force autonegotiation */
-#define	MIIF_RXID	0x0800		/* add Rx delay */
-#define	MIIF_TXID	0x1000		/* add Tx delay */
-#define	MIIF_SGMII	0x2000		/* MAC to PHY interface is SGMII */
+#define	MIIF_SETDELAY	0x0800		/* set internal delay */
+#define	MIIF_RXID	0x1000		/* add Rx delay */
+#define	MIIF_TXID	0x2000		/* add Tx delay */
+#define	MIIF_SGMII	0x4000		/* MAC to PHY interface is SGMII */
 
 #define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
 

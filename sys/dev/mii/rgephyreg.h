@@ -1,4 +1,4 @@
-/*	$OpenBSD: rgephyreg.h,v 1.9 2018/02/27 19:47:10 kettenis Exp $	*/
+/*	$OpenBSD: rgephyreg.h,v 1.10 2023/04/05 10:45:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -104,5 +104,12 @@
 #define RGEPHY_PS_PAGE_2	0x0002
 #define RGEPHY_PS_PAGE_3	0x0003
 #define RGEPHY_PS_PAGE_4	0x0004
+
+/* RTL8211F */
+#define RGEPHY_PS_PAGE_MII	0x0d08
+#define RGEPHY_MIICR1		0x11
+#define RGEPHY_MIICR1_TXDLY_EN	0x0100
+#define RGEPHY_MIICR2		0x15
+#define RGEPHY_MIICR2_RXDLY_EN	0x0008
 
 #endif /* _DEV_RGEPHY_MIIREG_H_ */
