@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_sqrt.c,v 1.7 2023/04/05 10:47:00 tb Exp $ */
+/*	$OpenBSD: bn_mod_sqrt.c,v 1.8 2023/04/05 11:03:11 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -21,7 +21,11 @@
 
 #include <openssl/bn.h>
 
-/* Test that sqrt * sqrt = A (mod p) where p is a prime */
+/*
+ * Test that .sqrt * .sqrt = .a (mod .p) where .p is a prime.  If .sqrt is
+ * omitted, .a does not have a square root and BN_mod_sqrt() fails.
+ */
+
 struct mod_sqrt_test {
 	const char *a;
 	const char *p;
@@ -1455,7 +1459,7 @@ struct mod_sqrt_test {
 	},
 
 	/*
-	 * p = 1 (mod 8), short initial segment of residues
+	 * p = 1 (mod 8), short initial segment of quadratic residues
 	 */
 
 	{
@@ -2140,7 +2144,7 @@ struct mod_sqrt_test {
 	},
 
 	/*
-	 * p = 1 (mod 8), long initial segment of residues
+	 * p = 1 (mod 8), long initial segment of quadratic residues
 	 */
 
 	{
@@ -2872,7 +2876,7 @@ mod_sqrt_test(struct mod_sqrt_test *test, BN_CTX *ctx)
 	if (!BN_is_zero(diff) && !BN_is_zero(sum)) {
 		fprintf(stderr, "a: %s\n", test->a);
 		fprintf(stderr, "p: %s\n", test->p);
-		fprintf(stderr, "want: %s:", test->sqrt);
+		fprintf(stderr, "want: %s\n", test->sqrt);
 		fprintf(stderr, "got: ");
 		BN_print_fp(stderr, got);
 		fprintf(stderr, "\n\n");
