@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.4 2023/01/31 06:17:10 jsing Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2023/04/05 11:07:40 kettenis Exp $
 
 # aarch64-specific libcrypto build rules
 
@@ -27,4 +27,5 @@ ${f}.S: ${LCRYPTO_SRC}/${dir}/asm/${f}.pl
 .endfor
 
 CFLAGS+= -DOPENSSL_CPUID_OBJ
+AFLAGS+= -mmark-bti-property
 SRCS+=	arm64cpuid.S arm64cap.c
