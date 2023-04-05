@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshci.c,v 1.2 2023/04/02 08:53:01 anton Exp $ */
+/*	$OpenBSD: ufshci.c,v 1.3 2023/04/05 17:23:30 mglocker Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -1227,7 +1227,7 @@ ufshci_utr_cmd_write(struct ufshci_softc *sc, struct ufshci_ccb *ccb,
 	ucd->cmd.expected_xfer_len = htobe32(rsp_size);
 
 	ucd->cmd.cdb[0] = WRITE_10; /* 0x2a */
-	//ucd->cmd.cdb[1] = (1 << 3); /* FUA: Force Unit Access */
+	ucd->cmd.cdb[1] = (1 << 3); /* FUA: Force Unit Access */
 	ucd->cmd.cdb[2] = (lba >> 24) & 0xff;
 	ucd->cmd.cdb[3] = (lba >> 16) & 0xff;
 	ucd->cmd.cdb[4] = (lba >>  8) & 0xff;
