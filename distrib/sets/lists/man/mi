@@ -1,4 +1,3 @@
-./usr/share/man/man4/rkpciephy.4
 ./usr/share/doc/mg/tutorial
 ./usr/share/info/amdref.info
 ./usr/share/info/cvs.info
@@ -1883,13 +1882,16 @@
 ./usr/share/man/man4/rkgrf.4
 ./usr/share/man/man4/rkiic.4
 ./usr/share/man/man4/rkiis.4
+./usr/share/man/man4/rkiovd.4
 ./usr/share/man/man4/rkpcie.4
+./usr/share/man/man4/rkpciephy.4
 ./usr/share/man/man4/rkpinctrl.4
 ./usr/share/man/man4/rkpmic.4
 ./usr/share/man/man4/rkpwm.4
 ./usr/share/man/man4/rkrng.4
 ./usr/share/man/man4/rktcphy.4
 ./usr/share/man/man4/rktemp.4
+./usr/share/man/man4/rkusbphy.4
 ./usr/share/man/man4/rkvop.4
 ./usr/share/man/man4/rl.4
 ./usr/share/man/man4/rlphy.4
