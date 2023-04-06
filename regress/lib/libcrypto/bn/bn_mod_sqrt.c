@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_sqrt.c,v 1.8 2023/04/05 11:03:11 tb Exp $ */
+/*	$OpenBSD: bn_mod_sqrt.c,v 1.9 2023/04/06 12:01:45 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -71,15 +71,14 @@ struct mod_sqrt_test {
 		.sqrt = "7",
 	},
 
+	/*
+	 * Test cases resulting in an infinite loop before bn_sqrt.c r1.10.
+	 */
+
 	{
 		.a = "20a7ee",
 		.p = "460201", /* 460201 == 4D5 * E7D */
 	},
-
-	/*
-	 * Test case resulting in an infinite loop before bn_sqrt.c r1.10.
-	 */
-
 	{
 		.a = "65bebdb00a96fc814ec44b81f98b59fba3c30203928fa521"
 		     "4c51e0a97091645280c947b005847f239758482b9bfc45b0"
