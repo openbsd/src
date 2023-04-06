@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.34 2023/03/29 10:36:14 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.35 2023/04/06 07:08:41 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -77,8 +77,7 @@ bn_print(const char *name, const BIGNUM *bn)
 	size_t len;
 	int pad = 0;
 
-	len = strlen(name);
-	if (len < 7)
+	if ((len = strlen(name)) < 7)
 		pad = 6 - len;
 
 	fprintf(stderr, "%s: %*s", name, pad, "");
