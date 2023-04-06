@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgrf.c,v 1.5 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: rkgrf.c,v 1.6 2023/04/06 19:02:29 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -81,8 +81,6 @@ rkgrf_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map registers\n");
 		return;
 	}
-
-	printf("\n");
 
 	regmap_register(faa->fa_node, sc->sc_iot, sc->sc_ioh,
 	    faa->fa_reg[0].size);
