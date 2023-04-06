@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.5 2023/03/26 21:44:46 kettenis Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.6 2023/04/06 00:09:39 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -63,7 +63,7 @@
 
 int	dwqe_fdt_match(struct device *, void *, void *);
 void	dwqe_fdt_attach(struct device *, struct device *, void *);
-void	dwqe_setup_rockchip(struct dwqe_softc *);
+void	dwqe_setup_rk3568(struct dwqe_softc *);
 void	dwqe_mii_statchg_rk3568(struct device *);
 void	dwqe_mii_statchg_rk3588(struct device *);
 
@@ -138,7 +138,7 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Do hardware specific initializations. */
 	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
-		dwqe_setup_rockchip(sc);
+		dwqe_setup_rk3568(sc);
 
 	/* Power up PHY. */
 	phy_supply = OF_getpropint(faa->fa_node, "phy-supply", 0);
@@ -266,41 +266,62 @@ dwqe_reset_phy(struct dwqe_softc *sc, uint32_t phy)
 #define RK3568_GRF_GMACx_CON1(x)	(0x0384 + (x) * 0x8)
 #define  RK3568_GMAC_PHY_INTF_SEL_RGMII		((0x7 << 4) << 16 | (0x1 << 4))
 #define  RK3568_GMAC_PHY_INTF_SEL_RMII		((0x7 << 4) << 16 | (0x4 << 4))
-#define  RK3568_GMAC_TXCLK_DLY_ENA		((1 << 0) << 16 | (1 << 0))
-#define  RK3568_GMAC_RXCLK_DLY_ENA		((1 << 1) << 16 | (1 << 1))
+#define  RK3568_GMAC_TXCLK_DLY_SET(_v)		((1 << 0) << 16 | ((_v) << 0))
+#define  RK3568_GMAC_RXCLK_DLY_SET(_v)		((1 << 1) << 16 | ((_v) << 1))
 
 void	dwqe_mii_statchg_rk3568_task(void *);
 
 void
-dwqe_setup_rockchip(struct dwqe_softc *sc)
+dwqe_setup_rk3568(struct dwqe_softc *sc)
 {
+	char phy_mode[32];
 	struct regmap *rm;
 	uint32_t grf;
 	int tx_delay, rx_delay;
+	uint32_t iface;
 
 	grf = OF_getpropint(sc->sc_node, "rockchip,grf", 0);
 	rm = regmap_byphandle(grf);
 	if (rm == NULL)
 		return;
 
+	if (OF_getprop(sc->sc_node, "phy-mode",
+	    phy_mode, sizeof(phy_mode)) <= 0)
+		return;
+
 	tx_delay = OF_getpropint(sc->sc_node, "tx_delay", 0x30);
 	rx_delay = OF_getpropint(sc->sc_node, "rx_delay", 0x10);
 
-	if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-gmac")) {
-		/* Program clock delay lines. */
-		regmap_write_4(rm, RK3568_GRF_GMACx_CON0(sc->sc_gmac_id),
-		    RK3568_GMAC_CLK_TX_DL_CFG(tx_delay) |
-		    RK3568_GMAC_CLK_RX_DL_CFG(rx_delay));
+	if (strcmp(phy_mode, "rgmii") == 0) {
+		iface = RK3568_GMAC_PHY_INTF_SEL_RGMII;
+	} else if (strcmp(phy_mode, "rgmii-id") == 0) {
+		iface = RK3568_GMAC_PHY_INTF_SEL_RGMII;
+		/* id is "internal delay" */
+		tx_delay = rx_delay = 0;
+	} else if (strcmp(phy_mode, "rgmii-rxid") == 0) {
+		iface = RK3568_GMAC_PHY_INTF_SEL_RGMII;
+		rx_delay = 0;
+	} else if (strcmp(phy_mode, "rgmii-txid") == 0) {
+		iface = RK3568_GMAC_PHY_INTF_SEL_RGMII;
+		tx_delay = 0;
+	} else if (strcmp(phy_mode, "rmii") == 0) {
+		iface = RK3568_GMAC_PHY_INTF_SEL_RMII;
+		tx_delay = rx_delay = 0;
+	} else
+		return;
 
-		/* Use RGMII interface and enable clock delay. */
-		regmap_write_4(rm, RK3568_GRF_GMACx_CON1(sc->sc_gmac_id),
-		    RK3568_GMAC_PHY_INTF_SEL_RGMII |
-		    RK3568_GMAC_TXCLK_DLY_ENA |
-		    RK3568_GMAC_RXCLK_DLY_ENA);
+	/* Program clock delay lines. */
+	regmap_write_4(rm, RK3568_GRF_GMACx_CON0(sc->sc_gmac_id),
+	    RK3568_GMAC_CLK_TX_DL_CFG(tx_delay) |
+	    RK3568_GMAC_CLK_RX_DL_CFG(rx_delay));
 
-		task_set(&sc->sc_statchg_task,
-		    dwqe_mii_statchg_rk3568_task, sc);
-	}
+	/* Set interface and enable/disable clock delay. */
+	regmap_write_4(rm, RK3568_GRF_GMACx_CON1(sc->sc_gmac_id), iface |
+	    RK3568_GMAC_TXCLK_DLY_SET(tx_delay > 0 ? 1 : 0) |
+	    RK3568_GMAC_RXCLK_DLY_SET(rx_delay > 0 ? 1 : 0));
+
+	task_set(&sc->sc_statchg_task,
+	    dwqe_mii_statchg_rk3568_task, sc);
 }
 
 void
