@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_gcd.c,v 1.1 2023/04/03 21:32:44 tb Exp $ */
+/*	$OpenBSD: bn_gcd.c,v 1.2 2023/04/06 07:07:54 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -3504,7 +3504,6 @@ bn_gcd_test(const struct gcd_test *testcase)
 				    test->name, signs, testcase->r);
 				BN_print_fp(stderr, got);
 				fprintf(stderr, "\n");
-
 
 				failed |= 1;
 			}
