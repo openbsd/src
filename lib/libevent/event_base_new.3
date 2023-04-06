@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_new.3,v 1.1 2023/04/05 18:34:37 schwarze Exp $
+.\" $OpenBSD: event_base_new.3,v 1.2 2023/04/06 20:52:18 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 5 2023 $
+.Dd $Mdocdate: April 6 2023 $
 .Dt EVENT_BASE_NEW 3
 .Os
 .Sh NAME
@@ -68,9 +68,11 @@ For a complete list of environment variables refer to
 .Pp
 The function
 .Fn event_init
-is a version of
-.Fn event_base_new
-that sets internal global variables and can support one event loop.
+behaves like
+.Fn event_base_new ,
+except it additionally saves a pointer to the returned structure
+in an internal global variable.
+It is designed for programs that need only one single event loop.
 Invoking most functions documented in the event library to require
 .Fn event_init
 without first calling
@@ -110,15 +112,26 @@ it is a pointer returned by an earlier call to
 or
 .Fn event_init .
 If
-.Fa base
-is
-.Dv NULL
-and the library was initialized with
-.Fn event_init ,
-then
+.Fn event_init
+has been used and
 .Fn event_base_free
-deallocates internal global library variables.
-Otherwise, it triggers an
+is called with the
+.Fa base
+structure returned from
+.Fn event_init
+or with a
+.Dv NULL
+pointer argument, the structure that was returned from
+.Fn event_init
+is freed as usual, and the pointer to it is also deleted
+from the internal global variable.
+If
+.Fn event_init
+was not used, calling
+.Fn event_base_free
+with a
+.Dv NULL
+pointer argument triggers an
 .Xr assert 3
 call.
 .Pp
@@ -126,10 +139,9 @@ Functions documented to require
 .Fn event_init
 generate a segmentation fault if invoked after
 .Fn event_base_free
-destroys the internal global variables initialized by
-.Fn event_init .
-There is no API to restore these internal global variables to their default
-state once they are configured with
+destroyed the internal global
+.Vt event_base
+structure that was created by
 .Fn event_init .
 .Pp
 Errors and diagnostics from many event library functions are reported using
@@ -297,11 +309,11 @@ The event library and these functions were written by
 This manual page was written by
 .An Ted Bullock Aq Mt tbullock@comlore.com .
 .Sh CAVEATS
-The event API is not thread safe unless only one
+The event API is not thread safe if any
 .Vt "event_base"
-structure is accessible per thread or care is taken to lock access.
-The simplified API that is initialized by using
-.Fn event_init
-instead of
+structure, no matter whether created using
 .Fn event_base_new
-is not thread safe.
+or
+.Fn event_init ,
+is accessed by more than one thread,
+unless the application program implements its own locking mechanism.
