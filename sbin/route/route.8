@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.117 2023/03/18 11:44:53 jmc Exp $
+.\"	$OpenBSD: route.8,v 1.118 2023/04/06 11:29:55 kn Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: March 18 2023 $
+.Dd $Mdocdate: April 6 2023 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -401,27 +401,27 @@ Within the output of
 the "Flags" column indicates what flags are set on the route.
 The mapping between letters and flags is:
 .Bl -column "1" "RTF_BLACKHOLE" "Protocol specific routing flag #1."
-.It 1 Ta Dv RTF_PROTO1 Ta "Protocol specific routing flag #1."
-.It 2 Ta Dv RTF_PROTO2 Ta "Protocol specific routing flag #2."
-.It 3 Ta Dv RTF_PROTO3 Ta "Protocol specific routing flag #3."
-.It B Ta Dv RTF_BLACKHOLE Ta "Just discard packets."
-.It b Ta Dv RTF_BROADCAST Ta "Correspond to a local broadcast address."
-.It C Ta Dv RTF_CLONING Ta "Generate new routes on use."
-.It c Ta Dv RTF_CLONED Ta "Cloned routes (generated from RTF_CLONING)."
-.It D Ta Dv RTF_DYNAMIC Ta "Created dynamically (by redirect)."
-.It G Ta Dv RTF_GATEWAY Ta "Dest requires forwarding by intermediary."
-.It H Ta Dv RTF_HOST Ta "Host entry (net otherwise)."
-.It h Ta Dv RTF_CACHED Ta "Referenced by gateway route."
-.It L Ta Dv RTF_LLINFO Ta "Valid protocol to link address translation."
-.It l Ta Dv RTF_LOCAL Ta "Correspond to a local address."
-.It M Ta Dv RTF_MODIFIED Ta "Modified dynamically (by redirect)."
-.It m Ta Dv RTF_MULTICAST Ta "Correspond to a multicast address."
-.It n Ta Dv RTF_CONNECTED Ta "Interface route."
-.It P Ta Dv RTF_MPATH Ta "Multipath route."
-.It R Ta Dv RTF_REJECT Ta "Host or net unreachable."
-.It S Ta Dv RTF_STATIC Ta "Manually added."
-.It T Ta Dv RTF_MPLS Ta "MPLS route."
-.It U Ta Dv RTF_UP Ta "Route usable."
+.It Dv 1 Ta Dv RTF_PROTO1 Ta "Protocol specific routing flag #1."
+.It Dv 2 Ta Dv RTF_PROTO2 Ta "Protocol specific routing flag #2."
+.It Dv 3 Ta Dv RTF_PROTO3 Ta "Protocol specific routing flag #3."
+.It Dv B Ta Dv RTF_BLACKHOLE Ta "Just discard packets."
+.It Dv b Ta Dv RTF_BROADCAST Ta "Correspond to a local broadcast address."
+.It Dv C Ta Dv RTF_CLONING Ta "Generate new routes on use."
+.It Dv c Ta Dv RTF_CLONED Ta "Cloned routes (generated from RTF_CLONING)."
+.It Dv D Ta Dv RTF_DYNAMIC Ta "Created dynamically (by redirect)."
+.It Dv G Ta Dv RTF_GATEWAY Ta "Dest requires forwarding by intermediary."
+.It Dv H Ta Dv RTF_HOST Ta "Host entry (net otherwise)."
+.It Dv h Ta Dv RTF_CACHED Ta "Referenced by gateway route."
+.It Dv L Ta Dv RTF_LLINFO Ta "Valid protocol to link address translation."
+.It Dv l Ta Dv RTF_LOCAL Ta "Correspond to a local address."
+.It Dv M Ta Dv RTF_MODIFIED Ta "Modified dynamically (by redirect)."
+.It Dv m Ta Dv RTF_MULTICAST Ta "Correspond to a multicast address."
+.It Dv n Ta Dv RTF_CONNECTED Ta "Interface route."
+.It Dv P Ta Dv RTF_MPATH Ta "Multipath route."
+.It Dv R Ta Dv RTF_REJECT Ta "Host or net unreachable."
+.It Dv S Ta Dv RTF_STATIC Ta "Manually added."
+.It Dv T Ta Dv RTF_MPLS Ta "MPLS route."
+.It Dv U Ta Dv RTF_UP Ta "Route usable."
 .El
 .Pp
 .It Xo
