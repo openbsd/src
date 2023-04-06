@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.142 2023/04/06 08:38:53 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.143 2023/04/06 08:41:53 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -577,7 +577,7 @@ func hashEvpMdFromString(hs string) (*C.EVP_MD, error) {
 	}
 }
 
-func hashEvpDigestMessage(md *C.EVP_MD, msg []byte) ([]byte, C.size, error) {
+func hashEvpDigestMessage(md *C.EVP_MD, msg []byte) ([]byte, int, error) {
 	size := C.EVP_MD_size(md)
 	if size <= 0 || size > C.EVP_MAX_MD_SIZE {
 		return nil, 0, fmt.Errorf("unexpected MD size %d", size)
