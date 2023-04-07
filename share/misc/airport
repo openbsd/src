@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.87 2022/08/21 03:08:52 daniel Exp $
+#	$OpenBSD: airport,v 1.88 2023/04/07 01:18:01 deraadt Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1113,6 +1113,7 @@ MKL:Mc Kellar Field, Jackson, Tennessee, USA
 MKM:Mukah, Sarawak, Malaysia
 MKW:Rendani, Manokwari, Indonesia
 MKY:Mackay, Queensland, Australia
+MLN:Melilla, Spain
 MLA:Luqa, Malta, Malta
 MLB:Melbourne, Florida, USA
 MLE:Male International, Maldives
