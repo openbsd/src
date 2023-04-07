@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.5 2023/04/07 22:18:42 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.6 2023/04/07 22:22:10 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2579,7 +2579,7 @@ rand_neg(void)
 	static unsigned int neg = 0;
 	static int sign[8] = { 0, 0, 0, 1, 1, 0, 1, 1 };
 
-	return (sign[(neg++) % 8]);
+	return sign[neg++ % 8];
 }
 
 int
