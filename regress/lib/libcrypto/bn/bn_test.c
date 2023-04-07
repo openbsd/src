@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.11 2023/04/07 22:30:31 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.12 2023/04/07 22:32:59 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,16 +89,16 @@ const int num0 = 100; /* number of tests */
 const int num1 = 50;  /* additional tests for some functions */
 const int num2 = 5;   /* number of tests for slow functions */
 
-int test_add(BIO *bp);
-int test_sub(BIO *bp);
-int test_lshift1(BIO *bp);
+int test_add(BIO *bp, BN_CTX *ctx);
+int test_sub(BIO *bp, BN_CTX *ctx);
+int test_lshift1(BIO *bp, BN_CTX *ctx);
 int test_lshift(BIO *bp, BN_CTX *ctx, int use_lst);
-int test_rshift1(BIO *bp);
+int test_rshift1(BIO *bp, BN_CTX *ctx);
 int test_rshift(BIO *bp, BN_CTX *ctx);
 int test_div(BIO *bp, BN_CTX *ctx);
-int test_div_word(BIO *bp);
+int test_div_word(BIO *bp, BN_CTX *ctx);
 int test_div_recp(BIO *bp, BN_CTX *ctx);
-int test_mul(BIO *bp);
+int test_mul(BIO *bp, BN_CTX *ctx);
 int test_sqr(BIO *bp, BN_CTX *ctx);
 int test_mont(BIO *bp, BN_CTX *ctx);
 int test_mod(BIO *bp, BN_CTX *ctx);
@@ -108,8 +108,8 @@ int test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx);
 int test_mod_exp_mont5(BIO *bp, BN_CTX *ctx);
 int test_mod_exp_sizes(BIO *bp, BN_CTX *ctx);
 int test_exp(BIO *bp, BN_CTX *ctx);
-int test_gf2m_add(BIO *bp);
-int test_gf2m_mod(BIO *bp);
+int test_gf2m_add(BIO *bp, BN_CTX *ctx);
+int test_gf2m_mod(BIO *bp, BN_CTX *ctx);
 int test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx);
 int test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx);
 int test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx);
@@ -188,32 +188,32 @@ main(int argc, char *argv[])
 		BIO_puts(out, "obase=16\nibase=16\n");
 
 	message(out, "BN_add");
-	if (!test_add(out))
+	if (!test_add(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
 
 	message(out, "BN_sub");
-	if (!test_sub(out))
+	if (!test_sub(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
 
 	message(out, "BN_lshift1");
-	if (!test_lshift1(out))
+	if (!test_lshift1(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
 
 	message(out, "BN_lshift (fixed)");
-	if (!test_lshift(out, ctx, 1))
-		goto err;
-	(void)BIO_flush(out);
-
-	message(out, "BN_lshift");
 	if (!test_lshift(out, ctx, 0))
 		goto err;
 	(void)BIO_flush(out);
 
+	message(out, "BN_lshift");
+	if (!test_lshift(out, ctx, 1))
+		goto err;
+	(void)BIO_flush(out);
+
 	message(out, "BN_rshift1");
-	if (!test_rshift1(out))
+	if (!test_rshift1(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
 
@@ -228,7 +228,7 @@ main(int argc, char *argv[])
 	(void)BIO_flush(out);
 
 	message(out, "BN_mul");
-	if (!test_mul(out))
+	if (!test_mul(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
 
@@ -238,7 +238,7 @@ main(int argc, char *argv[])
 	(void)BIO_flush(out);
 
 	message(out, "BN_div_word");
-	if (!test_div_word(out))
+	if (!test_div_word(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
 
@@ -299,12 +299,12 @@ main(int argc, char *argv[])
 
 #ifndef OPENSSL_NO_EC2M
 	message(out, "BN_GF2m_add");
-	if (!test_gf2m_add(out))
+	if (!test_gf2m_add(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
 
 	message(out, "BN_GF2m_mod");
-	if (!test_gf2m_mod(out))
+	if (!test_gf2m_mod(out, ctx))
 		goto err;
 	(void)BIO_flush(out);
 
@@ -343,6 +343,7 @@ main(int argc, char *argv[])
 		goto err;
 	(void)BIO_flush(out);
 #endif
+
 	BN_CTX_free(ctx);
 	BIO_free(out);
 
@@ -358,17 +359,19 @@ main(int argc, char *argv[])
 }
 
 int
-test_add(BIO *bp)
+test_add(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL;
+	BIGNUM *a, *b, *c;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_bntest_rand(a, 512, 0, 0));
@@ -399,25 +402,25 @@ test_add(BIO *bp)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
 
 int
-test_sub(BIO *bp)
+test_sub(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL;
+	BIGNUM *a, *b, *c;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	for (i = 0; i < num0 + num1; i++) {
@@ -453,9 +456,7 @@ test_sub(BIO *bp)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -463,19 +464,21 @@ test_sub(BIO *bp)
 int
 test_div(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
+	BIGNUM *a, *b, *c, *d, *e;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_one(a));
@@ -528,11 +531,7 @@ test_div(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -555,16 +554,18 @@ print_word(BIO *bp, BN_ULONG w)
 }
 
 int
-test_div_word(BIO *bp)
+test_div_word(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL;
+	BIGNUM *a, *b;
 	BN_ULONG r, rmod, s = 0;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	for (i = 0; i < num0; i++) {
@@ -619,8 +620,7 @@ test_div_word(BIO *bp)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -628,20 +628,22 @@ test_div_word(BIO *bp)
 int
 test_div_recp(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
 	BN_RECP_CTX *recp = NULL;
+	BIGNUM *a, *b, *c, *d, *e;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if ((recp = BN_RECP_CTX_new()) == NULL)
@@ -694,37 +696,30 @@ test_div_recp(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 	BN_RECP_CTX_free(recp);
 
 	return rc;
 }
 
 int
-test_mul(BIO *bp)
+test_mul(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
+	BIGNUM *a, *b, *c, *d, *e;
 	int i;
 	int rc = 0;
-	BN_CTX *ctx;
 
-	ctx = BN_CTX_new();
-	if (ctx == NULL)
-		exit(1);
+	BN_CTX_start(ctx);
 
-	if ((a = BN_new()) == NULL)
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	for (i = 0; i < num0 + num1; i++) {
@@ -756,12 +751,7 @@ test_mul(BIO *bp)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
-	BN_CTX_free(ctx);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -769,17 +759,19 @@ test_mul(BIO *bp)
 int
 test_sqr(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *c = NULL, *d = NULL, *e = NULL;
+	BIGNUM *a, *c, *d, *e;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	for (i = 0; i < num0; i++) {
@@ -855,10 +847,7 @@ test_sqr(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -866,29 +855,29 @@ test_sqr(BIO *bp, BN_CTX *ctx)
 int
 test_mont(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *A = NULL, *B = NULL;
-	BIGNUM *n = NULL;
+	BN_MONT_CTX *mont = NULL;
+	BIGNUM *a, *b, *c, *d, *A, *B, *n;
 	int i;
 	int rc = 0;
-	BN_MONT_CTX *mont;
 
-	mont = BN_MONT_CTX_new();
-	if (mont == NULL)
-		return 0;
+	BN_CTX_start(ctx);
 
-	if ((a = BN_new()) == NULL)
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((A = BN_new()) == NULL)
+	if ((A = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((B = BN_new()) == NULL)
+	if ((B = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((n = BN_new()) == NULL)
+	if ((n = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if ((mont = BN_MONT_CTX_new()) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_zero(n));
@@ -946,14 +935,8 @@ test_mont(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
+	BN_CTX_end(ctx);
 	BN_MONT_CTX_free(mont);
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	BN_free(A);
-	BN_free(B);
-	BN_free(n);
 
 	return rc;
 }
@@ -961,19 +944,21 @@ test_mont(BIO *bp, BN_CTX *ctx)
 int
 test_mod(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
+	BIGNUM *a, *b, *c, *d, *e;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_bntest_rand(a, 1024, 0, 0));
@@ -1002,11 +987,7 @@ test_mod(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -1014,19 +995,21 @@ test_mod(BIO *bp, BN_CTX *ctx)
 int
 test_mod_mul(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
+	BIGNUM *a, *b, *c, *d, *e;
 	int i, j;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_one(a));
@@ -1088,11 +1071,7 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -1100,19 +1079,21 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 int
 test_mod_exp(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
+	BIGNUM *a, *b, *c, *d, *e;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_one(a));
@@ -1223,11 +1204,7 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -1235,19 +1212,21 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 int
 test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
+	BIGNUM *a, *b, *c, *d, *e;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_one(a));
@@ -1299,11 +1278,7 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -1315,27 +1290,29 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 int
 test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *p = NULL, *m = NULL, *d = NULL, *e = NULL;
-	BIGNUM *b = NULL, *n = NULL, *c = NULL;
+	BIGNUM *a, *p, *m, *d, *e;
+	BIGNUM *b, *n, *c;
 	BN_MONT_CTX *mont = NULL;
 	int len;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((p = BN_new()) == NULL)
+	if ((p = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((m = BN_new()) == NULL)
+	if ((m = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((n = BN_new()) == NULL)
+	if ((n = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(mont = BN_MONT_CTX_new());
@@ -1462,14 +1439,7 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(p);
-	BN_free(m);
-	BN_free(d);
-	BN_free(e);
-	BN_free(b);
-	BN_free(n);
-	BN_free(c);
+	BN_CTX_end(ctx);
 	BN_MONT_CTX_free(mont);
 
 	return rc;
@@ -1478,21 +1448,20 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 int
 test_exp(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *d = NULL, *e = NULL, *one = NULL;
+	BIGNUM *a, *b, *d, *e;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((one = BN_new()) == NULL)
-		goto err;
-	CHECK_GOTO(BN_one(one));
 
 	for (i = 0; i < num2; i++) {
 		CHECK_GOTO(BN_bntest_rand(a, 20 + i * 5, 0, 0));
@@ -1512,7 +1481,7 @@ test_exp(BIO *bp, BN_CTX *ctx)
 			BIO_puts(bp, "\n");
 		}
 		CHECK_GOTO(BN_one(e));
-		for (; !BN_is_zero(b); BN_sub(b, b, one))
+		for (; !BN_is_zero(b); BN_sub_word(b, 1))
 			CHECK_GOTO(BN_mul(e, e, a, ctx));
 		CHECK_GOTO(BN_sub(e, e, d));
 		if (!BN_is_zero(e)) {
@@ -1523,28 +1492,26 @@ test_exp(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(d);
-	BN_free(e);
-	BN_free(one);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
 
 #ifndef OPENSSL_NO_EC2M
 int
-test_gf2m_add(BIO *bp)
+test_gf2m_add(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL;
+	BIGNUM *a, *b, *c;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	for (i = 0; i < num0; i++) {
@@ -1581,33 +1548,33 @@ test_gf2m_add(BIO *bp)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
 
 int
-test_gf2m_mod(BIO *bp)
+test_gf2m_mod(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL;
-	int i, j;
+	BIGNUM *a, *b[2] = { 0 }, *c, *d, *e;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
-	int p1[] = { 193, 15, 0, -1 };
+	int p1[] = { 193, 15, 0, -1, 0 };
+	int i, j;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[0] = BN_new()) == NULL)
+	if ((b[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[1] = BN_new()) == NULL)
+	if ((b[1] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_GF2m_arr2poly(p0, b[0]));
@@ -1641,12 +1608,7 @@ test_gf2m_mod(BIO *bp)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b[0]);
-	BN_free(b[1]);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -1654,30 +1616,31 @@ test_gf2m_mod(BIO *bp)
 int
 test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
-	BIGNUM *g = NULL, *h = NULL;
-	int i, j;
+	BIGNUM *a, *b[2] = { 0 }, *c, *d, *e, *f, *g, *h;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
+	int i, j;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[0] = BN_new()) == NULL)
+	if ((b[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[1] = BN_new()) == NULL)
+	if ((b[1] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((f = BN_new()) == NULL)
+	if ((f = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((g = BN_new()) == NULL)
+	if ((g = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((h = BN_new()) == NULL)
+	if ((h = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_GF2m_arr2poly(p0, b[0]));
@@ -1718,15 +1681,7 @@ test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b[0]);
-	BN_free(b[1]);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
-	BN_free(f);
-	BN_free(g);
-	BN_free(h);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -1734,21 +1689,23 @@ test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
 int
 test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL;
+	BIGNUM *a, *b[2] = { 0 }, *c, *d;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[0] = BN_new()) == NULL)
+	if ((b[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[1] = BN_new()) == NULL)
+	if ((b[1] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_GF2m_arr2poly(p0, b[0]));
@@ -1785,11 +1742,7 @@ test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b[0]);
-	BN_free(b[1]);
-	BN_free(c);
-	BN_free(d);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -1797,21 +1750,23 @@ test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
 int
 test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL;
+	BIGNUM *a, *b[2] = { 0 }, *c, *d;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[0] = BN_new()) == NULL)
+	if ((b[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[1] = BN_new()) == NULL)
+	if ((b[1] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_GF2m_arr2poly(p0, b[0]));
@@ -1844,11 +1799,7 @@ test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b[0]);
-	BN_free(b[1]);
-	BN_free(c);
-	BN_free(d);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -1856,25 +1807,27 @@ test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
 int
 test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
+	BIGNUM *a, *b[2] = { 0 }, *c, *d, *e, *f;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[0] = BN_new()) == NULL)
+	if ((b[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[1] = BN_new()) == NULL)
+	if ((b[1] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((f = BN_new()) == NULL)
+	if ((f = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_GF2m_arr2poly(p0, b[0]));
@@ -1911,13 +1864,7 @@ test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b[0]);
-	BN_free(b[1]);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
-	BN_free(f);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -1925,25 +1872,27 @@ test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
 int
 test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
+	BIGNUM *a, *b[2] = { 0 }, *c, *d, *e, *f;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[0] = BN_new()) == NULL)
+	if ((b[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[1] = BN_new()) == NULL)
+	if ((b[1] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((f = BN_new()) == NULL)
+	if ((f = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_GF2m_arr2poly(p0, b[0]));
@@ -1988,13 +1937,7 @@ test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b[0]);
-	BN_free(b[1]);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
-	BN_free(f);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -2002,25 +1945,27 @@ test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
 int
 test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
+	BIGNUM *a, *b[2] = { 0 }, *c, *d, *e, *f;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[0] = BN_new()) == NULL)
+	if ((b[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[1] = BN_new()) == NULL)
+	if ((b[1] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((f = BN_new()) == NULL)
+	if ((f = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_GF2m_arr2poly(p0, b[0]));
@@ -2053,13 +1998,7 @@ test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b[0]);
-	BN_free(b[1]);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
-	BN_free(f);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -2067,23 +2006,25 @@ test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
 int
 test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL;
+	BIGNUM *a, *b[2] = { 0 }, *c, *d, *e;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j, s = 0, t;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[0] = BN_new()) == NULL)
+	if ((b[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b[1] = BN_new()) == NULL)
+	if ((b[1] = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_GF2m_arr2poly(p0, b[0]));
@@ -2140,16 +2081,12 @@ test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b[0]);
-	BN_free(b[1]);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
 #endif
+
 static int
 genprime_cb(int p, int n, BN_GENCB *arg)
 {
@@ -2170,19 +2107,21 @@ genprime_cb(int p, int n, BN_GENCB *arg)
 int
 test_kron(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *r = NULL, *t = NULL;
+	BIGNUM *a, *b, *r, *t;
 	BN_GENCB *cb = NULL;
 	int i;
 	int legendre, kronecker;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((r = BN_new()) == NULL)
+	if ((r = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((t = BN_new()) == NULL)
+	if ((t = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if ((cb = BN_GENCB_new()) == NULL)
@@ -2263,10 +2202,7 @@ test_kron(BIO *bp, BN_CTX *ctx)
 	rc = 1;
  err:
 	BN_GENCB_free(cb);
-	BN_free(a);
-	BN_free(b);
-	BN_free(r);
-	BN_free(t);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -2274,16 +2210,18 @@ test_kron(BIO *bp, BN_CTX *ctx)
 int
 test_sqrt(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *p = NULL, *r = NULL;
+	BIGNUM *a, *p, *r;
 	BN_GENCB *cb = NULL;
 	int i, j;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((p = BN_new()) == NULL)
+	if ((p = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((r = BN_new()) == NULL)
+	if ((r = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if ((cb = BN_GENCB_new()) == NULL)
@@ -2360,9 +2298,7 @@ test_sqrt(BIO *bp, BN_CTX *ctx)
 	rc = 1;
  err:
 	BN_GENCB_free(cb);
-	BN_free(a);
-	BN_free(p);
-	BN_free(r);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -2370,17 +2306,19 @@ test_sqrt(BIO *bp, BN_CTX *ctx)
 int
 test_lshift(BIO *bp, BN_CTX *ctx, int use_lst)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
+	BIGNUM *a, *b, *c, *d;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	CHECK_GOTO(BN_one(c));
 
@@ -2424,26 +2362,25 @@ test_lshift(BIO *bp, BN_CTX *ctx, int use_lst)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
 
 int
-test_lshift1(BIO *bp)
+test_lshift1(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL;
+	BIGNUM *a, *b, *c;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_bntest_rand(a, 200, 0, 0));
@@ -2471,9 +2408,7 @@ test_lshift1(BIO *bp)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -2481,19 +2416,21 @@ test_lshift1(BIO *bp)
 int
 test_rshift(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
+	BIGNUM *a, *b, *c, *d, *e;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((d = BN_new()) == NULL)
+	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((e = BN_new()) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	CHECK_GOTO(BN_one(c));
 
@@ -2522,27 +2459,25 @@ test_rshift(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
-	BN_free(d);
-	BN_free(e);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
 
 int
-test_rshift1(BIO *bp)
+test_rshift1(BIO *bp, BN_CTX *ctx)
 {
-	BIGNUM *a = NULL, *b = NULL, *c = NULL;
+	BIGNUM *a, *b, *c;
 	int i;
 	int rc = 0;
 
-	if ((a = BN_new()) == NULL)
+	BN_CTX_start(ctx);
+
+	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((b = BN_new()) == NULL)
+	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((c = BN_new()) == NULL)
+	if ((c = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	CHECK_GOTO(BN_bntest_rand(a, 200, 0, 0));
@@ -2569,9 +2504,7 @@ test_rshift1(BIO *bp)
 
 	rc = 1;
  err:
-	BN_free(a);
-	BN_free(b);
-	BN_free(c);
+	BN_CTX_end(ctx);
 
 	return rc;
 }
@@ -2589,7 +2522,7 @@ int
 test_mod_exp_sizes(BIO *bp, BN_CTX *ctx)
 {
 	BN_MONT_CTX *mont_ctx = NULL;
-	BIGNUM *p = NULL, *x = NULL, *y = NULL, *r = NULL, *r2 = NULL;
+	BIGNUM *p, *x, *y, *r, *r2;
 	int size;
 	int rc = 0;
 
@@ -2631,8 +2564,8 @@ test_mod_exp_sizes(BIO *bp, BN_CTX *ctx)
 
 	rc = 1;
  err:
-	BN_MONT_CTX_free(mont_ctx);
 	BN_CTX_end(ctx);
+	BN_MONT_CTX_free(mont_ctx);
 
 	return rc;
 }
