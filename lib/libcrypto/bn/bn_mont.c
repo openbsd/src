@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.55 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.56 2023/04/07 23:03:32 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -518,7 +518,7 @@ bn_montgomery_reduce(BIGNUM *r, BIGNUM *a, BN_MONT_CTX *mctx)
 	carry = 0;
 	n0 = mctx->n0[0];
 
-	/* Add multiples of the modulus, so that it becomes divisable by R. */
+	/* Add multiples of the modulus, so that it becomes divisible by R. */
 	for (i = 0; i < n_len; i++) {
 		v = bn_mul_add_words(&a->d[i], n->d, n_len, a->d[i] * n0);
 		bn_addw_addw(v, a->d[i + n_len], carry, &carry,
