@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.7 2023/04/07 22:23:31 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.8 2023/04/07 22:25:09 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1410,8 +1410,7 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	    "0000000000000000000000000000000000000000000000000000000000000000"
 	    "000000000000000000000000000000000000000000FFFFFFFFFFFFFF00000000");
 	CHECK_GOTO(len);
-	BN_free(b);
-	CHECK_GOTO(b = BN_dup(a));
+	CHECK_GOTO(bn_copy(b, a));
 	CHECK_GOTO(BN_MONT_CTX_set(mont, n, ctx));
 	CHECK_GOTO(BN_mod_mul_montgomery(c, a, a, mont, ctx));
 	CHECK_GOTO(BN_mod_mul_montgomery(d, a, b, mont, ctx));
