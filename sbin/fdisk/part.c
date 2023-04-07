@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.151 2023/04/05 14:07:08 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.152 2023/04/07 14:42:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -733,6 +733,8 @@ const struct menu_item menu_items[] = {
 
 const struct gpt_type	*find_gpt_type(const struct uuid *);
 const struct mbr_type	*find_mbr_type(const int);
+const char		*find_mbr_desc(const int);
+const char		*find_uuid_desc(const struct uuid *);
 int			 uuid_attr(const struct uuid *);
 int			 mbr_item(const unsigned int);
 int			 gpt_item(const unsigned int);
@@ -744,34 +746,76 @@ void			 print_menu(int (*)(const unsigned int),
 const struct gpt_type *
 find_gpt_type(const struct uuid *uuid)
 {
-	char			*uuidstr = NULL;
+	const struct gpt_type	*gt = NULL;
+	char			*guid;
 	unsigned int		 i;
 	uint32_t		 status;
 
-	uuid_to_string(uuid, &uuidstr, &status);
-	if (status == uuid_s_ok) {
-		for (i = 0; i < nitems(gpt_types); i++) {
-			if (strcasecmp(gpt_types[i].gt_guid, uuidstr) == 0)
-				break;
+	if (uuid != NULL) {
+		uuid_to_string(uuid, &guid, &status);
+		if (status == uuid_s_ok) {
+			for (i = 0; i < nitems(gpt_types) && gt == NULL; i++) {
+				if (strcasecmp(gpt_types[i].gt_guid, guid) == 0)
+					gt = &gpt_types[i];
+			}
 		}
-	} else
-		i = nitems(gpt_types);
-	free(uuidstr);
+		free(guid);
+	}
 
-	if (i < nitems(gpt_types))
-		return &gpt_types[i];
-	else
-		return NULL;
+	return gt;
+}
+
+const char *
+find_uuid_desc(const struct uuid *uuid)
+{
+	const struct gpt_type	*gt;
+	unsigned int		 i;
+
+	gt = find_gpt_type(uuid);
+	if (gt != NULL) {
+		if (gt->gt_desc != NULL)
+			return gt->gt_desc;
+		for (i = 0; i < nitems(menu_items); i++) {
+			if (gpt_item(i) == 0 &&
+			    strcasecmp(menu_items[i].mi_guid, gt->gt_guid) == 0)
+				return menu_items[i].mi_name;
+		}
+	}
+
+	return NULL;
 }
 
 const struct mbr_type *
 find_mbr_type(const int id)
 {
-	unsigned int			i;
+	const struct mbr_type	*mt = NULL;
+	unsigned int		 i;
 
-	for (i = 0; i < nitems(mbr_types); i++) {
-		if (mbr_types[i].mt_type == id)
-			return &mbr_types[i];
+	if (id >= 0) {
+		for (i = 0; i < nitems(mbr_types); i++) {
+			if (mbr_types[i].mt_type == id)
+				mt = &mbr_types[i];
+		}
+	}
+
+	return mt;
+}
+
+const char *
+find_mbr_desc(const int mbrid)
+{
+	const struct mbr_type	*mt;
+	unsigned int		 i;
+
+	mt = find_mbr_type(mbrid);
+	if (mt != NULL) {
+		if (mt->mt_desc != NULL)
+			return mt->mt_desc;
+		for (i = 0; i < nitems(menu_items); i++) {
+			if (mbr_item(i) == 0 &&
+			    menu_items[i].mi_mbrid == mt->mt_type)
+				return menu_items[i].mi_name;
+		}
 	}
 
 	return NULL;
@@ -967,28 +1011,18 @@ void
 PRT_print_part(const int num, const struct prt *prt, const char *units)
 {
 	const struct unit_type	*ut;
-	const struct mbr_type	*mt;
-	const char		*desc = NULL;
+	const char		*desc;
 	struct chs		 start, end;
 	double			 size;
 	unsigned int		 i;
 
 	size = units_size(units, prt->prt_ns, &ut);
 	PRT_lba_to_chs(prt, &start, &end);
-	mt = find_mbr_type(prt->prt_id);
-	if (mt != NULL) {
-		if (mt->mt_desc != NULL)
-			desc = mt->mt_desc;
-		for (i = 0; i < nitems(menu_items) && desc == NULL; i++) {
-			if (mbr_item(i) == 0 &&
-			    menu_items[i].mi_mbrid == prt->prt_id)
-				desc = menu_items[i].mi_name;
-		}
-	}
+	desc = find_mbr_desc(prt->prt_id);
 
 	printf("%c%1d: %.2X %6llu %3u %3u - %6llu %3u %3u [%12llu:%12.0f%s] "
-	    "%s\n", (prt->prt_flag == DOSACTIVE) ? '*' : ' ', num, prt->prt_id,
-	    start.chs_cyl, start.chs_head, start.chs_sect,
+	    "%-15s\n", (prt->prt_flag == DOSACTIVE) ? '*' : ' ', num,
+	    prt->prt_id, start.chs_cyl, start.chs_head, start.chs_sect,
 	    end.chs_cyl, end.chs_head, end.chs_sect,
 	    prt->prt_bs, size, ut->ut_abbr, desc ? desc : "<Unknown ID>");
 
@@ -1036,33 +1070,25 @@ PRT_lba_to_chs(const struct prt *prt, struct chs *start, struct chs *end)
 }
 
 const char *
-PRT_uuid_to_name(const struct uuid *uuid)
+PRT_uuid_to_desc(const struct uuid *uuid)
 {
-	static char		 typename[UUID_STR_LEN + 1];
-	const struct gpt_type	*gt;
-	char			*uuidstr;
-	unsigned int		 i;
+	static char		 guid[UUID_STR_LEN + 1];
+	const char		*desc;
+	char			*str;
 	uint32_t		 status;
 
-	gt = find_gpt_type(uuid);
-	if (gt != NULL) {
-		if (gt->gt_desc != NULL)
-			return gt->gt_desc;
-		for (i = 0; i < nitems(menu_items); i++) {
-			if (gpt_item(i) == 0 &&
-			    strcasecmp(gt->gt_guid, menu_items[i].mi_guid) == 0)
-				return menu_items[i].mi_name;
-		}
-	}
+	desc = find_uuid_desc(uuid);
+	if (desc != NULL)
+		return desc;
 
-	uuid_to_string(uuid, &uuidstr, &status);
+	uuid_to_string(uuid, &str, &status);
 	if (status == uuid_s_ok)
-		strlcpy(typename, uuidstr, sizeof(typename));
+		strlcpy(guid, str, sizeof(guid));
 	else
-		typename[0] = '\0';
-	free(uuidstr);
+		strlcpy(guid, "<Bad UUID>", sizeof(guid));
+	free(str);
 
-	return typename;
+	return guid;
 }
 
 int
