@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$OpenBSD: makesyscalls.sh,v 1.19 2023/02/27 00:18:00 afresh1 Exp $
+#	$OpenBSD: makesyscalls.sh,v 1.20 2023/04/07 09:43:38 tb Exp $
 #	$NetBSD: makesyscalls.sh,v 1.26 1998/01/09 06:17:51 thorpej Exp $
 #
 # Copyright (c) 1994,1996 Christopher G. Demetriou
@@ -398,8 +398,8 @@ function putent(nodefs, compatwrap) {
 			printf(" \"%s\"", argtype[i]) > sysnumhdr
 		if (isvarargs) {
 			printf(" \"...\"") > sysnumhdr
-			for (i = varargc+1; i <= argc; i++)                                                             
-				printf(" \"%s\"", argtype[i]) > sysnumhdr                                               
+			for (i = varargc + 1; i <= argc; i++)
+				printf(" \"%s\"", argtype[i]) > sysnumhdr
 		}
 		printf(" */\n") > sysnumhdr
 
