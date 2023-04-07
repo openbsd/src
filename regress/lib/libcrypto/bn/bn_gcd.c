@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_gcd.c,v 1.2 2023/04/06 07:07:54 tb Exp $ */
+/*	$OpenBSD: bn_gcd.c,v 1.3 2023/04/07 17:09:54 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -3495,13 +3495,16 @@ bn_gcd_test(const struct gcd_test *testcase)
 			BN_set_negative(b, (signs >> 1) & 1);
 
 			if (!test->fn(got, a, b, ctx)) {
-				fprintf(stderr, "boo\n");
+				fprintf(stderr, "%s(%s, %s) failed\n",
+				    test->name, testcase->a, testcase->b);
 				goto err;
 			}
 
 			if (BN_cmp(got, want) != 0) {
-				fprintf(stderr, "%s, signs %d, want %s, got ",
-				    test->name, signs, testcase->r);
+				fprintf(stderr, "a: %s\n", testcase->a);
+				fprintf(stderr, "b: %s\n", testcase->b);
+				fprintf(stderr, "%s, i: %zu, signs %d, want %s, got ",
+				    test->name, i, signs, testcase->r);
 				BN_print_fp(stderr, got);
 				fprintf(stderr, "\n");
 
@@ -3568,9 +3571,13 @@ bn_binomial_gcd_test(const struct gcd_test_fn *test, int k, BIGNUM *a,
 			}
 
 			if (BN_ucmp(gcd, b) != 0) {
-				fprintf(stderr, "%s: BN_ucmp() failed, "
+				fprintf(stderr, "%s: BN_ucmp(gcd, b) failed, "
 				    "k: %d, shift: %d, signs %d\n",
 				    test->name, k, shift, signs);
+				BN_print_fp(stderr, gcd);
+				fprintf(stderr, "\n");
+				BN_print_fp(stderr, b);
+				fprintf(stderr, "\n");
 				failed |= 1;
 			}
 		}
