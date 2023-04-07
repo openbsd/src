@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.3 2023/03/27 08:52:57 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.4 2023/04/07 22:14:20 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,7 +92,7 @@ const int num2 = 5;   /* number of tests for slow functions */
 int test_add(BIO *bp);
 int test_sub(BIO *bp);
 int test_lshift1(BIO *bp);
-int test_lshift(BIO *bp, BN_CTX *ctx, BIGNUM *a_);
+int test_lshift(BIO *bp, BN_CTX *ctx, int use_lst);
 int test_rshift1(BIO *bp);
 int test_rshift(BIO *bp, BN_CTX *ctx);
 int test_div(BIO *bp, BN_CTX *ctx);
@@ -121,10 +121,6 @@ int test_kron(BIO *bp, BN_CTX *ctx);
 int test_sqrt(BIO *bp, BN_CTX *ctx);
 int rand_neg(void);
 static int results = 0;
-
-static unsigned char lst[] =
-	"\xC6\x4F\x43\x04\x2A\xEA\xCA\x6E\x58\x36\x80\x5B\xE8\xC9"
-	"\x9B\x04\x5D\x48\x36\xC2\xFD\x16\xC9\x64\xF0";
 
 #define PRINT_ERROR printf("Error in %s [%s:%d]\n", __func__, __FILE__,	\
 		__LINE__)
@@ -205,12 +201,12 @@ main(int argc, char *argv[])
 	(void)BIO_flush(out);
 
 	message(out, "BN_lshift (fixed)");
-	if (!test_lshift(out, ctx, BN_bin2bn(lst, sizeof(lst) - 1, NULL)))
+	if (!test_lshift(out, ctx, 1))
 		goto err;
 	(void)BIO_flush(out);
 
 	message(out, "BN_lshift");
-	if (!test_lshift(out, ctx, NULL))
+	if (!test_lshift(out, ctx, 0))
 		goto err;
 	(void)BIO_flush(out);
 
@@ -2354,12 +2350,14 @@ test_sqrt(BIO *bp, BN_CTX *ctx)
 }
 
 int
-test_lshift(BIO *bp, BN_CTX *ctx, BIGNUM *a_)
+test_lshift(BIO *bp, BN_CTX *ctx, int use_lst)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
 	int i;
 	int rc = 1;
 
+	if ((a = BN_new()) == NULL)
+		goto err;
 	if ((b = BN_new()) == NULL)
 		goto err;
 	if ((c = BN_new()) == NULL)
@@ -2368,11 +2366,11 @@ test_lshift(BIO *bp, BN_CTX *ctx, BIGNUM *a_)
 		goto err;
 	CHECK_GOTO(BN_one(c));
 
-	if (a_)
-		a = a_;
-	else {
-		if ((a = BN_new()) == NULL)
-		goto err;
+	if (use_lst) {
+		if (!BN_hex2bn(&a, "C64F43042AEACA6E5836805BE8C99B04"
+		    "5D4836C2FD16C964F0"))
+			goto err;
+	} else {
 		CHECK_GOTO(BN_bntest_rand(a, 200, 0, 0));
 		BN_set_negative(a, rand_neg());
 	}
