@@ -49,6 +49,12 @@ my %obsolete = (
 	V_ASN1_PRIMATIVE_TAG
 	X509_algor_st
     )],
+    bio => [qw(
+	BIO_get_no_connect_return BIO_get_proxies
+	BIO_get_proxy_header BIO_get_url
+	BIO_set_filter_bio BIO_set_no_connect_return BIO_set_proxies
+	BIO_set_proxy_cb BIO_set_proxy_header BIO_set_url
+    )],
     bn => [qw(
 	BN_FLG_EXP_CONSTTIME BN_FLG_FREE BN_get_params
 	BN_HEX_FMT1 BN_HEX_FMT2 BN_MASK
