@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.3 2023/03/22 21:41:28 jsg Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.4 2023/04/07 08:53:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -106,6 +106,7 @@ dwqe_attach(struct dwqe_softc *sc)
 {
 	struct ifnet *ifp;
 	uint32_t version, mode;
+	int mii_flags = 0;
 	int i;
 
 	version = dwqe_read(sc, GMAC_VERSION);
@@ -212,8 +213,25 @@ dwqe_attach(struct dwqe_softc *sc)
 		dwqe_write(sc, GMAC_SYS_BUS_MODE, mode);
 	}
 
+	switch (sc->sc_phy_mode) {
+	case DWQE_PHY_MODE_RGMII:
+		mii_flags |= MIIF_SETDELAY;
+		break;
+	case DWQE_PHY_MODE_RGMII_ID:
+		mii_flags |= MIIF_SETDELAY | MIIF_RXID | MIIF_TXID;
+		break;
+	case DWQE_PHY_MODE_RGMII_RXID:
+		mii_flags |= MIIF_SETDELAY | MIIF_RXID;
+		break;
+	case DWQE_PHY_MODE_RGMII_TXID:
+		mii_flags |= MIIF_SETDELAY | MIIF_TXID;
+		break;
+	default:
+		break;
+	}
+
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
-	    (sc->sc_phyloc == MII_PHY_ANY) ? 0 : MII_OFFSET_ANY, 0);
+	    (sc->sc_phyloc == MII_PHY_ANY) ? 0 : MII_OFFSET_ANY, mii_flags);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);

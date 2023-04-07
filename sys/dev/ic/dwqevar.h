@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqevar.h,v 1.2 2023/03/19 09:46:40 kettenis Exp $	*/
+/*	$OpenBSD: dwqevar.h,v 1.3 2023/04/07 08:53:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -15,6 +15,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+enum dwqe_phy_mode {
+	DWQE_PHY_MODE_UNKNOWN,
+	DWQE_PHY_MODE_RGMII,
+	DWQE_PHY_MODE_RGMII_ID,
+	DWQE_PHY_MODE_RGMII_TXID,
+	DWQE_PHY_MODE_RGMII_RXID,
+};
 
 struct dwqe_buf {
 	bus_dmamap_t	tb_map;
@@ -51,6 +59,7 @@ struct dwqe_softc {
 #define sc_media	sc_mii.mii_media
 	int			sc_link;
 	int			sc_phyloc;
+	enum dwqe_phy_mode	sc_phy_mode;
 
 	struct dwqe_dmamem	*sc_txring;
 	struct dwqe_buf		*sc_txbuf;

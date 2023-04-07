@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.7 2023/04/07 06:33:49 dlg Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.8 2023/04/07 08:53:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -86,6 +86,7 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dwqe_softc *sc = (void *)self;
 	struct fdt_attach_args *faa = aux;
+	char phy_mode[16] = { 0 };
 	uint32_t phy, phy_supply;
 	uint32_t axi_config;
 	struct ifnet *ifp;
@@ -112,6 +113,18 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unknown controller\n");
 		return;
 	}
+
+	OF_getprop(faa->fa_node, "phy-mode", phy_mode, sizeof(phy_mode));
+	if (strcmp(phy_mode, "rgmii") == 0)
+		sc->sc_phy_mode = DWQE_PHY_MODE_RGMII;
+	else if (strcmp(phy_mode, "rgmii-rxid") == 0)
+		sc->sc_phy_mode = DWQE_PHY_MODE_RGMII_RXID;
+	else if (strcmp(phy_mode, "rgmii-txid") == 0)
+		sc->sc_phy_mode = DWQE_PHY_MODE_RGMII_TXID;
+	else if (strcmp(phy_mode, "rgmii-id") == 0)
+		sc->sc_phy_mode = DWQE_PHY_MODE_RGMII_ID;
+	else
+		sc->sc_phy_mode = DWQE_PHY_MODE_UNKNOWN;
 
 	/* Lookup PHY. */
 	phy = OF_getpropint(faa->fa_node, "phy", 0);
