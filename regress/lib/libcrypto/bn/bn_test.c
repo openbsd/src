@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.9 2023/04/07 22:28:21 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.10 2023/04/07 22:29:33 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -774,7 +774,8 @@ int
 test_sqr(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *c = NULL, *d = NULL, *e = NULL;
-	int i, rc = 0;
+	int i;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1552,7 +1553,8 @@ int
 test_gf2m_add(BIO *bp)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL;
-	int i, rc = 0;
+	int i;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1749,9 +1751,10 @@ int
 test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL;
-	int i, j, rc = 0;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
+	int i, j;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1811,9 +1814,10 @@ int
 test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL;
-	int i, j, rc = 0;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
+	int i, j;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1869,9 +1873,10 @@ int
 test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
-	int i, j, rc = 0;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
+	int i, j;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1937,9 +1942,10 @@ int
 test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
-	int i, j, rc = 0;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
+	int i, j;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -2013,9 +2019,10 @@ int
 test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL, *f = NULL;
-	int i, j, rc = 0;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
+	int i, j;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -2077,9 +2084,10 @@ int
 test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b[2] = { 0 }, *c = NULL, *d = NULL, *e = NULL;
-	int i, j, s = 0, t, rc = 0;
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
+	int i, j, s = 0, t;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
