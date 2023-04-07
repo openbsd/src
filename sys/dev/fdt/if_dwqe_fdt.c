@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.6 2023/04/06 00:09:39 dlg Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.7 2023/04/07 06:33:49 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -88,6 +88,7 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	struct fdt_attach_args *faa = aux;
 	uint32_t phy, phy_supply;
 	uint32_t axi_config;
+	struct ifnet *ifp;
 	int i, node;
 
 	sc->sc_node = faa->fa_node;
@@ -210,6 +211,11 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	    dwqe_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
+
+	ifp = &sc->sc_ac.ac_if;
+	sc->sc_ifd.if_node = faa->fa_node;
+	sc->sc_ifd.if_ifp = ifp;
+	if_register(&sc->sc_ifd);
 }
 
 void
