@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.6 2023/04/07 22:22:10 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.7 2023/04/07 22:23:31 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -481,7 +481,7 @@ test_div(BIO *bp, BN_CTX *ctx)
 
 	if (BN_div(d, c, a, b, ctx)) {
 		fprintf(stderr, "Division by zero succeeded!\n");
-		return (0);
+		goto err;
 	}
 
 	for (i = 0; i < num0 + num1; i++) {
@@ -893,13 +893,13 @@ test_mont(BIO *bp, BN_CTX *ctx)
 	CHECK_GOTO(BN_zero(n));
 	if (BN_MONT_CTX_set(mont, n, ctx)) {
 		fprintf(stderr, "BN_MONT_CTX_set succeeded for zero modulus!\n");
-		return (0);
+		goto err;
 	}
 
 	CHECK_GOTO(BN_set_word(n, 16));
 	if (BN_MONT_CTX_set(mont, n, ctx)) {
 		fprintf(stderr, "BN_MONT_CTX_set succeeded for even modulus!\n");
-		return (0);
+		goto err;
 	}
 
 	CHECK_GOTO(BN_bntest_rand(a, 100, 0, 0));
@@ -1031,7 +1031,7 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 	CHECK_GOTO(BN_zero(c));
 	if (BN_mod_mul(e, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_mul with zero modulus succeeded!\n");
-		return (0);
+		goto err;
 	}
 
 	for (j = 0; j < 3; j++) {
