@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqevar.h,v 1.3 2023/04/07 08:53:03 kettenis Exp $	*/
+/*	$OpenBSD: dwqevar.h,v 1.4 2023/04/07 09:33:51 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -52,6 +52,8 @@ struct dwqe_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
 	void			*sc_ih;
+
+	struct if_device	sc_ifd;
 
 	struct arpcom		sc_ac;
 #define sc_lladdr	sc_ac.ac_enaddr
