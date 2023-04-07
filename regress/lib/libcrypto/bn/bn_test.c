@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.4 2023/04/07 22:14:20 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.5 2023/04/07 22:18:42 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -128,7 +128,6 @@ static int results = 0;
 #define CHECK_GOTO(a) do {						\
 	if (!(a)) {							\
 		PRINT_ERROR;						\
-		rc = 0;							\
 		goto err;						\
 	}								\
 } while (0)
@@ -360,7 +359,7 @@ test_add(BIO *bp)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -391,11 +390,11 @@ test_add(BIO *bp)
 		CHECK_GOTO(BN_add(c, c, a));
 		if (!BN_is_zero(c)) {
 			fprintf(stderr, "Add test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
 
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
@@ -409,7 +408,7 @@ test_sub(BIO *bp)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -423,8 +422,7 @@ test_sub(BIO *bp)
 			CHECK_GOTO(BN_bntest_rand(a, 512, 0, 0));
 			CHECK_GOTO(bn_copy(b, a));
 			if (BN_set_bit(a, i) == 0) {
-				rc = 0;
-				break;
+				goto err;
 			}
 			CHECK_GOTO(BN_add_word(b, i));
 		} else {
@@ -447,15 +445,17 @@ test_sub(BIO *bp)
 		CHECK_GOTO(BN_sub(c, c, a));
 		if (!BN_is_zero(c)) {
 			fprintf(stderr, "Subtract test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -463,7 +463,7 @@ test_div(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -519,17 +519,19 @@ test_div(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_sub(d, d, a));
 		if (!BN_is_zero(d)) {
 			fprintf(stderr, "Division test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
 	BN_free(d);
 	BN_free(e);
-	return (rc);
+
+	return rc;
 }
 
 static void
@@ -555,7 +557,7 @@ test_div_word(BIO *bp)
 	BIGNUM *a = NULL, *b = NULL;
 	BN_ULONG r, rmod, s = 0;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -566,29 +568,25 @@ test_div_word(BIO *bp)
 		do {
 			if (!BN_bntest_rand(a, 512, -1, 0) ||
 			    !BN_bntest_rand(b, BN_BITS2, -1, 0)) {
-				rc = 0;
-				break;
+				goto err;
 			}
 			s = BN_get_word(b);
 		} while (!s);
 
 		if (!bn_copy(b, a)) {
-			rc = 0;
-			break;
+			goto err;
 		}
 
 		rmod = BN_mod_word(b, s);
 		r = BN_div_word(b, s);
 
 		if (r == (BN_ULONG)-1 || rmod == (BN_ULONG)-1) {
-			rc = 0;
-			break;
+			goto err;
 		}
 
 		if (rmod != r) {
 			fprintf(stderr, "Mod (word) test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 
 		if (bp != NULL) {
@@ -615,10 +613,11 @@ test_div_word(BIO *bp)
 		CHECK_GOTO(BN_sub(b, a, b));
 		if (!BN_is_zero(b)) {
 			fprintf(stderr, "Division (word) test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
@@ -632,7 +631,7 @@ test_div_recp(BIO *bp, BN_CTX *ctx)
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
 	BN_RECP_CTX *recp = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -689,10 +688,11 @@ test_div_recp(BIO *bp, BN_CTX *ctx)
 			fprintf(stderr, "\nb=");
 			CHECK_GOTO(BN_print_fp(stderr, b));
 			fprintf(stderr, "\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
@@ -700,7 +700,8 @@ test_div_recp(BIO *bp, BN_CTX *ctx)
 	BN_free(d);
 	BN_free(e);
 	BN_RECP_CTX_free(recp);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -708,7 +709,7 @@ test_mul(BIO *bp)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 	BN_CTX *ctx;
 
 	ctx = BN_CTX_new();
@@ -749,10 +750,11 @@ test_mul(BIO *bp)
 		CHECK_GOTO(BN_sub(d, d, b));
 		if (!BN_is_zero(d) || !BN_is_zero(e)) {
 			fprintf(stderr, "Multiplication test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
@@ -760,7 +762,8 @@ test_mul(BIO *bp)
 	BN_free(d);
 	BN_free(e);
 	BN_CTX_free(ctx);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -848,12 +851,14 @@ test_sqr(BIO *bp, BN_CTX *ctx)
 				"different results!\n");
 		goto err;
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
 	BN_free(c);
 	BN_free(d);
 	BN_free(e);
+
 	return rc;
 }
 
@@ -863,7 +868,7 @@ test_mont(BIO *bp, BN_CTX *ctx)
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *A = NULL, *B = NULL;
 	BIGNUM *n = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 	BN_MONT_CTX *mont;
 
 	mont = BN_MONT_CTX_new();
@@ -932,10 +937,11 @@ test_mont(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_sub(d, d, A));
 		if (!BN_is_zero(d)) {
 			fprintf(stderr, "Montgomery multiplication test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_MONT_CTX_free(mont);
 	BN_free(a);
@@ -945,7 +951,8 @@ test_mont(BIO *bp, BN_CTX *ctx)
 	BN_free(A);
 	BN_free(B);
 	BN_free(n);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -953,7 +960,7 @@ test_mod(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -986,17 +993,19 @@ test_mod(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_sub(e, e, c));
 		if (!BN_is_zero(e)) {
 			fprintf(stderr, "Modulo test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
 	BN_free(d);
 	BN_free(e);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -1004,7 +1013,7 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
 	int i, j;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1068,18 +1077,20 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 			if (!BN_is_zero(b)) {
 				fprintf(stderr, "Modulo multiply test failed!\n");
 				ERR_print_errors_fp(stderr);
-				rc = 0;
 				goto err;
 			}
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
 	BN_free(d);
 	BN_free(e);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -1087,7 +1098,7 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1105,17 +1116,14 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 	CHECK_GOTO(BN_zero(c));
 	if (BN_mod_exp(d, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_exp with zero modulus succeeded!\n");
-		rc = 0;
 		goto err;
 	}
 	if (BN_mod_exp_ct(d, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_exp_ct with zero modulus succeeded!\n");
-		rc = 0;
 		goto err;
 	}
 	if (BN_mod_exp_nonct(d, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_exp_nonct with zero modulus succeeded!\n");
-		rc = 0;
 		goto err;
 	}
 
@@ -1125,8 +1133,7 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
 		if (!BN_mod_exp(d, a, b, c, ctx)) {
-			rc = 0;
-			break;
+			goto err;
 		}
 
 		if (bp != NULL) {
@@ -1146,8 +1153,7 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_div(a, b, e, c, ctx));
 		if (!BN_is_zero(b)) {
 			fprintf(stderr, "Modulo exponentiation test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
 
@@ -1157,8 +1163,7 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
 		if (!BN_mod_exp_ct(d, a, b, c, ctx)) {
-			rc = 0;
-			break;
+			goto err;
 		}
 
 		if (bp != NULL) {
@@ -1178,8 +1183,7 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_div(a, b, e, c, ctx));
 		if (!BN_is_zero(b)) {
 			fprintf(stderr, "Modulo exponentiation test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
 
@@ -1189,8 +1193,7 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
 		if (!BN_mod_exp_nonct(d, a, b, c, ctx)) {
-			rc = 0;
-			break;
+			goto err;
 		}
 
 		if (bp != NULL) {
@@ -1210,17 +1213,19 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_div(a, b, e, c, ctx));
 		if (!BN_is_zero(b)) {
 			fprintf(stderr, "Modulo exponentiation test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
 	BN_free(d);
 	BN_free(e);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -1228,7 +1233,7 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1247,7 +1252,6 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 	if (BN_mod_exp_mont_consttime(d, a, b, c, ctx, NULL)) {
 		fprintf(stderr, "BN_mod_exp_mont_consttime with zero modulus "
 				"succeeded\n");
-		rc = 0;
 		goto err;
 	}
 
@@ -1255,7 +1259,6 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 	if (BN_mod_exp_mont_consttime(d, a, b, c, ctx, NULL)) {
 		fprintf(stderr, "BN_mod_exp_mont_consttime with even modulus "
 				"succeeded\n");
-		rc = 0;
 		goto err;
 	}
 
@@ -1265,8 +1268,7 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
 		if (!BN_mod_exp_mont_consttime(d, a, b, c, ctx, NULL)) {
-			rc = 0;
-			break;
+			goto err;
 		}
 
 		if (bp != NULL) {
@@ -1286,17 +1288,19 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_div(a, b, e, c, ctx));
 		if (!BN_is_zero(b)) {
 			fprintf(stderr, "Modulo exponentiation test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
 	BN_free(d);
 	BN_free(e);
-	return (rc);
+
+	return rc;
 }
 
 /*
@@ -1310,7 +1314,7 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	BIGNUM *b = NULL, *n = NULL, *c = NULL;
 	BN_MONT_CTX *mont = NULL;
 	int len;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1336,12 +1340,10 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	CHECK_GOTO(BN_bntest_rand(a, 1024, 0, 0));
 	CHECK_GOTO(BN_zero(p));
 	if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL)) {
-		rc = 0;
 		goto err;
 	}
 	if (!BN_is_one(d)) {
 		fprintf(stderr, "Modular exponentiation test failed!\n");
-		rc = 0;
 		goto err;
 	}
 	/* Regression test for carry bug in mulx4x_mont */
@@ -1369,7 +1371,6 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	if (BN_cmp(c, d)) {
 		fprintf(stderr, "Montgomery multiplication test failed:"
 		    " a*b != b*a.\n");
-		rc = 0;
 		goto err;
 	}
 	/* Regression test for carry bug in sqr[x]8x_mont */
@@ -1417,19 +1418,16 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	if (BN_cmp(c, d)) {
 		fprintf(stderr, "Montgomery multiplication test failed:"
 		    " a**2 != a*a.\n");
-		rc = 0;
 		goto err;
 	}
 	/* Zero input */
 	CHECK_GOTO(BN_bntest_rand(p, 1024, 0, 0));
 	CHECK_GOTO(BN_zero(a));
 	if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL)) {
-		rc = 0;
 		goto err;
 	}
 	if (!BN_is_zero(d)) {
 		fprintf(stderr, "Modular exponentiation test failed!\n");
-		rc = 0;
 		goto err;
 	}
 	/*
@@ -1440,37 +1438,32 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	CHECK_GOTO(BN_one(a));
 	CHECK_GOTO(BN_MONT_CTX_set(mont, m, ctx));
 	if (!BN_from_montgomery(e, a, mont, ctx)) {
-		rc = 0;
 		goto err;
 	}
 	if (!BN_mod_exp_mont_consttime(d, e, p, m, ctx, NULL)) {
-		rc = 0;
 		goto err;
 	}
 	if (!BN_mod_exp_simple(a, e, p, m, ctx)) {
-		rc = 0;
 		goto err;
 	}
 	if (BN_cmp(a, d) != 0) {
 		fprintf(stderr, "Modular exponentiation test failed!\n");
-		rc = 0;
 		goto err;
 	}
 	/* Finally, some regular test vectors. */
 	CHECK_GOTO(BN_bntest_rand(e, 1024, 0, 0));
 	if (!BN_mod_exp_mont_consttime(d, e, p, m, ctx, NULL)) {
-		rc = 0;
 		goto err;
 	}
 	if (!BN_mod_exp_simple(a, e, p, m, ctx)) {
-		rc = 0;
 		goto err;
 	}
 	if (BN_cmp(a, d) != 0) {
 		fprintf(stderr, "Modular exponentiation test failed!\n");
-		rc = 0;
 		goto err;
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(p);
@@ -1481,7 +1474,8 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	BN_free(n);
 	BN_free(c);
 	BN_MONT_CTX_free(mont);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -1489,7 +1483,7 @@ test_exp(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b = NULL, *d = NULL, *e = NULL, *one = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -1508,8 +1502,7 @@ test_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
 		if (BN_exp(d, a, b, ctx) <= 0) {
-			rc = 0;
-			break;
+			goto err;
 		}
 
 		if (bp != NULL) {
@@ -1528,17 +1521,19 @@ test_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_sub(e, e, d));
 		if (!BN_is_zero(e)) {
 			fprintf(stderr, "Exponentiation test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(d);
 	BN_free(e);
 	BN_free(one);
-	return (rc);
+
+	return rc;
 }
 
 #ifndef OPENSSL_NO_EC2M
@@ -1586,11 +1581,13 @@ test_gf2m_add(BIO *bp)
 			goto err;
 		}
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
+
 	return rc;
 }
 
@@ -1644,6 +1641,7 @@ test_gf2m_mod(BIO *bp)
 			}
 		}
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
@@ -1652,6 +1650,7 @@ test_gf2m_mod(BIO *bp)
 	BN_free(c);
 	BN_free(d);
 	BN_free(e);
+
 	return rc;
 }
 
@@ -1719,6 +1718,7 @@ test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
 			}
 		}
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
@@ -1730,6 +1730,7 @@ test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
 	BN_free(f);
 	BN_free(g);
 	BN_free(h);
+
 	return rc;
 }
 
@@ -1783,6 +1784,7 @@ test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
 			}
 		}
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
@@ -1790,6 +1792,7 @@ test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
 	BN_free(b[1]);
 	BN_free(c);
 	BN_free(d);
+
 	return rc;
 }
 
@@ -1839,6 +1842,7 @@ test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
 			}
 		}
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
@@ -1846,6 +1850,7 @@ test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
 	BN_free(b[1]);
 	BN_free(c);
 	BN_free(d);
+
 	return rc;
 }
 
@@ -1903,6 +1908,7 @@ test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
 			}
 		}
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
@@ -1912,6 +1918,7 @@ test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
 	BN_free(d);
 	BN_free(e);
 	BN_free(f);
+
 	return rc;
 }
 
@@ -1977,6 +1984,7 @@ test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
 			}
 		}
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
@@ -1986,6 +1994,7 @@ test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
 	BN_free(d);
 	BN_free(e);
 	BN_free(f);
+
 	return rc;
 }
 
@@ -2039,6 +2048,7 @@ test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
 			}
 		}
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
@@ -2048,6 +2058,7 @@ test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
 	BN_free(d);
 	BN_free(e);
 	BN_free(f);
+
 	return rc;
 }
 
@@ -2123,6 +2134,7 @@ test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
 		fprintf(stderr, "this is very unlikely and probably indicates an error.\n");
 		goto err;
 	}
+
 	rc = 1;
  err:
 	BN_free(a);
@@ -2131,6 +2143,7 @@ test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
 	BN_free(c);
 	BN_free(d);
 	BN_free(e);
+
 	return rc;
 }
 #endif
@@ -2148,7 +2161,7 @@ genprime_cb(int p, int n, BN_GENCB *arg)
 	if (p == 3)
 		c = '\n';
 	putc(c, stderr);
-	return (1);
+	return 1;
 }
 
 int
@@ -2243,14 +2256,15 @@ test_kron(BIO *bp, BN_CTX *ctx)
 	}
 
 	putc('\n', stderr);
-	rc = 1;
 
+	rc = 1;
  err:
 	BN_GENCB_free(cb);
 	BN_free(a);
 	BN_free(b);
 	BN_free(r);
 	BN_free(t);
+
 	return rc;
 }
 
@@ -2339,13 +2353,14 @@ test_sqrt(BIO *bp, BN_CTX *ctx)
 
 		putc('\n', stderr);
 	}
-	rc = 1;
 
+	rc = 1;
  err:
 	BN_GENCB_free(cb);
 	BN_free(a);
 	BN_free(p);
 	BN_free(r);
+
 	return rc;
 }
 
@@ -2354,7 +2369,7 @@ test_lshift(BIO *bp, BN_CTX *ctx, int use_lst)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -2400,16 +2415,18 @@ test_lshift(BIO *bp, BN_CTX *ctx, int use_lst)
 			fprintf(stderr, "\nd=");
 			CHECK_GOTO(BN_print_fp(stderr, d));
 			fprintf(stderr, "\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
 	BN_free(d);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -2417,7 +2434,7 @@ test_lshift1(BIO *bp)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -2443,17 +2460,19 @@ test_lshift1(BIO *bp)
 		CHECK_GOTO(BN_sub(a, b, c));
 		if (!BN_is_zero(a)) {
 			fprintf(stderr, "Left shift one test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 
 		CHECK_GOTO(bn_copy(a, b));
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -2461,7 +2480,7 @@ test_rshift(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -2494,17 +2513,19 @@ test_rshift(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_sub(d, d, b));
 		if (!BN_is_zero(d)) {
 			fprintf(stderr, "Right shift test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
 	BN_free(d);
 	BN_free(e);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -2512,7 +2533,7 @@ test_rshift1(BIO *bp)
 {
 	BIGNUM *a = NULL, *b = NULL, *c = NULL;
 	int i;
-	int rc = 1;
+	int rc = 0;
 
 	if ((a = BN_new()) == NULL)
 		goto err;
@@ -2538,16 +2559,18 @@ test_rshift1(BIO *bp)
 		CHECK_GOTO(BN_sub(c, c, b));
 		if (!BN_is_zero(c) && !BN_abs_is_word(c, 1)) {
 			fprintf(stderr, "Right shift one test failed!\n");
-			rc = 0;
-			break;
+			goto err;
 		}
 		CHECK_GOTO(bn_copy(a, b));
 	}
+
+	rc = 1;
  err:
 	BN_free(a);
 	BN_free(b);
 	BN_free(c);
-	return (rc);
+
+	return rc;
 }
 
 int
@@ -2604,9 +2627,9 @@ test_mod_exp_sizes(BIO *bp, BN_CTX *ctx)
 	}
 
 	rc = 1;
-
  err:
 	BN_MONT_CTX_free(mont_ctx);
 	BN_CTX_end(ctx);
+
 	return rc;
 }
