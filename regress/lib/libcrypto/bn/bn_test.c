@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.12 2023/04/07 22:32:59 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.13 2023/04/07 22:36:38 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -363,7 +363,7 @@ test_add(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -400,11 +400,11 @@ test_add(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -412,7 +412,7 @@ test_sub(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -454,11 +454,11 @@ test_sub(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -466,7 +466,7 @@ test_div(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c, *d, *e;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -529,11 +529,11 @@ test_div(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 static void
@@ -559,7 +559,7 @@ test_div_word(BIO *bp, BN_CTX *ctx)
 	BIGNUM *a, *b;
 	BN_ULONG r, rmod, s = 0;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -618,11 +618,11 @@ test_div_word(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -631,7 +631,7 @@ test_div_recp(BIO *bp, BN_CTX *ctx)
 	BN_RECP_CTX *recp = NULL;
 	BIGNUM *a, *b, *c, *d, *e;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -694,12 +694,12 @@ test_div_recp(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 	BN_RECP_CTX_free(recp);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -707,7 +707,7 @@ test_mul(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c, *d, *e;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -749,11 +749,11 @@ test_mul(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -761,7 +761,7 @@ test_sqr(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *c, *d, *e;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -845,11 +845,11 @@ test_sqr(BIO *bp, BN_CTX *ctx)
 		goto err;
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -858,7 +858,7 @@ test_mont(BIO *bp, BN_CTX *ctx)
 	BN_MONT_CTX *mont = NULL;
 	BIGNUM *a, *b, *c, *d, *A, *B, *n;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -933,12 +933,12 @@ test_mont(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 	BN_MONT_CTX_free(mont);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -946,7 +946,7 @@ test_mod(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c, *d, *e;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -985,11 +985,11 @@ test_mod(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -997,7 +997,7 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c, *d, *e;
 	int i, j;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1069,11 +1069,11 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1081,7 +1081,7 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c, *d, *e;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1202,11 +1202,11 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1214,7 +1214,7 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c, *d, *e;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1276,11 +1276,11 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 /*
@@ -1294,7 +1294,7 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	BIGNUM *b, *n, *c;
 	BN_MONT_CTX *mont = NULL;
 	int len;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1437,12 +1437,12 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 		goto err;
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 	BN_MONT_CTX_free(mont);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1450,7 +1450,7 @@ test_exp(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *d, *e;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1490,11 +1490,11 @@ test_exp(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 #ifndef OPENSSL_NO_EC2M
@@ -1503,7 +1503,7 @@ test_gf2m_add(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1546,11 +1546,11 @@ test_gf2m_add(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1560,7 +1560,7 @@ test_gf2m_mod(BIO *bp, BN_CTX *ctx)
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1, 0 };
 	int i, j;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1606,11 +1606,11 @@ test_gf2m_mod(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1620,7 +1620,7 @@ test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1679,11 +1679,11 @@ test_gf2m_mod_mul(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1693,7 +1693,7 @@ test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1740,11 +1740,11 @@ test_gf2m_mod_sqr(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1754,7 +1754,7 @@ test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1797,11 +1797,11 @@ test_gf2m_mod_inv(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1811,7 +1811,7 @@ test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1862,11 +1862,11 @@ test_gf2m_mod_div(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1876,7 +1876,7 @@ test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1935,11 +1935,11 @@ test_gf2m_mod_exp(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -1949,7 +1949,7 @@ test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -1996,11 +1996,11 @@ test_gf2m_mod_sqrt(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -2010,7 +2010,7 @@ test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
 	int p0[] = { 163, 7, 6, 3, 0, -1 };
 	int p1[] = { 193, 15, 0, -1 };
 	int i, j, s = 0, t;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -2079,11 +2079,11 @@ test_gf2m_mod_solve_quad(BIO *bp, BN_CTX *ctx)
 		goto err;
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 #endif
 
@@ -2111,7 +2111,7 @@ test_kron(BIO *bp, BN_CTX *ctx)
 	BN_GENCB *cb = NULL;
 	int i;
 	int legendre, kronecker;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -2199,12 +2199,12 @@ test_kron(BIO *bp, BN_CTX *ctx)
 
 	putc('\n', stderr);
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_GENCB_free(cb);
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -2213,7 +2213,7 @@ test_sqrt(BIO *bp, BN_CTX *ctx)
 	BIGNUM *a, *p, *r;
 	BN_GENCB *cb = NULL;
 	int i, j;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -2295,12 +2295,12 @@ test_sqrt(BIO *bp, BN_CTX *ctx)
 		putc('\n', stderr);
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_GENCB_free(cb);
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -2308,7 +2308,7 @@ test_lshift(BIO *bp, BN_CTX *ctx, int use_lst)
 {
 	BIGNUM *a, *b, *c, *d;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -2360,11 +2360,11 @@ test_lshift(BIO *bp, BN_CTX *ctx, int use_lst)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -2372,7 +2372,7 @@ test_lshift1(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -2406,11 +2406,11 @@ test_lshift1(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(bn_copy(a, b));
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -2418,7 +2418,7 @@ test_rshift(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c, *d, *e;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -2457,11 +2457,11 @@ test_rshift(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -2469,7 +2469,7 @@ test_rshift1(BIO *bp, BN_CTX *ctx)
 {
 	BIGNUM *a, *b, *c;
 	int i;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 
@@ -2502,11 +2502,11 @@ test_rshift1(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(bn_copy(a, b));
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 
-	return rc;
+	return ret;
 }
 
 int
@@ -2524,7 +2524,7 @@ test_mod_exp_sizes(BIO *bp, BN_CTX *ctx)
 	BN_MONT_CTX *mont_ctx = NULL;
 	BIGNUM *p, *x, *y, *r, *r2;
 	int size;
-	int rc = 0;
+	int ret = 0;
 
 	BN_CTX_start(ctx);
 	CHECK_GOTO(p = BN_CTX_get(ctx));
@@ -2562,10 +2562,10 @@ test_mod_exp_sizes(BIO *bp, BN_CTX *ctx)
 		}
 	}
 
-	rc = 1;
+	ret = 1;
  err:
 	BN_CTX_end(ctx);
 	BN_MONT_CTX_free(mont_ctx);
 
-	return rc;
+	return ret;
 }
