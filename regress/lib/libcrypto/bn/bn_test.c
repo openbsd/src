@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.8 2023/04/07 22:25:09 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.9 2023/04/07 22:28:21 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -135,6 +135,9 @@ static int results = 0;
 static void
 message(BIO *out, char *m)
 {
+	ERR_print_errors_fp(stderr);
+	ERR_clear_error();
+
 	fprintf(stderr, "test %s\n", m);
 	BIO_puts(out, "print \"test ");
 	BIO_puts(out, m);
@@ -483,6 +486,7 @@ test_div(BIO *bp, BN_CTX *ctx)
 		fprintf(stderr, "Division by zero succeeded!\n");
 		goto err;
 	}
+	ERR_clear_error();
 
 	for (i = 0; i < num0 + num1; i++) {
 		if (i < num1) {
@@ -895,12 +899,14 @@ test_mont(BIO *bp, BN_CTX *ctx)
 		fprintf(stderr, "BN_MONT_CTX_set succeeded for zero modulus!\n");
 		goto err;
 	}
+	ERR_clear_error();
 
 	CHECK_GOTO(BN_set_word(n, 16));
 	if (BN_MONT_CTX_set(mont, n, ctx)) {
 		fprintf(stderr, "BN_MONT_CTX_set succeeded for even modulus!\n");
 		goto err;
 	}
+	ERR_clear_error();
 
 	CHECK_GOTO(BN_bntest_rand(a, 100, 0, 0));
 	CHECK_GOTO(BN_bntest_rand(b, 100, 0, 0));
@@ -1033,6 +1039,7 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 		fprintf(stderr, "BN_mod_mul with zero modulus succeeded!\n");
 		goto err;
 	}
+	ERR_clear_error();
 
 	for (j = 0; j < 3; j++) {
 		CHECK_GOTO(BN_bntest_rand(c, 1024, 0, 0));
@@ -1118,14 +1125,17 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		fprintf(stderr, "BN_mod_exp with zero modulus succeeded!\n");
 		goto err;
 	}
+	ERR_clear_error();
 	if (BN_mod_exp_ct(d, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_exp_ct with zero modulus succeeded!\n");
 		goto err;
 	}
+	ERR_clear_error();
 	if (BN_mod_exp_nonct(d, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_exp_nonct with zero modulus succeeded!\n");
 		goto err;
 	}
+	ERR_clear_error();
 
 	CHECK_GOTO(BN_bntest_rand(c, 30, 0, 1)); /* must be odd for montgomery */
 	for (i = 0; i < num2; i++) {
@@ -1254,6 +1264,7 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 				"succeeded\n");
 		goto err;
 	}
+	ERR_clear_error();
 
 	CHECK_GOTO(BN_set_word(c, 16));
 	if (BN_mod_exp_mont_consttime(d, a, b, c, ctx, NULL)) {
@@ -1261,6 +1272,7 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 				"succeeded\n");
 		goto err;
 	}
+	ERR_clear_error();
 
 	CHECK_GOTO(BN_bntest_rand(c, 30, 0, 1)); /* must be odd for montgomery */
 	for (i = 0; i < num2; i++) {
