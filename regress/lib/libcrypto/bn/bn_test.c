@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.10 2023/04/07 22:29:33 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.11 2023/04/07 22:30:31 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -424,9 +424,8 @@ test_sub(BIO *bp)
 		if (i < num1) {
 			CHECK_GOTO(BN_bntest_rand(a, 512, 0, 0));
 			CHECK_GOTO(bn_copy(b, a));
-			if (BN_set_bit(a, i) == 0) {
+			if (BN_set_bit(a, i) == 0)
 				goto err;
-			}
 			CHECK_GOTO(BN_add_word(b, i));
 		} else {
 			CHECK_GOTO(BN_bntest_rand(b, 400 + i - num1, 0, 0));
@@ -571,22 +570,19 @@ test_div_word(BIO *bp)
 	for (i = 0; i < num0; i++) {
 		do {
 			if (!BN_bntest_rand(a, 512, -1, 0) ||
-			    !BN_bntest_rand(b, BN_BITS2, -1, 0)) {
+			    !BN_bntest_rand(b, BN_BITS2, -1, 0))
 				goto err;
-			}
 			s = BN_get_word(b);
 		} while (!s);
 
-		if (!bn_copy(b, a)) {
+		if (!bn_copy(b, a))
 			goto err;
-		}
 
 		rmod = BN_mod_word(b, s);
 		r = BN_div_word(b, s);
 
-		if (r == (BN_ULONG)-1 || rmod == (BN_ULONG)-1) {
+		if (r == (BN_ULONG)-1 || rmod == (BN_ULONG)-1)
 			goto err;
-		}
 
 		if (rmod != r) {
 			fprintf(stderr, "Mod (word) test failed!\n");
@@ -1143,9 +1139,8 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(a, 20 + i * 5, 0, 0));
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
-		if (!BN_mod_exp(d, a, b, c, ctx)) {
+		if (!BN_mod_exp(d, a, b, c, ctx))
 			goto err;
-		}
 
 		if (bp != NULL) {
 			if (!results) {
@@ -1173,9 +1168,8 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(a, 20 + i * 5, 0, 0));
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
-		if (!BN_mod_exp_ct(d, a, b, c, ctx)) {
+		if (!BN_mod_exp_ct(d, a, b, c, ctx))
 			goto err;
-		}
 
 		if (bp != NULL) {
 			if (!results) {
@@ -1203,9 +1197,8 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(a, 20 + i * 5, 0, 0));
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
-		if (!BN_mod_exp_nonct(d, a, b, c, ctx)) {
+		if (!BN_mod_exp_nonct(d, a, b, c, ctx))
 			goto err;
-		}
 
 		if (bp != NULL) {
 			if (!results) {
@@ -1280,9 +1273,8 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(a, 20 + i * 5, 0, 0));
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
-		if (!BN_mod_exp_mont_consttime(d, a, b, c, ctx, NULL)) {
+		if (!BN_mod_exp_mont_consttime(d, a, b, c, ctx, NULL))
 			goto err;
-		}
 
 		if (bp != NULL) {
 			if (!results) {
@@ -1352,9 +1344,8 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	/* Zero exponent */
 	CHECK_GOTO(BN_bntest_rand(a, 1024, 0, 0));
 	CHECK_GOTO(BN_zero(p));
-	if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL)) {
+	if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL))
 		goto err;
-	}
 	if (!BN_is_one(d)) {
 		fprintf(stderr, "Modular exponentiation test failed!\n");
 		goto err;
@@ -1435,9 +1426,8 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	/* Zero input */
 	CHECK_GOTO(BN_bntest_rand(p, 1024, 0, 0));
 	CHECK_GOTO(BN_zero(a));
-	if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL)) {
+	if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL))
 		goto err;
-	}
 	if (!BN_is_zero(d)) {
 		fprintf(stderr, "Modular exponentiation test failed!\n");
 		goto err;
@@ -1449,27 +1439,22 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	 */
 	CHECK_GOTO(BN_one(a));
 	CHECK_GOTO(BN_MONT_CTX_set(mont, m, ctx));
-	if (!BN_from_montgomery(e, a, mont, ctx)) {
+	if (!BN_from_montgomery(e, a, mont, ctx))
 		goto err;
-	}
-	if (!BN_mod_exp_mont_consttime(d, e, p, m, ctx, NULL)) {
+	if (!BN_mod_exp_mont_consttime(d, e, p, m, ctx, NULL))
 		goto err;
-	}
-	if (!BN_mod_exp_simple(a, e, p, m, ctx)) {
+	if (!BN_mod_exp_simple(a, e, p, m, ctx))
 		goto err;
-	}
 	if (BN_cmp(a, d) != 0) {
 		fprintf(stderr, "Modular exponentiation test failed!\n");
 		goto err;
 	}
 	/* Finally, some regular test vectors. */
 	CHECK_GOTO(BN_bntest_rand(e, 1024, 0, 0));
-	if (!BN_mod_exp_mont_consttime(d, e, p, m, ctx, NULL)) {
+	if (!BN_mod_exp_mont_consttime(d, e, p, m, ctx, NULL))
 		goto err;
-	}
-	if (!BN_mod_exp_simple(a, e, p, m, ctx)) {
+	if (!BN_mod_exp_simple(a, e, p, m, ctx))
 		goto err;
-	}
 	if (BN_cmp(a, d) != 0) {
 		fprintf(stderr, "Modular exponentiation test failed!\n");
 		goto err;
@@ -1513,9 +1498,8 @@ test_exp(BIO *bp, BN_CTX *ctx)
 		CHECK_GOTO(BN_bntest_rand(a, 20 + i * 5, 0, 0));
 		CHECK_GOTO(BN_bntest_rand(b, 2 + i, 0, 0));
 
-		if (BN_exp(d, a, b, ctx) <= 0) {
+		if (BN_exp(d, a, b, ctx) <= 0)
 			goto err;
-		}
 
 		if (bp != NULL) {
 			if (!results) {
