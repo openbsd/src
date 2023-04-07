@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.257 2023/03/29 10:46:11 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.258 2023/04/07 13:49:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -38,7 +38,7 @@
 uint16_t rib_size;
 struct rib **ribs;
 
-struct rib_entry *rib_add(struct rib *, struct bgpd_addr *, int);
+struct rib_entry *rib_add(struct rib *, struct pt_entry *);
 static inline int rib_compare(const struct rib_entry *,
 			const struct rib_entry *);
 void rib_remove(struct rib_entry *);
@@ -297,18 +297,24 @@ rib_shutdown(void)
 }
 
 struct rib_entry *
-rib_get(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
+rib_get(struct rib *rib, struct pt_entry *pte)
 {
 	struct rib_entry xre, *re;
 
 	memset(&xre, 0, sizeof(xre));
-	xre.prefix = pt_fill(prefix, prefixlen);
+	xre.prefix = pte;
 
 	re = RB_FIND(rib_tree, rib_tree(rib), &xre);
 	if (re && re->rib_id != rib->id)
 		fatalx("%s: Unexpected RIB %u != %u.", __func__,
 		    re->rib_id, rib->id);
 	return re;
+}
+
+struct rib_entry *
+rib_get_addr(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
+{
+	return rib_get(rib, pt_fill(prefix, prefixlen));
 }
 
 struct rib_entry *
@@ -321,7 +327,7 @@ rib_match(struct rib *rib, struct bgpd_addr *addr)
 	case AID_INET:
 	case AID_VPN_IPv4:
 		for (i = 32; i >= 0; i--) {
-			re = rib_get(rib, addr, i);
+			re = rib_get_addr(rib, addr, i);
 			if (re != NULL)
 				return (re);
 		}
@@ -329,7 +335,7 @@ rib_match(struct rib *rib, struct bgpd_addr *addr)
 	case AID_INET6:
 	case AID_VPN_IPv6:
 		for (i = 128; i >= 0; i--) {
-			re = rib_get(rib, addr, i);
+			re = rib_get_addr(rib, addr, i);
 			if (re != NULL)
 				return (re);
 		}
@@ -342,14 +348,9 @@ rib_match(struct rib *rib, struct bgpd_addr *addr)
 
 
 struct rib_entry *
-rib_add(struct rib *rib, struct bgpd_addr *prefix, int prefixlen)
+rib_add(struct rib *rib, struct pt_entry *pte)
 {
-	struct pt_entry	*pte;
 	struct rib_entry *re;
-
-	pte = pt_get(prefix, prefixlen);
-	if (pte == NULL)
-		pte = pt_add(prefix, prefixlen);
 
 	if ((re = calloc(1, sizeof(*re))) == NULL)
 		fatal("rib_add");
@@ -861,7 +862,7 @@ prefix_get(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 {
 	struct rib_entry	*re;
 
-	re = rib_get(rib, prefix, prefixlen);
+	re = rib_get_addr(rib, prefix, prefixlen);
 	if (re == NULL)
 		return (NULL);
 	return (prefix_bypeer(re, peer, path_id));
@@ -1024,12 +1025,16 @@ prefix_add(struct bgpd_addr *prefix, int prefixlen, struct rib *rib,
     struct rde_aspath *asp, struct rde_community *comm,
     struct nexthop *nexthop, uint8_t nhflags, uint8_t vstate)
 {
+	struct pt_entry	*pte;
 	struct prefix		*p;
 	struct rib_entry	*re;
 
-	re = rib_get(rib, prefix, prefixlen);
+	pte = pt_get(prefix, prefixlen);
+	if (pte == NULL)
+		pte = pt_add(prefix, prefixlen);
+	re = rib_get(rib, pte);
 	if (re == NULL)
-		re = rib_add(rib, prefix, prefixlen);
+		re = rib_add(rib, pte);
 
 	p = prefix_alloc();
 	prefix_link(p, re, re->prefix, peer, path_id, path_id_tx, asp, comm,

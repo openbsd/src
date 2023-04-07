@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.599 2023/04/03 10:48:00 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.600 2023/04/07 13:49:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1734,7 +1734,7 @@ pathid_assign(struct rde_peer *peer, uint32_t path_id,
 		return peer->path_id_tx;
 
 	/* peer uses add-path, therefore new path_ids need to be assigned */
-	re = rib_get(rib_byid(RIB_ADJ_IN), prefix, prefixlen);
+	re = rib_get_addr(rib_byid(RIB_ADJ_IN), prefix, prefixlen);
 	if (re != NULL) {
 		struct prefix *p;
 
@@ -3052,14 +3052,15 @@ rde_dump_ctx_new(struct ctl_show_rib_request *req, pid_t pid,
 
 		if (req->flags & F_SHORTER) {
 			for (plen = 0; plen <= req->prefixlen; plen++) {
-				re = rib_get(rib_byid(rid), &req->prefix, plen);
+				re = rib_get_addr(rib_byid(rid), &req->prefix,
+				    plen);
 				rde_dump_upcall(re, ctx);
 			}
 		} else if (req->prefixlen == hostplen) {
 			re = rib_match(rib_byid(rid), &req->prefix);
 			rde_dump_upcall(re, ctx);
 		} else {
-			re = rib_get(rib_byid(rid), &req->prefix,
+			re = rib_get_addr(rib_byid(rid), &req->prefix,
 			    req->prefixlen);
 			rde_dump_upcall(re, ctx);
 		}

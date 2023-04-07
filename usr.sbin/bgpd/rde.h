@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.290 2023/03/30 12:11:18 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.291 2023/04/07 13:49:03 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -548,7 +548,8 @@ struct rib	*rib_byid(uint16_t);
 uint16_t	 rib_find(char *);
 void		 rib_free(struct rib *);
 void		 rib_shutdown(void);
-struct rib_entry *rib_get(struct rib *, struct bgpd_addr *, int);
+struct rib_entry *rib_get(struct rib *, struct pt_entry *);
+struct rib_entry *rib_get_addr(struct rib *, struct bgpd_addr *, int);
 struct rib_entry *rib_match(struct rib *, struct bgpd_addr *);
 int		 rib_dump_pending(void);
 void		 rib_dump_runner(void);
