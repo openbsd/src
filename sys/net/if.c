@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.686 2023/04/05 19:35:23 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.687 2023/04/07 22:02:58 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -927,11 +927,8 @@ if_netisr(void *unused)
 		atomic_clearbits_int(&netisr, n);
 
 #if NETHER > 0
-		if (n & (1 << NETISR_ARP)) {
-			KERNEL_LOCK();
+		if (n & (1 << NETISR_ARP))
 			arpintr();
-			KERNEL_UNLOCK();
-		}
 #endif
 		if (n & (1 << NETISR_IP))
 			ipintr();

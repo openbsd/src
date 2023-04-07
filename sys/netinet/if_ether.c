@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.260 2023/04/05 21:51:47 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.261 2023/04/07 22:02:58 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -609,12 +609,7 @@ in_arpinput(struct ifnet *ifp, struct mbuf *m)
 		    "address %s\n", addr, ether_sprintf(ea->arp_sha));
 		itaddr = isaddr;
 	} else if (rt != NULL) {
-		int error;
-
-		KERNEL_LOCK();
-		error = arpcache(ifp, ea, rt);
-		KERNEL_UNLOCK();
-		if (error)
+		if (arpcache(ifp, ea, rt))
 			goto out;
 	}
 
@@ -656,7 +651,7 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 	time_t uptime;
 	int changed = 0;
 
-	KERNEL_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 	KASSERT(sdl != NULL);
 
 	/*
