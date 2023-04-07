@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1239 2023/04/02 00:58:07 kn Exp $
+#	$OpenBSD: install.sub,v 1.1240 2023/04/07 09:40:18 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -308,6 +308,11 @@ get_softraid_chunks() {
 	local _device=${1:-softraid0}
 
 	bioctl $_device 2>/dev/null | sed -n 's/.*<\(.*\).>$/\1/p'
+}
+
+# Return list of softraid volumes.
+get_softraid_volumes() {
+	bioctl softraid0 | sed -n 's/^softraid0.*\(sd[0-9]*\).*/\1/p'
 }
 
 # Return disk devices found in hw.disknames.
@@ -2398,7 +2403,7 @@ is_rootdisk() {
 
 # Get global root information. ie. ROOTDISK, ROOTDEV and SWAPDEV.
 get_rootinfo() {
-	local _default=$(get_dkdevs_root) _dkdev
+	local _default=${CRYPTOVOLUME:-$(get_dkdevs_root)} _dkdev
 	local _q="Which disk is the root disk? ('?' for details)"
 
 	while :; do
@@ -3078,7 +3083,7 @@ encrypt_root() {
 
 	# Do not even try if softraid is in use already,
 	# e.g. auto-assembled at boot or done in (S)hell.
-	[[ -z $(get_softraid_chunks) ]] || return
+	[[ -z $(get_softraid_volumes) ]] || return
 
 	while :; do
 		echo "Available disks are: $(get_dkdevs | sed 's/^$/none/')."
@@ -3109,6 +3114,9 @@ __EOT
 	done
 
         CRYPTOCHUNK=$_chunk
+	# No volumes existed before asking, but we just created one.
+	# Save it for later as sane root disk default.
+	CRYPTOVOLUME=$(get_softraid_volumes)
 }
 
 do_install() {
@@ -3581,6 +3589,7 @@ NIFS=0
 export PS1="$MODE# "
 PUB_KEY=/etc/signify/openbsd-${VERSION}-base.pub
 CRYPTOCHUNK=
+CRYPTOVOLUME=
 ROOTDEV=
 ROOTDISK=
 SETDIR="$VNAME/$ARCH"
