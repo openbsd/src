@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.17 2023/04/01 08:37:23 kettenis Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.18 2023/04/07 06:18:26 dlg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -106,13 +106,18 @@ regulator_fixed_set(int node, int enable)
 	uint32_t *gpio;
 	uint32_t startup_delay;
 	int len;
+	char *prop = "gpio";
 
 	pinctrl_byname(node, "default");
 
-	/* The "gpio" property is optional. */
-	len = OF_getproplen(node, "gpio");
-	if (len < 0)
-		return 0;
+	/* The "gpio"/"gpios" property is optional. */
+	len = OF_getproplen(node, prop);
+	if (len < 0) {
+		prop = "gpios";
+		len = OF_getproplen(node, prop);
+		if (len < 0)
+			return 0;
+	}
 
 	/*
 	 * We deliberately ignore the "enable-active-high" property
@@ -128,7 +133,7 @@ regulator_fixed_set(int node, int enable)
 	 */
 
 	gpio = malloc(len, M_TEMP, M_WAITOK);
-	OF_getpropintarray(node, "gpio", gpio, len);
+	OF_getpropintarray(node, prop, gpio, len);
 	gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
 	if (enable)
 		gpio_controller_set_pin(gpio, 1);
