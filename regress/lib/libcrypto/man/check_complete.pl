@@ -217,11 +217,12 @@ try_again:
 	if (/^\s*$/ ||
 	    /^DECLARE_STACK_OF\(\w+\)$/ ||
 	    /^TYPEDEF_D2I2D_OF\(\w+\);$/ ||
+	    /^#define __bounded__\(\w+, \w+, \w+\)$/ ||
 	    /^#define HEADER_\w+_H$/ ||
 	    /^#endif$/ ||
 	    /^#else$/ ||
 	    /^extern\s+const\s+ASN1_ITEM\s+\w+_it;$/ ||
-	    /^#include\s/ ||
+	    /^#\s*include\s/ ||
 	    /^#ifn?def\s/ ||
 	    /^#if !?defined/ ||
 	    /^#undef\s+BN_LLONG$/) {
