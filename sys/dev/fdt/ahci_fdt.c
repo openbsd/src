@@ -1,4 +1,4 @@
-/* $OpenBSD: ahci_fdt.c,v 1.7 2022/05/25 03:03:58 dlg Exp $ */
+/* $OpenBSD: ahci_fdt.c,v 1.8 2023/04/08 02:32:38 dlg Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -30,6 +30,8 @@
 #include <dev/ic/ahcivar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_clock.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 int	ahci_fdt_match(struct device *, void *, void *);
@@ -63,6 +65,7 @@ ahci_fdt_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ahci_softc *sc = (struct ahci_softc *) self;
 	struct fdt_attach_args *faa = aux;
+	uint32_t pi;
 
 	if (faa->fa_nreg < 1)
 		return;
@@ -82,11 +85,20 @@ ahci_fdt_attach(struct device *parent, struct device *self, void *aux)
 		goto unmap;
 	}
 
+	clock_set_assigned(faa->fa_node);
+	clock_enable_all(faa->fa_node);
+	phy_enable(faa->fa_node, "sata-phy");
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0x118, 1U << 22);
+	pi = OF_getpropint(faa->fa_node, "ports-implemented", 0x0);
+	if (pi != 0)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, AHCI_REG_PI, pi);
+
 	printf(":");
 
 	if (ahci_attach(sc) != 0) {
 		/* error printed by ahci_attach */
-		goto irq;
+		goto irq; /* disable phy and clocks? */
 	}
 
 	return;
