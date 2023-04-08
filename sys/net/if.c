@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.687 2023/04/07 22:02:58 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.688 2023/04/08 13:49:38 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1125,11 +1125,11 @@ if_detach(struct ifnet *ifp)
 #ifdef INET6
 	nd6_ifdetach(ifp);
 #endif
+	splx(s);
+	NET_UNLOCK();
 
 	/* Announce that the interface is gone. */
 	rtm_ifannounce(ifp, IFAN_DEPARTURE);
-	splx(s);
-	NET_UNLOCK();
 
 	if (ifp->if_counters != NULL)
 		if_counters_free(ifp);
