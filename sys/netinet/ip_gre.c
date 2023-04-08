@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.85 2022/10/17 14:49:02 mvs Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.86 2023/04/08 13:50:22 mvs Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -88,11 +88,9 @@ gre_send(struct socket *so, struct mbuf *m, struct mbuf *nam,
 		struct in_addr *ina_dst;
 
 		ina_dst = NULL;
-		if ((so->so_state & SS_ISCONNECTED) != 0) {
-			inp = sotoinpcb(so);
-			if (inp)
-				ina_dst = &inp->inp_laddr;
-		} else if (nam) {
+		if ((so->so_state & SS_ISCONNECTED) != 0)
+			ina_dst = &inp->inp_laddr;
+		else if (nam) {
 			if (in_nam2sin(nam, &sin4) == 0)
 				ina_dst = &sin4->sin_addr;
 		}
