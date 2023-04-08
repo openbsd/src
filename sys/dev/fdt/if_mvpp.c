@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvpp.c,v 1.49 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: if_mvpp.c,v 1.50 2023/04/08 05:38:25 jsg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2020 Patrick Wildt <patrick@blueri.se>
@@ -2599,7 +2599,7 @@ mvpp2_xlg_config(struct mvpp2_port *sc)
 	ctl4 |= MV_XLG_MAC_CTRL4_FORWARD_802_3X_FC_EN;
 
 	mvpp2_xlg_write(sc, MV_XLG_PORT_MAC_CTRL0_REG, ctl0);
-	mvpp2_xlg_write(sc, MV_XLG_PORT_MAC_CTRL4_REG, ctl0);
+	mvpp2_xlg_write(sc, MV_XLG_PORT_MAC_CTRL4_REG, ctl4);
 
 	/* Port reset */
 	while ((mvpp2_xlg_read(sc, MV_XLG_PORT_MAC_CTRL0_REG) &
