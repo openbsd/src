@@ -1,4 +1,4 @@
-/*	$OpenBSD: fchmod.c,v 1.2 2021/12/01 17:25:35 kettenis Exp $	*/
+/*	$OpenBSD: fchmod.c,v 1.3 2023/04/08 18:12:08 kn Exp $	*/
 /*	$NetBSD: stat.c,v 1.3 1994/10/26 05:45:07 cgd Exp $	*/
 
 /*-
@@ -59,6 +59,7 @@ fchmod(int fd, mode_t m)
 		return (-1);
 	}
 
-	errno = (f->f_ops->fchmod)(f, m);
+	if ((errno = (f->f_ops->fchmod)(f, m)))
+		return (-1);
 	return (0);
 }
