@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.13 2023/04/07 22:36:38 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.14 2023/04/08 17:43:30 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -167,13 +167,10 @@ main(int argc, char *argv[])
 		argv++;
 	}
 
-
-	ctx = BN_CTX_new();
-	if (ctx == NULL)
+	if ((ctx = BN_CTX_new()) == NULL)
 		exit(1);
 
-	out = BIO_new(BIO_s_file());
-	if (out == NULL)
+	if ((out = BIO_new(BIO_s_file())) == NULL)
 		exit(1);
 	if (outfile == NULL) {
 		BIO_set_fp(out, stdout, BIO_NOCLOSE);
