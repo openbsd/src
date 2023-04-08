@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc_fdt.c,v 1.19 2022/01/18 11:36:21 patrick Exp $	*/
+/*	$OpenBSD: sdhc_fdt.c,v 1.20 2023/04/08 05:40:54 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -402,6 +402,8 @@ sdhc_fdt_xenon_bus_clock_post(struct sdhc_softc *ssc, int freq, int timing)
 	    XENON_EMMC_PHY_PAD_CONTROL2_ZNR_SHIFT);
 	reg |= sc->sc_zpr << XENON_EMMC_PHY_PAD_CONTROL2_ZPR_SHIFT |
 	     sc->sc_znr << XENON_EMMC_PHY_PAD_CONTROL2_ZNR_SHIFT;
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,
+	    XENON_EMMC_PHY_PAD_CONTROL2, reg);
 
 	reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh, SDHC_CLOCK_CTL);
 	reg &= ~SDHC_SDCLK_ENABLE;
