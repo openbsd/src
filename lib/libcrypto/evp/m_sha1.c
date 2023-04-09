@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sha1.c,v 1.21 2023/04/09 15:40:09 jsing Exp $ */
+/* $OpenBSD: m_sha1.c,v 1.22 2023/04/09 15:47:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,15 +119,48 @@ sha224_init(EVP_MD_CTX *ctx)
 }
 
 static int
+sha224_update(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+	/*
+	 * Even though there're separate SHA224_[Update|Final], we call
+	 * SHA256 functions even in SHA224 context. This is what happens
+	 * there anyway, so we can spare few CPU cycles:-)
+	 */
+	return SHA256_Update(ctx->md_data, data, count);
+}
+
+static int
+sha224_final(EVP_MD_CTX *ctx, unsigned char *md)
+{
+	return SHA224_Final(md, ctx->md_data);
+}
+
+static const EVP_MD sha224_md = {
+	.type = NID_sha224,
+	.pkey_type = NID_sha224WithRSAEncryption,
+	.md_size = SHA224_DIGEST_LENGTH,
+	.flags = EVP_MD_FLAG_DIGALGID_ABSENT,
+	.init = sha224_init,
+	.update = sha224_update,
+	.final = sha224_final,
+	.copy = NULL,
+	.cleanup = NULL,
+	.block_size = SHA256_CBLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(SHA256_CTX),
+};
+
+const EVP_MD *
+EVP_sha224(void)
+{
+	return &sha224_md;
+}
+
+static int
 sha256_init(EVP_MD_CTX *ctx)
 {
 	return SHA256_Init(ctx->md_data);
 }
-/*
- * Even though there're separate SHA224_[Update|Final], we call
- * SHA256 functions even in SHA224 context. This is what happens
- * there anyway, so we can spare few CPU cycles:-)
- */
+
 static int
 sha256_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
@@ -138,26 +171,6 @@ static int
 sha256_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
 	return SHA256_Final(md, ctx->md_data);
-}
-
-static const EVP_MD sha224_md = {
-	.type = NID_sha224,
-	.pkey_type = NID_sha224WithRSAEncryption,
-	.md_size = SHA224_DIGEST_LENGTH,
-	.flags = EVP_MD_FLAG_DIGALGID_ABSENT,
-	.init = sha224_init,
-	.update = sha256_update,
-	.final = sha256_final,
-	.copy = NULL,
-	.cleanup = NULL,
-	.block_size = SHA256_CBLOCK,
-	.ctx_size = sizeof(EVP_MD *) + sizeof(SHA256_CTX),
-};
-
-const EVP_MD *
-EVP_sha224(void)
-{
-	return (&sha224_md);
 }
 
 static const EVP_MD sha256_md = {
@@ -189,21 +202,16 @@ sha384_init(EVP_MD_CTX *ctx)
 }
 
 static int
-sha512_init(EVP_MD_CTX *ctx)
+sha384_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
-	return SHA512_Init(ctx->md_data);
-}
-/* See comment in SHA224/256 section */
-static int
-sha512_update(EVP_MD_CTX *ctx, const void *data, size_t count)
-{
+	/* See comment in SHA224/256 section */
 	return SHA512_Update(ctx->md_data, data, count);
 }
 
 static int
-sha512_final(EVP_MD_CTX *ctx, unsigned char *md)
+sha384_final(EVP_MD_CTX *ctx, unsigned char *md)
 {
-	return SHA512_Final(md, ctx->md_data);
+	return SHA384_Final(md, ctx->md_data);
 }
 
 static const EVP_MD sha384_md = {
@@ -212,8 +220,8 @@ static const EVP_MD sha384_md = {
 	.md_size = SHA384_DIGEST_LENGTH,
 	.flags = EVP_MD_FLAG_DIGALGID_ABSENT,
 	.init = sha384_init,
-	.update = sha512_update,
-	.final = sha512_final,
+	.update = sha384_update,
+	.final = sha384_final,
 	.copy = NULL,
 	.cleanup = NULL,
 	.block_size = SHA512_CBLOCK,
@@ -224,6 +232,24 @@ const EVP_MD *
 EVP_sha384(void)
 {
 	return &sha384_md;
+}
+
+static int
+sha512_init(EVP_MD_CTX *ctx)
+{
+	return SHA512_Init(ctx->md_data);
+}
+
+static int
+sha512_update(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+	return SHA512_Update(ctx->md_data, data, count);
+}
+
+static int
+sha512_final(EVP_MD_CTX *ctx, unsigned char *md)
+{
+	return SHA512_Final(md, ctx->md_data);
 }
 
 static const EVP_MD sha512_md = {
