@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_dup_chain.3,v 1.1 2022/12/18 19:35:36 schwarze Exp $
+.\" $OpenBSD: BIO_dup_chain.3,v 1.2 2023/04/09 06:27:52 jsg Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 18 2022 $
+.Dd $Mdocdate: April 9 2023 $
 .Dt BIO_DUP_CHAIN 3
 .Os
 .Sh NAME
@@ -54,7 +54,7 @@ and
 The custom data pointer that can be used by custom BIO types
 and that can be retrieved with
 .Xr BIO_get_data 3
-is set set to
+is set to
 .Dv NULL
 in the copied BIO objects rather than copied.
 The reference count of each BIO in the copied chain is set to 1.
