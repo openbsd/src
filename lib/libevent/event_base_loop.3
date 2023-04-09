@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_loop.3,v 1.1 2023/04/08 16:21:22 schwarze Exp $
+.\" $OpenBSD: event_base_loop.3,v 1.2 2023/04/09 14:43:51 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 8 2023 $
+.Dd $Mdocdate: April 9 2023 $
 .Dt EVENT_BASE_LOOP 3
 .Os
 .Sh NAME
@@ -32,8 +32,6 @@
 .Fn event_base_dispatch "struct event_base *base"
 .Ft int
 .Fn event_dispatch void
-.Fd #define EVLOOP_ONCE		0x01
-.Fd #define EVLOOP_NONBLOCK	0x02
 .Sh DESCRIPTION
 An event loop waits for and dispatches events in a program.
 This enables asynchronous programming, allowing a program to perform other
@@ -46,8 +44,7 @@ with each event as they occur.
 .Pp
 The
 .Fn event_base_loop
-family of functions start an event loop that replaces the main loop of a
-program.
+family of functions run an event loop.
 By default, they return when there are no more scheduled events.
 .Pp
 There are three types of events these functions monitor including signal,
@@ -81,8 +78,7 @@ events are resolved, some of these such as signals, may persist and become
 events again.
 .El
 .Pp
-.Fn event_base_loop
-starts an event loop, it takes two arguments:
+The arguments are as follows:
 .Bl -tag -width 6n
 .It Fa base :
 A pointer to an
@@ -91,10 +87,6 @@ structure returned from
 .Xr event_init 3
 or
 .Xr event_base_new 3 .
-The behavior is undefined if
-.Fa base
-is
-.Dv NULL .
 .It Fa flags :
 A set of flags that modify the behavior of the event loop.
 The following flags are available:
@@ -119,10 +111,6 @@ is a version of
 .Fn event_base_loop
 that requires the library to be initialized by
 .Xr event_init 3 .
-The function has one argument,
-.Fa flags ,
-with the same attributes as
-.Fn event_base_loop .
 .Pp
 .Fn event_base_dispatch
 is equivalent to calling
