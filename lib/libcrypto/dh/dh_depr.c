@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_depr.c,v 1.8 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: dh_depr.c,v 1.9 2023/04/09 19:10:23 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -64,7 +64,6 @@
 
 #include "bn_local.h"
 
-#ifndef OPENSSL_NO_DEPRECATED
 DH *
 DH_generate_parameters(int prime_len, int generator,
     void (*callback)(int, int, void *), void *cb_arg)
@@ -82,4 +81,3 @@ DH_generate_parameters(int prime_len, int generator,
 	DH_free(ret);
 	return NULL;
 }
-#endif

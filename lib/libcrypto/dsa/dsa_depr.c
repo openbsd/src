@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_depr.c,v 1.10 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: dsa_depr.c,v 1.11 2023/04/09 19:10:23 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -70,7 +70,6 @@
 
 #include "bn_local.h"
 
-#ifndef OPENSSL_NO_DEPRECATED
 DSA *
 DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
     int *counter_ret, unsigned long *h_ret, void (*callback)(int, int, void *),
@@ -90,5 +89,4 @@ DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 	DSA_free(ret);
 	return NULL;
 }
-#endif
 #endif

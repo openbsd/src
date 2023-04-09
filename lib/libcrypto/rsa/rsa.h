@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.58 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: rsa.h,v 1.59 2023/04/09 19:10:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,11 +240,12 @@ RSA *RSA_new_method(ENGINE *engine);
 int RSA_bits(const RSA *rsa);
 int RSA_size(const RSA *rsa);
 
-/* Deprecated version */
-#ifndef OPENSSL_NO_DEPRECATED
+/*
+ * Wrapped in OPENSSL_NO_DEPRECATED in 0.9.8. Still used for libressl bindings
+ * in rust-openssl.
+ */
 RSA *RSA_generate_key(int bits, unsigned long e,
     void (*callback)(int, int, void *), void *cb_arg);
-#endif /* !defined(OPENSSL_NO_DEPRECATED) */
 
 /* New version */
 int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);

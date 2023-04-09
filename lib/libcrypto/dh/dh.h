@@ -1,4 +1,4 @@
-/* $OpenBSD: dh.h,v 1.35 2022/07/12 14:42:49 kn Exp $ */
+/* $OpenBSD: dh.h,v 1.36 2023/04/09 19:10:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -162,11 +162,12 @@ void DH_set_flags(DH *dh, int flags);
 long DH_get_length(const DH *dh);
 int DH_set_length(DH *dh, long length);
 
-/* Deprecated version */
-#ifndef OPENSSL_NO_DEPRECATED
+/*
+ * Wrapped in OPENSSL_NO_DEPRECATED in 0.9.8, added to rust-openssl in 2020,
+ * for "advanced DH support".
+ */
 DH *	DH_generate_parameters(int prime_len,int generator,
 		void (*callback)(int,int,void *),void *cb_arg);
-#endif /* !defined(OPENSSL_NO_DEPRECATED) */
 
 /* New version */
 int	DH_generate_parameters_ex(DH *dh, int prime_len,int generator, BN_GENCB *cb);

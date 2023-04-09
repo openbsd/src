@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_depr.c,v 1.10 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rsa_depr.c,v 1.11 2023/04/09 19:10:23 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -66,8 +66,6 @@
 
 #include "bn_local.h"
 
-#ifndef OPENSSL_NO_DEPRECATED
-
 RSA *
 RSA_generate_key(int bits, unsigned long e_value,
     void (*callback)(int, int, void *), void *cb_arg)
@@ -100,4 +98,3 @@ err:
 
 	return 0;
 }
-#endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: err.h,v 1.28 2022/08/29 06:49:24 jsing Exp $ */
+/* $OpenBSD: err.h,v 1.29 2023/04/09 19:10:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -395,9 +395,8 @@ void ERR_load_crypto_strings(void);
 void ERR_free_strings(void);
 
 void ERR_remove_thread_state(const CRYPTO_THREADID *tid);
-#ifndef OPENSSL_NO_DEPRECATED
-void ERR_remove_state(unsigned long pid); /* if zero we look it up */
-#endif
+/* Wrapped in OPENSSL_NO_DEPRECATED in 0.9.8. Still used in 2023. */
+void ERR_remove_state(unsigned long pid);
 ERR_STATE *ERR_get_state(void);
 
 #ifndef OPENSSL_NO_LHASH

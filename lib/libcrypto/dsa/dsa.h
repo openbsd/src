@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.40 2023/03/04 20:47:04 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.41 2023/04/09 19:10:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,13 +165,11 @@ DSA *d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
 int i2d_DSAparams(const DSA *a,unsigned char **pp);
 extern const ASN1_ITEM DSAparams_it;
 
-/* Deprecated version */
-#ifndef OPENSSL_NO_DEPRECATED
+/* Wrapped in OPENSSL_NO_DEPRECATED in 0.9.8. Still used in 2023. */
 DSA *	DSA_generate_parameters(int bits,
 		unsigned char *seed,int seed_len,
 		int *counter_ret, unsigned long *h_ret,void
 		(*callback)(int, int, void *),void *cb_arg);
-#endif /* !defined(OPENSSL_NO_DEPRECATED) */
 
 /* New version */
 int	DSA_generate_parameters_ex(DSA *dsa, int bits,
