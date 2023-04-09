@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.93 2023/03/27 19:02:47 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.94 2023/04/09 19:48:37 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1688,8 +1688,10 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 	else
 		access_bits = ap_bits_user[pted->pted_pte & PROT_MASK];
 
+#ifndef SMALL_KERNEL
 	if (pm == pmap_kernel())
 		access_bits |= ATTR_GP;
+#endif
 
 	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
 	*pl3 = access_bits ? pte : 0;
