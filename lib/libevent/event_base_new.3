@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_new.3,v 1.2 2023/04/06 20:52:18 schwarze Exp $
+.\" $OpenBSD: event_base_new.3,v 1.3 2023/04/09 14:30:24 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 6 2023 $
+.Dd $Mdocdate: April 9 2023 $
 .Dt EVENT_BASE_NEW 3
 .Os
 .Sh NAME
@@ -73,11 +73,17 @@ behaves like
 except it additionally saves a pointer to the returned structure
 in an internal global variable.
 It is designed for programs that need only one single event loop.
-Invoking most functions documented in the event library to require
+.Pp
+If
 .Fn event_init
-without first calling
-.Fn event_init
-generates a segmentation fault.
+was not invoked before using an event API function that requires it,
+or if such a function is called after
+.Fn event_base_free
+has destroyed the structure that was returned from
+.Fn event_init ,
+a
+.Dv NULL
+pointer access occurs unless otherwise documented.
 .Pp
 After calling
 .Xr fork 2 ,
@@ -134,15 +140,6 @@ with a
 pointer argument triggers an
 .Xr assert 3
 call.
-.Pp
-Functions documented to require
-.Fn event_init
-generate a segmentation fault if invoked after
-.Fn event_base_free
-destroyed the internal global
-.Vt event_base
-structure that was created by
-.Fn event_init .
 .Pp
 Errors and diagnostics from many event library functions are reported using
 the log callback system configured with
