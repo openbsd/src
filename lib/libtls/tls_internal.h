@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.80 2022/03/24 15:56:34 tb Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.81 2023/04/09 18:26:26 tb Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -302,7 +302,6 @@ ECDSA_METHOD *tls_signer_ecdsa_method(void);
 
 #define TLS_PADDING_NONE			0
 #define TLS_PADDING_RSA_PKCS1			1
-#define TLS_PADDING_RSA_X9_31			2
 
 int tls_config_set_sign_cb(struct tls_config *_config, tls_sign_cb _cb,
     void *_cb_arg);
