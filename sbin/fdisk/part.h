@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.h,v 1.44 2023/04/07 14:42:51 krw Exp $	*/
+/*	$OpenBSD: part.h,v 1.45 2023/04/09 17:19:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -38,7 +38,7 @@ void		 PRT_make(const struct prt *,const uint64_t, const uint64_t,
 void		 PRT_print_part(const int, const struct prt *, const char *);
 void		 PRT_print_parthdr(void);
 const char	*PRT_uuid_to_desc(const struct uuid *);
-int		 PRT_uuid_to_menuid(const struct uuid *);
-const struct uuid *PRT_menuid_to_uuid(const int);
+char		*PRT_uuid_to_menudflt(const struct uuid *);
+const char	*PRT_menuid_to_guid(const int);
 int		 PRT_protected_uuid(const struct uuid *);
 int		 PRT_lba_to_chs(const struct prt*, struct chs *, struct chs*);

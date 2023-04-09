@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.174 2023/04/07 16:34:41 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.175 2023/04/09 17:19:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -590,22 +590,18 @@ ask_pid(const int dflt)
 const struct uuid *
 ask_uuid(const struct uuid *olduuid)
 {
-	static struct uuid	 uuid;
 	char			 lbuf[LINEBUFSZ];
-	char			*dflt = NULL;
+	static struct uuid	 uuid;
+	const char		*guid;
+	char			*dflt;
 	uint32_t		 status;
-	int			 menuid;
 
-	menuid = PRT_uuid_to_menuid(olduuid);
-	if (menuid == -1) {
-		uuid_to_string(olduuid, &dflt, &status);
-		if (status != uuid_s_ok) {
-			printf("uuid_to_string() failed\n");
+	dflt = PRT_uuid_to_menudflt(olduuid);
+	if (dflt == NULL) {
+		if (asprintf(&dflt, "0") == -1) {
+			warn("asprintf()");
 			goto done;
 		}
-	} else if (asprintf(&dflt, "%X", menuid) == -1) {
-		warn("asprintf()");
-		goto done;
 	}
 
 	for (;;) {
@@ -623,25 +619,15 @@ ask_uuid(const struct uuid *olduuid)
 			goto done;
 		}
 
-		uuid_from_string(lbuf, &uuid, &status);
+		guid = PRT_menuid_to_guid(hex_octet(lbuf));
+		if (guid == NULL)
+			guid = lbuf;
+
+		uuid_from_string(guid, &uuid, &status);
 		if (status == uuid_s_ok)
 			goto done;
 
-		menuid = hex_octet(lbuf);
-		switch (menuid) {
-		case -1:
-			printf("'%s' is not a valid partition id\n", lbuf);
-			break;
-		case 0:
-			uuid_create_nil(&uuid, NULL);
-			goto done;
-		default:
-			uuid = *PRT_menuid_to_uuid(menuid);
-			if (uuid_is_nil(&uuid, NULL) == 0)
-				goto done;
-			printf("'%s' has no associated UUID\n", lbuf);
-			break;
-		}
+		printf("'%s' has no associated UUID\n", lbuf);
 	}
 
  done:
