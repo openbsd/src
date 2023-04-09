@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.26 2023/04/03 21:43:43 tb Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.27 2023/04/09 18:38:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -165,7 +165,6 @@ BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
 	BIGNUM *a, *b, *t;
 	int ret = 0;
 
-
 	BN_CTX_start(ctx);
 	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -223,7 +222,6 @@ BN_gcd_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 
 	BN_init(&local_A);
 	BN_init(&local_B);
-
 
 	BN_CTX_start(ctx);
 	if ((A = BN_CTX_get(ctx)) == NULL)
@@ -367,7 +365,6 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	BIGNUM *pA, *pB;
 	BIGNUM *ret = NULL;
 	int sign;
-
 
 	BN_init(&local_A);
 	BN_init(&local_B);
@@ -534,7 +531,6 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 	if (ct)
 		return BN_mod_inverse_no_branch(in, a, n, ctx);
 
-
 	BN_CTX_start(ctx);
 	if ((A = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -614,7 +610,6 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 					goto err;
 			}
 
-
 			/* Same for  A  and  Y.  Afterwards, (2) still holds. */
 			shift = 0;
 			while (!BN_is_bit_set(A, shift)) /* note that 0 < A */
@@ -633,7 +628,6 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 				if (!BN_rshift(A, A, shift))
 					goto err;
 			}
-
 
 			/* We still have (1) and (2).
 			 * Both  A  and  B  are odd.
