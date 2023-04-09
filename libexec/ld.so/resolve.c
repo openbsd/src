@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.97 2022/01/08 06:49:41 guenther Exp $ */
+/*	$OpenBSD: resolve.c,v 1.98 2023/04/09 23:41:47 gnezdo Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -227,14 +227,17 @@ _dl_origin_subst_path(elf_object_t *object, const char *origin_path,
 static int
 _dl_origin_path(elf_object_t *object, char *origin_path)
 {
-	const char *dirname_path = _dl_dirname(object->load_name);
+	const char *dirname_path;
 
+	/* syscall in ld.so returns 0/-errno, where libc returns char* */
+	if (_dl___realpath(object->load_name, origin_path) < 0)
+		return -1;
+
+	dirname_path = _dl_dirname(origin_path);
 	if (dirname_path == NULL)
 		return -1;
 
-	/* syscall in ld.so returns 0/-errno, where libc returns char* */
-	if (_dl___realpath(dirname_path, origin_path) < 0)
-		return -1;
+	_dl_strlcpy(origin_path, dirname_path, PATH_MAX);
 
 	return 0;
 }
