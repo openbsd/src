@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.70 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.71 2023/04/09 17:50:02 jcs Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -112,11 +112,10 @@
 #define	THINKPAD_TABLET_SCREEN_CHANGED	0x60c0
 #define	THINKPAD_SWITCH_WIRELESS	0x7000
 
-#define THINKPAD_NSENSORS 10
-#define THINKPAD_NTEMPSENSORS 8
-
-#define THINKPAD_SENSOR_FANRPM		THINKPAD_NTEMPSENSORS
-#define THINKPAD_SENSOR_PORTREPL	THINKPAD_NTEMPSENSORS + 1
+#define THINKPAD_SENSOR_FANRPM		0
+#define THINKPAD_SENSOR_PORTREPL	1
+#define THINKPAD_SENSOR_TMP0		2
+#define THINKPAD_NSENSORS		10
 
 #define THINKPAD_ECOFFSET_VOLUME	0x30
 #define THINKPAD_ECOFFSET_VOLUME_MUTE_MASK 0x40
@@ -140,6 +139,7 @@ struct acpithinkpad_softc {
 
 	struct ksensor		 sc_sens[THINKPAD_NSENSORS];
 	struct ksensordev	 sc_sensdev;
+	int			 sc_ntempsens;
 
 	uint64_t		 sc_hkey_version;
 
@@ -178,6 +178,7 @@ int	thinkpad_get_brightness(struct acpithinkpad_softc *);
 int	thinkpad_set_brightness(void *, int);
 int	thinkpad_get_param(struct wsdisplay_param *);
 int	thinkpad_set_param(struct wsdisplay_param *);
+int	thinkpad_get_temp(struct acpithinkpad_softc *, int, int64_t *);
 
 void    thinkpad_sensor_attach(struct acpithinkpad_softc *sc);
 void    thinkpad_sensor_refresh(void *);
@@ -228,6 +229,7 @@ thinkpad_match(struct device *parent, void *match, void *aux)
 void
 thinkpad_sensor_attach(struct acpithinkpad_softc *sc)
 {
+	int64_t tmp;
 	int i;
 
 	if (sc->sc_acpi->sc_ec == NULL)
@@ -237,10 +239,16 @@ thinkpad_sensor_attach(struct acpithinkpad_softc *sc)
 	/* Add temperature probes */
 	strlcpy(sc->sc_sensdev.xname, DEVNAME(sc),
 	    sizeof(sc->sc_sensdev.xname));
-	for (i=0; i<THINKPAD_NTEMPSENSORS; i++) {
-		sc->sc_sens[i].type = SENSOR_TEMP;
-		sensor_attach(&sc->sc_sensdev, &sc->sc_sens[i]);
-	}
+	sc->sc_ntempsens = 0;
+	for (i = 0; i < THINKPAD_NSENSORS - THINKPAD_SENSOR_TMP0; i++) {
+		if (thinkpad_get_temp(sc, i, &tmp) != 0)
+			break;
+
+		sc->sc_sens[THINKPAD_SENSOR_TMP0 + i].type = SENSOR_TEMP;
+		sensor_attach(&sc->sc_sensdev,
+		    &sc->sc_sens[THINKPAD_SENSOR_TMP0 + i]);
+		sc->sc_ntempsens++;
+ 	}
 
 	/* Add fan probe */
 	sc->sc_sens[THINKPAD_SENSOR_FANRPM].type = SENSOR_FANRPM;
@@ -262,17 +270,19 @@ thinkpad_sensor_refresh(void *arg)
 	struct acpithinkpad_softc *sc = arg;
 	uint8_t lo, hi, i;
 	int64_t tmp;
-	char sname[5];
 
 	/* Refresh sensor readings */
-	for (i=0; i<THINKPAD_NTEMPSENSORS; i++) {
-		snprintf(sname, sizeof(sname), "TMP%d", i);
-		aml_evalinteger(sc->sc_acpi, sc->sc_ec->sc_devnode,
-		    sname, 0, 0, &tmp);
-		sc->sc_sens[i].value = (tmp * 1000000) + 273150000;
-		if (tmp > 127 || tmp < -127)
-			sc->sc_sens[i].flags = SENSOR_FINVALID;
-	}
+	for (i = 0; i < sc->sc_ntempsens; i++) {
+		if (thinkpad_get_temp(sc, i, &tmp) != 0) {
+ 			sc->sc_sens[i].flags = SENSOR_FINVALID;
+			continue;
+		}
+
+		sc->sc_sens[THINKPAD_SENSOR_TMP0 + i].value =
+		    (tmp * 1000000) + 273150000;
+		sc->sc_sens[THINKPAD_SENSOR_TMP0 + i].flags =
+		    (tmp > 127 || tmp < -127) ? SENSOR_FINVALID : 0;
+ 	}
 
 	/* Read fan RPM */
 	acpiec_read(sc->sc_ec, THINKPAD_ECOFFSET_FANLO, 1, &lo);
@@ -785,6 +795,20 @@ thinkpad_set_param(struct wsdisplay_param *dp)
 	default:
 		return -1;
 	}
+}
+
+int
+thinkpad_get_temp(struct acpithinkpad_softc *sc, int idx, int64_t *temp)
+{
+	char sname[5];
+
+	snprintf(sname, sizeof(sname), "TMP%d", idx);
+
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_ec->sc_devnode, sname, 0, 0,
+	    temp) != 0)
+		return (1);
+
+	return (0);
 }
 
 #if NAUDIO > 0 && NWSKBD > 0
