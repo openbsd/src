@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_loop.3,v 1.2 2023/04/09 14:43:51 schwarze Exp $
+.\" $OpenBSD: event_base_loop.3,v 1.3 2023/04/10 13:40:16 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 9 2023 $
+.Dd $Mdocdate: April 10 2023 $
 .Dt EVENT_BASE_LOOP 3
 .Os
 .Sh NAME
@@ -33,22 +33,21 @@
 .Ft int
 .Fn event_dispatch void
 .Sh DESCRIPTION
-An event loop waits for and dispatches events in a program.
+An event loop waits for events
+and invokes an associated callback function whenever one occurs.
 This enables asynchronous programming, allowing a program to perform other
 tasks while waiting for an event to occur.
 Asynchronous programming is a useful idiom for handling multiple I/O
 operations, such as network connections, user interfaces, or disk operations
 without blocking the main loop of a program.
-The event loop continuously processes events and executes callbacks associated
-with each event as they occur.
 .Pp
 The
 .Fn event_base_loop
 family of functions run an event loop.
 By default, they return when there are no more scheduled events.
 .Pp
-There are three types of events these functions monitor including signal,
-kernel and timer.
+There are three types of events these functions monitor:
+signal, kernel, and timer events.
 Events involving POSIX signals are configured with
 .Xr signal_set 3 .
 Kernel events such as network activity and changes to file descriptors are
@@ -57,7 +56,7 @@ configured with
 Timer events are configured with
 .Xr evtimer_set 3 .
 .Pp
-The event library further categorizes event states as:
+The event library categorizes event states as:
 .Bl -tag -width "Initialized:"
 .It Sy Initialized :
 These have been configured with
@@ -71,11 +70,8 @@ They can be be queried with
 .Fn event_pending 3 .
 .It Sy Activated :
 These are triggered events.
-The loop processes events until all
-.Sy activated
-events are resolved, some of these such as signals, may persist and become
-.Sy scheduled
-events again.
+The loop processes events until all activated events are resolved.
+Some of these, such as signals, may persist and become scheduled again.
 .El
 .Pp
 The arguments are as follows:
@@ -84,12 +80,11 @@ The arguments are as follows:
 A pointer to an
 .Vt event_base
 structure returned from
-.Xr event_init 3
+.Xr event_base_new 3
 or
-.Xr event_base_new 3 .
+.Xr event_init 3 .
 .It Fa flags :
-A set of flags that modify the behavior of the event loop.
-The following flags are available:
+Zero or more of the following flags OR'ed together:
 .Pp
 .Bl -hyphen -compact -width 1n
 .It
@@ -136,15 +131,16 @@ is set.
 .It 0
 on success, asked to terminate loop.
 .It 1
-on success, no remaining events left or scheduled in queue.
+on success, no scheduled events remain.
 .El
 .Sh ERRORS
 These functions have complex interactions with
 .Va errno .
 Error conditions that set
 .Va errno
-change corresponding to the kernel notification method the event library is
-using.
+change corresponding to the kernel notification method the
+.Fa base
+structure is using.
 These values directly correspond to
 .Xr kevent 2 ,
 .Xr poll 2
@@ -187,7 +183,7 @@ first appeared in libevent-0.4 and has been available since
 .Fn event_base_dispatch
 and
 .Fn event_base_loop
-first appeared in libevent-1.0 and has been available since
+first appeared in libevent-1.0 and have been available since
 .Ox 3.8 .
 .Sh AUTHORS
 The event library and these functions were written by
