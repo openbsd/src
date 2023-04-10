@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.5 2022/10/31 17:44:21 jca Exp $
+dnl	$OpenBSD: prep,v 1.6 2023/04/10 12:57:15 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete, however progress is being made.
 
@@ -33,7 +33,7 @@ Running EFI payloads with U-Boot:
 
 If the U-Boot target supports "distro_bootcmd" efiboot will automatically
 be loaded by placing bootriscv64.efi into /efi/boot/bootriscv64.efi on a FAT
-filesystem.  With dtb files placed in in /vendor/, /dtbs/vendor/, or
+filesystem.  With dtb files placed in /vendor/, /dtbs/vendor/, or
 /dtb/current/vendor/.
 
 If the U-Boot target supports bootefi but not automatically finding it with

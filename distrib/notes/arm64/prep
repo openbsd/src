@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.17 2023/03/16 18:04:08 miod Exp $
+dnl	$OpenBSD: prep,v 1.18 2023/04/10 12:57:15 jsg Exp $
 To perform an installation you must be able to interact with the
 console of the machine.  In some cases this can be done by an attached
 monitor and keyboard.  In others a serial console is required.
@@ -36,7 +36,7 @@ Running EFI payloads with U-Boot:
 
 If the U-Boot target supports "distro_bootcmd" efiboot will automatically
 be loaded by placing bootaa64.efi into /efi/boot/bootaa64.efi on a FAT
-filesystem.  With dtb files placed in in /vendor/, /dtbs/vendor/, or
+filesystem.  With dtb files placed in /vendor/, /dtbs/vendor/, or
 /dtb/current/vendor/.
 
 If the U-Boot target supports bootefi but not automatically finding it with

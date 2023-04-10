@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.20 2022/08/29 17:05:38 fcambus Exp $
+dnl	$OpenBSD: prep,v 1.21 2023/04/10 12:57:15 jsg Exp $
 Please be aware that OpenBSD support for this platform is far from
 complete.
 
@@ -47,7 +47,7 @@ Running EFI payloads with U-Boot:
 
 If the U-Boot target supports "distro_bootcmd" efiboot will automatically
 be loaded by placing bootarm.efi into /efi/boot/bootarm.efi on a FAT
-filesystem.  With dtb files placed in in /, /dtbs/, or /dtb/current/.
+filesystem.  With dtb files placed in /, /dtbs/, or /dtb/current/.
 
 If the U-Boot target supports bootefi but not automatically finding it with
 "distro_bootcmd" then it must be loaded manually or by U-Boot commands or
