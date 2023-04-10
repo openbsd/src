@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.14 2023/04/08 17:43:30 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.15 2023/04/10 20:59:33 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,12 +68,6 @@
  * Sheueling Chang Shantz and Douglas Stebila of Sun Microsystems Laboratories.
  *
  */
-
-/* Until the key-gen callbacks are modified to use newer prototypes, we allow
- * deprecated functions for openssl-internal code */
-#ifdef OPENSSL_NO_DEPRECATED
-#undef OPENSSL_NO_DEPRECATED
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
