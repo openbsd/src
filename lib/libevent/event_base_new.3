@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_new.3,v 1.3 2023/04/09 14:30:24 schwarze Exp $
+.\" $OpenBSD: event_base_new.3,v 1.4 2023/04/10 13:32:29 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 9 2023 $
+.Dd $Mdocdate: April 10 2023 $
 .Dt EVENT_BASE_NEW 3
 .Os
 .Sh NAME
@@ -58,13 +58,6 @@ By default,
 uses the
 .Xr kqueue 2
 method.
-.Pp
-Environment variables can modify the behavior of
-.Fn event_base_new
-to disable library support for certain kernel notification methods and to
-enable additional diagnostic reporting.
-For a complete list of environment variables refer to
-.Sx ENVIRONMENT .
 .Pp
 The function
 .Fn event_init
@@ -164,24 +157,28 @@ Fatal error conditions do
 .Em not
 return.
 .Sh ENVIRONMENT
-Environment variables that modify the behavior of
+Environment variables can modify the behavior of
 .Fn event_base_new
 and
 .Fn event_init
-are:
+to disable individual kernel notification methods for the returned
+.Vt event_base
+structure and to enable additional diagnostic reporting:
 .Bl -tag -width Ds
-.It Ev EVENT_SHOW_METHOD
-If the log callback is configured, report which kernel notification method the
-library is using.
 .It Ev EVENT_NOKQUEUE
-Disable library support for
+Disable support for
 .Xr kqueue 2 .
 .It Ev EVENT_NOPOLL
-Disable library support for
+Disable support for
 .Xr poll 2 .
 .It Ev EVENT_NOSELECT
-Disable library support for
+Disable support for
 .Xr select 2 .
+.It Ev EVENT_SHOW_METHOD
+If the log callback is configured,
+report which kernel notification method the returned
+.Vt event_base
+structure is using.
 .El
 .Pp
 These environment variables work unless the library detects the program
