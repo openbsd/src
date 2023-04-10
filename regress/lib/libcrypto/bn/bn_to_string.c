@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_to_string.c,v 1.3 2023/02/13 04:26:32 jsing Exp $ */
+/*	$OpenBSD: bn_to_string.c,v 1.4 2023/04/10 13:57:32 tb Exp $ */
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -20,97 +20,237 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/bn.h>
+#include <openssl/x509v3.h>
 
 char *bn_to_string(const BIGNUM *bn);
 
 struct convert_st {
 	const char	*input;
-	const char	*expected;
+	const char	*want;
 };
 
 struct convert_st testcases[] = {
-	{"0", "0"},
-	{"-0", "0"},
-	{"7", "7"},
-	{"-7", "-7"},
-	{"8", "8"},
-	{"-8", "-8"},
-	{"F", "15"},
-	{"-F", "-15"},
-	{"10", "16"},
-	{"-10", "-16"},
-	{"7F", "127"},
-	{"-7F", "-127"},
-	{"80", "128"},
-	{"-80", "-128"},
-	{"FF", "255"},
-	{"-FF", "-255"},
-	{"100", "256"},
-	{"7FFF", "32767"},
-	{"-7FFF", "-32767"},
-	{"8000", "32768"},
-	{"-8000", "-32768"},
-	{"FFFF", "65535"},
-	{"-FFFF", "-65535"},
-	{"10000", "65536"},
-	{"-10000", "-65536"},
-	{"7FFFFFFF", "2147483647"},
-	{"-7FFFFFFF", "-2147483647"},
-	{"80000000", "2147483648"},
-	{"-80000000", "-2147483648"},
-	{"FFFFFFFF", "4294967295"},
-	{"-FFFFFFFF", "-4294967295"},
-	{"100000000", "4294967296"},
-	{"-100000000", "-4294967296"},
-	{"7FFFFFFFFFFFFFFF", "9223372036854775807"},
-	{"-7FFFFFFFFFFFFFFF", "-9223372036854775807"},
-	{"8000000000000000", "9223372036854775808"},
-	{"-8000000000000000", "-9223372036854775808"},
-	{"FFFFFFFFFFFFFFFF", "18446744073709551615"},
-	{"-FFFFFFFFFFFFFFFF", "-18446744073709551615"},
-	{"10000000000000000", "18446744073709551616"},
-	{"-10000000000000000", "-18446744073709551616"},
-	{"7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-	    "170141183460469231731687303715884105727"},
-	{"-7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-	    "-170141183460469231731687303715884105727"},
-	{"80000000000000000000000000000000",
-	    "0x80000000000000000000000000000000"},
-	{"-80000000000000000000000000000000",
-	    "-0x80000000000000000000000000000000"},
-	{"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-	    "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"},
-	{"-FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-	    "-0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"},
-	{"100000000000000000000000000000000",
-	    "0x0100000000000000000000000000000000"},
-	{"-100000000000000000000000000000000",
-	    "-0x0100000000000000000000000000000000"},
-	{ NULL, NULL },
+	{
+		.input = "0x0",
+		.want = "0",
+	},
+	{
+		.input = "-0x0",
+		.want = "0",
+	},
+	{
+		.input = "0x7",
+		.want = "7",
+	},
+	{
+		.input = "-0x7",
+		.want = "-7",
+	},
+	{
+		.input = "0x8",
+		.want = "8",
+	},
+	{
+		.input = "-0x8",
+		.want = "-8",
+	},
+	{
+		.input = "0xF",
+		.want = "15",
+	},
+	{
+		.input = "-0xF",
+		.want = "-15",
+	},
+	{
+		.input = "0x10",
+		.want = "16",
+	},
+	{
+		.input = "-0x10",
+		.want = "-16",
+	},
+	{
+		.input = "0x7F",
+		.want = "127",
+	},
+	{
+		.input = "-0x7F",
+		.want = "-127",
+	},
+	{
+		.input = "0x80",
+		.want = "128",
+	},
+	{
+		.input = "-0x80",
+		.want = "-128",
+	},
+	{
+		.input = "0xFF",
+		.want = "255",
+	},
+	{
+		.input = "-0xFF",
+		.want = "-255",
+	},
+	{
+		.input = "0x100",
+		.want = "256",
+	},
+	{
+		.input = "0x7FFF",
+		.want = "32767",
+	},
+	{
+		.input = "-0x7FFF",
+		.want = "-32767",
+	},
+	{
+		.input = "0x8000",
+		.want = "32768",
+	},
+	{
+		.input = "-0x8000",
+		.want = "-32768",
+	},
+	{
+		.input = "0xFFFF",
+		.want = "65535",
+	},
+	{
+		.input = "-0xFFFF",
+		.want = "-65535",
+	},
+	{
+		.input = "0x10000",
+		.want = "65536",
+	},
+	{
+		.input = "-0x10000",
+		.want = "-65536",
+	},
+	{
+		.input = "0x7FFFFFFF",
+		.want = "2147483647",
+	},
+	{
+		.input = "-0x7FFFFFFF",
+		.want = "-2147483647",
+	},
+	{
+		.input = "0x80000000",
+		.want = "2147483648",
+	},
+	{
+		.input = "-0x80000000",
+		.want = "-2147483648",
+	},
+	{
+		.input = "0xFFFFFFFF",
+		.want = "4294967295",
+	},
+	{
+		.input = "-0xFFFFFFFF",
+		.want = "-4294967295",
+	},
+	{
+		.input = "0x100000000",
+		.want = "4294967296",
+	},
+	{
+		.input = "-0x100000000",
+		.want = "-4294967296",
+	},
+	{
+		.input = "0x7FFFFFFFFFFFFFFF",
+		.want = "9223372036854775807",
+	},
+	{
+		.input = "-0x7FFFFFFFFFFFFFFF",
+		.want = "-9223372036854775807",
+	},
+	{
+		.input = "0x8000000000000000",
+		.want = "9223372036854775808",
+	},
+	{
+		.input = "-0x8000000000000000",
+		.want = "-9223372036854775808",
+	},
+	{
+		.input = "0xFFFFFFFFFFFFFFFF",
+		.want = "18446744073709551615",
+	},
+	{
+		.input = "-0xFFFFFFFFFFFFFFFF",
+		.want = "-18446744073709551615",
+	},
+	{
+		.input = "0x10000000000000000",
+		.want = "18446744073709551616",
+	},
+	{
+		.input = "-0x10000000000000000",
+		.want = "-18446744073709551616",
+	},
+	{
+		.input = "0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+		.want = "170141183460469231731687303715884105727",
+	},
+	{
+		.input = "-0x7FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+		.want = "-170141183460469231731687303715884105727",
+	},
+	{
+		.input = "0x80000000000000000000000000000000",
+		.want = "0x80000000000000000000000000000000",
+	},
+	{
+		.input = "-0x80000000000000000000000000000000",
+		.want = "-0x80000000000000000000000000000000",
+	},
+	{
+		.input = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+		.want = "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+	},
+	{
+		.input = "-0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+		.want = "-0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+	},
+	{
+		.input = "0x100000000000000000000000000000000",
+		.want = "0x0100000000000000000000000000000000",
+	},
+	{
+		.input = "-0x100000000000000000000000000000000",
+		.want = "-0x0100000000000000000000000000000000",
+	},
+	{
+		.input = NULL,
+	},
 };
 
 int
 main(int argc, char *argv[])
 {
 	struct convert_st	*test;
-	BIGNUM			*bn = NULL;
-	char			*bnstr;
+	ASN1_INTEGER		*aint;
+	char			*got;
 	int			 failed = 0;
 
 	for (test = testcases; test->input != NULL; test++) {
-		if (!BN_hex2bn(&bn, test->input))
-			errx(1, "BN_hex2bn(%s)", test->input);
-		if ((bnstr = bn_to_string(bn)) == NULL)
-			errx(1, "bn_to_string(%s)", test->input);
-		if (strcmp(bnstr, test->expected) != 0) {
-			warnx("%s != %s", bnstr, test->expected);
-			failed = 1;
+		if ((aint = s2i_ASN1_INTEGER(NULL, test->input)) == NULL)
+			errx(1, "s2i_ASN1_INTEGER(%s)", test->input);
+		if ((got = i2s_ASN1_INTEGER(NULL, aint)) == NULL)
+			errx(1, "i2s_ASN1_INTEGER(%s)", test->input);
+		if (strcmp(got, test->want) != 0) {
+			warnx("want: %s, got: %s", test->want, got);
+			failed |= 1;
 		}
-		free(bnstr);
+		ASN1_INTEGER_free(aint);
+		free(got);
 	}
-
-	BN_free(bn);
 
 	return failed;
 }
