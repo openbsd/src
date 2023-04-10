@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.175 2023/04/09 17:19:59 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.176 2023/04/10 19:44:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -598,7 +598,7 @@ ask_uuid(const struct uuid *olduuid)
 
 	dflt = PRT_uuid_to_menudflt(olduuid);
 	if (dflt == NULL) {
-		if (asprintf(&dflt, "0") == -1) {
+		if (asprintf(&dflt, "00") == -1) {
 			warn("asprintf()");
 			goto done;
 		}

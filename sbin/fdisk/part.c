@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.154 2023/04/09 17:19:59 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.155 2023/04/10 19:44:43 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -1107,7 +1107,7 @@ PRT_uuid_to_menudflt(const struct uuid *uuid)
 			continue;
 		free(dflt);
 		dflt = NULL;
-		if (asprintf(&dflt, "%X", menu_items[i].mi_menuid) == -1)
+		if (asprintf(&dflt, "%02X", menu_items[i].mi_menuid) == -1)
 			return NULL;
 	}
 
