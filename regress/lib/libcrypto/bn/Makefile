@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.28 2023/04/10 13:57:57 tb Exp $
+#	$OpenBSD: Makefile,v 1.29 2023/04/10 19:02:30 jsing Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
 PROGS +=	bn_gcd
+PROGS +=	bn_general
 PROGS +=	bn_isqrt
 PROGS +=	bn_mod_exp
 PROGS +=	bn_mod_sqrt
