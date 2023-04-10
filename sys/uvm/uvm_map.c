@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.313 2023/02/24 15:17:48 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.314 2023/04/10 04:21:20 jsg Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -1793,7 +1793,7 @@ uvm_map_remap_as_stack(struct proc *p, vaddr_t addr, vaddr_t sz)
 
 	/*
 	 * UVM_FLAG_SIGALTSTACK indicates that immutable may be bypassed,
-	 * but the range is checked that it is contigous, is not a syscall
+	 * but the range is checked that it is contiguous, is not a syscall
 	 * mapping, and protection RW.  Then, a new mapping (all zero) is
 	 * placed upon the region, which prevents an attacker from pivoting
 	 * into pre-placed MAP_STACK space.
@@ -2392,7 +2392,7 @@ out:
  * all mapped regions.
  *
  * Map must not be locked.
- * If no flags are specified, all ragions are unwired.
+ * If no flags are specified, all regions are unwired.
  */
 int
 uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
@@ -2689,7 +2689,7 @@ uvm_map_splitentry(struct vm_map *map, struct vm_map_entry *orig,
 	 * Link orig and next into free-space tree.
 	 *
 	 * Don't insert 'next' into the addr tree until orig has been linked,
-	 * in case the free-list looks at adjecent entries in the addr tree
+	 * in case the free-list looks at adjacent entries in the addr tree
 	 * for its decisions.
 	 */
 	if (orig->fspace > 0)

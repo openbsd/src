@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmpic.c,v 1.6 2023/03/05 04:30:08 jmatthew Exp $ */
+/* $OpenBSD: mvmpic.c,v 1.7 2023/04/10 04:21:20 jsg Exp $ */
 /*
  * Copyright (c) 2007,2009,2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2015 Patrick Wildt <patrick@blueri.se>
@@ -129,7 +129,7 @@ mpic_attach(struct device *parent, struct device *self, void *args)
 	/* Clear pending IPIs */
 	bus_space_write_4(sc->sc_iot, sc->sc_c_ioh, MPIC_DOORBELL_CAUSE, 0);
 
-	/* Enable hardware priorization selection */
+	/* Enable hardware prioritization selection */
 	bus_space_write_4(sc->sc_iot, sc->sc_m_ioh, MPIC_CTRL,
 	    MPIC_CTRL_PRIO_EN);
 

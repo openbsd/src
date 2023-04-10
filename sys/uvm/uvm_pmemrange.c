@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pmemrange.c,v 1.62 2022/06/02 18:00:53 kettenis Exp $	*/
+/*	$OpenBSD: uvm_pmemrange.c,v 1.63 2023/04/10 04:21:20 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Ariane van der Steldt <ariane@stack.nl>
@@ -41,7 +41,7 @@
  * The size tree is not used for memory ranges of 1 page, instead,
  * single queue is vm_page[0].pageq
  *
- * vm_page[0].fpgsz describes the length of a free range. Two adjecent ranges
+ * vm_page[0].fpgsz describes the length of a free range. Two adjacent ranges
  * are joined, unless:
  * - they have pages in between them which are not free
  * - they belong to different memtypes (zeroed vs dirty memory)
@@ -383,7 +383,7 @@ uvm_pmr_remove(struct uvm_pmemrange *pmr, struct vm_page *pg)
  * Returns the range thus created (which may be joined with the previous and
  * next ranges).
  * If no_join, the caller guarantees that the range cannot possibly join
- * with adjecent ranges.
+ * with adjacent ranges.
  */
 struct vm_page *
 uvm_pmr_insert_addr(struct uvm_pmemrange *pmr, struct vm_page *pg, int no_join)

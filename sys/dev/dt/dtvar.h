@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.15 2023/03/10 22:14:32 bluhm Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.16 2023/04/10 04:21:20 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -182,7 +182,7 @@ struct dt_pcb {
 	/* Event states ring */
 	unsigned int		 dp_prod;	/* [m] read index */
 	unsigned int		 dp_cons;	/* [m] write index */
-	struct dt_evt		*dp_ring;	/* [m] ring of event sates */
+	struct dt_evt		*dp_ring;	/* [m] ring of event states */
 	struct mutex		 dp_mtx;
 
 	struct dt_softc		*dp_sc;		/* [I] related softc */

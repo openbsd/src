@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.11 2018/05/14 09:33:20 kettenis Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.12 2023/04/10 04:21:20 jsg Exp $	*/
 
 /* Public Domain */
 
@@ -246,7 +246,7 @@ atomic_clearbits_long(volatile unsigned long *uip, unsigned long v)
 
 /*
  * Although the PA-RISC 2.0 architecture allows an implementation to
- * be weakly ordered, all PA-RISC processers to date implement a
+ * be weakly ordered, all PA-RISC processors to date implement a
  * strong memory ordering model.  So all we need is a compiler
  * barrier.
  */

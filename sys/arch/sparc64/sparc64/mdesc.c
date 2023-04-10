@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdesc.c,v 1.8 2019/10/20 16:27:19 kettenis Exp $	*/
+/*	$OpenBSD: mdesc.c,v 1.9 2023/04/10 04:21:20 jsg Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
  *
@@ -116,7 +116,7 @@ pri_init(void)
 
 	/*
 	 * We can only fetch the physical resource inventory this way
-	 * if the firmware supports parellel boot.
+	 * if the firmware supports parallel boot.
 	 */
 	if (prom_set_sun4v_api_version(HSVC_GROUP_PARALLEL_BOOT, 1, 0, &minor))
 		return;

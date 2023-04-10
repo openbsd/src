@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_disksubr.c,v 1.6 2022/10/14 13:22:57 krw Exp $	*/
+/*	$OpenBSD: ufs_disksubr.c,v 1.7 2023/04/10 04:21:20 jsg Exp $	*/
 /*	$NetBSD: ufs_disksubr.c,v 1.2 2013/01/14 01:37:57 tsutsui Exp $	*/
 
 /*
@@ -106,7 +106,7 @@ sun_extended_sum(struct sun_disklabel *sl, void *end)
 
 /*
  * Attempt to read a disk label from a device
- * using the indicated stategy routine.
+ * using the indicated strategy routine.
  * The label must be partly set up before this:
  * secpercyl and anything required in the strategy routine
  * (e.g., sector size) must be filled in before calling us.

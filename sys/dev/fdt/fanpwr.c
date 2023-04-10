@@ -1,4 +1,4 @@
-/*	$OpenBSD: fanpwr.c,v 1.6 2023/02/13 19:16:50 kettenis Exp $	*/
+/*	$OpenBSD: fanpwr.c,v 1.7 2023/04/10 04:21:20 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -44,7 +44,7 @@
 #define  TCS4525_TIME_SLEW_MASK		(0x3 << 3)
 #define  TCS4525_TIME_SLEW_SHIFT	3
 
-/* Distinguish between Failrchild original and Silergy clones. */
+/* Distinguish between Fairchild original and Silergy clones. */
 enum fanpwr_id {
 	FANPWR_FAN53555,	/* Fairchild FAN53555 */
 	FANPWR_SYR827,		/* Silergy SYR827 */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.131 2022/12/08 21:32:48 kettenis Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.132 2023/04/10 04:21:20 jsg Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -912,7 +912,7 @@ uvn_put(struct uvm_object *uobj, struct vm_page **pps, int npages, int flags)
 	 * function assumes we hold a reference.
 	 *
 	 * If the vnode is in the process of being recycled by someone
-	 * else, grabbing a refernce will fail.  In that case the
+	 * else, grabbing a reference will fail.  In that case the
 	 * pages will already be written out by whoever is cleaning
 	 * the vnode, so simply return VM_PAGER_AGAIN such that we
 	 * skip these pages.

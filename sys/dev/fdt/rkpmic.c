@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpmic.c,v 1.12 2022/10/12 13:39:50 kettenis Exp $	*/
+/*	$OpenBSD: rkpmic.c,v 1.13 2023/04/10 04:21:20 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -474,7 +474,7 @@ rkpmic_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 
 	/*
 	 * The RTC thinks November has 31 days.  Match what Linux does
-	 * and undo the damage by considering the calenders to be in
+	 * and undo the damage by considering the calendars to be in
 	 * sync on January 1st 2016.
 	 */
 	secs = clock_ymdhms_to_secs(&dt);
@@ -497,7 +497,7 @@ rkpmic_settime(struct todr_chip_handle *handle, struct timeval *tv)
 	 * Don't try to be clever, just do the conversion in two
 	 * steps, first taking care of November 31 in previous years,
 	 * and then taking care of days in December of the current
-	 * year.  Decmber 1st turns into November 31st!
+	 * year.  December 1st turns into November 31st!
 	 */
 	secs = tv->tv_sec;
 	clock_secs_to_ymdhms(secs, &dt);
