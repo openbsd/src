@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.6 2023/03/26 09:34:06 jsg Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.7 2023/04/10 15:14:04 tobhe Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1168,6 +1168,9 @@ apldckbd_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case WSKBDIO_GTYPE:
 		/* XXX: should we set something else? */
 		*(u_int *)data = WSKBD_TYPE_USB;
+		return 0;
+	case WSKBDIO_SETLEDS:
+		apldckbd_set_leds(v, *(int *)data);
 		return 0;
 	default:
 		return hidkbd_ioctl(kbd, cmd, data, flag, p);
