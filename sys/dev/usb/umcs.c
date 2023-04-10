@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.c,v 1.10 2022/04/09 20:07:44 naddy Exp $ */
+/* $OpenBSD: umcs.c,v 1.11 2023/04/10 12:11:22 jsg Exp $ */
 /* $NetBSD: umcs.c,v 1.8 2014/08/23 21:37:56 martin Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
@@ -542,9 +542,9 @@ umcs_param(void *self, int portno, struct termios *t)
 	if (t->c_cflag & PARENB) {
 		lcr |= UMCS_LCR_PARITYON;
 		if (t->c_cflag & PARODD) {
-			lcr = UMCS_LCR_PARITYODD;
+			lcr |= UMCS_LCR_PARITYODD;
 		} else {
-			lcr = UMCS_LCR_PARITYEVEN;
+			lcr |= UMCS_LCR_PARITYEVEN;
 		}
 	} else {
 		lcr &= ~UMCS_LCR_PARITYON;
