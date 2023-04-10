@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.40 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: sab.c,v 1.41 2023/04/10 23:18:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -1019,6 +1019,8 @@ sabttyparam(struct sabtty_softc *sc, struct tty *tp, struct termios *t)
 			dafo |= SAB_DAFO_PAR_EVEN;
 	} else
 		dafo |= SAB_DAFO_PAR_NONE;
+
+	SAB_WRITE(sc, SAB_DAFO, dafo);
 
 	if (ospeed != 0) {
 		SAB_WRITE(sc, SAB_BGR, ospeed & 0xff);
