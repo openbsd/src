@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2023/04/03 21:33:16 tb Exp $
+#	$OpenBSD: Makefile,v 1.28 2023/04/10 13:57:57 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -21,7 +21,6 @@ STATIC_LINK +=	bn_isqrt
 STATIC_LINK +=	bn_mod_exp
 STATIC_LINK +=	bn_rand_interval
 STATIC_LINK +=	bn_test
-STATIC_LINK +=	bn_to_string
 
 LDADD =		-lcrypto
 DPADD =		${LIBCRYPTO}
