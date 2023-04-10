@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_to_string.c,v 1.4 2023/04/10 13:57:32 tb Exp $ */
+/*	$OpenBSD: bn_to_string.c,v 1.5 2023/04/10 21:00:16 tb Exp $ */
 /*
  * Copyright (c) 2019 Theo Buehler <tb@openbsd.org>
  *
@@ -22,14 +22,10 @@
 
 #include <openssl/x509v3.h>
 
-char *bn_to_string(const BIGNUM *bn);
-
-struct convert_st {
+struct bn_to_string_tests {
 	const char	*input;
 	const char	*want;
-};
-
-struct convert_st testcases[] = {
+} testcases[] = {
 	{
 		.input = "0x0",
 		.want = "0",
@@ -232,12 +228,12 @@ struct convert_st testcases[] = {
 };
 
 int
-main(int argc, char *argv[])
+main(void)
 {
-	struct convert_st	*test;
-	ASN1_INTEGER		*aint;
-	char			*got;
-	int			 failed = 0;
+	struct bn_to_string_tests *test;
+	ASN1_INTEGER *aint;
+	char *got;
+	int failed = 0;
 
 	for (test = testcases; test->input != NULL; test++) {
 		if ((aint = s2i_ASN1_INTEGER(NULL, test->input)) == NULL)
