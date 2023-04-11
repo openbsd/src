@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.157 2023/04/11 17:26:59 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.158 2023/04/11 21:14:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -732,11 +732,13 @@ const struct menu_item menu_items[] = {
 };
 
 const struct gpt_type	*find_gpt_type(const struct uuid *);
+const struct menu_item	*find_gpt_menuitem(const struct gpt_type *);
 const char		*find_gpt_desc(const struct gpt_type *);
 int			 gpt_item(const unsigned int);
 int			 uuid_attr(const struct uuid *);
 
 const struct mbr_type	*find_mbr_type(const int);
+const struct menu_item	*find_mbr_menuitem(const struct mbr_type *);
 const char		*find_mbr_desc(const struct mbr_type *);
 int			 mbr_item(const unsigned int);
 
@@ -767,19 +769,33 @@ find_gpt_type(const struct uuid *uuid)
 	return gt;
 }
 
+const struct menu_item *
+find_gpt_menuitem(const struct gpt_type *gt)
+{
+	unsigned int		i;
+
+	if (gt != NULL) {
+		for (i = 0; i < nitems(menu_items); i++) {
+			if (gpt_item(i) == 0 &&
+			    strcasecmp(menu_items[i].mi_guid, gt->gt_guid) == 0)
+				return &menu_items[i];
+		}
+	}
+
+	return NULL;
+}
+
 const char *
 find_gpt_desc(const struct gpt_type *gt)
 {
-	unsigned int		 i;
+	const struct menu_item	*mi;
 
 	if (gt != NULL) {
 		if (gt->gt_desc != NULL)
 			return gt->gt_desc;
-		for (i = 0; i < nitems(menu_items); i++) {
-			if (gpt_item(i) == 0 &&
-			    strcasecmp(menu_items[i].mi_guid, gt->gt_guid) == 0)
-				return menu_items[i].mi_name;
-		}
+		mi = find_gpt_menuitem(gt);
+		if (mi)
+			return mi->mi_name;
 	}
 
 	return NULL;
@@ -819,19 +835,33 @@ find_mbr_type(const int id)
 	return mt;
 }
 
+const struct menu_item *
+find_mbr_menuitem(const struct mbr_type *mt)
+{
+	unsigned int		i;
+
+	if (mt != NULL) {
+		for (i = 0; i < nitems(menu_items); i++) {
+			if (mbr_item(i) == 0
+			    && menu_items[i].mi_mbrid == mt->mt_type)
+				return &menu_items[i];
+		}
+	}
+
+	return NULL;
+}
+
 const char *
 find_mbr_desc(const struct mbr_type *mt)
 {
-	unsigned int		 i;
+	const struct menu_item	*mi;
 
 	if (mt != NULL) {
 		if (mt->mt_desc != NULL)
 			return mt->mt_desc;
-		for (i = 0; i < nitems(menu_items); i++) {
-			if (mbr_item(i) == 0 &&
-			    menu_items[i].mi_mbrid == mt->mt_type)
-				return menu_items[i].mi_name;
-		}
+		mi = find_mbr_menuitem(mt);
+		if (mi)
+			return mi->mi_name;
 	}
 
 	return NULL;
