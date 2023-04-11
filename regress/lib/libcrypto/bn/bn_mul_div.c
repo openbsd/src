@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mul_div.c,v 1.5 2023/01/29 15:51:26 jsing Exp $ */
+/*	$OpenBSD: bn_mul_div.c,v 1.6 2023/04/11 05:53:53 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -386,7 +386,7 @@ benchmark_run(const struct benchmark *bm, int seconds)
 	timespecsub(&end, &start, &duration);
 	fprintf(stderr, "%d iterations in %f seconds - %llu op/s\n", i,
 	    duration.tv_sec + duration.tv_nsec / 1000000000.0,
-	    (size_t)i * 1000000000 /
+	    (uint64_t)i * 1000000000 /
 	    (duration.tv_sec * 1000000000 + duration.tv_nsec));
 
 	BN_CTX_end(bn_ctx);

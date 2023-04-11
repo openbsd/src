@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_general.c,v 1.1 2023/04/10 19:02:30 jsing Exp $ */
+/*	$OpenBSD: bn_general.c,v 1.2 2023/04/11 05:53:53 jsing Exp $ */
 /*
  * Copyright (c) 2022, 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -148,7 +148,7 @@ benchmark_run(const struct benchmark *bm, int seconds)
 	timespecsub(&end, &start, &duration);
 	fprintf(stderr, "%d iterations in %f seconds - %llu op/s\n", i,
 	    duration.tv_sec + duration.tv_nsec / 1000000000.0,
-	    (size_t)i * 1000000000 /
+	    (uint64_t)i * 1000000000 /
 	    (duration.tv_sec * 1000000000 + duration.tv_nsec));
 
 	BN_free(src);
