@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_accept.3,v 1.13 2022/03/31 17:30:05 naddy Exp $
+.\"	$OpenBSD: BIO_s_accept.3,v 1.14 2023/04/11 16:58:43 schwarze Exp $
 .\"	OpenSSL c03726ca Thu Aug 27 12:28:08 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: April 11 2023 $
 .Dt BIO_S_ACCEPT 3
 .Os
 .Sh NAME
@@ -281,6 +281,15 @@ and
 .Fn BIO_do_accept
 are macros.
 .Sh RETURN VALUES
+When called on an accept BIO object,
+.Xr BIO_method_type 3
+returns the constant
+.Dv BIO_TYPE_ACCEPT
+and
+.Xr BIO_method_name 3
+returns a pointer to the static string
+.Qq socket accept .
+.Pp
 .Fn BIO_do_accept ,
 .Fn BIO_set_accept_port ,
 .Fn BIO_set_nbio_accept ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BIO_s_socket.3,v 1.9 2018/05/01 17:05:05 schwarze Exp $
+.\"	$OpenBSD: BIO_s_socket.3,v 1.10 2023/04/11 16:58:43 schwarze Exp $
 .\"	OpenSSL bbdc9c98 Oct 19 22:02:21 2000 +0000
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 1 2018 $
+.Dd $Mdocdate: April 11 2023 $
 .Dt BIO_S_SOCKET 3
 .Os
 .Sh NAME
@@ -104,6 +104,15 @@ returns the socket BIO method.
 returns the newly allocated BIO or
 .Dv NULL
 if an error occurred.
+.Pp
+When called on a socket BIO object,
+.Xr BIO_method_type 3
+returns the constant
+.Dv BIO_TYPE_SOCKET
+and
+.Xr BIO_method_name 3
+returns a pointer to the static string
+.Qq socket .
 .Sh SEE ALSO
 .Xr BIO_get_fd 3 ,
 .Xr BIO_new 3

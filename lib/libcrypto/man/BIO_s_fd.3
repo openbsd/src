@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_fd.3,v 1.10 2022/12/20 14:55:45 schwarze Exp $
+.\" $OpenBSD: BIO_s_fd.3,v 1.11 2023/04/11 16:58:43 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 20 2022 $
+.Dd $Mdocdate: April 11 2023 $
 .Dt BIO_S_FD 3
 .Os
 .Sh NAME
@@ -208,6 +208,15 @@ are implemented as macros.
 .Sh RETURN VALUES
 .Fn BIO_s_fd
 returns the file descriptor BIO method.
+.Pp
+When called on a file descriptor BIO object,
+.Xr BIO_method_type 3
+returns the constant
+.Dv BIO_TYPE_FD
+and
+.Xr BIO_method_name 3
+returns a pointer to the static string
+.Qq file descriptor .
 .Pp
 .Fn BIO_set_fd
 always returns 1.
