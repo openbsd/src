@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_mult.c,v 1.28 2023/03/08 05:45:31 jsing Exp $ */
+/* $OpenBSD: ec_mult.c,v 1.29 2023/04/11 18:58:20 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller and Nils Larsch for the OpenSSL project.
  */
@@ -335,7 +335,6 @@ int
 ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 {
-	BN_CTX *new_ctx = NULL;
 	const EC_POINT *generator = NULL;
 	EC_POINT *tmp = NULL;
 	size_t totalnum;
@@ -375,11 +374,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 		}
 	}
 
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			goto err;
-	}
 	if (scalar != NULL) {
 		generator = EC_GROUP_get0_generator(group);
 		if (generator == NULL) {
@@ -679,7 +673,6 @@ ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	ret = 1;
 
  err:
-	BN_CTX_free(new_ctx);
 	EC_POINT_free(tmp);
 	free(wsize);
 	free(wNAF_len);
@@ -726,7 +719,6 @@ ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
 	const EC_POINT *generator;
 	EC_POINT *tmp_point = NULL, *base = NULL, **var;
-	BN_CTX *new_ctx = NULL;
 	BIGNUM *order;
 	size_t i, bits, w, pre_points_per_block, blocksize, numblocks,
 	 num;
@@ -745,12 +737,9 @@ ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 		ECerror(EC_R_UNDEFINED_GENERATOR);
 		goto err;
 	}
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			goto err;
-	}
+
 	BN_CTX_start(ctx);
+
 	if ((order = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
@@ -857,10 +846,9 @@ ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	pre_comp = NULL;
 
 	ret = 1;
+
  err:
-	if (ctx != NULL)
-		BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
+	BN_CTX_end(ctx);
 	ec_pre_comp_free(pre_comp);
 	if (points) {
 		EC_POINT **p;

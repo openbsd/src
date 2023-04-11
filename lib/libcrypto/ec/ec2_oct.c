@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_oct.c,v 1.19 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ec2_oct.c,v 1.20 2023/04/11 18:58:20 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -94,21 +94,17 @@ int
 ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point,
     const BIGNUM *x_, int y_bit, BN_CTX *ctx)
 {
-	BN_CTX *new_ctx = NULL;
 	BIGNUM *tmp, *x, *y, *z;
-	int ret = 0, z0;
+	int z0;
+	int ret = 0;
 
 	/* clear error queue */
 	ERR_clear_error();
 
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			return 0;
-	}
 	y_bit = (y_bit != 0) ? 1 : 0;
 
 	BN_CTX_start(ctx);
+
 	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((x = BN_CTX_get(ctx)) == NULL)
@@ -163,7 +159,7 @@ ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group, EC_POINT *point
 
  err:
 	BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
+
 	return ret;
 }
 
@@ -177,18 +173,17 @@ ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
     point_conversion_form_t form,
     unsigned char *buf, size_t len, BN_CTX *ctx)
 {
-	size_t ret;
-	BN_CTX *new_ctx = NULL;
-	int used_ctx = 0;
 	BIGNUM *x, *y, *yxi;
 	size_t field_len, i, skip;
+	size_t ret;
 
-	if ((form != POINT_CONVERSION_COMPRESSED)
-	    && (form != POINT_CONVERSION_UNCOMPRESSED)
-	    && (form != POINT_CONVERSION_HYBRID)) {
+	if (form != POINT_CONVERSION_COMPRESSED &&
+	    form != POINT_CONVERSION_UNCOMPRESSED &&
+	    form != POINT_CONVERSION_HYBRID) {
 		ECerror(EC_R_INVALID_FORM);
-		goto err;
+		return 0;
 	}
+
 	if (EC_POINT_is_at_infinity(group, point) > 0) {
 		/* encodes to a single 0 octet */
 		if (buf != NULL) {
@@ -200,6 +195,9 @@ ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 		}
 		return 1;
 	}
+
+	BN_CTX_start(ctx);
+
 	/* ret := required output buffer length */
 	field_len = (EC_GROUP_get_degree(group) + 7) / 8;
 	ret = (form == POINT_CONVERSION_COMPRESSED) ? 1 + field_len :
@@ -211,13 +209,7 @@ ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 			ECerror(EC_R_BUFFER_TOO_SMALL);
 			goto err;
 		}
-		if (ctx == NULL) {
-			ctx = new_ctx = BN_CTX_new();
-			if (ctx == NULL)
-				return 0;
-		}
-		BN_CTX_start(ctx);
-		used_ctx = 1;
+
 		if ((x = BN_CTX_get(ctx)) == NULL)
 			goto err;
 		if ((y = BN_CTX_get(ctx)) == NULL)
@@ -271,18 +263,12 @@ ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 			goto err;
 		}
 	}
-	if (used_ctx)
-		BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
-	return ret;
 
  err:
-	if (used_ctx)
-		BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
-	return 0;
-}
+	BN_CTX_end(ctx);
 
+	return ret;
+}
 
 /*
  * Converts an octet string representation to an EC_POINT.
@@ -294,7 +280,6 @@ ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 {
 	point_conversion_form_t form;
 	int y_bit;
-	BN_CTX *new_ctx = NULL;
 	BIGNUM *x, *y, *yxi;
 	size_t field_len, enc_len;
 	int ret = 0;
@@ -349,12 +334,8 @@ ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 		return 0;
 	}
 
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			return 0;
-	}
 	BN_CTX_start(ctx);
+
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((y = BN_CTX_get(ctx)) == NULL)
@@ -415,7 +396,7 @@ ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 
  err:
 	BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
+
 	return ret;
 }
 #endif

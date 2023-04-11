@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_smpl.c,v 1.34 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: ec2_smpl.c,v 1.35 2023/04/11 18:58:20 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -216,18 +216,11 @@ ec_GF2m_simple_group_get_degree(const EC_GROUP *group)
 static int
 ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 {
-	int ret = 0;
 	BIGNUM *b;
-	BN_CTX *new_ctx = NULL;
+	int ret = 0;
 
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-	}
 	BN_CTX_start(ctx);
+
 	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
@@ -244,9 +237,8 @@ ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	ret = 1;
 
  err:
-	if (ctx != NULL)
-		BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
+	BN_CTX_end(ctx);
+
 	return ret;
 }
 
@@ -368,7 +360,6 @@ static int
 ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
     const EC_POINT *b, BN_CTX *ctx)
 {
-	BN_CTX *new_ctx = NULL;
 	BIGNUM *x0, *y0, *x1, *y1, *x2, *y2, *s, *t;
 	int ret = 0;
 
@@ -382,12 +373,9 @@ ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 			return 0;
 		return 1;
 	}
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			return 0;
-	}
+
 	BN_CTX_start(ctx);
+
 	if ((x0 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((y0 = BN_CTX_get(ctx)) == NULL)
@@ -475,7 +463,7 @@ ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
  err:
 	BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
+
 	return ret;
 }
 
@@ -517,11 +505,10 @@ ec_GF2m_simple_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 static int
 ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx)
 {
-	int ret = -1;
-	BN_CTX *new_ctx = NULL;
-	BIGNUM *lh, *y2;
 	int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
 	int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
+	BIGNUM *lh, *y2;
+	int ret = -1;
 
 	if (EC_POINT_is_at_infinity(group, point) > 0)
 		return 1;
@@ -533,12 +520,8 @@ ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX 
 	if (!point->Z_is_one)
 		return -1;
 
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			return -1;
-	}
 	BN_CTX_start(ctx);
+
 	if ((y2 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((lh = BN_CTX_get(ctx)) == NULL)
@@ -563,11 +546,12 @@ ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX 
 		goto err;
 	if (!BN_GF2m_add(lh, lh, y2))
 		goto err;
+
 	ret = BN_is_zero(lh);
+
  err:
-	if (ctx)
-		BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
+	BN_CTX_end(ctx);
+
 	return ret;
 }
 
@@ -583,24 +567,19 @@ ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
     const EC_POINT *b, BN_CTX *ctx)
 {
 	BIGNUM *aX, *aY, *bX, *bY;
-	BN_CTX *new_ctx = NULL;
 	int ret = -1;
 
-	if (EC_POINT_is_at_infinity(group, a) > 0) {
+	if (EC_POINT_is_at_infinity(group, a) > 0)
 		return EC_POINT_is_at_infinity(group, b) > 0 ? 0 : 1;
-	}
+
 	if (EC_POINT_is_at_infinity(group, b) > 0)
 		return 1;
 
-	if (a->Z_is_one && b->Z_is_one) {
+	if (a->Z_is_one && b->Z_is_one)
 		return ((BN_cmp(&a->X, &b->X) == 0) && BN_cmp(&a->Y, &b->Y) == 0) ? 0 : 1;
-	}
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			return -1;
-	}
+
 	BN_CTX_start(ctx);
+
 	if ((aX = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((aY = BN_CTX_get(ctx)) == NULL)
@@ -617,9 +596,8 @@ ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 	ret = ((BN_cmp(aX, bX) == 0) && BN_cmp(aY, bY) == 0) ? 0 : 1;
 
  err:
-	if (ctx)
-		BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
+	BN_CTX_end(ctx);
+
 	return ret;
 }
 
@@ -627,19 +605,14 @@ ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 static int
 ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 {
-	BN_CTX *new_ctx = NULL;
 	BIGNUM *x, *y;
 	int ret = 0;
 
 	if (point->Z_is_one || EC_POINT_is_at_infinity(group, point) > 0)
 		return 1;
 
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			return 0;
-	}
 	BN_CTX_start(ctx);
+
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((y = BN_CTX_get(ctx)) == NULL)
@@ -657,9 +630,8 @@ ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 	ret = 1;
 
  err:
-	if (ctx)
-		BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
+	BN_CTX_end(ctx);
+
 	return ret;
 }
 

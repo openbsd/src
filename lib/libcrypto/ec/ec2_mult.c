@@ -1,4 +1,4 @@
-/* $OpenBSD: ec2_mult.c,v 1.16 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: ec2_mult.c,v 1.17 2023/04/11 18:58:20 jsing Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -375,17 +375,11 @@ int
 ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
     size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx)
 {
-	BN_CTX *new_ctx = NULL;
-	int ret = 0;
-	size_t i;
 	EC_POINT *p = NULL;
 	EC_POINT *acc = NULL;
+	size_t i;
+	int ret = 0;
 
-	if (ctx == NULL) {
-		ctx = new_ctx = BN_CTX_new();
-		if (ctx == NULL)
-			return 0;
-	}
 	/*
 	 * This implementation is more efficient than the wNAF implementation
 	 * for 2 or fewer points.  Use the ec_wNAF_mul implementation for 3
@@ -432,7 +426,7 @@ ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
  err:
 	EC_POINT_free(p);
 	EC_POINT_free(acc);
-	BN_CTX_free(new_ctx);
+
 	return ret;
 }
 

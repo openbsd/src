@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nist.c,v 1.25 2023/04/11 18:53:20 jsing Exp $ */
+/* $OpenBSD: ecp_nist.c,v 1.26 2023/04/11 18:58:20 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -80,15 +80,6 @@ static int
 ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
-	int ret = 0;
-	BN_CTX *new_ctx = NULL;
-
-	if (ctx == NULL)
-		if ((ctx = new_ctx = BN_CTX_new()) == NULL)
-			return 0;
-
-	BN_CTX_start(ctx);
-
 	if (BN_ucmp(BN_get0_nist_prime_192(), p) == 0)
 		group->field_mod_func = BN_nist_mod_192;
 	else if (BN_ucmp(BN_get0_nist_prime_224(), p) == 0)
@@ -101,67 +92,40 @@ ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 		group->field_mod_func = BN_nist_mod_521;
 	else {
 		ECerror(EC_R_NOT_A_NIST_PRIME);
-		goto err;
+		return 0;
 	}
 
-	ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
-
- err:
-	BN_CTX_end(ctx);
-	BN_CTX_free(new_ctx);
-	return ret;
+	return ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
 }
 
 static int
 ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)
 {
-	int ret = 0;
-	BN_CTX *ctx_new = NULL;
-
-	if (!group || !r || !a || !b) {
+	if (group == NULL || r == NULL || a == NULL || b == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
-		goto err;
+		return 0;
 	}
-	if (!ctx)
-		if ((ctx_new = ctx = BN_CTX_new()) == NULL)
-			goto err;
 
 	if (!BN_mul(r, a, b, ctx))
-		goto err;
-	if (!group->field_mod_func(r, r, &group->field, ctx))
-		goto err;
+		return 0;
 
-	ret = 1;
- err:
-	BN_CTX_free(ctx_new);
-	return ret;
+	return group->field_mod_func(r, r, &group->field, ctx);
 }
 
 static int
 ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
     BN_CTX *ctx)
 {
-	int ret = 0;
-	BN_CTX *ctx_new = NULL;
-
-	if (!group || !r || !a) {
+	if (group == NULL || r == NULL || a == NULL) {
 		ECerror(EC_R_PASSED_NULL_PARAMETER);
-		goto err;
+		return 0;
 	}
-	if (!ctx)
-		if ((ctx_new = ctx = BN_CTX_new()) == NULL)
-			goto err;
 
 	if (!BN_sqr(r, a, ctx))
-		goto err;
-	if (!group->field_mod_func(r, r, &group->field, ctx))
-		goto err;
+		return 0;
 
-	ret = 1;
- err:
-	BN_CTX_free(ctx_new);
-	return ret;
+	return group->field_mod_func(r, r, &group->field, ctx);
 }
 
 static const EC_METHOD ec_GFp_nist_method = {
