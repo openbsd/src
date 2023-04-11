@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.156 2023/04/11 16:34:51 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.157 2023/04/11 17:26:59 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -732,12 +732,12 @@ const struct menu_item menu_items[] = {
 };
 
 const struct gpt_type	*find_gpt_type(const struct uuid *);
-const char		*find_uuid_desc(const struct uuid *);
+const char		*find_gpt_desc(const struct gpt_type *);
 int			 gpt_item(const unsigned int);
 int			 uuid_attr(const struct uuid *);
 
 const struct mbr_type	*find_mbr_type(const int);
-const char		*find_mbr_desc(const int);
+const char		*find_mbr_desc(const struct mbr_type *);
 int			 mbr_item(const unsigned int);
 
 void			 print_menu(int (*)(const unsigned int),
@@ -768,12 +768,10 @@ find_gpt_type(const struct uuid *uuid)
 }
 
 const char *
-find_uuid_desc(const struct uuid *uuid)
+find_gpt_desc(const struct gpt_type *gt)
 {
-	const struct gpt_type	*gt;
 	unsigned int		 i;
 
-	gt = find_gpt_type(uuid);
 	if (gt != NULL) {
 		if (gt->gt_desc != NULL)
 			return gt->gt_desc;
@@ -822,12 +820,10 @@ find_mbr_type(const int id)
 }
 
 const char *
-find_mbr_desc(const int mbrid)
+find_mbr_desc(const struct mbr_type *mt)
 {
-	const struct mbr_type	*mt;
 	unsigned int		 i;
 
-	mt = find_mbr_type(mbrid);
 	if (mt != NULL) {
 		if (mt->mt_desc != NULL)
 			return mt->mt_desc;
@@ -1020,7 +1016,7 @@ PRT_print_part(const int num, const struct prt *prt, const char *units)
 
 	size = units_size(units, prt->prt_ns, &ut);
 	PRT_lba_to_chs(prt, &start, &end);
-	desc = find_mbr_desc(prt->prt_id);
+	desc = find_mbr_desc(find_mbr_type(prt->prt_id));
 
 	printf("%c%1d: %.2X %6llu %3u %3u - %6llu %3u %3u [%12llu:%12.0f%s] "
 	    "%-15s\n", (prt->prt_flag == DOSACTIVE) ? '*' : ' ', num,
@@ -1079,7 +1075,7 @@ PRT_uuid_to_desc(const struct uuid *uuid)
 	char			*str;
 	uint32_t		 status;
 
-	desc = find_uuid_desc(uuid);
+	desc = find_gpt_desc(find_gpt_type(uuid));
 	if (desc != NULL)
 		return desc;
 
