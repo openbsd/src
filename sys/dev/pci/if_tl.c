@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.76 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.77 2023/04/11 00:45:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1015,7 +1015,7 @@ tl_newbuf(struct tl_softc *sc, struct tl_chain_onefrag *c)
  * into mbufs. This saves us from having to do a buffer copy: we can
  * just hand the mbufs directly to the network stack. Once the frame
  * has been sent on its way, the 'list' structure is assigned a new
- * buffer and moved to the end of the RX chain. As long we we stay
+ * buffer and moved to the end of the RX chain. As long we stay
  * ahead of the chip, it will always think it has an endless receive
  * channel.
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.141 2021/06/02 00:09:57 dlg Exp $	*/
+/*	$OpenBSD: in.h,v 1.142 2023/04/11 00:45:09 jsg Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -136,7 +136,7 @@ typedef __in_port_t	in_port_t;	/* IP port type */
  * sysctl(3).  (net.inet.ip.port{hi}{first,last})
  *
  * Changing those values has bad security implications if you are
- * using a a stateless firewall that is allowing packets outside of that
+ * using a stateless firewall that is allowing packets outside of that
  * range in order to allow transparent outgoing connections.
  *
  * Such a firewall configuration will generally depend on the use of these

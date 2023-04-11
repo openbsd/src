@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcic2reg.h,v 1.5 2022/01/09 05:42:42 jsg Exp $	*/
+/*	$OpenBSD: tcic2reg.h,v 1.6 2023/04/11 00:45:08 jsg Exp $	*/
 /*	$NetBSD: tcic2reg.h,v 1.1 1999/03/23 20:04:14 bad Exp $	*/
 
 /*-
@@ -304,7 +304,7 @@
 	/*
 	 * If set, use full address (a[12:23]) for MCS16 generation.
 	 * If clear, run in ISA-compatible mode (only using a[17:23]).
-	 * With many chip sets, the TCIC-2/N's timing will will allow full
+	 * With many chip sets, the TCIC-2/N's timing will allow full
 	 * address decoding to be used rather than limiting us to LA[17:23];
 	 * thus we can get around the ISA spec which limits the granularity
 	 * of bus sizing to 128K blocks.

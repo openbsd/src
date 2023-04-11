@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.28 2022/02/21 19:15:58 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.29 2023/04/11 00:45:07 jsg Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ vmapbuf(struct buf *bp, vsize_t len)
 	 * the pmap_extract().
 	 *
 	 * no need to flush TLB since we expect nothing to be mapped
-	 * where we we just allocated (TLB will be flushed when our
+	 * where we just allocated (TLB will be flushed when our
 	 * mapping is removed).
 	 */
 	while (len) {

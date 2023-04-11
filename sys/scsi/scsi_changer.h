@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_changer.h,v 1.10 2022/01/11 23:10:11 jsg Exp $	*/
+/*	$OpenBSD: scsi_changer.h,v 1.11 2023/04/11 00:45:09 jsg Exp $	*/
 /*	$NetBSD: scsi_changer.h,v 1.7 1996/04/03 00:25:48 thorpej Exp $	*/
 
 /*
@@ -338,7 +338,7 @@ struct page_device_capabilities {
  * Some of these fields can be a little confusing, so an explanation
  * is in order.
  *
- * Each component within a a medium changer apparatus is called an
+ * Each component within a medium changer apparatus is called an
  * "element".
  *
  * The "medium transport element address" is the address of the first

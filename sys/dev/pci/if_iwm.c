@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.405 2022/12/16 13:49:35 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.406 2023/04/11 00:45:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10121,7 +10121,7 @@ iwm_send_paging_cmd(struct iwm_softc *sc, const struct iwm_fw_sects *fw)
 		.block_num = htole32(sc->num_of_paging_blk),
 	};
 
-	/* loop for for all paging blocks + CSS block */
+	/* loop for all paging blocks + CSS block */
 	for (blk_idx = 0; blk_idx < sc->num_of_paging_blk + 1; blk_idx++) {
 		dev_phy_addr = htole32(
 		    sc->fw_paging_db[blk_idx].fw_paging_block.paddr >>

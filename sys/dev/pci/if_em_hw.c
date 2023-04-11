@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.116 2022/06/23 09:47:04 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.117 2023/04/11 00:45:08 jsg Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -3975,7 +3975,7 @@ em_force_mac_fc(struct em_hw *hw)
 	 * The possible values of the "fc" parameter are: 0:  Flow control is
 	 * completely disabled 1:  Rx flow control is enabled (we can receive
 	 * pause frames but not send pause frames). 2:  Tx flow control is
-	 * enabled (we can send pause frames frames but we do not receive
+	 * enabled (we can send pause frames but we do not receive
 	 * pause frames). 3:  Both Rx and TX flow control (symmetric) is
 	 * enabled. other:  No other values should be possible at this point.
 	 */
@@ -4466,7 +4466,7 @@ em_check_for_link(struct em_hw *hw)
 				 * TBI link partner, we will store bad
 				 * packets. Some frames have an additional
 				 * byte on the end and will look like CRC
-				 * errors to to the hardware.
+				 * errors to the hardware.
 				 */
 				if (!hw->tbi_compatibility_on) {
 					hw->tbi_compatibility_on = TRUE;

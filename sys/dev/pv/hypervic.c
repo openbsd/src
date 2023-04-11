@@ -889,7 +889,7 @@ kvp_get_ip_info(struct hv_kvp *kvp, const uint8_t *mac, uint8_t *family,
 	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
 		/*
 		 * First IPv4 address is always a best match unless
-		 * we were asked for for an IPv6 address.
+		 * we were asked for an IPv6 address.
 		 */
 		if ((af == AF_INET || af == AF_UNSPEC) &&
 		    (ifa->ifa_addr->sa_family == AF_INET)) {

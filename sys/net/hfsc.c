@@ -1,4 +1,4 @@
-/*	$OpenBSD: hfsc.c,v 1.48 2018/10/22 23:44:53 dlg Exp $	*/
+/*	$OpenBSD: hfsc.c,v 1.49 2023/04/11 00:45:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 2012-2013 Henning Brauer <henning@openbsd.org>
@@ -72,7 +72,7 @@
  *	representation.
  *	the slope values are scaled to avoid overflow.
  *	the inverse slope values as well as the y-projection of the 1st
- *	segment are kept in order to to avoid 64-bit divide operations
+ *	segment are kept in order to avoid 64-bit divide operations
  *	that are expensive on 32-bit architectures.
  *
  *  note: Intel Pentium TSC never wraps around in several thousands of years.

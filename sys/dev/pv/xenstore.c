@@ -1,4 +1,4 @@
-/*	$OpenBSD: xenstore.c,v 1.48 2023/01/07 06:40:21 asou Exp $	*/
+/*	$OpenBSD: xenstore.c,v 1.49 2023/04/11 00:45:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Belopuhov
@@ -471,7 +471,7 @@ xs_ring_put(struct xs_softc *xs, void *src, size_t size)
 	size = MIN(size, avail);
 	/* How many contiguous bytes can we memcpy... */
 	left = XS_RING_SIZE - prod;
-	/* ...bounded by by how much we need to write? */
+	/* ...bounded by how much we need to write? */
 	left = MIN(left, size);
 
 	memcpy(&xsr->xsr_req[prod], src, left);
@@ -498,7 +498,7 @@ xs_ring_get(struct xs_softc *xs, void *dst, size_t size)
 	size = MIN(size, avail);
 	/* How many contiguous bytes can we memcpy... */
 	left = XS_RING_SIZE - cons;
-	/* ...bounded by by how much we need to read? */
+	/* ...bounded by how much we need to read? */
 	left = MIN(left, size);
 
 	memcpy(dst, &xsr->xsr_rsp[cons], left);

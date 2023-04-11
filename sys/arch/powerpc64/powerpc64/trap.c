@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.52 2023/01/02 23:03:18 kettenis Exp $	*/
+/*	$OpenBSD: trap.c,v 1.53 2023/04/11 00:45:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -234,7 +234,7 @@ trap(struct trapframe *frame)
 		 * insert a new SLB entry.  Executing the faulting
 		 * instruction again should result in a Data Storage
 		 * Interrupt that does indicate whether we're dealing
-		 * with with a read or a write fault.
+		 * with a read or a write fault.
 		 */
 		map = &p->p_vmspace->vm_map;
 		vm_map_lock_read(map);

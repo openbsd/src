@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.89 2023/02/06 11:16:22 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.90 2023/04/11 00:45:07 jsg Exp $ */
 /* $NetBSD: pmap.c,v 1.154 2000/12/07 22:18:55 thorpej Exp $ */
 
 /*-
@@ -286,7 +286,7 @@ struct pool pmap_pv_pool;
  *	* Process B runs.  It is now using the TLB entries tagged
  *	  by process A.  *poof*
  *
- * In the scenario above, in addition to the processor using using incorrect
+ * In the scenario above, in addition to the processor using incorrect
  * TLB entries, the PALcode might use incorrect information to service a
  * TLB miss.  (The PALcode uses the recursively mapped Virtual Page Table
  * to locate the PTE for a faulting address, and tagged TLB entries exist
@@ -301,7 +301,7 @@ struct pool pmap_pv_pool;
  * safe (since PG_ASM mappings match any ASN).
  *
  * On processors that do not support ASNs, the PALcode invalidates
- * the TLB and I-cache automatically on swpctx.  We still still go
+ * the TLB and I-cache automatically on swpctx.  We still go
  * through the motions of assigning an ASN (really, just refreshing
  * the ASN generation in this particular case) to keep the logic sane
  * in other parts of the code.

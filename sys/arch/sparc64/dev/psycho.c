@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.82 2023/02/04 19:19:37 cheloha Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.83 2023/04/11 00:45:08 jsg Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -1291,7 +1291,7 @@ found:
 	/*
 	 * Enable the interrupt now we have the handler installed.
 	 * Read the current value as we can't change it besides the
-	 * valid bit so so make sure only this bit is changed.
+	 * valid bit so make sure only this bit is changed.
 	 *
 	 * XXXX --- we really should use bus_space for this.
 	 */

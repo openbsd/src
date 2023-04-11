@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.220 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.221 2023/04/11 00:45:07 jsg Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -372,7 +372,7 @@ int nkptp_max = 1024 - (KERNBASE / NBPD) - 1;
 
 /*
  * pg_g_kern:  if CPU is affected by Meltdown pg_g_kern is 0,
- * otherwise it is is set to PG_G.  pmap_pg_g will be derived
+ * otherwise it is set to PG_G.  pmap_pg_g will be derived
  * from pg_g_kern, see pmap_bootstrap().
  */
 extern int pg_g_kern;
@@ -1843,7 +1843,7 @@ pmap_do_remove_86(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		 * with pmap_remove!  if we allow this (and why would
 		 * we?) then we end up freeing the pmap's page
 		 * directory page (PDP) before we are finished using
-		 * it when we hit in in the recursive mapping.  this
+		 * it when we hit it in the recursive mapping.  this
 		 * is BAD.
 		 *
 		 * long term solution is to move the PTEs out of user

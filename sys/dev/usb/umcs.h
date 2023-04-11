@@ -1,4 +1,4 @@
-/* $OpenBSD: umcs.h,v 1.5 2022/02/21 12:41:39 jsg Exp $ */
+/* $OpenBSD: umcs.h,v 1.6 2023/04/11 00:45:09 jsg Exp $ */
 /* $NetBSD: umcs.h,v 1.1 2014/03/16 09:34:45 martin Exp $ */
 
 /*-
@@ -48,7 +48,7 @@
  * All these registers are documented only in full datasheet, which
  * can be requested from MosChip tech support.
  */
-#define	UMCS_SP1		0x00	/* Options for for UART 1, R/W */
+#define	UMCS_SP1		0x00	/* Option bits for UART 1, R/W */
 #define	UMCS_CTRL1		0x01	/* Control bits for UART 1, R/W */
 #define	UMCS_PINPONGHIGH	0x02	/* High bits of ping-pong reg, R/W */
 #define	UMCS_PINPONGLOW		0x03	/* Low bits of ping-pong reg, R/W */
@@ -56,11 +56,11 @@
 
 /* DCRx_1 Registers goes here (see below, they are documented) */
 #define	UMCS_GPIO		0x07	/* GPIO_0 and GPIO_1 bits, R/W */
-#define	UMCS_SP2		0x08	/* Options for for UART 2, R/W */
+#define	UMCS_SP2		0x08	/* Option bits for UART 2, R/W */
 #define	UMCS_CTRL2		0x09	/* Control bits for UART 2, R/W */
-#define	UMCS_SP3		0x0a	/* Options for for UART 3, R/W */
+#define	UMCS_SP3		0x0a	/* Option bits for UART 3, R/W */
 #define	UMCS_CTRL3		0x0b	/* Control bits for UART 3, R/W */
-#define	UMCS_SP4		0x0c	/* Options for for UART 4, R/W */
+#define	UMCS_SP4		0x0c	/* Option bits for UART 4, R/W */
 #define	UMCS_CTRL4		0x0d	/* Control bits for UART 4, R/W */
 #define	UMCS_PLL_DIV_M		0x0e	/* Pre-divider for PLL, R/W */
 #define	UMCS_UNKNOWN1		0x0f	/* NOT MENTIONED AND NOT USED */

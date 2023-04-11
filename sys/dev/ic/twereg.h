@@ -1,4 +1,4 @@
-/*	$OpenBSD: twereg.h,v 1.9 2008/09/01 17:30:56 deraadt Exp $	*/
+/*	$OpenBSD: twereg.h,v 1.10 2023/04/11 00:45:08 jsg Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -108,7 +108,7 @@
  * From 3ware's documentation:
  *
  *   All parameters maintained by the controller are grouped into related
- *   tables.  Tables are are accessed indirectly via get and set parameter
+ *   tables.  Tables are accessed indirectly via get and set parameter
  *   commands.  To access a specific parameter in a table, the table ID and
  *   parameter index are used to uniquely identify a parameter.  Table
  *   0xffff is the directory table and provides a list of the table IDs and

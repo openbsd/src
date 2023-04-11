@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpcie.c,v 1.16 2022/01/09 05:42:37 jsg Exp $	*/
+/*	$OpenBSD: rkpcie.c,v 1.17 2023/04/11 00:45:08 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -168,7 +168,7 @@ void	rkpcie_intr_disestablish(void *, void *);
  * It is important to have reached L0 state before beginning Gen 2 training,
  * as it is documented that setting the Retrain Link bit while currently
  * in Recovery or Configuration states is a race condition that may result
- * in missing the retraining. See See PCIE 2.0 Base Specification, 7.8.7
+ * in missing the retraining. See PCIE 2.0 Base Specification, 7.8.7
  * Link Control Register implementation notes on Retrain Link bit.
  */
 

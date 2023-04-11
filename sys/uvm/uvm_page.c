@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.170 2022/08/29 02:58:13 jsg Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.171 2023/04/11 00:45:09 jsg Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1158,7 +1158,7 @@ vm_physseg_find(paddr_t pframe, int *offp)
 	int	start, len, try;
 
 	/*
-	 * if try is too large (thus target is less than than try) we reduce
+	 * if try is too large (thus target is less than try) we reduce
 	 * the length to trunc(len/2) [i.e. everything smaller than "try"]
 	 *
 	 * if the try is too small (thus target is greater than try) then

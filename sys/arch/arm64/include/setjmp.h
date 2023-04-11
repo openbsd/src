@@ -1,4 +1,4 @@
-/*	$OpenBSD: setjmp.h,v 1.1 2016/12/17 23:38:33 patrick Exp $	*/
+/*	$OpenBSD: setjmp.h,v 1.2 2023/04/11 00:45:07 jsg Exp $	*/
 /*	$NetBSD: setjmp.h,v 1.2 2001/08/25 14:45:59 bjh21 Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
  *	27	(con't)
  *	28	(con't)
  *
- * The magic number number identifies the jmp_buf and
+ * The magic number identifies the jmp_buf and
  * how the buffer was created as well as providing
  * a sanity check.
  *

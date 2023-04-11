@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.180 2023/03/08 04:43:09 guenther Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.181 2023/04/11 00:45:09 jsg Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -1249,7 +1249,7 @@ sys_kbind(struct proc *p, void *v, register_t *retval)
 		else
 			s -= extra;
 redo:
-		/* make sure sure the desired page is mapped into kernel_map */
+		/* make sure the desired page is mapped into kernel_map */
 		if (baseva != last_baseva) {
 			if (kva != 0) {
 				vm_map_lock(kernel_map);

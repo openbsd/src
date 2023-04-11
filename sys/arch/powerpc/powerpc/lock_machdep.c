@@ -1,4 +1,4 @@
-/*	$OpenBSD: lock_machdep.c,v 1.10 2021/05/21 00:39:35 gkoehler Exp $	*/
+/*	$OpenBSD: lock_machdep.c,v 1.11 2023/04/11 00:45:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2021 George Koehler <gkoehler@openbsd.org>
@@ -121,7 +121,7 @@ __ppc_unlock(struct __ppc_lock *mpl)
 
 	/*
 	 * If we get a page fault after membar_exit() and before
-	 * releasing the lock, then then recursive call to
+	 * releasing the lock, then the recursive call to
 	 * __ppc_unlock() must also membar_exit().
 	 */
 	if (mpl->mpl_count == 0) {

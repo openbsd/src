@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.18 2019/11/08 15:01:15 mpi Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.19 2023/04/11 00:45:07 jsg Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -859,7 +859,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 
 		/*
 		 * We've got to find the top of a stack frame so we can get both
-		 * a PC and and real SP.
+		 * a PC and a real SP.
 		 */
 		for (ptr = arg.num;/**/; ptr += 4) {
 			/* Read a word from the named stack */

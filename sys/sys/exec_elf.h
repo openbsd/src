@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.97 2022/10/27 23:17:18 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.98 2023/04/11 00:45:09 jsg Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -645,7 +645,7 @@ typedef struct {
  *	NT_OPENBSD_PROCINFO
  *		Note is a "elfcore_procinfo" structure.
  *	NT_OPENBSD_AUXV
- *		Note is a a bunch of Auxiliary Vectors, terminated by
+ *		Note is a bunch of Auxiliary Vectors, terminated by
  *		an AT_NULL entry.
  *	NT_OPENBSD_REGS
  *		Note is a "reg" structure.

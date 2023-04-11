@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.68 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.69 2023/04/11 00:45:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1267,7 +1267,7 @@ pmap_do_remove_pae(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 		 * with pmap_remove!  if we allow this (and why would
 		 * we?) then we end up freeing the pmap's page
 		 * directory page (PDP) before we are finished using
-		 * it when we hit in in the recursive mapping.  this
+		 * it when we hit it in the recursive mapping.  this
 		 * is BAD.
 		 *
 		 * long term solution is to move the PTEs out of user

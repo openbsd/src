@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.71 2022/01/11 23:10:11 jsg Exp $	*/
+/*	$OpenBSD: ch.c,v 1.72 2023/04/11 00:45:09 jsg Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -162,7 +162,7 @@ chattach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	/*
-	 * Store our our device's quirks.
+	 * Store our device's quirks.
 	 */
 	ch_get_quirks(sc, &link->inqdata);
 }
@@ -510,7 +510,7 @@ copy_voltag(struct changer_voltag *uvoltag, struct volume_tag *voltag)
 }
 
 /*
- * Copy an an element status descriptor to a user-mode
+ * Copy an element status descriptor to a user-mode
  * changer_element_status structure.
  */
 static void

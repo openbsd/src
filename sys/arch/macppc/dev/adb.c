@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.49 2022/12/26 19:17:00 miod Exp $	*/
+/*	$OpenBSD: adb.c,v 1.50 2023/04/11 00:45:07 jsg Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
@@ -153,7 +153,7 @@ int	adb_debug;		/* Output debugging messages */
 
 /*
  * This is the delay that is required (in uS) between certain
- * ADB transactions. The actual timing delay for for each uS is
+ * ADB transactions. The actual timing delay for each uS is
  * calculated at boot time to account for differences in machine speed.
  */
 #define ADB_DELAY	150
@@ -203,7 +203,7 @@ u_char	adbOutputBuffer[ADB_MAX_MSG_LENGTH];	/* data output buffer */
 int	adbSentChars;		/* how many characters we have sent */
 
 struct	adbCommand adbInbound[ADB_QUEUE];	/* incoming queue */
-int	adbInCount;			/* how many packets in in queue */
+int	adbInCount;			/* how many packets in queue */
 int	adbInHead;			/* head of in queue */
 int	adbInTail;			/* tail of in queue */
 
@@ -311,7 +311,7 @@ adb_cuda_tickle(void *unused)
 }
 
 /*
- * called when when an adb interrupt happens
+ * called when an adb interrupt happens
  *
  * Cuda version of adb_intr
  * TO DO: do we want to add some calls to intr_dispatch() here to
@@ -627,7 +627,7 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data,
 }
 
 /*
- * Called when when an adb interrupt happens.
+ * Called when an adb interrupt happens.
  * This routine simply transfers control over to the appropriate
  * code for the machine we are running on.
  */

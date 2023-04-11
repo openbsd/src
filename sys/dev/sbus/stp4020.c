@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.22 2020/02/18 00:10:22 cheloha Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.23 2023/04/11 00:45:09 jsg Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -796,7 +796,7 @@ stp4020_chip_intr_establish(pcmcia_chipset_handle_t pch,
 	/*
 	 * Note that this code relies on softintr_establish() to be
 	 * used with real, hardware ipl values. All platforms with
-	 * SBus support support this.
+	 * SBus support this.
 	 */
 	h->intrhandler = handler;
 	h->intrarg = arg;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.54 2021/03/26 13:40:05 mpi Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.55 2023/04/11 00:45:09 jsg Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ uvm_anfree_list(struct vm_anon *anon, struct pglist *pgl)
 		pmap_page_protect(pg, PROT_NONE);
 		if (pgl != NULL) {
 			/*
-			 * clean page, and put on on pglist
+			 * clean page, and put it on pglist
 			 * for later freeing.
 			 */
 			uvm_lock_pageq();

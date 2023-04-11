@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_amap.c,v 1.91 2022/08/01 14:15:46 mpi Exp $	*/
+/*	$OpenBSD: uvm_amap.c,v 1.92 2023/04/11 00:45:09 jsg Exp $	*/
 /*	$NetBSD: uvm_amap.c,v 1.27 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -597,7 +597,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int waitf,
 	 * First check and see if we are the only map entry referencing
 	 * he amap we currently have.  If so, then just take it over instead
 	 * of copying it.  Note that we are reading am_ref without lock held
-	 * as the value value can only be one if we have the only reference
+	 * as the value can only be one if we have the only reference
 	 * to the amap (via our locked map).  If the value is greater than
 	 * one, then allocate amap and re-check the value.
 	 */
