@@ -1,10 +1,10 @@
-.\" $OpenBSD: BIO_find_type.3,v 1.10 2021/11/25 12:15:37 schwarze Exp $
+.\" $OpenBSD: BIO_find_type.3,v 1.11 2023/04/11 15:35:31 schwarze Exp $
 .\" full merge up to: OpenSSL 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2021, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 25 2021 $
+.Dd $Mdocdate: April 11 2023 $
 .Dt BIO_FIND_TYPE 3
 .Os
 .Sh NAME
@@ -94,31 +94,6 @@
 .Fa "const BIO *bio"
 .Fc
 .Fd #define BIO_TYPE_NONE		0
-.Fd #define BIO_TYPE_MEM		(1|0x0400)
-.Fd #define BIO_TYPE_FILE		(2|0x0400)
-.Fd #define BIO_TYPE_FD			(4|0x0400|0x0100)
-.Fd #define BIO_TYPE_SOCKET		(5|0x0400|0x0100)
-.Fd #define BIO_TYPE_NULL		(6|0x0400)
-.Fd #define BIO_TYPE_SSL		(7|0x0200)
-.Fd #define BIO_TYPE_MD			(8|0x0200)
-.Fd #define BIO_TYPE_BUFFER		(9|0x0200)
-.Fd #define BIO_TYPE_CIPHER		(10|0x0200)
-.Fd #define BIO_TYPE_BASE64		(11|0x0200)
-.Fd #define BIO_TYPE_CONNECT		(12|0x0400|0x0100)
-.Fd #define BIO_TYPE_ACCEPT		(13|0x0400|0x0100)
-.Fd #define BIO_TYPE_PROXY_CLIENT	(14|0x0200)
-.Fd #define BIO_TYPE_PROXY_SERVER	(15|0x0200)
-.Fd #define BIO_TYPE_NBIO_TEST	(16|0x0200)
-.Fd #define BIO_TYPE_NULL_FILTER	(17|0x0200)
-.Fd #define BIO_TYPE_BER		(18|0x0200)
-.Fd #define BIO_TYPE_BIO		(19|0x0400)
-.Fd #define BIO_TYPE_LINEBUFFER	(20|0x0200)
-.Fd #define BIO_TYPE_DGRAM		(21|0x0400|0x0100)
-.Fd #define BIO_TYPE_ASN1		(22|0x0200)
-.Fd #define BIO_TYPE_COMP		(23|0x0200)
-.Fd #define BIO_TYPE_DESCRIPTOR	0x0100
-.Fd #define BIO_TYPE_FILTER		0x0200
-.Fd #define BIO_TYPE_SOURCE_SINK	0x0400
 .Fd #define BIO_TYPE_START		128
 .Sh DESCRIPTION
 .Fn BIO_find_type
@@ -134,10 +109,6 @@ are accepted.
 Otherwise, a match only requires that any of the bits set in the
 .Fa type
 argument is also set in the candidate BIO.
-.Pp
-Not all the
-.Dv BIO_TYPE_*
-types shown above have corresponding BIO implementations.
 .Pp
 Types with a least significant byte in the range from 0 to
 .Dv BIO_TYPE_START ,
@@ -163,6 +134,80 @@ returns the type of the given
 .Fn BIO_method_name
 returns an ASCII string representing the type of the
 .Fa bio .
+.Pp
+The following are the built-in source/sink BIO types
+that operate on file descriptors.
+They all have both of the bits
+.Dv BIO_TYPE_SOURCE_SINK
+and
+.Dv BIO_TYPE_DESCRIPTOR
+but not the bit
+.Dv BIO_TYPE_FILTER
+set in their type constant.
+.Bl -column BIO_TYPE_NULL_FILTER "datagram socket" BIO_s_datagram(3)
+.It Fa type No constant   Ta Em name No string Ta Vt BIO_METHOD
+.It Dv BIO_TYPE_ACCEPT      Ta socket accept   Ta Xr BIO_s_accept 3
+.It Dv BIO_TYPE_CONNECT     Ta socket connect  Ta Xr BIO_s_connect 3
+.It Dv BIO_TYPE_DGRAM       Ta datagram socket Ta Xr BIO_s_datagram 3
+.It Dv BIO_TYPE_FD          Ta file descriptor Ta Xr BIO_s_fd 3
+.It Dv BIO_TYPE_SOCKET      Ta socket          Ta Xr BIO_s_socket 3
+.El
+.Pp
+The following are the built-in source/sink BIO types
+that do not directly operate on file descriptors.
+They all have the bit
+.Dv BIO_TYPE_SOURCE_SINK
+but not the bits
+.Dv BIO_TYPE_DESCRIPTOR
+and
+.Dv BIO_TYPE_FILTER
+set in their type constant.
+.Bl -column BIO_TYPE_NULL_FILTER "datagram socket" BIO_s_datagram(3)
+.It Fa type No constant   Ta Em name No string Ta Vt BIO_METHOD
+.It Dv BIO_TYPE_BIO         Ta BIO pair        Ta Xr BIO_s_bio 3
+.It Dv BIO_TYPE_FILE        Ta FILE pointer    Ta Xr BIO_s_file 3
+.It Dv BIO_TYPE_MEM         Ta memory buffer   Ta Xr BIO_s_mem 3
+.It Dv BIO_TYPE_NULL        Ta NULL            Ta Xr BIO_s_null 3
+.El
+.Pp
+The following are the built-in filter BIO types.
+They all have the bit
+.Dv BIO_TYPE_FILTER
+but not the bits
+.Dv BIO_TYPE_SOURCE_SINK
+and
+.Dv BIO_TYPE_DESCRIPTOR
+set in their type constant.
+.Bl -column BIO_TYPE_NULL_FILTER "datagram socket" BIO_s_datagram(3)
+.It Fa type No constant   Ta Em name No string Ta Vt BIO_METHOD
+.It Dv BIO_TYPE_ASN1        Ta asn1            Ta Xr BIO_f_asn1 3
+.It Dv BIO_TYPE_BASE64      Ta base64 encoding Ta Xr BIO_f_base64 3
+.It Dv BIO_TYPE_BUFFER      Ta buffer          Ta Xr BIO_f_buffer 3
+.It Dv BIO_TYPE_CIPHER      Ta cipher          Ta Xr BIO_f_cipher 3
+.It Dv BIO_TYPE_MD          Ta message digest  Ta Xr BIO_f_md 3
+.It Dv BIO_TYPE_NULL_FILTER Ta NULL filter     Ta Xr BIO_f_null 3
+.It Dv BIO_TYPE_SSL         Ta ssl             Ta Xr BIO_f_ssl 3
+.El
+.Pp
+The constants
+.Dv BIO_TYPE_BER ,
+.Dv BIO_TYPE_PROXY_CLIENT ,
+and
+.Dv BIO_TYPE_PROXY_SERVER
+do not correspond to any BIO types implemented by the library and are
+not intended to be used for application-defined types, either.
+The constants
+.Dv BIO_TYPE_COMP ,
+.Dv BIO_TYPE_LINEBUFFER ,
+and
+.Dv BIO_TYPE_NBIO_TEST
+corresponds to a deprecated BIO types that are intentionally undocumented.
+.Pp
+If a variable in an application program is intended
+to store a BIO type but temporarily does not refer to any BIO
+or refers to a BIO of an unknown type, setting the variable to
+.Dv BIO_TYPE_NONE
+is recommended.
 .Sh RETURN VALUES
 .Fn BIO_find_type
 returns the next matching BIO or
