@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_nist.c,v 1.24 2023/03/08 05:45:31 jsing Exp $ */
+/* $OpenBSD: ecp_nist.c,v 1.25 2023/04/11 18:53:20 jsing Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -82,15 +82,12 @@ ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 {
 	int ret = 0;
 	BN_CTX *new_ctx = NULL;
-	BIGNUM *tmp_bn;
 
 	if (ctx == NULL)
 		if ((ctx = new_ctx = BN_CTX_new()) == NULL)
 			return 0;
 
 	BN_CTX_start(ctx);
-	if ((tmp_bn = BN_CTX_get(ctx)) == NULL)
-		goto err;
 
 	if (BN_ucmp(BN_get0_nist_prime_192(), p) == 0)
 		group->field_mod_func = BN_nist_mod_192;
