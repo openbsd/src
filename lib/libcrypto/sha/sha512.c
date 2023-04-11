@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.24 2023/03/29 05:27:02 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.25 2023/04/11 10:21:02 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -62,41 +62,6 @@
 #include <openssl/sha.h>
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512)
-/*
- * IMPLEMENTATION NOTES.
- *
- * As you might have noticed 32-bit hash algorithms:
- *
- * - permit SHA_LONG to be wider than 32-bit (case on CRAY);
- * - optimized versions implement two transform functions: one operating
- *   on [aligned] data in host byte order and one - on data in input
- *   stream byte order;
- * - share common byte-order neutral collector and padding function
- *   implementations, ../md32_common.h;
- *
- * Neither of the above applies to this SHA-512 implementations. Reasons
- * [in reverse order] are:
- *
- * - it's the only 64-bit hash algorithm for the moment of this writing,
- *   there is no need for common collector/padding implementation [yet];
- * - by supporting only one transform function [which operates on
- *   *aligned* data in input stream byte order, big-endian in this case]
- *   we minimize burden of maintenance in two ways: a) collector/padding
- *   function is simpler; b) only one transform function to stare at;
- * - SHA_LONG64 is required to be exactly 64-bit in order to be able to
- *   apply a number of optimizations to mitigate potential performance
- *   penalties caused by previous design decision;
- *
- * Caveat lector.
- *
- * Implementation relies on the fact that "long long" is 64-bit on
- * both 32- and 64-bit platforms. If some compiler vendor comes up
- * with 128-bit long long, adjustment to sha.h would be required.
- * As this implementation relies on 64-bit integer type, it's totally
- * inappropriate for platforms which don't support it, most notably
- * 16-bit platforms.
- *					<appro@fy.chalmers.se>
- */
 
 #if !defined(__STRICT_ALIGNMENT) || defined(SHA512_ASM)
 #define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
