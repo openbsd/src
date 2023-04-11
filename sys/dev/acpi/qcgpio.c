@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcgpio.c,v 1.8 2022/12/18 10:00:53 mglocker Exp $	*/
+/*	$OpenBSD: qcgpio.c,v 1.9 2023/04/11 04:45:11 mglocker Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -104,7 +104,6 @@ void	qcgpio_write_pin(void *, int, int);
 void	qcgpio_intr_establish(void *, int, int, int (*)(void *), void *);
 void	qcgpio_intr_enable(void *, int);
 void	qcgpio_intr_disable(void *, int);
-int	qcgpio_pin_intr(struct qcgpio_softc *, int);
 int	qcgpio_intr(void *);
 
 int
@@ -352,10 +351,10 @@ qcgpio_intr(void *arg)
 		stat = HREAD4(sc, off + TLMM_GPIO_INTR_STATUS(pin));
 		if (stat & TLMM_GPIO_INTR_STATUS_INTR_STATUS) {
 			sc->sc_pin_ih[pin].ih_func(sc->sc_pin_ih[pin].ih_arg);
+			HWRITE4(sc, off + TLMM_GPIO_INTR_STATUS(pin),
+			    stat & ~TLMM_GPIO_INTR_STATUS_INTR_STATUS);
 			handled = 1;
 		}
-		HWRITE4(sc, off + TLMM_GPIO_INTR_STATUS(pin),
-		    stat & ~TLMM_GPIO_INTR_STATUS_INTR_STATUS);
 	}
 
 	return handled;
