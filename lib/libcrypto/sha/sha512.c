@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.25 2023/04/11 10:21:02 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.26 2023/04/11 10:26:29 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -67,10 +67,9 @@
 #define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
 #endif
 
-#ifndef SHA512_ASM
-static
+#ifdef SHA512_ASM
+void sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num);
 #endif
-void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num);
 
 #ifndef SHA512_ASM
 static const SHA_LONG64 K512[80] = {
