@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.26 2023/04/11 10:26:29 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.27 2023/04/11 10:32:21 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -581,28 +581,9 @@ SHA512_Final(unsigned char *md, SHA512_CTX *c)
 		sha512_block_data_order(c, p, 1);
 	}
 
-	memset (p + n, 0, sizeof(c->u) - 16 - n);
-#if BYTE_ORDER == BIG_ENDIAN
-	c->u.d[SHA_LBLOCK - 2] = c->Nh;
-	c->u.d[SHA_LBLOCK - 1] = c->Nl;
-#else
-	p[sizeof(c->u) - 1] = (unsigned char)(c->Nl);
-	p[sizeof(c->u) - 2] = (unsigned char)(c->Nl >> 8);
-	p[sizeof(c->u) - 3] = (unsigned char)(c->Nl >> 16);
-	p[sizeof(c->u) - 4] = (unsigned char)(c->Nl >> 24);
-	p[sizeof(c->u) - 5] = (unsigned char)(c->Nl >> 32);
-	p[sizeof(c->u) - 6] = (unsigned char)(c->Nl >> 40);
-	p[sizeof(c->u) - 7] = (unsigned char)(c->Nl >> 48);
-	p[sizeof(c->u) - 8] = (unsigned char)(c->Nl >> 56);
-	p[sizeof(c->u) - 9] = (unsigned char)(c->Nh);
-	p[sizeof(c->u) - 10] = (unsigned char)(c->Nh >> 8);
-	p[sizeof(c->u) - 11] = (unsigned char)(c->Nh >> 16);
-	p[sizeof(c->u) - 12] = (unsigned char)(c->Nh >> 24);
-	p[sizeof(c->u) - 13] = (unsigned char)(c->Nh >> 32);
-	p[sizeof(c->u) - 14] = (unsigned char)(c->Nh >> 40);
-	p[sizeof(c->u) - 15] = (unsigned char)(c->Nh >> 48);
-	p[sizeof(c->u) - 16] = (unsigned char)(c->Nh >> 56);
-#endif
+	memset(p + n, 0, sizeof(c->u) - 16 - n);
+	c->u.d[SHA_LBLOCK - 2] = htobe64(c->Nh);
+	c->u.d[SHA_LBLOCK - 1] = htobe64(c->Nl);
 
 	sha512_block_data_order(c, p, 1);
 
