@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.155 2023/04/10 19:44:43 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.156 2023/04/11 16:34:51 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -732,16 +732,18 @@ const struct menu_item menu_items[] = {
 };
 
 const struct gpt_type	*find_gpt_type(const struct uuid *);
+const char		*find_uuid_desc(const struct uuid *);
+int			 gpt_item(const unsigned int);
+int			 uuid_attr(const struct uuid *);
+
 const struct mbr_type	*find_mbr_type(const int);
 const char		*find_mbr_desc(const int);
-const char		*find_uuid_desc(const struct uuid *);
-int			 uuid_attr(const struct uuid *);
 int			 mbr_item(const unsigned int);
-int			 gpt_item(const unsigned int);
-int			 nth_menu_item(int (*)(const unsigned int),
-    const unsigned int, unsigned int);
+
 void			 print_menu(int (*)(const unsigned int),
     const unsigned int);
+int			 nth_menu_item(int (*)(const unsigned int),
+    const unsigned int, unsigned int);
 
 const struct gpt_type *
 find_gpt_type(const struct uuid *uuid)
@@ -785,6 +787,24 @@ find_uuid_desc(const struct uuid *uuid)
 	return NULL;
 }
 
+int
+gpt_item(const unsigned int item)
+{
+	return menu_items[item].mi_guid == NULL;
+}
+
+int
+uuid_attr(const struct uuid *uuid)
+{
+	const struct gpt_type	*gt;
+
+	gt = find_gpt_type(uuid);
+	if (gt == NULL)
+		return 0;
+	else
+		return gt->gt_attr;
+}
+
 const struct mbr_type *
 find_mbr_type(const int id)
 {
@@ -822,15 +842,9 @@ find_mbr_desc(const int mbrid)
 }
 
 int
-uuid_attr(const struct uuid *uuid)
+mbr_item(const unsigned int item)
 {
-	const struct gpt_type	*gt;
-
-	gt = find_gpt_type(uuid);
-	if (gt == NULL)
-		return 0;
-	else
-		return gt->gt_attr;
+	return menu_items[item].mi_mbrid == -1;
 }
 
 void
@@ -859,18 +873,6 @@ print_menu(int (*test)(const unsigned int), const unsigned int columns)
 		}
 		printf("\n");
 	}
-}
-
-int
-mbr_item(const unsigned int item)
-{
-	return menu_items[item].mi_mbrid == -1;
-}
-
-int
-gpt_item(const unsigned int item)
-{
-	return menu_items[item].mi_guid == NULL;
 }
 
 int
