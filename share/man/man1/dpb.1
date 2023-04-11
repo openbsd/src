@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.30 2023/03/05 12:56:41 jmc Exp $
+.\"	$OpenBSD: dpb.1,v 1.31 2023/04/11 15:02:56 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 5 2023 $
+.Dd $Mdocdate: April 11 2023 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -58,7 +58,11 @@ installations.
 If run as non-root,
 .Nm
 will warn.
-The preferred way is to run it as root (and preferably under a chroot).
+The preferred way is to run it as root (and preferably under a chroot, see
+.Xr bulk 8
+and
+.Xr proot 1
+for example setups).
 .Nm
 will then change its identity to different users as needed.
 See
@@ -1771,7 +1775,8 @@ and restart it.
 .Xr clean-old-distfiles 1 ,
 .Xr dpb-replay 1 ,
 .Xr proot 1 ,
-.Xr pkgpath 7
+.Xr pkgpath 7 ,
+.Xr bulk 8
 .Sh HISTORY
 The original
 .Nm dpb
