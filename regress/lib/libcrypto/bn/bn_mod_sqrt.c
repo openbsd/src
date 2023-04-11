@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_sqrt.c,v 1.9 2023/04/06 12:01:45 tb Exp $ */
+/*	$OpenBSD: bn_mod_sqrt.c,v 1.10 2023/04/11 10:10:52 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -2833,7 +2833,7 @@ const size_t N_TESTS = sizeof(mod_sqrt_test_data) / sizeof(*mod_sqrt_test_data);
 static int
 mod_sqrt_test(struct mod_sqrt_test *test, BN_CTX *ctx)
 {
-	BIGNUM *a, *p, *want, *got, *diff, *sum;
+	BIGNUM *a, *p, *want, *got, *diff;
 	int failed = 1;
 
 	BN_CTX_start(ctx);
@@ -2848,8 +2848,6 @@ mod_sqrt_test(struct mod_sqrt_test *test, BN_CTX *ctx)
 		errx(1, "got = BN_CTX_get()");
 	if ((diff = BN_CTX_get(ctx)) == NULL)
 		errx(1, "diff = BN_CTX_get()");
-	if ((sum = BN_CTX_get(ctx)) == NULL)
-		errx(1, "sum = BN_CTX_get()");
 
 	if (!BN_hex2bn(&a, test->a))
 		errx(1, "BN_hex2bn(%s)", test->a);
@@ -2868,11 +2866,8 @@ mod_sqrt_test(struct mod_sqrt_test *test, BN_CTX *ctx)
 		errx(1, "BN_hex2bn(%s)", test->sqrt);
 	if (!BN_mod_sub(diff, want, got, p, ctx))
 		errx(1, "BN_mod_sub() failed\n");
-	if (!BN_mod_add(sum, want, got, p, ctx))
-		errx(1, "BN_mod_add() failed\n");
 
-	/* XXX - Remove sum once we return the canonical square root. */
-	if (!BN_is_zero(diff) && !BN_is_zero(sum)) {
+	if (!BN_is_zero(diff)) {
 		fprintf(stderr, "a: %s\n", test->a);
 		fprintf(stderr, "p: %s\n", test->p);
 		fprintf(stderr, "want: %s\n", test->sqrt);
@@ -4439,7 +4434,7 @@ static int
 bn_mod_sqrt_p_is_1_mod_8_test(const struct p_is_1_mod_8_tests *test,
     BN_CTX *ctx)
 {
-	BIGNUM *a, *p, *want, *got, *diff, *sum;
+	BIGNUM *a, *p, *want, *got, *diff;
 	const char *const *sqrts = test->sqrt;
 	int i;
 	int failed = 0;
@@ -4456,8 +4451,6 @@ bn_mod_sqrt_p_is_1_mod_8_test(const struct p_is_1_mod_8_tests *test,
 		errx(1, "got = BN_CTX_get()");
 	if ((diff = BN_CTX_get(ctx)) == NULL)
 		errx(1, "diff = BN_CTX_get()");
-	if ((sum = BN_CTX_get(ctx)) == NULL)
-		errx(1, "sum = BN_CTX_get()");
 
 	if (!BN_hex2bn(&p, test->p))
 		errx(1, "BN_hex2bn");
@@ -4488,11 +4481,8 @@ bn_mod_sqrt_p_is_1_mod_8_test(const struct p_is_1_mod_8_tests *test,
 
 		if (!BN_mod_sub(diff, want, got, p, ctx))
 			errx(1, "BN_mod_sub() failed\n");
-		if (!BN_mod_add(sum, want, got, p, ctx))
-			errx(1, "BN_mod_add() failed\n");
 
-		/* XXX - Remove sum once we return the canonical square root. */
-		if (!BN_is_zero(diff) && !BN_is_zero(sum)) {
+		if (!BN_is_zero(diff)) {
 			fprintf(stderr, "a: %d\n", i);
 			fprintf(stderr, "p: %s\n", test->p);
 			fprintf(stderr, "want: %s\n", sqrts[i]);
