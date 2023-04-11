@@ -1,4 +1,4 @@
-.\"	$OpenBSD: proot.1,v 1.10 2022/11/06 09:26:29 tb Exp $
+.\"	$OpenBSD: proot.1,v 1.11 2023/04/11 11:23:09 espie Exp $
 .\"
 .\" Copyright (c) 2016 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 6 2022 $
+.Dd $Mdocdate: April 11 2023 $
 .Dt PROOT 1
 .Os
 .Sh NAME
@@ -253,7 +253,12 @@ The following
 .Ar configfile
 sets things up for an initial build on a
 .Xr dpb 1
-cluster.
+cluster
+.Po
+refer to
+.Xr bulk 8
+for typical setups of such build clusters
+.Pc .
 .Bd -literal -offset index
 chroot=/build
 PORT_USER=espie
@@ -291,6 +296,7 @@ Slaves should not need the extra arguments, as the directories will
 already have correct owners.
 .Sh SEE ALSO
 .Xr dpb 1 ,
+.Xr bulk 8 ,
 .Xr chroot 8
 .Sh AUTHORS
 .An Marc Espie Aq Mt espie@openbsd.org
