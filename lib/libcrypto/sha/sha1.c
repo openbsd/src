@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1dgst.c,v 1.25 2023/03/29 05:31:43 jsing Exp $ */
+/* $OpenBSD: sha1.c,v 1.5 2023/04/11 10:39:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -436,6 +436,25 @@ sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 	}
 }
 #endif
-
 #endif
+
+unsigned char *
+SHA1(const unsigned char *d, size_t n, unsigned char *md)
+{
+	SHA_CTX c;
+	static unsigned char m[SHA_DIGEST_LENGTH];
+
+	if (md == NULL)
+		md = m;
+
+	if (!SHA1_Init(&c))
+		return NULL;
+	SHA1_Update(&c, d, n);
+	SHA1_Final(md, &c);
+
+	explicit_bzero(&c, sizeof(c));
+
+	return (md);
+}
+
 #endif
