@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.106 2023/03/13 16:59:22 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.107 2023/04/12 17:19:16 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 13 2023 $
+.Dd $Mdocdate: April 12 2023 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -133,20 +133,12 @@ It is possible to set various path attributes with additional arguments.
 Adding a prefix will replace an existing equal prefix, including
 prefixes loaded from the configuration.
 .It Xo
-.Cm network bulk
+.Cm network bulk add
 .Op Ar argument ...
-.Op Cm add
 .Xc
 Bulk add specified prefixes to the list of announced networks.
 Prefixes should be sent via stdin.
 It is possible to set various path attributes with additional arguments.
-If neither
-.Cm add
-or
-.Cm delete
-is given,
-.Cm add
-is the default.
 .It Cm network bulk delete
 Bulk remove the specified prefixes from the list of announced networks.
 Prefixes should be sent via stdin.

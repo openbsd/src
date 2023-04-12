@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.122 2023/03/13 16:59:22 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.123 2023/04/12 17:19:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -98,6 +98,7 @@ static const struct token t_show_extcommunity[];
 static const struct token t_show_ext_subtype[];
 static const struct token t_show_largecommunity[];
 static const struct token t_network[];
+static const struct token t_bulk[];
 static const struct token t_network_show[];
 static const struct token t_prefix[];
 static const struct token t_set[];
@@ -371,8 +372,14 @@ static const struct token t_network[] = {
 	{ KEYWORD,	"flush",	NETWORK_FLUSH,	NULL},
 	{ KEYWORD,	"show",		NETWORK_SHOW,	t_network_show},
 	{ KEYWORD,	"mrt",		NETWORK_MRT,	t_show_mrt},
-	{ KEYWORD,	"bulk",		NETWORK_BULK_ADD,	t_set},
+	{ KEYWORD,	"bulk",		NONE,		t_bulk},
 	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_bulk[] = {
+	{ KEYWORD,	"add",		NETWORK_BULK_ADD,	t_set},
+	{ KEYWORD,	"delete",	NETWORK_BULK_REMOVE,	NULL},
+	{ ENDTOKEN,	"",		NONE,			NULL}
 };
 
 static const struct token t_prefix[] = {
@@ -405,8 +412,6 @@ static const struct token t_set[] = {
 	{ KEYWORD,	"prepend-self",		NONE,	t_prepself},
 	{ KEYWORD,	"rd",			NONE,	t_rd},
 	{ KEYWORD,	"weight",		NONE,	t_weight},
-	{ KEYWORD,	"add",			NETWORK_BULK_ADD,	NULL},
-	{ KEYWORD,	"delete",		NETWORK_BULK_REMOVE,	NULL},
 	{ ENDTOKEN,	"",			NONE,	NULL}
 };
 
