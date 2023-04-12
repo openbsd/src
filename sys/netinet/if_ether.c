@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.261 2023/04/07 22:02:58 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.262 2023/04/12 16:14:42 kn Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -339,6 +339,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	struct rtentry *rt = NULL;
 	char addr[INET_ADDRSTRLEN];
 	time_t uptime;
+	int refresh = 0;
 
 	if (m->m_flags & M_BCAST) {	/* broadcast */
 		memcpy(desten, etherbroadcastaddr, sizeof(etherbroadcastaddr));
@@ -380,8 +381,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 */
 	if ((rt->rt_expire == 0 || rt->rt_expire > uptime) &&
 	    sdl->sdl_family == AF_LINK && sdl->sdl_alen != 0) {
-		int refresh = 0;
-
 		memcpy(desten, LLADDR(sdl), sdl->sdl_alen);
 
 		/* refresh ARP entry when timeout gets close */
@@ -456,10 +455,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		if (la->la_asked == 0 || rt->rt_expire != uptime) {
 			rt->rt_expire = uptime;
 			if (la->la_asked++ < arp_maxtries)
-				arprequest(ifp,
-				    &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
-				    &satosin(dst)->sin_addr.s_addr,
-				    ac->ac_enaddr);
+				refresh = 1;
 			else {
 				rt->rt_flags |= RTF_REJECT;
 				rt->rt_expire += arpt_down;
@@ -472,6 +468,9 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	}
 
 	KERNEL_UNLOCK();
+	if (refresh)
+		arprequest(ifp, &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
+		    &satosin(dst)->sin_addr.s_addr, ac->ac_enaddr);
 	return (EAGAIN);
 
 bad:
