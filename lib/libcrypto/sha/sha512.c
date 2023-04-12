@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.31 2023/04/12 04:40:39 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.32 2023/04/12 04:54:16 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -119,11 +119,6 @@ static const SHA_LONG64 K512[80] = {
 
 #if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 # if defined(__x86_64) || defined(__x86_64__)
-#  define ROTR(a, n)	({ SHA_LONG64 ret;		\
-				asm ("rorq %1,%0"	\
-				: "=r"(ret)		\
-				: "J"(n),"0"(a)		\
-				: "cc"); ret;		})
 #   define PULL64(x) ({ SHA_LONG64 ret=*((const SHA_LONG64 *)(&(x)));	\
 				asm ("bswapq	%0"		\
 				: "=r"(ret)			\
@@ -135,11 +130,6 @@ static const SHA_LONG64 K512[80] = {
 				: "=r"(lo),"=r"(hi)		\
 				: "0"(lo),"1"(hi));		\
 				((SHA_LONG64)hi)<<32|lo;	})
-# elif (defined(_ARCH_PPC) && defined(__64BIT__)) || defined(_ARCH_PPC64)
-#  define ROTR(a, n)	({ SHA_LONG64 ret;		\
-				asm ("rotrdi %0,%1,%2"	\
-				: "=r"(ret)		\
-				: "r"(a),"K"(n)); ret;	})
 # endif
 #endif
 
@@ -152,9 +142,7 @@ static const SHA_LONG64 K512[80] = {
 #endif
 #endif
 
-#ifndef ROTR
-#define ROTR(x, s)	(((x)>>s) | (x)<<(64-s))
-#endif
+#define ROTR(x, s)	crypto_ror_u64(x, s)
 
 #define Sigma0(x)	(ROTR((x),28) ^ ROTR((x),34) ^ ROTR((x),39))
 #define Sigma1(x)	(ROTR((x),14) ^ ROTR((x),18) ^ ROTR((x),41))

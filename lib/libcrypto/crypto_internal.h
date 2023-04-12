@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.1 2023/04/12 04:40:39 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.2 2023/04/12 04:54:15 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -28,6 +28,38 @@ crypto_store_htobe64(uint8_t *dst, uint64_t v)
 {
 	v = htobe64(v);
 	memcpy(dst, &v, sizeof(v));
+}
+#endif
+
+#ifndef HAVE_CRYPTO_ROL_U32
+static inline uint32_t
+crypto_rol_u32(uint32_t v, size_t shift)
+{
+	return (v << shift) | (v >> (32 - shift));
+}
+#endif
+
+#ifndef HAVE_CRYPTO_ROR_U32
+static inline uint32_t
+crypto_ror_u32(uint32_t v, size_t shift)
+{
+	return (v << (32 - shift)) | (v >> shift);
+}
+#endif
+
+#ifndef HAVE_CRYPTO_ROL_U64
+static inline uint64_t
+crypto_rol_u64(uint64_t v, size_t shift)
+{
+	return (v << shift) | (v >> (64 - shift));
+}
+#endif
+
+#ifndef HAVE_CRYPTO_ROR_U64
+static inline uint64_t
+crypto_ror_u64(uint64_t v, size_t shift)
+{
+	return (v << (64 - shift)) | (v >> shift);
 }
 #endif
 
