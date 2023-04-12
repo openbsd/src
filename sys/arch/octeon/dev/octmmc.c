@@ -1,4 +1,4 @@
-/*	$OpenBSD: octmmc.c,v 1.14 2019/10/07 22:40:35 cheloha Exp $	*/
+/*	$OpenBSD: octmmc.c,v 1.15 2023/04/12 02:20:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Visa Hankala
@@ -734,7 +734,7 @@ octmmc_exec_pio(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 {
 	struct octmmc_softc *sc = bus->bus_hc;
 	unsigned char *ptr;
-	uint64_t index, piocmd, status, value;
+	uint64_t piocmd, status, value;
 	unsigned int i;
 	int s;
 
@@ -807,10 +807,7 @@ octmmc_exec_pio(struct octmmc_bus *bus, struct sdmmc_command *cmd)
 
 	/* If this is a read, copy data from the controller's buffer. */
 	if (cmd->c_data != NULL && ISSET(cmd->c_flags, SCF_CMD_READ)) {
-		/* Reset index, set autoincrement and select the buffer. */
-		index = MIO_EMM_BUF_IDX_INC;
-		index |= (status >> MIO_EMM_RSP_STS_DBUF_SHIFT) <<
-		    MIO_EMM_BUF_IDX_BUF_NUM_SHIFT;
+		/* Reset index and set autoincrement. */
 		MMC_WR_8(sc, MIO_EMM_BUF_IDX, MIO_EMM_BUF_IDX_INC);
 
 		ptr = cmd->c_data;
