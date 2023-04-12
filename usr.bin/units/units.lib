@@ -1,4 +1,4 @@
-/ $OpenBSD: units.lib,v 1.146 2022/11/18 19:07:54 florian Exp $
+/ $OpenBSD: units.lib,v 1.147 2023/04/12 15:26:26 jmc Exp $
 / $NetBSD: units.lib,v 1.3 1996/04/06 06:01:04 thorpej Exp $
 
 / primitive units
@@ -337,7 +337,7 @@ venezuelabolivar	1|2500064.0890 $
 / The Economist, April 28, 2021
 / Hungary, Iceland, Ukraine, Vietnam: no updates available since October 2018
 argentinapeso		1|93.4 $
-chilepeso		1|702 ±
+chilepeso		1|702 $
 colombiapeso		1|3707 $
 czechkoruna		1|21.4 $
 egyptpound		1|15.7 $
