@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.5,v 1.13 2021/11/26 03:42:33 jsg Exp $
+.\"	$OpenBSD: rsync.5,v 1.14 2023/04/12 08:32:27 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 26 2021 $
+.Dd $Mdocdate: April 12 2023 $
 .Dt RSYNC 5
 .Os
 .Sh NAME
@@ -93,7 +93,7 @@ Otherwise, the payload is out-of-band server messages.
 If the tag is 1, it is an error on the sender's part and must trigger an
 exit.
 This limits message payloads to 24 bit integer size,
-.Li 0x0fffffff .
+.Li 0x00ffffff .
 .Pp
 The only data not using this envelope are the initial handshake between
 client and server.
