@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.39 2021/07/13 19:28:05 tb Exp $
+	$OpenBSD: na.phone,v 1.40 2023/04/12 09:07:42 jsg Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -215,7 +215,6 @@
 337:Sulphur:Louisiana:LA
 340:St John:US Virgin Islands:
 340:St Thomas:US Virgin Islands:
-343::Ontario:ON
 343::Ontario:ON
 345::Cayman Islands:
 347:Brooklyn:New York:NY

@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.45 2017/06/03 00:10:19 halex Exp $
+#	$OpenBSD: inter.phone,v 1.46 2023/04/12 09:07:42 jsg Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -238,7 +238,6 @@
 36:37:Visonta:Hungary
 36:38:Petofibanyatelep (Lorinci):Hungary
 36:38:Selyp (Lorinci):Hungary
-36:42:Nyiregyhaza:Hungary
 36:42:Nyiregyhaza:Hungary
 36:42:Nyirszollos (Nyiregyhaza):Hungary
 36:42:Sostogyogyfurdo (Nyiregyhaza):Hungary
