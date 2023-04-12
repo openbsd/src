@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.34 2023/03/13 19:51:49 job Exp $ */
+/*	$OpenBSD: print.c,v 1.35 2023/04/12 03:53:40 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -882,7 +882,7 @@ geofeed_print(const X509 *x, const struct geofeed *p)
 		printf("Geofeed not before:       %s\n",
 		    time2str(p->notbefore));
 		printf("Geofeed not after:        %s\n", time2str(p->notafter));
-		printf("Geofeed CSV records:\n");
+		printf("Geofeed CSV records:      ");
 	}
 
 	for (i = 0; i < p->geoipsz; i++) {
