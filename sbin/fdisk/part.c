@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.159 2023/04/12 12:35:30 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.160 2023/04/12 13:11:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -735,7 +735,6 @@ const struct gpt_type	*find_gpt_type(const struct uuid *);
 const struct menu_item	*find_gpt_menuitem(const struct gpt_type *);
 const char		*find_gpt_desc(const struct gpt_type *);
 int			 gpt_item(const unsigned int);
-int			 uuid_attr(const struct uuid *);
 
 const struct mbr_type	*find_mbr_type(const int);
 const struct menu_item	*find_mbr_menuitem(const struct mbr_type *);
@@ -805,18 +804,6 @@ int
 gpt_item(const unsigned int item)
 {
 	return menu_items[item].mi_guid == NULL;
-}
-
-int
-uuid_attr(const struct uuid *uuid)
-{
-	const struct gpt_type	*gt;
-
-	gt = find_gpt_type(uuid);
-	if (gt == NULL)
-		return 0;
-	else
-		return gt->gt_attr;
 }
 
 const struct mbr_type *
@@ -925,14 +912,17 @@ PRT_protected_uuid(const struct uuid *uuid)
 	unsigned int		 pn;
 
 	gt = find_gpt_type(uuid);
-	if (gt && gt->gt_attr & GTATTR_PROTECT)
-		return 1;
+	if (gt == NULL)
+		return 0;	/* We don't know this type, so no protection. */
+	if (gt->gt_attr & GTATTR_PROTECT)
+		return 1;	/* Protected! */
+	if (strcasecmp(gt->gt_guid, EFI_SYSTEM_PARTITION_GUID))
+		return 0;	/* Not EFI Sys, so not protected. */
 
-	if (gt && strcasecmp(gt->gt_guid, EFI_SYSTEM_PARTITION_GUID) == 0) {
-		for (pn = 0; pn < gh.gh_part_num; pn++) {
-			if (uuid_attr(&gp[pn].gp_type) & GTATTR_PROTECT_EFISYS)
-				return 1;
-		}
+	for (pn = 0; pn < gh.gh_part_num; pn++) {
+		gt = find_gpt_type(&gp[pn].gp_type);
+		if (gt && (gt->gt_attr & GTATTR_PROTECT_EFISYS))
+			return 1;	/* EFI Sys must be protected! */
 	}
 
 	return 0;
