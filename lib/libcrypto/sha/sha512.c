@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.30 2023/04/11 15:38:55 tb Exp $ */
+/* $OpenBSD: sha512.c,v 1.31 2023/04/12 04:40:39 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -60,6 +60,8 @@
 
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
+
+#include "crypto_internal.h"
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512)
 
@@ -552,37 +554,21 @@ SHA512_Final(unsigned char *md, SHA512_CTX *c)
 
 	sha512_block_data_order(c, p, 1);
 
-	if (md == 0)
+	if (md == NULL)
 		return 0;
 
+	/* Let compiler decide if it's appropriate to unroll... */
 	switch (c->md_len) {
-		/* Let compiler decide if it's appropriate to unroll... */
 	case SHA384_DIGEST_LENGTH:
 		for (n = 0; n < SHA384_DIGEST_LENGTH/8; n++) {
-			SHA_LONG64 t = c->h[n];
-
-			*(md++) = (unsigned char)(t >> 56);
-			*(md++) = (unsigned char)(t >> 48);
-			*(md++) = (unsigned char)(t >> 40);
-			*(md++) = (unsigned char)(t >> 32);
-			*(md++) = (unsigned char)(t >> 24);
-			*(md++) = (unsigned char)(t >> 16);
-			*(md++) = (unsigned char)(t >> 8);
-			*(md++) = (unsigned char)(t);
+			crypto_store_htobe64(md, c->h[n]);
+			md += 8;
 		}
 		break;
 	case SHA512_DIGEST_LENGTH:
 		for (n = 0; n < SHA512_DIGEST_LENGTH/8; n++) {
-			SHA_LONG64 t = c->h[n];
-
-			*(md++) = (unsigned char)(t >> 56);
-			*(md++) = (unsigned char)(t >> 48);
-			*(md++) = (unsigned char)(t >> 40);
-			*(md++) = (unsigned char)(t >> 32);
-			*(md++) = (unsigned char)(t >> 24);
-			*(md++) = (unsigned char)(t >> 16);
-			*(md++) = (unsigned char)(t >> 8);
-			*(md++) = (unsigned char)(t);
+			crypto_store_htobe64(md, c->h[n]);
+			md += 8;
 		}
 		break;
 		/* ... as well as make sure md_len is not abused. */
