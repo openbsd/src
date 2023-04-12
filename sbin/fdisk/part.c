@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.158 2023/04/11 21:14:19 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.159 2023/04/12 12:35:30 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -1122,21 +1122,17 @@ PRT_uuid_to_desc(const struct uuid *uuid)
 char *
 PRT_uuid_to_menudflt(const struct uuid *uuid)
 {
+	const struct menu_item	*mi;
 	char			*dflt;
-	unsigned int		 i;
 	uint32_t		 status;
 
-	uuid_to_string(uuid, &dflt, &status);
-	if (status != uuid_s_ok)
-		return NULL;
-
-	for (i = 0; i < nitems(menu_items); i++) {
-		if (gpt_item(i) || strcasecmp(menu_items[i].mi_guid, dflt))
-			continue;
-		free(dflt);
-		dflt = NULL;
-		if (asprintf(&dflt, "%02X", menu_items[i].mi_menuid) == -1)
+	mi = find_gpt_menuitem(find_gpt_type(uuid));
+	if (mi == NULL) {
+		uuid_to_string(uuid, &dflt, &status);
+		if (status != uuid_s_ok)
 			return NULL;
+	} else if (asprintf(&dflt, "%02X", mi->mi_menuid) == -1) {
+		return NULL;
 	}
 
 	return dflt;
