@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_depr.c,v 1.11 2023/04/09 19:10:23 tb Exp $ */
+/* $OpenBSD: dsa_depr.c,v 1.12 2023/04/13 14:58:27 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -70,23 +70,4 @@
 
 #include "bn_local.h"
 
-DSA *
-DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
-    int *counter_ret, unsigned long *h_ret, void (*callback)(int, int, void *),
-    void *cb_arg)
-{
-	BN_GENCB cb;
-	DSA *ret;
-
-	if ((ret = DSA_new()) == NULL)
-		return NULL;
-
-	BN_GENCB_set_old(&cb, callback, cb_arg);
-
-	if (DSA_generate_parameters_ex(ret, bits, seed_in, seed_len,
-	    counter_ret, h_ret, &cb))
-		return ret;
-	DSA_free(ret);
-	return NULL;
-}
 #endif
