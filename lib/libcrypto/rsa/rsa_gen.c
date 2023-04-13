@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_gen.c,v 1.28 2023/04/13 14:59:13 tb Exp $ */
+/* $OpenBSD: rsa_gen.c,v 1.29 2023/04/13 15:18:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,12 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-
-/* NB: these functions have been "upgraded", the deprecated versions (which are
- * compatibility wrappers using these functions) are in rsa_depr.c.
- * - Geoff
- */
-
 #include <stdio.h>
 #include <time.h>
 
@@ -74,13 +68,6 @@
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb);
 
-/*
- * NB: this wrapper would normally be placed in rsa_lib.c and the static
- * implementation would probably be in rsa_eay.c. Nonetheless, is kept here so
- * that we don't introduce a new linker dependency. Eg. any application that
- * wasn't previously linking object code related to key-generation won't have to
- * now just because key-generation is part of RSA_METHOD.
- */
 int
 RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 {

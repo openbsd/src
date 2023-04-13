@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_gen.c,v 1.19 2023/04/13 15:15:43 tb Exp $ */
+/* $OpenBSD: dh_gen.c,v 1.20 2023/04/13 15:18:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -54,11 +54,6 @@
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
- */
-
-/* NB: These functions have been upgraded - the previous prototypes are in
- * dh_depr.c as wrappers to these ones.
- *  - Geoff
  */
 
 #include <stdio.h>
