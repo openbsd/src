@@ -1,4 +1,4 @@
-/*	$OpenBSD: ethertypes.h,v 1.17 2023/02/23 08:37:03 mbuhl Exp $	*/
+/*	$OpenBSD: ethertypes.h,v 1.18 2023/04/13 23:02:12 dlg Exp $	*/
 /*	$NetBSD: ethertypes.h,v 1.13 2002/02/10 01:28:32 thorpej Exp $	*/
 
 /*
@@ -303,6 +303,8 @@
 #define	ETHERTYPE_AOE		0x88A2	/* ATA over Ethernet */
 #define	ETHERTYPE_QINQ		0x88A8	/* 802.1ad VLAN stacking */
 #define	ETHERTYPE_LLDP		0x88CC	/* Link Layer Discovery Protocol */
+#define	ETHERTYPE_802_EX1	0x88B5	/* IEEE Std 802 - Local Experimental */
+#define	ETHERTYPE_802_EX2	0x88B6	/* IEEE Std 802 - Local Experimental */
 #define	ETHERTYPE_MACSEC	0x88e5	/* 802.1AE MACsec */
 #define	ETHERTYPE_PBB		0x88e7	/* 802.1Q Provider Backbone Bridging */
 #define	ETHERTYPE_NSH		0x894F	/* Network Service Header (RFC8300) */
