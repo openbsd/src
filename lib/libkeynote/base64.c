@@ -1,5 +1,5 @@
-/* $OpenBSD: base64.c,v 1.11 2004/06/29 11:35:56 msf Exp $ */
-/* $OpenBSD: base64.c,v 1.11 2004/06/29 11:35:56 msf Exp $ */
+/* $OpenBSD: base64.c,v 1.12 2023/04/13 18:20:21 tb Exp $ */
+/* $OpenBSD: base64.c,v 1.12 2023/04/13 18:20:21 tb Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -34,11 +34,8 @@ int __b64_ntop(unsigned char const *, size_t, char *, size_t);
 int __b64_pton(char const *, unsigned char *, size_t);
 
 int
-kn_encode_base64(src, srclength, target, targsize)
-unsigned char const *src;
-unsigned int srclength;
-char *target;
-unsigned int targsize;
+kn_encode_base64(unsigned char const *src, unsigned int srclength, char *target,
+    unsigned int targsize)
 {
     int i;
 
@@ -49,10 +46,7 @@ unsigned int targsize;
 }
 
 int
-kn_decode_base64(src, target, targsize)
-char const *src;
-unsigned char *target;
-unsigned int targsize;
+kn_decode_base64(char const *src, unsigned char *target, unsigned int targsize)
 {
     int i;
 
