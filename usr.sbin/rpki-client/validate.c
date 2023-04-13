@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.55 2023/03/06 16:04:52 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.56 2023/04/13 17:04:02 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -80,15 +80,22 @@ valid_ip(struct auth *a, enum afi afi,
 }
 
 /*
- * Make sure that the SKI doesn't already exist and return the parent by
- * its AKI.
- * Returns the parent auth or NULL on failure.
+ * Make sure the AKI is the same as the AKI listed on the Manifest,
+ * and that the SKI doesn't already exist.
+ * Return the parent by its AKI, or NULL on failure.
  */
 struct auth *
 valid_ski_aki(const char *fn, struct auth_tree *auths,
-    const char *ski, const char *aki)
+    const char *ski, const char *aki, const char *mftaki)
 {
 	struct auth *a;
+
+	if (mftaki != NULL) {
+		if (strcmp(aki, mftaki) != 0) {
+			warnx("%s: AKI doesn't match Manifest AKI", fn);
+			return NULL;
+		}
+	}	
 
 	if (auth_find(auths, ski) != NULL) {
 		warnx("%s: RFC 6487: duplicate SKI", fn);

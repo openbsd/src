@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.232 2023/02/23 09:50:40 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.233 2023/04/13 17:04:02 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -119,6 +119,7 @@ entity_free(struct entity *ent)
 
 	free(ent->path);
 	free(ent->file);
+	free(ent->mftaki);
 	free(ent->data);
 	free(ent);
 }
@@ -137,6 +138,7 @@ entity_read_req(struct ibuf *b, struct entity *ent)
 	io_read_buf(b, &ent->talid, sizeof(ent->talid));
 	io_read_str(b, &ent->path);
 	io_read_str(b, &ent->file);
+	io_read_str(b, &ent->mftaki);
 	io_read_buf_alloc(b, (void **)&ent->data, &ent->datasz);
 }
 
@@ -156,6 +158,7 @@ entity_write_req(const struct entity *ent)
 	io_simple_buffer(b, &ent->talid, sizeof(ent->talid));
 	io_str_buffer(b, ent->path);
 	io_str_buffer(b, ent->file);
+	io_str_buffer(b, ent->mftaki);
 	io_buf_buffer(b, ent->data, ent->datasz);
 	io_close_buffer(&procq, b);
 }
@@ -180,7 +183,8 @@ entity_write_repo(struct repo *rp)
 	io_simple_buffer(b, &talid, sizeof(talid));
 	io_str_buffer(b, path);
 	io_str_buffer(b, altpath);
-	io_buf_buffer(b, NULL, 0);
+	io_buf_buffer(b, NULL, 0); /* ent->mftaki */
+	io_buf_buffer(b, NULL, 0); /* ent->data */
 	io_close_buffer(&procq, b);
 	free(path);
 	free(altpath);
@@ -209,7 +213,8 @@ entityq_flush(struct entityq *q, struct repo *rp)
  */
 static void
 entityq_add(char *path, char *file, enum rtype type, enum location loc,
-    struct repo *rp, unsigned char *data, size_t datasz, int talid)
+    struct repo *rp, unsigned char *data, size_t datasz, int talid,
+    char *mftaki)
 {
 	struct entity	*p;
 
@@ -219,6 +224,7 @@ entityq_add(char *path, char *file, enum rtype type, enum location loc,
 	p->type = type;
 	p->location = loc;
 	p->talid = talid;
+	p->mftaki = mftaki;
 	p->path = path;
 	if (rp != NULL)
 		p->repoid = repo_id(rp);
@@ -377,7 +383,7 @@ queue_add_from_mft(const struct mft *mft)
 	size_t			 i;
 	struct repo		*rp;
 	const struct mftfile	*f;
-	char			*nfile, *npath = NULL;
+	char			*mftaki, *nfile, *npath = NULL;
 
 	rp = repo_byid(mft->repoid);
 	for (i = 0; i < mft->filesz; i++) {
@@ -391,8 +397,10 @@ queue_add_from_mft(const struct mft *mft)
 				err(1, NULL);
 		if ((nfile = strdup(f->file)) == NULL)
 			err(1, NULL);
+		if ((mftaki = strdup(mft->aki)) == NULL)
+			err(1, NULL);
 		entityq_add(npath, nfile, f->type, f->location, rp, NULL, 0,
-		    -1);
+		    -1, mftaki);
 	}
 }
 
@@ -415,7 +423,8 @@ queue_add_file(const char *file, enum rtype type, int talid)
 	if ((nfile = strdup(file)) == NULL)
 		err(1, NULL);
 	/* Not in a repository, so directly add to queue. */
-	entityq_add(NULL, nfile, type, DIR_UNKNOWN, NULL, buf, len, talid);
+	entityq_add(NULL, nfile, type, DIR_UNKNOWN, NULL, buf, len, talid,
+	    NULL);
 }
 
 /*
@@ -450,7 +459,7 @@ queue_add_from_tal(struct tal *tal)
 	data = tal->pkey;
 	tal->pkey = NULL;
 	entityq_add(NULL, nfile, RTYPE_CER, DIR_VALID, repo, data,
-	    tal->pkeysz, tal->id);
+	    tal->pkeysz, tal->id, NULL);
 }
 
 /*
@@ -518,7 +527,8 @@ queue_add_from_cert(const struct cert *cert)
 			err(1, NULL);
 	}
 
-	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0, -1);
+	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0, -1,
+	    NULL);
 }
 
 /*

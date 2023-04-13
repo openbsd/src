@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.89 2023/03/13 09:24:37 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.90 2023/04/13 17:04:02 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -125,7 +125,8 @@ parse_filepath(unsigned int repoid, const char *path, const char *file,
  * Returns the roa on success, NULL on failure.
  */
 static struct roa *
-proc_parser_roa(char *file, const unsigned char *der, size_t len)
+proc_parser_roa(char *file, const unsigned char *der, size_t len,
+    const char *mftaki)
 {
 	struct roa		*roa;
 	struct auth		*a;
@@ -136,7 +137,7 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len)
 	if ((roa = roa_parse(&x509, file, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, roa->ski, roa->aki);
+	a = valid_ski_aki(file, &auths, roa->ski, roa->aki, mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -228,12 +229,18 @@ parse_load_crl_from_mft(struct entity *entp, struct mft *mft, enum location loc,
 	if (crl == NULL)
 		goto out;
 
+	if (strcmp(crl->aki, mft->aki) != 0) {
+		warnx("%s: AKI doesn't match Manifest AKI", fn);
+		goto out;
+	}
+
 	*crlfile = fn;
 	free(f);
 
 	return crl;
 
  out:
+	crl_free(crl);
 	free(f);
 	free(fn);
 
@@ -278,7 +285,7 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	if (*crl == NULL)
 		*crl = parse_load_crl_from_mft(entp, mft, DIR_VALID, crlfile);
 
-	a = valid_ski_aki(*file, &auths, mft->ski, mft->aki);
+	a = valid_ski_aki(*file, &auths, mft->ski, mft->aki, NULL);
 	if (!valid_x509(*file, ctx, x509, a, *crl, errstr)) {
 		X509_free(x509);
 		mft_free(mft);
@@ -400,7 +407,8 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile)
  * parse failure.
  */
 static struct cert *
-proc_parser_cert(char *file, const unsigned char *der, size_t len)
+proc_parser_cert(char *file, const unsigned char *der, size_t len,
+    const char *mftaki)
 {
 	struct cert	*cert;
 	struct crl	*crl;
@@ -414,7 +422,7 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len)
 	if (cert == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, cert->ski, cert->aki);
+	a = valid_ski_aki(file, &auths, cert->ski, cert->aki, mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, cert->x509, a, crl, &errstr) ||
@@ -478,7 +486,8 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
  * Parse a ghostbuster record
  */
 static void
-proc_parser_gbr(char *file, const unsigned char *der, size_t len)
+proc_parser_gbr(char *file, const unsigned char *der, size_t len,
+    const char *mftaki)
 {
 	struct gbr	*gbr;
 	X509		*x509;
@@ -489,7 +498,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len)
 	if ((gbr = gbr_parse(&x509, file, der, len)) == NULL)
 		return;
 
-	a = valid_ski_aki(file, &auths, gbr->ski, gbr->aki);
+	a = valid_ski_aki(file, &auths, gbr->ski, gbr->aki, mftaki);
 	crl = crl_get(&crlt, a);
 
 	/* return value can be ignored since nothing happens here */
@@ -504,7 +513,8 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len)
  * Parse an ASPA object
  */
 static struct aspa *
-proc_parser_aspa(char *file, const unsigned char *der, size_t len)
+proc_parser_aspa(char *file, const unsigned char *der, size_t len,
+    const char *mftaki)
 {
 	struct aspa	*aspa;
 	struct auth	*a;
@@ -515,7 +525,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len)
 	if ((aspa = aspa_parse(&x509, file, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, aspa->ski, aspa->aki);
+	a = valid_ski_aki(file, &auths, aspa->ski, aspa->aki, mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -537,7 +547,8 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len)
  * Parse a TAK object.
  */
 static struct tak *
-proc_parser_tak(char *file, const unsigned char *der, size_t len)
+proc_parser_tak(char *file, const unsigned char *der, size_t len,
+    const char *mftaki)
 {
 	struct tak	*tak;
 	X509		*x509;
@@ -549,7 +560,7 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len)
 	if ((tak = tak_parse(&x509, file, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, tak->ski, tak->aki);
+	a = valid_ski_aki(file, &auths, tak->ski, tak->aki, mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -646,7 +657,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 				    f, flen, entp->data, entp->datasz,
 				    entp->talid);
 			else
-				cert = proc_parser_cert(file, f, flen);
+				cert = proc_parser_cert(file, f, flen,
+				    entp->mftaki);
 			c = (cert != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (cert != NULL) {
@@ -687,7 +699,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_ROA:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			roa = proc_parser_roa(file, f, flen);
+			roa = proc_parser_roa(file, f, flen, entp->mftaki);
 			c = (roa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (roa != NULL)
@@ -697,12 +709,12 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_GBR:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			proc_parser_gbr(file, f, flen);
+			proc_parser_gbr(file, f, flen, entp->mftaki);
 			break;
 		case RTYPE_ASPA:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			aspa = proc_parser_aspa(file, f, flen);
+			aspa = proc_parser_aspa(file, f, flen, entp->mftaki);
 			c = (aspa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (aspa != NULL)
@@ -712,7 +724,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_TAK:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			proc_parser_tak(file, f, flen);
+			proc_parser_tak(file, f, flen, entp->mftaki);
 			break;
 		case RTYPE_CRL:
 		default:
