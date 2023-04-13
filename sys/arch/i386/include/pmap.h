@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.92 2023/01/31 15:18:54 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.93 2023/04/13 15:23:22 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -205,7 +205,6 @@ extern struct pool pmap_pv_pool;
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
-#define pmap_copy(DP,SP,D,L,S)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */

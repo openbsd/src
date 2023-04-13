@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.124 2023/01/11 03:19:52 visa Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.125 2023/04/13 15:23:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1404,22 +1404,6 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		pmap, (void *)va, (void *)pa, rv));
 
 	return found;
-}
-
-/*
- *	Copy the range specified by src_addr/len
- *	from the source map to the range dst_addr/len
- *	in the destination map.
- *
- *	This routine is only advisory and need not do anything.
- */
-void
-pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
-    vaddr_t src_addr)
-{
-
-	DPRINTF(PDB_FOLLOW,("pmap_copy(%p, %p, %p, 0x%lx, %p)\n",
-	       dst_pmap, src_pmap, (void *)dst_addr, len, (void *)src_addr));
 }
 
 /*

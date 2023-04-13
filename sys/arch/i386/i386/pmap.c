@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.221 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.222 2023/04/13 15:23:22 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -2261,17 +2261,6 @@ pmap_collect(struct pmap *pmap)
 	pmap_do_remove(pmap, VM_MIN_ADDRESS, VM_MAX_ADDRESS,
 	    PMAP_REMOVE_SKIPWIRED);
 }
-
-/*
- * pmap_copy: copy mappings from one pmap to another
- *
- * => optional function
- * void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
- */
-
-/*
- * defined as macro in pmap.h
- */
 
 /*
  * pmap_enter: enter a mapping into a pmap

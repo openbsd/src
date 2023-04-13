@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.110 2023/01/24 07:26:34 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.111 2023/04/13 15:23:22 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 /*
  * 
@@ -1525,19 +1525,6 @@ pmap_release(struct pmap *pm)
 	pmap_free_page(tmp, pm);
 	mtx_leave(&pm->pm_mtx);
 	ctx_free(pm);
-}
-
-/*
- * Copy the range specified by src_addr/len
- * from the source map to the range dst_addr/len
- * in the destination map.
- *
- * This routine is only advisory and need not do anything.
- */
-void
-pmap_copy(struct pmap *dst_pmap, struct pmap *src_pmap, vaddr_t dst_addr,
-    vsize_t len, vaddr_t src_addr)
-{
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.28 2023/02/12 07:02:43 aoyama Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.29 2023/04/13 15:23:22 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991 Carnegie Mellon University
@@ -51,7 +51,6 @@ extern	apr_t		kernel_apr, userland_apr;
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define pmap_copy(dp,sp,d,l,s)		do { /* nothing */ } while (0)
 #define pmap_update(pmap)		do { /* nothing */ } while (0)
 
 #define	pmap_clear_modify(pg)		pmap_unsetbit(pg, PG_M)

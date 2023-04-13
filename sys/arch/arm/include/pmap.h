@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.53 2023/01/31 15:18:54 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.54 2023/04/13 15:23:22 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.76 2003/09/06 09:10:46 rearnsha Exp $	*/
 
 /*
@@ -240,7 +240,6 @@ extern struct pmap	kernel_pmap_store;
 	(((pg)->mdpage.pvh_attrs & PVF_REF) != 0)
 
 #define	pmap_deactivate(p)		do { /* nothing */ } while (0)
-#define	pmap_copy(dp, sp, da, l, sa)	do { /* nothing */ } while (0)
 
 #define pmap_unuse_final(p)		do { /* nothing */ } while (0)
 #define	pmap_remove_holes(vm)		do { /* nothing */ } while (0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.85 2023/01/31 15:18:54 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.86 2023/04/13 15:23:21 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 2003/04/26 18:39:46 fvdl Exp $	*/
 
 /*
@@ -369,7 +369,6 @@ extern const long nbpd[], nkptpmax[];
 
 #define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
 #define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
-#define pmap_copy(DP,SP,D,L,S)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
 #define pmap_move(DP,SP,D,L,S)

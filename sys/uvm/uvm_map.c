@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.314 2023/04/10 04:21:20 jsg Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.315 2023/04/13 15:23:23 miod Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -3716,15 +3716,6 @@ uvm_mapent_forkshared(struct vmspace *new_vm, struct vm_map *new_map,
 	    old_entry->end - old_entry->start, 0, old_entry->protection,
 	    old_entry->max_protection, old_map, old_entry, dead);
 
-	/*
-	 * pmap_copy the mappings: this routine is optional
-	 * but if it is there it will reduce the number of
-	 * page faults in the new proc.
-	 */
-	if (!UVM_ET_ISHOLE(new_entry))
-		pmap_copy(new_map->pmap, old_map->pmap, new_entry->start,
-		    (new_entry->end - new_entry->start), new_entry->start);
-
 	return (new_entry);
 }
 
@@ -3805,8 +3796,6 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 		 * resolve all copy-on-write faults now
 		 * (note that there is nothing to do if
 		 * the old mapping does not have an amap).
-		 * XXX: is it worthwhile to bother with
-		 * pmap_copy in this case?
 		 */
 		if (old_entry->aref.ar_amap)
 			amap_cow_now(new_map, new_entry);
@@ -3821,12 +3810,7 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 			 * fork operation.
 			 *
 			 * if we do not write-protect the parent, then
-			 * we must be sure to write-protect the child
-			 * after the pmap_copy() operation.
-			 *
-			 * XXX: pmap_copy should have some way of telling
-			 * us that it didn't do anything so we can avoid
-			 * calling pmap_protect needlessly.
+			 * we must be sure to write-protect the child.
 			 */
 			if (!UVM_ET_ISNEEDSCOPY(old_entry)) {
 				if (old_entry->max_protection & PROT_WRITE) {
@@ -3854,15 +3838,6 @@ uvm_mapent_forkcopy(struct vmspace *new_vm, struct vm_map *new_map,
 			else
 				protect_child = FALSE;
 		}
-		/*
-		 * copy the mappings
-		 * XXX: need a way to tell if this does anything
-		 */
-		if (!UVM_ET_ISHOLE(new_entry))
-			pmap_copy(new_map->pmap, old_map->pmap,
-			    new_entry->start,
-			    (old_entry->end - old_entry->start),
-			    old_entry->start);
 
 		/* protect the child's mappings if necessary */
 		if (protect_child) {
@@ -4526,13 +4501,6 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 		    newentry->protection != PROT_NONE)
 			newentry->protection = newentry->max_protection;
 		newentry->protection &= ~PROT_EXEC;
-
-		/*
-		 * Step 2: perform pmap copy.
-		 * (Doing this in the loop saves one RB traversal.)
-		 */
-		pmap_copy(kernel_map->pmap, srcmap->pmap,
-		    cp_start - start + dstaddr, cp_len, cp_start);
 	}
 	pmap_update(kernel_map->pmap);
 

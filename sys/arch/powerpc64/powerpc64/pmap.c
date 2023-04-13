@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.59 2023/01/25 09:53:53 kettenis Exp $ */
+/*	$OpenBSD: pmap.c,v 1.60 2023/04/13 15:23:22 miod Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -1045,12 +1045,6 @@ pmap_init(void)
 	}
 
 	pmap_initialized = 1;
-}
-
-void
-pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
-    vsize_t len, vaddr_t src_addr)
-{
 }
 
 int

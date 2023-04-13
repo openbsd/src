@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.19 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.20 2023/04/13 15:23:22 miod Exp $	*/
 /*	$NetBSD: pmap.h,v 1.28 2006/04/10 23:12:11 uwe Exp $	*/
 
 /*-
@@ -65,7 +65,6 @@ void pmap_bootstrap(void);
 #define	pmap_kernel()			(&__pmap_kernel)
 #define	pmap_deactivate(pmap)		do { /* nothing */ } while (0)
 #define	pmap_update(pmap)		do { /* nothing */ } while (0)
-#define	pmap_copy(dp,sp,d,l,s)		do { /* nothing */ } while (0)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 

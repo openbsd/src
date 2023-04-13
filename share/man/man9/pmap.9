@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.19 2019/12/16 10:34:04 mpi Exp $
+.\"	$OpenBSD: pmap.9,v 1.20 2023/04/13 15:23:21 miod Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: December 16 2019 $
+.Dd $Mdocdate: April 13 2023 $
 .Dt PMAP_INIT 9
 .Os
 .Sh NAME
@@ -49,8 +49,7 @@
 .Nm pmap_growkernel ,
 .Nm pmap_update ,
 .Nm pmap_collect ,
-.Nm pmap_virtual_space ,
-.Nm pmap_copy
+.Nm pmap_virtual_space
 .Nd machine dependent interface to the MMU
 .Sh SYNOPSIS
 .In machine/pmap.h
@@ -366,9 +365,6 @@ it contains no valid mappings.
 .Fn pmap_collect "pmap_t pmap"
 .Ft void
 .Fn pmap_virtual_space "vaddr_t *vstartp" "vaddr_t *vendp"
-.Ft void
-.Fn pmap_copy "pmap_t dst_pmap" "pmap_t src_pmap" "vaddr_t dst_addr" \
-              "vsize_t len" "vaddr_t src_addr"
 .nr nS 0
 .Pp
 Wired memory allocation before the virtual memory system is bootstrapped
@@ -398,26 +394,6 @@ is not expected to be used for some time, giving the
 module a chance to prioritize.
 The initial bounds of the kernel virtual address space are returned by
 .Fn pmap_virtual_space .
-.Pp
-The
-.Fn pmap_copy
-function copies the range specified by
-.Fa src_addr
-and
-.Fa src_len
-from
-.Fa src_pmap
-to the range described by
-.Fa dst_addr
-and
-.Fa dst_len
-in
-.Fa dst_map .
-.Fn pmap_copy
-is called during a
-.Xr fork 2
-operation to give the child process an initial set of low-level
-mappings.
 .Sh SEE ALSO
 .Xr fork 2 ,
 .Xr uvm_init 9

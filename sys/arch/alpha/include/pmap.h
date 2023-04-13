@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.44 2023/02/06 11:16:22 miod Exp $ */
+/* $OpenBSD: pmap.h,v 1.45 2023/04/13 15:23:21 miod Exp $ */
 /* $NetBSD: pmap.h,v 1.37 2000/11/19 03:16:35 thorpej Exp $ */
 
 /*-
@@ -155,7 +155,6 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define pmap_copy(dp, sp, da, l, sa)	/* nothing */
 #define pmap_update(pmap)		/* nothing (yet) */
 
 #define pmap_proc_iflush(p, va, len)	/* nothing */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.69 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.70 2023/04/13 15:23:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -820,8 +820,6 @@ pmap_bootstrap_pae(void)
  * => we should not be holding any pv_head locks (in case we are forced
  *	to call pmap_steal_ptp())
  * => we may need to lock pv_head's if we have to steal a PTP
- * => just_try: true if we want a PTP, but not enough to steal one
- * 	from another pmap (e.g. during optional functions like pmap_copy)
  */
 
 struct vm_page *
@@ -1670,17 +1668,6 @@ pmap_unwire_pae(struct pmap *pmap, vaddr_t va)
 	}
 #endif
 }
-
-/*
- * pmap_copy: copy mappings from one pmap to another
- *
- * => optional function
- * void pmap_copy(dst_pmap, src_pmap, dst_addr, len, src_addr)
- */
-
-/*
- * defined as macro in pmap.h
- */
 
 /*
  * pmap_enter: enter a mapping into a pmap

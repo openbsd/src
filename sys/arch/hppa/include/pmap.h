@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.54 2023/01/24 16:51:06 kettenis Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.55 2023/04/13 15:23:22 miod Exp $	*/
 
 /*
  * Copyright (c) 2002-2004 Michael Shalayeff
@@ -102,7 +102,6 @@ struct vm_page *pmap_unmap_direct(vaddr_t);
 #define pmap_kernel()			(&kernel_pmap_store)
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_update(pm)			(void)(pm)
-#define pmap_copy(dpmap,spmap,da,len,sa)
 
 #define	PG_PMAP_MOD		PG_PMAP0	/* modified */
 #define	PG_PMAP_REF		PG_PMAP1	/* referenced */

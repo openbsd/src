@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.94 2023/04/09 19:48:37 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.95 2023/04/13 15:23:22 miod Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1926,13 +1926,6 @@ pmap_clear_reference(struct vm_page *pg)
 	mtx_leave(&pg->mdpage.pv_mtx);
 
 	return 0;
-}
-
-void
-pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
-	vsize_t len, vaddr_t src_addr)
-{
-	/* NOOP */
 }
 
 void
