@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.101 2023/04/11 10:41:10 jsing Exp $
+# $OpenBSD: Makefile,v 1.102 2023/04/13 15:01:18 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -310,7 +310,6 @@ SRCS+= xcbc_enc.c
 SRCS+= dh_ameth.c
 SRCS+= dh_asn1.c
 SRCS+= dh_check.c
-SRCS+= dh_depr.c
 SRCS+= dh_err.c
 SRCS+= dh_gen.c
 SRCS+= dh_key.c
@@ -321,7 +320,6 @@ SRCS+= dh_prn.c
 # dsa/
 SRCS+= dsa_ameth.c
 SRCS+= dsa_asn1.c
-SRCS+= dsa_depr.c
 SRCS+= dsa_err.c
 SRCS+= dsa_gen.c
 SRCS+= dsa_key.c
@@ -373,8 +371,6 @@ SRCS+= ecs_asn1.c
 SRCS+= ecs_err.c
 SRCS+= ecs_lib.c
 SRCS+= ecs_ossl.c
-SRCS+= ecs_sign.c
-SRCS+= ecs_vrf.c
 
 # engine/
 SRCS+= eng_all.c
@@ -608,7 +604,6 @@ SRCS+= rsa_ameth.c
 SRCS+= rsa_asn1.c
 SRCS+= rsa_chk.c
 SRCS+= rsa_crpt.c
-SRCS+= rsa_depr.c
 SRCS+= rsa_eay.c
 SRCS+= rsa_err.c
 SRCS+= rsa_gen.c
