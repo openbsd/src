@@ -1,4 +1,4 @@
-/* $OpenBSD: alpha_cpu.h,v 1.13 2016/05/15 23:37:42 guenther Exp $ */
+/* $OpenBSD: alpha_cpu.h,v 1.14 2023/04/13 19:39:50 miod Exp $ */
 /* $NetBSD: alpha_cpu.h,v 1.43 2001/12/18 04:18:22 thorpej Exp $ */
 
 /*
@@ -105,7 +105,7 @@ struct alpha_pcb {
 #define	ALPHA_PSL_IPL_CLOCK	0x0005		/* clock ints disabled */
 #define	ALPHA_PSL_IPL_HIGH	0x0006		/* all but mchecks disabled */
 
-#define	ALPHA_PSL_MUST_BE_ZERO	0xfffffffffffffff0
+#define	ALPHA_PSL_MUST_BE_ZERO	0xfffffffffffffff0UL
 
 /* Convenience constants: what must be set/clear in user mode */
 #define	ALPHA_PSL_USERSET	ALPHA_PSL_USERMODE
@@ -130,19 +130,19 @@ struct alpha_pcb {
  */
 
 #define	ALPHA_MCES_IMP							\
-    0xffffffff00000000	/* impl. dependent */
+    0xffffffff00000000UL	/* impl. dependent */
 #define	ALPHA_MCES_RSVD							\
-    0x00000000ffffffe0	/* reserved */
+    0x00000000ffffffe0UL	/* reserved */
 #define	ALPHA_MCES_DSC							\
-    0x0000000000000010	/* disable system correctable error reporting */
+    0x0000000000000010UL	/* disable system correctable error reporting */
 #define	ALPHA_MCES_DPC							\
-    0x0000000000000008	/* disable processor correctable error reporting */
+    0x0000000000000008UL	/* disable processor correctable error reporting */
 #define	ALPHA_MCES_PCE							\
-    0x0000000000000004	/* processor correctable error in progress */
+    0x0000000000000004UL	/* processor correctable error in progress */
 #define	ALPHA_MCES_SCE							\
-    0x0000000000000002	/* system correctable error in progress */
+    0x0000000000000002UL	/* system correctable error in progress */
 #define	ALPHA_MCES_MIP							\
-    0x0000000000000001	/* machine check in progress */
+    0x0000000000000001UL	/* machine check in progress */
 
 /*
  * Machine Check Error Summary Register definitions [OSF/1 PALcode Specific]
@@ -163,7 +163,7 @@ struct alpha_logout_area {
 #define	ALPHA_LOGOUT_FLAGS_SBZ		0x3fffffff	/* should be zero */
 
 #define	ALPHA_LOGOUT_NOT_BUILT						\
-    (struct alpha_logout_area *)0xffffffffffffffff)
+    (struct alpha_logout_area *)0xffffffffffffffffUL)
 
 #define	ALPHA_LOGOUT_PAL_AREA(lap)					\
     (unsigned long *)((unsigned char *)(lap) + 16)
@@ -193,12 +193,12 @@ struct alpha_logout_area {
  */
 
 #define	ALPHA_USEG_BASE		0			/* virtual */
-#define	ALPHA_USEG_END		0x000003ffffffffff
+#define	ALPHA_USEG_END		0x000003ffffffffffUL
 
-#define	ALPHA_K0SEG_BASE	0xfffffc0000000000	/* direct-mapped */
-#define	ALPHA_K0SEG_END		0xfffffdffffffffff
-#define	ALPHA_K1SEG_BASE	0xfffffe0000000000	/* virtual */
-#define	ALPHA_K1SEG_END		0xffffffffffffffff
+#define	ALPHA_K0SEG_BASE	0xfffffc0000000000UL	/* direct-mapped */
+#define	ALPHA_K0SEG_END		0xfffffdffffffffffUL
+#define	ALPHA_K1SEG_BASE	0xfffffe0000000000UL	/* virtual */
+#define	ALPHA_K1SEG_END		0xffffffffffffffffUL
 
 #define ALPHA_K0SEG_TO_PHYS(x)	((x) & ~ALPHA_K0SEG_BASE)
 #define ALPHA_PHYS_TO_K0SEG(x)	((x) | ALPHA_K0SEG_BASE)
