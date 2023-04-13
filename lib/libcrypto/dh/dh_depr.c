@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_depr.c,v 1.9 2023/04/09 19:10:23 tb Exp $ */
+/* $OpenBSD: dh_depr.c,v 1.10 2023/04/13 14:57:00 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -63,21 +63,3 @@
 #include <openssl/dh.h>
 
 #include "bn_local.h"
-
-DH *
-DH_generate_parameters(int prime_len, int generator,
-    void (*callback)(int, int, void *), void *cb_arg)
-{
-	BN_GENCB cb;
-	DH *ret = NULL;
-
-	if ((ret = DH_new()) == NULL)
-		return NULL;
-
-	BN_GENCB_set_old(&cb, callback, cb_arg);
-
-	if (DH_generate_parameters_ex(ret, prime_len, generator, &cb))
-		return ret;
-	DH_free(ret);
-	return NULL;
-}

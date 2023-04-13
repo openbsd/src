@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_gen.c,v 1.17 2022/01/07 09:27:13 tb Exp $ */
+/* $OpenBSD: dh_gen.c,v 1.18 2023/04/13 14:57:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -67,6 +67,7 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 
+#include "bn_local.h"
 #include "dh_local.h"
 
 static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
@@ -178,4 +179,22 @@ err:
 		BN_CTX_free(ctx);
 	}
 	return ok;
+}
+
+DH *
+DH_generate_parameters(int prime_len, int generator,
+    void (*callback)(int, int, void *), void *cb_arg)
+{
+	BN_GENCB cb;
+	DH *ret = NULL;
+
+	if ((ret = DH_new()) == NULL)
+		return NULL;
+
+	BN_GENCB_set_old(&cb, callback, cb_arg);
+
+	if (DH_generate_parameters_ex(ret, prime_len, generator, &cb))
+		return ret;
+	DH_free(ret);
+	return NULL;
 }
