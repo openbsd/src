@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_vrf.c,v 1.10 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ecs_vrf.c,v 1.11 2023/04/13 15:00:24 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -73,28 +73,9 @@
  *      0: incorrect signature
  *     -1: error
  */
-int
-ECDSA_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
-    EC_KEY *eckey)
-{
-	if (eckey->meth->verify_sig != NULL)
-		return eckey->meth->verify_sig(dgst, dgst_len, sig, eckey);
-	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
-	return 0;
-}
 
 /* returns
  *      1: correct signature
  *      0: incorrect signature
  *     -1: error
  */
-int
-ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
-    const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
-{
-	if (eckey->meth->verify != NULL)
-		return eckey->meth->verify(type, dgst, dgst_len,
-		    sigbuf, sig_len, eckey);
-	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
-	return 0;
-}

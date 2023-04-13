@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.32 2023/03/30 15:51:09 bluhm Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.33 2023/04/13 15:00:24 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -62,9 +62,11 @@
 
 #include <openssl/bn.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/objects.h>
 
 #include "bn_local.h"
+#include "ec_local.h"
 #include "ecs_local.h"
 
 static int ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len,
@@ -571,4 +573,67 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
 	if ((ecdsa = ecdsa_check(eckey)) == NULL)
 		return 0;
 	return ecdsa->meth->ecdsa_do_verify(dgst, dgst_len, sig, eckey);
+}
+
+ECDSA_SIG *
+ECDSA_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
+{
+	return ECDSA_do_sign_ex(dgst, dlen, NULL, NULL, eckey);
+}
+
+ECDSA_SIG *
+ECDSA_do_sign_ex(const unsigned char *dgst, int dlen, const BIGNUM *kinv,
+    const BIGNUM *rp, EC_KEY *eckey)
+{
+	if (eckey->meth->sign_sig != NULL)
+		return eckey->meth->sign_sig(dgst, dlen, kinv, rp, eckey);
+	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+	return 0;
+}
+
+int
+ECDSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
+    unsigned int *siglen, EC_KEY *eckey)
+{
+	return ECDSA_sign_ex(type, dgst, dlen, sig, siglen, NULL, NULL, eckey);
+}
+
+int
+ECDSA_sign_ex(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
+    unsigned int *siglen, const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
+{
+	if (eckey->meth->sign != NULL)
+		return eckey->meth->sign(type, dgst, dlen, sig, siglen, kinv, r, eckey);
+	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+	return 0;
+}
+
+int
+ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
+{
+	if (eckey->meth->sign_setup != NULL)
+		return eckey->meth->sign_setup(eckey, ctx_in, kinvp, rp);
+	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+	return 0;
+}
+
+int
+ECDSA_do_verify(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
+    EC_KEY *eckey)
+{
+	if (eckey->meth->verify_sig != NULL)
+		return eckey->meth->verify_sig(dgst, dgst_len, sig, eckey);
+	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+	return 0;
+}
+
+int
+ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
+    const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
+{
+	if (eckey->meth->verify != NULL)
+		return eckey->meth->verify(type, dgst, dgst_len,
+		    sigbuf, sig_len, eckey);
+	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+	return 0;
 }
