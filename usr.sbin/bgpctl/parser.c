@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.123 2023/04/12 17:19:16 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.124 2023/04/13 11:52:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -120,12 +120,12 @@ static const struct token t_communication[];
 static const struct token t_show_rib_path[];
 
 static const struct token t_main[] = {
-	{ KEYWORD,	"reload",	RELOAD,		t_communication},
-	{ KEYWORD,	"show",		SHOW,		t_show},
 	{ KEYWORD,	"fib",		FIB,		t_fib},
+	{ KEYWORD,	"log",		NONE,		t_log},
 	{ KEYWORD,	"neighbor",	NEIGHBOR,	t_neighbor},
 	{ KEYWORD,	"network",	NONE,		t_network},
-	{ KEYWORD,	"log",		NONE,		t_log},
+	{ KEYWORD,	"reload",	RELOAD,		t_communication},
+	{ KEYWORD,	"show",		SHOW,		t_show},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -133,17 +133,17 @@ static const struct token t_show[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
 	{ KEYWORD,	"fib",		SHOW_FIB,	t_show_fib},
 	{ KEYWORD,	"interfaces",	SHOW_INTERFACE,	NULL},
+	{ KEYWORD,	"ip",		NONE,		t_show_ip},
+	{ KEYWORD,	"metrics",	SHOW_METRICS,	NULL},
+	{ KEYWORD,	"mrt",		SHOW_MRT,	t_show_mrt},
 	{ KEYWORD,	"neighbor",	SHOW_NEIGHBOR,	t_show_neighbor},
 	{ KEYWORD,	"network",	NETWORK_SHOW,	t_network_show},
 	{ KEYWORD,	"nexthop",	SHOW_NEXTHOP,	NULL},
 	{ KEYWORD,	"rib",		SHOW_RIB,	t_show_rib},
-	{ KEYWORD,	"tables",	SHOW_FIB_TABLES, NULL},
-	{ KEYWORD,	"ip",		NONE,		t_show_ip},
-	{ KEYWORD,	"summary",	SHOW_SUMMARY,	t_show_summary},
-	{ KEYWORD,	"sets",		SHOW_SET,	NULL},
 	{ KEYWORD,	"rtr",		SHOW_RTR,	NULL},
-	{ KEYWORD,	"mrt",		SHOW_MRT,	t_show_mrt},
-	{ KEYWORD,	"metrics",	SHOW_METRICS,	NULL},
+	{ KEYWORD,	"sets",		SHOW_SET,	NULL},
+	{ KEYWORD,	"summary",	SHOW_SUMMARY,	t_show_summary},
+	{ KEYWORD,	"tables",	SHOW_FIB_TABLES, NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -155,10 +155,10 @@ static const struct token t_show_summary[] = {
 
 static const struct token t_show_fib[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
-	{ FLAG,		"connected",	F_CONNECTED,	t_show_fib},
-	{ FLAG,		"static",	F_STATIC,	t_show_fib},
 	{ FLAG,		"bgp",		F_BGPD,		t_show_fib},
+	{ FLAG,		"connected",	F_CONNECTED,	t_show_fib},
 	{ FLAG,		"nexthop",	F_NEXTHOP,	t_show_fib},
+	{ FLAG,		"static",	F_STATIC,	t_show_fib},
 	{ KEYWORD,	"table",	NONE,		t_show_fib_table},
 	{ FAMILY,	"",		NONE,		t_show_fib},
 	{ ADDRESS,	"",		NONE,		NULL},
@@ -168,60 +168,60 @@ static const struct token t_show_fib[] = {
 static const struct token t_show_rib[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
 	{ ASTYPE,	"as",		AS_ALL,		t_show_rib_as},
-	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_rib_as},
-	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_rib_as},
-	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_rib_as},
-	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_rib},
-	{ KEYWORD,	"community",	NONE,		t_show_community},
-	{ KEYWORD,	"ext-community", NONE,		t_show_extcommunity},
-	{ KEYWORD,	"large-community", NONE,	t_show_largecommunity},
-	{ FLAG,		"best",		F_CTL_BEST,	t_show_rib},
-	{ FLAG,		"selected",	F_CTL_BEST,	t_show_rib},
-	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
-	{ FLAG,		"error",	F_CTL_INVALID,	t_show_rib},
-	{ FLAG,		"invalid",	F_CTL_INELIGIBLE, t_show_rib},
-	{ FLAG,		"leaked",	F_CTL_LEAKED,	t_show_rib},
-	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
-	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
-	{ FLAG,		"ssv"	,	F_CTL_SSV,	t_show_rib},
-	{ KEYWORD,	"neighbor",	NONE,		t_show_rib_neigh},
 	{ KEYWORD,	"avs",		NONE,		t_show_avs},
+	{ FLAG,		"best",		F_CTL_BEST,	t_show_rib},
+	{ KEYWORD,	"community",	NONE,		t_show_community},
+	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
+	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_rib},
+	{ FLAG,		"error",	F_CTL_INVALID,	t_show_rib},
+	{ KEYWORD,	"ext-community", NONE,		t_show_extcommunity},
+	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
+	{ FLAG,		"invalid",	F_CTL_INELIGIBLE, t_show_rib},
+	{ KEYWORD,	"large-community", NONE,	t_show_largecommunity},
+	{ FLAG,		"leaked",	F_CTL_LEAKED,	t_show_rib},
+	{ KEYWORD,	"memory",	SHOW_RIB_MEM,	NULL},
+	{ KEYWORD,	"neighbor",	NONE,		t_show_rib_neigh},
+	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
 	{ KEYWORD,	"ovs",		NONE,		t_show_ovs},
 	{ KEYWORD,	"path-id",	NONE,		t_show_rib_path},
-	{ KEYWORD,	"table",	NONE,		t_show_rib_rib},
+	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_rib_as},
+	{ FLAG,		"selected",	F_CTL_BEST,	t_show_rib},
+	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_rib_as},
+	{ FLAG,		"ssv",		F_CTL_SSV,	t_show_rib},
 	{ KEYWORD,	"summary",	SHOW_SUMMARY,	t_show_summary},
-	{ KEYWORD,	"memory",	SHOW_RIB_MEM,	NULL},
+	{ KEYWORD,	"table",	NONE,		t_show_rib_rib},
+	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_rib_as},
 	{ FAMILY,	"",		NONE,		t_show_rib},
 	{ PREFIX,	"",		NONE,		t_show_prefix},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show_avs[] = {
-	{ FLAG,		"valid"	,	F_CTL_AVS_VALID,	t_show_rib},
 	{ FLAG,		"invalid",	F_CTL_AVS_INVALID,	t_show_rib},
 	{ FLAG,		"unknown",	F_CTL_AVS_UNKNOWN,	t_show_rib},
+	{ FLAG,		"valid"	,	F_CTL_AVS_VALID,	t_show_rib},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show_ovs[] = {
-	{ FLAG,		"valid"	,	F_CTL_OVS_VALID,	t_show_rib},
 	{ FLAG,		"invalid",	F_CTL_OVS_INVALID,	t_show_rib},
 	{ FLAG,		"not-found",	F_CTL_OVS_NOTFOUND,	t_show_rib},
+	{ FLAG,		"valid"	,	F_CTL_OVS_VALID,	t_show_rib},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_show_mrt[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
 	{ ASTYPE,	"as",		AS_ALL,		t_show_mrt_as},
-	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_mrt_as},
-	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_mrt_as},
-	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_mrt_as},
-	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_mrt},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_mrt},
-	{ FLAG,		"ssv",		F_CTL_SSV,	t_show_mrt},
-	{ KEYWORD,	"neighbor",	NONE,		t_show_mrt_neigh},
-	{ FLAG,		"peers",	F_CTL_NEIGHBORS,t_show_mrt},
+	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_mrt},
 	{ KEYWORD,	"file",		NONE,		t_show_mrt_file},
+	{ KEYWORD,	"neighbor",	NONE,		t_show_mrt_neigh},
+	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_mrt_as},
+	{ FLAG,		"peers",	F_CTL_NEIGHBORS,t_show_mrt},
+	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_mrt_as},
+	{ FLAG,		"ssv",		F_CTL_SSV,	t_show_mrt},
+	{ ASTYPE,	"transit-as",	AS_TRANSIT,	t_show_mrt_as},
 	{ FAMILY,	"",		NONE,		t_show_mrt},
 	{ PREFIX,	"",		NONE,		t_show_prefix},
 	{ ENDTOKEN,	"",		NONE,		NULL}
@@ -256,9 +256,9 @@ static const struct token t_show_rib_rib[] = {
 
 static const struct token t_show_neighbor_modifiers[] = {
 	{ NOTOKEN,	"",		NONE,			NULL},
-	{ KEYWORD,	"timers",	SHOW_NEIGHBOR_TIMERS,	NULL},
 	{ KEYWORD,	"messages",	SHOW_NEIGHBOR,		NULL},
 	{ KEYWORD,	"terse",	SHOW_NEIGHBOR_TERSE,	NULL},
+	{ KEYWORD,	"timers",	SHOW_NEIGHBOR_TIMERS,	NULL},
 	{ ENDTOKEN,	"",		NONE,			NULL}
 };
 
@@ -301,11 +301,11 @@ static const struct token t_communication[] = {
 };
 
 static const struct token t_neighbor_modifiers[] = {
-	{ KEYWORD,	"up",		NEIGHBOR_UP,		NULL},
-	{ KEYWORD,	"down",		NEIGHBOR_DOWN,		t_communication},
-	{ KEYWORD,	"clear",	NEIGHBOR_CLEAR,		t_communication},
-	{ KEYWORD,	"refresh",	NEIGHBOR_RREFRESH,	NULL},
+	{ KEYWORD,	"clear",	NEIGHBOR_CLEAR,	t_communication},
 	{ KEYWORD,	"destroy",	NEIGHBOR_DESTROY,	NULL},
+	{ KEYWORD,	"down",		NEIGHBOR_DOWN,	t_communication},
+	{ KEYWORD,	"refresh",	NEIGHBOR_RREFRESH,	NULL},
+	{ KEYWORD,	"up",		NEIGHBOR_UP,		NULL},
 	{ ENDTOKEN,	"",		NONE,			NULL}
 };
 
@@ -346,8 +346,8 @@ static const struct token t_show_extcommunity[] = {
 	{ EXTCOM_SUBTYPE,	"l2vid",	NONE,	t_show_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"mac-mob",	NONE,	t_show_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"odi",		NONE,	t_show_ext_subtype},
-	{ EXTCOM_SUBTYPE,	"ort",		NONE,	t_show_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"ori",		NONE,	t_show_ext_subtype},
+	{ EXTCOM_SUBTYPE,	"ort",		NONE,	t_show_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"ovs",		NONE,	t_show_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"rt",		NONE,	t_show_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"soo",		NONE,	t_show_ext_subtype},
@@ -368,11 +368,11 @@ static const struct token t_show_largecommunity[] = {
 
 static const struct token t_network[] = {
 	{ KEYWORD,	"add",		NETWORK_ADD,	t_prefix},
+	{ KEYWORD,	"bulk",		NONE,		t_bulk},
 	{ KEYWORD,	"delete",	NETWORK_REMOVE,	t_prefix},
 	{ KEYWORD,	"flush",	NETWORK_FLUSH,	NULL},
-	{ KEYWORD,	"show",		NETWORK_SHOW,	t_network_show},
 	{ KEYWORD,	"mrt",		NETWORK_MRT,	t_show_mrt},
-	{ KEYWORD,	"bulk",		NONE,		t_bulk},
+	{ KEYWORD,	"show",		NETWORK_SHOW,	t_network_show},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -428,8 +428,8 @@ static const struct token t_extcommunity[] = {
 	{ EXTCOM_SUBTYPE,	"l2vid",	NONE,	t_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"mac-mob",	NONE,	t_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"odi",		NONE,	t_ext_subtype},
-	{ EXTCOM_SUBTYPE,	"ort",		NONE,	t_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"ori",		NONE,	t_ext_subtype},
+	{ EXTCOM_SUBTYPE,	"ort",		NONE,	t_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"ovs",		NONE,	t_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"rt",		NONE,	t_ext_subtype},
 	{ EXTCOM_SUBTYPE,	"soo",		NONE,	t_ext_subtype},
@@ -484,8 +484,8 @@ static const struct token t_weight[] = {
 };
 
 static const struct token t_log[] = {
-	{ KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
 	{ KEYWORD,	"brief",	LOG_BRIEF,	NULL},
+	{ KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 

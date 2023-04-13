@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.107 2023/04/12 17:19:16 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.108 2023/04/13 11:52:43 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 12 2023 $
+.Dd $Mdocdate: April 13 2023 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -180,20 +180,20 @@ can be an IP address, in which case the route to this address is shown,
 or a flag:
 .Pp
 .Bl -tag -width tableXnumber -compact
-.It Cm connected
-Show only connected routes.
-.It Cm static
-Show only static routes.
 .It Cm bgp
 Show only routes originating from
 .Xr bgpd 8
 itself.
-.It Cm nexthop
-Show only routes required to reach a BGP nexthop.
+.It Cm connected
+Show only connected routes.
 .It Cm inet
 Show only IPv4 routes.
 .It Cm inet6
 Show only IPv6 routes.
+.It Cm nexthop
+Show only routes required to reach a BGP nexthop.
+.It Cm static
+Show only static routes.
 .It Cm table Ar number
 Show the routing table with ID
 .Ar number
@@ -317,6 +317,7 @@ Show RIB entry for this CIDR prefix.
 .Xc
 Show all entries in the specified range.
 .\".It Ar address/len Cm longer-prefixes
+.\".It Ar address/len Cm or-longer
 .It Xo
 .Ar address Ns Li / Ns Ar len
 .Cm or-shorter
@@ -326,20 +327,24 @@ Show all entries covering and including the specified prefix.
 Show all entries with
 .Ar as
 anywhere in the AS path.
+.It Cm avs Pq Ic valid | unknown | invalid
+Show all entries with matching ASAP Validation State (AVS).
 .It Cm community Ar community
 Show all entries with community
 .Ar community .
+.It Cm empty-as
+Show all entries that are internal routes with no AS's in the AS path.
 .It Cm large-community Ar large-community
 Show all entries with large-community
 .Ar large-community .
-.It Cm empty-as
-Show all entries that are internal routes with no AS's in the AS path.
 .It Cm memory
 Show RIB memory statistics.
 .It Cm neighbor Ar peer
 Show only entries from the specified peer.
 .It Cm neighbor group Ar description
 Show only entries from the specified peer group.
+.It Cm ovs Pq Ic valid | not-found | invalid
+Show all entries with matching Origin Validation State (OVS).
 .It Cm path-id Ar pathid
 Show only entries which match the specified
 .Ar pathid .
@@ -365,10 +370,6 @@ Show only entries from the specified RIB table.
 Show all entries with
 .Ar as
 anywhere but rightmost.
-.It Cm ovs Pq Ic valid | not-found | invalid
-Show all entries with matching Origin Validation State (OVS).
-.It Cm avs Pq Ic valid | unknown | invalid
-Show all entries with matching ASAP Validation State (AVS).
 .El
 .Pp
 Additionally, the following
