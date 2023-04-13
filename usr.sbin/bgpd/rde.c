@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.600 2023/04/07 13:49:03 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.601 2023/04/13 15:51:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2730,16 +2730,10 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 		struct rde_community *comm = prefix_communities(p);
 		size_t len = comm->nentries * sizeof(struct community);
 		if (comm->nentries > 0) {
-			if ((wbuf = imsg_create(ibuf_se_ctl,
-			    IMSG_CTL_SHOW_RIB_COMMUNITIES, 0, pid,
-			    len)) == NULL)
+			if (imsg_compose(ibuf_se_ctl,
+			    IMSG_CTL_SHOW_RIB_COMMUNITIES, 0, pid, -1,
+			    comm->communities, len) == -1)
 				return;
-			if ((bp = ibuf_reserve(wbuf, len)) == NULL) {
-				ibuf_free(wbuf);
-				return;
-			}
-			memcpy(bp, comm->communities, len);
-			imsg_close(ibuf_se_ctl, wbuf);
 		}
 		for (l = 0; l < asp->others_len; l++) {
 			if ((a = asp->others[l]) == NULL)
