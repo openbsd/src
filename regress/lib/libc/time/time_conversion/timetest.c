@@ -1,4 +1,4 @@
-/*	$OpenBSD: timetest.c,v 1.3 2022/11/22 10:40:10 anton Exp $ */
+/*	$OpenBSD: timetest.c,v 1.4 2023/04/13 11:32:06 mbuhl Exp $ */
 
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
@@ -1825,6 +1825,7 @@ int main() {
 	int failures = 0;
 	int verbose = 0;
 	struct stat sb;
+	size_t i;
 
 	if (stat("/usr/share/zoneinfo/posix", &sb) == -1 ||
 	    stat("/usr/share/zoneinfo/right", &sb) == -1) {
@@ -1834,7 +1835,7 @@ int main() {
 		exit(0);
 	}
 
-	for (size_t i = 0; timetests[i].descr != NULL; i++) {
+	for (i = 0; timetests[i].descr != NULL; i++) {
 		failures += dotimetest(&timetests[i], verbose);
 	}
 	if (failures)
