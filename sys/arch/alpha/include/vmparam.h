@@ -1,4 +1,4 @@
-/* $OpenBSD: vmparam.h,v 1.28 2015/11/01 20:09:59 miod Exp $ */
+/* $OpenBSD: vmparam.h,v 1.29 2023/04/13 15:05:19 miod Exp $ */
 /* $NetBSD: vmparam.h,v 1.18 2000/05/22 17:13:54 thorpej Exp $ */
 
 /*
@@ -46,7 +46,7 @@
  * Machine dependent constants for Alpha.
  */
 
-#define	USRSTACK	((vaddr_t)0x0000000200000000)		/* 8G */
+#define	USRSTACK	((vaddr_t)0x0000040000000000ULL)	/* 4T */
 
 /*
  * Virtual memory related constants, all in bytes
