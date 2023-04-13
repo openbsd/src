@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_depr.c,v 1.11 2023/04/09 19:10:23 tb Exp $ */
+/* $OpenBSD: rsa_depr.c,v 1.12 2023/04/13 14:59:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -66,35 +66,3 @@
 
 #include "bn_local.h"
 
-RSA *
-RSA_generate_key(int bits, unsigned long e_value,
-    void (*callback)(int, int, void *), void *cb_arg)
-{
-	BN_GENCB cb;
-	int i;
-	RSA *rsa = RSA_new();
-	BIGNUM *e = BN_new();
-
-	if (!rsa || !e)
-		goto err;
-
-	/* The problem is when building with 8, 16, or 32 BN_ULONG,
-	 * unsigned long can be larger */
-	for (i = 0; i < (int)sizeof(unsigned long) * 8; i++) {
-		if (e_value & (1UL << i))
-			if (BN_set_bit(e, i) == 0)
-				goto err;
-	}
-
-	BN_GENCB_set_old(&cb, callback, cb_arg);
-
-	if (RSA_generate_key_ex(rsa, bits, e, &cb)) {
-		BN_free(e);
-		return rsa;
-	}
-err:
-	BN_free(e);
-	RSA_free(rsa);
-
-	return 0;
-}
