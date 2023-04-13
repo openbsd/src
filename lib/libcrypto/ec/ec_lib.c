@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.53 2023/04/11 18:58:20 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.54 2023/04/13 06:48:18 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -524,7 +524,7 @@ EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 
 	if (group->meth->group_get_curve == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
+		goto err;
 	}
 	ret = group->meth->group_get_curve(group, p, a, b, ctx);
 
@@ -587,11 +587,11 @@ EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx_in)
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->group_check_discriminant == 0) {
+	if (group->meth->group_check_discriminant == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
+		goto err;
 	}
-	return group->meth->group_check_discriminant(group, ctx);
+	ret = group->meth->group_check_discriminant(group, ctx);
 
  err:
 	if (ctx != ctx_in)
@@ -1095,11 +1095,11 @@ EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 
 	if (group->meth->point_get_affine_coordinates == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
+		goto err;
 	}
 	if (group->meth != point->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-		return 0;
+		goto err;
 	}
 	ret = group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
 
@@ -1170,11 +1170,11 @@ EC_POINT_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
 	if (group->meth->dbl == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
+		goto err;
 	}
 	if (group->meth != r->meth || r->meth != a->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-		return 0;
+		goto err;
 	}
 	ret = group->meth->dbl(group, r, a, ctx);
 
@@ -1196,15 +1196,15 @@ EC_POINT_invert(const EC_GROUP *group, EC_POINT *a, BN_CTX *ctx_in)
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->invert == 0) {
+	if (group->meth->invert == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
-		return 0;
+		goto err;
 	}
 	if (group->meth != a->meth) {
 		ECerror(EC_R_INCOMPATIBLE_OBJECTS);
-		return 0;
+		goto err;
 	}
-	return group->meth->invert(group, a, ctx);
+	ret = group->meth->invert(group, a, ctx);
 
  err:
 	if (ctx != ctx_in)
