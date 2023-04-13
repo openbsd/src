@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.126 2022/11/27 22:55:31 kn Exp $	*/
+/*	$OpenBSD: pci.c,v 1.127 2023/04/13 15:36:28 miod Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -929,7 +929,7 @@ pci_reserve_resources(struct pci_attach_args *pa)
 #ifdef __sparc64__
 			/*
 			 * Certain SPARC T5 systems assign
-			 * non-prefetchable 64-bit BARs of its onboard
+			 * non-prefetchable 64-bit BARs of their onboard
 			 * mpii(4) controllers addresses in the
 			 * prefetchable memory range.  This is
 			 * (probably) safe, as reads from the device
