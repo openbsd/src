@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2023/04/11 00:45:08 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2023/04/13 02:19:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -23,7 +23,6 @@
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
-#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 

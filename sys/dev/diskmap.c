@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskmap.c,v 1.26 2019/08/06 07:16:48 anton Exp $	*/
+/*	$OpenBSD: diskmap.c,v 1.27 2023/04/13 02:19:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Joel Sing <jsing@openbsd.org>
@@ -37,7 +37,6 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/pledge.h>
-#include <sys/namei.h>
 
 int
 diskmapopen(dev_t dev, int flag, int fmt, struct proc *p)

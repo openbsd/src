@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.29 2023/04/03 01:46:18 dlg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.30 2023/04/13 02:19:05 jsg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -61,8 +61,6 @@
 #include <net/if.h>
 #include <net/if_media.h>
 #include <net/if_types.h>
-
-#include <net/bpf.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>

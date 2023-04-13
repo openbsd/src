@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.15 2023/02/11 23:07:27 deraadt Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.16 2023/04/13 02:19:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2020 Brian Bamsch <bbamsch@google.com>
@@ -22,8 +22,6 @@
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 

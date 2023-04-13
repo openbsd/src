@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vfsops.c,v 1.70 2022/01/11 03:13:59 jsg Exp $	*/
+/*	$OpenBSD: udf_vfsops.c,v 1.71 2023/04/13 02:19:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -62,7 +62,6 @@
 #include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>
-#include <sys/lock.h>
 #include <sys/endian.h>
 #include <sys/specdev.h>
 

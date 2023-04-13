@@ -1,4 +1,4 @@
-/* $OpenBSD: syscall.c,v 1.13 2023/02/11 23:07:26 deraadt Exp $ */
+/* $OpenBSD: syscall.c,v 1.14 2023/04/13 02:19:04 jsg Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -23,8 +23,6 @@
 #include <sys/signal.h>
 #include <sys/syscall.h>
 #include <sys/syscall_mi.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 

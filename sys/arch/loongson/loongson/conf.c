@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.33 2022/10/15 10:12:13 jsg Exp $ */
+/*	$OpenBSD: conf.c,v 1.34 2023/04/13 02:19:05 jsg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,6 @@
 #include "vnd.h"
 #include "sd.h"
 #include "cd.h"
-#include "st.h"
 #include "wd.h"
 bdev_decl(wd);
 #include "rd.h"

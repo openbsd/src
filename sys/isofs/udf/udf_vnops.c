@@ -1,4 +1,4 @@
-/*	$OpenBSD: udf_vnops.c,v 1.69 2021/12/12 09:14:59 visa Exp $	*/
+/*	$OpenBSD: udf_vnops.c,v 1.70 2023/04/13 02:19:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Scott Long <scottl@freebsd.org>
@@ -43,7 +43,6 @@
 #include <sys/lock.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-#include <sys/lock.h>
 #include <sys/dirent.h>
 #include <sys/queue.h>
 #include <sys/endian.h>

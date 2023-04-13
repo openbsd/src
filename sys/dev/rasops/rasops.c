@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.70 2023/02/03 18:34:24 miod Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.71 2023/04/13 02:19:05 jsg Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -1159,8 +1159,6 @@ rasops_erasecols(void *cookie, int row, int col, int num, uint32_t attr)
  * Quarter clockwise rotation routines (originally intended for the
  * built-in Zaurus C3x00 display in 16bpp).
  */
-
-#include <sys/malloc.h>
 
 void
 rasops_rotate_font(int *cookie, int ccw)

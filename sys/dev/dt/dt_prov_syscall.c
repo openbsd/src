@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_syscall.c,v 1.7 2021/12/09 00:26:11 guenther Exp $ */
+/*	$OpenBSD: dt_prov_syscall.c,v 1.8 2023/04/13 02:19:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/atomic.h>
-#include <sys/systm.h>
 #include <sys/syscall.h>
 
 #include <dev/dt/dtvar.h>

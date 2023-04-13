@@ -37,8 +37,6 @@
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/i8259.h>
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>

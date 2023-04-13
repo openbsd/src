@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.40 2022/09/02 08:13:03 kn Exp $	*/
+/*	$OpenBSD: boot.c,v 1.41 2023/04/13 02:19:05 jsg Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -58,7 +58,6 @@
 #include <lib/libsa/arc4.h>
 
 #ifdef SOFTRAID
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <dev/biovar.h>
 #include <dev/softraidvar.h>

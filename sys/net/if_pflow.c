@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.98 2022/11/23 15:12:27 mvs Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.99 2023/04/13 02:19:05 jsg Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -27,7 +27,6 @@
 #include <sys/timeout.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
-#include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 

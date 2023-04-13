@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.12 2020/06/13 12:25:09 kn Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.13 2023/04/13 02:19:05 jsg Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <machine/boot_flag.h>
 
 #ifdef SOFTRAID
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/disklabel.h>
 #include <dev/biovar.h>

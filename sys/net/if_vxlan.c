@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.91 2022/06/06 14:45:41 claudio Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.92 2023/04/13 02:19:05 jsg Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -31,7 +31,6 @@
 #include <sys/refcnt.h>
 #include <sys/smr.h>
 
-#include <sys/socket.h>
 #include <sys/socketvar.h>
 
 #include <net/if.h>
