@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.54 2023/04/13 06:48:18 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.55 2023/04/13 07:44:12 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -82,7 +82,7 @@ EC_GROUP_new(const EC_METHOD *meth)
 		ECerror(EC_R_SLOT_FULL);
 		return NULL;
 	}
-	if (meth->group_init == 0) {
+	if (meth->group_init == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return NULL;
 	}
@@ -144,7 +144,7 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
 	EC_EXTRA_DATA *d;
 
-	if (dest->meth->group_copy == 0) {
+	if (dest->meth->group_copy == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
@@ -568,7 +568,7 @@ EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
 int
 EC_GROUP_get_degree(const EC_GROUP *group)
 {
-	if (group->meth->group_get_degree == 0) {
+	if (group->meth->group_get_degree == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
@@ -854,7 +854,7 @@ EC_POINT_new(const EC_GROUP *group)
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
-	if (group->meth->point_init == 0) {
+	if (group->meth->point_init == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return NULL;
 	}
@@ -893,7 +893,7 @@ EC_POINT_clear_free(EC_POINT *point)
 int
 EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
 {
-	if (dest->meth->point_copy == 0) {
+	if (dest->meth->point_copy == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
 	}
