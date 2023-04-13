@@ -1,4 +1,4 @@
-/*      $OpenBSD: pci_map.c,v 1.32 2019/06/17 11:04:06 kettenis Exp $     */
+/*      $OpenBSD: pci_map.c,v 1.33 2023/04/13 15:07:43 miod Exp $     */
 /*	$NetBSD: pci_map.c,v 1.7 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*-
@@ -252,21 +252,6 @@ obsd_pci_mem_find(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t type,
 		      BUS_SPACE_MAP_PREFETCHABLE : 0;
 
 	return (0);
-}
-
-int
-pci_io_find(pci_chipset_tag_t pc, pcitag_t pcitag, int reg,
-    bus_addr_t *iobasep, bus_size_t *iosizep)
-{
-	return (obsd_pci_io_find(pc, pcitag, reg, 0, iobasep, iosizep, 0));
-}
-
-int
-pci_mem_find(pci_chipset_tag_t pc, pcitag_t pcitag, int reg,
-    bus_addr_t *membasep, bus_size_t *memsizep, int *cacheablep)
-{
-	return (obsd_pci_mem_find(pc, pcitag, reg, -1, membasep, memsizep,
-				  cacheablep));
 }
 
 pcireg_t

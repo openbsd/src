@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.68 2022/07/15 17:57:26 kettenis Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.69 2023/04/13 15:07:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -377,31 +377,32 @@ vgafb_mapregs(struct vgafb_softc *sc, struct pci_attach_args *pa)
 	bus_addr_t ba;
 	bus_size_t bs;
 	int hasio = 0, hasmem = 0, hasmmio = 0; 
-	u_int32_t i, cf;
+	u_int32_t bar, cf;
 	int rv;
 
-	for (i = PCI_MAPREG_START; i <= PCI_MAPREG_PPB_END; i += 4) {
-		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
+	for (bar = PCI_MAPREG_START; bar <= PCI_MAPREG_PPB_END; bar += 4) {
+		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar);
 		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
 			if (hasio)
 				continue;
-			rv = pci_io_find(pa->pa_pc, pa->pa_tag, i,
-			    &sc->sc_io_addr, &sc->sc_io_size);
+			rv = pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar,
+			    _PCI_MAPREG_TYPEBITS(cf),
+			    &sc->sc_io_addr, &sc->sc_io_size, NULL);
 			if (rv != 0) {
 				if (rv != ENOENT)
 					printf("%s: failed to find io at 0x%x\n",
-					    sc->sc_sunfb.sf_dev.dv_xname, i);
+					    sc->sc_sunfb.sf_dev.dv_xname, bar);
 				continue;
 			}
 			hasio = 1;
 		} else {
 			/* Memory mapping... frame memory or mmio? */
-			rv = pci_mem_find(pa->pa_pc, pa->pa_tag, i,
-			    &ba, &bs, NULL);
+			rv = pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar,
+			    _PCI_MAPREG_TYPEBITS(cf), &ba, &bs, NULL);
 			if (rv != 0) {
 				if (rv != ENOENT)
 					printf("%s: failed to find mem at 0x%x\n",
-					    sc->sc_sunfb.sf_dev.dv_xname, i);
+					    sc->sc_sunfb.sf_dev.dv_xname, bar);
 				continue;
 			}
 
@@ -435,6 +436,9 @@ vgafb_mapregs(struct vgafb_softc *sc, struct pci_attach_args *pa)
 					sc->sc_mem_size = bs;
 				}
 			}
+			if (PCI_MAPREG_MEM_TYPE(cf) ==
+			    PCI_MAPREG_MEM_TYPE_64BIT)
+				bar += 4;
 		}
 	}
 

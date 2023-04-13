@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsx_pci.c,v 1.15 2022/03/11 18:00:51 mpi Exp $	*/
+/*	$OpenBSD: rtsx_pci.c,v 1.16 2023/04/13 15:07:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -83,6 +83,7 @@ rtsx_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_size_t size;
 	int flags;
 	int bar = RTSX_PCI_BAR;
+	pcireg_t type;
 
 	if ((pci_conf_read(pa->pa_pc, pa->pa_tag, RTSX_CFG_PCI)
 	    & RTSX_CFG_ASIC) != 0) {
@@ -121,13 +122,13 @@ rtsx_pci_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
-	if (pci_mem_find(pa->pa_pc, pa->pa_tag, bar, NULL, NULL, NULL) != 0) {
+	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, bar);
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, type, NULL, NULL,
+	    NULL) != 0) {
 		printf("%s: can't find registers\n", sc->sc.sc_dev.dv_xname);
 	    	return;
 	}
-
-	if (pci_mapreg_map(pa, bar, PCI_MAPREG_TYPE_MEM, 0, &iot, &ioh, NULL,
-	    &size, 0)) {
+	if (pci_mapreg_map(pa, bar, type, 0, &iot, &ioh, NULL, &size, 0)) {
 		printf("%s: can't map registers\n", sc->sc.sc_dev.dv_xname);
 		return;
 	}

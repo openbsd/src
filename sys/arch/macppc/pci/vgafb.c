@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.64 2022/12/31 05:06:18 gkoehler Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.65 2023/04/13 15:07:43 miod Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -508,7 +508,7 @@ vgafb_mapregs(struct vgafb_softc *sc, struct pci_attach_args *pa)
 	bus_addr_t ba;
 	bus_size_t bs;
 	int hasmem = 0, hasmmio = 0;
-	uint32_t i, cf;
+	uint32_t bar, cf;
 	int rv;
 
 	/*
@@ -517,12 +517,12 @@ vgafb_mapregs(struct vgafb_softc *sc, struct pci_attach_args *pa)
 	 * For nvidia, this finds mmio 0x10 and frame memory 0x14.
 	 * Some nvidias have a 3rd mem region 0x18, which we ignore.
 	 */
-	for (i = PCI_MAPREG_START; i <= PCI_MAPREG_PPB_END; i += 4) {
-		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, i);
+	for (bar = PCI_MAPREG_START; bar <= PCI_MAPREG_PPB_END; bar += 4) {
+		cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar);
 		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_MEM) {
 			/* Memory mapping... frame memory or mmio? */
-			rv = pci_mem_find(pa->pa_pc, pa->pa_tag, i,
-			    &ba, &bs, NULL);
+			rv = pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar,
+			    _PCI_MAPREG_TYPEBITS(cf), &ba, &bs, NULL);
 			if (rv != 0)
 				continue;
 
@@ -558,6 +558,9 @@ vgafb_mapregs(struct vgafb_softc *sc, struct pci_attach_args *pa)
 				/* Ignore any other mem region. */
 				break;
 			}
+			if (PCI_MAPREG_MEM_TYPE(cf) ==
+			    PCI_MAPREG_MEM_TYPE_64BIT)
+				bar += 4;
 		}
 	}
 

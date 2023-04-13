@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci_machdep.c,v 1.2 2009/04/10 17:11:27 miod Exp $	*/
+/*	$OpenBSD: sti_pci_machdep.c,v 1.3 2023/04/13 15:07:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2007, 2009 Miodrag Vallat.
@@ -51,22 +51,13 @@ sti_pci_is_console(struct pci_attach_args *paa, bus_addr_t *bases)
 	 * matches what PAGE0 says, then we are the console, and it
 	 * doesn't matter which BAR matched.
 	 */
-	for (bar = PCI_MAPREG_START; bar <= PCI_MAPREG_PPB_END; ) {
+	for (bar = PCI_MAPREG_START; bar <= PCI_MAPREG_PPB_END; bar += 4) {
 		cf = pci_conf_read(paa->pa_pc, paa->pa_tag, bar);
-
-		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
-			rc = pci_io_find(paa->pa_pc, paa->pa_tag, bar, &addr,
-			    NULL);
+		rc = pci_mapreg_info(paa->pa_pc, paa->pa_tag, bar,
+		    _PCI_MAPREG_TYPEBITS(cf), &addr, NULL, NULL);
+		if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_MEM &&
+		    PCI_MAPREG_MEM_TYPE(cf) == PCI_MAPREG_MEM_TYPE_64BIT)
 			bar += 4;
-		} else {
-			rc = pci_mem_find(paa->pa_pc, paa->pa_tag, bar, &addr,
-			    NULL, NULL);
-			if (PCI_MAPREG_MEM_TYPE(cf) ==
-			    PCI_MAPREG_MEM_TYPE_64BIT)
-				bar += 8;
-			else
-				bar += 4;
-		}
 
 		if (rc == 0 &&
 		    (hppa_hpa_t)addr == (hppa_hpa_t)PAGE0->mem_cons.pz_hpa)

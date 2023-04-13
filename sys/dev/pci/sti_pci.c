@@ -1,4 +1,4 @@
-/*	$OpenBSD: sti_pci.c,v 1.12 2023/04/03 18:59:47 miod Exp $	*/
+/*	$OpenBSD: sti_pci.c,v 1.13 2023/04/13 15:07:43 miod Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2023 Miodrag Vallat.
@@ -316,7 +316,7 @@ sti_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
 {
 	bus_addr_t addr;
 	bus_size_t size;
-	u_int32_t cf;
+	pcireg_t type;
 	int rc;
 
 	if (bar == 0) {
@@ -332,15 +332,9 @@ sti_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
 		return EINVAL;
 	}
 
-	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar);
-
-	if (PCI_MAPREG_TYPE(cf) == PCI_MAPREG_TYPE_IO) {
-		rc = pci_io_find(pa->pa_pc, pa->pa_tag, bar,
-		    &addr, &size);
-	} else {
-		rc = pci_mem_find(pa->pa_pc, pa->pa_tag, bar,
-		    &addr, &size, NULL);
-	}
+	type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, bar);
+	rc = pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, type, &addr, &size,
+	    NULL);
 	if (rc != 0) {
 		printf("%s: invalid bar %02x for region %d\n",
 		    sc->sc_dev.dv_xname, bar, region);

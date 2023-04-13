@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppb.c,v 1.71 2023/01/20 15:11:44 kettenis Exp $	*/
+/*	$OpenBSD: ppb.c,v 1.72 2023/04/13 15:07:43 miod Exp $	*/
 /*	$NetBSD: ppb.c,v 1.16 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -637,6 +637,10 @@ ppb_alloc_resources(struct ppb_softc *sc, struct pci_attach_args *pa)
 				io_count++;
 			else
 				mem_count++;
+
+			if (type == (PCI_MAPREG_TYPE_MEM |
+			    PCI_MAPREG_MEM_TYPE_64BIT))
+				reg += 4;
 		}
 
 		if (reg_rom != 0) {
