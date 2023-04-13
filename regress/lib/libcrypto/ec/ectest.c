@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.12 2021/04/20 17:35:21 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.13 2023/04/13 05:25:30 tb Exp $	*/
 /* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
@@ -103,11 +103,17 @@ group_order_tests(EC_GROUP *group)
 	BIGNUM *n1, *n2, *order;
 	EC_POINT *P = EC_POINT_new(group);
 	EC_POINT *Q = EC_POINT_new(group);
-	BN_CTX *ctx = BN_CTX_new();
+	BN_CTX *ctx;
 
-	n1 = BN_new();
-	n2 = BN_new();
-	order = BN_new();
+	if ((ctx = BN_CTX_new()) == NULL)
+		ABORT;
+
+	if ((n1 = BN_new()) == NULL)
+		ABORT;
+	if ((n2 = BN_new()) == NULL)
+		ABORT;
+	if ((order = BN_new()) == NULL)
+		ABORT;
 	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
 	if (!EC_GROUP_get_order(group, order, ctx))
