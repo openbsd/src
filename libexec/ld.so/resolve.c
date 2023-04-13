@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.98 2023/04/09 23:41:47 gnezdo Exp $ */
+/*	$OpenBSD: resolve.c,v 1.99 2023/04/13 19:57:30 millert Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -650,13 +650,11 @@ _dl_find_symbol(const char *name, int flags, const Elf_Sym *ref_sym,
 
 	/* Calculate both hashes in one pass */
 	for (p = (const unsigned char *)name; (c = *p) != '\0'; p++) {
-		unsigned long g;
 		sl.sl_elf_hash = (sl.sl_elf_hash << 4) + c;
-		if ((g = sl.sl_elf_hash & 0xf0000000))
-			sl.sl_elf_hash ^= g >> 24;
-		sl.sl_elf_hash &= ~g;
+		sl.sl_elf_hash ^= (sl.sl_elf_hash >> 24) & 0xf0;
 		sl.sl_gnu_hash = sl.sl_gnu_hash * 33 + c;
 	}
+	sl.sl_elf_hash &= 0x0fffffff;
 
 	if (req_obj->dyn.symbolic)
 		if (_dl_find_symbol_obj(req_obj, &sl))
