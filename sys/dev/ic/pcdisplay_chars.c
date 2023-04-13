@@ -1,4 +1,4 @@
-/* $OpenBSD: pcdisplay_chars.c,v 1.5 2010/08/28 12:48:14 miod Exp $ */
+/* $OpenBSD: pcdisplay_chars.c,v 1.6 2023/04/13 18:29:35 miod Exp $ */
 /* $NetBSD: pcdisplay_chars.c,v 1.5 2000/06/08 07:01:19 cgd Exp $ */
 
 /*
@@ -272,8 +272,8 @@ static const struct {
 	{0x230b, 0xd9, 3}, /* RIGHT FLOOR -> light up and left */
 	{0x2329, 0x3c, 3}, /* LEFT-POINTING ANGLE BRACKET -> < */
 	{0x232a, 0x3e, 3}, /* RIGHT-POINTING ANGLE BRACKET -> > */
-	{_e003U, 0x2d, 3}, /* scan 5 -> - */
-	{_e005U, 0x5f, 3}, /* scan 9 -> _ */
+	{0x2500, 0x2d, 3}, /* scan 5 -> - */
+	{0x23bd, 0x5f, 3}, /* scan 9 -> _ */
 	{_e00bU, 0x7b, 3}, /* braceleftmid -> { */
 	{_e00cU, 0x7d, 3}, /* bracerightmid -> } */
 	{_e00fU, 0xd9, 3}, /* mirrored not sign? -> light up and left */
@@ -287,8 +287,8 @@ static const struct {
 	{0x03bd, 0x76, 2}, /* GREEK SMALL LETTER NU -> v */
 	{0x03c9, 0x77, 2}, /* GREEK SMALL LETTER OMEGA -> w */
 	{0x20ac, 0x45, 2}, /* EURO SIGN -> E */
-	{_e002U, 0x2d, 2}, /* scan 3 -> - */
-	{_e004U, 0x2d, 2}, /* scan 7 -> - */
+	{0x23bb, 0x2d, 2}, /* scan 3 -> - */
+	{0x23bc, 0x2d, 2}, /* scan 7 -> - */
 	{_e007U, 0xda, 2}, /* bracelefttp -> light down and right */
 	{_e008U, 0xc0, 2}, /* braceleftbt -> light up and right */
 	{_e009U, 0xbf, 2}, /* bracerighttp -> light down and left */
