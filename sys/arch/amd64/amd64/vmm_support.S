@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.22 2023/04/14 20:27:47 dv Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.23 2023/04/14 23:56:57 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -60,7 +60,7 @@ vmm_dispatch_intr:
 	ret
 	lfence
 
-NENTRY(vmxon)
+ENTRY(vmxon)
 	RETGUARD_SETUP(vmxon, r11)
 	xorq	%rax, %rax
 	vmxon	(%rdi)
@@ -70,7 +70,7 @@ NENTRY(vmxon)
 	lfence
 END(vmxon)
 
-NENTRY(vmxoff)
+ENTRY(vmxoff)
 	RETGUARD_SETUP(vmxoff, r11)
 	xorq	%rax, %rax
 	vmxoff
@@ -80,7 +80,7 @@ NENTRY(vmxoff)
 	lfence
 END(vmxoff)
 
-NENTRY(vmclear)
+ENTRY(vmclear)
 	RETGUARD_SETUP(vmclear, r11)
 	xorq	%rax, %rax
 	vmclear	(%rdi)
@@ -90,7 +90,7 @@ NENTRY(vmclear)
 	lfence
 END(vmclear)
 
-NENTRY(vmptrld)
+ENTRY(vmptrld)
 	RETGUARD_SETUP(vmptrld, r11)
 	xorq	%rax, %rax
 	vmptrld	(%rdi)
@@ -100,7 +100,7 @@ NENTRY(vmptrld)
 	lfence
 END(vmptrld)
 
-NENTRY(vmptrst)
+ENTRY(vmptrst)
 	RETGUARD_SETUP(vmptrst, r11)
 	xorq	%rax, %rax
 	vmptrst	(%rdi)
@@ -109,7 +109,7 @@ NENTRY(vmptrst)
 	ret
 	lfence
 
-NENTRY(vmwrite)
+ENTRY(vmwrite)
 	RETGUARD_SETUP(vmwrite, r11)
 	xorq	%rax, %rax
 	vmwrite	%rsi, %rdi
@@ -119,7 +119,7 @@ NENTRY(vmwrite)
 	lfence
 END(vmwrite)
 
-NENTRY(vmread)
+ENTRY(vmread)
 	RETGUARD_SETUP(vmread, r11)
 	xorq	%rax, %rax
 	vmread	%rdi, (%rsi)
@@ -129,7 +129,7 @@ NENTRY(vmread)
 	lfence
 END(vmread)
 
-NENTRY(invvpid)
+ENTRY(invvpid)
 	RETGUARD_SETUP(invvpid, r11)
 	invvpid (%rsi), %rdi
 	RETGUARD_CHECK(invvpid, r11)
@@ -137,7 +137,7 @@ NENTRY(invvpid)
 	lfence
 END(invvpid)
 
-NENTRY(invept)
+ENTRY(invept)
 	RETGUARD_SETUP(invept, r11)
 	invept (%rsi), %rdi
 	RETGUARD_CHECK(invept, r11)
@@ -145,7 +145,7 @@ NENTRY(invept)
 	lfence
 END(invept)
 
-NENTRY(vmx_enter_guest)
+ENTRY(vmx_enter_guest)
 	RETGUARD_SETUP(vmx_enter_guest, r11)
 	movq	%rdx, %r8	/* resume flag */
 	movq	%rcx, %r9	/* L1DF MSR support */
@@ -520,7 +520,7 @@ restore_host:
 	lfence
 END(vmx_enter_guest)
 
-NENTRY(svm_enter_guest)
+ENTRY(svm_enter_guest)
 	RETGUARD_SETUP(svm_enter_guest, r11)
 	clgi
 	movq	%rdi, %r8
