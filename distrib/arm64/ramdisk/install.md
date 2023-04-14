@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.44 2023/04/04 08:39:40 kn Exp $
+#	$OpenBSD: install.md,v 1.45 2023/04/14 15:00:40 robert Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,12 +34,13 @@
 
 MDBOOTSR=y
 NCPU=$(sysctl -n hw.ncpufound)
+COMPATIBLE=$(sysctl -n machdep.compatible)
 MOUNT_ARGS_msdos="-o-l"
 
 md_installboot() {
 	local _disk=$1 _chunks _bootdisk _mdec _plat
 
-	case $(sysctl -n machdep.compatible) in
+	case ${COMPATIBLE} in
 	apple,*)		_plat=apple;;
 	raspberrypi,*)		_plat=rpi;;
 	esac
@@ -89,7 +90,7 @@ md_prep_fdisk() {
 	local bootsectorsize="32768"
 	local bootfstype="msdos"
 
-	case $(sysctl -n machdep.compatible) in
+	case ${COMPATIBLE} in
 	openbsd,acpi)		bootsectorsize=532480;;
 	esac
 
@@ -206,18 +207,18 @@ md_consoleinfo() {
 		CSPEED=115200;;
 	esac
 
-	_fw=$(dmesgtail | sed -n '\!^bwfm0: failed!{s!^.*/\(.*\),.*$!\1!p;q;}')
-	case $(sysctl -n machdep.compatible) in
+	case ${COMPATIBLE} in
 	apple,*)
-		_fw2=$(sysctl -n machdep.compatible | sed 's/.*apple,//')
+		_fw=$(dmesgtail | sed -n '\!^bwfm0: failed!{s!^.*/\(.*\),.*$!\1!p;q;}')
+		_fw2=${COMPATIBLE##*apple,}
 		make_dev sd0
 		if mount -o ro /dev/sd0l /mnt2 2>/dev/null; then
 			rm -rf /usr/mdec/rpi /etc/firmware/apple
 			rm -rf /etc/firmware/brcm /etc/firmware/apple-bwfm
 			if [[ -s /mnt2/vendorfw/firmware.tar ]]; then
-				tar -x -C /etc/firmware \
+				[[ -n $_fw ]] && tar -x -C /etc/firmware \
 				    -f /mnt2/vendorfw/firmware.tar "*$_fw*" 2>/dev/null
-				tar -x -C /etc/firmware \
+				[[ -n $_fw2 ]] && tar -x -C /etc/firmware \
 				    -f /mnt2/vendorfw/firmware.tar "*$_fw2*" 2>/dev/null
 				mv /etc/firmware/brcm /etc/firmware/apple-bwfm 2>/dev/null
 			fi
