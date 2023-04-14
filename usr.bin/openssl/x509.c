@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.c,v 1.32 2023/04/09 17:28:52 tb Exp $ */
+/* $OpenBSD: x509.c,v 1.33 2023/04/14 06:47:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -888,10 +888,8 @@ x509_main(int argc, char **argv)
 
 		if ((pkey = X509_REQ_get0_pubkey(req)) == NULL)
 			goto end;
-		if (!X509_set_pubkey(x, pkey)) {
-			EVP_PKEY_free(pkey);
+		if (!X509_set_pubkey(x, pkey))
 			goto end;
-		}
 	} else {
 		x = load_cert(bio_err, cfg.infile, cfg.informat, NULL,
 		    "Certificate");
