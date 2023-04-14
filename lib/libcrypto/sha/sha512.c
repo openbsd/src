@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.33 2023/04/14 10:41:34 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.34 2023/04/14 10:45:15 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -62,6 +62,7 @@
 #include <openssl/sha.h>
 
 #include "crypto_internal.h"
+#include "sha_internal.h"
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512)
 
@@ -547,6 +548,19 @@ SHA512_Final(unsigned char *md, SHA512_CTX *c)
 
 	/* Let compiler decide if it's appropriate to unroll... */
 	switch (c->md_len) {
+	case SHA512_224_DIGEST_LENGTH:
+		for (n = 0; n < SHA512_224_DIGEST_LENGTH/8; n++) {
+			crypto_store_htobe64(md, c->h[n]);
+			md += 8;
+		}
+		crypto_store_htobe32(md, c->h[n] >> 32);
+		break;
+	case SHA512_256_DIGEST_LENGTH:
+		for (n = 0; n < SHA512_256_DIGEST_LENGTH/8; n++) {
+			crypto_store_htobe64(md, c->h[n]);
+			md += 8;
+		}
+		break;
 	case SHA384_DIGEST_LENGTH:
 		for (n = 0; n < SHA384_DIGEST_LENGTH/8; n++) {
 			crypto_store_htobe64(md, c->h[n]);
@@ -559,7 +573,6 @@ SHA512_Final(unsigned char *md, SHA512_CTX *c)
 			md += 8;
 		}
 		break;
-		/* ... as well as make sure md_len is not abused. */
 	default:
 		return 0;
 	}
@@ -583,6 +596,70 @@ SHA512(const unsigned char *d, size_t n, unsigned char *md)
 	explicit_bzero(&c, sizeof(c));
 
 	return (md);
+}
+
+int
+SHA512_224_Init(SHA512_CTX *c)
+{
+	memset(c, 0, sizeof(*c));
+
+	/* FIPS 180-4 section 5.3.6.1. */
+	c->h[0] = U64(0x8c3d37c819544da2);
+	c->h[1] = U64(0x73e1996689dcd4d6);
+	c->h[2] = U64(0x1dfab7ae32ff9c82);
+	c->h[3] = U64(0x679dd514582f9fcf);
+	c->h[4] = U64(0x0f6d2b697bd44da8);
+	c->h[5] = U64(0x77e36f7304c48942);
+	c->h[6] = U64(0x3f9d85a86a1d36c8);
+	c->h[7] = U64(0x1112e6ad91d692a1);
+
+	c->md_len = SHA512_224_DIGEST_LENGTH;
+
+	return 1;
+}
+
+int
+SHA512_224_Update(SHA512_CTX *c, const void *data, size_t len)
+{
+	return SHA512_Update(c, data, len);
+}
+
+int
+SHA512_224_Final(unsigned char *md, SHA512_CTX *c)
+{
+	return SHA512_Final(md, c);
+}
+
+int
+SHA512_256_Init(SHA512_CTX *c)
+{
+	memset(c, 0, sizeof(*c));
+
+	/* FIPS 180-4 section 5.3.6.2. */
+	c->h[0] = U64(0x22312194fc2bf72c);
+	c->h[1] = U64(0x9f555fa3c84c64c2);
+	c->h[2] = U64(0x2393b86b6f53b151);
+	c->h[3] = U64(0x963877195940eabd);
+	c->h[4] = U64(0x96283ee2a88effe3);
+	c->h[5] = U64(0xbe5e1e2553863992);
+	c->h[6] = U64(0x2b0199fc2c85b8aa);
+	c->h[7] = U64(0x0eb72ddc81c52ca2);
+
+	c->md_len = SHA512_256_DIGEST_LENGTH;
+
+	return 1;
+}
+
+int
+SHA512_256_Update(SHA512_CTX *c, const void *data, size_t len)
+{
+	return SHA512_Update(c, data, len);
+}
+
+int
+SHA512_256_Final(unsigned char *md, SHA512_CTX *c)
+{
+	return SHA512_Final(md, c);
 }
 
 #endif /* !OPENSSL_NO_SHA512 */
