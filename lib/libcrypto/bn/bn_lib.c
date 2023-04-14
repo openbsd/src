@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.80 2023/04/01 12:44:56 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.81 2023/04/14 11:04:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -344,50 +344,34 @@ BN_dup(const BIGNUM *a)
 	return t;
 }
 
+static inline void
+bn_copy_words(BN_ULONG *ap, const BN_ULONG *bp, int n)
+{
+	while (n > 0) {
+		ap[0] = bp[0];
+		ap++;
+		bp++;
+		n--;
+	}
+}
+
 BIGNUM *
 BN_copy(BIGNUM *a, const BIGNUM *b)
 {
-	int i;
-	BN_ULONG *A;
-	const BN_ULONG *B;
-
-
 	if (a == b)
 		return (a);
+
 	if (!bn_wexpand(a, b->top))
 		return (NULL);
 
-#if 1
-	A = a->d;
-	B = b->d;
-	for (i = b->top >> 2; i > 0; i--, A += 4, B += 4) {
-		BN_ULONG a0, a1, a2, a3;
-		a0 = B[0];
-		a1 = B[1];
-		a2 = B[2];
-		a3 = B[3];
-		A[0] = a0;
-		A[1] = a1;
-		A[2] = a2;
-		A[3] = a3;
-	}
-	switch (b->top & 3) {
-	case 3:
-		A[2] = B[2];
-	case 2:
-		A[1] = B[1];
-	case 1:
-		A[0] = B[0];
-	}
-#else
-	memcpy(a->d, b->d, sizeof(b->d[0]) * b->top);
-#endif
+	bn_copy_words(a->d, b->d, b->top);
 
 	/* Copy constant time flag from b, but make it sticky on a. */
 	a->flags |= b->flags & BN_FLG_CONSTTIME;
 
 	a->top = b->top;
 	a->neg = b->neg;
+
 	return (a);
 }
 
