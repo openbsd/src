@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.32 2023/04/12 04:54:16 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.33 2023/04/14 10:41:34 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -385,6 +385,8 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
 int
 SHA384_Init(SHA512_CTX *c)
 {
+	memset(c, 0, sizeof(*c));
+
 	c->h[0] = U64(0xcbbb9d5dc1059ed8);
 	c->h[1] = U64(0x629a292a367cd507);
 	c->h[2] = U64(0x9159015a3070dd17);
@@ -394,10 +396,8 @@ SHA384_Init(SHA512_CTX *c)
 	c->h[6] = U64(0xdb0c2e0d64f98fa7);
 	c->h[7] = U64(0x47b5481dbefa4fa4);
 
-	c->Nl = 0;
-	c->Nh = 0;
-	c->num = 0;
 	c->md_len = SHA384_DIGEST_LENGTH;
+
 	return 1;
 }
 
@@ -434,6 +434,8 @@ SHA384(const unsigned char *d, size_t n, unsigned char *md)
 int
 SHA512_Init(SHA512_CTX *c)
 {
+	memset(c, 0, sizeof(*c));
+
 	c->h[0] = U64(0x6a09e667f3bcc908);
 	c->h[1] = U64(0xbb67ae8584caa73b);
 	c->h[2] = U64(0x3c6ef372fe94f82b);
@@ -443,10 +445,8 @@ SHA512_Init(SHA512_CTX *c)
 	c->h[6] = U64(0x1f83d9abfb41bd6b);
 	c->h[7] = U64(0x5be0cd19137e2179);
 
-	c->Nl = 0;
-	c->Nh = 0;
-	c->num = 0;
 	c->md_len = SHA512_DIGEST_LENGTH;
+
 	return 1;
 }
 
