@@ -1,4 +1,4 @@
-/* $OpenBSD: cttest.c,v 1.5 2023/04/14 11:18:40 tb Exp $ */
+/* $OpenBSD: cttest.c,v 1.6 2023/04/14 12:37:20 tb Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -22,6 +22,10 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
+
+#ifndef CTPATH
+#define CTPATH "."
+#endif
 
 char *test_ctlog_conf_file;
 char *test_cert_file;
@@ -452,14 +456,15 @@ ct_sct_verify_test(void)
 int
 main(int argc, char **argv)
 {
-	const char *ctpath;
+	const char *ctpath = CTPATH;
 	int failed = 0;
 
-        if (argc != 2) {
-		fprintf(stderr, "usage: %s ctpath\n", argv[0]);
+	if (argc > 2) {
+		fprintf(stderr, "usage %s [ctpath]\n", argv[0]);
 		exit(1);
 	}
-	ctpath = argv[1];
+	if (argc == 2)
+		ctpath = argv[1];
 
 	if (asprintf(&test_cert_file, "%s/%s", ctpath,
 	    "libressl.org.crt") == -1)
