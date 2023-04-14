@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.102 2023/04/13 15:01:18 tb Exp $
+# $OpenBSD: Makefile,v 1.103 2023/04/14 11:10:11 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -181,6 +181,7 @@ SRCS+= bn_add.c
 SRCS+= bn_blind.c
 SRCS+= bn_bpsw.c
 SRCS+= bn_const.c
+SRCS+= bn_convert.c
 SRCS+= bn_ctx.c
 SRCS+= bn_div.c
 SRCS+= bn_err.c
@@ -197,7 +198,6 @@ SRCS+= bn_mpi.c
 SRCS+= bn_mul.c
 SRCS+= bn_nist.c
 SRCS+= bn_prime.c
-SRCS+= bn_print.c
 SRCS+= bn_rand.c
 SRCS+= bn_recp.c
 SRCS+= bn_shift.c
