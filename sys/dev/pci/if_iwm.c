@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.406 2023/04/11 00:45:08 jsg Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.407 2023/04/14 12:45:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -12009,6 +12009,7 @@ iwm_attach(struct device *parent, struct device *self, void *aux)
 	ic->ic_updateprot = iwm_updateprot;
 	ic->ic_updateslot = iwm_updateslot;
 	ic->ic_updateedca = iwm_updateedca;
+	ic->ic_updatechan = iwm_updatechan;
 	ic->ic_updatedtim = iwm_updatedtim;
 	ic->ic_ampdu_rx_start = iwm_ampdu_rx_start;
 	ic->ic_ampdu_rx_stop = iwm_ampdu_rx_stop;

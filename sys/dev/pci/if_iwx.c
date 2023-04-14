@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.169 2023/03/06 11:42:11 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.170 2023/04/14 12:45:10 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -11330,6 +11330,7 @@ iwx_attach(struct device *parent, struct device *self, void *aux)
 	/* Override 802.11 state transition machine. */
 	sc->sc_newstate = ic->ic_newstate;
 	ic->ic_newstate = iwx_newstate;
+	ic->ic_updatechan = iwx_updatechan;
 	ic->ic_updateprot = iwx_updateprot;
 	ic->ic_updateslot = iwx_updateslot;
 	ic->ic_updateedca = iwx_updateedca;
