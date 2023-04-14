@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.56 2023/04/13 17:04:02 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.57 2023/04/14 00:23:16 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -95,7 +95,7 @@ valid_ski_aki(const char *fn, struct auth_tree *auths,
 			warnx("%s: AKI doesn't match Manifest AKI", fn);
 			return NULL;
 		}
-	}	
+	}
 
 	if (auth_find(auths, ski) != NULL) {
 		warnx("%s: RFC 6487: duplicate SKI", fn);
