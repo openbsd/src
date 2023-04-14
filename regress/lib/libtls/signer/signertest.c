@@ -1,4 +1,4 @@
-/* $OpenBSD: signertest.c,v 1.5 2022/03/24 15:58:57 tb Exp $ */
+/* $OpenBSD: signertest.c,v 1.6 2023/04/14 12:41:26 tb Exp $ */
 /*
  * Copyright (c) 2017, 2018, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -34,7 +34,11 @@
 
 #include "tls_internal.h"
 
-const char *cert_path;
+#ifndef CERTSDIR
+#define CERTSDIR "."
+#endif
+
+const char *cert_path = CERTSDIR;
 int sign_cb_count;
 
 static void
@@ -453,12 +457,12 @@ main(int argc, char **argv)
 {
 	int failure = 0;
 
-	if (argc != 2) {
-		fprintf(stderr, "usage: %s certpath\n", argv[0]);
+	if (argc > 2) {
+		fprintf(stderr, "usage: %s [certpath]\n", argv[0]);
 		return (1);
 	}
-
-	cert_path = argv[1];
+	if (argc == 2)
+		cert_path = argv[1];
 
 	failure |= do_signer_tests();
 	failure |= do_signer_tls_tests();
