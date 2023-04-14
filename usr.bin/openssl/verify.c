@@ -1,4 +1,4 @@
-/* $OpenBSD: verify.c,v 1.16 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: verify.c,v 1.17 2023/04/14 15:27:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -427,7 +427,6 @@ cb(int ok, X509_STORE_CTX *ctx)
 		    X509_verify_cert_error_string(cert_error));
 		switch (cert_error) {
 		case X509_V_ERR_NO_EXPLICIT_POLICY:
-			policies_print(NULL, ctx);
 		case X509_V_ERR_CERT_HAS_EXPIRED:
 
 			/*
@@ -452,8 +451,6 @@ cb(int ok, X509_STORE_CTX *ctx)
 		return ok;
 
 	}
-	if (cert_error == X509_V_OK && ok == 2)
-		policies_print(NULL, ctx);
 	if (!cfg.verbose)
 		ERR_clear_error();
 	return (ok);

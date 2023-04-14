@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.c,v 1.33 2023/03/06 14:32:05 tb Exp $ */
+/* $OpenBSD: cms.c,v 1.34 2023/04/14 15:27:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -69,7 +69,6 @@
 #include <openssl/cms.h>
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
-static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(BIO *out, CMS_ContentInfo *cms);
 static CMS_ReceiptRequest *make_receipt_request(
     STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
@@ -1442,7 +1441,6 @@ cms_main(int argc, char **argv)
 		if ((store = setup_verify(bio_err, cfg.CAfile,
 		    cfg.CApath)) == NULL)
 			goto end;
-		X509_STORE_set_verify_cb(store, cms_cb);
 		if (cfg.vpm != NULL) {
 			if (!X509_STORE_set1_param(store, cfg.vpm))
 				goto end;
@@ -1802,26 +1800,6 @@ save_certs(char *signerfile, STACK_OF(X509) *signers)
 		PEM_write_bio_X509(tmp, sk_X509_value(signers, i));
 	BIO_free(tmp);
 	return 1;
-}
-
-/* Minimal callback just to output policy info (if any) */
-
-static int
-cms_cb(int ok, X509_STORE_CTX *ctx)
-{
-	int error;
-
-	error = X509_STORE_CTX_get_error(ctx);
-
-	verify_err = error;
-
-	if ((error != X509_V_ERR_NO_EXPLICIT_POLICY) &&
-	    ((error != X509_V_OK) || (ok != 2)))
-		return ok;
-
-	policies_print(NULL, ctx);
-
-	return ok;
 }
 
 static void

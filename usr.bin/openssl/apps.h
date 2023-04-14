@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.31 2022/01/10 12:17:49 tb Exp $ */
+/* $OpenBSD: apps.h,v 1.32 2023/04/14 15:27:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -237,7 +237,6 @@ int parse_yesno(const char *str, int def);
 X509_NAME *parse_name(char *str, long chtype, int multirdn);
 int args_verify(char ***pargs, int *pargc, int *badarg, BIO *err,
     X509_VERIFY_PARAM **pm);
-void policies_print(BIO *out, X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
 int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx, const char *algname,

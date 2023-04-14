@@ -1,4 +1,4 @@
-/* $OpenBSD: s_cb.c,v 1.20 2022/08/31 07:12:30 tb Exp $ */
+/* $OpenBSD: s_cb.c,v 1.21 2023/04/14 15:27:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -189,11 +189,8 @@ verify_callback(int ok, X509_STORE_CTX * ctx)
 		BIO_printf(bio_err, "\n");
 		break;
 	case X509_V_ERR_NO_EXPLICIT_POLICY:
-		policies_print(bio_err, ctx);
 		break;
 	}
-	if (err == X509_V_OK && ok == 2)
-		policies_print(bio_err, ctx);
 
 	BIO_printf(bio_err, "verify return:%d\n", ok);
 	return (ok);
