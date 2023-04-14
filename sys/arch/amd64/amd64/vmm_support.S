@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm_support.S,v 1.21 2022/12/01 00:26:15 guenther Exp $	*/
+/*	$OpenBSD: vmm_support.S,v 1.22 2023/04/14 20:27:47 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -60,7 +60,7 @@ vmm_dispatch_intr:
 	ret
 	lfence
 
-vmxon:
+NENTRY(vmxon)
 	RETGUARD_SETUP(vmxon, r11)
 	xorq	%rax, %rax
 	vmxon	(%rdi)
@@ -68,8 +68,9 @@ vmxon:
 	RETGUARD_CHECK(vmxon, r11)
 	ret
 	lfence
+END(vmxon)
 
-vmxoff:
+NENTRY(vmxoff)
 	RETGUARD_SETUP(vmxoff, r11)
 	xorq	%rax, %rax
 	vmxoff
@@ -77,8 +78,9 @@ vmxoff:
 	RETGUARD_CHECK(vmxoff, r11)
 	ret
 	lfence
+END(vmxoff)
 
-vmclear:
+NENTRY(vmclear)
 	RETGUARD_SETUP(vmclear, r11)
 	xorq	%rax, %rax
 	vmclear	(%rdi)
@@ -86,8 +88,9 @@ vmclear:
 	RETGUARD_CHECK(vmclear, r11)
 	ret
 	lfence
+END(vmclear)
 
-vmptrld:
+NENTRY(vmptrld)
 	RETGUARD_SETUP(vmptrld, r11)
 	xorq	%rax, %rax
 	vmptrld	(%rdi)
@@ -95,8 +98,9 @@ vmptrld:
 	RETGUARD_CHECK(vmptrld, r11)
 	ret
 	lfence
+END(vmptrld)
 
-vmptrst:
+NENTRY(vmptrst)
 	RETGUARD_SETUP(vmptrst, r11)
 	xorq	%rax, %rax
 	vmptrst	(%rdi)
@@ -105,7 +109,7 @@ vmptrst:
 	ret
 	lfence
 
-vmwrite:
+NENTRY(vmwrite)
 	RETGUARD_SETUP(vmwrite, r11)
 	xorq	%rax, %rax
 	vmwrite	%rsi, %rdi
@@ -113,8 +117,9 @@ vmwrite:
 	RETGUARD_CHECK(vmwrite, r11)
 	ret
 	lfence
+END(vmwrite)
 
-vmread:
+NENTRY(vmread)
 	RETGUARD_SETUP(vmread, r11)
 	xorq	%rax, %rax
 	vmread	%rdi, (%rsi)
@@ -122,22 +127,25 @@ vmread:
 	RETGUARD_CHECK(vmread, r11)
 	ret
 	lfence
+END(vmread)
 
-invvpid:
+NENTRY(invvpid)
 	RETGUARD_SETUP(invvpid, r11)
 	invvpid (%rsi), %rdi
 	RETGUARD_CHECK(invvpid, r11)
 	ret
 	lfence
+END(invvpid)
 
-invept:
+NENTRY(invept)
 	RETGUARD_SETUP(invept, r11)
 	invept (%rsi), %rdi
 	RETGUARD_CHECK(invept, r11)
 	ret
 	lfence
+END(invept)
 
-vmx_enter_guest:
+NENTRY(vmx_enter_guest)
 	RETGUARD_SETUP(vmx_enter_guest, r11)
 	movq	%rdx, %r8	/* resume flag */
 	movq	%rcx, %r9	/* L1DF MSR support */
@@ -510,8 +518,9 @@ restore_host:
 	RETGUARD_CHECK(vmx_enter_guest, r11)
 	ret
 	lfence
+END(vmx_enter_guest)
 
-svm_enter_guest:
+NENTRY(svm_enter_guest)
 	RETGUARD_SETUP(svm_enter_guest, r11)
 	clgi
 	movq	%rdi, %r8
@@ -738,3 +747,4 @@ restore_host_svm:
 	RETGUARD_CHECK(svm_enter_guest, r11)
 	ret
 	lfence
+END(svm_enter_guest)
