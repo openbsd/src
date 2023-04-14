@@ -1,4 +1,4 @@
-/* $OpenBSD: apitest.c,v 1.1 2022/01/05 09:59:39 jsing Exp $ */
+/* $OpenBSD: apitest.c,v 1.2 2023/04/14 12:38:30 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -21,7 +21,11 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-const char *certs_path;
+#ifndef CERTSDIR
+#define CERTSDIR "."
+#endif
+
+const char *certs_path = CERTSDIR;
 
 int debug = 0;
 
@@ -357,11 +361,12 @@ main(int argc, char **argv)
 {
 	int failed = 0;
 
-	if (argc != 2) {
-		fprintf(stderr, "usage: %s certspath\n", argv[0]);
+	if (argc > 2) {
+		fprintf(stderr, "usage: %s [certspath]\n", argv[0]);
 		exit(1);
 	}
-	certs_path = argv[1];
+	if (argc == 2)
+		certs_path = argv[1];
 
 	failed |= ssl_get_peer_cert_chain_tests();
 
