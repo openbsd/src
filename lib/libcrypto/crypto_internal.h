@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.2 2023/04/12 04:54:15 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.3 2023/04/14 10:42:51 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -22,6 +22,25 @@
 #ifndef HEADER_CRYPTO_INTERNAL_H
 #define HEADER_CRYPTO_INTERNAL_H
 
+/*
+ * crypto_store_htobe32() stores a 32 bit unsigned host endian value
+ * as a 32 bit unsigned big endian value, at the specified location in
+ * memory. The memory location may have any alignment.
+ */
+#ifndef HAVE_CRYPTO_STORE_HTOBE32
+static inline void
+crypto_store_htobe32(uint8_t *dst, uint32_t v)
+{
+	v = htobe32(v);
+	memcpy(dst, &v, sizeof(v));
+}
+#endif
+
+/*
+ * crypto_store_htobe64() stores a 64 bit unsigned host endian value
+ * as a 64 bit unsigned big endian value, at the specified location in
+ * memory. The memory location may have any alignment.
+ */
 #ifndef HAVE_CRYPTO_STORE_HTOBE64
 static inline void
 crypto_store_htobe64(uint8_t *dst, uint64_t v)
