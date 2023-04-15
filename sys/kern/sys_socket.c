@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.60 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.61 2023/04/15 13:18:28 kn Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -83,7 +83,6 @@ int
 soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 {
 	struct socket *so = (struct socket *)fp->f_data;
-	int error = 0;
 
 	switch (cmd) {
 
@@ -109,8 +108,7 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 	case FIOSETOWN:
 	case SIOCSPGRP:
 	case TIOCSPGRP:
-		error = sigio_setown(&so->so_sigio, cmd, data);
-		break;
+		return sigio_setown(&so->so_sigio, cmd, data);
 
 	case FIOGETOWN:
 	case SIOCGPGRP:
@@ -128,17 +126,14 @@ soo_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 		 * interface and routing ioctls should have a
 		 * different entry since a socket's unnecessary
 		 */
-		if (IOCGROUP(cmd) == 'i') {
-			error = ifioctl(so, cmd, data, p);
-			return (error);
-		}
+		if (IOCGROUP(cmd) == 'i')
+			return ifioctl(so, cmd, data, p);
 		if (IOCGROUP(cmd) == 'r')
 			return (EOPNOTSUPP);
-		error = pru_control(so, cmd, data, NULL);
-		break;
+		return pru_control(so, cmd, data, NULL);
 	}
 
-	return (error);
+	return (0);
 }
 
 int
