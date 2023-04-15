@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_regulator.c,v 1.18 2023/04/07 06:18:26 dlg Exp $	*/
+/*	$OpenBSD: ofw_regulator.c,v 1.19 2023/04/15 03:19:43 dlg Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -107,6 +107,14 @@ regulator_fixed_set(int node, int enable)
 	uint32_t startup_delay;
 	int len;
 	char *prop = "gpio";
+
+	/*
+	 * This regulator may rely on another. That "parent" regulator
+	 * may be used by multiple other devices/regulators, so unless
+	 * we refcnt use of a regulator we can only turn it on.
+	 */
+	if (enable)
+		regulator_enable(OF_getpropint(node, "vin-supply", 0));
 
 	pinctrl_byname(node, "default");
 
