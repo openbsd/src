@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.59 2023/04/09 19:10:23 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.60 2023/04/15 18:44:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,6 +226,7 @@ typedef struct rsa_oaep_params_st {
 #define RSA_SSLV23_PADDING	2
 #define RSA_NO_PADDING		3
 #define RSA_PKCS1_OAEP_PADDING	4
+/* Leave this for now as rust-openssl and erlang expose it. */
 #define RSA_X931_PADDING	5
 /* EVP_PKEY_ only */
 #define RSA_PKCS1_PSS_PADDING	6
@@ -349,11 +350,14 @@ int RSA_padding_add_none(unsigned char *to, int tlen,
     const unsigned char *f, int fl);
 int RSA_padding_check_none(unsigned char *to, int tlen,
     const unsigned char *f, int fl, int rsa_len);
+/* Remove in next major bump. */
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 int RSA_padding_add_X931(unsigned char *to, int tlen,
     const unsigned char *f, int fl);
 int RSA_padding_check_X931(unsigned char *to, int tlen,
     const unsigned char *f, int fl, int rsa_len);
 int RSA_X931_hash_id(int nid);
+#endif
 
 int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
     const EVP_MD *Hash, const unsigned char *EM, int sLen);
