@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.124 2023/04/13 11:52:43 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.125 2023/04/15 10:36:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -34,8 +34,9 @@
 #include "parser.h"
 
 enum token_type {
-	NOTOKEN,
 	ENDTOKEN,
+	NOTOKEN,
+	ANYTOKEN,
 	KEYWORD,
 	ADDRESS,
 	PEERADDRESS,
@@ -71,6 +72,8 @@ struct token {
 	int			 value;
 	const struct token	*next;
 };
+
+static const struct token *prevtable;
 
 static const struct token t_main[];
 static const struct token t_show[];
@@ -320,11 +323,11 @@ static const struct token t_show_mrt_as[] = {
 };
 
 static const struct token t_show_prefix[] = {
-	{ NOTOKEN,	"",		NONE,		NULL},
-	{ FLAG,		"all",		F_LONGER,	NULL},
-	{ FLAG,		"longer-prefixes", F_LONGER,	NULL},
-	{ FLAG,		"or-longer", 	F_LONGER,	NULL},
-	{ FLAG,		"or-shorter", 	F_SHORTER,	NULL},
+	{ FLAG,		"all",		F_LONGER,	t_show_rib},
+	{ FLAG,		"longer-prefixes", F_LONGER,	t_show_rib},
+	{ FLAG,		"or-longer", 	F_LONGER,	t_show_rib},
+	{ FLAG,		"or-shorter", 	F_SHORTER,	t_show_rib},
+	{ ANYTOKEN,	"",		NONE,		t_show_rib},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -533,6 +536,12 @@ parse(int argc, char *argv[])
 			show_valid_args(table);
 			return (NULL);
 		}
+		if (match->type == ANYTOKEN) {
+			if (prevtable == NULL)
+				prevtable = table;
+			table = match->next;
+			continue;
+		}
 
 		argc--;
 		argv++;
@@ -567,6 +576,13 @@ match_token(int *argc, char **argv[], const struct token table[])
 		switch (table[i].type) {
 		case NOTOKEN:
 			if (word == NULL || wordlen == 0) {
+				match++;
+				t = &table[i];
+			}
+			break;
+		case ANYTOKEN:
+			/* match anything if nothing else matched before */
+			if (match == 0) {
 				match++;
 				t = &table[i];
 			}
@@ -842,10 +858,19 @@ show_valid_args(const struct token table[])
 {
 	int	i;
 
+	if (prevtable != NULL) {
+		const struct token *t = prevtable;
+		prevtable = NULL;
+		show_valid_args(t);
+		fprintf(stderr, "or any of\n");
+	}
+
 	for (i = 0; table[i].type != ENDTOKEN; i++) {
 		switch (table[i].type) {
 		case NOTOKEN:
 			fprintf(stderr, "  <cr>\n");
+			break;
+		case ANYTOKEN:
 			break;
 		case KEYWORD:
 		case FLAG:
