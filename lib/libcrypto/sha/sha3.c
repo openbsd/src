@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.9 2023/04/15 18:32:55 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.10 2023/04/15 19:15:53 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -22,6 +22,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+
+#include <endian.h>
 
 #include "sha3_internal.h"
 
@@ -54,7 +56,7 @@ sha3_keccakf(uint64_t st[25])
 	uint64_t t, bc[5];
 	int i, j, r;
 
-#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+#if BYTE_ORDER != LITTLE_ENDIAN
 	uint8_t *v;
 
 	for (i = 0; i < 25; i++) {
@@ -99,7 +101,7 @@ sha3_keccakf(uint64_t st[25])
 		st[0] ^= sha3_keccakf_rndc[r];
 	}
 
-#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+#if BYTE_ORDER != LITTLE_ENDIAN
 	for (i = 0; i < 25; i++) {
 		v = (uint8_t *) &st[i];
 		t = st[i];
