@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.2 2023/04/15 17:59:50 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.3 2023/04/15 18:00:57 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -29,7 +29,7 @@
 // Revised 07-Aug-15 to match with official release of FIPS PUB 202 "SHA3"
 // Revised 03-Sep-15 for portability + OpenSSL - style API
 
-#include "sha3.h"
+#include "sha3_internal.h"
 
 // update the state with given number of rounds
 
