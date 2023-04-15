@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.10 2023/04/15 19:29:20 jsing Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.11 2023/04/15 19:30:31 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -66,8 +66,6 @@ typedef struct {
 int sha3_init(sha3_ctx *c, int mdlen);
 int sha3_update(sha3_ctx *c, const void *data, size_t len);
 int sha3_final(void *md, sha3_ctx *c);
-
-void *sha3(const void *in, size_t inlen, void *md, int mdlen);
 
 /* SHAKE128 and SHAKE256 extensible-output functions. */
 #define shake128_init(c) sha3_init(c, 16)

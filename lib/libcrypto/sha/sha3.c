@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.12 2023/04/15 19:29:20 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.13 2023/04/15 19:30:31 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -162,18 +162,6 @@ sha3_final(void *md, sha3_ctx *c)
 	}
 
 	return 1;
-}
-
-void *
-sha3(const void *in, size_t inlen, void *md, int mdlen)
-{
-	sha3_ctx sha3;
-
-	sha3_init(&sha3, mdlen);
-	sha3_update(&sha3, in, inlen);
-	sha3_final(md, &sha3);
-
-	return md;
 }
 
 /* SHAKE128 and SHAKE256 extensible-output functionality. */
