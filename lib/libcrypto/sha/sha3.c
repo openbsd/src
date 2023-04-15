@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.4 2023/04/15 18:07:44 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.5 2023/04/15 18:14:21 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -23,20 +23,11 @@
  * SOFTWARE.
  */
 
-// sha3.c
-// 19-Nov-11  Markku-Juhani O. Saarinen <mjos@iki.fi>
-
-// Revised 07-Aug-15 to match with official release of FIPS PUB 202 "SHA3"
-// Revised 03-Sep-15 for portability + OpenSSL - style API
-
 #include "sha3_internal.h"
-
-// update the state with given number of rounds
 
 void
 sha3_keccakf(uint64_t st[25])
 {
-	// constants
 	const uint64_t keccakf_rndc[24] = {
 		0x0000000000000001, 0x0000000000008082, 0x800000000000808a,
 		0x8000000080008000, 0x000000000000808b, 0x0000000080000001,
@@ -56,14 +47,12 @@ sha3_keccakf(uint64_t st[25])
 		15, 23, 19, 13, 12, 2, 20, 14, 22, 9,  6,  1
 	};
 
-	// variables
 	int i, j, r;
 	uint64_t t, bc[5];
 
 #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
 	uint8_t *v;
 
-	// endianess conversion. this is redundant on little-endian targets
 	for (i = 0; i < 25; i++) {
 		v = (uint8_t *) &st[i];
 		st[i] = ((uint64_t) v[0])	 | (((uint64_t) v[1]) << 8) |
@@ -73,10 +62,9 @@ sha3_keccakf(uint64_t st[25])
 	}
 #endif
 
-	// actual iteration
 	for (r = 0; r < KECCAKF_ROUNDS; r++) {
 
-		// Theta
+		/* Theta */
 		for (i = 0; i < 5; i++)
 			bc[i] = st[i] ^ st[i + 5] ^ st[i + 10] ^ st[i + 15] ^ st[i + 20];
 
@@ -86,7 +74,7 @@ sha3_keccakf(uint64_t st[25])
 				st[j + i] ^= t;
 		}
 
-		// Rho Pi
+		/* Rho Pi */
 		t = st[1];
 		for (i = 0; i < 24; i++) {
 			j = keccakf_piln[i];
@@ -95,7 +83,7 @@ sha3_keccakf(uint64_t st[25])
 			t = bc[0];
 		}
 
-		//  Chi
+		/* Chi */
 		for (j = 0; j < 25; j += 5) {
 			for (i = 0; i < 5; i++)
 				bc[i] = st[j + i];
@@ -103,12 +91,11 @@ sha3_keccakf(uint64_t st[25])
 				st[j + i] ^= (~bc[(i + 1) % 5]) & bc[(i + 2) % 5];
 		}
 
-		//  Iota
+		/* Iota */
 		st[0] ^= keccakf_rndc[r];
 	}
 
 #if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
-	// endianess conversion. this is redundant on little-endian targets
 	for (i = 0; i < 25; i++) {
 		v = (uint8_t *) &st[i];
 		t = st[i];
@@ -124,8 +111,6 @@ sha3_keccakf(uint64_t st[25])
 #endif
 }
 
-// Initialize the context for SHA3
-
 int
 sha3_init(sha3_ctx_t *c, int mdlen)
 {
@@ -139,8 +124,6 @@ sha3_init(sha3_ctx_t *c, int mdlen)
 
 	return 1;
 }
-
-// update state with more data
 
 int
 sha3_update(sha3_ctx_t *c, const void *data, size_t len)
@@ -161,8 +144,6 @@ sha3_update(sha3_ctx_t *c, const void *data, size_t len)
 	return 1;
 }
 
-// finalize and output a hash
-
 int
 sha3_final(void *md, sha3_ctx_t *c)
 {
@@ -179,8 +160,6 @@ sha3_final(void *md, sha3_ctx_t *c)
 	return 1;
 }
 
-// compute a SHA-3 hash (md) of given byte length from "in"
-
 void *
 sha3(const void *in, size_t inlen, void *md, int mdlen)
 {
@@ -193,8 +172,7 @@ sha3(const void *in, size_t inlen, void *md, int mdlen)
 	return md;
 }
 
-// SHAKE128 and SHAKE256 extensible-output functionality
-
+/* SHAKE128 and SHAKE256 extensible-output functionality. */
 void
 shake_xof(sha3_ctx_t *c)
 {
