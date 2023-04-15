@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.106 2023/03/10 12:44:56 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.107 2023/04/15 00:39:08 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -648,6 +648,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	X509			*x = NULL;
 	X509_EXTENSION		*ext = NULL;
 	const X509_ALGOR	*palg;
+	const ASN1_BIT_STRING	*piuid = NULL, *psuid = NULL;
 	const ASN1_OBJECT	*cobj;
 	ASN1_OBJECT		*obj;
 	EVP_PKEY		*pkey;
@@ -689,6 +690,13 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
 		    fn, OBJ_nid2ln(nid),
 		    OBJ_nid2ln(NID_sha256WithRSAEncryption));
+		goto out;
+	}
+
+	X509_get0_uids(x, &piuid, &psuid);
+	if (piuid != NULL || psuid != NULL) {
+		warnx("%s: issuer or subject unique identifiers not allowed",
+		    fn);
 		goto out;
 	}
 
