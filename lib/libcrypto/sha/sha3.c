@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.8 2023/04/15 18:30:27 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.9 2023/04/15 18:32:55 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -121,7 +121,7 @@ sha3_init(sha3_ctx *c, int mdlen)
 	int i;
 
 	for (i = 0; i < 25; i++)
-		c->st.q[i] = 0;
+		c->state.q[i] = 0;
 	c->mdlen = mdlen;
 	c->rsiz = 200 - 2 * mdlen;
 	c->pt = 0;
@@ -137,9 +137,9 @@ sha3_update(sha3_ctx *c, const void *data, size_t len)
 
 	j = c->pt;
 	for (i = 0; i < len; i++) {
-		c->st.b[j++] ^= ((const uint8_t *) data)[i];
+		c->state.b[j++] ^= ((const uint8_t *) data)[i];
 		if (j >= c->rsiz) {
-			sha3_keccakf(c->st.q);
+			sha3_keccakf(c->state.q);
 			j = 0;
 		}
 	}
@@ -153,12 +153,12 @@ sha3_final(void *md, sha3_ctx *c)
 {
 	int i;
 
-	c->st.b[c->pt] ^= 0x06;
-	c->st.b[c->rsiz - 1] ^= 0x80;
-	sha3_keccakf(c->st.q);
+	c->state.b[c->pt] ^= 0x06;
+	c->state.b[c->rsiz - 1] ^= 0x80;
+	sha3_keccakf(c->state.q);
 
 	for (i = 0; i < c->mdlen; i++) {
-		((uint8_t *) md)[i] = c->st.b[i];
+		((uint8_t *) md)[i] = c->state.b[i];
 	}
 
 	return 1;
@@ -180,9 +180,9 @@ sha3(const void *in, size_t inlen, void *md, int mdlen)
 void
 shake_xof(sha3_ctx *c)
 {
-	c->st.b[c->pt] ^= 0x1F;
-	c->st.b[c->rsiz - 1] ^= 0x80;
-	sha3_keccakf(c->st.q);
+	c->state.b[c->pt] ^= 0x1F;
+	c->state.b[c->rsiz - 1] ^= 0x80;
+	sha3_keccakf(c->state.q);
 	c->pt = 0;
 }
 
@@ -195,10 +195,10 @@ shake_out(sha3_ctx *c, void *out, size_t len)
 	j = c->pt;
 	for (i = 0; i < len; i++) {
 		if (j >= c->rsiz) {
-			sha3_keccakf(c->st.q);
+			sha3_keccakf(c->state.q);
 			j = 0;
 		}
-		((uint8_t *) out)[i] = c->st.b[j++];
+		((uint8_t *) out)[i] = c->state.b[j++];
 	}
 	c->pt = j;
 }

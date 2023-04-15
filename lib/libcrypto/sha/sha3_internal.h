@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.7 2023/04/15 18:30:27 jsing Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.8 2023/04/15 18:32:55 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -33,7 +33,7 @@ typedef struct {
 	union {
 		uint8_t b[200];		/* State as 8 bit bytes. */
 		uint64_t q[25];		/* State as 64 bit words. */
-	} st;
+	} state;
 	int pt, rsiz, mdlen;
 } sha3_ctx;
 
