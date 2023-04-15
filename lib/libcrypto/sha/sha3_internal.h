@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.12 2023/04/15 19:44:36 jsing Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.13 2023/04/15 20:00:24 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -56,12 +56,14 @@
 #define SHA3_512_BLOCK_SIZE	(SHA3_512_CAPACITY / 8)
 #define SHA3_512_DIGEST_LENGTH	(SHA3_512_BIT_LENGTH / 8)
 
-typedef struct {
+typedef struct sha3_ctx_st {
 	union {
 		uint8_t b[200];		/* State as 8 bit bytes. */
 		uint64_t q[25];		/* State as 64 bit words. */
 	} state;
-	int pt, rsiz, mdlen;
+	size_t pt;
+	size_t rsize;
+	size_t mdlen;
 } sha3_ctx;
 
 int sha3_init(sha3_ctx *c, int mdlen);
