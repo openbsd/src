@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.10 2023/04/15 19:15:53 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.11 2023/04/15 19:27:54 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -24,6 +24,7 @@
  */
 
 #include <endian.h>
+#include <string.h>
 
 #include "sha3_internal.h"
 
@@ -120,13 +121,10 @@ sha3_keccakf(uint64_t st[25])
 int
 sha3_init(sha3_ctx *c, int mdlen)
 {
-	int i;
+	memset(c, 0, sizeof(*c));
 
-	for (i = 0; i < 25; i++)
-		c->state.q[i] = 0;
 	c->mdlen = mdlen;
 	c->rsiz = 200 - 2 * mdlen;
-	c->pt = 0;
 
 	return 1;
 }
