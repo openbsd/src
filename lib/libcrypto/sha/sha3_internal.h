@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.9 2023/04/15 19:22:34 jsing Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.10 2023/04/15 19:29:20 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -62,8 +62,6 @@ typedef struct {
 	} state;
 	int pt, rsiz, mdlen;
 } sha3_ctx;
-
-void sha3_keccakf(uint64_t st[25]);
 
 int sha3_init(sha3_ctx *c, int mdlen);
 int sha3_update(sha3_ctx *c, const void *data, size_t len);

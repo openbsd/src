@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.11 2023/04/15 19:27:54 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.12 2023/04/15 19:29:20 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -51,7 +51,7 @@ static const int sha3_keccakf_piln[24] = {
 	15, 23, 19, 13, 12, 2, 20, 14, 22, 9,  6,  1
 };
 
-void
+static void
 sha3_keccakf(uint64_t st[25])
 {
 	uint64_t t, bc[5];
