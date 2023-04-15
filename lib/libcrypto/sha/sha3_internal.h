@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.4 2023/04/15 18:14:21 jsing Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.5 2023/04/15 18:22:53 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -23,11 +23,11 @@
  * SOFTWARE.
  */
 
-#ifndef SHA3_H
-#define SHA3_H
-
 #include <stddef.h>
 #include <stdint.h>
+
+#ifndef HEADER_SHA3_INTERNAL_H
+#define HEADER_SHA3_INTERNAL_H
 
 #ifndef KECCAKF_ROUNDS
 #define KECCAKF_ROUNDS 24
