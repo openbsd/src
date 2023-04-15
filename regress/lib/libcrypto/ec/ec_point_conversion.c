@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.8 2023/03/25 09:23:44 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.9 2023/04/15 21:53:38 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/objects.h>
 
