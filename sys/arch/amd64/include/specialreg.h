@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.100 2023/04/14 18:27:31 dv Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.101 2023/04/15 01:22:50 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -502,6 +502,9 @@
 #define MSR_MC3_STATUS		0x411
 #define MSR_MC3_ADDR		0x412
 #define MSR_MC3_MISC		0x413
+#define MSR_U_CET		0x6a0
+#define MSR_CET_ENDBR_EN		(1 << 2)
+#define MSR_S_CET		0x6a2
 #define MSR_PKRS		0x6e1
 
 /* VIA MSR */

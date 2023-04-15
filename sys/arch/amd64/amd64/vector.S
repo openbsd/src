@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.88 2023/01/20 16:01:04 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.89 2023/04/15 01:22:50 jsg Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -359,7 +359,9 @@ IDTVEC(trap12)
 IDTVEC(trap13)
 	ZTRAP(T_XMM)
 IDTVEC(trap14)
-IDTVEC_NOALIGN(trap15)
+	ZTRAP(T_VE)
+IDTVEC(trap15)
+	ZTRAP(T_CP)
 IDTVEC_NOALIGN(trap16)
 IDTVEC_NOALIGN(trap17)
 IDTVEC_NOALIGN(trap18)
@@ -370,7 +372,7 @@ IDTVEC_NOALIGN(trap1c)
 IDTVEC_NOALIGN(trap1d)
 IDTVEC_NOALIGN(trap1e)
 IDTVEC_NOALIGN(trap1f)
-	/* 20 - 31 reserved for future exp */
+	/* 22 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
 
 	.section .rodata

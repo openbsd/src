@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.97 2023/02/11 23:07:26 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.98 2023/04/15 01:22:50 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -121,6 +121,8 @@ const char * const trap_type[] = {
 	"stack fault",				/* 17 T_STKFLT */
 	"machine check",			/* 18 T_MCA */
 	"SSE FP exception",			/* 19 T_XMM */
+	"virtualization exception",		/* 20 T_VE */
+	"control protection exception",		/* 21 T_CP */
 };
 const int	trap_types = nitems(trap_type);
 

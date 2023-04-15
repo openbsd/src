@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.4 2020/11/13 23:08:10 guenther Exp $	*/
+/*	$OpenBSD: trap.h,v 1.5 2023/04/15 01:22:50 jsg Exp $	*/
 /*	$NetBSD: trap.h,v 1.4 1994/10/27 04:16:30 cgd Exp $	*/
 
 /*-
@@ -60,3 +60,5 @@
 #define	T_STKFLT	17	/* stack fault */
 #define	T_MCA		18	/* machine check ([P]Pro) */
 #define	T_XMM		19	/* SSE FP exception */
+#define	T_VE		20	/* virtualization exception */
+#define	T_CP		21	/* control protection exception */
