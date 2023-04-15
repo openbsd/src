@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.11 2023/04/15 19:30:31 jsing Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.12 2023/04/15 19:44:36 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -54,6 +54,7 @@
 #define SHA3_512_BITRATE	(2 * SHA3_512_BIT_LENGTH)
 #define SHA3_512_CAPACITY	(KECCAK_BIT_WIDTH - SHA3_512_BITRATE)
 #define SHA3_512_BLOCK_SIZE	(SHA3_512_CAPACITY / 8)
+#define SHA3_512_DIGEST_LENGTH	(SHA3_512_BIT_LENGTH / 8)
 
 typedef struct {
 	union {
