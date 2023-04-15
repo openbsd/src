@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.7 2023/04/15 18:29:26 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.8 2023/04/15 18:30:27 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -116,7 +116,7 @@ sha3_keccakf(uint64_t st[25])
 }
 
 int
-sha3_init(sha3_ctx_t *c, int mdlen)
+sha3_init(sha3_ctx *c, int mdlen)
 {
 	int i;
 
@@ -130,7 +130,7 @@ sha3_init(sha3_ctx_t *c, int mdlen)
 }
 
 int
-sha3_update(sha3_ctx_t *c, const void *data, size_t len)
+sha3_update(sha3_ctx *c, const void *data, size_t len)
 {
 	size_t i;
 	int j;
@@ -149,7 +149,7 @@ sha3_update(sha3_ctx_t *c, const void *data, size_t len)
 }
 
 int
-sha3_final(void *md, sha3_ctx_t *c)
+sha3_final(void *md, sha3_ctx *c)
 {
 	int i;
 
@@ -167,7 +167,7 @@ sha3_final(void *md, sha3_ctx_t *c)
 void *
 sha3(const void *in, size_t inlen, void *md, int mdlen)
 {
-	sha3_ctx_t sha3;
+	sha3_ctx sha3;
 
 	sha3_init(&sha3, mdlen);
 	sha3_update(&sha3, in, inlen);
@@ -178,7 +178,7 @@ sha3(const void *in, size_t inlen, void *md, int mdlen)
 
 /* SHAKE128 and SHAKE256 extensible-output functionality. */
 void
-shake_xof(sha3_ctx_t *c)
+shake_xof(sha3_ctx *c)
 {
 	c->st.b[c->pt] ^= 0x1F;
 	c->st.b[c->rsiz - 1] ^= 0x80;
@@ -187,7 +187,7 @@ shake_xof(sha3_ctx_t *c)
 }
 
 void
-shake_out(sha3_ctx_t *c, void *out, size_t len)
+shake_out(sha3_ctx *c, void *out, size_t len)
 {
 	size_t i;
 	int j;

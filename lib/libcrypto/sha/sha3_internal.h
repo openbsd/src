@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.6 2023/04/15 18:29:26 jsing Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.7 2023/04/15 18:30:27 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -35,13 +35,13 @@ typedef struct {
 		uint64_t q[25];		/* State as 64 bit words. */
 	} st;
 	int pt, rsiz, mdlen;
-} sha3_ctx_t;
+} sha3_ctx;
 
 void sha3_keccakf(uint64_t st[25]);
 
-int sha3_init(sha3_ctx_t *c, int mdlen);
-int sha3_update(sha3_ctx_t *c, const void *data, size_t len);
-int sha3_final(void *md, sha3_ctx_t *c);
+int sha3_init(sha3_ctx *c, int mdlen);
+int sha3_update(sha3_ctx *c, const void *data, size_t len);
+int sha3_final(void *md, sha3_ctx *c);
 
 void *sha3(const void *in, size_t inlen, void *md, int mdlen);
 
@@ -50,7 +50,7 @@ void *sha3(const void *in, size_t inlen, void *md, int mdlen);
 #define shake256_init(c) sha3_init(c, 32)
 #define shake_update sha3_update
 
-void shake_xof(sha3_ctx_t *c);
-void shake_out(sha3_ctx_t *c, void *out, size_t len);
+void shake_xof(sha3_ctx *c);
+void shake_out(sha3_ctx *c, void *out, size_t len);
 
 #endif
