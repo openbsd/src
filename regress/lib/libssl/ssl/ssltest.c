@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.37 2023/02/02 12:37:14 anton Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.38 2023/04/15 16:17:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1433,94 +1433,6 @@ verify_callback(int ok, X509_STORE_CTX *ctx)
 		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
 			fprintf(stderr, "  ... ignored.\n");
 			ok = 1;
-		}
-	}
-
-	if (ok == 1) {
-		if (X509_get_extension_flags(xs) & EXFLAG_PROXY) {
-			unsigned int *letters =
-			    X509_STORE_CTX_get_ex_data(ctx,
-			    get_proxy_auth_ex_data_idx());
-
-			if (letters) {
-				int found_any = 0;
-				int i;
-				PROXY_CERT_INFO_EXTENSION *pci =
-				    X509_get_ext_d2i(xs, NID_proxyCertInfo,
-				    NULL, NULL);
-
-				switch (OBJ_obj2nid(pci->proxyPolicy->policyLanguage)) {
-				case NID_Independent:
-					/* Completely meaningless in this
-					   program, as there's no way to
-					   grant explicit rights to a
-					   specific PrC.  Basically, using
-					   id-ppl-Independent is the perfect
-					   way to grant no rights at all. */
-					fprintf(stderr, "  Independent proxy certificate");
-					for (i = 0; i < 26; i++)
-						letters[i] = 0;
-					break;
-				case NID_id_ppl_inheritAll:
-					/* This is basically a NOP, we
-					   simply let the current rights
-					   stand as they are. */
-					fprintf(stderr, "  Proxy certificate inherits all");
-					break;
-				default:
-					s = (char *)
-					pci->proxyPolicy->policy->data;
-					i = pci->proxyPolicy->policy->length;
-
-					/* The algorithm works as follows:
-					   it is assumed that previous
-					   iterations or the initial granted
-					   rights has already set some elements
-					   of `letters'.  What we need to do is
-					   to clear those that weren't granted
-					   by the current PrC as well.  The
-					   easiest way to do this is to add 1
-					   to all the elements whose letters
-					   are given with the current policy.
-					   That way, all elements that are set
-					   by the current policy and were
-					   already set by earlier policies and
-					   through the original grant of rights
-					   will get the value 2 or higher.
-					   The last thing to do is to sweep
-					   through `letters' and keep the
-					   elements having the value 2 as set,
-					   and clear all the others. */
-
-					fprintf(stderr, "  Certificate proxy rights = %*.*s", i, i, s);
-					while (i-- > 0) {
-						int c = *s++;
-						if (isascii(c) && isalpha(c)) {
-							if (islower(c))
-								c = toupper(c);
-							letters[c - 'A']++;
-						}
-					}
-					for (i = 0; i < 26; i++)
-						if (letters[i] < 2)
-							letters[i] = 0;
-					else
-						letters[i] = 1;
-				}
-
-				found_any = 0;
-				fprintf(stderr, ", resulting proxy rights = ");
-				for (i = 0; i < 26; i++)
-					if (letters[i]) {
-					fprintf(stderr, "%c", i + 'A');
-					found_any = 1;
-				}
-				if (!found_any)
-					fprintf(stderr, "none");
-				fprintf(stderr, "\n");
-
-				PROXY_CERT_INFO_EXTENSION_free(pci);
-			}
 		}
 	}
 
