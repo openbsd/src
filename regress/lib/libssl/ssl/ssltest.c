@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.38 2023/04/15 16:17:57 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.39 2023/04/15 16:50:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -157,8 +157,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <ctype.h>
-
 #include <openssl/opensslconf.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
@@ -183,14 +181,6 @@
 
 static int verify_callback(int ok, X509_STORE_CTX *ctx);
 static int app_verify_callback(X509_STORE_CTX *ctx, void *arg);
-#define APP_CALLBACK_STRING "Test Callback Argument"
-struct app_verify_arg {
-	char *string;
-	int app_verify;
-	int allow_proxy_certs;
-	char *proxy_auth;
-	char *proxy_cond;
-};
 
 static DH *get_dh1024(void);
 static DH *get_dh1024dsa(void);
@@ -422,8 +412,7 @@ main(int argc, char *argv[])
 	int tls1 = 0, tls1_2 = 0, dtls1 = 0, ret = 1;
 	int client_auth = 0;
 	int server_auth = 0, i;
-	struct app_verify_arg app_verify_arg =
-	    { APP_CALLBACK_STRING, 0, 0, NULL, NULL };
+	char *app_verify_arg = "Test Callback Argument";
 	char *server_cert = TEST_SERVER_CERT;
 	char *server_key = NULL;
 	char *client_cert = TEST_CLIENT_CERT;
@@ -463,15 +452,7 @@ main(int argc, char *argv[])
 			server_auth = 1;
 		else if (strcmp(*argv, "-client_auth") == 0)
 			client_auth = 1;
-		else if (strcmp(*argv, "-proxy_auth") == 0) {
-			if (--argc < 1)
-				goto bad;
-			app_verify_arg.proxy_auth= *(++argv);
-		} else if (strcmp(*argv, "-proxy_cond") == 0) {
-			if (--argc < 1)
-				goto bad;
-			app_verify_arg.proxy_cond= *(++argv);
-		} else if (strcmp(*argv, "-v") == 0)
+		else if (strcmp(*argv, "-v") == 0)
 			verbose = 1;
 		else if (strcmp(*argv, "-d") == 0)
 			debug = 1;
@@ -557,9 +538,7 @@ main(int argc, char *argv[])
 				goto bad;
 			named_curve = *(++argv);
 		} else if (strcmp(*argv, "-app_verify") == 0) {
-			app_verify_arg.app_verify = 1;
-		} else if (strcmp(*argv, "-proxy") == 0) {
-			app_verify_arg.allow_proxy_certs = 1;
+			;
 		} else if (strcmp(*argv, "-alpn_client") == 0) {
 			if (--argc < 1)
 				goto bad;
@@ -697,14 +676,14 @@ bad:
 		    SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
 		    verify_callback);
 		SSL_CTX_set_cert_verify_callback(s_ctx, app_verify_callback,
-		    &app_verify_arg);
+		    app_verify_arg);
 	}
 	if (server_auth) {
 		BIO_printf(bio_err, "server authentication\n");
 		SSL_CTX_set_verify(c_ctx, SSL_VERIFY_PEER,
 		    verify_callback);
 		SSL_CTX_set_cert_verify_callback(c_ctx, app_verify_callback,
-		    &app_verify_arg);
+		    app_verify_arg);
 	}
 
 	{
@@ -1390,21 +1369,6 @@ err:
 }
 
 static int
-get_proxy_auth_ex_data_idx(void)
-{
-	static volatile int idx = -1;
-	if (idx < 0) {
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-		if (idx < 0) {
-			idx = X509_STORE_CTX_get_ex_new_index(0,
-			    "SSLtest for verify callback", NULL, NULL, NULL);
-		}
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
-	}
-	return idx;
-}
-
-static int
 verify_callback(int ok, X509_STORE_CTX *ctx)
 {
 	X509 *xs;
@@ -1439,326 +1403,26 @@ verify_callback(int ok, X509_STORE_CTX *ctx)
 	return (ok);
 }
 
-static void
-process_proxy_debug(int indent, const char *format, ...)
-{
-	static const char indentation[] =
-	    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-	    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"; /* That's 80 > */
-	char my_format[256];
-	va_list args;
-
-	(void) snprintf(my_format, sizeof(my_format), "%*.*s %s",
-	    indent, indent, indentation, format);
-
-	va_start(args, format);
-	vfprintf(stderr, my_format, args);
-	va_end(args);
-}
-/* Priority levels:
-   0	[!]var, ()
-   1	& ^
-   2	|
-*/
-static int process_proxy_cond_adders(unsigned int letters[26],
-    const char *cond, const char **cond_end, int *pos, int indent);
-
-static int
-process_proxy_cond_val(unsigned int letters[26], const char *cond,
-    const char **cond_end, int *pos, int indent)
-{
-	int c;
-	int ok = 1;
-	int negate = 0;
-
-	while (isspace((int)*cond)) {
-		cond++;
-		(*pos)++;
-	}
-	c = *cond;
-
-	if (debug)
-		process_proxy_debug(indent,
-		    "Start process_proxy_cond_val at position %d: %s\n",
-		    *pos, cond);
-
-	while (c == '!') {
-		negate = !negate;
-		cond++;
-		(*pos)++;
-		while (isspace((int)*cond)) {
-			cond++;
-			(*pos)++;
-		}
-		c = *cond;
-	}
-
-	if (c == '(') {
-		cond++;
-		(*pos)++;
-		ok = process_proxy_cond_adders(letters, cond, cond_end, pos,
-		    indent + 1);
-		cond = *cond_end;
-		if (ok < 0)
-			goto end;
-		while (isspace((int)*cond)) {
-			cond++;
-			(*pos)++;
-		}
-		c = *cond;
-		if (c != ')') {
-			fprintf(stderr,
-			    "Weird condition character in position %d: "
-			    "%c\n", *pos, c);
-			ok = -1;
-			goto end;
-		}
-		cond++;
-		(*pos)++;
-	} else if (isascii(c) && isalpha(c)) {
-		if (islower(c))
-			c = toupper(c);
-		ok = letters[c - 'A'];
-		cond++;
-		(*pos)++;
-	} else {
-		fprintf(stderr,
-		    "Weird condition character in position %d: "
-		    "%c\n", *pos, c);
-		ok = -1;
-		goto end;
-	}
-end:
-	*cond_end = cond;
-	if (ok >= 0 && negate)
-		ok = !ok;
-
-	if (debug)
-		process_proxy_debug(indent,
-		    "End process_proxy_cond_val at position %d: %s, returning %d\n",
-		    *pos, cond, ok);
-
-	return ok;
-}
-
-static int
-process_proxy_cond_multipliers(unsigned int letters[26], const char *cond,
-    const char **cond_end, int *pos, int indent)
-{
-	int ok;
-	char c;
-
-	if (debug)
-		process_proxy_debug(indent,
-		    "Start process_proxy_cond_multipliers at position %d: %s\n",
-		    *pos, cond);
-
-	ok = process_proxy_cond_val(letters, cond, cond_end, pos, indent + 1);
-	cond = *cond_end;
-	if (ok < 0)
-		goto end;
-
-	while (ok >= 0) {
-		while (isspace((int)*cond)) {
-			cond++;
-			(*pos)++;
-		}
-		c = *cond;
-
-		switch (c) {
-		case '&':
-		case '^':
-			{
-				int save_ok = ok;
-
-				cond++;
-				(*pos)++;
-				ok = process_proxy_cond_val(letters,
-				    cond, cond_end, pos, indent + 1);
-				cond = *cond_end;
-				if (ok < 0)
-					break;
-
-				switch (c) {
-				case '&':
-					ok &= save_ok;
-					break;
-				case '^':
-					ok ^= save_ok;
-					break;
-				default:
-					fprintf(stderr, "SOMETHING IS SERIOUSLY WRONG!"
-					    " STOPPING\n");
-					exit(1);
-				}
-			}
-			break;
-		default:
-			goto end;
-		}
-	}
-end:
-	if (debug)
-		process_proxy_debug(indent,
-		    "End process_proxy_cond_multipliers at position %d: %s, "
-		    "returning %d\n",
-		    *pos, cond, ok);
-
-	*cond_end = cond;
-	return ok;
-}
-
-static int
-process_proxy_cond_adders(unsigned int letters[26], const char *cond,
-    const char **cond_end, int *pos, int indent)
-{
-	int ok;
-	char c;
-
-	if (debug)
-		process_proxy_debug(indent,
-		    "Start process_proxy_cond_adders at position %d: %s\n",
-		    *pos, cond);
-
-	ok = process_proxy_cond_multipliers(letters, cond, cond_end, pos,
-	    indent + 1);
-	cond = *cond_end;
-	if (ok < 0)
-		goto end;
-
-	while (ok >= 0) {
-		while (isspace((int)*cond)) {
-			cond++;
-			(*pos)++;
-		}
-		c = *cond;
-
-		switch (c) {
-		case '|':
-			{
-				int save_ok = ok;
-
-				cond++;
-				(*pos)++;
-				ok = process_proxy_cond_multipliers(letters,
-				    cond, cond_end, pos, indent + 1);
-				cond = *cond_end;
-				if (ok < 0)
-					break;
-
-				switch (c) {
-				case '|':
-					ok |= save_ok;
-					break;
-				default:
-					fprintf(stderr, "SOMETHING IS SERIOUSLY WRONG!"
-					    " STOPPING\n");
-					exit(1);
-				}
-			}
-			break;
-		default:
-			goto end;
-		}
-	}
-end:
-	if (debug)
-		process_proxy_debug(indent,
-		    "End process_proxy_cond_adders at position %d: %s, returning %d\n",
-		    *pos, cond, ok);
-
-	*cond_end = cond;
-	return ok;
-}
-
-static int
-process_proxy_cond(unsigned int letters[26], const char *cond,
-    const char **cond_end)
-{
-	int pos = 1;
-	return process_proxy_cond_adders(letters, cond, cond_end, &pos, 1);
-}
-
 static int
 app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 {
-	int ok = 1;
-	struct app_verify_arg *cb_arg = arg;
-	unsigned int letters[26]; /* only used with proxy_auth */
+	X509 *xs;
+	char *s = NULL, buf[256];
+	const char *cb_arg = arg;
 
-	if (cb_arg->app_verify) {
-		X509 *xs;
-		char *s = NULL, buf[256];
-
-		xs = X509_STORE_CTX_get0_cert(ctx);
-		fprintf(stderr, "In app_verify_callback, allowing cert. ");
-		fprintf(stderr, "Arg is: %s\n", cb_arg->string);
-		fprintf(stderr, "Finished printing do we have a context? 0x%p a cert? 0x%p\n",
-		    (void *)ctx, (void *)xs);
-		if (xs)
-			s = X509_NAME_oneline(X509_get_subject_name(xs), buf, 256);
-		if (s != NULL) {
-			fprintf(stderr, "cert depth=%d %s\n",
-			    X509_STORE_CTX_get_error_depth(ctx), buf);
-		}
-		return (1);
-	}
-	if (cb_arg->proxy_auth) {
-		int found_any = 0, i;
-		char *sp;
-
-		for (i = 0; i < 26; i++)
-			letters[i] = 0;
-		for (sp = cb_arg->proxy_auth; *sp; sp++) {
-			int c = *sp;
-			if (isascii(c) && isalpha(c)) {
-				if (islower(c))
-					c = toupper(c);
-				letters[c - 'A'] = 1;
-			}
-		}
-
-		fprintf(stderr, "  Initial proxy rights = ");
-		for (i = 0; i < 26; i++)
-			if (letters[i]) {
-			fprintf(stderr, "%c", i + 'A');
-			found_any = 1;
-		}
-		if (!found_any)
-			fprintf(stderr, "none");
-		fprintf(stderr, "\n");
-
-		X509_STORE_CTX_set_ex_data(ctx,
-		    get_proxy_auth_ex_data_idx(), letters);
-	}
-	if (cb_arg->allow_proxy_certs) {
-		X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_ALLOW_PROXY_CERTS);
+	xs = X509_STORE_CTX_get0_cert(ctx);
+	fprintf(stderr, "In app_verify_callback, allowing cert. ");
+	fprintf(stderr, "Arg is: %s\n", cb_arg);
+	fprintf(stderr, "Finished printing do we have a context? 0x%p a cert? 0x%p\n",
+	    (void *)ctx, (void *)xs);
+	if (xs)
+		s = X509_NAME_oneline(X509_get_subject_name(xs), buf, 256);
+	if (s != NULL) {
+		fprintf(stderr, "cert depth=%d %s\n",
+		    X509_STORE_CTX_get_error_depth(ctx), buf);
 	}
 
-	ok = X509_verify_cert(ctx);
-
-	if (cb_arg->proxy_auth) {
-		if (ok > 0) {
-			const char *cond_end = NULL;
-
-			ok = process_proxy_cond(letters,
-			    cb_arg->proxy_cond, &cond_end);
-
-			if (ok < 0)
-				exit(3);
-			if (*cond_end) {
-				fprintf(stderr, "Stopped processing condition before it's end.\n");
-				ok = 0;
-			}
-			if (!ok)
-				fprintf(stderr, "Proxy rights check with condition '%s' proved invalid\n",
-				    cb_arg->proxy_cond);
-			else
-				fprintf(stderr, "Proxy rights check with condition '%s' proved valid\n",
-				    cb_arg->proxy_cond);
-		}
-	}
-	return (ok);
+	return 1;
 }
 
 /* These DH parameters have been generated as follows:
