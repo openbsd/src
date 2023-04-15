@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.5 2023/04/15 18:22:53 jsing Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.6 2023/04/15 18:29:26 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -28,14 +28,6 @@
 
 #ifndef HEADER_SHA3_INTERNAL_H
 #define HEADER_SHA3_INTERNAL_H
-
-#ifndef KECCAKF_ROUNDS
-#define KECCAKF_ROUNDS 24
-#endif
-
-#ifndef ROTL64
-#define ROTL64(x, y) (((x) << (y)) | ((x) >> (64 - (y))))
-#endif
 
 typedef struct {
 	union {

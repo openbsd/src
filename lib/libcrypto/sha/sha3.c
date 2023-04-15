@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.6 2023/04/15 18:19:06 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.7 2023/04/15 18:29:26 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -24,6 +24,10 @@
  */
 
 #include "sha3_internal.h"
+
+#define KECCAKF_ROUNDS 24
+
+#define ROTL64(x, y) (((x) << (y)) | ((x) >> (64 - (y))))
 
 static const uint64_t sha3_keccakf_rndc[24] = {
 	0x0000000000000001, 0x0000000000008082, 0x800000000000808a,
