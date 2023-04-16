@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.4 2023/04/03 00:20:24 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.5 2023/04/16 21:19:26 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -75,7 +75,9 @@ struct clockintr {
 	u_int cl_flags;					/* [m] CLST_* flags */
 };
 
-#define CLST_PENDING	0x00000001		/* scheduled to run */
+#define CLST_PENDING		0x00000001	/* scheduled to run */
+#define CLST_SHADOW_PENDING	0x00000002	/* shadow is scheduled to run */
+#define CLST_IGNORE_SHADOW	0x00000004	/* ignore shadow copy */
 
 /*
  * Per-CPU clock interrupt state.
@@ -88,6 +90,7 @@ struct clockintr {
  *	o	Owned by a single CPU.
  */
 struct clockintr_queue {
+	struct clockintr cq_shadow;	/* [o] copy of running clockintr */
 	struct mutex cq_mtx;		/* [a] per-queue mutex */
 	uint64_t cq_uptime;		/* [o] cached uptime */
 	TAILQ_HEAD(, clockintr) cq_est;	/* [m] established clockintr list */
