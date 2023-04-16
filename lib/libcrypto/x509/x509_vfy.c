@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.111 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.112 2023/04/16 08:06:42 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -732,7 +732,6 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 	int (*cb)(int xok, X509_STORE_CTX *xctx);
 	int proxy_path_length = 0;
 	int purpose;
-	int allow_proxy_certs;
 
 	cb = ctx->verify_cb;
 
@@ -747,14 +746,10 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 	must_be_ca = -1;
 
 	/* CRL path validation */
-	if (ctx->parent) {
-		allow_proxy_certs = 0;
+	if (ctx->parent)
 		purpose = X509_PURPOSE_CRL_SIGN;
-	} else {
-		allow_proxy_certs =
-		    !!(ctx->param->flags & X509_V_FLAG_ALLOW_PROXY_CERTS);
+	else
 		purpose = ctx->param->purpose;
-	}
 
 	/* Check all untrusted certificates */
 	for (i = 0; i < ctx->num_untrusted; i++) {
@@ -763,14 +758,6 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 		if (!(ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) &&
 		    (x->ex_flags & EXFLAG_CRITICAL)) {
 			ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION;
-			ctx->error_depth = i;
-			ctx->current_cert = x;
-			ok = cb(0, ctx);
-			if (!ok)
-				goto end;
-		}
-		if (!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY)) {
-			ctx->error = X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED;
 			ctx->error_depth = i;
 			ctx->current_cert = x;
 			ok = cb(0, ctx);
@@ -838,24 +825,7 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 		/* Increment path length if not self issued */
 		if (!(x->ex_flags & EXFLAG_SI))
 			plen++;
-		/* If this certificate is a proxy certificate, the next
-		   certificate must be another proxy certificate or a EE
-		   certificate.  If not, the next certificate must be a
-		   CA certificate.  */
-		if (x->ex_flags & EXFLAG_PROXY) {
-			if (x->ex_pcpathlen != -1 && i > x->ex_pcpathlen) {
-				ctx->error =
-				    X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED;
-				ctx->error_depth = i;
-				ctx->current_cert = x;
-				ok = cb(0, ctx);
-				if (!ok)
-					goto end;
-			}
-			proxy_path_length++;
-			must_be_ca = 0;
-		} else
-			must_be_ca = 1;
+		must_be_ca = 1;
 	}
 	ok = 1;
 
