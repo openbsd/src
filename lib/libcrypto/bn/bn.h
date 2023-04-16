@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.58 2023/04/16 08:55:44 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.59 2023/04/16 09:08:20 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -348,7 +348,10 @@ const BIGNUM *BN_value_one(void);
 char *	BN_options(void);
 BN_CTX *BN_CTX_new(void);
 #ifndef OPENSSL_NO_DEPRECATED
+/* Remove in next major bump. */
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 void	BN_CTX_init(BN_CTX *c);
+#endif
 #endif
 void	BN_CTX_free(BN_CTX *c);
 void	BN_CTX_start(BN_CTX *ctx);
@@ -361,7 +364,10 @@ int	BN_pseudo_rand_range(BIGNUM *rnd, const BIGNUM *range);
 int	BN_num_bits(const BIGNUM *a);
 int	BN_num_bits_word(BN_ULONG);
 BIGNUM *BN_new(void);
+/* Move to bn_local.h in the next major bump. */
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 void	BN_init(BIGNUM *);
+#endif
 void	BN_clear_free(BIGNUM *a);
 BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b);
 void	BN_swap(BIGNUM *a, BIGNUM *b);
@@ -498,7 +504,10 @@ int BN_X931_generate_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
     BN_GENCB *cb);
 
 BN_MONT_CTX *BN_MONT_CTX_new(void );
+/* Remove in next major bump. */
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
+#endif
 int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mont, BN_CTX *ctx);
 int BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
