@@ -2,6 +2,14 @@
 
 COPTS+=-Oz -fno-stack-protector
 COPTS+=-fno-unwind-tables -fno-asynchronous-unwind-tables
+
+.if ${MACHINE} == "amd64"
+COPTS+=-fcf-protection=none
+.endif
+.if ${MACHINE} == "arm64"
+COPTS+=-mbranch-protection=none
+.endif
+
 MAN=
 LDSTATIC=-static
 NOPIE=

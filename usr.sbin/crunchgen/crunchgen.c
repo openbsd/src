@@ -1,4 +1,4 @@
-/* $OpenBSD: crunchgen.c,v 1.25 2021/11/15 15:14:24 millert Exp $	 */
+/* $OpenBSD: crunchgen.c,v 1.26 2023/04/16 19:57:01 deraadt Exp $	 */
 
 /*
  * Copyright (c) 1994 University of Maryland
@@ -895,6 +895,12 @@ top_makefile_rules(FILE * outmk)
 	fprintf(outmk, "CFLAGS+=-Oz\n");
 	fprintf(outmk, "CFLAGS+=-fno-stack-protector\n");
 	fprintf(outmk, "CFLAGS+=-fno-unwind-tables\n");
+	fprintf(outmk, ".if ${MACHINE} == \"amd64\"\n");
+	fprintf(outmk, "CFLAGS+=-fcf-protection=none\n");
+	fprintf(outmk, ".endif\n");
+	fprintf(outmk, ".if ${MACHINE} == \"arm64\"\n");
+	fprintf(outmk, "CFLAGS+=-mbranch-protection=none\n");
+	fprintf(outmk, ".endif\n");
 	fprintf(outmk, "CFLAGS+=-fno-asynchronous-unwind-tables\n");
 	fprintf(outmk, "LDFLAGS+=$(NOPIE_LDFLAGS)\n");
 	fprintf(outmk, "STRIP?=strip\n");
