@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sha1.c,v 1.22 2023/04/09 15:47:41 jsing Exp $ */
+/* $OpenBSD: m_sha1.c,v 1.23 2023/04/16 16:42:06 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,6 +71,7 @@
 #endif
 
 #include "evp_local.h"
+#include "sha_internal.h"
 
 static int
 sha1_init(EVP_MD_CTX *ctx)
@@ -270,5 +271,81 @@ const EVP_MD *
 EVP_sha512(void)
 {
 	return &sha512_md;
+}
+
+static int
+sha512_224_init(EVP_MD_CTX *ctx)
+{
+	return SHA512_224_Init(ctx->md_data);
+}
+
+static int
+sha512_224_update(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+	return SHA512_224_Update(ctx->md_data, data, count);
+}
+
+static int
+sha512_224_final(EVP_MD_CTX *ctx, unsigned char *md)
+{
+	return SHA512_224_Final(md, ctx->md_data);
+}
+
+static const EVP_MD sha512_224_md = {
+	.type = NID_sha512_224,
+	.pkey_type = NID_sha512_224WithRSAEncryption,
+	.md_size = SHA512_224_DIGEST_LENGTH,
+	.flags = EVP_MD_FLAG_DIGALGID_ABSENT,
+	.init = sha512_224_init,
+	.update = sha512_224_update,
+	.final = sha512_224_final,
+	.copy = NULL,
+	.cleanup = NULL,
+	.block_size = SHA512_CBLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(SHA512_CTX),
+};
+
+const EVP_MD *
+EVP_sha512_224(void)
+{
+	return &sha512_224_md;
+}
+
+static int
+sha512_256_init(EVP_MD_CTX *ctx)
+{
+	return SHA512_256_Init(ctx->md_data);
+}
+
+static int
+sha512_256_update(EVP_MD_CTX *ctx, const void *data, size_t count)
+{
+	return SHA512_256_Update(ctx->md_data, data, count);
+}
+
+static int
+sha512_256_final(EVP_MD_CTX *ctx, unsigned char *md)
+{
+	return SHA512_256_Final(md, ctx->md_data);
+}
+
+static const EVP_MD sha512_256_md = {
+	.type = NID_sha512_256,
+	.pkey_type = NID_sha512_256WithRSAEncryption,
+	.md_size = SHA512_256_DIGEST_LENGTH,
+	.flags = EVP_MD_FLAG_DIGALGID_ABSENT,
+	.init = sha512_256_init,
+	.update = sha512_256_update,
+	.final = sha512_256_final,
+	.copy = NULL,
+	.cleanup = NULL,
+	.block_size = SHA512_CBLOCK,
+	.ctx_size = sizeof(EVP_MD *) + sizeof(SHA512_CTX),
+};
+
+const EVP_MD *
+EVP_sha512_256(void)
+{
+	return &sha512_256_md;
 }
 #endif	/* ifndef OPENSSL_NO_SHA512 */
