@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.35 2023/04/16 19:15:31 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.36 2023/04/16 19:16:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -83,9 +83,6 @@ str_free(char *s)
 {
     free(s);
 }
-
-#define string_stack_free(sk) sk_OPENSSL_STRING_pop_free(sk, str_free)
-
 
 /*
  * Post 1.0.1 sk function "deep_copy".  For the moment we simply make
