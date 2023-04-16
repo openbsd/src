@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.31 2023/03/08 05:45:31 jsing Exp $ */
+/* $OpenBSD: ec.h,v 1.32 2023/04/16 08:36:13 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -837,6 +837,8 @@ unsigned EC_KEY_get_enc_flags(const EC_KEY *key);
 void EC_KEY_set_enc_flags(EC_KEY *eckey, unsigned int flags);
 point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key);
 void EC_KEY_set_conv_form(EC_KEY *eckey, point_conversion_form_t cform);
+
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 /* functions to set/get method specific data  */
 void *EC_KEY_get_key_method_data(EC_KEY *key, 
 	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
@@ -850,6 +852,8 @@ void *EC_KEY_get_key_method_data(EC_KEY *key,
  */
 void *EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
 	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
+#endif
+
 /* wrapper functions for the underlying EC_GROUP object */
 void EC_KEY_set_asn1_flag(EC_KEY *eckey, int asn1_flag);
 
