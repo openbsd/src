@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.19 2022/09/11 17:31:19 tb Exp $ */
+/* $OpenBSD: ts.h,v 1.20 2023/04/16 08:31:54 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@opentsa.org) for the OpenSSL
  * project 2002, 2003, 2004.
  */
@@ -487,7 +487,9 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token);
 
 /* Set all fields to zero. */
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void);
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx);
+#endif
 void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx);
 
