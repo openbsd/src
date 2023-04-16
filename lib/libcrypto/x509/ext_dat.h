@@ -1,4 +1,4 @@
-/* $OpenBSD: ext_dat.h,v 1.4 2021/11/24 19:22:14 tb Exp $ */
+/* $OpenBSD: ext_dat.h,v 1.5 2023/04/16 07:49:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -69,7 +69,7 @@ extern X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_crl_invdate;
 extern X509V3_EXT_METHOD v3_delta_crl, v3_cpols, v3_crld, v3_freshest_crl;
 extern X509V3_EXT_METHOD v3_ocsp_nonce, v3_ocsp_accresp, v3_ocsp_acutoff;
 extern X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
-extern X509V3_EXT_METHOD v3_crl_hold, v3_pci;
+extern X509V3_EXT_METHOD v3_crl_hold;
 extern X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
 extern X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp, v3_idp;
 extern const X509V3_EXT_METHOD v3_addr, v3_asid;
@@ -123,7 +123,6 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 #ifndef OPENSSL_NO_OCSP
 	&v3_crl_hold,
 #endif
-	&v3_pci,
 	&v3_name_constraints,
 	&v3_policy_mappings,
 	&v3_inhibit_anyp,
