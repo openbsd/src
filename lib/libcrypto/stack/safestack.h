@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.22 2022/07/16 19:11:51 kn Exp $ */
+/* $OpenBSD: safestack.h,v 1.23 2023/04/16 08:18:10 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -1765,6 +1765,8 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_X509_OBJECT_sort(st) SKM_sk_sort(X509_OBJECT, (st))
 #define sk_X509_OBJECT_is_sorted(st) SKM_sk_is_sorted(X509_OBJECT, (st))
 
+/* Move these to pcy_int.h in the next major bump. */
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 #define sk_X509_POLICY_DATA_new(cmp) SKM_sk_new(X509_POLICY_DATA, (cmp))
 #define sk_X509_POLICY_DATA_new_null() SKM_sk_new_null(X509_POLICY_DATA)
 #define sk_X509_POLICY_DATA_free(st) SKM_sk_free(X509_POLICY_DATA, (st))
@@ -1808,6 +1810,7 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_X509_POLICY_NODE_pop(st) SKM_sk_pop(X509_POLICY_NODE, (st))
 #define sk_X509_POLICY_NODE_sort(st) SKM_sk_sort(X509_POLICY_NODE, (st))
 #define sk_X509_POLICY_NODE_is_sorted(st) SKM_sk_is_sorted(X509_POLICY_NODE, (st))
+#endif
 
 #define sk_X509_PURPOSE_new(cmp) SKM_sk_new(X509_PURPOSE, (cmp))
 #define sk_X509_PURPOSE_new_null() SKM_sk_new_null(X509_PURPOSE)
