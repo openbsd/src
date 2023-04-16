@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.11 2023/04/16 12:05:31 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.12 2023/04/16 12:08:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -66,10 +66,6 @@
 #include "x509_local.h"
 
 static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
-
-static int ext_cmp(const X509V3_EXT_METHOD * const *a,
-    const X509V3_EXT_METHOD * const *b);
-static void ext_list_free(X509V3_EXT_METHOD *ext);
 
 extern X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
 extern X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet, v3_info, v3_sinfo;
@@ -147,6 +143,12 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 
 #define STANDARD_EXTENSION_COUNT (sizeof(standard_exts) / sizeof(standard_exts[0]))
 
+static int
+ext_cmp(const X509V3_EXT_METHOD * const *a, const X509V3_EXT_METHOD * const *b)
+{
+	return ((*a)->ext_nid - (*b)->ext_nid);
+}
+
 int
 X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 {
@@ -161,12 +163,6 @@ X509V3_EXT_add(X509V3_EXT_METHOD *ext)
 	return 1;
 }
 LCRYPTO_ALIAS(X509V3_EXT_add);
-
-static int
-ext_cmp(const X509V3_EXT_METHOD * const *a, const X509V3_EXT_METHOD * const *b)
-{
-	return ((*a)->ext_nid - (*b)->ext_nid);
-}
 
 static int
 ext_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
@@ -252,6 +248,13 @@ X509V3_EXT_add_alias(int nid_to, int nid_from)
 }
 LCRYPTO_ALIAS(X509V3_EXT_add_alias);
 
+static void
+ext_list_free(X509V3_EXT_METHOD *ext)
+{
+	if (ext->ext_flags & X509V3_EXT_DYNAMIC)
+		free(ext);
+}
+
 void
 X509V3_EXT_cleanup(void)
 {
@@ -259,13 +262,6 @@ X509V3_EXT_cleanup(void)
 	ext_list = NULL;
 }
 LCRYPTO_ALIAS(X509V3_EXT_cleanup);
-
-static void
-ext_list_free(X509V3_EXT_METHOD *ext)
-{
-	if (ext->ext_flags & X509V3_EXT_DYNAMIC)
-		free(ext);
-}
 
 int
 X509V3_add_standard_extensions(void)
