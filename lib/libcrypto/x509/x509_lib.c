@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.8 2023/04/16 11:52:52 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.9 2023/04/16 11:59:50 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -84,8 +84,8 @@ extern X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp, v3_idp;
 extern const X509V3_EXT_METHOD v3_addr, v3_asid;
 extern const X509V3_EXT_METHOD v3_ct_scts[3];
 
-/* This table will be searched using OBJ_bsearch so it *must* kept in
- * order of the ext_nid values.
+/*
+ * This table needs to be sorted by increasing ext_nid values for OBJ_bsearch_.
  */
 
 static const X509V3_EXT_METHOD *standard_exts[] = {
@@ -270,10 +270,6 @@ ext_list_free(X509V3_EXT_METHOD *ext)
 	if (ext->ext_flags & X509V3_EXT_DYNAMIC)
 		free(ext);
 }
-
-/* Legacy function: we don't need to add standard extensions
- * any more because they are now kept in ext_dat.h.
- */
 
 int
 X509V3_add_standard_extensions(void)
