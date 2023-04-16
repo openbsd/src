@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.98 2023/04/11 00:45:09 jsg Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.99 2023/04/16 13:35:58 kettenis Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -476,6 +476,7 @@ typedef struct {
 
 #define PT_GNU_EH_FRAME		0x6474e550	/* Exception handling info */
 #define PT_GNU_RELRO		0x6474e552	/* Read-only after relocation */
+#define PT_GNU_PROPERTY		0x6474e553	/* Program property note */ 
 
 #define PT_OPENBSD_MUTABLE	0x65a3dbe5	/* like bss, but not immutable */
 #define PT_OPENBSD_RANDOMIZE	0x65a3dbe6	/* fill with random data */
