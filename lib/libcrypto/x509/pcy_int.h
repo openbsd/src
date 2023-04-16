@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_int.h,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: pcy_int.h,v 1.2 2023/04/16 07:36:43 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -55,6 +55,9 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+/* Needed to pull in the typedefs for X509_POLICY_* */
+#include "x509_local.h"
 
 __BEGIN_HIDDEN_DECLS
 
