@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_acpi.c,v 1.10 2022/06/28 21:02:14 kettenis Exp $	*/
+/*	$OpenBSD: com_acpi.c,v 1.11 2023/04/16 11:38:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -64,13 +64,30 @@ com_acpi_match(struct device *parent, void *match, void *aux)
 {
 	struct acpi_attach_args *aaa = aux;
 	struct cfdata *cf = match;
+	bus_space_handle_t ioh;
+	bus_space_tag_t iot;
+	int rv;
 
 	if (aaa->aaa_naddr < 1 || aaa->aaa_nirq < 1)
 		return 0;
 	if (cf->acpidevcf_addr != aaa->aaa_addr[0] &&
 	    cf->acpidevcf_addr != ACPIDEVCF_ADDR_UNK)
 		return 0;
-	return acpi_matchhids(aaa, com_hids, cf->cf_driver->cd_name);
+
+	if (!acpi_matchhids(aaa, com_hids, cf->cf_driver->cd_name))
+		return 0;
+	if (com_acpi_is_designware(aaa->aaa_dev))
+		return 1;
+
+	if (aaa->aaa_addr[0] == comconsaddr)
+		return 1;
+	iot = aaa->aaa_bst[0];
+	if (bus_space_map(iot, aaa->aaa_addr[0], aaa->aaa_size[0], 0, &ioh))
+		return 0;
+	rv = comprobe1(iot, ioh);
+	bus_space_unmap(iot, ioh, aaa->aaa_size[0]);
+
+	return rv;
 }
 
 void
