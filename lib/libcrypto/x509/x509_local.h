@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.2 2022/11/26 17:23:18 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.3 2023/04/16 08:08:34 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -165,7 +165,6 @@ struct x509_st {
 	CRYPTO_EX_DATA ex_data;
 	/* These contain copies of various extension values */
 	long ex_pathlen;
-	long ex_pcpathlen;
 	unsigned long ex_flags;
 	unsigned long ex_kusage;
 	unsigned long ex_xkusage;
