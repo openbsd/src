@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.132 2022/07/02 03:32:05 danj Exp $
+#	$OpenBSD: changelist,v 1.133 2023/04/16 07:16:58 ajacoutot Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -71,6 +71,7 @@
 /etc/mailer.conf
 /etc/man.conf
 /etc/master.passwd
+/etc/mixerctl.conf
 /etc/mk.conf
 +/etc/moduli
 /etc/monthly
