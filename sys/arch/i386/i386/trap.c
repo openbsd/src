@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.161 2023/03/08 04:43:07 guenther Exp $	*/
+/*	$OpenBSD: trap.c,v 1.162 2023/04/16 06:43:49 jsg Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -463,7 +463,7 @@ trap(struct trapframe *frame)
 	default:
 	we_re_toast:
 #ifdef DDB
-		if (db_ktrap(type, 0, frame))
+		if (db_ktrap(type, frame->tf_err, frame))
 			return;
 #endif
 		if (frame->tf_trapno < trap_types)
