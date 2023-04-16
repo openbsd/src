@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.139 2023/04/02 02:04:10 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.140 2023/04/16 12:47:26 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1955,4 +1955,30 @@ vm_terminate(struct vmd_vm *vm, const char *caller)
 		/* vm_remove calls vm_stop */
 		vm_remove(vm, caller);
 	}
+}
+
+/*
+ * Utility function for closing vm file descriptors. Assumes an fd of -1 was
+ * already closed or never opened.
+ *
+ * Returns 0 on success, otherwise -1 on failure.
+ */
+int
+close_fd(int fd)
+{
+	int	ret;
+
+	if (fd == -1)
+		return (0);
+
+#ifdef POSIX_CLOSE_RESTART
+	do { ret = close(fd); } while (ret == -1 && errno == EINTR);
+#else
+	ret = close(fd);
+#endif /* POSIX_CLOSE_RESTART */
+
+	if (ret == -1 && errno == EIO)
+		log_warn("%s(%d)", __func__, fd);
+
+	return (ret);
 }

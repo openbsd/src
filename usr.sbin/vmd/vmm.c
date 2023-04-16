@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.107 2023/01/14 20:55:55 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.108 2023/04/16 12:47:26 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -641,12 +641,10 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) == -1)
 		fatal("socketpair");
 
-	/* Start child vmd for this VM (fork, chroot, drop privs) */
+	/* Fork the vmm process to create the vm, inheriting open device fds. */
 	vm_pid = fork();
-
-	/* Start child failed? - cleanup and leave */
 	if (vm_pid == -1) {
-		log_warnx("%s: start child failed", __func__);
+		log_warn("%s: fork child failed", __func__);
 		ret = EIO;
 		goto err;
 	}
@@ -654,31 +652,24 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 	if (vm_pid > 0) {
 		/* Parent */
 		vm->vm_pid = vm_pid;
-		close(fds[1]);
+		close_fd(fds[1]);
 
 		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
 			for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
-				if (vm->vm_disks[i][j] != -1)
-					close(vm->vm_disks[i][j]);
-				vm->vm_disks[i][j] = -1;
+				if (close_fd(vm->vm_disks[i][j]) == 0)
+				    vm->vm_disks[i][j] = -1;
 			}
 		}
 		for (i = 0 ; i < vcp->vcp_nnics; i++) {
-			close(vm->vm_ifs[i].vif_fd);
-			vm->vm_ifs[i].vif_fd = -1;
+			if (close_fd(vm->vm_ifs[i].vif_fd) == 0)
+			    vm->vm_ifs[i].vif_fd = -1;
 		}
-		if (vm->vm_kernel != -1) {
-			close(vm->vm_kernel);
+		if (close_fd(vm->vm_kernel) == 0)
 			vm->vm_kernel = -1;
-		}
-		if (vm->vm_cdrom != -1) {
-			close(vm->vm_cdrom);
+		if (close_fd(vm->vm_cdrom) == 0)
 			vm->vm_cdrom = -1;
-		}
-		if (vm->vm_tty != -1) {
-			close(vm->vm_tty);
+		if (close_fd(vm->vm_tty) == 0)
 			vm->vm_tty = -1;
-		}
 
 		/* Read back the kernel-generated vm id from the child */
 		sz = atomicio(read, fds[0], &vcp->vcp_id, sizeof(vcp->vcp_id));
@@ -702,8 +693,8 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		return (0);
 	} else {
 		/* Child */
-		close(fds[0]);
-		close(PROC_PARENT_SOCK_FILENO);
+		close_fd(fds[0]);
+		close_fd(PROC_PARENT_SOCK_FILENO);
 
 		ret = start_vm(vm, fds[1]);
 

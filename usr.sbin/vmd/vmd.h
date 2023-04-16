@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.115 2023/04/02 02:04:10 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.116 2023/04/16 12:47:26 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -443,6 +443,7 @@ char	*get_string(uint8_t *, size_t);
 uint32_t prefixlen2mask(uint8_t);
 void	 prefixlen2mask6(u_int8_t, struct in6_addr *);
 void	 getmonotime(struct timeval *);
+int	 close_fd(int);
 
 /* priv.c */
 void	 priv(struct privsep *, struct privsep_proc *);
