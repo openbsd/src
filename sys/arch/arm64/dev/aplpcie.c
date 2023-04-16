@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.15 2023/03/09 19:48:42 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.16 2023/04/16 12:09:01 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -36,15 +36,20 @@
 #include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
-#define PCIE_CORE_LANE_CONF(port)	(0x84000 + (port) * 0x4000)
-#define  PCIE_CORE_LANE_CONF_REFCLK0REQ	(1 << 0)
-#define  PCIE_CORE_LANE_CONF_REFCLK1REQ	(1 << 1)
-#define  PCIE_CORE_LANE_CONF_REFCLK0ACK	(1 << 2)
-#define  PCIE_CORE_LANE_CONF_REFCLK1ACK	(1 << 3)
-#define  PCIE_CORE_LANE_CONF_REFCLK0EN	(1 << 9)
-#define  PCIE_CORE_LANE_CONF_REFCLK1EN	(1 << 10)
-#define PCIE_CORE_LANE_CTRL(port)	(0x84004 + (port) * 0x4000)
-#define  PCIE_CORE_LANE_CTRL_CFGACC	(1 << 15)
+#define PCIE_RC_PHY_BASE(port)		(0x84000 + (port) * 0x4000)
+#define PCIE_RC_PHY_SIZE		0x4000
+
+#define PCIE_PHY_LANE_CONF		0x0000
+#define  PCIE_PHY_LANE_CONF_REFCLK0REQ	(1 << 0)
+#define  PCIE_PHY_LANE_CONF_REFCLK1REQ	(1 << 1)
+#define  PCIE_PHY_LANE_CONF_REFCLK0ACK	(1 << 2)
+#define  PCIE_PHY_LANE_CONF_REFCLK1ACK	(1 << 3)
+#define  PCIE_PHY_LANE_CONF_REFCLK0EN	(1 << 9)
+#define  PCIE_PHY_LANE_CONF_REFCLK1EN	(1 << 10)
+#define  PCIE_PHY_LANE_CONF_REFCLK0CGEN	(1 << 30)
+#define  PCIE_PHY_LANE_CONF_REFCLK1CGEN	(1U << 31)
+#define PCIE_PHY_LANE_CTRL		0x0004
+#define  PCIE_PHY_LANE_CTRL_CFGACC	(1 << 15)
 
 #define PCIE_PORT_LTSSM_CTRL		0x0080
 #define  PCIE_PORT_LTSSM_CTRL_START	(1 << 0)
@@ -66,6 +71,12 @@
 #define PCIE_PORT_PERST			0x0814
 #define  PCIE_PORT_PERST_DIS		(1 << 0)
 
+#define PCIE_T6020_PORT_MSI_DOORBELL_LO	0x016c
+#define PCIE_T6020_PORT_MSI_DOORBELL_HI	0x0170
+#define PCIE_T6020_PORT_PERST		0x082c
+#define PCIE_T6020_PORT_MSI_MAP(idx)	(0x3800 + (idx) * 4)
+#define  PCIE_T6020_PORT_MSI_MAP_ENABLE	(1U << 31)
+
 #define HREAD4(sc, reg)							\
     (bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
@@ -79,6 +90,15 @@
     RWRITE4((sc), (reg), RREAD4((sc), (reg)) | (bits))
 #define RCLR4(sc, reg, bits)				\
     RWRITE4((sc), (reg), RREAD4((sc), (reg)) & ~(bits))
+
+#define LREAD4(sc, port, reg)					\
+    (bus_space_read_4((sc)->sc_iot, (sc)->sc_phy_ioh[port], (reg)))
+#define LWRITE4(sc, port, reg, val)				\
+    bus_space_write_4((sc)->sc_iot, (sc)->sc_phy_ioh[port], (reg), (val))
+#define LSET4(sc, port, reg, bits)			\
+    LWRITE4((sc), (port), (reg), LREAD4((sc), (port), (reg)) | (bits))
+#define LCLR4(sc, port, reg, bits)			\
+    LWRITE4((sc), (port), (reg), LREAD4((sc), (port), (reg)) & ~(bits))
 
 #define PREAD4(sc, port, reg)						\
     (bus_space_read_4((sc)->sc_iot, (sc)->sc_port_ioh[(port)], (reg)))
@@ -103,6 +123,8 @@ struct aplpcie_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_space_handle_t	sc_rc_ioh;
+	bus_space_handle_t	sc_phy_ioh[APLPCIE_MAX_PORTS];
+	bus_size_t		sc_phy_ios[APLPCIE_MAX_PORTS];
 	bus_space_handle_t	sc_port_ioh[APLPCIE_MAX_PORTS];
 	bus_size_t		sc_port_ios[APLPCIE_MAX_PORTS];
 	bus_dma_tag_t		sc_dmat;
@@ -148,10 +170,12 @@ aplpcie_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "apple,pcie");
+	return OF_is_compatible(faa->fa_node, "apple,pcie") ||
+	    OF_is_compatible(faa->fa_node, "apple,t6020-pcie");
 }
 
 void	aplpcie_init_port(struct aplpcie_softc *, int);
+void	aplpcie_t6020_init_port(struct aplpcie_softc *, int);
 
 void	aplpcie_attach_hook(struct device *, struct device *,
 	    struct pcibus_attach_args *);
@@ -220,6 +244,22 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 		sc->sc_port_ios[port] = faa->fa_reg[idx].size;
+
+		snprintf(name, sizeof(name), "phy%d", port);
+		idx = OF_getindex(faa->fa_node, name, "reg-names");
+		if (idx < 0) {
+			bus_space_subregion(sc->sc_iot, sc->sc_rc_ioh,
+			    PCIE_RC_PHY_BASE(port), PCIE_RC_PHY_SIZE,
+			    &sc->sc_phy_ioh[port]);
+			continue;
+		}
+		if (idx > faa->fa_nreg ||
+		    bus_space_map(sc->sc_iot, faa->fa_reg[idx].addr,
+		    faa->fa_reg[idx].size, 0, &sc->sc_phy_ioh[port])) {
+			printf(": can't map registers\n");
+			return;
+		}
+		sc->sc_phy_ios[port] = faa->fa_reg[idx].size;
 	}
 
 	sc->sc_dmat = faa->fa_dmat;
@@ -240,8 +280,13 @@ aplpcie_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	for (node = OF_child(sc->sc_node); node; node = OF_peer(node))
-		aplpcie_init_port(sc, node);
+	if (OF_is_compatible(sc->sc_node, "apple,t6020-pcie")) {
+		for (node = OF_child(sc->sc_node); node; node = OF_peer(node))
+			aplpcie_t6020_init_port(sc, node);
+	} else {
+		for (node = OF_child(sc->sc_node); node; node = OF_peer(node))
+			aplpcie_init_port(sc, node);
+	}
 
 	/*
 	 * Must wait at least 100ms after link training completes
@@ -444,24 +489,24 @@ aplpcie_init_port(struct aplpcie_softc *sc, int node)
 	}
 
 	/* Setup Refclk. */
-	RSET4(sc, PCIE_CORE_LANE_CTRL(port), PCIE_CORE_LANE_CTRL_CFGACC);
-	RSET4(sc, PCIE_CORE_LANE_CONF(port), PCIE_CORE_LANE_CONF_REFCLK0REQ);
+	LSET4(sc, port, PCIE_PHY_LANE_CTRL, PCIE_PHY_LANE_CTRL_CFGACC);
+	LSET4(sc, port, PCIE_PHY_LANE_CONF, PCIE_PHY_LANE_CONF_REFCLK0REQ);
 	for (timo = 500; timo > 0; timo--) {
-		stat = RREAD4(sc, PCIE_CORE_LANE_CONF(port));
-		if (stat & PCIE_CORE_LANE_CONF_REFCLK0ACK)
+		stat = LREAD4(sc, port, PCIE_PHY_LANE_CONF);
+		if (stat & PCIE_PHY_LANE_CONF_REFCLK0ACK)
 			break;
 		delay(100);
 	}
-	RSET4(sc, PCIE_CORE_LANE_CONF(port), PCIE_CORE_LANE_CONF_REFCLK1REQ);
+	LSET4(sc, port, PCIE_PHY_LANE_CONF, PCIE_PHY_LANE_CONF_REFCLK1REQ);
 	for (timo = 500; timo > 0; timo--) {
-		stat = RREAD4(sc, PCIE_CORE_LANE_CONF(port));
-		if (stat & PCIE_CORE_LANE_CONF_REFCLK1ACK)
+		stat = LREAD4(sc, port, PCIE_PHY_LANE_CONF);
+		if (stat & PCIE_PHY_LANE_CONF_REFCLK1ACK)
 			break;
 		delay(100);
 	}
-	RCLR4(sc, PCIE_CORE_LANE_CTRL(port), PCIE_CORE_LANE_CTRL_CFGACC);
-	RSET4(sc, PCIE_CORE_LANE_CONF(port),
-	    PCIE_CORE_LANE_CONF_REFCLK0EN | PCIE_CORE_LANE_CONF_REFCLK1EN);
+	LCLR4(sc, port, PCIE_PHY_LANE_CTRL, PCIE_PHY_LANE_CTRL_CFGACC);
+	LSET4(sc, port, PCIE_PHY_LANE_CONF,
+	    PCIE_PHY_LANE_CONF_REFCLK0EN | PCIE_PHY_LANE_CONF_REFCLK1EN);
 	PSET4(sc, port, PCIE_PORT_REFCLK, PCIE_PORT_REFCLK_EN);
 
 	/*
@@ -489,6 +534,125 @@ aplpcie_init_port(struct aplpcie_softc *sc, int node)
 		return;
 
 	PCLR4(sc, port, PCIE_PORT_REFCLK, PCIE_PORT_REFCLK_CGDIS);
+	PCLR4(sc, port, PCIE_PORT_APPCLK, PCIE_PORT_APPCLK_CGDIS);
+
+	/* Bring up the link. */
+	PWRITE4(sc, port, PCIE_PORT_LTSSM_CTRL, PCIE_PORT_LTSSM_CTRL_START);
+	for (timo = 1000; timo > 0; timo--) {
+		stat = PREAD4(sc, port, PCIE_PORT_LINK_STAT);
+		if (stat & PCIE_PORT_LINK_STAT_UP)
+			break;
+		delay(100);
+	}
+}
+
+void
+aplpcie_t6020_init_port(struct aplpcie_softc *sc, int node)
+{
+	char status[32];
+	uint32_t reg[5];
+	uint32_t *pwren_gpio;
+	uint32_t *reset_gpio;
+	int pwren_gpiolen, reset_gpiolen;
+	uint32_t stat;
+	int msi, port, timo;
+
+	if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
+	    strcmp(status, "disabled") == 0)
+		return;
+
+	if (OF_getpropintarray(node, "reg", reg, sizeof(reg)) != sizeof(reg))
+		return;
+
+	port = reg[0] >> 11;
+	if (port >= APLPCIE_MAX_PORTS || sc->sc_port_ios[port] == 0)
+		return;
+
+	pwren_gpiolen = OF_getproplen(node, "pwren-gpios");
+	reset_gpiolen = OF_getproplen(node, "reset-gpios");
+	if (reset_gpiolen <= 0)
+		return;
+
+	/*
+	 * Set things up such that we can share the 32 available MSIs
+	 * across all ports.
+	 */
+	PWRITE4(sc, port, PCIE_PORT_MSI_CTRL, PCIE_PORT_MSI_CTRL_ENABLE);
+	for (msi = 0; msi < 32; msi++)
+		PWRITE4(sc, port, PCIE_T6020_PORT_MSI_MAP(msi),
+		    msi | PCIE_T6020_PORT_MSI_MAP_ENABLE);
+	PWRITE4(sc, port, PCIE_T6020_PORT_MSI_DOORBELL_LO,
+	    sc->sc_msi_doorbell);
+	PWRITE4(sc, port, PCIE_T6020_PORT_MSI_DOORBELL_HI,
+	    sc->sc_msi_doorbell >> 32);
+
+	/* Check if the link is already up. */
+	stat = PREAD4(sc, port, PCIE_PORT_LINK_STAT);
+	if (stat & PCIE_PORT_LINK_STAT_UP)
+		return;
+
+	PSET4(sc, port, PCIE_PORT_APPCLK, PCIE_PORT_APPCLK_EN);
+
+	/* Assert PERST#. */
+	reset_gpio = malloc(reset_gpiolen, M_TEMP, M_WAITOK);
+	OF_getpropintarray(node, "reset-gpios", reset_gpio, reset_gpiolen);
+	gpio_controller_config_pin(reset_gpio, GPIO_CONFIG_OUTPUT);
+	gpio_controller_set_pin(reset_gpio, 1);
+
+	/* Power up the device if necessary. */
+	if (pwren_gpiolen > 0) {
+		pwren_gpio = malloc(pwren_gpiolen, M_TEMP, M_WAITOK);
+		OF_getpropintarray(node, "pwren-gpios",
+		    pwren_gpio, pwren_gpiolen);
+		gpio_controller_config_pin(pwren_gpio, GPIO_CONFIG_OUTPUT);
+		gpio_controller_set_pin(pwren_gpio, 1);
+		free(pwren_gpio, M_TEMP, pwren_gpiolen);
+	}
+
+	/* Setup Refclk. */
+	LSET4(sc, port, PCIE_PHY_LANE_CONF, PCIE_PHY_LANE_CONF_REFCLK0REQ);
+	for (timo = 500; timo > 0; timo--) {
+		stat = LREAD4(sc, port, PCIE_PHY_LANE_CONF);
+		if (stat & PCIE_PHY_LANE_CONF_REFCLK0ACK)
+			break;
+		delay(100);
+	}
+	LSET4(sc, port, PCIE_PHY_LANE_CONF, PCIE_PHY_LANE_CONF_REFCLK1REQ);
+	for (timo = 500; timo > 0; timo--) {
+		stat = LREAD4(sc, port, PCIE_PHY_LANE_CONF);
+		if (stat & PCIE_PHY_LANE_CONF_REFCLK1ACK)
+			break;
+		delay(100);
+	}
+	LSET4(sc, port, PCIE_PHY_LANE_CONF,
+	    PCIE_PHY_LANE_CONF_REFCLK0EN | PCIE_PHY_LANE_CONF_REFCLK1EN);
+
+	/*
+	 * PERST# must remain asserted for at least 100us after the
+	 * reference clock becomes stable.  But also has to remain
+	 * active at least 100ms after power up.
+	 */
+	if (pwren_gpiolen > 0)
+		delay(100000);
+	else
+		delay(100);
+
+	/* Deassert PERST#. */
+	PSET4(sc, port, PCIE_T6020_PORT_PERST, PCIE_PORT_PERST_DIS);
+	gpio_controller_set_pin(reset_gpio, 0);
+	free(reset_gpio, M_TEMP, reset_gpiolen);
+
+	for (timo = 2500; timo > 0; timo--) {
+		stat = PREAD4(sc, port, PCIE_PORT_STAT);
+		if (stat & PCIE_PORT_STAT_READY)
+			break;
+		delay(100);
+	}
+	if ((stat & PCIE_PORT_STAT_READY) == 0)
+		return;
+
+	LSET4(sc, port, PCIE_PHY_LANE_CONF,
+	    PCIE_PHY_LANE_CONF_REFCLK0CGEN | PCIE_PHY_LANE_CONF_REFCLK1CGEN);
 	PCLR4(sc, port, PCIE_PORT_APPCLK, PCIE_PORT_APPCLK_CGDIS);
 
 	/* Bring up the link. */
