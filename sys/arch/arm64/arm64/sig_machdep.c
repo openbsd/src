@@ -1,4 +1,4 @@
-/*	$OpenBSD: sig_machdep.c,v 1.8 2021/10/06 15:46:03 claudio Exp $ */
+/*	$OpenBSD: sig_machdep.c,v 1.9 2023/04/16 10:14:59 kettenis Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -157,6 +157,7 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 	tf->tf_sp = (register_t)fp;
 
 	tf->tf_elr = p->p_p->ps_sigcode;
+	tf->tf_spsr &= ~PSR_BTYPE;
 
 	return 0;
 }

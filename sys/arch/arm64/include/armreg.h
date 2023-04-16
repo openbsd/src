@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.27 2023/03/27 19:02:48 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.28 2023/04/16 10:14:59 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -673,6 +673,7 @@
 #define	PSR_I		0x00000080
 #define	PSR_A		0x00000100
 #define	PSR_D		0x00000200
+#define	PSR_BTYPE	0x00000c00
 #define	PSR_SSBS	0x00001000
 #define	PSR_IL		0x00100000
 #define	PSR_SS		0x00200000

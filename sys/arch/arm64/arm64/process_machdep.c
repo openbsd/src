@@ -1,4 +1,4 @@
-/* $OpenBSD: process_machdep.c,v 1.6 2022/01/01 18:52:36 kettenis Exp $ */
+/* $OpenBSD: process_machdep.c,v 1.7 2023/04/16 10:14:59 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -128,7 +128,10 @@ int
 process_set_pc(struct proc *p, caddr_t addr)
 {
 	struct trapframe *tf = p->p_addr->u_pcb.pcb_tf;
+
 	tf->tf_elr = (uint64_t)addr;
+	tf->tf_spsr &= ~PSR_BTYPE;
+
 	return (0);
 }
 
