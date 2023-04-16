@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.17 2023/04/10 16:46:00 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.18 2023/04/16 08:11:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -334,6 +334,7 @@ typedef struct POLICY_CONSTRAINTS_st {
 	ASN1_INTEGER *inhibitPolicyMapping;
 } POLICY_CONSTRAINTS;
 
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 /* Proxy certificate structures, see RFC 3820 */
 typedef struct PROXY_POLICY_st {
 	ASN1_OBJECT *policyLanguage;
@@ -355,6 +356,7 @@ void PROXY_CERT_INFO_EXTENSION_free(PROXY_CERT_INFO_EXTENSION *a);
 PROXY_CERT_INFO_EXTENSION *d2i_PROXY_CERT_INFO_EXTENSION(PROXY_CERT_INFO_EXTENSION **a, const unsigned char **in, long len);
 int i2d_PROXY_CERT_INFO_EXTENSION(PROXY_CERT_INFO_EXTENSION *a, unsigned char **out);
 extern const ASN1_ITEM PROXY_CERT_INFO_EXTENSION_it;
+#endif /* !LIBRESSL_NEXT_API || LIBRESSL_INTERNAL */
 
 struct ISSUING_DIST_POINT_st {
 	DIST_POINT_NAME *distpoint;
@@ -420,7 +422,9 @@ struct ISSUING_DIST_POINT_st {
 #define EXFLAG_INVALID		0x0080
 #define EXFLAG_SET		0x0100
 #define EXFLAG_CRITICAL		0x0200
+#if !defined(LIBRESSL_INTERNAL)
 #define EXFLAG_PROXY		0x0400
+#endif
 #define EXFLAG_INVALID_POLICY	0x0800
 #define EXFLAG_FRESHEST		0x1000
 #define EXFLAG_SS               0x2000	/* Self signed. */
