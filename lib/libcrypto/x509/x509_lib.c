@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.9 2023/04/16 11:59:50 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.10 2023/04/16 12:01:15 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -145,7 +145,7 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 #endif
 };
 
-#define STANDARD_EXTENSION_COUNT (sizeof(standard_exts)/sizeof(X509V3_EXT_METHOD *))
+#define STANDARD_EXTENSION_COUNT (sizeof(standard_exts) / sizeof(standard_exts[0]))
 
 int
 X509V3_EXT_add(X509V3_EXT_METHOD *ext)
