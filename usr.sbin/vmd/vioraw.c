@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioraw.c,v 1.7 2022/05/04 23:17:25 dv Exp $	*/
+/*	$OpenBSD: vioraw.c,v 1.8 2023/04/16 12:52:54 dv Exp $	*/
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
  *
@@ -46,9 +46,8 @@ raw_close(void *file, int stayopen)
 }
 
 /*
- * Initializes a raw disk image backing file from an fd.
- * Stores the number of 512 byte sectors in *szp,
- * returning -1 for error, 0 for success.
+ * Initializes a raw disk image backing file from an fd.  Stores the
+ * number of bytes in *szp, returning -1 for error, 0 for success.
  */
 int
 virtio_raw_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
@@ -57,21 +56,21 @@ virtio_raw_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 	int *fdp;
 
 	if (nfd != 1)
-		return -1;
+		return (-1);
 	sz = lseek(fd[0], 0, SEEK_END);
 	if (sz == -1)
-		return -1;
+		return (-1);
 
 	fdp = malloc(sizeof(int));
 	if (!fdp)
-		return -1;
+		return (-1);
 	*fdp = fd[0];
 	file->p = fdp;
 	file->pread = raw_pread;
 	file->pwrite = raw_pwrite;
 	file->close = raw_close;
 	*szp = sz;
-	return 0;
+	return (0);
 }
 
 /*
