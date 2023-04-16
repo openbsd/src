@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3.c,v 1.14 2023/04/15 20:00:24 jsing Exp $	*/
+/*	$OpenBSD: sha3.c,v 1.15 2023/04/16 15:32:16 jsing Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -121,10 +121,13 @@ sha3_keccakf(uint64_t st[25])
 int
 sha3_init(sha3_ctx *c, int mdlen)
 {
+	if (mdlen < 0 || mdlen >= KECCAK_BYTE_WIDTH / 2)
+		return 0;
+
 	memset(c, 0, sizeof(*c));
 
 	c->mdlen = mdlen;
-	c->rsize = 200 - 2 * mdlen;
+	c->rsize = KECCAK_BYTE_WIDTH - 2 * mdlen;
 
 	return 1;
 }
