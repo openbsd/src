@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.60 2023/04/16 09:11:06 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.61 2023/04/16 09:13:46 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -495,6 +495,8 @@ int	BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb);
 int	BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
     int do_trial_division, BN_GENCB *cb);
 
+/* Remove in next major bump. */
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx);
 
 int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
@@ -505,6 +507,7 @@ int BN_X931_generate_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
     const BIGNUM *Xp,
     const BIGNUM *e, BN_CTX *ctx,
     BN_GENCB *cb);
+#endif
 
 BN_MONT_CTX *BN_MONT_CTX_new(void );
 /* Remove in next major bump. */
