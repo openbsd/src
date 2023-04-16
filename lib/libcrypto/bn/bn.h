@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.57 2022/12/17 15:56:25 jsing Exp $ */
+/* $OpenBSD: bn.h,v 1.58 2023/04/16 08:55:44 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -612,6 +612,7 @@ int	BN_GF2m_arr2poly(const int p[], BIGNUM *a);
 
 #endif
 
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 /* faster mod functions for the 'NIST primes'
  * 0 <= a < p^2 */
 int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
@@ -625,6 +626,7 @@ const BIGNUM *BN_get0_nist_prime_224(void);
 const BIGNUM *BN_get0_nist_prime_256(void);
 const BIGNUM *BN_get0_nist_prime_384(void);
 const BIGNUM *BN_get0_nist_prime_521(void);
+#endif
 
 /* Primes from RFC 2409 */
 BIGNUM *get_rfc2409_prime_768(BIGNUM *bn);
