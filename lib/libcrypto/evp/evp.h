@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.115 2023/04/16 16:42:06 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.116 2023/04/16 17:06:19 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -624,6 +624,14 @@ const EVP_MD *EVP_sha512(void);
 #if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
 const EVP_MD *EVP_sha512_224(void);
 const EVP_MD *EVP_sha512_256(void);
+#endif
+#endif
+#ifndef OPENSSL_NO_SHA3
+#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
+const EVP_MD *EVP_sha3_224(void);
+const EVP_MD *EVP_sha3_256(void);
+const EVP_MD *EVP_sha3_384(void);
+const EVP_MD *EVP_sha3_512(void);
 #endif
 #endif
 #ifndef OPENSSL_NO_SM3
