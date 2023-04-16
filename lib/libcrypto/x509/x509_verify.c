@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.63 2023/01/20 22:00:47 job Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.64 2023/04/16 07:59:57 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -904,12 +904,6 @@ x509_verify_cert_extensions(struct x509_verify_ctx *ctx, X509 *cert, int need_ca
 	}
 	if (ctx->purpose > 0 && X509_check_purpose(cert, ctx->purpose, need_ca)) {
 		ctx->error = X509_V_ERR_INVALID_PURPOSE;
-		return 0;
-	}
-
-	/* XXX support proxy certs later in new api */
-	if (ctx->xsc == NULL && cert->ex_flags & EXFLAG_PROXY) {
-		ctx->error = X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED;
 		return 0;
 	}
 
