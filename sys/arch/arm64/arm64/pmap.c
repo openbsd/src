@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.95 2023/04/13 15:23:22 miod Exp $ */
+/* $OpenBSD: pmap.c,v 1.96 2023/04/16 11:14:26 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -1220,10 +1220,12 @@ pmap_bootstrap(long kvo, paddr_t lpt1, long kernelstart, long kernelend,
 	vp1 = (struct pmapvp1 *)pt1pa;
 	pmap_kernel()->pm_vp.l1 = (struct pmapvp1 *)va;
 	pmap_kernel()->pm_privileged = 1;
+	pmap_kernel()->pm_guarded = ATTR_GP;
 	pmap_kernel()->pm_asid = 0;
 
 	pmap_tramp.pm_vp.l1 = (struct pmapvp1 *)va + 1;
 	pmap_tramp.pm_privileged = 1;
+	pmap_tramp.pm_guarded = ATTR_GP;
 	pmap_tramp.pm_asid = 0;
 
 	/* Mark ASID 0 as in-use. */
@@ -1689,8 +1691,7 @@ pmap_pte_update(struct pte_desc *pted, uint64_t *pl3)
 		access_bits = ap_bits_user[pted->pted_pte & PROT_MASK];
 
 #ifndef SMALL_KERNEL
-	if (pm == pmap_kernel())
-		access_bits |= ATTR_GP;
+	access_bits |= pm->pm_guarded;
 #endif
 
 	pte = (pted->pted_pte & PTE_RPGN) | attr | access_bits | L3_P;
