@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.337 2023/01/30 14:05:36 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.338 2023/04/16 01:50:12 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3192,6 +3192,11 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		ctrlval = vcpu->vc_vmx_exit_ctls;
 	}
 
+	if (rcr4() & CR4_CET)
+		want1 |= IA32_VMX_LOAD_HOST_CET_STATE;
+	else
+		want0 |= IA32_VMX_LOAD_HOST_CET_STATE;
+
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &exit)) {
 		DPRINTF("%s: error computing exit controls\n", __func__);
 		ret = EINVAL;
@@ -3230,6 +3235,11 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 		ctrl = IA32_VMX_ENTRY_CTLS;
 		ctrlval = vcpu->vc_vmx_entry_ctls;
 	}
+
+	if (rcr4() & CR4_CET)
+		want1 |= IA32_VMX_LOAD_GUEST_CET_STATE;
+	else
+		want0 |= IA32_VMX_LOAD_GUEST_CET_STATE;
 
 	if (vcpu_vmx_compute_ctrl(ctrlval, ctrl, want1, want0, &entry)) {
 		ret = EINVAL;
