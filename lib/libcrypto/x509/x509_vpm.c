@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.34 2023/04/16 18:48:58 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.35 2023/04/16 19:15:31 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -139,7 +139,7 @@ x509_param_set_hosts_internal(X509_VERIFY_PARAM_ID *id, int mode,
 		return 0;
 
 	if (mode == SET_HOST && id->hosts) {
-		string_stack_free(id->hosts);
+		sk_OPENSSL_STRING_pop_free(id->hosts, str_free);
 		id->hosts = NULL;
 	}
 	if (name == NULL || namelen == 0)
@@ -186,7 +186,7 @@ x509_verify_param_zero(X509_VERIFY_PARAM *param)
 	}
 	paramid = param->id;
 	if (paramid->hosts) {
-		string_stack_free(paramid->hosts);
+		sk_OPENSSL_STRING_pop_free(paramid->hosts, str_free);
 		paramid->hosts = NULL;
 	}
 	free(paramid->peername);
@@ -332,7 +332,7 @@ X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest, const X509_VERIFY_PARAM *src)
 	/* Copy the host flags if and only if we're copying the host list */
 	if (test_x509_verify_param_copy_id(hosts, NULL)) {
 		if (dest->id->hosts) {
-			string_stack_free(dest->id->hosts);
+			sk_OPENSSL_STRING_pop_free(dest->id->hosts, str_free);
 			dest->id->hosts = NULL;
 		}
 		if (id->hosts) {
