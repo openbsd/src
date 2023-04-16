@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplcpu.c,v 1.5 2022/12/03 13:31:32 kettenis Exp $	*/
+/*	$OpenBSD: aplcpu.c,v 1.6 2023/04/16 08:02:45 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -375,8 +375,8 @@ aplcpu_setperf(int level)
 				continue;
 
 			/* Translate performance level to a P-state. */
-			opp_level = 1;
 			ot = sc->sc_opp_table[j];
+			opp_level = ot->ot_opp[0].opp_level;
 			for (k = 0; k < ot->ot_nopp; k++) {
 				if (ot->ot_opp[k].opp_hz <= level_hz &&
 				    ot->ot_opp[k].opp_level >= opp_level)
