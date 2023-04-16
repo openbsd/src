@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.22 2022/12/26 07:18:50 jmc Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.23 2023/04/16 08:17:04 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -160,10 +160,16 @@ typedef struct engine_st ENGINE;
 typedef struct ssl_st SSL;
 typedef struct ssl_ctx_st SSL_CTX;
 
+/*
+ * Move to x509_local.h in next major bump - x509_vfy.c needs X509_POLICY_TREE
+ * and X509_POLICY_CACHE.
+ */
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 typedef struct X509_POLICY_NODE_st X509_POLICY_NODE;
 typedef struct X509_POLICY_LEVEL_st X509_POLICY_LEVEL;
 typedef struct X509_POLICY_TREE_st X509_POLICY_TREE;
 typedef struct X509_POLICY_CACHE_st X509_POLICY_CACHE;
+#endif
 
 typedef struct AUTHORITY_KEYID_st AUTHORITY_KEYID;
 typedef struct DIST_POINT_st DIST_POINT;
