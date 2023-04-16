@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.59 2023/04/16 09:08:20 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.60 2023/04/16 09:11:06 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -444,7 +444,10 @@ int	BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 int	BN_mask_bits(BIGNUM *a, int n);
 int	BN_print_fp(FILE *fp, const BIGNUM *a);
 int	BN_print(BIO *fp, const BIGNUM *a);
+/* Move to bn_local.h in the next major bump. */
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 int	BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx);
+#endif
 int	BN_rshift(BIGNUM *r, const BIGNUM *a, int n);
 int	BN_rshift1(BIGNUM *r, const BIGNUM *a);
 void	BN_clear(BIGNUM *a);
@@ -549,6 +552,8 @@ void BN_set_params(int mul, int high, int low, int mont);
 int BN_get_params(int which); /* 0, mul, 1 high, 2 low, 3 mont */
 #endif
 
+/* Move to bn_local.h in the next major bump. */
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 void	BN_RECP_CTX_init(BN_RECP_CTX *recp);
 BN_RECP_CTX *BN_RECP_CTX_new(void);
 void	BN_RECP_CTX_free(BN_RECP_CTX *recp);
@@ -559,6 +564,7 @@ int	BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx);
 int	BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
     BN_RECP_CTX *recp, BN_CTX *ctx);
+#endif
 
 #ifndef OPENSSL_NO_EC2M
 
