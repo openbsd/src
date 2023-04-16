@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplefb.c,v 1.19 2022/11/09 22:56:44 tobhe Exp $	*/
+/*	$OpenBSD: simplefb.c,v 1.20 2023/04/16 11:34:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2016 Mark Kettenis
  *
@@ -288,6 +288,9 @@ simplefb_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		default:
 			return -1;
 		}
+		break;
+	case WSDISPLAYIO_GVIDEO:
+	case WSDISPLAYIO_SVIDEO:
 		break;
 	default:
 		return -1;
