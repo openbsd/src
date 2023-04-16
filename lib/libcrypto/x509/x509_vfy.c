@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.112 2023/04/16 08:06:42 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.113 2023/04/16 18:48:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -73,9 +73,10 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
 #include "asn1_local.h"
-#include "vpm_int.h"
 #include "x509_internal.h"
+#include "x509_local.h"
 
 /* CRL score values */
 
