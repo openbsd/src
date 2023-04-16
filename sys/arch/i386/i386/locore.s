@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.200 2023/01/31 15:18:54 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.201 2023/04/16 05:40:25 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -1166,7 +1166,7 @@ IDTVEC(fpu)
 	ZTRAP(T_ARITHTRAP)
 #endif
 IDTVEC(align)
-	ZTRAP(T_ALIGNFLT)
+	TRAP(T_ALIGNFLT)
 	/* 18 - 31 reserved for future exp */
 
 /*
