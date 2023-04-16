@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.98 2023/04/15 01:22:50 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.99 2023/04/16 06:38:50 guenther Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -430,6 +430,11 @@ usertrap(struct trapframe *frame)
 	case T_TRCTRAP:			/* trace trap */
 		sig = SIGTRAP;
 		code = TRAP_BRKPT;
+		break;
+	case T_CP:
+		sig = SIGILL;
+		code = (frame->tf_err & 0x7fff) < 4 ? ILL_ILLOPC
+		    : ILL_BADSTK;
 		break;
 
 	case T_PAGEFLT:			/* page fault */
