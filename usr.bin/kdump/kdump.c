@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.156 2023/02/17 18:01:26 deraadt Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.157 2023/04/16 19:42:40 otto Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -88,6 +88,7 @@ int needtid, tail, basecol;
 char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 pid_t pid_opt = -1;
+char* utracefilter;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
 
@@ -168,7 +169,7 @@ main(int argc, char *argv[])
 			screenwidth = 80;
 	}
 
-	while ((ch = getopt(argc, argv, "f:dHlm:np:RTt:xX")) != -1)
+	while ((ch = getopt(argc, argv, "f:dHlm:np:RTt:u:xX")) != -1)
 		switch (ch) {
 		case 'f':
 			tracefile = optarg;
@@ -211,6 +212,11 @@ main(int argc, char *argv[])
 			trpoints = getpoints(optarg, DEF_POINTS);
 			if (trpoints < 0)
 				errx(1, "unknown trace point in %s", optarg);
+			utracefilter = NULL;
+			break;
+		case 'u':
+			utracefilter = optarg;
+			trpoints = KTRFAC_USER;
 			break;
 		case 'x':
 			iohex = 1;
@@ -246,7 +252,8 @@ main(int argc, char *argv[])
 		silent = 0;
 		if (pid_opt != -1 && pid_opt != ktr_header.ktr_pid)
 			silent = 1;
-		if (silent == 0 && trpoints & (1<<ktr_header.ktr_type))
+		if (utracefilter == NULL && silent == 0 &&
+		    trpoints & (1<<ktr_header.ktr_type))
 			dumpheader(&ktr_header);
 		ktrlen = ktr_header.ktr_len;
 		if (ktrlen > size) {
@@ -1254,10 +1261,16 @@ showbufc(int col, unsigned char *dp, size_t datalen, int flags)
 static void
 showbuf(unsigned char *dp, size_t datalen)
 {
-	int i, j;
+	size_t i, j;
 	int col = 0, bpl;
 	unsigned char c;
+	char visbuf[4 * KTR_USER_MAXLEN + 1];
 
+	if (utracefilter != NULL) {
+		strvisx(visbuf, dp, datalen, VIS_SAFE | VIS_OCTAL);
+		printf("%s", visbuf);
+		return;
+	}
 	if (iohex == 1) {
 		putchar('\t');
 		col = 8;
@@ -1280,7 +1293,7 @@ showbuf(unsigned char *dp, size_t datalen)
 		if (bpl <= 0)
 			bpl = 1;
 		for (i = 0; i < datalen; i += bpl) {
-			printf("   %04x:  ", i);
+			printf("   %04zx:  ", i);
 			for (j = 0; j < bpl; j++) {
 				if (i+j >= datalen)
 					printf("   ");
@@ -1413,9 +1426,12 @@ ktruser(struct ktr_user *usr, size_t len)
 	if (len < sizeof(struct ktr_user))
 		errx(1, "invalid ktr user length %zu", len);
 	len -= sizeof(struct ktr_user);
-	printf("%.*s:", KTR_USER_MAXIDLEN, usr->ktr_id);
-	printf(" %zu bytes\n", len);
-	showbuf((unsigned char *)(usr + 1), len);
+	if (utracefilter == NULL) {
+		printf("%.*s:", KTR_USER_MAXIDLEN, usr->ktr_id);
+		printf(" %zu bytes\n", len);
+		showbuf((unsigned char *)(usr + 1), len);
+	} else if (strncmp(usr->ktr_id, utracefilter, KTR_USER_MAXIDLEN) == 0)
+		showbuf((unsigned char *)(usr + 1), len);
 }
 
 static void
@@ -1473,8 +1489,8 @@ usage(void)
 
 	extern char *__progname;
 	fprintf(stderr, "usage: %s "
-	    "[-dHlnRTXx] [-f file] [-m maxdata] [-p pid] [-t trstr]\n",
-	    __progname);
+	    "[-dHlnRTXx] [-f file] [-m maxdata] [-p pid] [-t trstr] "
+	    "[-u label]\n", __progname);
 	exit(1);
 }
 

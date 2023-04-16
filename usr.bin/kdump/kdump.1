@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.35 2022/07/30 07:19:30 jsg Exp $
+.\"	$OpenBSD: kdump.1,v 1.36 2023/04/16 19:42:40 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 30 2022 $
+.Dd $Mdocdate: April 16 2023 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Op Fl m Ar maxdata
 .Op Fl p Ar pid
 .Op Fl t Ar trstr
+.Op Fl u Ar label
 .Sh DESCRIPTION
 .Nm
 displays the kernel trace files produced with
@@ -106,12 +107,31 @@ See the
 option of
 .Xr ktrace 1
 for the meaning of the letters.
+.It Fl u Ar label
+Display
+.Xr utrace 2
+tracepoints having
+.XR utrace 2
+label
+.Ar label
+as strings with
+.Xr vis 3
+escaping, without
+.Xr ktrace 2
+header information.
 .It Fl X
 Display I/O data with hexadecimal data and printable ASCII characters
 side by side.
 .It Fl x
 Display I/O data in hexadecimal.
 .El
+.Pp
+The
+.Fl t
+and
+.Fl u
+options are mutually exclusive,
+the last one specified overrides any previous ones.
 .Sh FILES
 .Bl -tag -width ktrace.out -compact
 .It Pa ktrace.out
