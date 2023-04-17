@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.23 2023/04/17 09:49:04 op Exp $	*/
+/*	$OpenBSD: match.c,v 1.24 2023/04/17 15:18:25 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -168,17 +168,23 @@ displaymatch(struct line *clp, int cbo)
 		/* match is not in this window, so display line in echo area */
 		bufo = 0;
 		for (cp = 0; cp < llength(clp); cp++) {
+			if (bufo >= sizeof(buf) - 1)
+				break;
+
 			c = lgetc(clp, cp);
-			if (c != '\t')
+			if (c != '\t') {
 				if (ISCTRL(c)) {
+					if (bufo >= sizeof(buf) - 3)
+						break;
 					buf[bufo++] = '^';
 					buf[bufo++] = CCHR(c);
 				} else
 					buf[bufo++] = c;
-			else
+			} else {
 				do {
 					buf[bufo++] = ' ';
-				} while (bufo & 7);
+				} while ((bufo & 7) && bufo < sizeof(buf) - 1);
+			}
 		}
 		buf[bufo++] = '\0';
 		ewprintf("Matches %s", buf);
