@@ -1,4 +1,4 @@
-/* $OpenBSD: file.c,v 1.14 2023/01/06 07:09:27 nicm Exp $ */
+/* $OpenBSD: file.c,v 1.15 2023/04/17 17:58:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -177,9 +177,9 @@ file_fire_read(struct client_file *cf)
 int
 file_can_print(struct client *c)
 {
-	if (c == NULL)
-		return (0);
-	if (c->session != NULL && (~c->flags & CLIENT_CONTROL))
+	if (c == NULL ||
+	    (c->flags & CLIENT_ATTACHED) ||
+	    (c->flags & CLIENT_CONTROL))
 		return (0);
 	return (1);
 }
