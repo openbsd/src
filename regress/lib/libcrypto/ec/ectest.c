@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.13 2023/04/13 05:25:30 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.14 2023/04/17 20:41:02 tb Exp $	*/
 /* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
@@ -96,6 +96,9 @@
 #define TIMING_RAND_PT 1
 #define TIMING_SIMUL 2
 
+int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
+    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
+
 /* test multiplication with group order, long and negative scalars */
 static void
 group_order_tests(EC_GROUP *group)
@@ -132,7 +135,8 @@ group_order_tests(EC_GROUP *group)
 		ABORT;
 	fprintf(stdout, " ok\n");
 	fprintf(stdout, "long/negative scalar tests ... ");
-	if (!BN_one(n1))
+	/* XXX - switch back to BN_one() after next bump. */
+	if (!BN_set_word(n1, 1))
 		ABORT;
 	/* n1 = 1 - order */
 	if (!BN_sub(n1, n1, order))
@@ -342,7 +346,7 @@ prime_field_tests(void)
 	fprintf(stdout, "\nGenerator as octet string, hybrid form:\n     ");
 	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
 
-		if (!EC_POINT_get_Jprojective_coordinates(group, R, x, y, z, ctx))
+		if (!EC_POINT_get_Jprojective_coordinates_GFp(group, R, x, y, z, ctx))
 			ABORT;
 	fprintf(stdout, "\nA representation of the inverse of that generator in\nJacobian projective coordinates:\n     X = 0x");
 	BN_print_fp(stdout, x);

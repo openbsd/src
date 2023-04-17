@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.9 2023/04/15 21:53:38 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.10 2023/04/17 20:41:02 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -177,8 +177,10 @@ test_random_points_on_curve(EC_builtin_curve *curve)
 	for (i = 0; i < N_RANDOM_POINTS; i++) {
 		EC_POINT *random_point;
 
-		if (!bn_rand_interval(random, BN_value_one(), order))
-			errx(1, "bn_rand_interval");
+		do {
+			if (!BN_rand_range(random, order))
+				errx(1, "BN_rand_range");
+		} while (BN_is_zero(random));
 
 		if ((random_point = EC_POINT_new(group)) == NULL)
 			errx(1, "EC_POINT_new");
