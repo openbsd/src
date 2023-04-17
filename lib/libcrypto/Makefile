@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.104 2023/04/16 16:42:06 jsing Exp $
+# $OpenBSD: Makefile,v 1.105 2023/04/17 05:54:20 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -316,7 +316,6 @@ SRCS+= dh_gen.c
 SRCS+= dh_key.c
 SRCS+= dh_lib.c
 SRCS+= dh_pmeth.c
-SRCS+= dh_prn.c
 
 # dsa/
 SRCS+= dsa_ameth.c
