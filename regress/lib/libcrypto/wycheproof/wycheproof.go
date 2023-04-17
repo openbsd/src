@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.143 2023/04/06 08:41:53 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.144 2023/04/17 15:11:00 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -2956,7 +2956,7 @@ func main() {
 
 	testc = newTestCoordinator()
 
-	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sha3|sha512_(224|256))_`)
+	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sha3|sha512_(224|256)|sect\d{3}[rk]1)_`)
 
 	for _, test := range tests {
 		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
