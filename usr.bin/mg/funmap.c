@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.65 2022/12/26 19:16:02 jmc Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.66 2023/04/17 09:49:04 op Exp $	*/
 
 /* This file is in the public domain */
 
@@ -157,9 +157,7 @@ static struct funmap functnames[] = {
 	{enewline, "newline", 1},
 	{lfindent, "newline-and-indent", 1},
 	{forwline, "next-line", 1},
-#ifdef NOTAB
 	{notabmode, "no-tab-mode", 0},
-#endif /* NOTAB */
 	{notmodified, "not-modified", 0},
 	{openline, "open-line", 1},
 	{nextwind, "other-window", 0},
@@ -212,9 +210,7 @@ static struct funmap functnames[] = {
 	{shellcommand, "shell-command", 1},
 	{piperegion, "shell-command-on-region", 1},
 	{shrinkwind, "shrink-window", 1},
-#ifdef NOTAB
 	{space_to_tabstop, "space-to-tabstop", 0},
-#endif /* NOTAB */
 	{splitwind, "split-window-vertically", 0},
 	{definemacro, "start-kbd-macro", 0},
 	{spawncli, "suspend-emacs", 0},

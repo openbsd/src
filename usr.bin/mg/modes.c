@@ -1,4 +1,4 @@
-/*	$OpenBSD: modes.c,v 1.21 2017/05/30 07:05:22 florian Exp $	*/
+/*	$OpenBSD: modes.c,v 1.22 2023/04/17 09:49:04 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -78,7 +78,6 @@ fillmode(int f, int n)
 	return (changemode(f, n, "fill"));
 }
 
-#ifdef NOTAB
 int
 notabmode(int f, int n)
 {
@@ -93,7 +92,6 @@ notabmode(int f, int n)
 		curbp->b_flag ^= BFNOTAB;
 	return (TRUE);
 }
-#endif	/* NOTAB */
 
 int
 overwrite_mode(int f, int n)
@@ -162,13 +160,11 @@ set_default_mode(int f, int n)
 		else
 			defb_flag |= BFOVERWRITE;
 	}
-#ifdef NOTAB
 	if (strcmp(modebuf, "notab") == 0) {
 		if (n <= 0)
 			defb_flag &= ~BFNOTAB;
 		else
 			defb_flag |= BFNOTAB;
 	}
-#endif	/* NOTAB */
 	return (TRUE);
 }

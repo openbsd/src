@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.50 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: display.c,v 1.51 2023/04/17 09:49:04 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -317,11 +317,7 @@ vtputc(int c)
 	vp = vscreen[vtrow];
 	if (vtcol >= ncol)
 		vp->v_text[ncol - 1] = '$';
-	else if (c == '\t'
-#ifdef	NOTAB
-	    && !(curbp->b_flag & BFNOTAB)
-#endif
-	    ) {
+	else if (c == '\t') {
 		do {
 			vtputc(' ');
 		} while (vtcol < ncol && (vtcol & 0x07) != 0);
@@ -353,11 +349,7 @@ vtpute(int c)
 	vp = vscreen[vtrow];
 	if (vtcol >= ncol)
 		vp->v_text[ncol - 1] = '$';
-	else if (c == '\t'
-#ifdef	NOTAB
-	    && !(curbp->b_flag & BFNOTAB)
-#endif
-	    ) {
+	else if (c == '\t') {
 		do {
 			vtpute(' ');
 		} while (((vtcol + lbound) & 0x07) != 0 && vtcol < ncol);
@@ -516,11 +508,7 @@ update(int modelinecolor)
 	i = 0;
 	while (i < curwp->w_doto) {
 		c = lgetc(lp, i++);
-		if (c == '\t'
-#ifdef	NOTAB
-		    && !(curbp->b_flag & BFNOTAB)
-#endif
-			) {
+		if (c == '\t') {
 			curcol |= 0x07;
 			curcol++;
 		} else if (ISCTRL(c) != FALSE)

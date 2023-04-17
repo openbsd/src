@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.178 2023/03/30 19:00:02 op Exp $	*/
+/*	$OpenBSD: def.h,v 1.179 2023/04/17 09:49:04 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -285,9 +285,7 @@ struct buffer {
 
 #define BFCHG	0x01			/* Changed.			 */
 #define BFBAK	0x02			/* Need to make a backup.	 */
-#ifdef	NOTAB
 #define BFNOTAB 0x04			/* no tab mode			 */
-#endif
 #define BFOVERWRITE 0x08		/* overwrite mode		 */
 #define BFREADONLY  0x10		/* read only mode		 */
 #define BFDIRTY     0x20		/* Buffer was modified elsewhere */
@@ -676,9 +674,7 @@ int		 executemacro(int, int);
 /* modes.c X */
 int		 indentmode(int, int);
 int		 fillmode(int, int);
-#ifdef NOTAB
 int		 notabmode(int, int);
-#endif	/* NOTAB */
 int		 overwrite_mode(int, int);
 int		 set_default_mode(int,int);
 
