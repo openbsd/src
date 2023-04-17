@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2023/04/17 19:37:18 tb Exp $
+#	$OpenBSD: Makefile,v 1.31 2023/04/17 19:51:05 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -53,10 +53,15 @@ CLEANFILES += bn_isqrt_gen_tables.txt.tmp bn_isqrt_gen_tables.txt
 run-regress-bn_test bn_test.out: bn_test
 	./bn_test -out bn_test.out
 
+.if exists(/usr/local/bin/bc-gh)
+BC ?=	bc-gh
+.endif
+BC ?=	bc
+
 REGRESS_TARGETS +=	run-bc
 .PHONY: 		run-bc
 run-bc: bn_test.out
-	bc < $> | tee bc.out | grep -v '^0$$'
+	${BC} < $> | tee bc.out | grep -v '^0$$'
 	! grep -v '^test ' <bc.out | grep -v '^0$$'
 
 CLEANFILES +=	bn_test.out bc.out
