@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.132 2023/01/20 16:01:04 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.133 2023/04/17 00:03:59 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -540,6 +540,7 @@ XUsyscall_meltdown:
 	 * In case the CPU speculates past the mov to cr3, we put a
 	 * retpoline-style pause-lfence-jmp-to-pause loop.
 	 */
+	endbr64
 	swapgs
 	movq	%rax,CPUVAR(SCRATCH)
 	movq	CPUVAR(KERN_CR3),%rax
@@ -551,11 +552,12 @@ KUTEXT_PAGE_END
 
 KTEXT_PAGE_START
 	.align	NBPG, 0xcc
-IDTVEC_NOALIGN(syscall_meltdown)
+GENTRY(Xsyscall_meltdown)
 	/* pad to match real Xsyscall_meltdown positioning above */
 	movq	CPUVAR(KERN_CR3),%rax
 	movq	%rax,%cr3
-IDTVEC_NOALIGN(syscall)
+GENTRY(Xsyscall)
+	endbr64
 	swapgs
 	movq	%rax,CPUVAR(SCRATCH)
 	SYSCALL_ENTRY			/* create trapframe */
