@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.10 2023/04/17 20:41:02 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.11 2023/04/17 21:00:35 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -155,12 +155,23 @@ test_random_points_on_curve(EC_builtin_curve *curve)
 	BIGNUM *order = NULL;
 	BIGNUM *random;
 	BIGNUM *x, *y;
+	const char *curve_name;
 	size_t i, j;
 	int failed = 0;
 
-	fprintf(stderr, "%s\n", OBJ_nid2sn(curve->nid));
+	curve_name = OBJ_nid2sn(curve->nid);
 	if ((group = EC_GROUP_new_by_curve_name(curve->nid)) == NULL)
-		errx(1, "EC_GROUP_new_by_curve_name");
+		errx(1, "EC_GROUP_new_by_curve_name(%s)", curve_name);
+
+#ifndef OPENSSL_NO_EC2M
+	if (EC_GROUP_get_basis_type(group)) {
+		EC_GROUP_free(group);
+		fprintf(stderr, "%s ... skipped\n", curve_name);
+		return 0;
+	}
+#endif
+
+	fprintf(stderr, "%s\n", curve_name);
 
 	if ((order = BN_new()) == NULL)
 		errx(1, "BN_new order");
