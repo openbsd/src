@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.127 2023/04/17 11:02:40 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.128 2023/04/17 12:48:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -876,10 +876,10 @@ parse_addr(const char *word, struct bgpd_addr *addr)
 	if (word == NULL)
 		return (0);
 
-	memset(addr, 0, sizeof(struct bgpd_addr));
 	memset(&ina, 0, sizeof(ina));
 
 	if (inet_net_pton(AF_INET, word, &ina, sizeof(ina)) != -1) {
+		memset(addr, 0, sizeof(*addr));
 		addr->aid = AID_INET;
 		addr->v4 = ina;
 		return (1);
@@ -902,6 +902,7 @@ int
 parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr,
     uint8_t *prefixlen)
 {
+	struct bgpd_addr tmp;
 	char		*p, *ps;
 	const char	*errstr;
 	int		 mask = -1;
@@ -909,7 +910,7 @@ parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr,
 	if (word == NULL)
 		return (0);
 
-	memset(addr, 0, sizeof(struct bgpd_addr));
+	memset(&tmp, 0, sizeof(tmp));
 
 	if ((p = strrchr(word, '/')) != NULL) {
 		size_t plen = strlen(p);
@@ -921,17 +922,17 @@ parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr,
 			err(1, "parse_prefix: malloc");
 		strlcpy(ps, word, wordlen - plen + 1);
 
-		if (parse_addr(ps, addr) == 0) {
+		if (parse_addr(ps, &tmp) == 0) {
 			free(ps);
 			return (0);
 		}
 
 		free(ps);
 	} else
-		if (parse_addr(word, addr) == 0)
+		if (parse_addr(word, &tmp) == 0)
 			return (0);
 
-	switch (addr->aid) {
+	switch (tmp.aid) {
 	case AID_INET:
 		if (mask == -1)
 			mask = 32;
@@ -946,7 +947,7 @@ parse_prefix(const char *word, size_t wordlen, struct bgpd_addr *addr,
 		return (0);
 	}
 
-	applymask(addr, addr, mask);
+	applymask(addr, &tmp, mask);
 	*prefixlen = mask;
 	return (1);
 }
