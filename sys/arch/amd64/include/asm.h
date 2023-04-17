@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.23 2022/12/01 00:26:15 guenther Exp $	*/
+/*	$OpenBSD: asm.h,v 1.24 2023/04/17 00:02:14 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.2 2003/05/02 18:05:47 yamt Exp $	*/
 
 /*-
@@ -84,11 +84,14 @@
 #define	KTEXT_PAGE_END		.popsection
 
 #define	IDTVEC(name) \
-	KUTEXT; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
+	KUTEXT; _ALIGN_TRAPS; IDTVEC_NOALIGN(name); endbr64
 #define	GENTRY(x)		.globl x; _FENTRY(x)
 #define	IDTVEC_NOALIGN(name)	GENTRY(X ## name)
+#define	IDTVEC_ALIAS(alias,sym)						\
+	.global X ## alias;						\
+	X ## alias = X ## sym;
 #define	KIDTVEC(name) \
-	.text; _ALIGN_TRAPS; IDTVEC_NOALIGN(name)
+	.text; _ALIGN_TRAPS; IDTVEC_NOALIGN(name); endbr64
 #define	KIDTVEC_FALLTHROUGH(name) \
 	_ALIGN_TEXT; IDTVEC_NOALIGN(name)
 #define KUENTRY(x) \
@@ -166,10 +169,10 @@
 # define RETGUARD_SYMBOL(x)
 #endif
 
-#define	ENTRY(y)	_ENTRY(y); _PROF_PROLOGUE
+#define	ENTRY(y)	_ENTRY(y); endbr64; _PROF_PROLOGUE
 #define	NENTRY(y)	_NENTRY(y)
-#define	ASENTRY(y)	_NENTRY(y); _PROF_PROLOGUE
-#define	ENTRY_NB(y)	_ENTRY_NB(y); _PROF_PROLOGUE
+#define	ASENTRY(y)	_NENTRY(y); endbr64; _PROF_PROLOGUE
+#define	ENTRY_NB(y)	_ENTRY_NB(y); endbr64; _PROF_PROLOGUE
 #define	END(y)		.size y, . - y
 
 #define	STRONG_ALIAS(alias,sym)						\

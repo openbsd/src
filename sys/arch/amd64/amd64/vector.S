@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.91 2023/04/16 05:39:33 guenther Exp $	*/
+/*	$OpenBSD: vector.S,v 1.92 2023/04/17 00:02:14 deraadt Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -348,7 +348,7 @@ IDTVEC(trap0d)
 IDTVEC(trap0e)
 	TRAP(T_PAGEFLT)
 IDTVEC(intrspurious)
-IDTVEC_NOALIGN(trap0f)
+IDTVEC_ALIAS(trap0f, intrspurious)
 	iretq
 IDTVEC(trap10)
 	ZTRAP(T_ARITHTRAP)
@@ -362,16 +362,16 @@ IDTVEC(trap14)
 	ZTRAP(T_VE)
 IDTVEC(trap15)
 	TRAP(T_CP)
-IDTVEC(trap16)
-IDTVEC_NOALIGN(trap17)
-IDTVEC_NOALIGN(trap18)
-IDTVEC_NOALIGN(trap19)
-IDTVEC_NOALIGN(trap1a)
-IDTVEC_NOALIGN(trap1b)
-IDTVEC_NOALIGN(trap1c)
-IDTVEC_NOALIGN(trap1d)
-IDTVEC_NOALIGN(trap1e)
-IDTVEC_NOALIGN(trap1f)
+IDTVEC(trap1f)
+IDTVEC_ALIAS(trap16, trap1f)
+IDTVEC_ALIAS(trap17, trap1f)
+IDTVEC_ALIAS(trap18, trap1f)
+IDTVEC_ALIAS(trap19, trap1f)
+IDTVEC_ALIAS(trap1a, trap1f)
+IDTVEC_ALIAS(trap1b, trap1f)
+IDTVEC_ALIAS(trap1c, trap1f)
+IDTVEC_ALIAS(trap1d, trap1f)
+IDTVEC_ALIAS(trap1e, trap1f)
 	/* 22 - 31 reserved for future exp */
 	ZTRAP(T_RESERVED)
 
