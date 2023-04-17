@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.41 2021/07/08 20:04:57 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.42 2023/04/17 00:05:35 deraadt Exp $
 
 MAN=	pxeboot.8
 
@@ -10,6 +10,7 @@ PROG=	pxeboot
 SRCS=	srt0.S conf.c devopen.c open.c
 LD?=	ld
 SIZE?=	size
+AFLAGS+=-Dendbr64=
 LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie -znorelro
 LDFLAGS+=-melf_i386 -L/usr/libdata
 INSTALL_STRIP=

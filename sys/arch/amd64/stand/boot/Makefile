@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.48 2021/07/08 20:04:56 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.49 2023/04/17 00:05:35 deraadt Exp $
 
 COPTS?=
 MAN?=	boot.8
@@ -17,6 +17,7 @@ PROG?=	boot
 SRCS=	srt0.S conf.c
 LD?=	ld
 SIZE?=	size
+AFLAGS+=-Dendbr64=
 LDFLAGS+=-nostdlib -Bstatic -Ttext $(LINKADDR) -N -x -nopie -znorelro
 LDFLAGS+=-melf_i386 -L/usr/libdata
 
