@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1195 2023/03/27 08:47:57 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1196 2023/04/17 18:22:24 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -157,7 +157,9 @@ struct winlink;
 #define KEYC_IS_UNICODE(key) \
 	(((key) & KEYC_MASK_KEY) > 0x7f && \
 	 (((key) & KEYC_MASK_KEY) < KEYC_BASE || \
-	  ((key) & KEYC_MASK_KEY) >= KEYC_BASE_END))
+	  ((key) & KEYC_MASK_KEY) >= KEYC_BASE_END) && \
+	 (((key) & KEYC_MASK_KEY) < KEYC_USER || \
+	  ((key) & KEYC_MASK_KEY) >= KEYC_USER + KEYC_NUSER))
 
 /* Multiple click timeout. */
 #define KEYC_CLICK_TIMEOUT 300
