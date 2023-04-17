@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.470 2023/04/03 10:48:00 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.471 2023/04/17 08:02:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1087,18 +1087,23 @@ struct ext_comm_pairs {
 extern const struct ext_comm_pairs iana_ext_comms[];
 
 /* BGP flowspec defines RFC 8955 and 8956 */
-#define FLOWSPEC_LEN_LIMIT		0xf0
-#define FLOWSPEC_OP_EOL			0x80
-#define FLOWSPEC_OP_AND			0x40
-#define FLOWSPEC_OP_LEN_MASK		0x30
-#define FLOWSPEC_OP_LEN_SHIFT		4
+#define FLOWSPEC_LEN_LIMIT	0xf0
+#define FLOWSPEC_OP_EOL		0x80
+#define FLOWSPEC_OP_AND		0x40
+#define FLOWSPEC_OP_LEN_MASK	0x30
+#define FLOWSPEC_OP_LEN_SHIFT	4
 #define FLOWSPEC_OP_LEN(op)					\
 	(1 << (((op) & FLOWSPEC_OP_LEN_MASK) >> FLOWSPEC_OP_LEN_SHIFT))
-#define FLOWSPEC_OP_NUM_LT		0x04
-#define FLOWSPEC_OP_NUM_GT		0x02
-#define FLOWSPEC_OP_NUM_EQ		0x01
-#define FLOWSPEC_OP_BIT_NOT		0x02
-#define FLOWSPEC_OP_BIT_MATCH		0x01
+#define FLOWSPEC_OP_NUM_LT	0x04
+#define FLOWSPEC_OP_NUM_GT	0x02
+#define FLOWSPEC_OP_NUM_EQ	0x01
+#define FLOWSPEC_OP_NUM_LE	(FLOWSPEC_OP_NUM_LT | FLOWSPEC_OP_NUM_EQ)
+#define FLOWSPEC_OP_NUM_GE	(FLOWSPEC_OP_NUM_GT | FLOWSPEC_OP_NUM_EQ)
+#define FLOWSPEC_OP_NUM_NOT	(FLOWSPEC_OP_NUM_GT | FLOWSPEC_OP_NUM_LT)
+#define FLOWSPEC_OP_NUM_MASK	0x07
+#define FLOWSPEC_OP_BIT_NOT	0x02
+#define FLOWSPEC_OP_BIT_MATCH	0x01
+#define FLOWSPEC_OP_BIT_MASK	0x03
 
 #define FLOWSPEC_TYPE_MIN		1
 #define FLOWSPEC_TYPE_DEST		1
@@ -1114,7 +1119,7 @@ extern const struct ext_comm_pairs iana_ext_comms[];
 #define FLOWSPEC_TYPE_DSCP		11
 #define FLOWSPEC_TYPE_FRAG		12
 #define FLOWSPEC_TYPE_FLOW		13
-#define FLOWSPEC_TYPE_MAX		13
+#define FLOWSPEC_TYPE_MAX		14
 
 struct filter_prefix {
 	struct bgpd_addr	addr;
@@ -1510,6 +1515,7 @@ int		 aspath_verify(void *, uint16_t, int, int);
 #define		 AS_ERR_BAD	-3
 #define		 AS_ERR_SOFT	-4
 u_char		*aspath_inflate(void *, uint16_t, uint16_t *);
+int		 extract_prefix(const u_char *, int, void *, uint8_t, uint8_t);
 int		 nlri_get_prefix(u_char *, uint16_t, struct bgpd_addr *,
 		    uint8_t *);
 int		 nlri_get_prefix6(u_char *, uint16_t, struct bgpd_addr *,
@@ -1532,6 +1538,17 @@ int		 af2aid(sa_family_t, uint8_t, uint8_t *);
 struct sockaddr	*addr2sa(const struct bgpd_addr *, uint16_t, socklen_t *);
 void		 sa2addr(struct sockaddr *, struct bgpd_addr *, uint16_t *);
 const char *	 get_baudrate(unsigned long long, char *);
+
+/* flowspec.c */
+int	flowspec_valid(const uint8_t *, int, int);
+int	flowspec_cmp(const uint8_t *, int, const uint8_t *, int, int);
+int	flowspec_get_component(const uint8_t *, int, int, int,
+	    const uint8_t **, int *);
+int	flowspec_get_addr(const uint8_t *, int, int, int, struct bgpd_addr *,
+	    uint8_t *, uint8_t *);
+const char	*flowspec_fmt_label(int);
+const char	*flowspec_fmt_num_op(const uint8_t *, int, int *);
+const char	*flowspec_fmt_bin_op(const uint8_t *, int, int *, const char *);
 
 static const char * const log_procnames[] = {
 	"parent",

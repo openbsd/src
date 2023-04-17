@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.76 2023/04/03 10:48:00 claudio Exp $ */
+/*	$OpenBSD: util.c,v 1.77 2023/04/17 08:02:21 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Claudio Jeker <claudio@openbsd.org>
@@ -494,8 +494,8 @@ aspath_inflate(void *data, uint16_t len, uint16_t *newlen)
 }
 
 /* NLRI functions to extract prefixes from the NLRI blobs */
-static int
-extract_prefix(u_char *p, uint16_t len, void *va, uint8_t pfxlen, uint8_t max)
+int
+extract_prefix(const u_char *p, int len, void *va, uint8_t pfxlen, uint8_t max)
 {
 	static u_char	 addrmask[] = {
 	    0x00, 0x80, 0xc0, 0xe0, 0xf0, 0xf8, 0xfc, 0xfe, 0xff };
