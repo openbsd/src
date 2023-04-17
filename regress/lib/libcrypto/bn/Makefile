@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2023/04/10 19:02:30 jsing Exp $
+#	$OpenBSD: Makefile,v 1.30 2023/04/17 19:37:18 tb Exp $
 
 PROGS +=	bn_add_sub
 PROGS +=	bn_cmp
@@ -50,7 +50,7 @@ run-bn_isqrt_check_tables: bn_isqrt_gen_tables.txt
 CLEANFILES += bn_isqrt_gen_tables.txt.tmp bn_isqrt_gen_tables.txt
 
 # bn_test is special, so override bsd.regress.mk's run-regress-bn_test
-run-regress-bn_test bntest.out: bn_test
+run-regress-bn_test bn_test.out: bn_test
 	./bn_test -out bn_test.out
 
 REGRESS_TARGETS +=	run-bc
