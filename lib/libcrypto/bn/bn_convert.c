@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.1 2023/04/14 11:10:11 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.2 2023/04/17 12:36:59 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -349,6 +349,78 @@ BN_asc2bn(BIGNUM **bn, const char *a)
 	if (*a == '-')
 		BN_set_negative(*bn, 1);
 	return 1;
+}
+
+int
+BN_bn2mpi(const BIGNUM *a, unsigned char *d)
+{
+	int bits;
+	int num = 0;
+	int ext = 0;
+	long l;
+
+	bits = BN_num_bits(a);
+	num = (bits + 7) / 8;
+	if (bits > 0) {
+		ext = ((bits & 0x07) == 0);
+	}
+	if (d == NULL)
+		return (num + 4 + ext);
+
+	l = num + ext;
+	d[0] = (unsigned char)(l >> 24) & 0xff;
+	d[1] = (unsigned char)(l >> 16) & 0xff;
+	d[2] = (unsigned char)(l >> 8) & 0xff;
+	d[3] = (unsigned char)(l) & 0xff;
+	if (ext)
+		d[4] = 0;
+	num = BN_bn2bin(a, &(d[4 + ext]));
+	if (a->neg)
+		d[4] |= 0x80;
+	return (num + 4 + ext);
+}
+
+BIGNUM *
+BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
+{
+	BIGNUM *a = ain;
+	long len;
+	int neg = 0;
+
+	if (n < 4) {
+		BNerror(BN_R_INVALID_LENGTH);
+		return (NULL);
+	}
+	len = ((long)d[0] << 24) | ((long)d[1] << 16) | ((int)d[2] << 8) |
+	    (int)d[3];
+	if ((len + 4) != n) {
+		BNerror(BN_R_ENCODING_ERROR);
+		return (NULL);
+	}
+
+	if (a == NULL)
+		a = BN_new();
+	if (a == NULL)
+		return (NULL);
+
+	if (len == 0) {
+		a->neg = 0;
+		a->top = 0;
+		return (a);
+	}
+	d += 4;
+	if ((*d) & 0x80)
+		neg = 1;
+	if (BN_bin2bn(d, (int)len, a) == NULL) {
+		if (ain == NULL)
+			BN_free(a);
+		return (NULL);
+	}
+	BN_set_negative(a, neg);
+	if (neg) {
+		BN_clear_bit(a, BN_num_bits(a) - 1);
+	}
+	return (a);
 }
 
 #ifndef OPENSSL_NO_BIO
