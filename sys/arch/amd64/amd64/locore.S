@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.133 2023/04/17 00:03:59 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.134 2023/04/17 00:14:59 deraadt Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -171,6 +171,7 @@ lapic_isr:
 	.section .rodata
 	.globl	sigcode
 sigcode:
+	endbr64
 	call	1f
 	movq	%rsp,%rdi
 	pushq	%rdi			/* fake return address */
