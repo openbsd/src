@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.126 2023/04/17 10:23:32 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.127 2023/04/17 11:02:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -434,8 +434,8 @@ static const struct token t_show_rib_path[] = {
 
 static struct parse_result	res;
 
-const struct token	*match_token(int *argc, char **argv[],
-			    const struct token []);
+const struct token	*match_token(int, char *[], const struct token [],
+			    int *);
 void			 show_valid_args(const struct token []);
 
 int	parse_addr(const char *, struct bgpd_addr *);
@@ -451,13 +451,14 @@ parse(int argc, char *argv[])
 {
 	const struct token	*table = t_main;
 	const struct token	*match;
+	int			 used;
 
 	memset(&res, 0, sizeof(res));
 	res.rtableid = getrtable();
 	TAILQ_INIT(&res.set);
 
 	while (argc >= 0) {
-		if ((match = match_token(&argc, &argv, table)) == NULL) {
+		if ((match = match_token(argc, argv, table, &used)) == NULL) {
 			fprintf(stderr, "valid commands/args:\n");
 			show_valid_args(table);
 			return (NULL);
@@ -469,12 +470,11 @@ parse(int argc, char *argv[])
 			continue;
 		}
 
-		argc--;
-		argv++;
+		argc -= used;
+		argv += used;
 
 		if (match->type == NOTOKEN || match->next == NULL)
 			break;
-
 		table = match->next;
 	}
 
@@ -487,14 +487,15 @@ parse(int argc, char *argv[])
 }
 
 const struct token *
-match_token(int *argc, char **argv[], const struct token table[])
+match_token(int argc, char *argv[], const struct token table[], int *argsused)
 {
 	u_int			 i, match;
 	const struct token	*t = NULL;
 	struct filter_set	*fs;
-	const char		*word = (*argv)[0];
-	size_t			wordlen = 0;
+	const char		*word = argv[0];
+	size_t			 wordlen = 0;
 
+	*argsused = 1;
 	match = 0;
 	if (word != NULL)
 		wordlen = strlen(word);
@@ -625,10 +626,9 @@ match_token(int *argc, char **argv[], const struct token table[])
 			break;
 		case COMMUNITY:
 			if (word != NULL && strncmp(word, table[i].keyword,
-			    wordlen) == 0 && *argc > 1) {
-				parsecommunity(&res.community, (*argv)[1]);
-				*argc -= 1;
-				*argv += 1;
+			    wordlen) == 0 && argc > 1) {
+				parsecommunity(&res.community, argv[1]);
+				*argsused += 1;
 
 				if ((fs = calloc(1, sizeof(*fs))) == NULL)
 					err(1, NULL);
@@ -642,10 +642,9 @@ match_token(int *argc, char **argv[], const struct token table[])
 			break;
 		case LRGCOMMUNITY:
 			if (word != NULL && strncmp(word, table[i].keyword,
-			    wordlen) == 0 && *argc > 1) {
-				parselargecommunity(&res.community, (*argv)[1]);
-				*argc -= 1;
-				*argv += 1;
+			    wordlen) == 0 && argc > 1) {
+				parselargecommunity(&res.community, argv[1]);
+				*argsused += 1;
 
 				if ((fs = calloc(1, sizeof(*fs))) == NULL)
 					err(1, NULL);
@@ -659,11 +658,10 @@ match_token(int *argc, char **argv[], const struct token table[])
 			break;
 		case EXTCOMMUNITY:
 			if (word != NULL && strncmp(word, table[i].keyword,
-			    wordlen) == 0 && *argc > 2) {
+			    wordlen) == 0 && argc > 2) {
 				parseextcommunity(&res.community,
-				    (*argv)[1], (*argv)[2]);
-				*argc -= 2;
-				*argv += 2;
+				    argv[1], argv[2]);
+				*argsused += 2;
 
 				if ((fs = calloc(1, sizeof(*fs))) == NULL)
 					err(1, NULL);
