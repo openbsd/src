@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.79 2023/03/30 22:56:47 op Exp $	*/
+/*	$OpenBSD: extend.c,v 1.80 2023/04/17 10:11:30 op Exp $	*/
 /* This file is in the public domain. */
 
 /*
@@ -493,7 +493,7 @@ redefine_key(int f, int n)
 		return (FALSE);
 	(void)strlcat(buf, tmp, sizeof(buf));
 	if ((mp = name_map(tmp)) == NULL)
-		return (dobeep_msgs("Unknown map ", tmp));
+		return (dobeep_msgs("Unknown map", tmp));
 
 	if (strlcat(buf, "key: ", sizeof(buf)) >= sizeof(buf))
 		return (FALSE);
@@ -720,7 +720,7 @@ excline(char *line, int llen, int lnum)
 		n = (int)nl;
 	}
 	if ((fp = name_function(funcp)) == NULL)
-		return (dobeep_msgs("Unknown function: ", funcp));
+		return (dobeep_msgs("Unknown function:", funcp));
 
 	if (fp == bindtokey || fp == unbindtokey) {
 		bind = BINDARG;
@@ -847,7 +847,7 @@ excline(char *line, int llen, int lnum)
 		case BINDNEXT:
 			lp->l_text[lp->l_used] = '\0';
 			if ((curmap = name_map(lp->l_text)) == NULL) {
-				(void)dobeep_msgs("No such mode: ", lp->l_text);
+				(void)dobeep_msgs("No such mode:", lp->l_text);
 				status = FALSE;
 				free(lp);
 				goto cleanup;
