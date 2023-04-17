@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.6 2023/02/25 15:39:40 bcook Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.7 2023/04/17 12:51:09 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -32,10 +32,10 @@ bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 	BN_ULONG carry, r0;
 
 	__asm__ (
-		"adds %1, %2, %3 \n"
-		"cset %0, cs"
-	    : "=r"(carry), "=r"(r0)
-	    : "r"(a), "r"(b)
+	    "adds  %[r0], %[a], %[b] \n"
+	    "cset  %[carry], cs \n"
+	    : [carry]"=r"(carry), [r0]"=r"(r0)
+	    : [a]"r"(a), [b]"r"(b)
 	    : "cc");
 
 	*out_r1 = carry;
@@ -51,10 +51,10 @@ bn_mulw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 
 	/* Unsigned multiplication using a umulh/mul pair. */
 	__asm__ (
-		"umulh %0, %2, %3 \n"
-		"mul %1, %2, %3"
-	    : "=&r"(r1), "=r"(r0)
-	    : "r"(a), "r"(b));
+	    "umulh %[r1], %[a], %[b] \n"
+	    "mul   %[r0], %[a], %[b] \n"
+	    : [r1]"=&r"(r1), [r0]"=r"(r0)
+	    : [a]"r"(a), [b]"r"(b));
 
 	*out_r1 = r1;
 	*out_r0 = r0;
@@ -68,10 +68,10 @@ bn_subw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_borrow, BN_ULONG *out_r0)
 	BN_ULONG borrow, r0;
 
 	__asm__ (
-		"subs %1, %2, %3 \n"
-		"cset %0, cc"
-	    : "=r"(borrow), "=r"(r0)
-	    : "r"(a), "r"(b)
+	    "subs  %[r0], %[a], %[b] \n"
+	    "cset  %[borrow], cc \n"
+	    : [borrow]"=r"(borrow), [r0]"=r"(r0)
+	    : [a]"r"(a), [b]"r"(b)
 	    : "cc");
 
 	*out_borrow = borrow;
