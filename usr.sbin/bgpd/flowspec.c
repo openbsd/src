@@ -1,4 +1,4 @@
-/*	$OpenBSD: flowspec.c,v 1.1 2023/04/17 08:02:21 claudio Exp $ */
+/*	$OpenBSD: flowspec.c,v 1.2 2023/04/17 20:54:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -91,7 +91,7 @@ flowspec_next_component(const uint8_t *buf, int len, int is_v6, int *type)
 
 /*
  * Compare two IPv4 flowspec prefix components.
- * Returns 1 if first prefix is preferred, -1 if second, 0 if equal.
+ * Returns -1 if first prefix is preferred, 1 if second, 0 if equal.
  */
 static int
 flowspec_cmp_prefix4(const uint8_t *abuf, int ablen, const uint8_t *bbuf,
@@ -113,15 +113,15 @@ flowspec_cmp_prefix4(const uint8_t *abuf, int ablen, const uint8_t *bbuf,
 	/* lowest IP value has precedence */
 	cmp = memcmp(a, b, sizeof(a));
 	if (cmp < 0)
-		return 1;
-	if (cmp > 0)
 		return -1;
+	if (cmp > 0)
+		return 1;
 
 	/* if common prefix, more specific route has precedence */
 	if (alen > blen)
-		return 1;
-	if (alen < blen)
 		return -1;
+	if (alen < blen)
+		return 1;
 	return 0;
 }
 
@@ -139,9 +139,9 @@ flowspec_cmp_prefix6(const uint8_t *abuf, int ablen, const uint8_t *bbuf,
 
 	/* lowest offset has precedence */
 	if (abuf[2] < bbuf[2])
-		return 1;
-	if (abuf[2] > bbuf[2])
 		return -1;
+	if (abuf[2] > bbuf[2])
+		return 1;
 
 	/* calculate actual pattern size (len - offset) */
 	alen = abuf[1] - abuf[2];
@@ -157,15 +157,15 @@ flowspec_cmp_prefix6(const uint8_t *abuf, int ablen, const uint8_t *bbuf,
 	/* lowest IP value has precedence */
 	cmp = memcmp(a, b, sizeof(a));
 	if (cmp < 0)
-		return 1;
-	if (cmp > 0)
 		return -1;
+	if (cmp > 0)
+		return 1;
 
 	/* if common prefix, more specific route has precedence */
 	if (alen > blen)
-		return 1;
-	if (alen < blen)
 		return -1;
+	if (alen < blen)
+		return 1;
 	return 0;
 }
 
@@ -199,7 +199,7 @@ flowspec_valid(const uint8_t *buf, int len, int is_v6)
 
 /*
  * Compare two valid flowspec NLRI objects according to RFC 8955 & 8956.
- * Returns 1 if the first object has preference, -1 if not, and 0 if the
+ * Returns -1 if the first object has preference, 1 if not, and 0 if the
  * two objects are equal.
  */
 int
@@ -219,9 +219,9 @@ flowspec_cmp(const uint8_t *a, int alen, const uint8_t *b, int blen, int is_v6)
 
 		/* If types differ, lowest type wins. */
 		if (atype < btype)
-			return 1;
-		if (atype > btype)
 			return -1;
+		if (atype > btype)
+			return 1;
 
 		switch (atype) {
 		case FLOWSPEC_TYPE_DEST:
@@ -244,9 +244,9 @@ flowspec_cmp(const uint8_t *a, int alen, const uint8_t *b, int blen, int is_v6)
 			 * string has precedence.
 			 */
 			if (cmp < 0)
-				return 1;
-			if (cmp > 0)
 				return -1;
+			if (cmp > 0)
+				return 1;
 			/*
 			 * Longest component wins when common prefix is equal.
 			 * This is not really possible because EOL encoding will
@@ -254,9 +254,9 @@ flowspec_cmp(const uint8_t *a, int alen, const uint8_t *b, int blen, int is_v6)
 			 * it (and it is cheap).
 			 */
 			if (acomplen > bcomplen)
-				return 1;
-			if (acomplen < bcomplen)
 				return -1;
+			if (acomplen < bcomplen)
+				return 1;
 			break;
 		}
 		a += acomplen;
@@ -266,9 +266,9 @@ flowspec_cmp(const uint8_t *a, int alen, const uint8_t *b, int blen, int is_v6)
 
 		/* Rule with more components wins */
 		if (alen > 0 && blen <= 0)
-			return 1;
-		if (alen <= 0 && blen > 0)
 			return -1;
+		if (alen <= 0 && blen > 0)
+			return 1;
 	}
 	return 0;
 }
