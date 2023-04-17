@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.128 2023/04/17 12:48:38 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.129 2023/04/17 13:48:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -100,18 +100,10 @@ static const struct token t_bulk[];
 static const struct token t_network_show[];
 static const struct token t_prefix[];
 static const struct token t_set[];
-static const struct token t_localpref[];
-static const struct token t_med[];
 static const struct token t_nexthop[];
 static const struct token t_pftable[];
-static const struct token t_prepnbr[];
-static const struct token t_prepself[];
-static const struct token t_weight[];
 static const struct token t_log[];
-static const struct token t_fib_table[];
-static const struct token t_show_fib_table[];
 static const struct token t_communication[];
-static const struct token t_show_rib_path[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"fib",		FIB,		t_fib},
@@ -153,7 +145,7 @@ static const struct token t_show_fib[] = {
 	{ FLAG,		"connected",	F_CONNECTED,	t_show_fib},
 	{ FLAG,		"nexthop",	F_NEXTHOP,	t_show_fib},
 	{ FLAG,		"static",	F_STATIC,	t_show_fib},
-	{ KEYWORD,	"table",	NONE,		t_show_fib_table},
+	{ RTABLE,	"table",	NONE,		t_show_fib},
 	{ FAMILY,	"",		NONE,		t_show_fib},
 	{ ADDRESS,	"",		NONE,		NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
@@ -177,7 +169,7 @@ static const struct token t_show_rib[] = {
 	{ KEYWORD,	"neighbor",	NONE,		t_show_rib_neigh},
 	{ FLAG,		"out",		F_CTL_ADJ_OUT,	t_show_rib},
 	{ KEYWORD,	"ovs",		NONE,		t_show_ovs},
-	{ KEYWORD,	"path-id",	NONE,		t_show_rib_path},
+	{ PATHID,	"path-id",	NONE,		t_show_rib},
 	{ ASTYPE,	"peer-as",	AS_PEER,	t_show_rib_as},
 	{ FLAG,		"selected",	F_CTL_BEST,	t_show_rib},
 	{ ASTYPE,	"source-as",	AS_SOURCE,	t_show_rib_as},
@@ -272,7 +264,7 @@ static const struct token t_show_neighbor[] = {
 static const struct token t_fib[] = {
 	{ KEYWORD,	"couple",	FIB_COUPLE,	NULL},
 	{ KEYWORD,	"decouple",	FIB_DECOUPLE,	NULL},
-	{ KEYWORD,	"table",	NONE,		t_fib_table},
+	{ RTABLE,	"table",	NONE,		t_fib},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -364,25 +356,15 @@ static const struct token t_set[] = {
 	{ COMMUNITY,	"community",		NONE,	t_set},
 	{ EXTCOMMUNITY,	"ext-community",	NONE,	t_set},
 	{ LRGCOMMUNITY,	"large-community",	NONE,	t_set},
-	{ KEYWORD,	"localpref",		NONE,	t_localpref},
-	{ KEYWORD,	"med",			NONE,	t_med},
-	{ KEYWORD,	"metric",		NONE,	t_med},
+	{ LOCALPREF,	"localpref",		NONE,	t_set},
+	{ MED,		"med",			NONE,	t_set},
+	{ MED,		"metric",		NONE,	t_set},
 	{ KEYWORD,	"nexthop",		NONE,	t_nexthop},
 	{ KEYWORD,	"pftable",		NONE,	t_pftable},
-	{ KEYWORD,	"prepend-neighbor",	NONE,	t_prepnbr},
-	{ KEYWORD,	"prepend-self",		NONE,	t_prepself},
+	{ PREPNBR,	"prepend-neighbor",	NONE,	t_set},
+	{ PREPSELF,	"prepend-self",		NONE,	t_set},
 	{ KEYWORD,	"rd",			NONE,	t_rd},
-	{ KEYWORD,	"weight",		NONE,	t_weight},
-	{ ENDTOKEN,	"",			NONE,	NULL}
-};
-
-static const struct token t_localpref[] = {
-	{ LOCALPREF,	"",			NONE,	t_set},
-	{ ENDTOKEN,	"",			NONE,	NULL}
-};
-
-static const struct token t_med[] = {
-	{ MED,		"",			NONE,	t_set},
+	{ WEIGHT,	"weight",		NONE,	t_set},
 	{ ENDTOKEN,	"",			NONE,	NULL}
 };
 
@@ -396,40 +378,10 @@ static const struct token t_pftable[] = {
 	{ ENDTOKEN,	"",			NONE,	NULL}
 };
 
-static const struct token t_prepnbr[] = {
-	{ PREPNBR,	"",			NONE,	t_set},
-	{ ENDTOKEN,	"",			NONE,	NULL}
-};
-
-static const struct token t_prepself[] = {
-	{ PREPSELF,	"",			NONE,	t_set},
-	{ ENDTOKEN,	"",			NONE,	NULL}
-};
-
-static const struct token t_weight[] = {
-	{ WEIGHT,	"",			NONE,	t_set},
-	{ ENDTOKEN,	"",			NONE,	NULL}
-};
-
 static const struct token t_log[] = {
 	{ KEYWORD,	"brief",	LOG_BRIEF,	NULL},
 	{ KEYWORD,	"verbose",	LOG_VERBOSE,	NULL},
 	{ ENDTOKEN,	"",		NONE,		NULL}
-};
-
-static const struct token t_fib_table[] = {
-	{ RTABLE,	"",			NONE,	t_fib},
-	{ ENDTOKEN,	"",			NONE,	NULL}
-};
-
-static const struct token t_show_fib_table[] = {
-	{ RTABLE,	"",			NONE,	t_show_fib},
-	{ ENDTOKEN,	"",			NONE,	NULL}
-};
-
-static const struct token t_show_rib_path[] = {
-	{ PATHID,	"",		NONE,	t_show_rib},
-	{ ENDTOKEN,	"",		NONE,	NULL}
 };
 
 static struct parse_result	res;
@@ -716,8 +668,10 @@ match_token(int argc, char *argv[], const struct token table[], int *argsused)
 		case WEIGHT:
 		case RTABLE:
 		case PATHID:
-			if (word != NULL && wordlen > 0 &&
-			    parse_number(word, &res, table[i].type)) {
+			if (word != NULL && strncmp(word, table[i].keyword,
+			    wordlen) == 0 && argc > 1 &&
+			    parse_number(argv[1], &res, table[i].type)) {
+				*argsused += 1;
 				match++;
 				t = &table[i];
 			}
@@ -842,11 +796,9 @@ show_valid_args(const struct token table[])
 		case PREPNBR:
 		case PREPSELF:
 		case WEIGHT:
-		case PATHID:
-			fprintf(stderr, "  <number>\n");
-			break;
 		case RTABLE:
-			fprintf(stderr, "  <rtableid>\n");
+		case PATHID:
+			fprintf(stderr, "  %s <number>\n", table[i].keyword);
 			break;
 		case NEXTHOP:
 			fprintf(stderr, "  <address>\n");
