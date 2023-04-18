@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.688 2023/04/08 13:49:38 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.689 2023/04/18 22:00:19 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -272,6 +272,10 @@ ifinit(void)
 
 static struct if_idxmap if_idxmap;
 
+/*
+ * XXXSMP: For `ifnetlist' modification both kernel and net locks
+ * should be taken. For read-only access only one lock of them required.
+ */
 struct ifnet_head ifnetlist = TAILQ_HEAD_INITIALIZER(ifnetlist);
 
 static inline unsigned int
