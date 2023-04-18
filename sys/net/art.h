@@ -1,4 +1,4 @@
-/* $OpenBSD: art.h,v 1.21 2021/03/02 17:50:41 deraadt Exp $ */
+/* $OpenBSD: art.h,v 1.22 2023/04/18 10:19:16 mvs Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -41,7 +41,7 @@ struct art_root {
 	uint8_t			 ar_nlvl;	/* [I] Number of levels */
 	uint8_t			 ar_alen;	/* [I] Address length in bits */
 	uint8_t			 ar_off;	/* [I] Offset of key in bytes */
-	struct sockaddr		*source;	/* [K] optional src addr to use */
+	struct sockaddr		*ar_source;	/* [K] optional src addr to use */
 };
 
 #define ISLEAF(e)	(((unsigned long)(e) & 1) == 0)

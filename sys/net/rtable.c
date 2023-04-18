@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.80 2022/06/29 22:20:47 bluhm Exp $ */
+/*	$OpenBSD: rtable.c,v 1.81 2023/04/18 10:19:16 mvs Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -379,7 +379,7 @@ rtable_setsource(unsigned int rtableid, int af, struct sockaddr *src)
 	if ((ar = rtable_get(rtableid, af)) == NULL)
 		return (EAFNOSUPPORT);
 
-	ar->source = src;
+	ar->ar_source = src;
 
 	return (0);
 }
@@ -393,7 +393,7 @@ rtable_getsource(unsigned int rtableid, int af)
 	if (ar == NULL)
 		return (NULL);
 
-	return (ar->source);
+	return (ar->ar_source);
 }
 
 void
