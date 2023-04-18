@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.361 2023/04/18 09:55:34 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.362 2023/04/18 09:56:54 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2159,7 +2159,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 	switch (w.w_op) {
 	case NET_RT_DUMP:
 	case NET_RT_FLAGS:
-		NET_LOCK();
+		NET_LOCK_SHARED();
 		for (i = 1; i <= AF_MAX; i++) {
 			if (af != 0 && af != i)
 				continue;
@@ -2171,7 +2171,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 			if (error)
 				break;
 		}
-		NET_UNLOCK();
+		NET_UNLOCK_SHARED();
 		break;
 
 	case NET_RT_IFLIST:
