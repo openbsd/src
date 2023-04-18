@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.359 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.360 2023/04/18 09:54:53 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2193,9 +2193,9 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		    &tableinfo, sizeof(tableinfo));
 		return (error);
 	case NET_RT_IFNAMES:
-		NET_LOCK();
+		NET_LOCK_SHARED();
 		error = sysctl_ifnames(&w);
-		NET_UNLOCK();
+		NET_UNLOCK_SHARED();
 		break;
 	case NET_RT_SOURCE:
 		tableid = w.w_arg;
