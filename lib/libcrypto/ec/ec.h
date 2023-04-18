@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.33 2023/04/16 08:55:44 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.34 2023/04/18 08:46:08 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -83,9 +83,7 @@
 #endif
 
 #include <openssl/asn1.h>
-#ifndef OPENSSL_NO_DEPRECATED
 #include <openssl/bn.h>
-#endif
 
 #ifdef  __cplusplus
 extern "C" {
