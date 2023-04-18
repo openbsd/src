@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa.h,v 1.41 2023/04/09 19:10:23 tb Exp $ */
+/* $OpenBSD: dsa.h,v 1.42 2023/04/18 08:33:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,11 +77,9 @@
 #include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
 
-#ifndef OPENSSL_NO_DEPRECATED
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
 # include <openssl/dh.h>
-#endif
 #endif
 
 #ifndef OPENSSL_DSA_MAX_MODULUS_BITS

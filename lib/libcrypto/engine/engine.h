@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.35 2022/12/26 07:18:52 jmc Exp $ */
+/* $OpenBSD: engine.h,v 1.36 2023/04/18 08:33:43 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -70,7 +70,6 @@
 #error ENGINE is disabled.
 #endif
 
-#ifndef OPENSSL_NO_DEPRECATED
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
@@ -92,7 +91,6 @@
 #endif
 #include <openssl/ui.h>
 #include <openssl/err.h>
-#endif
 
 #include <openssl/ossl_typ.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.60 2023/04/15 18:44:17 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.61 2023/04/18 08:33:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,9 +68,7 @@
 #endif
 #include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
-#ifndef OPENSSL_NO_DEPRECATED
 #include <openssl/bn.h>
-#endif
 
 #ifdef OPENSSL_NO_RSA
 #error RSA is disabled.

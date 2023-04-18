@@ -1,4 +1,4 @@
-/* $OpenBSD: ui.h,v 1.17 2023/03/10 16:41:32 tb Exp $ */
+/* $OpenBSD: ui.h,v 1.18 2023/04/18 08:33:43 tb Exp $ */
 /* Written by Richard Levitte (richard@levitte.org) for the OpenSSL
  * project 2001.
  */
@@ -61,9 +61,7 @@
 
 #include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_DEPRECATED
 #include <openssl/crypto.h>
-#endif
 #include <openssl/safestack.h>
 #include <openssl/ossl_typ.h>
 
