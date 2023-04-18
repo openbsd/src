@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.73 2023/04/06 21:17:01 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.74 2023/04/18 05:27:04 dlg Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -3081,6 +3081,22 @@ rk3399_pmu_reset(void *cookie, uint32_t *cells, int on)
 
 const struct rkclock rk3568_clocks[] = {
 	{
+		RK3568_BCLK_EMMC, RK3568_CRU_CLKSEL_CON(28),
+		SEL(9, 8), 0,
+		{ RK3568_GPLL_200M, RK3568_GPLL_150M, RK3568_CPLL_125M }
+	},
+	{
+		RK3568_CCLK_EMMC, RK3568_CRU_CLKSEL_CON(28),
+		SEL(14, 12), 0,
+		{ RK3568_XIN24M, RK3568_GPLL_200M, RK3568_GPLL_150M,
+		  RK3568_CPLL_100M, RK3568_CPLL_50M, RK3568_CLK_OSC0_DIV_375K }
+	},
+	{
+		RK3568_TCLK_EMMC, 0, 0, 0,
+		{ RK3568_XIN24M }
+	},
+
+	{
 		RK3568_ACLK_PHP, RK3568_CRU_CLKSEL_CON(30),
 		SEL(1, 0), 0,
 		{ RK3568_GPLL_300M, RK3568_GPLL_200M,
@@ -3331,6 +3347,11 @@ const struct rkclock rk3568_clocks[] = {
 		{ RK3568_PLL_GPLL }
 	},
 	{
+		RK3568_GPLL_150M, RK3568_CRU_CLKSEL_CON(76),
+		0, DIV(12, 5),
+		{ RK3568_PLL_GPLL }
+	},
+	{
 		RK3568_GPLL_100M, RK3568_CRU_CLKSEL_CON(77),
 		0, DIV(4, 0),
 		{ RK3568_PLL_GPLL }
@@ -3481,6 +3502,9 @@ rk3568_get_frequency(void *cookie, uint32_t *cells)
 		return rk3568_get_frequency(sc, &idx) / 20;
 	case RK3568_SCLK_GMAC1_DIV_2:
 		idx = RK3568_SCLK_GMAC1;
+		return rk3568_get_frequency(sc, &idx) / 2;
+	case RK3568_CLK_OSC0_DIV_375K:
+		idx = RK3568_CLK_OSC0_DIV_750K;
 		return rk3568_get_frequency(sc, &idx) / 2;
 	case RK3568_GMAC0_CLKIN:
 		return rkclock_external_frequency("gmac0_clkin");
