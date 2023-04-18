@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.30 2023/03/12 11:55:34 job Exp $
+# $OpenBSD: Makefile.inc,v 1.31 2023/04/18 19:41:50 bluhm Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -21,6 +21,8 @@ REGRESS_TARGETS += run-regress-$p
 CFLAGS+=	-I${.CURDIR}/.. -I${.CURDIR}/../../../../usr.sbin/rpki-client
 LDADD+=		-lcrypto -lutil
 DPADD+=		${LIBCRYPTO} ${LIBUTIL}
+
+CLEANFILES+=	*.out *.err *.txt
 
 SRCS_test-ip +=		test-ip.c ip.c io.c encoding.c print.c x509.c \
 			log.c validate.c as.c cert.c cms.c crl.c mft.c
@@ -90,7 +92,7 @@ run-regress-test-rrdp: test-rrdp
 	./test-rrdp -S 8fe05c2e-047d-49e7-8398-cd4250a572b1 -N 50500 \
 	-n < ${.CURDIR}/../rrdp/notification.xml 2>&1 | tee rrdp-r2.out
 	cmp ${.CURDIR}/../rrdp/rrdp-r2.out rrdp-r2.out
-	
+
 	./test-rrdp -S 9b3f7e31-4979-4f8c-9818-73e4dadc3e6b -N 13755 \
 	-H 75416a54d1bb47f4f4dec7696bd33f77aa3a4a09a295b7f1a027841af0b50c1b \
 	-d < ${.CURDIR}/../rrdp/delta.xml 2>&1 | tee rrdp-r3.out
