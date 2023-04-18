@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.471 2023/04/17 08:02:21 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.472 2023/04/18 12:11:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -231,6 +231,9 @@ SIMPLEQ_HEAD(l3vpn_head, l3vpn);
 struct network;
 TAILQ_HEAD(network_head, network);
 
+struct flowspec_config;
+RB_HEAD(flowspec_tree, flowspec_config);
+
 struct prefixset;
 SIMPLEQ_HEAD(prefixset_head, prefixset);
 struct prefixset_item;
@@ -271,6 +274,7 @@ struct roa {
 };
 
 RB_HEAD(roa_tree, roa);
+struct aspa_set;
 RB_HEAD(aspa_tree, aspa_set);
 
 struct set_table;
@@ -287,6 +291,7 @@ struct bgpd_config {
 	struct peer_head			 peers;
 	struct l3vpn_head			 l3vpns;
 	struct network_head			 networks;
+	struct flowspec_tree			 flowspecs;
 	struct filter_head			*filters;
 	struct listen_addrs			*listen_addrs;
 	struct mrt_head				*mrt;
@@ -514,8 +519,23 @@ struct network_config {
 };
 
 struct network {
-	struct network_config		net;
-	TAILQ_ENTRY(network)		entry;
+	struct network_config	net;
+	TAILQ_ENTRY(network)	entry;
+};
+
+struct flowspec {
+	uint16_t		len;
+	uint8_t			aid;
+	uint8_t			pad;
+	uint8_t			data[1];
+};
+#define FLOWSPEC_SIZE	(offsetof(struct flowspec, data))
+
+struct flowspec_config {
+	RB_ENTRY(flowspec_config)	 entry;
+	struct filter_set_head		 attrset;
+	struct flowspec			*flow;
+	enum reconf_action		 reconf_action;
 };
 
 enum rtr_error {
@@ -1121,6 +1141,10 @@ extern const struct ext_comm_pairs iana_ext_comms[];
 #define FLOWSPEC_TYPE_FLOW		13
 #define FLOWSPEC_TYPE_MAX		14
 
+#define FLOWSPEC_TCP_FLAG_STRING 	"FSRPAUEW"
+#define FLOWSPEC_FRAG_STRING4 		"DIFL"
+#define FLOWSPEC_FRAG_STRING6 		" IFL"
+
 struct filter_prefix {
 	struct bgpd_addr	addr;
 	uint8_t			op;
@@ -1366,6 +1390,8 @@ int	control_imsg_relay(struct imsg *, struct peer *);
 struct bgpd_config	*new_config(void);
 void		copy_config(struct bgpd_config *, struct bgpd_config *);
 void		network_free(struct network *);
+struct flowspec_config	*flowspec_alloc(uint8_t, int);
+void		flowspec_free(struct flowspec_config *);
 void		free_l3vpns(struct l3vpn_head *);
 void		free_config(struct bgpd_config *);
 void		free_prefixsets(struct prefixset_head *);
@@ -1382,6 +1408,7 @@ void		expand_networks(struct bgpd_config *, struct network_head *);
 RB_PROTOTYPE(prefixset_tree, prefixset_item, entry, prefixset_cmp);
 RB_PROTOTYPE(roa_tree, roa, entry, roa_cmp);
 RB_PROTOTYPE(aspa_tree, aspa_set, entry, aspa_cmp);
+RB_PROTOTYPE(flowspec_tree, flowspec_config, entry, flowspec_config_cmp);
 
 /* kroute.c */
 int		 kr_init(int *, uint8_t);

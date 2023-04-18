@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.446 2023/04/05 08:37:21 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.447 2023/04/18 12:11:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,7 +28,10 @@
 #include <sys/stat.h>
 #include <sys/un.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip_icmp.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/icmp6.h>
 #include <arpa/inet.h>
 
 #include <ctype.h>
@@ -130,6 +133,14 @@ struct aspa_tas_l {
 	uint8_t			 aid;
 };
 
+struct flowspec_context {
+	uint8_t			*components[FLOWSPEC_TYPE_MAX];
+	uint16_t		 complen[FLOWSPEC_TYPE_MAX];
+	uint8_t			 aid;
+	uint8_t			 type;
+	uint8_t			 addr_type;
+};
+
 struct peer	*alloc_peer(void);
 struct peer	*new_peer(void);
 struct peer	*new_group(void);
@@ -162,7 +173,15 @@ static void	 add_roa_set(struct prefixset_item *, uint32_t, uint8_t,
 static struct rtr_config	*get_rtr(struct bgpd_addr *);
 static int	 insert_rtr(struct rtr_config *);
 static int	 merge_aspa_set(uint32_t, struct aspa_tas_l *, time_t);
+static int	 map_tos(char *, int *);
 static int	 getservice(char *);
+static int	 parse_flags(char *);
+static struct flowspec_config	*flow_to_flowspec(struct flowspec_context *);
+static void	 flow_free(struct flowspec_context *);
+static int	 push_prefix(struct bgpd_addr *, uint8_t);
+static int	 push_binop(uint8_t, long long);
+static int	 push_unary_numop(enum comp_ops, long long);
+static int	 push_binary_numop(enum comp_ops, long long, long long);
 
 static struct bgpd_config	*conf;
 static struct network_head	*netconf;
@@ -180,6 +199,7 @@ static struct filter_head	*peerfilter_l;
 static struct filter_head	*groupfilter_l;
 static struct filter_rule	*curpeer_filter[2];
 static struct filter_rule	*curgroup_filter[2];
+static struct flowspec_context	*curflow;
 static int			 noexpires;
 
 typedef struct {
@@ -215,10 +235,11 @@ typedef struct {
 %}
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE FIBPRIORITY RTABLE
-%token	NONE UNICAST VPN FLOWSPEC RD EXPORT EXPORTTRGT IMPORTTRGT DEFAULTROUTE
+%token	NONE UNICAST VPN RD EXPORT EXPORTTRGT IMPORTTRGT DEFAULTROUTE
 %token	RDE RIB EVALUATE IGNORE COMPARE RTR PORT
 %token	GROUP NEIGHBOR NETWORK
 %token	EBGP IBGP
+%token	FLOWSPEC PROTO FLAGS FRAGMENT TOS LENGTH ICMPTYPE CODE
 %token	LOCALAS REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX RESTART
 %token	ANNOUNCE CAPABILITIES REFRESH AS4BYTE CONNECTRETRY ENHANCED ADDPATH
 %token	SEND RECV PLUS POLICY ROLE
@@ -249,7 +270,7 @@ typedef struct {
 %type	<v.number>		yesno inout restricted expires enforce
 %type	<v.number>		validity aspa_validity
 %type	<v.number>		addpathextra addpathmax
-%type	<v.number>		port
+%type	<v.number>		port proto_item tos length flag icmptype
 %type	<v.string>		string
 %type	<v.addr>		address
 %type	<v.prefix>		prefix addrspec
@@ -282,6 +303,7 @@ grammar		: /* empty */
 		| grammar rtr '\n'
 		| grammar rib '\n'
 		| grammar network '\n'
+		| grammar flowspec '\n'
 		| grammar mrtdump '\n'
 		| grammar conf_main '\n'
 		| grammar l3vpn '\n'
@@ -1139,6 +1161,118 @@ network		: NETWORK prefix filter_set	{
 		}
 		;
 
+flowspec	: FLOWSPEC af {
+			if ((curflow = calloc(1, sizeof(*curflow))) == NULL)
+				fatal("new_flowspec");
+			curflow->aid = $2;
+		} flow_rules filter_set {
+			struct flowspec_config *f;
+
+			f = flow_to_flowspec(curflow);
+			if (f == NULL) {
+				yyerror("out of memory");
+				free($5);
+				flow_free(curflow);
+				curflow = NULL;
+				YYERROR;
+			}
+			filterset_move($5, &f->attrset);
+			free($5);
+			flow_free(curflow);
+			curflow = NULL;
+
+			if (RB_INSERT(flowspec_tree, &conf->flowspecs, f) !=
+			    NULL) {
+				yyerror("duplicate flowspec definition");
+				flowspec_free(f);
+				YYERROR;
+			}
+		}
+		;
+
+proto		: PROTO proto_item
+		| PROTO '{' optnl proto_list optnl '}'
+		;
+
+proto_list	: proto_item				{
+			curflow->type = FLOWSPEC_TYPE_PROTO;
+			if (push_unary_numop(OP_EQ, $1) == -1)
+				YYERROR;
+		}
+		| proto_list comma proto_item		{
+			curflow->type = FLOWSPEC_TYPE_PROTO;
+			if (push_unary_numop(OP_EQ, $3) == -1)
+				YYERROR;
+		}
+		;
+
+proto_item	: STRING				{
+			struct protoent *p;
+
+			p = getprotobyname($1);
+			if (p == NULL) {
+				yyerror("unknown protocol %s", $1);
+				free($1);
+				YYERROR;
+			}
+			$$ = p->p_proto;
+			free($1);
+		}
+		| NUMBER				{
+			if ($1 < 0 || $1 > 255) {
+				yyerror("protocol outside range");
+				YYERROR;
+			}
+			$$ = $1;
+		}
+		;
+
+from		: FROM {
+			curflow->type = FLOWSPEC_TYPE_SRC_PORT;
+			curflow->addr_type = FLOWSPEC_TYPE_SOURCE;
+		} ipportspec
+		;
+
+to		: TO {
+			curflow->type = FLOWSPEC_TYPE_DST_PORT;
+			curflow->addr_type = FLOWSPEC_TYPE_DEST;
+		} ipportspec
+		;
+
+ipportspec	: ipspec
+		| ipspec PORT portspec
+		| PORT portspec
+		;
+
+ipspec		: ANY
+		| prefix			{
+			if (push_prefix(&$1.prefix, $1.len) == -1)
+				YYERROR;
+		}
+		;
+
+portspec	: port_item
+		| '{' optnl port_list optnl '}'
+		;
+
+port_list	: port_item
+		| port_list comma port_item
+		;
+
+port_item	: port				{
+			if (push_unary_numop(OP_EQ, $1) == -1)
+				YYERROR;
+		}
+		| unaryop port			{
+			if (push_unary_numop($1, $2) == -1)
+				YYERROR;
+		}
+		| port binaryop port		{
+			if (push_binary_numop($2, $1, $3))
+				YYERROR;
+		}
+		;
+
 port		: NUMBER			{
 			if ($1 < 1 || $1 > USHRT_MAX) {
 				yyerror("port must be between %u and %u",
@@ -1156,6 +1290,195 @@ port		: NUMBER			{
 			free($1);
 		}
 		;
+
+flow_rules	: /* empty */
+		| flow_rules_l
+		;
+
+flow_rules_l	: flowrule
+		| flow_rules_l flowrule
+		;
+
+flowrule	: from
+		| to
+		| proto
+		| FLAGS {
+			curflow->type = FLOWSPEC_TYPE_TCP_FLAGS;
+		} flags
+		| icmpspec
+		| TOS tos {
+			curflow->type = FLOWSPEC_TYPE_DSCP;
+			if (push_unary_numop(OP_EQ, $2 >> 2) == -1)
+				YYERROR;
+		}
+		| LENGTH lengthspec {
+			curflow->type = FLOWSPEC_TYPE_PKT_LEN;
+		}
+		| FRAGMENT {
+			curflow->type = FLOWSPEC_TYPE_FRAG;
+		} flags;
+		;
+
+flags		: flag '/' flag			{
+			if (($1 & $3) != $1) {
+				yyerror("bad flag combination, "
+				    "check bit not in mask");
+				YYERROR;
+			}
+			if (push_binop(FLOWSPEC_OP_BIT_MATCH, $1) == -1)
+				YYERROR;
+			/* check if extra mask op is needed */
+			if ($3 & ~$1) {
+				if (push_binop(FLOWSPEC_OP_BIT_NOT |
+				    FLOWSPEC_OP_AND, $3 & ~$1) == -1)
+					YYERROR;
+			}
+		}
+		| '/' flag			{
+			if (push_binop(FLOWSPEC_OP_BIT_NOT, $2) == -1)
+				YYERROR;
+		}
+		| flag				{
+			if (push_binop(0, $1) == -1)
+				YYERROR;
+		}
+		| ANY		/* nothing */
+		;
+
+flag		: STRING {
+			if (($$ = parse_flags($1)) < 0) {
+				yyerror("bad flags %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		;
+
+icmpspec	: ICMPTYPE icmp_item
+		| ICMPTYPE '{' optnl icmp_list optnl '}'
+		;
+
+icmp_list	: icmp_item
+		| icmp_list comma icmp_item
+		;
+
+icmp_item	: icmptype			{
+			curflow->type = FLOWSPEC_TYPE_ICMP_TYPE;
+			if (push_unary_numop(OP_EQ, $1) == -1)
+				YYERROR;
+		}
+		| icmptype CODE STRING {
+			int code;
+
+			if ((code = geticmpcodebyname($1, $3, curflow->aid)) ==
+			    -1) {
+				yyerror("unknown icmp-code %s", $3);
+				free($3);
+				YYERROR;
+			}
+			free($3);
+
+			curflow->type = FLOWSPEC_TYPE_ICMP_TYPE;
+			if (push_unary_numop(OP_EQ, $1) == -1)
+				YYERROR;
+			curflow->type = FLOWSPEC_TYPE_ICMP_CODE;
+			if (push_unary_numop(OP_EQ, code) == -1)
+				YYERROR;
+		}
+		| icmptype CODE NUMBER {
+			if ($3 < 0 || $3 > 255) {
+				yyerror("illegal icmp-code %lld", $3);
+				YYERROR;
+			}
+			curflow->type = FLOWSPEC_TYPE_ICMP_TYPE;
+			if (push_unary_numop(OP_EQ, $1) == -1)
+				YYERROR;
+			curflow->type = FLOWSPEC_TYPE_ICMP_CODE;
+			if (push_unary_numop(OP_EQ, $3) == -1)
+				YYERROR;
+		}
+		;
+
+icmptype        : STRING {
+			int type;
+
+			if ((type = geticmptypebyname($1, curflow->aid)) ==
+			    -1) {
+				yyerror("unknown icmp-type %s", $1);
+				free($1);
+				YYERROR;
+			}
+			$$ = type;
+			free($1);
+		}
+		| NUMBER {
+			if ($1 < 0 || $1 > 255) {
+				yyerror("illegal icmp-type %lld", $1);
+				YYERROR;
+			}
+			$$ = $1;
+		}
+		;
+
+tos		: STRING		{
+			int val;
+			char *end;
+
+			if (map_tos($1, &val))
+				$$ = val;
+			else if ($1[0] == '0' && $1[1] == 'x') {
+				errno = 0;
+				$$ = strtoul($1, &end, 16);
+				if (errno || *end != '\0')
+					$$ = 256;
+			} else
+				$$ = 256;
+			if ($$ < 0 || $$ > 255) {
+				yyerror("illegal tos value %s", $1);
+				free($1);
+				YYERROR;
+			}
+			free($1);
+		}
+		| NUMBER		{
+			if ($$ < 0 || $$ > 255) {
+				yyerror("illegal tos value %lld", $1);
+				YYERROR;
+			}
+			$$ = $1;
+		}
+		;
+
+lengthspec	: length_item
+		| '{' optnl length_list optnl '}'
+		;
+
+length_list	: length_item
+		| length_list comma length_item
+		;
+
+length_item	: length			{
+			if (push_unary_numop(OP_EQ, $1) == -1)
+				YYERROR;
+		}
+		| unaryop length		{
+			if (push_unary_numop($1, $2) == -1)
+				YYERROR;
+		}
+		| length binaryop length	{
+			if (push_binary_numop($2, $1, $3) == -1)
+				YYERROR;
+		}
+		;
+
+length		: NUMBER			{
+			if ($$ < 0 || $$ > USHRT_MAX) {
+				yyerror("illegal ptk length value %lld", $1);
+				YYERROR;
+			}
+			$$ = $1;
+		}
 
 inout		: IN		{ $$ = 1; }
 		| OUT		{ $$ = 0; }
@@ -3206,7 +3529,9 @@ lookup(char *s)
 		{ "ext-community",	EXTCOMMUNITY},
 		{ "fib-priority",	FIBPRIORITY},
 		{ "fib-update",		FIBUPDATE},
+		{ "flags",		FLAGS},
 		{ "flowspec",		FLOWSPEC},
+		{ "fragment",		FRAGMENT},
 		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
@@ -3265,6 +3590,7 @@ lookup(char *s)
 		{ "prepend-neighbor",	PREPEND_PEER},
 		{ "prepend-self",	PREPEND_SELF},
 		{ "priority",		PRIORITY},
+		{ "proto",		PROTO},
 		{ "provider-as",	PROVIDERAS},
 		{ "qualify",		QUALIFY},
 		{ "quick",		QUICK},
@@ -3293,6 +3619,7 @@ lookup(char *s)
 		{ "static",		STATIC},
 		{ "tcp",		TCP},
 		{ "to",			TO},
+		{ "tos",		TOS},
 		{ "transit-as",		TRANSITAS},
 		{ "transparent-as",	TRANSPARENT},
 		{ "ttl-security",	TTLSECURITY},
@@ -3781,6 +4108,7 @@ parse_config(char *filename, struct peer_head *ph, struct rtr_config_head *rh)
 	cur_peers = NULL;
 	new_peers = NULL;
 	netconf = NULL;
+	curflow = NULL;
 
 	if (errors) {
 errors:
@@ -5159,6 +5487,57 @@ merge_aspa_set(uint32_t as, struct aspa_tas_l *tas, time_t expires)
 }
 
 static int
+kw_casecmp(const void *k, const void *e)
+{
+	return (strcasecmp(k, ((const struct keywords *)e)->k_name));
+}
+
+static int
+map_tos(char *s, int *val)
+{
+	/* DiffServ Codepoints and other TOS mappings */
+	const struct keywords	 toswords[] = {
+		{ "af11",		IPTOS_DSCP_AF11 },
+		{ "af12",		IPTOS_DSCP_AF12 },
+		{ "af13",		IPTOS_DSCP_AF13 },
+		{ "af21",		IPTOS_DSCP_AF21 },
+		{ "af22",		IPTOS_DSCP_AF22 },
+		{ "af23",		IPTOS_DSCP_AF23 },
+		{ "af31",		IPTOS_DSCP_AF31 },
+		{ "af32",		IPTOS_DSCP_AF32 },
+		{ "af33",		IPTOS_DSCP_AF33 },
+		{ "af41",		IPTOS_DSCP_AF41 },
+		{ "af42",		IPTOS_DSCP_AF42 },
+		{ "af43",		IPTOS_DSCP_AF43 },
+		{ "critical",		IPTOS_PREC_CRITIC_ECP },
+		{ "cs0",		IPTOS_DSCP_CS0 },
+		{ "cs1",		IPTOS_DSCP_CS1 },
+		{ "cs2",		IPTOS_DSCP_CS2 },
+		{ "cs3",		IPTOS_DSCP_CS3 },
+		{ "cs4",		IPTOS_DSCP_CS4 },
+		{ "cs5",		IPTOS_DSCP_CS5 },
+		{ "cs6",		IPTOS_DSCP_CS6 },
+		{ "cs7",		IPTOS_DSCP_CS7 },
+		{ "ef",			IPTOS_DSCP_EF },
+		{ "inetcontrol",	IPTOS_PREC_INTERNETCONTROL },
+		{ "lowdelay",		IPTOS_LOWDELAY },
+		{ "netcontrol",		IPTOS_PREC_NETCONTROL },
+		{ "reliability",	IPTOS_RELIABILITY },
+		{ "throughput",		IPTOS_THROUGHPUT }
+	};
+	const struct keywords	*p;
+
+	p = bsearch(s, toswords, sizeof(toswords)/sizeof(toswords[0]),
+	    sizeof(toswords[0]), kw_casecmp);
+
+	if (p) {
+		*val = p->k_val;
+		return (1);
+	}
+	return (0);
+}
+
+static int
 getservice(char *n)
 {
 	struct servent	*s;
@@ -5169,4 +5548,452 @@ getservice(char *n)
 	if (s == NULL)
 		return -1;
 	return s->s_port;
+}
+
+static int
+parse_flags(char *s)
+{
+	const char *flags = FLOWSPEC_TCP_FLAG_STRING;
+	char *p, *q;
+	uint8_t f = 0;
+
+	if (curflow->type == FLOWSPEC_TYPE_FRAG) {
+		if (curflow->aid == AID_INET)
+			flags = FLOWSPEC_FRAG_STRING4;
+		else
+			flags = FLOWSPEC_FRAG_STRING6;
+	}
+
+	for (p = s; *p; p++) {
+		if ((q = strchr(flags, *p)) == NULL)
+			return -1;
+		f |= 1 << (q - flags);
+	}
+	return (f ? f : 0xff);
+}
+
+static void
+component_finish(int type, uint8_t *data, int len)
+{
+	uint8_t *last;
+	int i = 0;
+
+	switch (type) {
+	case FLOWSPEC_TYPE_DEST:
+	case FLOWSPEC_TYPE_SOURCE:
+		/* nothing to do */
+		return;
+	default:
+		break;
+	}
+
+	do {
+		last = data + i;
+		i += FLOWSPEC_OP_LEN(*last) + 1;
+	} while (i < len);
+	*last |= FLOWSPEC_OP_EOL;
+}
+
+static struct flowspec_config *
+flow_to_flowspec(struct flowspec_context *ctx)
+{
+	struct flowspec_config *f;
+	int i, len = 0;
+	uint8_t aid;
+
+	switch (ctx->aid) {
+	case AID_INET:
+		aid = AID_FLOWSPECv4;
+		break;
+	case AID_INET6:
+		aid = AID_FLOWSPECv6;
+		break;
+	default:
+		return NULL;
+	}
+
+	for (i = FLOWSPEC_TYPE_MIN; i < FLOWSPEC_TYPE_MAX; i++)
+		if (ctx->components[i] != NULL)
+			len += ctx->complen[i] + 1;
+
+	f = flowspec_alloc(aid, len);
+	if (f == NULL)
+		return NULL;
+
+	len = 0;
+	for (i = FLOWSPEC_TYPE_MIN; i < FLOWSPEC_TYPE_MAX; i++)
+		if (ctx->components[i] != NULL) {
+			f->flow->data[len++] = i;
+			component_finish(i, ctx->components[i],
+			    ctx->complen[i]);
+			memcpy(f->flow->data + len, ctx->components[i],
+			    ctx->complen[i]);
+			len += ctx->complen[i];
+		}
+
+	return f;
+}
+
+static void
+flow_free(struct flowspec_context *ctx)
+{
+	int i;
+
+	for (i = 0; i < FLOWSPEC_TYPE_MAX; i++)
+		free(ctx->components[i]);
+	free(ctx);
+}
+
+static int
+push_prefix(struct bgpd_addr *addr, uint8_t len)
+{
+	void *data;
+	uint8_t *comp;
+	int complen, l = 0;
+
+	if (curflow->components[curflow->addr_type] != NULL) {
+		yyerror("flowspec address already set");
+		return -1;
+	}
+
+	if (curflow->aid != addr->aid) {
+		yyerror("wrong address family for flowspec address");
+		return -1;
+	}
+
+	switch (curflow->aid) {
+	case AID_INET:
+		complen = PREFIX_SIZE(len);
+		data = &addr->v4;
+		break;
+	case AID_INET6:
+		/* IPv6 includes an offset byte */
+		complen = PREFIX_SIZE(len) + 1;
+		data = &addr->v6;
+		break;
+	}
+	comp = malloc(complen);
+	if (comp == NULL) {
+		yyerror("out of memory");
+		return -1;
+	}
+
+	comp[l++] = len;
+	if (curflow->aid == AID_INET6)
+		comp[l++] = 0;
+	memcpy(comp + l, data, PREFIX_SIZE(len) - 1);
+
+	curflow->complen[curflow->addr_type] = complen;
+	curflow->components[curflow->addr_type] = comp;
+
+	return 0;
+}
+
+static int
+push_binop(uint8_t binop, long long val)
+{
+	uint8_t *comp;
+	int complen;
+	uint8_t u8;
+
+	if (val < 0 || val > 0xff) {
+		yyerror("unsupported value for flowspec bin_op");
+		return -1;
+	}
+	u8 = val;
+
+	complen = curflow->complen[curflow->type];
+	comp = realloc(curflow->components[curflow->type],
+	    complen + 2);
+	if (comp == NULL) {
+		yyerror("out of memory");
+		return -1;
+	}
+
+	comp[complen++] = binop;
+	comp[complen++] = u8;
+	curflow->complen[curflow->type] = complen;
+	curflow->components[curflow->type] = comp;
+
+	return 0;
+}
+
+static uint8_t
+component_numop(enum comp_ops op, int and, int len)
+{
+	uint8_t flag = 0;
+
+	switch (op) {
+	case OP_EQ:
+		flag |= FLOWSPEC_OP_NUM_EQ;
+		break;
+	case OP_NE:
+		flag |= FLOWSPEC_OP_NUM_NOT;
+		break;
+	case OP_LE:
+		flag |= FLOWSPEC_OP_NUM_LE;
+		break;
+	case OP_LT:
+		flag |= FLOWSPEC_OP_NUM_LT;
+		break;
+	case OP_GE:
+		flag |= FLOWSPEC_OP_NUM_GE;
+		break;
+	case OP_GT:
+		flag |= FLOWSPEC_OP_NUM_GT;
+		break;
+	default:
+		fatalx("unsupported op");
+	}
+
+	switch (len) {
+	case 2:
+		flag |= 1 << FLOWSPEC_OP_LEN_SHIFT;
+		break;
+	case 4:
+		flag |= 2 << FLOWSPEC_OP_LEN_SHIFT;
+		break;
+	case 8:
+		flag |= 3 << FLOWSPEC_OP_LEN_SHIFT;
+		break;
+	}
+
+	if (and)
+		flag |= FLOWSPEC_OP_AND;
+
+	return flag;
+}
+
+static int
+push_numop(enum comp_ops op, int and, long long val)
+{
+	uint8_t *comp;
+	void *data;
+	uint32_t u32;
+	uint16_t u16;
+	uint8_t u8;
+	int len, complen;
+
+	if (val < 0 || val > 0xffffffff) {
+		yyerror("unsupported value for flowspec num_op");
+		return -1;
+	} else if (val <= 255) {
+		len = 1;
+		u8 = val;
+		data = &u8;
+	} else if (val <= 0xffff) {
+		len = 2;
+		u16 = htons(val);
+		data = &u16;
+	} else {
+		len = 4;
+		u32 = htonl(val);
+		data = &u32;
+	}
+
+	complen = curflow->complen[curflow->type];
+	comp = realloc(curflow->components[curflow->type],
+	    complen + len + 1);
+	if (comp == NULL) {
+		yyerror("out of memory");
+		return -1;
+	}
+
+	comp[complen++] = component_numop(op, and, len);
+	memcpy(comp + complen, data, len);
+	complen += len;
+	curflow->complen[curflow->type] = complen;
+	curflow->components[curflow->type] = comp;
+
+	return 0;
+}
+
+static int
+push_unary_numop(enum comp_ops op, long long val)
+{
+	return push_numop(op, 0, val);
+}
+
+static int
+push_binary_numop(enum comp_ops op, long long min, long long max)
+{
+	switch (op) {
+	case OP_RANGE:
+		if (push_numop(OP_GE, 0, min) == -1)
+			return -1;
+		return push_numop(OP_LE, 1, max);
+	case OP_XRANGE:
+		if (push_numop(OP_LT, 0, min) == -1)
+			return -1;
+		return push_numop(OP_GT, 0, max);
+	default:
+		yyerror("unsupported binary flowspec num_op");
+		return -1;
+	}
+}
+
+struct icmptypeent {
+	const char *name;
+	u_int8_t type;
+};
+
+struct icmpcodeent {
+	const char *name;
+	u_int8_t type;
+	u_int8_t code;
+};
+
+static const struct icmptypeent icmp_type[] = {
+	{ "echoreq",	ICMP_ECHO },
+	{ "echorep",	ICMP_ECHOREPLY },
+	{ "unreach",	ICMP_UNREACH },
+	{ "squench",	ICMP_SOURCEQUENCH },
+	{ "redir",	ICMP_REDIRECT },
+	{ "althost",	ICMP_ALTHOSTADDR },
+	{ "routeradv",	ICMP_ROUTERADVERT },
+	{ "routersol",	ICMP_ROUTERSOLICIT },
+	{ "timex",	ICMP_TIMXCEED },
+	{ "paramprob",	ICMP_PARAMPROB },
+	{ "timereq",	ICMP_TSTAMP },
+	{ "timerep",	ICMP_TSTAMPREPLY },
+	{ "inforeq",	ICMP_IREQ },
+	{ "inforep",	ICMP_IREQREPLY },
+	{ "maskreq",	ICMP_MASKREQ },
+	{ "maskrep",	ICMP_MASKREPLY },
+	{ "trace",	ICMP_TRACEROUTE },
+	{ "dataconv",	ICMP_DATACONVERR },
+	{ "mobredir",	ICMP_MOBILE_REDIRECT },
+	{ "ipv6-where",	ICMP_IPV6_WHEREAREYOU },
+	{ "ipv6-here",	ICMP_IPV6_IAMHERE },
+	{ "mobregreq",	ICMP_MOBILE_REGREQUEST },
+	{ "mobregrep",	ICMP_MOBILE_REGREPLY },
+	{ "skip",	ICMP_SKIP },
+	{ "photuris",	ICMP_PHOTURIS }
+};
+
+static const struct icmptypeent icmp6_type[] = {
+	{ "unreach",	ICMP6_DST_UNREACH },
+	{ "toobig",	ICMP6_PACKET_TOO_BIG },
+	{ "timex",	ICMP6_TIME_EXCEEDED },
+	{ "paramprob",	ICMP6_PARAM_PROB },
+	{ "echoreq",	ICMP6_ECHO_REQUEST },
+	{ "echorep",	ICMP6_ECHO_REPLY },
+	{ "groupqry",	ICMP6_MEMBERSHIP_QUERY },
+	{ "listqry",	MLD_LISTENER_QUERY },
+	{ "grouprep",	ICMP6_MEMBERSHIP_REPORT },
+	{ "listenrep",	MLD_LISTENER_REPORT },
+	{ "groupterm",	ICMP6_MEMBERSHIP_REDUCTION },
+	{ "listendone", MLD_LISTENER_DONE },
+	{ "routersol",	ND_ROUTER_SOLICIT },
+	{ "routeradv",	ND_ROUTER_ADVERT },
+	{ "neighbrsol", ND_NEIGHBOR_SOLICIT },
+	{ "neighbradv", ND_NEIGHBOR_ADVERT },
+	{ "redir",	ND_REDIRECT },
+	{ "routrrenum", ICMP6_ROUTER_RENUMBERING },
+	{ "wrureq",	ICMP6_WRUREQUEST },
+	{ "wrurep",	ICMP6_WRUREPLY },
+	{ "fqdnreq",	ICMP6_FQDN_QUERY },
+	{ "fqdnrep",	ICMP6_FQDN_REPLY },
+	{ "niqry",	ICMP6_NI_QUERY },
+	{ "nirep",	ICMP6_NI_REPLY },
+	{ "mtraceresp",	MLD_MTRACE_RESP },
+	{ "mtrace",	MLD_MTRACE },
+	{ "listenrepv2", MLDV2_LISTENER_REPORT },
+};
+
+static const struct icmpcodeent icmp_code[] = {
+	{ "net-unr",		ICMP_UNREACH,	ICMP_UNREACH_NET },
+	{ "host-unr",		ICMP_UNREACH,	ICMP_UNREACH_HOST },
+	{ "proto-unr",		ICMP_UNREACH,	ICMP_UNREACH_PROTOCOL },
+	{ "port-unr",		ICMP_UNREACH,	ICMP_UNREACH_PORT },
+	{ "needfrag",		ICMP_UNREACH,	ICMP_UNREACH_NEEDFRAG },
+	{ "srcfail",		ICMP_UNREACH,	ICMP_UNREACH_SRCFAIL },
+	{ "net-unk",		ICMP_UNREACH,	ICMP_UNREACH_NET_UNKNOWN },
+	{ "host-unk",		ICMP_UNREACH,	ICMP_UNREACH_HOST_UNKNOWN },
+	{ "isolate",		ICMP_UNREACH,	ICMP_UNREACH_ISOLATED },
+	{ "net-prohib",		ICMP_UNREACH,	ICMP_UNREACH_NET_PROHIB },
+	{ "host-prohib",	ICMP_UNREACH,	ICMP_UNREACH_HOST_PROHIB },
+	{ "net-tos",		ICMP_UNREACH,	ICMP_UNREACH_TOSNET },
+	{ "host-tos",		ICMP_UNREACH,	ICMP_UNREACH_TOSHOST },
+	{ "filter-prohib",	ICMP_UNREACH,	ICMP_UNREACH_FILTER_PROHIB },
+	{ "host-preced",	ICMP_UNREACH,	ICMP_UNREACH_HOST_PRECEDENCE },
+	{ "cutoff-preced",	ICMP_UNREACH,	ICMP_UNREACH_PRECEDENCE_CUTOFF },
+	{ "redir-net",		ICMP_REDIRECT,	ICMP_REDIRECT_NET },
+	{ "redir-host",		ICMP_REDIRECT,	ICMP_REDIRECT_HOST },
+	{ "redir-tos-net",	ICMP_REDIRECT,	ICMP_REDIRECT_TOSNET },
+	{ "redir-tos-host",	ICMP_REDIRECT,	ICMP_REDIRECT_TOSHOST },
+	{ "normal-adv",		ICMP_ROUTERADVERT, ICMP_ROUTERADVERT_NORMAL },
+	{ "common-adv",		ICMP_ROUTERADVERT, ICMP_ROUTERADVERT_NOROUTE_COMMON },
+	{ "transit",		ICMP_TIMXCEED,	ICMP_TIMXCEED_INTRANS },
+	{ "reassemb",		ICMP_TIMXCEED,	ICMP_TIMXCEED_REASS },
+	{ "badhead",		ICMP_PARAMPROB,	ICMP_PARAMPROB_ERRATPTR },
+	{ "optmiss",		ICMP_PARAMPROB,	ICMP_PARAMPROB_OPTABSENT },
+	{ "badlen",		ICMP_PARAMPROB,	ICMP_PARAMPROB_LENGTH },
+	{ "unknown-ind",	ICMP_PHOTURIS,	ICMP_PHOTURIS_UNKNOWN_INDEX },
+	{ "auth-fail",		ICMP_PHOTURIS,	ICMP_PHOTURIS_AUTH_FAILED },
+	{ "decrypt-fail",	ICMP_PHOTURIS,	ICMP_PHOTURIS_DECRYPT_FAILED }
+};
+
+static const struct icmpcodeent icmp6_code[] = {
+	{ "admin-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADMIN },
+	{ "noroute-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOROUTE },
+	{ "beyond-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_BEYONDSCOPE },
+	{ "addr-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_ADDR },
+	{ "port-unr", ICMP6_DST_UNREACH, ICMP6_DST_UNREACH_NOPORT },
+	{ "transit", ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_TRANSIT },
+	{ "reassemb", ICMP6_TIME_EXCEEDED, ICMP6_TIME_EXCEED_REASSEMBLY },
+	{ "badhead", ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER },
+	{ "nxthdr", ICMP6_PARAM_PROB, ICMP6_PARAMPROB_NEXTHEADER },
+	{ "redironlink", ND_REDIRECT, ND_REDIRECT_ONLINK },
+	{ "redirrouter", ND_REDIRECT, ND_REDIRECT_ROUTER }
+};
+
+static int
+geticmptypebyname(char *w, uint8_t aid)
+{
+	unsigned int	i;
+
+	switch (aid) {
+	case AID_INET:
+		for (i = 0; i < (sizeof(icmp_type) / sizeof(icmp_type[0]));
+		    i++) {
+			if (!strcmp(w, icmp_type[i].name))
+				return (icmp_type[i].type);
+		}
+		break;
+	case AID_INET6:
+		for (i = 0; i < (sizeof(icmp6_type) / sizeof(icmp6_type[0]));
+		    i++) {
+			if (!strcmp(w, icmp6_type[i].name))
+				return (icmp6_type[i].type);
+		}
+		break;
+	}
+	return -1;
+}
+
+static int
+geticmpcodebyname(u_long type, char *w, uint8_t aid)
+{
+	unsigned int	i;
+
+	switch (aid) {
+	case AID_INET:
+		for (i = 0; i < (sizeof(icmp_code) / sizeof(icmp_code[0]));
+		    i++) {
+			if (type == icmp_code[i].type &&
+			    !strcmp(w, icmp_code[i].name))
+				return (icmp_code[i].code);
+		}
+		break;
+	case AID_INET6:
+		for (i = 0; i < (sizeof(icmp6_code) / sizeof(icmp6_code[0]));
+		    i++) {
+			if (type == icmp6_code[i].type &&
+			    !strcmp(w, icmp6_code[i].name))
+				return (icmp6_code[i].code);
+		}
+		break;
+	}
+	return -1;
 }

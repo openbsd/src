@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.106 2022/12/28 21:30:15 jmc Exp $ */
+/*	$OpenBSD: config.c,v 1.107 2023/04/18 12:11:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <ifaddrs.h>
 #include <netdb.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,6 +34,7 @@
 
 int		host_ip(const char *, struct bgpd_addr *, uint8_t *);
 void		free_networks(struct network_head *);
+void		free_flowspecs(struct flowspec_tree *);
 
 struct bgpd_config *
 new_config(void)
@@ -53,6 +55,7 @@ new_config(void)
 	/* init the various list for later */
 	RB_INIT(&conf->peers);
 	TAILQ_INIT(&conf->networks);
+	RB_INIT(&conf->flowspecs);
 	SIMPLEQ_INIT(&conf->l3vpns);
 	SIMPLEQ_INIT(&conf->prefixsets);
 	SIMPLEQ_INIT(&conf->originsets);
@@ -102,6 +105,50 @@ free_networks(struct network_head *networks)
 	while ((n = TAILQ_FIRST(networks)) != NULL) {
 		TAILQ_REMOVE(networks, n, entry);
 		network_free(n);
+	}
+}
+
+struct flowspec_config *
+flowspec_alloc(uint8_t aid, int len)
+{
+	struct flowspec_config *conf;
+	struct flowspec *flow;
+
+	flow = malloc(FLOWSPEC_SIZE + len);
+	if (flow == NULL)
+		return NULL;
+	memset(flow, 0, FLOWSPEC_SIZE);
+
+	conf = calloc(1, sizeof(*conf));
+	if (conf == NULL) {
+		free(flow);
+		return NULL;
+	}
+
+	conf->flow = flow;
+	TAILQ_INIT(&conf->attrset);
+	flow->len = len;
+	flow->aid = aid;
+
+	return conf;
+}
+
+void
+flowspec_free(struct flowspec_config *f)
+{
+	filterset_free(&f->attrset);
+	free(f->flow);
+	free(f);
+}
+
+void
+free_flowspecs(struct flowspec_tree *flowspecs)
+{
+	struct flowspec_config *f, *nf;
+
+	RB_FOREACH_SAFE(f, flowspec_tree, flowspecs, nf) {
+		RB_REMOVE(flowspec_tree, flowspecs, f);
+		flowspec_free(f);
 	}
 }
 
@@ -213,6 +260,7 @@ free_config(struct bgpd_config *conf)
 
 	free_l3vpns(&conf->l3vpns);
 	free_networks(&conf->networks);
+	free_flowspecs(&conf->flowspecs);
 	filterlist_free(conf->filters);
 	free_prefixsets(&conf->prefixsets);
 	free_prefixsets(&conf->originsets);
@@ -251,6 +299,7 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 {
 	struct listen_addr	*nla, *ola, *next;
 	struct peer		*p, *np, *nextp;
+	struct flowspec_config	*f, *nextf, *xf;
 
 	/*
 	 * merge the freshly parsed conf into the running xconf
@@ -315,6 +364,26 @@ merge_config(struct bgpd_config *xconf, struct bgpd_config *conf)
 	/* switch the network statements, but first remove the old ones */
 	free_networks(&xconf->networks);
 	TAILQ_CONCAT(&xconf->networks, &conf->networks, entry);
+
+	/*
+	 * Merge the flowspec statements. Mark the old ones for deletion
+	 * which happens when the flowspec is sent to the RDE.
+	 */
+	RB_FOREACH(f, flowspec_tree, &xconf->flowspecs)
+		f->reconf_action = RECONF_DELETE;
+
+	RB_FOREACH_SAFE(f, flowspec_tree, &conf->flowspecs, nextf) {
+		RB_REMOVE(flowspec_tree, &conf->flowspecs, f);
+
+		xf = RB_INSERT(flowspec_tree, &xconf->flowspecs, f);
+		if (xf != NULL) {
+			filterset_free(&xf->attrset);
+			filterset_move(&f->attrset, &xf->attrset);
+			flowspec_free(f);
+			xf->reconf_action = RECONF_KEEP;
+		} else
+			f->reconf_action = RECONF_KEEP;
+	}
 
 	/* switch the l3vpn configs, first remove the old ones */
 	free_l3vpns(&xconf->l3vpns);
@@ -668,3 +737,17 @@ aspa_cmp(struct aspa_set *a, struct aspa_set *b)
 }
 
 RB_GENERATE(aspa_tree, aspa_set, entry, aspa_cmp);
+
+static inline int
+flowspec_config_cmp(struct flowspec_config *a, struct flowspec_config *b)
+{
+	if (a->flow->aid < b->flow->aid)
+		return -1;
+	if (a->flow->aid > b->flow->aid)
+		return 1;
+
+	return flowspec_cmp(a->flow->data, a->flow->len,
+	    b->flow->data, b->flow->len, a->flow->aid == AID_FLOWSPECv6);
+}
+
+RB_GENERATE(flowspec_tree, flowspec_config, entry, flowspec_config_cmp);
