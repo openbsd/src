@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.175 2022/01/11 11:51:14 uaa Exp $	*/
+/*	$OpenBSD: com.c,v 1.176 2023/04/18 09:58:06 jsg Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -146,14 +146,14 @@ comspeed(long freq, long speed)
 int
 comprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 {
-	int i, k;
+	int i;
 
 	/* force access to id reg */
-	bus_space_write_1(iot, ioh, com_lcr, 0);
+	bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
 	bus_space_write_1(iot, ioh, com_iir, 0);
 	for (i = 0; i < 32; i++) {
-		k = bus_space_read_1(iot, ioh, com_iir);
-		if (k & 0x38) {
+		if ((bus_space_read_1(iot, ioh, com_lcr) != LCR_8BITS) ||
+		    (bus_space_read_1(iot, ioh, com_iir) & 0x38)) {
 			bus_space_read_1(iot, ioh, com_data); /* cleanup */
 		} else
 			break;
