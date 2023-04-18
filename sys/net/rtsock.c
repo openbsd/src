@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.360 2023/04/18 09:54:53 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.361 2023/04/18 09:55:34 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2175,9 +2175,9 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		break;
 
 	case NET_RT_IFLIST:
-		NET_LOCK();
+		NET_LOCK_SHARED();
 		error = sysctl_iflist(af, &w);
-		NET_UNLOCK();
+		NET_UNLOCK_SHARED();
 		break;
 
 	case NET_RT_STATS:
