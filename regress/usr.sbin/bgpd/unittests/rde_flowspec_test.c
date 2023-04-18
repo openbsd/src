@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_flowspec_test.c,v 1.1 2023/04/17 08:02:55 claudio Exp $ */
+/*	$OpenBSD: rde_flowspec_test.c,v 1.2 2023/04/18 06:41:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -119,8 +119,8 @@ test_flowspec_valid(void)
 static int
 do_cmp(const uint8_t *a, int alen, const uint8_t *b, int blen, int is_v6)
 {
-	if (flowspec_cmp(a, alen, b, blen, is_v6) != 1 ||
-	    flowspec_cmp(b, blen, a, alen, is_v6) != -1)
+	if (flowspec_cmp(a, alen, b, blen, is_v6) != -1 ||
+	    flowspec_cmp(b, blen, a, alen, is_v6) != 1)
 		return -1;
 	return 0;
 }
