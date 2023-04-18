@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.180 2023/04/15 13:24:47 kn Exp $	*/
+/*	$OpenBSD: in.c,v 1.181 2023/04/18 22:20:16 kn Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -282,13 +282,13 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		goto err;
 	}
 
+	if (!privileged) {
+		error = EPERM;
+		goto err;
+	}
+
 	switch (cmd) {
 	case SIOCSIFDSTADDR:
-		if (!privileged) {
-			error = EPERM;
-			break;
-		}
-
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0) {
 			error = EINVAL;
 			break;
@@ -308,11 +308,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 
 	case SIOCSIFBRDADDR:
-		if (!privileged) {
-			error = EPERM;
-			break;
-		}
-
 		if ((ifp->if_flags & IFF_BROADCAST) == 0) {
 			error = EINVAL;
 			break;
@@ -324,11 +319,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 		break;
 
 	case SIOCSIFNETMASK:
-		if (!privileged) {
-			error = EPERM;
-			break;
-		}
-
 		if (ifr->ifr_addr.sa_len < 8) {
 			error = EINVAL;
 			break;
@@ -429,6 +419,9 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 			return (error);
 	}
 
+	if (!privileged)
+		return (EPERM);
+
 	KERNEL_LOCK();
 	NET_LOCK();
 
@@ -446,11 +439,6 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 	switch (cmd) {
 	case SIOCAIFADDR: {
 		int needinit = 0;
-
-		if (!privileged) {
-			error = EPERM;
-			break;
-		}
 
 		if (ifra->ifra_mask.sin_len) {
 			if (ifra->ifra_mask.sin_len < 8) {
@@ -534,11 +522,6 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 		break;
 	    }
 	case SIOCDIFADDR:
-		if (!privileged) {
-			error = EPERM;
-			break;
-		}
-
 		if (ia == NULL) {
 			error = EADDRNOTAVAIL;
 			break;
