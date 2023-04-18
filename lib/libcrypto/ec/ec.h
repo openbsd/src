@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.34 2023/04/18 08:46:08 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.35 2023/04/18 15:14:46 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -148,23 +148,6 @@ const EC_METHOD *EC_GFp_mont_method(void);
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GFp_nist_method(void);
-#endif
-
-#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
-/** Returns 64-bit optimized methods for nistp224
- *  \return  EC_METHOD object
- */
-const EC_METHOD *EC_GFp_nistp224_method(void);
-
-/** Returns 64-bit optimized methods for nistp256
- *  \return  EC_METHOD object
- */
-const EC_METHOD *EC_GFp_nistp256_method(void);
-
-/** Returns 64-bit optimized methods for nistp521
- *  \return  EC_METHOD object
- */
-const EC_METHOD *EC_GFp_nistp521_method(void);
 #endif
 
 #ifndef OPENSSL_NO_EC2M
