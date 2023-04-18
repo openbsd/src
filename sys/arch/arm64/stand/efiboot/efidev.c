@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.11 2022/09/01 13:45:26 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.12 2023/04/18 23:11:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -564,4 +564,214 @@ int
 efiioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return 0;
+}
+
+/*
+ * load a file from the EFI System Partition
+ */
+
+static EFI_GUID lip_guid = LOADED_IMAGE_PROTOCOL;
+static EFI_GUID sfsp_guid = SIMPLE_FILE_SYSTEM_PROTOCOL;
+static EFI_GUID fi_guid = EFI_FILE_INFO_ID;
+
+int
+esp_open(char *path, struct open_file *f)
+{
+	extern EFI_HANDLE IH;
+	extern EFI_BOOT_SERVICES *BS;
+
+	EFI_LOADED_IMAGE *li = NULL;
+	EFI_FILE_IO_INTERFACE *ESPVolume;
+	CHAR16 *fname;
+	EFI_FILE_HANDLE VH, FH;
+	UINTN pathlen, i;
+	EFI_STATUS status;
+
+	if (strcmp("esp", f->f_dev->dv_name) != 0)
+		return ENXIO;
+
+	if (IH == NULL)
+		return ENXIO;
+
+	/* get the loaded image protocol interface */
+	status = BS->HandleProtocol(IH, &lip_guid, (void **)&li);
+	if (status != EFI_SUCCESS)
+		return ENXIO;
+
+	/* get a fs handle */
+	status = BS->HandleProtocol(li->DeviceHandle, &sfsp_guid,
+	    (void *)&ESPVolume);
+	if (status != EFI_SUCCESS)
+		return ENXIO;
+
+	status = ESPVolume->OpenVolume(ESPVolume, &VH);
+	if (status != EFI_SUCCESS)
+		return ENOENT;
+
+	pathlen = strlen(path) + 1;
+	fname = alloc(pathlen * sizeof(*fname));
+	if (fname == NULL)
+		return ENOMEM;
+
+	/* No AsciiStrToUnicodeStrS */
+	for (i = 0; i < pathlen; i++)
+		fname[i] = path[i];
+
+	status = VH->Open(VH, &FH, fname, EFI_FILE_MODE_READ,
+	    EFI_FILE_READ_ONLY /*| EFI_FILE_HIDDEN*/ | EFI_FILE_SYSTEM);
+	free(fname, pathlen * sizeof(*fname));
+	if (status != EFI_SUCCESS)
+		return ENOENT;
+
+	f->f_fsdata = FH;
+	return (0);
+}
+
+int
+esp_close(struct open_file *f)
+{
+	EFI_FILE_HANDLE FH = f->f_fsdata;
+	FH->Close(FH);
+	return 0;
+}
+
+int
+esp_read(struct open_file *f, void *addr, size_t size, size_t *resid)
+{
+	EFI_FILE_HANDLE FH = f->f_fsdata;
+	UINT64 readlen = size;
+	EFI_STATUS status;
+
+	status = FH->Read(FH, &readlen, addr);
+	if (status != EFI_SUCCESS)
+		return (EIO);
+
+	*resid = size - readlen;
+	return (0);
+}
+
+int
+esp_write(struct open_file *f, void *start, size_t size, size_t *resid)
+{
+	return (EROFS);
+}
+
+off_t
+esp_seek(struct open_file *f, off_t offset, int where)
+{
+	EFI_FILE_HANDLE FH = f->f_fsdata;
+	UINT64 position;
+	EFI_STATUS status;
+
+	switch(where) {
+	case SEEK_CUR:
+		status = FH->GetPosition(FH, &position);
+		if (status != EFI_SUCCESS) {
+			errno = EIO;
+			return ((off_t)-1);
+		}
+
+		position += offset;
+		break;
+	case SEEK_SET:
+		position = offset;
+		break;
+	case SEEK_END:
+		position = 0xFFFFFFFFFFFFFFFF;
+		break;
+	default:
+		errno = EINVAL;
+		return ((off_t)-1);
+	}
+
+	status = FH->SetPosition(FH, position);
+	if (status != EFI_SUCCESS) {
+		errno = EIO;
+		return ((off_t)-1);
+	}
+
+	return (0);
+}
+
+int
+esp_stat(struct open_file *f, struct stat *sb)
+{
+
+	EFI_FILE_HANDLE FH = f->f_fsdata;
+	EFI_FILE_INFO fi;
+	EFI_FILE_INFO *fip = &fi;
+	UINTN filen = sizeof(fi);
+	EFI_STATUS status;
+	ssize_t rv = -1;
+
+	sb->st_mode = 0444;
+	sb->st_nlink = 1;
+	sb->st_uid = 0;
+	sb->st_gid = 0;
+
+	status = FH->GetInfo(FH, &fi_guid, &filen, fip);
+	switch (status) {
+	case EFI_SUCCESS:
+		sb->st_size = fip->FileSize;
+		return (0);
+	case EFI_BUFFER_TOO_SMALL:
+		break;
+	default:
+		return (EIO);
+	}
+
+	fip = alloc(filen);
+	if (fip == NULL)
+		return (ENOMEM);
+
+	status = FH->GetInfo(FH, &fi_guid, &filen, fip);
+	if (status != EFI_SUCCESS)
+		goto done;
+
+	sb->st_size = fip->FileSize;
+
+done:
+	free(fip, filen);
+	return (rv);
+}
+
+int
+esp_readdir(struct open_file *f, char *name)
+{
+	return EOPNOTSUPP;
+}
+
+int
+espopen(struct open_file *f, ...)
+{
+        u_int unit;
+        va_list ap;
+
+        va_start(ap, f);
+        unit = va_arg(ap, u_int);
+        va_end(ap);
+
+        if (unit != 0)
+                return 1;
+
+        return 0;
+}
+
+int
+espclose(struct open_file *f)
+{
+	return 0;
+}
+
+int
+espioctl(struct open_file *f, u_long cmd, void *data)
+{
+        return EOPNOTSUPP;
+}
+
+int
+espstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+    size_t *rsize)
+{
+	return EOPNOTSUPP;
 }

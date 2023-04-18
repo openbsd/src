@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.44 2023/02/15 14:13:38 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.45 2023/04/18 23:11:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -46,7 +46,7 @@
 #include "efipxe.h"
 #include "softraid_arm64.h"
 
-const char version[] = "1.16";
+const char version[] = "1.17";
 int	debug = 0;
 
 struct fs_ops file_system[] = {
@@ -58,10 +58,13 @@ struct fs_ops file_system[] = {
 	  ufs_stat,    ufs_readdir,  ufs_fchmod },
 	{ ufs2_open,   ufs2_close,   ufs2_read,   ufs2_write,   ufs2_seek,
 	  ufs2_stat,   ufs2_readdir, ufs2_fchmod },
+	{ esp_open,    esp_close,    esp_read,    esp_write,    esp_seek,
+	  esp_stat,    esp_readdir,  }
 };
 int nfsys = nitems(file_system);
 
 struct devsw	devsw[] = {
+	{ "esp", espstrategy, espopen, espclose, espioctl },
 	{ "tftp", tftpstrategy, tftpopen, tftpclose, tftpioctl },
 	{ "sd", efistrategy, efiopen, eficlose, efiioctl },
 	{ "sr", srstrategy, sropen, srclose, srioctl },

@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.h,v 1.3 2020/12/09 18:10:18 krw Exp $	*/
+/*	$OpenBSD: efidev.h,v 1.4 2023/04/18 23:11:56 dlg Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,3 +34,16 @@ int		 efiopen(struct open_file *, ...);
 int		 efistrategy(void *, int, daddr_t, size_t, void *, size_t *);
 int		 eficlose(struct open_file *);
 int		 efiioctl(struct open_file *, u_long, void *);
+
+int		 esp_open(char *, struct open_file *);
+int		 esp_close(struct open_file *);
+int		 esp_read(struct open_file *, void *, size_t, size_t *);
+int		 esp_write(struct open_file *, void *, size_t, size_t *);
+off_t		 esp_seek(struct open_file *, off_t, int);
+int		 esp_stat(struct open_file *, struct stat *);
+int		 esp_readdir(struct open_file *, char *);
+
+int		 espopen(struct open_file *, ...);
+int		 espclose(struct open_file *);
+int		 espioctl(struct open_file *, u_long, void *);
+int		 espstrategy(void *, int, daddr_t, size_t, void *, size_t *);
