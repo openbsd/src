@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.164 2023/03/09 13:12:19 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.165 2023/04/18 14:11:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,6 +38,7 @@ void		 print_l3vpn_targets(struct filter_set_head *, const char *);
 void		 print_l3vpn(struct l3vpn *);
 const char	*print_af(uint8_t);
 void		 print_network(struct network_config *, const char *);
+void		 print_flowspec(struct flowspec_config *, const char *);
 void		 print_as_sets(struct as_set_head *);
 void		 print_prefixsets(struct prefixset_head *);
 void		 print_originsets(struct prefixset_head *);
@@ -461,12 +462,12 @@ print_af(uint8_t aid)
 {
 	/*
 	 * Hack around the fact that aid2str() will return "IPv4 unicast"
-	 * for AID_INET. AID_INET and AID_INET6 need special handling and
-	 * the other AID should never end up here (at least for now).
+	 * for AID_INET. AID_INET, AID_INET6 and the flowspec AID need
+	 * special handling and the other AID should never end up here.
 	 */
-	if (aid == AID_INET)
+	if (aid == AID_INET || aid == AID_FLOWSPECv4)
 		return ("inet");
-	if (aid == AID_INET6)
+	if (aid == AID_INET6 || aid == AID_FLOWSPECv6)
 		return ("inet6");
 	return (aid2str(aid));
 }
@@ -500,6 +501,112 @@ print_network(struct network_config *n, const char *c)
 	if (!TAILQ_EMPTY(&n->attrset))
 		printf(" ");
 	print_set(&n->attrset);
+	printf("\n");
+}
+
+static void
+print_flowspec_list(struct flowspec *f, int type, int is_v6)
+{
+	const uint8_t *comp;
+	const char *fmt;
+	int complen, off = 0;
+
+	if (flowspec_get_component(f->data, f->len, type, is_v6,
+	    &comp, &complen) != 1)
+		return;
+
+	printf("%s ", flowspec_fmt_label(type));
+	fmt = flowspec_fmt_num_op(comp, complen, &off);
+	if (off == -1) {
+		printf("%s ", fmt);
+	} else {
+		printf("{ %s ", fmt);
+		do {
+			fmt = flowspec_fmt_num_op(comp, complen, &off);
+			printf("%s ", fmt);
+		} while (off != -1);
+		printf("} ");
+	}
+}
+
+static void
+print_flowspec_flags(struct flowspec *f, int type, int is_v6)
+{
+	const uint8_t *comp;
+	const char *fmt, *flags;
+	int complen, off = 0;
+
+	if (flowspec_get_component(f->data, f->len, type, is_v6,
+	    &comp, &complen) != 1)
+		return;
+
+	printf("%s ", flowspec_fmt_label(type));
+
+	switch (type) {
+	case FLOWSPEC_TYPE_TCP_FLAGS:
+		flags = FLOWSPEC_TCP_FLAG_STRING;
+		break;
+	case FLOWSPEC_TYPE_FRAG:
+		if (!is_v6)
+			flags = FLOWSPEC_FRAG_STRING4;
+		else
+			flags = FLOWSPEC_FRAG_STRING6;
+		break;
+	}
+
+	fmt = flowspec_fmt_bin_op(comp, complen, &off, flags);
+	if (off == -1) {
+		printf("%s ", fmt);
+	} else {
+		printf("{ %s ", fmt);
+		do {
+			fmt = flowspec_fmt_bin_op(comp, complen, &off, flags);
+			printf("%s ", fmt);
+		} while (off != -1);
+		printf("} ");
+	}
+}
+
+static void
+print_flowspec_addr(struct flowspec *f, int type, int is_v6)
+{
+	struct bgpd_addr addr;
+	uint8_t plen;
+
+	flowspec_get_addr(f->data, f->len, type, is_v6, &addr, &plen, NULL);
+	if (plen == 0)
+		printf("%s any ", flowspec_fmt_label(type));
+	else
+		printf("%s %s/%u ", flowspec_fmt_label(type),
+		    log_addr(&addr), plen);
+}
+
+void
+print_flowspec(struct flowspec_config *fconf, const char *c)
+{
+	struct flowspec *f = fconf->flow;
+	int is_v6 = (f->aid == AID_FLOWSPECv6);
+
+	printf("%sflowspec %s ", c, print_af(f->aid));
+
+	print_flowspec_list(f, FLOWSPEC_TYPE_PROTO, is_v6);
+
+	print_flowspec_addr(f, FLOWSPEC_TYPE_SOURCE, is_v6);
+	print_flowspec_list(f, FLOWSPEC_TYPE_SRC_PORT, is_v6);
+
+	print_flowspec_addr(f, FLOWSPEC_TYPE_DEST, is_v6);
+	print_flowspec_list(f, FLOWSPEC_TYPE_DST_PORT, is_v6);
+
+	print_flowspec_list(f, FLOWSPEC_TYPE_DSCP, is_v6);
+	print_flowspec_list(f, FLOWSPEC_TYPE_PKT_LEN, is_v6);
+	print_flowspec_flags(f, FLOWSPEC_TYPE_TCP_FLAGS, is_v6);
+	print_flowspec_flags(f, FLOWSPEC_TYPE_FRAG, is_v6);
+
+	/* TODO: fixup the code handling to be like in the parser */
+	print_flowspec_list(f, FLOWSPEC_TYPE_ICMP_TYPE, is_v6);
+	print_flowspec_list(f, FLOWSPEC_TYPE_ICMP_CODE, is_v6);
+
+	print_set(&fconf->attrset);
 	printf("\n");
 }
 
@@ -1133,6 +1240,7 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l)
 {
 	struct filter_rule	*r;
 	struct network		*n;
+	struct flowspec_config	*f;
 	struct rde_rib		*rr;
 	struct l3vpn		*vpn;
 
@@ -1145,6 +1253,8 @@ print_config(struct bgpd_config *conf, struct rib_names *rib_l)
 	print_originsets(&conf->originsets);
 	TAILQ_FOREACH(n, &conf->networks, entry)
 		print_network(&n->net, "");
+	RB_FOREACH(f, flowspec_tree, &conf->flowspecs)
+		print_flowspec(f, "");
 	if (!SIMPLEQ_EMPTY(&conf->l3vpns))
 		printf("\n");
 	SIMPLEQ_FOREACH(vpn, &conf->l3vpns, entry)
