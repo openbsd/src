@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.133 2023/04/16 07:16:58 ajacoutot Exp $
+#	$OpenBSD: changelist,v 1.134 2023/04/18 08:48:17 semarie Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -168,6 +168,10 @@
 /var/db/unwind.key
 +/var/nsd/etc/nsd.conf
 /var/unbound/etc/unbound.conf
++/var/unbound/etc/unbound_control.key
+/var/unbound/etc/unbound_control.pem
++/var/unbound/etc/unbound_server.key
+/var/unbound/etc/unbound_server.pem
 /var/yp/Makefile.main
 /var/yp/Makefile.yp
 /.cshrc
