@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.16 2023/04/18 07:56:58 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.17 2023/04/18 08:17:49 tb Exp $	*/
 /* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
@@ -273,8 +273,7 @@ prime_field_tests(void)
 
 	fprintf(stdout, "A cyclic subgroup:\n");
 	k = 100;
-	do
-	{
+	do {
 		if (k-- == 0)
 			ABORT;
 
@@ -295,24 +294,10 @@ prime_field_tests(void)
 			ABORT;
 		if (!EC_POINT_add(group, P, P, Q, ctx))
 			ABORT;
+	} while (!EC_POINT_is_at_infinity(group, P));
 
-#if 0 /* optional */
-		{
-			EC_POINT *points[3];
-
-			points[0] = R;
-			points[1] = Q;
-			points[2] = P;
-			if (!EC_POINTs_make_affine(group, 2, points, ctx))
-				ABORT;
-		}
-#endif
-
-	}
-	while (!EC_POINT_is_at_infinity(group, P));
-
-		if (!EC_POINT_add(group, P, Q, R, ctx))
-			ABORT;
+	if (!EC_POINT_add(group, P, Q, R, ctx))
+		ABORT;
 	if (!EC_POINT_is_at_infinity(group, P))
 		ABORT;
 
