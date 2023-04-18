@@ -1,4 +1,4 @@
-/*	$OpenBSD: xhci_pci.c,v 1.11 2022/03/11 18:00:52 mpi Exp $ */
+/*	$OpenBSD: xhci_pci.c,v 1.12 2023/04/18 21:22:00 patrick Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -158,7 +158,8 @@ xhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* Map and establish the interrupt. */
-	if (pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
+	if (pci_intr_map_msix(pa, 0, &ih) != 0 &&
+	    pci_intr_map_msi(pa, &ih) != 0 && pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		goto unmap_ret;
 	}
