@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_oct.c,v 1.20 2023/04/11 18:58:20 jsing Exp $ */
+/* $OpenBSD: ecp_oct.c,v 1.21 2023/04/18 18:29:32 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -97,7 +97,7 @@ ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
 	/* tmp1 := x^3 */
 	if (!BN_nnmod(x, x_, &group->field, ctx))
 		goto err;
-	if (group->meth->field_decode == 0) {
+	if (group->meth->field_decode == NULL) {
 		/* field_{sqr,mul} work on standard representation */
 		if (!group->meth->field_sqr(group, tmp2, x_, ctx))
 			goto err;
@@ -135,7 +135,7 @@ ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
 	}
 
 	/* tmp1 := tmp1 + b */
-	if (group->meth->field_decode) {
+	if (group->meth->field_decode != NULL) {
 		if (!group->meth->field_decode(group, tmp2, &group->b, ctx))
 			goto err;
 		if (!BN_mod_add_quick(tmp1, tmp1, tmp2, &group->field))
