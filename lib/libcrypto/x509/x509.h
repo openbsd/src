@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.95 2023/04/18 08:33:43 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.96 2023/04/18 08:47:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,44 +66,40 @@
 
 #include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_BUFFER
-#include <openssl/buffer.h>
-#endif
-#ifndef OPENSSL_NO_EVP
-#include <openssl/evp.h>
-#endif
+#include <openssl/asn1.h>
 #ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
-#include <openssl/stack.h>
-#include <openssl/asn1.h>
-#include <openssl/safestack.h>
-
-#ifndef OPENSSL_NO_EC
-#include <openssl/ec.h>
-#endif
-
-#ifndef OPENSSL_NO_ECDSA
-#include <openssl/ecdsa.h>
-#endif
-
-#ifndef OPENSSL_NO_ECDH
-#include <openssl/ecdh.h>
-#endif
-
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
+#ifndef OPENSSL_NO_BUFFER
+#include <openssl/buffer.h>
 #endif
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
-
+#ifndef OPENSSL_NO_DSA
+#include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_EC
+#include <openssl/ec.h>
+#endif
+#ifndef OPENSSL_NO_ECDSA
+#include <openssl/ecdsa.h>
+#endif
+#ifndef OPENSSL_NO_ECDH
+#include <openssl/ecdh.h>
+#endif
+#ifndef OPENSSL_NO_EVP
+#include <openssl/evp.h>
+#endif
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
 #ifndef OPENSSL_NO_SHA
 #include <openssl/sha.h>
 #endif
+#include <openssl/stack.h>
+#include <openssl/safestack.h>
+
 #include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus

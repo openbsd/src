@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.h,v 1.14 2023/04/18 08:33:43 tb Exp $ */
+/* $OpenBSD: ecdsa.h,v 1.15 2023/04/18 08:47:28 tb Exp $ */
 /**
  * \file   crypto/ecdsa/ecdsa.h Include file for the OpenSSL ECDSA functions
  * \author Written by Nils Larsch for the OpenSSL project
@@ -65,9 +65,10 @@
 #error ECDSA is disabled.
 #endif
 
-#include <openssl/ec.h>
-#include <openssl/ossl_typ.h>
 #include <openssl/bn.h>
+#include <openssl/ec.h>
+
+#include <openssl/ossl_typ.h>
 
 #ifdef __cplusplus
 extern "C" {
