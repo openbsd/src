@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.38 2022/08/31 20:49:12 patrick Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.39 2023/04/18 12:39:32 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -502,12 +502,18 @@ acpipci_getirq(int crsidx, union acpi_resource *crs, void *arg)
 }
 
 int
-acpipci_intr_link(struct acpipci_softc *sc, struct aml_value *val)
+acpipci_intr_link(struct acpipci_softc *sc, struct aml_node *node,
+    struct aml_value *val)
 {
 	struct aml_value res;
 	int64_t sta;
 	int irq = -1;
 
+	if (val->type == AML_OBJTYPE_NAMEREF) {
+		node = aml_searchrel(node, aml_getname(val->v_nameref));
+		if (node)
+			val = node->value;
+	}
 	if (val->type == AML_OBJTYPE_OBJREF)
 		val = val->v_objref.ref;
 	if (val->type != AML_OBJTYPE_DEVICE)
@@ -576,7 +582,7 @@ acpipci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 			index = val->v_package[3]->v_integer;
 		} else {
 			source = 0;
-			index = acpipci_intr_link(sc, val->v_package[2]);
+			index = acpipci_intr_link(sc, node, val->v_package[2]);
 		}
 		if (source != 0 || index == -1)
 			continue;
