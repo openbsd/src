@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.37 2023/04/18 08:47:28 tb Exp $ */
+/* $OpenBSD: engine.h,v 1.38 2023/04/18 09:10:44 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -91,10 +91,9 @@
 #include <openssl/rsa.h>
 #endif
 #include <openssl/ui.h>
+#include <openssl/x509.h>
 
 #include <openssl/ossl_typ.h>
-
-#include <openssl/x509.h>
 
 #ifdef  __cplusplus
 extern "C" {
