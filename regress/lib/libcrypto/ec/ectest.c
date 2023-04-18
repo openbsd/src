@@ -1,4 +1,4 @@
-/*	$OpenBSD: ectest.c,v 1.15 2023/04/18 07:54:42 tb Exp $	*/
+/*	$OpenBSD: ectest.c,v 1.16 2023/04/18 07:56:58 tb Exp $	*/
 /* crypto/ec/ectest.c */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
@@ -723,54 +723,6 @@ prime_field_tests(void)
 		EC_GROUP_free(P_521);
 
 }
-
-/* Change test based on whether binary point compression is enabled or not. */
-#ifdef OPENSSL_EC_BIN_PT_COMP
-#define CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
-	if (!BN_hex2bn(&x, _x)) ABORT; \
-	if (!EC_POINT_set_compressed_coordinates(group, P, x, _y_bit, ctx)) ABORT; \
-	if (!EC_POINT_is_on_curve(group, P, ctx)) ABORT; \
-	if (!BN_hex2bn(&z, _order)) ABORT; \
-	if (!BN_hex2bn(&cof, _cof)) ABORT; \
-	if (!EC_GROUP_set_generator(group, P, z, cof)) ABORT; \
-	if (!EC_POINT_get_affine_coordinates(group, P, x, y, ctx)) ABORT; \
-	fprintf(stdout, "\n%s -- Generator:\n     x = 0x", _name); \
-	BN_print_fp(stdout, x); \
-	fprintf(stdout, "\n     y = 0x"); \
-	BN_print_fp(stdout, y); \
-	fprintf(stdout, "\n"); \
-	/* G_y value taken from the standard: */ \
-	if (!BN_hex2bn(&z, _y)) ABORT; \
-	if (0 != BN_cmp(y, z)) ABORT;
-#else
-#define CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
-	if (!BN_hex2bn(&x, _x)) ABORT; \
-	if (!BN_hex2bn(&y, _y)) ABORT; \
-	if (!EC_POINT_set_affine_coordinates(group, P, x, y, ctx)) ABORT; \
-	if (!EC_POINT_is_on_curve(group, P, ctx)) ABORT; \
-	if (!BN_hex2bn(&z, _order)) ABORT; \
-	if (!BN_hex2bn(&cof, _cof)) ABORT; \
-	if (!EC_GROUP_set_generator(group, P, z, cof)) ABORT; \
-	fprintf(stdout, "\n%s -- Generator:\n     x = 0x", _name); \
-	BN_print_fp(stdout, x); \
-	fprintf(stdout, "\n     y = 0x"); \
-	BN_print_fp(stdout, y); \
-	fprintf(stdout, "\n");
-#endif
-
-#define CHAR2_CURVE_TEST(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
-	if (!BN_hex2bn(&p, _p)) ABORT; \
-	if (!BN_hex2bn(&a, _a)) ABORT; \
-	if (!BN_hex2bn(&b, _b)) ABORT; \
-	if (!EC_GROUP_set_curve(group, p, a, b, ctx)) ABORT; \
-	CHAR2_CURVE_TEST_INTERNAL(_name, _p, _a, _b, _x, _y, _y_bit, _order, _cof, _degree, _variable) \
-	fprintf(stdout, "verify degree ..."); \
-	if (EC_GROUP_get_degree(group) != _degree) ABORT; \
-	fprintf(stdout, " ok\n"); \
-	group_order_tests(group); \
-	if (!(_variable = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT; \
-	if (!EC_GROUP_copy(_variable, group)) ABORT; \
-
 
 static void
 internal_curve_test(void)
