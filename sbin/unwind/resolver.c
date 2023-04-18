@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.159 2023/04/18 09:57:08 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.160 2023/04/18 09:57:51 florian Exp $	*/
 
 
 /*
@@ -953,6 +953,12 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 
 	running_res = --rq->running;
 
+	if (rcode == LDNS_RCODE_SERVFAIL) {
+		if (res->stop != 1)
+			check_resolver(res);
+		goto servfail;
+	}
+
 	if (answer_len < LDNS_HEADER_SIZE) {
 		log_warnx("bad packet: too short");
 		goto servfail;
@@ -964,12 +970,6 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 		goto servfail;
 	}
 	answer_header->answer_len = answer_len;
-
-	if (rcode == LDNS_RCODE_SERVFAIL) {
-		if (res->stop != 1)
-			check_resolver(res);
-		goto servfail;
-	}
 
 	if ((result = calloc(1, sizeof(*result))) == NULL)
 		goto servfail;
@@ -1545,17 +1545,17 @@ check_resolver_done(struct uw_resolver *res, void *arg, int rcode,
 
 	prev_state = checked_resolver->state;
 
-	if (answer_len < LDNS_HEADER_SIZE) {
-		checked_resolver->state = DEAD;
-		log_warnx("%s: bad packet: too short", __func__);
-		goto out;
-	}
-
 	if (rcode == LDNS_RCODE_SERVFAIL) {
 		log_debug("%s: %s rcode: SERVFAIL", __func__,
 		    uw_resolver_type_str[checked_resolver->type]);
 
 		checked_resolver->state = DEAD;
+		goto out;
+	}
+
+	if (answer_len < LDNS_HEADER_SIZE) {
+		checked_resolver->state = DEAD;
+		log_warnx("%s: bad packet: too short", __func__);
 		goto out;
 	}
 
@@ -1901,6 +1901,11 @@ trust_anchor_resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	int			 i, tas, n;
 	uint16_t		 dnskey_flags;
 	char			 rdata_buf[1024], *ta;
+
+	if (rcode == LDNS_RCODE_SERVFAIL) {
+		log_debug("%s: rcode: SERVFAIL", __func__);
+		goto out;
+	}
 
 	if (answer_len < LDNS_HEADER_SIZE) {
 		log_warnx("bad packet: too short");
