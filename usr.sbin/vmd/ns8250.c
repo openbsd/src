@@ -1,4 +1,4 @@
-/* $OpenBSD: ns8250.c,v 1.36 2023/03/13 18:09:41 dv Exp $ */
+/* $OpenBSD: ns8250.c,v 1.37 2023/04/18 10:27:38 tb Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -682,7 +682,7 @@ ns8250_restore(int fd, int con_fd, uint32_t vmid)
 }
 
 void
-ns8250_stop()
+ns8250_stop(void)
 {
 	if(event_del(&com1_dev.event))
 		log_warn("could not delete ns8250 event handler");
@@ -691,7 +691,7 @@ ns8250_stop()
 }
 
 void
-ns8250_start()
+ns8250_start(void)
 {
 	event_add(&com1_dev.event, NULL);
 	event_add(&com1_dev.wake, NULL);
