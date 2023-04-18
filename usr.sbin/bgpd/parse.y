@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.447 2023/04/18 12:11:27 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.448 2023/04/18 13:31:14 tb Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,6 +51,10 @@
 #include "session.h"
 #include "rde.h"
 #include "log.h"
+
+#ifndef nitems
+#define nitems(_a)	(sizeof((_a)) / sizeof((_a)[0]))
+#endif
 
 #define MACRO_NAME_LEN		128
 
@@ -3630,8 +3634,7 @@ lookup(char *s)
 	};
 	const struct keywords	*p;
 
-	p = bsearch(s, keywords, sizeof(keywords)/sizeof(keywords[0]),
-	    sizeof(keywords[0]), kw_cmp);
+	p = bsearch(s, keywords, nitems(keywords), sizeof(keywords[0]), kw_cmp);
 
 	if (p)
 		return (p->k_val);
@@ -5527,8 +5530,8 @@ map_tos(char *s, int *val)
 	};
 	const struct keywords	*p;
 
-	p = bsearch(s, toswords, sizeof(toswords)/sizeof(toswords[0]),
-	    sizeof(toswords[0]), kw_casecmp);
+	p = bsearch(s, toswords, nitems(toswords), sizeof(toswords[0]),
+	    kw_casecmp);
 
 	if (p) {
 		*val = p->k_val;
@@ -5951,19 +5954,17 @@ static const struct icmpcodeent icmp6_code[] = {
 static int
 geticmptypebyname(char *w, uint8_t aid)
 {
-	unsigned int	i;
+	size_t	i;
 
 	switch (aid) {
 	case AID_INET:
-		for (i = 0; i < (sizeof(icmp_type) / sizeof(icmp_type[0]));
-		    i++) {
+		for (i = 0; i < nitems(icmp_type); i++) {
 			if (!strcmp(w, icmp_type[i].name))
 				return (icmp_type[i].type);
 		}
 		break;
 	case AID_INET6:
-		for (i = 0; i < (sizeof(icmp6_type) / sizeof(icmp6_type[0]));
-		    i++) {
+		for (i = 0; i < nitems(icmp6_type); i++) {
 			if (!strcmp(w, icmp6_type[i].name))
 				return (icmp6_type[i].type);
 		}
@@ -5975,20 +5976,18 @@ geticmptypebyname(char *w, uint8_t aid)
 static int
 geticmpcodebyname(u_long type, char *w, uint8_t aid)
 {
-	unsigned int	i;
+	size_t	i;
 
 	switch (aid) {
 	case AID_INET:
-		for (i = 0; i < (sizeof(icmp_code) / sizeof(icmp_code[0]));
-		    i++) {
+		for (i = 0; i < nitems(icmp_code); i++) {
 			if (type == icmp_code[i].type &&
 			    !strcmp(w, icmp_code[i].name))
 				return (icmp_code[i].code);
 		}
 		break;
 	case AID_INET6:
-		for (i = 0; i < (sizeof(icmp6_code) / sizeof(icmp6_code[0]));
-		    i++) {
+		for (i = 0; i < nitems(icmp6_code); i++) {
 			if (type == icmp6_code[i].type &&
 			    !strcmp(w, icmp6_code[i].name))
 				return (icmp6_code[i].code);
