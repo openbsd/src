@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.689 2023/04/18 22:00:19 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.690 2023/04/18 22:01:24 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1413,8 +1413,9 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
 	struct ifaddr *ifa;
 	u_int rdomain;
 
+	NET_ASSERT_LOCKED();
+
 	rdomain = rtable_l2(rtableid);
-	KERNEL_LOCK();
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
@@ -1424,12 +1425,10 @@ ifa_ifwithaddr(struct sockaddr *addr, u_int rtableid)
 				continue;
 
 			if (equal(addr, ifa->ifa_addr)) {
-				KERNEL_UNLOCK();
 				return (ifa);
 			}
 		}
 	}
-	KERNEL_UNLOCK();
 	return (NULL);
 }
 
@@ -1442,8 +1441,9 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
 
+	NET_ASSERT_LOCKED();
+
 	rdomain = rtable_l2(rdomain);
-	KERNEL_LOCK();
 	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
 		if (ifp->if_rdomain != rdomain)
 			continue;
@@ -1453,13 +1453,11 @@ ifa_ifwithdstaddr(struct sockaddr *addr, u_int rdomain)
 				    addr->sa_family || ifa->ifa_dstaddr == NULL)
 					continue;
 				if (equal(addr, ifa->ifa_dstaddr)) {
-					KERNEL_UNLOCK();
 					return (ifa);
 				}
 			}
 		}
 	}
-	KERNEL_UNLOCK();
 	return (NULL);
 }
 
@@ -3171,12 +3169,14 @@ ifsettso(struct ifnet *ifp, int on)
 void
 ifa_add(struct ifnet *ifp, struct ifaddr *ifa)
 {
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
 }
 
 void
 ifa_del(struct ifnet *ifp, struct ifaddr *ifa)
 {
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 }
 

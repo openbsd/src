@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.124 2023/04/18 22:00:19 mvs Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.125 2023/04/18 22:01:24 mvs Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -240,7 +240,8 @@ struct ifaddr {
 #define	ifa_broadaddr	ifa_dstaddr	/* broadcast address interface */
 	struct	sockaddr *ifa_netmask;	/* used to determine subnet */
 	struct	ifnet *ifa_ifp;		/* back-pointer to interface */
-	TAILQ_ENTRY(ifaddr) ifa_list;	/* list of addresses for interface */
+	TAILQ_ENTRY(ifaddr) ifa_list;	/* [N] list of addresses for
+					    interface */
 	u_int	ifa_flags;		/* interface flags, see below */
 	struct	refcnt ifa_refcnt;	/* number of `rt_ifa` references */
 	int	ifa_metric;		/* cost of going out this interface */
