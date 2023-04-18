@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.158 2023/02/08 08:01:25 tb Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.159 2023/04/18 09:57:08 florian Exp $	*/
 
 
 /*
@@ -1623,8 +1623,9 @@ void
 asr_resolve_done(struct asr_result *ar, void *arg)
 {
 	struct resolver_cb_data	*cb_data = arg;
-	cb_data->cb(cb_data->res, cb_data->data, ar->ar_rcode, ar->ar_data,
-	    ar->ar_datalen, 0, NULL);
+	cb_data->cb(cb_data->res, cb_data->data, ar->ar_errno == 0 ?
+	    ar->ar_rcode : LDNS_RCODE_SERVFAIL, ar->ar_data, ar->ar_datalen, 0,
+	    NULL);
 	free(ar->ar_data);
 	resolver_unref(cb_data->res);
 	free(cb_data);
@@ -2289,6 +2290,9 @@ check_dns64_done(struct asr_result *ar, void *arg)
 	int				 preflen, count = 0;
 	void				*asr_ctx = arg;
 
+	if (ar->ar_errno != 0)
+		goto fail;
+
 	memset(&qinfo, 0, sizeof(qinfo));
 	alloc_init(&alloc, NULL, 0);
 
@@ -2390,6 +2394,7 @@ check_dns64_done(struct asr_result *ar, void *arg)
 	alloc_clear(&alloc);
 	regional_destroy(region);
 	sldns_buffer_free(buf);
+ fail:
 	free(ar->ar_data);
 	asr_resolver_free(asr_ctx);
 }
