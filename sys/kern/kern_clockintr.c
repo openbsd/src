@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.10 2023/04/16 21:19:26 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.11 2023/04/19 14:30:35 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -113,14 +113,14 @@ clockintr_cpu_init(const struct intrclock *ic)
 
 	KASSERT(ISSET(clockintr_flags, CL_INIT));
 
-	if (!ISSET(cq->cq_flags, CL_CPU_INIT)) {
+	if (!ISSET(cq->cq_flags, CQ_INIT)) {
 		cq->cq_shadow.cl_queue = cq;
 		mtx_init(&cq->cq_mtx, IPL_CLOCK);
 		TAILQ_INIT(&cq->cq_est);
 		TAILQ_INIT(&cq->cq_pend);
 		if (ic != NULL) {
 			cq->cq_intrclock = *ic;
-			SET(cq->cq_flags, CL_CPU_INTRCLOCK);
+			SET(cq->cq_flags, CQ_INTRCLOCK);
 		}
 		cq->cq_gen = 1;
 
@@ -148,7 +148,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 * anyway.  The primary CPU's starting offset is always zero, so
 	 * leave the multiplier zero.
 	 */
-	if (!CPU_IS_PRIMARY(ci) && ISSET(cq->cq_flags, CL_CPU_INTRCLOCK))
+	if (!CPU_IS_PRIMARY(ci) && ISSET(cq->cq_flags, CQ_INTRCLOCK))
 		multiplier = CPU_INFO_UNIT(ci);
 
 	cq->cq_uptime = nsecuptime();
@@ -161,7 +161,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 */
 	offset = hardclock_period / ncpus * multiplier;
 	clockintr_schedule(cq->cq_hardclock, offset);
-	if (!CPU_IS_PRIMARY(ci) || ISSET(cq->cq_flags, CL_CPU_INIT))
+	if (!CPU_IS_PRIMARY(ci) || ISSET(cq->cq_flags, CQ_INIT))
 		clockintr_advance(cq->cq_hardclock, hardclock_period);
 
 	/*
@@ -176,7 +176,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 		clockintr_advance(cq->cq_schedclock, schedclock_period);
 	}
 
-	SET(cq->cq_flags, CL_CPU_INIT);
+	SET(cq->cq_flags, CQ_INIT);
 }
 
 /*
@@ -187,9 +187,9 @@ clockintr_trigger(void)
 {
 	struct clockintr_queue *cq = &curcpu()->ci_queue;
 
-	KASSERT(ISSET(cq->cq_flags, CL_CPU_INIT));
+	KASSERT(ISSET(cq->cq_flags, CQ_INIT));
 
-	if (ISSET(cq->cq_flags, CL_CPU_INTRCLOCK))
+	if (ISSET(cq->cq_flags, CQ_INTRCLOCK))
 		intrclock_trigger(&cq->cq_intrclock);
 }
 
@@ -210,7 +210,7 @@ clockintr_dispatch(void *frame)
 	cq->cq_dispatch = 1;
 
 	splassert(IPL_CLOCK);
-	KASSERT(ISSET(cq->cq_flags, CL_CPU_INIT));
+	KASSERT(ISSET(cq->cq_flags, CQ_INIT));
 
 	mtx_enter(&cq->cq_mtx);
 
@@ -265,7 +265,7 @@ clockintr_dispatch(void *frame)
 	 */
 rearm:
 	/* Rearm the interrupt clock if we have one. */
-	if (ISSET(cq->cq_flags, CL_CPU_INTRCLOCK)) {
+	if (ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
 		if (!TAILQ_EMPTY(&cq->cq_pend)) {
 			intrclock_rearm(&cq->cq_intrclock,
 			    clockqueue_next(cq) - cq->cq_uptime);
@@ -602,7 +602,7 @@ sysctl_clockintr(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		memset(&sum, 0, sizeof sum);
 		CPU_INFO_FOREACH(cii, ci) {
 			cq = &ci->ci_queue;
-			if (!ISSET(cq->cq_flags, CL_CPU_INIT))
+			if (!ISSET(cq->cq_flags, CQ_INIT))
 				continue;
 			do {
 				gen = cq->cq_gen;
@@ -650,7 +650,7 @@ db_show_all_clockintr(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	db_printf("\n");
 	db_printf("%20s  %5s  %3s  %s\n", "EXPIRATION", "STATE", "CPU", "NAME");
 	CPU_INFO_FOREACH(cii, ci) {
-		if (ISSET(ci->ci_queue.cq_flags, CL_CPU_INIT))
+		if (ISSET(ci->ci_queue.cq_flags, CQ_INIT))
 			db_show_clockintr_cpu(ci);
 	}
 }

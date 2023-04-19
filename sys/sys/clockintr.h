@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.5 2023/04/16 21:19:26 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.6 2023/04/19 14:30:35 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -103,8 +103,12 @@ struct clockintr_queue {
 	struct clockintr_stat cq_stat;	/* [o] dispatch statistics */
 	volatile u_int cq_gen;		/* [o] cq_stat update generation */ 
 	volatile u_int cq_dispatch;	/* [o] dispatch is running */
-	u_int cq_flags;			/* [I] local state flags */
+	u_int cq_flags;			/* [I] CQ_* flags; see below */
 };
+
+#define CQ_INIT			0x00000001	/* clockintr_cpu_init() done */
+#define CQ_INTRCLOCK		0x00000002	/* intrclock installed */
+#define CQ_STATE_MASK		0x00000003
 
 /* Global state flags. */
 #define CL_INIT			0x00000001	/* global init done */
@@ -115,11 +119,6 @@ struct clockintr_queue {
 /* Global behavior flags. */
 #define CL_RNDSTAT		0x80000000	/* randomized statclock */
 #define CL_FLAG_MASK		0x80000000
-
-/* Per-CPU state flags. */
-#define CL_CPU_INIT		0x00000001	/* CPU is ready for dispatch */
-#define CL_CPU_INTRCLOCK	0x00000002	/* CPU has intrclock */
-#define CL_CPU_STATE_MASK	0x00000003
 
 void clockintr_cpu_init(const struct intrclock *);
 int clockintr_dispatch(void *);
