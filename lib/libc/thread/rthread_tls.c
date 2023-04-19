@@ -1,4 +1,4 @@
-/*	$OpenBSD: rthread_tls.c,v 1.4 2017/09/05 02:40:54 guenther Exp $ */
+/*	$OpenBSD: rthread_tls.c,v 1.5 2023/04/19 12:30:09 jsg Exp $ */
 /*
  * Copyright (c) 2004,2005 Ted Unangst <tedu@openbsd.org>
  * All Rights Reserved.
@@ -20,9 +20,6 @@
  */
 
 #include <errno.h>
-#include <pthread.h>
-#include <stdlib.h>
-
 #include <pthread.h>
 #include <stdlib.h>
 
