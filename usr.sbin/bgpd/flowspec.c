@@ -1,4 +1,4 @@
-/*	$OpenBSD: flowspec.c,v 1.3 2023/04/19 07:07:58 claudio Exp $ */
+/*	$OpenBSD: flowspec.c,v 1.4 2023/04/19 09:31:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -105,10 +105,8 @@ flowspec_cmp_prefix4(const uint8_t *abuf, int ablen, const uint8_t *bbuf,
 	clen = MINIMUM(alen, blen);
 
 	/* only extract the common prefix */
-	if (extract_prefix(abuf + 2, ablen - 2, &a, clen, sizeof(a)) == -1)
-		fatalx("bad flowspec prefix encoding");
-	if (extract_prefix(bbuf + 2, bblen - 2, &b, clen, sizeof(b)) == -1)
-		fatalx("bad flowspec prefix encoding");
+	extract_prefix(abuf + 2, ablen - 2, &a, clen, sizeof(a));
+	extract_prefix(bbuf + 2, bblen - 2, &b, clen, sizeof(b));
 
 	/* lowest IP value has precedence */
 	cmp = memcmp(a, b, sizeof(a));
@@ -149,10 +147,8 @@ flowspec_cmp_prefix6(const uint8_t *abuf, int ablen, const uint8_t *bbuf,
 	clen = MINIMUM(alen, blen);
 
 	/* only extract the common prefix */
-	if (extract_prefix(abuf + 3, ablen - 3, &a, clen, sizeof(a)) == -1)
-		fatalx("bad flowspec prefix encoding");
-	if (extract_prefix(bbuf + 3, bblen - 3, &b, clen, sizeof(b)) == -1)
-		fatalx("bad flowspec prefix encoding");
+	extract_prefix(abuf + 3, ablen - 3, &a, clen, sizeof(a));
+	extract_prefix(bbuf + 3, bblen - 3, &b, clen, sizeof(b));
 
 	/* lowest IP value has precedence */
 	cmp = memcmp(a, b, sizeof(a));
@@ -193,7 +189,7 @@ flowspec_valid(const uint8_t *buf, int len, int is_v6)
 		len -= l;
 	}
 	if (len < 0)
-		fatalx("flowspec overflow");
+		return -1;
 	return 0;
 }
 
@@ -211,11 +207,12 @@ flowspec_cmp(const uint8_t *a, int alen, const uint8_t *b, int blen, int is_v6)
 
 	while (alen > 0 && blen > 0) {
 		acomplen = flowspec_next_component(a, alen, is_v6, &atype);
-		if (acomplen == -1)
-			fatalx("bad flowspec component");
 		bcomplen = flowspec_next_component(b, blen, is_v6, &btype);
+		/* should not happen */
 		if (acomplen == -1)
-			fatalx("bad flowspec component");
+			return 1;
+		if (bcomplen == -1)
+			return -1;
 
 		/* If types differ, lowest type wins. */
 		if (atype < btype)
