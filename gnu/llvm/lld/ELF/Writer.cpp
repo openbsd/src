@@ -2499,6 +2499,11 @@ std::vector<PhdrEntry *> Writer<ELFT>::createPhdrs(Partition &part) {
   if (config->zWxneeded)
     addHdr(PT_OPENBSD_WXNEEDED, PF_X);
 
+  // PT_OPENBSD_NOBTCFI is an OpenBSD-specific header to mark that the
+  // executable is expected to violate branch-target CFI checks.
+  if (config->zNoBtCfi)
+    addHdr(PT_OPENBSD_NOBTCFI, PF_X);
+
   if (OutputSection *cmd = findSection(".note.gnu.property", partNo))
     addHdr(PT_GNU_PROPERTY, PF_R)->add(cmd);
 

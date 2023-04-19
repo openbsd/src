@@ -462,7 +462,8 @@ static bool isKnownZFlag(StringRef s) {
          s == "initfirst" || s == "interpose" ||
          s == "keep-text-section-prefix" || s == "lazy" || s == "muldefs" ||
          s == "separate-code" || s == "separate-loadable-segments" ||
-         s == "start-stop-gc" || s == "nocombreloc" || s == "nocopyreloc" ||
+         s == "start-stop-gc" || s == "nobtcfi" ||
+         s == "nocombreloc" || s == "nocopyreloc" ||
          s == "nodefaultlib" || s == "nodelete" || s == "nodlopen" ||
          s == "noexecstack" || s == "nognustack" ||
          s == "nokeep-text-section-prefix" || s == "norelro" ||
@@ -1197,6 +1198,7 @@ static void readConfigs(opt::InputArgList &args) {
   config->zInterpose = hasZOption(args, "interpose");
   config->zKeepTextSectionPrefix = getZFlag(
       args, "keep-text-section-prefix", "nokeep-text-section-prefix", false);
+  config->zNoBtCfi = hasZOption(args, "nobtcfi");
   config->zNodefaultlib = hasZOption(args, "nodefaultlib");
   config->zNodelete = hasZOption(args, "nodelete");
   config->zNodlopen = hasZOption(args, "nodlopen");
