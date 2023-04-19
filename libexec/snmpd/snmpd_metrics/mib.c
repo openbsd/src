@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.2 2022/10/16 13:33:10 jsg Exp $	*/
+/*	$OpenBSD: mib.c,v 1.3 2023/04/19 12:58:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -57,7 +57,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-#include <pwd.h>
 #include <libgen.h>
 #include <limits.h>
 #include <kvm.h>

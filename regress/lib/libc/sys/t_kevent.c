@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_kevent.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: t_kevent.c,v 1.3 2023/04/19 12:58:15 jsg Exp $	*/
 /*	$NetBSD: t_kevent.c,v 1.9 2020/10/31 01:08:32 christos Exp $ */
 
 /*-
@@ -46,7 +46,6 @@
 #ifndef __OpenBSD__
 #include <sys/drvctlio.h>
 #endif
-#include <sys/event.h>
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <sys/wait.h>

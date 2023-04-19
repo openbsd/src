@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp_dns.c,v 1.27 2021/10/24 21:24:19 deraadt Exp $ */
+/*	$OpenBSD: ntp_dns.c,v 1.28 2023/04/19 12:58:16 jsg Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -23,8 +23,6 @@
 #include <arpa/nameser.h>
 #include <resolv.h>
 
-#include <netinet/in.h>
-
 #include <err.h>
 #include <errno.h>
 #include <poll.h>
@@ -33,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <resolv.h>
 #include <unistd.h>
 
 #include "ntpd.h"

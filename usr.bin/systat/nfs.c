@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.8 2019/06/28 13:35:04 deraadt Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.9 2023/04/19 12:58:15 jsg Exp $	*/
 
 /*
  * Copyright (c) 2009 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -21,7 +21,6 @@
 #include <sys/mount.h>
 #include <sys/signal.h>
 #include <sys/sysctl.h>
-#include <sys/types.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>

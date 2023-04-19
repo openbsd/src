@@ -1,4 +1,4 @@
-/*	$OpenBSD: radish.c,v 1.7 2021/03/29 03:54:39 yasuoka Exp $ */
+/*	$OpenBSD: radish.c,v 1.8 2023/04/19 12:58:16 jsg Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -48,9 +48,7 @@
 #include "radish.h"
 
 #include <netinet/in.h>
-#include <string.h>
 #include <strings.h>
-#include <stdlib.h>
 #include <stdio.h>
 
 #define FATAL(x)			\

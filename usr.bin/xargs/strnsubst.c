@@ -1,4 +1,4 @@
-/*	$OpenBSD: strnsubst.c,v 1.7 2019/07/03 03:24:02 deraadt Exp $	*/
+/*	$OpenBSD: strnsubst.c,v 1.8 2023/04/19 12:58:16 jsg Exp $	*/
 /*	$FreeBSD: strnsubst.c,v 1.6 2002/06/22 12:58:42 jmallett Exp $	*/
 
 /*
@@ -67,7 +67,6 @@ done:
 }
 
 #ifdef TEST
-#include <stdio.h>
 
 int
 main(void)

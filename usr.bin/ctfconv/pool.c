@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.c,v 1.3 2017/08/29 21:10:20 deraadt Exp $ */
+/*	$OpenBSD: pool.c,v 1.4 2023/04/19 12:58:15 jsg Exp $ */
 
 /*
  * Copyright (c) 2017 Martin Pieuchot
@@ -18,7 +18,6 @@
 
 #ifndef NOPOOL
 
-#include <sys/types.h>
 #include <sys/types.h>
 #include <sys/queue.h>
 

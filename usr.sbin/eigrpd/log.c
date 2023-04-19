@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.9 2021/01/19 10:51:35 claudio Exp $ */
+/*	$OpenBSD: log.c,v 1.10 2023/04/19 12:58:16 jsg Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -28,8 +28,6 @@
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 
 #include "eigrpd.h"
 #include "log.h"

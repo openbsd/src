@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hash.h,v 1.4 2020/09/14 08:40:44 florian Exp $ */
+/* $Id: hash.h,v 1.5 2023/04/19 12:58:15 jsg Exp $ */
 
 #ifndef ISC_HASH_H
 #define ISC_HASH_H 1
@@ -72,12 +72,6 @@
  * \li Standards:
  *	None.
  */
-
-/***
- *** Imports
- ***/
-
-#include <isc/types.h>
 
 /***
  *** Functions

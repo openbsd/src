@@ -1,4 +1,4 @@
-/*	$Id: http.c,v 1.16 2022/12/15 08:07:03 florian Exp $ */
+/*	$Id: http.c,v 1.17 2023/04/19 12:58:16 jsg Exp $ */
 /*
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -33,7 +33,6 @@
 #include <unistd.h>
 
 #include "http.h"
-#include <tls.h>
 
 /*
  * A buffer for transferring HTTP/S data.

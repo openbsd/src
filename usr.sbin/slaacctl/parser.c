@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.1 2017/04/10 13:35:42 florian Exp $	*/
+/*	$OpenBSD: parser.c,v 1.2 2023/04/19 12:58:16 jsg Exp $	*/
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -24,7 +24,6 @@
 #include <arpa/inet.h>
 
 #include <net/if.h>
-#include <netinet/in.h>
 #include <netinet/if_ether.h>
 
 #include <err.h>
