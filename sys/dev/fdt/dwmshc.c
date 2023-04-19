@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmshc.c,v 1.1 2023/04/18 23:44:21 dlg Exp $ */
+/*	$OpenBSD: dwmshc.c,v 1.2 2023/04/19 01:38:32 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -240,8 +240,10 @@ dwmshc_attach(struct device *parent, struct device *self, void *aux)
 	sdhc->sc_bus_clock_pre = dwmshc_clock_pre;
 	sdhc->sc_bus_clock_post = dwmshc_clock_post;
 
-	if (OF_getpropbool(sc->sc_node, "non-removable"))
+	if (OF_getpropbool(sc->sc_node, "non-removable")) {
+		SET(sdhc->sc_flags, SDHC_F_NONREMOVABLE);
 		sdhc->sc_card_detect = dwmshc_non_removable;
+	}
 
 	bus_width = OF_getpropint(faa->fa_node, "bus-width", 1);
 	if (bus_width < 8)
