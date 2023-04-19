@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.161 2023/03/29 10:46:11 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.162 2023/04/19 08:30:37 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -460,6 +460,10 @@ up_get_nexthop(struct rde_peer *peer, struct filterstate *state, uint8_t aid)
 	case AID_VPN_IPv6:
 		peer_local = &peer->local_v6_addr;
 		break;
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		/* flowspec has no nexthop */
+		return (NULL);
 	default:
 		fatalx("%s, bad AID %s", __func__, aid2str(aid));
 	}
@@ -530,7 +534,7 @@ static void
 up_prep_adjout(struct rde_peer *peer, struct filterstate *state, uint8_t aid)
 {
 	struct bgpd_addr *nexthop;
-	struct nexthop *nh;
+	struct nexthop *nh = NULL;
 	u_char *np;
 	uint16_t nl;
 
@@ -545,7 +549,8 @@ up_prep_adjout(struct rde_peer *peer, struct filterstate *state, uint8_t aid)
 
 	/* update nexthop */
 	nexthop = up_get_nexthop(peer, state, aid);
-	nh = nexthop_get(nexthop);
+	if (nexthop != NULL)
+		nh = nexthop_get(nexthop);
 	nexthop_unref(state->nexthop);
 	state->nexthop = nh;
 	state->nhflags = 0;
@@ -1047,6 +1052,19 @@ up_generate_mp_reach(u_char *buf, int len, struct rde_peer *peer,
 		attrbuf += 12;
 		nexthop = &state->nexthop->exit_nexthop;
 		memcpy(attrbuf, &nexthop->v6, sizeof(struct in6_addr));
+		break;
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		attrlen = 5; /* AFI + SAFI + NH LEN + NH + Reserved */
+		if (len < wpos + attrlen)
+			return (-1);
+		wpos += attrlen;
+		if (aid2afi(aid, &tmp, &attrbuf[2]))
+			fatalx("up_generate_mp_reachi: bad AID");
+		tmp = htons(tmp);
+		memcpy(attrbuf, &tmp, sizeof(tmp));
+		attrbuf[3] = 0;	/* nh len MUST be 0 */
+		attrbuf[4] = 0;	/* Reserved must be 0 */
 		break;
 	default:
 		fatalx("up_generate_mp_reach: unknown AID");
