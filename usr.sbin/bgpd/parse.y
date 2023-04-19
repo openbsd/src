@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.448 2023/04/18 13:31:14 tb Exp $ */
+/*	$OpenBSD: parse.y,v 1.449 2023/04/19 15:27:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1305,22 +1305,22 @@ flow_rules_l	: flowrule
 
 flowrule	: from
 		| to
-		| proto
 		| FLAGS {
 			curflow->type = FLOWSPEC_TYPE_TCP_FLAGS;
 		} flags
+		| FRAGMENT {
+			curflow->type = FLOWSPEC_TYPE_FRAG;
+		} flags;
 		| icmpspec
+		| LENGTH lengthspec {
+			curflow->type = FLOWSPEC_TYPE_PKT_LEN;
+		}
+		| proto
 		| TOS tos {
 			curflow->type = FLOWSPEC_TYPE_DSCP;
 			if (push_unary_numop(OP_EQ, $2 >> 2) == -1)
 				YYERROR;
 		}
-		| LENGTH lengthspec {
-			curflow->type = FLOWSPEC_TYPE_PKT_LEN;
-		}
-		| FRAGMENT {
-			curflow->type = FLOWSPEC_TYPE_FRAG;
-		} flags;
 		;
 
 flags		: flag '/' flag			{
