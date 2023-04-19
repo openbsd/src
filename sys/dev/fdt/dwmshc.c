@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmshc.c,v 1.2 2023/04/19 01:38:32 dlg Exp $ */
+/*	$OpenBSD: dwmshc.c,v 1.3 2023/04/19 01:41:12 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -161,11 +161,6 @@ static void		 dwmshc_attach(struct device *, struct device *,
 
 static inline void	 dwmshc_wr1(struct dwmshc_softc *,
 			     bus_size_t, uint8_t);
-#if 0
-static inline void	 dwmshc_wr2(struct dwmshc_softc *,
-			     bus_size_t, uint16_t);
-static inline uint16_t	 dwmshc_rd2(struct dwmshc_softc *, bus_size_t);
-#endif
 static inline void	 dwmshc_wr4(struct dwmshc_softc *,
 			     bus_size_t, uint32_t);
 static inline uint32_t	 dwmshc_rd4(struct dwmshc_softc *, bus_size_t);
@@ -248,10 +243,6 @@ dwmshc_attach(struct device *parent, struct device *self, void *aux)
 	bus_width = OF_getpropint(faa->fa_node, "bus-width", 1);
 	if (bus_width < 8)
 		SET(capmask, SDHC_8BIT_MODE_SUPP);
-#if 0
-	if (bus_width < 4)
-		...
-#endif
 
 	freq = clock_get_frequency(faa->fa_node, "block");
 	sdhc->sc_clkbase = freq / 1000;
@@ -372,20 +363,6 @@ dwmshc_wr1(struct dwmshc_softc *sc, bus_size_t off, uint8_t v)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, off, v);
 }
-
-#if 0
-static inline void
-dwmshc_wr2(struct dwmshc_softc *sc, bus_size_t off, uint16_t v)
-{
-	bus_space_write_2(sc->sc_iot, sc->sc_ioh, off, v);
-}
-
-static inline uint16_t
-dwmshc_rd2(struct dwmshc_softc *sc, bus_size_t off)
-{
-	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, off));
-}
-#endif
 
 static inline void
 dwmshc_wr4(struct dwmshc_softc *sc, bus_size_t off, uint32_t v)
