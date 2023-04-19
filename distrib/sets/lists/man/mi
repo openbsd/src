@@ -1403,7 +1403,9 @@
 ./usr/share/man/man4/dwgpio.4
 ./usr/share/man/man4/dwiic.4
 ./usr/share/man/man4/dwmmc.4
+./usr/share/man/man4/dwmshc.4
 ./usr/share/man/man4/dwpcie.4
+./usr/share/man/man4/dwqe.4
 ./usr/share/man/man4/dwxe.4
 ./usr/share/man/man4/eap.4
 ./usr/share/man/man4/ec.4
