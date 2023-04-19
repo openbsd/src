@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.291 2023/04/07 13:49:03 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.292 2023/04/19 07:09:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -512,9 +512,12 @@ enum filter_actions rde_filter(struct filter_head *, struct rde_peer *,
 void	 pt_init(void);
 void	 pt_shutdown(void);
 void	 pt_getaddr(struct pt_entry *, struct bgpd_addr *);
+int	 pt_getflowspec(struct pt_entry *, uint8_t **);
 struct pt_entry	*pt_fill(struct bgpd_addr *, int);
 struct pt_entry	*pt_get(struct bgpd_addr *, int);
 struct pt_entry *pt_add(struct bgpd_addr *, int);
+struct pt_entry	*pt_get_flow(struct flowspec *);
+struct pt_entry	*pt_add_flow(struct flowspec *);
 void	 pt_remove(struct pt_entry *);
 struct pt_entry	*pt_lookup(struct bgpd_addr *);
 int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);

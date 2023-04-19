@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.48 2023/03/30 13:25:23 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.49 2023/04/19 07:09:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -95,6 +95,17 @@ struct pt_entry_vpn6 {
 	uint8_t				pad2;
 };
 
+struct pt_entry_flow {
+	RB_ENTRY(pt_entry)		pt_e;
+	uint8_t				aid;
+	uint8_t				prefixlen;	/* unused ??? */
+	uint16_t			len;
+	uint32_t			refcnt;
+	uint64_t			rd;
+	uint8_t				flow[1];	/* NLRI */
+};
+
+#define PT_FLOW_SIZE		(offsetof(struct pt_entry_flow, flow))
 
 RB_HEAD(pt_tree, pt_entry);
 RB_PROTOTYPE(pt_tree, pt_entry, pt_e, pt_prefix_cmp);
@@ -118,6 +129,8 @@ pt_shutdown(void)
 void
 pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 {
+	struct pt_entry_flow	*pflow;
+
 	memset(addr, 0, sizeof(struct bgpd_addr));
 	addr->aid = pte->aid;
 	switch (addr->aid) {
@@ -144,8 +157,31 @@ pt_getaddr(struct pt_entry *pte, struct bgpd_addr *addr)
 		    ((struct pt_entry_vpn6 *)pte)->labelstack,
 		    addr->labellen);
 		break;
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		pflow = (struct pt_entry_flow *)pte;
+		flowspec_get_addr(pflow->flow, pflow->len - PT_FLOW_SIZE,
+		    FLOWSPEC_TYPE_DEST, addr->aid == AID_FLOWSPECv6,
+		    addr, &pflow->prefixlen, NULL);
+		break;
 	default:
 		fatalx("pt_getaddr: unknown af");
+	}
+}
+
+int
+pt_getflowspec(struct pt_entry *pte, uint8_t **flow)
+{
+	struct pt_entry_flow	*pflow;
+
+	switch (pte->aid) {
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		pflow = (struct pt_entry_flow *)pte;
+		*flow = pflow->flow;
+		return pflow->len - PT_FLOW_SIZE;
+	default:
+		fatalx("pt_getflowspec: unknown af");
 	}
 }
 
@@ -234,6 +270,48 @@ pt_add(struct bgpd_addr *prefix, int prefixlen)
 	return (p);
 }
 
+struct pt_entry *
+pt_get_flow(struct flowspec *f)
+{
+	struct pt_entry *needle;
+	union {
+		struct pt_entry_flow	flow;
+		uint8_t			buf[4096];
+	} x;
+
+	needle = (struct pt_entry *)&x.flow;
+
+	memset(needle, 0, PT_FLOW_SIZE);
+	needle->aid = f->aid;
+	needle->len = f->len + PT_FLOW_SIZE;
+	memcpy(((struct pt_entry_flow *)needle)->flow, f->data, f->len);
+
+	return RB_FIND(pt_tree, &pttable, (struct pt_entry *)needle);
+}
+
+struct pt_entry *
+pt_add_flow(struct flowspec *f)
+{
+	struct pt_entry *p;
+	int len = f->len + PT_FLOW_SIZE;
+
+	p = malloc(len);
+	if (p == NULL)
+		fatal(__func__);
+	rdemem.pt_cnt[f->aid]++;
+	rdemem.pt_size[f->aid] += len;
+	memset(p, 0, PT_FLOW_SIZE);
+
+	p->len = len;
+	p->aid = f->aid;
+	memcpy(((struct pt_entry_flow *)p)->flow, f->data, f->len);
+
+	if (RB_INSERT(pt_tree, &pttable, p) != NULL)
+		fatalx("pt_add: insert failed");
+
+	return (p);
+}
+
 void
 pt_remove(struct pt_entry *pte)
 {
@@ -278,6 +356,7 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 	const struct pt_entry6		*a6, *b6;
 	const struct pt_entry_vpn4	*va4, *vb4;
 	const struct pt_entry_vpn6	*va6, *vb6;
+	const struct pt_entry_flow	*af, *bf;
 	int				 i;
 
 	if (a->aid > b->aid)
@@ -346,6 +425,13 @@ pt_prefix_cmp(const struct pt_entry *a, const struct pt_entry *b)
 		if (va6->prefixlen < vb6->prefixlen)
 			return (-1);
 		return (0);
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		af = (const struct pt_entry_flow *)a;
+		bf = (const struct pt_entry_flow *)b;
+		return flowspec_cmp(af->flow, af->len - PT_FLOW_SIZE,
+		    bf->flow, bf->len - PT_FLOW_SIZE,
+		    a->aid == AID_FLOWSPECv6);
 	default:
 		fatalx("pt_prefix_cmp: unknown af");
 	}
@@ -386,7 +472,8 @@ pt_write(u_char *buf, int len, struct pt_entry *pte, int withdraw)
 {
 	struct pt_entry_vpn4	*pvpn4 = (struct pt_entry_vpn4 *)pte;
 	struct pt_entry_vpn6	*pvpn6 = (struct pt_entry_vpn6 *)pte;
-	int			 totlen, psize;
+	struct pt_entry_flow	*pflow = (struct pt_entry_flow *)pte;
+	int			 totlen, flowlen, psize;
 	uint8_t			 plen;
 
 	switch (pte->aid) {
@@ -460,6 +547,23 @@ pt_write(u_char *buf, int len, struct pt_entry *pte, int withdraw)
 		buf += sizeof(pvpn6->rd);
 		memcpy(buf, &pvpn6->prefix6, psize);
 		return (totlen);
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		flowlen = pflow->len - PT_FLOW_SIZE;
+		totlen = flowlen < FLOWSPEC_LEN_LIMIT ? 1 : 2;
+		totlen += flowlen;
+
+		if (totlen > len)
+			return (-1);
+
+		if (flowlen < FLOWSPEC_LEN_LIMIT) {
+			*buf++ = flowlen;
+		} else {
+			*buf++ = 0xf0 | (flowlen >> 8);
+			*buf++ = flowlen & 0xff;
+		}
+		memcpy(buf, &pflow->flow, flowlen);
+		return (totlen);
 	default:
 		return (-1);
 	}
@@ -471,7 +575,8 @@ pt_writebuf(struct ibuf *buf, struct pt_entry *pte)
 {
 	struct pt_entry_vpn4	*pvpn4 = (struct pt_entry_vpn4 *)pte;
 	struct pt_entry_vpn6	*pvpn6 = (struct pt_entry_vpn6 *)pte;
-	int	 		 totlen;
+	struct pt_entry_flow	*pflow = (struct pt_entry_flow *)pte;
+	int			 totlen, flowlen;
 	void			*bptr;
 
 	switch (pte->aid) {
@@ -486,6 +591,12 @@ pt_writebuf(struct ibuf *buf, struct pt_entry *pte)
 	case AID_VPN_IPv6:
 		totlen = PREFIX_SIZE(pte->prefixlen) + sizeof(pvpn6->rd) +
 		    pvpn6->labellen;
+		break;
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		flowlen = pflow->len - PT_FLOW_SIZE;
+		totlen = flowlen < FLOWSPEC_LEN_LIMIT ? 1 : 2;
+		totlen += flowlen;
 		break;
 	default:
 		return (-1);
