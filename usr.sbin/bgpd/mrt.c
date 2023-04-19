@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.113 2023/03/28 15:17:34 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.114 2023/04/19 09:03:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -487,6 +487,15 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 			log_warn("mrt_dump_entry_mp: ibuf_add error");
 			goto fail;
 		}
+		break;
+	case AID_FLOWSPECv4:
+	case AID_FLOWSPECv6:
+		if (p->pt->aid == AID_FLOWSPECv4)
+			DUMP_SHORT(h2buf, AFI_IPv4);	/* afi */
+		else
+			DUMP_SHORT(h2buf, AFI_IPv6);	/* afi */
+		DUMP_BYTE(h2buf, SAFI_FLOWSPEC);	/* safi */
+		DUMP_BYTE(h2buf, 0);			/* nhlen */
 		break;
 	default:
 		log_warnx("king bula found new AF in %s", __func__);
