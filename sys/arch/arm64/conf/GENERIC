@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.264 2023/04/03 05:58:56 dlg Exp $
+# $OpenBSD: GENERIC,v 1.265 2023/04/19 00:40:24 dlg Exp $
 #
 # GENERIC machine description file
 #
@@ -314,6 +314,8 @@ rkvop*		at fdt?
 rkdwusb*	at fdt?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
+dwmshc*		at fdt?
+sdmmc*		at dwmshc?
 
 # Qualcomm SoCs
 qcdwusb*	at fdt?

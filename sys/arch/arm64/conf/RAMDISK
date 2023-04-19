@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.196 2023/04/03 05:58:56 dlg Exp $
+# $OpenBSD: RAMDISK,v 1.197 2023/04/19 00:40:24 dlg Exp $
 
 machine		arm64
 maxusers	4
@@ -238,6 +238,8 @@ rkrng*		at fdt?
 rkdwusb*	at fdt?
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
+dwmshc*		at fdt?
+sdmmc*		at dwmshc?
 
 # Qualcomm SoCs
 qcdwusb*	at fdt?
