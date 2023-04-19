@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.4 2023/04/19 11:05:11 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.5 2023/04/19 11:12:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,6 +59,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <openssl/opensslconf.h>
 
@@ -69,6 +70,186 @@
 #include "bn_local.h"
 
 static const char Hex[]="0123456789ABCDEF";
+
+typedef enum {
+	big,
+	little,
+} endianness_t;
+
+/* ignore negative */
+static int
+bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianness_t endianness)
+{
+	int n;
+	size_t i, lasti, j, atop, mask;
+	BN_ULONG l;
+
+	/*
+	 * In case |a| is fixed-top, BN_num_bytes can return bogus length,
+	 * but it's assumed that fixed-top inputs ought to be "nominated"
+	 * even for padded output, so it works out...
+	 */
+	n = BN_num_bytes(a);
+	if (tolen == -1)
+		tolen = n;
+	else if (tolen < n) {	/* uncommon/unlike case */
+		BIGNUM temp = *a;
+
+		bn_correct_top(&temp);
+
+		n = BN_num_bytes(&temp);
+		if (tolen < n)
+			return -1;
+	}
+
+	/* Swipe through whole available data and don't give away padded zero. */
+	atop = a->dmax * BN_BYTES;
+	if (atop == 0) {
+		explicit_bzero(to, tolen);
+		return tolen;
+	}
+
+	lasti = atop - 1;
+	atop = a->top * BN_BYTES;
+
+	if (endianness == big)
+		to += tolen; /* start from the end of the buffer */
+
+	for (i = 0, j = 0; j < (size_t)tolen; j++) {
+		unsigned char val;
+
+		l = a->d[i / BN_BYTES];
+		mask = 0 - ((j - atop) >> (8 * sizeof(i) - 1));
+		val = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
+
+		if (endianness == big)
+			*--to = val;
+		else
+			*to++ = val;
+
+		i += (i - lasti) >> (8 * sizeof(i) - 1); /* stay on last limb */
+	}
+
+	return tolen;
+}
+
+int
+BN_bn2bin(const BIGNUM *a, unsigned char *to)
+{
+	return bn2binpad(a, to, -1, big);
+}
+
+int
+BN_bn2binpad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+	if (tolen < 0)
+		return -1;
+	return bn2binpad(a, to, tolen, big);
+}
+
+BIGNUM *
+BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+	unsigned int i, m;
+	unsigned int n;
+	BN_ULONG l;
+	BIGNUM *bn = NULL;
+
+	if (len < 0)
+		return (NULL);
+	if (ret == NULL)
+		ret = bn = BN_new();
+	if (ret == NULL)
+		return (NULL);
+	l = 0;
+	n = len;
+	if (n == 0) {
+		ret->top = 0;
+		return (ret);
+	}
+	i = ((n - 1) / BN_BYTES) + 1;
+	m = ((n - 1) % (BN_BYTES));
+	if (!bn_wexpand(ret, (int)i)) {
+		BN_free(bn);
+		return NULL;
+	}
+	ret->top = i;
+	ret->neg = 0;
+	while (n--) {
+		l = (l << 8L) | *(s++);
+		if (m-- == 0) {
+			ret->d[--i] = l;
+			l = 0;
+			m = BN_BYTES - 1;
+		}
+	}
+	/* need to call this due to clear byte at top if avoiding
+	 * having the top bit set (-ve number) */
+	bn_correct_top(ret);
+	return (ret);
+}
+
+int
+BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
+{
+	if (tolen < 0)
+		return -1;
+
+	return bn2binpad(a, to, tolen, little);
+}
+
+BIGNUM *
+BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
+{
+	unsigned int i, m, n;
+	BN_ULONG l;
+	BIGNUM *bn = NULL;
+
+	if (ret == NULL)
+		ret = bn = BN_new();
+	if (ret == NULL)
+		return NULL;
+
+
+	s += len;
+	/* Skip trailing zeroes. */
+	for (; len > 0 && s[-1] == 0; s--, len--)
+		continue;
+
+	n = len;
+	if (n == 0) {
+		ret->top = 0;
+		return ret;
+	}
+
+	i = ((n - 1) / BN_BYTES) + 1;
+	m = (n - 1) % BN_BYTES;
+	if (!bn_wexpand(ret, (int)i)) {
+		BN_free(bn);
+		return NULL;
+	}
+
+	ret->top = i;
+	ret->neg = 0;
+	l = 0;
+	while (n-- > 0) {
+		s--;
+		l = (l << 8L) | *s;
+		if (m-- == 0) {
+			ret->d[--i] = l;
+			l = 0;
+			m = BN_BYTES - 1;
+		}
+	}
+
+	/*
+	 * need to call this due to clear byte at top if avoiding having the
+	 * top bit set (-ve number)
+	 */
+	bn_correct_top(ret);
+
+	return ret;
+}
 
 int
 BN_asc2bn(BIGNUM **bn, const char *a)
