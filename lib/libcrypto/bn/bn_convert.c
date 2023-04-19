@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.3 2023/04/19 10:54:49 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.4 2023/04/19 11:05:11 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -70,39 +70,23 @@
 
 static const char Hex[]="0123456789ABCDEF";
 
-/* Must 'free' the returned data */
-char *
-BN_bn2hex(const BIGNUM *a)
+int
+BN_asc2bn(BIGNUM **bn, const char *a)
 {
-	int i, j, v, z = 0;
-	char *buf;
-	char *p;
+	const char *p = a;
+	if (*p == '-')
+		p++;
 
-	buf = malloc(BN_is_negative(a) + a->top * BN_BYTES * 2 + 2);
-	if (buf == NULL) {
-		BNerror(ERR_R_MALLOC_FAILURE);
-		goto err;
+	if (p[0] == '0' && (p[1] == 'X' || p[1] == 'x')) {
+		if (!BN_hex2bn(bn, p + 2))
+			return 0;
+	} else {
+		if (!BN_dec2bn(bn, p))
+			return 0;
 	}
-	p = buf;
-	if (BN_is_negative(a))
-		*p++ = '-';
-	if (BN_is_zero(a))
-		*p++ = '0';
-	for (i = a->top - 1; i >=0; i--) {
-		for (j = BN_BITS2 - 8; j >= 0; j -= 8) {
-			/* strip leading zeros */
-			v = ((int)(a->d[i] >> (long)j)) & 0xff;
-			if (z || (v != 0)) {
-				*p++ = Hex[v >> 4];
-				*p++ = Hex[v & 0x0f];
-				z = 1;
-			}
-		}
-	}
-	*p = '\0';
-
-err:
-	return (buf);
+	if (*a == '-')
+		BN_set_negative(*bn, 1);
+	return 1;
 }
 
 /* Must 'free' the returned data */
@@ -187,6 +171,110 @@ err:
 }
 
 int
+BN_dec2bn(BIGNUM **bn, const char *a)
+{
+	BIGNUM *ret = NULL;
+	BN_ULONG l = 0;
+	int neg = 0, i, j;
+	int num;
+
+	if ((a == NULL) || (*a == '\0'))
+		return (0);
+	if (*a == '-') {
+		neg = 1;
+		a++;
+	}
+
+	for (i = 0; i <= (INT_MAX / 4) && isdigit((unsigned char)a[i]); i++)
+		;
+	if (i > INT_MAX / 4)
+		return (0);
+
+	num = i + neg;
+	if (bn == NULL)
+		return (num);
+
+	/* a is the start of the digits, and it is 'i' long.
+	 * We chop it into BN_DEC_NUM digits at a time */
+	if (*bn == NULL) {
+		if ((ret = BN_new()) == NULL)
+			return (0);
+	} else {
+		ret = *bn;
+		BN_zero(ret);
+	}
+
+	/* i is the number of digits, a bit of an over expand */
+	if (!bn_expand(ret, i * 4))
+		goto err;
+
+	j = BN_DEC_NUM - (i % BN_DEC_NUM);
+	if (j == BN_DEC_NUM)
+		j = 0;
+	l = 0;
+	while (*a) {
+		l *= 10;
+		l += *a - '0';
+		a++;
+		if (++j == BN_DEC_NUM) {
+			if (!BN_mul_word(ret, BN_DEC_CONV))
+				goto err;
+			if (!BN_add_word(ret, l))
+				goto err;
+			l = 0;
+			j = 0;
+		}
+	}
+
+	bn_correct_top(ret);
+
+	BN_set_negative(ret, neg);
+
+	*bn = ret;
+	return (num);
+
+err:
+	if (*bn == NULL)
+		BN_free(ret);
+	return (0);
+}
+
+/* Must 'free' the returned data */
+char *
+BN_bn2hex(const BIGNUM *a)
+{
+	int i, j, v, z = 0;
+	char *buf;
+	char *p;
+
+	buf = malloc(BN_is_negative(a) + a->top * BN_BYTES * 2 + 2);
+	if (buf == NULL) {
+		BNerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	p = buf;
+	if (BN_is_negative(a))
+		*p++ = '-';
+	if (BN_is_zero(a))
+		*p++ = '0';
+	for (i = a->top - 1; i >=0; i--) {
+		for (j = BN_BITS2 - 8; j >= 0; j -= 8) {
+			/* strip leading zeros */
+			v = ((int)(a->d[i] >> (long)j)) & 0xff;
+			if (z || (v != 0)) {
+				*p++ = Hex[v >> 4];
+				*p++ = Hex[v & 0x0f];
+				z = 1;
+			}
+		}
+	}
+	*p = '\0';
+
+err:
+	return (buf);
+}
+
+int
 BN_hex2bn(BIGNUM **bn, const char *a)
 {
 	BIGNUM *ret = NULL;
@@ -261,94 +349,6 @@ err:
 	if (*bn == NULL)
 		BN_free(ret);
 	return (0);
-}
-
-int
-BN_dec2bn(BIGNUM **bn, const char *a)
-{
-	BIGNUM *ret = NULL;
-	BN_ULONG l = 0;
-	int neg = 0, i, j;
-	int num;
-
-	if ((a == NULL) || (*a == '\0'))
-		return (0);
-	if (*a == '-') {
-		neg = 1;
-		a++;
-	}
-
-	for (i = 0; i <= (INT_MAX / 4) && isdigit((unsigned char)a[i]); i++)
-		;
-	if (i > INT_MAX / 4)
-		return (0);
-
-	num = i + neg;
-	if (bn == NULL)
-		return (num);
-
-	/* a is the start of the digits, and it is 'i' long.
-	 * We chop it into BN_DEC_NUM digits at a time */
-	if (*bn == NULL) {
-		if ((ret = BN_new()) == NULL)
-			return (0);
-	} else {
-		ret = *bn;
-		BN_zero(ret);
-	}
-
-	/* i is the number of digits, a bit of an over expand */
-	if (!bn_expand(ret, i * 4))
-		goto err;
-
-	j = BN_DEC_NUM - (i % BN_DEC_NUM);
-	if (j == BN_DEC_NUM)
-		j = 0;
-	l = 0;
-	while (*a) {
-		l *= 10;
-		l += *a - '0';
-		a++;
-		if (++j == BN_DEC_NUM) {
-			if (!BN_mul_word(ret, BN_DEC_CONV))
-				goto err;
-			if (!BN_add_word(ret, l))
-				goto err;
-			l = 0;
-			j = 0;
-		}
-	}
-
-	bn_correct_top(ret);
-
-	BN_set_negative(ret, neg);
-
-	*bn = ret;
-	return (num);
-
-err:
-	if (*bn == NULL)
-		BN_free(ret);
-	return (0);
-}
-
-int
-BN_asc2bn(BIGNUM **bn, const char *a)
-{
-	const char *p = a;
-	if (*p == '-')
-		p++;
-
-	if (p[0] == '0' && (p[1] == 'X' || p[1] == 'x')) {
-		if (!BN_hex2bn(bn, p + 2))
-			return 0;
-	} else {
-		if (!BN_dec2bn(bn, p))
-			return 0;
-	}
-	if (*a == '-')
-		BN_set_negative(*bn, 1);
-	return 1;
 }
 
 int
