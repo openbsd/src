@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2023/02/01 14:39:09 tb Exp $
+# $OpenBSD: Makefile,v 1.6 2023/04/19 15:34:23 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or openssl 3.0.  Pin client or server to a fixed TLS
@@ -37,7 +37,8 @@ FAIL_${cver}_${sver} = !
 .if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	run-version-client-${clib}-${cver}-server-${slib}-${sver}
 .else
-REGRESS_SLOW_TARGETS +=	run-version-client-${clib}-${cver}-server-${slib}-${sver}
+# Don't use REGRESS_SLOW_TARGETS since its handling in bsd.regress.mk is slow.
+SLOW_TARGETS +=	run-version-client-${clib}-${cver}-server-${slib}-${sver}
 .endif
 
 run-version-client-${clib}-${cver}-server-${slib}-${sver} \
@@ -65,7 +66,8 @@ server-version-client-${clib}-${cver}-server-${slib}-${sver}.out: \
 .if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	check-version-client-${clib}-${cver}-server-${slib}-${sver}
 .else
-REGRESS_SLOW_TARGETS +=	check-version-client-${clib}-${cver}-server-${slib}-${sver}
+# Don't use REGRESS_SLOW_TARGETS since its handling in bsd.regress.mk is slow.
+SLOW_TARGETS +=	check-version-client-${clib}-${cver}-server-${slib}-${sver}
 .endif
 
 check-version-client-${clib}-${cver}-server-${slib}-${sver}: \
@@ -97,5 +99,11 @@ check-version-client-${clib}-${cver}-server-${slib}-${sver}: \
 .endfor
 .endfor
 .endfor
+
+.include <bsd.own.mk>
+REGRESS_SKIP_SLOW ?= no
+.if ${REGRESS_SKIP_SLOW:L} != "yes"
+REGRESS_TARGETS += ${SLOW_TARGETS}
+.endif
 
 .include <bsd.regress.mk>

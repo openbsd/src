@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.11 2023/02/01 14:39:09 tb Exp $
+# $OpenBSD: Makefile,v 1.12 2023/04/19 15:34:23 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or 3.0.  Create lists of supported ciphers
@@ -105,7 +105,8 @@ DHPARAM_${cipher}_${slib} =
 .if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	run-cipher-${cipher}-client-${clib}-server-${slib}
 .else
-REGRESS_SLOW_TARGETS +=	run-cipher-${cipher}-client-${clib}-server-${slib}
+# Don't use REGRESS_SLOW_TARGETS since its handling in bsd.regress.mk is slow.
+SLOW_TARGETS +=	run-cipher-${cipher}-client-${clib}-server-${slib}
 .endif
 run-cipher-${cipher}-client-${clib}-server-${slib} \
 client-cipher-${cipher}-client-${clib}-server-${slib}.out \
@@ -127,7 +128,8 @@ server-cipher-${cipher}-client-${clib}-server-${slib}.out: dh.param \
 .if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	check-cipher-${cipher}-client-${clib}-server-${slib}
 .else
-REGRESS_SLOW_TARGETS +=	check-cipher-${cipher}-client-${clib}-server-${slib}
+# Don't use REGRESS_SLOW_TARGETS since its handling in bsd.regress.mk is slow.
+SLOW_TARGETS +=	check-cipher-${cipher}-client-${clib}-server-${slib}
 .endif
 check-cipher-${cipher}-client-${clib}-server-${slib}: \
     client-cipher-${cipher}-client-${clib}-server-${slib}.out \
@@ -160,5 +162,11 @@ check-cipher-${cipher}-client-${clib}-server-${slib}: \
 .endfor
 .endfor
 .endfor
+
+.include <bsd.own.mk>
+REGRESS_SKIP_SLOW ?= no
+.if ${REGRESS_SKIP_SLOW:L} != "yes"
+REGRESS_TARGETS += ${SLOW_TARGETS}
+.endif
 
 .include <bsd.regress.mk>

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.9 2023/02/01 14:39:09 tb Exp $
+# $OpenBSD: Makefile,v 1.10 2023/04/19 15:34:23 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or 3.0.  Create client and server certificates
@@ -39,7 +39,8 @@ FAIL_${cca}_${sca}_${ccert}_${scert}_${cv}_${sv} = !
 .if ("${clib}" == "libressl" || "${slib}" == "libressl")
 REGRESS_TARGETS +=	run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}
 .else
-REGRESS_SLOW_TARGETS +=	run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}
+# Don't use REGRESS_SLOW_TARGETS since its handling in bsd.regress.mk is slow.
+SLOW_TARGETS +=	run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}
 .endif
 
 run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${sv}: \
@@ -75,6 +76,12 @@ run-cert-client-${clib}-${cca}-${ccert}-${cv}-server-${slib}-${sca}-${scert}-${s
 .endfor
 .endfor
 .endfor
+
+.include <bsd.own.mk>
+REGRESS_SKIP_SLOW ?= no
+.if ${REGRESS_SKIP_SLOW:L} != "yes"
+REGRESS_TARGETS += ${SLOW_TARGETS}
+.endif
 
 REGRESS_TARGETS +=	run-bob
 run-bob:
