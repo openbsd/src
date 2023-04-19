@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.472 2023/04/18 12:11:27 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.473 2023/04/19 07:12:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -526,7 +526,7 @@ struct network {
 struct flowspec {
 	uint16_t		len;
 	uint8_t			aid;
-	uint8_t			pad;
+	uint8_t			flags;
 	uint8_t			data[1];
 };
 #define FLOWSPEC_SIZE	(offsetof(struct flowspec, data))
@@ -613,6 +613,9 @@ enum imsg_type {
 	IMSG_NETWORK_REMOVE,
 	IMSG_NETWORK_FLUSH,
 	IMSG_NETWORK_DONE,
+	IMSG_FLOWSPEC_ADD,
+	IMSG_FLOWSPEC_DONE,
+	IMSG_FLOWSPEC_REMOVE,
 	IMSG_FILTER_SET,
 	IMSG_SOCKET_CONN,
 	IMSG_SOCKET_CONN_CTL,

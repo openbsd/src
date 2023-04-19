@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.257 2023/02/14 15:33:46 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.258 2023/04/19 07:12:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -598,6 +598,7 @@ send_config(struct bgpd_config *conf)
 	struct roa		*roa;
 	struct aspa_set		*aspa;
 	struct rtr_config	*rtr;
+	struct flowspec_config	*f, *nf;
 
 	reconfpending = 3;	/* one per child */
 
@@ -655,6 +656,26 @@ send_config(struct bgpd_config *conf)
 
 	/* networks go via kroute to the RDE */
 	kr_net_reload(conf->default_tableid, 0, &conf->networks);
+
+	/* flowspec goes directly to the RDE, also remove old objects */
+	RB_FOREACH_SAFE(f, flowspec_tree, &conf->flowspecs, nf) {
+		if (f->reconf_action != RECONF_DELETE) {
+			if (imsg_compose(ibuf_rde, IMSG_FLOWSPEC_ADD, 0, 0, -1,
+			    f->flow, FLOWSPEC_SIZE + f->flow->len) == -1)
+				return (-1);
+			if (send_filterset(ibuf_rde, &f->attrset) == -1)
+				return (-1);
+			if (imsg_compose(ibuf_rde, IMSG_FLOWSPEC_DONE, 0, 0, -1,
+			    NULL, 0) == -1)
+				return (-1);
+		} else {
+			if (imsg_compose(ibuf_rde, IMSG_FLOWSPEC_REMOVE, 0, 0,
+			    -1, f->flow, FLOWSPEC_SIZE + f->flow->len) == -1)
+				return (-1);
+			RB_REMOVE(flowspec_tree, &conf->flowspecs, f);
+			flowspec_free(f);
+		}
+	}
 
 	/* prefixsets for filters in the RDE */
 	while ((ps = SIMPLEQ_FIRST(&conf->prefixsets)) != NULL) {

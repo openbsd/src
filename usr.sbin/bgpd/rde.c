@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.601 2023/04/13 15:51:16 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.602 2023/04/19 07:12:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -101,6 +101,10 @@ void		 network_add(struct network_config *, struct filterstate *);
 void		 network_delete(struct network_config *);
 static void	 network_dump_upcall(struct rib_entry *, void *);
 static void	 network_flush_upcall(struct rib_entry *, void *);
+
+void		 flowspec_add(struct flowspec *, struct filterstate *,
+		    struct filter_set_head *);
+void		 flowspec_delete(struct flowspec *);
 
 void		 rde_shutdown(void);
 static int	 ovs_match(struct prefix *, uint32_t);
@@ -719,6 +723,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	static struct rde_prefixset	*last_prefixset;
 	static struct as_set	*last_as_set;
 	static struct l3vpn	*vpn;
+	static struct flowspec	*curflow;
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
 	struct roa		 roa;
@@ -816,6 +821,75 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			memcpy(&netconf_p, imsg.data, sizeof(netconf_p));
 			TAILQ_INIT(&netconf_p.attrset);
 			network_delete(&netconf_p);
+			break;
+		case IMSG_FLOWSPEC_ADD:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE <= FLOWSPEC_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			if (curflow != NULL) {
+				log_warnx("rde_dispatch: "
+				    "unexpected flowspec add");
+				break;
+			}
+			curflow = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (curflow == NULL)
+				fatal(NULL);
+			memcpy(curflow, imsg.data,
+			    imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (curflow->len + FLOWSPEC_SIZE !=
+			    imsg.hdr.len - IMSG_HEADER_SIZE) {
+				free(curflow);
+				curflow = NULL;
+				log_warnx("rde_dispatch: wrong flowspec len");
+				break;
+			}
+			break;
+		case IMSG_FLOWSPEC_DONE:
+			if (curflow == NULL) {
+				log_warnx("rde_dispatch: "
+				    "unexpected flowspec done");
+				break;
+			}
+
+			rde_filterstate_init(&state);
+			asp = &state.aspath;
+			asp->aspath = aspath_get(NULL, 0);
+			asp->origin = ORIGIN_IGP;
+			asp->flags = F_ATTR_ORIGIN | F_ATTR_ASPATH |
+			    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
+
+			flowspec_add(curflow, &state, &parent_set);
+			rde_filterstate_clean(&state);
+			filterset_free(&parent_set);
+			free(curflow);
+			curflow = NULL;
+			break;
+		case IMSG_FLOWSPEC_REMOVE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE <= FLOWSPEC_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			if (curflow != NULL) {
+				log_warnx("rde_dispatch: "
+				    "unexpected flowspec remove");
+				break;
+			}
+			curflow = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (curflow == NULL)
+				fatal(NULL);
+			memcpy(curflow, imsg.data,
+			    imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (curflow->len + FLOWSPEC_SIZE !=
+			    imsg.hdr.len - IMSG_HEADER_SIZE) {
+				free(curflow);
+				curflow = NULL;
+				log_warnx("rde_dispatch: wrong flowspec len");
+				break;
+			}
+			flowspec_delete(curflow);
+			free(curflow);
+			curflow = NULL;
 			break;
 		case IMSG_RECONF_CONF:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
@@ -4487,6 +4561,20 @@ network_flush_upcall(struct rib_entry *re, void *ptr)
 	if (prefix_withdraw(rib_byid(RIB_ADJ_IN), peerself, 0, &addr,
 	    prefixlen) == 1)
 		peerself->stats.prefix_cnt--;
+}
+
+/*
+ * flowspec announcement stuff
+ */
+void
+flowspec_add(struct flowspec *f, struct filterstate *state,
+    struct filter_set_head *attrset)
+{
+}
+
+void
+flowspec_delete(struct flowspec *f)
+{
 }
 
 /* clean up */
