@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc_scsi.c,v 1.62 2023/04/19 01:42:13 dlg Exp $	*/
+/*	$OpenBSD: sdmmc_scsi.c,v 1.63 2023/04/19 01:46:10 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -442,7 +442,8 @@ sdmmc_inquiry(struct scsi_xfer *xs)
 
 	memset(&inq, 0, sizeof inq);
 	inq.device = T_DIRECT;
-	inq.dev_qual2 = SID_REMOVABLE;
+	if (!ISSET(sc->sc_caps, SMC_CAPS_NONREMOVABLE))
+		inq.dev_qual2 = SID_REMOVABLE;
 	inq.version = SCSI_REV_2;
 	inq.response_format = SID_SCSI2_RESPONSE;
 	inq.additional_length = SID_SCSI2_ALEN;
