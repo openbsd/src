@@ -1,4 +1,4 @@
-/*	$OpenBSD: flowspec.c,v 1.2 2023/04/17 20:54:57 claudio Exp $ */
+/*	$OpenBSD: flowspec.c,v 1.3 2023/04/19 07:07:58 claudio Exp $ */
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -228,10 +228,10 @@ flowspec_cmp(const uint8_t *a, int alen, const uint8_t *b, int blen, int is_v6)
 		case FLOWSPEC_TYPE_SOURCE:
 			if (!is_v6) {
 				cmp = flowspec_cmp_prefix4(a, acomplen,
-				   b, bcomplen);
+				    b, bcomplen);
 			} else {
 				cmp = flowspec_cmp_prefix6(a, acomplen,
-				   b, bcomplen);
+				    b, bcomplen);
 			}
 			if (cmp != 0)
 				return cmp;
