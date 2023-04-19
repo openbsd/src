@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.363 2023/04/18 22:01:24 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.364 2023/04/19 17:42:47 bluhm Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -864,7 +864,9 @@ route_output(struct mbuf *m, struct socket *so)
 			type = rtm->rtm_type;
 			seq = rtm->rtm_seq;
 			free(rtm, M_RTABLE, len);
+			NET_LOCK_SHARED();
 			rtm = rtm_report(rt, type, seq, tableid);
+			NET_UNLOCK_SHARED();
 			len = rtm->rtm_msglen;
 		}
 	}
