@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_filter.c,v 1.134 2023/03/10 07:57:15 claudio Exp $ */
+/*	$OpenBSD: rde_filter.c,v 1.135 2023/04/19 13:23:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -833,6 +833,9 @@ rde_filter(struct filter_head *rules, struct rde_peer *peer,
 
 	if (rules == NULL)
 		return (action);
+
+	if (prefix->aid == AID_FLOWSPECv4 || prefix->aid == AID_FLOWSPECv6)
+		return (ACTION_ALLOW);
 
 	f = TAILQ_FIRST(rules);
 	while (f != NULL) {

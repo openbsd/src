@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.602 2023/04/19 07:12:22 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.603 2023/04/19 13:23:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -859,7 +859,13 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			asp->flags = F_ATTR_ORIGIN | F_ATTR_ASPATH |
 			    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED;
 
-			flowspec_add(curflow, &state, &parent_set);
+			if (flowspec_valid(curflow->data, curflow->len,
+			    curflow->aid == AID_FLOWSPECv6) == -1)
+				log_warnx("invalid flowspec update received "
+				    "from parent");
+			else
+				flowspec_add(curflow, &state, &parent_set);
+
 			rde_filterstate_clean(&state);
 			filterset_free(&parent_set);
 			free(curflow);
@@ -887,7 +893,12 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				log_warnx("rde_dispatch: wrong flowspec len");
 				break;
 			}
-			flowspec_delete(curflow);
+			if (flowspec_valid(curflow->data, curflow->len,
+			    curflow->aid == AID_FLOWSPECv6) == -1)
+				log_warnx("invalid flowspec withdraw received "
+				    "from parent");
+			else
+				flowspec_delete(curflow);
 			free(curflow);
 			curflow = NULL;
 			break;
@@ -4570,11 +4581,32 @@ void
 flowspec_add(struct flowspec *f, struct filterstate *state,
     struct filter_set_head *attrset)
 {
+	struct pt_entry *pte;
+	uint32_t path_id_tx;
+
+	rde_apply_set(attrset, peerself, peerself, state, f->aid);
+	rde_filterstate_set_vstate(state, ROA_NOTFOUND, ASPA_NEVER_KNOWN);
+	path_id_tx = peerself->path_id_tx; /* XXX should use pathid_assign() */
+
+	pte = pt_get_flow(f);
+	if (pte == NULL)
+		pte = pt_add_flow(f);
+
+	if (prefix_flowspec_update(peerself, state, pte, path_id_tx) == 1)
+		peerself->stats.prefix_cnt++;
 }
 
 void
 flowspec_delete(struct flowspec *f)
 {
+	struct pt_entry *pte;
+
+	pte = pt_get_flow(f);
+	if (pte == NULL)
+		return;
+
+	if (prefix_flowspec_withdraw(peerself, pte) == 1)
+		peerself->stats.prefix_cnt--;
 }
 
 /* clean up */

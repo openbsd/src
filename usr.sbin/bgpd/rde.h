@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.292 2023/04/19 07:09:47 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.293 2023/04/19 13:23:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -567,9 +567,14 @@ int		 rib_dump_subtree(uint16_t, struct bgpd_addr *, uint8_t,
 		    int (*)(void *));
 void		 rib_dump_terminate(void *);
 
+extern struct rib flowrib;
+
 static inline struct rib *
 re_rib(struct rib_entry *re)
 {
+	if (re->prefix->aid == AID_FLOWSPECv4 ||
+	    re->prefix->aid == AID_FLOWSPECv6)
+		return &flowrib;
 	return rib_byid(re->rib_id);
 }
 
@@ -596,6 +601,12 @@ int		 prefix_update(struct rib *, struct rde_peer *, uint32_t,
 		    uint32_t, struct filterstate *, struct bgpd_addr *, int);
 int		 prefix_withdraw(struct rib *, struct rde_peer *, uint32_t,
 		    struct bgpd_addr *, int);
+int		 prefix_flowspec_update(struct rde_peer *, struct filterstate *,
+		    struct pt_entry *, uint32_t);
+int		 prefix_flowspec_withdraw(struct rde_peer *, struct pt_entry *);
+void		 prefix_flowspec_dump(uint8_t, void *,
+		    void (*)(struct rib_entry *, void *),
+		    void (*)(void *, uint8_t));
 void		 prefix_add_eor(struct rde_peer *, uint8_t);
 void		 prefix_adjout_update(struct prefix *, struct rde_peer *,
 		    struct filterstate *, struct pt_entry *, uint32_t);

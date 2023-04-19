@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.258 2023/04/07 13:49:03 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.259 2023/04/19 13:23:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -37,6 +37,7 @@
  */
 uint16_t rib_size;
 struct rib **ribs;
+struct rib flowrib = { .id = 1, .tree = RB_INITIALIZER(&flowrib.tree) };
 
 struct rib_entry *rib_add(struct rib *, struct pt_entry *);
 static inline int rib_compare(const struct rib_entry *,
@@ -1115,6 +1116,91 @@ prefix_withdraw(struct rib *rib, struct rde_peer *peer, uint32_t path_id,
 	prefix_destroy(p);
 
 	return (1);
+}
+
+/*
+ * Special functions for flowspec until full integration is available.
+ * This just directly feeds the prefixes into the Adj-RIB-Out bypassing
+ * Adj-RIB-In and Loc-RIB for now.
+ */
+int
+prefix_flowspec_update(struct rde_peer *peer, struct filterstate *state,
+    struct pt_entry *pte, uint32_t path_id_tx)
+{
+	struct rde_aspath *asp, *nasp;
+	struct rde_community *comm, *ncomm;
+	struct rib_entry *re;
+	struct prefix *new, *old;
+
+	re = rib_get(&flowrib, pte);
+	if (re == NULL)
+		re = rib_add(&flowrib, pte);
+
+	old = prefix_bypeer(re, peer, 0);
+	new = prefix_alloc();
+
+	nasp = &state->aspath;
+	ncomm = &state->communities;
+	if ((asp = path_lookup(nasp)) == NULL) {
+		/* Path not available, create and link a new one. */
+		asp = path_copy(path_get(), nasp);
+		path_link(asp);
+	}
+	if ((comm = communities_lookup(ncomm)) == NULL) {
+		/* Communities not available, create and link a new one. */
+		comm = communities_link(ncomm);
+	}
+
+	prefix_link(new, re, re->prefix, peer, 0, path_id_tx, asp, comm,
+	    NULL, 0, 0);
+	TAILQ_INSERT_HEAD(&re->prefix_h, new, entry.list.rib);
+
+	rde_generate_updates(re, new, old, EVAL_DEFAULT);
+
+	if (old != NULL) {
+		TAILQ_REMOVE(&re->prefix_h, old, entry.list.rib);
+		prefix_unlink(old);
+		prefix_free(old);
+		return 0;
+	}
+	return 1;
+}
+
+/*
+ * Remove a possible flowspec prefix from all Adj-RIB-Outs.
+ */
+int
+prefix_flowspec_withdraw(struct rde_peer *peer, struct pt_entry *pte)
+{
+	struct rib_entry *re;
+	struct prefix *p;
+
+	re = rib_get(&flowrib, pte);
+	if (re == NULL)
+		return 0;
+	p = prefix_bypeer(re, peer, 0);
+	if (p == NULL)
+		return 0;
+	rde_generate_updates(re, NULL, p, EVAL_DEFAULT);
+	TAILQ_REMOVE(&re->prefix_h, p, entry.list.rib);
+	prefix_unlink(p);
+	prefix_free(p);
+	return 1;
+}
+
+/*
+ * Push all flowspec rules into a newly available Adj-RIB-Out.
+ */
+void
+prefix_flowspec_dump(uint8_t aid, void *arg,
+    void (*call)(struct rib_entry *, void *), void (*done)(void *, uint8_t))
+{
+	struct rib_entry *re, *next;
+
+	RB_FOREACH_SAFE(re, rib_tree, rib_tree(&flowrib), next)
+		call(re, arg);
+	if (done != NULL)
+		done(arg, aid);
 }
 
 /*
