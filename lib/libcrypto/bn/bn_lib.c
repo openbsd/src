@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.81 2023/04/14 11:04:24 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.82 2023/04/19 10:51:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -733,54 +733,6 @@ void
 BN_set_negative(BIGNUM *bn, int neg)
 {
 	bn->neg = ~BN_is_zero(bn) & bn_ct_ne_zero(neg);
-}
-
-int
-bn_cmp_words(const BN_ULONG *a, const BN_ULONG *b, int n)
-{
-	int i;
-	BN_ULONG aa, bb;
-
-	aa = a[n - 1];
-	bb = b[n - 1];
-	if (aa != bb)
-		return ((aa > bb) ? 1 : -1);
-	for (i = n - 2; i >= 0; i--) {
-		aa = a[i];
-		bb = b[i];
-		if (aa != bb)
-			return ((aa > bb) ? 1 : -1);
-	}
-	return (0);
-}
-
-/* Here follows a specialised variants of bn_cmp_words().  It has the
-   property of performing the operation on arrays of different sizes.
-   The sizes of those arrays is expressed through cl, which is the
-   common length ( basicall, min(len(a),len(b)) ), and dl, which is the
-   delta between the two lengths, calculated as len(a)-len(b).
-   All lengths are the number of BN_ULONGs...  */
-
-int
-bn_cmp_part_words(const BN_ULONG *a, const BN_ULONG *b, int cl, int dl)
-{
-	int n, i;
-
-	n = cl - 1;
-
-	if (dl < 0) {
-		for (i = dl; i < 0; i++) {
-			if (b[n - i] != 0)
-				return -1; /* a < b */
-		}
-	}
-	if (dl > 0) {
-		for (i = dl; i > 0; i--) {
-			if (a[n + i] != 0)
-				return 1; /* a > b */
-		}
-	}
-	return bn_cmp_words(a, b, cl);
 }
 
 /*

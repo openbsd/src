@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.29 2023/03/30 14:28:56 tb Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.30 2023/04/19 10:51:22 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -228,90 +228,6 @@ bn_sqr_normal(BN_ULONG *r, const BN_ULONG *a, int n, BN_ULONG *tmp)
 	bn_add_words(r, r, tmp, max);
 }
 
-#ifdef BN_RECURSION
-/* r is 2*n words in size,
- * a and b are both n words in size.    (There's not actually a 'b' here ...)
- * n must be a power of 2.
- * We multiply and return the result.
- * t must be 2*n words in size
- * We calculate
- * a[0]*b[0]
- * a[0]*b[0]+a[1]*b[1]+(a[0]-a[1])*(b[1]-b[0])
- * a[1]*b[1]
- */
-void
-bn_sqr_recursive(BN_ULONG *r, const BN_ULONG *a, int n2, BN_ULONG *t)
-{
-	int n = n2 / 2;
-	int zero, c1;
-	BN_ULONG ln, lo, *p;
-
-	if (n2 == 4) {
-		bn_sqr_comba4(r, a);
-		return;
-	} else if (n2 == 8) {
-		bn_sqr_comba8(r, a);
-		return;
-	}
-	if (n2 < BN_SQR_RECURSIVE_SIZE_NORMAL) {
-		bn_sqr_normal(r, a, n2, t);
-		return;
-	}
-	/* r=(a[0]-a[1])*(a[1]-a[0]) */
-	c1 = bn_cmp_words(a, &(a[n]), n);
-	zero = 0;
-	if (c1 > 0)
-		bn_sub_words(t, a, &(a[n]), n);
-	else if (c1 < 0)
-		bn_sub_words(t, &(a[n]), a, n);
-	else
-		zero = 1;
-
-	/* The result will always be negative unless it is zero */
-	p = &(t[n2*2]);
-
-	if (!zero)
-		bn_sqr_recursive(&(t[n2]), t, n, p);
-	else
-		memset(&(t[n2]), 0, n2 * sizeof(BN_ULONG));
-	bn_sqr_recursive(r, a, n, p);
-	bn_sqr_recursive(&(r[n2]), &(a[n]), n, p);
-
-	/* t[32] holds (a[0]-a[1])*(a[1]-a[0]), it is negative or zero
-	 * r[10] holds (a[0]*b[0])
-	 * r[32] holds (b[1]*b[1])
-	 */
-
-	c1 = (int)(bn_add_words(t, r, &(r[n2]), n2));
-
-	/* t[32] is negative */
-	c1 -= (int)(bn_sub_words(&(t[n2]), t, &(t[n2]), n2));
-
-	/* t[32] holds (a[0]-a[1])*(a[1]-a[0])+(a[0]*a[0])+(a[1]*a[1])
-	 * r[10] holds (a[0]*a[0])
-	 * r[32] holds (a[1]*a[1])
-	 * c1 holds the carry bits
-	 */
-	c1 += (int)(bn_add_words(&(r[n]), &(r[n]), &(t[n2]), n2));
-	if (c1) {
-		p = &(r[n + n2]);
-		lo= *p;
-		ln = (lo + c1) & BN_MASK2;
-		*p = ln;
-
-		/* The overflow will stop before we over write
-		 * words we should not overwrite */
-		if (ln < (BN_ULONG)c1) {
-			do {
-				p++;
-				lo= *p;
-				ln = (lo + 1) & BN_MASK2;
-				*p = ln;
-			} while (ln == 0);
-		}
-	}
-}
-#endif
 
 /*
  * bn_sqr() computes a * a, storing the result in r. The caller must ensure that
@@ -330,31 +246,9 @@ bn_sqr(BIGNUM *r, const BIGNUM *a, int rn, BN_CTX *ctx)
 	if ((tmp = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-#if defined(BN_RECURSION)
-	if (a->top < BN_SQR_RECURSIVE_SIZE_NORMAL) {
-		BN_ULONG t[BN_SQR_RECURSIVE_SIZE_NORMAL*2];
-		bn_sqr_normal(r->d, a->d, a->top, t);
-	} else {
-		int j, k;
-
-		j = BN_num_bits_word((BN_ULONG)a->top);
-		j = 1 << (j - 1);
-		k = j + j;
-		if (a->top == j) {
-			if (!bn_wexpand(tmp, k * 2))
-				goto err;
-			bn_sqr_recursive(r->d, a->d, a->top, tmp->d);
-		} else {
-			if (!bn_wexpand(tmp, rn))
-				goto err;
-			bn_sqr_normal(r->d, a->d, a->top, tmp->d);
-		}
-	}
-#else
 	if (!bn_wexpand(tmp, rn))
 		goto err;
 	bn_sqr_normal(r->d, a->d, a->top, tmp->d);
-#endif
 
 	ret = 1;
 

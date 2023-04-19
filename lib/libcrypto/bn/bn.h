@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.61 2023/04/16 09:13:46 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.62 2023/04/19 10:51:22 jsing Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,12 +136,6 @@
 
 #ifdef  __cplusplus
 extern "C" {
-#endif
-
-#ifndef OPENSSL_SMALL_FOOTPRINT
-#define BN_MUL_COMBA
-#define BN_SQR_COMBA
-#define BN_RECURSION
 #endif
 
 /* This next option uses the C libraries (2 word)/(1 word) function.
