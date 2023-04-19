@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.74 2023/04/11 00:45:09 jsg Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.75 2023/04/19 02:01:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -397,6 +397,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	saa.sch = hp;
 	saa.caps = SMC_CAPS_4BIT_MODE;
 	saa.dmat = sc->sc_dmat;
+	saa.dma_boundary = sc->sc_dma_boundary;
 	if (ISSET(hp->flags, SHF_USE_DMA))
 		saa.caps |= SMC_CAPS_DMA;
 

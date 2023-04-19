@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdmmc.c,v 1.60 2022/09/03 15:29:43 kettenis Exp $	*/
+/*	$OpenBSD: sdmmc.c,v 1.61 2023/04/19 02:01:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -138,7 +138,8 @@ sdmmc_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA) && sc->sc_dmap == NULL) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SDMMC_MAXNSEGS,
-		    sc->sc_max_seg, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		    sc->sc_max_seg, saa->dma_boundary,
+		    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
 		    &sc->sc_dmap);
 		if (error) {
 			printf("%s: can't create DMA map\n", DEVNAME(sc));

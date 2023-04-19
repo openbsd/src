@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmshc.c,v 1.3 2023/04/19 01:41:12 dlg Exp $ */
+/*	$OpenBSD: dwmshc.c,v 1.4 2023/04/19 02:01:02 dlg Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -231,6 +231,7 @@ dwmshc_attach(struct device *parent, struct device *self, void *aux)
 
 	sdhc->sc_host = &sc->sc_host;
 	sdhc->sc_dmat = faa->fa_dmat;
+	sdhc->sc_dma_boundary = 128 * 1024 * 1024;
 
 	sdhc->sc_bus_clock_pre = dwmshc_clock_pre;
 	sdhc->sc_bus_clock_post = dwmshc_clock_post;

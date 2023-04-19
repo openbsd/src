@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcvar.h,v 1.16 2022/01/18 11:36:21 patrick Exp $	*/
+/*	$OpenBSD: sdhcvar.h,v 1.17 2023/04/19 02:01:02 dlg Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -31,6 +31,7 @@ struct sdhc_softc {
 	u_int sc_clkbase;
 
 	bus_dma_tag_t sc_dmat;
+	bus_size_t sc_dma_boundary;
 
 	void (*sc_bus_clock_pre)(struct sdhc_softc *, int, int);
 	void (*sc_bus_clock_post)(struct sdhc_softc *, int, int);
