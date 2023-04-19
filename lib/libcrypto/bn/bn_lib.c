@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.82 2023/04/19 10:51:22 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.83 2023/04/19 10:54:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -898,6 +898,25 @@ int
 BN_is_negative(const BIGNUM *a)
 {
 	return a->neg != 0;
+}
+
+char *
+BN_options(void)
+{
+	static int init = 0;
+	static char data[16];
+
+	if (!init) {
+		init++;
+#ifdef BN_LLONG
+		snprintf(data,sizeof data, "bn(%d,%d)",
+		    (int)sizeof(BN_ULLONG) * 8, (int)sizeof(BN_ULONG) * 8);
+#else
+		snprintf(data,sizeof data, "bn(%d,%d)",
+		    (int)sizeof(BN_ULONG) * 8, (int)sizeof(BN_ULONG) * 8);
+#endif
+	}
+	return (data);
 }
 
 /*
