@@ -1,4 +1,4 @@
-/*	$OpenBSD: ugold.c,v 1.22 2023/04/02 17:03:14 miod Exp $   */
+/*	$OpenBSD: ugold.c,v 1.23 2023/04/19 04:51:53 miod Exp $   */
 
 /*
  * Copyright (c) 2013 Takayoshi SASANO <uaa@openbsd.org>
@@ -427,12 +427,10 @@ ugold_si700x_intr(struct uhidev *addr, void *ibuf, u_int len)
 		if (buf[1] != 4 && buf[1] != 64 && buf[1] != 128)
 			printf("%s: invalid data length (%d bytes)\n",
 			    sc->sc_hdev.sc_dev.dv_xname, buf[1]);
-		if (buf[1] < 4)
-			break;
 		temp = ugold_si700x_temp(sc->sc_type, buf[2], buf[3]);
 		sc->sc_sensor[UGOLD_INNER].value = (temp * 1000) + 273150000;
 		sc->sc_sensor[UGOLD_INNER].flags &= ~SENSOR_FINVALID;
-		if (sc->sc_type != UGOLD_TYPE_GOLD && buf[1] >= 6) {
+		if (sc->sc_type != UGOLD_TYPE_GOLD) {
 			rhum = ugold_si700x_rhum(sc->sc_type, buf[4], buf[5], temp);
 			sc->sc_sensor[UGOLD_HUM].value = rhum;
 			sc->sc_sensor[UGOLD_HUM].flags &= ~SENSOR_FINVALID;
