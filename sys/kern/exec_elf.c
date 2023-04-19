@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.180 2023/01/16 07:09:11 guenther Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.181 2023/04/19 15:37:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -916,6 +916,10 @@ elf_os_pt_note(struct proc *p, struct exec_package *epp, Elf_Ehdr *eh, int *name
 	for (ph = hph;  ph < &hph[eh->e_phnum]; ph++) {
 		if (ph->p_type == PT_OPENBSD_WXNEEDED) {
 			epp->ep_flags |= EXEC_WXNEEDED;
+			continue;
+		}
+		if (ph->p_type == PT_OPENBSD_NOBTCFI) {
+			epp->ep_flags |= EXEC_NOBTCFI;
 			continue;
 		}
 
