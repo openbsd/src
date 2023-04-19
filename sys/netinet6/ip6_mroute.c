@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.135 2022/09/08 10:22:07 kn Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.136 2023/04/19 20:03:52 kn Exp $	*/
 /*	$NetBSD: ip6_mroute.c,v 1.59 2003/12/10 09:28:38 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
@@ -245,6 +245,8 @@ mrt6_ioctl(struct socket *so, u_long cmd, caddr_t data)
 	if (inp == NULL)
 		return (ENOTCONN);
 
+	KERNEL_LOCK();
+
 	switch (cmd) {
 	case SIOCGETSGCNT_IN6:
 		NET_LOCK_SHARED();
@@ -262,6 +264,8 @@ mrt6_ioctl(struct socket *so, u_long cmd, caddr_t data)
 		error = ENOTTY;
 		break;
 	}
+
+	KERNEL_UNLOCK();
 	return error;
 }
 
