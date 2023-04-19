@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.5 2023/04/19 11:12:43 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.6 2023/04/19 11:14:04 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -69,7 +69,7 @@
 
 #include "bn_local.h"
 
-static const char Hex[]="0123456789ABCDEF";
+static const char hex_digits[] = "0123456789ABCDEF";
 
 typedef enum {
 	big,
@@ -443,8 +443,8 @@ BN_bn2hex(const BIGNUM *a)
 			/* strip leading zeros */
 			v = ((int)(a->d[i] >> (long)j)) & 0xff;
 			if (z || (v != 0)) {
-				*p++ = Hex[v >> 4];
-				*p++ = Hex[v & 0x0f];
+				*p++ = hex_digits[v >> 4];
+				*p++ = hex_digits[v & 0x0f];
 				z = 1;
 			}
 		}
@@ -634,7 +634,7 @@ BN_print(BIO *bp, const BIGNUM *a)
 			/* strip leading zeros */
 			v = ((int)(a->d[i] >> (long)j)) & 0x0f;
 			if (z || (v != 0)) {
-				if (BIO_write(bp, &(Hex[v]), 1) != 1)
+				if (BIO_write(bp, &hex_digits[v], 1) != 1)
 					goto end;
 				z = 1;
 			}
