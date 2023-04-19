@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.185 2023/04/04 00:38:38 jsg Exp $
+#	$OpenBSD: files.fdt,v 1.186 2023/04/19 00:19:17 dlg Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -425,6 +425,10 @@ file	dev/fdt/rkvop.c			rkvop
 device	dwmmc: sdmmcbus
 attach	dwmmc at fdt
 file	dev/fdt/dwmmc.c			dwmmc
+
+device	dwmshc: sdhc, sdmmcbus
+attach	dwmshc at fdt
+file	dev/fdt/dwmshc.c		dwmshc
 
 device	dwdog
 attach	dwdog at fdt
