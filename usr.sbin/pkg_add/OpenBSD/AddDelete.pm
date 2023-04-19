@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.96 2022/05/16 14:13:19 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.97 2023/04/19 18:07:43 sthen Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -72,6 +72,8 @@ sub do_the_main_work
 	if ($state->{bad}) {
 		return;
 	}
+
+	umask 0022;
 
 	my $handler = sub { $state->fatal("Caught SIG#1", shift); };
 	local $SIG{'INT'} = $handler;
