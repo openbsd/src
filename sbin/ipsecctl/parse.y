@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.181 2021/10/22 12:30:54 bluhm Exp $	*/
+/*	$OpenBSD: parse.y,v 1.182 2023/04/19 13:33:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,7 +43,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <netdb.h>
 
 #include "ipsecctl.h"
 

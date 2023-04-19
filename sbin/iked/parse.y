@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.141 2022/07/22 15:53:33 tobhe Exp $	*/
+/*	$OpenBSD: parse.y,v 1.142 2023/04/19 13:33:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -46,7 +46,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <netdb.h>
 #include <event.h>
 
 #include "iked.h"
