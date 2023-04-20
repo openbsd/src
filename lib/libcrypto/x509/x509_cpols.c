@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.7 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.8 2023/04/20 18:29:08 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -594,7 +594,7 @@ notice_section(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *unot, int ia5org)
 		cnf = sk_CONF_VALUE_value(unot, i);
 		if (!strcmp(cnf->name, "explicitText")) {
 			if (not->exptext == NULL) {
-				not->exptext = ASN1_VISIBLESTRING_new();
+				not->exptext = ASN1_UTF8STRING_new();
 				if (not->exptext == NULL)
 					goto merr;
 			}
