@@ -2895,6 +2895,7 @@
 ./usr/share/man/man3/round.3
 ./usr/share/man/man3/rpc.3
 ./usr/share/man/man3/rs256_pk_new.3
+./usr/share/man/man3/s2i_ASN1_INTEGER.3
 ./usr/share/man/man3/scalbn.3
 ./usr/share/man/man3/scandir.3
 ./usr/share/man/man3/scanf.3
