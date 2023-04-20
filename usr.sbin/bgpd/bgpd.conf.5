@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.234 2023/04/03 10:48:00 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.235 2023/04/20 12:44:28 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 3 2023 $
+.Dd $Mdocdate: April 20 2023 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@ Global settings for
 .Xr bgpd 8 .
 .It Sx SET CONFIGURATION
 Various lookup tables are defined in this section.
-.It Sx NETWORK ANNOUNCEMENTS
+.It Sx NETWORK AND FLOWSPEC ANNOUNCEMENTS
 Networks which should be announced by
 .Xr bgpd 8
 are set in this section.
@@ -588,7 +588,7 @@ is
 .Em 323 .
 .El
 .El
-.Sh NETWORK ANNOUNCEMENTS
+.Sh NETWORK AND FLOWSPEC ANNOUNCEMENTS
 .Ic network
 statements specify the networks that
 .Xr bgpd 8
@@ -604,21 +604,21 @@ announces no networks.
 .It Xo
 .Ic network
 .Ar address Ns Li / Ns Ar prefix
-.Op Ic set ...\&
+.Op Ic set ...
 .Xc
 Announce the specified prefix as belonging to our AS.
 .Pp
 .It Xo
 .Ic network
 .Pq Ic inet Ns | Ns Ic inet6
-.Ic connected Op Ic set ...\&
+.Ic connected Op Ic set ...
 .Xc
 Announce routes to directly attached networks.
 .Pp
 .It Xo
 .Ic network prefix-set
 .Ar name
-.Op Ic set ...\&
+.Op Ic set ...
 .Xc
 Announce all networks in the prefix-set
 .Ar name .
@@ -626,7 +626,7 @@ Announce all networks in the prefix-set
 .It Xo
 .Ic network
 .Pq Ic inet Ns | Ns Ic inet6
-.Ic priority Ar number Op Ic set ...\&
+.Ic priority Ar number Op Ic set ...
 .Xc
 Announce routes having the specified
 .Ar priority .
@@ -634,7 +634,7 @@ Announce routes having the specified
 .It Xo
 .Ic network
 .Pq Ic inet Ns | Ns Ic inet6
-.Ic rtlabel Ar label Op Ic set ...\&
+.Ic rtlabel Ar label Op Ic set ...
 .Xc
 Announce routes having the specified
 .Ar label .
@@ -642,7 +642,7 @@ Announce routes having the specified
 .It Xo
 .Ic network
 .Pq Ic inet Ns | Ns Ic inet6
-.Ic static Op Ic set ...\&
+.Ic static Op Ic set ...
 .Xc
 Announce all static routes.
 .El
@@ -658,6 +658,121 @@ network 192.168.7.0/24 set localpref 220
 See also the
 .Sx ATTRIBUTE SET
 section.
+.Pp
+.Ic flowspec
+statements specify the flowspec rules that
+.Xr bgpd 8
+will announce as its own.
+.\"An announcement must also be permitted by the
+.\".Sx FILTER
+.\"rules.
+By default
+.Xr bgpd 8
+announces no flowspec rules.
+.Pp
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic flowspec
+.Pq Ic inet Ns | Ns Ic inet6
+.Ar rule Op Ic set ...
+.Xc
+Announce an IPv4 or IPv6 specific flowspec
+.Ar rule
+including the
+.Em AS path attributes
+specified by
+.Ar set .
+.El
+.Pp
+The following rule parameters can be set.
+Most number arguments in the below rules can be specified as a
+list of ranges enclosed in curly brackets using these operators:
+.Bd -literal -offset indent
+=       (equal, default)
+!=      (unequal)
+<       (less than)
+<=      (less than or equal)
+>       (greater than)
+>=      (greater than or equal)
+-       (range including boundaries)
+><      (except range)
+.Ed
+.Pp
+.Sq >< ,
+and
+.Sq -
+are binary operators (they take two arguments).
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic from Ar source Op Ic port Ar list
+.It Ic to Ar dest Op Ic port Ar list
+This rule applies only to packets with the specified source or
+destination addresses and ports.
+Addresses can be specified in CIDR notation (matching netblocks) or using
+.Cm any
+to match any address.
+In most cases a
+.Ic to
+address must be specified and be part of the announced networks.
+.Pp
+Ports can be specified either by number or by name.
+For example, port 80 can be specified as
+.Cm www .
+For a list of all port name to number mappings see the file
+.Pa /etc/services .
+.It Ic flags Ar a Ns / Ns Ar b
+This rule only applies to TCP packets that have the flags
+.Ar a
+set out of set
+.Ar b .
+Flags not specified in
+.Ar b
+are ignored.
+The flags are: (F)IN, (S)YN, (R)ST, (P)USH, (A)CK, (U)RG, (E)CE, and C(W)R.
+.It Ic fragment Ar a Ns / Ns Ar b
+This rule only applies to fragmented packets which match the specified flags.
+The flags are: (D)on't fragment, (I)s fragment, (F)irst fragment, and (L)ast
+fragment.
+.It Ic icmp-type Ar type Op Ic code Ar code
+.It Ic icmp6-type Ar type Op Ic code Ar code
+This rule only applies to ICMP or ICMP6 packets with the specified type
+and code.
+Text names for ICMP types and codes are listed in
+.Xr icmp 4
+and
+.Xr icmp6 4 .
+.It Ic length Ar pktlen
+This rule applies only to packets matching the specified
+.Ar pktlen .
+.It Ic proto Ar protocol
+This rule applies only to packets of this protocol.
+Common protocols are ICMP, ICMP6, TCP, and UDP.
+For a list of all the protocol name to number mappings see the file
+.Pa /etc/protocols .
+.It Ic tos Ar string Ns | Ns Ar number
+This rule applies to packets with the specified TOS bits set.
+.Ar string
+may be one of
+.Cm critical ,
+.Cm inetcontrol ,
+.Cm lowdelay ,
+.Cm netcontrol ,
+.Cm throughput ,
+.Cm reliability ,
+or one of the DiffServ Code Points:
+.Cm ef ,
+.Cm af11 No ... Cm af43 ,
+.Cm cs0 No ... Cm cs7 ;
+.Ar number
+may be either a hex or decimal number.
+.El
+.Pp
+The action taken when a flowspec rules matches depends on extended communities.
+For example to block all traffic either
+.Ic ext-community Ic flow-rate Ar as-number : Ns 0
+or
+.Ic ext-community Ic flow-pps Ar as-number : Ns 0
+need to be set.
 .Sh MPLS VPN CONFIGURATION
 A
 .Ic vpn
