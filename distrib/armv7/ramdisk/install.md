@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.55 2023/03/29 00:25:47 kn Exp $
+#	$OpenBSD: install.md,v 1.56 2023/04/20 19:42:52 kettenis Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,9 +63,9 @@ md_installboot() {
 		;;
 	cubox|wandboard)
 		cp $_mdec/*.dtb /mnt/mnt/
-		dd if=$_mdec/SPL of=/dev/r${_disk}c bs=1024 seek=1 \
+		dd if=$_mdec/SPL of=/dev/${_disk}c bs=1024 seek=1 \
 		    status=none
-		dd if=$_mdec/u-boot.img of=/dev/r${_disk}c bs=1024 seek=69 \
+		dd if=$_mdec/u-boot.img of=/dev/${_disk}c bs=1024 seek=69 \
 		    status=none
 		;;
 	nitrogen)
@@ -81,7 +81,7 @@ md_installboot() {
 		;;
 	cubie)
 		cp $_mdec/*.dtb /mnt/mnt/
-		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=/dev/r${_disk}c \
+		dd if=$_mdec/u-boot-sunxi-with-spl.bin of=/dev/${_disk}c \
 		    bs=1024 seek=8 status=none
 		;;
 	esac
