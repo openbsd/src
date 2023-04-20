@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.290 2023/03/13 16:59:22 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.291 2023/04/20 14:01:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -361,6 +361,22 @@ main(int argc, char *argv[])
 		mrt_parse(res->mrtfd, &net_mrt, 1);
 		done = 1;
 		break;
+	case FLOWSPEC_ADD:
+	case FLOWSPEC_REMOVE:
+		done = 1;
+		break;
+	case FLOWSPEC_FLUSH:
+		imsg_compose(ibuf, IMSG_FLOWSPEC_FLUSH, 0, 0, -1, NULL, 0);
+		printf("request sent.\n");
+		done = 1;
+		break;
+	case FLOWSPEC_SHOW:
+		memset(&ribreq, 0, sizeof(ribreq));
+		ribreq.aid = res->aid;
+		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
+		imsg_compose(ibuf, IMSG_CTL_SHOW_FLOWSPEC, 0, 0, -1,
+		    &ribreq, sizeof(ribreq));
+		break;
 	case LOG_VERBOSE:
 		verbose = 1;
 		/* FALLTHROUGH */
@@ -424,6 +440,7 @@ show(struct imsg *imsg, struct parse_result *res)
 	struct ctl_show_rtr	 rtr;
 	struct kroute_full	*kf;
 	struct ktable		*kt;
+	struct flowspec		*f;
 	struct ctl_show_rib	 rib;
 	struct rde_memstats	 stats;
 	u_char			*asdata;
@@ -466,6 +483,14 @@ show(struct imsg *imsg, struct parse_result *res)
 			break;
 		kf = imsg->data;
 		output->fib(kf);
+		break;
+	case IMSG_CTL_SHOW_FLOWSPEC:
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(*f))
+			errx(1, "wrong imsg len");
+		if (output->flowspec == NULL)
+			break;
+		f = imsg->data;
+		output->flowspec(f);
 		break;
 	case IMSG_CTL_SHOW_FIB_TABLES:
 		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(*kt))

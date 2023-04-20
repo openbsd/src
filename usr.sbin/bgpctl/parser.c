@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.129 2023/04/17 13:48:31 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.130 2023/04/20 14:01:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,6 +96,7 @@ static const struct token t_show_mrt_as[];
 static const struct token t_show_prefix[];
 static const struct token t_show_ip[];
 static const struct token t_network[];
+static const struct token t_flowspec[];
 static const struct token t_bulk[];
 static const struct token t_network_show[];
 static const struct token t_prefix[];
@@ -107,6 +108,7 @@ static const struct token t_communication[];
 
 static const struct token t_main[] = {
 	{ KEYWORD,	"fib",		FIB,		t_fib},
+	{ KEYWORD,	"flowspec",	NONE,		t_flowspec},
 	{ KEYWORD,	"log",		NONE,		t_log},
 	{ KEYWORD,	"neighbor",	NEIGHBOR,	t_neighbor},
 	{ KEYWORD,	"network",	NONE,		t_network},
@@ -118,6 +120,7 @@ static const struct token t_main[] = {
 static const struct token t_show[] = {
 	{ NOTOKEN,	"",		NONE,		NULL},
 	{ KEYWORD,	"fib",		SHOW_FIB,	t_show_fib},
+	{ KEYWORD,	"flowspec",	FLOWSPEC_SHOW,	t_network_show},
 	{ KEYWORD,	"interfaces",	SHOW_INTERFACE,	NULL},
 	{ KEYWORD,	"ip",		NONE,		t_show_ip},
 	{ KEYWORD,	"metrics",	SHOW_METRICS,	NULL},
@@ -326,6 +329,12 @@ static const struct token t_network[] = {
 	{ KEYWORD,	"flush",	NETWORK_FLUSH,	NULL},
 	{ KEYWORD,	"mrt",		NETWORK_MRT,	t_show_mrt},
 	{ KEYWORD,	"show",		NETWORK_SHOW,	t_network_show},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_flowspec[] = {
+	{ KEYWORD,	"flush",	FLOWSPEC_FLUSH,	NULL},
+	{ KEYWORD,	"show",		FLOWSPEC_SHOW,	t_network_show},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 

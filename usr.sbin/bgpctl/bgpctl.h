@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.h,v 1.20 2023/03/28 12:07:09 claudio Exp $ */
+/*	$OpenBSD: bgpctl.h,v 1.21 2023/04/20 14:01:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -24,6 +24,7 @@ struct output {
 	void	(*timer)(struct ctl_timer *);
 	void	(*fib)(struct kroute_full *);
 	void	(*fib_table)(struct ktable *);
+	void	(*flowspec)(struct flowspec *);
 	void	(*nexthop)(struct ctl_show_nexthop *);
 	void	(*interface)(struct ctl_show_interface *);
 	void	(*attr)(u_char *, size_t, int, int);

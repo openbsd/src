@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.38 2023/03/28 12:07:09 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.39 2023/04/20 14:01:50 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -85,6 +85,8 @@ show_head(struct parse_result *res)
 		printf("%-5s %-4s %-32s %-32s\n", "flags", "prio",
 		    "destination", "gateway");
 		break;
+	case FLOWSPEC_SHOW:
+		printf("flags: S = Static\n");
 	default:
 		break;
 	}
@@ -490,6 +492,108 @@ show_fib_table(struct ktable *kt)
 	printf("%5i %-20s %-8s%s\n", kt->rtableid, kt->descr,
 	    kt->fib_sync ? "coupled" : "decoupled",
 	    kt->fib_sync != kt->fib_conf ? "*" : "");
+}
+
+static void
+print_flowspec_list(struct flowspec *f, int type, int is_v6)
+{
+	const uint8_t *comp;
+	const char *fmt;
+	int complen, off = 0;
+
+	if (flowspec_get_component(f->data, f->len, type, is_v6,
+	    &comp, &complen) != 1)
+		return;
+
+	printf("%s ", flowspec_fmt_label(type));
+	fmt = flowspec_fmt_num_op(comp, complen, &off);
+	if (off == -1) {
+		printf("%s ", fmt);
+	} else {
+		printf("{ %s ", fmt);
+		do {
+			fmt = flowspec_fmt_num_op(comp, complen, &off);
+			printf("%s ", fmt);
+		} while (off != -1);
+		printf("} ");
+	}
+}
+
+static void
+print_flowspec_flags(struct flowspec *f, int type, int is_v6)
+{
+	const uint8_t *comp;
+	const char *fmt, *flags;
+	int complen, off = 0;
+
+	if (flowspec_get_component(f->data, f->len, type, is_v6,
+	    &comp, &complen) != 1)
+		return;
+
+	printf("%s ", flowspec_fmt_label(type));
+
+	switch (type) {
+	case FLOWSPEC_TYPE_TCP_FLAGS:
+		flags = FLOWSPEC_TCP_FLAG_STRING;
+		break;
+	case FLOWSPEC_TYPE_FRAG:
+		if (!is_v6)
+			flags = FLOWSPEC_FRAG_STRING4;
+		else
+			flags = FLOWSPEC_FRAG_STRING6;
+		break;
+	}
+
+	fmt = flowspec_fmt_bin_op(comp, complen, &off, flags);
+	if (off == -1) {
+		printf("%s ", fmt);
+	} else {
+		printf("{ %s ", fmt);
+		do {
+			fmt = flowspec_fmt_bin_op(comp, complen, &off, flags);
+			printf("%s ", fmt);
+		} while (off != -1);
+		printf("} ");
+	}
+}
+
+static void
+print_flowspec_addr(struct flowspec *f, int type, int is_v6)
+{
+	struct bgpd_addr addr;
+	uint8_t plen;
+
+	flowspec_get_addr(f->data, f->len, type, is_v6, &addr, &plen, NULL);
+	if (plen == 0)
+		printf("%s any ", flowspec_fmt_label(type));
+	else
+		printf("%s %s/%u ", flowspec_fmt_label(type),
+		    log_addr(&addr), plen);
+}
+
+static void
+show_flowspec(struct flowspec *f)
+{
+	int is_v6 = (f->aid == AID_FLOWSPECv6);
+
+	printf("%-5s ", fmt_fib_flags(f->flags));
+	print_flowspec_list(f, FLOWSPEC_TYPE_PROTO, is_v6);
+
+	print_flowspec_addr(f, FLOWSPEC_TYPE_SOURCE, is_v6);
+	print_flowspec_list(f, FLOWSPEC_TYPE_SRC_PORT, is_v6);
+
+	print_flowspec_addr(f, FLOWSPEC_TYPE_DEST, is_v6);
+	print_flowspec_list(f, FLOWSPEC_TYPE_DST_PORT, is_v6);
+
+	print_flowspec_list(f, FLOWSPEC_TYPE_DSCP, is_v6);
+	print_flowspec_list(f, FLOWSPEC_TYPE_PKT_LEN, is_v6);
+	print_flowspec_flags(f, FLOWSPEC_TYPE_TCP_FLAGS, is_v6);
+	print_flowspec_flags(f, FLOWSPEC_TYPE_FRAG, is_v6);
+	/* TODO: fixup the code handling to be like in the parser */
+	print_flowspec_list(f, FLOWSPEC_TYPE_ICMP_TYPE, is_v6);
+	print_flowspec_list(f, FLOWSPEC_TYPE_ICMP_CODE, is_v6);
+
+	printf("\n");
 }
 
 static void
@@ -1117,6 +1221,7 @@ const struct output show_output = {
 	.timer = show_timer,
 	.fib = show_fib,
 	.fib_table = show_fib_table,
+	.flowspec = show_flowspec,
 	.nexthop = show_nexthop,
 	.interface = show_interface,
 	.communities = show_communities,
