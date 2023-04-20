@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.515 2023/03/31 08:22:09 kevlo Exp $
+#	$OpenBSD: GENERIC,v 1.516 2023/04/20 19:28:30 jcs Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -706,3 +706,6 @@ viornd*		at virtio?	# Virtio entropy device
 vioscsi*	at virtio?	# Virtio SCSI device
 #viocon*	at virtio?	# Virtio console device
 vmmci*		at virtio?	# VMM control interface
+#viogpu*	at virtio?	# VirtIO GPU device
+#wsdisplay0	at viogpu? console 1
+#wsdisplay*	at viogpu? mux -1

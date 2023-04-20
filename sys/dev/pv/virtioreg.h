@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtioreg.h,v 1.4 2019/03/24 18:21:12 sf Exp $	*/
+/*	$OpenBSD: virtioreg.h,v 1.5 2023/04/20 19:28:31 jcs Exp $	*/
 /*	$NetBSD: virtioreg.h,v 1.1 2011/10/30 12:12:21 hannken Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #define PCI_PRODUCT_VIRTIO_SCSI		8
 #define PCI_PRODUCT_VIRTIO_9P		9
 #define PCI_PRODUCT_VIRTIO_MAC80211	10
+#define PCI_PRODUCT_VIRTIO_GPU		16
 #define PCI_PRODUCT_VIRTIO_VMMCI	65535	/* private id */
 
 /* device-independent feature bits */

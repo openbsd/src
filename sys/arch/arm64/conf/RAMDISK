@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.197 2023/04/19 00:40:24 dlg Exp $
+# $OpenBSD: RAMDISK,v 1.198 2023/04/20 19:28:30 jcs Exp $
 
 machine		arm64
 maxusers	4
@@ -103,6 +103,8 @@ vioblk*		at virtio?
 viomb*		at virtio?
 viornd*		at virtio?
 vioscsi*	at virtio?
+viogpu*		at virtio?
+wsdisplay*	at viogpu?
 
 simplefb*	at fdt?
 wsdisplay*	at simplefb?

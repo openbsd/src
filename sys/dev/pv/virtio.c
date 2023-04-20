@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.21 2022/01/09 05:42:58 jsg Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.22 2023/04/20 19:28:31 jcs Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -64,7 +64,13 @@ static const char * const virtio_device_name[] = {
 	"Rpmsg",		/* 7 */
 	"SCSI host",		/* 8 */
 	"9P Transport",		/* 9 */
-	"mac80211 wlan"		/* 10 */
+	"mac80211 wlan",	/* 10 */
+	NULL,			/* 11 */
+	NULL,			/* 12 */
+	NULL,			/* 13 */
+	NULL,			/* 14 */
+	NULL,			/* 15 */
+	"GPU",			/* 16 */
 };
 #define NDEVNAMES	(sizeof(virtio_device_name)/sizeof(char*))
 

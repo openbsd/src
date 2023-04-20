@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pv,v 1.16 2020/01/24 05:14:51 jsg Exp $
+#	$OpenBSD: files.pv,v 1.17 2023/04/20 19:28:31 jcs Exp $
 #
 # Config file and device description for paravirtual devices.
 # Included by ports that need it.
@@ -80,3 +80,7 @@ file	dev/pv/vioscsi.c		vioscsi
 device	vmmci
 attach	vmmci at virtio
 file	dev/pv/vmmci.c			vmmci
+
+device	viogpu: drmbase, wsemuldisplaydev, rasops32
+attach	viogpu at virtio
+file	dev/pv/viogpu.c			viogpu

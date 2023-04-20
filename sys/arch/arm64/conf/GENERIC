@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.265 2023/04/19 00:40:24 dlg Exp $
+# $OpenBSD: GENERIC,v 1.266 2023/04/20 19:28:30 jcs Exp $
 #
 # GENERIC machine description file
 #
@@ -119,6 +119,8 @@ vioblk*		at virtio?
 viomb*		at virtio?
 viornd*		at virtio?
 vioscsi*	at virtio?
+viogpu*		at virtio?
+wsdisplay*	at viogpu?
 
 option	WSDISPLAY_COMPAT_USL		# VT handling
 option	WSDISPLAY_COMPAT_RAWKBD		# provide raw scancodes; needed for X11
