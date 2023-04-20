@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhid.c,v 1.89 2022/07/02 08:50:42 visa Exp $ */
+/*	$OpenBSD: uhid.c,v 1.90 2023/04/20 10:49:57 brynet Exp $ */
 /*	$NetBSD: uhid.c,v 1.57 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -225,11 +225,16 @@ uhid_do_open(dev_t dev, int flag, int mode, struct proc *p)
 	if (usbd_is_dying(sc->sc_hdev.sc_udev))
 		return (ENXIO);
 
-	error = uhidev_open(&sc->sc_hdev);
-	if (error)
-		return (error);
+	if (sc->sc_hdev.sc_state & UHIDEV_OPEN)
+		return (EBUSY);
 
 	clalloc(&sc->sc_q, UHID_BSIZE, 0);
+
+	error = uhidev_open(&sc->sc_hdev);
+	if (error) {
+		clfree(&sc->sc_q);
+		return (error);
+	}
 
 	sc->sc_obuf = malloc(sc->sc_hdev.sc_osize, M_USBDEV, M_WAITOK);
 
