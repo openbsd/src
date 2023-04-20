@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.474 2023/04/20 12:53:27 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.475 2023/04/20 15:44:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1273,6 +1273,7 @@ struct aspa_set {
 	uint8_t				 *tas_aid;
 	RB_ENTRY(aspa_set)		 entry;
 };
+#define TAS_AID_SIZE(n)	(((n) + 15) / 16 * sizeof(uint32_t))
 
 struct aspa_prep {
 	size_t				datasize;

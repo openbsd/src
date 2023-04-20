@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.604 2023/04/20 12:53:27 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.605 2023/04/20 15:44:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1312,7 +1312,7 @@ rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
 			if (aspa == NULL)
 				fatalx("unexpected IMSG_RECONF_ASPA_TAS");
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			     aspa->num * sizeof(uint32_t))
+			    aspa->num * sizeof(uint32_t))
 				fatalx("IMSG_RECONF_ASPA_TAS bad len");
 			aspa->tas = reallocarray(NULL, aspa->num,
 			    sizeof(uint32_t));
@@ -1325,12 +1325,13 @@ rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
 			if (aspa == NULL)
 				fatalx("unexpected IMSG_RECONF_ASPA_TAS_AID");
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			     (aspa->num + 15) / 16)
+			    TAS_AID_SIZE(aspa->num))
 				fatalx("IMSG_RECONF_ASPA_TAS_AID bad len");
-			aspa->tas_aid = malloc((aspa->num + 15) / 16);
+			aspa->tas_aid = malloc(TAS_AID_SIZE(aspa->num));
 			if (aspa->tas_aid == NULL)
 				fatal("IMSG_RECONF_ASPA_TAS_AID");
-			memcpy(aspa->tas_aid, imsg.data, (aspa->num + 15) / 16);
+			memcpy(aspa->tas_aid, imsg.data,
+			    TAS_AID_SIZE(aspa->num));
 			break;
 		case IMSG_RECONF_ASPA_DONE:
 			if (aspa_new == NULL)

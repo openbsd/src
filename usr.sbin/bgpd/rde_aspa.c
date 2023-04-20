@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa.c,v 1.3 2023/01/24 11:28:41 claudio Exp $ */
+/*	$OpenBSD: rde_aspa.c,v 1.4 2023/04/20 15:44:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -445,12 +445,13 @@ aspa_add_set(struct rde_aspa *ra, uint32_t cas, const uint32_t *pas,
 	/* nobody in their right mind has per afi specific data */
 	if (pas_aid != NULL) {
 		/* 2 bits per entry rounded to next uint32_t */
-		if (ra->maxdata - ra->curdata < (pascnt * 2 + 31) / 32)
+		if (ra->maxdata - ra->curdata <
+		    TAS_AID_SIZE(pascnt) / sizeof(ra->data[0]))
 			fatalx("aspa set data overflow");
 
 		aspa->pas_aid = ra->data + ra->curdata;
-		for (i = 0; i < (pascnt * 2 + 31) / 32; i++)
-			ra->data[ra->curdata++] = pas_aid[i];
+		memcpy(aspa->pas_aid, pas_aid, TAS_AID_SIZE(pascnt));
+		ra->curdata += TAS_AID_SIZE(pascnt) / sizeof(ra->data[0]);
 	}
 }
 
