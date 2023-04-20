@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.109 2023/02/09 13:43:23 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.110 2023/04/20 12:53:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -279,6 +279,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			case IMSG_CTL_SHOW_TERSE:
 			case IMSG_CTL_SHOW_TIMER:
 			case IMSG_CTL_SHOW_NETWORK:
+			case IMSG_CTL_SHOW_FLOWSPEC:
 			case IMSG_CTL_SHOW_RIB:
 			case IMSG_CTL_SHOW_RIB_PREFIX:
 			case IMSG_CTL_SHOW_SET:
@@ -498,6 +499,7 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);
 			break;
 		case IMSG_CTL_SHOW_NETWORK:
+		case IMSG_CTL_SHOW_FLOWSPEC:
 			c->terminate = 1;
 			/* FALLTHROUGH */
 		case IMSG_CTL_SHOW_RIB_MEM:
@@ -512,6 +514,10 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 		case IMSG_NETWORK_REMOVE:
 		case IMSG_NETWORK_FLUSH:
 		case IMSG_NETWORK_DONE:
+		case IMSG_FLOWSPEC_ADD:
+		case IMSG_FLOWSPEC_REMOVE:
+		case IMSG_FLOWSPEC_DONE:
+		case IMSG_FLOWSPEC_FLUSH:
 		case IMSG_FILTER_SET:
 			imsg_ctl_rde(imsg.hdr.type, 0, 0,
 			    imsg.data, imsg.hdr.len - IMSG_HEADER_SIZE);

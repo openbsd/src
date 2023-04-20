@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.442 2023/03/09 13:12:19 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.443 2023/04/20 12:53:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3205,6 +3205,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 		case IMSG_CTL_SHOW_RIB_ATTR:
 		case IMSG_CTL_SHOW_RIB_MEM:
 		case IMSG_CTL_SHOW_NETWORK:
+		case IMSG_CTL_SHOW_FLOWSPEC:
 		case IMSG_CTL_SHOW_SET:
 			if (idx != PFD_PIPE_ROUTE_CTL)
 				fatalx("ctl rib request not from RDE");

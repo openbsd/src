@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.603 2023/04/19 13:23:33 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.604 2023/04/20 12:53:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -105,6 +105,9 @@ static void	 network_flush_upcall(struct rib_entry *, void *);
 void		 flowspec_add(struct flowspec *, struct filterstate *,
 		    struct filter_set_head *);
 void		 flowspec_delete(struct flowspec *);
+static void	 flowspec_flush_upcall(struct rib_entry *, void *);
+static void	 flowspec_dump_upcall(struct rib_entry *, void *);
+static void	 flowspec_dump_done(void *, uint8_t);
 
 void		 rde_shutdown(void);
 static int	 ovs_match(struct prefix *, uint32_t);
@@ -361,6 +364,7 @@ struct filter_set_head	parent_set = TAILQ_HEAD_INITIALIZER(parent_set);
 void
 rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 {
+	static struct flowspec	*curflow;
 	struct imsg		 imsg;
 	struct rde_peer_stats	 stats;
 	struct ctl_show_set	 cset;
@@ -577,6 +581,97 @@ badnetdel:
 			    NULL, NULL) == -1)
 				log_warn("rde_dispatch: IMSG_NETWORK_FLUSH");
 			break;
+		case IMSG_FLOWSPEC_ADD:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE <= FLOWSPEC_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			if (curflow != NULL) {
+				log_warnx("rde_dispatch: "
+				    "unexpected flowspec add");
+				break;
+			}
+			curflow = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (curflow == NULL)
+				fatal(NULL);
+			memcpy(curflow, imsg.data,
+			    imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (curflow->len + FLOWSPEC_SIZE !=
+			    imsg.hdr.len - IMSG_HEADER_SIZE) {
+				free(curflow);
+				curflow = NULL;
+				log_warnx("rde_dispatch: wrong flowspec len");
+				break;
+			}
+			rde_filterstate_init(&netconf_state);
+			asp = &netconf_state.aspath;
+			asp->aspath = aspath_get(NULL, 0);
+			asp->origin = ORIGIN_IGP;
+			asp->flags = F_ATTR_ORIGIN | F_ATTR_ASPATH |
+			    F_ATTR_LOCALPREF | F_PREFIX_ANNOUNCED |
+			    F_ANN_DYNAMIC;
+			break;
+		case IMSG_FLOWSPEC_DONE:
+			if (curflow == NULL) {
+				log_warnx("rde_dispatch: "
+				    "unexpected flowspec done");
+				break;
+			}
+
+			if (flowspec_valid(curflow->data, curflow->len,
+			    curflow->aid == AID_FLOWSPECv6) == -1)
+				log_warnx("invalid flowspec update received "
+				    "from bgpctl");
+			else
+				flowspec_add(curflow, &netconf_state,
+				    &session_set);
+
+			rde_filterstate_clean(&netconf_state);
+			filterset_free(&session_set);
+			free(curflow);
+			curflow = NULL;
+			break;
+		case IMSG_FLOWSPEC_REMOVE:
+			if (imsg.hdr.len - IMSG_HEADER_SIZE <= FLOWSPEC_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			if (curflow != NULL) {
+				log_warnx("rde_dispatch: "
+				    "unexpected flowspec remove");
+				break;
+			}
+			curflow = malloc(imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (curflow == NULL)
+				fatal(NULL);
+			memcpy(curflow, imsg.data,
+			    imsg.hdr.len - IMSG_HEADER_SIZE);
+			if (curflow->len + FLOWSPEC_SIZE !=
+			    imsg.hdr.len - IMSG_HEADER_SIZE) {
+				free(curflow);
+				curflow = NULL;
+				log_warnx("rde_dispatch: wrong flowspec len");
+				break;
+			}
+
+			if (flowspec_valid(curflow->data, curflow->len,
+			    curflow->aid == AID_FLOWSPECv6) == -1)
+				log_warnx("invalid flowspec withdraw received "
+				    "from bgpctl");
+			else
+				flowspec_delete(curflow);
+
+			free(curflow);
+			curflow = NULL;
+			break;
+		case IMSG_FLOWSPEC_FLUSH:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			prefix_flowspec_dump(AID_UNSPEC, NULL,
+			    flowspec_flush_upcall, NULL);
+			break;
 		case IMSG_FILTER_SET:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
 			    sizeof(struct filter_set)) {
@@ -602,6 +697,15 @@ badnetdel:
 			}
 			memcpy(&req, imsg.data, sizeof(req));
 			rde_dump_ctx_new(&req, imsg.hdr.pid, imsg.hdr.type);
+			break;
+		case IMSG_CTL_SHOW_FLOWSPEC:
+			if (imsg.hdr.len != IMSG_HEADER_SIZE + sizeof(req)) {
+				log_warnx("rde_dispatch: wrong imsg len");
+				break;
+			}
+			memcpy(&req, imsg.data, sizeof(req));
+			prefix_flowspec_dump(req.aid, &imsg.hdr.pid,
+			    flowspec_dump_upcall, flowspec_dump_done);
 			break;
 		case IMSG_CTL_SHOW_NEIGHBOR:
 			if (imsg.hdr.len - IMSG_HEADER_SIZE != 0) {
@@ -893,12 +997,14 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 				log_warnx("rde_dispatch: wrong flowspec len");
 				break;
 			}
+
 			if (flowspec_valid(curflow->data, curflow->len,
 			    curflow->aid == AID_FLOWSPECv6) == -1)
 				log_warnx("invalid flowspec withdraw received "
 				    "from parent");
 			else
 				flowspec_delete(curflow);
+
 			free(curflow);
 			curflow = NULL;
 			break;
@@ -4538,8 +4644,7 @@ network_dump_upcall(struct rib_entry *re, void *ptr)
 			kf.flags = F_STATIC;
 		if (imsg_compose(ibuf_se_ctl, IMSG_CTL_SHOW_NETWORK, 0,
 		    ctx->req.pid, -1, &kf, sizeof(kf)) == -1)
-			log_warnx("network_dump_upcall: "
-			    "imsg_compose error");
+			log_warnx("%s: imsg_compose error", __func__);
 	}
 }
 
@@ -4608,6 +4713,71 @@ flowspec_delete(struct flowspec *f)
 	if (prefix_flowspec_withdraw(peerself, pte) == 1)
 		peerself->stats.prefix_cnt--;
 }
+
+static void
+flowspec_flush_upcall(struct rib_entry *re, void *ptr)
+{
+	struct prefix *p;
+
+	p = prefix_bypeer(re, peerself, 0);
+	if (p == NULL)
+		return;
+	if ((prefix_aspath(p)->flags & F_ANN_DYNAMIC) != F_ANN_DYNAMIC)
+		return;
+	if (prefix_flowspec_withdraw(peerself, re->prefix) == 1)
+		peerself->stats.prefix_cnt--;
+}
+
+static void
+flowspec_dump_upcall(struct rib_entry *re, void *ptr)
+{
+	pid_t *pid = ptr;
+	struct prefix		*p;
+	struct rde_aspath	*asp;
+	struct rde_community	*comm;
+	struct flowspec		ff;
+	struct ibuf		*ibuf;
+	uint8_t			*flow;
+	int			len;
+
+	TAILQ_FOREACH(p, &re->prefix_h, entry.list.rib) {
+		asp = prefix_aspath(p);
+		if (!(asp->flags & F_PREFIX_ANNOUNCED))
+			continue;
+		comm = prefix_communities(p);
+
+		len = pt_getflowspec(p->pt, &flow);
+
+		memset(&ff, 0, sizeof(ff));
+		ff.aid = p->pt->aid;
+		ff.len = len;
+		if ((asp->flags & F_ANN_DYNAMIC) == 0)
+			ff.flags = F_STATIC;
+		if ((ibuf = imsg_create(ibuf_se_ctl, IMSG_CTL_SHOW_FLOWSPEC, 0,
+		    *pid, FLOWSPEC_SIZE + len)) == NULL)
+				continue;
+		if (imsg_add(ibuf, &ff, FLOWSPEC_SIZE) == -1 ||
+		    imsg_add(ibuf, flow, len) == -1)
+			continue;
+		imsg_close(ibuf_se_ctl, ibuf);
+		if (comm->nentries > 0) {
+			if (imsg_compose(ibuf_se_ctl,
+			    IMSG_CTL_SHOW_RIB_COMMUNITIES, 0, *pid, -1,
+			    comm->communities,
+			    comm->nentries * sizeof(struct community)) == -1)
+				continue;
+		}
+	}
+}
+
+static void
+flowspec_dump_done(void *ptr, uint8_t aid)
+{
+	pid_t *pid = ptr;
+
+	imsg_compose(ibuf_se_ctl, IMSG_CTL_END, 0, *pid, -1, NULL, 0);
+}
+
 
 /* clean up */
 void
