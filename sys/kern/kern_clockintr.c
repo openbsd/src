@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.11 2023/04/19 14:30:35 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.12 2023/04/20 00:24:11 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -110,6 +110,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 	uint64_t multiplier = 0, offset;
 	struct cpu_info *ci = curcpu();
 	struct clockintr_queue *cq = &ci->ci_queue;
+	int reset_cq_intrclock = 0;
 
 	KASSERT(ISSET(clockintr_flags, CL_INIT));
 
@@ -139,6 +140,16 @@ clockintr_cpu_init(const struct intrclock *ic)
 				    __func__);
 			}
 		}
+	}
+
+	/*
+	 * Mask CQ_INTRCLOCK while we're advancing the internal clock
+	 * interrupts.  We don't want the intrclock to fire until this
+	 * thread reaches clockintr_trigger().
+	 */
+	if (ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
+		CLR(cq->cq_flags, CQ_INTRCLOCK);
+		reset_cq_intrclock = 1;
 	}
 
 	/*
@@ -175,6 +186,9 @@ clockintr_cpu_init(const struct intrclock *ic)
 		clockintr_schedule(cq->cq_schedclock, offset);
 		clockintr_advance(cq->cq_schedclock, schedclock_period);
 	}
+
+	if (reset_cq_intrclock)
+		SET(cq->cq_flags, CQ_INTRCLOCK);
 
 	SET(cq->cq_flags, CQ_INIT);
 }
