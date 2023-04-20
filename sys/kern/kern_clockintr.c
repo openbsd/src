@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.12 2023/04/20 00:24:11 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.13 2023/04/20 14:51:28 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -91,10 +91,8 @@ clockintr_init(u_int flags)
 	clockintr_setstatclockrate(stathz);
 
 	KASSERT(schedhz >= 0 && schedhz <= 1000000000);
-	if (schedhz != 0) {
+	if (schedhz != 0)
 		schedclock_period = 1000000000 / schedhz;
-		SET(clockintr_flags, CL_SCHEDCLOCK);
-	}
 
 	SET(clockintr_flags, flags | CL_INIT);
 }
@@ -181,7 +179,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 	offset = statclock_avg / ncpus * multiplier;
 	clockintr_schedule(cq->cq_statclock, offset);
 	clockintr_advance(cq->cq_statclock, statclock_avg);
-	if (ISSET(clockintr_flags, CL_SCHEDCLOCK)) {
+	if (schedhz != 0) {
 		offset = schedclock_period / ncpus * multiplier;
 		clockintr_schedule(cq->cq_schedclock, offset);
 		clockintr_advance(cq->cq_schedclock, schedclock_period);
