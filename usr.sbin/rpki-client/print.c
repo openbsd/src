@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.35 2023/04/12 03:53:40 job Exp $ */
+/*	$OpenBSD: print.c,v 1.36 2023/04/20 15:12:19 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -402,7 +402,7 @@ mft_print(const X509 *x, const struct mft *p)
 		x509_print(x);
 		printf("Authority info access:    %s\n", p->aia);
 		printf("Subject info access:      %s\n", p->sia);
-		printf("Manifest Number:          %s\n", p->seqnum);
+		printf("Manifest number:          %s\n", p->seqnum);
 		if (p->signtime != 0)
 			printf("Signing time:             %s\n",
 			    time2str(p->signtime));
