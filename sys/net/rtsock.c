@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.364 2023/04/19 17:42:47 bluhm Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.365 2023/04/20 21:43:17 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2205,7 +2205,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 		tableid = w.w_arg;
 		if (!rtable_exists(tableid))
 			return (ENOENT);
-		NET_LOCK();
+		NET_LOCK_SHARED();
 		for (i = 1; i <= AF_MAX; i++) {
 			if (af != 0 && af != i)
 				continue;
@@ -2216,7 +2216,7 @@ sysctl_rtable(int *name, u_int namelen, void *where, size_t *given, void *new,
 			if (error)
 				break;
 		}
-		NET_UNLOCK();
+		NET_UNLOCK_SHARED();
 		break;
 	}
 	free(w.w_tmem, M_RTABLE, w.w_tmemsize);
