@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.31 2023/01/13 08:58:36 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.32 2023/04/20 15:05:44 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -115,6 +115,7 @@ static int
 print_vap(FILE *out, struct vap *v, enum afi afi)
 {
 	size_t i;
+	int foundafi = 0;
 
 	if (fprintf(out, "\t\t\t{ \"customer_asid\": %u, \"providers\": [",
 	    v->custasid) < 0)
@@ -122,12 +123,19 @@ print_vap(FILE *out, struct vap *v, enum afi afi)
 	for (i = 0; i < v->providersz; i++) {
 		if (v->providers[i].afi != 0 && v->providers[i].afi != afi)
 			continue;
+		foundafi = 1;
 		if (fprintf(out, "%u", v->providers[i].as) < 0)
 			return -1;
 		if (i + 1 < v->providersz)
 			if (fprintf(out, ", ") < 0)
 				return -1;
 	}
+
+	if (!foundafi) {
+		if (fprintf(out, "0") < 0)
+			return -1;
+	}
+
 	if (fprintf(out, "], \"expires\": %lld }", (long long)v->expires) < 0)
 		return -1;
 
