@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc3779.c,v 1.8 2022/05/12 19:58:45 tb Exp $ */
+/*	$OpenBSD: rfc3779.c,v 1.9 2023/04/20 07:39:17 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  *
@@ -322,7 +322,7 @@ run_IPAddressOrRange_tests(void)
  */
 static IPAddrBlocks *IPAddrBlocks_new(void);
 static void IPAddrBlocks_free(IPAddrBlocks *addr);
-static __unused IPAddrBlocks *d2i_IPAddrBlocks(IPAddrBlocks **addrs,
+static IPAddrBlocks *d2i_IPAddrBlocks(IPAddrBlocks **addrs,
     const unsigned char **in, long len);
 static int i2d_IPAddrBlocks(IPAddrBlocks *addrs, unsigned char **out);
 
@@ -380,7 +380,7 @@ get_IPAddrBlocks_it(void)
 	return my_IPAddrBlocks_it;
 }
 
-static __unused IPAddrBlocks *
+static IPAddrBlocks *
 d2i_IPAddrBlocks(IPAddrBlocks **addrs, const unsigned char **in, long len)
 {
 	const ASN1_ITEM_EXP *my_IPAddrBlocks_it;
@@ -867,12 +867,13 @@ addr_block_add_addrs(IPAddrBlocks *block, const struct ip_addr_block addrs[])
 static int
 build_addr_block_test(const struct build_addr_block_test_data *test)
 {
-	IPAddrBlocks	*addrs = NULL;
-	unsigned char	*out = NULL;
-	int		 out_len;
-	int		 i;
-	int		 memcmp_failed = 1;
-	int		 failed = 1;
+	IPAddrBlocks *addrs = NULL, *parsed = NULL;
+	const unsigned char *p;
+	unsigned char *out = NULL;
+	int out_len;
+	int i;
+	int memcmp_failed = 1;
+	int failed = 1;
 
 	if ((addrs = IPAddrBlocks_new()) == NULL)
 		goto err;
@@ -943,10 +944,34 @@ build_addr_block_test(const struct build_addr_block_test_data *test)
 		goto err;
 	}
 
+	p = test->der;
+	if ((parsed = d2i_IPAddrBlocks(NULL, &p, test->der_len)) == NULL) {
+		fprintf(stderr, "%s: \"%s\" d2i_IPAddrBlocks failed\n",
+		    __func__, test->description);
+		goto err;
+	}
+	if (!X509v3_addr_is_canonical(parsed)) {
+		fprintf(stderr, "%s: \"%s\" parsed AddrBlocks isn't canonical\n",
+		    __func__, test->description);
+		goto err;
+	}
+	/* Can't compare IPAddrBlocks with inheritance. */
+	if (!X509v3_addr_inherits(addrs) && !X509v3_addr_inherits(parsed)) {
+		if (!X509v3_addr_subset(addrs, parsed)) {
+			fprintf(stderr, "%s: \"%s\" addrs not subset of parsed\n",
+			    __func__, test->description);
+		}
+		if (!X509v3_addr_subset(parsed, addrs)) {
+			fprintf(stderr, "%s: \"%s\" parsed not subset of addrs\n",
+			    __func__, test->description);
+		}
+	}
+
 	failed = 0;
 
  err:
 	IPAddrBlocks_free(addrs);
+	IPAddrBlocks_free(parsed);
 	free(out);
 
 	return failed;
