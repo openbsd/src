@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.451 2023/04/21 10:47:07 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.452 2023/04/21 10:48:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -4441,7 +4441,7 @@ parseextvalue(int type, char *s, uint32_t *v, uint32_t *flag)
 		type = EXT_COMMUNITY_TRANS_IPV4;
 	}
 
-	switch (type) {
+	switch (type & EXT_COMMUNITY_VALUE) {
 	case EXT_COMMUNITY_TRANS_TWO_AS:
 		uval = strtonum(s, 0, USHRT_MAX, &errstr);
 		if (errstr) {
@@ -4510,6 +4510,9 @@ parseextcommunity(struct community *c, char *t, char *s)
 	case EXT_COMMUNITY_TRANS_TWO_AS:
 	case EXT_COMMUNITY_TRANS_FOUR_AS:
 	case EXT_COMMUNITY_TRANS_IPV4:
+	case EXT_COMMUNITY_GEN_TWO_AS:
+	case EXT_COMMUNITY_GEN_FOUR_AS:
+	case EXT_COMMUNITY_GEN_IPV4:
 	case -1:
 		if (strcmp(s, "*") == 0) {
 			dflag1 = COMMUNITY_ANY;
@@ -4525,11 +4528,14 @@ parseextcommunity(struct community *c, char *t, char *s)
 
 		switch (type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
+		case EXT_COMMUNITY_GEN_TWO_AS:
 			if (getcommunity(p, 1, &uval2, &dflag2) == -1)
 				return (-1);
 			break;
 		case EXT_COMMUNITY_TRANS_IPV4:
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
+		case EXT_COMMUNITY_GEN_IPV4:
+		case EXT_COMMUNITY_GEN_FOUR_AS:
 			if (getcommunity(p, 0, &uval2, &dflag2) == -1)
 				return (-1);
 			break;

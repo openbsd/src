@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.165 2023/04/18 14:11:54 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.166 2023/04/21 10:48:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -219,6 +219,8 @@ print_community(struct community *c)
 		switch (type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
+		case EXT_COMMUNITY_GEN_TWO_AS:
+		case EXT_COMMUNITY_GEN_FOUR_AS:
 			if ((c->flags >> 8 & 0xff) == COMMUNITY_NEIGHBOR_AS)
 				printf("neighbor-as:");
 			else if ((c->flags >> 8 & 0xff) == COMMUNITY_LOCAL_AS)
@@ -227,6 +229,7 @@ print_community(struct community *c)
 				printf("%s:", log_as(c->data1));
 			break;
 		case EXT_COMMUNITY_TRANS_IPV4:
+		case EXT_COMMUNITY_GEN_IPV4:
 			addr.s_addr = htonl(c->data1);
 			printf("%s:", inet_ntoa(addr));
 			break;
@@ -236,6 +239,9 @@ print_community(struct community *c)
 		case EXT_COMMUNITY_TRANS_TWO_AS:
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
 		case EXT_COMMUNITY_TRANS_IPV4:
+		case EXT_COMMUNITY_GEN_TWO_AS:
+		case EXT_COMMUNITY_GEN_FOUR_AS:
+		case EXT_COMMUNITY_GEN_IPV4:
 			if ((c->flags >> 16 & 0xff) == COMMUNITY_ANY)
 				printf("* ");
 			else if ((c->flags >> 16 & 0xff) ==
