@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_io.c,v 1.12 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cms_io.c,v 1.13 2023/04/21 19:08:47 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -123,8 +123,7 @@ PEM_write_CMS(FILE *fp, const CMS_ContentInfo *x)
 BIO *
 BIO_new_CMS(BIO *out, CMS_ContentInfo *cms)
 {
-	return BIO_new_NDEF(out, (ASN1_VALUE *)cms,
-	    &CMS_ContentInfo_it);
+	return BIO_new_NDEF(out, (ASN1_VALUE *)cms, &CMS_ContentInfo_it);
 }
 
 /* CMS wrappers round generalised stream and MIME routines */
