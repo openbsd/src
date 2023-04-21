@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_enum.c,v 1.4 2023/04/21 05:56:51 tb Exp $ */
+/* $OpenBSD: x509_enum.c,v 1.5 2023/04/21 06:00:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -63,13 +63,12 @@
 #include <openssl/x509v3.h>
 
 static BIT_STRING_BITNAME crl_reasons[] = {
-	{CRL_REASON_UNSPECIFIED, 	 "Unspecified", "unspecified"},
+	{CRL_REASON_UNSPECIFIED,	 "Unspecified", "unspecified"},
 	{CRL_REASON_KEY_COMPROMISE,	 "Key Compromise", "keyCompromise"},
 	{CRL_REASON_CA_COMPROMISE,	 "CA Compromise", "CACompromise"},
 	{CRL_REASON_AFFILIATION_CHANGED, "Affiliation Changed", "affiliationChanged"},
-	{CRL_REASON_SUPERSEDED, 	 "Superseded", "superseded"},
-		{CRL_REASON_CESSATION_OF_OPERATION,
-	"Cessation Of Operation", "cessationOfOperation"},
+	{CRL_REASON_SUPERSEDED,		 "Superseded", "superseded"},
+	{CRL_REASON_CESSATION_OF_OPERATION, "Cessation Of Operation", "cessationOfOperation"},
 	{CRL_REASON_CERTIFICATE_HOLD,	 "Certificate Hold", "certificateHold"},
 	{CRL_REASON_REMOVE_FROM_CRL,	 "Remove From CRL", "removeFromCRL"},
 	{CRL_REASON_PRIVILEGE_WITHDRAWN, "Privilege Withdrawn", "privilegeWithdrawn"},
