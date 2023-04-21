@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.25 2022/11/29 19:52:48 tb Exp $
+.\" $OpenBSD: X509_STORE_CTX_get_error.3,v 1.26 2023/04/21 06:45:56 tb Exp $
 .\" full merge up to:
 .\" OpenSSL man3/X509_STORE_CTX_get_error 24a535ea Sep 22 13:14:20 2020 +0100
 .\" OpenSSL man3/X509_STORE_CTX_new 24a535ea Sep 22 13:14:20 2020 +0100
@@ -68,7 +68,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 29 2022 $
+.Dd $Mdocdate: April 21 2023 $
 .Dt X509_STORE_CTX_GET_ERROR 3
 .Os
 .Sh NAME
@@ -485,14 +485,24 @@ This is only set if issuer check debugging is enabled it is used for
 status notification and is
 .Sy not
 in itself an error.
-.\" .It Dv X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER : \
-.\"  No unable to get CRL issuer certificate
-.\" .It Dv X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION : \
-.\"  No unhandled critical extension
-.\" .It Dv X509_V_ERR_KEYUSAGE_NO_CRL_SIGN : \
-.\"  No key usage does not include CRL signing
-.\" .It Dv X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION : \
-.\"  No unhandled critical CRL extension
+.It Dv X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER : \
+ No unable to get CRL issuer certificate
+The CRL's issuer could not be found:
+there is no alternative CRL issuer set on
+.Ar ctx
+and the last certificate in the chain is not self signed.
+.It Dv X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION : \
+ No unhandled critical extension
+The certificate contains a critical extension that is unsupported
+by the library.
+.It Dv X509_V_ERR_KEYUSAGE_NO_CRL_SIGN : \
+ No key usage does not include CRL signing
+The CRL issuer has a key usage extension with unset cRLSign bit.
+.It Dv X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION : \
+ No unhandled critical CRL extension
+The CRL contains a critical extension that is unsupported
+by the library.
+.\" XXX - The following are unreachable (X509_V_ERR_INVALID_NON_CA) or unused.
 .\" .It Dv X509_V_ERR_INVALID_NON_CA : \
 .\"  No invalid non-CA certificate (has CA markings)
 .\" .It Dv X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED : \
