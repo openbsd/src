@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.88 2023/04/07 01:18:01 deraadt Exp $
+#	$OpenBSD: airport,v 1.89 2023/04/21 00:37:10 kn Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -1482,6 +1482,7 @@ RUT:Rutland, Vermont, USA
 RWI:Wilson, Rocky Mount, North Carolina, USA
 RWN:Rivne International, Rivne, Ukraine
 RZE:Jasionka, Rzeszow, Poland
+RZV:Rize-Artvin, Rize, Turkey
 SAB:Saba Island, Netherlands Antilles
 SAC:Sacramento Executive, California, USA
 SAF:Santa Fe, New Mexico, USA
