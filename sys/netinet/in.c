@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.182 2023/04/19 20:03:51 kn Exp $	*/
+/*	$OpenBSD: in.c,v 1.183 2023/04/21 00:41:13 kn Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -200,7 +200,6 @@ int
 in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 {
 	int privileged;
-	int error;
 
 	privileged = 0;
 	if ((so->so_state & SS_PRIV) != 0)
@@ -210,15 +209,11 @@ in_control(struct socket *so, u_long cmd, caddr_t data, struct ifnet *ifp)
 #ifdef MROUTING
 	case SIOCGETVIFCNT:
 	case SIOCGETSGCNT:
-		error = mrt_ioctl(so, cmd, data);
-		break;
+		return mrt_ioctl(so, cmd, data);
 #endif /* MROUTING */
 	default:
-		error = in_ioctl(cmd, data, ifp, privileged);
-		break;
+		return in_ioctl(cmd, data, ifp, privileged);
 	}
-
-	return error;
 }
 
 int
