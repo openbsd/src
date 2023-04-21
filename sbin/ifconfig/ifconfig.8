@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.391 2023/03/07 20:09:47 jan Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.392 2023/04/21 01:15:48 asou Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: March 7 2023 $
+.Dd $Mdocdate: April 21 2023 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1460,7 +1460,7 @@ is omitted, it is decreased by 1.
 .Op Oo Fl Oc Ns Cm mplslabel Ar mpls-label
 .Op Oo Fl Oc Ns Cm pwecw
 .Op Oo Fl Oc Ns Cm pwefat
-.Op Cm pweneighbor Ar mpls-label Ar neighbor
+.Op Oo Fl Oc Ns Cm pweneighbor Ar mpls-label Ar neighbor
 .Op Oo Fl Oc Ns Cm tunneldomain Ar rdomain
 .Ek
 .nr nS 0
@@ -1513,6 +1513,8 @@ and
 .Ar neighbor
 as the remote MPLS label and neighbor respectively.
 Remote MPLS labels have the same restrictions on values as local MPLS labels.
+.It Fl Ns Cm pweneighbor
+Unset the remote MPLS label and neighbor.
 .El
 .Sh PAIR
 .nr nS 1
