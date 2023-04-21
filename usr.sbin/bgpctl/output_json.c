@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.31 2023/03/28 12:07:09 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.32 2023/04/21 10:49:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -495,11 +495,10 @@ json_communities(u_char *data, size_t len, struct parse_result *res)
 			break;
 		case COMMUNITY_TYPE_EXT:
 			ext = (uint64_t)c.data3 << 48;
-			switch (c.data3 >> 8) {
+			switch ((c.data3 >> 8) & EXT_COMMUNITY_VALUE) {
 			case EXT_COMMUNITY_TRANS_TWO_AS:
 			case EXT_COMMUNITY_TRANS_OPAQUE:
 			case EXT_COMMUNITY_TRANS_EVPN:
-			case EXT_COMMUNITY_NON_TRANS_OPAQUE:
 				ext |= ((uint64_t)c.data1 & 0xffff) << 32;
 				ext |= (uint64_t)c.data2;
 				break;

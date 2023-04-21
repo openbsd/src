@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.39 2023/04/20 14:01:50 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.40 2023/04/21 10:49:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -674,11 +674,10 @@ show_communities(u_char *data, size_t len, struct parse_result *res)
 			break;
 		case COMMUNITY_TYPE_EXT:
 			ext = (uint64_t)c.data3 << 48;
-			switch (c.data3 >> 8) {
+			switch ((c.data3 >> 8) & EXT_COMMUNITY_VALUE) {
 			case EXT_COMMUNITY_TRANS_TWO_AS:
 			case EXT_COMMUNITY_TRANS_OPAQUE:
 			case EXT_COMMUNITY_TRANS_EVPN:
-			case EXT_COMMUNITY_NON_TRANS_OPAQUE:
 				ext |= ((uint64_t)c.data1 & 0xffff) << 32;
 				ext |= (uint64_t)c.data2;
 				break;

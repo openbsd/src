@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.292 2023/04/21 09:12:41 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.293 2023/04/21 10:49:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -1051,6 +1051,7 @@ fmt_ext_community(uint8_t *data)
 
 	switch (type) {
 	case EXT_COMMUNITY_TRANS_TWO_AS:
+	case EXT_COMMUNITY_GEN_TWO_AS:
 		memcpy(&as2, data + 2, sizeof(as2));
 		memcpy(&u32, data + 4, sizeof(u32));
 		snprintf(buf, sizeof(buf), "%s %s:%u",
@@ -1058,6 +1059,7 @@ fmt_ext_community(uint8_t *data)
 		    log_as(ntohs(as2)), ntohl(u32));
 		return buf;
 	case EXT_COMMUNITY_TRANS_IPV4:
+	case EXT_COMMUNITY_GEN_IPV4:
 		memcpy(&ip, data + 2, sizeof(ip));
 		memcpy(&u16, data + 6, sizeof(u16));
 		snprintf(buf, sizeof(buf), "%s %s:%hu",
@@ -1065,6 +1067,7 @@ fmt_ext_community(uint8_t *data)
 		    inet_ntoa(ip), ntohs(u16));
 		return buf;
 	case EXT_COMMUNITY_TRANS_FOUR_AS:
+	case EXT_COMMUNITY_GEN_FOUR_AS:
 		memcpy(&as4, data + 2, sizeof(as4));
 		memcpy(&u16, data + 6, sizeof(u16));
 		snprintf(buf, sizeof(buf), "%s %s:%hu",
@@ -1081,20 +1084,27 @@ fmt_ext_community(uint8_t *data)
 	case EXT_COMMUNITY_NON_TRANS_OPAQUE:
 		memcpy(&ext, data, sizeof(ext));
 		ext = be64toh(ext) & 0xffffffffffffLL;
-		switch (ext) {
-		case EXT_COMMUNITY_OVS_VALID:
-			snprintf(buf, sizeof(buf), "%s valid",
-			    log_ext_subtype(type, subtype));
-			return buf;
-		case EXT_COMMUNITY_OVS_NOTFOUND:
-			snprintf(buf, sizeof(buf), "%s not-found",
-			    log_ext_subtype(type, subtype));
-			return buf;
-		case EXT_COMMUNITY_OVS_INVALID:
-			snprintf(buf, sizeof(buf), "%s invalid",
-			    log_ext_subtype(type, subtype));
-			return buf;
-		default:
+		if (subtype == EXT_COMMUNITY_SUBTYPE_OVS) {
+			switch (ext) {
+			case EXT_COMMUNITY_OVS_VALID:
+				snprintf(buf, sizeof(buf), "%s valid",
+				    log_ext_subtype(type, subtype));
+				return buf;
+			case EXT_COMMUNITY_OVS_NOTFOUND:
+				snprintf(buf, sizeof(buf), "%s not-found",
+				    log_ext_subtype(type, subtype));
+				return buf;
+			case EXT_COMMUNITY_OVS_INVALID:
+				snprintf(buf, sizeof(buf), "%s invalid",
+				    log_ext_subtype(type, subtype));
+				return buf;
+			default:
+				snprintf(buf, sizeof(buf), "%s 0x%llx",
+				    log_ext_subtype(type, subtype),
+				    (unsigned long long)ext);
+				return buf;
+			}
+		} else {
 			snprintf(buf, sizeof(buf), "%s 0x%llx",
 			    log_ext_subtype(type, subtype),
 			    (unsigned long long)ext);

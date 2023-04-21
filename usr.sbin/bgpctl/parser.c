@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.131 2023/04/21 09:12:41 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.132 2023/04/21 10:49:01 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -741,7 +741,7 @@ match_token(int argc, char *argv[], const struct token table[], int *argsused)
 					rd |= ((uint64_t)ext.data1 & 0xffff)
 					    << 32;
 					rd |= (uint64_t)ext.data2;
-				break;
+					break;
 				case EXT_COMMUNITY_TRANS_IPV4:
 					rd = (1ULL << 48);
 					rd |= (uint64_t)ext.data1 << 16;
@@ -1298,7 +1298,7 @@ parseextvalue(int type, char *s, uint32_t *v, uint32_t *flag)
 		type = EXT_COMMUNITY_TRANS_IPV4;
 	}
 
-	switch (type) {
+	switch (type & EXT_COMMUNITY_VALUE) {
 	case EXT_COMMUNITY_TRANS_TWO_AS:
 		uval = strtonum(s, 0, USHRT_MAX, &errstr);
 		if (errstr)
@@ -1355,6 +1355,9 @@ parseextcommunity(struct community *c, const char *t, char *s)
 	case EXT_COMMUNITY_TRANS_TWO_AS:
 	case EXT_COMMUNITY_TRANS_FOUR_AS:
 	case EXT_COMMUNITY_TRANS_IPV4:
+	case EXT_COMMUNITY_GEN_TWO_AS:
+	case EXT_COMMUNITY_GEN_FOUR_AS:
+	case EXT_COMMUNITY_GEN_IPV4:
 	case -1:
 		if (strcmp(s, "*") == 0) {
 			dflag1 = COMMUNITY_ANY;
@@ -1367,10 +1370,13 @@ parseextcommunity(struct community *c, const char *t, char *s)
 
 		switch (type) {
 		case EXT_COMMUNITY_TRANS_TWO_AS:
+		case EXT_COMMUNITY_GEN_TWO_AS:
 			getcommunity(p, 1, &uval2, &dflag2);
 			break;
 		case EXT_COMMUNITY_TRANS_IPV4:
 		case EXT_COMMUNITY_TRANS_FOUR_AS:
+		case EXT_COMMUNITY_GEN_IPV4:
+		case EXT_COMMUNITY_GEN_FOUR_AS:
 			getcommunity(p, 0, &uval2, &dflag2);
 			break;
 		default:
