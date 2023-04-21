@@ -2147,6 +2147,7 @@
 ./usr/share/man/man4/vio.4
 ./usr/share/man/man4/vioblk.4
 ./usr/share/man/man4/viocon.4
+./usr/share/man/man4/viogpu.4
 ./usr/share/man/man4/viomb.4
 ./usr/share/man/man4/viornd.4
 ./usr/share/man/man4/vioscsi.4

@@ -681,6 +681,7 @@
 ./usr/include/dev/pv/pvreg.h
 ./usr/include/dev/pv/pvvar.h
 ./usr/include/dev/pv/vioblkreg.h
+./usr/include/dev/pv/viogpu.h
 ./usr/include/dev/pv/vioscsireg.h
 ./usr/include/dev/pv/virtioreg.h
 ./usr/include/dev/pv/virtiovar.h
