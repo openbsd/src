@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.16 2023/04/21 15:33:00 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.17 2023/04/21 15:49:37 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -66,6 +66,7 @@ void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
 void clockintr_statclock(struct clockintr *, void *);
 void clockintr_statvar_init(int, uint32_t *, uint32_t *, uint32_t *);
+void clockqueue_init(struct clockintr_queue *);
 uint64_t clockqueue_next(const struct clockintr_queue *);
 void clockqueue_reset_intrclock(struct clockintr_queue *);
 uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
@@ -114,15 +115,11 @@ clockintr_cpu_init(const struct intrclock *ic)
 	KASSERT(ISSET(clockintr_flags, CL_INIT));
 
 	if (!ISSET(cq->cq_flags, CQ_INIT)) {
-		cq->cq_shadow.cl_queue = cq;
-		mtx_init(&cq->cq_mtx, IPL_CLOCK);
-		TAILQ_INIT(&cq->cq_est);
-		TAILQ_INIT(&cq->cq_pend);
+		clockqueue_init(cq);
 		if (ic != NULL) {
 			cq->cq_intrclock = *ic;
 			SET(cq->cq_flags, CQ_INTRCLOCK);
 		}
-		cq->cq_gen = 1;
 
 		/* TODO: Remove these from struct clockintr_queue. */
 		cq->cq_hardclock = clockintr_establish(cq, clockintr_hardclock);
@@ -196,8 +193,6 @@ clockintr_cpu_init(const struct intrclock *ic)
 
 	if (reset_cq_intrclock)
 		SET(cq->cq_flags, CQ_INTRCLOCK);
-
-	SET(cq->cq_flags, CQ_INIT);
 }
 
 /*
@@ -592,6 +587,20 @@ clockintr_statclock(struct clockintr *cl, void *frame)
 	}
 	for (i = 0; i < count; i++)
 		statclock(frame);
+}
+
+void
+clockqueue_init(struct clockintr_queue *cq)
+{
+	if (ISSET(cq->cq_flags, CQ_INIT))
+		return;
+
+	cq->cq_shadow.cl_queue = cq;
+	mtx_init(&cq->cq_mtx, IPL_CLOCK);
+	TAILQ_INIT(&cq->cq_est);
+	TAILQ_INIT(&cq->cq_pend);
+	cq->cq_gen = 1;
+	SET(cq->cq_flags, CQ_INIT);
 }
 
 uint64_t
