@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_io.c,v 1.15 2023/04/21 20:30:53 tb Exp $ */
+/* $OpenBSD: cms_io.c,v 1.16 2023/04/21 20:33:37 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -64,19 +64,21 @@ CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 {
 	ASN1_OCTET_STRING **pos;
 
-	pos = CMS_get0_content(cms);
-	if (pos == NULL)
+	if ((pos = CMS_get0_content(cms)) == NULL)
 		return 0;
+
 	if (*pos == NULL)
 		*pos = ASN1_OCTET_STRING_new();
-	if (*pos != NULL) {
-		(*pos)->flags |= ASN1_STRING_FLAG_NDEF;
-		(*pos)->flags &= ~ASN1_STRING_FLAG_CONT;
-		*boundary = &(*pos)->data;
-		return 1;
+	if (*pos == NULL) {
+		CMSerror(ERR_R_MALLOC_FAILURE);
+		return 0;
 	}
-	CMSerror(ERR_R_MALLOC_FAILURE);
-	return 0;
+
+	(*pos)->flags |= ASN1_STRING_FLAG_NDEF;
+	(*pos)->flags &= ~ASN1_STRING_FLAG_CONT;
+	*boundary = &(*pos)->data;
+
+	return 1;
 }
 
 CMS_ContentInfo *
