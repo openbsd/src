@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_io.c,v 1.14 2023/04/21 20:08:23 tb Exp $ */
+/* $OpenBSD: cms_io.c,v 1.15 2023/04/21 20:30:53 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -144,14 +144,12 @@ PEM_write_bio_CMS_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags)
 int
 SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
 {
-	STACK_OF(X509_ALGOR) *mdalgs;
+	STACK_OF(X509_ALGOR) *mdalgs = NULL;
 	int ctype_nid = OBJ_obj2nid(cms->contentType);
 	int econt_nid = OBJ_obj2nid(CMS_get0_eContentType(cms));
 
 	if (ctype_nid == NID_pkcs7_signed)
 		mdalgs = cms->d.signedData->digestAlgorithms;
-	else
-		mdalgs = NULL;
 
 	return SMIME_write_ASN1(bio, (ASN1_VALUE *)cms, data, flags, ctype_nid,
 	    econt_nid, mdalgs, &CMS_ContentInfo_it);
