@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.291 2023/04/20 14:01:50 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.292 2023/04/21 09:12:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -57,6 +57,7 @@ void		 show_mrt_msg(struct mrt_bgp_msg *, void *);
 const char	*msg_type(uint8_t);
 void		 network_bulk(struct parse_result *);
 int		 match_aspath(void *, uint16_t, struct filter_as *);
+struct flowspec	*res_to_flowspec(struct parse_result *);
 
 struct imsgbuf	*ibuf;
 struct mrt_parser show_mrt = { show_mrt_dump, show_mrt_state, show_mrt_msg };
@@ -85,6 +86,7 @@ main(int argc, char *argv[])
 	struct parse_result	*res;
 	struct ctl_neighbor	 neighbor;
 	struct ctl_show_rib_request	ribreq;
+	struct flowspec		*f;
 	char			*sockname;
 	enum imsg_type		 type;
 
@@ -363,6 +365,18 @@ main(int argc, char *argv[])
 		break;
 	case FLOWSPEC_ADD:
 	case FLOWSPEC_REMOVE:
+		f = res_to_flowspec(res);
+		/* attribute sets are not supported */
+		if (res->action == FLOWSPEC_ADD) {
+			imsg_compose(ibuf, IMSG_FLOWSPEC_ADD, 0, 0, -1,
+			    f, FLOWSPEC_SIZE + f->len);
+			send_filterset(ibuf, &res->set);
+			imsg_compose(ibuf, IMSG_FLOWSPEC_DONE, 0, 0, -1,
+			    NULL, 0);
+		} else
+			imsg_compose(ibuf, IMSG_FLOWSPEC_REMOVE, 0, 0, -1,
+			    f, FLOWSPEC_SIZE + f->len);
+		printf("request sent.\n");
 		done = 1;
 		break;
 	case FLOWSPEC_FLUSH:
@@ -1953,4 +1967,114 @@ match_aspath(void *data, uint16_t len, struct filter_as *f)
 		}
 	}
 	return (0);
+}
+
+static void
+component_finish(int type, uint8_t *data, int len)
+{
+	uint8_t *last;
+	int i;
+
+	switch (type) {
+	case FLOWSPEC_TYPE_DEST:
+	case FLOWSPEC_TYPE_SOURCE:
+		/* nothing todo */
+		return;
+	default:
+		break;
+	}
+
+	i = 0;
+	do {
+		last = data + i;
+		i += FLOWSPEC_OP_LEN(*last) + 1;
+	} while (i < len);
+	*last |= FLOWSPEC_OP_EOL;
+}
+
+static void
+push_prefix(struct parse_result *r, int type, struct bgpd_addr *addr,
+    uint8_t len)
+{
+	void *data;
+	uint8_t *comp;
+	int complen, l;
+
+	switch (addr->aid) {
+	case AID_UNSPEC:
+		return;
+	case AID_INET:
+		complen = PREFIX_SIZE(len);
+		data = &addr->v4;
+		break;
+	case AID_INET6:
+		/* IPv6 includes an offset byte */
+		complen = PREFIX_SIZE(len) + 1;
+		data = &addr->v6;
+		break;
+	}
+	comp = malloc(complen);
+	if (comp == NULL)
+		err(1, NULL);
+
+	l = 0;
+	comp[l++] = len;
+	if (addr->aid == AID_INET6)
+		comp[l++] = 0;
+	memcpy(comp + l, data, complen - l);
+
+	r->flow.complen[type] = complen;
+	r->flow.components[type] = comp;
+}
+
+
+struct flowspec *
+res_to_flowspec(struct parse_result *r)
+{
+	struct flowspec *f;
+	int i, len = 0;
+	uint8_t aid;
+
+	switch (r->aid) {
+	case AID_INET:
+		aid = AID_FLOWSPECv4;
+		break;
+	case AID_INET6:
+		aid = AID_FLOWSPECv6;
+		break;
+	default:
+		errx(1, "unsupported AFI %s for flowspec rule",
+		    aid2str(r->aid));
+	}
+
+	push_prefix(r, FLOWSPEC_TYPE_DEST, &r->flow.dst, r->flow.dstlen);
+	push_prefix(r, FLOWSPEC_TYPE_SOURCE, &r->flow.src, r->flow.srclen);
+
+	for (i = FLOWSPEC_TYPE_MIN; i < FLOWSPEC_TYPE_MAX; i++)
+		if (r->flow.components[i] != NULL)
+			len += r->flow.complen[i] + 1;
+
+	if (len == 0)
+		errx(1, "no flowspec rule defined");
+
+	f = malloc(FLOWSPEC_SIZE + len);
+	if (f == NULL)
+		err(1, NULL);
+	memset(f, 0, FLOWSPEC_SIZE);
+
+	f->aid = aid;
+	f->len = len;
+
+	len = 0;
+	for (i = FLOWSPEC_TYPE_MIN; i < FLOWSPEC_TYPE_MAX; i++)
+		if (r->flow.components[i] != NULL) {
+			f->data[len++] = i;
+			component_finish(i, r->flow.components[i],
+			    r->flow.complen[i]);
+			memcpy(f->data + len, r->flow.components[i],
+			    r->flow.complen[i]);
+			len += r->flow.complen[i];
+		}
+
+	return f;
 }

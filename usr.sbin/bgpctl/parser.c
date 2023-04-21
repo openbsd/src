@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.130 2023/04/20 14:01:50 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.131 2023/04/21 09:12:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,6 +63,17 @@ enum token_type {
 	RTABLE,
 	FILENAME,
 	PATHID,
+	FLOW_PROTO,
+	FLOW_SRC,
+	FLOW_DST,
+	FLOW_SRCPORT,
+	FLOW_DSTPORT,
+	FLOW_ICMPTYPE,
+	FLOW_ICMPCODE,
+	FLOW_LENGTH,
+	FLOW_DSCP,
+	FLOW_FLAGS,
+	FLOW_FRAGS,
 };
 
 struct token {
@@ -97,6 +108,13 @@ static const struct token t_show_prefix[];
 static const struct token t_show_ip[];
 static const struct token t_network[];
 static const struct token t_flowspec[];
+static const struct token t_flowfamily[];
+static const struct token t_flowrule[];
+static const struct token t_flowsrc[];
+static const struct token t_flowdst[];
+static const struct token t_flowsrcport[];
+static const struct token t_flowdstport[];
+static const struct token t_flowicmp[];
 static const struct token t_bulk[];
 static const struct token t_network_show[];
 static const struct token t_prefix[];
@@ -333,8 +351,59 @@ static const struct token t_network[] = {
 };
 
 static const struct token t_flowspec[] = {
+	{ KEYWORD,	"add",		FLOWSPEC_ADD,	t_flowfamily},
+	{ KEYWORD,	"delete",	FLOWSPEC_REMOVE,t_flowfamily},
 	{ KEYWORD,	"flush",	FLOWSPEC_FLUSH,	NULL},
 	{ KEYWORD,	"show",		FLOWSPEC_SHOW,	t_network_show},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_flowfamily[] = {
+	{ FAMILY,	"",		NONE,		t_flowrule},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_flowrule[] = {
+	{ NOTOKEN,	"",		NONE,		NULL},
+	{ FLOW_FLAGS,	"flags",	NONE,		t_flowrule},
+	{ FLOW_FRAGS,	"fragment",	NONE,		t_flowrule},
+	{ KEYWORD,	"from",		NONE,		t_flowsrc},
+	{ FLOW_ICMPTYPE,"icmp-type",	NONE,		t_flowicmp},
+	{ FLOW_LENGTH,	"length",	NONE,		t_flowrule},
+	{ FLOW_PROTO,	"proto",	NONE,		t_flowrule},
+	{ KEYWORD,	"set",		NONE,		t_set},
+	{ KEYWORD,	"to",		NONE,		t_flowdst},
+	{ FLOW_DSCP,	"dscp",		NONE,		t_flowrule},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_flowsrc[] = {
+	{ KEYWORD,	"any",		NONE,		t_flowsrcport},
+	{ FLOW_SRC,	"",		NONE,		t_flowsrcport},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_flowdst[] = {
+	{ KEYWORD,	"any",		NONE,		t_flowdstport},
+	{ FLOW_DST,	"",		NONE,		t_flowdstport},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_flowsrcport[] = {
+	{ FLOW_SRCPORT,	"port",		NONE,		t_flowrule},
+	{ ANYTOKEN,	"",		NONE,		t_flowrule},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_flowdstport[] = {
+	{ FLOW_DSTPORT,	"port",		NONE,		t_flowrule},
+	{ ANYTOKEN,	"",		NONE,		t_flowrule},
+	{ ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_flowicmp[] = {
+	{ FLOW_ICMPCODE,"code",		NONE,		t_flowrule},
+	{ ANYTOKEN,	"",		NONE,		t_flowrule},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -350,9 +419,9 @@ static const struct token t_prefix[] = {
 };
 
 static const struct token t_network_show[] = {
-	{ NOTOKEN,	"",		NONE,			NULL},
-	{ FAMILY,	"",		NONE,			NULL},
-	{ ENDTOKEN,	"",		NONE,			NULL}
+	{ NOTOKEN,	"",		NONE,		NULL},
+	{ FAMILY,	"",		NONE,		NULL},
+	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
 static const struct token t_rd[] = {
@@ -406,6 +475,7 @@ void	parsecommunity(struct community *c, char *s);
 void	parselargecommunity(struct community *c, char *s);
 void	parseextcommunity(struct community *c, const char *t, char *s);
 int	parse_nexthop(const char *, struct parse_result *);
+int	parse_flow_numop(int, char *[], struct parse_result *, enum token_type);
 
 struct parse_result *
 parse(int argc, char *argv[])
@@ -528,6 +598,26 @@ match_token(int argc, char *argv[], const struct token table[], int *argsused)
 			if (parse_addr(word, &res.peeraddr)) {
 				match++;
 				t = &table[i];
+			}
+			break;
+		case FLOW_SRC:
+			if (parse_prefix(word, wordlen, &res.flow.src,
+			    &res.flow.srclen)) {
+				match++;
+				t = &table[i];
+				if (res.aid != res.flow.src.aid)
+					errx(1, "wrong address family in "
+					    "flowspec rule");
+			}
+			break;
+		case FLOW_DST:
+			if (parse_prefix(word, wordlen, &res.flow.dst,
+			    &res.flow.dstlen)) {
+				match++;
+				t = &table[i];
+				if (res.aid != res.flow.dst.aid)
+					errx(1, "wrong address family in "
+					    "flowspec rule");
 			}
 			break;
 		case PREFIX:
@@ -723,6 +813,29 @@ match_token(int argc, char *argv[], const struct token table[], int *argsused)
 				t = &table[i];
 			}
 			break;
+		case FLOW_SRCPORT:
+		case FLOW_DSTPORT:
+		case FLOW_PROTO:
+		case FLOW_ICMPTYPE:
+		case FLOW_ICMPCODE:
+		case FLOW_LENGTH:
+		case FLOW_DSCP:
+			if (word != NULL && strncmp(word, table[i].keyword,
+			    wordlen) == 0 && argc > 1) {
+				*argsused += parse_flow_numop(argc, argv, &res,
+				    table[i].type);
+
+				match++;
+				t = &table[i];
+			}
+			break;
+		case FLOW_FLAGS:
+		case FLOW_FRAGS:
+			if (word != NULL && strncmp(word, table[i].keyword,
+			    wordlen) == 0) {
+				errx(1, "%s not yet implemented", word);
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -770,6 +883,8 @@ show_valid_args(const struct token table[])
 			fprintf(stderr, "  <address>\n");
 			break;
 		case PREFIX:
+		case FLOW_SRC:
+		case FLOW_DST:
 			fprintf(stderr, "  <address>[/<len>]\n");
 			break;
 		case ASNUM:
@@ -821,6 +936,21 @@ show_valid_args(const struct token table[])
 			break;
 		case FILENAME:
 			fprintf(stderr, "  <filename>\n");
+			break;
+		case FLOW_SRCPORT:
+		case FLOW_DSTPORT:
+		case FLOW_PROTO:
+		case FLOW_ICMPTYPE:
+		case FLOW_ICMPCODE:
+		case FLOW_LENGTH:
+		case FLOW_DSCP:
+			fprintf(stderr, "  %s <numberspec>\n",
+			    table[i].keyword);
+			break;
+		case FLOW_FLAGS:
+		case FLOW_FRAGS:
+			fprintf(stderr, "  %s <flagspec>\n",
+			    table[i].keyword);
 			break;
 		case ENDTOKEN:
 			break;
@@ -1329,4 +1459,178 @@ parse_nexthop(const char *word, struct parse_result *r)
 
 	TAILQ_INSERT_TAIL(&r->set, fs, entry);
 	return (1);
+}
+
+static int
+unary_op(const char *op)
+{
+	if (strcmp(op, "=") == 0)
+		return FLOWSPEC_OP_NUM_EQ;
+	if (strcmp(op, "!=") == 0)
+		return FLOWSPEC_OP_NUM_NOT;
+	if (strcmp(op, ">") == 0)
+		return FLOWSPEC_OP_NUM_GT;
+	if (strcmp(op, ">=") == 0)
+		return FLOWSPEC_OP_NUM_GE;
+	if (strcmp(op, "<") == 0)
+		return FLOWSPEC_OP_NUM_LT;
+	if (strcmp(op, "<=") == 0)
+		return FLOWSPEC_OP_NUM_LE;
+	return -1;
+}
+
+static enum comp_ops
+binary_op(const char *op)
+{
+	if (strcmp(op, "-") == 0)
+		return OP_RANGE;
+	if (strcmp(op, "><") == 0)
+		return OP_XRANGE;
+	return OP_NONE;
+}
+
+static void
+push_numop(struct parse_result *r, int type, uint8_t op, int and, long long val)
+{
+	uint8_t *comp;
+	void *data;
+	uint32_t u32;
+	uint16_t u16;
+	uint8_t u8, flag = 0;
+	int len, complen;
+
+	flag |= op;
+	if (and)
+		flag |= FLOWSPEC_OP_AND;
+
+	if (val < 0 || val > 0xffffffff) {
+		errx(1, "unsupported value for flowspec num_op");
+	} else if (val <= 255) {
+		len = 1;
+		u8 = val;
+		data = &u8;
+	} else if (val <= 0xffff) {
+		len = 2;
+		u16 = htons(val);
+		data = &u16;
+		flag |= 1 << FLOWSPEC_OP_LEN_SHIFT;
+	} else {
+		len = 4;
+		u32 = htonl(val);
+		data = &u32;
+		flag |= 2 << FLOWSPEC_OP_LEN_SHIFT;
+	}
+
+	complen = r->flow.complen[type];
+	comp = realloc(r->flow.components[type], complen + len + 1);
+	if (comp == NULL)
+		err(1, NULL);
+
+	comp[complen++] = flag;
+	memcpy(comp + complen, data, len);
+	complen += len;
+	r->flow.complen[type] = complen;
+	r->flow.components[type] = comp;
+}
+
+int
+parse_flow_numop(int argc, char *argv[], struct parse_result *r,
+    enum token_type toktype)
+{
+	const char *errstr;
+	long long val, val2;
+	int numargs, type;
+	int is_list = 0;
+	int op;
+
+	switch (toktype) {
+	case FLOW_PROTO:
+		type = FLOWSPEC_TYPE_PROTO;
+		break;
+	case FLOW_SRCPORT:
+		type = FLOWSPEC_TYPE_SRC_PORT;
+		break;
+	case FLOW_DSTPORT:
+		type = FLOWSPEC_TYPE_DST_PORT;
+		break;
+	case FLOW_ICMPTYPE:
+		type = FLOWSPEC_TYPE_ICMP_TYPE;
+		break;
+	case FLOW_ICMPCODE:
+		type = FLOWSPEC_TYPE_ICMP_CODE;
+		break;
+	case FLOW_LENGTH:
+		type = FLOWSPEC_TYPE_PKT_LEN;
+		break;
+	case FLOW_DSCP:
+		type = FLOWSPEC_TYPE_DSCP;
+		break;
+	default:
+		errx(1, "parse_flow_numop called with unsupported type");
+	}
+
+	/* skip keyword (which is already accounted for) */
+	argc--;
+	argv++;
+	numargs = argc;
+
+	while (argc > 0) {
+		if (strcmp(argv[0], "{") == 0) {
+			is_list = 1;
+			argc--;
+			argv++;
+		} else if (is_list && strcmp(argv[0], "}") == 0) {
+			is_list = 0;
+			argc--;
+			argv++;
+		} else if ((op = unary_op(argv[0])) != -1) {
+			if (argc < 2)
+				errx(1, "missing argument in flowspec "
+				    "definition");
+
+			val = strtonum(argv[1], LLONG_MIN, LLONG_MAX, &errstr);
+			if (errstr)
+				errx(1, "\"%s\" invalid number: %s", argv[0],
+				    errstr);
+			push_numop(r, type, op, 0, val);
+			argc -= 2;
+			argv += 2;
+		} else {
+			val = strtonum(argv[0], LLONG_MIN, LLONG_MAX, &errstr);
+			if (errstr)
+				errx(1, "\"%s\" invalid number: %s", argv[0],
+				    errstr);
+			if (argc >= 3 && (op = binary_op(argv[1])) != OP_NONE) {
+				val2 = strtonum(argv[2], LLONG_MIN, LLONG_MAX,
+				    &errstr);
+				if (errstr)
+					errx(1, "\"%s\" invalid number: %s",
+					    argv[2], errstr);
+				switch (op) {
+				case OP_RANGE:
+					push_numop(r, type, FLOWSPEC_OP_NUM_GE,
+					    0, val);
+					push_numop(r, type, FLOWSPEC_OP_NUM_LE,
+					    1, val2);
+					break;
+				case OP_XRANGE:
+					push_numop(r, type, FLOWSPEC_OP_NUM_LT,
+					    0, val);
+					push_numop(r, type, FLOWSPEC_OP_NUM_GT,
+					    0, val2);
+					break;
+				}
+				argc -= 3;
+				argv += 3;
+			} else {
+				push_numop(r, type, FLOWSPEC_OP_NUM_EQ, 0, val);
+				argc--;
+				argv++;
+			}
+		}
+		if (is_list == 0)
+			break;
+	}
+
+	return numargs - argc;
 }
