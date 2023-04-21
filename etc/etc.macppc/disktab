@@ -1,15 +1,10 @@
-# $OpenBSD: disktab,v 1.9 2023/03/07 16:41:08 krw Exp $
+# $OpenBSD: disktab,v 1.10 2023/04/21 14:09:52 krw Exp $
 
 # Leave nc=16; adjust size using: ns
 rdroot|ramdiskroot|RAM-disk root FS image:\
 	:dt=rdroot:se#512:nc#16:nt#2:ns#256:\
 	:ta=4.2BSD:oa#0:pa#8192:fa#512:ba#4096:\
 	:oc#0:pc#8192:
-
-# pseudo-geometry taken from rd7945
-miniroot:\
-	:dt=rdroot:ns#16:nt#7:nc#968:\
-	:pa#10240:ba#8192:fa#1024:
 
 floppy|floppy3|3in|3.5in High Density Floppy:\
 	:dt=floppy:se#512:nt#2:ns#18:nc#80:\
