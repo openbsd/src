@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.690 2023/04/18 22:01:24 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.691 2023/04/21 14:31:41 jan Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -92,6 +92,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/if_vlan_var.h>
 #include <net/route.h>
 #include <net/netisr.h>
 
@@ -3149,6 +3150,10 @@ ifsettso(struct ifnet *ifp, int on)
 	else
 		goto out;
 
+	/* Change TSO flag also on attached vlan(4)/svlan(4) interfaces. */
+	vlan_flags_from_parent(ifp, IFXF_TSO);
+
+	/* restart interface */
 	if (ISSET(ifp->if_flags, IFF_UP)) {
 		/* go down for a moment... */
 		CLR(ifp->if_flags, IFF_UP);
