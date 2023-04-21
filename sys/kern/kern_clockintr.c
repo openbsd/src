@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.17 2023/04/21 15:49:37 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.18 2023/04/21 16:35:20 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -114,28 +114,28 @@ clockintr_cpu_init(const struct intrclock *ic)
 
 	KASSERT(ISSET(clockintr_flags, CL_INIT));
 
-	if (!ISSET(cq->cq_flags, CQ_INIT)) {
-		clockqueue_init(cq);
-		if (ic != NULL) {
-			cq->cq_intrclock = *ic;
-			SET(cq->cq_flags, CQ_INTRCLOCK);
-		}
+	clockqueue_init(cq);
+	if (ic != NULL && !ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
+		cq->cq_intrclock = *ic;
+		SET(cq->cq_flags, CQ_INTRCLOCK);
+	}
 
-		/* TODO: Remove these from struct clockintr_queue. */
+	/* TODO: Remove these from struct clockintr_queue. */
+	if (cq->cq_hardclock == NULL) {
 		cq->cq_hardclock = clockintr_establish(cq, clockintr_hardclock);
 		if (cq->cq_hardclock == NULL)
 			panic("%s: failed to establish hardclock", __func__);
+	}
+	if (cq->cq_statclock == NULL) {
 		cq->cq_statclock = clockintr_establish(cq, clockintr_statclock);
 		if (cq->cq_statclock == NULL)
 			panic("%s: failed to establish statclock", __func__);
-		if (schedhz != 0) {
-			cq->cq_schedclock = clockintr_establish(cq,
-			    clockintr_schedclock);
-			if (cq->cq_schedclock == NULL) {
-				panic("%s: failed to establish schedclock",
-				    __func__);
-			}
-		}
+	}
+	if (schedhz != 0 && cq->cq_schedclock == NULL) {
+		cq->cq_schedclock = clockintr_establish(cq,
+		    clockintr_schedclock);
+		if (cq->cq_schedclock == NULL)
+			panic("%s: failed to establish schedclock", __func__);
 	}
 
 	/*
