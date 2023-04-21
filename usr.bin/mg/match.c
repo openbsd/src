@@ -1,4 +1,4 @@
-/*	$OpenBSD: match.c,v 1.24 2023/04/17 15:18:25 op Exp $	*/
+/*	$OpenBSD: match.c,v 1.25 2023/04/21 13:39:37 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -136,6 +136,7 @@ displaymatch(struct line *clp, int cbo)
 	int	 cp;
 	int	 bufo;
 	int	 c;
+	int	 col;
 	int	 inwindow;
 	char	 buf[NLINE];
 
@@ -181,9 +182,9 @@ displaymatch(struct line *clp, int cbo)
 				} else
 					buf[bufo++] = c;
 			} else {
-				do {
+				col = ntabstop(bufo, curbp->b_tabw);
+				while (bufo < col && bufo < sizeof(buf) - 1)
 					buf[bufo++] = ' ';
-				} while ((bufo & 7) && bufo < sizeof(buf) - 1);
 			}
 		}
 		buf[bufo++] = '\0';

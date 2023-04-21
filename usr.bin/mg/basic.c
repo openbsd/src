@@ -1,4 +1,4 @@
-/*	$OpenBSD: basic.c,v 1.53 2023/04/17 09:49:04 op Exp $	*/
+/*	$OpenBSD: basic.c,v 1.54 2023/04/21 13:39:36 op Exp $	*/
 
 /* This file is in the public domain */
 
@@ -277,8 +277,7 @@ getgoal(struct line *dlp)
 	for (i = 0; i < llength(dlp); i++) {
 		c = lgetc(dlp, i);
 		if (c == '\t') {
-			col |= 0x07;
-			col++;
+			col = ntabstop(col, curbp->b_tabw);
 		} else if (ISCTRL(c) != FALSE) {
 			col += 2;
 		} else if (isprint(c))

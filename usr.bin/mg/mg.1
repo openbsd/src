@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.129 2023/04/17 09:49:04 op Exp $
+.\"	$OpenBSD: mg.1,v 1.130 2023/04/21 13:39:37 op Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: April 17 2023 $
+.Dd $Mdocdate: April 21 2023 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -896,6 +896,9 @@ Used by auto-fill-mode.
 Sets the mark in the current window to the current dot location.
 .It set-prefix-string
 Sets the prefix string to be used by the 'prefix-region' command.
+.It set-tab-width
+Set the tab width for the current buffer, or the default for new buffers
+if called with a prefix argument or from the startup file.
 .It shell-command
 Execute external command from mini-buffer.
 .It shell-command-on-region

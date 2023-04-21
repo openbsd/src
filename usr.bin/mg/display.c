@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.51 2023/04/17 09:49:04 op Exp $	*/
+/*	$OpenBSD: display.c,v 1.52 2023/04/21 13:39:37 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -52,9 +52,9 @@ struct score {
 };
 
 void	vtmove(int, int);
-void	vtputc(int);
-void	vtpute(int);
-int	vtputs(const char *);
+void	vtputc(int, struct mgwin *);
+void	vtpute(int, struct mgwin *);
+int	vtputs(const char *, struct mgwin *);
 void	vteeol(void);
 void	updext(int, int);
 void	modeline(struct mgwin *, int);
@@ -308,9 +308,10 @@ vtmove(int row, int col)
  * Three guesses how we found this.
  */
 void
-vtputc(int c)
+vtputc(int c, struct mgwin *wp)
 {
 	struct video	*vp;
+	int		 target;
 
 	c &= 0xff;
 
@@ -318,19 +319,20 @@ vtputc(int c)
 	if (vtcol >= ncol)
 		vp->v_text[ncol - 1] = '$';
 	else if (c == '\t') {
+		target = ntabstop(vtcol, wp->w_bufp->b_tabw);
 		do {
-			vtputc(' ');
-		} while (vtcol < ncol && (vtcol & 0x07) != 0);
+			vtputc(' ', wp);
+		} while (vtcol < ncol && vtcol < target);
 	} else if (ISCTRL(c)) {
-		vtputc('^');
-		vtputc(CCHR(c));
+		vtputc('^', wp);
+		vtputc(CCHR(c), wp);
 	} else if (isprint(c))
 		vp->v_text[vtcol++] = c;
 	else {
 		char bf[5];
 
 		snprintf(bf, sizeof(bf), "\\%o", c);
-		vtputs(bf);
+		vtputs(bf, wp);
 	}
 }
 
@@ -340,9 +342,10 @@ vtputc(int c)
  * margin.
  */
 void
-vtpute(int c)
+vtpute(int c, struct mgwin *wp)
 {
 	struct video *vp;
+	int target;
 
 	c &= 0xff;
 
@@ -350,12 +353,13 @@ vtpute(int c)
 	if (vtcol >= ncol)
 		vp->v_text[ncol - 1] = '$';
 	else if (c == '\t') {
+		target = ntabstop(vtcol + lbound, wp->w_bufp->b_tabw);
 		do {
-			vtpute(' ');
-		} while (((vtcol + lbound) & 0x07) != 0 && vtcol < ncol);
+			vtpute(' ', wp);
+		} while (((vtcol + lbound) < target) && vtcol < ncol);
 	} else if (ISCTRL(c) != FALSE) {
-		vtpute('^');
-		vtpute(CCHR(c));
+		vtpute('^', wp);
+		vtpute(CCHR(c), wp);
 	} else if (isprint(c)) {
 		if (vtcol >= 0)
 			vp->v_text[vtcol] = c;
@@ -365,7 +369,7 @@ vtpute(int c)
 
 		snprintf(bf, sizeof(bf), "\\%o", c);
 		for (cp = bf; *cp != '\0'; cp++)
-			vtpute(*cp);
+			vtpute(*cp, wp);
 	}
 }
 
@@ -476,7 +480,7 @@ update(int modelinecolor)
 			vscreen[i]->v_flag |= (VFCHG | VFHBAD);
 			vtmove(i, 0);
 			for (j = 0; j < llength(lp); ++j)
-				vtputc(lgetc(lp, j));
+				vtputc(lgetc(lp, j), wp);
 			vteeol();
 		} else if ((wp->w_rflag & (WFEDIT | WFFULL)) != 0) {
 			hflag = TRUE;
@@ -486,7 +490,7 @@ update(int modelinecolor)
 				vtmove(i, 0);
 				if (lp != wp->w_bufp->b_headp) {
 					for (j = 0; j < llength(lp); ++j)
-						vtputc(lgetc(lp, j));
+						vtputc(lgetc(lp, j), wp);
 					lp = lforw(lp);
 				}
 				vteeol();
@@ -509,8 +513,7 @@ update(int modelinecolor)
 	while (i < curwp->w_doto) {
 		c = lgetc(lp, i++);
 		if (c == '\t') {
-			curcol |= 0x07;
-			curcol++;
+			curcol = ntabstop(curcol, curwp->w_bufp->b_tabw);
 		} else if (ISCTRL(c) != FALSE)
 			curcol += 2;
 		else if (isprint(c))
@@ -545,7 +548,7 @@ update(int modelinecolor)
 				    (curcol < ncol - 1)) {
 					vtmove(i, 0);
 					for (j = 0; j < llength(lp); ++j)
-						vtputc(lgetc(lp, j));
+						vtputc(lgetc(lp, j), wp);
 					vteeol();
 					/* this line no longer is extended */
 					vscreen[i]->v_flag &= ~VFEXT;
@@ -677,7 +680,7 @@ updext(int currow, int curcol)
 	vtmove(currow, -lbound);		/* start scanning offscreen */
 	lp = curwp->w_dotp;			/* line to output */
 	for (j = 0; j < llength(lp); ++j)	/* until the end-of-line */
-		vtpute(lgetc(lp, j));
+		vtpute(lgetc(lp, j), curwp);
 	vteeol();				/* truncate the virtual line */
 	vscreen[currow]->v_text[0] = '$';	/* and put a '$' in column 1 */
 }
@@ -793,45 +796,45 @@ modeline(struct mgwin *wp, int modelinecolor)
 	vscreen[n]->v_flag |= (VFCHG | VFHBAD);	/* Recompute, display.	 */
 	vtmove(n, 0);				/* Seek to right line.	 */
 	bp = wp->w_bufp;
-	vtputc('-');
-	vtputc('-');
+	vtputc('-', wp);
+	vtputc('-', wp);
 	if ((bp->b_flag & BFREADONLY) != 0) {
-		vtputc('%');
+		vtputc('%', wp);
 		if ((bp->b_flag & BFCHG) != 0)
-			vtputc('*');
+			vtputc('*', wp);
 		else
-			vtputc('%');
+			vtputc('%', wp);
 	} else if ((bp->b_flag & BFCHG) != 0) {	/* "*" if changed.	 */
-		vtputc('*');
-		vtputc('*');
+		vtputc('*', wp);
+		vtputc('*', wp);
 	} else {
-		vtputc('-');
-		vtputc('-');
+		vtputc('-', wp);
+		vtputc('-', wp);
 	}
-	vtputc('-');
+	vtputc('-', wp);
 	n = 5;
-	n += vtputs("Mg: ");
+	n += vtputs("Mg: ", wp);
 	if (bp->b_bname[0] != '\0')
-		n += vtputs(&(bp->b_bname[0]));
+		n += vtputs(&(bp->b_bname[0]), wp);
 	while (n < 42) {			/* Pad out with blanks.	 */
-		vtputc(' ');
+		vtputc(' ', wp);
 		++n;
 	}
-	vtputc('(');
+	vtputc('(', wp);
 	++n;
 	for (md = 0; ; ) {
-		n += vtputs(bp->b_modes[md]->p_name);
+		n += vtputs(bp->b_modes[md]->p_name, wp);
 		if (++md > bp->b_nmodes)
 			break;
-		vtputc('-');
+		vtputc('-', wp);
 		++n;
 	}
 	/* XXX These should eventually move to a real mode */
 	if (macrodef == TRUE)
-		n += vtputs("-def");
+		n += vtputs("-def", wp);
 	if (globalwd == TRUE)
-		n += vtputs("-gwd");
-	vtputc(')');
+		n += vtputs("-gwd", wp);
+	vtputc(')', wp);
 	++n;
 
 	if (linenos && colnos)
@@ -842,10 +845,10 @@ modeline(struct mgwin *wp, int modelinecolor)
 	else if (colnos)
 		len = snprintf(sl, sizeof(sl), "--C%d", getcolpos(wp));
 	if ((linenos || colnos) && len < sizeof(sl) && len != -1)
-		n += vtputs(sl);
+		n += vtputs(sl, wp);
 
 	while (n < ncol) {			/* Pad out.		 */
-		vtputc('-');
+		vtputc('-', wp);
 		++n;
 	}
 }
@@ -854,12 +857,12 @@ modeline(struct mgwin *wp, int modelinecolor)
  * Output a string to the mode line, report how long it was.
  */
 int
-vtputs(const char *s)
+vtputs(const char *s, struct mgwin *wp)
 {
 	int n = 0;
 
 	while (*s != '\0') {
-		vtputc(*s++);
+		vtputc(*s++, wp);
 		++n;
 	}
 	return (n);

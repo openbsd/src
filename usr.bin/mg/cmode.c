@@ -1,4 +1,4 @@
-/* $OpenBSD: cmode.c,v 1.21 2023/04/17 09:49:04 op Exp $ */
+/* $OpenBSD: cmode.c,v 1.22 2023/04/21 13:39:37 op Exp $ */
 /*
  * This file is in the public domain.
  *
@@ -245,10 +245,10 @@ getindent(const struct line *lp, int *curi)
 	for (lo = 0; lo < llength(lp); lo++) {
 		if (!isspace(c = lgetc(lp, lo)))
 			break;
-		if (c == '\t') {
-			nicol |= 0x07;
-		}
-		nicol++;
+		if (c == '\t')
+			nicol = ntabstop(nicol, curbp->b_tabw);
+		else
+			nicol++;
 	}
 
 	/* If last line was blank, choose 0 */
@@ -411,8 +411,7 @@ findcolpos(const struct buffer *bp, const struct line *lp, int lo)
 	for (i = 0; i < lo; ++i) {
 		c = lgetc(lp, i);
 		if (c == '\t') {
-			col |= 0x07;
-			col++;
+			col = ntabstop(col, curbp->b_tabw);
 		} else if (ISCTRL(c) != FALSE)
 			col += 2;
 		else if (isprint(c)) {

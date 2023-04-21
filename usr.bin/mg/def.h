@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.179 2023/04/17 09:49:04 op Exp $	*/
+/*	$OpenBSD: def.h,v 1.180 2023/04/21 13:39:37 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -269,6 +269,7 @@ struct buffer {
 	char		 b_cwd[NFILEN]; /* working directory		 */
 	char		*b_nlseq;	/* Newline sequence of chars	 */
 	char		*b_nlchr;	/* 1st newline character	 */
+	int		 b_tabw;	/* Width of a tab character	 */
 	struct fileinfo	 b_fi;		/* File attributes		 */
 	struct undoq	 b_undo;	/* Undo actions list		 */
 	struct undo_rec *b_undoptr;
@@ -430,6 +431,7 @@ int		 shrinkwind(int, int);
 int		 delwind(int, int);
 
 /* buffer.c */
+int		 settabw(int, int);
 int		 togglereadonly(int, int);
 int		 togglereadonlyall(int, int);
 struct buffer   *bfind(const char *, int);
@@ -542,6 +544,7 @@ int		 gotoline(int, int);
 int		 setlineno(int);
 
 /* util.c X */
+int		 ntabstop(int, int);
 int		 showcpos(int, int);
 int		 getcolpos(struct mgwin *);
 int		 twiddle(int, int);

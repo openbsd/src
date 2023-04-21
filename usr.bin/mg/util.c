@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.47 2023/04/17 09:53:08 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.48 2023/04/21 13:39:37 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -17,6 +17,16 @@
 #include "def.h"
 
 int	doindent(int);
+
+/*
+ * Compute next tab stop, with `col' being the a column number and
+ * `tabw' the tab width.
+ */
+int
+ntabstop(int col, int tabw)
+{
+	return (((col + tabw) / tabw) * tabw);
+}
 
 /*
  * Display a bunch of useful information about the current location of dot.
@@ -103,8 +113,7 @@ getcolpos(struct mgwin *wp)
 	for (i = 0; i < wp->w_doto; ++i) {
 		c = lgetc(wp->w_dotp, i);
 		if (c == '\t') {
-			col |= 0x07;
-			col++;
+			col = ntabstop(col, wp->w_bufp->b_tabw);
 		} else if (ISCTRL(c) != FALSE)
 			col += 2;
 		else if (isprint(c)) {
@@ -377,8 +386,9 @@ lfindent(int f, int n)
 			if (c != ' ' && c != '\t')
 				break;
 			if (c == '\t')
-				nicol |= 0x07;
-			++nicol;
+				nicol = ntabstop(nicol, curwp->w_bufp->b_tabw);
+			else
+				++nicol;
 		}
 		(void)delwhite(FFRAND, 1);
 
@@ -472,11 +482,17 @@ backdel(int f, int n)
 int
 space_to_tabstop(int f, int n)
 {
+	int	c;
+
 	if (n < 0)
 		return (FALSE);
 	if (n == 0)
 		return (TRUE);
-	return (linsert((n << 3) - (curwp->w_doto & 7), ' '));
+
+	c = curwp->w_doto;
+	while (n-- > 0)
+		c = ntabstop(c, curbp->b_tabw);
+	return (linsert(c - curwp->w_doto, ' '));
 }
 
 /*
