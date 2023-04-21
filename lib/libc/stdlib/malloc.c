@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.281 2023/04/16 19:46:17 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.282 2023/04/21 06:19:40 jsg Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -41,7 +41,6 @@
 #include <unistd.h>
 
 #ifdef MALLOC_STATS
-#include <sys/types.h>
 #include <sys/tree.h>
 #include <sys/ktrace.h>
 #include <dlfcn.h>
