@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.15 2023/04/21 03:03:50 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.16 2023/04/21 15:33:00 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -169,10 +169,18 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 * the global tick value is advanced during inittodr(9) on our
 	 * behalf.
 	 */
-	offset = hardclock_period / ncpus * multiplier;
-	clockintr_schedule(cq->cq_hardclock, offset);
-	if (!CPU_IS_PRIMARY(ci) || ISSET(cq->cq_flags, CQ_INIT))
+	if (CPU_IS_PRIMARY(ci)) {
+		if (cq->cq_hardclock->cl_expiration == 0)
+			clockintr_schedule(cq->cq_hardclock, 0);
+		else
+			clockintr_advance(cq->cq_hardclock, hardclock_period);
+	} else {
+		if (cq->cq_hardclock->cl_expiration == 0) {
+			offset = hardclock_period / ncpus * multiplier;
+			cq->cq_hardclock->cl_expiration =  offset;
+		}
 		clockintr_advance(cq->cq_hardclock, hardclock_period);
+	}
 
 	/*
 	 * We can always advance the statclock and schedclock.
