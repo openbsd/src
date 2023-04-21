@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_enum.c,v 1.3 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_enum.c,v 1.4 2023/04/21 05:56:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -58,9 +58,11 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/asn1.h>
 #include <openssl/x509v3.h>
 
-static ENUMERATED_NAMES crl_reasons[] = {
+static BIT_STRING_BITNAME crl_reasons[] = {
 	{CRL_REASON_UNSPECIFIED, 	 "Unspecified", "unspecified"},
 	{CRL_REASON_KEY_COMPROMISE,	 "Key Compromise", "keyCompromise"},
 	{CRL_REASON_CA_COMPROMISE,	 "CA Compromise", "CACompromise"},
@@ -95,7 +97,7 @@ const X509V3_EXT_METHOD v3_crl_reason = {
 char *
 i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *e)
 {
-	ENUMERATED_NAMES *enam;
+	BIT_STRING_BITNAME *enam;
 	long strval;
 
 	strval = ASN1_ENUMERATED_get(e);
