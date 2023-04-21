@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.48 2023/04/21 13:39:37 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.49 2023/04/21 14:14:13 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -482,17 +482,17 @@ backdel(int f, int n)
 int
 space_to_tabstop(int f, int n)
 {
-	int	c;
+	int	col, target;
 
 	if (n < 0)
 		return (FALSE);
 	if (n == 0)
 		return (TRUE);
 
-	c = curwp->w_doto;
+	col = target = getcolpos(curwp);
 	while (n-- > 0)
-		c = ntabstop(c, curbp->b_tabw);
-	return (linsert(c - curwp->w_doto, ' '));
+		target = ntabstop(target, curbp->b_tabw);
+	return (linsert(target - col, ' '));
 }
 
 /*
