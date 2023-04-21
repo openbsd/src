@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.14 2023/04/21 02:41:06 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.15 2023/04/21 03:03:50 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -158,7 +158,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 * anyway.  The primary CPU's starting offset is always zero, so
 	 * leave the multiplier zero.
 	 */
-	if (!CPU_IS_PRIMARY(ci) && ISSET(cq->cq_flags, CQ_INTRCLOCK))
+	if (!CPU_IS_PRIMARY(ci) && reset_cq_intrclock)
 		multiplier = CPU_INFO_UNIT(ci);
 
 	cq->cq_uptime = nsecuptime();
