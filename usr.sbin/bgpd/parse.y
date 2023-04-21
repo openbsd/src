@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.450 2023/04/21 09:28:14 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.451 2023/04/21 10:47:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -5590,7 +5590,7 @@ component_finish(int type, uint8_t *data, int len)
 		break;
 	}
 
-	i= 0;
+	i = 0;
 	do {
 		last = data + i;
 		i += FLOWSPEC_OP_LEN(*last) + 1;
