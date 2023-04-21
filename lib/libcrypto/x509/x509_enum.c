@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_enum.c,v 1.5 2023/04/21 06:00:24 tb Exp $ */
+/* $OpenBSD: x509_enum.c,v 1.6 2023/04/21 06:07:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -92,18 +92,3 @@ const X509V3_EXT_METHOD v3_crl_reason = {
 	.r2i = NULL,
 	.usr_data = crl_reasons,
 };
-
-char *
-i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *e)
-{
-	BIT_STRING_BITNAME *enam;
-	long strval;
-
-	strval = ASN1_ENUMERATED_get(e);
-	for (enam = method->usr_data; enam->lname; enam++) {
-		if (strval == enam->bitnum)
-			return strdup(enam->lname);
-	}
-	return i2s_ASN1_ENUMERATED(method, e);
-}
-LCRYPTO_ALIAS(i2s_ASN1_ENUMERATED_TABLE);

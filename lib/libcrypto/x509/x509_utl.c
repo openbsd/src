@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.7 2023/04/10 14:10:26 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.8 2023/04/21 06:07:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/conf.h>
 #include <openssl/err.h>
@@ -203,6 +204,21 @@ i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
 	return strtmp;
 }
 LCRYPTO_ALIAS(i2s_ASN1_ENUMERATED);
+
+char *
+i2s_ASN1_ENUMERATED_TABLE(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *e)
+{
+	BIT_STRING_BITNAME *enam;
+	long strval;
+
+	strval = ASN1_ENUMERATED_get(e);
+	for (enam = method->usr_data; enam->lname; enam++) {
+		if (strval == enam->bitnum)
+			return strdup(enam->lname);
+	}
+	return i2s_ASN1_ENUMERATED(method, e);
+}
+LCRYPTO_ALIAS(i2s_ASN1_ENUMERATED_TABLE);
 
 char *
 i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
