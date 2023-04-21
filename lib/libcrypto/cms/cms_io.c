@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_io.c,v 1.16 2023/04/21 20:33:37 tb Exp $ */
+/* $OpenBSD: cms_io.c,v 1.17 2023/04/21 20:36:07 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -53,10 +53,11 @@
  */
 
 #include <openssl/asn1t.h>
-#include <openssl/x509.h>
+#include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/cms.h>
+#include <openssl/x509.h>
+
 #include "cms_local.h"
 
 int
