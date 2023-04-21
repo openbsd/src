@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amd64,v 1.131 2023/04/17 01:14:24 deraadt Exp $
+#	$OpenBSD: Makefile.amd64,v 1.132 2023/04/21 13:24:20 bluhm Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -177,7 +177,7 @@ ld.script: ${_machdir}/conf/ld.script
 
 gapdummy.o:
 	echo '__asm(".section .rodata,\"a\"");' > gapdummy.c
-	${CC} -c ${CFLAGS} ${CPPFLAGS} gapdummy.c -o $@
+	${CC} -c ${CFLAGS} ${CPPFLAGS} -fcf-protection=none gapdummy.c -o $@
 
 makegap.sh:
 	cp $S/conf/makegap.sh $@
