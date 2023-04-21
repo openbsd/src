@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.449 2023/04/19 15:27:46 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.450 2023/04/21 09:28:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -5579,7 +5579,7 @@ static void
 component_finish(int type, uint8_t *data, int len)
 {
 	uint8_t *last;
-	int i = 0;
+	int i;
 
 	switch (type) {
 	case FLOWSPEC_TYPE_DEST:
@@ -5590,6 +5590,7 @@ component_finish(int type, uint8_t *data, int len)
 		break;
 	}
 
+	i= 0;
 	do {
 		last = data + i;
 		i += FLOWSPEC_OP_LEN(*last) + 1;
@@ -5652,7 +5653,7 @@ push_prefix(struct bgpd_addr *addr, uint8_t len)
 {
 	void *data;
 	uint8_t *comp;
-	int complen, l = 0;
+	int complen, l;
 
 	if (curflow->components[curflow->addr_type] != NULL) {
 		yyerror("flowspec address already set");
@@ -5681,10 +5682,11 @@ push_prefix(struct bgpd_addr *addr, uint8_t len)
 		return -1;
 	}
 
+	l = 0;
 	comp[l++] = len;
 	if (curflow->aid == AID_INET6)
 		comp[l++] = 0;
-	memcpy(comp + l, data, PREFIX_SIZE(len) - 1);
+	memcpy(comp + l, data, complen - l);
 
 	curflow->complen[curflow->addr_type] = complen;
 	curflow->components[curflow->addr_type] = comp;
