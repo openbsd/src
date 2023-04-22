@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.4 2023/04/07 08:53:03 kettenis Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.5 2023/04/22 05:01:44 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -476,23 +476,21 @@ void
 dwqe_mii_statchg(struct device *self)
 {
 	struct dwqe_softc *sc = (void *)self;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t conf;
 
 	conf = dwqe_read(sc, GMAC_MAC_CONF);
 	conf &= ~(GMAC_MAC_CONF_PS | GMAC_MAC_CONF_FES);
 
-	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
-	case IFM_1000_SX:
-	case IFM_1000_LX:
-	case IFM_1000_CX:
-	case IFM_1000_T:
+	switch (ifp->if_baudrate) {
+	case IF_Mbps(1000):
 		sc->sc_link = 1;
 		break;
-	case IFM_100_TX:
+	case IF_Mbps(100):
 		conf |= GMAC_MAC_CONF_PS | GMAC_MAC_CONF_FES;
 		sc->sc_link = 1;
 		break;
-	case IFM_10_T:
+	case IF_Mbps(10):
 		conf |= GMAC_MAC_CONF_PS;
 		sc->sc_link = 1;
 		break;
@@ -505,7 +503,7 @@ dwqe_mii_statchg(struct device *self)
 		return;
 
 	conf &= ~GMAC_MAC_CONF_DM;
-	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
+	if (ifp->if_link_state == LINK_STATE_FULL_DUPLEX)
 		conf |= GMAC_MAC_CONF_DM;
 
 	dwqe_write(sc, GMAC_MAC_CONF, conf);

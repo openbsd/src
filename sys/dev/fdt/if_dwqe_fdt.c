@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.9 2023/04/07 22:55:26 dlg Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.10 2023/04/22 05:01:44 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -349,17 +349,18 @@ void
 dwqe_mii_statchg_rk3568_task(void *arg)
 {
 	struct dwqe_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 
 	dwqe_mii_statchg(&sc->sc_dev);
 
-	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
-	case IFM_10_T:
+	switch (ifp->if_baudrate) {
+	case IF_Mbps(10):
 		clock_set_frequency(sc->sc_node, "clk_mac_speed", 2500000);
 		break;
-	case IFM_100_TX:
+	case IF_Mbps(100):
 		clock_set_frequency(sc->sc_node, "clk_mac_speed", 25000000);
 		break;
-	case IFM_1000_T:
+	case IF_Mbps(1000):
 		clock_set_frequency(sc->sc_node, "clk_mac_speed", 125000000);
 		break;
 	}
@@ -377,6 +378,7 @@ void
 dwqe_mii_statchg_rk3588(struct device *self)
 {
 	struct dwqe_softc *sc = (void *)self;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	struct regmap *rm;
 	uint32_t grf;
 	uint32_t gmac_clk_sel = 0;
@@ -388,14 +390,14 @@ dwqe_mii_statchg_rk3588(struct device *self)
 	if (rm == NULL)
 		return;
 
-	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
-	case IFM_10_T:
+	switch (ifp->if_baudrate) {
+	case IF_Mbps(10):
 		gmac_clk_sel = sc->sc_clk_sel_2_5;
 		break;
-	case IFM_100_TX:
+	case IF_Mbps(100):
 		gmac_clk_sel = sc->sc_clk_sel_25;
 		break;
-	case IFM_1000_T:
+	case IF_Mbps(1000):
 		gmac_clk_sel = sc->sc_clk_sel_125;
 		break;
 	}
