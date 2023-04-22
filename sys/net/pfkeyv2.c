@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.255 2023/01/08 10:26:36 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.256 2023/04/22 20:51:56 mvs Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -2711,10 +2711,10 @@ pfkeyv2_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		break;
 
 	case NET_KEY_SPD_DUMP:
-		NET_LOCK();
+		NET_LOCK_SHARED();
 		error = spd_table_walk(rdomain,
 		    pfkeyv2_sysctl_policydumper, &w);
-		NET_UNLOCK();
+		NET_UNLOCK_SHARED();
 		if (oldp)
 			*oldlenp = w.w_where - oldp;
 		else

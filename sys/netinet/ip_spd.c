@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.117 2022/06/17 13:40:21 bluhm Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.118 2023/04/22 20:51:56 mvs Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -90,7 +90,7 @@ spd_table_add(unsigned int rtableid)
 	unsigned int rdomain;
 	void *p;
 
-	NET_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	rdomain = rtable_l2(rtableid);
 	if (spd_tables == NULL || rdomain > spd_table_max) {
@@ -673,7 +673,7 @@ ipsec_delete_policy(struct ipsec_policy *ipo)
 	struct radix_node_head *rnh;
 	struct radix_node *rn = (struct radix_node *)ipo;
 
-	NET_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	if (refcnt_rele(&ipo->ipo_refcnt) == 0)
 		return 0;
