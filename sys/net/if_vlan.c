@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.212 2023/04/21 14:31:41 jan Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.213 2023/04/22 04:39:46 dlg Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -941,9 +941,6 @@ vlan_set_parent(struct vlan_softc *sc, const char *parent)
 	if (!ISSET(sc->sc_flags, IFVF_LLADDR))
 		if_setlladdr(ifp, LLADDR(ifp0->if_sadl));
 
-	/* Inherit flags from parent interface. */
-	vlan_flags_from_parent(ifp0, IFXF_TSO);
-
 put:
 	if_put(ifp0);
 	return (error);
@@ -963,33 +960,6 @@ vlan_del_parent(struct vlan_softc *sc)
 		if_setlladdr(ifp, etheranyaddr);
 
 	return (0);
-}
-
-void
-vlan_flags_from_parent(struct ifnet *ifp0, int flags)
-{
-	struct ifnet *ifp;
-	struct vlan_softc *sc;
-
-	TAILQ_FOREACH(ifp, &ifnetlist, if_list) {
-		if ((sc = ifp->if_softc) == NULL)
-			continue;
-
-		if (sc->sc_type != ETHERTYPE_VLAN &&
-		    sc->sc_type != ETHERTYPE_QINQ)
-			continue;
-
-		/* vlan and tso only works with hw tagging */
-		if (!ISSET(ifp0->if_capabilities, IFCAP_VLAN_HWTAGGING))
-			CLR(flags, IFXF_TSO);
-
-		if (sc->sc_ifidx0 == ifp0->if_index) {
-			if (ISSET(ifp0->if_xflags, flags))
-				SET(ifp->if_xflags, flags);
-			else
-				CLR(ifp->if_xflags, flags);
-		}
-	}
 }
 
 int
