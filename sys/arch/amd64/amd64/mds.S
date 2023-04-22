@@ -1,4 +1,4 @@
-/*	$OpenBSD: mds.S,v 1.3 2021/09/04 22:15:33 bluhm Exp $	*/
+/*	$OpenBSD: mds.S,v 1.4 2023/04/22 18:27:28 guenther Exp $	*/
 /*
  * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
  *
@@ -77,7 +77,7 @@ END(mds_handler_bdw)
 ENTRY(mds_handler_skl)
 	xorl	%ecx,%ecx
 	xgetbv
-	testb	$XCR0_AVX,%al
+	testb	$XFEATURE_AVX,%al
 	jne	mds_handler_skl_avx
 	jmp	mds_handler_skl_sse
 END(mds_handler_skl)

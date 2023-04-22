@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.166 2023/04/17 00:42:04 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.167 2023/04/22 18:27:28 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -317,7 +317,7 @@ replacemds(void)
 			 * CascadeLake
 			 */
 			/* XXX mds_handler_skl_avx512 */
-			if (xgetbv(0) & XCR0_AVX) {
+			if (xgetbv(0) & XFEATURE_AVX) {
 				handler = &mds_handler_skl_avx;
 				type = "Skylake AVX";
 			} else {
@@ -751,10 +751,9 @@ cpu_init(struct cpu_info *ci)
 	if ((cpu_ecxfeature & CPUIDECX_XSAVE) && cpuid_level >= 0xd) {
 		u_int32_t eax, ebx, ecx, edx;
 
-		xsave_mask = XCR0_X87 | XCR0_SSE;
+		xsave_mask = XFEATURE_X87 | XFEATURE_SSE;
 		CPUID_LEAF(0xd, 0, eax, ebx, ecx, edx);
-		if (eax & XCR0_AVX)
-			xsave_mask |= XCR0_AVX;
+		xsave_mask |= eax & XFEATURE_AVX;
 		xsetbv(0, xsave_mask);
 		CPUID_LEAF(0xd, 0, eax, ebx, ecx, edx);
 		if (CPU_IS_PRIMARY(ci)) {

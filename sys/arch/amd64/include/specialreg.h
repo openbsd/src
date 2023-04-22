@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.101 2023/04/15 01:22:50 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.102 2023/04/22 18:27:28 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -91,19 +91,40 @@
 #define	CR4_UINTR	0x02000000	/* user interrupts enable bit */
 
 /*
- * Extended Control Register XCR0
+ * Extended state components, for xsave/xrstor family of instructions.
  */
-#define	XCR0_X87	0x00000001	/* x87 FPU/MMX state */
-#define	XCR0_SSE	0x00000002	/* SSE state */
-#define	XCR0_AVX	0x00000004	/* AVX state */
-#define	XCR0_BNDREG	0x00000008	/* MPX state */
-#define	XCR0_BNDCSR	0x00000010	/* MPX state */
-#define	XCR0_OPMASK	0x00000020	/* AVX-512 opmask */
-#define	XCR0_ZMM_HI256	0x00000040	/* AVX-512 ZMM0-7 */
-#define	XCR0_HI16_ZMM	0x00000080	/* AVX-512 ZMM16-31 */
-#define	XCR0_PKRU	0x00000200	/* user page key */
-#define	XCR0_TILECFG	0x00020000	/* AMX state */
-#define	XCR0_TILEDATA	0x00040000	/* AMX state */
+#define	XFEATURE_X87		0x00000001	/* x87 FPU/MMX state */
+#define	XFEATURE_SSE		0x00000002	/* SSE state */
+#define	XFEATURE_AVX		0x00000004	/* AVX state */
+#define	XFEATURE_BNDREG		0x00000008	/* MPX state */
+#define	XFEATURE_BNDCSR		0x00000010	/* MPX state */
+#define	XFEATURE_MPX		(XFEATURE_BNDREG | XFEATURE_BNDCSR)
+#define	XFEATURE_OPMASK		0x00000020	/* AVX-512 opmask */
+#define	XFEATURE_ZMM_HI256	0x00000040	/* AVX-512 ZMM0-7 */
+#define	XFEATURE_HI16_ZMM	0x00000080	/* AVX-512 ZMM16-31 */
+#define	XFEATURE_AVX512		(XFEATURE_OPMASK | XFEATURE_ZMM_HI256 | \
+				 XFEATURE_HI16_ZMM)
+#define	XFEATURE_PT		0x00000100	/* processor trace */
+#define	XFEATURE_PKRU		0x00000200	/* user page key */
+#define	XFEATURE_PASID		0x00000400	/* Process ASIDs */
+#define	XFEATURE_CET_U		0x00000800	/* ctrl-flow enforce user */
+#define	XFEATURE_CET_S		0x00001000	/* ctrl-flow enforce system */
+#define	XFEATURE_CET		(XFEATURE_CET_U | XFEATURE_CET_S)
+#define	XFEATURE_HDC		0x00002000	/* HW duty cycling */
+#define	XFEATURE_UINTR		0x00004000	/* user interrupts */
+#define	XFEATURE_LBR		0x00008000	/* last-branch record */
+#define	XFEATURE_HWP		0x00010000	/* HW P-states */
+#define	XFEATURE_TILECFG	0x00020000	/* AMX state */
+#define	XFEATURE_TILEDATA	0x00040000	/* AMX state */
+#define	XFEATURE_AMX		(XFEATURE_TILEDATA | XFEATURE_TILEDATA)
+
+/* which bits are for XCR0 and which for the XSS MSR? */
+#define XFEATURE_XCR0_MASK \
+	(XFEATURE_X87 | XFEATURE_SSE | XFEATURE_AVX | XFEATURE_MPX | \
+	 XFEATURE_AVX512 | XFEATURE_PKRU | XFEATURE_AMX)
+#define	XFEATURE_XSS_MASK \
+	(XFEATURE_PT | XFEATURE_PASID | XFEATURE_CET | XFEATURE_HDC | \
+	 XFEATURE_UINTR | XFEATURE_LBR | XFEATURE_HWP)
 
 /*
  * CPUID "features" bits (CPUID function 0x1):
@@ -506,6 +527,7 @@
 #define MSR_CET_ENDBR_EN		(1 << 2)
 #define MSR_S_CET		0x6a2
 #define MSR_PKRS		0x6e1
+#define MSR_XSS			0xda0
 
 /* VIA MSR */
 #define MSR_CENT_TMTEMPERATURE	0x1423	/* Thermal monitor temperature */
@@ -1457,10 +1479,11 @@
 /*
  * XSAVE subfeatures (cpuid 0xd, leaf 1)
  */
-#define XSAVE_XSAVEOPT		0x1UL
-#define XSAVE_XSAVEC		0x2UL
-#define XSAVE_XGETBV1		0x4UL
-#define XSAVE_XSAVES		0x8UL
+#define XSAVE_XSAVEOPT		0x01UL
+#define XSAVE_XSAVEC		0x02UL
+#define XSAVE_XGETBV1		0x04UL
+#define XSAVE_XSAVES		0x08UL
+#define XSAVE_XFD		0x10UL
 
 /*
  * Default cr0 and cr4 flags.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.132 2023/03/26 18:12:45 mlarkin Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.133 2023/04/22 18:27:28 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -241,6 +241,7 @@ const struct {
 	{ XSAVE_XSAVEC,		"XSAVEC" },
 	{ XSAVE_XGETBV1,	"XGETBV1" },
 	{ XSAVE_XSAVES,		"XSAVES" },
+	{ XSAVE_XFD,		"XFD" },
 };
 
 int
