@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.99 2022/12/28 21:30:19 jmc Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.100 2023/04/22 19:47:35 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -2015,6 +2015,8 @@ vmmci_restore(int fd, uint32_t vm_id)
 int
 viornd_restore(int fd, struct vm_create_params *vcp)
 {
+	void *hva = NULL;
+
 	log_debug("%s: receiving viornd", __func__);
 	if (atomicio(read, fd, &viornd, sizeof(viornd)) != sizeof(viornd)) {
 		log_warnx("%s: error reading viornd from fd", __func__);
@@ -2028,6 +2030,11 @@ viornd_restore(int fd, struct vm_create_params *vcp)
 	viornd.vm_id = vcp->vcp_id;
 	viornd.irq = pci_get_dev_irq(viornd.pci_id);
 
+	hva = hvaddr_mem(viornd.vq[0].q_gpa, vring_size(VIORND_QUEUE_SIZE));
+	if (hva == NULL)
+		fatal("failed to restore viornd virtqueue");
+	viornd.vq[0].q_hva = hva;
+
 	return (0);
 }
 
@@ -2038,6 +2045,7 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	uint8_t i;
 	int ret;
+	void *hva = NULL;
 
 	nr_vionet = vcp->vcp_nnics;
 	if (vcp->vcp_nnics > 0) {
@@ -2079,6 +2087,18 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 			vionet[i].vm_vmid = vm->vm_vmid;
 			vionet[i].irq = pci_get_dev_irq(vionet[i].pci_id);
 
+			hva = hvaddr_mem(vionet[i].vq[RXQ].q_gpa,
+			    vring_size(VIONET_QUEUE_SIZE));
+			if (hva == NULL)
+				fatal("failed to restore vionet RX virtqueue");
+			vionet[i].vq[RXQ].q_hva = hva;
+
+			hva = hvaddr_mem(vionet[i].vq[TXQ].q_gpa,
+			    vring_size(VIONET_QUEUE_SIZE));
+			if (hva == NULL)
+				fatal("failed to restore vionet TX virtqueue");
+			vionet[i].vq[TXQ].q_hva = hva;
+
 			memset(&vionet[i].event, 0, sizeof(struct event));
 			event_set(&vionet[i].event, vionet[i].fd,
 			    EV_READ | EV_PERSIST, vionet_rx_event, &vionet[i]);
@@ -2093,6 +2113,7 @@ vioblk_restore(int fd, struct vmop_create_params *vmc,
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	uint8_t i;
+	void *hva = NULL;
 
 	nr_vioblk = vcp->vcp_ndisks;
 	vioblk = calloc(vcp->vcp_ndisks, sizeof(struct vioblk_dev));
@@ -2123,6 +2144,12 @@ vioblk_restore(int fd, struct vmop_create_params *vmc,
 		}
 		vioblk[i].vm_id = vcp->vcp_id;
 		vioblk[i].irq = pci_get_dev_irq(vioblk[i].pci_id);
+
+		hva = hvaddr_mem(vioblk[i].vq[0].q_gpa,
+		    vring_size(VIOBLK_QUEUE_SIZE));
+		if (hva == NULL)
+			fatal("failed to restore vioblk virtqueue");
+		vioblk[i].vq[0].q_hva = hva;
 	}
 	return (0);
 }
@@ -2130,6 +2157,9 @@ vioblk_restore(int fd, struct vmop_create_params *vmc,
 int
 vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 {
+	void *hva = NULL;
+	unsigned int i;
+
 	if (!strlen(vcp->vcp_cdrom))
 		return (0);
 
@@ -2160,6 +2190,15 @@ vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 	}
 	vioscsi->vm_id = vcp->vcp_id;
 	vioscsi->irq = pci_get_dev_irq(vioscsi->pci_id);
+
+	/* vioscsi uses 3 virtqueues. */
+	for (i = 0; i < 3; i++) {
+		hva = hvaddr_mem(vioscsi->vq[i].q_gpa,
+		    vring_size(VIOSCSI_QUEUE_SIZE));
+		if (hva == NULL)
+			fatal("failed to restore vioscsi virtqueue");
+		vioscsi->vq[i].q_hva = hva;
+	}
 
 	return (0);
 }
@@ -2194,6 +2233,9 @@ int
 viornd_dump(int fd)
 {
 	log_debug("%s: sending viornd", __func__);
+
+	viornd.vq[0].q_hva = NULL;
+
 	if (atomicio(vwrite, fd, &viornd, sizeof(viornd)) != sizeof(viornd)) {
 		log_warnx("%s: error writing viornd to fd", __func__);
 		return (-1);
@@ -2205,6 +2247,7 @@ int
 vmmci_dump(int fd)
 {
 	log_debug("%s: sending vmmci", __func__);
+
 	if (atomicio(vwrite, fd, &vmmci, sizeof(vmmci)) != sizeof(vmmci)) {
 		log_warnx("%s: error writing vmmci to fd", __func__);
 		return (-1);
@@ -2215,7 +2258,15 @@ vmmci_dump(int fd)
 int
 vionet_dump(int fd)
 {
+	int i;
+
 	log_debug("%s: sending vionet", __func__);
+
+	for (i = 0; i < nr_vionet; i++) {
+		vionet[i].vq[RXQ].q_hva = NULL;
+		vionet[i].vq[TXQ].q_hva = NULL;
+	}
+
 	if (atomicio(vwrite, fd, vionet,
 	    nr_vionet * sizeof(struct vionet_dev)) !=
 	    nr_vionet * sizeof(struct vionet_dev)) {
@@ -2228,7 +2279,13 @@ vionet_dump(int fd)
 int
 vioblk_dump(int fd)
 {
+	int i;
+
 	log_debug("%s: sending vioblk", __func__);
+
+	for (i = 0; i < nr_vioblk; i++)
+		vioblk[i].vq[0].q_hva = NULL;
+
 	if (atomicio(vwrite, fd, vioblk,
 	    nr_vioblk * sizeof(struct vioblk_dev)) !=
 	    nr_vioblk * sizeof(struct vioblk_dev)) {
@@ -2241,10 +2298,16 @@ vioblk_dump(int fd)
 int
 vioscsi_dump(int fd)
 {
+	unsigned int i;
+
 	if (vioscsi == NULL)
 		return (0);
 
 	log_debug("%s: sending vioscsi", __func__);
+
+	for (i = 0; i < 3; i++)
+		vioscsi->vq[i].q_hva = NULL;
+
 	if (atomicio(vwrite, fd, vioscsi, sizeof(struct vioscsi_dev)) !=
 	    sizeof(struct vioscsi_dev)) {
 		log_warnx("%s: error writing vioscsi to fd", __func__);
