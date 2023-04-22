@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_disasm.c,v 1.23 2023/04/10 04:21:19 jsg Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.24 2023/04/22 18:26:17 guenther Exp $	*/
 /*	$NetBSD: db_disasm.c,v 1.11 1996/05/03 19:41:58 christos Exp $	*/
 
 /* 
@@ -148,8 +148,8 @@ struct inst db_Grp9[] = {
 };
 
 char *	db_GrpA[] = {
-	"",		"cmpxchg8b",	"",		"",
-	"",		"",		"rdrand",	"rdseed"
+	"",		"cmpxchg8b",	"",		"xrstors",
+	"xsavec",	"xsaves",	"rdrand",	"rdseed"
 };
 
 char *	db_GrpB[] = {
