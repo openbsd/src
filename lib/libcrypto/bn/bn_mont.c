@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.56 2023/04/07 23:03:32 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.57 2023/04/22 14:31:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -345,25 +345,32 @@ void
 bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, BN_ULONG *tp, BN_ULONG n0, int n_len)
 {
-	BN_ULONG carry1, carry2, mask, w, x;
+	BN_ULONG a0, b, carry_a, carry_n, carry, mask, w, x;
 	int i, j;
 
-	for (i = 0; i <= n_len; i++)
+	carry_a = carry_n = carry = 0;
+
+	for (i = 0; i < n_len; i++)
 		tp[i] = 0;
 
-	for (i = 0; i < n_len; i++) {
-		/* Compute new t[0] * n0, as we need it inside the loop. */
-		w = (ap[0] * bp[i] + tp[0]) * n0;
+	a0 = ap[0];
 
-		carry1 = carry2 = 0;
+	for (i = 0; i < n_len; i++) {
+		b = bp[i];
+
+		/* Compute new t[0] * n0, as we need it inside the loop. */
+		w = (a0 * b + tp[0]) * n0;
+	
 		for (j = 0; j < n_len; j++) {
-			bn_mulw_addw_addw(ap[j], bp[i], tp[j], carry1, &carry1, &x);
-			bn_mulw_addw_addw(np[j], w, x, carry2, &carry2, &tp[j]);
+			bn_mulw_addw_addw(ap[j], b, tp[j], carry_a, &carry_a, &x);
+			bn_mulw_addw_addw(np[j], w, x, carry_n, &carry_n, &tp[j]);
 		}
-		bn_addw_addw(carry1, carry2, tp[n_len], &tp[n_len + 1], &tp[n_len]);
+		bn_addw_addw(carry_a, carry_n, carry, &carry, &tp[n_len]);
+		carry_a = carry_n = 0;
 
 		tp++;
 	}
+	tp[n_len] = carry;
 
 	/*
 	 * The output is now in the range of [0, 2N). Attempt to reduce once by
