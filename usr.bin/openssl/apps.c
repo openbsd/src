@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.63 2023/04/14 15:27:13 tb Exp $ */
+/* $OpenBSD: apps.c,v 1.64 2023/04/22 20:50:26 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -933,7 +933,11 @@ set_name_ex(unsigned long *flags, const char *arg)
 		{"ca_default", XN_FLAG_MULTILINE, 0xffffffffL},
 		{NULL, 0, 0}
 	};
-	return set_multi_opts(flags, arg, ex_tbl);
+	if (!set_multi_opts(flags, arg, ex_tbl))
+		return 0;
+	if (*flags != XN_FLAG_COMPAT && (*flags & XN_FLAG_SEP_MASK) == 0)
+		*flags |= XN_FLAG_SEP_CPLUS_SPC;
+	return 1;
 }
 
 int
