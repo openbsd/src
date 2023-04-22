@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.5 2023/04/22 05:01:44 dlg Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.6 2023/04/22 06:36:35 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -437,12 +437,11 @@ dwqe_mii_readreg(struct device *self, int phy, int reg)
 	    (reg << GMAC_MAC_MDIO_ADDR_RDA_SHIFT) |
 	    GMAC_MAC_MDIO_ADDR_GOC_READ |
 	    GMAC_MAC_MDIO_ADDR_GB);
-	delay(10000);
 
-	for (n = 0; n < 1000; n++) {
+	for (n = 0; n < 2000; n++) {
+		delay(10);
 		if ((dwqe_read(sc, GMAC_MAC_MDIO_ADDR) & GMAC_MAC_MDIO_ADDR_GB) == 0)
 			return dwqe_read(sc, GMAC_MAC_MDIO_DATA);
-		delay(10);
 	}
 
 	printf("%s: mii_read timeout\n", sc->sc_dev.dv_xname);
@@ -462,11 +461,11 @@ dwqe_mii_writereg(struct device *self, int phy, int reg, int val)
 	    (reg << GMAC_MAC_MDIO_ADDR_RDA_SHIFT) |
 	    GMAC_MAC_MDIO_ADDR_GOC_WRITE |
 	    GMAC_MAC_MDIO_ADDR_GB);
-	delay(10000);
-	for (n = 0; n < 1000; n++) {
+
+	for (n = 0; n < 2000; n++) {
+		delay(10);
 		if ((dwqe_read(sc, GMAC_MAC_MDIO_ADDR) & GMAC_MAC_MDIO_ADDR_GB) == 0)
 			return;
-		delay(10);
 	}
 
 	printf("%s: mii_write timeout\n", sc->sc_dev.dv_xname);
