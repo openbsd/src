@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.18 2023/04/21 16:35:20 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.19 2023/04/22 23:51:27 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -735,7 +735,7 @@ db_show_clockintr_cpu(struct cpu_info *ci)
 		db_show_clockintr(elm, "pend", cpu);
 	TAILQ_FOREACH(elm, &cq->cq_est, cl_elink) {
 		if (!ISSET(elm->cl_flags, CLST_PENDING))
-			db_show_clockintr(elm, "est", cpu);
+			db_show_clockintr(elm, "idle", cpu);
 	}
 }
 
