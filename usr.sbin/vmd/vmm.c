@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.108 2023/04/16 12:47:26 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.109 2023/04/23 12:11:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -80,20 +80,28 @@ vmm_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	if (config_init(ps->ps_env) == -1)
 		fatal("failed to initialize configuration");
 
-	signal_del(&ps->ps_evsigchld);
-	signal_set(&ps->ps_evsigchld, SIGCHLD, vmm_sighdlr, ps);
-	signal_add(&ps->ps_evsigchld, NULL);
+	/*
+	 * We aren't root, so we can't chroot(2). Use unveil(2) instead.
+	 */
+	if (unveil(env->argv0, "x") == -1)
+		fatal("unveil %s", env->argv0);
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil lock");
 
 	/*
 	 * pledge in the vmm process:
 	 * stdio - for malloc and basic I/O including events.
 	 * vmm - for the vmm ioctls and operations.
-	 * proc - for forking and maitaining vms.
+	 * proc, exec - for forking and execing new vm's.
 	 * sendfd - for sending send/recv fds to vm proc.
 	 * recvfd - for disks, interfaces and other fds.
 	 */
-	if (pledge("stdio vmm sendfd recvfd proc", NULL) == -1)
+	if (pledge("stdio vmm sendfd recvfd proc exec", NULL) == -1)
 		fatal("pledge");
+
+	signal_del(&ps->ps_evsigchld);
+	signal_set(&ps->ps_evsigchld, SIGCHLD, vmm_sighdlr, ps);
+	signal_add(&ps->ps_evsigchld, NULL);
 }
 
 int
@@ -603,7 +611,7 @@ opentap(char *ifname)
 /*
  * vmm_start_vm
  *
- * Prepares and forks a new VM process.
+ * Prepares and fork+execs a new VM process.
  *
  * Parameters:
  *  imsg: The VM data structure that is including the VM create parameters.
@@ -619,7 +627,8 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 {
 	struct vm_create_params	*vcp;
 	struct vmd_vm		*vm;
-	int			 ret = EINVAL;
+	char			*nargv[5], num[32];
+	int			 fd, ret = EINVAL;
 	int			 fds[2];
 	pid_t			 vm_pid;
 	size_t			 i, j, sz;
@@ -641,10 +650,17 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, fds) == -1)
 		fatal("socketpair");
 
-	/* Fork the vmm process to create the vm, inheriting open device fds. */
+	/* Keep our channel open after exec. */
+	if (fcntl(fds[1], F_SETFD, 0)) {
+		ret = errno;
+		log_warn("%s: fcntl", __func__);
+		goto err;
+	}
+
+	/* Start child vmd for this VM (fork, chroot, drop privs) */
 	vm_pid = fork();
 	if (vm_pid == -1) {
-		log_warn("%s: fork child failed", __func__);
+		log_warn("%s: start child failed", __func__);
 		ret = EIO;
 		goto err;
 	}
@@ -654,6 +670,16 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		vm->vm_pid = vm_pid;
 		close_fd(fds[1]);
 
+		/* Send the details over the pipe to the child. */
+		sz = atomicio(vwrite, fds[0], vm, sizeof(*vm));
+		if (sz != sizeof(*vm)) {
+			log_warnx("%s: failed to send config for vm '%s'",
+			    __func__, vcp->vcp_name);
+			ret = EIO;
+			/* Defer error handling until after fd closing. */
+		}
+
+		/* As the parent/vmm process, we no longer need these fds. */
 		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
 			for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
 				if (close_fd(vm->vm_disks[i][j]) == 0)
@@ -671,6 +697,20 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		if (close_fd(vm->vm_tty) == 0)
 			vm->vm_tty = -1;
 
+		/* Deferred error handling from sending the vm struct. */
+		if (ret == EIO)
+			goto err;
+
+		/* Send the fd number for /dev/vmm. */
+		sz = atomicio(vwrite, fds[0], &env->vmd_fd,
+		    sizeof(env->vmd_fd));
+		if (sz != sizeof(env->vmd_fd)) {
+			log_warnx("%s: failed to send /dev/vmm fd for vm '%s'",
+			    __func__, vcp->vcp_name);
+			ret = EIO;
+			goto err;
+		}
+
 		/* Read back the kernel-generated vm id from the child */
 		sz = atomicio(read, fds[0], &vcp->vcp_id, sizeof(vcp->vcp_id));
 		if (sz != sizeof(vcp->vcp_id)) {
@@ -681,30 +721,78 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 			goto err;
 		}
 
+		/* Check for an invalid id. This indicates child failure. */
 		if (vcp->vcp_id == 0)
 			goto err;
 
 		*id = vcp->vcp_id;
 		*pid = vm->vm_pid;
 
+		/* Wire up our pipe into the event handling. */
 		if (vmm_pipe(vm, fds[0], vmm_dispatch_vm) == -1)
 			fatal("setup vm pipe");
 
 		return (0);
 	} else {
-		/* Child */
+		/* Child. Create a new session. */
+		if (setsid() == -1)
+			fatal("setsid");
+
 		close_fd(fds[0]);
 		close_fd(PROC_PARENT_SOCK_FILENO);
 
-		ret = start_vm(vm, fds[1]);
+		/* Detach from terminal. */
+		if (!env->vmd_debug && (fd =
+			open("/dev/null", O_RDWR, 0)) != -1) {
+			dup2(fd, STDIN_FILENO);
+			dup2(fd, STDOUT_FILENO);
+			dup2(fd, STDERR_FILENO);
+			if (fd > 2)
+				close(fd);
+		}
 
+		/* Toggle all fds to not close on exec. */
+		for (i = 0 ; i < vcp->vcp_ndisks; i++)
+			for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
+				if (vm->vm_disks[i][j] != -1)
+					fcntl(vm->vm_disks[i][j], F_SETFD, 0);
+		for (i = 0 ; i < vcp->vcp_nnics; i++)
+			fcntl(vm->vm_ifs[i].vif_fd, F_SETFD, 0);
+		if (vm->vm_kernel != -1)
+			fcntl(vm->vm_kernel, F_SETFD, 0);
+		if (vm->vm_cdrom != -1)
+			fcntl(vm->vm_cdrom, F_SETFD, 0);
+		if (vm->vm_tty != -1)
+			fcntl(vm->vm_tty, F_SETFD, 0);
+		fcntl(env->vmd_fd, F_SETFD, 0);	/* vmm device fd */
+
+		/*
+		 * Prepare our new argv for execvp(2) with the fd of our open
+		 * pipe to the parent/vmm process as an argument.
+		 */
+		memset(num, 0, sizeof(num));
+		snprintf(num, sizeof(num), "%d", fds[1]);
+
+		nargv[0] = env->argv0;
+		nargv[1] = "-V";
+		nargv[2] = num;
+		nargv[3] = "-n";
+		nargv[4] = NULL;
+
+		/* Control resumes in vmd main(). */
+		execvp(nargv[0], nargv);
+
+		ret = errno;
+		log_warn("execvp %s", nargv[0]);
 		_exit(ret);
+		/* NOTREACHED */
 	}
 
 	return (0);
 
  err:
-	vm_remove(vm, __func__);
+	if (!vm->vm_from_config)
+		vm_remove(vm, __func__);
 
 	return (ret);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.84 2023/04/23 05:37:55 anton Exp $	*/
+/*	$OpenBSD: vm.c,v 1.85 2023/04/23 12:11:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -74,8 +74,7 @@
 
 io_fn_t ioports_map[MAX_PORTS];
 
-int run_vm(int, int[][VM_MAX_BASE_PER_DISK], int *,
-    struct vmop_create_params *, struct vcpu_reg_state *);
+static int run_vm(struct vmop_create_params *, struct vcpu_reg_state *);
 void vm_dispatch_vmm(int, short, void *);
 void *event_thread(void *);
 void *vcpu_run_loop(void *);
@@ -214,6 +213,72 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
 };
 
 /*
+ * vm_main
+ *
+ * Primary entrypoint for launching a vm. Does not return.
+ *
+ * fd: file descriptor for communicating with vmm process.
+ */
+void
+vm_main(int fd)
+{
+	struct vm_create_params	*vcp = NULL;
+	struct vmd_vm		 vm;
+	size_t			 sz = 0;
+	int			 ret = 0;
+
+	/*
+	 * We aren't root, so we can't chroot(2). Use unveil(2) instead.
+	 */
+	if (unveil("/var/empty", "") == -1)
+		fatal("unveil /var/empty");
+	if (unveil(NULL, NULL) == -1)
+		fatal("unveil lock");
+
+	/*
+	 * pledge in the vm processes:
+	 * stdio - for malloc and basic I/O including events.
+	 * vmm - for the vmm ioctls and operations.
+	 * recvfd - for vm send/recv and sending fd to devices.
+	 * proc - required for vmm(4) VMM_IOC_CREATE ioctl
+	 */
+	if (pledge("stdio vmm recvfd proc", NULL) == -1)
+		fatal("pledge");
+
+	/* Receive our vm configuration. */
+	memset(&vm, 0, sizeof(vm));
+	sz = atomicio(read, fd, &vm, sizeof(vm));
+	if (sz != sizeof(vm)) {
+		log_warnx("failed to receive start message");
+		_exit(EIO);
+	}
+
+	/* Receive the /dev/vmm fd number. */
+	sz = atomicio(read, fd, &env->vmd_fd, sizeof(env->vmd_fd));
+	if (sz != sizeof(env->vmd_fd)) {
+		log_warnx("failed to receive /dev/vmm fd");
+		_exit(EIO);
+	}
+
+	/* Update process with the vm name. */
+	vcp = &vm.vm_params.vmc_params;
+	setproctitle("%s", vcp->vcp_name);
+	log_procinit(vcp->vcp_name);
+
+	/*
+	 * We need, at minimum, a vm_kernel fd to boot a vm. This is either a
+	 * kernel or a BIOS image.
+	 */
+	if (vm.vm_kernel < 0 && !(vm.vm_state & VM_STATE_RECEIVED)) {
+		log_warnx("%s: failed to receive boot fd", vcp->vcp_name);
+		_exit(EINVAL);
+	}
+
+	ret = start_vm(&vm, fd);
+	_exit(ret);
+}
+
+/*
  * loadfile_bios
  *
  * Alternatively to loadfile_elf, this function loads a non-ELF BIOS image
@@ -300,15 +365,14 @@ start_vm(struct vmd_vm *vm, int fd)
 	struct vm_rwregs_params  vrp;
 	struct stat		 sb;
 
-	/* Child */
-	setproctitle("%s", vcp->vcp_name);
-	log_procinit(vcp->vcp_name);
-
+	/*
+	 * We first try to initialize and allocate memory before bothering
+	 * vmm(4) with a request to create a new vm.
+	 */
 	if (!(vm->vm_state & VM_STATE_RECEIVED))
 		create_memory_map(vcp);
 
-	ret = alloc_guest_mem(vcp);
-
+	ret = alloc_guest_mem(&vm->vm_params.vmc_params);
 	if (ret) {
 		struct rlimit lim;
 		char buf[FMT_SCALED_STRSIZE];
@@ -318,31 +382,44 @@ start_vm(struct vmd_vm *vm, int fd)
 				    "limit is %s)", buf);
 		}
 		errno = ret;
-		fatal("could not allocate guest memory");
+		log_warn("could not allocate guest memory");
+		return (ret);
 	}
 
+	/* We've allocated guest memory, so now create the vm in vmm(4). */
 	ret = vmm_create_vm(vcp);
-	current_vm = vm;
-
-	/* send back the kernel-generated vm id (0 on error) */
-	if (atomicio(vwrite, fd, &vcp->vcp_id, sizeof(vcp->vcp_id)) !=
-	    sizeof(vcp->vcp_id))
-		fatal("failed to send created vm id to vmm process");
-
 	if (ret) {
-		errno = ret;
-		fatal("create vmm ioctl failed - exiting");
+		/* Let the vmm process know we failed by sending a 0 vm id. */
+		vcp->vcp_id = 0;
+		atomicio(vwrite, fd, &vcp->vcp_id, sizeof(vcp->vcp_id));
+		return (ret);
 	}
 
-	/*
-	 * pledge in the vm processes:
-	 * stdio - for malloc and basic I/O including events.
-	 * recvfd - for send/recv.
-	 * vmm - for the vmm ioctls and operations.
-	 */
+	/* Tighten pledge now that we've called VMM_IOC_CREATE ioctl. */
 	if (pledge("stdio vmm recvfd", NULL) == -1)
 		fatal("pledge");
 
+	/*
+	 * Some of vmd currently relies on global state (current_vm, con_fd).
+	 */
+	current_vm = vm;
+	con_fd = vm->vm_tty;
+	if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1) {
+		log_warn("failed to set nonblocking mode on console");
+		return (1);
+	}
+
+	/*
+	 * We now let the vmm process know we were successful by sending it our
+	 * vmm(4) assigned vm id.
+	 */
+	if (atomicio(vwrite, fd, &vcp->vcp_id, sizeof(vcp->vcp_id)) !=
+	    sizeof(vcp->vcp_id)) {
+		log_warn("failed to send created vm id to vmm process");
+		return (1);
+	}
+
+	/* Prepare either our boot image or receive an existing vm to launch. */
 	if (vm->vm_state & VM_STATE_RECEIVED) {
 		ret = atomicio(read, vm->vm_receive_fd, &vrp, sizeof(vrp));
 		if (ret != sizeof(vrp))
@@ -377,16 +454,37 @@ start_vm(struct vmd_vm *vm, int fd)
 	}
 
 	if (vm->vm_kernel != -1)
-		close(vm->vm_kernel);
+		close_fd(vm->vm_kernel);
 
-	con_fd = vm->vm_tty;
-	if (fcntl(con_fd, F_SETFL, O_NONBLOCK) == -1)
-		fatal("failed to set nonblocking mode on console");
+	/* Initialize our mutexes. */
+	ret = pthread_mutex_init(&threadmutex, NULL);
+	if (ret) {
+		log_warn("%s: could not initialize thread state mutex",
+		    __func__);
+		return (ret);
+	}
+	ret = pthread_cond_init(&threadcond, NULL);
+	if (ret) {
+		log_warn("%s: could not initialize thread state "
+		    "condition variable", __func__);
+		return (ret);
+	}
+	mutex_lock(&threadmutex);
 
-	for (i = 0; i < VM_MAX_NICS_PER_VM; i++)
-		nicfds[i] = vm->vm_ifs[i].vif_fd;
 
+	/*
+	 * Finalize our communication socket with the vmm process. From here
+	 * onwards, communication with the vmm process is event-based.
+	 */
 	event_init();
+	if (vmm_pipe(vm, fd, vm_dispatch_vmm) == -1)
+		fatal("setup vm pipe");
+
+	/*
+	 * Initialize or restore our emulated hardware.
+	 */
+	for (i = 0; i < VMM_MAX_NICS_PER_VM; i++)
+		nicfds[i] = vm->vm_ifs[i].vif_fd;
 
 	if (vm->vm_state & VM_STATE_RECEIVED) {
 		restore_emulated_hw(vcp, vm->vm_receive_fd, nicfds,
@@ -395,13 +493,13 @@ start_vm(struct vmd_vm *vm, int fd)
 		if (restore_vm_params(vm->vm_receive_fd, vcp))
 			fatal("restore vm params failed");
 		unpause_vm(vcp);
-	}
+	} else
+		init_emulated_hw(vmc, vm->vm_cdrom, vm->vm_disks, nicfds);
 
-	if (vmm_pipe(vm, fd, vm_dispatch_vmm) == -1)
-		fatal("setup vm pipe");
-
-	/* Execute the vcpu run loop(s) for this VM */
-	ret = run_vm(vm->vm_cdrom, vm->vm_disks, nicfds, &vm->vm_params, &vrs);
+	/*
+	 * Execute the vcpu run loop(s) for this VM.
+	 */
+	ret = run_vm(&vm->vm_params, &vrs);
 
 	/* Ensure that any in-flight data is written back */
 	virtio_shutdown(vm);
@@ -1205,10 +1303,8 @@ restore_emulated_hw(struct vm_create_params *vcp, int fd,
  *  0: the VM exited normally
  *  !0 : the VM exited abnormally or failed to start
  */
-int
-run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
-    int *child_taps, struct vmop_create_params *vmc,
-    struct vcpu_reg_state *vrs)
+static int
+run_vm(struct vmop_create_params *vmc, struct vcpu_reg_state *vrs)
 {
 	struct vm_create_params *vcp = &vmc->vmc_params;
 	struct vm_rwregs_params vregsp;
@@ -1223,24 +1319,6 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 	if (vcp == NULL)
 		return (EINVAL);
 
-	if (child_cdrom == -1 && strlen(vcp->vcp_cdrom))
-		return (EINVAL);
-
-	if (child_disks == NULL && vcp->vcp_ndisks != 0)
-		return (EINVAL);
-
-	if (child_taps == NULL && vcp->vcp_nnics != 0)
-		return (EINVAL);
-
-	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM)
-		return (EINVAL);
-
-	if (vcp->vcp_ndisks > VM_MAX_DISKS_PER_VM)
-		return (EINVAL);
-
-	if (vcp->vcp_nnics > VM_MAX_NICS_PER_VM)
-		return (EINVAL);
-
 	if (vcp->vcp_nmemranges == 0 ||
 	    vcp->vcp_nmemranges > VMM_MAX_MEM_RANGES)
 		return (EINVAL);
@@ -1253,29 +1331,8 @@ run_vm(int child_cdrom, int child_disks[][VM_MAX_BASE_PER_DISK],
 		return (ENOMEM);
 	}
 
-	log_debug("%s: initializing hardware for vm %s", __func__,
-	    vcp->vcp_name);
-
-	if (!(current_vm->vm_state & VM_STATE_RECEIVED))
-		init_emulated_hw(vmc, child_cdrom, child_disks, child_taps);
-
-	ret = pthread_mutex_init(&threadmutex, NULL);
-	if (ret) {
-		log_warn("%s: could not initialize thread state mutex",
-		    __func__);
-		return (ret);
-	}
-	ret = pthread_cond_init(&threadcond, NULL);
-	if (ret) {
-		log_warn("%s: could not initialize thread state "
-		    "condition variable", __func__);
-		return (ret);
-	}
-
-	mutex_lock(&threadmutex);
-
-	log_debug("%s: starting vcpu threads for vm %s", __func__,
-	    vcp->vcp_name);
+	log_debug("%s: starting %zu vcpu thread(s) for vm %s", __func__,
+	    vcp->vcp_ncpus, vcp->vcp_name);
 
 	/*
 	 * Create and launch one thread for each VCPU. These threads may

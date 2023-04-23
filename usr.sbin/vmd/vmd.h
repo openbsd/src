@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.116 2023/04/16 12:47:26 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.117 2023/04/23 12:11:37 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -71,6 +71,9 @@
 #define VM_DEFAULT_MEMORY	512 * 1024 * 1024	/* 512 MiB */
 
 #define VMD_DEFAULT_STAGGERED_START_DELAY 30
+
+/* Launch mode identifiers for when a vm fork+exec's. */
+#define VMD_LAUNCH_VM		1
 
 /* Rate-limit fast reboots */
 #define VM_START_RATE_SEC	6	/* min. seconds since last reboot */
@@ -355,6 +358,7 @@ struct vmd_config {
 struct vmd {
 	struct privsep		 vmd_ps;
 	const char		*vmd_conffile;
+	char			*argv0;	/* abs. path to vmd for exec, unveil */
 
 	/* global configuration that is sent to the children */
 	struct vmd_config	 vmd_cfg;
@@ -464,6 +468,7 @@ int	 fd_hasdata(int);
 int	 vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
 
 /* vm.c */
+void	 vm_main(int);
 void	 mutex_lock(pthread_mutex_t *);
 void	 mutex_unlock(pthread_mutex_t *);
 int	 read_mem(paddr_t, void *buf, size_t);
