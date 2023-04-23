@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.24 2023/04/23 21:46:07 job Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.25 2023/04/23 21:49:15 job Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -459,7 +459,7 @@ x509v3_cache_extensions_internal(X509 *x)
 	/* V1 should mean no extensions ... */
 	if (X509_get_version(x) == 0) {
 		x->ex_flags |= EXFLAG_V1;
-		if (X509v3_get_ext_count(x) != 0)
+		if (X509_get_ext_count(x) != 0)
 			x->ex_flags |= EXFLAG_INVALID;
 	}
 
