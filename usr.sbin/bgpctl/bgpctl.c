@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.293 2023/04/21 10:49:01 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.294 2023/04/23 11:39:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -386,7 +386,20 @@ main(int argc, char *argv[])
 		break;
 	case FLOWSPEC_SHOW:
 		memset(&ribreq, 0, sizeof(ribreq));
-		ribreq.aid = res->aid;
+		switch (res->aid) {
+		case AID_INET:
+			ribreq.aid = AID_FLOWSPECv4;
+			break;
+		case AID_INET6:
+			ribreq.aid = AID_FLOWSPECv6;
+			break;
+		case AID_UNSPEC:
+			ribreq.aid = res->aid;
+			break;
+		default:
+			errx(1, "flowspec family %s currently not supported",
+			    aid2str(res->aid));
+		}
 		strlcpy(ribreq.rib, res->rib, sizeof(ribreq.rib));
 		imsg_compose(ibuf, IMSG_CTL_SHOW_FLOWSPEC, 0, 0, -1,
 		    &ribreq, sizeof(ribreq));
