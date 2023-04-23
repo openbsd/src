@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.36 2023/04/20 15:12:19 job Exp $ */
+/*	$OpenBSD: print.c,v 1.37 2023/04/23 13:19:34 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -685,6 +685,38 @@ rsc_print(const X509 *x, const struct rsc *p)
 		printf("\t],\n");
 }
 
+static void
+aspa_implicit_afi(const struct aspa *a)
+{
+	size_t	i;
+	size_t	v4cnt = 0, v6cnt = 0;
+	
+	for (i = 0; i < a->providersz; i++) {
+		switch (a->providers[i].afi) {
+		case AFI_IPV4:
+			v4cnt++;
+			break;
+		case AFI_IPV6:
+			v6cnt++;
+			break;
+		default:
+			return;
+		}
+	}
+
+	if (outformats & FORMAT_JSON) {
+		if (a->providersz == v4cnt)
+			printf("\t\t{ \"asid\": 0, \"afi_limit\": \"ipv6\" },\n");
+		if (a->providersz == v6cnt)
+			printf("\t\t{ \"asid\": 0, \"afi_limit\": \"ipv4\" },\n");
+	} else {
+		if (a->providersz == v4cnt)
+			printf("%25s AS: 0 (IPv6 only)\n", "");
+		if (a->providersz == v6cnt)
+			printf("%25s AS: 0 (IPv4 only)\n", "");
+	}
+}
+
 void
 aspa_print(const X509 *x, const struct aspa *p)
 {
@@ -706,6 +738,7 @@ aspa_print(const X509 *x, const struct aspa *p)
 			printf("\t\"expires\": %lld,\n", (long long)p->expires);
 		printf("\t\"customer_asid\": %u,\n", p->custasid);
 		printf("\t\"provider_set\": [\n");
+		aspa_implicit_afi(p);
 		for (i = 0; i < p->providersz; i++) {
 			printf("\t\t{ \"asid\": %u", p->providers[i].as);
 			if (p->providers[i].afi == AFI_IPV4)
@@ -730,8 +763,8 @@ aspa_print(const X509 *x, const struct aspa *p)
 		printf("ASPA not before:          %s\n",
 		    time2str(p->notbefore));
 		printf("ASPA not after:           %s\n", time2str(p->notafter));
-		printf("Customer AS:              %u\n", p->custasid);
-		printf("Provider Set:             ");
+		printf("Customer ASID:            %u\n", p->custasid);
+		printf("Provider set:             ");
 		for (i = 0; i < p->providersz; i++) {
 			if (i > 0)
 				printf("%26s", "");
@@ -748,6 +781,7 @@ aspa_print(const X509 *x, const struct aspa *p)
 			}
 			printf("\n");
 		}
+		aspa_implicit_afi(p);
 	}
 }
 
