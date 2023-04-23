@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.360 2023/03/31 08:19:41 kevlo Exp $
+#	$OpenBSD: files.pci,v 1.361 2023/04/23 00:20:26 dlg Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -770,6 +770,10 @@ file	dev/pci/ksmn.c			ksmn
 device	gcu
 attach	gcu at pci
 file	dev/pci/gcu.c			gcu		needs-flag
+
+# Intel OnChip System Fabric
+attach	iosf at pci with iosf_pci
+file	dev/pci/iosf_pci.c		iosf_pci
 
 # AMD Geode CS5536 Audio
 device	auglx: audio, ac97

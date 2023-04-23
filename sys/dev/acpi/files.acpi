@@ -1,4 +1,4 @@
-#	$OpenBSD: files.acpi,v 1.68 2023/02/04 23:11:59 mglocker Exp $
+#	$OpenBSD: files.acpi,v 1.69 2023/04/23 00:20:26 dlg Exp $
 #
 # Config file and device description for machine-independent ACPI code.
 # Included by ports that need it.
@@ -275,3 +275,7 @@ file	dev/acpi/qciic.c		qciic
 # UFS HC
 attach	ufshci at acpi with ufshci_acpi
 file	dev/acpi/ufshci_acpi.c		ufshci_acpi
+
+# Intel OnChip System Fabric
+attach	iosf at acpi with iosf_acpi
+file	dev/acpi/iosf_acpi.c		iosf_acpi
