@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.96 2023/04/18 08:47:28 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.97 2023/04/23 21:31:16 job Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1200,6 +1200,7 @@ void ERR_load_X509_strings(void);
 #define X509_R_UNSUPPORTED_ALGORITHM			 111
 #define X509_R_WRONG_LOOKUP_TYPE			 112
 #define X509_R_WRONG_TYPE				 122
+#define X509_R_INVALID_VERSION				 123
 
 #ifdef  __cplusplus
 }

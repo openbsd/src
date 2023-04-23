@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_err.c,v 1.19 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_err.c,v 1.20 2023/04/23 21:31:16 job Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -104,6 +104,7 @@ static ERR_STRING_DATA X509_str_reasons[] = {
 	{ERR_REASON(X509_R_UNSUPPORTED_ALGORITHM), "unsupported algorithm"},
 	{ERR_REASON(X509_R_WRONG_LOOKUP_TYPE)    , "wrong lookup type"},
 	{ERR_REASON(X509_R_WRONG_TYPE)           , "wrong type"},
+	{ERR_REASON(X509_R_INVALID_VERSION)      , "wrong x509 version"},
 	{0, NULL}
 };
 
