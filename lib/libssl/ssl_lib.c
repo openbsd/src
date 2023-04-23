@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.308 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.309 2023/04/23 18:51:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -302,6 +302,9 @@ SSL_new(SSL_CTX *ctx)
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	s->initial_ctx = ctx;
 
+	if (!tlsext_randomize_build_order(s))
+		goto err;
+
 	if (ctx->tlsext_ecpointformatlist != NULL) {
 		s->tlsext_ecpointformatlist =
 		    calloc(ctx->tlsext_ecpointformatlist_length,
@@ -549,6 +552,8 @@ SSL_free(SSL *s)
 	ssl_clear_cipher_state(s);
 
 	ssl_cert_free(s->cert);
+
+	free(s->tlsext_build_order);
 
 	free(s->tlsext_hostname);
 	SSL_CTX_free(s->initial_ctx);

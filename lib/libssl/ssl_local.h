@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.3 2022/12/26 07:31:44 jmc Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.4 2023/04/23 18:51:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -974,6 +974,7 @@ struct ssl_st {
 
 	unsigned int max_send_fragment;
 
+	const struct tls_extension **tlsext_build_order;
 	char *tlsext_hostname;
 
 	/* certificate status request info */
