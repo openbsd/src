@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.13 2023/04/23 11:39:56 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.14 2023/04/23 11:52:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -257,7 +257,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 		isneg = 1;
 	}
 
-	if (value[0] == '0' && ((value[1] == 'x') || (value[1] == 'X'))) {
+	if (value[0] == '0' && (value[1] == 'x' || value[1] == 'X')) {
 		value += 2;
 		ishex = 1;
 	}
