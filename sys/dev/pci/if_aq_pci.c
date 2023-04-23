@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.18 2023/04/23 22:48:03 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.19 2023/04/23 22:57:23 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -1071,6 +1071,7 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 
 	if (sc->sc_fw_ops->get_mac_addr(sc))
 		return;
+	printf(", address %s", ether_sprintf(sc->sc_enaddr.ether_addr_octet));
 
 	if (aq_init_rss(sc))
 		return;
@@ -1178,8 +1179,8 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 
 		if (sc->sc_nqueues > 1) {
 			if (pci_intr_map_msix(pa, irqnum, &ih)) {
-				printf("%s: unable to map msi-x vector %d\n",
-				    DEVNAME(sc), irqnum);
+				printf(": unable to map msi-x vector %d\n",
+				    irqnum);
 				return;
 			}
 
@@ -1187,8 +1188,8 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 			    IPL_NET | IPL_MPSAFE, intrmap_cpu(sc->sc_intrmap, i),
 			    aq_intr_queue, aq, aq->q_name);
 			if (aq->q_ihc == NULL) {
-				printf("%s: unable to establish interrupt %d\n",
-				    DEVNAME(sc), irqnum);
+				printf(": unable to establish interrupt %d\n",
+				    irqnum);
 				return;
 			}
 			rx->rx_irq = irqnum;
@@ -1245,8 +1246,7 @@ aq1_fw_reboot(struct aq_softc *sc)
 	}
 
 	if (i <= 0) {
-		printf("%s: F/W reset failed. Neither RBL nor FLB started",
-		    DEVNAME(sc));
+		printf(": F/W reset failed. Neither RBL nor FLB started");
 		return ETIMEDOUT;
 	}
 
@@ -1498,8 +1498,7 @@ aq1_fw_version_init(struct aq_softc *sc)
 	} else if ((FW_VERSION_MAJOR(sc) == 2) || (FW_VERSION_MAJOR(sc) == 3)) {
 		sc->sc_fw_ops = &aq_fw2x_ops;
 	} else {
-		printf("%s: Unsupported F/W version %d.%d.%d\n",
-		    DEVNAME(sc),
+		printf(": Unsupported F/W version %d.%d.%d\n",
 		    FW_VERSION_MAJOR(sc), FW_VERSION_MINOR(sc),
 		    FW_VERSION_BUILD(sc));
 		return ENOTSUP;
@@ -1592,8 +1591,7 @@ aq_hw_reset(struct aq_softc *sc)
 	    (AQ_READ_REG(sc, AQ_INTR_CTRL_REG) & AQ_INTR_CTRL_RESET_IRQ) == 0,
 	    1000, 10, &error);
 	if (error != 0) {
-		printf("%s: atlantic: IRQ reset failed: %d\n", DEVNAME(sc),
-		    error);
+		printf(": IRQ reset failed: %d\n", error);
 		return error;
 	}
 
@@ -1614,7 +1612,7 @@ aq1_get_mac_addr(struct aq_softc *sc)
 		efuse_shadow_addr = AQ_READ_REG(sc, FW1X_MPI_EFUSEADDR_REG);
 
 	if (efuse_shadow_addr == 0) {
-		printf("%s: cannot get efuse addr", DEVNAME(sc));
+		printf(": cannot get efuse addr\n");
 		return ENXIO;
 	}
 
@@ -1627,7 +1625,7 @@ aq1_get_mac_addr(struct aq_softc *sc)
 		return err;
 
 	if (mac_addr[0] == 0 && mac_addr[1] == 0) {
-		printf("%s: mac address not found", DEVNAME(sc));
+		printf(": mac address not found\n");
 		return ENXIO;
 	}
 
@@ -1642,7 +1640,6 @@ aq1_get_mac_addr(struct aq_softc *sc)
 
 	memcpy(sc->sc_enaddr.ether_addr_octet,
 	    (uint8_t *)mac_addr, ETHER_ADDR_LEN);
-	DPRINTF((": %s", ether_sprintf(sc->sc_enaddr.ether_addr_octet)));
 
 	return 0;
 }
