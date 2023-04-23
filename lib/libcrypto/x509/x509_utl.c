@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.9 2023/04/23 09:58:38 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.10 2023/04/23 10:19:52 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -471,9 +471,11 @@ hex_to_string(const unsigned char *buffer, long len)
 	int i;
 	static const char hexdig[] = "0123456789ABCDEF";
 
-	if (!buffer || !len)
+	if (len < 0)
 		return NULL;
-	if (!(tmp = malloc(len * 3 + 1))) {
+	if (len == 0)
+		return calloc(1, 1);
+	if ((tmp = calloc(len, 3)) == NULL) {
 		X509V3error(ERR_R_MALLOC_FAILURE);
 		return NULL;
 	}
