@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.12 2023/04/23 11:34:57 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.13 2023/04/23 11:39:56 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -273,7 +273,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 		return NULL;
 	}
 
-	if (isneg && BN_is_zero(bn))
+	if (BN_is_zero(bn))
 		isneg = 0;
 
 	aint = BN_to_ASN1_INTEGER(bn, NULL);
