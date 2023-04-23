@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.516 2023/04/20 19:28:30 jcs Exp $
+#	$OpenBSD: GENERIC,v 1.517 2023/04/23 00:50:29 dlg Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -159,6 +159,8 @@ iic*	at amdpm?
 dwiic*	at acpi?		# DesignWare Synopsys i2c controller
 dwiic*	at pci?
 iic*	at dwiic?
+iosf*	at acpi?		# Intel OnChip System Fabric
+iosf*	at pci?
 
 itherm*	at pci?			# Intel 3400 Thermal Sensor
 adc*	at iic?			# Analog Devices AD7416/AD7417/7418
