@@ -302,6 +302,7 @@
 ./usr/include/dev/ic/if_wivar.h
 ./usr/include/dev/ic/iha.h
 ./usr/include/dev/ic/imxiicvar.h
+./usr/include/dev/ic/iosfvar.h
 ./usr/include/dev/ic/lancereg.h
 ./usr/include/dev/ic/lancevar.h
 ./usr/include/dev/ic/lemacreg.h

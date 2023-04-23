@@ -1570,6 +1570,7 @@
 ./usr/share/man/man4/inet6.4
 ./usr/share/man/man4/inphy.4
 ./usr/share/man/man4/iophy.4
+./usr/share/man/man4/iosf.4
 ./usr/share/man/man4/ip.4
 ./usr/share/man/man4/ip6.4
 ./usr/share/man/man4/ipcomp.4
