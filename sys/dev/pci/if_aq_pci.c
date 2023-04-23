@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.17 2022/05/25 09:49:17 jmatthew Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.18 2023/04/23 22:48:03 jmatthew Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -395,11 +395,9 @@
 #define __LOWEST_SET_BIT(__mask) (((((uint32_t)__mask) - 1) & ((uint32_t)__mask)) ^ ((uint32_t)__mask))
 #define __SHIFTIN(__x, __mask) ((__x) * __LOWEST_SET_BIT(__mask))
 
-#if 0
 #define AQ_READ_REG(sc, reg) \
 	bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg))
 
-#endif
 #define AQ_WRITE_REG(sc, reg, val) \
 	bus_space_write_4((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
 
@@ -445,13 +443,15 @@
 #define FEATURES_TPO2		0x00000002
 #define FEATURES_RPF2		0x00000004
 #define FEATURES_MPI_AQ		0x00000008
-#define FEATURES_REV_A0		0x10000000
-#define FEATURES_REV_A		(FEATURES_REV_A0)
-#define FEATURES_REV_B0		0x20000000
-#define FEATURES_REV_B1		0x40000000
-#define FEATURES_REV_B		(FEATURES_REV_B0|FEATURES_REV_B1)
+#define FEATURES_AQ1_REV_A0	0x01000000
+#define FEATURES_AQ1_REV_A	(FEATURES_AQ1_REV_A0)
+#define FEATURES_AQ1_REV_B0	0x02000000
+#define FEATURES_AQ1_REV_B1	0x04000000
+#define FEATURES_AQ1_REV_B	(FEATURES_AQ1_REV_B0|FEATURES_AQ1_REV_B1)
+#define FEATURES_AQ1		(FEATURES_AQ1_REV_A|FEATURES_AQ1_REV_B)
+#define HWTYPE_AQ1_P(sc)	(((sc)->sc_features & FEATURES_AQ1) != 0)
 
-/* lock for FW2X_MPI_{CONTROL,STATE]_REG read-modify-write */
+/* lock for firmware interface */
 #define AQ_MPI_LOCK(sc)		mtx_enter(&(sc)->sc_mpi_mutex);
 #define AQ_MPI_UNLOCK(sc)	mtx_leave(&(sc)->sc_mpi_mutex);
 
@@ -518,6 +518,10 @@
 	 FW2X_CTRL_2P5GBASET_FD_EEE |	\
 	 FW2X_CTRL_5GBASET_FD_EEE |	\
 	 FW2X_CTRL_10GBASET_FD_EEE)
+
+enum aq_hwtype {
+	HWTYPE_AQ1,
+};
 
 enum aq_fw_bootloader_mode {
 	FW_BOOT_MODE_UNKNOWN = 0,
@@ -746,6 +750,7 @@ struct aq_queues {
 struct aq_softc;
 struct aq_firmware_ops {
 	int (*reset)(struct aq_softc *);
+	int (*get_mac_addr)(struct aq_softc *);
 	int (*set_mode)(struct aq_softc *, enum aq_hw_fw_mpi_state,
 	    enum aq_link_speed, enum aq_link_fc, enum aq_link_eee);
 	int (*get_mode)(struct aq_softc *, enum aq_hw_fw_mpi_state *,
@@ -807,57 +812,58 @@ const struct pci_matchid aq_devices[] = {
 const struct aq_product {
 	pci_vendor_id_t aq_vendor;
 	pci_product_id_t aq_product;
+	enum aq_hwtype aq_hwtype;
 	enum aq_media_type aq_media_type;
 	enum aq_link_speed aq_available_rates;
 } aq_products[] = {
-{	PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC100,
+{	PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC100, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_FIBRE, AQ_LINK_ALL
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC107,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC107, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_ALL
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC108,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC108, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5 | AQ_LINK_5G
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC109,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC109, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC111,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC111, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5 | AQ_LINK_5G
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC112,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC112, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC100S,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC100S, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_FIBRE, AQ_LINK_ALL
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC107S,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC107S, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_ALL
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC108S,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC108S, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5 | AQ_LINK_5G
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC109S,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC109S, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC111S,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC111S, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5 | AQ_LINK_5G
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC112S,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_AQC112S, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_D100,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_D100, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_FIBRE, AQ_LINK_ALL
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_D107,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_D107, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_ALL
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_D108,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_D108, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5 | AQ_LINK_5G
 },
-{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_D109,
+{ PCI_VENDOR_AQUANTIA, PCI_PRODUCT_AQUANTIA_D109, HWTYPE_AQ1,
 	AQ_MEDIA_TYPE_TP, AQ_LINK_100M | AQ_LINK_1G | AQ_LINK_2G5
-}
+},
 };
 
 int	aq_match(struct device *, void *, void *);
@@ -867,16 +873,6 @@ int	aq_activate(struct device *, int);
 int	aq_intr(void *);
 int	aq_intr_link(void *);
 int	aq_intr_queue(void *);
-void	aq_global_software_reset(struct aq_softc *);
-int	aq_fw_reset(struct aq_softc *);
-int	aq_mac_soft_reset(struct aq_softc *, enum aq_fw_bootloader_mode *);
-int	aq_mac_soft_reset_rbl(struct aq_softc *, enum aq_fw_bootloader_mode *);
-int	aq_mac_soft_reset_flb(struct aq_softc *);
-int	aq_fw_read_version(struct aq_softc *);
-int	aq_fw_version_init(struct aq_softc *);
-int	aq_hw_init_ucp(struct aq_softc *);
-int	aq_fw_downld_dwords(struct aq_softc *, uint32_t, uint32_t *, uint32_t);
-int	aq_get_mac_addr(struct aq_softc *);
 int	aq_init_rss(struct aq_softc *);
 int	aq_hw_reset(struct aq_softc *);
 int	aq_hw_init(struct aq_softc *, int, int);
@@ -899,6 +895,16 @@ void	aq_ifmedia_status(struct ifnet *, struct ifmediareq *);
 int	aq_ifmedia_change(struct ifnet *);
 void	aq_update_link_status(struct aq_softc *);
 
+int	aq1_fw_reboot(struct aq_softc *);
+int	aq1_fw_read_version(struct aq_softc *);
+int	aq1_fw_version_init(struct aq_softc *);
+int	aq1_hw_init_ucp(struct aq_softc *);
+void	aq1_global_software_reset(struct aq_softc *);
+int	aq1_mac_soft_reset(struct aq_softc *, enum aq_fw_bootloader_mode *);
+int	aq1_mac_soft_reset_rbl(struct aq_softc *, enum aq_fw_bootloader_mode *);
+int	aq1_mac_soft_reset_flb(struct aq_softc *);
+int	aq1_fw_downld_dwords(struct aq_softc *, uint32_t, uint32_t *, uint32_t);
+
 void	aq_refill(void *);
 int	aq_rx_fill(struct aq_softc *, struct aq_rxring *);
 static inline unsigned int aq_rx_fill_slots(struct aq_softc *,
@@ -908,6 +914,8 @@ int	aq_dmamem_alloc(struct aq_softc *, struct aq_dmamem *,
 	    bus_size_t, u_int);
 void	aq_dmamem_zero(struct aq_dmamem *);
 void	aq_dmamem_free(struct aq_softc *, struct aq_dmamem *);
+
+int	aq1_get_mac_addr(struct aq_softc *);
 
 int	aq_fw1x_reset(struct aq_softc *);
 int	aq_fw1x_get_mode(struct aq_softc *, enum aq_hw_fw_mpi_state *,
@@ -925,6 +933,7 @@ int	aq_fw2x_get_stats(struct aq_softc *, struct aq_hw_stats_s *);
 
 const struct aq_firmware_ops aq_fw1x_ops = {
 	.reset = aq_fw1x_reset,
+	.get_mac_addr = aq1_get_mac_addr,
 	.set_mode = aq_fw1x_set_mode,
 	.get_mode = aq_fw1x_get_mode,
 	.get_stats = aq_fw1x_get_stats,
@@ -932,6 +941,7 @@ const struct aq_firmware_ops aq_fw1x_ops = {
 
 const struct aq_firmware_ops aq_fw2x_ops = {
 	.reset = aq_fw2x_reset,
+	.get_mac_addr = aq1_get_mac_addr,
 	.set_mode = aq_fw2x_set_mode,
 	.get_mode = aq_fw2x_get_mode,
 	.get_stats = aq_fw2x_get_stats,
@@ -945,17 +955,6 @@ const struct cfattach aq_ca = {
 struct cfdriver aq_cd = {
 	NULL, "aq", DV_IFNET
 };
-
-uint32_t
-AQ_READ_REG(struct aq_softc *sc, uint32_t reg)
-{
-	uint32_t res;
-
-	res = bus_space_read_4(sc->sc_iot, sc->sc_ioh, reg);
-
-	return res;
-}
-
 
 int
 aq_match(struct device *dev, void *match, void *aux)
@@ -1058,21 +1057,19 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_nqueues > 1)
 		printf(", %d queues", sc->sc_nqueues);
 
-	if (aq_fw_reset(sc))
+	switch (aqp->aq_hwtype) {
+	case HWTYPE_AQ1:
+		if (aq1_fw_reboot(sc))
+			return;
+		break;
+	default:
 		return;
-
-	DPRINTF((", FW version 0x%x", sc->sc_fw_version));
-
-	if (aq_fw_version_init(sc))
-		return;
-
-	if (aq_hw_init_ucp(sc))
-		return;
+	}
 
 	if (aq_hw_reset(sc))
 		return;
 
-	if (aq_get_mac_addr(sc))
+	if (sc->sc_fw_ops->get_mac_addr(sc))
 		return;
 
 	if (aq_init_rss(sc))
@@ -1230,7 +1227,7 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-aq_fw_reset(struct aq_softc *sc)
+aq1_fw_reboot(struct aq_softc *sc)
 {
 	uint32_t ver, v, boot_exit_code;
 	int i, error;
@@ -1262,13 +1259,11 @@ aq_fw_reset(struct aq_softc *sc)
 	 * 2) Driver may skip reset sequence and save time.
 	 */
 	if (sc->sc_fast_start_enabled && (ver != 0)) {
-		error = aq_fw_read_version(sc);
-		/* Skip reset as it just completed */
-		if (error == 0)
-			return 0;
+		if (aq1_fw_read_version(sc) == 0)
+			goto faststart;
 	}
 
-	error = aq_mac_soft_reset(sc, &mode);
+	error = aq1_mac_soft_reset(sc, &mode);
 	if (error != 0) {
 		printf("%s: MAC reset failed: %d\n", DEVNAME(sc), error);
 		return error;
@@ -1279,12 +1274,12 @@ aq_fw_reset(struct aq_softc *sc)
 		DPRINTF(("%s: FLB> F/W successfully loaded from flash.",
 		    DEVNAME(sc)));
 		sc->sc_flash_present = 1;
-		return aq_fw_read_version(sc);
+		break;
 	case FW_BOOT_MODE_RBL_FLASH:
 		DPRINTF(("%s: RBL> F/W loaded from flash. Host Bootload "
 		    "disabled.", DEVNAME(sc)));
 		sc->sc_flash_present = 1;
-		return aq_fw_read_version(sc);
+		break;
 	case FW_BOOT_MODE_UNKNOWN:
 		printf("%s: F/W bootload error: unknown bootloader type",
 		    DEVNAME(sc));
@@ -1294,11 +1289,20 @@ aq_fw_reset(struct aq_softc *sc)
 		return ENOTSUP;
 	}
 
-	return ENOTSUP;
+ faststart:
+	error = aq1_fw_read_version(sc);
+	if (error != 0)
+		return error;
+
+	error = aq1_fw_version_init(sc);
+	if (error != 0)
+		return error;
+
+	return aq1_hw_init_ucp(sc);
 }
 
 int
-aq_mac_soft_reset_rbl(struct aq_softc *sc, enum aq_fw_bootloader_mode *mode)
+aq1_mac_soft_reset_rbl(struct aq_softc *sc, enum aq_fw_bootloader_mode *mode)
 {
 	int timo;
 
@@ -1311,7 +1315,7 @@ aq_mac_soft_reset_rbl(struct aq_softc *sc, enum aq_fw_bootloader_mode *mode)
 	/* MAC FW will reload PHY FW if 1E.1000.3 was cleaned - #undone */
 	AQ_WRITE_REG(sc, FW_BOOT_EXIT_CODE_REG, RBL_STATUS_DEAD);
 
-	aq_global_software_reset(sc);
+	aq1_global_software_reset(sc);
 
 	AQ_WRITE_REG(sc, AQ_FW_GLB_CTL2_REG, 0x40e0);
 
@@ -1353,7 +1357,7 @@ aq_mac_soft_reset_rbl(struct aq_softc *sc, enum aq_fw_bootloader_mode *mode)
 }
 
 int
-aq_mac_soft_reset_flb(struct aq_softc *sc)
+aq1_mac_soft_reset_flb(struct aq_softc *sc)
 {
 	uint32_t v;
 	int timo;
@@ -1423,7 +1427,7 @@ aq_mac_soft_reset_flb(struct aq_softc *sc)
 	AQ_WRITE_REG(sc, AQ_FW_GLB_CPU_SEM_REG(0), 1);
 
 	/* PHY Kickstart: #undone */
-	aq_global_software_reset(sc);
+	aq1_global_software_reset(sc);
 
 	for (timo = 0; timo < 1000; timo++) {
 		if (AQ_READ_REG(sc, AQ_FW_VERSION_REG) != 0)
@@ -1441,18 +1445,18 @@ aq_mac_soft_reset_flb(struct aq_softc *sc)
 }
 
 int
-aq_mac_soft_reset(struct aq_softc *sc, enum aq_fw_bootloader_mode *mode)
+aq1_mac_soft_reset(struct aq_softc *sc, enum aq_fw_bootloader_mode *mode)
 {
 	if (sc->sc_rbl_enabled)
-		return aq_mac_soft_reset_rbl(sc, mode);
+		return aq1_mac_soft_reset_rbl(sc, mode);
 
 	if (mode != NULL)
 		*mode = FW_BOOT_MODE_FLB;
-	return aq_mac_soft_reset_flb(sc);
+	return aq1_mac_soft_reset_flb(sc);
 }
 
 void
-aq_global_software_reset(struct aq_softc *sc)
+aq1_global_software_reset(struct aq_softc *sc)
 {
         uint32_t v;
 
@@ -1468,7 +1472,7 @@ aq_global_software_reset(struct aq_softc *sc)
 }
 
 int
-aq_fw_read_version(struct aq_softc *sc)
+aq1_fw_read_version(struct aq_softc *sc)
 {
 	int i, error = EBUSY;
 #define MAC_FW_START_TIMEOUT_MS 10000
@@ -1484,7 +1488,7 @@ aq_fw_read_version(struct aq_softc *sc)
 }
 
 int
-aq_fw_version_init(struct aq_softc *sc)
+aq1_fw_version_init(struct aq_softc *sc)
 {
 	int error = 0;
 	char fw_vers[sizeof("F/W version xxxxx.xxxxx.xxxxx")];
@@ -1507,24 +1511,24 @@ aq_fw_version_init(struct aq_softc *sc)
 	uint32_t hwrev = AQ_READ_REG(sc, AQ_HW_REVISION_REG);
 	switch (hwrev & 0x0000000f) {
 	case 0x01:
-		printf(", revision A0, %s", fw_vers);
-		sc->sc_features |= FEATURES_REV_A0 |
+		printf(", Atlantic A0, %s", fw_vers);
+		sc->sc_features |= FEATURES_AQ1_REV_A0 |
 		    FEATURES_MPI_AQ | FEATURES_MIPS;
 		break;
 	case 0x02:
-		printf(", revision B0, %s", fw_vers);
-		sc->sc_features |= FEATURES_REV_B0 |
+		printf(", Atlantic B0, %s", fw_vers);
+		sc->sc_features |= FEATURES_AQ1_REV_B0 |
 		    FEATURES_MPI_AQ | FEATURES_MIPS |
 		    FEATURES_TPO2 | FEATURES_RPF2;
 		break;
 	case 0x0A:
-		printf(", revision B1, %s", fw_vers);
-		sc->sc_features |= FEATURES_REV_B1 |
+		printf(", Atlantic B1, %s", fw_vers);
+		sc->sc_features |= FEATURES_AQ1_REV_B1 |
 		    FEATURES_MPI_AQ | FEATURES_MIPS |
 		    FEATURES_TPO2 | FEATURES_RPF2;
 		break;
 	default:
-		printf(", Unknown revision (0x%08x)", hwrev);
+		printf(": Unknown revision (0x%08x)\n", hwrev);
 		error = ENOTSUP;
 		break;
 	}
@@ -1532,7 +1536,7 @@ aq_fw_version_init(struct aq_softc *sc)
 }
 
 int
-aq_hw_init_ucp(struct aq_softc *sc)
+aq1_hw_init_ucp(struct aq_softc *sc)
 {
 	int timo;
 
@@ -1597,7 +1601,7 @@ aq_hw_reset(struct aq_softc *sc)
 }
 
 int
-aq_get_mac_addr(struct aq_softc *sc)
+aq1_get_mac_addr(struct aq_softc *sc)
 {
 	uint32_t mac_addr[2];
 	uint32_t efuse_shadow_addr;
@@ -1617,7 +1621,7 @@ aq_get_mac_addr(struct aq_softc *sc)
 	DPRINTF(("%s: efuse_shadow_addr = %x\n", DEVNAME(sc), efuse_shadow_addr));
 
 	memset(mac_addr, 0, sizeof(mac_addr));
-	err = aq_fw_downld_dwords(sc, efuse_shadow_addr + (40 * 4),
+	err = aq1_fw_downld_dwords(sc, efuse_shadow_addr + (40 * 4),
 	    mac_addr, 2);
 	if (err < 0)
 		return err;
@@ -1650,7 +1654,7 @@ aq_activate(struct device *self, int act)
 }
 
 int
-aq_fw_downld_dwords(struct aq_softc *sc, uint32_t addr, uint32_t *p,
+aq1_fw_downld_dwords(struct aq_softc *sc, uint32_t addr, uint32_t *p,
     uint32_t cnt)
 {
 	uint32_t v;
@@ -1674,7 +1678,7 @@ aq_fw_downld_dwords(struct aq_softc *sc, uint32_t addr, uint32_t *p,
 		/* execute mailbox interface */
 		AQ_WRITE_REG_BIT(sc, AQ_FW_MBOX_CMD_REG,
 		    AQ_FW_MBOX_CMD_EXECUTE, 1);
-		if (sc->sc_features & FEATURES_REV_B1) {
+		if (sc->sc_features & FEATURES_AQ1_REV_B1) {
 			WAIT_FOR(AQ_READ_REG(sc, AQ_FW_MBOX_ADDR_REG) != addr,
 			    1, 1000, &error);
 		} else {
@@ -1700,7 +1704,7 @@ aq_fw2x_reset(struct aq_softc *sc)
 	struct aq_fw2x_capabilities caps = { 0 };
 	int error;
 
-	error = aq_fw_downld_dwords(sc,
+	error = aq1_fw_downld_dwords(sc,
 	    sc->sc_mbox_addr + offsetof(struct aq_fw2x_mailbox, caps),
 	    (uint32_t *)&caps, sizeof caps / sizeof(uint32_t));
 	if (error != 0) {
@@ -1932,7 +1936,7 @@ aq_hw_init_rx_path(struct aq_softc *sc)
 	    ETHERTYPE_VLAN);
 	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 1);
 
-	if (sc->sc_features & FEATURES_REV_B) {
+	if (sc->sc_features & FEATURES_AQ1_REV_B) {
 		AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG,
 		    RPF_VLAN_MODE_ACCEPT_UNTAGGED, 1);
 		AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG,
