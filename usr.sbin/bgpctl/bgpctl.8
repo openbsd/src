@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.109 2023/04/23 11:29:57 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.110 2023/04/23 11:42:45 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -100,8 +100,14 @@ Remove the specified flowspec rule from the list of announced rules.
 Remove all dynamically added (i.e. with
 .Nm Cm flowspec add )
 flowspec rules from the list of announced rules.
-.It Cm flowspec show
+.It Cm flowspec show Ar family
 Show all announced flowspec rules.
+.Ar family ,
+if given, limits the output to the given address family.
+The supported families are
+.Em inet
+and
+.Em inet6 .
 .It Cm log brief
 Disable verbose debug logging.
 .It Cm log verbose
