@@ -1,6 +1,6 @@
-.\"	$OpenBSD: dwiic.4,v 1.5 2023/04/23 00:44:44 dlg Exp $
+.\"	$OpenBSD: iosf.4,v 1.1 2023/04/23 00:44:44 dlg Exp $
 .\"
-.\" Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
+.\" Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,40 +15,36 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .Dd $Mdocdate: April 23 2023 $
-.Dt DWIIC 4
+.Dt IOSF 4
 .Os
 .Sh NAME
-.Nm dwiic
-.Nd Synopsys DesignWare I2C controller
+.Nm iosf
+.Nd Intel OnChip System Fabric device
 .Sh SYNOPSIS
-.Cd "dwiic* at acpi?"
-.Cd "dwiic* at pci?"
-.Cd "iic* at dwiic?"
+.Cd "iosf* at acpi?"
+.Cd "iosf* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the Synopsys DesignWare I2C controller for use
-with the
-.Xr iic 4
-framework.
+driver provides support routines for platforms using the
+Intel OnChip System Fabric.
 .Pp
-On systems using the Intel OnChip System Fabric,
+The
+.Xr dwiic 4
+driver uses the MailBox Interface (MBI) provided by
 .Nm
-may need the
-.Xr iosf 4
-driver to coordinate access to the I2C bus.
+to coordinate access to I2C devices.
 .Sh SEE ALSO
 .Xr acpi 4 ,
-.Xr iic 4 ,
-.Xr iosf 4 ,
+.Xr dwiic 4 ,
 .Xr pci 4
 .Sh HISTORY
 The
 .Nm
 device driver first appeared in
-.Ox 5.9 .
+.Ox 7.4 .
 .Sh AUTHORS
 The
 .Nm
 driver was written by
-.An joshua stein Aq Mt jcs@openbsd.org .
+.An David Gwynne Aq Mt dlg@openbsd.org .
