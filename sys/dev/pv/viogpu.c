@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.1 2023/04/20 19:28:31 jcs Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.2 2023/04/23 10:29:35 patrick Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -92,7 +92,6 @@ struct viogpu_softc {
 	struct wsscreen_descr	sc_wsd;
 	struct wsscreen_list	sc_wsl;
 	struct wsscreen_descr	*sc_scrlist[1];
-	struct wsdisplay_charcell sc_fb_bs[VIOGPU_HEIGHT * VIOGPU_WIDTH];
 	int			console;
 	int			primary;
 
@@ -261,7 +260,6 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 	ri->ri_gnum = 8;
 	ri->ri_rpos = 16;
 	ri->ri_rnum = 8;
-	ri->ri_bs = sc->sc_fb_bs;
 	rasops_init(ri, VIOGPU_HEIGHT, VIOGPU_WIDTH);
 
 	strlcpy(sc->sc_wsd.name, "std", sizeof(sc->sc_wsd.name));
