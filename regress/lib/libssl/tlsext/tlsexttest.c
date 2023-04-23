@@ -1,4 +1,4 @@
-/* $OpenBSD: tlsexttest.c,v 1.79 2022/11/26 16:08:57 tb Exp $ */
+/* $OpenBSD: tlsexttest.c,v 1.80 2023/04/23 18:59:41 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -36,6 +36,7 @@ struct tls_extension_funcs {
 const struct tls_extension *tls_extension_find(uint16_t, size_t *);
 const struct tls_extension_funcs *tlsext_funcs(const struct tls_extension *,
     int);
+int tlsext_linearize_build_order(SSL *);
 
 static int
 tls_extension_funcs(int type, const struct tls_extension_funcs **client_funcs,
@@ -3223,6 +3224,11 @@ test_tlsext_clienthello_build(void)
 		goto err;
 	}
 
+	if (!tlsext_linearize_build_order(ssl)) {
+		FAIL("failed to linearize build order");
+		goto err;
+	}
+
 	if (!tls_extension_funcs(TLSEXT_TYPE_supported_versions, &client_funcs,
 	    &server_funcs))
 		errx(1, "failed to fetch supported versions funcs");
@@ -3337,6 +3343,10 @@ test_tlsext_serverhello_build(void)
 	}
 	if ((ssl = SSL_new(ssl_ctx)) == NULL) {
 		FAIL("failed to create SSL");
+		goto err;
+	}
+	if (!tlsext_linearize_build_order(ssl)) {
+		FAIL("failed to linearize build order");
 		goto err;
 	}
 	if ((ssl->session = SSL_SESSION_new()) == NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: clienttest.c,v 1.39 2022/07/19 20:16:50 tb Exp $ */
+/*	$OpenBSD: clienttest.c,v 1.40 2023/04/23 18:59:41 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -40,6 +40,8 @@
 #define TLS13_ONLY_KEY_SHARE_OFFSET (TLS13_HM_OFFSET + 98)
 
 #define TLS1_3_VERSION_ONLY (TLS1_3_VERSION | 0x10000)
+
+int tlsext_linearize_build_order(SSL *);
 
 static const uint8_t cipher_list_dtls1[] = {
 	0xc0, 0x14, 0xc0, 0x0a, 0x00, 0x39, 0xff, 0x85,
@@ -646,6 +648,11 @@ client_hello_test(int testno, const struct client_hello_test *cht)
 
 	if ((ssl = SSL_new(ssl_ctx)) == NULL) {
 		fprintf(stderr, "SSL_new() returned NULL\n");
+		goto failure;
+	}
+
+	if (!tlsext_linearize_build_order(ssl)) {
+		fprintf(stderr, "failed to linearize build order");
 		goto failure;
 	}
 
