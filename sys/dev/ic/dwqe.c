@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.6 2023/04/22 06:36:35 dlg Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.7 2023/04/23 06:22:15 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -116,7 +116,7 @@ dwqe_attach(struct dwqe_softc *sc)
 	for (i = 0; i < 4; i++)
 		sc->sc_hw_feature[i] = dwqe_read(sc, GMAC_MAC_HW_FEATURE(i));
 
-	timeout_set(&sc->sc_tick, dwqe_tick, sc);
+	timeout_set(&sc->sc_phy_tick, dwqe_tick, sc);
 	timeout_set(&sc->sc_rxto, dwqe_rxtick, sc);
 
 	ifp = &sc->sc_ac.ac_if;
@@ -518,7 +518,7 @@ dwqe_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	timeout_add_sec(&sc->sc_tick, 1);
+	timeout_add_sec(&sc->sc_phy_tick, 1);
 }
 
 void
@@ -824,7 +824,7 @@ dwqe_up(struct dwqe_softc *sc)
 	    GMAC_CHAN_INTR_ENA_RIE |
 	    GMAC_CHAN_INTR_ENA_TIE);
 
-	timeout_add_sec(&sc->sc_tick, 1);
+	timeout_add_sec(&sc->sc_phy_tick, 1);
 }
 
 void
@@ -836,7 +836,7 @@ dwqe_down(struct dwqe_softc *sc)
 	int i;
 
 	timeout_del(&sc->sc_rxto);
-	timeout_del(&sc->sc_tick);
+	timeout_del(&sc->sc_phy_tick);
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
