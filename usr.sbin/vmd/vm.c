@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.83 2023/02/06 20:33:34 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.84 2023/04/23 05:37:55 anton Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -175,7 +175,7 @@ static const struct vcpu_reg_state vcpu_init_flat64 = {
 	.vrs_msrs[VCPU_REGS_SFMASK] = 0ULL,
 	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL,
 	.vrs_msrs[VCPU_REGS_MISC_ENABLE] = 0ULL,
-	.vrs_crs[VCPU_REGS_XCR0] = XCR0_X87
+	.vrs_crs[VCPU_REGS_XCR0] = XFEATURE_X87
 };
 
 /*
@@ -210,7 +210,7 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
 	.vrs_msrs[VCPU_REGS_CSTAR] = 0ULL,
 	.vrs_msrs[VCPU_REGS_SFMASK] = 0ULL,
 	.vrs_msrs[VCPU_REGS_KGSBASE] = 0ULL,
-	.vrs_crs[VCPU_REGS_XCR0] = XCR0_X87
+	.vrs_crs[VCPU_REGS_XCR0] = XFEATURE_X87
 };
 
 /*
