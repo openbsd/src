@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.20 2022/08/31 15:14:01 kettenis Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.21 2023/04/23 00:33:02 dlg Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -17,6 +17,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "iosf.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -28,6 +30,7 @@
 #include <dev/acpi/dsdt.h>
 
 #include <dev/ic/dwiicvar.h>
+#include <dev/ic/iosfvar.h>
 
 struct dwiic_crs {
 	int irq_int;
@@ -52,6 +55,11 @@ void		dwiic_acpi_get_params(struct dwiic_softc *, char *, uint16_t *,
 void		dwiic_acpi_power(struct dwiic_softc *, int);
 void		dwiic_acpi_bus_scan(struct device *,
 		    struct i2cbus_attach_args *, void *);
+
+#if NIOSF > 0
+int		dwiic_acpi_acquire_bus(void *, int);
+void		dwiic_acpi_release_bus(void *, int);
+#endif
 
 const struct cfattach dwiic_acpi_ca = {
 	sizeof(struct dwiic_softc),
@@ -103,6 +111,7 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	struct acpi_attach_args *aaa = aux;
 	struct aml_value res;
 	struct dwiic_crs crs;
+	uint64_t sem;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aaa->aaa_node;
@@ -163,6 +172,13 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 			printf(": can't establish interrupt");
 	}
 
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode,
+	    "_SEM", 0, NULL, &sem))
+		sem = 0;
+
+	if (sem)
+		printf(", sem");
+
 	printf("\n");
 
 	rw_init(&sc->sc_i2c_lock, "iiclk");
@@ -175,6 +191,13 @@ dwiic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c_tag.ic_intr_establish = dwiic_i2c_intr_establish;
 	sc->sc_i2c_tag.ic_intr_disestablish = dwiic_i2c_intr_disestablish;
 	sc->sc_i2c_tag.ic_intr_string = dwiic_i2c_intr_string;
+
+#if NIOSF > 0
+	if (sem) {
+		sc->sc_i2c_tag.ic_acquire_bus = dwiic_acpi_acquire_bus;
+		sc->sc_i2c_tag.ic_release_bus = dwiic_acpi_release_bus;
+	}
+#endif
 
 	bzero(&sc->sc_iba, sizeof(sc->sc_iba));
 	sc->sc_iba.iba_name = "iic";
@@ -547,3 +570,27 @@ dwiic_acpi_power(struct dwiic_softc *sc, int power)
 		dwiic_write(sc, 0x800, 1);
 	}
 }
+
+#if NIOSF > 0
+extern int	iosf_i2c_acquire(int);
+extern void	iosf_i2c_release(int);
+
+int
+dwiic_acpi_acquire_bus(void *cookie, int flags)
+{
+	int rv;
+
+	rv = dwiic_i2c_acquire_bus(cookie, flags);
+	if (rv != 0)
+		return (rv);
+
+	return (iosf_i2c_acquire(flags));
+}
+
+void
+dwiic_acpi_release_bus(void *cookie, int flags)
+{
+	iosf_i2c_release(flags);
+	dwiic_i2c_release_bus(cookie, flags);
+}
+#endif /* NIOSF > 0 */
