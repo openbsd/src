@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.20 2023/04/23 00:01:40 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.21 2023/04/23 00:08:36 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -157,8 +157,6 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 */
 	if (!CPU_IS_PRIMARY(ci) && reset_cq_intrclock)
 		multiplier = CPU_INFO_UNIT(ci);
-
-	cq->cq_uptime = nsecuptime();
 
 	/*
 	 * The first time we do this, the primary CPU cannot skip any
