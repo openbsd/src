@@ -769,6 +769,7 @@ class IBTPltSection : public SyntheticSection {
 public:
   IBTPltSection();
   void writeTo(uint8_t *Buf) override;
+  bool isNeeded() const override;
   size_t getSize() const override;
 };
 
