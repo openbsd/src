@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.10 2023/04/23 10:19:52 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.11 2023/04/23 11:25:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -241,7 +241,7 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 {
 	BIGNUM *bn = NULL;
 	ASN1_INTEGER *aint;
-	int isneg, ishex;
+	int isneg = 0, ishex = 0;
 	int ret;
 
 	if (!value) {
@@ -252,14 +252,12 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 	if (value[0] == '-') {
 		value++;
 		isneg = 1;
-	} else
-		isneg = 0;
+	}
 
 	if (value[0] == '0' && ((value[1] == 'x') || (value[1] == 'X'))) {
 		value += 2;
 		ishex = 1;
-	} else
-		ishex = 0;
+	}
 
 	if (ishex)
 		ret = BN_hex2bn(&bn, value);
