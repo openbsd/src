@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.108 2023/04/13 11:52:43 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.109 2023/04/23 11:29:57 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 13 2023 $
+.Dd $Mdocdate: April 23 2023 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -80,6 +80,28 @@ a.k.a. the kernel routing table.
 .Xc
 Remove the learned routes from the specified Forwarding Information Base
 a.k.a. the kernel routing table.
+.It Cm flowspec add Ar family rule Op Cm set Ar argument ...
+Add the specified flowspec rule to the list of announced rules.
+Currently
+.Ar family
+can be either
+.Cm inet
+or
+.Cm inet6 .
+It is possible to set various path attributes with additional arguments.
+Adding a rule will replace an existing equal rule, including rules loaded
+from the configuration.
+See
+.Xr bgpd.conf 5
+for information on how to write a flowspec rule.
+.It Cm flowspec delete Ar family rule
+Remove the specified flowspec rule from the list of announced rules.
+.It Cm flowspec flush
+Remove all dynamically added (i.e. with
+.Nm Cm flowspec add )
+flowspec rules from the list of announced rules.
+.It Cm flowspec show
+Show all announced flowspec rules.
 .It Cm log brief
 Disable verbose debug logging.
 .It Cm log verbose
@@ -145,9 +167,9 @@ Prefixes should be sent via stdin.
 .It Cm network delete Ar prefix
 Remove the specified prefix from the list of announced networks.
 .It Cm network flush
-Remove all dynamically (i.e. with
+Remove all dynamically added (i.e. with
 .Nm Cm network add )
-added prefixes from the list of announced networks.
+prefixes from the list of announced networks.
 .It Cm network mrt file Ar file filter
 Import networks from an MRT table dump for debugging purposes.
 .Ar filter
