@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.259 2023/04/19 13:23:33 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.260 2023/04/23 11:39:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1197,8 +1197,11 @@ prefix_flowspec_dump(uint8_t aid, void *arg,
 {
 	struct rib_entry *re, *next;
 
-	RB_FOREACH_SAFE(re, rib_tree, rib_tree(&flowrib), next)
+	RB_FOREACH_SAFE(re, rib_tree, rib_tree(&flowrib), next) {
+		if (aid != AID_UNSPEC && aid != re->prefix->aid)
+			continue;
 		call(re, arg);
+	}
 	if (done != NULL)
 		done(arg, aid);
 }
