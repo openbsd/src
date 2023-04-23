@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.398 2023/03/31 08:20:58 kevlo Exp $
+.\"	$OpenBSD: pci.4,v 1.399 2023/04/23 08:04:59 dlg Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2023 $
+.Dd $Mdocdate: April 23 2023 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -468,6 +468,8 @@ TV tuners and video capture boards
 Yenta compatible
 .Tn CardBus
 bridges
+.It Xr dwiic 4
+Synopsys DesignWare I2C controller
 .It Xr ehci 4
 USB Enhanced Host Controller Interface
 .It Xr gcu 4
