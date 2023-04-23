@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.11 2023/04/23 11:25:21 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.12 2023/04/23 11:34:57 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -248,7 +248,10 @@ s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
 		X509V3error(X509V3_R_INVALID_NULL_VALUE);
 		return NULL;
 	}
-	bn = BN_new();
+	if ((bn = BN_new()) == NULL) {
+		X509V3error(ERR_R_MALLOC_FAILURE);
+		return NULL;
+	}
 	if (value[0] == '-') {
 		value++;
 		isneg = 1;
