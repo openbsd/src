@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.h,v 1.19 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: pkcs7.h,v 1.20 2023/04/24 22:12:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -321,7 +321,9 @@ extern const ASN1_ITEM PKCS7_it;
 extern const ASN1_ITEM PKCS7_ATTR_SIGN_it;
 extern const ASN1_ITEM PKCS7_ATTR_VERIFY_it;
 
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 int i2d_PKCS7_NDEF(PKCS7 *a, unsigned char **out);
+#endif
 int PKCS7_print_ctx(BIO *out, PKCS7 *x, int indent, const ASN1_PCTX *pctx);
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg);

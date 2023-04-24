@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.74 2023/04/18 08:47:28 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.75 2023/04/24 22:12:28 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -880,7 +880,10 @@ void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it);
 ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **val, const unsigned char **in,
     long len, const ASN1_ITEM *it);
 int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
+
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_VERSION_NUMBER)
 int ASN1_item_ndef_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
+#endif
 
 void ASN1_add_oid_module(void);
 
@@ -925,6 +928,7 @@ void ASN1_PCTX_set_str_flags(ASN1_PCTX *p, unsigned long flags);
 
 const BIO_METHOD *BIO_f_asn1(void);
 
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it);
 
 int i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
@@ -935,6 +939,7 @@ int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
     int ctype_nid, int econt_nid, STACK_OF(X509_ALGOR) *mdalgs,
     const ASN1_ITEM *it);
 ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
+#endif
 int SMIME_crlf_copy(BIO *in, BIO *out, int flags);
 int SMIME_text(BIO *in, BIO *out);
 
