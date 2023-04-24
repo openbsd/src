@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.183 2023/04/21 00:41:13 kn Exp $	*/
+/*	$OpenBSD: in.c,v 1.184 2023/04/24 12:11:56 kn Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -84,8 +84,8 @@
 
 void in_socktrim(struct sockaddr_in *);
 
-int in_ioctl_set_ifaddr(u_long, caddr_t, struct ifnet *, int);
-int in_ioctl_change_ifaddr(u_long, caddr_t, struct ifnet *, int);
+int in_ioctl_set_ifaddr(u_long, caddr_t, struct ifnet *);
+int in_ioctl_change_ifaddr(u_long, caddr_t, struct ifnet *);
 int in_ioctl_get(u_long, caddr_t, struct ifnet *);
 void in_purgeaddr(struct ifaddr *);
 int in_addhost(struct in_ifaddr *, struct sockaddr_in *);
@@ -235,10 +235,14 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	case SIOCGIFBRDADDR:
 		return in_ioctl_get(cmd, data, ifp);
 	case SIOCSIFADDR:
-		return in_ioctl_set_ifaddr(cmd, data, ifp, privileged);
+		if (!privileged)
+			return (EPERM);
+		return in_ioctl_set_ifaddr(cmd, data, ifp);
 	case SIOCAIFADDR:
 	case SIOCDIFADDR:
-		return in_ioctl_change_ifaddr(cmd, data, ifp, privileged);
+		if (!privileged)
+			return (EPERM);
+		return in_ioctl_change_ifaddr(cmd, data, ifp);
 	case SIOCSIFNETMASK:
 	case SIOCSIFDSTADDR:
 	case SIOCSIFBRDADDR:
@@ -246,6 +250,9 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	default:
 		return (EOPNOTSUPP);
 	}
+
+	if (!privileged)
+		return (EPERM);
 
 	if (ifr->ifr_addr.sa_family == AF_INET) {
 		error = in_sa2sin(&ifr->ifr_addr, &sin);
@@ -272,11 +279,6 @@ in_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp, int privileged)
 	}
 	if (ia == NULL) {
 		error = EADDRNOTAVAIL;
-		goto err;
-	}
-
-	if (!privileged) {
-		error = EPERM;
 		goto err;
 	}
 
@@ -335,8 +337,7 @@ err:
 }
 
 int
-in_ioctl_set_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
-    int privileged)
+in_ioctl_set_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa;
@@ -347,9 +348,6 @@ in_ioctl_set_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 
 	if (cmd != SIOCSIFADDR)
 		panic("%s: invalid ioctl %lu", __func__, cmd);
-
-	if (!privileged)
-		return (EPERM);
 
 	error = in_sa2sin(&ifr->ifr_addr, &sin);
 	if (error)
@@ -395,8 +393,7 @@ in_ioctl_set_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 }
 
 int
-in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
-    int privileged)
+in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp)
 {
 	struct ifaddr *ifa;
 	struct in_ifaddr *ia = NULL;
@@ -411,9 +408,6 @@ in_ioctl_change_ifaddr(u_long cmd, caddr_t data, struct ifnet *ifp,
 		if (error)
 			return (error);
 	}
-
-	if (!privileged)
-		return (EPERM);
 
 	KERNEL_LOCK();
 	NET_LOCK();
