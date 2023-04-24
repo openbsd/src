@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.10 2023/04/22 05:01:44 dlg Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.11 2023/04/24 01:33:32 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -89,7 +89,7 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	char phy_mode[16] = { 0 };
 	uint32_t phy, phy_supply;
 	uint32_t axi_config;
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	int i, node;
 
 	sc->sc_node = faa->fa_node;
@@ -164,6 +164,15 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	/* Reset PHY */
 	dwqe_reset_phy(sc, phy);
 
+	node = OF_getnodebyname(sc->sc_node, "fixed-link");
+	if (node) {
+		sc->sc_fixed_link = 1;
+
+		ifp->if_baudrate = IF_Mbps(OF_getpropint(node, "speed", 0));
+		ifp->if_link_state = OF_getpropbool(node, "full-duplex") ?
+		    LINK_STATE_FULL_DUPLEX : LINK_STATE_HALF_DUPLEX;
+	}
+
 	sc->sc_clk = clock_get_frequency(faa->fa_node, "stmmaceth");
 	if (sc->sc_clk > 500000000)
 		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_500_800;
@@ -227,10 +236,13 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ih == NULL)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 
-	ifp = &sc->sc_ac.ac_if;
 	sc->sc_ifd.if_node = faa->fa_node;
 	sc->sc_ifd.if_ifp = ifp;
 	if_register(&sc->sc_ifd);
+
+	/* force a configuraton of the clocks/mac */
+	if (sc->sc_fixed_link)
+		sc->sc_mii.mii_statchg(self);
 }
 
 void

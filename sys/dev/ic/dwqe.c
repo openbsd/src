@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.7 2023/04/23 06:22:15 dlg Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.8 2023/04/24 01:33:32 dlg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -74,6 +74,7 @@ void	dwqe_watchdog(struct ifnet *);
 int	dwqe_media_change(struct ifnet *);
 void	dwqe_media_status(struct ifnet *, struct ifmediareq *);
 
+void	dwqe_mii_attach(struct dwqe_softc *);
 int	dwqe_mii_readreg(struct device *, int, int);
 void	dwqe_mii_writereg(struct device *, int, int, int);
 void	dwqe_mii_statchg(struct device *);
@@ -106,7 +107,6 @@ dwqe_attach(struct dwqe_softc *sc)
 {
 	struct ifnet *ifp;
 	uint32_t version, mode;
-	int mii_flags = 0;
 	int i;
 
 	version = dwqe_read(sc, GMAC_VERSION);
@@ -213,6 +213,24 @@ dwqe_attach(struct dwqe_softc *sc)
 		dwqe_write(sc, GMAC_SYS_BUS_MODE, mode);
 	}
 
+	if (!sc->sc_fixed_link)
+		dwqe_mii_attach(sc);
+
+	if_attach(ifp);
+	ether_ifattach(ifp);
+
+	/* Disable interrupts. */
+	dwqe_write(sc, GMAC_INT_EN, 0);
+	dwqe_write(sc, GMAC_CHAN_INTR_ENA(0), 0);
+
+	return 0;
+}
+
+void
+dwqe_mii_attach(struct dwqe_softc *sc)
+{
+	int mii_flags = 0;
+
 	switch (sc->sc_phy_mode) {
 	case DWQE_PHY_MODE_RGMII:
 		mii_flags |= MIIF_SETDELAY;
@@ -238,15 +256,6 @@ dwqe_attach(struct dwqe_softc *sc)
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 	} else
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
-
-	if_attach(ifp);
-	ether_ifattach(ifp);
-
-	/* Disable interrupts. */
-	dwqe_write(sc, GMAC_INT_EN, 0);
-	dwqe_write(sc, GMAC_CHAN_INTR_ENA(0), 0);
-
-	return 0;
 }
 
 uint32_t
@@ -373,7 +382,10 @@ dwqe_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		if (sc->sc_fixed_link)
+			error = ENOTTY;
+		else
+			error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	case SIOCGIFRXR:
@@ -824,7 +836,8 @@ dwqe_up(struct dwqe_softc *sc)
 	    GMAC_CHAN_INTR_ENA_RIE |
 	    GMAC_CHAN_INTR_ENA_TIE);
 
-	timeout_add_sec(&sc->sc_phy_tick, 1);
+	if (!sc->sc_fixed_link)
+		timeout_add_sec(&sc->sc_phy_tick, 1);
 }
 
 void
@@ -836,7 +849,8 @@ dwqe_down(struct dwqe_softc *sc)
 	int i;
 
 	timeout_del(&sc->sc_rxto);
-	timeout_del(&sc->sc_phy_tick);
+	if (!sc->sc_fixed_link)
+		timeout_del(&sc->sc_phy_tick);
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
