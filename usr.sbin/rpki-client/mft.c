@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.89 2023/03/13 19:54:36 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.90 2023/04/24 17:11:33 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -545,7 +545,7 @@ mft_compare(const struct mft *a, const struct mft *b)
 		return 0;
 
 	r = strcmp(a->seqnum, b->seqnum);
-	if (r >= 0)	/* a is greater or equal, prefer a */
+	if (r > 0)	/* a is greater, prefer a */
 		return 1;
 	return 0;
 }
