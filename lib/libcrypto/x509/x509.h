@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.98 2023/04/24 08:39:06 job Exp $ */
+/* $OpenBSD: x509.h,v 1.99 2023/04/24 22:24:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -334,12 +334,13 @@ typedef struct Netscape_spki_st {
 	ASN1_BIT_STRING *signature;
 } NETSCAPE_SPKI;
 
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 /* Netscape certificate sequence structure */
 typedef struct Netscape_certificate_sequence {
 	ASN1_OBJECT *type;
 	STACK_OF(X509) *certs;
 } NETSCAPE_CERT_SEQUENCE;
-
+#endif
 
 /* Password based encryption structure */
 
@@ -737,11 +738,14 @@ void NETSCAPE_SPKAC_free(NETSCAPE_SPKAC *a);
 NETSCAPE_SPKAC *d2i_NETSCAPE_SPKAC(NETSCAPE_SPKAC **a, const unsigned char **in, long len);
 int i2d_NETSCAPE_SPKAC(NETSCAPE_SPKAC *a, unsigned char **out);
 extern const ASN1_ITEM NETSCAPE_SPKAC_it;
+
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 NETSCAPE_CERT_SEQUENCE *NETSCAPE_CERT_SEQUENCE_new(void);
 void NETSCAPE_CERT_SEQUENCE_free(NETSCAPE_CERT_SEQUENCE *a);
 NETSCAPE_CERT_SEQUENCE *d2i_NETSCAPE_CERT_SEQUENCE(NETSCAPE_CERT_SEQUENCE **a, const unsigned char **in, long len);
 int i2d_NETSCAPE_CERT_SEQUENCE(NETSCAPE_CERT_SEQUENCE *a, unsigned char **out);
 extern const ASN1_ITEM NETSCAPE_CERT_SEQUENCE_it;
+#endif
 
 #ifndef OPENSSL_NO_EVP
 X509_INFO *	X509_INFO_new(void);

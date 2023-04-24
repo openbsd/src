@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_all.c,v 1.17 2016/09/04 16:10:38 jsing Exp $ */
+/* $OpenBSD: pem_all.c,v 1.18 2023/04/24 22:24:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -239,12 +239,14 @@ PEM_write_bio_PKCS7(BIO *bp, PKCS7 *x)
 	    x, NULL, NULL, 0, NULL, NULL);
 }
 
+#if !defined(LIBRESSL_NEXT_API)
 int
 PEM_write_NETSCAPE_CERT_SEQUENCE(FILE *fp, NETSCAPE_CERT_SEQUENCE *x)
 {
 	return PEM_ASN1_write((i2d_of_void *)i2d_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, fp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }
+#endif
 
 NETSCAPE_CERT_SEQUENCE *
 PEM_read_NETSCAPE_CERT_SEQUENCE(FILE *fp, NETSCAPE_CERT_SEQUENCE **x, pem_password_cb *cb, void *u)
