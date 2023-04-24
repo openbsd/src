@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpon.c,v 1.3 2022/12/21 23:26:54 patrick Exp $	*/
+/*	$OpenBSD: qcpon.c,v 1.4 2023/04/24 14:34:13 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -63,7 +63,8 @@ qcpon_match(struct device *parent, void *match, void *aux)
 {
 	struct spmi_attach_args *saa = aux;
 
-	return OF_is_compatible(saa->sa_node, "qcom,pm8998-pon");
+	return (OF_is_compatible(saa->sa_node, "qcom,pm8998-pon") ||
+	    OF_is_compatible(saa->sa_node, "qcom,pmk8350-pon"));
 }
 
 void
@@ -71,13 +72,7 @@ qcpon_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct spmi_attach_args *saa = aux;
 	struct qcpon_softc *sc = (struct qcpon_softc *)self;
-	int node, reg;
-
-	reg = OF_getpropint(saa->sa_node, "reg", -1);
-	if (reg < 0) {
-		printf(": can't find registers\n");
-		return;
-	}
+	int node;
 
 	sc->sc_node = saa->sa_node;
 	sc->sc_tag = saa->sa_tag;
