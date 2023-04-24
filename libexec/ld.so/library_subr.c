@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_subr.c,v 1.53 2022/11/07 10:35:26 deraadt Exp $ */
+/*	$OpenBSD: library_subr.c,v 1.54 2023/04/24 08:59:09 robert Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -343,6 +343,13 @@ _dl_load_shlib(const char *libname, elf_object_t *parent, int type, int flags,
 
 		_dl_build_sod(lname, &sod);
 		req_sod = sod;
+
+		object = _dl_find_loaded_shlib(lname, req_sod, flags);
+		if (object) {
+			_dl_free((char *)sod.sod_name);
+			_dl_free(lpath);
+			return (object);
+		}
 
 		paths[0] = lpath;
 		paths[1] = NULL;
