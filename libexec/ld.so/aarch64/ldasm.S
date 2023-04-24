@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.9 2023/03/31 18:45:05 kettenis Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.10 2023/04/24 22:06:05 kettenis Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -76,7 +76,6 @@ ENTRY(_dl_bind_start)
 	 * return address and pointer to pltgot entry for this
 	 * relocation are on the stack
 	 */
-	bti	c
 	mov	x17, sp
 
 	// save parameter/result registers
