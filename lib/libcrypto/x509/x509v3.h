@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.19 2023/04/16 08:21:13 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.20 2023/04/24 22:30:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -265,6 +265,7 @@ struct AUTHORITY_KEYID_st {
 
 /* Strong extranet structures */
 
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 typedef struct SXNET_ID_st {
 	ASN1_INTEGER *zone;
 	ASN1_OCTET_STRING *user;
@@ -276,6 +277,7 @@ typedef struct SXNET_st {
 	ASN1_INTEGER *version;
 	STACK_OF(SXNETID) *ids;
 } SXNET;
+#endif
 
 typedef struct NOTICEREF_st {
 	ASN1_STRING *organization;
@@ -516,6 +518,7 @@ BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS **a, const unsigned c
 int i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **out);
 extern const ASN1_ITEM BASIC_CONSTRAINTS_it;
 
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 SXNET *SXNET_new(void);
 void SXNET_free(SXNET *a);
 SXNET *d2i_SXNET(SXNET **a, const unsigned char **in, long len);
@@ -537,6 +540,7 @@ int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, const char *user,
 ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone);
 ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
 ASN1_OCTET_STRING *SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone);
+#endif
 
 AUTHORITY_KEYID *AUTHORITY_KEYID_new(void);
 void AUTHORITY_KEYID_free(AUTHORITY_KEYID *a);

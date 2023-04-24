@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.23 2023/04/16 08:18:10 tb Exp $ */
+/* $OpenBSD: safestack.h,v 1.24 2023/04/24 22:30:17 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -1479,6 +1479,7 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_STORE_OBJECT_sort(st) SKM_sk_sort(STORE_OBJECT, (st))
 #define sk_STORE_OBJECT_is_sorted(st) SKM_sk_is_sorted(STORE_OBJECT, (st))
 
+#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
 #define sk_SXNETID_new(cmp) SKM_sk_new(SXNETID, (cmp))
 #define sk_SXNETID_new_null() SKM_sk_new_null(SXNETID)
 #define sk_SXNETID_free(st) SKM_sk_free(SXNETID, (st))
@@ -1500,6 +1501,7 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_SXNETID_pop(st) SKM_sk_pop(SXNETID, (st))
 #define sk_SXNETID_sort(st) SKM_sk_sort(SXNETID, (st))
 #define sk_SXNETID_is_sorted(st) SKM_sk_is_sorted(SXNETID, (st))
+#endif
 
 #define sk_UI_STRING_new(cmp) SKM_sk_new(UI_STRING, (cmp))
 #define sk_UI_STRING_new_null() SKM_sk_new_null(UI_STRING)
