@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.142 2023/04/23 12:11:37 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.143 2023/04/24 15:12:14 kn Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -88,6 +88,9 @@ struct event staggered_start_timer;
 static struct privsep_proc *proc_priv = &procs[0];
 static struct passwd proc_privpw;
 static const uint8_t zero_mac[ETHER_ADDR_LEN];
+
+const char		 default_conffile[] = VMD_CONF;
+const char		*conffile = default_conffile;
 
 int
 vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
@@ -767,7 +770,6 @@ main(int argc, char **argv)
 {
 	struct privsep		*ps;
 	int			 ch;
-	const char		*conffile = VMD_CONF;
 	enum privsep_procid	 proc_id = PROC_PARENT;
 	int			 proc_instance = 0, vm_launch = 0, vm_fd = -1;
 	const char		*errp, *title = NULL;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.63 2023/01/28 14:40:53 dv Exp $	*/
+/*	$OpenBSD: parse.y,v 1.64 2023/04/24 15:12:14 kn Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -1181,9 +1181,15 @@ popfile(void)
 int
 parse_config(const char *filename)
 {
-	struct sym	*sym, *next;
+	extern const char	 default_conffile[];
+	struct sym		*sym, *next;
 
 	if ((file = pushfile(filename, 0)) == NULL) {
+		/* no default config file is fine */
+		if (errno == ENOENT && filename == default_conffile) {
+			log_debug("%s: missing", filename);
+			return (0);
+		}
 		log_warn("failed to open %s", filename);
 		if (errno == ENOENT)
 			return (0);
