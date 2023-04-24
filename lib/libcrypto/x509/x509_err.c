@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_err.c,v 1.20 2023/04/23 21:31:16 job Exp $ */
+/* $OpenBSD: x509_err.c,v 1.21 2023/04/24 08:39:06 job Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -85,6 +85,7 @@ static ERR_STRING_DATA X509_str_reasons[] = {
 	{ERR_REASON(X509_R_INVALID_DIRECTORY)    , "invalid directory"},
 	{ERR_REASON(X509_R_INVALID_FIELD_NAME)   , "invalid field name"},
 	{ERR_REASON(X509_R_INVALID_TRUST)        , "invalid trust"},
+	{ERR_REASON(X509_R_INVALID_VERSION)      , "invalid x509 version"},
 	{ERR_REASON(X509_R_KEY_TYPE_MISMATCH)    , "key type mismatch"},
 	{ERR_REASON(X509_R_KEY_VALUES_MISMATCH)  , "key values mismatch"},
 	{ERR_REASON(X509_R_LOADING_CERT_DIR)     , "loading cert dir"},
@@ -104,7 +105,6 @@ static ERR_STRING_DATA X509_str_reasons[] = {
 	{ERR_REASON(X509_R_UNSUPPORTED_ALGORITHM), "unsupported algorithm"},
 	{ERR_REASON(X509_R_WRONG_LOOKUP_TYPE)    , "wrong lookup type"},
 	{ERR_REASON(X509_R_WRONG_TYPE)           , "wrong type"},
-	{ERR_REASON(X509_R_INVALID_VERSION)      , "wrong x509 version"},
 	{0, NULL}
 };
 

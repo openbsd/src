@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.97 2023/04/23 21:31:16 job Exp $ */
+/* $OpenBSD: x509.h,v 1.98 2023/04/24 08:39:06 job Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1181,6 +1181,7 @@ void ERR_load_X509_strings(void);
 #define X509_R_INVALID_DIRECTORY			 113
 #define X509_R_INVALID_FIELD_NAME			 119
 #define X509_R_INVALID_TRUST				 123
+#define X509_R_INVALID_VERSION				 137
 #define X509_R_KEY_TYPE_MISMATCH			 115
 #define X509_R_KEY_VALUES_MISMATCH			 116
 #define X509_R_LOADING_CERT_DIR				 103
@@ -1200,7 +1201,6 @@ void ERR_load_X509_strings(void);
 #define X509_R_UNSUPPORTED_ALGORITHM			 111
 #define X509_R_WRONG_LOOKUP_TYPE			 112
 #define X509_R_WRONG_TYPE				 122
-#define X509_R_INVALID_VERSION				 123
 
 #ifdef  __cplusplus
 }
