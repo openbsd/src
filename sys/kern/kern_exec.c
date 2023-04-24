@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.246 2023/02/21 14:31:07 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.247 2023/04/24 10:22:06 kettenis Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -530,6 +530,18 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pr->ps_textvp = pack.ep_vp;
 	if (otvp)
 		vrele(otvp);
+
+	/*
+	 * XXX As a transition mechanism, we don't enforce branch
+	 * target control floe integrety on partitions mounted with
+	 * the wxallowed flag.
+	 */
+	if (pr->ps_textvp->v_mount &&
+	    (pr->ps_textvp->v_mount->mnt_flag & MNT_WXALLOWED))
+		pack.ep_flags |= EXEC_NOBTCFI;
+	/* XXX XXX But enable it for chrome. */
+	if (strcmp(p->p_p->ps_comm, "chrome") == 0)
+		pack.ep_flags &= ~EXEC_NOBTCFI;
 
 	atomic_setbits_int(&pr->ps_flags, PS_EXEC);
 	if (pr->ps_flags & PS_PPWAIT) {
