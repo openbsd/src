@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.132 2023/04/23 18:51:53 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.133 2023/04/24 15:32:31 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2112,7 +2112,7 @@ static const struct tls_extension tls_extensions[] = {
 		},
 	},
 	{
-		.type = TLSEXT_TYPE_application_layer_protocol_negotiation,
+		.type = TLSEXT_TYPE_alpn,
 		.messages = SSL_TLSEXT_MSG_CH | SSL_TLSEXT_MSG_EE,
 		.client = {
 			.needs = tlsext_alpn_client_needs,
