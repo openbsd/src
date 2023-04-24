@@ -1,4 +1,4 @@
-/*	$OpenBSD: hibernate_machdep.c,v 1.49 2022/09/02 09:02:37 mlarkin Exp $	*/
+/*	$OpenBSD: hibernate_machdep.c,v 1.50 2023/04/24 09:04:03 dv Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Larkin <mlarkin@openbsd.org>
@@ -467,6 +467,9 @@ hibernate_quiesce_cpus(void)
 	pmap_kenter_pa(ACPI_TRAMPOLINE, ACPI_TRAMPOLINE, PROT_READ | PROT_EXEC);
 	pmap_kenter_pa(ACPI_TRAMP_DATA, ACPI_TRAMP_DATA,
 		PROT_READ | PROT_WRITE);
+
+	if (curcpu()->ci_feature_sefflags_edx & SEFF0EDX_IBT)
+		lcr4(rcr4() & ~CR4_CET);
 
 	for (i = 0; i < MAXCPUS; i++) {
 		ci = cpu_info[i];
