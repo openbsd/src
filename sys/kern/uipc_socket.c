@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.301 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.302 2023/04/24 09:20:09 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -316,21 +316,19 @@ sofree(struct socket *so, int keep_lock)
 	klist_free(&so->so_rcv.sb_klist);
 	klist_free(&so->so_snd.sb_klist);
 #ifdef SOCKET_SPLICE
-	if (so->so_sp) {
-		if (issplicedback(so)) {
-			int freeing = SOSP_FREEING_WRITE;
+	if (issplicedback(so)) {
+		int freeing = SOSP_FREEING_WRITE;
 
-			if (so->so_sp->ssp_soback == so)
-				freeing |= SOSP_FREEING_READ;
-			sounsplice(so->so_sp->ssp_soback, so, freeing);
-		}
-		if (isspliced(so)) {
-			int freeing = SOSP_FREEING_READ;
+		if (so->so_sp->ssp_soback == so)
+			freeing |= SOSP_FREEING_READ;
+		sounsplice(so->so_sp->ssp_soback, so, freeing);
+	}
+	if (isspliced(so)) {
+		int freeing = SOSP_FREEING_READ;
 
-			if (so == so->so_sp->ssp_socket)
-				freeing |= SOSP_FREEING_WRITE;
-			sounsplice(so, so->so_sp->ssp_socket, freeing);
-		}
+		if (so == so->so_sp->ssp_socket)
+			freeing |= SOSP_FREEING_WRITE;
+		sounsplice(so, so->so_sp->ssp_socket, freeing);
 	}
 #endif /* SOCKET_SPLICE */
 	sbrelease(so, &so->so_snd);
