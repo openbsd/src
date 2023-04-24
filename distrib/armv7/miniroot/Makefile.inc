@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.30 2023/02/10 15:54:33 krw Exp $
+#	$OpenBSD: Makefile.inc,v 1.31 2023/04/24 15:31:14 krw Exp $
 
 FS=		miniroot-${BOARD}-${OSrev}.img
 FSSIZE=		71424	# ffs+msdos, actually
@@ -6,7 +6,7 @@ MOUNT_POINT=	/mnt
 
 MKUBOOT?=	mkuboot
 
-DISKTYPE=	miniroot
+FSDISKTYPE=	miniroot
 MSDOSSTART=	32768
 MSDOSSIZE=	8192
 
@@ -17,7 +17,7 @@ all: ${FS}
 
 ${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
-	vnconfig -v -t ${DISKTYPE} ${FS} > vnd
+	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
 	fdisk -iy -b "${MSDOSSIZE}@${MSDOSSTART}:c" `cat vnd` >/dev/null
 	echo '/ *' | disklabel -wAT- `cat vnd`
 	newfs -O 1 -t msdos -L boot /dev/r`cat vnd`i
