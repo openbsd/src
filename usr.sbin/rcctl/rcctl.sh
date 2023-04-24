@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: rcctl.sh,v 1.115 2022/12/22 19:53:24 kn Exp $
+# $OpenBSD: rcctl.sh,v 1.116 2023/04/24 14:31:15 kn Exp $
 #
 # Copyright (c) 2014, 2015-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -617,7 +617,7 @@ case ${action} in
 		;;
 	ls)
 		# some rc.d(8) scripts need root for rc_check()
-		[[ ${lsarg} == @(started|stopped|failed) ]] && needs_root ${action} ${lsarg}
+		[[ ${lsarg} == @(started|stopped|failed|rogue) ]] && needs_root ${action} ${lsarg}
 		svc_ls ${lsarg}
 		;;
 	order)
