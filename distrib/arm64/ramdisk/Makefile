@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.26 2023/04/03 10:51:50 kn Exp $
+#	$OpenBSD: Makefile,v 1.27 2023/04/24 16:21:43 krw Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		88064
@@ -20,8 +20,8 @@ PRPI=		/usr/local/share/raspberrypi-firmware/boot
 LISTS=		${.CURDIR}/list
 UTILS=		${.CURDIR}/../../miniroot
 
-MRFSDISKTYPE=	rdroot
-MRMAKEFSARGS=	-o disklabel=${MRFSDISKTYPE},minfree=0,density=4096
+MRDISKTYPE=	rdroot
+MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 PIFILES=\
 	bootcode.bin \
