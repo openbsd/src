@@ -1,4 +1,4 @@
-/* $OpenBSD: stack.c,v 1.22 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: stack.c,v 1.23 2023/04/24 15:35:22 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -356,8 +356,17 @@ LCRYPTO_ALIAS(sk_sort);
 int
 sk_is_sorted(const _STACK *st)
 {
-	if (!st)
+	if (st == NULL)
 		return 1;
-	return st->sorted;
+
+	if (st->sorted)
+		return 1;
+
+	/* If there is no comparison function we cannot sort. */
+	if (st->comp == NULL)
+		return 0;
+
+	/* Lists with zero or one elements are always sorted. */
+	return st->num <= 1;
 }
 LCRYPTO_ALIAS(sk_is_sorted);
