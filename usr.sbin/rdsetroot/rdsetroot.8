@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdsetroot.8,v 1.3 2023/01/20 17:15:22 kn Exp $
+.\"	$OpenBSD: rdsetroot.8,v 1.4 2023/04/24 14:06:01 krw Exp $
 .\"
 .\" Copyright (c) 2019 Theo de Raadt
 .\"
@@ -14,13 +14,16 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 20 2023 $
+.Dd $Mdocdate: April 24 2023 $
 .Dt RDSETROOT 8
 .Os
 .Sh NAME
 .Nm rdsetroot
 .Nd insert disk image into RAMDISK kernel
 .Sh SYNOPSIS
+.Nm rdsetroot
+.Fl s
+.Ar kernel
 .Nm rdsetroot
 .Op Fl dx
 .Ar kernel
@@ -41,6 +44,9 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl d
 Debug.
+.It Fl s
+Print the size in bytes of the reserved space in the RAMDISK kernel.
+No insertion or extraction is attempted.
 .It Fl x
 Rather than inserting, extract the
 .Ar disk.fs

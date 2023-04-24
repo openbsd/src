@@ -1,4 +1,4 @@
-/* $OpenBSD: rdsetroot.c,v 1.4 2023/01/20 17:15:22 kn Exp $ */
+/* $OpenBSD: rdsetroot.c,v 1.5 2023/04/24 14:06:01 krw Exp $ */
 
 /*
  * Copyright (c) 2019 Sunil Nimmagadda <sunil@openbsd.org>
@@ -47,12 +47,15 @@ main(int argc, char **argv)
 	size_t		 shstrndx, mmap_size;
 	uint64_t	 rd_root_size_off, rd_root_image_off;
 	uint32_t	*ip;
-	int		 ch, debug = 0, fsfd, kfd, n, xflag = 0;
+	int		 ch, debug = 0, fsfd, kfd, n, sflag = 0, xflag = 0;
 
-	while ((ch = getopt(argc, argv, "dx")) != -1) {
+	while ((ch = getopt(argc, argv, "dsx")) != -1) {
 		switch (ch) {
 		case 'd':
 			debug = 1;
+			break;
+		case 's':
+			sflag = 1;
 			break;
 		case 'x':
 			xflag = 1;
@@ -63,6 +66,9 @@ main(int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
+
+	if (sflag && (debug || xflag || argc > 1))
+		usage();
 
 	if (argc == 1)
 		kernel = argv[0];
@@ -161,6 +167,11 @@ main(int argc, char **argv)
 	 */
 	ip = (uint32_t *) (dataseg + rd_root_size_off);
 	rd_root_size_val = *ip;
+	if (sflag) {
+		fprintf(stdout, "%llu\n", (unsigned long long)rd_root_size_val);
+		goto done;
+	}
+
 	if (debug) {
 		fprintf(stderr, "rd_root_size  val: 0x%llx (%lld blocks)\n",
 		    (unsigned long long)rd_root_size_val,
@@ -196,6 +207,7 @@ main(int argc, char **argv)
 	if (debug)
 		fprintf(stderr, "...copied %d bytes\n", n);
 
+ done:
 	elf_end(e);
 	return 0;
 }
@@ -294,6 +306,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dx] kernel [disk.fs]\n", __progname);
+	fprintf(stderr, "usage: %s -s kernel\n", __progname);
+	fprintf(stderr, "       %s [-dx] kernel [disk.fs]\n", __progname);
 	exit(1);
 }
