@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.111 2023/04/25 17:42:07 tb Exp $
+# $OpenBSD: Makefile,v 1.112 2023/04/25 17:54:10 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -513,7 +513,6 @@ SRCS+= cbc128.c
 SRCS+= ccm128.c
 SRCS+= cfb128.c
 SRCS+= ctr128.c
-#SRCS+= cts128.c
 SRCS+= gcm128.c
 SRCS+= ofb128.c
 SRCS+= xts128.c

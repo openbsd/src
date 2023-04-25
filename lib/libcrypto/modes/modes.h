@@ -1,4 +1,4 @@
-/* $OpenBSD: modes.h,v 1.4 2023/04/16 08:14:34 tb Exp $ */
+/* $OpenBSD: modes.h,v 1.5 2023/04/25 17:54:10 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project. All rights reserved.
  *
@@ -62,34 +62,6 @@ void CRYPTO_cfb128_1_encrypt(const unsigned char *in, unsigned char *out,
 			size_t bits, const void *key,
 			unsigned char ivec[16], int *num,
 			int enc, block128_f block);
-
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-size_t CRYPTO_cts128_encrypt_block(const unsigned char *in, unsigned char *out,
-			size_t len, const void *key,
-			unsigned char ivec[16], block128_f block);
-size_t CRYPTO_cts128_encrypt(const unsigned char *in, unsigned char *out,
-			size_t len, const void *key,
-			unsigned char ivec[16], cbc128_f cbc);
-size_t CRYPTO_cts128_decrypt_block(const unsigned char *in, unsigned char *out,
-			size_t len, const void *key,
-			unsigned char ivec[16], block128_f block);
-size_t CRYPTO_cts128_decrypt(const unsigned char *in, unsigned char *out,
-			size_t len, const void *key,
-			unsigned char ivec[16], cbc128_f cbc);
-
-size_t CRYPTO_nistcts128_encrypt_block(const unsigned char *in, unsigned char *out,
-			size_t len, const void *key,
-			unsigned char ivec[16], block128_f block);
-size_t CRYPTO_nistcts128_encrypt(const unsigned char *in, unsigned char *out,
-			size_t len, const void *key,
-			unsigned char ivec[16], cbc128_f cbc);
-size_t CRYPTO_nistcts128_decrypt_block(const unsigned char *in, unsigned char *out,
-			size_t len, const void *key,
-			unsigned char ivec[16], block128_f block);
-size_t CRYPTO_nistcts128_decrypt(const unsigned char *in, unsigned char *out,
-			size_t len, const void *key,
-			unsigned char ivec[16], cbc128_f cbc);
-#endif
 
 typedef struct gcm128_context GCM128_CONTEXT;
 
