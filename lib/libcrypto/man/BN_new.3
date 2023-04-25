@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_new.3,v 1.22 2022/11/21 22:04:04 schwarze Exp $
+.\" $OpenBSD: BN_new.3,v 1.23 2023/04/25 17:23:08 tb Exp $
 .\" full merge up to: OpenSSL man3/BN_new 2457c19d Mar 6 08:43:36 2004 +0000
 .\" selective merge up to: man3/BN_new 681acb31 Sep 29 13:10:34 2017 +0200
 .\" full merge up to: OpenSSL man7/bn 05ea606a May 20 20:52:46 2016 -0400
@@ -50,12 +50,11 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 21 2022 $
+.Dd $Mdocdate: April 25 2023 $
 .Dt BN_NEW 3
 .Os
 .Sh NAME
 .Nm BN_new ,
-.Nm BN_init ,
 .Nm BN_clear ,
 .Nm BN_free ,
 .Nm BN_clear_free
@@ -65,10 +64,6 @@
 .Ft BIGNUM *
 .Fo BN_new
 .Fa void
-.Fc
-.Ft void
-.Fo BN_init
-.Fa "BIGNUM *"
 .Fc
 .Ft void
 .Fo BN_clear
@@ -107,12 +102,6 @@ structure, in particular setting the value to zero and the flags to
 The security-relevant flag
 .Dv BN_FLG_CONSTTIME
 is not set by default.
-.Pp
-.Fn BN_init
-initializes an existing uninitialized
-.Vt BIGNUM .
-It is deprecated and dangerous: see
-.Sx CAVEATS .
 .Pp
 .Fn BN_clear
 is used to destroy sensitive data such as keys when they are no longer
@@ -180,30 +169,3 @@ and
 .Fn BN_clear_free
 first appeared in SSLeay 0.5.1 and have been available since
 .Ox 2.4 .
-.Pp
-.Fn BN_init
-first appeared in SSLeay 0.9.1 and has been available since
-.Ox 2.6 .
-.Sh CAVEATS
-.Fn BN_init
-must not be called on a
-.Vt BIGNUM
-that was used and contains an actual number, or the memory
-used for storing the number is leaked immediately.
-Besides, it must not be called on a number allocated with
-.Fn BN_new ,
-or the
-.Vt BIGNUM
-structure itself will likely be leaked later on.
-It can only be used on static
-.Vt BIGNUM
-structures, on
-.Vt BIGNUM
-structures on the stack, or on
-.Vt BIGNUM
-structures
-.Xr malloc 3 Ap ed
-manually, but all of these options are discouraged because they
-will no longer work once the
-.Vt BIGNUM
-data type is made opaque.
