@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.36 2023/04/25 19:26:45 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.37 2023/04/25 19:28:22 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -142,13 +142,6 @@ const EC_METHOD *EC_GFp_simple_method(void);
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GFp_mont_method(void);
-
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-/** Returns GFp methods using optimized methods for NIST recommended curves
- *  \return  EC_METHOD object
- */
-const EC_METHOD *EC_GFp_nist_method(void);
-#endif
 
 #ifndef OPENSSL_NO_EC2M
 /********************************************************************/ 
