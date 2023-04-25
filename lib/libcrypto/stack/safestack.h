@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.24 2023/04/24 22:30:17 tb Exp $ */
+/* $OpenBSD: safestack.h,v 1.25 2023/04/25 18:48:32 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -1478,30 +1478,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_STORE_OBJECT_pop(st) SKM_sk_pop(STORE_OBJECT, (st))
 #define sk_STORE_OBJECT_sort(st) SKM_sk_sort(STORE_OBJECT, (st))
 #define sk_STORE_OBJECT_is_sorted(st) SKM_sk_is_sorted(STORE_OBJECT, (st))
-
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-#define sk_SXNETID_new(cmp) SKM_sk_new(SXNETID, (cmp))
-#define sk_SXNETID_new_null() SKM_sk_new_null(SXNETID)
-#define sk_SXNETID_free(st) SKM_sk_free(SXNETID, (st))
-#define sk_SXNETID_num(st) SKM_sk_num(SXNETID, (st))
-#define sk_SXNETID_value(st, i) SKM_sk_value(SXNETID, (st), (i))
-#define sk_SXNETID_set(st, i, val) SKM_sk_set(SXNETID, (st), (i), (val))
-#define sk_SXNETID_zero(st) SKM_sk_zero(SXNETID, (st))
-#define sk_SXNETID_push(st, val) SKM_sk_push(SXNETID, (st), (val))
-#define sk_SXNETID_unshift(st, val) SKM_sk_unshift(SXNETID, (st), (val))
-#define sk_SXNETID_find(st, val) SKM_sk_find(SXNETID, (st), (val))
-#define sk_SXNETID_find_ex(st, val) SKM_sk_find_ex(SXNETID, (st), (val))
-#define sk_SXNETID_delete(st, i) SKM_sk_delete(SXNETID, (st), (i))
-#define sk_SXNETID_delete_ptr(st, ptr) SKM_sk_delete_ptr(SXNETID, (st), (ptr))
-#define sk_SXNETID_insert(st, val, i) SKM_sk_insert(SXNETID, (st), (val), (i))
-#define sk_SXNETID_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(SXNETID, (st), (cmp))
-#define sk_SXNETID_dup(st) SKM_sk_dup(SXNETID, st)
-#define sk_SXNETID_pop_free(st, free_func) SKM_sk_pop_free(SXNETID, (st), (free_func))
-#define sk_SXNETID_shift(st) SKM_sk_shift(SXNETID, (st))
-#define sk_SXNETID_pop(st) SKM_sk_pop(SXNETID, (st))
-#define sk_SXNETID_sort(st) SKM_sk_sort(SXNETID, (st))
-#define sk_SXNETID_is_sorted(st) SKM_sk_is_sorted(SXNETID, (st))
-#endif
 
 #define sk_UI_STRING_new(cmp) SKM_sk_new(UI_STRING, (cmp))
 #define sk_UI_STRING_new_null() SKM_sk_new_null(UI_STRING)

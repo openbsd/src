@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.22 2023/04/25 18:28:05 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.23 2023/04/25 18:48:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -262,22 +262,6 @@ struct AUTHORITY_KEYID_st {
 	ASN1_INTEGER *serial;
 };
 
-/* Strong extranet structures */
-
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-typedef struct SXNET_ID_st {
-	ASN1_INTEGER *zone;
-	ASN1_OCTET_STRING *user;
-} SXNETID;
-
-DECLARE_STACK_OF(SXNETID)
-
-typedef struct SXNET_st {
-	ASN1_INTEGER *version;
-	STACK_OF(SXNETID) *ids;
-} SXNET;
-#endif
-
 typedef struct NOTICEREF_st {
 	ASN1_STRING *organization;
 	STACK_OF(ASN1_INTEGER) *noticenos;
@@ -516,30 +500,6 @@ void BASIC_CONSTRAINTS_free(BASIC_CONSTRAINTS *a);
 BASIC_CONSTRAINTS *d2i_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS **a, const unsigned char **in, long len);
 int i2d_BASIC_CONSTRAINTS(BASIC_CONSTRAINTS *a, unsigned char **out);
 extern const ASN1_ITEM BASIC_CONSTRAINTS_it;
-
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-SXNET *SXNET_new(void);
-void SXNET_free(SXNET *a);
-SXNET *d2i_SXNET(SXNET **a, const unsigned char **in, long len);
-int i2d_SXNET(SXNET *a, unsigned char **out);
-extern const ASN1_ITEM SXNET_it;
-SXNETID *SXNETID_new(void);
-void SXNETID_free(SXNETID *a);
-SXNETID *d2i_SXNETID(SXNETID **a, const unsigned char **in, long len);
-int i2d_SXNETID(SXNETID *a, unsigned char **out);
-extern const ASN1_ITEM SXNETID_it;
-
-int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user,
-    int userlen);
-int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
-    int userlen);
-int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *izone, const char *user,
-    int userlen);
-
-ASN1_OCTET_STRING *SXNET_get_id_asc(SXNET *sx, const char *zone);
-ASN1_OCTET_STRING *SXNET_get_id_ulong(SXNET *sx, unsigned long lzone);
-ASN1_OCTET_STRING *SXNET_get_id_INTEGER(SXNET *sx, ASN1_INTEGER *zone);
-#endif
 
 AUTHORITY_KEYID *AUTHORITY_KEYID_new(void);
 void AUTHORITY_KEYID_free(AUTHORITY_KEYID *a);

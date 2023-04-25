@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.244 2023/04/20 16:19:43 tb Exp $
+# $OpenBSD: Makefile,v 1.245 2023/04/25 18:48:32 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -304,7 +304,6 @@ MAN=	\
 	SMIME_write_CMS.3 \
 	SMIME_write_PKCS7.3 \
 	STACK_OF.3 \
-	SXNET_new.3 \
 	TS_REQ_new.3 \
 	UI_UTIL_read_pw.3 \
 	UI_create_method.3 \
