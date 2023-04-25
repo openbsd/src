@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.23 2023/04/25 18:48:32 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.24 2023/04/25 19:01:01 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -318,30 +318,6 @@ typedef struct POLICY_CONSTRAINTS_st {
 	ASN1_INTEGER *requireExplicitPolicy;
 	ASN1_INTEGER *inhibitPolicyMapping;
 } POLICY_CONSTRAINTS;
-
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-/* Proxy certificate structures, see RFC 3820 */
-typedef struct PROXY_POLICY_st {
-	ASN1_OBJECT *policyLanguage;
-	ASN1_OCTET_STRING *policy;
-} PROXY_POLICY;
-
-typedef struct PROXY_CERT_INFO_EXTENSION_st {
-	ASN1_INTEGER *pcPathLengthConstraint;
-	PROXY_POLICY *proxyPolicy;
-} PROXY_CERT_INFO_EXTENSION;
-
-PROXY_POLICY *PROXY_POLICY_new(void);
-void PROXY_POLICY_free(PROXY_POLICY *a);
-PROXY_POLICY *d2i_PROXY_POLICY(PROXY_POLICY **a, const unsigned char **in, long len);
-int i2d_PROXY_POLICY(PROXY_POLICY *a, unsigned char **out);
-extern const ASN1_ITEM PROXY_POLICY_it;
-PROXY_CERT_INFO_EXTENSION *PROXY_CERT_INFO_EXTENSION_new(void);
-void PROXY_CERT_INFO_EXTENSION_free(PROXY_CERT_INFO_EXTENSION *a);
-PROXY_CERT_INFO_EXTENSION *d2i_PROXY_CERT_INFO_EXTENSION(PROXY_CERT_INFO_EXTENSION **a, const unsigned char **in, long len);
-int i2d_PROXY_CERT_INFO_EXTENSION(PROXY_CERT_INFO_EXTENSION *a, unsigned char **out);
-extern const ASN1_ITEM PROXY_CERT_INFO_EXTENSION_it;
-#endif /* !LIBRESSL_NEXT_API || LIBRESSL_INTERNAL */
 
 struct ISSUING_DIST_POINT_st {
 	DIST_POINT_NAME *distpoint;
