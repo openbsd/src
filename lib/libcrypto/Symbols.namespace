@@ -76,7 +76,6 @@ _libre_PKCS7_new
 _libre_PKCS7_free
 _libre_d2i_PKCS7
 _libre_i2d_PKCS7
-_libre_i2d_PKCS7_NDEF
 _libre_PKCS7_print_ctx
 _libre_PKCS7_ctrl
 _libre_PKCS7_set_type

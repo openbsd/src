@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_asn1.c,v 1.16 2023/03/12 17:29:02 tb Exp $ */
+/* $OpenBSD: pk7_asn1.c,v 1.17 2023/04/25 18:04:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -244,13 +244,6 @@ PKCS7_free(PKCS7 *a)
 	ASN1_item_free((ASN1_VALUE *)a, &PKCS7_it);
 }
 LCRYPTO_ALIAS(PKCS7_free);
-
-int
-i2d_PKCS7_NDEF(PKCS7 *a, unsigned char **out)
-{
-	return ASN1_item_ndef_i2d((ASN1_VALUE *)a, out, &PKCS7_it);
-}
-LCRYPTO_ALIAS(i2d_PKCS7_NDEF);
 
 PKCS7 *
 PKCS7_dup(PKCS7 *x)
