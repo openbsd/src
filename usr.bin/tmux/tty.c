@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.428 2023/03/27 08:31:32 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.429 2023/04/25 09:24:44 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -482,6 +482,8 @@ tty_update_features(struct tty *tty)
 		tty_puts(tty, tty_term_string(tty->term, TTYC_ENFCS));
 	if (tty->term->flags & TERM_VT100LIKE)
 		tty_puts(tty, "\033[?7727h");
+
+	tty_invalidate(tty);
 }
 
 void
