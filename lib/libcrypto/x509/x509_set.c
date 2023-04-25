@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_set.c,v 1.24 2023/02/23 18:12:32 job Exp $ */
+/* $OpenBSD: x509_set.c,v 1.25 2023/04/25 10:18:39 job Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,6 +88,7 @@ X509_set_version(X509 *x, long version)
 		if ((x->cert_info->version = ASN1_INTEGER_new()) == NULL)
 			return (0);
 	}
+	x->cert_info->enc.modified = 1;
 	return (ASN1_INTEGER_set(x->cert_info->version, version));
 }
 LCRYPTO_ALIAS(X509_set_version);
@@ -110,6 +111,7 @@ X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 	if (in != serial) {
 		in = ASN1_INTEGER_dup(serial);
 		if (in != NULL) {
+			x->cert_info->enc.modified = 1;
 			ASN1_INTEGER_free(x->cert_info->serialNumber);
 			x->cert_info->serialNumber = in;
 		}
@@ -123,6 +125,7 @@ X509_set_issuer_name(X509 *x, X509_NAME *name)
 {
 	if ((x == NULL) || (x->cert_info == NULL))
 		return (0);
+	x->cert_info->enc.modified = 1;
 	return (X509_NAME_set(&x->cert_info->issuer, name));
 }
 LCRYPTO_ALIAS(X509_set_issuer_name);
@@ -132,6 +135,7 @@ X509_set_subject_name(X509 *x, X509_NAME *name)
 {
 	if (x == NULL || x->cert_info == NULL)
 		return (0);
+	x->cert_info->enc.modified = 1;
 	return (X509_NAME_set(&x->cert_info->subject, name));
 }
 LCRYPTO_ALIAS(X509_set_subject_name);
@@ -163,6 +167,7 @@ X509_set_notBefore(X509 *x, const ASN1_TIME *tm)
 	if (in != tm) {
 		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
+			x->cert_info->enc.modified = 1;
 			ASN1_TIME_free(x->cert_info->validity->notBefore);
 			x->cert_info->validity->notBefore = in;
 		}
@@ -205,6 +210,7 @@ X509_set_notAfter(X509 *x, const ASN1_TIME *tm)
 	if (in != tm) {
 		in = ASN1_STRING_dup(tm);
 		if (in != NULL) {
+			x->cert_info->enc.modified = 1;
 			ASN1_TIME_free(x->cert_info->validity->notAfter);
 			x->cert_info->validity->notAfter = in;
 		}
@@ -225,6 +231,7 @@ X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
 {
 	if ((x == NULL) || (x->cert_info == NULL))
 		return (0);
+	x->cert_info->enc.modified = 1;
 	return (X509_PUBKEY_set(&(x->cert_info->key), pkey));
 }
 LCRYPTO_ALIAS(X509_set_pubkey);
