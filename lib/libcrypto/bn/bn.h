@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.67 2023/04/25 17:20:24 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.68 2023/04/25 17:42:07 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -564,22 +564,6 @@ int	BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a,
 int	BN_GF2m_poly2arr(const BIGNUM *a, int p[], int max);
 int	BN_GF2m_arr2poly(const int p[], BIGNUM *a);
 
-#endif
-
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-/* faster mod functions for the 'NIST primes'
- * 0 <= a < p^2 */
-int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
-int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
-int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
-int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
-int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx);
-
-const BIGNUM *BN_get0_nist_prime_192(void);
-const BIGNUM *BN_get0_nist_prime_224(void);
-const BIGNUM *BN_get0_nist_prime_256(void);
-const BIGNUM *BN_get0_nist_prime_384(void);
-const BIGNUM *BN_get0_nist_prime_521(void);
 #endif
 
 /* Primes from RFC 2409 */
