@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.19 2023/04/19 10:51:22 jsing Exp $ */
+/* $OpenBSD: bn_local.h,v 1.20 2023/04/25 17:13:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -278,6 +278,21 @@ void bn_div_rem_words(BN_ULONG h, BN_ULONG l, BN_ULONG d, BN_ULONG *out_q,
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
 int bn_rand_interval(BIGNUM *rnd, const BIGNUM *lower_inc, const BIGNUM *upper_exc);
+
+void	BN_init(BIGNUM *);
+
+int	BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx);
+
+void	BN_RECP_CTX_init(BN_RECP_CTX *recp);
+BN_RECP_CTX *BN_RECP_CTX_new(void);
+void	BN_RECP_CTX_free(BN_RECP_CTX *recp);
+int	BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *rdiv, BN_CTX *ctx);
+int	BN_mod_mul_reciprocal(BIGNUM *r, const BIGNUM *x, const BIGNUM *y,
+    BN_RECP_CTX *recp, BN_CTX *ctx);
+int	BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx);
+int	BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
+    BN_RECP_CTX *recp, BN_CTX *ctx);
 
 /* Explicitly const time / non-const time versions for internal use */
 int BN_mod_exp_ct(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
