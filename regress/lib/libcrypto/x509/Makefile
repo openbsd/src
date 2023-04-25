@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.16 2023/03/02 21:15:14 tb Exp $
+#	$OpenBSD: Makefile,v 1.17 2023/04/25 21:51:44 job Exp $
 
 PROGS =	constraints verify x509attribute x509name x509req_ext callback
-PROGS += expirecallback callbackfailures
+PROGS += expirecallback callbackfailures dercache 
 LDADD =	-lcrypto
 DPADD =	${LIBCRYPTO}
 
@@ -23,6 +23,9 @@ CLEANFILES +=	x509name.result callback.out
 	 rm -rf [0-9]*
 . endif
 .endif
+
+run-regress-dercache: dercache
+	./dercache
 
 run-regress-verify: verify
 	perl ${.CURDIR}/make-dir-roots.pl ${.CURDIR}/../certs .
