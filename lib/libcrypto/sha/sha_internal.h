@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha_internal.h,v 1.2 2023/04/16 16:42:06 jsing Exp $ */
+/*	$OpenBSD: sha_internal.h,v 1.3 2023/04/25 15:47:29 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -19,11 +19,6 @@
 
 #ifndef HEADER_SHA_INTERNAL_H
 #define HEADER_SHA_INTERNAL_H
-
-#define NID_sha512_224WithRSAEncryption		1025
-#define NID_sha512_256WithRSAEncryption		1026
-#define NID_sha512_224		1029
-#define NID_sha512_256		1030
 
 #define SHA512_224_DIGEST_LENGTH	28
 #define SHA512_256_DIGEST_LENGTH	32
