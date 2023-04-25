@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.4 2023/04/16 18:42:30 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.5 2023/04/25 18:28:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -68,6 +68,11 @@ __BEGIN_HIDDEN_DECLS
 #define X509_CERT_HASH_LEN	SHA512_DIGEST_LENGTH
 #define X509_CRL_HASH_EVP	EVP_sha512()
 #define X509_CRL_HASH_LEN	SHA512_DIGEST_LENGTH
+
+typedef struct X509_POLICY_NODE_st X509_POLICY_NODE;
+typedef struct X509_POLICY_LEVEL_st X509_POLICY_LEVEL;
+typedef struct X509_POLICY_TREE_st X509_POLICY_TREE;
+typedef struct X509_POLICY_CACHE_st X509_POLICY_CACHE;
 
 struct X509_pubkey_st {
 	X509_ALGOR *algor;
@@ -384,6 +389,13 @@ struct X509_VERIFY_PARAM_ID_st {
 int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
 
 int name_cmp(const char *name, const char *cmp);
+
+int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
+			STACK_OF(X509) *certs,
+			STACK_OF(ASN1_OBJECT) *policy_oids,
+			unsigned int flags);
+
+void X509_policy_tree_free(X509_POLICY_TREE *tree);
 
 __END_HIDDEN_DECLS
 

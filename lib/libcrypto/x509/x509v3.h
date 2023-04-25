@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.21 2023/04/25 15:51:04 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.22 2023/04/25 18:28:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -846,12 +846,6 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc);
 int a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 						unsigned long chtype);
-
-/* Move to pcy_int.h. */
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
-DECLARE_STACK_OF(X509_POLICY_NODE)
-#endif
 
 #ifndef OPENSSL_NO_RFC3779
 typedef struct ASRange_st {

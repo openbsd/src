@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.113 2023/04/16 18:48:58 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.114 2023/04/25 18:28:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2600,20 +2600,6 @@ X509_STORE_CTX_set0_verified_chain(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 	ctx->chain = sk;
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_set0_verified_chain);
-
-X509_POLICY_TREE *
-X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx)
-{
-	return ctx->tree;
-}
-LCRYPTO_ALIAS(X509_STORE_CTX_get0_policy_tree);
-
-int
-X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx)
-{
-	return ctx->explicit_policy;
-}
-LCRYPTO_ALIAS(X509_STORE_CTX_get_explicit_policy);
 
 int
 X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx)

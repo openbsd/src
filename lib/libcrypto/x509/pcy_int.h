@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_int.h,v 1.2 2023/04/16 07:36:43 tb Exp $ */
+/* $OpenBSD: pcy_int.h,v 1.3 2023/04/25 18:28:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -64,6 +64,7 @@ __BEGIN_HIDDEN_DECLS
 typedef struct X509_POLICY_DATA_st X509_POLICY_DATA;
 
 DECLARE_STACK_OF(X509_POLICY_DATA)
+DECLARE_STACK_OF(X509_POLICY_NODE)
 
 /* Internal structures */
 
@@ -208,5 +209,27 @@ int policy_node_match(const X509_POLICY_LEVEL *lvl,
     const X509_POLICY_NODE *node, const ASN1_OBJECT *oid);
 
 const X509_POLICY_CACHE *policy_cache_set(X509 *x);
+
+int X509_policy_tree_level_count(const X509_POLICY_TREE *tree);
+X509_POLICY_LEVEL *
+	X509_policy_tree_get0_level(const X509_POLICY_TREE *tree, int i);
+
+STACK_OF(X509_POLICY_NODE) *
+	X509_policy_tree_get0_policies(const X509_POLICY_TREE *tree);
+
+STACK_OF(X509_POLICY_NODE) *
+	X509_policy_tree_get0_user_policies(const X509_POLICY_TREE *tree);
+
+int X509_policy_level_node_count(X509_POLICY_LEVEL *level);
+
+X509_POLICY_NODE *X509_policy_level_get0_node(X509_POLICY_LEVEL *level, int i);
+
+const ASN1_OBJECT *X509_policy_node_get0_policy(const X509_POLICY_NODE *node);
+
+STACK_OF(POLICYQUALINFO) *
+	X509_policy_node_get0_qualifiers(const X509_POLICY_NODE *node);
+const X509_POLICY_NODE *
+	X509_policy_node_get0_parent(const X509_POLICY_NODE *node);
+
 
 __END_HIDDEN_DECLS
