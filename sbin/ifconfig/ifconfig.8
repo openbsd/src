@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.392 2023/04/21 01:15:48 asou Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.393 2023/04/25 05:02:56 asou Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: April 21 2023 $
+.Dd $Mdocdate: April 25 2023 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -1857,6 +1857,8 @@ The following options are available:
 .It Cm keepalive Ar period count
 Enable
 .Xr gre 4
+and
+.Xr eoip 4
 keepalive with a packet sent every
 .Ar period
 seconds.
