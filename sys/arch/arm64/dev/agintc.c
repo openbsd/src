@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.47 2023/01/27 23:11:59 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.48 2023/04/25 10:35:48 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -256,6 +256,8 @@ int		agintc_ipi_halt(void *v);
 int		agintc_ipi_nop(void *v);
 int		agintc_ipi_combined(void *);
 void		agintc_send_ipi(struct cpu_info *, int);
+
+void		agintc_msi_invall(void);
 
 const struct cfattach	agintc_ca = {
 	sizeof (struct agintc_softc), agintc_match, agintc_attach
@@ -841,7 +843,12 @@ agintc_enable_wakeup(void)
 		cpu_dcache_wb_range((vaddr_t)&prop[irq],
 		    sizeof(*prop));
 		__asm volatile("dsb sy");
+
+		/* XXX: Invalidate cache? */
 	}
+
+	/* Invalidate cache. */
+	agintc_msi_invall();
 }
 
 void
@@ -879,6 +886,9 @@ agintc_disable_wakeup(void)
 		    sizeof(*prop));
 		__asm volatile("dsb sy");
 	}
+
+	/* Invalidate cache. */
+	agintc_msi_invall();
 }
 
 void
@@ -1291,6 +1301,8 @@ agintc_intr_disestablish(void *cookie)
 		cpu_dcache_wb_range((vaddr_t)&prop[irqno - LPI_BASE],
 		    sizeof(*prop));
 		__asm volatile("dsb sy");
+
+		/* XXX: Invalidate cache? */
 	}
 
 	if (ih->ih_name != NULL)
@@ -1509,6 +1521,8 @@ struct gits_cmd {
 #define MAPD	0x08
 #define MAPC	0x09
 #define MAPTI	0x0a
+#define INV	0x0c
+#define INVALL	0x0d
 
 #define GITS_CMDQ_SIZE		(64 * 1024)
 #define GITS_CMDQ_NENTRIES	(GITS_CMDQ_SIZE / sizeof(struct gits_cmd))
@@ -1863,6 +1877,28 @@ agintc_msi_find_device(struct agintc_msi_softc *sc, uint32_t deviceid)
 	}
 
 	return agintc_msi_create_device(sc, deviceid);
+}
+
+void
+agintc_msi_invall(void)
+{
+	struct cfdriver *cd = &agintcmsi_cd;
+	struct agintc_msi_softc *sc;
+	struct gits_cmd cmd;
+	int i, j;
+
+	for (i = 0; i < cd->cd_ndevs; i++) {
+		if (cd->cd_devs[i] == NULL)
+			continue;
+		sc = cd->cd_devs[i];
+		for (j = 0; j < ncpus; j++) {
+			memset(&cmd, 0, sizeof(cmd));
+			cmd.cmd = INVALL;
+			cmd.dw2 = j;
+			agintc_msi_send_cmd(sc, &cmd);
+			agintc_msi_wait_cmd(sc);
+		}
+	}
 }
 
 void *
