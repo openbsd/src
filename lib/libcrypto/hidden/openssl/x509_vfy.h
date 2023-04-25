@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.3 2023/04/25 18:28:05 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.4 2023/04/25 18:32:42 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -35,8 +35,6 @@ LCRYPTO_USED(X509_OBJECT_get0_X509_CRL);
 LCRYPTO_USED(X509_STORE_new);
 LCRYPTO_USED(X509_STORE_free);
 LCRYPTO_USED(X509_STORE_up_ref);
-LCRYPTO_USED(X509_STORE_get1_certs);
-LCRYPTO_USED(X509_STORE_get1_crls);
 LCRYPTO_USED(X509_STORE_get0_objects);
 LCRYPTO_USED(X509_STORE_get_ex_data);
 LCRYPTO_USED(X509_STORE_set_ex_data);
@@ -59,6 +57,8 @@ LCRYPTO_USED(X509_STORE_CTX_get0_chain);
 LCRYPTO_USED(X509_STORE_CTX_get0_store);
 LCRYPTO_USED(X509_STORE_CTX_get0_untrusted);
 LCRYPTO_USED(X509_STORE_CTX_set0_untrusted);
+LCRYPTO_USED(X509_STORE_CTX_get1_certs);
+LCRYPTO_USED(X509_STORE_CTX_get1_crls);
 LCRYPTO_USED(X509_STORE_CTX_trusted_stack);
 LCRYPTO_USED(X509_STORE_CTX_set0_trusted_stack);
 LCRYPTO_USED(X509_STORE_CTX_cleanup);
