@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2030 2023/04/12 15:56:08 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2031 2023/04/25 08:27:59 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -25396,6 +25396,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "A2000",
 	},
 	{
+	    PCI_VENDOR_KINGSTON, PCI_PRODUCT_KINGSTON_KC3000,
+	    "KC3000",
+	},
+	{
 	    PCI_VENDOR_KINGSTON, PCI_PRODUCT_KINGSTON_NV2,
 	    "NV2",
 	},
@@ -30974,6 +30978,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_PM9A1_NVME,
 	    "PM9A1 NVMe",
+	},
+	{
+	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_PM9B1_NVME,
+	    "PM9B1 NVMe",
 	},
 	{
 	    PCI_VENDOR_SAMSUNG2, PCI_PRODUCT_SAMSUNG2_NVME_171X,
