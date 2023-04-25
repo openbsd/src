@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.339 2023/01/16 07:09:11 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.340 2023/04/25 18:14:06 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -241,8 +241,8 @@ struct process {
 #define	BOGO_PC	(u_long)-1
 
 /* End area that is copied on creation. */
-#define ps_endcopy	ps_refcnt
-	int	ps_refcnt;		/* Number of references. */
+#define ps_endcopy	ps_threadcnt
+	u_int	ps_threadcnt;		/* Number of threads. */
 
 	struct	timespec ps_start;	/* starting uptime. */
 	struct	timeout ps_realit_to;	/* [m] ITIMER_REAL timeout */
@@ -403,8 +403,7 @@ struct proc {
 #define	SONPROC	7		/* Thread is currently on a CPU. */
 
 #define	P_ZOMBIE(p)	((p)->p_stat == SDEAD)
-#define	P_HASSIBLING(p)	(TAILQ_FIRST(&(p)->p_p->ps_threads) != (p) || \
-			 TAILQ_NEXT((p), p_thr_link) != NULL)
+#define	P_HASSIBLING(p)	((p)->p_p->ps_threadcnt > 1)
 
 /*
  * These flags are per-thread and kept in p_flag

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.246 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.247 2023/04/25 18:14:06 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -180,7 +180,7 @@ process_initialize(struct process *pr, struct proc *p)
 	pr->ps_mainproc = p;
 	TAILQ_INIT(&pr->ps_threads);
 	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
-	pr->ps_refcnt = 1;
+	pr->ps_threadcnt = 1;
 	p->p_p = pr;
 
 	/* give the process the same creds as the initial thread */
@@ -539,7 +539,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 
 	/* other links */
 	p->p_p = pr;
-	pr->ps_refcnt++;
+	pr->ps_threadcnt++;
 
 	/* local copies */
 	p->p_fd		= pr->ps_fd;
@@ -560,6 +560,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 
 	SCHED_LOCK(s);
 	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
+
 	/*
 	 * if somebody else wants to take us to single threaded mode,
 	 * count ourselves in.
