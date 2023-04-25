@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_all.c,v 1.18 2023/04/24 22:24:39 tb Exp $ */
+/* $OpenBSD: pem_all.c,v 1.19 2023/04/25 11:03:37 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -246,7 +246,6 @@ PEM_write_NETSCAPE_CERT_SEQUENCE(FILE *fp, NETSCAPE_CERT_SEQUENCE *x)
 	return PEM_ASN1_write((i2d_of_void *)i2d_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, fp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }
-#endif
 
 NETSCAPE_CERT_SEQUENCE *
 PEM_read_NETSCAPE_CERT_SEQUENCE(FILE *fp, NETSCAPE_CERT_SEQUENCE **x, pem_password_cb *cb, void *u)
@@ -268,6 +267,7 @@ PEM_write_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp, NETSCAPE_CERT_SEQUENCE *x)
 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, bp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }
+#endif
 
 #ifndef OPENSSL_NO_RSA
 
