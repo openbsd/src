@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_ctrl.3,v 1.18 2023/04/06 19:06:51 schwarze Exp $
+.\" $OpenBSD: BIO_ctrl.3,v 1.19 2023/04/25 15:59:45 schwarze Exp $
 .\" full merge up to: OpenSSL 24a535eaf Tue Sep 22 13:14:20 2020 +0100
 .\" selective merge up to: OpenSSL 0c5bc96f Tue Mar 15 13:57:22 2022 +0000
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 6 2023 $
+.Dd $Mdocdate: April 25 2023 $
 .Dt BIO_CTRL 3
 .Os
 .Sh NAME
@@ -349,6 +349,64 @@ The function type name
 is a deprecated synonym for
 .Vt BIO_info_cb
 provided for backward compatibility with some existing application software.
+.Pp
+The following
+.Fa cmd
+constants correspond to macros:
+.Bl -column BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT BIO_set_ssl_renegotiate_timeout(3)
+.It Dv BIO_C_DESTROY_BIO_PAIR            Ta Xr BIO_destroy_bio_pair 3
+.It Dv BIO_C_DO_STATE_MACHINE            Ta Xr BIO_do_handshake 3
+.It Dv BIO_C_FILE_SEEK                   Ta Fn BIO_seek
+.It Dv BIO_C_FILE_TELL                   Ta Fn BIO_tell
+.It Dv BIO_C_GET_ACCEPT                  Ta Xr BIO_get_accept_port 3
+.It Dv BIO_C_GET_BIND_MODE               Ta Xr BIO_get_bind_mode 3
+.It Dv BIO_C_GET_BUF_MEM_PTR             Ta Xr BIO_get_mem_ptr 3
+.It Dv BIO_C_GET_BUFF_NUM_LINES          Ta Xr BIO_get_buffer_num_lines 3
+.It Dv BIO_C_GET_CIPHER_CTX              Ta Xr BIO_get_cipher_ctx 3
+.It Dv BIO_C_GET_CIPHER_STATUS           Ta Xr BIO_get_cipher_status 3
+.It Dv BIO_C_GET_FD                      Ta Xr BIO_get_fd 3
+.It Dv BIO_C_GET_FILE_PTR                Ta Xr BIO_get_fp 3
+.It Dv BIO_C_GET_MD                      Ta Xr BIO_get_md 3
+.It Dv BIO_C_GET_MD_CTX                  Ta Xr BIO_get_md_ctx 3
+.It Dv BIO_C_GET_READ_REQUEST            Ta Xr BIO_get_read_request 3
+.It Dv BIO_C_GET_SSL                     Ta Xr BIO_get_ssl 3
+.It Dv BIO_C_GET_SSL_NUM_RENEGOTIATES    Ta Xr BIO_get_num_renegotiates 3
+.It Dv BIO_C_GET_WRITE_BUF_SIZE          Ta Xr BIO_get_write_buf_size 3
+.It Dv BIO_C_GET_WRITE_GUARANTEE         Ta Xr BIO_get_write_guarantee 3
+.It Dv BIO_C_MAKE_BIO_PAIR               Ta Xr BIO_make_bio_pair 3
+.It Dv BIO_C_RESET_READ_REQUEST          Ta Xr BIO_ctrl_reset_read_request 3
+.It Dv BIO_C_SET_BIND_MODE               Ta Xr BIO_set_bind_mode 3
+.It Dv BIO_C_SET_BUF_MEM                 Ta Xr BIO_set_mem_buf 3
+.It Dv BIO_C_SET_BUF_MEM_EOF_RETURN      Ta Xr BIO_set_mem_eof_return 3
+.It Dv BIO_C_SET_BUFF_READ_DATA          Ta Xr BIO_set_buffer_read_data 3
+.It Dv BIO_C_SET_FD                      Ta Xr BIO_set_fd 3
+.It Dv BIO_C_SET_FILE_PTR                Ta Xr BIO_set_fp 3
+.It Dv BIO_C_SET_MD                      Ta Xr BIO_set_md 3
+.It Dv BIO_C_SET_NBIO                    Ta Xr BIO_set_nbio 3
+.It Dv BIO_C_SET_SSL                     Ta Xr BIO_set_ssl 3
+.It Dv BIO_C_SET_SSL_RENEGOTIATE_BYTES   Ta Xr BIO_set_ssl_renegotiate_bytes 3
+.It Dv BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT Ta Xr BIO_set_ssl_renegotiate_timeout 3
+.It Dv BIO_C_SET_WRITE_BUF_SIZE          Ta Xr BIO_set_write_buf_size 3
+.It Dv BIO_C_SHUTDOWN_WR                 Ta Xr BIO_shutdown_wr 3
+.It Dv BIO_C_SSL_MODE                    Ta Xr BIO_set_ssl_mode 3
+.It Dv BIO_CTRL_DGRAM_CONNECT            Ta Xr BIO_ctrl_dgram_connect 3
+.It Dv BIO_CTRL_DGRAM_GET_PEER           Ta Xr BIO_dgram_get_peer 3
+.It Dv BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP Ta Xr BIO_dgram_recv_timedout 3
+.It Dv BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP Ta Xr BIO_dgram_send_timedout 3
+.It Dv BIO_CTRL_DGRAM_SET_CONNECTED      Ta Xr BIO_ctrl_set_connected 3
+.It Dv BIO_CTRL_DGRAM_SET_PEER           Ta Xr BIO_dgram_set_peer 3
+.It Dv BIO_CTRL_DUP                      Ta Xr BIO_dup_state 3
+.It Dv BIO_CTRL_EOF                      Ta Fn BIO_eof
+.It Dv BIO_CTRL_FLUSH                    Ta Fn BIO_flush
+.It Dv BIO_CTRL_GET_CALLBACK             Ta Fn BIO_get_info_callback
+.It Dv BIO_CTRL_GET_CLOSE                Ta Fn BIO_get_close
+.It Dv BIO_CTRL_INFO                     Ta Xr BIO_get_mem_data 3
+.It Dv BIO_CTRL_PENDING                  Ta Fn BIO_pending
+.It Dv BIO_CTRL_RESET                    Ta Fn BIO_reset
+.It Dv BIO_CTRL_SET_CALLBACK             Ta Fn BIO_set_info_callback
+.It Dv BIO_CTRL_SET_CLOSE                Ta Fn BIO_set_close
+.It Dv BIO_CTRL_WPENDING                 Ta Fn BIO_wpending
+.El
 .Sh RETURN VALUES
 The meaning of the return values of
 .Fn BIO_ctrl ,
