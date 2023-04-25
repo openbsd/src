@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_lib.c,v 1.13 2023/04/17 06:46:19 tb Exp $ */
+/* $OpenBSD: x509_lib.c,v 1.14 2023/04/25 10:56:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -68,7 +68,7 @@
 static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
 
 extern const X509V3_EXT_METHOD v3_bcons, v3_nscert, v3_key_usage, v3_ext_ku;
-extern const X509V3_EXT_METHOD v3_pkey_usage_period, v3_sxnet, v3_info, v3_sinfo;
+extern const X509V3_EXT_METHOD v3_pkey_usage_period, v3_info, v3_sinfo;
 extern const X509V3_EXT_METHOD v3_ns_ia5_list[], v3_alt[], v3_skey_id, v3_akey_id;
 extern const X509V3_EXT_METHOD v3_crl_num, v3_crl_reason, v3_crl_invdate;
 extern const X509V3_EXT_METHOD v3_delta_crl, v3_cpols, v3_crld, v3_freshest_crl;
@@ -109,7 +109,6 @@ static const X509V3_EXT_METHOD *standard_exts[] = {
 #ifndef OPENSSL_NO_OCSP
 	&v3_crl_invdate,
 #endif
-	&v3_sxnet,
 	&v3_info,
 #ifndef OPENSSL_NO_RFC3779
 	&v3_addr,
