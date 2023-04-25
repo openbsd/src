@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.114 2023/04/25 18:28:05 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.115 2023/04/25 18:37:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2413,12 +2413,12 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	if (store && store->lookup_certs)
 		ctx->lookup_certs = store->lookup_certs;
 	else
-		ctx->lookup_certs = X509_STORE_get1_certs;
+		ctx->lookup_certs = X509_STORE_CTX_get1_certs;
 
 	if (store && store->lookup_crls)
 		ctx->lookup_crls = store->lookup_crls;
 	else
-		ctx->lookup_crls = X509_STORE_get1_crls;
+		ctx->lookup_crls = X509_STORE_CTX_get1_crls;
 
 	if (store && store->cleanup)
 		ctx->cleanup = store->cleanup;
