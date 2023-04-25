@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_primes.c,v 1.2 2022/12/06 18:23:29 tb Exp $ */
+/*	$OpenBSD: bn_primes.c,v 1.3 2023/04/25 15:30:03 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -98,19 +98,6 @@ static const struct test_dynamic_api {
 
 #define N_DYNAMIC_TESTS (sizeof(dynamic_api_data) / sizeof(dynamic_api_data[0]))
 
-static const struct test_const_api {
-	const BIGNUM *(*fn)(void);
-	const char *name;
-} const_api_data[] = {
-	BN_PRIME_FN_INIT(BN_get0_nist_prime_192),
-	BN_PRIME_FN_INIT(BN_get0_nist_prime_224),
-	BN_PRIME_FN_INIT(BN_get0_nist_prime_256),
-	BN_PRIME_FN_INIT(BN_get0_nist_prime_384),
-	BN_PRIME_FN_INIT(BN_get0_nist_prime_521),
-};
-
-#define N_CONST_TESTS (sizeof(const_api_data) / sizeof(const_api_data[0]))
-
 static int
 test_prime_dynamic_api(const struct test_dynamic_api *tc)
 {
@@ -137,30 +124,6 @@ test_prime_dynamic_api(const struct test_dynamic_api *tc)
 }
 
 static int
-test_prime_const_api(const struct test_const_api *tc)
-{
-	const BIGNUM *prime;
-	int ret;
-	int failed = 1;
-
-	if ((prime = tc->fn()) == NULL) {
-		fprintf(stderr, "%s failed\n", tc->name);
-		goto err;
-	}
-
-	if ((ret = BN_is_prime_fasttest_ex(prime, 1, NULL, 1, NULL)) != 1) {
-		fprintf(stderr, "%s: %s: want 1, got %d\n", tc->name,
-		    "BN_is_prime_fasttest_ex", ret);
-		goto err;
-	}
-
-	failed = 0;
-
- err:
-	return failed;
-}
-
-static int
 test_prime_constants(void)
 {
 	size_t i;
@@ -168,9 +131,6 @@ test_prime_constants(void)
 
 	for (i = 0; i < N_DYNAMIC_TESTS; i++)
 		failed |= test_prime_dynamic_api(&dynamic_api_data[i]);
-
-	for (i = 0; i < N_CONST_TESTS; i++)
-		failed |= test_prime_const_api(&const_api_data[i]);
 
 	return failed;
 }
