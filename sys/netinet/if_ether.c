@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.262 2023/04/12 16:14:42 kn Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.263 2023/04/25 16:24:25 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -339,7 +339,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	struct rtentry *rt = NULL;
 	char addr[INET_ADDRSTRLEN];
 	time_t uptime;
-	int refresh = 0;
+	int refresh = 0, reject = 0;
 
 	if (m->m_flags & M_BCAST) {	/* broadcast */
 		memcpy(desten, etherbroadcastaddr, sizeof(etherbroadcastaddr));
@@ -411,16 +411,9 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	if (ifp->if_flags & (IFF_NOARP|IFF_STATICARP))
 		goto bad;
 
-	KERNEL_LOCK();
-	/*
-	 * Re-check since we grab the kernel lock after the first check.
-	 * rtrequest_delete() can be called with shared netlock.  From
-	 * there arp_rtrequest() is reached which touches RTF_LLINFO
-	 * and rt_llinfo.  As this is called with kernel lock we grab the
-	 * kernel lock here and are safe.  XXXSMP
-	 */
+	mtx_enter(&arp_mtx);
 	if (!ISSET(rt->rt_flags, RTF_LLINFO)) {
-		KERNEL_UNLOCK();
+		mtx_leave(&arp_mtx);
 		goto bad;
 	}
 	la = (struct llinfo_arp *)rt->rt_llinfo;
@@ -451,13 +444,13 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	}
 #endif
 	if (rt->rt_expire) {
-		rt->rt_flags &= ~RTF_REJECT;
+		reject = ~RTF_REJECT;
 		if (la->la_asked == 0 || rt->rt_expire != uptime) {
 			rt->rt_expire = uptime;
 			if (la->la_asked++ < arp_maxtries)
 				refresh = 1;
 			else {
-				rt->rt_flags |= RTF_REJECT;
+				reject = RTF_REJECT;
 				rt->rt_expire += arpt_down;
 				la->la_asked = 0;
 				la->la_refreshed = 0;
@@ -466,8 +459,18 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 			}
 		}
 	}
+	mtx_leave(&arp_mtx);
 
-	KERNEL_UNLOCK();
+	if (reject == RTF_REJECT && !ISSET(rt->rt_flags, RTF_REJECT)) {
+		KERNEL_LOCK();
+		SET(rt->rt_flags, RTF_REJECT);
+		KERNEL_UNLOCK();
+	}
+	if (reject == ~RTF_REJECT && ISSET(rt->rt_flags, RTF_REJECT)) {
+		KERNEL_LOCK();
+		CLR(rt->rt_flags, RTF_REJECT);
+		KERNEL_UNLOCK();
+	}
 	if (refresh)
 		arprequest(ifp, &satosin(rt->rt_ifa->ifa_addr)->sin_addr.s_addr,
 		    &satosin(dst)->sin_addr.s_addr, ac->ac_enaddr);
