@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.64 2023/04/25 16:50:33 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.65 2023/04/25 17:01:21 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -323,20 +323,8 @@ int BN_is_one(const BIGNUM *a);
 int BN_is_word(const BIGNUM *a, const BN_ULONG w);
 int BN_is_odd(const BIGNUM *a);
 
-#if defined(LIBRESSL_INTERNAL) || defined(LIBRESSL_NEXT_API)
 void BN_zero(BIGNUM *a);
 int BN_one(BIGNUM *a);
-#else
-#define BN_one(a)	BN_set_word((a), 1)
-
-void BN_zero_ex(BIGNUM *a);
-
-#ifdef OPENSSL_NO_DEPRECATED
-#define BN_zero(a)	BN_zero_ex(a)
-#else
-#define BN_zero(a)	(BN_set_word((a),0))
-#endif
-#endif
 
 const BIGNUM *BN_value_one(void);
 char *	BN_options(void);
