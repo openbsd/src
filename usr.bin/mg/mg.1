@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.130 2023/04/21 13:39:37 op Exp $
+.\"	$OpenBSD: mg.1,v 1.131 2023/04/25 08:37:24 op Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: April 21 2023 $
+.Dd $Mdocdate: April 25 2023 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -759,7 +759,8 @@ where typing overwrites existing characters rather than inserting them.
 Can be set globally with set-default-mode.
 .It prefix-region
 Inserts a prefix string before each line of a region.
-The prefix string is settable by using 'set-prefix-string'.
+The prefix string is settable by using 'set-prefix-string'
+or by invoking this command with a prefix argument.
 .It previous-line
 Move backwards
 .Va n
