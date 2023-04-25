@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.34 2022/09/01 13:45:26 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.35 2023/04/25 14:00:35 kn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -533,6 +533,9 @@ devopen(struct open_file *of, const char *name, char **file)
 	if (bootdev_dip) {
 		if (fname[0] == 's' && fname[1] == 'r' &&
 		    '0' <= fname[2] && fname[2] <= '9') {
+			/* We only support read-only softraid. */
+			of->f_flags |= F_NOWRITE;
+
 			volno = fname[2];
 			if ('a' <= fname[3] &&
 			    fname[3] <= 'a' + MAXPARTITIONS) {
