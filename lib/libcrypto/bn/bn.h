@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.66 2023/04/25 17:13:06 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.67 2023/04/25 17:20:24 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -464,10 +464,6 @@ int	BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
     int do_trial_division, BN_GENCB *cb);
 
 BN_MONT_CTX *BN_MONT_CTX_new(void );
-/* Remove in next major bump. */
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
-#endif
 int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mont, BN_CTX *ctx);
 int BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
