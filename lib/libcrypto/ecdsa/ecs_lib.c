@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.16 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.17 2023/04/25 19:26:45 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -57,12 +57,14 @@
 
 #include <openssl/opensslconf.h>
 
-#include "ecs_local.h"
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
 #include <openssl/err.h>
 #include <openssl/bn.h>
+
+#include "ec_local.h"
+#include "ecs_local.h"
 
 static const ECDSA_METHOD *default_ECDSA_method = NULL;
 

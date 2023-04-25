@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.15 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.16 2023/04/25 19:26:45 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -71,11 +71,13 @@
 
 #include <openssl/opensslconf.h>
 
-#include "ech_local.h"
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
 #include <openssl/err.h>
+
+#include "ec_local.h"
+#include "ech_local.h"
 
 static const ECDH_METHOD *default_ECDH_method = NULL;
 
