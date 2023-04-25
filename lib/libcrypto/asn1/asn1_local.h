@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_local.h,v 1.1 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: asn1_local.h,v 1.2 2023/04/25 19:08:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -247,5 +247,18 @@ int OPENSSL_gmtime_diff(int *pday, int *psec, const struct tm *from,
     const struct tm *to);
 int asn1_time_time_t_to_tm(const time_t *time, struct tm *out_tm);
 int asn1_time_tm_to_time_t(const struct tm *tm, time_t *out);
+
+int ASN1_item_ndef_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
+
+BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it);
+
+int i2d_ASN1_bio_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
+    const ASN1_ITEM *it);
+int PEM_write_bio_ASN1_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
+    const char *hdr, const ASN1_ITEM *it);
+int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
+    int ctype_nid, int econt_nid, STACK_OF(X509_ALGOR) *mdalgs,
+    const ASN1_ITEM *it);
+ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
 
 __END_HIDDEN_DECLS

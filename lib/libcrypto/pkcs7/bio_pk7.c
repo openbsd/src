@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_pk7.c,v 1.7 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: bio_pk7.c,v 1.8 2023/04/25 19:08:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -52,11 +52,13 @@
  *
  */
 
-#include <openssl/asn1.h>
-#include <openssl/pkcs7.h>
-#include <openssl/bio.h>
-
 #include <stdio.h>
+
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/pkcs7.h>
+
+#include "asn1_local.h"
 
 /* Streaming encode support for PKCS#7 */
 BIO *
