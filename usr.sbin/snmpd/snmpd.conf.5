@@ -1,4 +1,4 @@
-.\" $OpenBSD: snmpd.conf.5,v 1.62 2023/03/02 17:09:54 jmc Exp $
+.\" $OpenBSD: snmpd.conf.5,v 1.63 2023/04/25 13:36:01 op Exp $
 .\"
 .\" Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: April 25 2023 $
 .Dt SNMPD.CONF 5
 .Os
 .Sh NAME
@@ -151,7 +151,7 @@ Having
 set requires at least one
 .Ic trap handle
 statement.
-.It Ic agentx Oo Ic path Ar path Oc Oo Ic owner Ar owner Oc Oo group Ar group Oc Oo Ic mode Ar mode Oc
+.It Ic agentx Oo Ic path Ar path Oc Oo Ic owner Ar owner Oc Oo Ic group Ar group Oc Oo Ic mode Ar mode Oc
 Set up an agentx master socket at
 .Ar path
 and defaults to
