@@ -58,7 +58,6 @@
 /* #define OPENSSL_NO_DTLS1_METHOD */
 #define OPENSSL_NO_DYNAMIC_ENGINE
 /* #define OPENSSL_NO_EC */
-/* #define OPENSSL_NO_EC2M */
 #define OPENSSL_NO_EC_NISTP_64_GCC_128
 #define OPENSSL_NO_EGD
 /* #define OPENSSL_NO_ENGINE */
