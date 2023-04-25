@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.115 2023/04/25 19:01:01 tb Exp $
+# $OpenBSD: Makefile,v 1.116 2023/04/25 19:53:30 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -187,7 +187,6 @@ SRCS+= bn_div.c
 SRCS+= bn_err.c
 SRCS+= bn_exp.c
 SRCS+= bn_gcd.c
-#SRCS+= bn_gf2m.c
 SRCS+= bn_isqrt.c
 SRCS+= bn_kron.c
 SRCS+= bn_lib.c
@@ -333,9 +332,6 @@ SRCS+= dso_null.c
 SRCS+= dso_openssl.c
 
 # ec/
-#SRCS+= ec2_mult.c
-#SRCS+= ec2_oct.c
-#SRCS+= ec2_smpl.c
 SRCS+= ec_ameth.c
 SRCS+= ec_asn1.c
 SRCS+= ec_check.c

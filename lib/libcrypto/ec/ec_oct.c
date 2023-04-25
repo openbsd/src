@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.11 2023/04/11 18:58:20 jsing Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.12 2023/04/25 19:53:30 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -106,15 +106,6 @@ EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
 {
 	return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
 }
-
-#ifndef OPENSSL_NO_EC2M
-int
-EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group, EC_POINT *point,
-    const BIGNUM *x, int y_bit, BN_CTX *ctx)
-{
-	return EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx);
-}
-#endif
 
 size_t
 EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,

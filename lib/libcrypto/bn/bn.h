@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.68 2023/04/25 17:42:07 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.69 2023/04/25 19:53:30 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -503,67 +503,6 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 #ifndef OPENSSL_NO_DEPRECATED
 void BN_set_params(int mul, int high, int low, int mont);
 int BN_get_params(int which); /* 0, mul, 1 high, 2 low, 3 mont */
-#endif
-
-#ifndef OPENSSL_NO_EC2M
-
-/* Functions for arithmetic over binary polynomials represented by BIGNUMs.
- *
- * The BIGNUM::neg property of BIGNUMs representing binary polynomials is
- * ignored.
- *
- * Note that input arguments are not const so that their bit arrays can
- * be expanded to the appropriate size if needed.
- */
-
-int	BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b); /*r = a + b*/
-#define BN_GF2m_sub(r, a, b) BN_GF2m_add(r, a, b)
-int	BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p); /*r=a mod p*/
-int
-BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
-	const BIGNUM *p, BN_CTX *ctx); /* r = (a * b) mod p */
-int
-BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-	BN_CTX *ctx); /* r = (a * a) mod p */
-int
-BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *b, const BIGNUM *p,
-	BN_CTX *ctx); /* r = (1 / b) mod p */
-int
-BN_GF2m_mod_div(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
-	const BIGNUM *p, BN_CTX *ctx); /* r = (a / b) mod p */
-int
-BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
-	const BIGNUM *p, BN_CTX *ctx); /* r = (a ^ b) mod p */
-int
-BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-	BN_CTX *ctx); /* r = sqrt(a) mod p */
-int	BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-	BN_CTX *ctx); /* r^2 + r = a mod p */
-#define BN_GF2m_cmp(a, b) BN_ucmp((a), (b))
-/* Some functions allow for representation of the irreducible polynomials
- * as an unsigned int[], say p.  The irreducible f(t) is then of the form:
- *     t^p[0] + t^p[1] + ... + t^p[k]
- * where m = p[0] > p[1] > ... > p[k] = 0.
- */
-int	BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[]);
-/* r = a mod p */
-int BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
-	const int p[], BN_CTX *ctx); /* r = (a * b) mod p */
-int BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const int p[],
-	BN_CTX *ctx); /* r = (a * a) mod p */
-int BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *b, const int p[],
-	BN_CTX *ctx); /* r = (1 / b) mod p */
-int	BN_GF2m_mod_div_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
-	const int p[], BN_CTX *ctx); /* r = (a / b) mod p */
-int	BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
-	const int p[], BN_CTX *ctx); /* r = (a ^ b) mod p */
-int	BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a,
-	const int p[], BN_CTX *ctx); /* r = sqrt(a) mod p */
-int	BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a,
-	const int p[], BN_CTX *ctx); /* r^2 + r = a mod p */
-int	BN_GF2m_poly2arr(const BIGNUM *a, int p[], int max);
-int	BN_GF2m_arr2poly(const int p[], BIGNUM *a);
-
 #endif
 
 /* Primes from RFC 2409 */
