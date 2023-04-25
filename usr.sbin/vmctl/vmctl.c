@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.84 2023/01/28 14:40:53 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.85 2023/04/25 12:46:13 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -128,14 +128,15 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 	vcp->vcp_memranges[0].vmr_size = memsize;
 
 	vcp->vcp_ncpus = 1;
-	vcp->vcp_ndisks = ndisks;
-	vcp->vcp_nnics = nnics;
 	vcp->vcp_id = start_id;
 
+	vmc->vmc_ndisks = ndisks;
+	vmc->vmc_nnics = nnics;
+
 	for (i = 0 ; i < ndisks; i++) {
-		if (strlcpy(vcp->vcp_disks[i], disks[i],
-		    sizeof(vcp->vcp_disks[i])) >=
-		    sizeof(vcp->vcp_disks[i]))
+		if (strlcpy(vmc->vmc_disks[i], disks[i],
+		    sizeof(vmc->vmc_disks[i])) >=
+		    sizeof(vmc->vmc_disks[i]))
 			errx(1, "disk path too long");
 		vmc->vmc_disktypes[i] = disktypes[i];
 	}
@@ -175,12 +176,12 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 			errx(1, "vm name too long");
 	}
 	if (kernel != NULL)
-		if (strlcpy(vcp->vcp_kernel, kernel,
-		    sizeof(vcp->vcp_kernel)) >= sizeof(vcp->vcp_kernel))
+		if (strlcpy(vmc->vmc_kernel, kernel,
+		    sizeof(vmc->vmc_kernel)) >= sizeof(vmc->vmc_kernel))
 			errx(1, "kernel name too long");
 	if (iso != NULL)
-		if (strlcpy(vcp->vcp_cdrom, iso,
-		    sizeof(vcp->vcp_cdrom)) >= sizeof(vcp->vcp_cdrom))
+		if (strlcpy(vmc->vmc_cdrom, iso,
+		    sizeof(vmc->vmc_cdrom)) >= sizeof(vmc->vmc_cdrom))
 			errx(1, "cdrom name too long");
 	if (instance != NULL)
 		if (strlcpy(vmc->vmc_instance, instance,

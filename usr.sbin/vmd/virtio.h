@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.43 2022/12/23 19:25:22 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.44 2023/04/25 12:46:13 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -284,15 +284,17 @@ struct ioinfo {
 
 /* virtio.c */
 void virtio_init(struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK], int *);
+void virtio_stop(struct vmd_vm *);
+void virtio_start(struct vmd_vm *);
 void virtio_shutdown(struct vmd_vm *);
 int virtio_dump(int);
-int virtio_restore(int, struct vmd_vm *, int,
-    int[][VM_MAX_BASE_PER_DISK], int *);
+int virtio_restore(int, struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK],
+    int *);
 uint32_t vring_size(uint32_t);
 
 int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int viornd_dump(int);
-int viornd_restore(int, struct vm_create_params *);
+int viornd_restore(int, struct vmd_vm *);
 void viornd_update_qs(void);
 void viornd_update_qa(void);
 int viornd_notifyq(void);
@@ -305,8 +307,7 @@ int virtio_raw_init(struct virtio_backing *, off_t *, int*, size_t);
 
 int virtio_blk_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int vioblk_dump(int);
-int vioblk_restore(int, struct vmop_create_params *,
-    int[][VM_MAX_BASE_PER_DISK]);
+int vioblk_restore(int, struct vmd_vm *, int[][VM_MAX_BASE_PER_DISK]);
 void vioblk_update_qs(struct vioblk_dev *);
 void vioblk_update_qa(struct vioblk_dev *);
 int vioblk_notifyq(struct vioblk_dev *);
@@ -332,7 +333,7 @@ void vmmci_timeout(int, short, void *);
 
 const char *vioblk_cmd_name(uint32_t);
 int vioscsi_dump(int);
-int vioscsi_restore(int, struct vm_create_params *, int);
+int vioscsi_restore(int, struct vmd_vm *, int);
 
 /* dhcp.c */
 ssize_t dhcp_request(struct vionet_dev *, char *, size_t, char **);
@@ -342,7 +343,5 @@ int vioscsi_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 void vioscsi_update_qs(struct vioscsi_dev *);
 void vioscsi_update_qa(struct vioscsi_dev *);
 int vioscsi_notifyq(struct vioscsi_dev *);
-void virtio_stop(struct vm_create_params *vcp);
-void virtio_start(struct vm_create_params *vcp);
 
 #endif /* _VIRTIO_H_ */

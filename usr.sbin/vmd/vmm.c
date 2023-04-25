@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.109 2023/04/23 12:11:37 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.110 2023/04/25 12:46:13 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -680,13 +680,13 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		}
 
 		/* As the parent/vmm process, we no longer need these fds. */
-		for (i = 0 ; i < vcp->vcp_ndisks; i++) {
+		for (i = 0 ; i < vm->vm_params.vmc_ndisks; i++) {
 			for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
 				if (close_fd(vm->vm_disks[i][j]) == 0)
 				    vm->vm_disks[i][j] = -1;
 			}
 		}
-		for (i = 0 ; i < vcp->vcp_nnics; i++) {
+		for (i = 0 ; i < vm->vm_params.vmc_nnics; i++) {
 			if (close_fd(vm->vm_ifs[i].vif_fd) == 0)
 			    vm->vm_ifs[i].vif_fd = -1;
 		}
@@ -752,11 +752,11 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		}
 
 		/* Toggle all fds to not close on exec. */
-		for (i = 0 ; i < vcp->vcp_ndisks; i++)
+		for (i = 0 ; i < vm->vm_params.vmc_ndisks; i++)
 			for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
 				if (vm->vm_disks[i][j] != -1)
 					fcntl(vm->vm_disks[i][j], F_SETFD, 0);
-		for (i = 0 ; i < vcp->vcp_nnics; i++)
+		for (i = 0 ; i < vm->vm_params.vmc_nnics; i++)
 			fcntl(vm->vm_ifs[i].vif_fd, F_SETFD, 0);
 		if (vm->vm_kernel != -1)
 			fcntl(vm->vm_kernel, F_SETFD, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.143 2023/04/24 15:12:14 kn Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.144 2023/04/25 12:46:13 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1354,14 +1354,14 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	if (vcp->vcp_ncpus > VMM_MAX_VCPUS_PER_VM) {
 		log_warnx("invalid number of CPUs");
 		goto fail;
-	} else if (vcp->vcp_ndisks > VM_MAX_DISKS_PER_VM) {
+	} else if (vmc->vmc_ndisks > VM_MAX_DISKS_PER_VM) {
 		log_warnx("invalid number of disks");
 		goto fail;
-	} else if (vcp->vcp_nnics > VM_MAX_NICS_PER_VM) {
+	} else if (vmc->vmc_nnics > VM_MAX_NICS_PER_VM) {
 		log_warnx("invalid number of interfaces");
 		goto fail;
-	} else if (strlen(vcp->vcp_kernel) == 0 &&
-	    vcp->vcp_ndisks == 0 && strlen(vcp->vcp_cdrom) == 0) {
+	} else if (strlen(vmc->vmc_kernel) == 0 &&
+	    vmc->vmc_ndisks == 0 && strlen(vmc->vmc_cdrom) == 0) {
 		log_warnx("no kernel or disk/cdrom specified");
 		goto fail;
 	} else if (strlen(vcp->vcp_name) == 0) {
@@ -1397,7 +1397,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 			vm->vm_disks[i][j] = -1;
 	for (i = 0; i < VM_MAX_NICS_PER_VM; i++)
 		vm->vm_ifs[i].vif_fd = -1;
-	for (i = 0; i < vcp->vcp_nnics; i++) {
+	for (i = 0; i < vmc->vmc_nnics; i++) {
 		if ((sw = switch_getbyname(vmc->vmc_ifswitch[i])) != NULL) {
 			/* inherit per-interface flags from the switch */
 			vmc->vmc_ifflags[i] |= (sw->sw_flags & VMIFF_OPTMASK);
@@ -1410,14 +1410,14 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 		 * from the kernel, incremented by one to differentiate
 		 * the source.
 		 */
-		if (memcmp(zero_mac, &vcp->vcp_macs[i], ETHER_ADDR_LEN) == 0) {
+		if (memcmp(zero_mac, &vmc->vmc_macs[i], ETHER_ADDR_LEN) == 0) {
 			rng = arc4random();
-			vcp->vcp_macs[i][0] = 0xfe;
-			vcp->vcp_macs[i][1] = 0xe1;
-			vcp->vcp_macs[i][2] = 0xba + 1;
-			vcp->vcp_macs[i][3] = 0xd0 | ((i + 1) & 0xf);
-			vcp->vcp_macs[i][4] = rng;
-			vcp->vcp_macs[i][5] = rng >> 8;
+			vmc->vmc_macs[i][0] = 0xfe;
+			vmc->vmc_macs[i][1] = 0xe1;
+			vmc->vmc_macs[i][2] = 0xba + 1;
+			vmc->vmc_macs[i][3] = 0xd0 | ((i + 1) & 0xf);
+			vmc->vmc_macs[i][4] = rng;
+			vmc->vmc_macs[i][5] = rng >> 8;
 		}
 	}
 	vm->vm_kernel = -1;
@@ -1505,17 +1505,17 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 
 	/* disks cannot be inherited */
 	if (vm_checkinsflag(vmcp, VMOP_CREATE_DISK, uid) != 0 &&
-	    vcp->vcp_ndisks) {
+	    vmc->vmc_ndisks) {
 		log_warnx("vm \"%s\" no permission to set disks", name);
 		return (EPERM);
 	}
-	for (i = 0; i < vcp->vcp_ndisks; i++) {
+	for (i = 0; i < vmc->vmc_ndisks; i++) {
 		/* Check if this disk is already used in the parent */
-		for (j = 0; j < vcpp->vcp_ndisks; j++) {
-			if (strcmp(vcp->vcp_disks[i],
-			    vcpp->vcp_disks[j]) == 0) {
+		for (j = 0; j < vmcp->vmc_ndisks; j++) {
+			if (strcmp(vmc->vmc_disks[i],
+			    vmcp->vmc_disks[j]) == 0) {
 				log_warnx("vm \"%s\" disk %s cannot be reused",
-				    name, vcp->vcp_disks[i]);
+				    name, vmc->vmc_disks[i]);
 				return (EBUSY);
 			}
 		}
@@ -1523,15 +1523,15 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	}
 
 	/* interfaces */
-	if (vcp->vcp_nnics > 0 &&
+	if (vmc->vmc_nnics > 0 &&
 	    vm_checkinsflag(vmcp, VMOP_CREATE_NETWORK, uid) != 0 &&
-	    vcp->vcp_nnics != vcpp->vcp_nnics) {
+	    vmc->vmc_nnics != vmcp->vmc_nnics) {
 		log_warnx("vm \"%s\" no permission to set interfaces", name);
 		return (EPERM);
 	}
-	for (i = 0; i < vcpp->vcp_nnics; i++) {
+	for (i = 0; i < vmcp->vmc_nnics; i++) {
 		/* Interface got overwritten */
-		if (i < vcp->vcp_nnics)
+		if (i < vmc->vmc_nnics)
 			continue;
 
 		/* Copy interface from parent */
@@ -1542,17 +1542,17 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 		    sizeof(vmc->vmc_ifswitch[i]));
 		(void)strlcpy(vmc->vmc_ifgroup[i], vmcp->vmc_ifgroup[i],
 		    sizeof(vmc->vmc_ifgroup[i]));
-		memcpy(vcp->vcp_macs[i], vcpp->vcp_macs[i],
-		    sizeof(vcp->vcp_macs[i]));
+		memcpy(vmc->vmc_macs[i], vmcp->vmc_macs[i],
+		    sizeof(vmc->vmc_macs[i]));
 		vmc->vmc_ifrdomain[i] = vmcp->vmc_ifrdomain[i];
-		vcp->vcp_nnics++;
+		vmc->vmc_nnics++;
 	}
-	for (i = 0; i < vcp->vcp_nnics; i++) {
-		for (j = 0; j < vcpp->vcp_nnics; j++) {
-			if (memcmp(zero_mac, vcp->vcp_macs[i],
-			    sizeof(vcp->vcp_macs[i])) != 0 &&
-			    memcmp(vcpp->vcp_macs[i], vcp->vcp_macs[i],
-			    sizeof(vcp->vcp_macs[i])) != 0) {
+	for (i = 0; i < vmc->vmc_nnics; i++) {
+		for (j = 0; j < vmcp->vmc_nnics; j++) {
+			if (memcmp(zero_mac, vmc->vmc_macs[i],
+			    sizeof(vmc->vmc_macs[i])) != 0 &&
+			    memcmp(vmcp->vmc_macs[i], vmc->vmc_macs[i],
+			    sizeof(vmc->vmc_macs[i])) != 0) {
 				log_warnx("vm \"%s\" lladdr cannot be reused",
 				    name);
 				return (EBUSY);
@@ -1568,28 +1568,28 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	}
 
 	/* kernel */
-	if (strlen(vcp->vcp_kernel) > 0) {
+	if (strlen(vmc->vmc_kernel) > 0) {
 		if (vm_checkinsflag(vmcp, VMOP_CREATE_KERNEL, uid) != 0) {
 			log_warnx("vm \"%s\" no permission to set boot image",
 			    name);
 			return (EPERM);
 		}
 		vmc->vmc_checkaccess |= VMOP_CREATE_KERNEL;
-	} else if (strlcpy(vcp->vcp_kernel, vcpp->vcp_kernel,
-	    sizeof(vcp->vcp_kernel)) >= sizeof(vcp->vcp_kernel)) {
+	} else if (strlcpy(vmc->vmc_kernel, vmcp->vmc_kernel,
+	    sizeof(vmc->vmc_kernel)) >= sizeof(vmc->vmc_kernel)) {
 		log_warnx("vm \"%s\" kernel name too long", name);
 		return (EINVAL);
 	}
 
 	/* cdrom */
-	if (strlen(vcp->vcp_cdrom) > 0) {
+	if (strlen(vmc->vmc_cdrom) > 0) {
 		if (vm_checkinsflag(vmcp, VMOP_CREATE_CDROM, uid) != 0) {
 			log_warnx("vm \"%s\" no permission to set cdrom", name);
 			return (EPERM);
 		}
 		vmc->vmc_checkaccess |= VMOP_CREATE_CDROM;
-	} else if (strlcpy(vcp->vcp_cdrom, vcpp->vcp_cdrom,
-	    sizeof(vcp->vcp_cdrom)) >= sizeof(vcp->vcp_cdrom)) {
+	} else if (strlcpy(vmc->vmc_cdrom, vmcp->vmc_cdrom,
+	    sizeof(vmc->vmc_cdrom)) >= sizeof(vmc->vmc_cdrom)) {
 		log_warnx("vm \"%s\" cdrom name too long", name);
 		return (EINVAL);
 	}

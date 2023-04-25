@@ -1,5 +1,5 @@
 /* $NetBSD: loadfile.c,v 1.10 2000/12/03 02:53:04 tsutsui Exp $ */
-/* $OpenBSD: loadfile_elf.c,v 1.46 2023/04/19 12:58:16 jsg Exp $ */
+/* $OpenBSD: loadfile_elf.c,v 1.47 2023/04/25 12:46:13 dv Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -262,8 +262,8 @@ push_pt_64(void)
  *  various error codes returned from gzread(3) or loadelf functions
  */
 int
-loadfile_elf(gzFile fp, struct vm_create_params *vcp,
-    struct vcpu_reg_state *vrs, unsigned int bootdevice)
+loadfile_elf(gzFile fp, struct vmd_vm *vm, struct vcpu_reg_state *vrs,
+    unsigned int bootdevice)
 {
 	int r, is_i386 = 0;
 	uint32_t bootargsz;
@@ -271,6 +271,7 @@ loadfile_elf(gzFile fp, struct vm_create_params *vcp,
 	u_long marks[MARK_MAX];
 	bios_memmap_t memmap[VMM_MAX_MEM_RANGES + 1];
 	bios_bootmac_t bm, *bootmac = NULL;
+	struct vm_create_params *vcp = &vm->vm_params.vmc_params;
 
 	if ((r = gzread(fp, &hdr, sizeof(hdr))) != sizeof(hdr))
 		return 1;
@@ -303,7 +304,7 @@ loadfile_elf(gzFile fp, struct vm_create_params *vcp,
 
 	if (bootdevice == VMBOOTDEV_NET) {
 		bootmac = &bm;
-		memcpy(bootmac, vcp->vcp_macs[0], ETHER_ADDR_LEN);
+		memcpy(bootmac, vm->vm_params.vmc_macs[0], ETHER_ADDR_LEN);
 	}
 	n = create_bios_memmap(vcp, memmap);
 	bootargsz = push_bootargs(memmap, n, bootmac);

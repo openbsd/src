@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.117 2023/04/23 12:11:37 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.118 2023/04/25 12:46:13 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -55,9 +55,6 @@
 #define VM_MAX_BASE_PER_DISK	4
 #define VM_TTYNAME_MAX		16
 #define VM_MAX_DISKS_PER_VM	4
-#define VM_MAX_PATH_DISK	128
-#define VM_MAX_PATH_CDROM	128
-#define VM_MAX_KERNEL_PATH	128
 #define VM_MAX_NICS_PER_VM	4
 
 #define VM_PCI_MMIO_BAR_SIZE	0x00010000
@@ -216,15 +213,23 @@ struct vmop_create_params {
 #define VMIFF_RDOMAIN		0x08
 #define VMIFF_OPTMASK		(VMIFF_LOCKED|VMIFF_LOCAL|VMIFF_RDOMAIN)
 
+	size_t			 vmc_ndisks;
+	char			 vmc_disks[VM_MAX_DISKS_PER_VM][PATH_MAX];
 	unsigned int		 vmc_disktypes[VM_MAX_DISKS_PER_VM];
 	unsigned int		 vmc_diskbases[VM_MAX_DISKS_PER_VM];
 #define VMDF_RAW		0x01
 #define VMDF_QCOW2		0x02
 
+	char			 vmc_cdrom[PATH_MAX];
+	char			 vmc_kernel[PATH_MAX];
+
+	size_t			 vmc_nnics;
 	char			 vmc_ifnames[VM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	char			 vmc_ifswitch[VM_MAX_NICS_PER_VM][VM_NAME_MAX];
 	char			 vmc_ifgroup[VM_MAX_NICS_PER_VM][IF_NAMESIZE];
 	unsigned int		 vmc_ifrdomain[VM_MAX_NICS_PER_VM];
+	uint8_t			 vmc_macs[VM_MAX_NICS_PER_VM][6];
+
 	struct vmop_owner	 vmc_owner;
 
 	/* instance template params */

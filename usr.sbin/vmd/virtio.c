@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.100 2023/04/22 19:47:35 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.101 2023/04/25 12:46:13 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1737,17 +1737,17 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	viornd.irq = pci_get_dev_irq(id);
 	viornd.vm_id = vcp->vcp_id;
 
-	if (vcp->vcp_nnics > 0) {
-		vionet = calloc(vcp->vcp_nnics, sizeof(struct vionet_dev));
+	if (vmc->vmc_nnics > 0) {
+		vionet = calloc(vmc->vmc_nnics, sizeof(struct vionet_dev));
 		if (vionet == NULL) {
 			log_warn("%s: calloc failure allocating vionets",
 			    __progname);
 			return;
 		}
 
-		nr_vionet = vcp->vcp_nnics;
+		nr_vionet = vmc->vmc_nnics;
 		/* Virtio network */
-		for (i = 0; i < vcp->vcp_nnics; i++) {
+		for (i = 0; i < vmc->vmc_nnics; i++) {
 			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
 			    PCI_PRODUCT_QUMRANET_VIO_NET, PCI_CLASS_SYSTEM,
 			    PCI_SUBCLASS_SYSTEM_MISC,
@@ -1804,7 +1804,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			}
 
 			/* MAC address has been assigned by the parent */
-			memcpy(&vionet[i].mac, &vcp->vcp_macs[i], 6);
+			memcpy(&vionet[i].mac, &vmc->vmc_macs[i], 6);
 			vionet[i].cfg.device_feature = VIRTIO_NET_F_MAC;
 
 			vionet[i].lockedmac =
@@ -1825,9 +1825,9 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		}
 	}
 
-	if (vcp->vcp_ndisks > 0) {
-		nr_vioblk = vcp->vcp_ndisks;
-		vioblk = calloc(vcp->vcp_ndisks, sizeof(struct vioblk_dev));
+	if (vmc->vmc_ndisks > 0) {
+		nr_vioblk = vmc->vmc_ndisks;
+		vioblk = calloc(vmc->vmc_ndisks, sizeof(struct vioblk_dev));
 		if (vioblk == NULL) {
 			log_warn("%s: calloc failure allocating vioblks",
 			    __progname);
@@ -1835,7 +1835,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		}
 
 		/* One virtio block device for each disk defined in vcp */
-		for (i = 0; i < vcp->vcp_ndisks; i++) {
+		for (i = 0; i < vmc->vmc_ndisks; i++) {
 			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
 			    PCI_PRODUCT_QUMRANET_VIO_BLOCK,
 			    PCI_CLASS_MASS_STORAGE,
@@ -1876,7 +1876,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	}
 
 	/* vioscsi cdrom */
-	if (strlen(vcp->vcp_cdrom)) {
+	if (strlen(vmc->vmc_cdrom)) {
 		vioscsi = calloc(1, sizeof(struct vioscsi_dev));
 		if (vioscsi == NULL) {
 			log_warn("%s: calloc failure allocating vioscsi",
@@ -1968,10 +1968,9 @@ void
 vionet_set_hostmac(struct vmd_vm *vm, unsigned int idx, uint8_t *addr)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vm_create_params	  *vcp = &vmc->vmc_params;
 	struct vionet_dev	  *dev;
 
-	if (idx > vcp->vcp_nnics)
+	if (idx > vmc->vmc_nnics)
 		fatalx("vionet_set_hostmac");
 
 	dev = &vionet[idx];
@@ -2013,7 +2012,7 @@ vmmci_restore(int fd, uint32_t vm_id)
 }
 
 int
-viornd_restore(int fd, struct vm_create_params *vcp)
+viornd_restore(int fd, struct vmd_vm *vm)
 {
 	void *hva = NULL;
 
@@ -2027,7 +2026,7 @@ viornd_restore(int fd, struct vm_create_params *vcp)
 		    __progname);
 		return (-1);
 	}
-	viornd.vm_id = vcp->vcp_id;
+	viornd.vm_id = vm->vm_params.vmc_params.vcp_id;
 	viornd.irq = pci_get_dev_irq(viornd.pci_id);
 
 	hva = hvaddr_mem(viornd.vq[0].q_gpa, vring_size(VIORND_QUEUE_SIZE));
@@ -2047,9 +2046,9 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 	int ret;
 	void *hva = NULL;
 
-	nr_vionet = vcp->vcp_nnics;
-	if (vcp->vcp_nnics > 0) {
-		vionet = calloc(vcp->vcp_nnics, sizeof(struct vionet_dev));
+	nr_vionet = vmc->vmc_nnics;
+	if (vmc->vmc_nnics > 0) {
+		vionet = calloc(vmc->vmc_nnics, sizeof(struct vionet_dev));
 		if (vionet == NULL) {
 			log_warn("%s: calloc failure allocating vionets",
 			    __progname);
@@ -2057,15 +2056,15 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 		}
 		log_debug("%s: receiving vionet", __func__);
 		if (atomicio(read, fd, vionet,
-		    vcp->vcp_nnics * sizeof(struct vionet_dev)) !=
-		    vcp->vcp_nnics * sizeof(struct vionet_dev)) {
+		    vmc->vmc_nnics * sizeof(struct vionet_dev)) !=
+		    vmc->vmc_nnics * sizeof(struct vionet_dev)) {
 			log_warnx("%s: error reading vionet from fd",
 			    __func__);
 			return (-1);
 		}
 
 		/* Virtio network */
-		for (i = 0; i < vcp->vcp_nnics; i++) {
+		for (i = 0; i < vmc->vmc_nnics; i++) {
 			if (pci_set_bar_fn(vionet[i].pci_id, 0, virtio_net_io,
 			    &vionet[i])) {
 				log_warnx("%s: can't set bar fn for virtio net "
@@ -2108,15 +2107,14 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 }
 
 int
-vioblk_restore(int fd, struct vmop_create_params *vmc,
+vioblk_restore(int fd, struct vmd_vm *vm,
     int child_disks[][VM_MAX_BASE_PER_DISK])
 {
-	struct vm_create_params *vcp = &vmc->vmc_params;
 	uint8_t i;
 	void *hva = NULL;
 
-	nr_vioblk = vcp->vcp_ndisks;
-	vioblk = calloc(vcp->vcp_ndisks, sizeof(struct vioblk_dev));
+	nr_vioblk = vm->vm_params.vmc_ndisks;
+	vioblk = calloc(vm->vm_params.vmc_ndisks, sizeof(struct vioblk_dev));
 	if (vioblk == NULL) {
 		log_warn("%s: calloc failure allocating vioblks", __progname);
 		return (-1);
@@ -2128,7 +2126,7 @@ vioblk_restore(int fd, struct vmop_create_params *vmc,
 		log_warnx("%s: error reading vioblk from fd", __func__);
 		return (-1);
 	}
-	for (i = 0; i < vcp->vcp_ndisks; i++) {
+	for (i = 0; i < vm->vm_params.vmc_ndisks; i++) {
 		if (pci_set_bar_fn(vioblk[i].pci_id, 0, virtio_blk_io,
 		    &vioblk[i])) {
 			log_warnx("%s: can't set bar fn for virtio block "
@@ -2136,13 +2134,13 @@ vioblk_restore(int fd, struct vmop_create_params *vmc,
 			return (-1);
 		}
 		if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
-		    child_disks[i], vmc->vmc_diskbases[i],
-		    vmc->vmc_disktypes[i]) == -1)  {
+		    child_disks[i], vm->vm_params.vmc_diskbases[i],
+		    vm->vm_params.vmc_disktypes[i]) == -1)  {
 			log_warnx("%s: unable to determine disk format",
 			    __func__);
 			return (-1);
 		}
-		vioblk[i].vm_id = vcp->vcp_id;
+		vioblk[i].vm_id = vm->vm_params.vmc_params.vcp_id;
 		vioblk[i].irq = pci_get_dev_irq(vioblk[i].pci_id);
 
 		hva = hvaddr_mem(vioblk[i].vq[0].q_gpa,
@@ -2155,12 +2153,12 @@ vioblk_restore(int fd, struct vmop_create_params *vmc,
 }
 
 int
-vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
+vioscsi_restore(int fd, struct vmd_vm *vm, int child_cdrom)
 {
 	void *hva = NULL;
 	unsigned int i;
 
-	if (!strlen(vcp->vcp_cdrom))
+	if (!strlen(vm->vm_params.vmc_cdrom))
 		return (0);
 
 	vioscsi = calloc(1, sizeof(struct vioscsi_dev));
@@ -2188,7 +2186,7 @@ vioscsi_restore(int fd, struct vm_create_params *vcp, int child_cdrom)
 		log_warnx("%s: unable to determine iso format", __func__);
 		return (-1);
 	}
-	vioscsi->vm_id = vcp->vcp_id;
+	vioscsi->vm_id = vm->vm_params.vmc_params.vcp_id;
 	vioscsi->irq = pci_get_dev_irq(vioscsi->pci_id);
 
 	/* vioscsi uses 3 virtqueues. */
@@ -2207,23 +2205,21 @@ int
 virtio_restore(int fd, struct vmd_vm *vm, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
-	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vm_create_params *vcp = &vmc->vmc_params;
 	int ret;
 
-	if ((ret = viornd_restore(fd, vcp)) == -1)
+	if ((ret = viornd_restore(fd, vm)) == -1)
 		return ret;
 
-	if ((ret = vioblk_restore(fd, vmc, child_disks)) == -1)
+	if ((ret = vioblk_restore(fd, vm, child_disks)) == -1)
 		return ret;
 
-	if ((ret = vioscsi_restore(fd, vcp, child_cdrom)) == -1)
+	if ((ret = vioscsi_restore(fd, vm, child_cdrom)) == -1)
 		return ret;
 
 	if ((ret = vionet_restore(fd, vm, child_taps)) == -1)
 		return ret;
 
-	if ((ret = vmmci_restore(fd, vcp->vcp_id)) == -1)
+	if ((ret = vmmci_restore(fd, vm->vm_params.vmc_params.vcp_id)) == -1)
 		return ret;
 
 	return (0);
@@ -2340,10 +2336,10 @@ virtio_dump(int fd)
 }
 
 void
-virtio_stop(struct vm_create_params *vcp)
+virtio_stop(struct vmd_vm *vm)
 {
 	uint8_t i;
-	for (i = 0; i < vcp->vcp_nnics; i++) {
+	for (i = 0; i < vm->vm_params.vmc_nnics; i++) {
 		if (event_del(&vionet[i].event)) {
 			log_warn("could not initialize vionet event "
 			    "handler");
@@ -2353,10 +2349,10 @@ virtio_stop(struct vm_create_params *vcp)
 }
 
 void
-virtio_start(struct vm_create_params *vcp)
+virtio_start(struct vmd_vm *vm)
 {
 	uint8_t i;
-	for (i = 0; i < vcp->vcp_nnics; i++) {
+	for (i = 0; i < vm->vm_params.vmc_nnics; i++) {
 		if (event_add(&vionet[i].event, NULL)) {
 			log_warn("could not initialize vionet event "
 			    "handler");

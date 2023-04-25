@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.69 2023/04/02 02:04:10 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.70 2023/04/25 12:46:13 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -268,13 +268,13 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
 			diskfds[i][j] = -1;
 
-	tapfds = reallocarray(NULL, vcp->vcp_nnics, sizeof(*tapfds));
+	tapfds = reallocarray(NULL, vmc->vmc_nnics, sizeof(*tapfds));
 	if (tapfds == NULL) {
 		ret = errno;
 		log_warn("%s: can't allocate tap fds", __func__);
 		return (ret);
 	}
-	for (i = 0; i < vcp->vcp_nnics; i++)
+	for (i = 0; i < vmc->vmc_nnics; i++)
 		tapfds[i] = -1;
 
 	vm->vm_peerid = peerid;
@@ -285,12 +285,12 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	 */
 
 	if (!(vm->vm_state & VM_STATE_RECEIVED)) {
-		if (strlen(vcp->vcp_kernel)) {
+		if (strlen(vmc->vmc_kernel)) {
 			/* Open external kernel for child */
-			if ((kernfd = open(vcp->vcp_kernel, O_RDONLY)) == -1) {
+			if ((kernfd = open(vmc->vmc_kernel, O_RDONLY)) == -1) {
 				ret = errno;
 				log_warn("%s: can't open kernel or BIOS "
-				    "boot image %s", __func__, vcp->vcp_kernel);
+				    "boot image %s", __func__, vmc->vmc_kernel);
 				goto fail;
 			}
 		}
@@ -312,18 +312,18 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    vmc->vmc_checkaccess & VMOP_CREATE_KERNEL,
 		    uid, R_OK) == -1) {
 			log_warnx("vm \"%s\" no read access to kernel %s",
-			    vcp->vcp_name, vcp->vcp_kernel);
+			    vcp->vcp_name, vmc->vmc_kernel);
 			ret = EPERM;
 			goto fail;
 		}
 	}
 
 	/* Open CDROM image for child */
-	if (strlen(vcp->vcp_cdrom)) {
+	if (strlen(vmc->vmc_cdrom)) {
 		/* Stat cdrom to ensure it is a regular file */
 		if ((cdromfd =
-		    open(vcp->vcp_cdrom, O_RDONLY)) == -1) {
-			log_warn("can't open cdrom %s", vcp->vcp_cdrom);
+		    open(vmc->vmc_cdrom, O_RDONLY)) == -1) {
+			log_warn("can't open cdrom %s", vmc->vmc_cdrom);
 			ret = VMD_CDROM_MISSING;
 			goto fail;
 		}
@@ -332,17 +332,17 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    vmc->vmc_checkaccess & VMOP_CREATE_CDROM,
 		    uid, R_OK) == -1) {
 			log_warnx("vm \"%s\" no read access to cdrom %s",
-			    vcp->vcp_name, vcp->vcp_cdrom);
+			    vcp->vcp_name, vmc->vmc_cdrom);
 			ret = EPERM;
 			goto fail;
 		}
 	}
 
 	/* Open disk images for child */
-	for (i = 0 ; i < vcp->vcp_ndisks; i++) {
-		if (strlcpy(path, vcp->vcp_disks[i], sizeof(path))
+	for (i = 0 ; i < vmc->vmc_ndisks; i++) {
+		if (strlcpy(path, vmc->vmc_disks[i], sizeof(path))
 		   >= sizeof(path))
-			log_warnx("disk path %s too long", vcp->vcp_disks[i]);
+			log_warnx("disk path %s too long", vmc->vmc_disks[i]);
 		memset(vmc->vmc_diskbases, 0, sizeof(vmc->vmc_diskbases));
 		oflags = O_RDWR|O_EXLOCK|O_NONBLOCK;
 		aflags = R_OK|W_OK;
@@ -350,7 +350,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			/* Stat disk[i] to ensure it is a regular file */
 			if ((diskfds[i][j] = open(path, oflags)) == -1) {
 				log_warn("can't open disk %s",
-				    vcp->vcp_disks[i]);
+				    vmc->vmc_disks[i]);
 				ret = VMD_DISK_MISSING;
 				goto fail;
 			}
@@ -378,7 +378,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			if (n == -1) {
 				log_warnx("vm \"%s\" unable to read "
 				    "base for disk %s", vcp->vcp_name,
-				    vcp->vcp_disks[i]);
+				    vmc->vmc_disks[i]);
 				goto fail;
 			}
 			(void)strlcpy(path, base, sizeof(path));
@@ -386,7 +386,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	}
 
 	/* Open network interfaces */
-	for (i = 0 ; i < vcp->vcp_nnics; i++) {
+	for (i = 0 ; i < vmc->vmc_nnics; i++) {
 		vif = &vm->vm_ifs[i];
 
 		/* Check if the user has requested a specific tap(4) */
@@ -474,12 +474,12 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		    IMSG_VMDOP_START_VM_REQUEST, vm->vm_vmid, kernfd,
 		    vmc, sizeof(*vmc));
 
-	if (strlen(vcp->vcp_cdrom))
+	if (strlen(vmc->vmc_cdrom))
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_START_VM_CDROM, vm->vm_vmid, cdromfd,
 		    NULL, 0);
 
-	for (i = 0; i < vcp->vcp_ndisks; i++) {
+	for (i = 0; i < vmc->vmc_ndisks; i++) {
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++) {
 			if (diskfds[i][j] == -1)
 				break;
@@ -488,7 +488,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 			    diskfds[i][j], &i, sizeof(i));
 		}
 	}
-	for (i = 0; i < vcp->vcp_nnics; i++) {
+	for (i = 0; i < vmc->vmc_nnics; i++) {
 		proc_compose_imsg(ps, PROC_VMM, -1,
 		    IMSG_VMDOP_START_VM_IF, vm->vm_vmid, tapfds[i],
 		    &i, sizeof(i));
@@ -524,12 +524,12 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		close(kernfd);
 	if (cdromfd != -1)
 		close(cdromfd);
-	for (i = 0; i < vcp->vcp_ndisks; i++)
+	for (i = 0; i < vmc->vmc_ndisks; i++)
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
 			if (diskfds[i][j] != -1)
 				close(diskfds[i][j]);
 	if (tapfds != NULL) {
-		for (i = 0; i < vcp->vcp_nnics; i++)
+		for (i = 0; i < vmc->vmc_nnics; i++)
 			close(tapfds[i]);
 		free(tapfds);
 	}
@@ -591,7 +591,7 @@ config_getdisk(struct privsep *ps, struct imsg *imsg)
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
 
-	if (n >= vm->vm_params.vmc_params.vcp_ndisks || imsg->fd == -1) {
+	if (n >= vm->vm_params.vmc_ndisks || imsg->fd == -1) {
 		log_warnx("invalid disk id");
 		errno = EINVAL;
 		return (-1);
@@ -620,7 +620,7 @@ config_getif(struct privsep *ps, struct imsg *imsg)
 
 	IMSG_SIZE_CHECK(imsg, &n);
 	memcpy(&n, imsg->data, sizeof(n));
-	if (n >= vm->vm_params.vmc_params.vcp_nnics ||
+	if (n >= vm->vm_params.vmc_nnics ||
 	    vm->vm_ifs[n].vif_fd != -1 || imsg->fd == -1) {
 		log_warnx("invalid interface id");
 		goto fail;

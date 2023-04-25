@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.89 2023/01/30 02:32:01 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.90 2023/04/25 12:46:13 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -25,10 +25,7 @@
 
 #define VMM_MAX_MEM_RANGES	16
 #define VMM_MAX_DISKS_PER_VM	4
-#define VMM_MAX_PATH_DISK	128
-#define VMM_MAX_PATH_CDROM	128
 #define VMM_MAX_NAME_LEN	64
-#define VMM_MAX_KERNEL_PATH	128
 #define VMM_MAX_VCPUS		512
 #define VMM_MAX_VCPUS_PER_VM	64
 #define VMM_MAX_VM_MEM_SIZE	32L * 1024 * 1024 * 1024	/* 32 GiB */
@@ -473,14 +470,8 @@ struct vm_create_params {
 	/* Input parameters to VMM_IOC_CREATE */
 	size_t			vcp_nmemranges;
 	size_t			vcp_ncpus;
-	size_t			vcp_ndisks;
-	size_t			vcp_nnics;
 	struct vm_mem_range	vcp_memranges[VMM_MAX_MEM_RANGES];
-	char			vcp_disks[VMM_MAX_DISKS_PER_VM][VMM_MAX_PATH_DISK];
-	char			vcp_cdrom[VMM_MAX_PATH_CDROM];
 	char			vcp_name[VMM_MAX_NAME_LEN];
-	char			vcp_kernel[VMM_MAX_KERNEL_PATH];
-	uint8_t			vcp_macs[VMM_MAX_NICS_PER_VM][6];
 
 	/* Output parameter from VMM_IOC_CREATE */
 	uint32_t		vcp_id;

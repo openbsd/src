@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.64 2023/04/24 15:12:14 kn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.65 2023/04/25 12:46:13 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -97,8 +97,8 @@ static struct vmop_create_params vmc;
 static struct vm_create_params	*vcp;
 static struct vmd_switch	*vsw;
 static char			 vsw_type[IF_NAMESIZE];
-static int			 vcp_disable;
-static size_t			 vcp_nnics;
+static int			 vmc_disable;
+static size_t			 vmc_nnics;
 static int			 errors;
 extern struct vmd		*env;
 extern const char		*vmd_descsw[];
@@ -246,7 +246,7 @@ switch		: SWITCH string			{
 			vsw->sw_name = $2;
 			vsw->sw_flags = VMIFF_UP;
 
-			vcp_disable = 0;
+			vmc_disable = 0;
 		} '{' optnl switch_opts_l '}'	{
 			if (strnlen(vsw->sw_ifname,
 			    sizeof(vsw->sw_ifname)) == 0) {
@@ -256,7 +256,7 @@ switch		: SWITCH string			{
 				YYERROR;
 			}
 
-			if (vcp_disable) {
+			if (vmc_disable) {
 				log_debug("%s:%d: switch \"%s\""
 				    " skipped (disabled)",
 				    file->name, yylval.lineno, vsw->sw_name);
@@ -275,7 +275,7 @@ switch_opts_l	: switch_opts_l switch_opts nl
 		;
 
 switch_opts	: disable			{
-			vcp_disable = $1;
+			vmc_disable = $1;
 		}
 		| GROUP string			{
 			if (priv_validgroup($2) == -1) {
@@ -326,8 +326,8 @@ vm		: VM string vm_instance		{
 
 			memset(&vmc, 0, sizeof(vmc));
 			vcp = &vmc.vmc_params;
-			vcp_disable = 0;
-			vcp_nnics = 0;
+			vmc_disable = 0;
+			vmc_nnics = 0;
 
 			if ($3 != NULL) {
 				/* This is an instance of a pre-configured VM */
@@ -367,8 +367,8 @@ vm		: VM string vm_instance		{
 			int		 ret;
 
 			/* configured interfaces vs. number of interfaces */
-			if (vcp_nnics > vcp->vcp_nnics)
-				vcp->vcp_nnics = vcp_nnics;
+			if (vmc_nnics > vmc.vmc_nnics)
+				vmc.vmc_nnics = vmc_nnics;
 
 			if (!env->vmd_noaction) {
 				ret = vm_register(&env->vmd_ps, &vmc,
@@ -385,7 +385,7 @@ vm		: VM string vm_instance		{
 					    vcp->vcp_name, strerror(errno));
 					YYERROR;
 				} else {
-					if (vcp_disable)
+					if (vmc_disable)
 						vm->vm_state |= VM_STATE_DISABLED;
 					else
 						vm->vm_state |= VM_STATE_WAITING;
@@ -393,7 +393,7 @@ vm		: VM string vm_instance		{
 					    "registered (%s)",
 					    file->name, yylval.lineno,
 					    vcp->vcp_name,
-					    vcp_disable ?
+					    vmc_disable ?
 					    "disabled" : "enabled");
 				}
 				vm->vm_from_config = 1;
@@ -410,7 +410,7 @@ vm_opts_l	: vm_opts_l vm_opts nl
 		;
 
 vm_opts		: disable			{
-			vcp_disable = $1;
+			vmc_disable = $1;
 		}
 		| DISK string image_format	{
 			if (parse_disk($2, $3) != 0) {
@@ -425,9 +425,9 @@ vm_opts		: disable			{
 			unsigned int	i;
 			char		type[IF_NAMESIZE];
 
-			i = vcp_nnics;
-			if (++vcp_nnics > VM_MAX_NICS_PER_VM) {
-				yyerror("too many interfaces: %zu", vcp_nnics);
+			i = vmc_nnics;
+			if (++vmc_nnics > VM_MAX_NICS_PER_VM) {
+				yyerror("too many interfaces: %zu", vmc_nnics);
 				free($3);
 				YYERROR;
 			}
@@ -458,7 +458,7 @@ vm_opts		: disable			{
 		| BOOT string			{
 			char	 path[PATH_MAX];
 
-			if (vcp->vcp_kernel[0] != '\0') {
+			if (vmc.vmc_kernel[0] != '\0') {
 				yyerror("kernel specified more than once");
 				free($2);
 				YYERROR;
@@ -471,9 +471,9 @@ vm_opts		: disable			{
 				YYERROR;
 			}
 			free($2);
-			if (strlcpy(vcp->vcp_kernel, path,
-			    sizeof(vcp->vcp_kernel)) >=
-			    sizeof(vcp->vcp_kernel)) {
+			if (strlcpy(vmc.vmc_kernel, path,
+			    sizeof(vmc.vmc_kernel)) >=
+			    sizeof(vmc.vmc_kernel)) {
 				yyerror("kernel name too long");
 				YYERROR;
 			}
@@ -483,15 +483,15 @@ vm_opts		: disable			{
 			vmc.vmc_bootdevice = $3;
 		}
 		| CDROM string			{
-			if (vcp->vcp_cdrom[0] != '\0') {
+			if (vmc.vmc_cdrom[0] != '\0') {
 				yyerror("cdrom specified more than once");
 				free($2);
 				YYERROR;
 
 			}
-			if (strlcpy(vcp->vcp_cdrom, $2,
-			    sizeof(vcp->vcp_cdrom)) >=
-			    sizeof(vcp->vcp_cdrom)) {
+			if (strlcpy(vmc.vmc_cdrom, $2,
+			    sizeof(vmc.vmc_cdrom)) >=
+			    sizeof(vmc.vmc_cdrom)) {
 				yyerror("cdrom name too long");
 				free($2);
 				YYERROR;
@@ -500,7 +500,7 @@ vm_opts		: disable			{
 			vmc.vmc_flags |= VMOP_CREATE_CDROM;
 		}
 		| NIFS NUMBER			{
-			if (vcp->vcp_nnics != 0) {
+			if (vmc.vmc_nnics != 0) {
 				yyerror("interfaces specified more than once");
 				YYERROR;
 			}
@@ -508,7 +508,7 @@ vm_opts		: disable			{
 				yyerror("too many interfaces: %lld", $2);
 				YYERROR;
 			}
-			vcp->vcp_nnics = (size_t)$2;
+			vmc.vmc_nnics = (size_t)$2;
 			vmc.vmc_flags |= VMOP_CREATE_NETWORK;
 		}
 		| MEMORY NUMBER			{
@@ -664,7 +664,7 @@ iface_opts_c	: iface_opts_c iface_opts optcomma
 		;
 
 iface_opts	: SWITCH string			{
-			unsigned int	i = vcp_nnics;
+			unsigned int	i = vmc_nnics;
 
 			/* No need to check if the switch exists */
 			if (strlcpy(vmc.vmc_ifswitch[i], $2,
@@ -677,7 +677,7 @@ iface_opts	: SWITCH string			{
 			free($2);
 		}
 		| GROUP string			{
-			unsigned int	i = vcp_nnics;
+			unsigned int	i = vmc_nnics;
 
 			if (priv_validgroup($2) == -1) {
 				yyerror("invalid group name: %s", $2);
@@ -692,22 +692,22 @@ iface_opts	: SWITCH string			{
 		}
 		| locked LLADDR lladdr		{
 			if ($1)
-				vmc.vmc_ifflags[vcp_nnics] |= VMIFF_LOCKED;
-			memcpy(vcp->vcp_macs[vcp_nnics], $3, ETHER_ADDR_LEN);
+				vmc.vmc_ifflags[vmc_nnics] |= VMIFF_LOCKED;
+			memcpy(vmc.vmc_macs[vmc_nnics], $3, ETHER_ADDR_LEN);
 		}
 		| RDOMAIN NUMBER		{
 			if ($2 < 0 || $2 > RT_TABLEID_MAX) {
 				yyerror("invalid rdomain: %lld", $2);
 				YYERROR;
 			}
-			vmc.vmc_ifflags[vcp_nnics] |= VMIFF_RDOMAIN;
-			vmc.vmc_ifrdomain[vcp_nnics] = $2;
+			vmc.vmc_ifflags[vmc_nnics] |= VMIFF_RDOMAIN;
+			vmc.vmc_ifrdomain[vmc_nnics] = $2;
 		}
 		| updown			{
 			if ($1)
-				vmc.vmc_ifflags[vcp_nnics] |= VMIFF_UP;
+				vmc.vmc_ifflags[vmc_nnics] |= VMIFF_UP;
 			else
-				vmc.vmc_ifflags[vcp_nnics] &= ~VMIFF_UP;
+				vmc.vmc_ifflags[vmc_nnics] &= ~VMIFF_UP;
 		}
 		;
 
@@ -1350,7 +1350,7 @@ parse_disk(char *word, int type)
 	int	 fd;
 	ssize_t	 len;
 
-	if (vcp->vcp_ndisks >= VM_MAX_DISKS_PER_VM) {
+	if (vmc.vmc_ndisks >= VM_MAX_DISKS_PER_VM) {
 		log_warnx("too many disks");
 		return (-1);
 	}
@@ -1377,14 +1377,15 @@ parse_disk(char *word, int type)
 		}
 	}
 
-	if (strlcpy(vcp->vcp_disks[vcp->vcp_ndisks], path,
-	    VM_MAX_PATH_DISK) >= VM_MAX_PATH_DISK) {
+	if (strlcpy(vmc.vmc_disks[vmc.vmc_ndisks], path,
+	    sizeof(vmc.vmc_disks[vmc.vmc_ndisks])) >=
+	    sizeof(vmc.vmc_disks[vmc.vmc_ndisks])) {
 		log_warnx("disk path too long");
 		return (-1);
 	}
-	vmc.vmc_disktypes[vcp->vcp_ndisks] = type;
+	vmc.vmc_disktypes[vmc.vmc_ndisks] = type;
 
-	vcp->vcp_ndisks++;
+	vmc.vmc_ndisks++;
 
 	return (0);
 }
