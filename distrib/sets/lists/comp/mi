@@ -2177,7 +2177,6 @@
 ./usr/share/man/man3/SSL_want.3
 ./usr/share/man/man3/SSL_write.3
 ./usr/share/man/man3/STACK_OF.3
-./usr/share/man/man3/SXNET_new.3
 ./usr/share/man/man3/SipHash24_Init.3
 ./usr/share/man/man3/TS_REQ_new.3
 ./usr/share/man/man3/UI_UTIL_read_pw.3
