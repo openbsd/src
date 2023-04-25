@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha3_internal.h,v 1.14 2023/04/16 17:06:19 jsing Exp $	*/
+/*	$OpenBSD: sha3_internal.h,v 1.15 2023/04/25 19:32:19 tb Exp $	*/
 /*
  * The MIT License (MIT)
  *
@@ -28,16 +28,6 @@
 
 #ifndef HEADER_SHA3_INTERNAL_H
 #define HEADER_SHA3_INTERNAL_H
-
-#define NID_sha3_224		1031
-#define NID_sha3_256		1032
-#define NID_sha3_384		1033
-#define NID_sha3_512		1034
-
-#define NID_RSA_SHA3_224	1049
-#define NID_RSA_SHA3_256	1050
-#define NID_RSA_SHA3_384	1051
-#define NID_RSA_SHA3_512	1052
 
 #define KECCAK_BIT_WIDTH	1600
 #define KECCAK_BYTE_WIDTH	(KECCAK_BIT_WIDTH / 8)
