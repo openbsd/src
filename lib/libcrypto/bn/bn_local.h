@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.20 2023/04/25 17:13:06 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.21 2023/04/25 17:59:41 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,13 +141,13 @@ struct bn_mont_ctx_st {
 /* Used for reciprocal division/mod functions
  * It cannot be shared between threads
  */
-struct bn_recp_ctx_st {
+typedef struct bn_recp_ctx_st {
 	BIGNUM N;	/* the divisor */
 	BIGNUM Nr;	/* the reciprocal */
 	int num_bits;
 	int shift;
 	int flags;
-};
+} BN_RECP_CTX;
 
 /* Used for slow "generation" functions. */
 struct bn_gencb_st {

@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.23 2023/04/16 08:17:04 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.24 2023/04/25 17:59:41 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -89,7 +89,6 @@ typedef struct bignum_st BIGNUM;
 typedef struct bignum_ctx BN_CTX;
 typedef struct bn_blinding_st BN_BLINDING;
 typedef struct bn_mont_ctx_st BN_MONT_CTX;
-typedef struct bn_recp_ctx_st BN_RECP_CTX;
 typedef struct bn_gencb_st BN_GENCB;
 
 typedef struct bio_st BIO;
