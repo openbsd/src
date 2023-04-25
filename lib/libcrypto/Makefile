@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.108 2023/04/21 06:14:42 tb Exp $
+# $OpenBSD: Makefile,v 1.109 2023/04/25 15:51:31 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -114,7 +114,7 @@ SRCS+= asn_mime.c
 SRCS+= asn_moid.c
 SRCS+= bio_asn1.c
 SRCS+= bio_ndef.c
-SRCS+= nsseq.c
+#SRCS+= nsseq.c
 SRCS+= p5_pbe.c
 SRCS+= p5_pbev2.c
 SRCS+= p8_pkey.c
@@ -188,7 +188,7 @@ SRCS+= bn_div.c
 SRCS+= bn_err.c
 SRCS+= bn_exp.c
 SRCS+= bn_gcd.c
-SRCS+= bn_gf2m.c
+#SRCS+= bn_gf2m.c
 SRCS+= bn_isqrt.c
 SRCS+= bn_kron.c
 SRCS+= bn_lib.c
@@ -196,7 +196,7 @@ SRCS+= bn_mod.c
 SRCS+= bn_mod_sqrt.c
 SRCS+= bn_mont.c
 SRCS+= bn_mul.c
-SRCS+= bn_nist.c
+#SRCS+= bn_nist.c
 SRCS+= bn_prime.c
 SRCS+= bn_rand.c
 SRCS+= bn_recp.c
@@ -204,7 +204,7 @@ SRCS+= bn_shift.c
 SRCS+= bn_small_primes.c
 SRCS+= bn_sqr.c
 SRCS+= bn_word.c
-SRCS+= bn_x931p.c
+#SRCS+= bn_x931p.c
 
 # buffer/
 SRCS+= buf_err.c
@@ -336,9 +336,9 @@ SRCS+= dso_null.c
 SRCS+= dso_openssl.c
 
 # ec/
-SRCS+= ec2_mult.c
-SRCS+= ec2_oct.c
-SRCS+= ec2_smpl.c
+#SRCS+= ec2_mult.c
+#SRCS+= ec2_oct.c
+#SRCS+= ec2_smpl.c
 SRCS+= ec_ameth.c
 SRCS+= ec_asn1.c
 SRCS+= ec_check.c
@@ -354,7 +354,7 @@ SRCS+= ec_pmeth.c
 SRCS+= ec_print.c
 SRCS+= eck_prn.c
 SRCS+= ecp_mont.c
-SRCS+= ecp_nist.c
+#SRCS+= ecp_nist.c
 SRCS+= ecp_oct.c
 SRCS+= ecp_smpl.c
 SRCS+= ecx_methods.c
@@ -516,7 +516,7 @@ SRCS+= cbc128.c
 SRCS+= ccm128.c
 SRCS+= cfb128.c
 SRCS+= ctr128.c
-SRCS+= cts128.c
+#SRCS+= cts128.c
 SRCS+= gcm128.c
 SRCS+= ofb128.c
 SRCS+= xts128.c
@@ -617,7 +617,7 @@ SRCS+= rsa_prn.c
 SRCS+= rsa_pss.c
 SRCS+= rsa_saos.c
 SRCS+= rsa_sign.c
-SRCS+= rsa_x931.c
+#SRCS+= rsa_x931.c
 
 # sha/
 SRCS+= sha1.c
@@ -698,8 +698,8 @@ SRCS+= x509_lu.c
 SRCS+= x509_ncons.c
 SRCS+= x509_obj.c
 SRCS+= x509_ocsp.c
-SRCS+= x509_pci.c
-SRCS+= x509_pcia.c
+#SRCS+= x509_pci.c
+#SRCS+= x509_pcia.c
 SRCS+= x509_pcons.c
 SRCS+= x509_pku.c
 SRCS+= x509_pmaps.c
@@ -709,7 +709,7 @@ SRCS+= x509_r2x.c
 SRCS+= x509_req.c
 SRCS+= x509_set.c
 SRCS+= x509_skey.c
-SRCS+= x509_sxnet.c
+#SRCS+= x509_sxnet.c
 SRCS+= x509_trs.c
 SRCS+= x509_txt.c
 SRCS+= x509_utl.c
