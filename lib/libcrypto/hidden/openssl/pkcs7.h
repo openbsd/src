@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.h,v 1.1 2022/11/12 12:11:14 beck Exp $ */
+/* $OpenBSD: pkcs7.h,v 1.2 2023/04/25 18:13:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -69,7 +69,6 @@ LCRYPTO_USED(PKCS7_new);
 LCRYPTO_USED(PKCS7_free);
 LCRYPTO_USED(d2i_PKCS7);
 LCRYPTO_USED(i2d_PKCS7);
-LCRYPTO_USED(i2d_PKCS7_NDEF);
 LCRYPTO_USED(PKCS7_print_ctx);
 LCRYPTO_USED(PKCS7_ctrl);
 LCRYPTO_USED(PKCS7_set_type);
