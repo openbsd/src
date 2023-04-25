@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.144 2023/04/17 15:11:00 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.145 2023/04/25 15:56:56 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -550,6 +550,12 @@ var nids = map[string]int{
 	"SHA-256":         C.NID_sha256,
 	"SHA-384":         C.NID_sha384,
 	"SHA-512":         C.NID_sha512,
+	"SHA-512/224":     C.NID_sha512_224,
+	"SHA-512/256":     C.NID_sha512_256,
+	"SHA3-224":        C.NID_sha3_224,
+	"SHA3-256":        C.NID_sha3_256,
+	"SHA3-384":        C.NID_sha3_384,
+	"SHA3-512":        C.NID_sha3_512,
 }
 
 func nidFromString(ns string) (int, error) {
@@ -572,6 +578,18 @@ func hashEvpMdFromString(hs string) (*C.EVP_MD, error) {
 		return C.EVP_sha384(), nil
 	case "SHA-512":
 		return C.EVP_sha512(), nil
+	case "SHA-512/224":
+		return C.EVP_sha512_224(), nil
+	case "SHA-512/256":
+		return C.EVP_sha512_256(), nil
+	case "SHA3-224":
+		return C.EVP_sha3_224(), nil
+	case "SHA3-256":
+		return C.EVP_sha3_256(), nil
+	case "SHA3-384":
+		return C.EVP_sha3_384(), nil
+	case "SHA3-512":
+		return C.EVP_sha3_512(), nil
 	default:
 		return nil, fmt.Errorf("unknown hash %q", hs)
 	}
@@ -2141,7 +2159,11 @@ func runHmacTest(md *C.EVP_MD, tagBytes int, wt *wycheproofTestHmac) bool {
 
 func runHmacTestGroup(algorithm string, wtg *wycheproofTestGroupHmac) bool {
 	fmt.Printf("Running %v test group %v with key size %d and tag size %d...\n", algorithm, wtg.Type, wtg.KeySize, wtg.TagSize)
-	md, err := hashEvpMdFromString("SHA-" + strings.TrimPrefix(algorithm, "HMACSHA"))
+	prefix := "SHA-"
+	if strings.HasPrefix(algorithm, "HMACSHA3-") {
+		prefix = "SHA"
+	}
+	md, err := hashEvpMdFromString(prefix + strings.TrimPrefix(algorithm, "HMACSHA"))
 	if err != nil {
 		log.Fatalf("Failed to get hash: %v", err)
 	}
@@ -2783,7 +2805,7 @@ func runTestVectors(path string, variant testVariant) bool {
 				wtg = &wycheproofTestGroupEdDSA{}
 			case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
 				wtg = &wycheproofTestGroupHkdf{}
-			case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512":
+			case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
 				wtg = &wycheproofTestGroupHmac{}
 			case "KW":
 				wtg = &wycheproofTestGroupKW{}
@@ -2838,7 +2860,7 @@ func runTestVectors(path string, variant testVariant) bool {
 				return runEdDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupEdDSA))
 			case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
 				return runHkdfTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHkdf))
-			case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512":
+			case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
 				return runHmacTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHmac))
 			case "KW":
 				return runKWTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupKW))
@@ -2956,7 +2978,7 @@ func main() {
 
 	testc = newTestCoordinator()
 
-	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sha3|sha512_(224|256)|sect\d{3}[rk]1)_`)
+	skipNormal := regexp.MustCompile(`_(ecpoint|p1363|sect\d{3}[rk]1)_`)
 
 	for _, test := range tests {
 		tvs, err := filepath.Glob(filepath.Join(testVectorPath, test.pattern))
