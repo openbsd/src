@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.85 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.86 2023/04/25 12:51:07 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -21,8 +21,6 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/un.h>
-
-#include <machine/vmmvar.h>
 
 #include <ctype.h>
 #include <err.h>

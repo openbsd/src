@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.73 2022/09/01 15:43:07 benno Exp $	*/
+/*	$OpenBSD: main.c,v 1.74 2023/04/25 12:51:07 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -20,8 +20,6 @@
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <sys/un.h>
-
-#include <machine/vmmvar.h>
 
 #include <err.h>
 #include <errno.h>
