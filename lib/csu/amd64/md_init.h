@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.9 2023/04/25 04:06:06 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.10 2023/04/25 04:10:21 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -45,6 +45,7 @@
 	"	.type " #entry_pt ",@function	\n" \
 	"	.align 16			\n" \
 	#entry_pt":				\n" \
+	"	endbr64				\n" \
 	"	subq	$8,%rsp			\n" \
 	"	.previous")
 
@@ -65,6 +66,7 @@
 	"	.globl	_start			\n" \
 	"_start:				\n" \
 	"__start:				\n" \
+	"	endbr64				\n" \
 	"	movq	%rdx,%rcx		\n" \
 	"	movq	(%rsp),%rdi		\n" \
 	"	leaq	16(%rsp,%rdi,8),%rdx	\n" \
@@ -83,6 +85,7 @@
 	"	.type	__start,@function		\n" \
 	"_start:					\n" \
 	"__start:					\n" \
+	"	endbr64					\n" \
 	"	movq	%rsp, %r12			\n" \
 	"	subq	$8, %rsp			\n" \
 	"	andq	$~15, %rsp			\n" \
@@ -108,6 +111,7 @@
 	"	.type	_dl_exit,@function		\n" \
 	"	.align	8				\n" \
 	"_dl_exit:					\n" \
+	"	endbr64					\n" \
 	"	movl	$ " STR(SYS_exit) ", %eax	\n" \
 	"	syscall					\n" \
 	"	int3					\n" \
