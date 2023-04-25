@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.84 2023/04/19 11:12:43 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.85 2023/04/25 19:57:59 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,71 +119,6 @@ BN_clear_free(BIGNUM *bn)
 {
 	BN_free(bn);
 }
-
-/* This stuff appears to be completely unused, so is deprecated */
-#ifndef OPENSSL_NO_DEPRECATED
-/* For a 32 bit machine
- * 2 -   4 ==  128
- * 3 -   8 ==  256
- * 4 -  16 ==  512
- * 5 -  32 == 1024
- * 6 -  64 == 2048
- * 7 - 128 == 4096
- * 8 - 256 == 8192
- */
-static int bn_limit_bits = 0;
-static int bn_limit_num = 8;        /* (1<<bn_limit_bits) */
-static int bn_limit_bits_low = 0;
-static int bn_limit_num_low = 8;    /* (1<<bn_limit_bits_low) */
-static int bn_limit_bits_high = 0;
-static int bn_limit_num_high = 8;   /* (1<<bn_limit_bits_high) */
-static int bn_limit_bits_mont = 0;
-static int bn_limit_num_mont = 8;   /* (1<<bn_limit_bits_mont) */
-
-void
-BN_set_params(int mult, int high, int low, int mont)
-{
-	if (mult >= 0) {
-		if (mult > (int)(sizeof(int) * 8) - 1)
-			mult = sizeof(int) * 8 - 1;
-		bn_limit_bits = mult;
-		bn_limit_num = 1 << mult;
-	}
-	if (high >= 0) {
-		if (high > (int)(sizeof(int) * 8) - 1)
-			high = sizeof(int) * 8 - 1;
-		bn_limit_bits_high = high;
-		bn_limit_num_high = 1 << high;
-	}
-	if (low >= 0) {
-		if (low > (int)(sizeof(int) * 8) - 1)
-			low = sizeof(int) * 8 - 1;
-		bn_limit_bits_low = low;
-		bn_limit_num_low = 1 << low;
-	}
-	if (mont >= 0) {
-		if (mont > (int)(sizeof(int) * 8) - 1)
-			mont = sizeof(int) * 8 - 1;
-		bn_limit_bits_mont = mont;
-		bn_limit_num_mont = 1 << mont;
-	}
-}
-
-int
-BN_get_params(int which)
-{
-	if (which == 0)
-		return (bn_limit_bits);
-	else if (which == 1)
-		return (bn_limit_bits_high);
-	else if (which == 2)
-		return (bn_limit_bits_low);
-	else if (which == 3)
-		return (bn_limit_bits_mont);
-	else
-		return (0);
-}
-#endif
 
 void
 BN_set_flags(BIGNUM *b, int n)

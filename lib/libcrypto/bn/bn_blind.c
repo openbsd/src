@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.21 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.22 2023/04/25 19:57:59 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -124,10 +124,6 @@ struct bn_blinding_st {
 	BIGNUM *Ai;
 	BIGNUM *e;
 	BIGNUM *mod; /* just a reference */
-#ifndef OPENSSL_NO_DEPRECATED
-	unsigned long thread_id; /* added in OpenSSL 0.9.6j and 0.9.7b;
-				  * used only by crypto/rsa/rsa_eay.c, rsa_lib.c */
-#endif
 	CRYPTO_THREADID tid;
 	int counter;
 	unsigned long flags;
@@ -278,20 +274,6 @@ BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 
 	return (ret);
 }
-
-#ifndef OPENSSL_NO_DEPRECATED
-unsigned long
-BN_BLINDING_get_thread_id(const BN_BLINDING *b)
-{
-	return b->thread_id;
-}
-
-void
-BN_BLINDING_set_thread_id(BN_BLINDING *b, unsigned long n)
-{
-	b->thread_id = n;
-}
-#endif
 
 CRYPTO_THREADID *
 BN_BLINDING_thread_id(BN_BLINDING *b)

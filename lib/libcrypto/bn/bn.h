@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.69 2023/04/25 19:53:30 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.70 2023/04/25 19:57:59 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -201,15 +201,6 @@ extern "C" {
                                       * BN_mod_inverse() will call BN_mod_inverse_no_branch.
                                       */
 
-#ifndef OPENSSL_NO_DEPRECATED
-#define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME /* deprecated name for the flag */
-                                      /* avoid leaking exponent information through timings
-                                      * (BN_mod_exp_mont() will call BN_mod_exp_mont_consttime) */
-#endif
-
-#ifndef OPENSSL_NO_DEPRECATED
-#define BN_FLG_FREE		0x8000	/* used for debugging */
-#endif
 void BN_set_flags(BIGNUM *b, int n);
 int BN_get_flags(const BIGNUM *b, int n);
 void BN_with_flags(BIGNUM *dest, const BIGNUM *src, int flags);
@@ -443,20 +434,6 @@ void	BN_consttime_swap(BN_ULONG swap, BIGNUM *a, BIGNUM *b, int nwords);
 
 int	BN_security_bits(int L, int N);
 
-/* Deprecated versions */
-#ifndef OPENSSL_NO_DEPRECATED
-BIGNUM *BN_generate_prime(BIGNUM *ret, int bits, int safe,
-    const BIGNUM *add, const BIGNUM *rem,
-    void (*callback)(int, int, void *), void *cb_arg);
-int	BN_is_prime(const BIGNUM *p, int nchecks,
-    void (*callback)(int, int, void *),
-    BN_CTX *ctx, void *cb_arg);
-int	BN_is_prime_fasttest(const BIGNUM *p, int nchecks,
-    void (*callback)(int, int, void *), BN_CTX *ctx, void *cb_arg,
-    int do_trial_division);
-#endif /* !defined(OPENSSL_NO_DEPRECATED) */
-
-/* Newer versions */
 int	BN_generate_prime_ex(BIGNUM *ret, int bits, int safe, const BIGNUM *add,
     const BIGNUM *rem, BN_GENCB *cb);
 int	BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb);
@@ -487,10 +464,7 @@ int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
 int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *);
-#ifndef OPENSSL_NO_DEPRECATED
-unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
-void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
-#endif
+
 CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
 void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
@@ -499,11 +473,6 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
     int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
     BN_MONT_CTX *m_ctx);
-
-#ifndef OPENSSL_NO_DEPRECATED
-void BN_set_params(int mul, int high, int low, int mont);
-int BN_get_params(int which); /* 0, mul, 1 high, 2 low, 3 mont */
-#endif
 
 /* Primes from RFC 2409 */
 BIGNUM *get_rfc2409_prime_768(BIGNUM *bn);
