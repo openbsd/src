@@ -1,3 +1,3 @@
 # Don't forget to give libssl and libtls the same type of bump!
-major=50
-minor=2
+major=51
+minor=0
