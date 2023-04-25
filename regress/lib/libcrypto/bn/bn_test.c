@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_test.c,v 1.16 2023/04/17 19:56:39 tb Exp $	*/
+/*	$OpenBSD: bn_test.c,v 1.17 2023/04/25 15:32:33 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -417,7 +417,7 @@ test_div(BIO *bp, BN_CTX *ctx)
 		goto err;
 
 	CHECK_GOTO(BN_one(a));
-	CHECK_GOTO(BN_zero(b));
+	BN_zero(b);
 
 	if (BN_div(d, c, a, b, ctx)) {
 		fprintf(stderr, "Division by zero succeeded!\n");
@@ -815,7 +815,7 @@ test_mont(BIO *bp, BN_CTX *ctx)
 	if ((mont = BN_MONT_CTX_new()) == NULL)
 		goto err;
 
-	CHECK_GOTO(BN_zero(n));
+	BN_zero(n);
 	if (BN_MONT_CTX_set(mont, n, ctx)) {
 		fprintf(stderr, "BN_MONT_CTX_set succeeded for zero modulus!\n");
 		goto err;
@@ -949,7 +949,7 @@ test_mod_mul(BIO *bp, BN_CTX *ctx)
 
 	CHECK_GOTO(BN_one(a));
 	CHECK_GOTO(BN_one(b));
-	CHECK_GOTO(BN_zero(c));
+	BN_zero(c);
 	if (BN_mod_mul(e, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_mul with zero modulus succeeded!\n");
 		goto err;
@@ -1033,7 +1033,7 @@ test_mod_exp(BIO *bp, BN_CTX *ctx)
 
 	CHECK_GOTO(BN_one(a));
 	CHECK_GOTO(BN_one(b));
-	CHECK_GOTO(BN_zero(c));
+	BN_zero(c);
 	if (BN_mod_exp(d, a, b, c, ctx)) {
 		fprintf(stderr, "BN_mod_exp with zero modulus succeeded!\n");
 		goto err;
@@ -1166,7 +1166,7 @@ test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 
 	CHECK_GOTO(BN_one(a));
 	CHECK_GOTO(BN_one(b));
-	CHECK_GOTO(BN_zero(c));
+	BN_zero(c);
 	if (BN_mod_exp_mont_consttime(d, a, b, c, ctx, NULL)) {
 		fprintf(stderr, "BN_mod_exp_mont_consttime with zero modulus "
 				"succeeded\n");
@@ -1255,7 +1255,7 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	CHECK_GOTO(BN_bntest_rand(m, 1024, 0, 1)); /* must be odd for montgomery */
 	/* Zero exponent */
 	CHECK_GOTO(BN_bntest_rand(a, 1024, 0, 0));
-	CHECK_GOTO(BN_zero(p));
+	BN_zero(p);
 	if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL))
 		goto err;
 	if (!BN_is_one(d)) {
@@ -1337,7 +1337,7 @@ test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	}
 	/* Zero input */
 	CHECK_GOTO(BN_bntest_rand(p, 1024, 0, 0));
-	CHECK_GOTO(BN_zero(a));
+	BN_zero(a);
 	if (!BN_mod_exp_mont_consttime(d, a, p, m, ctx, NULL))
 		goto err;
 	if (!BN_is_zero(d)) {
