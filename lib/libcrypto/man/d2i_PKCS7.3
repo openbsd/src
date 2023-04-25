@@ -1,4 +1,4 @@
-.\"	$OpenBSD: d2i_PKCS7.3,v 1.6 2018/03/27 17:35:50 schwarze Exp $
+.\"	$OpenBSD: d2i_PKCS7.3,v 1.7 2023/04/25 18:05:07 tb Exp $
 .\"
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 27 2018 $
+.Dd $Mdocdate: April 25 2023 $
 .Dt D2I_PKCS7 3
 .Os
 .Sh NAME
@@ -24,7 +24,6 @@
 .Nm i2d_PKCS7_bio ,
 .Nm d2i_PKCS7_fp ,
 .Nm i2d_PKCS7_fp ,
-.Nm i2d_PKCS7_NDEF ,
 .Nm d2i_PKCS7_DIGEST ,
 .Nm i2d_PKCS7_DIGEST ,
 .Nm d2i_PKCS7_ENCRYPT ,
@@ -76,11 +75,6 @@
 .Fo i2d_PKCS7_fp
 .Fa "FILE *out_fp"
 .Fa "PKCS7 *val_in"
-.Fc
-.Ft int
-.Fo i2d_PKCS7_NDEF
-.Fa "PKCS7 *val_in"
-.Fa "unsigned char **ber_out"
 .Fc
 .Ft PKCS7_DIGEST *
 .Fo d2i_PKCS7_DIGEST
@@ -203,12 +197,6 @@ or
 .Vt FILE
 pointer.
 .Pp
-.Fn i2d_PKCS7_NDEF
-is similar to
-.Fn i2d_PKCS7
-except that it encodes using BER rather than DER, using the indefinite
-length form where appropriate.
-.Pp
 .Fn d2i_PKCS7_DIGEST
 and
 .Fn i2d_PKCS7_DIGEST
@@ -297,7 +285,6 @@ return an object of the respective type or
 if an error occurs.
 .Pp
 .Fn i2d_PKCS7 ,
-.Fn i2d_PKCS7_NDEF ,
 .Fn i2d_PKCS7_DIGEST ,
 .Fn i2d_PKCS7_ENCRYPT ,
 .Fn i2d_PKCS7_ENC_CONTENT ,
