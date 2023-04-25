@@ -175,6 +175,8 @@ pkcs1 11		: RSA-SHA256		: sha256WithRSAEncryption
 pkcs1 12		: RSA-SHA384		: sha384WithRSAEncryption
 pkcs1 13		: RSA-SHA512		: sha512WithRSAEncryption
 pkcs1 14		: RSA-SHA224		: sha224WithRSAEncryption
+pkcs1 15		: RSA-SHA512/224	: sha512-224WithRSAEncryption
+pkcs1 16		: RSA-SHA512/256	: sha512-256WithRSAEncryption
 
 pkcs 3			: pkcs3
 pkcs3 1			:			: dhKeyAgreement
@@ -378,6 +380,9 @@ rsadsi 2 8		:			: hmacWithSHA224
 rsadsi 2 9		:			: hmacWithSHA256
 rsadsi 2 10		:			: hmacWithSHA384
 rsadsi 2 11		:			: hmacWithSHA512
+
+rsadsi 2 12		:			: hmacWithSHA512-224
+rsadsi 2 13		:			: hmacWithSHA512-256
 
 rsadsi 3 2		: RC2-CBC		: rc2-cbc
 			: RC2-ECB		: rc2-ecb
@@ -870,10 +875,16 @@ mime-mhs-headings 2	: id-hex-multipart-message : id-hex-multipart-message
 !Cname zlib-compression
 id-smime-alg 8		: ZLIB			: zlib compression
 
-# AES aka Rijndael
+#
+# NIST CSOR
+#
+# https://csrc.nisg.gov/projects/computer-security-objects/register/algorithm-registration
+#
 
 !Alias csor 2 16 840 1 101 3
 !Alias nistAlgorithms csor 4
+
+# AES aka Rijndael
 !Alias aes nistAlgorithms 1
 
 aes 1			: AES-128-ECB		: aes-128-ecb
@@ -927,17 +938,43 @@ aes 48			: id-aes256-wrap-pad
 			: DES-EDE3-CFB1		: des-ede3-cfb1
 			: DES-EDE3-CFB8		: des-ede3-cfb8
 
-# OIDs for SHA224, SHA256, SHA385 and SHA512, according to x9.84.
+# NIST CSOR Hash Algorithms (see also RFC 4231, RFC 8017, RFC 8702)
 !Alias nist_hashalgs nistAlgorithms 2
 nist_hashalgs 1		: SHA256		: sha256
 nist_hashalgs 2		: SHA384		: sha384
 nist_hashalgs 3		: SHA512		: sha512
 nist_hashalgs 4		: SHA224		: sha224
+nist_hashalgs 5		: SHA512-224		: sha512-224
+nist_hashalgs 6		: SHA512-256		: sha512-256
+nist_hashalgs 7		: SHA3-224		: sha3-224
+nist_hashalgs 8		: SHA3-256		: sha3-256
+nist_hashalgs 9		: SHA3-384		: sha3-384
+nist_hashalgs 10	: SHA3-512		: sha3-512
+#nist_hashalgs 11 	: SHAKE128		: shake128
+#nist_hashalgs 12	: SHAKE256		: shake256
+nist_hashalgs 13	: id-hmacWithSHA3-224	: hmac-sha3-224
+nist_hashalgs 14	: id-hmacWithSHA3-256	: hmac-sha3-256
+nist_hashalgs 15	: id-hmacWithSHA3-384	: hmac-sha3-384
+nist_hashalgs 16	: id-hmacWithSHA3-512	: hmac-sha3-512
 
-# OIDs for dsa-with-sha224 and dsa-with-sha256
-!Alias dsa_with_sha2 nistAlgorithms 3
-dsa_with_sha2 1		: dsa_with_SHA224
-dsa_with_sha2 2		: dsa_with_SHA256
+# NIST CSOR Signature Algorithms
+!Alias nist_sigalgs nistAlgorithms 3
+nist_sigalgs 1		: id-dsa-with-sha224			: dsa_with_SHA224
+nist_sigalgs 2		: id-dsa-with-sha256			: dsa_with_SHA256
+nist_sigalgs 3		: id-dsa-with-sha384			: dsa_with_SHA384
+nist_sigalgs 4		: id-dsa-with-sha512			: dsa_with_SHA512
+nist_sigalgs 5		: id-dsa-with-sha3-224			: dsa_with_SHA3-224
+nist_sigalgs 6		: id-dsa-with-sha3-256			: dsa_with_SHA3-256
+nist_sigalgs 7		: id-dsa-with-sha3-384			: dsa_with_SHA3-384
+nist_sigalgs 8		: id-dsa-with-sha3-512			: dsa_with_SHA3-512
+nist_sigalgs 9		: id-ecdsa-with-sha3-224		: ecdsa_with_SHA3-224
+nist_sigalgs 10		: id-ecdsa-with-sha3-256		: ecdsa_with_SHA3-256
+nist_sigalgs 11		: id-ecdsa-with-sha3-384		: ecdsa_with_SHA3-384
+nist_sigalgs 12		: id-ecdsa-with-sha3-512		: ecdsa_with_SHA3-512
+nist_sigalgs 13		: id-rsassa-pkcs1-v1_5-with-sha3-224	: RSA-SHA3-224
+nist_sigalgs 14		: id-rsassa-pkcs1-v1_5-with-sha3-256	: RSA-SHA3-256
+nist_sigalgs 15		: id-rsassa-pkcs1-v1_5-with-sha3-384	: RSA-SHA3-384
+nist_sigalgs 16		: id-rsassa-pkcs1-v1_5-with-sha3-512	: RSA-SHA3-512
 
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code
