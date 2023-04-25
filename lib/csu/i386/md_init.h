@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.11 2020/10/15 16:30:23 deraadt Exp $ */
+/* $OpenBSD: md_init.h,v 1.12 2023/04/25 04:06:06 deraadt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -38,18 +38,13 @@
 	"	call " #func "\n"		\
 	"	.previous")
 
-/*
- * Align is after because we want the function to start at the first
- * address of the section, but overall we want the section to be
- * aligned by the align amount.
- */
 #define MD_SECTION_PROLOGUE(sect, entry_pt)	\
 	__asm (					\
 	".section "#sect",\"ax\",@progbits	\n" \
 	"	.globl " #entry_pt "		\n" \
 	"	.type " #entry_pt ",@function	\n" \
-	#entry_pt":				\n" \
 	"	.align 16			\n" \
+	#entry_pt":				\n" \
 	"	pushl	%ebp			\n" \
 	"	movl	%esp,%ebp		\n" \
 	"	andl	$~15,%esp		\n" \
