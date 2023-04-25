@@ -1,4 +1,4 @@
-/*	$OpenBSD: efidev.c,v 1.40 2022/09/01 13:45:26 krw Exp $	*/
+/*	$OpenBSD: efidev.c,v 1.41 2023/04/25 10:11:20 kn Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -567,6 +567,8 @@ efiopen(struct open_file *f, ...)
 #ifdef SOFTRAID
 	/* Intercept softraid disks. */
 	if (strncmp("sr", dev, 2) == 0) {
+		/* We only support read-only softraid. */
+		f->f_flags |= F_NOWRITE;
 
 		/* Create a fake diskinfo for this softraid volume. */
 		SLIST_FOREACH(bv, &sr_volumes, sbv_link)
