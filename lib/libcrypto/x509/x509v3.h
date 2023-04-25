@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.20 2023/04/24 22:30:17 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.21 2023/04/25 15:51:04 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -190,7 +190,7 @@ typedef struct GENERAL_NAME_st {
 		OTHERNAME *otherName; /* otherName */
 		ASN1_IA5STRING *rfc822Name;
 		ASN1_IA5STRING *dNSName;
-		ASN1_TYPE *x400Address;
+		ASN1_STRING *x400Address;
 		X509_NAME *directoryName;
 		EDIPARTYNAME *ediPartyName;
 		ASN1_IA5STRING *uniformResourceIdentifier;
@@ -202,7 +202,6 @@ typedef struct GENERAL_NAME_st {
 		X509_NAME *dirn;		/* dirn */
 		ASN1_IA5STRING *ia5; /* rfc822Name, dNSName, uniformResourceIdentifier */
 		ASN1_OBJECT *rid; /* registeredID */
-		ASN1_TYPE *other; /* x400Address */
 	} d;
 } GENERAL_NAME;
 
