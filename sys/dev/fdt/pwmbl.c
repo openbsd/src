@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmbl.c,v 1.7 2022/11/14 07:22:44 miod Exp $	*/
+/*	$OpenBSD: pwmbl.c,v 1.8 2023/04/25 11:21:01 patrick Exp $	*/
 /*
  * Copyright (c) 2019 Krystian Lewandowski
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
@@ -39,15 +39,18 @@ struct pwmbl_softc {
 	int			sc_nlevels;
 	uint32_t		sc_max_level;
 	uint32_t		sc_def_level;
+	struct pwm_state	sc_ps_saved;
 };
 
 struct pwmbl_softc *sc_pwmbl;
 
 int	pwmbl_match(struct device *, void *, void *);
 void	pwmbl_attach(struct device *, struct device *, void *);
+int	pwmbl_activate(struct device *, int);
 
 const struct cfattach pwmbl_ca = {
-	sizeof(struct pwmbl_softc), pwmbl_match, pwmbl_attach
+	sizeof(struct pwmbl_softc), pwmbl_match, pwmbl_attach, NULL,
+	pwmbl_activate
 };
 
 struct cfdriver pwmbl_cd = {
@@ -119,6 +122,29 @@ pwmbl_attach(struct device *parent, struct device *self, void *aux)
 	sc_pwmbl = sc;
 	ws_get_param = pwmbl_get_param;
 	ws_set_param = pwmbl_set_param;
+}
+
+int
+pwmbl_activate(struct device *self, int act)
+{
+	struct pwmbl_softc *sc = (struct pwmbl_softc *)self;
+	struct pwm_state ps;
+	int error;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		error = pwm_get_state(sc->sc_pwm, &sc->sc_ps_saved);
+		if (error)
+			return error;
+
+		pwm_init_state(sc->sc_pwm, &ps);
+		ps.ps_pulse_width = 0;
+		ps.ps_enabled = 0;
+		return pwm_set_state(sc->sc_pwm, &ps);
+	case DVACT_WAKEUP:
+		return pwm_set_state(sc->sc_pwm, &sc->sc_ps_saved);
+	}
+	return 0;
 }
 
 int
