@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.31 2021/09/03 16:45:45 jasper Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.32 2023/04/25 00:58:47 cheloha Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -269,7 +269,7 @@ sys_profil(struct proc *p, void *v, register_t *retval)
  * Trap will then call addupc_task().
  */
 void
-addupc_intr(struct proc *p, u_long pc)
+addupc_intr(struct proc *p, u_long pc, u_long nticks)
 {
 	struct uprof *prof;
 
@@ -278,7 +278,7 @@ addupc_intr(struct proc *p, u_long pc)
 		return;			/* out of range; ignore */
 
 	p->p_prof_addr = pc;
-	p->p_prof_ticks++;
+	p->p_prof_ticks += nticks;
 	atomic_setbits_int(&p->p_flag, P_OWEUPC);
 	need_proftick(p);
 }

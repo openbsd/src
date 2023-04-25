@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.107 2023/03/03 20:16:44 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.108 2023/04/25 00:58:47 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -315,7 +315,7 @@ statclock(struct clockframe *frame)
 	if (CLKF_USERMODE(frame)) {
 		pr = p->p_p;
 		if (pr->ps_flags & PS_PROFIL)
-			addupc_intr(p, CLKF_PC(frame));
+			addupc_intr(p, CLKF_PC(frame), 1);
 		if (--spc->spc_pscnt > 0)
 			return;
 		/*
@@ -342,7 +342,7 @@ statclock(struct clockframe *frame)
 		}
 #endif
 		if (p != NULL && p->p_p->ps_flags & PS_PROFIL)
-			addupc_intr(p, PROC_PC(p));
+			addupc_intr(p, PROC_PC(p), 1);
 		if (--spc->spc_pscnt > 0)
 			return;
 		/*

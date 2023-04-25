@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.25 2022/03/18 14:45:39 visa Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.26 2023/04/25 00:58:47 cheloha Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ do {									\
 
 #include <lib/libkern/libkern.h>	/* for KASSERT() */
 
-void	 addupc_intr(struct proc *, u_long);
+void	 addupc_intr(struct proc *, u_long, u_long);
 void	 addupc_task(struct proc *, u_long, u_int);
 void	 tuagg_unlocked(struct process *, struct proc *);
 void	 tuagg(struct process *, struct proc *);
