@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.134 2022/11/07 11:22:55 yasuoka Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.135 2023/04/25 22:56:28 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -337,12 +337,12 @@ again:
 		}
 	}
 
-        /*
-         * Never send more than half a buffer full.  This insures that we can
-         * always keep 2 packets on the wire, no matter what SO_SNDBUF is, and
-         * therefore acks will never be delayed unless we run out of data to
-         * transmit.
-         */
+	/*
+	 * Never send more than half a buffer full.  This insures that we can
+	 * always keep 2 packets on the wire, no matter what SO_SNDBUF is, and
+	 * therefore acks will never be delayed unless we run out of data to
+	 * transmit.
+	 */
 	txmaxseg = ulmin(so->so_snd.sb_hiwat / 2, tp->t_maxseg);
 
 	if (len > txmaxseg) {
@@ -621,7 +621,7 @@ send:
 		len = tp->t_maxopd - optlen;
 		sendalot = 1;
 		flags &= ~TH_FIN;
-	 }
+	}
 
 #ifdef DIAGNOSTIC
 	if (max_linkhdr + hdrlen > MCLBYTES)
@@ -755,7 +755,8 @@ send:
 	 * case, since we know we aren't doing a retransmission.
 	 * (retransmit and persist are mutually exclusive...)
 	 */
-	if (len || (flags & (TH_SYN|TH_FIN)) || TCP_TIMER_ISARMED(tp, TCPT_PERSIST))
+	if (len || (flags & (TH_SYN|TH_FIN)) ||
+	    TCP_TIMER_ISARMED(tp, TCPT_PERSIST))
 		th->th_seq = htonl(tp->snd_nxt);
 	else
 		th->th_seq = htonl(tp->snd_max);
@@ -796,7 +797,7 @@ send:
 			if ((flags & (TH_SYN|TH_ACK)) == TH_SYN)
 				flags |= (TH_ECE|TH_CWR);
 			else if ((tp->t_flags & TF_ECN_PERMIT) &&
-				 (flags & (TH_SYN|TH_ACK)) == (TH_SYN|TH_ACK))
+			    (flags & (TH_SYN|TH_ACK)) == (TH_SYN|TH_ACK))
 				flags |= TH_ECE;
 		}
 		/*
@@ -1071,8 +1072,7 @@ send:
 #endif
 		}
 		error = ip6_output(m, tp->t_inpcb->inp_outputopts6,
-			  &tp->t_inpcb->inp_route6,
-			  0, NULL, tp->t_inpcb);
+		    &tp->t_inpcb->inp_route6, 0, NULL, tp->t_inpcb);
 		break;
 #endif /* INET6 */
 	}
