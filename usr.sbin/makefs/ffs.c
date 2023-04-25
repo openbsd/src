@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.36 2022/01/11 05:34:32 jsg Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.37 2023/04/25 08:57:11 krw Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -124,6 +124,7 @@ static  void	*ffs_build_dinode1(struct ufs1_dinode *, dirbuf_t *, fsnode *,
 static  void	*ffs_build_dinode2(struct ufs2_dinode *, dirbuf_t *, fsnode *,
 				 fsnode *, fsinfo_t *);
 
+struct disklabel *ffs_makerdroot(const fsinfo_t *);
 
 
 	/* publicly visible functions */
@@ -145,6 +146,7 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	    { "maxbpg", &ffs_opts->maxbpg, OPT_INT32, 1, INT_MAX },
 	    { "minfree", &ffs_opts->minfree, OPT_INT32, 0, 99 },
 	    { "optimization", NULL, OPT_STRBUF, 0, 0 },
+	    { "rdroot", &ffs_opts->rdroot, OPT_INT32, 0, 1 },
 	    { "version", &ffs_opts->version, OPT_INT32, 1, 2 },
 	    { .name = NULL }
 	};
@@ -158,6 +160,7 @@ ffs_prep_opts(fsinfo_t *fsopts)
 	ffs_opts->avgfilesize = AVFILESIZ;
 	ffs_opts->avgfpdir = AFPDIR;
 	ffs_opts->version = 1;
+	ffs_opts->rdroot = 0;
 	ffs_opts->lp = NULL;
 	ffs_opts->pp = NULL;
 
@@ -214,6 +217,43 @@ ffs_parse_opts(const char *option, fsinfo_t *fsopts)
 	return 1;
 }
 
+struct disklabel *
+ffs_makerdroot(const fsinfo_t *fsopts)
+{
+	const ffs_opt_t		*ffs_opts = fsopts->fs_specific;
+	struct disklabel	*lp;
+	struct partition	*pp;
+	uint32_t		 rdsize, poffset;
+	const uint32_t		 sectorsize = fsopts->sectorsize;
+	const uint32_t		 fsize = ffs_opts->fsize;
+	const uint32_t		 bsize = ffs_opts->bsize;
+
+	rdsize = (fsopts->size + sectorsize - 1) / sectorsize;
+	poffset = (fsopts->offset + sectorsize - 1) / sectorsize;
+
+	lp = ecalloc(1, sizeof(struct disklabel));
+
+	lp->d_version = 1;
+	lp->d_type = DTYPE_RDROOT;
+	strlcpy(lp->d_typename, "rdroot", sizeof(lp->d_typename));
+	lp->d_npartitions = RAW_PART + 1;
+	lp->d_secsize = sectorsize;
+	lp->d_ntracks = lp->d_ncylinders = 1;
+	lp->d_secpercyl = rdsize;
+	DL_SETDSIZE(lp, rdsize);
+
+	pp = &lp->d_partitions[0];		/* a.k.a. 'a' */
+	pp->p_fstype = FS_BSDFFS;
+	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fsize, bsize / fsize);
+	DL_SETPOFFSET(pp, poffset);
+	DL_SETPSIZE(pp, rdsize - poffset);
+
+	pp = &lp->d_partitions[RAW_PART];	/* a.k.a. 'c' */
+	DL_SETPOFFSET(pp, 0);
+	DL_SETPSIZE(pp, DL_GETDSIZE(lp));
+
+	return lp;
+}
 
 void
 ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
@@ -255,6 +295,11 @@ ffs_makefs(const char *image, const char *dir, fsnode *root, fsinfo_t *fsopts)
 
 		/* write out superblock; image is now complete */
 	ffs_write_superblock(fsopts->superblock, fsopts);
+
+	if (ffs_opts->rdroot == 1) {
+		ffs_opts->lp = ffs_makerdroot(fsopts);
+		ffs_opts->pp = &ffs_opts->lp->d_partitions[0];
+	}
 
 	if (ffs_opts->lp != NULL) {
 		struct disklabel *lp = ffs_opts->lp;
@@ -309,6 +354,9 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 	assert(fsopts != NULL);
 	assert(ffs_opts != NULL);
 
+	if (lp != NULL && ffs_opts->rdroot == 1)
+		errx(1, "rdroot and disklabel are mutually exclusive");
+
 	if (lp != NULL) {
 		for (i = 0; i < lp->d_npartitions; i++) {
 			pp = &lp->d_partitions[i];
@@ -336,6 +384,20 @@ ffs_validate(const char *dir, fsnode *root, fsinfo_t *fsopts)
 		    DL_GETPSIZE(pp) * lp->d_secsize;
 		ffs_opts->fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 		ffs_opts->bsize = DISKLABELV1_FFS_BSIZE(pp->p_fragblock);
+	} else if (ffs_opts->rdroot == 1) {
+		if (fsopts->freeblocks != 0 || fsopts->freeblockpc != 0 ||
+		    fsopts->freefiles != 0 || fsopts->freefilepc != 0 ||
+		    fsopts->offset != 0 || fsopts->sectorsize != -1 ||
+		    fsopts->minsize != fsopts->maxsize)
+			errx(1, "rdroot and -bfMmOS are mutually exclusive");
+		if (fsopts->minsize == 0 || fsopts->maxsize == 0)
+			errx(1, "rdroot requires -s");
+		if (ffs_opts->minfree != 0)
+			errx(1, "rdroot requires minfree=0");
+		if (ffs_opts->fsize == -1 || ffs_opts->bsize == -1 ||
+		    ffs_opts->density == -1)
+			errx(1, "rdroot requires bsize, fsize and density");
+		fsopts->sectorsize = DEV_BSIZE;
 	}
 
 		/* set FFS defaults */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.h,v 1.9 2016/11/13 10:22:21 natano Exp $	*/
+/*	$OpenBSD: ffs.h,v 1.10 2023/04/25 08:57:11 krw Exp $	*/
 /*	$NetBSD: ffs.h,v 1.2 2011/10/09 21:33:43 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@ typedef struct {
 	int	version;	/* filesystem version (1 = FFS, 2 = UFS2) */
 	int	maxbsize;	/* maximum extent size */
 	int	maxblkspercg;	/* max # of blocks per cylinder group */
+	int	rdroot;		/* create rdroot disklabel */
 
 	struct disklabel *lp;	/* disk label */
 	struct partition *pp;	/* matching FFS partition in disklabel */
