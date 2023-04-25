@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.142 2023/04/22 20:51:26 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.143 2023/04/25 16:11:02 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: April 22 2023 $
+.Dd $Mdocdate: April 25 2023 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -2541,37 +2541,6 @@ The output file password source.
 The size of the private key to generate in bits.
 This must be the last option specified.
 The default is 2048.
-.El
-.Tg nseq
-.Sh NSEQ
-.Nm openssl nseq
-.Op Fl in Ar file
-.Op Fl out Ar file
-.Op Fl toseq
-.Pp
-The
-.Nm nseq
-command takes a file containing a Netscape certificate sequence
-(an alternative to the standard PKCS#7 format)
-and prints out the certificates contained in it,
-or takes a file of certificates
-and converts it into a Netscape certificate sequence.
-.Pp
-The options are as follows:
-.Bl -tag -width Ds
-.It Fl in Ar file
-The input file to read from,
-or standard input if not specified.
-.It Fl out Ar file
-The output file to write to,
-or standard output if not specified.
-.It Fl toseq
-Normally, a Netscape certificate sequence will be input and the output
-is the certificates contained in it.
-With the
-.Fl toseq
-option the situation is reversed:
-a Netscape certificate sequence is created from a file of certificates.
 .El
 .Tg ocsp
 .Sh OCSP

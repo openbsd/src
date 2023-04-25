@@ -1,4 +1,4 @@
-/* $OpenBSD: openssl.c,v 1.32 2022/11/11 18:24:32 joshua Exp $ */
+/* $OpenBSD: openssl.c,v 1.33 2023/04/25 16:11:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,7 +161,6 @@ FUNCTION functions[] = {
 	{ FUNC_TYPE_GENERAL, "enc", enc_main },
 	{ FUNC_TYPE_GENERAL, "errstr", errstr_main },
 	{ FUNC_TYPE_GENERAL, "genpkey", genpkey_main },
-	{ FUNC_TYPE_GENERAL, "nseq", nseq_main },
 #ifndef OPENSSL_NO_OCSP
 	{ FUNC_TYPE_GENERAL, "ocsp", ocsp_main },
 #endif
