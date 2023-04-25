@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.62 2023/04/19 10:51:22 jsing Exp $ */
+/* $OpenBSD: bn.h,v 1.63 2023/04/25 16:41:29 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -341,12 +341,6 @@ void BN_zero_ex(BIGNUM *a);
 const BIGNUM *BN_value_one(void);
 char *	BN_options(void);
 BN_CTX *BN_CTX_new(void);
-#ifndef OPENSSL_NO_DEPRECATED
-/* Remove in next major bump. */
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-void	BN_CTX_init(BN_CTX *c);
-#endif
-#endif
 void	BN_CTX_free(BN_CTX *c);
 void	BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);

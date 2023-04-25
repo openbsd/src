@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_ctx.c,v 1.20 2023/01/14 15:23:27 jsing Exp $ */
+/*	$OpenBSD: bn_ctx.c,v 1.21 2023/04/25 16:41:29 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -69,12 +69,6 @@ BN_CTX *
 BN_CTX_new(void)
 {
 	return calloc(1, sizeof(struct bignum_ctx));
-}
-
-void
-BN_CTX_init(BN_CTX *bctx)
-{
-	memset(bctx, 0, sizeof(*bctx));
 }
 
 void
