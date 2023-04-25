@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_pmeth.c,v 1.16 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: dsa_pmeth.c,v 1.17 2023/04/25 15:48:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -203,6 +203,7 @@ pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 
 	case EVP_PKEY_CTRL_MD:
+		/* ANSI X9.57 and NIST CSOR. */
 		switch (EVP_MD_type((const EVP_MD *)p2)) {
 		case NID_sha1:
 		case NID_dsa:
@@ -211,6 +212,10 @@ pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		case NID_sha256:
 		case NID_sha384:
 		case NID_sha512:
+		case NID_sha3_224:
+		case NID_sha3_256:
+		case NID_sha3_384:
+		case NID_sha3_512:
 			break;
 		default:
 			DSAerror(DSA_R_INVALID_DIGEST_TYPE);

@@ -1,4 +1,4 @@
-/* $OpenBSD: hmac.h,v 1.16 2022/01/14 08:06:03 tb Exp $ */
+/* $OpenBSD: hmac.h,v 1.17 2023/04/25 15:48:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,7 +66,7 @@
 
 #include <openssl/evp.h>
 
-#define HMAC_MAX_MD_CBLOCK	128	/* largest known is SHA512 */
+#define HMAC_MAX_MD_CBLOCK	144	/* largest known is SHA3-224 */
 
 #ifdef  __cplusplus
 extern "C" {
