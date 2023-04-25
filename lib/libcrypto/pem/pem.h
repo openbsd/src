@@ -1,4 +1,4 @@
-/* $OpenBSD: pem.h,v 1.25 2023/04/24 22:24:39 tb Exp $ */
+/* $OpenBSD: pem.h,v 1.26 2023/04/25 17:51:36 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -424,10 +424,6 @@ DECLARE_PEM_write(X509_REQ_NEW, X509_REQ)
 DECLARE_PEM_rw(X509_CRL, X509_CRL)
 
 DECLARE_PEM_rw(PKCS7, PKCS7)
-
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-DECLARE_PEM_rw(NETSCAPE_CERT_SEQUENCE, NETSCAPE_CERT_SEQUENCE)
-#endif
 
 DECLARE_PEM_rw(PKCS8, X509_SIG)
 

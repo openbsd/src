@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_all.c,v 1.19 2023/04/25 11:03:37 tb Exp $ */
+/* $OpenBSD: pem_all.c,v 1.20 2023/04/25 17:51:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -238,36 +238,6 @@ PEM_write_bio_PKCS7(BIO *bp, PKCS7 *x)
 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_PKCS7, PEM_STRING_PKCS7, bp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }
-
-#if !defined(LIBRESSL_NEXT_API)
-int
-PEM_write_NETSCAPE_CERT_SEQUENCE(FILE *fp, NETSCAPE_CERT_SEQUENCE *x)
-{
-	return PEM_ASN1_write((i2d_of_void *)i2d_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, fp,
-	    x, NULL, NULL, 0, NULL, NULL);
-}
-
-NETSCAPE_CERT_SEQUENCE *
-PEM_read_NETSCAPE_CERT_SEQUENCE(FILE *fp, NETSCAPE_CERT_SEQUENCE **x, pem_password_cb *cb, void *u)
-{
-	return PEM_ASN1_read((d2i_of_void *)d2i_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, fp,
-	    (void **)x, cb, u);
-}
-
-NETSCAPE_CERT_SEQUENCE *
-PEM_read_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp, NETSCAPE_CERT_SEQUENCE **x, pem_password_cb *cb, void *u)
-{
-	return PEM_ASN1_read_bio((d2i_of_void *)d2i_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, bp,
-	    (void **)x, cb, u);
-}
-
-int
-PEM_write_bio_NETSCAPE_CERT_SEQUENCE(BIO *bp, NETSCAPE_CERT_SEQUENCE *x)
-{
-	return PEM_ASN1_write_bio((i2d_of_void *)i2d_NETSCAPE_CERT_SEQUENCE, PEM_STRING_X509, bp,
-	    x, NULL, NULL, 0, NULL, NULL);
-}
-#endif
 
 #ifndef OPENSSL_NO_RSA
 
