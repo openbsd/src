@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.32 2023/04/25 00:58:47 cheloha Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.33 2023/04/25 01:32:36 cheloha Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@
  * until we're sure they are in a sane state.
  */
 int gmoninit = 0;
+u_int gmon_cpu_count;		/* [K] number of CPUs with profiling enabled */
 
 extern char etext[];
 
@@ -126,6 +127,8 @@ prof_state_toggle(struct gmonparam *gp, int oldstate)
 {
 	int error = 0;
 
+	KERNEL_ASSERT_LOCKED();
+
 	if (gp->state == oldstate)
 		return (0);
 
@@ -138,15 +141,18 @@ prof_state_toggle(struct gmonparam *gp, int oldstate)
 		 */
 		error = db_prof_enable();
 #endif
-		if (error == 0)
-			startprofclock(&process0);
+		if (error == 0) {
+			if (++gmon_cpu_count == 1)
+				startprofclock(&process0);
+		}
 		break;
 	default:
 		error = EINVAL;
 		gp->state = GMON_PROF_OFF;
 		/* FALLTHROUGH */
 	case GMON_PROF_OFF:
-		stopprofclock(&process0);
+		if (--gmon_cpu_count == 0)
+			stopprofclock(&process0);
 #if !defined(GPROF)
 		db_prof_disable();
 #endif
