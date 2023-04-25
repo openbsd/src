@@ -1,4 +1,4 @@
-/*	$OpenBSD: pwmleds.c,v 1.1 2022/11/23 23:43:08 kettenis Exp $	*/
+/*	$OpenBSD: pwmleds.c,v 1.2 2023/04/25 11:12:38 tobhe Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -33,19 +33,22 @@ extern int (*wskbd_get_backlight)(struct wskbd_backlight *);
 extern int (*wskbd_set_backlight)(struct wskbd_backlight *);
 
 struct pwmleds_softc {
-	struct device	sc_dev;
+	struct device		sc_dev;
 
 	/* Keyboard backlight. */
-	uint32_t	*sc_pwm;
-	int		sc_pwm_len;
-	uint32_t	sc_max_brightness;
+	uint32_t		*sc_pwm;
+	int			 sc_pwm_len;
+	uint32_t		 sc_max_brightness;
+	struct pwm_state	 sc_ps_saved;
 };
 
 int	pwmleds_match(struct device *, void *, void *);
 void	pwmleds_attach(struct device *, struct device *, void *);
+int	pwmleds_activate(struct device *, int);
 
 const struct cfattach pwmleds_ca = {
-	sizeof (struct pwmleds_softc), pwmleds_match, pwmleds_attach
+	sizeof (struct pwmleds_softc), pwmleds_match, pwmleds_attach, NULL,
+	pwmleds_activate
 };
 
 struct cfdriver pwmleds_cd = {
@@ -99,6 +102,29 @@ pwmleds_attach(struct device *parent, struct device *self, void *aux)
 		wskbd_get_backlight = pwmleds_get_kbd_backlight;
 		wskbd_set_backlight = pwmleds_set_kbd_backlight;
 	}
+}
+
+int
+pwmleds_activate(struct device *self, int act)
+{
+	struct pwmleds_softc *sc = (struct pwmleds_softc *)self;
+	struct pwm_state ps;
+	int error;
+
+	switch (act) {
+	case DVACT_QUIESCE:
+		error = pwm_get_state(sc->sc_pwm, &sc->sc_ps_saved);
+		if (error)
+			return error;
+
+		pwm_init_state(sc->sc_pwm, &ps);
+		ps.ps_pulse_width = 0;
+		ps.ps_enabled = 0;
+		return pwm_set_state(sc->sc_pwm, &ps);
+	case DVACT_WAKEUP:
+		return pwm_set_state(sc->sc_pwm, &sc->sc_ps_saved);
+	}
+	return 0;
 }
 
 struct pwmleds_softc *
