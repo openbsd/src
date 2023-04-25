@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.144 2023/04/05 19:35:23 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.145 2023/04/25 15:41:17 phessler Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1132,6 +1132,9 @@ nd6_dad_timer(void *xifa)
 {
 	struct ifaddr *ifa = xifa;
 	struct in6_ifaddr *ia6 = ifatoia6(ifa);
+	struct in6_addr taddr6 = ia6->ia_addr.sin6_addr;
+	struct in6_addr daddr6;
+	struct ifnet *ifp = ifa->ifa_ifp;
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
 
@@ -1198,6 +1201,11 @@ nd6_dad_timer(void *xifa)
 			    ifa->ifa_ifp->if_xname,
 			    inet_ntop(AF_INET6, &ia6->ia_addr.sin6_addr,
 				addr, sizeof(addr))));
+
+			daddr6 = in6addr_linklocal_allrouters;
+			daddr6.s6_addr16[1] = htons(ifp->if_index);
+			/* RFC9131 - inform routers about our new address */
+			nd6_na_output(ifp, &daddr6, &taddr6, 0, 1, NULL);
 
 			nd6_dad_destroy(dp);
 		}
