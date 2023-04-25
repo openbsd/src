@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_new.3,v 1.4 2023/04/10 13:32:29 schwarze Exp $
+.\" $OpenBSD: event_base_new.3,v 1.5 2023/04/25 17:57:55 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 10 2023 $
+.Dd $Mdocdate: April 25 2023 $
 .Dt EVENT_BASE_NEW 3
 .Os
 .Sh NAME
@@ -133,13 +133,6 @@ with a
 pointer argument triggers an
 .Xr assert 3
 call.
-.Pp
-Errors and diagnostics from many event library functions are reported using
-the log callback system configured with
-.Xr event_set_log_callback 3 .
-In case of an error, the functions report the problem and then call
-.Xr exit 3
-with a status of 1.
 .Sh RETURN VALUES
 .Fn event_base_new
 and
@@ -147,15 +140,27 @@ and
 return the newly allocated
 .Vt event_base
 structure.
+If no kernel notification method can be initialized, both functions call
+.Xr exit 3
+with a status of 1 and do not return.
 .Pp
 On success,
 .Fn event_reinit
 returns 0.
 If one or more events fail to reinitialize, the function returns -1.
 .Pp
-Fatal error conditions do
-.Em not
-return.
+If the
+.Xr poll 2
+or
+.Xr select 2
+kernel notification method is used but
+.Xr socketpair 2
+fails, all three functions do not return but
+.Xr exit 3
+the program with a status of 1.
+This may also happen in some cases of
+.Xr malloc 3
+failure.
 .Sh ENVIRONMENT
 Environment variables can modify the behavior of
 .Fn event_base_new
@@ -187,89 +192,90 @@ was executed as either setuid or setgid using
 The value of the environment variables is ignored, even if it is
 empty or zero.
 .Sh DIAGNOSTICS
-The event library relies on its own system to issue messages via callbacks via
+Many event library functions report error and diagnostic messages via
+the log callback system that can optionally be enabled with
 .Xr event_set_log_callback 3 .
 .Pp
-.Sy Error
-messages that
-.Fn event_base_new
-and
-.Fn event_init
-can report and what they mean:
+The following error messages can occur:
 .Bl -tag -width Ds
-.It Dq event_base_new: calloc: Cannot allocate memory
+.It Dq evsignal_init: socketpair: Em reason
+While trying to initialize the
+.Xr poll 2
+or
+.Xr select 2
+kernel notification method in
 .Fn event_base_new
-failed to allocate memory for the
-.Vt event_base
-structure.
-.It Dq event_base_priority_init: calloc: Cannot allocate memory
-.Fn event_base_new
-failed to allocate memory for event queue.
-.It Dq event_base_priority_init: malloc: Cannot allocate memory
-.Fn event_base_new
-failed to allocate memory for event queue.
+or
+.Fn event_init ,
+.Xr socketpair 2
+failed for the given
+.Em reason .
 .It Dq event_base_new: no event mechanism available
-Event library support for all kernel notification
-methods is disabled; see
-.Sx ENVIRONMENT .
-.El
-.Pp
-.Sy Diagnostic
-messages that
-.Fn event_base_new
-and
-.Fn event_init
-can report and what they mean:
-.Bl -tag -width Ds
-.It Dq libevent using: kqueue
-The environment variable
-.Ev EVENT_SHOW_METHOD
-is defined and the event library is using
-.Xr kqueue 2 .
-.It Dq libevent using: poll
-The environment variable
-.Ev EVENT_SHOW_METHOD
-is defined and the event library is using
-.Xr poll 2 .
-.It Dq libevent using: select
-The environment variable
-.Ev EVENT_SHOW_METHOD
-is defined and the event library is using
-.Xr select 2 .
-.El
-.Pp
-.Sy Error
-messages that
-.Fn event_reinit
-can report and what they mean:
-.Bl -tag -width Ds
+Each kernel notification method is either disabled via the
+.Sx ENVIRONMENT ,
+or trying to initialize it failed.
+Some memory allocation failures may also cause this error.
 .It Dq event_base_reinit: could not reinitialize event mechanism
 Failed to reinitialize the kernel notification method.
-.It Dq event_queue_remove: Em @p Po fd Em @d Pc not on queue Em @x
-Failed to clear an event queue.
-The message format is populated as follows:
-.Bl -hyphen -compact -width 1n
-.It
-.Em @p :
-Event structure memory address in hexadecimal format.
-.It
-.Em @d :
-File descriptor in decimal format.
-.It
-.Em @x :
-Event queue number in hexadecimal format.
 .El
-.It Dq event_queue_remove: unknown queue Em @q
-Encountered an unknown queue number, indicated by
-.Em @q
-in hexadecimal format.
+.Pp
+In addition, all three functions may issue various error messages
+indicating memory allocation failure, but not all such failures are
+reported in this manner.
+.Pp
+The following diagnostic messages can occur:
+.Bl -tag -width Ds
+.It Dq libevent using: Em method
+The environment variable
+.Ev EVENT_SHOW_METHOD
+is defined and the event library is using the given kernel notification
+.Em method ,
+which is either
+.Qq kqueue ,
+.Qq poll ,
+or
+.Qq select .
+.It Dq kqueue: Em reason
+Calling
+.Xr kqueue 2
+failed in
+.Fn event_base_new
+or
+.Fn event_init
+for the given
+.Em reason .
+Other kernel notification methods are automatically tried.
 .El
 .Sh ERRORS
-The event library usually does not set
-.Xr errno 2 ,
-but instead has its own system to
-issue messages via callbacks which is configured with
-.Xr event_set_log_callback 3 .
+Even when they fail, most event library functions do not explicitly set
+.Xr errno 2 .
+Exceptions are mentioned in individual manual pages.
+.Pp
+However, many event library functions call C library functions
+or system calls internally that do set
+.Xr errno 2
+when they fail.
+Consequently, many event library functions set
+.Xr errno 2
+in some cases of failure but not in others.
+.Pp
+The functions
+.Fn event_base_new ,
+.Fn event_init ,
+and
+.Fn event_reinit
+may fail and set
+.Va errno
+for any of the errors specified for the library functions
+.Xr kqueue 2
+and
+.Xr malloc 3 .
+.Pp
+The same three functions may overwrite
+.Xr errno 2
+even if successful, for example when one kernel notification method
+fails to initialize and another succeeds, or when a disregarded
+memory allocation failure occurs.
 .Sh SEE ALSO
 .Xr fork 2 ,
 .Xr kqueue 2 ,
