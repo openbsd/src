@@ -127,7 +127,9 @@ $code=<<___;
 .globl	RC4
 .type	RC4,\@function,4
 .align	16
-RC4:	or	$len,$len
+RC4:
+	endbr64
+	or	$len,$len
 	jne	.Lentry
 	ret
 .Lentry:
@@ -433,6 +435,7 @@ $code.=<<___;
 .type	RC4_set_key,\@function,3
 .align	16
 RC4_set_key:
+	endbr64
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -505,6 +508,7 @@ RC4_set_key:
 .type	RC4_options,\@abi-omnipotent
 .align	16
 RC4_options:
+	endbr64
 	lea	.Lopts(%rip),%rax
 	mov	OPENSSL_ia32cap_P(%rip),%edx
 	bt	\$IA32CAP_BIT0_INTELP4,%edx

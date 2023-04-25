@@ -222,6 +222,7 @@ $code.=<<___;
 .type	sha1_block_data_order,\@function,3
 .align	16
 sha1_block_data_order:
+	endbr64
 	mov	OPENSSL_ia32cap_P+0(%rip),%r9d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r8d
 	test	\$IA32CAP_MASK1_SSSE3,%r8d		# check SSSE3 bit
@@ -309,6 +310,7 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_ssse3:
 _ssse3_shortcut:
+	endbr64
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -729,6 +731,7 @@ $code.=<<___;
 .align	16
 sha1_block_data_order_avx:
 _avx_shortcut:
+	endbr64
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -1099,6 +1102,7 @@ $code.=<<___;
 .type	se_handler,\@abi-omnipotent
 .align	16
 se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx

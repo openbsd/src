@@ -116,6 +116,7 @@ $code=<<___;
 .type	Camellia_EncryptBlock,\@abi-omnipotent
 .align	16
 Camellia_EncryptBlock:
+	endbr64
 	movl	\$128,%eax
 	subl	$arg0d,%eax
 	movl	\$3,$arg0d
@@ -128,6 +129,7 @@ Camellia_EncryptBlock:
 .align	16
 .Lenc_rounds:
 Camellia_EncryptBlock_Rounds:
+	endbr64
 	push	%rbx
 	push	%rbp
 	push	%r13
@@ -176,6 +178,7 @@ Camellia_EncryptBlock_Rounds:
 .type	_x86_64_Camellia_encrypt,\@abi-omnipotent
 .align	16
 _x86_64_Camellia_encrypt:
+	endbr64
 	xor	0($key),@S[1]
 	xor	4($key),@S[0]		# ^=key[0-3]
 	xor	8($key),@S[3]
@@ -226,6 +229,7 @@ $code.=<<___;
 .type	Camellia_DecryptBlock,\@abi-omnipotent
 .align	16
 Camellia_DecryptBlock:
+	endbr64
 	movl	\$128,%eax
 	subl	$arg0d,%eax
 	movl	\$3,$arg0d
@@ -238,6 +242,7 @@ Camellia_DecryptBlock:
 .align	16
 .Ldec_rounds:
 Camellia_DecryptBlock_Rounds:
+	endbr64
 	push	%rbx
 	push	%rbp
 	push	%r13
@@ -286,6 +291,7 @@ Camellia_DecryptBlock_Rounds:
 .type	_x86_64_Camellia_decrypt,\@abi-omnipotent
 .align	16
 _x86_64_Camellia_decrypt:
+	endbr64
 	xor	0($key),@S[1]
 	xor	4($key),@S[0]		# ^=key[0-3]
 	xor	8($key),@S[3]
@@ -400,6 +406,7 @@ $code.=<<___;
 .type	Camellia_Ekeygen,\@function,3
 .align	16
 Camellia_Ekeygen:
+	endbr64
 	push	%rbx
 	push	%rbp
 	push	%r13
@@ -630,6 +637,7 @@ $code.=<<___;
 .type	Camellia_cbc_encrypt,\@function,6
 .align	16
 Camellia_cbc_encrypt:
+	endbr64
 	cmp	\$0,%rdx
 	je	.Lcbc_abort
 	push	%rbx

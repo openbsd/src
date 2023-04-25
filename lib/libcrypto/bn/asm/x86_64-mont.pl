@@ -63,6 +63,7 @@ $code=<<___;
 .type	bn_mul_mont,\@function,6
 .align	16
 bn_mul_mont:
+	endbr64
 	test	\$3,${num}d
 	jnz	.Lmul_enter
 	cmp	\$8,${num}d
@@ -278,6 +279,7 @@ $code.=<<___;
 .align	16
 bn_mul4x_mont:
 .Lmul4x_enter:
+	endbr64
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -705,6 +707,7 @@ $code.=<<___;
 .align	16
 bn_sqr4x_mont:
 .Lsqr4x_enter:
+	endbr64
 	push	%rbx
 	push	%rbp
 	push	%r12

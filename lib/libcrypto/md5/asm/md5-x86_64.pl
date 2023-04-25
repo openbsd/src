@@ -128,6 +128,7 @@ $code .= <<EOF;
 .globl md5_block_asm_data_order
 .type md5_block_asm_data_order,\@function,3
 md5_block_asm_data_order:
+	endbr64
 	push	%rbp
 	push	%rbx
 	push	%r12

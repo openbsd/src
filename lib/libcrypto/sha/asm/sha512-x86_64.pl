@@ -175,6 +175,7 @@ $code=<<___;
 .type	$func,\@function,4
 .align	16
 $func:
+	endbr64
 	push	%rbx
 	push	%rbp
 	push	%r12

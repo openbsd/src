@@ -242,6 +242,7 @@ $code.=<<___;
 .type	${PREFIX}_encrypt,\@abi-omnipotent
 .align	16
 ${PREFIX}_encrypt:
+	endbr64
 	movups	($inp),$inout0		# load input
 	mov	240($key),$rounds	# key->rounds
 ___
@@ -255,6 +256,7 @@ $code.=<<___;
 .type	${PREFIX}_decrypt,\@abi-omnipotent
 .align	16
 ${PREFIX}_decrypt:
+	endbr64
 	movups	($inp),$inout0		# load input
 	mov	240($key),$rounds	# key->rounds
 ___
@@ -284,6 +286,7 @@ $code.=<<___;
 .type	_aesni_${dir}rypt3,\@abi-omnipotent
 .align	16
 _aesni_${dir}rypt3:
+	endbr64
 	$movkey	($key),$rndkey0
 	shr	\$1,$rounds
 	$movkey	16($key),$rndkey1
@@ -328,6 +331,7 @@ $code.=<<___;
 .type	_aesni_${dir}rypt4,\@abi-omnipotent
 .align	16
 _aesni_${dir}rypt4:
+	endbr64
 	$movkey	($key),$rndkey0
 	shr	\$1,$rounds
 	$movkey	16($key),$rndkey1
@@ -373,6 +377,7 @@ $code.=<<___;
 .type	_aesni_${dir}rypt6,\@abi-omnipotent
 .align	16
 _aesni_${dir}rypt6:
+	endbr64
 	$movkey		($key),$rndkey0
 	shr		\$1,$rounds
 	$movkey		16($key),$rndkey1
@@ -437,6 +442,7 @@ $code.=<<___;
 .type	_aesni_${dir}rypt8,\@abi-omnipotent
 .align	16
 _aesni_${dir}rypt8:
+	endbr64
 	$movkey		($key),$rndkey0
 	shr		\$1,$rounds
 	$movkey		16($key),$rndkey1
@@ -525,6 +531,7 @@ $code.=<<___;
 .type	aesni_ecb_encrypt,\@function,5
 .align	16
 aesni_ecb_encrypt:
+	endbr64
 	and	\$-16,$len
 	jz	.Lecb_ret
 
@@ -830,6 +837,7 @@ $code.=<<___;
 .type	aesni_ccm64_encrypt_blocks,\@function,6
 .align	16
 aesni_ccm64_encrypt_blocks:
+	endbr64
 ___
 $code.=<<___ if ($win64);
 	lea	-0x58(%rsp),%rsp
@@ -2478,6 +2486,7 @@ $code.=<<___;
 .type	${PREFIX}_set_decrypt_key,\@abi-omnipotent
 .align	16
 ${PREFIX}_set_decrypt_key:
+	endbr64
 	sub	\$8,%rsp
 	call	__aesni_set_encrypt_key
 	shl	\$4,$bits		# rounds-1 after _aesni_set_encrypt_key
@@ -2528,6 +2537,7 @@ $code.=<<___;
 .type	${PREFIX}_set_encrypt_key,\@abi-omnipotent
 .align	16
 ${PREFIX}_set_encrypt_key:
+	endbr64
 __aesni_set_encrypt_key:
 	sub	\$8,%rsp
 	mov	\$-1,%rax
@@ -2749,6 +2759,7 @@ $code.=<<___ if ($PREFIX eq "aesni");
 .type	ecb_se_handler,\@abi-omnipotent
 .align	16
 ecb_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -2768,6 +2779,7 @@ ecb_se_handler:
 .type	ccm64_se_handler,\@abi-omnipotent
 .align	16
 ccm64_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -2809,6 +2821,7 @@ ccm64_se_handler:
 .type	ctr32_se_handler,\@abi-omnipotent
 .align	16
 ctr32_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -2844,6 +2857,7 @@ ctr32_se_handler:
 .type	xts_se_handler,\@abi-omnipotent
 .align	16
 xts_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
@@ -2885,6 +2899,7 @@ $code.=<<___;
 .type	cbc_se_handler,\@abi-omnipotent
 .align	16
 cbc_se_handler:
+	endbr64
 	push	%rsi
 	push	%rdi
 	push	%rbx
