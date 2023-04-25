@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2023/03/26 19:14:11 tb Exp $
+#	$OpenBSD: Makefile,v 1.6 2023/04/25 15:29:17 tb Exp $
 
 PROGS +=	bio_asn1
 PROGS +=	bio_chain
@@ -10,5 +10,7 @@ DPADD =		${LIBCRYPTO}
 WARNINGS =	Yes
 CFLAGS +=	-DLIBRESSL_INTERNAL -Werror
 CFLAGS +=	-I${.CURDIR}/../../../../lib/libcrypto/bio/
+
+LDADD_bio_asn1 = ${CRYPTO_INT}
 
 .include <bsd.regress.mk>
