@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.62 2023/04/18 08:47:28 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.63 2023/04/25 16:50:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -349,14 +349,6 @@ int RSA_padding_add_none(unsigned char *to, int tlen,
     const unsigned char *f, int fl);
 int RSA_padding_check_none(unsigned char *to, int tlen,
     const unsigned char *f, int fl, int rsa_len);
-/* Remove in next major bump. */
-#if !defined(LIBRESSL_NEXT_API) || defined(LIBRESSL_INTERNAL)
-int RSA_padding_add_X931(unsigned char *to, int tlen,
-    const unsigned char *f, int fl);
-int RSA_padding_check_X931(unsigned char *to, int tlen,
-    const unsigned char *f, int fl, int rsa_len);
-int RSA_X931_hash_id(int nid);
-#endif
 
 int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
     const EVP_MD *Hash, const unsigned char *EM, int sLen);

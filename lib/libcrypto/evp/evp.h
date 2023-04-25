@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.116 2023/04/16 17:06:19 jsing Exp $ */
+/* $OpenBSD: evp.h,v 1.117 2023/04/25 16:50:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -183,7 +183,6 @@ extern "C" {
  */
 #define EVP_MD_CTX_FLAG_PAD_MASK	0xF0	/* RSA mode to use */
 #define EVP_MD_CTX_FLAG_PAD_PKCS1	0x00	/* PKCS#1 v1.5 mode */
-#define EVP_MD_CTX_FLAG_PAD_X931	0x10	/* X9.31 mode */
 #define EVP_MD_CTX_FLAG_PAD_PSS		0x20	/* PSS mode */
 
 #define EVP_MD_CTX_FLAG_NO_INIT		0x0100 /* Don't initialize md_data */
