@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_asn1.c,v 1.2 2023/03/31 06:07:44 tb Exp $ */
+/*	$OpenBSD: bio_asn1.c,v 1.3 2023/04/25 19:48:24 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -26,6 +26,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/pkcs7.h>
+
+#include "asn1_local.h"
 
 /*
  * Minimal reproducer for the BIO_new_NDEF() write after free fixed in
