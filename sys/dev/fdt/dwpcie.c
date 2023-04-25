@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.45 2023/04/24 15:15:00 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.46 2023/04/25 11:36:55 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -704,6 +704,8 @@ dwpcie_attach_deferred(struct device *self)
 	    OF_getproplen(sc->sc_node, "msi-map") > 0 ||
 	    sc->sc_msi_addr)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
+
+	pci_dopm = 1;
 
 	config_found(self, &pba, NULL);
 }
