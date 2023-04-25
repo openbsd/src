@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2031 2023/04/25 08:27:59 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2032 2023/04/25 21:57:29 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8547,6 +8547,7 @@
 /* Rockchip products */
 #define	PCI_PRODUCT_ROCKCHIP_RK3399	0x0100		/* RK3399 */
 #define	PCI_PRODUCT_ROCKCHIP_RK3566	0x3566		/* RK3566 */
+#define	PCI_PRODUCT_ROCKCHIP_RK3588	0x3588		/* RK3588 */
 
 /* Rockwell products */
 #define	PCI_PRODUCT_ROCKWELL_RS56SP_PCI11P1	0x2005		/* RS56/SP-PCI11P1 Modem */
