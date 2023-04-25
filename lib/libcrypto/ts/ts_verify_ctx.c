@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_verify_ctx.c,v 1.12 2023/03/31 17:47:39 tb Exp $ */
+/* $OpenBSD: ts_verify_ctx.c,v 1.13 2023/04/25 17:52:54 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2003.
  */
@@ -73,12 +73,6 @@ TS_VERIFY_CTX_new(void)
 		TSerror(ERR_R_MALLOC_FAILURE);
 
 	return ctx;
-}
-
-void
-TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx)
-{
-	memset(ctx, 0, sizeof(TS_VERIFY_CTX));
 }
 
 void
