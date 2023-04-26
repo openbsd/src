@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.211 2023/04/24 16:46:43 beck Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.212 2023/04/26 15:13:52 beck Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*
@@ -499,7 +499,7 @@ breadn(struct vnode *vp, daddr_t blkno, int size, daddr_t rablks[],
 	 */
 	for (i = 0; i < nrablks; i++) {
 		/* If it's in the cache, just go on to next one. */
-		if (incore_locked(vp, rablks[i]))
+		if (incore(vp, rablks[i]))
 			continue;
 
 		/* Get a buffer for the read-ahead block */
