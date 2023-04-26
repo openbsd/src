@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bulk.8,v 1.5 2019/06/27 17:29:16 jmc Exp $
+.\"	$OpenBSD: bulk.8,v 1.6 2023/04/26 19:12:49 jmc Exp $
 .\"
 .\"	Copyright (c) 2016 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-.Dd $Mdocdate: June 27 2019 $
+.Dd $Mdocdate: April 26 2023 $
 .Dt BULK 8
 .Os
 .Sh NAME
@@ -144,8 +144,8 @@ They just need to act as nfs clients to the master and to be reachable
 through ssh from the master.
 .Pp
 Use a similar
-.Xr proot 1 config
-to populate each slave.
+.Xr proot 1
+config to populate each slave.
 .Pp
 You should now be able to build ports on the slaves.
 A simple config will just have
