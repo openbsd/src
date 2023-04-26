@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.90 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.91 2023/04/26 15:11:21 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -298,19 +298,6 @@
 #define VMM_EX_XM	19	/* SIMD floating point exception #XM */
 #define VMM_EX_VE	20	/* Virtualization exception #VE */
 
-/*
- * VCPU state values. Note that there is a conversion function in vmm.c
- * (vcpu_state_decode) that converts these to human readable strings,
- * so this enum and vcpu_state_decode should be kept in sync.
- */
-enum {
-	VCPU_STATE_STOPPED,
-	VCPU_STATE_RUNNING,
-	VCPU_STATE_REQTERM,
-	VCPU_STATE_TERMINATED,
-	VCPU_STATE_UNKNOWN,
-};
-
 enum {
 	VEI_DIR_OUT,
 	VEI_DIR_IN
@@ -330,6 +317,13 @@ enum {
 	VMM_CPU_MODE_COMPAT,
 	VMM_CPU_MODE_LONG,
 	VMM_CPU_MODE_UNKNOWN,
+};
+
+struct vmm_softc_md {
+	/* Capabilities */
+	uint32_t		nr_rvi_cpus;	/* [I] */
+	uint32_t		nr_ept_cpus;	/* [I] */
+	uint8_t			pkru_enabled;	/* [I] */
 };
 
 /*
@@ -440,16 +434,6 @@ struct vcpu_reg_state {
 	struct vcpu_segment_info	vrs_idtr;
 };
 
-struct vm_mem_range {
-	paddr_t	vmr_gpa;
-	vaddr_t	vmr_va;
-	size_t	vmr_size;
-	int	vmr_type;
-#define VM_MEM_RAM		0	/* Presented as usable system memory. */
-#define VM_MEM_RESERVED		1	/* Reserved for BIOS, etc. */
-#define VM_MEM_MMIO		2	/* Special region for device mmio. */
-};
-
 /*
  * struct vm_exit
  *
@@ -466,17 +450,6 @@ struct vm_exit {
 	int				cpl;
 };
 
-struct vm_create_params {
-	/* Input parameters to VMM_IOC_CREATE */
-	size_t			vcp_nmemranges;
-	size_t			vcp_ncpus;
-	struct vm_mem_range	vcp_memranges[VMM_MAX_MEM_RANGES];
-	char			vcp_name[VMM_MAX_NAME_LEN];
-
-	/* Output parameter from VMM_IOC_CREATE */
-	uint32_t		vcp_id;
-};
-
 struct vm_run_params {
 	/* Input parameters to VMM_IOC_RUN */
 	uint32_t	vrp_vm_id;
@@ -490,38 +463,6 @@ struct vm_run_params {
 	/* Output parameter from VMM_IOC_RUN */
 	uint16_t	vrp_exit_reason;	/* exit reason */
 	uint8_t		vrp_irqready;		/* ready for IRQ on entry */
-};
-
-struct vm_info_result {
-	/* Output parameters from VMM_IOC_INFO */
-	size_t		vir_memory_size;
-	size_t		vir_used_size;
-	size_t		vir_ncpus;
-	uint8_t		vir_vcpu_state[VMM_MAX_VCPUS_PER_VM];
-	pid_t		vir_creator_pid;
-	uint32_t	vir_id;
-	char		vir_name[VMM_MAX_NAME_LEN];
-};
-
-struct vm_info_params {
-	/* Input parameters to VMM_IOC_INFO */
-	size_t			 vip_size;	/* Output buffer size */
-
-	/* Output Parameters from VMM_IOC_INFO */
-	size_t			 vip_info_ct;	/* # of entries returned */
-	struct vm_info_result	*vip_info;	/* Output buffer */
-};
-
-struct vm_terminate_params {
-	/* Input parameters to VMM_IOC_TERM */
-	uint32_t		vtp_vm_id;
-};
-
-struct vm_resetcpu_params {
-	/* Input parameters to VMM_IOC_RESETCPU */
-	uint32_t		vrp_vm_id;
-	uint32_t		vrp_vcpu_id;
-	struct vcpu_reg_state	vrp_init_state;
 };
 
 struct vm_intr_params {
@@ -574,18 +515,7 @@ struct vm_mprotect_ept_params {
 };
 
 /* IOCTL definitions */
-#define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
-#define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
-#define VMM_IOC_INFO _IOWR('V', 3, struct vm_info_params) /* Get VM Info */
-#define VMM_IOC_TERM _IOW('V', 4, struct vm_terminate_params) /* Terminate VM */
-#define VMM_IOC_RESETCPU _IOW('V', 5, struct vm_resetcpu_params) /* Reset */
 #define VMM_IOC_INTR _IOW('V', 6, struct vm_intr_params) /* Intr pending */
-#define VMM_IOC_READREGS _IOWR('V', 7, struct vm_rwregs_params) /* Get regs */
-#define VMM_IOC_WRITEREGS _IOW('V', 8, struct vm_rwregs_params) /* Set regs */
-/* Get VM params */
-#define VMM_IOC_READVMPARAMS _IOWR('V', 9, struct vm_rwvmparams_params)
-/* Set VM params */
-#define VMM_IOC_WRITEVMPARAMS _IOW('V', 10, struct vm_rwvmparams_params)
 /* Control the protection of ept pages*/
 #define VMM_IOC_MPROTECT_EPT _IOW('V', 11, struct vm_mprotect_ept_params)
 
@@ -694,9 +624,7 @@ struct vm_mprotect_ept_params {
 
 enum {
 	VMM_MODE_UNKNOWN,
-	VMM_MODE_VMX,
 	VMM_MODE_EPT,
-	VMM_MODE_SVM,
 	VMM_MODE_RVI
 };
 
@@ -882,11 +810,6 @@ struct vcpu_gueststate
 };
 
 /*
- * Virtual Machine
- */
-struct vm;
-
-/*
  * Virtual CPU
  *
  * Methods used to vcpu struct members:
@@ -1000,6 +923,20 @@ int	svm_enter_guest(uint64_t, struct vcpu_gueststate *,
 void	start_vmm_on_cpu(struct cpu_info *);
 void	stop_vmm_on_cpu(struct cpu_info *);
 void	vmclear_on_cpu(struct cpu_info *);
+void	vmm_attach_machdep(struct device *, struct device *, void *);
+void	vmm_activate_machdep(struct device *, int);
+int	vmmioctl_machdep(dev_t, u_long, caddr_t, int, struct proc *);
+int	pledge_ioctl_vmm_machdep(struct proc *, long);
+int	vmm_start(void);
+int	vmm_stop(void);
+int	vm_impl_init(struct vm *, struct proc *);
+void	vm_impl_deinit(struct vm *);
+int	vcpu_init(struct vcpu *);
+void	vcpu_deinit(struct vcpu *);
+int	vm_rwvmparams(struct vm_rwvmparams_params *, int);
+int	vm_rwregs(struct vm_rwregs_params *, int);
+int	vm_run(struct vm_run_params *);
+int	vcpu_reset_regs(struct vcpu *, struct vcpu_reg_state *);
 
 #endif /* _KERNEL */
 

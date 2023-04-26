@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amd64,v 1.107 2023/01/14 12:11:10 kettenis Exp $
+#	$OpenBSD: files.amd64,v 1.108 2023/04/26 15:11:21 mlarkin Exp $
 
 maxpartitions 16
 maxusers 2 16 128
@@ -254,7 +254,8 @@ file	arch/amd64/amd64/efi_machdep.c		efi
 #
 device vmm {}
 attach vmm at mainbus
-file	arch/amd64/amd64/vmm.c			vmm		needs-flag
+file	dev/vmm/vmm.c				vmm		needs-flag
+file	arch/amd64/amd64/vmm_machdep.c		vmm		needs-flag
 file	arch/amd64/amd64/vmm_support.S		vmm
 
 #
