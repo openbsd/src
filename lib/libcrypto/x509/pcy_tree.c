@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_tree.c,v 1.7 2023/04/26 19:11:33 beck Exp $ */
+/* $OpenBSD: pcy_tree.c,v 1.8 2023/04/26 20:43:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -63,74 +63,6 @@
 
 #include "pcy_int.h"
 #include "x509_local.h"
-
-/* Enable this to print out the complete policy tree at various point during
- * evaluation.
- */
-
-/*#define OPENSSL_POLICY_DEBUG*/
-
-#ifdef OPENSSL_POLICY_DEBUG
-
-static void
-expected_print(BIO *err, X509_POLICY_LEVEL *lev, X509_POLICY_NODE *node,
-    int indent)
-{
-	if ((lev->flags & X509_V_FLAG_INHIBIT_MAP) ||
-	    !(node->data->flags & POLICY_DATA_FLAG_MAP_MASK))
-		BIO_puts(err, "  Not Mapped\n");
-	else {
-		int i;
-		STACK_OF(ASN1_OBJECT) *pset = node->data->expected_policy_set;
-		ASN1_OBJECT *oid;
-		BIO_puts(err, "  Expected: ");
-		for (i = 0; i < sk_ASN1_OBJECT_num(pset); i++) {
-			oid = sk_ASN1_OBJECT_value(pset, i);
-			if (i)
-				BIO_puts(err, ", ");
-			i2a_ASN1_OBJECT(err, oid);
-		}
-		BIO_puts(err, "\n");
-	}
-}
-
-static void
-tree_print(char *str, X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
-{
-	X509_POLICY_LEVEL *plev;
-	X509_POLICY_NODE *node;
-	int i;
-	BIO *err;
-
-	if ((err = BIO_new_fp(stderr, BIO_NOCLOSE)) == NULL)
-		return;
-
-	if (!curr)
-		curr = tree->levels + tree->nlevel;
-	else
-		curr++;
-	BIO_printf(err, "Level print after %s\n", str);
-	BIO_printf(err, "Printing Up to Level %ld\n", curr - tree->levels);
-	for (plev = tree->levels; plev != curr; plev++) {
-		BIO_printf(err, "Level %ld, flags = %x\n",
-		    plev - tree->levels, plev->flags);
-		for (i = 0; i < sk_X509_POLICY_NODE_num(plev->nodes); i++) {
-			node = sk_X509_POLICY_NODE_value(plev->nodes, i);
-			X509_POLICY_NODE_print(err, node, 2);
-			expected_print(err, plev, node, 2);
-			BIO_printf(err, "  Flags: %x\n", node->data->flags);
-		}
-		if (plev->anyPolicy)
-			X509_POLICY_NODE_print(err, plev->anyPolicy, 2);
-	}
-
-	BIO_free(err);
-}
-#else
-
-#define tree_print(a,b,c) /* */
-
-#endif
 
 /* Initialize policy tree. Return values:
  *  0 Some internal error occurred.
@@ -615,7 +547,6 @@ tree_evaluate(X509_POLICY_TREE *tree)
 		if (!(curr->flags & X509_V_FLAG_INHIBIT_ANY) &&
 		    !tree_link_any(curr, cache, tree))
 			return 0;
-		tree_print("before tree_prune()", tree, curr);
 		ret = tree_prune(tree, curr);
 		if (ret != 1)
 			return ret;
@@ -726,9 +657,6 @@ X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
 	if (!tree)
 		goto error;
 	ret = tree_evaluate(tree);
-
-	tree_print("tree_evaluate()", tree, NULL);
-
 	if (ret <= 0)
 		goto error;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.2 2023/04/25 18:48:32 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.3 2023/04/26 20:43:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -213,7 +213,6 @@ LCRYPTO_USED(a2i_IPADDRESS);
 LCRYPTO_USED(a2i_IPADDRESS_NC);
 LCRYPTO_USED(a2i_ipadd);
 LCRYPTO_USED(X509V3_NAME_from_section);
-LCRYPTO_USED(X509_POLICY_NODE_print);
 LCRYPTO_USED(ASRange_new);
 LCRYPTO_USED(ASRange_free);
 LCRYPTO_USED(d2i_ASRange);

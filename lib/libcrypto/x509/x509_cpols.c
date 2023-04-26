@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.9 2023/04/26 19:11:33 beck Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.10 2023/04/26 20:43:32 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -65,9 +65,6 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
-#ifndef LIBRESSL_HAS_POLICY_DAG
-#include "pcy_int.h"
-#endif
 #include "x509_local.h"
 
 /* Certificate policies extension support: this one is a bit complex... */
@@ -767,23 +764,3 @@ print_notice(BIO *out, USERNOTICE *notice, int indent)
 		BIO_printf(out, "%*sExplicit Text: %.*s\n", indent, "",
 		    notice->exptext->length, notice->exptext->data);
 }
-
-#ifndef LIBRESSL_HAS_POLICY_DAG
-void
-X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent)
-{
-	const X509_POLICY_DATA *dat = node->data;
-
-	BIO_printf(out, "%*sPolicy: ", indent, "");
-
-	i2a_ASN1_OBJECT(out, dat->valid_policy);
-	BIO_puts(out, "\n");
-	BIO_printf(out, "%*s%s\n", indent + 2, "",
-	    node_data_critical(dat) ? "Critical" : "Non Critical");
-	if (dat->qualifier_set)
-		print_qualifiers(out, dat->qualifier_set, indent + 2);
-	else
-		BIO_printf(out, "%*sNo Qualifiers\n", indent + 2, "");
-}
-LCRYPTO_ALIAS(X509_POLICY_NODE_print);
-#endif

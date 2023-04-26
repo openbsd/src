@@ -837,7 +837,6 @@ _libre_a2i_IPADDRESS
 _libre_a2i_IPADDRESS_NC
 _libre_a2i_ipadd
 _libre_X509V3_NAME_from_section
-_libre_X509_POLICY_NODE_print
 _libre_ASRange_new
 _libre_ASRange_free
 _libre_d2i_ASRange
