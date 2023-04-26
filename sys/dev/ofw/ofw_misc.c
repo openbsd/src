@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.c,v 1.41 2023/04/03 01:40:32 dlg Exp $	*/
+/*	$OpenBSD: ofw_misc.c,v 1.42 2023/04/26 21:37:46 patrick Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -257,7 +257,7 @@ phy_enable_prop_idx(int node, char *prop, int idx)
 	int rv = -1;
 	int len;
 
-	len = OF_getproplen(node, "phys");
+	len = OF_getproplen(node, prop);
 	if (len <= 0)
 		return -1;
 
