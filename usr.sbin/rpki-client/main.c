@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.233 2023/04/13 17:04:02 job Exp $ */
+/*	$OpenBSD: main.c,v 1.234 2023/04/26 16:32:41 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -51,7 +51,7 @@
 const char	*tals[TALSZ_MAX];
 const char	*taldescs[TALSZ_MAX];
 unsigned int	 talrepocnt[TALSZ_MAX];
-struct repostats talstats[TALSZ_MAX];
+struct repotalstats talstats[TALSZ_MAX];
 int		 talsz;
 
 size_t	entity_queue;
@@ -400,7 +400,7 @@ queue_add_from_mft(const struct mft *mft)
 		if ((mftaki = strdup(mft->aki)) == NULL)
 			err(1, NULL);
 		entityq_add(npath, nfile, f->type, f->location, rp, NULL, 0,
-		    -1, mftaki);
+		    mft->talid, mftaki);
 	}
 }
 
@@ -527,8 +527,8 @@ queue_add_from_cert(const struct cert *cert)
 			err(1, NULL);
 	}
 
-	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0, -1,
-	    NULL);
+	entityq_add(npath, nfile, RTYPE_MFT, DIR_UNKNOWN, repo, NULL, 0,
+	    cert->talid, NULL);
 }
 
 /*
@@ -550,6 +550,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	struct repo	*rp;
 	char		*file;
 	unsigned int	 id;
+	int		 talid;
 	int		 c;
 
 	/*
@@ -560,6 +561,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	 */
 	io_read_buf(b, &type, sizeof(type));
 	io_read_buf(b, &id, sizeof(id));
+	io_read_buf(b, &talid, sizeof(talid));
 	io_read_str(b, &file);
 
 	/* in filemode messages can be ignored, only the accounting matters */
@@ -572,7 +574,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	}
 
 	rp = repo_byid(id);
-	repo_stat_inc(rp, type, STYPE_OK);
+	repo_stat_inc(rp, talid, type, STYPE_OK);
 	switch (type) {
 	case RTYPE_TAL:
 		st->tals++;
@@ -583,7 +585,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	case RTYPE_CER:
 		io_read_buf(b, &c, sizeof(c));
 		if (c == 0) {
-			repo_stat_inc(rp, type, STYPE_FAIL);
+			repo_stat_inc(rp, talid, type, STYPE_FAIL);
 			break;
 		}
 		cert = cert_read(b);
@@ -593,7 +595,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 			break;
 		case CERT_PURPOSE_BGPSEC_ROUTER:
 			cert_insert_brks(brktree, cert);
-			repo_stat_inc(rp, type, STYPE_BGPSEC);
+			repo_stat_inc(rp, talid, type, STYPE_BGPSEC);
 			break;
 		default:
 			errx(1, "unexpected cert purpose received");
@@ -604,14 +606,14 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	case RTYPE_MFT:
 		io_read_buf(b, &c, sizeof(c));
 		if (c == 0) {
-			repo_stat_inc(rp, type, STYPE_FAIL);
+			repo_stat_inc(rp, talid, type, STYPE_FAIL);
 			break;
 		}
 		mft = mft_read(b);
 		if (!mft->stale)
 			queue_add_from_mft(mft);
 		else
-			repo_stat_inc(rp, type, STYPE_STALE);
+			repo_stat_inc(rp, talid, type, STYPE_STALE);
 		mft_free(mft);
 		break;
 	case RTYPE_CRL:
@@ -621,14 +623,14 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	case RTYPE_ROA:
 		io_read_buf(b, &c, sizeof(c));
 		if (c == 0) {
-			repo_stat_inc(rp, type, STYPE_FAIL);
+			repo_stat_inc(rp, talid, type, STYPE_FAIL);
 			break;
 		}
 		roa = roa_read(b);
 		if (roa->valid)
 			roa_insert_vrps(tree, roa, rp);
 		else
-			repo_stat_inc(rp, type, STYPE_INVALID);
+			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		roa_free(roa);
 		break;
 	case RTYPE_GBR:
@@ -636,14 +638,14 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	case RTYPE_ASPA:
 		io_read_buf(b, &c, sizeof(c));
 		if (c == 0) {
-			repo_stat_inc(rp, type, STYPE_FAIL);
+			repo_stat_inc(rp, talid, type, STYPE_FAIL);
 			break;
 		}
 		aspa = aspa_read(b);
 		if (aspa->valid)
 			aspa_insert_vaps(vaptree, aspa, rp);
 		else
-			repo_stat_inc(rp, type, STYPE_INVALID);
+			repo_stat_inc(rp, talid, type, STYPE_INVALID);
 		aspa_free(aspa);
 		break;
 	case RTYPE_TAK:
@@ -716,12 +718,9 @@ rrdp_process(struct ibuf *b)
 }
 
 static void
-sum_stats(const struct repo *rp, const struct repostats *in, void *arg)
+sum_stats(const struct repo *rp, const struct repotalstats *in, void *arg)
 {
-	struct repostats *out = arg;
-
-	if (rp != NULL)
-		sum_stats(NULL, in, &talstats[repo_talid(rp)]);
+	struct repotalstats *out = arg;
 
 	out->mfts += in->mfts;
 	out->mfts_fail += in->mfts_fail;
@@ -745,7 +744,16 @@ sum_stats(const struct repo *rp, const struct repostats *in, void *arg)
 	out->vaps_pas += in->vaps_pas;
 	out->vaps_pas4 += in->vaps_pas4;
 	out->vaps_pas6 += in->vaps_pas6;
+}
 
+static void
+sum_repostats(const struct repo *rp, const struct repostats *in, void *arg)
+{
+	struct repostats *out = arg;
+
+	out->del_files += in->del_files;
+	out->extra_files += in->extra_files;
+	out->del_dirs += in->del_dirs;
 	timespecadd(&in->sync_time, &out->sync_time, &out->sync_time);
 }
 
@@ -1396,7 +1404,11 @@ main(int argc, char *argv[])
 	if (fchdir(outdirfd) == -1)
 		err(1, "fchdir output dir");
 
-	repo_stats_collect(sum_stats, &stats.repo_stats);
+	for (i = 0; i < talsz; i++) {
+		repo_tal_stats_collect(sum_stats, i, &talstats[i]);
+		repo_tal_stats_collect(sum_stats, i, &stats.repo_tal_stats);
+	}
+	repo_stats_collect(sum_repostats, &stats.repo_stats);
 
 	if (outputfiles(&vrps, &brks, &vaps, &stats))
 		rc = 1;
@@ -1408,29 +1420,32 @@ main(int argc, char *argv[])
 	    (long long)stats.system_time.tv_sec);
 	printf("Skiplist entries: %u\n", stats.skiplistentries);
 	printf("Route Origin Authorizations: %u (%u failed parse, %u "
-	    "invalid)\n", stats.repo_stats.roas, stats.repo_stats.roas_fail,
-	    stats.repo_stats.roas_invalid);
+	    "invalid)\n", stats.repo_tal_stats.roas,
+	    stats.repo_tal_stats.roas_fail,
+	    stats.repo_tal_stats.roas_invalid);
 	printf("AS Provider Attestations: %u (%u failed parse, %u "
-	    "invalid)\n", stats.repo_stats.aspas, stats.repo_stats.aspas_fail,
-	    stats.repo_stats.aspas_invalid);
-	printf("BGPsec Router Certificates: %u\n", stats.repo_stats.brks);
+	    "invalid)\n", stats.repo_tal_stats.aspas,
+	    stats.repo_tal_stats.aspas_fail,
+	    stats.repo_tal_stats.aspas_invalid);
+	printf("BGPsec Router Certificates: %u\n", stats.repo_tal_stats.brks);
 	printf("Certificates: %u (%u invalid)\n",
-	    stats.repo_stats.certs, stats.repo_stats.certs_fail);
+	    stats.repo_tal_stats.certs, stats.repo_tal_stats.certs_fail);
 	printf("Trust Anchor Locators: %u (%u invalid)\n",
 	    stats.tals, talsz - stats.tals);
 	printf("Manifests: %u (%u failed parse, %u stale)\n",
-	    stats.repo_stats.mfts, stats.repo_stats.mfts_fail,
-	    stats.repo_stats.mfts_stale);
-	printf("Certificate revocation lists: %u\n", stats.repo_stats.crls);
-	printf("Ghostbuster records: %u\n", stats.repo_stats.gbrs);
-	printf("Trust Anchor Keys: %u\n", stats.repo_stats.taks);
+	    stats.repo_tal_stats.mfts, stats.repo_tal_stats.mfts_fail,
+	    stats.repo_tal_stats.mfts_stale);
+	printf("Certificate revocation lists: %u\n", stats.repo_tal_stats.crls);
+	printf("Ghostbuster records: %u\n", stats.repo_tal_stats.gbrs);
+	printf("Trust Anchor Keys: %u\n", stats.repo_tal_stats.taks);
 	printf("Repositories: %u\n", stats.repos);
 	printf("Cleanup: removed %u files, %u directories, %u superfluous\n",
-	    stats.del_files, stats.del_dirs, stats.extra_files);
-	printf("VRP Entries: %u (%u unique)\n", stats.repo_stats.vrps,
-	    stats.repo_stats.vrps_uniqs);
-	printf("VAP Entries: %u (%u unique)\n", stats.repo_stats.vaps,
-	    stats.repo_stats.vaps_uniqs);
+	    stats.repo_stats.del_files, stats.repo_stats.del_dirs,
+	    stats.repo_stats.extra_files);
+	printf("VRP Entries: %u (%u unique)\n", stats.repo_tal_stats.vrps,
+	    stats.repo_tal_stats.vrps_uniqs);
+	printf("VAP Entries: %u (%u unique)\n", stats.repo_tal_stats.vaps,
+	    stats.repo_tal_stats.vaps_uniqs);
 
 	/* Memory cleanup. */
 	repo_free();

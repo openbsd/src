@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.30 2023/04/19 12:58:16 jsg Exp $ */
+/*	$OpenBSD: output.c,v 1.31 2023/04/26 16:32:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
  *
@@ -218,9 +218,9 @@ outputheader(FILE *out, struct stats *st)
 	    "# Certificates: %u (%u invalid)\n",
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
-	    st->repo_stats.roas, st->repo_stats.roas_fail,
-	    st->repo_stats.roas_invalid, st->repo_stats.brks,
-	    st->repo_stats.certs, st->repo_stats.certs_fail) < 0)
+	    st->repo_tal_stats.roas, st->repo_tal_stats.roas_fail,
+	    st->repo_tal_stats.roas_invalid, st->repo_tal_stats.brks,
+	    st->repo_tal_stats.certs, st->repo_tal_stats.certs_fail) < 0)
 		return -1;
 
 	if (fprintf(out,
@@ -238,12 +238,12 @@ outputheader(FILE *out, struct stats *st)
 	    "# Ghostbuster records: %u\n"
 	    "# Repositories: %u\n"
 	    "# VRP Entries: %u (%u unique)\n",
-	    st->repo_stats.mfts, st->repo_stats.mfts_fail,
-	    st->repo_stats.mfts_stale,
-	    st->repo_stats.crls,
-	    st->repo_stats.gbrs,
+	    st->repo_tal_stats.mfts, st->repo_tal_stats.mfts_fail,
+	    st->repo_tal_stats.mfts_stale,
+	    st->repo_tal_stats.crls,
+	    st->repo_tal_stats.gbrs,
 	    st->repos,
-	    st->repo_stats.vrps, st->repo_stats.vrps_uniqs) < 0)
+	    st->repo_tal_stats.vrps, st->repo_tal_stats.vrps_uniqs) < 0)
 		return -1;
 	return 0;
 }

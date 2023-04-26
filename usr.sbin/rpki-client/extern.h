@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.177 2023/04/13 17:04:02 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.178 2023/04/26 16:32:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -217,6 +217,7 @@ struct mft {
 	time_t		 expires; /* when the signature path expires */
 	size_t		 filesz; /* number of filenames */
 	unsigned int	 repoid;
+	int		 talid;
 	int		 stale; /* if a stale manifest */
 };
 
@@ -383,6 +384,8 @@ struct vap {
 	struct aspa_provider	*providers;
 	size_t			 providersz;
 	time_t			 expires;
+	int			 talid;
+	unsigned int		 repoid;
 };
 
 /*
@@ -397,12 +400,12 @@ RB_PROTOTYPE(vap_tree, vap, entry, vapcmp);
 struct vrp {
 	RB_ENTRY(vrp)	entry;
 	struct ip_addr	addr;
-	int		talid; /* covered by which TAL */
-	unsigned int	repoid;
 	uint32_t	asid;
 	enum afi	afi;
 	unsigned char	maxlength;
 	time_t		expires; /* transitive expiry moment */
+	int		talid; /* covered by which TAL */
+	unsigned int	repoid;
 };
 /*
  * Tree of VRP sorted by afi, addr, maxlength and asid
@@ -539,7 +542,7 @@ RB_HEAD(filepath_tree, filepath);
 /*
  * Statistics collected during run-time.
  */
-struct repostats {
+struct repotalstats {
 	uint32_t	 certs; /* certificates */
 	uint32_t	 certs_fail; /* invalid certificate */
 	uint32_t	 mfts; /* total number of manifests */
@@ -562,6 +565,13 @@ struct repostats {
 	uint32_t	 vaps_pas6; /* total number of IPv6 only providers */
 	uint32_t	 vrps; /* total number of Validated ROA Payloads */
 	uint32_t	 vrps_uniqs; /* number of unique vrps */
+};
+
+struct repostats {
+	uint32_t	 del_files;	/* number of files removed in cleanup */
+	uint32_t	 extra_files;	/* number of superfluous files */
+	uint32_t	 del_extra_files;/* number of removed extra files */
+	uint32_t	 del_dirs;	/* number of dirs removed in cleanup */
 	struct timespec	 sync_time;	/* time to sync repo */
 };
 
@@ -574,11 +584,9 @@ struct stats {
 	uint32_t	 http_fails; /* failed http repositories */
 	uint32_t	 rrdp_repos; /* synced rrdp repositories */
 	uint32_t	 rrdp_fails; /* failed rrdp repositories */
-	uint32_t	 del_files; /* number of files removed in cleanup */
-	uint32_t	 extra_files; /* number of superfluous files */
-	uint32_t	 del_dirs; /* number of dirs removed in cleanup */
 	uint32_t	 skiplistentries; /* number of skiplist entries */
 
+	struct repotalstats	repo_tal_stats;
 	struct repostats	repo_stats;
 	struct timespec		elapsed_time;
 	struct timespec		user_time;
@@ -595,7 +603,7 @@ extern int excludeaspa;
 extern const char *tals[];
 extern const char *taldescs[];
 extern unsigned int talrepocnt[];
-extern struct repostats talstats[];
+extern struct repotalstats talstats[];
 extern int talsz;
 
 /* Routines for RPKI entities. */
@@ -765,7 +773,9 @@ struct repo	*repo_byid(unsigned int);
 int		 repo_queued(struct repo *, struct entity *);
 void		 repo_cleanup(struct filepath_tree *, int);
 int		 repo_check_timeout(int);
-void		 repo_stat_inc(struct repo *, enum rtype, enum stype);
+void		 repo_stat_inc(struct repo *, int, enum rtype, enum stype);
+void		 repo_tal_stats_collect(void (*)(const struct repo *,
+		    const struct repotalstats *, void *), int, void *);
 void		 repo_stats_collect(void (*)(const struct repo *,
 		    const struct repostats *, void *), void *);
 void		 repo_free(void);

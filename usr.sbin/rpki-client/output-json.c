@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.32 2023/04/20 15:05:44 job Exp $ */
+/*	$OpenBSD: output-json.c,v 1.33 2023/04/26 16:32:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -58,16 +58,16 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"talfiles\": [\n",
 	    hn, tbuf, (long long)st->elapsed_time.tv_sec,
 	    (long long)st->user_time.tv_sec, (long long)st->system_time.tv_sec,
-	    st->repo_stats.roas,
-	    st->repo_stats.roas_fail,
-	    st->repo_stats.roas_invalid,
-	    st->repo_stats.aspas,
-	    st->repo_stats.aspas_fail,
-	    st->repo_stats.aspas_invalid,
-	    st->repo_stats.brks,
-	    st->repo_stats.certs,
-	    st->repo_stats.certs_fail,
-	    st->repo_stats.taks,
+	    st->repo_tal_stats.roas,
+	    st->repo_tal_stats.roas_fail,
+	    st->repo_tal_stats.roas_invalid,
+	    st->repo_tal_stats.aspas,
+	    st->repo_tal_stats.aspas_fail,
+	    st->repo_tal_stats.aspas_invalid,
+	    st->repo_tal_stats.brks,
+	    st->repo_tal_stats.certs,
+	    st->repo_tal_stats.certs_fail,
+	    st->repo_tal_stats.taks,
 	    st->tals, talsz - st->tals) < 0)
 		return -1;
 
@@ -94,19 +94,19 @@ outputheader_json(FILE *out, struct stats *st)
 	    "\t\t\"cachedir_superfluous_files\": %u,\n"
 	    "\t\t\"cachedir_del_dirs\": %u\n"
 	    "\t},\n\n",
-	    st->repo_stats.mfts,
-	    st->repo_stats.mfts_fail,
-	    st->repo_stats.mfts_stale,
-	    st->repo_stats.crls,
-	    st->repo_stats.gbrs,
+	    st->repo_tal_stats.mfts,
+	    st->repo_tal_stats.mfts_fail,
+	    st->repo_tal_stats.mfts_stale,
+	    st->repo_tal_stats.crls,
+	    st->repo_tal_stats.gbrs,
 	    st->repos,
-	    st->repo_stats.vrps,
-	    st->repo_stats.vrps_uniqs,
-	    st->repo_stats.vaps,
-	    st->repo_stats.vaps_uniqs,
-	    st->del_files,
-	    st->extra_files,
-	    st->del_dirs) < 0)
+	    st->repo_tal_stats.vrps,
+	    st->repo_tal_stats.vrps_uniqs,
+	    st->repo_tal_stats.vaps,
+	    st->repo_tal_stats.vaps_uniqs,
+	    st->repo_stats.del_files,
+	    st->repo_stats.extra_files,
+	    st->repo_stats.del_dirs) < 0)
 		return -1;
 	return 0;
 }

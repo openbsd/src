@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.16 2023/03/12 11:54:56 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.17 2023/04/26 16:32:41 claudio Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -283,6 +283,7 @@ aspa_buffer(struct ibuf *b, const struct aspa *p)
 {
 	io_simple_buffer(b, &p->valid, sizeof(p->valid));
 	io_simple_buffer(b, &p->custasid, sizeof(p->custasid));
+	io_simple_buffer(b, &p->talid, sizeof(p->talid));
 	io_simple_buffer(b, &p->expires, sizeof(p->expires));
 
 	io_simple_buffer(b, &p->providersz, sizeof(size_t));
@@ -309,6 +310,7 @@ aspa_read(struct ibuf *b)
 
 	io_read_buf(b, &p->valid, sizeof(p->valid));
 	io_read_buf(b, &p->custasid, sizeof(p->custasid));
+	io_read_buf(b, &p->talid, sizeof(p->talid));
 	io_read_buf(b, &p->expires, sizeof(p->expires));
 
 	io_read_buf(b, &p->providersz, sizeof(size_t));
@@ -350,20 +352,32 @@ aspa_insert_vaps(struct vap_tree *tree, struct aspa *aspa, struct repo *rp)
 	struct vap	*v, *found;
 	size_t		 i, j;
 
-	repo_stat_inc(rp, RTYPE_ASPA, STYPE_TOTAL);
-
 	if ((v = calloc(1, sizeof(*v))) == NULL)
 		err(1, NULL);
 	v->custasid = aspa->custasid;
+	v->talid = aspa->talid;
+	if (rp != NULL)
+		v->repoid = repo_id(rp);
+	else
+		v->repoid = 0;
 	v->expires = aspa->expires;
 
 	if ((found = RB_INSERT(vap_tree, tree, v)) != NULL) {
-		if (found->expires > v->expires)
+		if (found->expires > v->expires) {
+			/* decrement found */
+			repo_stat_inc(repo_byid(found->repoid), found->talid,
+			    RTYPE_ASPA, STYPE_DEC_UNIQUE);
 			found->expires = v->expires;
+			found->talid = v->talid;
+			found->repoid = v->repoid;
+			repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_UNIQUE);
+		}
 		free(v);
 		v = found;
 	} else
-		repo_stat_inc(rp, RTYPE_ASPA, STYPE_UNIQUE);
+		repo_stat_inc(rp, v->talid, RTYPE_ASPA, STYPE_UNIQUE);
+
+	repo_stat_inc(rp, aspa->talid, RTYPE_ASPA, STYPE_TOTAL);
 
 	v->providers = reallocarray(v->providers,
 	    v->providersz + aspa->providersz, sizeof(*v->providers));
@@ -379,14 +393,14 @@ aspa_insert_vaps(struct vap_tree *tree, struct aspa *aspa, struct repo *rp)
 		if (j == v->providersz ||
 		    aspa->providers[i].as < v->providers[j].as) {
 			/* merge provider from aspa into v */
-			repo_stat_inc(rp, RTYPE_ASPA,
+			repo_stat_inc(rp, v->talid, RTYPE_ASPA,
 			    STYPE_BOTH + aspa->providers[i].afi);
 			insert_vap(v, j, &aspa->providers[i]);
 			i++;
 		} else if (aspa->providers[i].as == v->providers[j].as) {
 			/* duplicate provider, merge afi */
 			if (v->providers[j].afi != aspa->providers[i].afi) {
-				repo_stat_inc(rp, RTYPE_ASPA,
+				repo_stat_inc(rp, v->talid, RTYPE_ASPA,
 				    STYPE_BOTH + aspa->providers[i].afi);
 				v->providers[j].afi = 0;
 			}

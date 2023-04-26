@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.90 2023/04/13 17:04:02 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.91 2023/04/26 16:32:41 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -298,6 +298,8 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	X509_free(x509);
 
 	mft->repoid = entp->repoid;
+	mft->talid = a->cert->talid;
+
 	return mft;
 }
 
@@ -635,6 +637,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		b = io_new_buffer();
 		io_simple_buffer(b, &entp->type, sizeof(entp->type));
 		io_simple_buffer(b, &entp->repoid, sizeof(entp->repoid));
+		io_simple_buffer(b, &entp->talid, sizeof(entp->talid));
 
 		file = NULL;
 		f = NULL;
@@ -689,6 +692,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 				io_simple_buffer(b2, &type, sizeof(type));
 				io_simple_buffer(b2, &entp->repoid,
 				    sizeof(entp->repoid));
+				io_simple_buffer(b2, &entp->talid,
+				    sizeof(entp->talid));
 				io_str_buffer(b2, crlfile);
 				free(crlfile);
 

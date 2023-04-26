@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.65 2023/03/12 11:54:56 job Exp $ */
+/*	$OpenBSD: roa.c,v 1.66 2023/04/26 16:32:41 claudio Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -384,19 +384,20 @@ roa_insert_vrps(struct vrp_tree *tree, struct roa *roa, struct repo *rp)
 			/* already exists */
 			if (found->expires < v->expires) {
 				/* update found with preferred data */
-				found->talid = v->talid;
-				found->expires = v->expires;
 				/* adjust unique count */
 				repo_stat_inc(repo_byid(found->repoid),
-				    RTYPE_ROA, STYPE_DEC_UNIQUE);
+				    found->talid, RTYPE_ROA, STYPE_DEC_UNIQUE);
+				found->expires = v->expires;
+				found->talid = v->talid;
 				found->repoid = v->repoid;
-				repo_stat_inc(rp, RTYPE_ROA, STYPE_UNIQUE);
+				repo_stat_inc(rp, v->talid, RTYPE_ROA,
+				    STYPE_UNIQUE);
 			}
 			free(v);
 		} else
-			repo_stat_inc(rp, RTYPE_ROA, STYPE_UNIQUE);
+			repo_stat_inc(rp, v->talid, RTYPE_ROA, STYPE_UNIQUE);
 
-		repo_stat_inc(rp, RTYPE_ROA, STYPE_TOTAL);
+		repo_stat_inc(rp, roa->talid, RTYPE_ROA, STYPE_TOTAL);
 	}
 }
 
