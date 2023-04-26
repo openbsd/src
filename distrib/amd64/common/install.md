@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.59 2023/03/07 17:29:42 kn Exp $
+#	$OpenBSD: install.md,v 1.60 2023/04/26 22:45:32 kn Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -126,8 +126,9 @@ __EOT
 			echo " try again." ;;
 		[oO]*)
 			[[ $_d == OpenBSD ]] || continue
-			if [[ $_disk == $ROOTDISK ]] && disk_has $_disk gpt &&
-				! disk_has $_disk gpt efisys; then
+			# Is this a boot disk?
+			if [[ $_disk == @($ROOTDISK|$CRYPTOCHUNK) ]] &&
+			    disk_has $_disk gpt && ! disk_has $_disk gpt efisys; then
 				echo "No EFI Sys partition in GPT, try again."
 				$AUTO && exit 1
 				continue
