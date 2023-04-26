@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.55 2022/07/14 08:33:31 tb Exp $
+# $OpenBSD: appstest.sh,v 1.56 2023/04/26 09:07:59 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -961,12 +961,6 @@ __EOF__
 	start_message "x509 ... convert DER format SPKAC cert to PEM"
 	spkacpem=$server_dir/spkac.pem
 	$openssl_bin x509 -in $spkaccert -inform DER -out $spkacpem -outform PEM
-	check_exit_status $?
-
-	# server-admin cert verify
-
-	start_message "nseq"
-	$openssl_bin nseq -in $spkacpem -toseq -out $spkacpem.nseq
 	check_exit_status $?
 
 	#---------#---------#---------#---------#---------#---------#---------
