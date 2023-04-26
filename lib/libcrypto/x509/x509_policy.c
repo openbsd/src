@@ -78,7 +78,29 @@ typedef struct x509_policy_node_st {
   int reachable;
 } X509_POLICY_NODE;
 
-DEFINE_STACK_OF(X509_POLICY_NODE)
+DECLARE_STACK_OF(X509_POLICY_NODE)
+
+#define sk_X509_POLICY_NODE_new(cmp) SKM_sk_new(X509_POLICY_NODE, (cmp))
+#define sk_X509_POLICY_NODE_new_null() SKM_sk_new_null(X509_POLICY_NODE)
+#define sk_X509_POLICY_NODE_free(st) SKM_sk_free(X509_POLICY_NODE, (st))
+#define sk_X509_POLICY_NODE_num(st) SKM_sk_num(X509_POLICY_NODE, (st))
+#define sk_X509_POLICY_NODE_value(st, i) SKM_sk_value(X509_POLICY_NODE, (st), (i))
+#define sk_X509_POLICY_NODE_set(st, i, val) SKM_sk_set(X509_POLICY_NODE, (st), (i), (val))
+#define sk_X509_POLICY_NODE_zero(st) SKM_sk_zero(X509_POLICY_NODE, (st))
+#define sk_X509_POLICY_NODE_push(st, val) SKM_sk_push(X509_POLICY_NODE, (st), (val))
+#define sk_X509_POLICY_NODE_unshift(st, val) SKM_sk_unshift(X509_POLICY_NODE, (st), (val))
+#define sk_X509_POLICY_NODE_find(st, val) SKM_sk_find(X509_POLICY_NODE, (st), (val))
+#define sk_X509_POLICY_NODE_find_ex(st, val) SKM_sk_find_ex(X509_POLICY_NODE, (st), (val))
+#define sk_X509_POLICY_NODE_delete(st, i) SKM_sk_delete(X509_POLICY_NODE, (st), (i))
+#define sk_X509_POLICY_NODE_delete_ptr(st, ptr) SKM_sk_delete_ptr(X509_POLICY_NODE, (st), (ptr))
+#define sk_X509_POLICY_NODE_insert(st, val, i) SKM_sk_insert(X509_POLICY_NODE, (st), (val), (i))
+#define sk_X509_POLICY_NODE_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(X509_POLICY_NODE, (st), (cmp))
+#define sk_X509_POLICY_NODE_dup(st) SKM_sk_dup(X509_POLICY_NODE, st)
+#define sk_X509_POLICY_NODE_pop_free(st, free_func) SKM_sk_pop_free(X509_POLICY_NODE, (st), (free_func))
+#define sk_X509_POLICY_NODE_shift(st) SKM_sk_shift(X509_POLICY_NODE, (st))
+#define sk_X509_POLICY_NODE_pop(st) SKM_sk_pop(X509_POLICY_NODE, (st))
+#define sk_X509_POLICY_NODE_sort(st) SKM_sk_sort(X509_POLICY_NODE, (st))
+#define sk_X509_POLICY_NODE_is_sorted(st) SKM_sk_is_sorted(X509_POLICY_NODE, (st))
 
 // An X509_POLICY_LEVEL is the collection of nodes at the same depth in the
 // policy graph. This structure can also be used to represent a level's
@@ -93,7 +115,29 @@ typedef struct x509_policy_level_st {
   int has_any_policy;
 } X509_POLICY_LEVEL;
 
-DEFINE_STACK_OF(X509_POLICY_LEVEL)
+DECLARE_STACK_OF(X509_POLICY_LEVEL)
+
+#define sk_X509_POLICY_LEVEL_new(cmp) SKM_sk_new(X509_POLICY_LEVEL, (cmp))
+#define sk_X509_POLICY_LEVEL_new_null() SKM_sk_new_null(X509_POLICY_LEVEL)
+#define sk_X509_POLICY_LEVEL_free(st) SKM_sk_free(X509_POLICY_LEVEL, (st))
+#define sk_X509_POLICY_LEVEL_num(st) SKM_sk_num(X509_POLICY_LEVEL, (st))
+#define sk_X509_POLICY_LEVEL_value(st, i) SKM_sk_value(X509_POLICY_LEVEL, (st), (i))
+#define sk_X509_POLICY_LEVEL_set(st, i, val) SKM_sk_set(X509_POLICY_LEVEL, (st), (i), (val))
+#define sk_X509_POLICY_LEVEL_zero(st) SKM_sk_zero(X509_POLICY_LEVEL, (st))
+#define sk_X509_POLICY_LEVEL_push(st, val) SKM_sk_push(X509_POLICY_LEVEL, (st), (val))
+#define sk_X509_POLICY_LEVEL_unshift(st, val) SKM_sk_unshift(X509_POLICY_LEVEL, (st), (val))
+#define sk_X509_POLICY_LEVEL_find(st, val) SKM_sk_find(X509_POLICY_LEVEL, (st), (val))
+#define sk_X509_POLICY_LEVEL_find_ex(st, val) SKM_sk_find_ex(X509_POLICY_LEVEL, (st), (val))
+#define sk_X509_POLICY_LEVEL_delete(st, i) SKM_sk_delete(X509_POLICY_LEVEL, (st), (i))
+#define sk_X509_POLICY_LEVEL_delete_ptr(st, ptr) SKM_sk_delete_ptr(X509_POLICY_LEVEL, (st), (ptr))
+#define sk_X509_POLICY_LEVEL_insert(st, val, i) SKM_sk_insert(X509_POLICY_LEVEL, (st), (val), (i))
+#define sk_X509_POLICY_LEVEL_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(X509_POLICY_LEVEL, (st), (cmp))
+#define sk_X509_POLICY_LEVEL_dup(st) SKM_sk_dup(X509_POLICY_LEVEL, st)
+#define sk_X509_POLICY_LEVEL_pop_free(st, free_func) SKM_sk_pop_free(X509_POLICY_LEVEL, (st), (free_func))
+#define sk_X509_POLICY_LEVEL_shift(st) SKM_sk_shift(X509_POLICY_LEVEL, (st))
+#define sk_X509_POLICY_LEVEL_pop(st) SKM_sk_pop(X509_POLICY_LEVEL, (st))
+#define sk_X509_POLICY_LEVEL_sort(st) SKM_sk_sort(X509_POLICY_LEVEL, (st))
+#define sk_X509_POLICY_LEVEL_is_sorted(st) SKM_sk_is_sorted(X509_POLICY_LEVEL, (st))
 
 static int is_any_policy(const ASN1_OBJECT *obj) {
   return OBJ_obj2nid(obj) == NID_any_policy;
