@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.693 2023/04/26 00:14:21 jan Exp $	*/
+/*	$OpenBSD: if.c,v 1.694 2023/04/26 19:54:35 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2388,7 +2388,6 @@ ifioctl_get(u_long cmd, caddr_t data)
 	char ifrtlabelbuf[RTLABEL_LEN];
 	int error = 0;
 	size_t bytesdone;
-	const char *label;
 
 	switch(cmd) {
 	case SIOCGIFCONF:
@@ -2463,9 +2462,8 @@ ifioctl_get(u_long cmd, caddr_t data)
 		break;
 
 	case SIOCGIFRTLABEL:
-		if (ifp->if_rtlabelid &&
-		    (label = rtlabel_id2name(ifp->if_rtlabelid)) != NULL) {
-			strlcpy(ifrtlabelbuf, label, RTLABEL_LEN);
+		if (ifp->if_rtlabelid && rtlabel_id2name(ifp->if_rtlabelid,
+		    ifrtlabelbuf, RTLABEL_LEN) != NULL) {
 			error = copyoutstr(ifrtlabelbuf, ifr->ifr_data,
 			    RTLABEL_LEN, &bytesdone);
 		} else

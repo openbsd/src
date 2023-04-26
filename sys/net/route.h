@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.198 2023/01/28 10:17:16 mvs Exp $	*/
+/*	$OpenBSD: route.h,v 1.199 2023/04/26 19:54:35 mvs Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -416,7 +416,8 @@ struct rttimer_queue {
 	int				rtq_timeout;	/* [T] */
 };
 
-const char	*rtlabel_id2name(u_int16_t);
+const char	*rtlabel_id2name_locked(u_int16_t);
+const char	*rtlabel_id2name(u_int16_t, char *, size_t);
 u_int16_t	 rtlabel_name2id(char *);
 struct sockaddr	*rtlabel_id2sa(u_int16_t, struct sockaddr_rtlabel *);
 void		 rtlabel_unref(u_int16_t);

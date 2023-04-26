@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.397 2023/01/06 17:44:34 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.398 2023/04/26 19:54:35 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -491,14 +491,10 @@ pf_rtlabel_remove(struct pf_addr_wrap *a)
 void
 pf_rtlabel_copyout(struct pf_addr_wrap *a)
 {
-	const char	*name;
-
 	if (a->type == PF_ADDR_RTLABEL && a->v.rtlabel) {
-		if ((name = rtlabel_id2name(a->v.rtlabel)) == NULL)
+		if (rtlabel_id2name(a->v.rtlabel, a->v.rtlabelname,
+		    sizeof(a->v.rtlabelname)) == NULL)
 			strlcpy(a->v.rtlabelname, "?",
-			    sizeof(a->v.rtlabelname));
-		else
-			strlcpy(a->v.rtlabelname, name,
 			    sizeof(a->v.rtlabelname));
 	}
 }
