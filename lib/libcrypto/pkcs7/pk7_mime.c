@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_mime.c,v 1.16 2023/04/25 19:08:30 tb Exp $ */
+/* $OpenBSD: pk7_mime.c,v 1.17 2023/04/26 14:25:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -61,6 +61,12 @@
 #include "asn1_local.h"
 
 /* PKCS#7 wrappers round generalised stream and MIME routines */
+BIO *
+BIO_new_PKCS7(BIO *out, PKCS7 *p7)
+{
+	return BIO_new_NDEF(out, (ASN1_VALUE *)p7, &PKCS7_it);
+}
+LCRYPTO_ALIAS(BIO_new_PKCS7);
 
 int
 i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)

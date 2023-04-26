@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_pk7.c,v 1.8 2023/04/25 19:08:30 tb Exp $ */
+/* $OpenBSD: bio_pk7.c,v 1.9 2023/04/26 14:25:58 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -61,9 +61,3 @@
 #include "asn1_local.h"
 
 /* Streaming encode support for PKCS#7 */
-BIO *
-BIO_new_PKCS7(BIO *out, PKCS7 *p7)
-{
-	return BIO_new_NDEF(out, (ASN1_VALUE *)p7, &PKCS7_it);
-}
-LCRYPTO_ALIAS(BIO_new_PKCS7);
