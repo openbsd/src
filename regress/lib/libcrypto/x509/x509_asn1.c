@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.4 2023/04/26 11:00:49 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.5 2023/04/26 11:04:12 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -60,7 +60,7 @@ x509_set_integer(int (*f)(X509 *x, ASN1_INTEGER *ai), X509 **x, int i)
 		err(1, NULL);
 	if (!ASN1_INTEGER_set(ai, i))
 		errx(1, "ASN1_INTEGER_set");
-	if (!(*f)(*x, ai))
+	if (!f(*x, ai))
 		err(1, NULL);
 
 	ASN1_INTEGER_free(ai);
@@ -76,7 +76,7 @@ x509_set_name(int (*f)(X509 *x, X509_NAME *name), X509 **x,
 		err(1, NULL);
 	if (!X509_NAME_add_entry_by_txt(xn, "C", MBSTRING_ASC, n, -1, -1, 0))
 		errx(1, "X509_NAME_add_entry_by_txt");
-	if (!(*f)(*x, xn))
+	if (!f(*x, xn))
 		err(1, NULL);
 
 	X509_NAME_free(xn);
@@ -91,7 +91,7 @@ x509_set_time(int (*f)(X509 *x, const ASN1_TIME *tm), X509 **x, int t)
 		err(1, NULL);
 	if ((at = X509_gmtime_adj(NULL, t)) == NULL)
 		errx(1, "X509_gmtime_adj");
-	if (!(*f)(*x, at))
+	if (!f(*x, at))
 		err(1, NULL);
 
 	ASN1_TIME_free(at);
