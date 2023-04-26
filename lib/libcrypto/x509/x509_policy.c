@@ -17,6 +17,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/stack.h>
 #include <openssl/x509v3.h>
@@ -24,6 +25,8 @@
 #include "x509_internal.h"
 #include "x509_local.h"
 
+/* XXX move to proper place */
+#define X509_R_INVALID_POLICY_EXTENSION 201
 
 // This file computes the X.509 policy tree, as described in RFC 5280, section
 // 6.1. It differs in that:
@@ -245,7 +248,7 @@ static int process_certificate_policies(const X509 *x509,
   // certificatePolicies may not be empty. See RFC 5280, section 4.2.1.4.
   // TODO(https://crbug.com/boringssl/443): Move this check into the parser.
   if (sk_POLICYINFO_num(policies) == 0) {
-    OPENSSL_PUT_ERROR(X509, X509_R_INVALID_POLICY_EXTENSION);
+    X509error(X509_R_INVALID_POLICY_EXTENSION);
     goto err;
   }
 
@@ -260,7 +263,7 @@ static int process_certificate_policies(const X509 *x509,
     if (i > 0 && OBJ_cmp(sk_POLICYINFO_value(policies, i - 1)->policyid,
                          policy->policyid) == 0) {
       // Per RFC 5280, section 4.2.1.4, |policies| may not have duplicates.
-      OPENSSL_PUT_ERROR(X509, X509_R_INVALID_POLICY_EXTENSION);
+      X509error(X509_R_INVALID_POLICY_EXTENSION);
       goto err;
     }
   }
@@ -369,7 +372,7 @@ static X509_POLICY_LEVEL *process_policy_mappings(const X509 *cert,
     // PolicyMappings may not be empty. See RFC 5280, section 4.2.1.5.
     // TODO(https://crbug.com/boringssl/443): Move this check into the parser.
     if (sk_POLICY_MAPPING_num(mappings) == 0) {
-      OPENSSL_PUT_ERROR(X509, X509_R_INVALID_POLICY_EXTENSION);
+      X509error(X509_R_INVALID_POLICY_EXTENSION);
       goto err;
     }
 
@@ -517,7 +520,7 @@ static int apply_skip_certs(const ASN1_INTEGER *skip_certs, size_t *value) {
 
   // TODO(https://crbug.com/boringssl/443): Move this check into the parser.
   if (skip_certs->type & V_ASN1_NEG) {
-    OPENSSL_PUT_ERROR(X509, X509_R_INVALID_POLICY_EXTENSION);
+    X509error(X509_R_INVALID_POLICY_EXTENSION);
     return 0;
   }
 
@@ -548,7 +551,7 @@ static int process_policy_constraints(const X509 *x509, size_t *explicit_policy,
         constraints->inhibitPolicyMapping == NULL) {
       // Per RFC 5280, section 4.2.1.11, at least one of the fields must be
       // present.
-      OPENSSL_PUT_ERROR(X509, X509_R_INVALID_POLICY_EXTENSION);
+      X509error(X509_R_INVALID_POLICY_EXTENSION);
       POLICY_CONSTRAINTS_free(constraints);
       return 0;
     }
