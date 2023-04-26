@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.2 2023/04/26 10:34:08 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.3 2023/04/26 10:55:58 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -31,11 +31,12 @@
 
 static void
 x509_setup(unsigned char **der, unsigned char **der2, X509 **x,
-    const unsigned char **cpder, const unsigned char **cpder2, long dersz,
-    long *der2sz)
+    const unsigned char **cpder2, long dersz, long *der2sz)
 {
-	*cpder = *der;
-	if ((*x = d2i_X509(NULL, cpder, dersz)) == NULL)
+	const unsigned char *cpder;
+
+	cpder = *der;
+	if ((*x = d2i_X509(NULL, &cpder, dersz)) == NULL)
 		errx(1, "d2i_X509");
 	if ((*der2sz = i2d_X509(*x, der2)) <= 0)
 		errx(1, "i2d_X509");
@@ -126,11 +127,11 @@ main(void)
 	EVP_PKEY *pkey = NULL;
 	EVP_PKEY_CTX *pkey_ctx = NULL;
 	X509 *a, *x;
-	const unsigned char *cpder, *cpder2;
+	const unsigned char *cpder2;
 	unsigned char *der = NULL, *der2 = NULL;
 	long dersz, der2sz;
 	int ret = 0;
-	
+
 	if ((x = X509_new()) == NULL)
 		err(1, NULL);
 
@@ -158,44 +159,44 @@ main(void)
 		errx(1, "i2d_X509");
 
 	/* test X509_set_version */
-	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_setup(&der, &der2, &a, &cpder2, dersz, &der2sz);
 	if (!X509_set_version(a, 2))
 		errx(1, "X509_set_version");
 	ret += x509_compare("X509_set_version", a, cpder2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_serialNumber */
-	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_setup(&der, &der2, &a, &cpder2, dersz, &der2sz);
 	x509_set_integer(X509_set_serialNumber, &a, 2);
 	ret += x509_compare("X509_set_serialNumber", a, cpder2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_issuer_name */
-	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_setup(&der, &der2, &a, &cpder2, dersz, &der2sz);
 	x509_set_name(X509_set_issuer_name, &a, "DE");
 	ret += x509_compare("X509_set_issuer_name", a, cpder2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_subject_name */
-	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_setup(&der, &der2, &a, &cpder2, dersz, &der2sz);
 	x509_set_name(X509_set_subject_name, &a, "FR");
 	ret += x509_compare("X509_set_subject_name", a, cpder2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_notBefore */
-	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_setup(&der, &der2, &a, &cpder2, dersz, &der2sz);
 	x509_set_time(X509_set_notBefore, &a, 120);
 	ret += x509_compare("X509_set_notBefore", a, cpder2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_notAfter */
-	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_setup(&der, &der2, &a, &cpder2, dersz, &der2sz);
 	x509_set_time(X509_set_notAfter, &a, 180);
 	ret += x509_compare("X509_set_notAfter", a, cpder2, der2sz);
 	x509_cleanup(&a, &der2);
 
 	/* test X509_set_pubkey */
-	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_setup(&der, &der2, &a, &cpder2, dersz, &der2sz);
 	if (EVP_PKEY_keygen(pkey_ctx, &pkey) <= 0)
 		errx(1, "EVP_PKEY_keygen");
 	if (X509_set_pubkey(a, pkey) != 1)
