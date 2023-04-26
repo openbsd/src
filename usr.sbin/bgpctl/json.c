@@ -1,4 +1,4 @@
-/*	$OpenBSD: json.c,v 1.3 2022/08/31 12:13:59 claudio Exp $ */
+/*	$OpenBSD: json.c,v 1.4 2023/04/26 17:39:20 tb Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -112,7 +112,7 @@ json_do_array(const char *name)
 
 	if (++level >= JSON_MAX_STACK)
 		errx(1, "json stack too deep");
-	
+
 	stack[level].name = name;
 	stack[level].type = ARRAY;
 	stack[level].count = 0;
@@ -135,7 +135,7 @@ json_do_object(const char *name)
 
 	if (++level >= JSON_MAX_STACK)
 		errx(1, "json stack too deep");
-	
+
 	stack[level].name = name;
 	stack[level].type = OBJECT;
 	stack[level].count = 0;
@@ -185,7 +185,7 @@ json_do_hexdump(const char *name, void *buf, size_t len)
 	do_comma_indent();
 	do_name(name);
 	printf("\"");
-	for (i=0; i < len; i++)
+	for (i = 0; i < len; i++)
 		printf("%02x", *(data+i));
 	printf("\"");
 }
