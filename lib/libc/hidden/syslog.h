@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.4 2016/03/21 22:41:28 bluhm Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.5 2023/04/26 06:52:45 gnezdo Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -20,9 +20,6 @@
 
 #include_next <syslog.h>
 
-int	sendsyslog(const char *, __size_t, int);
-PROTO_NORMAL(sendsyslog);
-
 __BEGIN_HIDDEN_DECLS
 void	__vsyslog_r(int, struct syslog_data *, int,
 	    const char *, __va_list);
@@ -32,6 +29,7 @@ PROTO_DEPRECATED(closelog);
 PROTO_NORMAL(closelog_r);
 PROTO_DEPRECATED(openlog);
 PROTO_NORMAL(openlog_r);
+PROTO_NORMAL(sendsyslog);
 PROTO_DEPRECATED(setlogmask);
 PROTO_NORMAL(setlogmask_r);
 PROTO_NORMAL(syslog);
