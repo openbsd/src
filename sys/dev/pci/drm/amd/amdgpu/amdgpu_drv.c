@@ -2906,6 +2906,7 @@ MODULE_LICENSE("GPL and additional rights");
 #endif /* __linux__ */
 
 #include <drm/drm_drv.h>
+#include <drm/drm_utils.h>
 
 #include "vga.h"
 
@@ -3564,6 +3565,7 @@ amdgpu_attachhook(struct device *self)
 	}
 {
 	struct wsemuldisplaydev_attach_args aa;
+	int orientation_quirk;
 
 	task_set(&adev->switchtask, amdgpu_doswitch, ri);
 	task_set(&adev->burner_task, amdgpu_burner_cb, adev);
@@ -3572,6 +3574,14 @@ amdgpu_attachhook(struct device *self)
 		return;
 
 	ri->ri_flg = RI_CENTER | RI_VCONS | RI_WRONLY;
+
+	orientation_quirk = drm_get_panel_orientation_quirk(ri->ri_width,
+	    ri->ri_height);
+	if (orientation_quirk == DRM_MODE_PANEL_ORIENTATION_LEFT_UP)
+		ri->ri_flg |= RI_ROTATE_CCW;
+	else if (orientation_quirk == DRM_MODE_PANEL_ORIENTATION_RIGHT_UP)
+		ri->ri_flg |= RI_ROTATE_CW;
+
 	rasops_init(ri, 160, 160);
 
 	ri->ri_hw = adev;
