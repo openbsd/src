@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.8 2023/03/07 17:29:42 kn Exp $
+#	$OpenBSD: install.md,v 1.9 2023/04/26 23:12:31 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,7 +55,8 @@ md_prep_fdisk() {
 	while :; do
 		_d=whole
 		if disk_has $_disk gpt; then
-			[[ $_disk == $ROOTDISK ]] && bootpart="-b ${bootsectorsize}"
+			# Is this a boot disk?
+			[[ $_disk == @($ROOTDISK|$CRYPTOCHUNK) ]] && bootpart="-b ${bootsectorsize}"
 			_type=GPT
 			fdisk $_disk
 		elif disk_has $_disk mbr; then
