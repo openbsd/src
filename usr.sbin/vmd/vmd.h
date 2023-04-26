@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.118 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.119 2023/04/26 16:12:21 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -22,6 +22,8 @@
 #include <sys/socket.h>
 
 #include <machine/vmmvar.h>
+
+#include <dev/vmm/vmm.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
