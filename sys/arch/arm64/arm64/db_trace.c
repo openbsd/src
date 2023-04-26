@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.13 2021/07/09 20:59:51 jasper Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.14 2023/04/26 16:53:58 claudio Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -182,4 +182,10 @@ stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 		if (!INKERNEL(frame->f_lr))
 			break;
 	}
+}
+
+void
+stacktrace_save_utrace(struct stacktrace *st)
+{
+	st->st_count = 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.43 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.44 2023/04/26 16:53:58 claudio Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.18 1996/05/03 19:42:01 christos Exp $	*/
 
 /*
@@ -288,6 +288,43 @@ stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 		if (frame >= limit)
 			break;
 		if (!INKERNEL(frame->f_retaddr))
+			break;
+	}
+}
+
+void
+stacktrace_save_utrace(struct stacktrace *st)
+{
+	struct callframe f, *frame, *lastframe;
+	struct pcb *pcb = curpcb;
+
+	st->st_count = 0;
+
+	if (pcb == NULL)
+		return;
+
+	frame = __builtin_frame_address(0);
+	KASSERT(INKERNEL(frame));
+	f = *frame;
+
+	while (st->st_count < STACKTRACE_MAX) {
+		if (f.f_retaddr != 0 && !INKERNEL(f.f_retaddr))
+			st->st_pc[st->st_count++] = f.f_retaddr;
+
+		lastframe = frame;
+		frame = f.f_frame;
+
+		if (frame == NULL)
+			break;
+		if (INKERNEL(f.f_retaddr)) {
+			if (frame <= lastframe)
+				break;
+			f = *frame;
+			continue;
+		}
+		if (!INKERNEL(lastframe) && frame <= lastframe)
+			break;
+		if (copyin(frame, &f, sizeof(f)) != 0)
 			break;
 	}
 }

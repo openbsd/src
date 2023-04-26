@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.25 2023/03/10 22:14:32 bluhm Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.26 2023/04/26 16:53:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -20,8 +20,10 @@
 #include <sys/systm.h>
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/exec_elf.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 
 #include <dev/dt/dtvar.h>
 
@@ -135,6 +137,7 @@ int	dt_ioctl_record_start(struct dt_softc *);
 void	dt_ioctl_record_stop(struct dt_softc *);
 int	dt_ioctl_probe_enable(struct dt_softc *, struct dtioc_req *);
 int	dt_ioctl_probe_disable(struct dt_softc *, struct dtioc_req *);
+int	dt_ioctl_get_auxbase(struct dt_softc *, struct dtioc_getaux *);
 
 int	dt_pcb_ring_copy(struct dt_pcb *, struct dt_evt *, size_t, uint64_t *);
 
@@ -289,6 +292,7 @@ dtioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	case DTIOCRECORD:
 	case DTIOCPRBENABLE:
 	case DTIOCPRBDISABLE:
+	case DTIOCGETAUXBASE:
 		/* root only ioctl(2) */
 		break;
 	default:
@@ -311,6 +315,9 @@ dtioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		break;
 	case DTIOCPRBDISABLE:
 		error = dt_ioctl_probe_disable(sc, (struct dtioc_req *)addr);
+		break;
+	case DTIOCGETAUXBASE:
+		error = dt_ioctl_get_auxbase(sc, (struct dtioc_getaux *)addr);
 		break;
 	default:
 		KASSERT(0);
@@ -575,6 +582,42 @@ dt_ioctl_probe_disable(struct dt_softc *sc, struct dtioc_req *dtrq)
 	return 0;
 }
 
+int
+dt_ioctl_get_auxbase(struct dt_softc *sc, struct dtioc_getaux *dtga)
+{
+	struct uio uio;
+	struct iovec iov;
+	struct process *pr;
+	struct proc *p = curproc;
+	AuxInfo auxv[ELF_AUX_ENTRIES];
+	int i, error;
+
+	dtga->dtga_auxbase = 0;
+
+	if ((pr = prfind(dtga->dtga_pid)) == NULL)
+		return ESRCH;
+
+	iov.iov_base = auxv;
+	iov.iov_len = sizeof(auxv);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = pr->ps_auxinfo;
+	uio.uio_resid = sizeof(auxv);
+	uio.uio_segflg = UIO_SYSSPACE;
+	uio.uio_procp = p;
+	uio.uio_rw = UIO_READ;
+
+	error = process_domem(p, pr, &uio, PT_READ_D);
+	if (error)
+		return error;
+
+	for (i = 0; i < ELF_AUX_ENTRIES; i++)
+		if (auxv[i].au_id == AUX_base)
+			dtga->dtga_auxbase = auxv[i].au_v;
+
+	return 0;
+}
+
 struct dt_probe *
 dt_dev_alloc_probe(const char *func, const char *name, struct dt_provider *dtpv)
 {
@@ -725,12 +768,14 @@ dt_pcb_ring_get(struct dt_pcb *dp, int profiling)
 	if (ISSET(dp->dp_evtflags, DTEVT_EXECNAME))
 		strlcpy(dtev->dtev_comm, p->p_p->ps_comm, sizeof(dtev->dtev_comm));
 
-	if (ISSET(dp->dp_evtflags, DTEVT_KSTACK|DTEVT_USTACK)) {
+	if (ISSET(dp->dp_evtflags, DTEVT_KSTACK)) {
 		if (profiling)
 			stacktrace_save_at(&dtev->dtev_kstack, DT_FA_PROFILE);
 		else
 			stacktrace_save_at(&dtev->dtev_kstack, DT_FA_STATIC);
 	}
+	if (ISSET(dp->dp_evtflags, DTEVT_USTACK))
+		stacktrace_save_utrace(&dtev->dtev_ustack);
 
 	return dtev;
 }

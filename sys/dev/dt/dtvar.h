@@ -1,4 +1,4 @@
-/*	$OpenBSD: dtvar.h,v 1.16 2023/04/10 04:21:20 jsg Exp $ */
+/*	$OpenBSD: dtvar.h,v 1.17 2023/04/26 16:53:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -53,6 +53,7 @@ struct dt_evt {
 	 * Recorded if the corresponding flag is set.
 	 */
 	struct stacktrace	dtev_kstack;	/* kernel stack frame */
+	struct stacktrace	dtev_ustack;	/* userland stack frame */
 	char			dtev_comm[DTMAXCOMLEN]; /* current pr. name */
 	union {
 		register_t		E_entry[DTMAXFUNCARGS];
@@ -80,7 +81,6 @@ struct dt_evt {
 	"\002USTACK"		\
 	"\003KSTACK"		\
 	"\004FUNCARGS"		\
-	"\005RETVAL"		\
 
 /*
  * Each PCB can have a filter attached to itself.  A filter do not
@@ -139,12 +139,18 @@ struct dtioc_stat {
 	uint64_t		 dtst_dropevt;	/* events dropped */
 };
 
+struct dtioc_getaux {
+	pid_t			 dtga_pid;	/* process to inspect */
+	unsigned long		 dtga_auxbase;	/* AUX_base value */
+};
+
 #define DTIOCGPLIST	_IOWR('D', 1, struct dtioc_probe)
 #define DTIOCGSTATS	_IOR('D', 2, struct dtioc_stat)
 #define DTIOCRECORD	_IOW('D', 3, int)
 #define DTIOCPRBENABLE	_IOW('D', 4, struct dtioc_req)
 #define DTIOCPRBDISABLE	 _IOW('D', 5, struct dtioc_req)
 #define DTIOCGARGS	_IOWR('D', 6, struct dtioc_arg)
+#define DTIOCGETAUXBASE	 _IOWR('D', 7, struct dtioc_getaux)
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_profile.c,v 1.4 2021/09/03 16:45:45 jasper Exp $ */
+/*	$OpenBSD: dt_prov_profile.c,v 1.5 2023/04/26 16:53:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -27,7 +27,7 @@ struct dt_probe	*dtpp_profile;		/* per-CPU profile probe */
 struct dt_probe	*dtpp_interval;		/* global periodic probe */
 
 /* Flags that make sense for this provider */
-#define DTEVT_PROV_PROFILE	DTEVT_KSTACK
+#define DTEVT_PROV_PROFILE	DTEVT_COMMON
 
 int	dt_prov_profile_alloc(struct dt_probe *, struct dt_softc *,
 	    struct dt_pcb_list *, struct dtioc_req *);

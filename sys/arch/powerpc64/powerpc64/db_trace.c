@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.8 2022/01/28 18:37:40 gkoehler Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.9 2023/04/26 16:53:59 claudio Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -231,4 +231,10 @@ stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 		    frame->cf_lr >= (vaddr_t)_etext)
 			break;
 	}
+}
+
+void
+stacktrace_save_utrace(struct stacktrace *st)
+{
+	st->st_count = 0;
 }

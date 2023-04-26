@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.166 2023/02/11 23:07:27 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.167 2023/04/26 16:53:59 claudio Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1478,6 +1478,12 @@ stacktrace_save_at(struct stacktrace *st, unsigned int skip)
 		ra = 0;
 		sp += framesize;
 	}
+}
+
+void
+stacktrace_save_utrace(struct stacktrace *st)
+{
+	st->st_count = 0;
 }
 #endif
 
