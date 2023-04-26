@@ -1,8 +1,8 @@
-/*	$OpenBSD: fdt.c,v 1.33 2022/09/19 16:12:19 patrick Exp $	*/
+/*	$OpenBSD: fdt.c,v 1.34 2023/04/26 14:39:42 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2009 Dariusz Swiderski <sfires@sfires.net>
- * Copyright (c) 2009 Mark Kettenis <kettenis@sfires.net>
+ * Copyright (c) 2009 Mark Kettenis <kettenis@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
