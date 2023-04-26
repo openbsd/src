@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_cache.c,v 1.3 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: pcy_cache.c,v 1.4 2023/04/26 19:11:32 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -58,6 +58,8 @@
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#ifndef LIBRESSL_HAS_POLICY_DAG
 
 #include "pcy_int.h"
 #include "x509_local.h"
@@ -270,3 +272,5 @@ policy_cache_set_int(long *out, ASN1_INTEGER *value)
 	*out = ASN1_INTEGER_get(value);
 	return 1;
 }
+
+#endif /* LIBRESSL_HAS_POLICY_DAG */

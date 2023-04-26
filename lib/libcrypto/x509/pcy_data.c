@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_data.c,v 1.1 2020/06/04 15:19:31 jsing Exp $ */
+/* $OpenBSD: pcy_data.c,v 1.2 2023/04/26 19:11:32 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -58,6 +58,8 @@
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#ifndef LIBRESSL_HAS_POLICY_DAG
 
 #include "pcy_int.h"
 
@@ -127,3 +129,5 @@ err:
 	ASN1_OBJECT_free(id);
 	return NULL;
 }
+
+#endif /* LIBRESSL_HAS_POLICY_DAG */

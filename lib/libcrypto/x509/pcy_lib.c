@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_lib.c,v 1.3 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: pcy_lib.c,v 1.4 2023/04/26 19:11:33 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -58,6 +58,8 @@
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#ifndef LIBRESSL_HAS_POLICY_DAG
 
 #include "pcy_int.h"
 
@@ -164,3 +166,5 @@ X509_policy_node_get0_parent(const X509_POLICY_NODE *node)
 	return node->parent;
 }
 LCRYPTO_ALIAS(X509_policy_node_get0_parent);
+
+#endif /* LIBRESSL_HAS_POLICY_DAG */

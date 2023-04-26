@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509.c,v 1.33 2023/04/24 08:09:29 job Exp $ */
+/* $OpenBSD: x_x509.c,v 1.34 2023/04/26 19:11:32 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -169,7 +169,9 @@ X509_CINF_free(X509_CINF *a)
 }
 /* X509 top level structure needs a bit of customisation */
 
+#ifndef LIBRESSL_HAS_POLICY_DAG
 extern void policy_cache_free(X509_POLICY_CACHE *cache);
+#endif
 
 static int
 x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
@@ -205,7 +207,9 @@ x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
 		ASN1_OCTET_STRING_free(ret->skid);
 		AUTHORITY_KEYID_free(ret->akid);
 		CRL_DIST_POINTS_free(ret->crldp);
+#ifndef LIBRESSL_HAS_POLICY_DAG
 		policy_cache_free(ret->policy_cache);
+#endif
 		GENERAL_NAMES_free(ret->altname);
 		NAME_CONSTRAINTS_free(ret->nc);
 #ifndef OPENSSL_NO_RFC3779

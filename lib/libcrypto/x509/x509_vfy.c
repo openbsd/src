@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.115 2023/04/25 18:37:56 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.116 2023/04/26 19:11:33 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1743,6 +1743,43 @@ cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	return 1;
 }
 
+
+#ifdef LIBRESSL_HAS_POLICY_DAG
+int
+x509_vfy_check_policy(X509_STORE_CTX *ctx)
+{
+	X509 *current_cert = NULL;
+	int ret;
+
+	if (ctx->parent != NULL)
+		return 1;
+
+	ret = X509_policy_check(ctx->chain, ctx->param->policies,
+	    ctx->param->flags, &current_cert);
+	if (ret != X509_V_OK) {
+		ctx->current_cert = current_cert;
+		ctx->error = ret;
+		if (ret == X509_V_ERR_OUT_OF_MEM)
+			return 0;
+		return ctx->verify_cb(0, ctx);
+	}
+
+	if (ctx->param->flags & X509_V_FLAG_NOTIFY_POLICY) {
+		ctx->current_cert = NULL;
+		/*
+		 * Verification errors need to be "sticky", a callback may have
+		 * allowed an SSL handshake to continue despite an error, and
+		 * we must then remain in an error state.  Therefore, we MUST
+		 * NOT clear earlier verification errors by setting the error
+		 * to X509_V_OK.
+		 */
+		if (!ctx->verify_cb(2, ctx))
+			return 0;
+	}
+
+	return 1;
+}
+#else
 int
 x509_vfy_check_policy(X509_STORE_CTX *ctx)
 {
@@ -1794,6 +1831,7 @@ x509_vfy_check_policy(X509_STORE_CTX *ctx)
 
 	return 1;
 }
+#endif
 
 static int
 check_policy(X509_STORE_CTX *ctx)
@@ -2486,10 +2524,12 @@ X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 			X509_VERIFY_PARAM_free(ctx->param);
 		ctx->param = NULL;
 	}
+#ifndef LIBRESSL_HAS_POLICY_DAG
 	if (ctx->tree != NULL) {
 		X509_policy_tree_free(ctx->tree);
 		ctx->tree = NULL;
 	}
+#endif
 	if (ctx->chain != NULL) {
 		sk_X509_pop_free(ctx->chain, X509_free);
 		ctx->chain = NULL;

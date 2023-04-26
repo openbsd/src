@@ -25,6 +25,8 @@
 #include "x509_internal.h"
 #include "x509_local.h"
 
+#ifdef LIBRESSL_HAS_POLICY_DAG
+
 /* XXX move to proper place */
 #define X509_R_INVALID_POLICY_EXTENSION 201
 
@@ -856,3 +858,5 @@ err:
   sk_X509_POLICY_LEVEL_pop_free(levels, x509_policy_level_free);
   return ret;
 }
+
+#endif /* LIBRESSL_HAS_POLICY_DAG */

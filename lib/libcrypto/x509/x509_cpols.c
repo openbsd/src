@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.8 2023/04/20 18:29:08 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.9 2023/04/26 19:11:33 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -65,7 +65,9 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 
+#ifndef LIBRESSL_HAS_POLICY_DAG
 #include "pcy_int.h"
+#endif
 #include "x509_local.h"
 
 /* Certificate policies extension support: this one is a bit complex... */
@@ -766,6 +768,7 @@ print_notice(BIO *out, USERNOTICE *notice, int indent)
 		    notice->exptext->length, notice->exptext->data);
 }
 
+#ifndef LIBRESSL_HAS_POLICY_DAG
 void
 X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent)
 {
@@ -783,3 +786,4 @@ X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent)
 		BIO_printf(out, "%*sNo Qualifiers\n", indent + 2, "");
 }
 LCRYPTO_ALIAS(X509_POLICY_NODE_print);
+#endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: pcy_int.h,v 1.4 2023/04/25 18:53:42 tb Exp $ */
+/* $OpenBSD: pcy_int.h,v 1.5 2023/04/26 19:11:32 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -55,6 +55,8 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+
+#ifndef LIBRESSL_HAS_POLICY_DAG
 
 /* Needed to pull in the typedefs for X509_POLICY_* */
 #include "x509_local.h"
@@ -275,3 +277,5 @@ const X509_POLICY_NODE *
 
 
 __END_HIDDEN_DECLS
+
+#endif /* LIBRESSL_HAS_POLICY_DAG */

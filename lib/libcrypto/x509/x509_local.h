@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.5 2023/04/25 18:28:05 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.6 2023/04/26 19:11:33 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -69,10 +69,12 @@ __BEGIN_HIDDEN_DECLS
 #define X509_CRL_HASH_EVP	EVP_sha512()
 #define X509_CRL_HASH_LEN	SHA512_DIGEST_LENGTH
 
+#ifndef LIBRESSL_HAS_POLICY_DAG
 typedef struct X509_POLICY_NODE_st X509_POLICY_NODE;
 typedef struct X509_POLICY_LEVEL_st X509_POLICY_LEVEL;
 typedef struct X509_POLICY_TREE_st X509_POLICY_TREE;
 typedef struct X509_POLICY_CACHE_st X509_POLICY_CACHE;
+#endif
 
 struct X509_pubkey_st {
 	X509_ALGOR *algor;
@@ -176,7 +178,9 @@ struct x509_st {
 	unsigned long ex_nscert;
 	ASN1_OCTET_STRING *skid;
 	AUTHORITY_KEYID *akid;
+#ifndef LIBRESSL_HAS_POLICY_DAG
 	X509_POLICY_CACHE *policy_cache;
+#endif
 	STACK_OF(DIST_POINT) *crldp;
 	STACK_OF(GENERAL_NAME) *altname;
 	NAME_CONSTRAINTS *nc;
@@ -356,7 +360,9 @@ struct x509_store_ctx_st {
 	int valid;		/* if 0, rebuild chain */
 	int num_untrusted;	/* number of untrusted certs in chain */
 	STACK_OF(X509) *chain;		/* chain of X509s - built up and trusted */
-	X509_POLICY_TREE *tree;	/* Valid policy tree */
+#ifndef LIBRESSL_HAS_POLICY_DAG
+	X509_POLICY_TREE *tree; /* Valid policy tree */
+#endif
 
 	int explicit_policy;	/* Require explicit policy value */
 
@@ -390,12 +396,17 @@ int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
 
 int name_cmp(const char *name, const char *cmp);
 
+#ifdef LIBRESSL_HAS_POLICY_DAG
+int X509_policy_check(const STACK_OF(X509) *certs,
+    const STACK_OF(ASN1_OBJECT) *user_policies, unsigned long flags,
+    X509 **out_current_cert);
+#else
 int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
-			STACK_OF(X509) *certs,
-			STACK_OF(ASN1_OBJECT) *policy_oids,
-			unsigned int flags);
+    STACK_OF(X509) *certs, STACK_OF(ASN1_OBJECT) *policy_oids,
+    unsigned int flags);
 
 void X509_policy_tree_free(X509_POLICY_TREE *tree);
+#endif
 
 __END_HIDDEN_DECLS
 
