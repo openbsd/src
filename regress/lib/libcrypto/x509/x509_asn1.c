@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.6 2023/04/26 11:06:32 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.7 2023/04/26 19:05:37 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -28,6 +28,31 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+
+static const struct fnnames {
+	char *name;
+	void (*fn);
+} fnnames[] = {
+	{ "X509_set_version", X509_set_version },
+	{ "X509_set_serialNumber", X509_set_serialNumber },
+	{ "X509_set_issuer_name", X509_set_issuer_name },
+	{ "X509_set_subject_name", X509_set_subject_name },
+	{ "X509_set_notBefore", X509_set_notBefore },
+	{ "X509_set_notAfter", X509_set_notAfter },
+	{ "X509_set_pubkey", X509_set_pubkey },
+	{ NULL, NULL }
+};
+
+static void
+lookup_and_err(void (*fn))
+{
+	int i;
+
+	for (i = 0; fnnames[i].name; i++) {
+		if (fnnames[i].fn == fn)
+			errx(1, "%s failed", fnnames[i].name);
+	}
+}
 
 static void
 x509_setup(unsigned char **der, unsigned char **der2, X509 **x,
@@ -61,7 +86,7 @@ x509_set_integer(int (*f)(X509 *, ASN1_INTEGER *), X509 **x, int i)
 	if (!ASN1_INTEGER_set(ai, i))
 		errx(1, "ASN1_INTEGER_set");
 	if (!f(*x, ai))
-		err(1, NULL);
+		lookup_and_err(f);
 
 	ASN1_INTEGER_free(ai);
 }
@@ -77,7 +102,7 @@ x509_set_name(int (*f)(X509 *, X509_NAME *), X509 **x,
 	if (!X509_NAME_add_entry_by_txt(xn, "C", MBSTRING_ASC, n, -1, -1, 0))
 		errx(1, "X509_NAME_add_entry_by_txt");
 	if (!f(*x, xn))
-		err(1, NULL);
+		lookup_and_err(f);
 
 	X509_NAME_free(xn);
 }
@@ -92,7 +117,7 @@ x509_set_time(int (*f)(X509 *, const ASN1_TIME *), X509 **x, int t)
 	if ((at = X509_gmtime_adj(NULL, t)) == NULL)
 		errx(1, "X509_gmtime_adj");
 	if (!f(*x, at))
-		err(1, NULL);
+		lookup_and_err(f);
 
 	ASN1_TIME_free(at);
 }
