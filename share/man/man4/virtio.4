@@ -1,4 +1,4 @@
-.\"     $OpenBSD: virtio.4,v 1.16 2019/05/26 20:37:03 jmc Exp $
+.\"     $OpenBSD: virtio.4,v 1.17 2023/04/26 22:34:30 jmc Exp $
 .\"
 .\" Copyright (c) 2012 Stefan Fritsch <sf@sfritsch.de>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 26 2019 $
+.Dd $Mdocdate: April 26 2023 $
 .Dt VIRTIO 4
 .Os
 .Sh NAME
@@ -42,6 +42,8 @@ VirtIO network device
 VirtIO disk
 .It Xr viocon 4
 VirtIO console device
+.It Xr viogpu 4
+VirtIO GPU device
 .It Xr viomb 4
 VirtIO memory ballooning driver
 .It Xr viornd 4
