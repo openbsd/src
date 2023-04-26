@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.1 2023/04/26 15:11:21 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.2 2023/04/26 15:34:31 mlarkin Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -2062,7 +2062,7 @@ vcpu_reset_regs_svm(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	ret = vcpu_writeregs_svm(vcpu, VM_RWREGS_ALL, vrs);
 
 	/* xcr0 power on default sets bit 0 (x87 state) */
-	vcpu->vc_gueststate.vg_xcr0 = XCR0_X87 & xsave_mask;
+	vcpu->vc_gueststate.vg_xcr0 = XFEATURE_X87 & xsave_mask;
 
 	vcpu->vc_parent->vm_map->pmap->eptp = 0;
 
@@ -2863,7 +2863,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	/* XXX CR4 shadow */
 
 	/* xcr0 power on default sets bit 0 (x87 state) */
-	vcpu->vc_gueststate.vg_xcr0 = XCR0_X87 & xsave_mask;
+	vcpu->vc_gueststate.vg_xcr0 = XFEATURE_X87 & xsave_mask;
 
 	/* XXX PAT shadow */
 	vcpu->vc_shadow_pat = rdmsr(MSR_CR_PAT);
