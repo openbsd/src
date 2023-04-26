@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.191 2023/03/08 04:43:09 guenther Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.192 2023/04/26 09:53:55 beck Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -3203,9 +3203,11 @@ nfs_writebp(struct buf *bp, int force)
 			nfs_clearcommit(bp->b_vp->v_mount);
 	}
 	if (retv) {
+		int s = splbio();
 		buf_flip_dma(bp);
 		if (force)
 			bp->b_flags |= B_WRITEINPROG;
+		splx(s);
 		VOP_STRATEGY(bp->b_vp, bp);
 	}
 
