@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.340 2023/04/24 16:53:57 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.341 2023/04/26 09:39:56 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3520,7 +3520,7 @@ vcpu_reset_regs_vmx(struct vcpu *vcpu, struct vcpu_reg_state *vrs)
 	vmx_setmsrbr(vcpu, MSR_TSC);
 
 	/* If host supports CET, pass through access to the guest. */
-	if (rcr4() | CR4_CET)
+	if (rcr4() & CR4_CET)
 		vmx_setmsrbrw(vcpu, MSR_S_CET);
 
 	/* XXX CR0 shadow */
@@ -7059,7 +7059,7 @@ vmm_handle_cpuid(struct vcpu *vcpu)
 				*rcx &= ~SEFF0ECX_PKU;
 
 			/* Expose IBT bit if we've enabled CET on the host. */
-			if (rcr4() | CR4_CET)
+			if (rcr4() & CR4_CET)
 				*rdx |= SEFF0EDX_IBT;
 			else
 				*rdx &= ~SEFF0EDX_IBT;
