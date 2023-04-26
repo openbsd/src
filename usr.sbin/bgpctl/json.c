@@ -1,4 +1,4 @@
-/*	$OpenBSD: json.c,v 1.6 2023/04/26 20:53:17 claudio Exp $ */
+/*	$OpenBSD: json.c,v 1.7 2023/04/26 21:17:24 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -49,9 +49,9 @@ do_comma_indent(void)
 {
 	if (stack[level].count++ > 0)
 		if (!eb)
-			eb = fprintf(jsonfh, ",\n") == -1;
+			eb = fprintf(jsonfh, ",\n") < 0;
 	if (!eb)
-		eb = fprintf(jsonfh, "\t%.*s", level, indent) == -1;
+		eb = fprintf(jsonfh, "\t%.*s", level, indent) < 0;
 }
 
 static void
@@ -60,7 +60,7 @@ do_name(const char *name)
 	if (stack[level].type == ARRAY)
 		return;
 	if (!eb)
-		eb = fprintf(jsonfh, "\"%s\": ", name) == -1;
+		eb = fprintf(jsonfh, "\"%s\": ", name) < 0;
 }
 
 static int
@@ -87,7 +87,7 @@ json_do_start(FILE *fh)
 	jsonfh = fh;
 	eb = 0;
 
-	eb = fprintf(jsonfh, "{\n") == -1;
+	eb = fprintf(jsonfh, "{\n") < 0;
 }
 
 int
@@ -96,7 +96,7 @@ json_do_finish(void)
 	while (level > 0)
 		json_do_end();
 	if (!eb)
-		eb = fprintf(jsonfh, "\n}\n") == -1;
+		eb = fprintf(jsonfh, "\n}\n") < 0;
 
 	return -eb;
 }
@@ -119,7 +119,7 @@ json_do_array(const char *name)
 	do_comma_indent();
 	do_name(name);
 	if (!eb)
-		eb = fprintf(jsonfh, "[\n") == -1;
+		eb = fprintf(jsonfh, "[\n") < 0;
 
 	if (++level >= JSON_MAX_STACK)
 		errx(1, "json stack too deep");
@@ -143,7 +143,7 @@ json_do_object(const char *name)
 	do_comma_indent();
 	do_name(name);
 	if (!eb)
-		eb = fprintf(jsonfh, "{\n") == -1;
+		eb = fprintf(jsonfh, "{\n") < 0;
 
 	if (++level >= JSON_MAX_STACK)
 		errx(1, "json stack too deep");
@@ -158,10 +158,10 @@ json_do_end(void)
 {
 	if (stack[level].type == ARRAY) {
 		if (!eb)
-			eb = fprintf(jsonfh, "\n%.*s]", level, indent) == -1;
+			eb = fprintf(jsonfh, "\n%.*s]", level, indent) < 0;
 	} else if (stack[level].type == OBJECT) {
 		if (!eb)
-			eb = fprintf(jsonfh, "\n%.*s}", level, indent) == -1;
+			eb = fprintf(jsonfh, "\n%.*s}", level, indent) < 0;
 	} else {
 		errx(1, "json bad stack state");
 	}
@@ -184,13 +184,13 @@ json_do_printf(const char *name, const char *fmt, ...)
 
 	do_name(name);
 	if (!eb)
-		eb = fprintf(jsonfh, "\"") == -1;
+		eb = fprintf(jsonfh, "\"") < 0;
 	va_start(ap, fmt);
 	if (!eb)
-		eb = vfprintf(jsonfh, fmt, ap) == -1;
+		eb = vfprintf(jsonfh, fmt, ap) < 0;
 	va_end(ap);
 	if (!eb)
-		eb = fprintf(jsonfh, "\"") == -1;
+		eb = fprintf(jsonfh, "\"") < 0;
 }
 
 void
@@ -202,12 +202,12 @@ json_do_hexdump(const char *name, void *buf, size_t len)
 	do_comma_indent();
 	do_name(name);
 	if (!eb)
-		eb = fprintf(jsonfh, "\"") == -1;
+		eb = fprintf(jsonfh, "\"") < 0;
 	for (i = 0; i < len; i++)
 		if (!eb)
-			eb = fprintf(jsonfh, "%02x", *(data + i)) == -1;
+			eb = fprintf(jsonfh, "%02x", *(data + i)) < 0;
 	if (!eb)
-		eb = fprintf(jsonfh, "\"") == -1;
+		eb = fprintf(jsonfh, "\"") < 0;
 }
 
 void
@@ -217,10 +217,10 @@ json_do_bool(const char *name, int v)
 	do_name(name);
 	if (v) {
 		if (!eb)
-			eb = fprintf(jsonfh, "true") == -1;
+			eb = fprintf(jsonfh, "true") < 0;
 	} else {
 		if (!eb)
-			eb = fprintf(jsonfh, "false") == -1;
+			eb = fprintf(jsonfh, "false") < 0;
 	}
 }
 
@@ -230,7 +230,7 @@ json_do_uint(const char *name, unsigned long long v)
 	do_comma_indent();
 	do_name(name);
 	if (!eb)
-		eb = fprintf(jsonfh, "%llu", v) == -1;
+		eb = fprintf(jsonfh, "%llu", v) < 0;
 }
 
 void
@@ -239,7 +239,7 @@ json_do_int(const char *name, long long v)
 	do_comma_indent();
 	do_name(name);
 	if (!eb)
-		eb = fprintf(jsonfh, "%lld", v) == -1;
+		eb = fprintf(jsonfh, "%lld", v) < 0;
 }
 
 void
@@ -248,5 +248,5 @@ json_do_double(const char *name, double v)
 	do_comma_indent();
 	do_name(name);
 	if (!eb)
-		eb = fprintf(jsonfh, "%f", v) == -1;
+		eb = fprintf(jsonfh, "%f", v) < 0;
 }
