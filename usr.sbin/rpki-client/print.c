@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.37 2023/04/23 13:19:34 job Exp $ */
+/*	$OpenBSD: print.c,v 1.38 2023/04/26 18:17:50 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -690,7 +690,7 @@ aspa_implicit_afi(const struct aspa *a)
 {
 	size_t	i;
 	size_t	v4cnt = 0, v6cnt = 0;
-	
+
 	for (i = 0; i < a->providersz; i++) {
 		switch (a->providers[i].afi) {
 		case AFI_IPV4:
