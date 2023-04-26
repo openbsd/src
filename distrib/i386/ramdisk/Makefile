@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.16 2021/07/26 12:47:45 kn Exp $
+#	$OpenBSD: Makefile,v 1.17 2023/04/26 13:01:02 krw Exp $
 
 FS=		floppy${OSrev}.img
 FSSIZE=		2880
@@ -15,9 +15,6 @@ all: ${FS}
 ${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
-.ifdef LBA
-	fdisk -yi -l ${FSSIZE} -f ${DESTDIR}/usr/mdec/mbr `cat vnd`
-.endif
 	disklabel -w `cat vnd` ${FSDISKTYPE}
 	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
