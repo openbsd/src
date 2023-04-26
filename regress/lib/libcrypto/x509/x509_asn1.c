@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.7 2023/04/26 19:05:37 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.8 2023/04/26 21:30:12 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -228,6 +228,9 @@ main(void)
 	EVP_PKEY_free(pkey);
 	ret += x509_compare("X509_set_pubkey", a, der2, der2sz);
 	x509_cleanup(&a, &der2);
+
+	X509_free(x);
+	free(der);
 
 	if (ret)
 		return 1;
