@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.33 2023/04/26 16:32:41 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.34 2023/04/26 17:59:00 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -148,7 +148,10 @@ output_aspa(FILE *out, struct vap_tree *vaps)
 	struct vap	*v;
 	int		 first;
 
-	if (fprintf(out, "\n\t],\n\n\t\"provider_authorizations\": {\n"
+	if (excludeaspa)
+		return 0;
+
+	if (fprintf(out, ",\n\n\t\"provider_authorizations\": {\n"
 	    "\t\t\"ipv4\": [\n") < 0)
 		return -1;
 
@@ -233,6 +236,9 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 		    (long long)b->expires) < 0)
 			return -1;
 	}
+
+	if (fprintf(out, "\n\t]") < 0)
+		return -1;
 
 	if (output_aspa(out, vaps) < 0)
 		return -1;
