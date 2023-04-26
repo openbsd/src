@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_connect.3,v 1.16 2023/04/11 16:58:43 schwarze Exp $
+.\" $OpenBSD: BIO_s_connect.3,v 1.17 2023/04/26 15:03:02 schwarze Exp $
 .\" full merge up to: OpenSSL 0e474b8b Nov 1 15:45:49 2015 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2023 $
+.Dd $Mdocdate: April 26 2023 $
 .Dt BIO_S_CONNECT 3
 .Os
 .Sh NAME
@@ -352,18 +352,24 @@ are called internally to automatically copy the hostname, port,
 non-blocking I/O flag, and info callback from the original BIO object
 to the new one.
 .Pp
-.Fn BIO_set_conn_hostname ,
-.Fn BIO_set_conn_port ,
-.Fn BIO_set_conn_ip ,
-.Fn BIO_set_conn_int_port ,
-.Fn BIO_get_conn_hostname ,
-.Fn BIO_get_conn_port ,
-.Fn BIO_get_conn_ip ,
-.Fn BIO_get_conn_int_port ,
-.Fn BIO_set_nbio ,
+.Xr BIO_ctrl 3
+.Fa cmd
 and
-.Fn BIO_do_connect
-are macros.
+.Fa larg
+arguments correspond to macros as follows:
+.Bl -column BIO_C_DO_STATE_MACHINE larg BIO_get_conn_hostname(3) -offset 3n
+.It Fa cmd No constant        Ta Fa larg Ta corresponding macro
+.It Dv BIO_C_DO_STATE_MACHINE Ta 0       Ta Fn BIO_do_connect
+.It Dv BIO_C_GET_CONNECT      Ta 0       Ta Fn BIO_get_conn_hostname
+.It                           Ta 1       Ta Fn BIO_get_conn_port
+.It                           Ta 2       Ta Fn BIO_get_conn_ip
+.It                           Ta 3       Ta Fn BIO_get_conn_int_port
+.It Dv BIO_C_SET_CONNECT      Ta 0       Ta Fn BIO_set_conn_hostname
+.It                           Ta 1       Ta Fn BIO_set_conn_port
+.It                           Ta 2       Ta Fn BIO_set_conn_ip
+.It                           Ta 3       Ta Fn BIO_set_conn_int_port
+.It Dv BIO_C_SET_NBIO         Ta Fa n    Ta Fn BIO_set_nbio
+.El
 .Sh RETURN VALUES
 .Fn BIO_s_connect
 returns the connect BIO method.

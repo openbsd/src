@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_ctrl.3,v 1.19 2023/04/25 15:59:45 schwarze Exp $
+.\" $OpenBSD: BIO_ctrl.3,v 1.20 2023/04/26 15:03:02 schwarze Exp $
 .\" full merge up to: OpenSSL 24a535eaf Tue Sep 22 13:14:20 2020 +0100
 .\" selective merge up to: OpenSSL 0c5bc96f Tue Mar 15 13:57:22 2022 +0000
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 25 2023 $
+.Dd $Mdocdate: April 26 2023 $
 .Dt BIO_CTRL 3
 .Os
 .Sh NAME
@@ -354,6 +354,7 @@ The following
 .Fa cmd
 constants correspond to macros:
 .Bl -column BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT BIO_set_ssl_renegotiate_timeout(3)
+.It Fa cmd No constant                   Ta corresponding macro
 .It Dv BIO_C_DESTROY_BIO_PAIR            Ta Xr BIO_destroy_bio_pair 3
 .It Dv BIO_C_DO_STATE_MACHINE            Ta Xr BIO_do_handshake 3
 .It Dv BIO_C_FILE_SEEK                   Ta Fn BIO_seek
@@ -406,6 +407,19 @@ constants correspond to macros:
 .It Dv BIO_CTRL_SET_CALLBACK             Ta Fn BIO_set_info_callback
 .It Dv BIO_CTRL_SET_CLOSE                Ta Fn BIO_set_close
 .It Dv BIO_CTRL_WPENDING                 Ta Fn BIO_wpending
+.El
+.Pp
+Some
+.Fa cmd
+constants serve more than one macro each
+and are documented in the following manual pages:
+.Bl -column BIO_C_SET_BUFF_SIZE BIO_s_connect(3) -offset 3n
+.It Fa cmd No constant     Ta manual page
+.It Dv BIO_C_GET_CONNECT   Ta Xr BIO_s_connect 3
+.It Dv BIO_C_SET_ACCEPT    Ta Xr BIO_s_accept 3
+.It Dv BIO_C_SET_BUFF_SIZE Ta Xr BIO_f_buffer 3
+.It Dv BIO_C_SET_CONNECT   Ta Xr BIO_s_connect 3
+.It Dv BIO_C_SET_FILENAME  Ta Xr BIO_s_file 3
 .El
 .Sh RETURN VALUES
 The meaning of the return values of

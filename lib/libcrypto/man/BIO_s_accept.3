@@ -1,7 +1,24 @@
-.\"	$OpenBSD: BIO_s_accept.3,v 1.14 2023/04/11 16:58:43 schwarze Exp $
-.\"	OpenSSL c03726ca Thu Aug 27 12:28:08 2015 -0400
+.\" $OpenBSD: BIO_s_accept.3,v 1.15 2023/04/26 15:03:02 schwarze Exp $
+.\" full merge up to: OpenSSL c03726ca Thu Aug 27 12:28:08 2015 -0400
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2014, 2015 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -48,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2023 $
+.Dd $Mdocdate: April 26 2023 $
 .Dt BIO_S_ACCEPT 3
 .Os
 .Sh NAME
@@ -271,15 +288,21 @@ would block: the application should take appropriate action
 to wait until the underlying socket has accepted a connection
 and retry the call.
 .Pp
-.Fn BIO_set_accept_port ,
-.Fn BIO_get_accept_port ,
-.Fn BIO_set_nbio_accept ,
-.Fn BIO_set_accept_bios ,
-.Fn BIO_set_bind_mode ,
-.Fn BIO_get_bind_mode ,
+.Xr BIO_ctrl 3
+.Fa cmd
 and
-.Fn BIO_do_accept
-are macros.
+.Fa larg
+arguments correspond to macros as follows:
+.Bl -column BIO_C_DO_STATE_MACHINE larg BIO_get_accept_port(3) -offset 3n
+.It Fa cmd No constant        Ta Fa larg Ta corresponding macro
+.It Dv BIO_C_DO_STATE_MACHINE Ta 0       Ta Fn BIO_do_accept
+.It Dv BIO_C_GET_ACCEPT       Ta 0       Ta Fn BIO_get_accept_port
+.It Dv BIO_C_GET_BIND_MODE    Ta 0       Ta Fn BIO_get_bind_mode
+.It Dv BIO_C_SET_ACCEPT       Ta 0       Ta Fn BIO_set_accept_port
+.It                           Ta 1       Ta Fn BIO_set_nbio_accept
+.It                           Ta 2       Ta Fn BIO_set_accept_bios
+.It Dv BIO_C_SET_BIND_MODE    Ta Fa mode Ta Fn BIO_set_bind_mode
+.El
 .Sh RETURN VALUES
 When called on an accept BIO object,
 .Xr BIO_method_type 3

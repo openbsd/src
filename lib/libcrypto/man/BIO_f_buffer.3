@@ -1,7 +1,24 @@
-.\" $OpenBSD: BIO_f_buffer.3,v 1.14 2023/04/11 16:58:43 schwarze Exp $
+.\" $OpenBSD: BIO_f_buffer.3,v 1.15 2023/04/26 15:03:02 schwarze Exp $
 .\" full merge up to OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2010, 2015, 2016 The OpenSSL Project.
 .\" All rights reserved.
 .\"
@@ -49,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2023 $
+.Dd $Mdocdate: April 26 2023 $
 .Dt BIO_F_BUFFER 3
 .Os
 .Sh NAME
@@ -137,10 +154,6 @@ If
 .Fa num
 is larger than the current buffer size, the buffer is expanded.
 .Pp
-Except
-.Fn BIO_f_buffer ,
-these functions are implemented as macros.
-.Pp
 Buffering BIOs implement
 .Xr BIO_gets 3
 by using
@@ -170,6 +183,32 @@ and
 .Fn BIO_set_write_buffer_size
 are called internally to automatically copy both buffer sizes from the
 original BIO object to the new one.
+.Pp
+.Xr BIO_ctrl 3
+.Fa cmd
+arguments correspond to macros as follows:
+.Bl -column BIO_C_GET_BUFF_NUM_LINES BIO_get_buffer_num_lines() -offset 3n
+.It Fa cmd No constant          Ta corresponding macro
+.It Dv BIO_C_GET_BUFF_NUM_LINES Ta Fn BIO_get_buffer_num_lines
+.It Dv BIO_C_SET_BUFF_READ_DATA Ta Fn BIO_set_buffer_read_data
+.It Dv BIO_C_SET_BUFF_SIZE      Ta Fn BIO_set_buffer_size
+.El
+.Pp
+The
+.Fa cmd
+constant
+.Dv BIO_C_SET_BUFF_SIZE
+is special.
+It is also used for
+.Xr BIO_int_ctrl 3
+with the following
+.Fa iarg
+arguments:
+.Bl -column BIO_C_SET_BUFF_SIZE iarg BIO_set_write_buffer_size() -offset 3n
+.It Fa cmd No constant     Ta Fa iarg Ta corresponding macro
+.It Dv BIO_C_SET_BUFF_SIZE Ta 0       Ta Fn BIO_set_read_buffer_size
+.It                        Ta 1       Ta Fn BIO_set_write_buffer_size
+.El
 .Sh RETURN VALUES
 .Fn BIO_f_buffer
 returns the buffering BIO method.
