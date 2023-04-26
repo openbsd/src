@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.91 2023/04/26 16:32:41 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.92 2023/04/26 22:05:28 beck Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -312,7 +312,7 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
     const char *errstr)
 {
 	/* check that now is not before from */
-	time_t now = time(NULL);
+	time_t now = get_current_time();
 
 	if (mft == NULL) {
 		if (errstr == NULL)

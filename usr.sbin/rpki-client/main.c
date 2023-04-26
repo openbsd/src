@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.234 2023/04/26 16:32:41 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.235 2023/04/26 22:05:28 beck Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -74,6 +74,8 @@ int	rrdpon = 1;
 int	repo_timeout;
 time_t	deadline;
 
+int64_t  evaluation_time = X509_TIME_MIN;
+
 struct stats	 stats;
 
 struct fqdnlistentry {
@@ -122,6 +124,14 @@ entity_free(struct entity *ent)
 	free(ent->mftaki);
 	free(ent->data);
 	free(ent);
+}
+
+time_t
+get_current_time(void)
+{
+	if (evaluation_time > X509_TIME_MIN)
+		return (time_t) evaluation_time;
+	return time(NULL);
 }
 
 /*
@@ -963,7 +973,7 @@ main(int argc, char *argv[])
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	while ((c = getopt(argc, argv, "Ab:Bcd:e:fH:jmnorRs:S:t:T:vV")) != -1)
+	while ((c = getopt(argc, argv, "Ab:Bcd:e:fH:jmnoP:rRs:S:t:T:vV")) != -1)
 		switch (c) {
 		case 'A':
 			excludeaspa = 1;
@@ -1002,6 +1012,12 @@ main(int argc, char *argv[])
 			break;
 		case 'o':
 			outformats |= FORMAT_OPENBGPD;
+			break;
+		case 'P':
+			evaluation_time = strtonum(optarg, X509_TIME_MIN + 1,
+			    X509_TIME_MAX, &errs);
+			if (errs)
+				errx(1, "-P: time in seconds %s", errs);
 			break;
 		case 'R':
 			rrdpon = 0;
