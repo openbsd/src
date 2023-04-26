@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.5 2023/04/26 11:04:12 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.6 2023/04/26 11:06:32 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -52,7 +52,7 @@ x509_cleanup(X509 **x, unsigned char **der)
 }
 
 static void
-x509_set_integer(int (*f)(X509 *x, ASN1_INTEGER *ai), X509 **x, int i)
+x509_set_integer(int (*f)(X509 *, ASN1_INTEGER *), X509 **x, int i)
 {
 	ASN1_INTEGER *ai;
 
@@ -67,7 +67,7 @@ x509_set_integer(int (*f)(X509 *x, ASN1_INTEGER *ai), X509 **x, int i)
 }
 
 static void
-x509_set_name(int (*f)(X509 *x, X509_NAME *name), X509 **x,
+x509_set_name(int (*f)(X509 *, X509_NAME *), X509 **x,
     const unsigned char *n)
 {
 	X509_NAME *xn;
@@ -83,7 +83,7 @@ x509_set_name(int (*f)(X509 *x, X509_NAME *name), X509 **x,
 }
 
 static void
-x509_set_time(int (*f)(X509 *x, const ASN1_TIME *tm), X509 **x, int t)
+x509_set_time(int (*f)(X509 *, const ASN1_TIME *), X509 **x, int t)
 {
 	ASN1_TIME *at;
 
