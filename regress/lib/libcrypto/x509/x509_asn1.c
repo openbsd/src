@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.1 2023/04/26 08:58:03 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.2 2023/04/26 10:34:08 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -29,55 +29,73 @@
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 
-#define SETUP()							\
-	derp = der;						\
-	if ((a = d2i_X509(NULL, &derp, dersz)) == NULL)		\
-		errx(1, "d2i_X509");				\
-	if ((der2sz = i2d_X509(a, &der2)) <= 0)			\
-		errx(1, "i2d_X509");				\
-	der2p = der2;
+static void
+x509_setup(unsigned char **der, unsigned char **der2, X509 **x,
+    const unsigned char **cpder, const unsigned char **cpder2, long dersz,
+    long *der2sz)
+{
+	*cpder = *der;
+	if ((*x = d2i_X509(NULL, cpder, dersz)) == NULL)
+		errx(1, "d2i_X509");
+	if ((*der2sz = i2d_X509(*x, der2)) <= 0)
+		errx(1, "i2d_X509");
+	*cpder2 = *der2;
+}
 
-#define CLEANUP()						\
-	X509_free(a);						\
-	a = NULL;						\
-	free(der2);						\
-	der2 = NULL;
+static void
+x509_cleanup(X509 **x, unsigned char **der)
+{
+	X509_free(*x);
+	*x = NULL;
+	free(*der);
+	*der = NULL;
+}
 
-#define CLEANUPSETUP()						\
-	CLEANUP()						\
-	SETUP()
+static void
+x509_set_integer(int (*f)(X509 *x, ASN1_INTEGER *ai), X509 **x, int i)
+{
+	ASN1_INTEGER *ai;
 
-#define SETX509NAME(fname, value, cert)				\
-	if ((xn = X509_NAME_new()) == NULL)			\
-		err(1, NULL);					\
-	if (!X509_NAME_add_entry_by_txt(xn, "C", MBSTRING_ASC,	\
-	    (const unsigned char*) value, -1, -1, 0))		\
-		errx(1, "X509_NAME_add_entry_by_txt");		\
-	if (!fname(cert, xn))					\
-		errx(1, "fname");				\
-	X509_NAME_free(xn);					\
-	xn = NULL;
+	if ((ai = ASN1_INTEGER_new()) == NULL)
+		err(1, NULL);
+	if (!ASN1_INTEGER_set(ai, i))
+		errx(1, "ASN1_INTEGER_set");
+	if (!(*f)(*x, ai))
+		err(1, NULL);
 
-#define SETASN1TIME(fname, value, cert)				\
-	if ((at = ASN1_TIME_new()) == NULL)			\
-		err(1, NULL);					\
-	if ((at = X509_gmtime_adj(NULL, value)) == NULL)	\
-		errx(1, "X509_gmtime_adj");			\
-	if (!fname(cert, at))					\
-		errx(1, "fname");				\
-	ASN1_TIME_free(at);					\
-	at = NULL;
+	ASN1_INTEGER_free(ai);
+}
 
-#define SETINTEGER(fname, value, cert)				\
-	if ((ai = ASN1_INTEGER_new()) == NULL)			\
-		err(1, NULL);					\
-	if (!ASN1_INTEGER_set(ai, value))			\
-		errx(1, "ASN1_INTEGER_set");			\
-	if (!fname(cert, ai))					\
-		errx(1, "fname");				\
-	ASN1_INTEGER_free(ai);					\
-	ai = NULL;
+static void
+x509_set_name(int (*f)(X509 *x, X509_NAME *name), X509 **x,
+    const unsigned char *n)
+{
+	X509_NAME *xn;
 
+	if ((xn = X509_NAME_new()) == NULL)
+		err(1, NULL);
+	if (!X509_NAME_add_entry_by_txt(xn, "C", MBSTRING_ASC, n, -1, -1, 0))
+		errx(1, "X509_NAME_add_entry_by_txt");
+	if (!(*f)(*x, xn))
+		err(1, NULL);
+
+	X509_NAME_free(xn);
+}
+
+static void
+x509_set_time(int (*f)(X509 *x, const ASN1_TIME *tm), X509 **x, int t)
+{
+	ASN1_TIME *at;
+
+	if ((at = ASN1_TIME_new()) == NULL)
+		err(1, NULL);
+	if ((at = X509_gmtime_adj(NULL, t)) == NULL)
+		errx(1, "X509_gmtime_adj");
+	if (!(*f)(*x, at))
+		err(1, NULL);
+
+	ASN1_TIME_free(at);
+}
 
 static int
 x509_compare(char *f, X509 *a, const unsigned char *der, long dersz)
@@ -105,13 +123,10 @@ x509_compare(char *f, X509 *a, const unsigned char *der, long dersz)
 int
 main(void)
 {
-	ASN1_INTEGER *ai = NULL;
-	ASN1_TIME *at = NULL;
 	EVP_PKEY *pkey = NULL;
 	EVP_PKEY_CTX *pkey_ctx = NULL;
-	X509_NAME *xn = NULL;
 	X509 *a, *x;
-	const unsigned char *derp, *der2p;
+	const unsigned char *cpder, *cpder2;
 	unsigned char *der = NULL, *der2 = NULL;
 	long dersz, der2sz;
 	int ret = 0;
@@ -130,11 +145,11 @@ main(void)
 	if (X509_set_pubkey(x, pkey) != 1)
 		errx(1, "X509_set_pubkey");
 
-	SETINTEGER(X509_set_serialNumber, 1, x)
-	SETASN1TIME(X509_set_notBefore, 0, x)
-	SETASN1TIME(X509_set_notAfter, 60, x)
-	SETX509NAME(X509_set_issuer_name, "NL", x)
-	SETX509NAME(X509_set_subject_name, "BE", x)
+	x509_set_integer(X509_set_serialNumber, &x, 1);
+	x509_set_time(X509_set_notBefore, &x, 0);
+	x509_set_time(X509_set_notAfter, &x, 60);
+	x509_set_name(X509_set_issuer_name, &x, "NL");
+	x509_set_name(X509_set_subject_name, &x, "BE");
 
 	// one time creation of the original DER
 	if (!X509_sign(x, pkey, EVP_sha256()))
@@ -142,54 +157,55 @@ main(void)
 	if ((dersz = i2d_X509(x, &der)) <= 0)
 		errx(1, "i2d_X509");
 
-	SETUP()
-
-	// test X509_set_version
+	/* test X509_set_version */
+	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
 	if (!X509_set_version(a, 2))
 		errx(1, "X509_set_version");
-	ret += x509_compare("X509_set_version", a, der2p, der2sz);
+	ret += x509_compare("X509_set_version", a, cpder2, der2sz);
+	x509_cleanup(&a, &der2);
 
-	CLEANUPSETUP()
+	/* test X509_set_serialNumber */
+	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_set_integer(X509_set_serialNumber, &a, 2);
+	ret += x509_compare("X509_set_serialNumber", a, cpder2, der2sz);
+	x509_cleanup(&a, &der2);
 
-	// test X509_set_serialNumber
-	SETINTEGER(X509_set_serialNumber, 2, a)
-	ret += x509_compare("X509_set_serialNumber", a, der2p, der2sz);
+	/* test X509_set_issuer_name */
+	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_set_name(X509_set_issuer_name, &a, "DE");
+	ret += x509_compare("X509_set_issuer_name", a, cpder2, der2sz);
+	x509_cleanup(&a, &der2);
 
-	CLEANUPSETUP()
+	/* test X509_set_subject_name */
+	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_set_name(X509_set_subject_name, &a, "FR");
+	ret += x509_compare("X509_set_subject_name", a, cpder2, der2sz);
+	x509_cleanup(&a, &der2);
 
-	// test X509_set_issuer_name
-	SETX509NAME(X509_set_issuer_name, "DE", a)
-	ret += x509_compare("X509_set_issuer_name", a, der2p, der2sz);
+	/* test X509_set_notBefore */
+	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_set_time(X509_set_notBefore, &a, 120);
+	ret += x509_compare("X509_set_notBefore", a, cpder2, der2sz);
+	x509_cleanup(&a, &der2);
 
-	CLEANUPSETUP()
+	/* test X509_set_notAfter */
+	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
+	x509_set_time(X509_set_notAfter, &a, 180);
+	ret += x509_compare("X509_set_notAfter", a, cpder2, der2sz);
+	x509_cleanup(&a, &der2);
 
-	// test X509_set_subject_name
-	SETX509NAME(X509_set_subject_name, "FR", a)
-	ret += x509_compare("X509_set_subject_name", a, der2p, der2sz);
-
-	CLEANUPSETUP()
-
-	// test X509_set_notBefore
-	SETASN1TIME(X509_set_notBefore, 120, a)
-	ret += x509_compare("X509_set_notBefore", a, der2p, der2sz);
-
-	CLEANUPSETUP()
-
-	// test X509_set_notAfter
-	SETASN1TIME(X509_set_notAfter, 180, a)
-	ret += x509_compare("X509_set_notAfter", a, der2p, der2sz);
-
-	CLEANUPSETUP()
-
-	// test X509_set_pubkey
+	/* test X509_set_pubkey */
+	x509_setup(&der, &der2, &a, &cpder, &cpder2, dersz, &der2sz);
 	if (EVP_PKEY_keygen(pkey_ctx, &pkey) <= 0)
 		errx(1, "EVP_PKEY_keygen");
 	if (X509_set_pubkey(a, pkey) != 1)
 		errx(1, "X509_set_pubkey");
-	ret += x509_compare("X509_set_pubkey", a, der2p, der2sz);
-
-	CLEANUP()
+	EVP_PKEY_CTX_free(pkey_ctx);
+	EVP_PKEY_free(pkey);
+	ret += x509_compare("X509_set_pubkey", a, cpder2, der2sz);
+	x509_cleanup(&a, &der2);
 
 	if (ret)
 		return 1;
+	return 0;
 }
