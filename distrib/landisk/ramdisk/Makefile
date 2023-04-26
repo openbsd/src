@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 2021/07/26 12:47:45 kn Exp $
+#	$OpenBSD: Makefile,v 1.35 2023/04/26 14:42:27 krw Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		5120
@@ -21,7 +21,7 @@ ${FS}: bsd.gz
 	fdisk -i -y `cat vnd`
 	fdisk -u -y -f ${DESTDIR}/usr/mdec/mbr `cat vnd`
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} -b 4096 -f 512 /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	installboot -vr ${MOUNT_POINT} `cat vnd` \
 	    ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/boot

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.17 2023/04/26 13:01:02 krw Exp $
+#	$OpenBSD: Makefile,v 1.18 2023/04/26 14:42:27 krw Exp $
 
 FS=		floppy${OSrev}.img
 FSSIZE=		2880
@@ -16,7 +16,7 @@ ${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
 	vnconfig -v ${FS} > vnd
 	disklabel -w `cat vnd` ${FSDISKTYPE}
-	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} /dev/r`cat vnd`a
+	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} -b 4096 -f 512 /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	objcopy -S -R .comment ${DESTDIR}/usr/mdec/fdboot ${.OBJDIR}/boot
 	installboot -v -r ${MOUNT_POINT} `cat vnd` \
