@@ -1,3 +1,4 @@
+/*	$OpenBSD: x509_policy.c,v 1.9 2023/04/26 20:52:11 tb Exp $ */
 /* Copyright (c) 2022, Google Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
