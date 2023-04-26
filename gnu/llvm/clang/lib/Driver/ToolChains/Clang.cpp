@@ -6017,6 +6017,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   } else if (Triple.isOSOpenBSD() && Triple.getArch() == llvm::Triple::x86_64) {
     // Emit IBT endbr64 instructions by default
     CmdArgs.push_back("-fcf-protection=branch");
+    // jump-table can generate indirect jumps, which are not permitted
+    CmdArgs.push_back("-fno-jump-tables");
   }
 
   // Forward -f options with positive and negative forms; we translate these by
