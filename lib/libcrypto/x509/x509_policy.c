@@ -139,6 +139,29 @@ DECLARE_STACK_OF(X509_POLICY_LEVEL)
 #define sk_X509_POLICY_LEVEL_sort(st) SKM_sk_sort(X509_POLICY_LEVEL, (st))
 #define sk_X509_POLICY_LEVEL_is_sorted(st) SKM_sk_is_sorted(X509_POLICY_LEVEL, (st))
 
+/*
+ * Don't look Ethel, but you would really not want to look if we did
+ * this the OpenSSL way either, and we are not using this boringsslism
+ * anywhere else.
+ */
+void
+sk_X509_POLICY_NODE_delete_if(STACK_OF(X509_POLICY_NODE) *nodes,
+    int (*delete_if)(X509_POLICY_NODE *, void *),
+    void *data)
+{
+	_STACK *sk = (_STACK *)nodes;
+	X509_POLICY_NODE *node;
+	int new_num = 0;
+	int i;
+
+	for (i = 0; i < sk_X509_POLICY_NODE_num(nodes); i++) {
+		node = sk_X509_POLICY_NODE_value(nodes, i);
+		if (!delete_if(node, data))
+			sk->data[new_num++] = (char *)node;
+	}
+	sk->num = new_num;
+}
+
 static int is_any_policy(const ASN1_OBJECT *obj) {
   return OBJ_obj2nid(obj) == NID_any_policy;
 }
