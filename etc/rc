@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.570 2023/01/25 10:53:15 asou Exp $
+#	$OpenBSD: rc,v 1.571 2023/04/26 14:28:09 phessler Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -447,7 +447,7 @@ if [[ $pf != NO ]]; then
 	if ifconfig lo0 inet6 >/dev/null 2>&1; then
 		RULES="$RULES
 		pass out inet6 proto icmp6 all icmp6-type neighbrsol
-		pass in inet6 proto icmp6 all icmp6-type neighbradv
+		pass inet6 proto icmp6 all icmp6-type neighbradv no state
 		pass out inet6 proto icmp6 all icmp6-type routersol
 		pass in inet6 proto icmp6 all icmp6-type routeradv
 		pass out inet6 proto udp from any port dhcpv6-client to any port dhcpv6-server
