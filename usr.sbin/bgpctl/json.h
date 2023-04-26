@@ -1,4 +1,4 @@
-/*	$OpenBSD: json.h,v 1.5 2023/04/26 19:14:54 claudio Exp $ */
+/*	$OpenBSD: json.h,v 1.6 2023/04/26 20:53:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -19,15 +19,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-void json_do_start(FILE *);
-void json_do_finish(void);
-void json_do_array(const char *);
-void json_do_object(const char *);
-void json_do_end(void);
-void json_do_printf(const char *, const char *, ...)
-	__attribute__((__format__ (printf, 2, 3)));
-void json_do_hexdump(const char *, void *, size_t);
-void json_do_bool(const char *, int);
-void json_do_uint(const char *, unsigned long long);
-void json_do_int(const char *, long long);
-void json_do_double(const char *, double);
+void	json_do_start(FILE *);
+int	json_do_finish(void);
+void	json_do_array(const char *);
+void	json_do_object(const char *);
+void	json_do_end(void);
+void	json_do_printf(const char *, const char *, ...)
+	    __attribute__((__format__ (printf, 2, 3)));
+void	json_do_hexdump(const char *, void *, size_t);
+void	json_do_bool(const char *, int);
+void	json_do_uint(const char *, unsigned long long);
+void	json_do_int(const char *, long long);
+void	json_do_double(const char *, double);
