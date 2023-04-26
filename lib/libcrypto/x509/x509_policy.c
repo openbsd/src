@@ -15,15 +15,14 @@
 #include <openssl/x509.h>
 
 #include <assert.h>
+#include <string.h>
 
-#include <openssl/mem.h>
-#include <openssl/obj.h>
+#include <openssl/objects.h>
 #include <openssl/stack.h>
 #include <openssl/x509v3.h>
 
-#include "../internal.h"
-#include "../x509v3/internal.h"
-#include "internal.h"
+#include "x509_internal.h"
+#include "x509_local.h"
 
 
 // This file computes the X.509 policy tree, as described in RFC 5280, section
