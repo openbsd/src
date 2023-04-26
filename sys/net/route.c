@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.416 2023/01/28 10:17:16 mvs Exp $	*/
+/*	$OpenBSD: route.c,v 1.417 2023/04/26 15:40:33 kn Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -1341,7 +1341,7 @@ rt_ifa_purge_walker(struct rtentry *rt, void *vifa, unsigned int rtableid)
 }
 
 /*
- * Route timer routines.  These routes allow functions to be called
+ * Route timer routines.  These routines allow functions to be called
  * for various routes at any time.  This is useful in supporting
  * path MTU discovery and redirect route deletion.
  *
