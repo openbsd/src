@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.452 2023/04/21 10:48:33 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.453 2023/04/26 18:14:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -186,6 +186,8 @@ static int	 push_prefix(struct bgpd_addr *, uint8_t);
 static int	 push_binop(uint8_t, long long);
 static int	 push_unary_numop(enum comp_ops, long long);
 static int	 push_binary_numop(enum comp_ops, long long, long long);
+static int	 geticmptypebyname(char *, uint8_t);
+static int	 geticmpcodebyname(u_long, char *, uint8_t);
 
 static struct bgpd_config	*conf;
 static struct network_head	*netconf;
