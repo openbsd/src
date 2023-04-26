@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.67 2023/03/08 18:05:05 cheloha Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.68 2023/04/26 10:52:55 mlarkin Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -171,7 +171,6 @@ lapic_cpu_number(void)
 	return i82489_cpu_number();
 }
 
-
 void
 lapic_map(paddr_t lapic_base)
 {
@@ -292,7 +291,7 @@ lapic_set_lvt(void)
 		 * the local APIC timer dead, so we disable it by reading
 		 * the Interrupt Pending Message register and clearing both
 		 * C1eOnCmpHalt (bit 28) and SmiOnCmpHalt (bit 27).
-		 * 
+		 *
 		 * Reference:
 		 *   "BIOS and Kernel Developer's Guide for AMD NPT
 		 *    Family 0Fh Processors"
