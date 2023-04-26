@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_cpols.c,v 1.10 2023/04/26 20:43:32 tb Exp $ */
+/* $OpenBSD: x509_cpols.c,v 1.11 2023/04/26 20:54:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -222,7 +222,6 @@ static const ASN1_ADB_TABLE POLICYQUALINFO_adbtbl[] = {
 			.field_name = "d.cpsuri",
 			.item = &ASN1_IA5STRING_it,
 		},
-	
 	},
 	{
 		.value = NID_id_qt_unotice,
@@ -233,7 +232,6 @@ static const ASN1_ADB_TABLE POLICYQUALINFO_adbtbl[] = {
 			.field_name = "d.usernotice",
 			.item = &USERNOTICE_it,
 		},
-	
 	},
 };
 
