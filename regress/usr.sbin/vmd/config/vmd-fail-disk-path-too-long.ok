@@ -1,2 +1,0 @@
-disk path too long
-5: failed to parse disks: some/relativepath/somewhere/abcdefghijklmnopqrstuvwxyz0123456789/abcdefghijklmnopqrstuvwxyz0123456789/abcdefghijklmnopqrstuvwxyz0123456789/bsd.img
