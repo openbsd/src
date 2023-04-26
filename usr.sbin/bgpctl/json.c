@@ -1,4 +1,4 @@
-/*	$OpenBSD: json.c,v 1.4 2023/04/26 17:39:20 tb Exp $ */
+/*	$OpenBSD: json.c,v 1.5 2023/04/26 19:14:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -33,21 +33,22 @@ enum json_type {
 	OBJECT
 };
 
-struct json_stack {
+static struct json_stack {
 	const char	*name;
 	unsigned int	count;
 	enum json_type	type;
 } stack[JSON_MAX_STACK];
 
-char indent[JSON_MAX_STACK + 1];
-int level;
+static char indent[JSON_MAX_STACK + 1];
+static int level;
+static FILE *jsonfh;
 
 static void
 do_comma_indent(void)
 {
 	if (stack[level].count++ > 0)
-		printf(",\n");
-	printf("\t%.*s", level, indent);
+		fprintf(jsonfh, ",\n");
+	fprintf(jsonfh, "\t%.*s", level, indent);
 }
 
 static void
@@ -55,7 +56,7 @@ do_name(const char *name)
 {
 	if (stack[level].type == ARRAY)
 		return;
-	printf("\"%s\": ", name);
+	fprintf(jsonfh, "\"%s\": ", name);
 }
 
 static int
@@ -73,14 +74,15 @@ do_find(enum json_type type, const char *name)
 }
 
 void
-json_do_start(void)
+json_do_start(FILE *fh)
 {
 	memset(indent, '\t', JSON_MAX_STACK);
 	memset(stack, 0, sizeof(stack));
 	level = 0;
 	stack[level].type = START;
+	jsonfh = fh;
 
-	printf("{\n");
+	fprintf(jsonfh, "{\n");
 }
 
 void
@@ -88,7 +90,7 @@ json_do_finish(void)
 {
 	while (level > 0)
 		json_do_end();
-	printf("\n}\n");
+	fprintf(jsonfh, "\n}\n");
 }
 
 void
@@ -108,7 +110,7 @@ json_do_array(const char *name)
 
 	do_comma_indent();
 	do_name(name);
-	printf("[\n");
+	fprintf(jsonfh, "[\n");
 
 	if (++level >= JSON_MAX_STACK)
 		errx(1, "json stack too deep");
@@ -131,7 +133,7 @@ json_do_object(const char *name)
 
 	do_comma_indent();
 	do_name(name);
-	printf("{\n");
+	fprintf(jsonfh, "{\n");
 
 	if (++level >= JSON_MAX_STACK)
 		errx(1, "json stack too deep");
@@ -145,9 +147,9 @@ void
 json_do_end(void)
 {
 	if (stack[level].type == ARRAY)
-		printf("\n%.*s]", level, indent);
+		fprintf(jsonfh, "\n%.*s]", level, indent);
 	else if (stack[level].type == OBJECT)
-		printf("\n%.*s}", level, indent);
+		fprintf(jsonfh, "\n%.*s}", level, indent);
 	else
 		errx(1, "json bad stack state");
 
@@ -169,11 +171,11 @@ json_do_printf(const char *name, const char *fmt, ...)
 	do_comma_indent();
 
 	do_name(name);
-	printf("\"");
+	fprintf(jsonfh, "\"");
 	va_start(ap, fmt);
-	vprintf(fmt, ap);
+	vfprintf(jsonfh, fmt, ap);
 	va_end(ap);
-	printf("\"");
+	fprintf(jsonfh, "\"");
 }
 
 void
@@ -184,10 +186,10 @@ json_do_hexdump(const char *name, void *buf, size_t len)
 
 	do_comma_indent();
 	do_name(name);
-	printf("\"");
+	fprintf(jsonfh, "\"");
 	for (i = 0; i < len; i++)
-		printf("%02x", *(data+i));
-	printf("\"");
+		fprintf(jsonfh, "%02x", *(data + i));
+	fprintf(jsonfh, "\"");
 }
 
 void
@@ -196,9 +198,9 @@ json_do_bool(const char *name, int v)
 	do_comma_indent();
 	do_name(name);
 	if (v)
-		printf("true");
+		fprintf(jsonfh, "true");
 	else
-		printf("false");
+		fprintf(jsonfh, "false");
 }
 
 void
@@ -206,7 +208,7 @@ json_do_uint(const char *name, unsigned long long v)
 {
 	do_comma_indent();
 	do_name(name);
-	printf("%llu", v);
+	fprintf(jsonfh, "%llu", v);
 }
 
 void
@@ -214,7 +216,7 @@ json_do_int(const char *name, long long v)
 {
 	do_comma_indent();
 	do_name(name);
-	printf("%lld", v);
+	fprintf(jsonfh, "%lld", v);
 }
 
 void
@@ -222,5 +224,5 @@ json_do_double(const char *name, double v)
 {
 	do_comma_indent();
 	do_name(name);
-	printf("%f", v);
+	fprintf(jsonfh, "%f", v);
 }

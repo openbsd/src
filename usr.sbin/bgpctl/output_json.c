@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.32 2023/04/21 10:49:01 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.33 2023/04/26 19:14:54 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -34,7 +34,7 @@
 static void
 json_head(struct parse_result *res)
 {
-	json_do_start();
+	json_do_start(stdout);
 }
 
 static void
