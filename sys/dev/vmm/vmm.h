@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.h,v 1.1 2023/04/26 15:11:21 mlarkin Exp $ */
+/* $OpenBSD: vmm.h,v 1.2 2023/04/26 16:13:19 mlarkin Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -20,6 +20,78 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifndef DEV_VMM_H
+#define DEV_VMM_H
+
+struct vm_mem_range {
+	paddr_t vmr_gpa;
+	vaddr_t vmr_va;
+	size_t  vmr_size;
+	int     vmr_type;
+#define VM_MEM_RAM		0	/* Presented as usable system memory. */
+#define VM_MEM_RESERVED		1	/* Reserved for BIOS, etc. */
+#define VM_MEM_MMIO		2	/* Special region for device mmio. */
+};
+
+struct vm_create_params {
+/* Input parameters to VMM_IOC_CREATE */
+	size_t			vcp_nmemranges;
+	size_t			vcp_ncpus;
+	struct vm_mem_range	vcp_memranges[VMM_MAX_MEM_RANGES];
+	char			vcp_name[VMM_MAX_NAME_LEN];
+
+        /* Output parameter from VMM_IOC_CREATE */
+        uint32_t		vcp_id;
+};
+
+struct vm_info_result {
+	/* Output parameters from VMM_IOC_INFO */
+	size_t		vir_memory_size;
+	size_t		vir_used_size;
+	size_t		vir_ncpus;
+	uint8_t		vir_vcpu_state[VMM_MAX_VCPUS_PER_VM];
+	pid_t		vir_creator_pid;
+	uint32_t	vir_id;
+	char		vir_name[VMM_MAX_NAME_LEN];
+};
+
+struct vm_info_params {
+	/* Input parameters to VMM_IOC_INFO */
+	size_t			 vip_size;	/* Output buffer size */
+
+	/* Output Parameters from VMM_IOC_INFO */
+	size_t			 vip_info_ct;	/* # of entries returned */
+	struct vm_info_result	*vip_info;	/* Output buffer */
+};
+
+struct vm_terminate_params {
+	/* Input parameters to VMM_IOC_TERM */
+	uint32_t		vtp_vm_id;
+};
+
+struct vm_resetcpu_params {
+	/* Input parameters to VMM_IOC_RESETCPU */
+	uint32_t		vrp_vm_id;
+	uint32_t		vrp_vcpu_id;
+	struct vcpu_reg_state	vrp_init_state;
+};
+
+/* IOCTL definitions */
+#define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
+#define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
+#define VMM_IOC_INFO _IOWR('V', 3, struct vm_info_params) /* Get VM Info */
+#define VMM_IOC_TERM _IOW('V', 4, struct vm_terminate_params) /* Terminate VM */
+#define VMM_IOC_RESETCPU _IOW('V', 5, struct vm_resetcpu_params) /* Reset */
+#define VMM_IOC_READREGS _IOWR('V', 7, struct vm_rwregs_params) /* Get regs */
+#define VMM_IOC_WRITEREGS _IOW('V', 8, struct vm_rwregs_params) /* Set regs */
+/* Get VM params */
+#define VMM_IOC_READVMPARAMS _IOWR('V', 9, struct vm_rwvmparams_params)
+/* Set VM params */
+#define VMM_IOC_WRITEVMPARAMS _IOW('V', 10, struct vm_rwvmparams_params)
+
+
+#ifdef _KERNEL
+
 /* #define VMM_DEBUG */
 
 #ifdef VMM_DEBUG
@@ -33,16 +105,6 @@ enum {
 	VCPU_STATE_REQTERM,
 	VCPU_STATE_TERMINATED,
 	VCPU_STATE_UNKNOWN,
-};
-
-struct vm_mem_range {
-	paddr_t vmr_gpa;
-	vaddr_t vmr_va;
-	size_t  vmr_size;
-	int     vmr_type;
-#define VM_MEM_RAM		0	/* Presented as usable system memory. */
-#define VM_MEM_RESERVED		1	/* Reserved for BIOS, etc. */
-#define VM_MEM_MMIO		2	/* Special region for device mmio. */
 };
 
 /*
@@ -116,62 +178,6 @@ struct vmm_softc {
 	uint8_t			vpids[512];	/* [p] bitmap of VPID/ASIDs */
 };
 
-struct vm_create_params {
-/* Input parameters to VMM_IOC_CREATE */
-	size_t			vcp_nmemranges;
-	size_t			vcp_ncpus;
-	struct vm_mem_range	vcp_memranges[VMM_MAX_MEM_RANGES];
-	char			vcp_name[VMM_MAX_NAME_LEN];
-
-        /* Output parameter from VMM_IOC_CREATE */
-        uint32_t		vcp_id;
-};
-
-struct vm_info_result {
-	/* Output parameters from VMM_IOC_INFO */
-	size_t		vir_memory_size;
-	size_t		vir_used_size;
-	size_t		vir_ncpus;
-	uint8_t		vir_vcpu_state[VMM_MAX_VCPUS_PER_VM];
-	pid_t		vir_creator_pid;
-	uint32_t	vir_id;
-	char		vir_name[VMM_MAX_NAME_LEN];
-};
-
-struct vm_info_params {
-	/* Input parameters to VMM_IOC_INFO */
-	size_t			 vip_size;	/* Output buffer size */
-
-	/* Output Parameters from VMM_IOC_INFO */
-	size_t			 vip_info_ct;	/* # of entries returned */
-	struct vm_info_result	*vip_info;	/* Output buffer */
-};
-
-struct vm_terminate_params {
-	/* Input parameters to VMM_IOC_TERM */
-	uint32_t		vtp_vm_id;
-};
-
-struct vm_resetcpu_params {
-	/* Input parameters to VMM_IOC_RESETCPU */
-	uint32_t		vrp_vm_id;
-	uint32_t		vrp_vcpu_id;
-	struct vcpu_reg_state	vrp_init_state;
-};
-
-/* IOCTL definitions */
-#define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
-#define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
-#define VMM_IOC_INFO _IOWR('V', 3, struct vm_info_params) /* Get VM Info */
-#define VMM_IOC_TERM _IOW('V', 4, struct vm_terminate_params) /* Terminate VM */
-#define VMM_IOC_RESETCPU _IOW('V', 5, struct vm_resetcpu_params) /* Reset */
-#define VMM_IOC_READREGS _IOWR('V', 7, struct vm_rwregs_params) /* Get regs */
-#define VMM_IOC_WRITEREGS _IOW('V', 8, struct vm_rwregs_params) /* Set regs */
-/* Get VM params */
-#define VMM_IOC_READVMPARAMS _IOWR('V', 9, struct vm_rwvmparams_params)
-/* Set VM params */
-#define VMM_IOC_WRITEVMPARAMS _IOW('V', 10, struct vm_rwvmparams_params)
-
 int vmm_probe(struct device *, void *, void *);
 int vmm_activate(struct device *, int);
 void vmm_attach(struct device *, struct device *,  void *);
@@ -189,3 +195,5 @@ int vm_terminate(struct vm_terminate_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
 int vcpu_must_stop(struct vcpu *);
 
+#endif /* _KERNEL */
+#endif /* DEV_VMM_H */
