@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.403 2023/02/18 15:22:40 miod Exp $	*/
+/*	$OpenBSD: editor.c,v 1.404 2023/04/27 14:19:28 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -180,7 +180,6 @@ int	alignpartition(struct disklabel *, int, u_int64_t, u_int64_t, int);
 
 static u_int64_t starting_sector;
 static u_int64_t ending_sector;
-static int expert;
 static int resizeok;
 
 /*
@@ -242,9 +241,8 @@ editor(int f)
 
 	puts("Label editor (enter '?' for help at any prompt)");
 	for (;;) {
-		fprintf(stdout, "%s%s%c ", dkname,
-		    (memcmp(&lab, &newlab, sizeof(newlab)) == 0) ? "" : "*",
-		    (expert == 0) ? '>' : '#');
+		fprintf(stdout, "%s%s> ", dkname,
+		    (memcmp(&lab, &newlab, sizeof(newlab)) == 0) ? "" : "*");
 		if (fgets(buf, sizeof(buf), stdin) == NULL) {
 			putchar('\n');
 			buf[0] = 'q';
@@ -276,12 +274,11 @@ editor(int f)
 				warn("DIOCGPDINFO");
 				newlab = lastlabel;
 			} else {
-				int oquiet = quiet, oexpert = expert;
+				int oquiet = quiet;
 				aflag = 1;
-				quiet = expert = 0;
+				quiet = 0;
 				editor_allocspace(&newlab);
 				quiet = oquiet;
-				expert = oexpert;
 			}
 			break;
 		case 'a':
@@ -481,12 +478,6 @@ editor(int f)
 				dflag = aflag = 0;
 				newlab = lab; /* lab now has UID info */
 			}
-			break;
-
-		case 'X':
-			expert = !expert;
-			printf("%s expert mode\n", expert ? "Entering" :
-			    "Exiting");
 			break;
 
 		case 'x':
@@ -1558,9 +1549,9 @@ editor_help(void)
 " d [part] - delete partition          U        - undo all changes\n"
 " e        - edit type and label name  u        - undo last change\n"
 " i        - modify disklabel UID      w        - write label to disk\n"
-" l [unit] - print disk label header   X        - toggle expert mode\n"
-" M        - disklabel(8) man page     x        - exit & lose changes\n"
-" m [part] - modify partition          z        - delete all partitions\n"
+" l [unit] - print disk label header   x        - exit & lose changes\n"
+" M        - disklabel(8) man page     z        - delete all partitions\n"
+" m [part] - modify partition\n"
 "\n"
 "Suffixes can be used to indicate units other than sectors:\n"
 " 'b' (bytes), 'k' (kilobytes), 'm' (megabytes), 'g' (gigabytes) 't' (terabytes)\n"
@@ -1712,9 +1703,6 @@ get_offset(struct disklabel *lp, int partno)
 		return (1);
 	}
 
-	if (expert == 1 && quiet == 0 && ui != DL_GETPOFFSET(pp))
-		printf("offset rounded to sector %llu\n", DL_GETPOFFSET(pp));
-
 	return (0);
 }
 
@@ -1746,16 +1734,12 @@ get_size(struct disklabel *lp, int partno)
 		return (1);
 	}
 
-	if (expert == 1 && quiet == 0 && ui != DL_GETPSIZE(pp))
-		printf("size rounded to %llu sectors\n", DL_GETPSIZE(pp));
-
 	return (0);
 }
 
 int
 get_cpg(struct disklabel *lp, int partno)
 {
-	u_int64_t ui;
 	struct partition *pp = &lp->d_partitions[partno];
 
 	if (pp->p_fstype != FS_BSDFFS)
@@ -1764,20 +1748,6 @@ get_cpg(struct disklabel *lp, int partno)
 	if (pp->p_cpg == 0)
 		pp->p_cpg = 1;
 
-	if (expert == 0)
-		return (0);
-
-	for (;;) {
-		ui = getnumber("cpg", "Size of partition in fs blocks.",
-		    pp->p_cpg, USHRT_MAX);
-		if (ui == CMD_ABORTED)
-			return (1);
-		else if (ui == CMD_BADVALUE)
-			;	/* Try again. */
-		else
-			break;
-	}
-	pp->p_cpg = ui;
 	return (0);
 }
 
@@ -1785,7 +1755,7 @@ int
 get_fsize(struct disklabel *lp, int partno)
 {
 	struct partition *pp = &lp->d_partitions[partno];
-	u_int64_t ui, bytes;
+	u_int64_t bytes;
 	u_int32_t frag, fsize;
 
 	if (pp->p_fstype != FS_BSDFFS)
@@ -1808,37 +1778,14 @@ get_fsize(struct disklabel *lp, int partno)
 		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fsize, frag);
 	}
 
-	if (expert == 0)
-		return (0);
-
-	for (;;) {
-		ui = getnumber("fragment size",
-		    "Size of ffs block fragments. A multiple of the disk "
-		    "sector-size.", fsize, UINT32_MAX);
-		if (ui == CMD_ABORTED)
-			return (1);
-		else if (ui == CMD_BADVALUE)
-			;	/* Try again. */
-		else if (ui < lp->d_secsize || (ui % lp->d_secsize) != 0)
-			fprintf(stderr, "Error: fragment size must be a "
-			    "multiple of the disk sector size (%d)\n",
-			    lp->d_secsize);
-		else
-			break;
-	}
-	if (ui == 0)
-		puts("Zero fragment size implies zero block size");
-	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(ui, frag);
 	return (0);
 }
 
 int
 get_bsize(struct disklabel *lp, int partno)
 {
-	u_int64_t ui, frag, fsize;
 	struct partition opp, *pp = &lp->d_partitions[partno];
 	u_int64_t offsetalign, sizealign;
-	char *p;
 
 	if (pp->p_fstype != FS_BSDFFS)
 		return (0);
@@ -1847,50 +1794,10 @@ get_bsize(struct disklabel *lp, int partno)
 	if (pp->p_fragblock == 0)
 		return (1);
 
+#ifdef SUN_CYLCHECK
+	return (0);
+#endif
 	opp = *pp;
-	if (expert == 0)
-		goto align;
-
-	fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
-	frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
-
-	for (;;) {
-		ui = getnumber("block size",
-		    "Size of ffs blocks. 1, 2, 4 or 8 times ffs fragment size.",
-		    fsize * frag, UINT32_MAX);
-
-		/* sanity checks */
-		if (ui == CMD_ABORTED)
-			return (1);
-		else if (ui == CMD_BADVALUE)
-			;	/* Try again. */
-		else if (ui < getpagesize())
-			fprintf(stderr,
-			    "Error: block size must be at least as big "
-			    "as page size (%d).\n", getpagesize());
-		else if (ui < fsize || (fsize != ui && fsize * 2 != ui &&
-		    fsize * 4 != ui && fsize * 8 != ui))
-			fprintf(stderr, "Error: block size must be 1, 2, 4 or "
-			    "8 times fragment size (%llu).\n",
-			    (unsigned long long) fsize);
-		else
-			break;
-	}
-	frag = ui / fsize;
-	pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fsize, frag);
-
-#ifdef SUN_CYLCHECK
-	return (0);
-#endif
-	p = getstring("Align partition to block size",
-	    "Round the partition offset and size to multiples of bsize?", "y");
-	if (*p == 'n' || *p == 'N')
-		return (0);
-
-align:
-#ifdef SUN_CYLCHECK
-	return (0);
-#endif
 	sizealign = (DISKLABELV1_FFS_FRAG(pp->p_fragblock) *
 	    DISKLABELV1_FFS_FSIZE(pp->p_fragblock)) / lp->d_secsize;
 	offsetalign = 1;
@@ -1902,12 +1809,6 @@ align:
 		*pp = opp;
 		return (1);
 	}
-
-	if (expert == 1 && quiet == 0 &&
-	    DL_GETPOFFSET(&opp) != DL_GETPOFFSET(pp))
-		printf("offset rounded to sector %llu\n", DL_GETPOFFSET(pp));
-	if (expert == 1 && quiet == 0 && DL_GETPSIZE(&opp) != DL_GETPSIZE(pp))
-		printf("size rounded to %llu sectors\n", DL_GETPSIZE(pp));
 
 	return (0);
 }

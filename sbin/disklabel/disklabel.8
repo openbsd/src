@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.153 2023/02/20 14:16:59 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.154 2023/04/27 14:19:28 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: February 20 2023 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -260,11 +260,7 @@ Where
 is the name of the disk being edited,
 .Sq *
 means that the in-memory copy of the partition table has been modified but
-not yet written to disk and the
-.Sq >
-is replaced by
-.Sq #
-when the editor is in expert mode.
+not yet written to disk.
 .Pp
 Some commands or prompts take an optional unit.
 Available units are
@@ -377,13 +373,6 @@ If no partition is specified, the user will be prompted for one.
 This option allows
 the user to change the filesystem type, starting offset, partition size,
 and mount point for the specified partition.
-If expert mode is enabled (see
-.Cm X
-below), then block fragment size, block size, and cylinders per group
-can also be modified.
-Note that not all parameters are configurable for
-.Pf non- Bx
-partitions.
 .It Cm n Op Ar part
 Name the mount point for an existing partition.
 If no partition is specified, the user will be prompted for one.
@@ -433,16 +422,6 @@ Entering it again will restore the change.
 .It Cm w
 Write the label to disk.
 This option will commit any changes to the on-disk label.
-.It Cm X
-Toggle
-.Dq expert mode .
-By default, some settings are reserved for experts only
-(such as the block and fragment size on ffs partitions).
-While in expert mode the command line prompt will end
-with
-.Ql #
-instead of
-.Ql > .
 .It Cm x
 Exit the editor without saving any changes to the on-disk label.
 .It Cm z
