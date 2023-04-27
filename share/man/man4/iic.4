@@ -1,4 +1,4 @@
-.\"	$OpenBSD: iic.4,v 1.132 2023/02/03 15:53:15 jmc Exp $
+.\"	$OpenBSD: iic.4,v 1.133 2023/04/27 20:35:16 jmc Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 3 2023 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -196,6 +196,8 @@ Genesys Logic GL518SM temperature, voltage, and fan sensor
 Atmel maXTouch touchpad and touchscreen
 .It Xr ihidev 4
 HID over I2C support
+.It Xr ipmi 4
+Intelligent Platform Management Interface driver
 .It Xr islrtc 4
 Intersil ISL1208/1218 real-time clock
 .It Xr lisa 4
@@ -250,6 +252,8 @@ Serial Presence Detect memory
 Solomon Systech SSD1306/SSD1309 OLED display module
 .It Xr stsec 4
 ST7 embedded controller
+.It Xr sypwr 4
+Silergy SY8106A voltage regulator
 .It Xr tascodec 4
 Texas Instruments TAS2770 digital amplifier
 .It Xr tcpci 4
@@ -260,6 +264,8 @@ Philips TDA8444 fan controller
 TI THMC50, Analog ADM1022/1028 temperature sensor
 .It Xr tipd 4
 TI USB Type-C power delivery controller
+.It Xr tipmic 4
+Intel Dollar Cove TI Power Management IC
 .It Xr titmp 4
 TI TMP451 temperature sensor
 .It Xr tsl 4
