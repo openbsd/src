@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.419 2023/04/26 19:54:35 mvs Exp $	*/
+/*	$OpenBSD: route.c,v 1.420 2023/04/27 11:11:04 mvs Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -142,6 +142,7 @@
  * Locks used to protect struct members:
  *      I       immutable after creation
  *      L       rtlabel_mtx
+ *      T       rttimer_mtx
  */
 
 #define ROUNDUP(a) (a>0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
