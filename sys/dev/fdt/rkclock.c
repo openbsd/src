@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.75 2023/04/18 05:28:41 dlg Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.76 2023/04/27 08:55:59 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -210,8 +210,10 @@
 
 #define RK3588_CRU_CLKSEL_CON(i)	(0x00300 + (i) * 4)
 #define RK3588_CRU_GATE_CON(i)		(0x00800 + (i) * 4)
+#define RK3588_CRU_SOFTRST_CON(i)	(0x00a00 + (i) * 4)
 
 #define RK3588_PHPTOPCRU_PPLL_CON(i)	(0x08200 + (i) * 4)
+#define RK3588_PHPTOPCRU_SOFTRST_CON(i)	(0x08a00 + (i) * 4)
 #define RK3588_PMUCRU_CLKSEL_CON(i)	(0x30300 + (i) * 4)
 
 #include "rkclock_clocks.h"
@@ -4116,6 +4118,21 @@ const struct rkclock rk3588_clocks[] = {
 		{ RK3588_CLK_UART0 }
 	},
 	{
+		RK3588_CLK_REF_PIPE_PHY0_OSC_SRC, 0, 0, 0,
+		{ RK3588_XIN24M }
+	},
+	{
+		RK3588_CLK_REF_PIPE_PHY0_PLL_SRC, RK3588_CRU_CLKSEL_CON(176),
+		0, DIV(5, 0),
+		{ RK3588_PLL_PPLL }
+	},
+	{
+		RK3588_CLK_REF_PIPE_PHY0, RK3588_CRU_CLKSEL_CON(177),
+		SEL(6, 6), 0,
+		{ RK3588_CLK_REF_PIPE_PHY0_OSC_SRC,
+		  RK3588_CLK_REF_PIPE_PHY0_PLL_SRC },
+	},
+	{
 		/* Sentinel */
 	}
 };
@@ -4315,7 +4332,28 @@ rk3588_enable(void *cookie, uint32_t *cells, int on)
 void
 rk3588_reset(void *cookie, uint32_t *cells, int on)
 {
+	struct rkclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t bit, mask, reg;
 
-	printf("%s: 0x%08x\n", __func__, idx);
+	switch (idx) {
+	case RK3588_SRST_PCIE4_POWER_UP:
+		reg = RK3588_CRU_SOFTRST_CON(33);
+		bit = 1;
+		break;
+	case RK3588_SRST_REF_PIPE_PHY0:
+		reg = RK3588_CRU_SOFTRST_CON(77);
+		bit = 6;
+		break;
+	case RK3588_SRST_P_PCIE2_PHY0:
+		reg = RK3588_PHPTOPCRU_SOFTRST_CON(0);
+		bit = 5;
+		break;
+	default:
+		printf("%s: 0x%08x\n", __func__, idx);
+		return;
+	}
+
+	mask = (1 << bit);
+	HWRITE4(sc, reg, mask << 16 | (on ? mask : 0));
 }
