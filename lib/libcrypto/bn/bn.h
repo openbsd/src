@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.70 2023/04/25 19:57:59 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.71 2023/04/27 06:48:47 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -347,10 +347,6 @@ int	BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 int	BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx);
-/** BN_set_negative sets sign of a BIGNUM
- * \param  b  pointer to the BIGNUM object
- * \param  n  0 if the BIGNUM b should be positive and a value != 0 otherwise
- */
 void	BN_set_negative(BIGNUM *b, int n);
 
 int BN_is_negative(const BIGNUM *b);
