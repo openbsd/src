@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.14 2023/04/27 08:07:26 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.15 2023/04/27 16:12:08 beck Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -266,7 +266,7 @@ x509_policy_level_is_empty(const X509_POLICY_LEVEL *level)
 static void
 x509_policy_level_clear(X509_POLICY_LEVEL *level)
 {
-	size_t i;
+	int i;
 
 	level->has_any_policy = 0;
 	for (i = 0; i < sk_X509_POLICY_NODE_num(level->nodes); i++) {
@@ -306,7 +306,7 @@ static int
 x509_policy_level_add_nodes(X509_POLICY_LEVEL *level,
     STACK_OF(X509_POLICY_NODE) *nodes)
 {
-	size_t i;
+	int i;
 
 	for (i = 0; i < sk_X509_POLICY_NODE_num(nodes); i++) {
 		X509_POLICY_NODE *node = sk_X509_POLICY_NODE_value(nodes, i);
@@ -362,7 +362,7 @@ process_certificate_policies(const X509 *x509,
     X509_POLICY_LEVEL *level,
     int any_policy_allowed)
 {
-	size_t i;
+	int i;
 	int ret = 0;
 	int critical;
 
@@ -517,7 +517,7 @@ process_policy_mappings(const X509 *cert,
     X509_POLICY_LEVEL *level,
     int mapping_allowed)
 {
-	size_t i;
+	int i;
 	int ok = 0;
 	int critical;
 	STACK_OF(X509_POLICY_NODE) *new_nodes = NULL;
@@ -772,13 +772,13 @@ static int
 has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
     const STACK_OF(ASN1_OBJECT) *user_policies)
 {
-	size_t i, j, k;
+	int i, j, k;
 
 	assert(user_policies == NULL ||
 	    sk_ASN1_OBJECT_is_sorted(user_policies));
 
 	/* Step (g.i). If the policy graph is empty, the intersection is empty. */
-	size_t num_levels = sk_X509_POLICY_LEVEL_num(levels);
+	int num_levels = sk_X509_POLICY_LEVEL_num(levels);
 	X509_POLICY_LEVEL *level = sk_X509_POLICY_LEVEL_value(levels,
 	    num_levels - 1);
 	if (x509_policy_level_is_empty(level))
@@ -789,7 +789,7 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 	 * anyPolicy value. The caller may also have supplied anyPolicy
 	 * explicitly.
 	 */
-	int user_has_any_policy = sk_ASN1_OBJECT_num(user_policies) == 0;
+	int user_has_any_policy = sk_ASN1_OBJECT_num(user_policies) <= 0;
 	for (i = 0; i < sk_ASN1_OBJECT_num(user_policies); i++) {
 		if (is_any_policy(sk_ASN1_OBJECT_value(user_policies, i))) {
 			user_has_any_policy = 1;
@@ -821,7 +821,7 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 	for (i = 0; i < sk_X509_POLICY_NODE_num(level->nodes); i++)
 		sk_X509_POLICY_NODE_value(level->nodes, i)->reachable = 1;
 
-	for (i = num_levels - 1; i < num_levels; i--) {
+	for (i = num_levels - 1; i >= 0; i--) {
 		level = sk_X509_POLICY_LEVEL_value(levels, i);
 		for (j = 0; j < sk_X509_POLICY_NODE_num(level->nodes);
 		    j++) {
@@ -882,8 +882,8 @@ X509_policy_check(const STACK_OF(X509) *certs,
 	X509_POLICY_LEVEL *level = NULL;
 	STACK_OF(X509_POLICY_LEVEL) *levels = NULL;
 	STACK_OF(ASN1_OBJECT) *user_policies_sorted = NULL;
-	size_t num_certs = sk_X509_num(certs);
-	size_t i;
+	int num_certs = sk_X509_num(certs);
+	int i;
 
 	/* Skip policy checking if the chain is just the trust anchor. */
 	if (num_certs <= 1)
@@ -901,7 +901,7 @@ X509_policy_check(const STACK_OF(X509) *certs,
 	if (levels == NULL)
 		goto err;
 
-	for (i = num_certs - 2; i < num_certs; i--) {
+	for (i = num_certs - 2; i >= 0; i--) {
 		X509 *cert = sk_X509_value(certs, i);
 		if (!x509v3_cache_extensions(cert))
 			goto err;
