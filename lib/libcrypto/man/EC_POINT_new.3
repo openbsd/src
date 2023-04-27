@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_POINT_new.3,v 1.13 2021/05/13 05:52:28 tb Exp $
+.\" $OpenBSD: EC_POINT_new.3,v 1.14 2023/04/27 09:39:52 tb Exp $
 .\" full merge up to: OpenSSL 50db8163 Jul 30 16:56:41 2018 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 13 2021 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt EC_POINT_NEW 3
 .Os
 .Sh NAME
@@ -61,15 +61,12 @@
 .Nm EC_POINT_set_to_infinity ,
 .Nm EC_POINT_set_affine_coordinates ,
 .Nm EC_POINT_set_affine_coordinates_GFp ,
-.Nm EC_POINT_set_affine_coordinates_GF2m ,
 .Nm EC_POINT_get_affine_coordinates ,
 .Nm EC_POINT_get_affine_coordinates_GFp ,
-.Nm EC_POINT_get_affine_coordinates_GF2m ,
 .Nm EC_POINT_set_Jprojective_coordinates_GFp ,
 .Nm EC_POINT_get_Jprojective_coordinates_GFp ,
 .Nm EC_POINT_set_compressed_coordinates ,
 .Nm EC_POINT_set_compressed_coordinates_GFp ,
-.Nm EC_POINT_set_compressed_coordinates_GF2m ,
 .Nm EC_POINT_point2oct ,
 .Nm EC_POINT_oct2point ,
 .Nm EC_POINT_point2bn ,
@@ -128,14 +125,6 @@
 .Fa "BN_CTX *ctx"
 .Fc
 .Ft int
-.Fo EC_POINT_set_affine_coordinates_GF2m
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *p"
-.Fa "const BIGNUM *x"
-.Fa "const BIGNUM *y"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
 .Fo EC_POINT_get_affine_coordinates
 .Fa "const EC_GROUP *group"
 .Fa "const EC_POINT *p"
@@ -145,14 +134,6 @@
 .Fc
 .Ft int
 .Fo EC_POINT_get_affine_coordinates_GFp
-.Fa "const EC_GROUP *group"
-.Fa "const EC_POINT *p"
-.Fa "BIGNUM *x"
-.Fa "BIGNUM *y"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_get_affine_coordinates_GF2m
 .Fa "const EC_GROUP *group"
 .Fa "const EC_POINT *p"
 .Fa "BIGNUM *x"
@@ -187,14 +168,6 @@
 .Fc
 .Ft int
 .Fo EC_POINT_set_compressed_coordinates_GFp
-.Fa "const EC_GROUP *group"
-.Fa "EC_POINT *p"
-.Fa "const BIGNUM *x"
-.Fa "int y_bit"
-.Fa "BN_CTX *ctx"
-.Fc
-.Ft int
-.Fo EC_POINT_set_compressed_coordinates_GF2m
 .Fa "const EC_GROUP *group"
 .Fa "EC_POINT *p"
 .Fa "const BIGNUM *x"
@@ -340,20 +313,15 @@ to the corresponding coordinates of
 .Pp
 The functions
 .Fn EC_POINT_set_affine_coordinates_GFp
-and
-.Fn EC_POINT_set_affine_coordinates_GF2m
-are deprecated synonyms for
+is a deprecated synonym for
 .Fn EC_POINT_set_affine_coordinates
-and the functions
+and the function
 .Fn EC_POINT_get_affine_coordinates_GFp
-and
-.Fn EC_POINT_get_affine_coordinates_GF2m
-are deprecated synonyms for
+is a deprecated synonym for
 .Fn EC_POINT_get_affine_coordinates .
 .Pp
 As well as the affine coordinates, a point can alternatively be
-described in terms of its Jacobian projective coordinates (for Fp
-curves only).
+described in terms of its Jacobian projective coordinates.
 Jacobian projective coordinates are expressed as three values
 .Fa x ,
 .Fa y ,
@@ -399,9 +367,7 @@ should be used.
 .Pp
 The functions
 .Fn EC_POINT_set_compressed_coordinates_GFp
-and
-.Fn EC_POINT_set_compressed_coordinates_GF2m
-are deprecated synonyms for
+is a deprecated synonym for
 .Fn EC_POINT_set_compressed_coordinates .
 .Pp
 In addition
@@ -476,13 +442,10 @@ The following functions return 1 on success or 0 on error:
 .Fn EC_POINT_get_Jprojective_coordinates_GFp ,
 .Fn EC_POINT_set_affine_coordinates ,
 .Fn EC_POINT_set_affine_coordinates_GFp ,
-.Fn EC_POINT_set_affine_coordinates_GF2m ,
 .Fn EC_POINT_get_affine_coordinates ,
 .Fn EC_POINT_get_affine_coordinates_GFp ,
-.Fn EC_POINT_get_affine_coordinates_GF2m ,
 .Fn EC_POINT_set_compressed_coordinates ,
 .Fn EC_POINT_set_compressed_coordinates_GFp ,
-.Fn EC_POINT_set_compressed_coordinates_GF2m ,
 and
 .Fn EC_POINT_oct2point .
 .Pp
@@ -547,9 +510,6 @@ first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
 .Pp
 .Fn EC_POINT_dup ,
-.Fn EC_POINT_set_affine_coordinates_GF2m ,
-.Fn EC_POINT_get_affine_coordinates_GF2m ,
-.Fn EC_POINT_set_compressed_coordinates_GF2m ,
 .Fn EC_POINT_point2bn ,
 .Fn EC_POINT_bn2point ,
 .Fn EC_POINT_point2hex ,
