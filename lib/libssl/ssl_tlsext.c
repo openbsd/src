@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.135 2023/04/25 07:50:38 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.136 2023/04/27 10:50:37 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2206,6 +2206,12 @@ static const struct tls_extension tls_extensions[] = {
 
 /* Ensure that extensions fit in a uint32_t bitmask. */
 CTASSERT(N_TLS_EXTENSIONS <= (sizeof(uint32_t) * 8));
+
+uint16_t
+tls_extension_type(const struct tls_extension *extension)
+{
+	return extension->type;
+}
 
 const struct tls_extension *
 tls_extension_find(uint16_t type, size_t *tls_extensions_idx)
