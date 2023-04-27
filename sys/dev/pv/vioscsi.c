@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscsi.c,v 1.30 2022/04/16 19:19:59 naddy Exp $	*/
+/*	$OpenBSD: vioscsi.c,v 1.31 2023/04/27 13:52:58 krw Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
  *
@@ -296,7 +296,6 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	struct scsi_xfer *xs = vr->vr_xs;
 	DPRINTF("vioscsi_req_done: enter vr: %p xs: %p\n", vr, xs);
 
-	int isread = !!(xs->flags & SCSI_DATA_IN);
 	bus_dmamap_sync(vsc->sc_dmat, vr->vr_control,
 	    offsetof(struct vioscsi_req, vr_req),
 	    sizeof(struct virtio_scsi_req_hdr),
@@ -305,6 +304,18 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	    offsetof(struct vioscsi_req, vr_res),
 	    sizeof(struct virtio_scsi_res_hdr),
 	    BUS_DMASYNC_POSTREAD);
+
+	/*
+	 * XXX Should be impossible but somehow happens on Oracle Cloud and
+	 *     particular QEMU configurations.
+	 *
+	 *     Stop the crashing while investigation into
+	 *     the apparent queuing/dequeuing issue proceeds.
+	 */
+	if (xs == NULL)
+		return;
+
+	int isread = !!(xs->flags & SCSI_DATA_IN);
 	if (xs->flags & (SCSI_DATA_IN | SCSI_DATA_OUT)) {
 		bus_dmamap_sync(vsc->sc_dmat, vr->vr_data, 0, xs->datalen,
 		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
