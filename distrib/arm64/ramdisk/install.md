@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.45 2023/04/14 15:00:40 robert Exp $
+#	$OpenBSD: install.md,v 1.46 2023/04/27 10:03:49 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -109,13 +109,15 @@ md_prep_fdisk() {
 		[wW]*)
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
 			if disk_has $_disk gpt apfsisc; then
-				if [[ $_disk == $ROOTDISK ]]; then
+				# Is this a boot disk?
+				if [[ $_disk == @($ROOTDISK|$CRYPTOCHUNK) ]]; then
 					fdisk -Ay -b "${bootsectorsize}" ${_disk} >/dev/null
 				else
 					fdisk -Ay ${_disk} >/dev/null
 				fi
 			elif disk_has $_disk gpt; then
-				if [[ $_disk == $ROOTDISK ]]; then
+				# Is this a boot disk?
+				if [[ $_disk == @($ROOTDISK|$CRYPTOCHUNK) ]]; then
 					fdisk -gy -b "${bootsectorsize}" ${_disk} >/dev/null
 					installboot -p $_disk
 				else
