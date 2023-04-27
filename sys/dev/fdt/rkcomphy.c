@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkcomphy.c,v 1.1 2023/03/12 14:29:50 kettenis Exp $	*/
+/*	$OpenBSD: rkcomphy.c,v 1.2 2023/04/27 08:56:39 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,12 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
+/*
+ * WARNING: Most (but not all!) of the register numbers in the Linux
+ * driver are off-by-one!  This driver uses 0-based register numbers
+ * like in the TRM.
+ */
+
 /* Combo PHY registers */
 #define COMBO_PIPE_PHY_REG(idx)			((idx) * 4)
 /* REG_005 */
@@ -49,6 +55,8 @@
 #define  COMBO_PIPE_PHY_SSC_CNT_HI_VALUE	(0x5f << 0)
 /* REG_017 */
 #define  COMBO_PIPE_PHY_PLL_LOOP		0x32
+/* REG_027 */
+#define  COMBO_PIPE_PHY_RX_TRIM_RK3588		0x4c
 /* REG_031 */
 #define  COMBO_PIPE_PHY_SSC_DIR_MASK		(0x3 << 4)
 #define  COMBO_PIPE_PHY_SSC_DIR_DOWN		(0x1 << 4)
@@ -57,9 +65,13 @@
 /* REG_032 */
 #define  COMBO_PIPE_PHY_PLL_KVCO_MASK		(0x7 << 2)
 #define  COMBO_PIPE_PHY_PLL_KVCO_VALUE		(0x2 << 2)
+#define  COMBO_PIPE_PHY_PLL_KVCO_VALUE_RK3588	(0x4 << 2)
 
 /* GRF registers */
 #define PIPE_GRF_PIPE_CON0			0x0000
+
+/* PHP GRF registers (for RK3588) */
+#define PHP_GRF_PCIESEL_CON			0x0100
 
 /* PHY GRF registers */
 #define PIPE_PHY_GRF_PIPE_CON(idx)		((idx) * 4)
@@ -112,15 +124,17 @@ struct cfdriver rkcomphy_cd = {
 	NULL, "rkcomphy", DV_DULL
 };
 
-int	rkcomphy_enable(void *, uint32_t *);
+int	rkcomphy_rk3568_enable(void *, uint32_t *);
+int	rkcomphy_rk3588_enable(void *, uint32_t *);
 
 int
 rkcomphy_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
+	int node = faa->fa_node;
 
-	return OF_is_compatible(faa->fa_node,
-	    "rockchip,rk3568-naneng-combphy");
+	return OF_is_compatible(node, "rockchip,rk3568-naneng-combphy") ||
+	    OF_is_compatible(node, "rockchip,rk3588-naneng-combphy");
 }
 
 void
@@ -147,12 +161,15 @@ rkcomphy_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pd.pd_node = faa->fa_node;
 	sc->sc_pd.pd_cookie = sc;
-	sc->sc_pd.pd_enable = rkcomphy_enable;
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-naneng-combphy"))
+	    sc->sc_pd.pd_enable = rkcomphy_rk3568_enable;
+	else
+	    sc->sc_pd.pd_enable = rkcomphy_rk3588_enable;
 	phy_register(&sc->sc_pd);
 }
 
 void
-rkcomphy_pll_tune(struct rkcomphy_softc *sc)
+rkcomphy_rk3568_pll_tune(struct rkcomphy_softc *sc)
 {
 	uint32_t reg;
 
@@ -173,7 +190,7 @@ rkcomphy_pll_tune(struct rkcomphy_softc *sc)
 }
 
 int
-rkcomphy_enable(void *cookie, uint32_t *cells)
+rkcomphy_rk3568_enable(void *cookie, uint32_t *cells)
 {
 	struct rkcomphy_softc *sc = cookie;
 	struct regmap *rm, *phy_rm;
@@ -238,7 +255,7 @@ rkcomphy_enable(void *cookie, uint32_t *cells)
 		regmap_write_4(rm, PIPE_GRF_PIPE_CON0, 0xffff2220);
 		break;
 	case PHY_TYPE_USB3:
-		rkcomphy_pll_tune(sc);
+		rkcomphy_rk3568_pll_tune(sc);
 
 		regmap_write_4(phy_rm, PIPE_PHY_GRF_PIPE_CON(0),
 		    PIPE_PHY_GRF_PIPE_MODE_USB);
@@ -276,7 +293,7 @@ rkcomphy_enable(void *cookie, uint32_t *cells)
 		    PIPE_PHY_GRF_PIPE_CLK_100M);
 		switch (type) {
 		case PHY_TYPE_PCIE:
-			rkcomphy_pll_tune(sc);
+			rkcomphy_rk3568_pll_tune(sc);
 			break;
 		case PHY_TYPE_SATA:
 			reg = HREAD4(sc, COMBO_PIPE_PHY_REG(31));
@@ -305,6 +322,84 @@ rkcomphy_enable(void *cookie, uint32_t *cells)
 			return ETIMEDOUT;
 		}
 	}
+
+	return 0;
+}
+
+void
+rkcomphy_rk3588_pll_tune(struct rkcomphy_softc *sc)
+{
+	uint32_t reg;
+
+	reg = HREAD4(sc, COMBO_PIPE_PHY_REG(32));
+	reg &= ~COMBO_PIPE_PHY_PLL_KVCO_MASK;
+	reg |= COMBO_PIPE_PHY_PLL_KVCO_VALUE_RK3588;
+	HWRITE4(sc, COMBO_PIPE_PHY_REG(32), reg);
+
+	HWRITE4(sc, COMBO_PIPE_PHY_REG(11), COMBO_PIPE_PHY_PLL_LPF_ADJ_VALUE);
+
+	HWRITE4(sc, COMBO_PIPE_PHY_REG(27), COMBO_PIPE_PHY_RX_TRIM_RK3588);
+	HWRITE4(sc, COMBO_PIPE_PHY_REG(10), COMBO_PIPE_PHY_SU_TRIM_0_7);
+}
+
+int
+rkcomphy_rk3588_enable(void *cookie, uint32_t *cells)
+{
+	struct rkcomphy_softc *sc = cookie;
+	struct regmap *rm, *phy_rm;
+	int node = sc->sc_pd.pd_node;
+	uint32_t type = cells[0];
+	uint32_t freq, grf, phy_grf;
+
+	/* We only support PCIe for now. */
+	switch (type) {
+	case PHY_TYPE_PCIE:
+		break;
+	default:
+		return EINVAL;
+	}
+
+	grf = OF_getpropint(node, "rockchip,pipe-grf", 0);
+	rm = regmap_byphandle(grf);
+	if (rm == NULL)
+		return ENXIO;
+
+	phy_grf = OF_getpropint(node, "rockchip,pipe-phy-grf", 0);
+	phy_rm = regmap_byphandle(phy_grf);
+	if (phy_rm == NULL)
+		return ENXIO;
+
+	clock_set_assigned(node);
+	clock_enable_all(node);
+
+	switch (type) {
+	case PHY_TYPE_PCIE:
+		regmap_write_4(phy_rm, PIPE_PHY_GRF_PIPE_CON(0), 0xffff1000);
+		regmap_write_4(phy_rm, PIPE_PHY_GRF_PIPE_CON(1), 0xffff0000);
+		regmap_write_4(phy_rm, PIPE_PHY_GRF_PIPE_CON(2), 0xffff0101);
+		regmap_write_4(phy_rm, PIPE_PHY_GRF_PIPE_CON(3), 0xffff0200);
+		regmap_write_4(rm, PHP_GRF_PCIESEL_CON, 0x00010000);
+		regmap_write_4(rm, PHP_GRF_PCIESEL_CON, 0x00020000);
+		break;
+	}
+
+	freq = clock_get_frequency(node, "ref");
+	switch (freq) {
+	case 25000000:
+		regmap_write_4(phy_rm, PIPE_PHY_GRF_PIPE_CON(1),
+		    PIPE_PHY_GRF_PIPE_CLK_25M);
+		break;
+	case 100000000:
+		regmap_write_4(phy_rm, PIPE_PHY_GRF_PIPE_CON(1),
+		    PIPE_PHY_GRF_PIPE_CLK_100M);
+		switch (type) {
+		case PHY_TYPE_PCIE:
+			rkcomphy_rk3588_pll_tune(sc);
+			break;
+		}
+	}
+
+	reset_deassert_all(node);
 
 	return 0;
 }
