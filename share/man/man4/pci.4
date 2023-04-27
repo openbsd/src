@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.400 2023/04/24 00:11:08 dlg Exp $
+.\"	$OpenBSD: pci.4,v 1.401 2023/04/27 05:41:11 jmc Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 24 2023 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -94,12 +94,8 @@
 .Cd "pci* at pchb?"
 .Cd "pci* at ppb?"
 .Sh DESCRIPTION
-The system includes a machine-independent
-.Tn PCI
-bus subsystem and
-several machine-independent
-.Tn PCI
-device drivers.
+The system includes a machine-independent PCI bus subsystem and
+several machine-independent PCI device drivers.
 .Pp
 Note that interrupt mappings on the i386 may require that you configure
 your BIOS to reserve sufficient interrupts as "PCI/ISAPnP" so that there
@@ -143,11 +139,13 @@ TRM-S1040 based PCI SCSI interface
 VMware Paravirtual SCSI
 .El
 .Ss IDE disk controllers
-.Bl -tag -width 10n -offset ind -compact
+.Bl -tag -width "kauaiata(4)" -offset ind -compact
 .It Xr ahci 4
 Advanced Host Controller Interface for Serial ATA
 .It Xr jmb 4
 JMicron JMB36x SATA II and PATA Host Controller
+.It Xr kauaiata 4
+ATA100 HD controller on PCI bus
 .It Xr pciide 4
 PCI IDE controller driver
 .It Xr sili 4
@@ -202,9 +200,6 @@ DEC/Intel 21140/21142/21143/21145 and clones 10/100 Ethernet device
 DEC DC21x4x (Tulip) 10/100 Ethernet device
 .It Xr em 4
 Intel PRO/1000 10/100/1Gb Ethernet device
-.\" .It Xr en 4
-.\" Midway-based Efficient Networks Inc.\&
-.\" and Adaptec ATM interfaces
 .It Xr ep 4
 3Com EtherLink III and Fast EtherLink III 10/100 Ethernet device
 .It Xr epic 4
@@ -362,12 +357,30 @@ communications card driver
 .El
 .Ss Display adapters
 .Bl -tag -width 10n -offset ind -compact
+.It Xr astfb 4
+Aspeed BMC frame buffer
+.It Xr gfxp 4
+accelerated color frame buffer
+.It Xr ifb 4
+inextricable frame buffer
+.It Xr machfb 4
+accelerated color frame buffer
+.It radeonfb 4
+accelerated color frame buffer
+.It Xr raptor 4
+accelerated color frame buffer
+.It Xr sisfb 4
+SiS 315 Pro frame buffer
+.It Xr smfb 4
+Silicon Motion frame buffer
 .It Xr sti 4
 HP Standard Text Interface
 .It Xr tga 4
 DECchip 21030 (TGA) graphics driver
 .It Xr vga 4
 VGA graphics cards
+.It Xr vgafb 4
+VGA frame buffer
 .El
 .Ss Audio devices
 .Bl -tag -width 10n -offset ind -compact
@@ -460,14 +473,11 @@ AMD-8111 series LPC bridge and timecounter
 .It Xr amdpm 4
 AMD-756/766/768/8111 Power Management and SMBus controller
 .It Xr bktr 4
-Brooktree Bt848/849/878/879
-.Tn PCI
-TV tuners and video capture boards
+Brooktree Bt848/849/878/879 PCI TV tuners and video capture boards
 .It Xr cbb 4
-.Tn PCI
-Yenta compatible
-.Tn CardBus
-bridges
+PCI Yenta compatible CardBus bridges
+.It Xr drm 4
+Direct Rendering Manager device
 .It Xr dwiic 4
 Synopsys DesignWare I2C controller
 .It Xr ehci 4
@@ -478,10 +488,14 @@ Intel EP80579 Global Configuration Unit
 CS5536 PCI-ISA Bridge with timecounter, watchdog timer, and GPIO
 .It Xr gscpcib 4
 National Semiconductor Geode SC1100 PCI-ISA bridge with GPIO
+.It Xr gscpm 4
+National Semiconductor Geode SC1100 SMI/ACPI module
 .It Xr hpb 4
-.Tn HyperTransport Ns \- Ns Tn PCI bridge
+HyperTransport-PCI bridge
 .It Xr ichiic 4
 Intel ICH SMBus controller
+.It Xr ichpcib 4
+Intel ICHx/ICHx-M LPC bridges
 .It Xr iosf 4
 Intel OnChip System Fabric device
 .It Xr nviic 4
@@ -491,15 +505,15 @@ USB Open Host Controller Interface
 .It Xr pcib 4
 PCI-ISA bridge
 .It Xr pcic 4
-.Tn PCI
-.Tn PCMCIA
-controllers, including the Cirrus Logic GD6729
+PCI PCMCIA controllers, including the Cirrus Logic GD6729
 .It Xr piixpm 4
 Intel PIIX SMBus controller
 .It Xr ppb 4
-.Tn PCI Ns \- Ns Tn PCI bridge
+PCI-PCI bridge
 .It Xr rtsx 4
 Realtek SD card reader
+.It Xr sbbc 4
+PCI BootBus Controller
 .It Xr sdhc 4
 SD Host Controller
 .It Xr ssio 4
@@ -512,6 +526,10 @@ USB Universal Host Controller Interface
 VIA SMBus controller
 .It Xr virtio 4
 VirtIO support driver
+.It Xr voyager 4
+Silicon Motion Mobile Multimedia Companion Chip
+.It Xr xspd 4
+XenSource Platform Device driver
 .El
 .Sh IOCTLS
 If the kernel is compiled with the
@@ -527,9 +545,7 @@ They are defined in the header file
 .It PCIOCREAD Fa "struct pci_io *"
 This
 .Xr ioctl 2
-reads the
-.Tn PCI
-configuration registers specified by the passed-in
+reads the PCI configuration registers specified by the passed-in
 .Va pci_io
 structure.
 The
@@ -542,9 +558,7 @@ A
 structure which specifies the bus, slot and function the user would like to
 query.
 .It pi_reg
-The
-.Tn PCI
-configuration register the user would like to access.
+The PCI configuration register the user would like to access.
 .It pi_width
 The width, in bytes, of the data the user would like to read.
 This value can be only 4.
@@ -554,24 +568,18 @@ The data returned by the kernel.
 .It PCIOCWRITE Fa "struct pci_io *"
 This
 .Xr ioctl 2
-allows users to write to the
-.Tn PCI
-device specified in the passed-in
+allows users to write to the PCI device specified in the passed-in
 .Va pci_io
 structure.
 The
 .Va pci_io
 structure is described above.
 The limitations on data width described for
-reading registers, above, also apply to writing
-.Tn PCI
-configuration registers.
+reading registers, above, also apply to writing PCI configuration registers.
 .It PCIOCGETROM Fa "struct pci_rom *"
 This
 .Xr ioctl 2
-allows users to read the contents of the
-.Tn PCI
-ROM specified in the passed-in
+allows users to read the contents of the PCI ROM specified in the passed-in
 .Va pci_rom
 structure.
 The
@@ -605,7 +613,5 @@ driver.
 .Xr intro 4 ,
 .Xr pcidump 8
 .Sh HISTORY
-The machine-independent
-.Tn PCI
-subsystem appeared in
+The machine-independent PCI subsystem appeared in
 .Ox 1.2 .
