@@ -837,6 +837,8 @@
 ./usr/include/dev/videomode/edidvar.h
 ./usr/include/dev/videomode/vesagtf.h
 ./usr/include/dev/videomode/videomode.h
+./usr/include/dev/vmm
+./usr/include/dev/vmm/vmm.h
 ./usr/include/dev/vndioctl.h
 ./usr/include/dev/vscsivar.h
 ./usr/include/dev/wscons
