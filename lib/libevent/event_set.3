@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_set.3,v 1.2 2023/04/27 15:44:36 schwarze Exp $
+.\" $OpenBSD: event_set.3,v 1.3 2023/04/27 16:48:53 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -266,9 +266,9 @@ is
 .Dv NULL .
 On success, it removes the event from internal event queues and unregisters it
 with the kernel notification method.
-The function fails if the library was not initialized with
+The function fails if the library was neither initialized with
 .Xr event_init 3
-and the event was not previously assigned to an
+nor was the event previously assigned to an
 .Vt event_base
 with
 .Fn event_base_set .
