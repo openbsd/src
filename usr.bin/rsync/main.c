@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.66 2023/02/14 17:15:15 job Exp $ */
+/*	$OpenBSD: main.c,v 1.67 2023/04/27 16:28:18 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -281,7 +281,6 @@ static struct opts	 opts;
 #define OP_PORT		1001
 #define OP_RSYNCPATH	1002
 #define OP_TIMEOUT	1003
-#define OP_VERSION	1004
 #define OP_EXCLUDE	1005
 #define OP_INCLUDE	1006
 #define OP_EXCLUDE_FROM	1007
@@ -339,7 +338,7 @@ const struct option	 lopts[] = {
     { "no-times",	no_argument,	&opts.preserve_times,	0 },
     { "verbose",	no_argument,	&verbose,		1 },
     { "no-verbose",	no_argument,	&verbose,		0 },
-    { "version",	no_argument,	NULL,			OP_VERSION },
+    { "version",	no_argument,	NULL,			'V' },
     { NULL,		0,		NULL,			0 }
 };
 
@@ -362,7 +361,7 @@ main(int argc, char *argv[])
 
 	opts.max_size = opts.min_size = -1;
 
-	while ((c = getopt_long(argc, argv, "Dae:ghlnoprtvxz", lopts, &lidx))
+	while ((c = getopt_long(argc, argv, "aDe:ghlnoprtVvxz", lopts, &lidx))
 	    != -1) {
 		switch (c) {
 		case 'D':
@@ -406,6 +405,10 @@ main(int argc, char *argv[])
 		case 'v':
 			verbose++;
 			break;
+		case 'V':
+			fprintf(stderr, "openrsync: protocol version %u\n",
+			    RSYNC_PROTOCOL);
+			exit(0);
 		case 'x':
 			opts.one_file_system++;
 			break;
@@ -495,10 +498,6 @@ basedir:
 			if (scan_scaled(optarg, &opts.min_size) == -1)
 				err(1, "bad min-size");
 			break;
-		case OP_VERSION:
-			fprintf(stderr, "openrsync: protocol version %u\n",
-			    RSYNC_PROTOCOL);
-			exit(0);
 		case 'h':
 		default:
 			goto usage;
@@ -633,11 +632,11 @@ basedir:
 	exit(rc);
 usage:
 	fprintf(stderr, "usage: %s"
-	    " [-aDglnoprtvx] [-e program] [--address=sourceaddr]\n"
+	    " [-aDglnoprtVvx] [-e program] [--address=sourceaddr]\n"
 	    "\t[--contimeout=seconds] [--compare-dest=dir] [--del] [--exclude]\n"
 	    "\t[--exclude-from=file] [--include] [--include-from=file]\n"
 	    "\t[--no-motd] [--numeric-ids] [--port=portnumber]\n"
-	    "\t[--rsync-path=program] [--timeout=seconds] [--version]\n"
+	    "\t[--rsync-path=program] [--timeout=seconds]\n"
 	    "\tsource ... directory\n",
 	    getprogname());
 	exit(ERR_SYNTAX);
