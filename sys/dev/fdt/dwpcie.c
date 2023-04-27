@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.46 2023/04/25 11:36:55 patrick Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.47 2023/04/27 09:00:03 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1482,6 +1482,7 @@ dwpcie_conf_read(void *v, pcitag_t tag, int reg)
 	dwpcie_decompose_tag(sc, tag, &bus, &dev, &fn);
 	if (bus == sc->sc_bus) {
 		KASSERT(dev == 0);
+		tag = dwpcie_make_tag(sc, 0, dev, fn);
 		return HREAD4(sc, tag | reg);
 	}
 
@@ -1515,6 +1516,7 @@ dwpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	dwpcie_decompose_tag(sc, tag, &bus, &dev, &fn);
 	if (bus == sc->sc_bus) {
 		KASSERT(dev == 0);
+		tag = dwpcie_make_tag(sc, 0, dev, fn);
 		HWRITE4(sc, tag | reg, data);
 		return;
 	}
