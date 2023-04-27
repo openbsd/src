@@ -1,4 +1,4 @@
-/*	$OpenBSD: rad.h,v 1.24 2022/12/28 21:30:18 jmc Exp $	*/
+/*	$OpenBSD: rad.h,v 1.25 2023/04/27 16:56:52 phessler Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -29,8 +29,8 @@
 #define	MAX_RTR_ADV_INTERVAL	600
 #define	MIN_RTR_ADV_INTERVAL	200
 #define	ADV_DEFAULT_LIFETIME	3 * MAX_RTR_ADV_INTERVAL
-#define	ADV_PREFERRED_LIFETIME	604800	/* 7 days */
-#define	ADV_VALID_LIFETIME	2592000	/* 30 days */
+#define	ADV_PREFERRED_LIFETIME	2700	/* 45 minutes */
+#define	ADV_VALID_LIFETIME	5400	/* 90 minutes */
 #define	MAX_RA_DELAY_TIME	500	/* 500 milliseconds */
 #define	MIN_DELAY_BETWEEN_RAS	3	/* 3 seconds */
 #define	MAX_SEARCH		1025	/* MAXDNAME in arpa/nameser.h */

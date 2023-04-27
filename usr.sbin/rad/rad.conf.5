@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rad.conf.5,v 1.20 2022/10/15 15:18:15 jmc Exp $
+.\"	$OpenBSD: rad.conf.5,v 1.21 2023/04/27 16:56:52 phessler Exp $
 .\"
 .\" Copyright (c) 2018 Florian Obser <florian@openbsd.org>
 .\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 15 2022 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt RAD.CONF 5
 .Os
 .Sh NAME
@@ -159,11 +159,11 @@ The default is yes.
 .It Ic preferred lifetime Ar seconds
 The preferred lifetime (pltime) in seconds for addresses generated from this
 prefix.
-The default is 604800.
+The default is 2700.
 .It Ic valid lifetime Ar seconds
 The valid lifetime (vltime) in seconds for addresses generated from this
 prefix.
-The default is 2592000.
+The default is 5400.
 .El
 .Sh FILES
 .Bl -tag -width /etc/examples/rad.conf -compact
