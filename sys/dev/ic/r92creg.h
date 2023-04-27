@@ -1,4 +1,4 @@
-/*	$OpenBSD: r92creg.h,v 1.28 2022/08/21 07:56:31 kevlo Exp $	*/
+/*	$OpenBSD: r92creg.h,v 1.29 2023/04/27 03:19:45 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -703,7 +703,7 @@
 #define R92C_SECCFG_RXBCKEY_DEF 0x0080
 
 /* IMR */
- 
+
 /*Beacon DMA interrupt 6 */
 #define R92C_IMR_BCNDMAINT6	0x80000000
 /*Beacon DMA interrupt 5 */
@@ -715,7 +715,7 @@
 /*Beacon DMA interrupt 2 */
 #define R92C_IMR_BCNDMAINT2	0x08000000
 /*Beacon DMA interrupt 1 */
-#define R92C_IMR_BCNDMAINT1	0x04000000	
+#define R92C_IMR_BCNDMAINT1	0x04000000
 /*Beacon Queue DMA OK interrupt 8 */
 #define R92C_IMR_BCNDOK8	0x02000000
 /*Beacon Queue DMA OK interrupt 7 */

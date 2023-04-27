@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.105 2023/03/08 04:43:08 guenther Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.106 2023/04/27 03:19:45 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -356,7 +356,7 @@ void		urtwn_free_tx_list(struct urtwn_softc *);
 void		urtwn_task(void *);
 void		urtwn_do_async(struct urtwn_softc *,
 		    void (*)(struct urtwn_softc *, void *), void *, int);
-void		urtwn_wait_async(void *); 
+void		urtwn_wait_async(void *);
 int		urtwn_write_region_1(struct urtwn_softc *, uint16_t, uint8_t *,
 		    int);
 void		urtwn_write_1(void *, uint16_t, uint8_t);
@@ -1703,7 +1703,7 @@ urtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 #endif
 
 	if (k != NULL && k->k_cipher == IEEE80211_CIPHER_CCMP) {
-		xferlen = (txdp - data->buf) + m->m_pkthdr.len + 
+		xferlen = (txdp - data->buf) + m->m_pkthdr.len +
 		    IEEE80211_CCMP_HDRLEN;
 		headerlen = ieee80211_get_hdrlen(wh);
 
@@ -2208,7 +2208,7 @@ urtwn_aggr_init(void *cookie)
 	else
 		urtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH + 1, dmatiming);
 
-	/* Drop incorrect bulk out. */ 
+	/* Drop incorrect bulk out. */
 	urtwn_write_4(sc, R92C_TXDMA_OFFSET_CHK,
 	    urtwn_read_4(sc, R92C_TXDMA_OFFSET_CHK) |
 	    R92C_TXDMA_OFFSET_CHK_DROP_DATA_EN);
@@ -2481,6 +2481,6 @@ int
 urtwn_is_oactive(void *cookie)
 {
 	struct urtwn_softc *sc = cookie;
-	
+
 	return (TAILQ_EMPTY(&sc->tx_free_list));
 }

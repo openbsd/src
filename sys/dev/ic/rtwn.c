@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.54 2022/12/27 20:13:03 patrick Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.55 2023/04/27 03:19:45 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -75,7 +75,7 @@
 #define RTWN_POWER_OFDM18	7
 #define RTWN_POWER_OFDM24	8
 #define RTWN_POWER_OFDM36	9
-#define RTWN_POWER_OFDM48	10 
+#define RTWN_POWER_OFDM48	10
 #define RTWN_POWER_OFDM54	11
 #define RTWN_POWER_MCS(mcs)	(12 + (mcs))
 #define RTWN_POWER_COUNT	28
@@ -189,7 +189,7 @@ void		rtwn_stop(struct ifnet *);
 #define	rtwn_bb_write	rtwn_write_4
 #define rtwn_bb_read	rtwn_read_4
 
-/* 
+/*
  * Macro to convert 4-bit signed integer to 8-bit signed integer.
  */
 #define RTWN_SIGN4TO8(val)	(((val) & 0x08) ? (val) | 0xf0 : (val))
@@ -1196,7 +1196,7 @@ rtwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 
 	error = sc->sc_newstate(ic, nstate, arg);
 	splx(s);
- 
+
 	return (error);
 }
 
@@ -1242,7 +1242,7 @@ rtwn_updateslot(struct ieee80211com *ic)
 {
 	struct rtwn_softc *sc = ic->ic_softc;
 	int s;
-	
+
 	s = splnet();
 	if (ic->ic_flags & IEEE80211_F_SHSLOT)
 		rtwn_write_1(sc, R92C_SLOT, IEEE80211_DUR_DS_SHSLOT);
@@ -1635,7 +1635,7 @@ rtwn_r92c_fw_reset(struct rtwn_softc *sc)
 	rtwn_write_2(sc, R92C_SYS_FUNC_EN, reg & ~R92C_SYS_FUNC_EN_CPUEN);
 sleep:
 	if (sc->chip & RTWN_CHIP_PCI) {
-		/* 
+		/*
 		 * We must sleep for one second to let the firmware settle.
 		 * Accessing registers too early will hang the whole system.
 		 */
@@ -1721,7 +1721,7 @@ rtwn_load_firmware(struct rtwn_softc *sc)
 	/* Enable FW download. */
 	rtwn_write_1(sc, R92C_MCUFWDL,
 	    rtwn_read_1(sc, R92C_MCUFWDL) | R92C_MCUFWDL_EN);
-	rtwn_write_4(sc, R92C_MCUFWDL, 
+	rtwn_write_4(sc, R92C_MCUFWDL,
 	    rtwn_read_4(sc, R92C_MCUFWDL) & ~R92C_MCUFWDL_ROM_DLEN);
 
 	/* Reset the FWDL checksum. */
@@ -1971,7 +1971,7 @@ rtwn_edca_init(struct rtwn_softc *sc)
 
 	if (sc->chip & RTWN_CHIP_PCI) {
 		/* linux magic */
-		rtwn_write_4(sc, R92C_FAST_EDCA_CTRL, 0x086666); 
+		rtwn_write_4(sc, R92C_FAST_EDCA_CTRL, 0x086666);
 	}
 
 	rtwn_write_4(sc, R92C_EDCA_RANDOM_GEN, arc4random());
@@ -2284,7 +2284,7 @@ rtwn_r88e_get_txpower(struct rtwn_softc *sc, int chain,
 	    R88E_ROM_TXPWR_OFDM_DIFF));
 	ofdmpow = htpow + diff;
 	for (ridx = RTWN_RIDX_OFDM6; ridx <= RTWN_RIDX_OFDM54; ridx++) {
-		power[ridx] = ofdmpow; 
+		power[ridx] = ofdmpow;
 		if (power[ridx] > R92C_MAX_TX_PWR)
 			power[ridx] = R92C_MAX_TX_PWR;
 	}
@@ -2765,7 +2765,7 @@ rtwn_iq_calib_write_results(struct rtwn_softc *sc, uint16_t tx[2],
 	if (tx[0] == 0xff || tx[1] == 0xff)
 		return;
 
-	reg = rtwn_bb_read(sc, R92C_OFDM0_TXIQIMBALANCE(chain)); 
+	reg = rtwn_bb_read(sc, R92C_OFDM0_TXIQIMBALANCE(chain));
 	val = ((reg >> 22) & 0x3ff);
 	x = tx[0];
 	if (x & 0x00000200)
@@ -2790,7 +2790,7 @@ rtwn_iq_calib_write_results(struct rtwn_softc *sc, uint16_t tx[2],
 	reg |= ((tx_c & 0x3c0) << 22);
 	rtwn_bb_write(sc, R92C_OFDM0_TXAFE(chain), reg);
 
-	reg = rtwn_bb_read(sc, R92C_OFDM0_TXIQIMBALANCE(chain)); 
+	reg = rtwn_bb_read(sc, R92C_OFDM0_TXIQIMBALANCE(chain));
 	reg &= ~0x003f0000;
 	reg |= ((tx_c & 0x3f) << 16);
 	rtwn_bb_write(sc, R92C_OFDM0_TXIQIMBALANCE(chain), reg);
