@@ -1,4 +1,4 @@
-.\"	$OpenBSD: isa.4,v 1.81 2020/01/22 05:19:24 jsg Exp $
+.\"	$OpenBSD: isa.4,v 1.82 2023/04/27 19:10:53 jmc Exp $
 .\"	$NetBSD: isa.4,v 1.19 2000/03/18 16:54:37 augustss Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -31,7 +31,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 22 2020 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt ISA 4
 .Os
 .Sh NAME
@@ -82,6 +82,8 @@ provides support for the following devices.
 Note that not all architectures support all devices.
 .Ss SCSI controllers
 .Bl -tag -width 12n -offset ind -compact
+.It Xr ahc 4
+Adaptec VL/EISA/PCI SCSI interface
 .It Xr aic 4
 Adaptec AIC-6260 and AIC-6360 SCSI interface
 .It Xr uha 4
@@ -112,6 +114,8 @@ multiplexing serial communications interface
 serial communications interface
 .It Xr cy 4
 Cyclades Cyclom-{4, 8, 16}Y asynchronous comms board device driver
+.It Xr hsq 4
+multiplexing serial communications interface
 .It Xr lpt 4
 parallel port driver
 .El
@@ -183,6 +187,10 @@ Winbond LPC Super I/O
 .Bl -tag -width 12n -offset ind -compact
 .It Xr gscsio 4
 National Semiconductor Geode SC1100 I2C controller
+.It Xr isagpio 4
+ISA I/O mapped as GPIO
+.It Xr joy 4
+games adapter
 .It Xr lms 4
 Logitech-style bus mouse driver
 .It Xr mms 4
@@ -192,30 +200,27 @@ Numeric Processing Extension coprocessor and emulator
 .It Xr pcdisplay 4
 PC display adapter driver for wscons
 .It Xr pcic 4
-.Tn ISA
-PCMCIA controllers
+ISA PCMCIA controllers
 .It Xr pckbc 4
 PC (ISA) keyboard controller driver
 .It Xr pcppi 4
 PC (ISA) control and timer port driver
 .It Xr skgpio 4
 Soekris net6501 GPIO and LEDs driver
+.It Xr tcic 4
+Databook PCMCIA controller driver
 .It Xr vga 4
 VGA graphics driver for wscons
+.It Xr ykbec 4
+Ene Technology KB3310B embedded controller chip
 .El
 .Pp
-Note that some
-.Tn ISA
-devices also have newer
-.Tn ISA
-Plug-and-Play variants.
+Note that some ISA devices also have newer ISA Plug-and-Play variants.
 These are listed in
 .Xr isapnp 4 .
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr isapnp 4
 .Sh HISTORY
-The machine-independent
-.Tn ISA
-subsystem appeared in
+The machine-independent ISA subsystem appeared in
 .Ox 2.0 .
