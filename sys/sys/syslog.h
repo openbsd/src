@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.18 2023/04/26 06:52:45 gnezdo Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.19 2023/04/27 23:16:18 gnezdo Exp $	*/
 /*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ int	setlogmask_r(int, struct syslog_data *);
 void	syslog_r(int, struct syslog_data *, const char *, ...)
      __attribute__((__format__(__syslog__,3,4)));
 void	vsyslog_r(int, struct syslog_data *, const char *, __va_list);
-int	sendsyslog(const char *, size_t, int);
+int	sendsyslog(const char *, __size_t, int);
 __END_DECLS
 
 #else /* !_KERNEL */
