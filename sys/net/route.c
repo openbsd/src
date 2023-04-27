@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.420 2023/04/27 11:11:04 mvs Exp $	*/
+/*	$OpenBSD: route.c,v 1.421 2023/04/27 14:41:09 mvs Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -507,7 +507,6 @@ rtfree(struct rtentry *rt)
 	KASSERT(!RT_ROOT(rt));
 	atomic_dec_int(&rttrash);
 
-	KERNEL_LOCK();
 	rt_timer_remove_all(rt);
 	ifafree(rt->rt_ifa);
 	rtlabel_unref(rt->rt_labelid);
@@ -516,7 +515,6 @@ rtfree(struct rtentry *rt)
 #endif
 	free(rt->rt_gateway, M_RTABLE, ROUNDUP(rt->rt_gateway->sa_len));
 	free(rt_key(rt), M_RTABLE, rt_key(rt)->sa_len);
-	KERNEL_UNLOCK();
 
 	pool_put(&rtentry_pool, rt);
 }
