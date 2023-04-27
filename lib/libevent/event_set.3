@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_set.3,v 1.1 2023/04/26 18:56:16 schwarze Exp $
+.\" $OpenBSD: event_set.3,v 1.2 2023/04/27 15:44:36 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 26 2023 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt EVENT_SET 3
 .Os
 .Sh NAME
@@ -37,11 +37,11 @@
 .Fa "struct event *ev"
 .Fa "int fd"
 .Fa "short events"
-.Fa "void (*fn)(int, short, void *)"
+.Fa "void (*callback)(int, short, void *)"
 .Fa "void *arg"
 .Fc
-.Fd #define evtimer_set(ev, fn, arg)
-.Fd #define signal_set(ev, signal, fn, arg)
+.Fd #define evtimer_set(ev, callback, arg)
+.Fd #define signal_set(ev, signal, callback, arg)
 .Ft int
 .Fn event_base_set "struct event_base *base" "struct event *ev"
 .Ft int
@@ -57,7 +57,7 @@
 .Fa "struct event_base *base"
 .Fa "int fd"
 .Fa "short events"
-.Fa "void (*fn)(int, short, void *)"
+.Fa "void (*callback)(int, short, void *)"
 .Fa "void *arg"
 .Fa "const struct timeval *tv"
 .Fc
@@ -65,22 +65,24 @@
 .Fo event_once
 .Fa "int fd"
 .Fa "short events"
-.Fa "void (*fn)(int, short, void *)"
+.Fa "void (*callback)(int, short, void *)"
 .Fa "void *arg"
 .Fa "const struct timeval *tv"
 .Fc
 .Sh DESCRIPTION
 The
 .Fn event_set
-function prepares an
+function initializes an uninitialized, unused,
 .Vt event
-structure to monitor a file descriptor or signal.
-Once prepared, the
+structure to monitor a file descriptor, signal, or timeout.
+Once initialized, the
 .Vt event
 can be scheduled using
 .Fn event_add .
-The event becomes activated and the callback is triggered when the file
-descriptor state changes or timeout expires.
+The event becomes activated and the
+.Fa callback
+is triggered when the file descriptor state changes, the signal arrives,
+or the timeout expires.
 Refer to
 .Xr event_base_loop 3
 for documentation on running an event loop.
@@ -127,8 +129,8 @@ That is, it should remain active until it is removed by calling
 .Fn event_del .
 Signal events typically require this flag.
 .El
-.It Va fn :
-A user-defined callback function that is executed when the event triggers.
+.It Va callback :
+A user-defined function that is executed when the event triggers.
 .Pp
 .Bl -enum -width Ds -compact
 .It
@@ -147,7 +149,9 @@ The third parameter corresponds to a user-specified pointer passed as a
 .Vt void * .
 .El
 .It Va arg :
-User-specified pointer to pass to the callback function.
+User-specified pointer to pass to the
+.Fa callback
+function.
 .El
 .Pp
 There are several helper macros that make it easier to set up timeout and
@@ -161,8 +165,8 @@ are named consistently with the library function
 .Fn event_set .
 The following macro and function calls are equivalent:
 .Bd -literal -offset indent
-evtimer_set(ev, fn, arg);
-event_set(ev, \-1, 0, fn, arg);
+evtimer_set(ev, callback, arg);
+event_set(ev, \-1, 0, callback, arg);
 .Ed
 .Pp
 Likewise, configuring a signal event with
@@ -170,13 +174,23 @@ Likewise, configuring a signal event with
 has an equivalent call to
 .Fn event_set :
 .Bd -literal -offset indent
-signal_set(ev, signal, fn, arg);
-event_set(ev, signal, EV_SIGNAL|EV_PERSIST, fn, arg);
+signal_set(ev, signal, callback, arg);
+event_set(ev, signal, EV_SIGNAL|EV_PERSIST, callback, arg);
 .Ed
 .Pp
+If
+.Xr event_init 3
+was called earlier,
 .Fn event_set
-configures new events assuming that the library was initialized by
-.Xr event_init 3 .
+associates
+.Fa ev
+with the
+.Vt event_base
+structure it created; otherwise,
+.Fa ev
+is not associated with any
+.Vt event_base
+structure.
 If a program needs to assign an event to a specific
 .Vt event_base
 structure, it should call
@@ -199,9 +213,13 @@ or corresponding helper macros or functions can be assigned to a new
 structure.
 .Pp
 .Fn event_add
-schedules events using the appropriate kernel notification method (see
+schedules the
+.Fa ev
+using the kernel notification method of its associated
+.Vt event_base
+structure; see
 .Xr event_base_new 3
-for information about kernel notification methods).
+for information about kernel notification methods.
 If a timeout is specified, it is added to the event timeout list.
 Events can register as timeout events without attaching to file
 descriptors or signals.
@@ -213,12 +231,13 @@ to specify that an event has no timeout.
 The behavior is undefined if
 .Fa ev
 is
-.Dv NULL .
-The helper macros
+.Dv NULL
+or uninitialized.
+The effect of the macros
 .Fn evtimer_add
 and
 .Fn signal_add
-correspond to
+is identical to
 .Fn event_add .
 .Pp
 If
@@ -235,7 +254,9 @@ Reschedules the event with the event loop.
 .El
 .Pp
 .Fn event_del
-removes an event from an event loop.
+removes an event from the event loop of its associated
+.Vt event_base
+structure.
 The
 .Fa ev
 argument is the event to remove.
@@ -247,21 +268,23 @@ On success, it removes the event from internal event queues and unregisters it
 with the kernel notification method.
 The function fails if the library was not initialized with
 .Xr event_init 3
-or the event was not previously assigned to an
+and the event was not previously assigned to an
 .Vt event_base
 with
 .Fn event_base_set .
 The function does not free memory assigned to user-defined data structures,
 nor does it close open file descriptors.
-The helper macros
+The effect of the macros
 .Fn evtimer_del
 and
 .Fn signal_del
-correspond to
+is identical to
 .Fn event_del .
 .Pp
 .Fn event_base_once
-is used to schedule a callback function to be executed exactly once without
+is used to schedule a
+.Fa callback
+function to be executed exactly once without
 requiring the caller to create and manage an
 .Vt event
 structure.
@@ -279,17 +302,19 @@ is
 .It Va fd :
 A file descriptor to monitor.
 .It Va events :
-Flags matching
 .Dv EV_TIMEOUT ,
-.Dv EV_READ
+.Dv EV_READ ,
+.Dv EV_WRITE ,
 or
-.Dv EV_WRITE .
-.It Va fn :
-A user-defined callback function that is executed when the event triggers.
+.Dv EV_READ | EV_WRITE .
+.It Va callback :
+A user-defined function that is executed when the event triggers.
 This callback matches the same prototype and design used in
 .Fn event_set .
 .It Va arg :
-A user-specified pointer to pass to the callback function.
+A user-specified pointer to pass to the
+.Fa callback
+function.
 .It Va tv :
 A pointer to an optional timeout
 .Vt timeval
@@ -314,8 +339,7 @@ These functions return 0 on success or \-1 on failure.
 .Fn event_base_set
 returns \-1 if the event being reassigned has already
 been processed by
-.Fn event_add
-or is not initialized.
+.Fn event_add .
 .Pp
 .Fn event_add
 returns \-1 if a memory allocation fault occurs,
@@ -344,23 +368,32 @@ System has insufficient memory to add the event to the event loop.
 .Fn event_add
 and
 .Fn event_del
-first appeared in libevent-0.1 and have been available since
+first appeared in libevent-0.1,
+.Fn signal_set ,
+.Fn signal_add ,
+and
+.Fn signal_del
+in libevent-0.5 ,
+and
+.Fn evtimer_set ,
+.Fn evtimer_add
+and
+.Fn evtimer_del
+in libevent-0.6.
+These functions have been available since
 .Ox 3.2 .
+.Pp
+.Fn event_once
+first appeared in libevent-0.8 and has been available since
+.Ox 3.6 .
 .Pp
 .Fn event_base_set
 first appeared in libevent-1.0 and has been available since
 .Ox 3.8 .
 .Pp
-.Fn event_once
-first appeared in libevent-0.8 and has been available since
-.Ox 3.8 .
-.Pp
 .Fn event_base_once
 first appeared in libevent-1.3c and has been available since
 .Ox 4.4 .
-.Pp
-The helper macros first appeared in libevent-0.6 and have been available since
-.Ox 3.2 .
 .Sh AUTHORS
 .An -nosplit
 .An Niels Provos
