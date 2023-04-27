@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.12 2023/04/26 22:09:07 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.13 2023/04/27 08:04:40 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -193,30 +193,32 @@ is_any_policy(const ASN1_OBJECT *obj)
 static void
 x509_policy_node_free(X509_POLICY_NODE *node)
 {
-	if (node != NULL) {
-		ASN1_OBJECT_free(node->policy);
-		sk_ASN1_OBJECT_pop_free(node->parent_policies,
-		    ASN1_OBJECT_free);
-		free(node);
-	}
+	if (node == NULL)
+		return;
+
+	ASN1_OBJECT_free(node->policy);
+	sk_ASN1_OBJECT_pop_free(node->parent_policies, ASN1_OBJECT_free);
+	free(node);
 }
 
 static X509_POLICY_NODE *
 x509_policy_node_new(const ASN1_OBJECT *policy)
 {
 	assert(!is_any_policy(policy));
-	X509_POLICY_NODE *node = malloc(sizeof(X509_POLICY_NODE));
-	if (node == NULL) {
-		return NULL;
-	}
-	memset(node, 0, sizeof(X509_POLICY_NODE));
-	node->policy = OBJ_dup(policy);
-	node->parent_policies = sk_ASN1_OBJECT_new_null();
-	if (node->policy == NULL || node->parent_policies == NULL) {
-		x509_policy_node_free(node);
-		return NULL;
-	}
+	X509_POLICY_NODE *node;
+
+	if ((node = calloc(1, sizeof(*node))) == NULL)
+		goto err;
+	if ((node->policy = OBJ_dup(policy)) == NULL)
+		goto err;
+	if ((node->parent_policies = sk_ASN1_OBJECT_new_null()) == NULL)
+		goto err;
+
 	return node;
+
+ err:
+	x509_policy_node_free(node);
+	return NULL;
 }
 
 static int
@@ -229,27 +231,29 @@ x509_policy_node_cmp(const X509_POLICY_NODE *const *a,
 static void
 x509_policy_level_free(X509_POLICY_LEVEL *level)
 {
-	if (level != NULL) {
-		sk_X509_POLICY_NODE_pop_free(level->nodes,
-		    x509_policy_node_free);
-		free(level);
-	}
+	if (level == NULL)
+		return;
+
+	sk_X509_POLICY_NODE_pop_free(level->nodes, x509_policy_node_free);
+	free(level);
 }
 
 static X509_POLICY_LEVEL *
 x509_policy_level_new(void)
 {
-	X509_POLICY_LEVEL *level = malloc(sizeof(X509_POLICY_LEVEL));
-	if (level == NULL) {
-		return NULL;
-	}
-	memset(level, 0, sizeof(X509_POLICY_LEVEL));
+	X509_POLICY_LEVEL *level;
+
+	if ((level = calloc(1, sizeof(*level))) == NULL)
+		goto err;
 	level->nodes = sk_X509_POLICY_NODE_new(x509_policy_node_cmp);
-	if (level->nodes == NULL) {
-		x509_policy_level_free(level);
-		return NULL;
-	}
+	if (level->nodes== NULL)
+		goto err;
+
 	return level;
+
+ err:
+	x509_policy_level_free(level);
+	return NULL;
 }
 
 static int
