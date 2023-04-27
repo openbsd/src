@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmd.c,v 1.111 2023/03/08 04:43:13 guenther Exp $	*/
+/*	$OpenBSD: apmd.c,v 1.112 2023/04/27 10:51:27 kn Exp $	*/
 
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
@@ -584,11 +584,6 @@ main(int argc, char *argv[])
 		case APM_USER_HIBERNATE_REQ:
 			hibernates++;
 			break;
-#if 0
-		case APM_CANCEL:
-			suspends = standbys = 0;
-			break;
-#endif
 		case APM_NORMAL_RESUME:
 		case APM_CRIT_RESUME:
 		case APM_SYS_STANDBY_RESUME:
