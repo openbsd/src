@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.398 2023/04/26 19:54:35 mvs Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.399 2023/04/27 12:10:30 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2047,11 +2047,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			goto fail;
 		}
-		NET_LOCK();
 		PF_LOCK();
 		pt->seconds = pf_default_rule.timeout[pt->timeout];
 		PF_UNLOCK();
-		NET_UNLOCK();
 		break;
 	}
 
