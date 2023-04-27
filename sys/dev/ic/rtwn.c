@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwn.c,v 1.55 2023/04/27 03:19:45 kevlo Exp $	*/
+/*	$OpenBSD: rtwn.c,v 1.56 2023/04/27 03:28:34 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -2233,7 +2233,7 @@ rtwn_r92e_get_txpower(struct rtwn_softc *sc, int chain,
 		}
 	}
 
-	for (ridx = RTWN_RIDX_MCS0; ridx < RTWN_RIDX_MCS15; ridx++) {
+	for (ridx = RTWN_RIDX_MCS0; ridx <= RTWN_RIDX_MCS15; ridx++) {
 		power[ridx] = (ridx < RTWN_RIDX_MCS8) ? htpow : htpow2s;
 		if (power[ridx] > R92C_MAX_TX_PWR)
 			power[ridx] = R92C_MAX_TX_PWR;
