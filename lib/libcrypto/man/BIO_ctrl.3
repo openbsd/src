@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_ctrl.3,v 1.20 2023/04/26 15:03:02 schwarze Exp $
+.\" $OpenBSD: BIO_ctrl.3,v 1.21 2023/04/27 14:44:33 schwarze Exp $
 .\" full merge up to: OpenSSL 24a535eaf Tue Sep 22 13:14:20 2020 +0100
 .\" selective merge up to: OpenSSL 0c5bc96f Tue Mar 15 13:57:22 2022 +0000
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 26 2023 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt BIO_CTRL 3
 .Os
 .Sh NAME
@@ -409,7 +409,7 @@ constants correspond to macros:
 .It Dv BIO_CTRL_WPENDING                 Ta Fn BIO_wpending
 .El
 .Pp
-Some
+A few
 .Fa cmd
 constants serve more than one macro each
 and are documented in the following manual pages:
@@ -420,6 +420,32 @@ and are documented in the following manual pages:
 .It Dv BIO_C_SET_BUFF_SIZE Ta Xr BIO_f_buffer 3
 .It Dv BIO_C_SET_CONNECT   Ta Xr BIO_s_connect 3
 .It Dv BIO_C_SET_FILENAME  Ta Xr BIO_s_file 3
+.El
+.Pp
+Some
+.Fa cmd
+constants are not associated with any macros.
+They are documented in the following manual pages:
+.Bl -column BIO_CTRL_DGRAM_SET_RECV_TIMEOUT BIO_dgram_recv_timedout(3)\
+ -offset 3n
+.It Fa cmd No constant                 Ta manual page
+.It Dv BIO_C_GET_EX_ARG                Ta Xr BIO_f_asn1 3
+.It Dv BIO_C_GET_PREFIX                Ta Xr BIO_asn1_get_prefix 3
+.It Dv BIO_C_GET_SUFFIX                Ta Xr BIO_asn1_get_suffix 3
+.It Dv BIO_C_SET_EX_ARG                Ta Xr BIO_f_asn1 3 , Xr BIO_new_NDEF 3
+.It Dv BIO_C_SET_PREFIX                Ta Xr BIO_asn1_set_prefix 3
+.It Dv BIO_C_SET_SUFFIX                Ta Xr BIO_asn1_set_suffix 3
+.It Dv BIO_CTRL_DGRAM_GET_FALLBACK_MTU Ta Xr BIO_dgram_set_peer 3
+.It Dv BIO_CTRL_DGRAM_GET_MTU          Ta Xr BIO_dgram_set_peer 3
+.It Dv BIO_CTRL_DGRAM_GET_RECV_TIMEOUT Ta Xr BIO_dgram_recv_timedout 3
+.It Dv BIO_CTRL_DGRAM_GET_SEND_TIMEOUT Ta Xr BIO_dgram_send_timedout 3
+.It Dv BIO_CTRL_DGRAM_SET_MTU          Ta Xr BIO_dgram_set_peer 3
+.It Dv BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT Ta Xr BIO_dgram_recv_timedout 3
+.It Dv BIO_CTRL_DGRAM_SET_RECV_TIMEOUT Ta Xr BIO_dgram_recv_timedout 3
+.It Dv BIO_CTRL_DGRAM_SET_SEND_TIMEOUT Ta Xr BIO_dgram_send_timedout 3
+.It Dv BIO_CTRL_DGRAM_MTU_EXCEEDED     Ta Xr BIO_s_datagram 3
+.It Dv BIO_CTRL_POP                    Ta Xr BIO_pop 3
+.It Dv BIO_CTRL_PUSH                   Ta Xr BIO_push 3
 .El
 .Sh RETURN VALUES
 The meaning of the return values of
