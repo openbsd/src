@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcpu.c,v 1.4 2023/04/23 18:38:55 anton Exp $	*/
+/*	$OpenBSD: vcpu.c,v 1.5 2023/04/27 05:42:44 anton Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -22,6 +22,8 @@
 
 #include <machine/specialreg.h>
 #include <machine/vmmvar.h>
+
+#include <dev/vmm/vmm.h>
 
 #include <err.h>
 #include <errno.h>
