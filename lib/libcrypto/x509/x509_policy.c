@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.13 2023/04/27 08:04:40 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.14 2023/04/27 08:07:26 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -246,7 +246,7 @@ x509_policy_level_new(void)
 	if ((level = calloc(1, sizeof(*level))) == NULL)
 		goto err;
 	level->nodes = sk_X509_POLICY_NODE_new(x509_policy_node_cmp);
-	if (level->nodes== NULL)
+	if (level->nodes == NULL)
 		goto err;
 
 	return level;
@@ -288,9 +288,8 @@ x509_policy_level_find(X509_POLICY_LEVEL *level,
 	X509_POLICY_NODE node;
 	node.policy = (ASN1_OBJECT *)policy;
 	int idx;
-	if ((idx = sk_X509_POLICY_NODE_find(level->nodes, &node)) < 0) {
+	if ((idx = sk_X509_POLICY_NODE_find(level->nodes, &node)) < 0)
 		return NULL;
-	}
 	return sk_X509_POLICY_NODE_value(level->nodes, idx);
 }
 
@@ -311,9 +310,8 @@ x509_policy_level_add_nodes(X509_POLICY_LEVEL *level,
 
 	for (i = 0; i < sk_X509_POLICY_NODE_num(nodes); i++) {
 		X509_POLICY_NODE *node = sk_X509_POLICY_NODE_value(nodes, i);
-		if (!sk_X509_POLICY_NODE_push(level->nodes, node)) {
+		if (!sk_X509_POLICY_NODE_push(level->nodes, node))
 			return 0;
-		}
 		sk_X509_POLICY_NODE_set(nodes, i, NULL);
 	}
 	sk_X509_POLICY_NODE_sort(level->nodes);
@@ -344,9 +342,8 @@ delete_if_not_in_policies(X509_POLICY_NODE *node, void *data)
 	assert(sk_POLICYINFO_is_sorted(policies));
 	POLICYINFO info;
 	info.policyid = node->policy;
-	if (sk_POLICYINFO_find(policies, &info) >= 0) {
+	if (sk_POLICYINFO_find(policies, &info) >= 0)
 		return 0;
-	}
 	x509_policy_node_free(node);
 	return 1;
 }
@@ -373,9 +370,8 @@ process_certificate_policies(const X509 *x509,
 	CERTIFICATEPOLICIES *policies =
 	    X509_get_ext_d2i(x509, NID_certificate_policies, &critical, NULL);
 	if (policies == NULL) {
-		if (critical != -1) {
+		if (critical != -1)
 			return 0;  /* Syntax error in the extension. */
-		}
 
 		/* RFC 5280, section 6.1.3, step (e). */
 		x509_policy_level_clear(level);
@@ -396,9 +392,8 @@ process_certificate_policies(const X509 *x509,
 	int cert_has_any_policy = 0;
 	for (i = 0; i < sk_POLICYINFO_num(policies); i++) {
 		const POLICYINFO *policy = sk_POLICYINFO_value(policies, i);
-		if (is_any_policy(policy->policyid)) {
+		if (is_any_policy(policy->policyid))
 			cert_has_any_policy = 1;
-		}
 		if (i > 0 &&
 		    OBJ_cmp(sk_POLICYINFO_value(policies, i - 1)->policyid,
 		    policy->policyid) == 0) {
@@ -436,9 +431,8 @@ process_certificate_policies(const X509 *x509,
 	 */
 	if (previous_level_has_any_policy) {
 		new_nodes = sk_X509_POLICY_NODE_new_null();
-		if (new_nodes == NULL) {
+		if (new_nodes == NULL)
 			goto err;
-		}
 		for (i = 0; i < sk_POLICYINFO_num(policies); i++) {
 			const POLICYINFO *policy = sk_POLICYINFO_value(policies,
 			    i);
@@ -460,9 +454,8 @@ process_certificate_policies(const X509 *x509,
 				}
 			}
 		}
-		if (!x509_policy_level_add_nodes(level, new_nodes)) {
+		if (!x509_policy_level_add_nodes(level, new_nodes))
 			goto err;
-		}
 	}
 
 	ret = 1;
@@ -495,9 +488,8 @@ delete_if_mapped(X509_POLICY_NODE *node, void *data)
 	assert(sk_POLICY_MAPPING_is_sorted(mappings));
 	POLICY_MAPPING mapping;
 	mapping.issuerDomainPolicy = node->policy;
-	if (sk_POLICY_MAPPING_find(mappings, &mapping) < 0) {
+	if (sk_POLICY_MAPPING_find(mappings, &mapping) < 0)
 		return 0;
-	}
 	x509_policy_node_free(node);
 	return 1;
 }
@@ -527,9 +519,9 @@ process_policy_mappings(const X509 *cert,
 {
 	size_t i;
 	int ok = 0;
+	int critical;
 	STACK_OF(X509_POLICY_NODE) *new_nodes = NULL;
 	X509_POLICY_LEVEL *next = NULL;
-	int critical;
 	POLICY_MAPPINGS *mappings =
 	    X509_get_ext_d2i(cert, NID_policy_mappings, &critical, NULL);
 	if (mappings == NULL && critical != -1) {
@@ -550,11 +542,11 @@ process_policy_mappings(const X509 *cert,
 
 		/* RFC 5280, section 6.1.4, step (a). */
 		for (i = 0; i < sk_POLICY_MAPPING_num(mappings); i++) {
-			POLICY_MAPPING *mapping = sk_POLICY_MAPPING_value(mappings, i);
+			POLICY_MAPPING *mapping = sk_POLICY_MAPPING_value(mappings,
+			    i);
 			if (is_any_policy(mapping->issuerDomainPolicy) ||
-			    is_any_policy(mapping->subjectDomainPolicy)) {
+			    is_any_policy(mapping->subjectDomainPolicy))
 				goto err;
-			}
 		}
 
 		/* Sort to group by issuerDomainPolicy. */
@@ -568,9 +560,8 @@ process_policy_mappings(const X509 *cert,
 			 * section 6.1.4, step (b.1).
 			 */
 			new_nodes = sk_X509_POLICY_NODE_new_null();
-			if (new_nodes == NULL) {
+			if (new_nodes == NULL)
 				goto err;
-			}
 			const ASN1_OBJECT *last_policy = NULL;
 			for (i = 0; i < sk_POLICY_MAPPING_num(mappings);
 			    i++) {
@@ -582,18 +573,16 @@ process_policy_mappings(const X509 *cert,
 				 */
 				if (last_policy != NULL &&
 				    OBJ_cmp(mapping->issuerDomainPolicy,
-				    last_policy) == 0) {
+				    last_policy) == 0)
 					continue;
-				}
 				last_policy = mapping->issuerDomainPolicy;
 
 				X509_POLICY_NODE *node =
 				    x509_policy_level_find(level,
 				    mapping->issuerDomainPolicy);
 				if (node == NULL) {
-					if (!level->has_any_policy) {
+					if (!level->has_any_policy)
 						continue;
-					}
 					node = x509_policy_node_new(
 					    mapping->issuerDomainPolicy);
 					if (node == NULL ||
@@ -605,9 +594,8 @@ process_policy_mappings(const X509 *cert,
 				}
 				node->mapped = 1;
 			}
-			if (!x509_policy_level_add_nodes(level, new_nodes)) {
+			if (!x509_policy_level_add_nodes(level, new_nodes))
 				goto err;
-			}
 		} else {
 			/*
 			 * RFC 5280, section 6.1.4, step (b.2). If mapping is
@@ -627,18 +615,16 @@ process_policy_mappings(const X509 *cert,
 	 */
 	if (mappings == NULL) {
 		mappings = sk_POLICY_MAPPING_new_null();
-		if (mappings == NULL) {
+		if (mappings == NULL)
 			goto err;
-		}
 	}
 	for (i = 0; i < sk_X509_POLICY_NODE_num(level->nodes); i++) {
 		X509_POLICY_NODE *node = sk_X509_POLICY_NODE_value(level->nodes,
 		    i);
 		if (!node->mapped) {
 			POLICY_MAPPING *mapping = POLICY_MAPPING_new();
-			if (mapping == NULL) {
+			if (mapping == NULL)
 				goto err;
-			}
 			mapping->issuerDomainPolicy = OBJ_dup(node->policy);
 			mapping->subjectDomainPolicy = OBJ_dup(node->policy);
 			if (mapping->issuerDomainPolicy == NULL ||
@@ -656,9 +642,8 @@ process_policy_mappings(const X509 *cert,
 
 	/* Convert |mappings| to our "expected_policy_set" representation. */
 	next = x509_policy_level_new();
-	if (next == NULL) {
+	if (next == NULL)
 		goto err;
-	}
 	next->has_any_policy = level->has_any_policy;
 
 	X509_POLICY_NODE *last_node = NULL;
@@ -670,9 +655,8 @@ process_policy_mappings(const X509 *cert,
 		 */
 		if (!level->has_any_policy &&
 		    x509_policy_level_find(level,
-		    mapping->issuerDomainPolicy) == NULL) {
+		    mapping->issuerDomainPolicy) == NULL)
 			continue;
-		}
 
 		if (last_node == NULL ||
 		    OBJ_cmp(last_node->policy, mapping->subjectDomainPolicy) !=
@@ -687,9 +671,8 @@ process_policy_mappings(const X509 *cert,
 		}
 
 		if (!sk_ASN1_OBJECT_push(last_node->parent_policies,
-		    mapping->issuerDomainPolicy)) {
+		    mapping->issuerDomainPolicy))
 			goto err;
-		}
 		mapping->issuerDomainPolicy = NULL;
 	}
 
@@ -715,9 +698,8 @@ err:
 static int
 apply_skip_certs(const ASN1_INTEGER *skip_certs, size_t *value)
 {
-	if (skip_certs == NULL) {
+	if (skip_certs == NULL)
 		return 1;
-	}
 
 	/* TODO(https://crbug.com/boringssl/443): Move this check into the parser. */
 	if (skip_certs->type & V_ASN1_NEG) {
@@ -727,9 +709,8 @@ apply_skip_certs(const ASN1_INTEGER *skip_certs, size_t *value)
 
 	/* If |skip_certs| does not fit in |uint64_t|, it must exceed |*value|. */
 	uint64_t u64;
-	if (ASN1_INTEGER_get_uint64(&u64, skip_certs) && u64 < *value) {
+	if (ASN1_INTEGER_get_uint64(&u64, skip_certs) && u64 < *value)
 		*value = (size_t)u64;
-	}
 	ERR_clear_error();
 	return 1;
 }
@@ -748,9 +729,8 @@ process_policy_constraints(const X509 *x509, size_t *explicit_policy,
 	int critical;
 	POLICY_CONSTRAINTS *constraints =
 	    X509_get_ext_d2i(x509, NID_policy_constraints, &critical, NULL);
-	if (constraints == NULL && critical != -1) {
+	if (constraints == NULL && critical != -1)
 		return 0;
-	}
 	if (constraints != NULL) {
 		if (constraints->requireExplicitPolicy == NULL &&
 		    constraints->inhibitPolicyMapping == NULL) {
@@ -768,16 +748,14 @@ process_policy_constraints(const X509 *x509, size_t *explicit_policy,
 		    apply_skip_certs(constraints->inhibitPolicyMapping,
 		    policy_mapping);
 		POLICY_CONSTRAINTS_free(constraints);
-		if (!ok) {
+		if (!ok)
 			return 0;
-		}
 	}
 
 	ASN1_INTEGER *inhibit_any_policy_ext =
 	    X509_get_ext_d2i(x509, NID_inhibit_any_policy, &critical, NULL);
-	if (inhibit_any_policy_ext == NULL && critical != -1) {
+	if (inhibit_any_policy_ext == NULL && critical != -1)
 		return 0;
-	}
 	int ok = apply_skip_certs(inhibit_any_policy_ext, inhibit_any_policy);
 	ASN1_INTEGER_free(inhibit_any_policy_ext);
 	return ok;
@@ -803,9 +781,8 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 	size_t num_levels = sk_X509_POLICY_LEVEL_num(levels);
 	X509_POLICY_LEVEL *level = sk_X509_POLICY_LEVEL_value(levels,
 	    num_levels - 1);
-	if (x509_policy_level_is_empty(level)) {
+	if (x509_policy_level_is_empty(level))
 		return 0;
-	}
 
 	/*
 	 * If |user_policies| is empty, we interpret it as having a single
@@ -824,9 +801,8 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 	 * Step (g.ii). If the policy graph is not empty and the user set
 	 * contains anyPolicy, the intersection is the entire (non-empty) graph.
 	 */
-	if (user_has_any_policy) {
+	if (user_has_any_policy)
 		return 1;
-	}
 
 	/*
 	 * Step (g.iii) does not delete anyPolicy nodes, so if the graph has
@@ -834,18 +810,16 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 	 * may synthesize some nodes in step (g.iii.3), but we do not return the
 	 * policy list itself, so we skip actually computing this.
 	 */
-	if (level->has_any_policy) {
+	if (level->has_any_policy)
 		return 1;
-	}
 
 	/*
 	 * We defer pruning the tree, so as we look for nodes with parent
 	 * anyPolicy, step (g.iii.1), we must limit to nodes reachable from the
 	 * bottommost level. Start by marking each of those nodes as reachable.
 	 */
-	for (i = 0; i < sk_X509_POLICY_NODE_num(level->nodes); i++) {
+	for (i = 0; i < sk_X509_POLICY_NODE_num(level->nodes); i++)
 		sk_X509_POLICY_NODE_value(level->nodes, i)->reachable = 1;
-	}
 
 	for (i = num_levels - 1; i < num_levels; i--) {
 		level = sk_X509_POLICY_LEVEL_value(levels, i);
@@ -853,9 +827,8 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 		    j++) {
 			X509_POLICY_NODE *node = sk_X509_POLICY_NODE_value(level->nodes,
 			    j);
-			if (!node->reachable) {
+			if (!node->reachable)
 				continue;
-			}
 			if (sk_ASN1_OBJECT_num(node->parent_policies) == 0) {
 				/*
 				 * |node|'s parent is anyPolicy and is part of
@@ -864,9 +837,8 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 				 * non-empty and we * can return immediately.
 				 */
 				if (sk_ASN1_OBJECT_find(user_policies,
-				    node->policy) >= 0) {
+				    node->policy) >= 0)
 					return 1;
-				}
 			} else if (i > 0) {
 				/* |node|'s parents are concrete policies. Mark
 				 * the parents reachable, to be inspected by the
@@ -874,15 +846,17 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 				 */
 				X509_POLICY_LEVEL *prev = sk_X509_POLICY_LEVEL_value(levels,
 				    i - 1);
-				for (k = 0; k < sk_ASN1_OBJECT_num(node->parent_policies);
+				for (k = 0;
+				    k <
+				    sk_ASN1_OBJECT_num(node->parent_policies);
 				    k++) {
 					X509_POLICY_NODE *parent = x509_policy_level_find(
 					    prev,
 
-					    sk_ASN1_OBJECT_value(node->parent_policies, k));
-					if (parent != NULL) {
+					    sk_ASN1_OBJECT_value(node->parent_policies,
+					    k));
+					if (parent != NULL)
 						parent->reachable = 1;
-					}
 				}
 			}
 		}
@@ -912,9 +886,8 @@ X509_policy_check(const STACK_OF(X509) *certs,
 	size_t i;
 
 	/* Skip policy checking if the chain is just the trust anchor. */
-	if (num_certs <= 1) {
+	if (num_certs <= 1)
 		return X509_V_OK;
-	}
 
 	/* See RFC 5280, section 6.1.2, steps (d) through (f). */
 	size_t explicit_policy =
@@ -925,23 +898,20 @@ X509_policy_check(const STACK_OF(X509) *certs,
 	    (flags & X509_V_FLAG_INHIBIT_MAP) ? 0 : num_certs + 1;
 
 	levels = sk_X509_POLICY_LEVEL_new_null();
-	if (levels == NULL) {
+	if (levels == NULL)
 		goto err;
-	}
 
 	for (i = num_certs - 2; i < num_certs; i--) {
 		X509 *cert = sk_X509_value(certs, i);
-		if (!x509v3_cache_extensions(cert)) {
+		if (!x509v3_cache_extensions(cert))
 			goto err;
-		}
 		const int is_self_issued = (cert->ex_flags & EXFLAG_SI) != 0;
 
 		if (level == NULL) {
 			assert(i == num_certs - 2);
 			level = x509_policy_level_new();
-			if (level == NULL) {
+			if (level == NULL)
 				goto err;
-			}
 			level->has_any_policy = 1;
 		}
 
@@ -965,9 +935,8 @@ X509_policy_check(const STACK_OF(X509) *certs,
 		}
 
 		/* Insert into the list. */
-		if (!sk_X509_POLICY_LEVEL_push(levels, level)) {
+		if (!sk_X509_POLICY_LEVEL_push(levels, level))
 			goto err;
-		}
 		X509_POLICY_LEVEL *current_level = level;
 		level = NULL;
 
@@ -994,15 +963,12 @@ X509_policy_check(const STACK_OF(X509) *certs,
 		 * longer read at this point, so we use the same process.
 		 */
 		if (i == 0 || !is_self_issued) {
-			if (explicit_policy > 0) {
+			if (explicit_policy > 0)
 				explicit_policy--;
-			}
-			if (policy_mapping > 0) {
+			if (policy_mapping > 0)
 				policy_mapping--;
-			}
-			if (inhibit_any_policy > 0) {
+			if (inhibit_any_policy > 0)
 				inhibit_any_policy--;
-			}
 		}
 		if (!process_policy_constraints(cert, &explicit_policy,
 		    &policy_mapping, &inhibit_any_policy)) {
@@ -1025,9 +991,8 @@ X509_policy_check(const STACK_OF(X509) *certs,
 		if (user_policies != NULL) {
 			user_policies_sorted = sk_ASN1_OBJECT_dup(
 			    user_policies);
-			if (user_policies_sorted == NULL) {
+			if (user_policies_sorted == NULL)
 				goto err;
-			}
 			sk_ASN1_OBJECT_set_cmp_func(user_policies_sorted,
 			    asn1_object_cmp);
 			sk_ASN1_OBJECT_sort(user_policies_sorted);
