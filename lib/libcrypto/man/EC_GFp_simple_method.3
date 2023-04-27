@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EC_GFp_simple_method.3,v 1.11 2023/04/27 07:01:45 tb Exp $
+.\"	$OpenBSD: EC_GFp_simple_method.3,v 1.12 2023/04/27 08:47:04 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Matt Caswell <matt@openssl.org>.
@@ -91,11 +91,6 @@ All other implementations are based on this one.
 .Fn EC_GFp_mont_method
 adds the use of Montgomery multiplication (see
 .Xr BN_mod_mul_montgomery 3 ) .
-.Fn EC_GFp_nist_method
-offers an implementation optimised for use with NIST recommended
-curves.
-NIST curves are available through
-.Xr EC_GROUP_new_by_curve_name 3 .
 .Pp
 .Fn EC_METHOD_get_field_type
 identifies what type of field the
@@ -135,6 +130,7 @@ and
 .Fn EC_GFp_mont_method
 first appeared in OpenSSL 0.9.7 and have been available since
 .Ox 3.2 .
+.Pp
 .Fn EC_METHOD_get_field_type
 first appeared in OpenSSL 0.9.8 and has been available since
 .Ox 4.5 .
