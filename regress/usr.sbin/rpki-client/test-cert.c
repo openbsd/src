@@ -1,4 +1,4 @@
-/*	$Id: test-cert.c,v 1.21 2023/04/27 06:11:43 claudio Exp $ */
+/*	$Id: test-cert.c,v 1.22 2023/04/27 08:37:53 beck Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -35,6 +35,8 @@
 int outformats;
 int verbose;
 int filemode;
+
+int64_t evaluation_time;
 
 int
 main(int argc, char *argv[])
@@ -124,10 +126,4 @@ main(int argc, char *argv[])
 
 	printf("OK\n");
 	return 0;
-}
-
-time_t
-get_current_time(void)
-{
-	return time(NULL);
 }

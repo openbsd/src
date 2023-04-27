@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bird.c,v 1.16 2023/04/26 22:05:28 beck Exp $ */
+/*	$OpenBSD: output-bird.c,v 1.17 2023/04/27 08:37:53 beck Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2020 Robert Scheck <robert@fedoraproject.org>
@@ -84,7 +84,6 @@ output_bird2(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 {
 	extern		const char *bird_tablename;
 	struct vrp	*v;
-	time_t		 now = get_current_time();
 
 	if (outputheader(out, st) < 0)
 		return -1;
@@ -92,7 +91,7 @@ output_bird2(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	if (fprintf(out, "\ndefine force_roa_table_update = %lld;\n\n"
 	    "roa4 table %s4;\nroa6 table %s6;\n\n"
 	    "protocol static {\n\troa4 { table %s4; };\n\n",
-	    (long long)now, bird_tablename, bird_tablename,
+	    (long long)evaluation_time, bird_tablename, bird_tablename,
 	    bird_tablename) < 0)
 		return -1;
 

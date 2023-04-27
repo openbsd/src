@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-rrdp.c,v 1.4 2023/04/27 06:11:43 claudio Exp $ */
+/*	$OpenBSD: test-rrdp.c,v 1.5 2023/04/27 08:37:53 beck Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -36,6 +36,8 @@
 #include "rrdp.h"
 
 int verbose;
+
+int64_t evaluation_time;
 
 #define REGRESS_NOTIFY_URI	"https://rpki.example.com/notify.xml"
 
@@ -337,10 +339,4 @@ usage:
 	fprintf(stderr, "usage: %s [-S session_id] [-N serial] [-H hash] "
 	    "-d | -n | -s\n", "test-rrdp");
 	exit(1);
-}
-
-time_t
-get_current_time(void)
-{
-	return time(NULL);
 }
