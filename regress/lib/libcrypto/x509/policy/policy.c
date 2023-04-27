@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.1 2023/04/27 12:23:31 beck Exp $ */
+/* $OpenBSD: policy.c,v 1.2 2023/04/27 13:26:57 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -309,8 +309,12 @@ struct verify_cert_test verify_cert_tests[] = {
 		.root_file = CERTSDIR "/" "policy_root.pem",
 		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
-		.policy_oid_to_check = OID2,
+		.policy_oid_to_check = OID3,
 		.want_chains = 0,
+		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error_depth = 0,
 	},
 	{
 		.id = "1 and 2, in 1 and 2",
@@ -338,6 +342,10 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.policy_oid_to_check = OID1,
 		.want_chains = 0,
+		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_legacy_error_depth = 0,
 	},
 	{
 		.id = "invalid intermediate",
@@ -345,6 +353,10 @@ struct verify_cert_test verify_cert_tests[] = {
 		.intermediate_file = CERTSDIR "/" "policy_intermediate_invalid.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.want_chains = 0,
+		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_legacy_error_depth = 0,
 	},
 	{
 		.id = "1 in invalid policy in leaf",
@@ -353,6 +365,10 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf_invalid.pem",
 		.policy_oid_to_check = OID1,
 		.want_chains = 0,
+		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_legacy_error_depth = 0,
 	},
 	{
 		.id = "invalid leaf",
@@ -360,6 +376,10 @@ struct verify_cert_test verify_cert_tests[] = {
 		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf_invalid.pem",
 		.want_chains = 0,
+		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_legacy_error_depth = 0,
 	},
 	// There is a duplicate policy in the leaf policy extension.
 	{
@@ -369,6 +389,10 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf_duplicate.pem",
 		.policy_oid_to_check = OID1,
 		.want_chains = 0,
+		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_legacy_error_depth = 0,
 	},
 	// There is a duplicate policy in the intermediate policy extension.
 	{
@@ -378,6 +402,10 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.policy_oid_to_check = OID1,
 		.want_chains = 0,
+		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_error_depth = 0,
+		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_legacy_error_depth = 0,
 	},
 };
 
