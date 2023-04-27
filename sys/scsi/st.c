@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.189 2022/02/27 02:27:55 krw Exp $	*/
+/*	$OpenBSD: st.c,v 1.190 2023/04/27 18:21:44 robert Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
 #include <sys/buf.h>
 #include <sys/mtio.h>
 #include <sys/device.h>
+#include <sys/disk.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
@@ -157,6 +158,7 @@ const struct st_quirk_inquiry_pattern st_quirk_patterns[] = {
 
 struct st_softc {
 	struct device sc_dev;
+	struct disk sc_dk;
 
 	int flags;
 #define	ST_INFO_VALID		0x00000001
@@ -295,6 +297,8 @@ stattach(struct device *parent, struct device *self, void *aux)
 
 	scsi_xsh_set(&st->sc_xsh, link, ststart);
 
+	st->sc_dk.dk_name = st->sc_dev.dv_xname;
+
 	/* Set up the buf queue for this device. */
 	bufq_init(&st->sc_bufq, BUFQ_FIFO);
 
@@ -309,6 +313,9 @@ stattach(struct device *parent, struct device *self, void *aux)
 	 * will be checked again at the first open.
 	 */
 	CLR(link->flags, SDEV_MEDIA_LOADED);
+
+	st->sc_dk.dk_flags = DKF_NOLABELREAD;
+	disk_attach(&st->sc_dev, &st->sc_dk);
 }
 
 int
@@ -343,6 +350,8 @@ stdetach(struct device *self, int flags)
 
 	bufq_destroy(&st->sc_bufq);
 
+	disk_detach(&st->sc_dk);
+
 	return 0;
 }
 
@@ -364,6 +373,11 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 		return ENXIO;
 	}
 	link = st->sc_link;
+
+	if ((error = disk_lock(&st->sc_dk)) != 0) {
+		device_unref(&st->sc_dev);
+		return error;
+	}
 
 	if (ISSET(flags, FWRITE) && ISSET(link->flags, SDEV_READONLY)) {
 		error = EACCES;
@@ -420,6 +434,7 @@ stopen(dev_t dev, int flags, int fmt, struct proc *p)
 
 done:
 	SC_DEBUG(link, SDEV_DB2, ("open complete\n"));
+	disk_unlock(&st->sc_dk);
 	device_unref(&st->sc_dev);
 	return error;
 }
@@ -444,6 +459,8 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 	}
 	link = st->sc_link;
 
+	disk_lock_nointr(&st->sc_dk);
+
 	SC_DEBUG(link, SDEV_DB1, ("closing\n"));
 
 	if (ISSET(st->flags, ST_WRITTEN) && !ISSET(st->flags, ST_FM_WRITTEN))
@@ -465,6 +482,8 @@ stclose(dev_t dev, int flags, int mode, struct proc *p)
 	}
 	CLR(link->flags, SDEV_OPEN);
 	scsi_xsh_del(&st->sc_xsh);
+
+	disk_unlock(&st->sc_dk);
 
 done:
 	device_unref(&st->sc_dev);
@@ -924,6 +943,9 @@ ststart(struct scsi_xfer *xs)
 	xs->cookie = bp;
 	xs->bp = bp;
 
+	/* Instrumentation. */
+	disk_busy(&st->sc_dk);
+
 	/*
 	 * go ask the adapter to do all this for us
 	 */
@@ -939,6 +961,7 @@ ststart(struct scsi_xfer *xs)
 void
 st_buf_done(struct scsi_xfer *xs)
 {
+	struct st_softc *st = xs->sc_link->device_softc;
 	struct buf *bp = xs->cookie;
 	int error, s;
 
@@ -984,6 +1007,9 @@ st_buf_done(struct scsi_xfer *xs)
 		bp->b_resid = bp->b_bcount;
 		break;
 	}
+
+	disk_unbusy(&st->sc_dk, bp->b_bcount - xs->resid, bp->b_blkno,
+		bp->b_flags & B_READ);
 
 	s = splbio();
 	biodone(bp);
