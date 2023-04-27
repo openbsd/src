@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acpi.4,v 1.71 2023/04/23 08:04:59 dlg Exp $
+.\"	$OpenBSD: acpi.4,v 1.72 2023/04/27 19:26:06 jmc Exp $
 .\"
 .\" Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2023 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -100,6 +100,8 @@ ASUSTeK AI Booster ACPI ATK0110 temperature, voltage, and fan sensor
 AMD GPIO controller
 .It Xr aplgpio 4
 Intel Apollo Lake GPIO controller
+.It Xr asmc 4
+Apple System Management Controller (SMC)
 .It Xr bse 4
 Broadcom GENET 10/100/1Gb Ethernet device
 .It Xr bytgpio 4
@@ -118,12 +120,18 @@ Intel Gemini Lake GPIO controller
 i.MX onboard I2C controller
 .It Xr iosf 4
 Intel OnChip System Fabric device
+.It Xr ipmi 4
+Intelligent Platform Management Interface driver
 .It Xr pchgpio 4
 Intel PCH GPIO controller
+.It Xr pluart 4
+ARM PrimeCell PL011 UART
 .It Xr qcgpio 4
 Qualcomm Snapdragon GPIO controller
 .It Xr qciic 4
 Qualcomm Snapdragon GENI I2C controller
+.It Xr sdhc 4
+SD Host Controller
 .It Xr tpm 4
 Trusted Platform Module device
 .It Xr ufshci 4
