@@ -1,4 +1,4 @@
-/*	$Id: test-tal.c,v 1.9 2022/04/20 17:26:53 tb Exp $ */
+/*	$Id: test-tal.c,v 1.10 2023/04/27 06:11:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -79,4 +79,10 @@ main(int argc, char *argv[])
 
 	printf("OK\n");
 	return 0;
+}
+
+time_t
+get_current_time(void)
+{
+	return time(NULL);
 }

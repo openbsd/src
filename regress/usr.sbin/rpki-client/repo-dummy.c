@@ -6,7 +6,7 @@
 #include "extern.h"
 
 void
-repo_stat_inc(struct repo *repo, enum rtype type, enum stype subtype)
+repo_stat_inc(struct repo *repo, int tal, enum rtype type, enum stype subtype)
 {
 	return;
 }

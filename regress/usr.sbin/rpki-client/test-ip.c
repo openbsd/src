@@ -1,4 +1,4 @@
-/*	$Id: test-ip.c,v 1.6 2022/11/05 10:32:51 job Exp $ */
+/*	$Id: test-ip.c,v 1.7 2023/04/27 06:11:43 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -127,4 +127,10 @@ main(int argc, char *argv[])
 
 	printf("OK\n");
 	return 0;
+}
+
+time_t
+get_current_time(void)
+{
+	return time(NULL);
 }
