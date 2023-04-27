@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.44 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.45 2023/04/27 22:47:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -63,10 +63,40 @@
  */
 #define VIRTIO_MAX_QUEUES	3
 
+#define MAXPHYS	(64 * 1024)	/* max raw I/O transfer size */
+
 /*
  * Rename the address config register to be more descriptive.
  */
 #define VIRTIO_CONFIG_QUEUE_PFN	VIRTIO_CONFIG_QUEUE_ADDRESS
+
+/*
+ * VM <-> Device messaging.
+ */
+struct viodev_msg {
+	uint8_t type;
+#define VIODEV_MSG_INVALID	0
+#define VIODEV_MSG_READY	1
+#define VIODEV_MSG_ERROR	2
+#define VIODEV_MSG_KICK		3
+#define VIODEV_MSG_IO_READ	4
+#define VIODEV_MSG_IO_WRITE	5
+#define VIODEV_MSG_DUMP		6
+#define VIODEV_MSG_SHUTDOWN	7
+
+	uint16_t reg;		/* VirtIO register */
+	uint8_t io_sz;		/* IO instruction size */
+	uint8_t vcpu;		/* VCPU id */
+	uint8_t irq;		/* IRQ number */
+
+	int8_t state;		/* Interrupt state toggle (if any) */
+#define INTR_STATE_ASSERT	 1
+#define INTR_STATE_NOOP		 0
+#define INTR_STATE_DEASSERT	-1
+
+	uint32_t data;		/* Data (if any) */
+	uint8_t data_valid;	/* 1 if data field is populated. */
+} __packed;
 
 /*
  * This struct stores notifications from a virtio driver. There is
@@ -177,16 +207,15 @@ struct viornd_dev {
 
 struct vioblk_dev {
 	struct virtio_io_cfg cfg;
-
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
 	struct virtio_backing file;
 
-	uint64_t sz;
+	int disk_fd[VM_MAX_BASE_PER_DISK];	/* fds for disk image(s) */
+	uint8_t ndisk_fd;	/* number of valid disk fds */
+	uint64_t sz;		/* size in 512 byte sectors */
 	uint32_t max_xfer;
 
-	uint8_t pci_id;
-	int irq;
-	uint32_t vm_id;
+	unsigned int idx;
 };
 
 /* vioscsi will use at least 3 queues - 5.6.2 Virtqueues
@@ -218,26 +247,40 @@ struct vioscsi_dev {
 };
 
 struct vionet_dev {
-	pthread_mutex_t mutex;
-	struct event event;
-
 	struct virtio_io_cfg cfg;
-
 	struct virtio_vq_info vq[VIRTIO_MAX_QUEUES];
 
-	int fd;
-	uint32_t vm_id;
-	uint32_t vm_vmid;
-	int irq;
+	int data_fd;		/* fd for our tap device */
+
 	uint8_t mac[6];
 	uint8_t hostmac[6];
-
-	int idx;
 	int lockedmac;
 	int local;
 	int pxeboot;
 
+	unsigned int idx;
+};
+
+struct virtio_dev {
+	union {
+		struct vioblk_dev vioblk;
+		struct vionet_dev vionet;
+	};
+
+	struct imsgev async_iev;
+	struct imsgev sync_iev;
+
+	int sync_fd;		/* fd for synchronous channel */
+	int async_fd;		/* fd for async channel */
+
 	uint8_t pci_id;
+	uint32_t vm_id;
+	uint32_t vm_vmid;
+	int irq;
+
+	pid_t dev_pid;
+	char dev_type;
+	SLIST_ENTRY(virtio_dev) dev_next;
 };
 
 struct virtio_net_hdr {
@@ -290,7 +333,12 @@ void virtio_shutdown(struct vmd_vm *);
 int virtio_dump(int);
 int virtio_restore(int, struct vmd_vm *, int, int[][VM_MAX_BASE_PER_DISK],
     int *);
+const char *virtio_reg_name(uint8_t);
 uint32_t vring_size(uint32_t);
+int vm_device_pipe(struct virtio_dev *, void (*)(int, short, void *));
+int virtio_pci_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
+void virtio_assert_pic_irq(struct virtio_dev *, int);
+void virtio_deassert_pic_irq(struct virtio_dev *, int);
 
 int virtio_rnd_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int viornd_dump(int);
@@ -305,21 +353,19 @@ int virtio_qcow2_init(struct virtio_backing *, off_t *, int*, size_t);
 int virtio_raw_create(const char *, uint64_t);
 int virtio_raw_init(struct virtio_backing *, off_t *, int*, size_t);
 
-int virtio_blk_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int vioblk_dump(int);
 int vioblk_restore(int, struct vmd_vm *, int[][VM_MAX_BASE_PER_DISK]);
 void vioblk_update_qs(struct vioblk_dev *);
 void vioblk_update_qa(struct vioblk_dev *);
 int vioblk_notifyq(struct vioblk_dev *);
 
-int virtio_net_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);
 int vionet_dump(int);
 int vionet_restore(int, struct vmd_vm *, int *);
 void vionet_update_qs(struct vionet_dev *);
 void vionet_update_qa(struct vionet_dev *);
-int vionet_notifyq(struct vionet_dev *);
-void vionet_notify_rx(struct vionet_dev *);
-int vionet_notify_tx(struct vionet_dev *);
+int vionet_notifyq(struct virtio_dev *);
+void vionet_notify_rx(struct virtio_dev *);
+int vionet_notify_tx(struct virtio_dev *);
 void vionet_process_rx(uint32_t);
 int vionet_enq_rx(struct vionet_dev *, char *, size_t, int *);
 void vionet_set_hostmac(struct vmd_vm *, unsigned int, uint8_t *);
@@ -336,7 +382,7 @@ int vioscsi_dump(int);
 int vioscsi_restore(int, struct vmd_vm *, int);
 
 /* dhcp.c */
-ssize_t dhcp_request(struct vionet_dev *, char *, size_t, char **);
+ssize_t dhcp_request(struct virtio_dev *, char *, size_t, char **);
 
 /* vioscsi.c */
 int vioscsi_io(int, uint16_t, uint32_t *, uint8_t *, void *, uint8_t);

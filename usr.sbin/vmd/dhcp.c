@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.11 2021/06/16 16:55:02 dv Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.12 2023/04/27 22:47:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -43,8 +43,9 @@ static const uint8_t broadcast[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 extern struct vmd *env;
 
 ssize_t
-dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
+dhcp_request(struct virtio_dev *dev, char *buf, size_t buflen, char **obuf)
 {
+	struct vionet_dev	*vionet = NULL;
 	unsigned char		*respbuf = NULL, *op, *oe, dhcptype = 0;
 	unsigned char		*opts = NULL;
 	ssize_t			 offset, optslen, respbuflen = 0;
@@ -56,6 +57,10 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	struct vmd_vm		*vm;
 	const char		*hostname = NULL;
 
+	if (dev->dev_type != VMD_DEVTYPE_NET)
+		fatalx("%s: not a network device", __func__);
+	vionet = &dev->vionet;
+
 	if (buflen < BOOTP_MIN_LEN + ETHER_HDR_LEN ||
 	    buflen > 1500 + ETHER_HDR_LEN)
 		return (-1);
@@ -65,10 +70,10 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 		return (-1);
 
 	if (memcmp(pc.pc_dmac, broadcast, ETHER_ADDR_LEN) != 0 &&
-	    memcmp(pc.pc_dmac, dev->hostmac, ETHER_ADDR_LEN) != 0)
+	    memcmp(pc.pc_dmac, vionet->hostmac, ETHER_ADDR_LEN) != 0)
 		return (-1);
 
-	if (memcmp(pc.pc_smac, dev->mac, ETHER_ADDR_LEN) != 0)
+	if (memcmp(pc.pc_smac, vionet->mac, ETHER_ADDR_LEN) != 0)
 		return (-1);
 
 	if ((offset = decode_udp_ip_header(buf, buflen, offset, &pc)) < 0)
@@ -87,7 +92,7 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	if (req.op != BOOTREQUEST ||
 	    req.htype != pc.pc_htype ||
 	    req.hlen != ETHER_ADDR_LEN ||
-	    memcmp(dev->mac, req.chaddr, req.hlen) != 0)
+	    memcmp(vionet->mac, req.chaddr, req.hlen) != 0)
 		return (-1);
 
 	/* Ignore unsupported requests for now */
@@ -134,7 +139,7 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	resp.hlen = req.hlen;
 	resp.xid = req.xid;
 
-	if (dev->pxeboot) {
+	if (vionet->pxeboot) {
 		strlcpy(resp.file, "auto_install", sizeof resp.file);
 		vm = vm_getbyvmid(dev->vm_vmid);
 		if (vm && res_hnok(vm->vm_params.vmc_params.vcp_name))
@@ -143,7 +148,7 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 
 	if ((client_addr.s_addr =
 	    vm_priv_addr(&env->vmd_cfg,
-	    dev->vm_vmid, dev->idx, 1)) == 0)
+	    dev->vm_vmid, vionet->idx, 1)) == 0)
 		return (-1);
 	memcpy(&resp.yiaddr, &client_addr,
 	    sizeof(client_addr));
@@ -152,7 +157,7 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	ss2sin(&pc.pc_dst)->sin_port = htons(CLIENT_PORT);
 
 	if ((server_addr.s_addr = vm_priv_addr(&env->vmd_cfg, dev->vm_vmid,
-	    dev->idx, 0)) == 0)
+	    vionet->idx, 0)) == 0)
 		return (-1);
 	memcpy(&resp.siaddr, &server_addr, sizeof(server_addr));
 	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &server_addr,
@@ -167,9 +172,9 @@ dhcp_request(struct vionet_dev *dev, char *buf, size_t buflen, char **obuf)
 	if ((respbuf = calloc(1, respbuflen)) == NULL)
 		goto fail;
 
-	memcpy(&pc.pc_dmac, dev->mac, sizeof(pc.pc_dmac));
-	memcpy(&resp.chaddr, dev->mac, resp.hlen);
-	memcpy(&pc.pc_smac, dev->mac, sizeof(pc.pc_smac));
+	memcpy(&pc.pc_dmac, vionet->mac, sizeof(pc.pc_dmac));
+	memcpy(&resp.chaddr, vionet->mac, resp.hlen);
+	memcpy(&pc.pc_smac, vionet->mac, sizeof(pc.pc_smac));
 	pc.pc_smac[5]++;
 	if ((offset = assemble_hw_header(respbuf, respbuflen, 0,
 	    &pc, HTYPE_ETHER)) < 0) {

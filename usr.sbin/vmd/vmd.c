@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.144 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.145 2023/04/27 22:47:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -774,13 +774,14 @@ main(int argc, char **argv)
 	int			 proc_instance = 0, vm_launch = 0, vm_fd = -1;
 	const char		*errp, *title = NULL;
 	int			 argc0 = argc;
+	char			 dev_type = '\0';
 
 	log_init(0, LOG_DAEMON);
 
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
-	while ((ch = getopt(argc, argv, "D:P:I:V:df:vn")) != -1) {
+	while ((ch = getopt(argc, argv, "D:P:I:V:X:df:nt:v")) != -1) {
 		switch (ch) {
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -812,12 +813,27 @@ main(int argc, char **argv)
 			if (errp)
 				fatalx("invalid process instance");
 			break;
-		/* child vm fork/exec */
+		/* child vm and device fork/exec */
 		case 'V':
 			vm_launch = VMD_LAUNCH_VM;
 			vm_fd = strtonum(optarg, 0, 128, &errp);
 			if (errp)
 				fatalx("invalid vm fd");
+			break;
+		case 'X':
+			vm_launch = VMD_LAUNCH_DEV;
+			vm_fd = strtonum(optarg, 0, 128, &errp);
+			if (errp)
+				fatalx("invalid device fd");
+			break;
+		case 't':
+			dev_type = *optarg;
+			switch (dev_type) {
+			case VMD_DEVTYPE_NET:
+			case VMD_DEVTYPE_DISK:
+				break;
+			default: fatalx("invalid device type");
+			}
 			break;
 		default:
 			usage();
@@ -865,6 +881,15 @@ main(int argc, char **argv)
 	if (vm_launch == VMD_LAUNCH_VM) {
 		vm_main(vm_fd);
 		/* NOTREACHED */
+	} else if (vm_launch == VMD_LAUNCH_DEV) {
+		if (dev_type == VMD_DEVTYPE_NET) {
+			vionet_main(vm_fd);
+			/* NOTREACHED */
+		} else if (dev_type == VMD_DEVTYPE_DISK) {
+			vioblk_main(vm_fd);
+			/* NOTREACHED */
+		}
+		fatalx("unsupported device type '%c'", dev_type);
 	}
 
 	/* Open /dev/vmm early. */

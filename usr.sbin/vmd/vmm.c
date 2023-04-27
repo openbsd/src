@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.110 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.111 2023/04/27 22:47:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -627,7 +627,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 {
 	struct vm_create_params	*vcp;
 	struct vmd_vm		*vm;
-	char			*nargv[5], num[32];
+	char			*nargv[6], num[32];
 	int			 fd, ret = EINVAL;
 	int			 fds[2];
 	pid_t			 vm_pid;
@@ -770,6 +770,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		 * Prepare our new argv for execvp(2) with the fd of our open
 		 * pipe to the parent/vmm process as an argument.
 		 */
+		memset(&nargv, 0, sizeof(nargv));
 		memset(num, 0, sizeof(num));
 		snprintf(num, sizeof(num), "%d", fds[1]);
 
@@ -777,7 +778,12 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		nargv[1] = "-V";
 		nargv[2] = num;
 		nargv[3] = "-n";
-		nargv[4] = NULL;
+
+		if (env->vmd_verbose) {
+			nargv[4] = "-v";
+			nargv[5] = NULL;
+		} else
+			nargv[4] = NULL;
 
 		/* Control resumes in vmd main(). */
 		execvp(nargv[0], nargv);

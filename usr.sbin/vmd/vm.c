@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.86 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.87 2023/04/27 22:47:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -81,8 +81,8 @@ void *vcpu_run_loop(void *);
 int vcpu_exit(struct vm_run_params *);
 int vcpu_reset(uint32_t, uint32_t, struct vcpu_reg_state *);
 void create_memory_map(struct vm_create_params *);
-int alloc_guest_mem(struct vm_create_params *);
 static int vmm_create_vm(struct vmd_vm *);
+int alloc_guest_mem(struct vmd_vm *);
 void init_emulated_hw(struct vmop_create_params *, int,
     int[][VM_MAX_BASE_PER_DISK], int *);
 void restore_emulated_hw(struct vm_create_params *, int, int *,
@@ -230,8 +230,8 @@ vm_main(int fd)
 	/*
 	 * We aren't root, so we can't chroot(2). Use unveil(2) instead.
 	 */
-	if (unveil("/var/empty", "") == -1)
-		fatal("unveil /var/empty");
+	if (unveil(env->argv0, "x") == -1)
+		fatal("unveil %s", env->argv0);
 	if (unveil(NULL, NULL) == -1)
 		fatal("unveil lock");
 
@@ -239,10 +239,11 @@ vm_main(int fd)
 	 * pledge in the vm processes:
 	 * stdio - for malloc and basic I/O including events.
 	 * vmm - for the vmm ioctls and operations.
+	 * proc exec - fork/exec for launching devices.
 	 * recvfd - for vm send/recv and sending fd to devices.
-	 * proc - required for vmm(4) VMM_IOC_CREATE ioctl
+	 * tmppath/rpath - for shm_mkstemp, ftruncate, unlink
 	 */
-	if (pledge("stdio vmm recvfd proc", NULL) == -1)
+	if (pledge("stdio vmm proc exec recvfd tmppath rpath", NULL) == -1)
 		fatal("pledge");
 
 	/* Receive our vm configuration. */
@@ -372,7 +373,7 @@ start_vm(struct vmd_vm *vm, int fd)
 	if (!(vm->vm_state & VM_STATE_RECEIVED))
 		create_memory_map(vcp);
 
-	ret = alloc_guest_mem(&vm->vm_params.vmc_params);
+	ret = alloc_guest_mem(vm);
 	if (ret) {
 		struct rlimit lim;
 		char buf[FMT_SCALED_STRSIZE];
@@ -394,10 +395,6 @@ start_vm(struct vmd_vm *vm, int fd)
 		atomicio(vwrite, fd, &vcp->vcp_id, sizeof(vcp->vcp_id));
 		return (ret);
 	}
-
-	/* Tighten pledge now that we've called VMM_IOC_CREATE ioctl. */
-	if (pledge("stdio vmm recvfd", NULL) == -1)
-		fatal("pledge");
 
 	/*
 	 * Some of vmd currently relies on global state (current_vm, con_fd).
@@ -487,14 +484,18 @@ start_vm(struct vmd_vm *vm, int fd)
 		nicfds[i] = vm->vm_ifs[i].vif_fd;
 
 	if (vm->vm_state & VM_STATE_RECEIVED) {
+		restore_mem(vm->vm_receive_fd, vcp);
 		restore_emulated_hw(vcp, vm->vm_receive_fd, nicfds,
 		    vm->vm_disks, vm->vm_cdrom);
-		restore_mem(vm->vm_receive_fd, vcp);
 		if (restore_vm_params(vm->vm_receive_fd, vcp))
 			fatal("restore vm params failed");
 		unpause_vm(vm);
 	} else
 		init_emulated_hw(vmc, vm->vm_cdrom, vm->vm_disks, nicfds);
+
+	/* Drop privleges further before starting the vcpu run loop(s). */
+	if (pledge("stdio vmm recvfd", NULL) == -1)
+		fatal("pledge");
 
 	/*
 	 * Execute the vcpu run loop(s) for this VM.
@@ -653,7 +654,7 @@ send_vm(int fd, struct vmd_vm *vm)
 	size_t			   sz;
 
 	if (dump_send_header(fd)) {
-		log_info("%s: failed to send vm dump header", __func__);
+		log_warnx("%s: failed to send vm dump header", __func__);
 		goto err;
 	}
 
@@ -697,6 +698,9 @@ send_vm(int fd, struct vmd_vm *vm)
 		}
 	}
 
+	/* Dump memory before devices to aid in restoration. */
+	if ((ret = dump_mem(fd, vm)))
+		goto err;
 	if ((ret = i8253_dump(fd)))
 		goto err;
 	if ((ret = i8259_dump(fd)))
@@ -710,8 +714,6 @@ send_vm(int fd, struct vmd_vm *vm)
 	if ((ret = pci_dump(fd)))
 		goto err;
 	if ((ret = virtio_dump(fd)))
-		goto err;
-	if ((ret = dump_mem(fd, vm)))
 		goto err;
 
 	for (i = 0; i < vm->vm_params.vmc_params.vcp_ncpus; i++) {
@@ -1086,31 +1088,67 @@ create_memory_map(struct vm_create_params *vcp)
  *  !0: failure - errno indicating the source of the failure
  */
 int
-alloc_guest_mem(struct vm_create_params *vcp)
+alloc_guest_mem(struct vmd_vm *vm)
 {
 	void *p;
-	int ret;
+	char *tmp;
+	int fd, ret = 0;
 	size_t i, j;
+	struct vm_create_params *vcp = &vm->vm_params.vmc_params;
 	struct vm_mem_range *vmr;
+
+	tmp = calloc(32, sizeof(char));
+	if (tmp == NULL) {
+		ret = errno;
+		log_warn("%s: calloc", __func__);
+		return (ret);
+	}
+	strlcpy(tmp, "/tmp/vmd.XXXXXXXXXX", 32);
+
+	vm->vm_nmemfds = vcp->vcp_nmemranges;
 
 	for (i = 0; i < vcp->vcp_nmemranges; i++) {
 		vmr = &vcp->vcp_memranges[i];
+
+		fd = shm_mkstemp(tmp);
+		if (fd < 0) {
+			ret = errno;
+			log_warn("%s: shm_mkstemp", __func__);
+			return (ret);
+		}
+		if (ftruncate(fd, vmr->vmr_size) == -1) {
+			ret = errno;
+			log_warn("%s: ftruncate", __func__);
+			goto out;
+		}
+		if (fcntl(fd, F_SETFD, 0) == -1) {
+			ret = errno;
+			log_warn("%s: fcntl", __func__);
+			goto out;
+		}
+		if (shm_unlink(tmp) == -1) {
+			ret = errno;
+			log_warn("%s: shm_unlink", __func__);
+			goto out;
+		}
+		strlcpy(tmp, "/tmp/vmd.XXXXXXXXXX", 32);
+
 		p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
-		    MAP_PRIVATE | MAP_ANON, -1, 0);
+		    MAP_SHARED | MAP_CONCEAL, fd, 0);
 		if (p == MAP_FAILED) {
 			ret = errno;
 			for (j = 0; j < i; j++) {
 				vmr = &vcp->vcp_memranges[j];
 				munmap((void *)vmr->vmr_va, vmr->vmr_size);
 			}
-
-			return (ret);
+			goto out;
 		}
-
+		vm->vm_memfds[i] = fd;
 		vmr->vmr_va = (vaddr_t)p;
 	}
-
-	return (0);
+out:
+	free(tmp);
+	return (ret);
 }
 
 /*
@@ -2498,4 +2536,61 @@ vm_pipe_recv(struct vm_dev_pipe *p)
 		fatal("failed to read from device pipe");
 
 	return msg;
+}
+
+/*
+ * Re-map the guest address space using the shared memory file descriptor.
+ *
+ * Returns 0 on success, non-zero in event of failure.
+ */
+int
+remap_guest_mem(struct vmd_vm *vm)
+{
+	struct vm_create_params	*vcp;
+	struct vm_mem_range	*vmr;
+	size_t			 i, j;
+	void			*p = NULL;
+	int			 ret;
+
+	if (vm == NULL)
+		return (1);
+
+	vcp = &vm->vm_params.vmc_params;
+
+	/*
+	 * We've execve'd, so we need to re-map the guest VM memory. Iterate
+	 * over all possible vm_mem_range entries so we can initialize all
+	 * file descriptors to a value.
+	 */
+	for (i = 0; i < VMM_MAX_MEM_RANGES; i++) {
+		if (i < vcp->vcp_nmemranges) {
+			vmr = &vcp->vcp_memranges[i];
+			/* Skip ranges we know we don't need right now. */
+			if (vmr->vmr_type == VM_MEM_MMIO) {
+				log_debug("%s: skipping range i=%ld, type=%d",
+				    __func__, i, vmr->vmr_type);
+				vm->vm_memfds[i] = -1;
+				continue;
+			}
+			/* Re-mmap the memrange. */
+			p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
+			    MAP_SHARED | MAP_CONCEAL, vm->vm_memfds[i], 0);
+			if (p == MAP_FAILED) {
+				ret = errno;
+				log_warn("%s: mmap", __func__);
+				for (j = 0; j < i; j++) {
+					vmr = &vcp->vcp_memranges[j];
+					munmap((void *)vmr->vmr_va,
+					    vmr->vmr_size);
+				}
+				return (ret);
+			}
+			vmr->vmr_va = (vaddr_t)p;
+		} else {
+			/* Initialize with an invalid fd. */
+			vm->vm_memfds[i] = -1;
+		}
+	}
+
+	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.101 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.102 2023/04/27 22:47:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -18,6 +18,7 @@
 
 #include <sys/param.h>	/* PAGE_SIZE */
 #include <sys/socket.h>
+#include <sys/wait.h>
 
 #include <machine/vmmvar.h>
 #include <dev/pci/pcireg.h>
@@ -34,6 +35,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <fcntl.h>
 #include <poll.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -47,15 +49,15 @@
 #include "vmd.h"
 #include "vmm.h"
 
+extern struct vmd *env;
 extern char *__progname;
+
 struct viornd_dev viornd;
-struct vioblk_dev *vioblk;
-struct vionet_dev *vionet;
 struct vioscsi_dev *vioscsi;
 struct vmmci_dev vmmci;
 
-int nr_vionet;
-int nr_vioblk;
+/* Devices emulated in subprocesses are inserted into this list. */
+SLIST_HEAD(virtio_dev_head, virtio_dev) virtio_devs;
 
 #define MAXPHYS	(64 * 1024)	/* max raw I/O transfer size */
 
@@ -68,22 +70,11 @@ int nr_vioblk;
 #define RXQ	0
 #define TXQ	1
 
-const char *
-vioblk_cmd_name(uint32_t type)
-{
-	switch (type) {
-	case VIRTIO_BLK_T_IN: return "read";
-	case VIRTIO_BLK_T_OUT: return "write";
-	case VIRTIO_BLK_T_SCSI_CMD: return "scsi read";
-	case VIRTIO_BLK_T_SCSI_CMD_OUT: return "scsi write";
-	case VIRTIO_BLK_T_FLUSH: return "flush";
-	case VIRTIO_BLK_T_FLUSH_OUT: return "flush out";
-	case VIRTIO_BLK_T_GET_ID: return "get id";
-	default: return "unknown";
-	}
-}
+static int virtio_dev_launch(struct vmd_vm *, struct virtio_dev *);
+static void virtio_dispatch_dev(int, short, void *);
+static int handle_dev_msg(struct viodev_msg *, struct virtio_dev *);
 
-static const char *
+const char *
 virtio_reg_name(uint8_t reg)
 {
 	switch (reg) {
@@ -95,8 +86,11 @@ virtio_reg_name(uint8_t reg)
 	case VIRTIO_CONFIG_QUEUE_NOTIFY: return "queue notify";
 	case VIRTIO_CONFIG_DEVICE_STATUS: return "device status";
 	case VIRTIO_CONFIG_ISR_STATUS: return "isr status";
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI: return "device config 0";
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4: return "device config 1";
+	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI...VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 3:
+		return "device config 0";
+	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4:
+	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 5:
+		return "device config 1";
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 8: return "device config 2";
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 12: return "device config 3";
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 16: return "device config 4";
@@ -154,7 +148,7 @@ viornd_update_qa(void)
 
 	hva = hvaddr_mem(vq_info->q_gpa, vring_size(VIORND_QUEUE_SIZE));
 	if (hva == NULL)
-		fatal("viornd_update_qa");
+		fatalx("viornd_update_qa");
 	vq_info->q_hva = hva;
 }
 
@@ -284,1191 +278,6 @@ virtio_rnd_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		}
 	}
 	return (0);
-}
-
-void
-vioblk_update_qa(struct vioblk_dev *dev)
-{
-	struct virtio_vq_info *vq_info;
-	void *hva = NULL;
-
-	/* Invalid queue? */
-	if (dev->cfg.queue_select > 0)
-		return;
-
-	vq_info = &dev->vq[dev->cfg.queue_select];
-	vq_info->q_gpa = (uint64_t)dev->cfg.queue_pfn * VIRTIO_PAGE_SIZE;
-
-	hva = hvaddr_mem(vq_info->q_gpa, vring_size(VIOBLK_QUEUE_SIZE));
-	if (hva == NULL)
-		fatal("vioblk_update_qa");
-	vq_info->q_hva = hva;
-}
-
-void
-vioblk_update_qs(struct vioblk_dev *dev)
-{
-	struct virtio_vq_info *vq_info;
-
-	/* Invalid queue? */
-	if (dev->cfg.queue_select > 0) {
-		dev->cfg.queue_size = 0;
-		return;
-	}
-
-	vq_info = &dev->vq[dev->cfg.queue_select];
-
-	/* Update queue pfn/size based on queue select */
-	dev->cfg.queue_pfn = vq_info->q_gpa >> 12;
-	dev->cfg.queue_size = vq_info->qs;
-}
-
-static void
-vioblk_free_info(struct ioinfo *info)
-{
-	if (!info)
-		return;
-	free(info->buf);
-	free(info);
-}
-
-static struct ioinfo *
-vioblk_start_read(struct vioblk_dev *dev, off_t sector, size_t sz)
-{
-	struct ioinfo *info;
-
-	/* Limit to 64M for now */
-	if (sz > (1 << 26)) {
-		log_warnx("%s: read size exceeded 64M", __func__);
-		return (NULL);
-	}
-
-	info = calloc(1, sizeof(*info));
-	if (!info)
-		goto nomem;
-	info->buf = malloc(sz);
-	if (info->buf == NULL)
-		goto nomem;
-	info->len = sz;
-	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
-	info->file = &dev->file;
-
-	return info;
-
-nomem:
-	free(info);
-	log_warn("malloc error vioblk read");
-	return (NULL);
-}
-
-
-static const uint8_t *
-vioblk_finish_read(struct ioinfo *info)
-{
-	struct virtio_backing *file;
-
-	file = info->file;
-	if (file->pread(file->p, info->buf, info->len, info->offset) != info->len) {
-		info->error = errno;
-		log_warn("vioblk read error");
-		return NULL;
-	}
-
-	return info->buf;
-}
-
-static struct ioinfo *
-vioblk_start_write(struct vioblk_dev *dev, off_t sector,
-    paddr_t addr, size_t len)
-{
-	struct ioinfo *info;
-
-	/* Limit to 64M for now */
-	if (len > (1 << 26)) {
-		log_warnx("%s: write size exceeded 64M", __func__);
-		return (NULL);
-	}
-
-	info = calloc(1, sizeof(*info));
-	if (!info)
-		goto nomem;
-
-	info->buf = malloc(len);
-	if (info->buf == NULL)
-		goto nomem;
-	info->len = len;
-	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
-	info->file = &dev->file;
-
-	if (read_mem(addr, info->buf, info->len)) {
-		vioblk_free_info(info);
-		return NULL;
-	}
-
-	return info;
-
-nomem:
-	free(info);
-	log_warn("malloc error vioblk write");
-	return (NULL);
-}
-
-static int
-vioblk_finish_write(struct ioinfo *info)
-{
-	struct virtio_backing *file;
-
-	file = info->file;
-	if (file->pwrite(file->p, info->buf, info->len, info->offset) != info->len) {
-		log_warn("vioblk write error");
-		return EIO;
-	}
-	return 0;
-}
-
-/*
- * XXX in various cases, ds should be set to VIRTIO_BLK_S_IOERR, if we can
- */
-int
-vioblk_notifyq(struct vioblk_dev *dev)
-{
-	uint16_t idx, cmd_desc_idx, secdata_desc_idx, ds_desc_idx;
-	uint8_t ds;
-	int cnt;
-	off_t secbias;
-	char *vr;
-	struct vring_desc *desc, *cmd_desc, *secdata_desc, *ds_desc;
-	struct vring_avail *avail;
-	struct vring_used *used;
-	struct virtio_blk_req_hdr cmd;
-	struct virtio_vq_info *vq_info;
-
-	/* Invalid queue? */
-	if (dev->cfg.queue_notify > 0)
-		return (0);
-
-	vq_info = &dev->vq[dev->cfg.queue_notify];
-	vr = vq_info->q_hva;
-	if (vr == NULL)
-		fatalx("%s: null vring", __func__);
-
-	/* Compute offsets in ring of descriptors, avail ring, and used ring */
-	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
-
-	idx = vq_info->last_avail & VIOBLK_QUEUE_MASK;
-
-	if ((avail->idx & VIOBLK_QUEUE_MASK) == idx) {
-		log_debug("%s - nothing to do?", __func__);
-		return (0);
-	}
-
-	while (idx != (avail->idx & VIOBLK_QUEUE_MASK)) {
-
-		ds = VIRTIO_BLK_S_IOERR;
-		cmd_desc_idx = avail->ring[idx] & VIOBLK_QUEUE_MASK;
-		cmd_desc = &desc[cmd_desc_idx];
-
-		if ((cmd_desc->flags & VRING_DESC_F_NEXT) == 0) {
-			log_warnx("unchained vioblk cmd descriptor received "
-			    "(idx %d)", cmd_desc_idx);
-			goto out;
-		}
-
-		/* Read command from descriptor ring */
-		if (cmd_desc->flags & VRING_DESC_F_WRITE) {
-			log_warnx("vioblk: unexpected writable cmd descriptor "
-			    "%d", cmd_desc_idx);
-			goto out;
-		}
-		if (read_mem(cmd_desc->addr, &cmd, sizeof(cmd))) {
-			log_warnx("vioblk: command read_mem error @ 0x%llx",
-			    cmd_desc->addr);
-			goto out;
-		}
-
-		switch (cmd.type) {
-		case VIRTIO_BLK_T_IN:
-			/* first descriptor */
-			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			secdata_desc = &desc[secdata_desc_idx];
-
-			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-				log_warnx("unchained vioblk data descriptor "
-				    "received (idx %d)", cmd_desc_idx);
-				goto out;
-			}
-
-			cnt = 0;
-			secbias = 0;
-			do {
-				struct ioinfo *info;
-				const uint8_t *secdata;
-
-				if ((secdata_desc->flags & VRING_DESC_F_WRITE)
-				    == 0) {
-					log_warnx("vioblk: unwritable data "
-					    "descriptor %d", secdata_desc_idx);
-					goto out;
-				}
-
-				info = vioblk_start_read(dev,
-				    cmd.sector + secbias, secdata_desc->len);
-
-				if (info == NULL) {
-					log_warnx("vioblk: can't start read");
-					goto out;
-				}
-
-				/* read the data, use current data descriptor */
-				secdata = vioblk_finish_read(info);
-				if (secdata == NULL) {
-					vioblk_free_info(info);
-					log_warnx("vioblk: block read error, "
-					    "sector %lld", cmd.sector);
-					goto out;
-				}
-
-				if (write_mem(secdata_desc->addr, secdata,
-					secdata_desc->len)) {
-					log_warnx("can't write sector "
-					    "data to gpa @ 0x%llx",
-					    secdata_desc->addr);
-					vioblk_free_info(info);
-					goto out;
-				}
-
-				vioblk_free_info(info);
-
-				secbias += (secdata_desc->len /
-				    VIRTIO_BLK_SECTOR_SIZE);
-				secdata_desc_idx = secdata_desc->next &
-				    VIOBLK_QUEUE_MASK;
-				secdata_desc = &desc[secdata_desc_idx];
-
-				/* Guard against infinite chains */
-				if (++cnt >= VIOBLK_QUEUE_SIZE) {
-					log_warnx("%s: descriptor table "
-					    "invalid", __func__);
-					goto out;
-				}
-			} while (secdata_desc->flags & VRING_DESC_F_NEXT);
-
-			ds_desc_idx = secdata_desc_idx;
-			ds_desc = secdata_desc;
-
-			ds = VIRTIO_BLK_S_OK;
-			break;
-		case VIRTIO_BLK_T_OUT:
-			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			secdata_desc = &desc[secdata_desc_idx];
-
-			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-				log_warnx("wr vioblk: unchained vioblk data "
-				    "descriptor received (idx %d)",
-				    cmd_desc_idx);
-				goto out;
-			}
-
-			if (secdata_desc->len > dev->max_xfer) {
-				log_warnx("%s: invalid read size %d requested",
-				    __func__, secdata_desc->len);
-				goto out;
-			}
-
-			cnt = 0;
-			secbias = 0;
-			do {
-				struct ioinfo *info;
-
-				if (secdata_desc->flags & VRING_DESC_F_WRITE) {
-					log_warnx("wr vioblk: unexpected "
-					    "writable data descriptor %d",
-					    secdata_desc_idx);
-					goto out;
-				}
-
-				info = vioblk_start_write(dev,
-				    cmd.sector + secbias,
-				    secdata_desc->addr, secdata_desc->len);
-
-				if (info == NULL) {
-					log_warnx("wr vioblk: can't read "
-					    "sector data @ 0x%llx",
-					    secdata_desc->addr);
-					goto out;
-				}
-
-				if (vioblk_finish_write(info)) {
-					log_warnx("wr vioblk: disk write "
-					    "error");
-					vioblk_free_info(info);
-					goto out;
-				}
-
-				vioblk_free_info(info);
-
-				secbias += secdata_desc->len /
-				    VIRTIO_BLK_SECTOR_SIZE;
-
-				secdata_desc_idx = secdata_desc->next &
-				    VIOBLK_QUEUE_MASK;
-				secdata_desc = &desc[secdata_desc_idx];
-
-				/* Guard against infinite chains */
-				if (++cnt >= VIOBLK_QUEUE_SIZE) {
-					log_warnx("%s: descriptor table "
-					    "invalid", __func__);
-					goto out;
-				}
-			} while (secdata_desc->flags & VRING_DESC_F_NEXT);
-
-			ds_desc_idx = secdata_desc_idx;
-			ds_desc = secdata_desc;
-
-			ds = VIRTIO_BLK_S_OK;
-			break;
-		case VIRTIO_BLK_T_FLUSH:
-		case VIRTIO_BLK_T_FLUSH_OUT:
-			ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			ds_desc = &desc[ds_desc_idx];
-
-			ds = VIRTIO_BLK_S_UNSUPP;
-			break;
-		case VIRTIO_BLK_T_GET_ID:
-			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			secdata_desc = &desc[secdata_desc_idx];
-
-			/*
-			 * We don't support this command yet. While it's not
-			 * officially part of the virtio spec (will be in v1.2)
-			 * there's no feature to negotiate. Linux drivers will
-			 * often send this command regardless.
-			 *
-			 * When the command is received, it should appear as a
-			 * chain of 3 descriptors, similar to the IN/OUT
-			 * commands. The middle descriptor should have have a
-			 * length of VIRTIO_BLK_ID_BYTES bytes.
-			 */
-			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-				log_warnx("id vioblk: unchained vioblk data "
-				    "descriptor received (idx %d)",
-				    cmd_desc_idx);
-				goto out;
-			}
-
-			/* Skip the data descriptor. */
-			ds_desc_idx = secdata_desc->next & VIOBLK_QUEUE_MASK;
-			ds_desc = &desc[ds_desc_idx];
-
-			ds = VIRTIO_BLK_S_UNSUPP;
-			break;
-		default:
-			log_warnx("%s: unsupported command 0x%x", __func__,
-			    cmd.type);
-			ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			ds_desc = &desc[ds_desc_idx];
-
-			ds = VIRTIO_BLK_S_UNSUPP;
-			break;
-		}
-
-		if ((ds_desc->flags & VRING_DESC_F_WRITE) == 0) {
-			log_warnx("%s: ds descriptor %d unwritable", __func__,
-			    ds_desc_idx);
-			goto out;
-		}
-		if (write_mem(ds_desc->addr, &ds, sizeof(ds))) {
-			log_warnx("%s: can't write device status data @ 0x%llx",
-			    __func__, ds_desc->addr);
-			goto out;
-		}
-
-		dev->cfg.isr_status = 1;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
-		__sync_synchronize();
-		used->idx++;
-
-		vq_info->last_avail = avail->idx & VIOBLK_QUEUE_MASK;
-		idx = (idx + 1) & VIOBLK_QUEUE_MASK;
-	}
-out:
-	return (1);
-}
-
-int
-virtio_blk_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
-    void *cookie, uint8_t sz)
-{
-	struct vioblk_dev *dev = (struct vioblk_dev *)cookie;
-
-	*intr = 0xFF;
-
-
-	if (dir == 0) {
-		switch (reg) {
-		case VIRTIO_CONFIG_DEVICE_FEATURES:
-		case VIRTIO_CONFIG_QUEUE_SIZE:
-		case VIRTIO_CONFIG_ISR_STATUS:
-			log_warnx("%s: illegal write %x to %s",
-			    __progname, *data, virtio_reg_name(reg));
-			break;
-		case VIRTIO_CONFIG_GUEST_FEATURES:
-			dev->cfg.guest_feature = *data;
-			break;
-		case VIRTIO_CONFIG_QUEUE_PFN:
-			dev->cfg.queue_pfn = *data;
-			vioblk_update_qa(dev);
-			break;
-		case VIRTIO_CONFIG_QUEUE_SELECT:
-			dev->cfg.queue_select = *data;
-			vioblk_update_qs(dev);
-			break;
-		case VIRTIO_CONFIG_QUEUE_NOTIFY:
-			dev->cfg.queue_notify = *data;
-			if (vioblk_notifyq(dev))
-				*intr = 1;
-			break;
-		case VIRTIO_CONFIG_DEVICE_STATUS:
-			dev->cfg.device_status = *data;
-			if (dev->cfg.device_status == 0) {
-				log_debug("%s: device reset", __func__);
-				dev->cfg.guest_feature = 0;
-				dev->cfg.queue_pfn = 0;
-				vioblk_update_qa(dev);
-				dev->cfg.queue_size = 0;
-				vioblk_update_qs(dev);
-				dev->cfg.queue_select = 0;
-				dev->cfg.queue_notify = 0;
-				dev->cfg.isr_status = 0;
-				dev->vq[0].last_avail = 0;
-				vcpu_deassert_pic_irq(dev->vm_id, 0, dev->irq);
-			}
-			break;
-		default:
-			break;
-		}
-	} else {
-		switch (reg) {
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI:
-			switch (sz) {
-			case 4:
-				*data = (uint32_t)(dev->sz);
-				break;
-			case 2:
-				*data &= 0xFFFF0000;
-				*data |= (uint32_t)(dev->sz) & 0xFFFF;
-				break;
-			case 1:
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->sz) & 0xFF;
-				break;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 1:
-			if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->sz >> 8) & 0xFF;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 2:
-			if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->sz >> 16) & 0xFF;
-			} else if (sz == 2) {
-				*data &= 0xFFFF0000;
-				*data |= (uint32_t)(dev->sz >> 16) & 0xFFFF;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 3:
-			if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->sz >> 24) & 0xFF;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4:
-			switch (sz) {
-			case 4:
-				*data = (uint32_t)(dev->sz >> 32);
-				break;
-			case 2:
-				*data &= 0xFFFF0000;
-				*data |= (uint32_t)(dev->sz >> 32) & 0xFFFF;
-				break;
-			case 1:
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->sz >> 32) & 0xFF;
-				break;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 5:
-			if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->sz >> 40) & 0xFF;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 6:
-			if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->sz >> 48) & 0xFF;
-			} else if (sz == 2) {
-				*data &= 0xFFFF0000;
-				*data |= (uint32_t)(dev->sz >> 48) & 0xFFFF;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 7:
-			if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->sz >> 56) & 0xFF;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 8:
-			switch (sz) {
-			case 4:
-				*data = (uint32_t)(dev->max_xfer);
-				break;
-			case 2:
-				*data &= 0xFFFF0000;
-				*data |= (uint32_t)(dev->max_xfer) & 0xFFFF;
-				break;
-			case 1:
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->max_xfer) & 0xFF;
-				break;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 9:
-			if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->max_xfer >> 8) & 0xFF;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 10:
-			if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->max_xfer >> 16) & 0xFF;
-			} else if (sz == 2) {
-				*data &= 0xFFFF0000;
-				*data |= (uint32_t)(dev->max_xfer >> 16)
-				    & 0xFFFF;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 11:
-			if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint32_t)(dev->max_xfer >> 24) & 0xFF;
-			}
-			/* XXX handle invalid sz */
-			break;
-		case VIRTIO_CONFIG_DEVICE_FEATURES:
-			*data = dev->cfg.device_feature;
-			break;
-		case VIRTIO_CONFIG_GUEST_FEATURES:
-			*data = dev->cfg.guest_feature;
-			break;
-		case VIRTIO_CONFIG_QUEUE_PFN:
-			*data = dev->cfg.queue_pfn;
-			break;
-		case VIRTIO_CONFIG_QUEUE_SIZE:
-			if (sz == 4)
-				*data = dev->cfg.queue_size;
-			else if (sz == 2) {
-				*data &= 0xFFFF0000;
-				*data |= (uint16_t)dev->cfg.queue_size;
-			} else if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint8_t)dev->cfg.queue_size;
-			}
-			break;
-		case VIRTIO_CONFIG_QUEUE_SELECT:
-			*data = dev->cfg.queue_select;
-			break;
-		case VIRTIO_CONFIG_QUEUE_NOTIFY:
-			*data = dev->cfg.queue_notify;
-			break;
-		case VIRTIO_CONFIG_DEVICE_STATUS:
-			if (sz == 4)
-				*data = dev->cfg.device_status;
-			else if (sz == 2) {
-				*data &= 0xFFFF0000;
-				*data |= (uint16_t)dev->cfg.device_status;
-			} else if (sz == 1) {
-				*data &= 0xFFFFFF00;
-				*data |= (uint8_t)dev->cfg.device_status;
-			}
-			break;
-		case VIRTIO_CONFIG_ISR_STATUS:
-			*data = dev->cfg.isr_status;
-			dev->cfg.isr_status = 0;
-			vcpu_deassert_pic_irq(dev->vm_id, 0, dev->irq);
-			break;
-		}
-	}
-	return (0);
-}
-
-int
-virtio_net_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
-    void *cookie, uint8_t sz)
-{
-	struct vionet_dev *dev = (struct vionet_dev *)cookie;
-
-	*intr = 0xFF;
-	mutex_lock(&dev->mutex);
-
-	if (dir == 0) {
-		switch (reg) {
-		case VIRTIO_CONFIG_DEVICE_FEATURES:
-		case VIRTIO_CONFIG_QUEUE_SIZE:
-		case VIRTIO_CONFIG_ISR_STATUS:
-			log_warnx("%s: illegal write %x to %s",
-			    __progname, *data, virtio_reg_name(reg));
-			break;
-		case VIRTIO_CONFIG_GUEST_FEATURES:
-			dev->cfg.guest_feature = *data;
-			break;
-		case VIRTIO_CONFIG_QUEUE_PFN:
-			dev->cfg.queue_pfn = *data;
-			vionet_update_qa(dev);
-			break;
-		case VIRTIO_CONFIG_QUEUE_SELECT:
-			dev->cfg.queue_select = *data;
-			vionet_update_qs(dev);
-			break;
-		case VIRTIO_CONFIG_QUEUE_NOTIFY:
-			dev->cfg.queue_notify = *data;
-			if (vionet_notifyq(dev))
-				*intr = 1;
-			break;
-		case VIRTIO_CONFIG_DEVICE_STATUS:
-			dev->cfg.device_status = *data;
-			if (dev->cfg.device_status == 0) {
-				log_debug("%s: device reset", __func__);
-				dev->cfg.guest_feature = 0;
-				dev->cfg.queue_pfn = 0;
-				vionet_update_qa(dev);
-				dev->cfg.queue_size = 0;
-				vionet_update_qs(dev);
-				dev->cfg.queue_select = 0;
-				dev->cfg.queue_notify = 0;
-				dev->cfg.isr_status = 0;
-				dev->vq[RXQ].last_avail = 0;
-				dev->vq[RXQ].notified_avail = 0;
-				dev->vq[TXQ].last_avail = 0;
-				dev->vq[TXQ].notified_avail = 0;
-				vcpu_deassert_pic_irq(dev->vm_id, 0, dev->irq);
-			}
-			break;
-		default:
-			break;
-		}
-	} else {
-		switch (reg) {
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI:
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 1:
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 2:
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 3:
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4:
-		case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 5:
-			*data = dev->mac[reg -
-			    VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI];
-			break;
-		case VIRTIO_CONFIG_DEVICE_FEATURES:
-			*data = dev->cfg.device_feature;
-			break;
-		case VIRTIO_CONFIG_GUEST_FEATURES:
-			*data = dev->cfg.guest_feature;
-			break;
-		case VIRTIO_CONFIG_QUEUE_PFN:
-			*data = dev->cfg.queue_pfn;
-			break;
-		case VIRTIO_CONFIG_QUEUE_SIZE:
-			*data = dev->cfg.queue_size;
-			break;
-		case VIRTIO_CONFIG_QUEUE_SELECT:
-			*data = dev->cfg.queue_select;
-			break;
-		case VIRTIO_CONFIG_QUEUE_NOTIFY:
-			*data = dev->cfg.queue_notify;
-			break;
-		case VIRTIO_CONFIG_DEVICE_STATUS:
-			*data = dev->cfg.device_status;
-			break;
-		case VIRTIO_CONFIG_ISR_STATUS:
-			*data = dev->cfg.isr_status;
-			dev->cfg.isr_status = 0;
-			vcpu_deassert_pic_irq(dev->vm_id, 0, dev->irq);
-			break;
-		}
-	}
-
-	mutex_unlock(&dev->mutex);
-	return (0);
-}
-
-/*
- * Must be called with dev->mutex acquired.
- */
-void
-vionet_update_qa(struct vionet_dev *dev)
-{
-	struct virtio_vq_info *vq_info;
-	void *hva = NULL;
-
-	/* Invalid queue? */
-	if (dev->cfg.queue_select > 1)
-		return;
-
-	vq_info = &dev->vq[dev->cfg.queue_select];
-	vq_info->q_gpa = (uint64_t)dev->cfg.queue_pfn * VIRTIO_PAGE_SIZE;
-
-	hva = hvaddr_mem(vq_info->q_gpa, vring_size(VIONET_QUEUE_SIZE));
-	if (hva == NULL)
-		fatal("vionet_update_qa");
-	vq_info->q_hva = hva;
-}
-
-/*
- * Must be called with dev->mutex acquired.
- */
-void
-vionet_update_qs(struct vionet_dev *dev)
-{
-	struct virtio_vq_info *vq_info;
-
-	/* Invalid queue? */
-	if (dev->cfg.queue_select > 1) {
-		dev->cfg.queue_size = 0;
-		return;
-	}
-
-	vq_info = &dev->vq[dev->cfg.queue_select];
-
-	/* Update queue pfn/size based on queue select */
-	dev->cfg.queue_pfn = vq_info->q_gpa >> 12;
-	dev->cfg.queue_size = vq_info->qs;
-}
-
-/*
- * vionet_enq_rx
- *
- * Take a given packet from the host-side tap and copy it into the guest's
- * buffers utilizing the rx virtio ring. If the packet length is invalid
- * (too small or too large) or if there are not enough buffers available,
- * the packet is dropped.
- *
- * Must be called with dev->mutex acquired.
- */
-int
-vionet_enq_rx(struct vionet_dev *dev, char *pkt, size_t sz, int *spc)
-{
-	uint16_t dxx, idx, hdr_desc_idx, chain_hdr_idx;
-	char *vr = NULL;
-	size_t bufsz = 0, off = 0, pkt_offset = 0, chunk_size = 0;
-	size_t chain_len = 0;
-	struct vring_desc *desc, *pkt_desc, *hdr_desc;
-	struct vring_avail *avail;
-	struct vring_used *used;
-	struct virtio_vq_info *vq_info;
-	struct virtio_net_hdr hdr;
-	size_t hdr_sz;
-
-	if (sz < VIONET_MIN_TXLEN || sz > VIONET_MAX_TXLEN) {
-		log_warn("%s: invalid packet size", __func__);
-		return (0);
-	}
-
-	hdr_sz = sizeof(hdr);
-
-	if (!(dev->cfg.device_status & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK))
-		return (0);
-
-	vq_info = &dev->vq[RXQ];
-	vr = vq_info->q_hva;
-	if (vr == NULL)
-		fatalx("%s: null vring", __func__);
-
-	/* Compute offsets in ring of descriptors, avail ring, and used ring */
-	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
-
-	idx = vq_info->last_avail & VIONET_QUEUE_MASK;
-	if ((vq_info->notified_avail & VIONET_QUEUE_MASK) == idx) {
-		log_debug("%s: insufficient available buffer capacity, "
-		    "dropping packet.", __func__);
-		return (0);
-	}
-
-	hdr_desc_idx = avail->ring[idx] & VIONET_QUEUE_MASK;
-	hdr_desc = &desc[hdr_desc_idx];
-
-	dxx = hdr_desc_idx;
-	chain_hdr_idx = dxx;
-	chain_len = 0;
-
-	/* Process the descriptor and walk any potential chain. */
-	do {
-		off = 0;
-		pkt_desc = &desc[dxx];
-		if (!(pkt_desc->flags & VRING_DESC_F_WRITE)) {
-			log_warnx("%s: invalid descriptor, not writable",
-			    __func__);
-			return (0);
-		}
-
-		/* How much data do we get to write? */
-		if (sz - bufsz > pkt_desc->len)
-			chunk_size = pkt_desc->len;
-		else
-			chunk_size = sz - bufsz;
-
-		if (chain_len == 0) {
-			off = hdr_sz;
-			if (chunk_size == pkt_desc->len)
-				chunk_size -= off;
-		}
-
-		/* Write a chunk of data if we need to */
-		if (chunk_size && write_mem(pkt_desc->addr + off,
-			pkt + pkt_offset, chunk_size)) {
-			log_warnx("%s: failed to write to buffer 0x%llx",
-			    __func__, pkt_desc->addr);
-			return (0);
-		}
-
-		chain_len += chunk_size + off;
-		bufsz += chunk_size;
-		pkt_offset += chunk_size;
-
-		dxx = pkt_desc->next & VIONET_QUEUE_MASK;
-	} while (bufsz < sz && pkt_desc->flags & VRING_DESC_F_NEXT);
-
-	/* Move our marker in the ring...*/
-	vq_info->last_avail = (vq_info->last_avail + 1) &
-	    VIONET_QUEUE_MASK;
-
-	/* Prepend the virtio net header in the first buffer. */
-	memset(&hdr, 0, sizeof(hdr));
-	hdr.hdr_len = hdr_sz;
-	if (write_mem(hdr_desc->addr, &hdr, hdr_sz)) {
-	    log_warnx("vionet: rx enq header write_mem error @ 0x%llx",
-		hdr_desc->addr);
-	    return (0);
-	}
-
-	/* Update the index field in the used ring. This must be done last. */
-	dev->cfg.isr_status = 1;
-	*spc = (vq_info->notified_avail - vq_info->last_avail)
-	    & VIONET_QUEUE_MASK;
-
-	/* Update the list of used buffers. */
-	used->ring[used->idx & VIONET_QUEUE_MASK].id = chain_hdr_idx;
-	used->ring[used->idx & VIONET_QUEUE_MASK].len = chain_len;
-	__sync_synchronize();
-	used->idx++;
-
-	return (1);
-}
-
-/*
- * vionet_rx
- *
- * Enqueue data that was received on a tap file descriptor
- * to the vionet device queue.
- *
- * Must be called with dev->mutex acquired.
- */
-static int
-vionet_rx(struct vionet_dev *dev)
-{
-	char buf[PAGE_SIZE];
-	int num_enq = 0, spc = 0;
-	struct ether_header *eh;
-	ssize_t sz;
-
-	do {
-		sz = read(dev->fd, buf, sizeof(buf));
-		if (sz == -1) {
-			/*
-			 * If we get EAGAIN, No data is currently available.
-			 * Do not treat this as an error.
-			 */
-			if (errno != EAGAIN)
-				log_warn("unexpected read error on vionet "
-				    "device");
-		} else if (sz > 0) {
-			eh = (struct ether_header *)buf;
-			if (!dev->lockedmac ||
-			    ETHER_IS_MULTICAST(eh->ether_dhost) ||
-			    memcmp(eh->ether_dhost, dev->mac,
-			    sizeof(eh->ether_dhost)) == 0)
-				num_enq += vionet_enq_rx(dev, buf, sz, &spc);
-		} else if (sz == 0) {
-			log_debug("process_rx: no data");
-			break;
-		}
-	} while (spc > 0 && sz > 0);
-
-	return (num_enq);
-}
-
-/*
- * vionet_rx_event
- *
- * Called from the event handling thread when new data can be
- * received on the tap fd of a vionet device.
- */
-static void
-vionet_rx_event(int fd, short kind, void *arg)
-{
-	struct vionet_dev *dev = arg;
-
-	mutex_lock(&dev->mutex);
-
-	if (vionet_rx(dev) > 0) {
-		/* XXX: vcpu_id */
-		vcpu_assert_pic_irq(dev->vm_id, 0, dev->irq);
-	}
-
-	mutex_unlock(&dev->mutex);
-}
-
-/*
- * Must be called with dev->mutex acquired.
- */
-void
-vionet_notify_rx(struct vionet_dev *dev)
-{
-	char *vr;
-	struct vring_avail *avail;
-	struct virtio_vq_info *vq_info;
-
-	vq_info = &dev->vq[RXQ];
-	vr = vq_info->q_hva;
-	if (vr == NULL)
-		fatalx("%s: null vring", __func__);
-
-	/* Compute offset into avail ring */
-	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	vq_info->notified_avail = avail->idx - 1;
-}
-
-/*
- * Must be called with dev->mutex acquired.
- */
-int
-vionet_notifyq(struct vionet_dev *dev)
-{
-	int ret = 0;
-
-	switch (dev->cfg.queue_notify) {
-	case RXQ:
-		vionet_notify_rx(dev);
-		break;
-	case TXQ:
-		ret = vionet_notify_tx(dev);
-		break;
-	default:
-		/*
-		 * Catch the unimplemented queue ID 2 (control queue) as
-		 * well as any bogus queue IDs.
-		 */
-		log_debug("%s: notify for unimplemented queue ID %d",
-		    __func__, dev->cfg.queue_notify);
-		break;
-	}
-
-	return (ret);
-}
-
-/*
- * Must be called with dev->mutex acquired.
- */
-int
-vionet_notify_tx(struct vionet_dev *dev)
-{
-	uint16_t idx, pkt_desc_idx, hdr_desc_idx, dxx, cnt;
-	size_t pktsz, chunk_size = 0;
-	ssize_t dhcpsz = 0;
-	int num_enq, ofs, spc = 0;
-	char *vr = NULL, *pkt = NULL, *dhcppkt = NULL;
-	struct vring_desc *desc, *pkt_desc, *hdr_desc;
-	struct vring_avail *avail;
-	struct vring_used *used;
-	struct virtio_vq_info *vq_info;
-	struct ether_header *eh;
-
-	vq_info = &dev->vq[TXQ];
-	vr = vq_info->q_hva;
-	if (vr == NULL)
-		fatalx("%s: null vring", __func__);
-
-	/* Compute offsets in ring of descriptors, avail ring, and used ring */
-	desc = (struct vring_desc *)(vr);
-	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
-	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
-
-	num_enq = 0;
-
-	idx = vq_info->last_avail & VIONET_QUEUE_MASK;
-
-	if ((avail->idx & VIONET_QUEUE_MASK) == idx) {
-		log_debug("%s - nothing to do?", __func__);
-		return (0);
-	}
-
-	while ((avail->idx & VIONET_QUEUE_MASK) != idx) {
-		hdr_desc_idx = avail->ring[idx] & VIONET_QUEUE_MASK;
-		hdr_desc = &desc[hdr_desc_idx];
-		pktsz = 0;
-
-		cnt = 0;
-		dxx = hdr_desc_idx;
-		do {
-			pktsz += desc[dxx].len;
-			dxx = desc[dxx].next & VIONET_QUEUE_MASK;
-
-			/*
-			 * Virtio 1.0, cs04, section 2.4.5:
-			 *  "The number of descriptors in the table is defined
-			 *   by the queue size for this virtqueue: this is the
-			 *   maximum possible descriptor chain length."
-			 */
-			if (++cnt >= VIONET_QUEUE_SIZE) {
-				log_warnx("%s: descriptor table invalid",
-				    __func__);
-				goto out;
-			}
-		} while (desc[dxx].flags & VRING_DESC_F_NEXT);
-
-		pktsz += desc[dxx].len;
-
-		/* Remove virtio header descriptor len */
-		pktsz -= hdr_desc->len;
-
-		/* Drop packets violating device MTU-based limits */
-		if (pktsz < VIONET_MIN_TXLEN || pktsz > VIONET_MAX_TXLEN) {
-			log_warnx("%s: invalid packet size %lu", __func__,
-			    pktsz);
-			goto drop_packet;
-		}
-		pkt = malloc(pktsz);
-		if (pkt == NULL) {
-			log_warn("malloc error alloc packet buf");
-			goto out;
-		}
-
-		ofs = 0;
-		pkt_desc_idx = hdr_desc->next & VIONET_QUEUE_MASK;
-		pkt_desc = &desc[pkt_desc_idx];
-
-		while (pkt_desc->flags & VRING_DESC_F_NEXT) {
-			/* must be not writable */
-			if (pkt_desc->flags & VRING_DESC_F_WRITE) {
-				log_warnx("unexpected writable tx desc "
-				    "%d", pkt_desc_idx);
-				goto out;
-			}
-
-			/* Check we don't read beyond allocated pktsz */
-			if (pkt_desc->len > pktsz - ofs) {
-				log_warnx("%s: descriptor len past pkt len",
-				    __func__);
-				chunk_size = pktsz - ofs;
-			} else
-				chunk_size = pkt_desc->len;
-
-			/* Read packet from descriptor ring */
-			if (read_mem(pkt_desc->addr, pkt + ofs, chunk_size)) {
-				log_warnx("vionet: packet read_mem error "
-				    "@ 0x%llx", pkt_desc->addr);
-				goto out;
-			}
-
-			ofs += pkt_desc->len;
-			pkt_desc_idx = pkt_desc->next & VIONET_QUEUE_MASK;
-			pkt_desc = &desc[pkt_desc_idx];
-		}
-
-		/* Now handle tail descriptor - must be not writable */
-		if (pkt_desc->flags & VRING_DESC_F_WRITE) {
-			log_warnx("unexpected writable tx descriptor %d",
-			    pkt_desc_idx);
-			goto out;
-		}
-
-		/* Check we don't read beyond allocated pktsz */
-		if (pkt_desc->len > pktsz - ofs) {
-			log_warnx("%s: descriptor len past pkt len", __func__);
-			chunk_size = pktsz - ofs - pkt_desc->len;
-		} else
-			chunk_size = pkt_desc->len;
-
-		/* Read packet from descriptor ring */
-		if (read_mem(pkt_desc->addr, pkt + ofs, chunk_size)) {
-			log_warnx("vionet: packet read_mem error @ "
-			    "0x%llx", pkt_desc->addr);
-			goto out;
-		}
-
-		/* reject other source addresses */
-		if (dev->lockedmac && pktsz >= ETHER_HDR_LEN &&
-		    (eh = (struct ether_header *)pkt) &&
-		    memcmp(eh->ether_shost, dev->mac,
-		    sizeof(eh->ether_shost)) != 0)
-			log_debug("vionet: wrong source address %s for vm %d",
-			    ether_ntoa((struct ether_addr *)
-			    eh->ether_shost), dev->vm_id);
-		else if (dev->local &&
-		    (dhcpsz = dhcp_request(dev, pkt, pktsz, &dhcppkt)) != -1) {
-			log_debug("vionet: dhcp request,"
-			    " local response size %zd", dhcpsz);
-
-		/* XXX signed vs unsigned here, funky cast */
-		} else if (write(dev->fd, pkt, pktsz) != (int)pktsz) {
-			log_warnx("vionet: tx failed writing to tap: "
-			    "%d", errno);
-			goto out;
-		}
-
-	drop_packet:
-		dev->cfg.isr_status = 1;
-		used->ring[used->idx & VIONET_QUEUE_MASK].id = hdr_desc_idx;
-		used->ring[used->idx & VIONET_QUEUE_MASK].len = hdr_desc->len;
-		__sync_synchronize();
-		used->idx++;
-
-		vq_info->last_avail = avail->idx & VIONET_QUEUE_MASK;
-		idx = (idx + 1) & VIONET_QUEUE_MASK;
-
-		num_enq++;
-
-		free(pkt);
-		pkt = NULL;
-	}
-
-	if (dhcpsz > 0)
-		vionet_enq_rx(dev, dhcppkt, dhcpsz, &spc);
-
-out:
-	free(pkt);
-	free(dhcppkt);
-
-	return (1);
 }
 
 int
@@ -1678,36 +487,15 @@ virtio_get_base(int fd, char *path, size_t npath, int type, const char *dpath)
 	return -1;
 }
 
-/*
- * Initializes a struct virtio_backing using the list of fds.
- */
-static int
-virtio_init_disk(struct virtio_backing *file, off_t *sz,
-    int *fd, size_t nfd, int type)
-{
-	/*
-	 * probe disk types in order of preference, first one to work wins.
-	 * TODO: provide a way of specifying the type and options.
-	 */
-	switch (type) {
-	case VMDF_RAW:
-		return virtio_raw_init(file, sz, fd, nfd);
-	case VMDF_QCOW2:
-		return virtio_qcow2_init(file, sz, fd, nfd);
-	}
-	log_warnx("%s: invalid disk format", __func__);
-	return -1;
-}
-
 void
 virtio_init(struct vmd_vm *vm, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params *vcp = &vmc->vmc_params;
+	struct virtio_dev *dev;
 	uint8_t id;
-	uint8_t i;
-	int ret;
+	uint8_t i, j;
 
 	/* Virtio entropy device */
 	if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
@@ -1737,105 +525,98 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 	viornd.irq = pci_get_dev_irq(id);
 	viornd.vm_id = vcp->vcp_id;
 
-	if (vmc->vmc_nnics > 0) {
-		vionet = calloc(vmc->vmc_nnics, sizeof(struct vionet_dev));
-		if (vionet == NULL) {
-			log_warn("%s: calloc failure allocating vionets",
-			    __progname);
-			return;
-		}
+	SLIST_INIT(&virtio_devs);
 
-		nr_vionet = vmc->vmc_nnics;
-		/* Virtio network */
+	if (vmc->vmc_nnics > 0) {
 		for (i = 0; i < vmc->vmc_nnics; i++) {
+			dev = calloc(1, sizeof(struct virtio_dev));
+			if (dev == NULL) {
+				log_warn("%s: calloc failure allocating vionet",
+				    __progname);
+				return;
+			}
+			/* Virtio network */
+			dev->dev_type = VMD_DEVTYPE_NET;
+
 			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
-			    PCI_PRODUCT_QUMRANET_VIO_NET, PCI_CLASS_SYSTEM,
-			    PCI_SUBCLASS_SYSTEM_MISC,
-			    PCI_VENDOR_OPENBSD,
-			    PCI_PRODUCT_VIRTIO_NETWORK, 1, NULL)) {
+				PCI_PRODUCT_QUMRANET_VIO_NET, PCI_CLASS_SYSTEM,
+				PCI_SUBCLASS_SYSTEM_MISC, PCI_VENDOR_OPENBSD,
+				PCI_PRODUCT_VIRTIO_NETWORK, 1, NULL)) {
 				log_warnx("%s: can't add PCI virtio net device",
 				    __progname);
 				return;
 			}
+			dev->pci_id = id;
+			dev->sync_fd = -1;
+			dev->async_fd = -1;
+			dev->vm_id = vcp->vcp_id;
+			dev->vm_vmid = vm->vm_vmid;
+			dev->irq = pci_get_dev_irq(id);
 
-			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_net_io,
-			    &vionet[i])) {
+			/* The vionet pci bar function is called by the vcpu. */
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_pci_io,
+			    dev)) {
 				log_warnx("%s: can't add bar for virtio net "
 				    "device", __progname);
 				return;
 			}
 
-			ret = pthread_mutex_init(&vionet[i].mutex, NULL);
-			if (ret) {
-				errno = ret;
-				log_warn("%s: could not initialize mutex "
-				    "for vionet device", __progname);
-				return;
-			}
-
-			vionet[i].vq[RXQ].qs = VIONET_QUEUE_SIZE;
-			vionet[i].vq[RXQ].vq_availoffset =
+			dev->vionet.vq[RXQ].qs = VIONET_QUEUE_SIZE;
+			dev->vionet.vq[RXQ].vq_availoffset =
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE;
-			vionet[i].vq[RXQ].vq_usedoffset = VIRTQUEUE_ALIGN(
-			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
-			    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
-			vionet[i].vq[RXQ].last_avail = 0;
-			vionet[i].vq[RXQ].notified_avail = 0;
+			dev->vionet.vq[RXQ].vq_usedoffset = VIRTQUEUE_ALIGN(
+				sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
+				+ sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
+			dev->vionet.vq[RXQ].last_avail = 0;
+			dev->vionet.vq[RXQ].notified_avail = 0;
 
-			vionet[i].vq[TXQ].qs = VIONET_QUEUE_SIZE;
-			vionet[i].vq[TXQ].vq_availoffset =
+			dev->vionet.vq[TXQ].qs = VIONET_QUEUE_SIZE;
+			dev->vionet.vq[TXQ].vq_availoffset =
 			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE;
-			vionet[i].vq[TXQ].vq_usedoffset = VIRTQUEUE_ALIGN(
-			    sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
-			    + sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
-			vionet[i].vq[TXQ].last_avail = 0;
-			vionet[i].vq[TXQ].notified_avail = 0;
-			vionet[i].fd = child_taps[i];
-			vionet[i].vm_id = vcp->vcp_id;
-			vionet[i].vm_vmid = vm->vm_vmid;
-			vionet[i].irq = pci_get_dev_irq(id);
+			dev->vionet.vq[TXQ].vq_usedoffset = VIRTQUEUE_ALIGN(
+				sizeof(struct vring_desc) * VIONET_QUEUE_SIZE
+				+ sizeof(uint16_t) * (2 + VIONET_QUEUE_SIZE));
+			dev->vionet.vq[TXQ].last_avail = 0;
+			dev->vionet.vq[TXQ].notified_avail = 0;
 
-			event_set(&vionet[i].event, vionet[i].fd,
-			    EV_READ | EV_PERSIST, vionet_rx_event, &vionet[i]);
-			if (event_add(&vionet[i].event, NULL)) {
-				log_warn("could not initialize vionet event "
-				    "handler");
-				return;
-			}
+			dev->vionet.data_fd = child_taps[i];
 
 			/* MAC address has been assigned by the parent */
-			memcpy(&vionet[i].mac, &vmc->vmc_macs[i], 6);
-			vionet[i].cfg.device_feature = VIRTIO_NET_F_MAC;
+			memcpy(&dev->vionet.mac, &vmc->vmc_macs[i], 6);
+			dev->vionet.cfg.device_feature = VIRTIO_NET_F_MAC;
 
-			vionet[i].lockedmac =
+			dev->vionet.lockedmac =
 			    vmc->vmc_ifflags[i] & VMIFF_LOCKED ? 1 : 0;
-			vionet[i].local =
+			dev->vionet.local =
 			    vmc->vmc_ifflags[i] & VMIFF_LOCAL ? 1 : 0;
 			if (i == 0 && vmc->vmc_bootdevice & VMBOOTDEV_NET)
-				vionet[i].pxeboot = 1;
-			vionet[i].idx = i;
-			vionet[i].pci_id = id;
+				dev->vionet.pxeboot = 1;
 
 			log_debug("%s: vm \"%s\" vio%u lladdr %s%s%s%s",
 			    __func__, vcp->vcp_name, i,
-			    ether_ntoa((void *)vionet[i].mac),
-			    vionet[i].lockedmac ? ", locked" : "",
-			    vionet[i].local ? ", local" : "",
-			    vionet[i].pxeboot ? ", pxeboot" : "");
+			    ether_ntoa((void *)dev->vionet.mac),
+			    dev->vionet.lockedmac ? ", locked" : "",
+			    dev->vionet.local ? ", local" : "",
+			    dev->vionet.pxeboot ? ", pxeboot" : "");
+
+			/* Add the vionet to our device list. */
+			dev->vionet.idx = i;
+			SLIST_INSERT_HEAD(&virtio_devs, dev, dev_next);
 		}
 	}
 
 	if (vmc->vmc_ndisks > 0) {
-		nr_vioblk = vmc->vmc_ndisks;
-		vioblk = calloc(vmc->vmc_ndisks, sizeof(struct vioblk_dev));
-		if (vioblk == NULL) {
-			log_warn("%s: calloc failure allocating vioblks",
-			    __progname);
-			return;
-		}
-
-		/* One virtio block device for each disk defined in vcp */
 		for (i = 0; i < vmc->vmc_ndisks; i++) {
+			dev = calloc(1, sizeof(struct virtio_dev));
+			if (dev == NULL) {
+				log_warn("%s: calloc failure allocating vioblk",
+				    __progname);
+				return;
+			}
+
+			/* One vioblk device for each disk defined in vcp */
+			dev->dev_type = VMD_DEVTYPE_DISK;
+
 			if (pci_add_device(&id, PCI_VENDOR_QUMRANET,
 			    PCI_PRODUCT_QUMRANET_VIO_BLOCK,
 			    PCI_CLASS_MASS_STORAGE,
@@ -1846,33 +627,51 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 				    "device", __progname);
 				return;
 			}
-			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_blk_io,
-			    &vioblk[i])) {
+			dev->pci_id = id;
+			dev->sync_fd = -1;
+			dev->async_fd = -1;
+			dev->vm_id = vcp->vcp_id;
+			dev->vm_vmid = vm->vm_vmid;
+			dev->irq = pci_get_dev_irq(id);
+
+			if (pci_add_bar(id, PCI_MAPREG_TYPE_IO, virtio_pci_io,
+			    &dev->vioblk)) {
 				log_warnx("%s: can't add bar for virtio block "
 				    "device", __progname);
 				return;
 			}
-			vioblk[i].vq[0].qs = VIOBLK_QUEUE_SIZE;
-			vioblk[i].vq[0].vq_availoffset =
+			dev->vioblk.vq[0].qs = VIOBLK_QUEUE_SIZE;
+			dev->vioblk.vq[0].vq_availoffset =
 			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE;
-			vioblk[i].vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
+			dev->vioblk.vq[0].vq_usedoffset = VIRTQUEUE_ALIGN(
 			    sizeof(struct vring_desc) * VIOBLK_QUEUE_SIZE
 			    + sizeof(uint16_t) * (2 + VIOBLK_QUEUE_SIZE));
-			vioblk[i].vq[0].last_avail = 0;
-			vioblk[i].cfg.device_feature = VIRTIO_BLK_F_SIZE_MAX;
-			vioblk[i].max_xfer = 1048576;
-			vioblk[i].pci_id = id;
-			vioblk[i].vm_id = vcp->vcp_id;
-			vioblk[i].irq = pci_get_dev_irq(id);
-			if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
-			    child_disks[i], vmc->vmc_diskbases[i],
-			    vmc->vmc_disktypes[i]) == -1) {
-				log_warnx("%s: unable to determine disk format",
-				    __func__);
-				return;
-			}
-			vioblk[i].sz /= 512;
+			dev->vioblk.vq[0].last_avail = 0;
+			dev->vioblk.cfg.device_feature =
+			    VIRTIO_BLK_F_SIZE_MAX;
+			dev->vioblk.max_xfer = 1048576;
+
+			/*
+			 * Initialize disk fds to an invalid fd (-1), then
+			 * set any child disk fds.
+			 */
+			memset(&dev->vioblk.disk_fd, -1,
+			    sizeof(dev->vioblk.disk_fd));
+			dev->vioblk.ndisk_fd = vmc->vmc_diskbases[i];
+			for (j = 0; j < dev->vioblk.ndisk_fd; j++)
+				dev->vioblk.disk_fd[j] = child_disks[i][j];
+
+			dev->vioblk.idx = i;
+			SLIST_INSERT_HEAD(&virtio_devs, dev, dev_next);
 		}
+	}
+
+	/*
+	 * Launch virtio devices that support subprocess execution.
+	 */
+	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
+		if (virtio_dev_launch(vm, dev) != 0)
+			fatalx("failed to launch virtio device");
 	}
 
 	/* vioscsi cdrom */
@@ -1901,7 +700,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			return;
 		}
 
-		for ( i = 0; i < VIRTIO_MAX_QUEUES; i++) {
+		for (i = 0; i < VIRTIO_MAX_QUEUES; i++) {
 			vioscsi->vq[i].qs = VIOSCSI_QUEUE_SIZE;
 			vioscsi->vq[i].vq_availoffset =
 			    sizeof(struct vring_desc) * VIOSCSI_QUEUE_SIZE;
@@ -1910,15 +709,15 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    + sizeof(uint16_t) * (2 + VIOSCSI_QUEUE_SIZE));
 			vioscsi->vq[i].last_avail = 0;
 		}
-		if (virtio_init_disk(&vioscsi->file, &vioscsi->sz,
-		    &child_cdrom, 1, VMDF_RAW) == -1) {
+		if (virtio_raw_init(&vioscsi->file, &vioscsi->sz, &child_cdrom,
+		    1) == -1) {
 			log_warnx("%s: unable to determine iso format",
 			    __func__);
 			return;
 		}
 		vioscsi->locked = 0;
 		vioscsi->lba = 0;
-		vioscsi->n_blocks = vioscsi->sz >> 11; /* num of 2048 blocks in file */
+		vioscsi->n_blocks = vioscsi->sz >> 2; /* num of 2048 blocks in file */
 		vioscsi->max_xfer = VIOSCSI_BLOCK_SIZE_CDROM;
 		vioscsi->pci_id = id;
 		vioscsi->vm_id = vcp->vcp_id;
@@ -1967,27 +766,84 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 void
 vionet_set_hostmac(struct vmd_vm *vm, unsigned int idx, uint8_t *addr)
 {
-	struct vmop_create_params *vmc = &vm->vm_params;
-	struct vionet_dev	  *dev;
+	struct vmop_create_params	*vmc = &vm->vm_params;
+	struct virtio_dev		*dev;
+	struct vionet_dev		*vionet = NULL;
+	int ret;
 
 	if (idx > vmc->vmc_nnics)
-		fatalx("vionet_set_hostmac");
+		fatalx("%s: invalid vionet index: %u", __func__, idx);
 
-	dev = &vionet[idx];
-	memcpy(dev->hostmac, addr, sizeof(dev->hostmac));
+	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
+		if (dev->dev_type == VMD_DEVTYPE_NET
+		    && dev->vionet.idx == idx) {
+			vionet = &dev->vionet;
+			break;
+		}
+	}
+	if (vionet == NULL)
+		fatalx("%s: dev == NULL, idx = %u", __func__, idx);
+
+	/* Set the local vm process copy. */
+	memcpy(vionet->hostmac, addr, sizeof(vionet->hostmac));
+
+	/* Send the information to the device process. */
+	ret = imsg_compose_event(&dev->async_iev, IMSG_DEVOP_HOSTMAC, 0, 0, -1,
+	    vionet->hostmac, sizeof(vionet->hostmac));
+	if (ret == -1) {
+		log_warnx("%s: failed to queue hostmac to vionet dev %u",
+		    __func__, idx);
+		return;
+	}
 }
 
 void
 virtio_shutdown(struct vmd_vm *vm)
 {
-	int i;
+	int ret, status;
+	pid_t pid = 0;
+	struct virtio_dev *dev, *tmp;
+	struct viodev_msg msg;
+	struct imsgbuf *ibuf;
 
-	/* ensure that our disks are synced */
+	/* Ensure that our disks are synced. */
 	if (vioscsi != NULL)
 		vioscsi->file.close(vioscsi->file.p, 0);
 
-	for (i = 0; i < nr_vioblk; i++)
-		vioblk[i].file.close(vioblk[i].file.p, 0);
+	/*
+	 * Broadcast shutdown to child devices. We need to do this
+	 * synchronously as we have already stopped the async event thread.
+	 */
+	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
+		memset(&msg, 0, sizeof(msg));
+		msg.type = VIODEV_MSG_SHUTDOWN;
+		ibuf = &dev->sync_iev.ibuf;
+		ret = imsg_compose(ibuf, VIODEV_MSG_SHUTDOWN, 0, 0, -1,
+		    &msg, sizeof(msg));
+		if (ret == -1)
+			fatalx("%s: failed to send shutdown to device",
+			    __func__);
+		if (imsg_flush(ibuf) == -1)
+			fatalx("%s: imsg_flush", __func__);
+	}
+
+	/*
+	 * Wait for all children to shutdown using a simple approach of
+	 * iterating over known child devices and waiting for them to die.
+	 */
+	SLIST_FOREACH_SAFE(dev, &virtio_devs, dev_next, tmp) {
+		log_debug("%s: waiting on device pid %d", __func__,
+		    dev->dev_pid);
+		do {
+			pid = waitpid(dev->dev_pid, &status, WNOHANG);
+		} while (pid == 0 || (pid == -1 && errno == EINTR));
+		if (pid == dev->dev_pid)
+			log_debug("%s: device for pid %d is stopped",
+			    __func__, pid);
+		else
+			log_warnx("%s: unexpected pid %d", __func__, pid);
+		free(dev);
+	}
 }
 
 int
@@ -2042,67 +898,52 @@ vionet_restore(int fd, struct vmd_vm *vm, int *child_taps)
 {
 	struct vmop_create_params *vmc = &vm->vm_params;
 	struct vm_create_params *vcp = &vmc->vmc_params;
+	struct virtio_dev *dev;
 	uint8_t i;
-	int ret;
-	void *hva = NULL;
 
-	nr_vionet = vmc->vmc_nnics;
-	if (vmc->vmc_nnics > 0) {
-		vionet = calloc(vmc->vmc_nnics, sizeof(struct vionet_dev));
-		if (vionet == NULL) {
-			log_warn("%s: calloc failure allocating vionets",
+	if (vmc->vmc_nnics == 0)
+		return (0);
+
+	for (i = 0; i < vmc->vmc_nnics; i++) {
+		dev = calloc(1, sizeof(struct virtio_dev));
+		if (dev == NULL) {
+			log_warn("%s: calloc failure allocating vionet",
 			    __progname);
 			return (-1);
 		}
-		log_debug("%s: receiving vionet", __func__);
-		if (atomicio(read, fd, vionet,
-		    vmc->vmc_nnics * sizeof(struct vionet_dev)) !=
-		    vmc->vmc_nnics * sizeof(struct vionet_dev)) {
+
+		log_debug("%s: receiving virtio network device", __func__);
+		if (atomicio(read, fd, dev, sizeof(struct virtio_dev))
+		    != sizeof(struct virtio_dev)) {
 			log_warnx("%s: error reading vionet from fd",
 			    __func__);
 			return (-1);
 		}
 
 		/* Virtio network */
-		for (i = 0; i < vmc->vmc_nnics; i++) {
-			if (pci_set_bar_fn(vionet[i].pci_id, 0, virtio_net_io,
-			    &vionet[i])) {
-				log_warnx("%s: can't set bar fn for virtio net "
-				    "device", __progname);
-				return (-1);
-			}
-
-			memset(&vionet[i].mutex, 0, sizeof(pthread_mutex_t));
-			ret = pthread_mutex_init(&vionet[i].mutex, NULL);
-
-			if (ret) {
-				errno = ret;
-				log_warn("%s: could not initialize mutex "
-				    "for vionet device", __progname);
-				return (-1);
-			}
-			vionet[i].fd = child_taps[i];
-			vionet[i].vm_id = vcp->vcp_id;
-			vionet[i].vm_vmid = vm->vm_vmid;
-			vionet[i].irq = pci_get_dev_irq(vionet[i].pci_id);
-
-			hva = hvaddr_mem(vionet[i].vq[RXQ].q_gpa,
-			    vring_size(VIONET_QUEUE_SIZE));
-			if (hva == NULL)
-				fatal("failed to restore vionet RX virtqueue");
-			vionet[i].vq[RXQ].q_hva = hva;
-
-			hva = hvaddr_mem(vionet[i].vq[TXQ].q_gpa,
-			    vring_size(VIONET_QUEUE_SIZE));
-			if (hva == NULL)
-				fatal("failed to restore vionet TX virtqueue");
-			vionet[i].vq[TXQ].q_hva = hva;
-
-			memset(&vionet[i].event, 0, sizeof(struct event));
-			event_set(&vionet[i].event, vionet[i].fd,
-			    EV_READ | EV_PERSIST, vionet_rx_event, &vionet[i]);
+		if (dev->dev_type != VMD_DEVTYPE_NET) {
+			log_warnx("%s: invalid device type", __func__);
+			return (-1);
 		}
+
+		dev->sync_fd = -1;
+		dev->async_fd = -1;
+		dev->vm_id = vcp->vcp_id;
+		dev->vm_vmid = vm->vm_vmid;
+		dev->irq = pci_get_dev_irq(dev->pci_id);
+
+		if (pci_set_bar_fn(dev->pci_id, 0, virtio_pci_io, dev)) {
+			log_warnx("%s: can't set bar fn for virtio net "
+			    "device", __progname);
+			return (-1);
+		}
+
+		dev->vionet.data_fd = child_taps[i];
+		dev->vionet.idx = i;
+
+		SLIST_INSERT_HEAD(&virtio_devs, dev, dev_next);
 	}
+
 	return (0);
 }
 
@@ -2110,44 +951,50 @@ int
 vioblk_restore(int fd, struct vmd_vm *vm,
     int child_disks[][VM_MAX_BASE_PER_DISK])
 {
-	uint8_t i;
-	void *hva = NULL;
+	struct vmop_create_params *vmc = &vm->vm_params;
+	struct virtio_dev *dev;
+	uint8_t i, j;
 
-	nr_vioblk = vm->vm_params.vmc_ndisks;
-	vioblk = calloc(vm->vm_params.vmc_ndisks, sizeof(struct vioblk_dev));
-	if (vioblk == NULL) {
-		log_warn("%s: calloc failure allocating vioblks", __progname);
-		return (-1);
-	}
-	log_debug("%s: receiving vioblk", __func__);
-	if (atomicio(read, fd, vioblk,
-	    nr_vioblk * sizeof(struct vioblk_dev)) !=
-	    nr_vioblk * sizeof(struct vioblk_dev)) {
-		log_warnx("%s: error reading vioblk from fd", __func__);
-		return (-1);
-	}
-	for (i = 0; i < vm->vm_params.vmc_ndisks; i++) {
-		if (pci_set_bar_fn(vioblk[i].pci_id, 0, virtio_blk_io,
-		    &vioblk[i])) {
+	if (vmc->vmc_ndisks == 0)
+		return (0);
+
+	for (i = 0; i < vmc->vmc_ndisks; i++) {
+		dev = calloc(1, sizeof(struct virtio_dev));
+		if (dev == NULL) {
+			log_warn("%s: calloc failure allocating vioblks",
+			    __progname);
+			return (-1);
+		}
+
+		log_debug("%s: receiving vioblk", __func__);
+		if (atomicio(read, fd, dev, sizeof(struct virtio_dev))
+		    != sizeof(struct virtio_dev)) {
+			log_warnx("%s: error reading vioblk from fd", __func__);
+			return (-1);
+		}
+		if (dev->dev_type != VMD_DEVTYPE_DISK) {
+			log_warnx("%s: invalid device type", __func__);
+			return (-1);
+		}
+
+		dev->sync_fd = -1;
+		dev->async_fd = -1;
+
+		if (pci_set_bar_fn(dev->pci_id, 0, virtio_pci_io, dev)) {
 			log_warnx("%s: can't set bar fn for virtio block "
 			    "device", __progname);
 			return (-1);
 		}
-		if (virtio_init_disk(&vioblk[i].file, &vioblk[i].sz,
-		    child_disks[i], vm->vm_params.vmc_diskbases[i],
-		    vm->vm_params.vmc_disktypes[i]) == -1)  {
-			log_warnx("%s: unable to determine disk format",
-			    __func__);
-			return (-1);
-		}
-		vioblk[i].vm_id = vm->vm_params.vmc_params.vcp_id;
-		vioblk[i].irq = pci_get_dev_irq(vioblk[i].pci_id);
+		dev->vm_id = vmc->vmc_params.vcp_id;
+		dev->irq = pci_get_dev_irq(dev->pci_id);
 
-		hva = hvaddr_mem(vioblk[i].vq[0].q_gpa,
-		    vring_size(VIOBLK_QUEUE_SIZE));
-		if (hva == NULL)
-			fatal("failed to restore vioblk virtqueue");
-		vioblk[i].vq[0].q_hva = hva;
+		memset(&dev->vioblk.disk_fd, -1, sizeof(dev->vioblk.disk_fd));
+		dev->vioblk.ndisk_fd = vmc->vmc_diskbases[i];
+		for (j = 0; j < dev->vioblk.ndisk_fd; j++)
+			dev->vioblk.disk_fd[j] = child_disks[i][j];
+
+		dev->vioblk.idx = i;
+		SLIST_INSERT_HEAD(&virtio_devs, dev, dev_next);
 	}
 	return (0);
 }
@@ -2181,11 +1028,6 @@ vioscsi_restore(int fd, struct vmd_vm *vm, int child_cdrom)
 		return (-1);
 	}
 
-	if (virtio_init_disk(&vioscsi->file, &vioscsi->sz, &child_cdrom, 1,
-	    VMDF_RAW) == -1) {
-		log_warnx("%s: unable to determine iso format", __func__);
-		return (-1);
-	}
 	vioscsi->vm_id = vm->vm_params.vmc_params.vcp_id;
 	vioscsi->irq = pci_get_dev_irq(vioscsi->pci_id);
 
@@ -2205,22 +1047,30 @@ int
 virtio_restore(int fd, struct vmd_vm *vm, int child_cdrom,
     int child_disks[][VM_MAX_BASE_PER_DISK], int *child_taps)
 {
+	struct virtio_dev *dev;
 	int ret;
 
+	SLIST_INIT(&virtio_devs);
+
 	if ((ret = viornd_restore(fd, vm)) == -1)
-		return ret;
+		return (ret);
 
 	if ((ret = vioblk_restore(fd, vm, child_disks)) == -1)
-		return ret;
+		return (ret);
 
 	if ((ret = vioscsi_restore(fd, vm, child_cdrom)) == -1)
-		return ret;
+		return (ret);
 
 	if ((ret = vionet_restore(fd, vm, child_taps)) == -1)
-		return ret;
+		return (ret);
 
 	if ((ret = vmmci_restore(fd, vm->vm_params.vmc_params.vcp_id)) == -1)
-		return ret;
+		return (ret);
+
+	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
+		if (virtio_dev_launch(vm, dev) != 0)
+			fatalx("%s: failed to restore virtio dev", __func__);
+	}
 
 	return (0);
 }
@@ -2254,40 +1104,114 @@ vmmci_dump(int fd)
 int
 vionet_dump(int fd)
 {
-	int i;
+	struct virtio_dev	*dev, temp;
+	struct viodev_msg	 msg;
+	struct imsg		 imsg;
+	struct imsgbuf		*ibuf = NULL;
+	size_t			 sz;
+	int			 ret;
 
-	log_debug("%s: sending vionet", __func__);
+	log_debug("%s: dumping vionet", __func__);
 
-	for (i = 0; i < nr_vionet; i++) {
-		vionet[i].vq[RXQ].q_hva = NULL;
-		vionet[i].vq[TXQ].q_hva = NULL;
+	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
+		if (dev->dev_type != VMD_DEVTYPE_NET)
+			continue;
+
+		memset(&msg, 0, sizeof(msg));
+		memset(&imsg, 0, sizeof(imsg));
+
+		ibuf = &dev->sync_iev.ibuf;
+		msg.type = VIODEV_MSG_DUMP;
+
+		ret = imsg_compose(ibuf, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
+		    sizeof(msg));
+		if (ret == -1) {
+			log_warnx("%s: failed requesting dump of vionet[%d]",
+			    __func__, dev->vionet.idx);
+			return (-1);
+		}
+		if (imsg_flush(ibuf) == -1) {
+			log_warnx("%s: imsg_flush", __func__);
+			return (-1);
+		}
+
+		sz = atomicio(read, dev->sync_fd, &temp, sizeof(temp));
+		if (sz != sizeof(temp)) {
+			log_warnx("%s: failed to dump vionet[%d]", __func__,
+			    dev->vionet.idx);
+			return (-1);
+		}
+
+		temp.vionet.vq[RXQ].q_hva = NULL;
+		temp.vionet.vq[TXQ].q_hva = NULL;
+		temp.async_fd = -1;
+		temp.sync_fd = -1;
+		memset(&temp.async_iev, 0, sizeof(temp.async_iev));
+		memset(&temp.sync_iev, 0, sizeof(temp.sync_iev));
+
+		if (atomicio(vwrite, fd, &temp, sizeof(temp)) != sizeof(temp)) {
+			log_warnx("%s: error writing vionet to fd", __func__);
+			return (-1);
+		}
 	}
 
-	if (atomicio(vwrite, fd, vionet,
-	    nr_vionet * sizeof(struct vionet_dev)) !=
-	    nr_vionet * sizeof(struct vionet_dev)) {
-		log_warnx("%s: error writing vionet to fd", __func__);
-		return (-1);
-	}
 	return (0);
 }
 
 int
 vioblk_dump(int fd)
 {
-	int i;
+	struct virtio_dev	*dev, temp;
+	struct viodev_msg	 msg;
+	struct imsg		 imsg;
+	struct imsgbuf		*ibuf = NULL;
+	size_t			 sz;
+	int			 ret;
 
-	log_debug("%s: sending vioblk", __func__);
+	log_debug("%s: dumping vioblk", __func__);
 
-	for (i = 0; i < nr_vioblk; i++)
-		vioblk[i].vq[0].q_hva = NULL;
+	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
+		if (dev->dev_type != VMD_DEVTYPE_DISK)
+			continue;
 
-	if (atomicio(vwrite, fd, vioblk,
-	    nr_vioblk * sizeof(struct vioblk_dev)) !=
-	    nr_vioblk * sizeof(struct vioblk_dev)) {
-		log_warnx("%s: error writing vioblk to fd", __func__);
-		return (-1);
+		memset(&msg, 0, sizeof(msg));
+		memset(&imsg, 0, sizeof(imsg));
+
+		ibuf = &dev->sync_iev.ibuf;
+		msg.type = VIODEV_MSG_DUMP;
+
+		ret = imsg_compose(ibuf, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
+		    sizeof(msg));
+		if (ret == -1) {
+			log_warnx("%s: failed requesting dump of vioblk[%d]",
+			    __func__, dev->vioblk.idx);
+			return (-1);
+		}
+		if (imsg_flush(ibuf) == -1) {
+			log_warnx("%s: imsg_flush", __func__);
+			return (-1);
+		}
+
+
+		sz = atomicio(read, dev->sync_fd, &temp, sizeof(temp));
+		if (sz != sizeof(temp)) {
+			log_warnx("%s: failed to dump vioblk[%d]", __func__,
+			    dev->vioblk.idx);
+			return (-1);
+		}
+
+		temp.vioblk.vq[0].q_hva = NULL;
+		temp.async_fd = -1;
+		temp.sync_fd = -1;
+		memset(&temp.async_iev, 0, sizeof(temp.async_iev));
+		memset(&temp.sync_iev, 0, sizeof(temp.sync_iev));
+
+		if (atomicio(vwrite, fd, &temp, sizeof(temp)) != sizeof(temp)) {
+			log_warnx("%s: error writing vioblk to fd", __func__);
+			return (-1);
+		}
 	}
+
 	return (0);
 }
 
@@ -2338,12 +1262,15 @@ virtio_dump(int fd)
 void
 virtio_stop(struct vmd_vm *vm)
 {
-	uint8_t i;
-	for (i = 0; i < vm->vm_params.vmc_nnics; i++) {
-		if (event_del(&vionet[i].event)) {
-			log_warn("could not initialize vionet event "
-			    "handler");
-			return;
+	struct virtio_dev *dev;
+	int ret;
+
+	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
+		ret = imsg_compose_event(&dev->async_iev, IMSG_VMDOP_PAUSE_VM,
+		    0, 0, -1, NULL, 0);
+		if (ret == -1) {
+			log_warnx("%s: failed to compose pause msg to device",
+				__func__);
 		}
 	}
 }
@@ -2351,12 +1278,498 @@ virtio_stop(struct vmd_vm *vm)
 void
 virtio_start(struct vmd_vm *vm)
 {
-	uint8_t i;
-	for (i = 0; i < vm->vm_params.vmc_nnics; i++) {
-		if (event_add(&vionet[i].event, NULL)) {
-			log_warn("could not initialize vionet event "
-			    "handler");
+	struct virtio_dev *dev;
+	int ret;
+
+	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
+		ret = imsg_compose_event(&dev->async_iev, IMSG_VMDOP_UNPAUSE_VM,
+		    0, 0, -1, NULL, 0);
+		if (ret == -1) {
+			log_warnx("%s: failed to compose start msg to device",
+			    __func__);
+		}
+	}
+}
+
+/*
+ * Fork+exec a child virtio device. Returns 0 on success.
+ */
+static int
+virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
+{
+	char *nargv[8], num[32], t[2];
+	pid_t dev_pid;
+	int data_fds[VM_MAX_BASE_PER_DISK], sync_fds[2], async_fds[2], ret = 0;
+	size_t i, j, data_fds_sz, sz = 0;
+	struct virtio_dev *d = NULL;
+	struct viodev_msg msg;
+	struct imsg imsg;
+	struct imsgev *iev = &dev->sync_iev;
+
+	switch (dev->dev_type) {
+	case VMD_DEVTYPE_NET:
+		data_fds[0] = dev->vionet.data_fd;
+		data_fds_sz = 1;
+		log_debug("%s: launching vionet[%d]",
+		    vm->vm_params.vmc_params.vcp_name, dev->vionet.idx);
+		break;
+	case VMD_DEVTYPE_DISK:
+		memcpy(&data_fds, dev->vioblk.disk_fd, sizeof(data_fds));
+		data_fds_sz = dev->vioblk.ndisk_fd;
+		log_debug("%s: launching vioblk[%d]",
+		    vm->vm_params.vmc_params.vcp_name, dev->vioblk.idx);
+		break;
+		/* NOTREACHED */
+	default:
+		log_warn("%s: invalid device type", __func__);
+		return (EINVAL);
+	}
+
+	/* We need two channels: one synchronous (IO reads) and one async. */
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sync_fds) == -1) {
+		log_warn("failed to create socketpair");
+		return (errno);
+	}
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, async_fds) == -1) {
+		log_warn("failed to create async socketpair");
+		return (errno);
+	}
+
+	/* Keep communication channels open after exec. */
+	if (fcntl(sync_fds[1], F_SETFD, 0)) {
+		ret = errno;
+		log_warn("%s: fcntl", __func__);
+		goto err;
+	}
+	if (fcntl(async_fds[1], F_SETFD, 0)) {
+		ret = errno;
+		log_warn("%s: fcnt", __func__);
+		goto err;
+	}
+
+	/* Keep data file descriptors open after exec. */
+	for (i = 0; i < data_fds_sz; i++) {
+		log_debug("%s: marking fd %d !close-on-exec", __func__,
+		    data_fds[i]);
+		if (fcntl(data_fds[i], F_SETFD, 0)) {
+			ret = errno;
+			log_warn("%s: fcntl", __func__);
+			goto err;
+		}
+	}
+
+	/* Fork... */
+	dev_pid = fork();
+	if (dev_pid == -1) {
+		ret = errno;
+		log_warn("%s: fork failed", __func__);
+		goto err;
+	}
+
+	if (dev_pid > 0) {
+		/* Parent */
+		close_fd(sync_fds[1]);
+		close_fd(async_fds[1]);
+
+		/* Save the child's pid to help with cleanup. */
+		dev->dev_pid = dev_pid;
+
+		/* Set the channel fds to the child's before sending. */
+		dev->sync_fd = sync_fds[1];
+		dev->async_fd = async_fds[1];
+
+		/* Close data fds. Only the child device needs them now. */
+		for (i = 0; i < data_fds_sz; i++)
+			close_fd(data_fds[i]);
+
+		/* Set our synchronous channel to non-blocking. */
+		if (fcntl(sync_fds[0], F_SETFL, O_NONBLOCK) == -1) {
+			ret = errno;
+			log_warn("%s: fcntl", __func__);
+			goto err;
+		}
+
+		/* 1. Send over our configured device. */
+		log_debug("%s: sending '%c' type device struct", __func__,
+			dev->dev_type);
+		sz = atomicio(vwrite, sync_fds[0], dev, sizeof(*dev));
+		if (sz != sizeof(*dev)) {
+			log_warnx("%s: failed to send device", __func__);
+			ret = EIO;
+			goto err;
+		}
+
+		/* 2. Send over details on the VM (including memory fds). */
+		log_debug("%s: sending vm message for '%s'", __func__,
+			vm->vm_params.vmc_params.vcp_name);
+		sz = atomicio(vwrite, sync_fds[0], vm, sizeof(*vm));
+		if (sz != sizeof(*vm)) {
+			log_warnx("%s: failed to send vm details", __func__);
+			ret = EIO;
+			goto err;
+		}
+
+		/*
+		 * Initialize our imsg channel to the child device. The initial
+		 * communication will be synchronous. We expect the child to
+		 * report itself "ready" to confirm the launch was a success.
+		 */
+		imsg_init(&iev->ibuf, sync_fds[0]);
+		do
+			ret = imsg_read(&iev->ibuf);
+		while (ret == -1 && errno == EAGAIN);
+		if (ret == 0 || ret == -1) {
+			log_warnx("%s: failed to receive ready message from "
+			    "'%c' type device", __func__, dev->dev_type);
+			ret = EIO;
+			goto err;
+		}
+		ret = 0;
+
+		log_debug("%s: receiving reply", __func__);
+		if (imsg_get(&iev->ibuf, &imsg) < 1) {
+			log_warnx("%s: imsg_get", __func__);
+			ret = EIO;
+			goto err;
+		}
+		IMSG_SIZE_CHECK(&imsg, &msg);
+		memcpy(&msg, imsg.data, sizeof(msg));
+		imsg_free(&imsg);
+
+		if (msg.type != VIODEV_MSG_READY) {
+			log_warnx("%s: expected ready message, got type %d",
+			    __func__, msg.type);
+			ret = EINVAL;
+			goto err;
+		}
+		log_debug("%s: device reports ready via sync channel",
+		    __func__);
+
+		/*
+		 * Wire in the async event handling, but after reverting back
+		 * to the parent's fd's.
+		 */
+		dev->sync_fd = sync_fds[0];
+		dev->async_fd = async_fds[0];
+		vm_device_pipe(dev, virtio_dispatch_dev);
+	} else {
+		/* Child */
+		close_fd(async_fds[0]);
+		close_fd(sync_fds[0]);
+
+		/*
+		 * Close any other device fd's we know aren't
+		 * ours. This releases any exclusive locks held on
+		 * things like disk images.
+		 */
+		SLIST_FOREACH(d, &virtio_devs, dev_next) {
+			if (d == dev)
+				continue;
+
+			switch (d->dev_type) {
+			case VMD_DEVTYPE_DISK:
+				for (j = 0; j < d->vioblk.ndisk_fd; j++)
+					close_fd(d->vioblk.disk_fd[j]);
+				break;
+			case VMD_DEVTYPE_NET:
+				close_fd(d->vionet.data_fd);
+				break;
+			default:
+				fatalx("%s: invalid device type '%c'",
+				    __func__, d->dev_type);
+			}
+		}
+
+		memset(&nargv, 0, sizeof(nargv));
+		memset(num, 0, sizeof(num));
+		snprintf(num, sizeof(num), "%d", sync_fds[1]);
+
+		t[0] = dev->dev_type;
+		t[1] = '\0';
+
+		nargv[0] = env->argv0;
+		nargv[1] = "-X";
+		nargv[2] = num;
+		nargv[3] = "-t";
+		nargv[4] = t;
+		nargv[5] = "-n";
+
+		if (env->vmd_verbose) {
+			nargv[6] = "-v";
+			nargv[7] = NULL;
+		} else
+			nargv[6] = NULL;
+
+		/* Control resumes in vmd.c:main(). */
+		execvp(nargv[0], nargv);
+
+		ret = errno;
+		log_warn("%s: failed to exec device", __func__);
+		_exit(ret);
+		/* NOTREACHED */
+	}
+
+	return (ret);
+
+err:
+	close_fd(sync_fds[0]);
+	close_fd(sync_fds[1]);
+	close_fd(async_fds[0]);
+	close_fd(async_fds[1]);
+	return (ret);
+}
+
+/*
+ * Initialize an async imsg channel for a virtio device.
+ */
+int
+vm_device_pipe(struct virtio_dev *dev, void (*cb)(int, short, void *))
+{
+	struct imsgev *iev = &dev->async_iev;
+	int fd = dev->async_fd;
+
+	log_debug("%s: initializing '%c' device pipe (fd=%d)", __func__,
+	    dev->dev_type, fd);
+
+	if (fcntl(fd, F_SETFL, O_NONBLOCK) == -1) {
+		log_warn("failed to set nonblocking mode on vm device pipe");
+		return (-1);
+	}
+
+	imsg_init(&iev->ibuf, fd);
+	iev->handler = cb;
+	iev->data = dev;
+	iev->events = EV_READ;
+	imsg_event_add(iev);
+
+	return (0);
+}
+
+void
+virtio_dispatch_dev(int fd, short event, void *arg)
+{
+	struct virtio_dev	*dev = (struct virtio_dev*)arg;
+	struct imsgev		*iev = &dev->async_iev;
+	struct imsgbuf		*ibuf = &iev->ibuf;
+	struct imsg		 imsg;
+	struct viodev_msg	 msg;
+	ssize_t			 n = 0;
+
+	if (event & EV_READ) {
+		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
+			fatal("%s: imsg_read", __func__);
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			log_debug("%s: pipe dead (EV_READ)", __func__);
+			event_del(&iev->ev);
+			event_loopexit(NULL);
 			return;
 		}
 	}
+
+	if (event & EV_WRITE) {
+		if ((n = msgbuf_write(&ibuf->w)) == -1 && errno != EAGAIN)
+			fatal("%s: msgbuf_write", __func__);
+		if (n == 0) {
+			/* this pipe is dead, so remove the event handler */
+			log_debug("%s: pipe dead (EV_WRITE)", __func__);
+			event_del(&iev->ev);
+			event_loopexit(NULL);
+			return;
+		}
+	}
+
+	for (;;) {
+		if ((n = imsg_get(ibuf, &imsg)) == -1)
+			fatal("%s: imsg_get", __func__);
+		if (n == 0)
+			break;
+
+		switch (imsg.hdr.type) {
+		case IMSG_DEVOP_MSG:
+			IMSG_SIZE_CHECK(&imsg, &msg);
+			memcpy(&msg, imsg.data, sizeof(msg));
+			handle_dev_msg(&msg, dev);
+			break;
+		default:
+			log_warnx("%s: got non devop imsg %d", __func__,
+			    imsg.hdr.type);
+			break;
+		}
+		imsg_free(&imsg);
+	}
+	imsg_event_add(iev);
+}
+
+
+static int
+handle_dev_msg(struct viodev_msg *msg, struct virtio_dev *gdev)
+{
+	uint32_t vm_id = gdev->vm_id;
+	int irq = gdev->irq;
+
+	switch (msg->type) {
+	case VIODEV_MSG_KICK:
+		if (msg->state == INTR_STATE_ASSERT)
+			vcpu_assert_pic_irq(vm_id, msg->vcpu, irq);
+		else if (msg->state == INTR_STATE_DEASSERT)
+			vcpu_deassert_pic_irq(vm_id, msg->vcpu, irq);
+		break;
+	case VIODEV_MSG_READY:
+		log_debug("%s: device reports ready", __func__);
+		break;
+	case VIODEV_MSG_ERROR:
+		log_warnx("%s: device reported error", __func__);
+		break;
+	case VIODEV_MSG_INVALID:
+	case VIODEV_MSG_IO_READ:
+	case VIODEV_MSG_IO_WRITE:
+		/* FALLTHROUGH */
+	default:
+		log_warnx("%s: unsupported device message type %d", __func__,
+		    msg->type);
+		return (1);
+	}
+
+	return (0);
+};
+
+/*
+ * Called by the VM process while processing IO from the VCPU thread.
+ *
+ * N.b. Since the VCPU thread calls this function, we cannot mutate the event
+ * system. All ipc messages must be sent manually and cannot be queued for
+ * the event loop to push them. (We need to perform a synchronous read, so
+ * this isn't really a big deal.)
+ */
+int
+virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
+    void *cookie, uint8_t sz)
+{
+	struct virtio_dev *dev = (struct virtio_dev *)cookie;
+	struct imsgbuf *ibuf = &dev->sync_iev.ibuf;
+	struct imsg imsg;
+	struct viodev_msg msg;
+	ssize_t n;
+	int ret = 0;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.reg = reg;
+	msg.io_sz = sz;
+
+	if (dir == 0) {
+		msg.type = VIODEV_MSG_IO_WRITE;
+		msg.data = *data;
+		msg.data_valid = 1;
+	} else
+		msg.type = VIODEV_MSG_IO_READ;
+
+	if (msg.type == VIODEV_MSG_IO_WRITE) {
+		/*
+		 * Write request. No reply expected.
+		 */
+		ret = imsg_compose(ibuf, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
+		    sizeof(msg));
+		if (ret == -1) {
+			log_warn("%s: failed to send async io event to vionet"
+			    " device", __func__);
+			return (ret);
+		}
+		if (imsg_flush(ibuf) == -1) {
+			log_warnx("%s: imsg_flush (write)", __func__);
+			return (-1);
+		}
+	} else {
+		/*
+		 * Read request. Requires waiting for a reply.
+		 */
+		ret = imsg_compose(ibuf, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
+		    sizeof(msg));
+		if (ret == -1) {
+			log_warnx("%s: failed to send sync io event to vionet"
+			    " device", __func__);
+			return (ret);
+		}
+		if (imsg_flush(ibuf) == -1) {
+			log_warnx("%s: imsg_flush (read)", __func__);
+			return (-1);
+		}
+
+		/* Read our reply. */
+		do
+			n = imsg_read(ibuf);
+		while (n == -1 && errno == EAGAIN);
+		if (n == 0 || n == -1) {
+			log_warn("%s: imsg_read (n=%ld)", __func__, n);
+			return (-1);
+		}
+		if ((n = imsg_get(ibuf, &imsg)) == -1) {
+			log_warn("%s: imsg_get (n=%ld)", __func__, n);
+			return (-1);
+		}
+		if (n == 0) {
+			log_warnx("%s: invalid imsg", __func__);
+			return (-1);
+		}
+
+		IMSG_SIZE_CHECK(&imsg, &msg);
+		memcpy(&msg, imsg.data, sizeof(msg));
+		imsg_free(&imsg);
+
+		if (msg.type == VIODEV_MSG_IO_READ && msg.data_valid) {
+			log_debug("%s: got sync read response (reg=%s)",
+			    __func__, virtio_reg_name(msg.reg));
+			*data = msg.data;
+			/*
+			 * It's possible we're asked to {de,}assert after the
+			 * device performs a register read.
+			 */
+			if (msg.state == INTR_STATE_ASSERT)
+				vcpu_assert_pic_irq(dev->vm_id, msg.vcpu, msg.irq);
+			else if (msg.state == INTR_STATE_DEASSERT)
+				vcpu_deassert_pic_irq(dev->vm_id, msg.vcpu, msg.irq);
+		} else {
+			log_warnx("%s: expected IO_READ, got %d", __func__,
+			    msg.type);
+			return (-1);
+		}
+	}
+
+	return (0);
+}
+
+void
+virtio_assert_pic_irq(struct virtio_dev *dev, int vcpu)
+{
+	struct viodev_msg msg;
+	int ret;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.irq = dev->irq;
+	msg.vcpu = vcpu;
+	msg.type = VIODEV_MSG_KICK;
+	msg.state = INTR_STATE_ASSERT;
+
+	ret = imsg_compose_event(&dev->async_iev, IMSG_DEVOP_MSG, 0, 0, -1,
+	    &msg, sizeof(msg));
+	if (ret == -1)
+		log_warnx("%s: failed to assert irq %d", __func__, dev->irq);
+}
+
+void
+virtio_deassert_pic_irq(struct virtio_dev *dev, int vcpu)
+{
+	struct viodev_msg msg;
+	int ret;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.irq = dev->irq;
+	msg.vcpu = vcpu;
+	msg.type = VIODEV_MSG_KICK;
+	msg.state = INTR_STATE_DEASSERT;
+
+	ret = imsg_compose_event(&dev->async_iev, IMSG_DEVOP_MSG, 0, 0, -1,
+	    &msg, sizeof(msg));
+	if (ret == -1)
+		log_warnx("%s: failed to deassert irq %d", __func__, dev->irq);
 }

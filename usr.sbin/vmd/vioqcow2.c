@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.20 2022/05/20 22:06:47 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.21 2023/04/27 22:47:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -110,9 +110,8 @@ static ssize_t qc2_pwrite(void *, char *, size_t, off_t);
 static void qc2_close(void *, int);
 
 /*
- * Initializes a raw disk image backing file from an fd.
- * Stores the number of 512 byte sectors in *szp,
- * returning -1 for error, 0 for success.
+ * Initializes a raw disk image backing file from an fd. Stores the
+ * number of bytes in *szp, returning -1 for error, 0 for success.
  *
  * May open snapshot base images.
  */
@@ -132,7 +131,7 @@ virtio_qcow2_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 	file->pread = qc2_pread;
 	file->pwrite = qc2_pwrite;
 	file->close = qc2_close;
-	*szp = diskp->disksz;
+	*szp = diskp->disksz / 512;
 	return 0;
 }
 

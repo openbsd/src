@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.119 2023/04/26 16:12:21 mlarkin Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.120 2023/04/27 22:47:27 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -73,6 +73,10 @@
 
 /* Launch mode identifiers for when a vm fork+exec's. */
 #define VMD_LAUNCH_VM		1
+#define VMD_LAUNCH_DEV		2
+
+#define VMD_DEVTYPE_NET		'n'
+#define VMD_DEVTYPE_DISK	'd'
 
 /* Rate-limit fast reboots */
 #define VM_START_RATE_SEC	6	/* min. seconds since last reboot */
@@ -137,7 +141,10 @@ enum imsg_type {
 	IMSG_VMDOP_VM_SHUTDOWN,
 	IMSG_VMDOP_VM_REBOOT,
 	IMSG_VMDOP_CONFIG,
-	IMSG_VMDOP_DONE
+	IMSG_VMDOP_DONE,
+	/* Device Operation Messages */
+	IMSG_DEVOP_HOSTMAC,
+	IMSG_DEVOP_MSG,
 };
 
 struct vmop_result {
@@ -319,6 +326,9 @@ struct vmd_vm {
 	struct timeval		 vm_start_tv;
 	int			 vm_start_limit;
 
+	int			 vm_memfds[VMM_MAX_MEM_RANGES];
+	size_t			 vm_nmemfds;
+
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
 TAILQ_HEAD(vmlist, vmd_vm);
@@ -486,6 +496,7 @@ void	 vm_pipe_send(struct vm_dev_pipe *, enum pipe_msg_type);
 enum pipe_msg_type vm_pipe_recv(struct vm_dev_pipe *);
 int	 write_mem(paddr_t, const void *buf, size_t);
 void*	 hvaddr_mem(paddr_t, size_t);
+int	 remap_guest_mem(struct vmd_vm *);
 
 /* config.c */
 int	 config_init(struct vmd *);
@@ -511,5 +522,11 @@ int	 host(const char *, struct address *);
 
 /* virtio.c */
 int	 virtio_get_base(int, char *, size_t, int, const char *);
+
+/* vionet.c */
+__dead void vionet_main(int);
+
+/* vioblk.c */
+__dead void vioblk_main(int);
 
 #endif /* VMD_H */
