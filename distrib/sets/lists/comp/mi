@@ -1827,7 +1827,6 @@
 ./usr/share/man/man3/BN_kronecker.3
 ./usr/share/man/man3/BN_mod_inverse.3
 ./usr/share/man/man3/BN_mod_mul_montgomery.3
-./usr/share/man/man3/BN_mod_mul_reciprocal.3
 ./usr/share/man/man3/BN_mod_sqrt.3
 ./usr/share/man/man3/BN_new.3
 ./usr/share/man/man3/BN_num_bytes.3
