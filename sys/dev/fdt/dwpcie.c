@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.47 2023/04/27 09:00:03 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.48 2023/04/27 09:03:06 kettenis Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -86,6 +86,7 @@
 #define IATU_LWR_TARGET_ADDR	0x14
 #define IATU_UPPER_TARGET_ADDR	0x18
 
+/* Marvell ARMADA 8k registers */
 #define PCIE_GLOBAL_CTRL	0x8000
 #define  PCIE_GLOBAL_CTRL_APP_LTSSM_EN		(1 << 2)
 #define  PCIE_GLOBAL_CTRL_DEVICE_TYPE_MASK	(0xf << 4)
@@ -171,11 +172,13 @@
 #define ANATOP_PLLOUT_DIV			0x7c
 #define  ANATOP_PLLOUT_DIV_SYSPLL1			0x7
 
-/* Rockchip */
+/* Rockchip RK3568/RK3588 registers */
 #define PCIE_CLIENT_GENERAL_CON			0x0000
 #define  PCIE_CLIENT_DEV_TYPE_RC		((0xf << 4) << 16 | (0x4 << 4))
 #define  PCIE_CLIENT_LINK_REQ_RST_GRT		((1 << 3) << 16 | (1 << 3))
 #define  PCIE_CLIENT_APP_LTSSM_ENABLE		((1 << 2) << 16 | (1 << 2))
+#define PCIE_CLIENT_INTR_STATUS_LEGACY		0x0008
+#define PCIE_CLIENT_INTR_MASK_LEGACY		0x001c
 #define PCIE_CLIENT_HOT_RESET_CTRL		0x0180
 #define  PCIE_CLIENT_APP_LTSSM_ENABLE_ENHANCE	((1 << 4) << 16 | (1 << 4))
 #define PCIE_CLIENT_LTSSM_STATUS		0x0300
@@ -198,6 +201,18 @@ struct dwpcie_range {
 	uint64_t		pci_base;
 	uint64_t		phys_base;
 	uint64_t		size;
+};
+
+struct dwpcie_intx {
+	int			(*di_func)(void *);
+	void			*di_arg;
+	int			di_ipl;
+	int			di_flags;
+	int			di_pin;
+	struct evcount		di_count;
+	char			*di_name;
+	struct dwpcie_softc	*di_sc;
+	TAILQ_ENTRY(dwpcie_intx) di_next;
 };
 
 #define DWPCIE_NUM_MSI		32
@@ -262,6 +277,8 @@ struct dwpcie_softc {
 	int			sc_atu_viewport;
 
 	void			*sc_ih;
+	struct interrupt_controller sc_ic;
+	TAILQ_HEAD(,dwpcie_intx) sc_intx[4];
 
 	uint64_t		sc_msi_addr;
 	struct dwpcie_msi	sc_msi[DWPCIE_NUM_MSI];
@@ -298,6 +315,7 @@ dwpcie_match(struct device *parent, void *match, void *aux)
 	    OF_is_compatible(faa->fa_node, "marvell,armada8k-pcie") ||
 	    OF_is_compatible(faa->fa_node, "qcom,pcie-sc8280xp") ||
 	    OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3588-pcie") ||
 	    OF_is_compatible(faa->fa_node, "sifive,fu740-pcie"));
 }
 
@@ -320,7 +338,14 @@ int	dwpcie_imx8mq_init(struct dwpcie_softc *);
 int	dwpcie_imx8mq_intr(void *);
 
 int	dwpcie_fu740_init(struct dwpcie_softc *);
+
 int	dwpcie_rk3568_init(struct dwpcie_softc *);
+int	dwpcie_rk3568_intr(void *);
+void	*dwpcie_rk3568_intr_establish(void *, int *, int,
+ 	    struct cpu_info *, int (*)(void *), void *, char *);
+void	dwpcie_rk3568_intr_disestablish(void *);
+void	dwpcie_rk3568_intr_barrier(void *);
+
 int	dwpcie_sc8280xp_init(struct dwpcie_softc *);
 
 void	dwpcie_attach_hook(struct device *, struct device *,
@@ -400,7 +425,8 @@ dwpcie_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_glue_size = faa->fa_reg[glue].size;
 	}
 
-	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie")) {
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3588-pcie")) {
 		glue = OF_getindex(faa->fa_node, "apb", "reg-names");
 		if (glue < 0 || glue >= faa->fa_nreg) {
 			printf(": no glue registers\n");
@@ -509,7 +535,8 @@ dwpcie_attach_deferred(struct device *self)
 		error = dwpcie_imx8mq_init(sc);
 	if (OF_is_compatible(sc->sc_node, "qcom,pcie-sc8280xp"))
 		error = dwpcie_sc8280xp_init(sc);
-	if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie"))
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie") ||
+	    OF_is_compatible(sc->sc_node, "rockchip,rk3588-pcie"))
 		error = dwpcie_rk3568_init(sc);
 	if (OF_is_compatible(sc->sc_node, "sifive,fu740-pcie"))
 		error = dwpcie_fu740_init(sc);
@@ -610,8 +637,7 @@ dwpcie_attach_deferred(struct device *self)
 
 	/* Set up bus range. */
 	if (OF_getpropintarray(sc->sc_node, "bus-range", bus_range,
-	    sizeof(bus_range)) != sizeof(bus_range) ||
-	    bus_range[0] >= 32 || bus_range[1] >= 32) {
+	    sizeof(bus_range)) != sizeof(bus_range)) {
 		bus_range[0] = 0;
 		bus_range[1] = 31;
 	}
@@ -700,10 +726,13 @@ dwpcie_attach_deferred(struct device *self)
 	pba.pba_bus = sc->sc_bus;
 	if (OF_is_compatible(sc->sc_node, "baikal,bm1000-pcie") ||
 	    OF_is_compatible(sc->sc_node, "marvell,armada8k-pcie") ||
-	    OF_is_compatible(sc->sc_node, "rockchip,rk3568-pcie") ||
 	    OF_getproplen(sc->sc_node, "msi-map") > 0 ||
 	    sc->sc_msi_addr)
 		pba.pba_flags |= PCI_FLAGS_MSI_ENABLED;
+
+	/* XXX No working MSI on RK3588 yet. */
+	if (OF_is_compatible(sc->sc_node, "rockchip,rk3588-pcie"))
+		pba.pba_flags &= ~PCI_FLAGS_MSI_ENABLED;
 
 	pci_dopm = 1;
 
@@ -1273,7 +1302,8 @@ dwpcie_rk3568_init(struct dwpcie_softc *sc)
 {
 	uint32_t *reset_gpio;
 	ssize_t reset_gpiolen;
-	int error, timo;
+	int error, idx, node;
+	int pin, timo;
 
 	sc->sc_num_viewport = 8;
 
@@ -1339,12 +1369,133 @@ dwpcie_rk3568_init(struct dwpcie_softc *sc)
 		goto err;
 	}
 
+	node = OF_getnodebyname(sc->sc_node, "legacy-interrupt-controller");
+	idx = OF_getindex(sc->sc_node, "legacy", "interrupt-names");
+	if (node && idx != -1) {
+		sc->sc_ih = fdt_intr_establish_idx(sc->sc_node, idx,
+		    IPL_BIO | IPL_MPSAFE, dwpcie_rk3568_intr, sc,
+		    sc->sc_dev.dv_xname);
+	}
+
+	if (sc->sc_ih) {
+		for (pin = 0; pin < nitems(sc->sc_intx); pin++)
+			TAILQ_INIT(&sc->sc_intx[pin]);
+		sc->sc_ic.ic_node = node;
+		sc->sc_ic.ic_cookie = sc;
+		sc->sc_ic.ic_establish = dwpcie_rk3568_intr_establish;
+		sc->sc_ic.ic_disestablish = dwpcie_rk3568_intr_disestablish;
+		sc->sc_ic.ic_barrier = dwpcie_rk3568_intr_barrier;
+		fdt_intr_register(&sc->sc_ic);
+	}
+
 	error = 0;
 err:
 	if (reset_gpiolen > 0)
 		free(reset_gpio, M_TEMP, reset_gpiolen);
 	
 	return error;
+}
+
+int
+dwpcie_rk3568_intr(void *arg)
+{
+	struct dwpcie_softc *sc = arg;
+	struct dwpcie_intx *di;
+	uint32_t status;
+	int pin, s;
+
+	status = bus_space_read_4(sc->sc_iot, sc->sc_glue_ioh,
+	    PCIE_CLIENT_INTR_STATUS_LEGACY);
+	for (pin = 0; pin < nitems(sc->sc_intx); pin++) {
+		if ((status & (1 << pin)) == 0)
+			continue;
+
+		TAILQ_FOREACH(di, &sc->sc_intx[pin], di_next) {
+			if ((di->di_flags & IPL_MPSAFE) == 0)
+				KERNEL_LOCK();
+			s = splraise(di->di_ipl);
+			if (di->di_func(di->di_arg))
+				di->di_count.ec_count++;
+			splx(s);
+			if ((di->di_flags & IPL_MPSAFE) == 0)
+				KERNEL_UNLOCK();
+		}
+	}
+
+	return 1;
+}
+
+void *
+dwpcie_rk3568_intr_establish(void *cookie, int *cell, int level,
+    struct cpu_info *ci, int (*func)(void *), void *arg, char *name)
+{
+	struct dwpcie_softc *sc = (struct dwpcie_softc *)cookie;
+	struct dwpcie_intx *di;
+	int pin = cell[0];
+	uint32_t mask = (1U << pin);
+
+	if (ci != NULL && !CPU_IS_PRIMARY(ci))
+		return NULL;
+
+	if (pin < 0 || pin >= nitems(sc->sc_intx))
+		return NULL;
+
+	/* Mask the interrupt. */
+	bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+	    PCIE_CLIENT_INTR_MASK_LEGACY, (mask << 16) | mask);
+	intr_barrier(sc->sc_ih);
+
+	di = malloc(sizeof(*di), M_DEVBUF, M_WAITOK | M_ZERO);
+	di->di_func = func;
+	di->di_arg = arg;
+	di->di_ipl = level & IPL_IRQMASK;
+	di->di_flags = level & IPL_FLAGMASK;
+	di->di_pin = pin;
+	di->di_name = name;
+	if (name != NULL)
+		evcount_attach(&di->di_count, name, &di->di_pin);
+	di->di_sc = sc;
+	TAILQ_INSERT_TAIL(&sc->sc_intx[pin], di, di_next);
+
+	/* Unmask the interrupt. */
+	bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+	    PCIE_CLIENT_INTR_MASK_LEGACY, mask << 16);
+
+	return di;
+}
+
+void
+dwpcie_rk3568_intr_disestablish(void *cookie)
+{
+	struct dwpcie_intx *di = cookie;
+	struct dwpcie_softc *sc = di->di_sc;
+	uint32_t mask = (1U << di->di_pin);
+
+	/* Mask the interrupt. */
+	bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+	    PCIE_CLIENT_INTR_MASK_LEGACY, (mask << 16) | mask);
+	intr_barrier(sc->sc_ih);
+
+	if (di->di_name)
+		evcount_detach(&di->di_count);
+
+	TAILQ_REMOVE(&sc->sc_intx[di->di_pin], di, di_next);
+	free(di, M_DEVBUF, sizeof(*di));
+
+	if (!TAILQ_EMPTY(&sc->sc_intx[di->di_pin])) {
+		/* Unmask the interrupt. */
+		bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
+		    PCIE_CLIENT_INTR_MASK_LEGACY, mask << 16);
+	}
+}
+
+void
+dwpcie_rk3568_intr_barrier(void *cookie)
+{
+	struct dwpcie_intx *di = cookie;
+	struct dwpcie_softc *sc = di->di_sc;
+
+	intr_barrier(sc->sc_ih);
 }
 
 int
