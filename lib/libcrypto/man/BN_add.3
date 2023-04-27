@@ -1,4 +1,4 @@
-.\" $OpenBSD: BN_add.3,v 1.18 2023/01/31 05:16:52 jsing Exp $
+.\" $OpenBSD: BN_add.3,v 1.19 2023/04/27 09:45:56 tb Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 31 2023 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt BN_ADD 3
 .Os
 .Sh NAME
@@ -465,11 +465,9 @@ as
 .Fa a
 or
 .Fa b .
-For more efficient algorithms for repeated computations using the same
+For a more efficient algorithm for repeated computations using the same
 modulus, see
-.Xr BN_mod_mul_montgomery 3
-and
-.Xr BN_mod_mul_reciprocal 3 .
+.Xr BN_mod_mul_montgomery 3 .
 .Pp
 .Fn BN_mod_sqr
 takes the square of
