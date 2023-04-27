@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.71 2023/04/09 17:50:02 jcs Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.72 2023/04/27 19:06:57 miod Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -287,7 +287,12 @@ thinkpad_sensor_refresh(void *arg)
 	/* Read fan RPM */
 	acpiec_read(sc->sc_ec, THINKPAD_ECOFFSET_FANLO, 1, &lo);
 	acpiec_read(sc->sc_ec, THINKPAD_ECOFFSET_FANHI, 1, &hi);
-	sc->sc_sens[THINKPAD_SENSOR_FANRPM].value = ((hi << 8L) + lo);
+	if (hi == 0xff && lo == 0xff) {
+ 		sc->sc_sens[THINKPAD_SENSOR_FANRPM].flags = SENSOR_FINVALID;
+	} else {
+		sc->sc_sens[THINKPAD_SENSOR_FANRPM].value = ((hi << 8L) + lo);
+ 		sc->sc_sens[THINKPAD_SENSOR_FANRPM].flags = 0;
+	}
 }
 
 void
