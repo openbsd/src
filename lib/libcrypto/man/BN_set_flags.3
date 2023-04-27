@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_set_flags.3,v 1.5 2021/12/06 19:45:27 schwarze Exp $
+.\"	$OpenBSD: BN_set_flags.3,v 1.6 2023/04/27 07:22:22 tb Exp $
 .\"
 .\" Copyright (c) 2017 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 6 2021 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt BN_SET_FLAGS 3
 .Os
 .Sh NAME
@@ -96,10 +96,8 @@ object is usually a terrible idea that can cause both disclosure
 of secret data and memory leaks.
 This flag is automatically set on the constant
 .Vt BIGNUM
-objects returned by
-.Xr BN_value_one 3
-and by the functions documented in
-.Xr BN_get0_nist_prime_521 3 .
+object returned by
+.Xr BN_value_one 3 .
 .El
 .Pp
 .Fn BN_get_flags
