@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.46 2023/04/27 10:03:49 kn Exp $
+#	$OpenBSD: install.md,v 1.47 2023/04/27 17:04:17 caspar Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@ MDBOOTSR=y
 NCPU=$(sysctl -n hw.ncpufound)
 COMPATIBLE=$(sysctl -n machdep.compatible)
 MOUNT_ARGS_msdos="-o-l"
+KEEP_EFI_SYS=false
 
 md_installboot() {
 	local _disk=$1 _chunks _bootdisk _mdec _plat
@@ -109,6 +110,11 @@ md_prep_fdisk() {
 		[wW]*)
 			echo -n "Creating a ${bootfstype} partition and an OpenBSD partition for rest of $_disk..."
 			if disk_has $_disk gpt apfsisc; then
+				# On Apple hardware, the existing EFI Sys
+				# partition contains boot firmware and MUST NOT
+				# be recreated.
+				KEEP_EFI_SYS=true
+
 				# Is this a boot disk?
 				if [[ $_disk == @($ROOTDISK|$CRYPTOCHUNK) ]]; then
 					fdisk -Ay -b "${bootsectorsize}" ${_disk} >/dev/null
@@ -119,13 +125,22 @@ md_prep_fdisk() {
 				# Is this a boot disk?
 				if [[ $_disk == @($ROOTDISK|$CRYPTOCHUNK) ]]; then
 					fdisk -gy -b "${bootsectorsize}" ${_disk} >/dev/null
-					installboot -p $_disk
+
+					# With root on softraid,
+					# 'installboot -p' on the root disk
+					# nukes the EFI Sys partition on
+					# the chunks.
+					$KEEP_EFI_SYS || installboot -p $_disk
 				else
 					fdisk -gy ${_disk} >/dev/null
 				fi
 			else
 				fdisk -iy -b "${bootsectorsize}@${bootsectorstart}:${bootparttype}" ${_disk} >/dev/null
-				installboot -p $_disk
+
+				# With root on softraid, 'installboot -p' on
+				# the root disk nukes the EFI Sys partition on
+				# the chunks.
+				$KEEP_EFI_SYS || installboot -p $_disk
 			fi
 			echo "done."
 			return ;;
