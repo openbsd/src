@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_loop.3,v 1.4 2023/04/17 04:46:04 jsg Exp $
+.\" $OpenBSD: event_base_loop.3,v 1.5 2023/04/27 16:10:11 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 17 2023 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt EVENT_BASE_LOOP 3
 .Os
 .Sh NAME
@@ -57,43 +57,40 @@ Timer events are configured with
 .Xr evtimer_set 3 .
 .Pp
 The event library categorizes event states as:
-.Bl -tag -width "Initialized:"
-.It Sy Initialized :
+.Bl -tag -width initialized
+.It Em initialized
 These have been configured with
 .Xr event_set 3
 and not yet registered with an event loop.
-.It Sy Scheduled :
+.It Em scheduled
 These are registered to a loop using
 .Xr event_add 3
 and are idle, waiting to trigger and be processed by the loop.
 They can be queried with
 .Fn event_pending 3 .
-.It Sy Activated :
+.It Em activated
 These are triggered events.
 The loop processes events until all activated events are resolved.
 Some of these, such as signals, may persist and become scheduled again.
 .El
 .Pp
 The arguments are as follows:
-.Bl -tag -width 6n
-.It Fa base :
+.Bl -tag -width flags
+.It Fa base
 A pointer to an
 .Vt event_base
 structure returned from
 .Xr event_base_new 3
 or
 .Xr event_init 3 .
-.It Fa flags :
+.It Fa flags
 Zero or more of the following flags OR'ed together:
-.Pp
-.Bl -hyphen -compact -width 1n
-.It
-.Dv EVLOOP_ONCE :
+.Bl -tag -width EVLOOP_NONBLOCK
+.It Dv EVLOOP_ONCE
 Run the event loop for one iteration and then return.
 This is useful for a main program that needs to perform actions outside
 the event loop.
-.It
-.Dv EVLOOP_NONBLOCK :
+.It Dv EVLOOP_NONBLOCK
 Run the event loop in non-blocking mode.
 The loop returns after processing activated signal and kernel events and does
 not wait for timer events to expire.
