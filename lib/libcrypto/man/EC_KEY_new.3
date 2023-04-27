@@ -1,4 +1,4 @@
-.\" $OpenBSD: EC_KEY_new.3,v 1.16 2020/09/08 03:25:15 tb Exp $
+.\" $OpenBSD: EC_KEY_new.3,v 1.17 2023/04/27 09:49:44 tb Exp $
 .\" full merge up to: OpenSSL 3aef36ff Jan 5 13:06:03 2016 -0500
 .\" partial merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 8 2020 $
+.Dd $Mdocdate: April 27 2023 $
 .Dt EC_KEY_NEW 3
 .Os
 .Sh NAME
@@ -72,8 +72,6 @@
 .Nm EC_KEY_set_enc_flags ,
 .Nm EC_KEY_get_conv_form ,
 .Nm EC_KEY_set_conv_form ,
-.Nm EC_KEY_get_key_method_data ,
-.Nm EC_KEY_insert_key_method_data ,
 .Nm EC_KEY_set_asn1_flag ,
 .Nm EC_KEY_precompute_mult ,
 .Nm EC_KEY_generate_key ,
@@ -166,21 +164,6 @@
 .Fo EC_KEY_set_conv_form
 .Fa "EC_KEY *key"
 .Fa "point_conversion_form_t cform"
-.Fc
-.Ft void *
-.Fo EC_KEY_get_key_method_data
-.Fa "EC_KEY *key"
-.Fa "void *(*dup_func)(void *)"
-.Fa "void (*free_func)(void *)"
-.Fa "void (*clear_free_func)(void *)"
-.Fc
-.Ft void
-.Fo EC_KEY_insert_key_method_data
-.Fa "EC_KEY *key"
-.Fa "void *data"
-.Fa "void *(*dup_func)(void *)"
-.Fa "void (*free_func)(void *)"
-.Fa "void (*clear_free_func)(void *)"
 .Fc
 .Ft void
 .Fo EC_KEY_set_asn1_flag
@@ -393,26 +376,6 @@ get and set the point_conversion_form for the
 For a description of point_conversion_form please refer to
 .Xr EC_GROUP_copy 3 .
 .Pp
-.Fn EC_KEY_insert_key_method_data
-and
-.Fn EC_KEY_get_key_method_data
-enable the caller to associate arbitrary additional data specific
-to the elliptic curve scheme being used with the
-.Vt EC_KEY
-object.
-This data is treated as a "black box" by the EC library.
-The data to be stored by
-.Fn EC_KEY_insert_key_method_data
-is provided in the
-.Fa data
-parameter, which must have associated functions for duplicating, freeing
-and "clear_freeing" the data item.
-If a subsequent
-.Fn EC_KEY_get_key_method_data
-call is issued, the functions for duplicating, freeing and
-"clear_freeing" the data item must be provided again, and they must
-be the same as they were when the data item was inserted.
-.Pp
 .Fn EC_KEY_set_flags
 sets the flags in the
 .Fa flags
@@ -549,8 +512,6 @@ returns the point_conversion_form for the
 .Fn EC_KEY_set_enc_flags ,
 .Fn EC_KEY_get_conv_form ,
 .Fn EC_KEY_set_conv_form ,
-.Fn EC_KEY_get_key_method_data ,
-.Fn EC_KEY_insert_key_method_data ,
 .Fn EC_KEY_set_asn1_flag ,
 .Fn EC_KEY_precompute_mult ,
 .Fn EC_KEY_generate_key ,
