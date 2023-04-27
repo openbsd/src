@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.12 2023/04/25 19:26:45 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.13 2023/04/27 07:10:05 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -408,8 +408,15 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
     const ECDSA_SIG *sig, EC_KEY *eckey);
 
 void *EC_KEY_get_key_method_data(EC_KEY *key,
-	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
+    void *(*dup_func)(void *), void (*free_func)(void *),
+    void (*clear_free_func)(void *));
 void *EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
-	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
+    void *(*dup_func)(void *), void (*free_func)(void *),
+    void (*clear_free_func)(void *));
+
+int EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *p,
+    const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx);
+int EC_POINT_get_Jprojective_coordinates(const EC_GROUP *group,
+    const EC_POINT *p, BIGNUM *x, BIGNUM *y, BIGNUM *z, BN_CTX *ctx);
 
 __END_HIDDEN_DECLS
