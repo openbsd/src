@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.21 2023/04/28 15:35:55 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.22 2023/04/28 15:37:28 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -778,8 +778,9 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 	X509_POLICY_NODE *node, *parent;
 	int num_levels, user_has_any_policy;
 	int i, j, k;
-	assert(user_policies == NULL ||
-	    sk_ASN1_OBJECT_is_sorted(user_policies));
+
+	if (!sk_ASN1_OBJECT_is_sorted(user_policies))
+		return 0;
 
 	/* Step (g.i). If the policy graph is empty, the intersection is empty. */
 	num_levels = sk_X509_POLICY_LEVEL_num(levels);
