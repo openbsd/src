@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.9 2023/04/26 22:05:36 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.10 2023/04/28 13:48:38 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -44,6 +44,8 @@ static const struct fnnames {
 	{ "X509_CRL_set_issuer_name", X509_CRL_set_issuer_name },
 	{ "X509_CRL_set_lastUpdate", X509_CRL_set_lastUpdate },
 	{ "X509_CRL_set_nextUpdate", X509_CRL_set_nextUpdate },
+	{ "X509_REQ_add_extensions", X509_REQ_add_extensions },
+	{ "X509_REQ_add1_attr", X509_REQ_add1_attr },
 	{ NULL, NULL }
 };
 
@@ -383,12 +385,148 @@ test_x509_crl_setters(void)
 	return failed;
 }
 
+static void
+x509_req_setup(unsigned char **der, unsigned char **der2, X509_REQ **xr,
+    long dersz, long *der2sz)
+{
+	const unsigned char *cpder;
+
+	cpder = *der;
+	if ((*xr = d2i_X509_REQ(NULL, &cpder, dersz)) == NULL)
+		errx(1, "d2i_X509");
+	if ((*der2sz = i2d_X509_REQ(*xr, der2)) <= 0)
+		errx(1, "i2d_X509");
+}
+
+static int
+x509_req_compare(char *f, X509_REQ *xr, const unsigned char *der, long dersz)
+{
+	unsigned char *der_test = NULL;
+	long der_testsz;
+	int rc = 0;
+
+	if ((der_testsz = i2d_X509_REQ(xr, &der_test)) <= 0)
+		errx(1, "i2d_X509_REQ");
+
+	if (dersz == der_testsz) {
+		if (memcmp(der, der_test, dersz) == 0) {
+			warnx("%s() didn't invalidate DER cache", f);
+			rc = 1;
+		} else
+			warnx("%s() OK", f);
+	} else
+		warnx("%s() OK", f);
+
+	free(der_test);
+	return rc;
+}
+
+static void
+x509_req_cleanup(X509_REQ **xr, unsigned char **der)
+{
+	X509_REQ_free(*xr);
+	*xr = NULL;
+	free(*der);
+	*der = NULL;
+}
+
+static int
+test_x509_req_setters(void)
+{
+	EVP_PKEY *pkey = NULL;
+	EVP_PKEY_CTX *pkey_ctx = NULL;
+	X509_REQ *ar = NULL, *xr = NULL;
+	unsigned char *der = NULL, *der2 = NULL;
+	X509_NAME *xn;
+	ASN1_OCTET_STRING *aos;
+	X509_EXTENSION *xe;
+	STACK_OF(X509_EXTENSION) *exts = NULL;
+	ASN1_OBJECT *coid;
+	X509_ATTRIBUTE *xa;
+	long dersz, der2sz;
+	int failed = 0;
+
+	if ((xr = X509_REQ_new()) == NULL)
+		err(1, NULL);
+
+	if (!X509_REQ_set_version(xr, 0))
+		errx(1, "X509_REQ_set_version");
+
+	if ((xn = X509_NAME_new()) == NULL)
+		err(1, NULL);
+	if (!X509_NAME_add_entry_by_txt(xn, "C", MBSTRING_ASC, "NL", -1, -1, 0))
+		errx(1, "X509_NAME_add_entry_by_txt");
+	if (!X509_REQ_set_subject_name(xr, xn))
+		errx(1, "X509_REQ_set_subject_name");
+	X509_NAME_free(xn);
+	xn = NULL;
+
+	if ((pkey_ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL)) == NULL)
+		errx(1, "EVP_PKEY_CTX_new_id");
+	if (EVP_PKEY_keygen_init(pkey_ctx) != 1)
+		errx(1, "EVP_PKEY_keygen_init");
+	if (EVP_PKEY_CTX_set_rsa_keygen_bits(pkey_ctx, 2048) <= 0)
+		errx(1, "EVP_PKEY_CTX_set_rsa_keygen_bits");
+	if (EVP_PKEY_keygen(pkey_ctx, &pkey) <= 0)
+		errx(1, "EVP_PKEY_keygen");
+	if (!X509_REQ_set_pubkey(xr, pkey))
+		errx(1, "X509_REQ_set_pubkey");
+
+	if (!X509_REQ_sign(xr, pkey, EVP_sha256()))
+		errx(1, "X509_REQ_sign");
+	if ((dersz = i2d_X509_REQ(xr, &der)) <= 0)
+		errx(1, "i2d_X509_REQ");
+
+	/* test X509_REQ_add_extensions */
+	x509_req_setup(&der, &der2, &ar, dersz, &der2sz);
+	if ((aos = ASN1_OCTET_STRING_new()) == NULL)
+		err(1, NULL);
+	ASN1_OCTET_STRING_set(aos, (unsigned char *)"DNS: test.nl",
+	    strlen("DNS: test.nl"));
+	if ((xe = X509_EXTENSION_new()) == NULL)
+		err(1, NULL);
+	if (!X509_EXTENSION_create_by_NID(&xe, NID_subject_alt_name, 0, aos))
+		errx(1, "X509_EXTENSION_create_by_NID");
+	if ((exts = sk_X509_EXTENSION_new_null()) == NULL)
+		errx(1, "sk_X509_EXTENSION_new_null");
+	sk_X509_EXTENSION_push(exts, xe);
+	if (!X509_REQ_add_extensions(ar, exts))
+		errx(1, "X509_REQ_add_extensions");
+	failed |= x509_req_compare("X509_REQ_add_extensions", ar, der2, der2sz);
+	x509_req_cleanup(&ar, &der2);
+
+	/* test X509_REQ_add1_attr */
+	x509_req_setup(&der, &der2, &ar, dersz, &der2sz);
+	if ((coid = OBJ_nid2obj(NID_pkcs7_data)) == NULL)
+		errx(1, "OBJ_nid2obj");
+	if ((xa = X509_ATTRIBUTE_create(NID_pkcs9_contentType, V_ASN1_OBJECT,
+	    coid)) == NULL)
+		errx(1, "X509_ATTRIBUTE_create");
+	if (!X509_REQ_add1_attr(ar, xa))
+		errx(1, "X509_REQ_add1_attr");
+	failed |= x509_req_compare("X509_REQ_add1_attr", ar, der2, der2sz);
+	x509_req_cleanup(&ar, &der2);
+
+	ASN1_OCTET_STRING_free(aos);
+	X509_EXTENSION_free(xe);
+	X509_ATTRIBUTE_free(xa);
+	EVP_PKEY_free(pkey);
+	EVP_PKEY_CTX_free(pkey_ctx);
+	X509_REQ_free(ar);
+	X509_REQ_free(xr);
+	free(der);
+	free(der2);
+
+	return failed;
+}
+
 int main(void)
 {
 	int failed = 0;
 
 	failed |= test_x509_setters();
 	/* failed |= */ test_x509_crl_setters();
+	/* failed |= */ test_x509_req_setters();
 
 	return failed;
 }
