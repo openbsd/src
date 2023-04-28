@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.40 2023/04/21 10:49:01 claudio Exp $ */
+/*	$OpenBSD: output.c,v 1.41 2023/04/28 13:24:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -526,12 +526,6 @@ print_flowspec_flags(struct flowspec *f, int type, int is_v6)
 	const char *fmt, *flags;
 	int complen, off = 0;
 
-	if (flowspec_get_component(f->data, f->len, type, is_v6,
-	    &comp, &complen) != 1)
-		return;
-
-	printf("%s ", flowspec_fmt_label(type));
-
 	switch (type) {
 	case FLOWSPEC_TYPE_TCP_FLAGS:
 		flags = FLOWSPEC_TCP_FLAG_STRING;
@@ -542,7 +536,16 @@ print_flowspec_flags(struct flowspec *f, int type, int is_v6)
 		else
 			flags = FLOWSPEC_FRAG_STRING6;
 		break;
+	default:
+		printf("??? ");
+		return;
 	}
+
+	if (flowspec_get_component(f->data, f->len, type, is_v6,
+	    &comp, &complen) != 1)
+		return;
+
+	printf("%s ", flowspec_fmt_label(type));
 
 	fmt = flowspec_fmt_bin_op(comp, complen, &off, flags);
 	if (off == -1) {

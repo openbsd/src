@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.294 2023/04/23 11:39:51 claudio Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.295 2023/04/28 13:24:25 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -2035,6 +2035,8 @@ push_prefix(struct parse_result *r, int type, struct bgpd_addr *addr,
 		complen = PREFIX_SIZE(len) + 1;
 		data = &addr->v6;
 		break;
+	default:
+		errx(1, "unsupported address family for flowspec address");
 	}
 	comp = malloc(complen);
 	if (comp == NULL)
