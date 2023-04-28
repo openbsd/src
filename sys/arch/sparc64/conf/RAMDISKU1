@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKU1,v 1.25 2020/04/02 06:07:05 otto Exp $
+#	$OpenBSD: RAMDISKU1,v 1.26 2023/04/28 18:27:55 cheloha Exp $
 
 machine		sparc64
 maxusers	4
@@ -23,7 +23,6 @@ cpu0		at mainbus0
 
 sbus*		at mainbus0				# Ultra 1
 clock*		at sbus?				# Mostek clock
-timer*		at mainbus0				# Timer chip
 
 le*		at sbus?			# Lance Ethernet - AMD7990
 ledma*		at sbus?

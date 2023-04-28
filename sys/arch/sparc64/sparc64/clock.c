@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.76 2023/02/04 19:19:37 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.77 2023/04/28 18:27:55 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -88,7 +88,6 @@
 #include <dev/ic/mk48txxreg.h>
 
 #include <sparc64/sparc64/intreg.h>
-#include <sparc64/sparc64/timerreg.h>
 #include <sparc64/dev/iommureg.h>
 #include <sparc64/dev/sbusreg.h>
 #include <dev/sbus/sbusvar.h>
@@ -207,26 +206,12 @@ const struct cfattach clock_fhc_ca = {
 extern todr_chip_handle_t todr_handle;
 static struct idprom *idprom;
 
-static int	timermatch(struct device *, void *, void *);
-static void	timerattach(struct device *, struct device *, void *);
-
-struct timerreg_4u	timerreg_4u;	/* XXX - need more cleanup */
-
-const struct cfattach timer_ca = {
-	sizeof(struct device), timermatch, timerattach
-};
-
-struct cfdriver timer_cd = {
-	NULL, "timer", DV_DULL
-};
-
 int clock_bus_wenable(struct todr_chip_handle *, int);
 struct chiptime;
 void myetheraddr(u_char *);
 struct idprom *getidprom(void);
 int chiptotime(int, int, int, int, int, int);
 void timetochip(struct chiptime *);
-void stopcounter(struct timer_4u *);
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 
@@ -458,68 +443,6 @@ getidprom(void)
 		return (NULL);
 	}
 	return (idp);
-}
-
-/*
- * The sun4u OPENPROMs call the timer the "counter-timer", except for
- * the lame UltraSPARC IIi PCI machines that don't have them.
- */
-static int
-timermatch(struct device *parent, void *cf, void *aux)
-{
-#ifndef MULTIPROCESSOR
-	struct mainbus_attach_args *ma = aux;
-
-	if (!timerreg_4u.t_timer || !timerreg_4u.t_clrintr)
-		return (strcmp("counter-timer", ma->ma_name) == 0);
-	else
-#endif
-		return (0);
-}
-
-static void
-timerattach(struct device *parent, struct device *self, void *aux)
-{
-#if 0
-	struct mainbus_attach_args *ma = aux;
-	u_int *va = ma->ma_address;
-	
-	/*
-	 * What we should have are 3 sets of registers that reside on
-	 * different parts of SYSIO or PSYCHO.  We'll use the prom
-	 * mappings cause we can't get rid of them and set up appropriate
-	 * pointers on the timerreg_4u structure.
-	 */
-	timerreg_4u.t_timer = (struct timer_4u *)(u_long)va[0];
-	timerreg_4u.t_clrintr = (int64_t *)(u_long)va[1];
-	timerreg_4u.t_mapintr = (int64_t *)(u_long)va[2];
-
-	/* Install the appropriate interrupt vector here */
-	level10.ih_number = INTVEC(ma->ma_interrupts[0]);
-	level10.ih_clr = (void *)&timerreg_4u.t_clrintr[0];
-	level10.ih_map = (void *)&timerreg_4u.t_mapintr[0];
-	strlcpy(level10.ih_name, "clock", sizeof(level10.ih_name));
-	intr_establish(10, &level10);
-
-	level14.ih_number = INTVEC(ma->ma_interrupts[1]);
-	level14.ih_clr = (void *)&timerreg_4u.t_clrintr[1];
-	level14.ih_map = (void *)&timerreg_4u.t_mapintr[1];
-	strlcpy(level14.ih_name, "prof", sizeof(level14.ih_name));
-	intr_establish(14, &level14);
-
-	printf(" ivec 0x%llx, 0x%llx\n", INTVEC(level10.ih_number),
-	    INTVEC(level14.ih_number));
-#endif
-	printf("\n");
-}
-
-void
-stopcounter(struct timer_4u *creg)
-{
-	/* Stop the clock */
-	volatile int discard;
-	discard = creg->t_limit;
-	creg->t_limit = 0;
 }
 
 /*

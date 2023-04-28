@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKU5,v 1.22 2020/04/02 06:07:05 otto Exp $
+#	$OpenBSD: RAMDISKU5,v 1.23 2023/04/28 18:27:55 cheloha Exp $
 
 machine		sparc64
 maxusers	4
@@ -37,8 +37,6 @@ auxio*		at ebus?
 clock*		at ebus?
 
 pcons0		at mainbus0		# PROM console 
-
-timer*		at mainbus0		# Timer chip (some systems)
 
 pciide*		at pci? flags 0x0000
 wd*		at pciide? flags 0x0a00
