@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.12 2023/03/09 00:13:47 chris Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -1209,9 +1209,8 @@ igc_rxrinfo(struct igc_softc *sc, struct if_rxrinfo *ifri)
 	struct rx_ring *rxr;
 	int error, i, n = 0;
 
-	if ((ifr = mallocarray(sc->sc_nqueues, sizeof(*ifr), M_DEVBUF,
-	    M_WAITOK | M_ZERO)) == NULL)
-		return ENOMEM;
+	ifr = mallocarray(sc->sc_nqueues, sizeof(*ifr), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
 		rxr = &sc->rx_rings[i];
