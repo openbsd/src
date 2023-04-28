@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.145 2023/04/25 15:41:17 phessler Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.146 2023/04/28 14:09:06 phessler Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -678,11 +678,40 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 		goto bad;
 	}
 
+	/* Check if we already have this neighbor in our cache. */
+	rt = nd6_lookup(&taddr6, 0, ifp, ifp->if_rdomain);
+
 	/*
+	 * If we are a router, we may create new stale cache entries upon
+	 * receiving Unsolicited Neighbor Advertisements.
+	 */
+	if (rt == NULL && ip6_forwarding == 1) {
+		rt = nd6_lookup(&taddr6, 1, ifp, ifp->if_rdomain);
+		if (rt == NULL || lladdr == NULL ||
+		    ((sdl = satosdl(rt->rt_gateway)) == NULL))
+			goto freeit;
+
+		ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+		sdl->sdl_alen = ifp->if_addrlen;
+		bcopy(lladdr, LLADDR(sdl), ifp->if_addrlen);
+
+		/*
+		 * RFC9131 6.1.1
+		 *
+		 * Routers SHOULD create a new entry for the target address
+		 * with the reachability state set to STALE.
+		 */
+		ln->ln_state = ND6_LLINFO_STALE;
+		nd6_llinfo_settimer(ln, nd6_gctimer);
+
+		goto freeit;
+	}
+
+	/*
+	 * Host:
 	 * If no neighbor cache entry is found, NA SHOULD silently be
 	 * discarded.
 	 */
-	rt = nd6_lookup(&taddr6, 0, ifp, ifp->if_rdomain);
 	if ((rt == NULL) ||
 	   ((ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) ||
 	   ((sdl = satosdl(rt->rt_gateway)) == NULL))
