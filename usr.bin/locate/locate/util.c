@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.16 2019/01/17 06:15:44 tedu Exp $
+/*	$OpenBSD: util.c,v 1.17 2023/04/28 20:22:35 tb Exp $
  *
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
  * Copyright (c) 1989, 1993
@@ -52,8 +52,7 @@ int	check_bigram_char(int);
  * or the database is obviously not a locate database.
  */
 int
-check_bigram_char(ch)
-	int ch;
+check_bigram_char(int ch)
 {
 	/* legal bigram: 0, ASCII_MIN ... ASCII_MAX */
 	if (ch == 0 ||
@@ -75,10 +74,7 @@ check_bigram_char(ch)
  *
  */
 char **
-colon(dbv, path, dot)
-	char **dbv;
-	char *path;
-	char *dot; /* default for single ':' */
+colon(char **dbv, char *path, char *dot)
 {
 	int vlen, slen;
 	char *c, *ch, *p;
@@ -140,8 +136,7 @@ colon(dbv, path, dot)
 static char globfree[100];
 
 char *
-patprep(name)
-	char *name;
+patprep(char *name)
 {
 	char *endmark, *p, *subp;
 
@@ -202,8 +197,7 @@ patprep(name)
  */
 
 int
-getwm(p)
-	caddr_t p;
+getwm(caddr_t p)
 {
 	union {
 		char buf[sizeof(int)];
@@ -237,8 +231,7 @@ getwm(p)
  */
 
 int
-getwf(fp)
-	FILE *fp;
+getwf(FILE *fp)
 {
 	int word;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fastfind.c,v 1.16 2019/01/17 06:15:44 tedu Exp $	*/
+/*	$OpenBSD: fastfind.c,v 1.17 2023/04/28 20:22:35 tb Exp $	*/
 
 /*
  * Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
@@ -37,9 +37,7 @@
 #define _LOCATE_STATISTIC_
 
 void
-statistic (fp, path_fcodes)
-	FILE *fp;               /* open database */
-	char *path_fcodes;  	/* for error message */
+statistic (FILE *fp, char *path_fcodes)
 {
 	int lines, chars, size, big, zwerg;
 	u_char *p, *s;
@@ -108,14 +106,7 @@ fastfind_mmap_icase
 #else
 fastfind_mmap
 #endif /* FF_ICASE */
-(pathpart, paddr, len, database)
-	char *pathpart; 	/* search string */
-	caddr_t paddr;  	/* mmap pointer */
-	int len;        	/* length of database */
-	char *database; 	/* for error message */
-
-
-
+(char *pathpart, caddr_t paddr, int len, char *database)
 {
 	u_char *p, *s, *patend, *q, *foundchar;
 	int c, cc;
