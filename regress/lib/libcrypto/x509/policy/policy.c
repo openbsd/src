@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.4 2023/04/28 08:43:18 beck Exp $ */
+/* $OpenBSD: policy.c,v 1.5 2023/04/28 08:45:50 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -141,7 +141,6 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 	    &bundle))
 		errx(1, "failed to load intermediate from '%s'",
 		    intermediate_file);
-	printf ("%d certs %d roots\n", sk_X509_num(bundle), sk_X509_num(roots));
 	if (sk_X509_num(bundle) < 1)
 		errx(1, "not enough certs in bundle");
 	leaf = sk_X509_shift(bundle);
