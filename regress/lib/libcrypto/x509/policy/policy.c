@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.8 2023/04/28 09:02:04 beck Exp $ */
+/* $OpenBSD: policy.c,v 1.9 2023/04/28 14:45:51 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2023 Bob Beck <beck@openbsd.org>
@@ -125,7 +125,7 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 	X509_STORE_CTX *xsc = NULL;
 	X509_STORE *store = NULL;
 	X509 *leaf = NULL;
-	int ret;
+	int flags, ret;
 
 	*chains = 0;
 	*error = 0;
@@ -150,7 +150,7 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 		errx(1, "failed to init store context");
 	}
 
-	int flags = X509_V_FLAG_POLICY_CHECK;
+	flags = X509_V_FLAG_POLICY_CHECK;
 	flags |= verify_flags;
 	if (mode == MODE_LEGACY_VFY)
 		flags |= X509_V_FLAG_LEGACY_VERIFY;
@@ -583,6 +583,7 @@ struct verify_cert_test verify_cert_tests[] = {
 static int
 verify_cert_test(int mode)
 {
+	ASN1_OBJECT *policy_oid, *policy_oid2;
 	struct verify_cert_test *vct;
 	int chains, error, error_depth;
 	int failed = 0;
@@ -590,9 +591,9 @@ verify_cert_test(int mode)
 
 	for (i = 0; i < N_VERIFY_CERT_TESTS; i++) {
 		vct = &verify_cert_tests[i];
-		ASN1_OBJECT *policy_oid = vct->policy_oid_to_check ?
+		policy_oid = vct->policy_oid_to_check ?
 		    OBJ_txt2obj(vct->policy_oid_to_check, 1) : NULL;
-		ASN1_OBJECT *policy_oid2 = vct->policy_oid_to_check2 ?
+		policy_oid2 = vct->policy_oid_to_check2 ?
 		    OBJ_txt2obj(vct->policy_oid_to_check2, 1) : NULL;
 
 		error = 0;
