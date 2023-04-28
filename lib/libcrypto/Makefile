@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.123 2023/04/28 16:14:46 tb Exp $
+# $OpenBSD: Makefile,v 1.124 2023/04/28 16:21:57 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -653,12 +653,6 @@ SRCS+= wp_dgst.c
 SRCS+= by_dir.c
 SRCS+= by_file.c
 SRCS+= by_mem.c
-SRCS+= pcy_cache.c
-SRCS+= pcy_data.c
-SRCS+= pcy_lib.c
-SRCS+= pcy_map.c
-SRCS+= pcy_node.c
-SRCS+= pcy_tree.c
 SRCS+= x509_addr.c
 SRCS+= x509_akey.c
 SRCS+= x509_akeya.c
