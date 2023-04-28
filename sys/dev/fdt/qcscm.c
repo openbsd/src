@@ -1,4 +1,4 @@
-/* $OpenBSD: qcscm.c,v 1.2 2023/01/21 10:34:49 kettenis Exp $ */
+/* $OpenBSD: qcscm.c,v 1.3 2023/04/28 10:19:07 patrick Exp $ */
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -189,20 +189,19 @@ void
 qcscm_smc_exec(uint64_t *in, uint64_t *out)
 {
 	__asm(
-	    "ldp x0, x1, [%0, %2]\n"
-	    "ldp x2, x3, [%0, %3]\n"
-	    "ldp x4, x5, [%0, %4]\n"
-	    "ldp x6, x7, [%0, %5]\n"
+	    "ldp x0, x1, [%0, #0]\n"
+	    "ldp x2, x3, [%0, #16]\n"
+	    "ldp x4, x5, [%0, #32]\n"
+	    "ldp x6, x7, [%0, #48]\n"
 	    "smc #0\n"
-	    "stp x0, x1, [%1, %2]\n"
-	    "stp x2, x3, [%1, %3]\n"
-	    "stp x4, x5, [%1, %4]\n"
-	    "stp x6, x7, [%1, %5]\n" ::
-	    "r" (in), "r" (out),
-	    "i"(0), "i"(16), "i"(32), "i"(48),
-	    "m" (*in), "m" (*out) :
+	    "stp x0, x1, [%1, #0]\n"
+	    "stp x2, x3, [%1, #16]\n"
+	    "stp x4, x5, [%1, #32]\n"
+	    "stp x6, x7, [%1, #48]\n" ::
+	    "r" (in), "r" (out) :
 	    "x0", "x1", "x2", "x3",
-	    "x4", "x5", "x6", "x7");
+	    "x4", "x5", "x6", "x7",
+	    "memory");
 }
 
 int
