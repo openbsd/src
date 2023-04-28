@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.6 2023/04/28 08:50:08 beck Exp $ */
+/* $OpenBSD: policy.c,v 1.7 2023/04/28 08:53:20 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -131,7 +131,6 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 	*error = 0;
 	*error_depth = 0;
 
-
 	if (!certs_from_file(roots_file, &roots))
 		errx(1, "failed to load roots from '%s'", roots_file);
 	if (!certs_from_file(leaf_file, &bundle))
@@ -154,7 +153,7 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 	int flags = X509_V_FLAG_POLICY_CHECK;
 	flags |= verify_flags;
 	if (mode == MODE_LEGACY_VFY)
-		flags |=  X509_V_FLAG_LEGACY_VERIFY;
+		flags |= X509_V_FLAG_LEGACY_VERIFY;
 	X509_STORE_CTX_set_flags(xsc, flags);
 
 	if (verbose)
@@ -162,13 +161,13 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 	X509_STORE_CTX_set0_trusted_stack(xsc, roots);
 
 	if (policy_oid != NULL) {
-		X509_VERIFY_PARAM * param = X509_STORE_CTX_get0_param(xsc);
-		ASN1_OBJECT * copy = OBJ_dup(policy_oid);
+		X509_VERIFY_PARAM *param = X509_STORE_CTX_get0_param(xsc);
+		ASN1_OBJECT *copy = OBJ_dup(policy_oid);
 		X509_VERIFY_PARAM_add0_policy(param, copy);
 	}
 	if (policy_oid2 != NULL) {
-		X509_VERIFY_PARAM * param = X509_STORE_CTX_get0_param(xsc);
-		ASN1_OBJECT * copy = OBJ_dup(policy_oid2);
+		X509_VERIFY_PARAM *param = X509_STORE_CTX_get0_param(xsc);
+		ASN1_OBJECT *copy = OBJ_dup(policy_oid2);
 		X509_VERIFY_PARAM_add0_policy(param, copy);
 	}
 
@@ -388,7 +387,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_chains = 0,
 		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_error_depth = 0,
-		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_legacy_error_depth = 0,
 	},
 	// requireExplicitPolicy applies even if the application does not configure a
@@ -402,7 +401,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_chains = 0,
 		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_error_depth = 0,
-		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_legacy_error_depth = 0,
 	},
 	// A leaf can also set requireExplicitPolicy but should work with none
@@ -413,7 +412,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf_require.pem",
 		.want_chains = 1,
 	},
-	// A leaf can also set requireExplicitPolicy but should fail with policy 
+	// A leaf can also set requireExplicitPolicy but should fail with policy
 	{
 		.id = "oid3, explicit policy unset,  with leaf requiring policy",
 		.root_file = CERTSDIR "/" "policy_root.pem",
@@ -423,7 +422,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_chains = 0,
 		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_error_depth = 0,
-		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_legacy_error_depth = 0,
 	},
 	// requireExplicitPolicy is a count of certificates to skip. If the value is
@@ -438,7 +437,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_chains = 0,
 		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_error_depth = 0,
-		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_legacy_error_depth = 0,
 	},
 	{
@@ -469,7 +468,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_chains = 0,
 		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_error_depth = 0,
-		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_legacy_error_depth = 0,
 	},
 	{
@@ -482,7 +481,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_chains = 0,
 		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_error_depth = 0,
-		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_legacy_error_depth = 0,
 	},
 	// An intermediate that requires an explicit policy, but then specifies no
@@ -496,7 +495,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_chains = 0,
 		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_error_depth = 0,
-		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_legacy_error_depth = 0,
 	},
 	// A constrained intermediate's policy extension has a duplicate policy, which
@@ -510,7 +509,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.want_chains = 0,
 		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
 		.want_error_depth = 0,
-		.want_legacy_error =  X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
 		.want_legacy_error_depth = 0,
 	},
 	// The leaf asserts anyPolicy, but the intermediate does not. The resulting
@@ -612,7 +611,6 @@ verify_cert_test(int mode)
 		fprintf(stderr, "\n");
 		ASN1_OBJECT_free(policy_oid);
 		ASN1_OBJECT_free(policy_oid2);
-
 	}
 	return failed;
 }
