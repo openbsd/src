@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.22 2023/04/28 15:37:28 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.23 2023/04/28 15:39:29 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -15,14 +15,12 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <openssl/x509.h>
-
-#include <assert.h>
 #include <string.h>
 
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/stack.h>
+#include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
 #include "x509_internal.h"
