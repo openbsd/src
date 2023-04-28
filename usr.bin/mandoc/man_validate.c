@@ -1,4 +1,4 @@
-/* $OpenBSD: man_validate.c,v 1.127 2022/08/02 11:55:51 schwarze Exp $ */
+/* $OpenBSD: man_validate.c,v 1.128 2023/04/28 20:14:19 schwarze Exp $ */
 /*
  * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -42,7 +42,6 @@
 
 typedef	void	(*v_check)(CHKARGS);
 
-static	void	  check_abort(CHKARGS) __attribute__((__noreturn__));
 static	void	  check_par(CHKARGS);
 static	void	  check_part(CHKARGS);
 static	void	  check_root(CHKARGS);
@@ -67,9 +66,9 @@ static	const v_check man_valids[MAN_MAX - MAN_TH] = {
 	post_SH,    /* SS */
 	post_TP,    /* TP */
 	post_TP,    /* TQ */
-	check_abort,/* LP */
+	check_par,  /* LP */
 	check_par,  /* PP */
-	check_abort,/* P */
+	check_par,  /* P */
 	post_IP,    /* IP */
 	NULL,       /* HP */
 	NULL,       /* SM */
@@ -110,25 +109,11 @@ man_validate(struct roff_man *man)
 	const v_check	 *cp;
 
 	/*
-	 * Translate obsolete macros such that later code
-	 * does not need to look for them.
-	 */
-
-	n = man->last;
-	switch (n->tok) {
-	case MAN_LP:
-	case MAN_P:
-		n->tok = MAN_PP;
-		break;
-	default:
-		break;
-	}
-
-	/*
 	 * Iterate over all children, recursing into each one
 	 * in turn, depth-first.
 	 */
 
+	n = man->last;
 	man->last = man->last->child;
 	while (man->last != NULL) {
 		man_validate(man);
@@ -196,12 +181,6 @@ check_root(CHKARGS)
 		mandoc_msg(MANDOCERR_RCS_MISSING, 0, 0,
 		    man->meta.os_e == MANDOC_OS_OPENBSD ?
 		    "(OpenBSD)" : "(NetBSD)");
-}
-
-static void
-check_abort(CHKARGS)
-{
-	abort();
 }
 
 /*
@@ -338,7 +317,8 @@ post_SH(CHKARGS)
 		return;
 	}
 
-	if (nc->tok == MAN_PP && nc->body->child != NULL) {
+	if ((nc->tok == MAN_LP || nc->tok == MAN_PP || nc->tok == MAN_P) &&
+	    nc->body->child != NULL) {
 		while (nc->body->last != NULL) {
 			man->next = ROFF_NEXT_CHILD;
 			roff_node_relink(man, nc->body->last);
@@ -346,7 +326,8 @@ post_SH(CHKARGS)
 		}
 	}
 
-	if (nc->tok == MAN_PP || nc->tok == ROFF_sp || nc->tok == ROFF_br) {
+	if (nc->tok == MAN_LP || nc->tok == MAN_PP || nc->tok == MAN_P ||
+	    nc->tok == ROFF_sp || nc->tok == ROFF_br) {
 		mandoc_msg(MANDOCERR_PAR_SKIP, nc->line, nc->pos,
 		    "%s after %s", roff_name[nc->tok], roff_name[n->tok]);
 		roff_node_delete(man, nc);
