@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_base_new.3,v 1.5 2023/04/25 17:57:55 schwarze Exp $
+.\" $OpenBSD: event_base_new.3,v 1.6 2023/04/28 17:31:58 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comlore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 25 2023 $
+.Dd $Mdocdate: April 28 2023 $
 .Dt EVENT_BASE_NEW 3
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@ The functions
 .Fn event_base_new
 and
 .Fn event_init
-allocate memory and initialize an opaque
+allocate and initialize an opaque
 .Vt event_base
 structure.
 This structure is used to schedule and monitor events using the operating
@@ -80,36 +80,22 @@ pointer access occurs unless otherwise documented.
 .Pp
 After calling
 .Xr fork 2 ,
-the function
+invoke
 .Fn event_reinit
-must be invoked to reset the event queues and any events registered with
-the kernel notification method in the
+in the child process for each initialized
 .Vt event_base
-structure of the child process.
-The function takes a single argument, a pointer to an
-.Vt event_base
-structure returned by
-.Fn event_init
-or
-.Fn event_base_new .
-The behavior is undefined if
-.Fa base
-is
-.Dv NULL .
+structure to reset the event queues and any registered events.
 .Pp
 The
 .Fn event_base_free
-function releases all resources associated with an
-.Vt event_base
-structure and is intended to be called after the event loop has been stopped.
-If
+function releases all resources associated with the
 .Fa base
-is not
-.Dv NULL
-it is a pointer returned by an earlier call to
+structure returned by an earlier call to
 .Fn event_base_new
 or
 .Fn event_init .
+It is intended to be called after the event loop has been stopped.
+.Pp
 If
 .Fn event_init
 has been used and
@@ -186,10 +172,10 @@ report which kernel notification method the returned
 structure is using.
 .El
 .Pp
-These environment variables work unless the library detects the program
-was executed as either setuid or setgid using
-.Xr issetugid 2 .
-The value of the environment variables is ignored, even if it is
+These environment variables are ignored if
+.Xr issetugid 2
+reports that the program was executed as setuid or setgid.
+The values of the environment variables are always ignored, even if they are
 empty or zero.
 .Sh DIAGNOSTICS
 Many event library functions report error and diagnostic messages via
@@ -293,14 +279,30 @@ The function
 first appeared in libevent-0.1 and has been available since
 .Ox 3.2 .
 .Pp
+.Fn event_base_free
+first appeared in libevent-1.2 and has been available since
+.Ox 4.0 .
+.Pp
 .Fn event_base_new
 and
 .Fn event_reinit
 first appeared in libevent-1.4.1 and have been available since
 .Ox 4.8 .
 .Pp
-Support for environment variables first appeared in libevent-0.7a and
-.Ox 3.6 .
+Support for
+.Dv EVENT_NOKQUEUE
+first appeared in libevent-0.4 and has been available since
+.Ox 3.2 .
+Support for the other environment variables first appeared in libevent-0.7a.
+.Dv EVENT_NOSELECT
+and
+.Dv EVENT_SHOW_METHOD
+have been available since
+.Ox 3.4
+and
+.Dv EVENT_NOPOLL
+since
+.Ox 3.5 .
 .Sh AUTHORS
 The event library and these functions were written by
 .An -nosplit
