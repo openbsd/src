@@ -1,7 +1,24 @@
-.\" $OpenBSD: BIO_f_md.3,v 1.14 2023/04/28 15:04:33 schwarze Exp $
-.\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: BIO_f_md.3,v 1.15 2023/04/28 16:20:01 schwarze Exp $
+.\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2022, 2023 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2000, 2006, 2009, 2016 The OpenSSL Project.
 .\" All rights reserved.
 .\"
@@ -56,7 +73,8 @@
 .Nm BIO_f_md ,
 .Nm BIO_set_md ,
 .Nm BIO_get_md ,
-.Nm BIO_get_md_ctx
+.Nm BIO_get_md_ctx ,
+.Nm BIO_set_md_ctx
 .Nd message digest BIO filter
 .Sh SYNOPSIS
 .In openssl/bio.h
@@ -65,20 +83,25 @@
 .Fo BIO_f_md
 .Fa void
 .Fc
-.Ft int
+.Ft long
 .Fo BIO_set_md
 .Fa "BIO *b"
 .Fa "EVP_MD *md"
 .Fc
-.Ft int
+.Ft long
 .Fo BIO_get_md
 .Fa "BIO *b"
 .Fa "EVP_MD **mdp"
 .Fc
-.Ft int
+.Ft long
 .Fo BIO_get_md_ctx
 .Fa "BIO *b"
 .Fa "EVP_MD_CTX **mdcp"
+.Fc
+.Ft long
+.Fo BIO_set_md_ctx
+.Fa "BIO *b"
+.Fa "EVP_MD_CTX *mdc"
 .Fc
 .Sh DESCRIPTION
 .Fn BIO_f_md
@@ -164,6 +187,31 @@ is an internal context structure.
 Changes made to this context will affect the digest BIO itself, and
 the context pointer will become invalid when the digest BIO is freed.
 .Pp
+.Fn BIO_set_md_ctx
+replaces the digest context of
+.Fa b
+with
+.Fa mdc .
+Calling this function is usually not necessary
+because creating a digest BIO with
+.Xr BIO_new 3
+automatically creates a digest context and stores it internally.
+Before calling
+.Fn BIO_set_md_ctx ,
+the caller has to retrieve the old context using
+.Fn BIO_get_md_ctx ,
+and the caller also becomes responsible for calling
+.Xr EVP_MD_CTX_free 3
+on the old context.
+Unless
+.Fa mdc
+is already initialized, the caller needs to initialize it after calling
+.Fn BIO_set_md_ctx
+using either
+.Fn BIO_set_md
+or
+.Xr EVP_DigestInit 3 .
+.Pp
 When a chain containing a message digest BIO is copied with
 .Xr BIO_dup_chain 3 ,
 .Xr EVP_MD_CTX_copy_ex 3
@@ -172,6 +220,18 @@ from the existing BIO object to the new one,
 and the init flag that can be retrieved with
 .Xr BIO_get_init 3
 is set to 1.
+.Pp
+.Xr BIO_ctrl 3
+.Fa cmd
+arguments correspond to macros as follows:
+.Bl -column BIO_C_GET_MD_CTX "corresponding macro" -offset 3n
+.It Fa cmd No constant  Ta corresponding macro
+.It Dv BIO_C_GET_MD     Ta Fn BIO_get_md
+.It Dv BIO_C_GET_MD_CTX Ta Fn BIO_get_md_ctx
+.It Dv BIO_C_SET_MD     Ta Fn BIO_set_md
+.It Dv BIO_C_SET_MD_CTX Ta Fn BIO_set_md_ctx
+.It Dv BIO_CTRL_RESET   Ta Xr BIO_reset 3
+.El
 .Sh RETURN VALUES
 .Fn BIO_f_md
 returns the digest BIO method.
@@ -185,11 +245,21 @@ and
 returns a pointer to the static string
 .Qq message digest .
 .Pp
-.Fn BIO_set_md ,
-.Fn BIO_get_md ,
+.Fn BIO_set_md
+returns 1 on success or 0 if
+.Xr EVP_DigestInit_ex 3
+fails.
+.Pp
+.Fn BIO_get_md
 and
+.Fn BIO_set_md_ctx
+return 1 on success or 0 if
+.Fa b
+is not initialized.
+.Pp
 .Fn BIO_get_md_ctx
-return 1 for success and 0 for failure.
+returns 1 on success or 0 on failure,
+but the current implementation cannot actually fail.
 .Sh EXAMPLES
 The following example creates a BIO chain containing a SHA-1 and MD5
 digest BIO and passes the string "Hello World" through it.
@@ -269,6 +339,10 @@ first appeared in SSLeay 0.6.0.
 first appeared in SSLeay 0.8.1.
 These functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn BIO_set_md_ctx
+first appeared in OpenSSL 0.9.7e and has been available since
+.Ox 3.8 .
 .Pp
 Before OpenSSL 1.0.0, the call to
 .Fn BIO_get_md_ctx
