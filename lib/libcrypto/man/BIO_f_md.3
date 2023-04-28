@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_f_md.3,v 1.13 2023/04/11 16:58:43 schwarze Exp $
+.\" $OpenBSD: BIO_f_md.3,v 1.14 2023/04/28 15:04:33 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2023 $
+.Dd $Mdocdate: April 28 2023 $
 .Dt BIO_F_MD 3
 .Os
 .Sh NAME
@@ -90,6 +90,22 @@ It is a BIO wrapper for the digest routines
 and
 .Xr EVP_DigestFinal 3 .
 .Pp
+.Fn BIO_set_md
+sets the message digest of
+.Fa b
+to
+.Fa md
+and initializes it using
+.Xr EVP_DigestInit_ex 3 .
+Calling this function is required before any data is passed through
+.Fa b .
+.Pp
+.Fn BIO_get_md
+places a pointer to the digest method of
+.Fa b
+into
+.Pf * Fa mdp .
+.Pp
 Any data written or read through a digest BIO using
 .Xr BIO_read 3
 and
@@ -104,31 +120,34 @@ finishes the digest calculation and returns the digest value.
 .Xr BIO_puts 3
 is
 not supported.
+If an application needs to call
+.Xr BIO_gets 3
+or
+.Xr BIO_puts 3
+through a chain containing digest BIOs,
+this can be done by prepending a buffering BIO.
 .Pp
+After the digest has been retrieved from a digest BIO, call
 .Xr BIO_reset 3
-reinitialises a digest BIO.
-.Pp
+to reinitialize it and any BIOs following it in its chain
+before passing any more data through it.
+If no subsequent BIOs require reinitialization,
 .Fn BIO_set_md
-sets the message digest of BIO
-.Fa b
-to
-.Fa md :
-this must be called to initialize a digest BIO
-before any data is passed through it.
-It is a
-.Xr BIO_ctrl 3
-macro.
-.Pp
-.Fn BIO_get_md
-places a pointer to the digest BIOs digest method in
-.Fa mdp .
-It is a
-.Xr BIO_ctrl 3
-macro.
+can be used instead of
+.Xr BIO_reset 3 .
 .Pp
 .Fn BIO_get_md_ctx
-returns the digest BIOs context in
-.Fa mdcp .
+places a pointer to the digest context of
+.Fa b
+into
+.Pf * Fa mdcp
+and marks the BIO as initialized without actually initializing it.
+Unless
+.Fn BIO_set_md
+was already called on
+.Fa b ,
+the caller becomes responsible for initializing the digest context with
+.Xr EVP_DigestInit_ex 3 .
 .Pp
 The context returned by
 .Fn BIO_get_md_ctx
@@ -153,30 +172,6 @@ from the existing BIO object to the new one,
 and the init flag that can be retrieved with
 .Xr BIO_get_init 3
 is set to 1.
-.Pp
-After the digest has been retrieved from a digest BIO,
-it must be reinitialized by calling
-.Xr BIO_reset 3
-or
-.Fn BIO_set_md
-before any more data is passed through it.
-.Pp
-If an application needs to call
-.Xr BIO_gets 3
-or
-.Xr BIO_puts 3
-through a chain containing digest BIOs,
-then this can be done by prepending a buffering BIO.
-.Pp
-Calling
-.Fn BIO_get_md_ctx
-will return the context and initialize the
-.Vt BIO
-state.
-This allows applications to initialize the context externally
-if the standard calls such as
-.Fn BIO_set_md
-are not sufficiently flexible.
 .Sh RETURN VALUES
 .Fn BIO_f_md
 returns the digest BIO method.
