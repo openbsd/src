@@ -1,0 +1,31 @@
+#! /bin/sh
+
+# testing modification time. This is tricky for two reasons:
+# - BSD find only emits minutes granularity
+# - the test might run less than a second, but the rsync
+#   protocol has 1 second roundoff in times
+# So we set some time older than this software for some
+# parts of the original tree.
+
+. ${tstdir-.}/lib.sh
+. ${tstdir-.}/conf.sh
+
+rm -rf dir1 dir2 dir3
+# make the copy-from-here tree
+mkdir dir1
+cd dir1
+touch -d 1975-10-21T01:01:01 foo
+# make the tree we want to compare to
+mkdir ../dir2
+cd ../dir2
+touch -d 1975-10-21T01:01:01 foo
+
+# test a - we want the time corrected
+mkdir ../dir3
+cd ../dir3
+touch -d 1975-10-21T01:01:01 foo
+
+cd ..
+# call -a
+$rsync -Dgorltp dir1/ dir3
+compare_trees dir2 dir3

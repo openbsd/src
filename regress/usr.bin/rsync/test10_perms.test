@@ -1,0 +1,29 @@
+#! /bin/sh
+
+. ${tstdir-.}/lib.sh
+. ${tstdir-.}/conf.sh
+
+umask 022
+rm -rf dir1 dir2 dir3
+# make the copy-from-here tree
+mkdir dir1
+cd dir1
+generate_tree_1
+chmod 640 foo/bar/baz/one.txt
+# make the tree we want to compare to
+mkdir ../dir2
+cd ../dir2
+genfile one.txt
+# we expect umask permissions after rsync
+chmod 644 one.txt
+
+mkdir ../dir3
+cd ../dir3
+genfile one.txt
+# we expect umask permissions after rsync
+chmod 644 one.txt
+
+cd ..
+# call -a without -p
+$rsync -Dgorltr dir1/foo/bar/baz/one.txt dir3
+compare_trees dir2 dir3

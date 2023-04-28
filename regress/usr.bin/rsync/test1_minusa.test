@@ -1,0 +1,18 @@
+#! /bin/sh
+
+. ${tstdir-.}/lib.sh
+. ${tstdir-.}/conf.sh
+
+rm -rf dir1 dir2 dir3
+# make the copy-from-here tree
+mkdir dir1
+cd dir1
+generate_tree_1
+# make the tree we want to compare to
+mkdir ../dir2
+cd ../dir2
+generate_tree_1
+
+cd ..
+$rsync -a dir1/ dir3
+compare_trees dir2 dir3

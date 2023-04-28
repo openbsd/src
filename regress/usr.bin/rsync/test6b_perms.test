@@ -1,0 +1,32 @@
+#! /bin/sh
+
+# Testing that rsync -a without -p indeed leaves permissions alone.
+# Make the target tree and mess up some permissions in there.
+# We expect rsync to NOT reset this to what dir1 has since we don't
+# use -a.
+
+. ${tstdir-.}/lib.sh
+. ${tstdir-.}/conf.sh
+
+rm -rf dir1 dir2 dir3
+# make the copy-from-here tree
+mkdir dir1
+cd dir1
+generate_tree_1
+# make the tree we want to compare to
+mkdir ../dir2
+cd ../dir2
+generate_tree_1
+chmod 600 foo/bar/baz/one.txt
+chmod 777 foo/bar/baz/one2.txt
+
+mkdir ../dir3
+cd ../dir3
+generate_tree_1
+chmod 600 foo/bar/baz/one.txt
+chmod 777 foo/bar/baz/one2.txt
+
+cd ..
+# call -a without -p.
+$rsync -Dglort dir1/ dir3
+compare_trees dir2 dir3
