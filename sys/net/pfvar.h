@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.529 2023/02/07 17:58:43 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.530 2023/04/28 14:08:38 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -822,7 +822,7 @@ struct pf_ruleset {
 		struct {
 			struct pf_rulequeue	*ptr;
 			u_int32_t		 rcount;
-			u_int32_t		 ticket;
+			u_int32_t		 version;
 			int			 open;
 		}			 active, inactive;
 	}			 rules;
@@ -844,6 +844,7 @@ struct pf_anchor {
 	struct pf_ruleset	 ruleset;
 	int			 refcnt;	/* anchor rules */
 	int			 match;
+	struct refcnt		 ref;		/* for transactions */
 };
 RB_PROTOTYPE(pf_anchor_global, pf_anchor, entry_global, pf_anchor_compare)
 RB_PROTOTYPE(pf_anchor_node, pf_anchor, entry_node, pf_anchor_compare)
@@ -1823,6 +1824,8 @@ struct pf_ruleset 	*pf_get_leaf_ruleset(char *, char **);
 struct pf_anchor 	*pf_create_anchor(struct pf_anchor *, const char *);
 struct pf_ruleset	*pf_find_or_create_ruleset(const char *);
 void			 pf_rs_initialize(void);
+void			 pf_anchor_rele(struct pf_anchor *);
+struct pf_anchor	*pf_anchor_take(struct pf_anchor *);
 
 /* The fingerprint functions can be linked into userland programs (tcpdump) */
 int	pf_osfp_add(struct pf_osfp_ioctl *);

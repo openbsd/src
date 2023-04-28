@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.390 2023/01/06 17:44:33 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.391 2023/04/28 14:08:38 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -837,7 +837,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
     char *anchorname, int depth, int wildcard, long shownr)
 {
 	struct pfioc_rule pr;
-	u_int32_t nr, mnr, header = 0;
+	u_int32_t header = 0;
 	int len = strlen(path), ret = 0;
 	char *npath, *p;
 
@@ -893,24 +893,9 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		goto error;
 	}
 
-	if (shownr < 0) {
-		mnr = pr.nr;
-		nr = 0;
-	} else if (shownr < pr.nr) {
-		nr = shownr;
-		mnr = shownr + 1;
-	} else {
-		warnx("rule %ld not found", shownr);
-		ret = -1;
-		goto error;
-	}
-	for (; nr < mnr; ++nr) {
-		pr.nr = nr;
-		if (ioctl(dev, DIOCGETRULE, &pr) == -1) {
-			warn("DIOCGETRULE");
-			ret = -1;
-			goto error;
-		}
+	while (ioctl(dev, DIOCGETRULE, &pr) != -1) {
+		if (shownr != -1 && shownr != pr.nr)
+			continue;
 
 		/* anchor is the same for all rules in it */
 		if (pr.rule.anchor_wildcard == 0)
@@ -968,6 +953,13 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 		case PFCTL_SHOW_NOTHING:
 			break;
 		}
+		errno = 0;
+	}
+
+	if (errno != 0 && errno != ENOENT) {
+		warn("DIOCGETRULE");
+		ret = -1;
+		goto error;
 	}
 
 	/*
