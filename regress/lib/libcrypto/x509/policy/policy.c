@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.5 2023/04/28 08:45:50 beck Exp $ */
+/* $OpenBSD: policy.c,v 1.6 2023/04/28 08:50:08 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -31,7 +31,6 @@
 #define MODE_MODERN_VFY		0
 #define MODE_MODERN_VFY_DIR	1
 #define MODE_LEGACY_VFY		2
-#define MODE_VERIFY		3
 
 static int verbose = 1;
 
@@ -154,7 +153,6 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 
 	int flags = X509_V_FLAG_POLICY_CHECK;
 	flags |= verify_flags;
-	//	flags |= X509_V_FLAG_INHIBIT_MAP;
 	if (mode == MODE_LEGACY_VFY)
 		flags |=  X509_V_FLAG_LEGACY_VERIFY;
 	X509_STORE_CTX_set_flags(xsc, flags);
@@ -196,72 +194,6 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 	X509_STORE_free(store);
 	X509_STORE_CTX_free(xsc);
 	X509_free(leaf);
-}
-
-static void
-verify_cert_new(const char *roots_file, const char *intermediate_file,
-    const char*leaf_file, int *chains)
-{
-	STACK_OF(X509) *roots = NULL, *bundle = NULL;
-	X509_STORE_CTX *xsc = NULL;
-	X509 *leaf = NULL;
-	struct x509_verify_ctx *ctx;
-
-	*chains = 0;
-
-	if (!certs_from_file(roots_file, &roots))
-		errx(1, "failed to load roots from '%s'", roots_file);
-	if (!certs_from_file(leaf_file, &bundle))
-		errx(1, "failed to load leaf from '%s'", leaf_file);
-	if (intermediate_file != NULL && !certs_from_file(intermediate_file,
-	    &bundle))
-		errx(1, "failed to load intermediate from '%s'",
-		    intermediate_file);
-	if (sk_X509_num(bundle) < 1)
-		errx(1, "not enough certs in bundle");
-	leaf = sk_X509_shift(bundle);
-
-        if ((xsc = X509_STORE_CTX_new()) == NULL)
-		errx(1, "X509_STORE_CTX");
-	if (!X509_STORE_CTX_init(xsc, NULL, leaf, bundle)) {
-		ERR_print_errors_fp(stderr);
-		errx(1, "failed to init store context");
-	}
-	if (verbose)
-		X509_STORE_CTX_set_verify_cb(xsc, verify_cert_cb);
-
-	if ((ctx = x509_verify_ctx_new(roots)) == NULL)
-		errx(1, "failed to create ctx");
-	if (!x509_verify_ctx_set_intermediates(ctx, bundle))
-		errx(1, "failed to set intermediates");
-
-	if ((*chains = x509_verify(ctx, leaf, NULL)) == 0) {
-		fprintf(stderr, "failed to verify at %lu: %s\n",
-		    x509_verify_ctx_error_depth(ctx),
-		    x509_verify_ctx_error_string(ctx));
-	} else {
-		int c;
-
-		for (c = 0; verbose && c < *chains; c++) {
-			STACK_OF(X509) *chain;
-			int i;
-
-			fprintf(stderr, "Chain %d\n--------\n", c);
-			chain = x509_verify_ctx_chain(ctx, c);
-			for (i = 0; i < sk_X509_num(chain); i++) {
-				X509 *cert = sk_X509_value(chain, i);
-				X509_NAME_print_ex_fp(stderr,
-				    X509_get_subject_name(cert), 0,
-				    XN_FLAG_ONELINE);
-				fprintf(stderr, "\n");
-			}
-		}
-	}
-	sk_X509_pop_free(roots, X509_free);
-	sk_X509_pop_free(bundle, X509_free);
-	X509_free(leaf);
-	X509_STORE_CTX_free(xsc);
-	x509_verify_ctx_free(ctx);
 }
 
 struct verify_cert_test {
@@ -647,16 +579,11 @@ verify_cert_test(int mode)
 		error_depth = 0;
 
 		fprintf(stderr, "== Test %zu (%s)\n", i, vct->id);
-		if (mode == MODE_VERIFY)
-			verify_cert_new(vct->root_file, vct->intermediate_file,
-			    vct->leaf_file, &chains);
-		else
-			verify_cert(vct->root_file, vct->intermediate_file,
-			    vct->leaf_file, &chains, &error, &error_depth,
-			    mode, policy_oid, policy_oid2, vct->verify_flags);
+		verify_cert(vct->root_file, vct->intermediate_file,
+		    vct->leaf_file, &chains, &error, &error_depth,
+		    mode, policy_oid, policy_oid2, vct->verify_flags);
 
-		if ((mode == MODE_VERIFY && chains == vct->want_chains) ||
-		    (chains == 0 && vct->want_chains == 0) ||
+		if ((chains == 0 && vct->want_chains == 0) ||
 		    (chains == 1 && vct->want_chains > 0)) {
 			fprintf(stderr, "INFO: Succeeded with %d chains%s\n",
 			    chains, vct->failing ? " (legacy failure)" : "");
@@ -699,9 +626,7 @@ main(int argc, char **argv)
 	failed |= verify_cert_test(MODE_LEGACY_VFY);
 	fprintf(stderr, "\n\nTesting modern x509_vfy\n");
 	failed |= verify_cert_test(MODE_MODERN_VFY);
-	// New does not support policy goo at the moment.
-	//	fprintf(stderr, "\n\nTestin x509_verify\n");
-	//	failed |= verify_cert_test(MODE_VERIFY);
+	/* New verifier does not do policy goop at the moment */
 
 	return (failed);
 }
