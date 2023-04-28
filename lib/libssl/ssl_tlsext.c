@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_tlsext.c,v 1.136 2023/04/27 10:50:37 tb Exp $ */
+/* $OpenBSD: ssl_tlsext.c,v 1.137 2023/04/28 18:14:59 tb Exp $ */
 /*
  * Copyright (c) 2016, 2017, 2019 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2017 Doug Hogan <doug@openbsd.org>
@@ -2251,7 +2251,7 @@ int
 tlsext_randomize_build_order(SSL *s)
 {
 	size_t idx, new_idx, psk_idx;
-	size_t alpn_idx, sni_idx;
+	size_t alpn_idx = 0, sni_idx = 0;
 
 	free(s->tlsext_build_order);
 	s->tlsext_build_order_len = 0;
