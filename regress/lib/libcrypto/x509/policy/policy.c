@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.3 2023/04/28 08:15:11 beck Exp $ */
+/* $OpenBSD: policy.c,v 1.4 2023/04/28 08:43:18 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -516,7 +516,6 @@ struct verify_cert_test verify_cert_tests[] = {
 		.intermediate_file = CERTSDIR "/" "policy_intermediate_require2.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.policy_oid_to_check = OID3,
-		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 		.want_chains = 1,
 	},
 	{
@@ -525,7 +524,6 @@ struct verify_cert_test verify_cert_tests[] = {
 		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf_require1.pem",
 		.policy_oid_to_check = OID3,
-		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 		.want_chains = 1,
 	},
 	// If multiple certificates specify the constraint, the more constrained value
