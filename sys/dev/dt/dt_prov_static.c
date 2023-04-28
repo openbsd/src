@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.17 2022/09/11 19:05:44 dv Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.18 2023/04/28 20:03:13 mvs Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -94,6 +94,7 @@ DT_STATIC_PROBE2(smr, thread, "uint64_t", "uint64_t");
 DT_STATIC_PROBE0(refcnt, none);
 DT_STATIC_PROBE3(refcnt, ifaddr, "void *", "int", "int");
 DT_STATIC_PROBE3(refcnt, inpcb, "void *", "int", "int");
+DT_STATIC_PROBE3(refcnt, rtentry, "void *", "int", "int");
 DT_STATIC_PROBE3(refcnt, tdb, "void *", "int", "int");
 
 /*
@@ -140,6 +141,7 @@ struct dt_probe *const dtps_static[] = {
 	&_DT_STATIC_P(refcnt, none),
 	&_DT_STATIC_P(refcnt, ifaddr),
 	&_DT_STATIC_P(refcnt, inpcb),
+	&_DT_STATIC_P(refcnt, rtentry),
 	&_DT_STATIC_P(refcnt, tdb),
 };
 

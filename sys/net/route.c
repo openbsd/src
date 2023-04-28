@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.421 2023/04/27 14:41:09 mvs Exp $	*/
+/*	$OpenBSD: route.c,v 1.422 2023/04/28 20:03:14 mvs Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -875,7 +875,7 @@ rtrequest(int req, struct rt_addrinfo *info, u_int8_t prio,
 			return (ENOBUFS);
 		}
 
-		refcnt_init(&rt->rt_refcnt);
+		refcnt_init_trace(&rt->rt_refcnt, DT_REFCNT_IDX_RTENTRY);
 		rt->rt_flags = info->rti_flags | RTF_UP;
 		rt->rt_priority = prio;	/* init routing priority */
 		LIST_INIT(&rt->rt_timer);
