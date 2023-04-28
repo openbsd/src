@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.49 2023/04/21 14:14:13 op Exp $	*/
+/*	$OpenBSD: util.c,v 1.50 2023/04/28 10:02:03 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -363,9 +363,9 @@ doindent(int cols)
 
 /*
  * Insert a newline, then enough tabs and spaces to duplicate the indentation
- * of the previous line.  Assumes tabs are every eight characters.  Quite
- * simple.  Figure out the indentation of the current line.  Insert a newline
- * by calling the standard routine.  Insert the indentation by inserting the
+ * of the previous line, respecting no-tab-mode and the buffer tab width.
+ * Figure out the indentation of the current line.  Insert a newline by
+ * calling the standard routine.  Insert the indentation by inserting the
  * right number of tabs and spaces.  Return TRUE if all ok.  Return FALSE if
  * one of the subcommands failed. Normally bound to "C-m".
  */

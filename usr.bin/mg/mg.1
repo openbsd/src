@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mg.1,v 1.133 2023/04/28 09:50:50 op Exp $
+.\"	$OpenBSD: mg.1,v 1.134 2023/04/28 10:02:03 op Exp $
 .\" This file is in the public domain.
 .\"
 .Dd $Mdocdate: April 28 2023 $
@@ -760,8 +760,9 @@ Process a negative argument for keyboard-invoked functions.
 Insert a newline into the current buffer.
 .It Ic newline-and-indent
 Insert a newline, then enough tabs and spaces to duplicate the indentation
-of the previous line.
-Assumes tabs are every eight characters.
+of the previous line, respecting
+.Ic no-tab-mode
+and the buffer tab width.
 .It Ic next-line
 Move forward
 .Va n
