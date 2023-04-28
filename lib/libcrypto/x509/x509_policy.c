@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.20 2023/04/28 15:30:14 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.21 2023/04/28 15:35:55 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -164,7 +164,7 @@ DECLARE_STACK_OF(X509_POLICY_LEVEL)
 /*
  * Don't look Ethel, but you would really not want to look if we did
  * this the OpenSSL way either, and we are not using this boringsslism
- * anywhere else.
+ * anywhere else. Callers should ensure that the stack in data is sorted.
  */
 void
 sk_X509_POLICY_NODE_delete_if(STACK_OF(X509_POLICY_NODE) *nodes,
@@ -333,9 +333,9 @@ static int
 delete_if_not_in_policies(X509_POLICY_NODE *node, void *data)
 {
 	const CERTIFICATEPOLICIES *policies = data;
-	assert(sk_POLICYINFO_is_sorted(policies));
 	POLICYINFO info;
 	info.policyid = node->policy;
+
 	if (sk_POLICYINFO_find(policies, &info) >= 0)
 		return 0;
 	x509_policy_node_free(node);
@@ -415,6 +415,8 @@ process_certificate_policies(const X509 *x509, X509_POLICY_LEVEL *level,
 	 * anyPolicy if it is inhibited.
 	 */
 	if (!cert_has_any_policy || !any_policy_allowed) {
+		if (!sk_POLICYINFO_is_sorted(policies))
+			goto err;
 		sk_X509_POLICY_NODE_delete_if(level->nodes,
 		    delete_if_not_in_policies, policies);
 		level->has_any_policy = 0;
@@ -478,8 +480,6 @@ static int
 delete_if_mapped(X509_POLICY_NODE *node, void *data)
 {
 	const POLICY_MAPPINGS *mappings = data;
-	/* |mappings| must have been sorted by |compare_issuer_policy|. */
-	assert(sk_POLICY_MAPPING_is_sorted(mappings));
 	POLICY_MAPPING mapping;
 	mapping.issuerDomainPolicy = node->policy;
 	if (sk_POLICY_MAPPING_find(mappings, &mapping) < 0)
@@ -596,6 +596,8 @@ process_policy_mappings(const X509 *cert,
 			 * RFC 5280, section 6.1.4, step (b.2). If mapping is
 			 * inhibited, delete all mapped nodes.
 			 */
+			if (!sk_POLICY_MAPPING_is_sorted(mappings))
+				goto err;
 			sk_X509_POLICY_NODE_delete_if(level->nodes,
 			    delete_if_mapped, mappings);
 			sk_POLICY_MAPPING_pop_free(mappings,
