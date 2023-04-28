@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1173 2023/03/23 01:41:12 jsg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1174 2023/04/28 14:08:34 phessler Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2608,6 +2608,18 @@ pf_icmp_mapping(struct pf_pdesc *pd, u_int8_t type, int *icmp_dir,
 			    nd->nd_ns_target.s6_addr32[2] ^
 			    nd->nd_ns_target.s6_addr32[3];
 			*virtual_id = (h >> 16) ^ (h & 0xffff);
+			/*
+			 * the extra work here deals with 'keep state' option
+			 * at pass rule  for unsolicited advertisement.  By
+			 * returning 1 (state_icmp = 1) we override 'keep
+			 * state' to 'no state' so we don't create state for
+			 * unsolicited advertisements. No one expects answer to
+			 * unsolicited advertisements so we should be good.
+			 */
+			if (type == ND_NEIGHBOR_ADVERT) {
+				*virtual_type = htons(*virtual_type);
+				return (1);
+			}
 			break;
 		}
 
@@ -4061,7 +4073,6 @@ enter_ruleset:
 			break;
 
 		case IPPROTO_ICMP:
-		case IPPROTO_ICMPV6:
 			/* icmp only. type always 0 in other cases */
 			PF_TEST_ATTRIB((r->type &&
 			    r->type != ctx->icmptype + 1),
@@ -4074,6 +4085,23 @@ enter_ruleset:
 			PF_TEST_ATTRIB((r->keep_state && !ctx->state_icmp &&
 			    (r->rule_flag & PFRULE_STATESLOPPY) == 0 &&
 			    ctx->icmp_dir != PF_IN),
+				TAILQ_NEXT(r, entries));
+			break;
+
+		case IPPROTO_ICMPV6:
+			/* icmp only. type always 0 in other cases */
+			PF_TEST_ATTRIB((r->type &&
+			    r->type != ctx->icmptype + 1),
+				TAILQ_NEXT(r, entries));
+			/* icmp only. type always 0 in other cases */
+			PF_TEST_ATTRIB((r->code &&
+			    r->code != ctx->icmpcode + 1),
+				TAILQ_NEXT(r, entries));
+			/* icmp only. don't create states on replies */
+			PF_TEST_ATTRIB((r->keep_state && !ctx->state_icmp &&
+			    (r->rule_flag & PFRULE_STATESLOPPY) == 0 &&
+			    ctx->icmp_dir != PF_IN &&
+			    ctx->icmptype != ND_NEIGHBOR_ADVERT),
 				TAILQ_NEXT(r, entries));
 			break;
 
