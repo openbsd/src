@@ -1,4 +1,4 @@
-.\"	$OpenBSD: vmctl.8,v 1.73 2021/03/01 14:27:44 kn Exp $
+.\"	$OpenBSD: vmctl.8,v 1.74 2023/04/28 20:13:56 dv Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 1 2021 $
+.Dd $Mdocdate: April 28 2023 $
 .Dt VMCTL 8
 .Os
 .Sh NAME
@@ -193,6 +193,7 @@ Boot the VM with the specified
 kernel or custom BIOS image.
 If not specified, the default is to boot using the BIOS image in
 .Pa /etc/firmware/vmm-bios .
+If the VM is an existing VM, use the provided image for only the next boot.
 .It Fl c
 Automatically connect to the VM console.
 .It Fl d Ar disk
