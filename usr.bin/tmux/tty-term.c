@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-term.c,v 1.97 2023/04/25 09:31:50 nicm Exp $ */
+/* $OpenBSD: tty-term.c,v 1.98 2023/04/28 05:59:35 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -759,8 +759,10 @@ tty_term_string_i(struct tty_term *term, enum tty_code_code code, int a)
 	const char	*x = tty_term_string(term, code), *s;
 
 	s = tparm((char *)x, a);
-	if (s == NULL)
-		fatalx("could not expand %s", tty_term_codes[code].name);
+	if (s == NULL) {
+		log_debug("could not expand %s", tty_term_codes[code].name);
+		return ("");
+	}
 	return (s);
 }
 
@@ -770,20 +772,24 @@ tty_term_string_ii(struct tty_term *term, enum tty_code_code code, int a, int b)
 	const char	*x = tty_term_string(term, code), *s;
 
 	s = tparm((char *)x, a, b);
-	if (s == NULL)
-		fatalx("could not expand %s", tty_term_codes[code].name);
+	if (s == NULL) {
+		log_debug("could not expand %s", tty_term_codes[code].name);
+		return ("");
+	}
 	return (s);
 }
 
 const char *
-tty_term_string_iii(struct tty_term *term, enum tty_code_code code, int a, int b,
-    int c)
+tty_term_string_iii(struct tty_term *term, enum tty_code_code code, int a,
+    int b, int c)
 {
 	const char	*x = tty_term_string(term, code), *s;
 
 	s = tparm((char *)x, a, b, c);
-	if (s == NULL)
-		fatalx("could not expand %s", tty_term_codes[code].name);
+	if (s == NULL) {
+		log_debug("could not expand %s", tty_term_codes[code].name);
+		return ("");
+	}
 	return (s);
 }
 
@@ -793,20 +799,24 @@ tty_term_string_s(struct tty_term *term, enum tty_code_code code, const char *a)
 	const char	*x = tty_term_string(term, code), *s;
 
 	s = tparm((char *)x, (long)a);
-	if (s == NULL)
-		fatalx("could not expand %s", tty_term_codes[code].name);
+	if (s == NULL) {
+		log_debug("could not expand %s", tty_term_codes[code].name);
+		return ("");
+	}
 	return (s);
 }
 
 const char *
-tty_term_string_ss(struct tty_term *term, enum tty_code_code code, const char *a,
-    const char *b)
+tty_term_string_ss(struct tty_term *term, enum tty_code_code code,
+    const char *a, const char *b)
 {
 	const char	*x = tty_term_string(term, code), *s;
 
 	s = tparm((char *)x, (long)a, (long)b);
-	if (s == NULL)
-		fatalx("could not expand %s", tty_term_codes[code].name);
+	if (s == NULL) {
+		log_debug("could not expand %s", tty_term_codes[code].name);
+		return ("");
+	}
 	return (s);
 }
 
