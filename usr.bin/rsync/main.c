@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.67 2023/04/27 16:28:18 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.68 2023/04/28 10:24:38 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -312,6 +312,7 @@ const struct option	 lopts[] = {
     { "group",		no_argument,	&opts.preserve_gids,	1 },
     { "no-group",	no_argument,	&opts.preserve_gids,	0 },
     { "help",		no_argument,	NULL,			'h' },
+    { "ignore-times",	no_argument,	NULL,			'I' },
     { "include",	required_argument, NULL,		OP_INCLUDE },
     { "include-from",	required_argument, NULL,		OP_INCLUDE_FROM },
     { "links",		no_argument,	&opts.preserve_links,	1 },
@@ -331,6 +332,7 @@ const struct option	 lopts[] = {
     { "rsync-path",	required_argument, NULL,		OP_RSYNCPATH },
     { "sender",		no_argument,	&opts.sender,		1 },
     { "server",		no_argument,	&opts.server,		1 },
+    { "size-only",	no_argument,	&opts.size_only,	1 },
     { "specials",	no_argument,	&opts.specials,		1 },
     { "no-specials",	no_argument,	&opts.specials,		0 },
     { "timeout",	required_argument, NULL,		OP_TIMEOUT },
@@ -361,7 +363,7 @@ main(int argc, char *argv[])
 
 	opts.max_size = opts.min_size = -1;
 
-	while ((c = getopt_long(argc, argv, "aDe:ghlnoprtVvxz", lopts, &lidx))
+	while ((c = getopt_long(argc, argv, "aDe:ghIlnoprtVvxz", lopts, &lidx))
 	    != -1) {
 		switch (c) {
 		case 'D':
@@ -383,6 +385,9 @@ main(int argc, char *argv[])
 			break;
 		case 'g':
 			opts.preserve_gids = 1;
+			break;
+		case 'I':
+			opts.ignore_times = 1;
 			break;
 		case 'l':
 			opts.preserve_links = 1;
@@ -632,11 +637,11 @@ basedir:
 	exit(rc);
 usage:
 	fprintf(stderr, "usage: %s"
-	    " [-aDglnoprtVvx] [-e program] [--address=sourceaddr]\n"
+	    " [-aDgIlnoprtVvx] [-e program] [--address=sourceaddr]\n"
 	    "\t[--contimeout=seconds] [--compare-dest=dir] [--del] [--exclude]\n"
 	    "\t[--exclude-from=file] [--include] [--include-from=file]\n"
 	    "\t[--no-motd] [--numeric-ids] [--port=portnumber]\n"
-	    "\t[--rsync-path=program] [--timeout=seconds]\n"
+	    "\t[--rsync-path=program] [--size-only] [--timeout=seconds]\n"
 	    "\tsource ... directory\n",
 	    getprogname());
 	exit(ERR_SYNTAX);

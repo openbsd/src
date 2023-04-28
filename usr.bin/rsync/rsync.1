@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rsync.1,v 1.32 2023/04/27 17:18:40 jmc Exp $
+.\"	$OpenBSD: rsync.1,v 1.33 2023/04/28 10:24:38 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2023 $
+.Dd $Mdocdate: April 28 2023 $
 .Dt OPENRSYNC 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd synchronise local and remote files
 .Sh SYNOPSIS
 .Nm openrsync
-.Op Fl aDglnoprtVvx
+.Op Fl aDgIlnoprtVvx
 .Op Fl e Ar program
 .Op Fl -address Ns = Ns Ar sourceaddr
 .Op Fl -compare-dest Ns = Ns Ar directory
@@ -38,6 +38,7 @@
 .Op Fl -numeric-ids
 .Op Fl -port Ns = Ns Ar service
 .Op Fl -rsync-path Ns = Ns Ar program
+.Op Fl -size-only
 .Op Fl -timeout Ns = Ns Ar seconds
 .Ar source ...
 .Ar directory
@@ -93,6 +94,9 @@ not found in
 directories.
 Only applicable with
 .Fl r .
+.It Fl e Ar program , Fl -rsh Ns = Ns Ar program
+Specify alternative communication program, defaults to
+.Xr ssh 1 .
 .It Fl -exclude Ar pattern
 Exclude files matching
 .Em pattern .
@@ -103,21 +107,8 @@ and
 .Em rules
 from
 .Em file .
-.It Fl -include Ar pattern
-Include files matching
-.Em pattern .
-.It Fl -include-from Ns = Ns Ar file
-Load
-.Em patterns
-and
-.Em rules
-from
-.Em file .
 .It Fl -devices
 Also transfer device files.
-.It Fl e Ar program , Fl -rsh Ns = Ns Ar program
-Specify alternative communication program, defaults to
-.Xr ssh 1 .
 .It Fl g , -group
 Set the group name to match the source.
 For example, group
@@ -129,6 +120,18 @@ If
 .Fl -numeric-ids
 is also given or if the remote group name is unknown on the local machine,
 set the numeric group ID to match the source instead.
+.It Fl I , -ignore-times
+Do not skip based on file size and modification time.
+.It Fl -include Ar pattern
+Include files matching
+.Em pattern .
+.It Fl -include-from Ns = Ns Ar file
+Load
+.Em patterns
+and
+.Em rules
+from
+.Em file .
 .It Fl l , -links
 Also transfer symbolic links.
 The link is transferred as a standalone file: if the destination does
@@ -200,6 +203,8 @@ Run
 .Ar program
 on the remote host instead of the default
 .Pa rsync .
+.It Fl -size-only
+Skip files based only on size, don't check timestamp.
 .It Fl -specials
 Also transfer fifo and unix domain socket files.
 .It Fl -timeout Ns = Ns Ar seconds

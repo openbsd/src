@@ -1,4 +1,4 @@
-/*	$OpenBSD: uploader.c,v 1.33 2021/11/03 14:42:12 deraadt Exp $ */
+/*	$OpenBSD: uploader.c,v 1.34 2023/04/28 10:24:39 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2019 Florian Obser <florian@openbsd.org>
@@ -652,7 +652,8 @@ post_dir(struct sess *sess, const struct upload *u, size_t idx)
  * The stat pointer st is only valid for 0, 1, and 2 returns.
  */
 static int
-check_file(int rootfd, const struct flist *f, struct stat *st)
+check_file(int rootfd, const struct flist *f, struct stat *st,
+    struct sess *sess)
 {
 	if (fstatat(rootfd, f->path, st, AT_SYMLINK_NOFOLLOW) == -1) {
 		if (errno == ENOENT)
@@ -666,9 +667,16 @@ check_file(int rootfd, const struct flist *f, struct stat *st)
 	if (!S_ISREG(st->st_mode))
 		return 2;
 
+	/* TODO: add support for --checksum */
+
+	/* if ignore_times is on file needs attention */
+	if (sess->opts->ignore_times)
+		return 2;
+
 	/* quick check if file is the same */
-	/* TODO: add support for --checksum, --size-only and --ignore-times */
 	if (st->st_size == f->st.size) {
+		if (sess->opts->size_only)
+			return 0;
 		if (st->st_mtime == f->st.mtime)
 			return 0;
 		return 1;
@@ -721,7 +729,7 @@ pre_file(const struct upload *p, int *filefd, off_t *size,
 	*size = 0;
 	*filefd = -1;
 
-	rc = check_file(p->rootfd, f, &st);
+	rc = check_file(p->rootfd, f, &st, sess);
 	if (rc == -1)
 		return -1;
 	if (rc == 2 && !S_ISREG(st.st_mode)) {
@@ -748,7 +756,7 @@ pre_file(const struct upload *p, int *filefd, off_t *size,
 		dfd = openat(p->rootfd, root, O_RDONLY | O_DIRECTORY);
 		if (dfd == -1)
 			err(ERR_FILE_IO, "%s: openat", root);
-		x = check_file(dfd, f, &st);
+		x = check_file(dfd, f, &st, sess);
 		/* found a match */
 		if (x == 0) {
 			if (rc >= 0) {

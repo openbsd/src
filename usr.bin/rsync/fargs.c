@@ -1,4 +1,4 @@
-/*	$OpenBSD: fargs.c,v 1.23 2022/01/12 22:52:40 tb Exp $ */
+/*	$OpenBSD: fargs.c,v 1.24 2023/04/28 10:24:38 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -114,6 +114,8 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 		addargs(&args, "-r");
 	if (sess->opts->preserve_times)
 		addargs(&args, "-t");
+	if (sess->opts->ignore_times)
+		addargs(&args, "-I");
 	if (verbose > 3)
 		addargs(&args, "-v");
 	if (verbose > 2)
@@ -136,15 +138,20 @@ fargs_cmdline(struct sess *sess, const struct fargs *f, size_t *skip)
 	if (sess->opts->min_size >= 0)
 		addargs(&args, "--min-size=%lld", sess->opts->min_size);
 
-	/* only add --compare-dest, etc if this is the sender */
-	if (sess->opts->alt_base_mode != 0 &&
-	    f->mode == FARGS_SENDER) {
-		for (j = 0; j < MAX_BASEDIR; j++) {
-			if (sess->opts->basedir[j] == NULL)
-				break;
-			addargs(&args, "%s=%s",
-			    alt_base_mode(sess->opts->alt_base_mode),
-			    sess->opts->basedir[j]);
+	/* extra options for the receiver (local is sender) */
+	if (f->mode == FARGS_SENDER) {
+		if (sess->opts->size_only)
+			addargs(&args, "--size-only");
+
+		/* only add --compare-dest, etc if this is the sender */
+		if (sess->opts->alt_base_mode != 0) {
+			for (j = 0; j < MAX_BASEDIR; j++) {
+				if (sess->opts->basedir[j] == NULL)
+					break;
+				addargs(&args, "%s=%s",
+				    alt_base_mode(sess->opts->alt_base_mode),
+				    sess->opts->basedir[j]);
+			}
 		}
 	}
 
