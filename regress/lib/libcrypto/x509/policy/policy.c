@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.2 2023/04/27 13:26:57 beck Exp $ */
+/* $OpenBSD: policy.c,v 1.3 2023/04/28 08:15:11 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
@@ -119,7 +119,8 @@ verify_cert_cb(int ok, X509_STORE_CTX *xsc)
 static void
 verify_cert(const char *roots_file, const char *intermediate_file,
     const char *leaf_file, int *chains, int *error, int *error_depth,
-    int mode, ASN1_OBJECT *policy_oid, ASN1_OBJECT *policy_oid2)
+    int mode, ASN1_OBJECT *policy_oid, ASN1_OBJECT *policy_oid2,
+    int verify_flags)
 {
 	STACK_OF(X509) *roots = NULL, *bundle = NULL;
 	X509_STORE_CTX *xsc = NULL;
@@ -153,7 +154,7 @@ verify_cert(const char *roots_file, const char *intermediate_file,
 	}
 
 	int flags = X509_V_FLAG_POLICY_CHECK;
-	flags |= X509_V_FLAG_EXPLICIT_POLICY;
+	flags |= verify_flags;
 	//	flags |= X509_V_FLAG_INHIBIT_MAP;
 	if (mode == MODE_LEGACY_VFY)
 		flags |=  X509_V_FLAG_LEGACY_VERIFY;
@@ -277,9 +278,11 @@ struct verify_cert_test {
 	int want_legacy_error;
 	int want_legacy_error_depth;
 	int failing;
+	int verify_flags;
 };
 
 struct verify_cert_test verify_cert_tests[] = {
+	// Comments here are from boringssl/crypto/x509/x509_test.cc
 	// The chain is good for |oid1| and |oid2|, but not |oid3|.
 	{
 		.id = "nothing  in 1 and 2",
@@ -287,6 +290,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.want_chains = 1,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 	},
 	{
 		.id = "1, in 1 and 2",
@@ -295,6 +299,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.policy_oid_to_check = OID1,
 		.want_chains = 1,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 	},
 	{
 		.id = "2, in 1 and 2",
@@ -303,6 +308,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.policy_oid_to_check = OID2,
 		.want_chains = 1,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 	},
 	{
 		.id = "3, in 1 and 2",
@@ -311,6 +317,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.policy_oid_to_check = OID3,
 		.want_chains = 0,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
 		.want_error_depth = 0,
 		.want_legacy_error = X509_V_ERR_NO_EXPLICIT_POLICY,
@@ -324,6 +331,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.policy_oid_to_check = OID1,
 		.policy_oid_to_check2 = OID2,
 		.want_chains = 1,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 	},
 	{
 		.id = "1 and 3, in 1 and 2",
@@ -342,6 +350,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.policy_oid_to_check = OID1,
 		.want_chains = 0,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
 		.want_error_depth = 0,
 		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
@@ -353,6 +362,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.intermediate_file = CERTSDIR "/" "policy_intermediate_invalid.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.want_chains = 0,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
 		.want_error_depth = 0,
 		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
@@ -365,6 +375,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf_invalid.pem",
 		.policy_oid_to_check = OID1,
 		.want_chains = 0,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
 		.want_error_depth = 0,
 		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
@@ -376,6 +387,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf_invalid.pem",
 		.want_chains = 0,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
 		.want_error_depth = 0,
 		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
@@ -389,6 +401,7 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf_duplicate.pem",
 		.policy_oid_to_check = OID1,
 		.want_chains = 0,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
 		.want_error_depth = 0,
 		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
@@ -402,11 +415,217 @@ struct verify_cert_test verify_cert_tests[] = {
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
 		.policy_oid_to_check = OID1,
 		.want_chains = 0,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
 		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
 		.want_error_depth = 0,
 		.want_legacy_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
 		.want_legacy_error_depth = 0,
 	},
+	// Without |X509_V_FLAG_EXPLICIT_POLICY|, the policy tree is built and
+	// intersected with user-specified policies, but it is not required to result
+	// in any valid policies.
+	{
+		.id = "nothing with explicit_policy unset",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
+		.want_chains = 1,
+	},
+	{
+		.id = "oid3 with explicit_policy unset",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
+		.policy_oid_to_check = OID3,
+		.want_chains = 1,
+	},
+	// However, a CA with policy constraints can require an explicit policy.
+	{
+		.id = "oid1 with explicit_policy unset, intermediate requiring policy",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_require.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
+		.policy_oid_to_check = OID1,
+		.want_chains = 1,
+	},
+	{
+		.id = "oid3 with explicit_policy unset, intermediate requiring policy",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_require.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
+		.policy_oid_to_check = OID3,
+		.want_chains = 0,
+		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_error_depth = 0,
+		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error_depth = 0,
+	},
+	// requireExplicitPolicy applies even if the application does not configure a
+	// user-initial-policy-set. If the validation results in no policies, the
+	// chain is invalid.
+	{
+		.id = "nothing explict_policy unset, with intermediate requiring policy",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_require.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_none.pem",
+		.want_chains = 0,
+		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_error_depth = 0,
+		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error_depth = 0,
+	},
+	// A leaf can also set requireExplicitPolicy but should work with none
+	{
+		.id = "nothing explicit_policy unset, with leaf requiring policy",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_require.pem",
+		.want_chains = 1,
+	},
+	// A leaf can also set requireExplicitPolicy but should fail with policy 
+	{
+		.id = "oid3, explicit policy unset,  with leaf requiring policy",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_require.pem",
+		.policy_oid_to_check = OID3,
+		.want_chains = 0,
+		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_error_depth = 0,
+		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error_depth = 0,
+	},
+	// requireExplicitPolicy is a count of certificates to skip. If the value is
+	// not zero by the end of the chain, it doesn't count.
+	{
+		.id = "oid3, with intermediate requiring explicit depth 1",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_require1.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
+		.policy_oid_to_check = OID3,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
+		.want_chains = 0,
+		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_error_depth = 0,
+		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error_depth = 0,
+	},
+	{
+		.id = "oid3, with intermediate requiring explicit depth 2",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_require2.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
+		.policy_oid_to_check = OID3,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
+		.want_chains = 1,
+	},
+	{
+		.id = "oid3, with leaf requiring explicit depth 1",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_require1.pem",
+		.policy_oid_to_check = OID3,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
+		.want_chains = 1,
+	},
+	// If multiple certificates specify the constraint, the more constrained value
+	// wins.
+	{
+		.id = "oid3, with leaf and intermediate requiring explicit depth 1",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_require1.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_require1.pem",
+		.policy_oid_to_check = OID3,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
+		.want_chains = 0,
+		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_error_depth = 0,
+		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error_depth = 0,
+	},
+	{
+		.id = "oid3, with leaf requiring explicit depth 1 and intermediate depth 2",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_require2.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_require.pem",
+		.policy_oid_to_check = OID3,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
+		.want_chains = 0,
+		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_error_depth = 0,
+		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error_depth = 0,
+	},
+	// An intermediate that requires an explicit policy, but then specifies no
+	// policies should fail verification as a result.
+	{
+		.id = "oid1 with explicit_policy unset, intermediate requiring policy but specifying none",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_require_no_policies.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
+		.policy_oid_to_check = OID3,
+		.want_chains = 0,
+		.want_error = X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_error_depth = 0,
+		.want_legacy_error =  X509_V_ERR_NO_EXPLICIT_POLICY,
+		.want_legacy_error_depth = 0,
+	},
+	// A constrained intermediate's policy extension has a duplicate policy, which
+	// is invalid. Historically this, and the above case, leaked memory.
+	{
+		.id = "oid1 with explicit_policy unset, intermediate requiring policy but has duplicate",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_require_duplicate.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
+		.policy_oid_to_check = OID3,
+		.want_chains = 0,
+		.want_error = X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_error_depth = 0,
+		.want_legacy_error =  X509_V_ERR_INVALID_POLICY_EXTENSION,
+		.want_legacy_error_depth = 0,
+	},
+	// The leaf asserts anyPolicy, but the intermediate does not. The resulting
+	// valid policies are the intersection.
+	// (and vice versa)
+	{
+		.id = "oid1, with explicit_policy set, with leaf asserting any",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_any.pem",
+		.policy_oid_to_check = OID1,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
+		.want_chains = 1,
+	},
+	{
+		.id = "oid3, with explicit_policy set, with leaf asserting any",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_any.pem",
+		.policy_oid_to_check = OID1,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
+		.want_chains = 1,
+	},
+	// Both assert anyPolicy. All policies are valid.
+	{
+		.id = "oid1, with explicit_policy set, with leaf and intermediate asserting any",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_any.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_any.pem",
+		.policy_oid_to_check = OID1,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
+		.want_chains = 1,
+	},
+	{
+		.id = "oid3, with explicit_policy set, with leaf and intermediate asserting any",
+		.root_file = CERTSDIR "/" "policy_root.pem",
+		.intermediate_file = CERTSDIR "/" "policy_intermediate_any.pem",
+		.leaf_file = CERTSDIR "/" "policy_leaf_any.pem",
+		.policy_oid_to_check = OID1,
+		.verify_flags = X509_V_FLAG_EXPLICIT_POLICY,
+		.want_chains = 1,
+	},
+	// boring tests just a trust anchor but behaves differently in this corner case.
+	// for reasons that have nothing to do wiht policy
 };
 
 #define N_VERIFY_CERT_TESTS \
@@ -437,7 +656,7 @@ verify_cert_test(int mode)
 		else
 			verify_cert(vct->root_file, vct->intermediate_file,
 			    vct->leaf_file, &chains, &error, &error_depth,
-			    mode, policy_oid, policy_oid2);
+			    mode, policy_oid, policy_oid2, vct->verify_flags);
 
 		if ((mode == MODE_VERIFY && chains == vct->want_chains) ||
 		    (chains == 0 && vct->want_chains == 0) ||
