@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.453 2023/04/26 18:14:28 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.454 2023/04/28 13:23:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -5683,6 +5683,9 @@ push_prefix(struct bgpd_addr *addr, uint8_t len)
 		complen = PREFIX_SIZE(len) + 1;
 		data = &addr->v6;
 		break;
+	default:
+		yyerror("unsupported address family for flowspec address");
+		return -1;
 	}
 	comp = malloc(complen);
 	if (comp == NULL) {
