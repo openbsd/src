@@ -160,6 +160,7 @@
 ./etc/firmware/udl_huffman
 ./etc/firmware/urtwn-license
 ./etc/firmware/urtwn-rtl8188eu
+./etc/firmware/urtwn-rtl8188ftv
 ./etc/firmware/urtwn-rtl8192cT
 ./etc/firmware/urtwn-rtl8192cU
 ./etc/firmware/urtwn-rtl8192eu
