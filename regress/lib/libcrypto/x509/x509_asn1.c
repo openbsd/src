@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.12 2023/04/28 18:27:49 tb Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.13 2023/04/28 18:31:34 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -517,8 +517,8 @@ int main(void)
 	int failed = 0;
 
 	failed |= test_x509_setters();
-	/* failed |= */ test_x509_crl_setters();
-	/* failed |= */ test_x509_req_setters();
+	failed |= test_x509_crl_setters();
+	failed |= test_x509_req_setters();
 
 	return failed;
 }
