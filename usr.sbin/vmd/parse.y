@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.66 2023/04/28 19:46:42 dv Exp $	*/
+/*	$OpenBSD: parse.y,v 1.67 2023/04/28 21:22:20 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -477,7 +477,10 @@ vm_opts		: disable			{
 				YYERROR;
 			}
 			free($2);
-			kernel = path;
+			kernel = malloc(sizeof(path));
+			if (kernel == NULL)
+				yyerror("malloc");
+			memcpy(kernel, &path, sizeof(path));
 			vmc.vmc_flags |= VMOP_CREATE_KERNEL;
 		}
 		| BOOT DEVICE bootdevice	{
