@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.117 2023/04/28 16:30:14 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.118 2023/04/28 16:50:16 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -586,7 +586,7 @@ X509_verify_cert_legacy(X509_STORE_CTX *ctx)
 		goto end;
 
 	/* If we get this far evaluate policies */
-	if (!bad_chain && (ctx->param->flags & X509_V_FLAG_POLICY_CHECK))
+	if (!bad_chain)
 		ok = ctx->check_policy(ctx);
 
  end:

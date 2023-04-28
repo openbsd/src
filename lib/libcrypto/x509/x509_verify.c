@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.64 2023/04/16 07:59:57 tb Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.65 2023/04/28 16:50:16 beck Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -439,8 +439,7 @@ x509_verify_ctx_validate_legacy_chain(struct x509_verify_ctx *ctx,
 	if (!x509_vfy_check_revocation(ctx->xsc))
 		goto err;
 
-	if (ctx->xsc->param->flags & X509_V_FLAG_POLICY_CHECK &&
-	    !x509_vfy_check_policy(ctx->xsc))
+	if (!x509_vfy_check_policy(ctx->xsc))
 		goto err;
 
 	ret = 1;

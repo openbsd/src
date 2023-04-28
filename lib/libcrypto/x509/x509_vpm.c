@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vpm.c,v 1.36 2023/04/16 19:16:32 tb Exp $ */
+/* $OpenBSD: x509_vpm.c,v 1.37 2023/04/28 16:50:16 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2004.
  */
@@ -418,8 +418,6 @@ int
 X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param, unsigned long flags)
 {
 	param->flags |= flags;
-	if (flags & X509_V_FLAG_POLICY_MASK)
-		param->flags |= X509_V_FLAG_POLICY_CHECK;
 	return 1;
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_set_flags);
@@ -527,7 +525,6 @@ X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
 			return 0;
 		}
 	}
-	param->flags |= X509_V_FLAG_POLICY_CHECK;
 	return 1;
 }
 LCRYPTO_ALIAS(X509_VERIFY_PARAM_set1_policies);

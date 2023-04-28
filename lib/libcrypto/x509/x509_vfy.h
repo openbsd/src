@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.62 2023/04/25 18:32:42 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.63 2023/04/28 16:50:16 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -226,7 +226,7 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define	X509_V_FLAG_X509_STRICT			0x20
 /* Enable proxy certificate validation */
 #define	X509_V_FLAG_ALLOW_PROXY_CERTS		0x40
-/* Enable policy checking */
+/* Does nothing as its functionality has been enabled by default */
 #define X509_V_FLAG_POLICY_CHECK		0x80
 /* Policy variable require-explicit-policy */
 #define X509_V_FLAG_EXPLICIT_POLICY		0x100
@@ -264,7 +264,10 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define X509_VP_FLAG_LOCKED			0x8
 #define X509_VP_FLAG_ONCE			0x10
 
-/* Internal use: mask of policy related options */
+/*
+ * Obsolete internal use: mask of policy related options.
+ * This should really go away.
+ */
 #define X509_V_FLAG_POLICY_MASK (X509_V_FLAG_POLICY_CHECK \
 				| X509_V_FLAG_EXPLICIT_POLICY \
 				| X509_V_FLAG_INHIBIT_ANY \
