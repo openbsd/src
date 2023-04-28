@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.19 2023/04/28 15:27:15 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.20 2023/04/28 15:30:14 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -281,16 +281,16 @@ x509_policy_level_clear(X509_POLICY_LEVEL *level)
 
 /*
  * x509_policy_level_find returns the node in |level| corresponding to |policy|,
- * or NULL if none exists.
+ * or NULL if none exists. Callers should ensure that level->nodes is sorted
+ * to avoid the cost of sorting it in sk_find().
  */
 static X509_POLICY_NODE *
-x509_policy_level_find(X509_POLICY_LEVEL *level,
-    const ASN1_OBJECT *policy)
+x509_policy_level_find(X509_POLICY_LEVEL *level, const ASN1_OBJECT *policy)
 {
-	assert(sk_X509_POLICY_NODE_is_sorted(level->nodes));
 	X509_POLICY_NODE node;
 	node.policy = (ASN1_OBJECT *)policy;
 	int idx;
+
 	if ((idx = sk_X509_POLICY_NODE_find(level->nodes, &node)) < 0)
 		return NULL;
 	return sk_X509_POLICY_NODE_value(level->nodes, idx);
@@ -435,15 +435,17 @@ process_certificate_policies(const X509 *x509, X509_POLICY_LEVEL *level,
 			 * is in |level| if and only if it would have been a
 			 * match in step (d.1.ii).
 			 */
-			if (!is_any_policy(policy->policyid) &&
-			    x509_policy_level_find(level, policy->policyid) ==
-			    NULL) {
-				node = x509_policy_node_new(policy->policyid);
-				if (node == NULL ||
-				    !sk_X509_POLICY_NODE_push(new_nodes, node)) {
-					x509_policy_node_free(node);
-					goto err;
-				}
+			if (is_any_policy(policy->policyid))
+				continue;
+			if (!sk_X509_POLICY_NODE_is_sorted(level->nodes))
+				goto err;
+			if (x509_policy_level_find(level, policy->policyid) != NULL)
+				continue;
+			node = x509_policy_node_new(policy->policyid);
+			if (node == NULL ||
+			    !sk_X509_POLICY_NODE_push(new_nodes, node)) {
+				x509_policy_node_free(node);
+				goto err;
 			}
 		}
 		if (!x509_policy_level_add_nodes(level, new_nodes))
@@ -569,6 +571,8 @@ process_policy_mappings(const X509 *cert,
 					continue;
 				last_policy = mapping->issuerDomainPolicy;
 
+				if (!sk_X509_POLICY_NODE_is_sorted(level->nodes))
+					goto err;
 				node = x509_policy_level_find(level,
 				    mapping->issuerDomainPolicy);
 				if (node == NULL) {
@@ -643,10 +647,13 @@ process_policy_mappings(const X509 *cert,
 		 * Skip mappings where |issuerDomainPolicy| does not appear in
 		 * the graph.
 		 */
-		if (!level->has_any_policy &&
-		    x509_policy_level_find(level,
-		    mapping->issuerDomainPolicy) == NULL)
-			continue;
+		if (!level->has_any_policy) {
+			if (!sk_X509_POLICY_NODE_is_sorted(level->nodes))
+				goto err;
+			if (x509_policy_level_find(level,
+			    mapping->issuerDomainPolicy) == NULL)
+				continue;
+		}
 
 		if (last_node == NULL ||
 		    OBJ_cmp(last_node->policy, mapping->subjectDomainPolicy) !=
@@ -841,6 +848,8 @@ has_explicit_policy(STACK_OF(X509_POLICY_LEVEL) *levels,
 				 */
 				prev = sk_X509_POLICY_LEVEL_value(levels, i - 1);
 				for (k = 0; k < num_parent_policies; k++) {
+					if (!sk_X509_POLICY_NODE_is_sorted(prev->nodes))
+						return 0;
 					parent = x509_policy_level_find(prev,
 					    sk_ASN1_OBJECT_value(node->parent_policies,
 					    k));
