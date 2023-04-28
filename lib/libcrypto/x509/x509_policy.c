@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.18 2023/04/28 15:21:22 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.19 2023/04/28 15:27:15 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -899,7 +899,8 @@ X509_policy_check(const STACK_OF(X509) *certs,
 		is_self_issued = (cert->ex_flags & EXFLAG_SI) != 0;
 
 		if (level == NULL) {
-			assert(i == num_certs - 2);
+			if (i != num_certs - 2)
+				goto err;
 			level = x509_policy_level_new();
 			if (level == NULL)
 				goto err;
