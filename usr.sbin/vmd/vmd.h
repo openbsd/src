@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.120 2023/04/27 22:47:27 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.121 2023/04/28 19:46:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -230,7 +230,7 @@ struct vmop_create_params {
 #define VMDF_QCOW2		0x02
 
 	char			 vmc_cdrom[PATH_MAX];
-	char			 vmc_kernel[PATH_MAX];
+	int			 vmc_kernel;
 
 	size_t			 vmc_nnics;
 	char			 vmc_ifnames[VM_MAX_NICS_PER_VM][IF_NAMESIZE];
@@ -299,7 +299,10 @@ struct vmd_vm {
 	struct vmop_create_params vm_params;
 	pid_t			 vm_pid;
 	uint32_t		 vm_vmid;
+
 	int			 vm_kernel;
+	char			*vm_kernel_path; /* Used by vm.conf. */
+
 	int			 vm_cdrom;
 	int			 vm_disks[VM_MAX_DISKS_PER_VM][VM_MAX_BASE_PER_DISK];
 	struct vmd_if		 vm_ifs[VM_MAX_NICS_PER_VM];

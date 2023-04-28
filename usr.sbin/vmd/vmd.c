@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.145 2023/04/27 22:47:27 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.146 2023/04/28 19:46:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -111,8 +111,10 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 	case IMSG_VMDOP_START_VM_REQUEST:
 		IMSG_SIZE_CHECK(imsg, &vmc);
 		memcpy(&vmc, imsg->data, sizeof(vmc));
+		vmc.vmc_kernel = imsg->fd;
+
 		ret = vm_register(ps, &vmc, &vm, 0, vmc.vmc_owner.uid);
-		if (vmc.vmc_flags == 0) {
+		if (vmc.vmc_flags == 0 || vmc.vmc_flags == VMOP_CREATE_KERNEL) {
 			/* start an existing VM with pre-configured options */
 			if (!(ret == -1 && errno == EALREADY &&
 			    !(vm->vm_state & VM_STATE_RUNNING))) {
@@ -123,6 +125,7 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			res = errno;
 			cmd = IMSG_VMDOP_START_VM_RESPONSE;
 		}
+
 		if (res == 0) {
 			res = config_setvm(ps, vm, imsg->hdr.peerid,
 			    vm->vm_params.vmc_owner.uid);
@@ -1290,6 +1293,8 @@ vm_remove(struct vmd_vm *vm, const char *caller)
 	TAILQ_REMOVE(env->vmd_vms, vm, vm_entry);
 
 	vm_stop(vm, 0, caller);
+	if (vm->vm_kernel_path != NULL && !vm->vm_from_config)
+		free(vm->vm_kernel_path);
 	free(vm);
 }
 
@@ -1353,6 +1358,7 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 			errno = EPERM;
 			goto fail;
 		}
+		vm->vm_kernel = vmc->vmc_kernel;
 		*ret_vm = vm;
 		errno = EALREADY;
 		goto fail;
@@ -1385,8 +1391,8 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	} else if (vmc->vmc_nnics > VM_MAX_NICS_PER_VM) {
 		log_warnx("invalid number of interfaces");
 		goto fail;
-	} else if (strlen(vmc->vmc_kernel) == 0 &&
-	    vmc->vmc_ndisks == 0 && strlen(vmc->vmc_cdrom) == 0) {
+	} else if (vmc->vmc_kernel == -1 && vmc->vmc_ndisks == 0
+	    && strlen(vmc->vmc_cdrom) == 0) {
 		log_warnx("no kernel or disk/cdrom specified");
 		goto fail;
 	} else if (strlen(vcp->vcp_name) == 0) {
@@ -1415,7 +1421,11 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 	vm->vm_pid = -1;
 	vm->vm_tty = -1;
 	vm->vm_receive_fd = -1;
+	vm->vm_kernel = -1;
 	vm->vm_state &= ~VM_STATE_PAUSED;
+
+	if (vmc->vmc_kernel > -1)
+		vm->vm_kernel = vmc->vmc_kernel;
 
 	for (i = 0; i < VM_MAX_DISKS_PER_VM; i++)
 		for (j = 0; j < VM_MAX_BASE_PER_DISK; j++)
@@ -1445,7 +1455,6 @@ vm_register(struct privsep *ps, struct vmop_create_params *vmc,
 			vmc->vmc_macs[i][5] = rng >> 8;
 		}
 	}
-	vm->vm_kernel = -1;
 	vm->vm_cdrom = -1;
 	vm->vm_iev.ibuf.fd = -1;
 
@@ -1593,17 +1602,14 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	}
 
 	/* kernel */
-	if (strlen(vmc->vmc_kernel) > 0) {
+	if (vmc->vmc_kernel > -1 || (vm->vm_kernel_path != NULL &&
+		strnlen(vm->vm_kernel_path, PATH_MAX) < PATH_MAX)) {
 		if (vm_checkinsflag(vmcp, VMOP_CREATE_KERNEL, uid) != 0) {
 			log_warnx("vm \"%s\" no permission to set boot image",
 			    name);
 			return (EPERM);
 		}
 		vmc->vmc_checkaccess |= VMOP_CREATE_KERNEL;
-	} else if (strlcpy(vmc->vmc_kernel, vmcp->vmc_kernel,
-	    sizeof(vmc->vmc_kernel)) >= sizeof(vmc->vmc_kernel)) {
-		log_warnx("vm \"%s\" kernel name too long", name);
-		return (EINVAL);
 	}
 
 	/* cdrom */

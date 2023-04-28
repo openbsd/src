@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.87 2023/04/27 22:47:27 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.88 2023/04/28 19:46:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -270,9 +270,17 @@ vm_main(int fd)
 	 * We need, at minimum, a vm_kernel fd to boot a vm. This is either a
 	 * kernel or a BIOS image.
 	 */
-	if (vm.vm_kernel < 0 && !(vm.vm_state & VM_STATE_RECEIVED)) {
-		log_warnx("%s: failed to receive boot fd", vcp->vcp_name);
-		_exit(EINVAL);
+	if (!(vm.vm_state & VM_STATE_RECEIVED)) {
+		if (vm.vm_kernel == -1) {
+			log_warnx("%s: failed to receive boot fd",
+			    vcp->vcp_name);
+			_exit(EINVAL);
+		}
+		if (fcntl(vm.vm_kernel, F_SETFL, O_NONBLOCK) == -1) {
+			ret = errno;
+			log_warn("failed to set nonblocking mode on boot fd");
+			_exit(ret);
+		}
 	}
 
 	ret = start_vm(&vm, fd);

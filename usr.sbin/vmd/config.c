@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.70 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.71 2023/04/28 19:46:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -283,14 +283,15 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	/*
 	 * From here onward, all failures need cleanup and use goto fail
 	 */
-
-	if (!(vm->vm_state & VM_STATE_RECEIVED)) {
-		if (strlen(vmc->vmc_kernel)) {
+	if (!(vm->vm_state & VM_STATE_RECEIVED) && vm->vm_kernel == -1) {
+		if (vm->vm_kernel_path != NULL) {
 			/* Open external kernel for child */
-			if ((kernfd = open(vmc->vmc_kernel, O_RDONLY)) == -1) {
+			kernfd = open(vm->vm_kernel_path, O_RDONLY);
+			if (kernfd == -1) {
 				ret = errno;
 				log_warn("%s: can't open kernel or BIOS "
-				    "boot image %s", __func__, vmc->vmc_kernel);
+				    "boot image %s", __func__,
+				    vm->vm_kernel_path);
 				goto fail;
 			}
 		}
@@ -301,21 +302,25 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 		 * typically distributed separately due to an incompatible
 		 * license.
 		 */
-		if (kernfd == -1 &&
-		    (kernfd = open(VM_DEFAULT_BIOS, O_RDONLY)) == -1) {
-			log_warn("can't open %s", VM_DEFAULT_BIOS);
-			ret = VMD_BIOS_MISSING;
-			goto fail;
+		if (kernfd == -1) {
+			if ((kernfd = open(VM_DEFAULT_BIOS, O_RDONLY)) == -1) {
+				log_warn("can't open %s", VM_DEFAULT_BIOS);
+				ret = VMD_BIOS_MISSING;
+				goto fail;
+			}
 		}
 
 		if (vm_checkaccess(kernfd,
 		    vmc->vmc_checkaccess & VMOP_CREATE_KERNEL,
 		    uid, R_OK) == -1) {
-			log_warnx("vm \"%s\" no read access to kernel %s",
-			    vcp->vcp_name, vmc->vmc_kernel);
+			log_warnx("vm \"%s\" no read access to kernel "
+			    "%s", vcp->vcp_name, vm->vm_kernel_path);
 			ret = EPERM;
 			goto fail;
 		}
+
+		vm->vm_kernel = kernfd;
+		vmc->vmc_kernel = kernfd;
 	}
 
 	/* Open CDROM image for child */
@@ -467,11 +472,11 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 	/* XXX check proc_compose_imsg return values */
 	if (vm->vm_state & VM_STATE_RECEIVED)
 		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_RECEIVE_VM_REQUEST, vm->vm_vmid, fd,  vmc,
+		    IMSG_VMDOP_RECEIVE_VM_REQUEST, vm->vm_vmid, fd, vmc,
 		    sizeof(struct vmop_create_params));
 	else
 		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_START_VM_REQUEST, vm->vm_vmid, kernfd,
+		    IMSG_VMDOP_START_VM_REQUEST, vm->vm_vmid, vm->vm_kernel,
 		    vmc, sizeof(*vmc));
 
 	if (strlen(vmc->vmc_cdrom))
@@ -502,7 +507,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
 
 	if (!(vm->vm_state & VM_STATE_RECEIVED))
 		proc_compose_imsg(ps, PROC_VMM, -1,
-		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd,  NULL, 0);
+		    IMSG_VMDOP_START_VM_END, vm->vm_vmid, fd, NULL, 0);
 
 	free(tapfds);
 
@@ -520,7 +525,7 @@ config_setvm(struct privsep *ps, struct vmd_vm *vm, uint32_t peerid, uid_t uid)
  fail:
 	log_warnx("failed to start vm %s", vcp->vcp_name);
 
-	if (kernfd != -1)
+	if (vm->vm_kernel != -1)
 		close(kernfd);
 	if (cdromfd != -1)
 		close(cdromfd);
@@ -551,16 +556,15 @@ config_getvm(struct privsep *ps, struct imsg *imsg)
 
 	IMSG_SIZE_CHECK(imsg, &vmc);
 	memcpy(&vmc, imsg->data, sizeof(vmc));
+	vmc.vmc_kernel = imsg->fd;
 
 	errno = 0;
 	if (vm_register(ps, &vmc, &vm, imsg->hdr.peerid, 0) == -1)
 		goto fail;
 
-	/* If the fd is -1, the kernel will be searched on the disk */
-	vm->vm_kernel = imsg->fd;
 	vm->vm_state |= VM_STATE_RUNNING;
 	vm->vm_peerid = (uint32_t)-1;
-
+	vm->vm_kernel = imsg->fd;
 	return (0);
 
  fail:

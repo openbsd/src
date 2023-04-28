@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.65 2023/04/25 12:46:13 dv Exp $	*/
+/*	$OpenBSD: parse.y,v 1.66 2023/04/28 19:46:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -96,6 +96,7 @@ unsigned int	 parse_format(const char *);
 static struct vmop_create_params vmc;
 static struct vm_create_params	*vcp;
 static struct vmd_switch	*vsw;
+static char			*kernel = NULL;
 static char			 vsw_type[IF_NAMESIZE];
 static int			 vmc_disable;
 static size_t			 vmc_nnics;
@@ -325,6 +326,8 @@ vm		: VM string vm_instance		{
 			char		*name;
 
 			memset(&vmc, 0, sizeof(vmc));
+			vmc.vmc_kernel = -1;
+
 			vcp = &vmc.vmc_params;
 			vmc_disable = 0;
 			vmc_nnics = 0;
@@ -396,8 +399,11 @@ vm		: VM string vm_instance		{
 					    vmc_disable ?
 					    "disabled" : "enabled");
 				}
+				vm->vm_kernel_path = kernel;
+				vm->vm_kernel = -1;
 				vm->vm_from_config = 1;
 			}
+			kernel = NULL;
 		}
 		;
 
@@ -458,7 +464,7 @@ vm_opts		: disable			{
 		| BOOT string			{
 			char	 path[PATH_MAX];
 
-			if (vmc.vmc_kernel[0] != '\0') {
+			if (kernel != NULL) {
 				yyerror("kernel specified more than once");
 				free($2);
 				YYERROR;
@@ -471,12 +477,7 @@ vm_opts		: disable			{
 				YYERROR;
 			}
 			free($2);
-			if (strlcpy(vmc.vmc_kernel, path,
-			    sizeof(vmc.vmc_kernel)) >=
-			    sizeof(vmc.vmc_kernel)) {
-				yyerror("kernel name too long");
-				YYERROR;
-			}
+			kernel = path;
 			vmc.vmc_flags |= VMOP_CREATE_KERNEL;
 		}
 		| BOOT DEVICE bootdevice	{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.40 2023/03/08 04:43:15 guenther Exp $	*/
+/*	$OpenBSD: control.c,v 1.41 2023/04/28 19:46:42 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -451,8 +451,10 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			vmc.vmc_owner.uid = c->peercred.uid;
 			vmc.vmc_owner.gid = -1;
 
+			/* imsg.fd may contain kernel image fd. */
 			if (proc_compose_imsg(ps, PROC_PARENT, -1,
-			    imsg.hdr.type, fd, -1, &vmc, sizeof(vmc)) == -1) {
+			    imsg.hdr.type, fd, imsg.fd, &vmc,
+			    sizeof(vmc)) == -1) {
 				control_close(fd, cs);
 				return;
 			}

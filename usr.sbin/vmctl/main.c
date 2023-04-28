@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.74 2023/04/25 12:51:07 dv Exp $	*/
+/*	$OpenBSD: main.c,v 1.75 2023/04/28 19:46:41 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -81,7 +81,7 @@ struct ctl_command ctl_commands[] = {
 	{ "show",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "start",	CMD_START,	ctl_start,
 	    "[-cL] [-B device] [-b path] [-d disk] [-i count]\n"
-	    "\t\t[-m size] [-n switch] [-r path] [-t name] id | name" },
+	    "\t\t[-m size] [-n switch] [-r path] [-t name] id | name",	1},
 	{ "status",	CMD_STATUS,	ctl_status,	"[id]" },
 	{ "stop",	CMD_STOP,	ctl_stop,	"[-fw] [id | -a]" },
 	{ "unpause",	CMD_UNPAUSE,	ctl_unpause,	"id" },
@@ -819,6 +819,10 @@ ctl_start(struct parse_result *res, int argc, char *argv[])
 	int		 ch, i, type;
 	char		 path[PATH_MAX];
 	const char	*s;
+
+	/* We may require sendfd */
+	if (pledge("stdio rpath exec unix getpw unveil sendfd", NULL) == -1)
+		err(1, "pledge");
 
 	while ((ch = getopt(argc, argv, "b:B:cd:i:Lm:n:r:t:")) != -1) {
 		switch (ch) {
