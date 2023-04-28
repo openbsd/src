@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.17 2023/04/28 15:16:48 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.18 2023/04/28 15:21:22 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -319,15 +319,6 @@ x509_policy_level_add_nodes(X509_POLICY_LEVEL *level,
 	}
 	sk_X509_POLICY_NODE_sort(level->nodes);
 
-#if !defined(NDEBUG)
-	/* There should be no duplicate nodes. */
-	for (i = 1; i < sk_X509_POLICY_NODE_num(level->nodes); i++) {
-		assert(
-		    OBJ_cmp(
-		    sk_X509_POLICY_NODE_value(level->nodes, i - 1)->policy,
-		    sk_X509_POLICY_NODE_value(level->nodes, i)->policy) != 0);
-	}
-#endif
 	return 1;
 }
 
