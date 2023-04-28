@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.11 2023/04/28 15:12:51 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.12 2023/04/28 18:27:49 tb Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -118,8 +118,6 @@ x509_set_time(int (*f)(X509 *, const ASN1_TIME *), X509 **x, int t)
 {
 	ASN1_TIME *at;
 
-	if ((at = ASN1_TIME_new()) == NULL)
-		err(1, NULL);
 	if ((at = X509_gmtime_adj(NULL, t)) == NULL)
 		errx(1, "X509_gmtime_adj");
 	if (!f(*x, at))
@@ -194,8 +192,6 @@ x509_crl_set_time(int (*f)(X509_CRL *, const ASN1_TIME *), X509_CRL **xc, int t)
 {
 	ASN1_TIME *at;
 
-	if ((at = ASN1_TIME_new()) == NULL)
-		err(1, NULL);
 	if ((at = X509_gmtime_adj(NULL, t)) == NULL)
 		errx(1, "X509_gmtime_adj");
 	if (!f(*xc, at))
