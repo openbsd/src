@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2021/11/11 20:25:56 kn Exp $
+#	$OpenBSD: Makefile,v 1.53 2023/04/28 08:45:25 krw Exp $
 
 CDROM=		cd${OSrev}.iso
 MTREE=		${UTILS}/mtree.conf
@@ -34,7 +34,7 @@ MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 bsd.gz: bsd.rd
 	gzip -9cn bsd.rd > bsd.gz
 
-bsd.rd: mr.fs bsd
+bsd.rd: mr.fs
 	objcopy -g -x -R .comment -R .SUNW_ctf \
 	    -K rd_root_size -K rd_root_image \
 	    bsd bsd.rd
@@ -45,7 +45,7 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE} ${MFLAGS}'
 	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
-mr.fs: instbin
+mr.fs: instbin bsd
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u

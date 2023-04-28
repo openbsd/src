@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2023/04/26 14:42:27 krw Exp $
+#	$OpenBSD: Makefile,v 1.25 2023/04/28 08:45:24 krw Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		5760
@@ -68,7 +68,7 @@ bsd.gz: bsd.rd
 	    bsd.rd bsd.strip
 	gzip -9cn bsd.strip > bsd.gz
 
-bsd.rd: mr.fs bsd
+bsd.rd: mr.fs
 	cp bsd bsd.rd
 	rdsetroot bsd.rd mr.fs
 
@@ -77,7 +77,7 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE} ${MFLAGS}'
 	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
-mr.fs: instbin
+mr.fs: instbin bsd
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u

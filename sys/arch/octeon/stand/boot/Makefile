@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2023/04/25 12:13:15 krw Exp $
+#	$OpenBSD: Makefile,v 1.11 2023/04/28 08:45:26 krw Exp $
 
 NOMAN=
 #MAN=		boot.8
@@ -20,7 +20,7 @@ rdboot: ${RDBOOT}
 	cp -p ${RDBOOT} rdboot
 	strip rdboot
 
-mr.fs: rdboot
+mr.fs: rdboot bsd
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d/dev
 	install -d -o root -g wheel $@.d/mnt
@@ -29,7 +29,7 @@ mr.fs: rdboot
 	cd $@.d/dev && sh ${DESTDIR}/dev/MAKEDEV boot
 	makefs ${MRMAKEFSARGS} $@ $@.d
 
-boot: bsd mr.fs
+boot: mr.fs
 	cp bsd boot
 	rdsetroot boot mr.fs
 

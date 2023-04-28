@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2021/07/26 12:47:45 kn Exp $
+#	$OpenBSD: Makefile,v 1.29 2023/04/28 08:45:25 krw Exp $
 
 MTREE=		${UTILS}/mtree.conf
 RAMDISK=	RAMDISK
@@ -11,7 +11,7 @@ MRMAKEFSARGS=	-o disklabel=${MRDISKTYPE},minfree=0,density=4096
 
 all:	bsd.rd
 
-bsd.rd: mr.fs bsd
+bsd.rd: mr.fs
 	cp bsd bsd.rd
 	rdsetroot bsd.rd mr.fs
 
@@ -20,7 +20,7 @@ bsd:
 	    su ${BUILDUSER} -c '${MAKE} config && ${MAKE} clean && exec ${MAKE} ${MFLAGS}'
 	cp -p ${.CURDIR}/../../../sys/arch/${MACHINE}/compile/${RAMDISK}/obj/bsd bsd
 
-mr.fs: instbin
+mr.fs: instbin bsd
 	rm -rf $@.d
 	install -d -o root -g wheel $@.d
 	mtree -def ${MTREE} -p $@.d -u
