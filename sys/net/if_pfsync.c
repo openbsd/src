@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.313 2023/02/15 18:11:47 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.314 2023/04/28 15:50:05 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -2258,8 +2258,6 @@ pfsync_q_del(struct pf_state *st)
 {
 	struct pfsync_softc *sc = pfsyncif;
 	int q;
-
-	KASSERT(st->sync_state != PFSYNC_S_NONE);
 
 	mtx_enter(&sc->sc_st_mtx);
 	q = st->sync_state;
