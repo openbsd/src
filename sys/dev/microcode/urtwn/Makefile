@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.1 2021/10/04 01:33:42 kevlo Exp $
+# $OpenBSD: Makefile,v 1.2 2023/04/28 01:24:14 kevlo Exp $
 
 NOPROG=
 NOMAN=
 CC=${HOSTCC}
 
-FIRM=	urtwn-rtl8188eu urtwn-rtl8192cT urtwn-rtl8192cU urtwn-rtl8192eu
+FIRM=	urtwn-rtl8188eu urtwn-rtl8188ftv urtwn-rtl8192cT urtwn-rtl8192cU \
+	urtwn-rtl8192eu
 
 PROG=	build
 

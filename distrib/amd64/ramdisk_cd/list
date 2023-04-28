@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 2021/10/04 01:34:29 kevlo Exp $
+#	$OpenBSD: list,v 1.6 2023/04/28 01:24:14 kevlo Exp $
 
 SRCDIRS distrib/special
 
@@ -97,6 +97,7 @@ COPY    ${DESTDIR}/etc/firmware/rtwn-rtl8192cU_B	etc/firmware/rtwn-rtl8192cU_B
 COPY    ${DESTDIR}/etc/firmware/rtwn-rtl8723	etc/firmware/rtwn-rtl8723
 COPY    ${DESTDIR}/etc/firmware/rtwn-rtl8723_B	etc/firmware/rtwn-rtl8723_B
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188eu	etc/firmware/urtwn-rtl8188eu
+COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188ftv	etc/firmware/urtwn-rtl8188ftv
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cT	etc/firmware/urtwn-rtl8192cT
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cU	etc/firmware/urtwn-rtl8192cU
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192eu	etc/firmware/urtwn-rtl8192eu

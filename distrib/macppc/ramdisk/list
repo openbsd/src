@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.78 2022/05/23 16:58:10 krw Exp $
+#	$OpenBSD: list,v 1.79 2023/04/28 01:24:14 kevlo Exp $
 
 SRCDIRS distrib/special
 
@@ -79,6 +79,7 @@ COPY	${DESTDIR}/etc/firmware/rum-rt2573	etc/firmware/rum-rt2573
 COPY	${DESTDIR}/etc/firmware/run-rt2870	etc/firmware/run-rt2870
 COPY	${DESTDIR}/etc/firmware/run-rt3071	etc/firmware/run-rt3071
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188eu	etc/firmware/urtwn-rtl8188eu
+COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188ftv	etc/firmware/urtwn-rtl8188ftv
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cT	etc/firmware/urtwn-rtl8192cT
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cU	etc/firmware/urtwn-rtl8192cU
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192eu	etc/firmware/urtwn-rtl8192eu

@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.754 2023/04/02 23:55:12 dlg Exp $
+$OpenBSD: usbdevs,v 1.755 2023/04/28 01:24:14 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -3809,6 +3809,7 @@ product REALTEK RTL8713		0x8713	RTL8713
 product REALTEK RTL8188CU_COMBO	0x8754	RTL8188CU
 product REALTEK RTL8723BU	0xb720	RTL8723BU
 product REALTEK RTL8192SU	0xc512	RTL8192SU
+product REALTEK RTL8188FTV	0xf179	RTL8188FTV
 
 /* Renesas products */
 product RENESAS RX610		0x0053	RX610 RX-Stick

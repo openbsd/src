@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.21 2023/04/03 10:51:50 kn Exp $
+#	$OpenBSD: list,v 1.22 2023/04/28 01:24:14 kevlo Exp $
 
 SRCDIRS distrib/special
 
@@ -96,6 +96,7 @@ COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-ext etc/firmware/atu-rfmd2958smc-ex
 COPY	${DESTDIR}/etc/firmware/atu-rfmd2958smc-int etc/firmware/atu-rfmd2958smc-int
 COPY    ${DESTDIR}/etc/firmware/rsu-rtl8712	etc/firmware/rsu-rtl8712
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188eu	etc/firmware/urtwn-rtl8188eu
+COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8188ftv etc/firmware/urtwn-rtl8188ftv
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cT	etc/firmware/urtwn-rtl8192cT
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192cU	etc/firmware/urtwn-rtl8192cU
 COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192eu	etc/firmware/urtwn-rtl8192eu

@@ -1,4 +1,4 @@
-.\" $OpenBSD: urtwn.4,v 1.53 2021/10/24 12:32:42 kn Exp $
+.\" $OpenBSD: urtwn.4,v 1.54 2023/04/28 01:24:14 kevlo Exp $
 .\"
 .\" Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
 .\"
@@ -14,12 +14,12 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 24 2021 $
+.Dd $Mdocdate: April 28 2023 $
 .Dt URTWN 4
 .Os
 .Sh NAME
 .Nm urtwn
-.Nd Realtek RTL8188CU/RTL8188EU/RTL8192CU/RTL8192EU USB IEEE 802.11b/g/n wireless
+.Nd Realtek RTL8188CU/RTL8188EU/RTL8188FTV/RTL8192CU/RTL8192EU USB IEEE 802.11b/g/n wireless
 network device
 .Sh SYNOPSIS
 .Cd "urtwn* at uhub? port ?"
@@ -27,10 +27,10 @@ network device
 The
 .Nm
 driver supports USB 2.0 wireless network devices based on Realtek
-RTL8188CU, RTL8188CE-VAU, RTL8188EU, RTL8188RU, RTL8192CU and RTL8192EU
-chipsets.
+RTL8188CU, RTL8188CE-VAU, RTL8188EU, RTL8188FTV, RTL8188RU, RTL8192CU
+and RTL8192EU chipsets.
 .Pp
-The RTL8188CU and RTL8188EU are highly integrated 802.11n adapters
+The RTL8188CU, RTL8188EU and RTL8188FTV are highly integrated 802.11n adapters
 that combine a MAC, a 1T1R capable baseband and an RF in a single chip.
 They operate in the 2GHz spectrum only.
 The RTL8188RU is a high-power variant of the RTL8188CU.
@@ -92,6 +92,7 @@ the driver when the device is attached:
 .It Pa /etc/firmware/urtwn-rtl8192cU
 .It Pa /etc/firmware/urtwn-rtl8192eu
 .It Pa /etc/firmware/urtwn-rtl8188eu
+.It Pa /etc/firmware/urtwn-rtl8188ftv
 .El
 .Sh HARDWARE
 The following adapters should work:
@@ -105,9 +106,10 @@ The following adapters should work:
 .It Asus USB-N10 NANO B1
 .It B-Link BL-LW05-5R
 .It Belkin F7D1102 Surf Wireless Micro
+.It Comfast CF-WU710N v4
 .It D-Link DWA-121
-.It D-Link DWA-123 rev \&D1
-.It D-Link DWA-125 rev \&D1
+.It D-Link DWA-123 rev D1
+.It D-Link DWA-125 rev D1
 .It D-Link DWA-131 rev B, E1
 .It D-Link DWA-133
 .It D-Link DWA-135

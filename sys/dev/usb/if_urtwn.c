@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urtwn.c,v 1.106 2023/04/27 03:19:45 kevlo Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.107 2023/04/28 01:24:14 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -19,8 +19,8 @@
  */
 
 /*
- * Driver for Realtek RTL8188CE-VAU/RTL8188CUS/RTL8188EU/RTL8188RU/RTL8192CU/
- * RTL8192EU.
+ * Driver for Realtek RTL8188CE-VAU/RTL8188CUS/RTL8188EU/RTL8188FTV/RTL8188RU/
+ * RTL8192CU/RTL8192EU.
  */
 
 #include "bpfilter.h"
@@ -70,7 +70,6 @@
 #define R92C_NQ_NPAGES		2
 #define R92C_TXPKTBUF_COUNT	256
 #define R92C_TX_PAGE_COUNT	248
-#define R92C_TX_PAGE_BOUNDARY	(R92C_TX_PAGE_COUNT + 1)
 #define R92C_MAX_RX_DMA_SIZE	0x2800
 
 #define R88E_HQ_NPAGES		0
@@ -78,14 +77,19 @@
 #define R88E_NQ_NPAGES		0
 #define R88E_TXPKTBUF_COUNT	177
 #define R88E_TX_PAGE_COUNT	168
-#define R88E_TX_PAGE_BOUNDARY	(R88E_TX_PAGE_COUNT + 1)
 #define R88E_MAX_RX_DMA_SIZE	0x2400
+
+#define R88F_HQ_NPAGES		12
+#define R88F_LQ_NPAGES		2
+#define R88F_NQ_NPAGES		2
+#define R88F_TXPKTBUF_COUNT	177
+#define R88F_TX_PAGE_COUNT	247
+#define R88F_MAX_RX_DMA_SIZE	0x3f80
 
 #define R92E_HQ_NPAGES		16
 #define R92E_LQ_NPAGES		16
 #define R92E_NQ_NPAGES		16
 #define R92E_TX_PAGE_COUNT	248
-#define R92E_TX_PAGE_BOUNDARY	(R92E_TX_PAGE_COUNT + 1)
 #define R92E_MAX_RX_DMA_SIZE	0x3fc0
 
 #define R92C_TXDESC_SUMSIZE	32
@@ -234,8 +238,9 @@ int urtwn_debug = 4;
 #define URTWN_DEV(v, p, f)					\
         { { USB_VENDOR_##v, USB_PRODUCT_##v##_##p }, (f) | RTWN_CHIP_USB }
 #define URTWN_DEV_8192CU(v, p)	URTWN_DEV(v, p, RTWN_CHIP_92C | RTWN_CHIP_88C)
-#define URTWN_DEV_8188EU(v, p)	URTWN_DEV(v, p, RTWN_CHIP_88E)
 #define URTWN_DEV_8192EU(v, p)	URTWN_DEV(v, p, RTWN_CHIP_92E)
+#define URTWN_DEV_8188EU(v, p)	URTWN_DEV(v, p, RTWN_CHIP_88E)
+#define URTWN_DEV_8188F(v, p)	URTWN_DEV(v, p, RTWN_CHIP_88F)
 static const struct urtwn_type {
 	struct usb_devno        dev;
 	uint32_t		chip;
@@ -332,6 +337,8 @@ static const struct urtwn_type {
 	URTWN_DEV_8188EU(REALTEK,	RTL8188EU),
 	URTWN_DEV_8188EU(TPLINK,	RTL8188EUS),
 	URTWN_DEV_8188EU(ASUS,  	RTL8188EUS),
+	/* URTWN_RTL8188FTV */
+	URTWN_DEV_8188F(REALTEK,	RTL8188FTV),
 
 	/* URTWN_RTL8192EU */
 	URTWN_DEV_8192EU(DLINK,		DWA131E1),
@@ -399,6 +406,7 @@ int		urtwn_alloc_buffers(void *);
 int		urtwn_r92c_power_on(struct urtwn_softc *);
 int		urtwn_r92e_power_on(struct urtwn_softc *);
 int		urtwn_r88e_power_on(struct urtwn_softc *);
+int		urtwn_r88f_power_on(struct urtwn_softc *);
 int		urtwn_llt_init(struct urtwn_softc *, int);
 int		urtwn_fw_loadpage(void *, int, uint8_t *, int);
 int		urtwn_load_firmware(void *, u_char **, size_t *);
@@ -1188,7 +1196,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen,
 		return;
 	}
 
-	rate = (sc->sc_sc.chip & RTWN_CHIP_92E) ?
+	rate = (sc->sc_sc.chip & (RTWN_CHIP_88F | RTWN_CHIP_92E)) ?
 	    MS(rxdw3, R92E_RXDW3_RATE) : MS(rxdw3, R92C_RXDW3_RATE);
 	infosz = MS(rxdw0, R92C_RXDW0_INFOSZ) * 8;
 
@@ -1346,7 +1354,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv,
 
 			goto resubmit;
 		}
-	} else if (sc->sc_sc.chip & RTWN_CHIP_92E) {
+	} else if (sc->sc_sc.chip & (RTWN_CHIP_88F | RTWN_CHIP_92E)) {
 		int type;
 		struct r92e_c2h_tx_rpt *txrpt;
 
@@ -1372,7 +1380,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv,
 		}
 	}
 
-	align = (sc->sc_sc.chip & RTWN_CHIP_92E ? 7 : 127);
+	align = ((sc->sc_sc.chip & (RTWN_CHIP_88F | RTWN_CHIP_92E)) ? 7 : 127);
 
 	/* Process all of them. */
 	while (npkts-- > 0) {
@@ -1672,7 +1680,7 @@ urtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 
 	/* Fill Tx descriptor. */
 	txdp = data->buf;
-	if (sc->sc_sc.chip & RTWN_CHIP_92E)
+	if (sc->sc_sc.chip & (RTWN_CHIP_88F | RTWN_CHIP_92E))
 		urtwn_tx_fill_desc_gen2(sc, &txdp, m, wh, k, ni);
 	else
 		urtwn_tx_fill_desc(sc, &txdp, m, wh, k, ni);
@@ -1969,6 +1977,66 @@ urtwn_r88e_power_on(struct urtwn_softc *sc)
 }
 
 int
+urtwn_r88f_power_on(struct urtwn_softc *sc)
+{
+	uint32_t reg;
+	int ntries;
+
+	/* Enable WL suspend. */
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    urtwn_read_2(sc, R92C_APS_FSMCO) &
+	    ~(R92C_APS_FSMCO_AFSM_HSUS | R92C_APS_FSMCO_AFSM_PCIE));
+	/* Turn off USB APHY LDO under suspend mode. */
+	urtwn_write_1(sc, 0xc4, urtwn_read_1(sc, 0xc4) & ~0x10);
+
+	/* Disable SW LPS. */
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    urtwn_read_2(sc, R92C_APS_FSMCO) & ~R92C_APS_FSMCO_APFM_RSM);
+	/* Wait for power ready bit. */
+	for (ntries = 0; ntries < 5000; ntries++) {
+		if (urtwn_read_4(sc, R92C_APS_FSMCO) & R92C_APS_FSMCO_SUS_HOST)
+			break;
+		DELAY(10);
+	}
+	if (ntries == 5000) {
+		printf("%s: timeout waiting for chip power up\n",
+		    sc->sc_dev.dv_xname);
+		return (ETIMEDOUT);
+	}
+	/* Disable HWPDN. */
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    urtwn_read_2(sc, R92C_APS_FSMCO) & ~R92C_APS_FSMCO_APDM_HPDN);
+	/* Disable WL suspend. */
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    urtwn_read_2(sc, R92C_APS_FSMCO) & ~R92C_APS_FSMCO_AFSM_HSUS);
+	/* Auto enable WLAN. */
+	urtwn_write_2(sc, R92C_APS_FSMCO,
+	    urtwn_read_2(sc, R92C_APS_FSMCO) | R92C_APS_FSMCO_APFM_ONMAC);
+	for (ntries = 0; ntries < 5000; ntries++) {
+		if (!(urtwn_read_2(sc, R92C_APS_FSMCO) &
+		    R92C_APS_FSMCO_APFM_ONMAC))
+			break;
+		DELAY(10);
+	}
+	if (ntries == 5000) {
+		printf("%s: timeout waiting for MAC auto ON\n",
+		    sc->sc_dev.dv_xname);
+		return (ETIMEDOUT);
+	}
+	/* Reduce RF noise. */
+	urtwn_write_1(sc, R92C_AFE_LDO_CTRL, 0x35);
+
+	/* Enable MAC DMA/WMAC/SCHEDULE/SEC blocks. */
+	urtwn_write_2(sc, R92C_CR, 0);
+	reg = urtwn_read_2(sc, R92C_CR);
+	reg |= R92C_CR_HCI_TXDMA_EN | R92C_CR_HCI_RXDMA_EN |
+	    R92C_CR_TXDMA_EN | R92C_CR_RXDMA_EN | R92C_CR_PROTOCOL_EN |
+	    R92C_CR_SCHEDULE_EN | R92C_CR_ENSEC | R92C_CR_CALTMR_EN;
+	urtwn_write_2(sc, R92C_CR, reg);
+	return (0);
+}
+
+int
 urtwn_llt_init(struct urtwn_softc *sc, int page_count)
 {
 	int i, error, pktbuf_count;
@@ -2002,8 +2070,8 @@ urtwn_auto_llt_init(struct urtwn_softc *sc)
 {
 	int ntries;
 
-	urtwn_write_4(sc, R92E_AUTO_LLT, urtwn_read_4(sc,
-	    R92E_AUTO_LLT) | R92E_AUTO_LLT_EN);
+	urtwn_write_4(sc, R92E_AUTO_LLT,
+	    urtwn_read_4(sc, R92E_AUTO_LLT) | R92E_AUTO_LLT_EN);
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if (!(urtwn_read_4(sc, R92E_AUTO_LLT) & R92E_AUTO_LLT_EN))
 			return (0);
@@ -2055,6 +2123,8 @@ urtwn_load_firmware(void *cookie, u_char **fw, size_t *len)
 		name = "urtwn-rtl8192eu";
 	else if (sc->sc_sc.chip & RTWN_CHIP_88E)
 		name = "urtwn-rtl8188eu";
+	else if (sc->sc_sc.chip & RTWN_CHIP_88F)
+		name = "urtwn-rtl8188ftv";
 	else if ((sc->sc_sc.chip & (RTWN_CHIP_UMC_A_CUT | RTWN_CHIP_92C)) ==
 		    RTWN_CHIP_UMC_A_CUT)
 		name = "urtwn-rtl8192cU";
@@ -2083,30 +2153,33 @@ urtwn_dma_init(void *cookie)
 		lqpages = R88E_LQ_NPAGES;
 		nqpages = R88E_NQ_NPAGES;
 		pagecnt = R88E_TX_PAGE_COUNT;
-		boundary = R88E_TX_PAGE_BOUNDARY;
 		dmasize = R88E_MAX_RX_DMA_SIZE;
+	} else if (sc->sc_sc.chip & RTWN_CHIP_88F) {
+		hqpages = R88F_HQ_NPAGES;
+		lqpages = R88F_LQ_NPAGES;
+		nqpages = R88F_NQ_NPAGES;
+		pagecnt = R88F_TX_PAGE_COUNT;
+		dmasize = R88F_MAX_RX_DMA_SIZE;
 	} else if (sc->sc_sc.chip & RTWN_CHIP_92E) {
 		hqpages = R92E_HQ_NPAGES;
 		lqpages = R92E_LQ_NPAGES;
 		nqpages = R92E_NQ_NPAGES;
 		pagecnt = R92E_TX_PAGE_COUNT;
-		boundary = R92E_TX_PAGE_BOUNDARY;
 		dmasize = R92E_MAX_RX_DMA_SIZE;
 	} else {
 		hqpages = R92C_HQ_NPAGES;
 		lqpages = R92C_LQ_NPAGES;
 		nqpages = R92C_NQ_NPAGES;
 		pagecnt = R92C_TX_PAGE_COUNT;
-		boundary = R92C_TX_PAGE_BOUNDARY;
 		dmasize = R92C_MAX_RX_DMA_SIZE;
 	}
+	boundary = pagecnt + 1;
 
 	/* Initialize LLT table. */
-	if (sc->sc_sc.chip & RTWN_CHIP_92E) {
+	if (sc->sc_sc.chip & (RTWN_CHIP_88F | RTWN_CHIP_92E))
 		error = urtwn_auto_llt_init(sc);
-	} else {
+	else
 		error = urtwn_llt_init(sc, pagecnt);
-	}
 	if (error != 0)
 		return (error);
 
@@ -2163,9 +2236,15 @@ urtwn_dma_init(void *cookie)
 
 	if (!(sc->sc_sc.chip & RTWN_CHIP_92E)) {
 		/* Set Tx/Rx transfer page size. */
-		urtwn_write_1(sc, R92C_PBP,
-		    SM(R92C_PBP_PSRX, R92C_PBP_128) |
-		    SM(R92C_PBP_PSTX, R92C_PBP_128));
+		if (sc->sc_sc.chip & RTWN_CHIP_88F) {
+			urtwn_write_1(sc, R92C_PBP,
+			    SM(R92C_PBP_PSRX, R92C_PBP_256) |
+			    SM(R92C_PBP_PSTX, R92C_PBP_256));
+		} else {
+			urtwn_write_1(sc, R92C_PBP,
+			    SM(R92C_PBP_PSRX, R92C_PBP_128) |
+			    SM(R92C_PBP_PSTX, R92C_PBP_128));
+		}
 	}
 	return (error);
 }
@@ -2178,10 +2257,14 @@ urtwn_aggr_init(void *cookie)
 	int dmasize, dmatiming, ndesc;
 
 	/* Set burst packet length. */
-	if (sc->sc_sc.chip & RTWN_CHIP_92E)
+	if (sc->sc_sc.chip & (RTWN_CHIP_88F | RTWN_CHIP_92E))
 		urtwn_burstlen_init(sc);
 
-	if (sc->sc_sc.chip & RTWN_CHIP_92E) {
+	if (sc->sc_sc.chip & RTWN_CHIP_88F) {
+		dmasize = 5;
+		dmatiming = 32;
+		ndesc = 6;
+	} else if (sc->sc_sc.chip & RTWN_CHIP_92E) {
 		dmasize = 6;
 		dmatiming = 32;
 		ndesc = 3;
@@ -2195,7 +2278,7 @@ urtwn_aggr_init(void *cookie)
 	reg = urtwn_read_4(sc, R92C_TDECTRL);
 	reg = RW(reg, R92C_TDECTRL_BLK_DESC_NUM, ndesc);
 	urtwn_write_4(sc, R92C_TDECTRL, reg);
-	if (sc->sc_sc.chip & RTWN_CHIP_92E)
+	if (sc->sc_sc.chip & (RTWN_CHIP_88F | RTWN_CHIP_92E))
 		urtwn_write_1(sc, R92E_DWBCN1_CTRL, ndesc << 1);
 
 	/* Rx aggregation setting. */
@@ -2207,6 +2290,11 @@ urtwn_aggr_init(void *cookie)
 		urtwn_write_1(sc, R92C_USB_DMA_AGG_TO, dmatiming);
 	else
 		urtwn_write_1(sc, R92C_RXDMA_AGG_PG_TH + 1, dmatiming);
+
+	if (sc->sc_sc.chip & RTWN_CHIP_88F) {
+		urtwn_write_1(sc, R92E_RXDMA_PRO,
+		    urtwn_read_1(sc, R92E_RXDMA_PRO) | R92E_RXDMA_PRO_DMA_MODE);
+	}
 
 	/* Drop incorrect bulk out. */
 	urtwn_write_4(sc, R92C_TXDMA_OFFSET_CHK,
@@ -2227,6 +2315,11 @@ urtwn_mac_init(void *cookie)
 			    rtl8188eu_mac[i].val);
 		}
 		urtwn_write_1(sc, R92C_MAX_AGGR_NUM, 0x07);
+	} else if (sc->sc_sc.chip & RTWN_CHIP_88F) {
+		for (i = 0; i < nitems(rtl8188ftv_mac); i++) {
+			urtwn_write_1(sc, rtl8188ftv_mac[i].reg,
+			    rtl8188ftv_mac[i].val);
+		}
 	} else if (sc->sc_sc.chip & RTWN_CHIP_92E) {
 		for (i = 0; i < nitems(rtl8192eu_mac); i++) {
 			urtwn_write_1(sc, rtl8192eu_mac[i].reg,
@@ -2254,7 +2347,7 @@ urtwn_bb_init(void *cookie)
 	    R92C_SYS_FUNC_EN_BBRSTB | R92C_SYS_FUNC_EN_BB_GLB_RST |
 	    R92C_SYS_FUNC_EN_DIO_RF);
 
-	if (!(sc->sc_sc.chip & (RTWN_CHIP_88E | RTWN_CHIP_92E)))
+	if (!(sc->sc_sc.chip & (RTWN_CHIP_88E | RTWN_CHIP_88F | RTWN_CHIP_92E)))
 		urtwn_write_2(sc, R92C_AFE_PLL_CTRL, 0xdb83);
 
 	urtwn_write_1(sc, R92C_RF_CTRL,
@@ -2263,7 +2356,8 @@ urtwn_bb_init(void *cookie)
 	    R92C_SYS_FUNC_EN_USBA | R92C_SYS_FUNC_EN_USBD |
 	    R92C_SYS_FUNC_EN_BB_GLB_RST | R92C_SYS_FUNC_EN_BBRSTB);
 
-	if (!(sc->sc_sc.chip & (RTWN_CHIP_88E | RTWN_CHIP_92E))) {
+	if (!(sc->sc_sc.chip &
+	    (RTWN_CHIP_88E | RTWN_CHIP_88F | RTWN_CHIP_92E))) {
 		urtwn_write_1(sc, R92C_LDOHCI12_CTRL, 0x0f);
 		urtwn_write_1(sc, 0x15, 0xe9);
 		urtwn_write_1(sc, R92C_AFE_XTAL_CTRL + 1, 0x80);
@@ -2272,6 +2366,8 @@ urtwn_bb_init(void *cookie)
 	/* Select BB programming based on board type. */
 	if (sc->sc_sc.chip & RTWN_CHIP_88E)
 		prog = &rtl8188eu_bb_prog;
+	else if (sc->sc_sc.chip & RTWN_CHIP_88F)
+		prog = &rtl8188ftv_bb_prog;
 	else if (sc->sc_sc.chip & RTWN_CHIP_92E)
 		prog = &rtl8192eu_bb_prog;
 	else if (!(sc->sc_sc.chip & RTWN_CHIP_92C)) {
@@ -2339,7 +2435,7 @@ urtwn_bb_init(void *cookie)
 		DELAY(1);
 	}
 
-	if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+	if (sc->sc_sc.chip & (RTWN_CHIP_88E | RTWN_CHIP_88F)) {
 		urtwn_bb_write(sc, R92C_OFDM0_AGCCORE1(0), 0x69553422);
 		DELAY(1);
 		urtwn_bb_write(sc, R92C_OFDM0_AGCCORE1(0), 0x69553420);
@@ -2351,7 +2447,7 @@ urtwn_bb_init(void *cookie)
 		DELAY(1);
 	}
 
-	if (sc->sc_sc.chip & RTWN_CHIP_88E) {
+	if (sc->sc_sc.chip & (RTWN_CHIP_88E | RTWN_CHIP_88F)) {
 		xtal = sc->sc_sc.crystal_cap & 0x3f;
 		reg = urtwn_bb_read(sc, R92C_AFE_XTAL_CTRL);
 		urtwn_bb_write(sc, R92C_AFE_XTAL_CTRL,
@@ -2383,6 +2479,30 @@ urtwn_burstlen_init(struct urtwn_softc *sc)
 		urtwn_write_1(sc, R92E_RXDMA_PRO, reg | 0x2e);
 		break;
 	}
+
+	if (sc->sc_sc.chip & RTWN_CHIP_88F) {
+		/* Setup AMPDU aggregation. */
+		urtwn_write_1(sc, R88F_HT_SINGLE_AMPDU,
+		    urtwn_read_1(sc, R88F_HT_SINGLE_AMPDU) |
+		    R88F_HT_SINGLE_AMPDU_EN);
+		urtwn_write_2(sc, R92C_MAX_AGGR_NUM, 0x0c14);
+		urtwn_write_1(sc, R88F_AMPDU_MAX_TIME, 0x70);
+		urtwn_write_4(sc, R92C_AGGLEN_LMT, 0xffffffff);
+
+		/* For VHT packet length 11K */
+		urtwn_write_1(sc, R88F_RX_PKT_LIMIT, 0x18);
+
+		urtwn_write_1(sc, R92C_PIFS, 0);
+		urtwn_write_1(sc, R92C_FWHW_TXQ_CTRL, 0x80);
+		urtwn_write_4(sc, R92C_FAST_EDCA_CTRL, 0x03086666);
+		urtwn_write_1(sc, R92C_USTIME_TSF, 0x28);
+		urtwn_write_1(sc, R88F_USTIME_EDCA, 0x28);
+
+		/* To prevent mac is reseted by bus. */
+		urtwn_write_1(sc, R92C_RSV_CTRL,
+		    urtwn_read_1(sc, R92C_RSV_CTRL) |
+		    R92C_RSV_CTRL_R_DIS_PRST_0 | R92C_RSV_CTRL_R_DIS_PRST_1);
+	}
 }
 
 int
@@ -2392,6 +2512,8 @@ urtwn_power_on(void *cookie)
 
 	if (sc->sc_sc.chip & RTWN_CHIP_88E)
 		return (urtwn_r88e_power_on(sc));
+	else if (sc->sc_sc.chip & RTWN_CHIP_88F)
+		return (urtwn_r88f_power_on(sc));
 	else if (sc->sc_sc.chip & RTWN_CHIP_92E)
 		return (urtwn_r92e_power_on(sc));
 

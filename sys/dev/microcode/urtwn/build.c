@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.1 2021/10/04 01:33:42 kevlo Exp $	*/
+/*	$OpenBSD: build.c,v 1.2 2023/04/28 01:24:14 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -51,6 +51,7 @@ int
 main(void)
 {
 	output("urtwn-rtl8188eu", rtl8188eu, sizeof rtl8188eu);
+	output("urtwn-rtl8188ftv", rtl8188ftv, sizeof rtl8188ftv);
 	output("urtwn-rtl8192cT", rtl8192cT, sizeof rtl8192cT);
 	output("urtwn-rtl8192cU", rtl8192cU, sizeof rtl8192cU);
 	output("urtwn-rtl8192eu", rtl8192eu, sizeof rtl8192eu);
