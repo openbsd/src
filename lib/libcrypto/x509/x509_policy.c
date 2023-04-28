@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.16 2023/04/28 09:56:09 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.17 2023/04/28 15:16:48 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -203,9 +203,10 @@ x509_policy_node_free(X509_POLICY_NODE *node)
 static X509_POLICY_NODE *
 x509_policy_node_new(const ASN1_OBJECT *policy)
 {
-	assert(!is_any_policy(policy));
-	X509_POLICY_NODE *node;
+	X509_POLICY_NODE *node = NULL;
 
+	if (is_any_policy(policy))
+		goto err;
 	if ((node = calloc(1, sizeof(*node))) == NULL)
 		goto err;
 	if ((node->policy = OBJ_dup(policy)) == NULL)
