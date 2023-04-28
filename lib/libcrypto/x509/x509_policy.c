@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.23 2023/04/28 15:39:29 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.24 2023/04/28 15:57:38 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -380,7 +380,7 @@ process_certificate_policies(const X509 *x509, X509_POLICY_LEVEL *level,
 		goto err;
 	}
 
-	sk_POLICYINFO_set_cmp_func(policies, policyinfo_cmp);
+	(void)sk_POLICYINFO_set_cmp_func(policies, policyinfo_cmp);
 	sk_POLICYINFO_sort(policies);
 	cert_has_any_policy = 0;
 	for (i = 0; i < sk_POLICYINFO_num(policies); i++) {
@@ -544,7 +544,8 @@ process_policy_mappings(const X509 *cert,
 		}
 
 		/* Sort to group by issuerDomainPolicy. */
-		sk_POLICY_MAPPING_set_cmp_func(mappings, compare_issuer_policy);
+		(void)sk_POLICY_MAPPING_set_cmp_func(mappings,
+		    compare_issuer_policy);
 		sk_POLICY_MAPPING_sort(mappings);
 
 		if (mapping_allowed) {
@@ -631,7 +632,7 @@ process_policy_mappings(const X509 *cert,
 	}
 
 	/* Sort to group by subjectDomainPolicy. */
-	sk_POLICY_MAPPING_set_cmp_func(mappings, compare_subject_policy);
+	(void)sk_POLICY_MAPPING_set_cmp_func(mappings, compare_subject_policy);
 	sk_POLICY_MAPPING_sort(mappings);
 
 	/* Convert |mappings| to our "expected_policy_set" representation. */
@@ -995,7 +996,7 @@ X509_policy_check(const STACK_OF(X509) *certs,
 			    user_policies);
 			if (user_policies_sorted == NULL)
 				goto err;
-			sk_ASN1_OBJECT_set_cmp_func(user_policies_sorted,
+			(void)sk_ASN1_OBJECT_set_cmp_func(user_policies_sorted,
 			    asn1_object_cmp);
 			sk_ASN1_OBJECT_sort(user_policies_sorted);
 		}
