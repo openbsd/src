@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.186 2023/04/19 00:19:17 dlg Exp $
+#	$OpenBSD: files.fdt,v 1.187 2023/04/28 05:13:37 phessler Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -710,6 +710,11 @@ file	dev/fdt/qcpon.c			qcpon
 device	qcpwm
 attach	qcpwm at spmi
 file	dev/fdt/qcpwm.c			qcpwm
+
+# Qualcomm RNG
+device	qcrng
+attach	qcrng at fdt
+file	dev/fdt/qcrng.c			qcrng
 
 # Qualcomm PMIC RTC
 device	qcrtc

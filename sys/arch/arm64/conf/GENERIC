@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.266 2023/04/20 19:28:30 jcs Exp $
+# $OpenBSD: GENERIC,v 1.267 2023/04/28 05:13:37 phessler Exp $
 #
 # GENERIC machine description file
 #
@@ -333,6 +333,7 @@ qcpmic*		at qcspmi?
 qcpmicgpio*	at qcpmic?
 qcpon*		at qcpmic?
 qcpwm*		at qcpmic?
+qcrng*		at fdt?
 qcrtc*		at qcpmic?
 
 # Sunxi SoCs
