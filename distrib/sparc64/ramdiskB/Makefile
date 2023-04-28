@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2023/04/28 08:45:26 krw Exp $
+#	$OpenBSD: Makefile,v 1.53 2023/04/28 12:26:43 krw Exp $
 
 FS=		floppyB${OSrev}.img
 FSSIZE=		2880
@@ -17,8 +17,8 @@ all: ${FS}
 
 ${FS}: bsd.gz
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
-	vnconfig -v ${FS} > vnd
-	disklabel -w `cat vnd` ${FSDISKTYPE}
+	vnconfig -v -t ${FSDISKTYPE} ${FS} > vnd
+	echo '/ *' | disklabel -wAT- `cat vnd`
 	newfs -O 1 -m 0 -o space -i 524288 -c ${FSSIZE} -b 4096 -f 512 /dev/r`cat vnd`a
 	mount /dev/`cat vnd`a ${MOUNT_POINT}
 	install -c -m 555 -o root -g wheel \
