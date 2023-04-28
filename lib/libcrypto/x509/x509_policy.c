@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_policy.c,v 1.24 2023/04/28 15:57:38 tb Exp $ */
+/*	$OpenBSD: x509_policy.c,v 1.25 2023/04/28 16:30:14 tb Exp $ */
 /*
  * Copyright (c) 2022, Google Inc.
  *
@@ -25,8 +25,6 @@
 
 #include "x509_internal.h"
 #include "x509_local.h"
-
-#ifdef LIBRESSL_HAS_POLICY_DAG
 
 /* XXX move to proper place */
 #define X509_R_INVALID_POLICY_EXTENSION 201
@@ -1019,5 +1017,3 @@ err:
 	sk_X509_POLICY_LEVEL_pop_free(levels, x509_policy_level_free);
 	return ret;
 }
-
-#endif /* LIBRESSL_HAS_POLICY_DAG */
