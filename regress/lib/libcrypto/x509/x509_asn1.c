@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.10 2023/04/28 13:48:38 job Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.11 2023/04/28 15:12:51 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -306,13 +306,11 @@ test_x509_setters(void)
 		errx(1, "EVP_PKEY_keygen");
 	if (X509_set_pubkey(a, pkey) != 1)
 		errx(1, "X509_set_pubkey");
+	failed |= x509_compare("X509_set_pubkey", a, der2, der2sz);
+	x509_cleanup(&a, &der2);
+
 	EVP_PKEY_CTX_free(pkey_ctx);
 	EVP_PKEY_free(pkey);
-	pkey_ctx = NULL;
-	pkey = NULL;
-	failed |= x509_compare("X509_set_pubkey", a, der2, der2sz);
-
-	x509_cleanup(&a, &der2);
 	X509_free(x);
 	free(der);
 
@@ -348,8 +346,6 @@ test_x509_crl_setters(void)
 	// one time creation of the original DER
 	if (!X509_CRL_sign(xc, pkey, EVP_sha256()))
 		errx(1, "X509_CRL_sign");
-	EVP_PKEY_free(pkey);
-	EVP_PKEY_CTX_free(pkey_ctx);
 	if ((dersz = i2d_X509_CRL(xc, &der)) <= 0)
 		errx(1, "i2d_X509_CRL");
 
@@ -379,6 +375,8 @@ test_x509_crl_setters(void)
 	failed |= x509_crl_compare("X509_set_notAfter", ac, der2, der2sz);
 	x509_crl_cleanup(&ac, &der2);
 
+	EVP_PKEY_free(pkey);
+	EVP_PKEY_CTX_free(pkey_ctx);
 	X509_CRL_free(xc);
 	free(der);
 
@@ -458,8 +456,6 @@ test_x509_req_setters(void)
 		errx(1, "X509_NAME_add_entry_by_txt");
 	if (!X509_REQ_set_subject_name(xr, xn))
 		errx(1, "X509_REQ_set_subject_name");
-	X509_NAME_free(xn);
-	xn = NULL;
 
 	if ((pkey_ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL)) == NULL)
 		errx(1, "EVP_PKEY_CTX_new_id");
@@ -507,15 +503,15 @@ test_x509_req_setters(void)
 	failed |= x509_req_compare("X509_REQ_add1_attr", ar, der2, der2sz);
 	x509_req_cleanup(&ar, &der2);
 
+	ASN1_OBJECT_free(coid);
+	X509_NAME_free(xn);
 	ASN1_OCTET_STRING_free(aos);
-	X509_EXTENSION_free(xe);
+	sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
 	X509_ATTRIBUTE_free(xa);
 	EVP_PKEY_free(pkey);
 	EVP_PKEY_CTX_free(pkey_ctx);
-	X509_REQ_free(ar);
 	X509_REQ_free(xr);
 	free(der);
-	free(der2);
 
 	return failed;
 }
