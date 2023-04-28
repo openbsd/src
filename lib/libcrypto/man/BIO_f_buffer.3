@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_f_buffer.3,v 1.15 2023/04/26 15:03:02 schwarze Exp $
+.\" $OpenBSD: BIO_f_buffer.3,v 1.16 2023/04/28 16:49:00 schwarze Exp $
 .\" full merge up to OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 26 2023 $
+.Dd $Mdocdate: April 28 2023 $
 .Dt BIO_F_BUFFER 3
 .Os
 .Sh NAME
@@ -76,9 +76,10 @@
 .Nm BIO_set_write_buffer_size ,
 .Nm BIO_set_buffer_size ,
 .Nm BIO_set_buffer_read_data
-.\" .Nm BIO_buffer_get_num_lines is intentionally undocumented.
-.\" Contrary to what bio.h says, it does not *not* get some "IO type",
-.\" whatever that is supposed to be, but is a NOOP, and nothing uses it.
+.\" .Nm BIO_buffer_get_num_lines and
+.\" .Nm BIO_CTRL_GET are intentionally undocumented.
+.\" Contrary to what bio.h says, they do not *not* get some "IO type",
+.\" whatever that is supposed to be, but are NOOPs, and nothing uses them.
 .Nd buffering BIO
 .Sh SYNOPSIS
 .In openssl/bio.h

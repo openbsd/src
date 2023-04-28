@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_f_cipher.3,v 1.14 2023/04/11 16:58:43 schwarze Exp $
+.\" $OpenBSD: BIO_f_cipher.3,v 1.15 2023/04/28 16:49:00 schwarze Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2023 $
+.Dd $Mdocdate: April 28 2023 $
 .Dt BIO_F_CIPHER 3
 .Os
 .Sh NAME
@@ -57,6 +57,7 @@
 .Nm BIO_set_cipher ,
 .Nm BIO_get_cipher_status ,
 .Nm BIO_get_cipher_ctx
+.\" .Nm BIO_CTRL_SET is intentionally undocumented because it has no effect.
 .Nd cipher BIO filter
 .Sh SYNOPSIS
 .In openssl/bio.h

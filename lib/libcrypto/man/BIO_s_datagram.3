@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_datagram.3,v 1.2 2022/12/28 07:59:13 jsg Exp $
+.\" $OpenBSD: BIO_s_datagram.3,v 1.3 2023/04/28 16:49:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 28 2022 $
+.Dd $Mdocdate: April 28 2023 $
 .Dt BIO_S_DATAGRAM 3
 .Os
 .Sh NAME
@@ -27,6 +27,9 @@
 .Nm BIO_dgram_recv_timedout ,
 .Nm BIO_dgram_send_timedout ,
 .Nm BIO_dgram_non_fatal_error
+.\" .Nm BIO_CTRL_DGRAM_QUERY_MTU and
+.\" .Nm BIO_CTRL_DGRAM_MTU_DISCOVER are intentionally undocumented.
+.\" They are almost unused, and OpenBSD does not appear to support them.
 .Nd datagram socket BIO
 .Sh SYNOPSIS
 .In openssl/bio.h
@@ -381,8 +384,6 @@ Control commands correspond to accessor functions as follows:
 .It Dv BIO_CTRL_SET_CLOSE
 .Xr BIO_set_close 3
 .El
-.\" OpenBSD does not appear to support
-.\" BIO_CTRL_DGRAM_MTU_DISCOVER and BIO_CTRL_DGRAM_QUERY_MTU.
 .Ss Input and output operations
 .Xr BIO_read 3
 attempts to read up to
