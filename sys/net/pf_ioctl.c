@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.401 2023/04/28 14:08:38 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.402 2023/04/29 10:25:32 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1231,12 +1231,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_queuespec	*qs;
 		u_int32_t		 nr = 0;
 
-		NET_LOCK();
 		PF_LOCK();
 		if (pq->ticket != pf_main_ruleset.rules.active.version) {
 			error = EBUSY;
 			PF_UNLOCK();
-			NET_UNLOCK();
 			goto fail;
 		}
 
@@ -1247,12 +1245,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (qs == NULL) {
 			error = EBUSY;
 			PF_UNLOCK();
-			NET_UNLOCK();
 			goto fail;
 		}
 		memcpy(&pq->queue, qs, sizeof(pq->queue));
 		PF_UNLOCK();
-		NET_UNLOCK();
 		break;
 	}
 
