@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.88 2023/04/13 02:19:04 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.89 2023/04/29 08:50:53 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -666,8 +666,7 @@ cpu_identify(struct cpu_info *ci)
 	/*
 	 * ID_AA64MMFR1
 	 *
-	 * We omit printing virtualization related fields like XNX, VH
-	 * and VMIDBits as they are not really relevant for us.
+	 * We omit printing most virtualization related fields for now.
 	 */
 	id = READ_SPECIALREG(id_aa64mmfr1_el1);
 
@@ -692,6 +691,11 @@ cpu_identify(struct cpu_info *ci)
 
 	if (ID_AA64MMFR1_HPDS(id) >= ID_AA64MMFR1_HPDS_IMPL) {
 		printf("%sHPDS", sep);
+		sep = ",";
+	}
+
+	if (ID_AA64MMFR1_VH(id) >= ID_AA64MMFR1_VH_IMPL) {
+		printf("%sVH", sep);
 		sep = ",";
 	}
 
