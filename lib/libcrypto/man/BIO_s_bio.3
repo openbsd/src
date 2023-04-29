@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_bio.3,v 1.18 2023/04/28 16:49:00 schwarze Exp $
+.\" $OpenBSD: BIO_s_bio.3,v 1.19 2023/04/29 12:01:53 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file was written by
@@ -53,7 +53,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 28 2023 $
+.Dd $Mdocdate: April 29 2023 $
 .Dt BIO_S_BIO 3
 .Os
 .Sh NAME
@@ -116,7 +116,7 @@
 .Fa "BIO **bio2"
 .Fa "size_t writebuf2"
 .Fc
-.Ft size_t
+.Ft int
 .Fo BIO_get_write_guarantee
 .Fa "BIO *b"
 .Fc
@@ -300,15 +300,26 @@ it will never succeed because the request was never sent.
 .Xr BIO_eof 3
 is true if no data is in the peer BIO and the peer BIO has been shutdown.
 .Pp
-.Fn BIO_make_bio_pair ,
-.Fn BIO_destroy_bio_pair ,
-.Fn BIO_shutdown_wr ,
-.Fn BIO_set_write_buf_size ,
-.Fn BIO_get_write_buf_size ,
-.Fn BIO_get_write_guarantee ,
-and
-.Fn BIO_get_read_request
-are implemented as macros.
+.Xr BIO_ctrl 3
+.Fa cmd
+arguments correspond to macros as follows:
+.Bl -column BIO_C_GET_WRITE_GUARANTEE BIO_ctrl_reset_read_request() -offset 3n
+.It Fa cmd No constant           Ta corresponding macro
+.It Dv BIO_C_DESTROY_BIO_PAIR    Ta Fn BIO_destroy_bio_pair
+.It Dv BIO_C_GET_READ_REQUEST    Ta Fn BIO_get_read_request
+.It Dv BIO_C_GET_WRITE_BUF_SIZE  Ta Fn BIO_get_write_buf_size
+.It Dv BIO_C_GET_WRITE_GUARANTEE Ta Fn BIO_get_write_guarantee
+.It Dv BIO_C_MAKE_BIO_PAIR       Ta Fn BIO_make_bio_pair
+.It Dv BIO_C_RESET_READ_REQUEST  Ta Fn BIO_ctrl_reset_read_request
+.It Dv BIO_C_SET_WRITE_BUF_SIZE  Ta Fn BIO_set_write_buf_size
+.It Dv BIO_C_SHUTDOWN_WR         Ta Fn BIO_shutdown_wr
+.It Dv BIO_CTRL_EOF              Ta Xr BIO_eof 3
+.It Dv BIO_CTRL_GET_CLOSE        Ta Xr BIO_get_close 3
+.It Dv BIO_CTRL_PENDING          Ta Xr BIO_pending 3
+.It Dv BIO_CTRL_RESET            Ta Xr BIO_reset 3
+.It Dv BIO_CTRL_SET_CLOSE        Ta Xr BIO_set_close 3
+.It Dv BIO_CTRL_WPENDING         Ta Xr BIO_wpending 3
+.El
 .Sh RETURN VALUES
 .Fn BIO_new_bio_pair
 returns 1 on success, with the new BIOs available in
