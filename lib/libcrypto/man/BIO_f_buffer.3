@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_f_buffer.3,v 1.16 2023/04/28 16:49:00 schwarze Exp $
+.\" $OpenBSD: BIO_f_buffer.3,v 1.17 2023/04/29 12:22:08 schwarze Exp $
 .\" full merge up to OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 28 2023 $
+.Dd $Mdocdate: April 29 2023 $
 .Dt BIO_F_BUFFER 3
 .Os
 .Sh NAME
@@ -106,6 +106,7 @@
 .Fa "BIO *b"
 .Fa "long size"
 .Fc
+.Ft long
 .Fo BIO_set_buffer_read_data
 .Fa "BIO *b"
 .Fa "void *buf"
@@ -193,6 +194,10 @@ arguments correspond to macros as follows:
 .It Dv BIO_C_GET_BUFF_NUM_LINES Ta Fn BIO_get_buffer_num_lines
 .It Dv BIO_C_SET_BUFF_READ_DATA Ta Fn BIO_set_buffer_read_data
 .It Dv BIO_C_SET_BUFF_SIZE      Ta Fn BIO_set_buffer_size
+.It Dv BIO_CTRL_FLUSH           Ta Xr BIO_flush 3
+.It Dv BIO_CTRL_PENDING         Ta Xr BIO_pending 3
+.It Dv BIO_CTRL_RESET           Ta Xr BIO_reset 3
+.It Dv BIO_CTRL_WPENDING        Ta Xr BIO_wpending 3
 .El
 .Pp
 The
