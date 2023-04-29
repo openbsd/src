@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_file.3,v 1.14 2023/04/28 16:49:00 schwarze Exp $
+.\" $OpenBSD: BIO_s_file.3,v 1.15 2023/04/29 13:06:10 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" selective merge up to: OpenSSL 1212818e Sep 11 13:22:14 2018 +0100
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 28 2023 $
+.Dd $Mdocdate: April 29 2023 $
 .Dt BIO_S_FILE 3
 .Os
 .Sh NAME
@@ -108,22 +108,22 @@
 .Fa "BIO *b"
 .Fa "FILE **fpp"
 .Fc
-.Ft int
+.Ft long
 .Fo BIO_read_filename
 .Fa "BIO *b"
 .Fa "char *name"
 .Fc
-.Ft int
+.Ft long
 .Fo BIO_write_filename
 .Fa "BIO *b"
 .Fa "char *name"
 .Fc
-.Ft int
+.Ft long
 .Fo BIO_append_filename
 .Fa "BIO *b"
 .Fa "char *name"
 .Fc
-.Ft int
+.Ft long
 .Fo BIO_rw_filename
 .Fa "BIO *b"
 .Fa "char *name"
@@ -241,9 +241,16 @@ The following
 constants correspond to macros:
 .Bl -column BIO_C_GET_FILE_PTR "corresponding macro" -offset 3n
 .It Fa cmd No constant    Ta corresponding macro
+.It Dv BIO_C_FILE_SEEK    Ta Xr BIO_seek 3
+.It Dv BIO_C_FILE_TELL    Ta Xr BIO_tell 3
 .It Dv BIO_C_GET_FILE_PTR Ta Fn BIO_get_fp
 .It Dv BIO_C_SET_FILE_PTR Ta Fn BIO_set_fp
 .It Dv BIO_C_SET_FILENAME Ta various, see below
+.It Dv BIO_CTRL_EOF       Ta Xr BIO_eof 3
+.It Dv BIO_CTRL_FLUSH     Ta Xr BIO_flush 3
+.It Dv BIO_CTRL_GET_CLOSE Ta Xr BIO_get_close 3
+.It Dv BIO_CTRL_RESET     Ta Xr BIO_reset 3
+.It Dv BIO_CTRL_SET_CLOSE Ta Xr BIO_set_close 3
 .El
 .Pp
 The meaning of

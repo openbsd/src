@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_accept.3,v 1.15 2023/04/26 15:03:02 schwarze Exp $
+.\" $OpenBSD: BIO_s_accept.3,v 1.16 2023/04/29 13:06:10 schwarze Exp $
 .\" full merge up to: OpenSSL c03726ca Thu Aug 27 12:28:08 2015 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 26 2023 $
+.Dd $Mdocdate: April 29 2023 $
 .Dt BIO_S_ACCEPT 3
 .Os
 .Sh NAME
@@ -121,7 +121,7 @@
 .Fd #define BIO_BIND_NORMAL				0
 .Fd #define BIO_BIND_REUSEADDR_IF_UNUSED	1
 .Fd #define BIO_BIND_REUSEADDR			2
-.Ft int
+.Ft long
 .Fo BIO_do_accept
 .Fa "BIO *b"
 .Fc
@@ -298,10 +298,16 @@ arguments correspond to macros as follows:
 .It Dv BIO_C_DO_STATE_MACHINE Ta 0       Ta Fn BIO_do_accept
 .It Dv BIO_C_GET_ACCEPT       Ta 0       Ta Fn BIO_get_accept_port
 .It Dv BIO_C_GET_BIND_MODE    Ta 0       Ta Fn BIO_get_bind_mode
+.It Dv BIO_C_GET_FD           Ta 0       Ta Xr BIO_get_fd 3
 .It Dv BIO_C_SET_ACCEPT       Ta 0       Ta Fn BIO_set_accept_port
 .It                           Ta 1       Ta Fn BIO_set_nbio_accept
 .It                           Ta 2       Ta Fn BIO_set_accept_bios
+.It Dv BIO_C_SET_FD           Ta Fa fd   Ta Xr BIO_set_fd 3
+.It Dv BIO_C_SET_NBIO         Ta Fa n    Ta Xr BIO_set_nbio 3
 .It Dv BIO_C_SET_BIND_MODE    Ta Fa mode Ta Fn BIO_set_bind_mode
+.It Dv BIO_CTRL_GET_CLOSE     Ta 0       Ta Xr BIO_get_close 3
+.It Dv BIO_CTRL_RESET         Ta 0       Ta Xr BIO_reset 3
+.It Dv BIO_CTRL_SET_CLOSE     Ta Fa flag Ta Xr BIO_set_close 3
 .El
 .Sh RETURN VALUES
 When called on an accept BIO object,

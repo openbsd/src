@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_connect.3,v 1.17 2023/04/26 15:03:02 schwarze Exp $
+.\" $OpenBSD: BIO_s_connect.3,v 1.18 2023/04/29 13:06:10 schwarze Exp $
 .\" full merge up to: OpenSSL 0e474b8b Nov 1 15:45:49 2015 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 26 2023 $
+.Dd $Mdocdate: April 29 2023 $
 .Dt BIO_S_CONNECT 3
 .Os
 .Sh NAME
@@ -133,7 +133,7 @@
 .Fa "BIO *b"
 .Fa "long n"
 .Fc
-.Ft int
+.Ft long
 .Fo BIO_do_connect
 .Fa "BIO *b"
 .Fc
@@ -229,7 +229,7 @@ sets the port to
 .Fa port .
 .Fa port
 is looked up as a service using
-.Xr getaddrinfo 3
+.Xr getaddrinfo 3 .
 .Pp
 .Fn BIO_set_conn_ip
 sets the IP address to
@@ -364,11 +364,15 @@ arguments correspond to macros as follows:
 .It                           Ta 1       Ta Fn BIO_get_conn_port
 .It                           Ta 2       Ta Fn BIO_get_conn_ip
 .It                           Ta 3       Ta Fn BIO_get_conn_int_port
+.It Dv BIO_C_GET_FD           Ta 0       Ta Xr BIO_get_fd 3
 .It Dv BIO_C_SET_CONNECT      Ta 0       Ta Fn BIO_set_conn_hostname
 .It                           Ta 1       Ta Fn BIO_set_conn_port
 .It                           Ta 2       Ta Fn BIO_set_conn_ip
 .It                           Ta 3       Ta Fn BIO_set_conn_int_port
 .It Dv BIO_C_SET_NBIO         Ta Fa n    Ta Fn BIO_set_nbio
+.It Dv BIO_CTRL_GET_CLOSE     Ta 0       Ta Xr BIO_get_close 3
+.It Dv BIO_CTRL_RESET         Ta 0       Ta Xr BIO_reset 3
+.It Dv BIO_CTRL_SET_CLOSE     Ta Fa flag Ta Xr BIO_set_close 3
 .El
 .Sh RETURN VALUES
 .Fn BIO_s_connect
