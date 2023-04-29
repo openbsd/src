@@ -1,4 +1,4 @@
-/* $OpenBSD: zsig.c,v 1.18 2019/12/22 06:37:25 espie Exp $ */
+/* $OpenBSD: zsig.c,v 1.19 2023/04/29 10:08:18 espie Exp $ */
 /*
  * Copyright (c) 2016 Marc Espie <espie@openbsd.org>
  *
@@ -160,6 +160,8 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 			if (more == 0)
 				break;
 		}
+		if (n == 0)
+			break;
 		SHA512_256Data(buffer, n, output);
 		if (endsha - sha < SHA512_256_DIGEST_STRING_LENGTH-1)
 			errx(4, "signature truncated");
@@ -172,6 +174,8 @@ copy_blocks(int fdout, int fdin, const char *sha, const char *endsha,
 		if (n != bufsize)
 			break;
 	}
+	if (endsha != sha)
+		errx(4, "file truncated");
 	free(buffer);
 }
 
