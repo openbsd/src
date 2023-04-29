@@ -1,4 +1,4 @@
-/*	$OpenBSD: ioapic.c,v 1.30 2022/02/21 11:03:39 mpi Exp $	*/
+/*	$OpenBSD: ioapic.c,v 1.31 2023/04/29 10:12:33 mlarkin Exp $	*/
 /* 	$NetBSD: ioapic.c,v 1.6 2003/05/15 13:30:31 fvdl Exp $	*/
 
 /*-
@@ -71,7 +71,7 @@
 #include <sys/malloc.h>
 
 #include <machine/bus.h>
- 
+
 #include <uvm/uvm_extern.h>
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
@@ -132,7 +132,7 @@ static __inline u_int32_t
 ioapic_read_ul(struct ioapic_softc *sc,int regid)
 {
 	u_int32_t val;
-	
+
 	*(sc->sc_reg) = regid;
 	val = *sc->sc_data;
 
