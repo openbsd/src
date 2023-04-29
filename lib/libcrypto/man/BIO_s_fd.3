@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_fd.3,v 1.11 2023/04/11 16:58:43 schwarze Exp $
+.\" $OpenBSD: BIO_s_fd.3,v 1.12 2023/04/29 12:04:54 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2023 $
+.Dd $Mdocdate: April 29 2023 $
 .Dt BIO_S_FD 3
 .Os
 .Sh NAME
@@ -201,10 +201,19 @@ manual pages.
 File descriptor BIOs should not be used for socket I/O.
 Use socket BIOs instead.
 .Pp
-.Fn BIO_set_fd
-and
-.Fn BIO_get_fd
-are implemented as macros.
+.Xr BIO_ctrl 3
+.Fa cmd
+arguments correspond to macros as follows:
+.Bl -column BIO_CTRL_GET_CLOSE BIO_get_close(3) -offset 3n
+.It Fa cmd No constant    Ta corresponding macro
+.It Dv BIO_C_FILE_SEEK    Ta Xr BIO_seek 3
+.It Dv BIO_C_FILE_TELL    Ta Xr BIO_tell 3
+.It Dv BIO_C_GET_FD       Ta Fn BIO_get_fd
+.It Dv BIO_C_SET_FD       Ta Fn BIO_set_fd
+.It Dv BIO_CTRL_GET_CLOSE Ta Xr BIO_get_close 3
+.It Dv BIO_CTRL_RESET     Ta Xr BIO_reset 3
+.It Dv BIO_CTRL_SET_CLOSE Ta Xr BIO_set_close 3
+.El
 .Sh RETURN VALUES
 .Fn BIO_s_fd
 returns the file descriptor BIO method.

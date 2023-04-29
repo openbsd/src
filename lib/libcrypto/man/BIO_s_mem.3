@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_mem.3,v 1.17 2023/04/11 16:58:43 schwarze Exp $
+.\" $OpenBSD: BIO_s_mem.3,v 1.18 2023/04/29 12:04:54 schwarze Exp $
 .\" full merge up to: OpenSSL 8711efb4 Mon Apr 20 11:33:12 2009 +0000
 .\" selective merge up to: OpenSSL 36359cec Mar 7 14:37:23 2018 +0100
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2023 $
+.Dd $Mdocdate: April 29 2023 $
 .Dt BIO_S_MEM 3
 .Os
 .Sh NAME
@@ -203,6 +203,23 @@ until the BIO is freed.
 .Pp
 Writes to memory BIOs will always succeed if memory is available:
 their size can grow indefinitely.
+.Pp
+.Xr BIO_ctrl 3
+.Fa cmd
+arguments correspond to macros as follows:
+.Bl -column BIO_C_SET_BUF_MEM_EOF_RETURN BIO_set_mem_eof_return() -offset 3n
+.It Fa cmd No constant              Ta corresponding macro
+.It Dv BIO_C_GET_BUF_MEM_PTR        Ta Fn BIO_get_mem_ptr
+.It Dv BIO_C_SET_BUF_MEM            Ta Fn BIO_set_mem_buf
+.It Dv BIO_C_SET_BUF_MEM_EOF_RETURN Ta Fn BIO_set_mem_eof_return
+.It Dv BIO_CTRL_EOF                 Ta Xr BIO_eof 3
+.It Dv BIO_CTRL_GET_CLOSE           Ta Xr BIO_get_close 3
+.It Dv BIO_CTRL_INFO                Ta Fn BIO_get_mem_data
+.It Dv BIO_CTRL_PENDING             Ta Xr BIO_pending 3
+.It Dv BIO_CTRL_RESET               Ta Xr BIO_reset 3
+.It Dv BIO_CTRL_SET_CLOSE           Ta Xr BIO_set_close 3
+.It Dv BIO_CTRL_WPENDING            Ta Xr BIO_wpending 3
+.El
 .Sh RETURN VALUES
 .Fn BIO_s_mem
 returns a pointer to a static object.
