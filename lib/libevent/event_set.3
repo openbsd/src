@@ -1,4 +1,4 @@
-.\" $OpenBSD: event_set.3,v 1.3 2023/04/27 16:48:53 schwarze Exp $
+.\" $OpenBSD: event_set.3,v 1.4 2023/04/29 13:37:03 schwarze Exp $
 .\" Copyright (c) 2023 Ted Bullock <tbullock@comore.com>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -13,7 +13,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 27 2023 $
+.Dd $Mdocdate: April 29 2023 $
 .Dt EVENT_SET 3
 .Os
 .Sh NAME
@@ -34,29 +34,44 @@
 .In event.h
 .Ft void
 .Fo event_set
-.Fa "struct event *ev"
+.Fa "struct event *event"
 .Fa "int fd"
-.Fa "short events"
+.Fa "short flags"
 .Fa "void (*callback)(int, short, void *)"
 .Fa "void *arg"
 .Fc
-.Fd #define evtimer_set(ev, callback, arg)
-.Fd #define signal_set(ev, signal, callback, arg)
+.Ft void
+.Fo evtimer_set
+.Fa "struct event *event"
+.Fa "void (*callback)(int, short, void *)"
+.Fa "void *arg"
+.Fc
+.Ft void
+.Fo signal_set
+.Fa "struct event *event"
+.Fa "int signal"
+.Fa "void (*callback)(int, short, void *)"
+.Fa "void *arg"
+.Fc
 .Ft int
-.Fn event_base_set "struct event_base *base" "struct event *ev"
+.Fn event_base_set "struct event_base *base" "struct event *event"
 .Ft int
-.Fn event_add "struct event *ev" "const struct timeval *tv"
-.Fd #define evtimer_add(ev, tv)
-.Fd #define signal_add(ev, tv)
+.Fn event_add "struct event *event" "const struct timeval *tv"
 .Ft int
-.Fn event_del "struct event *ev"
-.Fd #define evtimer_del(ev)
-.Fd #define signal_del(ev)
+.Fn evtimer_add "struct event *event" "const struct timeval *tv"
+.Ft int
+.Fn signal_add "struct event *event" "const struct timeval *tv"
+.Ft int
+.Fn event_del "struct event *event"
+.Ft int
+.Fn evtimer_del "struct event *event"
+.Ft int
+.Fn signal_del "struct event *event"
 .Ft int
 .Fo event_base_once
 .Fa "struct event_base *base"
 .Fa "int fd"
-.Fa "short events"
+.Fa "short flags"
 .Fa "void (*callback)(int, short, void *)"
 .Fa "void *arg"
 .Fa "const struct timeval *tv"
@@ -64,7 +79,7 @@
 .Ft int
 .Fo event_once
 .Fa "int fd"
-.Fa "short events"
+.Fa "short flags"
 .Fa "void (*callback)(int, short, void *)"
 .Fa "void *arg"
 .Fa "const struct timeval *tv"
@@ -73,11 +88,9 @@
 The
 .Fn event_set
 function initializes an uninitialized, unused,
-.Vt event
+.Fa event
 structure to monitor a file descriptor, signal, or timeout.
-Once initialized, the
-.Vt event
-can be scheduled using
+Once initialized, the event can be scheduled using
 .Fn event_add .
 The event becomes activated and the
 .Fa callback
@@ -90,46 +103,43 @@ for documentation on running an event loop.
 Arguments for
 .Fn event_set
 are as follows:
-.Bl -tag -width 7n
-.It Va ev :
-A pointer to an
-.Vt "event"
-structure.
+.Bl -tag -width Ds
+.It Fa event
+The event structure to initialize.
 If
-.Fa ev
+.Fa event
 is
 .Dv NULL
 the behavior is undefined.
-.It Va fd :
+.It Fa fd
 The file descriptor or signal to monitor.
 Unassociated timeout events require this set to \-1.
-.It Va events :
+.It Fa flags
 Flags indicating how to monitor events.
 Unassociated timeout events require this set to 0.
-.Pp
-.Bl -tag -width "EV_PERSIST:" -compact
-.It Dv EV_READ :
+.Bl -tag -width EV_PERSIST
+.It Dv EV_READ
 Triggered when data is available for reading from the file descriptor.
-.It Dv EV_WRITE :
+.It Dv EV_WRITE
 Triggered when the file descriptor is ready for writing.
 Can be combined with
 .Dv EV_READ
 to indicate that the program can read from or write to the file descriptor
 without blocking.
-.It Dv EV_SIGNAL :
+.It Dv EV_SIGNAL
 Refers to a signal event that is triggered when a specified signal is
 received.
 Cannot be used together with either
 .Dv EV_READ
 or
 .Dv EV_WRITE .
-.It Dv EV_PERSIST :
+.It Dv EV_PERSIST
 Indicates that the event should persist after it triggers.
 That is, it should remain active until it is removed by calling
 .Fn event_del .
 Signal events typically require this flag.
 .El
-.It Va callback :
+.It Fa callback
 A user-defined function that is executed when the event triggers.
 .Pp
 .Bl -enum -width Ds -compact
@@ -148,7 +158,7 @@ combined with a binary OR operation.
 The third parameter corresponds to a user-specified pointer passed as a
 .Vt void * .
 .El
-.It Va arg :
+.It Fa arg
 User-specified pointer to pass to the
 .Fa callback
 function.
@@ -165,8 +175,8 @@ are named consistently with the library function
 .Fn event_set .
 The following macro and function calls are equivalent:
 .Bd -literal -offset indent
-evtimer_set(ev, callback, arg);
-event_set(ev, \-1, 0, callback, arg);
+evtimer_set(event, callback, arg);
+event_set(event, \-1, 0, callback, arg);
 .Ed
 .Pp
 Likewise, configuring a signal event with
@@ -174,20 +184,20 @@ Likewise, configuring a signal event with
 has an equivalent call to
 .Fn event_set :
 .Bd -literal -offset indent
-signal_set(ev, signal, callback, arg);
-event_set(ev, signal, EV_SIGNAL|EV_PERSIST, callback, arg);
+signal_set(event, signal, callback, arg);
+event_set(event, signal, EV_SIGNAL|EV_PERSIST, callback, arg);
 .Ed
 .Pp
 If
 .Xr event_init 3
 was called earlier,
 .Fn event_set
-associates
-.Fa ev
+associates the
+.Fa event
 with the
 .Vt event_base
-structure it created; otherwise,
-.Fa ev
+structure it created; otherwise, the
+.Fa event
 is not associated with any
 .Vt event_base
 structure.
@@ -202,7 +212,7 @@ The first argument of
 is the target
 .Vt event_base
 structure, and the second argument is the
-.Vt event
+.Fa event
 to be reassigned.
 The behavior is undefined if either argument is
 .Dv NULL .
@@ -214,7 +224,7 @@ structure.
 .Pp
 .Fn event_add
 schedules the
-.Fa ev
+.Fa event
 using the kernel notification method of its associated
 .Vt event_base
 structure; see
@@ -228,8 +238,8 @@ Programs can set the
 argument to
 .Dv NULL
 to specify that an event has no timeout.
-The behavior is undefined if
-.Fa ev
+The behavior is undefined if the
+.Fa event
 is
 .Dv NULL
 or uninitialized.
@@ -254,14 +264,13 @@ Reschedules the event with the event loop.
 .El
 .Pp
 .Fn event_del
-removes an event from the event loop of its associated
+removes the
+.Fa event
+from the event loop of its associated
 .Vt event_base
 structure.
-The
-.Fa ev
-argument is the event to remove.
-The behavior of the function is undefined if
-.Fa ev
+The behavior of the function is undefined if the
+.Fa event
 is
 .Dv NULL .
 On success, it removes the event from internal event queues and unregisters it
@@ -289,8 +298,8 @@ requiring the caller to create and manage an
 .Vt event
 structure.
 The arguments are as follows:
-.Bl -tag -width "events:"
-.It Va base :
+.Bl -tag -width Ds
+.It Fa base
 A pointer to an
 .Vt event_base
 structure initialized by
@@ -299,23 +308,23 @@ The behavior is undefined if
 .Fa base
 is
 .Dv NULL .
-.It Va fd :
+.It Fa fd
 A file descriptor to monitor.
-.It Va events :
+.It Fa flags
 .Dv EV_TIMEOUT ,
 .Dv EV_READ ,
 .Dv EV_WRITE ,
 or
 .Dv EV_READ | EV_WRITE .
-.It Va callback :
+.It Fa callback
 A user-defined function that is executed when the event triggers.
 This callback matches the same prototype and design used in
 .Fn event_set .
-.It Va arg :
+.It Fa arg
 A user-specified pointer to pass to the
 .Fa callback
 function.
-.It Va tv :
+.It Fa tv
 A pointer to an optional timeout
 .Vt timeval
 structure, ignored if
@@ -337,8 +346,9 @@ If a program needs to manually trigger an event, refer to
 These functions return 0 on success or \-1 on failure.
 .Pp
 .Fn event_base_set
-returns \-1 if the event being reassigned has already
-been processed by
+returns \-1 if the
+.Fa event
+has already been processed by
 .Fn event_add .
 .Pp
 .Fn event_add
@@ -356,7 +366,9 @@ can set errno
 as follows:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
-System has insufficient memory to add the event to the event loop.
+The system has insufficient memory to add the
+.Fa event
+to the event loop.
 .El
 .Sh SEE ALSO
 .Xr event_active 3 ,
