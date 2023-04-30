@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2032 2023/04/25 21:57:29 kettenis Exp 
+ *	OpenBSD: pcidevs,v 1.2033 2023/04/30 23:38:52 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -1283,6 +1283,7 @@
 #define	PCI_PRODUCT_ATI_PPB_1	0x1478		/* PCIE */
 #define	PCI_PRODUCT_ATI_PPB_2	0x1479		/* PCIE */
 #define	PCI_PRODUCT_ATI_MENDOCINO	0x1506		/* Mendocino */
+#define	PCI_PRODUCT_ATI_PHOENIX	0x15bf		/* Phoenix */
 #define	PCI_PRODUCT_ATI_PICASSO	0x15d8		/* Picasso */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA	0x15dd		/* Radeon Vega */
 #define	PCI_PRODUCT_ATI_RAVEN_VEGA_HDA	0x15de		/* Radeon Vega HD Audio */
