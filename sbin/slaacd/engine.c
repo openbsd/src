@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.84 2022/08/26 00:02:08 kn Exp $	*/
+/*	$OpenBSD: engine.c,v 1.85 2023/04/30 13:08:40 phessler Exp $	*/
 
 /*
  * Copyright (c) 2017 Florian Obser <florian@openbsd.org>
@@ -1927,7 +1927,7 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
     struct radv_prefix *prefix)
 {
 	struct address_proposal	*addr_proposal;
-	uint32_t		 remaining_lifetime, pltime, vltime;
+	uint32_t		 pltime, vltime;
 	int			 found, found_temporary, duplicate_found;
 
 	found = found_temporary = duplicate_found = 0;
@@ -1966,16 +1966,7 @@ update_iface_ra_prefix(struct slaacd_iface *iface, struct radv *ra,
 			continue;
 		}
 
-		remaining_lifetime = real_lifetime(&addr_proposal->uptime,
-			addr_proposal->vltime);
-
-		/* RFC 4862 5.5.3 two hours rule */
-#define TWO_HOURS 2 * 3600
-		if (prefix->vltime > TWO_HOURS ||
-		    prefix->vltime >= remaining_lifetime)
-			vltime = prefix->vltime;
-		else
-			vltime = TWO_HOURS;
+		vltime = prefix->vltime;
 
 		if (addr_proposal->temporary) {
 			struct timespec	now;
