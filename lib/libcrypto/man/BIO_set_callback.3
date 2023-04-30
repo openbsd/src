@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_set_callback.3,v 1.11 2023/04/07 14:47:37 schwarze Exp $
+.\" $OpenBSD: BIO_set_callback.3,v 1.12 2023/04/30 13:57:29 schwarze Exp $
 .\" full merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 7 2023 $
+.Dd $Mdocdate: April 30 2023 $
 .Dt BIO_SET_CALLBACK 3
 .Os
 .Sh NAME
@@ -190,7 +190,14 @@ The arguments of the callback functions are as follows:
 .It Fa b
 The BIO the callback is attached to.
 .It Fa oper
-The operation being performed.
+The operation being performed, which is one of
+.Dv BIO_CB_CTRL ,
+.Dv BIO_CB_FREE ,
+.Dv BIO_CB_GETS ,
+.Dv BIO_CB_PUTS ,
+.Dv BIO_CB_READ ,
+or
+.Dv BIO_CB_WRITE .
 For some operations, the callback is called twice,
 once before and once after the actual operation.
 The latter case has
