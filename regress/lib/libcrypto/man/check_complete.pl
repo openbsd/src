@@ -27,8 +27,8 @@ my %internal = (
     bn => [qw(
 	BN_BITS BN_BITS4 BN_BYTES
 	BN_DEC_CONV BN_DEC_FMT1 BN_DEC_FMT2 BN_DEC_NUM BN_LLONG BN_LONG
-	BN_MASK2 BN_MASK2h BN_MASK2h1 BN_MASK2l BN_MUL_COMBA
-	BN_RECURSION BN_SQR_COMBA BN_TBIT BN_ULLONG
+	BN_MASK2 BN_MASK2h BN_MASK2h1 BN_MASK2l
+	BN_TBIT BN_ULLONG
     )],
     objects => [qw(
 	OBJ_bsearch OBJ_bsearch_ OBJ_bsearch_ex OBJ_bsearch_ex_
@@ -58,9 +58,8 @@ my %obsolete = (
 	BIO_set_proxy_cb BIO_set_proxy_header BIO_set_url
     )],
     bn => [qw(
-	BN_FLG_EXP_CONSTTIME BN_FLG_FREE BN_get_params
 	BN_HEX_FMT1 BN_HEX_FMT2 BN_MASK
-	BN_options BN_prime_checks BN_set_params
+	BN_options BN_prime_checks
     )],
     objects => [qw(
 	_DECLARE_OBJ_BSEARCH_CMP_FN
