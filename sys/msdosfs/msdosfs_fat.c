@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.34 2021/03/11 13:31:35 jsg Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.35 2023/04/30 17:16:36 sf Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -409,6 +409,7 @@ updatefats(struct msdosfsmount *pmp, struct buf *bp, uint32_t fatbn)
 static __inline void
 usemap_alloc(struct msdosfsmount *pmp, uint32_t cn)
 {
+	KASSERT(cn <= pmp->pm_maxcluster);
 
 	pmp->pm_inusemap[cn / N_INUSEBITS] |= 1 << (cn % N_INUSEBITS);
 	pmp->pm_freeclustercount--;
@@ -417,6 +418,7 @@ usemap_alloc(struct msdosfsmount *pmp, uint32_t cn)
 static __inline void
 usemap_free(struct msdosfsmount *pmp, uint32_t cn)
 {
+	KASSERT(cn <= pmp->pm_maxcluster);
 
 	pmp->pm_freeclustercount++;
 	pmp->pm_inusemap[cn / N_INUSEBITS] &= ~(1 << (cn % N_INUSEBITS));
@@ -644,6 +646,8 @@ chainlength(struct msdosfsmount *pmp, uint32_t start, uint32_t count)
 	u_int map;
 	uint32_t len;
 
+	if (start > pmp->pm_maxcluster)
+	    return (0);
 	max_idx = pmp->pm_maxcluster / N_INUSEBITS;
 	idx = start / N_INUSEBITS;
 	start %= N_INUSEBITS;
@@ -651,11 +655,15 @@ chainlength(struct msdosfsmount *pmp, uint32_t start, uint32_t count)
 	map &= ~((1 << start) - 1);
 	if (map) {
 		len = ffs(map) - 1 - start;
-		return (len > count ? count : len);
+		len = MIN(len, count);
+		len = MIN(len, pmp->pm_maxcluster - start + 1);
+		return (len);
 	}
 	len = N_INUSEBITS - start;
-	if (len >= count)
-		return (count);
+	if (len >= count) {
+		len = MIN(count, pmp->pm_maxcluster - start + 1);
+		return (len);
+	}
 	while (++idx <= max_idx) {
 		if (len >= count)
 			break;
@@ -665,7 +673,9 @@ chainlength(struct msdosfsmount *pmp, uint32_t start, uint32_t count)
 		}
 		len += N_INUSEBITS;
 	}
-	return (len > count ? count : len);
+	len = MIN(len, count);
+	len = MIN(len, pmp->pm_maxcluster - start + 1);
+	return (len);
 }
 
 /*
