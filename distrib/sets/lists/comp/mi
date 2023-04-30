@@ -2019,7 +2019,6 @@
 ./usr/share/man/man3/PKCS8_pkey_set0.3
 ./usr/share/man/man3/PKEY_USAGE_PERIOD_new.3
 ./usr/share/man/man3/POLICYINFO_new.3
-./usr/share/man/man3/PROXY_POLICY_new.3
 ./usr/share/man/man3/RAND_add.3
 ./usr/share/man/man3/RAND_bytes.3
 ./usr/share/man/man3/RAND_load_file.3
@@ -2413,7 +2412,6 @@
 ./usr/share/man/man3/d2i_PKCS8_PRIV_KEY_INFO.3
 ./usr/share/man/man3/d2i_PKEY_USAGE_PERIOD.3
 ./usr/share/man/man3/d2i_POLICYINFO.3
-./usr/share/man/man3/d2i_PROXY_POLICY.3
 ./usr/share/man/man3/d2i_PrivateKey.3
 ./usr/share/man/man3/d2i_RSAPublicKey.3
 ./usr/share/man/man3/d2i_SSL_SESSION.3
