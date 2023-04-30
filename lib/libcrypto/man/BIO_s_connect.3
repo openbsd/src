@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_s_connect.3,v 1.18 2023/04/29 13:06:10 schwarze Exp $
+.\" $OpenBSD: BIO_s_connect.3,v 1.19 2023/04/30 13:53:54 schwarze Exp $
 .\" full merge up to: OpenSSL 0e474b8b Nov 1 15:45:49 2015 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 29 2023 $
+.Dd $Mdocdate: April 30 2023 $
 .Dt BIO_S_CONNECT 3
 .Os
 .Sh NAME
@@ -211,6 +211,40 @@ the state machine was invoked from.
 Usually, \-1 is used to indicate failure and return values less than
 or equal to zero abort the operation in question, whereas positive
 values indicate success and allow the operation to proceed.
+.Pp
+The
+.Fa state
+constants passed to the callback are named according to
+which operation needs to be performed next.
+They are listed here in the order the states are passed through:
+.Pp
+.Bl -tag -width BIO_CONN_S_BLOCKED_CONNECT -offset 3n -compact
+.It Dv BIO_CONN_S_BEFORE
+The BIO is idle and no connection has been initiated yet.
+.It Dv BIO_CONN_S_GET_IP
+The hostname to connect to needs to be converted to an IP address.
+.It Dv BIO_CONN_S_GET_PORT
+The service name to connect to needs to be converted to a TCP port number.
+.It Dv BIO_CONN_S_CREATE_SOCKET
+The TCP socket needs to be created with the
+.Xr socket 2
+system call.
+.It Dv BIO_CONN_S_NBIO
+Socket options may need to be set using
+.Xr fcntl 2
+and
+.Xr setsockopt 2 .
+.It Dv BIO_CONN_S_CONNECT
+The connection needs to be initiated with the
+.Xr connect 2
+system call.
+.It Dv BIO_CONN_S_BLOCKED_CONNECT
+The
+.Xr connect 2
+system call would have blocked and needs to be tried again.
+.It Dv BIO_CONN_S_OK
+The connection has been established and can now be used to transfer data.
+.El
 .Pp
 .Fn BIO_set_conn_hostname
 uses the string
