@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.248 2023/04/27 09:43:55 tb Exp $
+# $OpenBSD: Makefile,v 1.249 2023/04/30 14:49:47 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -377,9 +377,6 @@ MAN=	\
 	X509_load_cert_file.3 \
 	X509_new.3 \
 	X509_ocspid_print.3 \
-	X509_policy_check.3 \
-	X509_policy_tree_get0_policies.3 \
-	X509_policy_tree_level_count.3 \
 	X509_print_ex.3 \
 	X509_sign.3 \
 	X509_signature_dump.3 \
