@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.85 2023/04/25 19:57:59 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.86 2023/04/30 19:15:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -599,12 +599,6 @@ BN_zero(BIGNUM *a)
 {
 	a->neg = 0;
 	a->top = 0;
-}
-
-void
-BN_zero_ex(BIGNUM *a)
-{
-	BN_zero(a);
 }
 
 int
