@@ -1,4 +1,4 @@
-/*	$OpenBSD: frontend.c,v 1.77 2023/02/08 08:01:25 tb Exp $	*/
+/*	$OpenBSD: frontend.c,v 1.78 2023/04/30 23:46:52 jsg Exp $	*/
 
 /*
  * Copyright (c) 2018 Florian Obser <florian@openbsd.org>
@@ -1747,6 +1747,7 @@ tcp_response(int fd, short events, void *arg)
 		if (errno == EAGAIN || errno == EINTR)
 			return;
 		free_pending_query(pq);
+		return;
 	}
 	sldns_buffer_skip(pq->abuf, n);
 	if (sldns_buffer_remaining(pq->abuf) == 0)
