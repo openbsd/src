@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.85 2023/04/28 17:59:53 job Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.86 2023/04/30 16:46:49 job Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -736,7 +736,7 @@ static int
 asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
     int tag_number, int tag_class, int optional, int depth)
 {
-	CBS cbs_seq, cbs_seq_content;
+	CBS cbs_seq, cbs_seq_content, cbs_object;
 	int constructed, indefinite, optional_field;
 	const ASN1_TEMPLATE *errat = NULL;
 	const ASN1_TEMPLATE *seqat, *at;
@@ -878,8 +878,13 @@ asn1_item_d2i_sequence(ASN1_VALUE **pval, CBS *cbs, const ASN1_ITEM *it,
 		ASN1_template_free(pseqval, seqat);
 	}
 
-	if (!CBS_skip(cbs, CBS_offset(&cbs_seq)))
+	if (!CBS_get_bytes(cbs, &cbs_object, CBS_offset(&cbs_seq)))
 		goto err;
+
+	if (!asn1_enc_save(&aseq, &cbs_object, it)) {
+		ASN1error(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
 	if (asn1_cb != NULL && !asn1_cb(ASN1_OP_D2I_POST, &aseq, it, NULL)) {
 		ASN1error(ASN1_R_AUX_ERROR);

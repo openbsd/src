@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.30 2023/04/28 17:59:53 job Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.31 2023/04/30 16:46:49 job Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -210,6 +210,14 @@ ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
 		/* fall through */
 
 	case ASN1_ITYPE_SEQUENCE:
+		i = asn1_enc_restore(&seqcontlen, out, pval, it);
+		/* An error occurred */
+		if (i < 0)
+			return 0;
+		/* We have a valid cached encoding... */
+		if (i > 0)
+			return seqcontlen;
+		/* Otherwise carry on */
 		seqcontlen = 0;
 		/* If no IMPLICIT tagging set to SEQUENCE, UNIVERSAL */
 		if (tag == -1) {
