@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.28 2023/04/30 14:49:47 tb Exp $
+.\" $OpenBSD: X509_VERIFY_PARAM_set_flags.3,v 1.29 2023/04/30 19:40:23 tb Exp $
 .\" full merge up to: OpenSSL d33def66 Feb 9 14:17:13 2016 -0500
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -540,7 +540,9 @@ flag disables workarounds for some broken certificates and makes the
 verification strictly apply X509 rules.
 .Pp
 .Dv X509_V_FLAG_ALLOW_PROXY_CERTS
-enables proxy certificate verification.
+deprecated flag that used to
+enable proxy certificate verification.
+In LibreSSL, this flag has no effect.
 .Pp
 .Dv X509_V_FLAG_POLICY_CHECK
 enables certificate policy checking; by default no policy checking is

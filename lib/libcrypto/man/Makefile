@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.249 2023/04/30 14:49:47 tb Exp $
+# $OpenBSD: Makefile,v 1.250 2023/04/30 19:40:23 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -265,7 +265,6 @@ MAN=	\
 	PKCS8_pkey_set0.3 \
 	PKEY_USAGE_PERIOD_new.3 \
 	POLICYINFO_new.3 \
-	PROXY_POLICY_new.3 \
 	RAND_add.3 \
 	RAND_bytes.3 \
 	RAND_load_file.3 \
@@ -407,7 +406,6 @@ MAN=	\
 	d2i_PKCS8_PRIV_KEY_INFO.3 \
 	d2i_PKEY_USAGE_PERIOD.3 \
 	d2i_POLICYINFO.3 \
-	d2i_PROXY_POLICY.3 \
 	d2i_PrivateKey.3 \
 	d2i_RSAPublicKey.3 \
 	d2i_TS_REQ.3 \

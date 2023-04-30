@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get_extension_flags.3,v 1.3 2021/11/11 13:58:59 schwarze Exp $
+.\" $OpenBSD: X509_get_extension_flags.3,v 1.4 2023/04/30 19:40:23 tb Exp $
 .\" full merge up to: OpenSSL 361136f4 Sep 1 18:56:58 2015 +0100
 .\" selective merge up to: OpenSSL 2b2e3106f Feb 16 15:04:45 2021 +0000
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 11 2021 $
+.Dd $Mdocdate: April 30 2023 $
 .Dt X509_GET_EXTENSION_FLAGS 3
 .Os
 .Sh NAME
@@ -87,6 +87,7 @@ The certificate contains a basic constraints extension.
 The certificate contains basic constraints and asserts the CA flag.
 .It Dv EXFLAG_PROXY
 The certificate is a valid proxy certificate.
+In LibreSSL this flag is never set.
 .It Dv EXFLAG_SI
 The certificate is self issued (that is subject and issuer names match).
 .It Dv EXFLAG_SS
@@ -217,7 +218,6 @@ return sets of flags corresponding to the certificate extension values.
 .Xr BASIC_CONSTRAINTS_new 3 ,
 .Xr EXTENDED_KEY_USAGE_new 3 ,
 .Xr POLICYINFO_new 3 ,
-.Xr PROXY_CERT_INFO_EXTENSION_new 3 ,
 .Xr X509_check_ca 3 ,
 .Xr X509_check_purpose 3 ,
 .Xr X509_EXTENSION_new 3 ,
