@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.94 2023/04/26 22:05:28 beck Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.95 2023/04/30 20:10:38 benno Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 26 2023 $
+.Dd $Mdocdate: April 30 2023 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -63,7 +63,8 @@ in various formats.
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
-Exclude the aspa-set in the OpenBGPD specific output file.
+Exclude the ASPA-set from the output files that support it (JSON and
+OpenBGPD).
 .It Fl B
 Create output in the files
 .Pa bird1v4 ,
