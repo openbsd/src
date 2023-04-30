@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.11 2023/04/28 08:45:26 krw Exp $
+#	$OpenBSD: Makefile,v 1.12 2023/04/30 22:28:27 krw Exp $
 
 NOMAN=
 #MAN=		boot.8
 
 RDBOOT=		${.CURDIR}/../rdboot/obj/rdboot
 
-MRDISKTYPE= rdroot
+MRDISKTYPE= rdboot
 MRMAKEFSARGS= -o disklabel=${MRDISKTYPE},minfree=0,density=1024
 
 .if ${MACHINE} == "octeon"
