@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.26 2023/04/28 12:26:43 krw Exp $
+#	$OpenBSD: Makefile,v 1.27 2023/04/30 22:44:18 krw Exp $
 
 FS=		miniroot${OSrev}.img
-FSSIZE=		5760
+FSSIZE=		6080
 FSDISKTYPE=	fakeramdisk
 CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
