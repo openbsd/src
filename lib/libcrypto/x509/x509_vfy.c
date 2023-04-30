@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.118 2023/04/28 16:50:16 beck Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.119 2023/04/30 14:43:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1742,7 +1742,6 @@ cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 
 	return 1;
 }
-
 
 int
 x509_vfy_check_policy(X509_STORE_CTX *ctx)
