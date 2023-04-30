@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_accept.3,v 1.1 2022/12/22 21:05:48 schwarze Exp $
+.\" $OpenBSD: BIO_accept.3,v 1.2 2023/04/30 13:38:48 schwarze Exp $
 .\"
 .\" Copyright (c) 2022 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 22 2022 $
+.Dd $Mdocdate: April 30 2023 $
 .Dt BIO_ACCEPT 3
 .Os
 .Sh NAME
@@ -32,6 +32,11 @@
 .Nm BIO_set_tcp_ndelay
 .\" deprecated in OpenSSL and unused anywhere, hence intentionally undocumented
 .\" .Nm BIO_gethostbyname
+.\" .Nm BIO_GHBN_CTRL_CACHE_SIZE
+.\" .Nm BIO_GHBN_CTRL_FLUSH
+.\" .Nm BIO_GHBN_CTRL_GET_ENTRY
+.\" .Nm BIO_GHBN_CTRL_HITS
+.\" .Nm BIO_GHBN_CTRL_MISSES
 .\" .Nm BIO_socket_ioctl
 .\" does almost nothing and used very rarely, hence intentionally undocumented
 .\" .Nm BIO_sock_init
