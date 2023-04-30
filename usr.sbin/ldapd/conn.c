@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.19 2023/02/03 17:43:25 tb Exp $ */
+/*	$OpenBSD: conn.c,v 1.20 2023/04/30 23:49:14 jsg Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -310,8 +310,10 @@ conn_accept(int fd, short event, void *data)
 	bufferevent_enable(conn->bev, EV_READ);
 	bufferevent_settimeout(conn->bev, 0, 60);
 	if (l->flags & F_LDAPS)
-		if (conn_tls_init(conn) == -1)
+		if (conn_tls_init(conn) == -1) {
 			conn_close(conn);
+			goto giveup;
+		}
 
 	TAILQ_INIT(&conn->searches);
 	TAILQ_INSERT_HEAD(&conn_list, conn, next);
