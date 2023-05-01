@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2033 2023/04/30 23:38:52 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2034 2023/05/01 07:24:04 dlg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -4445,6 +4445,7 @@
 #define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_1	0x228a		/* Braswell Serial */
 #define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_2	0x228c		/* Braswell Serial */
 #define	PCI_PRODUCT_INTEL_BRASWELL_SMB	0x2292		/* Braswell SMBus */
+#define	PCI_PRODUCT_INTEL_BSW_SDIO	0x2295		/* Braswell SDIO */
 #define	PCI_PRODUCT_INTEL_BSW_TXE	0x2298		/* Braswell TXE */
 #define	PCI_PRODUCT_INTEL_BSW_PCU_LPC	0x229c		/* Braswell PCU LPC */
 #define	PCI_PRODUCT_INTEL_BSW_AHCI	0x22a3		/* Braswell AHCI */
