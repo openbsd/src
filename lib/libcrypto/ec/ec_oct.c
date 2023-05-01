@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.12 2023/04/25 19:53:30 tb Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.13 2023/05/01 21:15:26 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -120,7 +120,7 @@ EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
 	if (ctx == NULL)
 		goto err;
 
-	if (group->meth->point2oct == NULL) { 
+	if (group->meth->point2oct == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		goto err;
 	}
