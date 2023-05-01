@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.37 2023/05/01 17:31:15 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.38 2023/05/01 17:49:33 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -2995,7 +2995,7 @@ static const struct ec_list_element {
 #endif
 };
 
-#define curve_list_length (sizeof(curve_list) / sizeof(curve_list[0]))
+#define CURVE_LIST_LENGTH (sizeof(curve_list) / sizeof(curve_list[0]))
 
 static EC_GROUP *
 ec_group_new_from_data(const struct ec_list_element *curve)
@@ -3114,7 +3114,7 @@ EC_GROUP_new_by_curve_name(int nid)
 	if (nid <= 0)
 		return NULL;
 
-	for (i = 0; i < curve_list_length; i++)
+	for (i = 0; i < CURVE_LIST_LENGTH; i++)
 		if (curve_list[i].nid == nid) {
 			ret = ec_group_new_from_data(&curve_list[i]);
 			break;
@@ -3134,16 +3134,16 @@ EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
 	size_t i, min;
 
 	if (r == NULL || nitems == 0)
-		return curve_list_length;
+		return CURVE_LIST_LENGTH;
 
-	min = nitems < curve_list_length ? nitems : curve_list_length;
+	min = nitems < CURVE_LIST_LENGTH ? nitems : CURVE_LIST_LENGTH;
 
 	for (i = 0; i < min; i++) {
 		r[i].nid = curve_list[i].nid;
 		r[i].comment = curve_list[i].comment;
 	}
 
-	return curve_list_length;
+	return CURVE_LIST_LENGTH;
 }
 
 static const struct {
