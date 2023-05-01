@@ -1800,7 +1800,6 @@
 ./usr/share/man/man3/BIO_meth_new.3
 ./usr/share/man/man3/BIO_new.3
 ./usr/share/man/man3/BIO_new_CMS.3
-./usr/share/man/man3/BIO_new_NDEF.3
 ./usr/share/man/man3/BIO_printf.3
 ./usr/share/man/man3/BIO_push.3
 ./usr/share/man/man3/BIO_read.3
@@ -1993,7 +1992,6 @@
 ./usr/share/man/man3/PEM_read.3
 ./usr/share/man/man3/PEM_read_SSL_SESSION.3
 ./usr/share/man/man3/PEM_read_bio_PrivateKey.3
-./usr/share/man/man3/PEM_write_bio_ASN1_stream.3
 ./usr/share/man/man3/PEM_write_bio_CMS_stream.3
 ./usr/share/man/man3/PEM_write_bio_PKCS7_stream.3
 ./usr/share/man/man3/PKCS12_SAFEBAG_new.3
@@ -2645,7 +2643,6 @@
 ./usr/share/man/man3/htonl.3
 ./usr/share/man/man3/hypot.3
 ./usr/share/man/man3/i2a_ASN1_STRING.3
-./usr/share/man/man3/i2d_ASN1_bio_stream.3
 ./usr/share/man/man3/i2d_CMS_bio_stream.3
 ./usr/share/man/man3/i2d_PKCS7_bio_stream.3
 ./usr/share/man/man3/if_indextoname.3
