@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.38 2023/05/01 17:49:33 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.39 2023/05/01 17:53:01 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -3114,11 +3114,12 @@ EC_GROUP_new_by_curve_name(int nid)
 	if (nid <= 0)
 		return NULL;
 
-	for (i = 0; i < CURVE_LIST_LENGTH; i++)
+	for (i = 0; i < CURVE_LIST_LENGTH; i++) {
 		if (curve_list[i].nid == nid) {
 			ret = ec_group_new_from_data(&curve_list[i]);
 			break;
 		}
+	}
 	if (ret == NULL) {
 		ECerror(EC_R_UNKNOWN_GROUP);
 		return NULL;
