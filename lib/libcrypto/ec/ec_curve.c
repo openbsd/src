@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.27 2023/04/25 19:53:30 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.28 2023/05/01 07:54:08 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -2021,16 +2021,10 @@ EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems)
 	return curve_list_length;
 }
 
-/*
- * Functions to translate between common NIST curve names and NIDs.
- */
-
-typedef struct {
-	const char *name;	/* NIST Name of curve */
-	int nid;		/* Curve NID */
-} EC_NIST_NAME;
-
-static EC_NIST_NAME nist_curves[] = {
+static const struct {
+	const char *name;
+	int nid;
+} nist_curves[] = {
 	{ "B-163", NID_sect163r2 },
 	{ "B-233", NID_sect233r1 },
 	{ "B-283", NID_sect283r1 },
@@ -2053,11 +2047,12 @@ EC_curve_nid2nist(int nid)
 {
 	size_t i;
 
-	for (i = 0; i < sizeof(nist_curves) / sizeof(EC_NIST_NAME); i++) {
+	for (i = 0; i < sizeof(nist_curves) / sizeof(nist_curves[0]); i++) {
 		if (nist_curves[i].nid == nid)
-			return (nist_curves[i].name);
+			return nist_curves[i].name;
 	}
-	return (NULL);
+
+	return NULL;
 }
 
 int
@@ -2065,9 +2060,10 @@ EC_curve_nist2nid(const char *name)
 {
 	size_t i;
 
-	for (i = 0; i < sizeof(nist_curves) / sizeof(EC_NIST_NAME); i++) {
-		if (!strcmp(nist_curves[i].name, name))
-			return (nist_curves[i].nid);
+	for (i = 0; i < sizeof(nist_curves) / sizeof(nist_curves[0]); i++) {
+		if (strcmp(nist_curves[i].name, name) == 0)
+			return nist_curves[i].nid;
 	}
-	return (NID_undef);
+
+	return NID_undef;
 }
