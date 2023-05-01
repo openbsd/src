@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4,v 1.2 2022/03/31 17:27:21 naddy Exp $
+.\" $OpenBSD: intro.4,v 1.3 2023/05/01 06:04:46 jmc Exp $
 .\"
 .\" Copyright (c) 2014 Sylvestre Gallon <syl@openbsd.org>
 .\" Copyright (c) 1983, 1986, 1991 Regents of the University of California.
@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: May 1 2023 $
 .Dt INTRO 4 arm64
 .Os
 .Sh NAME
@@ -93,6 +93,8 @@ man page.
 The following buses and controllers list these devices:
 .Pp
 .Bl -tag -width 8n -offset 3n -compact
+.It Xr acpi 4
+Advanced Configuration and Power Interface
 .It Xr iic 4
 Inter IC (I2C) bus
 .It Xr pci 4
