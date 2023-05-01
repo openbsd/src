@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.31 2023/05/01 08:16:17 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.32 2023/05/01 12:39:38 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -2113,7 +2113,7 @@ ec_group_new_from_data(const ec_list_element curve)
 	EC_GROUP *group = NULL;
 	EC_POINT *P = NULL;
 	BN_CTX *ctx = NULL;
-	BIGNUM *p = NULL, *a = NULL, *b = NULL, *x = NULL, *y = NULL, *order = NULL;
+	BIGNUM *p, *a, *b, *x, *y, *order, *cofactor;
 	int ok = 0;
 	int seed_len, param_len;
 	const EC_CURVE_DATA *data;
@@ -2123,15 +2123,52 @@ ec_group_new_from_data(const ec_list_element curve)
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
+	BN_CTX_start(ctx);
+
+	if ((p = BN_CTX_get(ctx)) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if ((a = BN_CTX_get(ctx)) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if ((b = BN_CTX_get(ctx)) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if ((x = BN_CTX_get(ctx)) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if ((y = BN_CTX_get(ctx)) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if ((order = BN_CTX_get(ctx)) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if ((cofactor = BN_CTX_get(ctx)) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+
 	data = curve.data;
 	seed_len = data->seed_len;
 	param_len = data->param_len;
 	params = (const unsigned char *) (data + 1);	/* skip header */
 	params += seed_len;	/* skip seed   */
 
-	if (!(p = BN_bin2bn(params + 0 * param_len, param_len, NULL)) ||
-	    !(a = BN_bin2bn(params + 1 * param_len, param_len, NULL)) ||
-	    !(b = BN_bin2bn(params + 2 * param_len, param_len, NULL))) {
+	if (BN_bin2bn(params + 0 * param_len, param_len, p) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if (BN_bin2bn(params + 1 * param_len, param_len, a) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if (BN_bin2bn(params + 2 * param_len, param_len, b) == NULL) {
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
@@ -2146,8 +2183,11 @@ ec_group_new_from_data(const ec_list_element curve)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	if (!(x = BN_bin2bn(params + 3 * param_len, param_len, NULL))
-	    || !(y = BN_bin2bn(params + 4 * param_len, param_len, NULL))) {
+	if (BN_bin2bn(params + 3 * param_len, param_len, x) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if (BN_bin2bn(params + 4 * param_len, param_len, y) == NULL) {
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
@@ -2155,12 +2195,15 @@ ec_group_new_from_data(const ec_list_element curve)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	if (!(order = BN_bin2bn(params + 5 * param_len, param_len, NULL))
-	    || !BN_set_word(x, (BN_ULONG) data->cofactor)) {
+	if (BN_bin2bn(params + 5 * param_len, param_len, order) == NULL) {
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!EC_GROUP_set_generator(group, P, order, x)) {
+	if (!BN_set_word(cofactor, data->cofactor)) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if (!EC_GROUP_set_generator(group, P, order, cofactor)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -2177,13 +2220,9 @@ ec_group_new_from_data(const ec_list_element curve)
 		group = NULL;
 	}
 	EC_POINT_free(P);
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	BN_free(p);
-	BN_free(a);
-	BN_free(b);
-	BN_free(order);
-	BN_free(x);
-	BN_free(y);
+
 	return group;
 }
 
