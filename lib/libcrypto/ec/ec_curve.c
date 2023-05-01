@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.30 2023/05/01 07:58:34 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.31 2023/05/01 08:16:17 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -1819,7 +1819,6 @@ static const struct {
 typedef struct _ec_list_element_st {
 	int nid;
 	const EC_CURVE_DATA *data;
-	const EC_METHOD *(*meth) (void);
 	const char *comment;
 } ec_list_element;
 
@@ -2117,7 +2116,6 @@ ec_group_new_from_data(const ec_list_element curve)
 	BIGNUM *p = NULL, *a = NULL, *b = NULL, *x = NULL, *y = NULL, *order = NULL;
 	int ok = 0;
 	int seed_len, param_len;
-	const EC_METHOD *meth;
 	const EC_CURVE_DATA *data;
 	const unsigned char *params;
 
@@ -2137,14 +2135,7 @@ ec_group_new_from_data(const ec_list_element curve)
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (curve.meth != 0) {
-		meth = curve.meth();
-		if (((group = EC_GROUP_new(meth)) == NULL) ||
-		    (!(group->meth->group_set_curve(group, p, a, b, ctx)))) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
-	} else if (data->field_type == NID_X9_62_prime_field) {
+	if (data->field_type == NID_X9_62_prime_field) {
 		if ((group = EC_GROUP_new_curve_GFp(p, a, b, ctx)) == NULL) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
