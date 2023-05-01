@@ -1,4 +1,4 @@
-.\"	$OpenBSD: RSA_check_key.3,v 1.8 2021/03/12 05:18:00 jsg Exp $
+.\"	$OpenBSD: RSA_check_key.3,v 1.9 2023/05/01 07:28:11 tb Exp $
 .\"	OpenSSL 6859cf74 Sep 25 13:33:28 2002 +0000
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org> and
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 12 2021 $
+.Dd $Mdocdate: May 1 2023 $
 .Dt RSA_CHECK_KEY 3
 .Os
 .Sh NAME
@@ -142,7 +142,9 @@ structure elements directly, bypassing the
 .Vt RSA_METHOD
 table altogether (and completely violating encapsulation and
 object-orientation in the process).
-The best fix will probably be to introduce a check_key() handler
+The best fix will probably be to introduce a
+.Fn check_key
+handler
 to the
 .Vt RSA_METHOD
 function table so that alternative implementations can also provide

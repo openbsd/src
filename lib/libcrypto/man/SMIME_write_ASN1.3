@@ -1,4 +1,4 @@
-.\" $OpenBSD: SMIME_write_ASN1.3,v 1.1 2021/12/13 17:24:39 schwarze Exp $
+.\" $OpenBSD: SMIME_write_ASN1.3,v 1.2 2023/05/01 07:28:11 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: December 13 2021 $
+.Dd $Mdocdate: May 1 2023 $
 .Dt SMIME_WRITE_ASN1 3
 .Os
 .Sh NAME
@@ -126,9 +126,7 @@ or
 .Qq application/pkcs7-signature
 are used instead.
 .It Dv SMIME_STREAM
-Perform streaming by passing this flag through to
-.Xr i2d_ASN1_bio_stream 3
-and reading the content from
+Perform streaming by reading the content from
 .Fa in_bio .
 This only works if
 .Dv SMIME_DETACHED
@@ -151,7 +149,6 @@ is intended to return 1 on success or 0 on failure.
 .Xr ASN1_item_i2d_bio 3 ,
 .Xr BIO_f_base64 3 ,
 .Xr BIO_new 3 ,
-.Xr i2d_ASN1_bio_stream 3 ,
 .Xr SMIME_crlf_copy 3 ,
 .Xr SMIME_write_CMS 3 ,
 .Xr SMIME_write_PKCS7 3 ,

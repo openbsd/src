@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.250 2023/04/30 19:40:23 tb Exp $
+# $OpenBSD: Makefile,v 1.251 2023/05/01 07:28:11 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -51,7 +51,6 @@ MAN=	\
 	BIO_meth_new.3 \
 	BIO_new.3 \
 	BIO_new_CMS.3 \
-	BIO_new_NDEF.3 \
 	BIO_printf.3 \
 	BIO_push.3 \
 	BIO_read.3 \
@@ -239,7 +238,6 @@ MAN=	\
 	PEM_bytes_read_bio.3 \
 	PEM_read.3 \
 	PEM_read_bio_PrivateKey.3 \
-	PEM_write_bio_ASN1_stream.3 \
 	PEM_write_bio_CMS_stream.3 \
 	PEM_write_bio_PKCS7_stream.3 \
 	PKCS12_SAFEBAG_new.3 \
@@ -421,7 +419,6 @@ MAN=	\
 	evp.3 \
 	get_rfc3526_prime_8192.3 \
 	i2a_ASN1_STRING.3 \
-	i2d_ASN1_bio_stream.3 \
 	i2d_CMS_bio_stream.3 \
 	i2d_PKCS7_bio_stream.3 \
 	lh_new.3 \
