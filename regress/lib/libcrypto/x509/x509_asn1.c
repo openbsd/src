@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.15 2023/04/30 21:31:16 tb Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.16 2023/05/01 11:02:23 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -138,7 +138,7 @@ x509_compare(char *f, X509 *a, const unsigned char *der, long dersz)
 
 	if (dersz == der_testsz) {
 		if (memcmp(der, der_test, dersz) == 0) {
-			warnx("%s() didn't invalidate DER cache", f);
+			warnx("%s() stale version of encoding after i2d", f);
 			rc = 1;
 		} else
 			warnx("%s() OK", f);
@@ -212,7 +212,7 @@ x509_crl_compare(char *f, X509_CRL *ac, const unsigned char *der, long dersz)
 
 	if (dersz == der_testsz) {
 		if (memcmp(der, der_test, dersz) == 0) {
-			warnx("%s() didn't invalidate DER cache", f);
+			warnx("%s() stale version of encoding after i2d", f);
 			rc = 1;
 		} else
 			warnx("%s() OK", f);
@@ -404,7 +404,7 @@ x509_req_compare(char *f, X509_REQ *xr, const unsigned char *der, long dersz)
 
 	if (dersz == der_testsz) {
 		if (memcmp(der, der_test, dersz) == 0) {
-			warnx("%s() didn't invalidate DER cache", f);
+			warnx("%s() stale version of encoding after i2d", f);
 			rc = 1;
 		} else
 			warnx("%s() OK", f);
