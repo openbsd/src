@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.32 2023/05/01 12:39:38 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.33 2023/05/01 13:14:00 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -79,9 +79,9 @@
 #include "ec_local.h"
 
 typedef struct {
-	int field_type,		/* either NID_X9_62_prime_field or
-				 * NID_X9_62_characteristic_two_field */
-	 seed_len, param_len;
+	int field_type;
+	int seed_len;
+	int param_len;
 	unsigned int cofactor;	/* promoted to BN_ULONG */
 } EC_CURVE_DATA;
 
@@ -92,7 +92,10 @@ static const struct {
 }
  _EC_NIST_PRIME_192 = {
 	{
-		NID_X9_62_prime_field, 20, 24, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 24,
+		.cofactor = 1,
 	},
 	{
 		0x30, 0x45, 0xAE, 0x6F, 0xC8, 0x42, 0x2F, 0x64, 0xED, 0x57,	/* seed */
@@ -125,7 +128,10 @@ static const struct {
 }
  _EC_NIST_PRIME_224 = {
 	{
-		NID_X9_62_prime_field, 20, 28, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 28,
+		.cofactor = 1,
 	},
 	{
 		0xBD, 0x71, 0x34, 0x47, 0x99, 0xD5, 0xC7, 0xFC, 0xDC, 0x45,	/* seed */
@@ -158,7 +164,10 @@ static const struct {
 }
  _EC_NIST_PRIME_384 = {
 	{
-		NID_X9_62_prime_field, 20, 48, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 48,
+		.cofactor = 1,
 	},
 	{
 		0xA3, 0x35, 0x92, 0x6A, 0xA3, 0x19, 0xA2, 0x7A, 0x1D, 0x00,	/* seed */
@@ -203,7 +212,10 @@ static const struct {
 }
  _EC_NIST_PRIME_521 = {
 	{
-		NID_X9_62_prime_field, 20, 66, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 66,
+		.cofactor = 1,
 	},
 	{
 		0xD0, 0x9E, 0x88, 0x00, 0x29, 0x1C, 0xB8, 0x53, 0x96, 0xCC,	/* seed */
@@ -261,7 +273,10 @@ static const struct {
 }
  _EC_X9_62_PRIME_192V2 = {
 	{
-		NID_X9_62_prime_field, 20, 24, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 24,
+		.cofactor = 1,
 	},
 	{
 		0x31, 0xA9, 0x2E, 0xE2, 0x02, 0x9F, 0xD1, 0x0D, 0x90, 0x1B,	/* seed */
@@ -294,7 +309,10 @@ static const struct {
 }
  _EC_X9_62_PRIME_192V3 = {
 	{
-		NID_X9_62_prime_field, 20, 24, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 24,
+		.cofactor = 1,
 	},
 	{
 		0xC4, 0x69, 0x68, 0x44, 0x35, 0xDE, 0xB3, 0x78, 0xC4, 0xB6,	/* seed */
@@ -327,7 +345,10 @@ static const struct {
 }
  _EC_X9_62_PRIME_239V1 = {
 	{
-		NID_X9_62_prime_field, 20, 30, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 30,
+		.cofactor = 1,
 	},
 	{
 		0xE4, 0x3B, 0xB4, 0x60, 0xF0, 0xB8, 0x0C, 0xC0, 0xC0, 0xB0,	/* seed */
@@ -365,7 +386,10 @@ static const struct {
 }
  _EC_X9_62_PRIME_239V2 = {
 	{
-		NID_X9_62_prime_field, 20, 30, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 30,
+		.cofactor = 1,
 	},
 	{
 		0xE8, 0xB4, 0x01, 0x16, 0x04, 0x09, 0x53, 0x03, 0xCA, 0x3B,	/* seed */
@@ -403,7 +427,10 @@ static const struct {
 }
  _EC_X9_62_PRIME_239V3 = {
 	{
-		NID_X9_62_prime_field, 20, 30, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 30,
+		.cofactor = 1,
 	},
 	{
 		0x7D, 0x73, 0x74, 0x16, 0x8F, 0xFE, 0x34, 0x71, 0xB6, 0x0A,	/* seed */
@@ -442,7 +469,10 @@ static const struct {
 }
  _EC_X9_62_PRIME_256V1 = {
 	{
-		NID_X9_62_prime_field, 20, 32, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 32,
+		.cofactor = 1,
 	},
 	{
 		0xC4, 0x9D, 0x36, 0x08, 0x86, 0xE7, 0x04, 0x93, 0x6A, 0x66,	/* seed */
@@ -482,7 +512,10 @@ static const struct {
 }
  _EC_SECG_PRIME_112R1 = {
 	{
-		NID_X9_62_prime_field, 20, 14, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 14,
+		.cofactor = 1,
 	},
 	{
 		0x00, 0xF5, 0x0B, 0x02, 0x8E, 0x4D, 0x69, 0x6E, 0x67, 0x68,	/* seed */
@@ -509,7 +542,10 @@ static const struct {
 }
  _EC_SECG_PRIME_112R2 = {
 	{
-		NID_X9_62_prime_field, 20, 14, 4
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 14,
+		.cofactor = 4,
 	},
 	{
 		0x00, 0x27, 0x57, 0xA1, 0x11, 0x4D, 0x69, 0x6E, 0x67, 0x68,	/* seed */
@@ -536,7 +572,10 @@ static const struct {
 }
  _EC_SECG_PRIME_128R1 = {
 	{
-		NID_X9_62_prime_field, 20, 16, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 16,
+		.cofactor = 1,
 	},
 	{
 		0x00, 0x0E, 0x0D, 0x4D, 0x69, 0x6E, 0x67, 0x68, 0x75, 0x61,	/* seed */
@@ -563,7 +602,10 @@ static const struct {
 }
  _EC_SECG_PRIME_128R2 = {
 	{
-		NID_X9_62_prime_field, 20, 16, 4
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 16,
+		.cofactor = 4,
 	},
 	{
 		0x00, 0x4D, 0x69, 0x6E, 0x67, 0x68, 0x75, 0x61, 0x51, 0x75,	/* seed */
@@ -590,7 +632,10 @@ static const struct {
 }
  _EC_SECG_PRIME_160K1 = {
 	{
-		NID_X9_62_prime_field, 0, 21, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 21,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* p */
@@ -620,7 +665,10 @@ static const struct {
 }
  _EC_SECG_PRIME_160R1 = {
 	{
-		NID_X9_62_prime_field, 20, 21, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 21,
+		.cofactor = 1,
 	},
 	{
 		0x10, 0x53, 0xCD, 0xE4, 0x2C, 0x14, 0xD6, 0x96, 0xE6, 0x76,	/* seed */
@@ -653,7 +701,10 @@ static const struct {
 }
  _EC_SECG_PRIME_160R2 = {
 	{
-		NID_X9_62_prime_field, 20, 21, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 20,
+		.param_len = 21,
+		.cofactor = 1,
 	},
 	{
 		0xB9, 0x9B, 0x99, 0xB0, 0x99, 0xB3, 0x23, 0xE0, 0x27, 0x09,	/* seed */
@@ -686,7 +737,10 @@ static const struct {
 }
  _EC_SECG_PRIME_192K1 = {
 	{
-		NID_X9_62_prime_field, 0, 24, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 24,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* p */
@@ -716,7 +770,10 @@ static const struct {
 }
  _EC_SECG_PRIME_224K1 = {
 	{
-		NID_X9_62_prime_field, 0, 29, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 29,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* p */
@@ -746,7 +803,10 @@ static const struct {
 }
  _EC_SECG_PRIME_256K1 = {
 	{
-		NID_X9_62_prime_field, 0, 32, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 32,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* p */
@@ -783,7 +843,10 @@ static const struct {
 }
  _EC_WTLS_8 = {
 	{
-		NID_X9_62_prime_field, 0, 15, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 15,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* p */
@@ -807,7 +870,10 @@ static const struct {
 }
  _EC_WTLS_9 = {
 	{
-		NID_X9_62_prime_field, 0, 21, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 21,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* p */
@@ -837,7 +903,10 @@ static const struct {
 }
  _EC_WTLS_12 = {
 	{
-		NID_X9_62_prime_field, 0, 28, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 28,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* p */
@@ -875,7 +944,10 @@ static const struct {
 }
  _EC_brainpoolP160r1 = {
 	{
-		NID_X9_62_prime_field, 0, 20, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 20,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xE9, 0x5E, 0x4A, 0x5F, 0x73, 0x70, 0x59, 0xDC, 0x60, 0xDF,	/* p */
@@ -899,7 +971,10 @@ static const struct {
 }
  _EC_brainpoolP160t1 = {
 	{
-		NID_X9_62_prime_field, 0, 20, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 20,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xE9, 0x5E, 0x4A, 0x5F, 0x73, 0x70, 0x59, 0xDC, 0x60, 0xDF,	/* p */
@@ -923,7 +998,10 @@ static const struct {
 }
  _EC_brainpoolP192r1 = {
 	{
-		NID_X9_62_prime_field, 0, 24, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 24,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xC3, 0x02, 0xF4, 0x1D, 0x93, 0x2A, 0x36, 0xCD, 0xA7, 0xA3,	/* p */
@@ -953,7 +1031,10 @@ static const struct {
 }
  _EC_brainpoolP192t1 = {
 	{
-		NID_X9_62_prime_field, 0, 24, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 24,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xC3, 0x02, 0xF4, 0x1D, 0x93, 0x2A, 0x36, 0xCD, 0xA7, 0xA3,	/* p */
@@ -983,7 +1064,10 @@ static const struct {
 }
  _EC_brainpoolP224r1 = {
 	{
-		NID_X9_62_prime_field, 0, 28, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 28,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xD7, 0xC1, 0x34, 0xAA, 0x26, 0x43, 0x66, 0x86, 0x2A, 0x18,	/* p */
@@ -1013,7 +1097,10 @@ static const struct {
 }
  _EC_brainpoolP224t1 = {
 	{
-		NID_X9_62_prime_field, 0, 28, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 28,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xD7, 0xC1, 0x34, 0xAA, 0x26, 0x43, 0x66, 0x86, 0x2A, 0x18,	/* p */
@@ -1043,7 +1130,10 @@ static const struct {
 }
  _EC_brainpoolP256r1 = {
 	{
-		NID_X9_62_prime_field, 0, 32, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 32,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xA9, 0xFB, 0x57, 0xDB, 0xA1, 0xEE, 0xA9, 0xBC, 0x3E, 0x66,	/* p */
@@ -1079,7 +1169,10 @@ static const struct {
 }
  _EC_brainpoolP256t1 = {
 	{
-		NID_X9_62_prime_field, 0, 32, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 32,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xA9, 0xFB, 0x57, 0xDB, 0xA1, 0xEE, 0xA9, 0xBC, 0x3E, 0x66,	/* p */
@@ -1115,7 +1208,10 @@ static const struct {
 }
  _EC_brainpoolP320r1 = {
 	{
-		NID_X9_62_prime_field, 0, 40, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 40,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xD3, 0x5E, 0x47, 0x20, 0x36, 0xBC, 0x4F, 0xB7, 0xE1, 0x3C,	/* p */
@@ -1151,7 +1247,10 @@ static const struct {
 }
  _EC_brainpoolP320t1 = {
 	{
-		NID_X9_62_prime_field, 0, 40, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 40,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xD3, 0x5E, 0x47, 0x20, 0x36, 0xBC, 0x4F, 0xB7, 0xE1, 0x3C,	/* p */
@@ -1187,7 +1286,10 @@ static const struct {
 }
  _EC_brainpoolP384r1 = {
 	{
-		NID_X9_62_prime_field, 0, 48, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 48,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x8C, 0xB9, 0x1E, 0x82, 0xA3, 0x38, 0x6D, 0x28, 0x0F, 0x5D,	/* p */
@@ -1229,7 +1331,10 @@ static const struct {
 }
  _EC_brainpoolP384t1 = {
 	{
-		NID_X9_62_prime_field, 0, 48, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 48,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x8C, 0xB9, 0x1E, 0x82, 0xA3, 0x38, 0x6D, 0x28, 0x0F, 0x5D,	/* p */
@@ -1271,7 +1376,10 @@ static const struct {
 }
  _EC_brainpoolP512r1 = {
 	{
-		NID_X9_62_prime_field, 0, 64, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 64,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xAA, 0xDD, 0x9D, 0xB8, 0xDB, 0xE9, 0xC4, 0x8B, 0x3F, 0xD4,	/* p */
@@ -1325,7 +1433,10 @@ static const struct {
 }
  _EC_brainpoolP512t1 = {
 	{
-		NID_X9_62_prime_field, 0, 64, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 64,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xAA, 0xDD, 0x9D, 0xB8, 0xDB, 0xE9, 0xC4, 0x8B, 0x3F, 0xD4,	/* p */
@@ -1379,7 +1490,10 @@ static const struct {
 }
  _EC_FRP256v1 = {
 	{
-		NID_X9_62_prime_field, 0, 32, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 32,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xF1, 0xFD, 0x17, 0x8C, 0x0B, 0x3A, 0xD5, 0x8F, 0x10, 0x12,	/* p */
@@ -1416,7 +1530,10 @@ static const struct {
 }
  _EC_GOST_2001_Test = {
 	{
-		NID_X9_62_prime_field, 0, 32, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 32,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	/* p */
@@ -1452,7 +1569,10 @@ static const struct {
 }
  _EC_GOST_2001_CryptoPro_A = {
 	{
-		NID_X9_62_prime_field, 0, 32, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 32,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* p */
@@ -1488,7 +1608,10 @@ static const struct {
 }
  _EC_GOST_2001_CryptoPro_B = {
 	{
-		NID_X9_62_prime_field, 0, 32, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 32,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	/* p */
@@ -1524,7 +1647,10 @@ static const struct {
 }
  _EC_GOST_2001_CryptoPro_C = {
 	{
-		NID_X9_62_prime_field, 0, 32, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 32,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x9B, 0x9F, 0x60, 0x5F, 0x5A, 0x85, 0x81, 0x07, 0xAB, 0x1E,	/* p */
@@ -1564,7 +1690,10 @@ static const struct {
 }
  _EC_GOST_2012_256_TC26_A = {
 	{
-		NID_X9_62_prime_field, 0, 32, 4
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 32,
+		.cofactor = 4,
 	},
 	{			/* no seed */
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,	/* p */
@@ -1600,7 +1729,10 @@ static const struct {
 }
  _EC_GOST_2012_512_Test = {
 	{
-		NID_X9_62_prime_field, 0, 64, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 64,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x45, 0x31, 0xac, 0xd1, 0xfe, 0x00, 0x23, 0xc7, 0x55, 0x0d,	/* p */
@@ -1654,7 +1786,10 @@ static const struct {
 }
  _EC_GOST_2012_512_TC26_A = {
 	{
-		NID_X9_62_prime_field, 0, 64, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 64,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* p */
@@ -1708,7 +1843,10 @@ static const struct {
 }
  _EC_GOST_2012_512_TC26_B = {
 	{
-		NID_X9_62_prime_field, 0, 64, 1
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 64,
+		.cofactor = 1,
 	},
 	{			/* no seed */
 		0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,	/* p */
@@ -1766,7 +1904,10 @@ static const struct {
 }
  _EC_GOST_2012_512_TC26_C = {
 	{
-		NID_X9_62_prime_field, 0, 64, 4
+		.field_type = NID_X9_62_prime_field,
+		.seed_len = 0,
+		.param_len = 64,
+		.cofactor = 4,
 	},
 	{			/* no seed */
 		0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* p */
