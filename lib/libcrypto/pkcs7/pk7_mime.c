@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_mime.c,v 1.17 2023/04/26 14:25:58 tb Exp $ */
+/* $OpenBSD: pk7_mime.c,v 1.18 2023/05/02 09:38:33 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -71,8 +71,7 @@ LCRYPTO_ALIAS(BIO_new_PKCS7);
 int
 i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
 {
-	return i2d_ASN1_bio_stream(out, (ASN1_VALUE *)p7, in, flags,
-	    &PKCS7_it);
+	return i2d_ASN1_bio_stream(out, (ASN1_VALUE *)p7, in, flags, &PKCS7_it);
 }
 LCRYPTO_ALIAS(i2d_PKCS7_bio_stream);
 
