@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.272 2023/04/05 23:01:03 kn Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.273 2023/05/02 06:06:13 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -303,7 +303,8 @@ nd6_llinfo_timer(struct rtentry *rt)
 		if (ln->ln_asked < nd6_mmaxtries) {
 			ln->ln_asked++;
 			nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
-			nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
+			nd6_ns_output(ifp, NULL, &dst->sin6_addr,
+			    &ln->ln_saddr6, 0);
 		} else {
 			struct mbuf_list ml;
 			struct mbuf *m;
@@ -336,6 +337,7 @@ nd6_llinfo_timer(struct rtentry *rt)
 			ln = NULL;
 		}
 		break;
+
 	case ND6_LLINFO_REACHABLE:
 		if (!ND6_LLINFO_PERMANENT(ln)) {
 			ln->ln_state = ND6_LLINFO_STALE;
@@ -357,14 +359,16 @@ nd6_llinfo_timer(struct rtentry *rt)
 		ln->ln_asked = 1;
 		ln->ln_state = ND6_LLINFO_PROBE;
 		nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
-		nd6_ns_output(ifp, &dst->sin6_addr, &dst->sin6_addr, ln, 0);
+		nd6_ns_output(ifp, &dst->sin6_addr, &dst->sin6_addr,
+		    &ln->ln_saddr6, 0);
 		break;
+
 	case ND6_LLINFO_PROBE:
 		if (ln->ln_asked < nd6_umaxtries) {
 			ln->ln_asked++;
 			nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
-			nd6_ns_output(ifp, &dst->sin6_addr,
-			    &dst->sin6_addr, ln, 0);
+			nd6_ns_output(ifp, &dst->sin6_addr, &dst->sin6_addr,
+			    &ln->ln_saddr6, 0);
 		} else {
 			nd6_free(rt);
 			ln = NULL;
@@ -1247,7 +1251,9 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	struct sockaddr_dl *sdl;
 	struct rtentry *rt;
 	struct llinfo_nd6 *ln = NULL;
+	struct in6_addr saddr6;
 	time_t uptime;
+	int solicit = 0;
 
 	if (m->m_flags & M_MCAST) {
 		ETHER_MAP_IPV6_MULTICAST(&satosin6(dst)->sin6_addr, desten);
@@ -1357,9 +1363,13 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	if (!ND6_LLINFO_PERMANENT(ln) && ln->ln_asked == 0) {
 		ln->ln_asked++;
 		nd6_llinfo_settimer(ln, RETRANS_TIMER / 1000);
-		nd6_ns_output(ifp, NULL, &satosin6(dst)->sin6_addr, ln, 0);
+		saddr6 = ln->ln_saddr6;
+		solicit = 1;
 	}
 	KERNEL_UNLOCK();
+
+	if (solicit)
+		nd6_ns_output(ifp, NULL, &satosin6(dst)->sin6_addr, &saddr6, 0);
 	return (EAGAIN);
 
 bad:

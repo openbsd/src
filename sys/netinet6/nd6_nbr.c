@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.146 2023/04/28 14:09:06 phessler Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.147 2023/05/02 06:06:13 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -360,7 +360,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
  */
 void
 nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
-    const struct in6_addr *taddr6, const struct llinfo_nd6 *ln, int dad)
+    const struct in6_addr *taddr6, const struct in6_addr *saddr6, int dad)
 {
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
@@ -423,7 +423,7 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 	bzero(&dst_sa, sizeof(dst_sa));
 	src_sa.sin6_family = dst_sa.sin6_family = AF_INET6;
 	src_sa.sin6_len = dst_sa.sin6_len = sizeof(struct sockaddr_in6);
-	if (daddr6)
+	if (daddr6 != NULL)
 		dst_sa.sin6_addr = *daddr6;
 	else {
 		dst_sa.sin6_addr.s6_addr16[0] = __IPV6_ADDR_INT16_MLL;
@@ -451,14 +451,13 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		 * - if taddr is link local saddr6 must be link local as well
 		 * Otherwise, we perform the source address selection as usual.
 		 */
-		if (ln != NULL)
-			src_sa.sin6_addr = ln->ln_saddr6;
+		if (saddr6 != NULL)
+			src_sa.sin6_addr = *saddr6;
 
 		if (!IN6_IS_ADDR_LINKLOCAL(taddr6) ||
 		    IN6_IS_ADDR_UNSPECIFIED(&src_sa.sin6_addr) ||
 		    IN6_IS_ADDR_LINKLOCAL(&src_sa.sin6_addr) ||
 		    !in6ifa_ifpwithaddr(ifp, &src_sa.sin6_addr)) {
-
 			struct rtentry *rt;
 
 			rt = rtalloc(sin6tosa(&dst_sa), RT_RESOLVE,
