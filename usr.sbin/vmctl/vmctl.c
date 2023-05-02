@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.87 2023/04/28 19:46:41 dv Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.88 2023/05/02 13:02:51 jsg Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -202,7 +202,7 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 	imsg_compose(ibuf, IMSG_VMDOP_START_VM_REQUEST, 0, 0, vmc->vmc_kernel,
 	    vmc, sizeof(struct vmop_create_params));
 
-	free(vcp);
+	free(vmc);
 	return (0);
 }
 
