@@ -272,7 +272,7 @@ try_again:
 			print "D- $line\n" if $verbose;
 			next;
 		}
-		if ($id =~ /^(?:ASN1|BN|X509(?:V3)?)_[FR]_\w+$/) {
+		if ($id =~ /^(?:ASN1|BIO|BN|X509(?:V3)?)_[FR]_\w+$/) {
 			print "D- $line\n" if $verbose;
 			next;
 		}
