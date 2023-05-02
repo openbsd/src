@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.89 2023/04/21 00:37:10 kn Exp $
+#	$OpenBSD: airport,v 1.90 2023/05/02 08:48:06 stsp Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -374,6 +374,7 @@ CPR:Casper/Natrone County International, Wyoming, USA
 CPT:Cape Town International, Cape Town, South Africa
 CRD:Comodoro Rivadavia, Chubut, Argentina
 CRI:Crooked Island, Bahamas
+CRL:Brussels South / Gosselies, Charleroi, Belgium
 CRM:Charleston (WV) Yeager, South Carolina, USA
 CRP:Corpus Christi International, Texas, USA
 CRU:Carriacou Island, Grenada
