@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.7 2023/04/10 15:14:04 tobhe Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.8 2023/05/02 19:39:10 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -963,16 +963,78 @@ struct mtp_fwhdr {
 	uint32_t iface_off;
 };
 
-void
-apldchidev_attachhook(struct device *self)
+int
+apldchidev_load_firmware(struct apldchidev_softc *sc, const char *name)
 {
-	struct apldchidev_softc *sc = (struct apldchidev_softc *)self;
-	struct apldchidev_attach_args aa;
+	struct mtp_fwhdr *hdr;
 	uint8_t *ucode;
 	size_t ucode_size;
 	uint8_t *data;
 	size_t size;
 	int error;
+
+	error = loadfirmware(name, &ucode, &ucode_size);
+	if (error) {
+		printf("%s: error %d, could not read firmware %s\n",
+		    sc->sc_dev.dv_xname, error, name);
+		return error;
+	}
+
+	hdr = (struct mtp_fwhdr *)ucode;
+	if (sizeof(hdr) > ucode_size ||
+	    hdr->hdr_len + hdr->data_len > ucode_size) {
+		printf("%s: loaded firmware is too small\n",
+		    sc->sc_dev.dv_xname);
+		return EINVAL;
+	}
+	if (hdr->magic != MTP_FW_MAGIC) {
+		printf("%s: wrong firmware magic number 0x%08x\n",
+		    sc->sc_dev.dv_xname, hdr->magic);
+		return EINVAL;
+	}
+	if (hdr->version != MTP_FW_VERSION) {
+		printf("%s: wrong firmware version %d\n",
+		    sc->sc_dev.dv_xname, hdr->version);
+		return EINVAL;
+	}
+	data = ucode + hdr->hdr_len;
+	if (hdr->iface_off)
+		data[hdr->iface_off] = sc->sc_iface_mt;
+	size = hdr->data_len;
+
+	apldchidev_send_firmware(sc, sc->sc_iface_mt, data, size);
+	apldchidev_reset(sc, sc->sc_iface_mt, 0);
+	apldchidev_reset(sc, sc->sc_iface_mt, 2);
+
+	/* Wait until ready. */
+	while (sc->sc_mt_ready == 0) {
+		error = tsleep_nsec(sc, PZERO, "apldcmt", SEC_TO_NSEC(2));
+		if (error == EWOULDBLOCK)
+			return error;
+	}
+
+	return 0;
+}
+
+void
+apldchidev_attachhook(struct device *self)
+{
+	struct apldchidev_softc *sc = (struct apldchidev_softc *)self;
+	struct apldchidev_attach_args aa;
+	char *firmware_name;
+	int node, len;
+	int retry;
+	int error;
+
+	/* Enable interface. */
+	apldchidev_enable(sc, sc->sc_iface_mt);
+
+	node = OF_getnodebyname(sc->sc_node, "multi-touch");
+	if (node == -1)
+		return;
+	len = OF_getproplen(node, "firmware-name");
+	if (len <= 0)
+		return;
 
 	/* Wait until we have received the multi-touch HID descriptor. */
 	while (sc->sc_mtdesclen == 0) {
@@ -981,71 +1043,24 @@ apldchidev_attachhook(struct device *self)
 			return;
 	}
 
-	if (sc->sc_mtdesclen > 0) {
-		struct mtp_fwhdr *hdr;
-		char *firmware_name;
-		int node, len;
+	firmware_name = malloc(len, M_TEMP, M_WAITOK);
+	OF_getprop(node, "firmware-name", firmware_name, len);
 
-		/* Enable interface. */
-		apldchidev_enable(sc, sc->sc_iface_mt);
-
-		node = OF_getnodebyname(sc->sc_node, "multi-touch");
-		if (node == -1)
-			return;
-		len = OF_getproplen(node, "firmware-name");
-		if (len <= 0)
-			return;
-		firmware_name = malloc(len, M_TEMP, M_WAITOK);
-		OF_getprop(node, "firmware-name", firmware_name, len);
-
-		error = loadfirmware(firmware_name, &ucode, &ucode_size);
-		if (error) {
-			printf("%s: error %d, could not read firmware %s\n",
-			    sc->sc_dev.dv_xname, error, firmware_name);
-			free(firmware_name, M_TEMP, len);
-			return;
-		}
-		free(firmware_name, M_TEMP, len);
-
-		hdr = (struct mtp_fwhdr *)ucode;
-		if (sizeof(hdr) > ucode_size ||
-		    hdr->hdr_len + hdr->data_len > ucode_size) {
-			printf("%s: loaded firmware is too small\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-		if (hdr->magic != MTP_FW_MAGIC) {
-			printf("%s: wrong firmware magic number 0x%08x\n",
-			    sc->sc_dev.dv_xname, hdr->magic);
-			return;
-		}
-		if (hdr->version != MTP_FW_VERSION) {
-			printf("%s: wrong firmware version %d\n",
-			    sc->sc_dev.dv_xname, hdr->version);
-			return;
-		}
-		data = ucode + hdr->hdr_len;
-		if (hdr->iface_off)
-			data[hdr->iface_off] = sc->sc_iface_mt;
-		size = hdr->data_len;
-
-		apldchidev_send_firmware(sc, sc->sc_iface_mt, data, size);
-		apldchidev_reset(sc, sc->sc_iface_mt, 0);
-		apldchidev_reset(sc, sc->sc_iface_mt, 2);
-
-		/* Wait until ready. */
-		while (sc->sc_mt_ready == 0) {
-			error = tsleep_nsec(sc, PZERO, "apldcmt",
-			    SEC_TO_NSEC(10));
-			if (error == EWOULDBLOCK)
-				return;
-		}
-
-		aa.aa_name = "multi-touch";
-		aa.aa_desc = sc->sc_mtdesc;
-		aa.aa_desclen = sc->sc_mtdesclen;
-		sc->sc_mt = config_found(self, &aa, NULL);
+	for (retry = 5; retry > 0; retry--) {
+		error = apldchidev_load_firmware(sc, firmware_name);
+		if (error != EWOULDBLOCK)
+			break;
 	}
+	if (error)
+		goto out;
+
+	aa.aa_name = "multi-touch";
+	aa.aa_desc = sc->sc_mtdesc;
+	aa.aa_desclen = sc->sc_mtdesclen;
+	sc->sc_mt = config_found(self, &aa, NULL);
+
+out:
+	free(firmware_name, M_TEMP, len);
 }
 
 #endif
