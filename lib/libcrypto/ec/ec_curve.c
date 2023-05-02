@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.40 2023/05/02 10:44:20 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.41 2023/05/02 13:01:57 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -3001,7 +3001,7 @@ static EC_GROUP *
 ec_group_new_from_data(const struct ec_list_element *curve)
 {
 	EC_GROUP *group = NULL, *ret = NULL;
-	EC_POINT *P = NULL;
+	EC_POINT *generator = NULL;
 	BN_CTX *ctx = NULL;
 	BIGNUM *p, *a, *b, *x, *y, *order, *cofactor;
 
@@ -3058,7 +3058,7 @@ ec_group_new_from_data(const struct ec_list_element *curve)
 	}
 	EC_GROUP_set_curve_name(group, curve->nid);
 
-	if ((P = EC_POINT_new(group)) == NULL) {
+	if ((generator = EC_POINT_new(group)) == NULL) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -3070,7 +3070,7 @@ ec_group_new_from_data(const struct ec_list_element *curve)
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!EC_POINT_set_affine_coordinates(group, P, x, y, ctx)) {
+	if (!EC_POINT_set_affine_coordinates(group, generator, x, y, ctx)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -3082,7 +3082,7 @@ ec_group_new_from_data(const struct ec_list_element *curve)
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!EC_GROUP_set_generator(group, P, order, cofactor)) {
+	if (!EC_GROUP_set_generator(group, generator, order, cofactor)) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -3099,7 +3099,7 @@ ec_group_new_from_data(const struct ec_list_element *curve)
 
  err:
 	EC_GROUP_free(group);
-	EC_POINT_free(P);
+	EC_POINT_free(generator);
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 
