@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttymsg.c,v 1.20 2021/10/24 21:24:17 deraadt Exp $	*/
+/*	$OpenBSD: ttymsg.c,v 1.21 2023/05/02 09:51:22 tb Exp $	*/
 /*	$NetBSD: ttymsg.c,v 1.3 1994/11/17 07:17:55 jtc Exp $	*/
 
 /*
@@ -54,11 +54,7 @@ char *ttymsg(struct iovec *, int, char *, int);
  * ignored (exclusive-use, lack of permission, etc.).
  */
 char *
-ttymsg(iov, iovcnt, line, tmout)
-	struct iovec *iov;
-	int iovcnt;
-	char *line;
-	int tmout;
+ttymsg(struct iovec *iov, int iovcnt, char *line, int tmout)
 {
 	static char device[MAXNAMLEN] = _PATH_DEV;
 	static char errbuf[1024];
