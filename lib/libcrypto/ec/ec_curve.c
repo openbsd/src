@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_curve.c,v 1.39 2023/05/01 17:53:01 tb Exp $ */
+/* $OpenBSD: ec_curve.c,v 1.40 2023/05/02 10:44:20 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -3000,11 +3000,10 @@ static const struct ec_list_element {
 static EC_GROUP *
 ec_group_new_from_data(const struct ec_list_element *curve)
 {
-	EC_GROUP *group = NULL;
+	EC_GROUP *group = NULL, *ret = NULL;
 	EC_POINT *P = NULL;
 	BN_CTX *ctx = NULL;
 	BIGNUM *p, *a, *b, *x, *y, *order, *cofactor;
-	int ok = 0;
 
 	if ((ctx = BN_CTX_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
@@ -3057,6 +3056,7 @@ ec_group_new_from_data(const struct ec_list_element *curve)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
+	EC_GROUP_set_curve_name(group, curve->nid);
 
 	if ((P = EC_POINT_new(group)) == NULL) {
 		ECerror(ERR_R_EC_LIB);
@@ -3086,47 +3086,41 @@ ec_group_new_from_data(const struct ec_list_element *curve)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
+
 	if (curve->seed != NULL) {
 		if (!EC_GROUP_set_seed(group, curve->seed, curve->seed_len)) {
 			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 	}
-	ok = 1;
+
+	ret = group;
+	group = NULL;
+
  err:
-	if (!ok) {
-		EC_GROUP_free(group);
-		group = NULL;
-	}
+	EC_GROUP_free(group);
 	EC_POINT_free(P);
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 
-	return group;
+	return ret;
 }
 
 EC_GROUP *
 EC_GROUP_new_by_curve_name(int nid)
 {
 	size_t i;
-	EC_GROUP *ret = NULL;
 
 	if (nid <= 0)
 		return NULL;
 
 	for (i = 0; i < CURVE_LIST_LENGTH; i++) {
-		if (curve_list[i].nid == nid) {
-			ret = ec_group_new_from_data(&curve_list[i]);
-			break;
-		}
+		if (curve_list[i].nid == nid)
+			return ec_group_new_from_data(&curve_list[i]);
 	}
-	if (ret == NULL) {
-		ECerror(EC_R_UNKNOWN_GROUP);
-		return NULL;
-	}
-	EC_GROUP_set_curve_name(ret, nid);
 
-	return ret;
+	ECerror(EC_R_UNKNOWN_GROUP);
+	return NULL;
 }
 
 size_t
