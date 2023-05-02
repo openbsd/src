@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.21 2023/05/01 08:25:55 kettenis Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.22 2023/05/02 12:32:22 kettenis Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -1970,7 +1970,7 @@ aq2_fw_reboot(struct aq_softc *sc)
 		snprintf(buf, sizeof(buf), "(unknown 0x%08x)", v);
 		break;
 	}
-	printf(", Atlantic2 %s, F/W version %d.%d.%d\n", buf,
+	printf(", Atlantic2 %s, F/W version %d.%d.%d", buf,
 	    FW_VERSION_MAJOR(sc), FW_VERSION_MINOR(sc), FW_VERSION_BUILD(sc));
 
 	aq2_interface_buffer_read(sc, AQ2_FW_INTERFACE_OUT_FILTER_CAPS_REG,
