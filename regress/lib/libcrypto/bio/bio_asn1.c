@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_asn1.c,v 1.3 2023/04/25 19:48:24 tb Exp $ */
+/*	$OpenBSD: bio_asn1.c,v 1.4 2023/05/02 09:30:37 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -125,8 +125,8 @@ test_prefix_leak(void)
 	if ((bio_out = BIO_new(BIO_s_mem())) == NULL)
 		goto err;
 
-	if (!i2d_ASN1_bio_stream(bio_out, (ASN1_VALUE *)pkcs7, bio_in,
-	    SMIME_STREAM | SMIME_BINARY, &PKCS7_it))
+	if (!i2d_PKCS7_bio_stream(bio_out, pkcs7, bio_in,
+	    SMIME_STREAM | SMIME_BINARY))
 		goto err;
 
 	if (set_me != 1) {
