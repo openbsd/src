@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1243 2023/04/25 14:20:13 kn Exp $
+#	$OpenBSD: install.sub,v 1.1244 2023/05/02 15:55:58 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3099,7 +3099,7 @@ Create a passphrase protected CRYPTO softraid volume to be used as root disk.
 __EOT
 			diskinfo $(get_dkdevs);;
 		'')	;;
-		no)	return;;
+		n|no)	return;;
 		*)	isin "$resp" $(get_dkdevs) && break
 			echo 'No such disk.';;
 		esac
