@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.32 2023/05/02 14:13:05 beck Exp $ */
+/* $OpenBSD: x509name.c,v 1.33 2023/05/03 07:13:18 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -107,7 +107,7 @@ X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, char *buf,
 		goto err;
 	/* We still support the "pass NULL to find out how much" API */
 	if (buf != NULL) {
-		if (!CBS_write_bytes(&cbs, buf, len - 1, NULL))
+		if (len <= 0 || !CBS_write_bytes(&cbs, buf, len - 1, NULL))
 			goto err;
 		/* It must be a C string */
 		buf[text_len] = '\0';
