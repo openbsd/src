@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.42 2023/04/25 19:53:30 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.43 2023/05/03 06:30:11 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -225,7 +225,6 @@ static const ASN1_ADB_TABLE X9_62_CHARACTERISTIC_TWO_adbtbl[] = {
 			.field_name = "p.onBasis",
 			.item = &ASN1_NULL_it,
 		},
-
 	},
 	{
 		.value = NID_X9_62_tpBasis,
@@ -236,7 +235,6 @@ static const ASN1_ADB_TABLE X9_62_CHARACTERISTIC_TWO_adbtbl[] = {
 			.field_name = "p.tpBasis",
 			.item = &ASN1_INTEGER_it,
 		},
-
 	},
 	{
 		.value = NID_X9_62_ppBasis,
@@ -327,7 +325,6 @@ static const ASN1_ADB_TABLE X9_62_FIELDID_adbtbl[] = {
 			.field_name = "p.prime",
 			.item = &ASN1_INTEGER_it,
 		},
-
 	},
 	{
 		.value = NID_X9_62_characteristic_two_field,
@@ -338,7 +335,6 @@ static const ASN1_ADB_TABLE X9_62_FIELDID_adbtbl[] = {
 			.field_name = "p.char_two",
 			.item = &X9_62_CHARACTERISTIC_TWO_it,
 		},
-
 	},
 };
 
@@ -1098,7 +1094,7 @@ ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 /* EC_GROUP <-> DER encoding of ECPKPARAMETERS */
 
 EC_GROUP *
-d2i_ECPKParameters(EC_GROUP ** a, const unsigned char **in, long len)
+d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 {
 	EC_GROUP *group = NULL;
 	ECPKPARAMETERS *params;
@@ -1143,7 +1139,7 @@ i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 /* some EC_KEY functions */
 
 EC_KEY *
-d2i_ECPrivateKey(EC_KEY ** a, const unsigned char **in, long len)
+d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 {
 	EC_KEY *ret = NULL;
 	EC_PRIVATEKEY *priv_key = NULL;
@@ -1329,7 +1325,7 @@ i2d_ECParameters(EC_KEY *a, unsigned char **out)
 }
 
 EC_KEY *
-d2i_ECParameters(EC_KEY ** a, const unsigned char **in, long len)
+d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
 {
 	EC_KEY *ret;
 
@@ -1358,7 +1354,7 @@ d2i_ECParameters(EC_KEY ** a, const unsigned char **in, long len)
 }
 
 EC_KEY *
-o2i_ECPublicKey(EC_KEY ** a, const unsigned char **in, long len)
+o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
 {
 	EC_KEY *ret = NULL;
 
