@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.29 2023/01/04 16:51:34 job Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.30 2023/05/03 07:51:08 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -503,8 +503,8 @@ rrdp_data_handler(struct rrdp *s)
 
 	len = read(s->infd, buf, sizeof(buf));
 	if (len == -1) {
-		s->state |= RRDP_STATE_PARSE_ERROR;
 		warn("%s: read failure", s->local);
+		rrdp_abort_req(s);
 		return;
 	}
 	if ((s->state & RRDP_STATE_PARSE) == 0)
