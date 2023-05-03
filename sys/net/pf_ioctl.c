@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.402 2023/04/29 10:25:32 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.403 2023/05/03 10:32:48 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -857,6 +857,8 @@ pf_commit_rules(u_int32_t version, char *anchor)
 	struct pf_rule		*rule;
 	struct pf_rulequeue	*old_rules;
 	u_int32_t		 old_rcount;
+
+	PF_ASSERT_LOCKED();
 
 	rs = pf_find_ruleset(anchor);
 	if (rs == NULL || !rs->rules.inactive.open ||
@@ -2151,13 +2153,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_ruleset	*ruleset;
 		struct pf_anchor	*anchor;
 
-		NET_LOCK();
 		PF_LOCK();
 		pr->path[sizeof(pr->path) - 1] = '\0';
 		if ((ruleset = pf_find_ruleset(pr->path)) == NULL) {
 			error = EINVAL;
 			PF_UNLOCK();
-			NET_UNLOCK();
 			goto fail;
 		}
 		pr->nr = 0;
@@ -2172,7 +2172,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pr->nr++;
 		}
 		PF_UNLOCK();
-		NET_UNLOCK();
 		break;
 	}
 
@@ -2182,13 +2181,11 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		struct pf_anchor	*anchor;
 		u_int32_t		 nr = 0;
 
-		NET_LOCK();
 		PF_LOCK();
 		pr->path[sizeof(pr->path) - 1] = '\0';
 		if ((ruleset = pf_find_ruleset(pr->path)) == NULL) {
 			error = EINVAL;
 			PF_UNLOCK();
-			NET_UNLOCK();
 			goto fail;
 		}
 		pr->name[0] = '\0';
@@ -2210,7 +2207,6 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				}
 		}
 		PF_UNLOCK();
-		NET_UNLOCK();
 		if (!pr->name[0])
 			error = EBUSY;
 		break;

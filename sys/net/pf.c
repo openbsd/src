@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1174 2023/04/28 14:08:34 phessler Exp $ */
+/*	$OpenBSD: pf.c,v 1.1175 2023/05/03 10:32:47 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1369,6 +1369,8 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	int pool_flags;
 	int error = ENOMEM;
 	int n = 0;
+
+	PF_ASSERT_LOCKED();
 
 	if (sp->creatorid == 0) {
 		DPFPRINTF(LOG_NOTICE, "%s: invalid creator id: %08x", __func__,
@@ -4269,6 +4271,8 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 	int			 action = PF_DROP;
 	struct pf_test_ctx	 ctx;
 	int			 rv;
+
+	PF_ASSERT_LOCKED();
 
 	memset(&ctx, 0, sizeof(ctx));
 	ctx.pd = pd;
