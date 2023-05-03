@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.48 2023/04/27 09:03:06 kettenis Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.49 2023/05/03 15:25:25 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1480,13 +1480,14 @@ dwpcie_rk3568_intr_disestablish(void *cookie)
 		evcount_detach(&di->di_count);
 
 	TAILQ_REMOVE(&sc->sc_intx[di->di_pin], di, di_next);
-	free(di, M_DEVBUF, sizeof(*di));
 
 	if (!TAILQ_EMPTY(&sc->sc_intx[di->di_pin])) {
 		/* Unmask the interrupt. */
 		bus_space_write_4(sc->sc_iot, sc->sc_glue_ioh,
 		    PCIE_CLIENT_INTR_MASK_LEGACY, mask << 16);
 	}
+
+	free(di, M_DEVBUF, sizeof(*di));
 }
 
 void
