@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.273 2023/05/02 06:06:13 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.274 2023/05/03 11:43:31 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -1260,15 +1260,12 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		return (0);
 	}
 
-	/* XXXSMP there is a MP race in nd6_resolve() */
-	KERNEL_LOCK();
 	uptime = getuptime();
 	rt = rt_getll(rt0);
 
 	if (ISSET(rt->rt_flags, RTF_REJECT) &&
 	    (rt->rt_expire == 0 || rt->rt_expire > uptime)) {
 		m_freem(m);
-		KERNEL_UNLOCK();
 		return (rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
 
@@ -1291,6 +1288,11 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		goto bad;
 	}
 
+	KERNEL_LOCK();
+	if (!ISSET(rt->rt_flags, RTF_LLINFO)) {
+		KERNEL_UNLOCK();
+		goto bad;
+	}
 	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 	KASSERT(ln != NULL);
 
@@ -1321,6 +1323,8 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 * send the packet.
 	 */
 	if (ln->ln_state > ND6_LLINFO_INCOMPLETE) {
+		KERNEL_UNLOCK();
+
 		sdl = satosdl(rt->rt_gateway);
 		if (sdl->sdl_alen != ETHER_ADDR_LEN) {
 			char addr[INET6_ADDRSTRLEN];
@@ -1332,7 +1336,6 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		}
 
 		bcopy(LLADDR(sdl), desten, sdl->sdl_alen);
-		KERNEL_UNLOCK();
 		return (0);
 	}
 
@@ -1374,7 +1377,6 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 
 bad:
 	m_freem(m);
-	KERNEL_UNLOCK();
 	return (EINVAL);
 }
 
