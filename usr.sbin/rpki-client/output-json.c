@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.36 2023/04/27 07:57:25 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.37 2023/05/03 09:54:25 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -39,8 +39,8 @@ outputheader_json(struct stats *st)
 
 	json_do_object("metadata");
 
-	json_do_printf("buildmachine", "%s", hn);
-	json_do_printf("buildtime", "%s", tbuf);
+	json_do_string("buildmachine", hn);
+	json_do_string("buildtime", tbuf);
 	json_do_int("elapsedtime", st->elapsed_time.tv_sec);
 	json_do_int("usertime", st->user_time.tv_sec);
 	json_do_int("systemtime", st->system_time.tv_sec);
@@ -59,7 +59,7 @@ outputheader_json(struct stats *st)
 
 	json_do_array("talfiles");
 	for (i = 0; i < talsz; i++)
-		json_do_printf("name", "%s", tals[i]);
+		json_do_string("name", tals[i]);
 	json_do_end();
 
 	json_do_int("manifests", st->repo_tal_stats.mfts);
@@ -138,9 +138,9 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 
 		json_do_object("roa");
 		json_do_int("asn", v->asid);
-		json_do_printf("prefix", "%s", buf);
+		json_do_string("prefix", buf);
 		json_do_int("maxLength", v->maxlength);
-		json_do_printf("ta", "%s", taldescs[v->talid]);
+		json_do_string("ta", taldescs[v->talid]);
 		json_do_int("expires", v->expires);
 		json_do_end();
 	}
@@ -150,9 +150,9 @@ output_json(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	RB_FOREACH(b, brk_tree, brks) {
 		json_do_object("brks");
 		json_do_int("asn", b->asid);
-		json_do_printf("ski", "%s", b->ski);
-		json_do_printf("pubkey", "%s", b->pubkey);
-		json_do_printf("ta", "%s", taldescs[b->talid]);
+		json_do_string("ski", b->ski);
+		json_do_string("pubkey", b->pubkey);
+		json_do_string("ta", taldescs[b->talid]);
 		json_do_int("expires", b->expires);
 		json_do_end();
 	}
