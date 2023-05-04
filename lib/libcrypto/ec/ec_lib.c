@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.56 2023/04/25 19:53:30 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.57 2023/05/04 13:51:59 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1459,15 +1459,20 @@ ec_group_simple_order_bits(const EC_GROUP *group)
 EC_KEY *
 ECParameters_dup(EC_KEY *key)
 {
-	unsigned char *p = NULL;
-	EC_KEY *k = NULL;
+	const unsigned char *p;
+	unsigned char *der = NULL;
+	EC_KEY *dup = NULL;
 	int len;
 
 	if (key == NULL)
-		return (NULL);
+		return NULL;
 
-	if ((len = i2d_ECParameters(key, &p)) > 0)
-		k = d2i_ECParameters(NULL, (const unsigned char **)&p, len);
+	if ((len = i2d_ECParameters(key, &der)) <= 0)
+		return NULL;
 
-	return (k);
+	p = der;
+	dup = d2i_ECParameters(NULL, &p, len);
+	freezero(der, len);
+
+	return dup;
 }
