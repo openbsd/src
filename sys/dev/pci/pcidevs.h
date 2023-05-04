@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2034 2023/05/01 07:24:04 dlg Exp 
+ *	OpenBSD: pcidevs,v 1.2035 2023/05/04 05:38:17 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7068,6 +7068,7 @@
 
 /* Lenovo products */
 #define	PCI_PRODUCT_LENOVO_NVME	0x0003		/* NVMe */
+#define	PCI_PRODUCT_LENOVO_NVME_2	0x0006		/* NVMe */
 
 /* Level 1 (Intel) */
 #define	PCI_PRODUCT_LEVEL1_LXT1001	0x0001		/* LXT1001 */
