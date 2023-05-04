@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.27 2015/08/13 16:34:11 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.28 2023/05/04 14:02:44 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -105,7 +105,7 @@ sub erase
 sub delete
 {
 	my ($self, @pkgnames) = @_;
-	$self->fill_entries($self);
+	$self->fill_entries;
 	for my $pkg (@pkgnames) {
 		delete $self->{entries}->{$pkg};
 	}
@@ -115,7 +115,7 @@ sub delete
 sub add
 {
 	my ($self, @pkgnames) = @_;
-	$self->fill_entries($self);
+	$self->fill_entries;
 	for my $pkg (@pkgnames) {
 		$self->{entries}->{$pkg} = 1;
 	}
