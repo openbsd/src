@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.44 2023/05/04 05:57:18 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.45 2023/05/04 05:59:38 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -908,8 +908,8 @@ ec_asn1_group2pkparameters(const EC_GROUP *group, ECPKPARAMETERS *params)
 	} else {
 		/* use the ECPARAMETERS structure */
 		ret->type = 1;
-		if ((ret->value.parameters = ec_asn1_group2parameters(
-			    group, NULL)) == NULL)
+		if ((ret->value.parameters = ec_asn1_group2parameters(group,
+		    NULL)) == NULL)
 			ok = 0;
 	}
 
