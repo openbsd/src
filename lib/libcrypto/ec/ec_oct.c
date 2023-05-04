@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_oct.c,v 1.13 2023/05/01 21:15:26 tb Exp $ */
+/* $OpenBSD: ec_oct.c,v 1.14 2023/05/04 06:45:51 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -113,7 +113,7 @@ EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point,
     BN_CTX *ctx_in)
 {
 	BN_CTX *ctx;
-	int ret = 0;
+	size_t ret = 0;
 
 	if ((ctx = ctx_in) == NULL)
 		ctx = BN_CTX_new();
