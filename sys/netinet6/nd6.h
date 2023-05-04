@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.h,v 1.98 2023/05/02 06:06:13 bluhm Exp $	*/
+/*	$OpenBSD: nd6.h,v 1.99 2023/05/04 06:56:56 bluhm Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -44,7 +44,10 @@
 #define ND6_LLINFO_PROBE	4
 
 /*
- *  Locks used to protect struct members in this file:
+ * Locks used to protect struct members in this file:
+ *	I	immutable after creation
+ *	K	kernel lock
+ *	m	nd6 mutex, needed when net lock is shared
  *	N	net lock
  */
 
@@ -79,8 +82,8 @@ struct	in6_ndireq {
 #include <sys/queue.h>
 
 struct	llinfo_nd6 {
-	TAILQ_ENTRY(llinfo_nd6)	ln_list;
-	struct	rtentry *ln_rt;
+	TAILQ_ENTRY(llinfo_nd6)	 ln_list;	/* [mN] global nd6_list */
+	struct	rtentry		*ln_rt;		/* [I] backpointer to rtentry */
 	struct	mbuf_queue ln_mq;	/* hold packets until resolved */
 	struct	in6_addr ln_saddr6;	/* source of prompting packet */
 	long	ln_asked;	/* number of queries already sent for addr */

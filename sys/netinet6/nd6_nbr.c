@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.147 2023/05/02 06:06:13 bluhm Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.148 2023/05/04 06:56:56 bluhm Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -567,7 +567,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	struct nd_opts ndopts;
 	char addr[INET6_ADDRSTRLEN], addr0[INET6_ADDRSTRLEN];
 
-	NET_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	ifp = if_get(m->m_pkthdr.ph_ifidx);
 	if (ifp == NULL)
