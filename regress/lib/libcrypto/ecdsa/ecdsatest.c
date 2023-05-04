@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdsatest.c,v 1.14 2022/09/02 11:47:25 tb Exp $	*/
+/*	$OpenBSD: ecdsatest.c,v 1.15 2023/05/04 13:41:20 tb Exp $	*/
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -83,78 +83,7 @@
 #endif
 #include <openssl/err.h>
 
-/* declaration of the test functions */
-int x9_62_test_internal(int nid, const char *r, const char *s);
 int test_builtin(void);
-
-/* some tests from the X9.62 draft */
-int
-x9_62_test_internal(int nid, const char *r_in, const char *s_in)
-{
-	EVP_MD_CTX *md_ctx = NULL;
-	const char message[] = "abc";
-	unsigned char digest[20];
-	unsigned int dgst_len = 0;
-	EC_KEY *key = NULL;
-	ECDSA_SIG *signature = NULL;
-	BIGNUM *r = NULL, *s = NULL;
-	int failed = 1;
-
-	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
-		goto err;
-
-	if (!EVP_DigestInit(md_ctx, EVP_sha1()))
-		goto err;
-	if (!EVP_DigestUpdate(md_ctx, message, 3))
-		goto err;
-	if (!EVP_DigestFinal(md_ctx, digest, &dgst_len))
-		goto err;
-
-	printf("testing %s: ", OBJ_nid2sn(nid));
-
-	if ((key = EC_KEY_new_by_curve_name(nid)) == NULL)
-		goto err;
-	if (!EC_KEY_generate_key(key))
-		goto err;
-
-	printf(".");
-	fflush(stdout);
-
-	if ((signature = ECDSA_do_sign(digest, 20, key)) == NULL)
-		goto err;
-
-	printf(".");
-	fflush(stdout);
-
-	if (!BN_dec2bn(&r, r_in) || !BN_dec2bn(&s, s_in))
-		goto err;
-	if (BN_cmp(ECDSA_SIG_get0_r(signature), r) ||
-	    BN_cmp(ECDSA_SIG_get0_s(signature), s))
-		goto err;
-
-	printf(".");
-	fflush(stdout);
-
-	if (ECDSA_do_verify(digest, 20, signature, key) != 1)
-		goto err;
-
-	printf(".");
-	fflush(stdout);
-
-	printf(" ok\n");
-
-	failed = 0;
-
- err:
-	if (failed)
-		printf(" failed\n");
-	EC_KEY_free(key);
-	ECDSA_SIG_free(signature);
-	BN_free(r);
-	BN_free(s);
-	EVP_MD_CTX_free(md_ctx);
-	return failed;
-}
 
 int
 test_builtin(void)
