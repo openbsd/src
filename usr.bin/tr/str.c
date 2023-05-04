@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.14 2021/11/02 03:09:15 cheloha Exp $	*/
+/*	$OpenBSD: str.c,v 1.15 2023/05/04 16:08:29 tb Exp $	*/
 /*	$NetBSD: str.c,v 1.7 1995/08/31 22:13:47 jtc Exp $	*/
 
 /*-
@@ -52,8 +52,7 @@ static int	genrange(STR *);
 static void	genseq(STR *);
 
 int
-next(s)
-	STR *s;
+next(STR *s)
 {
 	int ch;
 
@@ -110,8 +109,7 @@ next(s)
 }
 
 static int
-bracket(s)
-	STR *s;
+bracket(STR *s)
 {
 	char *p;
 
@@ -203,8 +201,7 @@ genclass(STR *s)
 }
 
 static int
-c_class(a, b)
-	const void *a, *b;
+c_class(const void *a, const void *b)
 {
 	return (strcmp(((CLASS *)a)->name, ((CLASS *)b)->name));
 }
@@ -214,8 +211,7 @@ c_class(a, b)
  * we just syntax check and grab the character.
  */
 static void
-genequiv(s)
-	STR *s;
+genequiv(STR *s)
 {
 	if (*s->str == '\\') {
 		s->equiv[0] = backslash(s);
@@ -233,8 +229,7 @@ genequiv(s)
 }
 
 static int
-genrange(s)
-	STR *s;
+genrange(STR *s)
 {
 	int stopval;
 	unsigned char *savestart;
@@ -252,8 +247,7 @@ genrange(s)
 }
 
 static void
-genseq(s)
-	STR *s;
+genseq(STR *s)
 {
 	char *ep;
 
