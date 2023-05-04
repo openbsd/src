@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2034 2023/05/01 07:24:04 dlg Exp $
+$OpenBSD: pcidevs,v 1.2035 2023/05/04 05:38:17 kevlo Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7063,6 +7063,7 @@ product LEADTEK WINFAST_XP	0x6609	Leadtek WinFast TV 2000 XP
 
 /* Lenovo products */
 product LENOVO NVME		0x0003	NVMe
+product LENOVO NVME_2		0x0006	NVMe
 
 /* Level 1 (Intel) */
 product LEVEL1 LXT1001		0x0001	LXT1001
