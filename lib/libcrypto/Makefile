@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.125 2023/04/28 16:30:14 tb Exp $
+# $OpenBSD: Makefile,v 1.126 2023/05/05 12:20:03 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -606,6 +606,7 @@ SRCS+= rsa_prn.c
 SRCS+= rsa_pss.c
 SRCS+= rsa_saos.c
 SRCS+= rsa_sign.c
+SRCS+= rsa_x931.c
 
 # sha/
 SRCS+= sha1.c
