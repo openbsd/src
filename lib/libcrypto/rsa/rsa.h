@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.63 2023/04/25 16:50:33 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.64 2023/05/05 12:30:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -225,7 +225,7 @@ typedef struct rsa_oaep_params_st {
 #define RSA_SSLV23_PADDING	2
 #define RSA_NO_PADDING		3
 #define RSA_PKCS1_OAEP_PADDING	4
-/* Leave this for now as rust-openssl and erlang expose it. */
+/* rust-openssl and erlang expose this and salt even uses it. */
 #define RSA_X931_PADDING	5
 /* EVP_PKEY_ only */
 #define RSA_PKCS1_PSS_PADDING	6
