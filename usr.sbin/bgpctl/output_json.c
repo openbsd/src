@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.33 2023/04/26 19:14:54 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.34 2023/05/05 07:42:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -62,7 +62,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 		json_do_array("multiprotocol");
 		for (i = AID_MIN; i < AID_MAX; i++)
 			if (capa->mp[i])
-				json_do_printf("mp", "%s", aid2str(i));
+				json_do_string("mp", aid2str(i));
 		json_do_end();
 	}
 	if (capa->grestart.restart) {
@@ -87,8 +87,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 			for (i = AID_MIN; i < AID_MAX; i++)
 				if (capa->grestart.flags[i] & CAPA_GR_PRESENT) {
 					json_do_object("family");
-					json_do_printf("family", "%s",
-					    aid2str(i));
+					json_do_string("family", aid2str(i));
 					json_do_bool("preserved",
 					    capa->grestart.flags[i] &
 					    CAPA_GR_FORWARD);
@@ -104,16 +103,16 @@ json_neighbor_capabilities(struct capabilities *capa)
 		for (i = AID_MIN; i < AID_MAX; i++)
 			if (capa->add_path[i]) {
 				json_do_object("add-path-elm");
-				json_do_printf("family", "%s", aid2str(i));
+				json_do_string("family", aid2str(i));
 				switch (capa->add_path[i]) {
 				case CAPA_AP_RECV:
-					json_do_printf("mode", "recv");
+					json_do_string("mode", "recv");
 					break;
 				case CAPA_AP_SEND:
-					json_do_printf("mode", "send");
+					json_do_string("mode", "send");
 					break;
 				case CAPA_AP_BIDIR:
-					json_do_printf("mode", "bidir");
+					json_do_string("mode", "bidir");
 					break;
 				default:
 					json_do_printf("mode", "unknown %d",
@@ -126,7 +125,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 	}
 
 	if (capa->policy) {
-		json_do_printf("open_policy", "%s",
+		json_do_string("open_policy",
 		    capa->policy == 2 ? "enforce" : "present");
 	}
 
@@ -137,9 +136,9 @@ static void
 json_neighbor_stats(struct peer *p)
 {
 	json_do_object("stats");
-	json_do_printf("last_read", "%s", fmt_monotime(p->stats.last_read));
+	json_do_string("last_read", fmt_monotime(p->stats.last_read));
 	json_do_int("last_read_sec", get_monotime(p->stats.last_read));
-	json_do_printf("last_write", "%s", fmt_monotime(p->stats.last_write));
+	json_do_string("last_write", fmt_monotime(p->stats.last_write));
 	json_do_int("last_write_sec", get_monotime(p->stats.last_write));
 
 	json_do_object("prefixes");
@@ -242,14 +241,13 @@ json_neighbor_full(struct peer *p)
 			    p->conf.max_out_prefix_restart);
 	}
 	if (p->auth.method != AUTH_NONE)
-		json_do_printf("authentication", "%s",
+		json_do_string("authentication",
 		    fmt_auth_method(p->auth.method));
 	json_do_bool("ttl_security", p->conf.ttlsec);
 	json_do_uint("holdtime", p->conf.holdtime);
 	json_do_uint("min_holdtime", p->conf.min_holdtime);
 	if (p->conf.ebgp && p->conf.role != ROLE_NONE)
-		json_do_printf("role", "%s",
-		    log_policy(p->conf.role));
+		json_do_string("role", log_policy(p->conf.role));
 
 	/* capabilities */
 	json_do_bool("announce_capabilities", p->conf.announce_capa);
@@ -263,19 +261,19 @@ json_neighbor_full(struct peer *p)
 
 	/* errors */
 	if (p->conf.reason[0])
-		json_do_printf("my_shutdown_reason", "%s",
+		json_do_string("my_shutdown_reason",
 		    log_reason(p->conf.reason));
 	if (p->stats.last_reason[0])
-		json_do_printf("last_shutdown_reason", "%s",
+		json_do_string("last_shutdown_reason",
 		    log_reason(p->stats.last_reason));
 	errstr = fmt_errstr(p->stats.last_sent_errcode,
 	    p->stats.last_sent_suberr);
 	if (errstr)
-		json_do_printf("last_error_sent", "%s", errstr);
+		json_do_string("last_error_sent", errstr);
 	errstr = fmt_errstr(p->stats.last_rcvd_errcode,
 	    p->stats.last_rcvd_suberr);
 	if (errstr)
-		json_do_printf("last_error_received", "%s", errstr);
+		json_do_string("last_error_received", errstr);
 
 	/* connection info */
 	if (p->state >= STATE_OPENSENT) {
@@ -284,13 +282,13 @@ json_neighbor_full(struct peer *p)
 		json_do_uint("keepalive", p->holdtime / 3);
 
 		json_do_object("local");
-		json_do_printf("address", "%s", log_addr(&p->local));
+		json_do_string("address", log_addr(&p->local));
 		json_do_uint("port", p->local_port);
 		json_neighbor_capabilities(&p->capa.ann);
 		json_do_end();
 
 		json_do_object("remote");
-		json_do_printf("address", "%s", log_addr(&p->remote));
+		json_do_string("address", log_addr(&p->remote));
 		json_do_uint("port", p->remote_port);
 		json_neighbor_capabilities(&p->capa.peer);
 		json_do_end();
@@ -299,9 +297,9 @@ json_neighbor_full(struct peer *p)
 		json_neighbor_capabilities(&p->capa.neg);
 
 		if (p->conf.ebgp && p->conf.role != ROLE_NONE) {
-			json_do_printf("remote_role", "%s",
+			json_do_string("remote_role",
 			    log_policy(p->remote_role));
-			json_do_printf("local_role", "%s",
+			json_do_string("local_role",
 			    log_policy(p->conf.role));
 		}
 		json_do_end();
@@ -315,24 +313,23 @@ json_neighbor(struct peer *p, struct parse_result *res)
 
 	json_do_object("neighbor");
 
-	json_do_printf("remote_as", "%s", log_as(p->conf.remote_as));
+	json_do_string("remote_as", log_as(p->conf.remote_as));
 	if (p->conf.descr[0])
-		json_do_printf("description", "%s", p->conf.descr);
+		json_do_string("description", p->conf.descr);
 	if (p->conf.group[0])
-		json_do_printf("group", "%s", p->conf.group);
+		json_do_string("group", p->conf.group);
 	if (!p->conf.template)
-		json_do_printf("remote_addr", "%s",
-		    log_addr(&p->conf.remote_addr));
+		json_do_string("remote_addr", log_addr(&p->conf.remote_addr));
 	else
 		json_do_printf("remote_addr", "%s/%u",
 		    log_addr(&p->conf.remote_addr), p->conf.remote_masklen);
 	if (p->state == STATE_ESTABLISHED) {
 		struct in_addr ina;
 		ina.s_addr = p->remote_bgpid;
-		json_do_printf("bgpid", "%s", inet_ntoa(ina));
+		json_do_string("bgpid", inet_ntoa(ina));
 	}
-	json_do_printf("state", "%s", statenames[p->state]);
-	json_do_printf("last_updown", "%s", fmt_monotime(p->stats.last_updown));
+	json_do_string("state", statenames[p->state]);
+	json_do_string("last_updown", fmt_monotime(p->stats.last_updown));
 	json_do_int("last_updown_sec", get_monotime(p->stats.last_updown));
 
 	switch (res->action) {
@@ -359,7 +356,7 @@ json_timer(struct ctl_timer *t)
 	json_do_array("timers");
 
 	json_do_object("timer");
-	json_do_printf("name", "%s", timernames[t->type]);
+	json_do_string("name", timernames[t->type]);
 	json_do_int("due", t->val);
 	json_do_end();
 }
@@ -383,7 +380,7 @@ json_fib(struct kroute_full *kf)
 		origin = "static";
 	else
 		origin = "unknown";
-	json_do_printf("origin", "%s", origin);
+	json_do_string("origin", origin);
 	json_do_bool("used_by_nexthop", kf->flags & F_NEXTHOP);
 	json_do_bool("blackhole", kf->flags & F_BLACKHOLE);
 	json_do_bool("reject", kf->flags & F_REJECT);
@@ -391,7 +388,7 @@ json_fib(struct kroute_full *kf)
 	if (kf->flags & F_CONNECTED)
 		json_do_printf("nexthop", "link#%u", kf->ifindex);
 	else
-		json_do_printf("nexthop", "%s", log_addr(&kf->nexthop));
+		json_do_string("nexthop", log_addr(&kf->nexthop));
 
 	if (kf->flags & F_MPLS) {
 		json_do_array("mplslabel");
@@ -409,7 +406,7 @@ json_fib_table(struct ktable *kt)
 
 	json_do_object("fibtable");
 	json_do_uint("rtableid", kt->rtableid);
-	json_do_printf("description", "%s", kt->descr);
+	json_do_string("description", kt->descr);
 	json_do_bool("coupled", kt->fib_sync);
 	json_do_bool("admin_change", kt->fib_sync != kt->fib_conf);
 	json_do_end();
@@ -420,15 +417,15 @@ json_do_interface(struct ctl_show_interface *iface)
 {
 	json_do_object("interface");
 
-	json_do_printf("name", "%s", iface->ifname);
+	json_do_string("name", iface->ifname);
 	json_do_uint("rdomain", iface->rdomain);
 	json_do_bool("is_up", iface->is_up);
 	json_do_bool("nh_reachable", iface->nh_reachable);
 
 	if (iface->media[0])
-		json_do_printf("media", "%s", iface->media);
+		json_do_string("media", iface->media);
 
-	json_do_printf("linkstate", "%s", iface->linkstate);
+	json_do_string("linkstate", iface->linkstate);
 	if (iface->baudrate > 0)
 		json_do_uint("baudrate", iface->baudrate);
 
@@ -442,7 +439,7 @@ json_nexthop(struct ctl_show_nexthop *nh)
 
 	json_do_object("nexthop");
 
-	json_do_printf("address", "%s", log_addr(&nh->addr));
+	json_do_string("address", log_addr(&nh->addr));
 	json_do_bool("valid", nh->valid);
 
 	if (!nh->krvalid)
@@ -452,7 +449,7 @@ json_nexthop(struct ctl_show_nexthop *nh)
 	    nh->kr.prefixlen);
 	json_do_uint("priority", nh->kr.priority);
 	json_do_bool("connected", nh->kr.flags & F_CONNECTED);
-	json_do_printf("nexthop", "%s", log_addr(&nh->kr.nexthop));
+	json_do_string("nexthop", log_addr(&nh->kr.nexthop));
 	if (nh->iface.ifname[0])
 		json_do_interface(&nh->iface);
 done:
@@ -485,12 +482,12 @@ json_communities(u_char *data, size_t len, struct parse_result *res)
 		switch (c.flags) {
 		case COMMUNITY_TYPE_BASIC:
 			json_do_array("communities");
-			json_do_printf("community", "%s",
+			json_do_string("community",
 			    fmt_community(c.data1, c.data2));
 			break;
 		case COMMUNITY_TYPE_LARGE:
 			json_do_array("large_communities");
-			json_do_printf("community", "%s",
+			json_do_string("community",
 			    fmt_large_community(c.data1, c.data2, c.data3));
 			break;
 		case COMMUNITY_TYPE_EXT:
@@ -511,7 +508,7 @@ json_communities(u_char *data, size_t len, struct parse_result *res)
 			ext = htobe64(ext);
 
 			json_do_array("extended_communities");
-			json_do_printf("community", "%s",
+			json_do_string("community",
 			    fmt_ext_community((void *)&ext));
 			break;
 		}
@@ -524,7 +521,7 @@ json_do_community(u_char *data, uint16_t len)
 	uint16_t a, v, i;
 
 	if (len & 0x3) {
-		json_do_printf("error", "bad length");
+		json_do_string("error", "bad length");
 		return;
 	}
 
@@ -535,7 +532,7 @@ json_do_community(u_char *data, uint16_t len)
 		memcpy(&v, data + i + 2, sizeof(v));
 		a = ntohs(a);
 		v = ntohs(v);
-		json_do_printf("community", "%s", fmt_community(a, v));
+		json_do_string("community", fmt_community(a, v));
 	}
 
 	json_do_end();
@@ -548,7 +545,7 @@ json_do_large_community(u_char *data, uint16_t len)
 	uint16_t i;
 
 	if (len % 12) {
-		json_do_printf("error", "bad length");
+		json_do_string("error", "bad length");
 		return;
 	}
 
@@ -562,7 +559,7 @@ json_do_large_community(u_char *data, uint16_t len)
 		l1 = ntohl(l1);
 		l2 = ntohl(l2);
 
-		json_do_printf("community", "%s",
+		json_do_string("community",
 		    fmt_large_community(a, l1, l2));
 	}
 
@@ -575,14 +572,14 @@ json_do_ext_community(u_char *data, uint16_t len)
 	uint16_t i;
 
 	if (len & 0x7) {
-		json_do_printf("error", "bad length");
+		json_do_string("error", "bad length");
 		return;
 	}
 
 	json_do_array("extended_communities");
 
 	for (i = 0; i < len; i += 8)
-		json_do_printf("community", "%s", fmt_ext_community(data + i));
+		json_do_string("community", fmt_ext_community(data + i));
 
 	json_do_end();
 }
@@ -630,7 +627,7 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 	json_do_array("attributes");
 
 	json_do_object("attribute");
-	json_do_printf("type", "%s", fmt_attr(type, -1));
+	json_do_string("type", fmt_attr(type, -1));
 	json_do_uint("length", alen);
 	json_do_object("flags");
 	json_do_bool("partial", flags & ATTR_PARTIAL);
@@ -641,9 +638,9 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 	switch (type) {
 	case ATTR_ORIGIN:
 		if (alen == 1)
-			json_do_printf("origin", "%s", fmt_origin(*data, 0));
+			json_do_string("origin", fmt_origin(*data, 0));
 		else
-			json_do_printf("error", "bad length");
+			json_do_string("error", "bad length");
 		break;
 	case ATTR_ASPATH:
 	case ATTR_AS4_PATH:
@@ -657,12 +654,12 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 			if (path == NULL)
 				errx(1, "aspath_inflate failed");
 		} else {
-			json_do_printf("error", "bad AS-Path");
+			json_do_string("error", "bad AS-Path");
 			break;
 		}
 		if (aspath_asprint(&aspath, path, alen) == -1)
 			err(1, NULL);
-		json_do_printf("aspath", "%s", aspath);
+		json_do_string("aspath", aspath);
 		free(aspath);
 		if (path != data)
 			free(path);
@@ -670,9 +667,9 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 	case ATTR_NEXTHOP:
 		if (alen == 4) {
 			memcpy(&id, data, sizeof(id));
-			json_do_printf("nexthop", "%s", inet_ntoa(id));
+			json_do_string("nexthop", inet_ntoa(id));
 		} else
-			json_do_printf("error", "bad length");
+			json_do_string("error", "bad length");
 		break;
 	case ATTR_MED:
 	case ATTR_LOCALPREF:
@@ -681,7 +678,7 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 			memcpy(&val, data, sizeof(val));
 			json_do_uint("metric", ntohl(val));
 		} else
-			json_do_printf("error", "bad length");
+			json_do_string("error", "bad length");
 		break;
 	case ATTR_AGGREGATOR:
 	case ATTR_AS4_AGGREGATOR:
@@ -694,11 +691,11 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 			memcpy(&id, data + sizeof(short_as), sizeof(id));
 			as = ntohs(short_as);
 		} else {
-			json_do_printf("error", "bad AS-Path");
+			json_do_string("error", "bad AS-Path");
 			break;
 		}
 		json_do_uint("AS", as);
-		json_do_printf("router_id", "%s", inet_ntoa(id));
+		json_do_string("router_id", inet_ntoa(id));
 		break;
 	case ATTR_COMMUNITIES:
 		json_do_community(data, alen);
@@ -706,16 +703,16 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 	case ATTR_ORIGINATOR_ID:
 		if (alen == 4) {
 			memcpy(&id, data, sizeof(id));
-			json_do_printf("originator", "%s", inet_ntoa(id));
+			json_do_string("originator", inet_ntoa(id));
 		} else
-			json_do_printf("error", "bad length");
+			json_do_string("error", "bad length");
 		break;
 	case ATTR_CLUSTER_LIST:
 		json_do_array("cluster_list");
 		for (off = 0; off + sizeof(id) <= alen;
 		    off += sizeof(id)) {
 			memcpy(&id, data + off, sizeof(id));
-			json_do_printf("cluster_id", "%s", inet_ntoa(id));
+			json_do_string("cluster_id", inet_ntoa(id));
 		}
 		json_do_end();
 		break;
@@ -723,7 +720,7 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 	case ATTR_MP_UNREACH_NLRI:
 		if (alen < 3) {
 bad_len:
-			json_do_printf("error", "bad length");
+			json_do_string("error", "bad length");
 			break;
 		}
 		memcpy(&afi, data, 2);
@@ -738,7 +735,7 @@ bad_len:
 			    afi, safi);
 			break;
 		}
-		json_do_printf("family", "%s", aid2str(aid));
+		json_do_string("family", aid2str(aid));
 
 		if (type == ATTR_MP_REACH_NLRI) {
 			struct bgpd_addr nexthop;
@@ -780,7 +777,7 @@ bad_len:
 			data += nhlen + 1;
 			alen -= nhlen + 1;
 
-			json_do_printf("nexthop", "%s", log_addr(&nexthop));
+			json_do_string("nexthop", log_addr(&nexthop));
 		}
 
 		json_do_array("NLRI");
@@ -788,7 +785,7 @@ bad_len:
 			json_do_object("prefix");
 			if (addpath) {
 				if (alen <= sizeof(pathid)) {
-					json_do_printf("error", "bad path-id");
+					json_do_string("error", "bad path-id");
 					break;
 				}
 				memcpy(&pathid, data, sizeof(pathid));
@@ -841,7 +838,7 @@ bad_len:
 			as = ntohl(as);
 			json_do_uint("as", as);
 		} else
-			json_do_printf("error", "bad length");
+			json_do_string("error", "bad length");
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
 	default:
@@ -866,18 +863,18 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 
 	if (aspath_asprint(&aspath, asdata, aslen) == -1)
 		err(1, NULL);
-	json_do_printf("aspath", "%s", aspath);
+	json_do_string("aspath", aspath);
 	free(aspath);
 
-	json_do_printf("exit_nexthop", "%s", log_addr(&r->exit_nexthop));
-	json_do_printf("true_nexthop", "%s", log_addr(&r->true_nexthop));
+	json_do_string("exit_nexthop", log_addr(&r->exit_nexthop));
+	json_do_string("true_nexthop", log_addr(&r->true_nexthop));
 
 	json_do_object("neighbor");
 	if (r->descr[0])
-		json_do_printf("description", "%s", r->descr);
-	json_do_printf("remote_addr", "%s", log_addr(&r->remote_addr));
+		json_do_string("description", r->descr);
+	json_do_string("remote_addr", log_addr(&r->remote_addr));
 	id.s_addr = htonl(r->remote_id);
-	json_do_printf("bgp_id", "%s", inet_ntoa(id));
+	json_do_string("bgp_id", inet_ntoa(id));
 	json_do_end();
 
 	if (r->flags & F_PREF_PATH_ID)
@@ -892,23 +889,23 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	if (r->flags & F_PREF_AS_WIDE)
 		json_do_bool("as-wide", 1);
 	if (r->flags & F_PREF_INTERNAL)
-		json_do_printf("source", "%s", "internal");
+		json_do_string("source", "internal");
 	else
-		json_do_printf("source", "%s", "external");
+		json_do_string("source", "external");
 	if (r->flags & F_PREF_STALE)
 		json_do_bool("stale", 1);
 	if (r->flags & F_PREF_ANNOUNCE)
 		json_do_bool("announced", 1);
 
 	/* various attribibutes */
-	json_do_printf("ovs", "%s", fmt_ovs(r->roa_validation_state, 0));
-	json_do_printf("avs", "%s", fmt_avs(r->aspa_validation_state, 0));
-	json_do_printf("origin", "%s", fmt_origin(r->origin, 0));
+	json_do_string("ovs", fmt_ovs(r->roa_validation_state, 0));
+	json_do_string("avs", fmt_avs(r->aspa_validation_state, 0));
+	json_do_string("origin", fmt_origin(r->origin, 0));
 	json_do_uint("metric", r->med);
 	json_do_uint("localpref", r->local_pref);
 	json_do_uint("weight", r->weight);
 	json_do_int("dmetric", r->dmetric);
-	json_do_printf("last_update", "%s", fmt_timeframe(r->age));
+	json_do_string("last_update", fmt_timeframe(r->age));
 	json_do_int("last_update_sec", r->age);
 
 	/* keep the object open for communities and attributes */
@@ -985,9 +982,9 @@ json_rib_set(struct ctl_show_set *set)
 	json_do_array("sets");
 
 	json_do_object("set");
-	json_do_printf("name", "%s", set->name);
-	json_do_printf("type", "%s", fmt_set_type(set));
-	json_do_printf("last_change", "%s", fmt_monotime(set->lastchange));
+	json_do_string("name", set->name);
+	json_do_string("type", fmt_set_type(set));
+	json_do_string("last_change", fmt_monotime(set->lastchange));
 	json_do_int("last_change_sec", get_monotime(set->lastchange));
 	if (set->type == ASNUM_SET || set->type == ASPA_SET) {
 		json_do_uint("num_ASnum", set->as_cnt);
@@ -1005,11 +1002,11 @@ json_rtr(struct ctl_show_rtr *rtr)
 
 	json_do_object("rtr");
 	if (rtr->descr[0])
-		json_do_printf("descr", "%s", rtr->descr);
-	json_do_printf("remote_addr", "%s", log_addr(&rtr->remote_addr));
+		json_do_string("descr", rtr->descr);
+	json_do_string("remote_addr", log_addr(&rtr->remote_addr));
 	json_do_uint("remote_port", rtr->remote_port);
 	if (rtr->local_addr.aid != AID_UNSPEC)
-		json_do_printf("local_addr", "%s", log_addr(&rtr->local_addr));
+		json_do_string("local_addr", log_addr(&rtr->local_addr));
 
 	if (rtr->session_id != -1) {
 		json_do_uint("session_id", rtr->session_id);
@@ -1020,17 +1017,17 @@ json_rtr(struct ctl_show_rtr *rtr)
 	json_do_uint("expire", rtr->expire);
 
 	if (rtr->last_sent_error != NO_ERROR) {
-		json_do_printf("last_sent_error", "%s",
+		json_do_string("last_sent_error",
 		    log_rtr_error(rtr->last_sent_error));
 		if (rtr->last_sent_msg[0])
-			json_do_printf("last_sent_msg", "%s",
+			json_do_string("last_sent_msg",
 			    log_reason(rtr->last_sent_msg));
 	}
 	if (rtr->last_recv_error != NO_ERROR) {
-		json_do_printf("last_recv_error", "%s",
+		json_do_string("last_recv_error",
 		    log_rtr_error(rtr->last_recv_error));
 		if (rtr->last_recv_msg[0])
-			json_do_printf("last_recv_msg", "%s",
+			json_do_string("last_recv_msg",
 			    log_reason(rtr->last_recv_msg));
 	}
 }
@@ -1039,14 +1036,14 @@ static void
 json_result(u_int rescode)
 {
 	if (rescode == 0)
-		json_do_printf("status", "OK");
+		json_do_string("status", "OK");
 	else if (rescode >=
 	    sizeof(ctl_res_strerror)/sizeof(ctl_res_strerror[0])) {
-		json_do_printf("status", "FAILED");
+		json_do_string("status", "FAILED");
 		json_do_printf("error", "unknown error %d", rescode);
 	} else {
-		json_do_printf("status", "FAILED");
-		json_do_printf("error", "%s", ctl_res_strerror[rescode]);
+		json_do_string("status", "FAILED");
+		json_do_string("error", ctl_res_strerror[rescode]);
 	}
 }
 

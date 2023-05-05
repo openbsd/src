@@ -1,4 +1,4 @@
-/*	$OpenBSD: json.c,v 1.7 2023/04/26 21:17:24 claudio Exp $ */
+/*	$OpenBSD: json.c,v 1.8 2023/05/05 07:42:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -16,10 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <ctype.h>
 #include <err.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "json.h"
@@ -179,16 +181,58 @@ void
 json_do_printf(const char *name, const char *fmt, ...)
 {
 	va_list ap;
+	char *str;
+
+	va_start(ap, fmt);
+	if (!eb) {
+		if (vasprintf(&str, fmt, ap) == -1)
+			errx(1, "json printf failed");
+		json_do_string(name, str);
+		free(str);
+	}
+	va_end(ap);
+}
+
+void
+json_do_string(const char *name, const char *v)
+{
+	unsigned char c;
 
 	do_comma_indent();
-
 	do_name(name);
 	if (!eb)
 		eb = fprintf(jsonfh, "\"") < 0;
-	va_start(ap, fmt);
-	if (!eb)
-		eb = vfprintf(jsonfh, fmt, ap) < 0;
-	va_end(ap);
+	while ((c = *v++) != '\0' && !eb) {
+		/* skip escaping '/' since our use case does not require it */
+		switch(c) {
+		case '"':
+			eb = fprintf(jsonfh, "\\\"") < 0;
+			break;
+		case '\\':
+			eb = fprintf(jsonfh, "\\\\") < 0;
+			break;
+		case '\b':
+			eb = fprintf(jsonfh, "\\b") < 0;
+			break;
+		case '\f':
+			eb = fprintf(jsonfh, "\\f") < 0;
+			break;
+		case '\n':
+			eb = fprintf(jsonfh, "\\n") < 0;
+			break;
+		case '\r':
+			eb = fprintf(jsonfh, "\\r") < 0;
+			break;
+		case '\t':
+			eb = fprintf(jsonfh, "\\t") < 0;
+			break;
+		default:
+			if (iscntrl(c))
+				errx(1, "bad control character in string");
+			eb = putc(c, jsonfh) == EOF;
+			break;
+		}
+	}
 	if (!eb)
 		eb = fprintf(jsonfh, "\"") < 0;
 }

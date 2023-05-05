@@ -1,4 +1,4 @@
-/*	$OpenBSD: json.h,v 1.6 2023/04/26 20:53:17 claudio Exp $ */
+/*	$OpenBSD: json.h,v 1.7 2023/05/05 07:42:40 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -26,6 +26,7 @@ void	json_do_object(const char *);
 void	json_do_end(void);
 void	json_do_printf(const char *, const char *, ...)
 	    __attribute__((__format__ (printf, 2, 3)));
+void	json_do_string(const char *, const char *);
 void	json_do_hexdump(const char *, void *, size_t);
 void	json_do_bool(const char *, int);
 void	json_do_uint(const char *, unsigned long long);
