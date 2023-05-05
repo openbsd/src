@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.95 2021/06/22 20:12:17 jmc Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.96 2023/05/05 13:50:40 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -381,6 +381,41 @@ edit_cmd(void)
 	syslog(LOG_INFO, "(%s) END EDIT (%s)", RealUser, User);
 }
 
+/* Create a temporary file in the spool dir owned by "pw". */
+static FILE *
+spool_mkstemp(char *template)
+{
+	uid_t euid = geteuid();
+	int fd = -1;
+	FILE *fp;
+
+	if (euid != pw->pw_uid) {
+		if (seteuid(pw->pw_uid) == -1) {
+			warn("unable to change uid to %u", pw->pw_uid);
+			goto bad;
+		}
+	}
+	fd = mkstemp(template);
+	if (euid != pw->pw_uid) {
+		if (seteuid(euid) == -1) {
+			warn("unable to change uid to %u", euid);
+			goto bad;
+		}
+	}
+	if (fd == -1 || !(fp = fdopen(fd, "w+"))) {
+		warn("%s", template);
+		goto bad;
+	}
+	return (fp);
+
+bad:
+	if (fd != -1) {
+		close(fd);
+		unlink(template);
+	}
+	return (NULL);
+}
+
 /* returns	0	on success
  *		-1	on syntax error
  *		-2	on install error
@@ -390,10 +425,9 @@ replace_cmd(void)
 {
 	char n[PATH_MAX], envstr[MAX_ENVSTR];
 	FILE *tmp;
-	int ch, eof, fd;
+	int ch, eof;
 	int error = 0;
 	entry *e;
-	uid_t euid = geteuid();
 	time_t now = time(NULL);
 	char **envp = env_init();
 
@@ -407,25 +441,8 @@ replace_cmd(void)
 		warnc(ENAMETOOLONG, "%s/tmp.XXXXXXXXX", _PATH_CRON_SPOOL);
 		return (-2);
 	}
-	if (euid != pw->pw_uid) {
-		if (seteuid(pw->pw_uid) == -1) {
-			warn("unable to change uid to %u", pw->pw_uid);
-			return (-2);
-		}
-	}
-	fd = mkstemp(TempFilename);
-	if (euid != pw->pw_uid) {
-		if (seteuid(euid) == -1) {
-			warn("unable to change uid to %u", euid);
-			return (-2);
-		}
-	}
-	if (fd == -1 || !(tmp = fdopen(fd, "w+"))) {
-		warn("%s", TempFilename);
-		if (fd != -1) {
-			close(fd);
-			unlink(TempFilename);
-		}
+	tmp = spool_mkstemp(TempFilename);
+	if (tmp == NULL) {
 		TempFilename[0] = '\0';
 		return (-2);
 	}
