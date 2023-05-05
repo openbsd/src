@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.143 2023/04/25 16:11:02 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.144 2023/05/05 18:01:27 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: April 25 2023 $
+.Dd $Mdocdate: May 5 2023 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -3505,6 +3505,8 @@ for PKCS#1 padding;
 for no padding;
 .Cm oaep
 for OAEP mode;
+.Cm x931
+for X9.31 mode;
 and
 .Cm pss
 for PSS.
@@ -3515,6 +3517,8 @@ If a digest is set then a DigestInfo
 structure is used and its length
 must correspond to the digest type.
 For oeap mode only encryption and decryption is supported.
+For x931 if the digest type is set it is used to format the block data;
+otherwise the first byte is used to specify the X9.31 digest ID.
 Sign, verify, and verifyrecover can be performed in this mode.
 For pss mode only sign and verify are supported and the digest type must be
 specified.
@@ -4178,7 +4182,7 @@ Print the public/private key components in plain text.
 .Op Fl in Ar file
 .Op Fl inkey Ar file
 .Op Fl keyform Cm der | pem
-.Op Fl oaep | pkcs | raw
+.Op Fl oaep | pkcs | raw | x931
 .Op Fl out Ar file
 .Op Fl passin Ar arg
 .Op Fl pubin
@@ -4216,9 +4220,9 @@ The input key file; by default an RSA private key.
 The private key format.
 The default is
 .Cm pem .
-.It Fl oaep | pkcs | raw
+.It Fl oaep | pkcs | raw | x931
 The padding to use:
-PKCS#1 OAEP, PKCS#1 v1.5 (the default), no padding,
+PKCS#1 OAEP, PKCS#1 v1.5 (the default), no padding, or ANSI X9.31,
 respectively.
 For signatures, only
 .Fl pkcs
