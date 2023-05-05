@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.255 2022/08/15 16:15:37 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.256 2023/05/05 01:19:51 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -526,6 +526,8 @@ unsigned int		ml_hdatalen(struct mbuf_list *);
  * mbuf queues
  */
 
+#include <sys/atomic.h>
+
 #define MBUF_QUEUE_INITIALIZER(_maxlen, _ipl) \
     { MUTEX_INITIALIZER(_ipl), MBUF_LIST_INITIALIZER(), (_maxlen), 0 }
 
@@ -538,12 +540,12 @@ void			mq_delist(struct mbuf_queue *, struct mbuf_list *);
 struct mbuf *		mq_dechain(struct mbuf_queue *);
 unsigned int		mq_purge(struct mbuf_queue *);
 unsigned int		mq_hdatalen(struct mbuf_queue *);
+void			mq_set_maxlen(struct mbuf_queue *, u_int);
 
-#define	mq_len(_mq)		ml_len(&(_mq)->mq_list)
-#define	mq_empty(_mq)		ml_empty(&(_mq)->mq_list)
-#define	mq_full(_mq)		(mq_len((_mq)) >= (_mq)->mq_maxlen)
-#define	mq_drops(_mq)		((_mq)->mq_drops)
-#define	mq_set_maxlen(_mq, _l)	((_mq)->mq_maxlen = (_l))
+#define mq_len(_mq)		READ_ONCE((_mq)->mq_list.ml_len)
+#define mq_empty(_mq)		(mq_len(_mq) == 0)
+#define mq_full(_mq)		(mq_len((_mq)) >= READ_ONCE((_mq)->mq_maxlen))
+#define mq_drops(_mq)		READ_ONCE((_mq)->mq_drops)
 
 #endif /* _KERNEL */
 #endif /* _SYS_MBUF_H_ */
