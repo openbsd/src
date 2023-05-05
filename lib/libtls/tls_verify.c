@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.20 2018/02/05 00:52:24 jsing Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.21 2023/05/05 14:05:33 tb Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -209,7 +209,7 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 	char *common_name = NULL;
 	union tls_addr addrbuf;
 	int common_name_len;
-	int rv = 0;
+	int rv = -1;
 
 	*cn_match = 0;
 
@@ -223,8 +223,10 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 		goto done;
 
 	common_name = calloc(common_name_len + 1, 1);
-	if (common_name == NULL)
-		goto done;
+	if (common_name == NULL) {
+		tls_set_error(ctx, "out of memory");
+		goto err;
+	}
 
 	X509_NAME_get_text_by_NID(subject_name, NID_commonName, common_name,
 	    common_name_len + 1);
@@ -235,8 +237,7 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 		tls_set_errorx(ctx, "error verifying name '%s': "
 		    "NUL byte in Common Name field, "
 		    "probably a malicious certificate", name);
-		rv = -1;
-		goto done;
+		goto err;
 	}
 
 	/*
@@ -254,6 +255,9 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 		*cn_match = 1;
 
  done:
+	rv = 0;
+
+ err:
 	free(common_name);
 	return rv;
 }
