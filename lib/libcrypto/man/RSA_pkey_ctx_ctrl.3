@@ -1,4 +1,4 @@
-.\" $OpenBSD: RSA_pkey_ctx_ctrl.3,v 1.6 2023/04/16 23:19:28 tb Exp $
+.\" $OpenBSD: RSA_pkey_ctx_ctrl.3,v 1.7 2023/05/05 12:22:21 tb Exp $
 .\" full merge up to:
 .\" OpenSSL man3/EVP_PKEY_CTX_ctrl.pod 99d63d46 Oct 26 13:56:48 2016 -0400
 .\" OpenSSL man3/EVP_PKEY_CTX_set_rsa_pss_keygen_md.pod
@@ -55,7 +55,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 16 2023 $
+.Dd $Mdocdate: May 5 2023 $
 .Dt RSA_PKEY_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -189,15 +189,12 @@ for PKCS#1 padding,
 for no padding,
 .Dv RSA_PKCS1_OAEP_PADDING
 for OAEP padding (encrypt and decrypt only),
-and
+.Dv RSA_X931_PADDING
+for X9.31 padding (signature operations only) and
 .Dv RSA_PKCS1_PSS_PADDING
 (sign and verify only).
 Only the last one can be used with keys of the type
 .Dv EVP_PKEY_RSA_PSS .
-X9.31 padding mode is unsupported.
-.Dv RSA_X931_PADDING
-is provided for backward compatibility with some existing
-application software.
 .Pp
 Two RSA padding modes behave differently if
 .Xr EVP_PKEY_CTX_set_signature_md 3
@@ -209,6 +206,8 @@ structure according to PKCS#1 when signing and this structure is
 expected (and stripped off) when verifying.
 If this control is not used with RSA and PKCS#1 padding then the
 supplied data is used directly and not encapsulated.
+In the case of X9.31 padding for RSA the algorithm identifier byte is
+added or checked and removed if this control is called.
 If it is not called then the first byte of the plaintext buffer is
 expected to be the algorithm identifier byte.
 .Pp
