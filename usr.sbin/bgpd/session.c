@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.443 2023/04/20 12:53:27 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.444 2023/05/05 07:28:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1189,20 +1189,15 @@ session_setup_socket(struct peer *p)
 		return (-1);
 	}
 
-	/* only increase bufsize (and thus window) if md5 or ipsec is in use */
-	if (p->conf.auth.method != AUTH_NONE) {
-		/* try to increase bufsize. no biggie if it fails */
-		bsize = 65535;
-		while (bsize > 8192 &&
-		    setsockopt(p->fd, SOL_SOCKET, SO_RCVBUF, &bsize,
-		    sizeof(bsize)) == -1 && errno != EINVAL)
-			bsize /= 2;
-		bsize = 65535;
-		while (bsize > 8192 &&
-		    setsockopt(p->fd, SOL_SOCKET, SO_SNDBUF, &bsize,
-		    sizeof(bsize)) == -1 && errno != EINVAL)
-			bsize /= 2;
-	}
+	/* limit bufsize. no biggie if it fails */
+	bsize = 65535;
+	while (bsize > 8192 && setsockopt(p->fd, SOL_SOCKET, SO_RCVBUF,
+	    &bsize, sizeof(bsize)) == -1 && errno != EINVAL)
+		bsize /= 2;
+	bsize = 65535;
+	while (bsize > 8192 && setsockopt(p->fd, SOL_SOCKET, SO_SNDBUF,
+	    &bsize, sizeof(bsize)) == -1 && errno != EINVAL)
+		bsize /= 2;
 
 	return (0);
 }
