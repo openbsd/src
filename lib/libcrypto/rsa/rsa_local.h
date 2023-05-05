@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_local.h,v 1.1 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rsa_local.h,v 1.2 2023/05/05 12:21:44 tb Exp $ */
 
 __BEGIN_HIDDEN_DECLS
 
@@ -90,5 +90,11 @@ int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
 extern int int_rsa_verify(int dtype, const unsigned char *m,
     unsigned int m_len, unsigned char *rm, size_t *prm_len,
     const unsigned char *sigbuf, size_t siglen, RSA *rsa);
+
+int RSA_padding_add_X931(unsigned char *to, int tlen,
+    const unsigned char *f, int fl);
+int RSA_padding_check_X931(unsigned char *to, int tlen,
+    const unsigned char *f, int fl, int rsa_len);
+int RSA_X931_hash_id(int nid);
 
 __END_HIDDEN_DECLS

@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pmeth.c,v 1.37 2023/04/25 15:48:48 tb Exp $ */
+/* $OpenBSD: rsa_pmeth.c,v 1.38 2023/05/05 12:21:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -187,7 +187,7 @@ static int
 pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
     const unsigned char *tbs, size_t tbslen)
 {
-	int ret = -1;
+	int ret;
 	RSA_PKEY_CTX *rctx = ctx->data;
 	RSA *rsa = ctx->pkey->pkey.rsa;
 
@@ -197,11 +197,21 @@ pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 			return -1;
 		}
 
-		if (rctx->pad_mode != RSA_PKCS1_PADDING &&
-		    rctx->pad_mode != RSA_PKCS1_PSS_PADDING)
-			return -1;
-
-		if (rctx->pad_mode == RSA_PKCS1_PADDING) {
+		if (rctx->pad_mode == RSA_X931_PADDING) {
+			if ((size_t)EVP_PKEY_size(ctx->pkey) < tbslen + 1) {
+				RSAerror(RSA_R_KEY_SIZE_TOO_SMALL);
+				return -1;
+			}
+			if (!setup_tbuf(rctx, ctx)) {
+				RSAerror(ERR_R_MALLOC_FAILURE);
+				return -1;
+			}
+			memcpy(rctx->tbuf, tbs, tbslen);
+			rctx->tbuf[tbslen] =
+			    RSA_X931_hash_id(EVP_MD_type(rctx->md));
+			ret = RSA_private_encrypt(tbslen + 1, rctx->tbuf, sig,
+			    rsa, RSA_X931_PADDING);
+		} else if (rctx->pad_mode == RSA_PKCS1_PADDING) {
 			unsigned int sltmp;
 
 			ret = RSA_sign(EVP_MD_type(rctx->md), tbs, tbslen, sig,
@@ -217,6 +227,8 @@ pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 				return -1;
 			ret = RSA_private_encrypt(RSA_size(rsa), rctx->tbuf,
 			    sig, rsa, RSA_NO_PADDING);
+		} else {
+			return -1;
 		}
 	} else {
 		ret = RSA_private_encrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
@@ -236,16 +248,36 @@ pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx, unsigned char *rout, size_t *routlen,
 	RSA_PKEY_CTX *rctx = ctx->data;
 
 	if (rctx->md) {
-		size_t sltmp;
+		if (rctx->pad_mode == RSA_X931_PADDING) {
+			if (!setup_tbuf(rctx, ctx))
+				return -1;
+			ret = RSA_public_decrypt(siglen, sig, rctx->tbuf,
+			    ctx->pkey->pkey.rsa, RSA_X931_PADDING);
+			if (ret < 1)
+				return 0;
+			ret--;
+			if (rctx->tbuf[ret] !=
+			    RSA_X931_hash_id(EVP_MD_type(rctx->md))) {
+				RSAerror(RSA_R_ALGORITHM_MISMATCH);
+				return 0;
+			}
+			if (ret != EVP_MD_size(rctx->md)) {
+				RSAerror(RSA_R_INVALID_DIGEST_LENGTH);
+				return 0;
+			}
+			if (rout)
+				memcpy(rout, rctx->tbuf, ret);
+		} else if (rctx->pad_mode == RSA_PKCS1_PADDING) {
+			size_t sltmp;
 
-		if (rctx->pad_mode != RSA_PKCS1_PADDING)
+			ret = int_rsa_verify(EVP_MD_type(rctx->md), NULL, 0,
+			    rout, &sltmp, sig, siglen, ctx->pkey->pkey.rsa);
+			if (ret <= 0)
+				return 0;
+			ret = sltmp;
+		} else {
 			return -1;
-
-		ret = int_rsa_verify(EVP_MD_type(rctx->md), NULL, 0,
-		    rout, &sltmp, sig, siglen, ctx->pkey->pkey.rsa);
-		if (ret <= 0)
-			return 0;
-		ret = sltmp;
+		}
 	} else {
 		ret = RSA_public_decrypt(siglen, sig, rout, ctx->pkey->pkey.rsa,
 		    rctx->pad_mode);
@@ -263,7 +295,6 @@ pkey_rsa_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
 	RSA_PKEY_CTX *rctx = ctx->data;
 	RSA *rsa = ctx->pkey->pkey.rsa;
 	size_t rslen;
-	int ret;
 
 	if (rctx->md) {
 		if (rctx->pad_mode == RSA_PKCS1_PADDING)
@@ -273,22 +304,30 @@ pkey_rsa_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
 			RSAerror(RSA_R_INVALID_DIGEST_LENGTH);
 			return -1;
 		}
+		if (rctx->pad_mode == RSA_X931_PADDING) {
+			if (pkey_rsa_verifyrecover(ctx, NULL, &rslen, sig,
+			    siglen) <= 0)
+				return 0;
+		} else if (rctx->pad_mode == RSA_PKCS1_PSS_PADDING) {
+			int ret;
 
-		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING)
+			if (!setup_tbuf(rctx, ctx))
+				return -1;
+			ret = RSA_public_decrypt(siglen, sig, rctx->tbuf,
+			    rsa, RSA_NO_PADDING);
+			if (ret <= 0)
+				return 0;
+			ret = RSA_verify_PKCS1_PSS_mgf1(rsa, tbs, rctx->md,
+			    rctx->mgf1md, rctx->tbuf, rctx->saltlen);
+			if (ret <= 0)
+				return 0;
+			return 1;
+		} else {
 			return -1;
-
-		if (!setup_tbuf(rctx, ctx))
-			return -1;
-		ret = RSA_public_decrypt(siglen, sig, rctx->tbuf,
-		    rsa, RSA_NO_PADDING);
-		if (ret <= 0)
-			return 0;
-		ret = RSA_verify_PKCS1_PSS_mgf1(rsa, tbs, rctx->md,
-		    rctx->mgf1md, rctx->tbuf, rctx->saltlen);
-		if (ret <= 0)
-			return 0;
-		return 1;
+		}
 	} else {
+		int ret;
+
 		if (!setup_tbuf(rctx, ctx))
 			return -1;
 
@@ -365,34 +404,41 @@ check_padding_md(const EVP_MD *md, int padding)
 	if (md == NULL)
 		return 1;
 
-	if (padding == RSA_NO_PADDING || padding == RSA_X931_PADDING) {
-		RSAerror(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+	if (padding == RSA_NO_PADDING) {
+		RSAerror(RSA_R_INVALID_PADDING_MODE);
 		return 0;
 	}
 
-	/* List of all supported RSA digests. */
-	/* RFC 8017 and NIST CSOR. */
-	switch(EVP_MD_type(md)) {
-	case NID_sha1:
-	case NID_sha224:
-	case NID_sha256:
-	case NID_sha384:
-	case NID_sha512:
-	case NID_sha512_224:
-	case NID_sha512_256:
-	case NID_sha3_224:
-	case NID_sha3_256:
-	case NID_sha3_384:
-	case NID_sha3_512:
-	case NID_md5:
-	case NID_md5_sha1:
-	case NID_md4:
-	case NID_ripemd160:
-		return 1;
+	if (padding == RSA_X931_PADDING) {
+		if (RSA_X931_hash_id(EVP_MD_type(md)) == -1) {
+			RSAerror(RSA_R_INVALID_X931_DIGEST);
+			return 0;
+		}
+	} else {
+		/* List of all supported RSA digests. */
+		/* RFC 8017 and NIST CSOR. */
+		switch(EVP_MD_type(md)) {
+		case NID_sha1:
+		case NID_sha224:
+		case NID_sha256:
+		case NID_sha384:
+		case NID_sha512:
+		case NID_sha512_224:
+		case NID_sha512_256:
+		case NID_sha3_224:
+		case NID_sha3_256:
+		case NID_sha3_384:
+		case NID_sha3_512:
+		case NID_md5:
+		case NID_md5_sha1:
+		case NID_md4:
+		case NID_ripemd160:
+			return 1;
 
-	default:
-		RSAerror(RSA_R_INVALID_DIGEST);
-		return 0;
+		default:
+			RSAerror(RSA_R_INVALID_DIGEST);
+			return 0;
+		}
 	}
 
 	return 1;
@@ -598,6 +644,8 @@ pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx, const char *type, const char *value)
 			pm = RSA_PKCS1_OAEP_PADDING;
 		else if (!strcmp(value, "oaep"))
 			pm = RSA_PKCS1_OAEP_PADDING;
+		else if (!strcmp(value, "x931"))
+			pm = RSA_X931_PADDING;
 		else if (!strcmp(value, "pss"))
 			pm = RSA_PKCS1_PSS_PADDING;
 		else {

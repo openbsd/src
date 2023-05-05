@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.59 2023/04/15 18:48:52 tb Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.60 2023/05/05 12:21:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -382,11 +382,14 @@ RSA_eay_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
 	case RSA_PKCS1_PADDING:
 		i = RSA_padding_add_PKCS1_type_1(buf, num, from, flen);
 		break;
+	case RSA_X931_PADDING:
+		i = RSA_padding_add_X931(buf, num, from, flen);
+		break;
 	case RSA_NO_PADDING:
 		i = RSA_padding_add_none(buf, num, from, flen);
 		break;
 	default:
-		RSAerror(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
+		RSAerror(RSA_R_UNKNOWN_PADDING_TYPE);
 		goto err;
 	}
 	if (i <= 0)
@@ -446,11 +449,14 @@ RSA_eay_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
 			goto err;
 
 	if (padding == RSA_X931_PADDING) {
-		RSAerror(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
-		goto err;
-	}
-
-	res = ret;
+		if (!BN_sub(f, rsa->n, ret))
+			goto err;
+		if (BN_cmp(ret, f) > 0)
+			res = f;
+		else
+			res = ret;
+	} else
+		res = ret;
 
 	/* put in leading 0 bytes if the number is less than the
 	 * length of the modulus */
@@ -661,10 +667,9 @@ RSA_eay_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
 	    rsa->_method_mod_n))
 		goto err;
 
-	if (padding == RSA_X931_PADDING) {
-		RSAerror(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
-		goto err;
-	}
+	if (padding == RSA_X931_PADDING && (ret->d[0] & 0xf) != 12)
+		if (!BN_sub(ret, rsa->n, ret))
+			goto err;
 
 	p = buf;
 	i = BN_bn2bin(ret, p);
@@ -672,6 +677,9 @@ RSA_eay_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
 	switch (padding) {
 	case RSA_PKCS1_PADDING:
 		r = RSA_padding_check_PKCS1_type_1(to, num, buf, i, num);
+		break;
+	case RSA_X931_PADDING:
+		r = RSA_padding_check_X931(to, num, buf, i, num);
 		break;
 	case RSA_NO_PADDING:
 		r = RSA_padding_check_none(to, num, buf, i, num);
