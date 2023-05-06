@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.53 2022/05/21 01:21:29 deraadt Exp $	*/
+/*	$OpenBSD: entry.c,v 1.54 2023/05/06 23:06:27 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -456,10 +456,11 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 	/* range = number | number* "~" number* | number "-" number ["/" number]
 	 */
 
-	int i, num1, num2, num3;
+	int i, num1, num2, num3, rndstep;
 
 	num1 = low;
 	num2 = high;
+	rndstep = 0;
 
 	if (ch == '*') {
 		/* '*' means [low, high] but can still be modified by /step
@@ -497,12 +498,19 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 
 			/* get the (optional) number following the tilde
 			 */
-			ch = get_number(&num2, low, names, ch, file, ", \t\n");
+			ch = get_number(&num2, low, names, ch, file, "/, \t\n");
 			if (ch == EOF)
 				ch = get_char(file);
 			if (ch == EOF || num1 > num2) {
 				unget_char(ch, file);
 				return (EOF);
+			}
+
+			if (ch == '/') {
+				/* randomize the step value instead of num1
+				 */
+				rndstep = 1;
+				break;
 			}
 
 			/* get a random number in the interval [num1, num2]
@@ -538,6 +546,13 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 		ch = get_number(&num3, 0, NULL, ch, file, ", \t\n");
 		if (ch == EOF || num3 == 0)
 			return (EOF);
+		if (rndstep) {
+			/*
+			 * use a random offset smaller than the step size
+			 * and the difference between high and low values.
+			 */
+			num1 += arc4random_uniform(MINIMUM(num3, num2 - num1));
+		}
 	} else {
 		/* no step.  default==1.
 		 */

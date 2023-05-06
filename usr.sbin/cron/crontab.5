@@ -17,9 +17,9 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT
 .\" OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.\" $OpenBSD: crontab.5,v 1.41 2020/04/18 17:11:40 jmc Exp $
+.\" $OpenBSD: crontab.5,v 1.42 2023/05/06 23:06:27 millert Exp $
 .\"
-.Dd $Mdocdate: April 18 2020 $
+.Dd $Mdocdate: May 6 2023 $
 .Dt CRONTAB 5
 .Os
 .Sh NAME
@@ -157,8 +157,7 @@ If either (or both) of the numbers on either side of the
 .Ql ~
 are omitted, the appropriate limit (low or high) for the field will be used.
 .Pp
-Step values can be used in conjunction with ranges (but not random ranges
-which represent a single number).
+Step values can be used in conjunction with ranges.
 Following a range with
 .No / Ns Ar number
 specifies skips of
@@ -173,6 +172,18 @@ Steps are also permitted after an asterisk, so to say
 .Dq every two hours ,
 just use
 .Dq */2 .
+A step value after a random range will execute the command at a random
+offset less than the step size.
+For example, to avoid a thundering herd at the top and bottom of the hour,
+.Dq 0~59/30
+.Po
+or simply
+.Dq ~/30
+.Pc
+can be used in the
+.Ar minute
+field to specify that command execution happen twice an hour at
+consistent intervals.
 .Pp
 An asterisk
 .Pq Ql *

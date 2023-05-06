@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.15 2015/11/12 21:12:05 millert Exp $	*/
+/*	$OpenBSD: macros.h,v 1.16 2023/05/06 23:06:27 millert Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,8 @@
 #define	MAX_ENVSTR	1000	/* max length of envvar=value\0 strings */
 #define	MAX_TEMPSTR	100	/* obvious */
 #define	MAX_UNAME	(_PW_NAME_LEN+1)	/* max length of username, should be overkill */
+
+#define	MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 
 #define	Skip_Blanks(c, f) \
 			while (c == '\t' || c == ' ') \
