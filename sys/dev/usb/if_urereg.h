@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.11 2022/04/02 12:22:56 kevlo Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.12 2023/05/06 08:07:10 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -167,6 +167,7 @@
 #define	URE_OCP_EEE_ABLE	0xa5c4
 #define	URE_OCP_EEE_ADV		0xa5d0
 #define	URE_OCP_EEE_LPABLE	0xa5d2
+#define	URE_OCP_10GBT_CTRL	0xa5d4
 #define	URE_OCP_PHY_STATE	0xa708
 #define	URE_OCP_ADC_CFG		0xbc06
 
@@ -248,19 +249,19 @@
 #define	URE_CRWECR_CONFIG	0xc0
 
 /* URE_PLA_OOB_CTRL */
-#define	URE_DIS_MCU_CLROOB	0x01    
-#define	URE_LINK_LIST_READY	0x02    
-#define	URE_RXFIFO_EMPTY	0x10    
-#define	URE_TXFIFO_EMPTY	0x20    
-#define	URE_NOW_IS_OOB		0x80    
+#define	URE_DIS_MCU_CLROOB	0x01
+#define	URE_LINK_LIST_READY	0x02
+#define	URE_RXFIFO_EMPTY	0x10
+#define	URE_TXFIFO_EMPTY	0x20
+#define	URE_NOW_IS_OOB		0x80
 #define	URE_FIFO_EMPTY		(URE_TXFIFO_EMPTY | URE_RXFIFO_EMPTY)
 
 /* URE_PLA_MISC_1 */
-#define	URE_RXDY_GATED_EN	0x0008  
+#define	URE_RXDY_GATED_EN	0x0008
 
 /* URE_PLA_SFF_STS_7 */
-#define	URE_MCU_BORW_EN		0x4000  
-#define	URE_RE_INIT_LL		0x8000  
+#define	URE_MCU_BORW_EN		0x4000
+#define	URE_RE_INIT_LL		0x8000
 
 /* URE_PLA_CPCR */
 #define	URE_FLOW_CTRL_EN	0x0001
@@ -312,6 +313,7 @@
 #define	URE_TP1000_SPDWN_EN	0x0008
 #define	URE_TP500_SPDWN_EN	0x0010
 #define	URE_TP100_SPDWN_EN	0x0020
+#define	URE_IDLE_SPDWN_EN	0x0040
 #define	URE_TX10MIDLE_EN	0x0100
 #define	URE_RXDV_SPDWN_EN	0x0800
 #define	URE_PWRSAVE_SPDWN_EN	0x1000
@@ -391,6 +393,7 @@
 
 /* URE_USB_MISC_2 */
 #define	URE_UPS_FORCE_PWR_DOWN	0x01
+#define	URE_UPS_NO_UPS		0x80
 
 /* URE_USB_ECM_OPTION */
 #define	URE_BYPASS_MAC_RESET	0x0020
@@ -493,15 +496,15 @@
 #define URE_UPS_FLAGS_MASK	0xffffffff
 
 /* URE_OCP_ALDPS_CONFIG */
-#define	URE_ENPWRSAVE		0x8000  
-#define	URE_ENPDNPS		0x0200  
-#define	URE_LINKENA		0x0100  
+#define	URE_ENPWRSAVE		0x8000
+#define	URE_ENPDNPS		0x0200
+#define	URE_LINKENA		0x0100
 #define	URE_DIS_SDSAVE		0x0010
 
 /* URE_OCP_PHY_STATUS */
 #define	URE_PHY_STAT_MASK	0x0007
 #define	URE_PHY_STAT_EXT_INIT	2
-#define	URE_PHY_STAT_LAN_ON	3	
+#define	URE_PHY_STAT_LAN_ON	3
 #define	URE_PHY_STAT_PWRDN	5
 
 /* URE_OCP_POWER_CFG */
@@ -646,4 +649,5 @@ struct ure_softc {
 #define	URE_CHIP_VER_5C20	0x10
 #define	URE_CHIP_VER_5C30	0x20
 #define	URE_CHIP_VER_6010	0x40
+#define	URE_CHIP_VER_7420	0x80
 };
