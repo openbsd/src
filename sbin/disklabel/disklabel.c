@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.247 2023/01/04 21:08:08 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.248 2023/05/06 15:07:02 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1038,19 +1038,19 @@ checklabel(struct disklabel *lp)
 	char part;
 
 	if (lp->d_secsize == 0) {
-		warnx("sector size %d", lp->d_secsize);
+		warnx("sector size 0");
 		return (1);
 	}
 	if (lp->d_nsectors == 0) {
-		warnx("sectors/track %d", lp->d_nsectors);
+		warnx("sectors/track 0");
 		return (1);
 	}
 	if (lp->d_ntracks == 0) {
-		warnx("tracks/cylinder %d", lp->d_ntracks);
+		warnx("tracks/cylinder 0");
 		return (1);
 	}
 	if  (lp->d_ncylinders == 0) {
-		warnx("cylinders/unit %d", lp->d_ncylinders);
+		warnx("cylinders/unit 0");
 		errors++;
 	}
 	if (lp->d_secpercyl == 0)
