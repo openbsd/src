@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_verify.c,v 1.65 2023/04/28 16:50:16 beck Exp $ */
+/* $OpenBSD: x509_verify.c,v 1.66 2023/05/07 07:11:50 tb Exp $ */
 /*
  * Copyright (c) 2020-2021 Bob Beck <beck@openbsd.org>
  *
@@ -275,7 +275,6 @@ x509_verify_ctx_cert_is_root(struct x509_verify_ctx *ctx, X509 *cert,
 		    cert)) != NULL) {
 			X509_free(match);
 			return x509_verify_check_chain_end(cert, full_chain);
-
 		}
 	} else {
 		/* Check the provided roots */
