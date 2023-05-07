@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.694 2023/04/26 19:54:35 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.695 2023/05/07 16:23:23 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -762,27 +762,6 @@ if_enqueue_ifq(struct ifnet *ifp, struct mbuf *m)
 }
 
 void
-if_mqoutput(struct ifnet *ifp, struct mbuf_queue *mq, unsigned int *total,
-    struct sockaddr *dst, struct rtentry *rt)
-{
-	struct mbuf_list ml;
-	struct mbuf *m;
-	unsigned int len;
-
-	mq_delist(mq, &ml);
-	len = ml_len(&ml);
-	while ((m = ml_dequeue(&ml)) != NULL)
-		ifp->if_output(ifp, m, rt_key(rt), rt);
-
-	/* XXXSMP we also discard if other CPU enqueues */
-	if (mq_len(mq) > 0) {
-		/* mbuf is back in queue. Discard. */
-		atomic_sub_int(total, len + mq_purge(mq));
-	} else
-		atomic_sub_int(total, len);
-}
-
-void
 if_input(struct ifnet *ifp, struct mbuf_list *ml)
 {
 	ifiq_input(&ifp->if_rcv, ml);
@@ -841,6 +820,46 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 	}
 
 	return (0);
+}
+
+int
+if_output_ml(struct ifnet *ifp, struct mbuf_list *ml,
+    struct sockaddr *dst, struct rtentry *rt)
+{
+	struct mbuf *m;
+	int error = 0;
+
+	while ((m = ml_dequeue(ml)) != NULL) {
+		error = ifp->if_output(ifp, m, dst, rt);
+		if (error)
+			break;
+	}
+	if (error)
+		ml_purge(ml);
+
+	return error;
+}
+
+int
+if_output_mq(struct ifnet *ifp, struct mbuf_queue *mq, unsigned int *total,
+    struct sockaddr *dst, struct rtentry *rt)
+{
+	struct mbuf_list ml;
+	unsigned int len;
+	int error;
+
+	mq_delist(mq, &ml);
+	len = ml_len(&ml);
+	error = if_output_ml(ifp, &ml, dst, rt);
+
+	/* XXXSMP we also discard if other CPU enqueues */
+	if (mq_len(mq) > 0) {
+		/* mbuf is back in queue. Discard. */
+		atomic_sub_int(total, len + mq_purge(mq));
+	} else
+		atomic_sub_int(total, len);
+
+	return error;
 }
 
 int

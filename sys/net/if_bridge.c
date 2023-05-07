@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.365 2023/02/27 09:35:32 jan Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.366 2023/05/07 16:23:23 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1826,7 +1826,7 @@ bridge_fragment(struct ifnet *brifp, struct ifnet *ifp, struct ether_header *eh,
     struct mbuf *m)
 {
 	struct llc llc;
-	struct mbuf_list fml;
+	struct mbuf_list ml;
 	int error = 0;
 	int hassnap = 0;
 	u_int16_t etype;
@@ -1884,11 +1884,11 @@ bridge_fragment(struct ifnet *brifp, struct ifnet *ifp, struct ether_header *eh,
 		return;
 	}
 
-	error = ip_fragment(m, &fml, ifp, ifp->if_mtu);
+	error = ip_fragment(m, &ml, ifp, ifp->if_mtu);
 	if (error)
 		return;
 
-	while ((m = ml_dequeue(&fml)) != NULL) {
+	while ((m = ml_dequeue(&ml)) != NULL) {
 		if (hassnap) {
 			M_PREPEND(m, LLC_SNAPFRAMELEN, M_DONTWAIT);
 			if (m == NULL) {
@@ -1908,7 +1908,7 @@ bridge_fragment(struct ifnet *brifp, struct ifnet *ifp, struct ether_header *eh,
 			break;
 	}
 	if (error)
-		ml_purge(&fml);
+		ml_purge(&ml);
 	else
 		ipstat_inc(ips_fragmented);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.382 2022/08/12 17:04:16 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.383 2023/05/07 16:23:23 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ ip_output(struct mbuf *m, struct mbuf *opt, struct route *ro, int flags,
 {
 	struct ip *ip;
 	struct ifnet *ifp = NULL;
-	struct mbuf_list fml;
+	struct mbuf_list ml;
 	int hlen = sizeof (struct ip);
 	int error = 0;
 	struct route iproute;
@@ -505,19 +505,10 @@ sendit:
 		goto bad;
 	}
 
-	error = ip_fragment(m, &fml, ifp, mtu);
-	if (error)
+	if ((error = ip_fragment(m, &ml, ifp, mtu)) ||
+	    (error = if_output_ml(ifp, &ml, sintosa(dst), ro->ro_rt)))
 		goto done;
-
-	while ((m = ml_dequeue(&fml)) != NULL) {
-		error = ifp->if_output(ifp, m, sintosa(dst), ro->ro_rt);
-		if (error)
-			break;
-	}
-	if (error)
-		ml_purge(&fml);
-	else
-		ipstat_inc(ips_fragmented);
+	ipstat_inc(ips_fragmented);
 
 done:
 	if (ro == &iproute && ro->ro_rt)
@@ -677,16 +668,15 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 #endif /* IPSEC */
 
 int
-ip_fragment(struct mbuf *m0, struct mbuf_list *fml, struct ifnet *ifp,
+ip_fragment(struct mbuf *m0, struct mbuf_list *ml, struct ifnet *ifp,
     u_long mtu)
 {
-	struct mbuf *m;
 	struct ip *ip;
 	int firstlen, hlen, tlen, len, off;
 	int error;
 
-	ml_init(fml);
-	ml_enqueue(fml, m0);
+	ml_init(ml);
+	ml_enqueue(ml, m0);
 
 	ip = mtod(m0, struct ip *);
 	hlen = ip->ip_hl << 2;
@@ -705,10 +695,11 @@ ip_fragment(struct mbuf *m0, struct mbuf_list *fml, struct ifnet *ifp,
 	in_proto_cksum_out(m0, NULL);
 
 	/*
-	 * Loop through length of segment after first fragment,
+	 * Loop through length of payload after first fragment,
 	 * make new header and copy data of each part and link onto chain.
 	 */
 	for (off = hlen + firstlen; off < tlen; off += len) {
+		struct mbuf *m;
 		struct ip *mhip;
 		int mhlen;
 
@@ -717,8 +708,7 @@ ip_fragment(struct mbuf *m0, struct mbuf_list *fml, struct ifnet *ifp,
 			error = ENOBUFS;
 			goto bad;
 		}
-		ml_enqueue(fml, m);
-
+		ml_enqueue(ml, m);
 		if ((error = m_dup_pkthdr(m, m0, M_DONTWAIT)) != 0)
 			goto bad;
 		m->m_data += max_linkhdr;
@@ -762,25 +752,26 @@ ip_fragment(struct mbuf *m0, struct mbuf_list *fml, struct ifnet *ifp,
 	 * Update first fragment by trimming what's been copied out
 	 * and updating header, then send each fragment (in order).
 	 */
-	m = m0;
-	m_adj(m, hlen + firstlen - tlen);
-	ip->ip_off |= htons(IP_MF);
-	ip->ip_len = htons(m->m_pkthdr.len);
+	if (hlen + firstlen < tlen) {
+		m_adj(m0, hlen + firstlen - tlen);
+		ip->ip_off |= htons(IP_MF);
+	}
+	ip->ip_len = htons(m0->m_pkthdr.len);
 
 	ip->ip_sum = 0;
-	if (in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4))
-		m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
+	if (in_ifcap_cksum(m0, ifp, IFCAP_CSUM_IPv4))
+		m0->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
 	else {
 		ipstat_inc(ips_outswcsum);
-		ip->ip_sum = in_cksum(m, hlen);
+		ip->ip_sum = in_cksum(m0, hlen);
 	}
 
-	ipstat_add(ips_ofragments, ml_len(fml));
+	ipstat_add(ips_ofragments, ml_len(ml));
 	return (0);
 
 bad:
 	ipstat_inc(ips_odropped);
-	ml_purge(fml);
+	ml_purge(ml);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.125 2023/04/18 22:01:24 mvs Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.126 2023/05/07 16:23:23 bluhm Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -321,12 +321,14 @@ extern struct ifnet_head ifnetlist;
 void	if_start(struct ifnet *);
 int	if_enqueue(struct ifnet *, struct mbuf *);
 int	if_enqueue_ifq(struct ifnet *, struct mbuf *);
-void	if_mqoutput(struct ifnet *, struct mbuf_queue *, unsigned int *,
-	    struct sockaddr *, struct rtentry *);
 void	if_input(struct ifnet *, struct mbuf_list *);
 void	if_vinput(struct ifnet *, struct mbuf *);
 void	if_input_process(struct ifnet *, struct mbuf_list *);
 int	if_input_local(struct ifnet *, struct mbuf *, sa_family_t);
+int	if_output_ml(struct ifnet *, struct mbuf_list *,
+	    struct sockaddr *, struct rtentry *);
+int	if_output_mq(struct ifnet *, struct mbuf_queue *, unsigned int *,
+	    struct sockaddr *, struct rtentry *);
 int	if_output_local(struct ifnet *, struct mbuf *, sa_family_t);
 void	if_rtrequest_dummy(struct ifnet *, int, struct rtentry *);
 void	p2p_rtrequest(struct ifnet *, int, struct rtentry *);

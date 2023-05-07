@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.263 2023/04/25 16:24:25 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.264 2023/05/07 16:23:23 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -723,7 +723,7 @@ arpcache(struct ifnet *ifp, struct ether_arp *ea, struct rtentry *rt)
 
 	la->la_asked = 0;
 	la->la_refreshed = 0;
-	if_mqoutput(ifp, &la->la_mq, &la_hold_total, rt_key(rt), rt);
+	if_output_mq(ifp, &la->la_mq, &la_hold_total, rt_key(rt), rt);
 
 	return (0);
 }
