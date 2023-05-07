@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.117 2022/07/18 15:06:22 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.118 2023/05/07 13:03:03 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 18 2022 $
+.Dd $Mdocdate: May 7 2023 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -51,9 +51,11 @@ to put all available space not taken by
 into a single
 .Ox
 partition.
-The available space is first maximized by deleting all existing partition
-entries except those for APFS ISC, APFS, APFS Recovery, BIOS Boot,
-HiFive FSBL and HiFive BBL partitions.
+The available space is maximized by deleting all existing partition
+entries except for partition types APFS ISC, APFS, APFS Recovery, BIOS Boot,
+HiFive FSBL, HiFive BBL and partitions with the
+.Sq Required
+GPT attribute set.
 .Pp
 If
 APFS ISC, APFS, or APFS Recovery
