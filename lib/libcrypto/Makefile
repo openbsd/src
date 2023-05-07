@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.127 2023/05/05 21:23:02 tb Exp $
+# $OpenBSD: Makefile,v 1.128 2023/05/07 12:47:48 bluhm Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -16,7 +16,7 @@ LCRYPTO_SRC=	${.CURDIR}
 
 CFLAGS+= -Wall -Wundef
 .if ${COMPILER_VERSION:L} == "clang"
-CFLAGS+= -Werror -Wshadow
+CFLAGS+= -Werror
 .endif
 CFLAGS+= -DLIBRESSL_INTERNAL -DLIBRESSL_CRYPTO_INTERNAL
 .ifdef NAMESPACE
