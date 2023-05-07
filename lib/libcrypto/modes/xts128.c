@@ -1,4 +1,4 @@
-/* $OpenBSD: xts128.c,v 1.9 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: xts128.c,v 1.10 2023/05/07 14:38:04 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -120,9 +120,9 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 	}
 	if (enc) {
 		for (i=0;i<len;++i) {
-			u8 c = inp[i];
+			u8 ch = inp[i];
 			out[i] = scratch.c[i];
-			scratch.c[i] = c;
+			scratch.c[i] = ch;
 		}
 		scratch.u[0] ^= tweak.u[0];
 		scratch.u[1] ^= tweak.u[1];
@@ -165,9 +165,9 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 		scratch.u[1] ^= tweak1.u[1];
 
 		for (i=0;i<len;++i) {
-			u8 c = inp[16+i];
+			u8 ch = inp[16+i];
 			out[16+i] = scratch.c[i];
-			scratch.c[i] = c;
+			scratch.c[i] = ch;
 		}
 		scratch.u[0] ^= tweak.u[0];
 		scratch.u[1] ^= tweak.u[1];
