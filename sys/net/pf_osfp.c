@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.45 2020/12/15 15:23:48 sashan Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.46 2023/05/07 12:45:21 kn Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -60,10 +60,9 @@ typedef struct pool pool_t;
 #define pool_put(pool, item)	free(item)
 #define pool_init(pool, size, a, ao, f, m, p)	(*(pool)) = (size)
 
-#define NET_LOCK()
-#define NET_UNLOCK()
 #define PF_LOCK()
 #define PF_UNLOCK()
+#define PF_ASSERT_LOCKED()
 
 #ifdef PFDEBUG
 #include <sys/stdarg.h>	/* for DPFPRINTF() */
@@ -71,16 +70,21 @@ typedef struct pool pool_t;
 
 #endif /* _KERNEL */
 
-SLIST_HEAD(pf_osfp_list, pf_os_fingerprint) pf_osfp_list;
-pool_t pf_osfp_entry_pl;
-pool_t pf_osfp_pl;
+/*
+ * Protection/ownership:
+ *	I	immutable after pf_osfp_initialize()
+ *	p	pf_lock
+ */
 
-struct pf_os_fingerprint	*pf_osfp_find(struct pf_osfp_list *,
-				    struct pf_os_fingerprint *, u_int8_t);
-struct pf_os_fingerprint	*pf_osfp_find_exact(struct pf_osfp_list *,
-				    struct pf_os_fingerprint *);
-void				 pf_osfp_insert(struct pf_osfp_list *,
-				    struct pf_os_fingerprint *);
+SLIST_HEAD(pf_osfp_list, pf_os_fingerprint) pf_osfp_list =
+    SLIST_HEAD_INITIALIZER(pf_osfp_list);	/* [p] */
+pool_t pf_osfp_entry_pl;			/* [I] */
+pool_t pf_osfp_pl;				/* [I] */
+
+struct pf_os_fingerprint	*pf_osfp_find(struct pf_os_fingerprint *,
+				    u_int8_t);
+struct pf_os_fingerprint	*pf_osfp_find_exact(struct pf_os_fingerprint *);
+void				 pf_osfp_insert(struct pf_os_fingerprint *);
 
 
 #ifdef _KERNEL
@@ -257,8 +261,7 @@ pf_osfp_fingerprint_hdr(const struct ip *ip, const struct ip6_hdr *ip6,
 	    (fp.fp_flags & PF_OSFP_WSCALE_DC) ? "*" : "",
 	    fp.fp_wscale);
 
-	if ((fpresult = pf_osfp_find(&pf_osfp_list, &fp,
-	    PF_OSFP_MAXTTL_OFFSET)))
+	if ((fpresult = pf_osfp_find(&fp, PF_OSFP_MAXTTL_OFFSET)))
 		return (&fpresult->fp_oses);
 	return (NULL);
 }
@@ -302,7 +305,6 @@ pf_osfp_initialize(void)
 	    IPL_NONE, PR_WAITOK, "pfosfpen", NULL);
 	pool_init(&pf_osfp_pl, sizeof(struct pf_os_fingerprint), 0,
 	    IPL_NONE, PR_WAITOK, "pfosfp", NULL);
-	SLIST_INIT(&pf_osfp_list);
 }
 
 /* Flush the fingerprint list */
@@ -312,7 +314,6 @@ pf_osfp_flush(void)
 	struct pf_os_fingerprint *fp;
 	struct pf_osfp_entry *entry;
 
-	NET_LOCK();
 	PF_LOCK();
 	while ((fp = SLIST_FIRST(&pf_osfp_list))) {
 		SLIST_REMOVE_HEAD(&pf_osfp_list, fp_next);
@@ -323,7 +324,6 @@ pf_osfp_flush(void)
 		pool_put(&pf_osfp_pl, fp);
 	}
 	PF_UNLOCK();
-	NET_UNLOCK();
 }
 
 
@@ -379,14 +379,12 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 		return (ENOMEM);
 	}
 
-	NET_LOCK();
 	PF_LOCK();
-	if ((fp = pf_osfp_find_exact(&pf_osfp_list, &fpadd))) {
+	if ((fp = pf_osfp_find_exact(&fpadd))) {
 		struct pf_osfp_entry *tentry;
 
 		 SLIST_FOREACH(tentry, &fp->fp_oses, fp_entry) {
 			if (PF_OSFP_ENTRY_EQ(tentry, &fpioc->fp_os)) {
-				NET_UNLOCK();
 				PF_UNLOCK();
 				pool_put(&pf_osfp_entry_pl, entry);
 				pool_put(&pf_osfp_pl, fp_prealloc);
@@ -405,7 +403,7 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 		fp->fp_wscale = fpioc->fp_wscale;
 		fp->fp_ttl = fpioc->fp_ttl;
 		SLIST_INIT(&fp->fp_oses);
-		pf_osfp_insert(&pf_osfp_list, fp);
+		pf_osfp_insert(fp);
 	}
 	memcpy(entry, &fpioc->fp_os, sizeof(*entry));
 
@@ -416,7 +414,6 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 
 	SLIST_INSERT_HEAD(&fp->fp_oses, entry, fp_entry);
 	PF_UNLOCK();
-	NET_UNLOCK();
 
 #ifdef PFDEBUG
 	if ((fp = pf_osfp_validate()))
@@ -433,10 +430,11 @@ pf_osfp_add(struct pf_osfp_ioctl *fpioc)
 
 /* Find a fingerprint in the list */
 struct pf_os_fingerprint *
-pf_osfp_find(struct pf_osfp_list *list, struct pf_os_fingerprint *find,
-    u_int8_t ttldiff)
+pf_osfp_find(struct pf_os_fingerprint *find, u_int8_t ttldiff)
 {
 	struct pf_os_fingerprint *f;
+
+	PF_ASSERT_LOCKED();
 
 #define MATCH_INT(_MOD, _DC, _field)					\
 	if ((f->fp_flags & _DC) == 0) {					\
@@ -449,7 +447,7 @@ pf_osfp_find(struct pf_osfp_list *list, struct pf_os_fingerprint *find,
 		}							\
 	}
 
-	SLIST_FOREACH(f, list, fp_next) {
+	SLIST_FOREACH(f, &pf_osfp_list, fp_next) {
 		if (f->fp_tcpopts != find->fp_tcpopts ||
 		    f->fp_optcnt != find->fp_optcnt ||
 		    f->fp_ttl < find->fp_ttl ||
@@ -507,11 +505,13 @@ pf_osfp_find(struct pf_osfp_list *list, struct pf_os_fingerprint *find,
 
 /* Find an exact fingerprint in the list */
 struct pf_os_fingerprint *
-pf_osfp_find_exact(struct pf_osfp_list *list, struct pf_os_fingerprint *find)
+pf_osfp_find_exact(struct pf_os_fingerprint *find)
 {
 	struct pf_os_fingerprint *f;
 
-	SLIST_FOREACH(f, list, fp_next) {
+	PF_ASSERT_LOCKED();
+
+	SLIST_FOREACH(f, &pf_osfp_list, fp_next) {
 		if (f->fp_tcpopts == find->fp_tcpopts &&
 		    f->fp_wsize == find->fp_wsize &&
 		    f->fp_psize == find->fp_psize &&
@@ -528,18 +528,20 @@ pf_osfp_find_exact(struct pf_osfp_list *list, struct pf_os_fingerprint *find)
 
 /* Insert a fingerprint into the list */
 void
-pf_osfp_insert(struct pf_osfp_list *list, struct pf_os_fingerprint *ins)
+pf_osfp_insert(struct pf_os_fingerprint *ins)
 {
 	struct pf_os_fingerprint *f, *prev = NULL;
 
+	PF_ASSERT_LOCKED();
+
 	/* XXX need to go semi tree based.  can key on tcp options */
 
-	SLIST_FOREACH(f, list, fp_next)
+	SLIST_FOREACH(f, &pf_osfp_list, fp_next)
 		prev = f;
 	if (prev)
 		SLIST_INSERT_AFTER(prev, ins, fp_next);
 	else
-		SLIST_INSERT_HEAD(list, ins, fp_next);
+		SLIST_INSERT_HEAD(&pf_osfp_list, ins, fp_next);
 }
 
 /* Fill a fingerprint by its number (from an ioctl) */
@@ -551,9 +553,7 @@ pf_osfp_get(struct pf_osfp_ioctl *fpioc)
 	int num = fpioc->fp_getnum;
 	int i = 0;
 
-
 	memset(fpioc, 0, sizeof(*fpioc));
-	NET_LOCK();
 	PF_LOCK();
 	SLIST_FOREACH(fp, &pf_osfp_list, fp_next) {
 		SLIST_FOREACH(entry, &fp->fp_oses, fp_entry) {
@@ -568,13 +568,11 @@ pf_osfp_get(struct pf_osfp_ioctl *fpioc)
 				memcpy(&fpioc->fp_os, entry,
 				    sizeof(fpioc->fp_os));
 				PF_UNLOCK();
-				NET_UNLOCK();
 				return (0);
 			}
 		}
 	}
 	PF_UNLOCK();
-	NET_UNLOCK();
 
 	return (EBUSY);
 }
@@ -585,6 +583,8 @@ struct pf_os_fingerprint *
 pf_osfp_validate(void)
 {
 	struct pf_os_fingerprint *f, *f2, find;
+
+	PF_ASSERT_LOCKED();
 
 	SLIST_FOREACH(f, &pf_osfp_list, fp_next) {
 		memcpy(&find, f, sizeof(find));
@@ -598,7 +598,7 @@ pf_osfp_validate(void)
 			find.fp_wsize *= (find.fp_mss + 40);
 		else if (f->fp_flags & PF_OSFP_WSIZE_MOD)
 			find.fp_wsize *= 2;
-		if (f != (f2 = pf_osfp_find(&pf_osfp_list, &find, 0))) {
+		if (f != (f2 = pf_osfp_find(&find, 0))) {
 			if (f2)
 				DPFPRINTF(LOG_NOTICE,
 				    "Found \"%s %s %s\" instead of "
