@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.54 2023/05/06 23:06:27 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.55 2023/05/07 13:43:13 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -499,8 +499,15 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 			/* get the (optional) number following the tilde
 			 */
 			ch = get_number(&num2, low, names, ch, file, "/, \t\n");
-			if (ch == EOF)
+			if (ch == EOF) {
+				/* no second number, check for valid terminator
+				 */
 				ch = get_char(file);
+				if (!strchr("/, \t\n", ch)) {
+					unget_char(ch, file);
+					return (EOF);
+				}
+			}
 			if (ch == EOF || num1 > num2) {
 				unget_char(ch, file);
 				return (EOF);
