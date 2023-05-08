@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_prn.c,v 1.5 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509_prn.c,v 1.6 2023/05/08 05:30:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -178,7 +178,7 @@ X509V3_extensions_print(BIO *bp, const char *title,
 		obj = X509_EXTENSION_get_object(ex);
 		i2a_ASN1_OBJECT(bp, obj);
 		j = X509_EXTENSION_get_critical(ex);
-		if (BIO_printf(bp, ": %s\n",j?"critical":"") <= 0)
+		if (BIO_printf(bp, ":%s\n", j ? " critical" : "") <= 0)
 			return 0;
 		if (!X509V3_EXT_print(bp, ex, flag, indent + 4)) {
 			BIO_printf(bp, "%*s", indent + 4, "");
