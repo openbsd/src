@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.31 2023/04/28 14:08:38 sashan Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.32 2023/05/08 23:52:36 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -135,7 +135,6 @@ RBT_PROTOTYPE(pf_state_tree_id, pf_state, entry_id, pf_state_compare_id);
 extern struct pf_state_tree_id tree_id;
 
 /*
- *
  * states are linked into a global list to support the following
  * functionality:
  *
@@ -148,7 +147,7 @@ extern struct pf_state_tree_id tree_id;
  * been successfully added to the various trees that make up the state
  * table. states are only removed from the pf_state_list by the garbage
  * collection process.
-
+ *
  * the pf_state_list head and tail pointers (ie, the pfs_list TAILQ_HEAD
  * structure) and the pointers between the entries on the pf_state_list
  * are locked separately. at a high level, this allows for insertion
