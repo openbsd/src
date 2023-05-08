@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.7 2023/04/28 16:30:14 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.8 2023/05/08 14:51:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -327,10 +327,10 @@ struct x509_store_ctx_st {
 	/* The following are set by the caller */
 	X509 *cert;		/* The cert to check */
 	STACK_OF(X509) *untrusted;	/* chain of X509s - untrusted - passed in */
+	STACK_OF(X509) *trusted;	/* trusted stack for use with get_issuer() */
 	STACK_OF(X509_CRL) *crls;	/* set of CRLs passed in */
 
 	X509_VERIFY_PARAM *param;
-	void *other_ctx;	/* Other info for use with get_issuer() */
 
 	/* Callbacks for various operations */
 	int (*verify)(X509_STORE_CTX *ctx);	/* called to verify a certificate */

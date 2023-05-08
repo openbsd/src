@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.121 2023/05/08 05:37:36 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.122 2023/05/08 14:51:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -144,7 +144,7 @@ static int X509_cmp_time_internal(const ASN1_TIME *ctm, time_t *cmp_time,
     int clamp_notafter);
 
 static int internal_verify(X509_STORE_CTX *ctx);
-static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
+static int get_trusted_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
 static int check_key_level(X509_STORE_CTX *ctx, X509 *cert);
 static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err);
 
@@ -694,12 +694,12 @@ check_issued(X509_STORE_CTX *ctx, X509 *subject, X509 *issuer)
 	return X509_check_issued(issuer, subject) == X509_V_OK;
 }
 
-/* Alternative lookup method: look from a STACK stored in other_ctx */
+/* Alternative lookup method: look from a STACK stored in ctx->trusted */
 
 static int
-get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
+get_trusted_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
-	*issuer = find_issuer(ctx, ctx->other_ctx, x, 1);
+	*issuer = find_issuer(ctx, ctx->trusted, x, 1);
 	if (*issuer) {
 		CRYPTO_add(&(*issuer)->references, 1, CRYPTO_LOCK_X509);
 		return 1;
@@ -2434,17 +2434,17 @@ LCRYPTO_ALIAS(X509_STORE_CTX_init);
  */
 
 void
-X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *trusted)
 {
-	ctx->other_ctx = sk;
-	ctx->get_issuer = get_issuer_sk;
+	X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_trusted_stack);
 
 void
-X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
+X509_STORE_CTX_set0_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *trusted)
 {
-	X509_STORE_CTX_trusted_stack(ctx, sk);
+	ctx->trusted = trusted;
+	ctx->get_issuer = get_trusted_issuer;
 }
 LCRYPTO_ALIAS(X509_STORE_CTX_set0_trusted_stack);
 
