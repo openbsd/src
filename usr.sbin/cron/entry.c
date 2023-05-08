@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.55 2023/05/07 13:43:13 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.56 2023/05/08 15:18:31 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -512,6 +512,11 @@ get_range(bitstr_t *bits, int low, int high, const char *names[],
 				unget_char(ch, file);
 				return (EOF);
 			}
+
+			/* we must perform the bounds checking ourselves
+			 */
+			if (num1 < low || num2 > high)
+				return (EOF);
 
 			if (ch == '/') {
 				/* randomize the step value instead of num1
