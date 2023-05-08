@@ -1,3 +1,4 @@
+/*	$OpenBSD: crypto_init.c,v 1.8 2023/05/08 13:53:26 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
