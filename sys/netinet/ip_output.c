@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.383 2023/05/07 16:23:23 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.384 2023/05/08 13:22:13 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -443,7 +443,6 @@ sendit:
 		goto reroute;
 	}
 #endif
-	in_proto_cksum_out(m, ifp);
 
 #ifdef IPSEC
 	if (ipsec_in_use && (flags & IP_FORWARDING) && (ipforwarding == 2) &&
@@ -464,7 +463,7 @@ sendit:
 			ipstat_inc(ips_outswcsum);
 			ip->ip_sum = in_cksum(m, hlen);
 		}
-
+		in_proto_cksum_out(m, ifp);
 		error = ifp->if_output(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1176 2023/05/07 16:23:23 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1177 2023/05/08 13:22:13 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6548,8 +6548,6 @@ pf_route(struct pf_pdesc *pd, struct pf_state *st)
 		ip = mtod(m0, struct ip *);
 	}
 
-	in_proto_cksum_out(m0, ifp);
-
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
 		ip->ip_sum = 0;
 		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
@@ -6558,6 +6556,7 @@ pf_route(struct pf_pdesc *pd, struct pf_state *st)
 			ipstat_inc(ips_outswcsum);
 			ip->ip_sum = in_cksum(m0, ip->ip_hl << 2);
 		}
+		in_proto_cksum_out(m0, ifp);
 		ifp->if_output(ifp, m0, sintosa(dst), rt);
 		goto done;
 	}
@@ -6677,8 +6676,6 @@ pf_route6(struct pf_pdesc *pd, struct pf_state *st)
 		}
 	}
 
-	in6_proto_cksum_out(m0, ifp);
-
 	/*
 	 * If packet has been reassembled by PF earlier, we have to
 	 * use pf_refragment6() here to turn it back to fragments.
@@ -6689,6 +6686,7 @@ pf_route6(struct pf_pdesc *pd, struct pf_state *st)
 	}
 
 	if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
+		in6_proto_cksum_out(m0, ifp);
 		ifp->if_output(ifp, m0, sin6tosa(dst), rt);
 		goto done;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.273 2023/05/07 16:23:24 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.274 2023/05/08 13:22:13 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -664,8 +664,6 @@ reroute:
 			ip6->ip6_dst.s6_addr16[1] = dst_scope;
 	}
 
-	in6_proto_cksum_out(m, ifp);
-
 	/*
 	 * Send the packet to the outgoing interface.
 	 * If necessary, do IPv6 fragmentation before sending.
@@ -701,6 +699,7 @@ reroute:
 	 * transmit packet without fragmentation
 	 */
 	if (dontfrag || (tlen <= mtu)) {	/* case 1-a and 2-a */
+		in6_proto_cksum_out(m, ifp);
 		error = ifp->if_output(ifp, m, sin6tosa(dst), ro->ro_rt);
 		goto done;
 	}
