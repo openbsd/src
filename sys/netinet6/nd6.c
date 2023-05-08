@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.276 2023/05/07 16:23:24 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.277 2023/05/08 11:47:52 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -845,6 +845,8 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		mq_init(&ln->ln_mq, LN_HOLD_QUEUE, IPL_SOFTNET);
 		rt->rt_llinfo = (caddr_t)ln;
 		ln->ln_rt = rt;
+		rt->rt_flags |= RTF_LLINFO;
+		TAILQ_INSERT_HEAD(&nd6_list, ln, ln_list);
 		/* this is required for "ndp" command. - shin */
 		if (req == RTM_ADD) {
 			/*
@@ -862,9 +864,6 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 			ln->ln_state = ND6_LLINFO_NOSTATE;
 			nd6_llinfo_settimer(ln, 0);
 		}
-		rt->rt_flags |= RTF_LLINFO;
-		TAILQ_INSERT_HEAD(&nd6_list, ln, ln_list);
-		mtx_leave(&nd6_mtx);
 
 		/*
 		 * If we have too many cache entries, initiate immediate
@@ -877,7 +876,6 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		    nd6_inuse >= ip6_neighborgcthresh) {
 			int i;
 
-			mtx_enter(&nd6_mtx);
 			for (i = 0; i < 10; i++) {
 				struct llinfo_nd6 *ln_end;
 
@@ -898,7 +896,6 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 					ln_end->ln_state = ND6_LLINFO_PURGE;
 				nd6_llinfo_settimer(ln_end, 0);
 			}
-			mtx_leave(&nd6_mtx);
 		}
 
 		/*
@@ -908,39 +905,38 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 		ifa6 = in6ifa_ifpwithaddr(ifp,
 		    &satosin6(rt_key(rt))->sin6_addr);
 		ifa = ifa6 ? &ifa6->ia_ifa : NULL;
-		if (ifa) {
+		if (ifa != NULL ||
+		    (rt->rt_flags & RTF_ANNOUNCE)) {
 			ln->ln_state = ND6_LLINFO_REACHABLE;
 			ln->ln_byhint = 0;
 			rt->rt_expire = 0;
-			KASSERT(ifa == rt->rt_ifa);
-		} else if (rt->rt_flags & RTF_ANNOUNCE) {
-			ln->ln_state = ND6_LLINFO_REACHABLE;
-			ln->ln_byhint = 0;
-			rt->rt_expire = 0;
+		}
+		mtx_leave(&nd6_mtx);
 
-			/* join solicited node multicast for proxy ND */
-			if (ifp->if_flags & IFF_MULTICAST) {
-				struct in6_addr llsol;
-				int error;
+		/* join solicited node multicast for proxy ND */
+		if (ifa == NULL &&
+		    (rt->rt_flags & RTF_ANNOUNCE) &&
+		    (ifp->if_flags & IFF_MULTICAST)) {
+			struct in6_addr llsol;
+			int error;
 
-				llsol = satosin6(rt_key(rt))->sin6_addr;
-				llsol.s6_addr16[0] = htons(0xff02);
-				llsol.s6_addr16[1] = htons(ifp->if_index);
-				llsol.s6_addr32[1] = 0;
-				llsol.s6_addr32[2] = htonl(1);
-				llsol.s6_addr8[12] = 0xff;
+			llsol = satosin6(rt_key(rt))->sin6_addr;
+			llsol.s6_addr16[0] = htons(0xff02);
+			llsol.s6_addr16[1] = htons(ifp->if_index);
+			llsol.s6_addr32[1] = 0;
+			llsol.s6_addr32[2] = htonl(1);
+			llsol.s6_addr8[12] = 0xff;
 
-				KERNEL_LOCK();
-				if (in6_addmulti(&llsol, ifp, &error)) {
-					char addr[INET6_ADDRSTRLEN];
-					nd6log((LOG_ERR, "%s: failed to join "
-					    "%s (errno=%d)\n", ifp->if_xname,
-					    inet_ntop(AF_INET6, &llsol,
-						addr, sizeof(addr)),
-					    error));
-				}
-				KERNEL_UNLOCK();
+			KERNEL_LOCK();
+			if (in6_addmulti(&llsol, ifp, &error)) {
+				char addr[INET6_ADDRSTRLEN];
+				nd6log((LOG_ERR, "%s: failed to join "
+				    "%s (errno=%d)\n", ifp->if_xname,
+				    inet_ntop(AF_INET6, &llsol,
+					addr, sizeof(addr)),
+				    error));
 			}
+			KERNEL_UNLOCK();
 		}
 		break;
 
