@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.120 2023/04/30 14:59:52 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.121 2023/05/08 05:37:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -592,7 +592,6 @@ X509_verify_cert_legacy(X509_STORE_CTX *ctx)
 int
 X509_verify_cert(X509_STORE_CTX *ctx)
 {
-	STACK_OF(X509) *roots = NULL;
 	struct x509_verify_ctx *vctx = NULL;
 	int chain_count = 0;
 
@@ -655,8 +654,6 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		chain_count = x509_verify(vctx, NULL, NULL);
 	}
 	x509_verify_ctx_free(vctx);
-
-	sk_X509_pop_free(roots, X509_free);
 
 	/* if we succeed we have a chain in ctx->chain */
 	return (chain_count > 0 && ctx->chain != NULL);
