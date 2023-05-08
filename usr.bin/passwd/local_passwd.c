@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.63 2022/02/10 13:06:46 robert Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.64 2023/05/08 17:15:43 tobias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -202,7 +202,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 
 	pwd_tries = pwd_gettries(lc);
 
-	for (newpass[0] = '\0', tries = 0;;) {
+	for (newpass[0] = '\0', tries = -1;;) {
 		char repeat[1024];
 
 		p = readpassphrase("New password:", newpass, sizeof(newpass),
@@ -217,7 +217,7 @@ getnewpasswd(struct passwd *pw, login_cap_t *lc, int authenticated)
 			continue;
 		}
 
-		if ((tries++ < pwd_tries || pwd_tries == 0) &&
+		if ((pwd_tries == 0 || ++tries < pwd_tries) &&
 		    pwd_check(lc, p) == 0)
 			continue;
 		p = readpassphrase("Retype new password:", repeat, sizeof(repeat),
