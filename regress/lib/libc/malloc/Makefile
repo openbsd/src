@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.7 2018/01/28 13:42:17 otto Exp $
+#	$OpenBSD: Makefile,v 1.8 2023/05/08 11:13:30 otto Exp $
 
 SUBDIR+= malloc_general malloc0test malloc_errno malloc_ulimit1 malloc_ulimit2
-SUBDIR+= malloc_threaderr
+SUBDIR+= malloc_threaderr malloc_errs
 
 install:
 
