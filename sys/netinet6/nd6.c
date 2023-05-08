@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.277 2023/05/08 11:47:52 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.278 2023/05/08 13:14:21 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -780,40 +780,12 @@ nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 
 	switch (req) {
 	case RTM_ADD:
-		if ((rt->rt_flags & RTF_CLONING) ||
-		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && ln == NULL)) {
-			if (ln != NULL)
-				nd6_llinfo_settimer(ln, 0);
-			if ((rt->rt_flags & RTF_CLONING) != 0)
-				break;
+		if (rt->rt_flags & RTF_CLONING) {
+			rt->rt_expire = 0;
+			break;
 		}
-		/*
-		 * In IPv4 code, we try to announce new RTF_ANNOUNCE entry here.
-		 * We don't do that here since llinfo is not ready yet.
-		 *
-		 * There are also couple of other things to be discussed:
-		 * - unsolicited NA code needs improvement beforehand
-		 * - RFC2461 says we MAY send multicast unsolicited NA
-		 *   (7.2.6 paragraph 4), however, it also says that we
-		 *   SHOULD provide a mechanism to prevent multicast NA storm.
-		 *   we don't have anything like it right now.
-		 *   note that the mechanism needs a mutual agreement
-		 *   between proxies, which means that we need to implement
-		 *   a new protocol, or a new kludge.
-		 * - from RFC2461 6.2.4, host MUST NOT send an unsolicited NA.
-		 *   we need to check ip6forwarding before sending it.
-		 *   (or should we allow proxy ND configuration only for
-		 *   routers?  there's no mention about proxy ND from hosts)
-		 */
-#if 0
-		/* XXX it does not work */
-		if (rt->rt_flags & RTF_ANNOUNCE)
-			nd6_na_output(ifp,
-			      &satosin6(rt_key(rt))->sin6_addr,
-			      &satosin6(rt_key(rt))->sin6_addr,
-			      ip6_forwarding ? ND_NA_FLAG_ROUTER : 0,
-			      1, NULL);
-#endif
+		if ((rt->rt_flags & RTF_LOCAL) && rt->rt_llinfo == NULL)
+			rt->rt_expire = 0;
 		/* FALLTHROUGH */
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
