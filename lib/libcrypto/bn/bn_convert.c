@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.7 2023/05/09 05:12:49 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.8 2023/05/09 05:15:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -418,39 +418,49 @@ err:
 	return (0);
 }
 
-/* Must 'free' the returned data */
 char *
-BN_bn2hex(const BIGNUM *a)
+BN_bn2hex(const BIGNUM *bn)
 {
-	int i, j, v, z = 0;
-	char *buf;
-	char *p;
+	int started = 0;
+	uint8_t *s = NULL;
+	size_t s_len;
+	BN_ULONG v, w;
+	int i, j;
+	CBB cbb;
 
-	buf = malloc(BN_is_negative(a) + a->top * BN_BYTES * 2 + 2);
-	if (buf == NULL) {
-		BNerror(ERR_R_MALLOC_FAILURE);
+	if (!CBB_init(&cbb, 0))
 		goto err;
+
+	if (BN_is_negative(bn)) {
+		if (!CBB_add_u8(&cbb, '-'))
+			goto err;
 	}
-	p = buf;
-	if (BN_is_negative(a))
-		*p++ = '-';
-	if (BN_is_zero(a))
-		*p++ = '0';
-	for (i = a->top - 1; i >=0; i--) {
+	if (BN_is_zero(bn)) {
+		if (!CBB_add_u8(&cbb, '0'))
+			goto err;
+	}
+	for (i = bn->top - 1; i >= 0; i--) {
+		w = bn->d[i];
 		for (j = BN_BITS2 - 8; j >= 0; j -= 8) {
-			/* strip leading zeros */
-			v = ((int)(a->d[i] >> (long)j)) & 0xff;
-			if (z || (v != 0)) {
-				*p++ = hex_digits[v >> 4];
-				*p++ = hex_digits[v & 0x0f];
-				z = 1;
-			}
+			v = (w >> j) & 0xff;
+			if (!started && v == 0)
+				continue;
+			if (!CBB_add_u8(&cbb, hex_digits[v >> 4]))
+				goto err;
+			if (!CBB_add_u8(&cbb, hex_digits[v & 0xf]))
+				goto err;
+			started = 1;
 		}
 	}
-	*p = '\0';
+	if (!CBB_add_u8(&cbb, '\0'))
+		goto err;
+	if (!CBB_finish(&cbb, &s, &s_len))
+		goto err;
 
-err:
-	return (buf);
+ err:
+	CBB_cleanup(&cbb);
+
+	return s;
 }
 
 int
