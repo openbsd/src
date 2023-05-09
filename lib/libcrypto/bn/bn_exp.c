@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.45 2023/03/30 14:21:10 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.46 2023/05/09 05:38:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -194,7 +194,7 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	bits = BN_num_bits(p);
 	if (bits == 0) {
 		/* x**0 mod 1 is still zero. */
-		if (BN_is_one(m)) {
+		if (BN_abs_is_word(m, 1)) {
 			ret = 1;
 			BN_zero(r);
 		} else
@@ -402,7 +402,7 @@ BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	bits = BN_num_bits(p);
 	if (bits == 0) {
 		/* x**0 mod 1 is still zero. */
-		if (BN_is_one(m)) {
+		if (BN_abs_is_word(m, 1)) {
 			ret = 1;
 			BN_zero(rr);
 		} else
@@ -658,7 +658,7 @@ BN_mod_exp_mont_internal(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIG
 	bits = BN_num_bits(p);
 	if (bits == 0) {
 		/* x**0 mod 1 is still zero. */
-		if (BN_is_one(m)) {
+		if (BN_abs_is_word(m, 1)) {
 			ret = 1;
 			BN_zero(rr);
 		} else
@@ -843,7 +843,7 @@ BN_mod_exp_mont_word(BIGNUM *rr, BN_ULONG a, const BIGNUM *p, const BIGNUM *m,
 	bits = BN_num_bits(p);
 	if (bits == 0) {
 		/* x**0 mod 1 is still zero. */
-		if (BN_is_one(m)) {
+		if (BN_abs_is_word(m, 1)) {
 			ret = 1;
 			BN_zero(rr);
 		} else
@@ -968,7 +968,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	bits = BN_num_bits(p);
 	if (bits == 0) {
 		/* x**0 mod 1 is still zero. */
-		if (BN_is_one(m)) {
+		if (BN_abs_is_word(m, 1)) {
 			ret = 1;
 			BN_zero(r);
 		} else
