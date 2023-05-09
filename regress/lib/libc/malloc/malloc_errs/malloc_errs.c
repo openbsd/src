@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_errs.c,v 1.1 2023/05/08 11:12:44 otto Exp $	*/
+/*	$OpenBSD: malloc_errs.c,v 1.2 2023/05/09 19:07:37 otto Exp $	*/
 /*
  * Copyright (c) 2023 Otto Moerbeek <otto@drijf.net>
  *
@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
 		pid = fork();
 		switch (pid) {
 		case 0:
-			snprintf(options, sizeof(options), "cfjgu%s", tests[i].flags);
+			snprintf(options, sizeof(options), "us%s", tests[i].flags);
 			snprintf(num, sizeof(num), "%d", i);
 			execl(argv[0], argv[0], num, options, NULL);
 			err(1, "exec");
