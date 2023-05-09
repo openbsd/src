@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.6 2023/04/19 11:14:04 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.7 2023/05/09 05:12:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,7 @@
 #include <openssl/err.h>
 
 #include "bn_local.h"
+#include "bytestring.h"
 
 static const char hex_digits[] = "0123456789ABCDEF";
 
@@ -270,85 +271,82 @@ BN_asc2bn(BIGNUM **bn, const char *a)
 	return 1;
 }
 
-/* Must 'free' the returned data */
 char *
-BN_bn2dec(const BIGNUM *a)
+BN_bn2dec(const BIGNUM *bn)
 {
-	int i = 0, num, bn_data_num, ok = 0;
-	char *buf = NULL;
-	char *p;
-	BIGNUM *t = NULL;
-	BN_ULONG *bn_data = NULL, *lp;
+	int started = 0;
+	BIGNUM *tmp = NULL;
+	uint8_t *data = NULL;
+	size_t data_len = 0;
+	uint8_t *s = NULL;
+	size_t s_len;
+	BN_ULONG v, w;
+	uint8_t c;
+	CBB cbb;
+	CBS cbs;
+	int i;
 
-	if (BN_is_zero(a)) {
-		buf = malloc(BN_is_negative(a) + 2);
-		if (buf == NULL) {
-			BNerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-		p = buf;
-		if (BN_is_negative(a))
-			*p++ = '-';
-		*p++ = '0';
-		*p++ = '\0';
-		return (buf);
-	}
+	if (!CBB_init(&cbb, 0))
+		goto err;
 
-	/* get an upper bound for the length of the decimal integer
-	 * num <= (BN_num_bits(a) + 1) * log(2)
-	 *     <= 3 * BN_num_bits(a) * 0.1001 + log(2) + 1     (rounding error)
-	 *     <= BN_num_bits(a)/10 + BN_num_bits/1000 + 1 + 1
+	if ((tmp = BN_dup(bn)) == NULL)
+		goto err;
+
+	/*
+	 * Divide the BIGNUM by a large multiple of 10, then break the remainder
+	 * into decimal digits. This produces a reversed string of digits,
+	 * potentially with leading zeroes.
 	 */
-	i = BN_num_bits(a) * 3;
-	num = (i / 10 + i / 1000 + 1) + 1;
-	bn_data_num = num / BN_DEC_NUM + 1;
-	bn_data = reallocarray(NULL, bn_data_num, sizeof(BN_ULONG));
-	buf = malloc(num + 3);
-	if ((buf == NULL) || (bn_data == NULL)) {
-		BNerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if ((t = BN_dup(a)) == NULL)
-		goto err;
-
-#define BUF_REMAIN (num+3 - (size_t)(p - buf))
-	p = buf;
-	lp = bn_data;
-	if (BN_is_negative(t))
-		*p++ = '-';
-
-	while (!BN_is_zero(t)) {
-		if (lp - bn_data >= bn_data_num)
+	while (!BN_is_zero(tmp)) {
+		if ((w = BN_div_word(tmp, BN_DEC_CONV)) == -1)
 			goto err;
-		*lp = BN_div_word(t, BN_DEC_CONV);
-		if (*lp == (BN_ULONG)-1)
+		for (i = 0; i < BN_DEC_NUM; i++) {
+			v = w % 10;
+			if (!CBB_add_u8(&cbb, '0' + v))
+				goto err;
+			w /= 10;
+		}
+	}
+	if (!CBB_finish(&cbb, &data, &data_len))
+		goto err;
+
+	if (data_len > SIZE_MAX - 3)
+		goto err;
+	if (!CBB_init(&cbb, data_len + 3))
+		goto err;
+
+	if (BN_is_negative(bn)) {
+		if (!CBB_add_u8(&cbb, '-'))
 			goto err;
-		lp++;
-	}
-	lp--;
-	/* We now have a series of blocks, BN_DEC_NUM chars
-	 * in length, where the last one needs truncation.
-	 * The blocks need to be reversed in order. */
-	snprintf(p, BUF_REMAIN, BN_DEC_FMT1, *lp);
-	while (*p)
-		p++;
-	while (lp != bn_data) {
-		lp--;
-		snprintf(p, BUF_REMAIN, BN_DEC_FMT2, *lp);
-		while (*p)
-			p++;
-	}
-	ok = 1;
-
-err:
-	free(bn_data);
-	BN_free(t);
-	if (!ok && buf) {
-		free(buf);
-		buf = NULL;
 	}
 
-	return (buf);
+	/* Reverse digits and trim leading zeroes. */
+	CBS_init(&cbs, data, data_len);
+	while (CBS_len(&cbs) > 0) {
+		if (!CBS_get_last_u8(&cbs, &c))
+			goto err;
+		if (!started && c == '0')
+			continue;
+		if (!CBB_add_u8(&cbb, c))
+			goto err;
+		started = 1;
+	}
+
+	if (!started) {
+		if (!CBB_add_u8(&cbb, '0'))
+			goto err;
+	}
+	if (!CBB_add_u8(&cbb, '\0'))
+		goto err;
+	if (!CBB_finish(&cbb, &s, &s_len))
+		goto err;
+
+ err:
+	BN_free(tmp);
+	CBB_cleanup(&cbb);
+	freezero(data, data_len);
+
+	return s;
 }
 
 int
