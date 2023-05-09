@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.10 2022/01/10 22:44:22 tb Exp $
+.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.11 2023/05/09 07:19:24 tb Exp $
 .\"
 .\" Copyright (c) 2014, Google Inc.
 .\" Parts of the text were written by Adam Langley and David Benjamin.
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 10 2022 $
+.Dd $Mdocdate: May 9 2023 $
 .Dt EVP_AEAD_CTX_INIT 3
 .Os
 .Sh NAME
@@ -266,9 +266,14 @@ It is also safer to use as it prevents common mistakes with the native APIs.
 .Fn EVP_AEAD_CTX_new
 returns the new
 .Vt EVP_AEAD_CTX
-object or
+object on success;
+otherwise
 .Dv NULL
-on failure.
+is returned and
+.Va errno
+is set to
+.Er ENOMEM .
+.Pp
 .Fn EVP_AEAD_CTX_init ,
 .Fn EVP_AEAD_CTX_open ,
 and
