@@ -1,4 +1,4 @@
-/*	$OpenBSD: qs.c,v 1.4 2023/03/13 17:31:28 claudio Exp $ */
+/*	$OpenBSD: qs.c,v 1.5 2023/05/09 14:35:45 claudio Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -391,7 +391,7 @@ qs_argv(char **argv, size_t argc, size_t len, struct lg_ctx *ctx, int barenbr)
 			argv[argc++] = "error";
 	} else if (ctx->qs_args[QS_INVALID].one) {
 		if (argc < len)
-			argv[argc++] = "invalid";
+			argv[argc++] = "disqualified";
 	} else if (ctx->qs_args[QS_LEAKED].one) {
 		if (argc < len)
 			argv[argc++] = "leaked";
