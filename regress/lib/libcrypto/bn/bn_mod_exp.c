@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_exp.c,v 1.37 2023/04/25 17:17:21 tb Exp $ */
+/*	$OpenBSD: bn_mod_exp.c,v 1.38 2023/05/09 05:39:24 tb Exp $ */
 
 /*
  * Copyright (c) 2022,2023 Theo Buehler <tb@openbsd.org>
@@ -86,19 +86,21 @@ bn_print(const char *name, const BIGNUM *bn)
 }
 
 static void
-print_zero_test_failure(const BIGNUM *got, const BIGNUM *a, const char *name)
+print_zero_test_failure(const BIGNUM *got, const BIGNUM *a, const BIGNUM *m,
+    const char *name)
 {
 	fprintf(stderr, "%s() zero test failed:\n", name);
 
 	bn_print("a", a);
+	bn_print("m", m);
 	bn_print("got", got);
 }
 
 static int
-bn_mod_exp_zero_test(const struct mod_exp_test *test, BN_CTX *ctx, int use_random)
+bn_mod_exp_zero_test(const struct mod_exp_test *test, BN_CTX *ctx,
+    int neg_modulus, int random_base)
 {
-	const BIGNUM *one;
-	BIGNUM *a, *p, *got;
+	BIGNUM *a, *m, *p, *got;
 	int mod_exp_ret;
 	int failed = 1;
 
@@ -106,24 +108,29 @@ bn_mod_exp_zero_test(const struct mod_exp_test *test, BN_CTX *ctx, int use_rando
 
 	if ((a = BN_CTX_get(ctx)) == NULL)
 		errx(1, "BN_CTX_get");
+	if ((m = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
 	if ((p = BN_CTX_get(ctx)) == NULL)
 		errx(1, "BN_CTX_get");
 	if ((got = BN_CTX_get(ctx)) == NULL)
 		errx(1, "BN_CTX_get");
 
-	one = BN_value_one();
+	if (!BN_one(m))
+		errx(1, "BN_one");
+	if (neg_modulus)
+		BN_set_negative(m, 1);
 	BN_zero(a);
 	BN_zero(p);
 
-	if (use_random) {
+	if (random_base) {
 		if (!BN_rand(a, 1024, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY))
 			errx(1, "BN_rand");
 	}
 
 	if (test->mod_exp_fn != NULL) {
-		mod_exp_ret = test->mod_exp_fn(got, a, p, one, ctx);
+		mod_exp_ret = test->mod_exp_fn(got, a, p, m, ctx);
 	} else {
-		mod_exp_ret = test->mod_exp_mont_fn(got, a, p, one, ctx, NULL);
+		mod_exp_ret = test->mod_exp_mont_fn(got, a, p, m, ctx, NULL);
 	}
 
 	if (!mod_exp_ret) {
@@ -133,7 +140,7 @@ bn_mod_exp_zero_test(const struct mod_exp_test *test, BN_CTX *ctx, int use_rando
 	}
 
 	if (!BN_is_zero(got)) {
-		print_zero_test_failure(got, a, test->name);
+		print_zero_test_failure(got, a, m, test->name);
 		goto err;
 	}
 
@@ -146,31 +153,35 @@ bn_mod_exp_zero_test(const struct mod_exp_test *test, BN_CTX *ctx, int use_rando
 }
 
 static int
-bn_mod_exp_zero_word_test(BN_CTX *ctx)
+bn_mod_exp_zero_word_test(BN_CTX *ctx, int neg_modulus)
 {
 	const char *name = "BN_mod_exp_mont_word";
-	const BIGNUM *one;
-	BIGNUM *p, *got;
+	BIGNUM *m, *p, *got;
 	int failed = 1;
 
 	BN_CTX_start(ctx);
 
+	if ((m = BN_CTX_get(ctx)) == NULL)
+		errx(1, "BN_CTX_get");
 	if ((p = BN_CTX_get(ctx)) == NULL)
 		errx(1, "BN_CTX_get");
 	if ((got = BN_CTX_get(ctx)) == NULL)
 		errx(1, "BN_CTX_get");
 
-	one = BN_value_one();
+	if (!BN_one(m))
+		errx(1, "BN_one");
+	if (neg_modulus)
+		BN_set_negative(m, neg_modulus);
 	BN_zero(p);
 
-	if (!BN_mod_exp_mont_word(got, 1, p, one, ctx, NULL)) {
+	if (!BN_mod_exp_mont_word(got, 1, p, m, ctx, NULL)) {
 		fprintf(stderr, "%s failed\n", name);
 		ERR_print_errors_fp(stderr);
 		goto err;
 	}
 
 	if (!BN_is_zero(got)) {
-		print_zero_test_failure(got, one, name);
+		print_zero_test_failure(got, p, m, name);
 		goto err;
 	}
 
@@ -186,22 +197,24 @@ static int
 test_bn_mod_exp_zero(void)
 {
 	BN_CTX *ctx;
-	size_t i;
-	int use_random;
+	size_t i, j;
 	int failed = 0;
 
 	if ((ctx = BN_CTX_new()) == NULL)
 		errx(1, "BN_CTX_new");
 
-	use_random = 1;
-	for (i = 0; i < N_MOD_EXP_FN; i++)
-		failed |= bn_mod_exp_zero_test(&mod_exp_fn[i], ctx, use_random);
+	for (i = 0; i < N_MOD_EXP_FN; i++) {
+		for (j = 0; j < 4; j++) {
+			int neg_modulus = (j >> 0) & 1;
+			int random_base = (j >> 1) & 1;
 
-	use_random = 0;
-	for (i = 0; i < N_MOD_EXP_FN; i++)
-		failed |= bn_mod_exp_zero_test(&mod_exp_fn[i], ctx, use_random);
+			failed |= bn_mod_exp_zero_test(&mod_exp_fn[i], ctx,
+			    neg_modulus, random_base);
+		}
+	}
 
-	failed |= bn_mod_exp_zero_word_test(ctx);
+	failed |= bn_mod_exp_zero_word_test(ctx, 0);
+	failed |= bn_mod_exp_zero_word_test(ctx, 1);
 
 	BN_CTX_free(ctx);
 
