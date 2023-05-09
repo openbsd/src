@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.132 2023/04/21 10:49:01 claudio Exp $ */
+/*	$OpenBSD: parser.c,v 1.133 2023/05/09 13:26:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -179,11 +179,11 @@ static const struct token t_show_rib[] = {
 	{ FLAG,		"best",		F_CTL_BEST,	t_show_rib},
 	{ COMMUNITY,	"community",	NONE,		t_show_rib},
 	{ FLAG,		"detail",	F_CTL_DETAIL,	t_show_rib},
+	{ FLAG,		"disqualified",	F_CTL_INELIGIBLE, t_show_rib},
 	{ ASTYPE,	"empty-as",	AS_EMPTY,	t_show_rib},
 	{ FLAG,		"error",	F_CTL_INVALID,	t_show_rib},
 	{ EXTCOMMUNITY,	"ext-community", NONE,		t_show_rib},
 	{ FLAG,		"in",		F_CTL_ADJ_IN,	t_show_rib},
-	{ FLAG,		"invalid",	F_CTL_INELIGIBLE, t_show_rib},
 	{ LRGCOMMUNITY,	"large-community", NONE,	t_show_rib},
 	{ FLAG,		"leaked",	F_CTL_LEAKED,	t_show_rib},
 	{ KEYWORD,	"memory",	SHOW_RIB_MEM,	NULL},

@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.110 2023/04/23 11:42:45 claudio Exp $
+.\" $OpenBSD: bgpctl.8,v 1.111 2023/05/09 13:26:27 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2023 $
+.Dd $Mdocdate: May 9 2023 $
 .Dt BGPCTL 8
 .Os
 .Sh NAME
@@ -404,12 +404,14 @@ Additionally, the following
 .Ar options
 are defined:
 .Pp
-.Bl -tag -width "selected" -compact
+.Bl -tag -width "disqualified" -compact
 .It Cm best
 Alias for
 .Ic selected .
 .It Cm detail
 Show more detailed output for matching routes.
+.It Cm disqualified
+Show only routes which are not eligible.
 .It Cm error
 Show only prefixes which are marked invalid and were treated as withdrawn.
 .It Ar family
@@ -419,8 +421,6 @@ Show routes from the unfiltered Adj-RIB-In.
 The
 .Cm neighbor
 needs to be specified.
-.It Cm invalid
-Show only routes which are not eligible.
 .It Cm leaked
 Show only routes where a route leak was detected.
 .It Cm out
