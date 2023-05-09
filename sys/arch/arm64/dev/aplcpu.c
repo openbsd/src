@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplcpu.c,v 1.6 2023/04/16 08:02:45 kettenis Exp $	*/
+/*	$OpenBSD: aplcpu.c,v 1.7 2023/05/09 10:13:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -396,9 +396,7 @@ aplcpu_setperf(int level)
 
 			/* Set desired P-state. */
 			reg &= ~DVFS_CMD_PS1_MASK;
-			reg &= ~DVFS_CMD_PS2_MASK;
 			reg |= (opp_level << DVFS_CMD_PS1_SHIFT);
-			reg |= (opp_level << DVFS_CMD_PS2_SHIFT);
 			reg |= DVFS_CMD_SET;
 			bus_space_write_8(sc->sc_iot, sc->sc_ioh[j],
 			    DVFS_CMD, reg);
