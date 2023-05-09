@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.155 2023/02/25 09:55:46 mvs Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.156 2023/05/09 14:22:17 visa Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -769,12 +769,6 @@ pselregister(struct proc *p, fd_set *pibits[3], fd_set *pobits[3], int nfd,
 						 * __EV_SELECT */
 					error = 0;
 					break;
-				case EPIPE:	/* Specific to pipes */
-					KASSERT(kev.filter == EVFILT_WRITE);
-					FD_SET(kev.ident, pobits[1]);
-					(*ncollected)++;
-					error = 0;
-					break;
 				case ENXIO:	/* Device has been detached */
 				default:
 					goto bad;
@@ -1072,10 +1066,6 @@ again:
 				kevp->filter = EVFILT_EXCEPT;
 				goto again;
 			}
-			break;
-		case EPIPE:	/* Specific to pipes */
-			KASSERT(kevp->filter == EVFILT_WRITE);
-			pl->revents |= POLLHUP;
 			break;
 		default:
 			DPRINTFN(0, "poll err %lu fd %d revents %02x serial"

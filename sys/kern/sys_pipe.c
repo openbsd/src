@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_pipe.c,v 1.145 2023/02/12 10:41:00 mvs Exp $	*/
+/*	$OpenBSD: sys_pipe.c,v 1.146 2023/05/09 14:22:17 visa Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -857,9 +857,13 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 		break;
 	case EVFILT_WRITE:
 		if (wpipe == NULL) {
-			/* other end of pipe has been closed */
-			error = EPIPE;
-			break;
+			/*
+			 * The other end of the pipe has been closed.
+			 * Since the filter now always indicates a pending
+			 * event, attach the knote to the current side
+			 * to proceed with the registration.
+			 */
+			wpipe = rpipe;
 		}
 		kn->kn_fop = &pipe_wfiltops;
 		kn->kn_hook = wpipe;
