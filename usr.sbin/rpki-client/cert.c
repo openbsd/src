@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.107 2023/04/15 00:39:08 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.108 2023/05/09 10:34:32 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -1092,6 +1092,7 @@ auth_insert(struct auth_tree *auths, struct cert *cert, struct auth *parent)
 
 	na->parent = parent;
 	na->cert = cert;
+	na->any_inherits = x509_any_inherits(cert->x509);
 
 	if (RB_INSERT(auth_tree, auths, na) != NULL)
 		err(1, "auth tree corrupted");

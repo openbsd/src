@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.59 2023/04/27 08:37:53 beck Exp $ */
+/*	$OpenBSD: validate.c,v 1.60 2023/05/09 10:34:32 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -332,25 +332,37 @@ valid_origin(const char *uri, const char *proto)
 }
 
 /*
- * Walk the certificate tree to the root and build a certificate
- * chain from cert->x509. All certs in the tree are validated and
- * can be loaded as trusted stack into the validator.
+ * Walk the tree of known valid CA certificates until we find a certificate that
+ * doesn't inherit. Build a chain of intermediates and use the non-inheriting
+ * certificate as a trusted root by virtue of X509_V_FLAG_PARTIAL_CHAIN. The
+ * RFC 3779 path validation needs a non-inheriting trust root to ensure that
+ * all delegated resources are covered.
  */
 static void
-build_chain(const struct auth *a, STACK_OF(X509) **chain)
+build_chain(const struct auth *a, STACK_OF(X509) **intermediates,
+    STACK_OF(X509) **root)
 {
-	*chain = NULL;
+	*intermediates = NULL;
+	*root = NULL;
 
 	if (a == NULL)
 		return;
 
-	if ((*chain = sk_X509_new_null()) == NULL)
+	if ((*intermediates = sk_X509_new_null()) == NULL)
+		err(1, "sk_X509_new_null");
+	if ((*root = sk_X509_new_null()) == NULL)
 		err(1, "sk_X509_new_null");
 	for (; a != NULL; a = a->parent) {
 		assert(a->cert->x509 != NULL);
-		if (!sk_X509_push(*chain, a->cert->x509))
+		if (!a->any_inherits) {
+			if (!sk_X509_push(*root, a->cert->x509))
+				errx(1, "sk_X509_push");
+			break;
+		}
+		if (!sk_X509_push(*intermediates, a->cert->x509))
 			errx(1, "sk_X509_push");
 	}
+	assert(sk_X509_num(*root) == 1);
 }
 
 /*
@@ -381,13 +393,13 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
 {
 	X509_VERIFY_PARAM	*params;
 	ASN1_OBJECT		*cp_oid;
-	STACK_OF(X509)		*chain;
+	STACK_OF(X509)		*intermediates, *root;
 	STACK_OF(X509_CRL)	*crls = NULL;
 	unsigned long		 flags;
 	int			 error;
 
 	*errstr = NULL;
-	build_chain(a, &chain);
+	build_chain(a, &intermediates, &root);
 	build_crls(crl, &crls);
 
 	assert(store_ctx != NULL);
@@ -404,25 +416,33 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
 	X509_VERIFY_PARAM_set_time(params, evaluation_time);
 
 	flags = X509_V_FLAG_CRL_CHECK;
+	flags |= X509_V_FLAG_PARTIAL_CHAIN;
 	flags |= X509_V_FLAG_POLICY_CHECK;
 	flags |= X509_V_FLAG_EXPLICIT_POLICY;
 	flags |= X509_V_FLAG_INHIBIT_MAP;
 	X509_STORE_CTX_set_flags(store_ctx, flags);
 	X509_STORE_CTX_set_depth(store_ctx, MAX_CERT_DEPTH);
-	X509_STORE_CTX_set0_trusted_stack(store_ctx, chain);
+	/*
+	 * See the comment above build_chain() for details on what's happening
+	 * here. The nomenclature in this API is dubious and poorly documented.
+	 */
+	X509_STORE_CTX_set0_untrusted(store_ctx, intermediates);
+	X509_STORE_CTX_set0_trusted_stack(store_ctx, root);
 	X509_STORE_CTX_set0_crls(store_ctx, crls);
 
 	if (X509_verify_cert(store_ctx) <= 0) {
 		error = X509_STORE_CTX_get_error(store_ctx);
 		*errstr = X509_verify_cert_error_string(error);
 		X509_STORE_CTX_cleanup(store_ctx);
-		sk_X509_free(chain);
+		sk_X509_free(intermediates);
+		sk_X509_free(root);
 		sk_X509_CRL_free(crls);
 		return 0;
 	}
 
 	X509_STORE_CTX_cleanup(store_ctx);
-	sk_X509_free(chain);
+	sk_X509_free(intermediates);
+	sk_X509_free(root);
 	sk_X509_CRL_free(crls);
 	return 1;
 }
