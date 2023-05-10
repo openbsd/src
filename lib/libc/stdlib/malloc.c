@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.282 2023/04/21 06:19:40 jsg Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.283 2023/05/10 07:58:06 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -263,24 +263,6 @@ static void malloc_exit(void);
 #define REALSIZE(sz, r)						\
 	(sz) = (uintptr_t)(r)->p & MALLOC_PAGEMASK,		\
 	(sz) = ((sz) == 0 ? (r)->size : B2SIZE((sz) - 1))
-
-static inline void
-_MALLOC_LEAVE(struct dir_info *d)
-{
-	if (d->malloc_mt) {
-		d->active--;
-		_MALLOC_UNLOCK(d->mutex);
-	}
-}
-
-static inline void
-_MALLOC_ENTER(struct dir_info *d)
-{
-	if (d->malloc_mt) {
-		_MALLOC_LOCK(d->mutex);
-		d->active++;
-	}
-}
 
 static inline size_t
 hash(void *p)
@@ -879,9 +861,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 			return p;
 		}
 		if (psz <= 1) {
-			_MALLOC_LEAVE(d);
 			p = MMAP(cache->max * sz, d->mmap_flag);
-			_MALLOC_ENTER(d);
 			if (p != MAP_FAILED) {
 				STATS_ADD(d->malloc_used, cache->max * sz);
 				cache->length = cache->max - 1;
@@ -901,9 +881,7 @@ map(struct dir_info *d, size_t sz, int zero_fill)
 		}
 
 	}
-	_MALLOC_LEAVE(d);
 	p = MMAP(sz, d->mmap_flag);
-	_MALLOC_ENTER(d);
 	if (p != MAP_FAILED)
 		STATS_ADD(d->malloc_used, sz);
 	/* zero fill not needed */
