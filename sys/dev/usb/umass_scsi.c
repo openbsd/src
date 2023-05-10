@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_scsi.c,v 1.63 2022/04/16 19:19:59 naddy Exp $ */
+/*	$OpenBSD: umass_scsi.c,v 1.64 2023/05/10 15:28:26 krw Exp $ */
 /*	$NetBSD: umass_scsipi.c,v 1.9 2003/02/16 23:14:08 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -96,6 +96,11 @@ umass_scsi_attach(struct umass_softc *sc)
 				     sc->sc_dev.dv_xname, sc, scbus));
 		break;
 	case UMASS_CPROTO_UFI:
+		flags |= SDEV_UFI | SDEV_ATAPI;
+		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: UFI\n"
+				     "sc = 0x%p, scbus = 0x%p\n",
+				     sc->sc_dev.dv_xname, sc, scbus));
+		break;
 	case UMASS_CPROTO_ATAPI:
 		flags |= SDEV_ATAPI;
 		DPRINTF(UDMASS_USB, ("%s: umass_attach_bus: ATAPI\n"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.201 2022/04/16 19:19:59 naddy Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.202 2023/05/10 15:28:26 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -299,6 +299,7 @@ struct scsi_link {
 #define SDEV_UMASS		0x0400	/* device is UMASS SCSI */
 #define SDEV_VIRTUAL		0x0800	/* device is virtualised on the hba */
 #define SDEV_OWN_IOPL		0x1000	/* scsibus */
+#define SDEV_UFI		0x2000	/* Universal Floppy Interface */
 	u_int16_t quirks;		/* per-device oddities */
 #define	SDEV_AUTOSAVE		0x0001	/* do implicit SAVEDATAPOINTER on disconnect */
 #define	SDEV_NOSYNC		0x0002	/* does not grok SDTR */

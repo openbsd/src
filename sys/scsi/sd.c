@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.333 2022/10/23 14:39:19 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.334 2023/05/10 15:28:26 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1115,13 +1115,19 @@ sdgetdisklabel(dev_t dev, struct sd_softc *sc, struct disklabel *lp,
 		/* As long as it's not 0 - readdisklabel divides by it. */
 	}
 
-	lp->d_type = DTYPE_SCSI;
-	if ((link->inqdata.device & SID_TYPE) == T_OPTICAL)
-		strncpy(lp->d_typename, "SCSI optical",
+	if (ISSET(link->flags, SDEV_UFI)) {
+		lp->d_type = DTYPE_FLOPPY;
+		strncpy(lp->d_typename, "USB floppy disk",
 		    sizeof(lp->d_typename));
-	else
-		strncpy(lp->d_typename, "SCSI disk",
-		    sizeof(lp->d_typename));
+	} else {
+		lp->d_type = DTYPE_SCSI;
+		if ((link->inqdata.device & SID_TYPE) == T_OPTICAL)
+			strncpy(lp->d_typename, "SCSI optical",
+			    sizeof(lp->d_typename));
+		else
+			strncpy(lp->d_typename, "SCSI disk",
+			    sizeof(lp->d_typename));
+	}
 
 	/*
 	 * Try to fit '<vendor> <product>' into d_packname. If that doesn't fit
