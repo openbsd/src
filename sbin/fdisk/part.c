@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.160 2023/04/12 13:11:37 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.161 2023/05/10 13:45:49 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -386,7 +386,7 @@ const struct gpt_type		gpt_types[] = {
 	{ 0, NULL,	/* EFI Sys */		EFI_SYSTEM_PARTITION_GUID },
 	{ 0, NULL,	/* Win Recovery*/	WIN_RECOVERY_GUID },
 	{ 0, NULL,	/* Linux VM */		LINUX_LVM_GUID },
-	{ 0, NULL,	/* MS basic data */	MICROSOFT_BASIC_DATA_GUID },
+	{ 0, "Microsoft basic data",		MICROSOFT_BASIC_DATA_GUID },
 	{ 0, NULL,	/* ChromeKernel */	CHROME_KERNEL_GUID },
 #if 0
 	/* Sorted as in https://en.wikipedia.org/wiki/GUID_Partition_Table */
