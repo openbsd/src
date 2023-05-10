@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.384 2023/05/08 13:22:13 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.385 2023/05/10 12:07:16 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -84,7 +84,6 @@ void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
 static __inline u_int16_t __attribute__((__unused__))
     in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
 void in_delayed_cksum(struct mbuf *);
-int in_ifcap_cksum(struct mbuf *, struct ifnet *, int);
 
 int ip_output_ipsec_lookup(struct mbuf *m, int hlen, struct inpcb *inp,
     struct tdb **, int ipsecflowinfo);
@@ -468,6 +467,16 @@ sendit:
 		goto done;
 	}
 
+	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) &&
+	    m->m_pkthdr.ph_mss <= mtu) {
+		if ((error = tcp_chopper(m, &ml, ifp, m->m_pkthdr.ph_mss)) ||
+		    (error = if_output_ml(ifp, &ml, sintosa(dst), ro->ro_rt)))
+			goto done;
+		tcpstat_inc(tcps_outswtso);
+		goto done;
+	}
+	CLR(m->m_pkthdr.csum_flags, M_TCP_TSO);
+
 	/*
 	 * Too large for interface; fragment if possible.
 	 * Must be able to put at least 8 bytes per fragment.
@@ -597,12 +606,12 @@ ip_output_ipsec_pmtu_update(struct tdb *tdb, struct route *ro,
 int
 ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 {
-#if NPF > 0
-	struct ifnet *encif;
-#endif
+	struct mbuf_list ml;
+	struct ifnet *encif = NULL;
 	struct ip *ip;
 	struct in_addr dst;
-	int error, rtableid;
+	u_int len;
+	int error, rtableid, tso = 0;
 
 #if NPF > 0
 	/*
@@ -622,16 +631,22 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	 * Until now the change was not reconsidered.
 	 * What's the behaviour?
 	 */
-	in_proto_cksum_out(m, encif);
 #endif
 
-	/* Check if we are allowed to fragment */
+	/* Check if we can chop the TCP packet */
 	ip = mtod(m, struct ip *);
+	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) &&
+	    m->m_pkthdr.ph_mss <= tdb->tdb_mtu) {
+		tso = 1;
+		len = m->m_pkthdr.ph_mss;
+	} else
+		len = ntohs(ip->ip_len);
+
+	/* Check if we are allowed to fragment */
 	dst = ip->ip_dst;
 	rtableid = m->m_pkthdr.ph_rtableid;
 	if (ip_mtudisc && (ip->ip_off & htons(IP_DF)) && tdb->tdb_mtu &&
-	    ntohs(ip->ip_len) > tdb->tdb_mtu &&
-	    tdb->tdb_mtutimeout > gettime()) {
+	    len > tdb->tdb_mtu && tdb->tdb_mtutimeout > gettime()) {
 		int transportmode;
 
 		transportmode = (tdb->tdb_dst.sa.sa_family == AF_INET) &&
@@ -652,14 +667,33 @@ ip_output_ipsec_send(struct tdb *tdb, struct mbuf *m, struct route *ro, int fwd)
 	 */
 	m->m_flags &= ~(M_MCAST | M_BCAST);
 
-	/* Callee frees mbuf */
+	if (tso) {
+		error = tcp_chopper(m, &ml, encif, len);
+		if (error)
+			goto done;
+	} else {
+		CLR(m->m_pkthdr.csum_flags, M_TCP_TSO);
+		in_proto_cksum_out(m, encif);
+		ml_init(&ml);
+		ml_enqueue(&ml, m);
+	}
+
 	KERNEL_LOCK();
-	error = ipsp_process_packet(m, tdb, AF_INET, 0);
+	while ((m = ml_dequeue(&ml)) != NULL) {
+		/* Callee frees mbuf */
+		error = ipsp_process_packet(m, tdb, AF_INET, 0);
+		if (error)
+			break;
+	}
 	KERNEL_UNLOCK();
+ done:
 	if (error) {
+		ml_purge(&ml);
 		ipsecstat_inc(ipsec_odrops);
 		tdbstat_inc(tdb, tdb_odrops);
 	}
+	if (!error && tso)
+		tcpstat_inc(tcps_outswtso);
 	if (ip_mtudisc && error == EMSGSIZE)
 		ip_output_ipsec_pmtu_update(tdb, ro, dst, rtableid, 0);
 	return error;

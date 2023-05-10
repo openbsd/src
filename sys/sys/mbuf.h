@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.256 2023/05/05 01:19:51 bluhm Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.257 2023/05/10 12:07:17 bluhm Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -129,12 +129,13 @@ struct	pkthdr {
 	SLIST_HEAD(, m_tag)	 ph_tags;	/* list of packet tags */
 	int64_t			 ph_timestamp;	/* packet timestamp */
 	int			 len;		/* total packet length */
+	u_int			 ph_rtableid;	/* routing table id */
+	u_int			 ph_ifidx;	/* rcv interface index */
 	u_int16_t		 ph_tagsset;	/* mtags attached */
 	u_int16_t		 ph_flowid;	/* pseudo unique flow id */
 	u_int16_t		 csum_flags;	/* checksum flags */
 	u_int16_t		 ether_vtag;	/* Ethernet 802.1p+Q vlan tag */
-	u_int			 ph_rtableid;	/* routing table id */
-	u_int			 ph_ifidx;	/* rcv interface index */
+	u_int16_t		 ph_mss;	/* TCP max segment size */
 	u_int8_t		 ph_loopcnt;	/* mbuf is looping in kernel */
 	u_int8_t		 ph_family;	/* af, used when queueing */
 	struct pkthdr_pf	 pf;
@@ -226,6 +227,7 @@ struct mbuf {
 #define	M_IPV6_DF_OUT		0x1000	/* don't fragment outgoing IPv6 */
 #define	M_TIMESTAMP		0x2000	/* ph_timestamp is set */
 #define	M_FLOWID		0x4000	/* ph_flowid is set */
+#define	M_TCP_TSO		0x8000	/* TCP Segmentation Offload needed */
 
 #ifdef _KERNEL
 #define MCS_BITS \

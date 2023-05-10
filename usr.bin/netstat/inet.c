@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.174 2022/08/12 14:49:15 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.175 2023/05/10 12:07:17 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -408,6 +408,10 @@ tcp_stats(char *name)
 	p(tcps_sndwinup, "\t\t%u window update packet%s\n");
 	p(tcps_sndctrl, "\t\t%u control packet%s\n");
 	p(tcps_outswcsum, "\t\t%u packet%s software-checksummed\n");
+	p(tcps_outswtso, "\t\t%u output TSO packet%s software chopped\n");
+	p(tcps_outhwtso, "\t\t%u output TSO packet%s hardware processed\n");
+	p(tcps_outpkttso, "\t\t%u output TSO packet%s generated\n");
+	p(tcps_outbadtso, "\t\t%u output TSO packet%s dropped\n");
 	p(tcps_rcvtotal, "\t%u packet%s received\n");
 	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %llu byte%s)\n");
 	p(tcps_rcvdupack, "\t\t%u duplicate ack%s\n");

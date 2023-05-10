@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.135 2023/04/25 22:56:28 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.136 2023/05/10 12:07:16 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -210,6 +210,7 @@ tcp_output(struct tcpcb *tp)
 #ifdef TCP_ECN
 	int needect;
 #endif
+	int tso;
 
 	if (tp->t_flags & TF_BLOCKOUTPUT) {
 		tp->t_flags |= TF_NEEDOUTPUT;
@@ -279,6 +280,7 @@ again:
 	}
 
 	sendalot = 0;
+	tso = 0;
 	/*
 	 * If in persist timeout with window of 0, send 1 byte.
 	 * Otherwise, if window is small but nonzero
@@ -346,8 +348,25 @@ again:
 	txmaxseg = ulmin(so->so_snd.sb_hiwat / 2, tp->t_maxseg);
 
 	if (len > txmaxseg) {
-		len = txmaxseg;
-		sendalot = 1;
+		if (tcp_do_tso &&
+		    tp->t_inpcb->inp_options == NULL &&
+		    tp->t_inpcb->inp_outputopts6 == NULL &&
+#ifdef TCP_SIGNATURE
+		    ((tp->t_flags & TF_SIGNATURE) == 0) &&
+#endif
+		    len >= 2 * tp->t_maxseg &&
+		    tp->rcv_numsacks == 0 && sack_rxmit == 0 &&
+		    !(flags & (TH_SYN|TH_RST|TH_FIN))) {
+			tso = 1;
+			/* avoid small chopped packets */
+			if (len > (len / tp->t_maxseg) * tp->t_maxseg) {
+				len = (len / tp->t_maxseg) * tp->t_maxseg;
+				sendalot = 1;
+			}
+		} else {
+			len = txmaxseg;
+			sendalot = 1;
+		}
 	}
 	if (off + len < so->so_snd.sb_cc)
 		flags &= ~TH_FIN;
@@ -365,7 +384,7 @@ again:
 	 * to send into a small window), then must resend.
 	 */
 	if (len) {
-		if (len == txmaxseg)
+		if (len >= txmaxseg)
 			goto send;
 		if ((idle || (tp->t_flags & TF_NODELAY)) &&
 		    len + off >= so->so_snd.sb_cc && !soissending(so) &&
@@ -616,10 +635,19 @@ send:
 	/*
 	 * Adjust data length if insertion of options will
 	 * bump the packet length beyond the t_maxopd length.
+	 * Clear the FIN bit because we cut off the tail of
+	 * the segment.
 	 */
 	if (len > tp->t_maxopd - optlen) {
-		len = tp->t_maxopd - optlen;
-		sendalot = 1;
+		if (tso) {
+			if (len + hdrlen + max_linkhdr > MAXMCLBYTES) {
+				len = MAXMCLBYTES - hdrlen - max_linkhdr;
+				sendalot = 1;
+			}
+		} else {
+			len = tp->t_maxopd - optlen;
+			sendalot = 1;
+		}
 		flags &= ~TH_FIN;
 	}
 
@@ -722,6 +750,12 @@ send:
 	}
 	m->m_pkthdr.ph_ifidx = 0;
 	m->m_pkthdr.len = hdrlen + len;
+
+	/* Enable TSO and specify the size of the resulting segments. */
+	if (tso) {
+		m->m_pkthdr.csum_flags |= M_TCP_TSO;
+		m->m_pkthdr.ph_mss = tp->t_maxseg;
+	}
 
 	if (!tp->t_template)
 		panic("tcp_output");
@@ -1152,4 +1186,177 @@ tcp_setpersist(struct tcpcb *tp)
 	TCP_TIMER_ARM(tp, TCPT_PERSIST, msec);
 	if (tp->t_rxtshift < TCP_MAXRXTSHIFT)
 		tp->t_rxtshift++;
+}
+
+int
+tcp_chopper(struct mbuf *m0, struct mbuf_list *ml, struct ifnet *ifp,
+    u_int mss)
+{
+	struct ip *ip = NULL;
+#ifdef INET6
+	struct ip6_hdr *ip6 = NULL;
+#endif
+	struct tcphdr *th;
+	int firstlen, iphlen, hlen, tlen, off;
+	int error;
+
+	ml_init(ml);
+	ml_enqueue(ml, m0);
+
+	ip = mtod(m0, struct ip *);
+	switch (ip->ip_v) {
+	case 4:
+		iphlen = ip->ip_hl << 2;
+		if (ISSET(ip->ip_off, htons(IP_OFFMASK | IP_MF)) ||
+		    iphlen != sizeof(struct ip) || ip->ip_p != IPPROTO_TCP) {
+			/* only TCP without fragment or IP option supported */
+			error = EPROTOTYPE;
+			goto bad;
+		}
+		break;
+#ifdef INET6
+	case 6:
+		ip = NULL;
+		ip6 = mtod(m0, struct ip6_hdr *);
+		iphlen = sizeof(struct ip6_hdr);
+		if (ip6->ip6_nxt != IPPROTO_TCP) {
+			/* only TCP without IPv6 header chain supported */
+			error = EPROTOTYPE;
+			goto bad;
+		}
+		break;
+#endif
+	default:
+		panic("%s: unknown ip version %d", __func__, ip->ip_v);
+	}
+
+	tlen = m0->m_pkthdr.len;
+	if (tlen < iphlen + sizeof(struct tcphdr)) {
+		error = ENOPROTOOPT;
+		goto bad;
+	}
+	/* IP and TCP header should be contiguous, this check is paranoia */
+	if (m0->m_len < iphlen + sizeof(*th)) {
+		ml_dequeue(ml);
+		if ((m0 = m_pullup(m0, iphlen + sizeof(*th))) == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
+		ml_enqueue(ml, m0);
+	}
+	th = (struct tcphdr *)(mtod(m0, caddr_t) + iphlen);
+	hlen = iphlen + (th->th_off << 2);
+	if (tlen < hlen) {
+		error = ENOPROTOOPT;
+		goto bad;
+	}
+	firstlen = MIN(tlen - hlen, mss);
+
+	CLR(m0->m_pkthdr.csum_flags, M_TCP_TSO);
+
+	/*
+	 * Loop through length of payload after first segment,
+	 * make new header and copy data of each part and link onto chain.
+	 */
+	for (off = hlen + firstlen; off < tlen; off += mss) {
+		struct mbuf *m;
+		struct tcphdr *mhth;
+		int len;
+
+		len = MIN(tlen - off, mss);
+
+		MGETHDR(m, M_DONTWAIT, MT_HEADER);
+		if (m == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
+		ml_enqueue(ml, m);
+		if ((error = m_dup_pkthdr(m, m0, M_DONTWAIT)) != 0)
+			goto bad;
+
+		/* IP and TCP header to the end, space for link layer header */
+		m->m_len = hlen;
+		m_align(m, hlen);
+
+		/* copy and adjust TCP header */
+		mhth = (struct tcphdr *)(mtod(m, caddr_t) + iphlen);
+		memcpy(mhth, th, hlen - iphlen);
+		mhth->th_seq = htonl(ntohl(th->th_seq) + (off - hlen));
+		if (off + len < tlen)
+			CLR(mhth->th_flags, TH_PUSH|TH_FIN);
+
+		/* add mbuf chain with payload */
+		m->m_pkthdr.len = hlen + len;
+		if ((m->m_next = m_copym(m0, off, len, M_DONTWAIT)) == NULL) {
+			error = ENOBUFS;
+			goto bad;
+		}
+
+		/* copy and adjust IP header, calculate checksum */
+		SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
+		mhth->th_sum = 0;
+		if (ip) {
+			struct ip *mhip;
+
+			mhip = mtod(m, struct ip *);
+			*mhip = *ip;
+			mhip->ip_len = htons(hlen + len);
+			mhip->ip_id = htons(ip_randomid());
+			mhip->ip_sum = 0;
+			if (ifp && in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4)) {
+				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
+			} else {
+				ipstat_inc(ips_outswcsum);
+				mhip->ip_sum = in_cksum(m, iphlen);
+			}
+			in_proto_cksum_out(m, ifp);
+		}
+#ifdef INET6
+		if (ip6) {
+			struct ip6_hdr *mhip6;
+
+			mhip6 = mtod(m, struct ip6_hdr *);
+			*mhip6 = *ip6;
+			mhip6->ip6_plen = htons(hlen - iphlen + len);
+			in6_proto_cksum_out(m, ifp);
+		}
+#endif
+	}
+
+	/*
+	 * Update first segment by trimming what's been copied out
+	 * and updating header, then send each segment (in order).
+	 */
+	if (hlen + firstlen < tlen) {
+		m_adj(m0, hlen + firstlen - tlen);
+		CLR(th->th_flags, TH_PUSH|TH_FIN);
+	}
+	/* adjust IP header, calculate checksum */
+	SET(m0->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
+	th->th_sum = 0;
+	if (ip) {
+		ip->ip_len = htons(m0->m_pkthdr.len);
+		ip->ip_sum = 0;
+		if (ifp && in_ifcap_cksum(m0, ifp, IFCAP_CSUM_IPv4)) {
+			m0->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
+		} else {
+			ipstat_inc(ips_outswcsum);
+			ip->ip_sum = in_cksum(m0, iphlen);
+		}
+		in_proto_cksum_out(m0, ifp);
+	}
+#ifdef INET6
+	if (ip6) {
+		ip6->ip6_plen = htons(m0->m_pkthdr.len - iphlen);
+		in6_proto_cksum_out(m0, ifp);
+	}
+#endif
+
+	tcpstat_add(tcps_outpkttso, ml_len(ml));
+	return 0;
+
+ bad:
+	tcpstat_inc(tcps_outbadtso);
+	ml_purge(ml);
+	return error;
 }

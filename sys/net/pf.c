@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1177 2023/05/08 13:22:13 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1178 2023/05/10 12:07:16 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6561,6 +6561,16 @@ pf_route(struct pf_pdesc *pd, struct pf_state *st)
 		goto done;
 	}
 
+	if (ISSET(m0->m_pkthdr.csum_flags, M_TCP_TSO) &&
+	    m0->m_pkthdr.ph_mss <= ifp->if_mtu) {
+		if (tcp_chopper(m0, &ml, ifp, m0->m_pkthdr.ph_mss) ||
+		    if_output_ml(ifp, &ml, sintosa(dst), rt))
+			goto done;
+		tcpstat_inc(tcps_outswtso);
+		goto done;
+	}
+	CLR(m0->m_pkthdr.csum_flags, M_TCP_TSO);
+
 	/*
 	 * Too large for interface; fragment if possible.
 	 * Must be able to put at least 8 bytes per fragment.
@@ -6594,6 +6604,7 @@ void
 pf_route6(struct pf_pdesc *pd, struct pf_state *st)
 {
 	struct mbuf		*m0;
+	struct mbuf_list	 ml;
 	struct sockaddr_in6	*dst, sin6;
 	struct rtentry		*rt = NULL;
 	struct ip6_hdr		*ip6;
@@ -6685,11 +6696,21 @@ pf_route6(struct pf_pdesc *pd, struct pf_state *st)
 		goto done;
 	}
 
-	if ((u_long)m0->m_pkthdr.len <= ifp->if_mtu) {
+	if (m0->m_pkthdr.len <= ifp->if_mtu) {
 		in6_proto_cksum_out(m0, ifp);
 		ifp->if_output(ifp, m0, sin6tosa(dst), rt);
 		goto done;
 	}
+
+	if (ISSET(m0->m_pkthdr.csum_flags, M_TCP_TSO) &&
+	    m0->m_pkthdr.ph_mss <= ifp->if_mtu) {
+		if (tcp_chopper(m0, &ml, ifp, m0->m_pkthdr.ph_mss) ||
+		    if_output_ml(ifp, &ml, sin6tosa(dst), rt))
+			goto done;
+		tcpstat_inc(tcps_outswtso);
+		goto done;
+	}
+	CLR(m0->m_pkthdr.csum_flags, M_TCP_TSO);
 
 	ip6stat_inc(ip6s_cantfrag);
 	if (st->rt != PF_DUPTO)
