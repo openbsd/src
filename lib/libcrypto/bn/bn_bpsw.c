@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.9 2023/05/10 12:21:55 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.10 2023/05/10 21:05:24 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -156,7 +156,7 @@ bn_lucas(BIGNUM *U, BIGNUM *V, const BIGNUM *k, const BIGNUM *D,
  */
 
 static int
-bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
+bn_strong_lucas_test(int *is_pseudoprime, const BIGNUM *n, const BIGNUM *D,
     BN_CTX *ctx)
 {
 	BIGNUM *k, *U, *V;
@@ -194,7 +194,7 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
 		goto err;
 
 	if (BN_is_zero(U) || BN_is_zero(V)) {
-		*is_prime = 1;
+		*is_pseudoprime = 1;
 		goto done;
 	}
 
@@ -208,7 +208,7 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
 			goto err;
 
 		if (BN_is_zero(V)) {
-			*is_prime = 1;
+			*is_pseudoprime = 1;
 			goto done;
 		}
 	}
@@ -217,7 +217,7 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
 	 * If we got here, n is definitely composite.
 	 */
 
-	*is_prime = 0;
+	*is_pseudoprime = 0;
 
  done:
 	ret = 1;
@@ -235,7 +235,7 @@ bn_strong_lucas_test(int *is_prime, const BIGNUM *n, const BIGNUM *D,
  */
 
 static int
-bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
+bn_strong_lucas_selfridge(int *is_pseudoprime, const BIGNUM *n, BN_CTX *ctx)
 {
 	BIGNUM *D, *two;
 	int is_perfect_square, jacobi_symbol, sign;
@@ -247,7 +247,7 @@ bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 	if (!bn_is_perfect_square(&is_perfect_square, n, ctx))
 		goto err;
 	if (is_perfect_square) {
-		*is_prime = 0;
+		*is_pseudoprime = 0;
 		goto done;
 	}
 
@@ -278,7 +278,7 @@ bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 
 		/* n and D have prime factors in common. */
 		if (jacobi_symbol == 0) {
-			*is_prime = 0;
+			*is_pseudoprime = 0;
 			goto done;
 		}
 
@@ -288,7 +288,7 @@ bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 		BN_set_negative(D, sign == -1);
 	}
 
-	if (!bn_strong_lucas_test(is_prime, n, D, ctx))
+	if (!bn_strong_lucas_test(is_pseudoprime, n, D, ctx))
 		goto err;
 
  done:
@@ -318,7 +318,7 @@ bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
  */
 
 static int
-bn_fermat(int *is_prime, const BIGNUM *n, const BIGNUM *n_minus_one,
+bn_fermat(int *is_pseudoprime, const BIGNUM *n, const BIGNUM *n_minus_one,
     const BIGNUM *k, int s, const BIGNUM *base, BN_CTX *ctx, BN_MONT_CTX *mctx)
 {
 	BIGNUM *power;
@@ -338,7 +338,7 @@ bn_fermat(int *is_prime, const BIGNUM *n, const BIGNUM *n_minus_one,
 		goto err;
 
 	if (BN_is_one(power) || BN_cmp(power, n_minus_one) == 0) {
-		*is_prime = 1;
+		*is_pseudoprime = 1;
 		goto done;
 	}
 
@@ -349,13 +349,13 @@ bn_fermat(int *is_prime, const BIGNUM *n, const BIGNUM *n_minus_one,
 
 		/* n is a pseudoprime for base. */
 		if (BN_cmp(power, n_minus_one) == 0) {
-			*is_prime = 1;
+			*is_pseudoprime = 1;
 			goto done;
 		}
 
 		/* n is composite: there's a square root of unity != 1 or -1. */
 		if (BN_is_one(power)) {
-			*is_prime = 0;
+			*is_pseudoprime = 0;
 			goto done;
 		}
 	}
@@ -364,7 +364,7 @@ bn_fermat(int *is_prime, const BIGNUM *n, const BIGNUM *n_minus_one,
 	 * If we get here, n is definitely composite: base^(n-1) != 1.
 	 */
 
-	*is_prime = 0;
+	*is_pseudoprime = 0;
 
  done:
 	ret = 1;
@@ -377,11 +377,12 @@ bn_fermat(int *is_prime, const BIGNUM *n, const BIGNUM *n_minus_one,
 
 /*
  * Miller-Rabin primality test for base 2 and for |rounds| of random bases.
- * On success: is_prime == 0 implies n is composite - the converse is false.
+ * On success: is_pseudoprime == 0 implies that n is composite.
  */
 
 static int
-bn_miller_rabin(int *is_prime, const BIGNUM *n, BN_CTX *ctx, size_t rounds)
+bn_miller_rabin(int *is_pseudoprime, const BIGNUM *n, BN_CTX *ctx,
+    size_t rounds)
 {
 	BN_MONT_CTX *mctx = NULL;
 	BIGNUM *base, *k, *n_minus_one, *three;
@@ -401,12 +402,12 @@ bn_miller_rabin(int *is_prime, const BIGNUM *n, BN_CTX *ctx, size_t rounds)
 		goto err;
 
 	if (BN_is_word(n, 2) || BN_is_word(n, 3)) {
-		*is_prime = 1;
+		*is_pseudoprime = 1;
 		goto done;
 	}
 
 	if (BN_cmp(n, BN_value_one()) <= 0 || !BN_is_odd(n)) {
-		*is_prime = 0;
+		*is_pseudoprime = 0;
 		goto done;
 	}
 
@@ -440,9 +441,9 @@ bn_miller_rabin(int *is_prime, const BIGNUM *n, BN_CTX *ctx, size_t rounds)
 	if (!BN_set_word(base, 2))
 		goto err;
 
-	if (!bn_fermat(is_prime, n, n_minus_one, k, s, base, ctx, mctx))
+	if (!bn_fermat(is_pseudoprime, n, n_minus_one, k, s, base, ctx, mctx))
 		goto err;
-	if (!*is_prime)
+	if (!*is_pseudoprime)
 		goto done;
 
 	/*
@@ -457,9 +458,10 @@ bn_miller_rabin(int *is_prime, const BIGNUM *n, BN_CTX *ctx, size_t rounds)
 		if (!bn_rand_interval(base, three, n_minus_one))
 			goto err;
 
-		if (!bn_fermat(is_prime, n, n_minus_one, k, s, base, ctx, mctx))
+		if (!bn_fermat(is_pseudoprime, n, n_minus_one, k, s, base, ctx,
+		    mctx))
 			goto err;
-		if (!*is_prime)
+		if (!*is_pseudoprime)
 			goto done;
 	}
 
@@ -467,7 +469,7 @@ bn_miller_rabin(int *is_prime, const BIGNUM *n, BN_CTX *ctx, size_t rounds)
 	 * If we got here, we have a Miller-Rabin pseudoprime.
 	 */
 
-	*is_prime = 1;
+	*is_pseudoprime = 1;
 
  done:
 	ret = 1;
@@ -485,7 +487,8 @@ bn_miller_rabin(int *is_prime, const BIGNUM *n, BN_CTX *ctx, size_t rounds)
  */
 
 int
-bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx, size_t rounds)
+bn_is_prime_bpsw(int *is_pseudoprime, const BIGNUM *n, BN_CTX *in_ctx,
+    size_t rounds)
 {
 	BN_CTX *ctx = NULL;
 	BN_ULONG mod;
@@ -493,12 +496,12 @@ bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx, size_t rounds)
 	int ret = 0;
 
 	if (BN_is_word(n, 2)) {
-		*is_prime = 1;
+		*is_pseudoprime = 1;
 		goto done;
 	}
 
 	if (BN_cmp(n, BN_value_one()) <= 0 || !BN_is_odd(n)) {
-		*is_prime = 0;
+		*is_pseudoprime = 0;
 		goto done;
 	}
 
@@ -507,7 +510,7 @@ bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx, size_t rounds)
 		if ((mod = BN_mod_word(n, primes[i])) == (BN_ULONG)-1)
 			goto err;
 		if (mod == 0) {
-			*is_prime = BN_is_word(n, primes[i]);
+			*is_pseudoprime = BN_is_word(n, primes[i]);
 			goto done;
 		}
 	}
@@ -517,12 +520,12 @@ bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx, size_t rounds)
 	if (ctx == NULL)
 		goto err;
 
-	if (!bn_miller_rabin(is_prime, n, ctx, rounds))
+	if (!bn_miller_rabin(is_pseudoprime, n, ctx, rounds))
 		goto err;
-	if (!*is_prime)
+	if (!*is_pseudoprime)
 		goto done;
 
-	if (!bn_strong_lucas_selfridge(is_prime, n, ctx))
+	if (!bn_strong_lucas_selfridge(is_pseudoprime, n, ctx))
 		goto err;
 
  done:
