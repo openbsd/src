@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_lb.c,v 1.73 2023/01/04 10:31:55 dlg Exp $ */
+/*	$OpenBSD: pf_lb.c,v 1.74 2023/05/10 22:42:51 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -196,18 +196,24 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 			/* XXX bug: icmp states dont use the id on both
 			 * XXX sides (traceroute -I through nat) */
 			key.port[sidx] = pd->nsport;
+			key.hash = pf_pkt_hash(key.af, key.proto, &key.addr[0],
+			    &key.addr[1], key.port[0], key.port[1]);
 			if (pf_find_state_all(&key, dir, NULL) == NULL) {
 				*nport = pd->nsport;
 				return (0);
 			}
 		} else if (low == 0 && high == 0) {
 			key.port[sidx] = pd->nsport;
+			key.hash = pf_pkt_hash(key.af, key.proto, &key.addr[0],
+			    &key.addr[1], key.port[0], key.port[1]);
 			if (pf_find_state_all(&key, dir, NULL) == NULL) {
 				*nport = pd->nsport;
 				return (0);
 			}
 		} else if (low == high) {
 			key.port[sidx] = htons(low);
+			key.hash = pf_pkt_hash(key.af, key.proto, &key.addr[0],
+			    &key.addr[1], key.port[0], key.port[1]);
 			if (pf_find_state_all(&key, dir, NULL) == NULL) {
 				*nport = htons(low);
 				return (0);
@@ -225,6 +231,9 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 			/* low <= cut <= high */
 			for (tmp = cut; tmp <= high && tmp <= 0xffff; ++tmp) {
 				key.port[sidx] = htons(tmp);
+				key.hash = pf_pkt_hash(key.af, key.proto,
+				    &key.addr[0], &key.addr[1], key.port[0],
+				    key.port[1]);
 				if (pf_find_state_all(&key, dir, NULL) ==
 				    NULL && !in_baddynamic(tmp, pd->proto)) {
 					*nport = htons(tmp);
@@ -234,6 +243,9 @@ pf_get_sport(struct pf_pdesc *pd, struct pf_rule *r,
 			tmp = cut;
 			for (tmp -= 1; tmp >= low && tmp <= 0xffff; --tmp) {
 				key.port[sidx] = htons(tmp);
+				key.hash = pf_pkt_hash(key.af, key.proto,
+				    &key.addr[0], &key.addr[1], key.port[0],
+				    key.port[1]);
 				if (pf_find_state_all(&key, dir, NULL) ==
 				    NULL && !in_baddynamic(tmp, pd->proto)) {
 					*nport = htons(tmp);

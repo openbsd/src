@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar_priv.h,v 1.32 2023/05/08 23:52:36 dlg Exp $	*/
+/*	$OpenBSD: pfvar_priv.h,v 1.33 2023/05/10 22:42:51 sashan Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -405,6 +405,9 @@ void			pf_state_peer_hton(const struct pf_state_peer *,
 			    struct pfsync_state_peer *);
 void			pf_state_peer_ntoh(const struct pfsync_state_peer *,
 			    struct pf_state_peer *);
+u_int16_t		pf_pkt_hash(sa_family_t, uint8_t,
+			    const struct pf_addr *, const struct pf_addr *,
+			    uint16_t, uint16_t);
 
 #endif /* _KERNEL */
 
