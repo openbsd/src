@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.755 2023/04/28 01:24:14 kevlo Exp $
+$OpenBSD: usbdevs,v 1.756 2023/05/10 18:26:05 miod Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1575,6 +1575,7 @@ product DIGITALSTREAM PS2	0x0001	PS/2 Active
 /* DisplayLink products */
 product DISPLAYLINK GUC2020	0x0059	IOGEAR DVI GUC2020
 product DISPLAYLINK LD220	0x0100	Samsung LD220
+product DISPLAYLINK TOSHIBA	0x0110	TOSHIBA Video Dock
 product DISPLAYLINK POLARIS2	0x0117	Polaris2 USB dock
 product DISPLAYLINK VCUD60	0x0136	Rextron DVI
 product DISPLAYLINK CONV	0x0138	StarTech CONV-USB2DVI
