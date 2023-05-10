@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.21 2023/04/25 17:59:41 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.22 2023/05/10 12:21:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -324,7 +324,7 @@ int bn_copy(BIGNUM *dst, const BIGNUM *src);
 int bn_isqrt(BIGNUM *out_sqrt, int *out_perfect, const BIGNUM *n, BN_CTX *ctx);
 int bn_is_perfect_square(int *out_perfect, const BIGNUM *n, BN_CTX *ctx);
 
-int bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx);
+int bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *ctx, size_t rounds);
 
 __END_HIDDEN_DECLS
 #endif /* !HEADER_BN_LOCAL_H */

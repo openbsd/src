@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.8 2022/11/26 16:08:51 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.9 2023/05/10 12:21:55 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -301,23 +301,103 @@ bn_strong_lucas_selfridge(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 }
 
 /*
- * Miller-Rabin primality test for base 2.
+ * Fermat criterion in Miller-Rabin test.
+ *
+ * Check whether 1 < base < n - 1 witnesses that n is composite. For prime n:
+ *
+ *  * Fermat's little theorem: base^(n-1) = 1 (mod n).
+ *  * The only square roots of 1 (mod n) are 1 and -1.
+ *
+ * Calculate base^((n-1)/2) by writing n - 1 = k * 2^s with odd k. Iteratively
+ * compute power = (base^k)^(2^(s-1)) by successive squaring of base^k.
+ *
+ * If power ever reaches -1, base^(n-1) is equal to 1 and n is a pseudoprime
+ * for base. If power reaches 1 before -1 during successive squaring, we have
+ * an unexpected square root of 1 and n is composite. Otherwise base^(n-1) != 1,
+ * and n is composite.
  */
 
 static int
-bn_miller_rabin_base_2(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
+bn_fermat(int *is_prime, const BIGNUM *n, const BIGNUM *n_minus_one,
+    const BIGNUM *k, int s, const BIGNUM *base, BN_CTX *ctx, BN_MONT_CTX *mctx)
 {
-	BIGNUM *n_minus_one, *k, *x;
-	int i, s;
+	BIGNUM *power;
+	int ret = 0;
+	int i;
+
+	BN_CTX_start(ctx);
+
+	if ((power = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	/* Sanity check: ensure that 1 < base < n - 1. */
+	if (BN_cmp(base, BN_value_one()) <= 0 || BN_cmp(base, n_minus_one) >= 0)
+		goto err;
+
+	if (!BN_mod_exp_mont_ct(power, base, k, n, ctx, mctx))
+		goto err;
+
+	if (BN_is_one(power) || BN_cmp(power, n_minus_one) == 0) {
+		*is_prime = 1;
+		goto done;
+	}
+
+	/* Loop invariant: power is neither 1 nor -1 (mod n). */
+	for (i = 1; i < s; i++) {
+		if (!BN_mod_sqr(power, power, n, ctx))
+			goto err;
+
+		/* n is a pseudoprime for base. */
+		if (BN_cmp(power, n_minus_one) == 0) {
+			*is_prime = 1;
+			goto done;
+		}
+
+		/* n is composite: there's a square root of unity != 1 or -1. */
+		if (BN_is_one(power)) {
+			*is_prime = 0;
+			goto done;
+		}
+	}
+
+	/*
+	 * If we get here, n is definitely composite: base^(n-1) != 1.
+	 */
+
+	*is_prime = 0;
+
+ done:
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+
+	return ret;
+}
+
+/*
+ * Miller-Rabin primality test for base 2 and for |rounds| of random bases.
+ * On success: is_prime == 0 implies n is composite - the converse is false.
+ */
+
+static int
+bn_miller_rabin(int *is_prime, const BIGNUM *n, BN_CTX *ctx, size_t rounds)
+{
+	BN_MONT_CTX *mctx = NULL;
+	BIGNUM *base, *k, *n_minus_one, *three;
+	size_t i;
+	int s;
 	int ret = 0;
 
 	BN_CTX_start(ctx);
 
-	if ((n_minus_one = BN_CTX_get(ctx)) == NULL)
+	if ((base = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((k = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((x = BN_CTX_get(ctx)) == NULL)
+	if ((n_minus_one = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((three = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (BN_is_word(n, 2) || BN_is_word(n, 3)) {
@@ -344,43 +424,56 @@ bn_miller_rabin_base_2(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
 		goto err;
 
 	/*
-	 * If 2^k is 1 or -1 (mod n) then n is a 2-pseudoprime.
+	 * Montgomery setup for n.
 	 */
 
-	if (!BN_set_word(x, 2))
-		goto err;
-	if (!BN_mod_exp_ct(x, x, k, n, ctx))
+	if ((mctx = BN_MONT_CTX_new()) == NULL)
 		goto err;
 
-	if (BN_is_one(x) || BN_cmp(x, n_minus_one) == 0) {
-		*is_prime = 1;
+	if (!BN_MONT_CTX_set(mctx, n, ctx))
+		goto err;
+
+	/*
+	 * Perform a Miller-Rabin test for base 2 as required by BPSW.
+	 */
+
+	if (!BN_set_word(base, 2))
+		goto err;
+
+	if (!bn_fermat(is_prime, n, n_minus_one, k, s, base, ctx, mctx))
+		goto err;
+	if (!*is_prime)
 		goto done;
-	}
 
 	/*
-	 * If 2^{2^i k} == -1 (mod n) for some 1 <= i < s, then n is a
-	 * 2-pseudoprime.
+	 * Perform Miller-Rabin tests with random 3 <= base < n - 1 to reduce
+	 * risk of false positives in BPSW.
 	 */
 
-	for (i = 1; i < s; i++) {
-		if (!BN_mod_sqr(x, x, n, ctx))
+	if (!BN_set_word(three, 3))
+		goto err;
+
+	for (i = 0; i < rounds; i++) {
+		if (!bn_rand_interval(base, three, n_minus_one))
 			goto err;
-		if (BN_cmp(x, n_minus_one) == 0) {
-			*is_prime = 1;
+
+		if (!bn_fermat(is_prime, n, n_minus_one, k, s, base, ctx, mctx))
+			goto err;
+		if (!*is_prime)
 			goto done;
-		}
 	}
 
 	/*
-	 * If we got here, n is definitely composite.
+	 * If we got here, we have a Miller-Rabin pseudoprime.
 	 */
 
-	*is_prime = 0;
+	*is_prime = 1;
 
  done:
 	ret = 1;
 
  err:
+	BN_MONT_CTX_free(mctx);
 	BN_CTX_end(ctx);
 
 	return ret;
@@ -392,7 +485,7 @@ bn_miller_rabin_base_2(int *is_prime, const BIGNUM *n, BN_CTX *ctx)
  */
 
 int
-bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx)
+bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx, size_t rounds)
 {
 	BN_CTX *ctx = NULL;
 	BN_ULONG mod;
@@ -424,12 +517,10 @@ bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *in_ctx)
 	if (ctx == NULL)
 		goto err;
 
-	if (!bn_miller_rabin_base_2(is_prime, n, ctx))
+	if (!bn_miller_rabin(is_prime, n, ctx, rounds))
 		goto err;
 	if (!*is_prime)
 		goto done;
-
-	/* XXX - Miller-Rabin for random bases? See FIPS 186-4, Table C.1. */
 
 	if (!bn_strong_lucas_selfridge(is_prime, n, ctx))
 		goto err;
