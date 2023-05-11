@@ -1,6 +1,6 @@
-/*	$OpenBSD: dump_tables.c,v 1.7 2021/12/13 16:56:49 deraadt Exp $	*/
+/*	$OpenBSD: dump_tables.c,v 1.8 2023/05/11 22:28:38 guenther Exp $	*/
 /*
- * Copyright (c) 2019 Philip Guenther <guenther@openbsd.org>
+ * Copyright (c) 2019,2023 Philip Guenther <guenther@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -34,6 +34,9 @@
 #include "struct_pmap.h"
 
 #define PG_1GFRAME	0x000fffffc0000000UL	/* should be in pmap.h */
+
+#define PG_PK_SHIFT	59
+
 
 #include <err.h>
 #include <fcntl.h>
@@ -141,14 +144,17 @@ l4type(int i)
 	return T_NORMAL;
 }
 
+const char pk_name[16] = "R-23456789abcdef";
 void
 pflags(pd_entry_t e, pd_entry_t inherited)
 {
+	int pk = (e & PG_PKMASK) >> PG_PK_SHIFT;
 	if (reproducible)
 		e &= ~(PG_M|PG_U);
 	inherited &= e;
-	printf("[%c%c%c%c""%c%c%c%c][%c%c%c]",
+	printf("[%c%c%c%c%c""%c%c%c%c][%c%c%c%c]",
 	    e & PG_NX ? 'X' : '-',	/* reversed */
+	    pk_name[pk],
 	    e & PG_G  ? 'G' : '-',
 	    e & PG_M  ? 'M' : '-',
 	    e & PG_U  ? 'U' : '-',
@@ -156,9 +162,10 @@ pflags(pd_entry_t e, pd_entry_t inherited)
 	    e & PG_WT ? 'w' : '-',
 	    e & PG_u  ? 'u' : '-',
 	    e & PG_RW ? 'W' : '-',
-	    inherited & PG_NX ? 'X' : '-',	/* reversed */
 	    inherited & PG_u  ? 'u' : '-',
-	    inherited & PG_RW ? 'W' : '-');
+	    pk_name[pk],
+	    inherited & PG_RW ? 'W' : '-',
+	    inherited & PG_NX ? 'X' : '-');	/* reversed */
 }
 
 const char * const prefix[] = {
@@ -307,7 +314,7 @@ main(int argc, char **argv)
 		check_mbz(cr3, mbz_normal[5]);
 	}
 	printf("\
-VA               lvl  idx    PA              sz entry-attr eff  L4-slot\
+VA               lvl  idx    PA              sz entry-attr  eff   L4-slot\
 \n");
 	for (i = 0; i < PAGE_SIZE / sizeof(pd_entry_t); i++) {
 		enum l4_type l4_type = l4type(i);
