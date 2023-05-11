@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.22 2023/05/10 13:48:54 op Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.23 2023/05/11 07:35:27 tb Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -115,7 +115,7 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 
 	count = sk_GENERAL_NAME_num(altname_stack);
 	for (i = 0; i < count; i++) {
-		GENERAL_NAME	*altname;
+		GENERAL_NAME *altname;
 
 		altname = sk_GENERAL_NAME_value(altname_stack, i);
 
@@ -126,8 +126,8 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 			continue;
 
 		if (type == GEN_DNS) {
-			const unsigned char	*data;
-			int		 format, len;
+			const unsigned char *data;
+			int format, len;
 
 			format = ASN1_STRING_type(altname->d.dNSName);
 			if (format == V_ASN1_IA5STRING) {
@@ -171,8 +171,8 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 			}
 
 		} else if (type == GEN_IPADD) {
-			const unsigned char	*data;
-			int		 datalen;
+			const unsigned char *data;
+			int datalen;
 
 			datalen = ASN1_STRING_length(altname->d.iPAddress);
 			data = ASN1_STRING_get0_data(altname->d.iPAddress);
