@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.403 2023/05/03 10:32:48 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.404 2023/05/11 12:36:22 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2107,8 +2107,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		NET_LOCK();
 		PF_LOCK();
-		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX ||
-		    pf_pool_limits[pl->index].pp == NULL) {
+		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX) {
 			error = EINVAL;
 			PF_UNLOCK();
 			NET_UNLOCK();
