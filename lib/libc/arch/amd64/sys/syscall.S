@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.8 2016/05/07 19:05:21 guenther Exp $	*/
+/*	$OpenBSD: syscall.S,v 1.9 2023/05/11 19:35:50 guenther Exp $	*/
 /*	$NetBSD: syscall.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -39,4 +39,18 @@
 
 #include "SYS.h"
 
-RSYSCALL(syscall)
+SYSENTRY(syscall)
+	RETGUARD_SETUP(_thread_sys_syscall, r11)
+#ifdef _RET_PROTECTOR
+	pushq	8(%rsp)		/* repush 6th argument */
+#endif
+	RETGUARD_PUSH(r11)
+	SYSTRAP(syscall)
+	HANDLE_ERRNO;
+	RETGUARD_POP(r11)
+#ifdef _RET_PROTECTOR
+	addq	$8,%rsp		/* repush 6th argument */
+#endif
+	RETGUARD_CHECK(_thread_sys_syscall, r11)
+	ret
+SYSCALL_END(syscall)
