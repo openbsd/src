@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.170 2023/04/14 12:45:10 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.171 2023/05/11 16:55:46 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -8429,17 +8429,6 @@ iwx_run_stop(struct iwx_softc *sc)
 	if (err) {
 		printf("%s: failed to update MAC\n", DEVNAME(sc));
 		return err;
-	}
-
-	/* Reset Tx chains in case MIMO or 40 MHz channels were enabled. */
-	if (in->in_ni.ni_flags & IEEE80211_NODE_HT) {
-		err = iwx_phy_ctxt_update(sc, in->in_phyctxt,
-		    in->in_phyctxt->channel, 1, 1, 0, IEEE80211_HTOP0_SCO_SCN,
-		    IEEE80211_VHTOP0_CHAN_WIDTH_HT);
-		if (err) {
-			printf("%s: failed to update PHY\n", DEVNAME(sc));
-			return err;
-		}
 	}
 
 	return 0;
