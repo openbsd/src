@@ -1,4 +1,4 @@
-.\" $OpenBSD: vm.conf.5,v 1.62 2023/02/19 17:10:38 deraadt Exp $
+.\" $OpenBSD: vm.conf.5,v 1.63 2023/05/12 00:06:53 kn Exp $
 .\"
 .\" Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
 .\" Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 19 2023 $
+.Dd $Mdocdate: May 12 2023 $
 .Dt VM.CONF 5
 .Os
 .Sh NAME
@@ -143,7 +143,7 @@ instances in parallel every
 seconds.
 Defaults to
 .Ar parallelism
-equal to number of CPUs and a
+equal to number of online CPUs and a
 .Ar delay
 of 30 seconds.
 .El
