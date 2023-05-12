@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.278 2023/05/08 13:14:21 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.279 2023/05/12 12:42:16 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -527,6 +527,7 @@ nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp,
 	if (rt == NULL) {
 		if (create && ifp) {
 			struct rt_addrinfo info;
+			struct llinfo_nd6 *ln;
 			struct ifaddr *ifa;
 			int error;
 
@@ -556,11 +557,9 @@ nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp,
 			    rtableid);
 			if (error)
 				return (NULL);
-			if (rt->rt_llinfo != NULL) {
-				struct llinfo_nd6 *ln =
-				    (struct llinfo_nd6 *)rt->rt_llinfo;
+			ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+			if (ln != NULL)
 				ln->ln_state = ND6_LLINFO_NOSTATE;
-			}
 		} else
 			return (NULL);
 	}
@@ -741,7 +740,7 @@ void
 nd6_rtrequest(struct ifnet *ifp, int req, struct rtentry *rt)
 {
 	struct sockaddr *gate = rt->rt_gateway;
-	struct llinfo_nd6 *ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+	struct llinfo_nd6 *ln;
 	struct ifaddr *ifa;
 	struct in6_ifaddr *ifa6;
 
@@ -1027,10 +1026,10 @@ void
 nd6_cache_lladdr(struct ifnet *ifp, const struct in6_addr *from, char *lladdr,
     int lladdrlen, int type, int code)
 {
-	struct rtentry *rt = NULL;
-	struct llinfo_nd6 *ln = NULL;
+	struct rtentry *rt;
+	struct llinfo_nd6 *ln;
 	int is_newentry;
-	struct sockaddr_dl *sdl = NULL;
+	struct sockaddr_dl *sdl;
 	int do_update;
 	int olladdr;
 	int llchange;
@@ -1257,7 +1256,7 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 {
 	struct sockaddr_dl *sdl;
 	struct rtentry *rt;
-	struct llinfo_nd6 *ln = NULL;
+	struct llinfo_nd6 *ln;
 	struct in6_addr saddr6;
 	time_t uptime;
 	int solicit = 0;
