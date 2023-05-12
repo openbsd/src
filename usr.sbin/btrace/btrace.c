@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.69 2023/03/10 23:02:30 bluhm Exp $ */
+/*	$OpenBSD: btrace.c,v 1.70 2023/05/12 14:14:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -119,9 +119,12 @@ struct dtioc_arg_info  **dt_args;	/* array of probe arguments */
 struct dt_evt		 bt_devt;	/* fake event for BEGIN/END */
 uint64_t		 bt_filtered;	/* # of events filtered out */
 
+struct syms		*kelf, *uelf;
+
 char			**vargs;
 int			 nargs = 0;
 int			 verbose = 0;
+int			 dtfd;
 volatile sig_atomic_t	 quit_pending;
 
 static void
@@ -152,6 +155,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			noaction = 1;
+			break;
+		case 'p':
+			uelf = kelf_open(optarg);
 			break;
 		case 'v':
 			verbose++;
@@ -204,6 +210,7 @@ main(int argc, char *argv[])
 		fd = open(__PATH_DEVDT, O_RDONLY);
 		if (fd == -1)
 			err(1, "could not open %s", __PATH_DEVDT);
+		dtfd = fd;
 	}
 
 	if (showprobes) {
@@ -516,7 +523,7 @@ rules_setup(int fd)
 	}
 
 	if (dokstack)
-		kelf_open();
+		kelf = kelf_open(_PATH_KSYMS);
 
 	/* Initialize "fake" event for BEGIN/END */
 	bt_devt.dtev_pbn = -1;
@@ -593,8 +600,10 @@ rules_teardown(int fd)
 		}
 	}
 
-	if (dokstack)
-		kelf_close();
+	kelf_close(kelf);
+	kelf = NULL;
+	kelf_close(uelf);
+	uelf = NULL;
 
 	/* Update "fake" event for BEGIN/END */
 	clock_gettime(CLOCK_REALTIME, &bt_devt.dtev_tsp);
@@ -703,17 +712,21 @@ builtin_nsecs(struct dt_evt *dtev)
 }
 
 const char *
-builtin_stack(struct dt_evt *dtev, int kernel)
+builtin_stack(struct dt_evt *dtev, int kernel, unsigned long offset)
 {
 	struct stacktrace *st = &dtev->dtev_kstack;
-	static char buf[4096], *bp;
+	static char buf[4096];
+	const char *last = "\nkernel\n";
+	char *bp;
 	size_t i;
 	int sz;
 
-	if (!kernel)
-		return "";
-	if (st->st_count == 0)
+	if (!kernel) {
+		st = &dtev->dtev_ustack;
+		last = "\nuserland\n";
+	} else if (st->st_count == 0) {
 		return "\nuserland\n";
+	}
 
 	buf[0] = '\0';
 	bp = buf;
@@ -721,7 +734,12 @@ builtin_stack(struct dt_evt *dtev, int kernel)
 	for (i = 0; i < st->st_count; i++) {
 		int l;
 
-		l = kelf_snprintsym(bp, sz - 1, st->st_pc[i]);
+		if (!kernel)
+			l = kelf_snprintsym(uelf, bp, sz - 1, st->st_pc[i],
+			    offset);
+		else
+			l = kelf_snprintsym(kelf, bp, sz - 1, st->st_pc[i],
+			    offset);
 		if (l < 0)
 			break;
 		if (l >= sz - 1) {
@@ -732,7 +750,7 @@ builtin_stack(struct dt_evt *dtev, int kernel)
 		bp += l;
 		sz -= l;
 	}
-	snprintf(bp, sz, "\nkernel\n");
+	snprintf(bp, sz, "%s", last);
 
 	return buf;
 }
@@ -1525,10 +1543,10 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = "";
 		break;
 	case B_AT_BI_KSTACK:
-		str = builtin_stack(dtev, 1);
+		str = builtin_stack(dtev, 1, 0);
 		break;
 	case B_AT_BI_USTACK:
-		str = builtin_stack(dtev, 0);
+		str = builtin_stack(dtev, 0, dt_get_offset(dtev->dtev_pid));
 		break;
 	case B_AT_BI_COMM:
 		str = dtev->dtev_comm;
@@ -1795,4 +1813,31 @@ debug_probe_name(struct bt_probe *bp)
 	}
 
 	return buf;
+}
+
+unsigned long
+dt_get_offset(pid_t pid)
+{
+	static struct dtioc_getaux	cache[32];
+	static int			next;
+	struct dtioc_getaux		*aux = NULL;
+	int				 i;
+
+	for (i = 0; i < 32; i++) {
+		if (cache[i].dtga_pid != pid)
+			continue;
+		aux = cache + i;
+		break;
+	}
+
+	if (aux == NULL) {
+		aux = &cache[next++];
+		next %= 32;
+
+		aux->dtga_pid = pid;
+		if (ioctl(dtfd, DTIOCGETAUXBASE, aux))
+			aux->dtga_auxbase = 0;
+	}
+
+	return aux->dtga_auxbase;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.11 2021/12/07 22:17:03 guenther Exp $ */
+/*	$OpenBSD: btrace.h,v 1.12 2023/05/12 14:14:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -33,11 +33,15 @@ const char *		 ba_name(struct bt_arg *);
 long			 ba2long(struct bt_arg *, struct dt_evt *);
 const char		*ba2str(struct bt_arg *, struct dt_evt *);
 long			 bacmp(struct bt_arg *, struct bt_arg *);
+unsigned long		 dt_get_offset(pid_t);
 
 /* ksyms.c */
-int			 kelf_open(void);
-void			 kelf_close(void);
-int			 kelf_snprintsym(char *, size_t, unsigned long);
+struct syms;
+struct syms		*kelf_open(const char *);
+void			 kelf_offset(struct syms *, unsigned long);
+void			 kelf_close(struct syms *);
+int			 kelf_snprintsym(struct syms *, char *, size_t,
+			    unsigned long, unsigned long);
 
 /* map.c */
 struct map;
@@ -52,7 +56,7 @@ void			 map_zero(struct map *);
 struct hist		*hist_increment(struct hist *, const char *, long);
 void			 hist_print(struct hist *, const char *);
 
-#define KLEN	512	/* # of characters in map key, contain a stack trace */
+#define KLEN	1024	/* # of characters in map key, contain a stack trace */
 #define STRLEN	64	/* maximum # of bytes to output via str() function */
 
 /* printf.c */
