@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2035 2023/05/04 05:38:17 kevlo Exp $
+$OpenBSD: pcidevs,v 1.2036 2023/05/12 11:42:22 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -5892,16 +5892,15 @@ product INTEL DG2_G11_2		0x5694	Arc A350M
 product INTEL DG2_G11_3		0x5695	Graphics
 product INTEL DG2_G12_1		0x5696	Graphics
 product INTEL DG2_G12_2		0x5697	Graphics
-product INTEL DG2_G11_4		0x5698	Graphics
 product INTEL DG2_G10_4		0x56a0	Arc A770
 product INTEL DG2_G10_5		0x56a1	Arc A750
 product INTEL DG2_G10_6		0x56a2	Arc A580
 product INTEL DG2_G12_3		0x56a3	Graphics
 product INTEL DG2_G12_4		0x56a4	Graphics
-product INTEL DG2_G11_5		0x56a5	Arc A380
-product INTEL DG2_G11_6		0x56a6	Arc A310
-product INTEL DG2_G11_7		0x56b0	Arc Pro A30M
-product INTEL DG2_G11_8		0x56b1	Arc Pro A40/A50
+product INTEL DG2_G11_4		0x56a5	Arc A380
+product INTEL DG2_G11_5		0x56a6	Arc A310
+product INTEL DG2_G11_6		0x56b0	Arc Pro A30M
+product INTEL DG2_G11_7		0x56b1	Arc Pro A40/A50
 product INTEL DG2_G12_5		0x56b2	Graphics
 product INTEL DG2_G12_6		0x56b3	Graphics
 product INTEL ATS_M150		0x56c0	Flex 170
