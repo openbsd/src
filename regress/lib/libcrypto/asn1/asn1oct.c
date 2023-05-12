@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1oct.c,v 1.1 2023/05/12 08:28:05 tb Exp $ */
+/*	$OpenBSD: asn1oct.c,v 1.2 2023/05/12 08:56:05 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -114,9 +114,9 @@ test_new_ASN1_OCTET_STRING(void)
 	int failed = 0;
 
 	if ((aos = ASN1_OCTET_STRING_new()) == NULL)
-		errx(1, "ASN1_OCTET_STRING_new");
+		errx(1, "%s: ASN1_OCTET_STRING_new", __func__);
 	if ((got = i2s_ASN1_OCTET_STRING(NULL, aos)) == NULL)
-		errx(1, "foo i2s_ASN1_OCTET_STRING");
+		errx(1, "%s: i2s_ASN1_OCTET_STRING", __func__);
 
 	if (strcmp("", got) != 0) {
 		fprintf(stderr, "%s failed: want \"\", got \"%s\"\n",
