@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.14 2023/04/23 11:52:14 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.15 2023/05/12 13:56:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -55,9 +55,9 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-/* X509 v3 extension utilities */
 
 #include <ctype.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -66,6 +66,8 @@
 #include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
+
+#include "bytestring.h"
 
 static char *bn_to_string(const BIGNUM *bn);
 static char *strip_spaces(char *name);
@@ -459,97 +461,149 @@ strip_spaces(char *name)
 	return p;
 }
 
-/* hex string utilities */
+static const char hex_digits[] = "0123456789ABCDEF";
 
-/* Given a buffer of length 'len' return a malloc'ed string with its
- * hex representation
- */
 char *
 hex_to_string(const unsigned char *buffer, long len)
 {
-	char *tmp, *q;
-	const unsigned char *p;
-	int i;
-	static const char hexdig[] = "0123456789ABCDEF";
+	CBB cbb;
+	CBS cbs;
+	uint8_t *out = NULL;
+	uint8_t c;
+	size_t out_len;
+
+	if (!CBB_init(&cbb, 0))
+		goto err;
 
 	if (len < 0)
-		return NULL;
-	if (len == 0)
-		return calloc(1, 1);
-	if ((tmp = calloc(len, 3)) == NULL) {
-		X509V3error(ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
+
+	CBS_init(&cbs, buffer, len);
+	while (CBS_len(&cbs) > 0) {
+		if (!CBS_get_u8(&cbs, &c))
+			goto err;
+		if (!CBB_add_u8(&cbb, hex_digits[c >> 4]))
+			goto err;
+		if (!CBB_add_u8(&cbb, hex_digits[c & 0xf]))
+			goto err;
+		if (CBS_len(&cbs) > 0) {
+			if (!CBB_add_u8(&cbb, ':'))
+				goto err;
+		}
 	}
-	q = tmp;
-	for (i = 0, p = buffer; i < len; i++, p++) {
-		*q++ = hexdig[(*p >> 4) & 0xf];
-		*q++ = hexdig[*p & 0xf];
-		*q++ = ':';
-	}
-	q[-1] = 0;
-	return tmp;
+
+	if (!CBB_add_u8(&cbb, '\0'))
+		goto err;
+
+	if (!CBB_finish(&cbb, &out, &out_len))
+		goto err;
+
+ err:
+	CBB_cleanup(&cbb);
+
+	return out;
 }
 LCRYPTO_ALIAS(hex_to_string);
 
-/* Give a string of hex digits convert to
- * a buffer
- */
+static int
+x509_skip_colons_cbs(CBS *cbs)
+{
+	uint8_t c;
+
+	while (CBS_len(cbs) > 0) {
+		if (!CBS_peek_u8(cbs, &c))
+			return 0;
+		if (c != ':')
+			return 1;
+		if (!CBS_get_u8(cbs, &c))
+			return 0;
+	}
+
+	return 1;
+
+}
+
+static int
+x509_get_xdigit_nibble_cbs(CBS *cbs, uint8_t *out_nibble) {
+	uint8_t c;
+
+	if (!CBS_get_u8(cbs, &c))
+		return 0;
+
+	if (c >= '0' && c <= '9') {
+		*out_nibble = c - '0';
+		return 1;
+	}
+	if (c >= 'a' && c <= 'f') {
+		*out_nibble = c - 'a' + 10;
+		return 1;
+	}
+	if (c >= 'A' && c <= 'F') {
+		*out_nibble = c - 'A' + 10;
+		return 1;
+	}
+
+	X509V3error(X509V3_R_ILLEGAL_HEX_DIGIT);
+	return 0;
+
+}
 
 unsigned char *
 string_to_hex(const char *str, long *len)
 {
-	unsigned char *hexbuf, *q;
-	unsigned char ch, cl, *p;
-	if (!str) {
-		X509V3error(X509V3_R_INVALID_NULL_ARGUMENT);
-		return NULL;
-	}
-	if (!(hexbuf = malloc(strlen(str) >> 1)))
+	CBB cbb;
+	CBS cbs;
+	uint8_t *out = NULL;
+	size_t out_len;
+	uint8_t hi, lo;
+
+	*len = 0;
+
+	if (!CBB_init(&cbb, 0))
 		goto err;
-	for (p = (unsigned char *)str, q = hexbuf; *p; ) {
-		ch = *p++;
-		if (ch == ':')
-			continue;
-		cl = *p++;
-		if (!cl) {
-			X509V3error(X509V3_R_ODD_NUMBER_OF_DIGITS);
-			free(hexbuf);
-			return NULL;
-		}
-		ch = tolower(ch);
-		cl = tolower(cl);
 
-		if ((ch >= '0') && (ch <= '9'))
-			ch -= '0';
-		else if ((ch >= 'a') && (ch <= 'f'))
-			ch -= 'a' - 10;
-		else
-			goto badhex;
-
-		if ((cl >= '0') && (cl <= '9'))
-			cl -= '0';
-		else if ((cl >= 'a') && (cl <= 'f'))
-			cl -= 'a' - 10;
-		else
-			goto badhex;
-
-		*q++ = (ch << 4) | cl;
+	if (str == NULL) {
+		X509V3error(X509V3_R_INVALID_NULL_ARGUMENT);
+		goto err;
 	}
 
-	if (len)
-		*len = q - hexbuf;
+	CBS_init(&cbs, str, strlen(str));
+	while (CBS_len(&cbs) > 0) {
+		/*
+		 * Skipping only a single colon between two pairs of digits
+		 * would make more sense - history...
+		 */
+		if (!x509_skip_colons_cbs(&cbs))
+			goto err;
+		/* Another historic idiocy. */
+		if (CBS_len(&cbs) == 0)
+			break;
+		if (!x509_get_xdigit_nibble_cbs(&cbs, &hi))
+			goto err;
+		if (CBS_len(&cbs) == 0) {
+			X509error(X509V3_R_ODD_NUMBER_OF_DIGITS);
+			goto err;
+		}
+		if (!x509_get_xdigit_nibble_cbs(&cbs, &lo))
+			goto err;
+		if (!CBB_add_u8(&cbb, hi << 4 | lo))
+			goto err;
+	}
 
-	return hexbuf;
+	if (!CBB_finish(&cbb, &out, &out_len))
+		goto err;
+	if (out_len > LONG_MAX) {
+		freezero(out, out_len);
+		out = NULL;
+		goto err;
+	}
+
+	*len = out_len;
 
  err:
-	free(hexbuf);
-	X509V3error(ERR_R_MALLOC_FAILURE);
-	return NULL;
+	CBB_cleanup(&cbb);
 
- badhex:
-	free(hexbuf);
-	X509V3error(X509V3_R_ILLEGAL_HEX_DIGIT);
-	return NULL;
+	return out;
 }
 LCRYPTO_ALIAS(string_to_hex);
 
