@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.16 2023/05/12 18:39:44 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.17 2023/05/12 19:02:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -580,7 +580,7 @@ string_to_hex(const char *str, long *len)
 		if (!x509_get_xdigit_nibble_cbs(&cbs, &hi))
 			goto err;
 		if (CBS_len(&cbs) == 0) {
-			X509error(X509V3_R_ODD_NUMBER_OF_DIGITS);
+			X509V3error(X509V3_R_ODD_NUMBER_OF_DIGITS);
 			goto err;
 		}
 		if (!x509_get_xdigit_nibble_cbs(&cbs, &lo))
