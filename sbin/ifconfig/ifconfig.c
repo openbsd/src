@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.462 2023/03/08 04:43:06 guenther Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.463 2023/05/12 18:24:13 jan Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -1070,14 +1070,14 @@ printgroup(char *groupname, int ifaliases)
 		    errno == ENOENT)
 			return (-1);
 		else
-			err(1, "SIOCGIFGMEMB");
+			err(1, "%s: SIOCGIFGMEMB", ifgr.ifgr_name);
 	}
 
 	len = ifgr.ifgr_len;
 	if ((ifgr.ifgr_groups = calloc(1, len)) == NULL)
 		err(1, "printgroup");
 	if (ioctl(sock, SIOCGIFGMEMB, (caddr_t)&ifgr) == -1)
-		err(1, "SIOCGIFGMEMB");
+		err(1, "%s: SIOCGIFGMEMB", ifgr.ifgr_name);
 
 	for (ifg = ifgr.ifgr_groups; ifg && len >= sizeof(struct ifg_req);
 	    ifg++) {
@@ -1099,7 +1099,7 @@ printgroupattribs(char *groupname)
 	bzero(&ifgr, sizeof(ifgr));
 	strlcpy(ifgr.ifgr_name, groupname, sizeof(ifgr.ifgr_name));
 	if (ioctl(sock, SIOCGIFGATTR, (caddr_t)&ifgr) == -1)
-		err(1, "SIOCGIFGATTR");
+		err(1, "%s: SIOCGIFGATTR", ifgr.ifgr_name);
 
 	printf("%s:", groupname);
 	printf(" carp demote count %d", ifgr.ifgr_attrib.ifg_carp_demoted);
@@ -1122,7 +1122,8 @@ setgroupattribs(char *groupname, int argc, char *argv[])
 	if (argc > 1) {
 		neg = strtonum(argv[1], 0, 128, &errstr);
 		if (errstr)
-			errx(1, "invalid carp demotion: %s", errstr);
+			errx(1, "%s: invalid carp demotion: %s", ifgr.ifgr_name,
+			    errstr);
 	}
 
 	if (p[0] == '-') {
@@ -1135,7 +1136,7 @@ setgroupattribs(char *groupname, int argc, char *argv[])
 		usage();
 
 	if (ioctl(sock, SIOCSIFGATTR, (caddr_t)&ifgr) == -1)
-		err(1, "SIOCSIFGATTR");
+		err(1, "%s: SIOCSIFGATTR", ifgr.ifgr_name);
 }
 
 void
@@ -1249,7 +1250,7 @@ clone_create(const char *addr, int param)
 
 	(void) strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCIFCREATE, &ifr) == -1)
-		err(1, "SIOCIFCREATE");
+		err(1, "%s: SIOCIFCREATE", ifr.ifr_name);
 }
 
 void
@@ -1258,7 +1259,7 @@ clone_destroy(const char *addr, int param)
 
 	(void) strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	if (ioctl(sock, SIOCIFDESTROY, &ifr) == -1)
-		err(1, "SIOCIFDESTROY");
+		err(1, "%s: SIOCIFDESTROY", ifr.ifr_name);
 }
 
 struct if_clonereq *
@@ -1422,7 +1423,7 @@ setifflags(const char *vname, int value)
 	bcopy((char *)&ifr, (char *)&my_ifr, sizeof(struct ifreq));
 
 	if (ioctl(sock, SIOCGIFFLAGS, (caddr_t)&my_ifr) == -1)
-		err(1, "SIOCGIFFLAGS");
+		err(1, "%s: SIOCGIFFLAGS", my_ifr.ifr_name);
 	(void) strlcpy(my_ifr.ifr_name, ifname, sizeof(my_ifr.ifr_name));
 	flags = my_ifr.ifr_flags;
 
@@ -1433,7 +1434,7 @@ setifflags(const char *vname, int value)
 		flags |= value;
 	my_ifr.ifr_flags = flags;
 	if (ioctl(sock, SIOCSIFFLAGS, (caddr_t)&my_ifr) == -1)
-		err(1, "SIOCSIFFLAGS");
+		err(1, "%s: SIOCSIFFLAGS", my_ifr.ifr_name);
 }
 
 void
@@ -1444,7 +1445,7 @@ setifxflags(const char *vname, int value)
 	bcopy((char *)&ifr, (char *)&my_ifr, sizeof(struct ifreq));
 
 	if (ioctl(sock, SIOCGIFXFLAGS, (caddr_t)&my_ifr) == -1)
-		warn("SIOCGIFXFLAGS");
+		warn("%s: SIOCGIFXFLAGS", my_ifr.ifr_name);
 	(void) strlcpy(my_ifr.ifr_name, ifname, sizeof(my_ifr.ifr_name));
 	xflags = my_ifr.ifr_flags;
 
@@ -1455,7 +1456,7 @@ setifxflags(const char *vname, int value)
 		xflags |= value;
 	my_ifr.ifr_flags = xflags;
 	if (ioctl(sock, SIOCSIFXFLAGS, (caddr_t)&my_ifr) == -1)
-		warn("SIOCSIFXFLAGS");
+		warn("%s: SIOCSIFXFLAGS", my_ifr.ifr_name);
 }
 
 void
@@ -1466,7 +1467,7 @@ addaf(const char *vname, int value)
 	strlcpy(ifar.ifar_name, ifname, sizeof(ifar.ifar_name));
 	ifar.ifar_af = value;
 	if (ioctl(sock, SIOCIFAFATTACH, (caddr_t)&ifar) == -1)
-		warn("SIOCIFAFATTACH");
+		warn("%s: SIOCIFAFATTACH", ifar.ifar_name);
 }
 
 void
@@ -1477,7 +1478,7 @@ removeaf(const char *vname, int value)
 	strlcpy(ifar.ifar_name, ifname, sizeof(ifar.ifar_name));
 	ifar.ifar_af = value;
 	if (ioctl(sock, SIOCIFAFDETACH, (caddr_t)&ifar) == -1)
-		warn("SIOCIFAFDETACH");
+		warn("%s: SIOCIFAFDETACH", ifar.ifar_name);
 }
 
 void
@@ -1659,7 +1660,7 @@ setifgroup(const char *group_name, int dummy)
 	strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ);
 	if (ioctl(sock, SIOCAIFGROUP, (caddr_t)&ifgr) == -1) {
 		if (errno != EEXIST)
-			err(1," SIOCAIFGROUP");
+			err(1,"%s: SIOCAIFGROUP", group_name);
 	}
 }
 
@@ -1674,7 +1675,7 @@ unsetifgroup(const char *group_name, int dummy)
 	if (strlcpy(ifgr.ifgr_group, group_name, IFNAMSIZ) >= IFNAMSIZ)
 		errx(1, "unsetifgroup: group name too long");
 	if (ioctl(sock, SIOCDIFGROUP, (caddr_t)&ifgr) == -1)
-		err(1, "SIOCDIFGROUP");
+		err(1, "%s: SIOCDIFGROUP", group_name);
 }
 
 const char *
@@ -1820,7 +1821,7 @@ process_join_commands(void)
 
 	ifr.ifr_data = (caddr_t)&join;
 	if (ioctl(sock, SIOCS80211JOIN, (caddr_t)&ifr) == -1)
-		err(1, "SIOCS80211JOIN");
+		err(1, "%s: SIOCS80211JOIN", ifr.ifr_name);
 }
 
 void
@@ -1867,7 +1868,7 @@ delifjoin(const char *val, int d)
 	if (d == -1) {
 		ifr.ifr_data = (caddr_t)&join;
 		if (ioctl(sock, SIOCS80211JOIN, (caddr_t)&ifr) == -1)
-			err(1, "SIOCS80211JOIN");
+			err(1, "%s: SIOCS80211JOIN", ifr.ifr_name);
 	}
 
 	len = sizeof(join.i_nwid);
@@ -1879,7 +1880,7 @@ delifjoin(const char *val, int d)
 	(void)strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
 	ifr.ifr_data = (caddr_t)&join;
 	if (ioctl(sock, SIOCS80211JOIN, (caddr_t)&ifr) == -1)
-		err(1, "SIOCS80211JOIN");
+		err(1, "%s: SIOCS80211JOIN", ifr.ifr_name);
 }
 
 void
@@ -1892,7 +1893,7 @@ delifjoinlist(const char *val, int d)
 
 	ifr.ifr_data = (caddr_t)&join;
 	if (ioctl(sock, SIOCS80211JOIN, (caddr_t)&ifr) == -1)
-		err(1, "SIOCS80211JOIN");
+		err(1, "%s: SIOCS80211JOIN", ifr.ifr_name);
 }
 
 void
@@ -1916,7 +1917,7 @@ setifbssid(const char *val, int d)
 	}
 	strlcpy(bssid.i_name, ifname, sizeof(bssid.i_name));
 	if (ioctl(sock, SIOCS80211BSSID, &bssid) == -1)
-		warn("SIOCS80211BSSID");
+		warn("%s: SIOCS80211BSSID", bssid.i_name);
 }
 
 void
@@ -2015,7 +2016,7 @@ setifnwkey(const char *val, int d)
 	}
 
 	if (ioctl(sock, SIOCS80211NWKEY, (caddr_t)&nwkey) == -1)
-		err(1, "SIOCS80211NWKEY");
+		err(1, "%s: SIOCS80211NWKEY", nwkey.i_name);
 }
 
 void
@@ -2035,7 +2036,7 @@ setifwpa(const char *val, int d)
 	}
 
 	if (ioctl(sock, SIOCS80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCS80211WPAPARMS");
+		err(1, "%s: SIOCS80211WPAPARMS", wpa.i_name);
 }
 
 void
@@ -2068,14 +2069,14 @@ setifwpaprotos(const char *val, int d)
 	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, ifname, sizeof(wpa.i_name));
 	if (ioctl(sock, SIOCG80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCG80211WPAPARMS");
+		err(1, "%s: SIOCG80211WPAPARMS", wpa.i_name);
 	wpa.i_protos = rval;
 	/* Let the kernel set up the appropriate default ciphers. */
 	wpa.i_ciphers = 0;
 	wpa.i_groupcipher = 0;
 
 	if (ioctl(sock, SIOCS80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCS80211WPAPARMS");
+		err(1, "%s: SIOCS80211WPAPARMS", wpa.i_name);
 }
 
 void
@@ -2110,13 +2111,13 @@ setifwpaakms(const char *val, int d)
 	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, ifname, sizeof(wpa.i_name));
 	if (ioctl(sock, SIOCG80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCG80211WPAPARMS");
+		err(1, "%s: SIOCG80211WPAPARMS", wpa.i_name);
 	wpa.i_akms = rval;
 	/* Enable WPA for 802.1x here. PSK case is handled in setifwpakey(). */
 	wpa.i_enabled = ((rval & IEEE80211_WPA_AKM_8021X) != 0);
 
 	if (ioctl(sock, SIOCS80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCS80211WPAPARMS");
+		err(1, "%s: SIOCS80211WPAPARMS", wpa.i_name);
 }
 
 static const struct {
@@ -2170,11 +2171,11 @@ setifwpaciphers(const char *val, int d)
 	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, ifname, sizeof(wpa.i_name));
 	if (ioctl(sock, SIOCG80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCG80211WPAPARMS");
+		err(1, "%s: SIOCG80211WPAPARMS", wpa.i_name);
 	wpa.i_ciphers = rval;
 
 	if (ioctl(sock, SIOCS80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCS80211WPAPARMS");
+		err(1, "%s: SIOCS80211WPAPARMS", wpa.i_name);
 }
 
 void
@@ -2190,7 +2191,7 @@ setifwpagroupcipher(const char *val, int d)
 	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, ifname, sizeof(wpa.i_name));
 	if (ioctl(sock, SIOCG80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCG80211WPAPARMS");
+		err(1, "%s: SIOCG80211WPAPARMS", wpa.i_name);
 	wpa.i_groupcipher = cipher;
 
 	if (actions & A_JOIN) {
@@ -2200,7 +2201,7 @@ setifwpagroupcipher(const char *val, int d)
 	}
 
 	if (ioctl(sock, SIOCS80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCS80211WPAPARMS");
+		err(1, "%s: SIOCS80211WPAPARMS", wpa.i_name);
 }
 
 void
@@ -2228,7 +2229,7 @@ setifwpakey(const char *val, int d)
 			warnx("no nwid or join command, guessing nwid to use");
 
 			if (ioctl(sock, SIOCG80211NWID, (caddr_t)&ifr) == -1)
-				err(1, "SIOCG80211NWID");
+				err(1, "%s: SIOCG80211NWID", ifr.ifr_name);
 		}
 
 		passlen = strlen(val);
@@ -2265,16 +2266,16 @@ setifwpakey(const char *val, int d)
 	}
 
 	if (ioctl(sock, SIOCS80211WPAPSK, (caddr_t)&psk) == -1)
-		err(1, "SIOCS80211WPAPSK");
+		err(1, "%s: SIOCS80211WPAPSK", psk.i_name);
 
 	/* And ... automatically enable or disable WPA */
 	memset(&wpa, 0, sizeof(wpa));
 	(void)strlcpy(wpa.i_name, ifname, sizeof(wpa.i_name));
 	if (ioctl(sock, SIOCG80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCG80211WPAPARMS");
+		err(1, "%s: SIOCG80211WPAPARMS", psk.i_name);
 	wpa.i_enabled = psk.i_enabled;
 	if (ioctl(sock, SIOCS80211WPAPARMS, (caddr_t)&wpa) == -1)
-		err(1, "SIOCS80211WPAPARMS");
+		err(1, "%s: SIOCS80211WPAPARMS", psk.i_name);
 }
 
 void
@@ -2303,7 +2304,7 @@ setifchan(const char *val, int d)
 	strlcpy(channel.i_name, ifname, sizeof(channel.i_name));
 	channel.i_channel = (u_int16_t)chan;
 	if (ioctl(sock, SIOCS80211CHANNEL, (caddr_t)&channel) == -1)
-		warn("SIOCS80211CHANNEL");
+		warn("%s: SIOCS80211CHANNEL", channel.i_name);
 }
 
 void
@@ -2332,7 +2333,7 @@ setifnwflag(const char *val, int d)
 		errx(1, "Invalid nwflag: %s", val);
 
 	if (ioctl(sock, SIOCG80211FLAGS, (caddr_t)&ifr) != 0)
-		err(1, "SIOCG80211FLAGS");
+		err(1, "%s: SIOCG80211FLAGS", ifr.ifr_name);
 
 	if (d)
 		ifr.ifr_flags &= ~flag;
@@ -2340,7 +2341,7 @@ setifnwflag(const char *val, int d)
 		ifr.ifr_flags |= flag;
 
 	if (ioctl(sock, SIOCS80211FLAGS, (caddr_t)&ifr) != 0)
-		err(1, "SIOCS80211FLAGS");
+		err(1, "%s: SIOCS80211FLAGS", ifr.ifr_name);
 }
 
 void
@@ -2357,7 +2358,7 @@ setifpowersave(const char *val, int d)
 
 	(void)strlcpy(power.i_name, ifname, sizeof(power.i_name));
 	if (ioctl(sock, SIOCG80211POWER, (caddr_t)&power) == -1) {
-		warn("SIOCG80211POWER");
+		warn("%s: SIOCG80211POWER", power.i_name);
 		return;
 	}
 
@@ -2369,7 +2370,7 @@ setifpowersave(const char *val, int d)
 
 	power.i_enabled = d == -1 ? 0 : 1;
 	if (ioctl(sock, SIOCS80211POWER, (caddr_t)&power) == -1)
-		warn("SIOCS80211POWER");
+		warn("%s: SIOCS80211POWER", power.i_name);
 }
 #endif
 
@@ -2590,7 +2591,7 @@ join_status(void)
 				ojsz = jsz;
 				continue;
 			} else if (errno != ENOENT)
-				warn("SIOCG80211JOINALL");
+				warn("%s: SIOCG80211JOINALL", ja.ja_ifname);
 			return;
 		}
 		break;
@@ -2662,7 +2663,7 @@ ieee80211_listchans(void)
 	strlcpy(ca.i_name, ifname, sizeof(ca.i_name));
 
 	if (ioctl(sock, SIOCG80211ALLCHANS, &ca) != 0) {
-		warn("SIOCG80211ALLCHANS");
+		warn("%s: SIOCG80211ALLCHANS", ca.i_name);
 		return;
 	}
 	printf("\t\t%4s  %-8s  %s\n", "chan", "freq", "properties");
@@ -2718,7 +2719,7 @@ ieee80211_listnodes(void)
 	strlcpy(na.na_ifname, ifname, sizeof(na.na_ifname));
 
 	if (ioctl(sock, SIOCG80211ALLNODES, &na) != 0) {
-		warn("SIOCG80211ALLNODES");
+		warn("%s: SIOCG80211ALLNODES", na.na_ifname);
 		return;
 	}
 
@@ -2837,7 +2838,7 @@ init_current_media(void)
 			 * that there are more, so we can ignore it.
 			 */
 			if (errno != E2BIG)
-				err(1, "SIOCGIFMEDIA");
+				err(1, "%s: SIOCGIFMEDIA", ifmr.ifm_name);
 		}
 
 		media_current = ifmr.ifm_current;
@@ -2868,7 +2869,7 @@ process_media_commands(void)
 	ifr.ifr_media = media_current;
 
 	if (ioctl(sock, SIOCSIFMEDIA, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSIFMEDIA");
+		err(1, "%s: SIOCSIFMEDIA", ifr.ifr_name);
 }
 
 void
@@ -3397,7 +3398,7 @@ status(int link, struct sockaddr_dl *sdl, int ls, int ifaliases)
 	ifmr.ifm_ulist = media_list;
 
 	if (ioctl(sock, SIOCGIFMEDIA, (caddr_t)&ifmr) == -1)
-		err(1, "SIOCGIFMEDIA");
+		err(1, "%s: SIOCGIFMEDIA", ifmr.ifm_name);
 
 	printf("\tmedia: ");
 	print_media_word(ifmr.ifm_current, 1, 0);
@@ -4207,7 +4208,7 @@ setifparent(const char *id, int param)
 		errx(1, "parent: parent too long");
 
 	if (ioctl(sock, SIOCSIFPARENT, (caddr_t)&ifp) == -1)
-		warn("SIOCSIFPARENT");
+		warn("%s: %s: SIOCSIFPARENT", ifp.ifp_name, ifp.ifp_parent);
 }
 
 void
@@ -4408,7 +4409,7 @@ settrunkport(const char *val, int d)
 	strlcpy(rp.rp_portname, val, sizeof(rp.rp_portname));
 
 	if (ioctl(sock, SIOCSTRUNKPORT, &rp) == -1)
-		err(1, "SIOCSTRUNKPORT");
+		err(1, "%s %s: SIOCSTRUNKPORT", rp.rp_ifname, rp.rp_portname);
 }
 
 void
@@ -4421,7 +4422,8 @@ unsettrunkport(const char *val, int d)
 	strlcpy(rp.rp_portname, val, sizeof(rp.rp_portname));
 
 	if (ioctl(sock, SIOCSTRUNKDELPORT, &rp) == -1)
-		err(1, "SIOCSTRUNKDELPORT");
+		err(1, "%s: %s: SIOCSTRUNKDELPORT", rp.rp_ifname,
+		    rp.rp_portname);
 }
 
 void
@@ -4445,7 +4447,7 @@ settrunkproto(const char *val, int d)
 
 	strlcpy(ra.ra_ifname, ifname, sizeof(ra.ra_ifname));
 	if (ioctl(sock, SIOCSTRUNK, &ra) != 0)
-		err(1, "SIOCSTRUNK");
+		err(1, "%s: SIOCSTRUNK", ra.ra_ifname);
 }
 
 void
@@ -4458,7 +4460,7 @@ settrunklacpmode(const char *val, int d)
 	strlcpy(ra.ra_ifname, ifname, sizeof(ra.ra_ifname));
 
 	if (ioctl(sock, SIOCGTRUNK, &ra) != 0)
-		err(1, "SIOCGTRUNK");
+		err(1, "%s: SIOCGTRUNK", ra.ra_ifname);
 
 	if (ra.ra_proto != TRUNK_PROTO_LACP)
 		errx(1, "Invalid option for trunk: %s", ifname);
@@ -4478,7 +4480,7 @@ settrunklacpmode(const char *val, int d)
 		tops.to_lacpopts.lacp_mode = 0;
 
 	if (ioctl(sock, SIOCSTRUNKOPTS, &tops) != 0)
-		err(1, "SIOCSTRUNKOPTS");
+		err(1, "%s: SIOCSTRUNKOPTS", tops.to_ifname);
 }
 
 void
@@ -4491,7 +4493,7 @@ settrunklacptimeout(const char *val, int d)
 	strlcpy(ra.ra_ifname, ifname, sizeof(ra.ra_ifname));
 
 	if (ioctl(sock, SIOCGTRUNK, &ra) != 0)
-		err(1, "SIOCGTRUNK");
+		err(1, "%s SIOCGTRUNK", ra.ra_ifname);
 
 	if (ra.ra_proto != TRUNK_PROTO_LACP)
 		errx(1, "Invalid option for trunk: %s", ifname);
@@ -4511,7 +4513,7 @@ settrunklacptimeout(const char *val, int d)
 		tops.to_lacpopts.lacp_timeout = 0;
 
 	if (ioctl(sock, SIOCSTRUNKOPTS, &tops) != 0)
-		err(1, "SIOCSTRUNKOPTS");
+		err(1, "%s: SIOCSTRUNKOPTS", tops.to_ifname);
 }
 
 void
@@ -4682,13 +4684,13 @@ setcarp_passwd(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	bzero(carpr.carpr_key, CARP_KEY_LEN);
 	strlcpy((char *)carpr.carpr_key, val, CARP_KEY_LEN);
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 }
 
 void
@@ -4706,13 +4708,13 @@ setcarp_vhid(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	carpr.carpr_vhids[0] = vhid;
 	carpr.carpr_vhids[1] = 0;
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 }
 
 void
@@ -4730,12 +4732,12 @@ setcarp_advskew(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	carpr.carpr_advskews[0] = advskew;
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 }
 
 void
@@ -4753,12 +4755,12 @@ setcarp_advbase(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	carpr.carpr_advbase = advbase;
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 }
 
 void
@@ -4772,7 +4774,7 @@ setcarppeer(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -4789,7 +4791,7 @@ setcarppeer(const char *val, int d)
 	    peerres->ai_addr)->sin_addr.s_addr;
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 
 	freeaddrinfo(peerres);
 }
@@ -4803,12 +4805,12 @@ unsetcarppeer(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	bzero(&carpr.carpr_peer, sizeof(carpr.carpr_peer));
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 }
 
 void
@@ -4821,7 +4823,7 @@ setcarp_state(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	for (i = 0; i <= CARP_MAXSTATE; i++) {
 		if (!strcasecmp(val, carp_states[i])) {
@@ -4831,7 +4833,7 @@ setcarp_state(const char *val, int d)
 	}
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 }
 
 void
@@ -4843,12 +4845,12 @@ setcarpdev(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	strlcpy(carpr.carpr_carpdev, val, sizeof(carpr.carpr_carpdev));
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 }
 
 void
@@ -4862,7 +4864,7 @@ setcarp_nodes(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	bzero(carpr.carpr_vhids, sizeof(carpr.carpr_vhids));
 	bzero(carpr.carpr_advskews, sizeof(carpr.carpr_advskews));
@@ -4892,7 +4894,7 @@ setcarp_nodes(const char *val, int d)
 	free(optlist);
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 }
 
 void
@@ -4905,7 +4907,7 @@ setcarp_balancing(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&carpr;
 
 	if (ioctl(sock, SIOCGVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGVH");
+		err(1, "%s: SIOCGVH", ifr.ifr_name);
 
 	for (i = 0; i <= CARP_BAL_MAXID; i++)
 		if (!strcasecmp(val, carp_bal_modes[i]))
@@ -4917,7 +4919,7 @@ setcarp_balancing(const char *val, int d)
 	carpr.carpr_balancing = i;
 
 	if (ioctl(sock, SIOCSVH, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSVH");
+		err(1, "%s: SIOCSVH", ifr.ifr_name);
 }
 
 void
@@ -4929,12 +4931,12 @@ setpfsync_syncdev(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(sock, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETPFSYNC");
+		err(1, "%s: SIOCGETPFSYNC", ifr.ifr_name);
 
 	strlcpy(preq.pfsyncr_syncdev, val, sizeof(preq.pfsyncr_syncdev));
 
 	if (ioctl(sock, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFSYNC");
+		err(1, "%s: SIOCSETPFSYNC", ifr.ifr_name);
 }
 
 void
@@ -4946,12 +4948,12 @@ unsetpfsync_syncdev(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(sock, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETPFSYNC");
+		err(1, "%s: SIOCGETPFSYNC", ifr.ifr_name);
 
 	bzero(&preq.pfsyncr_syncdev, sizeof(preq.pfsyncr_syncdev));
 
 	if (ioctl(sock, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFSYNC");
+		err(1, "%s: SIOCSETPFSYNC", ifr.ifr_name);
 }
 
 void
@@ -4965,7 +4967,7 @@ setpfsync_syncpeer(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(sock, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETPFSYNC");
+		err(1, "%s: SIOCGETPFSYNC", ifr.ifr_name);
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
@@ -4982,7 +4984,7 @@ setpfsync_syncpeer(const char *val, int d)
 	    peerres->ai_addr)->sin_addr.s_addr;
 
 	if (ioctl(sock, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFSYNC");
+		err(1, "%s: SIOCSETPFSYNC", ifr.ifr_name);
 
 	freeaddrinfo(peerres);
 }
@@ -4996,12 +4998,12 @@ unsetpfsync_syncpeer(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(sock, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETPFSYNC");
+		err(1, "%s: SIOCGETPFSYNC", ifr.ifr_name);
 
 	preq.pfsyncr_syncpeer.s_addr = 0;
 
 	if (ioctl(sock, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFSYNC");
+		err(1, "%s: SIOCSETPFSYNC", ifr.ifr_name);
 }
 
 void
@@ -5019,12 +5021,12 @@ setpfsync_maxupd(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(sock, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETPFSYNC");
+		err(1, "%s: SIOCGETPFSYNC", ifr.ifr_name);
 
 	preq.pfsyncr_maxupdates = maxupdates;
 
 	if (ioctl(sock, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFSYNC");
+		err(1, "%s: SIOCSETPFSYNC", ifr.ifr_name);
 }
 
 void
@@ -5036,11 +5038,11 @@ setpfsync_defer(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(sock, SIOCGETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGETPFSYNC");
+		err(1, "%s: SIOCGETPFSYNC", ifr.ifr_name);
 
 	preq.pfsyncr_defer = d;
 	if (ioctl(sock, SIOCSETPFSYNC, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFSYNC");
+		err(1, "%s: SIOCSETPFSYNC", ifr.ifr_name);
 }
 
 void
@@ -5208,7 +5210,7 @@ setpflow_sender(const char *val, int d)
 	pflow_addr(val, &preq.flowsrc);
 
 	if (ioctl(sock, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFLOW");
+		err(1, "%s: SIOCSETPFLOW", ifr.ifr_name);
 }
 
 void
@@ -5220,7 +5222,7 @@ unsetpflow_sender(const char *val, int d)
 	preq.addrmask |= PFLOW_MASK_SRCIP;
 	ifr.ifr_data = (caddr_t)&preq;
 	if (ioctl(sock, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFLOW");
+		err(1, "%s: SIOCSETPFLOW", ifr.ifr_name);
 }
 
 void
@@ -5234,7 +5236,7 @@ setpflow_receiver(const char *val, int d)
 	pflow_addr(val, &preq.flowdst);
 
 	if (ioctl(sock, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFLOW");
+		err(1, "%s: SIOCSETPFLOW", ifr.ifr_name);
 }
 
 void
@@ -5246,7 +5248,7 @@ unsetpflow_receiver(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&preq;
 	preq.addrmask |= PFLOW_MASK_DSTIP;
 	if (ioctl(sock, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFLOW");
+		err(1, "%s: SIOCSETPFLOW", ifr.ifr_name);
 }
 
 /* PFLOWPROTO XXX */
@@ -5274,7 +5276,7 @@ setpflowproto(const char *val, int d)
 	ifr.ifr_data = (caddr_t)&preq;
 
 	if (ioctl(sock, SIOCSETPFLOW, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSETPFLOW");
+		err(1, "%s: SIOCSETPFLOW", ifr.ifr_name);
 }
 
 void
@@ -5407,7 +5409,7 @@ spppauthinfo(struct sauthreq *spa, int d)
 	ifr.ifr_data = (caddr_t)spa;
 	spa->cmd = d == 0 ? SPPPIOGMAUTH : SPPPIOGHAUTH;
 	if (ioctl(sock, SIOCGSPPPPARAMS, &ifr) == -1)
-		err(1, "SIOCGSPPPPARAMS(SPPPIOGXAUTH)");
+		err(1, "%s: SIOCGSPPPPARAMS(SPPPIOGXAUTH)", ifr.ifr_name);
 }
 
 void
@@ -5418,7 +5420,7 @@ spppdnsinfo(struct sdnsreq *spd)
 	ifr.ifr_data = (caddr_t)spd;
 	spd->cmd = SPPPIOGDNS;
 	if (ioctl(sock, SIOCGSPPPPARAMS, &ifr) == -1)
-		err(1, "SIOCGSPPPPARAMS(SPPPIOGDNS)");
+		err(1, "%s: SIOCGSPPPPARAMS(SPPPIOGDNS)", ifr.ifr_name);
 }
 
 void
@@ -5439,7 +5441,7 @@ setspppproto(const char *val, int d)
 
 	spa.cmd = d == 0 ? SPPPIOSMAUTH : SPPPIOSHAUTH;
 	if (ioctl(sock, SIOCSSPPPPARAMS, &ifr) == -1)
-		err(1, "SIOCSSPPPPARAMS(SPPPIOSXAUTH)");
+		err(1, "%s: SIOCSSPPPPARAMS(SPPPIOSXAUTH)", ifr.ifr_name);
 }
 
 void
@@ -5462,7 +5464,7 @@ setspppname(const char *val, int d)
 
 	spa.cmd = d == 0 ? SPPPIOSMAUTH : SPPPIOSHAUTH;
 	if (ioctl(sock, SIOCSSPPPPARAMS, &ifr) == -1)
-		err(1, "SIOCSSPPPPARAMS(SPPPIOSXAUTH)");
+		err(1, "%s: SIOCSSPPPPARAMS(SPPPIOSXAUTH)", ifr.ifr_name);
 }
 
 void
@@ -5485,7 +5487,7 @@ setspppkey(const char *val, int d)
 
 	spa.cmd = d == 0 ? SPPPIOSMAUTH : SPPPIOSHAUTH;
 	if (ioctl(sock, SIOCSSPPPPARAMS, &ifr) == -1)
-		err(1, "SIOCSSPPPPARAMS(SPPPIOSXAUTH)");
+		err(1, "%s: SIOCSSPPPPARAMS(SPPPIOSXAUTH)", ifr.ifr_name);
 }
 
 void
@@ -5518,7 +5520,7 @@ setsppppeerflag(const char *val, int d)
 
 	spa.cmd = SPPPIOSHAUTH;
 	if (ioctl(sock, SIOCSSPPPPARAMS, &ifr) == -1)
-		err(1, "SIOCSSPPPPARAMS(SPPPIOSXAUTH)");
+		err(1, "%s: SIOCSSPPPPARAMS(SPPPIOSXAUTH)", ifr.ifr_name);
 }
 
 void
@@ -5859,7 +5861,7 @@ process_wg_commands(void)
 		strlcpy(wgdata.wgd_name, ifname, sizeof(wgdata.wgd_name));
 
 		if (ioctl(sock, SIOCSWG, (caddr_t)&wgdata) == -1)
-			err(1, "SIOCSWG");
+			err(1, "%s: SIOCSWG", wgdata.wgd_name);
 	}
 }
 
@@ -5878,7 +5880,7 @@ wg_status(int ifaliases)
 		if (ioctl(sock, SIOCGWG, (caddr_t)&wgdata) < 0) {
 			if (errno == ENOTTY)
 				goto out;
-			err(1, "SIOCGWG");
+			err(1, "%s: SIOCGWG", wgdata.wgd_name);
 		}
 		if (last_size >= wgdata.wgd_size)
 			break;
@@ -6230,7 +6232,7 @@ umb_pinop(int op, int is_puk, const char *pin, const char *newpin)
 	memset(&mp, 0, sizeof (mp));
 	ifr.ifr_data = (caddr_t)&mp;
 	if (ioctl(sock, SIOCGUMBPARAM, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGUMBPARAM");
+		err(1, "%s: SIOCGUMBPARAM", ifr.ifr_name);
 
 	mp.op = op;
 	mp.is_puk = is_puk;
@@ -6245,7 +6247,7 @@ umb_pinop(int op, int is_puk, const char *pin, const char *newpin)
 	}
 
 	if (ioctl(sock, SIOCSUMBPARAM, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSUMBPARAM");
+		err(1, "%s: SIOCSUMBPARAM", ifr.ifr_name);
 }
 
 void
@@ -6256,7 +6258,7 @@ umb_apn(const char *apn, int d)
 	memset(&mp, 0, sizeof (mp));
 	ifr.ifr_data = (caddr_t)&mp;
 	if (ioctl(sock, SIOCGUMBPARAM, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGUMBPARAM");
+		err(1, "%s: SIOCGUMBPARAM", ifr.ifr_name);
 
 	if (d != 0)
 		memset(mp.apn, 0, sizeof (mp.apn));
@@ -6265,7 +6267,7 @@ umb_apn(const char *apn, int d)
 		errx(1, "APN too long");
 
 	if (ioctl(sock, SIOCSUMBPARAM, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSUMBPARAM");
+		err(1, "%s: SIOCSUMBPARAM", ifr.ifr_name);
 }
 
 void
@@ -6283,13 +6285,13 @@ umb_setclass(const char *val, int d)
 	memset(&mp, 0, sizeof (mp));
 	ifr.ifr_data = (caddr_t)&mp;
 	if (ioctl(sock, SIOCGUMBPARAM, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGUMBPARAM");
+		err(1, "%s: SIOCGUMBPARAM", ifr.ifr_name);
 	if (d != -1)
 		mp.preferredclasses = umb_parse_classes(val);
 	else
 		mp.preferredclasses = MBIM_DATACLASS_NONE;
 	if (ioctl(sock, SIOCSUMBPARAM, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSUMBPARAM");
+		err(1, "%s: SIOCSUMBPARAM", ifr.ifr_name);
 }
 
 void
@@ -6300,10 +6302,10 @@ umb_roaming(const char *val, int d)
 	memset(&mp, 0, sizeof (mp));
 	ifr.ifr_data = (caddr_t)&mp;
 	if (ioctl(sock, SIOCGUMBPARAM, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGUMBPARAM");
+		err(1, "%s: SIOCGUMBPARAM", ifr.ifr_name);
 	mp.roaming = d;
 	if (ioctl(sock, SIOCSUMBPARAM, (caddr_t)&ifr) == -1)
-		err(1, "SIOCSUMBPARAM");
+		err(1, "%s: SIOCSUMBPARAM", ifr.ifr_name);
 }
 
 void
@@ -6589,7 +6591,7 @@ getifgroups(void)
 		if (errno == EINVAL || errno == ENOTTY)
 			return;
 		else
-			err(1, "SIOCGIFGROUP");
+			err(1, "%s: SIOCGIFGROUP", ifgr.ifgr_name);
 	}
 
 	len = ifgr.ifgr_len;
@@ -6598,7 +6600,7 @@ getifgroups(void)
 	if (ifgr.ifgr_groups == NULL)
 		err(1, "getifgroups");
 	if (ioctl(sock, SIOCGIFGROUP, (caddr_t)&ifgr) == -1)
-		err(1, "SIOCGIFGROUP");
+		err(1, "%s: SIOCGIFGROUP", ifgr.ifgr_name);
 
 	cnt = 0;
 	ifg = ifgr.ifgr_groups;
@@ -6632,7 +6634,7 @@ printifhwfeatures(const char *unused, int show)
 	bzero(&ifrdat, sizeof(ifrdat));
 	ifr.ifr_data = (caddr_t)&ifrdat;
 	if (ioctl(sock, SIOCGIFDATA, (caddr_t)&ifr) == -1)
-		err(1, "SIOCGIFDATA");
+		err(1, "%s: SIOCGIFDATA", ifr.ifr_name);
 	printb("\thwfeatures", (u_int)ifrdat.ifi_capabilities, HWFEATURESBITS);
 
 	if (ioctl(sock, SIOCGIFHARDMTU, (caddr_t)&ifr) != -1) {
