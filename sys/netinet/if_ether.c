@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.264 2023/05/07 16:23:23 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.265 2023/05/12 12:40:49 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -388,10 +388,8 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		    rt->rt_expire - arpt_keep / 8 < uptime) {
 
 			mtx_enter(&arp_mtx);
-			if (ISSET(rt->rt_flags, RTF_LLINFO)) {
-				la = (struct llinfo_arp *)rt->rt_llinfo;
-				KASSERT(la != NULL);
-
+			la = (struct llinfo_arp *)rt->rt_llinfo;
+			if (la != NULL) {
 				if (la->la_refreshed + 30 < uptime) {
 					la->la_refreshed = uptime;
 					refresh = 1;
@@ -412,12 +410,11 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		goto bad;
 
 	mtx_enter(&arp_mtx);
-	if (!ISSET(rt->rt_flags, RTF_LLINFO)) {
+	la = (struct llinfo_arp *)rt->rt_llinfo;
+	if (la == NULL) {
 		mtx_leave(&arp_mtx);
 		goto bad;
 	}
-	la = (struct llinfo_arp *)rt->rt_llinfo;
-	KASSERT(la != NULL);
 
 	/*
 	 * There is an arptab entry, but no ethernet address
