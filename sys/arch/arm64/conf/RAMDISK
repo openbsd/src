@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.199 2023/04/28 05:13:37 phessler Exp $
+# $OpenBSD: RAMDISK,v 1.200 2023/05/12 21:32:49 uaa Exp $
 
 machine		arm64
 maxusers	4
@@ -266,12 +266,13 @@ gpio*		at sxipio?
 sxiccmu*	at fdt? early 1	# Clock Control Module/Unit
 sxidog*		at fdt?
 sxirsb*		at fdt? early 1	# Reduced Serial Bus
+axppmic*	at rsb?
 sxirtc*		at fdt? early 1	# Real Time Clock
 sximmc*		at fdt?		# SD/MMC card controller
 sdmmc*		at sximmc?	# SD/MMC bus
 sxisid*		at fdt? early 1
 sxisyscon*	at fdt? early 1	# System controller
-sxitwi*		at fdt?		# I2C controller
+sxitwi*		at fdt?	early 1	# I2C controller
 iic*		at sxitwi?	# I2C bus
 dwxe*		at fdt?
 
@@ -369,6 +370,7 @@ ytphy*		at mii?			# MotorComm YT8511 PHY
 
 # I2C devices
 abcrtc*		at iic?			# Abracon x80x RTC
+axppmic*	at iic?			# AXP80x PMIC
 dsxrtc*		at iic?			# DS3231 RTC
 fusbtc*		at iic?			# USB Type-C controller
 ihidev*		at iic?			# HID-over-I2C
