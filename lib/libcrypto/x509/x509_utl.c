@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_utl.c,v 1.15 2023/05/12 13:56:17 tb Exp $ */
+/* $OpenBSD: x509_utl.c,v 1.16 2023/05/12 18:39:44 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -520,11 +520,11 @@ x509_skip_colons_cbs(CBS *cbs)
 	}
 
 	return 1;
-
 }
 
 static int
-x509_get_xdigit_nibble_cbs(CBS *cbs, uint8_t *out_nibble) {
+x509_get_xdigit_nibble_cbs(CBS *cbs, uint8_t *out_nibble)
+{
 	uint8_t c;
 
 	if (!CBS_get_u8(cbs, &c))
@@ -545,7 +545,6 @@ x509_get_xdigit_nibble_cbs(CBS *cbs, uint8_t *out_nibble) {
 
 	X509V3error(X509V3_R_ILLEGAL_HEX_DIGIT);
 	return 0;
-
 }
 
 unsigned char *
