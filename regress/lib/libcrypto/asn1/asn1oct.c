@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1oct.c,v 1.2 2023/05/12 08:56:05 tb Exp $ */
+/*	$OpenBSD: asn1oct.c,v 1.3 2023/05/12 10:43:28 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -156,6 +156,11 @@ static const struct s2i_asn1_octet_string_test {
 		.want = "",
 	},
 	{
+		.desc = "only colons",
+		.in = ":::::::",
+		.want = "",
+	},
+	{
 		.desc = "a 0 octet",
 		.in = "00",
 		.want = "00",
@@ -204,6 +209,10 @@ static const struct s2i_asn1_octet_string_test {
 	{
 		.desc = "non-hex digit",
 		.in = "g00d",
+	},
+	{
+		.desc = "non-hex digits",
+		.in = "d0gged",
 	},
 	{
 		.desc = "trailing non-hex digit",
