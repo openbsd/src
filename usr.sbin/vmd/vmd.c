@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.147 2023/05/12 14:42:30 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.148 2023/05/12 16:18:17 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1502,7 +1502,6 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	struct vm_create_params	*vcp = &vmc->vmc_params;
 	struct vmop_create_params *vmcp;
 	struct vm_create_params	*vcpp;
-	struct vmd_vm		*vm = NULL;
 	unsigned int		 i, j;
 
 	/* return without error if the parent is NULL (nothing to inherit) */
@@ -1526,8 +1525,8 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 
 	name = vcp->vcp_name;
 
-	if ((vm = vm_getbyname(vcp->vcp_name)) != NULL ||
-	    (vm = vm_getbyvmid(vcp->vcp_id)) != NULL) {
+	if (vm_getbyname(vcp->vcp_name) != NULL ||
+	    vm_getbyvmid(vcp->vcp_id) != NULL) {
 		return (EPROCLIM);
 	}
 
@@ -1616,8 +1615,8 @@ vm_instance(struct privsep *ps, struct vmd_vm **vm_parent,
 	}
 
 	/* kernel */
-	if (vmc->vmc_kernel > -1 || (vm->vm_kernel_path != NULL &&
-		strnlen(vm->vm_kernel_path, PATH_MAX) < PATH_MAX)) {
+	if (vmc->vmc_kernel > -1 || ((*vm_parent)->vm_kernel_path != NULL &&
+		strnlen((*vm_parent)->vm_kernel_path, PATH_MAX) < PATH_MAX)) {
 		if (vm_checkinsflag(vmcp, VMOP_CREATE_KERNEL, uid) != 0) {
 			log_warnx("vm \"%s\" no permission to set boot image",
 			    name);
