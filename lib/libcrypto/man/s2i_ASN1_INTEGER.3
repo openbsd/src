@@ -1,4 +1,4 @@
-.\" $OpenBSD: s2i_ASN1_INTEGER.3,v 1.4 2023/04/21 13:08:16 tb Exp $
+.\" $OpenBSD: s2i_ASN1_INTEGER.3,v 1.5 2023/05/12 08:12:09 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 21 2023 $
+.Dd $Mdocdate: May 12 2023 $
 .Dt I2S_ASN1_INTEGER 3
 .Os
 .Sh NAME
@@ -135,8 +135,9 @@ The
 and
 .Fa ctx
 arguments are ignored.
-Every pair of hexadecimal digits is converted into an octet, while
-any number of colons separating two pairs are ignored.
+Every pair of hexadecimal digits is converted into an octet.
+Colons are ignored if they are at the start, the end or
+if they separate two pairs of digits.
 .Pp
 .Fn i2s_ASN1_ENUMERATED_TABLE
 uses strings provided in the usr_data field of the non-NULL
@@ -187,7 +188,7 @@ or NULL on error.
 Error conditions are memory allocation failure or if
 .Fa value
 contains an odd number of hexadecimal digits or anything except
-colons between pairs of hexadecimal digits.
+colons at the start, the end or between pairs of hexadecimal digits.
 .Pp
 Error codes can sometimes be obtained by
 .Xr ERR_get_error 3 .
