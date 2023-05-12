@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.34 2023/04/14 10:45:15 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.35 2023/05/12 10:10:55 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -153,137 +153,6 @@ static const SHA_LONG64 K512[80] = {
 #define Ch(x, y, z)	(((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x, y, z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
-
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86)
-/*
- * This code should give better results on 32-bit CPU with less than
- * ~24 registers, both size and performance wise...
- */
-static void
-sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
-{
-	const SHA_LONG64 *W = in;
-	SHA_LONG64 A, E, T;
-	SHA_LONG64 X[9 + 80], *F;
-	int i;
-
-	while (num--) {
-
-		F = X + 80;
-		A = ctx->h[0];
-		F[1] = ctx->h[1];
-		F[2] = ctx->h[2];
-		F[3] = ctx->h[3];
-		E = ctx->h[4];
-		F[5] = ctx->h[5];
-		F[6] = ctx->h[6];
-		F[7] = ctx->h[7];
-
-		for (i = 0; i < 16; i++, F--) {
-			T = PULL64(W[i]);
-			F[0] = A;
-			F[4] = E;
-			F[8] = T;
-			T += F[7] + Sigma1(E) + Ch(E, F[5], F[6]) + K512[i];
-			E = F[3] + T;
-			A = T + Sigma0(A) + Maj(A, F[1], F[2]);
-		}
-
-		for (; i < 80; i++, F--) {
-			T = sigma0(F[8 + 16 - 1]);
-			T += sigma1(F[8 + 16 - 14]);
-			T += F[8 + 16] + F[8 + 16 - 9];
-
-			F[0] = A;
-			F[4] = E;
-			F[8] = T;
-			T += F[7] + Sigma1(E) + Ch(E, F[5], F[6]) + K512[i];
-			E = F[3] + T;
-			A = T + Sigma0(A) + Maj(A, F[1], F[2]);
-		}
-
-		ctx->h[0] += A;
-		ctx->h[1] += F[1];
-		ctx->h[2] += F[2];
-		ctx->h[3] += F[3];
-		ctx->h[4] += E;
-		ctx->h[5] += F[5];
-		ctx->h[6] += F[6];
-		ctx->h[7] += F[7];
-
-		W += SHA_LBLOCK;
-	}
-}
-
-#elif defined(OPENSSL_SMALL_FOOTPRINT)
-
-static void
-sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
-{
-	const SHA_LONG64 *W = in;
-	SHA_LONG64 a, b, c, d, e, f, g, h, s0, s1, T1, T2;
-	SHA_LONG64 X[16];
-	int i;
-
-	while (num--) {
-
-		a = ctx->h[0];
-		b = ctx->h[1];
-		c = ctx->h[2];
-		d = ctx->h[3];
-		e = ctx->h[4];
-		f = ctx->h[5];
-		g = ctx->h[6];
-		h = ctx->h[7];
-
-		for (i = 0; i < 16; i++) {
-			T1 = X[i] = PULL64(W[i]);
-			T1 += h + Sigma1(e) + Ch(e, f, g) + K512[i];
-			T2 = Sigma0(a) + Maj(a, b, c);
-			h = g;
-			g = f;
-			f = e;
-			e = d + T1;
-			d = c;
-			c = b;
-			b = a;
-			a = T1 + T2;
-		}
-
-		for (; i < 80; i++) {
-			s0 = X[(i + 1)&0x0f];
-			s0 = sigma0(s0);
-			s1 = X[(i + 14)&0x0f];
-			s1 = sigma1(s1);
-
-			T1 = X[i&0xf] += s0 + s1 + X[(i + 9)&0xf];
-			T1 += h + Sigma1(e) + Ch(e, f, g) + K512[i];
-			T2 = Sigma0(a) + Maj(a, b, c);
-			h = g;
-			g = f;
-			f = e;
-			e = d + T1;
-			d = c;
-			c = b;
-			b = a;
-			a = T1 + T2;
-		}
-
-		ctx->h[0] += a;
-		ctx->h[1] += b;
-		ctx->h[2] += c;
-		ctx->h[3] += d;
-		ctx->h[4] += e;
-		ctx->h[5] += f;
-		ctx->h[6] += g;
-		ctx->h[7] += h;
-
-		W += SHA_LBLOCK;
-	}
-}
-
-#else
-
 #define	ROUND_00_15(i, a, b, c, d, e, f, g, h)		do {	\
 	T1 += h + Sigma1(e) + Ch(e, f, g) + K512[i];	\
 	h = Sigma0(a) + Maj(a, b, c);			\
@@ -378,8 +247,6 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
 		W += SHA_LBLOCK;
 	}
 }
-
-#endif
 
 #endif /* SHA512_ASM */
 
