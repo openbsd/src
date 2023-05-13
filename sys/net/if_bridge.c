@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.366 2023/05/07 16:23:23 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.367 2023/05/13 13:35:17 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1735,15 +1735,8 @@ bridge_ip(struct ifnet *brifp, int dir, struct ifnet *ifp,
 			return (NULL);
 		if (m->m_len < sizeof(struct ip))
 			goto dropit;
+		in_hdr_cksum_out(m, ifp);
 		in_proto_cksum_out(m, ifp);
-		ip = mtod(m, struct ip *);
-		ip->ip_sum = 0;
-		if (0 && (ifp->if_capabilities & IFCAP_CSUM_IPv4))
-			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-		else {
-			ipstat_inc(ips_outswcsum);
-			ip->ip_sum = in_cksum(m, hlen);
-		}
 
 #if NPF > 0
 		if (dir == BRIDGE_IN &&
@@ -1993,8 +1986,7 @@ bridge_send_icmp_err(struct ifnet *ifp,
 	ip->ip_off &= htons(IP_DF);
 	ip->ip_id = htons(ip_randomid());
 	ip->ip_ttl = MAXTTL;
-	ip->ip_sum = 0;
-	ip->ip_sum = in_cksum(m, hlen);
+	in_hdr_cksum_out(m, NULL);
 
 	/* Swap ethernet addresses */
 	bcopy(&eh->ether_dhost, &ether_tmp, sizeof(ether_tmp));

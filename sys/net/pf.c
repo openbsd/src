@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1178 2023/05/10 12:07:16 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1179 2023/05/13 13:35:17 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2868,7 +2868,7 @@ pf_change_icmp_af(struct mbuf *m, int ipoff2, struct pf_pdesc *pd,
 			ip4->ip_p = pd2->proto;
 		ip4->ip_src = src->v4;
 		ip4->ip_dst = dst->v4;
-		ip4->ip_sum = in_cksum(n, ip4->ip_hl << 2);
+		in_hdr_cksum_out(n, NULL);
 		break;
 	case AF_INET6:
 		ip6 = mtod(n, struct ip6_hdr *);
@@ -6549,13 +6549,7 @@ pf_route(struct pf_pdesc *pd, struct pf_state *st)
 	}
 
 	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
-		ip->ip_sum = 0;
-		if (ifp->if_capabilities & IFCAP_CSUM_IPv4)
-			m0->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-		else {
-			ipstat_inc(ips_outswcsum);
-			ip->ip_sum = in_cksum(m0, ip->ip_hl << 2);
-		}
+		in_hdr_cksum_out(m0, ifp);
 		in_proto_cksum_out(m0, ifp);
 		ifp->if_output(ifp, m0, sintosa(dst), rt);
 		goto done;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.385 2023/05/10 12:07:16 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.386 2023/05/13 13:35:17 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -81,8 +81,7 @@ int ip_pcbopts(struct mbuf **, struct mbuf *);
 int ip_multicast_if(struct ip_mreqn *, u_int, unsigned int *);
 int ip_setmoptions(int, struct ip_moptions **, struct mbuf *, u_int);
 void ip_mloopback(struct ifnet *, struct mbuf *, struct sockaddr_in *);
-static __inline u_int16_t __attribute__((__unused__))
-    in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
+static u_int16_t in_cksum_phdr(u_int32_t, u_int32_t, u_int32_t);
 void in_delayed_cksum(struct mbuf *);
 
 int ip_output_ipsec_lookup(struct mbuf *m, int hlen, struct inpcb *inp,
@@ -455,13 +454,7 @@ sendit:
 	 * If small enough for interface, can just send directly.
 	 */
 	if (ntohs(ip->ip_len) <= mtu) {
-		ip->ip_sum = 0;
-		if (in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4))
-			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-		else {
-			ipstat_inc(ips_outswcsum);
-			ip->ip_sum = in_cksum(m, hlen);
-		}
+		in_hdr_cksum_out(m, ifp);
 		in_proto_cksum_out(m, ifp);
 		error = ifp->if_output(ifp, m, sintosa(dst), ro->ro_rt);
 		goto done;
@@ -772,13 +765,7 @@ ip_fragment(struct mbuf *m0, struct mbuf_list *ml, struct ifnet *ifp,
 			goto bad;
 		}
 
-		mhip->ip_sum = 0;
-		if (in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4))
-			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-		else {
-			ipstat_inc(ips_outswcsum);
-			mhip->ip_sum = in_cksum(m, mhlen);
-		}
+		in_hdr_cksum_out(m, ifp);
 	}
 
 	/*
@@ -791,13 +778,7 @@ ip_fragment(struct mbuf *m0, struct mbuf_list *ml, struct ifnet *ifp,
 	}
 	ip->ip_len = htons(m0->m_pkthdr.len);
 
-	ip->ip_sum = 0;
-	if (in_ifcap_cksum(m0, ifp, IFCAP_CSUM_IPv4))
-		m0->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-	else {
-		ipstat_inc(ips_outswcsum);
-		ip->ip_sum = in_cksum(m0, hlen);
-	}
+	in_hdr_cksum_out(m0, ifp);
 
 	ipstat_add(ips_ofragments, ml_len(ml));
 	return (0);
@@ -1806,7 +1787,6 @@ ip_freemoptions(struct ip_moptions *imo)
 void
 ip_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in *dst)
 {
-	struct ip *ip;
 	struct mbuf *copym;
 
 	copym = m_dup_pkt(m, max_linkhdr, M_DONTWAIT);
@@ -1815,10 +1795,23 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in *dst)
 		 * We don't bother to fragment if the IP length is greater
 		 * than the interface's MTU.  Can this possibly matter?
 		 */
-		ip = mtod(copym, struct ip *);
-		ip->ip_sum = 0;
-		ip->ip_sum = in_cksum(copym, ip->ip_hl << 2);
+		in_hdr_cksum_out(copym, NULL);
 		if_input_local(ifp, copym, dst->sin_family);
+	}
+}
+
+void
+in_hdr_cksum_out(struct mbuf *m, struct ifnet *ifp)
+{
+	struct ip *ip = mtod(m, struct ip *);
+
+	ip->ip_sum = 0;
+	if (ifp && in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4)) {
+		SET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT);
+	} else {
+		ipstat_inc(ips_outswcsum);
+		ip->ip_sum = in_cksum(m, ip->ip_hl << 2);
+		CLR(m->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT);
 	}
 }
 
@@ -1826,7 +1819,7 @@ ip_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in *dst)
  *	Compute significant parts of the IPv4 checksum pseudo-header
  *	for use in a delayed TCP/UDP checksum calculation.
  */
-static __inline u_int16_t __attribute__((__unused__))
+static u_int16_t
 in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
 {
 	u_int32_t sum;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.136 2023/05/10 12:07:16 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.137 2023/05/13 13:35:18 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1302,13 +1302,7 @@ tcp_chopper(struct mbuf *m0, struct mbuf_list *ml, struct ifnet *ifp,
 			*mhip = *ip;
 			mhip->ip_len = htons(hlen + len);
 			mhip->ip_id = htons(ip_randomid());
-			mhip->ip_sum = 0;
-			if (ifp && in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4)) {
-				m->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-			} else {
-				ipstat_inc(ips_outswcsum);
-				mhip->ip_sum = in_cksum(m, iphlen);
-			}
+			in_hdr_cksum_out(m, ifp);
 			in_proto_cksum_out(m, ifp);
 		}
 #ifdef INET6
@@ -1337,12 +1331,7 @@ tcp_chopper(struct mbuf *m0, struct mbuf_list *ml, struct ifnet *ifp,
 	if (ip) {
 		ip->ip_len = htons(m0->m_pkthdr.len);
 		ip->ip_sum = 0;
-		if (ifp && in_ifcap_cksum(m0, ifp, IFCAP_CSUM_IPv4)) {
-			m0->m_pkthdr.csum_flags |= M_IPV4_CSUM_OUT;
-		} else {
-			ipstat_inc(ips_outswcsum);
-			ip->ip_sum = in_cksum(m0, iphlen);
-		}
+		in_hdr_cksum_out(m0, ifp);
 		in_proto_cksum_out(m0, ifp);
 	}
 #ifdef INET6
