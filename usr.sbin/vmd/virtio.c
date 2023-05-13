@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.102 2023/04/27 22:47:27 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.103 2023/05/13 23:15:28 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1297,7 +1297,7 @@ virtio_start(struct vmd_vm *vm)
 static int
 virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 {
-	char *nargv[8], num[32], t[2];
+	char *nargv[10], num[32], vmm_fd[32], t[2];
 	pid_t dev_pid;
 	int data_fds[VM_MAX_BASE_PER_DISK], sync_fds[2], async_fds[2], ret = 0;
 	size_t i, j, data_fds_sz, sz = 0;
@@ -1483,6 +1483,8 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		memset(&nargv, 0, sizeof(nargv));
 		memset(num, 0, sizeof(num));
 		snprintf(num, sizeof(num), "%d", sync_fds[1]);
+		memset(vmm_fd, 0, sizeof(vmm_fd));
+		snprintf(vmm_fd, sizeof(vmm_fd), "%d", env->vmd_fd);
 
 		t[0] = dev->dev_type;
 		t[1] = '\0';
@@ -1492,13 +1494,15 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		nargv[2] = num;
 		nargv[3] = "-t";
 		nargv[4] = t;
-		nargv[5] = "-n";
+		nargv[5] = "-i";
+		nargv[6] = vmm_fd;
+		nargv[7] = "-n";
 
 		if (env->vmd_verbose) {
-			nargv[6] = "-v";
-			nargv[7] = NULL;
+			nargv[8] = "-v";
+			nargv[9] = NULL;
 		} else
-			nargv[6] = NULL;
+			nargv[8] = NULL;
 
 		/* Control resumes in vmd.c:main(). */
 		execvp(nargv[0], nargv);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.111 2023/04/27 22:47:27 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.112 2023/05/13 23:15:28 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -627,7 +627,7 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 {
 	struct vm_create_params	*vcp;
 	struct vmd_vm		*vm;
-	char			*nargv[6], num[32];
+	char			*nargv[8], num[32], vmm_fd[32];
 	int			 fd, ret = EINVAL;
 	int			 fds[2];
 	pid_t			 vm_pid;
@@ -701,16 +701,6 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		if (ret == EIO)
 			goto err;
 
-		/* Send the fd number for /dev/vmm. */
-		sz = atomicio(vwrite, fds[0], &env->vmd_fd,
-		    sizeof(env->vmd_fd));
-		if (sz != sizeof(env->vmd_fd)) {
-			log_warnx("%s: failed to send /dev/vmm fd for vm '%s'",
-			    __func__, vcp->vcp_name);
-			ret = EIO;
-			goto err;
-		}
-
 		/* Read back the kernel-generated vm id from the child */
 		sz = atomicio(read, fds[0], &vcp->vcp_id, sizeof(vcp->vcp_id));
 		if (sz != sizeof(vcp->vcp_id)) {
@@ -773,17 +763,21 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		memset(&nargv, 0, sizeof(nargv));
 		memset(num, 0, sizeof(num));
 		snprintf(num, sizeof(num), "%d", fds[1]);
+		memset(vmm_fd, 0, sizeof(vmm_fd));
+		snprintf(vmm_fd, sizeof(vmm_fd), "%d", env->vmd_fd);
 
 		nargv[0] = env->argv0;
 		nargv[1] = "-V";
 		nargv[2] = num;
 		nargv[3] = "-n";
+		nargv[4] = "-i";
+		nargv[5] = vmm_fd;
 
 		if (env->vmd_verbose) {
-			nargv[4] = "-v";
-			nargv[5] = NULL;
+			nargv[6] = "-v";
+			nargv[7] = NULL;
 		} else
-			nargv[4] = NULL;
+			nargv[6] = NULL;
 
 		/* Control resumes in vmd main(). */
 		execvp(nargv[0], nargv);

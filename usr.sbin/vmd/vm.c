@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.88 2023/04/28 19:46:42 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.89 2023/05/13 23:15:28 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -218,9 +218,10 @@ static const struct vcpu_reg_state vcpu_init_flat16 = {
  * Primary entrypoint for launching a vm. Does not return.
  *
  * fd: file descriptor for communicating with vmm process.
+ * fd_vmm: file descriptor for communicating with vmm(4) device
  */
 void
-vm_main(int fd)
+vm_main(int fd, int vmm_fd)
 {
 	struct vm_create_params	*vcp = NULL;
 	struct vmd_vm		 vm;
@@ -241,9 +242,8 @@ vm_main(int fd)
 	 * vmm - for the vmm ioctls and operations.
 	 * proc exec - fork/exec for launching devices.
 	 * recvfd - for vm send/recv and sending fd to devices.
-	 * tmppath/rpath - for shm_mkstemp, ftruncate, unlink
 	 */
-	if (pledge("stdio vmm proc exec recvfd tmppath rpath", NULL) == -1)
+	if (pledge("stdio vmm proc exec recvfd", NULL) == -1)
 		fatal("pledge");
 
 	/* Receive our vm configuration. */
@@ -251,13 +251,6 @@ vm_main(int fd)
 	sz = atomicio(read, fd, &vm, sizeof(vm));
 	if (sz != sizeof(vm)) {
 		log_warnx("failed to receive start message");
-		_exit(EIO);
-	}
-
-	/* Receive the /dev/vmm fd number. */
-	sz = atomicio(read, fd, &env->vmd_fd, sizeof(env->vmd_fd));
-	if (sz != sizeof(env->vmd_fd)) {
-		log_warnx("failed to receive /dev/vmm fd");
 		_exit(EIO);
 	}
 
@@ -1099,63 +1092,34 @@ int
 alloc_guest_mem(struct vmd_vm *vm)
 {
 	void *p;
-	char *tmp;
-	int fd, ret = 0;
+	int ret = 0;
 	size_t i, j;
 	struct vm_create_params *vcp = &vm->vm_params.vmc_params;
 	struct vm_mem_range *vmr;
 
-	tmp = calloc(32, sizeof(char));
-	if (tmp == NULL) {
-		ret = errno;
-		log_warn("%s: calloc", __func__);
-		return (ret);
-	}
-	strlcpy(tmp, "/tmp/vmd.XXXXXXXXXX", 32);
-
-	vm->vm_nmemfds = vcp->vcp_nmemranges;
-
 	for (i = 0; i < vcp->vcp_nmemranges; i++) {
 		vmr = &vcp->vcp_memranges[i];
 
-		fd = shm_mkstemp(tmp);
-		if (fd < 0) {
-			ret = errno;
-			log_warn("%s: shm_mkstemp", __func__);
-			return (ret);
-		}
-		if (ftruncate(fd, vmr->vmr_size) == -1) {
-			ret = errno;
-			log_warn("%s: ftruncate", __func__);
-			goto out;
-		}
-		if (fcntl(fd, F_SETFD, 0) == -1) {
-			ret = errno;
-			log_warn("%s: fcntl", __func__);
-			goto out;
-		}
-		if (shm_unlink(tmp) == -1) {
-			ret = errno;
-			log_warn("%s: shm_unlink", __func__);
-			goto out;
-		}
-		strlcpy(tmp, "/tmp/vmd.XXXXXXXXXX", 32);
-
+		/*
+		 * We only need R/W as userland. vmm(4) will use R/W/X in its
+		 * mapping.
+		 *
+		 * We must use MAP_SHARED so emulated devices will be able
+		 * to generate shared mappings.
+		 */
 		p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
-		    MAP_SHARED | MAP_CONCEAL, fd, 0);
+		    MAP_ANON | MAP_CONCEAL | MAP_SHARED, -1, 0);
 		if (p == MAP_FAILED) {
 			ret = errno;
 			for (j = 0; j < i; j++) {
 				vmr = &vcp->vcp_memranges[j];
 				munmap((void *)vmr->vmr_va, vmr->vmr_size);
 			}
-			goto out;
+			return (ret);
 		}
-		vm->vm_memfds[i] = fd;
 		vmr->vmr_va = (vaddr_t)p;
 	}
-out:
-	free(tmp);
+
 	return (ret);
 }
 
@@ -2552,10 +2516,11 @@ vm_pipe_recv(struct vm_dev_pipe *p)
  * Returns 0 on success, non-zero in event of failure.
  */
 int
-remap_guest_mem(struct vmd_vm *vm)
+remap_guest_mem(struct vmd_vm *vm, int vmm_fd)
 {
 	struct vm_create_params	*vcp;
 	struct vm_mem_range	*vmr;
+	struct vm_sharemem_params vsp;
 	size_t			 i, j;
 	void			*p = NULL;
 	int			 ret;
@@ -2566,23 +2531,32 @@ remap_guest_mem(struct vmd_vm *vm)
 	vcp = &vm->vm_params.vmc_params;
 
 	/*
-	 * We've execve'd, so we need to re-map the guest VM memory. Iterate
-	 * over all possible vm_mem_range entries so we can initialize all
-	 * file descriptors to a value.
+	 * Initialize our VM shared memory request using our original
+	 * creation parameters. We'll overwrite the va's after mmap(2).
+	 */
+	memset(&vsp, 0, sizeof(vsp));
+	vsp.vsp_nmemranges = vcp->vcp_nmemranges;
+	vsp.vsp_vm_id = vcp->vcp_id;
+	memcpy(&vsp.vsp_memranges, &vcp->vcp_memranges,
+	    sizeof(vsp.vsp_memranges));
+
+	/*
+	 * Use mmap(2) to identify virtual address space for our mappings.
 	 */
 	for (i = 0; i < VMM_MAX_MEM_RANGES; i++) {
-		if (i < vcp->vcp_nmemranges) {
-			vmr = &vcp->vcp_memranges[i];
-			/* Skip ranges we know we don't need right now. */
+		if (i < vsp.vsp_nmemranges) {
+			vmr = &vsp.vsp_memranges[i];
+
+			/* Ignore any MMIO ranges. */
 			if (vmr->vmr_type == VM_MEM_MMIO) {
-				log_debug("%s: skipping range i=%ld, type=%d",
-				    __func__, i, vmr->vmr_type);
-				vm->vm_memfds[i] = -1;
+				vmr->vmr_va = 0;
+				vcp->vcp_memranges[i].vmr_va = 0;
 				continue;
 			}
-			/* Re-mmap the memrange. */
-			p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
-			    MAP_SHARED | MAP_CONCEAL, vm->vm_memfds[i], 0);
+
+			/* Make initial mappings for the memrange. */
+			p = mmap(NULL, vmr->vmr_size, PROT_READ, MAP_ANON, -1,
+			    0);
 			if (p == MAP_FAILED) {
 				ret = errno;
 				log_warn("%s: mmap", __func__);
@@ -2594,11 +2568,29 @@ remap_guest_mem(struct vmd_vm *vm)
 				return (ret);
 			}
 			vmr->vmr_va = (vaddr_t)p;
-		} else {
-			/* Initialize with an invalid fd. */
-			vm->vm_memfds[i] = -1;
+			vcp->vcp_memranges[i].vmr_va = vmr->vmr_va;
 		}
 	}
+
+	/*
+	 * munmap(2) now that we have va's and ranges that don't overlap. vmm
+	 * will use the va's and sizes to recreate the mappings for us.
+	 */
+	for (i = 0; i < vsp.vsp_nmemranges; i++) {
+		vmr = &vsp.vsp_memranges[i];
+		if (vmr->vmr_type == VM_MEM_MMIO)
+			continue;
+		if (munmap((void*)vmr->vmr_va, vmr->vmr_size) == -1)
+			fatal("%s: munmap", __func__);
+	}
+
+	/*
+	 * Ask vmm to enter the shared mappings for us. They'll point
+	 * to the same host physical memory, but will have a randomized
+	 * virtual address for the calling process.
+	 */
+	if (ioctl(vmm_fd, VMM_IOC_SHAREMEM, &vsp) == -1)
+		return (errno);
 
 	return (0);
 }

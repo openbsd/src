@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.148 2023/05/12 16:18:17 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.149 2023/05/13 23:15:28 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -788,7 +788,8 @@ main(int argc, char **argv)
 	struct privsep		*ps;
 	int			 ch;
 	enum privsep_procid	 proc_id = PROC_PARENT;
-	int			 proc_instance = 0, vm_launch = 0, vm_fd = -1;
+	int			 proc_instance = 0, vm_launch = 0;
+	int			 vmm_fd = -1, vm_fd = -1;
 	const char		*errp, *title = NULL;
 	int			 argc0 = argc;
 	char			 dev_type = '\0';
@@ -798,7 +799,7 @@ main(int argc, char **argv)
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
-	while ((ch = getopt(argc, argv, "D:P:I:V:X:df:nt:v")) != -1) {
+	while ((ch = getopt(argc, argv, "D:P:I:V:X:df:i:nt:v")) != -1) {
 		switch (ch) {
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -852,6 +853,11 @@ main(int argc, char **argv)
 			default: fatalx("invalid device type");
 			}
 			break;
+		case 'i':
+			vmm_fd = strtonum(optarg, 0, 128, &errp);
+			if (errp)
+				fatalx("invalid vmm fd");
+			break;
 		default:
 			usage();
 		}
@@ -880,7 +886,7 @@ main(int argc, char **argv)
 
 	ps = &env->vmd_ps;
 	ps->ps_env = env;
-	env->vmd_fd = -1;
+	env->vmd_fd = vmm_fd;
 
 	if (config_init(env) == -1)
 		fatal("failed to initialize configuration");
@@ -896,14 +902,14 @@ main(int argc, char **argv)
 	 * If we're launching a new vm or its device, we short out here.
 	 */
 	if (vm_launch == VMD_LAUNCH_VM) {
-		vm_main(vm_fd);
+		vm_main(vm_fd, vmm_fd);
 		/* NOTREACHED */
 	} else if (vm_launch == VMD_LAUNCH_DEV) {
 		if (dev_type == VMD_DEVTYPE_NET) {
-			vionet_main(vm_fd);
+			vionet_main(vm_fd, vmm_fd);
 			/* NOTREACHED */
 		} else if (dev_type == VMD_DEVTYPE_DISK) {
-			vioblk_main(vm_fd);
+			vioblk_main(vm_fd, vmm_fd);
 			/* NOTREACHED */
 		}
 		fatalx("unsupported device type '%c'", dev_type);

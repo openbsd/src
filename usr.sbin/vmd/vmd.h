@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.121 2023/04/28 19:46:42 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.122 2023/05/13 23:15:28 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -329,9 +329,6 @@ struct vmd_vm {
 	struct timeval		 vm_start_tv;
 	int			 vm_start_limit;
 
-	int			 vm_memfds[VMM_MAX_MEM_RANGES];
-	size_t			 vm_nmemfds;
-
 	TAILQ_ENTRY(vmd_vm)	 vm_entry;
 };
 TAILQ_HEAD(vmlist, vmd_vm);
@@ -488,7 +485,7 @@ int	 fd_hasdata(int);
 int	 vmm_pipe(struct vmd_vm *, int, void (*)(int, short, void *));
 
 /* vm.c */
-void	 vm_main(int);
+void	 vm_main(int, int);
 void	 mutex_lock(pthread_mutex_t *);
 void	 mutex_unlock(pthread_mutex_t *);
 int	 read_mem(paddr_t, void *buf, size_t);
@@ -499,7 +496,7 @@ void	 vm_pipe_send(struct vm_dev_pipe *, enum pipe_msg_type);
 enum pipe_msg_type vm_pipe_recv(struct vm_dev_pipe *);
 int	 write_mem(paddr_t, const void *buf, size_t);
 void*	 hvaddr_mem(paddr_t, size_t);
-int	 remap_guest_mem(struct vmd_vm *);
+int	 remap_guest_mem(struct vmd_vm *, int);
 
 /* config.c */
 int	 config_init(struct vmd *);
@@ -527,9 +524,9 @@ int	 host(const char *, struct address *);
 int	 virtio_get_base(int, char *, size_t, int, const char *);
 
 /* vionet.c */
-__dead void vionet_main(int);
+__dead void vionet_main(int, int);
 
 /* vioblk.c */
-__dead void vioblk_main(int);
+__dead void vioblk_main(int, int);
 
 #endif /* VMD_H */

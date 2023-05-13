@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.c,v 1.1 2023/04/26 15:11:21 mlarkin Exp $ */
+/* $OpenBSD: vmm.c,v 1.2 2023/05/13 23:15:28 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -262,6 +262,9 @@ vmmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	case VMM_IOC_WRITEVMPARAMS:
 		ret = vm_rwvmparams((struct vm_rwvmparams_params *)data, 1);
 		break;
+	case VMM_IOC_SHAREMEM:
+		ret = vm_share_mem((struct vm_sharemem_params *)data, p);
+		break;
 	default:
 		ret = vmmioctl_machdep(dev, cmd, data, flag, p);
 		break;
@@ -286,6 +289,7 @@ pledge_ioctl_vmm(struct proc *p, long com)
 	switch (com) {
 	case VMM_IOC_CREATE:
 	case VMM_IOC_INFO:
+	case VMM_IOC_SHAREMEM:
 		/* The "parent" process in vmd forks and manages VMs */
 		if (p->p_p->ps_pledge & PLEDGE_PROC)
 			return (0);
@@ -779,4 +783,83 @@ vcpu_must_stop(struct vcpu *vcpu)
 	if (SIGPENDING(p) != 0)
 		return (1);
 	return (0);
+}
+
+/*
+ * vm_share_mem
+ *
+ * Share a uvm mapping for the vm guest memory ranges into the calling process.
+ *
+ * Return values:
+ *  0: if successful
+ *  ENOENT: if the vm cannot be found by vm_find
+ *  EPERM: if the vm cannot be accessed by the current process
+ *  EINVAL: if the provide memory ranges fail checks
+ *  ENOMEM: if uvm_share fails to find available memory in the destination map
+ */
+int
+vm_share_mem(struct vm_sharemem_params *vsp, struct proc *p)
+{
+	int ret = EINVAL;
+	size_t i, n;
+	struct vm *vm;
+	struct vm_mem_range *src, *dst;
+
+	ret = vm_find(vsp->vsp_vm_id, &vm);
+	if (ret)
+		return (ret);
+
+	/* Check we have the expected number of ranges. */
+	if (vm->vm_nmemranges != vsp->vsp_nmemranges)
+		goto out;
+	n = vm->vm_nmemranges;
+
+	/* Check their types, sizes, and gpa's (implying page alignment). */
+	for (i = 0; i < n; i++) {
+		src = &vm->vm_memranges[i];
+		dst = &vsp->vsp_memranges[i];
+
+		/*
+		 * The vm memranges were already checked during creation, so
+		 * compare to them to confirm validity of mapping request.
+		 */
+		if (src->vmr_type != dst->vmr_type)
+			goto out;
+		if (src->vmr_gpa != dst->vmr_gpa)
+			goto out;
+		if (src->vmr_size != dst->vmr_size)
+			goto out;
+
+		/* Check our intended destination is page-aligned. */
+		if (dst->vmr_va & PAGE_MASK)
+			goto out;
+	}
+
+	/*
+	 * Share each range individually with the calling process. We do
+	 * not need PROC_EXEC as the emulated devices do not need to execute
+	 * instructions from guest memory.
+	 */
+	for (i = 0; i < n; i++) {
+		src = &vm->vm_memranges[i];
+		dst = &vsp->vsp_memranges[i];
+
+		/* Skip MMIO range. */
+		if (src->vmr_type == VM_MEM_MMIO)
+			continue;
+
+		DPRINTF("sharing gpa=0x%lx for pid %d @ va=0x%lx\n",
+		    src->vmr_gpa, p->p_p->ps_pid, dst->vmr_va);
+		ret = uvm_share(&p->p_vmspace->vm_map, dst->vmr_va,
+		    PROT_READ | PROT_WRITE, vm->vm_map, src->vmr_gpa,
+		    src->vmr_size);
+		if (ret) {
+			printf("%s: uvm_share failed (%d)\n", __func__, ret);
+			break;
+		}
+	}
+	ret = 0;
+out:
+	refcnt_rele_wake(&vm->vm_refcnt);
+	return (ret);
 }

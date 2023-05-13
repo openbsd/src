@@ -1,4 +1,4 @@
-/*	$OpenBSD: vcpu.c,v 1.5 2023/04/27 05:42:44 anton Exp $	*/
+/*	$OpenBSD: vcpu.c,v 1.6 2023/05/13 23:15:28 dv Exp $	*/
 
 /*
  * Copyright (c) 2022 Dave Voutila <dv@openbsd.org>
@@ -83,6 +83,7 @@ main(int argc, char **argv)
 	struct vm_resetcpu_params	 vresetp;
 	struct vm_run_params		 vrunp;
 	struct vm_terminate_params	 vtp;
+	struct vm_sharemem_params	 vsp;
 
 	struct vm_mem_range		*vmr;
 	int				 fd, ret = 1;
@@ -127,8 +128,9 @@ main(int argc, char **argv)
 			((uint8_t*)p)[j + 1] = PCKBC_AUX;
 		}
 		vmr->vmr_va = (vaddr_t)p;
-		printf("mapped region %zu: { gpa: 0x%08lx, size: %lu }\n",
-		    i, vmr->vmr_gpa, vmr->vmr_size);
+		printf("created mapped region %zu: { gpa: 0x%08lx, size: %lu,"
+		    " hva: 0x%lx }\n", i, vmr->vmr_gpa, vmr->vmr_size,
+		    vmr->vmr_va);
 	}
 
 	if (ioctl(fd, VMM_IOC_CREATE, &vcp) == -1)
@@ -136,7 +138,54 @@ main(int argc, char **argv)
 	printf("created vm %d named \"%s\"\n", vcp.vcp_id, vcp.vcp_name);
 
 	/*
-	 * 2. Check that our VM exists.
+	 * 2. Check we can create shared memory mappings.
+	 */
+	memset(&vsp, 0, sizeof(vsp));
+	vsp.vsp_nmemranges = vcp.vcp_nmemranges;
+	memcpy(&vsp.vsp_memranges, &vcp.vcp_memranges,
+	    sizeof(vsp.vsp_memranges));
+	vsp.vsp_vm_id = vcp.vcp_id;
+
+	/* Find some new va ranges... */
+	for (i = 0; i < vsp.vsp_nmemranges; i++) {
+		vmr = &vsp.vsp_memranges[i];
+		p = mmap(NULL, vmr->vmr_size, PROT_READ | PROT_WRITE,
+		    MAP_PRIVATE | MAP_ANON, -1, 0);
+		if (p == MAP_FAILED)
+			err(1, "mmap");
+		vmr->vmr_va = (vaddr_t)p;
+	}
+
+	/* Release our mappings so vmm can replace them. */
+	for (i = 0; i < vsp.vsp_nmemranges; i++) {
+		vmr = &vsp.vsp_memranges[i];
+		munmap((void*)vmr->vmr_va, vmr->vmr_size);
+	}
+
+	/* Perform the shared mapping. */
+	if (ioctl(fd, VMM_IOC_SHAREMEM, &vsp) == -1)
+		err(1, "VMM_IOC_SHAREMEM");
+	printf("created shared memory mappings\n");
+
+	/* We should see our reset vector instructions in the new mappings. */
+	for (i = 0; i < vsp.vsp_nmemranges; i++) {
+		vmr = &vsp.vsp_memranges[i];
+		p = (void*)vmr->vmr_va;
+
+		for (j = 0; j < vmr->vmr_size; j += 2) {
+			if (((uint8_t*)p)[j + 0] != 0xE4)
+				errx(1, "bad byte");
+			if (((uint8_t*)p)[j + 1] != PCKBC_AUX)
+				errx(1, "bad byte");
+		}
+		printf("checked shared region %zu: { gpa: 0x%08lx, size: %lu,"
+		    " hva: 0x%lx }\n", i, vmr->vmr_gpa, vmr->vmr_size,
+		    vmr->vmr_va);
+	}
+	printf("validated shared memory mappings\n");
+
+	/*
+	 * 3. Check that our VM exists.
 	 */
 	memset(&vip, 0, sizeof(vip));
 	vip.vip_size = 0;
@@ -189,7 +238,7 @@ main(int argc, char **argv)
 	ours = NULL;
 
 	/*
-	 * 3. Reset our VCPU and initialize register state.
+	 * 4. Reset our VCPU and initialize register state.
 	 */
 	memset(&vresetp, 0, sizeof(vresetp));
 	vresetp.vrp_vm_id = vcp.vcp_id;
@@ -205,7 +254,7 @@ main(int argc, char **argv)
 	    vresetp.vrp_vm_id);
 
 	/*
-	 * 4. Run the vcpu, expecting an immediate exit for IO assist.
+	 * 5. Run the vcpu, expecting an immediate exit for IO assist.
 	 */
 	exit = malloc(sizeof(*exit));
 	if (exit == NULL) {
@@ -258,7 +307,7 @@ main(int argc, char **argv)
 
 out:
 	/*
-	 * 5. Terminate our VM and clean up.
+	 * 6. Terminate our VM and clean up.
 	 */
 	memset(&vtp, 0, sizeof(vtp));
 	vtp.vtp_vm_id = vcp.vcp_id;
@@ -277,12 +326,22 @@ out:
 		vmr = &vcp.vcp_memranges[i];
 		if (vmr->vmr_va) {
 			if (munmap((void *)vmr->vmr_va, vmr->vmr_size)) {
-				warn("failed to unmap region %zu at 0x%08lx",
-				    i, vmr->vmr_va);
+				warn("failed to unmap orginal region %zu @ hva "
+				    "0x%lx", i, vmr->vmr_va);
 				ret = 1;
 			} else
-				printf("unmapped region %zu @ gpa 0x%08lx\n",
-				    i, vmr->vmr_gpa);
+				printf("unmapped origin region %zu @ hva "
+				    "0x%lx\n", i, vmr->vmr_va);
+		}
+		vmr = &vsp.vsp_memranges[i];
+		if (vmr->vmr_va) {
+			if (munmap((void *)vmr->vmr_va, vmr->vmr_size)) {
+				warn("failed to unmap shared region %zu @ hva "
+				    "0x%lx", i, vmr->vmr_va);
+				ret = 1;
+			} else
+				printf("unmapped shared region %zu @ hva "
+				    "0x%lx\n", i, vmr->vmr_va);
 		}
 	}
 

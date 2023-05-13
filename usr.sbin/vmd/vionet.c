@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.2 2023/04/28 18:52:22 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.3 2023/05/13 23:15:28 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -61,7 +61,7 @@ static void dev_dispatch_vm(int, short, void *);
 static void handle_sync_io(int, short, void *);
 
 __dead void
-vionet_main(int fd)
+vionet_main(int fd, int fd_vmm)
 {
 	struct virtio_dev	 dev;
 	struct vionet_dev	*vionet = NULL;
@@ -73,8 +73,11 @@ vionet_main(int fd)
 
 	log_procinit("vionet");
 
-	/* stdio - needed for read/write to tap fd and channels to the vm. */
-	if (pledge("stdio", NULL) == -1)
+	/*
+	 * stdio - needed for read/write to disk fds and channels to the vm.
+	 * vmm + proc - needed to create shared vm mappings.
+	 */
+	if (pledge("stdio vmm proc", NULL) == -1)
 		fatal("pledge");
 
 	/* Receive our vionet_dev, mostly preconfigured. */
@@ -92,8 +95,9 @@ vionet_main(int fd)
 	dev.sync_fd = fd;
 	vionet = &dev.vionet;
 
-	log_debug("%s: got vionet dev. tap fd = %d, syncfd = %d, asyncfd = %d",
-	    __func__, vionet->data_fd, dev.sync_fd, dev.async_fd);
+	log_debug("%s: got vionet dev. tap fd = %d, syncfd = %d, asyncfd = %d"
+	    ", vmm fd = %d", __func__, vionet->data_fd, dev.sync_fd,
+	    dev.async_fd, fd_vmm);
 
 	/* Receive our vm information from the vm process. */
 	memset(&vm, 0, sizeof(vm));
@@ -108,9 +112,18 @@ vionet_main(int fd)
 	setproctitle("%s/vionet[%d]", vcp->vcp_name, vionet->idx);
 
 	/* Now that we have our vm information, we can remap memory. */
-	ret = remap_guest_mem(&vm);
-	if (ret)
+	ret = remap_guest_mem(&vm, fd_vmm);
+	if (ret) {
+		fatal("%s: failed to remap", __func__);
 		goto fail;
+	}
+
+	/*
+	 * We no longer need /dev/vmm access.
+	 */
+	close_fd(fd_vmm);
+	if (pledge("stdio", NULL) == -1)
+		fatal("pledge2");
 
 	/* If we're restoring hardware, re-initialize virtqueue hva's. */
 	if (vm.vm_state & VM_STATE_RECEIVED) {

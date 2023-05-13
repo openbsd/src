@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.2 2023/04/28 18:52:22 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.3 2023/05/13 23:15:28 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -58,7 +58,7 @@ disk_type(int type)
 }
 
 __dead void
-vioblk_main(int fd)
+vioblk_main(int fd, int fd_vmm)
 {
 	struct virtio_dev	 dev;
 	struct vioblk_dev	*vioblk;
@@ -71,8 +71,11 @@ vioblk_main(int fd)
 
 	log_procinit("vioblk");
 
-	/* stdio - needed for read/write to disk fds and channels to the vm. */
-	if (pledge("stdio", NULL) == -1)
+	/*
+	 * stdio - needed for read/write to disk fds and channels to the vm.
+	 * vmm + proc - needed to create shared vm mappings.
+	 */
+	if (pledge("stdio vmm proc", NULL) == -1)
 		fatal("pledge");
 
 	/* Receive our virtio_dev, mostly preconfigured. */
@@ -92,8 +95,9 @@ vioblk_main(int fd)
 	vioblk = &dev.vioblk;
 
 	log_debug("%s: got viblk dev. num disk fds = %d, sync fd = %d, "
-	    "async fd = %d, sz = %lld maxfer = %d", __func__, vioblk->ndisk_fd,
-	    dev.sync_fd, dev.async_fd, vioblk->sz, vioblk->max_xfer);
+	    "async fd = %d, sz = %lld maxfer = %d, vmm fd = %d", __func__,
+	    vioblk->ndisk_fd, dev.sync_fd, dev.async_fd, vioblk->sz,
+	    vioblk->max_xfer, fd_vmm);
 
 	/* Receive our vm information from the vm process. */
 	memset(&vm, 0, sizeof(vm));
@@ -108,11 +112,18 @@ vioblk_main(int fd)
 	setproctitle("%s/vioblk[%d]", vcp->vcp_name, vioblk->idx);
 
 	/* Now that we have our vm information, we can remap memory. */
-	ret = remap_guest_mem(&vm);
+	ret = remap_guest_mem(&vm, fd_vmm);
 	if (ret) {
 		log_warnx("failed to remap guest memory");
 		goto fail;
 	}
+
+	/*
+	 * We no longer need /dev/vmm access.
+	 */
+	close_fd(fd_vmm);
+	if (pledge("stdio", NULL) == -1)
+		fatal("pledge2");
 
 	/* Initialize the virtio block abstractions. */
 	type = vm.vm_params.vmc_disktypes[vioblk->idx];

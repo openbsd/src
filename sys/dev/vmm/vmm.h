@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm.h,v 1.2 2023/04/26 16:13:19 mlarkin Exp $ */
+/* $OpenBSD: vmm.h,v 1.3 2023/05/13 23:15:28 dv Exp $ */
 /*
  * Copyright (c) 2014-2023 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -76,6 +76,13 @@ struct vm_resetcpu_params {
 	struct vcpu_reg_state	vrp_init_state;
 };
 
+struct vm_sharemem_params {
+	/* Input parameters to VMM_IOC_SHAREMEM */
+	uint32_t		vsp_vm_id;
+	size_t			vsp_nmemranges;
+	struct vm_mem_range	vsp_memranges[VMM_MAX_MEM_RANGES];
+};
+
 /* IOCTL definitions */
 #define VMM_IOC_CREATE _IOWR('V', 1, struct vm_create_params) /* Create VM */
 #define VMM_IOC_RUN _IOWR('V', 2, struct vm_run_params) /* Run VCPU */
@@ -88,7 +95,7 @@ struct vm_resetcpu_params {
 #define VMM_IOC_READVMPARAMS _IOWR('V', 9, struct vm_rwvmparams_params)
 /* Set VM params */
 #define VMM_IOC_WRITEVMPARAMS _IOW('V', 10, struct vm_rwvmparams_params)
-
+#define VMM_IOC_SHAREMEM _IOW('V', 11, struct vm_sharemem_params)
 
 #ifdef _KERNEL
 
@@ -194,6 +201,7 @@ int vm_get_info(struct vm_info_params *);
 int vm_terminate(struct vm_terminate_params *);
 int vm_resetcpu(struct vm_resetcpu_params *);
 int vcpu_must_stop(struct vcpu *);
+int vm_share_mem(struct vm_sharemem_params *, struct proc *);
 
 #endif /* _KERNEL */
 #endif /* DEV_VMM_H */
