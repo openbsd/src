@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_aobj.h,v 1.19 2022/07/24 11:00:22 mpi Exp $	*/
+/*	$OpenBSD: uvm_aobj.h,v 1.20 2023/05/13 09:24:59 mpi Exp $	*/
 /*	$NetBSD: uvm_aobj.h,v 1.10 2000/01/11 06:57:49 chs Exp $	*/
 
 /*
@@ -60,6 +60,7 @@
 
 void uao_init(void);
 int uao_set_swslot(struct uvm_object *, int, int);
+int uao_find_swslot(struct uvm_object *, int);
 int uao_dropswap(struct uvm_object *, int);
 int uao_swap_off(int, int);
 int uao_shrink(struct uvm_object *, int);
