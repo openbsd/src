@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.279 2023/05/12 12:42:16 bluhm Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.280 2023/05/13 16:27:59 bluhm Exp $	*/
 /*	$KAME: nd6.c,v 1.280 2002/06/08 19:52:07 itojun Exp $	*/
 
 /*
@@ -306,7 +306,7 @@ nd6_llinfo_timer(struct rtentry *rt)
 	struct sockaddr_in6 *dst = satosin6(rt_key(rt));
 	struct ifnet *ifp;
 
-	NET_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	if ((ifp = if_get(rt->rt_ifidx)) == NULL)
 		return 1;
@@ -557,9 +557,11 @@ nd6_lookup(const struct in6_addr *addr6, int create, struct ifnet *ifp,
 			    rtableid);
 			if (error)
 				return (NULL);
+			mtx_enter(&nd6_mtx);
 			ln = (struct llinfo_nd6 *)rt->rt_llinfo;
 			if (ln != NULL)
 				ln->ln_state = ND6_LLINFO_NOSTATE;
+			mtx_leave(&nd6_mtx);
 		} else
 			return (NULL);
 	}
@@ -665,7 +667,7 @@ nd6_free(struct rtentry *rt)
 	struct in6_addr in6 = satosin6(rt_key(rt))->sin6_addr;
 	struct ifnet *ifp;
 
-	NET_ASSERT_LOCKED();
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	ifp = if_get(rt->rt_ifidx);
 
@@ -704,6 +706,8 @@ nd6_nud_hint(struct rtentry *rt)
 {
 	struct llinfo_nd6 *ln;
 	struct ifnet *ifp;
+
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	ifp = if_get(rt->rt_ifidx);
 	if (ifp == NULL)
@@ -990,8 +994,10 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		}
 
 		rt = nd6_lookup(&nb_addr, 0, ifp, ifp->if_rdomain);
+		mtx_enter(&nd6_mtx);
 		if (rt == NULL ||
 		    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) {
+			mtx_leave(&nd6_mtx);
 			rtfree(rt);
 			NET_UNLOCK_SHARED();
 			return (EINVAL);
@@ -1006,6 +1012,7 @@ nd6_ioctl(u_long cmd, caddr_t data, struct ifnet *ifp)
 		nbi->asked = ln->ln_asked;
 		nbi->isrouter = ln->ln_router;
 		nbi->expire = expire;
+		mtx_leave(&nd6_mtx);
 
 		rtfree(rt);
 		NET_UNLOCK_SHARED();
@@ -1034,6 +1041,8 @@ nd6_cache_lladdr(struct ifnet *ifp, const struct in6_addr *from, char *lladdr,
 	int olladdr;
 	int llchange;
 	int newstate = 0;
+
+	NET_ASSERT_LOCKED_EXCLUSIVE();
 
 	if (!ifp)
 		panic("%s: ifp == NULL", __func__);
@@ -1294,23 +1303,20 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		goto bad;
 	}
 
-	KERNEL_LOCK();
-	if (!ISSET(rt->rt_flags, RTF_LLINFO)) {
-		KERNEL_UNLOCK();
+	mtx_enter(&nd6_mtx);
+	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+	if (ln == NULL) {
+		mtx_leave(&nd6_mtx);
 		goto bad;
 	}
-	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
-	KASSERT(ln != NULL);
 
 	/*
 	 * Move this entry to the head of the queue so that it is less likely
 	 * for this entry to be a target of forced garbage collection (see
 	 * nd6_rtrequest()).
 	 */
-	mtx_enter(&nd6_mtx);
 	TAILQ_REMOVE(&nd6_list, ln, ln_list);
 	TAILQ_INSERT_HEAD(&nd6_list, ln, ln_list);
-	mtx_leave(&nd6_mtx);
 
 	/*
 	 * The first time we send a packet to a neighbor whose entry is
@@ -1331,7 +1337,7 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 	 * send the packet.
 	 */
 	if (ln->ln_state > ND6_LLINFO_INCOMPLETE) {
-		KERNEL_UNLOCK();
+		mtx_leave(&nd6_mtx);
 
 		sdl = satosdl(rt->rt_gateway);
 		if (sdl->sdl_alen != ETHER_ADDR_LEN) {
@@ -1377,7 +1383,7 @@ nd6_resolve(struct ifnet *ifp, struct rtentry *rt0, struct mbuf *m,
 		saddr6 = ln->ln_saddr6;
 		solicit = 1;
 	}
-	KERNEL_UNLOCK();
+	mtx_leave(&nd6_mtx);
 
 	if (solicit)
 		nd6_ns_output(ifp, NULL, &satosin6(dst)->sin6_addr, &saddr6, 0);
