@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.248 2023/05/06 15:07:02 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.249 2023/05/13 18:13:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -354,6 +354,7 @@ readlabel(int f)
 		lab.d_ntracks = dl.d_ntracks;
 		lab.d_secpercyl = dl.d_secpercyl;
 		lab.d_ncylinders = dl.d_ncylinders;
+		lab.d_type = dl.d_type;
 	}
 }
 
@@ -840,24 +841,6 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			continue;
 		}
 		*tp++ = '\0', tp = skip(tp);
-		if (!strcmp(cp, "type")) {
-			if (tp == NULL)
-				tp = "unknown";
-			else if (strcasecmp(tp, "IDE") == 0)
-				tp = "ESDI";
-			cpp = dktypenames;
-			for (; cpp < &dktypenames[DKMAXTYPES]; cpp++)
-				if ((s = *cpp) && !strcasecmp(s, tp)) {
-					lp->d_type = cpp - dktypenames;
-					goto next;
-				}
-			v = GETNUM(lp->d_type, tp, 0, &errstr);
-			if (errstr || v >= DKMAXTYPES)
-				warnx("line %d: warning, unknown disk type: %s",
-				    lineno, tp);
-			lp->d_type = v;
-			continue;
-		}
 		if (!strcmp(cp, "flags")) {
 			for (v = 0; (cp = tp) && *cp != '\0';) {
 				tp = word(cp);
@@ -919,7 +902,8 @@ getasciilabel(FILE *f, struct disklabel *lp)
 		    !strcmp(cp, "sectors/track") ||
 		    !strcmp(cp, "sectors/cylinder") ||
 		    !strcmp(cp, "tracks/cylinder") ||
-		    !strcmp(cp, "cylinders"))
+		    !strcmp(cp, "cylinders") ||
+		    !strcmp(cp, "type"))
 			continue;
 
 		if ('a' <= *cp && *cp <= 'z' && cp[1] == '\0') {

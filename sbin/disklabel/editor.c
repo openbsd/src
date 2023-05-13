@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.404 2023/04/27 14:19:28 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.405 2023/05/13 18:13:42 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -136,7 +136,7 @@ struct alloc_table alloc_table_default[] = {
 struct alloc_table *alloc_table = alloc_table_default;
 int alloc_table_nitems = 4;
 
-void	edit_parms(struct disklabel *);
+void	edit_packname(struct disklabel *);
 void	editor_resize(struct disklabel *, const char *);
 void	editor_add(struct disklabel *, const char *);
 void	editor_change(struct disklabel *, const char *);
@@ -153,7 +153,6 @@ int	getpartno(const struct disklabel *, const char *, const char *);
 int	has_overlap(struct disklabel *);
 int	partition_cmp(const void *, const void *);
 const struct partition **sort_partitions(const struct disklabel *, int);
-void	getdisktype(struct disklabel *, const char *, char *);
 void	find_bounds(const struct disklabel *);
 void	set_bounds(struct disklabel *);
 void	set_duid(struct disklabel *);
@@ -201,10 +200,6 @@ editor(int f)
 	    !(origmountpoints = calloc(MAXPARTITIONS, sizeof(char *))) ||
 	    !(tmpmountpoints = calloc(MAXPARTITIONS, sizeof(char *))))
 		errx(4, "out of memory");
-
-	/* Don't allow disk type of "unknown" */
-	getdisktype(&newlab, "You need to specify a type for this disk.",
-	    specname);
 
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(&newlab);
@@ -310,7 +305,7 @@ editor(int f)
 			break;
 
 		case 'e':
-			edit_parms(&newlab);
+			edit_packname(&newlab);
 			break;
 
 		case 'i':
@@ -1229,41 +1224,12 @@ done:
 }
 
 void
-edit_parms(struct disklabel *lp)
+edit_packname(struct disklabel *lp)
 {
 	char *p;
-	u_int64_t ui;
 	struct disklabel oldlabel = *lp;
 
-	printf("Changing disk type and label description for %s:\n", specname);
-
-	/* disk type */
-	for (;;) {
-		p = getstring("disk type",
-		    "What kind of disk is this?  Usually SCSI, ESDI, ST506, or "
-		    "floppy (use ESDI for IDE).", dktypenames[lp->d_type]);
-		if (p == NULL)
-			return;
-		if (strcasecmp(p, "IDE") == 0)
-			ui = DTYPE_ESDI;
-		else
-			for (ui = 1; ui < DKMAXTYPES && strcasecmp(p,
-			    dktypenames[ui]); ui++)
-				;
-		if (ui < DKMAXTYPES) {
-			break;
-		} else {
-			printf("\"%s\" is not a valid disk type.\n", p);
-			fputs("Valid types are: ", stdout);
-			for (ui = 1; ui < DKMAXTYPES; ui++) {
-				printf("\"%s\"", dktypenames[ui]);
-				if (ui < DKMAXTYPES - 1)
-					fputs(", ", stdout);
-			}
-			putchar('\n');
-		}
-	}
-	lp->d_type = ui;
+	printf("Changing label description for %s:\n", specname);
 
 	/* pack/label id */
 	p = getstring("label name",
@@ -1300,77 +1266,6 @@ sort_partitions(const struct disklabel *lp, int ignore)
 			err(4, "failed to sort partition table");
 
 	return (spp);
-}
-
-/*
- * Get a valid disk type if necessary.
- */
-void
-getdisktype(struct disklabel *lp, const char *banner, char *dev)
-{
-	int i;
-	char *s;
-	const char *def = "SCSI";
-	const struct dtypes {
-		const char *dev;
-		const char *type;
-	} dtypes[] = {
-		{ "sd",   "SCSI" },
-		{ "wd",   "IDE" },
-		{ "fd",   "FLOPPY" },
-		{ "vnd",  "VND" },
-	};
-
-	if ((s = basename(dev)) != NULL) {
-		if (*s == 'r')
-			s++;
-		i = strcspn(s, "0123456789");
-		s[i] = '\0';
-		dev = s;
-		for (i = 0; i < nitems(dtypes); i++) {
-			if (strcmp(dev, dtypes[i].dev) == 0) {
-				def = dtypes[i].type;
-				break;
-			}
-		}
-	}
-
-	if (lp->d_type > DKMAXTYPES || lp->d_type == 0) {
-		puts(banner);
-		puts("Possible values are:");
-		printf("\"IDE\", ");
-		for (i = 1; i < DKMAXTYPES; i++) {
-			printf("\"%s\"", dktypenames[i]);
-			if (i < DKMAXTYPES - 1)
-				fputs(", ", stdout);
-		}
-		putchar('\n');
-
-		for (;;) {
-			s = getstring("Disk type",
-			    "What kind of disk is this?  Usually SCSI, IDE, "
-			    "ESDI, ST506, or floppy.", def);
-			if (s == NULL)
-				continue;
-			if (strcasecmp(s, "IDE") == 0) {
-				lp->d_type = DTYPE_ESDI;
-				return;
-			}
-			for (i = 1; i < DKMAXTYPES; i++)
-				if (strcasecmp(s, dktypenames[i]) == 0) {
-					lp->d_type = i;
-					return;
-				}
-			printf("\"%s\" is not a valid disk type.\n", s);
-			fputs("Valid types are: ", stdout);
-			for (i = 1; i < DKMAXTYPES; i++) {
-				printf("\"%s\"", dktypenames[i]);
-				if (i < DKMAXTYPES - 1)
-					fputs(", ", stdout);
-			}
-			putchar('\n');
-		}
-	}
 }
 
 /*
@@ -1547,7 +1442,7 @@ editor_help(void)
 " c [part] - change partition size     r        - display free space\n"
 " D        - reset label to default    s [path] - save label to file\n"
 " d [part] - delete partition          U        - undo all changes\n"
-" e        - edit type and label name  u        - undo last change\n"
+" e        - edit label description    u        - undo last change\n"
 " i        - modify disklabel UID      w        - write label to disk\n"
 " l [unit] - print disk label header   x        - exit & lose changes\n"
 " M        - disklabel(8) man page     z        - delete all partitions\n"
