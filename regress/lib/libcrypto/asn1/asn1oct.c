@@ -1,4 +1,4 @@
-/*	$OpenBSD: asn1oct.c,v 1.3 2023/05/12 10:43:28 tb Exp $ */
+/*	$OpenBSD: asn1oct.c,v 1.4 2023/05/13 07:17:32 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -16,6 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <assert.h>
 #include <err.h>
 #include <string.h>
 
@@ -239,6 +240,7 @@ test_s2i_ASN1_OCTET_STRING(const struct s2i_asn1_octet_string_test *test)
 	if ((got = i2s_ASN1_OCTET_STRING(NULL, aos)) == NULL)
 		errx(1, "%s: i2s_ASN1_OCTET_STRING", test->desc);
 
+	assert(test->want != NULL);
 	if (strcmp(test->want, got) != 0) {
 		fprintf(stderr, "%s: \"%s\" failed: want \"%s\", got \"%s\"\n",
 		    __func__, test->desc, test->want, got);
