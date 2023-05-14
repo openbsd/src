@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.695 2023/05/07 16:23:23 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.696 2023/05/14 01:46:53 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -243,8 +243,13 @@ int	ifq_congestion;
 
 int		 netisr;
 
+struct softnet {
+	char		 sn_name[16];
+	struct taskq	*sn_taskq;
+};
+
 #define	NET_TASKQ	4
-struct taskq	*nettqmp[NET_TASKQ];
+struct softnet	softnets[NET_TASKQ];
 
 struct task if_input_task_locked = TASK_INITIALIZER(if_netisr, NULL);
 
@@ -269,8 +274,11 @@ ifinit(void)
 	if_idxmap_init(8); /* 8 is a nice power of 2 for malloc */
 
 	for (i = 0; i < NET_TASKQ; i++) {
-		nettqmp[i] = taskq_create("softnet", 1, IPL_NET, TASKQ_MPSAFE);
-		if (nettqmp[i] == NULL)
+		struct softnet *sn = &softnets[i];
+		snprintf(sn->sn_name, sizeof(sn->sn_name), "softnet%u", i);
+		sn->sn_taskq = taskq_create(sn->sn_name, 1, IPL_NET,
+		    TASKQ_MPSAFE);
+		if (sn->sn_taskq == NULL)
 			panic("unable to create network taskq %d", i);
 	}
 }
@@ -3463,13 +3471,13 @@ unhandled_af(int af)
 struct taskq *
 net_tq(unsigned int ifindex)
 {
-	struct taskq *t = NULL;
+	struct softnet *sn;
 	static int nettaskqs;
 
 	if (nettaskqs == 0)
 		nettaskqs = min(NET_TASKQ, ncpus);
 
-	t = nettqmp[ifindex % nettaskqs];
+	sn = &softnets[ifindex % nettaskqs];
 
-	return (t);
+	return (sn->sn_taskq);
 }
