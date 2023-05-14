@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.122 2023/05/08 14:51:00 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.123 2023/05/14 20:20:40 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2308,8 +2308,8 @@ X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 LCRYPTO_ALIAS(X509_STORE_CTX_free);
 
 int
-X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
-    STACK_OF(X509) *chain)
+X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *leaf,
+    STACK_OF(X509) *untrusted)
 {
 	int param_ret = 1;
 
@@ -2337,8 +2337,8 @@ X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	 * possible even on early exits.
 	 */
 	ctx->store = store;
-	ctx->cert = x509;
-	ctx->untrusted = chain;
+	ctx->cert = leaf;
+	ctx->untrusted = untrusted;
 
 	if (store && store->verify)
 		ctx->verify = store->verify;
