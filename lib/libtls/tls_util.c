@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_util.c,v 1.15 2021/08/16 13:54:38 tb Exp $ */
+/* $OpenBSD: tls_util.c,v 1.16 2023/05/14 07:26:25 op Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
@@ -20,6 +20,7 @@
 #include <sys/stat.h>
 
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 

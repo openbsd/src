@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_server.c,v 1.48 2022/01/19 11:10:55 inoguchi Exp $ */
+/* $OpenBSD: tls_server.c,v 1.49 2023/05/14 07:26:25 op Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -18,6 +18,8 @@
 #include <sys/socket.h>
 
 #include <arpa/inet.h>
+
+#include <string.h>
 
 #include <openssl/ec.h>
 #include <openssl/err.h>
