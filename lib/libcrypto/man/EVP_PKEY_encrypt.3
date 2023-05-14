@@ -1,4 +1,4 @@
-.\"	$OpenBSD: EVP_PKEY_encrypt.3,v 1.7 2022/03/31 17:27:17 naddy Exp $
+.\"	$OpenBSD: EVP_PKEY_encrypt.3,v 1.8 2023/05/14 09:29:37 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: May 14 2023 $
 .Dt EVP_PKEY_ENCRYPT 3
 .Os
 .Sh NAME
@@ -131,7 +131,9 @@ and
 .Xr d2i_X509 3
 for means to load a public key.
 You may also simply set
-.Ql eng = NULL;
+.Dq eng
+to
+.Dv NULL
 to start with the default OpenSSL RSA implementation:
 .Bd -literal -offset indent
 #include <openssl/evp.h>
