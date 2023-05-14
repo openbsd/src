@@ -1,4 +1,4 @@
-/*	$OpenBSD: vndioctl.h,v 1.11 2019/11/18 22:32:45 jca Exp $	*/
+/*	$OpenBSD: vndioctl.h,v 1.12 2023/05/14 18:34:02 krw Exp $	*/
 /*	$NetBSD: vndioctl.h,v 1.5 1995/01/25 04:46:30 cgd Exp $	*/
 
 /*
@@ -48,13 +48,14 @@
  * Ioctl definitions for file (vnode) disk pseudo-device.
  */
 struct vnd_ioctl {
-	char	*vnd_file;	/* pathname of file to mount */
-	size_t	vnd_secsize;	/* sector size in bytes */
-	size_t	vnd_nsectors;	/* number of sectors in a track */
-	size_t	vnd_ntracks;	/* number of tracks per cylinder (i.e. heads) */
-	off_t	vnd_size;	/* (returned) size of disk */
-	u_char	*vnd_key;
-	int	vnd_keylen;
+	char		*vnd_file;	/* pathname of file to mount */
+	size_t		 vnd_secsize;	/* sector size in bytes */
+	size_t		 vnd_nsectors;	/* number of sectors in a track */
+	size_t		 vnd_ntracks;	/* number of tracks per cylinder */
+	off_t		 vnd_size;	/* (returned) size of disk */
+	u_char		*vnd_key;
+	int		 vnd_keylen;
+	uint16_t	 vnd_type;	/* DTYPE being emulated */
 };
 
 /*

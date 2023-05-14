@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnconfig.c,v 1.12 2022/10/04 06:52:52 kn Exp $	*/
+/*	$OpenBSD: vnconfig.c,v 1.13 2023/05/14 18:34:02 krw Exp $	*/
 /*
  * Copyright (c) 1993 University of Utah.
  * Copyright (c) 1990, 1993
@@ -300,6 +300,7 @@ config(char *file, char *dev, struct disklabel *dp, char *key, size_t keylen)
 
 	memset(&vndio, 0, sizeof vndio);
 	vndio.vnd_file = file;
+	vndio.vnd_type = (dp && dp->d_type) ? dp->d_type : DTYPE_VND;
 	vndio.vnd_secsize = (dp && dp->d_secsize) ? dp->d_secsize : DEV_BSIZE;
 	vndio.vnd_nsectors = (dp && dp->d_nsectors) ? dp->d_nsectors : 100;
 	vndio.vnd_ntracks = (dp && dp->d_ntracks) ? dp->d_ntracks : 1;
