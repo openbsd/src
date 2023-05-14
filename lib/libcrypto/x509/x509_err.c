@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_err.c,v 1.21 2023/04/24 08:39:06 job Exp $ */
+/* $OpenBSD: x509_err.c,v 1.22 2023/05/14 17:20:26 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -71,11 +71,6 @@ static ERR_STRING_DATA X509_str_functs[] = {
 	{0, NULL}
 };
 
-static ERR_STRING_DATA X509V3_str_functs[] = {
-	{ERR_FUNC(0xfff), "CRYPTO_internal"},
-	{0, NULL}
-};
-
 static ERR_STRING_DATA X509_str_reasons[] = {
 	{ERR_REASON(X509_R_BAD_X509_FILETYPE)    , "bad x509 filetype"},
 	{ERR_REASON(X509_R_BASE64_DECODE_ERROR)  , "base64 decode error"},
@@ -105,6 +100,16 @@ static ERR_STRING_DATA X509_str_reasons[] = {
 	{ERR_REASON(X509_R_UNSUPPORTED_ALGORITHM), "unsupported algorithm"},
 	{ERR_REASON(X509_R_WRONG_LOOKUP_TYPE)    , "wrong lookup type"},
 	{ERR_REASON(X509_R_WRONG_TYPE)           , "wrong type"},
+	{0, NULL}
+};
+
+#undef ERR_FUNC
+#undef ERR_REASON
+#define ERR_FUNC(func) ERR_PACK(ERR_LIB_X509V3,func,0)
+#define ERR_REASON(reason) ERR_PACK(ERR_LIB_X509V3,0,reason)
+
+static ERR_STRING_DATA X509V3_str_functs[] = {
+	{ERR_FUNC(0xfff), "CRYPTO_internal"},
 	{0, NULL}
 };
 
