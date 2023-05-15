@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpctl.c,v 1.170 2022/02/25 17:31:40 rob Exp $	*/
+/*	$OpenBSD: smtpctl.c,v 1.171 2023/05/15 12:03:04 op Exp $	*/
 
 /*
  * Copyright (c) 2013 Eric Faurot <eric@openbsd.org>
@@ -136,7 +136,7 @@ offline_file(void)
 	FILE   *fp;
 
 	if (!bsnprintf(path, sizeof(path), "%s%s/%lld.XXXXXXXXXX", PATH_SPOOL,
-		PATH_OFFLINE, (long long int) time(NULL)))
+	    PATH_OFFLINE, (long long)time(NULL)))
 		err(EX_UNAVAILABLE, "snprintf");
 
 	if ((fd = mkstemp(path)) == -1 || (fp = fdopen(fd, "w+")) == NULL) {

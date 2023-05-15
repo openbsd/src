@@ -1,4 +1,4 @@
-/*	$OpenBSD: bounce.c,v 1.88 2023/05/04 12:43:44 chrisz Exp $	*/
+/*	$OpenBSD: bounce.c,v 1.89 2023/05/15 12:03:04 op Exp $	*/
 
 /*
  * Copyright (c) 2009 Gilles Chehade <gilles@poolp.org>
@@ -305,7 +305,7 @@ bounce_send(struct bounce_session *s, const char *fmt, ...)
 }
 
 static const char *
-bounce_duration(long long int d)
+bounce_duration(long long d)
 {
 	static char buf[32];
 
