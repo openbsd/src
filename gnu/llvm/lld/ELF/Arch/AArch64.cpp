@@ -621,7 +621,11 @@ private:
 } // namespace
 
 AArch64BtiPac::AArch64BtiPac() {
+#ifdef __OpenBSD__
+  btiHeader = true;
+#else
   btiHeader = (config->andFeatures & GNU_PROPERTY_AARCH64_FEATURE_1_BTI);
+#endif
   // A BTI (Branch Target Indicator) Plt Entry is only required if the
   // address of the PLT entry can be taken by the program, which permits an
   // indirect jump to the PLT entry. This can happen when the address
@@ -717,6 +721,10 @@ void AArch64BtiPac::writePlt(uint8_t *buf, const Symbol &sym,
 }
 
 static TargetInfo *getTargetInfo() {
+#ifdef __OpenBSD__
+  static AArch64BtiPac t;
+  return &t;
+#else
   if (config->andFeatures & (GNU_PROPERTY_AARCH64_FEATURE_1_BTI |
                              GNU_PROPERTY_AARCH64_FEATURE_1_PAC)) {
     static AArch64BtiPac t;
@@ -724,6 +732,7 @@ static TargetInfo *getTargetInfo() {
   }
   static AArch64 t;
   return &t;
+#endif
 }
 
 TargetInfo *elf::getAArch64TargetInfo() { return getTargetInfo(); }
