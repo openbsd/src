@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1179 2023/05/13 13:35:17 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1180 2023/05/15 16:34:56 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6555,15 +6555,9 @@ pf_route(struct pf_pdesc *pd, struct pf_state *st)
 		goto done;
 	}
 
-	if (ISSET(m0->m_pkthdr.csum_flags, M_TCP_TSO) &&
-	    m0->m_pkthdr.ph_mss <= ifp->if_mtu) {
-		if (tcp_chopper(m0, &ml, ifp, m0->m_pkthdr.ph_mss) ||
-		    if_output_ml(ifp, &ml, sintosa(dst), rt))
-			goto done;
-		tcpstat_inc(tcps_outswtso);
+	if (tcp_if_output_tso(ifp, &m0, sintosa(dst), rt,
+	    IFCAP_TSOv4, ifp->if_mtu) || m0 == NULL)
 		goto done;
-	}
-	CLR(m0->m_pkthdr.csum_flags, M_TCP_TSO);
 
 	/*
 	 * Too large for interface; fragment if possible.
@@ -6598,7 +6592,6 @@ void
 pf_route6(struct pf_pdesc *pd, struct pf_state *st)
 {
 	struct mbuf		*m0;
-	struct mbuf_list	 ml;
 	struct sockaddr_in6	*dst, sin6;
 	struct rtentry		*rt = NULL;
 	struct ip6_hdr		*ip6;
@@ -6696,15 +6689,9 @@ pf_route6(struct pf_pdesc *pd, struct pf_state *st)
 		goto done;
 	}
 
-	if (ISSET(m0->m_pkthdr.csum_flags, M_TCP_TSO) &&
-	    m0->m_pkthdr.ph_mss <= ifp->if_mtu) {
-		if (tcp_chopper(m0, &ml, ifp, m0->m_pkthdr.ph_mss) ||
-		    if_output_ml(ifp, &ml, sin6tosa(dst), rt))
-			goto done;
-		tcpstat_inc(tcps_outswtso);
+	if (tcp_if_output_tso(ifp, &m0, sin6tosa(dst), rt,
+	    IFCAP_TSOv6, ifp->if_mtu) || m0 == NULL)
 		goto done;
-	}
-	CLR(m0->m_pkthdr.csum_flags, M_TCP_TSO);
 
 	ip6stat_inc(ip6s_cantfrag);
 	if (st->rt != PF_DUPTO)

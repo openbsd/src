@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.137 2023/05/13 13:35:18 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.138 2023/05/15 16:34:56 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #include <sys/kernel.h>
 
 #include <net/if.h>
+#include <net/if_var.h>
 #include <net/route.h>
 #if NPF > 0
 #include <net/pfvar.h>
@@ -753,7 +754,7 @@ send:
 
 	/* Enable TSO and specify the size of the resulting segments. */
 	if (tso) {
-		m->m_pkthdr.csum_flags |= M_TCP_TSO;
+		SET(m->m_pkthdr.csum_flags, M_TCP_TSO);
 		m->m_pkthdr.ph_mss = tp->t_maxseg;
 	}
 
@@ -1347,5 +1348,47 @@ tcp_chopper(struct mbuf *m0, struct mbuf_list *ml, struct ifnet *ifp,
  bad:
 	tcpstat_inc(tcps_outbadtso);
 	ml_purge(ml);
+	return error;
+}
+
+int
+tcp_if_output_tso(struct ifnet *ifp, struct mbuf **mp, struct sockaddr *dst,
+    struct rtentry *rt, uint32_t ifcap, u_int mtu)
+{
+	struct mbuf_list ml;
+	int error;
+
+	/* caller must fail later or fragment */
+	if (!ISSET((*mp)->m_pkthdr.csum_flags, M_TCP_TSO))
+		return 0;
+	if ((*mp)->m_pkthdr.ph_mss > mtu) {
+		CLR((*mp)->m_pkthdr.csum_flags, M_TCP_TSO);
+		return 0;
+	}
+
+	/* network interface hardware will do TSO */
+	if (in_ifcap_cksum(*mp, ifp, ifcap)) {
+		if (ISSET(ifcap, IFCAP_TSOv4)) {
+			in_hdr_cksum_out(*mp, ifp);
+			in_proto_cksum_out(*mp, ifp);
+		}
+#ifdef INET6
+		if (ISSET(ifcap, IFCAP_TSOv6))
+			in6_proto_cksum_out(*mp, ifp);
+#endif
+		error = ifp->if_output(ifp, *mp, dst, rt);
+		if (!error)
+			tcpstat_inc(tcps_outhwtso);
+		goto done;
+	}
+
+	/* as fallback do TSO in software */
+	if ((error = tcp_chopper(*mp, &ml, ifp, (*mp)->m_pkthdr.ph_mss)) ||
+	    (error = if_output_ml(ifp, &ml, dst, rt)))
+		goto done;
+	tcpstat_inc(tcps_outswtso);
+
+ done:
+	*mp = NULL;
 	return error;
 }

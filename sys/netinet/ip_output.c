@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.386 2023/05/13 13:35:17 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.387 2023/05/15 16:34:56 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -460,15 +460,10 @@ sendit:
 		goto done;
 	}
 
-	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) &&
-	    m->m_pkthdr.ph_mss <= mtu) {
-		if ((error = tcp_chopper(m, &ml, ifp, m->m_pkthdr.ph_mss)) ||
-		    (error = if_output_ml(ifp, &ml, sintosa(dst), ro->ro_rt)))
-			goto done;
-		tcpstat_inc(tcps_outswtso);
+	error = tcp_if_output_tso(ifp, &m, sintosa(dst), ro->ro_rt,
+	    IFCAP_TSOv4, mtu);
+	if (error || m == NULL)
 		goto done;
-	}
-	CLR(m->m_pkthdr.csum_flags, M_TCP_TSO);
 
 	/*
 	 * Too large for interface; fragment if possible.
@@ -1887,10 +1882,15 @@ in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 		u_int16_t csum = 0, offset;
 
 		offset = ip->ip_hl << 2;
-		if (m->m_pkthdr.csum_flags & (M_TCP_CSUM_OUT|M_UDP_CSUM_OUT))
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+			csum = in_cksum_phdr(ip->ip_src.s_addr,
+			    ip->ip_dst.s_addr, htonl(ip->ip_p));
+		} else if (ISSET(m->m_pkthdr.csum_flags,
+		    M_TCP_CSUM_OUT|M_UDP_CSUM_OUT)) {
 			csum = in_cksum_phdr(ip->ip_src.s_addr,
 			    ip->ip_dst.s_addr, htonl(ntohs(ip->ip_len) -
 			    offset + ip->ip_p));
+		}
 		if (ip->ip_p == IPPROTO_TCP)
 			offset += offsetof(struct tcphdr, th_sum);
 		else if (ip->ip_p == IPPROTO_UDP)

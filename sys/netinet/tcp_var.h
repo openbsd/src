@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.164 2023/05/10 12:07:16 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.165 2023/05/15 16:34:56 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -719,6 +719,8 @@ struct tcpcb *
 void	 tcp_notify(struct inpcb *, int);
 int	 tcp_output(struct tcpcb *);
 int	 tcp_chopper(struct mbuf *, struct mbuf_list *, struct ifnet *, u_int);
+int	 tcp_if_output_tso(struct ifnet *, struct mbuf **, struct sockaddr *,
+	    struct rtentry *, uint32_t, u_int);
 void	 tcp_pulloutofband(struct socket *, u_int, struct mbuf *, int);
 int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
 void	 tcp_rscale(struct tcpcb *, u_long);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.275 2023/05/10 12:07:17 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.276 2023/05/15 16:34:57 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -706,15 +706,10 @@ reroute:
 		goto done;
 	}
 
-	if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) &&
-	    m->m_pkthdr.ph_mss <= mtu) {
-		if ((error = tcp_chopper(m, &ml, ifp, m->m_pkthdr.ph_mss)) ||
-		    (error = if_output_ml(ifp, &ml, sin6tosa(dst), ro->ro_rt)))
-			goto done;
-		tcpstat_inc(tcps_outswtso);
+	error = tcp_if_output_tso(ifp, &m, sin6tosa(dst), ro->ro_rt,
+	    IFCAP_TSOv6, mtu);
+	if (error || m == NULL)
 		goto done;
-	}
-	CLR(m->m_pkthdr.csum_flags, M_TCP_TSO);
 
 	/*
 	 * try to fragment the packet.  case 1-b
@@ -2715,8 +2710,13 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 		u_int16_t csum;
 
 		offset = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nxt);
-		csum = in6_cksum_phdr(&ip6->ip6_src, &ip6->ip6_dst,
-		    htonl(m->m_pkthdr.len - offset), htonl(nxt));
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+			csum = in6_cksum_phdr(&ip6->ip6_src, &ip6->ip6_dst,
+			    htonl(0), htonl(nxt));
+		} else {
+			csum = in6_cksum_phdr(&ip6->ip6_src, &ip6->ip6_dst,
+			    htonl(m->m_pkthdr.len - offset), htonl(nxt));
+		}
 		if (nxt == IPPROTO_TCP)
 			offset += offsetof(struct tcphdr, th_sum);
 		else if (nxt == IPPROTO_UDP)
