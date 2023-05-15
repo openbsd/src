@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.40 2023/05/10 08:03:49 op Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.41 2023/05/15 12:02:40 op Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -244,7 +244,7 @@ retry:
 
 	curoff = lseek(mbfd, 0, SEEK_END);
 	(void)snprintf(biffmsg, sizeof biffmsg, "%s@%lld\n", name,
-	    (long long int)curoff);
+	    (long long)curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
 		mwarn("temporary file: %s", strerror(errno));
 		goto bad;
