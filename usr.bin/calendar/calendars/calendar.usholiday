@@ -1,7 +1,7 @@
 /*
  * USA holiday
  *
- * $OpenBSD: calendar.usholiday,v 1.9 2015/01/19 18:07:47 tedu Exp $
+ * $OpenBSD: calendar.usholiday,v 1.10 2023/05/15 10:36:08 bentley Exp $
  */
 
 #ifndef _calendar_usholiday_
@@ -22,6 +22,7 @@
 05/SatThird	Armed Forces Day (3rd Saturday of May)
 05/MonLast	Memorial Day (Last Monday of May)
 06/SunThird	Father's Day (3rd Sunday of June)
+06/19	Juneteenth
 06/21*	Summer Solstice
 07/04	Independence Day
 09/MonFirst	Labor Day (1st Monday of September)
