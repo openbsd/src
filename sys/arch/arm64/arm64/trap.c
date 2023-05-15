@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.44 2023/04/26 12:30:24 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.45 2023/05/15 15:02:06 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -94,7 +94,7 @@ udata_abort(struct trapframe *frame, uint64_t esr, uint64_t far, int exe)
 	switch (esr & ISS_DATA_DFSC_MASK) {
 	case ISS_DATA_DFSC_ALIGN:
 		sv.sival_ptr = (void *)far;
-		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		trapsignal(p, SIGBUS, esr, BUS_ADRALN, sv);
 		return;
 	default:
 		break;
@@ -132,7 +132,7 @@ udata_abort(struct trapframe *frame, uint64_t esr, uint64_t far, int exe)
 		code = SEGV_MAPERR;
 	}
 	sv.sival_ptr = (void *)far;
-	trapsignal(p, sig, 0, code, sv);
+	trapsignal(p, sig, esr, code, sv);
 }
 
 static void
@@ -275,7 +275,7 @@ do_el0_sync(struct trapframe *frame)
 	case EXCP_UNKNOWN:
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
-		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		trapsignal(p, SIGILL, esr, ILL_ILLOPC, sv);
 		break;
 	case EXCP_FP_SIMD:
 	case EXCP_TRAP_FP:
@@ -284,7 +284,7 @@ do_el0_sync(struct trapframe *frame)
 	case EXCP_BRANCH_TGT:
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
-		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
+		trapsignal(p, SIGILL, esr, ILL_ILLOPC, sv);
 		break;
 	case EXCP_SVC:
 		svc_handler(frame);
@@ -295,23 +295,23 @@ do_el0_sync(struct trapframe *frame)
 	case EXCP_PC_ALIGN:
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
-		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		trapsignal(p, SIGBUS, esr, BUS_ADRALN, sv);
 		break;
 	case EXCP_SP_ALIGN:
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_sp;
-		trapsignal(p, SIGBUS, 0, BUS_ADRALN, sv);
+		trapsignal(p, SIGBUS, esr, BUS_ADRALN, sv);
 		break;
 	case EXCP_DATA_ABORT_L:
 		udata_abort(frame, esr, far, 0);
 		break;
 	case EXCP_BRK:
 		sv.sival_ptr = (void *)frame->tf_elr;
-		trapsignal(p, SIGTRAP, 0, TRAP_BRKPT, sv);
+		trapsignal(p, SIGTRAP, esr, TRAP_BRKPT, sv);
 		break;
 	case EXCP_SOFTSTP_EL0:
 		sv.sival_ptr = (void *)frame->tf_elr;
-		trapsignal(p, SIGTRAP, 0, TRAP_TRACE, sv);
+		trapsignal(p, SIGTRAP, esr, TRAP_TRACE, sv);
 		break;
 	default:
 		// panic("Unknown userland exception %x esr_el1 %lx", exception,
