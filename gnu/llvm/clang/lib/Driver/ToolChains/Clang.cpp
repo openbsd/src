@@ -1819,8 +1819,11 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
     if (IndirectBranches)
       CmdArgs.push_back("-mbranch-target-enforce");
   } else {
-    if (Triple.isOSOpenBSD())
+    if (Triple.isOSOpenBSD()) {
+      CmdArgs.push_back("-msign-return-address=non-leaf");
+      CmdArgs.push_back("-msign-return-address-key=a_key");
       CmdArgs.push_back("-mbranch-target-enforce");
+    }
   }
 
   // Handle -msve_vector_bits=<bits>
