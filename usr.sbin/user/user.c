@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.128 2019/10/17 21:54:29 millert Exp $ */
+/* $OpenBSD: user.c,v 1.129 2023/05/15 17:00:24 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -200,20 +200,18 @@ static size_t expand_len(const char *, const char *);
 static struct group *find_group_info(const char *);
 static struct passwd *find_user_info(const char *);
 static void checkeuid(void);
-static void memsave(char **, const char *, size_t);
+static void strsave(char **, const char *);
 static void read_defaults(user_t *);
 
 static int	verbose;
 
-/* if *cpp is non-null, free it, then assign `n' chars of `s' to it */
+/* free *cpp, then store a copy of `s' in it */
 static void
-memsave(char **cpp, const char *s, size_t n)
+strsave(char **cpp, const char *s)
 {
 	free(*cpp);
-	if ((*cpp = calloc (n + 1, sizeof(char))) == NULL)
+	if ((*cpp = strdup(s)) == NULL)
 		err(1, NULL);
-	memcpy(*cpp, s, n);
-	(*cpp)[n] = '\0';
 }
 
 /* a replacement for system(3) */
@@ -788,12 +786,12 @@ read_defaults(user_t *up)
 	unsigned char	*cp;
 	unsigned char	*s;
 
-	memsave(&up->u_primgrp, DEF_GROUP, strlen(DEF_GROUP));
-	memsave(&up->u_basedir, DEF_BASEDIR, strlen(DEF_BASEDIR));
-	memsave(&up->u_skeldir, DEF_SKELDIR, strlen(DEF_SKELDIR));
-	memsave(&up->u_shell, DEF_SHELL, strlen(DEF_SHELL));
-	memsave(&up->u_comment, DEF_COMMENT, strlen(DEF_COMMENT));
-	memsave(&up->u_class, DEF_CLASS, strlen(DEF_CLASS));
+	strsave(&up->u_primgrp, DEF_GROUP);
+	strsave(&up->u_basedir, DEF_BASEDIR);
+	strsave(&up->u_skeldir, DEF_SKELDIR);
+	strsave(&up->u_shell, DEF_SHELL);
+	strsave(&up->u_comment, DEF_COMMENT);
+	strsave(&up->u_class, DEF_CLASS);
 	up->u_rsize = 16;
 	up->u_defrc = 0;
 	if ((up->u_rv = calloc(up->u_rsize, sizeof(range_t))) == NULL)
@@ -811,27 +809,27 @@ read_defaults(user_t *up)
 			if (strncmp(s, "group", 5) == 0) {
 				for (cp = s + 5 ; isspace((unsigned char)*cp); cp++) {
 				}
-				memsave(&up->u_primgrp, cp, strlen(cp));
+				strsave(&up->u_primgrp, cp);
 			} else if (strncmp(s, "base_dir", 8) == 0) {
 				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
-				memsave(&up->u_basedir, cp, strlen(cp));
+				strsave(&up->u_basedir, cp);
 			} else if (strncmp(s, "skel_dir", 8) == 0) {
 				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
-				memsave(&up->u_skeldir, cp, strlen(cp));
+				strsave(&up->u_skeldir, cp);
 			} else if (strncmp(s, "shell", 5) == 0) {
 				for (cp = s + 5 ; isspace((unsigned char)*cp); cp++) {
 				}
-				memsave(&up->u_shell, cp, strlen(cp));
+				strsave(&up->u_shell, cp);
 			} else if (strncmp(s, "password", 8) == 0) {
 				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
-				memsave(&up->u_password, cp, strlen(cp));
+				strsave(&up->u_password, cp);
 			} else if (strncmp(s, "class", 5) == 0) {
 				for (cp = s + 5 ; isspace((unsigned char)*cp); cp++) {
 				}
-				memsave(&up->u_class, cp, strlen(cp));
+				strsave(&up->u_class, cp);
 			} else if (strncmp(s, "inactive", 8) == 0) {
 				for (cp = s + 8 ; isspace((unsigned char)*cp); cp++) {
 				}
@@ -839,7 +837,7 @@ read_defaults(user_t *up)
 					free(up->u_inactive);
 					up->u_inactive = NULL;
 				} else {
-					memsave(&up->u_inactive, cp, strlen(cp));
+					strsave(&up->u_inactive, cp);
 				}
 			} else if (strncmp(s, "range", 5) == 0) {
 				for (cp = s + 5 ; isspace((unsigned char)*cp); cp++) {
@@ -858,7 +856,7 @@ read_defaults(user_t *up)
 					free(up->u_expire);
 					up->u_expire = NULL;
 				} else {
-					memsave(&up->u_expire, cp, strlen(cp));
+					strsave(&up->u_expire, cp);
 				}
 			}
 			free(s);
@@ -1411,8 +1409,7 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		if ((*pwp->pw_passwd != '\0') &&
 		    (up->u_flags & F_PASSWORD) == 0) {
 			up->u_flags |= F_PASSWORD;
-			memsave(&up->u_password, pwp->pw_passwd,
-			    strlen(pwp->pw_passwd));
+			strsave(&up->u_password, pwp->pw_passwd);
 			explicit_bzero(pwp->pw_passwd, strlen(pwp->pw_passwd));
 		}
 	}
@@ -1807,34 +1804,34 @@ useradd(int argc, char **argv)
 			break;
 		case 'b':
 			defaultfield = 1;
-			memsave(&u.u_basedir, optarg, strlen(optarg));
+			strsave(&u.u_basedir, optarg);
 			break;
 		case 'c':
-			memsave(&u.u_comment, optarg, strlen(optarg));
+			strsave(&u.u_comment, optarg);
 			break;
 		case 'd':
-			memsave(&u.u_home, optarg, strlen(optarg));
+			strsave(&u.u_home, optarg);
 			u.u_flags |= F_HOMEDIR;
 			break;
 		case 'e':
 			defaultfield = 1;
-			memsave(&u.u_expire, optarg, strlen(optarg));
+			strsave(&u.u_expire, optarg);
 			break;
 		case 'f':
 			defaultfield = 1;
-			memsave(&u.u_inactive, optarg, strlen(optarg));
+			strsave(&u.u_inactive, optarg);
 			break;
 		case 'g':
 			defaultfield = 1;
-			memsave(&u.u_primgrp, optarg, strlen(optarg));
+			strsave(&u.u_primgrp, optarg);
 			break;
 		case 'k':
 			defaultfield = 1;
-			memsave(&u.u_skeldir, optarg, strlen(optarg));
+			strsave(&u.u_skeldir, optarg);
 			break;
 		case 'L':
 			defaultfield = 1;
-			memsave(&u.u_class, optarg, strlen(optarg));
+			strsave(&u.u_class, optarg);
 			break;
 		case 'm':
 			u.u_flags |= F_MKDIR;
@@ -1843,7 +1840,7 @@ useradd(int argc, char **argv)
 			u.u_flags |= F_DUPUID;
 			break;
 		case 'p':
-			memsave(&u.u_password, optarg, strlen(optarg));
+			strsave(&u.u_password, optarg);
 			explicit_bzero(optarg, strlen(optarg));
 			break;
 		case 'r':
@@ -1853,7 +1850,7 @@ useradd(int argc, char **argv)
 			break;
 		case 's':
 			defaultfield = 1;
-			memsave(&u.u_shell, optarg, strlen(optarg));
+			strsave(&u.u_shell, optarg);
 			break;
 		case 'u':
 			u.u_uid = strtonum(optarg, -1, UID_MAX, &errstr);
@@ -1947,23 +1944,23 @@ usermod(int argc, char **argv)
 			u.u_flags |= F_ACCTLOCK;
 			break;
 		case 'c':
-			memsave(&u.u_comment, optarg, strlen(optarg));
+			strsave(&u.u_comment, optarg);
 			u.u_flags |= F_COMMENT;
 			break;
 		case 'd':
-			memsave(&u.u_home, optarg, strlen(optarg));
+			strsave(&u.u_home, optarg);
 			u.u_flags |= F_HOMEDIR;
 			break;
 		case 'e':
-			memsave(&u.u_expire, optarg, strlen(optarg));
+			strsave(&u.u_expire, optarg);
 			u.u_flags |= F_EXPIRE;
 			break;
 		case 'f':
-			memsave(&u.u_inactive, optarg, strlen(optarg));
+			strsave(&u.u_inactive, optarg);
 			u.u_flags |= F_INACTIVE;
 			break;
 		case 'g':
-			memsave(&u.u_primgrp, optarg, strlen(optarg));
+			strsave(&u.u_primgrp, optarg);
 			u.u_flags |= F_GROUP;
 			break;
 		case 'l':
@@ -1975,7 +1972,7 @@ usermod(int argc, char **argv)
 			u.u_flags |= F_USERNAME;
 			break;
 		case 'L':
-			memsave(&u.u_class, optarg, strlen(optarg));
+			strsave(&u.u_class, optarg);
 			u.u_flags |= F_CLASS;
 			break;
 		case 'm':
@@ -1985,12 +1982,12 @@ usermod(int argc, char **argv)
 			u.u_flags |= F_DUPUID;
 			break;
 		case 'p':
-			memsave(&u.u_password, optarg, strlen(optarg));
+			strsave(&u.u_password, optarg);
 			explicit_bzero(optarg, strlen(optarg));
 			u.u_flags |= F_PASSWORD;
 			break;
 		case 's':
-			memsave(&u.u_shell, optarg, strlen(optarg));
+			strsave(&u.u_shell, optarg);
 			u.u_flags |= F_SHELL;
 			break;
 		case 'u':
@@ -2091,8 +2088,8 @@ userdel(int argc, char **argv)
 		(void)removehomedir(pwp->pw_name, pwp->pw_uid, pwp->pw_dir);
 	if (u.u_preserve) {
 		u.u_flags |= F_SHELL;
-		memsave(&u.u_shell, NOLOGIN, strlen(NOLOGIN));
-		memsave(&u.u_password, "*", strlen("*"));
+		strsave(&u.u_shell, NOLOGIN);
+		strsave(&u.u_password, "*");
 		u.u_flags |= F_PASSWORD;
 		openlog("userdel", LOG_PID, LOG_USER);
 		return moduser(*argv, *argv, &u) ? EXIT_SUCCESS : EXIT_FAILURE;
@@ -2225,7 +2222,7 @@ groupmod(int argc, char **argv)
 			dupgid = 1;
 			break;
 		case 'n':
-			memsave(&newname, optarg, strlen(optarg));
+			strsave(&newname, optarg);
 			break;
 		case 'v':
 			verbose = 1;
