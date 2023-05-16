@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdhtest.c,v 1.14 2023/04/26 09:31:12 tb Exp $	*/
+/*	$OpenBSD: ecdhtest.c,v 1.15 2023/05/16 18:41:18 tb Exp $	*/
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -146,7 +146,8 @@ test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 	(void)BIO_flush(out);
 
 	alen = KDF1_SHA1_len;
-	abuf = malloc(alen);
+	if ((abuf = malloc(alen)) == NULL)
+		goto err;
 	aout = ECDH_compute_key(abuf, alen, EC_KEY_get0_public_key(b),
 	    a, KDF1_SHA1);
 
@@ -154,7 +155,8 @@ test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 	(void)BIO_flush(out);
 
 	blen = KDF1_SHA1_len;
-	bbuf = malloc(blen);
+	if ((bbuf = malloc(blen)) == NULL)
+	    goto err;
 	bout = ECDH_compute_key(bbuf, blen, EC_KEY_get0_public_key(a),
 	    b, KDF1_SHA1);
 
@@ -344,7 +346,8 @@ ecdh_kat(BIO *out, const char *cname, int nid,
 	Ztmplen = ECDH_size(key1);
 	if (Ztmplen != Zlen)
 		goto err;
-	Ztmp = malloc(Ztmplen);
+	if ((Ztmp = malloc(Ztmplen)) == NULL)
+		goto err;
 	if (!ECDH_compute_key(Ztmp, Ztmplen,
 	    EC_KEY_get0_public_key(key2), key1, 0))
 		goto err;
