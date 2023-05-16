@@ -1,4 +1,4 @@
-.\"	$OpenBSD: acme-client.1,v 1.41 2022/01/21 18:46:21 deraadt Exp $
+.\"	$OpenBSD: acme-client.1,v 1.42 2023/05/16 09:02:50 espie Exp $
 .\"
 .\" Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 21 2022 $
+.Dd $Mdocdate: May 16 2023 $
 .Dt ACME-CLIENT 1
 .Os
 .Sh NAME
@@ -151,3 +151,12 @@ The
 .Nm
 utility was written by
 .An Kristaps Dzonsons Aq Mt kristaps@bsd.lv .
+.Sh CAVEATS
+The usual ACME service providers are notoriously picky about
+authenticating rules, and yield fairly long time-outs after just a
+few invalid attempts.
+It is strongly suggested to first validate a configuration with a
+staging server before moving an official certificate validation
+workflow to
+.Xr crontab 5
+status.
