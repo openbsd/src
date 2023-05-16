@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.39 2023/05/16 16:45:04 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.40 2023/05/16 16:55:32 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -43,7 +43,7 @@ use POSIX;
 sub is_allowed() { 0 }
 
 # match archive header link name against actual link name
-sub check_linkname
+sub _check_linkname
 {
 	my ($self, $linkname) = @_;
 	my $c = $self->{linkname};
@@ -53,7 +53,7 @@ sub check_linkname
 	return $c eq $linkname;
 }
 
-sub errsay
+sub _errsay
 {
 	my ($self, @args) = @_;
 	$self->{archive}{state}->errsay(@args);
@@ -66,59 +66,59 @@ sub validate_meta
 	$o->{cwd} = $item->cwd;
 	if (defined $item->{symlink} || $o->isSymLink) {
 		if (!defined $item->{symlink}) {
-			$o->errsay("bogus symlink #1 -> #2", 
+			$o->_errsay("bogus symlink #1 -> #2", 
 			    $item->name, $o->{linkname});
-			$o->errsay("\t(no \@symlink annotation in packing-list)");
+			$o->_errsay("\t(no \@symlink annotation in packing-list)");
 			return 0;
 		}
 		if (!$o->isSymLink) {
-			$o->errsay("bogus symlink #1 -> #2", 
+			$o->_errsay("bogus symlink #1 -> #2", 
 			    $item->name, $item->{symlink});
-			$o->errsay("\t(not a symlink in the tarball)");
+			$o->_errsay("\t(not a symlink in the tarball)");
 			return 0;
 		}
-		if (!$o->check_linkname($item->{symlink})) {
-			$o->errsay("archive symlink does not match #1 != #2",
+		if (!$o->_check_linkname($item->{symlink})) {
+			$o->_errsay("archive symlink does not match #1 != #2",
 			    $o->{linkname}, $item->{symlink});
 			return 0;
 		}
 	} elsif (defined $item->{link} || $o->isHardLink) {
 		if (!defined $item->{link}) {
-			$o->errsay("bogus hardlink #1 -> #2",
+			$o->_errsay("bogus hardlink #1 -> #2",
 			    $item->name, $o->{linkname});
-			$o->errsay("\t(no \@link annotation in packing-list)");
+			$o->_errsay("\t(no \@link annotation in packing-list)");
 			return 0;
 		}
 		if (!$o->isHardLink) {
-			$o->errsay("bogus hardlink #1 -> #2",
+			$o->_errsay("bogus hardlink #1 -> #2",
 			    $item->name, $item->{link});
-			$o->errsay("\t(not a link in the tarball)");
+			$o->_errsay("\t(not a link in the tarball)");
 			return 0;
 		}
-		if (!$o->check_linkname($item->{link})) {
-			$o->errsay("archive hardlink does not match #1 != #2",
+		if (!$o->_check_linkname($item->{link})) {
+			$o->_errsay("archive hardlink does not match #1 != #2",
 			    $o->{linkname}, $item->{link});
 			return 0;
 		}
 	} elsif ($o->isFile) {
 		if (!defined $item->{size}) {
-			$o->errsay("Error: file #1 does not have recorded size",
+			$o->_errsay("Error: file #1 does not have recorded size",
 			    $item->fullname);
 			return 0;
 		} elsif ($item->{size} != $o->{size}) {
-			$o->errsay("Error: size does not match for #1",
+			$o->_errsay("Error: size does not match for #1",
 			    $item->fullname);
 			return 0;
 		}
 	} else {
-		$o->errsay("archive content for #1 should be file", 
+		$o->_errsay("archive content for #1 should be file", 
 		    $item->name);
 		return 0;
 	}
 	return $o->verify_modes($item);
 }
 
-sub strip_modes
+sub _strip_modes
 {
 	my ($o, $item) = @_;
 
@@ -147,7 +147,7 @@ sub strip_modes
 	return $result;
 }
 
-sub printable_mode
+sub _printable_mode
 {
 	my $o = shift;
 	return sprintf("%4o", 
@@ -161,23 +161,23 @@ sub verify_modes
 
 	if (!defined $item->{owner}) {
 		if ($o->{uname} ne 'root') {
-			$o->errsay("Error: no \@owner for #1 (#2)",
+			$o->_errsay("Error: no \@owner for #1 (#2)",
 			    $item->fullname, $o->{uname});
 	    		$result = 0;
 		}
 	}
 	if (!defined $item->{group}) {
 		if ($o->{gname} ne 'bin' && $o->{gname} ne 'wheel') {
-			$o->errsay("Error: no \@group for #1 (#2)",
+			$o->_errsay("Error: no \@group for #1 (#2)",
 			    $item->fullname, $o->{gname});
 			$result = 0;
 		}
 	}
 	# XXX /1
 	$o->{mode} &= ~(S_ISUID|S_ISGID);
-	if ($o->{mode} != $o->strip_modes($o)) {
-		$o->errsay("Error: weird mode for #1: #2", $item->fullname,
-		    $o->printable_mode);
+	if ($o->{mode} != $o->_strip_modes($o)) {
+		$o->_errsay("Error: weird mode for #1: #2", $item->fullname,
+		    $o->_printable_mode);
 		    $result = 0;
  	}
 	return $result;
@@ -246,7 +246,7 @@ sub prepare_long
 		    $item->name, $entry->{gid});
 	}
 	# XXX /2
-	$entry->{mode} = $entry->strip_modes($item) & ~(S_ISUID|S_ISGID);
+	$entry->{mode} = $entry->_strip_modes($item) & ~(S_ISUID|S_ISGID);
 	if (defined $item->{ts}) {
 		delete $entry->{mtime};
 	}
