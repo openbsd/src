@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.356 2023/03/08 04:43:09 guenther Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.357 2023/05/16 14:32:54 jan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1693,7 +1693,7 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp0)
 
 	sc->sc_carpdevidx = ifp0->if_index;
 	sc->sc_if.if_capabilities = ifp0->if_capabilities &
-	    IFCAP_CSUM_MASK;
+	    (IFCAP_CSUM_MASK | IFCAP_TSOv4 | IFCAP_TSOv6);
 
 	SRPL_FOREACH_LOCKED(vr, cif, sc_list) {
 		struct carp_vhost_entry *vrhead, *schead;

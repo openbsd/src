@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.214 2023/04/26 00:14:21 jan Exp $	*/
+/*	$OpenBSD: if_vlan.c,v 1.215 2023/05/16 14:32:54 jan Exp $	*/
 
 /*
  * Copyright 1998 Massachusetts Institute of Technology
@@ -536,7 +536,8 @@ vlan_up(struct vlan_softc *sc)
 		 * Chips that can do hardware-assisted VLAN encapsulation, can
 		 * calculate the correct checksum for VLAN tagged packets.
 		 */
-		ifp->if_capabilities = ifp0->if_capabilities & IFCAP_CSUM_MASK;
+		ifp->if_capabilities = ifp0->if_capabilities &
+		    (IFCAP_CSUM_MASK | IFCAP_TSOv4 | IFCAP_TSOv6);
 	}
 
 	/* commit the sc */
@@ -559,9 +560,6 @@ vlan_up(struct vlan_softc *sc)
 
 	/* configure the parent to handle packets for this vlan */
 	vlan_multi_apply(sc, ifp0, SIOCADDMULTI);
-
-	/* Inherit flags from parent interface. */
-	vlan_flags_from_parent(ifp0, IFXF_TSO);
 
 	/* we're running now */
 	SET(ifp->if_flags, IFF_RUNNING);
@@ -963,28 +961,6 @@ vlan_del_parent(struct vlan_softc *sc)
 		if_setlladdr(ifp, etheranyaddr);
 
 	return (0);
-}
-
-void
-vlan_flags_from_parent(struct ifnet *ifp0, int flags)
-{
-	struct vlan_softc *sc;
-	int i;
-
-	for (i = 0; i < TAG_HASH_SIZE; i++) {
-		SMR_SLIST_FOREACH_LOCKED(sc, &vlan_tagh[i], sc_list) {
-			/* vlan and tso only works with hw tagging */
-			if (!ISSET(ifp0->if_capabilities, IFCAP_VLAN_HWTAGGING))
-				CLR(flags, IFXF_TSO);
-
-			if (sc->sc_ifidx0 == ifp0->if_index) {
-				if (ISSET(ifp0->if_xflags, flags))
-					SET(sc->sc_if.if_xflags, flags);
-				else
-					CLR(sc->sc_if.if_xflags, flags);
-			}
-		}
-	}
 }
 
 int

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.394 2023/04/26 02:38:08 asou Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.395 2023/05/16 14:32:54 jan Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd $Mdocdate: April 26 2023 $
+.Dd $Mdocdate: May 16 2023 $
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -282,8 +282,18 @@ tag.
 As CSUM_TCPv4, but supports IPv6 datagrams.
 .It Sy CSUM_UDPv6
 As above, for UDP.
-.It Sy TSO
-The device supports TCP segment offloading (TSO).
+.It Sy LRO
+The device supports TCP large receive offload (LRO).
+.It Sy TSOv4
+The device supports IPv4 TCP segmentation offload (TSO).
+TSO is used by default.
+Use the
+.Xr sysctl 8
+variable
+.Va net.inet.tcp.tso
+to disable this feature.
+.It Sy TSOv6
+As above, for IPv6.
 .It Sy WOL
 The device supports Wake on LAN (WoL).
 .It Sy hardmtu
@@ -491,25 +501,25 @@ Query and display information and diagnostics from GBIC and SFP
 modules installed in an interface.
 It is only supported by drivers implementing the necessary functionality
 on hardware which supports it.
-.It Cm tso
-Enable TCP segmentation offloading (TSO) if it's supported by the hardware; see
+.It Cm tcprecvoffload
+Enable TCP large receive offload (LRO) if it's supported by the hardware; see
 .Cm hwfeatures .
-TSO enabled NICs modify received TCP/IP packets.
+LRO enabled network interfaces modify received TCP/IP packets.
 This will also affect traffic of upper layer interfaces,
 such as
 .Xr vlan 4 ,
 .Xr aggr 4 ,
 and
 .Xr carp 4 .
-It is not possible to use TSO with interfaces attached to a
+It is not possible to use LRO with interfaces attached to a
 .Xr bridge 4 ,
 .Xr veb 4 ,
 or
 .Xr tpmr 4 .
 Changing this option will re-initialize the network interface.
-.It Cm -tso
-Disable TSO.
-TSO is disabled by default.
+.It Cm -tcprecvoffload
+Disable LRO.
+LRO is disabled by default.
 .It Cm up
 Mark an interface
 .Dq up .

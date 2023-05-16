@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.212 2023/05/15 16:34:56 bluhm Exp $	*/
+/*	$OpenBSD: if.h,v 1.213 2023/05/16 14:32:54 jan Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -231,7 +231,7 @@ struct if_status_description {
 #define IFXF_INET6_NOSOII	0x40	/* [N] don't do RFC 7217 */
 #define	IFXF_AUTOCONF4		0x80	/* [N] v4 autoconf (aka dhcp) enabled */
 #define	IFXF_MONITOR		0x100	/* [N] only used for bpf */
-#define	IFXF_TSO		0x200	/* [N] XXX missnamed, should be LRO */
+#define	IFXF_LRO		0x200	/* [N] TCP large recv offload */
 
 #define	IFXF_CANTCHANGE \
 	(IFXF_MPSAFE|IFXF_CLONED)
@@ -253,7 +253,7 @@ struct if_status_description {
 #define	IFCAP_CSUM_UDPv6	0x00000100	/* can do IPv6/UDP checksums */
 #define	IFCAP_TSOv4		0x00001000	/* IPv4/TCP segment offload */
 #define	IFCAP_TSOv6		0x00002000	/* IPv6/TCP segment offload */
-#define	IFCAP_TSO		0x00004000	/* XXX should be LRO */
+#define	IFCAP_LRO		0x00004000	/* TCP large recv offload */
 #define	IFCAP_WOL		0x00008000	/* can do wake on lan */
 
 #define IFCAP_CSUM_MASK		(IFCAP_CSUM_IPv4 | IFCAP_CSUM_TCPv4 | \
@@ -546,7 +546,7 @@ void	if_getdata(struct ifnet *, struct if_data *);
 void	ifinit(void);
 int	ifioctl(struct socket *, u_long, caddr_t, struct proc *);
 int	ifpromisc(struct ifnet *, int);
-int	ifsettso(struct ifnet *, int);
+int	ifsetlro(struct ifnet *, int);
 struct	ifg_group *if_creategroup(const char *);
 int	if_addgroup(struct ifnet *, const char *);
 int	if_delgroup(struct ifnet *, const char *);

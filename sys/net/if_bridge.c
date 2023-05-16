@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.367 2023/05/13 13:35:17 bluhm Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.368 2023/05/16 14:32:54 jan Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -338,7 +338,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		 */
 
 		NET_LOCK();
-		ifsettso(ifs, 0);
+		ifsetlro(ifs, 0);
 		NET_UNLOCK();
 
 		bif->bridge_sc = sc;
@@ -401,7 +401,7 @@ bridge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		}
 
 		NET_LOCK();
-		ifsettso(ifs, 0);
+		ifsetlro(ifs, 0);
 		NET_UNLOCK();
 
 		bif->bridge_sc = sc;

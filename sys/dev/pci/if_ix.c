@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.193 2023/04/28 10:18:57 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.194 2023/05/16 14:32:54 jan Exp $	*/
 
 /******************************************************************************
 
@@ -1925,7 +1925,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
 
 	if (sc->hw.mac.type != ixgbe_mac_82598EB)
-		ifp->if_capabilities |= IFCAP_TSO;
+		ifp->if_capabilities |= IFCAP_LRO;
 
 	/*
 	 * Specify the media types supported by this sc and register
@@ -2873,13 +2873,13 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	hlreg |= IXGBE_HLREG0_JUMBOEN;
 	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg);
 
-	if (ISSET(ifp->if_xflags, IFXF_TSO)) {
+	if (ISSET(ifp->if_xflags, IFXF_LRO)) {
 		rdrxctl = IXGBE_READ_REG(hw, IXGBE_RDRXCTL);
 
 		/* This field has to be set to zero. */
 		rdrxctl &= ~IXGBE_RDRXCTL_RSCFRSTSIZE;
 
-		/* Enable TSO Receive Offloading */
+		/* RSC Coalescing on ACK Change */
 		rdrxctl |= IXGBE_RDRXCTL_RSCACKC;
 		rdrxctl |= IXGBE_RDRXCTL_FCOE_WRFIX;
 
@@ -2902,10 +2902,10 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 		srrctl = bufsz | IXGBE_SRRCTL_DESCTYPE_ADV_ONEBUF;
 		IXGBE_WRITE_REG(hw, IXGBE_SRRCTL(i), srrctl);
 
-		if (ISSET(ifp->if_xflags, IFXF_TSO)) {
+		if (ISSET(ifp->if_xflags, IFXF_LRO)) {
 			rdrxctl = IXGBE_READ_REG(&sc->hw, IXGBE_RSCCTL(i));
 
-			/* Enable TSO Receive Side Coalescing */
+			/* Enable Receive Side Coalescing */
 			rdrxctl |= IXGBE_RSCCTL_RSCEN;
 			rdrxctl |= IXGBE_RSCCTL_MAXDESC_16;
 
@@ -3263,7 +3263,7 @@ ixgbe_setup_vlan_hw_support(struct ix_softc *sc)
 	 * We have to disable VLAN striping when using TCP offloading, due to a
 	 * firmware bug.
 	 */
-	if (ISSET(ifp->if_xflags, IFXF_TSO)) {
+	if (ISSET(ifp->if_xflags, IFXF_LRO)) {
 		sc->vlan_stripping = 0;
 		return;
 	}
