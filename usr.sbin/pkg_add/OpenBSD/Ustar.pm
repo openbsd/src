@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.91 2022/05/28 23:20:28 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.92 2023/05/16 14:30:12 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -49,10 +49,10 @@ use File::Basename ();
 use OpenBSD::IdCache;
 use OpenBSD::Paths;
 
-our $uidcache = new OpenBSD::UidCache;
-our $gidcache = new OpenBSD::GidCache;
-our $unamecache = new OpenBSD::UnameCache;
-our $gnamecache = new OpenBSD::GnameCache;
+our $uidcache = OpenBSD::UidCache->new;
+our $gidcache = OpenBSD::GidCache->new;
+our $unamecache = OpenBSD::UnameCache->new;
+our $gnamecache = OpenBSD::GnameCache->new;
 
 # This is a multiple of st_blksize everywhere....
 my $buffsize = 2 * 1024 * 1024;
@@ -71,12 +71,17 @@ sub new
 	    destdir => $destdir} , $class;
 }
 
+# $self->set_description($description):
+#	application-level description of the archive for error messages
 sub set_description
 {
 	my ($self, $d) = @_;
 	$self->{description} = $d;
 }
 
+# $self->set_callback(sub($size_done) {}):
+#	for large file extraction, provide intermediate callbacks with the
+#	size already done for progress meters and the likes
 sub set_callback
 {
 	my ($self, $code) = @_;
@@ -139,6 +144,7 @@ my $unsupported = {
 	LONGNAME => 'Long file',
 };
 	
+# helpers for the XHDR type
 sub read_records
 {
 	my ($self, $size) = @_;
@@ -268,6 +274,7 @@ sub next
 	return $result;
 }
 
+# helper for prepare: ustar has strong limitations wrt directory/filename
 sub split_name
 {
 	my $name = shift;
@@ -285,6 +292,7 @@ sub split_name
 	return ($prefix, $name);
 }
 
+# helper for prepare
 sub extended_record
 {
 	my ($k, $v) = @_;
@@ -476,6 +484,12 @@ sub destdir
 	} else {
 		return $self->{destdir};
 	}
+}
+
+sub set_destdir
+{
+	my ($self, $d) = @_;
+	$self->{destdir} = $d;
 }
 
 sub fh
@@ -743,6 +757,8 @@ our @ISA=qw(OpenBSD::Ustar::Device);
 sub type() { OpenBSD::Ustar::BLOCKDEVICE }
 sub devicetype() { 'c' }
 
+# This is very specific to classic Unix: files with series of 0s should
+# have "gaps" created by using lseek while writing.
 package OpenBSD::CompactWriter;
 
 use constant {
