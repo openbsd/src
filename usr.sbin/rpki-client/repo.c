@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.44 2023/04/26 16:32:41 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.45 2023/05/16 17:01:31 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -806,6 +806,7 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 	ssize_t s;
 	char *fn = NULL;
 	int fd = -1, try = 0;
+	int flags;
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
@@ -850,8 +851,17 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 		if (repo_mkpath(AT_FDCWD, fn) == -1)
 			goto fail;
 
-		fd = open(fn, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+		flags = O_WRONLY|O_CREAT|O_TRUNC;
+		if (pt == PUB_ADD)
+			flags |= O_EXCL;
+		fd = open(fn, flags, 0644);
 		if (fd == -1) {
+			if (errno == EEXIST) {
+				warnx("%s: duplicate publish element for %s",
+				    rr->notifyuri, fn);
+				free(fn);
+				return 0;
+			}
 			warn("open %s", fn);
 			goto fail;
 		}
