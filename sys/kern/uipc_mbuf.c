@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.285 2023/05/05 01:19:51 bluhm Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.286 2023/05/16 20:09:27 mvs Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1801,7 +1801,7 @@ sysctl_mq(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	case IFQCTL_MAXLEN:
 		maxlen = mq->mq_maxlen;
 		error = sysctl_int(oldp, oldlenp, newp, newlen, &maxlen);
-		if (!error && maxlen != mq->mq_maxlen)
+		if (error == 0)
 			mq_set_maxlen(mq, maxlen);
 		return (error);
 	case IFQCTL_DROPS:
