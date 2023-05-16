@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.18 2019/07/05 06:21:14 espie Exp $
+# $OpenBSD: md5.pm,v 1.19 2023/05/16 14:29:20 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,9 @@
 use strict;
 use warnings;
 
+# XXX even though there is ONE current implementation of OpenBSD::digest
+# (SHA256) we keep the framework open in case we ever need to switch,
+# as we did in the past with md5 -> sha256
 package OpenBSD::digest;
 
 sub new
