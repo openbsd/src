@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.35 2023/05/12 10:10:55 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.36 2023/05/16 07:04:57 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -153,27 +153,29 @@ static const SHA_LONG64 K512[80] = {
 #define Ch(x, y, z)	(((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x, y, z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
-#define	ROUND_00_15(i, a, b, c, d, e, f, g, h)		do {	\
-	T1 += h + Sigma1(e) + Ch(e, f, g) + K512[i];	\
-	h = Sigma0(a) + Maj(a, b, c);			\
-	d += T1;	h += T1;			} while (0)
+#define	ROUND_00_15(i, a, b, c, d, e, f, g, h, Wt)		do {	\
+	T1 = h + Sigma1(e) + Ch(e, f, g) + K512[i] + Wt;		\
+	T2 = Sigma0(a) + Maj(a, b, c);					\
+	d += T1;							\
+	h = T1 + T2;							\
+								} while (0)
 
-#define	ROUND_16_80(i, j, a, b, c, d, e, f, g, h, X)	do {	\
-	s0 = X[(j+1)&0x0f];	s0 = sigma0(s0);	\
-	s1 = X[(j+14)&0x0f];	s1 = sigma1(s1);	\
-	T1 = X[(j)&0x0f] += s0 + s1 + X[(j+9)&0x0f];	\
-	ROUND_00_15(i+j, a, b, c, d, e, f, g, h);	} while (0)
+#define	ROUND_16_80(i, j, a, b, c, d, e, f, g, h, X)		do {	\
+	s0 = sigma0(X[(j + 1) & 0x0f]);					\
+	s1 = sigma1(X[(j + 14) & 0x0f]);				\
+	X[(j) & 0x0f] += s0 + s1 + X[(j + 9) & 0x0f];			\
+	ROUND_00_15(i + j, a, b, c, d, e, f, g, h, X[(j) & 0x0f]);	\
+								} while (0)
 
 static void
-sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
+sha512_block_data_order(SHA512_CTX *ctx, const void *_in, size_t num)
 {
-	const SHA_LONG64 *W = in;
-	SHA_LONG64 a, b, c, d, e, f, g, h, s0, s1, T1;
+	const SHA_LONG64 *in = _in;
+	SHA_LONG64 a, b, c, d, e, f, g, h, s0, s1, T1, T2;
 	SHA_LONG64 X[16];
 	int i;
 
 	while (num--) {
-
 		a = ctx->h[0];
 		b = ctx->h[1];
 		c = ctx->h[2];
@@ -183,38 +185,38 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
 		g = ctx->h[6];
 		h = ctx->h[7];
 
-		T1 = X[0] = PULL64(W[0]);
-		ROUND_00_15(0, a, b, c, d, e, f, g, h);
-		T1 = X[1] = PULL64(W[1]);
-		ROUND_00_15(1, h, a, b, c, d, e, f, g);
-		T1 = X[2] = PULL64(W[2]);
-		ROUND_00_15(2, g, h, a, b, c, d, e, f);
-		T1 = X[3] = PULL64(W[3]);
-		ROUND_00_15(3, f, g, h, a, b, c, d, e);
-		T1 = X[4] = PULL64(W[4]);
-		ROUND_00_15(4, e, f, g, h, a, b, c, d);
-		T1 = X[5] = PULL64(W[5]);
-		ROUND_00_15(5, d, e, f, g, h, a, b, c);
-		T1 = X[6] = PULL64(W[6]);
-		ROUND_00_15(6, c, d, e, f, g, h, a, b);
-		T1 = X[7] = PULL64(W[7]);
-		ROUND_00_15(7, b, c, d, e, f, g, h, a);
-		T1 = X[8] = PULL64(W[8]);
-		ROUND_00_15(8, a, b, c, d, e, f, g, h);
-		T1 = X[9] = PULL64(W[9]);
-		ROUND_00_15(9, h, a, b, c, d, e, f, g);
-		T1 = X[10] = PULL64(W[10]);
-		ROUND_00_15(10, g, h, a, b, c, d, e, f);
-		T1 = X[11] = PULL64(W[11]);
-		ROUND_00_15(11, f, g, h, a, b, c, d, e);
-		T1 = X[12] = PULL64(W[12]);
-		ROUND_00_15(12, e, f, g, h, a, b, c, d);
-		T1 = X[13] = PULL64(W[13]);
-		ROUND_00_15(13, d, e, f, g, h, a, b, c);
-		T1 = X[14] = PULL64(W[14]);
-		ROUND_00_15(14, c, d, e, f, g, h, a, b);
-		T1 = X[15] = PULL64(W[15]);
-		ROUND_00_15(15, b, c, d, e, f, g, h, a);
+		X[0] = PULL64(in[0]);
+		ROUND_00_15(0, a, b, c, d, e, f, g, h, X[0]);
+		X[1] = PULL64(in[1]);
+		ROUND_00_15(1, h, a, b, c, d, e, f, g, X[1]);
+		X[2] = PULL64(in[2]);
+		ROUND_00_15(2, g, h, a, b, c, d, e, f, X[2]);
+		X[3] = PULL64(in[3]);
+		ROUND_00_15(3, f, g, h, a, b, c, d, e, X[3]);
+		X[4] = PULL64(in[4]);
+		ROUND_00_15(4, e, f, g, h, a, b, c, d, X[4]);
+		X[5] = PULL64(in[5]);
+		ROUND_00_15(5, d, e, f, g, h, a, b, c, X[5]);
+		X[6] = PULL64(in[6]);
+		ROUND_00_15(6, c, d, e, f, g, h, a, b, X[6]);
+		X[7] = PULL64(in[7]);
+		ROUND_00_15(7, b, c, d, e, f, g, h, a, X[7]);
+		X[8] = PULL64(in[8]);
+		ROUND_00_15(8, a, b, c, d, e, f, g, h, X[8]);
+		X[9] = PULL64(in[9]);
+		ROUND_00_15(9, h, a, b, c, d, e, f, g, X[9]);
+		X[10] = PULL64(in[10]);
+		ROUND_00_15(10, g, h, a, b, c, d, e, f, X[10]);
+		X[11] = PULL64(in[11]);
+		ROUND_00_15(11, f, g, h, a, b, c, d, e, X[11]);
+		X[12] = PULL64(in[12]);
+		ROUND_00_15(12, e, f, g, h, a, b, c, d, X[12]);
+		X[13] = PULL64(in[13]);
+		ROUND_00_15(13, d, e, f, g, h, a, b, c, X[13]);
+		X[14] = PULL64(in[14]);
+		ROUND_00_15(14, c, d, e, f, g, h, a, b, X[14]);
+		X[15] = PULL64(in[15]);
+		ROUND_00_15(15, b, c, d, e, f, g, h, a, X[15]);
 
 		for (i = 16; i < 80; i += 16) {
 			ROUND_16_80(i, 0, a, b, c, d, e, f, g, h, X);
@@ -244,7 +246,7 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num)
 		ctx->h[6] += g;
 		ctx->h[7] += h;
 
-		W += SHA_LBLOCK;
+		in += SHA_LBLOCK;
 	}
 }
 
