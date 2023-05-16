@@ -1,4 +1,4 @@
-$OpenBSD: Ustar.pod,v 1.2 2023/05/16 10:51:36 espie Exp $
+$OpenBSD: Ustar.pod,v 1.3 2023/05/16 10:52:58 espie Exp $
 
 =head1 NAME
 
@@ -56,7 +56,7 @@ to be usable on pipe outputs. For archive writing, the filehandle should
 support C<print>.
 
 Error messages and fatal errors will be handled through the C<$state> object,
-which should conform to C<OpenBSD::State(3p)> (uses C<errsay> and C<fatal>).
+which should conform to C<OpenBSD::BaseState(3p)> (uses C<errsay> and C<fatal>).
 
 Note that read and write support are mutually exclusive, though there is
 no need to specify the mode used at creation time; it is implicitly
