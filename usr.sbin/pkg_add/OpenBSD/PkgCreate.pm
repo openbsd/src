@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.185 2023/01/25 13:25:07 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.186 2023/05/16 14:30:55 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -434,7 +434,7 @@ sub set_destdir
 {
 	my ($self, $state) = @_;
 	if ($self->name =~ m/^\//) {
-		$state->{archive}->destdir($state->{base});
+		$state->{archive}->set_destdir($state->{base});
 	} else {
 		$self->SUPER::set_destdir($state);
 	}
@@ -585,7 +585,7 @@ sub set_destdir
 {
 	my ($self, $state) = @_;
 
-	$state->{archive}->destdir($state->{base}."/".$self->cwd);
+	$state->{archive}->set_destdir($state->{base}."/".$self->cwd);
 }
 
 sub archive
