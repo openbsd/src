@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.59 2022/11/26 17:52:35 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.60 2023/05/16 19:36:00 mvs Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -123,14 +123,16 @@ struct protosw {
  * PR_ADDR requires PR_ATOMIC;
  * PR_ADDR and PR_CONNREQUIRED are mutually exclusive.
  */
-#define	PR_ATOMIC	0x01		/* exchange atomic messages only */
-#define	PR_ADDR		0x02		/* addresses given with messages */
-#define	PR_CONNREQUIRED	0x04		/* connection required by protocol */
-#define	PR_WANTRCVD	0x08		/* want PRU_RCVD calls */
-#define	PR_RIGHTS	0x10		/* passes capabilities */
-#define	PR_ABRTACPTDIS	0x20		/* abort on accept(2) to disconnected
+#define	PR_ATOMIC	0x0001		/* exchange atomic messages only */
+#define	PR_ADDR		0x0002		/* addresses given with messages */
+#define	PR_CONNREQUIRED	0x0004		/* connection required by protocol */
+#define	PR_WANTRCVD	0x0008		/* want PRU_RCVD calls */
+#define	PR_RIGHTS	0x0010		/* passes capabilities */
+#define	PR_ABRTACPTDIS	0x0020		/* abort on accept(2) to disconnected
 					   socket */
-#define	PR_SPLICE	0x40		/* socket splicing is possible */
+#define	PR_SPLICE	0x0040		/* socket splicing is possible */
+#define	PR_MPSYSCTL	0x0080		/* (*pr_sysctl)() doesn't require
+					   kernel lock */
 
 /*
  * The arguments to usrreq are:
