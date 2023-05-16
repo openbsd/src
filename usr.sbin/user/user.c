@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.129 2023/05/15 17:00:24 millert Exp $ */
+/* $OpenBSD: user.c,v 1.130 2023/05/16 21:28:46 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -171,7 +171,7 @@ enum {
 #define MKDIR		"/bin/mkdir"
 #define MV		"/bin/mv"
 #define NOLOGIN		"/sbin/nologin"
-#define PAX		"/bin/pax"
+#define CP		"/bin/cp"
 #define RM		"/bin/rm"
 
 #define UNSET_INACTIVE	"Null (unset)"
@@ -311,8 +311,8 @@ copydotfiles(char *skeldir, char *dir)
 	if (n == 0) {
 		warnx("No \"dot\" initialisation files found");
 	} else {
-		(void) asystem("cd %s && %s -rw -pe %s . %s",
-				skeldir, PAX, (verbose) ? "-v" : "", dir);
+		(void) asystem("%s -a %s %s/. %s",
+		    CP, (verbose) ? "-v" : "", skeldir, dir);
 	}
 	return n;
 }
