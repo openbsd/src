@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.92 2023/05/16 14:30:12 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.93 2023/05/16 16:45:04 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -515,17 +515,6 @@ sub fatal
 	$self->{archive}->fatal(@args);
 }
 
-sub system
-{
-	my ($self, @args) = @_;
-	$self->{archive}{state}->system(@args);
-}
-
-sub errsay
-{
-	my ($self, @args) = @_;
-	$self->{archive}{state}->errsay(@args);
-}
 sub left_todo
 {
 	my ($self, $toread) = @_;
@@ -737,7 +726,7 @@ sub create
 {
 	my $self = shift;
 	$self->make_basedir;
-	$self->system(OpenBSD::Paths->mknod,
+	$self->{archive}{state}->system(OpenBSD::Paths->mknod,
 	    '-m', $self->{mode}, '--', $self->fullname,
 	    $self->devicetype, $self->{major}, $self->{minor});
 	$self->set_modes;

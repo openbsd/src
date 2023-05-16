@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.38 2023/05/16 14:33:04 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.39 2023/05/16 16:45:04 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -51,6 +51,12 @@ sub check_linkname
 		$c = $self->{cwd}.'/'.$c;
 	}
 	return $c eq $linkname;
+}
+
+sub errsay
+{
+	my ($self, @args) = @_;
+	$self->{archive}{state}->errsay(@args);
 }
 
 sub validate_meta
