@@ -1,4 +1,4 @@
-$OpenBSD: md5.pod,v 1.1 2020/12/20 15:30:58 daniel Exp $
+$OpenBSD: md5.pod,v 1.2 2023/05/16 11:53:01 espie Exp $
 
 =head1 NAME
 
@@ -51,7 +51,7 @@ create a new digest object from a string representation.
 
 create a new digest object C<$o2> of the same type as C<$o>.
 
-=item $o-E<gt>equal($o2)
+=item $o-E<gt>equals($o2)
 
 compare two digest objects. Returns true only if they match.
 
