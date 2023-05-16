@@ -1,4 +1,4 @@
-$OpenBSD: IdCache.pod,v 1.1 2020/12/20 15:30:58 daniel Exp $
+$OpenBSD: IdCache.pod,v 1.2 2023/05/16 11:20:00 espie Exp $
 
 =head1 NAME
 
@@ -8,16 +8,16 @@ OpenBSD::IdCache - cache for user and group look-ups
 
     use OpenBSD::IdCache;
 
-    my $ucache = new OpenBSD::UidCache;
+    my $ucache = OpenBSD::UidCache->new;
     my $uid = $ucache->lookup("espie");
 
-    my $gcache = new OpenBSD::GidCache;
+    my $gcache = OpenBSD::GidCache->new;
     my $gid = $gcache->lookup("wheel", 0);
 
-    my $unamecache = new OpenBSD::UnameCache;
+    my $unamecache = OpenBSD::UnameCache->new;
     my $name = $unamecache->lookup($uid);
 
-    my $gnamecache = new OpenBSD::GnameCache;
+    my $gnamecache = OpenBSD::GnameCache->new;
     my $grname = $gnamecache->lookup($gid);
 
 =head1 DESCRIPTION
