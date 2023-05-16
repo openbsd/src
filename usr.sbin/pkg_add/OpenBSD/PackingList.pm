@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.149 2022/06/06 07:21:17 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.150 2023/05/16 14:31:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -177,10 +177,7 @@ sub read
 	if (ref $a) {
 		$plist = $a;
 	} else {
-		$plist = new $a;
-	}
-	if (defined $subclass->{$code}) {
-		bless $plist, "OpenBSD::PackingList::".$subclass->{$code};
+		$plist = $a->new;
 	}
 	&$code($u,
 		sub {
@@ -561,38 +558,5 @@ sub signature
 	require OpenBSD::Signature;
 	return OpenBSD::Signature->from_plist($self);
 }
-
-$subclass =  {
-	\&defaultCode => 'Full',
-	\&SharedItemsOnly => 'SharedItems',
-	\&DirrmOnly => 'SharedItems',
-	\&LibraryOnly => 'Libraries',
-	\&FilesOnly => 'Files',
-	\&PrelinkStuffOnly => 'Prelink',
-	\&DependOnly => 'Depend',
-	\&ExtraInfoOnly => 'ExtraInfo',
-	\&UpdateInfoOnly => 'UpdateInfo',
-	\&ConflictOnly => 'Conflict' };
-
-package OpenBSD::PackingList::OldLibs;
-our @ISA = qw(OpenBSD::PackingList);
-package OpenBSD::PackingList::Full;
-our @ISA = qw(OpenBSD::PackingList::OldLibs);
-package OpenBSD::PackingList::SharedItems;
-our @ISA = qw(OpenBSD::PackingList);
-package OpenBSD::PackingList::Libraries;
-our @ISA = qw(OpenBSD::PackingList);
-package OpenBSD::PackingList::Files;
-our @ISA = qw(OpenBSD::PackingList);
-package OpenBSD::PackingList::Prelink;
-our @ISA = qw(OpenBSD::PackingList);
-package OpenBSD::PackingList::Depend;
-our @ISA = qw(OpenBSD::PackingList);
-package OpenBSD::PackingList::ExtraInfo;
-our @ISA = qw(OpenBSD::PackingList);
-package OpenBSD::PackingList::UpdateInfo;
-our @ISA = qw(OpenBSD::PackingList);
-package OpenBSD::PackingList::Conflict;
-our @ISA = qw(OpenBSD::PackingList);
 
 1;
