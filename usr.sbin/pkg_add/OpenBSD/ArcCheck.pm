@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.37 2022/06/06 06:57:35 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.38 2023/05/16 14:33:04 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -21,14 +21,16 @@
 # between tar balls OpenBSD::Ustar::Object and 
 # packing list OpenBSD::PackingElement
 
-# specifically, during create time, we call prepare_long:
-# - prevent a lot of weird objects from entering the archives
-# - make sure all relevant users/modes are recorded in the PLIST item
+# specifically, during create time:
+# 	$o = $archive->prepare_long($item);
+# 	if (!$o->verify_modes($self))
+# 		error...
+# 	if (!$o->is_allowed)
+#		error...
 
-# during extraction: we call validate_meta:
-# - make sure complex objects have all their relevant properties recorded
-# - disallow extraction of non-files/links.
-# - guard against files much longer than they should be.
+# during extraction:
+#	$o->validate_meta($item) or
+#		error...
 
 use strict;
 use warnings;
