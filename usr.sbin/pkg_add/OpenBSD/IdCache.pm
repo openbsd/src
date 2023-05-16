@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: IdCache.pm,v 1.10 2010/12/24 09:04:14 espie Exp $
+# $OpenBSD: IdCache.pm,v 1.11 2023/05/16 14:31:54 espie Exp $
 #
 # Copyright (c) 2002-2005 Marc Espie <espie@openbsd.org>
 #
@@ -32,7 +32,7 @@ sub lookup
 	if (defined $self->{$name}) {
 		$r = $self->{$name};
 	} else {
-		$r = $self->convert($name);
+		$r = $self->_convert($name);
 		if (!defined $r) {
 			$r = $default;
 		}
@@ -59,7 +59,7 @@ sub lookup
 package OpenBSD::UidCache;
 our @ISA=qw(OpenBSD::IdCache);
 
-sub convert
+sub _convert
 {
 	my @entry = getpwnam($_[1]);
 	return @entry == 0 ? undef : $entry[2];
@@ -68,7 +68,7 @@ sub convert
 package OpenBSD::GidCache;
 our @ISA=qw(OpenBSD::IdCache);
 
-sub convert
+sub _convert
 {
 	my @entry = getgrnam($_[1]);
 	return @entry == 0 ? undef : $entry[2];
@@ -77,7 +77,7 @@ sub convert
 package OpenBSD::UnameCache;
 our @ISA=qw(OpenBSD::SimpleIdCache);
 
-sub convert
+sub _convert
 {
 	return getpwuid($_[1]);
 }
@@ -85,7 +85,7 @@ sub convert
 package OpenBSD::GnameCache;
 our @ISA=qw(OpenBSD::SimpleIdCache);
 
-sub convert
+sub _convert
 {
 	return getgrgid($_[1]);
 }
