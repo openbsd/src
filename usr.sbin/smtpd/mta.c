@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.243 2022/02/18 16:57:36 millert Exp $	*/
+/*	$OpenBSD: mta.c,v 1.244 2023/05/16 17:48:52 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -489,38 +489,41 @@ mta_setup_dispatcher(struct dispatcher *dispatcher)
 	if (remote->tls_ciphers)
 		ciphers = remote->tls_ciphers;
 	if (ciphers && tls_config_set_ciphers(config, ciphers) == -1)
-		fatal("%s", tls_config_error(config));
+		fatalx("%s", tls_config_error(config));
 
 	if (remote->tls_protocols) {
 		if (tls_config_parse_protocols(&protos,
 		    remote->tls_protocols) == -1)
-			fatal("failed to parse protocols \"%s\"",
+			fatalx("failed to parse protocols \"%s\"",
 			    remote->tls_protocols);
 		if (tls_config_set_protocols(config, protos) == -1)
-			fatal("%s", tls_config_error(config));
+			fatalx("%s", tls_config_error(config));
 	}
 
 	if (remote->pki) {
 		pki = dict_get(env->sc_pki_dict, remote->pki);
 		if (pki == NULL)
-			fatal("client pki \"%s\" not found ", remote->pki);
+			fatalx("client pki \"%s\" not found", remote->pki);
 
 		tls_config_set_dheparams(config, dheparams[pki->pki_dhe]);
 		tls_config_use_fake_private_key(config);
 		if (tls_config_set_keypair_mem(config, pki->pki_cert,
 		    pki->pki_cert_len, NULL, 0) == -1)
-		fatal("tls_config_set_keypair_mem");
+			fatalx("tls_config_set_keypair_mem: %s",
+			    tls_config_error(config));
 	}
 
 	if (remote->ca) {
 		ca = dict_get(env->sc_ca_dict, remote->ca);
 		if (tls_config_set_ca_mem(config, ca->ca_cert, ca->ca_cert_len)
 		    == -1)
-			fatal("tls_config_set_ca_mem");
+			fatalx("tls_config_set_ca_mem: %s",
+			    tls_config_error(config));
 	}
 	else if (tls_config_set_ca_file(config, tls_default_ca_cert_file())
 	    == -1)
-		fatal("tls_config_set_ca_file");
+		fatalx("tls_config_set_ca_file: %s",
+		    tls_config_error(config));
 
 	if (remote->tls_verify) {
 		tls_config_verify(config);
