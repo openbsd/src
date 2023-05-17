@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.201 2023/05/17 23:18:59 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.202 2023/05/17 23:30:58 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -251,6 +251,7 @@ qciic*		at acpi?
 qciic*		at fdt?
 iic*		at qciic?
 qcipcc*		at fdt?
+qcmtx*		at fdt? early 1
 qcpdc*		at fdt?
 qcscm*		at fdt?
 qcspmi*		at fdt?

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.188 2023/05/17 23:19:00 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.189 2023/05/17 23:30:58 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -680,6 +680,11 @@ file	dev/fdt/qciic_fdt.c		qciic
 device	qcipcc
 attach	qcipcc at fdt
 file	dev/fdt/qcipcc.c		qcipcc
+
+# Qualcomm Hardware Spinlock
+device	qcmtx
+attach	qcmtx at fdt
+file	dev/fdt/qcmtx.c			qcmtx
 
 # Qualcomm SCM
 device	qcscm
