@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.29 2023/04/03 01:40:32 dlg Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.30 2023/05/17 23:25:45 patrick Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -312,5 +312,23 @@ struct mbox_channel *mbox_channel_idx(int, int, struct mbox_client *);
 
 int	mbox_send(struct mbox_channel *, const void *, size_t);
 int	mbox_recv(struct mbox_channel *, void *, size_t);
+
+/* hwlock support */
+
+struct hwlock_device {
+	int	hd_node;
+	void	*hd_cookie;
+	int	(*hd_lock)(void *, uint32_t *, int);
+
+	LIST_ENTRY(hwlock_device) hd_list;
+	uint32_t hd_phandle;
+	uint32_t hd_cells;
+};
+
+void	hwlock_register(struct hwlock_device *);
+
+int	hwlock_lock_idx(int, int);
+int	hwlock_lock_idx_timeout(int, int, int);
+int	hwlock_unlock_idx(int, int);
 
 #endif /* _DEV_OFW_MISC_H_ */
