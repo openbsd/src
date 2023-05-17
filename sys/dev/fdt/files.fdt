@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.187 2023/04/28 05:13:37 phessler Exp $
+#	$OpenBSD: files.fdt,v 1.188 2023/05/17 23:19:00 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -675,6 +675,11 @@ file	dev/fdt/qcgpio_fdt.c		qcgpio
 # Qualcomm I2C controller
 attach	qciic at fdt with qciic_fdt
 file	dev/fdt/qciic_fdt.c		qciic
+
+# Qualcomm Inter-Processor Communication controller
+device	qcipcc
+attach	qcipcc at fdt
+file	dev/fdt/qcipcc.c		qcipcc
 
 # Qualcomm SCM
 device	qcscm
