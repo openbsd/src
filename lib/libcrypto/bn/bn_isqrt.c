@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.7 2023/03/27 10:25:02 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.8 2023/05/17 07:42:38 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -22,9 +22,7 @@
 #include <openssl/err.h>
 
 #include "bn_local.h"
-
-#define CTASSERT(x)	extern char  _ctassert[(x) ? 1 : -1 ]   \
-			    __attribute__((__unused__))
+#include "crypto_internal.h"
 
 /*
  * Calculate integer square root of |n| using a variant of Newton's method.
