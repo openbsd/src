@@ -1,4 +1,4 @@
-/* $OpenBSD: qcscm.c,v 1.3 2023/04/28 10:19:07 patrick Exp $ */
+/* $OpenBSD: qcscm.c,v 1.4 2023/05/17 23:12:04 patrick Exp $ */
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -43,6 +43,7 @@
 #define ARM_SMCCC_STD_CALL			(0U << 31)
 #define ARM_SMCCC_FAST_CALL			(1U << 31)
 #define ARM_SMCCC_LP64				(1U << 30)
+#define ARM_SMCCC_OWNER_SIP			2
 
 #define QCTEE_TZ_OWNER_TZ_APPS			48
 #define QCTEE_TZ_OWNER_QSEE_OS			50
@@ -67,6 +68,14 @@
 #define QCTEE_UEFI_BUFFER_TOO_SMALL		0x80000005
 #define QCTEE_UEFI_DEVICE_ERROR			0x80000007
 #define QCTEE_UEFI_NOT_FOUND			0x8000000e
+
+#define QCSCM_SVC_PIL			0x02
+#define QCSCM_PIL_PAS_INIT_IMAGE	0x01
+#define QCSCM_PIL_PAS_MEM_SETUP		0x02
+#define QCSCM_PIL_PAS_AUTH_AND_RESET	0x05
+#define QCSCM_PIL_PAS_SHUTDOWN		0x06
+#define QCSCM_PIL_PAS_IS_SUPPORTED	0x07
+#define QCSCM_PIL_PAS_MSS_RESET		0x0a
 
 #define QCSCM_INTERRUPTED		1
 
@@ -728,6 +737,93 @@ qcscm_uefi_rtc_set(uint32_t off)
 		return EIO;
 
 	return 0;
+}
+
+int
+qcscm_pas_init_image(uint32_t peripheral, paddr_t metadata)
+{
+	struct qcscm_softc *sc = qcscm_sc;
+	uint64_t res[3];
+	uint64_t args[2];
+	uint32_t arginfo;
+	int ret;
+
+	if (sc == NULL)
+		return ENXIO;
+
+	arginfo = QCSCM_ARGINFO_NUM(nitems(args));
+	arginfo |= QCSCM_ARGINFO_TYPE(0, QCSCM_ARGINFO_TYPE_VAL);
+	arginfo |= QCSCM_ARGINFO_TYPE(1, QCSCM_ARGINFO_TYPE_RW);
+	args[0] = peripheral;
+	args[1] = metadata;
+
+	/* Make call into TEE */
+	ret = qcscm_smc_call(sc, ARM_SMCCC_OWNER_SIP, QCSCM_SVC_PIL,
+	    QCSCM_PIL_PAS_INIT_IMAGE, arginfo, args, nitems(args), res);
+
+	/* If the call succeeded, check the response status */
+	if (ret == 0)
+		ret = res[0];
+
+	return ret;
+}
+
+int
+qcscm_pas_mem_setup(uint32_t peripheral, paddr_t addr, size_t size)
+{
+	struct qcscm_softc *sc = qcscm_sc;
+	uint64_t res[3];
+	uint64_t args[3];
+	uint32_t arginfo;
+	int ret;
+
+	if (sc == NULL)
+		return ENXIO;
+
+	arginfo = QCSCM_ARGINFO_NUM(nitems(args));
+	arginfo |= QCSCM_ARGINFO_TYPE(0, QCSCM_ARGINFO_TYPE_VAL);
+	arginfo |= QCSCM_ARGINFO_TYPE(1, QCSCM_ARGINFO_TYPE_VAL);
+	arginfo |= QCSCM_ARGINFO_TYPE(2, QCSCM_ARGINFO_TYPE_VAL);
+	args[0] = peripheral;
+	args[1] = addr;
+	args[2] = size;
+
+	/* Make call into TEE */
+	ret = qcscm_smc_call(sc, ARM_SMCCC_OWNER_SIP, QCSCM_SVC_PIL,
+	    QCSCM_PIL_PAS_MEM_SETUP, arginfo, args, nitems(args), res);
+
+	/* If the call succeeded, check the response status */
+	if (ret == 0)
+		ret = res[0];
+
+	return ret;
+}
+
+int
+qcscm_pas_auth_and_reset(uint32_t peripheral)
+{
+	struct qcscm_softc *sc = qcscm_sc;
+	uint64_t res[3];
+	uint64_t args[1];
+	uint32_t arginfo;
+	int ret;
+
+	if (sc == NULL)
+		return ENXIO;
+
+	arginfo = QCSCM_ARGINFO_NUM(nitems(args));
+	arginfo |= QCSCM_ARGINFO_TYPE(0, QCSCM_ARGINFO_TYPE_VAL);
+	args[0] = peripheral;
+
+	/* Make call into TEE */
+	ret = qcscm_smc_call(sc, ARM_SMCCC_OWNER_SIP, QCSCM_SVC_PIL,
+	    QCSCM_PIL_PAS_AUTH_AND_RESET, arginfo, args, nitems(args), res);
+
+	/* If the call succeeded, check the response status */
+	if (ret == 0)
+		ret = res[0];
+
+	return ret;
 }
 
 /* DMA code */
