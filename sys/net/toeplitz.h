@@ -1,4 +1,4 @@
-/*	$OpenBSD: toeplitz.h,v 1.10 2022/12/27 20:13:03 patrick Exp $ */
+/*	$OpenBSD: toeplitz.h,v 1.11 2023/05/17 10:22:17 dlg Exp $ */
 
 /*
  * Copyright (c) 2019 David Gwynne <dlg@openbsd.org>
@@ -92,9 +92,9 @@ stoeplitz_hash_h16(const struct stoeplitz_cache *scache, uint16_t h16)
 }
 
 static __unused inline uint16_t
-stoeplitz_hash_h32(const struct stoeplitz_cache *scache, uint64_t h32)
+stoeplitz_hash_h32(const struct stoeplitz_cache *scache, uint32_t h32)
 {
-	return (stoeplitz_hash_h16(scache, h32 & (h32 >> 16)));
+	return (stoeplitz_hash_h16(scache, h32 ^ (h32 >> 16)));
 }
 
 static __unused inline uint16_t
