@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.161 2023/05/10 13:45:49 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.162 2023/05/17 12:59:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -951,7 +951,7 @@ PRT_print_gptmenu(char *lbuf, size_t lbuflen)
 }
 
 void
-PRT_parse(const struct dos_partition *dp, const uint64_t lba_self,
+PRT_dp_to_prt(const struct dos_partition *dp, const uint64_t lba_self,
     const uint64_t lba_firstembr, struct prt *prt)
 {
 	off_t			off;
@@ -974,7 +974,7 @@ PRT_parse(const struct dos_partition *dp, const uint64_t lba_self,
 }
 
 void
-PRT_make(const struct prt *prt, const uint64_t lba_self,
+PRT_prt_to_dp(const struct prt *prt, const uint64_t lba_self,
     const uint64_t lba_firstembr, struct dos_partition *dp)
 {
 	struct chs		start, end;

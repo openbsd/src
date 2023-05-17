@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.123 2023/03/06 13:24:40 krw Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.124 2023/05/17 12:59:37 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -64,7 +64,7 @@ MBR_init(struct mbr *mbr)
 		bootprt = disk.dk_bootprt;
 	} else {
 		memcpy(&dp, &default_dmbr.dmbr_parts[0], sizeof(dp));
-		PRT_parse(&dp, 0, 0, &bootprt);
+		PRT_dp_to_prt(&dp, 0, 0, &bootprt);
 	}
 
 	if (bootprt.prt_ns > 0) {
@@ -123,7 +123,7 @@ dos_mbr_to_mbr(const struct dos_mbr *dmbr, const uint64_t lba_self,
 	for (i = 0; i < nitems(mbr->mbr_prt); i++) {
 		memset(&mbr->mbr_prt[i], 0, sizeof(mbr->mbr_prt[i]));
 		if (i < nitems(dmbr->dmbr_parts))
-			PRT_parse(&dos_parts[i], lba_self, lba_firstembr,
+			PRT_dp_to_prt(&dos_parts[i], lba_self, lba_firstembr,
 			    &mbr->mbr_prt[i]);
 	}
 }
@@ -140,7 +140,7 @@ mbr_to_dos_mbr(const struct mbr *mbr, struct dos_mbr *dos_mbr)
 	for (i = 0; i < nitems(dos_mbr->dmbr_parts); i++) {
 		memset(&dos_partition, 0, sizeof(dos_partition));
 		if (i < nitems(mbr->mbr_prt)) {
-			PRT_make(&mbr->mbr_prt[i], mbr->mbr_lba_self,
+			PRT_prt_to_dp(&mbr->mbr_prt[i], mbr->mbr_lba_self,
 			    mbr->mbr_lba_firstembr, &dos_partition);
 		}
 		memcpy(&dos_mbr->dmbr_parts[i], &dos_partition,
