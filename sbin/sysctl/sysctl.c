@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.258 2021/07/12 15:09:19 beck Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.259 2023/05/17 22:12:51 kettenis Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -132,6 +132,7 @@ struct ctlname ddbname[] = CTL_DDB_NAMES;
 struct ctlname audioname[] = CTL_KERN_AUDIO_NAMES;
 struct ctlname videoname[] = CTL_KERN_VIDEO_NAMES;
 struct ctlname witnessname[] = CTL_KERN_WITNESS_NAMES;
+struct ctlname batteryname[] = CTL_HW_BATTERY_NAMES;
 char names[BUFSIZ];
 int lastused;
 
@@ -223,6 +224,7 @@ int sysctl_chipset(char *, char **, int *, int, int *);
 int sysctl_audio(char *, char **, int *, int, int *);
 int sysctl_video(char *, char **, int *, int, int *);
 int sysctl_witness(char *, char **, int *, int, int *);
+int sysctl_battery(char *, char **, int *, int, int *);
 void vfsinit(void);
 
 char *equ = "=";
@@ -555,6 +557,11 @@ parse(char *string, int flags)
 		case HW_SENSORS:
 			special |= SENSORS;
 			len = sysctl_sensors(string, &bufp, mib, flags, &type);
+			if (len < 0)
+				return;
+			break;
+		case HW_BATTERY:
+			len = sysctl_battery(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
 			break;
@@ -1782,6 +1789,7 @@ struct list tclist = { tcname, KERN_TIMECOUNTER_MAXID };
 struct list audiolist = { audioname, KERN_AUDIO_MAXID };
 struct list videolist = { videoname, KERN_VIDEO_MAXID };
 struct list witnesslist = { witnessname, KERN_WITNESS_MAXID };
+struct list batterylist = { batteryname, HW_BATTERY_MAXID };
 
 /*
  * handle vfs namei cache statistics
@@ -2908,6 +2916,26 @@ sysctl_witness(char *string, char **bufpp, int mib[], int flags, int *typep)
 		return (-1);
 	mib[2] = indx;
 	*typep = witnesslist.list[indx].ctl_type;
+	return (3);
+}
+
+/*
+ * Handle battery support
+ */
+int
+sysctl_battery(char *string, char **bufpp, int mib[], int flags,
+    int *typep)
+{
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &batterylist);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, &batterylist)) == -1)
+		return (-1);
+	mib[2] = indx;
+	*typep = batterylist.list[indx].ctl_type;
 	return (3);
 }
 

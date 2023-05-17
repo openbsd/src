@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.412 2023/05/04 09:40:36 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.413 2023/05/17 22:12:51 kettenis Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -143,6 +143,7 @@ int sysctl_audio(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_video(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_cpustats(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_utc_offset(void *, size_t *, void *, size_t);
+int sysctl_hwbattery(int *, u_int, void *, size_t *, void *, size_t);
 
 void fill_file(struct kinfo_file *, struct file *, struct filedesc *, int,
     struct vnode *, struct process *, struct proc *, struct socket *, int);
@@ -689,8 +690,11 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	extern char machine[], cpu_model[];
 	int err, cpuspeed;
 
-	/* all sysctl names at this level except sensors are terminal */
-	if (name[0] != HW_SENSORS && namelen != 1)
+	/*
+	 * all sysctl names at this level except sensors and battery
+	 * are terminal
+	 */
+	if (name[0] != HW_SENSORS && name[0] != HW_BATTERY && namelen != 1)
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -777,12 +781,108 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case HW_SMT:
 		return (sysctl_hwsmt(oldp, oldlenp, newp, newlen));
 #endif
+#ifndef SMALL_KERNEL
+	case HW_BATTERY:
+		return (sysctl_hwbattery(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+#endif
 	default:
 		return sysctl_bounded_arr(hw_vars, nitems(hw_vars), name,
 		    namelen, oldp, oldlenp, newp, newlen);
 	}
 	/* NOTREACHED */
 }
+
+#ifndef SMALL_KERNEL
+
+int hw_battery_chargemode;
+int hw_battery_chargestart;
+int hw_battery_chargestop;
+int (*hw_battery_setchargemode)(int);
+int (*hw_battery_setchargestart)(int);
+int (*hw_battery_setchargestop)(int);
+
+int
+sysctl_hwchargemode(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	int mode = hw_battery_chargemode;
+	int error;
+
+	if (!hw_battery_setchargemode)
+		return EOPNOTSUPP;
+
+	error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+	    &mode, -1, 1);
+	if (error)
+		return error;
+
+	if (newp != NULL)
+		error = hw_battery_setchargemode(mode);
+
+	return error;
+}
+
+int
+sysctl_hwchargestart(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	int start = hw_battery_chargestart;
+	int error;
+
+	if (!hw_battery_setchargestart)
+		return EOPNOTSUPP;
+
+	error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+	    &start, 0, 100);
+	if (error)
+		return error;
+
+	if (newp != NULL)
+		error = hw_battery_setchargestart(start);
+
+	return error;
+}
+
+int
+sysctl_hwchargestop(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	int stop = hw_battery_chargestop;
+	int error;
+
+	if (!hw_battery_setchargestart)
+		return EOPNOTSUPP;
+
+	error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
+	    &stop, 0, 100);
+	if (error)
+		return error;
+
+	if (newp != NULL)
+		error = hw_battery_setchargestop(stop);
+
+	return error;
+}
+
+int
+sysctl_hwbattery(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+    void *newp, size_t newlen)
+{
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case HW_BATTERY_CHARGEMODE:
+		return (sysctl_hwchargemode(oldp, oldlenp, newp, newlen));
+	case HW_BATTERY_CHARGESTART:
+		return (sysctl_hwchargestart(oldp, oldlenp, newp, newlen));
+	case HW_BATTERY_CHARGESTOP:
+		return (sysctl_hwchargestop(oldp, oldlenp, newp, newlen));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+#endif
 
 #ifdef DEBUG_SYSCTL
 /*
