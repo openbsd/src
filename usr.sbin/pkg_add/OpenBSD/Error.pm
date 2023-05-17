@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.40 2019/07/24 18:05:26 espie Exp $
+# $OpenBSD: Error.pm,v 1.41 2023/05/17 15:51:58 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ use warnings;
 # this is a set of common classes related to error handling in pkg land
 
 package OpenBSD::Auto;
-sub cache(*&)
+sub cache :prototype(*&)
 {
 	my ($sym, $code) = @_;
 	my $callpkg = caller;
@@ -170,7 +170,7 @@ sub dienow
 	}
 }
 
-sub try(&@)
+sub try :prototype(&@)
 {
 	my ($try, $catch) = @_;
 	eval { &$try };
@@ -189,7 +189,7 @@ sub rethrow
 	die $e if $e;
 }
 
-sub catch(&)
+sub catch :prototype(&)
 {
 		bless $_[0], "OpenBSD::Error::catch";
 }

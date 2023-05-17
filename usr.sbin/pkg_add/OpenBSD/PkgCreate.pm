@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.186 2023/05/16 14:30:55 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.187 2023/05/17 15:51:58 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -250,7 +250,7 @@ sub register_forbidden
 	}
 }
 
-sub is_forbidden() { 0 }
+sub is_forbidden { 0 }
 sub resolve_link
 {
 	my ($filename, $base, $level) = @_;
@@ -507,7 +507,7 @@ sub prepare_for_archival
 	return $o;
 }
 
-sub forbidden() { 1 }
+sub forbidden { 1 }
 
 sub register_for_archival
 {
@@ -842,31 +842,31 @@ sub check_version
 }
 
 package OpenBSD::PackingElement::DigitalSignature;
-sub is_forbidden() { 1 }
+sub is_forbidden { 1 }
 
 package OpenBSD::PackingElement::Signer;
-sub is_forbidden() { 1 }
+sub is_forbidden { 1 }
 
 package OpenBSD::PackingElement::ExtraInfo;
-sub is_forbidden() { 1 }
+sub is_forbidden { 1 }
 
 package OpenBSD::PackingElement::ManualInstallation;
-sub is_forbidden() { 1 }
+sub is_forbidden { 1 }
 
 package OpenBSD::PackingElement::Firmware;
-sub is_forbidden() { 1 }
+sub is_forbidden { 1 }
 
 package OpenBSD::PackingElement::Url;
-sub is_forbidden() { 1 }
+sub is_forbidden { 1 }
 
 package OpenBSD::PackingElement::Arch;
-sub is_forbidden() { 1 }
+sub is_forbidden { 1 }
 
 package OpenBSD::PackingElement::LocalBase;
-sub is_forbidden() { 1 }
+sub is_forbidden { 1 }
 
 package OpenBSD::PackingElement::Version;
-sub is_forbidden() { 1 }
+sub is_forbidden { 1 }
 
 # put together file and filename, in order to handle fragments simply
 package MyFile;

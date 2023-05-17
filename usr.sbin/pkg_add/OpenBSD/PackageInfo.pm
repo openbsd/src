@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.63 2022/02/15 07:35:35 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.64 2023/05/17 15:51:58 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -174,7 +174,7 @@ sub installed_name
 	return $name;
 }
 
-sub info_names()
+sub info_names
 {
 	return @info;
 }
@@ -187,7 +187,7 @@ sub is_info_name
 
 my $dlock;
 
-sub lock_db($;$)
+sub lock_db
 {
 	my ($shared, $state) = @_;
 	my $mode = $shared ? LOCK_SH : LOCK_EX;
@@ -206,7 +206,7 @@ sub lock_db($;$)
 	return;
 }
 
-sub unlock_db()
+sub unlock_db
 {
 	if (defined $dlock) {
 		flock($dlock, LOCK_UN);

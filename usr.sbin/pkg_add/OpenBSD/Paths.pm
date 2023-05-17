@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.37 2022/04/13 21:19:16 espie Exp $
+# $OpenBSD: Paths.pm,v 1.38 2023/05/17 15:51:58 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -21,61 +21,61 @@ use warnings;
 package OpenBSD::Paths;
 
 # Commands
-sub ldconfig() { '/sbin/ldconfig' }
-sub chroot() { '/usr/sbin/chroot' }
-sub mkfontscale() { '/usr/X11R6/bin/mkfontscale' }
-sub mkfontdir() { '/usr/X11R6/bin/mkfontdir' }
-sub fc_cache() { '/usr/X11R6/bin/fc-cache' }
-sub install_info() { '/usr/bin/install-info' }
-sub useradd() { '/usr/sbin/useradd' }
-sub groupadd() { '/usr/sbin/groupadd' }
-sub sysctl() { '/sbin/sysctl' }
-sub openssl() { '/usr/bin/openssl' }
-sub pkgca() { '/etc/ssl/pkgca.pem' }
-sub signify() { '/usr/bin/signify' }
+sub ldconfig { '/sbin/ldconfig' }
+sub chroot { '/usr/sbin/chroot' }
+sub mkfontscale { '/usr/X11R6/bin/mkfontscale' }
+sub mkfontdir { '/usr/X11R6/bin/mkfontdir' }
+sub fc_cache { '/usr/X11R6/bin/fc-cache' }
+sub install_info { '/usr/bin/install-info' }
+sub useradd { '/usr/sbin/useradd' }
+sub groupadd { '/usr/sbin/groupadd' }
+sub sysctl { '/sbin/sysctl' }
+sub openssl { '/usr/bin/openssl' }
+sub pkgca { '/etc/ssl/pkgca.pem' }
+sub signify { '/usr/bin/signify' }
 sub signifykey { my $s = $_[1]; "/etc/signify/$s.pub" }
-sub pkg_add() { '/usr/sbin/pkg_add' }
-sub chmod() { '/bin/chmod' }	# external command is used for symbolic modes.
-sub gzip() { '/usr/bin/gzip' }
-sub ftp() { $ENV{'FETCH_CMD'} || '/usr/bin/ftp' }
-sub groff() { '/usr/local/bin/groff' }
-sub sh() { '/bin/sh' }
-sub arch() { '/usr/bin/arch' }
-sub uname() { '/usr/bin/uname' }
-sub userdel() { '/usr/sbin/userdel' }
-sub groupdel() { '/usr/sbin/groupdel' }
-sub makewhatis() { '/usr/sbin/makewhatis' }
-sub mknod() { '/sbin/mknod' }
-sub mount() { '/sbin/mount' }
-sub df() { '/bin/df' }
-sub ssh() { '/usr/bin/ssh' }
-sub make() { '/usr/bin/make' }
-sub mklocatedb() { '/usr/libexec/locate.mklocatedb' }
-sub locate() { '/usr/bin/locate' }
-sub hostname() { '/bin/hostname' }
-sub doas() { '/usr/bin/doas' }
-sub env() { '/usr/bin/env' }
-sub du() { '/usr/bin/du' }
-sub diff() { '/usr/bin/diff' }
-sub sha256() { '/bin/sha256' }
+sub pkg_add { '/usr/sbin/pkg_add' }
+sub chmod { '/bin/chmod' }	# external command is used for symbolic modes.
+sub gzip { '/usr/bin/gzip' }
+sub ftp { $ENV{'FETCH_CMD'} || '/usr/bin/ftp' }
+sub groff { '/usr/local/bin/groff' }
+sub sh { '/bin/sh' }
+sub arch { '/usr/bin/arch' }
+sub uname { '/usr/bin/uname' }
+sub userdel { '/usr/sbin/userdel' }
+sub groupdel { '/usr/sbin/groupdel' }
+sub makewhatis { '/usr/sbin/makewhatis' }
+sub mknod { '/sbin/mknod' }
+sub mount { '/sbin/mount' }
+sub df { '/bin/df' }
+sub ssh { '/usr/bin/ssh' }
+sub make { '/usr/bin/make' }
+sub mklocatedb { '/usr/libexec/locate.mklocatedb' }
+sub locate { '/usr/bin/locate' }
+sub hostname { '/bin/hostname' }
+sub doas { '/usr/bin/doas' }
+sub env { '/usr/bin/env' }
+sub du { '/usr/bin/du' }
+sub diff { '/usr/bin/diff' }
+sub sha256 { '/bin/sha256' }
 
 # Various paths
-sub shells() { '/etc/shells' }
-sub pkgdb() { '/var/db/pkg' }
-sub localbase() { '/usr/local' }
-sub vartmp() { '/tmp' }
-sub portsdir() { '/usr/ports' }
+sub shells { '/etc/shells' }
+sub pkgdb { '/var/db/pkg' }
+sub localbase { '/usr/local' }
+sub vartmp { '/tmp' }
+sub portsdir { '/usr/ports' }
 
-sub library_dirs() { ("/usr", "/usr/X11R6") }
-sub master_keys() { ("/etc/master_key") }
-sub installurl() { "/etc/installurl" }
-sub srclocatedb() { "/usr/lib/locate/src.db" }
-sub xlocatedb() { "/usr/X11R6/lib/locate/xorg.db" }
+sub library_dirs { ("/usr", "/usr/X11R6") }
+sub master_keys { ("/etc/master_key") }
+sub installurl { "/etc/installurl" }
+sub srclocatedb { "/usr/lib/locate/src.db" }
+sub xlocatedb { "/usr/X11R6/lib/locate/xorg.db" }
 sub updateinfodb { '/usr/local/share/update.db' }
 
-sub font_cruft() { ("fonts.alias", "fonts.dir", "fonts.cache-1", "fonts.scale") }
-sub man_cruft() { ("whatis.db", "mandoc.db", "mandoc.index") }
-sub info_cruft() { ("dir") }
+sub font_cruft { ("fonts.alias", "fonts.dir", "fonts.cache-1", "fonts.scale") }
+sub man_cruft { ("whatis.db", "mandoc.db", "mandoc.index") }
+sub info_cruft { ("dir") }
 
 # a bit of code, OS-dependent stuff that's run-time detected and has no
 # home yet.

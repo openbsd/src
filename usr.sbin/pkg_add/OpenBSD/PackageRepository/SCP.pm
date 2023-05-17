@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.29 2014/08/27 18:40:03 kspillner Exp $
+# $OpenBSD: SCP.pm,v 1.30 2023/05/17 15:51:58 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -64,7 +64,7 @@ my $pid;
 my $token = 0;
 $|= 1;
 
-sub batch(&)
+sub batch
 {
 	my $code = shift;
 	if (defined $pid) {
@@ -82,7 +82,7 @@ sub batch(&)
 	}
 }
 
-sub abort_batch()
+sub abort_batch
 {
 	if (defined $pid) {
 		kill 1, $pid;

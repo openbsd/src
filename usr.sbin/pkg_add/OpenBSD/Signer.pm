@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.10 2016/10/03 13:17:30 espie Exp $
+# $OpenBSD: Signer.pm,v 1.11 2023/05/17 15:51:58 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -19,7 +19,7 @@
 use strict;
 use warnings;
 
-# code necessary to create signed package
+# code necessary to create signed packages
 
 # the factory that chooses what method to use to sign things
 package OpenBSD::Signer;

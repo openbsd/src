@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.28 2023/05/04 14:02:44 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.29 2023/05/17 15:51:58 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -166,12 +166,12 @@ package OpenBSD::RequiredBy;
 our @ISA=qw(OpenBSD::RequirementList);
 use OpenBSD::PackageInfo;
 
-sub filename() { REQUIRED_BY };
+sub filename { REQUIRED_BY };
 
 package OpenBSD::Requiring;
 our @ISA=qw(OpenBSD::RequirementList);
 use OpenBSD::PackageInfo;
 
-sub filename() { REQUIRING };
+sub filename { REQUIRING };
 
 1;

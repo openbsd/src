@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.165 2022/06/09 09:27:11 espie Exp $
+# $OpenBSD: Delete.pm,v 1.166 2023/05/17 15:51:58 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -360,7 +360,7 @@ sub delete
 	}
 }
 
-sub should_run() { 1 }
+sub should_run { 1 }
 
 package OpenBSD::PackingElement::UnexecDelete;
 sub should_run

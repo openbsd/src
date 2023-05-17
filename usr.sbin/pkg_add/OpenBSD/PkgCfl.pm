@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.39 2014/02/01 10:53:17 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.40 2023/05/17 15:51:58 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -68,20 +68,20 @@ sub conflicts_with
 	}
 }
 
-sub register($$)
+sub register
 {
 	my ($plist, $state) = @_;
 
 	$state->{conflict_list}{$plist->pkgname} = $plist->conflict_list;
 }
 
-sub unregister($$)
+sub unregister
 {
 	my ($plist, $state) = @_;
 	delete $state->{conflict_list}{$plist->pkgname};
 }
 
-sub fill_conflict_lists($)
+sub fill_conflict_lists
 {
 	my $state = shift;
 	for my $pkg (installed_packages()) {
@@ -96,7 +96,7 @@ sub fill_conflict_lists($)
 	}
 }
 
-sub find($$)
+sub find
 {
 	my ($pkgname, $state) = @_;
 	my @bad = ();
