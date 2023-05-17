@@ -99,6 +99,7 @@ static void SIMD_Fixup (int, int);
 static void PNI_Fixup (int, int);
 static void XCR_Fixup (int, int);
 static void SVME_Fixup (int, int);
+static void SSP_Fixup (int, int);
 static void INVLPG_Fixup (int, int);
 static void BadOp (void);
 static void SEG_Fixup (int, int);
@@ -106,6 +107,7 @@ static void VMX_Fixup (int, int);
 static void REP_Fixup (int, int);
 static void OP_0f38 (int, int);
 static void OP_0f3a (int, int);
+static void OP_0f1e (int, int);
 static void OP_data (int, int);
 
 struct dis_private {
@@ -324,6 +326,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define OP0FAE OP_0fae, v_mode
 #define OP0F38 OP_0f38, 0
 #define OP0F3A OP_0f3a, 0
+#define OP0F1E OP_0f1e, v_mode
 #define OPDATA OP_data, 0
 
 /* Used handle "rep" prefix for string instructions.  */
@@ -471,6 +474,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
 #define PREGRP30  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 30, NULL, 0
 #define PREGRP31  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 31, NULL, 0
 #define PREGRP32  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 32, NULL, 0
+#define PREGRP33  NULL, NULL, USE_PREFIX_USER_TABLE, NULL, 33, NULL, 0
 
 #define X86_64_0  NULL, NULL, X86_64_SPECIAL, NULL,  0, NULL, 0
 
@@ -494,6 +498,7 @@ struct dis386 {
    'B' => print 'b' if suffix_always is true
    'C' => print 's' or 'l' ('w' or 'd' in Intel mode) depending on operand
    .      size prefix
+   'D' => print '64' in place of rex64 prefix
    'E' => print 'e' if 32-bit form of jcxz
    'F' => print 'w' or 'l' depending on address size prefix (loop insns)
    'H' => print ",pt" or ",pn" branch hint
@@ -852,7 +857,7 @@ static const struct dis386 dis386_twobyte[] = {
   { "(bad)",		XX, XX, XX },
   { "(bad)",		XX, XX, XX },
   { "(bad)",		XX, XX, XX },
-  { "(bad)",		XX, XX, XX },
+  { PREGRP33 },
   { "(bad)",		XX, XX, XX },
   /* 20 */
   { "movZ",		Rm, Cm, XX },
@@ -1135,7 +1140,7 @@ static const unsigned char twobyte_has_modrm[256] = {
   /*       0 1 2 3 4 5 6 7 8 9 a b c d e f        */
   /*       -------------------------------        */
   /* 00 */ 1,1,1,1,0,0,0,0,0,0,0,0,0,1,0,1, /* 0f */
-  /* 10 */ 1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0, /* 1f */
+  /* 10 */ 1,1,1,1,1,1,1,1,1,0,0,0,0,0,1,0, /* 1f */
   /* 20 */ 1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1, /* 2f */
   /* 30 */ 0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0, /* 3f */
   /* 40 */ 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 4f */
@@ -1416,7 +1421,7 @@ static const struct dis386 grps[][8] = {
     { "lgdt{Q|Q||}",	 XCR_Fixup, 0, XX, XX },
     { "lidt{Q|Q||}",	 SVME_Fixup, 0, XX, XX },
     { "smswQ",	Ev, XX, XX },
-    { "(bad)",	XX, XX, XX },
+    { "", SSP_Fixup, 0, XX, XX },
     { "lmsw",	Ew, XX, XX },
     { "invlpg",	INVLPG_Fixup, w_mode, XX, XX },
   },
@@ -1436,9 +1441,9 @@ static const struct dis386 grps[][8] = {
     { "(bad)",	XX, XX, XX },
     { "cmpxchg8b", Eq, XX, XX },
     { "(bad)",	XX, XX, XX },
-    { "(bad)",	XX, XX, XX },
-    { "(bad)",	XX, XX, XX },
-    { "(bad)",	XX, XX, XX },
+    { "xrstorsD",Ev, XX, XX },
+    { "xsavecD",Ev, XX, XX },
+    { "xsavesD",Ev, XX, XX },
     { "",	VM, XX, XX },		/* See OP_VMX.  */
     { "",	VM2, XX, XX },
   },
@@ -1477,13 +1482,13 @@ static const struct dis386 grps[][8] = {
   },
   /* GRP13 */
   {
-    { "fxsave",   OP0FAE, XX, XX },
-    { "fxrstor",  OP0FAE, XX, XX },
+    { "fxsaveD",  OP0FAE, XX, XX },
+    { "fxrstorD", OP0FAE, XX, XX },
     { "ldmxcsr",  OP0FAE, XX, XX },
     { "stmxcsr",  OP0FAE, XX, XX },
-    { "xsave",	  Ev, XX, XX },
-    { "xrstor",   OP0FAE, XX, XX },
-    { "xsaveopt", OP0FAE, XX, XX },
+    { "xsaveD",	  OP0FAE, XX, XX },
+    { "xrstorD",  OP0FAE, XX, XX },
+    { "xsaveoptD",OP0FAE, XX, XX },
     { "clflush",  OP0FAE, XX, XX },
   },
   /* GRP14 */
@@ -1529,7 +1534,7 @@ static const struct dis386 grps[][8] = {
     { "(bad)",   OP_0f07, 0, XX, XX },
     { "(bad)",	 OP_0f07, 0, XX, XX },
     { "(bad)",	 OP_0f07, 0, XX, XX },
-  }
+  },
 };
 
 static const struct dis386 prefix_user_table[][4] = {
@@ -1763,6 +1768,13 @@ static const struct dis386 prefix_user_table[][4] = {
     { "(bad)", XM, EX, XX },
     { "(bad)", XM, EX, XX },
     { "lddqu", XM, M, XX },
+  },
+  /* PREGRP33 */
+  {
+    { "(bad)", XM, EX, XX },
+    { "", OP0F1E, XX, XX },
+    { "(bad)", XM, EX, XX },
+    { "(bad)", XM, EX, XX },
   },
 };
 
@@ -3397,6 +3409,14 @@ putop (const char *template, int sizeflag)
 	      used_prefixes |= (prefixes & PREFIX_DATA);
 	    }
 	  break;
+	case 'D':
+	  USED_REX (REX_MODE64);
+	  if (rex & REX_MODE64)
+	    {
+	      *obufp++ = '6';
+	      *obufp++ = '4';
+	    }
+	  break;
 	case 'E':		/* For jcxz/jecxz */
 	  if (address_mode == mode_64bit)
 	    {
@@ -4829,8 +4849,109 @@ OP_0f07 (int bytemode, int sizeflag)
 }
 
 static void
+OP_0f1e (int bytemode, int sizeflag)
+{
+  used_prefixes |= PREFIX_REPZ;
+  switch (*codep++)
+    {
+    case 0xfa:
+      strcpy (obuf, "endbr64");
+      break;
+    case 0xfb:
+      strcpy (obuf, "endbr32");
+      break;
+    default:
+      USED_REX (REX_MODE64);
+      if (rex & REX_MODE64)
+	strcpy (obuf, "rdsspq");
+      else
+	strcpy (obuf, "rdsspd");
+      OP_E (bytemode, sizeflag);
+      return;
+    }
+}
+
+static void
 OP_0fae (int bytemode, int sizeflag)
 {
+  if (prefixes & PREFIX_REPZ)
+   {
+      used_prefixes |= PREFIX_REPZ;
+      if (mod != 3)
+	{
+	  if (reg == 6)
+	    {
+	      strcpy (obuf, "clrssbsy");
+	      OP_E (bytemode, sizeflag);
+	    }
+	  else
+	    BadOp ();
+	  return;
+	}
+      switch (reg)
+        {
+	case 0:
+	  strcpy (obuf, "rdfsbase");
+	  break;
+	case 1:
+	  strcpy (obuf, "rdgsbase");
+	  break;
+	case 2:
+	  strcpy (obuf, "wrfsbase");
+	  break;
+	case 3:
+	  strcpy (obuf, "wrgsbase");
+	  break;
+	case 4:
+	  strcpy (obuf, "ptwrite");
+	  break;
+	case 5:
+	  USED_REX (REX_MODE64);
+	  if (rex & REX_MODE64)
+	    strcpy (obuf, "incsspq");
+	  else
+	    strcpy (obuf, "incsspd");
+	  break;
+	case 6:
+	  strcpy (obuf, "umonitor"); /* XXX wrong size for r16/r32/r64 arg */
+	  break;
+	case 7:
+	  BadOp ();
+	  return;
+        }
+      OP_E (bytemode, sizeflag);
+      return;
+    }
+
+  if (prefixes & PREFIX_REPNZ)
+    {
+      if (mod == 3 && reg == 6)
+	{
+	  used_prefixes |= PREFIX_REPNZ;
+	  strcpy (obuf, "umwait");
+	  OP_E (bytemode, sizeflag);
+	}
+      else
+	BadOp ();
+      return;
+    }
+
+  if (prefixes & PREFIX_DATA)
+    {
+      if (mod != 3 && reg >= 6)
+	strcpy (obuf, reg == 6 ? "clwb" : "clflushopt");
+      else if (mod == 3 && reg == 6)
+	strcpy (obuf, "tpause"); /* XXX wrong size for r16/r32/r64 arg */
+      else
+	{
+	  BadOp ();
+	  return;
+	}
+      used_prefixes |= PREFIX_DATA;
+      OP_E (bytemode, sizeflag);
+      return;
+    }
+
   if (mod == 3)
     {
       if (reg == 7)
@@ -4839,21 +4960,9 @@ OP_0fae (int bytemode, int sizeflag)
 	strcpy (obuf + strlen (obuf) - sizeof ("xsaveopt") + 1, "mfence");
       else if (reg == 5)
 	strcpy (obuf + strlen (obuf) - sizeof ("xrstor") + 1, "lfence");
-
-      if (reg < 4 && prefixes == PREFIX_REPZ)
-        {
-	  if (reg == 0)
-	    strcpy (obuf, "rdfsbase");
-	  else if (reg == 1)
-	    strcpy (obuf, "rdgsbase");
-	  else if (reg == 2)
-	    strcpy (obuf, "wrfsbase");
-	  else
-	    strcpy (obuf, "wrgsbase");
-        }
-      else if (reg < 5 || rm != 0)
+      else if (reg < 5)
 	{
-	  BadOp ();	/* bad sfence, mfence, or lfence */
+	  BadOp ();
 	  return;
 	}
     }
@@ -5031,6 +5140,7 @@ SIMD_Fixup (int extrachar, int sizeflag ATTRIBUTE_UNUSED)
 static void
 PNI_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
 {
+  /* missing: encls==np0f01cf */
   if (mod == 3 && reg == 1 && rm <= 1)
     {
       /* Override "sidt".  */
@@ -5105,7 +5215,8 @@ PNI_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
 static void
 XCR_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
 {
-  if (mod == 3 && reg == 2 && rm <= 1)
+  if (mod == 3 && reg == 2 && (rm <= 1 || rm >= 4) && 
+    (prefixes & (PREFIX_REPZ|PREFIX_REPNZ|PREFIX_DATA)) == 0)
     {
       /* Override "lgdt".  */
       size_t olen = strlen (obuf);
@@ -5125,13 +5236,26 @@ XCR_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
 	      || strncmp (p - 3, "32", 2) == 0))
 	p -= 7;
 
-      if (rm)
+      switch (rm)
 	{
-	  strcpy (p, "xsetbv");
-	}
-      else
-	{
+	case 0:
 	  strcpy (p, "xgetbv");
+	  break;
+	case 1:
+	  strcpy (p, "xsetbv");
+	  break;
+	case 4:
+	  strcpy (p, "vmfunc");
+	  break;
+	case 5:
+	  strcpy (p, "xend");
+	  break;
+	case 6:
+	  strcpy (p, "xtest");
+	  break;
+	case 7:
+	  strcpy (p, "enclu");
+	  break;
 	}
 
       codep++;
@@ -5208,6 +5332,78 @@ SVME_Fixup (int bytemode, int sizeflag)
       *obufp = '\0';
       break;
     }
+}
+
+static void
+SSP_Fixup (int bytemode, int sizeflag)
+{
+  used_prefixes |= (prefixes & (PREFIX_REPZ | PREFIX_REPNZ));
+  if (mod != 3)
+    {
+      if (prefixes & PREFIX_REPZ)
+	{
+	  strcpy (obuf, "rstorssp");
+	  OP_M (bytemode, sizeflag);
+	}
+      else
+	BadOp ();
+      return;
+    }
+
+  if (prefixes & PREFIX_REPZ)
+    switch (*codep++)
+      {
+      case 0xe8:
+	strcpy (obuf, "setssbsy");
+	break;
+      case 0xea:
+	strcpy (obuf, "saveprevssp");
+	break;
+      case 0xec:
+	strcpy (obuf, "uiret");
+	break;
+      case 0xed:
+	strcpy (obuf, "testui");
+	break;
+      case 0xee:
+	strcpy (obuf, "clui");
+	break;
+      case 0xef:
+	strcpy (obuf, "stui");
+	break;
+      default:
+	break;
+      }
+  else if (prefixes & PREFIX_REPNZ)
+    switch (*codep)
+      {
+      case 0xe8:
+	strcpy (obuf, "xsusldtrk");
+	break;
+      case 0xe9:
+	strcpy (obuf, "xresldtrk");
+	break;
+      default:
+	BadOp ();
+	return;
+      }
+  else 
+    switch (*codep)
+      {
+      case 0xe8:
+	strcpy (obuf, "serialize");
+	break;
+      case 0xee:
+	strcpy (obuf, "rdpkru");
+	break;
+      case 0xef:
+	strcpy (obuf, "wrpkru");
+	break;
+      default:
+	BadOp ();
+	return;
+      }
+  codep++;
 }
 
 static void
@@ -5292,6 +5488,7 @@ SEG_Fixup (int extrachar, int sizeflag)
 static void
 VMX_Fixup (int extrachar ATTRIBUTE_UNUSED, int sizeflag)
 {
+  /* missing: enclv==np0f01c0 pconfig==np0f01c5 */
   if (mod == 3 && reg == 0 && rm >=1 && rm <= 4)
     {
       /* Override "sgdt".  */
@@ -5328,8 +5525,17 @@ OP_VMX (int bytemode, int sizeflag)
 {
   if (mod == 3)
     {
-      strcpy (obuf, "rdrand");
-      OP_E (v_mode, sizeflag);
+      used_prefixes |= (prefixes & PREFIX_REPZ);
+      if (prefixes & PREFIX_REPZ)
+	{
+	  strcpy (obuf, "senduipi");
+	  OP_G (m_mode, sizeflag);
+	}
+      else
+	{
+	  strcpy (obuf, "rdrand");
+	  OP_E (v_mode, sizeflag);
+	}
     }
   else
     {
@@ -5349,7 +5555,11 @@ OP_VMX2 (int bytemode ATTRIBUTE_UNUSED, int sizeflag)
 {
   if (mod == 3)
     {
-      strcpy (obuf, "rdseed");
+      used_prefixes |= (prefixes & PREFIX_REPZ);
+      if (prefixes & PREFIX_REPZ)
+	strcpy (obuf, "rdpid");
+      else
+	strcpy (obuf, "rdseed");
       OP_E (v_mode, sizeflag);
     }
   else
