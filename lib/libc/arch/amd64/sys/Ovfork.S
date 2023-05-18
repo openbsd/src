@@ -1,4 +1,4 @@
-/*	$OpenBSD: Ovfork.S,v 1.9 2023/01/11 01:55:17 mortimer Exp $	*/
+/*	$OpenBSD: Ovfork.S,v 1.10 2023/05/18 04:26:06 guenther Exp $	*/
 /*	$NetBSD: Ovfork.S,v 1.2 2002/06/03 18:30:33 fvdl Exp $	*/
 
 /*-
@@ -39,17 +39,24 @@
 
 #include "SYS.h"
 
+/*
+ * This is written to support a potential vfork(2) that would share
+ * the parent's vmspace to the child.  For that, the parent must
+ * not rely on anything on the stack at the time of the syscall,
+ * as the child will overwrite it.  So, keep both the return address
+ * and retguard value in registers (r9 and r8) across the call.
+ * This used to do an indirect jump on success, but that doesn't
+ * work if indirect-branch-tracking is enabled as the _caller_ of
+ * this vfork() stub won't know to place an endbr64 instruction
+ * after the call.  So, just push it back on the stack and return.
+ */
 SYSENTRY_HIDDEN(vfork)
+	RETGUARD_SETUP(_thread_sys_vfork, r8);
 	popq	%r9		/* my rta into r9 */
-	RETGUARD_SETUP(_thread_sys_vfork, r11);
-	RETGUARD_PUSH(r11);
 	SYSTRAP(vfork)
-	RETGUARD_POP(r11)
-	jc	1f
-	jmp	*%r9
-1:
 	pushq	%r9
+	jnc	1f
 	SET_ERRNO
-	RETGUARD_CHECK(_thread_sys_vfork, r11);
+1:	RETGUARD_CHECK(_thread_sys_vfork, r8);
 	ret
 SYSCALL_END_HIDDEN(vfork)
