@@ -1,4 +1,4 @@
-/*	$OpenBSD: realpath.c,v 1.27 2019/07/05 05:04:26 deraadt Exp $ */
+/*	$OpenBSD: realpath.c,v 1.28 2023/05/18 16:11:10 guenther Exp $ */
 /*
  * Copyright (c) 2019 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2019 Theo de Raadt <deraadt@openbsd.org>
@@ -23,9 +23,6 @@
 #include <limits.h>
 #include <syslog.h>
 #include <stdarg.h>
-
-int __realpath(const char *pathname, char *resolved);
-PROTO_NORMAL(__realpath);
 
 /*
  * wrapper for kernel __realpath

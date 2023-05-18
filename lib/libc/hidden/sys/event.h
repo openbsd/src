@@ -1,6 +1,6 @@
-/*	$OpenBSD: stat.h,v 1.3 2023/05/18 16:11:09 guenther Exp $	*/
+/*	$OpenBSD: event.h,v 1.1 2023/05/18 16:11:09 guenther Exp $	*/
 /*
- * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
+ * Copyright (c) 2023 Philip Guenther <guenther@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,30 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef _LIBC_SYS_STAT_H_
-#define	_LIBC_SYS_STAT_H_
+#ifndef _LIBC_SYS_EVENT_H_
+#define _LIBC_SYS_EVENT_H_
 
-#include_next <sys/stat.h>
+#include_next <sys/event.h>
 
-PROTO_NORMAL(chflags);
-PROTO_NORMAL(chflagsat);
-PROTO_NORMAL(chmod);
-PROTO_NORMAL(fchflags);
-PROTO_NORMAL(fchmod);
-PROTO_NORMAL(fchmodat);
-PROTO_NORMAL(fstat);
-PROTO_NORMAL(fstatat);
-PROTO_NORMAL(futimens);
-PROTO_DEPRECATED(isfdtype);
-PROTO_NORMAL(lstat);
-PROTO_NORMAL(mkdir);
-PROTO_NORMAL(mkdirat);
-PROTO_NORMAL(mkfifo);
-PROTO_NORMAL(mkfifoat);
-PROTO_NORMAL(mknod);
-PROTO_NORMAL(mknodat);
-PROTO_NORMAL(stat);
-PROTO_NORMAL(umask);
-PROTO_NORMAL(utimensat);
+PROTO_NORMAL(kevent);
+PROTO_NORMAL(kqueue);
 
-#endif /* !_LIBC_SYS_STAT_H_ */
+#endif /* !_LIBC_SYS_EVENT_H_ */

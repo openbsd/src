@@ -1,4 +1,4 @@
-/*	$OpenBSD: unistd.h,v 1.11 2018/07/13 09:25:22 beck Exp $	*/
+/*	$OpenBSD: unistd.h,v 1.12 2023/05/18 16:11:09 guenther Exp $	*/
 /*
  * Copyright (c) 2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -25,6 +25,10 @@ __BEGIN_HIDDEN_DECLS
 extern int	_pagesize;
 __END_HIDDEN_DECLS
 
+/* the real syscall behind getcwd(3) and getwd(3) */
+int __getcwd(char *buf, size_t len);
+
+PROTO_NORMAL(__getcwd);
 PROTO_NORMAL(__tfork_thread);
 PROTO_NORMAL(_exit);
 PROTO_NORMAL(access);
@@ -87,6 +91,7 @@ PROTO_NORMAL(getresgid);
 PROTO_NORMAL(getresuid);
 PROTO_NORMAL(getsid);
 PROTO_NORMAL(getthrid);
+PROTO_NORMAL(getthrname);
 PROTO_NORMAL(getuid);
 PROTO_DEPRECATED(getusershell);
 PROTO_DEPRECATED(getwd);
@@ -142,6 +147,7 @@ PROTO_NORMAL(setresgid);
 PROTO_NORMAL(setresuid);
 PROTO_NORMAL(setreuid);
 PROTO_NORMAL(setsid);
+PROTO_NORMAL(setthrname);
 PROTO_NORMAL(setuid);
 PROTO_DEPRECATED(setusershell);
 /*PROTO_CANCEL(sleep);*/

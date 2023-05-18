@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.16 2019/05/10 15:03:24 otto Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.17 2023/05/18 16:11:09 guenther Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -45,11 +45,14 @@ __END_HIDDEN_DECLS
 extern char **environ;
 extern char *__progname;
 
+int __realpath(const char *pathname, char *resolved);
+
 #if 0
 /*extern PROTO_NORMAL(suboptarg);*/
 #endif
 
 PROTO_NORMAL(__mb_cur_max);
+PROTO_NORMAL(__realpath);
 PROTO_STD_DEPRECATED(_Exit);
 PROTO_DEPRECATED(a64l);
 PROTO_NORMAL(abort);

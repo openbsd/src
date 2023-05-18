@@ -1,4 +1,4 @@
-/*	$OpenBSD: getcwd.c,v 1.21 2016/05/07 19:48:00 guenther Exp $	*/
+/*	$OpenBSD: getcwd.c,v 1.22 2023/05/18 16:11:09 guenther Exp $	*/
 
 /*
  * Copyright (c) 2005 Marius Eriksen <marius@openbsd.org>
@@ -20,9 +20,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-int __getcwd(char *buf, size_t len);
-PROTO_NORMAL(__getcwd);
 
 char *
 getcwd(char *buf, size_t size)
