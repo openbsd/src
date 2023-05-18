@@ -1,4 +1,4 @@
-/*	$OpenBSD: protosw.h,v 1.61 2023/05/16 19:44:55 mvs Exp $	*/
+/*	$OpenBSD: protosw.h,v 1.62 2023/05/18 09:59:44 mvs Exp $	*/
 /*	$NetBSD: protosw.h,v 1.10 1996/04/09 20:55:32 cgd Exp $	*/
 
 /*-
@@ -131,8 +131,6 @@ struct protosw {
 #define PR_ABRTACPTDIS	0x0020		/* abort on accept(2) to disconnected
 					   socket */
 #define PR_SPLICE	0x0040		/* socket splicing is possible */
-#define PR_MPSYSCTL	0x0080		/* (*pr_sysctl)() doesn't require
-					   kernel lock */
 
 /*
  * The arguments to usrreq are:
