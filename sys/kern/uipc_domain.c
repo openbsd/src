@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_domain.c,v 1.63 2023/05/18 09:59:43 mvs Exp $	*/
+/*	$OpenBSD: uipc_domain.c,v 1.64 2023/05/18 10:23:19 mvs Exp $	*/
 /*	$NetBSD: uipc_domain.c,v 1.14 1996/02/09 19:00:44 christos Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 {
 	const struct domain *dp;
 	const struct protosw *pr;
-	int error, family, protocol;
+	int family, protocol;
 
 	/*
 	 * All sysctl names at this level are nonterminal.
@@ -213,13 +213,9 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    newp, newlen));
 #endif
 #if NPFLOW > 0
-	if (family == PF_PFLOW) {
-		KERNEL_LOCK();
-		error = pflow_sysctl(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen);
-		KERNEL_UNLOCK();
-		return (error);
-	}
+	if (family == PF_PFLOW)
+		return (pflow_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 #endif
 #ifdef PIPEX
 	if (family == PF_PIPEX)
@@ -227,13 +223,9 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		    newp, newlen));
 #endif
 #ifdef MPLS
-	if (family == PF_MPLS) {
-		KERNEL_LOCK();
-		error = mpls_sysctl(name + 1, namelen - 1, oldp, oldlenp,
-		    newp, newlen);
-		KERNEL_UNLOCK();
-		return (error);
-	}
+	if (family == PF_MPLS)
+		return (mpls_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 #endif
 	dp = pffinddomain(family);
 	if (dp == NULL)
@@ -243,13 +235,9 @@ net_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		return (EISDIR);		/* overloaded */
 	protocol = name[1];
 	for (pr = dp->dom_protosw; pr < dp->dom_protoswNPROTOSW; pr++)
-		if (pr->pr_protocol == protocol && pr->pr_sysctl) {
-			KERNEL_LOCK();
-			error = (*pr->pr_sysctl)(name + 2, namelen - 2,
-			    oldp, oldlenp, newp, newlen);
-			KERNEL_UNLOCK();
-			return (error);
-		}
+		if (pr->pr_protocol == protocol && pr->pr_sysctl)
+			return ((*pr->pr_sysctl)(name + 2, namelen - 2,
+			    oldp, oldlenp, newp, newlen));
 	return (ENOPROTOOPT);
 }
 

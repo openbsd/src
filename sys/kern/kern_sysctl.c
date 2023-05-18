@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.413 2023/05/17 22:12:51 kettenis Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.414 2023/05/18 10:23:19 mvs Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -169,7 +169,7 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 		syscallarg(void *) new;
 		syscallarg(size_t) newlen;
 	} */ *uap = v;
-	int error, dokernellock = 1, dolock = 1;
+	int error, dolock = 1;
 	size_t savelen = 0, oldlen = 0;
 	sysctlfn *fn;
 	int name[CTL_MAXNAME];
@@ -204,7 +204,6 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 		break;
 	case CTL_NET:
 		fn = net_sysctl;
-		dokernellock = 0;
 		break;
 	case CTL_FS:
 		fn = fs_sysctl;
@@ -232,22 +231,19 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, oldlenp) &&
 	    (error = copyin(SCARG(uap, oldlenp), &oldlen, sizeof(oldlen))))
 		return (error);
-	if (dokernellock)
-		KERNEL_LOCK();
 	if (SCARG(uap, old) != NULL) {
 		if ((error = rw_enter(&sysctl_lock, RW_WRITE|RW_INTR)) != 0)
-			goto unlock;
+			return (error);
 		if (dolock) {
 			if (atop(oldlen) > uvmexp.wiredmax - uvmexp.wired) {
 				rw_exit_write(&sysctl_lock);
-				error = ENOMEM;
-				goto unlock;
+				return (ENOMEM);
 			}
 			error = uvm_vslock(p, SCARG(uap, old), oldlen,
 			    PROT_READ | PROT_WRITE);
 			if (error) {
 				rw_exit_write(&sysctl_lock);
-				goto unlock;
+				return (error);
 			}
 		}
 		savelen = oldlen;
@@ -259,9 +255,6 @@ sys_sysctl(struct proc *p, void *v, register_t *retval)
 			uvm_vsunlock(p, SCARG(uap, old), savelen);
 		rw_exit_write(&sysctl_lock);
 	}
-unlock:
-	if (dokernellock)
-		KERNEL_UNLOCK();
 	if (error)
 		return (error);
 	if (SCARG(uap, oldlenp))
