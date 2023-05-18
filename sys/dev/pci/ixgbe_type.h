@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.36 2022/01/09 05:42:56 jsg Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.37 2023/05/18 08:22:37 jan Exp $	*/
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -3355,6 +3355,7 @@ struct ixgbe_adv_tx_context_desc {
 /* 1st&Last TSO-full iSCSI PDU */
 #define IXGBE_ADVTXD_POPTS_ISCO_FULL	0x00001800
 #define IXGBE_ADVTXD_POPTS_RSV		0x00002000 /* POPTS Reserved */
+#define IXGBE_ADVTXD_PAYLEN_MASK	0x0003FFFF /* Adv desc PAYLEN */
 #define IXGBE_ADVTXD_PAYLEN_SHIFT	14 /* Adv desc PAYLEN shift */
 #define IXGBE_ADVTXD_MACLEN_SHIFT	9  /* Adv ctxt desc mac len shift */
 #define IXGBE_ADVTXD_VLAN_SHIFT		16  /* Adv ctxt vlan tag shift */

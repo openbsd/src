@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.165 2023/05/15 16:34:56 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.166 2023/05/18 08:22:37 jan Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -687,6 +687,8 @@ extern	int tcp_syn_bucket_limit;/* max entries per hash bucket */
 extern	int tcp_syn_use_limit;   /* number of uses before reseeding hash */
 extern	struct syn_cache_set tcp_syn_cache[];
 extern	int tcp_syn_cache_active; /* active syn cache, may be 0 or 1 */
+
+struct tdb;
 
 void	 tcp_canceltimers(struct tcpcb *);
 struct tcpcb *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.194 2023/05/16 14:32:54 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.195 2023/05/18 08:22:37 jan Exp $	*/
 
 /******************************************************************************
 
@@ -1924,6 +1924,7 @@ ixgbe_setup_interface(struct ix_softc *sc)
 	ifp->if_capabilities |= IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4;
 
+	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 	if (sc->hw.mac.type != ixgbe_mac_82598EB)
 		ifp->if_capabilities |= IFCAP_LRO;
 
@@ -2344,6 +2345,7 @@ ixgbe_initialize_transmit_units(struct ix_softc *sc)
 	int		 i;
 	uint64_t	 tdba;
 	uint32_t	 txctrl;
+	uint32_t	 hlreg;
 
 	/* Setup the Base and Length of the Tx Descriptor Ring */
 
@@ -2405,6 +2407,11 @@ ixgbe_initialize_transmit_units(struct ix_softc *sc)
 		rttdcs &= ~IXGBE_RTTDCS_ARBDIS;
 		IXGBE_WRITE_REG(hw, IXGBE_RTTDCS, rttdcs);
 	}
+
+	/* Enable TCP/UDP padding when using TSO */
+	hlreg = IXGBE_READ_REG(hw, IXGBE_HLREG0);
+	hlreg |= IXGBE_HLREG0_TXPADEN;
+	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg);
 }
 
 /*********************************************************************
@@ -2473,16 +2480,18 @@ ixgbe_free_transmit_buffers(struct tx_ring *txr)
  **********************************************************************/
 
 static inline int
-ixgbe_csum_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
-    uint32_t *type_tucmd_mlhl, uint32_t *olinfo_status)
+ixgbe_tx_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
+    uint32_t *type_tucmd_mlhl, uint32_t *olinfo_status, uint32_t *cmd_type_len,
+    uint32_t *mss_l4len_idx)
 {
 	struct ether_extracted ext;
 	int offload = 0;
-	uint32_t iphlen;
+	uint32_t ethlen, iphlen;
 
 	ether_extract_headers(mp, &ext);
+	ethlen = sizeof(*ext.eh);
 
-	*vlan_macip_lens |= (sizeof(*ext.eh) << IXGBE_ADVTXD_MACLEN_SHIFT);
+	*vlan_macip_lens |= (ethlen << IXGBE_ADVTXD_MACLEN_SHIFT);
 
 	if (ext.ip4) {
 		iphlen = ext.ip4->ip_hl << 2;
@@ -2500,6 +2509,8 @@ ixgbe_csum_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 		*type_tucmd_mlhl |= IXGBE_ADVTXD_TUCMD_IPV6;
 #endif
 	} else {
+		if (mp->m_pkthdr.csum_flags & M_TCP_TSO)
+			tcpstat_inc(tcps_outbadtso);
 		return offload;
 	}
 
@@ -2519,6 +2530,31 @@ ixgbe_csum_offload(struct mbuf *mp, uint32_t *vlan_macip_lens,
 		}
 	}
 
+	if (mp->m_pkthdr.csum_flags & M_TCP_TSO) {
+		if (ext.tcp) {
+			uint32_t hdrlen, thlen, paylen, outlen;
+
+			thlen = ext.tcp->th_off << 2;
+
+			outlen = mp->m_pkthdr.ph_mss;
+			*mss_l4len_idx |= outlen << IXGBE_ADVTXD_MSS_SHIFT;
+			*mss_l4len_idx |= thlen << IXGBE_ADVTXD_L4LEN_SHIFT;
+
+			hdrlen = ethlen + iphlen + thlen;
+			paylen = mp->m_pkthdr.len - hdrlen;
+			CLR(*olinfo_status, IXGBE_ADVTXD_PAYLEN_MASK
+			    << IXGBE_ADVTXD_PAYLEN_SHIFT);
+			*olinfo_status |= paylen << IXGBE_ADVTXD_PAYLEN_SHIFT;
+
+			*cmd_type_len |= IXGBE_ADVTXD_DCMD_TSE;
+			offload = 1;
+
+			tcpstat_add(tcps_outpkttso,
+			    (paylen + outlen - 1) / outlen);
+		} else
+			tcpstat_inc(tcps_outbadtso);
+	}
+
 	return offload;
 }
 
@@ -2529,6 +2565,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	struct ixgbe_adv_tx_context_desc *TXD;
 	struct ixgbe_tx_buf *tx_buffer;
 	uint32_t vlan_macip_lens = 0, type_tucmd_mlhl = 0;
+	uint32_t mss_l4len_idx = 0;
 	int	ctxd = txr->next_avail_desc;
 	int	offload = 0;
 
@@ -2544,8 +2581,8 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	}
 #endif
 
-	offload |= ixgbe_csum_offload(mp, &vlan_macip_lens, &type_tucmd_mlhl,
-	    olinfo_status);
+	offload |= ixgbe_tx_offload(mp, &vlan_macip_lens, &type_tucmd_mlhl,
+	    olinfo_status, cmd_type_len, &mss_l4len_idx);
 
 	if (!offload)
 		return (0);
@@ -2559,7 +2596,7 @@ ixgbe_tx_ctx_setup(struct tx_ring *txr, struct mbuf *mp,
 	TXD->vlan_macip_lens = htole32(vlan_macip_lens);
 	TXD->type_tucmd_mlhl = htole32(type_tucmd_mlhl);
 	TXD->seqnum_seed = htole32(0);
-	TXD->mss_l4len_idx = htole32(0);
+	TXD->mss_l4len_idx = htole32(mss_l4len_idx);
 
 	tx_buffer->m_head = NULL;
 	tx_buffer->eop_index = -1;
@@ -2868,9 +2905,11 @@ ixgbe_initialize_receive_units(struct ix_softc *sc)
 	}
 	IXGBE_WRITE_REG(hw, IXGBE_FCTRL, fctrl);
 
-	/* Always enable jumbo frame reception */
 	hlreg = IXGBE_READ_REG(hw, IXGBE_HLREG0);
+	/* Always enable jumbo frame reception */
 	hlreg |= IXGBE_HLREG0_JUMBOEN;
+	/* Always enable CRC stripping */
+	hlreg |= IXGBE_HLREG0_RXCRCSTRP;
 	IXGBE_WRITE_REG(hw, IXGBE_HLREG0, hlreg);
 
 	if (ISSET(ifp->if_xflags, IFXF_LRO)) {
