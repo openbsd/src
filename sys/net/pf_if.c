@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.109 2022/11/22 22:28:40 sashan Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.110 2023/05/18 14:11:18 kn Exp $ */
 
 /*
  * Copyright 2005 Henning Brauer <henning@openbsd.org>
@@ -157,6 +157,8 @@ pfi_kif_find(const char *kif_name)
 {
 	struct pfi_kif_cmp	 s;
 
+	PF_ASSERT_LOCKED();
+
 	memset(&s, 0, sizeof(s));
 	strlcpy(s.pfik_name, kif_name, sizeof(s.pfik_name));
 	return (RB_FIND(pfi_ifhead, &pfi_ifs, (struct pfi_kif *)&s));
@@ -166,6 +168,8 @@ struct pfi_kif *
 pfi_kif_get(const char *kif_name, struct pfi_kif **prealloc)
 {
 	struct pfi_kif		*kif;
+
+	PF_ASSERT_LOCKED();
 
 	if ((kif = pfi_kif_find(kif_name)))
 		return (kif);
@@ -187,6 +191,8 @@ pfi_kif_get(const char *kif_name, struct pfi_kif **prealloc)
 void
 pfi_kif_ref(struct pfi_kif *kif, enum pfi_kif_refs what)
 {
+	PF_ASSERT_LOCKED();
+
 	switch (what) {
 	case PFI_KIF_REF_RULE:
 		kif->pfik_rules++;
@@ -213,6 +219,8 @@ pfi_kif_unref(struct pfi_kif *kif, enum pfi_kif_refs what)
 {
 	if (kif == NULL)
 		return;
+
+	PF_ASSERT_LOCKED();
 
 	switch (what) {
 	case PFI_KIF_REF_NONE:
@@ -801,6 +809,8 @@ pfi_skip_if(const char *filter, struct pfi_kif *p)
 	struct ifg_list	*i;
 	int		 n;
 
+	PF_ASSERT_LOCKED();
+
 	if (filter == NULL || !*filter)
 		return (0);
 	if (!strcmp(p->pfik_name, filter))
@@ -822,6 +832,8 @@ pfi_set_flags(const char *name, int flags)
 {
 	struct pfi_kif	*p;
 	size_t	n;
+
+	PF_ASSERT_LOCKED();
 
 	if (name != NULL && name[0] != '\0') {
 		p = pfi_kif_find(name);
@@ -862,6 +874,8 @@ pfi_clear_flags(const char *name, int flags)
 {
 	struct pfi_kif	*p, *w;
 
+	PF_ASSERT_LOCKED();
+
 	if (name != NULL && name[0] != '\0') {
 		p = pfi_kif_find(name);
 		if (p != NULL) {
@@ -898,6 +912,8 @@ pfi_xcommit(void)
 	struct ifg_list	*g;
 	struct ifnet	*ifp;
 	size_t n;
+
+	PF_ASSERT_LOCKED();
 
 	RB_FOREACH(p, pfi_ifhead, &pfi_ifs) {
 		p->pfik_flags = p->pfik_flags_new;
