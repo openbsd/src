@@ -1,4 +1,4 @@
-$OpenBSD: style.pod,v 1.1 2020/12/20 15:30:58 daniel Exp $
+$OpenBSD: style.pod,v 1.2 2023/05/18 16:30:01 espie Exp $
 
 =head1 NAME
 
@@ -16,6 +16,9 @@ Just as for L<style(9)>, indentation is an 8 character tab,
 and statements continuing on the next line are indented
 by four more spaces.
 
+Systematically C<use v5.36> or later which yields C<strict>, C<warnings>,
+C<say> and function signatures.
+
 =head2 Subroutines and methods
 
 Prefer object-oriented over procedural style for new code.
@@ -32,46 +35,78 @@ Name the constructor new() unless there are better options.
 
 Inside methods, call the object C<$self> unless there are reasons not to.
 
-For functions with multiple parameters,
-use list assignment to retrieve the arguments:
+Use signatures for every function (except delegations), so that the number
+of parameters can be checked.
 
-	sub m3
+	sub m3($self, $p1, $p2)
 	{
-		my ($self, $p1, $p2) = @_;
 		...
 	}
 
-Usually, there is no need to check the number of arguments.
+Accordingly, avoid calling code refs without parentheses, since this creates
+an implicit C<@_> reference.
 
-For functions with exactly one parameter, one can alternatively
-retrieve the argument with the shift() function:
+Note that signatures can also absorb an arbitrary number of parameters with
+C<@l> and set default parameter values like in C++, e.g.
 
-	sub width
-	{
-		my $self = shift;
-		...
-	}
+	sub do_backsubst($subst, $string, $unsubst = undef,
+	    $context = 'OpenBSD::PackingElement');
 
-Because it takes no argument apart from the object itself, calling
-such a method doesn't need trailing empty parentheses:
+For methods that take no argument apart from the object itself, remove
+trailing parentheses for the method call:
 
 	my $columns = $object->width;
 
 If a function passes on an arbitrary number of arguments
 to another function:
 
-	sub wrapper_method
+	sub wrapper_method($self, @p)
 	{
-		my $self = shift;
 		...
-		do_something_with(@_);
+		do_something_with(@p);
 	}
 
-Mark the last expression at the end of a function with an explicit
-B<return> unless the function is is not intended to return anything.
+Anonymous subs should also use signatures
 
-Avoid using the wantarray() function except as an optimization;
-it should not change the semantics of the subroutine.
+	$state->{opt}{x} =
+	    sub($opt) {
+		push ${$state->{xlist}}, $opt);
+	    };
+
+(Exception: signal handlers are currently not specified and may take an
+arbitrary number of parameters for C<__DIE__> and C<__WARN__>.
+
+Mark the last expression at the end of a function with an explicit
+B<return> unless the function is is not intended to return anything,
+or for "constant" methods
+
+	sub isFile($)
+	{
+		1;
+	}
+
+Do not name parameters to methods unless actually used.
+For documentation, use a comment in that case (especially useful
+for base methods)
+
+	# $self->foo($state):
+	# 	explain what foo does
+	sub foo($, $)
+	{
+	}
+
+Avoid using old-style function prototypes unless absolutely necessary
+to create syntax:
+
+	sub try :prototype(&@)
+	{
+		my ($try, $catch) = @_;
+		eval { &$try() };
+		dienow($@, $catch);
+	}
+
+Only use the wantarray() built-in as an optimization;
+it should never change the semantics of the subroutine.
 For example, suppose there is a function returning a list,
 and while the question whether the list is empty sometimes
 needs to be asked, the number of elements never matters.
@@ -102,16 +137,14 @@ simply mark internal methods by prefixing their names with C<_>.
 Treat anonymous subroutines just like other code,
 indenting them by one tab:
 
-	my $s = sub {
-		my $self = shift;
+	my $s = sub($self) {
 		...
 		};
 
 When passing an anonymous function as an argument, start it on a new line:
 
 	f($a1, $a2,
-	    sub {
-		my $self = shift;
+	    sub($self) {
 		...
 		});
 
@@ -123,7 +156,9 @@ into the same source file is fine.
 Avoid multiple inheritance unless absolutely necessary
 because it almost always turns into a mess.
 Including some behavior from a different class (mixin)
-is best done on a per-method basis.
+is best done on a per-method basis, but explicitly annotate the mixins
+as such.
+
 Delegating from one method of one class to a method of another class,
 passing C<@_> completely unchanged, can be done with the following syntax:
 
@@ -133,6 +168,9 @@ passing C<@_> completely unchanged, can be done with the following syntax:
 	{
 		&Lender::visit_notary;  # no parentheses here
 	}
+
+This is the only case where a code ref should be called without explicit
+parameters, and where a method can be declared without a prototype.
 
 If a program often uses fork(), set
 
