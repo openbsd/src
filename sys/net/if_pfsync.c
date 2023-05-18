@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.314 2023/04/28 15:50:05 sashan Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.315 2023/05/18 12:10:04 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1362,14 +1362,17 @@ pfsync_grab_snapshot(struct pfsync_snapshot *sn, struct pfsync_softc *sc)
 
 		while ((st = TAILQ_FIRST(&sc->sc_qs[q])) != NULL) {
 			TAILQ_REMOVE(&sc->sc_qs[q], st, sync_list);
+			mtx_enter(&st->mtx);
 			if (st->snapped == 0) {
 				TAILQ_INSERT_TAIL(&sn->sn_qs[q], st, sync_snap);
 				st->snapped = 1;
+				mtx_leave(&st->mtx);
 			} else {
 				/*
 				 * item is on snapshot list already, so we can
 				 * skip it now.
 				 */
+				mtx_leave(&st->mtx);
 				pf_state_unref(st);
 			}
 		}
@@ -1422,11 +1425,13 @@ pfsync_drop_snapshot(struct pfsync_snapshot *sn)
 			continue;
 
 		while ((st = TAILQ_FIRST(&sn->sn_qs[q])) != NULL) {
+			mtx_enter(&st->mtx);
 			KASSERT(st->sync_state == q);
 			KASSERT(st->snapped == 1);
 			TAILQ_REMOVE(&sn->sn_qs[q], st, sync_snap);
 			st->sync_state = PFSYNC_S_NONE;
 			st->snapped = 0;
+			mtx_leave(&st->mtx);
 			pf_state_unref(st);
 		}
 	}
@@ -1665,6 +1670,7 @@ pfsync_sendout(void)
 
 		count = 0;
 		while ((st = TAILQ_FIRST(&sn.sn_qs[q])) != NULL) {
+			mtx_enter(&st->mtx);
 			TAILQ_REMOVE(&sn.sn_qs[q], st, sync_snap);
 			KASSERT(st->sync_state == q);
 			KASSERT(st->snapped == 1);
@@ -1672,6 +1678,7 @@ pfsync_sendout(void)
 			st->snapped = 0;
 			pfsync_qs[q].write(st, m->m_data + offset);
 			offset += pfsync_qs[q].len;
+			mtx_leave(&st->mtx);
 
 			pf_state_unref(st);
 			count++;
@@ -1724,8 +1731,6 @@ pfsync_insert_state(struct pf_state *st)
 	if (sc == NULL || !ISSET(sc->sc_if.if_flags, IFF_RUNNING) ||
 	    ISSET(st->state_flags, PFSTATE_NOSYNC))
 		return;
-
-	KASSERT(st->sync_state == PFSYNC_S_NONE);
 
 	if (sc->sc_len == PFSYNC_MINPKT)
 		timeout_add_sec(&sc->sc_tmo, 1);
@@ -2221,6 +2226,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 		panic("pfsync pkt len is too low %zd", sc->sc_len);
 	do {
 		mtx_enter(&sc->sc_st_mtx);
+		mtx_enter(&st->mtx);
 
 		/*
 		 * There are either two threads trying to update the
@@ -2228,6 +2234,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 		 * (is on snapshot queue).
 		 */
 		if (st->sync_state != PFSYNC_S_NONE) {
+			mtx_leave(&st->mtx);
 			mtx_leave(&sc->sc_st_mtx);
 			break;
 		}
@@ -2240,6 +2247,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 		sclen = atomic_add_long_nv(&sc->sc_len, nlen);
 		if (sclen > sc->sc_if.if_mtu) {
 			atomic_sub_long(&sc->sc_len, nlen);
+			mtx_leave(&st->mtx);
 			mtx_leave(&sc->sc_st_mtx);
 			pfsync_sendout();
 			continue;
@@ -2249,6 +2257,7 @@ pfsync_q_ins(struct pf_state *st, int q)
 
 		TAILQ_INSERT_TAIL(&sc->sc_qs[q], st, sync_list);
 		st->sync_state = q;
+		mtx_leave(&st->mtx);
 		mtx_leave(&sc->sc_st_mtx);
 	} while (0);
 }
@@ -2260,6 +2269,7 @@ pfsync_q_del(struct pf_state *st)
 	int q;
 
 	mtx_enter(&sc->sc_st_mtx);
+	mtx_enter(&st->mtx);
 	q = st->sync_state;
 	/*
 	 * re-check under mutex
@@ -2267,6 +2277,7 @@ pfsync_q_del(struct pf_state *st)
 	 * too late, the state is being just processed/dispatched to peer.
 	 */
 	if ((q == PFSYNC_S_NONE) || (st->snapped)) {
+		mtx_leave(&st->mtx);
 		mtx_leave(&sc->sc_st_mtx);
 		return;
 	}
@@ -2275,6 +2286,7 @@ pfsync_q_del(struct pf_state *st)
 	if (TAILQ_EMPTY(&sc->sc_qs[q]))
 		atomic_sub_long(&sc->sc_len, sizeof (struct pfsync_subheader));
 	st->sync_state = PFSYNC_S_NONE;
+	mtx_leave(&st->mtx);
 	mtx_leave(&sc->sc_st_mtx);
 
 	pf_state_unref(st);
