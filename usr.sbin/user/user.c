@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.130 2023/05/16 21:28:46 millert Exp $ */
+/* $OpenBSD: user.c,v 1.131 2023/05/18 18:29:28 millert Exp $ */
 /* $NetBSD: user.c,v 1.69 2003/04/14 17:40:07 agc Exp $ */
 
 /*
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <dirent.h>
@@ -42,7 +43,6 @@
 #include <login_cap.h>
 #include <paths.h>
 #include <pwd.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,6 +101,12 @@ enum {
 	F_SETSECGROUP	= 0x4000,
 	F_ACCTLOCK	= 0x8000,
 	F_ACCTUNLOCK	= 0x10000
+};
+
+/* flags for runas() */
+enum {
+	RUNAS_DUP_DEVNULL	= 0x01,
+	RUNAS_IGNORE_EXITVAL	= 0x02
 };
 
 #define CONFFILE		"/etc/usermgmt.conf"
@@ -179,8 +185,6 @@ enum {
 
 static int adduser(char *, user_t *);
 static int append_group(char *, int, const char **);
-static int asystem(const char *, ...)
-	__attribute__((__format__(__printf__, 1, 2)));
 static int copydotfiles(char *, char *);
 static int creategid(char *, gid_t, const char *);
 static int getnextgid(uid_t *, uid_t, uid_t);
@@ -214,30 +218,79 @@ strsave(char **cpp, const char *s)
 		err(1, NULL);
 }
 
-/* a replacement for system(3) */
+/* run the given command with optional arguments as the specified uid */
 static int
-asystem(const char *fmt, ...)
+runas(const char *path, const char *const argv[], uid_t uid, int flags)
 {
-	va_list	vp;
-	char	buf[MaxCommandLen];
-	int	ret;
+	int argc, status, ret = 0;
+	char buf[MaxCommandLen];
+	pid_t child;
 
-	va_start(vp, fmt);
-	(void) vsnprintf(buf, sizeof(buf), fmt, vp);
-	va_end(vp);
-	if (verbose) {
+	strlcpy(buf, path, sizeof(buf));
+	for (argc = 1; argv[argc] != NULL; argc++) {
+		strlcat(buf, " ", sizeof(buf));
+		strlcat(buf, argv[argc], sizeof(buf));
+	}
+	if (verbose)
 		printf("Command: %s\n", buf);
+
+	child = fork();
+	switch (child) {
+	case -1:
+		err(EXIT_FAILURE, "fork");
+	case 0:
+		if (flags & RUNAS_DUP_DEVNULL) {
+			/* Redirect output to /dev/null if possible. */
+			int dev_null = open(_PATH_DEVNULL, O_RDWR);
+			if (dev_null != -1) {
+				dup2(dev_null, STDOUT_FILENO);
+				dup2(dev_null, STDERR_FILENO);
+				if (dev_null > STDERR_FILENO)
+					close(dev_null);
+			} else {
+				warn("%s", _PATH_DEVNULL);
+			}
+		}
+		if (uid != -1) {
+			if (setresuid(uid, uid, uid) == -1)
+				warn("setresuid(%u, %u, %u)", uid, uid, uid);
+		}
+		execv(path, (char **)argv);
+		warn("%s", buf);
+		_exit(EXIT_FAILURE);
+	default:
+		while (waitpid(child, &status, 0) == -1) {
+			if (errno != EINTR)
+				err(EXIT_FAILURE, "waitpid");
+		}
+		if (WIFSIGNALED(status)) {
+			ret = WTERMSIG(status);
+			warnx("[Warning] `%s' killed by signal %d", buf, ret);
+			ret |= 128;
+		} else {
+			if (!(flags & RUNAS_IGNORE_EXITVAL))
+				ret = WEXITSTATUS(status);
+			if (ret != 0) {
+				warnx("[Warning] `%s' failed with status %d",
+				    buf, ret);
+			}
+		}
+		return ret;
 	}
-	if ((ret = system(buf)) != 0) {
-		warnx("[Warning] can't system `%s'", buf);
-	}
-	return ret;
+}
+
+/* run the given command with optional arguments */
+static int
+run(const char *path, const char *const argv[])
+{
+	return runas(path, argv, -1, 0);
 }
 
 /* remove a users home directory, returning 1 for success (ie, no problems encountered) */
 static int
 removehomedir(const char *user, uid_t uid, const char *dir)
 {
+	const char *rm_argv[] = { "rm", "-rf", dir, NULL };
 	struct stat st;
 
 	/* userid not root? */
@@ -263,11 +316,9 @@ removehomedir(const char *user, uid_t uid, const char *dir)
 		return 0;
 	}
 
-	(void) seteuid(uid);
-	/* we add the "|| true" to keep asystem() quiet if there is a non-zero exit status. */
-	(void) asystem("%s -rf %s > /dev/null 2>&1 || true", RM, dir);
-	(void) seteuid(0);
-	if (rmdir(dir) == -1) {
+	/* run "rm -rf dir 2>&1/dev/null" as user, not root */
+	(void) runas(RM, rm_argv, uid, RUNAS_DUP_DEVNULL|RUNAS_IGNORE_EXITVAL);
+	if (rmdir(dir) == -1 && errno != ENOENT) {
 		warnx("Unable to remove all files in `%s'", dir);
 		return 0;
 	}
@@ -288,11 +339,12 @@ checkeuid(void)
 
 /* copy any dot files into the user's home directory */
 static int
-copydotfiles(char *skeldir, char *dir)
+copydotfiles(char *skeldir, char *dst)
 {
+	char		src[MaxFileNameLen];
 	struct dirent	*dp;
 	DIR		*dirp;
-	int		n;
+	int		len, n;
 
 	if (*skeldir == '\0')
 		return 0;
@@ -311,8 +363,16 @@ copydotfiles(char *skeldir, char *dir)
 	if (n == 0) {
 		warnx("No \"dot\" initialisation files found");
 	} else {
-		(void) asystem("%s -a %s %s/. %s",
-		    CP, (verbose) ? "-v" : "", skeldir, dir);
+		len = snprintf(src, sizeof(src), "%s/.", skeldir);
+		if (len < 0 || len >= sizeof(src)) {
+			warnx("skeleton directory `%s' too long", skeldir);
+			n = 0;
+		} else {
+			const char *cp_argv[] = { "cp", "-a", src, dst, NULL };
+			if (verbose)
+				cp_argv[1] = "-av";
+			run(CP, cp_argv);
+		}
 	}
 	return n;
 }
@@ -1203,7 +1263,15 @@ adduser(char *login_name, user_t *up)
 			errx(EXIT_FAILURE, "home directory `%s' already exists",
 			    home);
 		} else {
-			if (asystem("%s -p %s", MKDIR, home) != 0) {
+			char idstr[64];
+			const char *mkdir_argv[] =
+			    { "mkdir", "-p", home, NULL };
+			const char *chown_argv[] =
+			    { "chown", "-RP", idstr, home, NULL };
+			const char *chmod_argv[] =
+			    { "chmod", "-R", "u+w", home, NULL };
+
+			if (run(MKDIR, mkdir_argv) != 0) {
 				int saved_errno = errno;
 				close(ptmpfd);
 				pw_abort();
@@ -1211,9 +1279,10 @@ adduser(char *login_name, user_t *up)
 				    "can't mkdir `%s'", home);
 			}
 			(void) copydotfiles(up->u_skeldir, home);
-			(void) asystem("%s -R -P %u:%u %s", CHOWN, up->u_uid,
-			    gid, home);
-			(void) asystem("%s -R u+w %s", CHMOD, home);
+			(void) snprintf(idstr, sizeof(idstr), "%u:%u",
+			    up->u_uid, gid);
+			(void) run(CHOWN, chown_argv);
+			(void) run(CHMOD, chmod_argv);
 		}
 	}
 	if (strcmp(up->u_primgrp, "=uid") == 0 && !group_exists(login_name) &&
@@ -1657,8 +1726,9 @@ moduser(char *login_name, char *newlogin, user_t *up)
 		}
 	}
 	if (up != NULL) {
+		const char *mv_argv[] = { "mv", homedir, pwp->pw_dir, NULL };
 		if ((up->u_flags & F_MKDIR) &&
-		    asystem("%s %s %s", MV, homedir, pwp->pw_dir) != 0) {
+		    run(MV, mv_argv) != 0) {
 			int saved_errno = errno;
 			close(ptmpfd);
 			pw_abort();
