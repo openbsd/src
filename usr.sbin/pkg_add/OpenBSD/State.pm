@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.71 2022/02/12 09:46:19 espie Exp $
+# $OpenBSD: State.pm,v 1.72 2023/05/19 07:25:16 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -242,7 +242,7 @@ sub handle_options
 		push(@EXPORT, "\$opt_$k");
 	}
 	local $Exporter::ExportLevel = $state->{export_level};
-	import OpenBSD::State;
+	OpenBSD::State->import;
 }
 
 sub defines
