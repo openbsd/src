@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.37 2023/05/17 06:37:14 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.38 2023/05/19 00:54:28 deraadt Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -66,8 +66,9 @@
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512)
 
-/* Ensure that SHA_LONG64 and uint64_t are equivalent. */
-CTASSERT(sizeof(SHA_LONG64) == sizeof(uint64_t));
+#if !defined(__STRICT_ALIGNMENT) || defined(SHA512_ASM)
+#define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+#endif
 
 #ifdef SHA512_ASM
 void sha512_block_data_order(SHA512_CTX *ctx, const void *in, size_t num);
@@ -117,6 +118,31 @@ static const SHA_LONG64 K512[80] = {
 	U64(0x5fcb6fab3ad6faec), U64(0x6c44198c4a475817),
 };
 
+#if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+# if defined(__x86_64) || defined(__x86_64__)
+#   define PULL64(x) ({ SHA_LONG64 ret=*((const SHA_LONG64 *)(&(x)));	\
+				asm ("bswapq	%0"		\
+				: "=r"(ret)			\
+				: "0"(ret)); ret;		})
+# elif (defined(__i386) || defined(__i386__))
+#   define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
+			 unsigned int hi=p[0],lo=p[1];		\
+				asm ("bswapl %0; bswapl %1;"	\
+				: "=r"(lo),"=r"(hi)		\
+				: "0"(lo),"1"(hi));		\
+				((SHA_LONG64)hi)<<32|lo;	})
+# endif
+#endif
+
+#ifndef PULL64
+#if BYTE_ORDER == BIG_ENDIAN
+#define PULL64(x)	(x)
+#else
+#define B(x, j)		(((SHA_LONG64)(*(((const unsigned char *)(&x))+j)))<<((7-j)*8))
+#define PULL64(x)	(B(x,0)|B(x,1)|B(x,2)|B(x,3)|B(x,4)|B(x,5)|B(x,6)|B(x,7))
+#endif
+#endif
+
 #define ROTR(x, s)	crypto_ror_u64(x, s)
 
 #define Sigma0(x)	(ROTR((x),28) ^ ROTR((x),34) ^ ROTR((x),39))
@@ -159,60 +185,37 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *_in, size_t num)
 		g = ctx->h[6];
 		h = ctx->h[7];
 
-		if ((uintptr_t)in % sizeof(SHA_LONG64) == 0) {
-			/* Input is 64 bit aligned. */
-			X[0] = be64toh(in[0]);
-			X[1] = be64toh(in[1]);
-			X[2] = be64toh(in[2]);
-			X[3] = be64toh(in[3]);
-			X[4] = be64toh(in[4]);
-			X[5] = be64toh(in[5]);
-			X[6] = be64toh(in[6]);
-			X[7] = be64toh(in[7]);
-			X[8] = be64toh(in[8]);
-			X[9] = be64toh(in[9]);
-			X[10] = be64toh(in[10]);
-			X[11] = be64toh(in[11]);
-			X[12] = be64toh(in[12]);
-			X[13] = be64toh(in[13]);
-			X[14] = be64toh(in[14]);
-			X[15] = be64toh(in[15]);
-		} else {
-			/* Input is not 64 bit aligned. */
-			X[0] = crypto_load_be64toh(&in[0]);
-			X[1] = crypto_load_be64toh(&in[1]);
-			X[2] = crypto_load_be64toh(&in[2]);
-			X[3] = crypto_load_be64toh(&in[3]);
-			X[4] = crypto_load_be64toh(&in[4]);
-			X[5] = crypto_load_be64toh(&in[5]);
-			X[6] = crypto_load_be64toh(&in[6]);
-			X[7] = crypto_load_be64toh(&in[7]);
-			X[8] = crypto_load_be64toh(&in[8]);
-			X[9] = crypto_load_be64toh(&in[9]);
-			X[10] = crypto_load_be64toh(&in[10]);
-			X[11] = crypto_load_be64toh(&in[11]);
-			X[12] = crypto_load_be64toh(&in[12]);
-			X[13] = crypto_load_be64toh(&in[13]);
-			X[14] = crypto_load_be64toh(&in[14]);
-			X[15] = crypto_load_be64toh(&in[15]);
-		}
-		in += SHA_LBLOCK;
-
+		X[0] = PULL64(in[0]);
 		ROUND_00_15(0, a, b, c, d, e, f, g, h, X[0]);
+		X[1] = PULL64(in[1]);
 		ROUND_00_15(1, h, a, b, c, d, e, f, g, X[1]);
+		X[2] = PULL64(in[2]);
 		ROUND_00_15(2, g, h, a, b, c, d, e, f, X[2]);
+		X[3] = PULL64(in[3]);
 		ROUND_00_15(3, f, g, h, a, b, c, d, e, X[3]);
+		X[4] = PULL64(in[4]);
 		ROUND_00_15(4, e, f, g, h, a, b, c, d, X[4]);
+		X[5] = PULL64(in[5]);
 		ROUND_00_15(5, d, e, f, g, h, a, b, c, X[5]);
+		X[6] = PULL64(in[6]);
 		ROUND_00_15(6, c, d, e, f, g, h, a, b, X[6]);
+		X[7] = PULL64(in[7]);
 		ROUND_00_15(7, b, c, d, e, f, g, h, a, X[7]);
+		X[8] = PULL64(in[8]);
 		ROUND_00_15(8, a, b, c, d, e, f, g, h, X[8]);
+		X[9] = PULL64(in[9]);
 		ROUND_00_15(9, h, a, b, c, d, e, f, g, X[9]);
+		X[10] = PULL64(in[10]);
 		ROUND_00_15(10, g, h, a, b, c, d, e, f, X[10]);
+		X[11] = PULL64(in[11]);
 		ROUND_00_15(11, f, g, h, a, b, c, d, e, X[11]);
+		X[12] = PULL64(in[12]);
 		ROUND_00_15(12, e, f, g, h, a, b, c, d, X[12]);
+		X[13] = PULL64(in[13]);
 		ROUND_00_15(13, d, e, f, g, h, a, b, c, X[13]);
+		X[14] = PULL64(in[14]);
 		ROUND_00_15(14, c, d, e, f, g, h, a, b, X[14]);
+		X[15] = PULL64(in[15]);
 		ROUND_00_15(15, b, c, d, e, f, g, h, a, X[15]);
 
 		for (i = 16; i < 80; i += 16) {
@@ -242,6 +245,8 @@ sha512_block_data_order(SHA512_CTX *ctx, const void *_in, size_t num)
 		ctx->h[5] += f;
 		ctx->h[6] += g;
 		ctx->h[7] += h;
+
+		in += SHA_LBLOCK;
 	}
 }
 
@@ -318,15 +323,21 @@ SHA512_Init(SHA512_CTX *c)
 void
 SHA512_Transform(SHA512_CTX *c, const unsigned char *data)
 {
+#ifndef SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+	if ((size_t)data % sizeof(c->u.d[0]) != 0) {
+		memcpy(c->u.p, data, sizeof(c->u.p));
+		data = c->u.p;
+	}
+#endif
 	sha512_block_data_order(c, data, 1);
 }
 
 int
 SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
 {
-	const unsigned char *data = _data;
-	unsigned char *p = c->u.p;
-	SHA_LONG64 l;
+	SHA_LONG64	l;
+	unsigned char  *p = c->u.p;
+	const unsigned char *data = (const unsigned char *)_data;
 
 	if (len == 0)
 		return 1;
@@ -355,10 +366,22 @@ SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
 	}
 
 	if (len >= sizeof(c->u)) {
-		sha512_block_data_order(c, data, len/sizeof(c->u));
-		data += len;
-		len %= sizeof(c->u);
-		data -= len;
+#ifndef SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
+		if ((size_t)data % sizeof(c->u.d[0]) != 0) {
+			while (len >= sizeof(c->u)) {
+				memcpy(p, data, sizeof(c->u));
+				sha512_block_data_order(c, p, 1);
+				len -= sizeof(c->u);
+				data += sizeof(c->u);
+			}
+		} else
+#endif
+		{
+			sha512_block_data_order(c, data, len/sizeof(c->u));
+			data += len;
+			len %= sizeof(c->u);
+			data -= len;
+		}
 	}
 
 	if (len != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.4 2023/05/17 06:37:14 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.5 2023/05/19 00:54:27 deraadt Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -22,34 +22,14 @@
 #ifndef HEADER_CRYPTO_INTERNAL_H
 #define HEADER_CRYPTO_INTERNAL_H
 
-#define CTASSERT(x) \
-    extern char _ctassert[(x) ? 1 : -1] __attribute__((__unused__))
-
 /*
- * crypto_load_be32toh() loads a 32 bit unsigned big endian value as a 32 bit
- * unsigned host endian value, from the specified address in memory. The memory
- * address may have any alignment.
- */
-#ifndef HAVE_CRYPTO_LOAD_BE32TOH
-static inline uint32_t
-crypto_load_be32toh(const void *src)
-{
-	uint32_t v;
-
-	memcpy(&v, src, sizeof(v));
-
-	return be32toh(v);
-}
-#endif
-
-/*
- * crypto_store_htobe32() stores a 32 bit unsigned host endian value as a 32 bit
- * unsigned big endian value, at the specified address in memory. The memory
- * address may have any alignment.
+ * crypto_store_htobe32() stores a 32 bit unsigned host endian value
+ * as a 32 bit unsigned big endian value, at the specified location in
+ * memory. The memory location may have any alignment.
  */
 #ifndef HAVE_CRYPTO_STORE_HTOBE32
 static inline void
-crypto_store_htobe32(void *dst, uint32_t v)
+crypto_store_htobe32(uint8_t *dst, uint32_t v)
 {
 	v = htobe32(v);
 	memcpy(dst, &v, sizeof(v));
@@ -57,30 +37,13 @@ crypto_store_htobe32(void *dst, uint32_t v)
 #endif
 
 /*
- * crypto_load_be64toh() loads a 64 bit unsigned big endian value as a 64 bit
- * unsigned host endian value, from the specified address in memory. The memory
- * address may have any alignment.
- */
-#ifndef HAVE_CRYPTO_LOAD_BE64TOH
-static inline uint64_t
-crypto_load_be64toh(const void *src)
-{
-	uint64_t v;
-
-	memcpy(&v, src, sizeof(v));
-
-	return be64toh(v);
-}
-#endif
-
-/*
- * crypto_store_htobe64() stores a 64 bit unsigned host endian value as a 64 bit
- * unsigned big endian value, at the specified address in memory. The memory
- * address may have any alignment.
+ * crypto_store_htobe64() stores a 64 bit unsigned host endian value
+ * as a 64 bit unsigned big endian value, at the specified location in
+ * memory. The memory location may have any alignment.
  */
 #ifndef HAVE_CRYPTO_STORE_HTOBE64
 static inline void
-crypto_store_htobe64(void *dst, uint64_t v)
+crypto_store_htobe64(uint8_t *dst, uint64_t v)
 {
 	v = htobe64(v);
 	memcpy(dst, &v, sizeof(v));
