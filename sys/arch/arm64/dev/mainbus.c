@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.24 2023/01/21 10:30:11 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.25 2023/05/19 21:15:16 patrick Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -44,6 +44,7 @@ void mainbus_attach_efi(struct device *);
 void mainbus_attach_apm(struct device *);
 void mainbus_attach_framebuffer(struct device *);
 void mainbus_attach_firmware(struct device *);
+void mainbus_attach_resvmem(struct device *);
 
 struct mainbus_softc {
 	struct device		 sc_dev;
@@ -141,6 +142,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	mainbus_attach_efi(self);
 	mainbus_attach_firmware(self);
+	mainbus_attach_resvmem(self);
 
 	sc->sc_rangeslen = OF_getproplen(OF_peer(0), "ranges");
 	if (sc->sc_rangeslen > 0 && !(sc->sc_rangeslen % sizeof(uint32_t))) {
@@ -426,6 +428,18 @@ void
 mainbus_attach_firmware(struct device *self)
 {
 	int node = OF_finddevice("/firmware");
+
+	if (node == -1)
+		return;
+
+	for (node = OF_child(node); node != 0; node = OF_peer(node))
+		mainbus_attach_node(self, node, NULL);
+}
+
+void
+mainbus_attach_resvmem(struct device *self)
+{
+	int node = OF_finddevice("/reserved-memory");
 
 	if (node == -1)
 		return;
