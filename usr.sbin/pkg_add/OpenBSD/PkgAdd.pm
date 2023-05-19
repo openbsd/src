@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.138 2022/07/29 14:26:45 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.139 2023/05/19 07:30:40 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -443,7 +443,7 @@ sub complete
 	# XXX kept must have complete plists to be able to track 
 	# libs for OldLibs
 	for my $o ($set->older, $set->kept) {
-		$o->complete_old($state);
+		$o->complete_old;
 	}
 
 	my $check = $set->install_issues($state);
