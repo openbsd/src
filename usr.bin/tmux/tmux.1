@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.919 2023/04/28 06:12:27 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.920 2023/05/19 07:46:34 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 28 2023 $
+.Dd $Mdocdate: May 19 2023 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5275,6 +5275,7 @@ The following variables are available, where appropriate:
 .It Li "selection_present" Ta "" Ta "1 if selection started in copy mode"
 .It Li "selection_start_x" Ta "" Ta "X position of the start of the selection"
 .It Li "selection_start_y" Ta "" Ta "Y position of the start of the selection"
+.It Li "server_sessions" Ta "" Ta "Number of sessions"
 .It Li "session_activity" Ta "" Ta "Time of session last activity"
 .It Li "session_alerts" Ta "" Ta "List of window indexes with alerts"
 .It Li "session_attached" Ta "" Ta "Number of clients session is attached to"
