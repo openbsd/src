@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.190 2023/05/19 21:13:49 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.191 2023/05/19 21:26:10 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -695,6 +695,11 @@ file	dev/fdt/qcscm.c			qcscm
 device	qcsmem
 attach	qcsmem at fdt
 file	dev/fdt/qcsmem.c		qcsmem
+
+# Qualcomm Shared Memory Point-to-Point
+device	qcsmptp
+attach	qcsmptp at fdt
+file	dev/fdt/qcsmptp.c		qcsmptp
 
 # Qualcomm SPMI controller
 device	qcspmi: spmi
