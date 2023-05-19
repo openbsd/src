@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd.conf.5,v 1.264 2023/03/02 17:09:53 jmc Exp $
+.\"	$OpenBSD: smtpd.conf.5,v 1.265 2023/05/19 15:18:06 op Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: May 19 2023 $
 .Dt SMTPD.CONF 5
 .Os
 .Sh NAME
@@ -128,7 +128,7 @@ Optionally,
 might be specified to use the
 recipient email address (after expansion) instead of the
 local user in the LMTP session as RCPT TO.
-.It Cm maildir Op Ar pathname Op Cm junk
+.It Cm maildir Oo Ar pathname Oc Op Cm junk
 Deliver the message to the maildir in
 .Ar pathname
 if specified, or by default to
