@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Paths.pm,v 1.38 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: Paths.pm,v 1.39 2023/05/19 07:37:11 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -84,8 +84,9 @@ my ($machine_arch, $arch, $osversion, $osdirectory);
 
 sub architecture
 {
+	my $self = shift;
 	if (!defined $arch) {
-		my $cmd = uname()." -m";
+		my $cmd = $self->uname." -m";
 		chomp($arch = `$cmd`);
 	}
 	return $arch;
@@ -93,8 +94,9 @@ sub architecture
 
 sub machine_architecture
 {
+	my $self = shift;
 	if (!defined $machine_arch) {
-		my $cmd = arch()." -s";
+		my $cmd = $self->arch." -s";
 		chomp($machine_arch = `$cmd`);
 	}
 	return $machine_arch;
@@ -102,7 +104,8 @@ sub machine_architecture
 
 sub compute_osversion
 {
-	open my $cmd, '-|', OpenBSD::Paths->sysctl, '-n', 'kern.version';
+	my $self = shift;
+	open my $cmd, '-|', $self->sysctl, '-n', 'kern.version';
 	my $line = <$cmd>;
 	close($cmd);
 	if ($line =~ m/^OpenBSD (\d\.\d)(\S*)\s/) {
@@ -117,16 +120,18 @@ sub compute_osversion
 
 sub os_version
 {
+	my $self = shift;
 	if (!defined $osversion) {
-		compute_osversion();
+		$self->compute_osversion;
 	}
 	return $osversion;
 }
 
 sub os_directory
 {
+	my $self = shift;
 	if (!defined $osversion) {
-		compute_osversion();
+		$self->compute_osversion;
 	}
 	return $osdirectory;
 }
