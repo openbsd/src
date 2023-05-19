@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp.h,v 1.23 2022/08/11 09:13:21 claudio Exp $	*/
+/*	$OpenBSD: tcp.h,v 1.24 2023/05/19 01:04:39 guenther Exp $	*/
 /*	$NetBSD: tcp.h,v 1.8 1995/04/17 05:32:58 cgd Exp $	*/
 
 /*
@@ -117,24 +117,6 @@ struct tcphdr {
 
 #define	TCP_MAX_WINSHIFT	14	/* maximum window shift */
 
-#endif /* __BSD_VISIBLE */
-
-/*
- * User-settable options (used with setsockopt).
- */
-#define	TCP_NODELAY		0x01   /* don't delay send to coalesce pkts */
-#define	TCP_MAXSEG		0x02   /* set maximum segment size */
-#define	TCP_MD5SIG		0x04   /* enable TCP MD5 signature option */
-#define	TCP_SACK_ENABLE		0x08   /* enable SACKs (if disabled by def.) */
-#define	TCP_INFO		0x09   /* retrieve tcp_info structure */
-#define	TCP_NOPUSH		0x10   /* don't push last block of write */
-
-#define	TCPI_OPT_TIMESTAMPS	0x01
-#define	TCPI_OPT_SACK		0x02
-#define	TCPI_OPT_WSCALE		0x04
-#define	TCPI_OPT_ECN		0x08
-#define	TCPI_OPT_TOE		0x10
-
 /*
  * The TCP_INFO socket option comes from the Linux 2.6 TCP API, and permits
  * the caller to query certain information about the state of a TCP
@@ -149,6 +131,11 @@ struct tcp_info {
 	uint8_t		__tcpi_probes;
 	uint8_t		__tcpi_backoff;
 	uint8_t		tcpi_options;		/* Options enabled on conn. */
+#define	TCPI_OPT_TIMESTAMPS	0x01
+#define	TCPI_OPT_SACK		0x02
+#define	TCPI_OPT_WSCALE		0x04
+#define	TCPI_OPT_ECN		0x08
+#define	TCPI_OPT_TOE		0x10
 	uint8_t		tcpi_snd_wscale;	/* RFC1323 send shift value. */
 	uint8_t		tcpi_rcv_wscale;	/* RFC1323 recv shift value. */
 
@@ -219,5 +206,17 @@ struct tcp_info {
 	uint32_t	tcpi_so_snd_sb_lowat;
 	uint32_t	tcpi_so_snd_sb_wat;
 };
+
+#endif /* __BSD_VISIBLE */
+
+/*
+ * User-settable options (used with setsockopt).
+ */
+#define	TCP_NODELAY		0x01   /* don't delay send to coalesce pkts */
+#define	TCP_MAXSEG		0x02   /* set maximum segment size */
+#define	TCP_MD5SIG		0x04   /* enable TCP MD5 signature option */
+#define	TCP_SACK_ENABLE		0x08   /* enable SACKs (if disabled by def.) */
+#define	TCP_INFO		0x09   /* retrieve tcp_info structure */
+#define	TCP_NOPUSH		0x10   /* don't push last block of write */
 
 #endif /* _NETINET_TCP_H_ */
