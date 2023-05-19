@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.64 2022/07/17 03:12:55 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.65 2023/05/19 01:12:23 guenther Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 17 2022 $
+.Dd $Mdocdate: May 19 2023 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -227,6 +227,7 @@ As a result, all the expected functionalities of libc stdio work.
 .Xr socketpair 2 ,
 .Xr umask 2 ,
 .Xr wait4 2 ,
+.Xr waitid 2 ,
 .Xr write 2 ,
 .Xr writev 2
 .It Cm rpath
