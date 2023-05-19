@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcipcc.c,v 1.1 2023/05/17 23:19:00 patrick Exp $	*/
+/*	$OpenBSD: qcipcc.c,v 1.2 2023/05/19 20:54:55 patrick Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -156,6 +156,8 @@ qcipcc_intr(void *arg)
 	int handled = 0;
 
 	while ((reg = HREAD4(sc, IPCC_RECV_ID)) != ~0) {
+		HWRITE4(sc, IPCC_RECV_SIGNAL_CLEAR, reg);
+
 		client_id = (reg >> IPCC_CLIENT_ID_SHIFT) &
 		    IPCC_CLIENT_ID_MASK;
 		signal_id = (reg >> IPCC_SIGNAL_ID_SHIFT) &
@@ -168,8 +170,6 @@ qcipcc_intr(void *arg)
 			ih->ih_func(ih->ih_arg);
 			handled = 1;
 		}
-
-		HWRITE4(sc, IPCC_RECV_SIGNAL_CLEAR, reg);
 	}
 
 	return handled;
