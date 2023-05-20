@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.31 2023/05/20 05:42:57 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.32 2023/05/20 11:44:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -478,11 +478,11 @@ speed_main(int argc, char **argv)
 	argc--;
 	argv++;
 	while (argc) {
-		if ((argc > 0) && (strcmp(*argv, "-elapsed") == 0)) {
+		if (argc > 0 && strcmp(*argv, "-elapsed") == 0) {
 			usertime = 0;
 			j--;	/* Otherwise, -elapsed gets confused with an
 				 * algorithm. */
-		} else if ((argc > 0) && (strcmp(*argv, "-evp") == 0)) {
+		} else if (argc > 0 && strcmp(*argv, "-evp") == 0) {
 			argc--;
 			argv++;
 			if (argc == 0) {
@@ -498,12 +498,11 @@ speed_main(int argc, char **argv)
 				goto end;
 			}
 			doit[D_EVP] = 1;
-		} else if (argc > 0 && !strcmp(*argv, "-decrypt")) {
+		} else if (argc > 0 && strcmp(*argv, "-decrypt") == 0) {
 			decrypt = 1;
 			j--;	/* Otherwise, -decrypt gets confused with an
 				 * algorithm. */
-		}
-		else if ((argc > 0) && (strcmp(*argv, "-multi") == 0)) {
+		} else if (argc > 0 && strcmp(*argv, "-multi") == 0) {
 			argc--;
 			argv++;
 			if (argc == 0) {
@@ -517,8 +516,7 @@ speed_main(int argc, char **argv)
 			}
 			j--;	/* Otherwise, -multi gets confused with an
 				 * algorithm. */
-		}
-		else if (argc > 0 && !strcmp(*argv, "-mr")) {
+		} else if (argc > 0 && strcmp(*argv, "-mr") == 0) {
 			mr = 1;
 			j--;	/* Otherwise, -mr gets confused with an
 				 * algorithm. */
