@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.30 2023/02/23 14:55:54 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.31 2023/05/20 05:42:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,7 +166,7 @@ static int do_multi(int multi);
 #define RSA_NUM		4
 #define DSA_NUM		3
 
-#define EC_NUM       16
+#define EC_NUM       6
 #define MAX_ECDH_SIZE 256
 
 static const char *names[ALGOR_NUM] = {
@@ -365,16 +365,6 @@ speed_main(int argc, char **argv)
 #define R_EC_P256    3
 #define R_EC_P384    4
 #define R_EC_P521    5
-#define R_EC_K163    6
-#define R_EC_K233    7
-#define R_EC_K283    8
-#define R_EC_K409    9
-#define R_EC_K571    10
-#define R_EC_B163    11
-#define R_EC_B233    12
-#define R_EC_B283    13
-#define R_EC_B409    14
-#define R_EC_B571    15
 
 	RSA *rsa_key[RSA_NUM];
 	long rsa_c[RSA_NUM][2];
@@ -394,53 +384,24 @@ speed_main(int argc, char **argv)
 	 * name to the following arrays and increase the EC_NUM value
 	 * accordingly.
 	 */
-	static unsigned int test_curves[EC_NUM] =
-	{
-		/* Prime Curves */
+	static unsigned int test_curves[EC_NUM] = {
 		NID_secp160r1,
 		NID_X9_62_prime192v1,
 		NID_secp224r1,
 		NID_X9_62_prime256v1,
 		NID_secp384r1,
 		NID_secp521r1,
-		/* Binary Curves */
-		NID_sect163k1,
-		NID_sect233k1,
-		NID_sect283k1,
-		NID_sect409k1,
-		NID_sect571k1,
-		NID_sect163r2,
-		NID_sect233r1,
-		NID_sect283r1,
-		NID_sect409r1,
-		NID_sect571r1
 	};
-	static const char *test_curves_names[EC_NUM] =
-	{
-		/* Prime Curves */
+	static const char *test_curves_names[EC_NUM] = {
 		"secp160r1",
 		"nistp192",
 		"nistp224",
 		"nistp256",
 		"nistp384",
 		"nistp521",
-		/* Binary Curves */
-		"nistk163",
-		"nistk233",
-		"nistk283",
-		"nistk409",
-		"nistk571",
-		"nistb163",
-		"nistb233",
-		"nistb283",
-		"nistb409",
-		"nistb571"
 	};
-	static int test_curves_bits[EC_NUM] =
-	{
+	static int test_curves_bits[EC_NUM] = {
 		160, 192, 224, 256, 384, 521,
-		163, 233, 283, 409, 571,
-		163, 233, 283, 409, 571
 	};
 
 #endif
@@ -753,26 +714,6 @@ speed_main(int argc, char **argv)
 			ecdsa_doit[R_EC_P384] = 2;
 		else if (strcmp(*argv, "ecdsap521") == 0)
 			ecdsa_doit[R_EC_P521] = 2;
-		else if (strcmp(*argv, "ecdsak163") == 0)
-			ecdsa_doit[R_EC_K163] = 2;
-		else if (strcmp(*argv, "ecdsak233") == 0)
-			ecdsa_doit[R_EC_K233] = 2;
-		else if (strcmp(*argv, "ecdsak283") == 0)
-			ecdsa_doit[R_EC_K283] = 2;
-		else if (strcmp(*argv, "ecdsak409") == 0)
-			ecdsa_doit[R_EC_K409] = 2;
-		else if (strcmp(*argv, "ecdsak571") == 0)
-			ecdsa_doit[R_EC_K571] = 2;
-		else if (strcmp(*argv, "ecdsab163") == 0)
-			ecdsa_doit[R_EC_B163] = 2;
-		else if (strcmp(*argv, "ecdsab233") == 0)
-			ecdsa_doit[R_EC_B233] = 2;
-		else if (strcmp(*argv, "ecdsab283") == 0)
-			ecdsa_doit[R_EC_B283] = 2;
-		else if (strcmp(*argv, "ecdsab409") == 0)
-			ecdsa_doit[R_EC_B409] = 2;
-		else if (strcmp(*argv, "ecdsab571") == 0)
-			ecdsa_doit[R_EC_B571] = 2;
 		else if (strcmp(*argv, "ecdsa") == 0) {
 			for (i = 0; i < EC_NUM; i++)
 				ecdsa_doit[i] = 1;
@@ -789,26 +730,6 @@ speed_main(int argc, char **argv)
 			ecdh_doit[R_EC_P384] = 2;
 		else if (strcmp(*argv, "ecdhp521") == 0)
 			ecdh_doit[R_EC_P521] = 2;
-		else if (strcmp(*argv, "ecdhk163") == 0)
-			ecdh_doit[R_EC_K163] = 2;
-		else if (strcmp(*argv, "ecdhk233") == 0)
-			ecdh_doit[R_EC_K233] = 2;
-		else if (strcmp(*argv, "ecdhk283") == 0)
-			ecdh_doit[R_EC_K283] = 2;
-		else if (strcmp(*argv, "ecdhk409") == 0)
-			ecdh_doit[R_EC_K409] = 2;
-		else if (strcmp(*argv, "ecdhk571") == 0)
-			ecdh_doit[R_EC_K571] = 2;
-		else if (strcmp(*argv, "ecdhb163") == 0)
-			ecdh_doit[R_EC_B163] = 2;
-		else if (strcmp(*argv, "ecdhb233") == 0)
-			ecdh_doit[R_EC_B233] = 2;
-		else if (strcmp(*argv, "ecdhb283") == 0)
-			ecdh_doit[R_EC_B283] = 2;
-		else if (strcmp(*argv, "ecdhb409") == 0)
-			ecdh_doit[R_EC_B409] = 2;
-		else if (strcmp(*argv, "ecdhb571") == 0)
-			ecdh_doit[R_EC_B571] = 2;
 		else if (strcmp(*argv, "ecdh") == 0) {
 			for (i = 0; i < EC_NUM; i++)
 				ecdh_doit[i] = 1;
@@ -881,11 +802,7 @@ speed_main(int argc, char **argv)
 
 			BIO_printf(bio_err, "dsa512   dsa1024  dsa2048\n");
 			BIO_printf(bio_err, "ecdsap160 ecdsap192 ecdsap224 ecdsap256 ecdsap384 ecdsap521\n");
-			BIO_printf(bio_err, "ecdsak163 ecdsak233 ecdsak283 ecdsak409 ecdsak571\n");
-			BIO_printf(bio_err, "ecdsab163 ecdsab233 ecdsab283 ecdsab409 ecdsab571 ecdsa\n");
 			BIO_printf(bio_err, "ecdhp160  ecdhp192  ecdhp224  ecdhp256  ecdhp384  ecdhp521\n");
-			BIO_printf(bio_err, "ecdhk163  ecdhk233  ecdhk283  ecdhk409  ecdhk571\n");
-			BIO_printf(bio_err, "ecdhb163  ecdhb233  ecdhb283  ecdhb409  ecdhb571  ecdh\n");
 
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err, "idea     ");
