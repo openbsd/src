@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.173 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.174 2023/05/20 09:30:57 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -1009,11 +1009,10 @@ sub setup_session
 
 	require OpenBSD::Temp;
 	$self->{count} = 0;
-	local ($>, $));
+	local $>;
 	my ($uid, $gid, $user) = $self->fetch_id;
 	if (defined $uid) {
 		$> = $uid;
-		$) = "$gid $gid";
 	}
 	my ($fh, undef) = OpenBSD::Temp::fh_file("session",
 		sub { unlink(shift); });
