@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.405 2023/05/13 18:13:42 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.406 2023/05/20 15:16:47 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -761,7 +761,7 @@ editor_resize(struct disklabel *lp, const char *p)
 			DL_SETPOFFSET(pp, off);
 			if (off + DL_GETPSIZE(pp) > ending_sector) {
 				DL_SETPSIZE(pp, ending_sector - off);
-				pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(0, 0);
+				pp->p_fragblock = 0;
 				if (get_fsize(&label, i) == 1 ||
 				    get_bsize(&label, i) == 1 ||
 				    get_cpg(&label, i) == 1)
