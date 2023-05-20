@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.32 2023/05/20 11:44:15 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.33 2023/05/20 12:03:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,6 +78,8 @@
 #define DSA_SECONDS	10
 #define ECDSA_SECONDS   10
 #define ECDH_SECONDS    10
+
+#define MAX_UNALIGN	16
 
 #include <math.h>
 #include <signal.h>
@@ -227,7 +229,9 @@ KDF1_SHA1(const void *in, size_t inlen, void *out, size_t * outlen)
 int
 speed_main(int argc, char **argv)
 {
+	unsigned char *real_buf = NULL, *real_buf2 = NULL;
 	unsigned char *buf = NULL, *buf2 = NULL;
+	size_t unaligned = 0;
 	int mret = 1;
 	long count = 0, save_count = 0;
 	int i, j, k;
@@ -450,11 +454,11 @@ speed_main(int argc, char **argv)
 	for (i = 0; i < RSA_NUM; i++)
 		rsa_key[i] = NULL;
 
-	if ((buf = malloc(BUFSIZE)) == NULL) {
+	if ((buf = real_buf = malloc(BUFSIZE + MAX_UNALIGN)) == NULL) {
 		BIO_printf(bio_err, "out of memory\n");
 		goto end;
 	}
-	if ((buf2 = malloc(BUFSIZE)) == NULL) {
+	if ((buf2 = real_buf2 = malloc(BUFSIZE + MAX_UNALIGN)) == NULL) {
 		BIO_printf(bio_err, "out of memory\n");
 		goto end;
 	}
@@ -515,6 +519,23 @@ speed_main(int argc, char **argv)
 				goto end;
 			}
 			j--;	/* Otherwise, -multi gets confused with an
+				 * algorithm. */
+		} else if (argc > 0 && strcmp(*argv, "-unaligned") == 0) {
+			argc--;
+			argv++;
+			if (argc == 0) {
+				BIO_printf(bio_err, "no alignment offset given\n");
+				goto end;
+			}
+			unaligned = strtonum(argv[0], 0, MAX_UNALIGN, &errstr);
+			if (errstr) {
+				BIO_printf(bio_err, "bad alignment offset: %s",
+				    errstr);
+				goto end;
+			}
+			buf = real_buf + unaligned;
+			buf2 = real_buf2 + unaligned;
+			j--;	/* Otherwise, -unaligned gets confused with an
 				 * algorithm. */
 		} else if (argc > 0 && strcmp(*argv, "-mr") == 0) {
 			mr = 1;
@@ -835,6 +856,7 @@ speed_main(int argc, char **argv)
 			BIO_printf(bio_err, "-decrypt        time decryption instead of encryption (only EVP).\n");
 			BIO_printf(bio_err, "-mr             produce machine readable output.\n");
 			BIO_printf(bio_err, "-multi n        run n benchmarks in parallel.\n");
+			BIO_printf(bio_err, "-unaligned n    use buffers with offset n from proper alignment.\n");
 			goto end;
 		}
 		argc--;
@@ -1848,8 +1870,8 @@ show_res:
 
  end:
 	ERR_print_errors(bio_err);
-	free(buf);
-	free(buf2);
+	free(real_buf);
+	free(real_buf2);
 	for (i = 0; i < RSA_NUM; i++)
 		if (rsa_key[i] != NULL)
 			RSA_free(rsa_key[i]);

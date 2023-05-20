@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.144 2023/05/05 18:01:27 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.145 2023/05/20 12:03:02 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: May 5 2023 $
+.Dd $Mdocdate: May 20 2023 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -5392,6 +5392,7 @@ An error occurred writing certificates.
 .Op Fl evp Ar algorithm
 .Op Fl mr
 .Op Fl multi Ar number
+.Op Fl unaligned Ar number
 .Ek
 .El
 .Pp
@@ -5418,6 +5419,13 @@ Produce machine readable output.
 Run
 .Ar number
 benchmarks in parallel.
+.It Fl unaligned Ar number
+Use allocated buffers with an offset of
+.Ar number
+bytes from the alignment provided by
+.Xr malloc 3 . 
+.Ar number
+should be between 0 and 16.
 .El
 .Tg spkac
 .Sh SPKAC
