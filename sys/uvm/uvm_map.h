@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.h,v 1.85 2023/04/26 12:25:12 bluhm Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.86 2023/05/20 12:48:36 mpi Exp $	*/
 /*	$NetBSD: uvm_map.h,v 1.24 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -274,6 +274,7 @@ struct vm_map {
 	int			ref_count;	/* [a] Reference count */
 	int			flags;		/* flags */
 	unsigned int		timestamp;	/* Version number */
+	struct proc		*busy;		/* [v] thread holding map busy*/
 
 	vaddr_t			min_offset;	/* [I] First address in map. */
 	vaddr_t			max_offset;	/* [I] Last address in map. */
