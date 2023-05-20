@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpithinkpad.c,v 1.72 2023/04/27 19:06:57 miod Exp $	*/
+/*	$OpenBSD: acpithinkpad.c,v 1.73 2023/05/20 12:02:46 kettenis Exp $	*/
 /*
  * Copyright (c) 2008 joshua stein <jcs@openbsd.org>
  *
@@ -130,6 +130,11 @@
 #define THINKPAD_MASK_BRIGHTNESS_DOWN	(1 << 16)
 #define THINKPAD_MASK_KBD_BACKLIGHT	(1 << 17)
 
+#define THINKPAD_BATTERY_ERROR		0x80000000
+#define THINKPAD_BATTERY_SUPPORT	0x00000100
+#define THINKPAD_BATTERY_SUPPORT_BICG	0x00000020
+#define THINKPAD_BATTERY_SHIFT		8
+
 struct acpithinkpad_softc {
 	struct device		 sc_dev;
 
@@ -189,6 +194,17 @@ int thinkpad_get_volume_mute(struct acpithinkpad_softc *);
 extern int wskbd_set_mixermute(long, long);
 extern int wskbd_set_mixervolume(long, long);
 #endif
+
+int	thinkpad_battery_setchargemode(int);
+int	thinkpad_battery_setchargestart(int);
+int	thinkpad_battery_setchargestop(int);
+
+extern int (*hw_battery_setchargemode)(int);
+extern int (*hw_battery_setchargestart)(int);
+extern int (*hw_battery_setchargestop)(int);
+extern int hw_battery_chargemode;
+extern int hw_battery_chargestart;
+extern int hw_battery_chargestop;
 
 const struct cfattach acpithinkpad_ca = {
 	sizeof(struct acpithinkpad_softc), thinkpad_match, thinkpad_attach,
@@ -300,6 +316,8 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct acpithinkpad_softc *sc = (struct acpithinkpad_softc *)self;
 	struct acpi_attach_args	*aa = aux;
+	struct aml_value arg;
+	uint64_t ret;
 
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
@@ -342,6 +360,52 @@ thinkpad_attach(struct device *parent, struct device *self, void *aux)
 	    0, NULL, &sc->sc_brightness) == 0)) {
 		ws_get_param = thinkpad_get_param;
 		ws_set_param = thinkpad_set_param;
+	}
+
+	memset(&arg, 0, sizeof(arg));
+	arg.type = AML_OBJTYPE_INTEGER;
+	arg.v_integer = 1;
+
+	hw_battery_chargemode = 1;
+	hw_battery_chargestart = 0;
+	hw_battery_chargestop = 100;
+
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "BCTG",
+	    1, &arg, &ret) == 0 && (ret & THINKPAD_BATTERY_ERROR) == 0) {
+		if (ret & THINKPAD_BATTERY_SUPPORT) {
+			hw_battery_chargestart = ret & 0xff;
+			hw_battery_setchargestart =
+				thinkpad_battery_setchargestart;
+		}
+	}
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "BCSG",
+	    1, &arg, &ret) == 0 && (ret & THINKPAD_BATTERY_ERROR) == 0) {
+		if (ret & THINKPAD_BATTERY_SUPPORT) {
+			if ((ret & 0xff) == 0)
+				hw_battery_chargestop = 100;
+			else
+				hw_battery_chargestop = ret & 0xff;
+			hw_battery_setchargestop =
+				thinkpad_battery_setchargestop;
+		}
+	}
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "BDSG",
+	    1, &arg, &ret) == 0 && (ret & THINKPAD_BATTERY_ERROR) == 0) {
+		if (ret & THINKPAD_BATTERY_SUPPORT) {
+			if (ret & 0x1)
+				hw_battery_chargemode = -1;
+			hw_battery_setchargemode =
+				thinkpad_battery_setchargemode;
+		}
+	}
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "BICG",
+	    1, &arg, &ret) == 0 && (ret & THINKPAD_BATTERY_ERROR) == 0) {
+		if (ret & THINKPAD_BATTERY_SUPPORT_BICG) {
+			if (ret & 0x1)
+				hw_battery_chargemode = 0;
+			hw_battery_setchargemode =
+				thinkpad_battery_setchargemode;
+		}
 	}
 
 	/* Run thinkpad_hotkey on button presses */
@@ -836,3 +900,124 @@ thinkpad_get_volume_mute(struct acpithinkpad_softc *sc)
 	    THINKPAD_ECOFFSET_VOLUME_MUTE_MASK);
 }
 #endif
+
+int
+thinkpad_battery_inhibit_charge(int state)
+{
+	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
+	struct aml_value arg;
+	int battery = 1;
+	uint64_t ret;
+
+	memset(&arg, 0, sizeof(arg));
+	arg.type = AML_OBJTYPE_INTEGER;
+	arg.v_integer = (0xffff << 8) | (battery << 4) | state;
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "BICS",
+	    1, &arg, &ret) || (ret & THINKPAD_BATTERY_ERROR))
+		return EIO;
+
+	return 0;
+}
+
+int
+thinkpad_battery_force_discharge(int state)
+{
+	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
+	struct aml_value arg;
+	int battery = 1;
+	uint64_t ret;
+
+	memset(&arg, 0, sizeof(arg));
+	arg.type = AML_OBJTYPE_INTEGER;
+	arg.v_integer = (battery << THINKPAD_BATTERY_SHIFT) | state;
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "BDSS",
+	    1, &arg, &ret) || (ret & THINKPAD_BATTERY_ERROR))
+		return EIO;
+
+	return 0;
+}
+
+int
+thinkpad_battery_setchargemode(int mode)
+{
+	int error;
+
+	switch (mode) {
+	case -1:
+		error = thinkpad_battery_inhibit_charge(1);
+		if (error)
+			return error;
+		error = thinkpad_battery_force_discharge(1);
+		if (error)
+			return error;
+		break;
+	case 0:
+		error = thinkpad_battery_force_discharge(0);
+		if (error)
+			return error;
+		error = thinkpad_battery_inhibit_charge(1);
+		if (error)
+			return error;
+		break;
+	case 1:
+		error = thinkpad_battery_force_discharge(0);
+		if (error)
+			return error;
+		error = thinkpad_battery_inhibit_charge(0);
+		if (error)
+			return error;
+		break;
+	default:
+		return EOPNOTSUPP;
+	}
+
+	hw_battery_chargemode = mode;
+	return 0;
+}
+
+int
+thinkpad_battery_setchargestart(int start)
+{
+	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
+	struct aml_value arg;
+	int battery = 1;
+	uint64_t ret;
+
+	if (start >= hw_battery_chargestop)
+		return EINVAL;
+
+	memset(&arg, 0, sizeof(arg));
+	arg.type = AML_OBJTYPE_INTEGER;
+	arg.v_integer = (battery << THINKPAD_BATTERY_SHIFT) | start;
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "BCCS",
+	    1, &arg, &ret) || (ret & THINKPAD_BATTERY_ERROR))
+		return EIO;
+
+	hw_battery_chargestart = start;
+	return 0;
+}
+
+int
+thinkpad_battery_setchargestop(int stop)
+{
+	struct acpithinkpad_softc *sc = acpithinkpad_cd.cd_devs[0];
+	struct aml_value arg;
+	int battery = 1;
+	uint64_t ret;
+
+	if (stop <= hw_battery_chargestart)
+		return EINVAL;
+
+	if (stop == 100)
+		stop = 0;
+
+	memset(&arg, 0, sizeof(arg));
+	arg.type = AML_OBJTYPE_INTEGER;
+	arg.v_integer = (battery << THINKPAD_BATTERY_SHIFT) | stop;
+	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "BCSS",
+	    1, &arg, &ret) || (ret & THINKPAD_BATTERY_ERROR))
+		return EIO;
+
+	hw_battery_chargestop = (stop == 0) ? 100 : stop;
+	return 0;
+}
