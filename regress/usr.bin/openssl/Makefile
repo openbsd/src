@@ -1,11 +1,12 @@
-#	$OpenBSD: Makefile,v 1.7 2021/02/16 21:39:17 jan Exp $
+#	$OpenBSD: Makefile,v 1.8 2023/05/20 12:07:21 tb Exp $
 
 SUBDIR= options x509
 
 CLEANFILES+= testdsa.key testdsa.pem rsakey.pem rsacert.pem dsa512.pem
 CLEANFILES+= appstest_dir
 
-REGRESS_TARGETS=ssl-enc ssl-dsa ssl-rsa appstest
+REGRESS_TARGETS=ssl-enc ssl-dsa ssl-rsa appstest speed
+REGRESS_SLOW_TARGETS=speed
 
 OPENSSL=/usr/bin/openssl
 CLEAR1=p
@@ -59,6 +60,10 @@ ssl-rsa:
 	env OPENSSL=${OPENSSL} sh ${.CURDIR}/testrsa.sh ${.OBJDIR} ${.CURDIR}
 appstest:
 	env OPENSSL=${OPENSSL} sh ${.CURDIR}/appstest.sh -q
+speed:
+.for offset in 0 3
+	${OPENSSL} speed -unaligned ${offset}
+.endfor
 
 clean:
 	rm -rf ${CLEANFILES}
