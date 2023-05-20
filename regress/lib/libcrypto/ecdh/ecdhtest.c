@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdhtest.c,v 1.15 2023/05/16 18:41:18 tb Exp $	*/
+/*	$OpenBSD: ecdhtest.c,v 1.16 2023/05/20 16:00:22 tb Exp $	*/
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -156,7 +156,7 @@ test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 
 	blen = KDF1_SHA1_len;
 	if ((bbuf = malloc(blen)) == NULL)
-	    goto err;
+		goto err;
 	bout = ECDH_compute_key(bbuf, blen, EC_KEY_get0_public_key(a),
 	    b, KDF1_SHA1);
 
