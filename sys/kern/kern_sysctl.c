@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.414 2023/05/18 10:23:19 mvs Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.415 2023/05/21 12:47:54 claudio Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -841,7 +841,7 @@ sysctl_hwchargestop(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 	int stop = hw_battery_chargestop;
 	int error;
 
-	if (!hw_battery_setchargestart)
+	if (!hw_battery_setchargestop)
 		return EOPNOTSUPP;
 
 	error = sysctl_int_bounded(oldp, oldlenp, newp, newlen,
