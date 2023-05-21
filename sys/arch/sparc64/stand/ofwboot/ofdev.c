@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.35 2023/04/25 14:00:35 kn Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.36 2023/05/21 17:04:22 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -673,7 +673,7 @@ devopen(struct open_file *of, const char *name, char **file)
 			goto bad;
 		else if (error == ERDLAB) {
 			if (partition)
-				/* User specified a parititon, but there is none */
+				/* User specified a partition, but there is none */
 				goto bad;
 			/* No, label, just use complete disk */
 			ofdev.partoff = 0;
