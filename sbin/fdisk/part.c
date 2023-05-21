@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.162 2023/05/17 12:59:37 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.163 2023/05/21 17:29:33 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -731,6 +731,8 @@ const struct menu_item menu_items[] = {
 	{ 0xFF,	0xFF,	"Xenix BBT",	NULL },
 };
 
+void			 chs_to_dp(const unsigned char, const struct chs *,
+    uint8_t *, uint8_t *, uint8_t *);
 const struct gpt_type	*find_gpt_type(const struct uuid *);
 const struct menu_item	*find_gpt_menuitem(const struct gpt_type *);
 const char		*find_gpt_desc(const struct gpt_type *);
@@ -745,6 +747,26 @@ void			 print_menu(int (*)(const unsigned int),
     const unsigned int);
 int			 nth_menu_item(int (*)(const unsigned int),
     const unsigned int, unsigned int);
+
+void
+chs_to_dp(const unsigned char prt_id, const struct chs *chs, uint8_t *dp_cyl,
+    uint8_t *dp_hd, uint8_t *dp_sect)
+{
+	uint64_t		cyl = chs->chs_cyl;
+	uint32_t		head = chs->chs_head;
+	uint32_t		sect = chs->chs_sect;
+
+	if (head > 254 || sect > 63 || cyl > 1023) {
+		/* Set max values to trigger LBA. */
+		head = (prt_id == DOSPTYP_EFI) ? 255 : 254;
+		sect = 63;
+		cyl = 1023;
+	}
+
+	*dp_hd = head & 0xFF;
+	*dp_sect = (sect & 0x3F) | ((cyl & 0x300) >> 2);
+	*dp_cyl = cyl & 0xFF;
+}
 
 const struct gpt_type *
 find_gpt_type(const struct uuid *uuid)
@@ -990,16 +1012,9 @@ PRT_prt_to_dp(const struct prt *prt, const uint64_t lba_self,
 	else
 		off = lba_self;
 
-	if (PRT_lba_to_chs(prt, &start, &end) == 0) {
-		dp->dp_shd = start.chs_head & 0xFF;
-		dp->dp_ssect = (start.chs_sect & 0x3F) | ((start.chs_cyl & 0x300) >> 2);
-		dp->dp_scyl = start.chs_cyl & 0xFF;
-		dp->dp_ehd = end.chs_head & 0xFF;
-		dp->dp_esect = (end.chs_sect & 0x3F) | ((end.chs_cyl & 0x300) >> 2);
-		dp->dp_ecyl = end.chs_cyl & 0xFF;
-	} else {
-		memset(dp, 0xFF, sizeof(*dp));
-	}
+	PRT_lba_to_chs(prt, &start, &end);
+	chs_to_dp(prt->prt_id, &start, &dp->dp_scyl, &dp->dp_shd, &dp->dp_ssect);
+	chs_to_dp(prt->prt_id, &end, &dp->dp_ecyl, &dp->dp_ehd, &dp->dp_esect);
 
 	dp->dp_flag = prt->prt_flag & 0xFF;
 	dp->dp_typ = prt->prt_id & 0xFF;
@@ -1052,7 +1067,7 @@ PRT_print_part(const int num, const struct prt *prt, const char *units)
 		    disk.dk_name);
 }
 
-int
+void
 PRT_lba_to_chs(const struct prt *prt, struct chs *start, struct chs *end)
 {
 	uint64_t		lba;
@@ -1060,7 +1075,7 @@ PRT_lba_to_chs(const struct prt *prt, struct chs *start, struct chs *end)
 	if (prt->prt_ns == 0 || prt->prt_id == DOSPTYP_UNUSED) {
 		memset(start, 0, sizeof(*start));
 		memset(end, 0, sizeof(*end));
-		return -1;
+		return;
 	}
 
 	/*
@@ -1078,13 +1093,6 @@ PRT_lba_to_chs(const struct prt *prt, struct chs *start, struct chs *end)
 	end->chs_cyl = lba / (disk.dk_sectors * disk.dk_heads);
 	end->chs_head = (lba / disk.dk_sectors) % disk.dk_heads;
 	end->chs_sect = (lba % disk.dk_sectors) + 1;
-
-	if (start->chs_head > 255 || end->chs_head > 255 ||
-	    start->chs_sect > 63  || end->chs_sect > 63 ||
-	    start->chs_cyl > 1023 || end->chs_cyl > 1023)
-		return -1;
-
-	return 0;
 }
 
 const char *
