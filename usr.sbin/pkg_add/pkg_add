@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.486 2021/05/04 10:19:28 espie Exp $
+# $OpenBSD: pkg_add,v 1.487 2023/05/21 08:06:03 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -16,13 +16,11 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 no lib ('/usr/local/libdata/perl5/site_perl');
 
-sub run
+sub run($cmd, $m)
 {
-	my ($cmd, $m) = @_;
 	my $module = "OpenBSD::$m";
 	eval "require $module";
 	if ($@) {
