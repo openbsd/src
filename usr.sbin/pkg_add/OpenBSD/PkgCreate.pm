@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.187 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.188 2023/05/21 16:07:35 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -21,7 +21,6 @@ use warnings;
 
 use OpenBSD::AddCreateDelete;
 use OpenBSD::Dependencies::SolverBase;
-use OpenBSD::SharedLibs;
 use OpenBSD::Signer;
 
 package OpenBSD::PkgCreate::State;
@@ -964,8 +963,7 @@ sub solve_wantlibs
 		    $solver->{to_register}{$h}, $state,
 		    $lib->spec);
 		$okay = 0;
-		OpenBSD::SharedLibs::report_problem($state,
-		    $lib->spec) if $final;
+		$state->shlibs->report_problem($lib->spec) if $final;
 	}
 	if (!$okay && $final) {
 		$solver->dump($state);
@@ -1104,7 +1102,7 @@ sub really_solve_from_ports
 			$self->to_cache($plist, $diskcache);
 		}
 	}
-	OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
+	$state->shlibs->add_libs_from_plist($plist);
 	$self->{tag_finder}->find_in_plist($plist, $dep->{pkgpath});
 	$self->add_dep($plist);
 	return $plist->pkgname;

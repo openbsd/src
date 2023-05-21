@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.76 2022/03/15 08:12:53 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.77 2023/05/21 16:07:35 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -21,7 +21,6 @@ use strict;
 use warnings;
 
 use OpenBSD::AddCreateDelete;
-use OpenBSD::SharedLibs;
 
 package Installer::State;
 our @ISA = qw(OpenBSD::PkgAdd::State);
@@ -77,8 +76,8 @@ sub find_dependencies
 
 sub mark_indirect_depends
 {
-	my $self = shift;
-	$self->mark_available_lib(@_);
+	my ($self, $pkgname, $state) = @_;
+	$self->mark_available_lib($pkgname, $state->shlibs);
 }
 
 sub cache_depends
@@ -290,7 +289,7 @@ package OpenBSD::PackingElement::Wantlib;
 sub find_dependencies
 {
 	my ($self, $state, $l, $checker, $pkgname) = @_;
-	my $r = OpenBSD::SharedLibs::lookup_libspec($state->{localbase},
+	my $r = $state->shlibs->lookup_libspec($state->{localbase},
 	    $self->spec);
 	if (defined $r && @$r != 0) {
 		my $okay = 0;
@@ -854,7 +853,7 @@ sub sanity_check
 sub dependencies_check
 {
 	my ($self, $state, $l) = @_;
-	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir}, $state);
+	$state->shlibs->add_libs_from_system($state->{destdir});
 	$self->for_all_packages($state, $l, "Direct dependencies", sub {
 		my $name = shift;
 		$state->log->set_context($name);
@@ -897,7 +896,7 @@ sub package_files_check
 		} else {
 			$plist->thorough_check($state);
 		}
-		$plist->mark_available_lib($plist->pkgname, $state);
+		$plist->mark_available_lib($plist->pkgname, $state->shlibs);
 	});
 }
 

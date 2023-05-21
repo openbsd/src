@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.173 2019/10/13 16:22:58 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.174 2023/05/21 16:07:35 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -17,7 +17,6 @@
 use strict;
 use warnings;
 
-use OpenBSD::SharedLibs;
 use OpenBSD::Dependencies::SolverBase;
 
 package _cache;
@@ -368,8 +367,8 @@ sub find_old_lib
 
 	my $r = $state->repo->installed->match_locations(OpenBSD::Search::PkgSpec->new(".libs-".$pattern));
 	for my $try (map {$_->name} @$r) {
-		OpenBSD::SharedLibs::add_libs_from_installed_package($try, $state);
-		if ($self->check_lib_spec($base, $lib, {$try => 1})) {
+		$state->shlibs->add_libs_from_installed_package($try);
+		if ($self->check_lib_spec($state, $base, $lib, {$try => 1})) {
 			return $try;
 		}
 	}

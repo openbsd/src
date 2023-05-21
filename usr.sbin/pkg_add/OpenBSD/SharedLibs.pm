@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.59 2017/09/16 12:04:13 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.60 2023/05/21 16:07:35 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -15,115 +15,120 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 use OpenBSD::Paths;
 use OpenBSD::LibSpec;
 
 package OpenBSD::PackingElement;
 
-sub mark_available_lib
+sub mark_available_lib($, $, $)
 {
 }
 
 package OpenBSD::PackingElement::Lib;
 
-sub mark_available_lib
+sub mark_available_lib($self, $pkgname, $object)
 {
-	my ($self, $pkgname, $state) = @_;
-	OpenBSD::SharedLibs::register_libname($self->fullname,
-	    $pkgname, $state);
+	$object->register_libname($self->fullname, $pkgname);
 }
 
 package OpenBSD::SharedLibs;
 use File::Basename;
 use OpenBSD::Error;
 
-our $repo = OpenBSD::LibRepo->new;
-
-sub register_library
+sub _basestate($)
 {
-	my ($lib, $pkgname) = @_;
-	$repo->register($lib, $pkgname);
+	require OpenBSD::Basestate;
+	return 'OpenBSD::BaseState';
 }
 
-sub register_libname
+sub new($class, $state = $class->_basestate)
 {
-	my ($name, $pkgname, $state) = @_;
+	bless {
+	    state => $state,
+	    repo => OpenBSD::LibRepo->new,
+	    printed => {},
+	    done_plist => {},
+	    done_system => 0
+	    }, $class;
+}
+
+
+sub register_library($self, $lib, $pkgname)
+{
+	$self->{repo}->register($lib, $pkgname);
+}
+
+sub register_libname($self, $name, $pkgname)
+{
 	my $lib = OpenBSD::Library->from_string($name);
 	if ($lib->is_valid) {
-		register_library($lib, $pkgname);
+		$self->register_library($lib, $pkgname);
 	} else {
-		$state->errsay("Bogus library in #1: #2", $pkgname, $name)
-		    unless $pkgname eq 'system';
+		$self->{state}->errsay("Bogus library in #1: #2", $pkgname, 
+		    $name) unless $pkgname eq 'system';
 	}
 
 }
 
 sub find_best
 {
-	my ($class, $stem) = @_;
-	return $repo->find_best($stem);
+	my ($self, $stem) = @_;
+	return $self->{repo}->find_best($stem);
 }
 
-my $done_plist = {};
-
-sub system_dirs
+sub system_dirs($)
 {
 	return OpenBSD::Paths->library_dirs;
 }
 
-sub add_libs_from_system
+sub add_libs_from_system($self, $destdir)
 {
-	my ($destdir, $state) = @_;
-	return if $done_plist->{'system'};
-	$done_plist->{'system'} = 1;
-	for my $dirname (system_dirs()) {
+	return if $self->{done_system};
+	$self->{done_system} = 1;
+	for my $dirname ($self->system_dirs) {
 		opendir(my $dir, $destdir.$dirname."/lib") or next;
 		while (my $d = readdir($dir)) {
 			next unless $d =~ m/\.so/;
-			register_libname("$dirname/lib/$d", 'system', $state);
+			$self->register_libname("$dirname/lib/$d", 'system');
 		}
 		closedir($dir);
 	}
 }
 
-sub add_libs_from_installed_package
+sub add_libs_from_installed_package($self, $pkgname)
 {
-	my ($pkgname, $state) = @_;
-	return if $done_plist->{$pkgname};
-	$done_plist->{$pkgname} = 1;
+	return if $self->{done_plist}{$pkgname};
+	$self->{done_plist}{$pkgname} = 1;
 	my $plist = OpenBSD::PackingList->from_installation($pkgname,
 	    \&OpenBSD::PackingList::LibraryOnly);
 	return if !defined $plist;
 
-	$plist->mark_available_lib($pkgname, $state);
+	$plist->mark_available_lib($pkgname, $self);
 }
 
-sub add_libs_from_plist
+sub add_libs_from_plist($self, $plist)
 {
-	my ($plist, $state) = @_;
 	my $pkgname = $plist->pkgname;
-	return if $done_plist->{$pkgname};
-	$done_plist->{$pkgname} = 1;
-	$plist->mark_available_lib($pkgname, $state);
+	return if $self->{done_plist}{$pkgname};
+	$self->{done_plist}{$pkgname} = 1;
+	$plist->mark_available_lib($pkgname, $self);
 }
 
-sub lookup_libspec
+sub lookup_libspec($self, $base, $spec)
 {
-	my ($base, $spec) = @_;
-	return $spec->lookup($repo, $base);
+	return $spec->lookup($self->{repo}, $base);
 }
 
-my $printed = {};
 
-sub report_problem
+sub report_problem($self, $spec)
 {
-	my ($state, $spec) = @_;
 	my $name = $spec->to_string;
+	my $state = $self->{state};
 	my $base = $state->{localbase};
-	my $approx = $spec->lookup_stem($repo);
+	my $approx = $spec->lookup_stem($self->{repo});
+	my $printed = $self->{printed};
 
 	my $r = "";
 	if (!$spec->is_valid) {

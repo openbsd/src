@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.72 2023/05/19 07:25:16 espie Exp $
+# $OpenBSD: State.pm,v 1.73 2023/05/21 16:07:35 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -162,6 +162,13 @@ OpenBSD::Auto::cache(installpath,
 			next if m/^\s*$/;
 			return "$_/%c/packages/%a/";
 		}
+	});
+
+OpenBSD::Auto::cache(shlibs,
+	sub {
+		my $self = shift;
+		require OpenBSD::SharedLibs;
+		return $self->{shlibs} //= OpenBSD::SharedLibs->new($self);
 	});
 
 sub usage_is

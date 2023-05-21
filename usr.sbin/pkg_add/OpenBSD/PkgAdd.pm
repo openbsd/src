@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.139 2023/05/19 07:30:40 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.140 2023/05/21 16:07:35 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -671,7 +671,6 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
 use OpenBSD::PkgCfl;
 use OpenBSD::Add;
-use OpenBSD::SharedLibs;
 use OpenBSD::UpdateSet;
 use OpenBSD::Error;
 
@@ -892,7 +891,7 @@ sub really_add
 	for my $handle ($set->newer) {
 		my $pkgname = $handle->pkgname;
 		my $plist = $handle->plist;
-		OpenBSD::SharedLibs::add_libs_from_plist($plist, $state);
+		$state->shlibs->add_libs_from_plist($plist);
 		OpenBSD::Add::tweak_plist_status($plist, $state);
 		OpenBSD::Add::register_installation($plist, $state);
 		add_installed($pkgname);

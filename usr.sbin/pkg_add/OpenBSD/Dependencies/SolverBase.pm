@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.13 2021/06/21 14:36:48 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.14 2023/05/21 16:07:35 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -127,7 +127,7 @@ sub find_in_already_done
 	my ($self, $solver, $state, $obj) = @_;
 
 
-	my $r = $solver->check_lib_spec($solver->{localbase}, $obj,
+	my $r = $solver->check_lib_spec($state, $solver->{localbase}, $obj,
 	    $self->{known});
 	if ($r) {
 		$self->say_found($state, $obj, $state->f("package #1", $r));
@@ -142,9 +142,9 @@ sub find_in_extra_sources
 	my ($self, $solver, $state, $obj) = @_;
 	return undef if !$obj->is_valid || defined $obj->{dir};
 
-	OpenBSD::SharedLibs::add_libs_from_system($state->{destdir}, $state);
-	for my $dir (OpenBSD::SharedLibs::system_dirs()) {
-		if ($solver->check_lib_spec($dir, $obj, {system => 1})) {
+	$state->shlibs->add_libs_from_system($state->{destdir});
+	for my $dir ($state->shlibs->system_dirs) {
+		if ($solver->check_lib_spec($state, $dir, $obj, {system => 1})) {
 			$self->say_found($state, $obj, $state->f("#1/lib", $dir));
 			return 'system';
 		}
@@ -157,11 +157,11 @@ sub find_in_new_source
 	my ($self, $solver, $state, $obj, $dep) = @_;
 
 	if (defined $solver->{set}{newer}{$dep}) {
-		OpenBSD::SharedLibs::add_libs_from_plist($solver->{set}{newer}{$dep}->plist, $state);
+		$state->shlibs->add_libs_from_plist($solver->{set}{newer}{$dep}->plist);
 	} else {
-		OpenBSD::SharedLibs::add_libs_from_installed_package($dep, $state);
+		$state->shlibs->add_libs_from_installed_package($dep);
 	}
-	if ($solver->check_lib_spec($solver->{localbase}, $obj, {$dep => 1})) {
+	if ($solver->check_lib_spec($state, $solver->{localbase}, $obj, {$dep => 1})) {
 		$self->say_found($state, $obj, $state->f("package #1", $dep));
 		return $dep;
 	}
@@ -373,8 +373,7 @@ sub solve_wantlibs
 				$solver->errsay_library($state, $h);
 			}
 			$okay = 0;
-			OpenBSD::SharedLibs::report_problem($state,
-			    $lib->spec);
+			$state->shlibs->report_problem($lib->spec);
 		}
 	}
 	if (!$okay) {
@@ -409,8 +408,8 @@ sub dependencies
 
 sub check_lib_spec
 {
-	my ($self, $base, $spec, $dependencies) = @_;
-	my $r = OpenBSD::SharedLibs::lookup_libspec($base, $spec);
+	my ($self, $state, $base, $spec, $dependencies) = @_;
+	my $r = $state->shlibs->lookup_libspec($base, $spec);
 	for my $candidate (@$r) {
 		if ($dependencies->{$candidate->origin}) {
 			return $candidate->origin;
