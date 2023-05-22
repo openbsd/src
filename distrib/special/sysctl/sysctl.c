@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.14 2021/06/04 00:29:15 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.15 2023/05/22 09:29:54 kn Exp $	*/
 
 /*
  * Copyright (c) 2009 Theo de Raadt <deraadt@openbsd.org>
@@ -143,7 +143,7 @@ main(int argc, char *argv[])
 			nflag = 1;
 			break;
 		default:
-			fprintf(stderr, "usage: sysctl [-n] name\n");
+			fprintf(stderr, "usage: sysctl [-n] [name]\n");
 			exit(1);
 		}
 	}
