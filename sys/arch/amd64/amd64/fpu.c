@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.c,v 1.43 2022/08/07 23:56:06 guenther Exp $	*/
+/*	$OpenBSD: fpu.c,v 1.44 2023/05/22 00:39:57 guenther Exp $	*/
 /*	$NetBSD: fpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*-
@@ -116,8 +116,6 @@ fputrap(int type)
 		fwait();
 		statbits = sfp->fp_fxsave.fx_fsw;
 	}
-	sfp->fp_ex_tw = sfp->fp_fxsave.fx_ftw;
-	sfp->fp_ex_sw = sfp->fp_fxsave.fx_fsw;
 	return x86fpflags_to_siginfo(statbits);
 }
 

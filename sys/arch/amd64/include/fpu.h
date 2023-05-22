@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.17 2019/11/29 22:34:09 mortimer Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.18 2023/05/22 00:39:57 guenther Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_MACHINE_FPU_H_
@@ -40,8 +40,6 @@ struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
 	struct xstate_hdr fp_xstate;
 	u_int64_t fp_ymm[16][2];
-	u_int16_t fp_ex_sw;		/* saved status from last exception */
-	u_int16_t fp_ex_tw;		/* saved tag from last exception */
 };
 
 /*
