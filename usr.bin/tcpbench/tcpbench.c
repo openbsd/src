@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.68 2023/05/22 12:37:00 bluhm Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.69 2023/05/22 12:53:04 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -986,8 +986,7 @@ main(int argc, char **argv)
 {
 	struct timeval tv;
 	unsigned int secs, rtable;
-
-	char kerr[_POSIX2_LINE_MAX], *tmp;
+	char *tmp;
 	struct addrinfo *aitop, *aib, hints;
 	const char *errstr;
 	struct rlimit rl;
