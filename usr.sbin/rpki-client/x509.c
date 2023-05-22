@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.70 2023/03/14 07:09:11 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.71 2023/05/22 15:07:02 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -506,7 +506,7 @@ x509_get_notbefore(X509 *x, const char *fn, time_t *tt)
 		return 0;
 	}
 	if (!x509_get_time(at, tt)) {
-		warnx("%s: ASN1_time_parse failed", fn);
+		warnx("%s: ASN1_TIME_to_tm failed", fn);
 		return 0;
 	}
 	return 1;
@@ -526,7 +526,7 @@ x509_get_notafter(X509 *x, const char *fn, time_t *tt)
 		return 0;
 	}
 	if (!x509_get_time(at, tt)) {
-		warnx("%s: ASN1_time_parse failed", fn);
+		warnx("%s: ASN1_TIME_to_tm failed", fn);
 		return 0;
 	}
 	return 1;
@@ -757,7 +757,10 @@ x509_get_time(const ASN1_TIME *at, time_t *t)
 
 	*t = 0;
 	memset(&tm, 0, sizeof(tm));
-	if (ASN1_time_parse(at->data, at->length, &tm, 0) == -1)
+	/* Fail instead of silently falling back to the current time. */
+	if (at == NULL)
+		return 0;
+	if (!ASN1_TIME_to_tm(at, &tm))
 		return 0;
 	if ((*t = timegm(&tm)) == -1)
 		errx(1, "timegm failed");
