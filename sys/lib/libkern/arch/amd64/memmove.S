@@ -45,6 +45,7 @@ ENTRY(bcopy)
 	/* fall into memmove */
 
 NENTRY(memmove)
+	endbr64
 	RETGUARD_SETUP(memmove, r10)
 	movq	%rdi,%r11	/* save dest */
 	movq	%rdx,%rcx
