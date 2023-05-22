@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpbench.c,v 1.67 2022/08/15 09:06:54 claudio Exp $	*/
+/*	$OpenBSD: tcpbench.c,v 1.68 2023/05/22 12:37:00 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2008 Damien Miller <djm@mindrot.org>
@@ -159,7 +159,6 @@ static const char *allowed_kvars[] = {
 	"rcv_space",
 	"rcv_up",
 	"rcv_wscale",
-	"rcv_wscale",
 	"rfbuf_cnt",
 	"rfbuf_ts",
 	"rtt",
@@ -175,8 +174,6 @@ static const char *allowed_kvars[] = {
 	"snd_wl1",
 	"snd_wl2",
 	"snd_wnd",
-	"snd_wnd",
-	"snd_wscale",
 	"snd_wscale",
 	"snd_zerowin",
 	"so_rcv_sb_cc",
@@ -427,7 +424,6 @@ tcp_stats_display(unsigned long long total_elapsed, long double mbps,
 			P(tcpi, snd_una, "%u")
 			P(tcpi, snd_wl1, "%u")
 			P(tcpi, snd_wl2, "%u")
-			P(tcpi, snd_wnd, "%u")
 			P(tcpi, snd_wnd, "%u")
 			P(tcpi, snd_wscale, "%hhu")
 			P(tcpi, snd_zerowin, "%u")
