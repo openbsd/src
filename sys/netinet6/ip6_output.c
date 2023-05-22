@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.276 2023/05/15 16:34:57 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.277 2023/05/22 16:08:34 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -2710,7 +2710,8 @@ in6_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 		u_int16_t csum;
 
 		offset = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nxt);
-		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) &&
+		    in_ifcap_cksum(m, ifp, IFCAP_TSOv6)) {
 			csum = in6_cksum_phdr(&ip6->ip6_src, &ip6->ip6_dst,
 			    htonl(0), htonl(nxt));
 		} else {

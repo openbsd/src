@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.387 2023/05/15 16:34:56 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.388 2023/05/22 16:08:34 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1882,7 +1882,8 @@ in_proto_cksum_out(struct mbuf *m, struct ifnet *ifp)
 		u_int16_t csum = 0, offset;
 
 		offset = ip->ip_hl << 2;
-		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO)) {
+		if (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) &&
+		    in_ifcap_cksum(m, ifp, IFCAP_TSOv4)) {
 			csum = in_cksum_phdr(ip->ip_src.s_addr,
 			    ip->ip_dst.s_addr, htonl(ip->ip_p));
 		} else if (ISSET(m->m_pkthdr.csum_flags,
