@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.91 2023/04/26 16:32:41 claudio Exp $ */
+/*	$OpenBSD: mft.c,v 1.92 2023/05/22 14:56:00 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -124,15 +124,14 @@ mft_parse_time(const ASN1_GENERALIZEDTIME *from,
 		return 0;
 	}
 
-	/* check that until is not before from */
-	if (ASN1_time_tm_cmp(&tm_until, &tm_from) < 0) {
-		warnx("%s: bad update interval", p->fn);
-		return 0;
-	}
-
 	if ((p->res->thisupdate = timegm(&tm_from)) == -1 ||
 	    (p->res->nextupdate = timegm(&tm_until)) == -1)
 		errx(1, "%s: timegm failed", p->fn);
+
+	if (p->res->thisupdate > p->res->nextupdate) {
+		warnx("%s: bad update interval", p->fn);
+		return 0;
+	}
 
 	return 1;
 }
