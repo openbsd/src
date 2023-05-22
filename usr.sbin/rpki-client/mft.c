@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.92 2023/05/22 14:56:00 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.93 2023/05/22 15:15:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -87,6 +87,8 @@ ASN1_SEQUENCE(Manifest) = {
 DECLARE_ASN1_FUNCTIONS(Manifest);
 IMPLEMENT_ASN1_FUNCTIONS(Manifest);
 
+#define GENTIME_LENGTH 15
+
 /*
  * Convert an ASN1_GENERALIZEDTIME to a struct tm.
  * Returns 1 on success, 0 on failure.
@@ -94,15 +96,18 @@ IMPLEMENT_ASN1_FUNCTIONS(Manifest);
 static int
 generalizedtime_to_tm(const ASN1_GENERALIZEDTIME *gtime, struct tm *tm)
 {
-	const char *data;
-	size_t len;
-
-	data = ASN1_STRING_get0_data(gtime);
-	len = ASN1_STRING_length(gtime);
+	/*
+	 * ASN1_GENERALIZEDTIME is another name for ASN1_STRING. Check type and
+	 * length, so we don't accidentally accept a UTCTime. Punt on checking
+	 * Zulu time for OpenSSL: we don't want to mess about with silly flags.
+	 */
+	if (ASN1_STRING_type(gtime) != V_ASN1_GENERALIZEDTIME)
+		return 0;
+	if (ASN1_STRING_length(gtime) != GENTIME_LENGTH)
+		return 0;
 
 	memset(tm, 0, sizeof(*tm));
-	return ASN1_time_parse(data, len, tm, V_ASN1_GENERALIZEDTIME) ==
-	    V_ASN1_GENERALIZEDTIME;
+	return ASN1_TIME_to_tm(gtime, tm);
 }
 
 /*
