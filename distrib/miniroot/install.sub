@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1246 2023/05/20 20:00:28 kn Exp $
+#	$OpenBSD: install.sub,v 1.1247 2023/05/22 23:32:31 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3105,7 +3105,7 @@ __EOT
 	echo "\nConfiguring the crypto chunk $_chunk...\n"
 
 	make_dev $_chunk
-	md_prep_fdisk $_chunk softraid
+	md_prep_fdisk $_chunk
 	echo 'RAID *' | disklabel -w -A -T- $_chunk
 
 	until bioctl -c C -l ${_chunk}a softraid0 >/dev/null; do
