@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.77 2023/05/21 16:07:35 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.78 2023/05/22 12:05:57 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -377,10 +377,6 @@ sub handle_options
 	} else {
 		$self->{destdir} = '';
 	}
-}
-
-sub build_tag
-{
 }
 
 sub destdir

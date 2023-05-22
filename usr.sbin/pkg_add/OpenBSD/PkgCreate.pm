@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.188 2023/05/21 16:07:35 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.189 2023/05/22 12:05:57 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1822,9 +1822,6 @@ sub run_command
 sub parse_and_run
 {
 	my ($self, $cmd) = @_;
-
-	my $sign_only = 0;
-	my $rc = 0;
 
 	my $state = OpenBSD::PkgCreate::State->new($cmd);
 	$state->handle_options;
