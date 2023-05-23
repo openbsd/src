@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.11 2022/11/30 08:17:21 job Exp $ */
+/*	$OpenBSD: as.c,v 1.12 2023/05/23 06:39:31 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -23,38 +23,16 @@
 
 #include "extern.h"
 
-/*
- * Parse a uint32_t AS identifier from an ASN1_INTEGER.
- * This relies on the specification for ASN1_INTEGER itself, which is
- * essentially a series of big-endian bytes in the unsigned case.
- * All we do here is check if the number is negative then start copying
- * over bytes.
- * This is necessary because ASN1_INTEGER_get() on a 32-bit machine
- * (e.g., i386) will fail for AS numbers of UINT32_MAX.
- */
+/* Parse a uint32_t AS identifier from an ASN1_INTEGER. */
 int
 as_id_parse(const ASN1_INTEGER *v, uint32_t *out)
 {
-	int	 i;
-	uint32_t res = 0;
+	uint64_t res = 0;
 
-	/* If the negative bit is set, this is wrong. */
-
-	if (v->type & V_ASN1_NEG)
+	if (!ASN1_INTEGER_get_uint64(&res, v))
 		return 0;
-
-	/* Too many bytes for us to consider. */
-
-	if ((size_t)v->length > sizeof(uint32_t))
+	if (res > UINT32_MAX)
 		return 0;
-
-	/* Stored as big-endian bytes. */
-
-	for (i = 0; i < v->length; i++) {
-		res <<= 8;
-		res |= v->data[i];
-	}
-
 	*out = res;
 	return 1;
 }
