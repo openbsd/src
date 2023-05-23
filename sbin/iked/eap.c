@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.23 2023/05/23 13:12:19 claudio Exp $	*/
+/*	$OpenBSD: eap.c,v 1.24 2023/05/23 13:57:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -51,7 +51,7 @@ eap_add_id_request(struct ibuf *e)
 {
 	struct eap_message		*eap;
 
-	if ((eap = ibuf_advance(e, sizeof(*eap))) == NULL)
+	if ((eap = ibuf_reserve(e, sizeof(*eap))) == NULL)
 		return (-1);
 	eap->eap_code = EAP_CODE_REQUEST;
 	eap->eap_id = 0;
@@ -124,7 +124,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 		/* CERT payload */
 		if ((pld = ikev2_add_payload(e)) == NULL)
 			goto done;
-		if ((cert = ibuf_advance(e, sizeof(*cert))) == NULL)
+		if ((cert = ibuf_reserve(e, sizeof(*cert))) == NULL)
 			goto done;
 		cert->cert_type = certid->id_type;
 		if (ibuf_cat(e, certid->id_buf) != 0)
@@ -139,7 +139,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 				goto done;
 			if ((pld = ikev2_add_payload(e)) == NULL)
 				goto done;
-			if ((cert = ibuf_advance(e, sizeof(*cert))) == NULL)
+			if ((cert = ibuf_reserve(e, sizeof(*cert))) == NULL)
 				goto done;
 			cert->cert_type = sa->sa_scert[i].id_type;
 			if (ibuf_cat(e, sa->sa_scert[i].id_buf) != 0)
@@ -154,7 +154,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 	/* AUTH payload */
 	if ((pld = ikev2_add_payload(e)) == NULL)
 		goto done;
-	if ((auth = ibuf_advance(e, sizeof(*auth))) == NULL)
+	if ((auth = ibuf_reserve(e, sizeof(*auth))) == NULL)
 		goto done;
 	auth->auth_method = sa->sa_localauth.id_type;
 	if (ibuf_cat(e, sa->sa_localauth.id_buf) != 0)
@@ -193,7 +193,7 @@ eap_challenge_request(struct iked *env, struct iked_sa *sa,
 	if ((e = ibuf_static()) == NULL)
 		return (-1);
 
-	if ((eap = ibuf_advance(e, sizeof(*eap))) == NULL)
+	if ((eap = ibuf_reserve(e, sizeof(*eap))) == NULL)
 		goto done;
 	eap->eap_code = EAP_CODE_REQUEST;
 	eap->eap_id = eap_id + 1;
@@ -205,7 +205,7 @@ eap_challenge_request(struct iked *env, struct iked_sa *sa,
 		eap->eap_length = htobe16(sizeof(*eap) +
 		    sizeof(*ms) + strlen(name));
 
-		if ((ms = ibuf_advance(e, sizeof(*ms))) == NULL)
+		if ((ms = ibuf_reserve(e, sizeof(*ms))) == NULL)
 			return (-1);
 		ms->msc_opcode = EAP_MSOPCODE_CHALLENGE;
 		ms->msc_id = eap->eap_id;
@@ -244,7 +244,7 @@ eap_message_send(struct iked *env, struct iked_sa *sa, int eap_code, int eap_id)
 	if ((e = ibuf_static()) == NULL)
 		return (-1);
 
-	if ((resp = ibuf_advance(e, sizeof(*resp))) == NULL)
+	if ((resp = ibuf_reserve(e, sizeof(*resp))) == NULL)
 		goto done;
 	resp->eap_code = eap_code;
 	resp->eap_id = eap_id;
@@ -278,7 +278,7 @@ eap_mschap_challenge(struct iked *env, struct iked_sa *sa, int eap_id,
 
 	msg = " M=Welcome";
 
-	if ((resp = ibuf_advance(eapmsg, sizeof(*resp))) == NULL)
+	if ((resp = ibuf_reserve(eapmsg, sizeof(*resp))) == NULL)
 		goto done;
 	resp->eap_code = EAP_CODE_REQUEST;
 	resp->eap_id = eap_id + 1;
@@ -286,7 +286,7 @@ eap_mschap_challenge(struct iked *env, struct iked_sa *sa, int eap_id,
 	    success_size + strlen(msg));
 	resp->eap_type = EAP_TYPE_MSCHAP_V2;
 
-	if ((mss = ibuf_advance(eapmsg, sizeof(*mss))) == NULL)
+	if ((mss = ibuf_reserve(eapmsg, sizeof(*mss))) == NULL)
 		goto done;
 	mss->mss_opcode = EAP_MSOPCODE_SUCCESS;
 	mss->mss_id = msr_id;
@@ -314,13 +314,13 @@ eap_mschap_success(struct iked *env, struct iked_sa *sa, int eap_id)
 
 	if ((eapmsg = ibuf_static()) == NULL)
 		return (-1);
-	if ((resp = ibuf_advance(eapmsg, sizeof(*resp))) == NULL)
+	if ((resp = ibuf_reserve(eapmsg, sizeof(*resp))) == NULL)
 		goto done;
 	resp->eap_code = EAP_CODE_RESPONSE;
 	resp->eap_id = eap_id;
 	resp->eap_length = htobe16(sizeof(*resp) + sizeof(*ms));
 	resp->eap_type = EAP_TYPE_MSCHAP_V2;
-	if ((ms = ibuf_advance(eapmsg, sizeof(*ms))) == NULL)
+	if ((ms = ibuf_reserve(eapmsg, sizeof(*ms))) == NULL)
 		goto done;
 	ms->ms_opcode = EAP_MSOPCODE_SUCCESS;
 

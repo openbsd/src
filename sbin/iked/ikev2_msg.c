@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.91 2023/05/23 13:12:19 claudio Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.92 2023/05/23 13:57:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -425,7 +425,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src,
 	 * Pad the payload and encrypt it
 	 */
 	if (pad) {
-		if ((ptr = ibuf_advance(src, pad)) == NULL)
+		if ((ptr = ibuf_reserve(src, pad)) == NULL)
 			goto done;
 		arc4random_buf(ptr, pad);
 	}
@@ -470,7 +470,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src,
 	if (outlen && ibuf_add(dst, ibuf_data(out), outlen) != 0)
 		goto done;
 
-	if ((ptr = ibuf_advance(dst, integrlen)) == NULL)
+	if ((ptr = ibuf_reserve(dst, integrlen)) == NULL)
 		goto done;
 	explicit_bzero(ptr, integrlen);
 
@@ -852,7 +852,7 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 			goto done;
 
 		/* Fragment header */
-		if ((frag = ibuf_advance(buf, sizeof(*frag))) == NULL) {
+		if ((frag = ibuf_reserve(buf, sizeof(*frag))) == NULL) {
 			log_debug("%s: failed to add SKF fragment header",
 			    __func__);
 			goto done;
@@ -959,7 +959,7 @@ ikev2_msg_auth(struct iked *env, struct iked_sa *sa, int response)
 	if (hash_keylength(sa->sa_prf) != hash_length(sa->sa_prf))
 		goto fail;
 
-	if ((ptr = ibuf_advance(authmsg, hash_keylength(sa->sa_prf))) == NULL)
+	if ((ptr = ibuf_reserve(authmsg, hash_keylength(sa->sa_prf))) == NULL)
 		goto fail;
 
 	hash_init(sa->sa_prf);

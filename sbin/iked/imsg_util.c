@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.15 2023/05/23 13:12:19 claudio Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.16 2023/05/23 13:57:14 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -55,7 +55,7 @@ ibuf_new(const void *data, size_t len)
 		return (buf);
 
 	if (data == NULL) {
-		if (ibuf_advance(buf, len) == NULL) {
+		if (ibuf_reserve(buf, len) == NULL) {
 			ibuf_free(buf);
 			return (NULL);
 		}
@@ -73,12 +73,6 @@ struct ibuf *
 ibuf_static(void)
 {
 	return ibuf_open(IKED_MSGBUF_MAX);
-}
-
-void *
-ibuf_advance(struct ibuf *buf, size_t len)
-{
-	return ibuf_reserve(buf, len);
 }
 
 size_t
