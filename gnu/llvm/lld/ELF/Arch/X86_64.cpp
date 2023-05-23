@@ -1050,7 +1050,7 @@ Retpoline::Retpoline() {
 }
 
 void Retpoline::writeGotPlt(uint8_t *buf, const Symbol &s) const {
-  write64le(buf, s.getPltVA() + 17);
+  write64le(buf, s.getPltVA() + 21);
 }
 
 void Retpoline::writePltHeader(uint8_t *buf) const {
@@ -1078,22 +1078,23 @@ void Retpoline::writePltHeader(uint8_t *buf) const {
 void Retpoline::writePlt(uint8_t *buf, const Symbol &sym,
                          uint64_t pltEntryAddr) const {
   const uint8_t insn[] = {
-      0x4c, 0x8b, 0x1d, 0, 0, 0, 0, // 0:  mov foo@GOTPLT(%rip), %r11
-      0xe8, 0,    0,    0,    0,    // 7:  callq plt+0x20
-      0xe9, 0,    0,    0,    0,    // c:  jmp plt+0x12
-      0x68, 0,    0,    0,    0,    // 11: pushq <relocation index>
-      0xe9, 0,    0,    0,    0,    // 16: jmp plt+0
-      0xcc, 0xcc, 0xcc, 0xcc, 0xcc, // 1b: int3; padding
+      0xf3, 0x0f, 0x1e, 0xfa,       // 0:  endbr64
+      0x4c, 0x8b, 0x1d, 0, 0, 0, 0, // 4:  mov foo@GOTPLT(%rip), %r11
+      0xe8, 0,    0,    0,    0,    // b:  callq plt+0x20
+      0xe9, 0,    0,    0,    0,    // 10:  jmp plt+0x12
+      0x68, 0,    0,    0,    0,    // 15: pushq <relocation index>
+      0xe9, 0,    0,    0,    0,    // 1a: jmp plt+0
+      0xcc,                         // 1f: int3; padding
   };
   memcpy(buf, insn, sizeof(insn));
 
   uint64_t off = pltEntryAddr - in.plt->getVA();
 
-  write32le(buf + 3, sym.getGotPltVA() - pltEntryAddr - 7);
-  write32le(buf + 8, -off - 12 + 32);
-  write32le(buf + 13, -off - 17 + 18);
-  write32le(buf + 18, sym.pltIndex);
-  write32le(buf + 23, -off - 27);
+  write32le(buf + 7, sym.getGotPltVA() - pltEntryAddr - 11);
+  write32le(buf + 12, -off - 16 + 32);
+  write32le(buf + 17, -off - 21 + 18);
+  write32le(buf + 22, sym.pltIndex);
+  write32le(buf + 27, -off - 31);
 }
 
 RetpolineZNow::RetpolineZNow() {
