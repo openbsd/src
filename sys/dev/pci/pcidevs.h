@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2036 2023/05/12 11:42:22 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2037 2023/05/22 13:23:56 denis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -762,6 +762,7 @@
 #define	PCI_PRODUCT_AMD_17_PCIE_3	0x1454		/* 17h PCIE */
 #define	PCI_PRODUCT_AMD_17_CCP_1	0x1456		/* 17h Crypto */
 #define	PCI_PRODUCT_AMD_17_HDA	0x1457		/* 17h HD Audio */
+#define	PCI_PRODUCT_AMD_EPYC_TENGB	0x1458		/* EPYC Embedded 3000 10GbE */
 #define	PCI_PRODUCT_AMD_17_XHCI_1	0x145c		/* 17h xHCI */
 #define	PCI_PRODUCT_AMD_17_XHCI_2	0x145f		/* 17h xHCI */
 #define	PCI_PRODUCT_AMD_17_DF_1	0x1460		/* 17h Data Fabric */

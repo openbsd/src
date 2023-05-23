@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2036 2023/05/12 11:42:22 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2037 2023/05/22 13:23:56 denis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -1298,6 +1298,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_HDA,
 	    "17h HD Audio",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_EPYC_TENGB,
+	    "EPYC Embedded 3000 10GbE",
 	},
 	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_XHCI_1,
