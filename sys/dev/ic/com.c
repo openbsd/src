@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.176 2023/04/18 09:58:06 jsg Exp $	*/
+/*	$OpenBSD: com.c,v 1.177 2023/05/23 16:39:29 denis Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -1166,14 +1166,16 @@ void
 comcnprobe(struct consdev *cp)
 {
 	bus_space_handle_t ioh;
-	int found;
+	int found = 1;
 
 	if (comconsaddr == 0)
 		return;
 
 	if (bus_space_map(comconsiot, comconsaddr, COM_NPORTS, 0, &ioh))
 		return;
-	found = comprobe1(comconsiot, ioh);
+	/* XXX Some com@acpi devices will fail the comprobe1() check */
+	if (comcons_reg_width != 4)
+		found = comprobe1(comconsiot, ioh);
 	bus_space_unmap(comconsiot, ioh, COM_NPORTS);
 	if (!found)
 		return;
