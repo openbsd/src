@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.22 2022/12/03 21:02:27 tobhe Exp $	*/
+/*	$OpenBSD: eap.c,v 1.23 2023/05/23 13:12:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -176,7 +176,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 	ret = ikev2_msg_send_encrypt(env, sa, &e,
 	    IKEV2_EXCHANGE_IKE_AUTH, firstpayload, 1);
  done:
-	ibuf_release(e);
+	ibuf_free(e);
 	return (ret);
 }
 
@@ -230,7 +230,7 @@ eap_challenge_request(struct iked *env, struct iked_sa *sa,
 	ret = ikev2_send_ike_e(env, sa, e,
 	    IKEV2_PAYLOAD_EAP, IKEV2_EXCHANGE_IKE_AUTH, 1);
  done:
-	ibuf_release(e);
+	ibuf_free(e);
 	return (ret);
 }
 
@@ -253,7 +253,7 @@ eap_message_send(struct iked *env, struct iked_sa *sa, int eap_code, int eap_id)
 	ret = ikev2_send_ike_e(env, sa, e,
 	    IKEV2_PAYLOAD_EAP, IKEV2_EXCHANGE_IKE_AUTH, 1);
  done:
-	ibuf_release(e);
+	ibuf_free(e);
 	return (ret);
 }
 
@@ -300,7 +300,7 @@ eap_mschap_challenge(struct iked *env, struct iked_sa *sa, int eap_id,
 	ret = ikev2_send_ike_e(env, sa, eapmsg,
 	    IKEV2_PAYLOAD_EAP, IKEV2_EXCHANGE_IKE_AUTH, 1);
  done:
-	ibuf_release(eapmsg);
+	ibuf_free(eapmsg);
 	return (ret);
 }
 
@@ -327,7 +327,7 @@ eap_mschap_success(struct iked *env, struct iked_sa *sa, int eap_id)
 	ret = ikev2_send_ike_e(env, sa, eapmsg,
 	    IKEV2_PAYLOAD_EAP, IKEV2_EXCHANGE_IKE_AUTH, 1);
  done:
-	ibuf_release(eapmsg);
+	ibuf_free(eapmsg);
 	return (ret);
 }
 

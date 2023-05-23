@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.127 2022/12/06 09:07:33 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.128 2023/05/23 13:12:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -748,7 +748,7 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 		return (-1);
 
 	if (ikev2_print_id(&idb, idstr, sizeof(idstr)) == -1) {
-		ibuf_release(idb.id_buf);
+		ibuf_free(idb.id_buf);
 		log_debug("%s: malformed id", __func__);
 		return (-1);
 	}
@@ -756,7 +756,7 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 	log_debug("%s: id %s length %zu", __func__, idstr, len);
 
 	if (!ikev2_msg_frompeer(msg)) {
-		ibuf_release(idb.id_buf);
+		ibuf_free(idb.id_buf);
 		return (0);
 	}
 
@@ -766,13 +766,13 @@ ikev2_pld_id(struct iked *env, struct ikev2_payload *pld,
 	else if (!sa->sa_hdr.sh_initiator && payload == IKEV2_PAYLOAD_IDr)
 		idp = &msg->msg_parent->msg_localid;
 	else {
-		ibuf_release(idb.id_buf);
+		ibuf_free(idb.id_buf);
 		log_debug("%s: unexpected id payload", __func__);
 		return (0);
 	}
 
 	if (idp->id_type) {
-		ibuf_release(idb.id_buf);
+		ibuf_free(idb.id_buf);
 		log_debug("%s: duplicate id payload", __func__);
 		return (-1);
 	}
@@ -964,7 +964,7 @@ ikev2_pld_auth(struct iked *env, struct ikev2_payload *pld,
 		return (-1);
 	}
 
-	ibuf_release(idp->id_buf);
+	ibuf_free(idp->id_buf);
 	idp->id_type = auth.auth_method;
 	idp->id_offset = 0;
 	if ((idp->id_buf = ibuf_new(buf, len)) == NULL)
@@ -1279,7 +1279,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 			    " notification: %zu", __func__, left);
 			return (0);
 		}
-		ibuf_release(msg->msg_cookie2);	/* should not happen */
+		ibuf_free(msg->msg_cookie2);	/* should not happen */
 		if ((msg->msg_cookie2 = ibuf_new(buf, left)) == NULL) {
 			log_debug("%s: failed to get peer cookie2", __func__);
 			return (-1);
@@ -1300,7 +1300,7 @@ ikev2_pld_notify(struct iked *env, struct ikev2_payload *pld,
 		log_debug("%s: received cookie, len %zu", __func__, left);
 		print_hex(buf, 0, left);
 
-		ibuf_release(msg->msg_cookie);
+		ibuf_free(msg->msg_cookie);
 		if ((msg->msg_cookie = ibuf_new(buf, left)) == NULL) {
 			log_debug("%s: failed to get peer cookie", __func__);
 			return (-1);
@@ -1710,12 +1710,12 @@ ikev2_pld_ef(struct iked *env, struct ikev2_payload *pld,
 done:
 	if (!processed)
 		ikestat_inc(env, ikes_frag_rcvd_drop);
-	ibuf_release(e);
+	ibuf_free(e);
 	return (ret);
 dropall:
 	ikestat_add(env, ikes_frag_rcvd_drop, sa_frag->frag_count + 1);
 	config_free_fragments(sa_frag);
-	ibuf_release(e);
+	ibuf_free(e);
 	return -1;
 }
 
@@ -1782,7 +1782,7 @@ done:
 	else
 		ikestat_add(env, ikes_frag_reass_drop, sa_frag->frag_total);
 	config_free_fragments(sa_frag);
-	ibuf_release(e);
+	ibuf_free(e);
 
 	return (ret);
 }
@@ -1837,7 +1837,7 @@ ikev2_pld_e(struct iked *env, struct ikev2_payload *pld,
 	    pld->pld_nextpayload);
 
  done:
-	ibuf_release(e);
+	ibuf_free(e);
 
 	return (ret);
 }

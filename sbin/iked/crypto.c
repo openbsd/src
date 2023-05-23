@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.42 2023/03/30 17:20:53 bluhm Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.43 2023/05/23 13:12:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -306,7 +306,7 @@ hash_new(uint8_t type, uint16_t id)
 struct ibuf *
 hash_setkey(struct iked_hash *hash, void *key, size_t keylen)
 {
-	ibuf_release(hash->hash_key);
+	ibuf_free(hash->hash_key);
 	if ((hash->hash_key = ibuf_new(key, keylen)) == NULL) {
 		log_debug("%s: alloc hash key", __func__);
 		return (NULL);
@@ -320,7 +320,7 @@ hash_free(struct iked_hash *hash)
 	if (hash == NULL)
 		return;
 	HMAC_CTX_free(hash->hash_ctx);
-	ibuf_release(hash->hash_key);
+	ibuf_free(hash->hash_key);
 	free(hash);
 }
 
@@ -487,7 +487,7 @@ cipher_new(uint8_t type, uint16_t id, uint16_t id_length)
 struct ibuf *
 cipher_setkey(struct iked_cipher *encr, const void *key, size_t keylen)
 {
-	ibuf_release(encr->encr_key);
+	ibuf_free(encr->encr_key);
 	if ((encr->encr_key = ibuf_new(key, keylen)) == NULL) {
 		log_debug("%s: alloc cipher key", __func__);
 		return (NULL);
@@ -498,7 +498,7 @@ cipher_setkey(struct iked_cipher *encr, const void *key, size_t keylen)
 struct ibuf *
 cipher_setiv(struct iked_cipher *encr, const void *iv, size_t len)
 {
-	ibuf_release(encr->encr_iv);
+	ibuf_free(encr->encr_iv);
 	encr->encr_iv = NULL;
 	if (iv != NULL) {
 		if (len < encr->encr_ivlength) {
@@ -551,8 +551,8 @@ cipher_free(struct iked_cipher *encr)
 	if (encr == NULL)
 		return;
 	EVP_CIPHER_CTX_free(encr->encr_ctx);
-	ibuf_release(encr->encr_iv);
-	ibuf_release(encr->encr_key);
+	ibuf_free(encr->encr_iv);
+	ibuf_free(encr->encr_key);
 	free(encr);
 }
 
@@ -767,7 +767,7 @@ dsa_free(struct iked_dsa *dsa)
 		EVP_PKEY_free(dsa->dsa_key);
 	}
 
-	ibuf_release(dsa->dsa_keydata);
+	ibuf_free(dsa->dsa_keydata);
 	free(dsa);
 }
 
@@ -780,7 +780,7 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 	EC_KEY		*ec = NULL;
 	EVP_PKEY	*pkey = NULL;
 
-	ibuf_release(dsa->dsa_keydata);
+	ibuf_free(dsa->dsa_keydata);
 	if ((dsa->dsa_keydata = ibuf_new(key, keylen)) == NULL) {
 		log_debug("%s: alloc signature key", __func__);
 		return (NULL);
@@ -855,7 +855,7 @@ dsa_setkey(struct iked_dsa *dsa, void *key, size_t keylen, uint8_t type)
 	EVP_PKEY_free(pkey);
 	X509_free(cert);
 	BIO_free(rawcert);
-	ibuf_release(dsa->dsa_keydata);
+	ibuf_free(dsa->dsa_keydata);
 	dsa->dsa_keydata = NULL;
 	return (NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.91 2022/12/03 22:34:35 tobhe Exp $	*/
+/*	$OpenBSD: config.c,v 1.92 2023/05/23 13:12:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -82,12 +82,12 @@ config_free_kex(struct iked_kex *kex)
 	if (kex == NULL)
 		return;
 
-	ibuf_release(kex->kex_inonce);
-	ibuf_release(kex->kex_rnonce);
+	ibuf_free(kex->kex_inonce);
+	ibuf_free(kex->kex_rnonce);
 
 	group_free(kex->kex_dhgroup);
-	ibuf_release(kex->kex_dhiexchange);
-	ibuf_release(kex->kex_dhrexchange);
+	ibuf_free(kex->kex_dhiexchange);
+	ibuf_free(kex->kex_dhrexchange);
 
 	free(kex);
 }
@@ -140,42 +140,42 @@ config_free_sa(struct iked *env, struct iked_sa *sa)
 	ikev2_msg_flushqueue(env, &sa->sa_requests);
 	ikev2_msg_flushqueue(env, &sa->sa_responses);
 
-	ibuf_release(sa->sa_inonce);
-	ibuf_release(sa->sa_rnonce);
+	ibuf_free(sa->sa_inonce);
+	ibuf_free(sa->sa_rnonce);
 
 	group_free(sa->sa_dhgroup);
-	ibuf_release(sa->sa_dhiexchange);
-	ibuf_release(sa->sa_dhrexchange);
+	ibuf_free(sa->sa_dhiexchange);
+	ibuf_free(sa->sa_dhrexchange);
 
-	ibuf_release(sa->sa_simult);
+	ibuf_free(sa->sa_simult);
 
 	hash_free(sa->sa_prf);
 	hash_free(sa->sa_integr);
 	cipher_free(sa->sa_encr);
 
-	ibuf_release(sa->sa_key_d);
-	ibuf_release(sa->sa_key_iauth);
-	ibuf_release(sa->sa_key_rauth);
-	ibuf_release(sa->sa_key_iencr);
-	ibuf_release(sa->sa_key_rencr);
-	ibuf_release(sa->sa_key_iprf);
-	ibuf_release(sa->sa_key_rprf);
+	ibuf_free(sa->sa_key_d);
+	ibuf_free(sa->sa_key_iauth);
+	ibuf_free(sa->sa_key_rauth);
+	ibuf_free(sa->sa_key_iencr);
+	ibuf_free(sa->sa_key_rencr);
+	ibuf_free(sa->sa_key_iprf);
+	ibuf_free(sa->sa_key_rprf);
 
-	ibuf_release(sa->sa_1stmsg);
-	ibuf_release(sa->sa_2ndmsg);
+	ibuf_free(sa->sa_1stmsg);
+	ibuf_free(sa->sa_2ndmsg);
 
-	ibuf_release(sa->sa_iid.id_buf);
-	ibuf_release(sa->sa_rid.id_buf);
-	ibuf_release(sa->sa_icert.id_buf);
-	ibuf_release(sa->sa_rcert.id_buf);
+	ibuf_free(sa->sa_iid.id_buf);
+	ibuf_free(sa->sa_rid.id_buf);
+	ibuf_free(sa->sa_icert.id_buf);
+	ibuf_free(sa->sa_rcert.id_buf);
 	for (i = 0; i < IKED_SCERT_MAX; i++)
-		ibuf_release(sa->sa_scert[i].id_buf);
-	ibuf_release(sa->sa_localauth.id_buf);
-	ibuf_release(sa->sa_peerauth.id_buf);
+		ibuf_free(sa->sa_scert[i].id_buf);
+	ibuf_free(sa->sa_localauth.id_buf);
+	ibuf_free(sa->sa_peerauth.id_buf);
 
-	ibuf_release(sa->sa_eap.id_buf);
+	ibuf_free(sa->sa_eap.id_buf);
 	free(sa->sa_eapid);
-	ibuf_release(sa->sa_eapmsk);
+	ibuf_free(sa->sa_eapmsk);
 
 	free(sa->sa_cp_addr);
 	free(sa->sa_cp_addr6);
@@ -1064,8 +1064,8 @@ config_setkeys(struct iked *env)
 	if (fp != NULL)
 		fclose(fp);
 
-	ibuf_release(pubkey.id_buf);
-	ibuf_release(privkey.id_buf);
+	ibuf_free(pubkey.id_buf);
+	ibuf_free(privkey.id_buf);
 	EVP_PKEY_free(key);
 
 	return (ret);

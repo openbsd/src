@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.90 2022/12/06 09:07:33 tobhe Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.91 2023/05/23 13:12:19 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -191,15 +191,15 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 	struct iked_certreq	*cr;
 
 	if (msg == msg->msg_parent) {
-		ibuf_release(msg->msg_nonce);
-		ibuf_release(msg->msg_ke);
-		ibuf_release(msg->msg_auth.id_buf);
-		ibuf_release(msg->msg_peerid.id_buf);
-		ibuf_release(msg->msg_localid.id_buf);
-		ibuf_release(msg->msg_cert.id_buf);
-		ibuf_release(msg->msg_cookie);
-		ibuf_release(msg->msg_cookie2);
-		ibuf_release(msg->msg_del_buf);
+		ibuf_free(msg->msg_nonce);
+		ibuf_free(msg->msg_ke);
+		ibuf_free(msg->msg_auth.id_buf);
+		ibuf_free(msg->msg_peerid.id_buf);
+		ibuf_free(msg->msg_localid.id_buf);
+		ibuf_free(msg->msg_cert.id_buf);
+		ibuf_free(msg->msg_cookie);
+		ibuf_free(msg->msg_cookie2);
+		ibuf_free(msg->msg_del_buf);
 		free(msg->msg_eap.eam_user);
 		free(msg->msg_cp_addr);
 		free(msg->msg_cp_addr6);
@@ -221,14 +221,14 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 
 		config_free_proposals(&msg->msg_proposals, 0);
 		while ((cr = SIMPLEQ_FIRST(&msg->msg_certreqs))) {
-			ibuf_release(cr->cr_data);
+			ibuf_free(cr->cr_data);
 			SIMPLEQ_REMOVE_HEAD(&msg->msg_certreqs, cr_entry);
 			free(cr);
 		}
 	}
 
 	if (msg->msg_data != NULL) {
-		ibuf_release(msg->msg_data);
+		ibuf_free(msg->msg_data);
 		msg->msg_data = NULL;
 	}
 }
@@ -478,13 +478,13 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src,
 	    __func__, len + sizeof(pad), pad, ibuf_size(dst));
 	print_hex(ibuf_data(dst), 0, ibuf_size(dst));
 
-	ibuf_release(src);
-	ibuf_release(out);
+	ibuf_free(src);
+	ibuf_free(out);
 	return (dst);
  done:
-	ibuf_release(src);
-	ibuf_release(out);
-	ibuf_release(dst);
+	ibuf_free(src);
+	ibuf_free(out);
+	ibuf_free(dst);
 	return (NULL);
 }
 
@@ -548,7 +548,7 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 
 	ret = 0;
  done:
-	ibuf_release(tmp);
+	ibuf_free(tmp);
 
 	return (ret);
 }
@@ -623,7 +623,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 		log_debug("%s: integrity check succeeded", __func__);
 		print_hex(tmp->buf, 0, tmplen);
 
-		ibuf_release(tmp);
+		ibuf_free(tmp);
 		tmp = NULL;
 	}
 
@@ -691,12 +691,12 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 	if (ibuf_setsize(out, outlen - pad - 1) != 0)
 		goto done;
 
-	ibuf_release(src);
+	ibuf_free(src);
 	return (out);
  done:
-	ibuf_release(tmp);
-	ibuf_release(out);
-	ibuf_release(src);
+	ibuf_free(tmp);
+	ibuf_free(out);
+	ibuf_free(src);
 	return (NULL);
 }
 
@@ -906,14 +906,14 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 		firstpayload = 0;
 
 		ikev2_msg_cleanup(env, &resp);
-		ibuf_release(e);
+		ibuf_free(e);
 		e = NULL;
 	}
 
 	return 0;
 done:
 	ikev2_msg_cleanup(env, &resp);
-	ibuf_release(e);
+	ibuf_free(e);
 	ikestat_inc(env, ikes_frag_send_failures);
 	return ret;
 }
@@ -977,7 +977,7 @@ ikev2_msg_auth(struct iked *env, struct iked_sa *sa, int response)
 	return (authmsg);
 
  fail:
-	ibuf_release(authmsg);
+	ibuf_free(authmsg);
 	return (NULL);
 }
 
@@ -1109,7 +1109,7 @@ ikev2_msg_authsign(struct iked *env, struct iked_sa *sa,
 		goto done;
 	}
 
-	ibuf_release(sa->sa_localauth.id_buf);
+	ibuf_free(sa->sa_localauth.id_buf);
 	sa->sa_localauth.id_buf = NULL;
 
 	if ((buf = ibuf_new(NULL, dsa_length(dsa))) == NULL) {
@@ -1120,14 +1120,14 @@ ikev2_msg_authsign(struct iked *env, struct iked_sa *sa,
 	if ((siglen = dsa_sign_final(dsa,
 	    ibuf_data(buf), ibuf_size(buf))) < 0) {
 		log_debug("%s: failed to create auth signature", __func__);
-		ibuf_release(buf);
+		ibuf_free(buf);
 		goto done;
 	}
 
 	if (ibuf_setsize(buf, siglen) < 0) {
 		log_debug("%s: failed to set auth signature size to %zd",
 		    __func__, siglen);
-		ibuf_release(buf);
+		ibuf_free(buf);
 		goto done;
 	}
 
