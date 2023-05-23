@@ -1,4 +1,4 @@
-/* $OpenBSD: objectstest.c,v 1.6 2022/09/05 21:06:31 tb Exp $ */
+/* $OpenBSD: objectstest.c,v 1.7 2023/05/23 11:05:09 tb Exp $ */
 /*
  * Copyright (c) 2017, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -397,6 +397,47 @@ obj_txt_test(struct obj_test *ot)
 }
 
 static int
+obj_txt_early_nul_test(void)
+{
+	ASN1_OBJECT *obj = NULL;
+	char buf[2];
+	int failed = 1;
+
+	buf[0] = 'x';
+	buf[1] = '\0';
+
+	if (OBJ_obj2txt(buf, sizeof(buf), NULL, 1) != 0) {
+		fprintf(stderr, "FAIL: OBJ_obj2txt(NULL) succeded\n");
+		goto failed;
+	}
+	if (buf[0] != '\0') {
+		fprintf(stderr, "FAIL: OBJ_obj2txt(NULL) did not NUL terminate\n");
+		goto failed;
+	}
+
+	if ((obj = ASN1_OBJECT_new()) == NULL)
+		errx(1, "ASN1_OBJECT_new");
+
+	buf[0] = 'x';
+	buf[1] = '\0';
+
+	if (OBJ_obj2txt(buf, sizeof(buf), obj, 1) != 0) {
+		fprintf(stderr, "FAIL: OBJ_obj2txt(obj) succeeded\n");
+		goto failed;
+	}
+	if (buf[0] != '\0') {
+		fprintf(stderr, "FAIL: OBJ_obj2txt(obj) did not NUL terminate\n");
+		goto failed;
+	}
+
+	failed = 0;
+ failed:
+	ASN1_OBJECT_free(obj);
+
+	return failed;
+}
+
+static int
 obj_txt_tests(void)
 {
 	int failed = 0;
@@ -404,6 +445,8 @@ obj_txt_tests(void)
 
 	for (i = 0; i < N_OBJ_TESTS; i++)
 		failed |= obj_txt_test(&obj_tests[i]);
+
+	failed |= obj_txt_early_nul_test();
 
 	return failed;
 }
