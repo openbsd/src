@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.51 2022/12/26 07:18:52 jmc Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.52 2023/05/23 11:04:04 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -499,6 +499,9 @@ OBJ_txt2obj(const char *s, int no_name)
 int
 OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *aobj, int no_name)
 {
+	if (buf_len > 0)
+		buf[0] = '\0';
+
 	if (aobj == NULL || aobj->data == NULL)
 		return 0;
 
