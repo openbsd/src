@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.204 2023/05/19 21:26:09 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.205 2023/05/23 14:10:27 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -244,6 +244,7 @@ dwmshc*		at fdt?
 sdmmc*		at dwmshc?
 
 # Qualcomm SoCs
+qcaoss*		at fdt?
 qcdwusb*	at fdt?
 qcgpio*		at acpi?
 qcgpio*		at fdt? early 1
