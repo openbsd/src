@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.189 2023/05/22 12:05:57 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.190 2023/05/23 10:02:46 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1530,7 +1530,7 @@ sub create_package
 	local $SIG{'TERM'} = $h;
 	$state->{archive} = $state->create_archive($wname, $plist->infodir);
 	$state->set_status("archiving");
-	my $p = $state->progress->new_sizer($plist, $state);
+	my $p = $state->progress->new_sizer($plist);
 	for my $e (@$ordered) {
 		$e->create_package($state);
 		$p->advance($e);

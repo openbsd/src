@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.192 2022/05/11 09:47:23 espie Exp $
+# $OpenBSD: Add.pm,v 1.193 2023/05/23 10:02:46 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -146,7 +146,7 @@ sub perform_extraction
 	# For "tied" entries, also see tie_files in OpenBSD::PkgAdd.
 	my ($wanted, $tied) = ({}, {});
 	$handle->{plist}->find_extractible($state, $wanted, $tied);
-	my $p = $state->progress->new_sizer($handle->{plist}, $state);
+	my $p = $state->progress->new_sizer($handle->{plist});
 
 	# so iterate over the archive, and "consume" hashes entry as we go
 	# it's necessary to delete them so that skip_to_the_end will work
