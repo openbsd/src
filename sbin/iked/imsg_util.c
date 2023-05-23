@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.13 2021/05/17 08:14:37 tobhe Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.14 2023/05/23 12:43:26 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -42,12 +42,6 @@ ibuf_cat(struct ibuf *dst, struct ibuf *src)
 	return (ibuf_add(dst, src->buf, ibuf_size(src)));
 }
 
-void
-ibuf_zero(struct ibuf *buf)
-{
-	explicit_bzero(buf->buf, buf->wpos);
-}
-
 struct ibuf *
 ibuf_new(const void *data, size_t len)
 {
@@ -56,8 +50,6 @@ ibuf_new(const void *data, size_t len)
 	if ((buf = ibuf_dynamic(len,
 	    IKED_MSGBUF_MAX)) == NULL)
 		return (NULL);
-
-	ibuf_zero(buf);
 
 	if (len == 0)
 		return (buf);
@@ -80,37 +72,19 @@ ibuf_new(const void *data, size_t len)
 struct ibuf *
 ibuf_static(void)
 {
-	struct ibuf	*buf;
-
-	if ((buf = ibuf_open(IKED_MSGBUF_MAX)) == NULL)
-		return (NULL);
-
-	ibuf_zero(buf);
-
-	return (buf);
+	return ibuf_open(IKED_MSGBUF_MAX);
 }
 
 void *
 ibuf_advance(struct ibuf *buf, size_t len)
 {
-	void	*ptr;
-
-	if ((ptr = ibuf_reserve(buf, len)) != NULL)
-		memset(ptr, 0, len);
-
-	return (ptr);
+	return ibuf_reserve(buf, len);
 }
 
 void
 ibuf_release(struct ibuf *buf)
 {
-	if (buf == NULL)
-		return;
-	if (buf->buf != NULL) {
-		ibuf_zero(buf);
-		free(buf->buf);
-	}
-	free(buf);
+	ibuf_free(buf);
 }
 
 size_t
