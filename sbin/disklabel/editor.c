@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.406 2023/05/20 15:16:47 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.407 2023/05/23 13:20:31 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -156,12 +156,10 @@ const struct partition **sort_partitions(const struct disklabel *, int);
 void	find_bounds(const struct disklabel *);
 void	set_bounds(struct disklabel *);
 void	set_duid(struct disklabel *);
+int	set_fragblock(struct disklabel *, int);
 const struct diskchunk *free_chunks(const struct disklabel *, int);
 int	micmp(const void *, const void *);
 int	mpequal(char **, char **);
-int	get_bsize(struct disklabel *, int);
-int	get_fsize(struct disklabel *, int);
-int	get_cpg(struct disklabel *, int);
 int	get_fstype(struct disklabel *, int);
 int	get_mp(const struct disklabel *, int);
 int	get_offset(struct disklabel *, int);
@@ -670,9 +668,7 @@ again:
 		} else {
 			pp->p_fstype = FS_BSDFFS;
 			pp->p_fragblock = 0;
-			if (get_fsize(lp, partno) == 1 ||
-			    get_bsize(lp, partno) == 1 ||
-			    get_cpg(lp, partno) == 1) {
+			if (set_fragblock(lp, partno) == 1) {
 				free(alloc);
 				return 1;
 			}
@@ -734,9 +730,7 @@ editor_resize(struct disklabel *lp, const char *p)
 
 	DL_SETPSIZE(pp, ui);
 	pp->p_fragblock = 0;
-	if (get_fsize(&label, partno) == 1 ||
-	    get_bsize(&label, partno) == 1 ||
-	    get_cpg(&label, partno) == 1)
+	if (set_fragblock(&label, partno) == 1)
 		return;
 
 	/*
@@ -762,9 +756,7 @@ editor_resize(struct disklabel *lp, const char *p)
 			if (off + DL_GETPSIZE(pp) > ending_sector) {
 				DL_SETPSIZE(pp, ending_sector - off);
 				pp->p_fragblock = 0;
-				if (get_fsize(&label, i) == 1 ||
-				    get_bsize(&label, i) == 1 ||
-				    get_cpg(&label, i) == 1)
+				if (set_fragblock(&label, i) == 1)
 					return;
 				shrunk = i;
 			}
@@ -836,9 +828,7 @@ editor_add(struct disklabel *lp, const char *p)
 	    get_size(lp, partno) == 0 &&
 	    get_fstype(lp, partno) == 0 &&
 	    get_mp(lp, partno) == 0 &&
-	    get_fsize(lp, partno) == 0  &&
-	    get_bsize(lp, partno) == 0 &&
-	    get_cpg(lp, partno) == 0)
+	    set_fragblock(lp, partno) == 0)
 		return;
 
 	/* Bailed out at some point, so effectively delete the partition. */
@@ -878,9 +868,7 @@ editor_modify(struct disklabel *lp, const char *p)
 	    get_size(lp, partno) == 0   &&
 	    get_fstype(lp, partno) == 0 &&
 	    get_mp(lp, partno) == 0 &&
-	    get_fsize(lp, partno) == 0  &&
-	    get_bsize(lp, partno) == 0 &&
-	    get_cpg(lp, partno) == 0)
+	    set_fragblock(lp, partno) == 0)
 		return;
 
 	/* Bailed out at some point, so undo any changes. */
@@ -1633,28 +1621,17 @@ get_size(struct disklabel *lp, int partno)
 }
 
 int
-get_cpg(struct disklabel *lp, int partno)
+set_fragblock(struct disklabel *lp, int partno)
 {
-	struct partition *pp = &lp->d_partitions[partno];
+	struct partition opp, *pp = &lp->d_partitions[partno];
+	u_int64_t bytes, offsetalign, sizealign;
+	u_int32_t frag, fsize;
 
 	if (pp->p_fstype != FS_BSDFFS)
 		return (0);
 
 	if (pp->p_cpg == 0)
 		pp->p_cpg = 1;
-
-	return (0);
-}
-
-int
-get_fsize(struct disklabel *lp, int partno)
-{
-	struct partition *pp = &lp->d_partitions[partno];
-	u_int64_t bytes;
-	u_int32_t frag, fsize;
-
-	if (pp->p_fstype != FS_BSDFFS)
-		return (0);
 
 	fsize = DISKLABELV1_FFS_FSIZE(pp->p_fragblock);
 	frag = DISKLABELV1_FFS_FRAG(pp->p_fragblock);
@@ -1672,23 +1649,6 @@ get_fsize(struct disklabel *lp, int partno)
 			fsize = MAXBSIZE / frag;
 		pp->p_fragblock = DISKLABELV1_FFS_FRAGBLOCK(fsize, frag);
 	}
-
-	return (0);
-}
-
-int
-get_bsize(struct disklabel *lp, int partno)
-{
-	struct partition opp, *pp = &lp->d_partitions[partno];
-	u_int64_t offsetalign, sizealign;
-
-	if (pp->p_fstype != FS_BSDFFS)
-		return (0);
-
-	/* Avoid dividing by zero... */
-	if (pp->p_fragblock == 0)
-		return (1);
-
 #ifdef SUN_CYLCHECK
 	return (0);
 #endif
