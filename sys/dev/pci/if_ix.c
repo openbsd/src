@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.195 2023/05/18 08:22:37 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.196 2023/05/23 09:16:16 jan Exp $	*/
 
 /******************************************************************************
 
@@ -3214,12 +3214,23 @@ ixgbe_rxeof(struct rx_ring *rxr)
 		sendmp = rxbuf->fmp;
 		rxbuf->buf = rxbuf->fmp = NULL;
 
-		if (sendmp != NULL) /* secondary frag */
+		if (sendmp != NULL) { /* secondary frag */
 			sendmp->m_pkthdr.len += mp->m_len;
-		else {
+
+			/*
+			 * This function iterates over interleaved descriptors.
+			 * Thus, we reuse ph_mss as global segment counter per
+			 * TCP connection, instead of introducing a new variable
+			 * in m_pkthdr.
+			 */
+			if (rsccnt)
+				sendmp->m_pkthdr.ph_mss += rsccnt - 1;
+		} else {
 			/* first desc of a non-ps chain */
 			sendmp = mp;
 			sendmp->m_pkthdr.len = mp->m_len;
+			if (rsccnt)
+				sendmp->m_pkthdr.ph_mss = rsccnt - 1;
 #if NVLAN > 0
 			if (sc->vlan_stripping && staterr & IXGBE_RXD_STAT_VP) {
 				sendmp->m_pkthdr.ether_vtag = vtag;
@@ -3239,6 +3250,21 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			if (hashtype != IXGBE_RXDADV_RSSTYPE_NONE) {
 				sendmp->m_pkthdr.ph_flowid = hash;
 				SET(sendmp->m_pkthdr.csum_flags, M_FLOWID);
+			}
+
+			if (sendmp->m_pkthdr.ph_mss == 1)
+				sendmp->m_pkthdr.ph_mss = 0;
+
+			if (sendmp->m_pkthdr.ph_mss > 0) {
+				struct ether_extracted ext;
+				uint16_t pkts = sendmp->m_pkthdr.ph_mss;
+
+				ether_extract_headers(sendmp, &ext);
+				if (ext.tcp)
+					tcpstat_inc(tcps_inhwlro);
+				else
+					tcpstat_inc(tcps_inbadlro);
+				tcpstat_add(tcps_inpktlro, pkts);
 			}
 
 			ml_enqueue(&ml, sendmp);

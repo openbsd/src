@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.175 2023/05/10 12:07:17 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.176 2023/05/23 09:16:16 jan Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -439,6 +439,9 @@ tcp_stats(char *name)
 	p(tcps_inswcsum, "\t\t%u packet%s software-checksummed\n");
 	p(tcps_rcvbadsig, "\t\t%u bad/missing md5 checksum%s\n");
 	p(tcps_rcvgoodsig, "\t\t%llu good md5 checksum%s\n");
+	p(tcps_inhwlro, "\t\t%u input LRO generated packet%s from hardware\n");
+	p(tcps_inpktlro, "\t\t%u input LRO coalesced packet%s by hardware\n");
+	p(tcps_inbadlro, "\t\t%u input bad LRO packet%s\n");
 	p(tcps_connattempt, "\t%u connection request%s\n");
 	p(tcps_accepts, "\t%u connection accept%s\n");
 	p(tcps_connects, "\t%u connection%s established (including accepts)\n");
