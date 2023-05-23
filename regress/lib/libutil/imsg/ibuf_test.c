@@ -1,4 +1,4 @@
-/* $OpenBSD: ibuf_test.c,v 1.1 2022/04/23 08:57:52 tobias Exp $
+/* $OpenBSD: ibuf_test.c,v 1.2 2023/05/23 09:32:37 claudio Exp $
 */
 /*
  * Copyright (c) Tobias Stoeckmann <tobias@openbsd.org>
@@ -29,7 +29,7 @@ int
 test_ibuf_open(void) {
 	struct ibuf *buf;
 
-	if ((buf = ibuf_open(0)) == NULL)
+	if ((buf = ibuf_open(1)) == NULL)
 		return 1;
 
 	ibuf_free(buf);
