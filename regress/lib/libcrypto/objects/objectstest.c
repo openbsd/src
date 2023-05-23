@@ -1,4 +1,4 @@
-/* $OpenBSD: objectstest.c,v 1.7 2023/05/23 11:05:09 tb Exp $ */
+/* $OpenBSD: objectstest.c,v 1.8 2023/05/23 11:06:52 tb Exp $ */
 /*
  * Copyright (c) 2017, 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -431,6 +431,7 @@ obj_txt_early_nul_test(void)
 	}
 
 	failed = 0;
+
  failed:
 	ASN1_OBJECT_free(obj);
 
