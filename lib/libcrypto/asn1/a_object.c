@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.49 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.50 2023/05/23 11:51:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -432,6 +432,9 @@ i2t_ASN1_OBJECT_internal(const ASN1_OBJECT *aobj, char *buf, int buf_len, int no
 		return 0;
 	if (buf_len > 0)
 		buf[0] = '\0';
+
+	if (aobj == NULL || aobj->data == NULL)
+		return 0;
 
 	if (!CBB_init(&cbb, 0))
 		goto err;
