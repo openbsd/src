@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.14 2022/04/23 08:57:52 tobias Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.15 2023/05/23 12:41:28 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -38,9 +38,13 @@ ibuf_open(size_t len)
 {
 	struct ibuf	*buf;
 
+	if (len == 0) {
+		errno = EINVAL;
+		return (NULL);
+	}
 	if ((buf = calloc(1, sizeof(struct ibuf))) == NULL)
 		return (NULL);
-	if ((buf->buf = malloc(len)) == NULL) {
+	if ((buf->buf = calloc(len, 1)) == NULL) {
 		free(buf);
 		return (NULL);
 	}
@@ -55,14 +59,22 @@ ibuf_dynamic(size_t len, size_t max)
 {
 	struct ibuf	*buf;
 
-	if (max < len)
+	if (max < len) {
+		errno = EINVAL;
 		return (NULL);
+	}
 
-	if ((buf = ibuf_open(len)) == NULL)
+	if ((buf = calloc(1, sizeof(struct ibuf))) == NULL)
 		return (NULL);
-
-	if (max > 0)
-		buf->max = max;
+	if (len > 0) {
+		if ((buf->buf = calloc(len, 1)) == NULL) {
+			free(buf);
+			return (NULL);
+		}
+	}
+	buf->size = len;
+	buf->max = max;
+	buf->fd = -1;
 
 	return (buf);
 }
@@ -120,6 +132,7 @@ ibuf_reserve(struct ibuf *buf, size_t len)
 
 	b = buf->buf + buf->wpos;
 	buf->wpos += len;
+	memset(b, 0, len);
 	return (b);
 }
 
