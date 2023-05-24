@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_VERIFY_PARAM_new.3,v 1.4 2022/09/10 10:22:46 jsg Exp $
+.\" $OpenBSD: X509_VERIFY_PARAM_new.3,v 1.5 2023/05/24 09:57:50 tb Exp $
 .\"
 .\" Copyright (c) 2018, 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2022 $
+.Dd $Mdocdate: May 24 2023 $
 .Dt X509_VERIFY_PARAM_NEW 3
 .Os
 .Sh NAME
@@ -148,16 +148,13 @@ the acceptable policy set with
 the maximum verification depth set with
 .Xr X509_VERIFY_PARAM_set_depth 3
 .It
+flags that were set with
+.Xr X509_VERIFY_PARAM_set_hostflags 3
+.It
 the list of expected DNS hostnames built with
 .Xr X509_VERIFY_PARAM_set1_host 3
 and
-.Xr X509_VERIFY_PARAM_add1_host 3 ;
-if this list is copied, any flags that were set with
-.Xr X509_VERIFY_PARAM_set_hostflags 3
-are copied together with the list, without inspecting any such flags
-that may already be present in the
-.Fa destination
-object before overwriting them
+.Xr X509_VERIFY_PARAM_add1_host 3
 .It
 the expected RFC 822 email address set with
 .Xr X509_VERIFY_PARAM_set1_email 3
