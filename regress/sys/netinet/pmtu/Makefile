@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2020/12/30 21:40:33 kn Exp $
+#	$OpenBSD: Makefile,v 1.16 2023/05/24 11:52:30 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -69,6 +69,15 @@ addr.py: Makefile
 	echo 'FAKE_NET = "${FAKE_NET}"' >>$@.tmp
 	echo 'FAKE_NET6 = "${FAKE_NET6}"' >>$@.tmp
 	mv $@.tmp $@
+
+REGRESS_SETUP_ONCE +=	pfctl
+stamp-pfctl: addr.py pf.conf
+pfctl:
+	# default "block return; pass" interferes with test, use "block; pass"
+	cat addr.py ${.CURDIR}/pf.conf | /sbin/pfctl -n -f -
+	cat addr.py ${.CURDIR}/pf.conf | ${SUDO} /sbin/pfctl -a regress -f -
+	cat addr.py ${.CURDIR}/pf.conf | \
+	    ssh ${REMOTE_SSH} ${SUDO} pfctl -a regress -f -
 
 # Set variables so that make runs with and without obj directory.
 # Only do that if necessary to keep visible output short.
@@ -163,6 +172,8 @@ check-setup-local:
 	! ping -n -c 1 -w 1 ${FAKE_NET_ADDR6}  # FAKE_NET_ADDR6
 	route -n get -inet6 ${FAKE_NET_ADDR6} | grep -q 'flags: .*BLACKHOLE'  # FAKE_NET_ADDR6
 	route -n get -inet6 -net ${FAKE_NET6} | grep -q 'flags: .*BLACKHOLE'  # FAKE_NET6
+	${SUDO} pfctl -sr | grep '^anchor "regress" all$$'
+	${SUDO} pfctl -si | grep '^Status: Enabled '
 
 check-setup-remote:
 	@echo '\n======== $@ ========'
