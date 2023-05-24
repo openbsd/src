@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2023/05/24 08:54:59 tb Exp $
+#	$OpenBSD: Makefile,v 1.16 2023/05/24 09:15:14 tb Exp $
 
 PROGS += cipher_list
 PROGS += ssl_get_shared_ciphers
@@ -17,7 +17,5 @@ CFLAGS+=	-DCERTSDIR=\"${.CURDIR}/../certs\"
 CFLAGS+=	-I${.CURDIR}/../../../../lib/libssl
 
 LDADD_ssl_verify_param = ${LIBSSL} ${CRYPTO_INT}
-
-REGRESS_EXPECTED_FAILURES+=	run-regress-ssl_verify_param
 
 .include <bsd.regress.mk>
