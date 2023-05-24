@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2021/09/30 17:57:44 anton Exp $
+#	$OpenBSD: Makefile,v 1.11 2023/05/24 20:31:49 bluhm Exp $
 
 # Copyright (c) 2017-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -16,9 +16,9 @@
 
 # The following ports must be installed:
 #
-# scapy               powerful interactive packet manipulation in python
-
-.include <bsd.own.mk>
+# scapy			powerful interactive packet manipulation in python
+# p5-BSD-Socket-Splice	perl interface to OpenBSD socket splicing
+# p5-Socket6		Perl defines relating to AF_INET6 sockets
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 
@@ -28,10 +28,13 @@ regress:
 	@echo SKIPPED
 .endif
 
-# PERL_REQUIRE set in ../Makefile.inc
+PERL_REQUIRE !=	perl -Mstrict -Mwarnings -e ' \
+    eval { require BSD::Socket::Splice } or print $@; \
+    eval { require Socket6 } or print $@; \
+'
 .if ! empty (PERL_REQUIRE)
 regress:
-	@echo perl require: "${PERL_REQUIRE}"
+	@echo "${PERL_REQUIRE}"
 	@echo Install these Perl modules for additional tests.
 	@echo SKIPPED
 .endif
