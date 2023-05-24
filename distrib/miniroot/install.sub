@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1247 2023/05/22 23:32:31 kn Exp $
+#	$OpenBSD: install.sub,v 1.1248 2023/05/24 20:04:05 naddy Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -77,7 +77,7 @@ wait_cgiinfo() {
 	local _l _s _key _val
 
 	if [ -f /tmp/cgipid ]; then
-		wait "$(cat /tmp/cgipid)" 2>/dev/null
+		wait "$(</tmp/cgipid)" 2>/dev/null
 		rm -f /tmp/cgipid
 	fi
 
@@ -2650,7 +2650,7 @@ start_cgiinfo() {
 	(
 		sleep 12;
 		if [ -f /tmp/cgipid ]; then
-			kill -INT -"$(cat /tmp/cgipid)" >/dev/null 2>&1
+			kill -INT -"$(</tmp/cgipid)" >/dev/null 2>&1
 			# wait will be done by wait_cgiinfo
 		fi
 	) &
@@ -3449,7 +3449,7 @@ do_upgrade() {
 	# Perform final steps common to both an install and an upgrade.
 	finish_up
 	if [ -f /tmp/wdpid ]; then
-		kill -KILL "$(cat /tmp/wdpid)" 2>/dev/null
+		kill -KILL "$(</tmp/wdpid)" 2>/dev/null
 		# do not bother waiting
 		rm -f /tmp/wdpid
 	fi
@@ -3480,7 +3480,7 @@ WATCHDOG_PERIOD_SEC=$((30 * 60))
 reset_watchdog() {
 	local _pid
 	if [ -f /tmp/wdpid ]; then
-		_pid=$(cat /tmp/wdpid)
+		_pid=$(</tmp/wdpid)
 		kill -KILL -$_pid 2>/dev/null
 		wait $_pid 2>/dev/null
 		rm -f /tmp/wdpid
