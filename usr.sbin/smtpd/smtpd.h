@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.674 2022/02/18 16:57:36 millert Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.675 2023/05/25 11:37:58 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -45,9 +45,6 @@
 
 #define CONF_FILE		 "/etc/mail/smtpd.conf"
 #define MAILNAME_FILE		 "/etc/mail/mailname"
-#define CA_FILE			 "/etc/ssl/cert.pem"
-
-#define PROC_COUNT		 7
 
 #define MAX_HOPS_COUNT		 100
 #define	DEFAULT_MAX_BODY_SIZE	(35*1024*1024)
