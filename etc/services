@@ -1,4 +1,4 @@
-# $OpenBSD: services,v 1.104 2022/03/02 11:43:52 landry Exp $
+# $OpenBSD: services,v 1.105 2023/05/25 09:41:46 sthen Exp $
 #
 # Network services, Internet style
 # https://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt
@@ -118,6 +118,7 @@ svrloc		427/tcp				# Server Location
 svrloc		427/udp
 nnsp		433/tcp		usenet		# Network News Transfer
 https		443/tcp				# secure http (TLS)
+https		443/udp				# secure http (TLS)
 snpp		444/tcp				# Simple Network Paging Protocol
 microsoft-ds	445/tcp				# Microsoft-DS
 microsoft-ds	445/udp				# Microsoft-DS
