@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.45 2023/05/16 17:01:31 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.46 2023/05/25 12:49:39 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1640,7 +1640,7 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 			} else if (fts_state.type == RSYNC_DIR) {
 				/* no need to keep rsync files */
 				if (verbose > 1)
-					logx("superfluous %s", path);
+					logx("deleted superfluous %s", path);
 				if (fts_state.rp != NULL)
 					fts_state.rp->repostats.del_extra_files++;
 				else 
@@ -1659,27 +1659,31 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 		if (e->fts_level == FTS_ROOTLEVEL)
 			fts_state.type = BASE_DIR;
 		if (e->fts_level == 1) {
+			/* rpki.example.org or .rrdp / .rsync */
 			if (strcmp(".rsync", e->fts_name) == 0) {
 				fts_state.type = RSYNC_DIR;
 				fts_state.rp = NULL;
 			} else if (strcmp(".rrdp", e->fts_name) == 0) {
 				fts_state.type = RRDP_DIR;
 				fts_state.rp = NULL;
-			} else {
-				fts_state.type = BASE_DIR;
-				fts_state.rp = repo_bypath(path);
 			}
 		}
 		if (e->fts_level == 2) {
-			if (fts_state.type == RSYNC_DIR)
+			/* rpki.example.org/repository or .rrdp/hashdir */
+			if (fts_state.type == BASE_DIR)
 				fts_state.rp = repo_bypath(path);
 			/*
 			 * special handling for rrdp directories,
 			 * clear them if they are not used anymore but
 			 * only if rrdp is active.
+			 * Look them up just using the hash.
 			 */
 			if (fts_state.type == RRDP_DIR)
 				fts_state.rp = repo_rrdp_bypath(path);
+		}
+		if (e->fts_level == 3 && fts_state.type == RSYNC_DIR) {
+			/* .rsync/rpki.example.org/repository */
+			fts_state.rp = repo_bypath(path + strlen(".rsync/"));
 		}
 		break;
 	case FTS_DP:
