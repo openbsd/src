@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.95 2023/05/14 07:26:25 op Exp $ */
+/* $OpenBSD: tls.c,v 1.96 2023/05/25 07:46:21 op Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -410,12 +410,18 @@ tls_keypair_setup_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY *p
 			tls_set_errorx(ctx, "RSA key setup failure");
 			goto err;
 		}
-		if (ctx->config->sign_cb == NULL)
-			break;
-		if ((rsa_method = tls_signer_rsa_method()) == NULL ||
-		    RSA_set_ex_data(rsa, 1, ctx->config) == 0 ||
-		    RSA_set_method(rsa, rsa_method) == 0) {
-			tls_set_errorx(ctx, "failed to setup RSA key");
+		if (ctx->config->sign_cb != NULL) {
+			rsa_method = tls_signer_rsa_method();
+			if (rsa_method == NULL ||
+			    RSA_set_ex_data(rsa, 1, ctx->config) == 0 ||
+			    RSA_set_method(rsa, rsa_method) == 0) {
+				tls_set_errorx(ctx, "failed to setup RSA key");
+				goto err;
+			}
+		}
+		/* Reset the key to work around caching in OpenSSL 3. */
+		if (EVP_PKEY_set1_RSA(pkey, rsa) == 0) {
+			tls_set_errorx(ctx, "failed to set RSA key");
 			goto err;
 		}
 		break;
@@ -425,12 +431,18 @@ tls_keypair_setup_pkey(struct tls *ctx, struct tls_keypair *keypair, EVP_PKEY *p
 			tls_set_errorx(ctx, "EC key setup failure");
 			goto err;
 		}
-		if (ctx->config->sign_cb == NULL)
-			break;
-		if ((ecdsa_method = tls_signer_ecdsa_method()) == NULL ||
-		    ECDSA_set_ex_data(eckey, 1, ctx->config) == 0 ||
-		    ECDSA_set_method(eckey, ecdsa_method) == 0) {
-			tls_set_errorx(ctx, "failed to setup EC key");
+		if (ctx->config->sign_cb != NULL) {
+			ecdsa_method = tls_signer_ecdsa_method();
+			if (ecdsa_method == NULL ||
+			    ECDSA_set_ex_data(eckey, 1, ctx->config) == 0 ||
+			    ECDSA_set_method(eckey, ecdsa_method) == 0) {
+				tls_set_errorx(ctx, "failed to setup EC key");
+				goto err;
+			}
+		}
+		/* Reset the key to work around caching in OpenSSL 3. */
+		if (EVP_PKEY_set1_EC_KEY(pkey, eckey) == 0) {
+			tls_set_errorx(ctx, "failed to set EC key");
 			goto err;
 		}
 		break;
