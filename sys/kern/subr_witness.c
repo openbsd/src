@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.48 2022/02/21 14:16:49 jsg Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.49 2023/05/25 19:32:34 kurt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -413,11 +413,11 @@ static int w_free_cnt, w_spin_cnt, w_sleep_cnt;
 
 static struct witness *w_data;
 static uint8_t **w_rmatrix;
-static struct lock_list_entry w_locklistdata[LOCK_CHILDCOUNT];
+static struct lock_list_entry *w_locklistdata;
 static struct witness_hash w_hash;	/* The witness hash table. */
 
 /* The lock order data hash */
-static struct witness_lock_order_data w_lodata[WITNESS_LO_DATA_COUNT];
+static struct witness_lock_order_data *w_lodata;
 static struct witness_lock_order_data *w_lofree = NULL;
 static struct witness_lock_order_hash w_lohash;
 static int w_max_used_index = 0;
@@ -522,6 +522,11 @@ witness_initialize(void)
 		stacks = (void *)uvm_pageboot_alloc(sizeof(*stacks) *
 		    w_lock_stack_num);
 	}
+
+	w_locklistdata = (void *)uvm_pageboot_alloc(
+	    sizeof(struct lock_list_entry) * LOCK_CHILDCOUNT);
+	memset(w_locklistdata, 0, sizeof(struct lock_list_entry) *
+	    LOCK_CHILDCOUNT);
 
 	s = splhigh();
 	for (i = 0; i < w_lock_stack_num; i++)
@@ -2339,9 +2344,12 @@ witness_init_hash_tables(void)
 	w_hash.wh_count = 0;
 
 	/* Initialize the lock order data hash. */
+	w_lodata = (void *)uvm_pageboot_alloc(
+	    sizeof(struct witness_lock_order_data) * WITNESS_LO_DATA_COUNT);
+	memset(w_lodata, 0, sizeof(struct witness_lock_order_data) *
+	    WITNESS_LO_DATA_COUNT);
 	w_lofree = NULL;
 	for (i = 0; i < WITNESS_LO_DATA_COUNT; i++) {
-		memset(&w_lodata[i], 0, sizeof(w_lodata[i]));
 		w_lodata[i].wlod_next = w_lofree;
 		w_lofree = &w_lodata[i];
 	}
