@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.309 2023/04/23 18:51:53 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.310 2023/05/26 13:44:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -900,7 +900,9 @@ SSL_get_peer_cert_chain(const SSL *s)
 STACK_OF(X509) *
 SSL_get0_verified_chain(const SSL *s)
 {
-	return s->verified_chain;
+	if (s->s3 == NULL)
+		return NULL;
+	return s->s3->hs.verified_chain;
 }
 
 /*

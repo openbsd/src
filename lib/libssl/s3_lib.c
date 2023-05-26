@@ -1,4 +1,4 @@
-/* $OpenBSD: s3_lib.c,v 1.243 2023/05/16 14:10:43 jcs Exp $ */
+/* $OpenBSD: s3_lib.c,v 1.244 2023/05/26 13:44:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1570,6 +1570,7 @@ ssl3_free(SSL *s)
 	freezero(s->s3->hs.sigalgs, s->s3->hs.sigalgs_len);
 	sk_X509_pop_free(s->s3->hs.peer_certs, X509_free);
 	sk_X509_pop_free(s->s3->hs.peer_certs_no_leaf, X509_free);
+	sk_X509_pop_free(s->s3->hs.verified_chain, X509_free);
 	tls_key_share_free(s->s3->hs.key_share);
 
 	tls13_secrets_destroy(s->s3->hs.tls13.secrets);
@@ -1579,8 +1580,6 @@ ssl3_free(SSL *s)
 	tls_buffer_free(s->s3->hs.tls13.quic_read_buffer);
 
 	sk_X509_NAME_pop_free(s->s3->hs.tls12.ca_names, X509_NAME_free);
-	sk_X509_pop_free(s->verified_chain, X509_free);
-	s->verified_chain = NULL;
 
 	tls1_transcript_free(s);
 	tls1_transcript_hash_free(s);
@@ -1603,8 +1602,6 @@ ssl3_clear(SSL *s)
 
 	tls1_cleanup_key_block(s);
 	sk_X509_NAME_pop_free(s->s3->hs.tls12.ca_names, X509_NAME_free);
-	sk_X509_pop_free(s->verified_chain, X509_free);
-	s->verified_chain = NULL;
 
 	tls_buffer_free(s->s3->alert_fragment);
 	s->s3->alert_fragment = NULL;
@@ -1619,6 +1616,8 @@ ssl3_clear(SSL *s)
 	s->s3->hs.peer_certs = NULL;
 	sk_X509_pop_free(s->s3->hs.peer_certs_no_leaf, X509_free);
 	s->s3->hs.peer_certs_no_leaf = NULL;
+	sk_X509_pop_free(s->s3->hs.verified_chain, X509_free);
+	s->s3->hs.verified_chain = NULL;
 
 	tls_key_share_free(s->s3->hs.key_share);
 	s->s3->hs.key_share = NULL;

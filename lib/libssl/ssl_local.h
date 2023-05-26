@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.5 2023/04/25 07:48:15 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.6 2023/05/26 13:44:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -651,6 +651,9 @@ typedef struct ssl_handshake_st {
 	STACK_OF(X509) *peer_certs;
 	STACK_OF(X509) *peer_certs_no_leaf;
 
+	/* Certificate chain resulting from X.509 verification. */
+	STACK_OF(X509) *verified_chain;
+
 	SSL_HANDSHAKE_TLS12 tls12;
 	SSL_HANDSHAKE_TLS13 tls13;
 } SSL_HANDSHAKE;
@@ -1130,7 +1133,6 @@ struct ssl_st {
 	int empty_record_count;
 
 	size_t num_tickets; /* Unused, for OpenSSL compatibility */
-	STACK_OF(X509) *verified_chain;
 };
 
 typedef struct ssl3_record_internal_st {

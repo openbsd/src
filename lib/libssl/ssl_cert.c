@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_cert.c,v 1.105 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: ssl_cert.c,v 1.106 2023/05/26 13:44:05 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -440,11 +440,11 @@ ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *certs)
 		ret = X509_verify_cert(ctx);
 
 	s->verify_result = X509_STORE_CTX_get_error(ctx);
-	sk_X509_pop_free(s->verified_chain, X509_free);
-	s->verified_chain = NULL;
+	sk_X509_pop_free(s->s3->hs.verified_chain, X509_free);
+	s->s3->hs.verified_chain = NULL;
 	if (X509_STORE_CTX_get0_chain(ctx) != NULL) {
-		s->verified_chain = X509_STORE_CTX_get1_chain(ctx);
-		if (s->verified_chain == NULL) {
+		s->s3->hs.verified_chain = X509_STORE_CTX_get1_chain(ctx);
+		if (s->s3->hs.verified_chain == NULL) {
 			SSLerrorx(ERR_R_MALLOC_FAILURE);
 			ret = 0;
 		}
