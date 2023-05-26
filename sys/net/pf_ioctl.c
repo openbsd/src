@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.404 2023/05/11 12:36:22 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.405 2023/05/26 12:13:26 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2094,44 +2094,37 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = EINVAL;
 			goto fail;
 		}
-		NET_LOCK();
 		PF_LOCK();
 		pl->limit = pf_pool_limits[pl->index].limit;
 		PF_UNLOCK();
-		NET_UNLOCK();
 		break;
 	}
 
 	case DIOCSETLIMIT: {
 		struct pfioc_limit	*pl = (struct pfioc_limit *)addr;
 
-		NET_LOCK();
 		PF_LOCK();
 		if (pl->index < 0 || pl->index >= PF_LIMIT_MAX) {
 			error = EINVAL;
 			PF_UNLOCK();
-			NET_UNLOCK();
 			goto fail;
 		}
 		if (((struct pool *)pf_pool_limits[pl->index].pp)->pr_nout >
 		    pl->limit) {
 			error = EBUSY;
 			PF_UNLOCK();
-			NET_UNLOCK();
 			goto fail;
 		}
 		/* Fragments reference mbuf clusters. */
 		if (pl->index == PF_LIMIT_FRAGS && pl->limit > nmbclust) {
 			error = EINVAL;
 			PF_UNLOCK();
-			NET_UNLOCK();
 			goto fail;
 		}
 
 		pf_pool_limits[pl->index].limit_new = pl->limit;
 		pl->limit = pf_pool_limits[pl->index].limit;
 		PF_UNLOCK();
-		NET_UNLOCK();
 		break;
 	}
 

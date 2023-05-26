@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.530 2023/04/28 14:08:38 sashan Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.531 2023/05/26 12:13:26 kn Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1795,10 +1795,16 @@ const struct pfq_ops
 extern struct pf_status	pf_status;
 extern struct pool	pf_frent_pl, pf_frag_pl;
 
+/*
+ * Protection/ownership of pf_pool_limit:
+ *	I	immutable after pfattach()
+ *	p	pf_lock
+ */
+
 struct pf_pool_limit {
-	void		*pp;
-	unsigned	 limit;
-	unsigned	 limit_new;
+	void		*pp;		/* [I] */
+	unsigned	 limit;		/* [p] */
+	unsigned	 limit_new;	/* [p] */
 };
 extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
 
