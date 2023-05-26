@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.77 2023/03/27 19:43:36 kn Exp $
+#	$OpenBSD: install.md,v 1.78 2023/05/26 11:41:50 kn Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -54,8 +54,7 @@ WARNING: Putting an MBR partition table on $_disk will DESTROY the existing HFS
 $(pdisk -l $_disk)
 
 __EOT
-		ask_yn "Are you *sure* you want an MBR partition table on $_disk?"
-		[[ $resp == n ]] && return 1
+		ask_yn "Are you *sure* you want an MBR partition table on $_disk?" || return 1
 	fi
 
 	while :; do
