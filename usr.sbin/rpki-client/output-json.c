@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.37 2023/05/03 09:54:25 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.38 2023/05/26 14:57:38 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -73,8 +73,10 @@ outputheader_json(struct stats *st)
 	json_do_int("vaps", st->repo_tal_stats.vaps);
 	json_do_int("uniquevaps", st->repo_tal_stats.vaps_uniqs);
 	json_do_int("cachedir_del_files", st->repo_stats.del_files);
-	json_do_int("cachedir_superfluous_files", st->repo_stats.extra_files);
 	json_do_int("cachedir_del_dirs", st->repo_stats.del_dirs);
+	json_do_int("cachedir_superfluous_files", st->repo_stats.extra_files);
+	json_do_int("cachedir_del_superfluous_files",
+	    st->repo_stats.del_extra_files);
 
 	json_do_end();
 }

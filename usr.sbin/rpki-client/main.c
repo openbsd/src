@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.237 2023/05/25 12:52:56 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.238 2023/05/26 14:57:38 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -755,6 +755,7 @@ sum_repostats(const struct repo *rp, const struct repostats *in, void *arg)
 
 	out->del_files += in->del_files;
 	out->extra_files += in->extra_files;
+	out->del_extra_files += in->del_extra_files;
 	out->del_dirs += in->del_dirs;
 	timespecadd(&in->sync_time, &out->sync_time, &out->sync_time);
 }
