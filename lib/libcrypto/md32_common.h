@@ -1,4 +1,4 @@
-/* $OpenBSD: md32_common.h,v 1.24 2023/04/12 04:54:15 jsing Exp $ */
+/* $OpenBSD: md32_common.h,v 1.25 2023/05/27 18:33:34 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -127,10 +127,10 @@
 #error "HASH_CTX must be defined!"
 #endif
 
-#ifndef HASH_UPDATE
+#if !defined(HASH_UPDATE) && !defined(HASH_NO_UPDATE)
 #error "HASH_UPDATE must be defined!"
 #endif
-#ifndef HASH_TRANSFORM
+#if !defined(HASH_TRANSFORM) && !defined(HASH_NO_TRANSFORM)
 #error "HASH_TRANSFORM must be defined!"
 #endif
 #if !defined(HASH_FINAL) && !defined(HASH_NO_FINAL)
@@ -206,6 +206,7 @@
  * Time for some action:-)
  */
 
+#ifndef HASH_NO_UPDATE
 int
 HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
 {
@@ -259,13 +260,14 @@ HASH_UPDATE(HASH_CTX *c, const void *data_, size_t len)
 	}
 	return 1;
 }
+#endif
 
-
+#ifndef HASH_NO_TRANSFORM
 void HASH_TRANSFORM (HASH_CTX *c, const unsigned char *data)
 {
 	HASH_BLOCK_DATA_ORDER (c, data, 1);
 }
-
+#endif
 
 #ifndef HASH_NO_FINAL
 int HASH_FINAL (unsigned char *md, HASH_CTX *c)
