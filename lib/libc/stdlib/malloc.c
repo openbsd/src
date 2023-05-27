@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.283 2023/05/10 07:58:06 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.284 2023/05/27 04:33:00 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -1417,7 +1417,7 @@ malloc(size_t size)
 	EPILOGUE()
 	return r;
 }
-/*DEF_STRONG(malloc);*/
+DEF_STRONG(malloc);
 
 void *
 malloc_conceal(size_t size)
@@ -1620,7 +1620,7 @@ free(void *ptr)
 	_MALLOC_UNLOCK(d->mutex);
 	errno = saved_errno;
 }
-/*DEF_STRONG(free);*/
+DEF_STRONG(free);
 
 static void
 freezero_p(void *ptr, size_t sz)
@@ -1841,7 +1841,7 @@ realloc(void *ptr, size_t size)
 	EPILOGUE()
 	return r;
 }
-/*DEF_STRONG(realloc);*/
+DEF_STRONG(realloc);
 
 /*
  * This is sqrt(SIZE_MAX+1), as s1*s2 <= SIZE_MAX
@@ -1872,7 +1872,7 @@ calloc(size_t nmemb, size_t size)
 	EPILOGUE()
 	return r;
 }
-/*DEF_STRONG(calloc);*/
+DEF_STRONG(calloc);
 
 void *
 calloc_conceal(size_t nmemb, size_t size)
@@ -2189,7 +2189,7 @@ err:
 	errno = saved_errno;
 	return res;
 }
-/*DEF_STRONG(posix_memalign);*/
+DEF_STRONG(posix_memalign);
 
 void *
 aligned_alloc(size_t alignment, size_t size)
@@ -2214,7 +2214,7 @@ aligned_alloc(size_t alignment, size_t size)
 	EPILOGUE()
 	return r;
 }
-/*DEF_STRONG(aligned_alloc);*/
+DEF_STRONG(aligned_alloc);
 
 #ifdef MALLOC_STATS
 
