@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.18 2019/07/05 06:02:29 espie Exp $
+# $OpenBSD: Subst.pm,v 1.19 2023/05/27 10:05:50 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -63,7 +63,7 @@ sub do
 {
 	my $self = shift;
 	my $s = shift;
-	return $s unless $s =~ m/\$/o;	# optimization
+	return $s unless $s =~ m/\$/o;	# no need to subst if no $
 	while ( my $k = ($s =~ m/\$\{([A-Za-z_][^\}]*)\}/o)[0] ) {
 		my $v = $self->{$k};
 		unless ( defined $v ) { $v = "\$\\\{$k\}"; }
