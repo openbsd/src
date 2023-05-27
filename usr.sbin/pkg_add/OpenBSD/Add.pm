@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.193 2023/05/23 10:02:46 espie Exp $
+# $OpenBSD: Add.pm,v 1.194 2023/05/27 09:58:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -277,10 +277,13 @@ use OpenBSD::Error;
 # used by newuser/newgroup to deal with options.
 my ($uidcache, $gidcache);
 
+# $self->prepare_for_addition($state, $pkgname, $set)
 sub prepare_for_addition
 {
 }
 
+# $self->find_extractible($state, $wanted, $tied):
+#	sort item into wanted (needed from archive) / tied (already there)
 sub find_extractible
 {
 }
@@ -724,6 +727,7 @@ sub find_extractible
 	$state->{current_set}{known_sample}{$self->fullname} = 1;
 }
 
+# $self->extract($state)
 sub extract
 {
 }
