@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.18 2017/09/16 12:04:13 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.19 2023/05/27 10:01:38 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -117,6 +117,7 @@ sub lookup_stem
 	return undef;
 }
 
+# $spec->match($library, $base)
 sub match
 {
 	return 0;
