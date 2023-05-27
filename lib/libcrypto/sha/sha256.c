@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.15 2023/03/29 05:34:01 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.16 2023/05/27 18:39:03 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -184,16 +184,115 @@ SHA224_Final(unsigned char *md, SHA256_CTX *c)
 	}				\
 	} while (0)
 
-#define	HASH_UPDATE		SHA256_Update
-#define	HASH_TRANSFORM		SHA256_Transform
-#define	HASH_FINAL		SHA256_Final
 #define	HASH_BLOCK_DATA_ORDER	sha256_block_data_order
 #ifndef SHA256_ASM
 static
 #endif
 void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
 
+#define HASH_NO_UPDATE
+#define HASH_NO_TRANSFORM
+#define HASH_NO_FINAL
+
 #include "md32_common.h"
+
+int
+SHA256_Update(HASH_CTX *c, const void *data_, size_t len)
+{
+	const unsigned char *data = data_;
+	unsigned char *p;
+	SHA_LONG l;
+	size_t n;
+
+	if (len == 0)
+		return 1;
+
+	l = (c->Nl + (((SHA_LONG)len) << 3))&0xffffffffUL;
+	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
+	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
+	if (l < c->Nl) /* overflow */
+		c->Nh++;
+	c->Nh+=(SHA_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
+	c->Nl = l;
+
+	n = c->num;
+	if (n != 0) {
+		p = (unsigned char *)c->data;
+
+		if (len >= SHA_CBLOCK || len + n >= SHA_CBLOCK) {
+			memcpy (p + n, data, SHA_CBLOCK - n);
+			sha256_block_data_order(c, p, 1);
+			n = SHA_CBLOCK - n;
+			data += n;
+			len -= n;
+			c->num = 0;
+			memset (p,0,SHA_CBLOCK);	/* keep it zeroed */
+		} else {
+			memcpy (p + n, data, len);
+			c->num += (unsigned int)len;
+			return 1;
+		}
+	}
+
+	n = len/SHA_CBLOCK;
+	if (n > 0) {
+		sha256_block_data_order(c, data, n);
+		n    *= SHA_CBLOCK;
+		data += n;
+		len -= n;
+	}
+
+	if (len != 0) {
+		p = (unsigned char *)c->data;
+		c->num = (unsigned int)len;
+		memcpy (p, data, len);
+	}
+	return 1;
+}
+
+void
+SHA256_Transform(HASH_CTX *c, const unsigned char *data)
+{
+	sha256_block_data_order(c, data, 1);
+}
+
+int
+SHA256_Final(unsigned char *md, HASH_CTX *c)
+{
+	unsigned char *p = (unsigned char *)c->data;
+	size_t n = c->num;
+
+	p[n] = 0x80; /* there is always room for one */
+	n++;
+
+	if (n > (SHA_CBLOCK - 8)) {
+		memset (p + n, 0, SHA_CBLOCK - n);
+		n = 0;
+		sha256_block_data_order(c, p, 1);
+	}
+	memset (p + n, 0, SHA_CBLOCK - 8 - n);
+
+	p += SHA_CBLOCK - 8;
+#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
+	HOST_l2c(c->Nh, p);
+	HOST_l2c(c->Nl, p);
+#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
+	HOST_l2c(c->Nl, p);
+	HOST_l2c(c->Nh, p);
+#endif
+	p -= SHA_CBLOCK;
+	sha256_block_data_order(c, p, 1);
+	c->num = 0;
+	memset (p, 0, SHA_CBLOCK);
+
+#ifndef HASH_MAKE_STRING
+#error "HASH_MAKE_STRING must be defined!"
+#else
+	HASH_MAKE_STRING(c, md);
+#endif
+
+	return 1;
+}
 
 #ifndef SHA256_ASM
 static const SHA_LONG K256[64] = {
