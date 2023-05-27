@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Vstat.pm,v 1.70 2022/03/17 21:45:52 espie Exp $
+# $OpenBSD: Vstat.pm,v 1.71 2023/05/27 10:08:25 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -24,11 +24,10 @@
 use strict;
 use warnings;
 
-{
 package OpenBSD::Vstat::Object;
 my $cache = {};
-my $x = undef;
-my $dummy = bless \$x, __PACKAGE__;
+my $dummy;
+$dummy = bless \$dummy, __PACKAGE__;
 
 sub new
 {
@@ -58,14 +57,12 @@ sub none
 	return OpenBSD::Vstat::Object::None->new;
 }
 
-}
 
-{
 package OpenBSD::Vstat::Object::None;
 our @ISA = qw(OpenBSD::Vstat::Object);
 
-my $x = undef;
-my $none = bless \$x, __PACKAGE__;
+my $none;
+$none = bless \$none, __PACKAGE__;
 
 sub exists
 {
@@ -76,9 +73,7 @@ sub new
 {
 	return $none;
 }
-}
 
-{
 package OpenBSD::Vstat::Object::Directory;
 our @ISA = qw(OpenBSD::Vstat::Object);
 
@@ -96,8 +91,6 @@ sub exists
 	require OpenBSD::SharedItems;
 
 	return OpenBSD::SharedItems::check_shared($self->{set}, $self->{o});
-}
-
 }
 
 package OpenBSD::Vstat;
