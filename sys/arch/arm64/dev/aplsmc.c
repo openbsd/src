@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.21 2023/01/09 20:29:35 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.22 2023/05/27 19:35:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -42,6 +42,13 @@ extern void (*simplefb_burn_hook)(u_int);
 
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);
+
+extern int (*hw_battery_setchargemode)(int);
+extern int (*hw_battery_setchargestart)(int);
+extern int (*hw_battery_setchargestop)(int);
+extern int hw_battery_chargemode;
+extern int hw_battery_chargestart;
+extern int hw_battery_chargestop;
 
 /* SMC mailbox endpoint */
 #define SMC_EP			32
@@ -133,6 +140,9 @@ struct aplsmc_softc {
 	struct ksensordev	sc_sensordev;
 };
 
+#define CH0I_DISCHARGE		(1 << 0)
+#define CH0C_INHIBIT		(1 << 0)
+
 struct aplsmc_softc *aplsmc_sc;
 
 #ifndef SMALL_KERNEL
@@ -187,6 +197,10 @@ int	aplsmc_settime(struct todr_chip_handle *, struct timeval *);
 void	aplsmc_reset(void);
 void	aplsmc_powerdown(void);
 void	aplsmc_reboot_attachhook(struct device *);
+void	aplsmc_battery_init(struct aplsmc_softc *);
+int	aplsmc_battery_setchargemode(int);
+int	aplsmc_battery_setchargestart(int);
+int	aplsmc_battery_setchargestop(int);
 
 int
 aplsmc_match(struct device *parent, void *match, void *aux)
@@ -337,11 +351,13 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 	apm_setinfohook(aplsmc_apminfo);
 #endif
 
+	aplsmc_battery_init(sc);
 #endif
 
 #ifdef SUSPEND
 	device_register_wakeup(&sc->sc_dev);
 #endif
+
 }
 
 void
@@ -762,4 +778,109 @@ aplsmc_powerdown(void)
 	nvmem_write_cell(sc->sc_reboot_node, "shutdown_flag",
 	    &shutdown_flag, sizeof(shutdown_flag));
 	aplsmc_write_key(sc, key, &off1, sizeof(off1));
+}
+
+void
+aplsmc_battery_init(struct aplsmc_softc *sc)
+{
+	uint8_t ch0i, ch0c;
+	int error;
+
+	error = aplsmc_read_key(sc, SMC_KEY("CH0I"), &ch0i, sizeof(ch0i));
+	if (error)
+		return;
+	error = aplsmc_read_key(sc, SMC_KEY("CH0C"), &ch0c, sizeof(ch0c));
+	if (error)
+		return;
+
+	if (ch0i & CH0I_DISCHARGE)
+		hw_battery_chargemode = -1;
+	else if (ch0c & CH0C_INHIBIT)
+		hw_battery_chargemode = 0;
+	else
+		hw_battery_chargemode = 1;
+
+	hw_battery_chargestart = 0;
+	hw_battery_chargestop = 100;
+
+	hw_battery_setchargemode = aplsmc_battery_setchargemode;
+	hw_battery_setchargestart = aplsmc_battery_setchargestart;
+	hw_battery_setchargestop = aplsmc_battery_setchargestop;
+}
+
+int
+aplsmc_battery_setchargemode(int mode)
+{
+	struct aplsmc_softc *sc = aplsmc_sc;
+	uint8_t val;
+	int error;
+
+	switch (mode) {
+	case -1:
+		val = 0;
+		error = aplsmc_write_key(sc, SMC_KEY("CH0C"),
+		    &val, sizeof(val));
+		if (error)
+			return error;
+		val = 1;
+		error = aplsmc_write_key(sc, SMC_KEY("CH0I"),
+		    &val, sizeof(val));
+		if (error)
+			return error;
+		break;
+	case 0:
+		val = 0;
+		error = aplsmc_write_key(sc, SMC_KEY("CH0I"),
+		    &val, sizeof(val));
+		if (error)
+			return error;
+		val = 1;
+		error = aplsmc_write_key(sc, SMC_KEY("CH0C"),
+		    &val, sizeof(val));
+		if (error)
+			return error;
+		break;
+	case 1:
+		val = 0;
+		error = aplsmc_write_key(sc, SMC_KEY("CH0I"),
+		    &val, sizeof(val));
+		if (error)
+			return error;
+		val = 0;
+		error = aplsmc_write_key(sc, SMC_KEY("CH0C"),
+		    &val, sizeof(val));
+		if (error)
+			return error;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	hw_battery_chargemode = mode;
+	return 0;
+}
+
+int
+aplsmc_battery_setchargestart(int start)
+{
+	return EOPNOTSUPP;
+}
+
+int
+aplsmc_battery_setchargestop(int stop)
+{
+	struct aplsmc_softc *sc = aplsmc_sc;
+	uint8_t chwa;
+
+	if (stop <= 80) {
+		hw_battery_chargestart = 75;
+		hw_battery_chargestop = 80;
+		chwa = 1;
+	} else {
+		hw_battery_chargestart = 95;
+		hw_battery_chargestop = 100;
+		chwa = 0;
+	}
+
+	return aplsmc_write_key(sc, SMC_KEY("CHWA"), &chwa, sizeof(chwa));
 }
