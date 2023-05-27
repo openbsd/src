@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.29 2018/10/22 10:29:06 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.30 2023/05/27 10:06:38 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -32,12 +32,14 @@ use strict;
 use warnings;
 
 package OpenBSD::Tracker;
+
+# XXX we're a singleton class
 our $s;
 
 sub new
 {
 	my $class = shift;
-	return $s = bless {}, $class;
+	return $s //= bless {}, $class;
 }
 
 sub dump2
