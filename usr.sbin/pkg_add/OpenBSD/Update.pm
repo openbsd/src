@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.168 2022/12/28 21:30:18 jmc Exp $
+# $OpenBSD: Update.pm,v 1.169 2023/05/27 10:06:55 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -25,6 +25,7 @@ sub update
 	return $updater->process_handle($set, $self, $state);
 }
 
+# TODO hint and hint2 are horrible names
 package OpenBSD::hint;
 sub update
 {
