@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.41 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: Error.pm,v 1.42 2023/05/27 10:01:21 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -207,6 +207,7 @@ sub rmtree
 }
 
 package OpenBSD::Error::catch;
+# TODO why keep the data we don't use ?...
 sub exec
 {
 	my ($self, $full, $e) = @_;
