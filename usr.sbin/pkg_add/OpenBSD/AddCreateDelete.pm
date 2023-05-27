@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.50 2021/01/30 11:16:58 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.51 2023/05/27 09:59:51 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -19,7 +19,7 @@
 use strict;
 use warnings;
 
-# common framework, let's place most everything in there
+# common behavior to pkg_add, pkg_delete, pkg_create
 
 package OpenBSD::AddCreateDelete::State;
 our @ISA = qw(OpenBSD::State);
@@ -62,6 +62,17 @@ sub add_interactive_options
 	return $self;
 }
 
+sub interactive_class
+{
+	my ($class, $i) = @_;
+	if ($i) {
+		require OpenBSD::Interactive;
+		return 'OpenBSD::Interactive';
+	} else {
+		return 'OpenBSD::InteractiveStub';
+	}
+}
+
 sub handle_options
 {
 	my ($state, $opt_string, @usage) = @_;
@@ -86,11 +97,7 @@ sub handle_options
 			$i = -t STDIN;
 		}
 	}
-	if ($i) {
-		require OpenBSD::Interactive;
-		$state->{interactive} = OpenBSD::Interactive->new($state, $i);
-	}
-	$state->{interactive} //= OpenBSD::InteractiveStub->new($state);
+	$state->{interactive} = $state->interactive_class($i)->new($state, $i);
 }
 
 
@@ -160,6 +167,7 @@ sub run_makewhatis
 	    OpenBSD::Paths->makewhatis, @$opts, '--', @$l);
 }
 
+# TODO the maze of ntogo/todo/... is a mess
 sub ntogo
 {
 	my ($self, $offset) = @_;
@@ -181,7 +189,6 @@ sub ntogo_string
 sub solve_dependency
 {
 	my ($self, $solver, $dep, $package) = @_;
-	# full dependency solving with everything
 	return $solver->really_solve_dependency($self, $dep, $package);
 }
 
