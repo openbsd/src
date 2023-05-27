@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.285 2023/05/16 14:28:39 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.286 2023/05/27 10:03:21 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1048,6 +1048,8 @@ sub keyword() { "localbase" }
 __PACKAGE__->register_with_factory;
 sub category() { "localbase" }
 
+# meta-info: where the package was downloaded/installed from
+# (TODO not as useful as could be, because the workflow isn't effective!)
 package OpenBSD::PackingElement::Url;
 our @ISA=qw(OpenBSD::PackingElement::Unique);
 
@@ -1055,7 +1057,7 @@ sub keyword() { "url" }
 __PACKAGE__->register_with_factory;
 sub category() { "url" }
 
-# XXX don't incorporate this in signatures.
+# don't incorporate this in signatures for obvious reasons
 sub write_no_sig()
 {
 }
@@ -1235,12 +1237,17 @@ sub destate
 	$state->{owners}{$self->{name}} = $uid;
 }
 
+# $self->check:
+# 	3 possible results
+#	- undef: nothing to check, user/group was not there
+#	- 0: does not match
+#	- 1: exists and matches
 sub check
 {
 	my $self = shift;
 	my ($name, $passwd, $uid, $gid, $quota, $class, $gcos, $dir, $shell,
 	    $expire) = getpwnam($self->name);
-	return unless defined $name;
+	return undef unless defined $name;
 	if ($self->{uid} =~ m/^\!(.*)$/o) {
 		return 0 unless $uid == $1;
 	}
@@ -1302,7 +1309,7 @@ sub check
 {
 	my $self = shift;
 	my ($name, $passwd, $gid, $members) = getgrnam($self->name);
-	return unless defined $name;
+	return undef unless defined $name;
 	if ($self->{gid} =~ m/^\!(.*)$/o) {
 		return 0 unless $gid == $1;
 	}
