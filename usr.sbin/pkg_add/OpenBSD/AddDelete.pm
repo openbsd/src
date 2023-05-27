@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.97 2023/04/19 18:07:43 sthen Exp $
+# $OpenBSD: AddDelete.pm,v 1.98 2023/05/27 10:00:23 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -19,7 +19,7 @@
 use strict;
 use warnings;
 
-# common framework, let's place most everything in there
+# common behavior to pkg_add / pkg_delete
 package main;
 our $not;
 
@@ -166,6 +166,7 @@ sub parse_and_run
 	return $state->{bad} != 0;
 }
 
+# $self->silence_children($state)
 sub silence_children
 {
 	1
@@ -300,12 +301,12 @@ sub build_deptree
 {
 	my ($state, $set, @deps) = @_;
 
-	if (defined $state->{deptree}->{$set}) {
-		$set = $state->{deptree}->{$set};
+	if (defined $state->{deptree}{$set}) {
+		$set = $state->{deptree}{$set};
 	}
 	for my $dep (@deps) {
-		$state->{deptree}->{$dep} = $set unless
-		    defined $state->{deptree}->{$dep};
+		$state->{deptree}{$dep} = $set unless
+		    defined $state->{deptree}{$dep};
 	}
 }
 
