@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.14 2023/05/21 16:07:35 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.15 2023/05/27 10:08:45 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -268,6 +268,7 @@ sub clone
 # The actual solver derives from SolverBase:
 # there is a specific subclass for pkg_create which does resolve
 # dependencies in a much lighter way than the normal pkg_add code.
+# (TODO: make it also work for tags!)
 package OpenBSD::Dependencies::SolverBase;
 our @ISA = qw(OpenBSD::Cloner);
 
