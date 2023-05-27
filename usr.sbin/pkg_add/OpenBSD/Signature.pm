@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.27 2022/05/29 10:48:41 espie Exp $
+# $OpenBSD: Signature.pm,v 1.28 2023/05/27 10:04:17 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -237,6 +237,7 @@ sub new
 	my ($class, $pkgname, $extra, $plist) = @_;
 	my $o = $class->SUPER::new($pkgname, $extra);
 	my $a = $plist->get('always-update');
+	# TODO remove after 2025
 	if (!defined $a->{hash}) {
 		$a->hash_plist($plist);
 	}
