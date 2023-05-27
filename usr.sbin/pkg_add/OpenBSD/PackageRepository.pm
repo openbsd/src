@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.174 2023/05/20 09:30:57 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.175 2023/05/27 10:02:38 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -272,10 +272,10 @@ sub find
 
 sub grabPlist
 {
-	my ($repository, $name, $code) = @_;
+	my ($repository, $name, @code) = @_;
 	my $self = $repository->new_location($name);
 
-	return $self->grabPlist($code);
+	return $self->grabPlist(@code);
 }
 
 sub parse_problems
