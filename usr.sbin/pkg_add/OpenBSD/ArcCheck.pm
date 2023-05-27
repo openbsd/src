@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.40 2023/05/16 16:55:32 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.41 2023/05/27 10:00:48 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -27,6 +27,8 @@
 # 		error...
 # 	if (!$o->is_allowed)
 #		error...
+# - prevent a lot of weird objects from entering the archives
+# - make sure all relevant users/modes are recorded in the PLIST item
 
 # during extraction:
 #	$o->validate_meta($item) or
