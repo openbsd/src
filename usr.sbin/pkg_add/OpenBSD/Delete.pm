@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.166 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: Delete.pm,v 1.167 2023/05/27 10:01:08 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -180,14 +180,17 @@ sub rename_file_to_temp
 	}
 }
 
+# $self->prepare_for_deletion($state, $pkgname)
 sub prepare_for_deletion
 {
 }
 
+# $self->delete($state)
 sub delete
 {
 }
 
+# $self->record_shared($recorder, $pkgname)
 sub record_shared
 {
 }
@@ -702,7 +705,8 @@ sub copy_old_stuff
 {
 	my ($self, $plist, $state) = @_;
 
-	OpenBSD::PackingElement::Comment->add($plist, "\@".$self->keyword." ".$self->stringize);
+	OpenBSD::PackingElement::Comment->add($plist, 
+	    "\@".$self->keyword." ".$self->stringize);
 }
 
 package OpenBSD::PackingElement::FDISPLAY;
