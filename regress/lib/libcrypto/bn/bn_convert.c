@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_convert.c,v 1.1 2023/04/22 14:03:03 jsing Exp $ */
+/*	$OpenBSD: bn_convert.c,v 1.2 2023/05/27 15:50:56 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -55,20 +55,20 @@ check_bin_output(size_t test_no, const char *label, const uint8_t *bin,
 
 	out_len = BN_num_bytes(bn);
 	if (out_len != (int)bin_len) {
-		fprintf(stderr, "FAIL: Test %zu - BN_num_bytes() = %d, "
-		    "want %zu\n", test_no, out_len, bin_len);
+		fprintf(stderr, "FAIL: Test %zu %s - BN_num_bytes() = %d, "
+		    "want %zu\n", test_no, label, out_len, bin_len);
 		goto failure;
 	}
 	if ((out = malloc(out_len)) == NULL)
 		err(1, "malloc");
 	if ((ret = BN_bn2bin(bn, out)) != out_len) {
-		fprintf(stderr, "FAIL: BN_bn2bin() returned %d, "
-		    "want %d\n", ret, out_len);
+		fprintf(stderr, "FAIL: Test %zu %s - BN_bn2bin() returned %d, "
+		    "want %d\n", test_no, label, ret, out_len);
 		goto failure;
 	}
 	if (memcmp(out, bin, bin_len) != 0) {
-		fprintf(stderr, "FAIL: Test %zu - output from "
-		    "BN_bn2bin() differs\n", test_no);
+		fprintf(stderr, "FAIL: Test %zu %s - output from "
+		    "BN_bn2bin() differs\n", test_no, label);
 		fprintf(stderr, "Got:\n");
 		hexdump(out, out_len);
 		fprintf(stderr, "Want:\n");
@@ -437,13 +437,21 @@ test_bn_dec2bn(void)
 	int ret;
 	int failed = 1;
 
-	/* An empty string fails to parse. */
+	/* An empty string fails to parse, as does NULL. */
 	if (BN_dec2bn(&bn, "") != 0) {
 		fprintf(stderr, "FAIL: BN_dec2bn(_, \"\") succeeded\n");
 		goto failure;
 	}
 	if (bn != NULL) {
 		fprintf(stderr, "FAIL: BN_dec2bn(_, \"\") succeeded\n");
+		goto failure;
+	}
+	if (BN_dec2bn(&bn, NULL) != 0) {
+		fprintf(stderr, "FAIL: BN_dec2bn(_, NULL) succeeded\n");
+		goto failure;
+	}
+	if (bn != NULL) {
+		fprintf(stderr, "FAIL: BN_dec2bn(_, NULL) succeeded\n");
 		goto failure;
 	}
 
@@ -492,6 +500,12 @@ test_bn_dec2bn(void)
 		goto failure;
 	}
 
+	/* And we can call BN_dec2bn() without actually converting to a BIGNUM. */
+	if ((ret = BN_dec2bn(NULL, "0123456789abcdef")) != 10) {
+		fprintf(stderr, "FAIL: BN_dec2bn() returned %d, want 10\n", ret);
+		goto failure;
+	}
+
 	failed = 0;
 
  failure:
@@ -508,13 +522,21 @@ test_bn_hex2bn(void)
 	int ret;
 	int failed = 1;
 
-	/* An empty string fails to parse. */
+	/* An empty string fails to parse, as does NULL. */
 	if (BN_hex2bn(&bn, "") != 0) {
 		fprintf(stderr, "FAIL: BN_hex2bn(_, \"\") succeeded\n");
 		goto failure;
 	}
 	if (bn != NULL) {
 		fprintf(stderr, "FAIL: BN_hex2bn(_, \"\") succeeded\n");
+		goto failure;
+	}
+	if (BN_hex2bn(&bn, NULL) != 0) {
+		fprintf(stderr, "FAIL: BN_hex2bn(_, NULL) succeeded\n");
+		goto failure;
+	}
+	if (bn != NULL) {
+		fprintf(stderr, "FAIL: BN_hex2bn(_, NULL) succeeded\n");
 		goto failure;
 	}
 
@@ -565,6 +587,12 @@ test_bn_hex2bn(void)
 	/* A 0x prefix fails to parse without BN_asc2bn() (instead we get 0!). */
 	if (BN_hex2bn(&bn, "0x1") != 1) {
 		fprintf(stderr, "FAIL: BN_hex2bn() parsed a 0x prefix\n");
+		goto failure;
+	}
+
+	/* And we can call BN_hex2bn() without actually converting to a BIGNUM. */
+	if ((ret = BN_hex2bn(NULL, "9abcdefz")) != 7) {
+		fprintf(stderr, "FAIL: BN_hex2bn() returned %d, want 7\n", ret);
 		goto failure;
 	}
 
