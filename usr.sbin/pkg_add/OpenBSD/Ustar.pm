@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.94 2023/05/16 16:55:32 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.95 2023/05/27 10:07:33 espie Exp $
 #
 # Copyright (c) 2002-2014 Marc Espie <espie@openbsd.org>
 #
@@ -901,8 +901,8 @@ sub write_contents
 	my $filename = $self->{realname};
 	my $size = $self->{size};
 	my $out = $arc->{fh};
-	open my $fh, "<", $filename or $self->_fatal("Can't read file #1: #2",
-	    $filename, $!);
+	open my $fh, "<", $filename or 
+	    $self->_fatal("Can't read file #1: #2", $filename, $!);
 
 	my $buffer;
 	my $toread = $size;
@@ -923,6 +923,7 @@ sub write_contents
 		$toread -= $actual;
 		$self->_left_todo($toread);
 	}
+	# explicitly pad archive to 512 bytes blocksize
 	if ($size % 512) {
 		print $out "\0" x (512 - $size % 512) or
 		    $self->_fatal("Error writing to archive: #1", $!);
@@ -953,6 +954,7 @@ sub copy_contents
 
 		$toread -= $actual;
 	}
+	# explicitly pad archive to 512 bytes blocksize
 	if ($size % 512) {
 		print $out "\0" x (512 - $size % 512) or
 		    $self->_fatal("Error writing to archive: #1", $!);
