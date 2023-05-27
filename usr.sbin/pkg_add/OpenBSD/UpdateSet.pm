@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.87 2022/04/13 21:20:23 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.88 2023/05/27 10:07:12 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -60,6 +60,10 @@ sub pkgname
 package OpenBSD::hint2;
 our @ISA = qw(OpenBSD::hint);
 
+# Code organisation: this is the stuff that's common for actual UpdateSets
+# (used by pkg_add) and DeleteSets, a simpler version used by pkg_delete.
+# Turns out some of that stuff is identical.
+# The really juicy stuff resides in pkg_add/pkg_delete proper.
 package OpenBSD::DeleteSet;
 use OpenBSD::Error;
 
@@ -131,6 +135,7 @@ sub has_error
 	&OpenBSD::Handle::has_error;
 }
 
+# display code that will put together packages with the same version
 sub smart_join
 {
 	my $self = shift;
