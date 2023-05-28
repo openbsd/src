@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.20 2023/05/28 14:14:33 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.21 2023/05/28 14:49:21 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -70,6 +70,7 @@
 #define	HASH_CBLOCK		SHA_CBLOCK
 
 #define	HASH_BLOCK_DATA_ORDER	sha256_block_data_order
+
 #ifndef SHA256_ASM
 static
 #endif
@@ -397,7 +398,7 @@ SHA256_Init(SHA256_CTX *c)
 }
 
 int
-SHA256_Update(HASH_CTX *c, const void *data_, size_t len)
+SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
 {
 	const unsigned char *data = data_;
 	unsigned char *p;
@@ -451,13 +452,13 @@ SHA256_Update(HASH_CTX *c, const void *data_, size_t len)
 }
 
 void
-SHA256_Transform(HASH_CTX *c, const unsigned char *data)
+SHA256_Transform(SHA256_CTX *c, const unsigned char *data)
 {
 	sha256_block_data_order(c, data, 1);
 }
 
 int
-SHA256_Final(unsigned char *md, HASH_CTX *c)
+SHA256_Final(unsigned char *md, SHA256_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
