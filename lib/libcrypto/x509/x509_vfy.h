@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.63 2023/04/28 16:50:16 beck Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.64 2023/05/28 05:25:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,7 +105,7 @@ DECLARE_STACK_OF(X509_LOOKUP)
 DECLARE_STACK_OF(X509_OBJECT)
 DECLARE_STACK_OF(X509_VERIFY_PARAM)
 
-/* unused in OpenSSL */
+/* XXX - unused in OpenSSL. Can we remove this? */
 typedef struct X509_VERIFY_PARAM_ID_st X509_VERIFY_PARAM_ID;
 
 

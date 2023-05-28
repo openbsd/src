@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.8 2023/05/08 14:51:00 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.9 2023/05/28 05:25:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -272,7 +272,14 @@ struct X509_VERIFY_PARAM_st {
 	int depth;		/* Verify depth */
 	int security_level;	/* 'Security level', see SP800-57. */
 	STACK_OF(ASN1_OBJECT) *policies;	/* Permissible policies */
-	X509_VERIFY_PARAM_ID *id;	/* opaque ID data */
+	STACK_OF(OPENSSL_STRING) *hosts; /* Set of acceptable names */
+	unsigned int hostflags;     /* Flags to control matching features */
+	char *peername;             /* Matching hostname in peer certificate */
+	char *email;                /* If not NULL email address to match */
+	size_t emaillen;
+	unsigned char *ip;          /* If not NULL IP address to match */
+	size_t iplen;               /* Length of IP address */
+	int poisoned;
 } /* X509_VERIFY_PARAM */;
 
 /*
@@ -367,17 +374,6 @@ struct x509_store_ctx_st {
 
 	CRYPTO_EX_DATA ex_data;
 } /* X509_STORE_CTX */;
-
-struct X509_VERIFY_PARAM_ID_st {
-	STACK_OF(OPENSSL_STRING) *hosts; /* Set of acceptable names */
-	unsigned int hostflags;     /* Flags to control matching features */
-	char *peername;             /* Matching hostname in peer certificate */
-	char *email;                /* If not NULL email address to match */
-	size_t emaillen;
-	unsigned char *ip;          /* If not NULL IP address to match */
-	size_t iplen;               /* Length of IP address */
-	int poisoned;
-};
 
 int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
 

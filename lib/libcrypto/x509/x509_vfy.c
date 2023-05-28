@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.123 2023/05/14 20:20:40 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.124 2023/05/28 05:25:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -177,19 +177,19 @@ check_id_error(X509_STORE_CTX *ctx, int errcode)
 }
 
 static int
-check_hosts(X509 *x, X509_VERIFY_PARAM_ID *id)
+check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
 {
 	int i, n;
 	char *name;
 
-	n = sk_OPENSSL_STRING_num(id->hosts);
-	free(id->peername);
-	id->peername = NULL;
+	n = sk_OPENSSL_STRING_num(vpm->hosts);
+	free(vpm->peername);
+	vpm->peername = NULL;
 
 	for (i = 0; i < n; ++i) {
-		name = sk_OPENSSL_STRING_value(id->hosts, i);
-		if (X509_check_host(x, name, strlen(name), id->hostflags,
-		    &id->peername) > 0)
+		name = sk_OPENSSL_STRING_value(vpm->hosts, i);
+		if (X509_check_host(x, name, strlen(name), vpm->hostflags,
+		    &vpm->peername) > 0)
 			return 1;
 	}
 	return n == 0;
@@ -199,19 +199,18 @@ static int
 check_id(X509_STORE_CTX *ctx)
 {
 	X509_VERIFY_PARAM *vpm = ctx->param;
-	X509_VERIFY_PARAM_ID *id = vpm->id;
 	X509 *x = ctx->cert;
 
-	if (id->hosts && check_hosts(x, id) <= 0) {
+	if (vpm->hosts && check_hosts(x, vpm) <= 0) {
 		if (!check_id_error(ctx, X509_V_ERR_HOSTNAME_MISMATCH))
 			return 0;
 	}
-	if (id->email != NULL && X509_check_email(x, id->email, id->emaillen, 0)
+	if (vpm->email != NULL && X509_check_email(x, vpm->email, vpm->emaillen, 0)
 	    <= 0) {
 		if (!check_id_error(ctx, X509_V_ERR_EMAIL_MISMATCH))
 			return 0;
 	}
-	if (id->ip != NULL && X509_check_ip(x, id->ip, id->iplen, 0) <= 0) {
+	if (vpm->ip != NULL && X509_check_ip(x, vpm->ip, vpm->iplen, 0) <= 0) {
 		if (!check_id_error(ctx, X509_V_ERR_IP_ADDRESS_MISMATCH))
 			return 0;
 	}
@@ -609,7 +608,7 @@ X509_verify_cert(X509_STORE_CTX *ctx)
 		ctx->error = X509_V_ERR_INVALID_CALL;
 		return -1;
 	}
-	if (ctx->param->id->poisoned) {
+	if (ctx->param->poisoned) {
 		/*
 		 * This X509_STORE_CTX had failures setting
 		 * up verify parameters. We can not use it.
