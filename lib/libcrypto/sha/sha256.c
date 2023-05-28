@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.16 2023/05/27 18:39:03 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.17 2023/05/28 13:53:08 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -155,34 +155,6 @@ SHA224_Final(unsigned char *md, SHA256_CTX *c)
 #define	HASH_LONG		SHA_LONG
 #define	HASH_CTX		SHA256_CTX
 #define	HASH_CBLOCK		SHA_CBLOCK
-/*
- * Note that FIPS180-2 discusses "Truncation of the Hash Function Output."
- * default: case below covers for it. It's not clear however if it's
- * permitted to truncate to amount of bytes not divisible by 4. I bet not,
- * but if it is, then default: case shall be extended. For reference.
- * Idea behind separate cases for pre-defined lengths is to let the
- * compiler decide if it's appropriate to unroll small loops.
- */
-#define	HASH_MAKE_STRING(c, s)	do {	\
-	unsigned long ll;		\
-	unsigned int  nn;		\
-	switch ((c)->md_len)		\
-	{   case SHA224_DIGEST_LENGTH:	\
-		for (nn=0;nn<SHA224_DIGEST_LENGTH/4;nn++)	\
-		{   ll=(c)->h[nn]; HOST_l2c(ll,(s));   }	\
-		break;			\
-	    case SHA256_DIGEST_LENGTH:	\
-		for (nn=0;nn<SHA256_DIGEST_LENGTH/4;nn++)	\
-		{   ll=(c)->h[nn]; HOST_l2c(ll,(s));   }	\
-		break;			\
-	    default:			\
-		if ((c)->md_len > SHA256_DIGEST_LENGTH)	\
-		    return 0;				\
-		for (nn=0;nn<(c)->md_len/4;nn++)		\
-		{   ll=(c)->h[nn]; HOST_l2c(ll,(s));   }	\
-		break;			\
-	}				\
-	} while (0)
 
 #define	HASH_BLOCK_DATA_ORDER	sha256_block_data_order
 #ifndef SHA256_ASM
@@ -261,6 +233,8 @@ SHA256_Final(unsigned char *md, HASH_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
+	unsigned long ll;
+	unsigned int nn;
 
 	p[n] = 0x80; /* there is always room for one */
 	n++;
@@ -285,11 +259,40 @@ SHA256_Final(unsigned char *md, HASH_CTX *c)
 	c->num = 0;
 	memset (p, 0, SHA_CBLOCK);
 
-#ifndef HASH_MAKE_STRING
-#error "HASH_MAKE_STRING must be defined!"
-#else
-	HASH_MAKE_STRING(c, md);
-#endif
+	/*
+	 * Note that FIPS180-2 discusses "Truncation of the Hash Function Output."
+	 * default: case below covers for it. It's not clear however if it's
+	 * permitted to truncate to amount of bytes not divisible by 4. I bet not,
+	 * but if it is, then default: case shall be extended. For reference.
+	 * Idea behind separate cases for pre-defined lengths is to let the
+	 * compiler decide if it's appropriate to unroll small loops.
+	 */
+	do {
+	switch (c->md_len) {
+	case SHA224_DIGEST_LENGTH:
+		for (nn = 0; nn < SHA224_DIGEST_LENGTH / 4; nn++) {
+			ll = c->h[nn];
+			HOST_l2c(ll, md);
+		}
+		break;
+
+	case SHA256_DIGEST_LENGTH:
+		for (nn = 0; nn < SHA256_DIGEST_LENGTH / 4; nn++) {
+			ll = c->h[nn];
+			HOST_l2c(ll, md);
+		}
+		break;
+
+	default:
+		if (c->md_len > SHA256_DIGEST_LENGTH)
+			return 0;
+		for (nn = 0; nn < c->md_len / 4; nn++) {
+			ll = c->h[nn];
+			HOST_l2c(ll, md);
+		}
+		break;
+	}
+	} while (0);
 
 	return 1;
 }
