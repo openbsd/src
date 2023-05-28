@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.18 2023/05/28 13:55:55 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.19 2023/05/28 13:57:27 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -52,17 +52,16 @@
  * Hudson (tjh@cryptsoft.com).
  */
 
-#include <openssl/opensslconf.h>
-
-#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA256)
-
 #include <endian.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/opensslconf.h>
+
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
-#include <openssl/opensslv.h>
+
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA256)
 
 int
 SHA224_Init(SHA256_CTX *c)
