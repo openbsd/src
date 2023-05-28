@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.17 2023/05/28 13:53:08 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.18 2023/05/28 13:55:55 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -267,7 +267,6 @@ SHA256_Final(unsigned char *md, HASH_CTX *c)
 	 * Idea behind separate cases for pre-defined lengths is to let the
 	 * compiler decide if it's appropriate to unroll small loops.
 	 */
-	do {
 	switch (c->md_len) {
 	case SHA224_DIGEST_LENGTH:
 		for (nn = 0; nn < SHA224_DIGEST_LENGTH / 4; nn++) {
@@ -292,7 +291,6 @@ SHA256_Final(unsigned char *md, HASH_CTX *c)
 		}
 		break;
 	}
-	} while (0);
 
 	return 1;
 }
