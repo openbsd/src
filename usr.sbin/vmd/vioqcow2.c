@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.22 2023/04/28 18:52:22 dv Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.23 2023/05/28 05:28:50 asou Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -130,7 +130,7 @@ virtio_qcow2_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 	file->pread = qc2_pread;
 	file->pwrite = qc2_pwrite;
 	file->close = qc2_close;
-	*szp = diskp->disksz / 512;
+	*szp = diskp->disksz;
 	return 0;
 }
 

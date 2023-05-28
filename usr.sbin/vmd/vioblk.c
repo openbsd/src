@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.3 2023/05/13 23:15:28 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.4 2023/05/28 05:28:50 asou Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -144,7 +144,7 @@ vioblk_main(int fd, int fd_vmm)
 		log_warnx("failed to init disk %s image", disk_type(type));
 		goto fail;
 	}
-	vioblk->sz = szp;
+	vioblk->sz = szp / 512;
 	log_debug("%s: initialized vioblk[%d] with %s image (sz=%lld)",
 	    __func__, vioblk->idx, disk_type(type), vioblk->sz);
 
