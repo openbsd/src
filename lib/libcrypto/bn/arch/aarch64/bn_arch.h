@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.7 2023/04/17 12:51:09 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.8 2023/05/28 17:22:04 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -42,6 +42,27 @@ bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 	*out_r0 = r0;
 }
 
+#define HAVE_BN_ADDW_ADDW
+
+static inline void
+bn_addw_addw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_r1,
+    BN_ULONG *out_r0)
+{
+	BN_ULONG carry, r0;
+
+	__asm__ (
+	    "adds  %[r0], %[a], %[b] \n"
+	    "cset  %[carry], cs \n"
+	    "adds  %[r0], %[r0], %[c] \n"
+	    "cinc  %[carry], %[carry], cs \n"
+	    : [carry]"=&r"(carry), [r0]"=&r"(r0)
+	    : [a]"r"(a), [b]"r"(b), [c]"r"(c)
+	    : "cc");
+
+	*out_r1 = carry;
+	*out_r0 = r0;
+}
+
 #define HAVE_BN_MULW
 
 static inline void
@@ -72,6 +93,27 @@ bn_subw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_borrow, BN_ULONG *out_r0)
 	    "cset  %[borrow], cc \n"
 	    : [borrow]"=r"(borrow), [r0]"=r"(r0)
 	    : [a]"r"(a), [b]"r"(b)
+	    : "cc");
+
+	*out_borrow = borrow;
+	*out_r0 = r0;
+}
+
+#define HAVE_BN_SUBW_SUBW
+
+static inline void
+bn_subw_subw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_borrow,
+    BN_ULONG *out_r0)
+{
+	BN_ULONG borrow, r0;
+
+	__asm__ (
+	    "subs  %[r0], %[a], %[b] \n"
+	    "cset  %[borrow], cc \n"
+	    "subs  %[r0], %[r0], %[c] \n"
+	    "cinc  %[borrow], %[borrow], cc \n"
+	    : [borrow]"=&r"(borrow), [r0]"=&r"(r0)
+	    : [a]"r"(a), [b]"r"(b), [c]"r"(c)
 	    : "cc");
 
 	*out_borrow = borrow;
