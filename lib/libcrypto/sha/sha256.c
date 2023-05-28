@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.19 2023/05/28 13:57:27 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.20 2023/05/28 14:14:33 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -63,92 +63,6 @@
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA256)
 
-int
-SHA224_Init(SHA256_CTX *c)
-{
-	memset (c, 0, sizeof(*c));
-
-	c->h[0] = 0xc1059ed8UL;
-	c->h[1] = 0x367cd507UL;
-	c->h[2] = 0x3070dd17UL;
-	c->h[3] = 0xf70e5939UL;
-	c->h[4] = 0xffc00b31UL;
-	c->h[5] = 0x68581511UL;
-	c->h[6] = 0x64f98fa7UL;
-	c->h[7] = 0xbefa4fa4UL;
-
-	c->md_len = SHA224_DIGEST_LENGTH;
-
-	return 1;
-}
-
-int
-SHA256_Init(SHA256_CTX *c)
-{
-	memset (c, 0, sizeof(*c));
-
-	c->h[0] = 0x6a09e667UL;
-	c->h[1] = 0xbb67ae85UL;
-	c->h[2] = 0x3c6ef372UL;
-	c->h[3] = 0xa54ff53aUL;
-	c->h[4] = 0x510e527fUL;
-	c->h[5] = 0x9b05688cUL;
-	c->h[6] = 0x1f83d9abUL;
-	c->h[7] = 0x5be0cd19UL;
-
-	c->md_len = SHA256_DIGEST_LENGTH;
-
-	return 1;
-}
-
-unsigned char *
-SHA224(const unsigned char *d, size_t n, unsigned char *md)
-{
-	SHA256_CTX c;
-	static unsigned char m[SHA224_DIGEST_LENGTH];
-
-	if (md == NULL)
-		md = m;
-
-	SHA224_Init(&c);
-	SHA256_Update(&c, d, n);
-	SHA256_Final(md, &c);
-
-	explicit_bzero(&c, sizeof(c));
-
-	return (md);
-}
-
-unsigned char *
-SHA256(const unsigned char *d, size_t n, unsigned char *md)
-{
-	SHA256_CTX c;
-	static unsigned char m[SHA256_DIGEST_LENGTH];
-
-	if (md == NULL)
-		md = m;
-
-	SHA256_Init(&c);
-	SHA256_Update(&c, d, n);
-	SHA256_Final(md, &c);
-
-	explicit_bzero(&c, sizeof(c));
-
-	return (md);
-}
-
-int
-SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
-{
-	return SHA256_Update(c, data, len);
-}
-
-int
-SHA224_Final(unsigned char *md, SHA256_CTX *c)
-{
-	return SHA256_Final(md, c);
-}
-
 #define	DATA_ORDER_IS_BIG_ENDIAN
 
 #define	HASH_LONG		SHA_LONG
@@ -166,133 +80,6 @@ void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
 #define HASH_NO_FINAL
 
 #include "md32_common.h"
-
-int
-SHA256_Update(HASH_CTX *c, const void *data_, size_t len)
-{
-	const unsigned char *data = data_;
-	unsigned char *p;
-	SHA_LONG l;
-	size_t n;
-
-	if (len == 0)
-		return 1;
-
-	l = (c->Nl + (((SHA_LONG)len) << 3))&0xffffffffUL;
-	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
-	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
-	if (l < c->Nl) /* overflow */
-		c->Nh++;
-	c->Nh+=(SHA_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
-	c->Nl = l;
-
-	n = c->num;
-	if (n != 0) {
-		p = (unsigned char *)c->data;
-
-		if (len >= SHA_CBLOCK || len + n >= SHA_CBLOCK) {
-			memcpy (p + n, data, SHA_CBLOCK - n);
-			sha256_block_data_order(c, p, 1);
-			n = SHA_CBLOCK - n;
-			data += n;
-			len -= n;
-			c->num = 0;
-			memset (p,0,SHA_CBLOCK);	/* keep it zeroed */
-		} else {
-			memcpy (p + n, data, len);
-			c->num += (unsigned int)len;
-			return 1;
-		}
-	}
-
-	n = len/SHA_CBLOCK;
-	if (n > 0) {
-		sha256_block_data_order(c, data, n);
-		n    *= SHA_CBLOCK;
-		data += n;
-		len -= n;
-	}
-
-	if (len != 0) {
-		p = (unsigned char *)c->data;
-		c->num = (unsigned int)len;
-		memcpy (p, data, len);
-	}
-	return 1;
-}
-
-void
-SHA256_Transform(HASH_CTX *c, const unsigned char *data)
-{
-	sha256_block_data_order(c, data, 1);
-}
-
-int
-SHA256_Final(unsigned char *md, HASH_CTX *c)
-{
-	unsigned char *p = (unsigned char *)c->data;
-	size_t n = c->num;
-	unsigned long ll;
-	unsigned int nn;
-
-	p[n] = 0x80; /* there is always room for one */
-	n++;
-
-	if (n > (SHA_CBLOCK - 8)) {
-		memset (p + n, 0, SHA_CBLOCK - n);
-		n = 0;
-		sha256_block_data_order(c, p, 1);
-	}
-	memset (p + n, 0, SHA_CBLOCK - 8 - n);
-
-	p += SHA_CBLOCK - 8;
-#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
-	HOST_l2c(c->Nh, p);
-	HOST_l2c(c->Nl, p);
-#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
-	HOST_l2c(c->Nl, p);
-	HOST_l2c(c->Nh, p);
-#endif
-	p -= SHA_CBLOCK;
-	sha256_block_data_order(c, p, 1);
-	c->num = 0;
-	memset (p, 0, SHA_CBLOCK);
-
-	/*
-	 * Note that FIPS180-2 discusses "Truncation of the Hash Function Output."
-	 * default: case below covers for it. It's not clear however if it's
-	 * permitted to truncate to amount of bytes not divisible by 4. I bet not,
-	 * but if it is, then default: case shall be extended. For reference.
-	 * Idea behind separate cases for pre-defined lengths is to let the
-	 * compiler decide if it's appropriate to unroll small loops.
-	 */
-	switch (c->md_len) {
-	case SHA224_DIGEST_LENGTH:
-		for (nn = 0; nn < SHA224_DIGEST_LENGTH / 4; nn++) {
-			ll = c->h[nn];
-			HOST_l2c(ll, md);
-		}
-		break;
-
-	case SHA256_DIGEST_LENGTH:
-		for (nn = 0; nn < SHA256_DIGEST_LENGTH / 4; nn++) {
-			ll = c->h[nn];
-			HOST_l2c(ll, md);
-		}
-		break;
-
-	default:
-		if (c->md_len > SHA256_DIGEST_LENGTH)
-			return 0;
-		for (nn = 0; nn < c->md_len / 4; nn++) {
-			ll = c->h[nn];
-			HOST_l2c(ll, md);
-		}
-		break;
-	}
-
-	return 1;
-}
 
 #ifndef SHA256_ASM
 static const SHA_LONG K256[64] = {
@@ -540,5 +327,218 @@ sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
 
 #endif
 #endif /* SHA256_ASM */
+
+int
+SHA224_Init(SHA256_CTX *c)
+{
+	memset (c, 0, sizeof(*c));
+
+	c->h[0] = 0xc1059ed8UL;
+	c->h[1] = 0x367cd507UL;
+	c->h[2] = 0x3070dd17UL;
+	c->h[3] = 0xf70e5939UL;
+	c->h[4] = 0xffc00b31UL;
+	c->h[5] = 0x68581511UL;
+	c->h[6] = 0x64f98fa7UL;
+	c->h[7] = 0xbefa4fa4UL;
+
+	c->md_len = SHA224_DIGEST_LENGTH;
+
+	return 1;
+}
+
+int
+SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
+{
+	return SHA256_Update(c, data, len);
+}
+
+int
+SHA224_Final(unsigned char *md, SHA256_CTX *c)
+{
+	return SHA256_Final(md, c);
+}
+
+unsigned char *
+SHA224(const unsigned char *d, size_t n, unsigned char *md)
+{
+	SHA256_CTX c;
+	static unsigned char m[SHA224_DIGEST_LENGTH];
+
+	if (md == NULL)
+		md = m;
+
+	SHA224_Init(&c);
+	SHA256_Update(&c, d, n);
+	SHA256_Final(md, &c);
+
+	explicit_bzero(&c, sizeof(c));
+
+	return (md);
+}
+
+int
+SHA256_Init(SHA256_CTX *c)
+{
+	memset (c, 0, sizeof(*c));
+
+	c->h[0] = 0x6a09e667UL;
+	c->h[1] = 0xbb67ae85UL;
+	c->h[2] = 0x3c6ef372UL;
+	c->h[3] = 0xa54ff53aUL;
+	c->h[4] = 0x510e527fUL;
+	c->h[5] = 0x9b05688cUL;
+	c->h[6] = 0x1f83d9abUL;
+	c->h[7] = 0x5be0cd19UL;
+
+	c->md_len = SHA256_DIGEST_LENGTH;
+
+	return 1;
+}
+
+int
+SHA256_Update(HASH_CTX *c, const void *data_, size_t len)
+{
+	const unsigned char *data = data_;
+	unsigned char *p;
+	SHA_LONG l;
+	size_t n;
+
+	if (len == 0)
+		return 1;
+
+	l = (c->Nl + (((SHA_LONG)len) << 3))&0xffffffffUL;
+	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
+	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
+	if (l < c->Nl) /* overflow */
+		c->Nh++;
+	c->Nh+=(SHA_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
+	c->Nl = l;
+
+	n = c->num;
+	if (n != 0) {
+		p = (unsigned char *)c->data;
+
+		if (len >= SHA_CBLOCK || len + n >= SHA_CBLOCK) {
+			memcpy (p + n, data, SHA_CBLOCK - n);
+			sha256_block_data_order(c, p, 1);
+			n = SHA_CBLOCK - n;
+			data += n;
+			len -= n;
+			c->num = 0;
+			memset (p,0,SHA_CBLOCK);	/* keep it zeroed */
+		} else {
+			memcpy (p + n, data, len);
+			c->num += (unsigned int)len;
+			return 1;
+		}
+	}
+
+	n = len/SHA_CBLOCK;
+	if (n > 0) {
+		sha256_block_data_order(c, data, n);
+		n    *= SHA_CBLOCK;
+		data += n;
+		len -= n;
+	}
+
+	if (len != 0) {
+		p = (unsigned char *)c->data;
+		c->num = (unsigned int)len;
+		memcpy (p, data, len);
+	}
+	return 1;
+}
+
+void
+SHA256_Transform(HASH_CTX *c, const unsigned char *data)
+{
+	sha256_block_data_order(c, data, 1);
+}
+
+int
+SHA256_Final(unsigned char *md, HASH_CTX *c)
+{
+	unsigned char *p = (unsigned char *)c->data;
+	size_t n = c->num;
+	unsigned long ll;
+	unsigned int nn;
+
+	p[n] = 0x80; /* there is always room for one */
+	n++;
+
+	if (n > (SHA_CBLOCK - 8)) {
+		memset (p + n, 0, SHA_CBLOCK - n);
+		n = 0;
+		sha256_block_data_order(c, p, 1);
+	}
+	memset (p + n, 0, SHA_CBLOCK - 8 - n);
+
+	p += SHA_CBLOCK - 8;
+#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
+	HOST_l2c(c->Nh, p);
+	HOST_l2c(c->Nl, p);
+#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
+	HOST_l2c(c->Nl, p);
+	HOST_l2c(c->Nh, p);
+#endif
+	p -= SHA_CBLOCK;
+	sha256_block_data_order(c, p, 1);
+	c->num = 0;
+	memset (p, 0, SHA_CBLOCK);
+
+	/*
+	 * Note that FIPS180-2 discusses "Truncation of the Hash Function Output."
+	 * default: case below covers for it. It's not clear however if it's
+	 * permitted to truncate to amount of bytes not divisible by 4. I bet not,
+	 * but if it is, then default: case shall be extended. For reference.
+	 * Idea behind separate cases for pre-defined lengths is to let the
+	 * compiler decide if it's appropriate to unroll small loops.
+	 */
+	switch (c->md_len) {
+	case SHA224_DIGEST_LENGTH:
+		for (nn = 0; nn < SHA224_DIGEST_LENGTH / 4; nn++) {
+			ll = c->h[nn];
+			HOST_l2c(ll, md);
+		}
+		break;
+
+	case SHA256_DIGEST_LENGTH:
+		for (nn = 0; nn < SHA256_DIGEST_LENGTH / 4; nn++) {
+			ll = c->h[nn];
+			HOST_l2c(ll, md);
+		}
+		break;
+
+	default:
+		if (c->md_len > SHA256_DIGEST_LENGTH)
+			return 0;
+		for (nn = 0; nn < c->md_len / 4; nn++) {
+			ll = c->h[nn];
+			HOST_l2c(ll, md);
+		}
+		break;
+	}
+
+	return 1;
+}
+
+unsigned char *
+SHA256(const unsigned char *d, size_t n, unsigned char *md)
+{
+	SHA256_CTX c;
+	static unsigned char m[SHA256_DIGEST_LENGTH];
+
+	if (md == NULL)
+		md = m;
+
+	SHA256_Init(&c);
+	SHA256_Update(&c, d, n);
+	SHA256_Final(md, &c);
+
+	explicit_bzero(&c, sizeof(c));
+
+	return (md);
+}
 
 #endif /* OPENSSL_NO_SHA256 */
