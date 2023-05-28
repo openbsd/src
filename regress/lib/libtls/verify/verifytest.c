@@ -1,4 +1,4 @@
-/*	$OpenBSD: verifytest.c,v 1.7 2017/04/30 03:53:31 jsing Exp $	*/
+/*	$OpenBSD: verifytest.c,v 1.8 2023/05/28 09:02:01 beck Exp $	*/
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -40,6 +40,7 @@ struct verify_test {
 	const char name[128];
 	int want_return;
 	int want_match;
+	int name_type;
 };
 
 struct verify_test verify_tests[] = {
@@ -474,7 +475,8 @@ do_verify_test(int test_no, struct verify_test *vt)
 		if ((name = X509_NAME_new()) == NULL)
 			errx(1, "failed to malloc X509_NAME");
 		if (X509_NAME_add_entry_by_NID(name, NID_commonName,
-		    MBSTRING_ASC, (unsigned char *)vt->common_name,
+		    vt->name_type ? vt->name_type : MBSTRING_ASC,
+		    (unsigned char *)vt->common_name,
 		    vt->common_name_len, -1, 0) == 0)
 			errx(1, "failed to add name entry");
 		if (X509_set_subject_name(cert, name) == 0)

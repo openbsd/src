@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.23 2023/05/11 07:35:27 tb Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.24 2023/05/28 09:02:01 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -205,10 +205,13 @@ static int
 tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
     int *cn_match)
 {
+	unsigned char *utf8_bytes = NULL;
 	X509_NAME *subject_name;
 	char *common_name = NULL;
 	union tls_addr addrbuf;
 	int common_name_len;
+	ASN1_STRING *data;
+	int lastpos = -1;
 	int rv = -1;
 
 	*cn_match = 0;
@@ -217,26 +220,57 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 	if (subject_name == NULL)
 		goto done;
 
-	common_name_len = X509_NAME_get_text_by_NID(subject_name,
-	    NID_commonName, NULL, 0);
-	if (common_name_len < 0)
+	lastpos = X509_NAME_get_index_by_NID(subject_name,
+	    NID_commonName, lastpos);
+	if (lastpos == -1)
 		goto done;
-
-	common_name = calloc(common_name_len + 1, 1);
-	if (common_name == NULL) {
-		tls_set_error(ctx, "out of memory");
+	if (X509_NAME_get_index_by_NID(subject_name, NID_commonName, lastpos)
+	    != -1) {
+		/*
+		 * Having multiple CN's is possible, and even happened back in
+		 * the glory days of mullets and Hammer pants. In anything like
+		 * a modern TLS cert, CN is as close to deprecated as it gets,
+		 * and having more than one is bad. We therefore fail if we have
+		 * more than one CN fed to us in the subject, treating the
+		 * certificate as hostile.
+		 */
+		tls_set_errorx(ctx, "error verifying name '%s': "
+		    "Certificate subject contains mutiple Common Name fields, "
+		    "probably a malicious or malformed certificate", name);
 		goto err;
 	}
 
-	X509_NAME_get_text_by_NID(subject_name, NID_commonName, common_name,
-	    common_name_len + 1);
+	data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subject_name,
+	    lastpos));
+	/*
+	 * Fail if we cannot encode as UTF-8, or if the UTF-8 encoding of the
+	 * string contains a 0 byte. We treat any certificate with such data
+	 * in the CN as hostile and fail.
+	 */
+	if ((common_name_len = ASN1_STRING_to_UTF8(&utf8_bytes, data)) < 0) {
+		tls_set_errorx(ctx, "error verifying name '%s': "
+		    "Common Name field cannot be encoded as a UTF-8 string, "
+		    "probably a malicious certificate", name);
+		goto err;
+	}
 
-	/* NUL bytes in CN? */
-	if (common_name_len < 0 ||
-	    (size_t)common_name_len != strlen(common_name)) {
+	if (common_name_len < 1 || common_name_len > 64) {
+		tls_set_errorx(ctx, "error verifying name '%s': "
+		    "Common Name field has invalid length, "
+		    "probably a malicious certificate", name);
+		goto err;
+	}
+
+	if (memchr(utf8_bytes, 0, common_name_len) != NULL) {
 		tls_set_errorx(ctx, "error verifying name '%s': "
 		    "NUL byte in Common Name field, "
 		    "probably a malicious certificate", name);
+		goto err;
+	}
+
+	common_name = strndup(utf8_bytes, common_name_len);
+	if (common_name == NULL) {
+		tls_set_error(ctx, "out of memory");
 		goto err;
 	}
 
@@ -258,6 +292,7 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 	rv = 0;
 
  err:
+	free(utf8_bytes);
 	free(common_name);
 	return rv;
 }
