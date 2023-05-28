@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.21 2023/05/28 14:49:21 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.22 2023/05/28 14:54:37 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -74,7 +74,7 @@
 #ifndef SHA256_ASM
 static
 #endif
-void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
+void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
 #define HASH_NO_UPDATE
 #define HASH_NO_TRANSFORM
@@ -198,7 +198,7 @@ static void
 sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
 {
 	unsigned MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1;
-	SHA_LONG	X[16];
+	SHA_LONG X[16];
 	int i;
 	const unsigned char *data = in;
 
@@ -332,7 +332,7 @@ sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
 int
 SHA224_Init(SHA256_CTX *c)
 {
-	memset (c, 0, sizeof(*c));
+	memset(c, 0, sizeof(*c));
 
 	c->h[0] = 0xc1059ed8UL;
 	c->h[1] = 0x367cd507UL;
@@ -381,7 +381,7 @@ SHA224(const unsigned char *d, size_t n, unsigned char *md)
 int
 SHA256_Init(SHA256_CTX *c)
 {
-	memset (c, 0, sizeof(*c));
+	memset(c, 0, sizeof(*c));
 
 	c->h[0] = 0x6a09e667UL;
 	c->h[1] = 0xbb67ae85UL;
@@ -408,12 +408,12 @@ SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
 	if (len == 0)
 		return 1;
 
-	l = (c->Nl + (((SHA_LONG)len) << 3))&0xffffffffUL;
+	l = (c->Nl + (((SHA_LONG)len) << 3)) & 0xffffffffUL;
 	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
 	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
 	if (l < c->Nl) /* overflow */
 		c->Nh++;
-	c->Nh+=(SHA_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
+	c->Nh += (SHA_LONG)(len >> 29);	/* might cause compiler warning on 16-bit */
 	c->Nl = l;
 
 	n = c->num;
@@ -421,15 +421,15 @@ SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
 		p = (unsigned char *)c->data;
 
 		if (len >= SHA_CBLOCK || len + n >= SHA_CBLOCK) {
-			memcpy (p + n, data, SHA_CBLOCK - n);
+			memcpy(p + n, data, SHA_CBLOCK - n);
 			sha256_block_data_order(c, p, 1);
 			n = SHA_CBLOCK - n;
 			data += n;
 			len -= n;
 			c->num = 0;
-			memset (p,0,SHA_CBLOCK);	/* keep it zeroed */
+			memset(p, 0, SHA_CBLOCK);	/* keep it zeroed */
 		} else {
-			memcpy (p + n, data, len);
+			memcpy(p + n, data, len);
 			c->num += (unsigned int)len;
 			return 1;
 		}
@@ -438,7 +438,7 @@ SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
 	n = len/SHA_CBLOCK;
 	if (n > 0) {
 		sha256_block_data_order(c, data, n);
-		n    *= SHA_CBLOCK;
+		n *= SHA_CBLOCK;
 		data += n;
 		len -= n;
 	}
@@ -446,7 +446,7 @@ SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
 	if (len != 0) {
 		p = (unsigned char *)c->data;
 		c->num = (unsigned int)len;
-		memcpy (p, data, len);
+		memcpy(p, data, len);
 	}
 	return 1;
 }
@@ -469,11 +469,11 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 	n++;
 
 	if (n > (SHA_CBLOCK - 8)) {
-		memset (p + n, 0, SHA_CBLOCK - n);
+		memset(p + n, 0, SHA_CBLOCK - n);
 		n = 0;
 		sha256_block_data_order(c, p, 1);
 	}
-	memset (p + n, 0, SHA_CBLOCK - 8 - n);
+	memset(p + n, 0, SHA_CBLOCK - 8 - n);
 
 	p += SHA_CBLOCK - 8;
 #if   defined(DATA_ORDER_IS_BIG_ENDIAN)
@@ -486,7 +486,7 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 	p -= SHA_CBLOCK;
 	sha256_block_data_order(c, p, 1);
 	c->num = 0;
-	memset (p, 0, SHA_CBLOCK);
+	memset(p, 0, SHA_CBLOCK);
 
 	/*
 	 * Note that FIPS180-2 discusses "Truncation of the Hash Function Output."
