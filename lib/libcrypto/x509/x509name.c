@@ -1,4 +1,4 @@
-/* $OpenBSD: x509name.c,v 1.34 2023/05/03 08:10:23 beck Exp $ */
+/* $OpenBSD: x509name.c,v 1.35 2023/05/29 11:54:50 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,6 +66,7 @@
 #include <openssl/stack.h>
 #include <openssl/x509.h>
 
+#include "bytestring.h"
 #include "x509_local.h"
 
 int
@@ -84,21 +85,38 @@ int
 X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, char *buf,
     int len)
 {
-	int i;
+	unsigned char *text = NULL;
 	ASN1_STRING *data;
+	int i, text_len;
+	int ret = -1;
+	CBS cbs;
 
 	i = X509_NAME_get_index_by_OBJ(name, obj, -1);
 	if (i < 0)
-		return (-1);
+		goto err;
 	data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(name, i));
-	i = (data->length > (len - 1)) ? (len - 1) : data->length;
-	if (buf == NULL)
-		return (data->length);
-	if (i >= 0) {
-		memcpy(buf, data->data, i);
-		buf[i] = '\0';
+	/*
+	 * Fail if we cannot encode as UTF-8, or if the UTF-8 encoding of the
+	 * string contains a 0 byte, because mortal callers seldom handle the
+	 * length difference correctly.
+	 */
+	if ((text_len = ASN1_STRING_to_UTF8(&text, data)) < 0)
+		goto err;
+	CBS_init(&cbs, text, text_len);
+	if (CBS_contains_zero_byte(&cbs))
+		goto err;
+	/* We still support the "pass NULL to find out how much" API */
+	if (buf != NULL) {
+		if (len <= 0 || !CBS_write_bytes(&cbs, buf, len - 1, NULL))
+			goto err;
+		/* It must be a C string */
+		buf[text_len] = '\0';
 	}
-	return (i);
+	ret = text_len;
+
+ err:
+	free(text);
+	return (ret);
 }
 LCRYPTO_ALIAS(X509_NAME_get_text_by_OBJ);
 

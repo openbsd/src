@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.18 2023/05/03 08:10:23 beck Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.19 2023/05/29 11:54:50 beck Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -512,13 +512,88 @@ test_x509_req_setters(void)
 	return failed;
 }
 
-int main(void)
+static const struct testcase {
+	char *data;
+	int len;
+	int len_to_pass;
+	int encode_type;
+	int expected_result;
+	char *expected_string;
+} testCases[] = {
+	/* should work */
+	{"fozzie", 6, 80, MBSTRING_ASC, 6, "fozzie"},
+	/* should work */
+	{"fozzie", 6, -1, MBSTRING_ASC, 6, ""},
+	/* should fail, truncation */
+	{"muppet", 6, 5, MBSTRING_ASC, -1, ""},
+	/* should fail, contains 0 byte */
+	{"g\0nzo", 5, 80, MBSTRING_ASC, -1, ""},
+	/* should fail, can't encode as utf-8 */
+	{"\x30\x00", 2, 80, V_ASN1_SEQUENCE, -1, ""},
+};
+
+#define NUM_TEST_CASES (sizeof(testCases) / sizeof(testCases[0]))
+
+static int
+test_x509_name_get(void)
+{
+	int failed = 0;
+	size_t i;
+
+	for (i = 0; i < NUM_TEST_CASES; i++) {
+		const struct testcase *test = testCases + i;
+		X509_NAME_ENTRY *entry = NULL;
+		X509_NAME *name = NULL;
+		char textbuf[80];
+		int result;
+
+		textbuf[0] = '\0';
+		if ((name = X509_NAME_new()) == NULL)
+			err(1, "X509_NAME_new");
+		if ((entry = X509_NAME_ENTRY_new()) == NULL)
+			err(1, "X509_NAME_ENTRY_new");
+		if (!X509_NAME_ENTRY_set_object(entry,
+		    OBJ_nid2obj(NID_commonName)))
+			err(1, "X509_NAME_ENTRY_set_object");
+		if (!X509_NAME_ENTRY_set_data(entry, test->encode_type,
+		    test->data, test->len))
+			err(1, "X509_NAME_ENTRY_set_data");
+		if (!X509_NAME_add_entry(name, entry, -1, 0))
+			err(1, "X509_NAME_add_entry");
+		if (test->len_to_pass == -1)
+			result = X509_NAME_get_text_by_NID(name, NID_commonName,
+			    NULL, 0);
+		else
+			result = X509_NAME_get_text_by_NID(name, NID_commonName,
+			    textbuf, test->len_to_pass);
+		if (result != test->expected_result) {
+			fprintf(stderr,
+			    "Test %zu X509_GET_text_by_NID returned %d,"
+			    "expected %d\n", i, result, test->expected_result);
+			failed++;
+		}
+		if (result != -1 &&
+		    strcmp(test->expected_string, textbuf) != 0) {
+			fprintf(stderr,
+			    "Test %zu, X509_GET_text_by_NID returned bytes do"
+			    "not match \n", i);
+			failed++;
+		}
+		X509_NAME_ENTRY_free(entry);
+		X509_NAME_free(name);
+	}
+	return failed;
+}
+
+int
+main(void)
 {
 	int failed = 0;
 
 	failed |= test_x509_setters();
 	/* failed |= */ test_x509_crl_setters();
 	/* failed |= */ test_x509_req_setters();
+	failed |= test_x509_name_get();
 
 	OPENSSL_cleanup();
 
