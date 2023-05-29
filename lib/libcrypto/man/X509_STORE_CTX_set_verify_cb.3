@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.9 2022/11/16 14:51:08 schwarze Exp $
+.\" $OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.10 2023/05/29 11:14:19 beck Exp $
 .\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 16 2022 $
+.Dd $Mdocdate: May 29 2023 $
 .Dt X509_STORE_CTX_SET_VERIFY_CB 3
 .Os
 .Sh NAME
@@ -98,13 +98,29 @@ to
 .Fa verify_cb
 overwriting any existing callback.
 .Pp
-The verification callback can be used to customise the operation of
+The verification callback can be used to modify the operation of
 certificate verification, either by overriding error conditions or
 logging errors for debugging purposes.
+The use of a verification callback is not essential, and should not
+be used in security sensitive programs.
 .Pp
-However, a verification callback is
-.Em not
-essential and the default operation is often sufficient.
+Do not use this function.
+It is extremely fragile and unpredictable.
+This callback exposes implementation details of certificate verification,
+which change as the library evolves.
+Attempting to use it for security checks can introduce vulnerabilities if
+making incorrect assumptions about when the callback is called.
+Additionally, overriding
+.Fa ok
+may leave
+Fa ctx
+in an inconsistent state and break invariants.
+.Pp
+Instead, customize certificate verification by configuring options on the
+.Vt X509_STORE_CTX
+before verification, or applying additional checks after
+.Xr X509_verify_cert 3
+completes successfully.
 .Pp
 The
 .Fa ok
@@ -112,6 +128,10 @@ parameter to the callback indicates the value the callback should return
 to retain the default behaviour.
 If it is zero then an error condition is indicated.
 If it is 1 then no error occurred.
+As the default behaviour is internal to the verifier, and possibly unknown
+to the caller, changing this parameter is inherently dangerous and should not
+normally be done except for debugging purposes, and should not be expected to
+be consistent if the verifier changes.
 If the flag
 .Dv X509_V_FLAG_NOTIFY_POLICY
 is set, then
@@ -156,9 +176,11 @@ verify_callback(int ok, X509_STORE_CTX *ctx)
 {
 	return ok;
 }
+This is likely the only safe callback to use.
 .Ed
 .Pp
-Simple example, suppose a certificate in the chain is expired and we
+Simple and terrible example that you should not use:
+Suppose a certificate in the chain is expired and we
 wish to continue after this error:
 .Bd -literal
 int
@@ -171,26 +193,17 @@ verify_callback(int ok, X509_STORE_CTX *ctx)
 	return ok;
 }
 .Ed
+While this example is presented for historical purposes,
+this is not the correct way to accomplish this.
+You should set verification options on the STORE_CTX to use
+.Vt X509_V_FLAG_NO_CHECK_TIME
+using
+.Xr X509_VERIFY_PARAM_set_flags 3
+instead.
 .Pp
-More complex example, we don't wish to continue after
-.Sy any
-certificate has expired just one specific case:
-.Bd -literal
-int
-verify_callback(int ok, X509_STORE_CTX *ctx)
-{
-	int err = X509_STORE_CTX_get_error(ctx);
-	X509 *err_cert = X509_STORE_CTX_get_current_cert(ctx);
-
-	if (err == X509_V_ERR_CERT_HAS_EXPIRED) {
-		if (check_is_acceptable_expired_cert(err_cert)
-			return 1;
-	}
-	return ok;
-}
-.Ed
-.Pp
-Full featured logging callback.
+Full featured debugging logging callback - note that the output and
+order that things happen from this can change over time and should not
+be parsed or expected to be consistent.
 In this case the
 .Fa bio_err
 is assumed to be a global logging
@@ -280,8 +293,13 @@ first appeared in OpenSSL 1.1.0 and has been available since
 .Sh CAVEATS
 In general a verification callback should
 .Sy NOT
-unconditionally return 1 in all circumstances because this will allow
-verification to succeed no matter what the error.
-This effectively removes all security from the application because
-.Sy any
-certificate (including untrusted generated ones) will be accepted.
+return a changed value of
+.Fa ok
+because this can allow the verification to appear to succeed
+in an unpredictable way.
+This can effectively remove all security from the application because
+untrusted or invalid certificates may be accepted.
+Doing this can possibly make
+.Xr X509_verify_cert 3
+return what appears to be a validated chain of certificates that has not
+been validated or even had the signatures checked.
