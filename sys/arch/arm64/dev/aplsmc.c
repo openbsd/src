@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.22 2023/05/27 19:35:55 kettenis Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.23 2023/05/29 04:24:39 deraadt Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -793,6 +793,7 @@ aplsmc_battery_init(struct aplsmc_softc *sc)
 	if (error)
 		return;
 
+#ifndef SMALL_KERNEL
 	if (ch0i & CH0I_DISCHARGE)
 		hw_battery_chargemode = -1;
 	else if (ch0c & CH0C_INHIBIT)
@@ -806,8 +807,10 @@ aplsmc_battery_init(struct aplsmc_softc *sc)
 	hw_battery_setchargemode = aplsmc_battery_setchargemode;
 	hw_battery_setchargestart = aplsmc_battery_setchargestart;
 	hw_battery_setchargestop = aplsmc_battery_setchargestop;
+#endif
 }
 
+#ifndef SMALL_KERNEL
 int
 aplsmc_battery_setchargemode(int mode)
 {
@@ -884,3 +887,4 @@ aplsmc_battery_setchargestop(int stop)
 
 	return aplsmc_write_key(sc, SMC_KEY("CHWA"), &chwa, sizeof(chwa));
 }
+#endif
