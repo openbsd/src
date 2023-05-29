@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_mmio.c,v 1.10 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: virtio_mmio.c,v 1.11 2023/05/29 08:13:35 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -293,7 +293,6 @@ virtio_mmio_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_2;
 	}
 
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 	return;
 
 fail_2:

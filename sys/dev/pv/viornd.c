@@ -1,4 +1,4 @@
-/*	$OpenBSD: viornd.c,v 1.5 2021/11/05 11:38:29 mpi Exp $	*/
+/*	$OpenBSD: viornd.c,v 1.6 2023/05/29 08:13:35 sf Exp $	*/
 
 /*
  * Copyright (c) 2014 Stefan Fritsch <sf@sfritsch.de>
@@ -138,6 +138,7 @@ viornd_attach(struct device *parent, struct device *self, void *aux)
 	timeout_add(&sc->sc_tick, 1);
 
 	printf("\n");
+	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 	return;
 err2:
 	bus_dmamap_destroy(vsc->sc_dmat, sc->sc_dmamap);

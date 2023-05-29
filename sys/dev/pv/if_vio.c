@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.22 2022/03/07 18:52:16 dv Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.23 2023/05/29 08:13:35 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -600,6 +600,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_txtick, vio_txtick, &sc->sc_vq[VQTX]);
 	timeout_set(&sc->sc_rxtick, vio_rxtick, &sc->sc_vq[VQRX]);
 
+	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 	if_attach(ifp);
 	ether_ifattach(ifp);
 

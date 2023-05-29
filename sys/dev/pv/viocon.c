@@ -1,4 +1,4 @@
-/*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
+/*	$OpenBSD: viocon.c,v 1.9 2023/05/29 08:13:35 sf Exp $	*/
 
 /*
  * Copyright (c) 2013-2015 Stefan Fritsch <sf@sfritsch.de>
@@ -203,6 +203,7 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 		goto err;
 	}
 	viocon_rx_fill(sc->sc_ports[0]);
+	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 
 	return;
 err:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.32 2023/04/13 02:19:05 jsg Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.33 2023/05/29 08:13:35 sf Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -651,7 +651,6 @@ virtio_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("%s: %s\n", vsc->sc_dev.dv_xname, intrstr);
 
-	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 	return;
 
 fail_2:

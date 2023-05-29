@@ -1,4 +1,4 @@
-/*	$OpenBSD: viogpu.c,v 1.2 2023/04/23 10:29:35 patrick Exp $ */
+/*	$OpenBSD: viogpu.c,v 1.3 2023/05/29 08:13:35 sf Exp $ */
 
 /*
  * Copyright (c) 2021-2023 joshua stein <jcs@openbsd.org>
@@ -234,6 +234,8 @@ viogpu_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_dmamap_load(vsc->sc_dmat, sc->sc_fb_dma_map,
 	    sc->sc_fb_dma_kva, sc->sc_fb_dma_size, NULL, BUS_DMA_NOWAIT) != 0)
 		goto fb_unmap;
+
+	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 
 	if (viogpu_create_2d(sc, 1, sc->sc_fb_width, sc->sc_fb_height) != 0)
 		goto fb_unmap;

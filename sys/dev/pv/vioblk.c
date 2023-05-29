@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.35 2022/04/16 19:19:59 naddy Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.36 2023/05/29 08:13:35 sf Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch.
@@ -251,6 +251,7 @@ vioblk_attach(struct device *parent, struct device *self, void *aux)
 	saa.saa_quirks = 0;
 	saa.saa_wwpn = saa.saa_wwnn = 0;
 
+	virtio_set_status(vsc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 	config_found(self, &saa, scsiprint);
 
 	return;
