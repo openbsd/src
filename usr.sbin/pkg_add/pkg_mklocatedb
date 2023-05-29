@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
-# $OpenBSD: pkg_mklocatedb,v 1.47 2021/05/04 08:41:03 espie Exp $
+# $OpenBSD: pkg_mklocatedb,v 1.48 2023/05/29 07:35:39 espie Exp $
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,8 +14,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 no lib ('/usr/local/libdata/perl5/site_perl');
 
 use OpenBSD::PackageInfo;
@@ -28,9 +27,8 @@ use OpenBSD::AddCreateDelete;
 package OpenBSD::Pkgmklocatedb::State;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
 
-sub handle_options
+sub handle_options($state)
 {
-	my $state = shift;
 	$state->{no_exports} = 1;
 	$state->SUPER::handle_options('ad:Knqp:Pu', 
 	    '[-aKnPqu] [-d repository] [-p portsdir] [pkg-name ...]');
@@ -45,20 +43,18 @@ sub handle_options
 }
 
 package OpenBSD::PackingElement;
-sub print_name {}
-sub set_header {}
+sub print_name($, $) {}
+sub set_header($, $) {}
 
 package OpenBSD::PackingElement::Name;
-sub set_header
+sub set_header($self, $state)
 {
-	my ($self, $state) = @_;
 	$state->{currentheader} = $self->{name}.':';
 }
 
 package OpenBSD::PackingElement::ExtraInfo;
-sub set_header
+sub set_header($self, $state)
 {
-	my ($self, $state) = @_;
 	if ($state->{allinfo}) {
 		$state->{currentheader} .=  $self->{subdir}.':';
 	} elsif ($state->{pkgpath}) {
@@ -69,9 +65,8 @@ sub set_header
 }
 
 package OpenBSD::PackingElement::FileObject;
-sub object_name
+sub object_name($self, $state)
 {
-	my ($self, $state) = @_;
 	if ($state->{full}) {
 		if ($self->needs_keyword) {
 			return "\@".$self->keyword." ".$self->fullname;
@@ -80,24 +75,21 @@ sub object_name
 	return $self->fullname;
 }
 
-sub print_name
+sub print_name($self, $state)
 {
-	my ($self, $state) = @_;
 	print {$state->{out}} $state->{currentheader}, 
 	    $self->object_name($state), "\n";
 }
 
 package OpenBSD::PackingElement::Action;
-sub print_name
+sub print_name($self, $state)
 {
-	my ($self, $state) = @_;
 	print {$state->{out}} $state->{currentheader}, $self->fullstring, "\n";
 }
 
 package OpenBSD::PackingElement::ExeclikeAction;
-sub print_name
+sub print_name($self, $state)
 {
-	my ($self, $state) = @_;
 	print {$state->{out}} $state->{currentheader}, "\@". 
 	    $self->keyword, " ", $self->{expanded}, "\n";
 }
@@ -115,36 +107,30 @@ sub print_name
 }
 
 package OpenBSD::PackingElement::TagBase;
-sub print_name
+sub print_name($self, $state)
 {
-	my ($self, $state) = @_;
 	print {$state->{out}} $state->{currentheader}, "\@". 
 	    join(' ', $self->keyword, $self->name, $self->{params}), "\n";
 }
 
 package OpenBSD::PackingElement::Tag;
-sub print_name
+sub print_name($self, $state)
 {
-	my ($self, $state) = @_;
 	print {$state->{out}} $state->{currentheader}, "\@". 
 	    join(' ', $self->keyword, $self->name, $self->{expanded}), "\n";
 }
 
 package OpenBSD::PackingElement::DirBase;
-sub print_name
+sub print_name($self, $state)
 {
-	my ($self, $state) = @_;
 	print {$state->{out}} $state->{currentheader}, 
 	    $self->object_name($state), "/\n";
 }
 
 package main;
 
-sub open_output
+sub open_output($state)
 {
-	my $state = shift;
-
-
 	if ($state->{nopipe} or -t STDOUT) {
 		$state->{out} = \*STDOUT;
 	} else {
@@ -155,17 +141,14 @@ sub open_output
 	}
 }
 
-sub print_out
+sub print_out($plist, $state)
 {
-	my ($plist, $state) = @_;
-
 	$plist->set_header($state);
 	$plist->print_name($state);
 }
 
-sub do_portsdir
+sub do_portsdir($state)
 {
-	my $state = shift;
 	my $make = $ENV{MAKE} || 'make';
 	my $target = defined $ENV{SUBDIRLIST} ? 
 	    'print-plist' : 'print-plist-all';
@@ -190,16 +173,14 @@ sub do_portsdir
 	close($in);
 }
 
-sub do_pkgdir
+sub do_pkgdir($state)
 {
-	my $state = shift;
-
 	require File::Find;
 	no warnings qw(once);
 	$state->fatal("Bad argument: #1 is not a directory", $state->{pkgdir})
 	    unless -d $state->{pkgdir};
 	File::Find::find(
-	    sub {
+	    sub() {
 		return unless -f $_;
 		my $plist = $state->repo->grabPlist($File::Find::name);
 		return unless defined $plist;
@@ -207,9 +188,8 @@ sub do_pkgdir
 	    }, $state->{pkgdir});
 }
 
-sub copy_stdin
+sub copy_stdin($state)
 {
-	my $state = shift;
 	while (<STDIN>) {
 		# if we find something that looks like a pkgpath we've done
 		# assume we were updating it
