@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.10 2023/05/29 11:14:19 beck Exp $
+.\" $OpenBSD: X509_STORE_CTX_set_verify_cb.3,v 1.11 2023/05/29 11:57:23 beck Exp $
 .\" full merge up to: OpenSSL aebb9aac Jul 19 09:27:53 2016 -0400
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -113,7 +113,7 @@ making incorrect assumptions about when the callback is called.
 Additionally, overriding
 .Fa ok
 may leave
-Fa ctx
+.Fa ctx
 in an inconsistent state and break invariants.
 .Pp
 Instead, customize certificate verification by configuring options on the
