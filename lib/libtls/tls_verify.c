@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.25 2023/05/28 09:06:34 beck Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.26 2023/05/29 14:12:36 beck Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -224,6 +224,8 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 	    NID_commonName, lastpos);
 	if (lastpos == -1)
 		goto done;
+	if (lastpos < 0)
+		goto err;
 	if (X509_NAME_get_index_by_NID(subject_name, NID_commonName, lastpos)
 	    != -1) {
 		/*
@@ -243,9 +245,7 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 	data = X509_NAME_ENTRY_get_data(X509_NAME_get_entry(subject_name,
 	    lastpos));
 	/*
-	 * Fail if we cannot encode as UTF-8, if the CN is of invalid length, or
-	 * if the UTF-8 encoding of the string contains a 0 byte. We treat any
-	 * certificate with such data in the CN as hostile and fail.
+	 * Fail if we cannot encode the CN bytes as UTF-8.
 	 */
 	if ((common_name_len = ASN1_STRING_to_UTF8(&utf8_bytes, data)) < 0) {
 		tls_set_errorx(ctx, "error verifying name '%s': "
@@ -253,14 +253,19 @@ tls_check_common_name(struct tls *ctx, X509 *cert, const char *name,
 		    "probably a malicious certificate", name);
 		goto err;
 	}
-
+	/*
+	 * Fail if the CN is of invalid length. RFC 5280 specifies that a CN
+	 * must be between 1 and 64 bytes long.
+	 */
 	if (common_name_len < 1 || common_name_len > 64) {
 		tls_set_errorx(ctx, "error verifying name '%s': "
 		    "Common Name field has invalid length, "
 		    "probably a malicious certificate", name);
 		goto err;
 	}
-
+	/*
+	 * Fail if the resulting text contains a NUL byte.
+	 */
 	if (memchr(utf8_bytes, 0, common_name_len) != NULL) {
 		tls_set_errorx(ctx, "error verifying name '%s': "
 		    "NUL byte in Common Name field, "
