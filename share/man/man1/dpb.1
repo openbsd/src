@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.31 2023/04/11 15:02:56 espie Exp $
+.\"	$OpenBSD: dpb.1,v 1.32 2023/05/29 09:05:24 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 11 2023 $
+.Dd $Mdocdate: May 29 2023 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -1340,7 +1340,7 @@ and finishes at
 .Sq package .
 .It Pa built-packages.log
 The actual list of fullpkgname.tgz as they get built.
-.It Pa concurrent.log
+.It Pa cpu-concurrency.log
 Shows the actual concurrency achieved as a result of job starvation /
 parallel handling.
 Only gets a new line when the value changes: pid timestamp jobs
