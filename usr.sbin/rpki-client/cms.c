@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.33 2023/03/13 19:46:55 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.34 2023/05/30 11:09:08 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -144,8 +144,17 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	/* RFC 6488 section 3 verify the CMS */
 	/* the version of SignedData and SignerInfos can't be verified */
 
-	sinfos = CMS_get0_SignerInfos(cms);
-	assert(sinfos != NULL);
+	/* Should only return NULL if cms is not of type SignedData. */
+	if ((sinfos = CMS_get0_SignerInfos(cms)) == NULL) {
+		if ((obj = CMS_get0_type(cms)) == NULL) {
+			warnx("%s: RFC 6488: missing content-type", fn);
+			goto out;
+		}
+		OBJ_obj2txt(buf, sizeof(buf), obj, 1);
+		warnx("%s: RFC 6488: no signerInfo in CMS object of type %s",
+		    fn, buf);
+		goto out;
+	}
 	if (sk_CMS_SignerInfo_num(sinfos) != 1) {
 		cryptowarnx("%s: RFC 6488: CMS has multiple signerInfos", fn);
 		goto out;
