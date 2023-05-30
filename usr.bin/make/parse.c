@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.134 2021/03/06 08:31:42 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.135 2023/05/30 04:42:21 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -1696,6 +1696,7 @@ void
 Parse_MainName(Lst listmain)	/* result list */
 {
 	if (mainNode == NULL) {
+		dump_unreadable();
 		Punt("no target to make.");
 		/*NOTREACHED*/
 	} else if (mainNode->type & OP_DOUBLEDEP) {

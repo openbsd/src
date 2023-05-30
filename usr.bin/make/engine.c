@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.70 2021/10/25 19:54:29 kn Exp $ */
+/*	$OpenBSD: engine.c,v 1.71 2023/05/30 04:42:21 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -84,6 +84,7 @@
 #include "extern.h"
 #include "lst.h"
 #include "timestamp.h"
+#include "main.h"
 #include "make.h"
 #include "pathnames.h"
 #include "error.h"
@@ -210,6 +211,7 @@ node_failure(GNode *gn)
 		fflush(stdout);
 	else {
 		print_errors();
+		dump_unreadable();
 		Punt(NULL);
 	}
 }
