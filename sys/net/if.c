@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.697 2023/05/16 14:32:54 jan Exp $	*/
+/*	$OpenBSD: if.c,v 1.698 2023/05/30 23:55:42 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3475,4 +3475,20 @@ net_tq(unsigned int ifindex)
 	sn = &softnets[ifindex % nettaskqs];
 
 	return (sn->sn_taskq);
+}
+
+void
+net_tq_barriers(const char *wmesg)
+{
+	struct task barriers[NET_TASKQ];
+	struct refcnt r = REFCNT_INITIALIZER();
+	int i;
+
+	for (i = 0; i < nitems(barriers); i++) {
+		task_set(&barriers[i], (void (*)(void *))refcnt_rele_wake, &r);
+		refcnt_take(&r);
+		task_add(softnets[i].sn_taskq, &barriers[i]);
+	}
+ 
+	refcnt_finalize(&r, wmesg);
 }
