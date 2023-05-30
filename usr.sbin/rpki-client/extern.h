@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.182 2023/05/30 12:14:48 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.183 2023/05/30 16:02:28 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -348,6 +348,7 @@ struct gbr {
 	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 notafter; /* Not After of the GBR EE */
 	time_t		 expires; /* when the signature path expires */
+	int		 talid; /* TAL the GBR is chained up to */
 };
 
 struct aspa_provider {
@@ -755,7 +756,7 @@ void		 proc_http(char *, int) __attribute__((noreturn));
 void		 proc_rrdp(int) __attribute__((noreturn));
 
 /* Repository handling */
-int		 filepath_add(struct filepath_tree *, char *);
+int		 filepath_add(struct filepath_tree *, char *, time_t);
 void		 rrdp_clear(unsigned int);
 void		 rrdp_save_state(unsigned int, struct rrdp_session *);
 int		 rrdp_handle_file(unsigned int, enum publish_type, char *,

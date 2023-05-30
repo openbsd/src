@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.46 2023/05/25 12:49:39 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.47 2023/05/30 16:02:28 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -119,6 +119,7 @@ static void		 remove_contents(char *);
 struct filepath {
 	RB_ENTRY(filepath)	entry;
 	char			*file;
+	time_t			 mtime;
 };
 
 static inline int
@@ -133,12 +134,13 @@ RB_PROTOTYPE(filepath_tree, filepath, entry, filepathcmp);
  * Functions to lookup which files have been accessed during computation.
  */
 int
-filepath_add(struct filepath_tree *tree, char *file)
+filepath_add(struct filepath_tree *tree, char *file, time_t mtime)
 {
 	struct filepath *fp;
 
 	if ((fp = malloc(sizeof(*fp))) == NULL)
 		err(1, NULL);
+	fp->mtime = mtime;
 	if ((fp->file = strdup(file)) == NULL)
 		err(1, NULL);
 
@@ -838,7 +840,7 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 
 	/* write new content or mark uri as deleted. */
 	if (pt == PUB_DEL) {
-		filepath_add(&rr->deleted, uri);
+		filepath_add(&rr->deleted, uri, 0);
 	} else {
 		fp = filepath_find(&rr->deleted, uri);
 		if (fp != NULL)
@@ -1536,6 +1538,28 @@ repo_move_valid(struct filepath_tree *tree)
 			base = strchr(fp->file + rrdpsz, '/');
 			assert(base != NULL);
 			fn = base + 1;
+
+			/*
+			 * Adjust file last modification time in order to
+			 * minimize RSYNC synchronization load after transport
+			 * failover.
+			 * While serializing RRDP datastructures to disk, set
+			 * the last modified timestamp to the CMS signing-time,
+			 * the X.509 notBefore, or CRL lastUpdate timestamp.
+			 */
+			if (fp->mtime != 0) {
+				int ret;
+				struct timespec ts[2];
+
+				ts[0].tv_nsec = UTIME_OMIT;
+				ts[1].tv_sec = fp->mtime;
+				ts[1].tv_nsec = 0;
+				ret = utimensat(AT_FDCWD, fp->file, ts, 0);
+				if (ret == -1) {
+					warn("utimensat %s", fp->file);
+					continue;
+				}
+			}
 		}
 
 		if (repo_mkpath(AT_FDCWD, fn) == -1)

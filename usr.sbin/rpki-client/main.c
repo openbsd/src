@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.240 2023/05/30 12:14:48 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.241 2023/05/30 16:02:28 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -559,6 +559,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	struct aspa	*aspa;
 	struct repo	*rp;
 	char		*file;
+	time_t		 mtime;
 	unsigned int	 id;
 	int		 talid;
 	int		 c;
@@ -573,12 +574,13 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	io_read_buf(b, &id, sizeof(id));
 	io_read_buf(b, &talid, sizeof(talid));
 	io_read_str(b, &file);
+	io_read_buf(b, &mtime, sizeof(mtime));
 
 	/* in filemode messages can be ignored, only the accounting matters */
 	if (filemode)
 		goto done;
 
-	if (filepath_add(&fpt, file) == 0) {
+	if (filepath_add(&fpt, file, mtime) == 0) {
 		warnx("%s: File already visited", file);
 		goto done;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.32 2023/05/30 12:02:22 claudio Exp $ */
+/*	$OpenBSD: filemode.c,v 1.33 2023/05/30 16:02:28 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -589,6 +589,7 @@ parse_file(struct entityq *q, struct msgbuf *msgq)
 	struct entity	*entp;
 	struct ibuf	*b;
 	struct tal	*tal;
+	time_t		 dummy = 0;
 
 	while ((entp = TAILQ_FIRST(q)) != NULL) {
 		TAILQ_REMOVE(q, entp, entries);
@@ -615,6 +616,7 @@ parse_file(struct entityq *q, struct msgbuf *msgq)
 		io_simple_buffer(b, &entp->repoid, sizeof(entp->repoid));
 		io_simple_buffer(b, &entp->talid, sizeof(entp->talid));
 		io_str_buffer(b, entp->file);
+		io_simple_buffer(b, &dummy, sizeof(dummy));
 		io_close_buffer(msgq, b);
 		entity_free(entp);
 	}
