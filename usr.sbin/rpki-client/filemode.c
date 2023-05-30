@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.31 2023/05/03 10:22:30 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.32 2023/05/30 12:02:22 claudio Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -39,6 +39,7 @@
 #include <openssl/x509v3.h>
 
 #include "extern.h"
+#include "json.h"
 
 extern int		 verbose;
 
@@ -302,15 +303,17 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 	time_t *expires = NULL, *notafter = NULL;
 	struct auth *a;
 	struct crl *c;
-	const char *errstr = NULL;
+	const char *errstr = NULL, *valid;
 	int status = 0;
 	char filehash[SHA256_DIGEST_LENGTH];
 	char *hash;
 	enum rtype type;
 	int is_ta = 0;
 
-	if (num++ > 0) {
-		if ((outformats & FORMAT_JSON) == 0)
+	if (outformats & FORMAT_JSON) {
+		json_do_start(stdout);
+	} else {
+		if (num++ > 0)
 			printf("--\n");
 	}
 
@@ -330,8 +333,8 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		errx(1, "base64_encode failed in %s", __func__);
 
 	if (outformats & FORMAT_JSON) {
-		printf("{\n\t\"file\": \"%s\",\n", file);
-		printf("\t\"hash_id\": \"%s\",\n", hash);
+		json_do_string("file", file);
+		json_do_string("hash_id", hash);
 	} else {
 		printf("File:                     %s\n", file);
 		printf("Hash identifier:          %s\n", hash);
@@ -470,7 +473,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
 			status = (cert != NULL);
 			if (outformats & FORMAT_JSON)
-				printf("\t\"tal\": \"%s\",\n", tal->descr);
+				json_do_string("tal", tal->descr);
 			else
 				printf("TAL:                      %s\n",
 				    tal->descr);
@@ -517,25 +520,25 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		}
 	}
 
-	if (outformats & FORMAT_JSON)
-		printf("\t\"validation\": \"");
-	else
-		printf("Validation:               ");
-
 	if (status)
-		printf("OK");
-	else {
-		if (aia == NULL)
-			printf("N/A");
-		else {
-			printf("Failed");
-			if (errstr != NULL)
-				printf(", %s", errstr);
-		}
+		valid = "OK";
+	else if (aia == NULL)
+		valid = "N/A";
+	else
+		valid = "Failed";
+
+	if (outformats & FORMAT_JSON) {
+		json_do_string("validation", valid);
+		if (errstr != NULL)
+			json_do_string("error", errstr);
+	} else {
+		printf("Validation:               %s", valid);
+		if (errstr != NULL)
+			printf(", %s", errstr);
 	}
 
 	if (outformats & FORMAT_JSON)
-		printf("\"\n}\n");
+		json_do_finish();
 	else {
 		printf("\n");
 
