@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.33 2021/05/16 03:39:27 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.34 2023/05/30 08:30:00 jsg Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.29 2003/09/06 09:08:35 rearnsha Exp $	*/
 
 /*
@@ -101,7 +101,7 @@ struct cpu_functions {
 	 *
 	 *	I-cache Synch (all or range):
 	 *		The goal is to synchronize the instruction stream,
-	 *		so you may beed to write-back dirty D-cache blocks
+	 *		so you may need to write-back dirty D-cache blocks
 	 *		first.  If a range is requested, and you can't
 	 *		synchronize just a range, you have to hit the whole
 	 *		thing.

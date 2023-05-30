@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.91 2023/05/29 02:26:14 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.92 2023/05/30 08:30:00 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1700,7 +1700,7 @@ cpu_psci_init(struct cpu_info *ci)
 	int idx, len, node;
 
 	/*
-	 * Hunt for the deppest idle state for this CPU.  This is
+	 * Hunt for the deepest idle state for this CPU.  This is
 	 * fairly complicated as it requires traversing quite a few
 	 * nodes in the device tree.  The first step is to look up the
 	 * "psci" power domain for this CPU.

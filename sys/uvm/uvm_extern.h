@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.167 2023/02/16 04:42:07 deraadt Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.168 2023/05/30 08:30:01 jsg Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -225,7 +225,7 @@ struct vmspace {
  * such as mbuf pools within address ranges that are reachable by devices
  * that perform DMA.
  *
- * It is also to discourge memory allocations from being satisfied from ranges
+ * It is also to discourage memory allocations from being satisfied from ranges
  * such as the ISA memory range, if they can be satisfied with allocation
  * from other ranges.
  *

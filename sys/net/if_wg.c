@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.26 2022/07/21 11:26:50 kn Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.27 2023/05/30 08:30:01 jsg Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -1463,7 +1463,7 @@ wg_handshake_worker(void *_sc)
  *  - The parallel queue is used to distribute the encryption across multiple
  *    threads.
  *  - The serial queue ensures that packets are not reordered and are
- *    delievered in sequence.
+ *    delivered in sequence.
  * The wg_tag attached to the packet contains two flags to help the two queues
  * interact.
  *  - t_done: The parallel queue has finished with the packet, now the serial

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_witness.c,v 1.49 2023/05/25 19:32:34 kurt Exp $	*/
+/*	$OpenBSD: subr_witness.c,v 1.50 2023/05/30 08:30:01 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Isilon Systems, Inc.
@@ -970,7 +970,7 @@ witness_checkorder(struct lock_object *lock, int flags,
 			/*
 			 * If we are locking a sleepable lock and this lock
 			 * isn't sleepable, we want to treat it as a lock
-			 * order violation to enfore a general lock order of
+			 * order violation to enforce a general lock order of
 			 * sleepable locks before non-sleepable locks.
 			 */
 			if (((lock->lo_flags & LO_SLEEPABLE) != 0 &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosboot.S,v 1.45 2022/09/01 08:18:20 krw Exp $	*/
+/*	$OpenBSD: biosboot.S,v 1.46 2023/05/30 08:30:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2003 Tobias Weingartner
@@ -420,7 +420,7 @@ load_blocks:
 
 	/*
 	 * The addw could be a 3 byte instruction, but stick to a 4 byte
-	 * one since the former inroduces mysterious hangs on *some*
+	 * one since the former introduces mysterious hangs on *some*
 	 * BIOS implementations, possibly alignment related.
 	 * Grand prize for somebody finding the root cause!
 	 */

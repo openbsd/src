@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_var.h,v 1.126 2023/05/07 16:23:23 bluhm Exp $	*/
+/*	$OpenBSD: if_var.h,v 1.127 2023/05/30 08:30:01 jsg Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -186,7 +186,7 @@ struct ifnet {				/* and the entries */
 
 	struct sockaddr_dl *if_sadl;	/* [N] pointer to our sockaddr_dl */
 
-	struct	nd_ifinfo *if_nd;	/* [I] IPv6 Neighour Discovery info */
+	struct	nd_ifinfo *if_nd;	/* [I] IPv6 Neighbor Discovery info */
 };
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type

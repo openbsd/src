@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmapae.c,v 1.70 2023/04/13 15:23:22 miod Exp $	*/
+/*	$OpenBSD: pmapae.c,v 1.71 2023/05/30 08:30:01 jsg Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Michael Shalayeff
@@ -1965,7 +1965,7 @@ pmap_enter_special_pae(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int32_t flags)
 	/* npa = physaddr of PT page */
 	npa = pd[l2idx] & PMAP_PA_MASK;
 
-	/* Valide PDE for the 2MB region containing va? */
+	/* Valid PDE for the 2MB region containing va? */
 	if (!npa) {
 		/*
 		 * No valid PDE - allocate PT page and set PDE.  We

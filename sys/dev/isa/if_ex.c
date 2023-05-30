@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ex.c,v 1.48 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: if_ex.c,v 1.49 2023/05/30 08:30:01 jsg Exp $	*/
 /*
  * Copyright (c) 1997, Donald A. Schmidt
  * Copyright (c) 1996, Javier Martín Rueda (jmrueda@diatel.upm.es)
@@ -216,7 +216,7 @@ ex_probe(struct device *parent, void *match, void *aux)
 	tmp = ex_eeprom_read(sc, EE_IRQ_No) & IRQ_No_Mask;
 	if (ia->ia_irq > 0) {
 		if (ee2irqmap[tmp] != ia->ia_irq)
-			printf("ex: WARING: board's EEPROM is configured for IRQ %d, using %d\n", ee2irqmap[tmp], ia->ia_irq);
+			printf("ex: WARNING: board's EEPROM is configured for IRQ %d, using %d\n", ee2irqmap[tmp], ia->ia_irq);
 		sc->irq_no = ia->ia_irq;
 	}
 	else {

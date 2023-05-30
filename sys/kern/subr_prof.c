@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.33 2023/04/25 01:32:36 cheloha Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.34 2023/05/30 08:30:01 jsg Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -137,7 +137,7 @@ prof_state_toggle(struct gmonparam *gp, int oldstate)
 #if !defined(GPROF)
 		/*
 		 * If this is not a profiling kernel, we need to patch
-		 * all symbols that can be instrummented.
+		 * all symbols that can be instrumented.
 		 */
 		error = db_prof_enable();
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.247 2023/04/24 10:22:06 kettenis Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.248 2023/05/30 08:30:01 jsg Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -533,7 +533,7 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	/*
 	 * XXX As a transition mechanism, we don't enforce branch
-	 * target control floe integrety on partitions mounted with
+	 * target control flow integrity on partitions mounted with
 	 * the wxallowed flag.
 	 */
 	if (pr->ps_textvp->v_mount &&

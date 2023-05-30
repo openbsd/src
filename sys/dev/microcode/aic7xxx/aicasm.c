@@ -1,4 +1,4 @@
-/* $OpenBSD: aicasm.c,v 1.16 2014/12/19 22:44:58 guenther Exp $ */
+/* $OpenBSD: aicasm.c,v 1.17 2023/05/30 08:30:01 jsg Exp $ */
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
  *
@@ -38,7 +38,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aicasm.c,v 1.16 2014/12/19 22:44:58 guenther Exp $
+ * $Id: aicasm.c,v 1.17 2023/05/30 08:30:01 jsg Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm.c,v 1.37 2004/03/12 21:45:25 trhodes Exp $
  */
@@ -253,7 +253,7 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	if (argc != 1) {
-		fprintf(stderr, "%s: No input file specifiled\n", appname);
+		fprintf(stderr, "%s: No input file specified\n", appname);
 		usage();
 		/* NOTREACHED */
 	}

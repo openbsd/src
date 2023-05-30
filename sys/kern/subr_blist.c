@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_blist.c,v 1.3 2022/08/13 16:02:15 semarie Exp $ */
+/* $OpenBSD: subr_blist.c,v 1.4 2023/05/30 08:30:01 jsg Exp $ */
 /* DragonFlyBSD:7b80531f545c7d3c51c1660130c71d01f6bccbe0:/sys/kern/subr_blist.c */
 /*
  * BLIST.C -	Bitmap allocator/deallocator, using a radix tree with hinting
@@ -70,8 +70,8 @@
  *	due to swap interleaving not all that much less), but the blist code
  *	scales much, much better.
  *
- *	LAYOUT: The radix tree is layed out recursively using a
- *	linear array.  Each meta node is immediately followed (layed out
+ *	LAYOUT: The radix tree is laid out recursively using a
+ *	linear array.  Each meta node is immediately followed (laid out
  *	sequentially in memory) by BLIST_META_RADIX lower level nodes.  This
  *	is a recursive structure but one that can be easily scanned through
  *	a very simple 'skip' calculation.  In order to support large radixes,
@@ -90,7 +90,7 @@
  *	ranges.
  *
  *	NOTE: The radix may exceed BLIST_BMAP_RADIX bits in order to support
- *	      up to 2^(BLIST_BMAP_RADIX-1) blocks.  The first divison will
+ *	      up to 2^(BLIST_BMAP_RADIX-1) blocks.  The first division will
  *	      drop the radix down and fit it within a signed BLIST_BMAP_RADIX
  *	      bit integer.
  *
@@ -285,7 +285,7 @@ blist_allocat(blist_t bl, swblk_t count, swblk_t blkat)
 
 /*
  * blist_free() -	free up space in the block bitmap.  Return the base
- *		     	of a contiguous region.  Panic if an inconsistancy is
+ *		     	of a contiguous region.  Panic if an inconsistency is
  *			found.
  */
 
@@ -418,7 +418,7 @@ blst_radix_gapfind(blmeta_t *scan, swblk_t blk, swblk_t radix, swblk_t skip,
 	swblk_t next_skip;
 
 	if (radix == BLIST_BMAP_RADIX) {
-		/* leaf node: we considere only completely free bitmap as free */
+		/* leaf node: we consider only completely free bitmaps as free */
 		if (state == GAPFIND_FIRSTFREE) {
 			if (scan->u.bmu_bitmap == (u_swblk_t)-1) {
 				/* node is fully free */
@@ -729,7 +729,7 @@ blst_leaf_free(blmeta_t *scan, swblk_t blk, swblk_t count)
 	 * We could probably do a better job here.  We are required to make
 	 * bighint at least as large as the biggest contiguous block of
 	 * data.  If we just shoehorn it, a little extra overhead will
-	 * be incured on the next allocation (but only that one typically).
+	 * be incurred on the next allocation (but only that one typically).
 	 */
 	scan->bm_bighint = BLIST_BMAP_RADIX;
 }

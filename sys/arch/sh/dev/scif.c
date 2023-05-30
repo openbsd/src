@@ -1,4 +1,4 @@
-/*	$OpenBSD: scif.c,v 1.22 2022/07/02 08:50:41 visa Exp $	*/
+/*	$OpenBSD: scif.c,v 1.23 2023/05/30 08:30:01 jsg Exp $	*/
 /*	$NetBSD: scif.c,v 1.47 2006/07/23 22:06:06 ad Exp $ */
 
 /*-
@@ -238,7 +238,7 @@ static int scif_attached;
 void InitializeScif(unsigned int);
 
 /*
- * following functions are debugging prupose only
+ * following functions are for debugging purposes only
  */
 #define	CR      0x0D
 #define	USART_ON (unsigned int)~0x08

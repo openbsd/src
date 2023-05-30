@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.11 2023/04/24 01:33:32 dlg Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.12 2023/05/30 08:30:01 jsg Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -240,7 +240,7 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ifd.if_ifp = ifp;
 	if_register(&sc->sc_ifd);
 
-	/* force a configuraton of the clocks/mac */
+	/* force a configuration of the clocks/mac */
 	if (sc->sc_fixed_link)
 		sc->sc_mii.mii_statchg(self);
 }
