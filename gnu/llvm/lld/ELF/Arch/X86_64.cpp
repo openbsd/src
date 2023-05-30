@@ -1122,14 +1122,14 @@ void RetpolineZNow::writePltHeader(uint8_t *buf) const {
 void RetpolineZNow::writePlt(uint8_t *buf, const Symbol &sym,
                              uint64_t pltEntryAddr) const {
   const uint8_t insn[] = {
-      0x4c, 0x8b, 0x1d, 0,    0, 0, 0, // mov foo@GOTPLT(%rip), %r11
-      0xe9, 0,    0,    0,    0,       // jmp plt+0
-      0xcc, 0xcc, 0xcc, 0xcc,          // int3; padding
+      0xf3, 0x0f, 0x1e, 0xfa,          // 0: endbr64
+      0x4c, 0x8b, 0x1d, 0,    0, 0, 0, // 4: mov foo@GOTPLT(%rip), %r11
+      0xe9, 0,    0,    0,    0,       // b: jmp plt+0
   };
   memcpy(buf, insn, sizeof(insn));
 
-  write32le(buf + 3, sym.getGotPltVA() - pltEntryAddr - 7);
-  write32le(buf + 8, in.plt->getVA() - pltEntryAddr - 12);
+  write32le(buf + 7, sym.getGotPltVA() - pltEntryAddr - 11);
+  write32le(buf + 12, in.plt->getVA() - pltEntryAddr - 16);
 }
 
 static TargetInfo *getTargetInfo() {
