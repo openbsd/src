@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.181 2023/05/09 10:34:32 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.182 2023/05/30 12:14:48 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -951,6 +951,6 @@ int	mkpathat(int, const char *);
  */
 #define X509_TIME_MAX 253402300799LL
 #define X509_TIME_MIN -62167219200LL
-extern int64_t evaluation_time;
+extern time_t  get_current_time(void);
 
 #endif /* ! EXTERN_H */

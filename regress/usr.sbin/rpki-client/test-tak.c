@@ -1,4 +1,4 @@
-/*	$Id: test-tak.c,v 1.4 2023/04/27 08:37:53 beck Exp $ */
+/*	$Id: test-tak.c,v 1.5 2023/05/30 12:14:48 claudio Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -34,8 +34,6 @@
 int outformats;
 int verbose;
 int filemode;
-
-int64_t evaluation_time;
 
 int
 main(int argc, char *argv[])
@@ -97,4 +95,10 @@ main(int argc, char *argv[])
 
 	printf("OK\n");
 	return 0;
+}
+
+time_t
+get_current_time(void)
+{
+	return time(NULL);
 }
