@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.6 2020/12/17 00:51:12 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.7 2023/05/30 15:10:39 krw Exp $
 #
 # Copyright (c) 2010 Theo de Raadt <deraadt@openbsd.org>
 # Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -43,6 +43,15 @@ DISK_SIZES =	  18000 \
 		 300000 \
 		 900000
 
+.if ${MACHINE} == "sparc64"
+CFLAGS+= -DSUN_CYLCHECK -DSUN_AAT0
+FDISKOPT= -v
+OK= sparc64.ok
+.else
+FDISKOPT= -iy
+OK= ok
+.endif
+
 DISKLABEL ?=	${.OBJDIR}/disklabel
 
 CLEANFILES +=	*.tmp *.out *.dl *.fstab diskimage disklabel.c manual.c
@@ -69,7 +78,7 @@ manual.c:
 
 REGRESS_TARGETS +=	run-disklabel-$s
 run-disklabel-$s: $s.out
-	diff -up ${.CURDIR}/$s.ok $s.out
+	diff -up ${.CURDIR}/$s.${OK} $s.out
 
 $s.out: ${DISKLABEL}
 	rm -f $s.tmp $s.out
@@ -78,7 +87,7 @@ $s.out: ${DISKLABEL}
 	echo "=== Start ${s}MB disk ===" >$s.tmp
 	dd if=/dev/zero of=diskimage bs=1m count=1 seek=$s status=none
 	${SUDO} vnconfig vnd0 diskimage
-	${SUDO} fdisk -iy vnd0 >>$s.tmp
+	${SUDO} fdisk ${FDISKOPT} vnd0 >>$s.tmp
 	echo >>$s.tmp
 	${SUDO} ${DISKLABEL} -A -p g vnd0 >$s.dl
 	${SUDO} ${DISKLABEL} -Aw -f $s.fstab vnd0 >>$s.dl
@@ -90,9 +99,9 @@ $s.out: ${DISKLABEL}
 	mv $s.tmp $s.out
 
 $s-update: $s.out
-	cp $s.out ${.CURDIR}/$s.ok
+	cp $s.out ${.CURDIR}/$s.${OK}
 
-# replace all .ok files with the new generated .out files
+# replace all .${OK} files with the new generated .out files
 update: $s-update
 
 .endfor
