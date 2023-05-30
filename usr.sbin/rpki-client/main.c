@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.238 2023/05/26 14:57:38 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.239 2023/05/30 12:12:06 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1450,9 +1450,10 @@ main(int argc, char *argv[])
 	printf("Ghostbuster records: %u\n", stats.repo_tal_stats.gbrs);
 	printf("Trust Anchor Keys: %u\n", stats.repo_tal_stats.taks);
 	printf("Repositories: %u\n", stats.repos);
-	printf("Cleanup: removed %u files, %u directories, %u superfluous\n",
+	printf("Cleanup: removed %u files, %u directories\n"
+	    "Repository cleanup: kept %u and removed %u superfluous files\n",
 	    stats.repo_stats.del_files, stats.repo_stats.del_dirs,
-	    stats.repo_stats.extra_files);
+	    stats.repo_stats.extra_files, stats.repo_stats.del_extra_files);
 	printf("VRP Entries: %u (%u unique)\n", stats.repo_tal_stats.vrps,
 	    stats.repo_tal_stats.vrps_uniqs);
 	printf("VAP Entries: %u (%u unique)\n", stats.repo_tal_stats.vaps,
