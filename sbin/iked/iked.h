@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.213 2023/05/23 13:57:14 claudio Exp $	*/
+/*	$OpenBSD: iked.h,v 1.214 2023/05/30 08:41:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1279,7 +1279,6 @@ struct ibuf *
 	 ibuf_dup(struct ibuf *);
 struct ibuf *
 	 ibuf_random(size_t);
-int	 ibuf_prepend(struct ibuf *, void *, size_t);
 int	 ibuf_strcat(struct ibuf **, const char *);
 int	 ibuf_strlen(struct ibuf *);
 

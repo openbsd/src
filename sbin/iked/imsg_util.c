@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.16 2023/05/23 13:57:14 claudio Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.17 2023/05/30 08:41:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -142,25 +142,6 @@ ibuf_setsize(struct ibuf *buf, size_t len)
 	if (len > buf->size)
 		return (-1);
 	buf->wpos = len;
-	return (0);
-}
-
-int
-ibuf_prepend(struct ibuf *buf, void *data, size_t len)
-{
-	struct ibuf	*new;
-
-	/* Swap buffers (we could also use memmove here) */
-	if ((new = ibuf_new(data, len)) == NULL)
-		return (-1);
-	if (ibuf_cat(new, buf) == -1) {
-		ibuf_free(new);
-		return (-1);
-	}
-	free(buf->buf);
-	memcpy(buf, new, sizeof(*buf));
-	free(new);
-
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.92 2023/05/23 13:57:14 claudio Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.93 2023/05/30 08:41:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -290,10 +290,18 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	    ibuf_length(buf), isnatt ? ", NAT-T" : "");
 
 	if (isnatt) {
-		if (ibuf_prepend(buf, &natt, sizeof(natt)) == -1) {
+		struct ibuf *new;
+		if ((new = ibuf_new(&natt, sizeof(natt))) == NULL) {
 			log_debug("%s: failed to set NAT-T", __func__);
 			return (-1);
 		}
+		if (ibuf_cat(new, buf) == -1) {
+			ibuf_free(new);
+			log_debug("%s: failed to set NAT-T", __func__);
+			return (-1);
+		}
+		ibuf_free(buf);
+		buf = msg->msg_data = new;
 	}
 
 	if (sendtofrom(msg->msg_fd, ibuf_data(buf), ibuf_size(buf), 0,
