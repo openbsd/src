@@ -1,4 +1,4 @@
-/*	$OpenBSD: to.c,v 1.49 2023/05/10 08:02:10 op Exp $	*/
+/*	$OpenBSD: to.c,v 1.50 2023/05/31 16:51:46 op Exp $	*/
 
 /*
  * Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #if IO_TLS
 #include <tls.h>
 #endif

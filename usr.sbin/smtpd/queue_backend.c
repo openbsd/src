@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue_backend.c,v 1.68 2021/06/14 17:58:16 eric Exp $	*/
+/*	$OpenBSD: queue_backend.c,v 1.69 2023/05/31 16:51:46 op Exp $	*/
 
 /*
  * Copyright (c) 2011 Gilles Chehade <gilles@poolp.org>
@@ -23,6 +23,7 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"

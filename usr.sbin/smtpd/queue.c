@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.c,v 1.194 2021/08/02 12:33:34 eric Exp $	*/
+/*	$OpenBSD: queue.c,v 1.195 2023/05/31 16:51:46 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -23,6 +23,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta_session.c,v 1.148 2023/05/15 12:03:04 op Exp $	*/
+/*	$OpenBSD: mta_session.c,v 1.149 2023/05/31 16:51:46 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -26,6 +26,7 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <tls.h>
 #include <unistd.h>
 
