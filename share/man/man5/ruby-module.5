@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ruby-module.5,v 1.39 2023/01/22 22:38:23 tb Exp $
+.\"	$OpenBSD: ruby-module.5,v 1.40 2023/05/31 15:27:45 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 22 2023 $
+.Dd $Mdocdate: May 31 2023 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -195,11 +195,11 @@ is necessary so that if a ruby x.y package is being built for the current
 port, it depends on the ruby x.y package of the
 dependencies.
 .Pp
-The ports system defaults to using ruby 3.1 if the version of ruby is not
+The ports system defaults to using ruby 3.2 if the version of ruby is not
 specified.
 If you want to specify a version for a gem port, use a specific
 .Ev FLAVOR ,
-such as ruby30 to use ruby 3.0.
+such as ruby31 to use ruby 3.1.
 If you want to specify a version for a non-gem port, set
 .Ev MODRUBY_REV
 for the version of ruby you want to use (3.0, 3.1, 3.2, jruby).
@@ -218,7 +218,7 @@ When
 .Ev MODRUBY_HANDLE_FLAVORS
 is Yes, the ports system automatically adds the appropriate prefix to the
 .Ev FULLPKGNAME
-(e.g. jruby- for jruby, ruby31- for ruby 3.1).
+(e.g. jruby- for jruby, ruby32- for ruby 3.2).
 Additionally, it adds
 .Ev GEM_BIN_SUFFIX
 and
