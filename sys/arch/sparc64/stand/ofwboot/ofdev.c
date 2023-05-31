@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.36 2023/05/21 17:04:22 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.37 2023/05/31 13:49:56 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -434,14 +434,9 @@ static char *
 search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
     u_long off0)
 {
-	size_t read;
-	struct mbr_partition *p;
-	int i;
-	u_long poff;
-
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
-	int error;
+	size_t read;
 
 	/* minimal requirements for archetypal disk label */
 	if (DL_GETDSIZE(lp) == 0)
@@ -485,7 +480,6 @@ load_disklabel(struct of_dev *ofdev, struct disklabel *label)
 	int error = 0;
 	char *errmsg = NULL;
 
-	/* First try to find a disklabel without MBR partitions */
 	DNPRINTF(BOOT_D_OFDEV, "load_disklabel: trying to read disklabel\n");
 	if (strategy(ofdev, F_READ,
 		     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
@@ -496,9 +490,7 @@ load_disklabel(struct of_dev *ofdev, struct disklabel *label)
 			DNPRINTF(BOOT_D_OFDEV,
 			    "load_disklabel: getdisklabel says %s\n", errmsg);
 #endif
-		/* Else try MBR partitions */
-		errmsg = search_label(ofdev, LABELSECTOR, buf,
-		    label, 0);
+		errmsg = search_label(ofdev, LABELSECTOR, buf, label, 0);
 		if (errmsg) {
 			printf("load_disklabel: search_label says %s\n",
 			    errmsg);
