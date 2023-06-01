@@ -1,4 +1,4 @@
-/*	$OpenBSD: softraid_sparc64.c,v 1.6 2022/09/02 08:13:03 kn Exp $	*/
+/*	$OpenBSD: softraid_sparc64.c,v 1.7 2023/06/01 17:24:56 krw Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Sing <jsing@openbsd.org>
@@ -49,7 +49,7 @@ srprobe_meta_opt_load(struct sr_metadata *sm, struct sr_meta_opt_head *som)
 	for (i = 0; i < sm->ssdi.ssd_opt_no; i++) {
 
 #ifdef DEBUG
-		printf("Found optional metadata of type %u, length %u\n", 
+		printf("Found optional metadata of type %u, length %u\n",
 		    omh->som_type, omh->som_length);
 #endif
 

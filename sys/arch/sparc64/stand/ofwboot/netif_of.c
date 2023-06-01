@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif_of.c,v 1.7 2014/08/21 14:24:08 mpi Exp $	*/
+/*	$OpenBSD: netif_of.c,v 1.8 2023/06/01 17:24:56 krw Exp $	*/
 /*	$NetBSD: netif_of.c,v 1.1 2000/08/20 14:58:39 mrg Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ netif_open(void *machdep_hint)
 	struct iodesc *io;
 	int fd, error;
 	char addr[32];
-	
+
 	DNPRINTF(BOOT_D_OFNET, "netif_open...");
 
 	/* find a free socket */
@@ -88,7 +88,7 @@ netif_open(void *machdep_hint)
 
 	netif_of.nif_devdata = op;
 	io->io_netif = &netif_of;
-	
+
 	/* Put our ethernet address in io->myea */
 	OF_getprop(OF_instance_to_package(op->handle),
 		   "mac-address", io->myea, sizeof io->myea);

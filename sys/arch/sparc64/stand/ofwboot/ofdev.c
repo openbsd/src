@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.37 2023/05/31 13:49:56 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.38 2023/06/01 17:24:56 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -683,7 +683,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		parent = OF_parent(dhandle);
 		if (parent && OF_getprop(parent, "device_type", buf,
 		    sizeof(buf)) > 0 && strcmp(buf, "ide") == 0) {
-			DNPRINTF(BOOT_D_OFDEV, 
+			DNPRINTF(BOOT_D_OFDEV,
 			    "devopen: Disable writing for IDE block device\n");
 			of->f_flags |= F_NOWRITE;
 		}

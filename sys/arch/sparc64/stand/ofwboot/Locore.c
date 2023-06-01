@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.17 2022/10/17 18:55:20 kettenis Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.18 2023/06/01 17:24:56 krw Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 2000/08/20 14:58:36 mrg Exp $	*/
 
 /*
@@ -609,7 +609,7 @@ OF_child(int phandle)
 		cell_t phandle;
 		cell_t child;
 	} args;
-	
+
 	args.name = ADR2CELL("child");
 	args.nargs = 1;
 	args.nreturns = 1;
@@ -629,7 +629,7 @@ OF_parent(int phandle)
 		cell_t phandle;
 		cell_t parent;
 	} args;
-	
+
 	args.name = ADR2CELL("parent");
 	args.nargs = 1;
 	args.nreturns = 1;
@@ -651,7 +651,7 @@ OF_package_to_path(int phandle, char *buf, int buflen)
 		cell_t buflen;
 		cell_t length;
 	} args;
-	
+
 	if (buflen > PAGE_SIZE)
 		return -1;
 	args.name = ADR2CELL("package-to-path");
