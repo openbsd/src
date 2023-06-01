@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.h,v 1.4 2020/06/22 12:20:44 jasper Exp $ */
+/*	$OpenBSD: if_wg.h,v 1.5 2023/06/01 18:57:53 kn Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -61,6 +61,7 @@ struct wg_aip_io {
 #define WG_PEER_REPLACE_AIPS		(1 << 4)
 #define WG_PEER_REMOVE			(1 << 5)
 #define WG_PEER_UPDATE			(1 << 6)
+#define WG_PEER_SET_DESCRIPTION		(1 << 7)
 
 #define p_sa		p_endpoint.sa_sa
 #define p_sin		p_endpoint.sa_sin
@@ -80,6 +81,7 @@ struct wg_peer_io {
 	uint64_t		p_txbytes;
 	uint64_t		p_rxbytes;
 	struct timespec		p_last_handshake; /* nanotime */
+	char			p_description[IFDESCRSIZE];
 	size_t			p_aips_count;
 	struct wg_aip_io	p_aips[];
 };

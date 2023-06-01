@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.464 2023/05/16 14:32:54 jan Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.465 2023/06/01 18:57:54 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -351,6 +351,7 @@ void	transceiverdump(const char *, int);
 
 /* WG */
 void	setwgpeer(const char *, int);
+void	setwgpeerdesc(const char *, int);
 void	setwgpeerep(const char *, const char *);
 void	setwgpeeraip(const char *, int);
 void	setwgpeerpsk(const char *, int);
@@ -360,6 +361,7 @@ void	setwgkey(const char *, int);
 void	setwgrtable(const char *, int);
 
 void	unsetwgpeer(const char *, int);
+void	unsetwgpeerdesc(const char *, int);
 void	unsetwgpeerpsk(const char *, int);
 void	unsetwgpeerall(const char *, int);
 
@@ -619,6 +621,8 @@ const struct	cmd {
 	{ "sffdump",	0,		0,		transceiverdump },
 
 	{ "wgpeer",	NEXTARG,	A_WIREGUARD,	setwgpeer},
+	{ "wgdescription", NEXTARG,	A_WIREGUARD,	setwgpeerdesc},
+	{ "wgdescr",	NEXTARG,	A_WIREGUARD,	setwgpeerdesc},
 	{ "wgendpoint",	NEXTARG2,	A_WIREGUARD,	NULL,	setwgpeerep},
 	{ "wgaip",	NEXTARG,	A_WIREGUARD,	setwgpeeraip},
 	{ "wgpsk",	NEXTARG,	A_WIREGUARD,	setwgpeerpsk},
@@ -627,7 +631,8 @@ const struct	cmd {
 	{ "wgkey",	NEXTARG,	A_WIREGUARD,	setwgkey},
 	{ "wgrtable",	NEXTARG,	A_WIREGUARD,	setwgrtable},
 	{ "-wgpeer",	NEXTARG,	A_WIREGUARD,	unsetwgpeer},
-	{ "-wgpsk",	0,		A_WIREGUARD,	unsetwgpeerpsk},
+	{ "-wgdescription", 0,		A_WIREGUARD,	unsetwgpeerdesc},
+	{ "-wgdescr",	0,		A_WIREGUARD,	unsetwgpeerdesc},
 	{ "-wgpeerall",	0,		A_WIREGUARD,	unsetwgpeerall},
 
 #else /* SMALL */
@@ -5736,6 +5741,15 @@ setwgpeer(const char *peerkey_b64, int param)
 }
 
 void
+setwgpeerdesc(const char *descr, int param)
+{
+	if (wg_peer == NULL)
+		errx(1, "wgdescr: wgpeer not set");
+	wg_peer->p_flags |= WG_PEER_SET_DESCRIPTION;
+	strlcpy(wg_peer->p_description, descr, IFDESCRSIZE);
+}
+
+void
 setwgpeeraip(const char *aip, int param)
 {
 	int res;
@@ -5839,6 +5853,15 @@ unsetwgpeer(const char *peerkey_b64, int param)
 }
 
 void
+unsetwgpeerdesc(const char *descr, int param)
+{
+	if (wg_peer == NULL)
+		errx(1, "wgdescr: wgpeer not set");
+	wg_peer->p_flags |= WG_PEER_SET_DESCRIPTION;
+	strlcpy(wg_peer->p_description, "", IFDESCRSIZE);
+}
+
+void
 unsetwgpeerpsk(const char *value, int param)
 {
 	if (wg_peer == NULL)
@@ -5907,6 +5930,10 @@ wg_status(int ifaliases)
 			b64_ntop(wg_peer->p_public, WG_KEY_LEN,
 			    key, sizeof(key));
 			printf("\twgpeer %s\n", key);
+
+			if (strlen(wg_peer->p_description))
+				printf("\t\twgdescr: %s\n",
+				    wg_peer->p_description);
 
 			if (wg_peer->p_flags & WG_PEER_HAS_PSK)
 				printf("\t\twgpsk (present)\n");
