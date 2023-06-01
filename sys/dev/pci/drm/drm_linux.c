@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.97 2023/03/15 08:24:56 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.98 2023/06/01 10:21:26 claudio Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -173,8 +173,13 @@ schedule_timeout_uninterruptible(long timeout)
 int
 wake_up_process(struct proc *p)
 {
+	int s, rv;
+
+	SCHED_LOCK(s);
 	atomic_cas_ptr(&sch_proc, p, NULL);
-	return wakeup_proc(p, NULL);
+	rv = wakeup_proc(p, NULL, 0);
+	SCHED_UNLOCK(s);
+	return rv;
 }
 
 void

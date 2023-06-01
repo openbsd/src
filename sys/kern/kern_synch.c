@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.191 2023/02/15 20:43:41 mvs Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.192 2023/06/01 10:21:26 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -470,20 +470,22 @@ sleep_signal_check(void)
 }
 
 int
-wakeup_proc(struct proc *p, const volatile void *chan)
+wakeup_proc(struct proc *p, const volatile void *chan, int flags)
 {
-	int s, awakened = 0;
+	int awakened = 0;
 
-	SCHED_LOCK(s);
+	SCHED_ASSERT_LOCKED();
+
 	if (p->p_wchan != NULL &&
 	   ((chan == NULL) || (p->p_wchan == chan))) {
 		awakened = 1;
+		if (flags)
+			atomic_setbits_int(&p->p_flag, flags);
 		if (p->p_stat == SSLEEP)
 			setrunnable(p);
 		else
 			unsleep(p);
 	}
-	SCHED_UNLOCK(s);
 
 	return awakened;
 }
@@ -502,8 +504,7 @@ endtsleep(void *arg)
 	int s;
 
 	SCHED_LOCK(s);
-	if (wakeup_proc(p, NULL))
-		atomic_setbits_int(&p->p_flag, P_TIMEOUT);
+	wakeup_proc(p, NULL, P_TIMEOUT);
 	SCHED_UNLOCK(s);
 }
 
@@ -548,7 +549,7 @@ wakeup_n(const volatile void *ident, int n)
 		if (p->p_stat != SSLEEP && p->p_stat != SSTOP)
 			panic("wakeup: p_stat is %d", (int)p->p_stat);
 #endif
-		if (wakeup_proc(p, ident))
+		if (wakeup_proc(p, ident, 0))
 			--n;
 	}
 	SCHED_UNLOCK(s);
