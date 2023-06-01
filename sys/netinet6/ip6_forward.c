@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.109 2023/04/05 13:56:31 kn Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.110 2023/06/01 09:05:33 jan Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -63,8 +63,10 @@
 #include <netinet/ip_ah.h>
 #include <netinet/ip_esp.h>
 #include <netinet/udp.h>
-#include <netinet/tcp.h>
 #endif
+#include <netinet/tcp.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 
 /*
  * Forward a packet.  If some error occurs return the sender
@@ -316,7 +318,11 @@ reroute:
 		goto reroute;
 	}
 #endif
-	in6_proto_cksum_out(m, ifp);
+
+	error = tcp_if_output_tso(ifp, &m, sin6tosa(sin6), rt, IFCAP_TSOv6,
+	    ifp->if_mtu);
+	if (error || m == NULL)
+		goto freecopy;
 
 	/* Check the size after pf_test to give pf a chance to refragment. */
 	if (m->m_pkthdr.len > ifp->if_mtu) {
@@ -327,6 +333,7 @@ reroute:
 		goto out;
 	}
 
+	in6_proto_cksum_out(m, ifp);
 	error = ifp->if_output(ifp, m, sin6tosa(sin6), rt);
 	if (error) {
 		ip6stat_inc(ip6s_cantforward);
