@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.26 2023/05/29 14:12:36 beck Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.27 2023/06/01 07:29:15 tb Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -92,15 +92,21 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 	union tls_addr addrbuf;
 	int addrlen, type;
 	int count, i;
+	int critical = 0;
 	int rv = 0;
 
 	*alt_match = 0;
 	*alt_exists = 0;
 
-	altname_stack = X509_get_ext_d2i(cert, NID_subject_alt_name,
-	    NULL, NULL);
-	if (altname_stack == NULL)
+	altname_stack = X509_get_ext_d2i(cert, NID_subject_alt_name, &critical,
+	    NULL);
+	if (altname_stack == NULL) {
+		if (critical != -1) {
+			tls_set_errorx(ctx, "error decoding subjectAltName");
+			return -1;
+		}
 		return 0;
+	}
 
 	if (inet_pton(AF_INET, name, &addrbuf) == 1) {
 		type = GEN_IPADD;
