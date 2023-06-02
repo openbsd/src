@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.14 2023/06/01 17:24:56 krw Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.15 2023/06/02 00:10:25 krw Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -221,7 +221,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 		if (shp->sh_type != SHT_SYMTAB
 		    && shp->sh_type != SHT_STRTAB
 		    && strcmp(shstr + shp->sh_name, ELF_CTF)) {
-			shp->sh_offset = 0; 
+			shp->sh_offset = 0;
 			continue;
 		}
 		size += shp->sh_size;
