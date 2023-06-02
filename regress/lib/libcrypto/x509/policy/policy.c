@@ -1,4 +1,4 @@
-/* $OpenBSD: policy.c,v 1.11 2023/05/29 15:52:46 beck Exp $ */
+/* $OpenBSD: policy.c,v 1.12 2023/06/02 08:35:10 tb Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2020-2023 Bob Beck <beck@openbsd.org>
@@ -279,7 +279,7 @@ struct verify_cert_test verify_cert_tests[] = {
 	},
 	/*  The policy extension cannot be parsed. */
 	{
-		.id = "1 in invalid intermediate poicy",
+		.id = "1 in invalid intermediate policy",
 		.root_file = CERTSDIR "/" "policy_root.pem",
 		.intermediate_file = CERTSDIR "/" "policy_intermediate_invalid.pem",
 		.leaf_file = CERTSDIR "/" "policy_leaf.pem",
