@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.65 2023/05/19 01:12:23 guenther Exp $
+.\" $OpenBSD: pledge.2,v 1.66 2023/06/02 17:44:29 cheloha Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 19 2023 $
+.Dd $Mdocdate: June 2 2023 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -134,6 +134,8 @@ May open
 .Pa /etc/localtime
 and any files below
 .Pa /usr/share/zoneinfo .
+.It Xr profil 2 :
+Can only disable profiling.
 .It Fn pledge :
 Can only reduce permissions for
 .Fa promises
@@ -209,6 +211,7 @@ As a result, all the expected functionalities of libc stdio work.
 .Xr poll 2 ,
 .Xr pread 2 ,
 .Xr preadv 2 ,
+.Xr profil 2 ,
 .Xr pwrite 2 ,
 .Xr pwritev 2 ,
 .Xr read 2 ,
