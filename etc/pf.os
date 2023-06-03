@@ -208,9 +208,9 @@
 65535:64:0:60:M512,N,W%2,N,N,T:		AIX:5.1-5.2::AIX 4.3.3-5.2
 65535:64:0:64:M*,N,W1,N,N,T,N,N,S:	AIX:5.3:ML1:AIX 5.3 ML1
 
-#----------------- Docker Containers---------
+#----------------- Docker OS Containers---------
 # RAW Docker’s Kali Container OS fingerprint is 4:64+0:0:1460:mss*44,7:mss,sok,ts,nop,ws:df,id+:0 #see redmine #14444
-
+# RAW Docker's Debian Container OS fingerprint is 4:64+0:0:1460:mss*44,7:mss,sok,ts,nop,ws:df,id+:0 #see redmine #1444 are all dockers the same OS signature
 # ----------------- Linux -------------------
 
 # S1:64:0:44:M*:A:		Linux:1.2::Linux 1.2.x (XXX quirks support)
