@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.38 2023/06/01 17:24:56 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.39 2023/06/03 21:37:53 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -184,11 +184,13 @@ devclose(struct open_file *of)
 }
 
 struct devsw devsw[1] = {
-	"OpenFirmware",
-	strategy,
-	(int (*)(struct open_file *, ...))nodev,
-	devclose,
-	noioctl
+	{
+		"OpenFirmware",
+		strategy,
+		(int (*)(struct open_file *, ...))nodev,
+		devclose,
+		noioctl
+	}
 };
 int ndevs = sizeof devsw / sizeof devsw[0];
 
@@ -223,14 +225,6 @@ static struct of_dev ofdev = {
 };
 
 char opened_name[256];
-
-static u_long
-get_long(const void *p)
-{
-	const unsigned char *cp = p;
-
-	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
-}
 
 /************************************************************************
  *

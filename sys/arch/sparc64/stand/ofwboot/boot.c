@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.42 2023/06/01 17:24:56 krw Exp $	*/
+/*	$OpenBSD: boot.c,v 1.43 2023/06/03 21:37:53 krw Exp $	*/
 /*	$NetBSD: boot.c,v 1.3 2001/05/31 08:55:19 mrg Exp $	*/
 /*
  * Copyright (c) 1997, 1999 Eduardo E. Horvath.  All rights reserved.
@@ -110,7 +110,6 @@ static int
 parseargs(char *str, int *howtop)
 {
 	char *cp;
-	int i;
 
 	*howtop = 0;
 	cp = str;
@@ -284,7 +283,7 @@ int
 loadrandom(char *path, char *buf, size_t buflen)
 {
 	struct stat sb;
-	int fd, i, error = 0;
+	int fd, error = 0;
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
@@ -416,7 +415,7 @@ main(void)
 	int chosen;
 	char bootline[512];		/* Should check size? */
 	char *cp;
-	int i, fd;
+	int fd;
 #ifdef SOFTRAID
 	int err;
 #endif

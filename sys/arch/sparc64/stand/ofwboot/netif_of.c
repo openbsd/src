@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif_of.c,v 1.8 2023/06/01 17:24:56 krw Exp $	*/
+/*	$OpenBSD: netif_of.c,v 1.9 2023/06/03 21:37:53 krw Exp $	*/
 /*	$NetBSD: netif_of.c,v 1.1 2000/08/20 14:58:39 mrg Exp $	*/
 
 /*
@@ -72,8 +72,6 @@ netif_open(void *machdep_hint)
 {
 	struct of_dev *op = machdep_hint;
 	struct iodesc *io;
-	int fd, error;
-	char addr[32];
 
 	DNPRINTF(BOOT_D_OFNET, "netif_open...");
 
