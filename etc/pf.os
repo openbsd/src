@@ -209,8 +209,7 @@
 65535:64:0:64:M*,N,W1,N,N,T,N,N,S:	AIX:5.3:ML1:AIX 5.3 ML1
 
 #----------------- Docker Containers---------
-
-
+# RAW Docker’s Kali Container OS fingerprint is 4:64+0:0:1460:mss*44,7:mss,sok,ts,nop,ws:df,id+:0 #see redmine #14444
 
 # ----------------- Linux -------------------
 
