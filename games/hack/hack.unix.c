@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.unix.c,v 1.21 2021/12/15 16:29:29 deraadt Exp $	*/
+/*	$OpenBSD: hack.unix.c,v 1.22 2023/06/03 15:19:38 op Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -154,52 +154,7 @@ midnight(void)
 	return(getlt()->tm_hour == 0);
 }
 
-struct stat buf, hbuf;
-
-void
-gethdate(char *name)
-{
-	char *p, *np, *path;
-	char filename[PATH_MAX];
-
-	if (strchr(name, '/') != NULL || (p = getenv("PATH")) == NULL)
-		p = "";
-	np = path = strdup(p);	/* Make a copy for strsep. */
-	if (path == NULL)
-		err(1, NULL);
-
-	for (;;) {
-		if ((p = strsep(&np, ":")) == NULL)
-			break;
-		if (*p == '\0')			/* :: */
-			(void) strlcpy(filename, name, sizeof filename);
-		else
-			(void) snprintf(filename, sizeof filename,
-			    "%s/%s", p, name);
-
-		if (stat(filename, &hbuf) == 0) {
-			free(path);
-			return;
-		}
-	}
-	error("Cannot get status of %s.",
-		(p = strrchr(name, '/')) ? p+1 : name);
-	free(path);
-}
-
-int
-uptodate(int fd)
-{
-	if(fstat(fd, &buf)) {
-		pline("Cannot get status of saved level? ");
-		return(0);
-	}
-	if(buf.st_mtime < hbuf.st_mtime) {
-		pline("Saved level is out of date. ");
-		return(0);
-	}
-	return(1);
-}
+struct stat buf;
 
 /* see whether we should throw away this xlock file */
 static int
