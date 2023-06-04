@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_inverse.c,v 1.1 2023/06/03 21:20:29 tb Exp $ */
+/*	$OpenBSD: bn_mod_inverse.c,v 1.2 2023/06/04 07:14:47 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -20,6 +20,8 @@
 #include <stdio.h>
 
 #include <openssl/bn.h>
+
+BIGNUM *BN_mod_inverse(BIGNUM *, const BIGNUM *, const BIGNUM *, BN_CTX *);
 
 static const struct mod_inv_test {
 	const char *i;
@@ -379,7 +381,7 @@ main(void)
 {
 	int failed = 0;
 
-	failed = test_bn_mod_inverse();
+	failed |= test_bn_mod_inverse();
 
 	return failed;
 }
