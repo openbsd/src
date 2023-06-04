@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.9 2022/05/10 19:27:21 tb Exp $
+#	$OpenBSD: Makefile,v 1.10 2023/06/04 11:33:45 tb Exp $
 
 OPENSSL_RUBY_TESTS =	/usr/local/share/openssl-ruby-tests
 .if exists(/usr/local/bin/ruby31)
 RUBY_BINREV =		31
 .else
-RUBY_BINREV =		30
+RUBY_BINREV =		32
 .endif
 RUBY =			ruby${RUBY_BINREV}
 
