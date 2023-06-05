@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-ometric.c,v 1.3 2023/04/26 16:32:41 claudio Exp $ */
+/*	$OpenBSD: output-ometric.c,v 1.4 2023/06/05 14:19:13 claudio Exp $ */
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
  *
@@ -216,7 +216,6 @@ output_ometric(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 	repo_stats_collect(repo_stats, NULL);
 	set_common_stats(&st->repo_tal_stats, rpki_obj, NULL);
 
-	ometric_set_int(rpki_repo, st->repos, NULL);
 	ometric_set_int_with_labels(rpki_repo, st->rsync_repos,
 	    OKV("type", "state"), OKV("rsync", "synced"), NULL);
 	ometric_set_int_with_labels(rpki_repo, st->rsync_fails,
