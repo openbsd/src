@@ -1,4 +1,4 @@
-/*	$OpenBSD: output_json.c,v 1.34 2023/05/05 07:42:40 claudio Exp $ */
+/*	$OpenBSD: output_json.c,v 1.35 2023/06/05 16:24:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -53,7 +53,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 	    !capa->refresh && !capa->enhanced_rr && !capa->as4byte)
 		return;
 
-	json_do_object("capabilities");
+	json_do_object("capabilities", 0);
 	json_do_bool("as4byte", capa->as4byte);
 	json_do_bool("refresh", capa->refresh);
 	json_do_bool("enhanced_refresh", capa->enhanced_rr);
@@ -75,7 +75,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 					restarted = 1;
 				break;
 			}
-		json_do_object("graceful_restart");
+		json_do_object("graceful_restart", 0);
 		json_do_bool("eor", 1);
 		json_do_bool("restart", restarted);
 
@@ -86,7 +86,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 			json_do_array("protocols");
 			for (i = AID_MIN; i < AID_MAX; i++)
 				if (capa->grestart.flags[i] & CAPA_GR_PRESENT) {
-					json_do_object("family");
+					json_do_object("family", 1);
 					json_do_string("family", aid2str(i));
 					json_do_bool("preserved",
 					    capa->grestart.flags[i] &
@@ -102,7 +102,7 @@ json_neighbor_capabilities(struct capabilities *capa)
 		json_do_array("add-path");
 		for (i = AID_MIN; i < AID_MAX; i++)
 			if (capa->add_path[i]) {
-				json_do_object("add-path-elm");
+				json_do_object("add-path-elm", 1);
 				json_do_string("family", aid2str(i));
 				switch (capa->add_path[i]) {
 				case CAPA_AP_RECV:
@@ -135,20 +135,20 @@ json_neighbor_capabilities(struct capabilities *capa)
 static void
 json_neighbor_stats(struct peer *p)
 {
-	json_do_object("stats");
+	json_do_object("stats", 0);
 	json_do_string("last_read", fmt_monotime(p->stats.last_read));
 	json_do_int("last_read_sec", get_monotime(p->stats.last_read));
 	json_do_string("last_write", fmt_monotime(p->stats.last_write));
 	json_do_int("last_write_sec", get_monotime(p->stats.last_write));
 
-	json_do_object("prefixes");
+	json_do_object("prefixes", 1);
 	json_do_uint("sent", p->stats.prefix_out_cnt);
 	json_do_uint("received", p->stats.prefix_cnt);
 	json_do_end();
 
-	json_do_object("message");
+	json_do_object("message", 0);
 
-	json_do_object("sent");
+	json_do_object("sent", 0);
 	json_do_uint("open", p->stats.msg_sent_open);
 	json_do_uint("notifications", p->stats.msg_sent_notification);
 	json_do_uint("updates", p->stats.msg_sent_update);
@@ -160,7 +160,7 @@ json_neighbor_stats(struct peer *p)
 	    p->stats.msg_sent_rrefresh);
 	json_do_end();
 
-	json_do_object("received");
+	json_do_object("received", 0);
 	json_do_uint("open", p->stats.msg_rcvd_open);
 	json_do_uint("notifications", p->stats.msg_rcvd_notification);
 	json_do_uint("updates", p->stats.msg_rcvd_update);
@@ -174,36 +174,36 @@ json_neighbor_stats(struct peer *p)
 
 	json_do_end();
 
-	json_do_object("update");
+	json_do_object("update", 0);
 
-	json_do_object("sent");
+	json_do_object("sent", 1);
 	json_do_uint("updates", p->stats.prefix_sent_update);
 	json_do_uint("withdraws", p->stats.prefix_sent_withdraw);
 	json_do_uint("eor", p->stats.prefix_sent_eor);
 	json_do_end();
 
-	json_do_object("received");
+	json_do_object("received", 1);
 	json_do_uint("updates", p->stats.prefix_rcvd_update);
 	json_do_uint("withdraws", p->stats.prefix_rcvd_withdraw);
 	json_do_uint("eor", p->stats.prefix_rcvd_eor);
 	json_do_end();
 
-	json_do_object("pending");
+	json_do_object("pending", 1);
 	json_do_uint("updates", p->stats.pending_update);
 	json_do_uint("withdraws", p->stats.pending_withdraw);
 	json_do_end();
 
 	json_do_end();
 
-	json_do_object("route-refresh");
+	json_do_object("route-refresh", 0);
 
-	json_do_object("sent");
+	json_do_object("sent", 1);
 	json_do_uint("request", p->stats.refresh_sent_req);
 	json_do_uint("borr", p->stats.refresh_sent_borr);
 	json_do_uint("eorr", p->stats.refresh_sent_eorr);
 	json_do_end();
 
-	json_do_object("received");
+	json_do_object("received", 1);
 	json_do_uint("request", p->stats.refresh_rcvd_req);
 	json_do_uint("borr", p->stats.refresh_rcvd_borr);
 	json_do_uint("eorr", p->stats.refresh_rcvd_eorr);
@@ -220,7 +220,7 @@ json_neighbor_full(struct peer *p)
 	const char *errstr;
 
 	/* config */
-	json_do_object("config");
+	json_do_object("config", 0);
 	json_do_bool("template", p->conf.template);
 	json_do_bool("cloned", p->template != NULL);
 	json_do_bool("passive", p->conf.passive);
@@ -277,17 +277,17 @@ json_neighbor_full(struct peer *p)
 
 	/* connection info */
 	if (p->state >= STATE_OPENSENT) {
-		json_do_object("session");
+		json_do_object("session", 0);
 		json_do_uint("holdtime", p->holdtime);
 		json_do_uint("keepalive", p->holdtime / 3);
 
-		json_do_object("local");
+		json_do_object("local", 0);
 		json_do_string("address", log_addr(&p->local));
 		json_do_uint("port", p->local_port);
 		json_neighbor_capabilities(&p->capa.ann);
 		json_do_end();
 
-		json_do_object("remote");
+		json_do_object("remote", 0);
 		json_do_string("address", log_addr(&p->remote));
 		json_do_uint("port", p->remote_port);
 		json_neighbor_capabilities(&p->capa.peer);
@@ -311,7 +311,7 @@ json_neighbor(struct peer *p, struct parse_result *res)
 {
 	json_do_array("neighbors");
 
-	json_do_object("neighbor");
+	json_do_object("neighbor", 0);
 
 	json_do_string("remote_as", log_as(p->conf.remote_as));
 	if (p->conf.descr[0])
@@ -355,7 +355,7 @@ json_timer(struct ctl_timer *t)
 {
 	json_do_array("timers");
 
-	json_do_object("timer");
+	json_do_object("timer", 1);
 	json_do_string("name", timernames[t->type]);
 	json_do_int("due", t->val);
 	json_do_end();
@@ -368,7 +368,7 @@ json_fib(struct kroute_full *kf)
 
 	json_do_array("fib");
 
-	json_do_object("fib_entry");
+	json_do_object("fib_entry", 0);
 
 	json_do_printf("prefix", "%s/%u", log_addr(&kf->prefix), kf->prefixlen);
 	json_do_uint("priority", kf->priority);
@@ -404,7 +404,7 @@ json_fib_table(struct ktable *kt)
 {
 	json_do_array("fibtables");
 
-	json_do_object("fibtable");
+	json_do_object("fibtable", 0);
 	json_do_uint("rtableid", kt->rtableid);
 	json_do_string("description", kt->descr);
 	json_do_bool("coupled", kt->fib_sync);
@@ -415,7 +415,7 @@ json_fib_table(struct ktable *kt)
 static void
 json_do_interface(struct ctl_show_interface *iface)
 {
-	json_do_object("interface");
+	json_do_object("interface", 0);
 
 	json_do_string("name", iface->ifname);
 	json_do_uint("rdomain", iface->rdomain);
@@ -437,7 +437,7 @@ json_nexthop(struct ctl_show_nexthop *nh)
 {
 	json_do_array("nexthops");
 
-	json_do_object("nexthop");
+	json_do_object("nexthop", 0);
 
 	json_do_string("address", log_addr(&nh->addr));
 	json_do_bool("valid", nh->valid);
@@ -626,10 +626,10 @@ json_attr(u_char *data, size_t len, int reqflags, int addpath)
 
 	json_do_array("attributes");
 
-	json_do_object("attribute");
+	json_do_object("attribute", 0);
 	json_do_string("type", fmt_attr(type, -1));
 	json_do_uint("length", alen);
-	json_do_object("flags");
+	json_do_object("flags", 1);
 	json_do_bool("partial", flags & ATTR_PARTIAL);
 	json_do_bool("transitive", flags & ATTR_TRANSITIVE);
 	json_do_bool("optional", flags & ATTR_OPTIONAL);
@@ -782,7 +782,7 @@ bad_len:
 
 		json_do_array("NLRI");
 		while (alen > 0) {
-			json_do_object("prefix");
+			json_do_object("prefix", 1);
 			if (addpath) {
 				if (alen <= sizeof(pathid)) {
 					json_do_string("error", "bad path-id");
@@ -857,7 +857,7 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 
 	json_do_array("rib");
 
-	json_do_object("rib_entry");
+	json_do_object("rib_entry", 0);
 
 	json_do_printf("prefix", "%s/%u", log_addr(&r->prefix), r->prefixlen);
 
@@ -869,7 +869,7 @@ json_rib(struct ctl_show_rib *r, u_char *asdata, size_t aslen,
 	json_do_string("exit_nexthop", log_addr(&r->exit_nexthop));
 	json_do_string("true_nexthop", log_addr(&r->true_nexthop));
 
-	json_do_object("neighbor");
+	json_do_object("neighbor", 1);
 	if (r->descr[0])
 		json_do_string("description", r->descr);
 	json_do_string("remote_addr", log_addr(&r->remote_addr));
@@ -915,7 +915,7 @@ static void
 json_rib_mem_element(const char *name, uint64_t count, uint64_t size,
     uint64_t refs)
 {
-	json_do_object(name);
+	json_do_object(name, 1);
 	if (count != UINT64_MAX)
 		json_do_uint("count", count);
 	if (size != UINT64_MAX)
@@ -931,7 +931,7 @@ json_rib_mem(struct rde_memstats *stats)
 	size_t pts = 0;
 	int i;
 
-	json_do_object("memory");
+	json_do_object("memory", 0);
 	for (i = 0; i < AID_MAX; i++) {
 		if (stats->pt_cnt[i] == 0)
 			continue;
@@ -964,7 +964,7 @@ json_rib_mem(struct rde_memstats *stats)
 	    stats->attr_data, UINT64_MAX);
 	json_do_end();
 
-	json_do_object("sets");
+	json_do_object("sets", 0);
 	json_rib_mem_element("as_set", stats->aset_nmemb,
 	    stats->aset_size, UINT64_MAX);
 	json_rib_mem_element("as_set_tables", stats->aset_cnt, UINT64_MAX,
@@ -981,7 +981,7 @@ json_rib_set(struct ctl_show_set *set)
 {
 	json_do_array("sets");
 
-	json_do_object("set");
+	json_do_object("set", 0);
 	json_do_string("name", set->name);
 	json_do_string("type", fmt_set_type(set));
 	json_do_string("last_change", fmt_monotime(set->lastchange));
@@ -1000,7 +1000,7 @@ json_rtr(struct ctl_show_rtr *rtr)
 {
 	json_do_array("rtrs");
 
-	json_do_object("rtr");
+	json_do_object("rtr", 0);
 	if (rtr->descr[0])
 		json_do_string("descr", rtr->descr);
 	json_do_string("remote_addr", log_addr(&rtr->remote_addr));
