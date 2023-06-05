@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_asn1.c,v 1.19 2023/05/29 11:54:50 beck Exp $ */
+/* $OpenBSD: x509_asn1.c,v 1.20 2023/06/05 18:32:06 job Exp $ */
 /*
  * Copyright (c) 2023 Job Snijders <job@openbsd.org>
  *
@@ -362,13 +362,13 @@ test_x509_crl_setters(void)
 	/* test X509_CRL_set_lastUpdate */
 	x509_crl_setup(&der, &der2, &ac, dersz, &der2sz);
 	x509_crl_set_time(X509_CRL_set_lastUpdate, &ac, 120);
-	failed |= x509_crl_compare("X509_set_notBefore", ac, der2, der2sz);
+	failed |= x509_crl_compare("X509_CRL_set_lastUpdate", ac, der2, der2sz);
 	x509_crl_cleanup(&ac, &der2);
 
 	/* test X509_CRL_set_nextUpdate */
 	x509_crl_setup(&der, &der2, &ac, dersz, &der2sz);
 	x509_crl_set_time(X509_CRL_set_nextUpdate, &ac, 180);
-	failed |= x509_crl_compare("X509_set_notAfter", ac, der2, der2sz);
+	failed |= x509_crl_compare("X509_CRL_set_nextUpdate", ac, der2, der2sz);
 	x509_crl_cleanup(&ac, &der2);
 
 	EVP_PKEY_free(pkey);
