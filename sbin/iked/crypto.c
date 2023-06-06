@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.43 2023/05/23 13:12:19 claudio Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.44 2023/06/06 13:27:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -567,9 +567,9 @@ cipher_init(struct iked_cipher *encr, int enc)
 		return (-1);
 	if (encr->encr_saltlength > 0) {
 		/* For AEADs the nonce is salt + IV  (see RFC5282) */
-		nonce = ibuf_new(ibuf_data(encr->encr_key) +
+		nonce = ibuf_new(ibuf_seek(encr->encr_key,
 		    ibuf_size(encr->encr_key) - encr->encr_saltlength,
-		    encr->encr_saltlength);
+		    encr->encr_saltlength), encr->encr_saltlength);
 		if (nonce == NULL)
 			return (-1);
 		if (ibuf_add(nonce, ibuf_data(encr->encr_iv) , ibuf_size(encr->encr_iv)) != 0)
