@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.106 2022/11/22 06:48:32 jmatthew Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.107 2023/06/06 01:40:04 dlg Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -6793,16 +6793,6 @@ mcx_process_txeof(struct mcx_softc *sc, struct mcx_tx *tx,
 	return (slots);
 }
 
-static uint64_t
-mcx_uptime(void)
-{
-	struct timespec ts;
-
-	nanouptime(&ts);
-
-	return ((uint64_t)ts.tv_sec * 1000000000 + (uint64_t)ts.tv_nsec);
-}
-
 static void
 mcx_calibrate_first(struct mcx_softc *sc)
 {
@@ -6812,7 +6802,7 @@ mcx_calibrate_first(struct mcx_softc *sc)
 	sc->sc_calibration_gen = 0;
 
 	s = splhigh(); /* crit_enter? */
-	c->c_ubase = mcx_uptime();
+	c->c_ubase = nsecuptime();
 	c->c_tbase = mcx_timer(sc);
 	splx(s);
 	c->c_ratio = 0;
@@ -6847,7 +6837,7 @@ mcx_calibrate(void *arg)
 	nc->c_timestamp = pc->c_tbase;
 
 	s = splhigh(); /* crit_enter? */
-	nc->c_ubase = mcx_uptime();
+	nc->c_ubase = nsecuptime();
 	nc->c_tbase = mcx_timer(sc);
 	splx(s);
 
