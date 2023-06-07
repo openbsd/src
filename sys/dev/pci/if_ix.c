@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.196 2023/05/23 09:16:16 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.197 2023/06/01 09:05:33 jan Exp $	*/
 
 /******************************************************************************
 
@@ -3245,6 +3245,8 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			sendmp = NULL;
 			mp->m_next = nxbuf->buf;
 		} else { /* Sending this frame? */
+			uint16_t pkts;
+
 			ixgbe_rx_checksum(staterr, sendmp);
 
 			if (hashtype != IXGBE_RXDADV_RSSTYPE_NONE) {
@@ -3252,19 +3254,45 @@ ixgbe_rxeof(struct rx_ring *rxr)
 				SET(sendmp->m_pkthdr.csum_flags, M_FLOWID);
 			}
 
-			if (sendmp->m_pkthdr.ph_mss == 1)
-				sendmp->m_pkthdr.ph_mss = 0;
+			pkts = sendmp->m_pkthdr.ph_mss;
+			sendmp->m_pkthdr.ph_mss = 0;
 
-			if (sendmp->m_pkthdr.ph_mss > 0) {
+			if (pkts > 1) {
 				struct ether_extracted ext;
-				uint16_t pkts = sendmp->m_pkthdr.ph_mss;
+				uint32_t hdrlen, paylen;
 
+				/* Calculate header size. */
 				ether_extract_headers(sendmp, &ext);
-				if (ext.tcp)
+				hdrlen = sizeof(*ext.eh);
+				if (ext.ip4)
+					hdrlen += ext.ip4->ip_hl << 2;
+				if (ext.ip6)
+					hdrlen += sizeof(*ext.ip6);
+				if (ext.tcp) {
+					hdrlen += ext.tcp->th_off << 2;
 					tcpstat_inc(tcps_inhwlro);
-				else
+					tcpstat_add(tcps_inpktlro, pkts);
+				} else {
 					tcpstat_inc(tcps_inbadlro);
-				tcpstat_add(tcps_inpktlro, pkts);
+				}
+
+				/*
+				 * If we gonna forward this packet, we have to
+				 * mark it as TSO, set a correct mss,
+				 * and recalculate the TCP checksum.
+				 */
+				paylen = sendmp->m_pkthdr.len - hdrlen;
+				if (ext.tcp && paylen >= pkts) {
+					SET(sendmp->m_pkthdr.csum_flags,
+					    M_TCP_TSO);
+					sendmp->m_pkthdr.ph_mss = paylen / pkts;
+				}
+				if (ext.tcp &&
+				    ISSET(sendmp->m_pkthdr.csum_flags,
+				    M_TCP_CSUM_IN_OK)) {
+					SET(sendmp->m_pkthdr.csum_flags,
+					    M_TCP_CSUM_OUT);
+				}
 			}
 
 			ml_enqueue(&ml, sendmp);

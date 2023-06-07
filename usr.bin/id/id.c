@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.29 2022/12/04 23:50:48 cheloha Exp $	*/
+/*	$OpenBSD: id.c,v 1.30 2023/05/30 16:44:16 op Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -128,6 +128,8 @@ main(int argc, char *argv[])
 		usage();
 
 	if (Rflag) {
+		if (argc != 0)
+			usage();
 		printf("%d\n", getrtable());
 		exit(0);
 	}

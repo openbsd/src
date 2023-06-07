@@ -1,4 +1,4 @@
-.\"	$OpenBSD: relayd.conf.5,v 1.205 2022/03/31 17:27:31 naddy Exp $
+.\"	$OpenBSD: relayd.conf.5,v 1.206 2023/06/06 15:16:52 beck Exp $
 .\"
 .\" Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
 .\" Copyright (c) 2006, 2007 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 6 2023 $
 .Dt RELAYD.CONF 5
 .Os
 .Sh NAME
@@ -1021,27 +1021,19 @@ The default is to enable TLSv1.3.
 Disable the TLSv1.2 protocol.
 The default is to enable TLSv1.2.
 .It Ic sslv3
-Enable the SSLv3 protocol.
-The default is
-.Ic no sslv3 .
+Is deprecated and does nothing.
 .It Ic tlsv1
 Enable all TLSv1 protocols.
-This is an alias that includes
-.Ic tlsv1.0 ,
-.Ic tlsv1.1 ,
+This is an alias that currently includes
 .Ic tlsv1.2 ,
 and
 .Ic tlsv1.3 .
 The default is
 .Ic no tlsv1 .
 .It Ic tlsv1.0
-Enable the TLSv1.0 protocol.
-The default is
-.Ic no tlsv1.0 .
+Is deprecated and does nothing.
 .It Ic tlsv1.1
-Enable the TLSv1.1 protocol.
-The default is
-.Ic no tlsv1.1 .
+Is deprecated and does nothing.
 .El
 .It Ic http Ar option
 Set the HTTP options and session settings.

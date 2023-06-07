@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.34 2023/05/30 08:30:01 jsg Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.35 2023/06/02 17:44:29 cheloha Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/pledge.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/mount.h>
@@ -236,7 +237,11 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct process *pr = p->p_p;
 	struct uprof *upp;
-	int s;
+	int error, s;
+
+	error = pledge_profil(p, SCARG(uap, scale));
+	if (error)
+		return error;
 
 	if (SCARG(uap, scale) > (1 << 16))
 		return (EINVAL);

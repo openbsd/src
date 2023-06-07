@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.56 2023/05/08 15:18:31 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.57 2023/06/04 17:27:27 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -453,7 +453,9 @@ static int
 get_range(bitstr_t *bits, int low, int high, const char *names[],
 	  int ch, FILE *file)
 {
-	/* range = number | number* "~" number* | number "-" number ["/" number]
+	/* range = number |
+	 * [number] "~" [number] ["/" number] |
+	 * number "-" number ["/" number]
 	 */
 
 	int i, num1, num2, num3, rndstep;

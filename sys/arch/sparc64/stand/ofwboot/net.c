@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.8 2021/01/30 21:06:45 deraadt Exp $	*/
+/*	$OpenBSD: net.c,v 1.9 2023/06/01 17:24:56 krw Exp $	*/
 /*	$NetBSD: net.c,v 1.1 2000/08/20 14:58:38 mrg Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ int
 net_open(struct of_dev *op)
 {
 	int error = 0;
-	
+
 	/*
 	 * On first open, do netif open, mount, etc.
 	 */

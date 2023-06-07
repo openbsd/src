@@ -1,0 +1,50 @@
+=== Start 20000MB disk ===
+Primary GPT:
+Not Found
+
+Secondary GPT:
+Not Found
+
+MBR:
+Disk: vnd0	geometry: 409620/1/100 [40962048 Sectors]
+Offset: 0	Signature: 0x0
+            Starting         Ending         LBA Info:
+ #: id      C   H   S -      C   H   S [       start:        size ]
+-------------------------------------------------------------------------------
+ 0: 00      0   0   0 -      0   0   0 [           0:           0 ] Unused         
+ 1: 00      0   0   0 -      0   0   0 [           0:           0 ] Unused         
+ 2: 00      0   0   0 -      0   0   0 [           0:           0 ] Unused         
+ 3: 00      0   0   0 -      0   0   0 [           0:           0 ] Unused         
+
+  a:             0.6G                0  4.2BSD   2048 16384     1 # /
+  a:          1230800                0  4.2BSD   2048 16384     1 
+  b:             1.0G          1230800    swap                    
+  b:          2011000          1230800    swap                    
+  d:             0.8G          3241800  4.2BSD   2048 16384     1 # /tmp
+  d:          1723500          3241800  4.2BSD   2048 16384     1 
+  e:             1.2G          4965300  4.2BSD   2048 16384     1 # /var
+  e:          2565100          4965300  4.2BSD   2048 16384     1 
+  f:             2.3G          7530400  4.2BSD   2048 16384     1 # /usr
+  f:          4919100          7530400  4.2BSD   2048 16384     1 
+  g:             0.6G         12449500  4.2BSD   2048 16384     1 # /usr/X11R6
+  g:          1340600         12449500  4.2BSD   2048 16384     1 
+  h:             2.3G         13790100  4.2BSD   2048 16384     1 # /usr/local
+  h:          4867800         13790100  4.2BSD   2048 16384     1 
+  i:             1.6G         18657900  4.2BSD   2048 16384     1 # /usr/src
+  i:          3441500         18657900  4.2BSD   2048 16384     1 
+  j:             5.4G         22099400  4.2BSD   2048 16384     1 # /usr/obj
+  j:         11224600         22099400  4.2BSD   2048 16384     1 
+  k:             3.6G         33324000  4.2BSD   2048 16384     1 # /home
+  k:          7638000         33324000  4.2BSD   2048 16384     1 
+
+/dev/vnd0a / ffs rw 1 1
+/dev/vnd0k /home ffs rw 1 2
+/dev/vnd0d /tmp ffs rw 1 2
+/dev/vnd0f /usr ffs rw 1 2
+/dev/vnd0g /usr/X11R6 ffs rw 1 2
+/dev/vnd0h /usr/local ffs rw 1 2
+/dev/vnd0j /usr/obj ffs rw 1 2
+/dev/vnd0i /usr/src ffs rw 1 2
+/dev/vnd0e /var ffs rw 1 2
+/dev/vnd0b none swap sw
+=== End 20000MB disk ===

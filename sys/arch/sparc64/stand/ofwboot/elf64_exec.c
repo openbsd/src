@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.13 2023/04/13 02:19:05 jsg Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.16 2023/06/03 21:37:53 krw Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -75,14 +75,13 @@ extern int boothowto;
 void syncicache(void *, int);
 
 int
-elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp){ 
+elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp){
 	Elf_Shdr *shp;
 	Elf_Off off;
 	void *addr;
 	size_t size;
 	u_int align;
 	int i, first = 1;
-	int n;
 	struct openbsd_bootdata *obd;
 #ifdef SOFTRAID
 	struct sr_boot_volume *bv;
@@ -118,7 +117,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 			obd->len = BOOTDATA_LEN_SOFTRAID;
 
 #ifdef SOFTRAID
-			/* 
+			/*
 			 * If booting from softraid we must pass additional
 			 * information to the kernel:
 			 * 1) The uuid of the softraid volume we booted from.
@@ -158,7 +157,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 		    (u_long)phdr.p_vaddr);
 		(void)lseek(fd, (size_t)phdr.p_offset, SEEK_SET);
 
-		/* 
+		/*
 		 * If the segment's VA is aligned on a 4MB boundary, align its
 		 * request 4MB aligned physical memory.  Otherwise use default
 		 * alignment.  Make sure BSS is extended to a 4MB boundary, too.
@@ -221,7 +220,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 		if (shp->sh_type != SHT_SYMTAB
 		    && shp->sh_type != SHT_STRTAB
 		    && strcmp(shstr + shp->sh_name, ELF_CTF)) {
-			shp->sh_offset = 0; 
+			shp->sh_offset = 0;
 			continue;
 		}
 		size += shp->sh_size;

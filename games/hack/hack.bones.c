@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.bones.c,v 1.11 2019/06/28 13:32:52 deraadt Exp $	*/
+/*	$OpenBSD: hack.bones.c,v 1.12 2023/06/03 15:19:38 op Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -139,17 +139,15 @@ savebones(void)
 int
 getbones(void)
 {
-	int fd,x,y,ok;
+	int fd,x,y;
 
 	if(rn2(3)) return(0);	/* only once in three times do we find bones */
 	bones[6] = '0' + dlevel/10;
 	bones[7] = '0' + dlevel%10;
 	if((fd = open(bones, O_RDONLY)) == -1) return(0);
-	if((ok = uptodate(fd)) != 0){
-		getlev(fd, 0, dlevel);
-		for(x = 0; x < COLNO; x++) for(y = 0; y < ROWNO; y++)
-			levl[x][y].seen = levl[x][y].new = 0;
-	}
+	getlev(fd, 0, dlevel);
+	for(x = 0; x < COLNO; x++) for(y = 0; y < ROWNO; y++)
+		levl[x][y].seen = levl[x][y].new = 0;
 	(void) close(fd);
 #ifdef WIZARD
 	if(!wizard)	/* duvel!frans: don't remove bones while debugging */
@@ -158,5 +156,5 @@ getbones(void)
 		pline("Cannot unlink %s .", bones);
 		return(0);
 	}
-	return(ok);
+	return(1);
 }

@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509_get0_notBefore.3,v 1.5 2020/06/24 14:59:41 schwarze Exp $
+.\" $OpenBSD: X509_get0_notBefore.3,v 1.6 2023/06/06 16:20:13 schwarze Exp $
 .\" content checked up to: OpenSSL 27b138e9 May 19 00:16:38 2017 +0000
 .\"
 .\" Copyright (c) 2018, 2020 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 24 2020 $
+.Dd $Mdocdate: June 6 2023 $
 .Dt X509_GET0_NOTBEFORE 3
 .Os
 .Sh NAME
@@ -142,14 +142,20 @@ and
 are identical except for the const qualifier on the return type.
 .Pp
 .Fn X509_CRL_get0_lastUpdate
-and
+is misnamed in a confusing way: it returns a pointer to the
+.Fa thisUpdate
+field of the
+.Fa crl ,
+indicating the time when this
+.Fa crl
+was issued.
+.Pp
 .Fn X509_CRL_get0_nextUpdate
-return pointers to the
-.Fa lastUpdate
-and
+returns a pointer to the
 .Fa nextUpdate
-fields of
-.Fa crl .
+field of the
+.Fa crl ,
+indicating the time when issuing the subsequent CRL will be due.
 .Pp
 .Fn X509_CRL_get_lastUpdate
 and
@@ -165,7 +171,7 @@ and
 set the
 .Fa notBefore ,
 .Fa notAfter ,
-.Fa lastUpdate ,
+.Fa thisUpdate Pq sic!\& ,
 or
 .Fa nextUpdate
 field of

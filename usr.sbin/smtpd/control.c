@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.129 2023/03/08 04:43:15 guenther Exp $	*/
+/*	$OpenBSD: control.c,v 1.130 2023/05/31 16:51:46 op Exp $	*/
 
 /*
  * Copyright (c) 2012 Gilles Chehade <gilles@poolp.org>
@@ -26,6 +26,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "smtpd.h"

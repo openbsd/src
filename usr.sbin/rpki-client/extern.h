@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.181 2023/05/09 10:34:32 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.184 2023/06/07 10:46:34 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -348,6 +348,7 @@ struct gbr {
 	time_t		 notbefore; /* EE cert's Not Before */
 	time_t		 notafter; /* Not After of the GBR EE */
 	time_t		 expires; /* when the signature path expires */
+	int		 talid; /* TAL the GBR is chained up to */
 };
 
 struct aspa_provider {
@@ -689,7 +690,8 @@ int		 valid_origin(const char *, const char *);
 int		 valid_x509(char *, X509_STORE_CTX *, X509 *, struct auth *,
 		    struct crl *, const char **);
 int		 valid_rsc(const char *, struct cert *, struct rsc *);
-int		 valid_econtent_version(const char *, const ASN1_INTEGER *);
+int		 valid_econtent_version(const char *, const ASN1_INTEGER *,
+		    uint64_t);
 int		 valid_aspa(const char *, struct cert *, struct aspa *);
 int		 valid_geofeed(const char *, struct cert *, struct geofeed *);
 int		 valid_uuid(const char *);
@@ -755,7 +757,7 @@ void		 proc_http(char *, int) __attribute__((noreturn));
 void		 proc_rrdp(int) __attribute__((noreturn));
 
 /* Repository handling */
-int		 filepath_add(struct filepath_tree *, char *);
+int		 filepath_add(struct filepath_tree *, char *, time_t);
 void		 rrdp_clear(unsigned int);
 void		 rrdp_save_state(unsigned int, struct rrdp_session *);
 int		 rrdp_handle_file(unsigned int, enum publish_type, char *,
@@ -951,6 +953,6 @@ int	mkpathat(int, const char *);
  */
 #define X509_TIME_MAX 253402300799LL
 #define X509_TIME_MIN -62167219200LL
-extern int64_t evaluation_time;
+extern time_t  get_current_time(void);
 
 #endif /* ! EXTERN_H */

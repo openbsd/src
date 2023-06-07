@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_errs.c,v 1.2 2023/05/09 19:07:37 otto Exp $	*/
+/*	$OpenBSD: malloc_errs.c,v 1.3 2023/06/04 06:58:33 otto Exp $	*/
 /*
  * Copyright (c) 2023 Otto Moerbeek <otto@drijf.net>
  *
@@ -138,9 +138,7 @@ t8(void)
 void
 t9(void)
 {
-	char *p;
-
-	p = malloc(100);
+	char *p = malloc(100);
 	p[100] = 0;
 	free(p);
 }
@@ -191,7 +189,6 @@ t15(void)
 void
 t16(void)
 {
-	abort(); /* not yet */
 	char *p = recallocarray(NULL, 0, 16, 1);
 	char *q = recallocarray(p, 2, 3, 16);
 }
@@ -208,9 +205,25 @@ t17(void)
 void
 t18(void)
 {
-	abort(); /* not yet */
 	char *p = recallocarray(NULL, 0, 1, getpagesize());
 	char *q = recallocarray(p, 2, 3, getpagesize());
+}
+
+/* recallocarray with wrong size, pages */
+void
+t19(void)
+{
+	char *p = recallocarray(NULL, 0, 1, 10 * getpagesize());
+	char *q = recallocarray(p, 1, 2, 4 * getpagesize());
+}
+
+/* canary check pages */
+void
+t20(void)
+{
+	char *p = malloc(2*getpagesize() - 100);
+	p[2*getpagesize() - 100] = 0;
+	free(p);
 }
 
 struct test {
@@ -238,6 +251,8 @@ struct test tests[] = {
 	{ t16, "" },
 	{ t17, "C" },
 	{ t18, "" },
+	{ t19, "" },
+	{ t20, "C" },
 };
 
 int main(int argc, char *argv[])

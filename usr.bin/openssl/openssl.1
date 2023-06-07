@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.146 2023/05/20 15:57:40 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.147 2023/06/07 10:53:30 schwarze Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: May 20 2023 $
+.Dd $Mdocdate: June 7 2023 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -1526,8 +1526,9 @@ The input format.
 Output the issuer name.
 .It Fl lastupdate
 Output the
-.Cm lastUpdate
+.Cm thisUpdate
 field.
+This option is misnamed for historical reasons.
 .It Fl nameopt Ar option
 Specify certificate name options.
 .It Fl nextupdate
@@ -6115,8 +6116,13 @@ The certificate
 field contains an invalid time.
 .It 15 X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD
 The CRL
-.Cm lastUpdate
+.Cm thisUpdate
 field contains an invalid time.
+The error code is misnamed and the error message confusingly talks about
+.Dq lastUpdate
+instead of
+.Dq thisUpdate
+for historical reasons.
 .It 16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD
 The CRL
 .Cm nextUpdate

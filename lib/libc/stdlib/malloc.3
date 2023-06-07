@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.132 2023/04/17 05:45:06 jmc Exp $
+.\"	$OpenBSD: malloc.3,v 1.133 2023/06/04 06:58:33 otto Exp $
 .\"
-.Dd $Mdocdate: April 17 2023 $
+.Dd $Mdocdate: June 4 2023 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -314,7 +314,7 @@ Increase the junk level by one if it is smaller than 2.
 Decrease the junk level by one if it is larger than 0.
 Junking writes some junk bytes into the area allocated.
 Junk is bytes of 0xdb when allocating;
-freed chunks are filled with 0xdf.
+freed allocations are filled with 0xdf.
 By default the junk level is 1: after free,
 small chunks are completely junked;
 for pages the first part is junked.
@@ -628,22 +628,24 @@ An attempt to
 .Fn free
 or
 reallocate an unallocated pointer was made.
-.It Dq chunk is already free
-There was an attempt to free a chunk that had already been freed.
+.It Dq double free
+There was an attempt to free an allocation that had already been freed.
 .It Dq write after free
-A chunk has been modified after it was freed.
+An allocation has been modified after it was freed.
 .It Dq modified chunk-pointer
 The pointer passed to
 .Fn free
 or a reallocation function has been modified.
-.It Dq chunk canary corrupted address offset@length
+.It Dq canary corrupted address offset@length
 A byte after the requested size has been overwritten,
 indicating a heap overflow.
 The offset at which corruption was detected is printed before the @,
 and the requested length of the allocation after the @.
-.It Dq recorded old size oldsize != size
+.It Dq recorded size oldsize inconsistent with size
 .Fn recallocarray
-has detected that the given old size does not equal the recorded size in its
+or
+.Fn freezero
+has detected that the given old size does not match the recorded size in its
 meta data.
 Enabling option
 .Cm C

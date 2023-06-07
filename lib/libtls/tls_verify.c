@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_verify.c,v 1.26 2023/05/29 14:12:36 beck Exp $ */
+/* $OpenBSD: tls_verify.c,v 1.28 2023/06/01 07:32:25 tb Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  *
@@ -92,15 +92,21 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 	union tls_addr addrbuf;
 	int addrlen, type;
 	int count, i;
-	int rv = 0;
+	int critical = 0;
+	int rv = -1;
 
 	*alt_match = 0;
 	*alt_exists = 0;
 
-	altname_stack = X509_get_ext_d2i(cert, NID_subject_alt_name,
-	    NULL, NULL);
-	if (altname_stack == NULL)
-		return 0;
+	altname_stack = X509_get_ext_d2i(cert, NID_subject_alt_name, &critical,
+	    NULL);
+	if (altname_stack == NULL) {
+		if (critical != -1) {
+			tls_set_errorx(ctx, "error decoding subjectAltName");
+			goto err;
+		}
+		goto done;
+	}
 
 	if (inet_pton(AF_INET, name, &addrbuf) == 1) {
 		type = GEN_IPADD;
@@ -140,8 +146,7 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 					    "NUL byte in subjectAltName, "
 					    "probably a malicious certificate",
 					    name);
-					rv = -1;
-					break;
+					goto err;
 				}
 
 				/*
@@ -154,13 +159,12 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 					    "error verifying name '%s': "
 					    "a dNSName of \" \" must not be "
 					    "used", name);
-					rv = -1;
-					break;
+					goto err;
 				}
 
 				if (tls_match_name(data, name) == 0) {
 					*alt_match = 1;
-					break;
+					goto done;
 				}
 			} else {
 #ifdef DEBUG
@@ -181,8 +185,7 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 				tls_set_errorx(ctx,
 				    "Unexpected negative length for an "
 				    "IP address: %d", datalen);
-				rv = -1;
-				break;
+				goto err;
 			}
 
 			/*
@@ -192,11 +195,15 @@ tls_check_subject_altname(struct tls *ctx, X509 *cert, const char *name,
 			if (datalen == addrlen &&
 			    memcmp(data, &addrbuf, addrlen) == 0) {
 				*alt_match = 1;
-				break;
+				goto done;
 			}
 		}
 	}
 
+ done:
+	rv = 0;
+
+ err:
 	sk_GENERAL_NAME_pop_free(altname_stack, GENERAL_NAME_free);
 	return rv;
 }

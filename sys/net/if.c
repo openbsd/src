@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.697 2023/05/16 14:32:54 jan Exp $	*/
+/*	$OpenBSD: if.c,v 1.699 2023/06/05 11:35:46 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -778,7 +778,7 @@ if_input(struct ifnet *ifp, struct mbuf_list *ml)
 int
 if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 {
-	int keepflags;
+	int keepflags, keepcksum;
 
 #if NBPFILTER > 0
 	/*
@@ -796,10 +796,25 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 	}
 #endif
 	keepflags = m->m_flags & (M_BCAST|M_MCAST);
+	/*
+	 * Preserve outgoing checksum flags, in case the packet is
+	 * forwarded to another interface.  Then the checksum, which
+	 * is now incorrect, will be calculated before sending.
+	 */
+	keepcksum = m->m_pkthdr.csum_flags & (M_IPV4_CSUM_OUT |
+	    M_TCP_CSUM_OUT | M_UDP_CSUM_OUT | M_ICMP_CSUM_OUT);
 	m_resethdr(m);
 	m->m_flags |= M_LOOP | keepflags;
+	m->m_pkthdr.csum_flags = keepcksum;
 	m->m_pkthdr.ph_ifidx = ifp->if_index;
 	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
+
+	if (ISSET(keepcksum, M_TCP_CSUM_OUT))
+		m->m_pkthdr.csum_flags |= M_TCP_CSUM_IN_OK;
+	if (ISSET(keepcksum, M_UDP_CSUM_OUT))
+		m->m_pkthdr.csum_flags |= M_UDP_CSUM_IN_OK;
+	if (ISSET(keepcksum, M_ICMP_CSUM_OUT))
+		m->m_pkthdr.csum_flags |= M_ICMP_CSUM_IN_OK;
 
 	ifp->if_opackets++;
 	ifp->if_obytes += m->m_pkthdr.len;
@@ -809,6 +824,8 @@ if_input_local(struct ifnet *ifp, struct mbuf *m, sa_family_t af)
 
 	switch (af) {
 	case AF_INET:
+		if (ISSET(keepcksum, M_IPV4_CSUM_OUT))
+			m->m_pkthdr.csum_flags |= M_IPV4_CSUM_IN_OK;
 		ipv4_input(ifp, m);
 		break;
 #ifdef INET6
@@ -3475,4 +3492,20 @@ net_tq(unsigned int ifindex)
 	sn = &softnets[ifindex % nettaskqs];
 
 	return (sn->sn_taskq);
+}
+
+void
+net_tq_barriers(const char *wmesg)
+{
+	struct task barriers[NET_TASKQ];
+	struct refcnt r = REFCNT_INITIALIZER();
+	int i;
+
+	for (i = 0; i < nitems(barriers); i++) {
+		task_set(&barriers[i], (void (*)(void *))refcnt_rele_wake, &r);
+		refcnt_take(&r);
+		task_add(softnets[i].sn_taskq, &barriers[i]);
+	}
+ 
+	refcnt_finalize(&r, wmesg);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.8 2023/03/12 11:46:35 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.9 2023/06/07 10:46:34 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -195,7 +195,7 @@ tak_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(fn, tak->version))
+	if (!valid_econtent_version(fn, tak->version, 0))
 		goto out;
 
 	p->res->current = parse_takey(fn, tak->current);

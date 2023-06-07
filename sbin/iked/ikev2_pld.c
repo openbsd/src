@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.128 2023/05/23 13:12:19 claudio Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.129 2023/06/06 16:09:35 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1525,9 +1525,10 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 	struct sockaddr_in		 s4;
 	struct sockaddr_in6		 s6;
 	uint8_t				 buf[2][128];
+	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 	uint8_t				*ptr;
 
-	ptr = ibuf_data(msg->msg_data) + offset;
+	ptr = msgbuf + offset;
 
 	switch (type) {
 	case IKEV2_TS_IPV4_ADDR_RANGE:
@@ -1867,6 +1868,7 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 	struct iked_addr	*addr;
 	struct sockaddr_in	*in4;
 	struct sockaddr_in6	*in6;
+	uint8_t			*msgbuf = ibuf_data(msg->msg_data);
 	uint8_t			*ptr;
 	size_t			 len;
 	uint8_t			 buf[128];
@@ -1875,7 +1877,7 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 	if (ikev2_validate_cp(msg, offset, left, &cp))
 		return (-1);
 
-	ptr = ibuf_data(msg->msg_data) + offset + sizeof(cp);
+	ptr = msgbuf + offset + sizeof(cp);
 	len = left - sizeof(cp);
 
 	log_debug("%s: type %s length %zu",

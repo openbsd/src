@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.39 2023/05/30 12:02:22 claudio Exp $ */
+/*	$OpenBSD: print.c,v 1.40 2023/06/05 14:19:13 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -161,7 +161,7 @@ as_resources_print(struct cert_as *as, size_t asz)
 
 	for (i = 0; i < asz; i++) {
 		if (outformats & FORMAT_JSON)
-			json_do_object("resource");
+			json_do_object("resource", 1);
 		switch (as[i].type) {
 		case CERT_AS_ID:
 			if (outformats & FORMAT_JSON) {
@@ -183,7 +183,7 @@ as_resources_print(struct cert_as *as, size_t asz)
 			break;
 		case CERT_AS_RANGE:
 			if (outformats & FORMAT_JSON) {
-				json_do_object("asrange");
+				json_do_object("asrange", 1);
 				json_do_uint("min", as[i].range.min);
 				json_do_uint("max", as[i].range.max);
 				json_do_end();
@@ -212,7 +212,7 @@ ip_resources_print(struct cert_ip *ips, size_t ipsz, size_t asz)
 
 	for (i = 0; i < ipsz; i++) {
 		if (outformats & FORMAT_JSON)
-			json_do_object("resource");
+			json_do_object("resource", 1);
 		switch (ips[i].type) {
 		case CERT_IP_INHERIT:
 			if (outformats & FORMAT_JSON) {
@@ -240,7 +240,7 @@ ip_resources_print(struct cert_ip *ips, size_t ipsz, size_t asz)
 			inet_ntop(sockt, ips[i].min, buf1, sizeof(buf1));
 			inet_ntop(sockt, ips[i].max, buf2, sizeof(buf2));
 			if (outformats & FORMAT_JSON) {
-				json_do_object("ip_range");
+				json_do_object("ip_range", 1);
 				json_do_string("min", buf1);
 				json_do_string("max", buf2);
 				json_do_end();
@@ -376,7 +376,7 @@ crl_print(const struct crl *p)
 		x509_get_time(X509_REVOKED_get0_revocationDate(rev), &t);
 		if (serial != NULL) {
 			if (outformats & FORMAT_JSON) {
-				json_do_object("cert");
+				json_do_object("cert", 1);
 				json_do_string("serial", serial);
 				json_do_string("date", time2str(t));
 				json_do_end();
@@ -436,7 +436,7 @@ mft_print(const X509 *x, const struct mft *p)
 			errx(1, "base64_encode failure");
 
 		if (outformats & FORMAT_JSON) {
-			json_do_object("filehash");
+			json_do_object("filehash", 1);
 			json_do_string("filename", p->files[i].file);
 			json_do_string("hash", hash);
 			json_do_end();
@@ -495,7 +495,7 @@ roa_print(const X509 *x, const struct roa *p)
 		    p->ips[i].afi, buf, sizeof(buf));
 
 		if (outformats & FORMAT_JSON) {
-			json_do_object("vrp");
+			json_do_object("vrp", 1);
 			json_do_string("prefix", buf);
 			json_do_uint("asid", p->asid);
 			json_do_uint("maxlen", p->ips[i].maxlength);
@@ -591,7 +591,7 @@ rsc_print(const X509 *x, const struct rsc *p)
 			errx(1, "base64_encode failure");
 
 		if (outformats & FORMAT_JSON) {
-			json_do_object("filehash");
+			json_do_object("filehash", 1);
 			if (p->files[i].filename)
 				json_do_string("filename",
 				    p->files[i].filename);
@@ -616,7 +616,7 @@ static void
 aspa_provider(uint32_t as, enum afi afi)
 {
 	if (outformats & FORMAT_JSON) {
-		json_do_object("aspa");
+		json_do_object("aspa", 1);
 		json_do_uint("asid", as);
 		if (afi == AFI_IPV4)
 			json_do_string("afi_limit", "ipv4");
@@ -713,7 +713,7 @@ takey_print(char *name, const struct takey *t)
 		errx(1, "base64_encode failed in %s", __func__);
 
 	if (outformats & FORMAT_JSON) {
-		json_do_object("takey");
+		json_do_object("takey", 0);
 		json_do_string("name", name);
 		json_do_array("comments");
 		for (i = 0; i < t->commentsz; i++)
@@ -824,7 +824,7 @@ geofeed_print(const X509 *x, const struct geofeed *p)
 		ip_addr_print(&p->geoips[i].ip->ip, p->geoips[i].ip->afi, buf,
 		    sizeof(buf));
 		if (outformats & FORMAT_JSON) {
-			json_do_object("geoip");
+			json_do_object("geoip", 1);
 			json_do_string("prefix", buf);
 			json_do_string("location", p->geoips[i].loc);
 			json_do_end();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.316 2023/05/26 12:13:26 kn Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.317 2023/06/05 08:45:20 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1989,6 +1989,11 @@ pfsync_update_state(struct pf_state *st)
 	case PFSYNC_S_NONE:
 		pfsync_q_ins(st, PFSYNC_S_UPD_C);
 		st->sync_updates = 0;
+		break;
+
+	case PFSYNC_S_DEL:
+	case PFSYNC_S_COUNT:
+	case PFSYNC_S_DEFER:
 		break;
 
 	default:

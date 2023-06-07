@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.93 2023/05/22 15:15:25 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.94 2023/06/07 10:46:34 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -286,7 +286,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, mft->version))
+	if (!valid_econtent_version(p->fn, mft->version, 0))
 		goto out;
 
 	p->res->seqnum = x509_convert_seqnum(p->fn, mft->manifestNumber);

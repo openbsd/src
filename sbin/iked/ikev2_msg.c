@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.93 2023/05/30 08:41:15 claudio Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.94 2023/06/06 13:27:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -644,7 +644,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 	}
 
 	cipher_setkey(sa->sa_encr, encr->buf, ibuf_length(encr));
-	cipher_setiv(sa->sa_encr, ibuf_data(src) + ivoff, ivlen);
+	cipher_setiv(sa->sa_encr, ibuf_seek(src, ivoff, ivlen), ivlen);
 	if (cipher_init_decrypt(sa->sa_encr) == -1) {
 		log_info("%s: error initiating cipher.", __func__);
 		goto done;
@@ -676,7 +676,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 	}
 
 	if ((outlen = ibuf_length(out)) != 0) {
-		if (cipher_update(sa->sa_encr, ibuf_data(src) + encroff,
+		if (cipher_update(sa->sa_encr, ibuf_seek(src, encroff, encrlen),
 		    encrlen, ibuf_data(out), &outlen) == -1) {
 			log_info("%s: error updating cipher.", __func__);
 			goto done;

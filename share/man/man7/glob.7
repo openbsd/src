@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.7,v 1.7 2022/07/29 17:34:07 schwarze Exp $
+.\"	$OpenBSD: glob.7,v 1.8 2023/05/30 14:04:53 aisha Exp $
 .\"
 .\" Copyright (c) 2009 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -15,7 +15,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: July 29 2022 $
+.Dd $Mdocdate: May 30 2023 $
 .Dt GLOB 7
 .Os
 .Sh NAME
@@ -85,9 +85,9 @@ and
 stands for the list of all characters belonging to that class.
 Supported character classes:
 .Bl -column "xdigit" "xdigit" "xdigit" -offset indent
-.It Li "alnum" Ta "cntrl" Ta "lower" Ta "space"
-.It Li "alpha" Ta "digit" Ta "print" Ta "upper"
-.It Li "blank" Ta "graph" Ta "punct" Ta "xdigit"
+.It Li "alnum" Ta Li "cntrl" Ta Li "lower" Ta Li "space"
+.It Li "alpha" Ta Li "digit" Ta Li "print" Ta Li "upper"
+.It Li "blank" Ta Li "graph" Ta Li "punct" Ta Li "xdigit"
 .El
 .Pp
 These match characters using the macros specified in

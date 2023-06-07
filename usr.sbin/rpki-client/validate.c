@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.62 2023/05/23 06:42:08 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.65 2023/06/07 11:09:08 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -415,7 +415,7 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
 		cryptoerrx("OBJ_dup");
 	if (!X509_VERIFY_PARAM_add0_policy(params, cp_oid))
 		cryptoerrx("X509_VERIFY_PARAM_add0_policy");
-	X509_VERIFY_PARAM_set_time(params, evaluation_time);
+	X509_VERIFY_PARAM_set_time(params, get_current_time());
 
 	flags = X509_V_FLAG_CRL_CHECK;
 	flags |= X509_V_FLAG_PARTIAL_CHAIN;
@@ -514,27 +514,35 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 }
 
 int
-valid_econtent_version(const char *fn, const ASN1_INTEGER *aint)
+valid_econtent_version(const char *fn, const ASN1_INTEGER *aint,
+    uint64_t expected)
 {
 	uint64_t version;
 
-	if (aint == NULL)
-		return 1;
+	if (aint == NULL) {
+		if (expected == 0)
+			return 1;
+		warnx("%s: unexpected version 0", fn);
+		return 0;
+	}
 
 	if (!ASN1_INTEGER_get_uint64(&version, aint)) {
 		warnx("%s: ASN1_INTEGER_get_uint64 failed", fn);
 		return 0;
 	}
 
-	switch (version) {
-	case 0:
+	if (version == 0) {
 		warnx("%s: incorrect encoding for version 0", fn);
 		return 0;
-	default:
-		warnx("%s: version %llu not supported (yet)", fn,
-		    (unsigned long long)version);
+	}
+
+	if (version != expected) {
+		warnx("%s: unexpected version (expected %llu, got %llu)", fn,
+		    (unsigned long long)expected, (unsigned long long)version);
 		return 0;
 	}
+
+	return 1;
 }
 
 /*

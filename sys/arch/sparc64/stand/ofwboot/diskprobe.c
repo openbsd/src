@@ -1,4 +1,4 @@
-/*	$OpenBSD: diskprobe.c,v 1.6 2018/12/31 11:44:57 claudio Exp $ */
+/*	$OpenBSD: diskprobe.c,v 1.7 2023/06/01 17:24:56 krw Exp $ */
 
 /*
  * Copyright (c) 2008 Mark Kettenis <kettenis@openbsd.org>
@@ -48,7 +48,7 @@ new_diskinfo(int node)
 	bzero(dip, sizeof(*dip));
 
 	len = OF_package_to_path(node, dip->path, sizeof(dip->path));
-	if (len < 0) { 
+	if (len < 0) {
 		DPRINTF("could not get path for disk node %x\n", node);
 		goto bad;
 	} else if (len >= sizeof(dip->path)) {
@@ -138,7 +138,7 @@ diskprobe(void)
 		if (node == 0 || node == -1) {
 			if (--depth < 0)
 				return;
-			
+
 			stack[depth] = OF_peer(stack[depth]);
 			continue;
 		}

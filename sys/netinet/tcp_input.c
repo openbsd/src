@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.387 2023/03/14 00:24:05 yasuoka Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.388 2023/05/30 19:32:57 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3990,14 +3990,11 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint32_t now)
 		ip6->ip6_dst = sc->sc_src.sin6.sin6_addr;
 		ip6->ip6_src = sc->sc_dst.sin6.sin6_addr;
 		ip6->ip6_nxt = IPPROTO_TCP;
-		/* ip6_plen will be updated in ip6_output() */
 		th = (struct tcphdr *)(ip6 + 1);
 		th->th_dport = sc->sc_src.sin6.sin6_port;
 		th->th_sport = sc->sc_dst.sin6.sin6_port;
 		break;
 #endif
-	default:
-		unhandled_af(sc->sc_src.sa.sa_family);
 	}
 
 	th->th_seq = htonl(sc->sc_iss);
@@ -4096,21 +4093,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint32_t now)
 	}
 #endif /* TCP_SIGNATURE */
 
-	/* Compute the packet's checksum. */
-	switch (sc->sc_src.sa.sa_family) {
-	case AF_INET:
-		ip->ip_len = htons(tlen - hlen);
-		th->th_sum = 0;
-		th->th_sum = in_cksum(m, tlen);
-		break;
-#ifdef INET6
-	case AF_INET6:
-		ip6->ip6_plen = htons(tlen - hlen);
-		th->th_sum = 0;
-		th->th_sum = in6_cksum(m, IPPROTO_TCP, hlen, tlen - hlen);
-		break;
-#endif
-	}
+	SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
 
 	/* use IPsec policy and ttl from listening socket, on SYN ACK */
 	inp = sc->sc_tp ? sc->sc_tp->t_inpcb : NULL;
@@ -4125,34 +4108,22 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint32_t now)
 		ip->ip_ttl = inp ? inp->inp_ip.ip_ttl : ip_defttl;
 		if (inp != NULL)
 			ip->ip_tos = inp->inp_ip.ip_tos;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
-		ip6->ip6_vfc |= IPV6_VERSION;
-		ip6->ip6_plen = htons(tlen - hlen);
-		/* ip6_hlim will be initialized afterwards */
-		/* leave flowlabel = 0, it is legal and require no state mgmt */
-		break;
-#endif
-	}
 
-	switch (sc->sc_src.sa.sa_family) {
-	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, &sc->sc_route4,
 		    (ip_mtudisc ? IP_MTUDISC : 0),  NULL, inp, 0);
 		break;
 #ifdef INET6
 	case AF_INET6:
+		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
+		ip6->ip6_vfc |= IPV6_VERSION;
+		/* ip6_plen will be updated in ip6_output() */
 		ip6->ip6_hlim = in6_selecthlim(inp);
+		/* leave flowlabel = 0, it is legal and require no state mgmt */
 
 		error = ip6_output(m, NULL /*XXX*/, &sc->sc_route6, 0,
 		    NULL, NULL);
 		break;
 #endif
-	default:
-		error = EAFNOSUPPORT;
-		break;
 	}
 	return (error);
 }

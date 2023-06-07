@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.93 2022/10/21 14:20:03 kn Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.94 2023/06/05 11:35:46 bluhm Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -173,6 +173,9 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_mtu = LOMTU;
 	ifp->if_flags = IFF_LOOPBACK | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_capabilities = IFCAP_CSUM_IPv4 |
+	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
+	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;
 	ifp->if_rtrequest = lortrequest;
 	ifp->if_ioctl = loioctl;
 	ifp->if_input = loinput;

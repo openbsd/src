@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.238 2023/05/26 14:57:38 claudio Exp $ */
+/*	$OpenBSD: main.c,v 1.241 2023/05/30 16:02:28 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -74,7 +74,7 @@ int	rrdpon = 1;
 int	repo_timeout;
 time_t	deadline;
 
-int64_t  evaluation_time;
+int64_t  evaluation_time = X509_TIME_MIN;
 
 struct stats	 stats;
 
@@ -124,6 +124,14 @@ entity_free(struct entity *ent)
 	free(ent->mftaki);
 	free(ent->data);
 	free(ent);
+}
+
+time_t
+get_current_time(void)
+{
+	if (evaluation_time > X509_TIME_MIN)
+		return (time_t) evaluation_time;
+	return time(NULL);
 }
 
 /*
@@ -551,6 +559,7 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	struct aspa	*aspa;
 	struct repo	*rp;
 	char		*file;
+	time_t		 mtime;
 	unsigned int	 id;
 	int		 talid;
 	int		 c;
@@ -565,12 +574,13 @@ entity_process(struct ibuf *b, struct stats *st, struct vrp_tree *tree,
 	io_read_buf(b, &id, sizeof(id));
 	io_read_buf(b, &talid, sizeof(talid));
 	io_read_str(b, &file);
+	io_read_buf(b, &mtime, sizeof(mtime));
 
 	/* in filemode messages can be ignored, only the accounting matters */
 	if (filemode)
 		goto done;
 
-	if (filepath_add(&fpt, file) == 0) {
+	if (filepath_add(&fpt, file, mtime) == 0) {
 		warnx("%s: File already visited", file);
 		goto done;
 	}
@@ -966,8 +976,6 @@ main(int argc, char *argv[])
 	    "proc exec unveil", NULL) == -1)
 		err(1, "pledge");
 
-	evaluation_time = time(NULL);
-
 	while ((c = getopt(argc, argv, "Ab:Bcd:e:fH:jmnoP:rRs:S:t:T:vV")) != -1)
 		switch (c) {
 		case 'A':
@@ -1009,7 +1017,7 @@ main(int argc, char *argv[])
 			outformats |= FORMAT_OPENBGPD;
 			break;
 		case 'P':
-			evaluation_time = strtonum(optarg, X509_TIME_MIN,
+			evaluation_time = strtonum(optarg, X509_TIME_MIN + 1,
 			    X509_TIME_MAX, &errs);
 			if (errs)
 				errx(1, "-P: time in seconds %s", errs);
@@ -1450,9 +1458,10 @@ main(int argc, char *argv[])
 	printf("Ghostbuster records: %u\n", stats.repo_tal_stats.gbrs);
 	printf("Trust Anchor Keys: %u\n", stats.repo_tal_stats.taks);
 	printf("Repositories: %u\n", stats.repos);
-	printf("Cleanup: removed %u files, %u directories, %u superfluous\n",
+	printf("Cleanup: removed %u files, %u directories\n"
+	    "Repository cleanup: kept %u and removed %u superfluous files\n",
 	    stats.repo_stats.del_files, stats.repo_stats.del_dirs,
-	    stats.repo_stats.extra_files);
+	    stats.repo_stats.extra_files, stats.repo_stats.del_extra_files);
 	printf("VRP Entries: %u (%u unique)\n", stats.repo_tal_stats.vrps,
 	    stats.repo_tal_stats.vrps_uniqs);
 	printf("VAP Entries: %u (%u unique)\n", stats.repo_tal_stats.vaps,

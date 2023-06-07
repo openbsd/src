@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.36 2023/05/21 17:04:22 krw Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.39 2023/06/03 21:37:53 krw Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 2000/08/20 14:58:41 mrg Exp $	*/
 
 /*
@@ -184,11 +184,13 @@ devclose(struct open_file *of)
 }
 
 struct devsw devsw[1] = {
-	"OpenFirmware",
-	strategy,
-	(int (*)(struct open_file *, ...))nodev,
-	devclose,
-	noioctl
+	{
+		"OpenFirmware",
+		strategy,
+		(int (*)(struct open_file *, ...))nodev,
+		devclose,
+		noioctl
+	}
 };
 int ndevs = sizeof devsw / sizeof devsw[0];
 
@@ -223,14 +225,6 @@ static struct of_dev ofdev = {
 };
 
 char opened_name[256];
-
-static u_long
-get_long(const void *p)
-{
-	const unsigned char *cp = p;
-
-	return cp[0] | (cp[1] << 8) | (cp[2] << 16) | (cp[3] << 24);
-}
 
 /************************************************************************
  *
@@ -434,14 +428,9 @@ static char *
 search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
     u_long off0)
 {
-	size_t read;
-	struct mbr_partition *p;
-	int i;
-	u_long poff;
-
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
-	int error;
+	size_t read;
 
 	/* minimal requirements for archetypal disk label */
 	if (DL_GETDSIZE(lp) == 0)
@@ -485,7 +474,6 @@ load_disklabel(struct of_dev *ofdev, struct disklabel *label)
 	int error = 0;
 	char *errmsg = NULL;
 
-	/* First try to find a disklabel without MBR partitions */
 	DNPRINTF(BOOT_D_OFDEV, "load_disklabel: trying to read disklabel\n");
 	if (strategy(ofdev, F_READ,
 		     LABELSECTOR, DEV_BSIZE, buf, &read) != 0
@@ -496,9 +484,7 @@ load_disklabel(struct of_dev *ofdev, struct disklabel *label)
 			DNPRINTF(BOOT_D_OFDEV,
 			    "load_disklabel: getdisklabel says %s\n", errmsg);
 #endif
-		/* Else try MBR partitions */
-		errmsg = search_label(ofdev, LABELSECTOR, buf,
-		    label, 0);
+		errmsg = search_label(ofdev, LABELSECTOR, buf, label, 0);
 		if (errmsg) {
 			printf("load_disklabel: search_label says %s\n",
 			    errmsg);
@@ -691,7 +677,7 @@ devopen(struct open_file *of, const char *name, char **file)
 		parent = OF_parent(dhandle);
 		if (parent && OF_getprop(parent, "device_type", buf,
 		    sizeof(buf)) > 0 && strcmp(buf, "ide") == 0) {
-			DNPRINTF(BOOT_D_OFDEV, 
+			DNPRINTF(BOOT_D_OFDEV,
 			    "devopen: Disable writing for IDE block device\n");
 			of->f_flags |= F_NOWRITE;
 		}

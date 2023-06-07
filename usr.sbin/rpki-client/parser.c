@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.94 2023/05/11 20:13:30 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.96 2023/05/30 16:02:28 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -312,6 +312,9 @@ static struct mft *
 proc_parser_mft_post(char *file, struct mft *mft, const char *path,
     const char *errstr)
 {
+	/* check that now is not before from */
+	time_t now = get_current_time();
+
 	if (mft == NULL) {
 		if (errstr == NULL)
 			errstr = "no valid mft available";
@@ -319,14 +322,14 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
 		return NULL;
 	}
 
-	/* check that evaluation_time is not before from */
-	if (evaluation_time < mft->thisupdate) {
+	/* check that now is not before from */
+	if (now < mft->thisupdate) {
 		warnx("%s: mft not yet valid %s", file,
 		    time2str(mft->thisupdate));
 		mft->stale = 1;
 	}
-	/* check that evaluation_time is not after until */
-	if (evaluation_time > mft->nextupdate) {
+	/* check that now is not after until */
+	if (now > mft->nextupdate) {
 		warnx("%s: mft expired on %s", file,
 		    time2str(mft->nextupdate));
 		mft->stale = 1;
@@ -349,7 +352,8 @@ proc_parser_mft_post(char *file, struct mft *mft, const char *path,
  * Load the most recent MFT by opening both options and comparing the two.
  */
 static char *
-proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile)
+proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile,
+    time_t *crlmtime)
 {
 	struct mft	*mft1 = NULL, *mft2 = NULL;
 	struct crl	*crl, *crl1, *crl2;
@@ -357,6 +361,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile)
 	const char	*err1, *err2;
 
 	*mp = NULL;
+	*crlmtime = 0;
 
 	mft1 = proc_parser_mft_pre(entp, DIR_VALID, &file1, &crl1, &crl1file,
 	    &err1);
@@ -389,6 +394,7 @@ proc_parser_mft(struct entity *entp, struct mft **mp, char **crlfile)
 	}
 
 	if (*mp != NULL) {
+		*crlmtime = crl->lastupdate;
 		if (!crl_insert(&crlt, crl)) {
 			warnx("%s: duplicate AKI %s", file, crl->aki);
 			crl_free(crl);
@@ -485,7 +491,7 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
 /*
  * Parse a ghostbuster record
  */
-static void
+static struct gbr *
 proc_parser_gbr(char *file, const unsigned char *der, size_t len,
     const char *mftaki)
 {
@@ -496,17 +502,23 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 	const char	*errstr;
 
 	if ((gbr = gbr_parse(&x509, file, der, len)) == NULL)
-		return;
+		return NULL;
 
 	a = valid_ski_aki(file, &auths, gbr->ski, gbr->aki, mftaki);
 	crl = crl_get(&crlt, a);
 
 	/* return value can be ignored since nothing happens here */
-	if (!valid_x509(file, ctx, x509, a, crl, &errstr))
+	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
 		warnx("%s: %s", file, errstr);
-
+		X509_free(x509);
+		gbr_free(gbr);
+		return NULL;
+	}
 	X509_free(x509);
-	gbr_free(gbr);
+
+	gbr->talid = a->cert->talid;
+
+	return gbr;
 }
 
 /*
@@ -615,8 +627,11 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 	struct mft	*mft;
 	struct roa	*roa;
 	struct aspa	*aspa;
+	struct gbr	*gbr;
+	struct tak	*tak;
 	struct ibuf	*b;
 	unsigned char	*f;
+	time_t		 mtime, crlmtime;
 	size_t		 flen;
 	char		*file, *crlfile;
 	int		 c;
@@ -639,9 +654,13 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 
 		file = NULL;
 		f = NULL;
+		mtime = 0;
+		crlmtime = 0;
+
 		switch (entp->type) {
 		case RTYPE_TAL:
 			io_str_buffer(b, entp->file);
+			io_simple_buffer(b, &mtime, sizeof(mtime));
 			if ((tal = tal_parse(entp->file, entp->data,
 			    entp->datasz)) == NULL)
 				errx(1, "%s: could not parse tal file",
@@ -660,6 +679,9 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			else
 				cert = proc_parser_cert(file, f, flen,
 				    entp->mftaki);
+			if (cert != NULL)
+				mtime = cert->notbefore;
+			io_simple_buffer(b, &mtime, sizeof(mtime));
 			c = (cert != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (cert != NULL) {
@@ -673,8 +695,11 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			 */
 			break;
 		case RTYPE_MFT:
-			file = proc_parser_mft(entp, &mft, &crlfile);
+			file = proc_parser_mft(entp, &mft, &crlfile, &crlmtime);
 			io_str_buffer(b, file);
+			if (mft != NULL)
+				mtime = mft->signtime;
+			io_simple_buffer(b, &mtime, sizeof(mtime));
 			c = (mft != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (mft != NULL)
@@ -693,6 +718,8 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 				io_simple_buffer(b2, &entp->talid,
 				    sizeof(entp->talid));
 				io_str_buffer(b2, crlfile);
+				io_simple_buffer(b2, &crlmtime,
+				    sizeof(crlmtime));
 				free(crlfile);
 
 				io_close_buffer(msgq, b2);
@@ -703,6 +730,9 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
 			roa = proc_parser_roa(file, f, flen, entp->mftaki);
+			if (roa != NULL)
+				mtime = roa->signtime;
+			io_simple_buffer(b, &mtime, sizeof(mtime));
 			c = (roa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (roa != NULL)
@@ -712,12 +742,19 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_GBR:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			proc_parser_gbr(file, f, flen, entp->mftaki);
+			gbr = proc_parser_gbr(file, f, flen, entp->mftaki);
+			if (gbr != NULL)
+				mtime = gbr->signtime;
+			io_simple_buffer(b, &mtime, sizeof(mtime));
+			gbr_free(gbr);
 			break;
 		case RTYPE_ASPA:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
 			aspa = proc_parser_aspa(file, f, flen, entp->mftaki);
+			if (aspa != NULL)
+				mtime = aspa->signtime;
+			io_simple_buffer(b, &mtime, sizeof(mtime));
 			c = (aspa != NULL);
 			io_simple_buffer(b, &c, sizeof(int));
 			if (aspa != NULL)
@@ -727,13 +764,18 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_TAK:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			proc_parser_tak(file, f, flen, entp->mftaki);
+			tak = proc_parser_tak(file, f, flen, entp->mftaki);
+			if (tak != NULL)
+				mtime = tak->signtime;
+			io_simple_buffer(b, &mtime, sizeof(mtime));
+			tak_free(tak);
 			break;
 		case RTYPE_CRL:
 		default:
 			file = parse_filepath(entp->repoid, entp->path,
 			    entp->file, entp->location);
 			io_str_buffer(b, file);
+			io_simple_buffer(b, &mtime, sizeof(mtime));
 			warnx("%s: unhandled type %d", file, entp->type);
 			break;
 		}

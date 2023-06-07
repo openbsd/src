@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_gcd.c,v 1.27 2023/04/09 18:38:59 tb Exp $ */
+/* $OpenBSD: bn_gcd.c,v 1.28 2023/06/02 17:15:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -497,19 +497,16 @@ BN_mod_inverse_no_branch(BIGNUM *in, const BIGNUM *a, const BIGNUM *n,
 	}
 	/* Now  Y*a  ==  A  (mod |n|).  */
 
-	if (BN_is_one(A)) {
-		/* Y*a == 1  (mod |n|) */
-		if (!Y->neg && BN_ucmp(Y, n) < 0) {
-			if (!bn_copy(R, Y))
-				goto err;
-		} else {
-			if (!BN_nnmod(R, Y, n, ctx))
-				goto err;
-		}
-	} else {
+	if (!BN_is_one(A)) {
 		BNerror(BN_R_NO_INVERSE);
 		goto err;
 	}
+
+	if (!BN_nnmod(Y, Y, n, ctx))
+		goto err;
+	if (!bn_copy(R, Y))
+		goto err;
+
 	ret = R;
 
  err:
@@ -785,19 +782,16 @@ BN_mod_inverse_internal(BIGNUM *in, const BIGNUM *a, const BIGNUM *n, BN_CTX *ct
 	}
 	/* Now  Y*a  ==  A  (mod |n|).  */
 
-	if (BN_is_one(A)) {
-		/* Y*a == 1  (mod |n|) */
-		if (!Y->neg && BN_ucmp(Y, n) < 0) {
-			if (!bn_copy(R, Y))
-				goto err;
-		} else {
-			if (!BN_nnmod(R, Y,n, ctx))
-				goto err;
-		}
-	} else {
+	if (!BN_is_one(A)) {
 		BNerror(BN_R_NO_INVERSE);
 		goto err;
 	}
+
+	if (!BN_nnmod(Y, Y, n, ctx))
+		goto err;
+	if (!bn_copy(R, Y))
+		goto err;
+
 	ret = R;
 
  err:

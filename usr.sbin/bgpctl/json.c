@@ -1,4 +1,4 @@
-/*	$OpenBSD: json.c,v 1.8 2023/05/05 07:42:40 claudio Exp $ */
+/*	$OpenBSD: json.c,v 1.9 2023/06/05 16:24:05 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -38,6 +38,7 @@ enum json_type {
 static struct json_stack {
 	const char	*name;
 	unsigned int	count;
+	int		compact;
 	enum json_type	type;
 } stack[JSON_MAX_STACK];
 
@@ -49,9 +50,18 @@ static FILE *jsonfh;
 static void
 do_comma_indent(void)
 {
-	if (stack[level].count++ > 0)
+	char sp = '\n';
+
+	if (stack[level].compact)
+		sp = ' ';
+
+	if (stack[level].count++ > 0) {
 		if (!eb)
-			eb = fprintf(jsonfh, ",\n") < 0;
+			eb = fprintf(jsonfh, ",%c", sp) < 0;
+	}
+
+	if (stack[level].compact)
+		return;
 	if (!eb)
 		eb = fprintf(jsonfh, "\t%.*s", level, indent) < 0;
 }
@@ -107,6 +117,7 @@ void
 json_do_array(const char *name)
 {
 	int i, l;
+	char sp = '\n';
 
 	if ((l = do_find(ARRAY, name)) > 0) {
 		/* array already in use, close element and move on */
@@ -118,10 +129,12 @@ json_do_array(const char *name)
 	if (stack[level].type == ARRAY)
 		json_do_end();
 
+	if (stack[level].compact)
+		sp = ' ';
 	do_comma_indent();
 	do_name(name);
 	if (!eb)
-		eb = fprintf(jsonfh, "[\n") < 0;
+		eb = fprintf(jsonfh, "[%c", sp) < 0;
 
 	if (++level >= JSON_MAX_STACK)
 		errx(1, "json stack too deep");
@@ -129,12 +142,15 @@ json_do_array(const char *name)
 	stack[level].name = name;
 	stack[level].type = ARRAY;
 	stack[level].count = 0;
+	/* inherit compact setting from above level */
+	stack[level].compact = stack[level - 1].compact;
 }
 
 void
-json_do_object(const char *name)
+json_do_object(const char *name, int compact)
 {
 	int i, l;
+	char sp = '\n';
 
 	if ((l = do_find(OBJECT, name)) > 0) {
 		/* roll back to that object and close it */
@@ -142,10 +158,12 @@ json_do_object(const char *name)
 			json_do_end();
 	}
 
+	if (compact)
+		sp = ' ';
 	do_comma_indent();
 	do_name(name);
 	if (!eb)
-		eb = fprintf(jsonfh, "{\n") < 0;
+		eb = fprintf(jsonfh, "{%c", sp) < 0;
 
 	if (++level >= JSON_MAX_STACK)
 		errx(1, "json stack too deep");
@@ -153,23 +171,33 @@ json_do_object(const char *name)
 	stack[level].name = name;
 	stack[level].type = OBJECT;
 	stack[level].count = 0;
+	stack[level].compact = compact;
 }
 
 void
 json_do_end(void)
 {
-	if (stack[level].type == ARRAY) {
-		if (!eb)
-			eb = fprintf(jsonfh, "\n%.*s]", level, indent) < 0;
-	} else if (stack[level].type == OBJECT) {
-		if (!eb)
-			eb = fprintf(jsonfh, "\n%.*s}", level, indent) < 0;
-	} else {
+	char c;
+
+	if (stack[level].type == ARRAY)
+		c = ']';
+	else if (stack[level].type == OBJECT)
+		c = '}';
+	else
 		errx(1, "json bad stack state");
+
+	if (!stack[level].compact) {
+		if (!eb)
+			eb = fprintf(jsonfh, "\n%.*s%c", level, indent, c) < 0;
+	} else {
+		if (!eb)
+			eb = fprintf(jsonfh, " %c", c) < 0;
 	}
+
 	stack[level].name = NULL;
 	stack[level].type = NONE;
 	stack[level].count = 0;
+	stack[level].compact = 0;
 
 	if (level-- <= 0)
 		errx(1, "json stack underflow");
