@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.183 2023/05/30 16:02:28 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.184 2023/06/07 10:46:34 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -690,7 +690,8 @@ int		 valid_origin(const char *, const char *);
 int		 valid_x509(char *, X509_STORE_CTX *, X509 *, struct auth *,
 		    struct crl *, const char **);
 int		 valid_rsc(const char *, struct cert *, struct rsc *);
-int		 valid_econtent_version(const char *, const ASN1_INTEGER *);
+int		 valid_econtent_version(const char *, const ASN1_INTEGER *,
+		    uint64_t);
 int		 valid_aspa(const char *, struct cert *, struct aspa *);
 int		 valid_geofeed(const char *, struct cert *, struct geofeed *);
 int		 valid_uuid(const char *);

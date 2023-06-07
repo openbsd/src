@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.63 2023/05/30 12:14:48 claudio Exp $ */
+/*	$OpenBSD: validate.c,v 1.64 2023/06/07 10:46:34 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -514,11 +514,12 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 }
 
 int
-valid_econtent_version(const char *fn, const ASN1_INTEGER *aint)
+valid_econtent_version(const char *fn, const ASN1_INTEGER *aint,
+    uint64_t expected)
 {
 	uint64_t version;
 
-	if (aint == NULL)
+	if (expected == 0 && aint == NULL)
 		return 1;
 
 	if (!ASN1_INTEGER_get_uint64(&version, aint)) {
@@ -526,15 +527,18 @@ valid_econtent_version(const char *fn, const ASN1_INTEGER *aint)
 		return 0;
 	}
 
-	switch (version) {
-	case 0:
+	if (version == 0) {
 		warnx("%s: incorrect encoding for version 0", fn);
 		return 0;
-	default:
-		warnx("%s: version %llu not supported (yet)", fn,
-		    (unsigned long long)version);
+	}
+
+	if (version != expected) {
+		warnx("%s: unexpected version (expected %llu, got %llu)", fn,
+		    (unsigned long long)expected, (unsigned long long)version);
 		return 0;
 	}
+
+	return 1;
 }
 
 /*

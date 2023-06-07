@@ -1,4 +1,4 @@
-/*	$OpenBSD: roa.c,v 1.67 2023/05/23 06:42:08 tb Exp $ */
+/*	$OpenBSD: roa.c,v 1.68 2023/06/07 10:46:34 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -119,7 +119,7 @@ roa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, roa->version))
+	if (!valid_econtent_version(p->fn, roa->version, 0))
 		goto out;
 
 	if (!as_id_parse(roa->asid, &p->res->asid)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.17 2023/04/26 16:32:41 claudio Exp $ */
+/*	$OpenBSD: aspa.c,v 1.18 2023/06/07 10:46:34 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -161,7 +161,7 @@ aspa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, aspa->version))
+	if (!valid_econtent_version(p->fn, aspa->version, 0))
 		goto out;
 
 	if (!as_id_parse(aspa->customerASID, &p->res->custasid)) {
