@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.64 2023/06/07 10:46:34 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.65 2023/06/07 11:09:08 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -519,8 +519,12 @@ valid_econtent_version(const char *fn, const ASN1_INTEGER *aint,
 {
 	uint64_t version;
 
-	if (expected == 0 && aint == NULL)
-		return 1;
+	if (aint == NULL) {
+		if (expected == 0)
+			return 1;
+		warnx("%s: unexpected version 0", fn);
+		return 0;
+	}
 
 	if (!ASN1_INTEGER_get_uint64(&version, aint)) {
 		warnx("%s: ASN1_INTEGER_get_uint64 failed", fn);
