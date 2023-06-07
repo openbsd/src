@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: BaseState.pm,v 1.1 2022/01/21 17:41:41 espie Exp $
+# $OpenBSD: BaseState.pm,v 1.2 2023/06/07 15:09:01 espie Exp $
 #
 # Copyright (c) 2007-2022 Marc Espie <espie@openbsd.org>
 #
@@ -219,11 +219,11 @@ sub _system
 		return 1;
 	} elsif ($r == 0) {
 		$DB::inhibit_exit = 0;
-		&$todo;
+		&$todo();
 		exec {$_[0]} @_ or
 		    exit 1;
 	} else {
-		&$todo2;
+		&$todo2();
 		waitpid($r, 0);
 		return $?;
 	}
