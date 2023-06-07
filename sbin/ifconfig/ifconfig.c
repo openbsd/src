@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.465 2023/06/01 18:57:54 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.466 2023/06/07 18:42:40 bluhm Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -471,8 +471,8 @@ const struct	cmd {
 	{ "-soii",	IFXF_INET6_NOSOII,	0,	setifxflags },
 	{ "monitor",	IFXF_MONITOR,	0,		setifxflags },
 	{ "-monitor",	-IFXF_MONITOR,	0,		setifxflags },
-	{ "tcprecvoffload", IFXF_LRO,	0,		setifxflags },
-	{ "-tcprecvoffload", -IFXF_LRO,	0,		setifxflags },
+	{ "tcplro",	IFXF_LRO,	0,		setifxflags },
+	{ "-tcplro",	-IFXF_LRO,	0,		setifxflags },
 #ifndef SMALL
 	{ "hwfeatures", NEXTARG0,	0,		printifhwfeatures },
 	{ "metric",	NEXTARG,	0,		setifmetric },
