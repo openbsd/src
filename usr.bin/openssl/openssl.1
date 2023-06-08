@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.147 2023/06/07 10:53:30 schwarze Exp $
+.\" $OpenBSD: openssl.1,v 1.148 2023/06/08 09:40:17 schwarze Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: June 7 2023 $
+.Dd $Mdocdate: June 8 2023 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -6058,137 +6058,16 @@ error 24 at 1 depth lookup:invalid CA certificate
 .Pp
 The first line contains the name of the certificate being verified, followed by
 the subject name of the certificate.
-The second line contains the error number and the depth.
+The second line contains the error number as defined by the
+.Dv X509_V_ERR_*
+constants in
+.In openssl/x509_vfy.h ,
+the associated error message documented in
+.Xr X509_STORE_CTX_get_error 3 ,
+and the depth.
 The depth is the number of the certificate being verified when a
 problem was detected starting with zero for the certificate being verified
 itself, then 1 for the CA that signed the certificate and so on.
-Finally a text version of the error number is presented.
-.Pp
-An exhaustive list of the error codes and messages is shown below; this also
-includes the name of the error code as defined in the header file
-.In openssl/x509_vfy.h .
-Some of the error codes are defined but never returned: these are described as
-.Qq unused .
-.Bl -tag -width "XXXX"
-.It 0 X509_V_OK
-The operation was successful.
-.It 2 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT
-The issuer certificate of an untrusted certificate could not be found.
-.It 3 X509_V_ERR_UNABLE_TO_GET_CRL
-The CRL of a certificate could not be found.
-.It 4 X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE
-The certificate signature could not be decrypted.
-This means that the actual signature value could not be determined
-rather than it not matching the expected value.
-This is only meaningful for RSA keys.
-.It 5 X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE
-The CRL signature could not be decrypted.
-This means that the actual signature value could not be determined
-rather than it not matching the expected value.
-Unused.
-.It 6 X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY
-The public key in the certificate
-.Cm SubjectPublicKeyInfo
-could not be read.
-.It 7 X509_V_ERR_CERT_SIGNATURE_FAILURE
-The signature of the certificate is invalid.
-.It 8 X509_V_ERR_CRL_SIGNATURE_FAILURE
-The signature of the certificate is invalid.
-.It 9 X509_V_ERR_CERT_NOT_YET_VALID
-The certificate is not yet valid: the
-.Cm notBefore
-date is after the current time.
-.It 10 X509_V_ERR_CERT_HAS_EXPIRED
-The certificate has expired; that is, the
-.Cm notAfter
-date is before the current time.
-.It 11 X509_V_ERR_CRL_NOT_YET_VALID
-The CRL is not yet valid.
-.It 12 X509_V_ERR_CRL_HAS_EXPIRED
-The CRL has expired.
-.It 13 X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD
-The certificate
-.Cm notBefore
-field contains an invalid time.
-.It 14 X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD
-The certificate
-.Cm notAfter
-field contains an invalid time.
-.It 15 X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD
-The CRL
-.Cm thisUpdate
-field contains an invalid time.
-The error code is misnamed and the error message confusingly talks about
-.Dq lastUpdate
-instead of
-.Dq thisUpdate
-for historical reasons.
-.It 16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD
-The CRL
-.Cm nextUpdate
-field contains an invalid time.
-.It 17 X509_V_ERR_OUT_OF_MEM
-An error occurred trying to allocate memory.
-This should never happen.
-.It 18 X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
-The passed certificate is self-signed and the same certificate cannot be
-found in the list of trusted certificates.
-.It 19 X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN
-The certificate chain could be built up using the untrusted certificates but
-the root could not be found locally.
-.It 20 X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
-The issuer certificate of a locally looked up certificate could not be found.
-This normally means the list of trusted certificates is not complete.
-.It 21 X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE
-No signatures could be verified because the chain contains only one
-certificate and it is not self-signed.
-.It 22 X509_V_ERR_CERT_CHAIN_TOO_LONG
-The certificate chain length is greater than the supplied maximum depth.
-Unused.
-.It 23 X509_V_ERR_CERT_REVOKED
-The certificate has been revoked.
-.It 24 X509_V_ERR_INVALID_CA
-A CA certificate is invalid.
-Either it is not a CA or its extensions are not consistent
-with the supplied purpose.
-.It 25 X509_V_ERR_PATH_LENGTH_EXCEEDED
-The
-.Cm basicConstraints
-pathlength parameter has been exceeded.
-.It 26 X509_V_ERR_INVALID_PURPOSE
-The supplied certificate cannot be used for the specified purpose.
-.It 27 X509_V_ERR_CERT_UNTRUSTED
-The root CA is not marked as trusted for the specified purpose.
-.It 28 X509_V_ERR_CERT_REJECTED
-The root CA is marked to reject the specified purpose.
-.It 29 X509_V_ERR_SUBJECT_ISSUER_MISMATCH
-The current candidate issuer certificate was rejected because its subject name
-did not match the issuer name of the current certificate.
-Only displayed when the
-.Fl issuer_checks
-option is set.
-.It 30 X509_V_ERR_AKID_SKID_MISMATCH
-The current candidate issuer certificate was rejected because its subject key
-identifier was present and did not match the authority key identifier current
-certificate.
-Only displayed when the
-.Fl issuer_checks
-option is set.
-.It 31 X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH
-The current candidate issuer certificate was rejected because its issuer name
-and serial number were present and did not match the authority key identifier
-of the current certificate.
-Only displayed when the
-.Fl issuer_checks
-option is set.
-.It 32 X509_V_ERR_KEYUSAGE_NO_CERTSIGN
-The current candidate issuer certificate was rejected because its
-.Cm keyUsage
-extension does not permit certificate signing.
-.It 50 X509_V_ERR_APPLICATION_VERIFICATION
-An application specific error.
-Unused.
-.El
 .Tg version
 .Sh VERSION
 .Nm openssl version
