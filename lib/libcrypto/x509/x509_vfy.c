@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.c,v 1.124 2023/05/28 05:25:24 tb Exp $ */
+/* $OpenBSD: x509_vfy.c,v 1.125 2023/06/08 22:02:40 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -754,23 +754,14 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 				goto end;
 		}
 		ret = X509_check_ca(x);
-		switch (must_be_ca) {
-		case -1:
+		if (must_be_ca == -1) {
 			if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) &&
 			    (ret != 1) && (ret != 0)) {
 				ret = 0;
 				ctx->error = X509_V_ERR_INVALID_CA;
 			} else
 				ret = 1;
-			break;
-		case 0:
-			if (ret != 0) {
-				ret = 0;
-				ctx->error = X509_V_ERR_INVALID_NON_CA;
-			} else
-				ret = 1;
-			break;
-		default:
+		} else {
 			if ((ret == 0) ||
 			    ((ctx->param->flags & X509_V_FLAG_X509_STRICT) &&
 			    (ret != 1))) {
@@ -778,7 +769,6 @@ x509_vfy_check_chain_extensions(X509_STORE_CTX *ctx)
 				ctx->error = X509_V_ERR_INVALID_CA;
 			} else
 				ret = 1;
-			break;
 		}
 		if (ret == 0) {
 			ctx->error_depth = i;
