@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.9 2023/01/25 19:06:50 millert Exp $
+# $OpenBSD: PkgConfig.pm,v 1.10 2023/06/08 08:55:27 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -14,17 +14,16 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
-use warnings;
+use v5.36;
 
-# this is a 'special' package, interface to the *.pc file format of pkg-config.
+# interface to the *.pc file format of pkg-config.
 package OpenBSD::PkgConfig;
 
 # specific properties may have specific needs.
 
 my $parse = {
-	Requires => sub {
-	    my @l = split(/[,\s]+/, shift);
+	Requires => sub($req) {
+	    my @l = split(/[,\s]+/, $req);
 	    my @r = ();
 	    while (@l > 0) {
 		    my $n = shift @l;
@@ -46,16 +45,14 @@ my $parse = {
 
 
 my $write = {
-	Libs => sub { " ".__PACKAGE__->compress(shift) }
+	Libs => sub($arg) { " ".__PACKAGE__->compress($arg) }
 };
 
 $parse->{'Requires.private'} = $parse->{Requires};
 $write->{'Libs.private'} = $write->{Libs};
 
-sub new
+sub new($class)
 {
-	my $class = shift;
-
 	return bless {
 		variables => {},
 		vlist => [],
@@ -64,9 +61,8 @@ sub new
 	}, $class;
 }
 
-sub add_variable
+sub add_variable($self, $name, $value)
 {
-	my ($self, $name, $value) = @_;
 	if (defined $self->{variables}{$name}) {
 		die "Duplicate variable $name";
 	}
@@ -74,9 +70,8 @@ sub add_variable
 	$self->{variables}{$name} = ($value =~ s/^\"|\"$//rg);
 }
 
-sub parse_value
+sub parse_value($self, $name, $value)
 {
-	my ($self, $name, $value) = @_;
 	if (defined $parse->{$name}) {
 		return $parse->{$name}($value);
 	} else {
@@ -84,9 +79,8 @@ sub parse_value
 	}
 }
 
-sub add_property
+sub add_property($self, $name, $value)
 {
-	my ($self, $name, $value) = @_;
 	if (defined $self->{properties}{$name}) {
 		die "Duplicate property $name";
 	}
@@ -100,12 +94,10 @@ sub add_property
 	$self->{properties}{$name} = $v;
 }
 
-sub read_fh
+sub read_fh($class, $fh, $name = '')
 {
-	my ($class, $fh, $name) = @_;
 	my $cfg = $class->new;
 
-	$name //= '';
 	while (<$fh>) {
 		chomp;
 		# continuation lines
@@ -135,20 +127,16 @@ sub read_fh
 	return $cfg;
 }
 
-sub read_file
+sub read_file($class, $filename)
 {
-	my ($class, $filename) = @_;
-
 	open my $fh, '<:crlf', $filename or die "Can't open $filename: $!";
 	return $class->read_fh($fh, $filename);
 }
 
-sub write_fh
+sub write_fh($self, $fh)
 {
-	my ($self, $fh) = @_;
-
 	foreach my $variable (@{$self->{vlist}}) {
-		print $fh "$variable=", $self->{variables}{$variable}, "\n";
+		say $fh "$variable=", $self->{variables}{$variable};
 	}
 	print $fh "\n\n";
 	foreach my $property (@{$self->{proplist}}) {
@@ -163,16 +151,14 @@ sub write_fh
 	}
 }
 
-sub write_file
+sub write_file($cfg, $filename)
 {
-	my ($cfg, $filename) = @_;
 	open my $fh, '>', $filename or die "Can't open $filename: $!";
 	$cfg->write_fh($fh);
 }
 
-sub compress_list
+sub compress_list($class, $l, $keep = undef)
 {
-	my ($class, $l, $keep) = @_;
 	my $h = {};
 	my $r = [];
 	foreach my $i (@$l) {
@@ -184,60 +170,52 @@ sub compress_list
 	return $r;
 }
 
-sub compress
+sub compress($class, $l, $keep = undef)
 {
-	my ($class, $l, $keep) = @_;
 	return join(' ', @{$class->compress_list($l, $keep)});
 }
 
-sub rcompress
+sub rcompress($class, $l, $keep = undef)
 {
-	my ($class, $l, $keep) = @_;
 	my @l2 = reverse @$l;
 	return join(' ', reverse @{$class->compress_list(\@l2, $keep)});
 }
 
-sub expanded
+sub expanded($self, $v, $extra = {})
 {
-	my ($self, $v, $extra) = @_;
-
-	$extra = {} if !defined $extra;
 	my $get_value =
-		sub {
-			my $var = shift;
-			if (defined $extra->{$var}) {
-			    if ($extra->{$var} =~ m/\$\{.*\}/ ) {
-	  			return undef;
-	                    } else {
-	  			return $extra->{$var};
-              		    }
-			} elsif (defined $self->{variables}{$var}) {
-				return $self->{variables}{$var};
+	    sub($var) {
+		if (defined $extra->{$var}) {
+			if ($extra->{$var} =~ m/\$\{.*\}/ ) {
+				return undef;
 			} else {
-				return '';
+				return $extra->{$var};
 			}
-	};
+		} elsif (defined $self->{variables}{$var}) {
+			return $self->{variables}{$var};
+		} else {
+			return '';
+		}
+	    };
 
 	# Expand all variables, unless the returned value is defined as an
 	# as an unexpandable variable (such as with --defined-variable).
 	while ($v =~ m/\$\{(.*?)\}/) {
-	    # Limit the expanded variable size if 64K to prevent a
-	    # malicious .pc file from consuming too much memory.
-	    die "Variable expansion overflow" if length($v) > 64 * 1024;
+		# Limit the expanded variable size if 64K to prevent a
+		# malicious .pc file from consuming too much memory.
+		die "Variable expansion overflow" if length($v) > 64 * 1024;
 
-	    unless (defined &$get_value($1)) {
-		$v =~ s/\$\{(.*?)\}/$extra->{$1}/g;
-		last;
-	    }
-	    $v =~ s/\$\{(.*?)\}/&$get_value($1)/ge;
+		unless (defined &$get_value($1)) {
+			$v =~ s/\$\{(.*?)\}/$extra->{$1}/g;
+			last;
+		}
+		$v =~ s/\$\{(.*?)\}/&$get_value($1)/ge;
 	}
 	return $v;
 }
 
-sub get_property
+sub get_property($self, $k, $extra = {})
 {
-	my ($self, $k, $extra) = @_;
-
 	my $l = $self->{properties}{$k};
 	if (!defined $l) {
 		return undef;
@@ -256,10 +234,8 @@ sub get_property
 	return $r;
 }
 
-sub get_variable
+sub get_variable($self, $k, $extra = {})
 {
-	my ($self, $k, $extra) = @_;
-
 	my $v = $self->{variables}{$k};
 	if (defined $v) {
 		return $self->expanded($v, $extra);
@@ -271,10 +247,8 @@ sub get_variable
 # to be used to make sure a config does not depend on absolute path names,
 # e.g., $cfg->add_bases(X11R6 => '/usr/X11R6');
 
-sub add_bases
+sub add_bases($self, $extra)
 {
-	my ($self, $extra) = @_;
-
 	while (my ($k, $v) = each %$extra) {
 		for my $name (keys %{$self->{variables}}) {
 			$self->{variables}{$name} =~ s/\Q$v\E\b/\$\{\Q$k\E\}/g;

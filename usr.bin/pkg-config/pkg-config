@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.95 2020/09/15 07:18:45 jasper Exp $
+# $OpenBSD: pkg-config,v 1.96 2023/06/08 08:55:27 espie Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 # Copyright (c) 2011-2020 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -16,13 +16,19 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 use Config;
 use Getopt::Long;
 use File::Basename;
 use File::stat;
 use OpenBSD::PkgConfig;
+
+use constant {
+	ONLY_I => 1, 
+	ONLY_l => 2,
+	ONLY_L => 4,
+	ONLY_OTHER => 8
+};
 
 my @PKGPATH = qw(/usr/lib/pkgconfig
 		 /usr/local/lib/pkgconfig
@@ -70,7 +76,7 @@ defined $ENV{PKG_CONFIG_DEBUG_SPEW} ? $mode{debug} = 1 : $mode{debug} = 0;
 
 if ($logfile) {
 	open my $L, ">>" , $logfile or die;
-	print $L beautify_list($0, @ARGV), "\n";
+	say $L beautify_list($0, @ARGV);
 	close $L;
 }
 
@@ -87,7 +93,7 @@ GetOptions(	'debug' 		=> \$mode{debug},
 		'help' 			=> \&help, #does not return
 		'usage' 		=> \&help, #does not return
 		'list-all' 		=> \$mode{list},
-		'version' 		=> sub { print "$version\n" ; exit(0);} ,
+		'version' 		=> sub { say $version ; exit(0);} ,
 		'errors-to-stdout' 	=> sub { $mode{estdout} = 1},
 		'print-errors' 		=> sub { $mode{printerr} = 1},
 		'silence-errors' 	=> sub { $mode{printerr} = 0},
@@ -97,13 +103,13 @@ GetOptions(	'debug' 		=> \$mode{debug},
 		'print-requires' 	=> \$mode{printrequires},
 		'print-requires-private' => \$mode{printrequiresprivate},
 
-		'cflags'		=> sub { $mode{cflags} = 3},
-		'cflags-only-I'		=> sub { $mode{cflags} |= 1},
-		'cflags-only-other'	=> sub { $mode{cflags} |= 2},
-		'libs'			=> sub { $mode{libs} = 7},
-		'libs-only-l'		=> sub { $mode{libs} |= 1},
-		'libs-only-L' 		=> sub { $mode{libs} |= 2},
-		'libs-only-other' 	=> sub { $mode{libs} |= 4},
+		'cflags'		=> sub { $mode{cflags} = ONLY_I|ONLY_OTHER},
+		'cflags-only-I'		=> sub { $mode{cflags} |= ONLY_I},
+		'cflags-only-other'	=> sub { $mode{cflags} |= ONLY_OTHER},
+		'libs'			=> sub { $mode{libs} = ONLY_L|ONLY_l|ONLY_OTHER},
+		'libs-only-l'		=> sub { $mode{libs} |= ONLY_l},
+		'libs-only-L' 		=> sub { $mode{libs} |= ONLY_L},
+		'libs-only-other' 	=> sub { $mode{libs} |= ONLY_OTHER},
 		'exists' 		=> sub { $mode{exists} = 1} ,
 		'validate'		=> sub { $mode{validate} = 1},
 		'static' 		=> sub { $mode{static} = 1},
@@ -164,29 +170,29 @@ my $top_config = [];
 
 # When we got here we're supposed to have had at least one
 # package as argument.
-if (!@ARGV){
+if (!@ARGV) {
 	say_error("No package name(s) specified.");
 	exit 1;
 }
 
 # Return the next module from @ARGV, if it turns out to be a comma separated
 # module list, take the first one and put the rest back to the front.
-sub get_next_module
+sub get_next_module()
 {
 	my $module = shift @ARGV;
 	my $m;
 	if ($module =~ m/,/) {
 	    	my @ms = split(/,/, $module);
 		$m = shift @ms;
-	    	unshift(@ARGV, @ms) if (scalar(@ms) > 0);
+	    	unshift(@ARGV, @ms) if @ms != 0;
 	} else {
-	    return $module;
+		return $module;
 	}
 
 	return $m;
 }
 
-while (@ARGV){
+while (@ARGV) {
 	my $p = get_next_module();
 	my $op = undef;
 	my $v = undef;
@@ -267,16 +273,15 @@ if ($mode{static}){
 if ($mode{cflags} || $mode{libs} || $mode{variable}) {
 	push @vlist, do_cflags($dep_cfg_list) if $mode{cflags};
 	push @vlist, do_libs($dep_cfg_list) if $mode{libs};
-	print join(' ', @vlist), "\n" if $rc == 0;
+	say join(' ', @vlist) if $rc == 0;
 }
 
 exit $rc;
 
 ###########################################################################
 
-sub handle_config
+sub handle_config($p, $op, $v, $list)
 {
-	my ($p, $op, $v, $list) = @_;
 	my $cfg = cache_find_config($p);
 
 	unshift @$list, $p if defined $cfg;
@@ -294,8 +299,7 @@ sub handle_config
 		}
 	}
 
-	my $get_props = sub {
-	    my $property = shift;
+	my $get_props = sub($property) {
 	    my $pkg;
 
 	    # See if there's anything in the environment that we need to
@@ -316,7 +320,7 @@ sub handle_config
 	    my $deps = $cfg->get_property($property, $variables);
 	    return unless defined $deps;
 	    for my $dep (@$deps) {
-		    if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+|[\d\.]+[\w]*[\d]+)$/) {
+		    if ($dep =~ m/^(.*?)\s*([<=>]+)\s*([\d\.]+|[\d\.]+\w*\d+)$/) {
 			    handle_config($1, $2, $3, $list);
 		    } else {
 			    handle_config($dep, undef, undef, $list);
@@ -339,10 +343,8 @@ sub handle_config
 
 # look for the .pc file in each of the PKGPATH elements. Return the path or
 # undef if it's not there
-sub pathresolve
+sub pathresolve($p)
 {
-	my ($p) = @_;
-
 	if ($allow_uninstalled && $p !~ m/\-uninstalled$/) {
 		for my $d (@PKGPATH) {
 			my $f = "$d/$p-uninstalled.pc";
@@ -362,13 +364,11 @@ sub pathresolve
 	return undef;
 }
 
-sub get_config
+sub get_config($f)
 {
-	my ($f) = @_;
-
 	my $cfg;
 	eval {
-	    $cfg = OpenBSD::PkgConfig->read_file($f);
+		$cfg = OpenBSD::PkgConfig->read_file($f);
 	};
 	if (!$@) {
 		return validate_config($f, $cfg);
@@ -378,10 +378,8 @@ sub get_config
 	return undef;
 }
 
-sub cache_find_config
+sub cache_find_config($name)
 {
-	my $name = shift;
-
 	say_debug("processing $name");
 
 	if (exists $configs{$name}) {
@@ -392,9 +390,8 @@ sub cache_find_config
 }
 
 # Required elements for a valid .pc file: Name, Description, Version
-sub validate_config
+sub validate_config($f, $cfg)
 {
-	my ($f, $cfg) = @_;
 	my @required_elems = ('Name', 'Description', 'Version');
 
 	# Check if we're dealing with an empty file, but don't error out just
@@ -417,7 +414,7 @@ sub validate_config
 
 # pkg-config won't install a pkg-config.pc file itself, but it may be
 # listed as a dependency in other files. so prime the cache with self.
-sub setup_self
+sub setup_self()
 {
 	my $pkg_pc = OpenBSD::PkgConfig->new;
 	$pkg_pc->add_property('Version', $version);
@@ -427,10 +424,8 @@ sub setup_self
 	$configs{'pkg-config'} = $pkg_pc;
 }
 
-sub find_config
+sub find_config($p)
 {
-	my ($p) = @_;
-
 	# Differentiate between getting a full path and just the module name.
 	my $f = ($p =~ m/\.pc$/ ? $p : pathresolve($p));
 
@@ -441,11 +436,8 @@ sub find_config
 	return undef;
 }
 
-sub stringize
+sub stringize($list, $sep = ',')
 {
-	my $list = shift;
-	my $sep = shift || ',';
-
 	if (defined $list) {
 		return join($sep, @$list)
 	} else {
@@ -454,10 +446,8 @@ sub stringize
 }
 
 #if the variable option is set, pull out the named variable
-sub do_variable
+sub do_variable($p, $v)
 {
-	my ($p, $v) = @_;
-
 	my $cfg = cache_find_config($p);
 
 	if (defined $cfg) {
@@ -472,20 +462,18 @@ sub do_variable
 
 #if the modversion or print-provides options are set,
 #pull out the compiler flags
-sub do_modversion
+sub do_modversion($p)
 {
-	my ($p) = @_;
-
 	my $cfg = cache_find_config($p);
 
 	if (defined $cfg) {
 		my $value = $cfg->get_property('Version', $variables);
 		if (defined $value) {
 			if (defined($mode{printprovides})){
-				print "$p = " . stringize($value) . "\n";
+				say "$p = " , stringize($value);
 				return undef;
 			} else {
-				print stringize($value), "\n";
+				say stringize($value);
 				return undef;
 			}
 		}
@@ -494,32 +482,29 @@ sub do_modversion
 }
 
 #if the cflags option is set, pull out the compiler flags
-sub do_cflags
+sub do_cflags($list)
 {
-	my $list = shift;
-
 	my $cflags = [];
 
 	for my $pkg (@$list) {
 		my $l = $configs{$pkg}->get_property('Cflags', $variables);
 		PATH: for my $path (@$l) {
 			for my $sys_path (@sys_includes) {
-				next PATH if ($path =~ /${sys_path}\/*$/);
+				next PATH if $path =~ /\Q${sys_path}\E\/*$/;
 			}
 			push(@$cflags, $path);
 		}
 	}
 	my $a = OpenBSD::PkgConfig->compress($cflags,
-		sub {
-			local $_ = shift;
-			if (($mode{cflags} & 1) && /^-I/ ||
-			    ($mode{cflags} & 2) && !/^-I/) {
+		sub($r) {
+			if (($mode{cflags} & ONLY_I) && $r =~ /^-I/ ||
+			    ($mode{cflags} & ONLY_OTHER) && $r !~ /^-I/) {
 			    return 1;
 			} else {
 			    return 0;
 			}
 		});
-	if (defined($a) && defined($variables->{pc_sysrootdir})){
+	if (defined($variables->{pc_sysrootdir})){
 		$a =~ s/[\w]?-I/$&$variables->{pc_sysrootdir}/g;
 	}
 
@@ -527,10 +512,8 @@ sub do_cflags
 }
 
 #if the lib option is set, pull out the linker flags
-sub do_libs
+sub do_libs($list)
 {
-	my $list = shift;
-
 	my $libs = [];
 
 	# In static mode, we have to make sure we discover the libs in dependency
@@ -556,11 +539,10 @@ sub do_libs
 
 	# Get the linker path directives (-L) and store it in $a.
 	# $b will be the actual libraries.
-	my $a = OpenBSD::PkgConfig->compress($libs,
-	    sub {
-		local $_ = shift;
-		if (($mode{libs} & 2) && /^-L/ ||
-		    ($mode{libs} & 4) && !/^-[lL]/) {
+	my $r = OpenBSD::PkgConfig->compress_list($libs,
+	    sub($r) {
+		if (($mode{libs} & ONLY_L) && $r =~ /^-L/ ||
+		    ($mode{libs} & ONLY_OTHER) && $r !~ /^-[lL]/) {
 		    return 1;
 		} else {
 		    return 0;
@@ -568,22 +550,23 @@ sub do_libs
 	    });
 
 	if (defined($variables->{pc_sysrootdir})){
-		$a =~ s/[\w]?-[lL]/$&$variables->{pc_sysrootdir}/g;
+		for my $i (@$r) {
+			$i =~ s/[\w]?-[lL]/$&$variables->{pc_sysrootdir}/;
+		}
 	}
 
-	if ($mode{libs} & 1) {
-		my $b = OpenBSD::PkgConfig->rcompress($libs,
-		    sub { shift =~ m/^-l/; });
-		return ($a, $b);
-	} else {
-		return $a;
+	if ($mode{libs} & ONLY_l) {
+		push(@$r, OpenBSD::PkgConfig->rcompress($libs,
+		    sub($l) { $l =~ m/^-l/; }));
 	}
+	return @$r;
 }
 
 #list all packages
-sub do_list
+sub do_list()
 {
 	my ($p, $x, $y, @files, $fname, $name);
+
 	my $error = 0;
 
 	for my $p (@PKGPATH) {
@@ -616,7 +599,7 @@ sub do_list
 	return $error;
 }
 
-sub help
+sub help(@)
 {
 	print <<EOF
 Usage: $0 [options]
@@ -655,9 +638,8 @@ EOF
 }
 
 # do we meet/beat the version the caller requested?
-sub self_version
+sub self_version($v)
 {
-	my ($v) = @_;
 	my (@a, @b);
 
 	@a = split(/\./, $v);
@@ -670,40 +652,39 @@ sub self_version
 	}
 }
 
-sub compare
+sub parse_suffix($s)
 {
-	my ($a, $b) = @_;
-	my ($full_a, $full_b) = ($a, $b);
-	my (@suffix_a, @suffix_b);
-
-	return 0 if ($a eq $b);
-
+	my @l = ();
+	my $full = $s;
 	# is there a valid non-numeric suffix to deal with later?
 	# accepted are (in order): a(lpha) < b(eta) < rc < ' '.
 	# suffix[0] is the 'alpha' part, suffix[1] is the '1' part in 'alpha1'.
-	if ($a =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
-		say_debug("valid suffix $1$2 found in $a$1$2.");
-		$suffix_a[0] = $1;
-		$suffix_a[1] = $2;
+	if ($s =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
+		@l = ($1, $2);
 	}
-
-	if ($b =~ s/(rc|beta|b|alpha|a)(\d+)$//) {
-		say_debug("valid suffix $1$2 found in $b$1$2.");
-		$suffix_b[0] = $1;
-		$suffix_b[1] = $2;
+	# also deal with -stable extension
+	elsif ($s =~ s/(\-stable)$//) {
+		@l = ($1);
 	}
-
 	# The above are standard suffixes; deal with single alphabetical
 	# suffixes too, e.g. 1.0.1h
-	if ($a =~ s/([a-zA-Z]){1}$//) {
-	    say_debug("valid suffix $1 found in $a$1.");
-	    $suffix_a[0] = $1;
+	elsif ($s =~ s/([a-zA-Z]){1}$//) {
+	    @l = ($1);
 	}
 
-	if ($b =~ s/([a-zA-Z]){1}$//) {
-	    say_debug("valid suffix $1 found in $b$1.");
-	    $suffix_b[0] = $1;
-	}
+	if (@l) {
+		say_debug("valid suffix @l found in $full.");
+	} 
+
+	return ($s, @l);
+}
+
+sub compare($full_a, $full_b)
+{
+	return 0 if $full_a eq $full_b;
+
+	my ($a, @suffix_a) = parse_suffix($full_a);
+	my ($b, @suffix_b) = parse_suffix($full_b);
 
 	my @a = split(/\./, $a);
 	my @b = split(/\./, $b);
@@ -723,8 +704,8 @@ sub compare
 				# directly compare suffixes, provided both suffixes
 				# are present.
 				if (@suffix_a && @suffix_b) {
-					my $first_char = sub {
-						return substr(shift, 0, 1);
+					my $first_char = sub($s) {
+						return substr($s, 0, 1);
 					};
 
 					# suffixes are equal, compare on numeric
@@ -769,10 +750,8 @@ sub compare
 }
 
 # simple numeric comparison, with optional equality test.
-sub compare_numeric
+sub compare_numeric($x, $y, $eq)
 {
-	my ($x, $y, $eq) = @_;
-
 	return  1 if $x > $y;
 	return -1 if $x < $y;
 	return  0 if (($x == $y) and ($eq == 1));
@@ -780,10 +759,8 @@ sub compare_numeric
 }
 
 # got a package meeting the requested specific version?
-sub versionmatch
+sub versionmatch($cfg, $op, $want)
 {
-	my ($cfg, $op, $want) = @_;
-
 	# can't possibly match if we can't find the file
 	return 0 if !defined $cfg;
 
@@ -802,9 +779,8 @@ sub versionmatch
 	elsif ($op eq '<=') { return $value <= 0; }
 }
 
-sub mismatch
+sub mismatch($p, $cfg, $op, $v)
 {
-	my ($p, $cfg, $op, $v) = @_;
 	my $name = stringize($cfg->get_property('Name'), ' ');
 	my $version = stringize($cfg->get_property('Version'));
 	my $url = stringize($cfg->get_property('URL'));
@@ -813,9 +789,8 @@ sub mismatch
 	say_warning("You may find new versions of $name at $url") if $url;
 }
 
-sub simplify_and_reverse
+sub simplify_and_reverse($reqlist)
 {
-	my $reqlist = shift;
 	my $dejavu = {};
 	my $result = [];
 
@@ -829,10 +804,8 @@ sub simplify_and_reverse
 }
 
 # retrieve and print Requires(.private)
-sub print_requires
+sub print_requires($p)
 {
-	my ($p) = @_;
-
 	my $cfg = cache_find_config($p);
 
 	if (defined($cfg)) {
@@ -848,7 +821,7 @@ sub print_requires
 		}
 
 		if (defined($value)) {
-			print "$_\n" for @$value;
+			say $_ for @$value;
 			return undef;
 		}
 	}
@@ -856,30 +829,28 @@ sub print_requires
 	$rc = 1;
 }
 
-sub beautify_list
+sub beautify_list(@p)
 {
-	return join(' ', map {"[$_]"} @_);
+	return join(' ', map {"[$_]"} @p);
 }
 
-sub say_debug
+sub say_debug($msg)
 {
-	say_msg(shift) if $mode{debug};
+	say_msg($msg) if $mode{debug};
 }
 
-sub say_error
+sub say_error($msg)
 {
-	say_msg(shift) if $mode{printerr}
+	say_msg($msg) if $mode{printerr}
 }
 
-sub say_warning
+sub say_warning($msg)
 {
-	say_msg(shift);
+	say_msg($msg);
 }
 
-sub say_msg
+sub say_msg($str)
 {
-	my $str = shift;
-
 	# If --errors-to-stdout was given, close STDERR (to be safe),
 	# then dup the output to STDOUT and delete the key from %mode so we
 	# won't keep checking it. STDERR stays dup'ed.
@@ -889,5 +860,5 @@ sub say_msg
 		delete($mode{estdout});
 	}
 
-	print STDERR $str, "\n";
+	say STDERR $str;
 }
