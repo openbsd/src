@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.62 2020/09/15 07:19:31 jasper Exp $
+#	$OpenBSD: Makefile,v 1.63 2023/06/08 08:57:02 espie Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -101,7 +101,12 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		filter-system-dirs-5 \
 		filter-system-dirs-6 \
 		cflags-system-path-1 \
-		cflags-system-path-2
+		cflags-system-path-2 \
+		lib-flags-1 \
+		lib-flags-2 \
+		lib-flags-3 \
+		lib-flags-4 \
+
 
 PKG_CONFIG?=	/usr/bin/pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -329,7 +334,7 @@ cmp-vers5-10:
 
 cmp-vers6-1:
 	# Test suffixed versions in Requires
-	@echo " -lalpha2" > ${WANT}
+	@echo "-lalpha2" > ${WANT}
 	@${VPCONFIG} --libs requires-test2
 	@diff -u ${WANT} ${GOT}
 
@@ -474,7 +479,7 @@ whitespace-libs:
 
 whitespace-linebreak:
 	# Test linebreak in Description field
-	@echo " -lc" > ${WANT}
+	@echo "-lc" > ${WANT}
 	@${VPCONFIG} --libs linebreak
 	@diff -u ${WANT} ${GOT}
 
@@ -631,19 +636,19 @@ variables-4:
 
 variables-5:
 	# Test --variable
-	@echo ' -lfoo-1' > ${WANT}
+	@echo '-lfoo-1' > ${WANT}
 	@${VPCONFIG} --libs variables
 	@diff -u ${WANT} ${GOT}
 
 variables-6:
 	# Test variable overriding from environment
-	@echo ' -lfoo-2' > ${WANT}
+	@echo '-lfoo-2' > ${WANT}
 	@PKG_CONFIG_VARIABLES_FOO_API_VERSION=2 ${VPCONFIG} --libs variables
 	@diff -u ${WANT} ${GOT}
 
 variables-7:
 	# Ensure variable overriding only uses uppercase keys
-	@echo ' -lfoo-1' > ${WANT}
+	@echo '-lfoo-1' > ${WANT}
 	@PKG_CONFIG_variables_foo_api_version=2 ${VPCONFIG} --libs variables
 	@diff -u ${WANT} ${GOT}
 
@@ -655,13 +660,13 @@ filter-system-dirs-1:
 
 filter-system-dirs-2:
 	# Test removing -L/usr/lib as a system directory
-	@echo ' -lfilter' > ${WANT}
+	@echo '-lfilter' > ${WANT}
 	@${VPCONFIG} --libs filter
 	@diff -u ${WANT} ${GOT}
 
 filter-system-dirs-3:
 	# Test removing -L/usr/lib as a system directory (static)
-	@echo ' -lfilter -lprivate-filter' > ${WANT}
+	@echo '-lfilter -lprivate-filter' > ${WANT}
 	@${VPCONFIG} --static --libs filter
 	@diff -u ${WANT} ${GOT}
 
@@ -697,6 +702,30 @@ cflags-system-path-2:
 
 clean:
 	rm -f *.want *.got
+
+lib-flags-1:
+	# Test --libs-only-other
+	@echo "-pthread" > ${WANT}
+	@${VPCONFIG} --libs-only-other lib-flags
+	@diff -u ${WANT} ${GOT}
+
+lib-flags-2:
+	# Test --libs
+	@echo "-L/usr/local/lib -pthread -lalpha2" > ${WANT}
+	@${VPCONFIG} --libs lib-flags
+	@diff -u ${WANT} ${GOT}
+
+lib-flags-3:
+	# Test --libs-only-L
+	@echo "-L/usr/local/lib" > ${WANT}
+	@${VPCONFIG} --libs-only-L lib-flags
+	@diff -u ${WANT} ${GOT}
+
+lib-flags-4:
+	# Test --libs-only-l
+	@echo "-lalpha2" > ${WANT}
+	@${VPCONFIG} --libs-only-l lib-flags
+	@diff -u ${WANT} ${GOT}
 
 .PHONY: ${REGRESS_TARGETS}
 
