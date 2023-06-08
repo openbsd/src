@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.48 2023/03/15 19:23:22 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.49 2023/06/08 11:17:28 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -637,7 +637,7 @@ int
 popup_display(int flags, enum box_lines lines, struct cmdq_item *item, u_int px,
     u_int py, u_int sx, u_int sy, struct environ *env, const char *shellcmd,
     int argc, char **argv, const char *cwd, const char *title, struct client *c,
-    struct session *s, const char* style, const char* border_style,
+    struct session *s, const char *style, const char *border_style,
     popup_close_cb cb, void *arg)
 {
 	struct popup_data	*pd;
