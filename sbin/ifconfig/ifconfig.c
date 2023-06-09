@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.466 2023/06/07 18:42:40 bluhm Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.467 2023/06/09 12:22:01 kn Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -631,6 +631,7 @@ const struct	cmd {
 	{ "wgkey",	NEXTARG,	A_WIREGUARD,	setwgkey},
 	{ "wgrtable",	NEXTARG,	A_WIREGUARD,	setwgrtable},
 	{ "-wgpeer",	NEXTARG,	A_WIREGUARD,	unsetwgpeer},
+	{ "-wgpsk",	0,		A_WIREGUARD,	unsetwgpeerpsk},
 	{ "-wgdescription", 0,		A_WIREGUARD,	unsetwgpeerdesc},
 	{ "-wgdescr",	0,		A_WIREGUARD,	unsetwgpeerdesc},
 	{ "-wgpeerall",	0,		A_WIREGUARD,	unsetwgpeerall},
