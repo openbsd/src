@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.48 2023/01/06 19:25:20 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.49 2023/06/10 05:00:58 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -428,6 +428,8 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
     Test("test-aesccm.py"),
     # need server to set up alpn
     Test("test-alpn-negotiation.py"),
+    # Failing on TLS_RSA_WITH_AES_128_CBC_SHA because server does not support it.
+    Test("test-bleichenbacher-timing-pregenerate.py"),
     # many tests fail due to unexpected server_name extension
     Test("test-bleichenbacher-workaround.py"),
 
