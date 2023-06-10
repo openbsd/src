@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_process.c,v 1.93 2023/01/24 00:12:03 deraadt Exp $	*/
+/*	$OpenBSD: sys_process.c,v 1.94 2023/06/10 19:30:48 kettenis Exp $	*/
 /*	$NetBSD: sys_process.c,v 1.55 1996/05/15 06:17:47 tls Exp $	*/
 
 /*-
@@ -104,6 +104,7 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		struct ptrace_event u_pe;
 		struct ptrace_state u_ps;
 		register_t u_wcookie;
+		register_t u_pacmask[2];
 	} u;
 	int size = 0;
 	enum { NONE, IN, IN_ALLOC, OUT, OUT_ALLOC, IN_OUT } mode;
@@ -198,6 +199,12 @@ sys_ptrace(struct proc *p, void *v, register_t *retval)
 		mode = OUT;
 		size = sizeof u.u_wcookie;
 		data = size;	/* suppress the data == size check */
+		break;
+#endif
+#ifdef PT_PACMASK
+	case PT_PACMASK:
+		mode = OUT;
+		size = sizeof u.u_pacmask;
 		break;
 #endif
 	default:
@@ -730,6 +737,12 @@ ptrace_ustate(struct proc *p, int req, pid_t pid, void *addr, int data,
 #ifdef PT_WCOOKIE
 	case PT_WCOOKIE:
 		*(register_t *)addr = process_get_wcookie(t);
+		return 0;
+#endif
+#ifdef PT_PACMASK
+	case PT_PACMASK:
+		((register_t *)addr)[0] = process_get_pacmask(t);
+		((register_t *)addr)[1] = process_get_pacmask(t);
 		return 0;
 #endif
 	default:

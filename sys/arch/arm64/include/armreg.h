@@ -1,4 +1,4 @@
-/* $OpenBSD: armreg.h,v 1.28 2023/04/16 10:14:59 kettenis Exp $ */
+/* $OpenBSD: armreg.h,v 1.29 2023/06/10 19:30:48 kettenis Exp $ */
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -169,6 +169,7 @@
 #define	 EXCP_ILL_STATE		0x0e	/* Illegal execution state */
 #define	 EXCP_SVC		0x15	/* SVC trap */
 #define	 EXCP_MSR		0x18	/* MSR/MRS trap */
+#define	 EXCP_FPAC		0x1c	/* Faulting PAC trap */
 #define	 EXCP_INSN_ABORT_L	0x20	/* Instruction abort, from lower EL */
 #define	 EXCP_INSN_ABORT	0x21	/* Instruction abort, from same EL */ 
 #define	 EXCP_PC_ALIGN		0x22	/* PC alignment fault */
@@ -642,6 +643,7 @@
 #define	SCTLR_SED	0x0000000000000100
 #define	SCTLR_UMA	0x0000000000000200
 #define	SCTLR_I		0x0000000000001000
+#define	SCTLR_EnDB	0x0000000000002000
 #define	SCTLR_DZE	0x0000000000004000
 #define	SCTLR_UCT	0x0000000000008000
 #define	SCTLR_nTWI	0x0000000000010000
@@ -651,6 +653,9 @@
 #define	SCTLR_EOE	0x0000000001000000
 #define	SCTLR_EE	0x0000000002000000
 #define	SCTLR_UCI	0x0000000004000000
+#define	SCTLR_EnDA	0x0000000008000000
+#define	SCTLR_EnIB	0x0000000040000000
+#define	SCTLR_EnIA	0x0000000080000000
 
 /* SPSR_EL1 */
 /*

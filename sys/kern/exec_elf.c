@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.181 2023/04/19 15:37:36 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.182 2023/06/10 19:30:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -1383,6 +1383,9 @@ coredump_note_elf(struct proc *p, void *iocookie, size_t *sizep)
 #ifdef PT_GETFPREGS
 	struct fpreg freg;
 #endif
+#ifdef PT_PACMASK
+	register_t pacmask[2];
+#endif
 
 	size = 0;
 
@@ -1421,6 +1424,24 @@ coredump_note_elf(struct proc *p, void *iocookie, size_t *sizep)
 		nhdr.type = NT_OPENBSD_FPREGS;
 
 		error = coredump_writenote_elf(p, iocookie, &nhdr, name, &freg);
+		if (error)
+			return (error);
+	}
+	size += notesize;
+#endif
+
+#ifdef PT_PACMASK
+	notesize = sizeof(nhdr) + elfround(namesize) +
+	    elfround(sizeof(pacmask));
+	if (iocookie) {
+		pacmask[0] = pacmask[1] = process_get_pacmask(p);
+
+		nhdr.namesz = namesize;
+		nhdr.descsz = sizeof(pacmask);
+		nhdr.type = NT_OPENBSD_PACMASK;
+
+		error = coredump_writenote_elf(p, iocookie, &nhdr,
+		    name, &pacmask);
 		if (error)
 			return (error);
 	}

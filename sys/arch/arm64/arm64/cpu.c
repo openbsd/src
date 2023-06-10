@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.92 2023/05/30 08:30:00 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.93 2023/06/10 19:30:48 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -944,6 +944,7 @@ cpu_init(void)
 {
 	uint64_t id_aa64mmfr1, sctlr;
 	uint64_t id_aa64pfr0;
+	uint64_t id_aa64isar1;
 	uint64_t tcr;
 
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
@@ -967,6 +968,16 @@ cpu_init(void)
 	id_aa64pfr0 = READ_SPECIALREG(id_aa64pfr0_el1);
 	if (ID_AA64PFR0_DIT(id_aa64pfr0) >= ID_AA64PFR0_DIT_IMPL)
 		__asm volatile (".arch armv8.4-a; msr dit, #1");
+
+	/* Enable PAuth. */
+	id_aa64isar1 = READ_SPECIALREG(id_aa64isar1_el1);
+	if (ID_AA64ISAR1_API(id_aa64isar1) >= ID_AA64ISAR1_API_BASE ||
+	    ID_AA64ISAR1_APA(id_aa64isar1) >= ID_AA64ISAR1_APA_BASE) {
+		sctlr = READ_SPECIALREG(sctlr_el1);
+		sctlr |= SCTLR_EnIA | SCTLR_EnDA;
+		sctlr |= SCTLR_EnIB | SCTLR_EnDB;
+		WRITE_SPECIALREG(sctlr_el1, sctlr);
+	}
 
 	/* Initialize debug registers. */
 	WRITE_SPECIALREG(mdscr_el1, DBG_MDSCR_TDCC);

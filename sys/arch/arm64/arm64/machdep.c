@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.81 2023/04/24 10:22:48 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.82 2023/06/10 19:30:48 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -314,11 +314,6 @@ cpu_switchto(struct proc *old, struct proc *new)
 	cpu_switchto_asm(old, new);
 }
 
-extern uint64_t cpu_id_aa64isar0;
-extern uint64_t cpu_id_aa64isar1;
-extern uint64_t cpu_id_aa64pfr0;
-extern uint64_t cpu_id_aa64pfr1;
-
 /*
  * machine dependent system variables.
  */
@@ -451,13 +446,21 @@ void
 setregs(struct proc *p, struct exec_package *pack, u_long stack,
     struct ps_strings *arginfo)
 {
+	struct pmap *pm = p->p_vmspace->vm_map.pmap;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf = pcb->pcb_tf;
 
 	if (pack->ep_flags & EXEC_NOBTCFI)
-		p->p_vmspace->vm_map.pmap->pm_guarded = 0;
+		pm->pm_guarded = 0;
 	else
-		p->p_vmspace->vm_map.pmap->pm_guarded = ATTR_GP;
+		pm->pm_guarded = ATTR_GP;
+
+	arc4random_buf(&pm->pm_apiakey, sizeof(pm->pm_apiakey));
+	arc4random_buf(&pm->pm_apdakey, sizeof(pm->pm_apdakey));
+	arc4random_buf(&pm->pm_apibkey, sizeof(pm->pm_apibkey));
+	arc4random_buf(&pm->pm_apdbkey, sizeof(pm->pm_apdbkey));
+	arc4random_buf(&pm->pm_apgakey, sizeof(pm->pm_apgakey));
+	pmap_setpauthkeys(pm);
 
 	/* If we were using the FPU, forget about it. */
 	memset(&pcb->pcb_fpstate, 0, sizeof(pcb->pcb_fpstate));

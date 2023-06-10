@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.h,v 1.23 2023/04/16 11:14:26 kettenis Exp $ */
+/* $OpenBSD: pmap.h,v 1.24 2023/06/10 19:30:48 kettenis Exp $ */
 /*
  * Copyright (c) 2008,2009,2014 Dale Rahn <drahn@dalerahn.com>
  *
@@ -71,6 +71,11 @@ struct pmap {
 	int pm_privileged;
 	int pm_refs;				/* ref count */
 	struct pmap_statistics  pm_stats;	/* pmap statistics */
+	uint64_t pm_apiakey[2];
+	uint64_t pm_apdakey[2];
+	uint64_t pm_apibkey[2];
+	uint64_t pm_apdbkey[2];
+	uint64_t pm_apgakey[2];
 };
 
 #define PMAP_PA_MASK	~((paddr_t)PAGE_MASK) /* to remove the flags */
@@ -99,6 +104,8 @@ vaddr_t pmap_bootstrap(long kvo, paddr_t lpt1,  long kernelstart,
 void pmap_kenter_cache(vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 void pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot);
 void pmap_page_rw(pmap_t pm, vaddr_t va);
+
+void pmap_setpauthkeys(struct pmap *);
 
 paddr_t pmap_steal_avail(size_t size, int align, void **kva);
 void pmap_avail_fixup(void);

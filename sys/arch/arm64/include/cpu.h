@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.35 2023/02/19 17:16:13 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.36 2023/06/10 19:30:48 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -60,6 +60,11 @@
 /*
  * Kernel-only definitions
  */
+
+extern uint64_t cpu_id_aa64isar0;
+extern uint64_t cpu_id_aa64isar1;
+extern uint64_t cpu_id_aa64pfr0;
+extern uint64_t cpu_id_aa64pfr1;
 
 #include <machine/intr.h>
 #include <machine/frame.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.100 2023/04/19 15:37:36 kettenis Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.101 2023/06/10 19:30:48 kettenis Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -666,6 +666,7 @@ typedef struct {
 #define NT_OPENBSD_FPREGS	21
 #define NT_OPENBSD_XFPREGS	22
 #define NT_OPENBSD_WCOOKIE	23
+#define NT_OPENBSD_PACMASK	24
 
 struct elfcore_procinfo {
 	/* Version 1 fields start here. */

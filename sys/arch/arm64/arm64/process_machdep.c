@@ -1,4 +1,4 @@
-/* $OpenBSD: process_machdep.c,v 1.7 2023/04/16 10:14:59 kettenis Exp $ */
+/* $OpenBSD: process_machdep.c,v 1.8 2023/06/10 19:30:48 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -136,3 +136,9 @@ process_set_pc(struct proc *p, caddr_t addr)
 }
 
 #endif	/* PTRACE */
+
+register_t
+process_get_pacmask(struct proc *p)
+{
+	return (-1ULL << USER_SPACE_BITS);
+}

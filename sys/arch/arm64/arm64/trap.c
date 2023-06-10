@@ -1,4 +1,4 @@
-/* $OpenBSD: trap.c,v 1.45 2023/05/15 15:02:06 kettenis Exp $ */
+/* $OpenBSD: trap.c,v 1.46 2023/06/10 19:30:48 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Andrew Turner
  * All rights reserved.
@@ -220,6 +220,8 @@ do_el1h_sync(struct trapframe *frame)
 		panic("FP exception in the kernel");
 	case EXCP_BRANCH_TGT:
 		panic("Branch target exception in the kernel");
+	case EXCP_FPAC:
+		panic("Faulting PAC trap in kernel");
 	case EXCP_INSN_ABORT:
 		kdata_abort(frame, esr, far, 1);
 		break;
@@ -282,6 +284,11 @@ do_el0_sync(struct trapframe *frame)
 		fpu_load(p);
 		break;
 	case EXCP_BRANCH_TGT:
+		curcpu()->ci_flush_bp();
+		sv.sival_ptr = (void *)frame->tf_elr;
+		trapsignal(p, SIGILL, esr, ILL_ILLOPC, sv);
+		break;
+	case EXCP_FPAC:
 		curcpu()->ci_flush_bp();
 		sv.sival_ptr = (void *)frame->tf_elr;
 		trapsignal(p, SIGILL, esr, ILL_ILLOPC, sv);

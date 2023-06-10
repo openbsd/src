@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.11 2023/04/11 00:45:07 jsg Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.12 2023/06/10 19:30:48 kettenis Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 2003/04/26 18:39:33 fvdl Exp $	*/
 
 /*-
@@ -69,10 +69,18 @@ void
 cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
     void (*func)(void *), void *arg)
 {
+	struct pmap *pm = p2->p_vmspace->vm_map.pmap;
+	struct pmap *pm1 = p1->p_vmspace->vm_map.pmap;
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct pcb *pcb1 = &p1->p_addr->u_pcb;
 	struct trapframe *tf;
 	struct switchframe *sf;
+
+	memcpy(pm->pm_apiakey, pm1->pm_apiakey, sizeof(pm->pm_apiakey));
+	memcpy(pm->pm_apdakey, pm1->pm_apdakey, sizeof(pm->pm_apdakey));
+	memcpy(pm->pm_apibkey, pm1->pm_apibkey, sizeof(pm->pm_apibkey));
+	memcpy(pm->pm_apdbkey, pm1->pm_apdbkey, sizeof(pm->pm_apdbkey));
+	memcpy(pm->pm_apgakey, pm1->pm_apgakey, sizeof(pm->pm_apgakey));
 
 	/* Save FPU state to PCB if necessary. */
 	if (pcb1->pcb_flags & PCB_FPU)

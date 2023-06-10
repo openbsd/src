@@ -1,4 +1,4 @@
-/* $OpenBSD: ptrace.h,v 1.1 2016/12/17 23:38:33 patrick Exp $ */
+/* $OpenBSD: ptrace.h,v 1.2 2023/06/10 19:30:48 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  *
@@ -20,3 +20,8 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+#define	PT_PACMASK	(PT_FIRSTMACH + 5)
+
+#ifdef _KERNEL
+register_t process_get_pacmask(struct proc *p);
+#endif
