@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.192 2023/05/23 14:10:27 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.193 2023/06/10 18:31:38 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -690,6 +690,11 @@ file	dev/fdt/qcipcc.c		qcipcc
 device	qcmtx
 attach	qcmtx at fdt
 file	dev/fdt/qcmtx.c			qcmtx
+
+# Qualcomm Peripheral Authentication Service
+device	qcpas
+attach	qcpas at fdt
+file	dev/fdt/qcpas.c			qcpas
 
 # Qualcomm SCM
 device	qcscm
