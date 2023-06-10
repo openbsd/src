@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.218 2022/12/26 17:45:27 jmc Exp $
+.\"	$OpenBSD: ksh.1,v 1.219 2023/06/10 07:24:21 op Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: December 26 2022 $
+.Dd $Mdocdate: June 10 2023 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -2569,20 +2569,6 @@ in non-POSIX mode:
 alias a='for ' i='j'
 a i in 1 2; do echo i=$i j=$j; done
 .Ed
-.It
-.Ic test .
-In POSIX mode, the expression
-.Sq Fl t
-(preceded by some number of
-.Sq \&!
-arguments) is always true as it is a non-zero length string;
-in non-POSIX mode, it tests if file descriptor 1 is a
-.Xr tty 4
-(i.e. the
-.Ar fd
-argument to the
-.Fl t
-test may be left out and defaults to 1).
 .El
 .Ss Strict Bourne shell mode
 When the
@@ -3857,18 +3843,12 @@ socket.
 .It Fl s Ar file
 .Ar file
 is not empty.
-.It Fl t Op Ar fd
+.It Fl t Ar fd
 File descriptor
 .Ar fd
 is a
 .Xr tty 4
 device.
-If the
-.Ic posix
-option is not set,
-.Ar fd
-may be left out, in which case it is taken to be 1 (the behaviour differs due
-to the special POSIX rules described above).
 .It Fl u Ar file
 .Ar file Ns 's
 mode has the setuid bit set.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_test.c,v 1.27 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: c_test.c,v 1.28 2023/06/10 07:24:21 op Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -156,12 +156,6 @@ c_test(char **wp)
 			}
 			if (argc == 1) {
 				opnd1 = (*te.getopnd)(&te, TO_NONOP, 1);
-				/* Historically, -t by itself test if fd 1
-				 * is a file descriptor, but POSIX says its
-				 * a string test...
-				 */
-				if (!Flag(FPOSIX) && strcmp(opnd1, "-t") == 0)
-				    break;
 				res = (*te.eval)(&te, TO_STNZE, opnd1,
 				    NULL, 1);
 				if (invert & 1)
@@ -271,14 +265,11 @@ test_eval(Test_env *te, Test_op op, const char *opnd1, const char *opnd2,
 	case TO_FILGZ: /* -s */
 		return stat(opnd1, &b1) == 0 && b1.st_size > 0L;
 	case TO_FILTT: /* -t */
-		if (opnd1 && !bi_getn(opnd1, &res)) {
+		if (!bi_getn(opnd1, &res)) {
 			te->flags |= TEF_ERROR;
-			res = 0;
-		} else {
-			/* generate error if in FPOSIX mode? */
-			res = isatty(opnd1 ? res : 0);
+			return 0;
 		}
-		return res;
+		return isatty(res);
 	case TO_FILUID: /* -O */
 		return stat(opnd1, &b1) == 0 && b1.st_uid == ksheuid;
 	case TO_FILGID: /* -G */
@@ -527,7 +518,7 @@ static const char *
 ptest_getopnd(Test_env *te, Test_op op, int do_eval)
 {
 	if (te->pos.wp >= te->wp_end)
-		return op == TO_FILTT ? "1" : NULL;
+		return NULL;
 	return *te->pos.wp++;
 }
 
