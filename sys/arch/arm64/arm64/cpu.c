@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.93 2023/06/10 19:30:48 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.94 2023/06/11 21:42:01 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -971,8 +971,7 @@ cpu_init(void)
 
 	/* Enable PAuth. */
 	id_aa64isar1 = READ_SPECIALREG(id_aa64isar1_el1);
-	if (ID_AA64ISAR1_API(id_aa64isar1) >= ID_AA64ISAR1_API_BASE ||
-	    ID_AA64ISAR1_APA(id_aa64isar1) >= ID_AA64ISAR1_APA_BASE) {
+	if (ID_AA64ISAR1_API(id_aa64isar1) >= ID_AA64ISAR1_API_BASE) {
 		sctlr = READ_SPECIALREG(sctlr_el1);
 		sctlr |= SCTLR_EnIA | SCTLR_EnDA;
 		sctlr |= SCTLR_EnIB | SCTLR_EnDB;
