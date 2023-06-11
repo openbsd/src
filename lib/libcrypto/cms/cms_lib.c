@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.16 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.17 2023/06/11 05:35:43 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -160,11 +160,6 @@ CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 	case NID_pkcs7_digest:
 		cmsbio = cms_DigestedData_init_bio(cms);
 		break;
-#ifdef ZLIB
-	case NID_id_smime_ct_compressedData:
-		cmsbio = cms_CompressedData_init_bio(cms);
-		break;
-#endif
 
 	case NID_pkcs7_encrypted:
 		cmsbio = cms_EncryptedData_init_bio(cms);

@@ -1,4 +1,4 @@
-/* $OpenBSD: err_all.c,v 1.27 2022/05/07 17:20:41 tb Exp $ */
+/* $OpenBSD: err_all.c,v 1.28 2023/06/11 05:35:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,9 +122,6 @@ ERR_load_crypto_strings_internal(void)
 	ERR_load_BUF_strings();
 #ifndef OPENSSL_NO_CMS
 	ERR_load_CMS_strings();
-#endif
-#ifdef ZLIB
-	ERR_load_COMP_strings();
 #endif
 	ERR_load_CONF_strings();
 	ERR_load_CRYPTO_strings();

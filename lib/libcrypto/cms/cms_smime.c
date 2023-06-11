@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_smime.c,v 1.25 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cms_smime.c,v 1.26 2023/06/11 05:35:43 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -868,55 +868,6 @@ CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags)
 	return ret;
 }
 
-#ifdef ZLIB
-
-int
-CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out, unsigned int flags)
-{
-	BIO *cont;
-	int r;
-
-	if (OBJ_obj2nid(CMS_get0_type(cms)) != NID_id_smime_ct_compressedData) {
-		CMSerror(CMS_R_TYPE_NOT_COMPRESSED_DATA);
-		return 0;
-	}
-
-	if (!dcont && !check_content(cms))
-		return 0;
-
-	cont = CMS_dataInit(cms, dcont);
-	if (!cont)
-		return 0;
-	r = cms_copy_content(out, cont, flags);
-	do_free_upto(cont, dcont);
-
-	return r;
-}
-
-CMS_ContentInfo *
-CMS_compress(BIO *in, int comp_nid, unsigned int flags)
-{
-	CMS_ContentInfo *cms;
-
-	if (comp_nid <= 0)
-		comp_nid = NID_zlib_compression;
-	cms = cms_CompressedData_create(comp_nid);
-	if (!cms)
-		return NULL;
-
-	if (!(flags & CMS_DETACHED))
-		CMS_set_detached(cms, 0);
-
-	if ((flags & CMS_STREAM) || CMS_final(cms, in, NULL, flags))
-		return cms;
-
-	CMS_ContentInfo_free(cms);
-
-	return NULL;
-}
-
-#else
-
 int
 CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out, unsigned int flags)
 {
@@ -930,5 +881,3 @@ CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 	CMSerror(CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
 	return NULL;
 }
-
-#endif

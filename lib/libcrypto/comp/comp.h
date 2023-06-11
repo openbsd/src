@@ -1,4 +1,4 @@
-/* $OpenBSD: comp.h,v 1.11 2022/12/24 07:12:09 tb Exp $ */
+/* $OpenBSD: comp.h,v 1.12 2023/06/11 05:35:43 tb Exp $ */
 /*
  * ---------------------------------------------------------------------------
  * Patches to this file were contributed by
@@ -130,12 +130,6 @@ int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
 COMP_METHOD *COMP_rle(void );
 COMP_METHOD *COMP_zlib(void );
 void COMP_zlib_cleanup(void);
-
-#ifdef HEADER_BIO_H
-#ifdef ZLIB
-BIO_METHOD *BIO_f_zlib(void);
-#endif
-#endif
 
 void ERR_load_COMP_strings(void);
 
