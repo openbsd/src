@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.98 2022/02/18 16:57:36 millert Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.99 2023/06/11 10:30:10 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -257,7 +257,7 @@ hash_x509(X509 *cert, char *hash, size_t hashlen)
 		fatalx("%s: X509_pubkey_digest failed", __func__);
 
 	if (hashlen < 2 * dlen + sizeof("SHA256:"))
-		fatalx("%s: hash buffer to small", __func__);
+		fatalx("%s: hash buffer too small", __func__);
 
 	off = strlcpy(hash, "SHA256:", hashlen);
 

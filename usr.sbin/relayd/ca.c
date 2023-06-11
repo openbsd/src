@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.41 2023/03/26 18:04:47 tb Exp $	*/
+/*	$OpenBSD: ca.c,v 1.42 2023/06/11 10:30:26 op Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -95,7 +95,7 @@ hash_x509(X509 *cert, char *hash, size_t hashlen)
 		fatalx("%s: X509_pubkey_digest failed", __func__);
 
 	if (hashlen < 2 * dlen + sizeof("SHA256:"))
-		fatalx("%s: hash buffer to small", __func__);
+		fatalx("%s: hash buffer too small", __func__);
 
 	off = strlcpy(hash, "SHA256:", hashlen);
 
