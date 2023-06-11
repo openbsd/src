@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.64 2023/04/22 20:50:26 tb Exp $ */
+/* $OpenBSD: apps.c,v 1.65 2023/06/11 12:35:00 jsg Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -197,75 +197,6 @@ program_name(char *in, char *out, int size)
 	else
 		p = in;
 	strlcpy(out, p, size);
-}
-
-int
-chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
-{
-	int num, i;
-	char *p;
-
-	*argc = 0;
-	*argv = NULL;
-
-	if (arg->count == 0) {
-		arg->count = 20;
-		arg->data = reallocarray(NULL, arg->count, sizeof(char *));
-		if (arg->data == NULL)
-			return 0;
-	}
-	for (i = 0; i < arg->count; i++)
-		arg->data[i] = NULL;
-
-	num = 0;
-	p = buf;
-	for (;;) {
-		/* first scan over white space */
-		if (!*p)
-			break;
-		while (*p && ((*p == ' ') || (*p == '\t') || (*p == '\n')))
-			p++;
-		if (!*p)
-			break;
-
-		/* The start of something good :-) */
-		if (num >= arg->count) {
-			char **tmp_p;
-			int tlen = arg->count + 20;
-			tmp_p = reallocarray(arg->data, tlen, sizeof(char *));
-			if (tmp_p == NULL)
-				return 0;
-			arg->data = tmp_p;
-			arg->count = tlen;
-			/* initialize newly allocated data */
-			for (i = num; i < arg->count; i++)
-				arg->data[i] = NULL;
-		}
-		arg->data[num++] = p;
-
-		/* now look for the end of this */
-		if ((*p == '\'') || (*p == '\"')) {	/* scan for closing
-							 * quote */
-			i = *(p++);
-			arg->data[num - 1]++;	/* jump over quote */
-			while (*p && (*p != i))
-				p++;
-			*p = '\0';
-		} else {
-			while (*p && ((*p != ' ') &&
-			    (*p != '\t') && (*p != '\n')))
-				p++;
-
-			if (*p == '\0')
-				p--;
-			else
-				*p = '\0';
-		}
-		p++;
-	}
-	*argc = num;
-	*argv = arg->data;
-	return (1);
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.32 2023/04/14 15:27:13 tb Exp $ */
+/* $OpenBSD: apps.h,v 1.33 2023/06/11 12:35:00 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,7 +159,6 @@ int should_retry(int i);
 int args_from_file(char *file, int *argc, char **argv[]);
 int str2fmt(char *s);
 void program_name(char *in, char *out, int size);
-int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[]);
 #ifdef HEADER_X509_H
 int dump_cert_text(BIO *out, X509 *x);
 void print_name(BIO *out, const char *title, X509_NAME *nm,
