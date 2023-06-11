@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.158 2022/12/26 07:31:44 jmc Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.159 2023/06/11 18:50:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2125,12 +2125,7 @@ ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey,
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-	if (!EVP_DigestSignUpdate(mctx, hdata, hdata_len)) {
-		SSLerror(s, ERR_R_EVP_LIB);
-		goto err;
-	}
-	if (!EVP_DigestSignFinal(mctx, NULL, &signature_len) ||
-	    signature_len == 0) {
+	if (!EVP_DigestSign(mctx, NULL, &signature_len, hdata, hdata_len)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
@@ -2138,7 +2133,7 @@ ssl3_send_client_verify_sigalgs(SSL *s, EVP_PKEY *pkey,
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!EVP_DigestSignFinal(mctx, signature, &signature_len)) {
+	if (!EVP_DigestSign(mctx, signature, &signature_len, hdata, hdata_len)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
@@ -2267,12 +2262,7 @@ ssl3_send_client_verify_gost(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
-	if (!EVP_DigestSignUpdate(mctx, hdata, hdata_len)) {
-		SSLerror(s, ERR_R_EVP_LIB);
-		goto err;
-	}
-	if (!EVP_DigestSignFinal(mctx, NULL, &signature_len) ||
-	    signature_len == 0) {
+	if (!EVP_DigestSign(mctx, NULL, &signature_len, hdata, hdata_len)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}
@@ -2280,7 +2270,7 @@ ssl3_send_client_verify_gost(SSL *s, EVP_PKEY *pkey, CBB *cert_verify)
 		SSLerror(s, ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!EVP_DigestSignFinal(mctx, signature, &signature_len)) {
+	if (!EVP_DigestSign(mctx, signature, &signature_len, hdata, hdata_len)) {
 		SSLerror(s, ERR_R_EVP_LIB);
 		goto err;
 	}

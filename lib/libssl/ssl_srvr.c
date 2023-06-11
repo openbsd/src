@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.153 2022/12/26 07:31:44 jmc Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.154 2023/06/11 18:50:51 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -2049,15 +2049,10 @@ ssl3_get_cert_verify(SSL *s)
 			al = SSL_AD_INTERNAL_ERROR;
 			goto fatal_err;
 		}
-		if (!EVP_DigestVerifyUpdate(mctx, hdata, hdatalen)) {
+		if (EVP_DigestVerify(mctx, CBS_data(&signature),
+		    CBS_len(&signature), hdata, hdatalen) <= 0) {
 			SSLerror(s, ERR_R_EVP_LIB);
 			al = SSL_AD_INTERNAL_ERROR;
-			goto fatal_err;
-		}
-		if (EVP_DigestVerifyFinal(mctx, CBS_data(&signature),
-		    CBS_len(&signature)) <= 0) {
-			al = SSL_AD_DECRYPT_ERROR;
-			SSLerror(s, SSL_R_BAD_SIGNATURE);
 			goto fatal_err;
 		}
 	} else if (EVP_PKEY_id(pkey) == EVP_PKEY_RSA) {
