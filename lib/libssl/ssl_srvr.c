@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.154 2023/06/11 18:50:51 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.155 2023/06/11 19:01:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1431,12 +1431,13 @@ ssl3_send_server_kex_ecdhe(SSL *s, CBB *cbb)
 static int
 ssl3_send_server_key_exchange(SSL *s)
 {
-	CBB cbb, cbb_params, cbb_signature, server_kex;
+	CBB cbb, cbb_signature, cbb_signed_params, server_kex;
+	CBS params;
 	const struct ssl_sigalg *sigalg = NULL;
+	unsigned char *signed_params = NULL;
+	size_t signed_params_len;
 	unsigned char *signature = NULL;
 	size_t signature_len = 0;
-	unsigned char *params = NULL;
-	size_t params_len;
 	const EVP_MD *md = NULL;
 	unsigned long type;
 	EVP_MD_CTX *md_ctx = NULL;
@@ -1445,7 +1446,7 @@ ssl3_send_server_key_exchange(SSL *s)
 	int al;
 
 	memset(&cbb, 0, sizeof(cbb));
-	memset(&cbb_params, 0, sizeof(cbb_params));
+	memset(&cbb_signed_params, 0, sizeof(cbb_signed_params));
 
 	if ((md_ctx = EVP_MD_CTX_new()) == NULL)
 		goto err;
@@ -1456,15 +1457,26 @@ ssl3_send_server_key_exchange(SSL *s)
 		    SSL3_MT_SERVER_KEY_EXCHANGE))
 			goto err;
 
-		if (!CBB_init(&cbb_params, 0))
+		if (!CBB_init(&cbb_signed_params, 0))
 			goto err;
+
+		if (!CBB_add_bytes(&cbb_signed_params, s->s3->client_random,
+		    SSL3_RANDOM_SIZE)) {
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
+			goto err;
+		}
+		if (!CBB_add_bytes(&cbb_signed_params, s->s3->server_random,
+		    SSL3_RANDOM_SIZE)) {
+			SSLerror(s, ERR_R_INTERNAL_ERROR);
+			goto err;
+		}
 
 		type = s->s3->hs.cipher->algorithm_mkey;
 		if (type & SSL_kDHE) {
-			if (!ssl3_send_server_kex_dhe(s, &cbb_params))
+			if (!ssl3_send_server_kex_dhe(s, &cbb_signed_params))
 				goto err;
 		} else if (type & SSL_kECDHE) {
-			if (!ssl3_send_server_kex_ecdhe(s, &cbb_params))
+			if (!ssl3_send_server_kex_ecdhe(s, &cbb_signed_params))
 				goto err;
 		} else {
 			al = SSL_AD_HANDSHAKE_FAILURE;
@@ -1472,10 +1484,16 @@ ssl3_send_server_key_exchange(SSL *s)
 			goto fatal_err;
 		}
 
-		if (!CBB_finish(&cbb_params, &params, &params_len))
+		if (!CBB_finish(&cbb_signed_params, &signed_params,
+		    &signed_params_len))
 			goto err;
 
-		if (!CBB_add_bytes(&server_kex, params, params_len))
+		CBS_init(&params, signed_params, signed_params_len);
+		if (!CBS_skip(&params, 2 * SSL3_RANDOM_SIZE))
+			goto err;
+
+		if (!CBB_add_bytes(&server_kex, CBS_data(&params),
+		    CBS_len(&params)))
 			goto err;
 
 		/* Add signature unless anonymous. */
@@ -1507,22 +1525,8 @@ ssl3_send_server_key_exchange(SSL *s)
 				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
 			}
-			if (!EVP_DigestSignUpdate(md_ctx, s->s3->client_random,
-			    SSL3_RANDOM_SIZE)) {
-				SSLerror(s, ERR_R_EVP_LIB);
-				goto err;
-			}
-			if (!EVP_DigestSignUpdate(md_ctx, s->s3->server_random,
-			    SSL3_RANDOM_SIZE)) {
-				SSLerror(s, ERR_R_EVP_LIB);
-				goto err;
-			}
-			if (!EVP_DigestSignUpdate(md_ctx, params, params_len)) {
-				SSLerror(s, ERR_R_EVP_LIB);
-				goto err;
-			}
-			if (!EVP_DigestSignFinal(md_ctx, NULL, &signature_len) ||
-			    !signature_len) {
+			if (!EVP_DigestSign(md_ctx, NULL, &signature_len,
+			    signed_params, signed_params_len)) {
 				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
 			}
@@ -1530,7 +1534,8 @@ ssl3_send_server_key_exchange(SSL *s)
 				SSLerror(s, ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
-			if (!EVP_DigestSignFinal(md_ctx, signature, &signature_len)) {
+			if (!EVP_DigestSign(md_ctx, signature, &signature_len,
+			    signed_params, signed_params_len)) {
 				SSLerror(s, ERR_R_EVP_LIB);
 				goto err;
 			}
@@ -1550,19 +1555,19 @@ ssl3_send_server_key_exchange(SSL *s)
 	}
 
 	EVP_MD_CTX_free(md_ctx);
-	free(params);
 	free(signature);
+	free(signed_params);
 
 	return (ssl3_handshake_write(s));
 
  fatal_err:
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
  err:
-	CBB_cleanup(&cbb_params);
+	CBB_cleanup(&cbb_signed_params);
 	CBB_cleanup(&cbb);
 	EVP_MD_CTX_free(md_ctx);
-	free(params);
 	free(signature);
+	free(signed_params);
 
 	return (-1);
 }

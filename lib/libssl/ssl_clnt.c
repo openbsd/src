@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_clnt.c,v 1.159 2023/06/11 18:50:51 tb Exp $ */
+/* $OpenBSD: ssl_clnt.c,v 1.160 2023/06/11 19:01:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1299,12 +1299,16 @@ ssl3_get_server_kex_ecdhe(SSL *s, CBS *cbs)
 static int
 ssl3_get_server_key_exchange(SSL *s)
 {
-	CBS cbs, signature;
+	CBB cbb;
+	CBS cbs, params, signature;
 	EVP_MD_CTX *md_ctx;
-	const unsigned char *param;
-	size_t param_len;
+	unsigned char *signed_params = NULL;
+	size_t signed_params_len;
+	size_t params_len;
 	long alg_k, alg_a;
 	int al, ret;
+
+	memset(&cbb, 0, sizeof(cbb));
 
 	alg_k = s->s3->hs.cipher->algorithm_mkey;
 	alg_a = s->s3->hs.cipher->algorithm_auth;
@@ -1341,8 +1345,14 @@ ssl3_get_server_key_exchange(SSL *s)
 		return (1);
 	}
 
-	param = CBS_data(&cbs);
-	param_len = CBS_len(&cbs);
+	if (!CBB_init(&cbb, 0))
+		goto err;
+	if (!CBB_add_bytes(&cbb, s->s3->client_random, SSL3_RANDOM_SIZE))
+		goto err;
+	if (!CBB_add_bytes(&cbb, s->s3->server_random, SSL3_RANDOM_SIZE))
+		goto err;
+
+	CBS_dup(&cbs, &params);
 
 	if (alg_k & SSL_kDHE) {
 		if (!ssl3_get_server_kex_dhe(s, &cbs))
@@ -1356,7 +1366,12 @@ ssl3_get_server_key_exchange(SSL *s)
 		goto fatal_err;
 	}
 
-	param_len -= CBS_len(&cbs);
+	if ((params_len = CBS_offset(&cbs)) > CBS_len(&params))
+		goto err;
+	if (!CBB_add_bytes(&cbb, CBS_data(&params), params_len))
+		goto err;
+	if (!CBB_finish(&cbb, &signed_params, &signed_params_len))
+		goto err;
 
 	/* if it was signed, check the signature */
 	if ((alg_a & SSL_aNULL) == 0) {
@@ -1400,21 +1415,13 @@ ssl3_get_server_key_exchange(SSL *s)
 		if (!EVP_DigestVerifyInit(md_ctx, &pctx, sigalg->md(),
 		    NULL, pkey))
 			goto err;
-		if (!EVP_DigestVerifyUpdate(md_ctx, s->s3->client_random,
-		    SSL3_RANDOM_SIZE))
-			goto err;
 		if ((sigalg->flags & SIGALG_FLAG_RSA_PSS) &&
 		    (!EVP_PKEY_CTX_set_rsa_padding(pctx,
 		    RSA_PKCS1_PSS_PADDING) ||
 		    !EVP_PKEY_CTX_set_rsa_pss_saltlen(pctx, -1)))
 			goto err;
-		if (!EVP_DigestVerifyUpdate(md_ctx, s->s3->server_random,
-		    SSL3_RANDOM_SIZE))
-			goto err;
-		if (!EVP_DigestVerifyUpdate(md_ctx, param, param_len))
-			goto err;
-		if (EVP_DigestVerifyFinal(md_ctx, CBS_data(&signature),
-		    CBS_len(&signature)) <= 0) {
+		if (EVP_DigestVerify(md_ctx, CBS_data(&signature),
+		    CBS_len(&signature), signed_params, signed_params_len) <= 0) {
 			al = SSL_AD_DECRYPT_ERROR;
 			SSLerror(s, SSL_R_BAD_SIGNATURE);
 			goto fatal_err;
@@ -1428,6 +1435,7 @@ ssl3_get_server_key_exchange(SSL *s)
 	}
 
 	EVP_MD_CTX_free(md_ctx);
+	free(signed_params);
 
 	return (1);
 
@@ -1439,7 +1447,9 @@ ssl3_get_server_key_exchange(SSL *s)
 	ssl3_send_alert(s, SSL3_AL_FATAL, al);
 
  err:
+	CBB_cleanup(&cbb);
 	EVP_MD_CTX_free(md_ctx);
+	free(signed_params);
 
 	return (-1);
 }
