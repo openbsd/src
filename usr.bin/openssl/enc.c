@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.28 2023/06/11 05:45:20 tb Exp $ */
+/* $OpenBSD: enc.c,v 1.29 2023/06/11 11:54:44 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -362,9 +362,7 @@ enc_main(int argc, char **argv)
 
 	cfg.cipher = EVP_get_cipherbyname(pname);
 
-	if (!cfg.base64 && cfg.cipher == NULL &&
-	    strcmp(pname, "enc") != 0)
-	{
+	if (!cfg.base64 && cfg.cipher == NULL && strcmp(pname, "enc") != 0) {
 		BIO_printf(bio_err, "%s is an unknown cipher\n", pname);
 		goto end;
 	}
