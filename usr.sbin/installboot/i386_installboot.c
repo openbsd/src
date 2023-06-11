@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386_installboot.c,v 1.45 2023/04/26 18:04:21 kn Exp $	*/
+/*	$OpenBSD: i386_installboot.c,v 1.46 2023/06/11 14:00:04 krw Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -196,7 +196,7 @@ write_bootblocks(int devfd, char *dev, struct disklabel *dl)
 {
 	struct stat	sb;
 	u_int8_t	*secbuf;
-	u_int		start = 0;
+	u_int		start;
 
 	/* Write patched proto bootblock(s) into the superblock. */
 	if (fstat(devfd, &sb) == -1)
@@ -214,18 +214,15 @@ write_bootblocks(int devfd, char *dev, struct disklabel *dl)
 	}
 
 	/*
-	 * Find OpenBSD partition. Floppies are special, getting an
-	 * everything-in-one /boot starting at sector 0.
+	 * Find bootstrap sector.
 	 */
-	if (dl->d_type != DTYPE_FLOPPY) {
-		start = findopenbsd(devfd, dl);
-		if (start == (u_int)-1)
-			errx(1, "no OpenBSD partition");
-	}
-
-	if (verbose)
+	start = findopenbsd(devfd, dl);
+	if (verbose) {
+		if (start == 0)
+			fprintf(stderr, "no MBR, ");
 		fprintf(stderr, "%s will be written at sector %u\n",
 		    stage1, start);
+	}
 
 	if (start + (blksize / dl->d_secsize) > BOOTBIOS_MAXSEC)
 		warnx("%s extends beyond sector %u. OpenBSD might not boot.",
@@ -437,6 +434,12 @@ rmdir:
 		exit(1);
 }
 
+/*
+ * a) For media w/o an MBR use sector 0.
+ * b) For media with an MBR and an OpenBSD (A6) partition use the first
+ *    sector of the OpenBSD partition.
+ * c) For media with an MBR and no OpenBSD partition error out.
+ */
 u_int
 findopenbsd(int devfd, struct disklabel *dl)
 {
@@ -453,7 +456,7 @@ again:
 		if (verbose)
 			fprintf(stderr, "Traversed more than %d Extended Boot "
 			    "Records (EBRs)\n", DOS_MAXEBR);
-		return ((u_int)-1);
+		goto done;
 	}
 
 	if (verbose)
@@ -469,9 +472,12 @@ again:
 	bcopy(secbuf, &mbr, sizeof(mbr));
 	free(secbuf);
 
-	if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
+	if (mbr.dmbr_sign != DOSMBR_SIGNATURE) {
+		if (mbroff == DOSBBSECTOR)
+			return 0;
 		errx(1, "invalid boot record signature (0x%04X) @ sector %u",
 		    mbr.dmbr_sign, mbroff);
+	}
 
 	nextebr = 0;
 	for (i = 0; i < NDOSPART; i++) {
@@ -505,7 +511,8 @@ again:
 		goto again;
 	}
 
-	return ((u_int)-1);
+ done:
+	errx(1, "no OpenBSD partition");
 }
 
 /*
