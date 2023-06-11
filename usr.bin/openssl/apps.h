@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.h,v 1.33 2023/06/11 12:35:00 jsg Exp $ */
+/* $OpenBSD: apps.h,v 1.34 2023/06/11 13:02:10 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -132,11 +132,6 @@ extern int single_execution;
 extern CONF *config;
 extern char *default_config_file;
 extern BIO *bio_err;
-
-typedef struct args_st {
-	char **data;
-	int count;
-} ARGS;
 
 #define PW_MIN_LENGTH 4
 typedef struct pw_cb_data {
