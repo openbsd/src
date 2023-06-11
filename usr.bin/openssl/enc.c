@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.29 2023/06/11 11:54:44 tb Exp $ */
+/* $OpenBSD: enc.c,v 1.30 2023/06/11 12:06:08 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -391,9 +391,9 @@ enc_main(int argc, char **argv)
 		}
 		fclose(infile);
 		i = strlen(buf);
-		if ((i > 0) && ((buf[i - 1] == '\n') || (buf[i - 1] == '\r')))
+		if (i > 0 && (buf[i - 1] == '\n' || buf[i - 1] == '\r'))
 			buf[--i] = '\0';
-		if ((i > 0) && ((buf[i - 1] == '\n') || (buf[i - 1] == '\r')))
+		if (i > 0 && (buf[i - 1] == '\n' || buf[i - 1] == '\r'))
 			buf[--i] = '\0';
 		if (i < 1) {
 			BIO_printf(bio_err, "zero length password\n");
@@ -421,9 +421,8 @@ enc_main(int argc, char **argv)
 		    cfg.md);
 		goto end;
 	}
-	if (dgst == NULL) {
+	if (dgst == NULL)
 		dgst = EVP_sha256();
-	}
 
 	if (cfg.bufsize != NULL) {
 		char *p = cfg.bufsize;
@@ -454,13 +453,13 @@ enc_main(int argc, char **argv)
 	}
 	strbuf = malloc(SIZE);
 	buff = malloc(EVP_ENCODE_LENGTH(bsize));
-	if ((buff == NULL) || (strbuf == NULL)) {
+	if (buff == NULL || strbuf == NULL) {
 		BIO_printf(bio_err, "malloc failure %ld\n", (long) EVP_ENCODE_LENGTH(bsize));
 		goto end;
 	}
 	in = BIO_new(BIO_s_file());
 	out = BIO_new(BIO_s_file());
-	if ((in == NULL) || (out == NULL)) {
+	if (in == NULL || out == NULL) {
 		ERR_print_errors(bio_err);
 		goto end;
 	}
@@ -482,15 +481,13 @@ enc_main(int argc, char **argv)
 	}
 
 	if (!cfg.keystr && cfg.passarg) {
-		if (!app_passwd(bio_err, cfg.passarg, NULL,
-		    &pass, NULL)) {
+		if (!app_passwd(bio_err, cfg.passarg, NULL, &pass, NULL)) {
 			BIO_printf(bio_err, "Error getting password\n");
 			goto end;
 		}
 		cfg.keystr = pass;
 	}
-	if (cfg.keystr == NULL && cfg.cipher != NULL &&
-	    cfg.hkey == NULL) {
+	if (cfg.keystr == NULL && cfg.cipher != NULL && cfg.hkey == NULL) {
 		for (;;) {
 			char buf[200];
 			int retval;
@@ -640,8 +637,7 @@ enc_main(int argc, char **argv)
 				explicit_bzero(cfg.keystr,
 				    strlen(cfg.keystr));
 		}
-		if (cfg.hiv != NULL &&
-		    !set_hex(cfg.hiv, iv, sizeof iv)) {
+		if (cfg.hiv != NULL && !set_hex(cfg.hiv, iv, sizeof iv)) {
 			BIO_printf(bio_err, "invalid hex iv value\n");
 			goto end;
 		}
@@ -655,8 +651,7 @@ enc_main(int argc, char **argv)
 			BIO_printf(bio_err, "iv undefined\n");
 			goto end;
 		}
-		if (cfg.hkey != NULL &&
-		    !set_hex(cfg.hkey, key, sizeof key)) {
+		if (cfg.hkey != NULL && !set_hex(cfg.hkey, key, sizeof key)) {
 			BIO_printf(bio_err, "invalid hex key value\n");
 			goto end;
 		}
@@ -680,8 +675,7 @@ enc_main(int argc, char **argv)
 		if (cfg.nopad)
 			EVP_CIPHER_CTX_set_padding(ctx, 0);
 
-		if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv,
-		    cfg.enc)) {
+		if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, cfg.enc)) {
 			BIO_printf(bio_err, "Error setting cipher %s\n",
 			    EVP_CIPHER_name(cfg.cipher));
 			ERR_print_errors(bio_err);
@@ -772,11 +766,11 @@ set_hex(char *in, unsigned char *out, int size)
 		*(in++) = '\0';
 		if (j == 0)
 			break;
-		if ((j >= '0') && (j <= '9'))
+		if (j >= '0' && j <= '9')
 			j -= '0';
-		else if ((j >= 'A') && (j <= 'F'))
+		else if (j >= 'A' && j <= 'F')
 			j = j - 'A' + 10;
-		else if ((j >= 'a') && (j <= 'f'))
+		else if (j >= 'a' && j <= 'f')
 			j = j - 'a' + 10;
 		else {
 			BIO_printf(bio_err, "non-hex digit\n");
