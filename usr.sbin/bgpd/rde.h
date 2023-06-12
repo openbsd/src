@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.293 2023/04/19 13:23:33 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.294 2023/06/12 12:48:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -401,8 +401,6 @@ void		 attr_copy(struct rde_aspath *, const struct rde_aspath *);
 int		 attr_compare(struct rde_aspath *, struct rde_aspath *);
 void		 attr_freeall(struct rde_aspath *);
 void		 attr_free(struct rde_aspath *, struct attr *);
-#define		 attr_optlen(x)	\
-    ((x)->len > 255 ? (x)->len + 4 : (x)->len + 3)
 
 struct aspath	*aspath_get(void *, uint16_t);
 struct aspath	*aspath_copy(struct aspath *);

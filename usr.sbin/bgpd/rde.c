@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.605 2023/04/20 15:44:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.606 2023/06/12 12:48:07 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2828,7 +2828,6 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 	struct rib_entry	*re;
 	struct prefix		*xp;
 	struct rde_peer		*peer;
-	void			*bp;
 	time_t			 staletime;
 	size_t			 aslen;
 	uint8_t			 l;
@@ -2931,15 +2930,10 @@ rde_dump_rib_as(struct prefix *p, struct rde_aspath *asp, pid_t pid, int flags,
 			if ((a = asp->others[l]) == NULL)
 				break;
 			if ((wbuf = imsg_create(ibuf_se_ctl,
-			    IMSG_CTL_SHOW_RIB_ATTR, 0, pid,
-			    attr_optlen(a))) == NULL)
+			    IMSG_CTL_SHOW_RIB_ATTR, 0, pid, 0)) == NULL)
 				return;
-			if ((bp = ibuf_reserve(wbuf, attr_optlen(a))) == NULL) {
-				ibuf_free(wbuf);
-				return;
-			}
-			if (attr_write(bp, attr_optlen(a), a->flags,
-			    a->type, a->data, a->len) == -1) {
+			if (attr_writebuf(wbuf, a->flags, a->type, a->data,
+			    a->len) == -1) {
 				ibuf_free(wbuf);
 				return;
 			}
