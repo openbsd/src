@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.24 2023/02/22 05:46:37 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.25 2023/06/12 16:17:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,18 +80,14 @@ bn_add_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	if (n <= 0)
 		return 0;
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
 	while (n & ~3) {
-		bn_addw_addw(a[0], b[0], carry, &carry, &r[0]);
-		bn_addw_addw(a[1], b[1], carry, &carry, &r[1]);
-		bn_addw_addw(a[2], b[2], carry, &carry, &r[2]);
-		bn_addw_addw(a[3], b[3], carry, &carry, &r[3]);
+		bn_qwaddqw(a[3], a[2], a[1], a[0], b[3], b[2], b[1], b[0],
+		    carry, &carry, &r[3], &r[2], &r[1], &r[0]);
 		a += 4;
 		b += 4;
 		r += 4;
 		n -= 4;
 	}
-#endif
 	while (n) {
 		bn_addw_addw(a[0], b[0], carry, &carry, &r[0]);
 		a++;
@@ -165,18 +161,14 @@ bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	if (n <= 0)
 		return 0;
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
 	while (n & ~3) {
-		bn_subw_subw(a[0], b[0], borrow, &borrow, &r[0]);
-		bn_subw_subw(a[1], b[1], borrow, &borrow, &r[1]);
-		bn_subw_subw(a[2], b[2], borrow, &borrow, &r[2]);
-		bn_subw_subw(a[3], b[3], borrow, &borrow, &r[3]);
+		bn_qwsubqw(a[3], a[2], a[1], a[0], b[3], b[2], b[1], b[0],
+		    borrow, &borrow, &r[3], &r[2], &r[1], &r[0]);
 		a += 4;
 		b += 4;
 		r += 4;
 		n -= 4;
 	}
-#endif
 	while (n) {
 		bn_subw_subw(a[0], b[0], borrow, &borrow, &r[0]);
 		a++;

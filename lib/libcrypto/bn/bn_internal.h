@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.11 2023/03/07 09:35:55 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.12 2023/06/12 16:17:24 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -123,6 +123,33 @@ bn_addw_addw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_r1,
 #endif
 
 /*
+ * bn_qwaddqw() computes
+ * (r4:r3:r2:r1:r0) = (a3:a2:a1:a0) + (b3:b2:b1:b0) + carry, where a is a quad word,
+ * b is a quad word, and carry is a single word with value 0 or 1, producing a four
+ * word result and carry.
+ */
+#ifndef HAVE_BN_QWADDQW
+static inline void
+bn_qwaddqw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0, BN_ULONG b3,
+    BN_ULONG b2, BN_ULONG b1, BN_ULONG b0, BN_ULONG carry, BN_ULONG *out_carry,
+    BN_ULONG *out_r3, BN_ULONG *out_r2, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG r3, r2, r1, r0;
+
+	bn_addw_addw(a0, b0, carry, &carry, &r0);
+	bn_addw_addw(a1, b1, carry, &carry, &r1);
+	bn_addw_addw(a2, b2, carry, &carry, &r2);
+	bn_addw_addw(a3, b3, carry, &carry, &r3);
+
+	*out_carry = carry;
+	*out_r3 = r3;
+	*out_r2 = r2;
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+#endif
+
+/*
  * bn_subw() computes r0 = a - b, where both inputs are single words,
  * producing a single word result and borrow.
  */
@@ -155,6 +182,33 @@ bn_subw_subw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_borrow,
 	bn_subw(r0, c, &b2, &r0);
 
 	*out_borrow = b1 + b2;
+	*out_r0 = r0;
+}
+#endif
+
+/*
+ * bn_qwsubqw() computes
+ * (r3:r2:r1:r0) = (a3:a2:a1:a0) - (b3:b2:b1:b0) - borrow, where a is a quad word,
+ * b is a quad word, and borrow is a single word with value 0 or 1, producing a
+ * four word result and borrow.
+ */
+#ifndef HAVE_BN_QWSUBQW
+static inline void
+bn_qwsubqw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0, BN_ULONG b3,
+    BN_ULONG b2, BN_ULONG b1, BN_ULONG b0, BN_ULONG borrow, BN_ULONG *out_borrow,
+    BN_ULONG *out_r3, BN_ULONG *out_r2, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG r3, r2, r1, r0;
+
+	bn_subw_subw(a0, b0, borrow, &borrow, &r0);
+	bn_subw_subw(a1, b1, borrow, &borrow, &r1);
+	bn_subw_subw(a2, b2, borrow, &borrow, &r2);
+	bn_subw_subw(a3, b3, borrow, &borrow, &r3);
+
+	*out_borrow = borrow;
+	*out_r3 = r3;
+	*out_r2 = r2;
+	*out_r1 = r1;
 	*out_r0 = r0;
 }
 #endif
@@ -381,6 +435,60 @@ bn_mul2_mulw_addtw(BN_ULONG a, BN_ULONG b, BN_ULONG c2, BN_ULONG c1, BN_ULONG c0
 	bn_addw(r1, x1 + carry, &carry, &r1);
 	r2 += carry;
 
+	*out_r2 = r2;
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+#endif
+
+/*
+ * bn_qwmulw_addw() computes (r4:r3:r2:r1:r0) = (a3:a2:a1:a0) * b + c, where a
+ * is a quad word, b is a single word and c is a single word, producing a five
+ * word result.
+ */
+#ifndef HAVE_BN_QWMULW_ADDW
+static inline void
+bn_qwmulw_addw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0, BN_ULONG b,
+    BN_ULONG c, BN_ULONG *out_r4, BN_ULONG *out_r3, BN_ULONG *out_r2,
+    BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG r3, r2, r1, r0;
+
+	bn_mulw_addw(a0, b, c, &c, &r0);
+	bn_mulw_addw(a1, b, c, &c, &r1);
+	bn_mulw_addw(a2, b, c, &c, &r2);
+	bn_mulw_addw(a3, b, c, &c, &r3);
+
+	*out_r4 = c;
+	*out_r3 = r3;
+	*out_r2 = r2;
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+#endif
+
+/*
+ * bn_qwmulw_addqw_addw() computes
+ * (r4:r3:r2:r1:r0) = (a3:a2:a1:a0) * b + (c3:c2:c1:c0) + d, where a
+ * is a quad word, b is a single word, c is a quad word, and d is a single word,
+ * producing a five word result.
+ */
+#ifndef HAVE_BN_QWMULW_ADDQW_ADDW
+static inline void
+bn_qwmulw_addqw_addw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0,
+    BN_ULONG b, BN_ULONG c3, BN_ULONG c2, BN_ULONG c1, BN_ULONG c0, BN_ULONG d,
+    BN_ULONG *out_r4, BN_ULONG *out_r3, BN_ULONG *out_r2, BN_ULONG *out_r1,
+    BN_ULONG *out_r0)
+{
+	BN_ULONG r3, r2, r1, r0;
+
+	bn_mulw_addw_addw(a0, b, c0, d, &d, &r0);
+	bn_mulw_addw_addw(a1, b, c1, d, &d, &r1);
+	bn_mulw_addw_addw(a2, b, c2, d, &d, &r2);
+	bn_mulw_addw_addw(a3, b, c3, d, &d, &r3);
+
+	*out_r4 = d;
+	*out_r3 = r3;
 	*out_r2 = r2;
 	*out_r1 = r1;
 	*out_r0 = r0;

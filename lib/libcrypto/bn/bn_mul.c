@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.37 2023/04/19 10:51:22 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.38 2023/06/12 16:17:24 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -210,17 +210,13 @@ bn_mul_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
 	if (num <= 0)
 		return 0;
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
 	while (num & ~3) {
-		bn_mulw_addw(a[0], w, carry, &carry, &r[0]);
-		bn_mulw_addw(a[1], w, carry, &carry, &r[1]);
-		bn_mulw_addw(a[2], w, carry, &carry, &r[2]);
-		bn_mulw_addw(a[3], w, carry, &carry, &r[3]);
+		bn_qwmulw_addw(a[3], a[2], a[1], a[0], w, carry, &carry,
+		    &r[3], &r[2], &r[1], &r[0]);
 		a += 4;
 		r += 4;
 		num -= 4;
 	}
-#endif
 	while (num) {
 		bn_mulw_addw(a[0], w, carry, &carry, &r[0]);
 		a++;
@@ -247,17 +243,14 @@ bn_mul_add_words(BN_ULONG *r, const BN_ULONG *a, int num, BN_ULONG w)
 	if (num <= 0)
 		return 0;
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
 	while (num & ~3) {
-		bn_mulw_addw_addw(a[0], w, r[0], carry, &carry, &r[0]);
-		bn_mulw_addw_addw(a[1], w, r[1], carry, &carry, &r[1]);
-		bn_mulw_addw_addw(a[2], w, r[2], carry, &carry, &r[2]);
-		bn_mulw_addw_addw(a[3], w, r[3], carry, &carry, &r[3]);
+		bn_qwmulw_addqw_addw(a[3], a[2], a[1], a[0], w,
+		    r[3], r[2], r[1], r[0], carry, &carry,
+		    &r[3], &r[2], &r[1], &r[0]);
 		a += 4;
 		r += 4;
 		num -= 4;
 	}
-#endif
 	while (num) {
 		bn_mulw_addw_addw(a[0], w, r[0], carry, &carry, &r[0]);
 		a++;
