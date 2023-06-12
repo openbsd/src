@@ -1,4 +1,4 @@
-/*	$OpenBSD: seq.c,v 1.6 2022/02/25 16:00:39 tb Exp $	*/
+/*	$OpenBSD: seq.c,v 1.7 2023/06/12 20:15:06 millert Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -89,13 +89,13 @@ main(int argc, char *argv[])
 	double first = 1.0;
 	double last = 0.0;
 	double incr = 0.0;
-	double last_shown_value = 0.0;
+	double prev = 0.0;
 	double cur, step;
 	struct lconv *locale;
 	char *fmt = NULL;
 	const char *sep = "\n";
 	const char *term = "\n";
-	char *cur_print, *last_print;
+	char *cur_print, *last_print, *prev_print;
 	char pad = ZERO;
 
 	if (pledge("stdio", NULL) == -1)
@@ -176,34 +176,37 @@ main(int argc, char *argv[])
 	} else
 		fmt = generate_format(first, incr, last, equalize, pad);
 
+	warnx("first: %f, incr: %f", first, incr);
 	for (step = 1, cur = first; incr > 0 ? cur <= last : cur >= last;
 	    cur = first + incr * step++) {
 		if (cur != first)
 			fputs(sep, stdout);
 		printf(fmt, cur);
-		last_shown_value = cur;
+		prev = cur;
 	}
 
 	/*
 	 * Did we miss the last value of the range in the loop above?
 	 *
 	 * We might have, so check if the printable version of the last
-	 * computed value ('cur') and desired 'last' value are equal.  If they
-	 * are equal after formatting truncation, but 'cur' and
-	 * 'last_shown_value' are not equal, it means the exit condition of the
-	 * loop held true due to a rounding error and we still need to print
-	 * 'last'.
+	 * computed value ('cur') and desired 'last' value are equal.  If
+	 * they are equal after formatting truncation, but 'cur' and 'prev'
+	 * are different, it means the exit condition of the loop held true
+	 * due to a rounding error and we still need to print 'last'.
 	 */
 	if (asprintf(&cur_print, fmt, cur) == -1 ||
-	    asprintf(&last_print, fmt, last) == -1)
+	    asprintf(&last_print, fmt, last) == -1 ||
+	    asprintf(&prev_print, fmt, prev) == -1)
 		err(1, "asprintf");
-	if (strcmp(cur_print, last_print) == 0 && cur != last_shown_value) {
+	if (strcmp(cur_print, last_print) == 0 &&
+	    strcmp(cur_print, prev_print) != 0) {
 		if (cur != first)
 			fputs(sep, stdout);
 		fputs(last_print, stdout);
 	}
 	free(cur_print);
 	free(last_print);
+	free(prev_print);
 
 	fputs(term, stdout);
 
