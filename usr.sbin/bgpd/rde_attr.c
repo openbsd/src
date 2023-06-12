@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.132 2022/12/14 12:37:15 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.133 2023/06/12 12:10:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -85,7 +85,7 @@ attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,
 
 	if (ibuf_add(buf, hdr, flags & ATTR_EXTLEN ? 4 : 3) == -1)
 		return (-1);
-	if (data && ibuf_add(buf, data, data_len) == -1)
+	if (data != NULL && ibuf_add(buf, data, data_len) == -1)
 		return (-1);
 	return (0);
 }
