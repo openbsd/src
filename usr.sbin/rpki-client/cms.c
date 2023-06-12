@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.34 2023/05/30 11:09:08 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.35 2023/06/12 18:22:02 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -315,11 +315,9 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 
 	if (!x509_get_notafter(*xp, fn, &notafter))
 		goto out;
-	if (*signtime > notafter) {
+	if (*signtime > notafter)
 		warnx("%s: dating issue: CMS signing-time after X.509 notAfter",
 		    fn);
-		goto out;
-	}
 
 	if (CMS_SignerInfo_get0_signer_id(si, &kid, NULL, NULL) != 1 ||
 	    kid == NULL) {
