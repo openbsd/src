@@ -1,0 +1,62 @@
+Test 1.1: check for invalid format string
+seq: invalid format string: `foo'
+
+Test 1.2: check for valid format string
+bar1.000000
+bar2.000000
+bar3.000000
+
+Test 1.3: check for invalid increment
+seq: zero decrement
+
+Test 1.4: check for first > last
+seq: needs negative decrement
+
+Test 1.5: check for increment mismatch
+seq: needs positive increment
+
+Test 1.6: check for increment mismatch
+seq: needs negative decrement
+
+Test 2.0: single argument (0)
+1
+0
+
+Test 2.1: single argument (1)
+1
+
+Test 2.2: single argument (-1)
+1
+0
+-1
+
+Test 2.3: two arguments (1, 1)
+1
+
+Test 2.3: two arguments (1, 2)
+1
+2
+
+Test 2.3: two arguments (1, -2)
+1
+0
+-1
+-2
+
+Test 3.0: check for missing element due to rounding
+1
+1.1
+1.2
+
+Test 3.1: check for missing element due to rounding
+0
+1e-06
+2e-06
+3e-06
+
+Test 3.2: check for extra element due to rounding
+0.1
+1.09
+
+Test 3.3: check for extra element due to rounding check
+1.05e+06
