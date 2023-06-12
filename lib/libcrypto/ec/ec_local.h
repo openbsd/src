@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.13 2023/04/27 07:10:05 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.14 2023/06/12 18:17:18 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -356,18 +356,6 @@ int ec_GFp_simple_mul_double_nonct(const EC_GROUP *, EC_POINT *r, const BIGNUM *
 	const BIGNUM *p_scalar, const EC_POINT *point, BN_CTX *);
 
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
-
-int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *, EC_POINT *,
-	const BIGNUM *x, int y_bit, BN_CTX *);
-size_t ec_GF2m_simple_point2oct(const EC_GROUP *, const EC_POINT *, point_conversion_form_t form,
-	unsigned char *buf, size_t len, BN_CTX *);
-int ec_GF2m_simple_oct2point(const EC_GROUP *, EC_POINT *,
-	const unsigned char *buf, size_t len, BN_CTX *);
-
-int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
-int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
-int ec_GF2m_have_precompute_mult(const EC_GROUP *group);
 
 /* EC_METHOD definitions */
 
