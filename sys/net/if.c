@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.699 2023/06/05 11:35:46 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.700 2023/06/12 21:19:54 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1170,6 +1170,8 @@ if_detach(struct ifnet *ifp)
 			ifafree(ifa);
 		}
 	}
+	splx(s);
+	NET_UNLOCK();
 
 	KASSERT(TAILQ_EMPTY(&ifp->if_addrhooks));
 	KASSERT(TAILQ_EMPTY(&ifp->if_linkstatehooks));
@@ -1178,8 +1180,6 @@ if_detach(struct ifnet *ifp)
 #ifdef INET6
 	nd6_ifdetach(ifp);
 #endif
-	splx(s);
-	NET_UNLOCK();
 
 	/* Announce that the interface is gone. */
 	rtm_ifannounce(ifp, IFAN_DEPARTURE);
