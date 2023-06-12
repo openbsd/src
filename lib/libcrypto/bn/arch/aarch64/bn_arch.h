@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.9 2023/05/28 17:42:30 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.10 2023/06/12 16:42:11 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -60,6 +60,35 @@ bn_addw_addw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_r1,
 	    : "cc");
 
 	*out_r1 = carry;
+	*out_r0 = r0;
+}
+
+#define HAVE_BN_QWADDQW
+
+static inline void
+bn_qwaddqw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0, BN_ULONG b3,
+    BN_ULONG b2, BN_ULONG b1, BN_ULONG b0, BN_ULONG carry, BN_ULONG *out_carry,
+    BN_ULONG *out_r3, BN_ULONG *out_r2, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG r3, r2, r1, r0;
+
+	__asm__ (
+	    "adds  xzr, %[carry], #-1 \n"
+	    "adcs  %[r0], %[a0], %[b0] \n"
+	    "adcs  %[r1], %[a1], %[b1] \n"
+	    "adcs  %[r2], %[a2], %[b2] \n"
+	    "adcs  %[r3], %[a3], %[b3] \n"
+	    "cset  %[carry], cs \n"
+	    : [carry]"+r"(carry), [r3]"=&r"(r3), [r2]"=&r"(r2),
+		[r1]"=&r"(r1), [r0]"=&r"(r0)
+	    : [a3]"r"(a3), [a2]"r"(a2), [a1]"r"(a1), [a0]"r"(a0),
+		[b3]"r"(b3), [b2]"r"(b2), [b1]"r"(b1), [b0]"r"(b0)
+	    : "cc");
+
+	*out_carry = carry;
+	*out_r3 = r3;
+	*out_r2 = r2;
+	*out_r1 = r1;
 	*out_r0 = r0;
 }
 
@@ -148,6 +177,83 @@ bn_mulw_addtw(BN_ULONG a, BN_ULONG b, BN_ULONG c2, BN_ULONG c1, BN_ULONG c0,
 	*out_r0 = r0;
 }
 
+#define HAVE_BN_QWMULW_ADDW
+
+static inline void
+bn_qwmulw_addw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0, BN_ULONG b,
+    BN_ULONG c, BN_ULONG *out_r4, BN_ULONG *out_r3, BN_ULONG *out_r2,
+    BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG r4, r3, r2, r1, r0;
+
+	__asm__ (
+	    "umulh  %[r1], %[a0], %[b] \n"
+	    "mul    %[r0], %[a0], %[b] \n"
+	    "adds   %[r0], %[r0], %[c] \n"
+	    "umulh  %[r2], %[a1], %[b] \n"
+	    "mul     %[c], %[a1], %[b] \n"
+	    "adcs   %[r1], %[r1], %[c] \n"
+	    "umulh  %[r3], %[a2], %[b] \n"
+	    "mul     %[c], %[a2], %[b] \n"
+	    "adcs   %[r2], %[r2], %[c] \n"
+	    "umulh  %[r4], %[a3], %[b] \n"
+	    "mul     %[c], %[a3], %[b] \n"
+	    "adcs   %[r3], %[r3], %[c] \n"
+	    "adc    %[r4], %[r4], xzr  \n"
+	    : [c]"+r"(c), [r4]"=&r"(r4), [r3]"=&r"(r3), [r2]"=&r"(r2),
+		[r1]"=&r"(r1), [r0]"=&r"(r0)
+	    : [a3]"r"(a3), [a2]"r"(a2), [a1]"r"(a1), [a0]"r"(a0), [b]"r"(b)
+	    : "cc");
+
+	*out_r4 = r4;
+	*out_r3 = r3;
+	*out_r2 = r2;
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+
+#define HAVE_BN_QWMULW_ADDQW_ADDW
+
+static inline void
+bn_qwmulw_addqw_addw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0,
+    BN_ULONG b, BN_ULONG c3, BN_ULONG c2, BN_ULONG c1, BN_ULONG c0, BN_ULONG d,
+    BN_ULONG *out_r4, BN_ULONG *out_r3, BN_ULONG *out_r2, BN_ULONG *out_r1,
+    BN_ULONG *out_r0)
+{
+	BN_ULONG r4, r3, r2, r1, r0;
+
+	__asm__ (
+	    "umulh  %[r1], %[a0], %[b]  \n"
+	    "mul    %[r0], %[a0], %[b]  \n"
+	    "adds   %[r0], %[r0], %[d]  \n"
+	    "umulh  %[r2], %[a1], %[b]  \n"
+	    "mul     %[d], %[a1], %[b]  \n"
+	    "adcs   %[r1], %[r1], %[d]  \n"
+	    "umulh  %[r3], %[a2], %[b]  \n"
+	    "mul     %[d], %[a2], %[b]  \n"
+	    "adcs   %[r2], %[r2], %[d]  \n"
+	    "umulh  %[r4], %[a3], %[b]  \n"
+	    "mul     %[d], %[a3], %[b]  \n"
+	    "adcs   %[r3], %[r3], %[d]  \n"
+	    "adc    %[r4], %[r4], xzr   \n"
+	    "adds   %[r0], %[r0], %[c0] \n"
+	    "adcs   %[r1], %[r1], %[c1] \n"
+	    "adcs   %[r2], %[r2], %[c2] \n"
+	    "adcs   %[r3], %[r3], %[c3] \n"
+	    "adc    %[r4], %[r4], xzr   \n"
+	    : [d]"+r"(d), [r4]"=&r"(r4), [r3]"=&r"(r3), [r2]"=&r"(r2),
+		[r1]"=&r"(r1), [r0]"=&r"(r0)
+	    : [a3]"r"(a3), [a2]"r"(a2), [a1]"r"(a1), [a0]"r"(a0), [b]"r"(b),
+		[c3]"r"(c3), [c2]"r"(c2), [c1]"r"(c1), [c0]"r"(c0)
+	    : "cc");
+
+	*out_r4 = r4;
+	*out_r3 = r3;
+	*out_r2 = r2;
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+
 #define HAVE_BN_SUBW
 
 static inline void
@@ -184,6 +290,35 @@ bn_subw_subw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_borrow,
 	    : "cc");
 
 	*out_borrow = borrow;
+	*out_r0 = r0;
+}
+
+#define HAVE_BN_QWSUBQW
+
+static inline void
+bn_qwsubqw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0, BN_ULONG b3,
+    BN_ULONG b2, BN_ULONG b1, BN_ULONG b0, BN_ULONG borrow, BN_ULONG *out_borrow,
+    BN_ULONG *out_r3, BN_ULONG *out_r2, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG r3, r2, r1, r0;
+
+	__asm__ (
+	    "subs  xzr, xzr, %[borrow] \n"
+	    "sbcs  %[r0], %[a0], %[b0] \n"
+	    "sbcs  %[r1], %[a1], %[b1] \n"
+	    "sbcs  %[r2], %[a2], %[b2] \n"
+	    "sbcs  %[r3], %[a3], %[b3] \n"
+	    "cset  %[borrow], cc \n"
+	    : [borrow]"+r"(borrow), [r3]"=&r"(r3), [r2]"=&r"(r2),
+		[r1]"=&r"(r1), [r0]"=&r"(r0)
+	    : [a3]"r"(a3), [a2]"r"(a2), [a1]"r"(a1), [a0]"r"(a0),
+		[b3]"r"(b3), [b2]"r"(b2), [b1]"r"(b1), [b0]"r"(b0)
+	    : "cc");
+
+	*out_borrow = borrow;
+	*out_r3 = r3;
+	*out_r2 = r2;
+	*out_r1 = r1;
 	*out_r0 = r0;
 }
 
