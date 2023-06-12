@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.75 2023/06/12 14:56:38 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.76 2023/06/12 15:27:52 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -71,7 +71,7 @@
 #define HTTP_USER_AGENT		"OpenBSD rpki-client"
 #define HTTP_BUF_SIZE		(32 * 1024)
 #define HTTP_IDLE_TIMEOUT	10
-#define MAX_CONTENTLEN		(2 * 1024 * 1024 * 1024LL)
+#define MAX_CONTENTLEN		(2 * 1024 * 1024 * 1024UL)
 #define NPFDS			(MAX_HTTP_REQUESTS + 1)
 
 enum res {
@@ -129,8 +129,8 @@ struct http_connection {
 	struct http_zlib	*zlibctx;
 	size_t			bufsz;
 	size_t			bufpos;
-	off_t			iosz;
-	off_t			totalsz;
+	size_t			iosz;
+	size_t			totalsz;
 	time_t			idle_time;
 	time_t			io_time;
 	int			status;
@@ -748,7 +748,7 @@ http_inflate_data(struct http_connection *conn)
 	size_t bsz = conn->bufpos;
 	int rv;
 
-	if (conn->iosz < (off_t)bsz)
+	if (conn->iosz < bsz)
 		bsz = conn->iosz;
 
 	zctx->zdone = 0;
@@ -1505,7 +1505,7 @@ http_parse_chunked(struct http_connection *conn, char *buf)
 	errno = 0;
 	chunksize = strtoul(header, &end, 16);
 	if (header[0] == '\0' || *end != '\0' || (errno == ERANGE &&
-	    chunksize == ULONG_MAX) || chunksize > INT_MAX)
+	    chunksize == ULONG_MAX) || chunksize > MAX_CONTENTLEN)
 		return -1;
 
 	conn->iosz = chunksize;
@@ -1625,7 +1625,7 @@ again:
 		return http_failed(conn);
 	case STATE_RESPONSE_DATA:
 		if (conn->bufpos != conn->bufsz &&
-		    conn->iosz > (off_t)conn->bufpos)
+		    conn->iosz > conn->bufpos)
 			goto read_more;
 
 		/* got a buffer full of data */
@@ -1633,7 +1633,7 @@ again:
 			/*
 			 * After redirects all data needs to be discarded.
 			 */
-			if (conn->iosz < (off_t)conn->bufpos) {
+			if (conn->iosz < conn->bufpos) {
 				conn->bufpos -= conn->iosz;
 				conn->iosz = 0;
 			} else {
@@ -1869,7 +1869,7 @@ data_write(struct http_connection *conn)
 
 	assert(conn->state == STATE_WRITE_DATA);
 
-	if (conn->iosz < (off_t)bsz)
+	if (conn->iosz < bsz)
 		bsz = conn->iosz;
 
 	s = write(conn->req->outfd, conn->buf, bsz);
