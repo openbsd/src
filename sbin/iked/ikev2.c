@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.367 2023/05/23 13:57:14 claudio Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.368 2023/06/12 09:02:31 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -3019,17 +3019,23 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 	struct iked_childsa	**peersas = NULL;
 	struct iked_sa		*sa = msg->msg_sa;
 	struct ikev2_delete	*localdel;
-	struct ibuf		*spibuf = NULL;
+	FILE			*spif;
+	char			*spibuf = NULL;
 	uint64_t		*localspi = NULL;
 	uint64_t		 spi64, spi = 0;
 	uint32_t		 spi32;
 	uint8_t			*buf;
 	size_t			 found = 0;
 	int			 ret = -1;
-	size_t			 i, sz, cnt, len;
+	size_t			 i, sz, cnt, len, dummy;
 
 	if (!msg->msg_del_protoid)
 		return (0);
+
+	if ((spif = open_memstream(&spibuf, &dummy)) == NULL) {
+		log_warn("%s", __func__);
+		return (0);
+	}
 
 	sz = msg->msg_del_spisize;
 
@@ -3093,11 +3099,10 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 		if (ikev2_childsa_delete(env, sa, msg->msg_del_protoid, spi,
 		    &localspi[i], 0) != -1) {
 			found++;
-
 			/* append SPI to log buffer */
-			if (ibuf_strlen(spibuf))
-				ibuf_strcat(&spibuf, ", ");
-			ibuf_strcat(&spibuf, print_spi(spi, sz));
+			if (ftello(spif) > 0)
+				fputs(", ", spif);
+			fputs(print_spi(spi, sz), spif);
 		}
 
 		/*
@@ -3143,11 +3148,12 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
 				break;
 			}
 		}
-		log_info("%sdeleted %zu SPI%s: %.*s",
-		    SPI_SA(sa, NULL), found,
-		    found == 1 ? "" : "s",
-		    spibuf ? ibuf_strlen(spibuf) : 0,
-		    spibuf ? (char *)ibuf_data(spibuf) : "");
+		fflush(spif);
+		if (!ferror(spif)) {
+			log_info("%sdeleted %zu SPI%s: %s",
+			    SPI_SA(sa, NULL), found, found == 1 ? "" : "s",
+			    spibuf);
+		}
 	} else {
 		/* XXX should we send an INVALID_SPI notification? */
 		ret = 0;
@@ -3156,7 +3162,8 @@ ikev2_handle_delete(struct iked *env, struct iked_message *msg,
  done:
 	free(localspi);
 	free(peersas);
-	ibuf_free(spibuf);
+	fclose(spif);
+	free(spibuf);
 
 	return (ret);
 }
@@ -6414,14 +6421,20 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	struct iked_childsa	*csa, *ocsa, *ipcomp;
 	struct iked_flow	*flow, *oflow;
 	int			 peer_changed, reload;
-	struct ibuf		*spibuf = NULL;
-	struct ibuf		*flowbuf = NULL;
-	char			*buf;
+	FILE			*spif, *flowf;
+	char			*spibuf = NULL, *flowbuf = NULL;
 	char			 prenat_mask[10];
 	uint16_t		 encrid = 0, integrid = 0, groupid = 0;
-	size_t			 encrlen = 0, integrlen = 0;
+	size_t			 encrlen = 0, integrlen = 0, spisz, flowsz;
 	int			 esn = 0;
 	int			 ret = -1;
+
+	spif = open_memstream(&spibuf, &spisz);
+	flowf = open_memstream(&flowbuf, &flowsz);
+	if (spif == NULL || flowf == NULL) {
+		log_warn("%s", __func__);
+		return (ret);
+	}
 
 	TAILQ_FOREACH(csa, &sa->sa_childsas, csa_entry) {
 		if (csa->csa_rekey || csa->csa_loaded)
@@ -6466,16 +6479,12 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 		    print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size));
 
 		/* append SPI to log buffer */
-		if (ibuf_strlen(spibuf))
-			ibuf_strcat(&spibuf, ", ");
-		ibuf_strcat(&spibuf, print_spi(csa->csa_spi.spi,
-		    csa->csa_spi.spi_size));
-		if (ipcomp) {
-			ibuf_strcat(&spibuf, "(");
-			ibuf_strcat(&spibuf, print_spi(ipcomp->csa_spi.spi,
+		if (ftello(spif) > 0)
+			fputs(", ", spif);
+		fputs(print_spi(csa->csa_spi.spi, csa->csa_spi.spi_size), spif);
+		if (ipcomp)
+			fprintf(spif, "(%s)", print_spi(ipcomp->csa_spi.spi,
 			    ipcomp->csa_spi.spi_size));
-			ibuf_strcat(&spibuf, ")");
-		}
 		if (!encrid) {
 			encrid = csa->csa_encrid;
 			encrlen = ibuf_length(csa->csa_encrkey);
@@ -6538,25 +6547,26 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 			    flow->flow_prenat.addr_mask);
 		else
 			prenat_mask[0] = '\0';
-		if (flow->flow_dir == IPSP_DIRECTION_OUT &&
-		    asprintf(&buf, "%s-%s/%d%s%s%s%s%s=%s/%d(%u)%s",
-		    print_map(flow->flow_saproto, ikev2_saproto_map),
-		    print_host((struct sockaddr *)&flow->flow_src.addr, NULL, 0),
-		    flow->flow_src.addr_mask,
-		    flow->flow_prenat.addr_af != 0 ? "[": "",
-		    flow->flow_prenat.addr_af != 0 ? print_host((struct sockaddr *)
-		    &flow->flow_prenat.addr, NULL, 0) : "",
-		    flow->flow_prenat.addr_af != 0 ? "/" : "",
-		    flow->flow_prenat.addr_af != 0 ? prenat_mask : "",
-		    flow->flow_prenat.addr_af != 0 ? "]": "",
-		    print_host((struct sockaddr *)&flow->flow_dst.addr, NULL, 0),
-		    flow->flow_dst.addr_mask,
-		    flow->flow_ipproto,
-		    reload ? "-R" : "") != -1) {
-			if (ibuf_strlen(flowbuf))
-				ibuf_strcat(&flowbuf, ", ");
-			ibuf_strcat(&flowbuf, buf);
-			free(buf);
+		if (flow->flow_dir == IPSP_DIRECTION_OUT) {
+			if (ftello(flowf) > 0)
+				fputs(", ", flowf);
+			fprintf(flowf, "%s-%s/%d%s%s%s%s%s=%s/%d(%u)%s",
+			    print_map(flow->flow_saproto, ikev2_saproto_map),
+			    print_host((struct sockaddr *)&flow->flow_src.addr,
+			    NULL, 0),
+			    flow->flow_src.addr_mask,
+			    flow->flow_prenat.addr_af != 0 ? "[": "",
+			    flow->flow_prenat.addr_af != 0 ?
+			    print_host((struct sockaddr *)
+			    &flow->flow_prenat.addr, NULL, 0) : "",
+			    flow->flow_prenat.addr_af != 0 ? "/" : "",
+			    flow->flow_prenat.addr_af != 0 ? prenat_mask : "",
+			    flow->flow_prenat.addr_af != 0 ? "]": "",
+			    print_host((struct sockaddr *)&flow->flow_dst.addr,
+			    NULL, 0),
+			    flow->flow_dst.addr_mask,
+			    flow->flow_ipproto,
+			    reload ? "-R" : "");
 		}
 	}
 
@@ -6569,10 +6579,10 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 		    NULL, 0));
 	}
 
-	if (ibuf_strlen(spibuf)) {
-		log_info("%s: loaded SPIs: %.*s (enc %s%s%s%s%s%s)",
-		    SPI_SA(sa, __func__),
-		    ibuf_strlen(spibuf), ibuf_data(spibuf),
+	fflush(spif);
+	if (ftello(spif) > 0 && !ferror(spif)) {
+		log_info("%s: loaded SPIs: %s (enc %s%s%s%s%s%s)",
+		    SPI_SA(sa, __func__), spibuf,
 		    print_xf(encrid, encrlen, ipsecencxfs),
 		    integrid ? " auth " : "",
 		    integrid ? print_xf(integrid, integrlen, authxfs) : "",
@@ -6580,14 +6590,17 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 		    groupid ? print_xf(groupid, 0, groupxfs) : "",
 		    esn ? " esn" : "");
 	}
-	if (ibuf_strlen(flowbuf))
-		log_info("%s: loaded flows: %.*s", SPI_SA(sa, __func__),
-		    ibuf_strlen(flowbuf), ibuf_data(flowbuf));
+	fflush(flowf);
+	if (ftello(flowf) > 0 && !ferror(flowf)) {
+		log_info("%s: loaded flows: %s", SPI_SA(sa, __func__), flowbuf);
+	}
 
 	ret = 0;
  done:
-	ibuf_free(spibuf);
-	ibuf_free(flowbuf);
+	fclose(spif);
+	fclose(flowf);
+	free(spibuf);
+	free(flowbuf);
 	return (ret);
 }
 
