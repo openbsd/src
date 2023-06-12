@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.756 2023/05/10 18:26:05 miod Exp $
+$OpenBSD: usbdevs,v 1.757 2023/06/12 11:26:24 jsg Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -645,6 +645,7 @@ vendor THINGM		0x27b8	ThingM
 vendor ASUSTEK		0x2821	ASUSTeK Computer
 vendor PIONEERDJ	0x2b73	Pioneer DJ
 vendor PLANEX		0x2c02	Planex Communications
+vendor MERCUSYS		0x2c4e	Mercusys
 vendor QUECTEL		0x2c7c	Quectel
 vendor CLUB3D		0x2d1c	Club 3D
 vendor AQUANTIA		0x2eca	Aquantia
@@ -3098,6 +3099,9 @@ product MELCO WLIUCG301N	0x016f	WLI-UC-G301N
 product MELCO UWABR100		0x017f	SONY UWA-BR100
 product MELCO WLIUCGNM		0x01a2	WLI-UC-GNM
 product MELCO WLIUCGNM2		0x01ee	WLI-UC-GNM2
+
+/* Mercusys products */
+product MERCUSYS MW150USV2	0x0102	MW150US V2
 
 /* MetaGeek products */
 product METAGEEK WISPY24I	0x2400	Wi-Spy 2.4i
