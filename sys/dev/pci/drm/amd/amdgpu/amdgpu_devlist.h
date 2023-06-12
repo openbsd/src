@@ -202,15 +202,17 @@ static const struct pci_matchid amdgpu_devices[] = {
 	/* GC 10.3.7, DCN 3.1.6, APU, Ryzen 7020 "Mendocino" */
 	{0x1002, 0x1506 },
 
-	/* GC 11.0.0, DCN 3.2.0, dGPU, Radeon RX 7900 XT/XTX "Navi 31" */
-	{0x1002, 0x744c },
+	/* GC 11.0.0, DCN 3.2.0, dGPU, "Navi 31" */
+	{0x1002, 0x744c },	/* Radeon RX 7900 XT/XTX */
+	{0x1002, 0x7448 },	/* Radeon Pro W7900 */
+	{0x1002, 0x745e },	/* Radeon Pro W7800 */
 
 	/* GC 11.0.1, DCN 3.1.4, APU, Ryzen 7040 "Phoenix" */
 	{0x1002, 0x15bf },
 
 	/* GC 11.0.2, DCN 3.2.1, dGPU, "Navi 33" */
-	{0x1002, 0x7480 },
-	{0x1002, 0x7483 },
+	{0x1002, 0x7480 },	/* Radeon RX 7600S, 7700S, 7600M XT, 7600 */
+	{0x1002, 0x7483 },	/* Radeon RX 7600M */
 
 	/* GC 11.0.3, DCN 3.2.0, dGPU */
 	/* GC 11.0.4, DCN 3.1.4, APU */
