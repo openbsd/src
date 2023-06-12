@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.74 2023/05/10 15:24:41 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.75 2023/06/12 14:56:38 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -52,6 +52,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <imsg.h>
 #include <limits.h>
 #include <netdb.h>
 #include <poll.h>
@@ -61,7 +62,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <vis.h>
-#include <imsg.h>
+#include <zlib.h>
 
 #include <tls.h>
 
@@ -104,6 +105,15 @@ struct http_proxy {
 	char	*proxyauth;
 } proxy;
 
+struct http_zlib {
+	z_stream		 zs;
+	char			*zbuf;
+	size_t			 zbufsz;
+	size_t			 zbufpos;
+	size_t			 zinsz;
+	int			 zdone;
+};
+
 struct http_connection {
 	LIST_ENTRY(http_connection)	entry;
 	char			*host;
@@ -116,6 +126,7 @@ struct http_connection {
 	struct addrinfo		*res;
 	struct tls		*tls;
 	char			*buf;
+	struct http_zlib	*zlibctx;
 	size_t			bufsz;
 	size_t			bufpos;
 	off_t			iosz;
@@ -125,6 +136,7 @@ struct http_connection {
 	int			status;
 	int			fd;
 	int			chunked;
+	int			gzipped;
 	int			keep_alive;
 	short			events;
 	enum http_state		state;
@@ -164,6 +176,13 @@ static void	http_req_done(unsigned int, enum http_result, const char *);
 static void	http_req_fail(unsigned int);
 static int	http_req_schedule(struct http_request *);
 
+/* HTTP decompression helper */
+static int	http_inflate_new(struct http_connection *);
+static void	http_inflate_free(struct http_connection *);
+static void	http_inflate_done(struct http_connection *);
+static int	http_inflate_data(struct http_connection *);
+static enum res	http_inflate_advance(struct http_connection *);
+
 /* HTTP connection API */
 static void	http_new(struct http_request *);
 static void	http_free(struct http_connection *);
@@ -191,6 +210,7 @@ static enum res	http_write(struct http_connection *);
 static enum res	proxy_read(struct http_connection *);
 static enum res	proxy_write(struct http_connection *);
 static enum res	data_write(struct http_connection *);
+static enum res	data_inflate_write(struct http_connection *);
 
 /*
  * Return a string that can be used in error message to identify the
@@ -667,6 +687,141 @@ http_req_schedule(struct http_request *req)
 }
 
 /*
+ * Allocate everything to allow inline decompression during write out.
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+http_inflate_new(struct http_connection *conn)
+{
+	struct http_zlib *zctx;
+
+	if (conn->zlibctx != NULL)
+		return 0;
+
+	if ((zctx = calloc(1, sizeof(*zctx))) == NULL)
+		goto fail;
+	zctx->zbufsz = HTTP_BUF_SIZE;
+	if ((zctx->zbuf = malloc(zctx->zbufsz)) == NULL)
+		goto fail;
+	if (inflateInit2(&zctx->zs, MAX_WBITS + 32) != Z_OK)
+		goto fail;
+	conn->zlibctx = zctx;
+	return 0;
+
+ fail:
+	warnx("%s: decompression initalisation failed", conn_info(conn));
+	if (zctx != NULL)
+		free(zctx->zbuf);
+	free(zctx);
+	return -1;
+}
+
+/* Free all memory used by the decompression API */
+static void
+http_inflate_free(struct http_connection *conn)
+{
+	if (conn->zlibctx == NULL)
+		return;
+	inflateEnd(&conn->zlibctx->zs);
+	free(conn->zlibctx->zbuf);
+	free(conn->zlibctx);
+	conn->zlibctx = NULL;
+}
+
+/* Reset the decompression state to allow a new request to use it */
+static void
+http_inflate_done(struct http_connection *conn)
+{
+	if (inflateReset(&conn->zlibctx->zs) != Z_OK)
+		http_inflate_free(conn);
+}
+
+/*
+ * Inflate the data from conn->buf into zctx->zbuf. The number of bytes
+ * available in zctx->zbuf is stored in zctx->zbufpos.
+ * Returns -1 on failure.
+ */
+static int
+http_inflate_data(struct http_connection *conn)
+{
+	struct http_zlib *zctx = conn->zlibctx;
+	size_t bsz = conn->bufpos;
+	int rv;
+
+	if (conn->iosz < (off_t)bsz)
+		bsz = conn->iosz;
+
+	zctx->zdone = 0;
+	zctx->zbufpos = 0;
+	zctx->zinsz = bsz;
+	zctx->zs.next_in = conn->buf;
+	zctx->zs.avail_in = bsz;
+	zctx->zs.next_out = zctx->zbuf;
+	zctx->zs.avail_out = zctx->zbufsz;
+
+	switch ((rv = inflate(&zctx->zs, Z_NO_FLUSH))) {
+	case Z_OK:
+		break;
+	case Z_STREAM_END:
+		zctx->zdone = 1;
+		break;
+	default:
+		if (zctx->zs.msg != NULL)
+			warnx("%s: inflate failed: %s", conn_info(conn),
+			    zctx->zs.msg);
+		else
+			warnx("%s: inflate failed error %d", conn_info(conn),
+			    rv);
+		return -1;
+	}
+
+	/* calculate how much can be written out */
+	zctx->zbufpos = zctx->zbufsz - zctx->zs.avail_out;
+	return 0;
+}
+
+/*
+ * Advance the input buffer after the output buffer has been fully written.
+ * If compression is done finish the transaction else read more data.
+ */
+static enum res
+http_inflate_advance(struct http_connection *conn)
+{
+	struct http_zlib *zctx = conn->zlibctx;
+	size_t bsz = zctx->zinsz - zctx->zs.avail_in;
+
+	/* adjust compressed input buffer */
+	conn->bufpos -= bsz;
+	conn->iosz -= bsz;
+	memmove(conn->buf, conn->buf + bsz, conn->bufpos);
+
+	if (zctx->zdone) {
+		/* all compressed data processed */
+		conn->gzipped = 0;
+		http_inflate_done(conn);
+
+		if (conn->iosz == 0) {
+			if (!conn->chunked) {
+				return http_done(conn, HTTP_OK);
+			} else {
+				conn->state = STATE_RESPONSE_CHUNKED_CRLF;
+				return http_read(conn);
+			}
+		} else {
+			warnx("%s: inflate extra data after end",
+			    conn_info(conn));
+			return http_failed(conn);
+		}
+	}
+
+	if (conn->chunked && conn->iosz == 0)
+		conn->state = STATE_RESPONSE_CHUNKED_CRLF;
+	else
+		conn->state = STATE_RESPONSE_DATA;
+	return http_read(conn);
+}
+
+/*
  * Create a new HTTP connection which will be used for the HTTP request req.
  * On errors a req faulure is issued and both connection and request are freed.
  */
@@ -722,6 +877,7 @@ http_free(struct http_connection *conn)
 	http_conn_count--;
 
 	http_req_free(conn->req);
+	http_inflate_free(conn);
 	free(conn->host);
 	free(conn->port);
 	free(conn->last_modified);
@@ -751,6 +907,11 @@ http_done(struct http_connection *conn, enum http_result res)
 	assert(conn->iosz == 0);
 	assert(conn->chunked == 0);
 	assert(conn->redir_uri == NULL);
+
+	if (conn->gzipped) {
+		conn->gzipped = 0;
+		http_inflate_done(conn);
+	}
 
 	conn->state = STATE_IDLE;
 	conn->idle_time = getmonotime() + HTTP_IDLE_TIMEOUT;
@@ -945,12 +1106,12 @@ http_tls_connect(struct http_connection *conn)
 		return http_failed(conn);
 	}
 	if (tls_configure(conn->tls, tls_config) == -1) {
-		warnx("%s: TLS configuration: %s\n", conn_info(conn),
+		warnx("%s: TLS configuration: %s", conn_info(conn),
 		    tls_error(conn->tls));
 		return http_failed(conn);
 	}
 	if (tls_connect_socket(conn->tls, conn->fd, conn->host) == -1) {
-		warnx("%s: TLS connect: %s\n", conn_info(conn),
+		warnx("%s: TLS connect: %s", conn_info(conn),
 		    tls_error(conn->tls));
 		return http_failed(conn);
 	}
@@ -1060,7 +1221,7 @@ http_request(struct http_connection *conn)
 	if ((r = asprintf(&conn->buf,
 	    "GET /%s HTTP/1.1\r\n"
 	    "Host: %s\r\n"
-	    "Accept-Encoding: identity\r\n"
+	    "Accept-Encoding: gzip, deflate\r\n"
 	    "User-Agent: " HTTP_USER_AGENT "\r\n"
 	    "%s\r\n",
 	    epath, host,
@@ -1195,6 +1356,7 @@ http_parse_header(struct http_connection *conn, char *buf)
 #define LOCATION "Location:"
 #define CONNECTION "Connection:"
 #define TRANSFER_ENCODING "Transfer-Encoding:"
+#define CONTENT_ENCODING "Content-Encoding:"
 #define LAST_MODIFIED "Last-Modified:"
 	const char *errstr;
 	char *cp, *redirurl;
@@ -1263,6 +1425,17 @@ http_parse_header(struct http_connection *conn, char *buf)
 		cp[strcspn(cp, " \t")] = '\0';
 		if (strcasecmp(cp, "chunked") == 0)
 			conn->chunked = 1;
+	} else if (strncasecmp(cp, CONTENT_ENCODING,
+	    sizeof(CONTENT_ENCODING) - 1) == 0) {
+		cp += sizeof(CONTENT_ENCODING) - 1;
+		cp += strspn(cp, " \t");
+		cp[strcspn(cp, " \t")] = '\0';
+		if (strcasecmp(cp, "gzip") == 0 ||
+		    strcasecmp(cp, "deflate") == 0) {
+			if (http_inflate_new(conn) == -1)
+				return -1;
+			conn->gzipped = 1;
+		}
 	} else if (strncasecmp(cp, CONNECTION, sizeof(CONNECTION) - 1) == 0) {
 		cp += sizeof(CONNECTION) - 1;
 		cp += strspn(cp, " \t");
@@ -1733,6 +1906,49 @@ data_write(struct http_connection *conn)
 }
 
 /*
+ * Inflate and write data into provided file descriptor.
+ * This is a simplified version of data_write() that just writes out the
+ * decompressed file stream. All the buffer handling is done by
+ * http_inflate_data() and http_inflate_advance().
+ */
+static enum res
+data_inflate_write(struct http_connection *conn)
+{
+	struct http_zlib *zctx = conn->zlibctx;
+	ssize_t s;
+
+	assert(conn->state == STATE_WRITE_DATA);
+
+	/* no decompressed data, get more */
+	if (zctx->zbufpos == 0)
+		if (http_inflate_data(conn) == -1)
+			return http_failed(conn);
+
+	s = write(conn->req->outfd, zctx->zbuf, zctx->zbufpos);
+	if (s == -1) {
+		warn("%s: data write", conn_info(conn));
+		return http_failed(conn);
+	}
+
+	conn->totalsz += s;
+	if (conn->totalsz > MAX_CONTENTLEN) {
+		warn("%s: too much decompressed data offered", conn_info(conn));
+		return http_failed(conn);
+	}
+
+	/* adjust output buffer */
+	zctx->zbufpos -= s;
+	memmove(zctx->zbuf, zctx->zbuf + s, zctx->zbufpos);
+
+	/* all decompressed data written, progress input */
+	if (zctx->zbufpos == 0)
+		return http_inflate_advance(conn);
+
+	/* still more data to write in buffer */
+	return WANT_POLLOUT;
+}
+
+/*
  * Do one IO call depending on the connection state.
  * Return WANT_POLLIN or WANT_POLLOUT to poll for more data.
  * If 0 is returned this stage is finished and the protocol should move
@@ -1765,7 +1981,10 @@ http_handle(struct http_connection *conn)
 	case STATE_RESPONSE_CHUNKED_TRAILER:
 		return http_read(conn);
 	case STATE_WRITE_DATA:
-		return data_write(conn);
+		if (conn->gzipped)
+			return data_inflate_write(conn);
+		else
+			return data_write(conn);
 	case STATE_CLOSE:
 		return http_close(conn);
 	case STATE_IDLE:

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2023/04/27 07:57:25 claudio Exp $
+#	$OpenBSD: Makefile,v 1.31 2023/06/12 14:56:38 claudio Exp $
 
 PROG=	rpki-client
 SRCS=	as.c aspa.c cert.c cms.c crl.c encoding.c filemode.c gbr.c geofeed.c \
@@ -9,8 +9,8 @@ SRCS=	as.c aspa.c cert.c cms.c crl.c encoding.c filemode.c gbr.c geofeed.c \
 	tal.c validate.c x509.c
 MAN=	rpki-client.8
 
-LDADD+= -lexpat -ltls -lssl -lcrypto -lutil
-DPADD+= ${LIBEXPAT} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL}
+LDADD+= -lexpat -ltls -lssl -lcrypto -lutil -lz
+DPADD+= ${LIBEXPAT} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
 
 CFLAGS+= -Wall -I${.CURDIR}
 CFLAGS+= -Wstrict-prototypes -Wmissing-prototypes
