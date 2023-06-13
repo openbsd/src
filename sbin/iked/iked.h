@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.215 2023/06/12 09:02:31 claudio Exp $	*/
+/*	$OpenBSD: iked.h,v 1.216 2023/06/13 12:34:12 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1252,6 +1252,8 @@ uint32_t
 	 prefixlen2mask(uint8_t);
 const char *
 	 print_host(struct sockaddr *, char *, size_t);
+const char *
+	 print_addr(void *);
 char	*get_string(uint8_t *, size_t);
 const char *
 	 print_proto(uint8_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vroute.c,v 1.18 2023/02/10 19:51:08 tobhe Exp $	*/
+/*	$OpenBSD: vroute.c,v 1.19 2023/06/13 12:34:12 tb Exp $	*/
 
 /*
  * Copyright (c) 2021 Tobias Heider <tobhe@openbsd.org>
@@ -840,9 +840,9 @@ vroute_doroute(struct iked *env, int flags, int addrs, int rdomain, uint8_t type
 	    flags & RTF_HOST ? "H" : "",
 	    flags & RTF_GATEWAY ? "G" : "",
 	    addrs,
-	    addrs & RTA_DST ? print_host(dest, NULL, 0) : "<>",
-	    addrs & RTA_NETMASK ? print_host(mask, NULL, 0) : "<>",
-	    addrs & RTA_GATEWAY ? print_host(addr, NULL, 0) : "<>");
+	    addrs & RTA_DST ? print_addr(dest) : "<>",
+	    addrs & RTA_NETMASK ? print_addr(mask) : "<>",
+	    addrs & RTA_GATEWAY ? print_addr(addr) : "<>");
 
 	if (writev(ivr->ivr_rtsock, iov, iovcnt) == -1) {
 		if ((type == RTM_ADD && errno != EEXIST) ||
@@ -933,9 +933,7 @@ vroute_doaddr(struct iked *env, char *ifname, struct sockaddr *addr,
 			memcpy(&req.ifra_mask, mask, sizeof(req.ifra_addr));
 
 		log_debug("%s: %s inet %s netmask %s", __func__,
-		    add ? "add" : "del",
-		    print_host((struct sockaddr *)addr, NULL, 0),
-		    print_host((struct sockaddr *)mask, NULL, 0));
+		    add ? "add" : "del", print_addr(addr), print_addr(mask));
 
 		ioreq = add ? SIOCAIFADDR : SIOCDIFADDR;
 		if (ioctl(ivr->ivr_iosock, ioreq, &req) == -1) {
@@ -955,9 +953,7 @@ vroute_doaddr(struct iked *env, char *ifname, struct sockaddr *addr,
 			    sizeof(req6.ifra_prefixmask));
 
 		log_debug("%s: %s inet6 %s netmask %s", __func__,
-		    add ? "add" : "del",
-		    print_host((struct sockaddr *)addr, NULL, 0),
-		    print_host((struct sockaddr *)mask, NULL, 0));
+		    add ? "add" : "del", print_addr(addr), print_addr(mask));
 
 		ioreq = add ? SIOCAIFADDR_IN6 : SIOCDIFADDR_IN6;
 		if (ioctl(ivr->ivr_iosock6, ioreq, &req6) == -1) {

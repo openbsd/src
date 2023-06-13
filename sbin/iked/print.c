@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.3 2021/10/26 17:31:22 tobhe Exp $	*/
+/*	$OpenBSD: print.c,v 1.4 2023/06/13 12:34:12 tb Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Tobias Heider <tobias.heider@stusta.de>
@@ -112,9 +112,7 @@ print_policy(struct iked_policy *pol)
 		print_verbose(" rdomain %d", pol->pol_rdomain);
 
 	RB_FOREACH(flow, iked_flows, &pol->pol_flows) {
-		print_verbose(" from %s",
-		    print_host((struct sockaddr *)&flow->flow_src.addr, NULL,
-		    0));
+		print_verbose(" from %s", print_addr(&flow->flow_src.addr));
 		if (flow->flow_src.addr_af != AF_UNSPEC &&
 		    flow->flow_src.addr_net)
 			print_verbose("/%d", flow->flow_src.addr_mask);
@@ -122,9 +120,7 @@ print_policy(struct iked_policy *pol)
 			print_verbose(" port %d",
 			    ntohs(flow->flow_src.addr_port));
 
-		print_verbose(" to %s",
-		    print_host((struct sockaddr *)&flow->flow_dst.addr, NULL,
-		    0));
+		print_verbose(" to %s", print_addr(&flow->flow_dst.addr));
 		if (flow->flow_dst.addr_af != AF_UNSPEC &&
 		    flow->flow_dst.addr_net)
 			print_verbose("/%d", flow->flow_dst.addr_mask);
@@ -134,16 +130,12 @@ print_policy(struct iked_policy *pol)
 	}
 
 	if ((pol->pol_flags & IKED_POLICY_DEFAULT) == 0) {
-		print_verbose(" local %s",
-		    print_host((struct sockaddr *)&pol->pol_local.addr, NULL,
-		    0));
+		print_verbose(" local %s", print_addr(&pol->pol_local.addr));
 		if (pol->pol_local.addr.ss_family != AF_UNSPEC &&
 		    pol->pol_local.addr_net)
 			print_verbose("/%d", pol->pol_local.addr_mask);
 
-		print_verbose(" peer %s",
-		    print_host((struct sockaddr *)&pol->pol_peer.addr, NULL,
-		    0));
+		print_verbose(" peer %s", print_addr(&pol->pol_peer.addr));
 		if (pol->pol_peer.addr.ss_family != AF_UNSPEC &&
 		    pol->pol_peer.addr_net)
 			print_verbose("/%d", pol->pol_peer.addr_mask);
@@ -235,8 +227,7 @@ print_policy(struct iked_policy *pol)
 		cfg = &pol->pol_cfg[i];
 		print_verbose(" config %s %s", print_xf(cfg->cfg_type,
 		    cfg->cfg.address.addr_af, cpxfs),
-		    print_host((struct sockaddr *)&cfg->cfg.address.addr, NULL,
-		    0));
+		    print_addr(&cfg->cfg.address.addr));
 	}
 
 	if (pol->pol_iface != 0 && if_indextoname(pol->pol_iface, iface) != NULL)

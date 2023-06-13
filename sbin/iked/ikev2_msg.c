@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.94 2023/06/06 13:27:49 claudio Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.95 2023/06/13 12:34:12 tb Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -285,8 +285,8 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	    print_map(exchange, ikev2_exchange_map),
 	    (flags & IKEV2_FLAG_RESPONSE) ? "res" : "req",
 	    betoh32(hdr->ike_msgid),
-	    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
-	    print_host((struct sockaddr *)&msg->msg_local, NULL, 0),
+	    print_addr(&msg->msg_peer),
+	    print_addr(&msg->msg_local),
 	    ibuf_length(buf), isnatt ? ", NAT-T" : "");
 
 	if (isnatt) {
@@ -1290,8 +1290,8 @@ ikev2_msg_retransmit_response(struct iked *env, struct iked_sa *sa,
 		    SPI_SA(sa, NULL),
 		    print_map(exchange, ikev2_exchange_map),
 		    m->msg_msgid,
-		    print_host((struct sockaddr *)&m->msg_local, NULL, 0),
-		    print_host((struct sockaddr *)&m->msg_peer, NULL, 0));
+		    print_addr(&m->msg_local),
+		    print_addr(&m->msg_peer));
 	}
 
 	timer_add(env, &mr->mrt_timer, IKED_RESPONSE_TIMEOUT);
@@ -1333,8 +1333,8 @@ ikev2_msg_retransmit_timeout(struct iked *env, void *arg)
 			    "local %s", SPI_SA(sa, NULL), mr->mrt_tries + 1,
 			    print_map(msg->msg_exchange, ikev2_exchange_map),
 			    msg->msg_msgid,
-			    print_host((struct sockaddr *)&msg->msg_peer, NULL, 0),
-			    print_host((struct sockaddr *)&msg->msg_local, NULL, 0));
+			    print_addr(&msg->msg_peer),
+			    print_addr(&msg->msg_local));
 		}
 		/* Exponential timeout */
 		timer_add(env, &mr->mrt_timer,

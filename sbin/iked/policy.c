@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.94 2023/05/23 13:12:19 claudio Exp $	*/
+/*	$OpenBSD: policy.c,v 1.95 2023/06/13 12:34:12 tb Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -398,10 +398,8 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 		case IKEV2_STATE_CLOSED:
 			log_debug("%s: %s -> %s from %s to %s policy '%s'",
 			    SPI_SA(sa, __func__), a, b,
-			    print_host((struct sockaddr *)&sa->sa_peer.addr,
-			    NULL, 0),
-			    print_host((struct sockaddr *)&sa->sa_local.addr,
-			    NULL, 0),
+			    print_addr(&sa->sa_peer.addr),
+			    print_addr(&sa->sa_local.addr),
 			    sa->sa_policy ? sa->sa_policy->pol_name :
 			    "<unknown>");
 			break;
