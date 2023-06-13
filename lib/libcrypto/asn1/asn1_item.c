@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.6 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.7 2023/06/13 23:31:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,12 +119,6 @@
 #include "asn1_local.h"
 #include "evp_local.h"
 
-/*
- * ASN1_ITEM version of dup: this follows the model above except we don't need
- * to allocate the buffer. At some point this could be rewritten to directly dup
- * the underlying structure instead of doing and encode and decode.
- */
-
 int
 ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
     unsigned char *md, unsigned int *len)
@@ -144,6 +138,12 @@ ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
 	free(str);
 	return (1);
 }
+
+/*
+ * ASN1_ITEM version of ASN1_dup(): follows the same model except there's no
+ * need to allocate the buffer. At some point this could be rewritten to dup
+ * the underlying structure directly instead of doing an encode and decode.
+ */
 
 void *
 ASN1_item_dup(const ASN1_ITEM *it, void *x)
