@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.9 2023/04/18 19:41:50 bluhm Exp $
+# $OpenBSD: Makefile,v 1.10 2023/06/13 11:41:36 claudio Exp $
 
 PROGS +=	test-http
 
 SRCS_test-http =	test-http.c http.c io.c encoding.c
-LDADD_test-http =	-ltls -lssl -lcrypto -lutil
-DPADD_test-http =	${LIBTLS} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL}
+LDADD_test-http =	-ltls -lssl -lcrypto -lutil -lz
+DPADD_test-http =	${LIBTLS} ${LIBSSL} ${LIBCRYPTO} ${LIBUTIL} ${LIBZ}
 
 SERVER =	jigsaw.w3.org
 .if ! (make(clean) || make(cleandir) || make(obj))
