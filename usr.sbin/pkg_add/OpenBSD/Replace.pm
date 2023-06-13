@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Replace.pm,v 1.91 2021/06/28 11:25:14 espie Exp $
+# $OpenBSD: Replace.pm,v 1.92 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -14,50 +14,44 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
-use warnings;
+use v5.36;
 
 use OpenBSD::Delete;
 
 package OpenBSD::PackingElement;
-sub scan_for_exec
+sub scan_for_exec($, $, $)
 {
 }
 
 package OpenBSD::PackingElement::Exec;
-sub scan_for_exec
+sub scan_for_exec($self, $installing, $r)
 {
-	my ($self, $installing, $r) = @_;
 	$$r = 1 if $installing;
 }
 
 package OpenBSD::PackingElement::ExecAdd;
-sub scan_for_exec {}
+sub scan_for_exec($, $, $) {}
 
 package OpenBSD::PackingElement::Unexec;
-sub scan_for_exec
+sub scan_for_exec($self, $installing, $r)
 {
-	my ($self, $installing, $r) = @_;
 	$$r = 1 if !$installing;
 }
 
 package OpenBSD::PackingElement::UnexecDelete;
-sub scan_for_exec { }
+sub scan_for_exec($, $, $) { }
 
 package OpenBSD::Replace;
 
-sub pkg_has_exec
+sub pkg_has_exec($pkg, $new)
 {
-	my ($pkg, $new) = @_;
-
 	my $has_exec = 0;
 	$pkg->plist->scan_for_exec($new, \$has_exec);
 	return $has_exec;
 }
 
-sub set_has_no_exec
+sub set_has_no_exec($set, $state)
 {
-	my ($set, $state) = @_;
 	for my $pkg ($set->older) {
 		return 0 if pkg_has_exec($pkg, 0);
 	}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ForwardDependencies.pm,v 1.17 2021/10/12 09:06:37 espie Exp $
+# $OpenBSD: ForwardDependencies.pm,v 1.18 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -16,16 +16,14 @@
 
 # handling of forward dependency adjustments
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::ForwardDependencies;
 
 require OpenBSD::RequiredBy;
 
-sub find
+sub find($class, $set)
 {
-	my ($class, $set) = @_;
 	my $forward = {};
 	for my $old ($set->older) {
 		for my $f (OpenBSD::RequiredBy->new($old->pkgname)->list) {
@@ -36,10 +34,8 @@ sub find
 	bless { forward => $forward, set => $set}, $class;
 }
 
-sub find_belated_update
+sub find_belated_update($set, $state, $old)
 {
-	my ($set, $state, $old) = @_;
-
 	for my $n ($set->newer) {
 		if ($n->conflict_list->conflicts_with($old->pkgname)) {
 			if (defined $old->{update_found}) {
@@ -54,9 +50,8 @@ sub find_belated_update
 	return $old->{update_found};
 }
 
-sub adjust
+sub adjust($self, $state)
 {
-	my ($self, $state) = @_;
 	my $set = $self->{set};
 
 	for my $f (keys %{$self->{forward}}) {
@@ -93,9 +88,8 @@ sub adjust
 	}
 }
 
-sub dump
+sub dump($self, $result, $state)
 {
-	my ($self, $result, $state) = @_;
 	$state->say("#1 forward dependencies:", $self->{set}->print);
 	while (my ($pkg, $l) = each %$result) {
 		if (@$l == 1) {
@@ -109,10 +103,8 @@ sub dump
 	}
 }
 
-sub check
+sub check($self, $state)
 {
-	my ($self, $state) = @_;
-
 	my @r = keys %{$self->{forward}};
 	my $set = $self->{set};
 	my $result = {};
@@ -141,15 +133,13 @@ sub check
 }
 
 package OpenBSD::PackingElement;
-sub check_forward_dependency
+sub check_forward_dependency($, $, $, $, $)
 {
 }
 
 package OpenBSD::PackingElement::Dependency;
-sub check_forward_dependency
+sub check_forward_dependency($self, $f, $old, $new, $r)
 {
-	my ($self, $f, $old, $new, $r) = @_;
-
 	# nothing to validate if old dependency doesn't concern us.
 	return unless $self->spec->filter(@$old);
 	# nothing to do if new dependency just matches

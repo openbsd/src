@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.29 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.30 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -15,24 +15,21 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::RequirementList;
 use OpenBSD::PackageInfo;
 use Carp;
 
-sub fatal_error
+sub fatal_error($self, $msg)
 {
-	my ($self, $msg) = @_;
 	require OpenBSD::Tracker;
 	OpenBSD::Tracker->dump;
 	confess ref($self), ": $msg $self->{filename}: $!";
 }
 
-sub fill_entries
+sub fill_entries($self)
 {
-	my $self = shift;
 	if (!exists $self->{entries}) {
 		my $l = $self->{entries} = {};
 
@@ -53,9 +50,8 @@ sub fill_entries
 	}
 }
 
-sub synch
+sub synch($self)
 {
-	my $self = shift;
 	return $self if $main::not;
 
 	if (!unlink $self->{filename}) {
@@ -78,10 +74,8 @@ sub synch
 	return $self;
 }
 
-sub list
+sub list($self)
 {
-	my $self = shift;
-
 	if (wantarray) {
 		$self->fill_entries;
 		return keys %{$self->{entries}};
@@ -95,16 +89,14 @@ sub list
 	}
 }
 
-sub erase
+sub erase($self)
 {
-	my $self = shift;
 	$self->{entries} = {};
 	$self->synch;
 }
 
-sub delete
+sub delete($self, @pkgnames)
 {
-	my ($self, @pkgnames) = @_;
 	$self->fill_entries;
 	for my $pkg (@pkgnames) {
 		delete $self->{entries}->{$pkg};
@@ -112,9 +104,8 @@ sub delete
 	$self->synch;
 }
 
-sub add
+sub add($self, @pkgnames)
 {
-	my ($self, @pkgnames) = @_;
 	$self->fill_entries;
 	for my $pkg (@pkgnames) {
 		$self->{entries}->{$pkg} = 1;
@@ -124,9 +115,8 @@ sub add
 
 my $cache = {};
 
-sub new
+sub new($class, $pkgname)
 {
-	my ($class, $pkgname) = @_;
 	my $f = installed_info($pkgname).$class->filename;
 	if (!exists $cache->{$f}) {
 		return $cache->{$f} = bless { filename => $f }, $class;
@@ -134,9 +124,8 @@ sub new
 	return $cache->{$f};
 }
 
-sub forget
+sub forget($class, $dir)
 {
-	my ($class, $dir) = @_;
 	my $f = $dir.$class->filename;
 	if (exists $cache->{$f}) {
 		$cache->{$f}->{entries} = {};
@@ -144,10 +133,8 @@ sub forget
 	}
 }
 
-sub compute_closure
+sub compute_closure($class, @seed)
 {
-	my ($class, @seed) = @_;
-
 	my @todo = @seed;
 	my %done = ();
 
@@ -166,12 +153,12 @@ package OpenBSD::RequiredBy;
 our @ISA=qw(OpenBSD::RequirementList);
 use OpenBSD::PackageInfo;
 
-sub filename { REQUIRED_BY };
+sub filename($) { REQUIRED_BY };
 
 package OpenBSD::Requiring;
 our @ISA=qw(OpenBSD::RequirementList);
 use OpenBSD::PackageInfo;
 
-sub filename { REQUIRING };
+sub filename($) { REQUIRING };
 
 1;

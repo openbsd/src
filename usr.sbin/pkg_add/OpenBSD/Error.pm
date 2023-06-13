@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.42 2023/05/27 10:01:21 espie Exp $
+# $OpenBSD: Error.pm,v 1.43 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -14,18 +14,15 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
-use warnings;
+use v5.36;
 
 # this is a set of common classes related to error handling in pkg land
 
 package OpenBSD::Auto;
-sub cache :prototype(*&)
+sub cache :prototype(*&)($sym, $code)
 {
-	my ($sym, $code) = @_;
 	my $callpkg = caller;
-	my $actual = sub {
-		my $self = shift;
+	my $actual = sub($self) {
 		return $self->{$sym} //= &$code($self);
 	};
 	no strict 'refs';
@@ -36,40 +33,35 @@ package OpenBSD::SigHandler;
 
 # instead of "local" sighandlers, let's do objects that revert
 # to their former state afterwards
-sub new
+sub new($class)
 {
-	my $class = shift;
 	# keep previous state
 	bless {}, $class;
 }
 
 
-sub DESTROY
+sub DESTROY($self)
 {
-	my $self = shift;
 	while (my ($s, $v) = each %$self) {
 		$SIG{$s} = $v;
 	}
 }
 
-sub set
+sub set($self, @p)
 {
-	my $self = shift;
-	my $v = pop;
-	for my $s (@_) {
+	my $v = pop @p;
+	for my $s (@p) {
 		$self->{$s} = $SIG{$s};
 		$SIG{$s} = $v;
 	}
 	return $self;
 }
 
-sub intercept
+sub intercept($self, @p)
 {
-	my $self = shift;
-	my $v = pop;
-	return $self->set(@_, 
-	    sub { 
-		my $sig = shift; 
+	my $v = pop @p;
+	return $self->set(@p, 
+	    sub($sig, @) { 
 		&$v($sig); 
 		$SIG{$sig} = $self->{$sig}; 
 		kill -$sig, $$; 
@@ -93,9 +85,8 @@ my $atend = {};
 # hash of code to run on fatal signals
 my $cleanup = {};
 
-sub cleanup
+sub cleanup($class, $sig)
 {
-	my ($class, $sig) = @_;
 	# XXX note that order of cleanup is "unpredictable"
 	for my $v (values %$cleanup) {
 		&$v($sig);
@@ -106,34 +97,31 @@ END {
 	# XXX localize $? so that cleanup doesn't fuck up our exit code
 	local $?;
 	for my $v (values %$atend) {
-		&$v();
+		&$v(undef);
 	}
 }
 
 # register each code block "by name" so that we can re-register each
 # block several times
-sub register
+sub register($class, $code)
 {
-	my ($class, $code) = @_;
 	$cleanup->{$code} = $code;
 }
 
-sub atend
+sub atend($class, $code)
 {
-	my ($class, $code) = @_;
 	$cleanup->{$code} = $code;
 	$atend->{$code} = $code;
 }
 
-my $handler = sub {
-	my $sig = shift;
+my $handler = sub($sig, @) {
 	__PACKAGE__->cleanup($sig);
 	# after cleanup, just propagate the signal
 	$SIG{$sig} = 'DEFAULT';
 	kill $sig, $$;
 };
 
-sub reset
+sub reset($)
 {
 	for my $sig (qw(INT QUIT HUP KILL TERM)) {
 		$SIG{$sig} = $handler;
@@ -153,9 +141,8 @@ our ($FileName, $Line, $FullMessage);
 our @INTetc = (qw(INT QUIT HUP TERM));
 
 use Carp;
-sub dienow
+sub dienow($error, $handler)
 {
-	my ($error, $handler) = @_;
 	if ($error) {
 		if ($error =~ m/^(.*?)(?:\s+at\s+(.*)\s+line\s+(\d+)\.?)?$/o) {
 			local $_ = $1;
@@ -170,48 +157,44 @@ sub dienow
 	}
 }
 
-sub try :prototype(&@)
+sub try :prototype(&@)($try, $catch)
 {
-	my ($try, $catch) = @_;
-	eval { &$try };
+	eval { &$try() };
 	dienow($@, $catch);
 }
 
-sub throw
+sub throw(@p)
 {
-	croak @_;
+	croak @p;
 
 }
 
-sub rethrow
+sub rethrow($e)
 {
-	my $e = shift;
 	die $e if $e;
 }
 
-sub catch :prototype(&)
+sub catch :prototype(&)($code)
 {
-		bless $_[0], "OpenBSD::Error::catch";
+	bless $code, "OpenBSD::Error::catch";
 }
 
-sub rmtree
+sub rmtree($class, @p)
 {
-	my $class = shift;
 	require File::Path;
 	require Cwd;
 
 	# XXX make sure we live somewhere
 	Cwd::getcwd() || chdir('/');
 
-	File::Path::rmtree(@_);
+	File::Path::rmtree(@p);
 }
 
 package OpenBSD::Error::catch;
-# TODO why keep the data we don't use ?...
-sub exec
+
+sub exec($self, $fullerror, $error, $filename, $line)
 {
-	my ($self, $full, $e) = @_;
-	&$self;
+	&$self();
 }
 
 1;

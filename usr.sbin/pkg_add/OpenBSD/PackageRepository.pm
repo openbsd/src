@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepository.pm,v 1.175 2023/05/27 10:02:38 espie Exp $
+# $OpenBSD: PackageRepository.pm,v 1.176 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -15,8 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 # XXX load extra class, grab match from Base class, and tweak inheritance
 # to get all methods.
@@ -32,25 +31,21 @@ use OpenBSD::Paths;
 use OpenBSD::Error;
 use OpenBSD::Temp;
 
-sub make_error_file
+sub make_error_file($self, $object)
 {
-	my ($self, $object) = @_;
 	$object->{errors} = OpenBSD::Temp->file;
 	if (!defined $object->{errors}) {
 		$self->{state}->fatal(OpenBSD::Temp->last_error);
 	}
 }
 
-sub baseurl
+sub baseurl($self)
 {
-	my $self = shift;
-
 	return $self->{path};
 }
 
-sub new
+sub new($class, $baseurl, $state)
 {
-	my ($class, $baseurl, $state) = @_;
 	if (!defined $state) {
 		require Carp;
 		Carp::croak "fatal: old api call to $class: needs state";
@@ -62,18 +57,16 @@ sub new
 	return $o;
 }
 
-sub can_be_empty
+sub can_be_empty($self)
 {
-	my $self = shift;
 	$self->{empty_okay} = 1;
 	return $self;
 }
 
 my $cache = {};
 
-sub unique
+sub unique($class, $o)
 {
-	my ($class, $o) = @_;
 	return $o unless defined $o;
 	if (defined $cache->{$o->url}) {
 		return $cache->{$o->url};
@@ -83,35 +76,31 @@ sub unique
 }
 
 OpenBSD::Handler->atend(
-    sub {
+    sub($) {
 	for my $repo (values %$cache) {
 		$repo->cleanup;
 	}
     });
 
-sub parse_fullurl
+sub parse_fullurl($class, $r, $state)
 {
-	my ($class, $r, $state) = @_;
-
 	$class->strip_urlscheme($r) or return undef;
 	return $class->unique($class->parse_url($r, $state));
 }
 
-sub dont_cleanup
+sub dont_cleanup($)
 {
 }
 
-sub ftp { 'OpenBSD::PackageRepository::FTP' }
-sub http { 'OpenBSD::PackageRepository::HTTP' }
-sub https { 'OpenBSD::PackageRepository::HTTPS' }
-sub scp { 'OpenBSD::PackageRepository::SCP' }
-sub file { 'OpenBSD::PackageRepository::Local' }
-sub installed { 'OpenBSD::PackageRepository::Installed' }
+sub ftp($) { 'OpenBSD::PackageRepository::FTP' }
+sub http($) { 'OpenBSD::PackageRepository::HTTP' }
+sub https($) { 'OpenBSD::PackageRepository::HTTPS' }
+sub scp($) { 'OpenBSD::PackageRepository::SCP' }
+sub file($) { 'OpenBSD::PackageRepository::Local' }
+sub installed($) { 'OpenBSD::PackageRepository::Installed' }
 
-sub parse
+sub parse($class, $r, $state)
 {
-	my ($class, $r, $state) = @_;
-
 	{
 	no warnings qw(uninitialized);	# in case installpath is empty
 	$$r =~ s/^installpath(\:|$)/$state->installpath.$1/e;
@@ -150,16 +139,13 @@ sub parse
 	}
 }
 
-sub available
+sub available($self)
 {
-	my $self = shift;
-
 	return @{$self->list};
 }
 
-sub stemlist
+sub stemlist($self)
 {
-	my $self = shift;
 	if (!defined $self->{stemlist}) {
 		require OpenBSD::PackageName;
 		my @l = $self->available;
@@ -172,10 +158,8 @@ sub stemlist
 	return $self->{stemlist};
 }
 
-sub wipe_info
+sub wipe_info($self, $pkg)
 {
-	my ($self, $pkg) = @_;
-
 	require File::Path;
 
 	my $dir = $pkg->{dir};
@@ -187,23 +171,23 @@ sub wipe_info
 }
 
 # by default, all objects may exist
-sub may_exist
+# $repo->may_exist($name)
+sub may_exist($, $)
 {
 	return 1;
 }
 
 # by default, we don't track opened files for this key
 
-sub opened
+sub opened($)
 {
 	undef;
 }
 
 # hint: 0 premature close, 1 real error. undef, normal !
 
-sub close
+sub close($self, $object, $hint = undef)
 {
-	my ($self, $object, $hint) = @_;
 	close($object->{fh}) if defined $object->{fh};
 	if (defined $object->{pid2}) {
 		local $SIG{ALRM} = sub {
@@ -219,10 +203,8 @@ sub close
 	$object->deref;
 }
 
-sub make_room
+sub make_room($self)
 {
-	my $self = shift;
-
 	# kill old files if too many
 	my $already = $self->opened;
 	if (defined $already) {
@@ -239,10 +221,8 @@ sub make_room
 }
 
 # open method that tracks opened files per-host.
-sub open
+sub open($self, $object)
 {
-	my ($self, $object) = @_;
-
 	return unless $self->may_exist($object->{name});
 
 	# kill old files if too many
@@ -259,9 +239,8 @@ sub open
 	return $fh;
 }
 
-sub find
+sub find($repository, $name)
 {
-	my ($repository, $name) = @_;
 	my $self = $repository->new_location($name);
 
 	if ($self->contents) {
@@ -270,17 +249,15 @@ sub find
 	return undef;
 }
 
-sub grabPlist
+sub grabPlist($repository, $name, @code)
 {
-	my ($repository, $name, @code) = @_;
 	my $self = $repository->new_location($name);
 
 	return $self->grabPlist(@code);
 }
 
-sub parse_problems
+sub parse_problems($self, $filename, $hint = 0, $object = undef)
 {
-	my ($self, $filename, $hint, $object) = @_;
 	CORE::open(my $fh, '<', $filename) or return;
 	my $baseurl = $self->url;
 	my $objecturl = $baseurl;
@@ -387,14 +364,13 @@ sub parse_problems
 	unlink $filename;
 }
 
-sub cleanup
+sub cleanup($)
 {
 	# nothing to do
 }
 
-sub relative_url
+sub relative_url($self, $name = undef)
 {
-	my ($self, $name) = @_;
 	if (defined $name) {
 		return $self->baseurl.$name.".tgz";
 	} else {
@@ -402,17 +378,15 @@ sub relative_url
 	}
 }
 
-sub add_to_list
+sub add_to_list($self, $list, $filename)
 {
-	my ($self, $list, $filename) = @_;
 	if ($filename =~ m/^(.*\-\d.*)\.tgz$/o) {
 		push(@$list, $1);
 	}
 }
 
-sub did_it_fork
+sub did_it_fork($self, $pid)
 {
-	my ($self, $pid) = @_;
 	if (!defined $pid) {
 		$self->{state}->fatal("Cannot fork: #1", $!);
 	}
@@ -423,12 +397,10 @@ sub did_it_fork
 	}
 }
 
-sub uncompress
+sub uncompress($self, $object, @p)
 {
-	my $self = shift;
-	my $object = shift;
 	require IO::Uncompress::Gunzip;
-	my $fh = IO::Uncompress::Gunzip->new(@_, MultiStream => 1);
+	my $fh = IO::Uncompress::Gunzip->new(@p, MultiStream => 1);
 	my $result = "";
 	if ($object->{is_signed}) {
 		my $h = $fh->getHeaderInfo;
@@ -448,22 +420,19 @@ sub uncompress
 	return $fh;
 }
 
-sub signify_pipe
+sub signify_pipe($self, $object, @p)
 {
-	my $self = shift;
-	my $object = shift;
 	CORE::open STDERR, ">>", $object->{errors};
 	exec {OpenBSD::Paths->signify}
 	    ("signify",
 	    "-zV",
-	    @_)
+	    @p)
 	or $self->{state}->fatal("Can't run #1: #2",
 	    OpenBSD::Paths->signify, $!);
 }
 
-sub check_signed
+sub check_signed($self, $object)
 {
-	my ($self, $object) = @_;
 	if ($object->{repository}{trusted}) {
 		return 0;
 	}
@@ -479,19 +448,19 @@ package OpenBSD::PackageRepository::Local;
 our @ISA=qw(OpenBSD::PackageRepository);
 use OpenBSD::Error;
 
-sub is_local_file
+sub is_local_file($)
 {
 	return 1;
 }
 
-sub urlscheme
+sub urlscheme($)
 {
 	return 'file';
 }
 
 my $pkg_db;
 
-sub pkg_db
+sub pkg_db($)
 {
 	if (!defined $pkg_db) {
 		use OpenBSD::Paths;
@@ -500,10 +469,8 @@ sub pkg_db
 	return $pkg_db;
 }
 
-sub parse_fullurl
+sub parse_fullurl($class, $r, $state)
 {
-	my ($class, $r, $state) = @_;
-
 	my $ok = $class->strip_urlscheme($r);
 	my $o = $class->parse_url($r, $state);
 	if (!$ok && $o->{path} eq $class->pkg_db."/") {
@@ -517,9 +484,8 @@ sub parse_fullurl
 }
 
 # wrapper around copy, that sometimes does not copy
-sub may_copy
+sub may_copy($self, $object, $destdir)
 {
-	my ($self, $object, $destdir) = @_;
 	my $src = $self->relative_url($object->{name});
 	require File::Spec;
 	my (undef, undef, $base) = File::Spec->splitpath($src);
@@ -537,9 +503,8 @@ sub may_copy
 	$self->{state}->copy_file($src, $destdir);
 }
 
-sub open_pipe
+sub open_pipe($self, $object)
 {
-	my ($self, $object) = @_;
 	if (defined $self->{state}->cache_directory) {
 		$self->may_copy($object, $self->{state}->cache_directory);
 	}
@@ -559,27 +524,25 @@ sub open_pipe
 	}
 }
 
-sub may_exist
+sub may_exist($self, $name)
 {
-	my ($self, $name) = @_;
 	return -r $self->relative_url($name);
 }
 
 my $local = [];
 
-sub opened
+sub opened($)
 {
 	return $local;
 }
 
-sub maxcount
+sub maxcount($)
 {
 	return 3;
 }
 
-sub list
+sub list($self)
 {
-	my $self = shift;
 	my $l = [];
 	my $dname = $self->baseurl;
 	opendir(my $dir, $dname) or return $l;
@@ -594,21 +557,18 @@ sub list
 package OpenBSD::PackageRepository::Distant;
 our @ISA=qw(OpenBSD::PackageRepository);
 
-sub baseurl
+sub baseurl($self)
 {
-	my $self = shift;
-
 	return "//$self->{host}$self->{path}";
 }
 
-sub setup_session
+sub setup_session($)
 {
 	# nothing to do except for https
 }
 
-sub parse_url
+sub parse_url($class, $r, $state)
 {
-	my ($class, $r, $state) = @_;
 	# same heuristics as ftp(1):
 	# find host part, rest is parsed as a local url
 	if (my ($host, $path) = $$r =~ m/^\/\/(.*?)(\/.*)$/) {
@@ -629,10 +589,8 @@ sub parse_url
 
 my $buffsize = 2 * 1024 * 1024;
 
-sub pkg_copy
+sub pkg_copy($self, $in, $object)
 {
-	my ($self, $in, $object) = @_;
-
 	my $name = $object->{name};
 	my $dir = $object->{cache_dir};
 
@@ -688,9 +646,8 @@ sub pkg_copy
 	close($in);
 }
 
-sub open_pipe
+sub open_pipe($self, $object)
 {
-	my ($self, $object) = @_;
 	$self->make_error_file($object);
 	my $d = $self->{state}->cache_directory;
 	if (defined $d) {
@@ -749,9 +706,8 @@ sub open_pipe
 	}
 }
 
-sub finish_and_close
+sub finish_and_close($self, $object)
 {
-	my ($self, $object) = @_;
 	if (defined $object->{cache_dir}) {
 		while (defined $object->next) {
 		}
@@ -766,9 +722,8 @@ our %distant = ();
 
 my ($fetch_uid, $fetch_gid, $fetch_user);
 
-sub fill_up_fetch_data
+sub fill_up_fetch_data($self)
 {
-	my $self = shift;
 	if ($< == 0) {
 		$fetch_user = '_pkgfetch';
 		unless ((undef, undef, $fetch_uid, $fetch_gid) = 
@@ -782,24 +737,21 @@ sub fill_up_fetch_data
     	}
 }
 
-sub fetch_id
+sub fetch_id($self)
 {
-	my $self = shift;
 	if (!defined $fetch_user) {
 		$self->fill_up_fetch_data;
 	}
 	return ($fetch_uid, $fetch_gid, $fetch_user);
 }
 
-sub ftp_cmd
+sub ftp_cmd($self)
 {
-	my $self = shift;
 	return OpenBSD::Paths->ftp;
 }
 
-sub drop_privileges_and_setup_env
+sub drop_privileges_and_setup_env($self)
 {
-	my $self = shift;
 	my ($uid, $gid, $user) = $self->fetch_id;
 	if (defined $uid) {
 		# we happen right before exec, so change id permanently
@@ -841,9 +793,8 @@ sub drop_privileges_and_setup_env
 }
 
 
-sub grab_object
+sub grab_object($self, $object)
 {
-	my ($self, $object) = @_;
 	my ($ftp, @extra) = split(/\s+/, $self->ftp_cmd);
 	$self->drop_privileges_and_setup_env;
 	exec {$ftp}
@@ -854,9 +805,8 @@ sub grab_object
 	or $self->{state}->fatal("Can't run #1: #2", $self->ftp_cmd, $!);
 }
 
-sub open_read_ftp
+sub open_read_ftp($self, $cmd, $errors = undef)
 {
-	my ($self, $cmd, $errors) = @_;
 	my $child_pid = open(my $fh, '-|');
 	if ($child_pid) {
 		$self->{pipe_pid} = $child_pid;
@@ -870,21 +820,19 @@ sub open_read_ftp
 	}
 }
 
-sub close_read_ftp
+sub close_read_ftp($self, $fh)
 {
-	my ($self, $fh) = @_;
 	close($fh);
 	waitpid $self->{pipe_pid}, 0;
 }
 
-sub maxcount
+sub maxcount($)
 {
 	return 1;
 }
 
-sub opened
+sub opened($self)
 {
-	my $self = $_[0];
 	my $k = $self->{host};
 	if (!defined $distant{$k}) {
 		$distant{$k} = [];
@@ -892,9 +840,8 @@ sub opened
 	return $distant{$k};
 }
 
-sub should_have
+sub should_have($self, $pkgname)
 {
-	my ($self, $pkgname) = @_;
 	if (defined $self->{lasterror} && $self->{lasterror} == 421) {
 		return (defined $self->{list}) &&
 			grep { $_ eq $pkgname } @{$self->{list}};
@@ -903,13 +850,11 @@ sub should_have
 	}
 }
 
-sub try_until_success
+sub try_until_success($self, $pkgname, $code)
 {
-	my ($self, $pkgname, $code) = @_;
-
 	for (my $retry = 5; $retry <= 160; $retry *= 2) {
 		undef $self->{lasterror};
-		my $o = &$code;
+		my $o = &$code();
 		if (defined $o) {
 			return $o;
 		}
@@ -926,28 +871,23 @@ sub try_until_success
 	return undef;
 }
 
-sub find
+sub find($self, $pkgname, @extra)
 {
-	my ($self, $pkgname, @extra) = @_;
-
 	return $self->try_until_success($pkgname,
-	    sub {
+	    sub() {
 	    	return $self->SUPER::find($pkgname, @extra); });
 
 }
 
-sub grabPlist
+sub grabPlist($self, $pkgname, @extra)
 {
-	my ($self, $pkgname, @extra) = @_;
-
 	return $self->try_until_success($pkgname,
-	    sub {
+	    sub() {
 	    	return $self->SUPER::grabPlist($pkgname, @extra); });
 }
 
-sub list
+sub list($self)
 {
-	my ($self) = @_;
 	if (!defined $self->{list}) {
 		$self->make_room;
 		my $error = OpenBSD::Temp->file;
@@ -960,10 +900,8 @@ sub list
 	return $self->{list};
 }
 
-sub get_http_list
+sub get_http_list($self, $error)
 {
-	my ($self, $error) = @_;
-
 	my $fullname = $self->url;
 	my $l = [];
 	my $fh = $self->open_read_ftp($self->ftp_cmd." -o - $fullname", 
@@ -984,29 +922,26 @@ sub get_http_list
 package OpenBSD::PackageRepository::HTTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP);
 
-sub urlscheme
+sub urlscheme($)
 {
 	return 'http';
 }
 
-sub obtain_list
+sub obtain_list($self, $error)
 {
-	my ($self, $error) = @_;
 	return $self->get_http_list($error);
 }
 
 package OpenBSD::PackageRepository::HTTPS;
 our @ISA=qw(OpenBSD::PackageRepository::HTTP);
 
-sub urlscheme
+sub urlscheme($)
 {
 	return 'https';
 }
 
-sub setup_session
+sub setup_session($self)
 {
-	my $self = shift;
-
 	require OpenBSD::Temp;
 	$self->{count} = 0;
 	local $>;
@@ -1015,22 +950,20 @@ sub setup_session
 		$> = $uid;
 	}
 	my ($fh, undef) = OpenBSD::Temp::fh_file("session",
-		sub { unlink(shift); });
+		sub($name) { unlink($name); });
 	if (!defined $fh) {
 		$self->{state}->fatal(OpenBSD::Temp->last_error);
 	}
 	$self->{fh} = $fh; # XXX store the full fh and not the fileno
 }
 
-sub ftp_cmd
+sub ftp_cmd($self)
 {
-	my $self = shift;
 	return $self->SUPER::ftp_cmd." -S session=/dev/fd/".fileno($self->{fh});
 }
 
-sub drop_privileges_and_setup_env
+sub drop_privileges_and_setup_env($self)
 {
-	my $self = shift;
 	$self->SUPER::drop_privileges_and_setup_env;
 	# reset the CLOEXEC flag on that one
 	use Fcntl;
@@ -1040,14 +973,13 @@ sub drop_privileges_and_setup_env
 package OpenBSD::PackageRepository::FTP;
 our @ISA=qw(OpenBSD::PackageRepository::HTTPorFTP);
 
-sub urlscheme
+sub urlscheme($)
 {
 	return 'ftp';
 }
 
-sub _list
+sub _list($self, $cmd, $error)
 {
-	my ($self, $cmd, $error) = @_;
 	my $l =[];
 	my $fh = $self->open_read_ftp($cmd, $error) or return;
 	while(<$fh>) {
@@ -1063,18 +995,15 @@ sub _list
 	return $l;
 }
 
-sub get_ftp_list
+sub get_ftp_list($self, $error)
 {
-	my ($self, $error) = @_;
-
 	my $fullname = $self->url;
 	return $self->_list("echo 'nlist'| ".$self->ftp_cmd." $fullname", 
 	    $error);
 }
 
-sub obtain_list
+sub obtain_list($self, $error)
 {
-	my ($self, $error) = @_;
 	if (defined $ENV{'ftp_proxy'} && $ENV{'ftp_proxy'} ne '') {
 		return $self->get_http_list($error);
 	} else {

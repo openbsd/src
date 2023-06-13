@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocation.pm,v 1.60 2022/05/08 13:31:40 espie Exp $
+# $OpenBSD: PackageLocation.pm,v 1.61 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -15,8 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackageLocation;
 
@@ -25,44 +24,37 @@ use OpenBSD::Temp;
 use OpenBSD::Error;
 use OpenBSD::Paths;
 
-sub new
+sub new($class, $repository, $name)
 {
-	my ($class, $repository, $name) = @_;
-
-	my $self = { repository => $repository, name => $repository->canonicalize($name) };
-	bless $self, $class;
-	return $self;
+	return bless { 
+	    repository => $repository, 
+	    name => $repository->canonicalize($name) 
+	    }, $class;
 
 }
 
-sub decorate
+sub decorate($self, $plist)
 {
-	my ($self, $plist) = @_;
 	$self->{repository}->decorate($plist, $self);
 }
 
-sub url
+sub url($self)
 {
-	my $self = shift;
-
 	return $self->{repository}->url($self->name);
 }
 
-sub name
+sub name($self)
 {
-	my $self = shift;
 	return $self->{name};
 }
 
 OpenBSD::Auto::cache(pkgname,
-    sub {
-	my $self = shift;
+    sub($self) {
 	return OpenBSD::PackageName->from_string($self->name);
     });
 
 OpenBSD::Auto::cache(update_info,
-    sub {
-	my $self = shift;
+    sub($self) {
 	my $name = $self->name;
 	if ($name =~ /^quirks\-/) {
 		return $self->plist;
@@ -91,10 +83,8 @@ OpenBSD::Auto::cache(update_info,
     });
 
 # make sure self is opened and move to the right location if need be.
-sub _opened
+sub _opened($self)
 {
-	my $self = shift;
-
 	if (defined $self->{fh}) {
 		return $self;
 	}
@@ -122,18 +112,15 @@ sub _opened
 	return $self;
 }
 
-sub _set_callback
+sub _set_callback($self)
 {
-	my $self = shift;
 	if (defined $self->{callback} && defined $self->{_archive}) {
 		$self->{_archive}->set_callback($self->{callback});
 	}
 }
 
-sub find_contents
+sub find_contents($self)
 {
-	my $self = shift;
-
 	while (my $e = $self->next) {
 		if ($e->isFile && is_info_name($e->{name})) {
 			if ($e->{name} eq CONTENTS ) {
@@ -147,9 +134,8 @@ sub find_contents
 	}
 }
 
-sub contents
+sub contents($self)
 {
-	my $self = shift;
 	if (!defined $self->{contents}) {
 		if (!$self->_opened) {
 			return;
@@ -160,9 +146,8 @@ sub contents
 	return $self->{contents};
 }
 
-sub grab_info
+sub grab_info($self)
 {
-	my $self = shift;
 	my $dir = $self->{dir} = OpenBSD::Temp->dir;
 	if (!defined $dir) {
 		$self->{repository}{state}->fatal(OpenBSD::Temp->last_error);
@@ -200,10 +185,8 @@ sub grab_info
 	return 1;
 }
 
-sub grabPlist
+sub grabPlist($self, $code = \&OpenBSD::PackingList::defaultCode)
 {
-	my ($self, $code) = @_;
-
 	my $plist = $self->plist($code);
 	if (defined $plist) {
 		$self->wipe_info;
@@ -214,16 +197,14 @@ sub grabPlist
 	}
 }
 
-sub forget
+sub forget($self)
 {
-	my $self = shift;
 	$self->wipe_info;
 	$self->close_now;
 }
 
-sub wipe_info
+sub wipe_info($self)
 {
-	my $self = shift;
 	$self->{repository}->wipe_info($self);
 	$self->{repository}->close_now($self);
 	delete $self->{contents};
@@ -233,19 +214,16 @@ sub wipe_info
 	delete $self->{_unput};
 }
 
-sub info
+sub info($self)
 {
-	my $self = shift;
-
 	if (!defined $self->{dir}) {
 		$self->grab_info;
 	}
 	return $self->{dir};
 }
 
-sub plist
+sub plist($self, $code = \&OpenBSD::PackingList::defaultCode)
 {
-	my ($self, $code) = @_;
 	require OpenBSD::PackingList;
 
 	if (defined $self->{dir} && -f $self->{dir}.CONTENTS) {
@@ -264,39 +242,33 @@ sub plist
 	return;
 }
 
-sub close
+sub close($self, $hint = 0)
 {
-	my ($self, $hint) = @_;
 	$self->{repository}->close($self, $hint);
 }
 
-sub finish_and_close
+sub finish_and_close($self)
 {
-	my $self = shift;
 	$self->{repository}->finish_and_close($self);
 }
 
-sub close_now
+sub close_now($self)
 {
-	my $self = shift;
 	$self->{repository}->close_now($self);
 }
 
-sub close_after_error
+sub close_after_error($self)
 {
-	my $self = shift;
 	$self->{repository}->close_after_error($self);
 }
 
-sub close_with_client_error
+sub close_with_client_error($self)
 {
-	my $self = shift;
 	$self->{repository}->close_with_client_error($self);
 }
 
-sub deref
+sub deref($self)
 {
-	my $self = shift;
 	delete $self->{fh};
 	delete $self->{pid2};
 	delete $self->{_archive};
@@ -304,10 +276,8 @@ sub deref
 }
 
 # proxy for archive operations
-sub next
+sub next($self)
 {
-	my $self = shift;
-
 	if (!$self->_opened) {
 		return;
 	}
@@ -324,28 +294,23 @@ sub next
 	return $self->{_current};
 }
 
-sub unput
+sub unput($self)
 {
-	my $self = shift;
 	$self->{_unput} = 1;
 }
 
-sub getNext
+sub getNext($self)
 {
-	my $self = shift;
-
 	return $self->{_archive}->next;
 }
 
-sub skip
+sub skip($self)
 {
-	my $self = shift;
 	return $self->{_archive}->skip;
 }
 
-sub set_callback
+sub set_callback($self, $code)
 {
-	my ($self, $code) = @_;
 	$self->{callback} = $code;
 	$self->_set_callback;
 }
@@ -354,16 +319,14 @@ package OpenBSD::PackageLocation::Installed;
 our @ISA = qw(OpenBSD::PackageLocation);
 
 
-sub info
+sub info($self)
 {
-	my $self = shift;
 	require OpenBSD::PackageInfo;
 	$self->{dir} = OpenBSD::PackageInfo::installed_info($self->name);
 }
 
-sub plist
+sub plist($self, $code = \&OpenBSD::PackingList::defaultCode)
 {
-	my ($self, $code) = @_;
 	require OpenBSD::PackingList;
 	return OpenBSD::PackingList->from_installation($self->name, $code);
 }

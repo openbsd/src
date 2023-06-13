@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageLocator.pm,v 1.110 2017/05/29 12:28:54 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.111 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -15,8 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackageLocator;
 
@@ -25,9 +24,8 @@ use OpenBSD::PackageRepository;
 
 my $default_path;
 
-sub add_default
+sub add_default($self, $state, $p)
 {
-	my ($self, $state, $p) = @_;
 	my $w;
 
 	if (defined $ENV{TRUSTED_PKG_PATH}) {
@@ -53,33 +51,29 @@ sub add_default
 	}
 }
 
-sub build_default_path
+sub build_default_path($self, $state)
 {
-	my ($self, $state) = @_;
 	$default_path = OpenBSD::PackageRepositoryList->new($state);
 
 	$self->add_default($state, $default_path);
 }
 
-sub default_path
+sub default_path($self,$state)
 {
-	my ($self, $state) = @_;
 	if (!defined $default_path) {
 		$self->build_default_path($state);
 	}
 	return $default_path;
 }
 
-sub printable_default_path
+sub printable_default_path($self, $state)
 {
-	my ($self, $state) = @_;
-
 	return join(':', $self->default_path($state)->do_something('url'));
 }
 
-sub path_parse
+sub path_parse($self, $pkgname, $state)
 {
-	my ($self, $pkgname, $state, $path) = (@_, './');
+	my $path = './';
 	if ($pkgname =~ m/^(.*[\/\:])(.*)/) {
 		($pkgname, $path) = ($2, $1);
 	}
@@ -87,10 +81,8 @@ sub path_parse
 	return (OpenBSD::PackageRepository->new($path, $state), $pkgname);
 }
 
-sub find
+sub find($self, $url, $state)
 {
-	my ($self, $url, $state) = @_;
-
 	my $package;
 	if ($url =~ m/[\/\:]/o) {
 		my ($repository, $pkgname) = $self->path_parse($url, $state);
@@ -104,10 +96,8 @@ sub find
 	return $package;
 }
 
-sub grabPlist
+sub grabPlist($self, $url, $code, $state)
 {
-	my ($self, $url, $code, $state) = @_;
-
 	my $plist;
 	if ($url =~ m/[\/\:]/o) {
 		my ($repository, $pkgname) = $self->path_parse($url, $state);
@@ -121,9 +111,8 @@ sub grabPlist
 	return $plist;
 }
 
-sub match_locations
+sub match_locations($self, @search)
 {
-	my ($self, @search) = @_;
 	my $state = pop @search;
 	return $self->default_path($state)->match_locations(@search);
 }

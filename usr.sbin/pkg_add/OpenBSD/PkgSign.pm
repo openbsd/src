@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSign.pm,v 1.17 2019/07/08 10:55:39 espie Exp $
+# $OpenBSD: PkgSign.pm,v 1.18 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -16,8 +16,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 use OpenBSD::AddCreateDelete;
 use OpenBSD::Signer;
@@ -25,26 +24,24 @@ use OpenBSD::Signer;
 package OpenBSD::PkgSign::State;
 our @ISA = qw(OpenBSD::CreateSign::State);
 
-sub handle_options
+sub handle_options($state)
 {
-	my $state = shift;
-
 	$state->{extra_stats} = 0;
 	$state->{opt} = {
 	    'o' =>
-		    sub {
-			    $state->{output_dir} = shift;
+		    sub($opt) {
+			    $state->{output_dir} = $opt;
 		    },
 	    'S' =>
-		    sub {
-			    $state->{source} = shift;
+		    sub($opt) {
+			    $state->{source} = $opt;
 		    },
 	    's' =>
-		    sub { 
-			    push(@{$state->{signature_params}}, shift);
+		    sub($opt) { 
+			    push(@{$state->{signature_params}}, $opt);
 		    },
 	    'V' =>
-		    sub {
+		    sub() {
 			    $state->{extra_stats}++;
 		    },
 	};
@@ -73,9 +70,8 @@ use OpenBSD::Temp;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 
-sub sign_existing_package
+sub sign_existing_package($self, $state, $pkg)
 {
-	my ($self, $state, $pkg) = @_;
 	my $output = $state->{output_dir};
 	my $dest = $output.'/'.$pkg->name.".tgz";
 	if ($state->opt('i')) {
@@ -91,21 +87,20 @@ sub sign_existing_package
 	rename($tmp, $dest) or
 	    $state->fatal("Can't create final signed package: #1", $!);
 	if ($state->opt('C')) {
-		$state->system(sub {
-		    chdir($output);
-		    open(STDOUT, '>>', 'SHA256');
+		$state->system(
+		    sub() {
+			chdir($output);
+			open(STDOUT, '>>', 'SHA256');
 		    },
 		    OpenBSD::Paths->sha256, '-b', $pkg->name.".tgz");
     	}
 }
 
-sub sign_list
+sub sign_list($self, $l, $repo, $maxjobs, $state)
 {
-	my ($self, $l, $repo, $maxjobs, $state) = @_;
 	$state->{total} = scalar @$l;
 	$maxjobs //= 1;
-	my $code = sub {
-		my $name = shift;
+	my $code = sub($name) {
 		my $pkg = $repo->find($name);
 		if (!defined $pkg) {
 			$state->errsay("#1 not found", $name);
@@ -114,17 +109,17 @@ sub sign_list
 		}
 	    };
 	my $display = $state->verbose ?
-	    sub {
-		$state->progress->set_header("Signed ".shift);
+	    sub($name) {
+		$state->progress->set_header("Signed ".$name);
 		$state->{done}++;
 		$state->progress->next($state->ntogo);
 	    } :
-	    sub {
+	    sub($) {
 	    };
 	if ($maxjobs > 1) {
 		my $jobs = {};
 		my $n = 0;
-		my $reap_job = sub {
+		my $reap_job = sub() {
 			my $pid = wait;
 			if (!defined $jobs->{$pid}) {
 				$state->fatal("Wait returned #1: unknown process", $pid);
@@ -151,11 +146,11 @@ sub sign_list
 				$n++;
 			}
 			if ($n >= $maxjobs) {
-				&$reap_job;
+				&$reap_job();
 			}
 		}
 		while ($n != 0) {
-			&$reap_job;
+			&$reap_job();
 		}
 	} else {
 		for my $name (@$l) {
@@ -165,18 +160,18 @@ sub sign_list
 		}
 	}
 	if ($state->opt('C')) {
-		$state->system(sub {
-		    chdir($state->{output_dir});
-		    open(STDOUT, '>', 'SHA256.new');
+		$state->system(
+		    sub() {
+			chdir($state->{output_dir});
+			open(STDOUT, '>', 'SHA256.new');
 		    }, 'sort', 'SHA256');
 		rename($state->{output_dir}.'/SHA256.new', 
 		    $state->{output_dir}.'/SHA256');
 	}
 }
 
-sub sign_existing_repository
+sub sign_existing_repository($self, $state, $source)
 {
-	my ($self, $state, $source) = @_;
 	require OpenBSD::PackageRepository;
 	my $repo = OpenBSD::PackageRepository->new($source, $state);
 	if ($state->{signer}->want_local && !$repo->is_local_file) {
@@ -190,9 +185,8 @@ sub sign_existing_repository
 }
 
 
-sub parse_and_run
+sub parse_and_run($self, $cmd)
 {
-	my ($self, $cmd) = @_;
 	my $state = OpenBSD::PkgSign::State->new($cmd);
 	$state->handle_options;
 	if (!defined $state->{source} && @ARGV == 0) {

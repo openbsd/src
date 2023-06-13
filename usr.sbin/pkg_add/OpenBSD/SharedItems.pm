@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedItems.pm,v 1.33 2019/06/09 12:16:07 espie Exp $
+# $OpenBSD: SharedItems.pm,v 1.34 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2004-2006 Marc Espie <espie@openbsd.org>
 #
@@ -15,8 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::SharedItems;
 
@@ -25,14 +24,12 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackingList;
 use OpenBSD::Paths;
 
-sub find_items_in_installed_packages
+sub find_items_in_installed_packages($state)
 {
-	my $state = shift;
 	my $db = OpenBSD::SharedItemsRecorder->new;
 	$state->status->what("Read")->object("shared items");
 	$state->progress->for_list("Read shared items", [installed_packages()],
-	    sub {
-		my $e = shift;
+	    sub($e) {
 		my $plist = OpenBSD::PackingList->from_installation($e,
 		    \&OpenBSD::PackingList::SharedItemsOnly) or return;
 		return if !defined $plist;
@@ -41,9 +38,8 @@ sub find_items_in_installed_packages
 	return $db;
 }
 
-sub check_shared
+sub check_shared($set, $o)
 {
-	my ($set, $o) = @_;
 	if (!defined $set->{db}) {
 		$set->{db} = OpenBSD::SharedItemsRecorder->new;
 		for my $pkg (installed_packages()) {
@@ -62,10 +58,8 @@ sub check_shared
 	}
 }
 
-sub wipe_directory
+sub wipe_directory($state, $h, $d)
 {
-	my ($state, $h, $d) = @_;
-
 	my $realname = $state->{destdir}.$d;
 
 	for my $i (@{$h->{$d}}) {
@@ -80,10 +74,8 @@ sub wipe_directory
 	return 1;
 }
 
-sub cleanup
+sub cleanup($recorder, $state)
 {
-	my ($recorder, $state) = @_;
-
 	my $remaining = find_items_in_installed_packages($state);
 
 	$state->progress->clear;
@@ -142,18 +134,17 @@ sub cleanup
 }
 
 package OpenBSD::PackingElement;
-sub cleanup
+sub cleanup($, $)
 {
 }
 
-sub reload
+sub reload($, $)
 {
 }
 
 package OpenBSD::PackingElement::Mandir;
-sub cleanup
+sub cleanup($self, $state)
 {
-	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
 	$state->log->set_context('-'.$self->{pkgname});
 	$state->log("You may wish to remove #1 from man.conf", $fullname);
@@ -163,9 +154,8 @@ sub cleanup
 }
 
 package OpenBSD::PackingElement::Fontdir;
-sub cleanup
+sub cleanup($self, $state)
 {
-	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
 	$state->log->set_context('-'.$self->{pkgname});
 	$state->log("You may wish to remove #1 from your font path", $fullname);
@@ -175,9 +165,8 @@ sub cleanup
 }
 
 package OpenBSD::PackingElement::Infodir;
-sub cleanup
+sub cleanup($self, $state)
 {
-	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname;
 	for my $f (OpenBSD::Paths->info_cruft) {
 		unlink("$fullname/$f");

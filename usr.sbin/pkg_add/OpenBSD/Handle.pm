@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Handle.pm,v 1.43 2022/05/08 13:21:04 espie Exp $
+# $OpenBSD: Handle.pm,v 1.44 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2007-2009 Marc Espie <espie@openbsd.org>
 #
@@ -18,8 +18,7 @@
 # fairly non-descriptive name. Used to store various package information
 # during installs and updates.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::Handle;
 
@@ -34,11 +33,10 @@ use constant {
 	CANT_DELETE => 5,
 };
 
-sub is_real { return 1; }
+sub is_real($) { return 1; }
 
-sub cleanup
+sub cleanup($self, $error = undef, $errorinfo = undef)
 {
-	my ($self, $error, $errorinfo) = @_;
 	if (defined $error) {
 		$self->{error} //= $error;
 		$self->{errorinfo} //= $errorinfo;
@@ -56,21 +54,18 @@ sub cleanup
 	delete $self->{conflict_list};
 }
 
-sub new
+sub new($class)
 {
-	my $class = shift;
 	return bless {}, $class;
 }
 
-sub system
+sub system($class)
 {
-	my $class = shift;
 	return OpenBSD::Handle::BaseSystem->new;
 }
 
-sub pkgname
+sub pkgname($self)
 {
-	my $self = shift;
 	if (!defined $self->{pkgname}) {
 		if (defined $self->{plist}) {
 			$self->{pkgname} = $self->{plist}->pkgname;
@@ -87,19 +82,18 @@ sub pkgname
 	return $self->{pkgname};
 }
 
-sub location
+sub location($self)
 {
-	return shift->{location};
+	return $self->{location};
 }
 
-sub plist
+sub plist($self)
 {
-	return shift->{plist};
+	return $self->{plist};
 }
 
-sub dependency_info
+sub dependency_info($self)
 {
-	my $self = shift;
 	if (defined $self->{plist}) {
 		return $self->{plist};
 	} elsif (defined $self->{location} && 
@@ -111,20 +105,18 @@ sub dependency_info
 }
 
 OpenBSD::Auto::cache(conflict_list,
-    sub {
+    sub($self) {
     	require OpenBSD::PkgCfl;
-	return OpenBSD::PkgCfl->make_conflict_list(shift->dependency_info);
+	return OpenBSD::PkgCfl->make_conflict_list($self->dependency_info);
     });
 
-sub set_error
+sub set_error($self, $error)
 {
-	my ($self, $error) = @_;
 	$self->{error} = $error;
 }
 
-sub has_error
+sub has_error($self, $error = undef)
 {
-	my ($self, $error) = @_;
 	if (!defined $self->{error}) {
 		return undef;
 	}
@@ -134,15 +126,13 @@ sub has_error
 	return $self->{error};
 }
 
-sub has_reported_error
+sub has_reported_error($self)
 {
-	my $self = shift;
 	return $self->{error_reported};
 }
 
-sub error_message
+sub error_message($self)
 {
-	my $self = shift;
 	my $error = $self->{error};
 	if ($error == BAD_PACKAGE) {
 		return "bad package";
@@ -161,9 +151,8 @@ sub error_message
 	}
 }
 
-sub complete_old
+sub complete_old($self)
 {
-	my $self = shift;
 	my $location = $self->{location};
 
 	if (!defined $location) {
@@ -180,9 +169,8 @@ sub complete_old
 	}
 }
 
-sub complete_dependency_info
+sub complete_dependency_info($self)
 {
-	my $self = shift;
 	my $location = $self->{location};
 
 	if (!defined $location) {
@@ -195,10 +183,8 @@ sub complete_dependency_info
 	}
 }
 
-sub create_old
+sub create_old($class, $pkgname, $state)
 {
-
-	my ($class, $pkgname, $state) = @_;
 	my $self= $class->new;
 	$self->{name} = $pkgname;
 
@@ -211,28 +197,24 @@ sub create_old
 	return $self;
 }
 
-sub create_new
+sub create_new($class, $pkg)
 {
-	my ($class, $pkg) = @_;
 	my $handle = $class->new;
 	$handle->{name} = $pkg;
 	$handle->{tweaked} = 0;
 	return $handle;
 }
 
-sub from_location
+sub from_location($class, $location)
 {
-	my ($class, $location) = @_;
 	my $handle = $class->new;
 	$handle->{location} = $location;
 	$handle->{tweaked} = 0;
 	return $handle;
 }
 
-sub get_plist
+sub get_plist($handle, $state)
 {
-	my ($handle, $state) = @_;
-
 	my $location = $handle->{location};
 	my $pkg = $handle->pkgname;
 
@@ -273,10 +255,8 @@ sub get_plist
 	$handle->{plist} = $plist;
 }
 
-sub get_location
+sub get_location($handle, $state)
 {
-	my ($handle, $state) = @_;
-
 	my $name = $handle->{name};
 
 	my $location = $state->repo->find($name);
@@ -300,10 +280,8 @@ sub get_location
 	$handle->{pkgname} = $location->name;
 }
 
-sub complete
+sub complete($handle, $state)
 {
-	my ($handle, $state) = @_;
-
 	return if $handle->has_error;
 
 	if (!defined $handle->{location}) {
@@ -317,8 +295,8 @@ sub complete
 
 package OpenBSD::Handle::BaseSystem;
 our @ISA = qw(OpenBSD::Handle);
-sub pkgname { return "BaseSystem"; }
+sub pkgname($) { return "BaseSystem"; }
 
-sub is_real { return 0; }
+sub is_real($) { return 0; }
 
 1;

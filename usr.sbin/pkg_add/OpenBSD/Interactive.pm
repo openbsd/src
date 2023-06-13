@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Interactive.pm,v 1.22 2018/02/26 13:53:31 espie Exp $
+# $OpenBSD: Interactive.pm,v 1.23 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2005-2007 Marc Espie <espie@openbsd.org>
 #
@@ -14,14 +14,12 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::Interactive;
 
-sub new
+sub new($class, $state, $level)
 {
-	my ($class, $state, $level) = @_;
 	bless {
 	    state => $state,
 	    always => 0,
@@ -29,9 +27,8 @@ sub new
 	}, $class;
 }
 
-sub ask_list
+sub ask_list($self, $prompt, @values)
 {
-	my ($self, $prompt, @values) = @_;
 	if ($self->{always}) {
 		return $values[0];
 	}
@@ -83,9 +80,8 @@ LOOP:
 	}
 }
 
-sub confirm
+sub confirm($self, $prompt, $yesno = 0)
 {
-	my ($self, $prompt, $yesno) = @_;
 	if ($self->{always}) {
 		return 1;
 	}
@@ -118,9 +114,9 @@ LOOP2:
 	goto LOOP2;
 }
 
-sub is_interactive
+sub is_interactive($self)
 {
-	return shift->{level};
+	return $self->{level};
 }
 
 1;

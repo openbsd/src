@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.98 2023/05/27 10:00:23 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.99 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -16,39 +16,34 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-use strict;
-use warnings;
+use v5.36;
 
 # common behavior to pkg_add / pkg_delete
 package main;
 our $not;
 
 package OpenBSD::PackingElement::FileObject;
-sub retrieve_fullname
+sub retrieve_fullname($self, $state, $pkgname)
 {
-	my ($self, $state, $pkgname) = @_;
 	return $state->{destdir}.$self->fullname;
 }
 
 package OpenBSD::PackingElement::FileBase;
-sub retrieve_size
+sub retrieve_size($self)
 {
-	my $self = shift;
 	return $self->{size};
 }
 
 package OpenBSD::PackingElement::SpecialFile;
 use OpenBSD::PackageInfo;
-sub retrieve_fullname
+sub retrieve_fullname($self, $state, $pkgname)
 {
-	my ($self, $state, $pkgname);
 	return installed_info($pkgname).$self->name;
 }
 
 package OpenBSD::PackingElement::FCONTENTS;
-sub retrieve_size
+sub retrieve_size($self)
 {
-	my $self = shift;
 	my $size = 0;
 	my $cname = $self->fullname;
 	if (defined $cname) {
@@ -65,10 +60,8 @@ use OpenBSD::PackageInfo;
 use OpenBSD::AddCreateDelete;
 our @ISA = qw(OpenBSD::AddCreateDelete);
 
-sub do_the_main_work
+sub do_the_main_work($self, $state)
 {
-	my ($self, $state) = @_;
-
 	if ($state->{bad}) {
 		return;
 	}
@@ -91,24 +84,20 @@ sub do_the_main_work
 	return $dielater;
 }
 
-sub handle_end_tags
+sub handle_end_tags($self, $state)
 {
-	my ($self, $state) = @_;
 	return if !defined $state->{tags}{atend};
 	$state->progress->for_list("Running tags", 
 	    [keys %{$state->{tags}{atend}}],
-	    sub {
-	    	my $k = shift;
+	    sub($k) {
 		return if $state->{tags}{deleted}{$k};
 		return if $state->{tags}{superseded}{$k};
 		$state->{tags}{atend}{$k}->run_tag($state);
 	    });
 }
 
-sub run_command
+sub run_command($self, $state)
 {
-	my ($self, $state) = @_;
-
 	lock_db($state->{not}, $state) unless $state->defines('nolock');
 	$state->check_root;
 	$self->process_parameters($state);
@@ -129,10 +118,8 @@ sub run_command
 	rethrow $dielater;
 }
 
-sub parse_and_run
+sub parse_and_run($self, $cmd)
 {
-	my ($self, $cmd) = @_;
-
 	my $state = $self->new_state($cmd);
 	$state->handle_options;
 
@@ -167,19 +154,17 @@ sub parse_and_run
 }
 
 # $self->silence_children($state)
-sub silence_children
+sub silence_children($, $)
 {
-	1
 }
 
 # nothing to do
-sub tweak_list
+sub tweak_list($, $)
 {
 }
 
-sub process_setlist
+sub process_setlist($self, $state)
 {
-	my ($self, $state) = @_;
 	$state->tracker->todo(@{$state->{setlist}});
 	# this is the actual very small loop that processes all sets
 	while (my $set = shift @{$state->{setlist}}) {
@@ -193,22 +178,19 @@ sub process_setlist
 }
 
 package OpenBSD::SharedItemsRecorder;
-sub new
+sub new($class)
 {
-	my $class = shift;
 	return bless {}, $class;
 }
 
-sub is_empty
+sub is_empty($self)
 {
-	my $self = shift;
 	return !(defined $self->{dirs} or defined $self->{users} or
 	    defined $self->{groups});
 }
 
-sub cleanup
+sub cleanup($self, $state)
 {
-	my ($self, $state) = @_;
 	return if $self->is_empty or $state->{not};
 
 	require OpenBSD::SharedItems;
@@ -220,12 +202,10 @@ use OpenBSD::Vstat;
 use OpenBSD::Log;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
 
-sub handle_options
+sub handle_options($state, $opt_string, @usage)
 {
-	my ($state, $opt_string, @usage) = @_;
-
 	$state->{extra_stats} = 0;
-	$state->{opt}{V} = sub {
+	$state->{opt}{V} = sub() {
 		$state->{extra_stats}++;
 	};
 	$state->{no_exports} = 1;
@@ -271,52 +251,46 @@ sub handle_options
 	$state->{destdir} = $base;
 }
 
-sub init
+sub init($self, @p)
 {
-	my $self = shift;
 	$self->{l} = OpenBSD::Log->new($self);
 	$self->{vstat} = OpenBSD::Vstat->new($self);
 	$self->{status} = OpenBSD::Status->new;
 	$self->{recorder} = OpenBSD::SharedItemsRecorder->new;
 	$self->{v} = 0;
-	$self->SUPER::init(@_);
+	$self->SUPER::init(@p);
 	$self->{export_level}++;
 }
 
-sub syslog
+sub syslog($self, @p)
 {
-	my $self = shift;
 	return unless $self->{loglevel};
-	Sys::Syslog::syslog('info', $self->f(@_));
+	Sys::Syslog::syslog('info', $self->f(@p));
 }
 
-sub ntodo
+sub ntodo($state, $offset)
 {
-	my ($state, $offset) = @_;
 	return $state->tracker->sets_todo($offset);
 }
 
 # one-level dependencies tree, for nicer printouts
-sub build_deptree
+sub build_deptree($state, $set, @deps)
 {
-	my ($state, $set, @deps) = @_;
-
 	if (defined $state->{deptree}{$set}) {
 		$set = $state->{deptree}{$set};
 	}
 	for my $dep (@deps) {
-		$state->{deptree}{$dep} = $set unless
-		    defined $state->{deptree}{$dep};
+		$state->{deptree}{$dep} = $set 
+		    unless defined $state->{deptree}{$dep};
 	}
 }
 
-sub deptree_header
+sub deptree_header($state, $pkg)
 {
-	my ($state, $pkg) = @_;
-	if (defined $state->{deptree}->{$pkg}) {
-		my $s = $state->{deptree}->{$pkg}->real_set;
+	if (defined $state->{deptree}{$pkg}) {
+		my $s = $state->{deptree}{$pkg}->real_set;
 		if ($s eq $pkg) {
-			delete $state->{deptree}->{$pkg};
+			delete $state->{deptree}{$pkg};
 		} else {
 			return $s->short_print.':';
 		}
@@ -324,26 +298,22 @@ sub deptree_header
 	return '';
 }
 
-sub vstat
+sub vstat($self)
 {
-	my $self = shift;
 	return $self->{vstat};
 }
 
-sub log
+sub log($self, @p)
 {
-	my $self = shift;
-	if (@_ == 0) {
+	if (@p == 0) {
 		return $self->{l};
 	} else {
-		$self->{l}->say(@_);
+		$self->{l}->say(@p);
 	}
 }
 
-sub run_quirks
+sub run_quirks($state, $sub)
 {
-	my ($state, $sub) = @_;
-
 	if (!exists $state->{quirks}) {
 		eval {
 			use lib ('/usr/local/libdata/perl5/site_perl');
@@ -373,9 +343,8 @@ sub run_quirks
 	}
 }
 
-sub check_root
+sub check_root($state)
 {
-	my $state = shift;
 	if ($< && !$state->defines('nonroot')) {
 		if ($state->{not}) {
 			$state->errsay("#1 should be run as root",
@@ -386,15 +355,13 @@ sub check_root
 	}
 }
 
-sub choose_location
+sub choose_location($state, $name, $list, $is_quirks = 0)
 {
-	my ($state, $name, $list, $is_quirks) = @_;
 	if (@$list == 0) {
 		if (!$is_quirks) {
 			$state->errsay("Can't find #1", $name);
 			$state->run_quirks(
-			    sub {
-				my $quirks = shift;
+			    sub($quirks) {
 				$quirks->filter_obsolete([$name], $state);
 			    });
 		}
@@ -407,7 +374,7 @@ sub choose_location
 	if ($state->is_interactive) {
 		$h{'<None>'} = undef;
 		$state->progress->clear;
-		my $cmp = sub {
+		my $cmp = sub {		# XXX prototypable ?
 			return -1 if !defined $h{$a};
 			return 1 if !defined $h{$b};
 			my $r = $h{$a}->pkgname->to_pattern cmp
@@ -428,36 +395,30 @@ sub choose_location
 	}
 }
 
-sub status
+sub status($self)
 {
-	my $self = shift;
-
 	return $self->{status};
 }
 
-sub replacing
+sub replacing($self)
 {
-	my $self = shift;
 	return $self->{replacing};
 }
 
 OpenBSD::Auto::cache(ldconfig,
-    sub {
-    	my $self = shift;
+    sub($self) {
 	return OpenBSD::LdConfig->new($self);
     });
 
 # if we're not running as root, allow some stuff when not under /usr/local
-sub allow_nonroot
+sub allow_nonroot($state, $path)
 {
-	my ($state, $path) = @_;
 	return $state->defines('nonroot') &&
 	    $path !~ m,^\Q$state->{localbase}/\E,;
 }
 
-sub make_path
+sub make_path($state, $path, $fullname)
 {
-	my ($state, $path, $fullname) = @_;
 	require File::Path;
 	if ($state->allow_nonroot($fullname)) {
 		eval {
@@ -471,16 +432,14 @@ sub make_path
 # this is responsible for running ldconfig when needed
 package OpenBSD::LdConfig;
 
-sub new
+sub new($class, $state)
 {
-	my ($class, $state) = @_;
 	bless { state => $state, todo => 0 }, $class;
 }
 
 # called once to figure out which directories are actually used
-sub init
+sub init($self)
 {
-	my $self = shift;
 	my $state = $self->{state};
 	my $destdir = $state->{destdir};
 
@@ -508,9 +467,8 @@ sub init
 }
 
 # called from libs to figure out whether ldconfig should be rerun
-sub mark_directory
+sub mark_directory($self, $name)
 {
-	my ($self, $name) = @_;
 	if (!defined $self->{path}) {
 		$self->init;
 	}
@@ -522,9 +480,8 @@ sub mark_directory
 }
 
 # call before running any command (or at end) to run ldconfig just in time
-sub ensure
+sub ensure($self)
 {
-	my $self = shift;
 	if ($self->{todo}) {
 		my $state = $self->{state};
 		$state->vsystem(@{$self->{ldconfig}}, "-R")
@@ -536,12 +493,10 @@ sub ensure
 # the object that gets displayed during status updates
 package OpenBSD::Status;
 
-sub print
+sub print($self, $state)
 {
-	my ($self, $state) = @_;
-
 	my $what = $self->{what};
-	$what //= "Processing";
+	$what //= 'Processing';
 	my $object;
 	if (defined $self->{object}) {
 		$object = $self->{object};
@@ -558,33 +513,28 @@ sub print
 	}
 }
 
-sub set
+sub set($self, $set)
 {
-	my ($self, $set) = @_;
 	delete $self->{object};
 	$self->{set} = $set;
 	return $self;
 }
 
-sub object
+sub object($self, $object)
 {
-	my ($self, $object) = @_;
 	delete $self->{set};
 	$self->{object} = $object;
 	return $self;
 }
 
-sub what
+sub what($self, $what = undef)
 {
-	my ($self, $what) = @_;
 	$self->{what} = $what;
 	return $self;
 }
 
-sub new
+sub new($class)
 {
-	my $class = shift;
-
 	bless {}, $class;
 }
 

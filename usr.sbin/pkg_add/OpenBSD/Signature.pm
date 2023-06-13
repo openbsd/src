@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Signature.pm,v 1.28 2023/05/27 10:04:17 espie Exp $
+# $OpenBSD: Signature.pm,v 1.29 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -18,66 +18,57 @@
 # this is the code that handles "update signatures", which has nothing
 # to do with cryptography
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackingElement;
-sub signature {}
+sub signature($, $) {}
 
 package OpenBSD::PackingElement::VersionElement;
-sub signature
+sub signature($self, $hash)
 {
-	my ($self, $hash) = @_;
 	$hash->{$self->signature_key} = $self;
 }
 
-sub always
+sub always($)
 {
 	return 1;
 }
 
 package OpenBSD::PackingElement::Version;
-sub signature
+sub signature($self, $hash)
 {
-	my ($self, $hash) = @_;
-
 	$hash->{VERSION}{name} += $self->name;
 }
 
 package OpenBSD::PackingElement::Dependency;
-sub signature_key
+sub signature_key($self)
 {
-	my $self = shift;
 	return $self->{pkgpath};
 }
 
-sub sigspec
+sub sigspec($self)
 {
-	my $self = shift;
 	return OpenBSD::PackageName->from_string($self->{def});
 }
 
-sub long_string
+sub long_string($self)
 {
-	my $self = shift;
 	return '@'.$self->sigspec->to_string;
 }
 
-sub compare
+sub compare($a, $b)
 {
-	my ($a, $b) = @_;
 	return $a->sigspec->compare($b->sigspec);
 }
 
-sub always
+sub always($)
 {
 	return 0;
 }
 
 package OpenBSD::PackingElement::Wantlib;
-sub signature_key
+sub signature_key($self)
 {
-	my $self = shift;
 	my $spec = $self->spec;
 	if ($spec->is_valid) {
 		return $spec->key;
@@ -86,46 +77,40 @@ sub signature_key
 	}
 }
 
-sub compare
+sub compare($a, $b)
 {
-	my ($a, $b) = @_;
 	return $a->spec->compare($b->spec);
 }
 
-sub long_string
+sub long_string($self)
 {
-	my $self = shift;
 	return $self->spec->to_string;
 }
 
-sub always
+sub always($)
 {
 	return 1;
 }
 
 package OpenBSD::PackingElement::Version;
-sub signature_key
+sub signature_key($)
 {
 	return 'VERSION';
 }
 
-sub long_string
+sub long_string($self)
 {
-	my $self = shift;
 	return $self->{name};
 }
 
-sub compare
+sub compare($a, $b)
 {
-	my ($a, $b) = @_;
 	return $a->{name} <=> $b->{name};
 }
 
 package OpenBSD::Signature;
-sub from_plist
+sub from_plist($class, $plist)
 {
-	my ($class, $plist) = @_;
-
 	my $k = {};
 	$k->{VERSION} = OpenBSD::PackingElement::Version->new(0);
 	$plist->visit('signature', $k);
@@ -137,34 +122,28 @@ sub from_plist
 	}
 }
 
-sub full
+sub full($)
 {
 	return "OpenBSD::Signature::Full";
 }
 
-sub new
+sub new($class, $pkgname, $extra)
 {
-	my ($class, $pkgname, $extra) = @_;
 	bless { name => $pkgname, extra => $extra }, $class;
 }
 
-sub string
+sub string($self)
 {
-	my $self = shift;
 	return join(',', $self->{name}, sort map {$_->long_string} values %{$self->{extra}});
 }
 
-sub compare
+sub compare($a, $b, $state)
 {
-	my ($a, $b, $state) = @_;
 	return $b->revert_compare($a, $state);
 }
 
-sub revert_compare
+sub revert_compare($b, $a, $state)
 {
-	my ($b, $a, $state) = @_;
-
-
 	if ($a->{name} eq $b->{name}) {
 		# first check if system version changed
 		# then we don't have to go any further
@@ -219,10 +198,8 @@ sub revert_compare
 	}
 }
 
-sub print_error
+sub print_error($a, $b, $state)
 {
-	my ($a, $b, $state) = @_;
-
 	$state->errsay("Error: #1 exists in two non-comparable versions",
 	    $a->{name});
 	$state->errsay("Someone forgot to bump a REVISION");
@@ -232,9 +209,8 @@ sub print_error
 package OpenBSD::Signature::Full;
 our @ISA=qw(OpenBSD::Signature);
 
-sub new
+sub new($class, $pkgname, $extra, $plist)
 {
-	my ($class, $pkgname, $extra, $plist) = @_;
 	my $o = $class->SUPER::new($pkgname, $extra);
 	my $a = $plist->get('always-update');
 	# TODO remove after 2025
@@ -245,15 +221,13 @@ sub new
 	return $o;
 }
 
-sub string
+sub string($self)
 {
-	my $self = shift;
 	return join(',', $self->SUPER::string, $self->{hash});
 }
 
-sub revert_compare
+sub revert_compare($b, $a, $state)
 {
-	my ($b, $a, $state) = @_;
 	my $r = $b->SUPER::revert_compare($a, $state);
 	if (defined $r && $r == 0) {
 		if ($a->string ne $b->string) {
@@ -263,9 +237,8 @@ sub revert_compare
 	return $r;
 }
 
-sub compare
+sub compare($a, $b, $state)
 {
-	my ($a, $b, $state) = @_;
 	my $r = $a->SUPER::compare($b, $state);
 	if (defined $r && $r == 0) {
 		if ($a->string ne $b->string) {

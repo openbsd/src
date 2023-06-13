@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Persistent.pm,v 1.3 2017/11/03 15:30:12 espie Exp $
+# $OpenBSD: Persistent.pm,v 1.4 2023/06/13 09:07:18 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -15,25 +15,21 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackageRepository::Persistent;
 our @ISA=qw(OpenBSD::PackageRepository::Distant);
 
 our %distant = ();
 
-sub may_exist
+sub may_exist($self, $name)
 {
-	my ($self, $name) = @_;
 	my $l = $self->list;
 	return grep {$_ eq $name } @$l;
 }
 
-sub grab_object
+sub grab_object($self, $object)
 {
-	my ($self, $object) = @_;
-
 	my $cmdfh = $self->{cmdfh};
 	my $getfh = $self->{getfh};
 
@@ -71,14 +67,13 @@ sub grab_object
 	CORE::close($getfh);
 }
 
-sub maxcount
+sub maxcount($)
 {
 	return 1;
 }
 
-sub opened
+sub opened($self)
 {
-	my $self = $_[0];
 	my $k = $self->{host};
 	if (!defined $distant{$k}) {
 		$distant{$k} = [];
@@ -86,9 +81,8 @@ sub opened
 	return $distant{$k};
 }
 
-sub list
+sub list($self)
 {
-	my ($self) = @_;
 	if (!defined $self->{list}) {
 		if (!defined $self->{controller}) {
 			$self->initiate;
@@ -120,9 +114,8 @@ sub list
 	return $self->{list};
 }
 
-sub cleanup
+sub cleanup($self)
 {
-	my $self = shift;
 	if (defined $self->{controller}) {
 		my $cmdfh = $self->{cmdfh};
 		my $getfh = $self->{getfh};
@@ -134,17 +127,15 @@ sub cleanup
 	}
 }
 
-sub dont_cleanup
+sub dont_cleanup($self)
 {
-	my $self = shift;
 	CORE::close($self->{cmdfh});
 	CORE::close($self->{getfh});
 	delete $self->{controller};
 }
 
-sub reinitialize
+sub reinitialize($self)
 {
-	my $self = shift;
 	$self->initiate;
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: BaseState.pm,v 1.2 2023/06/07 15:09:01 espie Exp $
+# $OpenBSD: BaseState.pm,v 1.3 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2007-2022 Marc Espie <espie@openbsd.org>
 #
@@ -16,36 +16,33 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::BaseState;
 use Carp;
 
-sub can_output
+sub can_output($)
 {
 	1;
 }
-sub sync_display
+sub sync_display($)
 {
 }
 
 my $forbidden = qr{[^[:print:]\s]};
 
-sub safe
+sub safe($self, $string)
 {
-	my ($self, $string) = @_;
 	$string =~ s/$forbidden/?/g;
 	return $string;
 }
 
-sub f
+sub f($self, @p)
 {
-	my $self = shift;
-	if (@_ == 0) {
+	if (@p == 0) {
 		return undef;
 	}
-	my ($fmt, @l) = @_;
+	my ($fmt, @l) = @p;
 
 	# is there anything to format, actually ?
 	if ($fmt =~ m/\#\d/) {
@@ -60,85 +57,71 @@ sub f
 	return $fmt;
 }
 
-sub _fatal
+sub _fatal($self, @p)
 {
-	my $self = shift;
 	# implementation note: to print "fatal errors" elsewhere,
 	# the way is to eval { croak @_}; and decide what to do with $@.
 	delete $SIG{__DIE__};
 	$self->sync_display;
-	croak @_, "\n";
+	croak @p, "\n";
 }
 
-sub fatal
+sub fatal($self, @p)
 {
-	my $self = shift;
-	$self->_fatal($self->f(@_));
+	$self->_fatal($self->f(@p));
 }
 
-sub _fhprint
+sub _fhprint($self, $fh, @p)
 {
-	my $self = shift;
-	my $fh = shift;
 	$self->sync_display;
-	print $fh @_;
+	print $fh @p;
 }
-sub _print
+sub _print($self, @p)
 {
-	my $self = shift;
-	$self->_fhprint(\*STDOUT, @_) if $self->can_output;
-}
-
-sub _errprint
-{
-	my $self = shift;
-	$self->_fhprint(\*STDERR, @_);
+	$self->_fhprint(\*STDOUT, @p) if $self->can_output;
 }
 
-sub fhprint
+sub _errprint($self, @p)
 {
-	my $self = shift;
-	my $fh = shift;
-	$self->_fhprint($fh, $self->f(@_));
+	$self->_fhprint(\*STDERR, @p);
 }
 
-sub fhsay
+sub fhprint($self, $fh, @p)
 {
-	my $self = shift;
-	my $fh = shift;
-	if (@_ == 0) {
+	$self->_fhprint($fh, $self->f(@p));
+}
+
+sub fhsay($self, $fh, @p)
+{
+	if (@p == 0) {
 		$self->_fhprint($fh, "\n");
 	} else {
-		$self->_fhprint($fh, $self->f(@_), "\n");
+		$self->_fhprint($fh, $self->f(@p), "\n");
 	}
 }
 
-sub print
+sub print($self, @p)
 {
-	my $self = shift;
-	$self->fhprint(\*STDOUT, @_) if $self->can_output;
+	$self->fhprint(\*STDOUT, @p) if $self->can_output;
 }
 
-sub say
+sub say($self, @p)
 {
-	my $self = shift;
-	$self->fhsay(\*STDOUT, @_) if $self->can_output;
+	$self->fhsay(\*STDOUT, @p) if $self->can_output;
 }
 
-sub errprint
+sub errprint($self, @p)
 {
-	my $self = shift;
-	$self->fhprint(\*STDERR, @_);
+	$self->fhprint(\*STDERR, @p);
 }
 
-sub errsay
+sub errsay($self, @p)
 {
-	my $self = shift;
-	$self->fhsay(\*STDERR, @_);
+	$self->fhsay(\*STDERR, @p);
 }
 
 my @signal_name = ();
-sub fillup_names
+sub fillup_names($)
 {
 	{
 	# XXX force autoload
@@ -170,10 +153,8 @@ sub fillup_names
 	$signal_name[29] = 'INFO';
 }
 
-sub find_signal
+sub find_signal($self, $number)
 {
-	my ($self, $number) = @_;
-
 	if (@signal_name == 0) {
 		$self->fillup_names;
 	}
@@ -181,11 +162,8 @@ sub find_signal
 	return $signal_name[$number] || $number;
 }
 
-sub child_error
+sub child_error($self, $error = $?)
 {
-	my ($self, $error) = @_;
-	$error //= $?;
-
 	my $extra = "";
 
 	if ($error & 128) {
@@ -199,20 +177,19 @@ sub child_error
 	}
 }
 
-sub _system
+sub _system($self, @p)
 {
-	my $self = shift;
 	$self->sync_display;
 	my ($todo, $todo2);
-	if (ref $_[0] eq 'CODE') {
-		$todo = shift;
+	if (ref $p[0] eq 'CODE') {
+		$todo = shift @p;
 	} else {
-		$todo = sub {};
+		$todo = sub() {};
 	}
-	if (ref $_[0] eq 'CODE') {
-		$todo2 = shift;
+	if (ref $p[0] eq 'CODE') {
+		$todo2 = shift @p;
 	} else {
-		$todo2 = sub {};
+		$todo2 = sub() {};
 	}
 	my $r = fork;
 	if (!defined $r) {
@@ -220,7 +197,7 @@ sub _system
 	} elsif ($r == 0) {
 		$DB::inhibit_exit = 0;
 		&$todo();
-		exec {$_[0]} @_ or
+		exec {$p[0]} @p or
 		    exit 1;
 	} else {
 		&$todo2();
@@ -229,27 +206,24 @@ sub _system
 	}
 }
 
-sub system
+sub system($self, @p)
 {
-	my $self = shift;
-	my $r = $self->_system(@_);
+	my $r = $self->_system(@p);
 	if ($r != 0) {
-		if (ref $_[0] eq 'CODE') {
-			shift;
+		if (ref $p[0] eq 'CODE') {
+			shift @p;
 		}
-		if (ref $_[0] eq 'CODE') {
-			shift;
+		if (ref $p[0] eq 'CODE') {
+			shift @p;
 		}
 		$self->errsay("system(#1) failed: #2",
-		    join(", ", @_), $self->child_error);
+		    join(", ", @p), $self->child_error);
 	}
 	return $r;
 }
 
-sub verbose_system
+sub verbose_system($self, @p)
 {
-	my $self = shift;
-	my @p = @_;
 	if (ref $p[0]) {
 		shift @p;
 	}
@@ -258,7 +232,7 @@ sub verbose_system
 	}
 
 	$self->print("Running #1", join(' ', @p));
-	my $r = $self->_system(@_);
+	my $r = $self->_system(@p);
 	if ($r != 0) {
 		$self->say("... failed: #1", $self->child_error);
 	} else {
@@ -266,40 +240,36 @@ sub verbose_system
 	}
 }
 
-sub copy_file
+sub copy_file($self, @p)
 {
-	my $self = shift;
 	require File::Copy;
 
-	my $r = File::Copy::copy(@_);
+	my $r = File::Copy::copy(@p);
 	if (!$r) {
-		$self->say("copy(#1) failed: #2", join(',', @_), $!);
+		$self->say("copy(#1) failed: #2", join(',', @p), $!);
 	}
 	return $r;
 }
 
-sub unlink
+sub unlink($self, $verbose, @p)
 {
-	my $self = shift;
-	my $verbose = shift;
-	my $r = unlink @_;
-	if ($r != @_) {
+	my $r = unlink @p;
+	if ($r != @p) {
 		$self->say("rm #1 failed: removed only #2 targets, #3",
-		    join(' ', @_), $r, $!);
+		    join(' ', @p), $r, $!);
 	} elsif ($verbose) {
-		$self->say("rm #1", join(' ', @_));
+		$self->say("rm #1", join(' ', @p));
 	}
 	return $r;
 }
 
-sub copy
+sub copy($self, @p)
 {
-	my $self = shift;
 	require File::Copy;
 
-	my $r = File::Copy::copy(@_);
+	my $r = File::Copy::copy(@p);
 	if (!$r) {
-		$self->say("copy(#1) failed: #2", join(',', @_), $!);
+		$self->say("copy(#1) failed: #2", join(',', @p), $!);
 	}
 	return $r;
 }

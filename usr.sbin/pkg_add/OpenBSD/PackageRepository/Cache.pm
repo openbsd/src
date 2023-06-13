@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Cache.pm,v 1.11 2022/05/29 10:48:41 espie Exp $
+# $OpenBSD: Cache.pm,v 1.12 2023/06/13 09:07:18 espie Exp $
 #
 # Copyright (c) 2022 Marc Espie <espie@openbsd.org>
 #
@@ -15,17 +15,14 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 # supplementary glue to add support for reading the update.db locate(1)
 # database in quirks
 package OpenBSD::PackageRepository::Cache;
 
-sub new
+sub new($class, $state, $setlist)
 {
-	my ($class, $state, $setlist) = @_;
-
 	return undef unless -f OpenBSD::Paths->updateinfodb;
 
 	my $o = bless { 
@@ -37,9 +34,8 @@ sub new
 	return $o;
 
 }
-sub pipe_locate
+sub pipe_locate($self, @params)
 {
-	my ($self, @params) = @_;
 	unshift(@params, OpenBSD::Paths->locate, 
 	    '-d', OpenBSD::Paths->updateinfodb, '--');
 	my $state = $self->{state};
@@ -52,16 +48,13 @@ sub pipe_locate
 # search objects such that the last one can do add_stem, so we oblige
 # (probably TODO: add a secondary interface in quirks, but this can do
 # in the meantime)
-sub add_stem
+sub add_stem($self, $stem)
 {
-	my ($self, $stem) = @_;
 	$self->{stems}{$stem} = 1;
 }
 
-sub prime_update_info_cache
+sub prime_update_info_cache($self, $state, $setlist)
 {
-	my ($self, $state, $setlist) = @_;
-
 	my $progress = $state->progress;
 	my $found = {};
 
@@ -85,8 +78,7 @@ sub prime_update_info_cache
 			$stem =~ s/\-\-.*//; # and set flavors
 			$self->add_stem($stem);
 			$state->run_quirks(
-			    sub {
-			    	my $quirks = shift;
+			    sub($quirks) {
 				$quirks->tweak_search($pseudo_search, $h, 
 				    $state);
 			    });
@@ -129,10 +121,8 @@ sub prime_update_info_cache
 	}
 }
 
-sub get_cached_info
+sub get_cached_info($self, $name)
 {
-	my ($self, $name) = @_;
-
 	my $state = $self->{state};
 	my $content;
 	if (exists $self->{raw_data}{$name}) {

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ArcCheck.pm,v 1.41 2023/05/27 10:00:48 espie Exp $
+# $OpenBSD: ArcCheck.pm,v 1.42 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2005-2006 Marc Espie <espie@openbsd.org>
 #
@@ -34,20 +34,18 @@
 #	$o->validate_meta($item) or
 #		error...
 
-use strict;
-use warnings;
+use v5.36;
 
 use OpenBSD::Ustar;
 
 package OpenBSD::Ustar::Object;
 use POSIX;
 
-sub is_allowed() { 0 }
+sub is_allowed($) { 0 }
 
 # match archive header link name against actual link name
-sub _check_linkname
+sub _check_linkname($self, $linkname)
 {
-	my ($self, $linkname) = @_;
 	my $c = $self->{linkname};
 	if ($self->isHardLink && defined $self->{cwd}) {
 		$c = $self->{cwd}.'/'.$c;
@@ -55,16 +53,13 @@ sub _check_linkname
 	return $c eq $linkname;
 }
 
-sub _errsay
+sub _errsay($o, @msg)
 {
-	my ($self, @args) = @_;
-	$self->{archive}{state}->errsay(@args);
+	$o->{archive}{state}->errsay(@msg);
 }
 
-sub validate_meta
+sub validate_meta($o, $item)
 {
-	my ($o, $item) = @_;
-
 	$o->{cwd} = $item->cwd;
 	if (defined $item->{symlink} || $o->isSymLink) {
 		if (!defined $item->{symlink}) {
@@ -120,10 +115,8 @@ sub validate_meta
 	return $o->verify_modes($item);
 }
 
-sub _strip_modes
+sub _strip_modes($o, $item)
 {
-	my ($o, $item) = @_;
-
 	my $result = $o->{mode};
 
 	# disallow writable files/dirs without explicit annotation
@@ -149,16 +142,14 @@ sub _strip_modes
 	return $result;
 }
 
-sub _printable_mode
+sub _printable_mode($o)
 {
-	my $o = shift;
 	return sprintf("%4o", 
 	    $o->{mode} & (S_IRWXU | S_IRWXG | S_IRWXO | S_ISUID | S_ISGID));
 }
 
-sub verify_modes
+sub verify_modes($o, $item)
 {
-	my ($o, $item) = @_;
 	my $result = 1;
 
 	if (!defined $item->{owner}) {
@@ -186,21 +177,20 @@ sub verify_modes
 }
 
 package OpenBSD::Ustar::HardLink;
-sub is_allowed() { 1 }
+sub is_allowed($) { 1 }
 
 package OpenBSD::Ustar::SoftLink;
-sub is_allowed() { 1 }
+sub is_allowed($) { 1 }
 
 package OpenBSD::Ustar::File;
-sub is_allowed() { 1 }
+sub is_allowed($) { 1 }
 
 package OpenBSD::Ustar;
 use POSIX;
 
 # prepare item according to pkg_create's rules.
-sub prepare_long
+sub prepare_long($self, $item)
 {
-	my ($self, $item) = @_;
 	my $entry;
 	if (defined $item->{wtempname}) {
 		$entry = $self->prepare($item->{wtempname}, '');

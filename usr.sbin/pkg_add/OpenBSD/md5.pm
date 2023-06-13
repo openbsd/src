@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: md5.pm,v 1.19 2023/05/16 14:29:20 espie Exp $
+# $OpenBSD: md5.pm,v 1.20 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -15,38 +15,33 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 # XXX even though there is ONE current implementation of OpenBSD::digest
 # (SHA256) we keep the framework open in case we ever need to switch,
 # as we did in the past with md5 -> sha256
 package OpenBSD::digest;
 
-sub new
+sub new($class, $filename)
 {
-	my ($class, $filename) = @_;
 	$class = ref($class) || $class;
 	my $digest = $class->digest_file($filename);
 	bless \$digest, $class;
 }
 
-sub key
+sub key($self)
 {
-	my $self = shift;
 	return $$self;
 }
 
-sub write
+sub write($self, $fh)
 {
-	my ($self, $fh) = @_;
 	print $fh "\@", $self->keyword, " ", $self->stringize, "\n";
 }
 
-sub digest_file
+sub digest_file($self, $fname)
 {
-	my ($self, $fname) = @_;
-	my $d = $self->algo;
+	my $d = $self->_algo;
 	eval {
 		$d->addfile($fname);
 	};
@@ -57,17 +52,15 @@ sub digest_file
 	return $d->digest;
 }
 
-sub fromstring
+sub fromstring($class, $arg)
 {
-	my ($class, $arg) = @_;
 	$class = ref($class) || $class;
-	my $d = $class->unstringize($arg);
+	my $d = $class->_unstringize($arg);
 	bless \$d, $class;
 }
 
-sub equals
+sub equals($a, $b)
 {
-	my ($a, $b) = @_;
 	return ref($a) eq ref($b) && $$a eq $$b;
 }
 
@@ -77,30 +70,26 @@ our @ISA=(qw(OpenBSD::digest));
 use Digest::SHA;
 use MIME::Base64;
 
-sub algo
+sub _algo($self)
 {
-	my $self = shift;
 
 	return Digest::SHA->new(256);
 }
 
-sub stringize
+sub stringize($self)
 {
-	my $self = shift;
-
 	return encode_base64($$self, '');
 }
 
-sub unstringize
+sub _unstringize($class, $arg)
 {
-	my ($class, $arg) = @_;
 	if ($arg =~ /^[0-9a-f]{64}$/i) {
 		return pack('H*', $arg);
 	}
 	return decode_base64($arg);
 }
 
-sub keyword
+sub keyword($)
 {
 	return "sha";
 }

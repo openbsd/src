@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Temp.pm,v 1.38 2019/07/24 09:03:12 espie Exp $
+# $OpenBSD: Temp.pm,v 1.39 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -15,8 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::Temp;
 
@@ -35,7 +34,7 @@ my $files = {};
 my ($lastname, $lasterror, $lasttype);
 
 OpenBSD::Handler->atend(
-    sub {
+    sub($) {
 	while (my ($name, $pid) = each %$files) {
 		unlink($name) if $pid == $$;
 	}
@@ -45,10 +44,10 @@ OpenBSD::Handler->atend(
     });
 
 
-sub dir
+sub dir($)
 {
 	my $caught;
-	my $h = sub { $caught = shift; };
+	my $h = sub($sig, @) { $caught = $sig; };
 	my $dir;
 
 	{
@@ -72,11 +71,10 @@ sub dir
 	}
 }
 
-sub fh_file
+sub fh_file($stem, $cleanup)
 {
-	my ($stem, $cleanup) = @_;
 	my $caught;
-	my $h = sub { $caught = shift; };
+	my $h = sub($sig, @) { $caught = $sig; };
 	my ($fh, $file);
 
 	{
@@ -96,22 +94,20 @@ sub fh_file
 	return ($fh, $file);
 }
 
-sub file
+sub file($)
 {
 	return (fh_file("pkgout", 
-	    sub { my $n = shift; $files->{$n} = $$; })) [1];
+	    sub($name) { $files->{$name} = $$; })) [1];
 }
 
-sub reclaim
+sub reclaim($class, $name)
 {
-	my ($class, $name) = @_;
 	delete $files->{$name};
 	delete $dirs->{$name};
 }
 
-sub permanent_file
+sub permanent_file($dir, $stem)
 {
-	my ($dir, $stem) = @_;
 	my $template = "$stem.XXXXXXXXXX";
 	if (defined $dir) {
 		$template = "$dir/$template";
@@ -123,9 +119,8 @@ sub permanent_file
 	return ();
 }
 
-sub permanent_dir
+sub permanent_dir($dir, $stem)
 {
-	my ($dir, $stem) = @_;
 	my $template = "$stem.XXXXXXXXXX";
 	if (defined $dir) {
 		$template = "$dir/$template";
@@ -137,12 +132,9 @@ sub permanent_dir
 	return undef;
 }
 
-sub last_error
+sub last_error($class, $template = "User #1 couldn't create temp #2 as #3: #4")
 {
-	my ($class, $template) = @_;
-
 	my ($user) = getpwuid($>);
-	$template //= "User #1 couldn't create temp #2 as #3: #4";
 	return ($template, $user, $lasttype, $lastname, $lasterror);
 }
 1;

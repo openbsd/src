@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.194 2023/05/27 09:58:26 espie Exp $
+# $OpenBSD: Add.pm,v 1.195 2023/06/13 09:07:16 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -15,8 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::Add;
 use OpenBSD::Error;
@@ -25,9 +24,8 @@ use OpenBSD::ArcCheck;
 use OpenBSD::Paths;
 use File::Copy;
 
-sub manpages_index
+sub manpages_index($state)
 {
-	my ($state) = @_;
 	return unless defined $state->{addman};
 	my $destdir = $state->{destdir};
 
@@ -44,9 +42,8 @@ sub manpages_index
 	delete $state->{addman};
 }
 
-sub register_installation
+sub register_installation($plist, $state)
 {
-	my ($plist, $state) = @_;
 	if ($state->{not}) {
 		$plist->to_cache;
 	} else {
@@ -58,17 +55,13 @@ sub register_installation
 	}
 }
 
-sub validate_plist
+sub validate_plist($plist, $state, $set)
 {
-	my ($plist, $state, $set) = @_;
-
 	$plist->prepare_for_addition($state, $plist->pkgname, $set);
 }
 
-sub record_partial_installation
+sub record_partial_installation($plist, $state, $h)
 {
-	my ($plist, $state, $h) = @_;
-
 	use OpenBSD::PackingElement;
 
 	my $n = $plist->make_shallow_copy($h);
@@ -96,10 +89,8 @@ sub record_partial_installation
 	return $borked;
 }
 
-sub perform_installation
+sub perform_installation($handle, $state)
 {
-	my ($handle, $state) = @_;
-
 	return if $state->defines('stub');
 
 	$state->{partial} = $handle->{partial};
@@ -111,9 +102,8 @@ sub perform_installation
 	}
 }
 
-sub skip_to_the_end
+sub skip_to_the_end($handle, $state, $tied, $p)
 {
-	my ($handle, $state, $tied, $p) = @_;
 	$state->tweak_header("skipping");
 	for my $e (values %$tied) {
 		$e->tie($state);
@@ -130,10 +120,8 @@ sub skip_to_the_end
 	}
 }
 
-sub perform_extraction
+sub perform_extraction($handle, $state)
 {
-	my ($handle, $state) = @_;
-
 	return if $state->defines('stub');
 
 	$handle->{partial} = {};
@@ -195,18 +183,15 @@ sub perform_extraction
 
 my $user_tagged = {};
 
-sub extract_pkgname
+sub extract_pkgname($pkgname)
 {
-	my $pkgname = shift;
 	$pkgname =~ s/^.*\///;
 	$pkgname =~ s/\.tgz$//;
 	return $pkgname;
 }
 
-sub tweak_package_status
+sub tweak_package_status($pkgname, $state)
 {
-	my ($pkgname, $state) = @_;
-
 	$pkgname = extract_pkgname($pkgname);
 	return 0 unless is_installed($pkgname);
 	return 0 unless $user_tagged->{$pkgname};
@@ -224,10 +209,8 @@ sub tweak_package_status
 	return 0;
 }
 
-sub tweak_plist_status
+sub tweak_plist_status($plist, $state)
 {
-	my ($plist, $state) = @_;
-
 	my $pkgname = $plist->pkgname;
 	if ($state->defines('FW_UPDATE')) {
 		$plist->has('firmware') or
@@ -239,9 +222,9 @@ sub tweak_plist_status
 	}
 }
 
-sub tag_user_packages
+sub tag_user_packages(@p)
 {
-	for my $set (@_) {
+	for my $set (@p) {
 		for my $n ($set->newer_names) {
 			$user_tagged->{OpenBSD::PackageName::url2pkgname($n)} = 1;
 		}
@@ -278,28 +261,26 @@ use OpenBSD::Error;
 my ($uidcache, $gidcache);
 
 # $self->prepare_for_addition($state, $pkgname, $set)
-sub prepare_for_addition
+sub prepare_for_addition($, $, $, $)
 {
 }
 
 # $self->find_extractible($state, $wanted, $tied):
 #	sort item into wanted (needed from archive) / tied (already there)
-sub find_extractible
+sub find_extractible($, $, $, $)
 {
 }
 
-sub extract
+sub extract($self, $state)
 {
-	my ($self, $state) = @_;
 	$state->{partial}{$self} = 1;
 	if ($state->{interrupted}) {
 		die "Interrupted";
 	}
 }
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	# XXX "normal" items are already in partial, but NOT stuff
 	# that's install-only, like symlinks and dirs...
 	$state->{partial}{$self} = 1;
@@ -308,14 +289,13 @@ sub install
 	}
 }
 
-sub copy_info
+# $self->copy_info($dest, $state)
+sub copy_info($, $, $)
 {
 }
 
-sub set_modes
+sub set_modes($self, $state, $name)
 {
-	my ($self, $state, $name) = @_;
-
 	if (defined $self->{owner} || defined $self->{group}) {
 		require OpenBSD::IdCache;
 
@@ -350,14 +330,13 @@ package OpenBSD::PackingElement::Meta;
 
 # XXX stuff that's invisible to find_extractible should be considered extracted
 # for the most part, otherwise we create broken partial packages
-sub find_extractible
+sub find_extractible($self, $state, $wanted, $tied)
 {
-	my ($self, $state, $wanted, $tied) = @_;
 	$state->{partial}{$self} = 1;
 }
 
 package OpenBSD::PackingElement::Cwd;
-sub find_extractible
+sub find_extractible	# forwarder
 {
 	&OpenBSD::PackingElement::Meta::find_extractible;
 }
@@ -365,10 +344,8 @@ sub find_extractible
 package OpenBSD::PackingElement::ExtraInfo;
 use OpenBSD::Error;
 
-sub prepare_for_addition
+sub prepare_for_addition($self, $state, $pkgname, $)
 {
-	my ($self, $state, $pkgname) = @_;
-
 	if ($state->{ftp_only} && $self->{ftp} ne 'yes') {
 	    $state->errsay("Package #1 is not for ftp", $pkgname);
 	    $state->{problems}++;
@@ -378,13 +355,11 @@ sub prepare_for_addition
 package OpenBSD::PackingElement::NewAuth;
 use OpenBSD::Error;
 
-sub add_entry
+sub add_entry($, $l, @p)
 {
-	shift;	# get rid of self
-	my $l = shift;
-	while (@_ >= 2) {
-		my $f = shift;
-		my $v = shift;
+	while (@p >= 2) {
+		my $f = shift @p;
+		my $v = shift @p;
 		next if !defined $v or $v eq '';
 		if ($v =~ m/^\!(.*)$/o) {
 			push(@$l, $f, $1);
@@ -394,9 +369,8 @@ sub add_entry
 	}
 }
 
-sub prepare_for_addition
+sub prepare_for_addition($self, $state, $pkgname, $)
 {
-	my ($self, $state, $pkgname) = @_;
 	my $ok = $self->check;
 	if (defined $ok) {
 		if ($ok == 0) {
@@ -408,9 +382,8 @@ sub prepare_for_addition
 	$self->{okay} = $ok;
 }
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	my $auth = $self->name;
 	$state->say("adding #1 #2", $self->type, $auth) if $state->verbose >= 2;
@@ -424,12 +397,10 @@ sub install
 
 package OpenBSD::PackingElement::NewUser;
 
-sub command 	{ OpenBSD::Paths->useradd }
+sub command($) { OpenBSD::Paths->useradd }
 
-sub build_args
+sub build_args($self, $l)
 {
-	my ($self, $l) = @_;
-
 	$self->add_entry($l,
 	    '-u', $self->{uid},
 	    '-g', $self->{group},
@@ -441,12 +412,10 @@ sub build_args
 
 package OpenBSD::PackingElement::NewGroup;
 
-sub command { OpenBSD::Paths->groupadd }
+sub command($) { OpenBSD::Paths->groupadd }
 
-sub build_args
+sub build_args($self, $l)
 {
-	my ($self, $l) = @_;
-
 	$self->add_entry($l, '-g', $self->{gid});
 }
 
@@ -456,9 +425,8 @@ use File::Basename;
 use File::Path;
 use OpenBSD::Temp;
 
-sub find_extractible
+sub find_extractible($self, $state, $wanted, $tied)
 {
-	my ($self, $state, $wanted, $tied) = @_;
 	if ($self->{tieto} || $self->{link} || $self->{symlink}) {
 		$tied->{$self->name} = $self;
 	} else {
@@ -466,9 +434,8 @@ sub find_extractible
 	}
 }
 
-sub prepare_for_addition
+sub prepare_for_addition($self, $state, $pkgname, $)
 {
-	my ($self, $state, $pkgname) = @_;
 	my $fname = $self->retrieve_fullname($state, $pkgname);
 	# check for collisions with existing stuff
 	if ($state->vstat->exists($fname)) {
@@ -489,9 +456,8 @@ sub prepare_for_addition
 	}
 }
 
-sub prepare_to_extract
+sub prepare_to_extract($self, $state, $file)
 {
-	my ($self, $state, $file) = @_;
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
@@ -504,9 +470,8 @@ sub prepare_to_extract
 	$file->{destdir} = $destdir;
 }
 
-sub find_safe_dir
+sub find_safe_dir($self, $state)
 {
-	my ($self, $state) = @_;
 	# figure out a safe directory where to put the temp file
 
 	my $fullname = $self->fullname;
@@ -539,9 +504,8 @@ sub find_safe_dir
 	return $d;
 }
 
-sub create_temp
+sub create_temp($self, $d, $state)
 {
-	my ($self, $d, $state) = @_;
 	my $fullname = $self->fullname;
 	my ($fh, $tempname) = OpenBSD::Temp::permanent_file($d, "pkg");
 	$self->{tempname} = $tempname;
@@ -556,9 +520,8 @@ sub create_temp
 	return ($fh, $tempname);
 }
 
-sub may_create_temp
+sub may_create_temp($self, $d, $state)
 {
-	my ($self, $d, $state) = @_;
 	if ($self->{avoid_temp}) {
 		if (open(my $fh, '>', $self->{avoid_temp})) {
 			return ($fh, $self->{avoid_temp});
@@ -568,9 +531,8 @@ sub may_create_temp
 	return $self->create_temp($d, $state);
 }
 
-sub tie
+sub tie($self, $state)
 {
-	my ($self, $state) = @_;
 	if (defined $self->{link} || defined $self->{symlink}) {
 		return;
 	}
@@ -602,10 +564,8 @@ sub tie
 }
 
 
-sub extract
+sub extract($self, $state, $file)
 {
-	my ($self, $state, $file) = @_;
-
 	$self->SUPER::extract($state);
 
 	my $d = $self->find_safe_dir($state);
@@ -636,9 +596,8 @@ sub extract
 	}
 }
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
@@ -677,17 +636,14 @@ sub install
 }
 
 package OpenBSD::PackingElement::Extra;
-sub find_extractible
+sub find_extractible($self, $state, $wanted, $tied)
 {
-	my ($self, $state, $wanted, $tied) = @_;
-
 	$state->{current_set}{known_extra}{$self->fullname} = 1;
 }
 
 package OpenBSD::PackingElement::RcScript;
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	$state->{add_rcscripts}{$self->fullname} = 1;
 	$self->SUPER::install($state);
 }
@@ -696,9 +652,8 @@ package OpenBSD::PackingElement::Sample;
 use OpenBSD::Error;
 use File::Copy;
 
-sub prepare_for_addition
+sub prepare_for_addition($self, $state, $pkgname, $)
 {
-	my ($self, $state, $pkgname) = @_;
 	if (!defined $self->{copyfrom}) {
 		$state->errsay("\@sample element #1 does not reference a valid file",
 		    $self->fullname);
@@ -720,22 +675,18 @@ sub prepare_for_addition
 	}
 }
 
-sub find_extractible
+sub find_extractible($self, $state, $wanted, $tied)
 {
-	my ($self, $state, $wanted, $tied) = @_;
-
 	$state->{current_set}{known_sample}{$self->fullname} = 1;
 }
 
 # $self->extract($state)
-sub extract
+sub extract($, $)
 {
 }
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
-
 	$self->SUPER::install($state);
 	my $destdir = $state->{destdir};
 	my $filename = $destdir.$self->fullname;
@@ -776,20 +727,19 @@ sub install
 }
 
 package OpenBSD::PackingElement::Sampledir;
-sub extract
+sub extract($, $)
 {
 }
 
-sub install
+sub install	# forwarder
 {
 	&OpenBSD::PackingElement::Dir::install;
 }
 
 package OpenBSD::PackingElement::Mandir;
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	if (!$state->{current_set}{known_mandirs}{$self->fullname}) {
 		$state->log("You may wish to add #1 to /etc/man.conf", 
@@ -799,9 +749,8 @@ sub install
 
 package OpenBSD::PackingElement::Manpage;
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	$self->register_manpage($state, 'addman');
 }
@@ -810,9 +759,8 @@ package OpenBSD::PackingElement::InfoFile;
 use File::Basename;
 use OpenBSD::Error;
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	return if $state->{not};
 	my $fullname = $state->{destdir}.$self->fullname;
@@ -821,9 +769,8 @@ sub install
 }
 
 package OpenBSD::PackingElement::Shell;
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	return if $state->{not};
 	my $fullname = $self->fullname;
@@ -843,9 +790,8 @@ sub install
 }
 
 package OpenBSD::PackingElement::Dir;
-sub extract
+sub extract($self, $state)
 {
-	my ($self, $state) = @_;
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
 
@@ -857,9 +803,8 @@ sub extract
 	$state->make_path($destdir.$fullname, $fullname);
 }
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	my $fullname = $self->fullname;
 	my $destdir = $state->{destdir};
@@ -874,38 +819,32 @@ sub install
 package OpenBSD::PackingElement::Exec;
 use OpenBSD::Error;
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
-
 	$self->SUPER::install($state);
 	if ($self->should_run($state)) {
 		$self->run($state);
 	}
 }
 
-sub should_run() { 1 }
+sub should_run($, $) { 1 }
 
 package OpenBSD::PackingElement::ExecAdd;
-sub should_run
+sub should_run($self, $state)
 {
-	my ($self, $state) = @_;
 	return !$state->replacing;
 }
 
 package OpenBSD::PackingElement::ExecUpdate;
-sub should_run
+sub should_run($self, $state)
 {
-	my ($self, $state) = @_;
 	return $state->replacing;
 }
 
 package OpenBSD::PackingElement::Tag;
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
-
 	for my $d (@{$self->{definition_list}}) {
 		$d->add_tag($self, "install", $state);
 	}
@@ -913,9 +852,8 @@ sub install
 
 package OpenBSD::PackingElement::Lib;
 
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	$self->SUPER::install($state);
 	$self->mark_ldconfig_directory($state);
 }
@@ -924,9 +862,8 @@ package OpenBSD::PackingElement::SpecialFile;
 use OpenBSD::PackageInfo;
 use OpenBSD::Error;
 
-sub copy_info
+sub copy_info($self, $dest, $state)
 {
-	my ($self, $dest, $state) = @_;
 	require File::Copy;
 
 	File::Copy::move($self->fullname, $dest) or
@@ -934,27 +871,24 @@ sub copy_info
 		$self->fullname, $dest, $!);
 }
 
-sub extract
+sub extract($self, $state)
 {
-	my ($self, $state) = @_;
 	$self->may_verify_digest($state);
 }
 
-sub find_extractible
+sub find_extractible($self, $state, $, $)
 {
-	my ($self, $state) = @_;
 	$self->may_verify_digest($state);
 }
 
 package OpenBSD::PackingElement::FCONTENTS;
-sub copy_info
+sub copy_info($, $, $)
 {
 }
 
 package OpenBSD::PackingElement::AskUpdate;
-sub prepare_for_addition
+sub prepare_for_addition($self, $state, $pkgname, $set)
 {
-	my ($self, $state, $pkgname, $set) = @_;
 	my @old = $set->older_names;
 	if ($self->spec->match_ref(\@old) > 0) {
 		my $key = "update_".OpenBSD::PackageName::splitstem($pkgname);
@@ -974,9 +908,8 @@ sub prepare_for_addition
 }
 
 package OpenBSD::PackingElement::FDISPLAY;
-sub install
+sub install($self, $state)
 {
-	my ($self, $state) = @_;
 	my $d = $self->{d};
 	if (!$state->{current_set}{known_displays}{$self->{d}->key}) {
 		$self->prepare($state);
@@ -985,9 +918,8 @@ sub install
 }
 
 package OpenBSD::PackingElement::FUNDISPLAY;
-sub find_extractible
+sub find_extractible($self, $state, $wanted, $tied)
 {
-	my ($self, $state, $wanted, $tied) = @_;
 	$state->{current_set}{known_displays}{$self->{d}->key} = 1;
 	$self->SUPER::find_extractible($state, $wanted, $tied);
 }

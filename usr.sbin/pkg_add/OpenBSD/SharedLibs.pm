@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SharedLibs.pm,v 1.61 2023/05/21 16:50:50 espie Exp $
+# $OpenBSD: SharedLibs.pm,v 1.62 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -53,7 +53,6 @@ sub new($class, $state = $class->_basestate)
 	    done_system => 0
 	    }, $class;
 }
-
 
 sub register_library($self, $lib, $pkgname)
 {

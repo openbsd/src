@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UpdateSet.pm,v 1.88 2023/05/27 10:07:12 espie Exp $
+# $OpenBSD: UpdateSet.pm,v 1.89 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -41,20 +41,18 @@
 # for instance, package installation will check UpdateSets for internal
 # dependencies and for conflicts. For that to work, we need kept stuff
 #
-use strict;
-use warnings;
+use v5.36;
 
 # hints should behave like locations
 package OpenBSD::hint;
-sub new
+sub new($class, $name)
 {
-	my ($class, $name) = @_;
 	bless {name => $name}, $class;
 }
 
-sub pkgname
+sub pkgname($self)
 {
-	return shift->{name};
+	return $self->{name};
 }
 
 package OpenBSD::hint2;
@@ -67,53 +65,47 @@ our @ISA = qw(OpenBSD::hint);
 package OpenBSD::DeleteSet;
 use OpenBSD::Error;
 
-sub new
+sub new($class, $state)
 {
-	my ($class, $state) = @_;
 	return bless {older => {}}, $class;
 }
 
-sub add_older
+sub add_older($self, @p)
 {
-	my $self = shift;
-	for my $h (@_) {
+	for my $h (@p) {
 		$self->{older}{$h->pkgname} = $h;
 		$h->{is_old} = 1;
 	}
 	return $self;
 }
 
-sub older
+sub older($self)
 {
-	my $self = shift;
 	return values %{$self->{older}};
 }
 
-sub older_names
+sub older_names($self)
 {
-	my $self = shift;
 	return keys %{$self->{older}};
 }
 
-sub all_handles
+sub all_handles	# forwarder
 {
 	&older;
 }
 
-sub changed_handles
+sub changed_handles	# forwarder
 {
 	&older;
 }
 
-sub mark_as_finished
+sub mark_as_finished($self)
 {
-	my $self = shift;
 	$self->{finished} = 1;
 }
 
-sub cleanup
+sub cleanup($self, $error = undef, $errorinfo = undef)
 {
-	my ($self, $error, $errorinfo) = @_;
 	for my $h ($self->all_handles) {
 		$h->cleanup($error, $errorinfo);
 	}
@@ -130,45 +122,42 @@ sub cleanup
 	$self->mark_as_finished;
 }
 
-sub has_error
+sub has_error	# forwarder
 {
 	&OpenBSD::Handle::has_error;
 }
 
 # display code that will put together packages with the same version
-sub smart_join
+sub smart_join($self, @p)
 {
-	my $self = shift;
-	if (@_ <= 1) {
-		return join('+', @_);
+	if (@p <= 1) {
+		return join('+', @p);
 	}
 	my ($k, @stems);
-	for my $l (@_) {
+	for my $l (@p) {
 		my ($stem, @rest) = OpenBSD::PackageName::splitname($l);
 		my $k2 = join('-', @rest);
 		$k //= $k2;
 		if ($k2 ne $k) {
-			return join('+', sort @_);
+			return join('+', sort @p);
 		}
 		push(@stems, $stem);
 	}
 	return join('+', sort @stems).'-'.$k;
 }
 
-sub print
+sub print($self)
 {
-	my $self = shift;
 	return $self->smart_join($self->older_names);
 }
 
-sub todo_names
+sub todo_names	# forwarder
 {
 	&older_names;
 }
 
-sub short_print
+sub short_print($self)
 {
-	my $self = shift;
 	my $result = $self->smart_join($self->todo_names);
 	if (length $result > 30) {
 		return substr($result, 0, 27)."...";
@@ -177,18 +166,16 @@ sub short_print
 	}
 }
 
-sub real_set
+sub real_set($set)
 {
-	my $set = shift;
 	while (defined $set->{merged}) {
 		$set = $set->{merged};
 	}
 	return $set;
 }
 
-sub merge_set
+sub merge_set($self, $set)
 {
-	my ($self, $set) = @_;
 	$self->add_older($set->older);
 	$set->mark_as_finished;
 	# XXX and mark it as merged, for eventual updates
@@ -196,10 +183,8 @@ sub merge_set
 }
 
 # Merge several deletesets together
-sub merge
+sub merge($self, $tracker, @sets)
 {
-	my ($self, $tracker, @sets) = @_;
-
 	# Apparently simple, just add the missing parts
 	for my $set (@sets) {
 		next if $set eq $self;
@@ -211,19 +196,19 @@ sub merge
 	return $self;
 }
 
-sub match_locations
+sub match_locations($, @)
 {
 	return [];
 }
 
 OpenBSD::Auto::cache(solver,
-    sub {
+    sub($self) {
     	require OpenBSD::Dependencies;
-	return OpenBSD::Dependencies::Solver->new(shift);
+	return OpenBSD::Dependencies::Solver->new($self);
     });
 
 OpenBSD::Auto::cache(conflict_cache,
-    sub {
+    sub($) {
     	require OpenBSD::Dependencies;
 	return OpenBSD::ConflictCache->new;
     });
@@ -231,9 +216,8 @@ OpenBSD::Auto::cache(conflict_cache,
 package OpenBSD::UpdateSet;
 our @ISA = qw(OpenBSD::DeleteSet);
 
-sub new
+sub new($class, $state)
 {
-	my ($class, $state) = @_;
 	my $o = $class->SUPER::new($state);
 	$o->{newer} = {};
 	$o->{kept} = {};
@@ -243,27 +227,22 @@ sub new
 	return $o;
 }
 
-sub path
+# TODO this stuff is mostly unused right now (or buggy)
+sub path($set)
 {
-	my $set = shift;
-
 	return $set->{path};
 }
 
-sub add_repositories
+sub add_repositories($set, @repos)
 {
-	my ($set, @repos) = @_;
-
 	if (!defined $set->{path}) {
 		$set->{path} = $set->{repo}->path;
 	}
 	$set->{path}->add(@repos);
 }
 
-sub merge_paths
+sub merge_paths($set, $other)
 {
-	my ($set, $other) = @_;
-
 	if (defined $other->path) {
 		if (!defined $set->path) {
 			$set->{path} = $other->path;
@@ -273,9 +252,8 @@ sub merge_paths
 	}
 }
 
-sub match_locations
+sub match_locations($set, @spec)
 {
-	my ($set, @spec) = @_;
 	my $r = [];
 	if (defined $set->{path}) {
 		$r = $set->{path}->match_locations(@spec);
@@ -286,29 +264,26 @@ sub match_locations
 	return $r;
 }
 
-sub add_newer
+sub add_newer($self, @p)
 {
-	my $self = shift;
-	for my $h (@_) {
+	for my $h (@p) {
 		$self->{newer}{$h->pkgname} = $h;
 		$self->{updates}++;
 	}
 	return $self;
 }
 
-sub add_kept
+sub add_kept($self, @p)
 {
-	my $self = shift;
-	for my $h (@_) {
+	for my $h (@p) {
 		$self->{kept}->{$h->pkgname} = $h;
 	}
 	return $self;
 }
 
-sub move_kept
+sub move_kept($self, @p)
 {
-	my $self = shift;
-	for my $h (@_) {
+	for my $h (@p) {
 		delete $self->{older}{$h->pkgname};
 		delete $self->{newer}{$h->pkgname};
 		$self->{kept}{$h->pkgname} = $h;
@@ -322,75 +297,64 @@ sub move_kept
 	return $self;
 }
 
-sub add_hints
+sub add_hints($self, @p)
 {
-	my $self = shift;
-	for my $h (@_) {
+	for my $h (@p) {
 		push(@{$self->{hints}}, OpenBSD::hint->new($h));
 	}
 	return $self;
 }
 
-sub add_hints2
+sub add_hints2($self, @p)
 {
-	my $self = shift;
-	for my $h (@_) {
+	for my $h (@p) {
 		push(@{$self->{hints}}, OpenBSD::hint2->new($h));
 	}
 	return $self;
 }
 
-sub newer
+sub newer($self)
 {
-	my $self = shift;
 	return values %{$self->{newer}};
 }
 
-sub kept
+sub kept($self)
 {
-	my $self = shift;
 	return values %{$self->{kept}};
 }
 
-sub hints
+sub hints($self)
 {
-	my $self = shift;
 	return @{$self->{hints}};
 }
 
-sub newer_names
+sub newer_names($self)
 {
-	my $self = shift;
 	return keys %{$self->{newer}};
 }
 
-sub kept_names
+sub kept_names($self)
 {
-	my $self = shift;
 	return keys %{$self->{kept}};
 }
 
-sub all_handles
+sub all_handles($self)
 {
-	my $self = shift;
 	return ($self->older, $self->newer, $self->kept);
 }
 
-sub changed_handles
+sub changed_handles($self)
 {
-	my $self = shift;
 	return ($self->older, $self->newer);
 }
 
-sub hint_names
+sub hint_names($self)
 {
-	my $self = shift;
 	return map {$_->pkgname} $self->hints;
 }
 
-sub older_to_do
+sub older_to_do($self)
 {
-	my $self = shift;
 	# XXX in `combined' updates, some dependencies may remove extra
 	# packages, so we do a double-take on the list of packages we
 	# are actually replacing... for now, until we merge update sets.
@@ -404,9 +368,8 @@ sub older_to_do
 	return @l;
 }
 
-sub print
+sub print($self)
 {
-	my $self = shift;
 	my $result = "";
 	if ($self->kept > 0) {
 		$result = "[".$self->smart_join($self->kept_names)."]";
@@ -440,9 +403,8 @@ sub print
 	return $result;
 }
 
-sub todo_names
+sub todo_names($self)
 {
-	my $self = shift;
 	if ($self->newer > 0) {
 		return $self->newer_names;
 	} else {
@@ -450,9 +412,8 @@ sub todo_names
 	}
 }
 
-sub validate_plists
+sub validate_plists($self, $state)
 {
-	my ($self, $state) = @_;
 	$state->{problems} = 0;
 	delete $state->{overflow};
 
@@ -496,9 +457,8 @@ sub validate_plists
 	}
 }
 
-sub cleanup_old_shared
+sub cleanup_old_shared($set, $state)
 {
-	my ($set, $state) = @_;
 	my $h = $set->{old_shared};
 
 	for my $d (sort {$b cmp $a} keys %$h) {
@@ -509,19 +469,16 @@ sub cleanup_old_shared
 }
 
 my @extra = qw(solver conflict_cache);
-sub mark_as_finished
+sub mark_as_finished($self)
 {
-	my $self = shift;
 	for my $i (@extra, 'sha') {
 		delete $self->{$i};
 	}
 	$self->SUPER::mark_as_finished;
 }
 
-sub merge_if_exists
+sub merge_if_exists($self, $k, @extra)
 {
-	my ($self, $k, @extra) = @_;
-
 	my @list = ();
 	for my $s (@extra) {
 		if ($s ne $self && defined $s->{$k}) {
@@ -531,9 +488,8 @@ sub merge_if_exists
 	$self->$k->merge(@list);
 }
 
-sub merge_set
+sub merge_set($self, $set)
 {
-	my ($self, $set) = @_;
 	$self->SUPER::merge_set($set);
 	$self->add_newer($set->newer);
 	$self->add_kept($set->kept);
@@ -543,10 +499,8 @@ sub merge_set
 }
 
 # Merge several updatesets together
-sub merge
+sub merge($self, $tracker, @sets)
 {
-	my ($self, $tracker, @sets) = @_;
-
 	for my $i (@extra) {
 		$self->merge_if_exists($i, @sets);
 	}

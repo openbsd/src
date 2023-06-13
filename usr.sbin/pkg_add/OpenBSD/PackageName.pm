@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageName.pm,v 1.57 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: PackageName.pm,v 1.58 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -15,14 +15,12 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackageName;
 
-sub url2pkgname
+sub url2pkgname($name)
 {
-	my $name = $_[0];
 	$name =~ s|.*/||;
 	$name =~ s|\.tgz$||;
 
@@ -30,9 +28,8 @@ sub url2pkgname
 }
 
 # see packages-specs(7)
-sub splitname
+sub splitname($n)
 {
-	my $n = shift;
 	if ($n =~ /^(.*?)\-(\d.*)$/o) {
 		my $stem = $1;
 		my $rest = $2;
@@ -45,15 +42,13 @@ sub splitname
 
 my $cached = {};
 
-sub from_string
+sub from_string($class, $s)
 {
-	my ($class, $s) = @_;
 	return $cached->{$s} //= $class->new_from_string($s);
 }
 
-sub new_from_string
+sub new_from_string($class, $n)
 {
-	my ($class, $n) = @_;
 	if ($n =~ /^(.*?)\-(\d.*)$/o) {
 		my $stem = $1;
 		my $rest = $2;
@@ -71,9 +66,8 @@ sub new_from_string
 	}
 }
 
-sub splitstem
+sub splitstem($s)
 {
-	my $s = shift;
 	if ($s =~ /^(.*?)\-\d/o) {
 		return $1;
 	} else {
@@ -81,16 +75,15 @@ sub splitstem
 	}
 }
 
-sub pkg2stem
+sub pkg2stem($pkg)
 {
-	my $s = splitstem(shift);
+	my $s = splitstem($pkg);
 	$s =~ tr/A-Z/a-z/;
 	return $s;
 
 }
-sub is_stem
+sub is_stem($s)
 {
-	my $s = shift;
 	if ($s =~ m/\-\d/o || $s eq '-') {
 		return 0;
 	} else {
@@ -98,39 +91,35 @@ sub is_stem
 	}
 }
 
-sub compile_stemlist
+sub compile_stemlist(@p)
 {
 	my $hash = {};
-	for my $n (@_) {
+	for my $n (@p) {
 		$hash->{pkg2stem($n)}{$n} = 1;
 	}
 	bless $hash, "OpenBSD::PackageLocator::_compiled_stemlist";
 }
 
-sub avail2stems
+sub avail2stems(@p)
 {
-	my @avail = @_;
-	return compile_stemlist(@avail);
+	return compile_stemlist(@p);
 }
 
 package OpenBSD::PackageLocator::_compiled_stemlist;
 
-sub find
+sub find($self, $stem)
 {
-	my ($self, $stem) = @_;
 	$stem =~ tr/A-Z/a-z/;
 	return keys %{$self->{$stem}};
 }
 
-sub add
+sub add($self, $pkgname)
 {
-	my ($self, $pkgname) = @_;
 	$self->{OpenBSD::PackageName::pkg2stem($pkgname)}{$pkgname} = 1;
 }
 
-sub delete
+sub delete($self, $pkgname)
 {
-	my ($self, $pkgname) = @_;
 	my $stem = OpenBSD::PackageName::pkg2stem($pkgname);
 	delete $self->{$stem}{$pkgname};
 	if(keys %{$self->{$stem}} == 0) {
@@ -138,9 +127,8 @@ sub delete
 	}
 }
 
-sub find_partial
+sub find_partial($self, $partial)
 {
-	my ($self, $partial) = @_;
 	my @result = ();
 	while (my ($stem, $pkgs) = each %$self) {
 		next unless $stem =~ /\Q$partial\E/i;
@@ -153,9 +141,8 @@ package OpenBSD::PackageName::dewey;
 
 my $cache = {};
 
-sub from_string
+sub from_string($class, $string)
 {
-	my ($class, $string) = @_;
 	my $o = bless { deweys => [ split(/\./o, $string) ],
 		suffix => '', suffix_value => 0}, $class;
 	if ($o->{deweys}->[-1] =~ m/^(\d+)(rc|alpha|beta|pre|pl)(\d*)$/) {
@@ -166,15 +153,13 @@ sub from_string
 	return $o;
 }
 
-sub make
+sub make($class, $string)
 {
-	my ($class, $string) = @_;
 	return $cache->{$string} //= $class->from_string($string);
 }
 
-sub to_string
+sub to_string($self)
 {
-	my $self = shift;
 	my $r = join('.', @{$self->{deweys}});
 	if ($self->{suffix}) {
 		$r .= $self->{suffix} . $self->{suffix_value};
@@ -182,9 +167,8 @@ sub to_string
 	return $r;
 }
 
-sub suffix_compare
+sub suffix_compare($a, $b)
 {
-	my ($a, $b) = @_;
 	if ($a->{suffix} eq $b->{suffix}) {
 		return $a->{suffix_value} <=> $b->{suffix_value};
 	}
@@ -213,9 +197,8 @@ sub suffix_compare
 	return 0;
 }
 
-sub compare
+sub compare($a, $b)
 {
-	my ($a, $b) = @_;
 	# Try a diff in dewey numbers first
 	for (my $i = 0; ; $i++) {
 		if (!defined $a->{deweys}->[$i]) {
@@ -235,9 +218,8 @@ sub compare
 	return suffix_compare($a, $b);
 }
 
-sub dewey_compare
+sub dewey_compare($a, $b)
 {
-	my ($a, $b) = @_;
 	# numerical comparison
 	if ($a =~ m/^\d+$/o and $b =~ m/^\d+$/o) {
 		return $a <=> $b;
@@ -256,23 +238,18 @@ sub dewey_compare
 
 package OpenBSD::PackageName::version;
 
-sub p
+sub p($self)
 {
-	my $self = shift;
-
 	return defined $self->{p} ? $self->{p} : -1;
 }
 
-sub v
+sub v($self)
 {
-	my $self = shift;
-
 	return defined $self->{v} ? $self->{v} : -1;
 }
 
-sub from_string
+sub from_string($class, $string)
 {
-	my ($class, $string) = @_;
 	my $o = bless {}, $class;
 	if ($string =~ m/^(.*)v(\d+)$/o) {
 		$o->{v} = $2;
@@ -287,9 +264,8 @@ sub from_string
 	return $o;
 }
 
-sub to_string
+sub to_string($o)
 {
-	my $o = shift;
 	my $string = $o->{dewey}->to_string;
 	if (defined $o->{p}) {
 		$string .= 'p'.$o->{p};
@@ -300,15 +276,13 @@ sub to_string
 	return $string;
 }
 
-sub pnum_compare
+sub pnum_compare($a, $b)
 {
-	my ($a, $b) = @_;
 	return $a->p <=> $b->p;
 }
 
-sub compare
+sub compare($a, $b)
 {
-	my ($a, $b) = @_;
 	# Simple case: epoch number
 	if ($a->v != $b->v) {
 		return $a->v <=> $b->v;
@@ -321,9 +295,8 @@ sub compare
 	return $a->{dewey}->compare($b->{dewey});
 }
 
-sub has_issues
+sub has_issues($self)
 {
-	my $self = shift;
 	if ($self->{dewey}{deweys}[-1] =~ m/v\d+$/ && defined $self->{p}) {
 		return ("correct order is pNvM");
 	} else {
@@ -332,56 +305,48 @@ sub has_issues
 }
 
 package OpenBSD::PackageName::Stem;
-sub to_string
+sub to_string($o)
 {
-	my $o = shift;
 	return $o->{stem};
 }
 
-sub to_pattern
+sub to_pattern($o)
 {
-	my $o = shift;
 	return $o->{stem}.'-*';
 }
 
-sub has_issues
+sub has_issues($self)
 {
-	my $self = shift;
 	return ("is a stem");
 }
 
 package OpenBSD::PackageName::Name;
-sub flavor_string
+sub flavor_string($o)
 {
-	my $o = shift;
 	return join('-', sort keys %{$o->{flavors}});
 }
 
-sub to_string
+sub to_string($o)
 {
-	my $o = shift;
 	return join('-', $o->{stem}, $o->{version}->to_string,
 	    sort keys %{$o->{flavors}});
 }
 
-sub to_pattern
+sub to_pattern($o)
 {
-	my $o = shift;
 	return join('-', $o->{stem}, '*', $o->flavor_string);
 }
 
-sub compare
+sub compare($a, $b)
 {
-	my ($a, $b) = @_;
 	if ($a->{stem} ne $b->{stem} || $a->flavor_string ne $b->flavor_string) {
 		return undef;
 	}
 	return $a->{version}->compare($b->{version});
 }
 
-sub has_issues
+sub has_issues($self)
 {
-	my $self = shift;
 	return ((map {"flavor $_ can't start with digit"}
 	    	grep { /^\d/ } keys %{$self->{flavors}}),
 		$self->{version}->has_issues);

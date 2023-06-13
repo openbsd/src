@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: State.pm,v 1.73 2023/05/21 16:07:35 espie Exp $
+# $OpenBSD: State.pm,v 1.74 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -16,65 +16,52 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackageRepositoryFactory;
-sub new
+sub new($class, $state)
 {
-	my ($class, $state) = @_;
 	return bless {state => $state}, $class;
 }
 
-sub locator
+sub locator($self)
 {
-	my $self = shift;
 	return $self->{state}->locator;
 }
 
-sub installed
+sub installed($self, $all = 0)
 {
-	my ($self, $all) = @_;
 	require OpenBSD::PackageRepository::Installed;
 
 	return OpenBSD::PackageRepository::Installed->new($all, $self->{state});
 }
 
-sub path_parse
+sub path_parse($self, $pkgname)
 {
-	my ($self, $pkgname) = @_;
-
 	return $self->locator->path_parse($pkgname, $self->{state});
 }
 
-sub find
+sub find($self, $pkg)
 {
-	my ($self, $pkg) = @_;
-
 	return $self->locator->find($pkg, $self->{state});
 }
 
-sub reinitialize
+sub reinitialize($)
 {
 }
 
-sub match_locations
+sub match_locations($self, @p)
 {
-	my $self = shift;
-
-	return $self->locator->match_locations(@_, $self->{state});
+	return $self->locator->match_locations(@p, $self->{state});
 }
 
-sub grabPlist
+sub grabPlist($self, $url, $code)
 {
-	my ($self, $url, $code) = @_;
-
 	return $self->locator->grabPlist($url, $code, $self->{state});
 }
 
-sub path
+sub path($self)
 {
-	my $self = shift;
 	require OpenBSD::PackageRepositoryList;
 
 	return OpenBSD::PackageRepositoryList->new($self->{state});
@@ -88,33 +75,30 @@ use OpenBSD::Error;
 use parent qw(OpenBSD::BaseState Exporter);
 our @EXPORT = ();
 
-sub locator
+sub locator($)
 {
 	require OpenBSD::PackageLocator;
 	return "OpenBSD::PackageLocator";
 }
 
-sub cache_directory
+sub cache_directory($)
 {
 	return undef;
 }
 
-sub new
+sub new($class, $cmd = undef, @p)
 {
-	my $class = shift;
-	my $cmd = shift;
 	if (!defined $cmd) {
 		$cmd = $0;
 		$cmd =~ s,.*/,,;
 	}
 	my $o = bless {cmd => $cmd}, $class;
-	$o->init(@_);
+	$o->init(@p);
 	return $o;
 }
 
-sub init
+sub init($self)
 {
-	my $self = shift;
 	$self->{subst} = OpenBSD::Subst->new;
 	$self->{repo} = OpenBSD::PackageRepositoryFactory->new($self);
 	$self->{export_level} = 1;
@@ -123,22 +107,20 @@ sub init
 	}
 }
 
-sub repo
+sub repo($self)
 {
-	my $self = shift;
 	return $self->{repo};
 }
 
-sub handle_continue
+sub handle_continue($self)
 {
-	my $self = shift;
 	$self->find_window_size;
 	# invalidate cache so this runs again after continue
 	delete $self->{can_output};
 }
 
 OpenBSD::Auto::cache(can_output,
-	sub {
+	sub($) {
 		require POSIX;
 
 		return 1 if !-t STDOUT;
@@ -151,8 +133,7 @@ OpenBSD::Auto::cache(can_output,
 	});
 
 OpenBSD::Auto::cache(installpath,
-	sub {
-		my $self = shift;
+	sub($self) {
 		return undef if $self->defines('NOINSTALLPATH');
 		require OpenBSD::Paths;
 		open(my $fh, '<', OpenBSD::Paths->installurl) or return undef;
@@ -165,36 +146,31 @@ OpenBSD::Auto::cache(installpath,
 	});
 
 OpenBSD::Auto::cache(shlibs,
-	sub {
-		my $self = shift;
+	sub($self) {
 		require OpenBSD::SharedLibs;
 		return $self->{shlibs} //= OpenBSD::SharedLibs->new($self);
 	});
 
-sub usage_is
+sub usage_is($self, @usage)
 {
-	my ($self, @usage) = @_;
 	$self->{usage} = \@usage;
 }
 
-sub verbose
+sub verbose($self)
 {
-	my $self = shift;
 	return $self->{v};
 }
 
-sub opt
+sub opt($self, $k)
 {
-	my ($self, $k) = @_;
 	return $self->{opt}{$k};
 }
 
-sub usage
+sub usage($self, @p)
 {
-	my $self = shift;
 	my $code = 0;
-	if (@_) {
-		print STDERR "$self->{cmd}: ", $self->f(@_), "\n";
+	if (@p) {
+		print STDERR "$self->{cmd}: ", $self->f(@p), "\n";
 		$code = 1;
 	}
 	print STDERR "Usage: $self->{cmd} ", shift(@{$self->{usage}}), "\n";
@@ -204,30 +180,32 @@ sub usage
 	exit($code);
 }
 
-sub do_options
+sub do_options($state, $sub)
 {
-	my ($state, $sub) = @_;
 	# this could be nicer...
 
 	try {
-		&$sub;
+		&$sub();
 	} catch {
 		$state->usage("#1", $_);
 	};
 }
 
-sub handle_options
+sub handle_options($state, $opt_string, @usage)
 {
-	my ($state, $opt_string, @usage) = @_;
 	require OpenBSD::Getopt;
 
 	$state->{opt}{v} = 0 unless $opt_string =~ m/v/;
-	$state->{opt}{h} = sub { $state->usage; } unless $opt_string =~ m/h/;
-	$state->{opt}{D} = sub {
-		$state->{subst}->parse_option(shift);
-	} unless $opt_string =~ m/D/;
+	$state->{opt}{h} = 
+	    sub() { 
+	    	$state->usage; 
+	    } unless $opt_string =~ m/h/;
+	$state->{opt}{D} = 
+	    sub($opt) {
+		$state->{subst}->parse_option($opt);
+	    } unless $opt_string =~ m/D/;
 	$state->usage_is(@usage);
-	$state->do_options(sub {
+	$state->do_options(sub() {
 		OpenBSD::Getopt::getopts($opt_string.'hvD:', $state->{opt});
 	});
 	$state->{v} = $state->opt('v');
@@ -241,7 +219,7 @@ sub handle_options
 	}
 
 	return if $state->{no_exports};
-	# XXX
+	# TODO make sure nothing uses this
 	no strict "refs";
 	no strict "vars";
 	for my $k (keys %{$state->{opt}}) {
@@ -252,33 +230,29 @@ sub handle_options
 	OpenBSD::State->import;
 }
 
-sub defines
+sub defines($self, $k)
 {
-	my ($self, $k) = @_;
 	return $self->{subst}->value($k);
 }
 
-sub width
+sub width($self)
 {
-	my $self = shift;
 	if (!defined $self->{width}) {
 		$self->find_window_size;
 	}
 	return $self->{width};
 }
 
-sub height
+sub height($self)
 {
-	my $self = shift;
 	if (!defined $self->{height}) {
 		$self->find_window_size;
 	}
 	return $self->{height};
 }
 		
-sub find_window_size
+sub find_window_size($self)
 {
-	my $self = shift;
 	require Term::ReadKey;
 	my @l = Term::ReadKey::GetTermSizeGWINSZ(\*STDOUT);
 	# default to sane values
@@ -295,8 +269,7 @@ sub find_window_size
 }
 
 OpenBSD::Auto::cache(signer_list,
-	sub {
-		my $self = shift;
+	sub($self) {
 		if ($self->defines('SIGNER')) {
 			return [split /,/, $self->{subst}->value('SIGNER')];
 		} else {

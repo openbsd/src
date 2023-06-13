@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: Signer.pm,v 1.11 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: Signer.pm,v 1.12 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -16,12 +16,12 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 # code necessary to create signed packages
 
 # the factory that chooses what method to use to sign things
+# we keep that just in case we need to change scheme again
 package OpenBSD::Signer;
 use OpenBSD::PackageInfo;
 
@@ -29,10 +29,8 @@ my $h = {
 	signify2 => 'OpenBSD::Signer::SIGNIFY2',
 };
 
-sub factory
+sub factory($class, $state)
 {
-	my ($class, $state) = @_;
-
 	my @p = @{$state->{signature_params}};
 
 	if (defined $h->{$p[0]}) {
@@ -44,9 +42,8 @@ sub factory
 
 package OpenBSD::Signer::SIGNIFY2;
 our @ISA = qw(OpenBSD::Signer);
-sub new
+sub new($class, $state, @p)
 {
-	my ($class, $state, @p) = @_;
 	if (@p != 2 || !-f $p[1]) {
 		$state->usage("$p[0] signature wants -s privkey");
 	}
@@ -54,9 +51,8 @@ sub new
 	return $o;
 }
 
-sub sign
+sub sign($signer, $pkg, $state, $tmp)
 {
-	my ($signer, $pkg, $state, $tmp) = @_;
 	my $privkey = $signer->{privkey};
  	my $url = $pkg->url;
 	if (!$pkg->{repository}->is_local_file) {
@@ -68,7 +64,7 @@ sub sign
 	$state->system(OpenBSD::Paths->signify, '-zS', '-s', $privkey, '-m', $url, '-x', $tmp);
 }
 
-sub want_local
+sub want_local($)
 {
 	return 1;
 }
@@ -76,9 +72,8 @@ sub want_local
 package OpenBSD::CreateSign::State;
 our @ISA = qw(OpenBSD::AddCreateDelete::State);
 
-sub create_archive
+sub create_archive($state, $filename, $dir)
 {
-	my ($state, $filename, $dir) = @_;
 	require IO::Compress::Gzip;
 	my $level = $state->{subst}->value('COMPRESSION_LEVEL') // 6;
 	my $fh = IO::Compress::Gzip->new($filename, 
@@ -88,9 +83,8 @@ sub create_archive
 	return OpenBSD::Ustar->new($fh, $state, $dir);
 }
 
-sub new_gstream
+sub new_gstream($state)
 {
-	my $state = shift;
 	close($state->{archive}{fh});
 	my $level = $state->{subst}->value('COMPRESSION_LEVEL') // 6;
 	$state->{archive}{fh} =IO::Compress::Gzip->new(
@@ -100,9 +94,8 @@ sub new_gstream
 		    $state->{archive_filename}, $!);
 }
 
-sub ntodo
+sub ntodo($self, $offset = 0)
 {
-	my ($self, $offset) = @_;
 	return sprintf("%u/%u", $self->{done}-$offset, $self->{total});
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: ProgressMeter.pm,v 1.53 2023/05/27 10:03:43 espie Exp $
+# $OpenBSD: ProgressMeter.pm,v 1.54 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -15,35 +15,30 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackingElement;
-sub compute_size
+sub compute_size($self, $totsize)
 {
-	my ($self, $totsize) = @_;
-
 	$$totsize += $self->{size} if defined $self->{size};
 }
 
 package OpenBSD::ProgressMeter;
-sub new
+sub new($)
 {
 	bless {}, "OpenBSD::ProgressMeter::Stub";
 }
 
-sub compute_size
+sub compute_size($self, $plist)
 {
-	my ($self, $plist) = @_;
 	my $totsize = 0;
 	$plist->compute_size(\$totsize);
 	$totsize = 1 if $totsize == 0;
 	return $totsize;
 }
 
-sub setup
+sub setup($self, $opt_x, $opt_m, $state)
 {
-	my ($self, $opt_x, $opt_m, $state) = @_;
 	$self->{state} = $state;
 	if ($opt_m || (!$opt_x && -t STDOUT)) {
 		require OpenBSD::ProgressMeter::Term;
@@ -52,22 +47,20 @@ sub setup
 	}
 }
 
-sub disable {}
+sub disable($) {}
 
-sub new_sizer
+sub new_sizer($progress, $plist)
 {
-	my ($progress, $plist) = @_;
 	return $progress->sizer_class->new($progress, $plist);
 }
 
-sub sizer_class
+sub sizer_class($)
 {
 	"PureSizer"
 }
 
-sub for_list
+sub for_list($self, $msg, $l, $code)
 {
-	my ($self, $msg, $l, $code) = @_;
 	if (defined $msg) {
 		$self->set_header($msg);
 	}
@@ -80,19 +73,17 @@ sub for_list
 	$self->next;
 }
 
-sub compute_playfield
+sub compute_playfield($)
 {
 }
 
-sub handle_continue
+sub handle_continue($self)
 {
-	my $self = shift;
 	$self->{continued} = 1;
 }
 
-sub can_output
+sub can_output($self)
 {
-	my $self = shift;
 	return $self->{state}->can_output;
 }
 
@@ -101,41 +92,39 @@ sub can_output
 package OpenBSD::ProgressMeter::Stub;
 our @ISA = qw(OpenBSD::ProgressMeter);
 
-sub forked {}
+sub forked($) {}
 
-sub clear {}
+sub clear($) {}
 
 
-sub show {}
+sub show($, $, $) {}
 
-sub working {}
-sub message {}
+sub working($, $) {}
+sub message($, $) {}
 
-sub next {}
+sub next($, $ = undef) {}
 
-sub set_header {}
+sub set_header($, $) {}
 
-sub ntogo
+sub ntogo($, $, $ = undef)
 {
 	return "";
 }
 
-sub visit_with_size
+sub visit_with_size($progress, $plist, $method, @r)
 {
-	my ($progress, $plist, $method, @r) = @_;
 	$plist->$method($progress->{state}, @r);
 }
 
-sub visit_with_count
+sub visit_with_count	# forwarder
 {
 	&OpenBSD::ProgressMeter::Stub::visit_with_size;
 }
 
 package PureSizer;
 
-sub new
+sub new($class, $progress, $plist)
 {
-	my ($class, $progress, $plist) = @_;
 	$plist->{totsize} //= $progress->compute_size($plist);
 	bless {
 	    progress => $progress, 
@@ -144,9 +133,8 @@ sub new
 	    }, $class;
 }
 
-sub advance
+sub advance($self, $e)
 {
-	my ($self, $e) = @_;
 	if (defined $e->{size}) {
 		$self->{donesize} += $e->{size};
 	}

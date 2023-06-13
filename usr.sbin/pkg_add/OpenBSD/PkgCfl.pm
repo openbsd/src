@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.40 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.41 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2005 Marc Espie <espie@openbsd.org>
 #
@@ -15,7 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
+use v5.36;
 use warnings;
 
 package OpenBSD::PkgCfl;
@@ -23,9 +23,8 @@ use OpenBSD::PackageName;
 use OpenBSD::Search;
 use OpenBSD::PackageInfo;
 
-sub make_conflict_list
+sub make_conflict_list($class, $plist)
 {
-	my ($class, $plist) = @_;
 	my $l = [];
 	my $pkgname = $plist->pkgname;
 	my $stem = OpenBSD::PackageName::splitstem($pkgname);
@@ -43,9 +42,8 @@ sub make_conflict_list
 	bless $l, $class;
 }
 
-sub conflicts_with
+sub conflicts_with($self, @pkgnames)
 {
-	my ($self, @pkgnames) = @_;
 	my @libs = grep {/^\.libs\d*\-/} @pkgnames;
 	@pkgnames = grep {!/^\.libs\d*\-/} @pkgnames;
 	if (wantarray) {
@@ -68,22 +66,18 @@ sub conflicts_with
 	}
 }
 
-sub register
+sub register($plist, $state)
 {
-	my ($plist, $state) = @_;
-
 	$state->{conflict_list}{$plist->pkgname} = $plist->conflict_list;
 }
 
-sub unregister
+sub unregister($plist, $state)
 {
-	my ($plist, $state) = @_;
 	delete $state->{conflict_list}{$plist->pkgname};
 }
 
-sub fill_conflict_lists
+sub fill_conflict_lists($state)
 {
-	my $state = shift;
 	for my $pkg (installed_packages()) {
 		my $plist = OpenBSD::PackingList->from_installation($pkg,
 		    \&OpenBSD::PackingList::ConflictOnly);
@@ -96,9 +90,8 @@ sub fill_conflict_lists
 	}
 }
 
-sub find
+sub find($pkgname, $state)
 {
-	my ($pkgname, $state) = @_;
 	my @bad = ();
 	if (is_installed $pkgname) {
 		push(@bad, $pkgname);
@@ -118,10 +111,8 @@ sub find
 	return @bad;
 }
 
-sub find_all
+sub find_all($plist, $state)
 {
-	my ($plist, $state) = @_;
-
 	my @first = $plist->conflict_list->conflicts_with(installed_packages());
 	# XXX optimization
 	if (@first > 0 && !$state->{allow_replacing}) {

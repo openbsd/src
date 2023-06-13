@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageInfo.pm,v 1.64 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: PackageInfo.pm,v 1.65 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -15,8 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackageInfo;
 require Exporter;
@@ -50,7 +49,7 @@ for my $i (@info) {
 	$info{$i} = $j;
 }
 
-sub _init_list
+sub _init_list()
 {
 	$list = {};
 	$stemlist = OpenBSD::PackageName::compile_stemlist();
@@ -63,30 +62,30 @@ sub _init_list
 	closedir($dir);
 }
 
-sub add_installed
+sub add_installed(@p)
 {
 	if (!defined $list) {
 		_init_list();
 	}
-	for my $p (@_) {
+	for my $p (@p) {
 		$list->{$p} = 1;
 		$stemlist->add($p);
 	}
 }
 
-sub delete_installed
+sub delete_installed(@p)
 {
 	if (!defined $list) {
 		_init_list();
 	}
-	for my $p (@_) {
+	for my $p (@p) {
 		delete $list->{$p};
 		$stemlist->delete($p);
 
 	}
 }
 
-sub installed_stems
+sub installed_stems()
 {
 	if (!defined $list) {
 		_init_list();
@@ -94,22 +93,20 @@ sub installed_stems
 	return $stemlist;
 }
 
-sub installed_packages
+sub installed_packages($all = 0)
 {
 	if (!defined $list) {
 		_init_list();
 	}
-	if ($_[0]) {
+	if ($all) {
 		return grep { !/^\./o } keys %$list;
 	} else {
 		return keys %$list;
 	}
 }
 
-sub installed_info
+sub installed_info($name)
 {
-	my $name =  shift;
-
 	# XXX remove the o if we allow pkg_db to change dynamically
 	if ($name =~ m|^\Q$pkg_db\E/?|o) {
 		return "$name/";
@@ -118,15 +115,13 @@ sub installed_info
 	}
 }
 
-sub installed_contents
+sub installed_contents($name)
 {
-	my $name = shift;
 	return installed_info($name).CONTENTS;
 }
 
-sub borked_package
+sub borked_package($pkgname)
 {
-	my $pkgname = shift;
 	$pkgname = "partial-$pkgname" unless $pkgname =~ m/^partial\-/;
 	unless (-e "$pkg_db/$pkgname") {
 		return $pkgname;
@@ -139,9 +134,8 @@ sub borked_package
 	return "$pkgname.$i";
 }
 
-sub libs_package
+sub libs_package($pkgname)
 {
-	my $pkgname = shift;
 	$pkgname =~ s/^\.libs\d*\-//;
 	unless (-e "$pkg_db/.libs-$pkgname") {
 		return ".libs-$pkgname";
@@ -154,19 +148,19 @@ sub libs_package
 	return ".libs$i-$pkgname";
 }
 
-sub is_installed
+sub is_installed($p)
 {
-	my $name = installed_name(shift);
+	my $name = installed_name($p);
 	if (!defined $list) {
 		installed_packages();
 	}
 	return defined $list->{$name};
 }
 
-sub installed_name
+sub installed_name($p)
 {
 	require File::Spec;
-	my $name = File::Spec->canonpath(shift);
+	my $name = File::Spec->canonpath($p);
 	$name =~ s|/$||o;
 	# XXX remove the o if we allow pkg_db to change dynamically
 	$name =~ s|^\Q$pkg_db\E/?||o;
@@ -174,22 +168,20 @@ sub installed_name
 	return $name;
 }
 
-sub info_names
+sub info_names()
 {
 	return @info;
 }
 
-sub is_info_name
+sub is_info_name($name)
 {
-	my $name = shift;
 	return $info{$name};
 }
 
 my $dlock;
 
-sub lock_db
+sub lock_db($shared = 0, $state = undef)
 {
-	my ($shared, $state) = @_;
 	my $mode = $shared ? LOCK_SH : LOCK_EX;
 	open($dlock, '<', $pkg_db) or return;
 	if (flock($dlock, $mode | LOCK_NB)) {
@@ -206,7 +198,7 @@ sub lock_db
 	return;
 }
 
-sub unlock_db
+sub unlock_db()
 {
 	if (defined $dlock) {
 		flock($dlock, LOCK_UN);

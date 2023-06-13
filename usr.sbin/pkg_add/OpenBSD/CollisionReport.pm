@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: CollisionReport.pm,v 1.48 2019/09/04 12:27:38 espie Exp $
+# $OpenBSD: CollisionReport.pm,v 1.49 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -15,18 +15,16 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackingElement;
-sub handle_collisions
+sub handle_collisions($, $, $, $)
 {
 }
 
 package OpenBSD::PackingElement::FileBase;
-sub handle_collisions
+sub handle_collisions($self, $todo, $pkg, $bypkg)
 {
-	my ($self, $todo, $pkg, $bypkg) = @_;
 	my $name = $self->fullname;
 	if (defined $todo->{$name}) {
 		push(@{$bypkg->{$pkg}}, $name);
@@ -38,9 +36,8 @@ package OpenBSD::CollisionReport;
 use OpenBSD::PackingList;
 use OpenBSD::PackageInfo;
 
-sub find_collisions
+sub find_collisions($todo, $state)
 {
-	my ($todo, $state) = @_;
 	my $verbose = $state->verbose >= 3;
 	my $bypkg = {};
 	for my $name (keys %$todo) {
@@ -68,10 +65,8 @@ sub find_collisions
 	return $bypkg;
 }
 
-sub collision_report
+sub collision_report($list, $state, $set)
 {
-	my ($list, $state, $set) = @_;
-
 	my $destdir = $state->{destdir};
 
 	if ($state->defines('removecollisions')) {

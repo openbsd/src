@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgInfo.pm,v 1.50 2020/02/19 14:23:26 espie Exp $
+# $OpenBSD: PkgInfo.pm,v 1.51 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -16,32 +16,29 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 use OpenBSD::State;
 
 package OpenBSD::PackingElement;
-sub dump_file
+sub dump_file($, $)
 {
 }
 
-sub hunt_file
+sub hunt_file($, $, $, $)
 {
 }
 
-sub sum_up
+sub sum_up($self, $rsize)
 {
-	my ($self, $rsize) = @_;
 	if (defined $self->{size}) {
 		$$rsize += $self->{size};
 	}
 }
 
 package OpenBSD::PackingElement::FileBase;
-sub dump_file
+sub dump_file($item, $opt_K)
 {
-	my ($item, $opt_K) = @_;
 	if ($opt_K) {
 		print '@', $item->keyword, " ";
 	}
@@ -49,9 +46,8 @@ sub dump_file
 }
 
 package OpenBSD::PackingElement::FileObject;
-sub hunt_file
+sub hunt_file($item, $h, $pkgname, $l)
 {
-	my ($item, $h, $pkgname, $l) = @_;
 	my $fname = $item->fullname;
 	if (defined $h->{$fname}) {
 		push(@{$h->{$fname}}, $pkgname);
@@ -64,26 +60,23 @@ our @ISA = qw(OpenBSD::State);
 
 use OpenBSD::PackageInfo;
 
-sub lock
+sub lock($state)
 {
-	my $state = shift;
 	return if $state->{locked};
 	return if $state->{subst}->value('nolock');
 	lock_db(1, $state->opt('q') ? undef : $state);
 	$state->{locked} = 1;
 }
 
-sub banner
+sub banner($state, @args)
 {
-	my ($state, @args) = @_;
 	return if $state->opt('q');
 	$state->print("#1", $state->opt('l')) if $state->opt('l');
 	$state->say(@args);
 }
 
-sub header
+sub header($state, $handle)
 {
-	my ($state, $handle) = @_;
 	return if $state->{terse} || $state->opt('q');
 	my $url = $handle->url;
 	return if $state->{header_done}{$url};
@@ -91,9 +84,8 @@ sub header
 	$state->banner("Information for #1\n", $url);
 }
 
-sub footer
+sub footer($state, $handle)
 {
-	my ($state, $handle) = @_;
 	return if $state->opt('q') || $state->{terse};
 	return unless $state->{header_done}{$handle->url};
 	if ($state->opt('l')) {
@@ -103,10 +95,8 @@ sub footer
 	}
 }
 
-sub printfile
+sub printfile($state, $filename)
 {
-	my ($state, $filename) = @_;
-
 	open my $fh, '<', $filename or return;
 	while(<$fh>) {
 		chomp;
@@ -116,10 +106,8 @@ sub printfile
 	$state->say;
 }
 
-sub printfile_sorted
+sub printfile_sorted($state, $filename)
 {
-	my ($state, $filename) = @_;
-
 	open my $fh, '<', $filename or return;
 	my @lines = (<$fh>);
 	close $fh;
@@ -130,10 +118,8 @@ sub printfile_sorted
 	$state->say;
 }
 
-sub print_description
+sub print_description($state, $dir)
 {
-	my ($state, $dir) = @_;
-
 	open my $fh, '<', $dir.DESC or return;
 	$_ = <$fh>; # zap COMMENT
 	while(<$fh>) {
@@ -144,9 +130,8 @@ sub print_description
 	$state->say;
 }
 
-sub hasanyopt
+sub hasanyopt($self, $string)
 {
-	my ($self, $string) = @_;
 	for my $i (split //, $string) {
 		if ($self->opt($i)) {
 			return 1;
@@ -155,21 +140,19 @@ sub hasanyopt
 	return 0;
 }
 
-sub setopts
+sub setopts($self, $string)
 {
-	my ($self, $string) = @_;
 	for my $i (split //, $string) {
 		$self->{opt}{$i} = 1;
 	}
 }
 
-sub log
+sub log($self, @p)
 {
-	my $self = shift;
-	if (@_ == 0) {
+	if (@p == 0) {
 		return $self;
 	} else {
-		$self->say(@_);
+		$self->say(@p);
 	}
 }
 
@@ -183,9 +166,8 @@ use OpenBSD::Error;
 my $total_size = 0;
 my $pkgs = 0;
 
-sub find_pkg_in
+sub find_pkg_in($self, $state, $repo, $pkgname, $code)
 {
-	my ($self, $state, $repo, $pkgname, $code) = @_;
 
 	if (OpenBSD::PackageName::is_stem($pkgname)) {
 		require OpenBSD::Search;
@@ -230,9 +212,8 @@ sub find_pkg_in
 	}
 }
 
-sub find_pkg
+sub find_pkg($self, $state, $pkgname, $code)
 {
-	my ($self, $state, $pkgname, $code) = @_;
 
 	if ($self->find_pkg_in($state, $state->repo->installed, $pkgname,
 	    $code)) {
@@ -249,25 +230,22 @@ sub find_pkg
 	return $self->find_pkg_in($state, $repo, $pkgname, $code);
 }
 
-sub get_line
+sub get_line($name)
 {
-	open my $fh, '<', shift or return "";
+	open my $fh, '<', $name or return "";
 	my $c = <$fh>;
 	chomp($c);
 	close $fh;
 	return $c;
 }
 
-sub get_comment
+sub get_comment($d)
 {
-	my $d = shift;
 	return get_line($d.DESC);
 }
 
-sub find_by_spec
+sub find_by_spec($pat, $state)
 {
-	my ($pat, $state) = @_;
-
 	require OpenBSD::Search;
 
 	my $s = OpenBSD::Search::PkgSpec->new($pat);
@@ -281,9 +259,8 @@ sub find_by_spec
 	}
 }
 
-sub filter_files
+sub filter_files($self, $state, $search, @args)
 {
-	my ($self, $state, $search, @args) = @_;
 	require OpenBSD::PackingList;
 
 	my @k = ();
@@ -299,9 +276,7 @@ sub filter_files
 	my @result = ();
 	for my $arg (@args) {
 		$self->find_pkg($state, $arg,
-		    sub {
-		    	my ($pkgname, $handle) = @_;
-
+		    sub($pkgname, $handle) {
 			if (-f $handle->info.CONTENTS) {
 				my $maybe = 0;
 				open(my $fh, '<', $handle->info.CONTENTS);
@@ -322,17 +297,14 @@ sub filter_files
 	return @result;
 }
 
-sub manual_filter
+sub manual_filter($self, $state, @args)
 {
-	my ($self, $state, @args) = @_;
 	require OpenBSD::PackingList;
 
 	my @result = ();
 	for my $arg (@args) {
 		$self->find_pkg($state, $arg,
-		    sub {
-		    	my ($pkgname, $handle) = @_;
-
+		    sub($pkgname, $handle) {
 			my $plist = $handle->plist(\&OpenBSD::PackingList::ConflictOnly);
 
 			push(@result, $pkgname) if $plist->has('manual-installation');
@@ -343,17 +315,13 @@ sub manual_filter
 
 my $path_info;
 
-sub add_to_path_info
+sub add_to_path_info($path, $pkgname)
 {
-	my ($path, $pkgname) = @_;
-
 	push(@{$path_info->{$path}}, $pkgname);
 }
 
-sub find_by_path
+sub find_by_path($pat)
 {
-	my $pat = shift;
-
 	if (!defined $path_info) {
 		require OpenBSD::PackingList;
 
@@ -382,9 +350,8 @@ sub find_by_path
 	}
 }
 
-sub print_info
+sub print_info($self, $state, $pkg, $handle)
 {
-	my ($self, $state, $pkg, $handle) = @_;
 	unless (defined $handle) {
 		$state->errsay("Error printing info for #1: no info ?", $pkg);
 		return;
@@ -513,10 +480,8 @@ sub print_info
 	}
 }
 
-sub handle_query
+sub handle_query($self, $state)
 {
-	my ($self, $state) = @_;
-
 	require OpenBSD::Search;
 
 	$state->say("PKG_PATH=#1", $ENV{PKG_PATH} // "<undefined>")
@@ -538,9 +503,8 @@ sub handle_query
 	}
 }
 
-sub parse_and_run
+sub parse_and_run($self, $cmd)
 {
-	my ($self, $cmd) = @_;
 	my $exit_code = 0;
 	my @sought_files;
 	my $error_e = 0;
@@ -549,8 +513,7 @@ sub parse_and_run
 	$state->{opt} =
 	    {
 	    	'e' =>
-		    sub {
-			    my $pat = shift;
+		    sub($pat) {
 			    my @list;
 			    if ($pat =~ m/\//o) {
 				    $state->lock;
@@ -567,10 +530,10 @@ sub parse_and_run
 			    $state->{terse} = 1;
 		    },
 	     'E' =>
-		    sub {
+		    sub($name) {
 			    require File::Spec;
 
-			    push(@sought_files, File::Spec->rel2abs(shift));
+			    push(@sought_files, File::Spec->rel2abs($name));
 
 		    }
 	    };
@@ -675,8 +638,8 @@ sub parse_and_run
 			$state->banner('#1', $pkg);
 		}
 		if (!$self->find_pkg($state, $pkg,
-		    sub {
-			$self->print_info($state, @_);
+		    sub($pkgname, $handle) {
+			$self->print_info($state, $pkgname, $handle);
 		})) {
 			$exit_code = 1;
 		}

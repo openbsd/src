@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Build.pm,v 1.7 2010/11/27 11:55:14 espie Exp $
+# $OpenBSD: Build.pm,v 1.8 2023/06/13 09:07:18 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -15,46 +15,41 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-use strict;
-use warnings;
+use v5.36;
 
 # the specs used during build are slightly different from the specs at
 # runtime.
 package OpenBSD::Library::Static;
 our @ISA = qw(OpenBSD::Library);
-sub new
+sub new($class, $dir, $stem)
 {
-	my ($class, $dir, $stem) = @_;
 	bless {dir => $dir, stem => $stem}, $class;
 }
 
-sub no_match_dispatch
+sub no_match_dispatch($library, $spec, $base)
 {
-	my ($library, $spec, $base) = @_;
 	return $spec->no_match_static($library, $base);
 }
 
-sub to_string
+sub to_string($self)
 {
-	my $self = shift;
 	return "$self->{dir}/lib$self->{stem}.a";
 }
 
-sub version { ".a" }
+sub version($) { ".a" }
 
-sub is_static { 1 }
+sub is_static($) { 1 }
 
-sub is_better { 0 }
+sub is_better($, $) { 0 }
 
 package OpenBSD::Library::Build;
 our @ISA = qw(OpenBSD::Library);
 
-sub static
+sub static($)
 { 'OpenBSD::Library::Static'; }
 
-sub from_string
+sub from_string($class, $filename)
 {
-	my ($class, $filename) = @_;
 	if (my ($dir, $stem) = $filename =~ m/^(.*)\/lib([^\/]+)\.a$/o) {
 		return $class->static->new($dir, $stem);
 	} else {
@@ -63,14 +58,13 @@ sub from_string
 }
 
 package OpenBSD::LibSpec;
-sub no_match_static
+sub no_match_static	# forwarder
 {
 	&OpenBSD::LibSpec::no_match_name;
 }
 
-sub findbest
+sub findbest($spec, $repo, $base)
 {
-	my ($spec, $repo, $base) = @_;
 	my $spec2 = OpenBSD::LibSpec::GT->new($spec->{dir}, $spec->{stem},
 	    0, 0);
 	my $r = $spec2->lookup($repo, $base);
@@ -93,15 +87,13 @@ sub findbest
 
 package OpenBSD::LibSpec::GT;
 our @ISA = qw(OpenBSD::LibSpec);
-sub no_match_major
+sub no_match_major($spec, $library)
 {
-	my ($spec, $library) = @_;
 	return $spec->major > $library->major;
 }
 
-sub to_string
+sub to_string($self)
 {
-	my $self = shift;
 	return $self->key.">=".$self->major.".".$self->minor;
 
 }
@@ -110,10 +102,8 @@ sub to_string
 package OpenBSD::LibSpec::Build;
 our @ISA = qw(OpenBSD::LibSpec);
 
-sub new_from_string
+sub new_from_string($class, $string)
 {
-	my ($class, $string) = @_;
-
 	$string =~ s/\.$//;
 	if (my ($stem, $strict, $major, $minor) = $string =~ m/^(.*?)(\>?)\=(\d+)\.(\d+)$/o) {
 		return $class->new_object($stem, $strict, $major, $minor);
@@ -124,9 +114,8 @@ sub new_from_string
 	}
 }
 
-sub new_object
+sub new_object($class, $stem, $strict, $major, $minor)
 {
-	my ($class, $stem, $strict, $major, $minor) = @_;
 	my $n = $strict eq '' ? "OpenBSD::LibSpec" : "OpenBSD::LibSpec::GT";
 	return $n->new_with_stem($stem, $major, $minor);
 }

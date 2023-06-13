@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.19 2023/05/27 10:05:50 espie Exp $
+# $OpenBSD: Subst.pm,v 1.20 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -15,40 +15,37 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 # very simple package, just holds everything needed for substitution
 # according to package rules.
 
 package OpenBSD::Subst;
 
-sub new
+# XXX ReverseSubst takes a state as an extra parameter
+sub new($class, @)
 {
-	bless {}, shift;
+	bless {}, $class;
 }
 
-sub hash
+sub hash($self)
 {
-	shift;
+	return $self;
 }
 
-sub add
+sub add($self, $k, $v)
 {
-	my ($self, $k, $v) = @_;
 	$k =~ s/^\^//;
 	$self->{$k} = $v;
 }
 
-sub value
+sub value($self, $k)
 {
-	my ($self, $k) = @_;
 	return $self->{$k};
 }
 
-sub parse_option
+sub parse_option($self, $opt)
 {
-	my ($self, $opt) = @_;
 	if ($opt =~ m/^([^=]+)\=(.*)$/o) {
 		my ($k, $v) = ($1, $2);
 		$v =~ s/^\'(.*)\'$/$1/;
@@ -59,10 +56,8 @@ sub parse_option
 	}
 }
 
-sub do
+sub do($self, $s)
 {
-	my $self = shift;
-	my $s = shift;
 	return $s unless $s =~ m/\$/o;	# no need to subst if no $
 	while ( my $k = ($s =~ m/\$\{([A-Za-z_][^\}]*)\}/o)[0] ) {
 		my $v = $self->{$k};
@@ -73,9 +68,8 @@ sub do
 	return $s;
 }
 
-sub copy_fh2
+sub copy_fh2($self, $src, $dest)
 {
-	my ($self, $src, $dest) = @_;
 	my $contents = do { local $/; <$src> };
 	while (my ($k, $v) = each %{$self}) {
 		$contents =~ s/\$\{\Q$k\E\}/$v/g;
@@ -84,25 +78,21 @@ sub copy_fh2
 	print $dest $contents;
 }
 
-sub copy_fh
+sub copy_fh($self, $srcname, $dest)
 {
-	my ($self, $srcname, $dest) = @_;
 	open my $src, '<', $srcname or die "can't open $srcname: $!";
 	$self->copy_fh2($src, $dest);
 }
 
-sub copy
+sub copy($self, $srcname, $destname)
 {
-	my ($self, $srcname, $destname) = @_;
 	open my $dest, '>', $destname or die "can't open $destname: $!";
 	$self->copy_fh($srcname, $dest);
 	return $dest;
 }
 
-sub has_fragment
+sub has_fragment($self, $def, $frag, $msg)
 {
-	my ($self, $def, $frag, $msg) = @_;
-
 	my $v = $self->value($def);
 
 	if (!defined $v) {
@@ -116,10 +106,8 @@ sub has_fragment
 	}
 }
 
-sub empty
+sub empty($self, $k)
 {
-	my ($self, $k) = @_;
-
 	my $v = $self->value($k);
 	if (defined $v && $v) {
 		return 0;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SCP.pm,v 1.30 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: SCP.pm,v 1.31 2023/06/13 09:07:18 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -15,8 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 use OpenBSD::PackageRepository::Persistent;
 
@@ -27,17 +26,15 @@ use IPC::Open2;
 use IO::Handle;
 use OpenBSD::Paths;
 
-sub urlscheme
+sub urlscheme($)
 {
 	return 'scp';
 }
 
 # Any SCP repository uses one single connection, reliant on a perl at end.
 # The connection starts by xfering and firing up the `distant' script.
-sub initiate
+sub initiate($self)
 {
-	my $self = shift;
-
 	my ($rdfh, $wrfh);
 
 	$self->{controller} = open2($rdfh, $wrfh, OpenBSD::Paths->ssh,
@@ -60,13 +57,13 @@ __DATA__
 # Distant connection script.
 #! /usr/bin/perl
 
+use v5.36;
 my $pid;
 my $token = 0;
 $|= 1;
 
-sub batch
+sub batch($code)
 {
-	my $code = shift;
 	if (defined $pid) {
 		waitpid($pid, 0);
 		undef $pid;
@@ -74,7 +71,7 @@ sub batch
 	$token++;
 	$pid = fork();
 	if (!defined $pid) {
-		print "ERROR: fork failed: $!\n";
+		say "ERROR: fork failed: $!";
 	}
 	if ($pid == 0) {
 		&$code();
@@ -82,22 +79,20 @@ sub batch
 	}
 }
 
-sub abort_batch
+sub abort_batch()
 {
 	if (defined $pid) {
 		kill 1, $pid;
 		waitpid($pid, 0);
 		undef $pid;
 	}
-	print "\nABORTED $token\n";
+	say "\nABORTED $token";
 }
 
 my $dirs = {};
 
-sub expand_tilde
+sub expand_tilde($arg)
 {
-	my $arg = shift;
-
 	return $dirs->{$arg} //= (getpwnam($arg))[7]."/";
 }
 
@@ -106,7 +101,7 @@ while (<STDIN>) {
 	if (m/^LIST\s+(.*)$/o) {
 		my $dname = $1;
 		$dname =~ s/^\/\~(.*?)\//expand_tilde($1)/e;
-		batch(sub {
+		batch(sub() {
 			my $d;
 			if (opendir($d, $dname)) {
 				print "SUCCESS: directory $dname\n";
@@ -125,7 +120,7 @@ while (<STDIN>) {
 	} elsif (m/^GET\s+(.*)$/o) {
 		my $fname = $1;
 		$fname =~ s/^\/\~(.*?)\//expand_tilde($1)/e;
-		batch(sub {
+		batch(sub() {
 			if (open(my $fh, '<', $fname)) {
 				my $size = (stat $fh)[7];
 				print "TRANSFER: $size\n";

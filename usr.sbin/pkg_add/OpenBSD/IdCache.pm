@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: IdCache.pm,v 1.11 2023/05/16 14:31:54 espie Exp $
+# $OpenBSD: IdCache.pm,v 1.12 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2002-2005 Marc Espie <espie@openbsd.org>
 #
@@ -14,19 +14,16 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::SimpleIdCache;
-sub new
+sub new($class)
 {
-	my $class = shift;
 	bless {}, $class;
 }
 
-sub lookup
+sub lookup($self, $name, $default = undef)
 {
-	my ($self, $name, $default) = @_;
 	my $r;
 
 	if (defined $self->{$name}) {
@@ -45,10 +42,8 @@ sub lookup
 package OpenBSD::IdCache;
 our @ISA=qw(OpenBSD::SimpleIdCache);
 
-sub lookup
+sub lookup($self, $name, $default = undef)
 {
-	my ($self, $name, $default) = @_;
-
 	if ($name =~ m/^\d+$/o) {
 		return $name;
 	} else {
@@ -59,35 +54,35 @@ sub lookup
 package OpenBSD::UidCache;
 our @ISA=qw(OpenBSD::IdCache);
 
-sub _convert
+sub _convert($, $key)
 {
-	my @entry = getpwnam($_[1]);
+	my @entry = getpwnam($key);
 	return @entry == 0 ? undef : $entry[2];
 }
 
 package OpenBSD::GidCache;
 our @ISA=qw(OpenBSD::IdCache);
 
-sub _convert
+sub _convert($, $key)
 {
-	my @entry = getgrnam($_[1]);
+	my @entry = getgrnam($key);
 	return @entry == 0 ? undef : $entry[2];
 }
 
 package OpenBSD::UnameCache;
 our @ISA=qw(OpenBSD::SimpleIdCache);
 
-sub _convert
+sub _convert($, $key)
 {
-	return getpwuid($_[1]);
+	return getpwuid($key);
 }
 
 package OpenBSD::GnameCache;
 our @ISA=qw(OpenBSD::SimpleIdCache);
 
-sub _convert
+sub _convert($, $key)
 {
-	return getgrgid($_[1]);
+	return getgrgid($key);
 }
 
 1;

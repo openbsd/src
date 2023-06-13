@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: SolverBase.pm,v 1.15 2023/05/27 10:08:45 espie Exp $
+# $OpenBSD: SolverBase.pm,v 1.16 2023/06/13 09:07:18 espie Exp $
 #
 # Copyright (c) 2005-2018 Marc Espie <espie@openbsd.org>
 #
@@ -14,17 +14,18 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
-use warnings;
+use v5.36;
 
 # generic dependencies lookup class: walk the dependency tree as far
 # as necessary to resolve dependencies
 package OpenBSD::lookup;
 
-sub lookup
-{
-	my ($self, $solver, $dependencies, $state, $obj) = @_;
+# this is a template method that relies on subclasses defining
+# find_in_already_done, find_in_extra_sources, find_in_new_source
+# and find_elsewhere accordingly
 
+sub lookup($self, $solver, $dependencies, $state, $obj)
+{
 	my $known = $self->{known};
 	if (my $r = $self->find_in_already_done($solver, $state, $obj)) {
 		$dependencies->{$r} = 1;
@@ -71,9 +72,8 @@ sub lookup
 # While walking the dependency tree, we may loop back to an older package,
 # because we're relying on dep lists on disk, that we haven't adjusted yet
 # since we're just checking. We need to prepare for the update here as well!
-sub may_adjust
+sub may_adjust($self, $solver, $state, $dep)
 {
-	my ($self, $solver, $state, $dep) = @_;
 	my $h = $solver->{set}{older}{$dep};
 	if (defined $h) {
 		$state->print("Detecting older #1...", $dep) 
@@ -93,19 +93,15 @@ sub may_adjust
 	return undef;
 }
 
-sub new
+sub new($class, $solver)
 {
-	my ($class, $solver) = @_;
-
 	# prepare for closure
 	my @todo = $solver->dependencies;
 	bless { todo => \@todo, done => {}, known => {} }, $class;
 }
 
-sub dump
+sub dump($self, $state)
 {
-	my ($self, $state) = @_;
-
 	return unless %{$self->{done}};
 	$state->say("Full dependency tree is #1",
 	    join(' ', keys %{$self->{done}}));
@@ -114,19 +110,14 @@ sub dump
 package OpenBSD::lookup::library;
 our @ISA=qw(OpenBSD::lookup);
 
-sub say_found
+sub say_found($self, $state, $obj, $where)
 {
-	my ($self, $state, $obj, $where) = @_;
-
 	$state->say("found libspec #1 in #2", $obj->to_string, $where)
 	    if $state->verbose >= 3;
 }
 
-sub find_in_already_done
+sub find_in_already_done($self, $solver, $state, $obj)
 {
-	my ($self, $solver, $state, $obj) = @_;
-
-
 	my $r = $solver->check_lib_spec($state, $solver->{localbase}, $obj,
 	    $self->{known});
 	if ($r) {
@@ -137,9 +128,8 @@ sub find_in_already_done
 	}
 }
 
-sub find_in_extra_sources
+sub find_in_extra_sources($self, $solver, $state, $obj)
 {
-	my ($self, $solver, $state, $obj) = @_;
 	return undef if !$obj->is_valid || defined $obj->{dir};
 
 	$state->shlibs->add_libs_from_system($state->{destdir});
@@ -152,10 +142,8 @@ sub find_in_extra_sources
 	return undef;
 }
 
-sub find_in_new_source
+sub find_in_new_source($self, $solver, $state, $obj, $dep)
 {
-	my ($self, $solver, $state, $obj, $dep) = @_;
-
 	if (defined $solver->{set}{newer}{$dep}) {
 		$state->shlibs->add_libs_from_plist($solver->{set}{newer}{$dep}->plist);
 	} else {
@@ -168,10 +156,8 @@ sub find_in_new_source
 	return undef;
 }
 
-sub find_elsewhere
+sub find_elsewhere($self, $solver, $state, $obj)
 {
-	my ($self, $solver, $state, $obj) = @_;
-
 	for my $n ($solver->{set}->newer) {
 		for my $dep (@{$n->dependency_info->{depend}}) {
 			my $r = $solver->find_old_lib($state,
@@ -188,10 +174,8 @@ sub find_elsewhere
 
 package OpenBSD::lookup::tag;
 our @ISA=qw(OpenBSD::lookup);
-sub new
+sub new($class, $solver, $state)
 {
-	my ($class, $solver, $state) = @_;
-
 	# prepare for closure
 	if (!defined $solver->{old_dependencies}) {
 		$solver->solve_old_depends($state);
@@ -200,17 +184,16 @@ sub new
 	bless { todo => \@todo, done => {}, known => {} }, $class;
 }
 
-sub find_in_extra_sources
+sub find_in_extra_sources($, $, $, $)
 {
 }
 
-sub find_elsewhere
+sub find_elsewhere($, $, $, $)
 {
 }
 
-sub find_in_already_done
+sub find_in_already_done($self, $solver, $state, $obj)
 {
-	my ($self, $solver, $state, $obj) = @_;
 	my $r = $self->{known_tags}{$obj->name};
 	if (defined $r) {
 		my ($dep, $d) = @$r;
@@ -222,9 +205,8 @@ sub find_in_already_done
 	return undef;
 }
 
-sub find_in_plist
+sub find_in_plist($self, $plist, $dep)
 {
-	my ($self, $plist, $dep) = @_;
 	if (defined $plist->{tags_definitions}) {
 		while (my ($name, $d) = each %{$plist->{tags_definitions}}) {
 			$self->{known_tags}{$name} = [$dep, $d];
@@ -232,9 +214,8 @@ sub find_in_plist
 	}
 }
 
-sub find_in_new_source
+sub find_in_new_source($self, $solver, $state, $obj, $dep)
 {
-	my ($self, $solver, $state, $obj, $dep) = @_;
 	my $plist;
 
 	if (defined $solver->{set}{newer}{$dep}) {
@@ -254,9 +235,8 @@ sub find_in_new_source
 # both the solver and the conflict cache inherit from cloner
 # they both want to merge several hashes from extra data.
 package OpenBSD::Cloner;
-sub clone
+sub clone($self, $h, @extra)
 {
-	my ($self, $h, @extra) = @_;
 	for my $extra (@extra) {
 		next unless defined $extra;
 		while (my ($k, $e) = each %{$extra->{$h}}) {
@@ -274,34 +254,29 @@ our @ISA = qw(OpenBSD::Cloner);
 
 my $global_cache = {};
 
-sub cached
+sub cached($self, $dep)
 {
-	my ($self, $dep) = @_;
 	return $global_cache->{$dep->{pattern}} ||
 	    $self->{cache}{$dep->{pattern}};
 }
 
-sub set_cache
+sub set_cache($self, $dep, $value)
 {
-	my ($self, $dep, $value) = @_;
 	$self->{cache}{$dep->{pattern}} = $value;
 }
 
-sub set_global
+sub set_global($self, $dep, $value)
 {
-	my ($self, $dep, $value) = @_;
 	$global_cache->{$dep->{pattern}} = $value;
 }
 
-sub global_cache
+sub global_cache($self, $pattern)
 {
-	my ($self, $pattern) = @_;
 	return $global_cache->{$pattern};
 }
 
-sub find_candidate
+sub find_candidate($self, $dep, @list)
 {
-	my ($self, $dep, @list) = @_;
 	my @candidates = $dep->spec->filter(@list);
 	if (@candidates >= 1) {
 		return $candidates[0];
@@ -310,10 +285,8 @@ sub find_candidate
 	}
 }
 
-sub solve_dependency
+sub solve_dependency($self, $state, $dep, $package)
 {
-	my ($self, $state, $dep, $package) = @_;
-
 	my $v;
 
 	if (defined $self->cached($dep)) {
@@ -335,10 +308,8 @@ sub solve_dependency
 	$state->solve_dependency($self, $dep, $package);
 }
 
-sub solve_depends
+sub solve_depends($self, $state)
 {
-	my ($self, $state) = @_;
-
 	$self->{all_dependencies} = {};
 	$self->{to_register} = {};
 	$self->{deplist} = {};
@@ -358,9 +329,8 @@ sub solve_depends
 	return sort values %{$self->{deplist}};
 }
 
-sub solve_wantlibs
+sub solve_wantlibs($solver, $state)
 {
-	my ($solver, $state) = @_;
 	my $okay = 1;
 
 	my $lib_finder = OpenBSD::lookup::library->new($solver);
@@ -384,9 +354,8 @@ sub solve_wantlibs
 	return $okay;
 }
 
-sub dump
+sub dump($self, $state)
 {
-	my ($self, $state) = @_;
 	if ($self->dependencies) {
 	    $state->print("Direct dependencies for #1 resolve to #2",
 	    	$self->{set}->print, join(' ',  $self->dependencies));
@@ -397,9 +366,8 @@ sub dump
 	}
 }
 
-sub dependencies
+sub dependencies($self)
 {
-	my $self = shift;
 	if (wantarray) {
 		return keys %{$self->{all_dependencies}};
 	} else {
@@ -407,9 +375,8 @@ sub dependencies
 	}
 }
 
-sub check_lib_spec
+sub check_lib_spec($self, $state, $base, $spec, $dependencies)
 {
-	my ($self, $state, $base, $spec, $dependencies) = @_;
 	my $r = $state->shlibs->lookup_libspec($base, $spec);
 	for my $candidate (@$r) {
 		if ($dependencies->{$candidate->origin}) {
@@ -419,24 +386,19 @@ sub check_lib_spec
 	return;
 }
 
-sub find_dep_in_installed
+sub find_dep_in_installed($self, $state, $dep)
 {
-	my ($self, $state, $dep) = @_;
-
 	return $self->find_candidate($dep, @{$self->installed_list});
 }
 
-sub find_dep_in_self
+sub find_dep_in_self($self, $state, $dep)
 {
-	my ($self, $state, $dep) = @_;
-
 	return $self->find_candidate($dep, $self->{set}->newer_names,
 	    $self->{set}->kept_names);
 }
 
-sub find_in_self
+sub find_in_self($solver, $plist, $state, $tag)
 {
-	my ($solver, $plist, $state, $tag) = @_;
 	return 0 unless defined $plist->{tags_definitions}{$tag->name};
 	$tag->{definition_list} = $plist->{tags_definitions}{$tag->name};
 	$tag->{found_in_self} = 1;
@@ -447,8 +409,7 @@ sub find_in_self
 
 use OpenBSD::PackageInfo;
 OpenBSD::Auto::cache(installed_list,
-	sub {
-		my $self = shift;
+	sub($self) {
 		my @l = installed_packages();
 
 		for my $o ($self->{set}->older_names) {
@@ -458,16 +419,14 @@ OpenBSD::Auto::cache(installed_list,
 	}
 );
 
-sub add_dep
+sub add_dep($self, $d)
 {
-	my ($self, $d) = @_;
 	$self->{deplist}{$d} = $d;
 }
 
 
-sub verify_tag
+sub verify_tag($self, $tag, $state, $plist, $is_old)
 {
-	my ($self, $tag, $state, $plist, $is_old) = @_;
 	my $bad_return = $is_old ? 1 : 0;
 	my $type = $is_old ? "Warning" : "Error";
 	my $msg = "#1 in #2: \@tag #3";

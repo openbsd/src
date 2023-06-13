@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.14 2023/05/17 15:51:58 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.15 2023/06/13 09:07:18 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -23,14 +23,13 @@ use OpenBSD::PackageRepository::Persistent;
 
 package OpenBSD::PackageRepository::HTTP1;
 our @ISA = qw(OpenBSD::PackageRepository::Persistent);
-sub urlscheme
+sub urlscheme($)
 {
 	return 'http';
 }
 
-sub initiate
+sub initiate($self)
 {
-	my $self = shift;
 	my ($rdfh, $wrfh);
 	pipe($self->{getfh}, $wrfh) or die;
 	pipe($rdfh, $self->{cmdfh}) or die;
@@ -62,22 +61,20 @@ sub initiate
 
 package _Proxy::Header;
 
-sub new
+sub new($class)
 {
-	my $class = shift;
 	bless {}, $class;
 }
 
-sub code
+sub code($self)
 {
 	my $self = shift;
 	return $self->{code};
 }
 
 package _Proxy::Connection;
-sub new
+sub new($class, $host, $port)
 {
-	my ($class, $host, $port) = @_;
 	require IO::Socket::INET;
 	my $o = IO::Socket::INET->new(
 		PeerHost => $host,
@@ -88,9 +85,8 @@ sub new
 	bless {fh => $o, host => $host, buffer => ''}, $class;
 }
 
-sub send_header
+sub send_header($o, $document, %extra)
 {
-	my ($o, $document, %extra) = @_;
 	my $crlf="\015\012";
 	$o->print("GET $document HTTP/1.1", $crlf,
 	    "Host: ", $o->{host}, $crlf);
@@ -101,9 +97,8 @@ sub send_header
 	$o->print($crlf);
 }
 
-sub get_header
+sub get_header($o)
 {
-	my $o = shift;
 	my $l = $o->getline;
 	if ($l !~ m,^HTTP/1\.1\s+(\d\d\d),) {
 		return undef;
@@ -132,9 +127,8 @@ sub get_header
 	return $h;
 }
 
-sub getline
+sub getline($self)
 {
-	my $self = shift;
 	while (1) {
 		if ($self->{buffer} =~ s/^(.*?)\015\012//) {
 			return $1;
@@ -145,9 +139,8 @@ sub getline
     	}
 }
 
-sub retrieve
+sub retrieve($self, $sz)
 {
-	my ($self, $sz) = @_;
 	while(length($self->{buffer}) < $sz) {
 		my $buffer;
 		$self->{fh}->recv($buffer, $sz - length($self->{buffer}));
@@ -158,9 +151,8 @@ sub retrieve
 	return $result;
 }
 
-sub retrieve_and_print
+sub retrieve_and_print($self, $sz, $fh)
 {
-	my ($self, $sz, $fh) = @_;
 	my $result = substr($self->{buffer}, 0, $sz);
 	print $fh $result;
 	my $retrieved = length($result);
@@ -177,9 +169,8 @@ sub retrieve_and_print
 	}
 }
 
-sub retrieve_chunked
+sub retrieve_chunked($self)
 {
-	my $self = shift;
 	my $result = '';
 	while (1) {
 		my $sz = $self->getline;
@@ -192,10 +183,8 @@ sub retrieve_chunked
 	return $result;
 }
 
-sub retrieve_response
+sub retrieve_response($self, $h)
 {
-	my ($self, $h) = @_;
-
 	if ($h->{chunked}) {
 		return $self->retrieve_chunked;
 	}
@@ -205,10 +194,8 @@ sub retrieve_response
 	return undef;
 }
 
-sub retrieve_response_and_print
+sub retrieve_response_and_print($self, $h, $fh)
 {
-	my ($self, $h, $fh) = @_;
-
 	if ($h->{chunked}) {
 		print $fh $self->retrieve_chunked;
 	}
@@ -217,9 +204,8 @@ sub retrieve_response_and_print
 	}
 }
 
-sub print
+sub print($self, @l)
 {
-	my ($self, @l) = @_;
 #	print STDERR "Before print\n";
 	if (!print {$self->{fh}} @l) {
 		print STDERR "network print failed with $!\n";
@@ -232,9 +218,8 @@ package _Proxy;
 my $pid;
 my $token = 0;
 
-sub batch
+sub batch($code)
 {
-	my $code = shift;
 	if (defined $pid) {
 		waitpid($pid, 0);
 		undef $pid;
@@ -250,7 +235,7 @@ sub batch
 	}
 }
 
-sub abort_batch
+sub abort_batch()
 {
 	if (defined $pid) {
 		kill HUP => $pid;
@@ -260,9 +245,8 @@ sub abort_batch
 	print "\nABORTED $token\n";
 }
 
-sub get_directory
+sub get_directory($o, $dname)
 {
-	my ($o, $dname) = @_;
 	local $SIG{'HUP'} = 'IGNORE';
 	$o->send_header("$dname/");
 	my $h = $o->get_header;
@@ -292,10 +276,8 @@ sub get_directory
 
 use File::Basename;
 
-sub get_file
+sub get_file($o, $fname)
 {
-	my ($o, $fname) = @_;
-
 	my $bailout = 0;
 	$SIG{'HUP'} = sub {
 		$bailout++;
@@ -333,18 +315,17 @@ sub get_file
 	} while ($end < $total_size);
 }
 
-sub main
+sub main($self)
 {
-	my $self = shift;
 	my $o = _Proxy::Connection->new($self->{host}, "www");
 	while (<STDIN>) {
 		chomp;
 		if (m/^LIST\s+(.*)$/o) {
 			my $dname = $1;
-			batch(sub {get_directory($o, $dname);});
+			batch(sub() {get_directory($o, $dname);});
 		} elsif (m/^GET\s+(.*)$/o) {
 			my $fname = $1;
-			batch(sub { get_file($o, $fname);});
+			batch(sub() { get_file($o, $fname);});
 		} elsif (m/^BYE$/o) {
 			exit(0);
 		} elsif (m/^ABORT$/o) {

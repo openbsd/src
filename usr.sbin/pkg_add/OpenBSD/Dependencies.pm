@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Dependencies.pm,v 1.174 2023/05/21 16:07:35 espie Exp $
+# $OpenBSD: Dependencies.pm,v 1.175 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2005-2010 Marc Espie <espie@openbsd.org>
 #
@@ -14,55 +14,48 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
-use warnings;
+use v5.36;
 
 use OpenBSD::Dependencies::SolverBase;
 
 package _cache;
 
-sub new
+sub new($class, $v)
 {
-	my ($class, $v) = @_;
 	bless \$v, $class;
 }
 
-sub pretty
+sub pretty($self)
 {
-	my $self = shift;
 	return ref($self)."(".$$self.")";
 }
 
 package _cache::self;
 our @ISA=(qw(_cache));
-sub do
+sub do($v, $solver, $state, $dep, $package)
 {
-	my ($v, $solver, $state, $dep, $package) = @_;
 	push(@{$package->{before}}, $$v);
 	return $$v;
 }
 
 package _cache::installed;
 our @ISA=(qw(_cache));
-sub do
+sub do($v, $solver, $state, $dep, $package)
 {
-	my ($v, $solver, $state, $dep, $package) = @_;
 	return $$v;
 }
 
 package _cache::bad;
 our @ISA=(qw(_cache));
-sub do
+sub do($v, $solver, $state, $dep, $package)
 {
-	my ($v, $solver, $state, $dep, $package) = @_;
 	return $$v;
 }
 
 package _cache::to_install;
 our @ISA=(qw(_cache));
-sub do
+sub do($v, $solver, $state, $dep, $package)
 {
-	my ($v, $solver, $state, $dep, $package) = @_;
 	if ($state->tracker->{uptodate}{$$v}) {
 		bless $v, "_cache::installed";
 		$solver->set_global($dep, $v);
@@ -88,9 +81,8 @@ sub do
 
 package _cache::to_update;
 our @ISA=(qw(_cache));
-sub do
+sub do($v, $solver, $state, $dep, $package)
 {
-	my ($v, $solver, $state, $dep, $package) = @_;
 	my $alt = $solver->find_dep_in_self($state, $dep);
 	if ($alt) {
 		$solver->set_cache($dep, _cache::self->new($alt));
@@ -125,23 +117,18 @@ our @ISA = qw(OpenBSD::Dependencies::SolverBase);
 
 use OpenBSD::PackageInfo;
 
-sub merge
+sub merge($solver, @extra)
 {
-	my ($solver, @extra) = @_;
-
 	$solver->clone('cache', @extra);
 }
 
-sub new
+sub new($class, $set)
 {
-	my ($class, $set) = @_;
 	bless { set => $set, bad => [] }, $class;
 }
 
-sub check_for_loops
+sub check_for_loops($self, $state)
 {
-	my ($self, $state) = @_;
-
 	my $initial = $self->{set};
 
 	my @todo = ();
@@ -185,10 +172,8 @@ sub check_for_loops
 	}
 }
 
-sub find_dep_in_repositories
+sub find_dep_in_repositories($self, $state, $dep)
 {
-	my ($self, $state, $dep) = @_;
-
 	return unless $dep->spec->is_valid;
 
 	my $default = $dep->{def};
@@ -224,10 +209,8 @@ sub find_dep_in_repositories
 	}
 }
 
-sub find_dep_in_stuff_to_install
+sub find_dep_in_stuff_to_install($self, $state, $dep)
 {
-	my ($self, $state, $dep) = @_;
-
 	my $v = $self->find_candidate($dep,
 	    keys %{$state->tracker->{uptodate}});
 	if ($v) {
@@ -257,10 +240,8 @@ sub find_dep_in_stuff_to_install
 	return $v;
 }
 
-sub really_solve_dependency
+sub really_solve_dependency($self, $state, $dep, $package)
 {
-	my ($self, $state, $dep, $package) = @_;
-
 	my $v;
 
 	if ($state->{allow_replacing}) {
@@ -318,10 +299,8 @@ sub really_solve_dependency
 	return $v;
 }
 
-sub check_depends
+sub check_depends($self)
 {
-	my $self = shift;
-
 	for my $dep ($self->dependencies) {
 		push(@{$self->{bad}}, $dep)
 		    unless is_installed($dep) or
@@ -330,10 +309,8 @@ sub check_depends
 	return $self->{bad};
 }
 
-sub register_dependencies
+sub register_dependencies($self, $state)
 {
-	my ($self, $state) = @_;
-
 	require OpenBSD::RequiredBy;
 	for my $pkg ($self->{set}->newer) {
 		my $pkgname = $pkg->pkgname;
@@ -346,9 +323,8 @@ sub register_dependencies
 	}
 }
 
-sub repair_dependencies
+sub repair_dependencies($self, $state)
 {
-	my ($self, $state) = @_;
 	for my $p ($self->{set}->newer) {
 		my $pkgname = $p->pkgname;
 		for my $pkg (installed_packages(1)) {
@@ -359,9 +335,8 @@ sub repair_dependencies
 	}
 }
 
-sub find_old_lib
+sub find_old_lib($self, $state, $base, $pattern, $lib)
 {
-	my ($self, $state, $base, $pattern, $lib) = @_;
 
 	require OpenBSD::Search;
 
@@ -375,17 +350,13 @@ sub find_old_lib
 	return undef;
 }
 
-sub errsay_library
+sub errsay_library($solver, $state, $h)
 {
-	my ($solver, $state, $h) = @_;
-
 	$state->errsay("Can't install #1 because of libraries", $h->pkgname);
 }
 
-sub solve_old_depends
+sub solve_old_depends($self, $state)
 {
-	my ($self, $state) = @_;
-
 	$self->{old_dependencies} = {};
 	for my $package ($self->{set}->older) {
 		for my $dep (@{$package->dependency_info->{depend}}) {
@@ -397,9 +368,8 @@ sub solve_old_depends
 	}
 }
 
-sub solve_handle_tags
+sub solve_handle_tags($solver, $h, $state)
 {
-	my ($solver, $h, $state) = @_;
 	my $plist = $h->plist;
 	return 1 if !defined $plist->{tags};
 	my $okay = 1;
@@ -415,10 +385,8 @@ sub solve_handle_tags
 	return $okay;
 }
 
-sub solve_tags
+sub solve_tags($solver, $state)
 {
-	my ($solver, $state) = @_;
-
 	my $okay = 1;
 	for my $h ($solver->{set}->changed_handles) {
 		if (!$solver->solve_handle_tags($h, $state)) {
@@ -433,14 +401,13 @@ sub solve_tags
 }
 
 package OpenBSD::PackingElement;
-sub repair_dependency
+sub repair_dependency($, $, $)
 {
 }
 
 package OpenBSD::PackingElement::Dependency;
-sub repair_dependency
+sub repair_dependency($self, $requiring, $required)
 {
-	my ($self, $requiring, $required) = @_;
 	if ($self->spec->filter($required) == 1) {
 		require OpenBSD::RequiredBy;
 		OpenBSD::RequiredBy->new($required)->add($requiring);

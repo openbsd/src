@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgSpec.pm,v 1.50 2021/11/21 10:15:52 espie Exp $
+# $OpenBSD: PkgSpec.pm,v 1.51 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2007 Marc Espie <espie@openbsd.org>
 #
@@ -15,21 +15,16 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PkgSpec::flavorspec;
-sub new
+sub new($class, $spec)
 {
-	my ($class, $spec) = @_;
-
 	bless \$spec, $class;
 }
 
-sub check_1flavor
+sub check_1flavor($f, $spec)
 {
-	my ($f, $spec) = @_;
-
 	for my $flavor (split /\-/o, $spec) {
 		# must not be here
 		if ($flavor =~ m/^\!(.*)$/o) {
@@ -42,10 +37,8 @@ sub check_1flavor
 	return 1;
 }
 
-sub match
+sub match($self, $h)
 {
-	my ($self, $h) = @_;
-
 	# check each flavor constraint
 	for my $c (split /\,/o, $$self) {
 		if (check_1flavor($h->{flavors}, $c)) {
@@ -57,21 +50,18 @@ sub match
 
 package OpenBSD::PkgSpec::exactflavor;
 our @ISA = qw(OpenBSD::PkgSpec::flavorspec);
-sub new
+sub new($class, $value)
 {
-	my ($class, $value) = @_;
 	bless {map{($_, 1)} split(/\-/, $value)}, $class;
 }
 
-sub flavor_string
+sub flavor_string($self)
 {
-	my $self = shift;
 	return join('-', sort keys %$self);
 }
 
-sub match
+sub match($self, $h)
 {
-	my ($self, $h) = @_;
 	if ($self->flavor_string eq $h->flavor_string) {
 		return 1;
 	} else {
@@ -89,9 +79,8 @@ my $ops = {
 	'=' => 'eq'
 };
 
-sub new
+sub new($class, $s)
 {
-	my ($class, $s) = @_;
 	my ($op, $version) = ('=', $s);
 	if ($s =~ m/^(\>\=|\>|\<\=|\<|\=)(.*)$/) {
 		($op, $version) = ($1, $2);
@@ -99,9 +88,8 @@ sub new
 	return "OpenBSD::PkgSpec::version::$ops->{$op}"->from_string($version);
 }
 
-sub pnum_compare
+sub pnum_compare($self, $b)
 {
-	my ($self, $b) = @_;
 	if (!defined $self->{p}) {
 		return 0;
 	} else {
@@ -109,79 +97,74 @@ sub pnum_compare
 	}
 }
 
-sub is_exact
+sub is_exact($)
 {
 	return 0;
 }
 
 package OpenBSD::PkgSpec::version::lt;
 our @ISA = qw(OpenBSD::PkgSpec::versionspec);
-sub match
+sub match($self, $b)
 {
-	my ($self, $b) = @_;
 	-$self->compare($b->{version}) < 0 ? 1 : 0;
 }
 
 package OpenBSD::PkgSpec::version::le;
 our @ISA = qw(OpenBSD::PkgSpec::versionspec);
-sub match
+sub match($self, $b)
 {
-	my ($self, $b) = @_;
 	-$self->compare($b->{version}) <= 0 ? 1 : 0;
 }
 
 package OpenBSD::PkgSpec::version::gt;
 our @ISA = qw(OpenBSD::PkgSpec::versionspec);
-sub match
+sub match($self, $b)
 {
-	my ($self, $b) = @_;
 	-$self->compare($b->{version}) > 0 ? 1 : 0;
 }
 
 package OpenBSD::PkgSpec::version::ge;
 our @ISA = qw(OpenBSD::PkgSpec::versionspec);
-sub match
+sub match($self, $b)
 {
-	my ($self, $b) = @_;
 	-$self->compare($b->{version}) >= 0 ? 1 : 0;
 }
 
 package OpenBSD::PkgSpec::version::eq;
 our @ISA = qw(OpenBSD::PkgSpec::versionspec);
-sub match
+sub match($self, $b)
 {
-	my ($self, $b) = @_;
 	-$self->compare($b->{version}) == 0 ? 1 : 0;
 }
 
-sub is_exact
+sub is_exact($)
 {
 	return 1;
 }
 
 package OpenBSD::PkgSpec::badspec;
-sub new
+sub new($class)
 {
-	my $class = shift;
 	bless {}, $class;
 }
 
-sub match_ref
+# $self->match*($list)
+sub match_ref($, $)
 {
 	return ();
 }
 
-sub match_libs_ref
+sub match_libs_ref($, $)
 {
 	return ();
 }
 
-sub match_locations
+sub match_locations($, $)
 {
 	return [];
 }
 
-sub is_valid
+sub is_valid($)
 {
 	return 0;
 }
@@ -189,10 +172,8 @@ sub is_valid
 package OpenBSD::PkgSpec::SubPattern;
 use OpenBSD::PackageName;
 
-sub parse
+sub parse($class, $p)
 {
-	my ($class, $p) = @_;
-
 	my $r = {};
 
 	# let's try really hard to find the stem and the flavors
@@ -218,10 +199,8 @@ sub parse
 	return $r;
 }
 
-sub add_version_constraints
+sub add_version_constraints($class, $constraints, $vspec)
 {
-	my ($class, $constraints, $vspec) = @_;
-
 	# turn the vspec into a list of constraints.
 	if ($vspec eq '*') {
 		# non constraint
@@ -233,9 +212,8 @@ sub add_version_constraints
 	}
 }
 
-sub add_flavor_constraints
+sub add_flavor_constraints($class, $constraints, $flavorspec)
 {
-	my ($class, $constraints, $flavorspec) = @_;
 	# and likewise for flavors
 	if ($flavorspec eq '') {
 		# non constraint
@@ -245,10 +223,8 @@ sub add_flavor_constraints
 	}
 }
 
-sub new
+sub new($class, $p, $with_partial)
 {
-	my ($class, $p, $with_partial) = @_;
-
 	my $r = $class->parse($p);
 	if (defined $r) {
 		my $stemspec = $r->{stemspec};
@@ -277,9 +253,8 @@ sub new
 	}
 }
 
-sub match_ref
+sub match_ref($o, $list)
 {
-	my ($o, $list) = @_;
 	my @result = ();
 	# Now, have to extract the version number, and the flavor...
 LOOP1:
@@ -304,16 +279,14 @@ LOOP1:
 	}
 }
 
-sub match_libs_ref
+sub match_libs_ref($o, $list)
 {
-	my ($o, $list) = @_;
 	return grep(/$o->{libstem}/, @$list);
 }
 
 
-sub match_locations
+sub match_locations($o, $list)
 {
-	my ($o, $list) = @_;
 	my $result = [];
 	# Now, have to extract the version number, and the flavor...
 LOOP2:
@@ -330,17 +303,16 @@ LOOP2:
 	return $result;
 }
 
-sub is_valid
+sub is_valid($)
 {
 	return 1;
 }
 
 package OpenBSD::PkgSpec;
-sub subpattern_class
+sub subpattern_class($)
 { "OpenBSD::PkgSpec::SubPattern" }
-sub new
+sub new($class, $pattern, $with_partial = 0)
 {
-	my ($class, $pattern, $with_partial) = @_;
 	my @l = map { $class->subpattern_class->new($_, $with_partial) }
 		(split /\|/o, $pattern);
 	if (@l == 1) {
@@ -350,9 +322,8 @@ sub new
 	}
 }
 
-sub match_ref
+sub match_ref($self, $r)
 {
-	my ($self, $r) = @_;
 	if (wantarray) {
 		my @l = ();
 		for my $subpattern (@$self) {
@@ -369,9 +340,8 @@ sub match_ref
 	}
 }
 
-sub match_libs_ref
+sub match_libs_ref($self, $r)
 {
-	my ($self, $r) = @_;
 	if (wantarray) {
 		my @l = ();
 		for my $subpattern (@$self) {
@@ -388,9 +358,8 @@ sub match_libs_ref
 	}
 }
 
-sub match_locations
+sub match_locations($self, $r)
 {
-	my ($self, $r) = @_;
 	my $l = [];
 	for my $subpattern (@$self) {
 		push(@$l, @{$subpattern->match_locations($r)});
@@ -398,9 +367,8 @@ sub match_locations
 	return $l;
 }
 
-sub is_valid
+sub is_valid($self)
 {
-	my $self = shift;
 	for my $subpattern (@$self) {
 		return 0 unless $subpattern->is_valid;
 	}
@@ -410,9 +378,8 @@ sub is_valid
 package OpenBSD::PkgSpec::SubPattern::Exact;
 our @ISA = qw(OpenBSD::PkgSpec::SubPattern);
 
-sub add_version_constraints
+sub add_version_constraints($class, $constraints, $vspec)
 {
-	my ($class, $constraints, $vspec) = @_;
 	return if $vspec eq '*'; # XXX
 	my $v = OpenBSD::PkgSpec::versionspec->new($vspec);
 	die "not a good exact spec" if !$v->is_exact;
@@ -420,16 +387,15 @@ sub add_version_constraints
 	push(@$constraints, $v);
 }
 
-sub add_flavor_constraints
+sub add_flavor_constraints($class, $constraints, $flavorspec)
 {
-	my ($class, $constraints, $flavorspec) = @_;
 	push(@$constraints, OpenBSD::PkgSpec::exactflavor->new($flavorspec));
 }
 
 package OpenBSD::PkgSpec::Exact;
 our @ISA = qw(OpenBSD::PkgSpec);
 
-sub subpattern_class
+sub subpattern_class($)
 { "OpenBSD::PkgSpec::SubPattern::Exact" }
 
 1;

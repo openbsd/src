@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Mtree.pm,v 1.13 2014/03/18 18:53:29 espie Exp $
+# $OpenBSD: Mtree.pm,v 1.14 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2004-2005 Marc Espie <espie@openbsd.org>
 #
@@ -15,17 +15,15 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::Mtree;
 use File::Spec;
 
 # read an mtree file, and produce the corresponding directory hierarchy
 
-sub parse_fh
+sub parse_fh($mtree, $basedir, $fh, $h = undef)
 {
-	my ($mtree, $basedir, $fh, $h) = @_;
 	while(<$fh>) {
 		chomp;
 		s/^\s*//o;
@@ -50,9 +48,8 @@ sub parse_fh
 	}
 }
 
-sub parse
+sub parse($mtree, $basedir, $filename, $h = undef)
 {
-	my ($mtree, $basedir, $filename, $h) = @_;
 	open my $file, '<', $filename or die "can't open $filename: $!";
 	parse_fh($mtree, $basedir, $file, $h);
 	close $file;

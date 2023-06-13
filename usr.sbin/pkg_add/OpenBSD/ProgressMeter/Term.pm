@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.43 2022/05/13 15:39:14 espie Exp $
+# $OpenBSD: Term.pm,v 1.44 2023/06/13 09:07:18 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -14,27 +14,23 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
+use v5.36;
 use warnings;
 
 package OpenBSD::PackingElement;
-sub size_and
+sub size_and($self, $p, $method, @r)
 {
-	my ($self, $p, $method, @r) = @_;
 	$p->advance($self);
 	$self->$method(@r);
 }
 
-sub compute_count
+sub compute_count($self, $count)
 {
-	my ($self, $count) = @_;
-
-	$$count ++;
+	$$count++;
 }
 
-sub count_and
+sub count_and($self, $progress, $done, $total, $method, @r)
 {
-	my ($self, $progress, $done, $total, $method, @r) = @_;
 	$$done ++;
 	$progress->show($$done, $total);
 	$self->$method(@r);
@@ -43,36 +39,32 @@ sub count_and
 package OpenBSD::ProgressMeter::Real;
 our @ISA = qw(OpenBSD::ProgressMeter);
 
-sub ntogo
+sub ntogo($self, $state, $offset = 0)
 {
-	my ($self, $state, $offset) = @_;
-	return $state->ntodo($offset // 0);
+	return $state->ntodo($offset);
 }
 
-sub compute_count
+sub compute_count($progress, $plist)
 {
-	my ($progres, $plist) = @_;
 	my $total = 0;
 	$plist->compute_count(\$total);
 	$total = 1 if $total == 0;
 	return $total;
 }
 
-sub visit_with_size
+sub visit_with_size($progress, $plist, $method, @r)
 {
-	my ($progress, $plist, $method, @r) = @_;
 	my $p = $progress->new_sizer($plist);
 	$plist->size_and($p, $method, $progress->{state}, @r);
 }
 
-sub sizer_class
+sub sizer_class($)
 {
 	"ProgressSizer"
 }
 
-sub visit_with_count
+sub visit_with_count($progress, $plist, $method, @r)
 {
-	my ($progress, $plist, $method, @r) = @_;
 	$plist->{total} //= $progress->compute_count($plist);
 	my $count = 0;
 	$progress->show($count, $plist->{total});
@@ -85,21 +77,18 @@ our @ISA = qw(OpenBSD::ProgressMeter::Real);
 use POSIX;
 use Term::Cap;
 
-sub width
+sub width($self)
 {
-	my $self = shift;
 	return $self->{state}->width;
 }
 
-sub forked
+sub forked($self)
 {
-	my $self = shift;
 	$self->{lastdisplay} = ' 'x($self->width-1);
 }
 
-sub init
+sub init($self)
 {
-	my $self = shift;
 	my $oldfh = select(STDOUT);
 	$| = 1;
 	select($oldfh);
@@ -134,26 +123,23 @@ sub init
 	}
 }
 
-sub compute_playfield
+sub compute_playfield($self)
 {
-	my $self = shift;
 	$self->{playfield} = $self->width - length($self->{header}) - 7;
 	if ($self->{playfield} < 5) {
 		$self->{playfield} = 0;
 	}
 }
 
-sub set_header
+sub set_header($self, $header)
 {
-	my ($self, $header) = @_;
 	$self->{header} = $header;
 	$self->compute_playfield;
 	return 1;
 }
 
-sub hmove
+sub hmove($self, $v)
 {
-	my ($self, $v) = @_;
 	my $seq = $self->{hpa};
 	$seq =~ s/\%i// and $v++;
 	$seq =~ s/\%n// and $v ^= 0140;
@@ -168,9 +154,8 @@ sub hmove
 	return $seq;
 }
 
-sub _show
+sub _show($self, $extra = undef, $stars = undef)
 {
-	my ($self, $extra, $stars) = @_;
 	my $d = $self->{header};
 	my $prefix = length($d);
 	if (defined $extra) {
@@ -209,9 +194,8 @@ sub _show
 	$self->{lastdisplay} = $d;
 }
 
-sub message
+sub message($self, $message)
 {
-	my ($self, $message) = @_;
 	return unless $self->can_output;
 	if ($self->{cleareol}) {
 		$message .= $self->{cleareol};
@@ -225,10 +209,8 @@ sub message
 	}
 }
 
-sub show
+sub show($self, $current, $total)
 {
-	my ($self, $current, $total) = @_;
-
 	return unless $self->can_output;
 
 	if ($self->{playfield}) {
@@ -245,17 +227,15 @@ sub show
 	}
 }
 
-sub working
+sub working($self, $slowdown)
 {
-	my ($self, $slowdown) = @_;
 	$self->{work}++;
 	return if $self->{work} < $slowdown;
 	$self->message(substr("/-\\|", ($self->{work}/$slowdown) % 4, 1));
 }
 
-sub clear
+sub clear($self)
 {
-	my $self = shift;
 	return unless length($self->{lastdisplay}) > 0;
 	if ($self->can_output) {
 		if ($self->{cleareol}) {
@@ -268,17 +248,15 @@ sub clear
 	delete $self->{stars};
 }
 
-sub disable
+sub disable($self)
 {
-	my $self = shift;
 	print "\n" if length($self->{lastdisplay}) > 0 and $self->can_output;
 
 	bless $self, "OpenBSD::ProgressMeter::Stub";
 }
 
-sub next
+sub next($self, $todo = 'ok')
 {
-	my ($self, $todo) = @_;
 	$self->clear;
 
 	$todo //= 'ok';
@@ -288,24 +266,21 @@ sub next
 package ProgressSizer;
 our @ISA = qw(PureSizer);
 
-sub new
+sub new($class, $progress, $plist)
 {
-	my ($class, $progress, $plist) = @_;
 	my $p = $class->SUPER::new($progress, $plist);
 	$progress->show(0, $p->{totsize});
 	if (defined $progress->{state}{archive}) {
 		$progress->{state}{archive}->set_callback(
-		    sub {
-			my $done = shift;
+		    sub($done) {
 			$progress->show($p->{donesize} + $done, $p->{totsize});
 		});
 	}
 	return $p;
 }
 
-sub advance
+sub advance($self, $e)
 {
-	my ($self, $e) = @_;
 	if (defined $e->{size}) {
 		$self->{donesize} += $e->{size};
 		$self->{progress}->show($self->{donesize}, $self->{totsize});

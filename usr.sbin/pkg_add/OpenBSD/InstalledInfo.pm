@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: InstalledInfo.pm,v 1.1 2020/02/17 13:06:45 espie Exp $
+# $OpenBSD: InstalledInfo.pm,v 1.2 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -15,8 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::InstalledInfo;
 require Exporter;
@@ -36,34 +35,29 @@ use constant {
 	UNDISPLAY => '+UNDISPLAY'
 };
 
-sub new
+sub new($class, $state, $dir = $ENV{"PKG_DBDIR"} || OpenBSD::Paths->pkgdb)
 {
-	my ($class, $state, $dir) = @_;
-	$dir //= $ENV{"PKG_DBDIR"} || OpenBSD::Paths->pkgdb;
 	return bless {state => $state, pkgdb => $dir}, $class;
 }
 
-sub list
+sub list($self)
 {
-	my $self = shift;
 	if (!defined $self->{list}) {
 		$self->_init;
 	}
 	return $self->{list};
 }
 
-sub stems
+sub stems($self)
 {
-	my $self = shift;
 	if (!defined $self->{stemlist}) {
 		$self->_init;
 	}
 	return $self->{stemlist};
 }
 
-sub _init
+sub _init($self)
 {
-	my $self = shift;
 	opendir(my $dir, $self->{pkgdb}) or 
 		$self->{state}->fatal("Bad pkg_db #1: #2", $self->{pgkdb}, $!);
 
@@ -86,20 +80,18 @@ for my $i (@info) {
 	$info{$i} = $j;
 }
 
-sub add
+sub add($self, @p)
 {
-	my $self = shift;
-	for my $p (@_) {
+	for my $p (@p) {
 		$self->{list}{$p} = 1;
 		$self->{stemlist}->add($p);
 	}
 	return $self;
 }
 
-sub delete
+sub delete($self, @p)
 {
-	my $self = shift;
-	for my $p (@_) {
+	for my $p (@p) {
 		delete $self->{list}{$p};
 		$self->{stemlist}->delete($p);
 
@@ -107,20 +99,17 @@ sub delete
 	return $self;
 }
 
-sub packages
+sub packages($self, $all = 0)
 {
-	my $self = shift;
-	if ($_[0]) {
+	if ($all) {
 		return grep { !/^\./o } keys %{$self->list};
 	} else {
 		return keys %{$self->list};
 	}
 }
 
-sub fullname
+sub fullname($self, $name)
 {
-	my ($self, $name) = @_;
-
 	if ($name =~ m|^\Q$self->{pkgdb}\E/?|) {
 		return "$name/";
 	} else {
@@ -128,15 +117,13 @@ sub fullname
 	}
 }
 
-sub contents
+sub contents($self, $name)
 {
-	my ($self, $name) = @_;
 	return $self->info($name).CONTENTS;
 }
 
-sub borked_package
+sub borked_package($self, $pkgname)
 {
-	my ($self, $pkgname) = shift;
 	$pkgname = "partial-$pkgname" unless $pkgname =~ m/^partial\-/;
 	unless (-e "$self->{pkgdb}/$pkgname") {
 		return $pkgname;
@@ -149,9 +136,8 @@ sub borked_package
 	return "$pkgname.$i";
 }
 
-sub libs_package
+sub libs_package($self, $pkgname)
 {
-	my ($self, $pkgname) = @_;
 	$pkgname =~ s/^\.libs\d*\-//;
 	unless (-e "$self->{pkgdb}/.libs-$pkgname") {
 		return ".libs-$pkgname";
@@ -164,9 +150,8 @@ sub libs_package
 	return ".libs$i-$pkgname";
 }
 
-sub installed_name
+sub installed_name($self, $path)
 {
-	my ($self, $path) = @_;
 	require File::Spec;
 	my $name = File::Spec->canonpath($path);
 	$name =~ s|/$||o;
@@ -175,28 +160,24 @@ sub installed_name
 	return $name;
 }
 
-sub is_installed
+sub is_installed($self, $path)
 {
-	my ($self, $path) = @_;
 	my $name = $self->installed_name($path);
 	return defined $self->list->{$self->installed_name($path)};
 }
 
-sub info_names
+sub info_names($class)
 {
-	my $class = shift;
 	return @info;
 }
 
-sub is_info_name
+sub is_info_name($class, $name)
 {
-	my ($class, $name) = @_;
 	return $info{$name};
 }
 
-sub lock
+sub lock($self, $shared = 0, $quiet = 0)
 {
-	my ($self, $shared, $quiet) = @_;
 	return if defined $self->{dlock};
 	my $mode = $shared ? LOCK_SH : LOCK_EX;
 	open($self->{dlock}, '<', $self->{pkg_db}) or return;
@@ -209,7 +190,7 @@ sub lock
 	return $self;
 }
 
-sub unlock
+sub unlock($self)
 {
 	my $self = shift;
 	if (defined $self->{dlock}) {

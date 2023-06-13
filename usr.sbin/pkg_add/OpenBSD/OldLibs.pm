@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: OldLibs.pm,v 1.16 2023/05/27 10:01:51 espie Exp $
+# $OpenBSD: OldLibs.pm,v 1.17 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2004-2010 Marc Espie <espie@openbsd.org>
 #
@@ -14,82 +14,77 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackingElement;
 
 # $self->mark_lib($libs, $libpatterns)
 #	store libs into hashes
-sub mark_lib
+sub mark_lib($, $, $)
 {
 }
 
-sub unmark_lib
+sub unmark_lib($, $, $)
 {
 }
 
 # $self->separate_element($libs, $c1, $c2)
 # 	based on libs hash, do we sort it into clone 1 or clone 2
-sub separate_element
+sub separate_element($self, $, $, $c2)
 {
-	my ($self, $libs, $c1, $c2) = @_;
 	$c2->{$self} = 1;
 }
 
-sub special_deep_copy
+sub special_deep_copy($self, $copy, $h, $)
 {
-	my ($self, $copy, $h) = @_;
 	$self->clone->add_object($copy) if defined $h->{$self};
 }
 
 package OpenBSD::PackingElement::Meta;
 
 # so every meta element ends up in both
-sub separate_element
+sub separate_element($self, $, $c1, $c2)
 {
-	my ($self, $libs, $c1, $c2) = @_;
 	$c1->{$self} = 1;
 	$c2->{$self} = 1;
 }
 
 package OpenBSD::PackingElement::DigitalSignature;
-sub separate_element
+
+sub separate_element($self, $, $, $c2)
 {
-	my ($self, $libs, $c1, $c2) = @_;
 	$c2->{$self} = 1;
 }
 
 package OpenBSD::PackingElement::State;
 
-sub separate_element
+sub separate_element	# forwarder
 {
 	&OpenBSD::PackingElement::Meta::separate_element;
 }
 
 package OpenBSD::PackingElement::Depend;
-sub separate_element
+sub separate_element	# forwarder
 {
 	&OpenBSD::PackingElement::separate_element;
 }
 
 package OpenBSD::PackingElement::SpecialFile;
-sub separate_element
+sub separate_element	# forwarder
 {
 	&OpenBSD::PackingElement::separate_element;
 }
 
 package OpenBSD::PackingElement::FCONTENTS;
-sub special_deep_copy
+sub special_deep_copy($, $, $, $)
 {
 }
 
 package OpenBSD::PackingElement::Lib;
 use File::Basename;
 
-sub mark_lib
+sub mark_lib($self, $libs, $libpatterns)
 {
-	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname;
 	my ($stem, $major, $minor, $dir) = $self->parse($libname);
 	if (defined $stem) {
@@ -98,9 +93,8 @@ sub mark_lib
 	$libs->{$libname} = 1;
 }
 
-sub separate_element
+sub separate_element($self, $libs, $c1, $c2)
 {
-	my ($self, $libs, $c1, $c2) = @_;
 	if ($libs->{$self->fullname}) {
 		$c1->{$self} = 1;
 	} else {
@@ -108,9 +102,8 @@ sub separate_element
 	}
 }
 
-sub unmark_lib
+sub unmark_lib($self, $libs, $libpatterns)
 {
-	my ($self, $libs, $libpatterns) = @_;
 	my $libname = $self->fullname;
 	my ($stem, $major, $minor, $dir) = $self->parse($libname);
 	if (defined $stem) {
@@ -123,9 +116,8 @@ sub unmark_lib
 	delete $libs->{$libname};
 }
 
-sub enforce_dir
+sub enforce_dir($self, $path, $copy, $dirs)
 {
-	my ($self, $path, $copy, $dirs) = @_;
 	my $d = dirname($path);
 	my $localbase = $copy->localbase;
 
@@ -142,9 +134,8 @@ sub enforce_dir
 	OpenBSD::PackingElement::Dir->add($copy, $d);
 }
 
-sub special_deep_copy
+sub special_deep_copy($self, $copy, $h, $dirs)
 {
-	my ($self, $copy, $h, $dirs) = @_;
 	$self->enforce_dir($self->fullname, $copy, $dirs);
 	$self->SUPER::special_deep_copy($copy, $h, $dirs);
 }
@@ -153,9 +144,8 @@ package OpenBSD::OldLibs;
 use OpenBSD::RequiredBy;
 use OpenBSD::PackageInfo;
 
-sub split_some_libs
+sub split_some_libs($plist, $libs)
 {
-	my ($plist, $libs) = @_;
 	my $c1 = {};
 	my $c2 = {};
 	$plist->separate_element($libs, $c1, $c2);
@@ -167,10 +157,8 @@ sub split_some_libs
 }
 
 # create a packing-list with only the libraries we want to keep around.
-sub split_libs
+sub split_libs($plist, $to_split)
 {
-	my ($plist, $to_split) = @_;
-
 	(my $splitted, $plist) = split_some_libs($plist, $to_split);
 
 	require OpenBSD::PackageInfo;
@@ -187,10 +175,8 @@ sub split_libs
 	return ($plist, $splitted);
 }
 
-sub adjust_depends_closure
+sub adjust_depends_closure($oldname, $plist, $state)
 {
-	my ($oldname, $plist, $state) = @_;
-
 	$state->say("    Packages that depend on those shared libraries:")
 	    if $state->verbose >= 3;
 
@@ -205,10 +191,8 @@ sub adjust_depends_closure
 	}
 }
 
-sub do_save_libs
+sub do_save_libs($o, $libs, $state)
 {
-	my ($o, $libs, $state) = @_;
-
 	my $oldname = $o->pkgname;
 
 	($o->{plist}, my $stub_list) = split_libs($o->plist, $libs);
@@ -241,10 +225,8 @@ sub do_save_libs
 	adjust_depends_closure($oldname, $stub_list, $state);
 }
 
-sub save_libs_from_handle
+sub save_libs_from_handle($o, $set, $state)
 {
-	my ($o, $set, $state) = @_;
-
 	my $libs = {};
 	my $p = {};
 
@@ -267,10 +249,8 @@ sub save_libs_from_handle
 	}
 }
 
-sub save
+sub save($self, $set, $state)
 {
-	my ($self, $set, $state) = @_;
-
 	for my $o ($set->older) {
 		save_libs_from_handle($o, $set, $state);
 	}

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Log.pm,v 1.9 2014/07/27 22:17:33 espie Exp $
+# $OpenBSD: Log.pm,v 1.10 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -16,76 +16,65 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::Log;
 
-sub new
+sub new($class, $printer)
 {
-	my ($class, $printer) = @_;
 	bless { p => $printer }, $class;
 }
 
-sub set_context
+sub set_context($self, $context)
 {
-	my ($self, $context) = @_;
 	$self->{context} = $context;
 }
 
-sub messages
+sub messages($self)
 {
-	my $self = shift;
 	$self->{context} //= "???";
 	return $self->{messages}{$self->{context}} //= [];
 }
 
-sub errmessages
+sub errmessages($self)
 {
-	my $self = shift;
 	$self->{context} //= "???";
 	return $self->{errmessages}{$self->{context}} //= [];
 }
 
-sub f
+sub f($self, @p)
 {
-	my $self = shift;
-	$self->{p}->f(@_);
+	$self->{p}->f(@p);
 }
 
-sub print
+sub print($self, @p)
 {
-	my $self = shift;
-	push(@{$self->messages}, $self->f(@_));
+	push(@{$self->messages}, $self->f(@p));
 }
 
-sub say
+sub say($self, @p)
 {
-	my $self = shift;
-	push(@{$self->messages}, $self->f(@_)."\n");
+	push(@{$self->messages}, $self->f(@p)."\n");
 }
 
-sub errprint
+sub errprint($self, @p)
 {
-	my $self = shift;
-	push(@{$self->errmessages}, $self->f(@_));
+	push(@{$self->errmessages}, $self->f(@p));
 }
 
-sub errsay
+sub errsay($self, @p)
 {
-	my $self = shift;
-	push(@{$self->errmessages}, $self->f(@_)."\n");
+	push(@{$self->errmessages}, $self->f(@p)."\n");
 }
 
-sub specialsort
+sub specialsort(@p)
 {
-	return ((sort grep { /^\-/ } @_), (sort grep { /^\+/} @_),
-	    (sort grep { !/^[\-+]/ } @_));
+	return ((sort grep { /^\-/ } @p), (sort grep { /^\+/} @p),
+	    (sort grep { !/^[\-+]/ } @p));
 }
 
-sub dump
+sub dump($self)
 {
-	my $self = shift;
 	for my $ctxt (specialsort keys %{$self->{errmessages}}) {
 		my $msgs = $self->{errmessages}{$ctxt};
 		if (@$msgs > 0) {
@@ -104,32 +93,30 @@ sub dump
 	$self->{messages} = {};
 }
 
-sub fatal
+sub fatal($self, @p)
 {
-	my $self = shift;
 	if (defined $self->{context}) {
-		$self->{p}->_fatal($self->{context}, ":", $self->f(@_));
+		$self->{p}->_fatal($self->{context}, ":", $self->f(@p));
 	}
 
-	$self->{p}->_fatal($self->f(@_));
+	$self->{p}->_fatal($self->f(@p));
 }
 
-sub system
+sub system($self, @p)
 {
-	my $self = shift;
-	if (open(my $grab, "-|", @_)) {
+	if (open(my $grab, "-|", @p)) {
 		while (<$grab>) {
 			$self->{p}->_print($_);
 		}
 		if (!close $grab) {
 			$self->{p}->say("system(#1) failed: #2 #3",
-			    join(", ", @_), $!,
+			    join(", ", @p), $!,
 			    $self->{p}->child_error);
 		}
 		return $?;
 	} else {
 		$self->{p}->say("system(#1) was not run: #2 #3",
-		    join(", ", @_), $!, $self->{p}->child_error);
+		    join(", ", @p), $!, $self->{p}->child_error);
 	}
 }
 

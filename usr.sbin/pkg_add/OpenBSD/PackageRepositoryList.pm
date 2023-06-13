@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackageRepositoryList.pm,v 1.32 2020/02/19 14:22:29 espie Exp $
+# $OpenBSD: PackageRepositoryList.pm,v 1.33 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2003-2006 Marc Espie <espie@openbsd.org>
 #
@@ -15,22 +15,19 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::PackageRepositoryList;
 
-sub new
+sub new($class, $state)
 {
-	my ($class, $state) = @_;
 	return bless {l => [], k => {}, state => $state}, $class;
 }
 
-sub filter_new
+sub filter_new($self, @p)
 {
-	my $self = shift;
 	my @l = ();
-	for my $r (@_) {
+	for my $r (@p) {
 		next if !defined $r;
 		next if $self->{k}{$r};
 		$self->{k}{$r} = 1;
@@ -39,21 +36,18 @@ sub filter_new
 	return @l;
 }
 
-sub add
+sub add($self, @p)
 {
-	my $self = shift;
-	push @{$self->{l}}, $self->filter_new(@_);
+	push @{$self->{l}}, $self->filter_new(@p);
 }
 
-sub prepend
+sub prepend($self, @p)
 {
-	my $self = shift;
-	unshift @{$self->{l}}, $self->filter_new(@_);
+	unshift @{$self->{l}}, $self->filter_new(@p);
 }
 
-sub do_something
+sub do_something($self, $do, $pkgname, @args)
 {
-	my ($self, $do, $pkgname, @args) = @_;
 	if (defined $pkgname && $pkgname eq '-') {
 		return OpenBSD::PackageRepository->pipe->new($self->{state})->$do($pkgname, @args);
 	}
@@ -64,22 +58,19 @@ sub do_something
 	return undef;
 }
 
-sub find
+sub find($self, @args)
 {
-	my ($self, @args) = @_;
 
 	return $self->do_something('find', @args);
 }
 
-sub grabPlist
+sub grabPlist($self, @args)
 {
-	my ($self, @args) = @_;
 	return $self->do_something('grabPlist', @args);
 }
 
-sub match_locations
+sub match_locations($self, @search)
 {
-	my ($self, @search) = @_;
 	my $result = [];
 	for my $repo (@{$self->{l}}) {
 		my $l = $repo->match_locations(@search);

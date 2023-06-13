@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: FwUpdate.pm,v 1.34 2022/03/10 07:18:24 hastings Exp $
+# $OpenBSD: FwUpdate.pm,v 1.35 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2014 Marc Espie <espie@openbsd.org>
 #
@@ -17,8 +17,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
-use strict;
-use warnings;
+use v5.36;
 use OpenBSD::PkgAdd;
 use OpenBSD::PackageRepository;
 use OpenBSD::PackageLocator;
@@ -26,9 +25,8 @@ use OpenBSD::PackageLocator;
 package OpenBSD::FwUpdate::Locator;
 our @ISA = qw(OpenBSD::PackageLocator);
 
-sub add_default
+sub add_default($self, $state, $p)
 {
-	my ($self, $state, $p) = @_;
 	my $path = $state->opt('p');
 	if (!$path) {
 		my $dir = OpenBSD::Paths->os_directory;
@@ -43,19 +41,18 @@ sub add_default
 package OpenBSD::FwUpdate::State;
 our @ISA = qw(OpenBSD::PkgAdd::State);
 
-sub cache_directory
+sub cache_directory($)
 {
 	return undef;
 }
 
-sub locator
+sub locator($)
 {
 	return "OpenBSD::FwUpdate::Locator";
 }
 
-sub handle_options
+sub handle_options($state)
 {
-	my $state = shift;
 	$state->OpenBSD::State::handle_options('adinp:', 
 	    '[-adinv] [-D keyword] [-p path] [driver...]');
 	$state->{not} = $state->opt('n');
@@ -83,53 +80,46 @@ sub handle_options
 	$state->{subst}->add('NO_SCP', 1);
 }
 
-sub finish_init
+sub finish_init($state)
 {
-	my $state = shift;
 	delete $state->{signer_list}; # XXX uncache value
 	$state->{subst}->add('FW_UPDATE', 1);
 }
 
-sub installed_drivers
+sub installed_drivers($self)
 {
-	my $self = shift;
 	return keys %{$self->{installed_drivers}};
 }
 
-sub is_installed
+sub is_installed($self, $driver)
 {
-	my ($self, $driver) = @_;
 	return $self->{installed_drivers}{$driver};
 }
 
-sub machine_drivers
+sub machine_drivers($self)
 {
-	my $self = shift;
 	return keys %{$self->{machine_drivers}};
 }
 
-sub all_drivers
+sub all_drivers($self)
 {
-	my $self = shift;
 	return keys %{$self->{all_drivers}};
 }
 
-sub is_needed
+sub is_needed($self, $driver)
 {
 	my ($self, $driver) = @_;
 	return $self->{machine_drivers}{$driver};
 }
 
-sub display_timestamp
+sub display_timestamp($state, $pkgname, $timestamp)
 {
-	my ($state, $pkgname, $timestamp) = @_;
 	return unless $state->verbose;
 	$state->SUPER::display_timestamp($pkgname, $timestamp);
 }
 
-sub fw_status
+sub fw_status($state, $msg, $list)
 {
-	my ($state, $msg, $list) = @_;
 	return if @$list == 0;
 	$state->say("#1: #2", $msg, join(' ', @$list));
 }
@@ -141,7 +131,7 @@ package OpenBSD::FwUpdate;
 our @ISA = qw(OpenBSD::PkgAdd);
 
 OpenBSD::Auto::cache(updater,
-    sub {
+    sub($) {
 	    require OpenBSD::Update;
 	    return OpenBSD::FwUpdate::Update->new;
     });
@@ -154,10 +144,8 @@ my %possible_drivers = map {($_, "$_-firmware")}
 my %match = map {($_, qr{^\Q$_\E\d+\s+at\s})} (keys %possible_drivers);
 $match{'intel'} = qr{^cpu\d+: Intel};
 
-sub parse_dmesg
+sub parse_dmesg($self, $f, $search, $found)
 {
-	my ($self, $f, $search, $found) = @_;
-
 	while (<$f>) {
 		chomp;
 		for my $driver (keys %$search) {
@@ -168,9 +156,8 @@ sub parse_dmesg
 	}
 }
 
-sub find_machine_drivers
+sub find_machine_drivers($self, $state)
 {
-	my ($self, $state) = @_;
 	$state->{machine_drivers} = {};
 	$state->{all_drivers} = \%possible_drivers;
 	my %search = %possible_drivers;
@@ -188,15 +175,13 @@ sub find_machine_drivers
 	}
 }
 
-sub driver2firmware
+sub driver2firmware($k)
 {
-	my $k = shift;
 	return $possible_drivers{$k};
 }
 
-sub find_installed_drivers
+sub find_installed_drivers($self, $state)
 {
-	my ($self, $state) = @_;
 	my $inst = $state->repo->installed;
 	for my $driver (keys %possible_drivers) {	
 		my $search = OpenBSD::Search::Stem->new(driver2firmware($driver));
@@ -209,15 +194,13 @@ sub find_installed_drivers
 }
 
 
-sub new_state
+sub new_state($self, $cmd)
 {
-	my ($self, $cmd) = @_;
 	return OpenBSD::FwUpdate::State->new($cmd);
 }
 
-sub find_handle
+sub find_handle($self, $state, $driver)
 {
-	my ($self, $state, $driver) = @_;
 	my $pkgname = driver2firmware($driver);
 	my $set;
 	my $h = $state->is_installed($driver);
@@ -229,9 +212,8 @@ sub find_handle
 	return $set;
 }
 
-sub mark_set_for_deletion
+sub mark_set_for_deletion($self, $set, $state)
 {
-	my ($self, $set, $state) = @_;
 	# XXX to be simplified. Basically, we pre-do the work of the updater...
 	for my $h ($set->older) {
 		$h->{update_found} = 1;
@@ -240,29 +222,25 @@ sub mark_set_for_deletion
 }
 
 # no quirks for firmware, bypass entirely
-sub do_quirks
+sub do_quirks($self, $state)
 {
-	my ($self, $state) = @_;
 	$state->finish_init;
 }
 
-sub to_remove
+sub to_remove($self, $state, $driver)
 {
-	my ($self, $state, $driver) = @_;
 	$self->mark_set_for_deletion($self->to_add_or_update($state, $driver));
 }
 
-sub to_add_or_update
+sub to_add_or_update($self, $state, $driver)
 {
-	my ($self, $state, $driver) = @_;
 	my $set = $self->find_handle($state, $driver);
 	push(@{$state->{setlist}}, $set);
 	return $set;
 }
 
-sub show_info
+sub show_info($self, $state)
 {
-	my ($self, $state) = @_;
 	my (@installed, @unneeded, @needed);
 	for my $d ($state->installed_drivers) {
 		my $h = $state->is_installed($d)->pkgname;
@@ -282,15 +260,13 @@ sub show_info
 	$state->fw_status("Missing", \@needed);
 }
 
-sub silence_children
+sub silence_children($, $)
 {
 	0
 }
 
-sub process_parameters
+sub process_parameters($self, $state)
 {
-	my ($self, $state) = @_;
-
 	$self->find_machine_drivers($state);
 	$self->find_installed_drivers($state);
 

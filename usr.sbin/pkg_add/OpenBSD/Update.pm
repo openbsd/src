@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.169 2023/05/27 10:06:55 espie Exp $
+# $OpenBSD: Update.pm,v 1.170 2023/06/13 09:07:17 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -14,31 +14,26 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
-use strict;
-use warnings;
+use v5.36;
 
 package OpenBSD::Handle;
-sub update
+sub update($self, $updater, $set, $state)
 {
-	my ($self, $updater, $set, $state) = @_;
 
 	return $updater->process_handle($set, $self, $state);
 }
 
 # TODO hint and hint2 are horrible names
 package OpenBSD::hint;
-sub update
+sub update($self, $updater, $set, $state)
 {
-	my ($self, $updater, $set, $state) = @_;
 
 	return $updater->process_hint($set, $self, $state);
 }
 
 package OpenBSD::hint2;
-sub update
+sub update($self, $updater, $set, $state)
 {
-	my ($self, $updater, $set, $state) = @_;
-
 	return $updater->process_hint2($set, $self, $state);
 }
 
@@ -48,31 +43,25 @@ use OpenBSD::PackageName;
 use OpenBSD::Error;
 use OpenBSD::UpdateSet;
 
-sub new
+sub new($class)
 {
-	my $class = shift;
 	return bless {}, $class;
 }
 
-sub add_handle
+sub add_handle($self, $set, $old, $n)
 {
-	my ($self, $set, $old, $n) = @_;
 	$old->{update_found} = $n;
 	$set->add_newer($n);
 }
 
-sub add_location
+sub add_location($self, $set, $handle, $location)
 {
-	my ($self, $set, $handle, $location) = @_;
-
 	$self->add_handle($set, $handle,
 	    OpenBSD::Handle->from_location($location));
 }
 
-sub look_for_debug
+sub look_for_debug($self, $set, $oldname, $newname, $state)
 {
-	my ($self, $set, $oldname, $newname, $state) = @_;
-
 	# hurdles to pass before adding debug packages
 	return unless $state->{debug_packages};
 
@@ -85,26 +74,22 @@ sub look_for_debug
 	$set->add_newer(OpenBSD::Handle->from_location($l->[0]));
 }
 
-sub found_update
+sub found_update($self, $set, $old, $location, $state)
 {
-	my ($self, $set, $old, $location, $state) = @_;
-
 	$self->add_location($set, $old, $location);
 	$self->look_for_debug($set, $old->pkgname, $location->name, $state);
 }
 
-sub progress_message
+sub progress_message($self, $state, @r)
 {
-	my ($self, $state, @r) = @_;
 	my $msg = $state->f(@r);
 	$msg .= $state->ntogo_string;
 	$state->progress->message($msg);
 	$state->say($msg) if $state->verbose >= 2;
 }
 
-sub process_handle
+sub process_handle($self, $set, $h, $state)
 {
-	my ($self, $set, $h, $state) = @_;
 	my $pkgname = $h->pkgname;
 
 	if ($pkgname =~ m/^\.libs\d*\-/o) {
@@ -114,8 +99,7 @@ sub process_handle
 	if (!$set->{quirks}) {
 		my $base = 0;
 		$state->run_quirks(
-		    sub {
-			my $quirks = shift;
+		    sub($quirks) {
 			$base = $quirks->is_base_system($h, $state);
 		    });
 		if ($base) {
@@ -150,8 +134,7 @@ sub process_handle
 
 	if (!$set->{quirks}) {
 		$state->run_quirks(
-		    sub {
-			my $quirks = shift;
+		    sub($quirks) {
 			$quirks->tweak_search(\@search, $h, $state);
 		    });
 	}
@@ -178,8 +161,7 @@ sub process_handle
 		push(@search, OpenBSD::Search::FilterLocation->more_recent_than($sname, \$oldfound));
 	}
 	push(@search, OpenBSD::Search::FilterLocation->new(
-	    sub {
-		my $l = shift;
+	    sub($l) {
 		if (@$l == 0) {
 			return $l;
 		}
@@ -251,10 +233,8 @@ sub process_handle
 	}
 }
 
-sub say_skipped_packages
+sub say_skipped_packages($self, $state, $o, $n)
 {
-	my ($self, $state, $o, $n) = @_;
-
 	my $o_name = $o->pkgname;
 	my @o_ps = map { @{$o->pkgpath->{$_}} } keys %{$o->pkgpath};
 	my $o_pp = join(" ", map {$_->fullpkgpath} @o_ps);
@@ -269,10 +249,8 @@ sub say_skipped_packages
 	$state->say($t, $n_name, $o_name, $n_pp, $o_pp);
 }
 
-sub find_nearest
+sub find_nearest($base, $locs)
 {
-	my ($base, $locs) = @_;
-
 	my $pkgname = OpenBSD::PackageName->from_string($base);
 	return undef if !defined $pkgname->{version};
 	my @sorted = sort {$a->pkgname->{version}->compare($b->pkgname->{version}) } @$locs;
@@ -285,10 +263,8 @@ sub find_nearest
 	return undef;
 }
 
-sub process_hint
+sub process_hint($self, $set, $hint, $state)
 {
-	my ($self, $set, $hint, $state) = @_;
-
 	my $l;
 	my $hint_name = $hint->pkgname;
 	my $k = OpenBSD::Search::FilterLocation->keep_most_recent;
@@ -301,8 +277,7 @@ sub process_hint
 		$t =~ s/\-\d([^-]*)\-?/--/;
 		my @search = (OpenBSD::Search::Stem->new($t));
 		$state->run_quirks(
-		    sub {
-			my $quirks = shift;
+		    sub($quirks) {
 			$quirks->tweak_search(\@search, $hint, $state);
 		    });
 		$l = $set->match_locations(@search, $k);
@@ -326,9 +301,8 @@ sub process_hint
 
 my $cache = {};
 
-sub process_hint2
+sub process_hint2($self, $set, $hint, $state)
 {
-	my ($self, $set, $hint, $state) = @_;
 	my $pkgname = $hint->pkgname;
 	my $pkg2;
 	if ($pkgname =~ m/[\/\:]/o) {
@@ -359,9 +333,8 @@ sub process_hint2
 	return 1;
 }
 
-sub process_set
+sub process_set($self, $set, $state)
 {
-	my ($self, $set, $state) = @_;
 	my @problems = ();
 	for my $h ($set->older, $set->hints) {
 		next if $h->{update_found};
@@ -384,9 +357,8 @@ sub process_set
 	return 1;
 }
 
-sub stem2location
+sub stem2location($self, $locator, $name, $state, $is_quirks = 0)
 {
-	my ($self, $locator, $name, $state, $is_quirks) = @_;
 	my $l = $locator->match_locations(OpenBSD::Search::Stem->new($name));
 	if (@$l > 1 && !$state->defines('allversions')) {
 		$l = OpenBSD::Search::FilterLocation->keep_most_recent->filter_locations($l);
