@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2038 2023/06/12 01:12:33 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2039 2023/06/13 02:43:39 jcs Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8637,6 +8637,7 @@
 #define	PCI_PRODUCT_SANDISK_WDSXXXG3X0C	0x5006		/* WD Black NVMe */
 #define	PCI_PRODUCT_SANDISK_PCSN530	0x5008		/* PC SN530 */
 #define	PCI_PRODUCT_SANDISK_SN850	0x5011		/* SN850 */
+#define	PCI_PRODUCT_SANDISK_PCSN740	0x5015		/* PC SN740 */
 
 /* Sangoma products */
 #define	PCI_PRODUCT_SANGOMA_A10X	0x0300		/* A10x */
