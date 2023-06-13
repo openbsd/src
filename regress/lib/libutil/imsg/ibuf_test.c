@@ -1,5 +1,4 @@
-/* $OpenBSD: ibuf_test.c,v 1.2 2023/05/23 09:32:37 claudio Exp $
-*/
+/* $OpenBSD: ibuf_test.c,v 1.3 2023/06/13 10:39:46 tb Exp $ */
 /*
  * Copyright (c) Tobias Stoeckmann <tobias@openbsd.org>
  *
@@ -26,7 +25,8 @@
 #include <stdio.h>
 
 int
-test_ibuf_open(void) {
+test_ibuf_open(void)
+{
 	struct ibuf *buf;
 
 	if ((buf = ibuf_open(1)) == NULL)
@@ -37,7 +37,8 @@ test_ibuf_open(void) {
 }
 
 int
-test_ibuf_dynamic(void) {
+test_ibuf_dynamic(void)
+{
 	struct ibuf *buf;
 
 	if (ibuf_dynamic(100, 0) != NULL)
@@ -51,7 +52,8 @@ test_ibuf_dynamic(void) {
 }
 
 int
-test_ibuf_reserve(void) {
+test_ibuf_reserve(void)
+{
 	struct ibuf *buf;
 	int ret;
 
@@ -76,7 +78,8 @@ test_ibuf_reserve(void) {
 }
 
 int
-test_ibuf_seek(void) {
+test_ibuf_seek(void)
+{
 	struct ibuf *buf;
 	int ret;
 
@@ -90,7 +93,8 @@ test_ibuf_seek(void) {
 }
 
 int
-test_msgbuf_drain(void) {
+test_msgbuf_drain(void)
+{
 	struct msgbuf msgbuf;
 	struct ibuf *buf;
 
