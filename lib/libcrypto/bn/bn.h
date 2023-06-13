@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.71 2023/04/27 06:48:47 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.72 2023/06/13 09:12:22 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -547,6 +547,7 @@ void ERR_load_BN_strings(void);
 #define BN_R_ENCODING_ERROR				 104
 #define BN_R_EXPAND_ON_STATIC_BIGNUM_DATA		 105
 #define BN_R_INPUT_NOT_REDUCED				 110
+#define BN_R_INVALID_ARGUMENT				 118
 #define BN_R_INVALID_LENGTH				 106
 #define BN_R_INVALID_RANGE				 115
 #define BN_R_NOT_A_SQUARE				 111

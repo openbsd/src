@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_err.c,v 1.15 2022/07/12 14:42:48 kn Exp $ */
+/* $OpenBSD: bn_err.c,v 1.16 2023/06/13 09:12:22 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -80,6 +80,7 @@ static ERR_STRING_DATA BN_str_reasons[]= {
 	{ERR_REASON(BN_R_ENCODING_ERROR)         , "encoding error"},
 	{ERR_REASON(BN_R_EXPAND_ON_STATIC_BIGNUM_DATA), "expand on static bignum data"},
 	{ERR_REASON(BN_R_INPUT_NOT_REDUCED)      , "input not reduced"},
+	{ERR_REASON(BN_R_INVALID_ARGUMENT)       , "invalid argument"},
 	{ERR_REASON(BN_R_INVALID_LENGTH)         , "invalid length"},
 	{ERR_REASON(BN_R_INVALID_RANGE)          , "invalid range"},
 	{ERR_REASON(BN_R_NOT_A_SQUARE)           , "not a square"},
