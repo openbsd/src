@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.277 2023/05/22 16:08:34 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.278 2023/06/13 19:34:12 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -688,7 +688,7 @@ reroute:
 		dontfrag = 0;
 	if (dontfrag &&					/* case 2-b */
 	    (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) ?
-	    m->m_pkthdr.csum_flags : tlen) > ifp->if_mtu) {
+	    m->m_pkthdr.ph_mss : tlen) > ifp->if_mtu) {
 #ifdef IPSEC
 		if (ip_mtudisc)
 			ipsec_adjust_mtu(m, mtu);
