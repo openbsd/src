@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.368 2023/06/12 09:02:31 claudio Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.369 2023/06/13 08:45:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6430,9 +6430,14 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	int			 ret = -1;
 
 	spif = open_memstream(&spibuf, &spisz);
-	flowf = open_memstream(&flowbuf, &flowsz);
-	if (spif == NULL || flowf == NULL) {
+	if (spif == NULL) {
 		log_warn("%s", __func__);
+		return (ret);
+	}
+	flowf = open_memstream(&flowbuf, &flowsz);
+	if (flowf == NULL) {
+		log_warn("%s", __func__);
+		fclose(spif);
 		return (ret);
 	}
 
