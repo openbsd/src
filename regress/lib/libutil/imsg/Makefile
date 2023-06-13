@@ -1,12 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 2022/04/23 08:57:52 tobias Exp $
+#	$OpenBSD: Makefile,v 1.2 2023/06/13 10:38:45 tb Exp $
 
-REGRESS_TARGETS= run-regress
-
-LDFLAGS= -lutil
-
-CLEANFILES= ibuf_test ibuf_test.d
-
-run-regress: ibuf_test
-	${.OBJDIR}/ibuf_test
+PROG=	ibuf_test
+LDADD=	-lutil
+DPADD=	${LIBUTIL}
 
 .include <bsd.regress.mk>
