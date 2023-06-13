@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.20 2023/03/27 10:21:23 tb Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.21 2023/06/13 09:28:13 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -136,6 +136,10 @@ BN_mod_nonct(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 int
 BN_nnmod(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 {
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		return 0;
+	}
 	if (!BN_mod_ct(r, a, m, ctx))
 		return 0;
 	if (BN_is_negative(r))
@@ -147,6 +151,10 @@ int
 BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
     BN_CTX *ctx)
 {
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		return 0;
+	}
 	if (!BN_add(r, a, b))
 		return 0;
 	return BN_nnmod(r, r, m, ctx);
@@ -159,6 +167,10 @@ BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 int
 BN_mod_add_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m)
 {
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		return 0;
+	}
 	if (!BN_uadd(r, a, b))
 		return 0;
 	if (BN_ucmp(r, m) >= 0)
@@ -170,6 +182,10 @@ int
 BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
     BN_CTX *ctx)
 {
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		return 0;
+	}
 	if (!BN_sub(r, a, b))
 		return 0;
 	return BN_nnmod(r, r, m, ctx);
@@ -182,6 +198,10 @@ BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 int
 BN_mod_sub_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m)
 {
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		return 0;
+	}
 	if (BN_ucmp(a, b) >= 0)
 		return BN_usub(r, a, b);
 	if (!BN_usub(r, b, a))
@@ -197,6 +217,11 @@ BN_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 	int ret = 0;
 
 	BN_CTX_start(ctx);
+
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		goto err;
+	}
 
 	rr = r;
 	if (rr == a || rr == b)
@@ -231,6 +256,10 @@ BN_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 int
 BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 {
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		return 0;
+	}
 	if (!BN_lshift1(r, a))
 		return 0;
 	return BN_nnmod(r, r, m, ctx);
@@ -243,6 +272,10 @@ BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 int
 BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m)
 {
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		return 0;
+	}
 	if (!BN_lshift1(r, a))
 		return 0;
 	if (BN_ucmp(r, m) >= 0)
@@ -257,6 +290,11 @@ BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m, BN_CTX *ctx)
 	int ret = 0;
 
 	BN_CTX_start(ctx);
+
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		goto err;
+	}
 
 	if (!BN_nnmod(r, a, m, ctx))
 		goto err;
@@ -287,6 +325,11 @@ int
 BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)
 {
 	int max_shift;
+
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		return 0;
+	}
 
 	if (!bn_copy(r, a))
 		return 0;
