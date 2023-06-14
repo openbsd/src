@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.90 2023/05/02 08:48:06 stsp Exp $
+#	$OpenBSD: airport,v 1.91 2023/06/14 01:16:08 kn Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -918,6 +918,7 @@ KUM:Yakushima, Japan
 KUN:Kaunas, Lithuania
 KUO:Kuopio, Finland
 KUS:Kulusuk Metropolitan Area, Greenland
+KUT:Kutaisi, Georgia
 KUV:Gunsan, South Korea
 KVA:Kavala, Greece
 KVB:Skovde, Sweden
