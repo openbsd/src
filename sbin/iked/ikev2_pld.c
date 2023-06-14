@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.129 2023/06/06 16:09:35 claudio Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.130 2023/06/14 14:09:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1522,9 +1522,8 @@ int
 ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
     struct iked_message *msg, size_t offset, size_t left, unsigned int type)
 {
-	struct sockaddr_in		 s4;
-	struct sockaddr_in6		 s6;
-	uint8_t				 buf[2][128];
+	struct sockaddr_in		 start4, end4;
+	struct sockaddr_in6		 start6, end6;
 	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 	uint8_t				*ptr;
 
@@ -1539,22 +1538,21 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 			return (-1);
 		}
 
-		bzero(&s4, sizeof(s4));
-		s4.sin_family = AF_INET;
-		s4.sin_len = sizeof(s4);
-		memcpy(&s4.sin_addr.s_addr, ptr, 4);
+		bzero(&start4, sizeof(start4));
+		start4.sin_family = AF_INET;
+		start4.sin_len = sizeof(start4);
+		memcpy(&start4.sin_addr.s_addr, ptr, 4);
 		ptr += 4;
 		left -= 4;
-		print_host((struct sockaddr *)&s4,
-		    (char *)buf[0], sizeof(buf[0]));
 
-		memcpy(&s4.sin_addr.s_addr, ptr, 4);
+		bzero(&end4, sizeof(end4));
+		end4.sin_family = AF_INET;
+		end4.sin_len = sizeof(end4);
+		memcpy(&end4.sin_addr.s_addr, ptr, 4);
 		left -= 4;
-		print_host((struct sockaddr *)&s4,
-		    (char *)buf[1], sizeof(buf[1]));
 
 		log_debug("%s: start %s end %s", __func__,
-		    buf[0], buf[1]);
+		    print_addr(&start4), print_addr(&end4));
 		break;
 	case IKEV2_TS_IPV6_ADDR_RANGE:
 		if (left < 2 * 16) {
@@ -1563,21 +1561,21 @@ ikev2_pld_ts(struct iked *env, struct ikev2_payload *pld,
 			    __func__, left, 2 * 16);
 			return (-1);
 		}
-		bzero(&s6, sizeof(s6));
-		s6.sin6_family = AF_INET6;
-		s6.sin6_len = sizeof(s6);
-		memcpy(&s6.sin6_addr, ptr, 16);
+		bzero(&start6, sizeof(start6));
+		start6.sin6_family = AF_INET6;
+		start6.sin6_len = sizeof(start6);
+		memcpy(&start6.sin6_addr, ptr, 16);
 		ptr += 16;
 		left -= 16;
-		print_host((struct sockaddr *)&s6,
-		    (char *)buf[0], sizeof(buf[0]));
 
-		memcpy(&s6.sin6_addr, ptr, 16);
+		bzero(&end6, sizeof(end6));
+		end6.sin6_family = AF_INET6;
+		end6.sin6_len = sizeof(end6);
+		memcpy(&end6.sin6_addr, ptr, 16);
 		left -= 16;
-		print_host((struct sockaddr *)&s6,
-		    (char *)buf[1], sizeof(buf[1]));
+
 		log_debug("%s: start %s end %s", __func__,
-		    buf[0], buf[1]);
+		    print_addr(&start6), print_addr(&end6));
 		break;
 	default:
 		log_debug("%s: ignoring unknown TS type %u", __func__, type);
@@ -1871,7 +1869,6 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 	uint8_t			*msgbuf = ibuf_data(msg->msg_data);
 	uint8_t			*ptr;
 	size_t			 len;
-	uint8_t			 buf[128];
 	int			 cfg_type;
 
 	if (ikev2_validate_cp(msg, offset, left, &cp))
@@ -1949,17 +1946,20 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 			in4->sin_family = AF_INET;
 			in4->sin_len = sizeof(*in4);
 			memcpy(&in4->sin_addr.s_addr, ptr, 4);
-			print_host((struct sockaddr *)in4, (char *)buf,
-			    sizeof(buf));
-			log_debug("%s: cfg %s", __func__, buf);
 			switch(cfg_type) {
 			case IKEV2_CFG_INTERNAL_IP4_ADDRESS:
 				msg->msg_parent->msg_cp_addr = addr;
-				log_debug("%s: IP4_ADDRESS %s", __func__, buf);
+				log_debug("%s: IP4_ADDRESS %s", __func__,
+				    print_addr(&addr->addr));
 				break;
 			case IKEV2_CFG_INTERNAL_IP4_DNS:
 				msg->msg_parent->msg_cp_dns = addr;
-				log_debug("%s: IP4_DNS %s", __func__, buf);
+				log_debug("%s: IP4_DNS %s", __func__,
+				    print_addr(&addr->addr));
+				break;
+			default:
+				log_debug("%s: cfg %s", __func__,
+				    print_addr(&addr->addr));
 				break;
 			}
 			break;
@@ -1999,17 +1999,20 @@ ikev2_pld_cp(struct iked *env, struct ikev2_payload *pld,
 			in6->sin6_family = AF_INET6;
 			in6->sin6_len = sizeof(*in6);
 			memcpy(&in6->sin6_addr, ptr, 16);
-			print_host((struct sockaddr *)in6, (char *)buf,
-			    sizeof(buf));
-			log_debug("%s: cfg %s/%d", __func__, buf, ptr[16]);
 			switch(cfg_type) {
 			case IKEV2_CFG_INTERNAL_IP6_ADDRESS:
 				msg->msg_parent->msg_cp_addr6 = addr;
-				log_debug("%s: IP6_ADDRESS %s", __func__, buf);
+				log_debug("%s: IP6_ADDRESS %s", __func__,
+				    print_addr(&addr->addr));
 				break;
 			case IKEV2_CFG_INTERNAL_IP6_DNS:
 				msg->msg_parent->msg_cp_dns = addr;
-				log_debug("%s: IP6_DNS %s", __func__, buf);
+				log_debug("%s: IP6_DNS %s", __func__,
+				    print_addr(&addr->addr));
+				break;
+			default:
+				log_debug("%s: cfg %s/%d", __func__,
+				    print_addr(&addr->addr), ptr[16]);
 				break;
 			}
 			break;

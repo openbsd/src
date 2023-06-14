@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.370 2023/06/13 12:34:12 tb Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.371 2023/06/14 14:09:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2285,7 +2285,7 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 	struct sockaddr_in	*in4;
 	struct sockaddr_in6	*in6;
 	ssize_t			 ret = -1;
-	struct sockaddr		*src, *dst, *ss;
+	struct sockaddr_storage	*src, *dst, *ss;
 	uint64_t		 rspi, ispi;
 	struct ibuf		*buf;
 	uint32_t		 rnd;
@@ -2299,13 +2299,13 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 			return (-1);
 		ispi = hdr->ike_ispi;
 		rspi = hdr->ike_rspi;
-		src = (struct sockaddr *)&msg->msg_peer;
-		dst = (struct sockaddr *)&msg->msg_local;
+		src = &msg->msg_peer;
+		dst = &msg->msg_local;
 	} else {
 		ispi = htobe64(sa->sa_hdr.sh_ispi);
 		rspi = htobe64(sa->sa_hdr.sh_rspi);
-		src = (struct sockaddr *)&msg->msg_local;
-		dst = (struct sockaddr *)&msg->msg_peer;
+		src = &msg->msg_local;
+		dst = &msg->msg_peer;
 	}
 
 	ctx = EVP_MD_CTX_new();
@@ -2337,7 +2337,7 @@ ikev2_nat_detection(struct iked *env, struct iked_message *msg,
 	EVP_DigestUpdate(ctx, &ispi, sizeof(ispi));
 	EVP_DigestUpdate(ctx, &rspi, sizeof(rspi));
 
-	switch (ss->sa_family) {
+	switch (ss->ss_family) {
 	case AF_INET:
 		in4 = (struct sockaddr_in *)ss;
 		EVP_DigestUpdate(ctx, &in4->sin_addr.s_addr,
@@ -6902,15 +6902,14 @@ ikev2_print_static_id(struct iked_static_id *id, char *idstr, size_t idstrlen)
 int
 ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 {
-	uint8_t				 buf[BUFSIZ], *ptr;
-	struct sockaddr_in		*s4;
-	struct sockaddr_in6		*s6;
+	uint8_t				*ptr;
+	struct sockaddr_in		 s4 = { 0 };
+	struct sockaddr_in6		 s6 = { 0 };
 	char				*str;
 	ssize_t				 len;
 	int				 i;
 	const char			*type;
 
-	bzero(buf, sizeof(buf));
 	bzero(idstr, idstrlen);
 
 	if (id->id_buf == NULL)
@@ -6931,48 +6930,38 @@ ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 	    strlcat(idstr, "/", idstrlen) >= idstrlen)
 		return (-1);
 
-	idstrlen -= strlen(idstr);
-	idstr += strlen(idstr);
-
 	switch (id->id_type) {
 	case IKEV2_ID_IPV4:
-		s4 = (struct sockaddr_in *)buf;
-		s4->sin_family = AF_INET;
-		s4->sin_len = sizeof(*s4);
-		memcpy(&s4->sin_addr.s_addr, ptr, len);
+		s4.sin_family = AF_INET;
+		s4.sin_len = sizeof(s4);
+		memcpy(&s4.sin_addr.s_addr, ptr, len);
 
-		if (print_host((struct sockaddr *)s4,
-		    idstr, idstrlen) == NULL)
+		if (strlcat(idstr, print_addr(&s4), idstrlen) >= idstrlen)
 			return (-1);
 		break;
 	case IKEV2_ID_FQDN:
 	case IKEV2_ID_UFQDN:
-		if (len >= (ssize_t)sizeof(buf))
-			return (-1);
-
 		if ((str = get_string(ptr, len)) == NULL)
 			return (-1);
 
-		if (strlcpy(idstr, str, idstrlen) >= idstrlen) {
+		if (strlcat(idstr, str, idstrlen) >= idstrlen) {
 			free(str);
 			return (-1);
 		}
 		free(str);
 		break;
 	case IKEV2_ID_IPV6:
-		s6 = (struct sockaddr_in6 *)buf;
-		s6->sin6_family = AF_INET6;
-		s6->sin6_len = sizeof(*s6);
-		memcpy(&s6->sin6_addr, ptr, len);
+		s6.sin6_family = AF_INET6;
+		s6.sin6_len = sizeof(s6);
+		memcpy(&s6.sin6_addr, ptr, len);
 
-		if (print_host((struct sockaddr *)s6,
-		    idstr, idstrlen) == NULL)
+		if (strlcat(idstr, print_addr(&s6), idstrlen) >= idstrlen)
 			return (-1);
 		break;
 	case IKEV2_ID_ASN1_DN:
 		if ((str = ca_asn1_name(ptr, len)) == NULL)
 			return (-1);
-		if (strlcpy(idstr, str, idstrlen) >= idstrlen) {
+		if (strlcat(idstr, str, idstrlen) >= idstrlen) {
 			OPENSSL_free(str);
 			return (-1);
 		}
@@ -6980,9 +6969,12 @@ ikev2_print_id(struct iked_id *id, char *idstr, size_t idstrlen)
 		break;
 	default:
 		/* XXX test */
-		for (i = 0; i < ((ssize_t)idstrlen - 1) && i < len; i++)
-			snprintf(idstr + i, idstrlen - i,
-			    "%02x", ptr[i]);
+		for (i = 0; i < len; i++) {
+			char buf[3];
+			snprintf(buf, sizeof(buf), "%02x", ptr[i]);
+			if (strlcat(idstr, buf, idstrlen) >= idstrlen)
+				break;
+		}
 		break;
 	}
 

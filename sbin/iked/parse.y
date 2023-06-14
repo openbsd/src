@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.142 2023/04/19 13:33:37 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.143 2023/06/14 14:09:29 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2880,8 +2880,7 @@ create_ike(char *name, int af, struct ipsec_addr_wrap *ipproto,
 	if (dstid)
 		strlcpy(idstr, dstid, sizeof(idstr));
 	else if (!pol.pol_peer.addr_net)
-		print_host((struct sockaddr *)&pol.pol_peer.addr, idstr,
-		    sizeof(idstr));
+		strlcpy(idstr, print_addr(&pol.pol_peer.addr), sizeof(idstr));
 
 	ikeauth = &pol.pol_auth;
 	switch (ikeauth->auth_method) {
