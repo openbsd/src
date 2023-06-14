@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.138 2023/04/19 20:03:51 kn Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.139 2023/06/14 14:30:08 mvs Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
@@ -718,7 +718,9 @@ add_vif(struct socket *so, struct mbuf *m)
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);
 		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
 		satosin(&ifr.ifr_addr)->sin_addr = zeroin_addr;
+		KERNEL_LOCK();
 		error = (*ifp->if_ioctl)(ifp, SIOCADDMULTI, (caddr_t)&ifr);
+		KERNEL_UNLOCK();
 		if (error)
 			return (error);
 	}
