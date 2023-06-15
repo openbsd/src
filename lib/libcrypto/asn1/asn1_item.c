@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.7 2023/06/13 23:31:53 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.8 2023/06/15 12:44:17 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -251,18 +251,20 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	if (pkey->ameth->item_sign) {
 		rv = pkey->ameth->item_sign(ctx, it, asn, algor1, algor2,
 		    signature);
-		if (rv == 1)
-			out_len = signature->length;
+		if (rv == 1) {
+			buf_out_len = signature->length;
+			goto done;
+		}
 		/* Return value meanings:
 		 * <=0: error.
 		 *   1: method does everything.
 		 *   2: carry on as normal.
 		 *   3: ASN1 method sets algorithm identifiers: just sign.
 		 */
-		if (rv <= 0)
+		if (rv <= 0) {
 			ASN1error(ERR_R_EVP_LIB);
-		if (rv <= 1)
 			goto err;
+		}
 	}
 
 	if (rv == 2) {
@@ -322,6 +324,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		goto err;
 	}
 
+ done:
 	ret = (int)buf_out_len;
  err:
 	EVP_MD_CTX_cleanup(ctx);
