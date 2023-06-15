@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.10 2023/06/15 13:22:25 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.11 2023/06/15 13:32:18 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -235,7 +235,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	EVP_PKEY *pkey;
 	unsigned char *buf_in = NULL, *buf_out = NULL;
 	size_t buf_out_len = 0;
-	int in_len = 0, out_len = 0;
+	int in_len = 0;
 	int signid, paramtype;
 	int rv = 2;
 	int ret = 0;
@@ -300,19 +300,17 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		goto err;
 	}
 
-	if ((out_len = EVP_PKEY_size(pkey)) <= 0) {
-		out_len = 0;
+	if (!EVP_DigestSign(ctx, NULL, &buf_out_len, buf_in, in_len)) {
+		ASN1error(ERR_R_EVP_LIB);
 		goto err;
 	}
 
-	if ((buf_out = malloc(out_len)) == NULL) {
+	if ((buf_out = calloc(1, buf_out_len)) == NULL) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	buf_out_len = out_len;
-	if (!EVP_DigestSignUpdate(ctx, buf_in, in_len) ||
-	    !EVP_DigestSignFinal(ctx, buf_out, &buf_out_len)) {
+	if (!EVP_DigestSign(ctx, buf_out, &buf_out_len, buf_in, in_len)) {
 		ASN1error(ERR_R_EVP_LIB);
 		goto err;
 	}
@@ -335,7 +333,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
  err:
 	EVP_MD_CTX_cleanup(ctx);
 	freezero(buf_in, in_len);
-	freezero(buf_out, out_len);
+	freezero(buf_out, buf_out_len);
 
 	return ret;
 }
