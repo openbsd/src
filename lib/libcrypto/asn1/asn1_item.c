@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.12 2023/06/15 13:44:38 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.13 2023/06/15 13:48:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -346,13 +346,12 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 	int in_len = 0;
 	int ret = -1;
 
-	if (!pkey) {
+	if (pkey == NULL) {
 		ASN1error(ERR_R_PASSED_NULL_PARAMETER);
 		return -1;
 	}
 
-	if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7)
-	{
+	if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7) {
 		ASN1error(ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
 		return -1;
 	}
