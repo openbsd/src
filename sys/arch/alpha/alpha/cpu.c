@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.46 2022/12/10 15:02:29 cheloha Exp $ */
+/* $OpenBSD: cpu.c,v 1.47 2023/06/15 22:18:06 cheloha Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -597,6 +597,7 @@ cpu_hatch(struct cpu_info *ci)
 	ALPHA_TBIA();
 	alpha_pal_imb();
 
+	clockqueue_init(&ci->ci_queue);
 	KERNEL_LOCK();
 	sched_init_cpu(ci);
 	nanouptime(&ci->ci_schedstate.spc_runtime);

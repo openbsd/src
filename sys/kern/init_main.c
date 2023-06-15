@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.320 2023/01/01 07:00:51 jsg Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.321 2023/06/15 22:18:06 cheloha Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/resourcevar.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/tty.h>
@@ -313,6 +314,7 @@ main(void *framep)
 	/* Initialize run queues */
 	sched_init_runqueues();
 	sleep_queue_init();
+	clockqueue_init(&curcpu()->ci_queue);
 	sched_init_cpu(curcpu());
 	p->p_cpu->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 

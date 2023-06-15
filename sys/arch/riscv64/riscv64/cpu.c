@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.13 2022/04/06 18:59:27 naddy Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.14 2023/06/15 22:18:08 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -193,6 +193,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 	if (ci->ci_flags & CPUF_AP) {
 		int timeout = 10000;
 
+		clockqueue_init(&ci->ci_queue);
 		sched_init_cpu(ci);
 		if (cpu_hatch_secondary(ci)) {
 			atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);

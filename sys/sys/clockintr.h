@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.7 2023/04/20 14:51:28 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.8 2023/06/15 22:18:06 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -129,6 +129,7 @@ void clockintr_trigger(void);
  * Kernel API
  */
 
+void clockqueue_init(struct clockintr_queue *);
 int sysctl_clockintr(int *, u_int, void *, size_t *, void *, size_t);
 
 #endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.82 2022/04/06 18:59:26 naddy Exp $ */
+/*	$OpenBSD: cpu.c,v 1.83 2023/06/15 22:18:07 cheloha Exp $ */
 
 /*
  * Copyright (c) 1997-2004 Opsycon AB (www.opsycon.se)
@@ -395,6 +395,7 @@ cpu_boot_secondary_processors(void)
 			continue;
 
 		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
+		clockqueue_init(&ci->ci_queue);
 		sched_init_cpu(ci);
 		cpu_boot_secondary(ci);
 	}

@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.21 2023/04/23 00:08:36 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.22 2023/06/15 22:18:06 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -66,7 +66,6 @@ void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
 void clockintr_statclock(struct clockintr *, void *);
 void clockintr_statvar_init(int, uint32_t *, uint32_t *, uint32_t *);
-void clockqueue_init(struct clockintr_queue *);
 uint64_t clockqueue_next(const struct clockintr_queue *);
 void clockqueue_reset_intrclock(struct clockintr_queue *);
 uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
@@ -114,7 +113,6 @@ clockintr_cpu_init(const struct intrclock *ic)
 
 	KASSERT(ISSET(clockintr_flags, CL_INIT));
 
-	clockqueue_init(cq);
 	if (ic != NULL && !ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
 		cq->cq_intrclock = *ic;
 		SET(cq->cq_flags, CQ_INTRCLOCK);

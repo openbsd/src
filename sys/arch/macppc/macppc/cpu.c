@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.85 2022/03/13 12:33:01 mpi Exp $ */
+/*	$OpenBSD: cpu.c,v 1.86 2023/06/15 22:18:07 cheloha Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -670,6 +670,7 @@ cpu_boot_secondary_processors(void)
 			continue;
 		ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
+		clockqueue_init(&ci->ci_queue);
 		sched_init_cpu(ci);
 
 		cpu_spinup(NULL, ci);

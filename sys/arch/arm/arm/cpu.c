@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.57 2022/03/12 14:40:41 mpi Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.58 2023/06/15 22:18:06 cheloha Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 2004/04/14 04:01:49 bsh Exp $	*/
 
 
@@ -391,6 +391,7 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 			    "cpu-release-addr", 0);
 		}
 
+		clockqueue_init(&ci->ci_queue);
 		sched_init_cpu(ci);
 		if (cpu_hatch_secondary(ci, spinup_method, spinup_data)) {
 			atomic_setbits_int(&ci->ci_flags, CPUF_IDENTIFY);

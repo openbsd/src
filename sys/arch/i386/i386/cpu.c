@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.111 2023/01/30 10:49:04 jsg Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.112 2023/06/15 22:18:07 cheloha Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -360,6 +360,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 #endif
 		cpu_tsx_disable(ci);
 		identifycpu(ci);
+		clockqueue_init(&ci->ci_queue);
 		sched_init_cpu(ci);
 		ci->ci_next = cpu_info_list->ci_next;
 		cpu_info_list->ci_next = ci;
