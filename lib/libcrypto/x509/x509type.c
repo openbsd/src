@@ -1,4 +1,4 @@
-/* $OpenBSD: x509type.c,v 1.18 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: x509type.c,v 1.19 2023/06/15 18:30:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,6 +88,9 @@ X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
 		break;
 	case EVP_PKEY_EC:
 		ret = EVP_PK_EC|EVP_PKT_SIGN|EVP_PKT_EXCH;
+		break;
+	case EVP_PKEY_ED25519:
+		ret = EVP_PKT_SIGN;
 		break;
 	case EVP_PKEY_DH:
 		ret = EVP_PK_DH|EVP_PKT_EXCH;
