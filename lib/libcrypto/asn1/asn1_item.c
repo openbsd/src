@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.13 2023/06/15 13:48:15 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.14 2023/06/15 13:58:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -399,35 +399,26 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 
 	}
 
-	in_len = ASN1_item_i2d(asn, &in, it);
-
-	if (in == NULL) {
+	if ((in_len = ASN1_item_i2d(asn, &in, it)) <= 0) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
+		in_len = 0;
 		goto err;
 	}
 
-	if (!EVP_DigestVerifyUpdate(&ctx, in, in_len)) {
+	if (EVP_DigestVerify(&ctx, signature->data, signature->length,
+	    in, in_len) <= 0) {
 		ASN1error(ERR_R_EVP_LIB);
 		ret = 0;
 		goto err;
 	}
 
-	freezero(in, (unsigned int)in_len);
-
-	if (EVP_DigestVerifyFinal(&ctx, signature->data,
-	    (size_t)signature->length) <= 0) {
-		ASN1error(ERR_R_EVP_LIB);
-		ret = 0;
-		goto err;
-	}
-	/* we don't need to zero the 'ctx' because we just checked
-	 * public information */
-	/* memset(&ctx,0,sizeof(ctx)); */
 	ret = 1;
 
  err:
 	EVP_MD_CTX_cleanup(&ctx);
-	return (ret);
+	freezero(in, in_len);
+
+	return ret;
 }
 
 #define HEADER_SIZE   8
