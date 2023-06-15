@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.9 2023/06/15 13:07:45 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.10 2023/06/15 13:22:25 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,10 +240,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	int rv = 2;
 	int ret = 0;
 
-	type = EVP_MD_CTX_md(ctx);
-	pkey = EVP_PKEY_CTX_get0_pkey(ctx->pctx);
-
-	if (!type || !pkey) {
+	if ((pkey = EVP_PKEY_CTX_get0_pkey(ctx->pctx)) == NULL) {
 		ASN1error(ASN1_R_CONTEXT_NOT_INITIALISED);
 		return 0;
 	}
@@ -253,7 +250,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		return 0;
 	}
 
-	if (pkey->ameth->item_sign) {
+	if (pkey->ameth->item_sign != NULL) {
 		rv = pkey->ameth->item_sign(ctx, it, asn, algor1, algor2,
 		    signature);
 		if (rv == 1) {
@@ -273,6 +270,11 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	}
 
 	if (rv == 2) {
+		if ((type = EVP_MD_CTX_md(ctx)) == NULL) {
+			ASN1error(ASN1_R_CONTEXT_NOT_INITIALISED);
+			return 0;
+		}
+
 		if (!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(type),
 		    pkey->ameth->pkey_id)) {
 			ASN1error(ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
