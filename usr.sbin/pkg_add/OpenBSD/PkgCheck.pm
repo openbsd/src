@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.80 2023/06/16 10:29:35 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.81 2023/06/16 10:38:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -521,7 +521,7 @@ sub run_command($self)
 	$self->{params} = [];
 }
 
-sub result($self)
+sub show_results($self)
 {
 	while (@{$self->{params}} > 0) {
 		$self->run_command;
@@ -919,7 +919,7 @@ sub locate_unknown($self, $state)
 				$locator->add_param($p);
 			});
 	}
-	$locator->result($state);
+	$locator->show_results;
 }
 
 sub fill_localbase($self, $state, $base)
