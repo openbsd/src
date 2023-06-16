@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.110 2023/06/01 09:05:33 jan Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.111 2023/06/16 19:18:56 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -321,35 +321,30 @@ reroute:
 
 	error = tcp_if_output_tso(ifp, &m, sin6tosa(sin6), rt, IFCAP_TSOv6,
 	    ifp->if_mtu);
+	if (error)
+		ip6stat_inc(ip6s_cantforward);
+	else if (m == NULL)
+		ip6stat_inc(ip6s_forward);
 	if (error || m == NULL)
-		goto freecopy;
+		goto senderr;
 
 	/* Check the size after pf_test to give pf a chance to refragment. */
-	if (m->m_pkthdr.len > ifp->if_mtu) {
-		if (mcopy)
-			icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0,
-			    ifp->if_mtu);
-		m_freem(m);
-		goto out;
+	if (m->m_pkthdr.len <= ifp->if_mtu) {
+		in6_proto_cksum_out(m, ifp);
+		error = ifp->if_output(ifp, m, sin6tosa(sin6), rt);
+		if (error)
+			ip6stat_inc(ip6s_cantforward);
+		else
+			ip6stat_inc(ip6s_forward);
+		goto senderr;
 	}
 
-	in6_proto_cksum_out(m, ifp);
-	error = ifp->if_output(ifp, m, sin6tosa(sin6), rt);
-	if (error) {
-		ip6stat_inc(ip6s_cantforward);
-	} else {
-		ip6stat_inc(ip6s_forward);
-		if (type)
-			ip6stat_inc(ip6s_redirectsent);
-		else {
-			if (mcopy)
-				goto freecopy;
-		}
-	}
+	if (mcopy != NULL)
+		icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);
+	m_freem(m);
+	goto out;
 
-#if NPF > 0 || defined(IPSEC)
 senderr:
-#endif
 	if (mcopy == NULL)
 		goto out;
 
@@ -357,6 +352,7 @@ senderr:
 	case 0:
 		if (type == ND_REDIRECT) {
 			icmp6_redirect_output(mcopy, rt);
+			ip6stat_inc(ip6s_redirectsent);
 			goto out;
 		}
 		goto freecopy;
