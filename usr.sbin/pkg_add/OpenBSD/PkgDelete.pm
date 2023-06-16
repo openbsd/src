@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.49 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.50 2023/06/16 10:08:17 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -170,7 +170,7 @@ sub create_locations($state, @l)
 	my $inst = $state->repo->installed;
 	my $result = [];
 	for my $name (@l) {
-		my $l = $inst->find($name, $state->{arch});
+		my $l = $inst->find($name);
 		if (!defined $l) {
 			$state->errsay("Can't find #1 in installed packages",
 			    $name);
