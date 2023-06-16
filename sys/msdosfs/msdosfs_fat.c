@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_fat.c,v 1.35 2023/04/30 17:16:36 sf Exp $	*/
+/*	$OpenBSD: msdosfs_fat.c,v 1.36 2023/06/16 08:42:08 sf Exp $	*/
 /*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
 
 /*-
@@ -411,7 +411,7 @@ usemap_alloc(struct msdosfsmount *pmp, uint32_t cn)
 {
 	KASSERT(cn <= pmp->pm_maxcluster);
 
-	pmp->pm_inusemap[cn / N_INUSEBITS] |= 1 << (cn % N_INUSEBITS);
+	pmp->pm_inusemap[cn / N_INUSEBITS] |= 1U << (cn % N_INUSEBITS);
 	pmp->pm_freeclustercount--;
 }
 
@@ -421,7 +421,7 @@ usemap_free(struct msdosfsmount *pmp, uint32_t cn)
 	KASSERT(cn <= pmp->pm_maxcluster);
 
 	pmp->pm_freeclustercount++;
-	pmp->pm_inusemap[cn / N_INUSEBITS] &= ~(1 << (cn % N_INUSEBITS));
+	pmp->pm_inusemap[cn / N_INUSEBITS] &= ~(1U << (cn % N_INUSEBITS));
 }
 
 int
@@ -652,7 +652,7 @@ chainlength(struct msdosfsmount *pmp, uint32_t start, uint32_t count)
 	idx = start / N_INUSEBITS;
 	start %= N_INUSEBITS;
 	map = pmp->pm_inusemap[idx];
-	map &= ~((1 << start) - 1);
+	map &= ~((1U << start) - 1);
 	if (map) {
 		len = ffs(map) - 1 - start;
 		len = MIN(len, count);
@@ -759,7 +759,7 @@ clusteralloc(struct msdosfsmount *pmp, uint32_t start, uint32_t count,
 	for (cn = newst; cn <= pmp->pm_maxcluster;) {
 		idx = cn / N_INUSEBITS;
 		map = pmp->pm_inusemap[idx];
-		map |= (1 << (cn % N_INUSEBITS)) - 1;
+		map |= (1U << (cn % N_INUSEBITS)) - 1;
 		if (map != (u_int)-1) {
 			cn = idx * N_INUSEBITS + ffs(map^(u_int)-1) - 1;
 			if ((l = chainlength(pmp, cn, count)) >= count)
@@ -776,7 +776,7 @@ clusteralloc(struct msdosfsmount *pmp, uint32_t start, uint32_t count,
 	for (cn = 0; cn < newst;) {
 		idx = cn / N_INUSEBITS;
 		map = pmp->pm_inusemap[idx];
-		map |= (1 << (cn % N_INUSEBITS)) - 1;
+		map |= (1U << (cn % N_INUSEBITS)) - 1;
 		if (map != (u_int)-1) {
 			cn = idx * N_INUSEBITS + ffs(map^(u_int)-1) - 1;
 			if ((l = chainlength(pmp, cn, count)) >= count)
