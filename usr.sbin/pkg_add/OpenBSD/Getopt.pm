@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Getopt.pm,v 1.16 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: Getopt.pm,v 1.17 2023/06/16 06:44:14 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -45,9 +45,8 @@ sub handle_option($opt, $hash, @params)
 	}
 }
 
-sub getopts($args, $hash)
+sub getopts($args, $hash = {})
 {
-    $hash = {} unless defined $hash;
     local @EXPORT;
 
     while ($_ = shift @ARGV) {
