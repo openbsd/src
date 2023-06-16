@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.24 2017/07/09 14:04:50 espie Exp $	*/
+/*	$OpenBSD: scan.l,v 1.25 2023/06/16 16:14:34 tb Exp $	*/
 /*	$NetBSD: scan.l,v 1.13 1997/02/02 21:12:37 thorpej Exp $	*/
 
 /*
@@ -178,8 +178,7 @@ rmoptions	return RMOPTIONS;
  * Open the "main" file (conffile).
  */
 int
-firstfile(fname)
-	const char *fname;
+firstfile(const char *fname)
 {
 
 	if ((yyin = fopen(fname, "r")) == NULL)
@@ -197,9 +196,7 @@ firstfile(fname)
  * If ateof == 0 then nothing is inserted.
  */
 int
-include(fname, ateof)
-	const char *fname;
-	int ateof;
+include(const char *fname, int ateof)
 {
 	FILE *fp;
 	struct incl *in;
