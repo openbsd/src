@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.41 2023/06/13 12:34:12 tb Exp $	*/
+/*	$OpenBSD: util.c,v 1.42 2023/06/16 10:28:43 tb Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -636,19 +636,20 @@ prefixlen2mask6(uint8_t prefixlen, uint32_t *mask)
 }
 
 const char *
-print_host(struct sockaddr *sa, char *buf, size_t len)
+print_addr(void *addr)
 {
-	static char	sbuf[IKED_CYCLE_BUFFERS][NI_MAXHOST + 7];
-	static int	idx = 0;
-	char		pbuf[7];
-	in_port_t	port;
+	static char	 sbuf[IKED_CYCLE_BUFFERS][NI_MAXHOST + 7];
+	static int	 idx;
+	struct sockaddr	*sa = addr;
+	char		*buf;
+	size_t		 len;
+	char		 pbuf[7];
+	in_port_t	 port;
 
-	if (buf == NULL) {
-		buf = sbuf[idx];
-		len = sizeof(sbuf[idx]);
-		if (++idx >= IKED_CYCLE_BUFFERS)
-			idx = 0;
-	}
+	buf = sbuf[idx];
+	len = sizeof(sbuf[idx]);
+	if (++idx >= IKED_CYCLE_BUFFERS)
+		idx = 0;
 
 	if (sa->sa_family == AF_UNSPEC) {
 		strlcpy(buf, "any", len);
@@ -667,12 +668,6 @@ print_host(struct sockaddr *sa, char *buf, size_t len)
 	}
 
 	return (buf);
-}
-
-const char *
-print_addr(void *addr)
-{
-	return print_host(addr, NULL, 0);
 }
 
 char *
