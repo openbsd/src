@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCheck.pm,v 1.79 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: PkgCheck.pm,v 1.80 2023/06/16 10:29:35 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -213,7 +213,7 @@ sub basic_check($self, $state)
 {
 	$self->SUPER::basic_check($state);
 	my $name = $state->destdir($self->fullname);
-	for my $file (OpenBSD::Paths::man_cruft()) {
+	for my $file (OpenBSD::Paths->man_cruft) {
 		$state->{known}{$name}{$file} = 1;
 	}
 	return 1;
@@ -924,7 +924,7 @@ sub locate_unknown($self, $state)
 
 sub fill_localbase($self, $state, $base)
 {
-	for my $file (OpenBSD::Paths::man_cruft()) {
+	for my $file (OpenBSD::Paths->man_cruft) {
 		$state->{known}{$base."/man"}{$file} = 1;
 	}
 	$state->{known}{$base."/info"}{'dir'} = 1;
