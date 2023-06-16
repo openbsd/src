@@ -1,4 +1,4 @@
-/* $OpenBSD: ex_data.c,v 1.20 2018/03/17 16:20:01 beck Exp $ */
+/* $OpenBSD: ex_data.c,v 1.21 2023/06/16 11:20:01 tb Exp $ */
 
 /*
  * Overhaul notes;
@@ -320,7 +320,7 @@ def_get_class(int class_index)
 		gen = malloc(sizeof(EX_CLASS_ITEM));
 		if (gen) {
 			gen->class_index = class_index;
-			gen->meth_num = 0;
+			gen->meth_num = 1;
 			gen->meth = sk_CRYPTO_EX_DATA_FUNCS_new_null();
 			if (!gen->meth)
 				free(gen);
