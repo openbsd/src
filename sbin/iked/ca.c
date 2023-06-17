@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.92 2023/05/23 13:12:19 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.93 2023/06/17 22:33:34 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -560,9 +560,9 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 	iov[2].iov_base = ptr;
 	iov[2].iov_len = len;
 
-	if (proc_composev(&env->sc_ps, PROC_IKEV2, cmd, iov, iovcnt) == -1)
-		return (-1);
-	return (0);
+	ret = proc_composev(&env->sc_ps, PROC_IKEV2, cmd, iov, iovcnt);
+	ibuf_free(key.id_buf);
+	return (ret);
 }
 
 static unsigned int
