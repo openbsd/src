@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.59 2023/04/30 05:21:20 tb Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.60 2023/06/17 14:43:50 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -327,6 +327,36 @@ bn_mod_mul_montgomery_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	return ret;
 }
 
+static void
+bn_montgomery_multiply_word(const BN_ULONG *ap, BN_ULONG b, const BN_ULONG *np,
+    BN_ULONG *tp, BN_ULONG w, BN_ULONG *carry_a, BN_ULONG *carry_n, int n_len)
+{
+	BN_ULONG x3, x2, x1, x0;
+
+	*carry_a = *carry_n = 0;
+
+	while (n_len & ~3) {
+		bn_qwmulw_addqw_addw(ap[3], ap[2], ap[1], ap[0], b,
+		    tp[3], tp[2], tp[1], tp[0], *carry_a, carry_a,
+		    &x3, &x2, &x1, &x0);
+		bn_qwmulw_addqw_addw(np[3], np[2], np[1], np[0], w,
+		    x3, x2, x1, x0, *carry_n, carry_n,
+		    &tp[3], &tp[2], &tp[1], &tp[0]);
+		ap += 4;
+		np += 4;
+		tp += 4;
+		n_len -= 4;
+	}
+	while (n_len > 0) {
+		bn_mulw_addw_addw(ap[0], b, tp[0], *carry_a, carry_a, &x0);
+		bn_mulw_addw_addw(np[0], w, x0, *carry_n, carry_n, &tp[0]);
+		ap++;
+		np++;
+		tp++;
+		n_len--;
+	}
+}
+
 /*
  * bn_montgomery_multiply_words() computes r = aR * bR * R^-1 = abR for the
  * given word arrays. The caller must ensure that rp, ap, bp and np are all
@@ -336,10 +366,10 @@ void
 bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, BN_ULONG *tp, BN_ULONG n0, int n_len)
 {
-	BN_ULONG a0, b, carry_a, carry_n, carry, mask, w, x;
-	int i, j;
+	BN_ULONG a0, b, carry_a, carry_n, carry, mask, w;
+	int i;
 
-	carry_a = carry_n = carry = 0;
+	carry = 0;
 
 	for (i = 0; i < n_len; i++)
 		tp[i] = 0;
@@ -349,15 +379,12 @@ bn_montgomery_multiply_words(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *b
 	for (i = 0; i < n_len; i++) {
 		b = bp[i];
 
-		/* Compute new t[0] * n0, as we need it inside the loop. */
+		/* Compute new t[0] * n0, as we need it for this iteration. */
 		w = (a0 * b + tp[0]) * n0;
 
-		for (j = 0; j < n_len; j++) {
-			bn_mulw_addw_addw(ap[j], b, tp[j], carry_a, &carry_a, &x);
-			bn_mulw_addw_addw(np[j], w, x, carry_n, &carry_n, &tp[j]);
-		}
+		bn_montgomery_multiply_word(ap, b, np, tp, w, &carry_a,
+		    &carry_n, n_len);
 		bn_addw_addw(carry_a, carry_n, carry, &carry, &tp[n_len]);
-		carry_a = carry_n = 0;
 
 		tp++;
 	}
