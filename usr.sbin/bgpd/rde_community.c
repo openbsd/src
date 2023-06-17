@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.11 2023/01/30 16:51:34 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.12 2023/06/17 08:05:48 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -97,6 +97,16 @@ fc2c(struct community *fc, struct rde_peer *peer, struct community *c,
 		type = (int32_t)fc->data3 >> 8;
 		subtype = fc->data3 & 0xff;
 
+		if ((fc->flags >> 24 & 0xff) == COMMUNITY_ANY) {
+			/* special case for 'ext-community * *' */
+			if (m == NULL)
+				return -1;
+			m->data1 = 0;
+			m->data2 = 0;
+			m->data3 = 0;
+			return 0;
+		}
+
 		if (type == -1) {
 			/* special case for 'ext-community rt *' */
 			if ((fc->flags >> 8 & 0xff) != COMMUNITY_ANY ||
@@ -149,10 +159,11 @@ fc2c(struct community *fc, struct rde_peer *peer, struct community *c,
 			return 0;
 		}
 
-		if (m) {
-			m->data1 = 0;
-			m->data2 = 0;
-		}
+		/* this is for 'ext-community subtype *' */
+		if (m == NULL)
+			return -1;
+		m->data1 = 0;
+		m->data2 = 0;
 		return 0;
 	default:
 		fatalx("%s: unknown type %d", __func__, (uint8_t)c->flags);
