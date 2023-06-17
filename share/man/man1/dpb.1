@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb.1,v 1.33 2023/05/29 21:13:24 aisha Exp $
+.\"	$OpenBSD: dpb.1,v 1.34 2023/06/17 19:35:54 espie Exp $
 .\"
 .\" Copyright (c) 2010-2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 29 2023 $
+.Dd $Mdocdate: June 17 2023 $
 .Dt DPB 1
 .Os
 .Sh NAME
@@ -124,6 +124,18 @@ be shared on the cluster.
 Some log files ("rolling logs") are kept from one run to the run and
 stored under
 .Pa ${DISTDIR}/build-stats .
+On each run, the most recent entries for each pkgpath
+.Po
+see
+.Ar STATS_USED
+.Pc
+are used to figure out in which order things should be built.
+Meanwhile, some more entries are kept around
+.Po
+see
+.Ar STATS_BACKLOG
+.Pc
+for potential data analysis over longer periods.
 .Pp
 Option
 .Fl h Ar file
@@ -184,7 +196,7 @@ for preparing such an environment.
 .It Fl b Ar logfile
 Explicitly prime the heuristics module with a previous build log,
 so that packages that take a long time to build will happen earlier.
-The rolling log under
+The rolling log file under
 .Pa %f/build-stats/%a
 is automatically used.
 .It Fl C Ar pathlist
@@ -347,6 +359,17 @@ Defaults to
 can be set to nothing to disable.
 .It Ar STARTUP
 Define a start-up script on the command-line, override any host file contents.
+.It Ar STATS_BACKLOG
+Max number of stats (per individual pkgpath) to save in the rolling log file
+.Po
+defaults to 25
+.Pc .
+.It Ar STATS_USED
+Clamp number of stats (per individual pkgpath) used for computing build
+order
+.Po
+defaults to 10
+.Pc .
 .It Ar STUCK_TIMEOUT
 Timeout (in seconds * speed factor) after which tasks that don't show
 any progress will be killed.
@@ -686,7 +709,7 @@ as an initial workdir size log.
 .It Fl s
 Compute workdir sizes before cleaning up, and stash them in log file
 .Pa %L/size.log .
-Also maintain a rolling log of build sizes under
+This will also maintain a rolling log of build sizes under
 .Pa %f/build-stats/%a-size .
 In order to save time,
 .Nm
@@ -1265,7 +1288,14 @@ They should be readable for the
 .Nm
 also records rolling build statistics under
 .Pa ${DISTDIR}/build-stats/${ARCH} ,
-and uses them automatically in the absence of
+and uses them automatically
+.Po
+see
+.Ar STATS_BACKLOG
+and
+.Ar STATS_USED
+.Pc
+in the absence of
 .Fl b Ar logfile .
 That file belongs to the
 .Ar LOG_USER
