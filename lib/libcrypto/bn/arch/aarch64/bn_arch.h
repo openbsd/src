@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.10 2023/06/12 16:42:11 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.11 2023/06/17 15:40:46 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -169,6 +169,33 @@ bn_mulw_addtw(BN_ULONG a, BN_ULONG b, BN_ULONG c2, BN_ULONG c1, BN_ULONG c0,
 	    "adcs   %[r1], %[r1], %[c1] \n"
 	    "adc    %[r2], xzr, %[c2] \n"
 	    : [r2]"=&r"(r2), [r1]"=&r"(r1), [r0]"=&r"(r0)
+	    : [a]"r"(a), [b]"r"(b), [c2]"r"(c2), [c1]"r"(c1), [c0]"r"(c0)
+	    : "cc");
+
+	*out_r2 = r2;
+	*out_r1 = r1;
+	*out_r0 = r0;
+}
+
+#define HAVE_BN_MUL2_MULW_ADDTW
+
+static inline void
+bn_mul2_mulw_addtw(BN_ULONG a, BN_ULONG b, BN_ULONG c2, BN_ULONG c1, BN_ULONG c0,
+    BN_ULONG *out_r2, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG r2, r1, r0, x1, x0;
+
+	__asm__ (
+	    "umulh  %[x1], %[a], %[b] \n"
+	    "mul    %[x0], %[a], %[b] \n"
+	    "adds   %[r0], %[c0], %[x0] \n"
+	    "adcs   %[r1], %[c1], %[x1] \n"
+	    "adc    %[r2], xzr, %[c2] \n"
+	    "adds   %[r0], %[r0], %[x0] \n"
+	    "adcs   %[r1], %[r1], %[x1] \n"
+	    "adc    %[r2], xzr, %[r2] \n"
+	    : [r2]"=&r"(r2), [r1]"=&r"(r1), [r0]"=&r"(r0), [x1]"=&r"(x1),
+		[x0]"=&r"(x0)
 	    : [a]"r"(a), [b]"r"(b), [c2]"r"(c2), [c1]"r"(c1), [c0]"r"(c0)
 	    : "cc");
 
