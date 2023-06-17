@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.6 2023/01/30 17:02:48 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.7 2023/06/17 08:01:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -161,7 +161,7 @@ test_filter(size_t num, struct testfilter *f)
 	if (f->next != 0) {
 		if (community_count(&comm, COMMUNITY_TYPE_EXT) !=
 		    f->next - 1) {
-			printf("Test %zu: community_count unexpected "
+			printf("Test %zu: ext community_count unexpected "
 			    "return %d != %d\n", num, r, f->next - 1);
 			return -1;
 		}
@@ -170,7 +170,7 @@ test_filter(size_t num, struct testfilter *f)
 	if (f->nlarge != 0) {
 		if (community_count(&comm, COMMUNITY_TYPE_LARGE) !=
 		    f->nlarge - 1) {
-			printf("Test %zu: community_count unexpected "
+			printf("Test %zu: large community_count unexpected "
 			    "return %d != %d\n", num, r, f->nlarge - 1);
 			return -1;
 		}

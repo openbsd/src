@@ -502,6 +502,22 @@ struct community filters[] = {
 		.data2 = 196618,
 		.data3 = EXT_COMMUNITY_TRANS_TWO_AS << 8 | 0x02,
 	},
+	{ /* 42 */
+		.flags = COMMUNITY_TYPE_EXT | (COMMUNITY_ANY << 24),
+	},
+	{ /* 43 */
+		.flags = COMMUNITY_TYPE_EXT | (COMMUNITY_ANY << 8),
+		.data3 = (-1 << 8) | 0x02,
+	},
+	{ /* 44 */
+		.flags = COMMUNITY_TYPE_EXT | (COMMUNITY_ANY << 8),
+		.data3 = EXT_COMMUNITY_TRANS_FOUR_AS << 8 | 0x02,
+	},
+	{ /* 45 */
+		.flags = COMMUNITY_TYPE_EXT | (COMMUNITY_ANY << 16),
+		.data3 = EXT_COMMUNITY_TRANS_FOUR_AS << 8 | 0x02,
+		.data1 = 196618,
+	},
 };
 
 struct testfilter {
@@ -514,12 +530,6 @@ struct testfilter {
 	int		 nlarge;
 	struct rde_peer *peer;
 } testfilters[] = {
-	{
-		.in = { 38, -1 },
-		.match = 30,
-		.mout = 1,
-		.peer = &peer,
-	},
 	{
 		.in = { 1, 2, -1 },
 		.match = 1,
@@ -952,5 +962,54 @@ struct testfilter {
 		.mout = 1,
 		.peer = &peer_r4,
 	},
+	{
+		.in = { 38, -1 },
+		.match = 30,
+		.mout = 1,
+		.peer = &peer,
+	},
+	{ /* 70 */
+		.in = { 38, 39, 40, -1 },
+		.match = 42,
+		.mout = 1,
+		.delete = 42,
+		.next = 0 + 1,
+		.peer = &peer,
+	},
+	{
+		.in = { 38, 39, 40, -1 },
+		.match = 43,
+		.mout = 1,
+		.delete = 43,
+		.next = 0 + 1,
+		.peer = &peer,
+	},
+	{
+		.in = { 39, 40, -1 },
+		.match = 44,
+		.mout = 1,
+		.delete = 44,
+		.next = 0 + 1,
+		.peer = &peer,
+	},
+	{
+		.in = { 38, -1 },
+		.match = 44,
+		.mout = 0,
+		.peer = &peer,
+	},
+	{
+		.in = { 40, -1 },
+		.match = 45,
+		.mout = 1,
+		.delete = 45,
+		.next = 0 + 1,
+		.peer = &peer,
+	},
+	{ /* 75 */
+		.in = { 38, 39, 41, -1 },
+		.match = 45,
+		.mout = 0,
+		.peer = &peer,
+	},
 };
-
