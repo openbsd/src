@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.14 2023/04/26 16:53:58 claudio Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.15 2023/06/17 08:13:56 kettenis Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.8 2003/01/17 22:28:48 thorpej Exp $	*/
 
 /*
@@ -49,18 +49,6 @@ db_regs_t ddb_regs;
 
 #define INKERNEL(va)	(((vaddr_t)(va)) & (1ULL << 63))
 
-#ifndef __clang__
-/*
- * Clang uses a different stack frame, which looks like the following.
- *
- *          return link value       [fp, #+4]
- *          return fp value         [fp]        <- fp points to here
- *
- */
-#define FR_RFP	(0x0)
-#define FR_RLV	(0x4)
-#endif /* !__clang__ */
-
 void
 db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
     char *modif, int (*pr)(const char *, ...))
@@ -98,7 +86,7 @@ db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
 			lastlr =  p->p_addr->u_pcb.pcb_tf->tf_elr;
 		} else {
 			sp = addr;
-			db_read_bytes(sp+16, sizeof(vaddr_t),
+			db_read_bytes(sp, sizeof(vaddr_t),
 			    (char *)&frame);
 			db_read_bytes(sp + 8, sizeof(vaddr_t),
 			    (char *)&lr);
