@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.35 2023/06/12 18:22:02 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.36 2023/06/17 04:46:11 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -224,6 +224,9 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 
 	if (has_bst)
 		warnx("%s: unsupported CMS signing-time attribute", fn);
+
+	if (!has_st)
+		warnx("%s: missing CMS signing-time attribute", fn);
 
 	if (CMS_unsigned_get_attr_count(si) != -1) {
 		cryptowarnx("%s: RFC 6488: CMS has unsignedAttrs", fn);
