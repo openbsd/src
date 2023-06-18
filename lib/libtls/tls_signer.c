@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.7 2023/06/18 17:24:09 tb Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.8 2023/06/18 17:50:28 tb Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -423,6 +423,20 @@ EC_KEY_METHOD *
 tls_signer_ecdsa_method(void)
 {
 	static EC_KEY_METHOD *ecdsa_method = NULL;
+	const EC_KEY_METHOD *default_method;
+	int (*keygen)(EC_KEY *key);
+	int (*compute_key)(void *out, size_t outlen, const EC_POINT *pub_key,
+	    EC_KEY *ecdh, void *(*KDF) (const void *in, size_t inlen, void *out,
+	    size_t *outlen));
+	int (*sign)(int type, const unsigned char *dgst, int dlen,
+	    unsigned char *sig, unsigned int *siglen,
+	    const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey);
+	int (*sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in,
+	    BIGNUM **kinvp, BIGNUM **rp);
+	int (*verify)(int type, const unsigned char *dgst, int dgst_len,
+	    const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
+	int (*verify_sig)(const unsigned char *dgst, int dgst_len,
+	    const ECDSA_SIG *sig, EC_KEY *eckey);
 
 	pthread_mutex_lock(&signer_method_lock);
 
@@ -433,7 +447,20 @@ tls_signer_ecdsa_method(void)
 	if (ecdsa_method == NULL)
 		goto out;
 
-	EC_KEY_METHOD_set_sign(ecdsa_method, NULL, NULL, tls_ecdsa_do_sign);
+	default_method = EC_KEY_get_default_method();
+
+	EC_KEY_METHOD_get_keygen(default_method, &keygen);
+	EC_KEY_METHOD_set_keygen(ecdsa_method, keygen);
+
+	EC_KEY_METHOD_get_compute_key(default_method, &compute_key);
+	EC_KEY_METHOD_set_compute_key(ecdsa_method, compute_key);
+
+	EC_KEY_METHOD_get_sign(default_method, &sign, &sign_setup, NULL);
+	EC_KEY_METHOD_set_sign(ecdsa_method, sign, sign_setup,
+	    tls_ecdsa_do_sign);
+
+	EC_KEY_METHOD_get_verify(default_method, &verify, &verify_sig);
+	EC_KEY_METHOD_set_verify(ecdsa_method, verify, verify_sig);
 
  out:
 	pthread_mutex_unlock(&signer_method_lock);
