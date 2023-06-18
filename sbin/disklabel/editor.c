@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.408 2023/06/18 18:58:55 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.409 2023/06/18 20:41:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -44,6 +44,7 @@
 
 #define	ROUNDUP(_s, _a)		((((_s) + (_a) - 1) / (_a)) * (_a))
 #define	ROUNDDOWN(_s, _a)	(((_s) / (_a)) * (_a))
+#define	CHUNKSZ(_c)		((_c)->stop - (_c)->start)
 
 /* flags for getuint64() */
 #define	DO_CONVERSIONS	0x00000001
@@ -404,11 +405,11 @@ editor(int f)
 			/* Display free space. */
 			chunk = free_chunks(&newlab, -1);
 			for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
-				total += chunk->stop - chunk->start;
+				total += CHUNKSZ(chunk);
 				fprintf(stderr, "Free sectors: %16llu - %16llu "
 				    "(%16llu)\n",
 				    chunk->start, chunk->stop - 1,
-				    chunk->stop - chunk->start);
+				    CHUNKSZ(chunk));
 			}
 			fprintf(stderr, "Total free sectors: %llu.\n", total);
 			break;
@@ -788,8 +789,8 @@ editor_add(struct disklabel *lp, const char *p)
 	chunk = free_chunks(lp, -1);
 	new_size = new_offset = 0;
 	for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
-		if (chunk->stop - chunk->start > new_size) {
-			new_size = chunk->stop - chunk->start;
+		if (CHUNKSZ(chunk) > new_size) {
+			new_size = CHUNKSZ(chunk);
 			new_offset = chunk->start;
 		}
 	}
@@ -1413,7 +1414,7 @@ editor_countfree(const struct disklabel *lp)
 	chunk = free_chunks(lp, -1);
 
 	for (; chunk->start != 0 || chunk->stop != 0; chunk++)
-		freesectors += chunk->stop - chunk->start;
+		freesectors += CHUNKSZ(chunk);
 
 	return (freesectors);
 }
