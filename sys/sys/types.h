@@ -48,6 +48,7 @@
 #endif
 
 #if __BSD_VISIBLE
+typedef char * string;			/*String Data Type: Better than writing char* everytime*/
 typedef	unsigned char	u_char;
 typedef	unsigned short	u_short;
 typedef	unsigned int	u_int;
