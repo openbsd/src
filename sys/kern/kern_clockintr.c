@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.23 2023/06/18 23:09:35 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.24 2023/06/18 23:19:01 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -107,7 +107,7 @@ clockintr_init(u_int flags)
 void
 clockintr_cpu_init(const struct intrclock *ic)
 {
-	uint64_t multiplier = 0, offset;
+	uint64_t multiplier = 0;
 	struct cpu_info *ci = curcpu();
 	struct clockintr_queue *cq = &ci->ci_queue;
 	int reset_cq_intrclock = 0;
@@ -170,8 +170,8 @@ clockintr_cpu_init(const struct intrclock *ic)
 			clockintr_advance(cq->cq_hardclock, hardclock_period);
 	} else {
 		if (cq->cq_hardclock->cl_expiration == 0) {
-			offset = hardclock_period / ncpus * multiplier;
-			cq->cq_hardclock->cl_expiration =  offset;
+			clockintr_stagger(cq->cq_hardclock, hardclock_period,
+			    multiplier, ncpus);
 		}
 		clockintr_advance(cq->cq_hardclock, hardclock_period);
 	}
@@ -179,12 +179,16 @@ clockintr_cpu_init(const struct intrclock *ic)
 	/*
 	 * We can always advance the statclock and schedclock.
 	 */
-	offset = statclock_avg / ncpus * multiplier;
-	clockintr_schedule(cq->cq_statclock, offset);
+	if (cq->cq_statclock->cl_expiration == 0) {
+		clockintr_stagger(cq->cq_statclock, statclock_avg, multiplier,
+		    ncpus);
+	}
 	clockintr_advance(cq->cq_statclock, statclock_avg);
 	if (schedhz != 0) {
-		offset = schedclock_period / ncpus * multiplier;
-		clockintr_schedule(cq->cq_schedclock, offset);
+		if (cq->cq_schedclock->cl_expiration == 0) {
+			clockintr_stagger(cq->cq_schedclock, schedclock_period,
+			    multiplier, ncpus);
+		}
 		clockintr_advance(cq->cq_schedclock, schedclock_period);
 	}
 
