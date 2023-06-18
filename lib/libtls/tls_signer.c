@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.6 2023/06/18 11:43:03 op Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.7 2023/06/18 17:24:09 tb Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -392,8 +392,8 @@ tls_ecdsa_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
 	 * to its calling convention/signature.
 	 */
 
-	pubkey_hash = ECDSA_get_ex_data(eckey, 0);
-	config = ECDSA_get_ex_data(eckey, 1);
+	pubkey_hash = EC_KEY_get_ex_data(eckey, 0);
+	config = EC_KEY_get_ex_data(eckey, 1);
 
 	if (pubkey_hash == NULL || config == NULL)
 		goto err;
