@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.6 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.7 2023/06/18 12:58:03 aoyama Exp $	*/
 /*	$NetBSD: sd.c,v 1.5 2013/01/22 15:48:40 tsutsui Exp $	*/
 
 /*
@@ -293,7 +293,7 @@ static struct scsi_generic_cdb cdb_read = {
 };
 
 static struct scsi_generic_cdb cdb_write = {
-	6,
+	10,
 	{ CMD_WRITE_EXT, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
