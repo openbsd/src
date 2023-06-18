@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1249 2023/06/06 09:35:44 kn Exp $
+#	$OpenBSD: install.sub,v 1.1250 2023/06/18 15:17:38 deraadt Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -1103,7 +1103,7 @@ v4_config() {
 		case $resp in
 		none)	return
 			;;
-		autoconf|dhcp)
+		a|autoconf|dhcp)
 			dhcp_request $_if
 			echo "inet autoconf" >>$_hn
 			return
@@ -1220,7 +1220,7 @@ v6_config() {
 		case $resp in
 		none)	return
 			;;
-		autoconf)
+		a|autoconf)
 			ifconfig $_if inet6 autoconf up
 			echo "inet6 autoconf" >>$_hn
 			return
