@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.149 2023/05/13 23:15:28 dv Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.150 2023/06/18 11:45:11 op Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -874,7 +874,7 @@ main(int argc, char **argv)
 	log_setverbose(env->vmd_verbose);
 
 	/* Re-exec from the vmm child process requires an absolute path. */
-	if (proc_id == PROC_PARENT && *argv[0] != '/')
+	if (proc_id == PROC_PARENT && *argv[0] != '/' && !env->vmd_noaction)
 		fatalx("re-exec requires execution with an absolute path");
 	env->argv0 = argv[0];
 
