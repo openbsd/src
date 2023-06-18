@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.44 2023/06/18 11:43:49 op Exp $	*/
+/*	$OpenBSD: ca.c,v 1.45 2023/06/18 19:08:52 op Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -28,8 +28,6 @@
 #include "smtpd.h"
 #include "log.h"
 #include "ssl.h"
-
-static int	 ca_verify_cb(int, X509_STORE_CTX *);
 
 static int	 rsae_send_imsg(int, const unsigned char *, unsigned char *,
 		    RSA *, int, unsigned int);
@@ -152,26 +150,6 @@ ca_init(void)
 	}
 }
 
-static int
-ca_verify_cb(int ok, X509_STORE_CTX *ctx)
-{
-	switch (X509_STORE_CTX_get_error(ctx)) {
-	case X509_V_OK:
-		break;
-        case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-		break;
-        case X509_V_ERR_CERT_NOT_YET_VALID:
-        case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
-		break;
-        case X509_V_ERR_CERT_HAS_EXPIRED:
-        case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
-		break;
-        case X509_V_ERR_NO_EXPLICIT_POLICY:
-		break;
-	}
-	return ok;
-}
-
 int
 ca_X509_verify(void *certificate, void *chain, const char *CAfile,
     const char *CRLfile, const char **errstr)
@@ -195,8 +173,6 @@ ca_X509_verify(void *certificate, void *chain, const char *CAfile,
 
 	if (X509_STORE_CTX_init(xsc, store, certificate, chain) != 1)
 		goto end;
-
-	X509_STORE_CTX_set_verify_cb(xsc, ca_verify_cb);
 
 	ret = X509_verify_cert(xsc);
 
