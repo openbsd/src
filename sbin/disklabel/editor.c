@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.407 2023/05/23 13:20:31 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.408 2023/06/18 18:58:55 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -1979,7 +1979,7 @@ parse_sizerange(char *buf, u_int64_t *min, u_int64_t *max)
 		return (-1);
 	if (p != NULL && p[0] != '\0') {
 		if (p[0] == '*')
-			*max = -1;
+			*max = UINT64_MAX;
 		else
 			if (parse_sizespec(p, &val2, &unit2) == -1)
 				return (-1);
