@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.49 2023/06/17 22:10:19 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.50 2023/06/18 16:25:21 kettenis Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -843,8 +843,6 @@ agintc_enable_wakeup(void)
 		cpu_dcache_wb_range((vaddr_t)&prop[irq],
 		    sizeof(*prop));
 		__asm volatile("dsb sy");
-
-		/* XXX: Invalidate cache? */
 	}
 
 	/* Invalidate cache. */
