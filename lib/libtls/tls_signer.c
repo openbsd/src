@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_signer.c,v 1.5 2023/04/09 18:26:26 tb Exp $ */
+/* $OpenBSD: tls_signer.c,v 1.6 2023/06/18 11:43:03 op Exp $ */
 /*
  * Copyright (c) 2021 Eric Faurot <eric@openbsd.org>
  *
@@ -419,26 +419,21 @@ tls_ecdsa_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
 	return (NULL);
 }
 
-ECDSA_METHOD *
+EC_KEY_METHOD *
 tls_signer_ecdsa_method(void)
 {
-	static ECDSA_METHOD *ecdsa_method = NULL;
+	static EC_KEY_METHOD *ecdsa_method = NULL;
 
 	pthread_mutex_lock(&signer_method_lock);
 
 	if (ecdsa_method != NULL)
 		goto out;
 
-	ecdsa_method = calloc(1, sizeof(*ecdsa_method));
+	ecdsa_method = EC_KEY_METHOD_new(NULL);
 	if (ecdsa_method == NULL)
 		goto out;
 
-	ecdsa_method->ecdsa_do_sign = tls_ecdsa_do_sign;
-	ecdsa_method->name = strdup("libtls ECDSA method");
-	if (ecdsa_method->name == NULL) {
-		free(ecdsa_method);
-		ecdsa_method = NULL;
-	}
+	EC_KEY_METHOD_set_sign(ecdsa_method, NULL, NULL, tls_ecdsa_do_sign);
 
  out:
 	pthread_mutex_unlock(&signer_method_lock);

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls_internal.h,v 1.81 2023/04/09 18:26:26 tb Exp $ */
+/* $OpenBSD: tls_internal.h,v 1.82 2023/06/18 11:43:03 op Exp $ */
 /*
  * Copyright (c) 2014 Jeremie Courreges-Anglas <jca@openbsd.org>
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
@@ -298,7 +298,7 @@ int tls_cert_pubkey_hash(X509 *_cert, char **_hash);
 int tls_password_cb(char *_buf, int _size, int _rwflag, void *_u);
 
 RSA_METHOD *tls_signer_rsa_method(void);
-ECDSA_METHOD *tls_signer_ecdsa_method(void);
+EC_KEY_METHOD *tls_signer_ecdsa_method(void);
 
 #define TLS_PADDING_NONE			0
 #define TLS_PADDING_RSA_PKCS1			1
