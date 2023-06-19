@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.15 2023/05/23 12:41:28 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.16 2023/06/19 17:19:50 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 
 #include <limits.h>
 #include <errno.h>
+#include <endian.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -32,6 +33,7 @@
 static int	ibuf_realloc(struct ibuf *, size_t);
 static void	ibuf_enqueue(struct msgbuf *, struct ibuf *);
 static void	ibuf_dequeue(struct msgbuf *, struct ibuf *);
+static void	msgbuf_drain(struct msgbuf *, size_t);
 
 struct ibuf *
 ibuf_open(size_t len)
@@ -99,23 +101,6 @@ ibuf_realloc(struct ibuf *buf, size_t len)
 	return (0);
 }
 
-int
-ibuf_add(struct ibuf *buf, const void *data, size_t len)
-{
-	if (len > SIZE_MAX - buf->wpos) {
-		errno = ERANGE;
-		return (-1);
-	}
-
-	if (buf->wpos + len > buf->size)
-		if (ibuf_realloc(buf, len) == -1)
-			return (-1);
-
-	memcpy(buf->buf + buf->wpos, data, len);
-	buf->wpos += len;
-	return (0);
-}
-
 void *
 ibuf_reserve(struct ibuf *buf, size_t len)
 {
@@ -136,14 +121,154 @@ ibuf_reserve(struct ibuf *buf, size_t len)
 	return (b);
 }
 
+int
+ibuf_add(struct ibuf *buf, const void *data, size_t len)
+{
+	void *b;
+
+	if ((b = ibuf_reserve(buf, len)) == NULL)
+		return (-1);
+
+	memcpy(b, data, len);
+	return (0);
+}
+
+int
+ibuf_add_buf(struct ibuf *buf, const struct ibuf *from)
+{
+	return ibuf_add(buf, from->buf, from->wpos);
+}
+
+int
+ibuf_add_n8(struct ibuf *buf, uint64_t value)
+{
+	uint8_t v;
+
+	if (value > UINT8_MAX) {
+		errno = EINVAL;
+		return (-1);
+	}
+	v = value;
+	return ibuf_add(buf, &v, sizeof(v));
+}
+
+int
+ibuf_add_n16(struct ibuf *buf, uint64_t value)
+{
+	uint16_t v;
+
+	if (value > UINT16_MAX) {
+		errno = EINVAL;
+		return (-1);
+	}
+	v = htobe16(value);
+	return ibuf_add(buf, &v, sizeof(v));
+}
+
+int
+ibuf_add_n32(struct ibuf *buf, uint64_t value)
+{
+	uint32_t v;
+
+	if (value > UINT32_MAX) {
+		errno = EINVAL;
+		return (-1);
+	}
+	v = htobe32(value);
+	return ibuf_add(buf, &v, sizeof(v));
+}
+
+int
+ibuf_add_n64(struct ibuf *buf, uint64_t value)
+{
+	value = htobe64(value);
+	return ibuf_add(buf, &value, sizeof(value));
+}
+
+int
+ibuf_add_zero(struct ibuf *buf, size_t len)
+{
+	void *b;
+
+	if ((b = ibuf_reserve(buf, len)) == NULL)
+		return (-1);
+	return (0);
+}
+
 void *
 ibuf_seek(struct ibuf *buf, size_t pos, size_t len)
 {
 	/* only allowed to seek in already written parts */
-	if (len > SIZE_MAX - pos || pos + len > buf->wpos)
+	if (len > SIZE_MAX - pos || pos + len > buf->wpos) {
+		errno = ERANGE;
 		return (NULL);
+	}
 
 	return (buf->buf + pos);
+}
+
+int
+ibuf_set(struct ibuf *buf, size_t pos, const void *data, size_t len)
+{
+	void *b;
+
+	if ((b = ibuf_seek(buf, pos, len)) == NULL)
+		return (-1);
+
+	memcpy(b, data, len);
+	return (0);
+}
+
+int
+ibuf_set_n8(struct ibuf *buf, size_t pos, uint64_t value)
+{
+	uint8_t v;
+
+	if (value > UINT8_MAX) {
+		errno = EINVAL;
+		return (-1);
+	}
+	v = value;
+	return (ibuf_set(buf, pos, &v, sizeof(v)));
+}
+
+int
+ibuf_set_n16(struct ibuf *buf, size_t pos, uint64_t value)
+{
+	uint16_t v;
+
+	if (value > UINT16_MAX) {
+		errno = EINVAL;
+		return (-1);
+	}
+	v = htobe16(value);
+	return (ibuf_set(buf, pos, &v, sizeof(v)));
+}
+
+int
+ibuf_set_n32(struct ibuf *buf, size_t pos, uint64_t value)
+{
+	uint32_t v;
+
+	if (value > UINT32_MAX) {
+		errno = EINVAL;
+		return (-1);
+	}
+	v = htobe32(value);
+	return (ibuf_set(buf, pos, &v, sizeof(v)));
+}
+
+int
+ibuf_set_n64(struct ibuf *buf, size_t pos, uint64_t value)
+{
+	value = htobe64(value);
+	return (ibuf_set(buf, pos, &value, sizeof(value)));
+}
+
+void *
+ibuf_data(struct ibuf *buf)
+{
+	return (buf->buf);
 }
 
 size_t
@@ -162,6 +287,45 @@ void
 ibuf_close(struct msgbuf *msgbuf, struct ibuf *buf)
 {
 	ibuf_enqueue(msgbuf, buf);
+}
+
+void
+ibuf_free(struct ibuf *buf)
+{
+	if (buf == NULL)
+		return;
+#ifdef NOTYET
+	if (buf->fd != -1)
+		close(buf->fd);
+#endif
+	freezero(buf->buf, buf->size);
+	free(buf);
+}
+
+int
+ibuf_fd_avail(struct ibuf *buf)
+{
+	return (buf->fd != -1);
+}
+
+int
+ibuf_fd_get(struct ibuf *buf)
+{
+	int fd;
+
+	fd = buf->fd;
+#ifdef NOTYET
+	buf->fd = -1;
+#endif
+	return (fd);
+}
+
+void
+ibuf_fd_set(struct ibuf *buf, int fd)
+{
+	if (buf->fd != -1)
+		close(buf->fd);
+	buf->fd = fd;
 }
 
 int
@@ -201,15 +365,6 @@ again:
 }
 
 void
-ibuf_free(struct ibuf *buf)
-{
-	if (buf == NULL)
-		return;
-	freezero(buf->buf, buf->size);
-	free(buf);
-}
-
-void
 msgbuf_init(struct msgbuf *msgbuf)
 {
 	msgbuf->queued = 0;
@@ -217,7 +372,7 @@ msgbuf_init(struct msgbuf *msgbuf)
 	TAILQ_INIT(&msgbuf->bufs);
 }
 
-void
+static void
 msgbuf_drain(struct msgbuf *msgbuf, size_t n)
 {
 	struct ibuf	*buf, *next;
@@ -326,8 +481,10 @@ ibuf_dequeue(struct msgbuf *msgbuf, struct ibuf *buf)
 {
 	TAILQ_REMOVE(&msgbuf->bufs, buf, entry);
 
-	if (buf->fd != -1)
+	if (buf->fd != -1) {
 		close(buf->fd);
+		buf->fd = -1;
+	}
 
 	msgbuf->queued--;
 	ibuf_free(buf);

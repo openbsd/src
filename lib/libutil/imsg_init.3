@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.25 2022/05/19 08:05:23 stsp Exp $
+.\" $OpenBSD: imsg_init.3,v 1.26 2023/06/19 17:19:50 claudio Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 19 2022 $
+.Dd $Mdocdate: June 19 2023 $
 .Dt IMSG_INIT 3
 .Os
 .Sh NAME
@@ -23,6 +23,7 @@
 .Nm imsg_get ,
 .Nm imsg_compose ,
 .Nm imsg_composev ,
+.Nm imsg_compose_ibuf ,
 .Nm imsg_create ,
 .Nm imsg_add ,
 .Nm imsg_close ,
@@ -32,17 +33,31 @@
 .Nm ibuf_open ,
 .Nm ibuf_dynamic ,
 .Nm ibuf_add ,
+.Nm ibuf_add_buf ,
+.Nm ibuf_add_n8 ,
+.Nm ibuf_add_n16 ,
+.Nm ibuf_add_n32 ,
+.Nm ibuf_add_n64 ,
+.Nm ibuf_add_zero ,
 .Nm ibuf_reserve ,
 .Nm ibuf_seek ,
+.Nm ibuf_set ,
+.Nm ibuf_set_n8 ,
+.Nm ibuf_set_n16 ,
+.Nm ibuf_set_n32 ,
+.Nm ibuf_set_n64 ,
+.Nm ibuf_data ,
 .Nm ibuf_size ,
 .Nm ibuf_left ,
 .Nm ibuf_close ,
-.Nm ibuf_write ,
 .Nm ibuf_free ,
+.Nm ibuf_fd_avail ,
+.Nm ibuf_fd_get ,
+.Nm ibuf_fd_set ,
+.Nm ibuf_write ,
 .Nm msgbuf_init ,
 .Nm msgbuf_clear ,
-.Nm msgbuf_write ,
-.Nm msgbuf_drain
+.Nm msgbuf_write
 .Nd IPC messaging functions
 .Sh SYNOPSIS
 .In sys/types.h
@@ -62,6 +77,9 @@
 .Ft int
 .Fn imsg_composev "struct imsgbuf *ibuf" "uint32_t type" "uint32_t peerid" \
     "pid_t pid" "int fd" "const struct iovec *iov" "int iovcnt"
+.Ft int
+.Fn imsg_compose_ibuf "struct imsgbuf *ibuf" "uint32_t type" "uint32_t peerid" \
+    "pid_t pid" "struct ibuf *buf"
 .Ft "struct ibuf *"
 .Fn imsg_create "struct imsgbuf *ibuf" "uint32_t type" "uint32_t peerid" \
     "pid_t pid" "uint16_t datalen"
@@ -81,28 +99,57 @@
 .Fn ibuf_dynamic "size_t len" "size_t max"
 .Ft int
 .Fn ibuf_add "struct ibuf *buf" "const void *data" "size_t len"
+.Ft int
+.Fn ibuf_add_buf "struct ibuf *buf" "const struct ibuf *from"
+.Ft int
+.Fn ibuf_add_n8 "struct ibuf *buf" "uint64_t value"
+.Ft int
+.Fn ibuf_add_n16 "struct ibuf *buf" "uint64_t value"
+.Ft int
+.Fn ibuf_add_n32 "struct ibuf *buf" "uint64_t value"
+.Ft int
+.Fn ibuf_add_n64 "struct ibuf *buf" "uint64_t value"
+.Ft int
+.Fn ibuf_add_zero "struct ibuf *buf" "size_t len"
 .Ft "void *"
 .Fn ibuf_reserve "struct ibuf *buf" "size_t len"
 .Ft "void *"
 .Fn ibuf_seek "struct ibuf *buf" "size_t pos" "size_t len"
+.Ft int
+.Fn ibuf_set "struct ibuf *buf" "size_t pos" "const void *data" \
+    "size_t len"
+.Ft int
+.Fn ibuf_set_n8 "struct ibuf *buf" "size_t pos" "uint64_t value"
+.Ft int
+.Fn ibuf_set_n16 "struct ibuf *buf" "size_t pos" "uint64_t value"
+.Ft int
+.Fn ibuf_set_n32 "struct ibuf *buf" "size_t pos" "uint64_t value"
+.Ft int
+.Fn ibuf_set_n64 "struct ibuf *buf" "size_t pos" "uint64_t value"
+.Ft "void *"
+.Fn ibuf_data "struct ibuf *buf"
 .Ft size_t
 .Fn ibuf_size "struct ibuf *buf"
 .Ft size_t
 .Fn ibuf_left "struct ibuf *buf"
 .Ft void
 .Fn ibuf_close "struct msgbuf *msgbuf" "struct ibuf *buf"
-.Ft int
-.Fn ibuf_write "struct msgbuf *msgbuf"
 .Ft void
 .Fn ibuf_free "struct ibuf *buf"
+.Ft int
+.Fn ibuf_fd_avail "struct ibuf *buf"
+.Ft int
+.Fn ibuf_fd_get "struct ibuf *buf"
+.Ft void
+.Fn ibuf_fd_set "struct ibuf *buf" "int fd"
+.Ft int
+.Fn ibuf_write "struct msgbuf *msgbuf"
 .Ft void
 .Fn msgbuf_init "struct msgbuf *msgbuf"
 .Ft void
 .Fn msgbuf_clear "struct msgbuf *msgbuf"
 .Ft int
 .Fn msgbuf_write "struct msgbuf *msgbuf"
-.Ft void
-.Fn msgbuf_drain "struct msgbuf *msgbuf" "size_t n"
 .Sh DESCRIPTION
 The
 .Nm imsg
@@ -133,7 +180,7 @@ struct imsgbuf {
 .Ed
 .Pp
 .Fn imsg_init
-is a routine which initializes
+initializes
 .Fa ibuf
 as one side of a channel associated with
 .Fa fd .
@@ -199,7 +246,7 @@ by adding it to
 output buffer.
 .Pp
 .Fn imsg_compose
-is a routine which is used to quickly create and queue an imsg.
+is used to quickly create and queue an imsg.
 It takes the same parameters as the
 .Fn imsg_create ,
 .Fn imsg_add
@@ -223,8 +270,19 @@ It takes the same parameters, except that the ancillary data buffer is specified
 by
 .Fa iovec .
 .Pp
+.Fn imsg_compose_ibuf
+is similar to
+.Fn imsg_compose .
+It takes the same parameters, except that the ancillary data buffer is specified
+by an ibuf
+.Fa buf .
+This routine returns 1 if it succeeds, \-1 otherwise.
+In either case the buffer
+.Fa buf
+is consumed by the function.
+.Pp
 .Fn imsg_flush
-is a function which calls
+calls
 .Fn msgbuf_write
 in a loop until all imsgs in the output buffer are sent.
 It returns 0 if it succeeds, \-1 otherwise.
@@ -357,7 +415,34 @@ Buffers allocated with
 are automatically grown if necessary when data is added.
 .Pp
 .Fn ibuf_add
-is a routine which appends a block of data to
+appends a block of data to
+.Fa buf .
+0 is returned on success and \-1 on failure.
+.Pp
+.Fn ibuf_add_buf
+appends the buffer
+.Fa from
+to
+.Fa buf .
+0 is returned on success and \-1 on failure.
+.Pp
+.Fn ibuf_add_n8 ,
+.Fn ibuf_add_n16 ,
+.Fn ibuf_add_n32 ,
+and
+.Fn ibuf_add_n64
+add a 1-byte, 2-byte, 4-byte, and 8-byte
+.Fa value
+to
+.Fa buf
+in network byte order.
+This function checks
+.Fa value
+to not overflow.
+0 is returned on success and \-1 on failure.
+.Pp
+.Fn ibuf_add_zero
+appends a block of zeros to
 .Fa buf .
 0 is returned on success and \-1 on failure.
 .Pp
@@ -369,12 +454,44 @@ bytes in
 A pointer to the start of the reserved space is returned, or NULL on error.
 .Pp
 .Fn ibuf_seek
-is a function which returns a pointer to the part of the buffer at offset
+returns a pointer to the part of the buffer at offset
 .Fa pos
 and of extent
 .Fa len .
 NULL is returned if the requested range is outside the part of the buffer
 in use.
+.Pp
+.Fn ibuf_set
+replaces a part of
+.Fa buf
+at offset
+.Fa pos
+with the data of extent
+.Fa len .
+0 is returned on success and \-1 on failure.
+.Pp
+.Fn ibuf_set_n8 ,
+.Fn ibuf_set_n16 ,
+.Fn ibuf_seek_set_n32
+and
+.Fn ibuf_seek_set_n64
+replace a 1-byte, 2-byte, 4-byte or 8-byte
+.Fa value
+at offset
+.Fa pos
+in the buffer
+.Fa buf
+in network byte order.
+This function checks
+.Fa value
+to not overflow.
+0 is returned on success and \-1 on failure.
+.Pp
+.Fn ibuf_data
+returns the pointer to the internal buffer.
+This function should only be used together with
+.Fn ibuf_size
+to process a previously generated buffer.
 .Pp
 .Fn ibuf_size
 and
@@ -390,6 +507,35 @@ to
 .Fa msgbuf
 ready to be sent.
 .Pp
+.Fn ibuf_fd_avail ,
+.Fn ibuf_fd_get
+and
+.Fn ibuf_fd_set
+are functions to check, get and set the filedescriptor assigned to
+.Fa buf .
+After calling
+.Fn ibuf_fd_set
+the filedescriptor is part of the
+.Fa buf
+and will be transmitted or closed by the ibuf API.
+Any previously set filedescriptor will be closed before assigning a
+new descriptor.
+.Fn ibuf_fd_get
+returns the filedescriptor and passes the responsibilty to track the
+descriptor back to the program.
+.Fn ibuf_fd_avail
+returns true if there is a filedescriptor set on
+.Fa buf
+.Pp
+.Fn ibuf_free
+frees
+.Fa buf
+and any associated storage, and closes any filedescriptor set with
+.Fn ibuf_fd_set .
+If
+.Fa buf
+is a NULL pointer, no action occurs.
+.Pp
 The
 .Fn ibuf_write
 routine transmits as many pending buffers as possible from
@@ -401,14 +547,6 @@ pending or an EOF condition on the socket is detected.
 Temporary resource shortages are returned with errno
 .Er EAGAIN
 and require the application to retry again in the future.
-.Pp
-.Fn ibuf_free
-frees
-.Fa buf
-and any associated storage.
-If
-.Fa buf
-is a NULL pointer, no action occurs.
 .Pp
 The
 .Fn msgbuf_init
@@ -435,15 +573,6 @@ or an EOF condition on the socket is detected.
 Temporary resource shortages are returned with errno
 .Er EAGAIN
 and require the application to retry again in the future.
-.Pp
-.Fn msgbuf_drain
-discards data from buffers queued in
-.Fa msgbuf
-until
-.Fa n
-bytes have been removed or
-.Fa msgbuf
-is empty.
 .Sh EXAMPLES
 In a typical program, a channel between two processes is created with
 .Xr socketpair 2 ,
