@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.76 2023/04/27 08:55:59 kettenis Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.77 2023/06/19 09:54:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -4340,6 +4340,10 @@ rk3588_reset(void *cookie, uint32_t *cells, int on)
 	case RK3588_SRST_PCIE4_POWER_UP:
 		reg = RK3588_CRU_SOFTRST_CON(33);
 		bit = 1;
+		break;
+	case RK3588_SRST_P_PCIE4:
+		reg = RK3588_CRU_SOFTRST_CON(34);
+		bit = 0;
 		break;
 	case RK3588_SRST_REF_PIPE_PHY0:
 		reg = RK3588_CRU_SOFTRST_CON(77);
