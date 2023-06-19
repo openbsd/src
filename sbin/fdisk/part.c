@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.163 2023/05/21 17:29:33 krw Exp $	*/
+/*	$OpenBSD: part.c,v 1.164 2023/06/19 23:11:57 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -1047,14 +1047,13 @@ PRT_print_part(const int num, const struct prt *prt, const char *units)
 	const char		*desc;
 	struct chs		 start, end;
 	double			 size;
-	unsigned int		 i;
 
 	size = units_size(units, prt->prt_ns, &ut);
 	PRT_lba_to_chs(prt, &start, &end);
 	desc = find_mbr_desc(find_mbr_type(prt->prt_id));
 
 	printf("%c%1d: %.2X %6llu %3u %3u - %6llu %3u %3u [%12llu:%12.0f%s] "
-	    "%-15s\n", (prt->prt_flag == DOSACTIVE) ? '*' : ' ', num,
+	    "%s\n", (prt->prt_flag == DOSACTIVE) ? '*' : ' ', num,
 	    prt->prt_id, start.chs_cyl, start.chs_head, start.chs_sect,
 	    end.chs_cyl, end.chs_head, end.chs_sect,
 	    prt->prt_bs, size, ut->ut_abbr, desc ? desc : "<Unknown ID>");
