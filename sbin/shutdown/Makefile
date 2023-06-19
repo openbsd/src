@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.3 1997/09/21 11:38:13 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.4 2023/06/19 13:05:25 deraadt Exp $
 
 PROG=	shutdown
 MAN=	shutdown.8
 BINOWN=	root
-BINGRP=	operator
+BINGRP=	_shutdown
 BINMODE=4550
 
 .include <bsd.prog.mk>

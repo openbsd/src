@@ -81,5 +81,6 @@ _sndiop:*:110:
 _syspatch:*:112:
 _slaacd:*:115:
 dialer:*:117:
+_shutdown:*:118:
 nogroup:*:32766:
 nobody:*:32767:

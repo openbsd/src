@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.43 2023/02/04 13:03:58 jsg Exp $
+.\"	$OpenBSD: shutdown.8,v 1.44 2023/06/19 13:05:25 deraadt Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)shutdown.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd $Mdocdate: February 4 2023 $
+.Dd $Mdocdate: June 19 2023 $
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -53,6 +53,15 @@ When the
 command is issued without options, the system is placed in single
 user mode at the indicated time after shutting down all system
 services.
+.Pp
+Users in the
+.Va _shutdown
+group can also run the
+.Nm
+command.
+Historically this permission was tied to the
+.Va operator
+group.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
