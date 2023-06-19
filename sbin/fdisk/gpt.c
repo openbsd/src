@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpt.c,v 1.91 2023/05/17 12:59:37 krw Exp $	*/
+/*	$OpenBSD: gpt.c,v 1.92 2023/06/19 23:11:19 krw Exp $	*/
 /*
  * Copyright (c) 2015 Markus Muller <mmu@grummel.net>
  * Copyright (c) 2015 Kenneth R Westerback <krw@openbsd.org>
@@ -455,7 +455,7 @@ GPT_print_part(const unsigned int pn, const char *units, const int verbosity)
 			printf("      <invalid partition guid>             ");
 		else
 			printf("      %-36s ", guidstr);
-		printf("%-36s\n", name_to_string(pn));
+		printf("%s\n", name_to_string(pn));
 		free(guidstr);
 		attrs = gp[pn].gp_attrs;
 		if (attrs) {
