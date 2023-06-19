@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.249 2023/05/13 18:13:42 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.250 2023/06/19 13:45:19 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -367,13 +367,13 @@ parsefstab(void)
 
 	i = asprintf(&partname, "/dev/%s%c", dkname, 'a');
 	if (i == -1)
-		err(4, NULL);
+		err(1, NULL);
 	i = asprintf(&partduid,
 	    "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx.a",
 	    lab.d_uid[0], lab.d_uid[1], lab.d_uid[2], lab.d_uid[3],
 	    lab.d_uid[4], lab.d_uid[5], lab.d_uid[6], lab.d_uid[7]);
 	if (i == -1)
-		err(4, NULL);
+		err(1, NULL);
 	setfsent();
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		partname[strlen(dkname) + 5] = 'a' + i;
@@ -812,7 +812,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	lp->d_version = 1;
 
 	if (!(omountpoints = calloc(MAXPARTITIONS, sizeof(char *))))
-		errx(4, "out of memory");
+		err(1, NULL);
 
 	mpcopy(omountpoints, mountpoints);
 	for (part = 0; part < MAXPARTITIONS; part++) {
