@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_unit.c,v 1.4 2023/03/31 19:40:08 tb Exp $ */
+/*	$OpenBSD: bn_unit.c,v 1.5 2023/06/20 06:36:09 jsing Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -65,6 +65,39 @@ test_bn_print_null_derefs(void)
 	failed |= test_bn_print_wrapper(a, size, "BN_hex2bn", BN_hex2bn);
 
 	free(a);
+
+	return failed;
+}
+
+static int
+test_bn_num_bits(void)
+{
+	BIGNUM *bn;
+	int i, num_bits;
+	int failed = 0;
+
+	if ((bn = BN_new()) == NULL)
+		errx(1, "BN_new");
+
+	if ((num_bits = BN_num_bits(bn)) != 0) {
+		warnx("BN_num_bits_word(0): want 0, got %d", num_bits);
+		failed |= 1;
+	}
+
+	if (!BN_set_word(bn, 1))
+		errx(1, "BN_set_word");
+
+	for (i = 0; i <= 5 * BN_BITS2; i++) {
+		if ((num_bits = BN_num_bits(bn)) != i + 1) {
+			warnx("BN_num_bits(1 << %d): want %d, got %d",
+			    i, i + 1, num_bits);
+			failed |= 1;
+		}
+		if (!BN_lshift1(bn, bn))
+			errx(1, "BN_lshift1");
+	}
+
+	BN_free(bn);
 
 	return failed;
 }
@@ -255,6 +288,7 @@ main(void)
 	int failed = 0;
 
 	failed |= test_bn_print_null_derefs();
+	failed |= test_bn_num_bits();
 	failed |= test_bn_num_bits_word();
 	failed |= test_bn_copy_copies_flags();
 	failed |= test_bn_copy_consttime_is_sticky();
