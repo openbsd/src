@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.28 2023/06/20 14:05:46 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.29 2023/06/20 14:10:05 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -153,19 +153,19 @@ EVP_PKEY_meth_find(int type)
 static EVP_PKEY_CTX *
 int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 {
-	EVP_PKEY_CTX *ret;
+	EVP_PKEY_CTX *pkey_ctx = NULL;
 	const EVP_PKEY_METHOD *pmeth;
 
 	if (id == -1) {
-		if (!pkey || !pkey->ameth)
+		if (pkey == NULL || pkey->ameth == NULL)
 			return NULL;
 		id = pkey->ameth->pkey_id;
 	}
 #ifndef OPENSSL_NO_ENGINE
-	if (pkey && pkey->engine)
+	if (pkey != NULL && pkey->engine != NULL)
 		e = pkey->engine;
-	/* Try to find an ENGINE which implements this method */
-	if (e) {
+	/* Try to find an ENGINE which implements this method. */
+	if (e != NULL) {
 		if (!ENGINE_init(e)) {
 			EVPerror(ERR_R_ENGINE_LIB);
 			return NULL;
@@ -173,11 +173,8 @@ int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 	} else
 		e = ENGINE_get_pkey_meth_engine(id);
 
-	/* If an ENGINE handled this method look it up. Otherwise
-	 * use internal tables.
-	 */
-
-	if (e)
+	/* Look up method handler in ENGINE or use internal tables. */
+	if (e != NULL)
 		pmeth = ENGINE_get_pkey_meth(e, id);
 	else
 #endif
@@ -185,35 +182,34 @@ int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 
 	if (pmeth == NULL) {
 		EVPerror(EVP_R_UNSUPPORTED_ALGORITHM);
-		return NULL;
+		goto err;
 	}
 
-	ret = malloc(sizeof(EVP_PKEY_CTX));
-	if (ret == NULL) {
-#ifndef OPENSSL_NO_ENGINE
-		ENGINE_finish(e);
-#endif
+	if ((pkey_ctx = calloc(1, sizeof(*pkey_ctx))) == NULL) {
 		EVPerror(ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
-	ret->engine = e;
-	ret->pmeth = pmeth;
-	ret->operation = EVP_PKEY_OP_UNDEFINED;
-	ret->pkey = pkey;
-	ret->peerkey = NULL;
-	ret->pkey_gencb = 0;
-	if (pkey)
-		CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
-	ret->data = NULL;
+	pkey_ctx->engine = e;
+	e = NULL;
+	pkey_ctx->pmeth = pmeth;
+	pkey_ctx->operation = EVP_PKEY_OP_UNDEFINED;
+	if ((pkey_ctx->pkey = pkey) != NULL)
+		EVP_PKEY_up_ref(pkey_ctx->pkey);
 
-	if (pmeth->init) {
-		if (pmeth->init(ret) <= 0) {
-			EVP_PKEY_CTX_free(ret);
-			return NULL;
-		}
+	if (pmeth->init != NULL) {
+		if (pmeth->init(pkey_ctx) <= 0)
+			goto err;
 	}
 
-	return ret;
+	return pkey_ctx;
+
+ err:
+	EVP_PKEY_CTX_free(pkey_ctx);
+#ifndef OPENSSL_NO_ENGINE
+	ENGINE_finish(e);
+#endif
+
+	return NULL;
 }
 
 EVP_PKEY_METHOD*
