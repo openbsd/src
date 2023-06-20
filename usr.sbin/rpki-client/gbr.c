@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.26 2023/03/12 11:46:35 tb Exp $ */
+/*	$OpenBSD: gbr.c,v 1.27 2023/06/20 12:39:50 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -43,6 +43,7 @@ struct gbr *
 gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 {
 	struct parse	 p;
+	struct cert	*cert = NULL;
 	size_t		 cmsz;
 	unsigned char	*cms;
 	time_t		 signtime = 0;
@@ -86,12 +87,16 @@ gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 
+	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
+		goto out;
+
 	return p.res;
 
  out:
 	gbr_free(p.res);
 	X509_free(*x509);
 	*x509 = NULL;
+	cert_free(cert);
 	return NULL;
 }
 

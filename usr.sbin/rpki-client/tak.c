@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.9 2023/06/07 10:46:34 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.10 2023/06/20 12:39:50 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -228,6 +228,7 @@ struct tak *
 tak_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 {
 	struct parse		 p;
+	struct cert		*cert = NULL;
 	unsigned char		*cms;
 	size_t			 cmsz;
 	time_t			 signtime = 0;
@@ -272,6 +273,9 @@ tak_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	if (!tak_parse_econtent(cms, cmsz, &p))
 		goto out;
 
+	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
+		goto out;
+
 	if (strcmp(p.res->aki, p.res->current->ski) != 0) {
 		warnx("%s: current TAKey's SKI does not match EE AKI", fn);
 		goto out;
@@ -285,6 +289,7 @@ tak_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 		X509_free(*x509);
 		*x509 = NULL;
 	}
+	cert_free(cert);
 	free(cms);
 	return p.res;
 }

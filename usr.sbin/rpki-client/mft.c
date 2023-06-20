@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.94 2023/06/07 10:46:34 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.95 2023/06/20 12:39:50 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -353,6 +353,7 @@ struct mft *
 mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 {
 	struct parse	 p;
+	struct cert	*cert = NULL;
 	int		 rc = 0;
 	size_t		 cmsz;
 	unsigned char	*cms;
@@ -418,6 +419,9 @@ mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
 	if (mft_parse_econtent(cms, cmsz, &p) == 0)
 		goto out;
 
+	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
+		goto out;
+
 	if (p.res->signtime > p.res->nextupdate) {
 		warnx("%s: dating issue: CMS signing-time after MFT nextUpdate",
 		    fn);
@@ -433,6 +437,7 @@ out:
 		*x509 = NULL;
 	}
 	free(crldp);
+	cert_free(cert);
 	free(cms);
 	return p.res;
 }
