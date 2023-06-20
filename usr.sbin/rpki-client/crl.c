@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.25 2023/05/22 15:07:02 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.26 2023/06/20 12:48:32 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -48,6 +48,11 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 	}
 	if (der != oder + len) {
 		warnx("%s: %td bytes trailing garbage", fn, oder + len - der);
+		goto out;
+	}
+
+	if (X509_CRL_get_version(crl->x509_crl) != 1) {
+		warnx("%s: RFC 6487 section 5: version 2 expected", fn);
 		goto out;
 	}
 
