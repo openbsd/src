@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.29 2023/06/20 14:10:05 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.30 2023/06/20 14:12:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -151,7 +151,7 @@ EVP_PKEY_meth_find(int type)
 }
 
 static EVP_PKEY_CTX *
-int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
+evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 {
 	EVP_PKEY_CTX *pkey_ctx = NULL;
 	const EVP_PKEY_METHOD *pmeth;
@@ -259,13 +259,13 @@ EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e)
 {
-	return int_ctx_new(pkey, e, -1);
+	return evp_pkey_ctx_new(pkey, e, -1);
 }
 
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_new_id(int id, ENGINE *e)
 {
-	return int_ctx_new(NULL, e, id);
+	return evp_pkey_ctx_new(NULL, e, id);
 }
 
 EVP_PKEY_CTX *
