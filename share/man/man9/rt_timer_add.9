@@ -1,4 +1,4 @@
-.\"     $OpenBSD: rt_timer_add.9,v 1.4 2014/03/26 14:50:30 mpi Exp $
+.\"     $OpenBSD: rt_timer_add.9,v 1.5 2023/06/20 10:59:47 kn Exp $
 .\"
 .\" Copyright (c) 2011 Bret S. Lambert <blambert@openbsd.org>
 .\" All rights reserved.
@@ -15,83 +15,90 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 26 2014 $
+.Dd $Mdocdate: June 20 2023 $
 .Dt RT_TIMER_ADD 9
 .Os
 .Sh NAME
 .Nm rt_timer_add ,
 .Nm rt_timer_remove_all ,
-.Nm rt_timer_queue_create ,
-.Nm rt_timer_queue_count ,
+.Nm rt_timer_get_expire ,
+.Nm rt_timer_queue_init ,
 .Nm rt_timer_queue_change ,
-.Nm rt_timer_queue_destroy
+.Nm rt_timer_queue_flush ,
+.Nm rt_timer_queue_count
 .Nd route timer queues interface
 .Sh SYNOPSIS
 .In net/route.h
 .Ft int
 .Fn rt_timer_add "struct rtentry *rt" \
-"void (*func)(struct rtentry *, struct rttimer *)" \
 "struct rttimer_queue *queue" "u_int rtableid"
 .Ft void
 .Fn rt_timer_remove_all "struct rtentry *rt"
-.Ft struct rttimer_queue *
-.Fn rt_timer_queue_create "u_int timeout"
+.Ft time_t
+.Fn rt_timer_get_expire "const struct rtentry *rt"
+.Ft void
+.Fn rt_timer_queue_init "struct rttimer_queue *rtq" "int timeout" \
+"void (*func)(struct rtentry *, u_int)"
+.Ft void
+.Fn rt_timer_queue_change "struct rttimer_queue *rtq" "int timeout"
+.Ft void
+.Fn rt_timer_queue_flush "struct rttimer_queue *rtq"
 .Ft unsigned long
 .Fn rt_timer_queue_count "struct rttimer_queue *rtq"
-.Ft void
-.Fn rt_timer_queue_change "struct rttimer_queue *rtq" "long timeout"
-.Ft void
-.Fn rt_timer_queue_destroy "struct rttimer_queue *rtq"
 .Sh DESCRIPTION
-Route timer queues provide a method of queueing routing-related actions to be
-triggered once per second.
-.Bl -tag -width Ds
-.It Fn rt_timer_add "struct rtentry *rt" \
-"void (*func)(struct rtentry *, struct rttimer *)" \
-"struct rttimer_queue *queue" "u_int rtableid"
-Schedule
-.Fa func
+The
+.Nm rt_timer
+subsystem queues routing-related functions for asynchronous execution
+in the future.
+.Pp
+.Fn rt_timer_add
+allocates an rttimer_queue
+.Fa rtq
 to be called on
 .Fa rt
 using the timeout of
 .Fa queue .
-If
-.Fa rt
-already has a call to
-.Fa func
-scheduled on any timer queue, it will be replaced with the new invocation.
-.It Fn rt_timer_remove_all "struct rtentry *rt"
-Remove all timeouts associated with
+If an action already exists, it will be replaced with the new one.
+.Pp
+.Fn rt_timer_remove_all
+removes all timeouts associated with
 .Fa rt
 from all routing timer queues.
-.It Fn rt_timer_queue_create "u_int timeout"
-Create a timer queue with a timeout of
+.Pp
+.Fn rt_timer_get_expire
+returns the current expiry time in seconds.
+.Pp
+.Fn rt_timer_queue_init
+creates a timer queue with a timeout of
 .Fa timeout
 seconds.
-.It Fn rt_timer_queue_count "struct rtentry *rt"
-Return the number of timers present in the queue
-.Fa rtq .
-.It Fn rt_timer_queue_change "struct rttimer_queue *rtq" "long timeout"
-Set timeout for
+.Pp
+.Fn rt_timer_queue_change
+sets the timeout for
 .Fa rtq
 to
 .Fa timeout
 seconds.
-.It Fn rt_timer_queue_destroy "struct rttimer_queue *rtq"
-Remove all timeouts from the routing timer queue
+.Pp
+.Fn rt_timer_queue_flush
+removes all timeouts from the routing timer queue
 .Fa rtq ,
-execute their associated callback and destroy it.
-.El
+executes their associated callback and destroys it.
+.Pp
+.Fn rt_timer_queue_count
+returns the number of timers present in the queue
+.Fa rtq .
 .Sh CONTEXT
 .Fn rt_timer_add ,
 .Fn rt_timer_remove_all ,
-.Fn rt_timer_queue_create ,
-.Fn rt_timer_queue_count ,
+.Fn rt_timer_get_expire ,
+.Fn rt_timer_queue_init ,
 .Fn rt_timer_queue_change ,
+.Fn rt_timer_queue_flush
 and
-.Fn rt_timer_queue_destroy
+.Fn rt_timer_queue_count
 can be called during autoconf, from process context, or from interrupt context.
-.Sh RETURN VALUES
+.Sh ERRORS
 .Fn rt_timer_add
 may fail with
 .Er ENOBUFS
