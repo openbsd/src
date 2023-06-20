@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.30 2023/06/20 14:12:51 tb Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.31 2023/06/20 14:14:00 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -151,7 +151,7 @@ EVP_PKEY_meth_find(int type)
 }
 
 static EVP_PKEY_CTX *
-evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
+evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *engine, int id)
 {
 	EVP_PKEY_CTX *pkey_ctx = NULL;
 	const EVP_PKEY_METHOD *pmeth;
@@ -163,19 +163,19 @@ evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 	}
 #ifndef OPENSSL_NO_ENGINE
 	if (pkey != NULL && pkey->engine != NULL)
-		e = pkey->engine;
+		engine = pkey->engine;
 	/* Try to find an ENGINE which implements this method. */
-	if (e != NULL) {
-		if (!ENGINE_init(e)) {
+	if (engine != NULL) {
+		if (!ENGINE_init(engine)) {
 			EVPerror(ERR_R_ENGINE_LIB);
 			return NULL;
 		}
 	} else
-		e = ENGINE_get_pkey_meth_engine(id);
+		engine = ENGINE_get_pkey_meth_engine(id);
 
 	/* Look up method handler in ENGINE or use internal tables. */
-	if (e != NULL)
-		pmeth = ENGINE_get_pkey_meth(e, id);
+	if (engine != NULL)
+		pmeth = ENGINE_get_pkey_meth(engine, id);
 	else
 #endif
 		pmeth = EVP_PKEY_meth_find(id);
@@ -189,8 +189,8 @@ evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 		EVPerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	pkey_ctx->engine = e;
-	e = NULL;
+	pkey_ctx->engine = engine;
+	engine = NULL;
 	pkey_ctx->pmeth = pmeth;
 	pkey_ctx->operation = EVP_PKEY_OP_UNDEFINED;
 	if ((pkey_ctx->pkey = pkey) != NULL)
@@ -206,7 +206,7 @@ evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
  err:
 	EVP_PKEY_CTX_free(pkey_ctx);
 #ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(e);
+	ENGINE_finish(engine);
 #endif
 
 	return NULL;
@@ -257,15 +257,15 @@ EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 }
 
 EVP_PKEY_CTX *
-EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e)
+EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *engine)
 {
-	return evp_pkey_ctx_new(pkey, e, -1);
+	return evp_pkey_ctx_new(pkey, engine, -1);
 }
 
 EVP_PKEY_CTX *
-EVP_PKEY_CTX_new_id(int id, ENGINE *e)
+EVP_PKEY_CTX_new_id(int id, ENGINE *engine)
 {
-	return evp_pkey_ctx_new(NULL, e, id);
+	return evp_pkey_ctx_new(NULL, engine, id);
 }
 
 EVP_PKEY_CTX *
