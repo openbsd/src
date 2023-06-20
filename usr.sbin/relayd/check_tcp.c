@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.58 2021/09/18 19:44:46 claudio Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.59 2023/06/20 09:54:57 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -344,17 +344,14 @@ check_http_code(struct ctl_tcp_event *cte)
 	char		*head;
 	char		 scode[4];
 	const char	*estr;
-	u_char		*b;
 	int		 code;
 	struct host	*host;
 
 	/*
 	 * ensure string is nul-terminated.
 	 */
-	b = ibuf_reserve(cte->buf, 1);
-	if (b == NULL)
+	if (ibuf_add_zero(cte->buf, 1) == -1)
 		fatal("out of memory");
-	*b = '\0';
 
 	head = cte->buf->buf;
 	host = cte->host;
@@ -398,17 +395,14 @@ int
 check_http_digest(struct ctl_tcp_event *cte)
 {
 	char		*head;
-	u_char		*b;
 	char		 digest[SHA1_DIGEST_STRING_LENGTH];
 	struct host	*host;
 
 	/*
 	 * ensure string is nul-terminated.
 	 */
-	b = ibuf_reserve(cte->buf, 1);
-	if (b == NULL)
+	if (ibuf_add_zero(cte->buf, 1) == -1)
 		fatal("out of memory");
-	*b = '\0';
 
 	head = cte->buf->buf;
 	host = cte->host;
