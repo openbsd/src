@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.71 2023/05/22 15:07:02 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.72 2023/06/20 11:06:47 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -479,8 +479,11 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 		*sia = NULL;
 	}
 
-	if (!rsync_found)
+	if (!rsync_found) {
+		warnx("%s: RFC 6487 section 4.8.8.2: "
+		    "SIA without rsync accessLocation", fn);
 		goto out;
+	}
 
 	AUTHORITY_INFO_ACCESS_free(info);
 	return 1;
