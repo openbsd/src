@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.20 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: Subst.pm,v 1.21 2023/06/20 14:50:06 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -91,18 +91,19 @@ sub copy($self, $srcname, $destname)
 	return $dest;
 }
 
-sub has_fragment($self, $def, $frag, $msg)
+sub has_fragment($self, $state, $def, $frag, $location)
 {
 	my $v = $self->value($def);
 
 	if (!defined $v) {
-		die "Error: unknown fragment $frag in $msg";
+		$state->fatal("Unknown fragment #1 in #2", 
+		    $frag, $location);
 	} elsif ($v == 1) {
 		return 1;
 	} elsif ($v == 0) {
 		return 0;
 	} else {
-		die "Incorrect define for $frag in $msg";
+		$state->fatal("Invalid fragment define #1=#2", $frag, $v);
 	}
 }
 

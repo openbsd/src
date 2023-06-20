@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.191 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.192 2023/06/20 14:50:05 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1125,10 +1125,10 @@ sub print($self)
 package OpenBSD::PkgCreate;
 our @ISA = qw(OpenBSD::AddCreateDelete);
 
-sub handle_fragment($self, $state, $old, $not, $frag, $, $, $msg)
+sub handle_fragment($self, $state, $old, $not, $frag, $location)
 {
 	my $def = $frag;
-	if ($state->{subst}->has_fragment($def, $frag, $msg)) {
+	if ($state->{subst}->has_fragment($state, $def, $frag, $location)) {
 		return undef if defined $not;
 	} else {
 		return undef unless defined $not;
@@ -1185,7 +1185,7 @@ sub read_fragments($self, $state, $plist, $filename)
 				if ($l =~ m/^(\!)?\%\%(.*)\%\%$/) {
 					$self->record_fragment($plist, $1, $2, 
 					    $file);
-					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $l, $cont, $filename)) {
+					if (my $f2 = $self->handle_fragment($state, $file, $1, $2, $filename)) {
 						push(@$stack, $file);
 						$file = $f2;
 					}
