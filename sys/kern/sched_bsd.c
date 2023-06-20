@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.74 2023/02/04 19:33:03 cheloha Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.75 2023/06/20 16:30:30 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -234,7 +234,6 @@ schedcpu(void *arg)
 		}
 		SCHED_UNLOCK(s);
 	}
-	uvm_meter();
 	wakeup(&lbolt);
 	timeout_add_sec(to, 1);
 }
@@ -669,6 +668,7 @@ scheduler_start(void)
 
 	rrticks_init = hz / 10;
 	schedcpu(&schedcpu_to);
+	uvm_meter(NULL);
 
 #ifndef SMALL_KERNEL
 	if (perfpolicy == PERFPOL_AUTO)

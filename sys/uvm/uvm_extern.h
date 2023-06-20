@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.168 2023/05/30 08:30:01 jsg Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.169 2023/06/20 16:30:30 cheloha Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.57 2001/03/09 01:02:12 chs Exp $	*/
 
 /*
@@ -414,7 +414,7 @@ void			uvmspace_free(struct vmspace *);
 struct vmspace		*uvmspace_share(struct process *);
 int			uvm_share(vm_map_t, vaddr_t, vm_prot_t,
 			    vm_map_t, vaddr_t, vsize_t);
-void			uvm_meter(void);
+void			uvm_meter(void *);
 int			uvm_sysctl(int *, u_int, void *, size_t *, 
 			    void *, size_t, struct proc *);
 struct vm_page		*uvm_pagealloc(struct uvm_object *,

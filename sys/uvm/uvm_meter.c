@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.42 2020/12/28 14:01:23 mpi Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.43 2023/06/20 16:30:30 cheloha Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -65,6 +65,9 @@
 int maxslp = MAXSLP;	/* patchable ... */
 struct loadavg averunnable;
 
+#define UVM_METER_INTVL	5
+struct timeout uvm_meter_to = TIMEOUT_INITIALIZER(uvm_meter, NULL);
+
 /*
  * constants for averages over 1, 5, and 15 minutes when sampling at
  * 5 second intervals.
@@ -82,15 +85,13 @@ void uvm_total(struct vmtotal *);
 void uvmexp_read(struct uvmexp *);
 
 /*
- * uvm_meter: calculate load average and wake up the swapper (if needed)
+ * uvm_meter: recompute load averages
  */
 void
-uvm_meter(void)
+uvm_meter(void *unused)
 {
-	if ((gettime() % 5) == 0)
-		uvm_loadav(&averunnable);
-	if (proc0.p_slptime > (maxslp / 2))
-		wakeup(&proc0);
+	timeout_add_sec(&uvm_meter_to, UVM_METER_INTVL);
+	uvm_loadav(&averunnable);
 }
 
 /*
