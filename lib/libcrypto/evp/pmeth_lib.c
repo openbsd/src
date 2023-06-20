@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.27 2022/12/26 07:18:52 jmc Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.28 2023/06/20 14:05:46 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -275,43 +275,40 @@ EVP_PKEY_CTX_new_id(int id, ENGINE *e)
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 {
-	EVP_PKEY_CTX *rctx;
+	EVP_PKEY_CTX *rctx = NULL;
 
-	if (!pctx->pmeth || !pctx->pmeth->copy)
-		return NULL;
+	if (pctx->pmeth == NULL || pctx->pmeth->copy == NULL)
+		goto err;
 #ifndef OPENSSL_NO_ENGINE
 	/* Make sure it's safe to copy a pkey context using an ENGINE */
-	if (pctx->engine && !ENGINE_init(pctx->engine)) {
+	if (pctx->engine != NULL && !ENGINE_init(pctx->engine)) {
 		EVPerror(ERR_R_ENGINE_LIB);
-		return 0;
+		goto err;
 	}
 #endif
-	rctx = malloc(sizeof(EVP_PKEY_CTX));
-	if (!rctx)
-		return NULL;
+	if ((rctx = calloc(1, sizeof(*rctx))) == NULL) {
+		EVPerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
 
 	rctx->pmeth = pctx->pmeth;
 #ifndef OPENSSL_NO_ENGINE
 	rctx->engine = pctx->engine;
 #endif
 
-	if (pctx->pkey)
-		CRYPTO_add(&pctx->pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
+	if ((rctx->pkey = pctx->pkey) != NULL)
+		EVP_PKEY_up_ref(rctx->pkey);
+	if ((rctx->peerkey = pctx->peerkey) != NULL)
+		EVP_PKEY_up_ref(rctx->peerkey);
 
-	rctx->pkey = pctx->pkey;
-
-	if (pctx->peerkey)
-		CRYPTO_add(&pctx->peerkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
-
-	rctx->peerkey = pctx->peerkey;
-
-	rctx->data = NULL;
-	rctx->app_data = NULL;
 	rctx->operation = pctx->operation;
 
-	if (pctx->pmeth->copy(rctx, pctx) > 0)
-		return rctx;
+	if (pctx->pmeth->copy(rctx, pctx) <= 0)
+		goto err;
 
+	return rctx;
+
+ err:
 	EVP_PKEY_CTX_free(rctx);
 	return NULL;
 }
