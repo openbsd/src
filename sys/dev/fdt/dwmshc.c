@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmshc.c,v 1.4 2023/04/19 02:01:02 dlg Exp $ */
+/*	$OpenBSD: dwmshc.c,v 1.5 2023/06/20 09:26:36 kettenis Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -98,7 +98,7 @@
 #define  EMMC_DLL_RXCLK_RX_CLK_OUT_SEL		(1U << 27)
 #define  EMMC_DLL_RXCLK_RX_CLK_CHANGE_WINDOW	(1U << 28)
 #define  EMMC_DLL_RXCLK_RX_CLK_SRC_SEL		(1U << 29)
-#define EMMC_DLL_TXCLK			0x804
+#define EMMC_DLL_TXCLK			0x808
 #define  EMMC_DLL_TXCLK_TX_TAP_NUM_SHIFT	0
 #define  EMMC_DLL_TXCLK_TX_TAP_NUM_MASK		0x1f
 #define  EMMC_DLL_TXCLK_TX_TAP_VALUE_SHIFT	8
