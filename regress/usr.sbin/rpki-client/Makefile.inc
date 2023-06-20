@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.32 2023/05/30 15:56:47 job Exp $
+# $OpenBSD: Makefile.inc,v 1.33 2023/06/20 12:52:32 job Exp $
 
 .PATH:		${.CURDIR}/../../../../usr.sbin/rpki-client
 
@@ -40,7 +40,7 @@ run-regress-test-cert: test-cert
 	./test-cert -vt ${TALARGS:S,,${.CURDIR}/../&,}
 
 SRCS_test-mft+=	test-mft.c mft.c crl.c cms.c x509.c ip.c io.c log.c validate.c \
-		encoding.c print.c dummy.c json.c
+		encoding.c print.c json.c cert.c as.c
 run-regress-test-mft: test-mft
 	./test-mft -v ${.CURDIR}/../mft/*.mft
 
@@ -64,8 +64,8 @@ SRCS_test-geofeed+=	test-geofeed.c geofeed.c cms.c x509.c ip.c io.c log.c \
 run-regress-test-geofeed: test-geofeed
 	./test-geofeed -v ${.CURDIR}/../geofeed/*.csv
 
-SRCS_test-tal+=	test-tal.c tal.c ip.c io.c log.c validate.c \
-		encoding.c print.c crl.c dummy.c x509.c json.c
+SRCS_test-tal+=	test-tal.c tal.c ip.c io.c log.c validate.c cms.c \
+		encoding.c print.c crl.c x509.c json.c cert.c as.c mft.c
 run-regress-test-tal: test-tal
 	./test-tal -v ${.CURDIR}/../tal/*.tal
 
@@ -80,9 +80,9 @@ SRCS_test-tak+=	test-tak.c tak.c cms.c x509.c ip.c as.c io.c log.c \
 run-regress-test-tak: test-tak
 	./test-tak -v ${.CURDIR}/../tak/*.tak
 
-SRCS_test-rrdp+=	test-rrdp.c rrdp_delta.c rrdp_notification.c \
-			rrdp_snapshot.c rrdp_util.c \
-			log.c encoding.c ip.c validate.c dummy.c crl.c x509.c
+SRCS_test-rrdp+=	test-rrdp.c rrdp_delta.c rrdp_notification.c cms.c \
+			rrdp_snapshot.c rrdp_util.c cert.c as.c mft.c io.c \
+			log.c encoding.c ip.c validate.c crl.c x509.c
 LDADD_test-rrdp+=	-lexpat ${LDADD}
 DPADD_test-rrdp+=	${LIBEXPAT} ${DPADD}
 run-regress-test-rrdp: test-rrdp
