@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.22 2022/12/14 15:19:16 claudio Exp $ */
+/*	$OpenBSD: io.c,v 1.23 2023/06/20 15:15:14 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -41,7 +41,7 @@ io_new_buffer(void)
 
 	if ((b = ibuf_dynamic(64, INT32_MAX)) == NULL)
 		err(1, NULL);
-	ibuf_reserve(b, sizeof(size_t));	/* can not fail */
+	ibuf_add_zero(b, sizeof(size_t));	/* can not fail */
 	return b;
 }
 
@@ -88,7 +88,7 @@ io_close_buffer(struct msgbuf *msgbuf, struct ibuf *b)
 	size_t len;
 
 	len = ibuf_size(b) - sizeof(len);
-	memcpy(ibuf_seek(b, 0, sizeof(len)), &len, sizeof(len));
+	ibuf_set(b, 0, &len, sizeof(len));
 	ibuf_close(msgbuf, b);
 }
 
@@ -280,7 +280,7 @@ io_buf_recvfd(int fd, struct ibuf **ib)
 			for (i = 0; i < j; i++) {
 				f = ((int *)CMSG_DATA(cmsg))[i];
 				if (i == 0)
-					b->fd = f;
+					ibuf_fd_set(b, f);
 				else
 					close(f);
 			}

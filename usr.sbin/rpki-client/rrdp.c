@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.30 2023/05/03 07:51:08 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.31 2023/06/20 15:15:14 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -431,20 +431,20 @@ rrdp_input_handler(int fd)
 		io_read_str(b, &session_id);
 		io_read_buf(b, &serial, sizeof(serial));
 		io_read_str(b, &last_mod);
-		if (b->fd != -1)
+		if (ibuf_fd_avail(b))
 			errx(1, "received unexpected fd");
 
 		rrdp_new(id, local, notify, session_id, serial, last_mod);
 		break;
 	case RRDP_HTTP_INI:
-		if (b->fd == -1)
-			errx(1, "expected fd not received");
 		s = rrdp_get(id);
 		if (s == NULL)
 			errx(1, "http ini, rrdp session %u does not exist", id);
 		if (s->state != RRDP_STATE_WAIT)
 			errx(1, "%s: bad internal state", s->local);
-		s->infd = b->fd;
+		s->infd = ibuf_fd_get(b);
+		if (s->infd == -1)
+			errx(1, "expected fd not received");
 		s->state = RRDP_STATE_PARSE;
 		if (s->aborted) {
 			rrdp_abort_req(s);
@@ -454,7 +454,7 @@ rrdp_input_handler(int fd)
 	case RRDP_HTTP_FIN:
 		io_read_buf(b, &res, sizeof(res));
 		io_read_str(b, &last_mod);
-		if (b->fd != -1)
+		if (ibuf_fd_avail(b))
 			errx(1, "received unexpected fd");
 
 		s = rrdp_get(id);
@@ -472,7 +472,7 @@ rrdp_input_handler(int fd)
 		s = rrdp_get(id);
 		if (s == NULL)
 			errx(1, "file, rrdp session %u does not exist", id);;
-		if (b->fd != -1)
+		if (ibuf_fd_avail(b))
 			errx(1, "received unexpected fd");
 		io_read_buf(b, &ok, sizeof(ok));
 		if (ok != 1)
@@ -482,7 +482,7 @@ rrdp_input_handler(int fd)
 			rrdp_finished(s);
 		break;
 	case RRDP_ABORT:
-		if (b->fd != -1)
+		if (ibuf_fd_avail(b))
 			errx(1, "received unexpected fd");
 		s = rrdp_get(id);
 		if (s != NULL)

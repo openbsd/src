@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.241 2023/05/30 16:02:28 job Exp $ */
+/*	$OpenBSD: main.c,v 1.242 2023/06/20 15:15:14 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -341,7 +341,7 @@ http_fetch(unsigned int id, const char *uri, const char *last_mod, int fd)
 	io_str_buffer(b, uri);
 	io_str_buffer(b, last_mod);
 	/* pass file as fd */
-	b->fd = fd;
+	ibuf_fd_set(b, fd);
 	io_close_buffer(&httpq, b);
 }
 
@@ -362,7 +362,7 @@ rrdp_http_fetch(unsigned int id, const char *uri, const char *last_mod)
 	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &id, sizeof(id));
-	b->fd = pi[0];
+	ibuf_fd_set(b, pi[0]);
 	io_close_buffer(&rrdpq, b);
 
 	http_fetch(id, uri, last_mod, pi[1]);

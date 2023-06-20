@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.76 2023/06/12 15:27:52 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.77 2023/06/20 15:15:14 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -2150,7 +2150,7 @@ proc_http(char *bind_addr, int fd)
 				io_read_str(b, &mod);
 
 				/* queue up new requests */
-				http_req_new(id, uri, mod, 0, b->fd);
+				http_req_new(id, uri, mod, 0, ibuf_fd_get(b));
 				ibuf_free(b);
 			}
 		}
