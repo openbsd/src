@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.20 2015/05/05 01:26:37 jsg Exp $ */
+/*	$OpenBSD: auth.c,v 1.21 2023/06/20 15:19:55 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -141,35 +141,44 @@ auth_gen(struct ibuf *buf, struct iface *iface)
 {
 	MD5_CTX		 hash;
 	u_int8_t	 digest[MD5_DIGEST_LENGTH];
-	struct ospf_hdr	*ospf_hdr;
+	struct crypt	 crypt;
 	struct auth_md	*md;
-
-	if ((ospf_hdr = ibuf_seek(buf, 0, sizeof(*ospf_hdr))) == NULL)
-		fatalx("auth_gen: buf_seek failed");
+	u_int16_t	 chksum;
 
 	/* update length */
 	if (ibuf_size(buf) > USHRT_MAX)
 		fatalx("auth_gen: resulting ospf packet too big");
-	ospf_hdr->len = htons(ibuf_size(buf));
-	/* clear auth_key field */
-	bzero(ospf_hdr->auth_key.simple, sizeof(ospf_hdr->auth_key.simple));
+	if (ibuf_set_n16(buf, offsetof(struct ospf_hdr, len),
+	    ibuf_size(buf)) == -1)
+		fatalx("auth_gen: ibuf_set_n16 failed");
 
 	switch (iface->auth_type) {
 	case AUTH_NONE:
-		ospf_hdr->chksum = in_cksum(buf->buf, ibuf_size(buf));
+		chksum = in_cksum(buf->buf, ibuf_size(buf));
+		if (ibuf_set(buf, offsetof(struct ospf_hdr, chksum),
+		    &chksum, sizeof(chksum)) == -1)
+			fatalx("auth_gen: ibuf_set failed");
 		break;
 	case AUTH_SIMPLE:
-		ospf_hdr->chksum = in_cksum(buf->buf, ibuf_size(buf));
+		chksum = in_cksum(buf->buf, ibuf_size(buf));
+		if (ibuf_set(buf, offsetof(struct ospf_hdr, chksum),
+		    &chksum, sizeof(chksum)) == -1)
+			fatalx("auth_gen: ibuf_set failed");
 
-		strncpy(ospf_hdr->auth_key.simple, iface->auth_key,
-		    sizeof(ospf_hdr->auth_key.simple));
+		if (ibuf_set(buf, offsetof(struct ospf_hdr, auth_key),
+		    iface->auth_key, strlen(iface->auth_key)) == -1)
+			fatalx("auth_gen: ibuf_set failed");
 		break;
 	case AUTH_CRYPT:
-		ospf_hdr->chksum = 0;
-		ospf_hdr->auth_key.crypt.keyid = iface->auth_keyid;
-		ospf_hdr->auth_key.crypt.seq_num = htonl(iface->crypt_seq_num);
-		ospf_hdr->auth_key.crypt.len = MD5_DIGEST_LENGTH;
+		bzero(&crypt, sizeof(crypt));
+		crypt.keyid = iface->auth_keyid;
+		crypt.seq_num = htonl(iface->crypt_seq_num);
+		crypt.len = MD5_DIGEST_LENGTH;
 		iface->crypt_seq_num++;
+
+		if (ibuf_set(buf, offsetof(struct ospf_hdr, auth_key),
+		    &crypt, sizeof(crypt)) == -1)
+			fatalx("auth_gen: ibuf_set failed");
 
 		/* insert plaintext key */
 		if ((md = md_list_find(&iface->auth_md_list,
