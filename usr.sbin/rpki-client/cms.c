@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.36 2023/06/17 04:46:11 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.37 2023/06/20 02:46:18 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -276,7 +276,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	assert(octype != NULL);
 	if (OBJ_cmp(obj, octype) != 0) {
 		OBJ_obj2txt(buf, sizeof(buf), obj, 1);
-		OBJ_obj2txt(obuf, sizeof(obuf), oid, 1);
+		OBJ_obj2txt(obuf, sizeof(obuf), octype, 1);
 		warnx("%s: RFC 6488: eContentType does not match Content-Type "
 		    "OID: %s, want %s", fn, buf, obuf);
 		goto out;
