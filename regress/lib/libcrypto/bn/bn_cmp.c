@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_cmp.c,v 1.1 2022/11/30 02:51:05 jsing Exp $ */
+/*	$OpenBSD: bn_cmp.c,v 1.2 2023/06/21 07:16:08 jsing Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -74,6 +74,30 @@ struct bn_cmp_test bn_cmp_tests[] = {
 		.b = "0",
 		.cmp = -1,
 		.ucmp = 1,
+	},
+	{
+		.a = "1ffffffffffffffff",
+		.b = "00000000000000001ffffffffffffffff",
+		.cmp = 0,
+		.ucmp = 0,
+	},
+	{
+		.a = "-1ffffffffffffffff",
+		.b = "-00000000000000001ffffffffffffffff",
+		.cmp = 0,
+		.ucmp = 0,
+	},
+	{
+		.a = "1ffffffffffffffff",
+		.b = "-00000000000000001ffffffffffffffff",
+		.cmp = 1,
+		.ucmp = 0,
+	},
+	{
+		.a = "-1ffffffffffffffff",
+		.b = "00000000000000001ffffffffffffffff",
+		.cmp = -1,
+		.ucmp = 0,
 	},
 };
 
