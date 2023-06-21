@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.3 2019/09/15 19:23:29 rob Exp $	*/
+/*	$OpenBSD: util.c,v 1.4 2023/06/21 07:49:24 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -289,44 +289,42 @@ getmonotime(struct timeval *tv)
 struct ibuf *
 string2binary(const char *string)
 {
-	unsigned long	 i, j, x;
-	unsigned char	*binary = NULL;
 	struct ibuf	*ibuf = NULL;
-	char		 hex[3];
-	int		 len;
+	unsigned char	 ch, r;
+	size_t		 i, len;
 
-	if (strlen(string) % 2 != 0) {
-		return NULL;
-	}
+	len = strlen(string);
+	if (len % 2 != 0)
+		goto fail;
+	if ((ibuf = ibuf_open(len / 2)) == NULL)
+		goto fail;
 
-	binary = calloc(strlen(string), sizeof(unsigned char));
-	if (binary == NULL) {
-		return NULL;
-	}
-
-	hex[2] = '\0';
-	j = 0;
-	for (i = 0; i < strlen(string); i++) {
-		if (isxdigit(string[i]) == 0 || isxdigit(string[i+1]) == 0) {
-			free(binary);
-			return NULL;
-		} else {
-			hex[0] = string[i];
-			hex[1] = string[i+1];
-			x = strtoul(hex, NULL, 16);
-			binary[j++] = (unsigned char)x;
-			i++;
+	while (*string) {
+		r = 0;
+		for (i = 0; i < 2; i++) {
+			ch = string[i];
+			if (isdigit(ch))
+				ch -= '0';
+			else if (islower(ch))
+				ch -= ('a' - 10);
+			else if (isupper(ch))
+				ch -= ('A' - 10);
+			else
+				goto fail;
+			if (ch > 0xf)
+				goto fail;
+			r = r << 4 | ch;
 		}
+		if (ibuf_add_n8(ibuf, r) == -1)
+			goto fail;
+		string += 2;
 	}
-	len = strlen(string) / 2;
-	if ((ibuf = ibuf_open(len)) == NULL ||
-	    ibuf_add(ibuf, binary, len) == -1) {
-		ibuf_free(ibuf);
-		free(binary);
-		return NULL;
-	}
-	free(binary);
+
 	return ibuf;
+
+fail:
+	ibuf_free(ibuf);
+	return NULL;
 }
 
 void
