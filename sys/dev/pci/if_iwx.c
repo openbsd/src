@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.171 2023/05/11 16:55:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.172 2023/06/21 23:24:10 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -724,7 +724,7 @@ iwx_init_fw_sec(struct iwx_softc *sc, const struct iwx_fw_sects *fws,
 
 	return 0;
 }
-	    
+
 void
 iwx_fw_version_str(char *buf, size_t bufsize,
     uint32_t major, uint32_t minor, uint32_t api)
@@ -1075,7 +1075,7 @@ iwx_ctxt_info_gen3_init(struct iwx_softc *sc, const struct iwx_fw_sects *fws)
 
 	IWX_SETBITS(sc, IWX_CSR_CTXT_INFO_BOOT_CTRL,
 		    IWX_CSR_AUTO_FUNC_BOOT_ENA);
-	
+
 	/* kick FW self load */
 	if (!iwx_nic_lock(sc)) {
 		iwx_dma_contig_free(&sc->iml_dma);
@@ -1713,7 +1713,7 @@ iwx_read_mem(struct iwx_softc *sc, uint32_t addr, void *buf, int dwords)
 int
 iwx_write_mem(struct iwx_softc *sc, uint32_t addr, const void *buf, int dwords)
 {
-	int offs;	
+	int offs;
 	const uint32_t *vals = buf;
 
 	if (iwx_nic_lock(sc)) {
@@ -2343,7 +2343,7 @@ iwx_prepare_card_hw(struct iwx_softc *sc)
 	IWX_SETBITS(sc, IWX_CSR_DBG_LINK_PWR_MGMT_REG,
 	    IWX_CSR_RESET_LINK_PWR_MGMT_DISABLED);
 	DELAY(1000);
- 
+
 	for (ntries = 0; ntries < 10; ntries++) {
 		/* If HW is not ready, prepare the conditions to check again */
 		IWX_SETBITS(sc, IWX_CSR_HW_IF_CONFIG_REG,
@@ -2709,7 +2709,7 @@ iwx_stop_device(struct iwx_softc *sc)
 	 */
 	iwx_conf_msix_hw(sc, 1);
 
-	/* 
+	/*
 	 * Upon stop, the APM issues an interrupt if HW RF kill is set.
 	 * Clear the interrupt again.
 	 */
@@ -4396,7 +4396,7 @@ iwx_run_init_mvm_ucode(struct iwx_softc *sc, int readnvm)
 		if (IEEE80211_ADDR_EQ(etheranyaddr, sc->sc_ic.ic_myaddr))
 			IEEE80211_ADDR_COPY(sc->sc_ic.ic_myaddr,
 			    sc->sc_nvm.hw_addr);
-		
+
 	}
 	return 0;
 }
@@ -4657,7 +4657,7 @@ iwx_rx_frame(struct iwx_softc *sc, struct mbuf *m, int chanidx,
 	struct ieee80211_frame *wh;
 	struct ieee80211_node *ni;
 
-	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))	
+	if (chanidx < 0 || chanidx >= nitems(ic->ic_channels))
 		chanidx = ieee80211_chan2ieee(ic, ic->ic_ibss_chan);
 
 	wh = mtod(m, struct ieee80211_frame *);
@@ -5209,7 +5209,7 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 			/* Padding is inserted after the IV. */
 			hdrlen += IEEE80211_CCMP_HDRLEN;
 		}
-	
+
 		memmove(m->m_data + 2, m->m_data, hdrlen);
 		m_adj(m, 2);
 	}
@@ -5245,7 +5245,7 @@ iwx_rx_mpdu_mq(struct iwx_softc *sc, struct mbuf *m, void *pktdata,
 			struct ieee80211_qosframe *qwh = mtod(m,
 			    struct ieee80211_qosframe *);
 			qwh->i_qos[0] &= htole16(~IEEE80211_QOS_AMSDU);
-		}	
+		}
 	}
 
 	/*
@@ -5890,7 +5890,7 @@ iwx_send_cmd(struct iwx_softc *sc, struct iwx_host_cmd *hcmd)
 		} else if (generation == sc->sc_generation) {
 			free(sc->sc_cmd_resp_pkt[idx], M_DEVBUF,
 			    sc->sc_cmd_resp_len[idx]);
-			sc->sc_cmd_resp_pkt[idx] = NULL;	
+			sc->sc_cmd_resp_pkt[idx] = NULL;
 		}
 	}
  out:
@@ -6946,7 +6946,7 @@ iwx_fill_probe_req(struct iwx_softc *sc, struct iwx_scan_probe_req *preq)
 		frm = ieee80211_add_xrates(frm, rs);
 	remain -= frm - pos;
 
-	if (isset(sc->sc_enabled_capa, 
+	if (isset(sc->sc_enabled_capa,
 	    IWX_UCODE_TLV_CAPA_DS_PARAM_SET_IE_SUPPORT)) {
 		if (remain < 3)
 			return ENOBUFS;
@@ -7271,7 +7271,7 @@ iwx_ack_rates(struct iwx_softc *sc, struct iwx_node *in, int *cck_rates,
 	}
 	for (i = IWX_FIRST_OFDM_RATE; i <= IWX_LAST_NON_HT_RATE; i++) {
 		if ((iwx_ridx2rate(rs, i) & IEEE80211_RATE_BASIC) == 0)
-			continue;	
+			continue;
 		ofdm |= (1 << (i - IWX_FIRST_OFDM_RATE));
 		if (lowest_present_ofdm == -1 || lowest_present_ofdm > i)
 			lowest_present_ofdm = i;
@@ -7479,7 +7479,7 @@ iwx_mac_ctxt_cmd(struct iwx_softc *sc, struct iwx_node *in, uint32_t action,
 		    IWX_MAC_FILTER_IN_PROBE_REQUEST |
 		    IWX_MAC_FILTER_IN_CRC32);
 	} else if (!assoc || !ni->ni_associd || !ni->ni_dtimperiod) {
-		/* 
+		/*
 		 * Allow beacons to pass through as long as we are not
 		 * associated or we do not have dtim period information.
 		 */
@@ -7580,7 +7580,7 @@ iwx_scan(struct iwx_softc *sc)
 }
 
 int
-iwx_bgscan(struct ieee80211com *ic) 
+iwx_bgscan(struct ieee80211com *ic)
 {
 	struct iwx_softc *sc = IC2IFP(ic)->if_softc;
 	int err;
@@ -7799,7 +7799,7 @@ iwx_rs_vht_rates(struct iwx_softc *sc, struct ieee80211_node *ni, int num_ss)
 		/* Should not happen; Values above cover the possible range. */
 		panic("invalid VHT Rx MCS value %u", rx_mcs);
 	}
-		
+
 	return ((1 << (max_mcs + 1)) - 1);
 }
 
@@ -8136,7 +8136,7 @@ iwx_auth(struct iwx_softc *sc)
 			return err;
 	}
 	in->in_phyctxt = &sc->sc_phyctxt[0];
-	IEEE80211_ADDR_COPY(in->in_macaddr, in->in_ni.ni_macaddr); 
+	IEEE80211_ADDR_COPY(in->in_macaddr, in->in_ni.ni_macaddr);
 
 	err = iwx_mac_ctxt_cmd(sc, in, IWX_FW_CTXT_ACTION_ADD, 0);
 	if (err) {
@@ -8186,7 +8186,7 @@ iwx_auth(struct iwx_softc *sc)
 	if (in->in_ni.ni_intval)
 		duration = in->in_ni.ni_intval * 9;
 	else
-		duration = 900; 
+		duration = 900;
 	return iwx_schedule_session_protection(sc, in, duration);
 rm_mgmt_queue:
 	if (generation == sc->sc_generation)
@@ -8344,7 +8344,7 @@ iwx_run(struct iwx_softc *sc)
 		return err;
 	}
 #ifdef notyet
-	/* 
+	/*
 	 * Disabled for now. Default beacon filter settings
 	 * prevent net80211 from getting ERP and HT protection
 	 * updates from beacons.
@@ -8422,7 +8422,7 @@ iwx_run_stop(struct iwx_softc *sc)
 		printf("%s: could not disable beacon filter (error %d)\n",
 		    DEVNAME(sc), err);
 		return err;
-	}	
+	}
 
 	/* Mark station as disassociated. */
 	err = iwx_mac_ctxt_cmd(sc, in, IWX_FW_CTXT_ACTION_MODIFY, 0);
@@ -9199,7 +9199,7 @@ iwx_init(struct ifnet *ifp)
 
 	ieee80211_begin_scan(ifp);
 
-	/* 
+	/*
 	 * ieee80211_begin_scan() ends up scheduling iwx_newstate_task().
 	 * Wait until the transition to SCAN state has completed.
 	 */
@@ -10042,7 +10042,7 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 			iwx_mcc_update(sc, notif);
 			break;
 		}
-	
+
 		case IWX_REPLY_ERROR: {
 			struct iwx_error_resp *resp;
 			SYNC_RESP_STRUCT(resp, pkt);
@@ -10149,7 +10149,7 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		/*
 		 * uCode sets bit 0x80 when it originates the notification,
 		 * i.e. when the notification is not a direct response to a
-		 * command sent by the driver. 
+		 * command sent by the driver.
 		 * For example, uCode issues IWX_REPLY_RX when it sends a
 		 * received frame to the driver.
 		 */
@@ -10459,7 +10459,7 @@ iwx_match(struct device *parent, iwx_match_t match __unused, void *aux)
  * Part of this complexity comes from iwlwifi supporting both iwm(4) and iwx(4)
  * devices in the same driver.
  *
- * Our table below contains mostly "new" entries declared in iwlwifi 
+ * Our table below contains mostly "new" entries declared in iwlwifi
  * with the _IWL_DEV_INFO() macro (with a leading underscore).
  * Other devices are matched based on PCI vendor/product ID as usual,
  * unless matching specific PCI subsystem vendor/product IDs is required.
@@ -11341,7 +11341,7 @@ fail4:	while (--txq_i >= 0)
 	iwx_free_rx_ring(sc, &sc->rxq);
 	if (sc->ict_dma.vaddr != NULL)
 		iwx_dma_contig_free(&sc->ict_dma);
-	
+
 fail1:	iwx_dma_contig_free(&sc->ctxt_info_dma);
 	iwx_dma_contig_free(&sc->prph_scratch_dma);
 	iwx_dma_contig_free(&sc->prph_info_dma);
