@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mul_div.c,v 1.6 2023/04/11 05:53:53 jsing Exp $ */
+/*	$OpenBSD: bn_mul_div.c,v 1.7 2023/06/21 07:18:10 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -405,6 +405,84 @@ benchmark_bn_mul_sqr(void)
 	}
 }
 
+static int
+test_bn_sqr(void)
+{
+	BN_CTX *bn_ctx = NULL;
+	BIGNUM *a, *r;
+	int failed = 1;
+
+	if ((bn_ctx = BN_CTX_new()) == NULL)
+		errx(1, "BN_CTX_new");
+
+	BN_CTX_start(bn_ctx);
+
+	if ((a = BN_CTX_get(bn_ctx)) == NULL)
+		errx(1, "BN_new");
+	if ((r = BN_CTX_get(bn_ctx)) == NULL)
+		errx(1, "BN_new");
+
+	/* Square of a new BN. */
+	if (!BN_sqr(r, a, bn_ctx)) {
+		fprintf(stderr, "FAIL: BN_sqr() on new BN failed\n");
+		goto failure;
+	}
+	if (!BN_is_zero(r)) {
+		fprintf(stderr, "FAIL: BN_sqr() on new BN is not zero\n");
+		goto failure;
+	}
+
+	/* Square of BN that is explicitly set to zero. */
+	if (!BN_set_word(a, 0)) {
+		fprintf(stderr, "FAIL: BN_set_word(0) failed\n");
+		goto failure;
+	}
+	if (!BN_sqr(r, a, bn_ctx)) {
+		fprintf(stderr, "FAIL: BN_sqr(0) failed\n");
+		goto failure;
+	}
+	if (!BN_is_zero(r)) {
+		fprintf(stderr, "FAIL: BN_sqr(0) != 0\n");
+		goto failure;
+	}
+
+	/* Square of BN with value one. */
+	if (!BN_set_word(a, 1)) {
+		fprintf(stderr, "FAIL: BN_set_word(1) failed\n");
+		goto failure;
+	}
+	if (!BN_sqr(r, a, bn_ctx)) {
+		fprintf(stderr, "FAIL: BN_sqr(1) failed\n");
+		goto failure;
+	}
+	if (BN_get_word(r) != 1) {
+		fprintf(stderr, "FAIL: BN_sqr(1) != 1\n");
+		goto failure;
+	}
+
+	/* Square of BN with value two. */
+	if (!BN_set_word(a, 2)) {
+		fprintf(stderr, "FAIL: BN_set_word(2) failed\n");
+		goto failure;
+	}
+	if (!BN_sqr(r, a, bn_ctx)) {
+		fprintf(stderr, "FAIL: BN_sqr(2) failed\n");
+		goto failure;
+	}
+	if (BN_get_word(r) != 4) {
+		fprintf(stderr, "FAIL: BN_sqr(2) != 4\n");
+		goto failure;
+	}
+
+	failed = 0;
+
+ failure:
+	BN_CTX_end(bn_ctx);
+	BN_CTX_free(bn_ctx);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -412,6 +490,8 @@ main(int argc, char **argv)
 
 	if (argc == 2 && strcmp(argv[1], "--benchmark") == 0)
 		benchmark = 1;
+
+	failed |= test_bn_sqr();
 
 	if (benchmark && !failed)
 		benchmark_bn_mul_sqr();
