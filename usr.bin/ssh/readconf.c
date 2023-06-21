@@ -1,4 +1,4 @@
-/* $OpenBSD: readconf.c,v 1.376 2023/03/31 04:23:02 djm Exp $ */
+/* $OpenBSD: readconf.c,v 1.377 2023/06/21 05:10:26 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -931,7 +931,7 @@ process_config_line_depth(Options *options, struct passwd *pw, const char *host,
 	char **cpptr, ***cppptr, fwdarg[256];
 	u_int i, *uintptr, uvalue, max_entries = 0;
 	int r, oactive, negated, opcode, *intptr, value, value2, cmdline = 0;
-	int remotefwd, dynamicfwd;
+	int remotefwd, dynamicfwd, ca_only = 0;
 	LogLevel *log_level_ptr;
 	SyslogFacility *log_facility_ptr;
 	long long val64;
@@ -1427,6 +1427,7 @@ parse_int:
 
 	case oHostKeyAlgorithms:
 		charptr = &options->hostkeyalgorithms;
+		ca_only = 0;
 parse_pubkey_algos:
 		arg = argv_next(&ac, &av);
 		if (!arg || *arg == '\0') {
@@ -1436,7 +1437,7 @@ parse_pubkey_algos:
 		}
 		if (*arg != '-' &&
 		    !sshkey_names_valid2(*arg == '+' || *arg == '^' ?
-		    arg + 1 : arg, 1)) {
+		    arg + 1 : arg, 1, ca_only)) {
 			error("%s line %d: Bad key types '%s'.",
 			    filename, linenum, arg ? arg : "<NONE>");
 			goto out;
@@ -1447,6 +1448,7 @@ parse_pubkey_algos:
 
 	case oCASignatureAlgorithms:
 		charptr = &options->ca_sign_algorithms;
+		ca_only = 1;
 		goto parse_pubkey_algos;
 
 	case oLogLevel:
@@ -2103,10 +2105,12 @@ parse_pubkey_algos:
 
 	case oHostbasedAcceptedAlgorithms:
 		charptr = &options->hostbased_accepted_algos;
+		ca_only = 0;
 		goto parse_pubkey_algos;
 
 	case oPubkeyAcceptedAlgorithms:
 		charptr = &options->pubkey_accepted_algos;
+		ca_only = 0;
 		goto parse_pubkey_algos;
 
 	case oAddKeysToAgent:
