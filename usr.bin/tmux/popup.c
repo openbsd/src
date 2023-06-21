@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.49 2023/06/08 11:17:28 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.50 2023/06/21 06:28:18 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -788,6 +788,8 @@ popup_editor(struct client *c, const char *buf, size_t len,
 	if (fd == -1)
 		return (-1);
 	f = fdopen(fd, "w");
+	if (f == NULL)
+		return (-1);
 	if (fwrite(buf, len, 1, f) != 1) {
 		fclose(f);
 		return (-1);
