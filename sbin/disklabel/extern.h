@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.35 2023/01/04 21:08:08 krw Exp $	*/
+/*	$OpenBSD: extern.h,v 1.36 2023/06/21 12:50:09 krw Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -19,6 +19,10 @@
 #define MEG(x)	((x) * 1024LL * (1024 / DEV_BSIZE))
 #define GIG(x)  (MEG(x) * 1024LL)
 
+/* 'actions' for mpfree(). */
+#define	DISCARD	0
+#define	KEEP	1
+
 u_short	dkcksum(const struct disklabel *);
 char	canonical_unit(const struct disklabel *, char);
 double	scale(u_int64_t, char, const struct disklabel *);
@@ -30,7 +34,7 @@ int	editor(int);
 int	editor_allocspace(struct disklabel *);
 void	mpsave(const struct disklabel *);
 void	mpcopy(char **, char **);
-void	mpfree(char **);
+void	mpfree(char **, int);
 void	parse_autotable(char *);
 
 int	writelabel(int, struct disklabel *);

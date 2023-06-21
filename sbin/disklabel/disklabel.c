@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.250 2023/06/19 13:45:19 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.251 2023/06/21 12:50:09 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -1005,7 +1005,7 @@ next:
 
 	if (errors > 0)
 		mpcopy(mountpoints, omountpoints);
-	mpfree(omountpoints);
+	mpfree(omountpoints, DISCARD);
 
 	return (errors > 0);
 }

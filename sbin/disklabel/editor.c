@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.410 2023/06/19 13:45:19 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.411 2023/06/21 12:50:09 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -501,9 +501,9 @@ editor(int f)
 		}
 	}
 done:
-	mpfree(omountpoints);
-	mpfree(origmountpoints);
-	mpfree(tmpmountpoints);
+	mpfree(omountpoints, DISCARD);
+	mpfree(origmountpoints, DISCARD);
+	mpfree(tmpmountpoints, DISCARD);
 	return (error);
 }
 
@@ -556,10 +556,7 @@ again:
 	if (index >= alloc_table_nitems)
 		return 1;
 	lp = &label;
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		free(mountpoints[i]);
-		mountpoints[i] = NULL;
-	}
+	mpfree(mountpoints, KEEP);
 	memcpy(lp, lp_org, sizeof(struct disklabel));
 	lp->d_npartitions = MAXPARTITIONS;
 	lastalloc = alloc_table[index].sz;
@@ -1541,17 +1538,22 @@ mpsave(const struct disklabel *lp)
 }
 
 void
-mpfree(char **mp)
+mpfree(char **mp, int action)
 {
 	int part;
 
 	if (mp == NULL)
 		return;
 
-	for (part = 0; part < MAXPARTITIONS; part++)
+	for (part = 0; part < MAXPARTITIONS; part++) {
 		free(mp[part]);
+		mp[part] = NULL;
+	}
 
-	free(mp);
+	if (action == DISCARD) {
+		free(mp);
+		mp = NULL;
+	}
 }
 
 int
@@ -1784,13 +1786,10 @@ zero_partitions(struct disklabel *lp)
 {
 	int i;
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		memset(&lp->d_partitions[i], 0, sizeof(struct partition));
-		free(mountpoints[i]);
-		mountpoints[i] = NULL;
-	}
-
+	memset(lp->d_partitions, 0, sizeof(lp->d_partitions));
 	DL_SETPSIZE(&lp->d_partitions[RAW_PART], DL_GETDSIZE(lp));
+
+	mpfree(mountpoints, KEEP);
 }
 
 u_int64_t
