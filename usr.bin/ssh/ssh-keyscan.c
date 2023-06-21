@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-keyscan.c,v 1.152 2023/03/31 04:21:56 djm Exp $ */
+/* $OpenBSD: ssh-keyscan.c,v 1.153 2023/06/21 05:06:04 djm Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -18,6 +18,7 @@
 #endif
 
 #include <errno.h>
+#include <limits.h>
 #include <netdb.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -125,10 +126,10 @@ fdlim_get(int hard)
 
 	if (getrlimit(RLIMIT_NOFILE, &rlfd) == -1)
 		return (-1);
-	if ((hard ? rlfd.rlim_max : rlfd.rlim_cur) == RLIM_INFINITY)
+	if ((hard ? rlfd.rlim_max : rlfd.rlim_cur) == RLIM_INFINITY ||
+	    (hard ? rlfd.rlim_max : rlfd.rlim_cur) > INT_MAX)
 		return sysconf(_SC_OPEN_MAX);
-	else
-		return hard ? rlfd.rlim_max : rlfd.rlim_cur;
+	return hard ? rlfd.rlim_max : rlfd.rlim_cur;
 }
 
 static int
