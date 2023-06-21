@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.89 2021/10/09 21:38:00 halex Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.90 2023/06/21 22:22:08 millert Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -31,10 +31,6 @@
 
 static	Area	aedit;
 #define	AEDIT	&aedit		/* area for kill ring and macro defns */
-
-#undef CTRL
-#define	CTRL(x)		((x) == '?' ? 0x7F : (x) & 0x1F)	/* ASCII */
-#define	UNCTRL(x)	((x) == 0x7F ? '?' : (x) | 0x40)	/* ASCII */
 
 /* values returned by keyboard functions */
 #define	KSTD	0

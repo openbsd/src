@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.69 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.70 2023/06/21 22:22:08 millert Exp $	*/
 
 /*
  * Command line editing - common code
@@ -293,6 +293,67 @@ static char	*add_glob(const char *str, int slen);
 static void	glob_table(const char *pat, XPtrV *wp, struct table *tp);
 static void	glob_path(int flags, const char *pat, XPtrV *wp,
 				const char *path);
+
+static char *
+plain_fmt_entry(void *arg, int i, char *buf, int bsize)
+{
+	const char *str = ((char *const *)arg)[i];
+	char *buf0 = buf;
+	int ch;
+
+	if (buf == NULL || bsize <= 0)
+		internal_errorf("%s: buf %lx, bsize %d",
+		    __func__, (long) buf, bsize);
+
+	while ((ch = (unsigned char)*str++) != '\0') {
+		if (iscntrl(ch)) {
+			if (bsize < 3)
+				break;
+			*buf++ = '^';
+			*buf++ = UNCTRL(ch);
+			bsize -= 2;
+			continue;
+		}
+		if (bsize < 2)
+			break;
+		*buf++ = ch;
+		bsize--;
+	}
+	*buf = '\0';
+
+	return buf0;
+}
+
+/* Compute the length of string taking into account escape characters. */
+static size_t
+strlen_esc(const char *str)
+{
+	size_t len = 0;
+	int ch;
+
+	while ((ch = (unsigned char)*str++) != '\0') {
+		if (iscntrl(ch))
+			len++;
+		len++;
+	}
+	return len;
+}
+
+static int
+pr_list(char *const *ap)
+{
+	char *const *pp;
+	int nwidth;
+	int i, n;
+
+	for (n = 0, nwidth = 0, pp = ap; *pp; n++, pp++) {
+		i = strlen_esc(*pp);
+		nwidth = (i > nwidth) ? i : nwidth;
+	}
+	print_columns(shl_out, n, plain_fmt_entry, (void *) ap, nwidth + 1, 0);
+
+	return n;
+}
 
 void
 x_print_expansions(int nwords, char *const *words, int is_command)
