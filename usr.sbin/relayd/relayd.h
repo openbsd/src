@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.h,v 1.269 2022/08/31 16:17:18 dv Exp $	*/
+/*	$OpenBSD: relayd.h,v 1.270 2023/06/21 07:54:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -176,7 +176,6 @@ struct ctl_icmp_event {
 
 struct ctl_tcp_event {
 	int			 s;
-	char			*req;
 	struct ibuf		*buf;
 	struct host		*host;
 	struct table		*table;

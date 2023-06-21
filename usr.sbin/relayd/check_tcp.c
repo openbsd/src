@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.59 2023/06/20 09:54:57 claudio Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.60 2023/06/21 07:54:54 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -183,10 +183,6 @@ tcp_host_up(struct ctl_tcp_event *cte)
 		return;
 	}
 
-	if (cte->table->sendbuf != NULL && cte->table->sendbinbuf == NULL) {
-		cte->req = cte->table->sendbuf;
-	} else if (cte->table->sendbinbuf != NULL)
-		cte->req = cte->table->sendbinbuf->buf;
 	if (cte->table->sendbuf != NULL || cte->table->sendbinbuf != NULL) {
 		event_again(&cte->ev, cte->s, EV_TIMEOUT|EV_WRITE, tcp_send_req,
 		    &cte->tv_start, &cte->table->conf.timeout, cte);
@@ -203,6 +199,7 @@ void
 tcp_send_req(int s, short event, void *arg)
 {
 	struct ctl_tcp_event	*cte = arg;
+	char			*req;
 	int			 bs;
 	int			 len;
 
@@ -214,14 +211,17 @@ tcp_send_req(int s, short event, void *arg)
 
 	if (cte->table->sendbinbuf != NULL) {
 		len = ibuf_size(cte->table->sendbinbuf);
+		req = ibuf_data(cte->table->sendbinbuf);
 		log_debug("%s: table %s sending binary", __func__,
 		    cte->table->conf.name);
 		print_hex(cte->table->sendbinbuf->buf, 0, len);
-	} else
-		len = strlen(cte->req);
+	} else {
+		len = strlen(cte->table->sendbuf);
+		req = cte->table->sendbuf;
+	}
 
 	do {
-		bs = write(s, cte->req, len);
+		bs = write(s, req, len);
 		if (bs == -1) {
 			if (errno == EAGAIN || errno == EINTR)
 				goto retry;
@@ -230,7 +230,7 @@ tcp_send_req(int s, short event, void *arg)
 			hce_notify_done(cte->host, HCE_TCP_WRITE_FAIL);
 			return;
 		}
-		cte->req += bs;
+		req += bs;
 		len -= bs;
 	} while (len > 0);
 
@@ -302,20 +302,22 @@ check_send_expect(struct ctl_tcp_event *cte)
 	u_char	*b;
 
 	if (cte->table->conf.check == CHECK_BINSEND_EXPECT) {
+		size_t   exlen;
+
+		exlen = strlen(cte->table->conf.exbuf) / 2;
 		log_debug("%s: table %s expecting binary",
 		    __func__, cte->table->conf.name);
-		print_hex(cte->table->conf.exbinbuf, 0,
-		    strlen(cte->table->conf.exbuf) / 2);
+		print_hex(cte->table->conf.exbinbuf, 0, exlen);
 
-		if (memcmp(cte->table->conf.exbinbuf, cte->buf->buf,
-		    strlen(cte->table->conf.exbuf) / 2) == 0) {
+		if (ibuf_size(cte->buf) >= exlen && memcmp(ibuf_data(cte->buf),
+		    cte->table->conf.exbinbuf, exlen) == 0) {
 			cte->host->he = HCE_SEND_EXPECT_OK;
 			cte->host->up = HOST_UP;
 			return (0);
-		} else {
+		} else if (ibuf_size(cte->buf) >= exlen) {
 			log_debug("%s: table %s received mismatching binary",
 			    __func__, cte->table->conf.name);
-			print_hex(cte->buf->buf, 0, ibuf_size(cte->buf));
+			print_hex(ibuf_data(cte->buf), 0, ibuf_size(cte->buf));
 		}
 	} else if (cte->table->conf.check == CHECK_SEND_EXPECT) {
 		/*
@@ -353,7 +355,7 @@ check_http_code(struct ctl_tcp_event *cte)
 	if (ibuf_add_zero(cte->buf, 1) == -1)
 		fatal("out of memory");
 
-	head = cte->buf->buf;
+	head = ibuf_data(cte->buf);
 	host = cte->host;
 	host->he = HCE_HTTP_CODE_ERROR;
 	host->code = 0;
@@ -404,7 +406,7 @@ check_http_digest(struct ctl_tcp_event *cte)
 	if (ibuf_add_zero(cte->buf, 1) == -1)
 		fatal("out of memory");
 
-	head = cte->buf->buf;
+	head = ibuf_data(cte->buf);
 	host = cte->host;
 	host->he = HCE_HTTP_DIGEST_ERROR;
 
