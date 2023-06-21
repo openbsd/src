@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.70 2023/05/15 12:03:04 op Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.71 2023/06/21 17:56:26 op Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -593,40 +593,27 @@ lka_filter_process_response(const char *name, const char *line)
 {
 	uint64_t reqid;
 	uint64_t token;
-	char buffer[LINE_MAX];
 	char *ep = NULL;
-	char *kind = NULL;
-	char *qid = NULL;
-	/*char *phase = NULL;*/
-	char *response = NULL;
-	char *parameter = NULL;
+	const char *kind = NULL;
+	const char *qid = NULL;
+	const char *response = NULL;
+	const char *parameter = NULL;
 	struct filter_session *fs;
 
-	(void)strlcpy(buffer, line, sizeof buffer);
-	if ((ep = strchr(buffer, '|')) == NULL)
+	kind = line;
+
+	if ((ep = strchr(kind, '|')) == NULL)
 		fatalx("Missing token: %s", line);
-	ep[0] = '\0';
-
-	kind = buffer;
-
 	qid = ep+1;
-	if ((ep = strchr(qid, '|')) == NULL)
-		fatalx("Missing reqid: %s", line);
-	ep[0] = '\0';
-
 	reqid = strtoull(qid, &ep, 16);
-	if (qid[0] == '\0' || *ep != '\0')
+	if (qid[0] == '\0' || *ep != '|')
 		fatalx("Invalid reqid: %s", line);
 	if (errno == ERANGE && reqid == ULLONG_MAX)
 		fatal("Invalid reqid: %s", line);
 
-	qid = ep+1;
-	if ((ep = strchr(qid, '|')) == NULL)
-		fatal("Missing directive: %s", line);
-	ep[0] = '\0';
-
+	qid = ep + 1;
 	token = strtoull(qid, &ep, 16);
-	if (qid[0] == '\0' || *ep != '\0')
+	if (qid[0] == '\0' || *ep != '|')
 		fatalx("Invalid token: %s", line);
 	if (errno == ERANGE && token == ULLONG_MAX)
 		fatal("Invalid token: %s", line);
@@ -637,7 +624,7 @@ lka_filter_process_response(const char *name, const char *line)
 	if ((fs = tree_get(&sessions, reqid)) == NULL)
 		return;
 
-	if (strcmp(kind, "filter-dataline") == 0) {
+	if (strncmp(kind, "filter-dataline|", 16) == 0) {
 		if (fs->phase != FILTER_DATA_LINE)
 			fatalx("filter-dataline out of dataline phase");
 		filter_data_next(token, reqid, response);
@@ -646,19 +633,13 @@ lka_filter_process_response(const char *name, const char *line)
 	if (fs->phase == FILTER_DATA_LINE)
 		fatalx("filter-result in dataline phase");
 
-	if ((ep = strchr(response, '|'))) {
+	if ((ep = strchr(response, '|')) != NULL)
 		parameter = ep + 1;
-		ep[0] = '\0';
-	}
 
 	if (strcmp(response, "proceed") == 0) {
-		if (parameter != NULL)
-			fatalx("Unexpected parameter after proceed: %s", line);
 		filter_protocol_next(token, reqid, 0);
 		return;
 	} else if (strcmp(response, "junk") == 0) {
-		if (parameter != NULL)
-			fatalx("Unexpected parameter after junk: %s", line);
 		if (fs->phase == FILTER_COMMIT)
 			fatalx("filter-reponse junk after DATA");
 		filter_result_junk(reqid);
@@ -667,11 +648,11 @@ lka_filter_process_response(const char *name, const char *line)
 		if (parameter == NULL)
 			fatalx("Missing parameter: %s", line);
 
-		if (strcmp(response, "rewrite") == 0)
+		if (strncmp(response, "rewrite|", 8) == 0)
 			filter_result_rewrite(reqid, parameter);
-		else if (strcmp(response, "reject") == 0)
+		else if (strncmp(response, "reject|", 7) == 0)
 			filter_result_reject(reqid, parameter);
-		else if (strcmp(response, "disconnect") == 0)
+		else if (strncmp(response, "disconnect|", 11) == 0)
 			filter_result_disconnect(reqid, parameter);
 		else
 			fatalx("Invalid directive: %s", line);
