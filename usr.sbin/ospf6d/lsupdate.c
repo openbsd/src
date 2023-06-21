@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.22 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.23 2023/06/21 07:45:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -177,7 +177,7 @@ prepare_ls_update(struct iface *iface, int bigpkt)
 		goto fail;
 
 	/* reserve space for number of lsa field */
-	if (ibuf_reserve(buf, sizeof(u_int32_t)) == NULL)
+	if (ibuf_add_zero(buf, sizeof(u_int32_t)) == -1)
 		goto fail;
 
 	return (buf);
@@ -208,8 +208,10 @@ add_ls_update(struct ibuf *buf, struct iface *iface, void *data, u_int16_t len,
 	age = ntohs(age);
 	if ((age += older + iface->transmit_delay) >= MAX_AGE)
 		age = MAX_AGE;
-	age = htons(age);
-	memcpy(ibuf_seek(buf, ageoff, sizeof(age)), &age, sizeof(age));
+	if (ibuf_set_n16(buf, ageoff, age) == -1) {
+		log_warn("add_ls_update");
+		return (0);
+	}
 
 	return (1);
 }
@@ -218,9 +220,8 @@ int
 send_ls_update(struct ibuf *buf, struct iface *iface, struct in6_addr addr,
     u_int32_t nlsa)
 {
-	nlsa = htonl(nlsa);
-	memcpy(ibuf_seek(buf, sizeof(struct ospf_hdr), sizeof(nlsa)),
-	    &nlsa, sizeof(nlsa));
+	if (ibuf_set_n32(buf, sizeof(struct ospf_hdr), nlsa) == -1)
+		goto fail;
 	/* calculate checksum */
 	if (upd_ospf_hdr(buf, iface))
 		goto fail;

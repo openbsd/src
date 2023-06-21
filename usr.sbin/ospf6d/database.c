@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.22 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: database.c,v 1.23 2023/06/21 07:45:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -51,7 +51,7 @@ send_db_description(struct nbr *nbr)
 		goto fail;
 
 	/* reserve space for database description header */
-	if (ibuf_reserve(buf, sizeof(dd_hdr)) == NULL)
+	if (ibuf_add_zero(buf, sizeof(dd_hdr)) == -1)
 		goto fail;
 
 	switch (nbr->state) {
@@ -134,8 +134,9 @@ send_db_description(struct nbr *nbr)
 	dd_hdr.bits = bits;
 	dd_hdr.dd_seq_num = htonl(nbr->dd_seq_num);
 
-	memcpy(ibuf_seek(buf, sizeof(struct ospf_hdr), sizeof(dd_hdr)),
-	    &dd_hdr, sizeof(dd_hdr));
+	if (ibuf_set(buf, sizeof(struct ospf_hdr), &dd_hdr,
+	    sizeof(dd_hdr)) == -1)
+		goto fail;
 
 	/* calculate checksum */
 	if (upd_ospf_hdr(buf, nbr->iface))
