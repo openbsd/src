@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.71 2023/06/21 17:56:26 op Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.72 2023/06/21 17:59:24 op Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -605,6 +605,8 @@ lka_filter_process_response(const char *name, const char *line)
 	if ((ep = strchr(kind, '|')) == NULL)
 		fatalx("Missing token: %s", line);
 	qid = ep+1;
+
+	errno = 0;
 	reqid = strtoull(qid, &ep, 16);
 	if (qid[0] == '\0' || *ep != '|')
 		fatalx("Invalid reqid: %s", line);
