@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.12 2023/06/12 16:17:24 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.13 2023/06/21 07:41:55 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -21,6 +21,10 @@
 
 #ifndef HEADER_BN_INTERNAL_H
 #define HEADER_BN_INTERNAL_H
+
+int bn_word_clz(BN_ULONG w);
+
+int bn_bitsize(const BIGNUM *bn);
 
 #ifndef HAVE_BN_CT_NE_ZERO
 static inline int

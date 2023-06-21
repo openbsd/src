@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.22 2023/05/10 12:21:55 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.23 2023/06/21 07:41:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -258,8 +258,6 @@ void bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a);
 
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
     const BN_ULONG *np, const BN_ULONG *n0, int num);
-
-int bn_word_clz(BN_ULONG w);
 
 void bn_correct_top(BIGNUM *a);
 int bn_expand(BIGNUM *a, int bits);

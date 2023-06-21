@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.86 2023/04/30 19:15:48 tb Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.87 2023/06/21 07:41:55 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -159,27 +159,6 @@ BN_value_one(void)
 	return &bn_value_one;
 }
 
-#ifndef HAVE_BN_WORD_CLZ
-int
-bn_word_clz(BN_ULONG w)
-{
-	BN_ULONG bits, mask, shift;
-
-	bits = shift = BN_BITS2;
-	mask = 0;
-
-	while ((shift >>= 1) != 0) {
-		bits += (shift & mask) - (shift & ~mask);
-		mask = bn_ct_ne_zero_mask(w >> bits);
-	}
-	bits += 1 & mask;
-
-	bits -= bn_ct_eq_zero(w);
-
-	return BN_BITS2 - bits;
-}
-#endif
-
 int
 BN_num_bits_word(BN_ULONG w)
 {
@@ -187,13 +166,9 @@ BN_num_bits_word(BN_ULONG w)
 }
 
 int
-BN_num_bits(const BIGNUM *a)
+BN_num_bits(const BIGNUM *bn)
 {
-	int i = a->top - 1;
-
-	if (BN_is_zero(a))
-		return 0;
-	return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
+	return bn_bitsize(bn);
 }
 
 void
