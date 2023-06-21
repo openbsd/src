@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_wmemstream.c,v 1.8 2015/09/12 16:23:14 guenther Exp $	*/
+/*	$OpenBSD: open_wmemstream.c,v 1.9 2023/06/21 13:11:49 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -52,10 +52,9 @@ wmemstream_write(void *v, const char *b, int l)
 
 		if (sz < end + 1)
 			sz = end + 1;
-		p = reallocarray(st->string, sz, sizeof(wchar_t));
+		p = recallocarray(st->string, st->size, sz, sizeof(wchar_t));
 		if (!p)
 			return (-1);
-		bzero(p + st->size, (sz - st->size) * sizeof(wchar_t));
 		*st->pbuf = st->string = p;
 		st->size = sz;
 	}
