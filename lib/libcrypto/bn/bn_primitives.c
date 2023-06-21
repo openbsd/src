@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_primitives.c,v 1.1 2023/06/21 07:41:55 jsing Exp $ */
+/* $OpenBSD: bn_primitives.c,v 1.2 2023/06/21 07:48:41 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -21,6 +21,7 @@
 #include "bn_internal.h"
 #include "bn_local.h"
 
+#ifndef HAVE_BN_CLZW
 #ifndef HAVE_BN_WORD_CLZ
 int
 bn_word_clz(BN_ULONG w)
@@ -41,6 +42,7 @@ bn_word_clz(BN_ULONG w)
 	return BN_BITS2 - bits;
 }
 #endif
+#endif
 
 #ifndef HAVE_BN_BITSIZE
 int
@@ -58,6 +60,6 @@ bn_bitsize(const BIGNUM *bn)
 		i++;
 	}
 
-	return (n + 1) * BN_BITS2 - bn_word_clz(x);
+	return (n + 1) * BN_BITS2 - bn_clzw(x);
 }
 #endif

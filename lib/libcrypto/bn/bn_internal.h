@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.13 2023/06/21 07:41:55 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.14 2023/06/21 07:48:41 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -55,6 +55,14 @@ static inline BN_ULONG
 bn_ct_eq_zero_mask(BN_ULONG w)
 {
 	return 0 - bn_ct_eq_zero(w);
+}
+#endif
+
+#ifndef HAVE_BN_CLZW
+static inline int
+bn_clzw(BN_ULONG w)
+{
+	return bn_word_clz(w);
 }
 #endif
 
