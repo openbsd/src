@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.67 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: kroute.c,v 1.68 2023/06/21 09:47:03 sthen Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -45,16 +45,23 @@ struct {
 	u_int32_t		rtseq;
 	pid_t			pid;
 	int			fib_sync;
+	int			fib_serial;
 	u_int8_t		fib_prio;
 	int			fd;
 	struct event		ev;
+	struct event		reload;
 	u_int			rdomain;
+#define KR_RELOAD_IDLE 0
+#define KR_RELOAD_FETCH        1
+#define KR_RELOAD_HOLD 2
+	int                     reload_state;
 } kr_state;
 
 struct kroute_node {
 	RB_ENTRY(kroute_node)	 entry;
 	struct kroute_node	*next;
 	struct kroute		 r;
+	int			 serial;
 };
 
 void	kr_redist_remove(struct kroute_node *, struct kroute_node *);
@@ -90,7 +97,10 @@ void		if_announce(void *);
 int		send_rtmsg(int, int, struct kroute *);
 int		dispatch_rtmsg(void);
 int		fetchtable(void);
-int		rtmsg_process(char *, size_t); 
+int		refetchtable(void);
+int		rtmsg_process(char *, size_t);
+void		kr_fib_reload_timer(int, short, void *);
+void		kr_fib_reload_arm_timer(int);
 
 RB_HEAD(kroute_tree, kroute_node)	krt;
 RB_PROTOTYPE(kroute_tree, kroute_node, entry, kroute_compare)
@@ -164,6 +174,9 @@ kr_init(int fs, u_int rdomain, int redis_label_or_prefix, u_int8_t fib_prio)
 	event_set(&kr_state.ev, kr_state.fd, EV_READ | EV_PERSIST,
 	    kr_dispatch_msg, NULL);
 	event_add(&kr_state.ev, NULL);
+
+	kr_state.reload_state = KR_RELOAD_IDLE;
+	evtimer_set(&kr_state.reload, kr_fib_reload_timer, NULL);
 
 	return (0);
 }
@@ -371,6 +384,64 @@ kr_fib_decouple(void)
 	kr_state.fib_sync = 0;
 
 	log_info("kernel routing table decoupled");
+}
+
+void
+kr_fib_reload_timer(int fd, short event, void *bula)
+{
+	if (kr_state.reload_state == KR_RELOAD_FETCH) {
+		kr_fib_reload();
+		kr_state.reload_state = KR_RELOAD_HOLD;
+		kr_fib_reload_arm_timer(KR_RELOAD_HOLD_TIMER);
+	} else {
+		kr_state.reload_state = KR_RELOAD_IDLE;
+	}
+}
+
+void
+kr_fib_reload_arm_timer(int delay)
+{
+	struct timeval		tv;
+
+	timerclear(&tv);
+	tv.tv_sec = delay / 1000;
+	tv.tv_usec = (delay % 1000) * 1000;
+
+	if (evtimer_add(&kr_state.reload, &tv) == -1)
+		fatal("add_reload_timer");
+}
+
+void
+kr_fib_reload(void)
+{
+	struct kroute_node	*krn, *kr, *kn;
+
+	log_info("reloading interface list and routing table");
+
+	kr_state.fib_serial++;
+
+	if (fetchifs(0) != 0 || fetchtable() != 0)
+		return;
+
+	for (kr = RB_MIN(kroute_tree, &krt); kr != NULL; kr = krn) {
+		krn = RB_NEXT(kroute_tree, &krt, kr);
+
+		do {
+			kn = kr->next;
+
+			if (kr->serial != kr_state.fib_serial) {
+
+				if (kr->r.priority == kr_state.fib_prio) {
+					kr->serial = kr_state.fib_serial;
+					if (send_rtmsg(kr_state.fd,
+					    RTM_ADD, &kr->r) != 0)
+						break;
+				} else
+					kroute_remove(kr);
+			}
+
+		} while ((kr = kn) != NULL);
+	}
 }
 
 void
@@ -663,6 +734,8 @@ int
 kroute_insert(struct kroute_node *kr)
 {
 	struct kroute_node	*krm, *krh;
+
+	kr->serial = kr_state.fib_serial;
 
 	if ((krh = RB_INSERT(kroute_tree, &krt, kr)) != NULL) {
 		/*
@@ -1279,7 +1352,7 @@ rtmsg_process(char *buf, size_t len)
 	int			 flags, mpath;
 	unsigned int		 scope;
 	u_short			 ifindex = 0;
-	int			 rv;
+	int			 rv, delay;
 	size_t			 offset;
 	char			*next;
 
@@ -1395,13 +1468,10 @@ rtmsg_process(char *buf, size_t len)
 
 			if ((okr = kroute_find(&prefix, prefixlen, prio))
 			    != NULL) {
-				/* just add new multipath routes */
-				if (mpath && rtm->rtm_type == RTM_ADD)
-					goto add;
-				/* get the correct route */
 				kr = okr;
-				if (mpath && (kr = kroute_matchgw(okr,
-				    &nexthop, scope)) == NULL) {
+				if ((mpath || prio == kr_state.fib_prio) &&
+				    (kr = kroute_matchgw(okr, &nexthop, scope)) ==
+				    NULL) {
 					log_warnx("rtmsg_process: mpath route"
 					    " not found");
 					/* add routes we missed out earlier */
@@ -1432,7 +1502,8 @@ rtmsg_process(char *buf, size_t len)
 					kr->r.flags |= F_DOWN;
 
 				/* just readd, the RDE will care */
-				kr_redistribute(okr);
+				kr->serial = kr_state.fib_serial;
+				kr_redistribute(kr);
 			} else {
 add:
 				if ((kr = calloc(1,
@@ -1517,6 +1588,23 @@ add:
 			break;
 		case RTM_IFANNOUNCE:
 			if_announce(next);
+			break;
+		case RTM_DESYNC:
+			/*
+			 * We lost some routing packets. Schedule a reload
+			 * of the kernel route/interface information.
+			 */
+			if (kr_state.reload_state == KR_RELOAD_IDLE) {
+				delay = KR_RELOAD_TIMER;
+				log_info("desync; scheduling fib reload");
+			} else {
+				delay = KR_RELOAD_HOLD_TIMER;
+				log_debug("desync during KR_RELOAD_%s",
+				    kr_state.reload_state ==
+				    KR_RELOAD_FETCH ? "FETCH" : "HOLD");
+			}
+			kr_state.reload_state = KR_RELOAD_FETCH;
+			kr_fib_reload_arm_timer(delay);
 			break;
 		default:
 			/* ignore for now */

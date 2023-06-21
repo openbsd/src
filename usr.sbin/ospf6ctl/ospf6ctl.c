@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6ctl.c,v 1.53 2022/12/27 12:11:39 claudio Exp $ */
+/*	$OpenBSD: ospf6ctl.c,v 1.54 2023/06/21 09:47:03 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -225,6 +225,11 @@ main(int argc, char *argv[])
 		printf("decouple request sent.\n");
 		done = 1;
 		break;
+	case FIB_RELOAD:
+		imsg_compose(ibuf, IMSG_CTL_FIB_RELOAD, 0, 0, -1, NULL, 0);
+		printf("reload request sent.\n");
+		done = 1;
+		break;
 	case LOG_VERBOSE:
 		verbose = 1;
 		/* FALLTHROUGH */
@@ -304,6 +309,7 @@ main(int argc, char *argv[])
 			case FIB:
 			case FIB_COUPLE:
 			case FIB_DECOUPLE:
+			case FIB_RELOAD:
 			case LOG_VERBOSE:
 			case LOG_BRIEF:
 			case RELOAD:

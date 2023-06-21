@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6.h,v 1.21 2013/03/25 14:29:35 markus Exp $ */
+/*	$OpenBSD: ospf6.h,v 1.22 2023/06/21 09:47:03 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2007 Esben Norby <norby@openbsd.org>
@@ -68,6 +68,10 @@
 #define DEFAULT_SPF_HOLDTIME	5
 #define MIN_SPF_HOLDTIME	1
 #define MAX_SPF_HOLDTIME	5
+
+/* msec */
+#define KR_RELOAD_TIMER		250
+#define KR_RELOAD_HOLD_TIMER	5000
 
 #define MIN_MD_ID		0
 #define MAX_MD_ID		255

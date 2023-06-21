@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.h,v 1.50 2021/01/19 09:46:51 claudio Exp $ */
+/*	$OpenBSD: ospf6d.h,v 1.51 2023/06/21 09:47:03 sthen Exp $ */
 
 /*
  * Copyright (c) 2004, 2007 Esben Norby <norby@openbsd.org>
@@ -93,6 +93,7 @@ enum imsg_type {
 	IMSG_CTL_SHOW_SUM_AREA,
 	IMSG_CTL_FIB_COUPLE,
 	IMSG_CTL_FIB_DECOUPLE,
+	IMSG_CTL_FIB_RELOAD,
 	IMSG_CTL_AREA,
 	IMSG_CTL_IFACE,
 	IMSG_CTL_KROUTE,
@@ -546,6 +547,7 @@ int		 kr_delete(struct kroute *);
 void		 kr_shutdown(void);
 void		 kr_fib_couple(void);
 void		 kr_fib_decouple(void);
+void		 kr_fib_reload(void);
 void		 kr_fib_update_prio(u_int8_t);
 void		 kr_dispatch_msg(int, short, void *);
 void		 kr_show_route(struct imsg *);

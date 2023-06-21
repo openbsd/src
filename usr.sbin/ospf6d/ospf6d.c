@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospf6d.c,v 1.53 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: ospf6d.c,v 1.54 2023/06/21 09:47:03 sthen Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -371,6 +371,9 @@ main_dispatch_ospfe(int fd, short event, void *bula)
 			break;
 		case IMSG_CTL_FIB_DECOUPLE:
 			kr_fib_decouple();
+			break;
+		case IMSG_CTL_FIB_RELOAD:
+			kr_fib_reload();
 			break;
 		case IMSG_CTL_KROUTE:
 		case IMSG_CTL_KROUTE_ADDR:
