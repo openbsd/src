@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.286 2023/06/07 12:56:22 aoyama Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.287 2023/06/22 11:04:16 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -255,7 +255,11 @@ void malloc_dump(void);
 PROTO_NORMAL(malloc_dump);
 static void malloc_exit(void);
 #endif
-#define CALLER	(DO_STATS ? __builtin_return_address(0) : NULL)
+#define CALLER	( \
+	DO_STATS == 0 ? NULL : (__builtin_extract_return_addr( \
+	DO_STATS == 1 ? __builtin_return_address(0) : \
+	DO_STATS == 2 ? __builtin_return_address(1) : \
+	DO_STATS == 3 ? __builtin_return_address(2) : NULL)))
 
 /* low bits of r->p determine size: 0 means >= page size and r->size holding
  * real size, otherwise low bits is the bucket + 1
@@ -365,7 +369,14 @@ omalloc_parseopt(char opt)
 		mopts.malloc_stats = 0;
 		break;
 	case 'D':
+	case '1':
 		mopts.malloc_stats = 1;
+		break;
+	case '2':
+		mopts.malloc_stats = 2;
+		break;
+	case '3':
+		mopts.malloc_stats = 3;
 		break;
 #endif /* MALLOC_STATS */
 	case 'f':
