@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.12 2019/12/19 16:47:14 remi Exp $ */
+/*	$OpenBSD: auth.c,v 1.13 2023/06/22 10:38:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <limits.h>
 #include <md5.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -236,14 +237,14 @@ auth_add_trailer(struct ibuf *buf, struct iface *iface)
 	MD5_CTX			 hash;
 	u_int8_t		 digest[MD5_DIGEST_LENGTH];
 	struct auth_md		*md;
-	struct md5_auth		*a;
-	int			 pos;
+	size_t			 pos;
 
-	pos = sizeof(struct rip_hdr) + sizeof(struct rip_auth);
+	pos = sizeof(struct rip_hdr) + sizeof(struct rip_auth) +
+	    offsetof(struct md5_auth, auth_offset);
 
 	/* add offset to header */
-	a = ibuf_seek(buf, pos, sizeof(*a));
-	a->auth_offset = htons(buf->wpos);
+	if (ibuf_set_n16(buf, pos, ibuf_size(buf)) == -1)
+		return (-1);
 
 	/* insert plaintext key */
 	if ((md = md_list_find(&iface->auth_md_list,
@@ -259,7 +260,7 @@ auth_add_trailer(struct ibuf *buf, struct iface *iface)
 
 	/* calculate MD5 digest */
 	MD5Init(&hash);
-	MD5Update(&hash, buf->buf, buf->wpos);
+	MD5Update(&hash, ibuf_data(buf), ibuf_size(buf));
 	MD5Update(&hash, digest, MD5_DIGEST_LENGTH);
 	MD5Final(digest, &hash);
 
