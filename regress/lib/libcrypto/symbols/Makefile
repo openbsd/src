@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.3 2022/09/21 15:24:45 tb Exp $
+#	$OpenBSD: Makefile,v 1.4 2023/06/22 19:23:27 tb Exp $
 
 TESTS = \
 	symbols
-
-PROG = ${TESTS}
 
 REGRESS_TARGETS= all_tests
 
@@ -29,10 +27,10 @@ CFLAGS+=	-Wno-deprecated-declarations
 CLEANFILES+= include_headers.c symbols.c symbols.c.tmp
 
 symbols.c: symbols.awk ../../../../lib/libcrypto/Symbols.list
-	make -f ${.CURDIR}/Makefile include_headers.c
+	make -f ${.CURDIR}/Makefile include_headers.c; \
 	awk -f ${.CURDIR}/symbols.awk \
-		< ${BSDSRCDIR}/lib/libcrypto/Symbols.list > symbols.c.tmp
-	mv symbols.c.tmp symbols.c
+		< ${BSDSRCDIR}/lib/libcrypto/Symbols.list > $@.tmp; \
+	mv -f $@.tmp $@
 
 all_tests: ${TESTS}
 	@for test in $>; do \
