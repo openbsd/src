@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtp_session.c,v 1.434 2023/05/31 16:51:46 op Exp $	*/
+/*	$OpenBSD: smtp_session.c,v 1.435 2023/06/23 18:32:28 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -212,6 +212,7 @@ static int  smtp_check_starttls(struct smtp_session *, const char *);
 static int  smtp_check_mail_from(struct smtp_session *, const char *);
 static int  smtp_check_rcpt_to(struct smtp_session *, const char *);
 static int  smtp_check_data(struct smtp_session *, const char *);
+static int  smtp_check_noop(struct smtp_session *, const char *);
 static int  smtp_check_noparam(struct smtp_session *, const char *);
 
 static void smtp_filter_phase(enum filter_phase, struct smtp_session *, const char *);
@@ -276,7 +277,7 @@ static struct {
 	{ CMD_DATA,             FILTER_DATA,            "DATA",         smtp_check_data,        smtp_proceed_data },
 	{ CMD_RSET,             FILTER_RSET,            "RSET",         smtp_check_rset,        smtp_proceed_rset },
 	{ CMD_QUIT,             FILTER_QUIT,            "QUIT",         smtp_check_noparam,     smtp_proceed_quit },
-	{ CMD_NOOP,             FILTER_NOOP,            "NOOP",         smtp_check_noparam,     smtp_proceed_noop },
+	{ CMD_NOOP,             FILTER_NOOP,            "NOOP",         smtp_check_noop,        smtp_proceed_noop },
 	{ CMD_HELP,             FILTER_HELP,            "HELP",         smtp_check_noparam,     smtp_proceed_help },
 	{ CMD_WIZ,              FILTER_WIZ,             "WIZ",          smtp_check_noparam,     smtp_proceed_wiz },
 	{ CMD_COMMIT,  		FILTER_COMMIT,		".",		smtp_check_noparam,	smtp_proceed_commit },
@@ -1343,8 +1344,8 @@ smtp_command(struct smtp_session *s, char *line)
 		break;
 
 	case CMD_NOOP:
-		if (!smtp_check_noparam(s, args))
-			break;		
+		if (!smtp_check_noop(s, args))
+			break;
 		smtp_filter_phase(FILTER_NOOP, s, NULL);
 		break;
 
@@ -1627,6 +1628,12 @@ smtp_check_data(struct smtp_session *s, const char *args)
 		return 0;
 	}
 
+	return 1;
+}
+
+static int
+smtp_check_noop(struct smtp_session *s, const char *args)
+{
 	return 1;
 }
 
