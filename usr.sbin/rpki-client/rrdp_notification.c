@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp_notification.c,v 1.17 2023/01/04 14:22:43 claudio Exp $ */
+/*	$OpenBSD: rrdp_notification.c,v 1.18 2023/06/23 11:36:24 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -60,6 +60,7 @@ struct notification_xml {
 	char			 snapshot_hash[SHA256_DIGEST_LENGTH];
 	struct delta_q		 delta_q;
 	long long		 serial;
+	long long		 min_serial;
 	int			 version;
 	enum notification_scope	 scope;
 };
@@ -101,11 +102,56 @@ add_delta(struct notification_xml *nxml, const char *uri,
 	return 1;
 }
 
+/* check that there are no holes in the list */
+static int
+check_delta(struct notification_xml *nxml)
+{
+	struct delta_item *d;
+	long long serial = 0;
+
+	TAILQ_FOREACH(d, &nxml->delta_q, q) {
+		if (serial != 0 && serial + 1 != d->serial)
+			return 0;
+		serial = d->serial;
+	}
+	return 1;
+}
+
 static void
 free_delta(struct delta_item *d)
 {
 	free(d->uri);
 	free(d);
+}
+
+/*
+ * Parse a delta serial and hash line at idx from the rrdp session state.
+ * Return the serial or 0 on error. If hash is non-NULL, it is set to the
+ * start of the hash string on success.
+ */
+static long long
+delta_parse(struct rrdp_session *s, size_t idx, char **hash)
+{
+	long long serial;
+	char *line, *ep;
+
+	if (hash != NULL)
+		*hash = NULL;
+	if (idx < 0 || idx >= sizeof(s->deltas) / sizeof(s->deltas[0]))
+		return 0;
+	if ((line = s->deltas[idx]) == NULL)
+		return 0;
+
+	errno = 0;
+	serial = strtoll(line, &ep, 10);
+	if (line[0] == '\0' || *ep != ' ')
+		return 0;
+	if (serial <= 0 || (errno == ERANGE && serial == LLONG_MAX))
+		return 0;
+
+	if (hash != NULL)
+		*hash = ep + 1;
+	return serial;
 }
 
 static void
@@ -149,6 +195,10 @@ start_notification_elem(struct notification_xml *nxml, const char **attr)
 		PARSE_FAIL(p, "parse failed - incomplete "
 		    "notification attributes");
 
+	/* Limit deltas to the ones which matter for us. */
+	if (nxml->min_serial == 0 && nxml->serial > MAX_RRDP_DELTAS)
+		nxml->min_serial = nxml->serial - MAX_RRDP_DELTAS;
+
 	nxml->scope = NOTIFICATION_SCOPE_NOTIFICATION;
 }
 
@@ -161,6 +211,9 @@ end_notification_elem(struct notification_xml *nxml)
 		PARSE_FAIL(p, "parse failed - exited notification "
 		    "elem unexpectedely");
 	nxml->scope = NOTIFICATION_SCOPE_END;
+
+	if (!check_delta(nxml))
+		PARSE_FAIL(p, "parse failed - delta list has holes");
 }
 
 static void
@@ -247,11 +300,12 @@ start_delta_elem(struct notification_xml *nxml, const char **attr)
 	if (hasUri != 1 || hasHash != 1 || delta_serial == 0)
 		PARSE_FAIL(p, "parse failed - incomplete delta attributes");
 
+	/* Delta serial must be smaller or equal to the notification serial */
+	if (nxml->serial < delta_serial)
+		PARSE_FAIL(p, "parse failed - bad delta serial");
+
 	/* optimisation, add only deltas that could be interesting */
-	if (nxml->repository->serial != 0 &&
-	    nxml->repository->serial < delta_serial &&
-	    nxml->repository->session_id != NULL &&
-	    strcmp(nxml->session_id, nxml->repository->session_id) == 0) {
+	if (nxml->min_serial < delta_serial) {
 		if (add_delta(nxml, delta_uri, delta_hash, delta_serial) == 0)
 			PARSE_FAIL(p, "parse failed - adding delta failed");
 	}
@@ -333,6 +387,7 @@ new_notification_xml(XML_Parser p, struct rrdp_session *repository,
 	nxml->repository = repository;
 	nxml->current = current;
 	nxml->notifyuri = notifyuri;
+	nxml->min_serial = delta_parse(repository, 0, NULL);
 
 	XML_SetElementHandler(nxml->parser, notification_xml_elem_start,
 	    notification_xml_elem_end);
@@ -343,6 +398,16 @@ new_notification_xml(XML_Parser p, struct rrdp_session *repository,
 	return nxml;
 }
 
+static void
+free_delta_queue(struct notification_xml *nxml)
+{
+	while (!TAILQ_EMPTY(&nxml->delta_q)) {
+		struct delta_item *d = TAILQ_FIRST(&nxml->delta_q);
+		TAILQ_REMOVE(&nxml->delta_q, d, q);
+		free_delta(d);
+	}
+}
+
 void
 free_notification_xml(struct notification_xml *nxml)
 {
@@ -351,12 +416,86 @@ free_notification_xml(struct notification_xml *nxml)
 
 	free(nxml->session_id);
 	free(nxml->snapshot_uri);
-	while (!TAILQ_EMPTY(&nxml->delta_q)) {
-		struct delta_item *d = TAILQ_FIRST(&nxml->delta_q);
-		TAILQ_REMOVE(&nxml->delta_q, d, q);
-		free_delta(d);
-	}
+	free_delta_queue(nxml);
 	free(nxml);
+}
+
+/*
+ * Collect a list of deltas to store in the repository state.
+ */
+static void
+notification_collect_deltas(struct notification_xml *nxml)
+{
+	struct delta_item *d;
+	long long keep_serial = 0;
+	size_t cur_idx = 0, max_deltas;
+	char *hash;
+
+	max_deltas =
+	    sizeof(nxml->current->deltas) / sizeof(nxml->current->deltas[0]);
+
+	if (nxml->serial > (long long)max_deltas)
+		keep_serial = nxml->serial - max_deltas + 1;
+
+	TAILQ_FOREACH(d, &nxml->delta_q, q) {
+		if (d->serial >= keep_serial) {
+			assert(cur_idx < max_deltas);
+			hash = hex_encode(d->hash, sizeof(d->hash));
+			if (asprintf(&nxml->current->deltas[cur_idx++],
+			    "%lld %s", d->serial, hash) == -1)
+				err(1, NULL);
+			free(hash);
+		}
+	}
+}
+
+/*
+ * Validate the delta list with the information from the repository state.
+ * Remove all obsolete deltas so that the list starts with the delta with
+ * serial nxml->repository->serial + 1.
+ * Returns 1 if all deltas were valid and 0 on failure.
+ */
+static int
+notification_check_deltas(struct notification_xml *nxml)
+{
+	struct delta_item *d, *nextd;
+	char *hash, *exp_hash;
+	long long exp_serial, new_serial;
+	size_t exp_idx = 0;
+
+	exp_serial = delta_parse(nxml->repository, exp_idx++, &exp_hash);
+	new_serial = nxml->repository->serial + 1;
+
+	/* compare hash of delta against repository state info */
+	TAILQ_FOREACH_SAFE(d, &nxml->delta_q, q, nextd) {
+		while (exp_serial != 0  && exp_serial < d->serial) {
+			exp_serial = delta_parse(nxml->repository,
+			    exp_idx++, &exp_hash);
+		}
+
+		if (d->serial == exp_serial) {
+			hash = hex_encode(d->hash, sizeof(d->hash));
+			if (strcmp(hash, exp_hash) != 0) {
+				warnx("%s: %s#%lld unexpected delta "
+				    "mutation (expected %s, got %s)",
+				    nxml->notifyuri, nxml->session_id,
+				    exp_serial, hash, exp_hash);
+				free(hash);
+				return 0;
+			}
+			free(hash);
+			exp_serial = delta_parse(nxml->repository,
+			    exp_idx++, &exp_hash);
+		}
+
+		/* is this delta needed? */
+		if (d->serial < new_serial) {
+			TAILQ_REMOVE(&nxml->delta_q, d, q);
+			free_delta(d);
+		}
+	}
+
+	return 1;
 }
 
 /*
@@ -369,11 +508,9 @@ free_notification_xml(struct notification_xml *nxml)
 enum rrdp_task
 notification_done(struct notification_xml *nxml, char *last_mod)
 {
-	struct delta_item *d;
-	long long s, last_s = 0;
-
 	nxml->current->last_mod = last_mod;
 	nxml->current->session_id = xstrdup(nxml->session_id);
+	notification_collect_deltas(nxml);
 
 	/* check the that the session_id was valid and still the same */
 	if (nxml->repository->session_id == NULL ||
@@ -382,6 +519,10 @@ notification_done(struct notification_xml *nxml, char *last_mod)
 
 	/* if repository serial is 0 fall back to snapshot */
 	if (nxml->repository->serial == 0)
+		goto snapshot;
+
+	/* check that all needed deltas are available and valid */
+	if (!notification_check_deltas(nxml))
 		goto snapshot;
 
 	if (nxml->repository->serial > nxml->serial)
@@ -399,14 +540,12 @@ notification_done(struct notification_xml *nxml, char *last_mod)
 	if (nxml->serial - nxml->repository->serial > MAX_RRDP_DELTAS)
 		goto snapshot;
 
-	/* check that all needed deltas are available */
-	s = nxml->repository->serial + 1;
-	TAILQ_FOREACH(d, &nxml->delta_q, q) {
-		if (d->serial != s++)
-			goto snapshot;
-		last_s = d->serial;
-	}
-	if (last_s != nxml->serial)
+	/* no deltas queued */
+	if (TAILQ_EMPTY(&nxml->delta_q))
+		goto snapshot;
+
+	/* first possible delta is no match */
+	if (nxml->repository->serial + 1 != TAILQ_FIRST(&nxml->delta_q)->serial)
 		goto snapshot;
 
 	/* update via delta possible */
@@ -416,6 +555,7 @@ notification_done(struct notification_xml *nxml, char *last_mod)
 
 snapshot:
 	/* update via snapshot download */
+	free_delta_queue(nxml);
 	nxml->current->serial = nxml->serial;
 	return SNAPSHOT;
 }

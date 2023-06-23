@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.184 2023/06/07 10:46:34 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.185 2023/06/23 11:36:24 claudio Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -486,6 +486,9 @@ enum rrdp_msg {
 	RRDP_ABORT,
 };
 
+/* Maximum number of delta files per RRDP notification file. */
+#define MAX_RRDP_DELTAS		300
+
 /*
  * RRDP session state, needed to pickup at the right spot on next run.
  */
@@ -493,6 +496,7 @@ struct rrdp_session {
 	char			*last_mod;
 	char			*session_id;
 	long long		 serial;
+	char			*deltas[MAX_RRDP_DELTAS];
 };
 
 /*
@@ -759,7 +763,11 @@ void		 proc_rrdp(int) __attribute__((noreturn));
 /* Repository handling */
 int		 filepath_add(struct filepath_tree *, char *, time_t);
 void		 rrdp_clear(unsigned int);
-void		 rrdp_save_state(unsigned int, struct rrdp_session *);
+void		 rrdp_session_save(unsigned int, struct rrdp_session *);
+void		 rrdp_session_free(struct rrdp_session *);
+void		 rrdp_session_buffer(struct ibuf *,
+		    const struct rrdp_session *);
+struct rrdp_session	*rrdp_session_read(struct ibuf *);
 int		 rrdp_handle_file(unsigned int, enum publish_type, char *,
 		    char *, size_t, char *, size_t);
 char		*repo_basedir(const struct repo *, int);
@@ -943,9 +951,6 @@ int	mkpathat(int, const char *);
 
 /* Maximum number of delegated hosting locations (repositories) for each TAL. */
 #define MAX_REPO_PER_TAL	1000
-
-/* Maximum number of delta files per RRDP notification file. */
-#define MAX_RRDP_DELTAS		300
 
 /*
  * Time - Evaluation time is used as the current time if it is

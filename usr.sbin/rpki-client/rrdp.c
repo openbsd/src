@@ -1,4 +1,4 @@
-/*	$OpenBSD: rrdp.c,v 1.31 2023/06/20 15:15:14 claudio Exp $ */
+/*	$OpenBSD: rrdp.c,v 1.32 2023/06/23 11:36:24 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -65,8 +65,8 @@ struct rrdp {
 	char			 hash[SHA256_DIGEST_LENGTH];
 	SHA256_CTX		 ctx;
 
-	struct rrdp_session	 repository;
-	struct rrdp_session	 current;
+	struct rrdp_session	*repository;
+	struct rrdp_session	*current;
 	XML_Parser		 parser;
 	struct notification_xml	*nxml;
 	struct snapshot_xml	*sxml;
@@ -135,9 +135,7 @@ rrdp_state_send(struct rrdp *s)
 	b = io_new_buffer();
 	io_simple_buffer(b, &type, sizeof(type));
 	io_simple_buffer(b, &s->id, sizeof(s->id));
-	io_str_buffer(b, s->current.session_id);
-	io_simple_buffer(b, &s->current.serial, sizeof(s->current.serial));
-	io_str_buffer(b, s->current.last_mod);
+	rrdp_session_buffer(b, s->current);
 	io_close_buffer(&msgq, b);
 }
 
@@ -182,8 +180,7 @@ rrdp_publish_file(struct rrdp *s, struct publish_xml *pxml,
 }
 
 static void
-rrdp_new(unsigned int id, char *local, char *notify, char *session_id,
-    long long serial, char *last_mod)
+rrdp_new(unsigned int id, char *local, char *notify, struct rrdp_session *state)
 {
 	struct rrdp *s;
 
@@ -194,15 +191,15 @@ rrdp_new(unsigned int id, char *local, char *notify, char *session_id,
 	s->id = id;
 	s->local = local;
 	s->notifyuri = notify;
-	s->repository.session_id = session_id;
-	s->repository.serial = serial;
-	s->repository.last_mod = last_mod;
+	s->repository = state;
+	if ((s->current = calloc(1, sizeof(*s->current))) == NULL)
+		err(1, NULL);
 
 	s->state = RRDP_STATE_REQ;
 	if ((s->parser = XML_ParserCreate("US-ASCII")) == NULL)
 		err(1, "XML_ParserCreate");
 
-	s->nxml = new_notification_xml(s->parser, &s->repository, &s->current,
+	s->nxml = new_notification_xml(s->parser, s->repository, s->current,
 	    notify);
 
 	TAILQ_INSERT_TAIL(&states, s, entry);
@@ -227,10 +224,8 @@ rrdp_free(struct rrdp *s)
 	free(s->notifyuri);
 	free(s->local);
 	free(s->last_mod);
-	free(s->repository.last_mod);
-	free(s->repository.session_id);
-	free(s->current.last_mod);
-	free(s->current.session_id);
+	rrdp_session_free(s->repository);
+	rrdp_session_free(s->current);
 
 	free(s);
 }
@@ -259,7 +254,7 @@ rrdp_failed(struct rrdp *s)
 		free_delta_xml(s->dxml);
 		s->dxml = NULL;
 		rrdp_clear_repo(s);
-		s->sxml = new_snapshot_xml(s->parser, &s->current, s);
+		s->sxml = new_snapshot_xml(s->parser, s->current, s);
 		s->task = SNAPSHOT;
 		s->state = RRDP_STATE_REQ;
 		logx("%s: delta sync failed, fallback to snapshot", s->local);
@@ -322,26 +317,26 @@ rrdp_finished(struct rrdp *s)
 			switch (s->task) {
 			case NOTIFICATION:
 				logx("%s: repository not modified (%s#%lld)",
-				    s->local, s->repository.session_id,
-				    s->repository.serial);
+				    s->local, s->repository->session_id,
+				    s->repository->serial);
 				rrdp_state_send(s);
 				rrdp_free(s);
 				rrdp_done(id, 1);
 				break;
 			case SNAPSHOT:
 				logx("%s: downloading snapshot (%s#%lld)",
-				    s->local, s->current.session_id,
-				    s->current.serial);
+				    s->local, s->current->session_id,
+				    s->current->serial);
 				rrdp_clear_repo(s);
-				s->sxml = new_snapshot_xml(p, &s->current, s);
+				s->sxml = new_snapshot_xml(p, s->current, s);
 				s->state = RRDP_STATE_REQ;
 				break;
 			case DELTA:
 				logx("%s: downloading %lld deltas (%s#%lld)",
 				    s->local,
-				    s->repository.serial - s->current.serial,
-				    s->current.session_id, s->current.serial);
-				s->dxml = new_delta_xml(p, &s->current, s);
+				    s->repository->serial - s->current->serial,
+				    s->current->session_id, s->current->serial);
+				s->dxml = new_delta_xml(p, s->current, s);
 				s->state = RRDP_STATE_REQ;
 				break;
 			}
@@ -360,14 +355,14 @@ rrdp_finished(struct rrdp *s)
 			} else {
 				/* reset delta parser for next delta */
 				free_delta_xml(s->dxml);
-				s->dxml = new_delta_xml(p, &s->current, s);
+				s->dxml = new_delta_xml(p, s->current, s);
 				s->state = RRDP_STATE_REQ;
 			}
 			break;
 		}
 	} else if (s->res == HTTP_NOT_MOD && s->task == NOTIFICATION) {
 		logx("%s: notification file not modified (%s#%lld)", s->local,
-		    s->repository.session_id, s->repository.serial);
+		    s->repository->session_id, s->repository->serial);
 		/* no need to update state file */
 		rrdp_free(s);
 		rrdp_done(id, 1);
@@ -408,12 +403,12 @@ static void
 rrdp_input_handler(int fd)
 {
 	static struct ibuf *inbuf;
-	char *local, *notify, *session_id, *last_mod;
+	struct rrdp_session *state;
+	char *local, *notify, *last_mod;
 	struct ibuf *b;
 	struct rrdp *s;
 	enum rrdp_msg type;
 	enum http_result res;
-	long long serial;
 	unsigned int id;
 	int ok;
 
@@ -426,15 +421,12 @@ rrdp_input_handler(int fd)
 
 	switch (type) {
 	case RRDP_START:
-		io_read_str(b, &local);
-		io_read_str(b, &notify);
-		io_read_str(b, &session_id);
-		io_read_buf(b, &serial, sizeof(serial));
-		io_read_str(b, &last_mod);
 		if (ibuf_fd_avail(b))
 			errx(1, "received unexpected fd");
-
-		rrdp_new(id, local, notify, session_id, serial, last_mod);
+		io_read_str(b, &local);
+		io_read_str(b, &notify);
+		state = rrdp_session_read(b);
+		rrdp_new(id, local, notify, state);
 		break;
 	case RRDP_HTTP_INI:
 		s = rrdp_get(id);
@@ -569,7 +561,7 @@ proc_rrdp(int fd)
 				switch (s->task) {
 				case NOTIFICATION:
 					rrdp_http_req(s->id, s->notifyuri,
-					    s->repository.last_mod);
+					    s->repository->last_mod);
 					break;
 				case SNAPSHOT:
 				case DELTA:

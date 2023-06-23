@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.47 2023/05/30 16:02:28 job Exp $ */
+/*	$OpenBSD: repo.c,v 1.48 2023/06/23 11:36:24 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -619,22 +619,26 @@ repo_alloc(int talid)
  * Parse the RRDP state file if it exists and set the session struct
  * based on that information.
  */
-static void
-rrdp_parse_state(const struct rrdprepo *rr, struct rrdp_session *state)
+static struct rrdp_session *
+rrdp_session_parse(const struct rrdprepo *rr)
 {
 	FILE *f;
-	int fd, ln = 0;
+	struct rrdp_session *state;
+	int fd, ln = 0, deltacnt = 0;
 	const char *errstr;
 	char *line = NULL, *file;
 	size_t len = 0;
 	ssize_t n;
+
+	if ((state = calloc(1, sizeof(*state))) == NULL)
+		err(1, NULL);
 
 	file = rrdp_state_filename(rr, 0);
 	if ((fd = open(file, O_RDONLY)) == -1) {
 		if (errno != ENOENT)
 			warn("%s: open state file", rr->basedir);
 		free(file);
-		return;
+		return state;
 	}
 	free(file);
 	f = fdopen(fd, "r");
@@ -655,39 +659,47 @@ rrdp_parse_state(const struct rrdprepo *rr, struct rrdp_session *state)
 				goto fail;
 			break;
 		case 2:
+			if (strcmp(line, "-") == 0)
+				break;
 			if ((state->last_mod = strdup(line)) == NULL)
 				err(1, NULL);
 			break;
 		default:
-			goto fail;
+			if (deltacnt >= MAX_RRDP_DELTAS)
+				goto fail;
+			if ((state->deltas[deltacnt++] = strdup(line)) == NULL)
+				err(1, NULL);
+			break;
 		}
 		ln++;
 	}
 
-	free(line);
 	if (ferror(f))
 		goto fail;
 	fclose(f);
-	return;
+	free(line);
+	return state;
 
-fail:
+ fail:
 	warnx("%s: troubles reading state file", rr->basedir);
 	fclose(f);
+	free(line);
 	free(state->session_id);
 	free(state->last_mod);
 	memset(state, 0, sizeof(*state));
+	return state;
 }
 
 /*
  * Carefully write the RRDP session state file back.
  */
 void
-rrdp_save_state(unsigned int id, struct rrdp_session *state)
+rrdp_session_save(unsigned int id, struct rrdp_session *state)
 {
 	struct rrdprepo *rr;
 	char *temp, *file;
-	FILE *f;
-	int fd;
+	FILE *f = NULL;
+	int fd, i;
 
 	rr = rrdp_find(id);
 	if (rr == NULL)
@@ -696,10 +708,8 @@ rrdp_save_state(unsigned int id, struct rrdp_session *state)
 	file = rrdp_state_filename(rr, 0);
 	temp = rrdp_state_filename(rr, 1);
 
-	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1) {
-		warn("mkostemp %s", temp);
+	if ((fd = mkostemp(temp, O_CLOEXEC)) == -1)
 		goto fail;
-	}
 	(void)fchmod(fd, 0644);
 	f = fdopen(fd, "w");
 	if (f == NULL)
@@ -707,37 +717,94 @@ rrdp_save_state(unsigned int id, struct rrdp_session *state)
 
 	/* write session state file out */
 	if (fprintf(f, "%s\n%lld\n", state->session_id,
-	    state->serial) < 0) {
-		fclose(f);
-		goto fail;
-	}
-	if (state->last_mod != NULL) {
-		if (fprintf(f, "%s\n", state->last_mod) < 0) {
-			fclose(f);
-			goto fail;
-		}
-	}
-	if (fclose(f) != 0)
+	    state->serial) < 0)
 		goto fail;
 
-	if (rename(temp, file) == -1)
-		warn("%s: rename state file", rr->basedir);
+	if (state->last_mod != NULL) {
+		if (fprintf(f, "%s\n", state->last_mod) < 0)
+			goto fail;
+	} else {
+		if (fprintf(f, "-\n") < 0)
+			goto fail;
+	}
+	for (i = 0; state->deltas[i] != NULL; i++) {
+		if (fprintf(f, "%s\n", state->deltas[i]) < 0)
+			goto fail;
+	}
+	if (fclose(f) != 0) {
+		f = NULL;
+		goto fail;
+	}
+
+	if (rename(temp, file) == -1) {
+		warn("%s: rename %s to %s", rr->basedir, temp, file);
+		unlink(temp);
+	}
 
 	free(temp);
 	free(file);
 	return;
 
-fail:
-	warnx("%s: failed to save state", rr->basedir);
+ fail:
+	warn("%s: save state to %s", rr->basedir, temp);
+	if (f != NULL)
+		fclose(f);
 	unlink(temp);
 	free(temp);
 	free(file);
 }
 
+/*
+ * Free an rrdp_session pointer. Safe to call with NULL.
+ */
+void
+rrdp_session_free(struct rrdp_session *s)
+{
+	size_t i;
+
+	if (s == NULL)
+		return;
+	free(s->session_id);
+	free(s->last_mod);
+	for (i = 0; i < sizeof(s->deltas) / sizeof(s->deltas[0]); i++)
+		free(s->deltas[i]);
+	free(s);
+}
+
+void
+rrdp_session_buffer(struct ibuf *b, const struct rrdp_session *s)
+{
+	size_t i;
+
+	io_str_buffer(b, s->session_id);
+	io_simple_buffer(b, &s->serial, sizeof(s->serial));
+	io_str_buffer(b, s->last_mod);
+	for (i = 0; i < sizeof(s->deltas) / sizeof(s->deltas[0]); i++)
+		io_str_buffer(b, s->deltas[i]);
+}
+
+struct rrdp_session *
+rrdp_session_read(struct ibuf *b)
+{
+	struct rrdp_session *s;
+	size_t i;
+
+	if ((s = calloc(1, sizeof(*s))) == NULL)
+		err(1, NULL);
+
+	io_read_str(b, &s->session_id);
+	io_read_buf(b, &s->serial, sizeof(s->serial));
+	io_read_str(b, &s->last_mod);
+	for (i = 0; i < sizeof(s->deltas) / sizeof(s->deltas[0]); i++)
+		io_read_str(b, &s->deltas[i]);
+
+	return s;
+}
+
 static struct rrdprepo *
 rrdp_get(const char *uri)
 {
-	struct rrdp_session state = { 0 };
+	struct rrdp_session *state;
 	struct rrdprepo *rr;
 
 	SLIST_FOREACH(rr, &rrdprepos, entry)
@@ -767,10 +834,9 @@ rrdp_get(const char *uri)
 	}
 
 	/* parse state and start the sync */
-	rrdp_parse_state(rr, &state);
-	rrdp_fetch(rr->id, rr->notifyuri, rr->notifyuri, &state);
-	free(state.session_id);
-	free(state.last_mod);
+	state = rrdp_session_parse(rr);
+	rrdp_fetch(rr->id, rr->notifyuri, rr->notifyuri, state);
+	rrdp_session_free(state);
 
 	logx("%s: pulling from %s", rr->notifyuri, "network");
 
@@ -1232,7 +1298,7 @@ repo_proto(const struct repo *rp)
 
 	if (rp->ta != NULL) {
 		const struct tarepo *tr = rp->ta;
-		if (tr->uriidx < tr->urisz && 
+		if (tr->uriidx < tr->urisz &&
 		    strncasecmp(tr->uri[tr->uriidx], "rsync://", 8) == 0)
 			return "rsync";
 		else
@@ -1667,14 +1733,14 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 					logx("deleted superfluous %s", path);
 				if (fts_state.rp != NULL)
 					fts_state.rp->repostats.del_extra_files++;
-				else 
+				else
 					stats.repo_stats.del_extra_files++;
 			} else {
 				if (verbose > 1)
 					logx("deleted %s", path);
 				if (fts_state.rp != NULL)
 					fts_state.rp->repostats.del_files++;
-				else 
+				else
 					stats.repo_stats.del_files++;
 			}
 		}
@@ -1728,7 +1794,7 @@ repo_cleanup_entry(FTSENT *e, struct filepath_tree *tree, int cachefd)
 				warn("rmdir %s", path);
 			if (fts_state.rp != NULL)
 				fts_state.rp->repostats.del_dirs++;
-			else 
+			else
 				stats.repo_stats.del_dirs++;
 		}
 		break;
@@ -1795,7 +1861,8 @@ repo_free(void)
 }
 
 /*
- * Remove all files and directories under base but do not remove base itself.
+ * Remove all files and directories under base.
+ * Do not remove base directory itself and the .state file.
  */
 static void
 remove_contents(char *base)
@@ -1812,6 +1879,9 @@ remove_contents(char *base)
 		case FTS_NSOK:
 		case FTS_SL:
 		case FTS_SLNONE:
+			if (e->fts_level == 1 &&
+			    strcmp(e->fts_name, ".state") == 0)
+				break;
 			if (unlink(e->fts_accpath) == -1)
 				warn("unlink %s", e->fts_path);
 			break;
