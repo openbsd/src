@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksmn.c,v 1.7 2022/04/25 16:17:19 claudio Exp $	*/
+/*	$OpenBSD: ksmn.c,v 1.8 2023/06/23 03:47:10 mlarkin Exp $	*/
 
 /*
  * Copyright (c) 2019 Bryan Steele <brynet@openbsd.org>
@@ -105,6 +105,7 @@ static const struct pci_matchid ksmn_devices[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_1X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_3X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_6X_RC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_6X_RC },
 };
 
 int
@@ -171,6 +172,9 @@ ksmn_attach(struct device *parent, struct device *self, void *aux)
 		    (m >= 0x10 && m <= 0x1f) ||
 		    (m >= 0xa0 && m <= 0xaf))
 			sc->sc_ccd_offset = 0x300;
+
+		if (m >= 0x60 && m <= 0x6f)
+			sc->sc_ccd_offset = 0x308;
 
 		if ((m >= 0x10 && m <= 0x1f) ||
 		    (m >= 0xa0 && m <= 0xaf))
