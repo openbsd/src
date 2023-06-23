@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.10 2023/06/23 10:31:27 tb Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.11 2023/06/23 10:33:12 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -291,13 +291,13 @@ BN_asc2bn(BIGNUM **bnp, const char *s)
 		goto decimal;
 	if (v != 'X' && v != 'x')
 		goto decimal;
-	if (!bn_hex2bn_cbs(bnp, &cbs_hex))
+	if (bn_hex2bn_cbs(bnp, &cbs_hex) == 0)
 		return 0;
 
 	goto done;
 
  decimal:
-	if (!bn_dec2bn_cbs(bnp, &cbs))
+	if (bn_dec2bn_cbs(bnp, &cbs) == 0)
 		return 0;
 
  done:
