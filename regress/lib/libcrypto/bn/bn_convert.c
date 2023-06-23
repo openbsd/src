@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_convert.c,v 1.2 2023/05/27 15:50:56 jsing Exp $ */
+/*	$OpenBSD: bn_convert.c,v 1.3 2023/06/23 10:50:47 tb Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -212,6 +212,16 @@ test_bn_asc2bn(void)
 			    bat->neg);
 			goto failure;
 		}
+	}
+
+	/*
+	 * While it makes little sense to call BN_asc2bn() with a NULL bn,
+	 * check for consistent behavior.
+	 */
+	if (!BN_asc2bn(NULL, "1") || !BN_asc2bn(NULL, "-1") ||
+	    !BN_asc2bn(NULL, "0x1") || !BN_asc2bn(NULL, "-0x1")) {
+		fprintf(stderr, "FAIL: BN_asc2bn() with NULL BIGNUM failed\n");
+		goto failure;
 	}
 
 	failed = 0;
