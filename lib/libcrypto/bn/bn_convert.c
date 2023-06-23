@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.9 2023/05/28 10:34:17 jsing Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.10 2023/06/23 10:31:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -281,7 +281,7 @@ BN_asc2bn(BIGNUM **bnp, const char *s)
 			return 0;
 	}
 
-	/* Try parsing as hexidecimal with a 0x prefix. */
+	/* Try parsing as hexadecimal with a 0x prefix. */
 	CBS_dup(&cbs, &cbs_hex);
 	if (!CBS_get_u8(&cbs_hex, &v))
 		goto decimal;
