@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.134 2023/06/22 11:04:16 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.135 2023/06/23 05:26:45 otto Exp $
 .\"
-.Dd $Mdocdate: June 22 2023 $
+.Dd $Mdocdate: June 23 2023 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -294,17 +294,6 @@ To record the dump:
 To view the leak report:
 .Pp
 .Dl $ kdump -u malloc ...
-.Pp
-By default, the immediate caller of a
-.Nm
-function will be recorded.
-Use malloc options
-.Cm 2
-or
-.Cm 3
-to record the caller one or two stack frames deeper instead.
-These malloc options imply
-.Cm D .
 .It Cm F
 .Dq Freecheck .
 Enable more extensive double free and use after free detection.
@@ -824,14 +813,3 @@ and
 .Fn realloc
 to avoid these problems on
 .Ox .
-.Pp
-The mechanism to record caller functions when using malloc options
-.Cm 2
-or
-.Cm 3
-is not guaranteed to work for all platforms, compilers or compilation
-options,
-and might even crash your program.
-Use
-.Em only
-for debugging purposes.
