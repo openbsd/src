@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.109 2023/06/20 12:28:08 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.110 2023/06/23 07:26:21 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -204,6 +204,11 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 		goto out;
 	}
 
+	if (asz == 0) {
+		warnx("%s: RFC 6487 section 4.8.11: empty asIdsOrRanges",
+		    p->fn);
+		goto out;
+	}
 	if (asz >= MAX_AS_SIZE) {
 		warnx("%s: too many AS number entries: limit %d",
 		    p->fn, MAX_AS_SIZE);
@@ -371,6 +376,10 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 			    p->fn, af->ipAddressChoice->type);
 			goto out;
 		}
+		if (ipsz == p->res->ipsz) {
+			warnx("%s: RFC 3779: empty ipAddressesOrRanges", p->fn);
+			goto out;
+		}
 
 		if (ipsz >= MAX_IP_SIZE)
 			goto out;
@@ -410,6 +419,11 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 				goto out;
 			}
 		}
+	}
+
+	if (p->res->ipsz == 0) {
+		warnx("%s: RFC 6487 section 4.8.10: empty ipAddrBlock", p->fn);
+		goto out;
 	}
 
 	rc = 1;
