@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.72 2023/06/20 11:06:47 job Exp $ */
+/*	$OpenBSD: x509.c,v 1.73 2023/06/23 15:32:15 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -146,8 +146,14 @@ x509_get_aki(X509 *x, const char *fn, char **aki)
 
 	*aki = NULL;
 	akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &crit, NULL);
-	if (akid == NULL)
+	if (akid == NULL) {
+		if (crit != -1) {
+			warnx("%s: RFC 6487 section 4.8.3: error parsing AKI",
+			    fn);
+			return 0;
+		}
 		return 1;
+	}
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.3: "
 		    "AKI: extension not non-critical", fn);
@@ -200,8 +206,14 @@ x509_get_ski(X509 *x, const char *fn, char **ski)
 
 	*ski = NULL;
 	os = X509_get_ext_d2i(x, NID_subject_key_identifier, &crit, NULL);
-	if (os == NULL)
+	if (os == NULL) {
+		if (crit != -1) {
+			warnx("%s: RFC 6487 section 4.8.2: error parsing SKI",
+			    fn);
+			return 0;
+		}
 		return 1;
+	}
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.2: "
 		    "SKI: extension not non-critical", fn);
@@ -258,6 +270,20 @@ x509_get_purpose(X509 *x, const char *fn)
 
 	if (X509_check_ca(x) == 1) {
 		bc = X509_get_ext_d2i(x, NID_basic_constraints, &crit, NULL);
+		if (bc == NULL) {
+			if (crit != -1)
+				warnx("%s: RFC 6487 section 4.8.1: "
+				    "error parsing basic constraints", fn);
+			else
+				warnx("%s: RFC 6487 section 4.8.1: "
+				    "missing basic constraints", fn);
+			goto out;
+		}
+		if (crit != 1) {
+			warnx("%s: RFC 6487 section 4.8.1: Basic Constraints "
+			    "must be marked critical", fn);
+			goto out;
+		}
 		if (bc->pathlen != NULL) {
 			warnx("%s: RFC 6487 section 4.8.1: Path Length "
 			    "Constraint must be absent", fn);
@@ -274,7 +300,10 @@ x509_get_purpose(X509 *x, const char *fn)
 
 	eku = X509_get_ext_d2i(x, NID_ext_key_usage, &crit, NULL);
 	if (eku == NULL) {
-		warnx("%s: EKU: extension missing", fn);
+		if (crit != -1)
+			warnx("%s: error parsing EKU", fn);
+		else
+			warnx("%s: EKU: extension missing", fn);
 		goto out;
 	}
 	if (crit != 0) {
@@ -372,18 +401,24 @@ x509_get_aia(X509 *x, const char *fn, char **aia)
 
 	*aia = NULL;
 	info = X509_get_ext_d2i(x, NID_info_access, &crit, NULL);
-	if (info == NULL)
+	if (info == NULL) {
+		if (crit != -1) {
+			warnx("%s: RFC 6487 section 4.8.7: error parsing AIA",
+			    fn);
+			return 0;
+		}
 		return 1;
-
-	if ((X509_get_extension_flags(x) & EXFLAG_SS) != 0) {
-		warnx("%s: RFC 6487 section 4.8.7: AIA must be absent from "
-		    "a self-signed certificate", fn);
-		goto out;
 	}
 
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.7: "
 		    "AIA: extension not non-critical", fn);
+		goto out;
+	}
+
+	if ((X509_get_extension_flags(x) & EXFLAG_SS) != 0) {
+		warnx("%s: RFC 6487 section 4.8.7: AIA must be absent from "
+		    "a self-signed certificate", fn);
 		goto out;
 	}
 
@@ -428,8 +463,13 @@ x509_get_sia(X509 *x, const char *fn, char **sia)
 	*sia = NULL;
 
 	info = X509_get_ext_d2i(x, NID_sinfo_access, &crit, NULL);
-	if (info == NULL)
+	if (info == NULL) {
+		if (crit != -1) {
+			warnx("%s: error parsing SIA", fn);
+			return 0;
+		}
 		return 1;
+	}
 
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.8: "
@@ -546,11 +586,14 @@ x509_inherits(X509 *x)
 	STACK_OF(IPAddressFamily)	*addrblk = NULL;
 	ASIdentifiers			*asidentifiers = NULL;
 	const IPAddressFamily		*af;
-	int				 i, rc = 0;
+	int				 crit, i, rc = 0;
 
-	addrblk = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
-	if (addrblk == NULL)
+	addrblk = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, &crit, NULL);
+	if (addrblk == NULL) {
+		if (crit != -1)
+			warnx("error parsing ipAddrBlock");
 		goto out;
+	}
 
 	/*
 	 * Check by hand, since X509v3_addr_inherits() success only means that
@@ -564,8 +607,11 @@ x509_inherits(X509 *x)
 
 	asidentifiers = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum, NULL,
 	    NULL);
-	if (asidentifiers == NULL)
+	if (asidentifiers == NULL) {
+		if (crit != -1)
+			warnx("error parsing asIdentifiers");
 		goto out;
+	}
 
 	/* We need to have AS numbers and don't want RDIs. */
 	if (asidentifiers->asnum == NULL || asidentifiers->rdi != NULL)
@@ -590,14 +636,18 @@ x509_any_inherits(X509 *x)
 {
 	STACK_OF(IPAddressFamily)	*addrblk = NULL;
 	ASIdentifiers			*asidentifiers = NULL;
-	int				 rc = 0;
+	int				 crit, rc = 0;
 
-	addrblk = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
+	addrblk = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, &crit, NULL);
+	if (addrblk == NULL && crit != -1)
+		warnx("error parsing ipAddrBlock");
 	if (X509v3_addr_inherits(addrblk))
 		rc = 1;
 
-	asidentifiers = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum, NULL,
+	asidentifiers = X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum, &crit,
 	    NULL);
+	if (asidentifiers == NULL && crit != -1)
+		warnx("error parsing asIdentifiers");
 	if (X509v3_asid_inherits(asidentifiers))
 		rc = 1;
 
@@ -624,8 +674,14 @@ x509_get_crl(X509 *x, const char *fn, char **crl)
 
 	*crl = NULL;
 	crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &crit, NULL);
-	if (crldp == NULL)
+	if (crldp == NULL) {
+		if (crit != -1) {
+			warnx("%s: RFC 6487 section 4.8.6: failed to parse "
+			    "CRL distribution points", fn);
+			return 0;
+		}
 		return 1;
+	}
 
 	if (crit != 0) {
 		warnx("%s: RFC 6487 section 4.8.6: "
