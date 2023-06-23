@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex_subst.c,v 1.30 2017/04/18 01:45:35 deraadt Exp $	*/
+/*	$OpenBSD: ex_subst.c,v 1.31 2023/06/23 15:06:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -633,7 +633,9 @@ nextmatch:	match[0].rm_so = offset;
 					goto lquit;
 				}
 			} else {
-				if (ex_print(sp, cmdp, &from, &to, 0) ||
+				const int flags =
+				    O_ISSET(sp, O_NUMBER) ? E_C_HASH : 0;
+				if (ex_print(sp, cmdp, &from, &to, flags) ||
 				    ex_scprint(sp, &from, &to))
 					goto lquit;
 				if (ex_txt(sp, &tiq, 0, TXT_CR))

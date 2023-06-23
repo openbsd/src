@@ -1,4 +1,4 @@
-/*	$OpenBSD: ex.c,v 1.22 2022/02/20 19:45:51 tb Exp $	*/
+/*	$OpenBSD: ex.c,v 1.23 2023/06/23 15:06:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -1454,8 +1454,14 @@ addr_verify:
 		LF_INIT(FL_ISSET(ecp->iflags, E_C_HASH | E_C_LIST | E_C_PRINT));
 		if (!LF_ISSET(E_C_HASH | E_C_LIST | E_C_PRINT | E_NOAUTO) &&
 		    !F_ISSET(sp, SC_EX_GLOBAL) &&
-		    O_ISSET(sp, O_AUTOPRINT) && F_ISSET(ecp, E_AUTOPRINT))
-			LF_INIT(E_C_PRINT);
+		    O_ISSET(sp, O_AUTOPRINT) && F_ISSET(ecp, E_AUTOPRINT)) {
+
+			/* Honor the number option if autoprint is set. */
+			if (F_ISSET(ecp, E_OPTNUM))
+				LF_INIT(E_C_HASH);
+			else
+				LF_INIT(E_C_PRINT);
+		}
 
 		if (LF_ISSET(E_C_HASH | E_C_LIST | E_C_PRINT)) {
 			cur.lno = sp->lno;
