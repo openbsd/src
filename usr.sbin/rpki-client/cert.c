@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.111 2023/06/23 07:40:28 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.112 2023/06/23 20:05:30 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -377,7 +377,8 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 			goto out;
 		}
 		if (ipsz == p->res->ipsz) {
-			warnx("%s: RFC 3779: empty ipAddressesOrRanges", p->fn);
+			warnx("%s: RFC 6487 section 4.8.10: "
+			    "empty ipAddressesOrRanges", p->fn);
 			goto out;
 		}
 
