@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.33 2023/06/24 16:19:52 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.34 2023/06/24 17:06:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -214,7 +214,9 @@ bn_sqr_normal(BN_ULONG *r, int r_len, const BN_ULONG *a, int a_len,
 
 	/* Compute initial product - r[n:1] = a[n:1] * a[0] */
 	n = a_len - 1;
-	rp[n] = bn_mul_words(rp, ap, n, w);
+	if (n > 0) {
+		rp[n] = bn_mul_words(rp, ap, n, w);
+	}
 	rp += 2;
 	n--;
 
