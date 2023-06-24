@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.16 2023/06/24 17:49:44 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.17 2023/06/24 18:21:07 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -145,8 +145,6 @@ struct ec_method_st {
 	int (*mul_double_nonct)(const EC_GROUP *group, EC_POINT *r,
 	    const BIGNUM *g_scalar, const BIGNUM *p_scalar,
 	    const EC_POINT *point, BN_CTX *);
-	int (*precompute_mult)(EC_GROUP *group, BN_CTX *);
-	int (*have_precompute_mult)(const EC_GROUP *group);
 
 	/*
 	 * Internal methods.

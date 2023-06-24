@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.59 2023/06/24 17:49:44 jsing Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.60 2023/06/24 18:21:07 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1390,33 +1390,13 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 int
 EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx_in)
 {
-	BN_CTX *ctx;
-	int ret = 0;
-
-	if (group->meth->precompute_mult == NULL)
-		return 1;
-
-	if ((ctx = ctx_in) == NULL)
-		ctx = BN_CTX_new();
-	if (ctx == NULL)
-		goto err;
-
-	ret = group->meth->precompute_mult(group, ctx);
-
- err:
-	if (ctx != ctx_in)
-		BN_CTX_free(ctx);
-
-	return ret;
+	return 1;
 }
 
 int
 EC_GROUP_have_precompute_mult(const EC_GROUP *group)
 {
-	if (group->meth->have_precompute_mult == NULL)
-		return 0;
-
-	return group->meth->have_precompute_mult(group);
+	return 0;
 }
 
 int
