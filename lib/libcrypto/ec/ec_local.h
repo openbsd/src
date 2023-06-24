@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.15 2023/06/24 17:18:15 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.16 2023/06/24 17:49:44 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -208,8 +208,6 @@ struct ec_group_st {
 	 * Internal methods and members. Handled by the method functions, even
 	 * if they appear to be generic.
 	 */
-
-	EC_EXTRA_DATA *extra_data;
 
 	/*
 	 * Field specification. For GF(p) this is the modulus; for GF(2^m),

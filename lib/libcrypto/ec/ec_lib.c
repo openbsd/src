@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.58 2023/06/20 14:37:15 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.59 2023/06/24 17:49:44 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -93,8 +93,6 @@ EC_GROUP_new(const EC_METHOD *meth)
 	}
 	ret->meth = meth;
 
-	ret->extra_data = NULL;
-
 	ret->generator = NULL;
 	BN_init(&ret->order);
 	BN_init(&ret->cofactor);
@@ -123,8 +121,6 @@ EC_GROUP_free(EC_GROUP *group)
 	if (group->meth->group_finish != NULL)
 		group->meth->group_finish(group);
 
-	EC_EX_DATA_clear_free_all_data(&group->extra_data);
-
 	EC_POINT_free(group->generator);
 	BN_free(&group->order);
 	BN_free(&group->cofactor);
@@ -142,8 +138,6 @@ EC_GROUP_clear_free(EC_GROUP *group)
 int
 EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
-	EC_EXTRA_DATA *d;
-
 	if (dest->meth->group_copy == NULL) {
 		ECerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return 0;
@@ -154,18 +148,6 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 	}
 	if (dest == src)
 		return 1;
-
-	EC_EX_DATA_free_all_data(&dest->extra_data);
-
-	for (d = src->extra_data; d != NULL; d = d->next) {
-		void *t = d->dup_func(d->data);
-
-		if (t == NULL)
-			return 0;
-		if (!EC_EX_DATA_set_data(&dest->extra_data, t, d->dup_func,
-		    d->free_func, d->clear_free_func))
-			return 0;
-	}
 
 	if (src->generator != NULL) {
 		if (dest->generator == NULL) {
