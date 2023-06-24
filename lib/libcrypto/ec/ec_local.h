@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.14 2023/06/12 18:17:18 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.15 2023/06/24 17:18:15 jsing Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -308,9 +308,6 @@ struct ec_point_st {
  * (ec_lib.c uses these as defaults if group->method->mul is 0) */
 int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
-int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *);
-int ec_wNAF_have_precompute_mult(const EC_GROUP *group);
-
 
 /* method functions in ecp_smpl.c */
 int ec_GFp_simple_group_init(EC_GROUP *);
