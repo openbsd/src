@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-rrdp.c,v 1.7 2023/06/20 12:52:32 job Exp $ */
+/*	$OpenBSD: test-rrdp.c,v 1.8 2023/06/24 07:07:36 claudio Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -203,6 +203,7 @@ rrdp_finished(struct rrdp *s)
 
 	switch (s->task) {
 	case NOTIFICATION:
+		notification_done(s->nxml, NULL);
 		log_notification_xml(s->nxml);
 		break;
 	case SNAPSHOT:
