@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.31 2023/06/24 16:01:43 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.32 2023/06/24 16:10:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -274,7 +274,7 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 
 	BN_CTX_start(ctx);
 
-	if (BN_is_zero(a)) {
+	if (a->top < 1) {
 		BN_zero(r);
 		goto done;
 	}
