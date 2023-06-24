@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.112 2023/06/23 20:05:30 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.113 2023/06/24 04:15:14 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -738,9 +738,9 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		obj = X509_EXTENSION_get_object(ext);
 		assert(obj != NULL);
 
-		switch ((nid = OBJ_obj2nid(obj))) {
+		switch (nid = OBJ_obj2nid(obj)) {
 		case NID_sbgp_ipAddrBlock:
-			if (ip++ >= 1)
+			if (ip++ > 0)
 				goto dup;
 			if (!sbgp_ipaddrblk(&p, ext))
 				goto out;
