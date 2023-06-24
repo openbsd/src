@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.276 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.277 2023/06/24 20:54:46 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -121,15 +121,15 @@ struct baddynamicports rootonlyports;
 struct pool inpcb_pool;
 
 void	in_pcbhash_insert(struct inpcb *);
-struct inpcb *in_pcbhash_lookup(struct inpcbtable *, u_int,
+struct inpcb *in_pcbhash_lookup(struct inpcbtable *, uint64_t, u_int,
     const struct in_addr *, u_short, const struct in_addr *, u_short);
 int	in_pcbresize(struct inpcbtable *, int);
 
 #define	INPCBHASH_LOADFACTOR(_x)	(((_x) * 3) / 4)
 
-struct inpcbhead *in_pcbhash(struct inpcbtable *, u_int,
+uint64_t in_pcbhash(struct inpcbtable *, u_int,
     const struct in_addr *, u_short, const struct in_addr *, u_short);
-struct inpcbhead *in_pcblhash(struct inpcbtable *, u_int, u_short);
+uint64_t in_pcblhash(struct inpcbtable *, u_int, u_short);
 
 /*
  * in_pcb is used for inet and inet6.  in6_pcb only contains special
@@ -142,7 +142,7 @@ in_init(void)
 	    IPL_SOFTNET, 0, "inpcb", NULL);
 }
 
-struct inpcbhead *
+uint64_t
 in_pcbhash(struct inpcbtable *table, u_int rdomain,
     const struct in_addr *faddr, u_short fport,
     const struct in_addr *laddr, u_short lport)
@@ -156,11 +156,10 @@ in_pcbhash(struct inpcbtable *table, u_int rdomain,
 	SipHash24_Update(&ctx, &fport, sizeof(fport));
 	SipHash24_Update(&ctx, laddr, sizeof(*laddr));
 	SipHash24_Update(&ctx, &lport, sizeof(lport));
-
-	return (&table->inpt_hashtbl[SipHash24_End(&ctx) & table->inpt_mask]);
+	return SipHash24_End(&ctx);
 }
 
-struct inpcbhead *
+uint64_t
 in_pcblhash(struct inpcbtable *table, u_int rdomain, u_short lport)
 {
 	SIPHASH_CTX ctx;
@@ -169,8 +168,7 @@ in_pcblhash(struct inpcbtable *table, u_int rdomain, u_short lport)
 	SipHash24_Init(&ctx, &table->inpt_lkey);
 	SipHash24_Update(&ctx, &nrdom, sizeof(nrdom));
 	SipHash24_Update(&ctx, &lport, sizeof(lport));
-
-	return (&table->inpt_lhashtbl[SipHash24_End(&ctx) & table->inpt_lmask]);
+	return SipHash24_End(&ctx);
 }
 
 void
@@ -816,11 +814,14 @@ in_pcblookup_local(struct inpcbtable *table, void *laddrp, u_int lport_arg,
 	struct in6_addr *laddr6 = (struct in6_addr *)laddrp;
 #endif
 	struct inpcbhead *head;
+	uint64_t lhash;
 	u_int rdomain;
 
 	rdomain = rtable_l2(rtable);
+	lhash = in_pcblhash(table, rdomain, lport);
+
 	mtx_enter(&table->inpt_mtx);
-	head = in_pcblhash(table, rdomain, lport);
+	head = &table->inpt_lhashtbl[lhash & table->inpt_lmask];
 	LIST_FOREACH(inp, head, inp_lhash) {
 		if (rtable_l2(inp->inp_rtableid) != rdomain)
 			continue;
@@ -1056,37 +1057,38 @@ in_pcbhash_insert(struct inpcb *inp)
 {
 	struct inpcbtable *table = inp->inp_table;
 	struct inpcbhead *head;
+	uint64_t hash, lhash;
 
-	NET_ASSERT_LOCKED();
 	MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
 
-	head = in_pcblhash(table, inp->inp_rtableid, inp->inp_lport);
+	lhash = in_pcblhash(table, inp->inp_rtableid, inp->inp_lport);
+	head = &table->inpt_lhashtbl[lhash & table->inpt_lmask];
 	LIST_INSERT_HEAD(head, inp, inp_lhash);
 #ifdef INET6
 	if (inp->inp_flags & INP_IPV6)
-		head = in6_pcbhash(table, rtable_l2(inp->inp_rtableid),
+		hash = in6_pcbhash(table, rtable_l2(inp->inp_rtableid),
 		    &inp->inp_faddr6, inp->inp_fport,
 		    &inp->inp_laddr6, inp->inp_lport);
 	else
 #endif /* INET6 */
-		head = in_pcbhash(table, rtable_l2(inp->inp_rtableid),
+		hash = in_pcbhash(table, rtable_l2(inp->inp_rtableid),
 		    &inp->inp_faddr, inp->inp_fport,
 		    &inp->inp_laddr, inp->inp_lport);
+	head = &table->inpt_hashtbl[hash & table->inpt_mask];
 	LIST_INSERT_HEAD(head, inp, inp_hash);
 }
 
 struct inpcb *
-in_pcbhash_lookup(struct inpcbtable *table, u_int rdomain,
+in_pcbhash_lookup(struct inpcbtable *table, uint64_t hash, u_int rdomain,
     const struct in_addr *faddr, u_short fport,
     const struct in_addr *laddr, u_short lport)
 {
 	struct inpcbhead *head;
 	struct inpcb *inp;
 
-	NET_ASSERT_LOCKED();
 	MUTEX_ASSERT_LOCKED(&table->inpt_mtx);
 
-	head = in_pcbhash(table, rdomain, faddr, fport, laddr, lport);
+	head = &table->inpt_hashtbl[hash & table->inpt_mask];
 	LIST_FOREACH(inp, head, inp_hash) {
 #ifdef INET6
 		if (ISSET(inp->inp_flags, INP_IPV6))
@@ -1140,8 +1142,6 @@ in_pcbresize(struct inpcbtable *table, int hashsize)
 	table->inpt_mask = nmask;
 	table->inpt_lmask = nlmask;
 	table->inpt_size = hashsize;
-	arc4random_buf(&table->inpt_key, sizeof(table->inpt_key));
-	arc4random_buf(&table->inpt_lkey, sizeof(table->inpt_lkey));
 
 	TAILQ_FOREACH(inp, &table->inpt_queue, inp_queue) {
 		LIST_REMOVE(inp, inp_lhash);
@@ -1172,13 +1172,18 @@ in_pcblookup(struct inpcbtable *table, struct in_addr faddr,
     u_int fport, struct in_addr laddr, u_int lport, u_int rtable)
 {
 	struct inpcb *inp;
+	uint64_t hash;
 	u_int rdomain;
 
 	rdomain = rtable_l2(rtable);
+	hash = in_pcbhash(table, rdomain, &faddr, fport, &laddr, lport);
+
 	mtx_enter(&table->inpt_mtx);
-	inp = in_pcbhash_lookup(table, rdomain, &faddr, fport, &laddr, lport);
+	inp = in_pcbhash_lookup(table, hash, rdomain,
+	    &faddr, fport, &laddr, lport);
 	in_pcbref(inp);
 	mtx_leave(&table->inpt_mtx);
+
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
 		printf("%s: faddr=%08x fport=%d laddr=%08x lport=%d rdom=%u\n",
@@ -1202,6 +1207,7 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 {
 	const struct in_addr *key1, *key2;
 	struct inpcb *inp;
+	uint64_t hash;
 	u_int16_t lport = lport_arg;
 	u_int rdomain;
 
@@ -1239,14 +1245,20 @@ in_pcblookup_listen(struct inpcbtable *table, struct in_addr laddr,
 #endif
 
 	rdomain = rtable_l2(rtable);
+	hash = in_pcbhash(table, rdomain, &zeroin_addr, 0, key1, lport);
+
 	mtx_enter(&table->inpt_mtx);
-	inp = in_pcbhash_lookup(table, rdomain, &zeroin_addr, 0, key1, lport);
+	inp = in_pcbhash_lookup(table, hash, rdomain,
+	    &zeroin_addr, 0, key1, lport);
 	if (inp == NULL && key1->s_addr != key2->s_addr) {
-		inp = in_pcbhash_lookup(table, rdomain,
+		hash = in_pcbhash(table, rdomain,
+		    &zeroin_addr, 0, key2, lport);
+		inp = in_pcbhash_lookup(table, hash, rdomain,
 		    &zeroin_addr, 0, key2, lport);
 	}
 	in_pcbref(inp);
 	mtx_leave(&table->inpt_mtx);
+
 #ifdef DIAGNOSTIC
 	if (inp == NULL && in_pcbnotifymiss) {
 		printf("%s: laddr=%08x lport=%d rdom=%u\n",

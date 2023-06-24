@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.135 2022/10/03 16:43:52 bluhm Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.136 2023/06/24 20:54:46 bluhm Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ struct inpcbtable {
 	TAILQ_HEAD(inpthead, inpcb) inpt_queue;	/* [t] inet PCB queue */
 	struct	inpcbhead *inpt_hashtbl;	/* [t] local and foreign hash */
 	struct	inpcbhead *inpt_lhashtbl;	/* [t] local port hash */
-	SIPHASH_KEY inpt_key, inpt_lkey;	/* [t] secrets for hashes */
+	SIPHASH_KEY inpt_key, inpt_lkey;	/* [I] secrets for hashes */
 	u_long	inpt_mask, inpt_lmask;		/* [t] hash masks */
 	int	inpt_count, inpt_size;		/* [t] queue count, hash size */
 };
@@ -294,8 +294,7 @@ struct inpcb *
 	 in_pcblookup_listen(struct inpcbtable *, struct in_addr, u_int,
 	    struct mbuf *, u_int);
 #ifdef INET6
-struct inpcbhead *
-	 in6_pcbhash(struct inpcbtable *, u_int, const struct in6_addr *,
+uint64_t in6_pcbhash(struct inpcbtable *, u_int, const struct in6_addr *,
 	    u_short, const struct in6_addr *, u_short);
 struct inpcb *
 	 in6_pcblookup(struct inpcbtable *, const struct in6_addr *,
