@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.32 2023/06/24 16:10:23 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.33 2023/06/24 16:19:52 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -284,8 +284,7 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 	if (rr == NULL)
 		goto err;
 
-	r_len = a->top * 2;
-	if (r_len < a->top)
+	if ((r_len = a->top * 2) < a->top)
 		goto err;
 	if (!bn_wexpand(rr, r_len))
 		goto err;
