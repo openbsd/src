@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
+/* $OpenBSD: ech_local.h,v 1.3 2023/06/25 08:12:23 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -67,14 +67,6 @@ struct ecdh_method {
 	int flags;
 	char *app_data;
 };
-
-/* If this flag is set the ECDH method is FIPS compliant and can be used
- * in FIPS mode. This is set in the validated module method. If an
- * application sets this flag in its own methods it is its responsibility
- * to ensure the result is compliant.
- */
-
-#define ECDH_FLAG_FIPS_METHOD	0x1
 
 typedef struct ecdh_data_st {
 	/* EC_KEY_METH_DATA part */
