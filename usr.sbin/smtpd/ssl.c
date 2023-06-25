@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.99 2023/06/11 10:30:10 op Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.100 2023/06/25 08:08:03 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -22,7 +22,6 @@
 
 #include <fcntl.h>
 #include <limits.h>
-#include <openssl/engine.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <string.h>
@@ -30,25 +29,6 @@
 
 #include "log.h"
 #include "ssl.h"
-
-void
-ssl_init(void)
-{
-	static int	inited = 0;
-
-	if (inited)
-		return;
-
-	SSL_library_init();
-	SSL_load_error_strings();
-
-	OpenSSL_add_all_algorithms();
-
-	/* Init hardware crypto engines. */
-	ENGINE_load_builtin_engines();
-	ENGINE_register_all_complete();
-	inited = 1;
-}
 
 static char *
 ssl_load_file(const char *name, off_t *len, mode_t perm)
@@ -139,9 +119,6 @@ ssl_load_key(const char *name, off_t *len, char *pass, mode_t perm, const char *
 	struct stat	 st;
 	char		 mode[12];
 	char		 prompt[2048];
-
-	/* Initialize SSL library once */
-	ssl_init();
 
 	/*
 	 * Read (possibly) encrypted key from file
