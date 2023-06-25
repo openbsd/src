@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.32 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.33 2023/06/25 18:52:27 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -122,16 +122,12 @@ EC_KEY_free(EC_KEY *r)
 	EC_POINT_free(r->pub_key);
 	BN_free(r->priv_key);
 
-	EC_EX_DATA_free_all_data(&r->method_data);
-
 	freezero(r, sizeof(EC_KEY));
 }
 
 EC_KEY *
 EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 {
-	EC_EXTRA_DATA *d;
-
 	if (dest == NULL || src == NULL) {
 		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
@@ -174,18 +170,6 @@ EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 		}
 		if (!bn_copy(dest->priv_key, src->priv_key))
 			return NULL;
-	}
-	/* copy method/extra data */
-	EC_EX_DATA_free_all_data(&dest->method_data);
-
-	for (d = src->method_data; d != NULL; d = d->next) {
-		void *t = d->dup_func(d->data);
-
-		if (t == NULL)
-			return 0;
-		if (!EC_EX_DATA_set_data(&dest->method_data, t, d->dup_func,
-		    d->free_func, d->clear_free_func))
-			return 0;
 	}
 
 	/* copy the rest */
@@ -524,38 +508,6 @@ EC_KEY_set_conv_form(EC_KEY *key, point_conversion_form_t cform)
 	key->conv_form = cform;
 	if (key->group != NULL)
 		EC_GROUP_set_point_conversion_form(key->group, cform);
-}
-
-void *
-EC_KEY_get_key_method_data(EC_KEY *key,
-    void *(*dup_func) (void *),
-    void (*free_func) (void *),
-    void (*clear_free_func) (void *))
-{
-	void *ret;
-
-	CRYPTO_r_lock(CRYPTO_LOCK_EC);
-	ret = EC_EX_DATA_get_data(key->method_data, dup_func, free_func, clear_free_func);
-	CRYPTO_r_unlock(CRYPTO_LOCK_EC);
-
-	return ret;
-}
-
-void *
-EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
-    void *(*dup_func) (void *),
-    void (*free_func) (void *),
-    void (*clear_free_func) (void *))
-{
-	EC_EXTRA_DATA *ex_data;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_EC);
-	ex_data = EC_EX_DATA_get_data(key->method_data, dup_func, free_func, clear_free_func);
-	if (ex_data == NULL)
-		EC_EX_DATA_set_data(&key->method_data, data, dup_func, free_func, clear_free_func);
-	CRYPTO_w_unlock(CRYPTO_LOCK_EC);
-
-	return ex_data;
 }
 
 void

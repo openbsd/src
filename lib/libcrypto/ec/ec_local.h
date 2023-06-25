@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.18 2023/06/25 07:50:37 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.19 2023/06/25 18:52:27 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -173,14 +173,6 @@ struct ec_method_st {
 	    BN_CTX *ctx);
 } /* EC_METHOD */;
 
-typedef struct ec_extra_data_st {
-	struct ec_extra_data_st *next;
-	void *data;
-	void *(*dup_func)(void *);
-	void (*free_func)(void *);
-	void (*clear_free_func)(void *);
-} EC_EXTRA_DATA; /* used in EC_GROUP */
-
 struct ec_group_st {
 	/*
 	 * Methods and members exposed via the public API.
@@ -260,25 +252,8 @@ struct ec_key_st {
 	int	references;
 	int	flags;
 
-	EC_EXTRA_DATA *method_data;
 	CRYPTO_EX_DATA ex_data;
 } /* EC_KEY */;
-
-/* Basically a 'mixin' for extra data, but available for EC_GROUPs/EC_KEYs only
- * (with visibility limited to 'package' level for now).
- * We use the function pointers as index for retrieval; this obviates
- * global ex_data-style index tables.
- */
-int EC_EX_DATA_set_data(EC_EXTRA_DATA **, void *data,
-	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
-void *EC_EX_DATA_get_data(const EC_EXTRA_DATA *,
-	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
-void EC_EX_DATA_free_data(EC_EXTRA_DATA **,
-	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
-void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **,
-	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *));
-void EC_EX_DATA_free_all_data(EC_EXTRA_DATA **);
-void EC_EX_DATA_clear_free_all_data(EC_EXTRA_DATA **);
 
 struct ec_point_st {
 	const EC_METHOD *meth;
