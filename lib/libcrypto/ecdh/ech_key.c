@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.17 2023/06/25 19:17:43 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.18 2023/06/25 19:26:04 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -73,12 +73,12 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/bn.h>
+#include <openssl/ecdh.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/sha.h>
 
 #include "bn_local.h"
-#include "ech_local.h"
 #include "ec_local.h"
 
 /*

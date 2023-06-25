@@ -52,10 +52,11 @@
 
 #include <string.h>
 
+#include <openssl/ecdh.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 
-#include "ech_local.h"
+#include "ec_local.h"
 
 /*
  * Key derivation function from X9.63/SECG.

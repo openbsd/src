@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_pmeth.c,v 1.17 2023/04/25 15:48:48 tb Exp $ */
+/* $OpenBSD: ec_pmeth.c,v 1.18 2023/06/25 19:26:04 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -68,7 +68,6 @@
 
 #include "bn_local.h"
 #include "ec_local.h"
-#include "ech_local.h"
 #include "evp_local.h"
 
 /* EC pkey context structure */
