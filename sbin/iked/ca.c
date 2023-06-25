@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.93 2023/06/17 22:33:34 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.94 2023/06/25 08:07:04 op Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -33,7 +33,6 @@
 
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/engine.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -1956,17 +1955,6 @@ int
 ca_x509_subjectaltname_get(X509 *cert, struct iked_id *retid)
 {
 	return ca_x509_subjectaltname_do(cert, MODE_ALT_GET, NULL, NULL, retid);
-}
-
-void
-ca_sslinit(void)
-{
-	OpenSSL_add_all_algorithms();
-	ERR_load_crypto_strings();
-
-	/* Init hardware crypto engines. */
-	ENGINE_load_builtin_engines();
-	ENGINE_register_all_complete();
 }
 
 void

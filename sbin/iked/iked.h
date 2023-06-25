@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.h,v 1.218 2023/06/19 17:19:50 claudio Exp $	*/
+/*	$OpenBSD: iked.h,v 1.219 2023/06/25 08:07:04 op Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1178,7 +1178,6 @@ int	 ca_setauth(struct iked *, struct iked_sa *,
 void	 ca_getkey(struct privsep *, struct iked_id *, enum imsg_type);
 int	 ca_privkey_serialize(EVP_PKEY *, struct iked_id *);
 int	 ca_pubkey_serialize(EVP_PKEY *, struct iked_id *);
-void	 ca_sslinit(void);
 void	 ca_sslerror(const char *);
 char	*ca_asn1_name(uint8_t *, size_t);
 void	*ca_x509_name_parse(char *);

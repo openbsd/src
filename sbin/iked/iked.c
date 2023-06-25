@@ -1,4 +1,4 @@
-/*	$OpenBSD: iked.c,v 1.64 2023/03/05 22:17:22 tobhe Exp $	*/
+/*	$OpenBSD: iked.c,v 1.65 2023/06/25 08:07:04 op Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -175,7 +175,6 @@ main(int argc, char *argv[])
 	if (strlcpy(env->sc_conffile, conffile, PATH_MAX) >= PATH_MAX)
 		errx(1, "config file exceeds PATH_MAX");
 
-	ca_sslinit();
 	group_init();
 	policy_init(env);
 
