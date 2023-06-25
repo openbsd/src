@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.20 2023/06/25 19:20:57 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.21 2023/06/25 19:22:21 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -367,13 +367,6 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
  */
 int ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
     size_t Zlen, const unsigned char *sinfo, size_t sinfolen, const EVP_MD *md);
-
-void *EC_KEY_get_key_method_data(EC_KEY *key,
-    void *(*dup_func)(void *), void (*free_func)(void *),
-    void (*clear_free_func)(void *));
-void *EC_KEY_insert_key_method_data(EC_KEY *key, void *data,
-    void *(*dup_func)(void *), void (*free_func)(void *),
-    void (*clear_free_func)(void *));
 
 int EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *p,
     const BIGNUM *x, const BIGNUM *y, const BIGNUM *z, BN_CTX *ctx);
