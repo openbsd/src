@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.24 2023/04/25 19:01:01 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.25 2023/06/25 18:15:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -426,8 +426,7 @@ typedef struct x509_purpose_st {
 	int purpose;
 	int trust;		/* Default trust ID */
 	int flags;
-	int (*check_purpose)(const struct x509_purpose_st *,
-				const X509 *, int);
+	int (*check_purpose)(const struct x509_purpose_st *, const X509 *, int);
 	char *name;
 	char *sname;
 	void *usr_data;
