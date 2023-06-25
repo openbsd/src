@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.17 2023/04/25 19:26:45 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.18 2023/06/25 18:24:33 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -90,20 +90,7 @@ ECDSA_get_default_method(void)
 int
 ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth)
 {
-	ECDSA_DATA *ecdsa;
-
-	ecdsa = ecdsa_check(eckey);
-
-	if (ecdsa == NULL)
-		return 0;
-
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(ecdsa->engine);
-	ecdsa->engine = NULL;
-#endif
-	ecdsa->meth = meth;
-
-	return 1;
+	return 0;
 }
 
 static ECDSA_DATA *

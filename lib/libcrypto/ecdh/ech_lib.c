@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.16 2023/04/25 19:26:45 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.17 2023/06/25 18:24:33 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -103,19 +103,7 @@ ECDH_get_default_method(void)
 int
 ECDH_set_method(EC_KEY *eckey, const ECDH_METHOD *meth)
 {
-	ECDH_DATA *ecdh;
-
-	ecdh = ecdh_check(eckey);
-
-	if (ecdh == NULL)
-		return 0;
-
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(ecdh->engine);
-	ecdh->engine = NULL;
-#endif
-	ecdh->meth = meth;
-	return 1;
+	return 0;
 }
 
 static ECDH_DATA *
