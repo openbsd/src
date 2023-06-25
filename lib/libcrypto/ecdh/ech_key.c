@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.14 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.15 2023/06/25 18:41:36 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -81,10 +81,6 @@
 #include "ech_local.h"
 #include "ec_local.h"
 
-static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key,
-    EC_KEY *ecdh,
-    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
-
 /*
  * This implementation is based on the following primitives in the IEEE 1363
  * standard:
@@ -92,8 +88,8 @@ static int ecdh_compute_key(void *out, size_t len, const EC_POINT *pub_key,
  *  - ECSVDP-DH
  * Finally an optional KDF is applied.
  */
-static int
-ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+int
+ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     EC_KEY *ecdh,
     void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
 {
@@ -195,26 +191,13 @@ err:
 
 static ECDH_METHOD openssl_ecdh_meth = {
 	.name = "OpenSSL ECDH method",
-	.compute_key = ecdh_compute_key
+	.compute_key = ossl_ecdh_compute_key,
 };
 
 const ECDH_METHOD *
 ECDH_OpenSSL(void)
 {
 	return &openssl_ecdh_meth;
-}
-
-/* replace w/ ecdh_compute_key() when ECDH_METHOD gets removed */
-int
-ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-    EC_KEY *eckey,
-    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
-{
-	ECDH_DATA *ecdh;
-
-	if ((ecdh = ecdh_check(eckey)) == NULL)
-		return 0;
-	return ecdh->meth->compute_key(out, outlen, pub_key, eckey, KDF);
 }
 
 int
