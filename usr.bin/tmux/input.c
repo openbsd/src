@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.214 2023/03/27 08:47:57 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.215 2023/06/25 15:53:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2065,7 +2065,7 @@ static void
 input_csi_dispatch_sgr(struct input_ctx *ictx)
 {
 	struct grid_cell	*gc = &ictx->cell.cell;
-	u_int			 i;
+	u_int			 i, link;
 	int			 n;
 
 	if (ictx->param_list_len == 0) {
@@ -2097,7 +2097,9 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 
 		switch (n) {
 		case 0:
+			link = gc->link;
 			memcpy(gc, &grid_default_cell, sizeof *gc);
+			gc->link = link;
 			break;
 		case 1:
 			gc->attr |= GRID_ATTR_BRIGHT;
