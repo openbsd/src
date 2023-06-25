@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.18 2023/06/25 18:24:33 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.19 2023/06/25 18:27:38 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -219,26 +219,17 @@ int
 ECDSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 {
-	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ECDSA, argl, argp,
-	    new_func, dup_func, free_func);
+	return -1;
 }
 
 int
 ECDSA_set_ex_data(EC_KEY *d, int idx, void *arg)
 {
-	ECDSA_DATA *ecdsa;
-	ecdsa = ecdsa_check(d);
-	if (ecdsa == NULL)
-		return 0;
-	return (CRYPTO_set_ex_data(&ecdsa->ex_data, idx, arg));
+	return 0;
 }
 
 void *
 ECDSA_get_ex_data(EC_KEY *d, int idx)
 {
-	ECDSA_DATA *ecdsa;
-	ecdsa = ecdsa_check(d);
-	if (ecdsa == NULL)
-		return NULL;
-	return (CRYPTO_get_ex_data(&ecdsa->ex_data, idx));
+	return NULL;
 }

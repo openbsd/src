@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.17 2023/06/25 18:24:33 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.18 2023/06/25 18:27:38 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -201,28 +201,19 @@ int
 ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
     CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func)
 {
-	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_ECDH, argl, argp,
-	    new_func, dup_func, free_func);
+	return -1;
 }
 
 int
 ECDH_set_ex_data(EC_KEY *d, int idx, void *arg)
 {
-	ECDH_DATA *ecdh;
-	ecdh = ecdh_check(d);
-	if (ecdh == NULL)
-		return 0;
-	return (CRYPTO_set_ex_data(&ecdh->ex_data, idx, arg));
+	return 0;
 }
 
 void *
 ECDH_get_ex_data(EC_KEY *d, int idx)
 {
-	ECDH_DATA *ecdh;
-	ecdh = ecdh_check(d);
-	if (ecdh == NULL)
-		return NULL;
-	return (CRYPTO_get_ex_data(&ecdh->ex_data, idx));
+	return NULL;
 }
 
 int
