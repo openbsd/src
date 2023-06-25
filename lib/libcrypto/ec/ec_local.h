@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.19 2023/06/25 18:52:27 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.20 2023/06/25 19:20:57 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -361,6 +361,12 @@ int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
     const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
 int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
     const ECDSA_SIG *sig, EC_KEY *eckey);
+
+/*
+ * ECDH Key Derivation Function as defined in ANSI X9.63.
+ */
+int ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
+    size_t Zlen, const unsigned char *sinfo, size_t sinfolen, const EVP_MD *md);
 
 void *EC_KEY_get_key_method_data(EC_KEY *key,
     void *(*dup_func)(void *), void (*free_func)(void *),
