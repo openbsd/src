@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.20 2023/06/25 19:04:35 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.21 2023/06/25 19:14:14 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -77,7 +77,14 @@
 #include <openssl/err.h>
 
 #include "ec_local.h"
-#include "ech_local.h"
+
+struct ecdh_method {
+	const char *name;
+	int (*compute_key)(void *key, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+	    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
+	int flags;
+	char *app_data;
+};
 
 static const ECDH_METHOD *default_ECDH_method = NULL;
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_local.h,v 1.4 2023/06/25 18:45:56 tb Exp $ */
+/* $OpenBSD: ech_local.h,v 1.5 2023/06/25 19:14:14 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -59,14 +59,6 @@
 #include <openssl/ecdh.h>
 
 __BEGIN_HIDDEN_DECLS
-
-struct ecdh_method {
-	const char *name;
-	int (*compute_key)(void *key, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-	    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
-	int flags;
-	char *app_data;
-};
 
 /*
  * ECDH Key Derivation Function as defined in ANSI X9.63.
