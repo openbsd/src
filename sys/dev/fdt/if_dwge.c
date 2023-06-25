@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.15 2023/02/26 13:28:12 kettenis Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.16 2023/06/25 22:36:09 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -21,6 +21,7 @@
  */
 
 #include "bpfilter.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +53,10 @@
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
+
+#if NKSTAT > 0
+#include <sys/kstat.h>
 #endif
 
 #include <netinet/in.h>
@@ -97,8 +102,24 @@
 #define  GMAC_INT_MASK_RIM		(1 << 0)
 #define GMAC_MAC_ADDR0_HI	0x0040
 #define GMAC_MAC_ADDR0_LO	0x0044
+#define GMAC_MAC_MMC_CTRL	0x0100
+#define  GMAC_MAC_MMC_CTRL_ROR	(1 << 2)
+#define  GMAC_MAC_MMC_CTRL_CR	(1 << 0)
 #define GMAC_MMC_RX_INT_MSK	0x010c
 #define GMAC_MMC_TX_INT_MSK	0x0110
+#define GMAC_MMC_TXOCTETCNT_GB	0x0114
+#define GMAC_MMC_TXFRMCNT_GB	0x0118
+#define GMAC_MMC_TXUNDFLWERR	0x0148
+#define GMAC_MMC_TXCARERR	0x0160
+#define GMAC_MMC_TXOCTETCNT_G	0x0164
+#define GMAC_MMC_TXFRMCNT_G	0x0168
+#define GMAC_MMC_RXFRMCNT_GB	0x0180
+#define GMAC_MMC_RXOCTETCNT_GB	0x0184
+#define GMAC_MMC_RXOCTETCNT_G	0x0188
+#define GMAC_MMC_RXMCFRMCNT_G	0x0190
+#define GMAC_MMC_RXCRCERR	0x0194
+#define GMAC_MMC_RXLENERR	0x01c8
+#define GMAC_MMC_RXFIFOOVRFLW	0x01d4
 #define GMAC_MMC_IPC_INT_MSK	0x0200
 #define GMAC_BUS_MODE		0x1000
 #define  GMAC_BUS_MODE_8XPBL		(1 << 24)
@@ -113,6 +134,7 @@
 #define GMAC_RX_DESC_LIST_ADDR	0x100c
 #define GMAC_TX_DESC_LIST_ADDR	0x1010
 #define GMAC_STATUS		0x1014
+#define  GMAC_STATUS_MMC		(1 << 27)
 #define  GMAC_STATUS_RI			(1 << 6)
 #define  GMAC_STATUS_TU			(1 << 2)
 #define  GMAC_STATUS_TI			(1 << 0)
@@ -277,6 +299,11 @@ struct dwge_softc {
 	uint32_t		sc_clk_sel_125;
 	uint32_t		sc_clk_sel_25;
 	uint32_t		sc_clk_sel_2_5;
+
+#if NKSTAT > 0
+	struct mutex		sc_kstat_mtx;
+	struct kstat		*sc_kstat;
+#endif
 };
 
 #define DEVNAME(_s)	((_s)->sc_dev.dv_xname)
@@ -333,6 +360,11 @@ struct dwge_dmamem *
 void	dwge_dmamem_free(struct dwge_softc *, struct dwge_dmamem *);
 struct mbuf *dwge_alloc_mbuf(struct dwge_softc *, bus_dmamap_t);
 void	dwge_fill_rx_ring(struct dwge_softc *);
+
+#if NKSTAT > 0
+int	dwge_kstat_read(struct kstat *);
+void	dwge_kstat_attach(struct dwge_softc *);
+#endif
 
 int
 dwge_match(struct device *parent, void *cfdata, void *aux)
@@ -555,13 +587,14 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
+#if NKSTAT > 0
+	dwge_kstat_attach(sc);
+#endif
 
 	/* Disable interrupts. */
 	dwge_write(sc, GMAC_INT_ENA, 0);
 	dwge_write(sc, GMAC_INT_MASK,
 	    GMAC_INT_MASK_LPIIM | GMAC_INT_MASK_PIM | GMAC_INT_MASK_RIM);
-	dwge_write(sc, GMAC_MMC_RX_INT_MSK, 0xffffffff);
-	dwge_write(sc, GMAC_MMC_TX_INT_MSK, 0xffffffff);
 	dwge_write(sc, GMAC_MMC_IPC_INT_MSK, 0xffffffff);
 
 	sc->sc_ih = fdt_intr_establish(faa->fa_node, IPL_NET | IPL_MPSAFE,
@@ -920,6 +953,14 @@ dwge_intr(void *arg)
 	if (reg & GMAC_STATUS_TI ||
 	    reg & GMAC_STATUS_TU)
 		dwge_tx_proc(sc);
+
+#if NKSTAT > 0
+	if (reg & GMAC_STATUS_MMC) {
+		mtx_enter(&sc->sc_kstat_mtx);
+		dwge_kstat_read(sc->sc_kstat);
+		mtx_leave(&sc->sc_kstat_mtx);
+	}
+#endif
 
 	return (1);
 }
@@ -1660,3 +1701,77 @@ dwge_mii_statchg_rockchip(struct device *self)
 
 	regmap_write_4(rm, sc->sc_clk_sel, gmac_clk_sel);
 }
+
+#if NKSTAT > 0
+
+struct dwge_counter {
+	const char		*c_name;
+	enum kstat_kv_unit	c_unit;
+	uint32_t		c_reg;
+};
+
+const struct dwge_counter dwge_counters[] = {
+	{ "tx octets total", KSTAT_KV_U_BYTES, GMAC_MMC_TXOCTETCNT_GB },
+	{ "tx frames total", KSTAT_KV_U_PACKETS, GMAC_MMC_TXFRMCNT_GB },
+	{ "tx underflow", KSTAT_KV_U_PACKETS, GMAC_MMC_TXUNDFLWERR },
+	{ "tx carrier err", KSTAT_KV_U_PACKETS, GMAC_MMC_TXCARERR },
+	{ "tx good octets", KSTAT_KV_U_BYTES, GMAC_MMC_TXOCTETCNT_G },
+	{ "tx good frames", KSTAT_KV_U_PACKETS, GMAC_MMC_TXFRMCNT_G },
+	{ "rx frames total", KSTAT_KV_U_PACKETS, GMAC_MMC_RXFRMCNT_GB },
+	{ "rx octets total", KSTAT_KV_U_BYTES, GMAC_MMC_RXOCTETCNT_GB },
+	{ "rx good octets", KSTAT_KV_U_BYTES, GMAC_MMC_RXOCTETCNT_G },
+	{ "rx good mcast", KSTAT_KV_U_PACKETS, GMAC_MMC_RXMCFRMCNT_G },
+	{ "rx crc errors", KSTAT_KV_U_PACKETS, GMAC_MMC_RXCRCERR },
+	{ "rx len errors", KSTAT_KV_U_PACKETS, GMAC_MMC_RXLENERR },
+	{ "rx fifo err", KSTAT_KV_U_PACKETS, GMAC_MMC_RXFIFOOVRFLW },
+};
+
+void
+dwge_kstat_attach(struct dwge_softc *sc)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	int i;
+
+	mtx_init(&sc->sc_kstat_mtx, IPL_NET);
+
+	/* clear counters, enable reset-on-read */
+	dwge_write(sc, GMAC_MAC_MMC_CTRL, GMAC_MAC_MMC_CTRL_ROR |
+	    GMAC_MAC_MMC_CTRL_CR);
+
+	ks = kstat_create(DEVNAME(sc), 0, "dwge-stats", 0,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	kvs = mallocarray(nitems(dwge_counters), sizeof(*kvs), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
+	for (i = 0; i < nitems(dwge_counters); i++) {
+		kstat_kv_unit_init(&kvs[i], dwge_counters[i].c_name,
+		    KSTAT_KV_T_COUNTER64, dwge_counters[i].c_unit);
+	}
+
+	kstat_set_mutex(ks, &sc->sc_kstat_mtx);
+	ks->ks_softc = sc;
+	ks->ks_data = kvs;
+	ks->ks_datalen = nitems(dwge_counters) * sizeof(*kvs);
+	ks->ks_read = dwge_kstat_read;
+	sc->sc_kstat = ks;
+	kstat_install(ks);
+}
+
+int
+dwge_kstat_read(struct kstat *ks)
+{
+	struct kstat_kv *kvs = ks->ks_data;
+	struct dwge_softc *sc = ks->ks_softc;
+	int i;
+
+	for (i = 0; i < nitems(dwge_counters); i++)
+		kstat_kv_u64(&kvs[i]) += dwge_read(sc, dwge_counters[i].c_reg);
+
+	getnanouptime(&ks->ks_updated);
+	return 0;
+}
+
+#endif
