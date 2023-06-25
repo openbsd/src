@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.26 2023/06/20 14:21:19 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.27 2023/06/25 13:52:27 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -441,6 +441,47 @@ setup_crldp(X509 *x)
 		setup_dp(x, sk_DIST_POINT_value(x->crldp, i));
 }
 
+static int
+x509_extension_oid_cmp(const X509_EXTENSION *const *a,
+    const X509_EXTENSION *const *b)
+{
+	return OBJ_cmp((*a)->object, (*b)->object);
+}
+
+static int
+x509_extension_oids_are_unique(X509 *x509)
+{
+	STACK_OF(X509_EXTENSION) *exts = NULL;
+	const X509_EXTENSION *prev_ext, *curr_ext;
+	int i;
+	int ret = 0;
+
+	if (X509_get_ext_count(x509) <= 1)
+		goto done;
+
+	if ((exts = sk_X509_EXTENSION_dup(x509->cert_info->extensions)) == NULL)
+		goto err;
+
+	(void)sk_X509_EXTENSION_set_cmp_func(exts, x509_extension_oid_cmp);
+	sk_X509_EXTENSION_sort(exts);
+
+	prev_ext = sk_X509_EXTENSION_value(exts, 0);
+	for (i = 1; i < sk_X509_EXTENSION_num(exts); i++) {
+		curr_ext = sk_X509_EXTENSION_value(exts, i);
+		if (x509_extension_oid_cmp(&prev_ext, &curr_ext) == 0)
+			goto err;
+		prev_ext = curr_ext;
+	}
+
+ done:
+	ret = 1;
+
+ err:
+	sk_X509_EXTENSION_free(exts);
+
+	return ret;
+}
+
 static void
 x509v3_cache_extensions_internal(X509 *x)
 {
@@ -611,6 +652,9 @@ x509v3_cache_extensions_internal(X509 *x)
 			break;
 		}
 	}
+
+	if (!x509_extension_oids_are_unique(x))
+		x->ex_flags |= EXFLAG_INVALID;
 
 	x509_verify_cert_info_populate(x);
 
