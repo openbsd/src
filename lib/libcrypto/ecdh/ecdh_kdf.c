@@ -1,3 +1,4 @@
+/*	$OpenBSD: ecdh_kdf.c,v 1.9 2023/06/25 19:43:28 tb Exp $ */
 /*
  * Written by Stephen Henson for the OpenSSL project.
  */
