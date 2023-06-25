@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.18 2023/06/25 19:26:04 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.19 2023/06/25 19:35:56 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -78,7 +78,6 @@
 #include <openssl/objects.h>
 #include <openssl/sha.h>
 
-#include "bn_local.h"
 #include "ec_local.h"
 
 /*
@@ -180,10 +179,9 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		ret = outlen;
 	}
 
-err:
+ err:
 	EC_POINT_free(tmp);
-	if (ctx)
-		BN_CTX_end(ctx);
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	free(buf);
 	return (ret);
