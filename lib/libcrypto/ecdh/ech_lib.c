@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.18 2023/06/25 18:27:38 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.19 2023/06/25 18:45:56 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -81,10 +81,6 @@
 
 static const ECDH_METHOD *default_ECDH_method = NULL;
 
-static void *ecdh_data_new(void);
-static void *ecdh_data_dup(void *);
-static void  ecdh_data_free(void *);
-
 void
 ECDH_set_default_method(const ECDH_METHOD *meth)
 {
@@ -104,97 +100,6 @@ int
 ECDH_set_method(EC_KEY *eckey, const ECDH_METHOD *meth)
 {
 	return 0;
-}
-
-static ECDH_DATA *
-ECDH_DATA_new_method(ENGINE *engine)
-{
-	ECDH_DATA *ret;
-
-	ret = malloc(sizeof(ECDH_DATA));
-	if (ret == NULL) {
-		ECDHerror(ERR_R_MALLOC_FAILURE);
-		return (NULL);
-	}
-
-	ret->init = NULL;
-
-	ret->meth = ECDH_get_default_method();
-	ret->engine = engine;
-#ifndef OPENSSL_NO_ENGINE
-	if (!ret->engine)
-		ret->engine = ENGINE_get_default_ECDH();
-	if (ret->engine) {
-		ret->meth = ENGINE_get_ECDH(ret->engine);
-		if (ret->meth == NULL) {
-			ECDHerror(ERR_R_ENGINE_LIB);
-			ENGINE_finish(ret->engine);
-			free(ret);
-			return NULL;
-		}
-	}
-#endif
-
-	ret->flags = ret->meth->flags;
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ECDH, ret, &ret->ex_data);
-	return (ret);
-}
-
-static void *
-ecdh_data_new(void)
-{
-	return (void *)ECDH_DATA_new_method(NULL);
-}
-
-static void *
-ecdh_data_dup(void *data)
-{
-	ECDH_DATA *r = (ECDH_DATA *)data;
-
-	/* XXX: dummy operation */
-	if (r == NULL)
-		return NULL;
-
-	return (void *)ecdh_data_new();
-}
-
-void
-ecdh_data_free(void *data)
-{
-	ECDH_DATA *r = (ECDH_DATA *)data;
-
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(r->engine);
-#endif
-
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDH, r, &r->ex_data);
-
-	freezero(r, sizeof(ECDH_DATA));
-}
-
-ECDH_DATA *
-ecdh_check(EC_KEY *key)
-{
-	ECDH_DATA *ecdh_data;
-
-	void *data = EC_KEY_get_key_method_data(key, ecdh_data_dup,
-	    ecdh_data_free, ecdh_data_free);
-	if (data == NULL) {
-		ecdh_data = (ECDH_DATA *)ecdh_data_new();
-		if (ecdh_data == NULL)
-			return NULL;
-		data = EC_KEY_insert_key_method_data(key, (void *)ecdh_data,
-		    ecdh_data_dup, ecdh_data_free, ecdh_data_free);
-		if (data != NULL) {
-			/* Another thread raced us to install the key_method
-			 * data and won. */
-			ecdh_data_free(ecdh_data);
-			ecdh_data = (ECDH_DATA *)data;
-		}
-	} else
-		ecdh_data = (ECDH_DATA *)data;
-
-	return ecdh_data;
 }
 
 int

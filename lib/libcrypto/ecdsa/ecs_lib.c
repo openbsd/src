@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.19 2023/06/25 18:27:38 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.20 2023/06/25 18:45:56 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -68,10 +68,6 @@
 
 static const ECDSA_METHOD *default_ECDSA_method = NULL;
 
-static void *ecdsa_data_new(void);
-static void *ecdsa_data_dup(void *);
-static void  ecdsa_data_free(void *);
-
 void
 ECDSA_set_default_method(const ECDSA_METHOD *meth)
 {
@@ -91,96 +87,6 @@ int
 ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth)
 {
 	return 0;
-}
-
-static ECDSA_DATA *
-ECDSA_DATA_new_method(ENGINE *engine)
-{
-	ECDSA_DATA *ret;
-
-	ret = malloc(sizeof(ECDSA_DATA));
-	if (ret == NULL) {
-		ECDSAerror(ERR_R_MALLOC_FAILURE);
-		return (NULL);
-	}
-
-	ret->init = NULL;
-
-	ret->meth = ECDSA_get_default_method();
-	ret->engine = engine;
-#ifndef OPENSSL_NO_ENGINE
-	if (!ret->engine)
-		ret->engine = ENGINE_get_default_ECDSA();
-	if (ret->engine) {
-		ret->meth = ENGINE_get_ECDSA(ret->engine);
-		if (ret->meth == NULL) {
-			ECDSAerror(ERR_R_ENGINE_LIB);
-			ENGINE_finish(ret->engine);
-			free(ret);
-			return NULL;
-		}
-	}
-#endif
-
-	ret->flags = ret->meth->flags;
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_ECDSA, ret, &ret->ex_data);
-	return (ret);
-}
-
-static void *
-ecdsa_data_new(void)
-{
-	return (void *)ECDSA_DATA_new_method(NULL);
-}
-
-static void *
-ecdsa_data_dup(void *data)
-{
-	ECDSA_DATA *r = (ECDSA_DATA *)data;
-
-	/* XXX: dummy operation */
-	if (r == NULL)
-		return NULL;
-
-	return ecdsa_data_new();
-}
-
-static void
-ecdsa_data_free(void *data)
-{
-	ECDSA_DATA *r = (ECDSA_DATA *)data;
-
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_finish(r->engine);
-#endif
-	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_ECDSA, r, &r->ex_data);
-
-	freezero(r, sizeof(ECDSA_DATA));
-}
-
-ECDSA_DATA *
-ecdsa_check(EC_KEY *key)
-{
-	ECDSA_DATA *ecdsa_data;
-
-	void *data = EC_KEY_get_key_method_data(key, ecdsa_data_dup,
-	    ecdsa_data_free, ecdsa_data_free);
-	if (data == NULL) {
-		ecdsa_data = (ECDSA_DATA *)ecdsa_data_new();
-		if (ecdsa_data == NULL)
-			return NULL;
-		data = EC_KEY_insert_key_method_data(key, (void *)ecdsa_data,
-		    ecdsa_data_dup, ecdsa_data_free, ecdsa_data_free);
-		if (data != NULL) {
-			/* Another thread raced us to install the key_method
-			 * data and won. */
-			ecdsa_data_free(ecdsa_data);
-			ecdsa_data = (ECDSA_DATA *)data;
-		}
-	} else
-		ecdsa_data = (ECDSA_DATA *)data;
-
-	return ecdsa_data;
 }
 
 int

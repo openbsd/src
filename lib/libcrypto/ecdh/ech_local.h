@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_local.h,v 1.3 2023/06/25 08:12:23 tb Exp $ */
+/* $OpenBSD: ech_local.h,v 1.4 2023/06/25 18:45:56 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -67,18 +67,6 @@ struct ecdh_method {
 	int flags;
 	char *app_data;
 };
-
-typedef struct ecdh_data_st {
-	/* EC_KEY_METH_DATA part */
-	int (*init)(EC_KEY *);
-	/* method specific part */
-	ENGINE	*engine;
-	int	flags;
-	const ECDH_METHOD *meth;
-	CRYPTO_EX_DATA ex_data;
-} ECDH_DATA;
-
-ECDH_DATA *ecdh_check(EC_KEY *);
 
 /*
  * ECDH Key Derivation Function as defined in ANSI X9.63.

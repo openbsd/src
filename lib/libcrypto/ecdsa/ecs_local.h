@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
+/* $OpenBSD: ecs_local.h,v 1.3 2023/06/25 18:45:56 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -63,28 +63,10 @@
 
 __BEGIN_HIDDEN_DECLS
 
-typedef struct ecdsa_data_st {
-	/* EC_KEY_METH_DATA part */
-	int (*init)(EC_KEY *);
-	/* method (ECDSA) specific part */
-	ENGINE	*engine;
-	int	flags;
-	const ECDSA_METHOD *meth;
-	CRYPTO_EX_DATA ex_data;
-} ECDSA_DATA;
-
 struct ECDSA_SIG_st {
 	BIGNUM *r;
 	BIGNUM *s;
 };
-
-/** ecdsa_check
- * checks whether ECKEY->meth_data is a pointer to a ECDSA_DATA structure
- * and if not it removes the old meth_data and creates a ECDSA_DATA structure.
- * \param  eckey pointer to a EC_KEY object
- * \return pointer to a ECDSA_DATA structure
- */
-ECDSA_DATA *ecdsa_check(EC_KEY *eckey);
 
 int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
     BIGNUM **rp);
