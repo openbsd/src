@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.21 2023/06/25 19:14:14 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.22 2023/06/25 19:17:43 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -137,10 +137,4 @@ void *
 ECDH_get_ex_data(EC_KEY *d, int idx)
 {
 	return NULL;
-}
-
-int
-ECDH_size(const EC_KEY *d)
-{
-	return ((EC_GROUP_get_degree(EC_KEY_get0_group(d)) + 7) / 8);
 }

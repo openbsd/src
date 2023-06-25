@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.16 2023/06/25 19:04:35 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.17 2023/06/25 19:17:43 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -198,4 +198,10 @@ ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		return eckey->meth->compute_key(out, outlen, pub_key, eckey, KDF);
 	ECerror(EC_R_NOT_IMPLEMENTED);
 	return 0;
+}
+
+int
+ECDH_size(const EC_KEY *d)
+{
+	return ((EC_GROUP_get_degree(EC_KEY_get0_group(d)) + 7) / 8);
 }
