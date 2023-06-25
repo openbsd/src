@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.17 2023/06/24 18:21:07 jsing Exp $ */
+/* $OpenBSD: ec_local.h,v 1.18 2023/06/25 07:50:37 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -280,8 +280,6 @@ void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **,
 void EC_EX_DATA_free_all_data(EC_EXTRA_DATA **);
 void EC_EX_DATA_clear_free_all_data(EC_EXTRA_DATA **);
 
-int ec_group_simple_order_bits(const EC_GROUP *group);
-
 struct ec_point_st {
 	const EC_METHOD *meth;
 
@@ -348,6 +346,7 @@ int ec_GFp_simple_mul_single_ct(const EC_GROUP *, EC_POINT *r, const BIGNUM *sca
 int ec_GFp_simple_mul_double_nonct(const EC_GROUP *, EC_POINT *r, const BIGNUM *g_scalar,
 	const BIGNUM *p_scalar, const EC_POINT *point, BN_CTX *);
 
+int ec_group_simple_order_bits(const EC_GROUP *group);
 int ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p, BN_CTX *ctx);
 
 /* EC_METHOD definitions */
