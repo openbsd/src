@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_internal.h,v 1.14 2023/06/21 07:48:41 jsing Exp $ */
+/*	$OpenBSD: bn_internal.h,v 1.15 2023/06/25 11:42:26 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -80,12 +80,18 @@ bn_clzw(BN_ULONG w)
  */
 
 /*
- * bn_addw() computes (r1:r0) = a + b, where both inputs are single words,
- * producing a double word result. The value of r1 is the carry from the
- * addition.
+ * Default implementations for BN_ULLONG architectures.
+ *
+ * On these platforms the C compiler is generally better at optimising without
+ * the use of inline assembly primitives. However, it can be difficult for the
+ * compiler to see through primitives in order to combine operations, due to
+ * type changes/narrowing. For this reason compound primitives are usually
+ * explicitly provided.
  */
+#ifdef BN_ULLONG
+
 #ifndef HAVE_BN_ADDW
-#ifdef BN_LLONG
+#define HAVE_BN_ADDW
 static inline void
 bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 {
@@ -96,8 +102,75 @@ bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 	*out_r1 = r >> BN_BITS2;
 	*out_r0 = r & BN_MASK2;
 }
-#else
+#endif
 
+#ifndef HAVE_BN_ADDW_ADDW
+#define HAVE_BN_ADDW_ADDW
+static inline void
+bn_addw_addw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_r1,
+    BN_ULONG *out_r0)
+{
+	BN_ULLONG r;
+
+	r = (BN_ULLONG)a + (BN_ULLONG)b + (BN_ULLONG)c;
+
+	*out_r1 = r >> BN_BITS2;
+	*out_r0 = r & BN_MASK2;
+}
+#endif
+
+#ifndef HAVE_BN_MULW
+#define HAVE_BN_MULW
+static inline void
+bn_mulw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULLONG r;
+
+	r = (BN_ULLONG)a * (BN_ULLONG)b;
+
+	*out_r1 = r >> BN_BITS2;
+	*out_r0 = r & BN_MASK2;
+}
+#endif
+
+#ifndef HAVE_BN_MULW_ADDW
+#define HAVE_BN_MULW_ADDW
+static inline void
+bn_mulw_addw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG *out_r1,
+    BN_ULONG *out_r0)
+{
+	BN_ULLONG r;
+
+	r = (BN_ULLONG)a * (BN_ULLONG)b + (BN_ULLONG)c;
+
+	*out_r1 = r >> BN_BITS2;
+	*out_r0 = r & BN_MASK2;
+}
+#endif
+
+#ifndef HAVE_BN_MULW_ADDW_ADDW
+#define HAVE_BN_MULW_ADDW_ADDW
+static inline void
+bn_mulw_addw_addw(BN_ULONG a, BN_ULONG b, BN_ULONG c, BN_ULONG d,
+    BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULLONG r;
+
+	r = (BN_ULLONG)a * (BN_ULLONG)b + (BN_ULLONG)c + (BN_ULLONG)d;
+
+	*out_r1 = r >> BN_BITS2;
+	*out_r0 = r & BN_MASK2;
+}
+#endif
+
+#endif /* !BN_ULLONG */
+
+/*
+ * bn_addw() computes (r1:r0) = a + b, where both inputs are single words,
+ * producing a double word result. The value of r1 is the carry from the
+ * addition.
+ */
+#ifndef HAVE_BN_ADDW
 static inline void
 bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 {
@@ -111,7 +184,6 @@ bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 	*out_r1 = r1;
 	*out_r0 = r0;
 }
-#endif
 #endif
 
 /*
@@ -230,19 +302,6 @@ bn_qwsubqw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0, BN_ULONG b3,
  * producing a double word result.
  */
 #ifndef HAVE_BN_MULW
-#ifdef BN_LLONG
-static inline void
-bn_mulw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
-{
-	BN_ULLONG r;
-
-	r = (BN_ULLONG)a * (BN_ULLONG)b;
-
-	*out_r1 = r >> BN_BITS2;
-	*out_r0 = r & BN_MASK2;
-}
-
-#else /* !BN_LLONG */
 /*
  * Multiply two words (a * b) producing a double word result (h:l).
  *
@@ -339,7 +398,6 @@ bn_mulw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
 	*out_r0 = (acc1 << BN_BITS4) | acc0;
 }
 #endif
-#endif /* !BN_LLONG */
 #endif
 
 #ifndef HAVE_BN_MULW_LO
