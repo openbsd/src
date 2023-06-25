@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.20 2023/06/25 18:45:56 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.21 2023/06/25 19:04:35 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -67,6 +67,19 @@
 #include "ecs_local.h"
 
 static const ECDSA_METHOD *default_ECDSA_method = NULL;
+
+static const ECDSA_METHOD openssl_ecdsa_meth = {
+	.name = "OpenSSL ECDSA method",
+	.ecdsa_do_sign = ossl_ecdsa_sign_sig,
+	.ecdsa_sign_setup = ossl_ecdsa_sign_setup,
+	.ecdsa_do_verify = ossl_ecdsa_verify_sig,
+};
+
+const ECDSA_METHOD *
+ECDSA_OpenSSL(void)
+{
+	return &openssl_ecdsa_meth;
+}
 
 void
 ECDSA_set_default_method(const ECDSA_METHOD *meth)

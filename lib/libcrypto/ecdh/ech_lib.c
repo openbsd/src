@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.19 2023/06/25 18:45:56 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.20 2023/06/25 19:04:35 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -80,6 +80,17 @@
 #include "ech_local.h"
 
 static const ECDH_METHOD *default_ECDH_method = NULL;
+
+static const ECDH_METHOD openssl_ecdh_meth = {
+	.name = "OpenSSL ECDH method",
+	.compute_key = ossl_ecdh_compute_key,
+};
+
+const ECDH_METHOD *
+ECDH_OpenSSL(void)
+{
+	return &openssl_ecdh_meth;
+}
 
 void
 ECDH_set_default_method(const ECDH_METHOD *meth)

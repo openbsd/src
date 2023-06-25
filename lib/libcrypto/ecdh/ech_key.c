@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.15 2023/06/25 18:41:36 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.16 2023/06/25 19:04:35 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -187,17 +187,6 @@ err:
 	BN_CTX_free(ctx);
 	free(buf);
 	return (ret);
-}
-
-static ECDH_METHOD openssl_ecdh_meth = {
-	.name = "OpenSSL ECDH method",
-	.compute_key = ossl_ecdh_compute_key,
-};
-
-const ECDH_METHOD *
-ECDH_OpenSSL(void)
-{
-	return &openssl_ecdh_meth;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.35 2023/06/25 18:41:36 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.36 2023/06/25 19:04:35 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -71,19 +71,6 @@
 
 static int ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len,
     BIGNUM *order, BIGNUM *ret);
-
-static ECDSA_METHOD openssl_ecdsa_meth = {
-	.name = "OpenSSL ECDSA method",
-	.ecdsa_do_sign = ossl_ecdsa_sign_sig,
-	.ecdsa_sign_setup = ossl_ecdsa_sign_setup,
-	.ecdsa_do_verify = ossl_ecdsa_verify_sig,
-};
-
-const ECDSA_METHOD *
-ECDSA_OpenSSL(void)
-{
-	return &openssl_ecdsa_meth;
-}
 
 static int
 ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len, BIGNUM *order,
