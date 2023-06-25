@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.21 2023/06/25 19:04:35 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.22 2023/06/25 19:33:39 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -100,38 +100,6 @@ int
 ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth)
 {
 	return 0;
-}
-
-int
-ECDSA_size(const EC_KEY *r)
-{
-	BIGNUM *order = NULL;
-	const EC_GROUP *group;
-	ECDSA_SIG signature;
-	int ret = 0;
-
-	if (r == NULL)
-		goto err;
-
-	if ((group = EC_KEY_get0_group(r)) == NULL)
-		goto err;
-
-	if ((order = BN_new()) == NULL)
-		goto err;
-
-	if (!EC_GROUP_get_order(group, order, NULL))
-		goto err;
-
-	signature.r = order;
-	signature.s = order;
-
-	if ((ret = i2d_ECDSA_SIG(&signature, NULL)) < 0)
-		ret = 0;
-
- err:
-	BN_free(order);
-
-	return ret;
 }
 
 int

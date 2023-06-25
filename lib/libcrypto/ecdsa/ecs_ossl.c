@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.36 2023/06/25 19:04:35 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.37 2023/06/25 19:33:39 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -579,4 +579,36 @@ ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
 		    sigbuf, sig_len, eckey);
 	ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
 	return 0;
+}
+
+int
+ECDSA_size(const EC_KEY *r)
+{
+	BIGNUM *order = NULL;
+	const EC_GROUP *group;
+	ECDSA_SIG signature;
+	int ret = 0;
+
+	if (r == NULL)
+		goto err;
+
+	if ((group = EC_KEY_get0_group(r)) == NULL)
+		goto err;
+
+	if ((order = BN_new()) == NULL)
+		goto err;
+
+	if (!EC_GROUP_get_order(group, order, NULL))
+		goto err;
+
+	signature.r = order;
+	signature.s = order;
+
+	if ((ret = i2d_ECDSA_SIG(&signature, NULL)) < 0)
+		ret = 0;
+
+ err:
+	BN_free(order);
+
+	return ret;
 }
