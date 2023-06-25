@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.43 2021/12/05 13:48:14 jsg Exp $	*/
+/*	$OpenBSD: config.c,v 1.44 2023/06/25 08:07:38 op Exp $	*/
 
 /*
  * Copyright (c) 2011 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -293,7 +293,6 @@ config_getcfg(struct relayd *env, struct imsg *imsg)
 	}
 
 	if (env->sc_conf.flags & (F_TLS|F_TLSCLIENT)) {
-		ssl_init(env);
 		if (what & CONFIG_CA_ENGINE)
 			ca_engine_init(env);
 	}

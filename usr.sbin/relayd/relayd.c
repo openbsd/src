@@ -1,4 +1,4 @@
-/*	$OpenBSD: relayd.c,v 1.190 2022/11/10 00:00:11 mbuhl Exp $	*/
+/*	$OpenBSD: relayd.c,v 1.191 2023/06/25 08:07:38 op Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -254,9 +254,6 @@ main(int argc, char *argv[])
 		proc_kill(env->sc_ps);
 		exit(0);
 	}
-
-	if (env->sc_conf.flags & (F_TLS|F_TLSCLIENT))
-		ssl_init(env);
 
 	/* rekey the TLS tickets before pushing the config */
 	parent_tls_ticket_rekey(0, 0, env);

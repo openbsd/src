@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.c,v 1.36 2021/12/08 19:25:04 tb Exp $	*/
+/*	$OpenBSD: ssl.c,v 1.37 2023/06/25 08:07:39 op Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -27,29 +27,10 @@
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <openssl/engine.h>
 
 #include "relayd.h"
 
 int	ssl_password_cb(char *, int, int, void *);
-
-void
-ssl_init(struct relayd *env)
-{
-	static int	 initialized = 0;
-
-	if (initialized)
-		return;
-
-	SSL_library_init();
-	SSL_load_error_strings();
-
-	/* Init hardware crypto engines. */
-	ENGINE_load_builtin_engines();
-	ENGINE_register_all_complete();
-
-	initialized = 1;
-}
 
 int
 ssl_password_cb(char *buf, int size, int rwflag, void *u)
@@ -72,9 +53,6 @@ ssl_load_key(struct relayd *env, const char *name, off_t *len, char *pass)
 	BIO		*bio = NULL;
 	long		 size;
 	char		*data, *buf = NULL;
-
-	/* Initialize SSL library once */
-	ssl_init(env);
 
 	/*
 	 * Read (possibly) encrypted key from file
