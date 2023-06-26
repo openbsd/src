@@ -1,4 +1,4 @@
-/* $OpenBSD: screen.c,v 1.81 2022/06/30 09:55:53 nicm Exp $ */
+/* $OpenBSD: screen.c,v 1.82 2023/06/26 08:14:19 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -626,7 +626,7 @@ screen_alternate_off(struct screen *s, struct grid_cell *gc, int cursor)
 	 * before copying back.
 	 */
 	if (s->saved_grid != NULL)
-		screen_resize(s, s->saved_grid->sx, s->saved_grid->sy, 1);
+		screen_resize(s, s->saved_grid->sx, s->saved_grid->sy, 0);
 
 	/*
 	 * Restore the cursor position and cell. This happens even if not
