@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.366 2023/06/26 07:49:48 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.367 2023/06/26 07:52:18 claudio Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -71,7 +71,7 @@
 #include <sys/domain.h>
 #include <sys/pool.h>
 #include <sys/protosw.h>
-#include <sys/smr.h>
+#include <sys/srp.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -107,6 +107,8 @@ struct walkarg {
 };
 
 void	route_prinit(void);
+void	rcb_ref(void *, void *);
+void	rcb_unref(void *, void *);
 int	route_output(struct mbuf *, struct socket *);
 int	route_ctloutput(int, struct socket *, int, int, struct mbuf *);
 int	route_attach(struct socket *, int, int);
@@ -153,7 +155,7 @@ int		 rt_setsource(unsigned int, struct sockaddr *);
 struct rtpcb {
 	struct socket		*rop_socket;		/* [I] */
 
-	SMR_LIST_ENTRY(rtpcb)	rop_list;
+	SRPL_ENTRY(rtpcb)	rop_list;
 	struct refcnt		rop_refcnt;
 	struct timeout		rop_timeout;
 	unsigned int		rop_msgfilter;		/* [s] */
@@ -166,7 +168,8 @@ struct rtpcb {
 #define	sotortpcb(so)	((struct rtpcb *)(so)->so_pcb)
 
 struct rtptable {
-	SMR_LIST_HEAD(, rtpcb)	rtp_list;
+	SRPL_HEAD(, rtpcb)	rtp_list;
+	struct srpl_rc		rtp_rc;
 	struct rwlock		rtp_lk;
 	unsigned int		rtp_count;
 };
@@ -188,10 +191,27 @@ struct rtptable rtptable;
 void
 route_prinit(void)
 {
+	srpl_rc_init(&rtptable.rtp_rc, rcb_ref, rcb_unref, NULL);
 	rw_init(&rtptable.rtp_lk, "rtsock");
-	SMR_LIST_INIT(&rtptable.rtp_list);
+	SRPL_INIT(&rtptable.rtp_list);
 	pool_init(&rtpcb_pool, sizeof(struct rtpcb), 0,
 	    IPL_SOFTNET, PR_WAITOK, "rtpcb", NULL);
+}
+
+void
+rcb_ref(void *null, void *v)
+{
+	struct rtpcb *rop = v;
+
+	refcnt_take(&rop->rop_refcnt);
+}
+
+void
+rcb_unref(void *null, void *v)
+{
+	struct rtpcb *rop = v;
+
+	refcnt_rele_wake(&rop->rop_refcnt);
 }
 
 int
@@ -212,7 +232,7 @@ route_attach(struct socket *so, int proto, int wait)
 	    PR_ZERO);
 	if (rop == NULL)
 		return (ENOBUFS);
-
+	so->so_pcb = rop;
 	/* Init the timeout structure */
 	timeout_set_proc(&rop->rop_timeout, rtm_senddesync_timer, so);
 	refcnt_init(&rop->rop_refcnt);
@@ -222,12 +242,12 @@ route_attach(struct socket *so, int proto, int wait)
 
 	rop->rop_rtableid = curproc->p_p->ps_rtableid;
 
-	so->so_pcb = rop;
 	soisconnected(so);
 	so->so_options |= SO_USELOOPBACK;
 
 	rw_enter(&rtptable.rtp_lk, RW_WRITE);
-	SMR_LIST_INSERT_HEAD_LOCKED(&rtptable.rtp_list, rop, rop_list);
+	SRPL_INSERT_HEAD_LOCKED(&rtptable.rtp_rc, &rtptable.rtp_list, rop,
+	    rop_list);
 	rtptable.rtp_count++;
 	rw_exit(&rtptable.rtp_lk);
 
@@ -248,13 +268,13 @@ route_detach(struct socket *so)
 	rw_enter(&rtptable.rtp_lk, RW_WRITE);
 
 	rtptable.rtp_count--;
-	SMR_LIST_REMOVE_LOCKED(rop, rop_list);
+	SRPL_REMOVE_LOCKED(&rtptable.rtp_rc, &rtptable.rtp_list, rop, rtpcb,
+	    rop_list);
 	rw_exit(&rtptable.rtp_lk);
 
 	sounlock(so);
 
 	/* wait for all references to drop */
-	smr_barrier();
 	refcnt_finalize(&rop->rop_refcnt, "rtsockrefs");
 	timeout_del_barrier(&rop->rop_timeout);
 
@@ -351,8 +371,6 @@ route_ctloutput(int op, struct socket *so, int level, int optname,
 
 	if (level != AF_ROUTE)
 		return (EINVAL);
-
-	soassertlocked(so);
 
 	switch (op) {
 	case PRCO_SETOPT:
@@ -475,9 +493,10 @@ void
 route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 {
 	struct socket *so;
-	struct rtpcb *rop, *nrop;
+	struct rtpcb *rop;
 	struct rt_msghdr *rtm;
 	struct mbuf *m = m0;
+	struct srp_ref sr;
 
 	/* ensure that we can access the rtm_type via mtod() */
 	if (m->m_len < offsetof(struct rt_msghdr, rtm_type) + 1) {
@@ -485,22 +504,17 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 		return;
 	}
 
-	smr_read_enter();
-	rop = SMR_LIST_FIRST(&rtptable.rtp_list);
-	while (rop != NULL) {
+	SRPL_FOREACH(rop, &sr, &rtptable.rtp_list, rop_list) {
 		/*
 		 * If route socket is bound to an address family only send
 		 * messages that match the address family. Address family
 		 * agnostic messages are always sent.
 		 */
 		if (sa_family != AF_UNSPEC && rop->rop_proto != AF_UNSPEC &&
-		    rop->rop_proto != sa_family) {
-			rop = SMR_LIST_NEXT(rop, rop_list);
+		    rop->rop_proto != sa_family)
 			continue;
-		}
 
-		refcnt_take(&rop->rop_refcnt);
-		smr_read_leave();
+
 		so = rop->rop_socket;
 		solock(so);
 
@@ -560,12 +574,8 @@ route_input(struct mbuf *m0, struct socket *so0, sa_family_t sa_family)
 		rtm_sendup(so, m);
 next:
 		sounlock(so);
-		smr_read_enter();
-		nrop = SMR_LIST_NEXT(rop, rop_list);
-		refcnt_rele_wake(&rop->rop_refcnt);
-		rop = nrop;
 	}
-	smr_read_leave();
+	SRPL_LEAVE(&sr);
 
 	m_freem(m);
 }
