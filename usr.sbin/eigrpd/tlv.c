@@ -1,4 +1,4 @@
-/*	$OpenBSD: tlv.c,v 1.16 2021/11/03 13:48:46 deraadt Exp $ */
+/*	$OpenBSD: tlv.c,v 1.17 2023/06/26 14:07:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,13 +52,14 @@ gen_parameter_tlv(struct ibuf *buf, struct eigrp_iface *ei, int peerterm)
 int
 gen_sequence_tlv(struct ibuf *buf, struct seq_addr_head *seq_addr_list)
 {
-	struct tlv		 tlv, *tlvp;
+	struct tlv		 tlv;
 	struct seq_addr_entry	*sa;
 	uint8_t			 alen;
 	uint16_t		 len = TLV_HDR_LEN;
-	size_t			 original_size = ibuf_size(buf);
+	size_t			 off;
 
 	tlv.type = htons(TLV_TYPE_SEQ);
+	off = ibuf_size(buf) + offsetof(struct tlv, length);
 	if (ibuf_add(buf, &tlv, sizeof(tlv))) {
 		log_warn("%s: ibuf_add failed", __func__);
 		return (-1);
@@ -85,9 +87,8 @@ gen_sequence_tlv(struct ibuf *buf, struct seq_addr_head *seq_addr_list)
 	}
 
 	/* adjust tlv length */
-	if ((tlvp = ibuf_seek(buf, original_size, sizeof(*tlvp))) == NULL)
-                fatalx("gen_sequence_tlv: buf_seek failed");
-	tlvp->length = htons(len);
+	if (ibuf_set_n16(buf, off, len) == -1)
+                fatalx("gen_sequence_tlv: buf_set_n16 failed");
 
 	return (0);
 }
@@ -158,13 +159,13 @@ len_route_tlv(struct rinfo *ri)
 int
 gen_route_tlv(struct ibuf *buf, struct rinfo *ri)
 {
-	struct tlv		 tlv, *tlvp;
+	struct tlv		 tlv;
 	struct in_addr		 addr;
 	struct classic_metric	 metric;
 	struct classic_emetric	 emetric;
 	uint16_t		 tlvlen;
 	uint8_t			 pflen;
-	size_t			 original_size = ibuf_size(buf);
+	size_t			 off;
 
 	switch (ri->af) {
 	case AF_INET:
@@ -189,6 +190,7 @@ gen_route_tlv(struct ibuf *buf, struct rinfo *ri)
 	}
 	tlv.type = htons(tlv.type);
 
+	off = ibuf_size(buf) + offsetof(struct tlv, length);
 	if (ibuf_add(buf, &tlv, sizeof(tlv)))
 		return (-1);
 	tlvlen = TLV_HDR_LEN;
@@ -251,9 +253,8 @@ gen_route_tlv(struct ibuf *buf, struct rinfo *ri)
 	tlvlen += sizeof(pflen) + pflen;
 
 	/* adjust tlv length */
-	if ((tlvp = ibuf_seek(buf, original_size, sizeof(*tlvp))) == NULL)
-                fatalx("gen_route_tlv: buf_seek failed");
-	tlvp->length = htons(tlvlen);
+	if (ibuf_set_n16(buf, off, tlvlen) == -1)
+                fatalx("gen_route_tlv: buf_set_n16 failed");
 
 	return (0);
 }

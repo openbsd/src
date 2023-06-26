@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.20 2021/01/19 11:49:26 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.21 2023/06/26 14:07:19 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -172,12 +172,11 @@ send_packet(struct eigrp_iface *ei, struct nbr *nbr, uint32_t flags,
 		eigrp_hdr->ack_num = htonl(nbr->recv_seq);
 		rtp_ack_stop_timer(nbr);
 	}
-	if (flags) {
-		eigrp_hdr->flags = ntohl(eigrp_hdr->flags) | flags;
-		eigrp_hdr->flags = htonl(eigrp_hdr->flags);
-	}
+	if (flags)
+		eigrp_hdr->flags |= htonl(flags);
+	
 	eigrp_hdr->chksum = 0;
-	eigrp_hdr->chksum = in_cksum(buf->buf, ibuf_size(buf));
+	eigrp_hdr->chksum = in_cksum(ibuf_data(buf), ibuf_size(buf));
 
 	/* log packet being sent */
 	if (eigrp_hdr->opcode != EIGRP_OPC_HELLO) {
