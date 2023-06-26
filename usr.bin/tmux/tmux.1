@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.920 2023/05/19 07:46:34 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.921 2023/06/26 07:17:40 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 19 2023 $
+.Dd $Mdocdate: June 26 2023 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -5384,6 +5384,8 @@ for the terminal default colour; or a hexadecimal RGB string such as
 .Ql #ffffff .
 .It Ic bg=colour
 Set the background colour.
+.It Ic us=colour
+Set the underscore colour.
 .It Ic none
 Set no attributes (turn off any active attributes).
 .It Xo Ic acs ,
