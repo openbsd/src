@@ -1,4 +1,4 @@
-/*	$OpenBSD: conn.c,v 1.20 2023/04/30 23:49:14 jsg Exp $ */
+/*	$OpenBSD: conn.c,v 1.21 2023/06/26 10:28:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Martin Hedenfalk <martin@bzero.se>
@@ -242,7 +242,8 @@ conn_err(struct bufferevent *bev, short why, void *data)
 	else if ((why & EVBUFFER_TIMEOUT) == EVBUFFER_TIMEOUT)
 		log_debug("timeout on connection %d", conn->fd);
 	else
-		log_warnx("error 0x%02X on connection %d", why, conn->fd);
+		log_warn("%s error on connection %d",
+		    why & EVBUFFER_WRITE ? "write" : "read", conn->fd);
 
 	conn_close(conn);
 }
