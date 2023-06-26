@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.44 2022/01/28 05:15:05 guenther Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.45 2023/06/26 07:10:17 op Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -257,8 +257,8 @@ pat_add(char *str, char *chdirname)
 
 /*
  * pat_chk()
- *	complain if any the user supplied pattern did not result in a match to
- *	a selected archive member.
+ *	complain if any of the user supplied patterns did not result in
+ *	a match to a selected archive member.
  */
 
 void
