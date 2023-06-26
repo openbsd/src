@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subs.c,v 1.17 2016/08/26 04:22:13 guenther Exp $	*/
+/*	$OpenBSD: tty_subs.c,v 1.18 2023/06/26 16:58:50 millert Exp $	*/
 /*	$NetBSD: tty_subs.c,v 1.5 1995/03/21 09:07:52 cgd Exp $	*/
 
 /*-
@@ -90,14 +90,14 @@ void
 tty_prnt(const char *fmt, ...)
 {
 	va_list ap;
+	char buf[8192];
 
-	va_start(ap, fmt);
-	if (ttyoutf == NULL) {
-		va_end(ap);
+	if (ttyoutf == NULL)
 		return;
-	}
-	(void)vfprintf(ttyoutf, fmt, ap);
+	va_start(ap, fmt);
+	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
+	safe_print(buf, ttyoutf);
 	(void)fflush(ttyoutf);
 }
 
@@ -132,8 +132,8 @@ void
 paxwarn(int set, const char *fmt, ...)
 {
 	va_list ap;
+	char buf[8192];
 
-	va_start(ap, fmt);
 	if (set)
 		exit_val = 1;
 	/*
@@ -146,8 +146,10 @@ paxwarn(int set, const char *fmt, ...)
 		vfpart = 0;
 	}
 	(void)fprintf(stderr, "%s: ", argv0);
-	(void)vfprintf(stderr, fmt, ap);
+	va_start(ap, fmt);
+	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
+	safe_print(buf, stderr);
 	(void)fputc('\n', stderr);
 }
 
@@ -161,8 +163,8 @@ void
 syswarn(int set, int errnum, const char *fmt, ...)
 {
 	va_list ap;
+	char buf[8192];
 
-	va_start(ap, fmt);
 	if (set)
 		exit_val = 1;
 	/*
@@ -175,8 +177,10 @@ syswarn(int set, int errnum, const char *fmt, ...)
 		vfpart = 0;
 	}
 	(void)fprintf(stderr, "%s: ", argv0);
-	(void)vfprintf(stderr, fmt, ap);
+	va_start(ap, fmt);
+	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
+	safe_print(buf, stderr);
 
 	/*
 	 * format and print the errno
