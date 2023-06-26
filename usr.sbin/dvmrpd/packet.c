@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.7 2021/01/19 16:02:56 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.8 2023/06/26 10:08:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -27,6 +27,7 @@
 
 #include <errno.h>
 #include <event.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -61,8 +62,10 @@ gen_dvmrp_hdr(struct ibuf *buf, struct iface *iface, u_int8_t code)
 
 /* send and receive packets */
 int
-send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
+send_packet(struct iface *iface, struct ibuf *pkt, struct sockaddr_in *dst)
 {
+	u_int16_t	chksum;
+
 	if (iface->passive) {
 		log_warnx("send_packet: cannot send packet on passive "
 		    "interface %s", iface->name);
@@ -77,7 +80,15 @@ send_packet(struct iface *iface, void *pkt, size_t len, struct sockaddr_in *dst)
 			return (-1);
 		}
 
-	if (sendto(iface->fd, pkt, len, 0,
+	/* update chksum */
+	chksum = in_cksum(ibuf_data(pkt), ibuf_size(pkt));
+	if (ibuf_set(pkt, offsetof(struct dvmrp_hdr, chksum),
+	    &chksum, sizeof(chksum)) == -1) {
+		log_warn("send_packet: failed to update checksum");
+		return (-1);
+	}
+
+	if (sendto(iface->fd, ibuf_data(pkt), ibuf_size(pkt), 0,
 	    (struct sockaddr *)dst, sizeof(*dst)) == -1 ) {
 		log_warn("send_packet: error sending packet on interface %s",
 		    iface->name);

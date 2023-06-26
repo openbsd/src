@@ -1,4 +1,4 @@
-/*	$OpenBSD: report.c,v 1.11 2015/12/07 18:59:31 mmcc Exp $ */
+/*	$OpenBSD: report.c,v 1.12 2023/06/26 10:08:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 Esben Norby <norby@openbsd.org>
@@ -41,7 +41,6 @@ send_report(struct iface *iface, struct in_addr addr, void *data, int len)
 {
 	struct sockaddr_in	 dst;
 	struct ibuf		*buf;
-	struct dvmrp_hdr	*dvmrp_hdr;
 	int			 ret = 0;
 
 	log_debug("send_report: interface %s addr %s",
@@ -63,11 +62,7 @@ send_report(struct iface *iface, struct in_addr addr, void *data, int len)
 	dst.sin_len = sizeof(struct sockaddr_in);
 	dst.sin_addr.s_addr = addr.s_addr;
 
-	/* update chksum */
-	dvmrp_hdr = ibuf_seek(buf, 0, sizeof(*dvmrp_hdr));
-	dvmrp_hdr->chksum = in_cksum(buf->buf, buf->wpos);
-
-	ret = send_packet(iface, buf->buf, buf->wpos, &dst);
+	ret = send_packet(iface, buf, &dst);
 	ibuf_free(buf);
 	return (ret);
 fail:
@@ -247,7 +242,7 @@ rr_list_send(struct rr_head *rr_list, struct iface *xiface, struct nbr *nbr)
 
 		prefixlen = 0;
 		while (((le = TAILQ_FIRST(rr_list)) != NULL) &&
-		    (buf->wpos < 1000)) {
+		    (ibuf_size(buf) < 1000)) {
 			/* netmask */
 			netmask = le->re->mask.s_addr;
 			if (prefixlen != mask2prefixlen(netmask)) {
@@ -288,7 +283,7 @@ rr_list_send(struct rr_head *rr_list, struct iface *xiface, struct nbr *nbr)
 			rr_list_remove(le->re);
 			free(le);
 		}
-		send_report(iface, addr, buf->buf, buf->wpos);
+		send_report(iface, addr, ibuf_data(buf), ibuf_size(buf));
 		ibuf_free(buf);
 	}
 }
