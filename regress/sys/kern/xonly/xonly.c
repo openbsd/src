@@ -1,4 +1,4 @@
-/*	$OpenBSD: xonly.c,v 1.1 2023/01/18 19:18:49 anton Exp $	*/
+/*	$OpenBSD: xonly.c,v 1.2 2023/06/26 19:03:03 guenther Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -26,6 +26,8 @@ void *setup_mmap_nrx(void);
 void *setup_mmap_nwx(void);
 void *setup_mmap_xnwx(void);
 
+char	***_csu_finish(char **_argv, char **_envp, void (*_cleanup)(void));
+
 struct outcome {
 	int uu;
 	int ku;
@@ -46,11 +48,11 @@ struct readable {
 	{ "mmap nwx",	setup_mmap_nwx, 0,	NULL,	0, {} },
 	{ "mmap xnwx",	setup_mmap_xnwx, 0,	NULL,	0, {} },
 	{ "main",	NULL, 1,		&main,	0, {} },
-	{ "libc",	NULL, 1,		&open,	0, {} },
+	{ "libc",	NULL, 1,		&_csu_finish, 0, {} },
 };
 
 static struct outcome expectations[2][8] = {
-#if defined(__aarch64__)
+#if defined(__aarch64__) || defined(__amd64__)
 	[0] = {
 		/* ld.so */	{ UNREADABLE,	UNREADABLE },
 		/* mmap xz */	{ UNREADABLE,	UNREADABLE },
@@ -61,20 +63,21 @@ static struct outcome expectations[2][8] = {
 		/* main */	{ UNREADABLE,	UNREADABLE },
 		/* libc */	{ UNREADABLE,	UNREADABLE },
 	},
-#elif defined(__amd64__)
+#else
+#error "unknown architecture"
+#endif
+#if defined(__amd64__)
 	/* PKU not available. */
-	[0] = {
-		/* ld.so */	{ READABLE,	READABLE },
+	[1] = {
+		/* ld.so */	{ READABLE,	UNREADABLE },
 		/* mmap xz */	{ UNREADABLE,	UNREADABLE },
 		/* mmap x */	{ READABLE,	READABLE },
 		/* mmap nrx */	{ READABLE,	READABLE },
 		/* mmap nwx */	{ READABLE,	READABLE },
 		/* mmap xnwx */	{ READABLE,	READABLE },
-		/* main */	{ READABLE,	READABLE },
-		/* libc */	{ READABLE,	READABLE },
+		/* main */	{ READABLE,	UNREADABLE },
+		/* libc */	{ READABLE,	UNREADABLE },
 	},
-#else
-#error "unknown architecture"
 #endif
 };
 
@@ -186,6 +189,17 @@ main(void)
 	size_t i;
 	int p[2];
 	int error = 0;
+	const struct outcome *desires = expectations[0];
+
+#if defined(__amd64__)
+	{
+		uint32_t ebx, ecx, edx;
+		asm("cpuid" : "=b" (ebx), "=c" (ecx), "=d" (edx) : "a" (7), "c" (0));
+		if ((ecx & 8) == 0) /* SEFF0ECX_PKU */
+			desires = expectations[1];
+	}
+#endif
+
 
 	signal(SIGSEGV, sigsegv);
 	signal(SIGBUS, sigsegv);
@@ -222,7 +236,7 @@ main(void)
 			printf("%-16s  %18p  %-12s %-12s\n", r->name, r->addr,
 			    "skipped", "skipped");
 		} else {
-			const struct outcome *want = &expectations[0][i];
+			const struct outcome *want = &desires[i];
 
 			if (r->got.uu != want->uu || r->got.ku != want->ku)
 				error++;
