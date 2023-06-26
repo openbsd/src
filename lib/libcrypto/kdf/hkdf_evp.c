@@ -1,4 +1,4 @@
-/*	$OpenBSD: hkdf_evp.c,v 1.19 2022/11/26 16:08:53 tb Exp $ */
+/*	$OpenBSD: hkdf_evp.c,v 1.20 2023/06/26 08:57:17 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2016-2018 The OpenSSL Project.  All rights reserved.
  *
@@ -129,10 +129,17 @@ pkey_hkdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 
 	case EVP_PKEY_CTRL_HKDF_KEY:
-		if (p1 <= 0)
+		if (p1 < 0)
 			return 0;
 
 		freezero(kctx->key, kctx->key_len);
+		kctx->key = NULL;
+		kctx->key_len = 0;
+
+		/* Match OpenSSL's behavior. */
+		if (p1 == 0 || p2 == NULL)
+			return 0;
+
 		if ((kctx->key = malloc(p1)) == NULL)
 			return 0;
 		memcpy(kctx->key, p2, p1);
