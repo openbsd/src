@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.18 2023/06/07 10:46:34 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.19 2023/06/26 18:39:53 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -47,32 +47,15 @@ extern ASN1_OBJECT	*aspa_oid;
  */
 
 typedef struct {
-	ASN1_INTEGER		*providerASID;
-	ASN1_OCTET_STRING	*afiLimit;
-} ProviderAS;
-
-DECLARE_STACK_OF(ProviderAS);
-
-#ifndef DEFINE_STACK_OF
-#define sk_ProviderAS_num(sk)		SKM_sk_num(ProviderAS, (sk))
-#define sk_ProviderAS_value(sk, i)	SKM_sk_value(ProviderAS, (sk), (i))
-#endif
-
-ASN1_SEQUENCE(ProviderAS) = {
-	ASN1_SIMPLE(ProviderAS, providerASID, ASN1_INTEGER),
-	ASN1_OPT(ProviderAS, afiLimit, ASN1_OCTET_STRING),
-} ASN1_SEQUENCE_END(ProviderAS);
-
-typedef struct {
 	ASN1_INTEGER		*version;
 	ASN1_INTEGER		*customerASID;
-	STACK_OF(ProviderAS)	*providers;
+	STACK_OF(ASN1_INTEGER)	*providers;
 } ASProviderAttestation;
 
 ASN1_SEQUENCE(ASProviderAttestation) = {
 	ASN1_EXP_OPT(ASProviderAttestation, version, ASN1_INTEGER, 0),
 	ASN1_SIMPLE(ASProviderAttestation, customerASID, ASN1_INTEGER),
-	ASN1_SEQUENCE_OF(ASProviderAttestation, providers, ProviderAS),
+	ASN1_SEQUENCE_OF(ASProviderAttestation, providers, ASN1_INTEGER),
 } ASN1_SEQUENCE_END(ASProviderAttestation);
 
 DECLARE_ASN1_FUNCTIONS(ASProviderAttestation);
@@ -83,13 +66,13 @@ IMPLEMENT_ASN1_FUNCTIONS(ASProviderAttestation);
  * Return zero on failure, non-zero on success.
  */
 static int
-aspa_parse_providers(struct parse *p, const STACK_OF(ProviderAS) *providers)
+aspa_parse_providers(struct parse *p, const STACK_OF(ASN1_INTEGER) *providers)
 {
-	ProviderAS		*pa;
-	struct aspa_provider	 provider;
+	const ASN1_INTEGER	*pa;
+	uint32_t		 provider;
 	size_t			 providersz, i;
 
-	if ((providersz = sk_ProviderAS_num(providers)) == 0) {
+	if ((providersz = sk_ASN1_INTEGER_num(providers)) == 0) {
 		warnx("%s: ASPA: ProviderASSet needs at least one entry",
 		    p->fn);
 		return 0;
@@ -106,37 +89,31 @@ aspa_parse_providers(struct parse *p, const STACK_OF(ProviderAS) *providers)
 		err(1, NULL);
 
 	for (i = 0; i < providersz; i++) {
-		pa = sk_ProviderAS_value(providers, i);
+		pa = sk_ASN1_INTEGER_value(providers, i);
 
 		memset(&provider, 0, sizeof(provider));
 
-		if (!as_id_parse(pa->providerASID, &provider.as)) {
+		if (!as_id_parse(pa, &provider)) {
 			warnx("%s: ASPA: malformed ProviderAS", p->fn);
 			return 0;
 		}
 
-		if (p->res->custasid == provider.as) {
+		if (p->res->custasid == provider) {
 			warnx("%s: ASPA: CustomerASID can't also be Provider",
 			    p->fn);
 			return 0;
 		}
 
 		if (i > 0) {
-			if  (p->res->providers[i - 1].as > provider.as) {
+			if  (p->res->providers[i - 1] > provider) {
 				warnx("%s: ASPA: invalid ProviderASSet order",
 				    p->fn);
 				return 0;
 			}
-			if (p->res->providers[i - 1].as == provider.as) {
+			if (p->res->providers[i - 1] == provider) {
 				warnx("%s: ASPA: duplicate ProviderAS", p->fn);
 				return 0;
 			}
-		}
-
-		if (pa->afiLimit != NULL && !ip_addr_afi_parse(p->fn,
-		    pa->afiLimit, &provider.afi)) {
-			warnx("%s: ASPA: invalid afiLimit", p->fn);
-			return 0;
 		}
 
 		p->res->providers[p->res->providersz++] = provider;
@@ -161,7 +138,7 @@ aspa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 		goto out;
 	}
 
-	if (!valid_econtent_version(p->fn, aspa->version, 0))
+	if (!valid_econtent_version(p->fn, aspa->version, 1))
 		goto out;
 
 	if (!as_id_parse(aspa->customerASID, &p->res->custasid)) {
@@ -314,8 +291,7 @@ aspa_read(struct ibuf *b)
 	io_read_buf(b, &p->expires, sizeof(p->expires));
 
 	io_read_buf(b, &p->providersz, sizeof(size_t));
-	if ((p->providers = calloc(p->providersz,
-	    sizeof(struct aspa_provider))) == NULL)
+	if ((p->providers = calloc(p->providersz, sizeof(uint32_t))) == NULL)
 		err(1, NULL);
 	io_read_buf(b, p->providers, p->providersz * sizeof(p->providers[0]));
 
@@ -328,12 +304,12 @@ aspa_read(struct ibuf *b)
 }
 
 /*
- * Insert a new aspa_provider at index idx in the struct vap v.
+ * Insert a new uint32_t at index idx in the struct vap v.
  * All elements in the provider array from idx are moved up by one
  * to make space for the new element.
  */
 static void
-insert_vap(struct vap *v, uint32_t idx, struct aspa_provider *p)
+insert_vap(struct vap *v, uint32_t idx, uint32_t *p)
 {
 	if (idx < v->providersz)
 		memmove(v->providers + idx + 1, v->providers + idx,
@@ -391,21 +367,15 @@ aspa_insert_vaps(struct vap_tree *tree, struct aspa *aspa, struct repo *rp)
 	 */
 	for (i = 0, j = 0; i < aspa->providersz; ) {
 		if (j == v->providersz ||
-		    aspa->providers[i].as < v->providers[j].as) {
+		    aspa->providers[i] < v->providers[j]) {
 			/* merge provider from aspa into v */
 			repo_stat_inc(rp, v->talid, RTYPE_ASPA,
-			    STYPE_BOTH + aspa->providers[i].afi);
+			    STYPE_BOTH + aspa->providers[i]);
 			insert_vap(v, j, &aspa->providers[i]);
 			i++;
-		} else if (aspa->providers[i].as == v->providers[j].as) {
-			/* duplicate provider, merge afi */
-			if (v->providers[j].afi != aspa->providers[i].afi) {
-				repo_stat_inc(rp, v->talid, RTYPE_ASPA,
-				    STYPE_BOTH + aspa->providers[i].afi);
-				v->providers[j].afi = 0;
-			}
+		} else if (aspa->providers[i] == v->providers[j])
 			i++;
-		}
+
 		if (j < v->providersz)
 			j++;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-json.c,v 1.39 2023/06/05 14:19:13 claudio Exp $ */
+/*	$OpenBSD: output-json.c,v 1.40 2023/06/26 18:39:53 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  *
@@ -82,24 +82,18 @@ outputheader_json(struct stats *st)
 }
 
 static void
-print_vap(struct vap *v, enum afi afi)
+print_vap(struct vap *v)
 {
 	size_t i;
-	int found = 0;
 
 	json_do_object("aspa", 1);
 	json_do_int("customer_asid", v->custasid);
 	json_do_int("expires", v->expires);
 
 	json_do_array("providers");
-	for (i = 0; i < v->providersz; i++) {
-		if (v->providers[i].afi != 0 && v->providers[i].afi != afi)
-			continue;
-		found = 1;
-		json_do_int("provider", v->providers[i].as);
-	}
-	if (!found)
-		json_do_int("provider", 0);
+	for (i = 0; i < v->providersz; i++)
+		json_do_int("provider", v->providers[i]);
+
 	json_do_end();
 }
 
@@ -108,18 +102,9 @@ output_aspa(struct vap_tree *vaps)
 {
 	struct vap	*v;
 
-	json_do_object("provider_authorizations", 0);
-
-	json_do_array("ipv4");
-	RB_FOREACH(v, vap_tree, vaps) {
-		print_vap(v, AFI_IPV4);
-	}
-	json_do_end();
-
-	json_do_array("ipv6");
-	RB_FOREACH(v, vap_tree, vaps) {
-		print_vap(v, AFI_IPV6);
-	}
+	json_do_array("aspas");
+	RB_FOREACH(v, vap_tree, vaps)
+		print_vap(v);
 	json_do_end();
 }
 

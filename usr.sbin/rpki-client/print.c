@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.40 2023/06/05 14:19:13 claudio Exp $ */
+/*	$OpenBSD: print.c,v 1.41 2023/06/26 18:39:53 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -613,59 +613,23 @@ rsc_print(const X509 *x, const struct rsc *p)
 }
 
 static void
-aspa_provider(uint32_t as, enum afi afi)
+aspa_provider(uint32_t as)
 {
 	if (outformats & FORMAT_JSON) {
 		json_do_object("aspa", 1);
 		json_do_uint("asid", as);
-		if (afi == AFI_IPV4)
-			json_do_string("afi_limit", "ipv4");
-		if (afi == AFI_IPV6)
-			json_do_string("afi_limit", "ipv6");
 		json_do_end();
 	} else {
 		printf("AS: %u", as);
-		if (afi == AFI_IPV4)
-			printf(" (IPv4 only)");
-		if (afi == AFI_IPV6)
-			printf(" (IPv6 only)");
 		printf("\n");
 	}
-}
-
-static void
-aspa_providers(const struct aspa *a)
-{
-	size_t	i;
-	int	hasv4 = 0, hasv6 = 0;
-
-	for (i = 0; i < a->providersz; i++) {
-		if ((outformats & FORMAT_JSON) == 0 && i > 0)
-			printf("%26s", "");
-		aspa_provider(a->providers[i].as, a->providers[i].afi);
-
-		switch (a->providers[i].afi) {
-		case AFI_IPV4:
-			hasv4 = 1;
-			break;
-		case AFI_IPV6:
-			hasv6 = 1;
-			break;
-		default:
-			hasv4 = hasv6 = 1;
-			break;
-		}
-	}
-
-	if (!hasv4)
-		aspa_provider(0, AFI_IPV4);
-	if (!hasv6)
-		aspa_provider(0, AFI_IPV6);
 }
 
 void
 aspa_print(const X509 *x, const struct aspa *p)
 {
+	size_t	i;
+
 	if (outformats & FORMAT_JSON) {
 		json_do_string("type", "aspa");
 		json_do_string("ski", pretty_key_id(p->ski));
@@ -697,7 +661,11 @@ aspa_print(const X509 *x, const struct aspa *p)
 		printf("Provider set:             ");
 	}
 
-	aspa_providers(p);
+	for (i = 0; i < p->providersz; i++) {
+		if ((outformats & FORMAT_JSON) == 0 && i > 0)
+			printf("%26s", "");
+		aspa_provider(p->providers[i]);
+	}
 
 	if (outformats & FORMAT_JSON)
 		json_do_end();

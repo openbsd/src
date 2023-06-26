@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.185 2023/06/23 11:36:24 claudio Exp $ */
+/*	$OpenBSD: extern.h,v 1.186 2023/06/26 18:39:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -351,11 +351,6 @@ struct gbr {
 	int		 talid; /* TAL the GBR is chained up to */
 };
 
-struct aspa_provider {
-	uint32_t	 as;
-	enum afi	 afi;
-};
-
 /*
  * A single ASPA record
  */
@@ -367,7 +362,7 @@ struct aspa {
 	char			*sia; /* SIA signedObject */
 	char			*ski; /* SKI */
 	uint32_t		 custasid; /* the customerASID */
-	struct aspa_provider	*providers; /* the providers */
+	uint32_t		*providers; /* the providers */
 	size_t			 providersz; /* number of providers */
 	time_t			 signtime; /* CMS signing-time attribute */
 	time_t		 	 notbefore; /* EE cert's Not Before */
@@ -382,7 +377,7 @@ struct aspa {
 struct vap {
 	RB_ENTRY(vap)		 entry;
 	uint32_t		 custasid;
-	struct aspa_provider	*providers;
+	uint32_t		*providers;
 	size_t			 providersz;
 	time_t			 expires;
 	int			 talid;

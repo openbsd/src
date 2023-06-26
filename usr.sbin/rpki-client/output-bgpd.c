@@ -1,4 +1,4 @@
-/*	$OpenBSD: output-bgpd.c,v 1.27 2023/04/19 19:26:26 job Exp $ */
+/*	$OpenBSD: output-bgpd.c,v 1.28 2023/06/26 18:39:53 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -63,18 +63,8 @@ output_bgpd(FILE *out, struct vrp_tree *vrps, struct brk_tree *brks,
 		    (long long)vap->expires) < 0)
 			return -1;
 		for (i = 0; i < vap->providersz; i++) {
-			if (fprintf(out, "%u", vap->providers[i].as) < 0)
+			if (fprintf(out, "%u", vap->providers[i]) < 0)
 				return -1;
-			switch (vap->providers[i].afi) {
-			case AFI_IPV4:
-				if (fprintf(out, " inet") < 0)
-					return -1;
-				break;
-			case AFI_IPV6:
-				if (fprintf(out, " inet6") < 0)
-					return -1;
-				break;
-			}
 			if (i + 1 < vap->providersz)
 				if (fprintf(out, ", ") < 0)
 					return -1;
