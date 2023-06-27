@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.45 2023/05/04 05:59:38 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.46 2023/06/27 07:28:57 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -70,23 +70,7 @@
 int
 EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
-	int i = 0;
-
-	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
-	    NID_X9_62_characteristic_two_field)
-		/* everything else is currently not supported */
-		return 0;
-
-	while (group->poly[i] != 0)
-		i++;
-
-	if (i == 4)
-		return NID_X9_62_ppBasis;
-	else if (i == 2)
-		return NID_X9_62_tpBasis;
-	else
-		/* everything else is currently not supported */
-		return 0;
+	return 0;
 }
 
 /* some structures needed for the asn1 encoding */
