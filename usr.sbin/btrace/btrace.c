@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.70 2023/05/12 14:14:16 claudio Exp $ */
+/*	$OpenBSD: btrace.c,v 1.71 2023/06/27 14:17:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -450,6 +450,37 @@ rules_do(int fd)
 	}
 }
 
+static uint64_t
+rules_action_scan(struct bt_stmt *bs)
+{
+	struct bt_arg *ba;
+	uint64_t evtflags = 0;
+
+	while (bs != NULL) {
+		SLIST_FOREACH(ba, &bs->bs_args, ba_next)
+			evtflags |= ba2dtflags(ba);
+
+		/* Also check the value for map/hist insertion */
+		switch (bs->bs_act) {
+		case B_AC_BUCKETIZE:
+		case B_AC_INSERT:
+			ba = (struct bt_arg *)bs->bs_var;
+			evtflags |= ba2dtflags(ba);
+			break;
+		case B_AC_TEST:
+			evtflags |= rules_action_scan(
+			    (struct bt_stmt *)bs->bs_var);
+			break;
+		default:
+			break;
+		}
+
+		bs = SLIST_NEXT(bs, bs_next);
+	}
+
+	return evtflags;
+}
+
 void
 rules_setup(int fd)
 {
@@ -474,21 +505,7 @@ rules_setup(int fd)
 			evtflags |= ba2dtflags(ba);
 		}
 
-		SLIST_FOREACH(bs, &r->br_action, bs_next) {
-			SLIST_FOREACH(ba, &bs->bs_args, ba_next)
-				evtflags |= ba2dtflags(ba);
-
-			/* Also check the value for map/hist insertion */
-			switch (bs->bs_act) {
-			case B_AC_BUCKETIZE:
-			case B_AC_INSERT:
-				ba = (struct bt_arg *)bs->bs_var;
-				evtflags |= ba2dtflags(ba);
-				break;
-			default:
-				break;
-			}
-		}
+		evtflags |= rules_action_scan(SLIST_FIRST(&r->br_action));
 
 		SLIST_FOREACH(bp, &r->br_probes, bp_next) {
 			debug("parsed probe '%s'", debug_probe_name(bp));
@@ -1685,10 +1702,17 @@ ba2dtflags(struct bt_arg *ba)
 long
 bacmp(struct bt_arg *a, struct bt_arg *b)
 {
-	assert(a->ba_type == b->ba_type);
-	assert(a->ba_type == B_AT_LONG);
+	if (a->ba_type != b->ba_type)
+		return a->ba_type - b->ba_type;
 
-	return ba2long(a, NULL) - ba2long(b, NULL);
+	switch (a->ba_type) {
+	case B_AT_LONG:
+		return ba2long(a, NULL) - ba2long(b, NULL);
+	case B_AT_STR:
+		return strcmp(ba2str(a, NULL), ba2str(b, NULL));
+	default:
+		errx(1, "no compare support for type %d", a->ba_type);
+	}
 }
 
 __dead void

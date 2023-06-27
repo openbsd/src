@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.20 2022/04/30 01:29:05 tedu Exp $ */
+/*	$OpenBSD: map.c,v 1.21 2023/06/27 14:17:00 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -175,6 +175,11 @@ map_insert(struct map *map, const char *key, struct bt_arg *bval,
 		val = (long)mep->mval->ba_value;
 		val += ba2long(bval->ba_value, dtev);
 		mep->mval->ba_value = (void *)val;
+		break;
+	case B_AT_BI_KSTACK:
+	case B_AT_BI_USTACK:
+		free(mep->mval);
+		mep->mval = ba_new(ba2str(bval, dtev), B_AT_STR);
 		break;
 	default:
 		errx(1, "no insert support for type %d", bval->ba_type);
