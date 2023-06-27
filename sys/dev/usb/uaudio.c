@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudio.c,v 1.172 2022/10/26 20:19:09 kn Exp $	*/
+/*	$OpenBSD: uaudio.c,v 1.173 2023/06/27 09:28:08 ratchov Exp $	*/
 /*
  * Copyright (c) 2018 Alexandre Ratchov <alex@caoua.org>
  *
@@ -2216,7 +2216,7 @@ uaudio_process_ac(struct uaudio_softc *sc, struct uaudio_blob *p, int ifnum)
 				&u->rates)) {
 				printf("%s: failed to read clock rates\n",
 				    DEVNAME(sc));
-				return 1;
+				return 0;
 			}
 #ifdef UAUDIO_DEBUG
 			if (uaudio_debug) {
