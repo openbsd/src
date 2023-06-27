@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2039 2023/06/13 02:43:39 jcs Exp 
+ *	OpenBSD: pcidevs,v 1.2040 2023/06/27 15:30:25 stsp Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5880,6 +5880,7 @@
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_XDCI	0x51ee		/* 600 Series xDCI */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_SRAM	0x51ef		/* 600 Series SRAM */
 #define	PCI_PRODUCT_INTEL_WL_22500_11	0x51f0		/* Wi-Fi 6 AX211 */
+#define	PCI_PRODUCT_INTEL_WL_22500_17	0x51f1		/* Wi-Fi 6 AX211 */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_GSPI_2	0x51fb		/* 600 Series GSPI */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_ISH	0x51fc		/* 600 Series ISH */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_UFS	0x51ff		/* 600 Series UFS */
