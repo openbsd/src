@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_kex.c,v 1.10 2022/01/14 09:11:22 tb Exp $ */
+/* $OpenBSD: ssl_kex.c,v 1.11 2023/06/27 11:03:41 tb Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -63,17 +63,17 @@ ssl_kex_generate_dhe_params_auto(DH *dh, size_t key_bits)
 	int ret = 0;
 
 	if (key_bits >= 8192)
-		p = get_rfc3526_prime_8192(NULL);
+		p = BN_get_rfc3526_prime_8192(NULL);
 	else if (key_bits >= 4096)
-		p = get_rfc3526_prime_4096(NULL);
+		p = BN_get_rfc3526_prime_4096(NULL);
 	else if (key_bits >= 3072)
-		p = get_rfc3526_prime_3072(NULL);
+		p = BN_get_rfc3526_prime_3072(NULL);
 	else if (key_bits >= 2048)
-		p = get_rfc3526_prime_2048(NULL);
+		p = BN_get_rfc3526_prime_2048(NULL);
 	else if (key_bits >= 1536)
-		p = get_rfc3526_prime_1536(NULL);
+		p = BN_get_rfc3526_prime_1536(NULL);
 	else
-		p = get_rfc2409_prime_1024(NULL);
+		p = BN_get_rfc2409_prime_1024(NULL);
 
 	if (p == NULL)
 		goto err;
