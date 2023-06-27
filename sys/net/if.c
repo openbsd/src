@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.700 2023/06/12 21:19:54 mvs Exp $	*/
+/*	$OpenBSD: if.c,v 1.701 2023/06/27 21:02:13 mvs Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2784,7 +2784,7 @@ if_creategroup(const char *groupname)
 {
 	struct ifg_group	*ifg;
 
-	if ((ifg = malloc(sizeof(*ifg), M_TEMP, M_NOWAIT)) == NULL)
+	if ((ifg = malloc(sizeof(*ifg), M_IFGROUP, M_NOWAIT)) == NULL)
 		return (NULL);
 
 	strlcpy(ifg->ifg_group, groupname, sizeof(ifg->ifg_group));
@@ -2819,11 +2819,11 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 		if (!strcmp(ifgl->ifgl_group->ifg_group, groupname))
 			return (EEXIST);
 
-	if ((ifgl = malloc(sizeof(*ifgl), M_TEMP, M_NOWAIT)) == NULL)
+	if ((ifgl = malloc(sizeof(*ifgl), M_IFGROUP, M_NOWAIT)) == NULL)
 		return (ENOMEM);
 
-	if ((ifgm = malloc(sizeof(*ifgm), M_TEMP, M_NOWAIT)) == NULL) {
-		free(ifgl, M_TEMP, sizeof(*ifgl));
+	if ((ifgm = malloc(sizeof(*ifgm), M_IFGROUP, M_NOWAIT)) == NULL) {
+		free(ifgl, M_IFGROUP, sizeof(*ifgl));
 		return (ENOMEM);
 	}
 
@@ -2834,8 +2834,8 @@ if_addgroup(struct ifnet *ifp, const char *groupname)
 	if (ifg == NULL) {
 		ifg = if_creategroup(groupname);
 		if (ifg == NULL) {
-			free(ifgl, M_TEMP, sizeof(*ifgl));
-			free(ifgm, M_TEMP, sizeof(*ifgm));
+			free(ifgl, M_IFGROUP, sizeof(*ifgl));
+			free(ifgm, M_IFGROUP, sizeof(*ifgm));
 			return (ENOMEM);
 		}
 	} else
@@ -2878,7 +2878,7 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 
 	if (ifgm != NULL) {
 		TAILQ_REMOVE(&ifgl->ifgl_group->ifg_members, ifgm, ifgm_next);
-		free(ifgm, M_TEMP, sizeof(*ifgm));
+		free(ifgm, M_IFGROUP, sizeof(*ifgm));
 	}
 
 #if NPF > 0
@@ -2891,10 +2891,10 @@ if_delgroup(struct ifnet *ifp, const char *groupname)
 #if NPF > 0
 		pfi_detach_ifgroup(ifgl->ifgl_group);
 #endif
-		free(ifgl->ifgl_group, M_TEMP, sizeof(*ifgl->ifgl_group));
+		free(ifgl->ifgl_group, M_IFGROUP, sizeof(*ifgl->ifgl_group));
 	}
 
-	free(ifgl, M_TEMP, sizeof(*ifgl));
+	free(ifgl, M_IFGROUP, sizeof(*ifgl));
 
 	return (0);
 }

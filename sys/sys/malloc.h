@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.122 2022/02/03 17:18:22 guenther Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.123 2023/06/27 21:02:13 mvs Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 /* 7 - free */
 /* 8 - free */
 #define	M_IFADDR	9	/* interface address */
-/* 10 - free */
+#define M_IFGROUP	10	/* interface group */
 #define	M_SYSCTL	11	/* sysctl buffers (persistent storage) */
 #define	M_COUNTERS	12	/* per CPU counters */
 /* 13 - free */
@@ -190,7 +190,7 @@
 	NULL, \
 	NULL, \
 	"ifaddr",	/* 9 M_IFADDR */ \
-	NULL, \
+	"ifgroup",	/* 10 M_IFGROUP */ \
 	"sysctl",	/* 11 M_SYSCTL */ \
 	"counters",	/* 12 M_COUNTERS */ \
 	NULL, \
