@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.21 2023/06/25 19:22:21 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.22 2023/06/27 07:31:18 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -206,21 +206,8 @@ struct ec_group_st {
 	BIGNUM field;
 
 	/*
-	 * Field specification for GF(2^m). The irreducible polynomial  is
-	 *	f(t) = t^poly[0] + t^poly[1] + ... + t^poly[k],
-	 * where
-	 *	m = poly[0] > poly[1] > ... > poly[k] = 0,
-	 * and the array is terminated with poly[k+1] = -1. All elliptic curve
-	 * irreducibles have at most 5 non-zero terms.
-	 */
-	int poly[6];
-
-	/*
 	 * Curve coefficients. In characteristic > 3, the curve is defined by a
-	 * Weierstrass equation of the form
-	 *	y^2 = x^3 + a*x + b.
-	 * For characteristic 2, the curve is defined by an equation of the form
-	 *	y^2 + x*y = x^3 + a*x^2 + b.
+	 * Weierstrass equation of the form y^2 = x^3 + a*x + b.
 	 */
 	BIGNUM a, b;
 
