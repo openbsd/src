@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bt.5,v 1.14 2022/03/31 17:27:29 naddy Exp $
+.\"	$OpenBSD: bt.5,v 1.15 2023/06/27 14:13:33 claudio Exp $
 .\"
 .\" Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: June 27 2023 $
 .Dt BT 5
 .Os
 .Sh NAME
@@ -111,8 +111,8 @@ Full name of the probe.
 Return value of the traced syscall.
 .It Va tid
 Thread ID of the current thread.
-.\".It Va ustack
-.\"Userland stack of the current thread.
+.It Va ustack
+Userland stack of the current thread.
 .El
 .Pp
 Functions:
@@ -141,10 +141,6 @@ and
 with buckets of
 .Va step
 size.
-.It Fn max
-Returns the maximum recorded value.
-.It Fn min
-Returns the minimum recorded value.
 .It Fn print "@map"
 Print all pairs from
 .Va @map .
@@ -162,8 +158,6 @@ Return the string from argument
 truncated to
 .Va index
 characters (up to 64, the default) including a guaranteed NUL-terminator.
-.It Fn sum
-Returns the sum of all recorded values.
 .It Fn time timefmt
 Print timestamps using
 .Xr strftime 3 .
@@ -171,6 +165,23 @@ Print timestamps using
 Set all values from
 .Va @map
 to 0.
+.El
+.Pp
+The following functions only work on a sepcific map entry.
+.Bl -tag -width "lhist(value, min, max, step)"
+.It "@map[key]" = Fn count
+Increase the stored value for
+.Va key
+by one.
+.It "@map[key]" = Fn max "value"
+Store the maximum recorded value for
+.Va key .
+.It "@map[key]" = Fn min "value"
+Store the minimum recorded value for
+.Va key .
+.It "@map[key]" = Fn sum "value"
+Store the sum of all recorded values for
+.Va key .
 .El
 .Sh SEE ALSO
 .Xr awk 1 ,
