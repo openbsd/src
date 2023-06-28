@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.94 2023/06/25 08:07:04 op Exp $	*/
+/*	$OpenBSD: ca.c,v 1.95 2023/06/28 14:10:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -62,7 +62,7 @@ int	 ca_x509_subject_cmp(X509 *, struct iked_static_id *);
 int	 ca_validate_pubkey(struct iked *, struct iked_static_id *,
 	    void *, size_t, struct iked_id *);
 int	 ca_validate_cert(struct iked *, struct iked_static_id *,
-	    void *, size_t, X509 **);
+	    void *, size_t, STACK_OF(X509) *, X509 **);
 EVP_PKEY *
 	 ca_bytes_to_pkey(uint8_t *, size_t);
 int	 ca_privkey_to_method(struct iked_id *);
@@ -201,6 +201,130 @@ ca_reset(struct privsep *ps)
 
 	if (ca_reload(env) != 0)
 		fatal("ca_reset: reload");
+}
+
+int
+ca_certbundle_add(struct ibuf *buf, struct iked_id *id)
+{
+	uint8_t		 type = id->id_type;
+	size_t		 len = ibuf_length(id->id_buf);
+	void		*val = ibuf_data(id->id_buf);
+
+	if (id == NULL ||
+	    buf == NULL ||
+	    ibuf_add(buf, &type, sizeof(type)) != 0 ||
+	    ibuf_add(buf, &len, sizeof(len)) != 0 ||
+	    ibuf_add(buf, val, len) != 0)
+		return -1;
+	return 0;
+}
+
+/*
+ * decode cert bundle to cert and untrusted intermediate CAs.
+ * datap/lenp point to bundle on input and to decoded cert output
+ */
+static int
+ca_decode_cert_bundle(struct iked *env, struct iked_sahdr *sh,
+  uint8_t **datap, size_t *lenp, STACK_OF(X509)	**untrustedp)
+{
+	STACK_OF(X509)		*untrusted = NULL;
+	X509			*cert;
+	BIO			*rawcert = NULL;
+	uint8_t			*certdata = NULL;
+	size_t			 certlen = 0;
+	uint8_t			 datatype;
+	size_t			 datalen = 0;
+	uint8_t			*ptr;
+	size_t			 len;
+	int			 ret = -1;
+
+	log_debug("%s: decoding cert bundle", SPI_SH(sh, __func__));
+
+	ptr = *datap;
+	len = *lenp;
+	*untrustedp = NULL;
+
+	/* allocate stack for intermediate CAs */
+	if ((untrusted = sk_X509_new_null()) == NULL)
+		goto done;
+
+	/* parse TLV, see ca_certbundle_add() */
+	while (len > 0) {
+		/* Type */
+		if (len < sizeof(datatype)) {
+			log_debug("%s: short data (type)",
+			    SPI_SH(sh, __func__));
+			goto done;
+		}
+		memcpy(&datatype, ptr, sizeof(datatype));
+		ptr += sizeof(datatype);
+		len -= sizeof(datatype);
+
+		/* Only X509 certs/CAs are supported */
+		if (datatype != IKEV2_CERT_X509_CERT) {
+			log_info("%s: unsupported data type: %s",
+			    SPI_SH(sh, __func__),
+			    print_map(datatype, ikev2_cert_map));
+			goto done;
+		}
+
+		/* Length */
+		if (len < sizeof(datalen)) {
+			log_info("%s: short data (len)",
+			    SPI_SH(sh, __func__));
+			goto done;
+		}
+		memcpy(&datalen, ptr, sizeof(datalen));
+		ptr += sizeof(datalen);
+		len -= sizeof(datalen);
+
+		/* Value */
+		if (len < datalen) {
+			log_info("%s: short len %zu < datalen %zu",
+			    SPI_SH(sh, __func__), len, datalen);
+			goto done;
+		}
+
+		if (certdata == NULL) {
+			/* First entry is cert */
+			certdata = ptr;
+			certlen = datalen;
+		} else {
+			/* All other entries are intermediate CAs */
+			rawcert = BIO_new_mem_buf(ptr, datalen);
+			if (rawcert == NULL)
+				goto done;
+			cert = d2i_X509_bio(rawcert, NULL);
+			BIO_free(rawcert);
+			if (cert == NULL) {
+				log_warnx("%s: cannot parse CA",
+				    SPI_SH(sh, __func__));
+				ca_sslerror(__func__);
+				goto done;
+			}
+			if (!sk_X509_push(untrusted, cert)) {
+				log_warnx("%s: cannot store CA",
+				    SPI_SH(sh, __func__));
+				X509_free(cert);
+				goto done;
+			}
+		}
+		ptr += datalen;
+		len -= datalen;
+	}
+	log_debug("%s: decoded cert bundle", SPI_SH(sh, __func__));
+	*datap = certdata;
+	*lenp = certlen;
+	*untrustedp = untrusted;
+	untrusted = NULL;
+	ret = 0;
+
+ done:
+	if (ret != 0)
+		log_info("%s: failed to decode cert bundle",
+		    SPI_SH(sh, __func__));
+	sk_X509_free(untrusted);
+	return ret;
 }
 
 int
@@ -470,6 +594,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 {
 	struct ca_store		*store = env->sc_priv;
 	X509			*issuer = NULL, *cert;
+	STACK_OF(X509)		*untrusted = NULL;
 	EVP_PKEY		*certkey;
 	struct iked_sahdr	 sh;
 	uint8_t			 type;
@@ -498,6 +623,10 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 
 	bzero(&key, sizeof(key));
 
+	if (type == IKEV2_CERT_BUNDLE &&
+	    ca_decode_cert_bundle(env, &sh, &ptr, &len, &untrusted) == 0)
+		type = IKEV2_CERT_X509_CERT;
+
 	switch (type) {
 	case IKEV2_CERT_X509_CERT:
 		/* Look in local cert storage first */
@@ -515,15 +644,17 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 			}
 		}
 		if (env->sc_ocsp_url == NULL)
-			ret = ca_validate_cert(env, &id, ptr, len, NULL);
+			ret = ca_validate_cert(env, &id, ptr, len, untrusted, NULL);
 		else {
-			ret = ca_validate_cert(env, &id, ptr, len, &issuer);
+			ret = ca_validate_cert(env, &id, ptr, len, untrusted, &issuer);
 			if (ret == 0) {
 				ret = ocsp_validate_cert(env, ptr, len, sh,
 				    type, issuer);
 				X509_free(issuer);
-				if (ret == 0)
+				if (ret == 0) {
+					sk_X509_free(untrusted);
 					return (0);
+				}
 			} else
 				X509_free(issuer);
 		}
@@ -561,6 +692,8 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 
 	ret = proc_composev(&env->sc_ps, PROC_IKEV2, cmd, iov, iovcnt);
 	ibuf_free(key.id_buf);
+	sk_X509_free(untrusted);
+
 	return (ret);
 }
 
@@ -979,7 +1112,7 @@ ca_reload(struct iked *env)
 
 		x509 = X509_OBJECT_get0_X509(xo);
 
-		(void)ca_validate_cert(env, NULL, x509, 0, NULL);
+		(void)ca_validate_cert(env, NULL, x509, 0, NULL, NULL);
 	}
 
 	if (!env->sc_certreqtype)
@@ -1690,7 +1823,7 @@ ca_validate_pubkey(struct iked *env, struct iked_static_id *id,
 
 int
 ca_validate_cert(struct iked *env, struct iked_static_id *id,
-    void *data, size_t len, X509 **issuerp)
+    void *data, size_t len, STACK_OF(X509) *untrusted, X509 **issuerp)
 {
 	struct ca_store		*store = env->sc_priv;
 	X509_STORE_CTX		*csc = NULL;
@@ -1754,7 +1887,7 @@ ca_validate_cert(struct iked *env, struct iked_static_id *id,
 		errstr = "failed to alloc csc";
 		goto done;
 	}
-	X509_STORE_CTX_init(csc, store->ca_cas, cert, NULL);
+	X509_STORE_CTX_init(csc, store->ca_cas, cert, untrusted);
 	param = X509_STORE_get0_param(store->ca_cas);
 	if (X509_VERIFY_PARAM_get_flags(param) & X509_V_FLAG_CRL_CHECK) {
 		X509_STORE_CTX_set_flags(csc, X509_V_FLAG_CRL_CHECK);

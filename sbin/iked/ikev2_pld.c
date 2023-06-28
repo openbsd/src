@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.130 2023/06/14 14:09:29 claudio Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.131 2023/06/28 14:10:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -810,6 +810,7 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
 	struct iked_id			*certid;
 	uint8_t				*msgbuf = ibuf_data(msg->msg_data);
 	const struct iked_sa		*sa = msg->msg_sa;
+	int				 i;
 
 	if (ikev2_validate_cert(msg, offset, left, &cert))
 		return (-1);
@@ -826,11 +827,26 @@ ikev2_pld_cert(struct iked *env, struct ikev2_payload *pld,
 	if (!ikev2_msg_frompeer(msg))
 		return (0);
 
-	certid = &msg->msg_parent->msg_cert;
-	if (certid->id_type) {
-		log_debug("%s: multiple cert payloads, ignoring",
+	/* do not accept internal encoding in the wire */
+	if (cert.cert_type == IKEV2_CERT_BUNDLE) {
+		log_debug("%s: ignoring IKEV2_CERT_BUNDLE",
 		   SPI_SA(sa, __func__));
 		return (0);
+	}
+
+	certid = &msg->msg_parent->msg_cert;
+	if (certid->id_type) {
+		/* try to set supplemental certs */
+		for (i = 0; i < IKED_SCERT_MAX; i++) {
+			certid = &msg->msg_parent->msg_scert[i];
+			if (!certid->id_type)
+				break;
+		}
+		if (certid->id_type) {
+			log_debug("%s: too many cert payloads, ignoring",
+			   SPI_SA(sa, __func__));
+			return (0);
+		}
 	}
 
 	if ((certid->id_buf = ibuf_new(buf, len)) == NULL) {

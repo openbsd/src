@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.h,v 1.34 2021/05/28 18:01:39 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.h,v 1.35 2023/06/28 14:10:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -433,6 +433,7 @@ struct ikev2_cert {
  * use range (201-255, same RFC) for ECDSA.
  */
 #define IKEV2_CERT_ECDSA		201	/* Private */
+#define IKEV2_CERT_BUNDLE		254	/* Private */
 
 extern struct iked_constmap ikev2_cert_map[];
 

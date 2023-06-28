@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.95 2023/06/13 12:34:12 tb Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.96 2023/06/28 14:10:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -189,6 +189,7 @@ void
 ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 {
 	struct iked_certreq	*cr;
+	int			 i;
 
 	if (msg == msg->msg_parent) {
 		ibuf_free(msg->msg_nonce);
@@ -197,6 +198,8 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 		ibuf_free(msg->msg_peerid.id_buf);
 		ibuf_free(msg->msg_localid.id_buf);
 		ibuf_free(msg->msg_cert.id_buf);
+		for (i = 0; i < IKED_SCERT_MAX; i++)
+			ibuf_free(msg->msg_scert[i].id_buf);
 		ibuf_free(msg->msg_cookie);
 		ibuf_free(msg->msg_cookie2);
 		ibuf_free(msg->msg_del_buf);
@@ -211,6 +214,8 @@ ikev2_msg_cleanup(struct iked *env, struct iked_message *msg)
 		msg->msg_peerid.id_buf = NULL;
 		msg->msg_localid.id_buf = NULL;
 		msg->msg_cert.id_buf = NULL;
+		for (i = 0; i < IKED_SCERT_MAX; i++)
+			msg->msg_scert[i].id_buf = NULL;
 		msg->msg_cookie = NULL;
 		msg->msg_cookie2 = NULL;
 		msg->msg_del_buf = NULL;

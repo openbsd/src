@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.371 2023/06/14 14:09:29 claudio Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.372 2023/06/28 14:10:24 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -940,11 +940,12 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
     struct iked_message *msg)
 {
 	struct iked_id		*id;
-	struct ibuf		*authmsg;
+	struct ibuf		*authmsg, *buf;
 	struct iked_policy	*old;
 	uint8_t			*cert = NULL;
 	size_t			 certlen = 0;
 	int			 certtype = IKEV2_CERT_NONE;
+	int			 i;
 
 	/* The AUTH payload indicates if the responder wants EAP or not */
 	if (msg->msg_auth.id_type != IKEV2_AUTH_NONE &&
@@ -1045,6 +1046,30 @@ ikev2_ike_auth_recv(struct iked *env, struct iked_sa *sa,
 			ca_setauth(env, sa, authmsg, PROC_CERT);
 			ibuf_free(authmsg);
 		}
+	}
+
+	/* Encode all received certs as single blob */
+	if (msg->msg_cert.id_type != IKEV2_CERT_BUNDLE &&
+	    msg->msg_scert[0].id_type != IKEV2_CERT_NONE) {
+		if ((buf = ibuf_new(NULL, 0)) == NULL)
+			return (-1);
+		/* begin with certificate */
+		if (ca_certbundle_add(buf, &msg->msg_cert) != 0) {
+			ibuf_free(buf);
+			return (-1);
+		}
+		/* add intermediate CAs */
+		for (i = 0; i < IKED_SCERT_MAX; i++) {
+			if (msg->msg_scert[i].id_type == IKEV2_CERT_NONE)
+				break;
+			if (ca_certbundle_add(buf, &msg->msg_scert[i]) != 0) {
+				ibuf_free(buf);
+				return (-1);
+			}
+		}
+		ibuf_free(msg->msg_cert.id_buf);
+		msg->msg_cert.id_buf = buf;
+		msg->msg_cert.id_type = IKEV2_CERT_BUNDLE;
 	}
 
 	if (!TAILQ_EMPTY(&msg->msg_proposals)) {
