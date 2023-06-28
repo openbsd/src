@@ -1,7 +1,7 @@
-.\"	$OpenBSD: mg.1,v 1.134 2023/04/28 10:02:03 op Exp $
+.\"	$OpenBSD: mg.1,v 1.135 2023/06/28 08:37:52 op Exp $
 .\" This file is in the public domain.
 .\"
-.Dd $Mdocdate: April 28 2023 $
+.Dd $Mdocdate: June 28 2023 $
 .Dt MG 1
 .Os
 .Sh NAME
@@ -770,6 +770,8 @@ lines.
 .It Ic no-tab-mode
 Toggle notab mode.
 In this mode, spaces are inserted rather than tabs.
+Can be set globally with
+.Ic set-default-mode .
 .It Ic not-modified
 Turn off the modified flag in the current buffer.
 .It Ic open-line
@@ -920,7 +922,7 @@ This is the default.
 .It Ic set-default-mode
 Append the supplied mode to the list of default modes
 used by subsequent buffer creation.
-Built in modes include: fill, indent and overwrite.
+Built in modes include: fill, indent, notab and overwrite.
 .It Ic set-fill-column
 Prompt the user for a fill column.
 Used by
