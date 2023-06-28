@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.192 2023/06/01 10:21:26 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.193 2023/06/28 08:23:25 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -151,8 +151,8 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 		return (0);
 	}
 
-	sleep_setup(&sls, ident, priority, wmesg, timo);
-	return sleep_finish(&sls, 1);
+	sleep_setup(&sls, ident, priority, wmesg);
+	return sleep_finish(&sls, priority, timo, 1);
 }
 
 int
@@ -244,7 +244,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 		return (0);
 	}
 
-	sleep_setup(&sls, ident, priority, wmesg, timo);
+	sleep_setup(&sls, ident, priority, wmesg);
 
 	/* XXX - We need to make sure that the mutex doesn't
 	 * unblock splsched. This can be made a bit more
@@ -254,7 +254,7 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 	MUTEX_OLDIPL(mtx) = splsched();
 	mtx_leave(mtx);
 	/* signal may stop the process, release mutex before that */
-	error = sleep_finish(&sls, 1);
+	error = sleep_finish(&sls, priority, timo, 1);
 
 	if ((priority & PNORELOCK) == 0) {
 		mtx_enter(mtx);
@@ -304,11 +304,11 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 	rw_assert_anylock(rwl);
 	status = rw_status(rwl);
 
-	sleep_setup(&sls, ident, priority, wmesg, timo);
+	sleep_setup(&sls, ident, priority, wmesg);
 
 	rw_exit(rwl);
 	/* signal may stop the process, release rwlock before that */
-	error = sleep_finish(&sls, 1);
+	error = sleep_finish(&sls, priority, timo, 1);
 
 	if ((priority & PNORELOCK) == 0)
 		rw_enter(rwl, status);
@@ -341,7 +341,7 @@ rwsleep_nsec(const volatile void *ident, struct rwlock *rwl, int priority,
 
 void
 sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
-    const char *wmesg, int timo)
+    const char *wmesg)
 {
 	struct proc *p = curproc;
 
@@ -354,9 +354,6 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 		panic("tsleep: not SONPROC");
 #endif
 
-	sls->sls_catch = prio & PCATCH;
-	sls->sls_timeout = 0;
-
 	SCHED_LOCK(sls->sls_s);
 
 	TRACEPOINT(sched, sleep, NULL);
@@ -367,20 +364,22 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 	p->p_slppri = prio & PRIMASK;
 	TAILQ_INSERT_TAIL(&slpque[LOOKUP(ident)], p, p_runq);
 
-	if (timo) {
-		KASSERT((p->p_flag & P_TIMEOUT) == 0);
-		sls->sls_timeout = 1;
-		timeout_add(&p->p_sleep_to, timo);
-	}
 }
 
 int
-sleep_finish(struct sleep_state *sls, int do_sleep)
+sleep_finish(struct sleep_state *sls, int prio, int timo, int do_sleep)
 {
 	struct proc *p = curproc;
-	int error = 0, error1 = 0;
+	int catch, error = 0, error1 = 0;
 
-	if (sls->sls_catch != 0) {
+	catch = prio & PCATCH;
+
+	if (timo != 0) {
+		KASSERT((p->p_flag & P_TIMEOUT) == 0);
+		timeout_add(&p->p_sleep_to, timo);
+	}
+
+	if (catch != 0) {
 		/*
 		 * We put ourselves on the sleep queue and start our
 		 * timeout before calling sleep_signal_check(), as we could
@@ -396,10 +395,10 @@ sleep_finish(struct sleep_state *sls, int do_sleep)
 		atomic_setbits_int(&p->p_flag, P_SINTR);
 		if ((error = sleep_signal_check()) != 0) {
 			p->p_stat = SONPROC;
-			sls->sls_catch = 0;
+			catch = 0;
 			do_sleep = 0;
 		} else if (p->p_wchan == NULL) {
-			sls->sls_catch = 0;
+			catch = 0;
 			do_sleep = 0;
 		}
 	}
@@ -427,7 +426,7 @@ sleep_finish(struct sleep_state *sls, int do_sleep)
 	 */
 	atomic_clearbits_int(&p->p_flag, P_SINTR);
 
-	if (sls->sls_timeout) {
+	if (timo != 0) {
 		if (p->p_flag & P_TIMEOUT) {
 			error1 = EWOULDBLOCK;
 		} else {
@@ -438,7 +437,7 @@ sleep_finish(struct sleep_state *sls, int do_sleep)
 	}
 
 	/* Check if thread was woken up because of a unwind or signal */
-	if (sls->sls_catch != 0)
+	if (catch != 0)
 		error = sleep_signal_check();
 
 	/* Signal errors are higher priority than timeouts. */
@@ -837,9 +836,9 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 	KASSERT(refs != ~0);
 	TRACEINDEX(refcnt, r->r_traceidx, r, refs + 1, -1);
 	while (refs) {
-		sleep_setup(&sls, r, PWAIT, wmesg, 0);
+		sleep_setup(&sls, r, PWAIT, wmesg);
 		refs = atomic_load_int(&r->r_refs);
-		sleep_finish(&sls, refs);
+		sleep_finish(&sls, PWAIT, 0, refs);
 	}
 	TRACEINDEX(refcnt, r->r_traceidx, r, refs, 0);
 	/* Order subsequent loads and stores after refs == 0 load. */
@@ -888,8 +887,8 @@ cond_wait(struct cond *c, const char *wmesg)
 
 	wait = atomic_load_int(&c->c_wait);
 	while (wait) {
-		sleep_setup(&sls, c, PWAIT, wmesg, 0);
+		sleep_setup(&sls, c, PWAIT, wmesg);
 		wait = atomic_load_int(&c->c_wait);
-		sleep_finish(&sls, wait);
+		sleep_finish(&sls, PWAIT, 0, wait);
 	}
 }

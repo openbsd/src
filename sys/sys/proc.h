@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.341 2023/06/01 10:21:26 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.342 2023/06/28 08:23:25 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -587,8 +587,6 @@ int	proc_cansugid(struct proc *);
 
 struct sleep_state {
 	int sls_s;
-	int sls_catch;
-	int sls_timeout;
 };
 
 struct cond {

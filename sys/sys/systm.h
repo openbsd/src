@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.161 2023/01/31 15:18:56 deraadt Exp $	*/
+/*	$OpenBSD: systm.h,v 1.162 2023/06/28 08:23:25 claudio Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -251,8 +251,8 @@ void	stop_periodic_resettodr(void);
 
 struct sleep_state;
 void	sleep_setup(struct sleep_state *, const volatile void *, int,
-	    const char *, int);
-int	sleep_finish(struct sleep_state *, int);
+	    const char *);
+int	sleep_finish(struct sleep_state *, int, int, int);
 void	sleep_queue_init(void);
 
 struct cond;
