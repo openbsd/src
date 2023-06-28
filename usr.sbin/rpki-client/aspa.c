@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.19 2023/06/26 18:39:53 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.20 2023/06/28 17:24:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -133,8 +133,7 @@ aspa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	int			 rc = 0;
 
 	if ((aspa = d2i_ASProviderAttestation(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: ASPA: failed to parse ASProviderAttestation",
-		    p->fn);
+		warnx("%s: ASPA: failed to parse ASProviderAttestation", p->fn);
 		goto out;
 	}
 
