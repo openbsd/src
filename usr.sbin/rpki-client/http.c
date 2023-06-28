@@ -1,4 +1,4 @@
-/*	$OpenBSD: http.c,v 1.77 2023/06/20 15:15:14 claudio Exp $ */
+/*	$OpenBSD: http.c,v 1.78 2023/06/28 17:36:09 op Exp $ */
 /*
  * Copyright (c) 2020 Nils Fisher <nils_fisher@hotmail.com>
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -1369,7 +1369,6 @@ http_parse_header(struct http_connection *conn, char *buf)
 	else if (strncasecmp(cp, CONTENTLEN, sizeof(CONTENTLEN) - 1) == 0) {
 		cp += sizeof(CONTENTLEN) - 1;
 		cp += strspn(cp, " \t");
-		cp[strcspn(cp, " \t")] = '\0';
 		conn->iosz = strtonum(cp, 0, MAX_CONTENTLEN, &errstr);
 		if (errstr != NULL) {
 			warnx("Content-Length of %s is %s",
@@ -1422,14 +1421,12 @@ http_parse_header(struct http_connection *conn, char *buf)
 	    sizeof(TRANSFER_ENCODING) - 1) == 0) {
 		cp += sizeof(TRANSFER_ENCODING) - 1;
 		cp += strspn(cp, " \t");
-		cp[strcspn(cp, " \t")] = '\0';
 		if (strcasecmp(cp, "chunked") == 0)
 			conn->chunked = 1;
 	} else if (strncasecmp(cp, CONTENT_ENCODING,
 	    sizeof(CONTENT_ENCODING) - 1) == 0) {
 		cp += sizeof(CONTENT_ENCODING) - 1;
 		cp += strspn(cp, " \t");
-		cp[strcspn(cp, " \t")] = '\0';
 		if (strcasecmp(cp, "gzip") == 0 ||
 		    strcasecmp(cp, "deflate") == 0) {
 			if (http_inflate_new(conn) == -1)
@@ -1439,7 +1436,6 @@ http_parse_header(struct http_connection *conn, char *buf)
 	} else if (strncasecmp(cp, CONNECTION, sizeof(CONNECTION) - 1) == 0) {
 		cp += sizeof(CONNECTION) - 1;
 		cp += strspn(cp, " \t");
-		cp[strcspn(cp, " \t")] = '\0';
 		if (strcasecmp(cp, "close") == 0)
 			conn->keep_alive = 0;
 		else if (strcasecmp(cp, "keep-alive") == 0)
