@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.411 2023/06/21 12:50:09 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.412 2023/06/28 12:12:48 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -175,6 +175,11 @@ int	parse_sizespec(const char *, double *, char **);
 int	parse_sizerange(char *, u_int64_t *, u_int64_t *);
 int	parse_pct(char *, int *);
 int	alignpartition(struct disklabel *, int, u_int64_t, u_int64_t, int);
+int	allocate_space(struct disklabel *, const struct alloc_table *);
+void	allocate_physmemincr(struct space_allocation *);
+int	allocate_partition(struct disklabel *, struct space_allocation *);
+const struct diskchunk *allocate_diskchunk(const struct disklabel *,
+    const struct space_allocation *);
 
 static u_int64_t starting_sector;
 static u_int64_t ending_sector;
@@ -514,170 +519,175 @@ done:
 int
 editor_allocspace(struct disklabel *lp_org)
 {
-	struct disklabel *lp, label;
-	struct space_allocation *alloc;
-	struct space_allocation *ap;
-	struct partition *pp;
-	const struct diskchunk *chunk;
-	u_int64_t chunkstart, chunksize, start, stop;
-	u_int64_t secs, xtrasecs;
-	u_int64_t pstart, pend, psz;
-	char **partmp;
-	int i, lastalloc, index, partno, freeparts;
-	extern int64_t physmem;
+	struct disklabel label;
+	u_int64_t pstart, pend;
+	int i;
 
 	/* How big is the OpenBSD portion of the disk?  */
 	find_bounds(lp_org);
 
 	resizeok = 1;
-	freeparts = 0;
 	for (i = 0;  i < MAXPARTITIONS; i++) {
 		if (i == RAW_PART)
 			continue;
-		pp = &lp_org->d_partitions[i];
-		psz = DL_GETPSIZE(pp);
-		if (psz == 0 || pp->p_fstype == FS_UNUSED) {
-			freeparts++;
-			continue;
-		}
-		pstart = DL_GETPOFFSET(pp);
-		pend = pstart + psz;
+		pstart = DL_GETPOFFSET(&lp_org->d_partitions[i]);
+		pend = pstart + DL_GETPSIZE(&lp_org->d_partitions[i]);
 		if (((pstart >= starting_sector && pstart < ending_sector) ||
 		    (pend > starting_sector && pend <= ending_sector)))
 			resizeok = 0; /* Part of OBSD area is in use! */
 	}
 
-	alloc = NULL;
-	index = -1;
-again:
-	free(alloc);
-	alloc = NULL;
-	index++;
-	if (index >= alloc_table_nitems)
-		return 1;
-	lp = &label;
-	mpfree(mountpoints, KEEP);
-	memcpy(lp, lp_org, sizeof(struct disklabel));
-	lp->d_npartitions = MAXPARTITIONS;
-	lastalloc = alloc_table[index].sz;
-	if (lastalloc > freeparts)
-		goto again;
-	alloc = reallocarray(NULL, lastalloc, sizeof(struct space_allocation));
-	if (alloc == NULL)
-		err(1, NULL);
-	memcpy(alloc, alloc_table[index].table,
-	    lastalloc * sizeof(struct space_allocation));
-
-	/* bump max swap based on phys mem, little physmem gets 2x swap */
-	if (index == 0 && alloc_table == alloc_table_default) {
-		if (physmem && physmem / DEV_BSIZE < MEG(256))
-			alloc[1].minsz = alloc[1].maxsz = 2 * (physmem /
-			    DEV_BSIZE);
-		else
-			alloc[1].maxsz += (physmem / DEV_BSIZE);
-		/* bump max /var to make room for 2 crash dumps */
-		alloc[3].maxsz += 2 * (physmem / DEV_BSIZE);
-	}
-
-	xtrasecs = editor_countfree(lp);
-
-	for (i = 0; i < lastalloc; i++) {
-		alloc[i].minsz = DL_BLKTOSEC(lp, alloc[i].minsz);
-		alloc[i].maxsz = DL_BLKTOSEC(lp, alloc[i].maxsz);
-		if (xtrasecs >= alloc[i].minsz)
-			xtrasecs -= alloc[i].minsz;
-		else {
-			/* It did not work out, try next strategy */
-			goto again;
+	for (i = 0; i < alloc_table_nitems; i++) {
+		memcpy(&label, lp_org, sizeof(label));
+		if (allocate_space(&label, &alloc_table[i]) == 0) {
+			memcpy(lp_org, &label, sizeof(struct disklabel));
+			return 0;
 		}
 	}
 
-	for (i = 0; i < lastalloc; i++) {
-		/* Find next available partition. */
-		for (partno = 0;  partno < MAXPARTITIONS; partno++)
-			if (DL_GETPSIZE(&lp->d_partitions[partno]) == 0)
-				break;
-		if (partno == MAXPARTITIONS) {
-			/* It did not work out, try next strategy */
-			goto again;
-		}
+	return 1;
+}
+
+const struct diskchunk *
+allocate_diskchunk(const struct disklabel *lp,
+    const struct space_allocation *sa)
+{
+	const struct diskchunk *chunk;
+	static struct diskchunk largest;
+	uint64_t maxstop;
+
+	largest.start = largest.stop = 0;
+
+	chunk = free_chunks(lp, -1);
+	for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
+		if (CHUNKSZ(chunk) > CHUNKSZ(&largest))
+			largest = *chunk;
+	}
+	maxstop = largest.start + DL_BLKTOSEC(lp, sa->maxsz);
+	if (maxstop > largest.stop)
+		maxstop = largest.stop;
+#ifdef SUN_CYLCHECK
+	if (lp->d_flags & D_VENDOR) {
+		largest.start = ROUNDUP(largest.start, lp->d_secpercyl);
+		maxstop = ROUNDUP(maxstop, lp->d_secpercyl);
+		if (maxstop > largest.stop)
+			maxstop -= lp->d_secpercyl;
+		if (largest.start >= maxstop)
+			largest.start = largest.stop = maxstop = 0;
+	}
+#endif
+	if (maxstop < largest.stop)
+		largest.stop = maxstop;
+	if (CHUNKSZ(&largest) < DL_BLKTOSEC(lp, sa->minsz))
+		return NULL;
+
+	return &largest;
+}
+
+int
+allocate_partition(struct disklabel *lp, struct space_allocation *sa)
+{
+	const struct diskchunk *chunk;
+	struct partition *pp;
+	unsigned int partno;
+
+	for (partno = 0; partno < nitems(lp->d_partitions); partno++) {
+		if (partno == RAW_PART)
+			continue;
 		pp = &lp->d_partitions[partno];
-		partmp = &mountpoints[partno];
-		ap = &alloc[i];
+		if (DL_GETPSIZE(pp) == 0 || pp->p_fstype == FS_UNUSED)
+			break;
+	}
+	if (partno >= nitems(lp->d_partitions))
+		return 1;		/* No free partition. */
 
-		/* Find largest chunk of free space. */
-		chunk = free_chunks(lp, -1);
-		chunkstart = chunksize = 0;
-		for (; chunk->start != 0 || chunk->stop != 0; chunk++) {
-			start = chunk->start;
-			stop = chunk->stop;
-#ifdef SUN_CYLCHECK
-			if (lp->d_flags & D_VENDOR) {
-				/* Align to cylinder boundaries. */
-				start = ROUNDUP(start, lp_org->d_secpercyl);
-				stop = ROUNDDOWN(stop, lp_org->d_secpercyl);
-				if (start > stop)
-					start = stop;
-			}
-#endif
-			if (stop - start > chunksize) {
-				chunkstart = start;
-				chunksize = stop - start;
-			}
-		}
+	/* Find appropriate chunk of free space. */
+	chunk = allocate_diskchunk(lp, sa);
+	if (chunk == NULL)
+		return 1;
 
-		/* Figure out the size of the partition. */
-		if (i == lastalloc - 1) {
-			if (chunksize > ap->maxsz)
-				secs = ap->maxsz;
-			else
-				secs = chunksize;
-		} else {
-			secs = ap->minsz;
-			if (xtrasecs > 0)
-				secs += (xtrasecs / 100) * ap->rate;
-			if (secs > ap->maxsz)
-				secs = ap->maxsz;
-		}
-#ifdef SUN_CYLCHECK
-		if (lp->d_flags & D_VENDOR) {
-			secs = ROUNDUP(secs, lp_org->d_secpercyl);
-			while (secs > chunksize)
-				secs -= lp_org->d_secpercyl;
-		}
-#endif
+	if (strcasecmp(sa->mp, "raid") == 0)
+		pp->p_fstype = FS_RAID;
+	else if (strcasecmp(sa->mp, "swap") == 0)
+		pp->p_fstype = FS_SWAP;
+	else if (sa->mp[0] == '/')
+		pp->p_fstype = FS_BSDFFS;
+	else
+		return 1;
 
-		/* See if partition can fit into chunk. */
-		if (secs > chunksize)
-			secs = chunksize;
-		if (secs < ap->minsz) {
-			/* It did not work out, try next strategy */
-			goto again;
-		}
+	DL_SETPSIZE(pp, chunk->stop - chunk->start);
+	DL_SETPOFFSET(pp, chunk->start);
 
-		/* Everything seems ok so configure the partition. */
-		DL_SETPSIZE(pp, secs);
-		DL_SETPOFFSET(pp, chunkstart);
-		if (ap->mp[0] != '/') {
-			if (strcasecmp(ap->mp, "raid") == 0)
-				pp->p_fstype = FS_RAID;
-			else
-				pp->p_fstype = FS_SWAP;
-		} else {
-			pp->p_fstype = FS_BSDFFS;
-			pp->p_fragblock = 0;
-			if (set_fragblock(lp, partno) == 1) {
-				free(alloc);
-				return 1;
-			}
-			free(*partmp);
-			if ((*partmp = strdup(ap->mp)) == NULL)
-				err(1, NULL);
+	if (pp->p_fstype == FS_BSDFFS && DL_GETPSIZE(pp) > 0) {
+		mountpoints[partno] = strdup(sa->mp);
+		if (mountpoints[partno] == NULL)
+			err(1, NULL);
+		if (set_fragblock(lp, partno))
+			return 1;
+	}
+
+	return 0;
+}
+
+void
+allocate_physmemincr(struct space_allocation *sa)
+{
+	u_int64_t memblks;
+	extern int64_t physmem;
+
+	if (physmem == 0)
+		return;
+
+	memblks = physmem / DEV_BSIZE;
+	if (strcasecmp(sa->mp, "swap") == 0) {
+		if (memblks < MEG(256))
+			sa->minsz = sa->maxsz = 2 * memblks;
+		else
+			sa->maxsz += memblks;
+	} else if (strcasecmp(sa->mp, "/var") == 0) {
+		sa->maxsz += 2 * memblks;
+	}
+}
+
+int
+allocate_space(struct disklabel *lp, const struct alloc_table *alloc_table)
+{
+	struct space_allocation sa[MAXPARTITIONS];
+	u_int64_t maxsz, xtrablks;
+	int i;
+
+	xtrablks = DL_SECTOBLK(lp, editor_countfree(lp));
+	memset(sa, 0, sizeof(sa));
+	for (i = 0; i < alloc_table->sz; i++) {
+		sa[i] = alloc_table->table[i];
+		if (alloc_table->table == alloc_big)
+			allocate_physmemincr(&sa[i]);
+		if (xtrablks < sa[i].minsz)
+			return 1;	/* Too few free blocks. */
+		xtrablks -= sa[i].minsz;
+	}
+	sa[alloc_table->sz - 1].rate = 100; /* Last allocation is greedy. */
+
+	for (i = lp->d_npartitions; i < MAXPARTITIONS; i++) {
+		if (i == RAW_PART)
+			continue;
+		memset(&lp->d_partitions[i], 0, sizeof(lp->d_partitions[i]));
+	}
+	lp->d_npartitions = MAXPARTITIONS;
+
+	mpfree(mountpoints, KEEP);
+	for (i = 0; i < alloc_table->sz; i++) {
+		if (sa[i].rate < 100) {
+			maxsz = sa[i].minsz + (xtrablks / 100) * sa[i].rate;
+			if (maxsz < sa[i].maxsz)
+				sa[i].maxsz = maxsz;
+		}
+		if (allocate_partition(lp, &sa[i])) {
+			mpfree(mountpoints, KEEP);
+			return 1;
 		}
 	}
 
-	free(alloc);
-	memcpy(lp_org, lp, sizeof(struct disklabel));
 	return 0;
 }
 
