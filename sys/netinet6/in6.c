@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.261 2023/04/21 00:41:13 kn Exp $	*/
+/*	$OpenBSD: in6.c,v 1.262 2023/06/28 11:49:49 kn Exp $	*/
 /*	$KAME: in6.c,v 1.372 2004/06/14 08:14:21 itojun Exp $	*/
 
 /*
@@ -1032,7 +1032,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 		/*
 		 * Found it; just increment the reference count.
 		 */
-		in6m->in6m_refcnt++;
+		refcnt_take(&in6m->in6m_refcnt);
 	} else {
 		/*
 		 * New address; allocate a new multicast record
@@ -1047,7 +1047,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, int *errorp)
 		in6m->in6m_sin.sin6_len = sizeof(struct sockaddr_in6);
 		in6m->in6m_sin.sin6_family = AF_INET6;
 		in6m->in6m_sin.sin6_addr = *maddr6;
-		in6m->in6m_refcnt = 1;
+		refcnt_init_trace(&in6m->in6m_refcnt, DT_REFCNT_IDX_IFMADDR);
 		in6m->in6m_ifidx = ifp->if_index;
 		in6m->in6m_ifma.ifma_addr = sin6tosa(&in6m->in6m_sin);
 
@@ -1088,7 +1088,7 @@ in6_delmulti(struct in6_multi *in6m)
 
 	NET_ASSERT_LOCKED();
 
-	if (--in6m->in6m_refcnt == 0) {
+	if (refcnt_rele(&in6m->in6m_refcnt) != 0) {
 		/*
 		 * No remaining claims to this record; let MLD6 know
 		 * that we are leaving the multicast group.

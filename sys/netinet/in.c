@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.c,v 1.184 2023/04/24 12:11:56 kn Exp $	*/
+/*	$OpenBSD: in.c,v 1.185 2023/06/28 11:49:49 kn Exp $	*/
 /*	$NetBSD: in.c,v 1.26 1996/02/13 23:41:39 christos Exp $	*/
 
 /*
@@ -839,7 +839,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		/*
 		 * Found it; just increment the reference count.
 		 */
-		++inm->inm_refcnt;
+		refcnt_take(&inm->inm_refcnt);
 	} else {
 		/*
 		 * New address; allocate a new multicast record
@@ -849,7 +849,7 @@ in_addmulti(struct in_addr *ap, struct ifnet *ifp)
 		inm->inm_sin.sin_len = sizeof(struct sockaddr_in);
 		inm->inm_sin.sin_family = AF_INET;
 		inm->inm_sin.sin_addr = *ap;
-		inm->inm_refcnt = 1;
+		refcnt_init_trace(&inm->inm_refcnt, DT_REFCNT_IDX_IFMADDR);
 		inm->inm_ifidx = ifp->if_index;
 		inm->inm_ifma.ifma_addr = sintosa(&inm->inm_sin);
 
@@ -890,7 +890,7 @@ in_delmulti(struct in_multi *inm)
 
 	NET_ASSERT_LOCKED();
 
-	if (--inm->inm_refcnt != 0)
+	if (refcnt_rele(&inm->inm_refcnt) == 0)
 		return;
 
 	ifp = if_get(inm->inm_ifidx);
