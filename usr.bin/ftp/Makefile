@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2021/02/16 16:27:34 naddy Exp $
+#	$OpenBSD: Makefile,v 1.36 2023/06/28 17:35:06 op Exp $
 
 # Define SMALL to disable command line editing and some other features,
 # NOSSL to disable https support.
@@ -12,5 +12,6 @@ LDADD+=	-ledit -lcurses -ltls -lssl -lcrypto
 DPADD+=	${LIBEDIT} ${LIBCURSES} ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}
 
 #COPTS+= -Wall -Wconversion -Wstrict-prototypes -Wmissing-prototypes
+COPTS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
 
 .include <bsd.prog.mk>

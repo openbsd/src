@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.215 2023/06/28 11:07:28 op Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.216 2023/06/28 17:35:06 op Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -891,7 +891,6 @@ noslash:
 		if (strncasecmp(cp, CONTENTLEN, sizeof(CONTENTLEN) - 1) == 0) {
 			cp += sizeof(CONTENTLEN) - 1;
 			cp += strspn(cp, " \t");
-			cp[strcspn(cp, " \t")] = '\0';
 			filesize = strtonum(cp, 0, LLONG_MAX, &errstr);
 			if (errstr != NULL)
 				goto improper;
@@ -964,10 +963,8 @@ noslash:
 #define RETRYAFTER "Retry-After:"
 		} else if (isunavail &&
 		    strncasecmp(cp, RETRYAFTER, sizeof(RETRYAFTER) - 1) == 0) {
-			size_t s;
 			cp += sizeof(RETRYAFTER) - 1;
 			cp += strspn(cp, " \t");
-			cp[strcspn(cp, " \t")] = '\0';
 			retryafter = strtonum(cp, 0, 0, &errstr);
 			if (errstr != NULL)
 				retryafter = -1;
@@ -976,7 +973,6 @@ noslash:
 			    sizeof(TRANSFER_ENCODING) - 1) == 0) {
 			cp += sizeof(TRANSFER_ENCODING) - 1;
 			cp += strspn(cp, " \t");
-			cp[strcspn(cp, " \t")] = '\0';
 			if (strcasecmp(cp, "chunked") == 0)
 				chunked = 1;
 #ifndef SMALL
@@ -985,7 +981,6 @@ noslash:
 			    sizeof(LAST_MODIFIED) - 1) == 0) {
 			cp += sizeof(LAST_MODIFIED) - 1;
 			cp += strspn(cp, " \t");
-			cp[strcspn(cp, "\t")] = '\0';
 			if (strptime(cp, "%a, %d %h %Y %T %Z", &lmt) == NULL)
 				server_timestamps = 0;
 #endif /* !SMALL */
