@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.38 2023/03/05 22:17:22 tobhe Exp $	*/
+/*	$OpenBSD: proc.c,v 1.39 2023/06/28 12:31:19 gerhard Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -205,6 +205,8 @@ proc_init(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc,
 
 	if (proc_id == PROC_PARENT) {
 		privsep_process = PROC_PARENT;
+		if (!debug && daemon(0, 0) == -1)
+			fatal("failed to daemonize");
 		proc_setup(ps, procs, nproc);
 
 		/*
