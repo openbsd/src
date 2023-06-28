@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.409 2023/06/28 15:36:08 kn Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.410 2023/06/28 21:33:35 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1506,11 +1506,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		int			 i;
 
 		t = pf_find_trans(minor(dev), pr->ticket);
-		if (t == NULL)
-			return (ENXIO);
+		if (t == NULL) {
+			error = ENXIO;
+			goto fail;
+		}
 		KASSERT(t->pft_unit == minor(dev));
-		if (t->pft_type != PF_TRANS_GETRULE)
-			return (EINVAL);
+		if (t->pft_type != PF_TRANS_GETRULE) {
+			error = EINVAL;
+			goto fail;
+		}
 
 		NET_LOCK();
 		PF_LOCK();
