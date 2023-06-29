@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.41 2023/06/26 18:39:53 job Exp $ */
+/*	$OpenBSD: print.c,v 1.42 2023/06/29 10:22:37 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -612,19 +612,6 @@ rsc_print(const X509 *x, const struct rsc *p)
 		json_do_end();
 }
 
-static void
-aspa_provider(uint32_t as)
-{
-	if (outformats & FORMAT_JSON) {
-		json_do_object("aspa", 1);
-		json_do_uint("asid", as);
-		json_do_end();
-	} else {
-		printf("AS: %u", as);
-		printf("\n");
-	}
-}
-
 void
 aspa_print(const X509 *x, const struct aspa *p)
 {
@@ -662,9 +649,13 @@ aspa_print(const X509 *x, const struct aspa *p)
 	}
 
 	for (i = 0; i < p->providersz; i++) {
-		if ((outformats & FORMAT_JSON) == 0 && i > 0)
-			printf("%26s", "");
-		aspa_provider(p->providers[i]);
+		if (outformats & FORMAT_JSON)
+			json_do_uint("asid", p->providers[i]);
+		else {
+			if (i > 0)
+				printf("%26s", "");
+			printf("AS: %u\n", p->providers[i]);
+		}
 	}
 
 	if (outformats & FORMAT_JSON)
