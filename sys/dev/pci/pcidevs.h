@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2040 2023/06/27 15:30:25 stsp Exp 
+ *	OpenBSD: pcidevs,v 1.2041 2023/06/29 07:58:15 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -5616,7 +5616,9 @@
 #define	PCI_PRODUCT_INTEL_ADL_PCIE_1	0x463d		/* Core 12G PCIE */
 #define	PCI_PRODUCT_INTEL_ADL_TBT_DMA0	0x463e		/* Core 12G TBT */
 #define	PCI_PRODUCT_INTEL_ADL_TBT_PCIE1	0x463f		/* Core 12G PCIE */
+#define	PCI_PRODUCT_INTEL_RPL_S_HB_1	0x4640		/* Core 13G Host */
 #define	PCI_PRODUCT_INTEL_ADL_HP_HB_1	0x4641		/* Core 12G Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_HB_1	0x4647		/* Core 13G Host */
 #define	PCI_PRODUCT_INTEL_ADL_S_HB_3	0x4648		/* Core 12G Host */
 #define	PCI_PRODUCT_INTEL_ADL_H_HB_1	0x4649		/* Core 12G Host */
 #define	PCI_PRODUCT_INTEL_ADL_S_PCIE_3	0x464d		/* Core 12G PCIE */
@@ -5834,6 +5836,7 @@
 #define	PCI_PRODUCT_INTEL_EP80579_LAN_3	0x5048		/* EP80579 LAN */
 #define	PCI_PRODUCT_INTEL_EP80579_LAN_6	0x5049		/* EP80579 LAN */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_ESPI	0x5182		/* 600 Series eSPI */
+#define	PCI_PRODUCT_INTEL_700SERIES_LP_ESPI	0x519d		/* 700 Series eSPI */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_P2SB	0x51a0		/* 600 Series P2SB */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_PMC	0x51a1		/* 600 Series PMC */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_SMB	0x51a3		/* 600 Series SMBus */
@@ -5859,6 +5862,7 @@
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_I2C_1	0x51c6		/* 600 Series I2C */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_UART_2	0x51c7		/* 600 Series UART */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_HDA	0x51c8		/* 600 Series HD Audio */
+#define	PCI_PRODUCT_INTEL_700SERIES_LP_HDA	0x51ca		/* 700 Series HD Audio */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_THC_0	0x51d0		/* 600 Series THC */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_THC_1	0x51d1		/* 600 Series THC */
 #define	PCI_PRODUCT_INTEL_600SERIES_LP_AHCI	0x51d3		/* 600 Series AHCI */
@@ -6935,8 +6939,37 @@
 #define	PCI_PRODUCT_INTEL_400SERIES_V_PCIE_21	0xa3eb		/* 400 Series PCIE */
 #define	PCI_PRODUCT_INTEL_400SERIES_V_PCIE_22	0xa3ec		/* 400 Series PCIE */
 #define	PCI_PRODUCT_INTEL_400SERIES_V_PCIE_23	0xa3ed		/* 400 Series PCIE */
+#define	PCI_PRODUCT_INTEL_RPL_S_HB_2	0xa700		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_HB_2	0xa702		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_S_HB_3	0xa703		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_S_HB_4	0xa704		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_S_HB_5	0xa705		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_H_HB_1	0xa706		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_H_HB_2	0xa707		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_U_HB_1	0xa708		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_PCIE_1	0xa70d		/* Core 13G PCIE */
+#define	PCI_PRODUCT_INTEL_RPL_H_HB_3	0xa716		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_HB_3	0xa719		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_U_HB_2	0xa71b		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_U_HB_3	0xa71c		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_DTT	0xa71d		/* Core 13G DTT */
+#define	PCI_PRODUCT_INTEL_RPL_XHCI	0xa71e		/* Core 13G xHCI */
 #define	PCI_PRODUCT_INTEL_RPL_P_GT_1	0xa720		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_P_GT_2	0xa721		/* Graphics */
+#define	PCI_PRODUCT_INTEL_RPL_HX_HB_4	0xa728		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_HB_5	0xa729		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_HX_HB_6	0xa72a		/* Core 13G Host */
+#define	PCI_PRODUCT_INTEL_RPL_PCIE_2	0xa72d		/* Core 13G PCIE */
+#define	PCI_PRODUCT_INTEL_RPL_TBT_PCIE2	0xa72f		/* Core 13G PCIE */
+#define	PCI_PRODUCT_INTEL_RPL_TBT_DMA0	0xa73e		/* Core 13G TBT */
+#define	PCI_PRODUCT_INTEL_RPL_PCIE_3	0xa74d		/* Core 13G PCIE */
+#define	PCI_PRODUCT_INTEL_RPL_GNA	0xa74f		/* Core 13G GNA */
+#define	PCI_PRODUCT_INTEL_RPL_IPU	0xa75d		/* Core 13G IPU */
+#define	PCI_PRODUCT_INTEL_RPL_TBT_DMA1	0xa76d		/* Core 13G TBT */
+#define	PCI_PRODUCT_INTEL_RPL_TBT_PCIE0	0xa76e		/* Core 13G PCIE */
+#define	PCI_PRODUCT_INTEL_RPL_TH	0xa76f		/* Core 13G TH */
+#define	PCI_PRODUCT_INTEL_RPL_CL	0xa77d		/* Core 13G CL */
+#define	PCI_PRODUCT_INTEL_RPL_VMD	0xa77f		/* Core 13G VMD */
 #define	PCI_PRODUCT_INTEL_RPL_S_GT_1	0xa780		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_S_GT_2	0xa781		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_S_GT_3	0xa782		/* Graphics */
