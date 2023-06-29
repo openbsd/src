@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.412 2023/06/28 12:12:48 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.413 2023/06/29 20:10:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -677,11 +677,12 @@ allocate_space(struct disklabel *lp, const struct alloc_table *alloc_table)
 
 	mpfree(mountpoints, KEEP);
 	for (i = 0; i < alloc_table->sz; i++) {
-		if (sa[i].rate < 100) {
+		if (sa[i].rate == 100)
+			maxsz = sa[i].minsz + xtrablks;
+		else
 			maxsz = sa[i].minsz + (xtrablks / 100) * sa[i].rate;
-			if (maxsz < sa[i].maxsz)
-				sa[i].maxsz = maxsz;
-		}
+		if (maxsz < sa[i].maxsz)
+			sa[i].maxsz = maxsz;
 		if (allocate_partition(lp, &sa[i])) {
 			mpfree(mountpoints, KEEP);
 			return 1;
