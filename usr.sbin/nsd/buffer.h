@@ -10,8 +10,8 @@
  * the java.nio.Buffer interface.
  */
 
-#ifndef _BUFFER_H_
-#define _BUFFER_H_
+#ifndef BUFFER_H
+#define BUFFER_H
 
 #include <assert.h>
 #include <stdarg.h>
@@ -411,4 +411,4 @@ buffer_read_u64(buffer_type *buffer)
 int buffer_printf(buffer_type *buffer, const char *format, ...)
 	ATTR_FORMAT(printf, 2, 3);
 
-#endif /* _BUFFER_H_ */
+#endif /* BUFFER_H */

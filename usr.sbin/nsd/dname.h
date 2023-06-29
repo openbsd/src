@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _DNAME_H_
-#define _DNAME_H_
+#ifndef DNAME_H
+#define DNAME_H
 
 #include <assert.h>
 #include <stdio.h>
@@ -381,4 +381,4 @@ char* wirelabel2str(const uint8_t* label);
 /** check if two uncompressed dnames of the same total length are equal */
 int dname_equal_nocase(uint8_t* a, uint8_t* b, uint16_t len);
 
-#endif /* _DNAME_H_ */
+#endif /* DNAME_H */

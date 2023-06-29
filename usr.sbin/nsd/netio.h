@@ -38,8 +38,8 @@
  * blocked in pselect(2).
  */
 
-#ifndef _NETIO_H_
-#define _NETIO_H_
+#ifndef NETIO_H
+#define NETIO_H
 
 #ifdef	HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -187,4 +187,4 @@ operator |= (netio_event_types_type &lhs, netio_event_types_type rhs) {
 }
 #endif /* __cplusplus */
 
-#endif /* _NETIO_H_ */
+#endif /* NETIO_H */

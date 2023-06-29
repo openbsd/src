@@ -1556,11 +1556,13 @@ main(int argc, char *argv[])
 	if(nsd.options->control_enable || (nsd.options->tls_service_key && nsd.options->tls_service_key[0])) {
 		perform_openssl_init();
 	}
+#endif /* HAVE_SSL */
 	if(nsd.options->control_enable) {
 		/* read ssl keys while superuser and outside chroot */
 		if(!(nsd.rc = daemon_remote_create(nsd.options)))
 			error("could not perform remote control setup");
 	}
+#if defined(HAVE_SSL)
 	if(nsd.options->tls_service_key && nsd.options->tls_service_key[0]
 	   && nsd.options->tls_service_pem && nsd.options->tls_service_pem[0]) {
 		if(!(nsd.tls_ctx = server_tls_ctx_create(&nsd, NULL,

@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef	_NSD_H_
-#define	_NSD_H_
+#ifndef	NSD_H
+#define	NSD_H
 
 #include <signal.h>
 #include <net/if.h>
@@ -407,4 +407,4 @@ void perform_openssl_init(void);
 #endif
 ssize_t block_read(struct nsd* nsd, int s, void* p, ssize_t sz, int timeout);
 
-#endif	/* _NSD_H_ */
+#endif	/* NSD_H */

@@ -329,13 +329,13 @@ xfrd_read_state(struct xfrd_state* xfrd)
 		incoming_soa = zone->soa_nsd;
 		incoming_acquired = zone->soa_nsd_acquired;
 		zone->soa_nsd = soa_nsd_read;
-		zone->soa_disk = soa_disk_read;
-		zone->soa_notified = soa_notified_read;
 		zone->soa_nsd_acquired = soa_nsd_acquired_read;
-		/* we had better use what we got from starting NSD, not
-		 * what we store in this file, because the actual zone
-		 * contents trumps the contents of this cache */
-		/* zone->soa_disk_acquired = soa_disk_acquired_read; */
+		/* use soa and soa_acquired from starting NSD, not what is stored in
+		 * the state file, because the actual zone contents trumps the contents
+		 * of this cache */
+		zone->soa_disk = incoming_soa;
+		zone->soa_disk_acquired = incoming_acquired;
+		zone->soa_notified = soa_notified_read;
 		zone->soa_notified_acquired = soa_notified_acquired_read;
 		if (zone->state == xfrd_zone_expired)
 		{

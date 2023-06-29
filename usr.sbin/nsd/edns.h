@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _EDNS_H_
-#define _EDNS_H_
+#ifndef EDNS_H
+#define EDNS_H
 
 #include "buffer.h"
 struct nsd;
@@ -103,4 +103,4 @@ void edns_init_nsid(edns_data_type *data, uint16_t nsid_len);
 void cookie_verify(struct query *q, struct nsd* nsd, uint32_t *now_p);
 void cookie_create(struct query *q, struct nsd* nsd, uint32_t *now_p);
 
-#endif /* _EDNS_H_ */
+#endif /* EDNS_H */

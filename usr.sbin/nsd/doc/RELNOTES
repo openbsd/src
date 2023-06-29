@@ -1,5 +1,46 @@
 NSD RELEASE NOTES
 
+4.7.0
+================
+FEATURES:
+	- Merge #263: Add bash autocompletion script for nsd-control.
+	- Fix #267: Allow unencrypted local operation of nsd-control.
+	- Merge #269 from Fale: Add systemd service unit.
+	- Fix #271: DNSTAP over TCP, with dnstap-ip: "127.0.0.1@3333".
+	- dnstap over TLS, default enabled. Configured with the
+	  options dnstap-tls, dnstap-tls-server-name, dnstap-tls-cert-bundle,
+	  dnstap-tls-client-key-file and dnstap-tls-client-cert-file.
+BUG FIXES:
+	- Fix #239: -Wincompatible-pointer-types warning in remote.c.
+	- Fix configure for -Wstrict-prototypes.
+	- Fix #262: Zone(s) not synchronizing properly via TLS.
+	- Fix for #262: More error logging for SSL read failures for zone
+	  transfers.
+	- Merge #265: Fix C99 compatibility issue.
+	- Fix #266: Fix build with --without-ssl.
+	- Fix for #267: neater variable definitions.
+	- Fix #270: reserved identifier violation.
+	- Fix to clean more memory on exit of dnstap collector.
+	- Fix dnstap to not check socket path when using IP address.
+	- Fix to compile without ssl with dnstap-tls code.
+	- Dnstap tls code fixes.
+	- Fix include brackets for ssl.h include statements, instead of quotes.
+	- Fix static analyzer warning about nsd_event_method initialization.
+	- Fix #273: Large TXT record breaks AXFR.
+	- Fix ixfr create from adding too many record types.
+	- Fix cirrus script for submit to coverity scan to libtoolize
+	  the configure script components config.guess and config.sub.
+	- Fix readme status badge links.
+	- make depend.
+	- Fix for build to run flex and bison before compiling code that needs
+	  the headers.
+	- Fix to remove unused whitespace from acx_nlnetlabs.m4 and config.h.
+	- For #279: Note that autoreconf -fi creates the configure script
+	  and also the needed auxiliary files, for autoconf 2.69 and 2.71.
+	- Fix unused variable warning in unit test, from clang compile.
+	- Fix #240: Prefix messages originating from verifier.
+	- Fix #275: Drop unnecessary root server checks.
+
 4.6.1
 ================
 FEATURES:

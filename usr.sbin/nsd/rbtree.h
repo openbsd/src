@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _RBTREE_H_
-#define	_RBTREE_H_
+#ifndef RBTREE_H
+#define	RBTREE_H
 
 #include "region-allocator.h"
 
@@ -73,4 +73,4 @@ rbnode_type *rbtree_previous(rbnode_type *rbtree);
 		(rbnode_type*)node != RBTREE_NULL; \
 		node = (type)rbtree_next((rbnode_type*)node))
 
-#endif /* _RBTREE_H_ */
+#endif /* RBTREE_H */

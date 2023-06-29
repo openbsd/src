@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _NAMEDB_H_
-#define	_NAMEDB_H_
+#ifndef NAMEDB_H
+#define	NAMEDB_H
 
 #include <stdio.h>
 
@@ -466,4 +466,4 @@ void zone_rr_iter_init(zone_rr_iter_type *iter, zone_type *zone);
 
 rr_type *zone_rr_iter_next(zone_rr_iter_type *iter);
 
-#endif /* _NAMEDB_H_ */
+#endif /* NAMEDB_H */

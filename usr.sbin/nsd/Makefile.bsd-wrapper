@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.19 2021/06/30 11:50:22 deraadt Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.20 2023/06/29 19:38:49 florian Exp $
 
 .include <bsd.own.mk>
 
@@ -21,8 +21,7 @@ CONFIGURE_OPTS=	--prefix=/usr \
 		--with-xfrdir=${CHROOTDIR}/run/xfr \
 		--with-xfrdfile=${CHROOTDIR}/run/xfrd.state \
 		--with-libevent=/usr \
-		--enable-ratelimit \
-		--enable-root-server
+		--enable-ratelimit
 
 PROG=	nsd nsd-checkconf nsd-checkzone nsd-control
 

@@ -43,10 +43,10 @@
  * Both the server and the client(control tool) have their own keys.
  */
 #include "config.h"
-#ifdef HAVE_SSL
 
+#ifdef HAVE_SSL
 #ifdef HAVE_OPENSSL_SSL_H
-#include "openssl/ssl.h"
+#include <openssl/ssl.h>
 #endif
 #ifdef HAVE_OPENSSL_ERR_H
 #include <openssl/err.h>
@@ -54,10 +54,12 @@
 #ifdef HAVE_OPENSSL_RAND_H
 #include <openssl/rand.h>
 #endif
+#endif /* HAVE_SSL */
 #include <ctype.h>
 #include <unistd.h>
 #include <assert.h>
 #include <fcntl.h>
+#include <errno.h>
 #ifndef USE_MINI_EVENT
 #  ifdef HAVE_EVENT_H
 #    include <event.h>
@@ -121,8 +123,10 @@ struct rc_state {
 	struct timeval tval;
 	/** in the handshake part */
 	enum { rc_none, rc_hs_read, rc_hs_write } shake_state;
+#ifdef HAVE_SSL
 	/** the ssl state */
 	SSL* ssl;
+#endif
 	/** file descriptor */
 	int fd;
 	/** the rc this is part of */
@@ -165,16 +169,20 @@ struct daemon_remote {
 	struct rc_state* stats_list;
 	/** last time stats was reported */
 	struct timeval stats_time, boot_time;
+#ifdef HAVE_SSL
 	/** the SSL context for creating new SSL streams */
 	SSL_CTX* ctx;
+#endif
 };
 
 /**
  * Connection to print to, either SSL or plain over fd
  */
 struct remote_stream {
+#ifdef HAVE_SSL
 	/** SSL structure, nonNULL if using SSL */
 	SSL* ssl;
+#endif
 	/** file descriptor for plain transfer */
 	int fd;
 };
@@ -218,7 +226,7 @@ remote_control_callback(int fd, short event, void* arg);
 
 /** ---- end of private defines ---- **/
 
-
+#ifdef HAVE_SSL
 /** log ssl crypto err */
 static void
 log_crypto_err(const char* str)
@@ -233,6 +241,7 @@ log_crypto_err(const char* str)
 		log_msg(LOG_ERR, "and additionally crypto %s", buf);
 	}
 }
+#endif /* HAVE_SSL */
 
 #ifdef BIND8_STATS
 /** subtract timers and the values do not overflow or become negative */
@@ -252,6 +261,7 @@ timeval_subtract(struct timeval* d, const struct timeval* end,
 }
 #endif /* BIND8_STATS */
 
+#ifdef HAVE_SSL
 static int
 remote_setup_ctx(struct daemon_remote* rc, struct nsd_options* cfg)
 {
@@ -264,6 +274,7 @@ remote_setup_ctx(struct daemon_remote* rc, struct nsd_options* cfg)
 	}
 	return 1;
 }
+#endif /* HAVE_SSL */
 
 struct daemon_remote*
 daemon_remote_create(struct nsd_options* cfg)
@@ -274,14 +285,20 @@ daemon_remote_create(struct nsd_options* cfg)
 	assert(cfg->control_enable);
 
 	if(options_remote_is_address(cfg)) {
+#ifdef HAVE_SSL
 		if(!remote_setup_ctx(rc, cfg)) {
 			daemon_remote_delete(rc);
 			return NULL;
 		}
 		rc->use_cert = 1;
+#else
+		log_msg(LOG_ERR, "Could not setup remote control: NSD was compiled without SSL.");
+#endif /* HAVE_SSL */
 	} else {
 		struct ip_address_option* o;
+#ifdef HAVE_SSL
 		rc->ctx = NULL;
+#endif
 		rc->use_cert = 0;
 		for(o = cfg->control_interface; o; o = o->next) {
 			if(o->address && o->address[0] != '/')
@@ -328,8 +345,10 @@ void daemon_remote_close(struct daemon_remote* rc)
 		np = p->next;
 		if(p->event_added)
 			event_del(&p->c);
+#ifdef HAVE_SSL
 		if(p->ssl)
 			SSL_free(p->ssl);
+#endif
 		close(p->c.ev_fd);
 		free(p);
 		p = np;
@@ -342,9 +361,11 @@ void daemon_remote_delete(struct daemon_remote* rc)
 {
 	if(!rc) return;
 	daemon_remote_close(rc);
+#ifdef HAVE_SSL
 	if(rc->ctx) {
 		SSL_CTX_free(rc->ctx);
 	}
+#endif
 	free(rc);
 }
 
@@ -639,6 +660,7 @@ remote_accept_callback(int fd, short event, void* arg)
 		}
 	}
 
+#ifdef HAVE_SSL
 	if(rc->ctx) {
 		n->shake_state = rc_hs_read;
 		n->ssl = SSL_new(rc->ctx);
@@ -660,6 +682,7 @@ remote_accept_callback(int fd, short event, void* arg)
 	} else {
 		n->ssl = NULL;
 	}
+#endif /* HAVE_SSL */
 
 	n->rc = rc;
 	n->stats_next = NULL;
@@ -717,10 +740,12 @@ clean_point(struct daemon_remote* rc, struct rc_state* s)
 	rc->active --;
 	if(s->event_added)
 		event_del(&s->c);
+#ifdef HAVE_SSL
 	if(s->ssl) {
 		SSL_shutdown(s->ssl);
 		SSL_free(s->ssl);
 	}
+#endif /* HAVE_SSL */
 	close(s->c.ev_fd);
 	free(s);
 }
@@ -728,10 +753,11 @@ clean_point(struct daemon_remote* rc, struct rc_state* s)
 static int
 ssl_print_text(RES* res, const char* text)
 {
-	int r;
 	if(!res) 
 		return 0;
+#ifdef HAVE_SSL
 	if(res->ssl) {
+		int r;
 		ERR_clear_error();
 		if((r=SSL_write(res->ssl, text, (int)strlen(text))) <= 0) {
 			if(SSL_get_error(res->ssl, r) == SSL_ERROR_ZERO_RETURN) {
@@ -743,12 +769,15 @@ ssl_print_text(RES* res, const char* text)
 			return 0;
 		}
 	} else {
+#endif /* HAVE_SSL */
 		if(write_socket(res->fd, text, strlen(text)) <= 0) {
 			log_msg(LOG_ERR, "could not write: %s",
 				strerror(errno));
 			return 0;
 		}
+#ifdef HAVE_SSL
 	}
+#endif /* HAVE_SSL */
 	return 1;
 }
 
@@ -776,14 +805,15 @@ ssl_printf(RES* ssl, const char* format, ...)
 static int
 ssl_read_line(RES* res, char* buf, size_t max)
 {
-	int r;
 	size_t len = 0;
 	if(!res)
 		return 0;
 	while(len < max) {
 		buf[len] = 0; /* terminate for safety and please checkers */
 		/* this byte is written if we read a byte from the input */
+#ifdef HAVE_SSL
 		if(res->ssl) {
+			int r;
 			ERR_clear_error();
 			if((r=SSL_read(res->ssl, buf+len, 1)) <= 0) {
 				if(SSL_get_error(res->ssl, r) == SSL_ERROR_ZERO_RETURN) {
@@ -794,6 +824,7 @@ ssl_read_line(RES* res, char* buf, size_t max)
 				return 0;
 			}
 		} else {
+#endif /* HAVE_SSL */
 			while(1) {
 				ssize_t rr = read(res->fd, buf+len, 1);
 				if(rr <= 0) {
@@ -809,7 +840,9 @@ ssl_read_line(RES* res, char* buf, size_t max)
 				}
 				break;
 			}
+#ifdef HAVE_SSL
 		}
+#endif /* HAVE_SSL */
 		if(buf[len] == '\n') {
 			/* return string without \n */
 			buf[len] = 0;
@@ -1212,8 +1245,11 @@ do_stats(struct daemon_remote* rc, int peek, struct rc_state* rs)
 	/* force a reload */
 	xfrd_set_reload_now(xfrd);
 #else
+	RES res;
+	res.ssl = rs->ssl;
+	res.fd = rs->fd;
 	(void)rc; (void)peek;
-	(void)ssl_printf(rs->ssl, "error no stats enabled at compile time\n");
+	(void)ssl_printf(&res, "error no stats enabled at compile time\n");
 #endif /* BIND8_STATS */
 }
 
@@ -2403,6 +2439,7 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 	}
 
 	/* try to read magic UBCT[version]_space_ string */
+#ifdef HAVE_SSL
 	if(res->ssl) {
 		ERR_clear_error();
 		if((r=SSL_read(res->ssl, magic, (int)sizeof(magic)-1)) <= 0) {
@@ -2412,6 +2449,7 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 			return;
 		}
 	} else {
+#endif /* HAVE_SSL */
 		while(1) {
 			ssize_t rr = read(res->fd, magic, sizeof(magic)-1);
 			if(rr <= 0) {
@@ -2424,7 +2462,9 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 			r = (int)rr;
 			break;
 		}
+#ifdef HAVE_SSL
 	}
+#endif /* HAVE_SSL */
 	magic[7] = 0;
 	if( r != 7 || strncmp(magic, "NSDCT", 5) != 0) {
 		VERBOSITY(2, (LOG_INFO, "control connection has bad header"));
@@ -2450,6 +2490,7 @@ handle_req(struct daemon_remote* rc, struct rc_state* s, RES* res)
 	execute_cmd(rc, res, buf, s);
 }
 
+#ifdef HAVE_SSL
 /** handle SSL_do_handshake changes to the file descriptor to wait for later */
 static void
 remote_handshake_later(struct daemon_remote* rc, struct rc_state* s, int fd,
@@ -2492,6 +2533,7 @@ remote_handshake_later(struct daemon_remote* rc, struct rc_state* s, int fd,
 		clean_point(rc, s);
 	}
 }
+#endif /* HAVE_SSL */
 
 static void
 remote_control_callback(int fd, short event, void* arg)
@@ -2499,14 +2541,15 @@ remote_control_callback(int fd, short event, void* arg)
 	RES res;
 	struct rc_state* s = (struct rc_state*)arg;
 	struct daemon_remote* rc = s->rc;
-	int r;
 	if( (event&EV_TIMEOUT) ) {
 		log_msg(LOG_ERR, "remote control timed out");
 		clean_point(rc, s);
 		return;
 	}
+#ifdef HAVE_SSL
 	if(s->ssl) {
 		/* (continue to) setup the SSL connection */
+		int r;
 		ERR_clear_error();
 		r = SSL_do_handshake(s->ssl);
 		if(r != 1) {
@@ -2516,10 +2559,12 @@ remote_control_callback(int fd, short event, void* arg)
 		}
 		s->shake_state = rc_none;
 	}
+#endif /* HAVE_SSL */
 
 	/* once handshake has completed, check authentication */
 	if (!rc->use_cert) {
 		VERBOSITY(3, (LOG_INFO, "unauthenticated remote control connection"));
+#ifdef HAVE_SSL
 	} else if(SSL_get_verify_result(s->ssl) == X509_V_OK) {
 		X509* x = SSL_get_peer_certificate(s->ssl);
 		if(!x) {
@@ -2530,6 +2575,7 @@ remote_control_callback(int fd, short event, void* arg)
 		}
 		VERBOSITY(3, (LOG_INFO, "remote control connection authenticated"));
 		X509_free(x);
+#endif /* HAVE_SSL */
 	} else {
 		VERBOSITY(2, (LOG_INFO, "remote control connection failed to "
 			"authenticate with client certificate"));
@@ -2538,7 +2584,9 @@ remote_control_callback(int fd, short event, void* arg)
 	}
 
 	/* if OK start to actually handle the request */
+#ifdef HAVE_SSL
 	res.ssl = s->ssl;
+#endif /* HAVE_SSL */
 	res.fd = fd;
 	handle_req(rc, s, &res);
 
@@ -2833,7 +2881,9 @@ daemon_remote_process_stats(struct daemon_remote* rc)
 	/* pop one and give it stats */
 	while((s = rc->stats_list)) {
 		assert(s->in_stats_list);
+#ifdef HAVE_SSL
 		res.ssl = s->ssl;
+#endif
 		res.fd = s->fd;
 		print_stats(&res, rc->xfrd, &now, (s->in_stats_list == 1));
 		if(s->in_stats_list == 1) {
@@ -2908,5 +2958,3 @@ err:
 	return -1;
 #endif
 }
-
-#endif /* HAVE_SSL */

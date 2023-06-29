@@ -5,7 +5,7 @@ dnl
 sinclude(acx_nlnetlabs.m4)
 sinclude(dnstap/dnstap.m4)
 
-AC_INIT([NSD],[4.6.1],[nsd-bugs@nlnetlabs.nl])
+AC_INIT([NSD],[4.7.0],[nsd-bugs@nlnetlabs.nl])
 AC_CONFIG_HEADERS([config.h])
 
 #
@@ -296,7 +296,7 @@ AC_MSG_CHECKING(whether $CC supports -$1)
 cache=`echo $1 | $SED 'y%.=/+-%___p_%'`
 AC_CACHE_VAL(cv_prog_cc_flag_$cache,
 [
-echo 'void f(){}' >conftest.c
+echo 'void f(void){}' >conftest.c
 if test -z "`$CC -$1 -c conftest.c 2>&1`"; then
 eval "cv_prog_cc_flag_$cache=yes"
 else
@@ -698,6 +698,9 @@ case "$enable_recvmmsg" in
         yes)
 		AC_CHECK_FUNC([recvmmsg], [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <sys/socket.h>
 #include <errno.h>
 int main(void)
@@ -714,6 +717,9 @@ AC_DEFINE([HAVE_RECVMMSG], [1], [Define if recvmmsg exists])]
 )])
 		AC_CHECK_FUNC([sendmmsg], [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <sys/socket.h>
 #include <errno.h>
 int main(void)
@@ -965,14 +971,7 @@ AC_DEFINE_UNQUOTED([TCP_TIMEOUT], $tcp_timeout, [Define to the default tcp timeo
 dnl
 dnl Features
 dnl
-AC_ARG_ENABLE(root-server, AS_HELP_STRING([--enable-root-server],[Configure NSD as a root server]))
-case "$enable_root_server" in
-        yes)
-		AC_DEFINE_UNQUOTED([ROOT_SERVER], [], [Define this to configure as a root server.])
-		;;
-        no|*)
-                ;;
-esac
+AC_ARG_ENABLE(root-server, AS_HELP_STRING([--enable-root-server],[Configure NSD as a root server (obsolete)]))
 
 AC_ARG_ENABLE(ipv6, AS_HELP_STRING([--disable-ipv6],[Disables IPv6 support]))
 case "$enable_ipv6" in
@@ -1122,7 +1121,6 @@ AC_INCLUDES_DEFAULT
 	LIBS="$BAKLIBS"
 
 else
-	AC_MSG_WARN([No SSL, therefore remote-control is disabled])
 	AC_MSG_WARN([No SSL, therefore TLS is disabled])
 fi
 

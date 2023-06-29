@@ -136,6 +136,12 @@ struct component {
 %token VAR_DNSTAP
 %token VAR_DNSTAP_ENABLE
 %token VAR_DNSTAP_SOCKET_PATH
+%token VAR_DNSTAP_IP
+%token VAR_DNSTAP_TLS
+%token VAR_DNSTAP_TLS_SERVER_NAME
+%token VAR_DNSTAP_TLS_CERT_BUNDLE
+%token VAR_DNSTAP_TLS_CLIENT_KEY_FILE
+%token VAR_DNSTAP_TLS_CLIENT_CERT_FILE
 %token VAR_DNSTAP_SEND_IDENTITY
 %token VAR_DNSTAP_SEND_VERSION
 %token VAR_DNSTAP_IDENTITY
@@ -615,6 +621,18 @@ dnstap_option:
     { cfg_parser->opt->dnstap_enable = $2; }
   | VAR_DNSTAP_SOCKET_PATH STRING
     { cfg_parser->opt->dnstap_socket_path = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_DNSTAP_IP STRING
+    { cfg_parser->opt->dnstap_ip = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_DNSTAP_TLS boolean
+    { cfg_parser->opt->dnstap_tls = $2; }
+  | VAR_DNSTAP_TLS_SERVER_NAME STRING
+    { cfg_parser->opt->dnstap_tls_server_name = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_DNSTAP_TLS_CERT_BUNDLE STRING
+    { cfg_parser->opt->dnstap_tls_cert_bundle = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_DNSTAP_TLS_CLIENT_KEY_FILE STRING
+    { cfg_parser->opt->dnstap_tls_client_key_file = region_strdup(cfg_parser->opt->region, $2); }
+  | VAR_DNSTAP_TLS_CLIENT_CERT_FILE STRING
+    { cfg_parser->opt->dnstap_tls_client_cert_file = region_strdup(cfg_parser->opt->region, $2); }
   | VAR_DNSTAP_SEND_IDENTITY boolean
     { cfg_parser->opt->dnstap_send_identity = $2; }
   | VAR_DNSTAP_SEND_VERSION boolean

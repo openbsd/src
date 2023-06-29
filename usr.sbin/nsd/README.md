@@ -1,9 +1,9 @@
 # NSD
 
-[![Travis Build Status](https://travis-ci.org/NLnetLabs/nsd.svg?branch=master)](https://travis-ci.org/NLnetLabs/nsd)
-[![Cirrus Build Status](https://api.cirrus-ci.com/github/NLnetLabs/nsd.svg)](https://cirrus-ci.com/github/NLnetLabs/nsd)
+[![Cirrus Build Status](https://api.cirrus-ci.com/github/NLnetLabs/nsd.svg?branch=master)](https://cirrus-ci.com/github/NLnetLabs/nsd)
 [![Packaging status](https://repology.org/badge/tiny-repos/nsd.svg)](https://repology.org/project/nsd/versions)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/1462/badge)](https://bestpractices.coreinfrastructure.org/projects/1462)
+[![Mastodon Follow](https://img.shields.io/mastodon/follow/109262826617293067?domain=https%3A%2F%2Ffosstodon.org&style=social)](https://fosstodon.org/@nlnetlabs)
 
 The NLnet Labs Name Server Daemon (NSD) is an authoritative DNS name server.
 It has been developed for operations in environments where speed,
@@ -28,7 +28,7 @@ The repository does not contain `./configure`, but you can generate it like
 this (note that the `./configure` is included in release tarballs so they do not have to be generated):
 
 ```
-aclocal && autoconf && autoheader
+autoreconf -fi
 ```
 
 NSD can be compiled and installed using:

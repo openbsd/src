@@ -117,6 +117,12 @@ nsd_options_create(region_type* region)
 #ifdef USE_DNSTAP
 	opt->dnstap_enable = 0;
 	opt->dnstap_socket_path = DNSTAP_SOCKET_PATH;
+	opt->dnstap_ip = "";
+	opt->dnstap_tls = 1;
+	opt->dnstap_tls_server_name = NULL;
+	opt->dnstap_tls_cert_bundle = NULL;
+	opt->dnstap_tls_client_key_file = NULL;
+	opt->dnstap_tls_client_cert_file = NULL;
 	opt->dnstap_send_identity = 0;
 	opt->dnstap_send_version = 0;
 	opt->dnstap_identity = NULL;

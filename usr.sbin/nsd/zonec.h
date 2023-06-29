@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _ZONEC_H_
-#define _ZONEC_H_
+#ifndef ZONEC_H
+#define ZONEC_H
 
 #include "namedb.h"
 
@@ -150,4 +150,4 @@ void check_sshfp(void);
 void apex_rrset_checks(struct namedb* db, rrset_type* rrset,
 	domain_type* domain);
 
-#endif /* _ZONEC_H_ */
+#endif /* ZONEC_H */

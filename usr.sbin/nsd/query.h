@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _QUERY_H_
-#define _QUERY_H_
+#ifndef QUERY_H
+#define QUERY_H
 
 #include <assert.h>
 #include <string.h>
@@ -230,4 +230,4 @@ query_overflow(query_type *q)
 {
 	return buffer_position(q->packet) > (q->maxlen - q->reserved_space);
 }
-#endif /* _QUERY_H_ */
+#endif /* QUERY_H */

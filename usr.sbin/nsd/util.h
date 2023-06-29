@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _UTIL_H_
-#define _UTIL_H_
+#ifndef UTIL_H
+#define UTIL_H
 
 #include <sys/time.h>
 #include <stdarg.h>
@@ -451,4 +451,4 @@ void activate_cookie_secret(struct nsd* nsd);
 /* Drop a cookie secret. Drops the staging secret. An active secret will not
  * be dropped. */
 void drop_cookie_secret(struct nsd* nsd);
-#endif /* _UTIL_H_ */
+#endif /* UTIL_H */

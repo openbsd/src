@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _DNS_H_
-#define _DNS_H_
+#ifndef DNS_H
+#define DNS_H
 
 enum rr_section {
 	QUESTION_SECTION,
@@ -305,4 +305,4 @@ operator++(rr_section_type &lhs)
 }
 #endif /* __cplusplus */
 
-#endif /* _DNS_H_ */
+#endif /* DNS_H */

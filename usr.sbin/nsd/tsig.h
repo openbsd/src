@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _TSIG_H_
-#define _TSIG_H_
+#ifndef TSIG_H
+#define TSIG_H
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -289,4 +289,4 @@ int tsig_strlowercmp(const char* str1, const char* str2);
  */
 void tsig_finalize(void);
 
-#endif /* _TSIG_H_ */
+#endif /* TSIG_H */

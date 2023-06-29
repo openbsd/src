@@ -533,16 +533,14 @@ static int process_marktypes(struct ixfr_store* store, struct zone* zone,
 	/* walk through the rrsets in the zone, if it is not in the
 	 * marktypes list, then it is new and an added RRset */
 	rrset_type* s;
-	size_t atmarktype = 0;
 	qsort(marktypes, marktypes_used, sizeof(marktypes[0]), &sort_uint16);
 	for(s=domain->rrsets; s; s=s->next) {
 		uint16_t tp;
 		if(s->zone != zone)
 			continue;
 		tp = rrset_rrtype(s);
-		if(atmarktype < marktypes_used && marktypes[atmarktype]==tp) {
+		if(bsearch(&tp, marktypes, marktypes_used, sizeof(marktypes[0]), &sort_uint16)) {
 			/* the item is in the marked list, skip it */
-			atmarktype++;
 			continue;
 		}
 		if(!process_add_rrset(store, domain, s))

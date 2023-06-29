@@ -6,8 +6,8 @@
  * See LICENSE for the license.
  *
  */
-#ifndef _POPEN3_H_
-#define _POPEN3_H_
+#ifndef POPEN3_H
+#define POPEN3_H
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -24,4 +24,4 @@ pid_t popen3(char *const *command,
              int *fdoutptr,
              int *fderrptr);
 
-#endif /* _POPEN3_H_ */
+#endif /* POPEN3_H */

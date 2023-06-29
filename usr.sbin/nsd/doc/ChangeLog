@@ -1,3 +1,86 @@
+31 May 2023: Wouter
+	- Add missing items to doc/RELNOTES.
+	- Tag for 4.7.0rc1.
+
+30 May 2023: Jeroen
+	- Fix #240: Prefix messages originating from verifier.
+	- Fix #275: Drop unnecessary root server checks.
+
+30 May 2023: Wouter
+	- Next version is 4.7.0, instead of 4.6.2, because of the added
+	  features, like TLS for DNSTAP.
+	- Fix unused variable warning in unit test, from clang compile.
+
+24 May 2023: Wouter
+	- For #279: Note that autoreconf -fi creates the configure script
+	  and also the needed auxiliary files, for autoconf 2.69 and 2.71.
+
+4 May 2023: Wouter
+	- Fix to remove unused whitespace from acx_nlnetlabs.m4 and config.h.
+
+1 May 2023: Wouter
+	- make depend.
+	- Fix for build to run flex and bison before compiling code that needs
+	  the headers.
+
+13 April 2023: Wouter
+	- Fix cirrus script for submit to coverity scan to libtoolize
+	  the configure script components config.guess and config.sub.
+	- Fix readme status badge links.
+
+28 March 2023: Wouter
+	- Fix #273: Large TXT record breaks AXFR.
+	- Fix ixfr create from adding too many record types.
+
+16 March 2023: Wouter
+	- Fix include brackets for ssl.h include statements, instead of quotes.
+	- Fix static analyzer warning about nsd_event_method initialization.
+
+15 March 2023: Wouter
+	- Dnstap tls code fixes.
+
+14 March 2023: Wouter
+	- Fix dnstap to not check socket path when using IP address.
+	- dnstap over TLS, default enabled. Configured with the
+	  options dnstap-tls, dnstap-tls-server-name, dnstap-tls-cert-bundle,
+	  dnstap-tls-client-key-file and dnstap-tls-client-cert-file.
+	- Fix to compile without ssl with dnstap-tls code.
+
+9 March 2023: Wouter
+	- Fix #271: DNSTAP over TCP, with dnstap-ip: "127.0.0.1@3333".
+	- Fix to clean more memory on exit of dnstap collector.
+
+23 February 2023: Wouter
+	- Fix #270: reserved identifier violation.
+
+20 February 2023: Wouter
+	- Merge #269 from Fale: Add systemd service unit.
+
+16 February 2023: Wouter
+	- Fix #266: Fix build with --without-ssl.
+	- Fix #267: Allow unencrypted local operation of nsd-control.
+	- Fix for #267: neater variable definitions.
+
+2 February 2023: Wouter
+	- Merge #265: Fix C99 compatibility issue.
+
+30 January 2023: Wouter
+	- Merge #263: Add bash autocompletion script for nsd-control.
+	- Fix for #262: More error logging for SSL read failures for zone
+	  transfers.
+
+27 January 2023: Wouter
+	- Fix #262: Zone(s) not synchronizing properly via TLS.
+	- Fix ixfr_and_restart test to wait for processes to come to a stop.
+
+26 January 2023: Wouter
+	- Fix configure for -Wstrict-prototypes.
+
+10 November 2022: Wouter
+	- Tag for NSD 4.6.1, the repository continues with version 4.6.2.
+	- Fix #239: -Wincompatible-pointer-types warning in remote.c.
+	- Fix unit tests to succeed with --disable-bind8-stats.
+
 1 November 2022: Wouter
 	- Fixup for non-trailing newline lexer change warnings.
 	- Update doc/RELNOTES for changes.

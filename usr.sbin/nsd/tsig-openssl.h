@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _TSIG_OPENSSL_H_
-#define _TSIG_OPENSSL_H_
+#ifndef TSIG_OPENSSL_H
+#define TSIG_OPENSSL_H
 
 #if defined(HAVE_SSL)
 
@@ -26,4 +26,4 @@ void tsig_openssl_finalize(void);
 
 #endif /* defined(HAVE_SSL) */
 
-#endif /* _TSIG_H_ */
+#endif /* TSIG_OPENSSL_H */

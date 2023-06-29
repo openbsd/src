@@ -116,11 +116,25 @@ query_axfr(struct nsd *nsd, struct query *query, int wstats)
 			    && query->axfr_current_rrset->zone == query->axfr_zone)
 			{
 				while (query->axfr_current_rr < query->axfr_current_rrset->rr_count) {
+					size_t oldmaxlen = query->maxlen;
+					if(total_added == 0)
+						/* RR > 16K can be first RR */
+						query->maxlen = (query->tcp?TCP_MAX_MESSAGE_LEN:UDP_MAX_MESSAGE_LEN);
 					added = packet_encode_rr(
 						query,
 						query->axfr_current_domain,
 						&query->axfr_current_rrset->rrs[query->axfr_current_rr],
 						query->axfr_current_rrset->rrs[query->axfr_current_rr].ttl);
+					if(total_added == 0) {
+						query->maxlen = oldmaxlen;
+						if(query_overflow(query)) {
+							if(added) {
+								++total_added;
+								++query->axfr_current_rr;
+								goto return_answer;
+							}
+						}
+					}
 					if (!added)
 						goto return_answer;
 					++total_added;

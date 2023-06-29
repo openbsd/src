@@ -2209,14 +2209,6 @@ zonec_read(const char* name, const char* zonefile, zone_type* zone)
 		return 1;
 	}
 
-#ifndef ROOT_SERVER
-	/* Is it a root zone? Are we a root server then? Idiot proof. */
-	if (dname->label_count == 1) {
-		zc_error("not configured as a root server");
-		return 1;
-	}
-#endif
-
 	/* Open the zone file */
 	if (!zone_open(zonefile, 3600, CLASS_IN, dname)) {
 		zc_error("cannot open '%s': %s", zonefile, strerror(errno));

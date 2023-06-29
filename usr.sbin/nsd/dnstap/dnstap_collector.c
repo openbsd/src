@@ -32,6 +32,7 @@
 #include "buffer.h"
 #include "namedb.h"
 #include "options.h"
+#include "remote.h"
 
 #include "udb.h"
 #include "rrl.h"
@@ -279,7 +280,12 @@ static void dt_init_dnstap(struct dt_collector* dt_col, struct nsd* nsd)
 			nsd->options->dnstap_socket_path += l;
 	}
 #endif
-	dt_col->dt_env = dt_create(nsd->options->dnstap_socket_path, num_workers);
+	dt_col->dt_env = dt_create(nsd->options->dnstap_socket_path,
+		nsd->options->dnstap_ip, num_workers, nsd->options->dnstap_tls,
+		nsd->options->dnstap_tls_server_name,
+		nsd->options->dnstap_tls_cert_bundle,
+		nsd->options->dnstap_tls_client_key_file,
+		nsd->options->dnstap_tls_client_cert_file);
 	if(!dt_col->dt_env) {
 		log_msg(LOG_ERR, "could not create dnstap env");
 		return;
@@ -308,6 +314,9 @@ static void dt_collector_cleanup(struct dt_collector* dt_col, struct nsd* nsd)
 		free(dt_col->inputs);
 	}
 	dt_collector_destroy(dt_col, nsd);
+	daemon_remote_delete(nsd->rc); /* ssl-delete secret keys */
+	nsd_options_destroy(nsd->options);
+	region_destroy(nsd->region);
 #endif
 }
 

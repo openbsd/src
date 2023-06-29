@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _PACKET_H_
-#define _PACKET_H_
+#ifndef PACKET_H
+#define PACKET_H
 
 #include <sys/types.h>
 
@@ -202,4 +202,4 @@ int packet_read_query_section(buffer_type *packet,
  * returns false on no-serial found or parse failure. */
 int packet_find_notify_serial(buffer_type *packet, uint32_t* serial);
 
-#endif /* _PACKET_H_ */
+#endif /* PACKET_H */

@@ -44,10 +44,24 @@
 #include "config.h"
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef HAVE_SSL
+
+struct region;
+struct domain_table;
+struct zone;
+struct domain;
+int zonec_parse_string(struct region* ATTR_UNUSED(region),
+	struct domain_table* ATTR_UNUSED(domains),
+	struct zone* ATTR_UNUSED(zone), char* ATTR_UNUSED(str),
+	struct domain** ATTR_UNUSED(parsed), int* ATTR_UNUSED(num_rrs))
+{
+	return 0;
+}
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
+#ifdef HAVE_SSL
 #ifdef HAVE_OPENSSL_SSL_H
 #include <openssl/ssl.h>
 #endif
@@ -57,6 +71,7 @@
 #ifdef HAVE_OPENSSL_RAND_H
 #include <openssl/rand.h>
 #endif
+#endif /* HAVE_SSL */
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
@@ -70,19 +85,16 @@
 #include "zonec.h"
 
 static void usage(void) ATTR_NORETURN;
+#ifdef HAVE_SSL
 static void ssl_err(const char* s) ATTR_NORETURN;
 static void ssl_path_err(const char* s, const char *path) ATTR_NORETURN;
+#else
+/* define SSL to use as a boolean to turn it off in function calls. */
+#define SSL int
+#endif
 
 /** timeout to wait for connection over stream, in msec */
 #define NSD_CONTROL_CONNECT_TIMEOUT 5000
-
-int zonec_parse_string(region_type* ATTR_UNUSED(region),
-	domain_table_type* ATTR_UNUSED(domains), zone_type* ATTR_UNUSED(zone),
-	char* ATTR_UNUSED(str), domain_type** ATTR_UNUSED(parsed),
-	int* ATTR_UNUSED(num_rrs))
-{
-	return 0;
-}
 
 /** Give nsd-control usage, and exit (1). */
 static void
@@ -130,6 +142,7 @@ usage()
 	exit(1);
 }
 
+#ifdef HAVE_SSL
 /** exit with ssl error */
 static void ssl_err(const char* s)
 {
@@ -203,6 +216,7 @@ setup_ctx(struct nsd_options* cfg)
 
 	return ctx;
 }
+#endif /* HAVE_SSL */
 
 /** check connect error */
 static void
@@ -355,6 +369,7 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 	return fd;
 }
 
+#ifdef HAVE_SSL
 /** setup SSL on the connection */
 static SSL*
 setup_ssl(SSL_CTX* ctx, int fd)
@@ -390,12 +405,14 @@ setup_ssl(SSL_CTX* ctx, int fd)
 	X509_free(x);
 	return ssl;
 }
+#endif /* HAVE_SSL */
 
 /** read from ssl or fd, fatalexit on error, 0 EOF, 1 success */
 static int
 remote_read(SSL* ssl, int fd, char* buf, size_t len)
 {
 	if(ssl) {
+#ifdef HAVE_SSL
 		int r;
 		ERR_clear_error();
 		if((r = SSL_read(ssl, buf, (int)len-1)) <= 0) {
@@ -406,6 +423,7 @@ remote_read(SSL* ssl, int fd, char* buf, size_t len)
 			ssl_err("could not SSL_read");
 		}
 		buf[r] = 0;
+#endif /* HAVE_SSL */
 	} else {
 		ssize_t rr = read(fd, buf, len-1);
 		if(rr <= 0) {
@@ -427,8 +445,10 @@ static void
 remote_write(SSL* ssl, int fd, const char* buf, size_t len)
 {
 	if(ssl) {
+#ifdef HAVE_SSL
 		if(SSL_write(ssl, buf, (int)len) <= 0)
 			ssl_err("could not SSL_write");
+#endif /* HAVE_SSL */
 	} else {
 		if(write(fd, buf, len) < (ssize_t)len) {
 			fprintf(stderr, "could not write: %s\n",
@@ -492,8 +512,10 @@ go(const char* cfgfile, char* svr, int argc, char* argv[])
 {
 	struct nsd_options* opt;
 	int fd, ret;
-	SSL_CTX* ctx;
-	SSL* ssl;
+#ifdef HAVE_SSL
+	SSL_CTX* ctx = NULL;
+#endif
+	SSL* ssl = NULL;
 
 	/* read config */
 	if(!(opt = nsd_options_create(region_create(xalloc, free)))) {
@@ -508,18 +530,31 @@ go(const char* cfgfile, char* svr, int argc, char* argv[])
 	if(!opt->control_enable)
 		fprintf(stderr, "warning: control-enable is 'no' in the config file.\n");
 	resolve_interface_names(opt);
+#ifdef HAVE_SSL
 	ctx = setup_ctx(opt);
+#else
+	if(options_remote_is_address(opt)) {
+		fprintf(stderr, "error: NSD was compiled without SSL.\n");
+		exit(1);
+	}
+#endif /* HAVE_SSL */
 
 	/* contact server */
 	fd = contact_server(svr, opt, argc>0&&strcmp(argv[0],"status")==0);
+#ifdef HAVE_SSL
 	ssl = setup_ssl(ctx, fd);
+#endif
 
 	/* send command */
 	ret = go_cmd(ssl, fd, argc, argv);
 
+#ifdef HAVE_SSL
 	if(ssl) SSL_free(ssl);
+#endif
 	close(fd);
+#ifdef HAVE_SSL
 	if(ctx) SSL_CTX_free(ctx);
+#endif
 	region_destroy(opt->region);
 	return ret;
 }
@@ -537,6 +572,7 @@ int main(int argc, char* argv[])
 	char* svr = NULL;
 	log_init("nsd-control");
 
+#ifdef HAVE_SSL
 #ifdef HAVE_ERR_LOAD_CRYPTO_STRINGS
 	ERR_load_crypto_strings();
 #endif
@@ -569,6 +605,7 @@ int main(int argc, char* argv[])
                 RAND_seed(buf, 256);
 		fprintf(stderr, "warning: no entropy, seeding openssl PRNG with time\n");
 	}
+#endif /* HAVE_SSL */
 
 	/* parse the options */
 	while( (c=getopt(argc, argv, "c:s:h")) != -1) {
@@ -603,11 +640,3 @@ int main(int argc, char* argv[])
 
 	return go(cfgfile, svr, argc, argv);
 }
-
-#else /* HAVE_SSL */
-int main(void)
-{
-	printf("error: NSD was compiled without SSL.\n");
-	return 1;
-}
-#endif /* HAVE_SSL */

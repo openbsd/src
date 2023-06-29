@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _IXFRCREATE_H_
-#define _IXFRCREATE_H_
+#ifndef IXFRCREATE_H
+#define IXFRCREATE_H
 #include "dns.h"
 struct zone;
 struct nsd;
@@ -83,4 +83,4 @@ struct spool_dname_iterator {
 	char* file_name;
 };
 
-#endif /* _IXFRCREATE_H_ */
+#endif /* IXFRCREATE_H */

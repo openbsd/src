@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _REGION_ALLOCATOR_H_
-#define _REGION_ALLOCATOR_H_
+#ifndef REGION_ALLOCATOR_H
+#define REGION_ALLOCATOR_H
 
 #include <stdio.h>
 
@@ -150,4 +150,4 @@ size_t region_get_mem_unused(region_type* region);
 /* Debug print REGION statistics to LOG. */
 void region_log_stats(region_type *region);
 
-#endif /* _REGION_ALLOCATOR_H_ */
+#endif /* REGION_ALLOCATOR_H */

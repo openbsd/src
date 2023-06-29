@@ -592,9 +592,6 @@
    safely assume C89 semantics that RETSIGTYPE is void.' */
 #undef RETSIGTYPE
 
-/* Define this to configure as a root server. */
-#undef ROOT_SERVER
-
 /* The size of `off_t', as computed by sizeof. */
 #undef SIZEOF_OFF_T
 

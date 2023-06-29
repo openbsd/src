@@ -1,4 +1,4 @@
-.TH "nsd.conf" "5" "Nov 10, 2022" "NLnet Labs" "nsd 4.6.1"
+.TH "nsd.conf" "5" "Jun  7, 2023" "NLnet Labs" "nsd 4.7.0"
 .\" Copyright (c) 2001\-2008, NLnet Labs. All rights reserved.
 .\" See LICENSE for the license.
 .SH "NAME"
@@ -1070,6 +1070,23 @@ for those messages to the server.
 .B dnstap-socket-path:\fR <file name>
 Sets the unix socket file name for connecting to the server that is
 listening on that socket.  Default is "@dnstap_socket_path@".
+.TP
+.B dnstap-ip:\fR <"" or addr[@port]>
+If disabled with "", the socket path is used. With a value, like address or
+address@port, like "127.0.0.1@3333" TCP or TLS is used. Default is "".
+.TP
+.B dnstap-tls:\fR <yes or no>
+If enabled, TLS is used to the address specified in \fBdnstap-ip\fR. Otherwise,
+TCP is used. Default is yes.
+.TP
+.B dnstap-tls-server-name:\fR <string>
+The name for authenticating the upstream server. With "" disabled.
+.TP
+.B dnstap-tls-client-key-file:\fR <file name>
+The key file for client authentication, or "" disabled.
+.TP
+.B dnstap-tls-client-cert-file:\fR <file name>
+The cert file for client authentication, or "" disabled.
 .TP
 .B dnstap-send-identity:\fR <yes or no>
 If enabled, the server identity is included in the log messages.

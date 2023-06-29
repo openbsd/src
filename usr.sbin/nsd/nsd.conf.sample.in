@@ -301,6 +301,13 @@ verify:
 	# set this to yes and set one or more of dnstap-log-..-messages to yes.
 	# dnstap-enable: no
 	# dnstap-socket-path: "@dnstap_socket_path@"
+	# for dnstap-ip, "" is disabled, use TCP or TLS with like 127.0.0.1@3333
+	# dnstap-ip: ""
+	# dnstap-tls: yes
+	# dnstap-tls-server-name: ""
+	# dnstap-tls-cert-bundle: "path/to/bundle.pem"
+	# dnstap-tls-client-key-file: ""
+	# dnstap-tls-client-cert-file: ""
 	# dnstap-send-identity: no
 	# dnstap-send-version: no
 	# dnstap-identity: ""

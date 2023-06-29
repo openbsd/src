@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _RDATA_H_
-#define _RDATA_H_
+#ifndef RDATA_H
+#define RDATA_H
 
 #include "dns.h"
 #include "namedb.h"
@@ -58,4 +58,4 @@ int rdata_atoms_to_unknown_string(buffer_type *out,
 int print_rdata(buffer_type *output, rrtype_descriptor_type *descriptor,
             rr_type *record);
 
-#endif /* _DNS_H_ */
+#endif /* RDATA_H */

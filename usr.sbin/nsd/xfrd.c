@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <inttypes.h>
 #include "xfrd.h"
 #include "xfrd-tcp.h"
 #include "xfrd-disk.h"
@@ -196,9 +197,7 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	xfrd->notify_waiting_last = NULL;
 	xfrd->notify_udp_num = 0;
 
-#ifdef HAVE_SSL
 	daemon_remote_attach(xfrd->nsd->rc, xfrd);
-#endif
 
 	xfrd->tcp_set = xfrd_tcp_set_create(xfrd->region, nsd->options->tls_cert_bundle, nsd->options->xfrd_tcp_max, nsd->options->xfrd_tcp_pipeline);
 	xfrd->tcp_set->tcp_timeout = nsd->tcp_timeout;
@@ -357,9 +356,7 @@ xfrd_shutdown()
 	if(xfrd->nsd->options->zonefiles_write) {
 		event_del(&xfrd->write_timer);
 	}
-#ifdef HAVE_SSL
 	daemon_remote_close(xfrd->nsd->rc); /* close sockets of rc */
-#endif
 	/* close sockets */
 	RBTREE_FOR(zone, xfrd_zone_type*, xfrd->zones)
 	{
@@ -406,8 +403,8 @@ xfrd_shutdown()
 	/* unlink xfr files in not-yet-done task file */
 	xfrd_clean_pending_tasks(xfrd->nsd, xfrd->nsd->task[xfrd->nsd->mytask]);
 	xfrd_del_tempdir(xfrd->nsd);
-#ifdef HAVE_SSL
 	daemon_remote_delete(xfrd->nsd->rc); /* ssl-delete secret keys */
+#ifdef HAVE_SSL
 	if (xfrd->nsd->tls_ctx)
 		SSL_CTX_free(xfrd->nsd->tls_ctx);
 #  ifdef HAVE_TLS_1_3
@@ -1300,7 +1297,7 @@ xfrd_handle_incoming_soa(xfrd_zone_type* zone,
 		return;
 
 	if(zone->soa_disk_acquired) {
-		int cmp = compare_serial(soa->serial, zone->soa_disk.serial);
+		int cmp = compare_serial(ntohl(soa->serial), ntohl(zone->soa_disk.serial));
 
 		/* soa is from an update if serial equals soa_disk.serial or
 		   serial is less than soa_disk.serial and the acquired time is
@@ -1317,9 +1314,17 @@ xfrd_handle_incoming_soa(xfrd_zone_type* zone,
 		}
 
 		/* soa in disk has been loaded in memory */
-		log_msg(LOG_INFO, "zone %s serial %u is updated to %u",
-			zone->apex_str, (unsigned)ntohl(zone->soa_nsd.serial),
-			(unsigned)ntohl(soa->serial));
+		{
+			uint32_t soa_serial, soa_nsd_serial;
+			soa_serial = ntohl(soa->serial);
+			soa_nsd_serial = ntohl(zone->soa_nsd.serial);
+			if (compare_serial(soa_serial, soa_nsd_serial) > 0)
+				log_msg(LOG_INFO, "zone %s serial %"PRIu32" is updated to %"PRIu32,
+					zone->apex_str, soa_nsd_serial, soa_serial);
+			else
+				log_msg(LOG_INFO, "zone %s serial is updated to %"PRIu32,
+					zone->apex_str, soa_serial);
+		}
 		zone->soa_nsd = *soa;
 		zone->soa_nsd_acquired = acquired;
 		xfrd->write_zonefile_needed = 1;
@@ -2356,8 +2361,8 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 	zone->soa_disk = soa;
 	if(zone->soa_notified_acquired && (
 		zone->soa_notified.serial == 0 ||
-		compare_serial(htonl(zone->soa_disk.serial),
-		htonl(zone->soa_notified.serial)) >= 0))
+		compare_serial(ntohl(zone->soa_disk.serial),
+		ntohl(zone->soa_notified.serial)) >= 0))
 	{
 		zone->soa_notified_acquired = 0;
 	}
@@ -2691,9 +2696,7 @@ xfrd_process_stat_info_task(xfrd_state_type* xfrd, struct task_list_d* task)
 		xfrd->nsd->children[i].query_count += *p++;
 	}
 	/* got total, now see if users are interested in these statistics */
-#ifdef HAVE_SSL
 	daemon_remote_process_stats(xfrd->nsd->rc);
-#endif
 }
 #endif /* BIND8_STATS */
 

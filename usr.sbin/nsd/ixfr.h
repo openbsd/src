@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _IXFR_H_
-#define _IXFR_H_
+#ifndef IXFR_H
+#define IXFR_H
 struct nsd;
 #include "query.h"
 #include "rbtree.h"
@@ -265,4 +265,4 @@ int ixfr_unlink_it(const char* zname, const char* zfile, int file_num,
 void ixfr_delete_superfluous_files(struct zone* zone, const char* zfile,
 	int dest_num_files);
 
-#endif /* _IXFR_H_ */
+#endif /* IXFR_H */

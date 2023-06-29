@@ -6,8 +6,8 @@
  * See LICENSE for the license.
  *
  */
-#ifndef _BITSET_H_
-#define _BITSET_H_
+#ifndef BITSET_H
+#define BITSET_H
 
 #include <assert.h>
 #include <limits.h>
@@ -37,4 +37,4 @@ void nsd_bitset_or(
 	struct nsd_bitset *srcset1,
 	struct nsd_bitset *srcset2);
 
-#endif /* _BITSET_H_ */
+#endif /* BITSET_H */

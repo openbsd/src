@@ -468,6 +468,12 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 #ifdef USE_DNSTAP
 		SERV_GET_BIN(dnstap_enable, o);
 		SERV_GET_STR(dnstap_socket_path, o);
+		SERV_GET_STR(dnstap_ip, o);
+		SERV_GET_BIN(dnstap_tls, o);
+		SERV_GET_STR(dnstap_tls_server_name, o);
+		SERV_GET_STR(dnstap_tls_cert_bundle, o);
+		SERV_GET_STR(dnstap_tls_client_key_file, o);
+		SERV_GET_STR(dnstap_tls_client_cert_file, o);
 		SERV_GET_BIN(dnstap_send_identity, o);
 		SERV_GET_BIN(dnstap_send_version, o);
 		SERV_GET_STR(dnstap_identity, o);
@@ -699,6 +705,12 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\ndnstap:\n");
 	printf("\tdnstap-enable: %s\n", opt->dnstap_enable?"yes":"no");
 	print_string_var("dnstap-socket-path:", opt->dnstap_socket_path);
+	print_string_var("dnstap-ip:", opt->dnstap_ip);
+	printf("\tdnstap-tls: %s\n", opt->dnstap_tls?"yes":"no");
+	print_string_var("dnstap-tls-server-name:", opt->dnstap_tls_server_name);
+	print_string_var("dnstap-tls-cert-bundle:", opt->dnstap_tls_cert_bundle);
+	print_string_var("dnstap-tls-client-key-file:", opt->dnstap_tls_client_key_file);
+	print_string_var("dnstap-tls-client-cert-file:", opt->dnstap_tls_client_cert_file);
 	printf("\tdnstap-send-identity: %s\n", opt->dnstap_send_identity?"yes":"no");
 	printf("\tdnstap-send-version: %s\n", opt->dnstap_send_version?"yes":"no");
 	print_string_var("dnstap-identity:", opt->dnstap_identity);
@@ -779,13 +791,6 @@ additional_checks(nsd_options_type* opt, const char* filename)
 			errors ++;
 			continue;
 		}
-#ifndef ROOT_SERVER
-		/* Is it a root zone? Are we a root server then? Idiot proof. */
-		if(dname->label_count == 1) {
-			fprintf(stderr, "%s: not configured as a root server.\n", filename);
-			errors ++;
-		}
-#endif
 		if(zone->pattern->allow_notify && !zone->pattern->request_xfr) {
 			fprintf(stderr, "%s: zone %s has allow-notify but no request-xfr"
 				" items. Where can it get a zone transfer when a notify "

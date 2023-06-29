@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef _AXFR_H_
-#define _AXFR_H_
+#ifndef AXFR_H
+#define AXFR_H
 
 #include "nsd.h"
 #include "query.h"
@@ -22,4 +22,4 @@
 query_state_type answer_axfr_ixfr(struct nsd *nsd, struct query *q);
 query_state_type query_axfr(struct nsd *nsd, struct query *query, int wstats);
 
-#endif /* _AXFR_H_ */
+#endif /* AXFR_H */

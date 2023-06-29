@@ -261,7 +261,8 @@ static int pktcompression_write_dname(struct buffer* packet,
 /* write an RR into the packet with compression for domain names,
  * return 0 and resets position if it does not fit in the packet. */
 static int ixfr_write_rr_pkt(struct query* query, struct buffer* packet,
-	struct pktcompression* pcomp, const uint8_t* rr, size_t rrlen)
+	struct pktcompression* pcomp, const uint8_t* rr, size_t rrlen,
+	uint16_t total_added)
 {
 	size_t oldpos = buffer_position(packet);
 	size_t rdpos;
@@ -271,10 +272,21 @@ static int ixfr_write_rr_pkt(struct query* query, struct buffer* packet,
 	size_t i;
 	rrtype_descriptor_type* descriptor;
 
-	if(buffer_position(packet) > MAX_COMPRESSION_OFFSET
-		|| query_overflow(query)) {
-		/* we are past the maximum length */
-		return 0;
+	if(total_added == 0) {
+		size_t oldmaxlen = query->maxlen;
+		/* RR > 16K can be first RR */
+		query->maxlen = (query->tcp?TCP_MAX_MESSAGE_LEN:UDP_MAX_MESSAGE_LEN);
+		if(query_overflow(query)) {
+			query->maxlen = oldmaxlen;
+			return 0;
+		}
+		query->maxlen = oldmaxlen;
+	} else {
+		if(buffer_position(packet) > MAX_COMPRESSION_OFFSET
+			|| query_overflow(query)) {
+			/* we are past the maximum length */
+			return 0;
+		}
 	}
 
 	/* write owner */
@@ -401,10 +413,21 @@ static int ixfr_write_rr_pkt(struct query* query, struct buffer* packet,
 	}
 	/* write compressed rdata length */
 	buffer_write_u16_at(packet, rdpos, buffer_position(packet)-rdpos-2);
-	if(query_overflow(query)) {
-		/* we are past the maximum length */
-		buffer_set_position(packet, oldpos);
-		return 0;
+	if(total_added == 0) {
+		size_t oldmaxlen = query->maxlen;
+		query->maxlen = (query->tcp?TCP_MAX_MESSAGE_LEN:UDP_MAX_MESSAGE_LEN);
+		if(query_overflow(query)) {
+			query->maxlen = oldmaxlen;
+			buffer_set_position(packet, oldpos);
+			return 0;
+		}
+		query->maxlen = oldmaxlen;
+	} else {
+		if(query_overflow(query)) {
+			/* we are past the maximum length */
+			buffer_set_position(packet, oldpos);
+			return 0;
+		}
 	}
 	return 1;
 }
@@ -658,7 +681,7 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 		 * the final SOA of the result of the IXFR */
 		if(ixfr_write_rr_pkt(query, query->packet, pcomp,
 			query->ixfr_end_data->newsoa,
-			query->ixfr_end_data->newsoa_len)) {
+			query->ixfr_end_data->newsoa_len, total_added)) {
 			query->ixfr_count_newsoa = query->ixfr_end_data->newsoa_len;
 			total_added++;
 			query->ixfr_pos_of_newsoa = buffer_position(query->packet);
@@ -672,7 +695,7 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 	if(query->ixfr_count_oldsoa < query->ixfr_data->oldsoa_len) {
 		if(ixfr_write_rr_pkt(query, query->packet, pcomp,
 			query->ixfr_data->oldsoa,
-			query->ixfr_data->oldsoa_len)) {
+			query->ixfr_data->oldsoa_len, total_added)) {
 			query->ixfr_count_oldsoa = query->ixfr_data->oldsoa_len;
 			total_added++;
 		} else {
@@ -687,7 +710,7 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 			query->ixfr_data->del_len, query->ixfr_count_del);
 		if(rrlen && ixfr_write_rr_pkt(query, query->packet, pcomp,
 			query->ixfr_data->del + query->ixfr_count_del,
-			rrlen)) {
+			rrlen, total_added)) {
 			query->ixfr_count_del += rrlen;
 			total_added++;
 		} else {
@@ -703,7 +726,7 @@ static uint16_t ixfr_copy_rrs_into_packet(struct query* query,
 			query->ixfr_data->add_len, query->ixfr_count_add);
 		if(rrlen && ixfr_write_rr_pkt(query, query->packet, pcomp,
 			query->ixfr_data->add + query->ixfr_count_add,
-			rrlen)) {
+			rrlen, total_added)) {
 			query->ixfr_count_add += rrlen;
 			total_added++;
 		} else {
