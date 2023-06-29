@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.113 2023/06/24 04:15:14 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.114 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -167,13 +167,13 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 	int			 i, rc = 0;
 
 	if (!X509_EXTENSION_get_critical(ext)) {
-		cryptowarnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
+		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
 		    "extension not critical", p->fn);
 		goto out;
 	}
 
 	if ((asidentifiers = X509V3_EXT_d2i(ext)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
+		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
 		    "failed extension parse", p->fn);
 		goto out;
 	}
@@ -348,13 +348,13 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 	int				 i, j, rc = 0;
 
 	if (!X509_EXTENSION_get_critical(ext)) {
-		cryptowarnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
+		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
 		    "extension not critical", p->fn);
 		goto out;
 	}
 
 	if ((addrblk = X509V3_EXT_d2i(ext)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
+		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
 		    "failed extension parse", p->fn);
 		goto out;
 	}
@@ -453,8 +453,8 @@ sbgp_sia(struct parse *p, X509_EXTENSION *ext)
 	}
 
 	if ((sia = X509V3_EXT_d2i(ext)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.8: SIA: "
-		    "failed extension parse", p->fn);
+		warnx("%s: RFC 6487 section 4.8.8: SIA: failed extension parse",
+		    p->fn);
 		goto out;
 	}
 
@@ -530,13 +530,13 @@ certificate_policies(struct parse *p, X509_EXTENSION *ext)
 	int				 rc = 0;
 
 	if (!X509_EXTENSION_get_critical(ext)) {
-		cryptowarnx("%s: RFC 6487 section 4.8.9: certificatePolicies: "
+		warnx("%s: RFC 6487 section 4.8.9: certificatePolicies: "
 		    "extension not critical", p->fn);
 		goto out;
 	}
 
 	if ((policies = X509V3_EXT_d2i(ext)) == NULL) {
-		cryptowarnx("%s: RFC 6487 section 4.8.9: certificatePolicies: "
+		warnx("%s: RFC 6487 section 4.8.9: certificatePolicies: "
 		    "failed extension parse", p->fn);
 		goto out;
 	}
@@ -641,7 +641,7 @@ cert_parse_ee_cert(const char *fn, X509 *x)
 	}
 
 	if (!X509_up_ref(x)) {
-		cryptowarnx("%s: X509_up_ref failed", fn);
+		warnx("%s: X509_up_ref failed", fn);
 		goto out;
 	}
 
@@ -688,7 +688,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 
 	oder = der;
 	if ((x = d2i_X509(NULL, &der, len)) == NULL) {
-		cryptowarnx("%s: d2i_X509", p.fn);
+		warnx("%s: d2i_X509", p.fn);
 		goto out;
 	}
 	if (der != oder + len) {
@@ -698,7 +698,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 
 	/* Cache X509v3 extensions, see X509_check_ca(3). */
 	if (X509_check_purpose(x, -1, -1) <= 0) {
-		cryptowarnx("%s: could not cache X509v3 extensions", p.fn);
+		warnx("%s: could not cache X509v3 extensions", p.fn);
 		goto out;
 	}
 
@@ -709,7 +709,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 
 	X509_get0_signature(NULL, &palg, x);
 	if (palg == NULL) {
-		cryptowarnx("%s: X509_get0_signature", p.fn);
+		warnx("%s: X509_get0_signature", p.fn);
 		goto out;
 	}
 	X509_ALGOR_get0(&cobj, NULL, NULL, palg);
@@ -730,7 +730,7 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 	/* Look for X509v3 extensions. */
 
 	if ((extsz = X509_get_ext_count(x)) < 0)
-		cryptoerrx("X509_get_ext_count");
+		errx(1, "X509_get_ext_count");
 
 	for (i = 0; i < (size_t)extsz; i++) {
 		ext = X509_get_ext(x, i);
@@ -941,15 +941,15 @@ ta_parse(const char *fn, struct cert *p, const unsigned char *pkey,
 	/* first check pubkey against the one from the TAL */
 	pk = d2i_PUBKEY(NULL, &pkey, pkeysz);
 	if (pk == NULL) {
-		cryptowarnx("%s: RFC 6487 (trust anchor): bad TAL pubkey", fn);
+		warnx("%s: RFC 6487 (trust anchor): bad TAL pubkey", fn);
 		goto badcert;
 	}
 	if ((opk = X509_get0_pubkey(p->x509)) == NULL) {
-		cryptowarnx("%s: RFC 6487 (trust anchor): missing pubkey", fn);
+		warnx("%s: RFC 6487 (trust anchor): missing pubkey", fn);
 		goto badcert;
 	}
 	if (EVP_PKEY_cmp(pk, opk) != 1) {
-		cryptowarnx("%s: RFC 6487 (trust anchor): "
+		warnx("%s: RFC 6487 (trust anchor): "
 		    "pubkey does not match TAL pubkey", fn);
 		goto badcert;
 	}

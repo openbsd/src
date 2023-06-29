@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.10 2023/06/20 12:39:50 job Exp $ */
+/*	$OpenBSD: tak.c,v 1.11 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -191,7 +191,7 @@ tak_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	fn = p->fn;
 
 	if ((tak = d2i_TAK(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: failed to parse Trust Anchor Key", fn);
+		warnx("%s: failed to parse Trust Anchor Key", fn);
 		goto out;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.65 2023/06/07 11:09:08 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.66 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -407,14 +407,14 @@ valid_x509(char *file, X509_STORE_CTX *store_ctx, X509 *x509, struct auth *a,
 	assert(store_ctx != NULL);
 	assert(x509 != NULL);
 	if (!X509_STORE_CTX_init(store_ctx, NULL, x509, NULL))
-		cryptoerrx("X509_STORE_CTX_init");
+		err(1, "X509_STORE_CTX_init");
 
 	if ((params = X509_STORE_CTX_get0_param(store_ctx)) == NULL)
-		cryptoerrx("X509_STORE_CTX_get0_param");
+		errx(1, "X509_STORE_CTX_get0_param");
 	if ((cp_oid = OBJ_dup(certpol_oid)) == NULL)
-		cryptoerrx("OBJ_dup");
+		err(1, "OBJ_dup");
 	if (!X509_VERIFY_PARAM_add0_policy(params, cp_oid))
-		cryptoerrx("X509_VERIFY_PARAM_add0_policy");
+		err(1, "X509_VERIFY_PARAM_add0_policy");
 	X509_VERIFY_PARAM_set_time(params, get_current_time());
 
 	flags = X509_V_FLAG_CRL_CHECK;

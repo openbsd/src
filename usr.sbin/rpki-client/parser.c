@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.96 2023/05/30 16:02:28 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.97 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -815,7 +815,7 @@ proc_parser(int fd)
 	x509_init_oid();
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
-		cryptoerrx("X509_STORE_CTX_new");
+		err(1, "X509_STORE_CTX_new");
 
 	TAILQ_INIT(&q);
 

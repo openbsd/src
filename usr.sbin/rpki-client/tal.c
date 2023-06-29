@@ -1,4 +1,4 @@
-/*	$OpenBSD: tal.c,v 1.38 2022/11/30 09:02:58 job Exp $ */
+/*	$OpenBSD: tal.c,v 1.39 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -137,7 +137,7 @@ tal_parse_buffer(const char *fn, char *buf, size_t len)
 	/* Make sure it's a valid public key. */
 	pkey = d2i_PUBKEY(NULL, (const unsigned char **)&der, dersz);
 	if (pkey == NULL) {
-		cryptowarnx("%s: RFC 7730 section 2.1: subjectPublicKeyInfo: "
+		warnx("%s: RFC 7730 section 2.1: subjectPublicKeyInfo: "
 		    "failed public key parse", fn);
 		goto out;
 	}

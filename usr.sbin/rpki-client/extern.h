@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.186 2023/06/26 18:39:53 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.187 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -798,14 +798,6 @@ void		 rrdp_fetch(unsigned int, const char *, const char *,
 		    struct rrdp_session *);
 void		 rrdp_abort(unsigned int);
 void		 rrdp_http_done(unsigned int, enum http_result, const char *);
-
-/* Logging (though really used for OpenSSL errors). */
-
-void		 cryptowarnx(const char *, ...)
-			__attribute__((format(printf, 1, 2)));
-void		 cryptoerrx(const char *, ...)
-			__attribute__((format(printf, 1, 2)))
-			__attribute__((noreturn));
 
 /* Encoding functions for hex and base64. */
 

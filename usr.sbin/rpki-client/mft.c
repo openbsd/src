@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.95 2023/06/20 12:39:50 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.96 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -281,7 +281,7 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	int			 i, rc = 0;
 
 	if ((mft = d2i_Manifest(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RFC 6486 section 4: failed to parse Manifest",
+		warnx("%s: RFC 6486 section 4: failed to parse Manifest",
 		    p->fn);
 		goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.37 2023/06/20 02:46:18 job Exp $ */
+/*	$OpenBSD: cms.c,v 1.38 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -123,7 +123,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 
 	oder = der;
 	if ((cms = d2i_CMS_ContentInfo(NULL, &der, len)) == NULL) {
-		cryptowarnx("%s: RFC 6488: failed CMS parse", fn);
+		warnx("%s: RFC 6488: failed CMS parse", fn);
 		goto out;
 	}
 	if (der != oder + len) {
@@ -137,7 +137,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	 */
 	if (!CMS_verify(cms, NULL, NULL, bio, NULL,
 	    CMS_NO_SIGNER_CERT_VERIFY)) {
-		cryptowarnx("%s: CMS verification error", fn);
+		warnx("%s: CMS verification error", fn);
 		goto out;
 	}
 
@@ -156,14 +156,14 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 		goto out;
 	}
 	if (sk_CMS_SignerInfo_num(sinfos) != 1) {
-		cryptowarnx("%s: RFC 6488: CMS has multiple signerInfos", fn);
+		warnx("%s: RFC 6488: CMS has multiple signerInfos", fn);
 		goto out;
 	}
 	si = sk_CMS_SignerInfo_value(sinfos, 0);
 
 	nattrs = CMS_signed_get_attr_count(si);
 	if (nattrs <= 0) {
-		cryptowarnx("%s: RFC 6488: error extracting signedAttrs", fn);
+		warnx("%s: RFC 6488: error extracting signedAttrs", fn);
 		goto out;
 	}
 	for (i = 0; i < nattrs; i++) {
@@ -171,31 +171,31 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 
 		attr = CMS_signed_get_attr(si, i);
 		if (attr == NULL || X509_ATTRIBUTE_count(attr) != 1) {
-			cryptowarnx("%s: RFC 6488: "
-			    "bad signed attribute encoding", fn);
+			warnx("%s: RFC 6488: bad signed attribute encoding",
+			    fn);
 			goto out;
 		}
 
 		obj = X509_ATTRIBUTE_get0_object(attr);
 		if (obj == NULL) {
-			cryptowarnx("%s: RFC 6488: bad signed attribute", fn);
+			warnx("%s: RFC 6488: bad signed attribute", fn);
 			goto out;
 		}
 		if (OBJ_cmp(obj, cnt_type_oid) == 0) {
 			if (has_ct++ != 0) {
-				cryptowarnx("%s: RFC 6488: duplicate "
+				warnx("%s: RFC 6488: duplicate "
 				    "signed attribute", fn);
 				goto out;
 			}
 		} else if (OBJ_cmp(obj, msg_dgst_oid) == 0) {
 			if (has_md++ != 0) {
-				cryptowarnx("%s: RFC 6488: duplicate "
+				warnx("%s: RFC 6488: duplicate "
 				    "signed attribute", fn);
 				goto out;
 			}
 		} else if (OBJ_cmp(obj, sign_time_oid) == 0) {
 			if (has_st++ != 0) {
-				cryptowarnx("%s: RFC 6488: duplicate "
+				warnx("%s: RFC 6488: duplicate "
 				    "signed attribute", fn);
 				goto out;
 			}
@@ -203,13 +203,13 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 				goto out;
 		} else if (OBJ_cmp(obj, bin_sign_time_oid) == 0) {
 			if (has_bst++ != 0) {
-				cryptowarnx("%s: RFC 6488: duplicate "
+				warnx("%s: RFC 6488: duplicate "
 				    "signed attribute", fn);
 				goto out;
 			}
 		} else {
 			OBJ_obj2txt(buf, sizeof(buf), obj, 1);
-			cryptowarnx("%s: RFC 6488: "
+			warnx("%s: RFC 6488: "
 			    "CMS has unexpected signed attribute %s",
 			    fn, buf);
 			goto out;
@@ -217,7 +217,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	}
 
 	if (!has_ct || !has_md) {
-		cryptowarnx("%s: RFC 6488: CMS missing required "
+		warnx("%s: RFC 6488: CMS missing required "
 		    "signed attribute", fn);
 		goto out;
 	}
@@ -229,7 +229,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 		warnx("%s: missing CMS signing-time attribute", fn);
 
 	if (CMS_unsigned_get_attr_count(si) != -1) {
-		cryptowarnx("%s: RFC 6488: CMS has unsignedAttrs", fn);
+		warnx("%s: RFC 6488: CMS has unsignedAttrs", fn);
 		goto out;
 	}
 
@@ -288,7 +288,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	crls = CMS_get1_crls(cms);
 	if (crls != NULL) {
 		sk_X509_CRL_pop_free(crls, X509_CRL_free);
-		cryptowarnx("%s: RFC 6488: CMS has CRLs", fn);
+		warnx("%s: RFC 6488: CMS has CRLs", fn);
 		goto out;
 	}
 
@@ -312,7 +312,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 
 	/* Cache X509v3 extensions, see X509_check_ca(3). */
 	if (X509_check_purpose(*xp, -1, -1) <= 0) {
-		cryptowarnx("%s: could not cache X509v3 extensions", fn);
+		warnx("%s: could not cache X509v3 extensions", fn);
 		goto out;
 	}
 

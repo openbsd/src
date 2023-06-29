@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.26 2023/06/20 12:48:32 job Exp $ */
+/*	$OpenBSD: crl.c,v 1.27 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -43,7 +43,7 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 
 	oder = der;
 	if ((crl->x509_crl = d2i_X509_CRL(NULL, &der, len)) == NULL) {
-		cryptowarnx("%s: d2i_X509_CRL", fn);
+		warnx("%s: d2i_X509_CRL", fn);
 		goto out;
 	}
 	if (der != oder + len) {
@@ -58,7 +58,7 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 
 	X509_CRL_get0_signature(crl->x509_crl, NULL, &palg);
 	if (palg == NULL) {
-		cryptowarnx("%s: X509_CRL_get0_signature", fn);
+		warnx("%s: X509_CRL_get0_signature", fn);
 		goto out;
 	}
 	X509_ALGOR_get0(&cobj, NULL, NULL, palg);

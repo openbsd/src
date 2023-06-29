@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.26 2023/06/07 10:46:34 job Exp $ */
+/*	$OpenBSD: rsc.c,v 1.27 2023/06/29 10:28:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -334,8 +334,7 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
 	 */
 
 	if ((rsc = d2i_RpkiSignedChecklist(NULL, &d, dsz)) == NULL) {
-		cryptowarnx("%s: RSC: failed to parse RpkiSignedChecklist",
-		    p->fn);
+		warnx("%s: RSC: failed to parse RpkiSignedChecklist", p->fn);
 		goto out;
 	}
 
