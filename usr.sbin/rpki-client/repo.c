@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.49 2023/06/29 14:09:42 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.50 2023/06/29 14:33:35 tb Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1473,14 +1473,8 @@ repo_stat_inc(struct repo *rp, int talid, enum rtype type, enum stype subtype)
 		case STYPE_DEC_UNIQUE:
 			rp->stats[talid].vaps_uniqs--;
 			break;
-		case STYPE_BOTH:
+		case STYPE_PROVIDERS:
 			rp->stats[talid].vaps_pas++;
-			break;
-		case STYPE_ONLY_IPV4:
-			rp->stats[talid].vaps_pas4++;
-			break;
-		case STYPE_ONLY_IPV6:
-			rp->stats[talid].vaps_pas6++;
 			break;
 		default:
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.187 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.188 2023/06/29 14:33:35 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -530,9 +530,7 @@ enum stype {
 	STYPE_TOTAL,
 	STYPE_UNIQUE,
 	STYPE_DEC_UNIQUE,
-	STYPE_BOTH,
-	STYPE_ONLY_IPV4,
-	STYPE_ONLY_IPV6,
+	STYPE_PROVIDERS,
 };
 
 struct repo;
@@ -562,8 +560,6 @@ struct repotalstats {
 	uint32_t	 vaps; /* total number of Validated ASPA Payloads */
 	uint32_t	 vaps_uniqs; /* total number of unique VAPs */
 	uint32_t	 vaps_pas; /* total number of providers */
-	uint32_t	 vaps_pas4; /* total number of IPv4 only providers */
-	uint32_t	 vaps_pas6; /* total number of IPv6 only providers */
 	uint32_t	 vrps; /* total number of Validated ROA Payloads */
 	uint32_t	 vrps_uniqs; /* number of unique vrps */
 };

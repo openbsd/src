@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.20 2023/06/28 17:24:20 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.21 2023/06/29 14:33:35 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -369,7 +369,7 @@ aspa_insert_vaps(struct vap_tree *tree, struct aspa *aspa, struct repo *rp)
 		    aspa->providers[i] < v->providers[j]) {
 			/* merge provider from aspa into v */
 			repo_stat_inc(rp, v->talid, RTYPE_ASPA,
-			    STYPE_BOTH + aspa->providers[i]);
+			    STYPE_PROVIDERS);
 			insert_vap(v, j, &aspa->providers[i]);
 			i++;
 		} else if (aspa->providers[i] == v->providers[j])
