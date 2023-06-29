@@ -1,4 +1,4 @@
-/* $OpenBSD: acpibtn.c,v 1.50 2023/04/03 13:38:18 millert Exp $ */
+/* $OpenBSD: acpibtn.c,v 1.51 2023/06/29 20:58:08 dv Exp $ */
 /*
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
  *
@@ -168,7 +168,7 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_acpi = (struct acpi_softc *)parent;
 	sc->sc_devnode = aa->aaa_node;
 
-	printf(": %s\n", sc->sc_devnode->name);
+	printf(": %s", sc->sc_devnode->name);
 
 	if (aml_evalinteger(sc->sc_acpi, sc->sc_devnode, "_STA", 0, NULL, &st))
 		st = STA_PRESENT | STA_ENABLED | STA_DEV_OK;
@@ -203,6 +203,15 @@ acpibtn_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_sens.value = lid_open;
 	}
 
+	/* Enable any related GPEs for wake. */
+	if (acpi_toggle_wakedev(sc->sc_acpi, sc->sc_devnode, 1) == 0) {
+#ifdef SUSPEND
+		device_register_wakeup(self);
+		printf("(wakeup)");
+#endif /* SUSPEND */
+	}
+
+	printf("\n");
 	aml_register_notify(sc->sc_devnode, aa->aaa_dev, acpibtn_notify,
 	    sc, ACPIDEV_NOPOLL);
 }

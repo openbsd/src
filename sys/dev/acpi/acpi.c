@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.420 2023/03/15 13:01:40 kettenis Exp $ */
+/* $OpenBSD: acpi.c,v 1.421 2023/06/29 20:58:08 dv Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -2264,7 +2264,7 @@ acpi_enable_wakegpes(struct acpi_softc *sc, int state)
 		dnprintf(10, "%.4s(S%d) gpe %.2x\n", wentry->q_node->name,
 		    wentry->q_state,
 		    wentry->q_gpe);
-		if (state <= wentry->q_state)
+		if (wentry->q_enabled && state <= wentry->q_state)
 			acpi_enable_onegpe(sc, wentry->q_gpe);
 	}
 }
@@ -2354,9 +2354,30 @@ acpi_foundprw(struct aml_node *node, void *arg)
 			wq->q_gpe = wq->q_wakepkg->v_package[0]->v_integer;
 		if (wq->q_wakepkg->v_package[1]->type == AML_OBJTYPE_INTEGER)
 			wq->q_state = wq->q_wakepkg->v_package[1]->v_integer;
+		wq->q_enabled = 0;
 	}
 	SIMPLEQ_INSERT_TAIL(&sc->sc_wakedevs, wq, q_next);
 	return 0;
+}
+
+int
+acpi_toggle_wakedev(struct acpi_softc *sc, struct aml_node *node, int enable)
+{
+	struct acpi_wakeq *wentry;
+	int ret = -1;
+
+	SIMPLEQ_FOREACH(wentry, &sc->sc_wakedevs, q_next) {
+		if (wentry->q_node == node) {
+			wentry->q_enabled = enable ? 1 : 0;
+			dnprintf(10, "%.4s(S%d) gpe %.2x %sabled\n",
+			    wentry->q_node->name, wentry->q_state,
+			    wentry->q_gpe, enable ? "en" : "dis");
+			ret = 0;
+			break;
+		}
+	}
+
+	return ret;
 }
 
 struct gpe_block *

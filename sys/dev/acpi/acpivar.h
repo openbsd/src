@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.122 2022/09/13 17:14:54 kettenis Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.123 2023/06/29 20:58:08 dv Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -105,6 +105,7 @@ struct acpi_wakeq {
 	struct aml_value		*q_wakepkg;
 	int				 q_gpe;
 	int				 q_state;
+	int				 q_enabled;
 };
 
 #if NACPIPWRRES > 0
@@ -414,6 +415,8 @@ struct acpi_q *acpi_maptable(struct acpi_softc *sc, paddr_t,
 	    const char *, const char *, const char *, int);
 
 bus_dma_tag_t acpi_iommu_device_map(struct aml_node *, bus_dma_tag_t);
+
+int	acpi_toggle_wakedev(struct acpi_softc *, struct aml_node *, int);
 
 #endif
 
