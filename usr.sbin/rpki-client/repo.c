@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.48 2023/06/23 11:36:24 claudio Exp $ */
+/*	$OpenBSD: repo.c,v 1.49 2023/06/29 14:09:42 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -727,7 +727,7 @@ rrdp_session_save(unsigned int id, struct rrdp_session *state)
 		if (fprintf(f, "-\n") < 0)
 			goto fail;
 	}
-	for (i = 0; state->deltas[i] != NULL; i++) {
+	for (i = 0; i < MAX_RRDP_DELTAS && state->deltas[i] != NULL; i++) {
 		if (fprintf(f, "%s\n", state->deltas[i]) < 0)
 			goto fail;
 	}
