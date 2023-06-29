@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_route.c,v 1.12 2017/05/28 10:39:15 benno Exp $	*/
+/*	$OpenBSD: pfe_route.c,v 1.13 2023/06/29 16:11:02 claudio Exp $	*/
 
 /*
  * Copyright (c) 2009 - 2011 Reyk Floeter <reyk@openbsd.org>
@@ -19,36 +19,20 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
+#include <sys/uio.h>
 
 #include <netinet/in.h>
 #include <net/route.h>
 #include <arpa/inet.h>
 
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 
 #include "relayd.h"
-
-struct relay_rtmsg {
-	struct rt_msghdr	rm_hdr;
-	union {
-		struct {
-			struct sockaddr_in	rm_dst;
-			struct sockaddr_in	rm_gateway;
-			struct sockaddr_in	rm_netmask;
-			struct sockaddr_rtlabel	rm_label;
-		}		 u4;
-		struct {
-			struct sockaddr_in6	rm_dst;
-			struct sockaddr_in6	rm_gateway;
-			struct sockaddr_in6	rm_netmask;
-			struct sockaddr_rtlabel	rm_label;
-		}		 u6;
-	}			 rm_u;
-};
 
 void
 init_routes(struct relayd *env)
@@ -103,110 +87,97 @@ sync_routes(struct relayd *env, struct router *rt)
 	}
 }
 
+static void
+pfe_apply_prefixlen(struct sockaddr_storage *ss, int af, int len)
+{
+	int q, r, off;
+	uint8_t *b = (uint8_t *)ss;
+
+        q = len >> 3;
+	r = len & 7;
+
+	bzero(ss, sizeof(*ss));
+	ss->ss_family = af;
+	switch (af) {
+	case AF_INET:
+		ss->ss_len = sizeof(struct sockaddr_in);
+		off = offsetof(struct sockaddr_in, sin_addr);
+		break;
+	case AF_INET6:
+		ss->ss_len = sizeof(struct sockaddr_in6);
+		off = offsetof(struct sockaddr_in6, sin6_addr);
+		break;
+	default:
+		fatal("%s: invalid address family", __func__);
+	}
+	if (q > 0)
+		memset(b + off, 0xff, q);
+	if (r > 0)
+		b[off + q] = (0xff00 >> r) & 0xff;
+}
+
+#define ROUNDUP(a) \
+	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+
 int
 pfe_route(struct relayd *env, struct ctl_netroute *crt)
 {
-	struct relay_rtmsg		 rm;
-	struct sockaddr_rtlabel		 sr;
-	struct sockaddr_storage		*gw;
-	struct sockaddr_in		*s4;
-	struct sockaddr_in6		*s6;
-	size_t				 len = 0;
+	struct iovec			 iov[5];
+	struct rt_msghdr		 hdr;
+	struct sockaddr_storage		 dst, gw, mask, label;
+	struct sockaddr_rtlabel		*sr = (struct sockaddr_rtlabel *)&label;
+	int				 iovcnt = 0;
 	char				*gwname;
-	int				 i = 0;
 
-	gw = &crt->host.ss;
+	bzero(&hdr, sizeof(hdr));
+	hdr.rtm_msglen = sizeof(hdr);
+	hdr.rtm_version = RTM_VERSION;
+	hdr.rtm_type = HOST_ISUP(crt->up) ? RTM_ADD : RTM_DELETE;
+	hdr.rtm_flags = RTF_STATIC | RTF_GATEWAY | RTF_MPATH;
+	hdr.rtm_seq = env->sc_rtseq++;
+	hdr.rtm_addrs = RTA_DST | RTA_GATEWAY | RTA_NETMASK;
+	hdr.rtm_tableid = crt->rt.rtable;
+	hdr.rtm_priority = crt->host.priority;
+
+	iov[iovcnt].iov_base = &hdr;
+	iov[iovcnt++].iov_len = sizeof(hdr);
+
+	dst = crt->nr.ss;
+	gw = crt->host.ss;
 	gwname = crt->host.name;
+	pfe_apply_prefixlen(&mask, dst.ss_family, crt->nr.prefixlen);
 
-	bzero(&rm, sizeof(rm));
-	bzero(&sr, sizeof(sr));
+	iov[iovcnt].iov_base = &dst;
+	iov[iovcnt++].iov_len = ROUNDUP(dst.ss_len);
+	hdr.rtm_msglen += ROUNDUP(dst.ss_len);
 
-	rm.rm_hdr.rtm_msglen = len;
-	rm.rm_hdr.rtm_version = RTM_VERSION;
-	rm.rm_hdr.rtm_type = HOST_ISUP(crt->up) ? RTM_ADD : RTM_DELETE;
-	rm.rm_hdr.rtm_flags = RTF_STATIC | RTF_GATEWAY | RTF_MPATH;
-	rm.rm_hdr.rtm_seq = env->sc_rtseq++;
-	rm.rm_hdr.rtm_addrs = RTA_DST | RTA_GATEWAY;
-	rm.rm_hdr.rtm_tableid = crt->rt.rtable;
-	rm.rm_hdr.rtm_priority = crt->host.priority;
+	iov[iovcnt].iov_base = &gw;
+	iov[iovcnt++].iov_len = ROUNDUP(gw.ss_len);
+	hdr.rtm_msglen += ROUNDUP(gw.ss_len);
+
+	iov[iovcnt].iov_base = &mask;
+	iov[iovcnt++].iov_len = ROUNDUP(mask.ss_len);
+	hdr.rtm_msglen += ROUNDUP(mask.ss_len);
 
 	if (strlen(crt->rt.label)) {
-		rm.rm_hdr.rtm_addrs |= RTA_LABEL;
-		sr.sr_len = sizeof(sr);
-		if (snprintf(sr.sr_label, sizeof(sr.sr_label),
-		    "%s", crt->rt.label) == -1)
-			goto bad;
+		sr->sr_len = sizeof(*sr);
+		strlcpy(sr->sr_label, crt->rt.label, sizeof(sr->sr_label));
+
+		iov[iovcnt].iov_base = &label;
+		iov[iovcnt++].iov_len = ROUNDUP(label.ss_len);
+		hdr.rtm_msglen += ROUNDUP(label.ss_len);
+		hdr.rtm_addrs |= RTA_LABEL;
 	}
 
-	if (crt->nr.ss.ss_family == AF_INET) {
-		rm.rm_hdr.rtm_msglen = len =
-		    sizeof(rm.rm_hdr) + sizeof(rm.rm_u.u4);
-
-		bcopy(&sr, &rm.rm_u.u4.rm_label, sizeof(sr));
-
-		s4 = &rm.rm_u.u4.rm_dst;
-		s4->sin_family = AF_INET;
-		s4->sin_len = sizeof(rm.rm_u.u4.rm_dst);
-		s4->sin_addr.s_addr =
-		    ((struct sockaddr_in *)&crt->nr.ss)->sin_addr.s_addr;
-
-		s4 = &rm.rm_u.u4.rm_gateway;
-		s4->sin_family = AF_INET;
-		s4->sin_len = sizeof(rm.rm_u.u4.rm_gateway);
-		s4->sin_addr.s_addr =
-		    ((struct sockaddr_in *)gw)->sin_addr.s_addr;
-
-		rm.rm_hdr.rtm_addrs |= RTA_NETMASK;
-		s4 = &rm.rm_u.u4.rm_netmask;
-		s4->sin_family = AF_INET;
-		s4->sin_len = sizeof(rm.rm_u.u4.rm_netmask);
-		if (crt->nr.prefixlen)
-			s4->sin_addr.s_addr =
-			    htonl(0xffffffff << (32 - crt->nr.prefixlen));
-		else if (crt->nr.prefixlen < 0)
-			rm.rm_hdr.rtm_flags |= RTF_HOST;
-	} else if (crt->nr.ss.ss_family == AF_INET6) {
-		rm.rm_hdr.rtm_msglen = len =
-		    sizeof(rm.rm_hdr) + sizeof(rm.rm_u.u6);
-
-		bcopy(&sr, &rm.rm_u.u6.rm_label, sizeof(sr));
-
-		s6 = &rm.rm_u.u6.rm_dst;
-		bcopy(((struct sockaddr_in6 *)&crt->nr.ss),
-		    s6, sizeof(*s6));
-		s6->sin6_family = AF_INET6;
-		s6->sin6_len = sizeof(*s6);
-
-		s6 = &rm.rm_u.u6.rm_gateway;
-		bcopy(((struct sockaddr_in6 *)gw), s6, sizeof(*s6));
-		s6->sin6_family = AF_INET6;
-		s6->sin6_len = sizeof(*s6);
-
-		rm.rm_hdr.rtm_addrs |= RTA_NETMASK;
-		s6 = &rm.rm_u.u6.rm_netmask;
-		s6->sin6_family = AF_INET6;
-		s6->sin6_len = sizeof(*s6);
-		if (crt->nr.prefixlen) {
-			for (i = 0; i < crt->nr.prefixlen / 8; i++)
-				s6->sin6_addr.s6_addr[i] = 0xff;
-			i = crt->nr.prefixlen % 8;
-			if (i)
-				s6->sin6_addr.s6_addr[crt->nr.prefixlen
-				    / 8] = 0xff00 >> i;
-		} else if (crt->nr.prefixlen < 0)
-			rm.rm_hdr.rtm_flags |= RTF_HOST;
-	} else
-		fatal("%s: invalid address family", __func__);
-
  retry:
-	if (write(env->sc_rtsock, &rm, len) == -1) {
+	if (writev(env->sc_rtsock, iov, iovcnt) == -1) {
 		switch (errno) {
 		case EEXIST:
 		case ESRCH:
-			if (rm.rm_hdr.rtm_type == RTM_ADD) {
-				rm.rm_hdr.rtm_type = RTM_CHANGE;
+			if (hdr.rtm_type == RTM_ADD) {
+				hdr.rtm_type = RTM_CHANGE;
 				goto retry;
-			} else if (rm.rm_hdr.rtm_type == RTM_DELETE) {
+			} else if (hdr.rtm_type == RTM_DELETE) {
 				/* Ignore */
 				break;
 			}
