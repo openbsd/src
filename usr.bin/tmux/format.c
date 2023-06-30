@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.313 2023/05/19 07:46:34 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.314 2023/06/30 13:19:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3813,7 +3813,7 @@ format_build_modifiers(struct format_expand_state *es, const char **s,
 		argc = 0;
 
 		/* Single argument with no wrapper character. */
-		if (!ispunct(cp[1]) || cp[1] == '-') {
+		if (!ispunct((u_char)cp[1]) || cp[1] == '-') {
 			end = format_skip(cp + 1, ":;");
 			if (end == NULL)
 				break;

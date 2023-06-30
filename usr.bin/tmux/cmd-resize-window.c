@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-resize-window.c,v 1.9 2021/08/27 17:15:57 nicm Exp $ */
+/* $OpenBSD: cmd-resize-window.c,v 1.10 2023/06/30 13:19:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2018 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -53,8 +53,7 @@ cmd_resize_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct session		*s = target->s;
 	const char	       	*errstr;
 	char			*cause;
-	u_int			 adjust, sx, sy;
-	int			 xpixel = -1, ypixel = -1;
+	u_int			 adjust, sx, sy, xpixel = 0, ypixel = 0;
 
 	if (args_count(args) == 0)
 		adjust = 1;

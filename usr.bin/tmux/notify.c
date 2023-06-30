@@ -1,4 +1,4 @@
-/* $OpenBSD: notify.c,v 1.43 2022/10/28 13:00:02 nicm Exp $ */
+/* $OpenBSD: notify.c,v 1.44 2023/06/30 13:19:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2012 George Nachman <tmux@georgester.com>
@@ -194,7 +194,7 @@ notify_add(const char *name, struct cmd_find_state *fs, struct client *c,
 	ne->client = c;
 	ne->session = s;
 	ne->window = w;
-	ne->pane = (wp != NULL ? wp->id : -1);
+	ne->pane = (wp != NULL ? (int)wp->id : -1);
 	ne->pbname = (pbname != NULL ? xstrdup(pbname) : NULL);
 
 	ne->formats = format_create(NULL, NULL, 0, FORMAT_NOJOBS);
@@ -241,7 +241,7 @@ notify_hook(struct cmdq_item *item, const char *name)
 	ne.client = cmdq_get_client(item);
 	ne.session = target->s;
 	ne.window = target->w;
-	ne.pane = (target->wp != NULL ? target->wp->id : -1);
+	ne.pane = (target->wp != NULL ? (int)target->wp->id : -1);
 
 	ne.formats = format_create(NULL, NULL, 0, FORMAT_NOJOBS);
 	format_add(ne.formats, "hook", "%s", name);

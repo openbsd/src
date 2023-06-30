@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.215 2023/06/25 15:53:07 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.216 2023/06/30 13:19:32 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2842,9 +2842,11 @@ input_reply_clipboard(struct bufferevent *bev, const char *buf, size_t len,
     const char *end)
 {
 	char	*out = NULL;
-	size_t	 outlen = 0;
+	int	 outlen = 0;
 
 	if (buf != NULL && len != 0) {
+		if (len >= ((size_t)INT_MAX * 3 / 4) - 1)
+			return;
 		outlen = 4 * ((len + 2) / 3) + 1;
 		out = xmalloc(outlen);
 		if ((outlen = b64_ntop(buf, len, out, outlen)) == -1) {
