@@ -1,4 +1,4 @@
-/* $OpenBSD: grid.c,v 1.128 2023/05/08 10:03:39 tb Exp $ */
+/* $OpenBSD: grid.c,v 1.129 2023/06/30 21:55:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1044,7 +1044,8 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 	const char		*data;
 	char			*buf, code[8192];
 	size_t			 len, off, size, codelen;
-	u_int			 xx, has_link = 0, end;
+	u_int			 xx, end;
+	int			 has_link = 0;
 	const struct grid_line	*gl;
 
 	if (lastgc != NULL && *lastgc == NULL) {

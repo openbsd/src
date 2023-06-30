@@ -1,4 +1,4 @@
-/* $OpenBSD: regsub.c,v 1.5 2020/04/09 14:23:34 nicm Exp $ */
+/* $OpenBSD: regsub.c,v 1.6 2023/06/30 21:55:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -24,7 +24,7 @@
 #include "tmux.h"
 
 static void
-regsub_copy(char **buf, size_t *len, const char *text, size_t start, size_t end)
+regsub_copy(char **buf, ssize_t *len, const char *text, size_t start, size_t end)
 {
 	size_t	add = end - start;
 
@@ -34,7 +34,7 @@ regsub_copy(char **buf, size_t *len, const char *text, size_t start, size_t end)
 }
 
 static void
-regsub_expand(char **buf, size_t *len, const char *with, const char *text,
+regsub_expand(char **buf, ssize_t *len, const char *with, const char *text,
     regmatch_t *m, u_int n)
 {
 	const char	*cp;

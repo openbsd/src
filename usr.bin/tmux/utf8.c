@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.60 2023/01/08 22:15:30 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.61 2023/06/30 21:55:09 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -95,7 +95,7 @@ utf8_item_by_index(u_int index)
 
 /* Add a UTF-8 item. */
 static int
-utf8_put_item(const char *data, size_t size, u_int *index)
+utf8_put_item(const u_char *data, size_t size, u_int *index)
 {
 	struct utf8_item	*ui;
 

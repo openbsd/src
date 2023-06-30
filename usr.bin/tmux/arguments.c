@@ -1,4 +1,4 @@
-/* $OpenBSD: arguments.c,v 1.59 2023/03/15 08:15:39 nicm Exp $ */
+/* $OpenBSD: arguments.c,v 1.60 2023/06/30 21:55:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2010 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -189,7 +189,7 @@ out:
 /* Parse flags argument. */
 static int
 args_parse_flags(const struct args_parse *parse, struct args_value *values,
-    u_int count, char **cause, struct args *args, int *i)
+    u_int count, char **cause, struct args *args, u_int *i)
 {
 	struct args_value	*value;
 	u_char			 flag;
