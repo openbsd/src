@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.303 2023/04/28 12:53:42 bluhm Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.304 2023/06/30 11:52:11 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -406,7 +406,7 @@ drop:
 			while (so->so_newconn > 0) {
 				so->so_state |= SS_NEWCONN_WAIT;
 				sosleep_nsec(so, &so->so_newconn, PSOCK,
-					"netlck", INFSLP);
+				    "newcon", INFSLP);
 			}
 		}
 
