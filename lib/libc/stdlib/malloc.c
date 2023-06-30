@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.288 2023/06/23 05:26:45 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.289 2023/06/30 06:24:58 otto Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -255,7 +255,37 @@ void malloc_dump(void);
 PROTO_NORMAL(malloc_dump);
 static void malloc_exit(void);
 #endif
-#define CALLER	(DO_STATS ? __builtin_return_address(0) : NULL)
+
+#if defined(__aarch64__) || \
+	defined(__amd64__) || \
+	defined(__arm__)
+static inline void* caller(void)
+{
+	void *p;
+
+	switch (DO_STATS) {
+	case 0:
+	default:
+		return NULL;
+	case 1:
+		p = __builtin_return_address(0);
+		break;
+	case 2:
+		p = __builtin_return_address(1);
+		break;
+	case 3:
+		p = __builtin_return_address(2);
+		break;
+	}
+	return __builtin_extract_return_addr(p);
+}
+#else
+static inline void* caller(void)
+{
+	return DO_STATS == 0 ? NULL :
+	    __builtin_extract_return_addr(__builtin_return_address(0));
+}
+#endif
 
 /* low bits of r->p determine size: 0 means >= page size and r->size holding
  * real size, otherwise low bits is the bucket + 1
@@ -365,7 +395,14 @@ omalloc_parseopt(char opt)
 		mopts.malloc_stats = 0;
 		break;
 	case 'D':
+	case '1':
 		mopts.malloc_stats = 1;
+		break;
+	case '2':
+		mopts.malloc_stats = 2;
+		break;
+	case '3':
+		mopts.malloc_stats = 3;
 		break;
 #endif /* MALLOC_STATS */
 	case 'f':
@@ -1436,7 +1473,7 @@ malloc(size_t size)
 	int saved_errno = errno;
 
 	PROLOGUE(getpool(), "malloc")
-	r = omalloc(d, size, 0, CALLER);
+	r = omalloc(d, size, 0, caller());
 	EPILOGUE()
 	return r;
 }
@@ -1450,7 +1487,7 @@ malloc_conceal(size_t size)
 	int saved_errno = errno;
 
 	PROLOGUE(mopts.malloc_pool[0], "malloc_conceal")
-	r = omalloc(d, size, 0, CALLER);
+	r = omalloc(d, size, 0, caller());
 	EPILOGUE()
 	return r;
 }
@@ -1860,7 +1897,7 @@ realloc(void *ptr, size_t size)
 	int saved_errno = errno;
 
 	PROLOGUE(getpool(), "realloc")
-	r = orealloc(&d, ptr, size, CALLER);
+	r = orealloc(&d, ptr, size, caller());
 	EPILOGUE()
 	return r;
 }
@@ -1891,7 +1928,7 @@ calloc(size_t nmemb, size_t size)
 	}
 
 	size *= nmemb;
-	r = omalloc(d, size, 1, CALLER);
+	r = omalloc(d, size, 1, caller());
 	EPILOGUE()
 	return r;
 }
@@ -1916,7 +1953,7 @@ calloc_conceal(size_t nmemb, size_t size)
 	}
 
 	size *= nmemb;
-	r = omalloc(d, size, 1, CALLER);
+	r = omalloc(d, size, 1, caller());
 	EPILOGUE()
 	return r;
 }
@@ -2072,7 +2109,7 @@ recallocarray(void *ptr, size_t oldnmemb, size_t newnmemb, size_t size)
 		oldsize = oldnmemb * size;
 	}
 
-	r = orecallocarray(&d, ptr, oldsize, newsize, CALLER);
+	r = orecallocarray(&d, ptr, oldsize, newsize, caller());
 	EPILOGUE()
 	return r;
 }
@@ -2204,7 +2241,7 @@ posix_memalign(void **memptr, size_t alignment, size_t size)
 		malloc_recurse(d);
 		goto err;
 	}
-	r = omemalign(d, alignment, size, 0, CALLER);
+	r = omemalign(d, alignment, size, 0, caller());
 	d->active--;
 	_MALLOC_UNLOCK(d->mutex);
 	if (r == NULL) {
@@ -2242,7 +2279,7 @@ aligned_alloc(size_t alignment, size_t size)
 	}
 
 	PROLOGUE(getpool(), "aligned_alloc")
-	r = omemalign(d, alignment, size, 0, CALLER);
+	r = omemalign(d, alignment, size, 0, caller());
 	EPILOGUE()
 	return r;
 }
