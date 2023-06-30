@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.410 2023/06/28 21:33:35 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.411 2023/06/30 09:58:30 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -661,7 +661,7 @@ pf_create_queues(void)
 		if (ifp == NULL)
 			continue;
 
-		qif = malloc(sizeof(*qif), M_TEMP, M_WAITOK);
+		qif = malloc(sizeof(*qif), M_PF, M_WAITOK);
 		qif->ifp = ifp;
 
 		if (q->flags & PFQS_ROOTCLASS) {
@@ -716,7 +716,7 @@ pf_create_queues(void)
 		ifp = qif->ifp;
 
 		ifq_attach(&ifp->if_snd, qif->ifqops, qif->disc);
-		free(qif, M_TEMP, sizeof(*qif));
+		free(qif, M_PF, sizeof(*qif));
 	}
 
 	return (0);
@@ -727,7 +727,7 @@ error:
 		list = qif->next;
 
 		qif->pfqops->pfq_free(qif->disc);
-		free(qif, M_TEMP, sizeof(*qif));
+		free(qif, M_PF, sizeof(*qif));
 	}
 
 	return (error);
@@ -2486,8 +2486,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			goto fail;
 		}
-		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
-		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
+		ioe = malloc(sizeof(*ioe), M_PF, M_WAITOK);
+		table = malloc(sizeof(*table), M_PF, M_WAITOK);
 		NET_LOCK();
 		PF_LOCK();
 		pf_default_rule_new = pf_default_rule;
@@ -2496,15 +2496,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		memset(&pf_trans_set, 0, sizeof(pf_trans_set));
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EFAULT;
 				goto fail;
 			}
 			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
 			    sizeof(ioe->anchor)) {
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = ENAMETOOLONG;
 				goto fail;
 			}
@@ -2519,8 +2519,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    &ioe->ticket, NULL, 0))) {
 					PF_UNLOCK();
 					NET_UNLOCK();
-					free(table, M_TEMP, sizeof(*table));
-					free(ioe, M_TEMP, sizeof(*ioe));
+					free(table, M_PF, sizeof(*table));
+					free(ioe, M_PF, sizeof(*ioe));
 					goto fail;
 				}
 				break;
@@ -2529,30 +2529,30 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    ioe->anchor))) {
 					PF_UNLOCK();
 					NET_UNLOCK();
-					free(table, M_TEMP, sizeof(*table));
-					free(ioe, M_TEMP, sizeof(*ioe));
+					free(table, M_PF, sizeof(*table));
+					free(ioe, M_PF, sizeof(*ioe));
 					goto fail;
 				}
 				break;
 			default:
 				PF_UNLOCK();
 				NET_UNLOCK();
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EINVAL;
 				goto fail;
 			}
 			PF_UNLOCK();
 			NET_UNLOCK();
 			if (copyout(ioe, io->array+i, sizeof(io->array[i]))) {
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EFAULT;
 				goto fail;
 			}
 		}
-		free(table, M_TEMP, sizeof(*table));
-		free(ioe, M_TEMP, sizeof(*ioe));
+		free(table, M_PF, sizeof(*table));
+		free(ioe, M_PF, sizeof(*ioe));
 		break;
 	}
 
@@ -2566,19 +2566,19 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			goto fail;
 		}
-		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
-		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
+		ioe = malloc(sizeof(*ioe), M_PF, M_WAITOK);
+		table = malloc(sizeof(*table), M_PF, M_WAITOK);
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EFAULT;
 				goto fail;
 			}
 			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
 			    sizeof(ioe->anchor)) {
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = ENAMETOOLONG;
 				goto fail;
 			}
@@ -2593,8 +2593,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    ioe->ticket, NULL, 0))) {
 					PF_UNLOCK();
 					NET_UNLOCK();
-					free(table, M_TEMP, sizeof(*table));
-					free(ioe, M_TEMP, sizeof(*ioe));
+					free(table, M_PF, sizeof(*table));
+					free(ioe, M_PF, sizeof(*ioe));
 					goto fail; /* really bad */
 				}
 				break;
@@ -2604,16 +2604,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			default:
 				PF_UNLOCK();
 				NET_UNLOCK();
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EINVAL;
 				goto fail; /* really bad */
 			}
 			PF_UNLOCK();
 			NET_UNLOCK();
 		}
-		free(table, M_TEMP, sizeof(*table));
-		free(ioe, M_TEMP, sizeof(*ioe));
+		free(table, M_PF, sizeof(*table));
+		free(ioe, M_PF, sizeof(*ioe));
 		break;
 	}
 
@@ -2628,20 +2628,20 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			error = ENODEV;
 			goto fail;
 		}
-		ioe = malloc(sizeof(*ioe), M_TEMP, M_WAITOK);
-		table = malloc(sizeof(*table), M_TEMP, M_WAITOK);
+		ioe = malloc(sizeof(*ioe), M_PF, M_WAITOK);
+		table = malloc(sizeof(*table), M_PF, M_WAITOK);
 		/* first makes sure everything will succeed */
 		for (i = 0; i < io->size; i++) {
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EFAULT;
 				goto fail;
 			}
 			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
 			    sizeof(ioe->anchor)) {
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = ENAMETOOLONG;
 				goto fail;
 			}
@@ -2654,8 +2654,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				     rs->tticket) {
 					PF_UNLOCK();
 					NET_UNLOCK();
-					free(table, M_TEMP, sizeof(*table));
-					free(ioe, M_TEMP, sizeof(*ioe));
+					free(table, M_PF, sizeof(*table));
+					free(ioe, M_PF, sizeof(*ioe));
 					error = EBUSY;
 					goto fail;
 				}
@@ -2668,8 +2668,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    ioe->ticket) {
 					PF_UNLOCK();
 					NET_UNLOCK();
-					free(table, M_TEMP, sizeof(*table));
-					free(ioe, M_TEMP, sizeof(*ioe));
+					free(table, M_PF, sizeof(*table));
+					free(ioe, M_PF, sizeof(*ioe));
 					error = EBUSY;
 					goto fail;
 				}
@@ -2677,8 +2677,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			default:
 				PF_UNLOCK();
 				NET_UNLOCK();
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EINVAL;
 				goto fail;
 			}
@@ -2697,8 +2697,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    pf_pool_limits[i].limit_new) {
 				PF_UNLOCK();
 				NET_UNLOCK();
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EBUSY;
 				goto fail;
 			}
@@ -2708,15 +2708,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			PF_UNLOCK();
 			NET_UNLOCK();
 			if (copyin(io->array+i, ioe, sizeof(*ioe))) {
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EFAULT;
 				goto fail;
 			}
 			if (strnlen(ioe->anchor, sizeof(ioe->anchor)) ==
 			    sizeof(ioe->anchor)) {
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = ENAMETOOLONG;
 				goto fail;
 			}
@@ -2731,8 +2731,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    NULL, NULL, 0))) {
 					PF_UNLOCK();
 					NET_UNLOCK();
-					free(table, M_TEMP, sizeof(*table));
-					free(ioe, M_TEMP, sizeof(*ioe));
+					free(table, M_PF, sizeof(*table));
+					free(ioe, M_PF, sizeof(*ioe));
 					goto fail; /* really bad */
 				}
 				break;
@@ -2741,16 +2741,16 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				    ioe->anchor))) {
 					PF_UNLOCK();
 					NET_UNLOCK();
-					free(table, M_TEMP, sizeof(*table));
-					free(ioe, M_TEMP, sizeof(*ioe));
+					free(table, M_PF, sizeof(*table));
+					free(ioe, M_PF, sizeof(*ioe));
 					goto fail; /* really bad */
 				}
 				break;
 			default:
 				PF_UNLOCK();
 				NET_UNLOCK();
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EINVAL;
 				goto fail; /* really bad */
 			}
@@ -2762,8 +2762,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			    pf_pool_limits[i].limit_new, NULL, 0) != 0) {
 				PF_UNLOCK();
 				NET_UNLOCK();
-				free(table, M_TEMP, sizeof(*table));
-				free(ioe, M_TEMP, sizeof(*ioe));
+				free(table, M_PF, sizeof(*table));
+				free(ioe, M_PF, sizeof(*ioe));
 				error = EBUSY;
 				goto fail; /* really bad */
 			}
@@ -2782,8 +2782,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		pf_trans_set_commit();
 		PF_UNLOCK();
 		NET_UNLOCK();
-		free(table, M_TEMP, sizeof(*table));
-		free(ioe, M_TEMP, sizeof(*ioe));
+		free(table, M_PF, sizeof(*table));
+		free(ioe, M_PF, sizeof(*ioe));
 		break;
 	}
 
@@ -2793,7 +2793,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		u_int32_t		 nr = 0;
 		size_t			 space = psn->psn_len;
 
-		pstore = malloc(sizeof(*pstore), M_TEMP, M_WAITOK);
+		pstore = malloc(sizeof(*pstore), M_PF, M_WAITOK);
 
 		NET_LOCK();
 		PF_LOCK();
@@ -2803,7 +2803,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			psn->psn_len = sizeof(struct pf_src_node) * nr;
 			PF_UNLOCK();
 			NET_UNLOCK();
-			free(pstore, M_TEMP, sizeof(*pstore));
+			free(pstore, M_PF, sizeof(*pstore));
 			goto fail;
 		}
 
@@ -2838,7 +2838,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			if (error) {
 				PF_UNLOCK();
 				NET_UNLOCK();
-				free(pstore, M_TEMP, sizeof(*pstore));
+				free(pstore, M_PF, sizeof(*pstore));
 				goto fail;
 			}
 			p++;
@@ -2848,7 +2848,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		PF_UNLOCK();
 		NET_UNLOCK();
-		free(pstore, M_TEMP, sizeof(*pstore));
+		free(pstore, M_PF, sizeof(*pstore));
 		break;
 	}
 
@@ -2941,7 +2941,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		}
 
 		if ((kif_buf = mallocarray(sizeof(*kif_buf), apfiio_size,
-		    M_TEMP, M_WAITOK|M_CANFAIL)) == NULL) {
+		    M_PF, M_WAITOK|M_CANFAIL)) == NULL) {
 			error = EINVAL;
 			goto fail;
 		}
@@ -2954,7 +2954,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		if (copyout(kif_buf, io->pfiio_buffer, sizeof(*kif_buf) *
 		    io->pfiio_size))
 			error = EFAULT;
-		free(kif_buf, M_TEMP, sizeof(*kif_buf) * apfiio_size);
+		free(kif_buf, M_PF, sizeof(*kif_buf) * apfiio_size);
 		break;
 	}
 
@@ -3264,7 +3264,7 @@ pf_open_trans(uint32_t unit)
 
 	rw_assert_wrlock(&pfioctl_rw);
 
-	t = malloc(sizeof(*t), M_TEMP, M_WAITOK|M_ZERO);
+	t = malloc(sizeof(*t), M_PF, M_WAITOK|M_ZERO);
 	t->pft_unit = unit;
 	t->pft_ticket = ticket++;
 
@@ -3320,7 +3320,7 @@ pf_free_trans(struct pf_trans *t)
 		log(LOG_ERR, "%s unknown transaction type: %d\n",
 		    __func__, t->pft_type);
 	}
-	free(t, M_TEMP, sizeof(*t));
+	free(t, M_PF, sizeof(*t));
 }
 
 void

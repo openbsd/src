@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ruleset.c,v 1.20 2023/04/28 14:08:38 sashan Exp $ */
+/*	$OpenBSD: pf_ruleset.c,v 1.21 2023/06/30 09:58:30 mvs Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -57,8 +57,8 @@
 
 
 #ifdef _KERNEL
-#define rs_malloc(x)		malloc(x, M_TEMP, M_WAITOK|M_CANFAIL|M_ZERO)
-#define rs_free(x, siz)		free(x, M_TEMP, siz)
+#define rs_malloc(x)		malloc(x, M_PF, M_WAITOK|M_CANFAIL|M_ZERO)
+#define rs_free(x, siz)		free(x, M_PF, siz)
 #define rs_pool_get_anchor()	pool_get(&pf_anchor_pl, \
 				    PR_WAITOK|PR_LIMITFAIL|PR_ZERO)
 #define rs_pool_put_anchor(x)	pool_put(&pf_anchor_pl, x)

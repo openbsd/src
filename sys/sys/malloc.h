@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.123 2023/06/27 21:02:13 mvs Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.124 2023/06/30 09:58:30 mvs Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 /* 3 - free */
 #define	M_PCB		4	/* protocol control block */
 #define	M_RTABLE	5	/* routing tables */
-/* 6 - free */
+#define M_PF		6	/* packet filter structures */
 /* 7 - free */
 /* 8 - free */
 #define	M_IFADDR	9	/* interface address */
@@ -186,7 +186,7 @@
 	NULL, \
 	"pcb",		/* 4 M_PCB */ \
 	"rtable",	/* 5 M_RTABLE */ \
-	NULL,		/* 6 */ \
+	"pf",		/* 6 M_PF */ \
 	NULL, \
 	NULL, \
 	"ifaddr",	/* 9 M_IFADDR */ \
