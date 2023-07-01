@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.26 2023/07/01 14:57:51 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.27 2023/07/01 15:03:05 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -93,7 +93,7 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
 {
 	BN_CTX *ctx;
-	EC_POINT *tmp = NULL;
+	EC_POINT *point = NULL;
 	BIGNUM *x;
 	const BIGNUM *priv_key;
 	const EC_GROUP* group;
@@ -126,17 +126,17 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	if (!EC_POINT_is_on_curve(group, pub_key, ctx))
 		goto err;
 
-	if ((tmp = EC_POINT_new(group)) == NULL) {
+	if ((point = EC_POINT_new(group)) == NULL) {
 		ECDHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
-	if (!EC_POINT_mul(group, tmp, NULL, pub_key, priv_key, ctx)) {
+	if (!EC_POINT_mul(group, point, NULL, pub_key, priv_key, ctx)) {
 		ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
 		goto err;
 	}
 
-	if (!EC_POINT_get_affine_coordinates(group, tmp, x, NULL, ctx)) {
+	if (!EC_POINT_get_affine_coordinates(group, point, x, NULL, ctx)) {
 		ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
 		goto err;
 	}
@@ -175,7 +175,7 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 
 	ret = outlen;
  err:
-	EC_POINT_free(tmp);
+	EC_POINT_free(point);
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	free(buf);
