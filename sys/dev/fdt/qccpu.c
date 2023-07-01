@@ -1,4 +1,4 @@
-/*	$OpenBSD: qccpu.c,v 1.1 2023/07/01 16:34:30 drahn Exp $	*/
+/*	$OpenBSD: qccpu.c,v 1.2 2023/07/01 18:59:11 drahn Exp $	*/
 /*
  * Copyright (c) 2023 Dale Rahn <drahn@openbsd.org>
  *
@@ -18,6 +18,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/sensors.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
@@ -61,13 +62,16 @@ struct cpu_freq_tbl {
 struct qccpu_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
-	bus_space_handle_t	sc_ioh[2];
+	bus_space_handle_t	sc_ioh[NUM_GROUP];
 
 	int			sc_node;
 
 	struct clock_device	sc_cd;
 	uint32_t		sc_freq[NUM_GROUP][MAX_LUT];
 	int			sc_num_lut[NUM_GROUP];
+
+	struct ksensordev       sc_sensordev;
+	struct ksensor          sc_hz_sensor[NUM_GROUP];
 };
 
 #define DEVNAME(sc) (sc)->sc_dev.dv_xname
@@ -79,6 +83,7 @@ int	qccpu_set_frequency(void *, uint32_t *, uint32_t);
 uint32_t qccpu_get_frequency(void *, uint32_t *);
 uint32_t qccpu_lut_to_freq(struct qccpu_softc *, int, uint32_t);
 uint32_t qccpu_lut_to_cores(struct qccpu_softc *, int, uint32_t);
+void	qccpu_refresh_sensor(void *arg);
 
 void qccpu_collect_lut(struct qccpu_softc *sc, int);
 
@@ -134,6 +139,16 @@ qccpu_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_cd.cd_get_frequency = qccpu_get_frequency;
 	sc->sc_cd.cd_set_frequency = qccpu_set_frequency;
 	clock_register(&sc->sc_cd);
+
+	strlcpy(sc->sc_sensordev.xname, sc->sc_dev.dv_xname,
+	    sizeof(sc->sc_sensordev.xname));
+
+	sc->sc_hz_sensor[0].type = SENSOR_FREQ;
+	sensor_attach(&sc->sc_sensordev, &sc->sc_hz_sensor[0]);
+	sc->sc_hz_sensor[1].type = SENSOR_FREQ;
+	sensor_attach(&sc->sc_sensordev, &sc->sc_hz_sensor[1]);
+	sensordev_install(&sc->sc_sensordev);
+	sensor_task_register(sc, qccpu_refresh_sensor, 1);
 }
 
 void
@@ -178,7 +193,7 @@ qccpu_get_frequency(void *cookie, uint32_t *cells)
 	uint32_t		lval;
 	uint32_t		group;
 
-	if (cells[0] >= 2) {
+	if (cells[0] >= NUM_GROUP) {
 		printf("%s: bad cell %d\n", __func__, cells[0]);
 		return 0;
 	}
@@ -201,7 +216,7 @@ qccpu_set_frequency(void *cookie, uint32_t *cells, uint32_t freq)
 	int			numcores, i;
 	uint32_t		group;
 
-	if (cells[0] >= 2) {
+	if (cells[0] >= NUM_GROUP) {
 		printf("%s: bad cell %d\n", __func__, cells[0]);
 		return 1;
 	}
@@ -251,4 +266,22 @@ qccpu_lut_to_cores(struct qccpu_softc *sc, int index, uint32_t group)
 {
 	return ((sc->sc_freq[group][index] >> CPUF_FREQ_LUT_CORES_S)
 	    & CPUF_FREQ_LUT_CORES_M);
+}
+
+void
+qccpu_refresh_sensor(void *arg)
+{
+        struct qccpu_softc *sc = arg;
+	bus_space_tag_t		iot = sc->sc_iot;
+	bus_space_handle_t	ioh;
+	int		 idx;
+	uint32_t	 lval;
+
+	for (idx = 0; idx < NUM_GROUP; idx++) {
+		ioh = sc->sc_ioh[idx];
+		
+		lval = (bus_space_read_4(iot, ioh, CPUF_DOMAIN_STATE)
+		    >> CPUF_DOMAIN_STATE_LVAL_S) & CPUF_DOMAIN_STATE_LVAL_M;
+		sc->sc_hz_sensor[idx].value = 1000000ULL * lval * XO_FREQ_HZ;
+	}
 }
