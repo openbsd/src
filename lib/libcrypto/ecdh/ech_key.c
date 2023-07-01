@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.27 2023/07/01 15:03:05 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.28 2023/07/01 15:09:54 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -81,10 +81,7 @@
 #include "ec_local.h"
 
 /*
- * This implementation is based on the following primitives in the IEEE 1363
- * standard:
- *  - ECKAS-DH1
- *  - ECSVDP-DH
+ * Based on the ECKAS-DH1 and ECSVDP-DH primitives in the IEEE 1363 standard.
  */
 /* XXX - KDF handling moved to ECDH_compute_key().  See OpenSSL e2285d87. */
 int
