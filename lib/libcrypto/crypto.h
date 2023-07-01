@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.60 2023/04/30 17:07:46 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.61 2023/07/01 09:04:19 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -509,26 +509,6 @@ void OPENSSL_init(void);
 int CRYPTO_memcmp(const void *a, const void *b, size_t len);
 #endif
 
-void ERR_load_CRYPTO_strings(void);
-
-/* Error codes for the CRYPTO functions. */
-
-/* Function codes. */
-#define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX		 100
-#define CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID		 103
-#define CRYPTO_F_CRYPTO_GET_NEW_LOCKID			 101
-#define CRYPTO_F_CRYPTO_SET_EX_DATA			 102
-#define CRYPTO_F_DEF_ADD_INDEX				 104
-#define CRYPTO_F_DEF_GET_CLASS				 105
-#define CRYPTO_F_FIPS_MODE_SET				 109
-#define CRYPTO_F_INT_DUP_EX_DATA			 106
-#define CRYPTO_F_INT_FREE_EX_DATA			 107
-#define CRYPTO_F_INT_NEW_EX_DATA			 108
-
-/* Reason codes. */
-#define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED		 101
-#define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK		 100
-
 /*
  * OpenSSL compatible OPENSSL_INIT options.
  */
@@ -563,6 +543,26 @@ void ERR_load_CRYPTO_strings(void);
 
 int OPENSSL_init_crypto(uint64_t opts, const void *settings);
 void OPENSSL_cleanup(void);
+
+void ERR_load_CRYPTO_strings(void);
+
+/* Error codes for the CRYPTO functions. */
+
+/* Function codes. */
+#define CRYPTO_F_CRYPTO_GET_EX_NEW_INDEX		 100
+#define CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID		 103
+#define CRYPTO_F_CRYPTO_GET_NEW_LOCKID			 101
+#define CRYPTO_F_CRYPTO_SET_EX_DATA			 102
+#define CRYPTO_F_DEF_ADD_INDEX				 104
+#define CRYPTO_F_DEF_GET_CLASS				 105
+#define CRYPTO_F_FIPS_MODE_SET				 109
+#define CRYPTO_F_INT_DUP_EX_DATA			 106
+#define CRYPTO_F_INT_FREE_EX_DATA			 107
+#define CRYPTO_F_INT_NEW_EX_DATA			 108
+
+/* Reason codes. */
+#define CRYPTO_R_FIPS_MODE_NOT_SUPPORTED		 101
+#define CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK		 100
 
 #ifdef  __cplusplus
 }
