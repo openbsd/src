@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcpas.c,v 1.1 2023/06/10 18:31:38 patrick Exp $	*/
+/*	$OpenBSD: qcpas.c,v 1.2 2023/07/01 15:50:18 drahn Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -1111,6 +1111,7 @@ struct battmgr_bat_status {
 	uint32_t rate;
 	uint32_t battery_voltage;
 	uint32_t power_state;
+#define BATTMGR_PWR_STATE_AC_ON			(1 << 0)
 	uint32_t charging_source;
 #define BATTMGR_CHARGING_SOURCE_AC		1
 #define BATTMGR_CHARGING_SOURCE_USB		2
@@ -1175,6 +1176,7 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 {
 	struct pmic_glink_hdr hdr;
 	uint32_t notification;
+	extern int hw_power;
 
 	if (len < sizeof(hdr)) {
 		printf("%s: pmic glink message too small\n",
@@ -1256,6 +1258,14 @@ qcpas_pmic_rtr_recv(void *cookie, uint8_t *buf, int len)
 				info->battery_state = APM_BATT_CHARGING;
 			else if (bat->battery_state & BATTMGR_BAT_STATE_CRITICAL_LOW)
 				info->battery_state = APM_BATT_CRITICAL;
+
+			if (bat->power_state & BATTMGR_PWR_STATE_AC_ON) {
+				info->ac_state = APM_AC_ON;
+				hw_power = 1;
+			} else {
+				info->ac_state = APM_AC_OFF;
+				hw_power = 0;
+			}
 #endif
 			free(bat, M_TEMP, sizeof(*bat));
 			break;
