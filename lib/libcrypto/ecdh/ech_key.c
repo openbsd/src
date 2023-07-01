@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.24 2023/07/01 14:53:48 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.25 2023/07/01 14:56:12 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -115,8 +115,7 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	priv_key = EC_KEY_get0_private_key(ecdh);
-	if (priv_key == NULL) {
+	if ((priv_key = EC_KEY_get0_private_key(ecdh)) == NULL) {
 		ECDHerror(ECDH_R_NO_PRIVATE_VALUE);
 		goto err;
 	}
