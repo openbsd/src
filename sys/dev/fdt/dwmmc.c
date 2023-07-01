@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwmmc.c,v 1.28 2023/07/01 08:22:41 jsing Exp $	*/
+/*	$OpenBSD: dwmmc.c,v 1.29 2023/07/01 08:27:26 jsing Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -359,6 +359,10 @@ dwmmc_attach(struct device *parent, struct device *self, void *aux)
 	/* if ciu clock is missing the rate is clock-frequency */
 	if (sc->sc_clkbase == 0)
 		sc->sc_clkbase = freq;
+	if (sc->sc_clkbase == 0) {
+		printf(": no clock base\n");
+		return;
+	}
 	div = OF_getpropint(faa->fa_node, "samsung,dw-mshc-ciu-div", div);
 	sc->sc_clkbase /= (div + 1);
 
