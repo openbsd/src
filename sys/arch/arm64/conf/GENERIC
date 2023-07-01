@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.274 2023/06/27 22:38:46 patrick Exp $
+# $OpenBSD: GENERIC,v 1.275 2023/07/01 16:34:29 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -321,6 +321,7 @@ sdmmc*		at dwmshc?
 
 # Qualcomm SoCs
 qcaoss*		at fdt?
+qccpu*		at fdt?
 qcdwusb*	at fdt?
 qcgpio*		at acpi?
 qcgpio*		at fdt? early 1
