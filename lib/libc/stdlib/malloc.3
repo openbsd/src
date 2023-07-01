@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.136 2023/06/30 06:24:58 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.137 2023/07/01 18:35:14 otto Exp $
 .\"
-.Dd $Mdocdate: June 30 2023 $
+.Dd $Mdocdate: July 1 2023 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -325,7 +325,7 @@ Increase the junk level by one if it is smaller than 2.
 Decrease the junk level by one if it is larger than 0.
 Junking writes some junk bytes into the area allocated.
 Junk is bytes of 0xdb when allocating;
-freed allocations are filled with 0xdf.
+small allocations are initially junked with 0xdf as are freed allocations.
 By default the junk level is 1: after free,
 small chunks are completely junked;
 for pages the first part is junked.
