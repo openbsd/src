@@ -1,4 +1,4 @@
-/*	$OpenBSD: stftemp.c,v 1.1 2022/06/12 10:51:55 kettenis Exp $	*/
+/*	$OpenBSD: stftemp.c,v 1.2 2023/07/01 08:20:38 jsing Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -72,7 +72,8 @@ stftemp_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "starfive,jh7100-temp");
+	return OF_is_compatible(faa->fa_node, "starfive,jh7100-temp") ||
+	    OF_is_compatible(faa->fa_node, "starfive,jh7110-temp");
 }
 
 void
@@ -146,7 +147,7 @@ void
 stftemp_refresh_sensors(void *arg)
 {
 	struct stftemp_softc *sc = arg;
-	
+
 	sc->sc_sensor.value = 273150000 + 1000 * stftemp_get_temp(sc);
 	sc->sc_sensor.flags &= ~SENSOR_FINVALID;
 }
