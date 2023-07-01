@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.25 2023/07/01 14:56:12 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.26 2023/07/01 14:57:51 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -98,7 +98,7 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	const BIGNUM *priv_key;
 	const EC_GROUP* group;
 	unsigned char *buf = NULL;
-	int buflen, len;
+	int buflen;
 	int ret = -1;
 
 	if (outlen > INT_MAX) {
@@ -141,9 +141,7 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		goto err;
 	}
 
-	buflen = ECDH_size(ecdh);
-	len = BN_num_bytes(x);
-	if (len > buflen) {
+	if ((buflen = ECDH_size(ecdh)) < BN_num_bytes(x)) {
 		ECDHerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
