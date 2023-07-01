@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.21 2023/07/01 14:48:01 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.22 2023/07/01 14:50:39 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -97,9 +97,9 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	BIGNUM *x;
 	const BIGNUM *priv_key;
 	const EC_GROUP* group;
-	int ret = -1;
 	unsigned char *buf = NULL;
 	int buflen, len;
+	int ret = -1;
 
 	if (outlen > INT_MAX) {
 		/* Sort of, anyway. */
@@ -166,7 +166,6 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 			ECDHerror(ECDH_R_KDF_FAILED);
 			goto err;
 		}
-		ret = outlen;
 	} else {
 		/* No KDF, just copy out the key and zero the rest. */
 		if (outlen > buflen) {
@@ -174,15 +173,16 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 			outlen = buflen;
 		}
 		memcpy(out, buf, outlen);
-		ret = outlen;
 	}
 
+	ret = outlen;
  err:
 	EC_POINT_free(tmp);
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	free(buf);
-	return (ret);
+
+	return ret;
 }
 
 int
@@ -199,5 +199,5 @@ ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 int
 ECDH_size(const EC_KEY *d)
 {
-	return ((EC_GROUP_get_degree(EC_KEY_get0_group(d)) + 7) / 8);
+	return (EC_GROUP_get_degree(EC_KEY_get0_group(d)) + 7) / 8;
 }
