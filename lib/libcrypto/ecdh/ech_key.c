@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.22 2023/07/01 14:50:39 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.23 2023/07/01 14:52:34 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -85,8 +85,8 @@
  * standard:
  *  - ECKAS-DH1
  *  - ECSVDP-DH
- * Finally an optional KDF is applied.
  */
+/* XXX - KDF handling moved to ECDH_compute_key().  See OpenSSL e2285d87. */
 int
 ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     EC_KEY *ecdh,
