@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.19 2023/06/25 19:35:56 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.20 2023/07/01 14:39:34 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -94,7 +94,7 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 {
 	BN_CTX *ctx;
 	EC_POINT *tmp = NULL;
-	BIGNUM *x = NULL, *y = NULL;
+	BIGNUM *x;
 	const BIGNUM *priv_key;
 	const EC_GROUP* group;
 	int ret = -1;
@@ -109,10 +109,10 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
+
 	BN_CTX_start(ctx);
+
 	if ((x = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((y = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	priv_key = EC_KEY_get0_private_key(ecdh);
@@ -136,7 +136,7 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		goto err;
 	}
 
-	if (!EC_POINT_get_affine_coordinates(group, tmp, x, y, ctx)) {
+	if (!EC_POINT_get_affine_coordinates(group, tmp, x, NULL, ctx)) {
 		ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
 		goto err;
 	}
