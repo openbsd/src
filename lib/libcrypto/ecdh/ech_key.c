@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.20 2023/07/01 14:39:34 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.21 2023/07/01 14:48:01 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -98,8 +98,8 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	const BIGNUM *priv_key;
 	const EC_GROUP* group;
 	int ret = -1;
-	size_t buflen, len;
 	unsigned char *buf = NULL;
+	int buflen, len;
 
 	if (outlen > INT_MAX) {
 		/* Sort of, anyway. */
@@ -156,9 +156,7 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		ECDHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-
-	memset(buf, 0, buflen - len);
-	if (len != (size_t)BN_bn2bin(x, buf + buflen - len)) {
+	if (BN_bn2binpad(x, buf, buflen) != buflen) {
 		ECDHerror(ERR_R_BN_LIB);
 		goto err;
 	}
