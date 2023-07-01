@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.38 2023/03/07 07:01:35 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.39 2023/07/01 08:15:31 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -500,11 +500,9 @@ do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 		BN_num_bits(order)) <= 0)
 		goto err;
 
-	if ((priv_key != NULL) && !ASN1_bn_print(bp, "priv:", priv_key,
-		buffer, off))
+	if (!ASN1_bn_print(bp, "priv:", priv_key, buffer, off))
 		goto err;
-	if ((pub_key != NULL) && !ASN1_bn_print(bp, "pub: ", pub_key,
-		buffer, off))
+	if (!ASN1_bn_print(bp, "pub: ", pub_key, buffer, off))
 		goto err;
 	if (!ECPKParameters_print(bp, group, off))
 		goto err;

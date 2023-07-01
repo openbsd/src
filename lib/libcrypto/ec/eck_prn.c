@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.21 2023/06/27 07:32:29 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.22 2023/07/01 08:15:31 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -172,10 +172,6 @@ ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 	size_t seed_len = 0;
 	const char *nname;
 
-	static const char *gen_compressed = "Generator (compressed):";
-	static const char *gen_uncompressed = "Generator (uncompressed):";
-	static const char *gen_hybrid = "Generator (hybrid):";
-
 	if (!x) {
 		reason = ERR_R_PASSED_NULL_PARAMETER;
 		goto err;
@@ -209,6 +205,7 @@ ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 	} else {
 		/* explicit parameters */
 		point_conversion_form_t form;
+		const char *conversion;
 
 		if ((p = BN_new()) == NULL || (a = BN_new()) == NULL ||
 		    (b = BN_new()) == NULL || (order = BN_new()) == NULL ||
@@ -265,30 +262,25 @@ ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 		if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(nid)) <= 0)
 			goto err;
 
-		if ((p != NULL) && !ASN1_bn_print(bp, "Prime:", p, buffer, off))
+		if (!ASN1_bn_print(bp, "Prime:", p, buffer, off))
 			goto err;
-		if ((a != NULL) && !ASN1_bn_print(bp, "A:   ", a, buffer, off))
+		if (!ASN1_bn_print(bp, "A:   ", a, buffer, off))
 			goto err;
-		if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, buffer, off))
+		if (!ASN1_bn_print(bp, "B:   ", b, buffer, off))
 			goto err;
-		if (form == POINT_CONVERSION_COMPRESSED) {
-			if ((gen != NULL) && !ASN1_bn_print(bp, gen_compressed, gen,
-				buffer, off))
-				goto err;
-		} else if (form == POINT_CONVERSION_UNCOMPRESSED) {
-			if ((gen != NULL) && !ASN1_bn_print(bp, gen_uncompressed, gen,
-				buffer, off))
-				goto err;
-		} else {	/* form == POINT_CONVERSION_HYBRID */
-			if ((gen != NULL) && !ASN1_bn_print(bp, gen_hybrid, gen,
-				buffer, off))
-				goto err;
-		}
-		if ((order != NULL) && !ASN1_bn_print(bp, "Order: ", order,
-			buffer, off))
+		if (form == POINT_CONVERSION_COMPRESSED)
+			conversion = "Generator (compressed):";
+		else if (form == POINT_CONVERSION_UNCOMPRESSED)
+			conversion = "Generator (uncompressed):";
+		else if (form == POINT_CONVERSION_HYBRID)
+			conversion = "Generator (hybrid):";
+		else
+			conversion = "Generator (unknown):";
+		if (!ASN1_bn_print(bp, conversion, gen, buffer, off))
 			goto err;
-		if ((cofactor != NULL) && !ASN1_bn_print(bp, "Cofactor: ", cofactor,
-			buffer, off))
+		if (!ASN1_bn_print(bp, "Order: ", order, buffer, off))
+			goto err;
+		if (!ASN1_bn_print(bp, "Cofactor: ", cofactor, buffer, off))
 			goto err;
 		if (seed && !print_bin(bp, "Seed:", seed, seed_len, off))
 			goto err;
