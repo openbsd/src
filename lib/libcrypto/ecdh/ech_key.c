@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.23 2023/07/01 14:52:34 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.24 2023/07/01 14:53:48 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -121,7 +121,8 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 		goto err;
 	}
 
-	group = EC_KEY_get0_group(ecdh);
+	if ((group = EC_KEY_get0_group(ecdh)) == NULL)
+		goto err;
 
 	if (!EC_POINT_is_on_curve(group, pub_key, ctx))
 		goto err;
