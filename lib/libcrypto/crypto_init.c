@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_init.c,v 1.9 2023/06/19 18:32:05 tb Exp $ */
+/*	$OpenBSD: crypto_init.c,v 1.10 2023/07/02 19:52:01 tb Exp $ */
 /*
  * Copyright (c) 2018 Bob Beck <beck@openbsd.org>
  *
@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <stdio.h>
 
+#include <openssl/asn1.h>
 #include <openssl/conf.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -27,6 +28,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/x509v3.h>
 
 #include "cryptlib.h"
 #include "x509_issuer_cache.h"
@@ -85,6 +87,13 @@ OPENSSL_cleanup(void)
 	ENGINE_cleanup();
 #endif
 	EVP_cleanup();
+
+	ASN1_STRING_TABLE_cleanup();
+	X509V3_EXT_cleanup();
+	X509_PURPOSE_cleanup();
+	X509_TRUST_cleanup();
+	X509_VERIFY_PARAM_table_cleanup();
+
 	x509_issuer_cache_free();
 
 	crypto_init_cleaned_up = 1;
