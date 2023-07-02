@@ -1,4 +1,4 @@
-/* $OpenBSD: req.c,v 1.27 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: req.c,v 1.28 2023/07/02 07:05:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1736,7 +1736,14 @@ do_sign_init(BIO * err, EVP_MD_CTX * ctx, EVP_PKEY * pkey,
     const EVP_MD * md, STACK_OF(OPENSSL_STRING) * sigopts)
 {
 	EVP_PKEY_CTX *pkctx = NULL;
+	int default_nid;
 	int i;
+
+	if (EVP_PKEY_get_default_digest_nid(pkey, &default_nid) == 2 &&
+	    default_nid == NID_undef) {
+		/* The digest is required to be EVP_md_null() (EdDSA). */
+		md = EVP_md_null();
+	}
 
 	if (!EVP_DigestSignInit(ctx, &pkctx, md, NULL, pkey))
 		return 0;
