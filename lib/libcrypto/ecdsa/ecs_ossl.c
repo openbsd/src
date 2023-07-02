@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.44 2023/07/02 13:26:36 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.45 2023/07/02 13:37:09 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -124,11 +124,13 @@ int
 ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
     BIGNUM **out_r)
 {
-	BN_CTX *ctx = in_ctx;
-	BIGNUM *k = NULL, *r = NULL, *order = NULL, *x = NULL;
-	EC_POINT *point = NULL;
 	const EC_GROUP *group;
-	int order_bits, ret = 0;
+	EC_POINT *point = NULL;
+	BN_CTX *ctx = NULL;
+	BIGNUM *k = NULL, *r = NULL;
+	BIGNUM *order, *x;
+	int order_bits;
+	int ret = 0;
 
 	BN_free(*out_kinv);
 	*out_kinv = NULL;
@@ -138,21 +140,28 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 
 	if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL) {
 		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
-		return 0;
+		goto err;
 	}
 
+	if ((k = BN_new()) == NULL)
+		goto err;
+	if ((r = BN_new()) == NULL)
+		goto err;
+
+	if ((ctx = in_ctx) == NULL)
+		ctx = BN_CTX_new();
 	if (ctx == NULL) {
-		if ((ctx = BN_CTX_new()) == NULL) {
-			ECDSAerror(ERR_R_MALLOC_FAILURE);
-			return 0;
-		}
-	}
-
-	if ((k = BN_new()) == NULL || (r = BN_new()) == NULL ||
-	    (order = BN_new()) == NULL || (x = BN_new()) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
+
+	BN_CTX_start(ctx);
+
+	if ((order = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
 	if ((point = EC_POINT_new(group)) == NULL) {
 		ECDSAerror(ERR_R_EC_LIB);
 		goto err;
@@ -236,14 +245,14 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 	ret = 1;
 
  err:
-	if (in_ctx == NULL)
+	BN_CTX_end(ctx);
+	if (ctx != in_ctx)
 		BN_CTX_free(ctx);
-	BN_free(order);
 	BN_free(k);
 	BN_free(r);
 	EC_POINT_free(point);
-	BN_free(x);
-	return (ret);
+
+	return ret;
 }
 
 /*
@@ -257,36 +266,50 @@ ECDSA_SIG *
 ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey)
 {
-	BIGNUM *b = NULL, *binv = NULL, *bm = NULL, *bxr = NULL;
-	BIGNUM *kinv = NULL, *m = NULL, *order = NULL, *s;
-	const BIGNUM *ckinv, *priv_key;
-	BN_CTX *ctx = NULL;
 	const EC_GROUP *group;
-	ECDSA_SIG  *ret;
+	BN_CTX *ctx = NULL;
+	BIGNUM *kinv = NULL, *r = NULL, *s = NULL;
+	BIGNUM *b, *binv, *bm, *bxr, *m, *order;
+	const BIGNUM *ckinv, *priv_key;
 	int attempts = 0;
-	int ok = 0;
+	ECDSA_SIG *sig = NULL;
 
 	group = EC_KEY_get0_group(eckey);
 	priv_key = EC_KEY_get0_private_key(eckey);
 
 	if (group == NULL || priv_key == NULL) {
 		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
-		return NULL;
+		goto err;
 	}
 
-	if ((ret = ECDSA_SIG_new()) == NULL) {
-		ECDSAerror(ERR_R_MALLOC_FAILURE);
-		return NULL;
-	}
-	s = ret->s;
-
-	if ((ctx = BN_CTX_new()) == NULL || (order = BN_new()) == NULL ||
-	    (b = BN_new()) == NULL ||
-	    (binv = BN_new()) == NULL || (bm = BN_new()) == NULL ||
-	    (bxr = BN_new()) == NULL || (m = BN_new()) == NULL) {
+	if ((r = BN_new()) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
+	if ((s = BN_new()) == NULL) {
+		ECDSAerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	if ((ctx = BN_CTX_new()) == NULL) {
+		ECDSAerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	BN_CTX_start(ctx);
+
+	if ((order = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((binv = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bm = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bxr = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((m = BN_CTX_get(ctx)) == NULL)
+		goto err;
 
 	if (!EC_GROUP_get_order(group, order, ctx)) {
 		ECDSAerror(ERR_R_EC_LIB);
@@ -298,14 +321,14 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 
 	do {
 		if (in_kinv == NULL || in_r == NULL) {
-			if (!ECDSA_sign_setup(eckey, ctx, &kinv, &ret->r)) {
+			if (!ECDSA_sign_setup(eckey, ctx, &kinv, &r)) {
 				ECDSAerror(ERR_R_ECDSA_LIB);
 				goto err;
 			}
 			ckinv = kinv;
 		} else {
 			ckinv = in_kinv;
-			if (!bn_copy(ret->r, in_r)) {
+			if (!bn_copy(r, in_r)) {
 				ECDSAerror(ERR_R_MALLOC_FAILURE);
 				goto err;
 			}
@@ -338,7 +361,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
-		if (!BN_mod_mul(bxr, bxr, ret->r, order, ctx)) { /* bxr */
+		if (!BN_mod_mul(bxr, bxr, r, order, ctx)) { /* bxr */
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
@@ -378,22 +401,25 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 			break;
 	} while (1);
 
-	ok = 1;
+	if ((sig = ECDSA_SIG_new()) == NULL) {
+		ECDSAerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if (!ECDSA_SIG_set0(sig, r, s)) {
+		ECDSA_SIG_free(sig);
+		goto err;
+	}
+	r = NULL;
+	s = NULL;
 
  err:
-	if (ok == 0) {
-		ECDSA_SIG_free(ret);
-		ret = NULL;
-	}
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	BN_free(b);
-	BN_free(binv);
-	BN_free(bm);
-	BN_free(bxr);
 	BN_free(kinv);
-	BN_free(m);
-	BN_free(order);
-	return ret;
+	BN_free(r);
+	BN_free(s);
+
+	return sig;
 }
 
 int
