@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.43 2023/07/02 13:18:54 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.44 2023/07/02 13:26:36 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -377,16 +377,6 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 			/* s != 0 => we have a valid signature */
 			break;
 	} while (1);
-
-	/*
-	 * Ensure that the signature generated can be verified. This ensures
-	 * that our implementation is correct, while also potentially detecting
-	 * some forms of side-channel attacks.
-	 */
-	if (ECDSA_do_verify(dgst, dgst_len, ret, eckey) <= 0) {
-		ECDSAerror(ERR_R_EC_LIB);
-		goto err;
-	}
 
 	ok = 1;
 
