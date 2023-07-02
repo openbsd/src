@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_purp.c,v 1.27 2023/06/25 13:52:27 tb Exp $ */
+/* $OpenBSD: x509_purp.c,v 1.28 2023/07/02 17:12:17 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -99,18 +99,72 @@ static int xp_cmp(const X509_PURPOSE * const *a, const X509_PURPOSE * const *b);
 static void xptable_free(X509_PURPOSE *p);
 
 static X509_PURPOSE xstandard[] = {
-	{X509_PURPOSE_SSL_CLIENT, X509_TRUST_SSL_CLIENT, 0, check_purpose_ssl_client, "SSL client", "sslclient", NULL},
-	{X509_PURPOSE_SSL_SERVER, X509_TRUST_SSL_SERVER, 0, check_purpose_ssl_server, "SSL server", "sslserver", NULL},
-	{X509_PURPOSE_NS_SSL_SERVER, X509_TRUST_SSL_SERVER, 0, check_purpose_ns_ssl_server, "Netscape SSL server", "nssslserver", NULL},
-	{X509_PURPOSE_SMIME_SIGN, X509_TRUST_EMAIL, 0, check_purpose_smime_sign, "S/MIME signing", "smimesign", NULL},
-	{X509_PURPOSE_SMIME_ENCRYPT, X509_TRUST_EMAIL, 0, check_purpose_smime_encrypt, "S/MIME encryption", "smimeencrypt", NULL},
-	{X509_PURPOSE_CRL_SIGN, X509_TRUST_COMPAT, 0, check_purpose_crl_sign, "CRL signing", "crlsign", NULL},
-	{X509_PURPOSE_ANY, X509_TRUST_DEFAULT, 0, no_check, "Any Purpose", "any", NULL},
-	{X509_PURPOSE_OCSP_HELPER, X509_TRUST_COMPAT, 0, ocsp_helper, "OCSP helper", "ocsphelper", NULL},
-	{X509_PURPOSE_TIMESTAMP_SIGN, X509_TRUST_TSA, 0, check_purpose_timestamp_sign, "Time Stamp signing", "timestampsign", NULL},
+	{
+		.purpose = X509_PURPOSE_SSL_CLIENT,
+		.trust = X509_TRUST_SSL_CLIENT,
+		.check_purpose = check_purpose_ssl_client,
+		.name = "SSL client",
+		.sname = "sslclient",
+	},
+	{
+		.purpose = X509_PURPOSE_SSL_SERVER,
+		.trust = X509_TRUST_SSL_SERVER,
+		.check_purpose = check_purpose_ssl_server,
+		.name = "SSL server",
+		.sname = "sslserver",
+	},
+	{
+		.purpose = X509_PURPOSE_NS_SSL_SERVER,
+		.trust = X509_TRUST_SSL_SERVER,
+		.check_purpose = check_purpose_ns_ssl_server,
+		.name = "Netscape SSL server",
+		.sname = "nssslserver",
+	},
+	{
+		.purpose = X509_PURPOSE_SMIME_SIGN,
+		.trust = X509_TRUST_EMAIL,
+		.check_purpose = check_purpose_smime_sign,
+		.name = "S/MIME signing",
+		.sname = "smimesign",
+	},
+	{
+		.purpose = X509_PURPOSE_SMIME_ENCRYPT,
+		.trust = X509_TRUST_EMAIL,
+		.check_purpose = check_purpose_smime_encrypt,
+		.name = "S/MIME encryption",
+		.sname = "smimeencrypt",
+	},
+	{
+		.purpose = X509_PURPOSE_CRL_SIGN,
+		.trust = X509_TRUST_COMPAT,
+		.check_purpose = check_purpose_crl_sign,
+		.name = "CRL signing",
+		.sname = "crlsign",
+	},
+	{
+		.purpose = X509_PURPOSE_ANY,
+		.trust = X509_TRUST_DEFAULT,
+		.check_purpose = no_check,
+		.name = "Any Purpose",
+		.sname = "any",
+	},
+	{
+		.purpose = X509_PURPOSE_OCSP_HELPER,
+		.trust = X509_TRUST_COMPAT,
+		.check_purpose = ocsp_helper,
+		.name = "OCSP helper",
+		.sname = "ocsphelper",
+	},
+	{
+		.purpose = X509_PURPOSE_TIMESTAMP_SIGN,
+		.trust = X509_TRUST_TSA,
+		.check_purpose = check_purpose_timestamp_sign,
+		.name = "Time Stamp signing",
+		.sname = "timestampsign",
+	},
 };
 
-#define X509_PURPOSE_COUNT (sizeof(xstandard)/sizeof(X509_PURPOSE))
+#define X509_PURPOSE_COUNT (sizeof(xstandard) / sizeof(xstandard[0]))
 
 static STACK_OF(X509_PURPOSE) *xptable = NULL;
 
