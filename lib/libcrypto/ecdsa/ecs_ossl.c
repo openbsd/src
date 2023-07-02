@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.42 2023/07/02 13:05:29 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.43 2023/07/02 13:18:54 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -130,6 +130,12 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 	const EC_GROUP *group;
 	int order_bits, ret = 0;
 
+	BN_free(*out_kinv);
+	*out_kinv = NULL;
+
+	BN_free(*out_r);
+	*out_r = NULL;
+
 	if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL) {
 		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
 		return 0;
@@ -220,20 +226,21 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	BN_free(*out_r);
-	BN_free(*out_kinv);
-	*out_r = r;
+
 	*out_kinv = k;
+	k = NULL;
+
+	*out_r = r;
+	r = NULL;
+
 	ret = 1;
 
  err:
-	if (ret == 0) {
-		BN_free(k);
-		BN_free(r);
-	}
 	if (in_ctx == NULL)
 		BN_CTX_free(ctx);
 	BN_free(order);
+	BN_free(k);
+	BN_free(r);
 	EC_POINT_free(point);
 	BN_free(x);
 	return (ret);
