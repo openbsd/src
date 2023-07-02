@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.5 2023/03/15 06:34:07 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.6 2023/07/02 15:02:52 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -683,11 +683,11 @@ ecx_item_verify(EVP_MD_CTX *md_ctx, const ASN1_ITEM *it, void *asn,
 
 	if (nid != NID_ED25519 || param_type != V_ASN1_UNDEF) {
 		ECerror(EC_R_INVALID_ENCODING);
-		return 0;
+		return -1;
 	}
 
 	if (!EVP_DigestVerifyInit(md_ctx, NULL, NULL, NULL, pkey))
-		return 0;
+		return -1;
 
 	return 2;
 }
@@ -757,9 +757,9 @@ pkey_ecx_digestverify(EVP_MD_CTX *md_ctx, const unsigned char *sig,
 	ecx_key = pkey_ctx->pkey->pkey.ecx;
 
 	if (ecx_key == NULL || ecx_key->pub_key == NULL)
-		return 0;
+		return -1;
 	if (sig_len != ecx_sig_size(pkey_ctx->pkey))
-		return 0;
+		return -1;
 
 	return ED25519_verify(message, message_len, sig, ecx_key->pub_key);
 }
