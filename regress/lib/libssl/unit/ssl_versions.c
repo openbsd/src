@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.19 2022/11/26 16:08:57 tb Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.20 2023/07/02 17:21:33 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -32,43 +32,43 @@ static struct version_range_test version_range_tests[] = {
 		.options = 0,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_VERSION,
+		.want_minver = TLS1_2_VERSION,
 		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.options = 0,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_VERSION,
+		.want_minver = TLS1_2_VERSION,
 		.want_maxver = TLS1_2_VERSION,
 	},
 	{
 		.options = SSL_OP_NO_TLSv1,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_1_VERSION,
+		.want_minver = TLS1_2_VERSION,
 		.want_maxver = TLS1_2_VERSION,
 	},
 	{
 		.options = SSL_OP_NO_TLSv1_3,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_VERSION,
+		.want_minver = TLS1_2_VERSION,
 		.want_maxver = TLS1_2_VERSION,
 	},
 	{
 		.options = SSL_OP_NO_TLSv1_2,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_1_VERSION,
+		.want_minver = 0,
+		.want_maxver = 0,
 	},
 	{
 		.options = SSL_OP_NO_TLSv1_1,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_VERSION,
+		.want_minver = TLS1_2_VERSION,
+		.want_maxver = TLS1_2_VERSION,
 	},
 	{
 		.options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1,
@@ -81,15 +81,15 @@ static struct version_range_test version_range_tests[] = {
 		.options = SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_VERSION,
+		.want_minver = 0,
+		.want_maxver = 0,
 	},
 	{
 		.options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_2,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_1_VERSION,
-		.want_maxver = TLS1_1_VERSION,
+		.want_minver = 0,
+		.want_maxver = 0,
 	},
 	{
 		.options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
@@ -119,14 +119,14 @@ static struct version_range_test version_range_tests[] = {
 		.options = 0,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_VERSION,
+		.want_minver = TLS1_2_VERSION,
 		.want_maxver = TLS1_2_VERSION,
 	},
 	{
 		.options = 0,
 		.minver = TLS1_1_VERSION,
 		.maxver = TLS1_2_VERSION,
-		.want_minver = TLS1_1_VERSION,
+		.want_minver = TLS1_2_VERSION,
 		.want_maxver = TLS1_2_VERSION,
 	},
 	{
@@ -140,14 +140,14 @@ static struct version_range_test version_range_tests[] = {
 		.options = 0,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_VERSION,
+		.want_minver = TLS1_2_VERSION,
 		.want_maxver = TLS1_3_VERSION,
 	},
 	{
 		.options = 0,
 		.minver = TLS1_1_VERSION,
 		.maxver = TLS1_3_VERSION,
-		.want_minver = TLS1_1_VERSION,
+		.want_minver = TLS1_2_VERSION,
 		.want_maxver = TLS1_3_VERSION,
 	},
 	{
@@ -168,15 +168,15 @@ static struct version_range_test version_range_tests[] = {
 		.options = 0,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_1_VERSION,
-		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_1_VERSION,
+		.want_minver = 0,
+		.want_maxver = 0,
 	},
 	{
 		.options = 0,
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_VERSION,
-		.want_minver = TLS1_VERSION,
-		.want_maxver = TLS1_VERSION,
+		.want_minver = 0,
+		.want_maxver = 0,
 	},
 };
 
@@ -276,7 +276,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = TLS1_VERSION,
-		.want_maxver = TLS1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -284,7 +284,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = TLS1_1_VERSION,
-		.want_maxver = TLS1_1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -316,7 +316,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = TLS1_2_VERSION,
-		.want_maxver = TLS1_1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -324,7 +324,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = TLS1_2_VERSION,
-		.want_maxver = TLS1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -340,7 +340,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = TLS1_1_VERSION,
-		.want_maxver = TLS1_1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -356,7 +356,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = TLS1_1_VERSION,
-		.want_maxver = TLS1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -372,7 +372,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_1_VERSION,
 		.peerver = TLS1_2_VERSION,
-		.want_maxver = TLS1_1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLS_method,
@@ -380,7 +380,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_VERSION,
 		.peerver = TLS1_2_VERSION,
-		.want_maxver = TLS1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLSv1_method,
@@ -388,7 +388,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = TLS1_VERSION,
-		.want_maxver = TLS1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = TLSv1_method,
@@ -404,7 +404,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = TLS1_1_VERSION,
-		.want_maxver = TLS1_1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = DTLS_method,
@@ -412,7 +412,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = DTLS1_VERSION,
-		.want_maxver = DTLS1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = DTLS_method,
@@ -436,7 +436,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_1_VERSION,
 		.maxver = TLS1_1_VERSION,
 		.peerver = DTLS1_2_VERSION,
-		.want_maxver = DTLS1_VERSION,
+		.want_maxver = 0,
 	},
 	{
 		.ssl_method = DTLSv1_2_method,
@@ -476,7 +476,7 @@ static struct shared_version_test shared_version_tests[] = {
 		.minver = TLS1_1_VERSION,
 		.maxver = TLS1_2_VERSION,
 		.peerver = DTLS1_2_VERSION,
-		.want_maxver = DTLS1_VERSION,
+		.want_maxver = 0,
 	},
 };
 

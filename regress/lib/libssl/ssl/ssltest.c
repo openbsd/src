@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.39 2023/04/15 16:50:05 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.40 2023/07/02 17:21:32 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -336,7 +336,7 @@ sv_usage(void)
 	fprintf(stderr, " -dhe1024dsa   - use 1024 bit key (with 160-bit subprime) for DHE\n");
 	fprintf(stderr, " -no_dhe       - disable DHE\n");
 	fprintf(stderr, " -no_ecdhe     - disable ECDHE\n");
-	fprintf(stderr, " -dtls1        - use DTLSv1\n");
+	fprintf(stderr, " -dtls1_2      - use DTLSv1.2\n");
 	fprintf(stderr, " -tls1         - use TLSv1\n");
 	fprintf(stderr, " -tls1_2       - use TLSv1.2\n");
 	fprintf(stderr, " -CApath arg   - PEM format directory of CA's\n");
@@ -409,7 +409,7 @@ main(int argc, char *argv[])
 	int badop = 0;
 	int bio_pair = 0;
 	int force = 0;
-	int tls1 = 0, tls1_2 = 0, dtls1 = 0, ret = 1;
+	int tls1 = 0, tls1_2 = 0, dtls1_2 = 0, ret = 1;
 	int client_auth = 0;
 	int server_auth = 0, i;
 	char *app_verify_arg = "Test Callback Argument";
@@ -464,8 +464,8 @@ main(int argc, char *argv[])
 			no_dhe = 1;
 		else if (strcmp(*argv, "-no_ecdhe") == 0)
 			no_ecdhe = 1;
-		else if (strcmp(*argv, "-dtls1") == 0)
-			dtls1 = 1;
+		else if (strcmp(*argv, "-dtls1_2") == 0)
+			dtls1_2 = 1;
 		else if (strcmp(*argv, "-tls1") == 0)
 			tls1 = 1;
 		else if (strcmp(*argv, "-tls1_2") == 0)
@@ -565,7 +565,7 @@ bad:
 		goto end;
 	}
 
-	if (!dtls1 && !tls1 && !tls1_2 && number > 1 && !reuse && !force) {
+	if (!dtls1_2 && !tls1 && !tls1_2 && number > 1 && !reuse && !force) {
 		fprintf(stderr,
 		    "This case cannot work.  Use -f to perform "
 		    "the test anyway (and\n-d to see what happens), "
@@ -588,8 +588,8 @@ bad:
 	SSL_library_init();
 	SSL_load_error_strings();
 
-	if (dtls1)
-		meth = DTLSv1_method();
+	if (dtls1_2)
+		meth = DTLSv1_2_method();
 	else if (tls1)
 		meth = TLSv1_method();
 	else if (tls1_2)

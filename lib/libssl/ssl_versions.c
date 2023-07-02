@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_versions.c,v 1.26 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: ssl_versions.c,v 1.27 2023/07/02 17:21:32 beck Exp $ */
 /*
  * Copyright (c) 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -150,11 +150,7 @@ ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 			options |= SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_2;
 	}
 
-	if ((options & SSL_OP_NO_TLSv1) == 0)
-		min_version = TLS1_VERSION;
-	else if ((options & SSL_OP_NO_TLSv1_1) == 0)
-		min_version = TLS1_1_VERSION;
-	else if ((options & SSL_OP_NO_TLSv1_2) == 0)
+	if ((options & SSL_OP_NO_TLSv1_2) == 0)
 		min_version = TLS1_2_VERSION;
 	else if ((options & SSL_OP_NO_TLSv1_3) == 0)
 		min_version = TLS1_3_VERSION;
@@ -162,10 +158,6 @@ ssl_enabled_tls_version_range(SSL *s, uint16_t *min_ver, uint16_t *max_ver)
 	if ((options & SSL_OP_NO_TLSv1_3) && min_version < TLS1_3_VERSION)
 		max_version = TLS1_2_VERSION;
 	if ((options & SSL_OP_NO_TLSv1_2) && min_version < TLS1_2_VERSION)
-		max_version = TLS1_1_VERSION;
-	if ((options & SSL_OP_NO_TLSv1_1) && min_version < TLS1_1_VERSION)
-		max_version = TLS1_VERSION;
-	if ((options & SSL_OP_NO_TLSv1) && min_version < TLS1_VERSION)
 		max_version = 0;
 
 	/* Everything has been disabled... */

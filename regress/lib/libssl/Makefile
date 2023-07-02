@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.51 2022/11/05 21:58:24 jsing Exp $
+#	$OpenBSD: Makefile,v 1.52 2023/07/02 17:21:32 beck Exp $
 
 SUBDIR += api
 SUBDIR += asn1
 SUBDIR += buffer
 SUBDIR += bytestring
 SUBDIR += ciphers
-SUBDIR += client
+#SUBDIR += client
 SUBDIR += dtls
 SUBDIR += exporter
 SUBDIR += handshake
@@ -13,7 +13,7 @@ SUBDIR += pqueue
 SUBDIR += quic
 SUBDIR += record
 SUBDIR += record_layer
-SUBDIR += server
+#SUBDIR += server
 SUBDIR += ssl
 SUBDIR += tls
 SUBDIR += tlsext

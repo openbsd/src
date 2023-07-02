@@ -95,8 +95,7 @@ done
 if $openssl no-dh; then
   echo skipping anonymous DH tests
 else
-  echo test tls1 with 1024bit anonymous DH, multiple handshakes
-  $ssltest -v -bio_pair -tls1 -cipher ADH -dhe1024dsa -num 10 -f -time $extra || exit 1
+  echo skipping tls1 tests.
 fi
 
 #if $openssl no-rsa; then
@@ -117,17 +116,16 @@ fi
 # DTLS tests
 #
 
-echo test dtlsv1
-$ssltest -dtls1 $extra || exit 1
+$ssltest -dtls1_2 $extra || exit 1
 
-echo test dtlsv1 with server authentication
-$ssltest -dtls1 -server_auth $CA $extra || exit 1
+echo test dtlsv1_2 with server authentication
+$ssltest -dtls1_2 -server_auth $CA $extra || exit 1
 
-echo test dtlsv1 with client authentication
-$ssltest -dtls1 -client_auth $CA $extra || exit 1
+echo test dtlsv1_2 with client authentication
+$ssltest -dtls1_2 -client_auth $CA $extra || exit 1
 
-echo test dtlsv1 with both client and server authentication
-$ssltest -dtls1 -server_auth -client_auth $CA $extra || exit 1
+echo test dtlsv1_2 with both client and server authentication
+$ssltest -dtls1_2 -server_auth -client_auth $CA $extra || exit 1
 
 echo "Testing DTLS ciphersuites"
 for protocol in SSLv3; do
@@ -136,7 +134,7 @@ for protocol in SSLv3; do
     awk "/ $protocol / { print \\$1 }" |
     grep -v RC4`; do
     echo "Testing $cipher"
-    $ssltest -cipher $cipher -dtls1
+    $ssltest -cipher $cipher -dtls1_2
     if [ $? -ne 0 ] ; then
       echo "Failed $cipher"
       exit 1
@@ -148,17 +146,17 @@ done
 # ALPN tests
 #
 echo "Testing ALPN..."
-$ssltest -bio_pair -tls1 -alpn_client foo -alpn_server bar || exit 1
-$ssltest -bio_pair -tls1 -alpn_client foo -alpn_server foo \
+$ssltest -bio_pair -alpn_client foo -alpn_server bar || exit 1
+$ssltest -bio_pair -alpn_client foo -alpn_server foo \
   -alpn_expected foo || exit 1
-$ssltest -bio_pair -tls1 -alpn_client foo,bar -alpn_server foo \
+$ssltest -bio_pair -alpn_client foo,bar -alpn_server foo \
   -alpn_expected foo || exit 1
-$ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server foo \
+$ssltest -bio_pair -alpn_client bar,foo -alpn_server foo \
   -alpn_expected foo || exit 1
-$ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server foo,bar \
+$ssltest -bio_pair -alpn_client bar,foo -alpn_server foo,bar \
   -alpn_expected foo || exit 1
-$ssltest -bio_pair -tls1 -alpn_client bar,foo -alpn_server bar,foo \
+$ssltest -bio_pair -alpn_client bar,foo -alpn_server bar,foo \
   -alpn_expected bar || exit 1
-$ssltest -bio_pair -tls1 -alpn_client foo,bar -alpn_server bar,foo \
+$ssltest -bio_pair -alpn_client foo,bar -alpn_server bar,foo \
   -alpn_expected bar || exit 1
-$ssltest -bio_pair -tls1 -alpn_client baz -alpn_server bar,foo || exit 1
+$ssltest -bio_pair -alpn_client baz -alpn_server bar,foo || exit 1

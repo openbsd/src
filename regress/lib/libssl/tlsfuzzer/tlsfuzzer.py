@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.49 2023/06/10 05:00:58 tb Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.50 2023/07/02 17:21:33 beck Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -323,6 +323,8 @@ tls13_unsupported_tests = TestGroup("TLSv1.3 tests for unsupported features", [
 tls12_exclude_legacy_protocols = [
     # all these have BIO_read timeouts against TLSv1.3
     "-e", "Protocol (3, 0)",
+    "-e", "Protocol (3, 1)",
+    "-e", "Protocol (3, 2)",
     "-e", "Protocol (3, 0) in SSLv2 compatible ClientHello",
     # the following only fail with TLSv1.3
     "-e", "Protocol (3, 1) in SSLv2 compatible ClientHello",
@@ -331,13 +333,20 @@ tls12_exclude_legacy_protocols = [
     "-e", "Protocol (3, 1) with x448 group",
     "-e", "Protocol (3, 2) with x448 group",
     "-e", "Protocol (3, 3) with x448 group",
+    # These don't work without TLSv1.0 and TLSv1.1
+    "-e", "Protocol (3, 1) with secp256r1 group",
+    "-e", "Protocol (3, 1) with secp384r1 group",
+    "-e", "Protocol (3, 1) with secp521r1 group",
+    "-e", "Protocol (3, 1) with x25519 group",
+    "-e", "Protocol (3, 2) with secp256r1 group",
+    "-e", "Protocol (3, 2) with secp384r1 group",
+    "-e", "Protocol (3, 2) with secp521r1 group",
+    "-e", "Protocol (3, 2) with x25519 group",
 ]
 
 tls12_tests = TestGroup("TLSv1.2 tests", [
     # Tests that pass as they are.
-    Test("test-TLSv1_2-rejected-without-TLSv1_2.py"),
     Test("test-aes-gcm-nonces.py"),
-    Test("test-chacha20.py"),
     Test("test-connection-abort.py"),
     Test("test-conversation.py"),
     Test("test-cve-2016-2107.py"),
@@ -386,13 +395,30 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
         ]
     ),
     Test("test-dhe-key-share-random.py", tls12_exclude_legacy_protocols),
-    Test("test-export-ciphers-rejected.py", ["--min-ver", "TLSv1.0"]),
+    Test("test-export-ciphers-rejected.py", ["--min-ver", "TLSv1.2"]),
     Test(
         "test-downgrade-protection.py",
         tls12_args = ["--server-max-protocol", "TLSv1.2"],
-        tls13_args = ["--server-max-protocol", "TLSv1.3"],
+        tls13_args = [
+            "--server-max-protocol", "TLSv1.3",
+            "-e", "TLS 1.3 downgrade check for Protocol (3, 1)",
+            "-e", "TLS 1.3 downgrade check for Protocol (3, 2)",
+        ]
     ),
-    Test("test-fallback-scsv.py", tls13_args = ["--tls-1.3"] ),
+    Test(
+        "test-fallback-scsv.py",
+        tls13_args = [
+            "--tls-1.3",
+            "-e", "FALLBACK - hello TLSv1.1 - pos 0",
+            "-e", "FALLBACK - hello TLSv1.1 - pos 1",
+            "-e", "FALLBACK - hello TLSv1.1 - pos 2",
+            "-e", "FALLBACK - record TLSv1.1 hello TLSv1.1 - pos 0",
+            "-e", "FALLBACK - record TLSv1.1 hello TLSv1.1 - pos 1",
+            "-e", "FALLBACK - record TLSv1.1 hello TLSv1.1 - pos 2",
+            "-e", "record TLSv1.1 hello TLSv1.1",
+            "-e", "sanity - TLSv1.1",
+        ]
+    ),
 
     Test("test-invalid-compression-methods.py", [
         "-x", "invalid compression methods",
@@ -412,6 +438,8 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
     Test("test-sig-algs-renegotiation-resumption.py", ["--sig-algs-drop-ok"]),
 
     Test("test-serverhello-random.py", args = tls12_exclude_legacy_protocols),
+
+    Test("test-chacha20.py", [ "-e", "Chacha20 in TLS1.1" ]),
 ])
 
 tls12_slow_tests = TestGroup("slow TLSv1.2 tests", [
@@ -549,6 +577,9 @@ tls12_failing_tests = TestGroup("failing TLSv1.2 tests", [
 
     # x448 tests need disabling plus x25519 corner cases need sorting out
     Test("test-x25519.py"),
+
+    # Needs TLS 1.0 or 1.1
+    Test("test-TLSv1_2-rejected-without-TLSv1_2.py"),
 ])
 
 tls12_unsupported_tests = TestGroup("TLSv1.2 for unsupported features", [

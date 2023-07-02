@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/04/19 15:34:23 tb Exp $
+# $OpenBSD: Makefile,v 1.7 2023/07/02 17:21:32 beck Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or openssl 3.0.  Pin client or server to a fixed TLS
@@ -14,7 +14,7 @@ LIBRARIES +=		openssl11
 LIBRARIES +=		openssl30
 .endif
 
-VERSIONS =	any TLS1 TLS1_1 TLS1_2 TLS1_3
+VERSIONS =	any TLS1_2 TLS1_3
 
 .for cver in ${VERSIONS}
 .for sver in ${VERSIONS}

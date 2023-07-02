@@ -1,4 +1,4 @@
-/* $OpenBSD: tlstest.c,v 1.1 2021/10/23 14:34:10 jsing Exp $ */
+/* $OpenBSD: tlstest.c,v 1.2 2023/07/02 17:21:33 beck Exp $ */
 /*
  * Copyright (c) 2020, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -245,30 +245,12 @@ static const struct tls_test tls_tests[] = {
 		.server_max_version = TLS1_2_VERSION,
 	},
 	{
-		.desc = "Default client and TLSv1.1 server",
-		.server_max_version = TLS1_1_VERSION,
-	},
-	{
-		.desc = "Default client and TLSv1.0 server",
-		.server_max_version = TLS1_VERSION,
-	},
-	{
 		.desc = "Default client and default server with ECDHE KEX",
 		.server_ciphers = "ECDHE-RSA-AES128-SHA",
 	},
 	{
 		.desc = "Default client and TLSv1.2 server with ECDHE KEX",
 		.server_max_version = TLS1_2_VERSION,
-		.server_ciphers = "ECDHE-RSA-AES128-SHA",
-	},
-	{
-		.desc = "Default client and TLSv1.1 server with ECDHE KEX",
-		.server_max_version = TLS1_1_VERSION,
-		.server_ciphers = "ECDHE-RSA-AES128-SHA",
-	},
-	{
-		.desc = "Default client and TLSv1.0 server with ECDHE KEX",
-		.server_max_version = TLS1_VERSION,
 		.server_ciphers = "ECDHE-RSA-AES128-SHA",
 	},
 	{
@@ -281,16 +263,6 @@ static const struct tls_test tls_tests[] = {
 		.server_ciphers = "DHE-RSA-AES128-SHA",
 	},
 	{
-		.desc = "Default client and TLSv1.1 server with DHE KEX",
-		.server_max_version = TLS1_1_VERSION,
-		.server_ciphers = "DHE-RSA-AES128-SHA",
-	},
-	{
-		.desc = "Default client and TLSv1.0 server with DHE KEX",
-		.server_max_version = TLS1_VERSION,
-		.server_ciphers = "DHE-RSA-AES128-SHA",
-	},
-	{
 		.desc = "Default client and default server with RSA KEX",
 		.server_ciphers = "AES128-SHA",
 	},
@@ -300,40 +272,12 @@ static const struct tls_test tls_tests[] = {
 		.server_ciphers = "AES128-SHA",
 	},
 	{
-		.desc = "Default client and TLSv1.1 server with RSA KEX",
-		.server_max_version = TLS1_1_VERSION,
-		.server_ciphers = "AES128-SHA",
-	},
-	{
-		.desc = "Default client and TLSv1.0 server with RSA KEX",
-		.server_max_version = TLS1_VERSION,
-		.server_ciphers = "AES128-SHA",
-	},
-	{
 		.desc = "TLSv1.2 client and default server",
 		.client_max_version = TLS1_2_VERSION,
 	},
 	{
-		.desc = "TLSv1.1 client and default server",
-		.client_max_version = TLS1_1_VERSION,
-	},
-	{
-		.desc = "TLSv1.0 client and default server",
-		.client_max_version = TLS1_VERSION,
-	},
-	{
 		.desc = "TLSv1.2 client and default server with ECDHE KEX",
 		.client_max_version = TLS1_2_VERSION,
-		.client_ciphers = "ECDHE-RSA-AES128-SHA",
-	},
-	{
-		.desc = "TLSv1.1 client and default server with ECDHE KEX",
-		.client_max_version = TLS1_1_VERSION,
-		.client_ciphers = "ECDHE-RSA-AES128-SHA",
-	},
-	{
-		.desc = "TLSv1.0 client and default server with ECDHE KEX",
-		.client_max_version = TLS1_VERSION,
 		.client_ciphers = "ECDHE-RSA-AES128-SHA",
 	},
 	{
@@ -342,28 +286,8 @@ static const struct tls_test tls_tests[] = {
 		.client_ciphers = "DHE-RSA-AES128-SHA",
 	},
 	{
-		.desc = "TLSv1.1 client and default server with DHE KEX",
-		.client_max_version = TLS1_1_VERSION,
-		.client_ciphers = "DHE-RSA-AES128-SHA",
-	},
-	{
-		.desc = "TLSv1.0 client and default server with DHE KEX",
-		.client_max_version = TLS1_VERSION,
-		.client_ciphers = "DHE-RSA-AES128-SHA",
-	},
-	{
 		.desc = "TLSv1.2 client and default server with RSA KEX",
 		.client_max_version = TLS1_2_VERSION,
-		.client_ciphers = "AES128-SHA",
-	},
-	{
-		.desc = "TLSv1.1 client and default server with RSA KEX",
-		.client_max_version = TLS1_1_VERSION,
-		.client_ciphers = "AES128-SHA",
-	},
-	{
-		.desc = "TLSv1.0 client and default server with RSA KEX",
-		.client_max_version = TLS1_VERSION,
 		.client_ciphers = "AES128-SHA",
 	},
 };
