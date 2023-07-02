@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.30 2023/07/02 02:28:20 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.31 2023/07/02 03:11:51 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -91,10 +91,10 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
     void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
 {
 	BN_CTX *ctx;
-	EC_POINT *point = NULL;
 	BIGNUM *x;
 	const BIGNUM *priv_key;
-	const EC_GROUP* group;
+	const EC_GROUP *group;
+	EC_POINT *point = NULL;
 	unsigned char *buf = NULL;
 	int buflen;
 	int ret = -1;
