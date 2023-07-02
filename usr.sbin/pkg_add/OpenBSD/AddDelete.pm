@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddDelete.pm,v 1.99 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: AddDelete.pm,v 1.100 2023/07/02 13:33:10 espie Exp $
 #
 # Copyright (c) 2007-2010 Marc Espie <espie@openbsd.org>
 #
@@ -139,7 +139,6 @@ sub parse_and_run($self, $cmd)
 			my $NOKERNINFO = 0x02000000; # not defined in POSIX
 			$termios->setlflag($lflag | $NOKERNINFO);
 			$termios->setattr;
-			
 		}
 	}
 
@@ -150,12 +149,18 @@ sub parse_and_run($self, $cmd)
 		$termios->setattr;
 	}
 
+	return $self->exit_code($state);
+}
+
+sub exit_code($self, $state)
+{
 	return $state->{bad} != 0;
 }
 
 # $self->silence_children($state)
 sub silence_children($, $)
 {
+	1;
 }
 
 # nothing to do
