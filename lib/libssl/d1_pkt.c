@@ -1,4 +1,4 @@
-/* $OpenBSD: d1_pkt.c,v 1.127 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: d1_pkt.c,v 1.128 2023/07/02 20:16:47 tb Exp $ */
 /*
  * DTLS implementation written by Nagendra Modadugu
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.
@@ -206,16 +206,16 @@ dtls1_copy_record(SSL *s, DTLS1_RECORD_DATA_INTERNAL *rdata)
 static int
 dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 {
-	DTLS1_RECORD_DATA_INTERNAL *rdata;
-	pitem *item;
+	DTLS1_RECORD_DATA_INTERNAL *rdata = NULL;
+	pitem *item = NULL;
 
 	/* Limit the size of the queue to prevent DOS attacks */
 	if (pqueue_size(queue->q) >= 100)
 		return 0;
 
-	rdata = malloc(sizeof(DTLS1_RECORD_DATA_INTERNAL));
-	item = pitem_new(priority, rdata);
-	if (rdata == NULL || item == NULL)
+	if ((rdata = malloc(sizeof(*rdata))) == NULL)
+		goto init_err;
+	if ((item = pitem_new(priority, rdata)) == NULL)
 		goto init_err;
 
 	rdata->packet = s->packet;
@@ -252,16 +252,16 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 static int
 dtls1_buffer_rcontent(SSL *s, rcontent_pqueue *queue, unsigned char *priority)
 {
-	DTLS1_RCONTENT_DATA_INTERNAL *rdata;
-	pitem *item;
+	DTLS1_RCONTENT_DATA_INTERNAL *rdata = NULL;
+	pitem *item = NULL;
 
 	/* Limit the size of the queue to prevent DOS attacks */
 	if (pqueue_size(queue->q) >= 100)
 		return 0;
 
-	rdata = malloc(sizeof(DTLS1_RCONTENT_DATA_INTERNAL));
-	item = pitem_new(priority, rdata);
-	if (rdata == NULL || item == NULL)
+	if ((rdata = malloc(sizeof(*rdata))) == NULL)
+		goto init_err;
+	if ((item = pitem_new(priority, rdata)) == NULL)
 		goto init_err;
 
 	rdata->rcontent = s->s3->rcontent;
