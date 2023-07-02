@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.40 2023/07/02 12:25:33 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.41 2023/07/02 12:48:59 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -124,7 +124,7 @@ int
 ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 {
 	BN_CTX *ctx = ctx_in;
-	BIGNUM *k = NULL, *r = NULL, *order = NULL, *X = NULL;
+	BIGNUM *k = NULL, *r = NULL, *order = NULL, *x = NULL;
 	EC_POINT *point = NULL;
 	const EC_GROUP *group;
 	int order_bits, ret = 0;
@@ -142,7 +142,7 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp
 	}
 
 	if ((k = BN_new()) == NULL || (r = BN_new()) == NULL ||
-	    (order = BN_new()) == NULL || (X = BN_new()) == NULL) {
+	    (order = BN_new()) == NULL || (x = BN_new()) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
@@ -169,7 +169,7 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp
 	/* Preallocate space. */
 	if (!BN_set_bit(k, order_bits) ||
 	    !BN_set_bit(r, order_bits) ||
-	    !BN_set_bit(X, order_bits))
+	    !BN_set_bit(x, order_bits))
 		goto err;
 
 	do {
@@ -193,8 +193,8 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp
 		 * conditional copy.
 		 */
 		if (!BN_add(r, k, order) ||
-		    !BN_add(X, r, order) ||
-		    !bn_copy(k, BN_num_bits(r) > order_bits ? r : X))
+		    !BN_add(x, r, order) ||
+		    !bn_copy(k, BN_num_bits(r) > order_bits ? r : x))
 			goto err;
 
 		BN_set_flags(k, BN_FLG_CONSTTIME);
@@ -204,12 +204,12 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp
 			ECDSAerror(ERR_R_EC_LIB);
 			goto err;
 		}
-		if (!EC_POINT_get_affine_coordinates(group, point, X, NULL,
+		if (!EC_POINT_get_affine_coordinates(group, point, x, NULL,
 		    ctx)) {
 			ECDSAerror(ERR_R_EC_LIB);
 			goto err;
 		}
-		if (!BN_nnmod(r, X, order, ctx)) {
+		if (!BN_nnmod(r, x, order, ctx)) {
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
@@ -234,7 +234,7 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp
 		BN_CTX_free(ctx);
 	BN_free(order);
 	EC_POINT_free(point);
-	BN_free(X);
+	BN_free(x);
 	return (ret);
 }
 
@@ -429,7 +429,7 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
     EC_KEY *eckey)
 {
 	BN_CTX *ctx;
-	BIGNUM *order, *u1, *u2, *m, *X;
+	BIGNUM *order, *u1, *u2, *m, *x;
 	EC_POINT *point = NULL;
 	const EC_GROUP *group;
 	const EC_POINT *pub_key;
@@ -450,8 +450,8 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 	u1 = BN_CTX_get(ctx);
 	u2 = BN_CTX_get(ctx);
 	m = BN_CTX_get(ctx);
-	X = BN_CTX_get(ctx);
-	if (X == NULL) {
+	x = BN_CTX_get(ctx);
+	if (x == NULL) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
@@ -496,11 +496,11 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 		ECDSAerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	if (!EC_POINT_get_affine_coordinates(group, point, X, NULL, ctx)) {
+	if (!EC_POINT_get_affine_coordinates(group, point, x, NULL, ctx)) {
 		ECDSAerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	if (!BN_nnmod(u1, X, order, ctx)) {
+	if (!BN_nnmod(u1, x, order, ctx)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
