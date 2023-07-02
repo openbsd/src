@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.247 2023/04/25 18:14:06 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.248 2023/07/02 11:16:03 deraadt Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -241,7 +241,8 @@ process_new(struct proc *p, struct process *parent, int flags)
 	unveil_copy(parent, pr);
 
 	pr->ps_flags = parent->ps_flags &
-	    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_EXECPLEDGE | PS_WXNEEDED);
+	    (PS_SUGID | PS_SUGIDEXEC | PS_PLEDGE | PS_EXECPLEDGE |
+	    PS_WXNEEDED | PS_CHROOT);
 	if (parent->ps_session->s_ttyvp != NULL)
 		pr->ps_flags |= parent->ps_flags & PS_CONTROLT;
 
