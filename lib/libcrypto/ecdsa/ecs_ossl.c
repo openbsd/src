@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.39 2023/07/02 04:17:00 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.40 2023/07/02 12:25:33 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -173,13 +173,10 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp
 		goto err;
 
 	do {
-		do {
-			if (!BN_rand_range(k, order)) {
-				ECDSAerror(
-				    ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);
-				goto err;
-			}
-		} while (BN_is_zero(k));
+		if (!bn_rand_interval(k, BN_value_one(), order)) {
+			ECDSAerror(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);
+			goto err;
+		}
 
 		/*
 		 * We do not want timing information to leak the length of k,
@@ -253,7 +250,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey)
 {
 	BIGNUM *b = NULL, *binv = NULL, *bm = NULL, *bxr = NULL;
-	BIGNUM *kinv = NULL, *m = NULL, *order = NULL, *range = NULL, *s;
+	BIGNUM *kinv = NULL, *m = NULL, *order = NULL, *s;
 	const BIGNUM *ckinv, *priv_key;
 	BN_CTX *ctx = NULL;
 	const EC_GROUP *group;
@@ -276,7 +273,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	s = ret->s;
 
 	if ((ctx = BN_CTX_new()) == NULL || (order = BN_new()) == NULL ||
-	    (range = BN_new()) == NULL || (b = BN_new()) == NULL ||
+	    (b = BN_new()) == NULL ||
 	    (binv = BN_new()) == NULL || (bm = BN_new()) == NULL ||
 	    (bxr = BN_new()) == NULL || (m = BN_new()) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
@@ -316,19 +313,10 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 		 *
 		 *  s = inv(b)(bm + bxr)inv(k) mod order
 		 *
-		 * where b is a random value in the range [1, order-1].
+		 * where b is a random value in the range [1, order).
 		 */
 
-		/* Generate b in range [1, order-1]. */
-		if (!BN_sub(range, order, BN_value_one())) {
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-		if (!BN_rand_range(b, range)) {
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-		if (!BN_add(b, b, BN_value_one())) {
+		if (!bn_rand_interval(b, BN_value_one(), order)) {
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
@@ -382,6 +370,16 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 			break;
 	} while (1);
 
+	/*
+	 * Ensure that the signature generated can be verified. This ensures
+	 * that our implementation is correct, while also potentially detecting
+	 * some forms of side-channel attacks.
+	 */
+	if (ECDSA_do_verify(dgst, dgst_len, ret, eckey) <= 0) {
+		ECDSAerror(ERR_R_EC_LIB);
+		goto err;
+	}
+
 	ok = 1;
 
  err:
@@ -397,7 +395,6 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	BN_free(kinv);
 	BN_free(m);
 	BN_free(order);
-	BN_free(range);
 	return ret;
 }
 
