@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.h,v 1.62 2022/03/24 15:56:34 tb Exp $ */
+/* $OpenBSD: tls.h,v 1.63 2023/07/02 06:37:27 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -29,14 +29,18 @@ extern "C" {
 
 #define TLS_API	20200120
 
-#define TLS_PROTOCOL_TLSv1_0	(1 << 1)
-#define TLS_PROTOCOL_TLSv1_1	(1 << 2)
+/*
+ * Deprecated versions of TLS. Using these effectively selects
+ * the minimum supported version.
+ */
+#define TLS_PROTOCOL_TLSv1_0	(1 << 3)
+#define TLS_PROTOCOL_TLSv1_1	(1 << 3)
+/* Supported versions of TLS */
 #define TLS_PROTOCOL_TLSv1_2	(1 << 3)
 #define TLS_PROTOCOL_TLSv1_3	(1 << 4)
 
 #define TLS_PROTOCOL_TLSv1 \
-	(TLS_PROTOCOL_TLSv1_0|TLS_PROTOCOL_TLSv1_1|\
-	 TLS_PROTOCOL_TLSv1_2|TLS_PROTOCOL_TLSv1_3)
+	(TLS_PROTOCOL_TLSv1_2|TLS_PROTOCOL_TLSv1_3)
 
 #define TLS_PROTOCOLS_ALL TLS_PROTOCOL_TLSv1
 #define TLS_PROTOCOLS_DEFAULT (TLS_PROTOCOL_TLSv1_2|TLS_PROTOCOL_TLSv1_3)

@@ -1,4 +1,4 @@
-/* $OpenBSD: tls.c,v 1.97 2023/06/18 11:43:03 op Exp $ */
+/* $OpenBSD: tls.c,v 1.98 2023/07/02 06:37:27 beck Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -520,16 +520,12 @@ tls_configure_ssl(struct tls *ctx, SSL_CTX *ssl_ctx)
 
 	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2);
 	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv3);
+	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1);
+	SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1_1);
 
-	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1);
-	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1_1);
 	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1_2);
 	SSL_CTX_clear_options(ssl_ctx, SSL_OP_NO_TLSv1_3);
 
-	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_0) == 0)
-		SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1);
-	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_1) == 0)
-		SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1_1);
 	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_2) == 0)
 		SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_TLSv1_2);
 	if ((ctx->config->protocols & TLS_PROTOCOL_TLSv1_3) == 0)

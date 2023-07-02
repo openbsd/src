@@ -251,11 +251,11 @@ func TestTLSVersions(t *testing.T) {
 		{tls.VersionSSL30, tls.VersionTLS12, ProtocolTLSv12, false},
 		{tls.VersionTLS10, tls.VersionTLS12, ProtocolTLSv12, false},
 		{tls.VersionTLS11, tls.VersionTLS12, ProtocolTLSv12, false},
-		{tls.VersionSSL30, tls.VersionTLS11, ProtocolTLSv11, false},
-		{tls.VersionSSL30, tls.VersionTLS10, ProtocolTLSv10, false},
+		{tls.VersionSSL30, tls.VersionTLS11, ProtocolTLSv11, true},
+		{tls.VersionSSL30, tls.VersionTLS10, ProtocolTLSv10, true},
 		{tls.VersionSSL30, tls.VersionSSL30, 0, true},
-		{tls.VersionTLS10, tls.VersionTLS10, ProtocolTLSv10, false},
-		{tls.VersionTLS11, tls.VersionTLS11, ProtocolTLSv11, false},
+		{tls.VersionTLS10, tls.VersionTLS10, ProtocolTLSv10, true},
+		{tls.VersionTLS11, tls.VersionTLS11, ProtocolTLSv11, true},
 		{tls.VersionTLS12, tls.VersionTLS12, ProtocolTLSv12, false},
 	}
 	for i, test := range tests {

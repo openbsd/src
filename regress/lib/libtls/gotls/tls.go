@@ -45,8 +45,6 @@ const (
 )
 
 var protocolNames = map[ProtocolVersion]string{
-	ProtocolTLSv10: "TLSv1",
-	ProtocolTLSv11: "TLSv1.1",
 	ProtocolTLSv12: "TLSv1.2",
 	ProtocolTLSv13: "TLSv1.3",
 	ProtocolsAll:   "all",
