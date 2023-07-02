@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.22 2023/07/01 08:15:31 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.23 2023/07/02 13:48:47 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -157,147 +157,176 @@ static int
 print_bin(BIO *fp, const char *str, const unsigned char *num,
     size_t len, int off);
 
-int
-ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
+static int
+ecpk_print_asn1_parameters(BIO *bp, const EC_GROUP *group, int off)
 {
-	unsigned char *buffer = NULL;
-	size_t buf_len = 0, i;
-	int ret = 0, reason = ERR_R_BIO_LIB;
+	const char *nist_name;
 	int nid;
-	BN_CTX *ctx = NULL;
-	const EC_POINT *point = NULL;
-	BIGNUM *p = NULL, *a = NULL, *b = NULL, *gen = NULL, *order = NULL,
-	*cofactor = NULL;
-	const unsigned char *seed;
-	size_t seed_len = 0;
-	const char *nname;
+	int ret = 0;
 
-	if (!x) {
-		reason = ERR_R_PASSED_NULL_PARAMETER;
+	if (!BIO_indent(bp, off, 128)) {
+		ECerror(ERR_R_BIO_LIB);
 		goto err;
 	}
-	ctx = BN_CTX_new();
-	if (ctx == NULL) {
-		reason = ERR_R_MALLOC_FAILURE;
+
+	if ((nid = EC_GROUP_get_curve_name(group)) == NID_undef) {
+		ECerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	if (EC_GROUP_get_asn1_flag(x)) {
-		/* the curve parameter are given by an asn1 OID */
-		if (!BIO_indent(bp, off, 128))
-			goto err;
 
-		nid = EC_GROUP_get_curve_name(x);
-		if (nid == 0)
-			goto err;
-
-		if (BIO_printf(bp, "ASN1 OID: %s", OBJ_nid2sn(nid)) <= 0)
-			goto err;
-		if (BIO_printf(bp, "\n") <= 0)
-			goto err;
-
-		nname = EC_curve_nid2nist(nid);
-		if (nname) {
-			if (!BIO_indent(bp, off, 128))
-				goto err;
-			if (BIO_printf(bp, "NIST CURVE: %s\n", nname) <= 0)
-				goto err;
-		}
-	} else {
-		/* explicit parameters */
-		point_conversion_form_t form;
-		const char *conversion;
-
-		if ((p = BN_new()) == NULL || (a = BN_new()) == NULL ||
-		    (b = BN_new()) == NULL || (order = BN_new()) == NULL ||
-		    (cofactor = BN_new()) == NULL) {
-			reason = ERR_R_MALLOC_FAILURE;
-			goto err;
-		}
-		if (!EC_GROUP_get_curve(x, p, a, b, ctx)) {
-			reason = ERR_R_EC_LIB;
-			goto err;
-		}
-
-		if ((point = EC_GROUP_get0_generator(x)) == NULL) {
-			reason = ERR_R_EC_LIB;
-			goto err;
-		}
-		if (!EC_GROUP_get_order(x, order, NULL) ||
-		    !EC_GROUP_get_cofactor(x, cofactor, NULL)) {
-			reason = ERR_R_EC_LIB;
-			goto err;
-		}
-		form = EC_GROUP_get_point_conversion_form(x);
-
-		if ((gen = EC_POINT_point2bn(x, point,
-			    form, NULL, ctx)) == NULL) {
-			reason = ERR_R_EC_LIB;
-			goto err;
-		}
-		buf_len = (size_t) BN_num_bytes(p);
-		if (buf_len < (i = (size_t) BN_num_bytes(a)))
-			buf_len = i;
-		if (buf_len < (i = (size_t) BN_num_bytes(b)))
-			buf_len = i;
-		if (buf_len < (i = (size_t) BN_num_bytes(gen)))
-			buf_len = i;
-		if (buf_len < (i = (size_t) BN_num_bytes(order)))
-			buf_len = i;
-		if (buf_len < (i = (size_t) BN_num_bytes(cofactor)))
-			buf_len = i;
-
-		if ((seed = EC_GROUP_get0_seed(x)) != NULL)
-			seed_len = EC_GROUP_get_seed_len(x);
-
-		buf_len += 10;
-		if ((buffer = malloc(buf_len)) == NULL) {
-			reason = ERR_R_MALLOC_FAILURE;
-			goto err;
-		}
-		if (!BIO_indent(bp, off, 128))
-			goto err;
-
-		nid = EC_METHOD_get_field_type(EC_GROUP_method_of(x));
-		/* print the 'short name' of the field type */
-		if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(nid)) <= 0)
-			goto err;
-
-		if (!ASN1_bn_print(bp, "Prime:", p, buffer, off))
-			goto err;
-		if (!ASN1_bn_print(bp, "A:   ", a, buffer, off))
-			goto err;
-		if (!ASN1_bn_print(bp, "B:   ", b, buffer, off))
-			goto err;
-		if (form == POINT_CONVERSION_COMPRESSED)
-			conversion = "Generator (compressed):";
-		else if (form == POINT_CONVERSION_UNCOMPRESSED)
-			conversion = "Generator (uncompressed):";
-		else if (form == POINT_CONVERSION_HYBRID)
-			conversion = "Generator (hybrid):";
-		else
-			conversion = "Generator (unknown):";
-		if (!ASN1_bn_print(bp, conversion, gen, buffer, off))
-			goto err;
-		if (!ASN1_bn_print(bp, "Order: ", order, buffer, off))
-			goto err;
-		if (!ASN1_bn_print(bp, "Cofactor: ", cofactor, buffer, off))
-			goto err;
-		if (seed && !print_bin(bp, "Seed:", seed, seed_len, off))
-			goto err;
+	if (BIO_printf(bp, "ASN1 OID: %s\n", OBJ_nid2sn(nid)) <= 0) {
+		ECerror(ERR_R_BIO_LIB);
+		goto err;
 	}
+
+	if ((nist_name = EC_curve_nid2nist(nid)) != NULL) {
+		if (!BIO_indent(bp, off, 128)) {
+			ECerror(ERR_R_BIO_LIB);
+			goto err;
+		}
+		if (BIO_printf(bp, "NIST CURVE: %s\n", nist_name) <= 0) {
+			ECerror(ERR_R_BIO_LIB);
+			goto err;
+		}
+	}
+
 	ret = 1;
  err:
-	if (!ret)
-		ECerror(reason);
-	BN_free(p);
-	BN_free(a);
-	BN_free(b);
-	BN_free(gen);
-	BN_free(order);
-	BN_free(cofactor);
+
+	return ret;
+}
+
+static int
+ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
+{
+	BN_CTX *ctx = NULL;
+	BIGNUM *p, *a, *b, *order, *cofactor;
+	BIGNUM *gen = NULL;
+	const EC_POINT *generator;
+	const unsigned char *conversion, *seed;
+	size_t seed_len;
+	unsigned char *buffer = NULL;
+	size_t buf_len, i;
+	point_conversion_form_t form;
+	int nid;
+	int ret = 0;
+
+	if ((ctx = BN_CTX_new()) == NULL) {
+		ECerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+
+	BN_CTX_start(ctx);
+
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((a = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((order = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((cofactor = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((gen = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx)) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+	if (!EC_GROUP_get_order(group, order, NULL)) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+	if (!EC_GROUP_get_cofactor(group, cofactor, NULL)) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+
+	if ((generator = EC_GROUP_get0_generator(group)) == NULL) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+	form = EC_GROUP_get_point_conversion_form(group);
+	if (EC_POINT_point2bn(group, generator, form, gen, ctx) == NULL) {
+		ECerror(ERR_R_EC_LIB);
+		goto err;
+	}
+
+	buf_len = (size_t) BN_num_bytes(p);
+	if (buf_len < (i = (size_t) BN_num_bytes(a)))
+		buf_len = i;
+	if (buf_len < (i = (size_t) BN_num_bytes(b)))
+		buf_len = i;
+	if (buf_len < (i = (size_t) BN_num_bytes(gen)))
+		buf_len = i;
+	if (buf_len < (i = (size_t) BN_num_bytes(order)))
+		buf_len = i;
+	if (buf_len < (i = (size_t) BN_num_bytes(cofactor)))
+		buf_len = i;
+
+	buf_len += 10;
+	if ((buffer = calloc(1, buf_len)) == NULL) {
+		ECerror(ERR_R_MALLOC_FAILURE);
+		goto err;
+	}
+	if (!BIO_indent(bp, off, 128))
+		goto err;
+
+	nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+	if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(nid)) <= 0)
+		goto err;
+
+	if (!ASN1_bn_print(bp, "Prime:", p, buffer, off))
+		goto err;
+	if (!ASN1_bn_print(bp, "A:   ", a, buffer, off))
+		goto err;
+	if (!ASN1_bn_print(bp, "B:   ", b, buffer, off))
+		goto err;
+
+	if (form == POINT_CONVERSION_COMPRESSED)
+		conversion = "Generator (compressed):";
+	else if (form == POINT_CONVERSION_UNCOMPRESSED)
+		conversion = "Generator (uncompressed):";
+	else if (form == POINT_CONVERSION_HYBRID)
+		conversion = "Generator (hybrid):";
+	else
+		conversion = "Generator (unknown):";
+	if (!ASN1_bn_print(bp, conversion, gen, buffer, off))
+		goto err;
+
+	if (!ASN1_bn_print(bp, "Order: ", order, buffer, off))
+		goto err;
+	if (!ASN1_bn_print(bp, "Cofactor: ", cofactor, buffer, off))
+		goto err;
+	if ((seed = EC_GROUP_get0_seed(group)) != NULL) {
+		seed_len = EC_GROUP_get_seed_len(group);
+		if (!print_bin(bp, "Seed:", seed, seed_len, off))
+			goto err;
+	}
+
+	ret = 1;
+err:
+	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	free(buffer);
-	return (ret);
+
+	return ret;
+}
+
+int
+ECPKParameters_print(BIO *bp, const EC_GROUP *group, int off)
+{
+	if (group == NULL) {
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+	}
+
+	if (EC_GROUP_get_asn1_flag(group))
+		return ecpk_print_asn1_parameters(bp, group, off);
+
+	return ecpk_print_explicit_parameters(bp, group, off);
 }
 
 static int
