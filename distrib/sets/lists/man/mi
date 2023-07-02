@@ -1838,6 +1838,7 @@
 ./usr/share/man/man4/pwmfan.4
 ./usr/share/man/man4/pwmleds.4
 ./usr/share/man/man4/pwmreg.4
+./usr/share/man/man4/qccpu.4
 ./usr/share/man/man4/qcdwusb.4
 ./usr/share/man/man4/qcgpio.4
 ./usr/share/man/man4/qciic.4
