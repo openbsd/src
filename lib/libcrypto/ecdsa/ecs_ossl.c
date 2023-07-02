@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.38 2023/07/02 03:20:44 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.39 2023/07/02 04:17:00 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -588,8 +588,8 @@ ECDSA_verify(int type, const unsigned char *dgst, int dgst_len,
 int
 ECDSA_size(const EC_KEY *r)
 {
-	BIGNUM *order = NULL;
 	const EC_GROUP *group;
+	BIGNUM *order = NULL;
 	ECDSA_SIG signature;
 	int ret = 0;
 
