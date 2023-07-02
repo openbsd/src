@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.31 2023/07/02 03:11:51 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.32 2023/07/02 11:29:36 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -68,7 +68,6 @@
  */
 
 #include <limits.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -163,11 +162,9 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 			goto err;
 		}
 	} else {
-		/* No KDF, just copy out the key and zero the rest. */
-		if (outlen > buflen) {
-			memset((void *)((uintptr_t)out + buflen), 0, outlen - buflen);
+		memset(out, 0, outlen);
+		if (outlen > buflen)
 			outlen = buflen;
-		}
 		memcpy(out, buf, outlen);
 	}
 
