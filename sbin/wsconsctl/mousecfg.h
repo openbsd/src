@@ -1,4 +1,4 @@
-/* $OpenBSD: mousecfg.h,v 1.4 2019/08/19 21:42:33 bru Exp $ */
+/* $OpenBSD: mousecfg.h,v 1.5 2023/07/02 21:44:04 bru Exp $ */
 
 /*
  * Copyright (c) 2017 Ulf Brosziewski
@@ -17,6 +17,7 @@
  */
 
 extern struct wsmouse_parameters cfg_tapping;
+extern struct wsmouse_parameters cfg_mtbuttons;
 extern struct wsmouse_parameters cfg_scaling;
 extern struct wsmouse_parameters cfg_edges;
 extern struct wsmouse_parameters cfg_swapsides;

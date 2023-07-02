@@ -1,4 +1,4 @@
-/*	$OpenBSD: mouse.c,v 1.20 2019/08/19 21:42:33 bru Exp $	*/
+/*	$OpenBSD: mouse.c,v 1.21 2023/07/02 21:44:04 bru Exp $	*/
 /*	$NetBSD: mouse.c,v 1.3 1999/11/15 13:47:30 ad Exp $ */
 
 /*-
@@ -57,6 +57,7 @@ struct field mouse_field_tab[] = {
     { "reverse_scrolling",	&cfg_revscroll, FMT_CFG,	FLG_NORDBACK },
     /* touchpad-specific options: */
     { "tp.tapping",		&cfg_tapping,	FMT_CFG,	FLG_NORDBACK },
+    { "tp.mtbuttons",		&cfg_mtbuttons,	FMT_CFG,	FLG_NORDBACK },
     { "tp.scaling",		&cfg_scaling,	FMT_CFG,	FLG_NORDBACK },
     { "tp.swapsides",		&cfg_swapsides,	FMT_CFG,	FLG_NORDBACK },
     { "tp.disable",		&cfg_disable,	FMT_CFG,	FLG_NORDBACK },
@@ -68,6 +69,10 @@ struct field mouse_field_tab[] = {
 };
 
 static int dev_index = -1;
+
+static struct wsmouse_parameters mtbtn_maxdist = {
+    (struct wsmouse_param[]) { { WSMOUSECFG_MTBTN_MAXDIST, 0 } }, 1
+};
 
 
 void
@@ -91,6 +96,12 @@ mouse_init(int devfd, int devidx) {
 			if (f->format == FMT_CFG) {
 				f->flags &= ~FLG_DEAD;
 			}
+		/* Hide the 'mtbuttons' field if the feature is unavailable. */
+		if (mousecfg_get_field(&mtbtn_maxdist) ||
+		    mtbtn_maxdist.params[0].value < 0) {
+			f = field_by_value(mouse_field_tab, &cfg_mtbuttons);
+			f->flags |= FLG_DEAD;
+		}
 	} else {
 		for (f = mouse_field_tab; f->name != NULL; f++)
 			if (f->format == FMT_CFG) {

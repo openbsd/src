@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplhidev.c,v 1.11 2023/04/10 15:14:04 tobhe Exp $	*/
+/*	$OpenBSD: aplhidev.c,v 1.12 2023/07/02 21:44:04 bru Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2013-2014 joshua stein <jcs@openbsd.org>
@@ -683,6 +683,10 @@ struct ubcmtp_finger {
 /* Use a constant, synaptics-compatible pressure value for now. */
 #define DEFAULT_PRESSURE	40
 
+static struct wsmouse_param aplms_wsmousecfg[] = {
+	{ WSMOUSECFG_MTBTN_MAXDIST, 0 }, /* 0: Compute a default value. */
+};
+
 struct aplms_softc {
 	struct device	sc_dev;
 	struct device	*sc_wsmousedev;
@@ -762,7 +766,8 @@ aplms_configure(struct aplms_softc *sc)
 	hw->mt_slots = UBCMTP_MAX_FINGERS;
 	hw->flags = WSMOUSEHW_MT_TRACKING;
 
-	return wsmouse_configure(sc->sc_wsmousedev, NULL, 0);
+	return wsmouse_configure(sc->sc_wsmousedev,
+	    aplms_wsmousecfg, nitems(aplms_wsmousecfg));
 }
 
 void

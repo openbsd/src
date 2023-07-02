@@ -1,4 +1,4 @@
-/* $OpenBSD: mousecfg.c,v 1.9 2021/03/03 19:44:37 bru Exp $ */
+/* $OpenBSD: mousecfg.c,v 1.10 2023/07/02 21:44:04 bru Exp $ */
 
 /*
  * Copyright (c) 2017 Ulf Brosziewski
@@ -35,30 +35,15 @@
 #define nitems(_a)       (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#define BASE_FIRST		WSMOUSECFG_DX_SCALE
-#define BASE_LAST		WSMOUSECFG_REVERSE_SCROLLING
-#define TP_FILTER_FIRST		WSMOUSECFG_DX_MAX
-#define TP_FILTER_LAST		WSMOUSECFG_SMOOTHING
-#define TP_FEATURES_FIRST	WSMOUSECFG_SOFTBUTTONS
-#define TP_FEATURES_LAST	WSMOUSECFG_DISABLE
-#define TP_SETUP_FIRST		WSMOUSECFG_LEFT_EDGE
-#define TP_SETUP_LAST		WSMOUSECFG_TAP_THREE_BTNMAP
-#define LOG_FIRST		WSMOUSECFG_LOG_INPUT
-#define LOG_LAST		WSMOUSECFG_LOG_EVENTS
-
-#define BASESIZE ((BASE_LAST - BASE_FIRST + 1) + (LOG_LAST - LOG_FIRST + 1))
-
-#define BUFSIZE (BASESIZE \
-    + (TP_FILTER_LAST - TP_FILTER_FIRST + 1) \
-    + (TP_FEATURES_LAST - TP_FEATURES_FIRST + 1) \
-    + (TP_SETUP_LAST - TP_SETUP_FIRST + 1))
+#define BASESIZE ((WSMOUSECFG__FILTERS - WSMOUSECFG_DX_SCALE) \
+    + (WSMOUSECFG__DEBUG - WSMOUSECFG_LOG_INPUT))
 
 static const int range[][2] = {
-	{ BASE_FIRST, BASE_LAST },
-	{ LOG_FIRST, LOG_LAST },
-	{ TP_FILTER_FIRST, TP_FILTER_LAST },
-	{ TP_FEATURES_FIRST, TP_FEATURES_LAST },
-	{ TP_SETUP_FIRST, TP_SETUP_LAST },
+	{ WSMOUSECFG_DX_SCALE, WSMOUSECFG__FILTERS - 1 },
+	{ WSMOUSECFG_LOG_INPUT, WSMOUSECFG__DEBUG - 1 },
+	{ WSMOUSECFG_DX_MAX, WSMOUSECFG__TPFILTERS - 1 },
+	{ WSMOUSECFG_SOFTBUTTONS, WSMOUSECFG__TPFEATURES - 1 },
+	{ WSMOUSECFG_LEFT_EDGE, WSMOUSECFG__TPSETUP - 1 },
 };
 
 static const int touchpad_types[] = {
@@ -75,6 +60,12 @@ struct wsmouse_parameters cfg_tapping = {
 	    { WSMOUSECFG_TAP_TWO_BTNMAP, 0 },
 	    { WSMOUSECFG_TAP_THREE_BTNMAP, 0 }, },
 	3
+};
+
+struct wsmouse_parameters cfg_mtbuttons = {
+	(struct wsmouse_param[]) {
+	    { WSMOUSECFG_MTBUTTONS, 0 }, },
+	1
 };
 
 struct wsmouse_parameters cfg_scaling = {
@@ -124,7 +115,7 @@ int cfg_touchpad;
 
 static int cfg_horiz_res;
 static int cfg_vert_res;
-static struct wsmouse_param cfg_buffer[BUFSIZE];
+static struct wsmouse_param cfg_buffer[WSMOUSECFG_MAX];
 
 
 int
@@ -171,7 +162,7 @@ mousecfg_init(int dev_fd, const char **errstr)
 	}
 	if (cfg_touchpad) {
 		parameters.params = cfg_buffer + BASESIZE;
-		parameters.nparams = BUFSIZE - BASESIZE;
+		parameters.nparams = WSMOUSECFG_MAX - BASESIZE;
 		if (ioctl(dev_fd, WSMOUSEIO_GETPARAMS, &parameters))
 			cfg_touchpad = 0;
 	}

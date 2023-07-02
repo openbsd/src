@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.99 2023/04/20 19:28:31 jcs Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.100 2023/07/02 21:44:04 bru Exp $ */
 /* $NetBSD: wsconsio.h,v 1.74 2005/04/28 07:15:44 martin Exp $ */
 
 /*
@@ -279,6 +279,9 @@ struct wsmouse_calibcoords {
  * WSMOUSEIO_SETPARAMS calls. Arbitrary subsets can be passed, provided
  * that all keys are valid and that the number of key/value pairs doesn't
  * exceed WSMOUSECFG_MAX.
+ *
+ * The keys are divided into various groups, which end with marker entries
+ * of the form WSMOUSECFG__*.
  */
 enum wsmousecfg {
  	/*
@@ -295,6 +298,8 @@ enum wsmousecfg {
 	WSMOUSECFG_REVERSE_SCROLLING,
 				/* reverse scroll directions */
 
+        WSMOUSECFG__FILTERS,
+
 	/*
 	 * Coordinate handling, applying only in WSMOUSE_COMPAT  mode.
 	 */
@@ -306,6 +311,8 @@ enum wsmousecfg {
 	WSMOUSECFG_STRONG_HYSTERESIS,	/* FALSE and read-only, the fea-
 					   ture is not supported anymore. */
 	WSMOUSECFG_SMOOTHING,	/* smoothing factor (0-7) */
+
+	WSMOUSECFG__TPFILTERS,
 
 	/*
 	 * Touchpad features
@@ -319,6 +326,9 @@ enum wsmousecfg {
 	WSMOUSECFG_SWAPSIDES,		/* invert soft-button/scroll areas */
 	WSMOUSECFG_DISABLE,		/* disable all output except for
 					   clicks in the top-button area */
+	WSMOUSECFG_MTBUTTONS,		/* multi-touch buttons */
+
+	WSMOUSECFG__TPFEATURES,
 
 	/*
 	 * Touchpad options
@@ -340,14 +350,25 @@ enum wsmousecfg {
 	WSMOUSECFG_TAP_ONE_BTNMAP,	/* one-finger tap button mapping */
 	WSMOUSECFG_TAP_TWO_BTNMAP,	/* two-finger tap button mapping */
 	WSMOUSECFG_TAP_THREE_BTNMAP,	/* three-finger tap button mapping */
+	WSMOUSECFG_MTBTN_MAXDIST,	/* MTBUTTONS: distance limit for
+					   two-finger clicks */
+
+	WSMOUSECFG__TPSETUP,
 
 	/*
 	 * Enable/Disable debug output.
 	 */
 	WSMOUSECFG_LOG_INPUT = 256,
 	WSMOUSECFG_LOG_EVENTS,
+
+	WSMOUSECFG__DEBUG,
 };
-#define WSMOUSECFG_MAX	41	/* max size of param array per ioctl */
+
+#define WSMOUSECFG_MAX ((WSMOUSECFG__FILTERS - WSMOUSECFG_DX_SCALE)	\
+    + (WSMOUSECFG__TPFILTERS - WSMOUSECFG_DX_MAX)			\
+    + (WSMOUSECFG__TPFEATURES - WSMOUSECFG_SOFTBUTTONS)			\
+    + (WSMOUSECFG__TPSETUP - WSMOUSECFG_LEFT_EDGE)			\
+    + (WSMOUSECFG__DEBUG - WSMOUSECFG_LOG_INPUT))
 
 struct wsmouse_param {
 	enum wsmousecfg key;

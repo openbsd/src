@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubcmtp.c,v 1.24 2022/10/26 16:07:28 kn Exp $ */
+/*	$OpenBSD: ubcmtp.c,v 1.25 2023/07/02 21:44:04 bru Exp $ */
 
 /*
  * Copyright (c) 2013-2014, joshua stein <jcs@openbsd.org>
@@ -309,6 +309,10 @@ static const struct ubcmtp_dev ubcmtp_devices[] = {
 	},
 };
 
+static struct wsmouse_param ubcmtp_wsmousecfg[] = {
+	{ WSMOUSECFG_MTBTN_MAXDIST, 0 }, /* 0: Compute a default value. */
+};
+
 struct ubcmtp_softc {
 	struct device		sc_dev;		/* base device */
 
@@ -529,7 +533,8 @@ ubcmtp_configure(struct ubcmtp_softc *sc)
 	hw->mt_slots = UBCMTP_MAX_FINGERS;
 	hw->flags = WSMOUSEHW_MT_TRACKING;
 
-	return wsmouse_configure(sc->sc_wsmousedev, NULL, 0);
+	return wsmouse_configure(sc->sc_wsmousedev,
+	    ubcmtp_wsmousecfg, nitems(ubcmtp_wsmousecfg));
 }
 
 int
