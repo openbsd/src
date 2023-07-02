@@ -1,4 +1,4 @@
-/* $OpenBSD: ca.c,v 1.55 2023/03/06 14:32:05 tb Exp $ */
+/* $OpenBSD: ca.c,v 1.56 2023/07/02 07:08:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -654,7 +654,6 @@ ca_main(int argc, char **argv)
 	int free_key = 0;
 	int total = 0;
 	int total_done = 0;
-	int ret = 1;
 	long errorline = -1;
 	EVP_PKEY *pkey = NULL;
 	int output_der = 0;
@@ -684,6 +683,8 @@ ca_main(int argc, char **argv)
 	STACK_OF(X509) *cert_sk = NULL;
 	char *tofree = NULL;
 	DB_ATTR db_attr;
+	int default_nid, rv;
+	int ret = 1;
 
 	if (pledge("stdio cpath wpath rpath tty", NULL) == -1) {
 		perror("pledge");
@@ -1050,26 +1051,34 @@ ca_main(int argc, char **argv)
 			BIO_set_fp(Sout, stdout, BIO_NOCLOSE | BIO_FP_TEXT);
 		}
 	}
-	if ((cfg.md == NULL) &&
-	    ((cfg.md = NCONF_get_string(conf, cfg.section,
-	    ENV_DEFAULT_MD)) == NULL)) {
-		lookup_fail(cfg.section, ENV_DEFAULT_MD);
-		goto err;
-	}
-	if (strcmp(cfg.md, "default") == 0) {
-		int def_nid;
-		if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0) {
-			BIO_puts(bio_err, "no default digest\n");
+
+	rv = EVP_PKEY_get_default_digest_nid(pkey, &default_nid);
+	if (rv == 2 && default_nid == NID_undef) {
+		/* The digest is required to be EVP_md_null() (EdDSA). */
+		dgst = EVP_md_null();
+	} else {
+		/* Ignore rv unless we need a valid default_nid. */
+		if (cfg.md == NULL)
+			cfg.md = NCONF_get_string(conf, cfg.section,
+			    ENV_DEFAULT_MD);
+		if (cfg.md == NULL) {
+			lookup_fail(cfg.section, ENV_DEFAULT_MD);
 			goto err;
 		}
-		cfg.md = (char *) OBJ_nid2sn(def_nid);
+		if (strcmp(cfg.md, "default") == 0) {
+			if (rv <= 0) {
+				BIO_puts(bio_err, "no default digest\n");
+				goto err;
+			}
+			cfg.md = (char *)OBJ_nid2sn(default_nid);
+		}
 		if (cfg.md == NULL)
 			goto err;
-	}
-	if ((dgst = EVP_get_digestbyname(cfg.md)) == NULL) {
-		BIO_printf(bio_err,
-		    "%s is an unsupported message digest type\n", cfg.md);
-		goto err;
+		if ((dgst = EVP_get_digestbyname(cfg.md)) == NULL) {
+			BIO_printf(bio_err, "%s is an unsupported "
+			    "message digest type\n", cfg.md);
+			goto err;
+		}
 	}
 	if (cfg.req) {
 		if ((cfg.email_dn == 1) &&
