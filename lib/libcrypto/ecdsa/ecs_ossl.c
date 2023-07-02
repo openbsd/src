@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.41 2023/07/02 12:48:59 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.42 2023/07/02 13:05:29 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -121,9 +121,10 @@ ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen, unsigned char *si
 }
 
 int
-ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
+ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
+    BIGNUM **out_r)
 {
-	BN_CTX *ctx = ctx_in;
+	BN_CTX *ctx = in_ctx;
 	BIGNUM *k = NULL, *r = NULL, *order = NULL, *x = NULL;
 	EC_POINT *point = NULL;
 	const EC_GROUP *group;
@@ -219,10 +220,10 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	BN_free(*rp);
-	BN_free(*kinvp);
-	*rp = r;
-	*kinvp = k;
+	BN_free(*out_r);
+	BN_free(*out_kinv);
+	*out_r = r;
+	*out_kinv = k;
 	ret = 1;
 
  err:
@@ -230,7 +231,7 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp
 		BN_free(k);
 		BN_free(r);
 	}
-	if (ctx_in == NULL)
+	if (in_ctx == NULL)
 		BN_CTX_free(ctx);
 	BN_free(order);
 	EC_POINT_free(point);
@@ -523,13 +524,13 @@ ECDSA_do_sign(const unsigned char *dgst, int dlen, EC_KEY *eckey)
 
 ECDSA_SIG *
 ECDSA_do_sign_ex(const unsigned char *dgst, int dlen, const BIGNUM *kinv,
-    const BIGNUM *rp, EC_KEY *eckey)
+    const BIGNUM *out_r, EC_KEY *eckey)
 {
 	if (eckey->meth->sign_sig == NULL) {
 		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
 		return 0;
 	}
-	return eckey->meth->sign_sig(dgst, dlen, kinv, rp, eckey);
+	return eckey->meth->sign_sig(dgst, dlen, kinv, out_r, eckey);
 }
 
 int
@@ -551,13 +552,13 @@ ECDSA_sign_ex(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 }
 
 int
-ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
+ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
 {
 	if (eckey->meth->sign_setup == NULL) {
 		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
 		return 0;
 	}
-	return eckey->meth->sign_setup(eckey, ctx_in, kinvp, rp);
+	return eckey->meth->sign_setup(eckey, in_ctx, out_kinv, out_r);
 }
 
 int
