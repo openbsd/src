@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.42 2023/02/10 14:34:16 visa Exp $	*/
+/*	$OpenBSD: apm.c,v 1.43 2023/07/02 19:02:28 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -418,10 +418,8 @@ apm_suspend(int state)
 	}
 
 	inittodr(gettime());	/* Move the clock forward */
-#ifdef __HAVE_CLOCKINTR
 	clockintr_cpu_init(NULL);
 	clockintr_trigger();
-#endif
 
 	config_suspend_all(DVACT_RESUME);
 

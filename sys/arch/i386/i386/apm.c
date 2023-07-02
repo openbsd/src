@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.131 2023/06/22 13:18:02 claudio Exp $	*/
+/*	$OpenBSD: apm.c,v 1.132 2023/07/02 19:02:27 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1998-2001 Michael Shalayeff. All rights reserved.
@@ -265,10 +265,8 @@ apm_suspend(int state)
 		rtcstart();		/* in i8254 mode, rtc is profclock */
 	inittodr(gettime());
 
-#ifdef __HAVE_CLOCKINTR
 	clockintr_cpu_init(NULL);
 	clockintr_trigger();
-#endif
 
 	config_suspend_all(DVACT_RESUME);
 	cold = 0;

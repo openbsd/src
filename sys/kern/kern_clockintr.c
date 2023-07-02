@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.26 2023/07/02 00:55:18 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.27 2023/07/02 19:02:27 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -28,8 +28,6 @@
 #include <sys/stdint.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
-
-#ifdef __HAVE_CLOCKINTR
 
 /*
  * Protection for global variables in this file:
@@ -773,4 +771,3 @@ db_show_clockintr(const struct clockintr *cl, const char *state, u_int cpu)
 }
 
 #endif /* DDB */
-#endif /*__HAVE_CLOCKINTR */

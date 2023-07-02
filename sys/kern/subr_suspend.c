@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.14 2022/11/10 10:37:40 kettenis Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.15 2023/07/02 19:02:27 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -165,10 +165,9 @@ fail_suspend:
 	splx(s);
 
 	inittodr(gettime());
-#ifdef __HAVE_CLOCKINTR
 	clockintr_cpu_init(NULL);
 	clockintr_trigger();
-#endif
+
 	sleep_resume(v);
 	resume_randomness(rndbuf, rndbuflen);
 #ifdef MULTIPROCESSOR

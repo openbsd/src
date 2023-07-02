@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.415 2023/05/21 12:47:54 claudio Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.416 2023/07/02 19:02:27 cheloha Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -430,11 +430,9 @@ kern_sysctl_dirs(int top_name, int *name, u_int namelen,
 	case KERN_CPUSTATS:
 		return (sysctl_cpustats(name, namelen, oldp, oldlenp,
 		    newp, newlen));
-#ifdef __HAVE_CLOCKINTR
 	case KERN_CLOCKINTR:
 		return sysctl_clockintr(name, namelen, oldp, oldlenp, newp,
 		    newlen);
-#endif
 	default:
 		return (ENOTDIR);	/* overloaded */
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: _types.h,v 1.21 2022/12/06 01:19:35 cheloha Exp $	*/
+/*	$OpenBSD: _types.h,v 1.22 2023/07/02 19:02:28 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,8 +34,6 @@
 
 #ifndef _SH__TYPES_H_
 #define _SH__TYPES_H_
-
-#define	__HAVE_CLOCKINTR
 
 #if defined(_KERNEL)
 typedef struct label_t {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.h,v 1.25 2022/11/05 19:29:45 cheloha Exp $	*/
+/*	$OpenBSD: db_interface.h,v 1.26 2023/07/02 19:02:27 cheloha Exp $	*/
 /*	$NetBSD: db_interface.h,v 1.1 1996/02/05 01:57:03 christos Exp $	*/
 
 /*
@@ -44,9 +44,7 @@ void db_kill_cmd(db_expr_t, int, db_expr_t, char *);
 void db_show_all_procs(db_expr_t, int, db_expr_t, char *);
 
 /* kern/kern_clockintr.c */
-#ifdef __HAVE_CLOCKINTR
 void db_show_all_clockintr(db_expr_t, int, db_expr_t, char *);
-#endif
 
 /* kern/kern_timeout.c */
 void db_show_callout(db_expr_t, int, db_expr_t, char *);
