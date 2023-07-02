@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.24 2023/07/02 14:53:18 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.25 2023/07/02 14:54:37 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -290,7 +290,7 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 	if (form == POINT_CONVERSION_COMPRESSED)
 		conversion_form = "compressed";
 	else if (form == POINT_CONVERSION_UNCOMPRESSED)
-		conversion_form = "compressed";
+		conversion_form = "uncompressed";
 	else if (form == POINT_CONVERSION_HYBRID)
 		conversion_form = "hybrid";
 	else
