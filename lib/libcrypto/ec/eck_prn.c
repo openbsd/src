@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.23 2023/07/02 13:48:47 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.24 2023/07/02 14:53:18 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -203,7 +203,9 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 	BIGNUM *p, *a, *b, *order, *cofactor;
 	BIGNUM *gen = NULL;
 	const EC_POINT *generator;
-	const unsigned char *conversion, *seed;
+	const char *conversion_form;
+	char *conversion = NULL;
+	const unsigned char *seed;
 	size_t seed_len;
 	unsigned char *buffer = NULL;
 	size_t buf_len, i;
@@ -286,13 +288,17 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 		goto err;
 
 	if (form == POINT_CONVERSION_COMPRESSED)
-		conversion = "Generator (compressed):";
+		conversion_form = "compressed";
 	else if (form == POINT_CONVERSION_UNCOMPRESSED)
-		conversion = "Generator (uncompressed):";
+		conversion_form = "compressed";
 	else if (form == POINT_CONVERSION_HYBRID)
-		conversion = "Generator (hybrid):";
+		conversion_form = "hybrid";
 	else
-		conversion = "Generator (unknown):";
+		conversion_form = "unknown";
+	if (asprintf(&conversion, "Generator (%s):", conversion_form) == -1) {
+		conversion = NULL;
+		goto err;
+	}
 	if (!ASN1_bn_print(bp, conversion, gen, buffer, off))
 		goto err;
 
@@ -311,6 +317,7 @@ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	free(buffer);
+	free(conversion);
 
 	return ret;
 }
