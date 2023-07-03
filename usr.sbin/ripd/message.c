@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.16 2023/03/08 04:43:14 guenther Exp $ */
+/*	$OpenBSD: message.c,v 1.17 2023/07/03 10:34:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2006 Michele Marchetto <mydecay@openbeer.it>
@@ -134,7 +134,7 @@ send_triggered_update(struct iface *iface, struct rip_route *rr)
 	ibuf_add(buf, &nexthop, sizeof(nexthop));
 	ibuf_add(buf, &metric, sizeof(metric));
 
-	send_packet(iface, buf->buf, buf->wpos, &dst);
+	send_packet(iface, ibuf_data(buf), ibuf_size(buf), &dst);
 	ibuf_free(buf);
 
 	return (0);
@@ -210,7 +210,7 @@ send_request(struct packet_head *r_list, struct iface *i, struct nbr *nbr)
 			delete_entry(entry->rr);
 			free(entry);
 		}
-		send_packet(iface, buf->buf, buf->wpos, &dst);
+		send_packet(iface, ibuf_data(buf), ibuf_size(buf), &dst);
 		ibuf_free(buf);
 	}
 
@@ -305,7 +305,7 @@ free:
 		if (iface->auth_type == AUTH_CRYPT)
 			auth_add_trailer(buf, iface);
 
-		send_packet(iface, buf->buf, buf->wpos, &dst);
+		send_packet(iface, ibuf_data(buf), ibuf_size(buf), &dst);
 		ibuf_free(buf);
 	}
 
