@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.52 2023/07/03 10:06:00 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.53 2023/07/03 10:09:12 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -481,15 +481,17 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
+
 	BN_CTX_start(ctx);
-	u1 = BN_CTX_get(ctx);
-	u2 = BN_CTX_get(ctx);
-	m = BN_CTX_get(ctx);
-	x = BN_CTX_get(ctx);
-	if (x == NULL) {
-		ECDSAerror(ERR_R_BN_LIB);
+
+	if ((u1 = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	}
+	if ((u2 = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((m = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((x = BN_CTX_get(ctx)) == NULL)
+		goto err;
 
 	if ((order = EC_GROUP_get0_order(group)) == NULL) {
 		ECDSAerror(ERR_R_EC_LIB);
