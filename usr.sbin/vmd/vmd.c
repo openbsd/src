@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.150 2023/06/18 11:45:11 op Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.151 2023/07/03 08:32:20 jasper Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -159,20 +159,22 @@ vmd_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 			if ((vm = vm_getbyname(vid.vid_name)) == NULL) {
 				res = ENOENT;
 				break;
-			} else if ((vm->vm_state & VM_STATE_SHUTDOWN) &&
-			    (flags & VMOP_FORCE) == 0) {
-				res = EALREADY;
-				break;
-			} else if (!(vm->vm_state & VM_STATE_RUNNING)) {
-				res = EINVAL;
-				break;
 			}
 			id = vm->vm_vmid;
 		} else if ((vm = vm_getbyvmid(id)) == NULL) {
 			res = ENOENT;
 			break;
 		}
-		if (vm_checkperm(vm, &vm->vm_params.vmc_owner, vid.vid_uid)) {
+
+		/* Validate curent state of vm */
+		if ((vm->vm_state & VM_STATE_SHUTDOWN) &&
+			    (flags & VMOP_FORCE) == 0) {
+				res = EALREADY;
+				break;
+		} else if (!(vm->vm_state & VM_STATE_RUNNING)) {
+			res = EINVAL;
+			break;
+		} else if (vm_checkperm(vm, &vm->vm_params.vmc_owner, vid.vid_uid)) {
 			res = EPERM;
 			break;
 		}
