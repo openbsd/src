@@ -29,7 +29,7 @@ files:
    LCRYPTO_UNUSED(x)	Symbols that are not used internally or by libssl
 	No renaming is done.  In builds of libcrypto, the symbol
 	is marked as deprecated to detect unintentional use of such
-	a synbol, so that it can be marked as used going forward.
+	a symbol, so that it can be marked as used going forward.
 	ex: LCRYPTO_UNUSED(SSL_CIPHER_get_name)
 
 Finally, to create the expected aliases, we use these in the .c files
