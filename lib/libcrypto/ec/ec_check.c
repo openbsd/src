@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_check.c,v 1.13 2023/04/11 18:58:20 jsing Exp $ */
+/* $OpenBSD: ec_check.c,v 1.14 2023/07/03 09:29:55 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -60,18 +60,13 @@ int
 EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx_in)
 {
 	BN_CTX *ctx;
-	BIGNUM *order;
 	EC_POINT *point = NULL;
+	const BIGNUM *order;
 	int ret = 0;
 
 	if ((ctx = ctx_in) == NULL)
 		ctx = BN_CTX_new();
 	if (ctx == NULL)
-		goto err;
-
-	BN_CTX_start(ctx);
-
-	if ((order = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	/* check the discriminant */
@@ -91,7 +86,7 @@ EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx_in)
 	/* check the order of the generator */
 	if ((point = EC_POINT_new(group)) == NULL)
 		goto err;
-	if (!EC_GROUP_get_order(group, order, ctx))
+	if ((order = EC_GROUP_get0_order(group)) == NULL)
 		goto err;
 	if (BN_is_zero(order)) {
 		ECerror(EC_R_UNDEFINED_ORDER);
@@ -107,8 +102,6 @@ EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx_in)
 	ret = 1;
 
  err:
-	BN_CTX_end(ctx);
-
 	if (ctx != ctx_in)
 		BN_CTX_free(ctx);
 
