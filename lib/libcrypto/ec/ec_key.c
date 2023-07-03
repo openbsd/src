@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.33 2023/06/25 18:52:27 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.34 2023/07/03 09:35:26 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -243,10 +243,9 @@ EC_KEY_generate_key(EC_KEY *eckey)
 int
 ossl_ec_key_gen(EC_KEY *eckey)
 {
-	BN_CTX *ctx = NULL;
 	BIGNUM *priv_key = NULL;
 	EC_POINT *pub_key = NULL;
-	BIGNUM *order;
+	const BIGNUM *order;
 	int ret = 0;
 
 	if (eckey == NULL || eckey->group == NULL) {
@@ -259,19 +258,11 @@ ossl_ec_key_gen(EC_KEY *eckey)
 	if ((pub_key = EC_POINT_new(eckey->group)) == NULL)
 		goto err;
 
-	if ((ctx = BN_CTX_new()) == NULL)
-		goto err;
-
-	BN_CTX_start(ctx);
-
-	if ((order = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
-	if (!EC_GROUP_get_order(eckey->group, order, ctx))
+	if ((order = EC_GROUP_get0_order(eckey->group)) == NULL)
 		goto err;
 	if (!bn_rand_interval(priv_key, BN_value_one(), order))
 		goto err;
-	if (!EC_POINT_mul(eckey->group, pub_key, priv_key, NULL, NULL, ctx))
+	if (!EC_POINT_mul(eckey->group, pub_key, priv_key, NULL, NULL, NULL))
 		goto err;
 
 	BN_free(eckey->priv_key);
@@ -287,8 +278,6 @@ ossl_ec_key_gen(EC_KEY *eckey)
  err:
 	EC_POINT_free(pub_key);
 	BN_free(priv_key);
-	BN_CTX_end(ctx);
-	BN_CTX_free(ctx);
 
 	return ret;
 }
@@ -298,7 +287,7 @@ EC_KEY_check_key(const EC_KEY *eckey)
 {
 	BN_CTX *ctx = NULL;
 	EC_POINT *point = NULL;
-	BIGNUM *order;
+	const BIGNUM *order;
 	int ret = 0;
 
 	if (eckey == NULL || eckey->group == NULL || eckey->pub_key == NULL) {
@@ -314,11 +303,6 @@ EC_KEY_check_key(const EC_KEY *eckey)
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 
-	BN_CTX_start(ctx);
-
-	if ((order = BN_CTX_get(ctx)) == NULL)
-		goto err;
-
 	if ((point = EC_POINT_new(eckey->group)) == NULL)
 		goto err;
 
@@ -329,7 +313,7 @@ EC_KEY_check_key(const EC_KEY *eckey)
 	}
 
 	/* Ensure public key multiplied by the order is the point at infinity. */
-	if (!EC_GROUP_get_order(eckey->group, order, ctx)) {
+	if ((order = EC_GROUP_get0_order(eckey->group)) == NULL) {
 		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
@@ -366,7 +350,6 @@ EC_KEY_check_key(const EC_KEY *eckey)
 	ret = 1;
 
  err:
-	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	EC_POINT_free(point);
 
