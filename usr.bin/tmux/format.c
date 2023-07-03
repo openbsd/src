@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.314 2023/06/30 13:19:32 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.315 2023/07/03 10:48:26 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3664,7 +3664,9 @@ format_skip(const char *s, const char *end)
 	for (; *s != '\0'; s++) {
 		if (*s == '#' && s[1] == '{')
 			brackets++;
-		if (*s == '#' && strchr(",#{}:", s[1]) != NULL) {
+		if (*s == '#' &&
+		    s[1] != '\0' &&
+		    strchr(",#{}:", s[1]) != NULL) {
 			s++;
 			continue;
 		}
