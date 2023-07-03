@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.54 2023/07/03 10:10:58 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.55 2023/07/03 10:16:14 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -498,11 +498,9 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 		goto err;
 	}
 
-	/* Verify that r and s are in the range [1, order-1]. */
-	if (BN_is_zero(sig->r) || BN_is_negative(sig->r) ||
-	    BN_ucmp(sig->r, order) >= 0 ||
-	    BN_is_zero(sig->s) || BN_is_negative(sig->s) ||
-	    BN_ucmp(sig->s, order) >= 0) {
+	/* Verify that r and s are in the range [1, order). */
+	if (BN_cmp(sig->r, BN_value_one()) < 0 || BN_ucmp(sig->r, order) >= 0 ||
+	    BN_cmp(sig->s, BN_value_one()) < 0 || BN_ucmp(sig->s, order) >= 0) {
 		ECDSAerror(ECDSA_R_BAD_SIGNATURE);
 		ret = 0;
 		goto err;
