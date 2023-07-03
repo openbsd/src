@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.56 2023/04/26 09:07:59 tb Exp $
+# $OpenBSD: appstest.sh,v 1.57 2023/07/03 05:31:56 beck Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -1760,10 +1760,6 @@ function test_server_client {
 	sleep 1
 
 	# test by protocol version
-	if [ "$other_openssl_version" = "OpenSSL 1." ] ; then
-	test_sc_by_protocol_version $sc tls1   'Protocol  : TLSv1$'    $c_id
-	test_sc_by_protocol_version $sc tls1_1 'Protocol  : TLSv1\.1$' $c_id
-	fi
 	test_sc_by_protocol_version $sc tls1_2 'Protocol  : TLSv1\.2$' $c_id
 	test_sc_by_protocol_version $sc tls1_3 'Protocol  : TLSv1\.3$' $c_id
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: test_client.sh,v 1.2 2018/02/06 02:31:13 tb Exp $
+#	$OpenBSD: test_client.sh,v 1.3 2023/07/03 05:31:56 beck Exp $
 
 echo
 echo This starts a tls1 mode client to talk to the server run by 
@@ -9,4 +9,4 @@ echo type in this window after ssl negotiation and your output should
 echo be echoed by the server. 
 echo
 echo
-${OPENSSL:-/usr/bin/openssl} s_client -tls1
+${OPENSSL:-/usr/bin/openssl} s_client
