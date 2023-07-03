@@ -1,4 +1,4 @@
-/*	$OpenBSD: lsupdate.c,v 1.23 2023/06/21 07:45:47 claudio Exp $ */
+/*	$OpenBSD: lsupdate.c,v 1.24 2023/07/03 09:51:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -194,7 +194,7 @@ add_ls_update(struct ibuf *buf, struct iface *iface, void *data, u_int16_t len,
 	size_t		ageoff;
 	u_int16_t	age;
 
-	if (buf->wpos + len >= buf->max)
+	if (len >= ibuf_left(buf))
 		return (0);
 
 	ageoff = ibuf_size(buf);

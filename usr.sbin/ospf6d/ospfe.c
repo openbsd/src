@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.69 2023/06/21 07:45:47 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.70 2023/07/03 09:51:38 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -954,18 +954,18 @@ orig_rtr_lsa(struct area *area)
 	lsa_hdr.ls_id = 0;
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
 	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);
-	lsa_hdr.len = htons(buf->wpos);
+	lsa_hdr.len = htons(ibuf_size(buf));
 	lsa_hdr.ls_chksum = 0;		/* updated later */
 	if (ibuf_set(buf, 0, &lsa_hdr, sizeof(lsa_hdr)) == -1)
 		fatal("orig_rtr_lsa: ibuf_set failed");
 
-	chksum = iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET);
+	chksum = iso_cksum(ibuf_data(buf), ibuf_size(buf), LS_CKSUM_OFFSET);
 	if (ibuf_set_n16(buf, LS_CKSUM_OFFSET, chksum) == -1)
 		fatal("orig_rtr_lsa: ibuf_set_n16 failed");
 
 	if (self)
 		imsg_compose_event(iev_rde, IMSG_LS_UPD, self->peerid, 0,
-		    -1, buf->buf, buf->wpos);
+		    -1, ibuf_data(buf), ibuf_size(buf));
 	else
 		log_warnx("orig_rtr_lsa: empty area %s",
 		    inet_ntoa(area->id));
@@ -1018,7 +1018,7 @@ orig_net_lsa(struct iface *iface)
 	lsa_hdr.ls_id = htonl(iface->ifindex);
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
 	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);
-	lsa_hdr.len = htons(buf->wpos);
+	lsa_hdr.len = htons(ibuf_size(buf));
 	lsa_hdr.ls_chksum = 0;		/* updated later */
 	if (ibuf_set(buf, 0, &lsa_hdr, sizeof(lsa_hdr)) == -1)
 		fatal("orig_net_lsa: ibuf_set failed");
@@ -1027,12 +1027,12 @@ orig_net_lsa(struct iface *iface)
 	if (ibuf_set(buf, sizeof(lsa_hdr), &lsa_net, sizeof(lsa_net)) == -1)
 		fatal("orig_net_lsa: ibuf_set failed");
 
-	chksum = iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET);
+	chksum = iso_cksum(ibuf_data(buf), ibuf_size(buf), LS_CKSUM_OFFSET);
 	if (ibuf_set_n16(buf, LS_CKSUM_OFFSET, chksum) == -1)
 		fatal("orig_net_lsa: ibuf_set_n16 failed");
 
 	imsg_compose_event(iev_rde, IMSG_LS_UPD, iface->self->peerid, 0,
-	    -1, buf->buf, buf->wpos);
+	    -1, ibuf_data(buf), ibuf_size(buf));
 
 	ibuf_free(buf);
 }
@@ -1116,17 +1116,17 @@ orig_link_lsa(struct iface *iface)
 	lsa_hdr.ls_id = htonl(iface->ifindex);
 	lsa_hdr.adv_rtr = oeconf->rtr_id.s_addr;
 	lsa_hdr.seq_num = htonl(INIT_SEQ_NUM);
-	lsa_hdr.len = htons(buf->wpos);
+	lsa_hdr.len = htons(ibuf_size(buf));
 	lsa_hdr.ls_chksum = 0;		/* updated later */
 	if (ibuf_set(buf, 0, &lsa_hdr, sizeof(lsa_hdr)) == -1)
 		fatal("orig_link_lsa: ibuf_set failed");
 
-	chksum = iso_cksum(buf->buf, buf->wpos, LS_CKSUM_OFFSET);
+	chksum = iso_cksum(ibuf_data(buf), ibuf_size(buf), LS_CKSUM_OFFSET);
 	if (ibuf_set_n16(buf, LS_CKSUM_OFFSET, chksum) == -1)
 		fatal("orig_link_lsa: ibuf_set_n16 failed");
 
 	imsg_compose_event(iev_rde, IMSG_LS_UPD, iface->self->peerid, 0,
-	    -1, buf->buf, buf->wpos);
+	    -1, ibuf_data(buf), ibuf_size(buf));
 
 	ibuf_free(buf);
 }
