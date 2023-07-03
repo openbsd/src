@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.47 2023/07/03 05:48:18 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.48 2023/07/03 07:28:05 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -70,11 +70,11 @@
 #include "ecs_local.h"
 
 static int ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len,
-    BIGNUM *order, BIGNUM *ret);
+    const BIGNUM *order, BIGNUM *ret);
 
 static int
-ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len, BIGNUM *order,
-    BIGNUM *ret)
+ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len,
+    const BIGNUM *order, BIGNUM *ret)
 {
 	int dgst_bits, order_bits;
 
@@ -129,7 +129,8 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 	EC_POINT *point = NULL;
 	BN_CTX *ctx = NULL;
 	BIGNUM *k = NULL, *r = NULL;
-	BIGNUM *order, *x;
+	const BIGNUM *order;
+	BIGNUM *x;
 	int order_bits;
 	int ret = 0;
 
@@ -158,8 +159,6 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 
 	BN_CTX_start(ctx);
 
-	if ((order = BN_CTX_get(ctx)) == NULL)
-		goto err;
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
@@ -167,7 +166,7 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 		ECDSAerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	if (!EC_GROUP_get_order(group, order, ctx)) {
+	if ((order = EC_GROUP_get0_order(group)) == NULL) {
 		ECDSAerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -270,8 +269,8 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	const EC_GROUP *group;
 	BN_CTX *ctx = NULL;
 	BIGNUM *kinv = NULL, *r = NULL, *s = NULL;
-	BIGNUM *b, *binv, *bm, *bxr, *m, *order;
-	const BIGNUM *ckinv, *priv_key;
+	BIGNUM *b, *binv, *bm, *bxr, *m;
+	const BIGNUM *ckinv, *order, *priv_key;
 	int attempts = 0;
 	ECDSA_SIG *sig = NULL;
 
@@ -299,8 +298,6 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 
 	BN_CTX_start(ctx);
 
-	if ((order = BN_CTX_get(ctx)) == NULL)
-		goto err;
 	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((binv = BN_CTX_get(ctx)) == NULL)
@@ -312,7 +309,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	if ((m = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (!EC_GROUP_get_order(group, order, ctx)) {
+	if ((order = EC_GROUP_get0_order(group)) == NULL) {
 		ECDSAerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -454,10 +451,11 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
     EC_KEY *eckey)
 {
 	BN_CTX *ctx;
-	BIGNUM *order, *u1, *u2, *m, *x;
+	BIGNUM *u1, *u2, *m, *x;
 	EC_POINT *point = NULL;
 	const EC_GROUP *group;
 	const EC_POINT *pub_key;
+	const BIGNUM *order;
 	int ret = -1;
 
 	if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL ||
@@ -471,7 +469,6 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 		return -1;
 	}
 	BN_CTX_start(ctx);
-	order = BN_CTX_get(ctx);
 	u1 = BN_CTX_get(ctx);
 	u2 = BN_CTX_get(ctx);
 	m = BN_CTX_get(ctx);
@@ -481,7 +478,7 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 		goto err;
 	}
 
-	if (!EC_GROUP_get_order(group, order, ctx)) {
+	if ((order = EC_GROUP_get0_order(group)) == NULL) {
 		ECDSAerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -611,7 +608,7 @@ int
 ECDSA_size(const EC_KEY *r)
 {
 	const EC_GROUP *group;
-	BIGNUM *order = NULL;
+	const BIGNUM *order = NULL;
 	ECDSA_SIG signature;
 	int ret = 0;
 
@@ -621,20 +618,15 @@ ECDSA_size(const EC_KEY *r)
 	if ((group = EC_KEY_get0_group(r)) == NULL)
 		goto err;
 
-	if ((order = BN_new()) == NULL)
+	if ((order = EC_GROUP_get0_order(group)) == NULL)
 		goto err;
 
-	if (!EC_GROUP_get_order(group, order, NULL))
-		goto err;
-
-	signature.r = order;
-	signature.s = order;
+	signature.r = (BIGNUM *)order;
+	signature.s = (BIGNUM *)order;
 
 	if ((ret = i2d_ECDSA_SIG(&signature, NULL)) < 0)
 		ret = 0;
 
  err:
-	BN_free(order);
-
 	return ret;
 }
