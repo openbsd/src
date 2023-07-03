@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: HTTP.pm,v 1.15 2023/06/13 09:07:18 espie Exp $
+# $OpenBSD: HTTP.pm,v 1.16 2023/07/03 17:01:59 espie Exp $
 #
 # Copyright (c) 2011 Marc Espie <espie@openbsd.org>
 #
@@ -16,8 +16,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 
 use OpenBSD::PackageRepository::Persistent;
 
@@ -68,7 +67,6 @@ sub new($class)
 
 sub code($self)
 {
-	my $self = shift;
 	return $self->{code};
 }
 
