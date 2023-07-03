@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.63 2023/06/08 08:57:02 espie Exp $
+#	$OpenBSD: Makefile,v 1.64 2023/07/03 13:44:45 jasper Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -106,7 +106,10 @@ REGRESS_TARGETS=cmp-vers1-1 \
 		lib-flags-2 \
 		lib-flags-3 \
 		lib-flags-4 \
-
+		private-cflags-1 \
+		private-libs-1 \
+		private-cflags-libs-1 \
+		private-static-libs-1
 
 PKG_CONFIG?=	/usr/bin/pkg-config
 PCONFIG =	PKG_CONFIG_PATH=${.CURDIR}/pcdir/ ${PKG_CONFIG}
@@ -700,9 +703,6 @@ cflags-system-path-2:
 	@PKG_CONFIG_SYSTEM_INCLUDE_PATH=/usr/X11R6/include:/usr/private/include ${VPCONFIG} --cflags cflags-2
 	@diff -u ${WANT} ${GOT}
 
-clean:
-	rm -f *.want *.got
-
 lib-flags-1:
 	# Test --libs-only-other
 	@echo "-pthread" > ${WANT}
@@ -726,6 +726,33 @@ lib-flags-4:
 	@echo "-lalpha2" > ${WANT}
 	@${VPCONFIG} --libs-only-l lib-flags
 	@diff -u ${WANT} ${GOT}
+
+private-cflags-1:
+	# Test --cflags printing Requires
+	@echo "-I/requires-test/include -I/private-dep/include -I/public-dep/include" > ${WANT}
+	@${VPCONFIG} --cflags requires-test
+	@diff -u ${WANT} ${GOT}
+
+private-libs-1:
+	# Test --libs printing Requires
+	@echo "-L/requires-test/lib -L/public-dep/lib -lrequires-test -lpublic-dep" > ${WANT}
+	@${VPCONFIG} --libs requires-test
+	@diff -u ${WANT} ${GOT}
+
+private-cflags-libs-1:
+	# Test --cflags --libs printing Requires and not also Requires.private libs
+	@echo "-I/requires-test/include -I/private-dep/include -I/public-dep/include -L/requires-test/lib -L/public-dep/lib -lrequires-test -lpublic-dep" > ${WANT}
+	@${VPCONFIG} --cflags --libs requires-test
+	@diff -u ${WANT} ${GOT} || echo "skipped"
+
+private-static-libs-1:
+	# Test --static --libs printing Requires.private
+	@echo "-L/requires-test/lib -L/private-dep/lib -L/public-dep/lib -lrequires-test -lprivate-dep -lpublic-dep" > ${WANT}
+	@${VPCONFIG} --static --libs requires-test
+	@diff -u ${WANT} ${GOT}
+
+clean:
+	rm -f *.want *.got
 
 .PHONY: ${REGRESS_TARGETS}
 
