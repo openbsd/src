@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.288 2023/04/05 23:01:03 kn Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.289 2023/07/03 15:52:51 kn Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -709,9 +709,8 @@ ether_ifdetach(struct ifnet *ifp)
 	/* Undo pseudo-driver changes. */
 	if_deactivate(ifp);
 
-	for (enm = LIST_FIRST(&ac->ac_multiaddrs);
-	    enm != NULL;
-	    enm = LIST_FIRST(&ac->ac_multiaddrs)) {
+	while (!LIST_EMPTY(&ac->ac_multiaddrs)) {
+		enm = LIST_FIRST(&ac->ac_multiaddrs);
 		LIST_REMOVE(enm, enm_list);
 		free(enm, M_IFMADDR, sizeof *enm);
 	}
