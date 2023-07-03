@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.45 2023/07/02 13:37:09 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.46 2023/07/03 05:29:03 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -104,9 +104,8 @@ ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen, unsigned char *si
 	int outlen = 0;
 	int ret = 0;
 
-	if ((s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey)) == NULL) {
+	if ((s = ECDSA_do_sign_ex(dgst, dlen, kinv, r, eckey)) == NULL)
 		goto err;
-	}
 	if ((outlen = i2d_ECDSA_SIG(s, &sig)) < 0) {
 		outlen = 0;
 		goto err;
@@ -117,6 +116,7 @@ ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen, unsigned char *si
  err:
 	*siglen = outlen;
 	ECDSA_SIG_free(s);
+
 	return ret;
 }
 
