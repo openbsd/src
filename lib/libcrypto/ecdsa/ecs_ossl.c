@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.55 2023/07/03 10:16:14 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.56 2023/07/03 10:19:52 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -499,8 +499,8 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 	}
 
 	/* Verify that r and s are in the range [1, order). */
-	if (BN_cmp(sig->r, BN_value_one()) < 0 || BN_ucmp(sig->r, order) >= 0 ||
-	    BN_cmp(sig->s, BN_value_one()) < 0 || BN_ucmp(sig->s, order) >= 0) {
+	if (BN_cmp(sig->r, BN_value_one()) < 0 || BN_cmp(sig->r, order) >= 0 ||
+	    BN_cmp(sig->s, BN_value_one()) < 0 || BN_cmp(sig->s, order) >= 0) {
 		ECDSAerror(ECDSA_R_BAD_SIGNATURE);
 		ret = 0;
 		goto err;
@@ -541,7 +541,7 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 	}
 
 	/* If the signature is correct, the x-coordinate is equal to sig->r. */
-	ret = (BN_ucmp(u1, sig->r) == 0);
+	ret = (BN_cmp(u1, sig->r) == 0);
 
  err:
 	BN_CTX_end(ctx);
