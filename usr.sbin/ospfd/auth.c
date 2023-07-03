@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.21 2023/06/20 15:19:55 claudio Exp $ */
+/*	$OpenBSD: auth.c,v 1.22 2023/07/03 09:40:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -154,13 +154,13 @@ auth_gen(struct ibuf *buf, struct iface *iface)
 
 	switch (iface->auth_type) {
 	case AUTH_NONE:
-		chksum = in_cksum(buf->buf, ibuf_size(buf));
+		chksum = in_cksum(ibuf_data(buf), ibuf_size(buf));
 		if (ibuf_set(buf, offsetof(struct ospf_hdr, chksum),
 		    &chksum, sizeof(chksum)) == -1)
 			fatalx("auth_gen: ibuf_set failed");
 		break;
 	case AUTH_SIMPLE:
-		chksum = in_cksum(buf->buf, ibuf_size(buf));
+		chksum = in_cksum(ibuf_data(buf), ibuf_size(buf));
 		if (ibuf_set(buf, offsetof(struct ospf_hdr, chksum),
 		    &chksum, sizeof(chksum)) == -1)
 			fatalx("auth_gen: ibuf_set failed");
@@ -193,7 +193,7 @@ auth_gen(struct ibuf *buf, struct iface *iface)
 
 		/* calculate MD5 digest */
 		MD5Init(&hash);
-		MD5Update(&hash, buf->buf, ibuf_size(buf));
+		MD5Update(&hash, ibuf_data(buf), ibuf_size(buf));
 		MD5Update(&hash, digest, MD5_DIGEST_LENGTH);
 		MD5Final(digest, &hash);
 

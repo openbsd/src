@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.c,v 1.112 2023/06/20 15:19:55 claudio Exp $ */
+/*	$OpenBSD: ospfe.c,v 1.113 2023/07/03 09:40:47 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -1099,13 +1099,13 @@ orig_rtr_lsa(struct area *area)
 	if (ibuf_set(buf, 0, &lsa_hdr, sizeof(lsa_hdr)) == -1)
 		fatal("orig_rtr_lsa: ibuf_set failed");
 
-	chksum = iso_cksum(buf->buf, ibuf_size(buf), LS_CKSUM_OFFSET);
+	chksum = iso_cksum(ibuf_data(buf), ibuf_size(buf), LS_CKSUM_OFFSET);
 	if (ibuf_set_n16(buf, LS_CKSUM_OFFSET, chksum) == -1)
 		fatal("orig_rtr_lsa: ibuf_set_n16 failed");
 
 	if (self && num_links)
 		imsg_compose_event(iev_rde, IMSG_LS_UPD, self->peerid, 0,
-		    -1, buf->buf, ibuf_size(buf));
+		    -1, ibuf_data(buf), ibuf_size(buf));
 	else
 		log_warnx("orig_rtr_lsa: empty area %s",
 		    inet_ntoa(area->id));
@@ -1165,12 +1165,12 @@ orig_net_lsa(struct iface *iface)
 	if (ibuf_set(buf, 0, &lsa_hdr, sizeof(lsa_hdr)) == -1)
 		fatal("orig_net_lsa: ibuf_set failed");
 
-	chksum = iso_cksum(buf->buf, ibuf_size(buf), LS_CKSUM_OFFSET);
+	chksum = iso_cksum(ibuf_data(buf), ibuf_size(buf), LS_CKSUM_OFFSET);
 	if (ibuf_set_n16(buf, LS_CKSUM_OFFSET, chksum) == -1)
 		fatal("orig_net_lsa: ibuf_set_n16 failed");
 
 	imsg_compose_event(iev_rde, IMSG_LS_UPD, iface->self->peerid, 0,
-	    -1, buf->buf, ibuf_size(buf));
+	    -1, ibuf_data(buf), ibuf_size(buf));
 
 	ibuf_free(buf);
 }
