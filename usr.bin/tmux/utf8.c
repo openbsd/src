@@ -1,4 +1,4 @@
-/* $OpenBSD: utf8.c,v 1.61 2023/06/30 21:55:09 nicm Exp $ */
+/* $OpenBSD: utf8.c,v 1.62 2023/07/03 08:37:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2008 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -72,7 +72,7 @@ static u_int utf8_next_index;
 
 /* Get a UTF-8 item from data. */
 static struct utf8_item *
-utf8_item_by_data(const char *data, size_t size)
+utf8_item_by_data(const u_char *data, size_t size)
 {
 	struct utf8_item	ui;
 
