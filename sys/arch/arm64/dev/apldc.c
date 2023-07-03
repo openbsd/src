@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.8 2023/05/02 19:39:10 kettenis Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.9 2023/07/03 15:54:07 tobhe Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1289,6 +1289,10 @@ int	apldcms_enable(void *);
 void	apldcms_disable(void *);
 int	apldcms_ioctl(void *, u_long, caddr_t, int, struct proc *);
 
+static struct wsmouse_param apldcms_wsmousecfg[] = {
+	{ WSMOUSECFG_MTBTN_MAXDIST, 0 }, /* 0: Compute a default value. */
+};
+
 const struct wsmouse_accessops apldcms_accessops = {
 	.enable = apldcms_enable,
 	.disable = apldcms_disable,
@@ -1350,7 +1354,8 @@ apldcms_configure(struct apldcms_softc *sc)
 	hw->mt_slots = UBCMTP_MAX_FINGERS;
 	hw->flags = WSMOUSEHW_MT_TRACKING;
 
-	return wsmouse_configure(sc->sc_wsmousedev, NULL, 0);
+	return wsmouse_configure(sc->sc_wsmousedev, apldcms_wsmousecfg,
+	    nitems(apldcms_wsmousecfg));
 }
 
 void
