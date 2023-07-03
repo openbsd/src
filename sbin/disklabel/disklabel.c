@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.253 2023/07/03 08:16:36 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.254 2023/07/03 15:27:07 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -921,7 +921,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 			}
 			pp = &lp->d_partitions[part];
 #define NXTNUM(n, field, errstr) {					\
-	if (tp == NULL) {						\
+	if (tp == NULL || *tp == '\0') {				\
 		warnx("line %d: too few fields", lineno);		\
 		errors++;						\
 		break;							\
