@@ -1,4 +1,4 @@
-/*	$OpenBSD: packet.c,v 1.21 2023/06/26 14:07:19 claudio Exp $ */
+/*	$OpenBSD: packet.c,v 1.22 2023/07/03 10:34:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 Renato Westphal <renato@openbsd.org>
@@ -97,7 +97,7 @@ send_packet_v4(struct iface *iface, struct nbr *nbr, struct ibuf *buf)
 	memset(&msg, 0, sizeof(msg));
 	iov[0].iov_base = &ip_hdr;
 	iov[0].iov_len = sizeof(ip_hdr);
-	iov[1].iov_base = buf->buf;
+	iov[1].iov_base = ibuf_data(buf);
 	iov[1].iov_len = ibuf_size(buf);
 	msg.msg_name = &dst;
 	msg.msg_namelen = sizeof(dst);
@@ -144,7 +144,7 @@ send_packet_v6(struct iface *iface, struct nbr *nbr, struct ibuf *buf)
 			return (-1);
 		}
 
-	if (sendto(global.eigrp_socket_v6, buf->buf, buf->wpos, 0,
+	if (sendto(global.eigrp_socket_v6, ibuf_data(buf), ibuf_size(buf), 0,
 	    (struct sockaddr *)&sa6, sizeof(sa6)) == -1) {
 		log_warn("%s: error sending packet on interface %s",
 		    __func__, iface->name);
