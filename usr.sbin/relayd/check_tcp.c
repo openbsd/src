@@ -1,4 +1,4 @@
-/*	$OpenBSD: check_tcp.c,v 1.60 2023/06/21 07:54:54 claudio Exp $	*/
+/*	$OpenBSD: check_tcp.c,v 1.61 2023/07/03 09:38:08 claudio Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -214,7 +214,7 @@ tcp_send_req(int s, short event, void *arg)
 		req = ibuf_data(cte->table->sendbinbuf);
 		log_debug("%s: table %s sending binary", __func__,
 		    cte->table->conf.name);
-		print_hex(cte->table->sendbinbuf->buf, 0, len);
+		print_hex(req, 0, len);
 	} else {
 		len = strlen(cte->table->sendbuf);
 		req = cte->table->sendbuf;
@@ -323,7 +323,7 @@ check_send_expect(struct ctl_tcp_event *cte)
 		/*
 		 * ensure string is nul-terminated.
 		 */
-		b = strndup(cte->buf->buf, ibuf_size(cte->buf));
+		b = strndup(ibuf_data(cte->buf), ibuf_size(cte->buf));
 		if (b == NULL)
 			fatal("out of memory");
 		if (fnmatch(cte->table->conf.exbuf, b, 0) == 0) {
