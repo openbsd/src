@@ -1,4 +1,4 @@
-/* $OpenBSD: s_client.c,v 1.61 2023/07/03 06:22:07 beck Exp $ */
+/* $OpenBSD: s_client.c,v 1.62 2023/07/03 08:03:56 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -622,6 +622,14 @@ static const struct option s_client_options[] = {
 		.type = OPTION_VALUE_OR,
 		.opt.value = &cfg.off,
 		.value = SSL_OP_NO_TICKET,
+	},
+	{
+		.name = "no_tls1",
+		.type = OPTION_DISCARD,
+	},
+	{
+		.name = "no_tls1_1",
+		.type = OPTION_DISCARD,
 	},
 	{
 		.name = "no_tls1_2",
