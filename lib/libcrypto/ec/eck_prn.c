@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.25 2023/07/02 14:54:37 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.26 2023/07/03 09:37:30 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -68,6 +68,8 @@
 #include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+
+#include "ec_local.h"
 
 int
 ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
@@ -200,7 +202,8 @@ static int
 ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 {
 	BN_CTX *ctx = NULL;
-	BIGNUM *p, *a, *b, *order, *cofactor;
+	const BIGNUM *order;
+	BIGNUM *p, *a, *b, *cofactor;
 	BIGNUM *gen = NULL;
 	const EC_POINT *generator;
 	const char *conversion_form;
@@ -226,8 +229,6 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 		goto err;
 	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((order = BN_CTX_get(ctx)) == NULL)
-		goto err;
 	if ((cofactor = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((gen = BN_CTX_get(ctx)) == NULL)
@@ -237,7 +238,7 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	if (!EC_GROUP_get_order(group, order, NULL)) {
+	if ((order = EC_GROUP_get0_order(group)) == NULL) {
 		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
