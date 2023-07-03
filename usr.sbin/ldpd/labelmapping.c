@@ -1,4 +1,4 @@
-/*	$OpenBSD: labelmapping.c,v 1.68 2017/03/04 00:15:35 renato Exp $ */
+/*	$OpenBSD: labelmapping.c,v 1.69 2023/07/03 11:51:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2014, 2015 Renato Westphal <renato@openbsd.org>
@@ -22,6 +22,7 @@
 #include <arpa/inet.h>
 #include <netmpls/mpls.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -39,10 +40,8 @@ static void	 log_msg_mapping(int, uint16_t, struct nbr *, struct map *);
 static void
 enqueue_pdu(struct nbr *nbr, struct ibuf *buf, uint16_t size)
 {
-	struct ldp_hdr		*ldp_hdr;
-
-	ldp_hdr = ibuf_seek(buf, 0, sizeof(struct ldp_hdr));
-	ldp_hdr->length = htons(size);
+	if (ibuf_set_n16(buf, offsetof(struct ldp_hdr, length), size) == -1)
+		fatal(__func__);
 	evbuf_enqueue(&nbr->tcp->wbuf, buf);
 }
 
