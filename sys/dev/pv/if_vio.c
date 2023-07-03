@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.23 2023/05/29 08:13:35 sf Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.24 2023/07/03 07:40:52 kn Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -265,8 +265,8 @@ int	vio_init(struct ifnet *);
 void	vio_stop(struct ifnet *, int);
 void	vio_start(struct ifnet *);
 int	vio_ioctl(struct ifnet *, u_long, caddr_t);
-void	vio_get_lladr(struct arpcom *ac, struct virtio_softc *vsc);
-void	vio_put_lladr(struct arpcom *ac, struct virtio_softc *vsc);
+void	vio_get_lladdr(struct arpcom *ac, struct virtio_softc *vsc);
+void	vio_put_lladdr(struct arpcom *ac, struct virtio_softc *vsc);
 
 /* rx */
 int	vio_add_rx_mbuf(struct vio_softc *, int);
@@ -491,7 +491,7 @@ err_hdr:
 }
 
 void
-vio_get_lladr(struct arpcom *ac, struct virtio_softc *vsc)
+vio_get_lladdr(struct arpcom *ac, struct virtio_softc *vsc)
 {
 	int i;
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
@@ -501,7 +501,7 @@ vio_get_lladr(struct arpcom *ac, struct virtio_softc *vsc)
 }
 
 void
-vio_put_lladr(struct arpcom *ac, struct virtio_softc *vsc)
+vio_put_lladdr(struct arpcom *ac, struct virtio_softc *vsc)
 {
 	int i;
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
@@ -537,10 +537,10 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 
 	virtio_negotiate_features(vsc, virtio_net_feature_names);
 	if (virtio_has_feature(vsc, VIRTIO_NET_F_MAC)) {
-		vio_get_lladr(&sc->sc_ac, vsc);
+		vio_get_lladdr(&sc->sc_ac, vsc);
 	} else {
 		ether_fakeaddr(ifp);
-		vio_put_lladr(&sc->sc_ac, vsc);
+		vio_put_lladdr(&sc->sc_ac, vsc);
 	}
 	printf(": address %s\n", ether_sprintf(sc->sc_ac.ac_enaddr));
 
