@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.252 2023/07/03 06:07:40 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.253 2023/07/03 08:16:36 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -998,8 +998,6 @@ gottype:
 		}
 		warnx("line %d: unknown field: %s", lineno, cp);
 		errors++;
-next:
-		;
 	}
 	errors += checklabel(lp);
 
