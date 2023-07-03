@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.60 2023/07/03 13:53:54 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.61 2023/07/03 14:51:09 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -274,7 +274,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	BN_CTX *ctx = NULL;
 	BIGNUM *kinv = NULL, *r = NULL, *s = NULL;
 	BIGNUM *b, *binv, *bm, *bxr, *m;
-	const BIGNUM *ckinv, *order, *priv_key;
+	const BIGNUM *order, *priv_key;
 	int caller_supplied_values = 0;
 	int attempts = 0;
 	ECDSA_SIG *sig = NULL;
@@ -331,7 +331,10 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 		 */
 		caller_supplied_values = 1;
 
-		ckinv = in_kinv;
+		if ((kinv = BN_dup(in_kinv)) == NULL) {
+			ECDSAerror(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 		if (!bn_copy(r, in_r)) {
 			ECDSAerror(ERR_R_MALLOC_FAILURE);
 			goto err;
@@ -344,7 +347,6 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 				ECDSAerror(ERR_R_ECDSA_LIB);
 				goto err;
 			}
-			ckinv = kinv;
 		}
 
 		/*
@@ -386,7 +388,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
-		if (!BN_mod_mul(s, s, ckinv, order, ctx)) { /* s = b(m + xr)k^-1 */
+		if (!BN_mod_mul(s, s, kinv, order, ctx)) { /* s = b(m + xr)k^-1 */
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
