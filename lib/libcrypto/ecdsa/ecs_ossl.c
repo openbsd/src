@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.49 2023/07/03 09:55:42 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.50 2023/07/03 09:59:20 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -440,7 +440,7 @@ ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
 	/* Ensure signature uses DER and doesn't have trailing garbage */
 	if ((derlen = i2d_ECDSA_SIG(s, &der)) != sig_len)
 		goto err;
-	if (memcmp(sigbuf, der, derlen))
+	if (timingsafe_memcmp(sigbuf, der, derlen))
 		goto err;
 
 	ret = ECDSA_do_verify(dgst, dgst_len, s, eckey);
