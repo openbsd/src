@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.53 2023/07/03 10:09:12 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.54 2023/07/03 10:10:58 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -456,12 +456,12 @@ int
 ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
     EC_KEY *eckey)
 {
-	BN_CTX *ctx = NULL;
-	BIGNUM *u1, *u2, *m, *x;
-	EC_POINT *point = NULL;
 	const EC_GROUP *group;
 	const EC_POINT *pub_key;
+	EC_POINT *point = NULL;
 	const BIGNUM *order;
+	BN_CTX *ctx = NULL;
+	BIGNUM *u1, *u2, *m, *x;
 	int ret = -1;
 
 	if (eckey == NULL || sig == NULL) {
