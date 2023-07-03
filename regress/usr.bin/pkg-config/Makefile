@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.64 2023/07/03 13:44:45 jasper Exp $
+#	$OpenBSD: Makefile,v 1.65 2023/07/03 17:55:51 anton Exp $
 
 REGRESS_TARGETS=cmp-vers1-1 \
 		cmp-vers1-2 \
@@ -739,11 +739,12 @@ private-libs-1:
 	@${VPCONFIG} --libs requires-test
 	@diff -u ${WANT} ${GOT}
 
+REGRESS_EXPECTED_FAILURES+=private-cflags-libs-1
 private-cflags-libs-1:
 	# Test --cflags --libs printing Requires and not also Requires.private libs
 	@echo "-I/requires-test/include -I/private-dep/include -I/public-dep/include -L/requires-test/lib -L/public-dep/lib -lrequires-test -lpublic-dep" > ${WANT}
 	@${VPCONFIG} --cflags --libs requires-test
-	@diff -u ${WANT} ${GOT} || echo "skipped"
+	@diff -u ${WANT} ${GOT}
 
 private-static-libs-1:
 	# Test --static --libs printing Requires.private
