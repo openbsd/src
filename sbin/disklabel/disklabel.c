@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.251 2023/06/21 12:50:09 krw Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.252 2023/07/03 06:07:40 krw Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -316,7 +316,7 @@ writelabel(int f, struct disklabel *lp)
 		/* Write new label to disk. */
 		if (ioctl(f, DIOCWDINFO, lp) == -1) {
 			warn("DIOCWDINFO");
-			return (1);
+			return 1;
 		}
 
 		/* Refresh our copy of the on-disk current label to get UID. */
@@ -327,7 +327,7 @@ writelabel(int f, struct disklabel *lp)
 		mpsave(lp);
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -547,7 +547,7 @@ canonical_unit(const struct disklabel *lp, char unit)
 	}
 	unit = toupper((unsigned char)unit);
 
-	return (unit);
+	return unit;
 }
 
 void
@@ -611,7 +611,7 @@ edit(struct disklabel *lp, int f)
 		warn("%s", tmpfil);
 		if (fd != -1)
 			close(fd);
-		return (1);
+		return 1;
 	}
 	display(fp, lp, 0, 1);
 	fprintf(fp, "\n# Notes:\n");
@@ -640,13 +640,13 @@ edit(struct disklabel *lp, int f)
 				puts("No changes.");
 				fclose(fp);
 				(void) unlink(tmpfil);
-				return (0);
+				return 0;
 			}
 			*lp = label;
 			if (writelabel(f, lp) == 0) {
 				fclose(fp);
 				(void) unlink(tmpfil);
-				return (0);
+				return 0;
 			}
 		}
 		fclose(fp);
@@ -659,7 +659,7 @@ edit(struct disklabel *lp, int f)
 			break;
 	}
 	(void)unlink(tmpfil);
-	return (1);
+	return 1;
 }
 
 /*
@@ -682,7 +682,7 @@ editit(const char *pathname)
 	if (ed == NULL || ed[0] == '\0')
 		ed = _PATH_VI;
 	if (asprintf(&p, "%s %s", ed, pathname) == -1)
-		return (-1);
+		return -1;
 	argp[2] = p;
 
 	sighup = signal(SIGHUP, SIG_IGN);
@@ -711,7 +711,7 @@ fail:
 	(void)signal(SIGCHLD, sigchld);
 	free(p);
 	errno = saved_errno;
-	return (ret);
+	return ret;
 }
 
 char *
@@ -720,8 +720,8 @@ skip(char *cp)
 
 	cp += strspn(cp, " \t");
 	if (*cp == '\0')
-		return (NULL);
-	return (cp);
+		return NULL;
+	return cp;
 }
 
 char *
@@ -730,12 +730,12 @@ word(char *cp)
 
 	cp += strcspn(cp, " \t");
 	if (*cp == '\0')
-		return (NULL);
+		return NULL;
 	*cp++ = '\0';
 	cp += strspn(cp, " \t");
 	if (*cp == '\0')
-		return (NULL);
-	return (cp);
+		return NULL;
+	return cp;
 }
 
 /* Base the max value on the sizeof of the value we are reading */
@@ -757,7 +757,7 @@ getnum(char *nptr, u_int64_t min, u_int64_t max, const char **errstr)
 	*p = '\0';
 	ret = strtonum(nptr, min, max, errstr);
 	*p = c;
-	return (ret);
+	return ret;
 }
 
 int
@@ -1007,7 +1007,7 @@ next:
 		mpcopy(mountpoints, omountpoints);
 	mpfree(omountpoints, DISCARD);
 
-	return (errors > 0);
+	return errors > 0;
 }
 
 /*
@@ -1023,15 +1023,15 @@ checklabel(struct disklabel *lp)
 
 	if (lp->d_secsize == 0) {
 		warnx("sector size 0");
-		return (1);
+		return 1;
 	}
 	if (lp->d_nsectors == 0) {
 		warnx("sectors/track 0");
-		return (1);
+		return 1;
 	}
 	if (lp->d_ntracks == 0) {
 		warnx("tracks/cylinder 0");
-		return (1);
+		return 1;
 	}
 	if  (lp->d_ncylinders == 0) {
 		warnx("cylinders/unit 0");
@@ -1092,7 +1092,7 @@ checklabel(struct disklabel *lp)
 			    "offset %llu", part, DL_GETPSIZE(pp),
 			    DL_GETPOFFSET(pp));
 	}
-	return (errors > 0);
+	return errors > 0;
 }
 
 int
@@ -1110,7 +1110,7 @@ cmplabel(struct disklabel *lp1, struct disklabel *lp2)
 	lab1.d_bend = lab2.d_bend;
 	lab1.d_bendh = lab2.d_bendh;
 
-	return (memcmp(&lab1, &lab2, sizeof(struct disklabel)));
+	return memcmp(&lab1, &lab2, sizeof(struct disklabel));
 }
 
 void
