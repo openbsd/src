@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.50 2023/07/03 09:59:20 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.51 2023/07/03 10:04:05 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -456,7 +456,7 @@ int
 ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *sig,
     EC_KEY *eckey)
 {
-	BN_CTX *ctx;
+	BN_CTX *ctx = NULL;
 	BIGNUM *u1, *u2, *m, *x;
 	EC_POINT *point = NULL;
 	const EC_GROUP *group;
@@ -467,12 +467,12 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 	if (eckey == NULL || (group = EC_KEY_get0_group(eckey)) == NULL ||
 	    (pub_key = EC_KEY_get0_public_key(eckey)) == NULL || sig == NULL) {
 		ECDSAerror(ECDSA_R_MISSING_PARAMETERS);
-		return -1;
+		goto err;
 	}
 
 	if ((ctx = BN_CTX_new()) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
-		return -1;
+		goto err;
 	}
 	BN_CTX_start(ctx);
 	u1 = BN_CTX_get(ctx);
