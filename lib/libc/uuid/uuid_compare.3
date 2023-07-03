@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uuid_compare.3,v 1.2 2020/11/14 10:35:58 jmc Exp $
+.\"	$OpenBSD: uuid_compare.3,v 1.3 2023/07/03 08:53:27 jasper Exp $
 .\"	$NetBSD: uuid.3,v 1.7 2008/05/02 18:11:05 martin Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/uuid/uuid.3,v 1.4 2003/08/08 19:12:28 marcel Exp $
 .\"
-.Dd $Mdocdate: November 14 2020 $
+.Dd $Mdocdate: July 3 2023 $
 .Dt UUID_COMPARE 3
 .Os
 .Sh NAME
@@ -84,11 +84,11 @@
 .Ft void
 .Fn uuid_enc_le "void *buf" "const uuid_t *uuid"
 .Ft void
-.Fn uuid_dec_le "const void *buf" "uuid_t *"
+.Fn uuid_dec_le "const void *buf" "uuid_t *uuid"
 .Ft void
 .Fn uuid_enc_be "void *buf" "const uuid_t *uuid"
 .Ft void
-.Fn uuid_dec_be "const void *buf" "uuid_t *"
+.Fn uuid_dec_be "const void *buf" "uuid_t *uuid"
 .Sh DESCRIPTION
 These routines provide for the creation and manipulation of Universally
 Unique Identifiers
