@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.58 2023/07/03 11:06:28 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.59 2023/07/03 11:10:28 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -278,10 +278,11 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	int attempts = 0;
 	ECDSA_SIG *sig = NULL;
 
-	group = EC_KEY_get0_group(eckey);
-	priv_key = EC_KEY_get0_private_key(eckey);
-
-	if (group == NULL || priv_key == NULL) {
+	if ((group = EC_KEY_get0_group(eckey)) == NULL) {
+		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
+		goto err;
+	}
+	if ((priv_key = EC_KEY_get0_private_key(eckey)) == NULL) {
 		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
