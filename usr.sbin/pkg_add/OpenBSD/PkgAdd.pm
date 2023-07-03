@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.142 2023/06/27 11:11:46 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.143 2023/07/03 19:12:08 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -861,6 +861,9 @@ sub really_add($set, $state)
 	if ($state->{received}) {
 		die "interrupted";
 	}
+	if (!$set->{quirks}) {
+		$state->{did_something} = 1;
+	}
 }
 
 sub newer_has_errors($set, $state)
@@ -1163,6 +1166,8 @@ sub process_parameters($self, $state)
 {
 	my $add_hints = $state->{fuzzy} ? "add_hints" : "add_hints2";
 
+	$state->{did_something} = 0;
+
 	# match against a list
 	if ($state->{pkglist}) {
 		open my $f, '<', $state->{pkglist} or
@@ -1178,7 +1183,6 @@ sub process_parameters($self, $state)
 
 	# update existing stuff
 	if ($state->{update}) {
-
 		if (@ARGV == 0) {
 			@ARGV = sort(installed_packages());
 		}
@@ -1239,6 +1243,16 @@ sub main($self, $state)
 	$self->process_setlist($state);
 }
 
+sub exit_code($self, $state)
+{
+	my $rc = $self->SUPER::exit_code($state);
+	if ($rc == 0 && $state->defines("SYSPATCH_LIKE")) {
+		if (!$state->{did_something}) {
+			$rc = 2;
+		}
+	}
+	return $rc;
+}
 
 sub new_state($self, $cmd)
 {
