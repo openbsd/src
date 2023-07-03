@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.59 2023/07/03 11:10:28 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.60 2023/07/03 13:53:54 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -275,6 +275,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	BIGNUM *kinv = NULL, *r = NULL, *s = NULL;
 	BIGNUM *b, *binv, *bm, *bxr, *m;
 	const BIGNUM *ckinv, *order, *priv_key;
+	int caller_supplied_values = 0;
 	int attempts = 0;
 	ECDSA_SIG *sig = NULL;
 
@@ -322,19 +323,28 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	if (!ecdsa_prepare_digest(dgst, dgst_len, order, m))
 		goto err;
 
+	if (in_kinv != NULL && in_r != NULL) {
+		/*
+		 * Use the caller's kinv and r. Don't call ECDSA_sign_setup().
+		 * If we're unable to compute a valid signature, the caller
+		 * must provide new values.
+		 */
+		caller_supplied_values = 1;
+
+		ckinv = in_kinv;
+		if (!bn_copy(r, in_r)) {
+			ECDSAerror(ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
+	}
+
 	do {
-		if (in_kinv == NULL || in_r == NULL) {
+		if (!caller_supplied_values) {
 			if (!ECDSA_sign_setup(eckey, ctx, &kinv, &r)) {
 				ECDSAerror(ERR_R_ECDSA_LIB);
 				goto err;
 			}
 			ckinv = kinv;
-		} else {
-			ckinv = in_kinv;
-			if (!bn_copy(r, in_r)) {
-				ECDSAerror(ERR_R_MALLOC_FAILURE);
-				goto err;
-			}
 		}
 
 		/*
@@ -385,23 +395,19 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 			goto err;
 		}
 
-		if (BN_is_zero(s)) {
-			/*
-			 * If kinv and r have been supplied by the caller,
-			 * don't generate new kinv and r values
-			 */
-			if (in_kinv != NULL && in_r != NULL) {
-				ECDSAerror(ECDSA_R_NEED_NEW_SETUP_VALUES);
-				goto err;
-			}
-
-			if (++attempts > ECDSA_MAX_SIGN_ITERATIONS) {
-				ECDSAerror(EC_R_WRONG_CURVE_PARAMETERS);
-				goto err;
-			}
-		} else
-			/* s != 0 => we have a valid signature */
+		/* If s is non-zero, we have a valid signature. */
+		if (!BN_is_zero(s))
 			break;
+
+		if (caller_supplied_values) {
+			ECDSAerror(ECDSA_R_NEED_NEW_SETUP_VALUES);
+			goto err;
+		}
+
+		if (++attempts > ECDSA_MAX_SIGN_ITERATIONS) {
+			ECDSAerror(EC_R_WRONG_CURVE_PARAMETERS);
+			goto err;
+		}
 	} while (1);
 
 	if ((sig = ECDSA_SIG_new()) == NULL) {
