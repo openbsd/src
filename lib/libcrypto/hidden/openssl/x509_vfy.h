@@ -1,4 +1,4 @@
-/* $OpenBSD: x509_vfy.h,v 1.4 2023/04/25 18:32:42 tb Exp $ */
+/* $OpenBSD: x509_vfy.h,v 1.5 2023/07/03 11:43:15 tobhe Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -148,16 +148,5 @@ LCRYPTO_USED(X509_VERIFY_PARAM_get_count);
 LCRYPTO_USED(X509_VERIFY_PARAM_add0_table);
 LCRYPTO_USED(X509_VERIFY_PARAM_lookup);
 LCRYPTO_USED(X509_VERIFY_PARAM_table_cleanup);
-LCRYPTO_USED(X509_policy_check);
-LCRYPTO_USED(X509_policy_tree_free);
-LCRYPTO_USED(X509_policy_tree_level_count);
-LCRYPTO_USED(X509_policy_tree_get0_level);
-LCRYPTO_USED(X509_policy_tree_get0_policies);
-LCRYPTO_USED(X509_policy_tree_get0_user_policies);
-LCRYPTO_USED(X509_policy_level_node_count);
-LCRYPTO_USED(X509_policy_level_get0_node);
-LCRYPTO_USED(X509_policy_node_get0_policy);
-LCRYPTO_USED(X509_policy_node_get0_qualifiers);
-LCRYPTO_USED(X509_policy_node_get0_parent);
 
 #endif /* _LIBCRYPTO_X509_VFY_H */
