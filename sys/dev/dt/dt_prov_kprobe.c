@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_kprobe.c,v 1.5 2023/07/04 12:20:10 jasper Exp $	*/
+/*	$OpenBSD: dt_prov_kprobe.c,v 1.6 2023/07/04 12:27:44 jasper Exp $	*/
 
 /*
  * Copyright (c) 2020 Tom Rollet <tom.rollet@epita.fr>
@@ -94,10 +94,10 @@ int nb_probes_return =	0;
 
 #define KPROBE_RETGUARD_XOR_SIZE 4
 
-#define RET		0xc3
+#define RET_INST	0xc3
 #define RET_SIZE	1
 #elif defined(__i386__)
-#define POP_RBP		0x5d
+#define POP_RBP_INST	0x5d
 #define POP_RBP_SIZE	1
 #endif
 
@@ -207,7 +207,7 @@ dt_prov_kprobe_init(void)
 
 #if defined(__amd64__)
 		/* If there last instruction isn't a ret, just bail. */
-		if (*(uint8_t *)(limit - 1) != RET)
+		if (*(uint8_t *)(limit - 1) != RET_INST)
 			continue;
 		inst = limit - 1;
 #elif defined(__i386__)
@@ -282,10 +282,10 @@ dt_prov_kprobe_dealloc(struct dt_probe *dtp, struct dt_softc *sc,
 		size  = SSF_SIZE;
 	} else if (strcmp(dtp->dtp_name, KPROBE_RETURN) == 0) {
 #if defined(__amd64__)
-		patch = RET;
+		patch = RET_INST;
 		size  = RET_SIZE;
 #elif defined(__i386__)
-		patch = POP_RBP;
+		patch = POP_RBP_INST;
 		size  = POP_RBP_SIZE;
 #endif
 	} else
