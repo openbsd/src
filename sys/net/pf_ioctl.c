@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.413 2023/07/04 11:34:19 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.414 2023/07/04 14:23:38 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -178,6 +178,10 @@ void			 pf_rtlabel_remove(struct pf_addr_wrap *);
 void			 pf_rtlabel_copyout(struct pf_addr_wrap *);
 
 LIST_HEAD(, pf_trans)	pf_ioctl_trans = LIST_HEAD_INITIALIZER(pf_trans);
+
+/* counts transactions opened by a device */
+unsigned int pf_tcount[CLONE_MAPSZ * NBBY];
+#define pf_unit2idx(_unit_)	((_unit_) >> CLONE_SHIFT)
 
 void
 pfattach(int num)
@@ -1492,6 +1496,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		NET_UNLOCK();
 
 		t = pf_open_trans(minor(dev));
+		if (t == NULL) {
+			error = EBUSY;
+			goto fail;
+		}
 		pf_init_tgetrule(t, ruleset->anchor, ruleset_version, rule);
 		pr->ticket = t->pft_ticket;
 
@@ -3276,9 +3284,14 @@ pf_open_trans(uint32_t unit)
 
 	rw_assert_wrlock(&pfioctl_rw);
 
+	KASSERT(pf_unit2idx(unit) < nitems(pf_tcount));
+	if (pf_tcount[pf_unit2idx(unit)] >= (PF_ANCHOR_STACK_MAX * 8))
+		return (NULL);
+
 	t = malloc(sizeof(*t), M_PF, M_WAITOK|M_ZERO);
 	t->pft_unit = unit;
 	t->pft_ticket = ticket++;
+	pf_tcount[pf_unit2idx(unit)]++;
 
 	LIST_INSERT_HEAD(&pf_ioctl_trans, t, pft_entry);
 
@@ -3332,6 +3345,11 @@ pf_free_trans(struct pf_trans *t)
 		log(LOG_ERR, "%s unknown transaction type: %d\n",
 		    __func__, t->pft_type);
 	}
+
+	KASSERT(pf_unit2idx(t->pft_unit) < nitems(pf_tcount));
+	KASSERT(pf_tcount[pf_unit2idx(t->pft_unit)] >= 1);
+	pf_tcount[pf_unit2idx(t->pft_unit)]--;
+
 	free(t, M_PF, sizeof(*t));
 }
 
