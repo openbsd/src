@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.69 2023/07/04 14:57:05 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.70 2023/07/04 14:59:32 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -506,6 +506,11 @@ ossl_ecdsa_verify(int type, const unsigned char *digest, int digest_len,
 	return ret;
 }
 
+/*
+ * FIPS 186-5, section 6.4.2: ECDSA signature verification.
+ * The caller provides us with the hash of the message, so has performed step 2.
+ */
+
 int
 ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
     const ECDSA_SIG *sig, EC_KEY *key)
@@ -515,7 +520,7 @@ ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 	EC_POINT *point = NULL;
 	const BIGNUM *order;
 	BN_CTX *ctx = NULL;
-	BIGNUM *u1, *u2, *e, *x;
+	BIGNUM *e, *sinv, *u, *v, *x;
 	int ret = -1;
 
 	if (key == NULL || sig == NULL) {
@@ -538,11 +543,13 @@ ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 
 	BN_CTX_start(ctx);
 
-	if ((u1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((u2 = BN_CTX_get(ctx)) == NULL)
-		goto err;
 	if ((e = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((sinv = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((u = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((v = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -552,7 +559,7 @@ ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 		goto err;
 	}
 
-	/* Verify that r and s are in the range [1, order). */
+	/* Step 1: verify that r and s are in the range [1, order). */
 	if (BN_cmp(sig->r, BN_value_one()) < 0 || BN_cmp(sig->r, order) >= 0) {
 		ECDSAerror(ECDSA_R_BAD_SIGNATURE);
 		ret = 0;
@@ -564,28 +571,35 @@ ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 		goto err;
 	}
 
+	/* Step 3: convert the hash into an integer. */
 	if (!ecdsa_prepare_digest(digest, digest_len, key, e))
 		goto err;
 
-	if (BN_mod_inverse_ct(u2, sig->s, order, ctx) == NULL) { /* w = inv(s) */
+	/* Step 4: compute the inverse of s modulo order. */
+	if (BN_mod_inverse_ct(sinv, sig->s, order, ctx) == NULL) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!BN_mod_mul(u1, e, u2, order, ctx)) {		/* u1 = ew */
+	/* Step 5: compute u = s^-1 * e and v = s^-1 * r (modulo order). */
+	if (!BN_mod_mul(u, e, sinv, order, ctx)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!BN_mod_mul(u2, sig->r, u2, order, ctx)) {		/* u2 = rw */
+	if (!BN_mod_mul(v, sig->r, sinv, order, ctx)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
-	/* Compute the x-coordinate of G * u1 + pub_key * u2. */
+	/*
+	 * Steps 6 and 7: compute R = G * u + pub_key * v = (x, y). Reject if
+	 * it's the point at infinity - getting affine coordinates fails. Keep
+	 * the x coordinate.
+	 */
 	if ((point = EC_POINT_new(group)) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (!EC_POINT_mul(group, point, u1, pub_key, u2, ctx)) {
+	if (!EC_POINT_mul(group, point, u, pub_key, v, ctx)) {
 		ECDSAerror(ERR_R_EC_LIB);
 		goto err;
 	}
@@ -593,13 +607,14 @@ ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 		ECDSAerror(ERR_R_EC_LIB);
 		goto err;
 	}
-	if (!BN_nnmod(u1, x, order, ctx)) {
+	/* Step 8: convert x to a number in [0, order). */
+	if (!BN_nnmod(x, x, order, ctx)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
-	/* If the signature is correct, the x-coordinate is equal to sig->r. */
-	ret = (BN_cmp(u1, sig->r) == 0);
+	/* Step 9: the signature is valid iff the x-coordinate is equal to r. */
+	ret = (BN_cmp(x, sig->r) == 0);
 
  err:
 	BN_CTX_end(ctx);
