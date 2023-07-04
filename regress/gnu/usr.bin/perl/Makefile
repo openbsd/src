@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2023/07/04 11:27:13 bluhm Exp $
+# $OpenBSD: Makefile,v 1.2 2023/07/04 19:01:46 anton Exp $
 
 .if ! (make(clean) || make(cleandir) || make(obj))
-NCPU !=		/sbin/sysctl -n hw.ncpu
+NCPU !=		/sbin/sysctl -n hw.ncpuonline
 .endif
 
 REGRESS_TARGETS +=	build
