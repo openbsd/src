@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.193 2023/07/04 13:58:01 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.194 2023/07/04 14:03:16 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -373,6 +373,9 @@ sub check_version($, $, $)
 {
 }
 
+
+# Virtual PackingElements related to chunked gzips and LRU caching.
+# see save_history
 package OpenBSD::PackingElement::StreamMarker;
 our @ISA = qw(OpenBSD::PackingElement::Meta);
 sub new($class)
