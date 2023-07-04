@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.70 2023/07/04 14:59:32 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.71 2023/07/04 15:09:31 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -315,6 +315,16 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
 
 	if ((s = BN_new()) == NULL)
 		goto err;
+
+	/*
+	 * In a valid ECDSA signature, r must be in [1, order). Since r can be
+	 * caller provided - either directly or by replacing sign_setup() - we
+	 * can't rely on this being the case.
+	 */
+	if (BN_cmp(r, BN_value_one()) < 0 || BN_cmp(r, order) >= 0) {
+		ECDSAerror(ECDSA_R_BAD_SIGNATURE);
+		goto err;
+	}
 
 	if (!bn_rand_interval(b, BN_value_one(), order)) {
 		ECDSAerror(ERR_R_BN_LIB);
