@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.9 2023/07/04 09:00:24 kettenis Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.10 2023/07/04 12:48:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -672,15 +672,21 @@ dwqe_rx_proc(struct dwqe_softc *sc)
 		    len, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, rxb->tb_map);
 
-		/* Strip off CRC. */
-		len -= ETHER_CRC_LEN;
-		KASSERT(len > 0);
-
 		m = rxb->tb_m;
 		rxb->tb_m = NULL;
-		m->m_pkthdr.len = m->m_len = len;
 
-		ml_enqueue(&ml, m);
+		if (rxd->sd_tdes3 & RDES3_ES) {
+			ifp->if_ierrors++;
+			m_freem(m);
+		} else {
+			/* Strip off CRC. */
+			len -= ETHER_CRC_LEN;
+			KASSERT(len > 0);
+
+			m->m_pkthdr.len = m->m_len = len;
+
+			ml_enqueue(&ml, m);
+		}
 
 		put++;
 		if (sc->sc_rx_cons == (DWQE_NRXDESC - 1))
