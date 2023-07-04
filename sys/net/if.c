@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.702 2023/07/02 19:59:15 bluhm Exp $	*/
+/*	$OpenBSD: if.c,v 1.703 2023/07/04 13:37:47 jan Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -3206,7 +3206,7 @@ ifsetlro(struct ifnet *ifp, int on)
 	KERNEL_ASSERT_LOCKED();	/* for if_flags */
 
 	if (on && !ISSET(ifp->if_xflags, IFXF_LRO)) {
-		if (ether_brport_isset(ifp)) {
+		if (ifp->if_type == IFT_ETHER && ether_brport_isset(ifp)) {
 			error = EBUSY;
 			goto out;
 		}
