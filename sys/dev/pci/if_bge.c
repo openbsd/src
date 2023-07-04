@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.400 2023/01/18 23:31:37 kettenis Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.401 2023/07/04 10:22:39 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -74,6 +74,7 @@
 
 #include "bpfilter.h"
 #include "vlan.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +86,7 @@
 #include <sys/timeout.h>
 #include <sys/socket.h>
 #include <sys/atomic.h>
+#include <sys/kstat.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -202,6 +204,58 @@ int bge_ape_lock(struct bge_softc *, int);
 void bge_ape_unlock(struct bge_softc *, int);
 void bge_ape_send_event(struct bge_softc *, uint32_t);
 void bge_ape_driver_state_change(struct bge_softc *, int);
+
+#if NKSTAT > 0
+void bge_kstat_attach(struct bge_softc *);
+
+enum {
+	bge_stat_out_octets = 0,
+	bge_stat_collisions,
+	bge_stat_xon_sent,
+	bge_stat_xoff_sent,
+	bge_stat_xmit_errors,
+	bge_stat_coll_frames,
+	bge_stat_multicoll_frames,
+	bge_stat_deferred_xmit,
+	bge_stat_excess_coll,
+	bge_stat_late_coll,
+	bge_stat_out_ucast_pkt,
+	bge_stat_out_mcast_pkt,
+	bge_stat_out_bcast_pkt,
+	bge_stat_in_octets,
+	bge_stat_fragments,
+	bge_stat_in_ucast_pkt,
+	bge_stat_in_mcast_pkt,
+	bge_stat_in_bcast_pkt,
+	bge_stat_fcs_errors,
+	bge_stat_align_errors,
+	bge_stat_xon_rcvd,
+	bge_stat_xoff_rcvd,
+	bge_stat_ctrl_frame_rcvd,
+	bge_stat_xoff_entered,
+	bge_stat_too_long_frames,
+	bge_stat_jabbers,
+	bge_stat_too_short_pkts,
+
+	bge_stat_dma_rq_full,
+	bge_stat_dma_hprq_full,
+	bge_stat_sdc_queue_full,
+	bge_stat_nic_sendprod_set,
+	bge_stat_status_updated,
+	bge_stat_irqs,
+	bge_stat_avoided_irqs,
+	bge_stat_tx_thresh_hit,
+
+	bge_stat_filtdrop,
+	bge_stat_dma_wrq_full,
+	bge_stat_dma_hpwrq_full,
+	bge_stat_out_of_bds,
+	bge_stat_if_in_drops,
+	bge_stat_if_in_errors,
+	bge_stat_rx_thresh_hit,
+};
+
+#endif
 
 #ifdef BGE_DEBUG
 #define DPRINTF(x)	do { if (bgedebug) printf x; } while (0)
@@ -2993,6 +3047,12 @@ bge_attach(struct device *parent, struct device *self, void *aux)
 	else
 		sc->bge_return_ring_cnt = BGE_RETURN_RING_CNT_5705;
 
+	mtx_init(&sc->bge_kstat_mtx, IPL_SOFTCLOCK);
+#if NKSTAT > 0
+	if (BGE_IS_5705_PLUS(sc))
+		bge_kstat_attach(sc);
+#endif
+
 	/* Set up ifnet structure */
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_softc = sc;
@@ -3767,9 +3827,11 @@ bge_tick(void *xsc)
 
 	s = splnet();
 
-	if (BGE_IS_5705_PLUS(sc))
+	if (BGE_IS_5705_PLUS(sc)) {
+		mtx_enter(&sc->bge_kstat_mtx);
 		bge_stats_update_regs(sc);
-	else
+		mtx_leave(&sc->bge_kstat_mtx);
+	} else
 		bge_stats_update(sc);
 
 	if (sc->bge_flags & BGE_FIBER_TBI) {
@@ -3799,11 +3861,15 @@ void
 bge_stats_update_regs(struct bge_softc *sc)
 {
 	struct ifnet *ifp = &sc->arpcom.ac_if;
+	uint32_t collisions, discards, inerrors;
+	uint32_t ucast, mcast, bcast;
+	u_int32_t val;
+#if NKSTAT > 0
+	struct kstat_kv *kvs = sc->bge_kstat->ks_data;
+#endif
 
-	sc->bge_tx_collisions += CSR_READ_4(sc, BGE_MAC_STATS +
+	collisions = CSR_READ_4(sc, BGE_MAC_STATS +
 	    offsetof(struct bge_mac_stats_regs, etherStatsCollisions));
-
-	sc->bge_rx_overruns += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_OUT_OF_BDS);
 
 	/*
 	 * XXX
@@ -3826,23 +3892,22 @@ bge_stats_update_regs(struct bge_softc *sc)
 	    BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5762 &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5719_A0 &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5720_A0)
-		sc->bge_rx_discards += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_DROPS);
+		discards = CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_DROPS);
+	else
+		discards = 0;
 
-	sc->bge_rx_inerrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_ERRORS);
+	inerrors = CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_ERRORS);
 
-	ifp->if_collisions = sc->bge_tx_collisions;
-	ifp->if_ierrors = sc->bge_rx_discards + sc->bge_rx_inerrors;
+	ifp->if_collisions += collisions;
+	ifp->if_ierrors += discards + inerrors;
 
+	ucast = CSR_READ_4(sc, BGE_MAC_STATS +
+	    offsetof(struct bge_mac_stats_regs, ifHCOutUcastPkts));
+	mcast = CSR_READ_4(sc, BGE_MAC_STATS +
+	    offsetof(struct bge_mac_stats_regs, ifHCOutMulticastPkts));
+	bcast = CSR_READ_4(sc, BGE_MAC_STATS +
+	    offsetof(struct bge_mac_stats_regs, ifHCOutBroadcastPkts));
 	if (sc->bge_flags & BGE_RDMA_BUG) {
-		u_int32_t val, ucast, mcast, bcast;
-
-		ucast = CSR_READ_4(sc, BGE_MAC_STATS +
-		    offsetof(struct bge_mac_stats_regs, ifHCOutUcastPkts));
-		mcast = CSR_READ_4(sc, BGE_MAC_STATS +
-		    offsetof(struct bge_mac_stats_regs, ifHCOutMulticastPkts));
-		bcast = CSR_READ_4(sc, BGE_MAC_STATS +
-		    offsetof(struct bge_mac_stats_regs, ifHCOutBroadcastPkts));
-
 		/*
 		 * If controller transmitted more than BGE_NUM_RDMA_CHANNELS
 		 * frames, it's safe to disable workaround for DMA engine's
@@ -3858,6 +3923,15 @@ bge_stats_update_regs(struct bge_softc *sc)
 			sc->bge_flags &= ~BGE_RDMA_BUG;
 		}
 	}
+
+#if NKSTAT > 0
+	kstat_kv_u32(&kvs[bge_stat_out_ucast_pkt]) += ucast;
+	kstat_kv_u32(&kvs[bge_stat_out_mcast_pkt]) += mcast;
+	kstat_kv_u32(&kvs[bge_stat_out_bcast_pkt]) += bcast;
+	kstat_kv_u32(&kvs[bge_stat_collisions]) += collisions;
+	kstat_kv_u32(&kvs[bge_stat_if_in_drops]) += discards;
+	kstat_kv_u32(&kvs[bge_stat_if_in_errors]) += inerrors;
+#endif
 }
 
 void
@@ -4814,3 +4888,151 @@ bge_link_upd(struct bge_softc *sc)
 	    BGE_MACSTAT_CFG_CHANGED|BGE_MACSTAT_MI_COMPLETE|
 	    BGE_MACSTAT_LINK_CHANGED);
 }
+
+#if NKSTAT > 0
+
+struct bge_stat {
+	char			name[KSTAT_KV_NAMELEN];
+	enum kstat_kv_unit	unit;
+	bus_size_t		reg;
+};
+
+#define MACREG(_f) \
+	BGE_MAC_STATS + offsetof(struct bge_mac_stats_regs, _f)
+
+static const struct bge_stat bge_kstat_tpl[] = {
+	/* MAC stats */
+	[bge_stat_out_octets] = { "out octets", KSTAT_KV_U_BYTES,
+	    MACREG(ifHCOutOctets) },
+	[bge_stat_collisions] = { "collisions", KSTAT_KV_U_NONE, 0 },
+	[bge_stat_xon_sent] = { "xon sent", KSTAT_KV_U_NONE,
+	    MACREG(outXonSent) },
+	[bge_stat_xoff_sent] = { "xoff sent", KSTAT_KV_U_NONE,
+	    MACREG(outXonSent) },
+	[bge_stat_xmit_errors] = { "xmit errors", KSTAT_KV_U_NONE,
+	    MACREG(dot3StatsInternalMacTransmitErrors) },
+	[bge_stat_coll_frames] = { "coll frames", KSTAT_KV_U_PACKETS,
+	    MACREG(dot3StatsSingleCollisionFrames) },
+	[bge_stat_multicoll_frames] = { "multicoll frames", KSTAT_KV_U_PACKETS,
+	    MACREG(dot3StatsMultipleCollisionFrames) },
+	[bge_stat_deferred_xmit] = { "deferred xmit", KSTAT_KV_U_NONE,
+	    MACREG(dot3StatsDeferredTransmissions) },
+	[bge_stat_excess_coll] = { "excess coll", KSTAT_KV_U_NONE,
+	    MACREG(dot3StatsExcessiveCollisions) },
+	[bge_stat_late_coll] = { "late coll", KSTAT_KV_U_NONE,
+	    MACREG(dot3StatsLateCollisions) },
+	[bge_stat_out_ucast_pkt] = { "out ucast pkts", KSTAT_KV_U_PACKETS, 0 },
+	[bge_stat_out_mcast_pkt] = { "out mcast pkts", KSTAT_KV_U_PACKETS, 0 },
+	[bge_stat_out_bcast_pkt] = { "out bcast pkts", KSTAT_KV_U_PACKETS, 0 },
+	[bge_stat_in_octets] = { "in octets", KSTAT_KV_U_BYTES,
+	    MACREG(ifHCInOctets) },
+	[bge_stat_fragments] = { "fragments", KSTAT_KV_U_NONE,
+	    MACREG(etherStatsFragments) },
+	[bge_stat_in_ucast_pkt] = { "in ucast pkts", KSTAT_KV_U_PACKETS,
+	    MACREG(ifHCInUcastPkts) },
+	[bge_stat_in_mcast_pkt] = { "in mcast pkts", KSTAT_KV_U_PACKETS,
+	    MACREG(ifHCInMulticastPkts) },
+	[bge_stat_in_bcast_pkt] = { "in bcast pkts", KSTAT_KV_U_PACKETS,
+	    MACREG(ifHCInBroadcastPkts) },
+	[bge_stat_fcs_errors] = { "FCS errors", KSTAT_KV_U_NONE,
+	    MACREG(dot3StatsFCSErrors) },
+	[bge_stat_align_errors] = { "align errors", KSTAT_KV_U_NONE,
+	    MACREG(dot3StatsAlignmentErrors) },
+	[bge_stat_xon_rcvd] = { "xon rcvd", KSTAT_KV_U_NONE,
+	    MACREG(xonPauseFramesReceived) },
+	[bge_stat_xoff_rcvd] = { "xoff rcvd", KSTAT_KV_U_NONE,
+	    MACREG(xoffPauseFramesReceived) },
+	[bge_stat_ctrl_frame_rcvd] = { "ctrlframes rcvd", KSTAT_KV_U_NONE,
+	    MACREG(macControlFramesReceived) },
+	[bge_stat_xoff_entered] = { "xoff entered", KSTAT_KV_U_NONE,
+	    MACREG(xoffStateEntered) },
+	[bge_stat_too_long_frames] = { "too long frames", KSTAT_KV_U_NONE,
+	    MACREG(dot3StatsFramesTooLong) },
+	[bge_stat_jabbers] = { "jabbers", KSTAT_KV_U_NONE,
+	    MACREG(etherStatsJabbers) },
+	[bge_stat_too_short_pkts] = { "too short pkts", KSTAT_KV_U_NONE,
+	    MACREG(etherStatsUndersizePkts) },
+
+	/* Send Data Initiator stats */
+	[bge_stat_dma_rq_full] = { "DMA RQ full", KSTAT_KV_U_NONE,
+	    BGE_LOCSTATS_DMA_RQ_FULL },
+	[bge_stat_dma_hprq_full] = { "DMA HPRQ full", KSTAT_KV_U_NONE,
+	    BGE_LOCSTATS_DMA_HIPRIO_RQ_FULL },
+	[bge_stat_sdc_queue_full] = { "SDC queue full", KSTAT_KV_U_NONE,
+	    BGE_LOCSTATS_SDC_QUEUE_FULL },
+	[bge_stat_nic_sendprod_set] = { "sendprod set", KSTAT_KV_U_NONE,
+	    BGE_LOCSTATS_NIC_SENDPROD_SET },
+	[bge_stat_status_updated] = { "stats updated", KSTAT_KV_U_NONE,
+	    BGE_LOCSTATS_STATS_UPDATED },
+	[bge_stat_irqs] = { "irqs", KSTAT_KV_U_NONE, BGE_LOCSTATS_IRQS },
+	[bge_stat_avoided_irqs] = { "avoided irqs", KSTAT_KV_U_NONE,
+	    BGE_LOCSTATS_AVOIDED_IRQS },
+	[bge_stat_tx_thresh_hit] = { "tx thresh hit", KSTAT_KV_U_NONE,
+	    BGE_LOCSTATS_TX_THRESH_HIT },
+
+	/* Receive List Placement stats */
+	[bge_stat_filtdrop] = { "filtdrop", KSTAT_KV_U_NONE,
+	    BGE_RXLP_LOCSTAT_FILTDROP },
+	[bge_stat_dma_wrq_full] = { "DMA WRQ full", KSTAT_KV_U_NONE,
+	    BGE_RXLP_LOCSTAT_DMA_WRQ_FULL },
+	[bge_stat_dma_hpwrq_full] = { "DMA HPWRQ full", KSTAT_KV_U_NONE,
+	    BGE_RXLP_LOCSTAT_DMA_HPWRQ_FULL },
+	[bge_stat_out_of_bds] = { "out of BDs", KSTAT_KV_U_NONE,
+	    BGE_RXLP_LOCSTAT_OUT_OF_BDS },
+	[bge_stat_if_in_drops] = { "if in drops", KSTAT_KV_U_NONE, 0 },
+	[bge_stat_if_in_errors] = { "if in errors", KSTAT_KV_U_NONE, 0 },
+	[bge_stat_rx_thresh_hit] = { "rx thresh hit", KSTAT_KV_U_NONE,
+	    BGE_RXLP_LOCSTAT_RXTHRESH_HIT },
+};
+
+int
+bge_kstat_read(struct kstat *ks)
+{
+	struct bge_softc *sc = ks->ks_softc;
+	struct kstat_kv *kvs = ks->ks_data;
+	int i;
+
+	bge_stats_update_regs(sc);
+
+	for (i = 0; i < nitems(bge_kstat_tpl); i++) {
+		if (bge_kstat_tpl[i].reg != 0)
+			kstat_kv_u32(kvs) += CSR_READ_4(sc,
+			    bge_kstat_tpl[i].reg);
+		kvs++;
+	}
+
+	getnanouptime(&ks->ks_updated);
+	return 0;
+}
+
+void
+bge_kstat_attach(struct bge_softc *sc)
+{
+	struct kstat *ks;
+	struct kstat_kv *kvs;
+	int i;
+
+
+	ks = kstat_create(sc->bge_dev.dv_xname, 0, "bge-stats", 0,
+	    KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	kvs = mallocarray(nitems(bge_kstat_tpl), sizeof(*kvs), M_DEVBUF,
+	    M_ZERO | M_WAITOK);
+	for (i = 0; i < nitems(bge_kstat_tpl); i++) {
+		const struct bge_stat *tpl = &bge_kstat_tpl[i];
+		kstat_kv_unit_init(&kvs[i], tpl->name, KSTAT_KV_T_UINT32,
+		    tpl->unit);
+	}
+
+	kstat_set_mutex(ks, &sc->bge_kstat_mtx);
+	ks->ks_softc = sc;
+	ks->ks_data = kvs;
+	ks->ks_datalen = nitems(bge_kstat_tpl) * sizeof(*kvs);
+	ks->ks_read = bge_kstat_read;
+
+	sc->bge_kstat = ks;
+	kstat_install(ks);
+}
+#endif /* NKSTAT > 0 */

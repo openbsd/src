@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bgereg.h,v 1.135 2022/01/09 05:42:46 jsg Exp $	*/
+/*	$OpenBSD: if_bgereg.h,v 1.136 2023/07/04 10:22:39 jmatthew Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -2942,4 +2942,7 @@ struct bge_softc {
 	u_int32_t		bge_rx_overruns;
 	u_int32_t		bge_tx_collisions;
 	bus_dmamap_t		bge_txdma[BGE_TX_RING_CNT];
+
+	struct mutex		bge_kstat_mtx;
+	struct kstat		*bge_kstat;
 };
