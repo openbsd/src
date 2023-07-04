@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.67 2023/07/04 10:31:57 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.68 2023/07/04 10:53:42 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -269,8 +269,10 @@ ossl_ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
 
 static int
 ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
-    const BIGNUM *r, const BIGNUM *priv_key, const BIGNUM *order, BN_CTX *ctx)
+    const BIGNUM *r, const EC_KEY *key, BN_CTX *ctx)
 {
+	const EC_GROUP *group;
+	const BIGNUM *order, *priv_key;
 	BIGNUM *b, *binv, *be, *bxr;
 	BIGNUM *s = NULL;
 	int ret = 0;
@@ -278,6 +280,19 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
 	*out_s = NULL;
 
 	BN_CTX_start(ctx);
+
+	if ((group = EC_KEY_get0_group(key)) == NULL) {
+		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
+		goto err;
+	}
+	if ((order = EC_GROUP_get0_order(group)) == NULL) {
+		ECDSAerror(ERR_R_EC_LIB);
+		goto err;
+	}
+	if ((priv_key = EC_KEY_get0_private_key(key)) == NULL) {
+		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
+		goto err;
+	}
 
 	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -353,23 +368,12 @@ ECDSA_SIG *
 ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *key)
 {
-	const EC_GROUP *group;
 	BN_CTX *ctx = NULL;
 	BIGNUM *kinv = NULL, *r = NULL, *s = NULL;
 	BIGNUM *e;
-	const BIGNUM *order, *priv_key;
 	int caller_supplied_values = 0;
 	int attempts = 0;
 	ECDSA_SIG *sig = NULL;
-
-	if ((group = EC_KEY_get0_group(key)) == NULL) {
-		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
-		goto err;
-	}
-	if ((priv_key = EC_KEY_get0_private_key(key)) == NULL) {
-		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
-		goto err;
-	}
 
 	if ((ctx = BN_CTX_new()) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
@@ -380,11 +384,6 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 
 	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
-
-	if ((order = EC_GROUP_get0_order(group)) == NULL) {
-		ECDSAerror(ERR_R_EC_LIB);
-		goto err;
-	}
 
 	if (!ecdsa_prepare_digest(digest, digest_len, key, e))
 		goto err;
@@ -416,7 +415,7 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 		}
 
 		/* If s is non-NULL, we have a valid signature. */
-		if (!ecdsa_compute_s(&s, e, kinv, r, priv_key, order, ctx))
+		if (!ecdsa_compute_s(&s, e, kinv, r, key, ctx))
 			goto err;
 		if (s != NULL)
 			break;
