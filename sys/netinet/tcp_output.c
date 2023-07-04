@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.138 2023/05/15 16:34:56 bluhm Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.139 2023/07/04 10:48:19 bluhm Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -1295,7 +1295,6 @@ tcp_chopper(struct mbuf *m0, struct mbuf_list *ml, struct ifnet *ifp,
 
 		/* copy and adjust IP header, calculate checksum */
 		SET(m->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
-		mhth->th_sum = 0;
 		if (ip) {
 			struct ip *mhip;
 
@@ -1328,10 +1327,8 @@ tcp_chopper(struct mbuf *m0, struct mbuf_list *ml, struct ifnet *ifp,
 	}
 	/* adjust IP header, calculate checksum */
 	SET(m0->m_pkthdr.csum_flags, M_TCP_CSUM_OUT);
-	th->th_sum = 0;
 	if (ip) {
 		ip->ip_len = htons(m0->m_pkthdr.len);
-		ip->ip_sum = 0;
 		in_hdr_cksum_out(m0, ifp);
 		in_proto_cksum_out(m0, ifp);
 	}

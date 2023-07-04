@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.388 2023/05/22 16:08:34 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.389 2023/07/04 10:48:19 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -1801,7 +1801,7 @@ in_hdr_cksum_out(struct mbuf *m, struct ifnet *ifp)
 	struct ip *ip = mtod(m, struct ip *);
 
 	ip->ip_sum = 0;
-	if (ifp && in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4)) {
+	if (in_ifcap_cksum(m, ifp, IFCAP_CSUM_IPv4)) {
 		SET(m->m_pkthdr.csum_flags, M_IPV4_CSUM_OUT);
 	} else {
 		ipstat_inc(ips_outswcsum);
