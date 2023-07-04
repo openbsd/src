@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.c,v 1.48 2023/03/03 20:16:44 cheloha Exp $	*/
+/*	$OpenBSD: param.c,v 1.49 2023/07/04 09:47:51 jsg Exp $	*/
 /*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
@@ -81,16 +81,6 @@ int	maxprocess = NPROCESS;
 int	maxthread = 2 * NPROCESS;
 int	maxfiles = 5 * (NPROCESS + MAXUSERS) + 80;
 long	nmbclust = NMBCLUSTERS;
-
-#ifndef MBLOWAT
-#define MBLOWAT		16
-#endif
-int	mblowat = MBLOWAT;
-
-#ifndef MCLLOWAT
-#define MCLLOWAT	8
-#endif
-int	mcllowat = MCLLOWAT;
 
 #ifndef BUFCACHEPERCENT
 #define BUFCACHEPERCENT	20

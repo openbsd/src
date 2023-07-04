@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.258 2023/07/04 03:56:07 jsg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.259 2023/07/04 09:47:51 jsg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -400,8 +400,6 @@ struct mbuf_queue {
 struct pool;
 
 extern	long nmbclust;			/* limit on the # of clusters */
-extern	int mblowat;			/* mbuf low water mark */
-extern	int mcllowat;			/* mbuf cluster low water mark */
 extern	int max_linkhdr;		/* largest link-level header */
 extern	int max_protohdr;		/* largest protocol header */
 extern	int max_hdr;			/* largest link+protocol header */
