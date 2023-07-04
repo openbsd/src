@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.51 2021/10/15 15:01:28 naddy Exp $ */
+/*	$OpenBSD: parse.y,v 1.52 2023/07/04 02:56:11 dlg Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -594,7 +594,7 @@ interfaceoptsl	: PASSIVE		{ iface->cflags |= F_IFACE_PASSIVE; }
 
 			if ($1) {
 				strlcpy(iface->dependon, $1,
-				        sizeof(iface->dependon));
+				    sizeof(iface->dependon));
 				depend_if = if_findname($1);
 				iface->depend_ok = ifstate_is_up(depend_if);
 			} else {
