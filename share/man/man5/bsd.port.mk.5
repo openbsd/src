@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.577 2023/04/05 09:46:27 edd Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.578 2023/07/04 07:04:11 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 5 2023 $
+.Dd $Mdocdate: July 4 2023 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -4186,6 +4186,14 @@ can be certain there are no
 .Pa MESSAGEs
 or
 other files pertinent to the package.
+.It "===> Building from scratch in ..."
+Emitted when a build creates the
+.Pa ${WRKDIR}
+for a port.
+Used by
+.Xr dpb 1
+to separate clean builds from builds restarted after a crash
+for statistics collection.
 .It "Discovered old directory in ..."
 This message comes from
 .Xr update-plist 1 .
