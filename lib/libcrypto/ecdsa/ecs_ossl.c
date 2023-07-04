@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.68 2023/07/04 10:53:42 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.69 2023/07/04 14:57:05 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -122,6 +122,11 @@ ossl_ecdsa_sign(int type, const unsigned char *digest, int digest_len,
 	return ret;
 }
 
+/*
+ * FIPS 186-5, section 6.4.1, steps 3-8 and 11: Generate k, calculate r and
+ * kinv, and clear it. If r == 0, try again with a new random k.
+ */
+
 int
 ossl_ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
     BIGNUM **out_r)
@@ -193,7 +198,9 @@ ossl_ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
 	    !BN_set_bit(x, order_bits))
 		goto err;
 
+	/* Step 11: repeat until r != 0. */
 	do {
+		/* Step 3: generate random k. */
 		if (!bn_rand_interval(k, BN_value_one(), order)) {
 			ECDSAerror(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);
 			goto err;
@@ -220,22 +227,25 @@ ossl_ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
 
 		BN_set_flags(k, BN_FLG_CONSTTIME);
 
-		/* Compute r, the x-coordinate of G * k. */
+		/* Step 5: P = k * G. */
 		if (!EC_POINT_mul(group, point, k, NULL, NULL, ctx)) {
 			ECDSAerror(ERR_R_EC_LIB);
 			goto err;
 		}
+		/* Steps 6 (and 7): from P = (x, y) retain the x-coordinate. */
 		if (!EC_POINT_get_affine_coordinates(group, point, x, NULL,
 		    ctx)) {
 			ECDSAerror(ERR_R_EC_LIB);
 			goto err;
 		}
+		/* Step 8: r = x (mod order). */
 		if (!BN_nnmod(r, x, order, ctx)) {
 			ECDSAerror(ERR_R_BN_LIB);
 			goto err;
 		}
 	} while (BN_is_zero(r));
 
+	/* Step 4: calculate kinv. */
 	if (BN_mod_inverse_ct(k, k, order, ctx) == NULL) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
@@ -343,6 +353,7 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
 		goto err;
 	}
 
+	/* Step 11: if s == 0 start over. */
 	if (!BN_is_zero(s)) {
 		*out_s = s;
 		s = NULL;
@@ -363,6 +374,12 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
  * allowing 32 retries is amply enough.
  */
 #define ECDSA_MAX_SIGN_ITERATIONS		32
+
+/*
+ * FIPS 186-5: Section 6.4.1: ECDSA signature generation, steps 2-12.
+ * The caller provides the hash of the message, thus performs step 1.
+ * Step 10, zeroing k and kinv, is done by BN_free().
+ */
 
 ECDSA_SIG *
 ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
@@ -385,6 +402,7 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
+	/* Step 2: convert hash into an integer. */
 	if (!ecdsa_prepare_digest(digest, digest_len, key, e))
 		goto err;
 
@@ -407,6 +425,7 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 	}
 
 	do {
+		/* Steps 3-8: calculate kinv and r. */
 		if (!caller_supplied_values) {
 			if (!ECDSA_sign_setup(key, ctx, &kinv, &r)) {
 				ECDSAerror(ERR_R_ECDSA_LIB);
@@ -414,7 +433,9 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 			}
 		}
 
-		/* If s is non-NULL, we have a valid signature. */
+		/*
+		 * Steps 9 and 11: if s is non-NULL, we have a valid signature.
+		 */
 		if (!ecdsa_compute_s(&s, e, kinv, r, key, ctx))
 			goto err;
 		if (s != NULL)
@@ -431,6 +452,7 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 		}
 	} while (1);
 
+	/* Step 12: output (r, s). */
 	if ((sig = ECDSA_SIG_new()) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
