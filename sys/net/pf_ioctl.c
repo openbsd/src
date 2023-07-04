@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.411 2023/06/30 09:58:30 mvs Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.412 2023/07/04 02:01:55 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -177,7 +177,6 @@ int			 pf_rtlabel_add(struct pf_addr_wrap *);
 void			 pf_rtlabel_remove(struct pf_addr_wrap *);
 void			 pf_rtlabel_copyout(struct pf_addr_wrap *);
 
-uint64_t trans_ticket = 1;
 LIST_HEAD(, pf_trans)	pf_ioctl_trans = LIST_HEAD_INITIALIZER(pf_trans);
 
 void
