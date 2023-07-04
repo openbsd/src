@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.8 2023/04/24 01:33:32 dlg Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.9 2023/07/04 09:00:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -444,7 +444,7 @@ dwqe_mii_readreg(struct device *self, int phy, int reg)
 	int n;
 
 	dwqe_write(sc, GMAC_MAC_MDIO_ADDR,
-	    sc->sc_clk << GMAC_MAC_MDIO_ADDR_CR_SHIFT |
+	    (sc->sc_clk << GMAC_MAC_MDIO_ADDR_CR_SHIFT) |
 	    (phy << GMAC_MAC_MDIO_ADDR_PA_SHIFT) |
 	    (reg << GMAC_MAC_MDIO_ADDR_RDA_SHIFT) |
 	    GMAC_MAC_MDIO_ADDR_GOC_READ |
@@ -468,7 +468,7 @@ dwqe_mii_writereg(struct device *self, int phy, int reg, int val)
 
 	dwqe_write(sc, GMAC_MAC_MDIO_DATA, val);
 	dwqe_write(sc, GMAC_MAC_MDIO_ADDR,
-	    sc->sc_clk << GMAC_MAC_MDIO_ADDR_CR_SHIFT |
+	    (sc->sc_clk << GMAC_MAC_MDIO_ADDR_CR_SHIFT) |
 	    (phy << GMAC_MAC_MDIO_ADDR_PA_SHIFT) |
 	    (reg << GMAC_MAC_MDIO_ADDR_RDA_SHIFT) |
 	    GMAC_MAC_MDIO_ADDR_GOC_WRITE |
@@ -698,7 +698,6 @@ dwqe_rx_proc(struct dwqe_softc *sc)
 	bus_dmamap_sync(sc->sc_dmat, DWQE_DMA_MAP(sc->sc_rxring), 0,
 	    DWQE_DMA_LEN(sc->sc_rxring),
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
 }
 
 void
