@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.412 2023/07/04 02:01:55 jsg Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.413 2023/07/04 11:34:19 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1144,6 +1144,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETSRCNODES:
 		case DIOCIGETIFACES:
 		case DIOCGETSYNFLWATS:
+		case DIOCXEND:
 			break;
 		case DIOCRCLRTABLES:
 		case DIOCRADDTABLES:
@@ -2783,6 +2784,18 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		NET_UNLOCK();
 		free(table, M_PF, sizeof(*table));
 		free(ioe, M_PF, sizeof(*ioe));
+		break;
+	}
+
+	case DIOCXEND: {
+		u_int32_t	*ticket = (u_int32_t *)addr;
+		struct pf_trans	*t;
+
+		t = pf_find_trans(minor(dev), *ticket);
+		if (t != NULL)
+			pf_rollback_trans(t);
+		else
+			error = ENXIO;
 		break;
 	}
 

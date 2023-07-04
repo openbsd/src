@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.3 2023/04/19 12:58:15 jsg Exp $	*/
+/*	$OpenBSD: mib.c,v 1.4 2023/07/04 11:34:19 sashan Exp $	*/
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -1183,6 +1183,8 @@ struct carpif {
 	struct kif	 kif;
 };
 
+void	 mib_close_pftrans(struct agentx_varbind *, u_int32_t);
+
 void	 mib_pfinfo(struct agentx_varbind *);
 void	 mib_pfcounters(struct agentx_varbind *);
 void	 mib_pfscounters(struct agentx_varbind *);
@@ -1745,6 +1747,17 @@ mib_pftableaddrs(struct agentx_varbind *vb)
 }
 
 void
+mib_close_pftrans(struct agentx_varbind *vb, u_int32_t ticket)
+{
+	extern int		devpf;
+
+	if (ioctl(devpf, DIOCXEND, &ticket) == -1) {
+		log_warn("DIOCXEND");
+		agentx_varbind_error(vb);
+	}
+}
+
+void
 mib_pflabelnum(struct agentx_varbind *vb)
 {
 	struct pfioc_rule	 pr;
@@ -1765,6 +1778,7 @@ mib_pflabelnum(struct agentx_varbind *vb)
 		if (ioctl(devpf, DIOCGETRULE, &pr) == -1) {
 			log_warn("DIOCGETRULE");
 			agentx_varbind_error(vb);
+			mib_close_pftrans(vb, pr.ticket);
 			return;
 		}
 
@@ -1773,6 +1787,8 @@ mib_pflabelnum(struct agentx_varbind *vb)
 	}
 
 	agentx_varbind_integer(vb, lnr);
+
+	mib_close_pftrans(vb, pr.ticket);
 }
 
 void
@@ -1818,6 +1834,7 @@ mib_pflabels(struct agentx_varbind *vb)
 		if (ioctl(devpf, DIOCGETRULE, &pr) == -1) {
 			log_warn("DIOCGETRULE");
 			agentx_varbind_error(vb);
+			mib_close_pftrans(vb, pr.ticket);
 			return;
 		}
 
@@ -1826,6 +1843,8 @@ mib_pflabels(struct agentx_varbind *vb)
 			break;
 		}
 	}
+
+	mib_close_pftrans(vb, pr.ticket);
 
 	if (r == NULL) {
 		agentx_varbind_notfound(vb);

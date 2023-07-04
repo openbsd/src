@@ -1,4 +1,4 @@
-/* $OpenBSD: pftop.c,v 1.45 2019/10/17 21:54:29 millert Exp $	 */
+/* $OpenBSD: pftop.c,v 1.46 2023/07/04 11:34:19 sashan Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar
  * Copyright (c) 2001 Daniel Hartmeier
@@ -942,6 +942,13 @@ add_rule_alloc(u_int32_t nr)
 
 int label_length;
 
+void
+close_pf_trans(u_int32_t ticket)
+{
+	if (ioctl(pf_dev, DIOCXEND, &ticket) == -1)
+		error("DIOCXEND: %s", strerror(errno));
+}
+
 int
 read_anchor_rules(char *anchor)
 {
@@ -968,6 +975,7 @@ read_anchor_rules(char *anchor)
 		pr.nr = nr;
 		if (ioctl(pf_dev, DIOCGETRULE, &pr) == -1) {
 			error("DIOCGETRULE: %s", strerror(errno));
+			close_pf_trans(pr.ticket);
 			return (-1);
 		}
 		/* XXX overload pr.anchor, to store a pointer to
@@ -978,6 +986,8 @@ read_anchor_rules(char *anchor)
 			label_length = len;
 		rules[off + nr] = pr.rule;
 	}
+
+	close_pf_trans(pr.ticket);
 
 	return (num);
 }

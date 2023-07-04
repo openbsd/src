@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.531 2023/05/26 12:13:26 kn Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.532 2023/07/04 11:34:19 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1573,6 +1573,7 @@ struct pfioc_synflwats {
 #define DIOCSETSYNFLWATS	_IOWR('D', 97, struct pfioc_synflwats)
 #define DIOCSETSYNCOOKIES	_IOWR('D', 98, u_int8_t)
 #define DIOCGETSYNFLWATS	_IOWR('D', 99, struct pfioc_synflwats)
+#define DIOCXEND	_IOWR('D', 100, u_int32_t)
 
 #ifdef _KERNEL
 
