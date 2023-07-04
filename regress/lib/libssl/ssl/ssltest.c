@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.40 2023/07/02 17:21:32 beck Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.41 2023/07/04 08:47:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -254,6 +254,7 @@ cb_server_alpn(SSL *s, const unsigned char **out, unsigned char *outlen,
 	 * Make a copy of the selected protocol which will be freed in
 	 * verify_alpn.
 	 */
+	free(alpn_selected);
 	if ((alpn_selected = malloc(*outlen)) == NULL) {
 		fprintf(stderr, "malloc failed\n");
 		abort();
