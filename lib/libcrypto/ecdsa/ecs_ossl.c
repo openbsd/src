@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.64 2023/07/04 10:14:37 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.65 2023/07/04 10:23:34 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -98,17 +98,17 @@ ecdsa_prepare_digest(const unsigned char *digest, int digest_len,
 
 int
 ossl_ecdsa_sign(int type, const unsigned char *digest, int digest_len,
-    unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
+    unsigned char *signature, unsigned int *signature_len, const BIGNUM *kinv,
     const BIGNUM *r, EC_KEY *eckey)
 {
-	ECDSA_SIG *s;
+	ECDSA_SIG *sig;
 	int outlen = 0;
 	int ret = 0;
 
-	if ((s = ECDSA_do_sign_ex(digest, digest_len, kinv, r, eckey)) == NULL)
+	if ((sig = ECDSA_do_sign_ex(digest, digest_len, kinv, r, eckey)) == NULL)
 		goto err;
 
-	if ((outlen = i2d_ECDSA_SIG(s, &sig)) < 0) {
+	if ((outlen = i2d_ECDSA_SIG(sig, &signature)) < 0) {
 		outlen = 0;
 		goto err;
 	}
@@ -116,8 +116,8 @@ ossl_ecdsa_sign(int type, const unsigned char *digest, int digest_len,
 	ret = 1;
 
  err:
-	*siglen = outlen;
-	ECDSA_SIG_free(s);
+	*signature_len = outlen;
+	ECDSA_SIG_free(sig);
 
 	return ret;
 }
@@ -665,7 +665,7 @@ ECDSA_size(const EC_KEY *r)
 {
 	const EC_GROUP *group;
 	const BIGNUM *order = NULL;
-	ECDSA_SIG signature;
+	ECDSA_SIG sig;
 	int ret = 0;
 
 	if (r == NULL)
@@ -677,10 +677,10 @@ ECDSA_size(const EC_KEY *r)
 	if ((order = EC_GROUP_get0_order(group)) == NULL)
 		goto err;
 
-	signature.r = (BIGNUM *)order;
-	signature.s = (BIGNUM *)order;
+	sig.r = (BIGNUM *)order;
+	sig.s = (BIGNUM *)order;
 
-	if ((ret = i2d_ECDSA_SIG(&signature, NULL)) < 0)
+	if ((ret = i2d_ECDSA_SIG(&sig, NULL)) < 0)
 		ret = 0;
 
  err:
