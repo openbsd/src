@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.65 2023/07/04 10:23:34 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.66 2023/07/04 10:26:47 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -102,21 +102,21 @@ ossl_ecdsa_sign(int type, const unsigned char *digest, int digest_len,
     const BIGNUM *r, EC_KEY *eckey)
 {
 	ECDSA_SIG *sig;
-	int outlen = 0;
+	int out_len = 0;
 	int ret = 0;
 
 	if ((sig = ECDSA_do_sign_ex(digest, digest_len, kinv, r, eckey)) == NULL)
 		goto err;
 
-	if ((outlen = i2d_ECDSA_SIG(sig, &signature)) < 0) {
-		outlen = 0;
+	if ((out_len = i2d_ECDSA_SIG(sig, &signature)) < 0) {
+		out_len = 0;
 		goto err;
 	}
 
 	ret = 1;
 
  err:
-	*signature_len = outlen;
+	*signature_len = out_len;
 	ECDSA_SIG_free(sig);
 
 	return ret;
@@ -460,7 +460,7 @@ ossl_ecdsa_verify(int type, const unsigned char *digest, int digest_len,
 	ECDSA_SIG *s;
 	unsigned char *der = NULL;
 	const unsigned char *p;
-	int derlen = 0;
+	int der_len = 0;
 	int ret = -1;
 
 	if ((s = ECDSA_SIG_new()) == NULL)
@@ -471,15 +471,15 @@ ossl_ecdsa_verify(int type, const unsigned char *digest, int digest_len,
 		goto err;
 
 	/* Ensure signature uses DER and doesn't have trailing garbage */
-	if ((derlen = i2d_ECDSA_SIG(s, &der)) != sig_len)
+	if ((der_len = i2d_ECDSA_SIG(s, &der)) != sig_len)
 		goto err;
-	if (timingsafe_memcmp(sigbuf, der, derlen))
+	if (timingsafe_memcmp(sigbuf, der, der_len))
 		goto err;
 
 	ret = ECDSA_do_verify(digest, digest_len, s, eckey);
 
  err:
-	freezero(der, derlen);
+	freezero(der, der_len);
 	ECDSA_SIG_free(s);
 
 	return ret;
@@ -607,23 +607,23 @@ ECDSA_do_sign_ex(const unsigned char *digest, int digest_len,
 
 int
 ECDSA_sign(int type, const unsigned char *digest, int digest_len,
-    unsigned char *sig, unsigned int *siglen, EC_KEY *eckey)
+    unsigned char *signature, unsigned int *signature_len, EC_KEY *eckey)
 {
-	return ECDSA_sign_ex(type, digest, digest_len, sig, siglen, NULL, NULL,
-	    eckey);
+	return ECDSA_sign_ex(type, digest, digest_len, signature, signature_len,
+	    NULL, NULL, eckey);
 }
 
 int
 ECDSA_sign_ex(int type, const unsigned char *digest, int digest_len,
-    unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
+    unsigned char *signature, unsigned int *signature_len, const BIGNUM *kinv,
     const BIGNUM *r, EC_KEY *eckey)
 {
 	if (eckey->meth->sign == NULL) {
 		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
 		return 0;
 	}
-	return eckey->meth->sign(type, digest, digest_len, sig, siglen, kinv, r,
-	    eckey);
+	return eckey->meth->sign(type, digest, digest_len, signature,
+	    signature_len, kinv, r, eckey);
 }
 
 int
