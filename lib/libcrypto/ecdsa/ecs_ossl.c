@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.62 2023/07/04 07:38:31 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.63 2023/07/04 10:06:36 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -69,31 +69,31 @@
 #include "ec_local.h"
 #include "ecs_local.h"
 
-static int ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len,
-    const BIGNUM *order, BIGNUM *ret);
-
+/*
+ * FIPS 186-5, section 6.4.1, step 2: convert hashed message into an integer.
+ * Use the order_bits leftmost bits if it exceeds the group order.
+ */
 static int
-ecdsa_prepare_digest(const unsigned char *dgst, int dgst_len,
-    const BIGNUM *order, BIGNUM *ret)
+ecdsa_prepare_digest(const unsigned char *digest, int digest_len,
+    const EC_KEY *key, BIGNUM *e)
 {
-	int dgst_bits, order_bits;
+	const EC_GROUP *group;
+	int digest_bits, order_bits;
 
-	if (!BN_bin2bn(dgst, dgst_len, ret)) {
+	if (!BN_bin2bn(digest, digest_len, e)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		return 0;
 	}
 
-	/* FIPS 186-3 6.4: Use order_bits leftmost bits if digest is too long */
-	dgst_bits = 8 * dgst_len;
-	order_bits = BN_num_bits(order);
-	if (dgst_bits > order_bits) {
-		if (!BN_rshift(ret, ret, dgst_bits - order_bits)) {
-			ECDSAerror(ERR_R_BN_LIB);
-			return 0;
-		}
-	}
+	if ((group = EC_KEY_get0_group(key)) == NULL)
+		return 0;
+	order_bits = EC_GROUP_order_bits(group);
 
-	return 1;
+	digest_bits = 8 * digest_len;
+	if (digest_bits <= order_bits)
+		return 1;
+
+	return BN_rshift(e, e, digest_bits - order_bits);
 }
 
 int
@@ -260,17 +260,17 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 }
 
 /*
- * FIPS 186-5, section 6.4.1, step 9: compute s = inv(k)(m + xr) mod order.
+ * FIPS 186-5, section 6.4.1, step 9: compute s = inv(k)(e + xr) mod order.
  * In order to reduce the possibility of a side-channel attack, the following
  * is calculated using a random blinding value b in [1, order):
- * s = inv(b)(bm + bxr)inv(k) mod order.
+ * s = inv(b)(be + bxr)inv(k) mod order.
  */
 
 static int
-ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *m, const BIGNUM *kinv,
+ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
     const BIGNUM *r, const BIGNUM *priv_key, const BIGNUM *order, BN_CTX *ctx)
 {
-	BIGNUM *b, *binv, *bm, *bxr;
+	BIGNUM *b, *binv, *be, *bxr;
 	BIGNUM *s = NULL;
 	int ret = 0;
 
@@ -282,7 +282,7 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *m, const BIGNUM *kinv,
 		goto err;
 	if ((binv = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((bm = BN_CTX_get(ctx)) == NULL)
+	if ((be = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((bxr = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -308,20 +308,20 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *m, const BIGNUM *kinv,
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!BN_mod_mul(bm, b, m, order, ctx)) {
+	if (!BN_mod_mul(be, b, e, order, ctx)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!BN_mod_add(s, bm, bxr, order, ctx)) {
+	if (!BN_mod_add(s, be, bxr, order, ctx)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	/* s = b(m + xr)k^-1 */
+	/* s = b(e + xr)k^-1 */
 	if (!BN_mod_mul(s, s, kinv, order, ctx)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	/* s = (m + xr)k^-1 */
+	/* s = (e + xr)k^-1 */
 	if (!BN_mod_mul(s, s, binv, order, ctx)) {
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
@@ -355,7 +355,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	const EC_GROUP *group;
 	BN_CTX *ctx = NULL;
 	BIGNUM *kinv = NULL, *r = NULL, *s = NULL;
-	BIGNUM *m;
+	BIGNUM *e;
 	const BIGNUM *order, *priv_key;
 	int caller_supplied_values = 0;
 	int attempts = 0;
@@ -377,7 +377,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 
 	BN_CTX_start(ctx);
 
-	if ((m = BN_CTX_get(ctx)) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if ((order = EC_GROUP_get0_order(group)) == NULL) {
@@ -385,7 +385,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 		goto err;
 	}
 
-	if (!ecdsa_prepare_digest(dgst, dgst_len, order, m))
+	if (!ecdsa_prepare_digest(dgst, dgst_len, eckey, e))
 		goto err;
 
 	if (in_kinv != NULL && in_r != NULL) {
@@ -415,7 +415,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 		}
 
 		/* If s is non-NULL, we have a valid signature. */
-		if (!ecdsa_compute_s(&s, m, kinv, r, priv_key, order, ctx))
+		if (!ecdsa_compute_s(&s, e, kinv, r, priv_key, order, ctx))
 			goto err;
 		if (s != NULL)
 			break;
@@ -493,7 +493,7 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 	EC_POINT *point = NULL;
 	const BIGNUM *order;
 	BN_CTX *ctx = NULL;
-	BIGNUM *u1, *u2, *m, *x;
+	BIGNUM *u1, *u2, *e, *x;
 	int ret = -1;
 
 	if (eckey == NULL || sig == NULL) {
@@ -520,7 +520,7 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 		goto err;
 	if ((u2 = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((m = BN_CTX_get(ctx)) == NULL)
+	if ((e = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -542,14 +542,14 @@ ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len, const ECDSA_SIG *
 		goto err;
 	}
 
-	if (!ecdsa_prepare_digest(dgst, dgst_len, order, m))
+	if (!ecdsa_prepare_digest(dgst, dgst_len, eckey, e))
 		goto err;
 
 	if (BN_mod_inverse_ct(u2, sig->s, order, ctx) == NULL) { /* w = inv(s) */
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	if (!BN_mod_mul(u1, m, u2, order, ctx)) {		/* u1 = mw */
+	if (!BN_mod_mul(u1, e, u2, order, ctx)) {		/* u1 = ew */
 		ECDSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
