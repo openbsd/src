@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.61 2023/07/03 14:51:09 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.62 2023/07/04 07:38:31 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -260,6 +260,88 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 }
 
 /*
+ * FIPS 186-5, section 6.4.1, step 9: compute s = inv(k)(m + xr) mod order.
+ * In order to reduce the possibility of a side-channel attack, the following
+ * is calculated using a random blinding value b in [1, order):
+ * s = inv(b)(bm + bxr)inv(k) mod order.
+ */
+
+static int
+ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *m, const BIGNUM *kinv,
+    const BIGNUM *r, const BIGNUM *priv_key, const BIGNUM *order, BN_CTX *ctx)
+{
+	BIGNUM *b, *binv, *bm, *bxr;
+	BIGNUM *s = NULL;
+	int ret = 0;
+
+	*out_s = NULL;
+
+	BN_CTX_start(ctx);
+
+	if ((b = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((binv = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bm = BN_CTX_get(ctx)) == NULL)
+		goto err;
+	if ((bxr = BN_CTX_get(ctx)) == NULL)
+		goto err;
+
+	if ((s = BN_new()) == NULL)
+		goto err;
+
+	if (!bn_rand_interval(b, BN_value_one(), order)) {
+		ECDSAerror(ERR_R_BN_LIB);
+		goto err;
+	}
+
+	if (BN_mod_inverse_ct(binv, b, order, ctx) == NULL) {
+		ECDSAerror(ERR_R_BN_LIB);
+		goto err;
+	}
+
+	if (!BN_mod_mul(bxr, b, priv_key, order, ctx)) {
+		ECDSAerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if (!BN_mod_mul(bxr, bxr, r, order, ctx)) {
+		ECDSAerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if (!BN_mod_mul(bm, b, m, order, ctx)) {
+		ECDSAerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if (!BN_mod_add(s, bm, bxr, order, ctx)) {
+		ECDSAerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	/* s = b(m + xr)k^-1 */
+	if (!BN_mod_mul(s, s, kinv, order, ctx)) {
+		ECDSAerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	/* s = (m + xr)k^-1 */
+	if (!BN_mod_mul(s, s, binv, order, ctx)) {
+		ECDSAerror(ERR_R_BN_LIB);
+		goto err;
+	}
+
+	if (!BN_is_zero(s)) {
+		*out_s = s;
+		s = NULL;
+	}
+
+	ret = 1;
+
+ err:
+	BN_CTX_end(ctx);
+	BN_free(s);
+
+	return ret;
+}
+
+/*
  * It is too expensive to check curve parameters on every sign operation.
  * Instead, cap the number of retries. A single retry is very unlikely, so
  * allowing 32 retries is amply enough.
@@ -273,7 +355,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 	const EC_GROUP *group;
 	BN_CTX *ctx = NULL;
 	BIGNUM *kinv = NULL, *r = NULL, *s = NULL;
-	BIGNUM *b, *binv, *bm, *bxr, *m;
+	BIGNUM *m;
 	const BIGNUM *order, *priv_key;
 	int caller_supplied_values = 0;
 	int attempts = 0;
@@ -288,15 +370,6 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 		goto err;
 	}
 
-	if ((r = BN_new()) == NULL) {
-		ECDSAerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	if ((s = BN_new()) == NULL) {
-		ECDSAerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
 	if ((ctx = BN_CTX_new()) == NULL) {
 		ECDSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
@@ -304,14 +377,6 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 
 	BN_CTX_start(ctx);
 
-	if ((b = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((binv = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((bm = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((bxr = BN_CTX_get(ctx)) == NULL)
-		goto err;
 	if ((m = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
@@ -335,7 +400,7 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 			ECDSAerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		if (!bn_copy(r, in_r)) {
+		if ((r = BN_dup(in_r)) == NULL) {
 			ECDSAerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
@@ -349,56 +414,10 @@ ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
 			}
 		}
 
-		/*
-		 * Compute:
-		 *
-		 *  s = inv(k)(m + xr) mod order
-		 *
-		 * In order to reduce the possibility of a side-channel attack,
-		 * the following is calculated using a blinding value:
-		 *
-		 *  s = inv(b)(bm + bxr)inv(k) mod order
-		 *
-		 * where b is a random value in the range [1, order).
-		 */
-
-		if (!bn_rand_interval(b, BN_value_one(), order)) {
-			ECDSAerror(ERR_R_BN_LIB);
+		/* If s is non-NULL, we have a valid signature. */
+		if (!ecdsa_compute_s(&s, m, kinv, r, priv_key, order, ctx))
 			goto err;
-		}
-
-		if (BN_mod_inverse_ct(binv, b, order, ctx) == NULL) {
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-
-		if (!BN_mod_mul(bxr, b, priv_key, order, ctx)) { /* bx */
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-		if (!BN_mod_mul(bxr, bxr, r, order, ctx)) { /* bxr */
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-		if (!BN_mod_mul(bm, b, m, order, ctx)) { /* bm */
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-		if (!BN_mod_add(s, bm, bxr, order, ctx)) { /* s = bm + bxr */
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-		if (!BN_mod_mul(s, s, kinv, order, ctx)) { /* s = b(m + xr)k^-1 */
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-		if (!BN_mod_mul(s, s, binv, order, ctx)) { /* s = (m + xr)k^-1 */
-			ECDSAerror(ERR_R_BN_LIB);
-			goto err;
-		}
-
-		/* If s is non-zero, we have a valid signature. */
-		if (!BN_is_zero(s))
+		if (s != NULL)
 			break;
 
 		if (caller_supplied_values) {
