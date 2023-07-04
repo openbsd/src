@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcsmptp.c,v 1.1 2023/05/19 21:26:10 patrick Exp $	*/
+/*	$OpenBSD: qcsmptp.c,v 1.2 2023/07/04 14:32:21 patrick Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *
@@ -182,6 +182,18 @@ qcsmptp_deferred(struct device *self)
 		return;
 	}
 
+	if (qcsmem_alloc(sc->sc_remote_pid, sc->sc_smem_id[0],
+	    sizeof(*sc->sc_in)) != 0) {
+		printf(": can't alloc smp2p item\n");
+		return;
+	}
+
+	sc->sc_in = qcsmem_get(sc->sc_remote_pid, sc->sc_smem_id[0], NULL);
+	if (sc->sc_in == NULL) {
+		printf(": can't get smp2p item\n");
+		return;
+	}
+
 	if (qcsmem_alloc(sc->sc_remote_pid, sc->sc_smem_id[1],
 	    sizeof(*sc->sc_out)) != 0) {
 		printf(": can't alloc smp2p item\n");
@@ -253,15 +265,6 @@ qcsmptp_intr(void *arg)
 	struct qcsmptp_intrhand *ih;
 	uint32_t changed, val;
 	int do_ack = 0, i;
-
-	/* Inbound item exists as soon as remoteproc is up. */
-	if (sc->sc_in == NULL)
-		sc->sc_in = qcsmem_get(sc->sc_remote_pid,
-		    sc->sc_smem_id[0], NULL);
-	if (sc->sc_in == NULL) {
-		printf("%s: can't get smp2p item\n", sc->sc_dev.dv_xname);
-		return 1;
-	}
 
 	/* Do initial feature negotiation if inbound is new. */
 	if (!sc->sc_negotiated) {
