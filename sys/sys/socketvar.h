@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.119 2023/01/27 18:46:34 mvs Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.120 2023/07/04 22:28:24 mvs Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -273,9 +273,16 @@ sbfree(struct socket *so, struct sockbuf *sb, struct mbuf *m)
 }
 
 /*
+ * Flags to sblock()
+ */
+#define SBL_WAIT	0x01	/* Wait if lock not immediately available. */
+#define SBL_NOINTR	0x02	/* Enforce non-interruptible sleep. */
+
+/*
  * Set lock on sockbuf sb; sleep if lock is already held.
- * Unless SB_NOINTR is set on sockbuf, sleep is interruptible.
- * Returns error without lock if sleep is interrupted.
+ * Unless SB_NOINTR is set on sockbuf or SBL_NOINTR passed,
+ * sleep is interruptible. Returns error without lock if
+ * sleep is interrupted.
  */
 int sblock(struct socket *, struct sockbuf *, int);
 

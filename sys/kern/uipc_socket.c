@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.304 2023/06/30 11:52:11 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.305 2023/07/04 22:28:24 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -524,7 +524,7 @@ sodisconnect(struct socket *so)
 
 int m_getuio(struct mbuf **, int, long, struct uio *);
 
-#define	SBLOCKWAIT(f)	(((f) & MSG_DONTWAIT) ? M_NOWAIT : M_WAITOK)
+#define	SBLOCKWAIT(f)	(((f) & MSG_DONTWAIT) ? 0 : SBL_WAIT)
 /*
  * Send on a socket.
  * If send must go all at once and message is larger than
@@ -1219,9 +1219,8 @@ sorflush(struct socket *so)
 	const struct protosw *pr = so->so_proto;
 	int error;
 
-	sb->sb_flags |= SB_NOINTR;
-	error = sblock(so, sb, M_WAITOK);
-	/* with SB_NOINTR and M_WAITOK sblock() must not fail */
+	error = sblock(so, sb, SBL_WAIT | SBL_NOINTR);
+	/* with SBL_WAIT and SLB_NOINTR sblock() must not fail */
 	KASSERT(error == 0);
 	socantrcvmore(so);
 	m = sb->sb_mb;
@@ -1290,7 +1289,7 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	/* If no fd is given, unsplice by removing existing link. */
 	if (fd < 0) {
 		/* Lock receive buffer. */
-		if ((error = sblock(so, &so->so_rcv, M_WAITOK)) != 0) {
+		if ((error = sblock(so, &so->so_rcv, SBL_WAIT)) != 0) {
 			return (error);
 		}
 		if (so->so_sp->ssp_socket)
@@ -1323,10 +1322,10 @@ sosplice(struct socket *so, int fd, off_t max, struct timeval *tv)
 	}
 
 	/* Lock both receive and send buffer. */
-	if ((error = sblock(so, &so->so_rcv, M_WAITOK)) != 0) {
+	if ((error = sblock(so, &so->so_rcv, SBL_WAIT)) != 0) {
 		goto frele;
 	}
-	if ((error = sblock(so, &sosp->so_snd, M_WAITOK)) != 0) {
+	if ((error = sblock(so, &sosp->so_snd, SBL_WAIT)) != 0) {
 		sbunlock(so, &so->so_rcv);
 		goto frele;
 	}

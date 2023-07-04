@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.136 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.137 2023/07/04 22:28:24 mvs Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -494,9 +494,9 @@ sbwait(struct socket *so, struct sockbuf *sb)
 }
 
 int
-sblock(struct socket *so, struct sockbuf *sb, int wait)
+sblock(struct socket *so, struct sockbuf *sb, int flags)
 {
-	int error, prio = (sb->sb_flags & SB_NOINTR) ? PSOCK : PSOCK | PCATCH;
+	int error, prio = PSOCK;
 
 	soassertlocked(so);
 
@@ -504,8 +504,10 @@ sblock(struct socket *so, struct sockbuf *sb, int wait)
 		sb->sb_flags |= SB_LOCK;
 		return (0);
 	}
-	if (wait & M_NOWAIT)
+	if ((flags & SBL_WAIT) == 0)
 		return (EWOULDBLOCK);
+	if (!(flags & SBL_NOINTR || sb->sb_flags & SB_NOINTR))
+		prio |= PCATCH;
 
 	while (sb->sb_flags & SB_LOCK) {
 		sb->sb_flags |= SB_WANT;
