@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.192 2023/06/20 14:50:05 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.193 2023/07/04 13:58:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -591,7 +591,8 @@ sub makesum_plist($self, $state, $plist)
 	my $fname = $self->fullname;
 	for (my $i = 1; ; $i++) {
 		if (-e "$state->{base}/$fname-$i") {
-			my $e = OpenBSD::PackingElement::File->add($plist, $self->name."-".$i);
+			my $e = OpenBSD::PackingElement::File->add($plist, 
+			    $self->name."-".$i);
 			$e->compute_checksum($e, $state, $state->{base});
 		} else {
 			last;
@@ -701,7 +702,9 @@ sub avert_duplicates_and_other_checks($self, $state)
 	} elsif ($self->spec->is_valid) {
 		my @m = $self->spec->filter($self->{def});
 		if (@m == 0) {
-			$state->error("\@#1 #2\n  pattern #3 doesn't match default #4\n",
+			$state->error(
+			    "\@#1 #2\n".
+			    "  pattern #3 doesn't match default #4\n",
 			    $self->keyword, $self->stringize,
 			    $self->{pattern}, $self->{def});
 		}
@@ -766,7 +769,9 @@ sub check_version($self, $state, $unsubst)
 	my @l  = $self->parse($self->name);
 	if (defined $l[0]) {
 		if (!$unsubst =~ m/\$\{LIB$l[0]_VERSION\}/) {
-			$state->error("Incorrectly versioned shared library: #1", $unsubst);
+			$state->error(
+			    "Incorrectly versioned shared library: #1", 
+			    $unsubst);
 		}
 	} else {
 		$state->error("Invalid shared library #1", $unsubst);

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.287 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.288 2023/07/04 13:58:01 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1950,7 +1950,7 @@ sub _iso8601_to_time($s)
 {
 	if ($s =~ m/^(\d{4})\-(\d{2})\-(\d{2})T(\d{2})\:(\d{2})\:(\d{2})Z$/) {
 		my ($year, $month, $day, $hour, $min, $sec) =
-			($1 - 1900, $2-1, $3, $4, $5, $6);
+		    ($1 - 1900, $2-1, $3, $4, $5, $6);
 		require POSIX;
 		my $oldtz = $ENV{TZ};
 		$ENV{TZ} = 'UTC';
