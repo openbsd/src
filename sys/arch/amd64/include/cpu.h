@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.154 2022/11/29 21:41:39 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.155 2023/07/04 17:29:32 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -112,10 +112,8 @@ struct cpu_info {
 #define ci_PAGEALIGN	ci_dev
 	struct device *ci_dev;		/* [I] */
 	struct cpu_info *ci_self;	/* [I] */
-	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* [I] */
 
-	struct proc *ci_curproc;	/* [o] */
 	u_int ci_cpuid;			/* [I] */
 	u_int ci_apicid;		/* [I] */
 	u_int ci_acpi_proc_id;		/* [I] */
@@ -128,6 +126,9 @@ struct cpu_info {
 	/* bits for mitigating Micro-architectural Data Sampling */
 	char		ci_mds_tmp[32];	/* [o] 32byte aligned */
 	void		*ci_mds_buf;	/* [I] */
+
+	struct proc *ci_curproc;	/* [o] */
+	struct schedstate_percpu ci_schedstate; /* scheduler state */
 
 	struct pmap *ci_proc_pmap;	/* last userspace pmap */
 	struct pcb *ci_curpcb;		/* [o] */
