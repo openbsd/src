@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.66 2023/07/04 10:26:47 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.67 2023/07/04 10:31:57 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -99,13 +99,13 @@ ecdsa_prepare_digest(const unsigned char *digest, int digest_len,
 int
 ossl_ecdsa_sign(int type, const unsigned char *digest, int digest_len,
     unsigned char *signature, unsigned int *signature_len, const BIGNUM *kinv,
-    const BIGNUM *r, EC_KEY *eckey)
+    const BIGNUM *r, EC_KEY *key)
 {
 	ECDSA_SIG *sig;
 	int out_len = 0;
 	int ret = 0;
 
-	if ((sig = ECDSA_do_sign_ex(digest, digest_len, kinv, r, eckey)) == NULL)
+	if ((sig = ECDSA_do_sign_ex(digest, digest_len, kinv, r, key)) == NULL)
 		goto err;
 
 	if ((out_len = i2d_ECDSA_SIG(sig, &signature)) < 0) {
@@ -123,7 +123,7 @@ ossl_ecdsa_sign(int type, const unsigned char *digest, int digest_len,
 }
 
 int
-ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
+ossl_ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
     BIGNUM **out_r)
 {
 	const EC_GROUP *group;
@@ -141,11 +141,11 @@ ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
 	BN_free(*out_r);
 	*out_r = NULL;
 
-	if (eckey == NULL) {
+	if (key == NULL) {
 		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
-	if ((group = EC_KEY_get0_group(eckey)) == NULL) {
+	if ((group = EC_KEY_get0_group(key)) == NULL) {
 		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
@@ -351,7 +351,7 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
 
 ECDSA_SIG *
 ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
-    const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey)
+    const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *key)
 {
 	const EC_GROUP *group;
 	BN_CTX *ctx = NULL;
@@ -362,11 +362,11 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 	int attempts = 0;
 	ECDSA_SIG *sig = NULL;
 
-	if ((group = EC_KEY_get0_group(eckey)) == NULL) {
+	if ((group = EC_KEY_get0_group(key)) == NULL) {
 		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
-	if ((priv_key = EC_KEY_get0_private_key(eckey)) == NULL) {
+	if ((priv_key = EC_KEY_get0_private_key(key)) == NULL) {
 		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
@@ -386,7 +386,7 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 		goto err;
 	}
 
-	if (!ecdsa_prepare_digest(digest, digest_len, eckey, e))
+	if (!ecdsa_prepare_digest(digest, digest_len, key, e))
 		goto err;
 
 	if (in_kinv != NULL && in_r != NULL) {
@@ -409,7 +409,7 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 
 	do {
 		if (!caller_supplied_values) {
-			if (!ECDSA_sign_setup(eckey, ctx, &kinv, &r)) {
+			if (!ECDSA_sign_setup(key, ctx, &kinv, &r)) {
 				ECDSAerror(ERR_R_ECDSA_LIB);
 				goto err;
 			}
@@ -455,7 +455,7 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 
 int
 ossl_ecdsa_verify(int type, const unsigned char *digest, int digest_len,
-    const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
+    const unsigned char *sigbuf, int sig_len, EC_KEY *key)
 {
 	ECDSA_SIG *s;
 	unsigned char *der = NULL;
@@ -476,7 +476,7 @@ ossl_ecdsa_verify(int type, const unsigned char *digest, int digest_len,
 	if (timingsafe_memcmp(sigbuf, der, der_len))
 		goto err;
 
-	ret = ECDSA_do_verify(digest, digest_len, s, eckey);
+	ret = ECDSA_do_verify(digest, digest_len, s, key);
 
  err:
 	freezero(der, der_len);
@@ -487,7 +487,7 @@ ossl_ecdsa_verify(int type, const unsigned char *digest, int digest_len,
 
 int
 ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
-    const ECDSA_SIG *sig, EC_KEY *eckey)
+    const ECDSA_SIG *sig, EC_KEY *key)
 {
 	const EC_GROUP *group;
 	const EC_POINT *pub_key;
@@ -497,15 +497,15 @@ ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 	BIGNUM *u1, *u2, *e, *x;
 	int ret = -1;
 
-	if (eckey == NULL || sig == NULL) {
+	if (key == NULL || sig == NULL) {
 		ECDSAerror(ECDSA_R_MISSING_PARAMETERS);
 		goto err;
 	}
-	if ((group = EC_KEY_get0_group(eckey)) == NULL) {
+	if ((group = EC_KEY_get0_group(key)) == NULL) {
 		ECDSAerror(ECDSA_R_MISSING_PARAMETERS);
 		goto err;
 	}
-	if ((pub_key = EC_KEY_get0_public_key(eckey)) == NULL) {
+	if ((pub_key = EC_KEY_get0_public_key(key)) == NULL) {
 		ECDSAerror(ECDSA_R_MISSING_PARAMETERS);
 		goto err;
 	}
@@ -543,7 +543,7 @@ ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 		goto err;
 	}
 
-	if (!ecdsa_prepare_digest(digest, digest_len, eckey, e))
+	if (!ecdsa_prepare_digest(digest, digest_len, key, e))
 		goto err;
 
 	if (BN_mod_inverse_ct(u2, sig->s, order, ctx) == NULL) { /* w = inv(s) */
@@ -589,75 +589,74 @@ ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 }
 
 ECDSA_SIG *
-ECDSA_do_sign(const unsigned char *digest, int digest_len, EC_KEY *eckey)
+ECDSA_do_sign(const unsigned char *digest, int digest_len, EC_KEY *key)
 {
-	return ECDSA_do_sign_ex(digest, digest_len, NULL, NULL, eckey);
+	return ECDSA_do_sign_ex(digest, digest_len, NULL, NULL, key);
 }
 
 ECDSA_SIG *
 ECDSA_do_sign_ex(const unsigned char *digest, int digest_len,
-    const BIGNUM *kinv, const BIGNUM *out_r, EC_KEY *eckey)
+    const BIGNUM *kinv, const BIGNUM *out_r, EC_KEY *key)
 {
-	if (eckey->meth->sign_sig == NULL) {
+	if (key->meth->sign_sig == NULL) {
 		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
 		return 0;
 	}
-	return eckey->meth->sign_sig(digest, digest_len, kinv, out_r, eckey);
+	return key->meth->sign_sig(digest, digest_len, kinv, out_r, key);
 }
 
 int
 ECDSA_sign(int type, const unsigned char *digest, int digest_len,
-    unsigned char *signature, unsigned int *signature_len, EC_KEY *eckey)
+    unsigned char *signature, unsigned int *signature_len, EC_KEY *key)
 {
 	return ECDSA_sign_ex(type, digest, digest_len, signature, signature_len,
-	    NULL, NULL, eckey);
+	    NULL, NULL, key);
 }
 
 int
 ECDSA_sign_ex(int type, const unsigned char *digest, int digest_len,
     unsigned char *signature, unsigned int *signature_len, const BIGNUM *kinv,
-    const BIGNUM *r, EC_KEY *eckey)
+    const BIGNUM *r, EC_KEY *key)
 {
-	if (eckey->meth->sign == NULL) {
+	if (key->meth->sign == NULL) {
 		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
 		return 0;
 	}
-	return eckey->meth->sign(type, digest, digest_len, signature,
-	    signature_len, kinv, r, eckey);
+	return key->meth->sign(type, digest, digest_len, signature,
+	    signature_len, kinv, r, key);
 }
 
 int
-ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
+ECDSA_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
     BIGNUM **out_r)
 {
-	if (eckey->meth->sign_setup == NULL) {
+	if (key->meth->sign_setup == NULL) {
 		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
 		return 0;
 	}
-	return eckey->meth->sign_setup(eckey, in_ctx, out_kinv, out_r);
+	return key->meth->sign_setup(key, in_ctx, out_kinv, out_r);
 }
 
 int
 ECDSA_do_verify(const unsigned char *digest, int digest_len,
-    const ECDSA_SIG *sig, EC_KEY *eckey)
+    const ECDSA_SIG *sig, EC_KEY *key)
 {
-	if (eckey->meth->verify_sig == NULL) {
+	if (key->meth->verify_sig == NULL) {
 		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
 		return 0;
 	}
-	return eckey->meth->verify_sig(digest, digest_len, sig, eckey);
+	return key->meth->verify_sig(digest, digest_len, sig, key);
 }
 
 int
 ECDSA_verify(int type, const unsigned char *digest, int digest_len,
-    const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
+    const unsigned char *sigbuf, int sig_len, EC_KEY *key)
 {
-	if (eckey->meth->verify == NULL) {
+	if (key->meth->verify == NULL) {
 		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
 		return 0;
 	}
-	return eckey->meth->verify(type, digest, digest_len, sigbuf, sig_len,
-	    eckey);
+	return key->meth->verify(type, digest, digest_len, sigbuf, sig_len, key);
 }
 
 int
