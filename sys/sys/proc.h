@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.342 2023/06/28 08:23:25 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.343 2023/07/04 11:14:00 jsg Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -547,8 +547,6 @@ void	unsleep(struct proc *);
 void	reaper(void *);
 __dead void exit1(struct proc *, int, int, int);
 void	exit2(struct proc *);
-int	dowait4(struct proc *, pid_t, int *, int, struct rusage *,
-	    register_t *);
 void	cpu_fork(struct proc *_curp, struct proc *_child, void *_stack,
 	    void *_tcb, void (*_func)(void *), void *_arg);
 void	cpu_exit(struct proc *);

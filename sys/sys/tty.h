@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.41 2022/07/02 08:50:42 visa Exp $	*/
+/*	$OpenBSD: tty.h,v 1.42 2023/07/04 11:14:00 jsg Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -256,7 +256,6 @@ int	sysctl_pty(int *, u_int, void *, size_t *, void *, size_t);
 
 int	 b_to_q(u_char *cp, int cc, struct clist *q);
 void	 catq(struct clist *from, struct clist *to);
-void	 clist_init(void);
 int	 getc(struct clist *q);
 void	 ndflush(struct clist *q, int cc);
 int	 ndqb(struct clist *q, int flag);

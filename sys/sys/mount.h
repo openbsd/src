@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.148 2021/04/06 14:17:35 kn Exp $	*/
+/*	$OpenBSD: mount.h,v 1.149 2023/07/04 11:14:00 jsg Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -604,7 +604,6 @@ extern	TAILQ_HEAD(mntlist, mount) mountlist;
 int	vfs_stall(struct proc *, int);
 void	vfs_stall_barrier(void);
 
-struct	mount *getvfs(fsid_t *);	    /* return vfs given fsid */
 					    /* process mount export info */
 int	vfs_export(struct mount *, struct netexport *, struct export_args *);
 					    /* lookup host in fs export list */

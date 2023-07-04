@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.233 2023/05/17 22:12:51 kettenis Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.234 2023/07/04 11:14:00 jsg Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -1077,7 +1077,6 @@ struct walkarg;
 int sysctl_dumpentry(struct rtentry *, void *, unsigned int);
 int sysctl_rtable(int *, u_int, void *, size_t *, void *, size_t);
 int sysctl_clockrate(char *, size_t *, void *);
-int sysctl_vnode(char *, size_t *, struct proc *);
 #if defined(GPROF) || defined(DDBPROF)
 int sysctl_doprof(int *, u_int, void *, size_t *, void *, size_t);
 #endif
@@ -1091,8 +1090,6 @@ int hw_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 int debug_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		      struct proc *);
 #endif
-int vm_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-		   struct proc *);
 int fs_sysctl(int *, u_int, void *, size_t *, void *, size_t,
 		   struct proc *);
 int fs_posix_sysctl(int *, u_int, void *, size_t *, void *, size_t,
