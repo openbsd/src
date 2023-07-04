@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_kprobe.c,v 1.4 2021/10/28 08:47:40 jasper Exp $	*/
+/*	$OpenBSD: dt_prov_kprobe.c,v 1.5 2023/07/04 12:20:10 jasper Exp $	*/
 
 /*
  * Copyright (c) 2020 Tom Rollet <tom.rollet@epita.fr>
@@ -76,6 +76,12 @@ int nb_probes_return =	0;
 #define KPROBE_RETURN "return"
 
 #if defined(__amd64__)
+#define KPROBE_IBT_1	0xf3
+#define KPROBE_IBT_2	0x0f
+#define KPROBE_IBT_3	0x1e
+#define KPROBE_IBT_4	0xfa
+#define KPROBE_IBT_SIZE	4
+
 #define KPROBE_RETGUARD_MOV_1 0x4c
 #define KPROBE_RETGUARD_MOV_2 0x8b
 #define KPROBE_RETGUARD_MOV_3 0x1d
@@ -154,20 +160,29 @@ dt_prov_kprobe_init(void)
 			continue;
 
 #if defined(__amd64__)
-		/* Find if there is a retguard, if so move the inst pointer to the later 'push rbp' */
+		/*
+		 * Find the IBT target and the retguard which follows it.
+		 * Move the instruction pointer down to the 'push rbp' as needed.
+		 */
 		if (*((uint8_t *)inst) != SSF_INST) {
-			/* No retguards in i386 */
-			if (((uint8_t *)inst)[0] != KPROBE_RETGUARD_MOV_1 ||
-				((uint8_t *)inst)[1] != KPROBE_RETGUARD_MOV_2 ||
-				((uint8_t *)inst)[2] != KPROBE_RETGUARD_MOV_3 ||
-				((uint8_t *)inst)[KPROBE_RETGUARD_MOV_SIZE] != KPROBE_RETGUARD_XOR_1 ||
-				((uint8_t *)inst)[KPROBE_RETGUARD_MOV_SIZE + 1] != KPROBE_RETGUARD_XOR_2 ||
-				((uint8_t *)inst)[KPROBE_RETGUARD_MOV_SIZE + 2] != KPROBE_RETGUARD_XOR_3 ||
-				((uint8_t *)inst)[KPROBE_RETGUARD_MOV_SIZE + KPROBE_RETGUARD_XOR_SIZE] != SSF_INST)
+			if (((uint8_t *)inst)[0] != KPROBE_IBT_1 ||
+				((uint8_t *)inst)[1] != KPROBE_IBT_2 ||
+				((uint8_t *)inst)[2] != KPROBE_IBT_3 ||
+				((uint8_t *)inst)[3] != KPROBE_IBT_4)
 				continue;
-			inst = (vaddr_t)&(((uint8_t *)inst)[KPROBE_RETGUARD_MOV_SIZE + KPROBE_RETGUARD_XOR_SIZE]);
+
+			if (((uint8_t *)inst)[KPROBE_IBT_SIZE] != KPROBE_RETGUARD_MOV_1 ||
+				((uint8_t *)inst)[KPROBE_IBT_SIZE + 1] != KPROBE_RETGUARD_MOV_2 ||
+				((uint8_t *)inst)[KPROBE_IBT_SIZE + 2] != KPROBE_RETGUARD_MOV_3 ||
+				((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE] != KPROBE_RETGUARD_XOR_1 ||
+				((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE + 1] != KPROBE_RETGUARD_XOR_2 ||
+				((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE + 2] != KPROBE_RETGUARD_XOR_3 ||
+				((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE + KPROBE_RETGUARD_XOR_SIZE] != SSF_INST)
+				continue;
+			inst = (vaddr_t)&(((uint8_t *)inst)[KPROBE_IBT_SIZE + KPROBE_RETGUARD_MOV_SIZE + KPROBE_RETGUARD_XOR_SIZE]);
 		}
 #elif defined(__i386__)
+		/* No retguard or IBT on i386 */
 		if (*((uint8_t *)inst) != SSF_INST)
 			continue;
 #endif
@@ -190,13 +205,8 @@ dt_prov_kprobe_init(void)
 		nb_probes++;
 		nb_probes_entry++;
 
-		/*
-		 *  Poor method to find the return point
-		 *  => we would need a disassembler to find all return points
-		 *  For now we start from the end of the function, iterate on
-		 *  int3 inserted for retguard until we find a ret
-		 */
 #if defined(__amd64__)
+		/* If there last instruction isn't a ret, just bail. */
 		if (*(uint8_t *)(limit - 1) != RET)
 			continue;
 		inst = limit - 1;
