@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.12 2023/05/30 08:30:01 jsg Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.13 2023/07/04 12:58:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -63,6 +63,7 @@
 
 int	dwqe_fdt_match(struct device *, void *, void *);
 void	dwqe_fdt_attach(struct device *, struct device *, void *);
+void	dwqe_setup_jh7110(struct dwqe_softc *);
 void	dwqe_setup_rk3568(struct dwqe_softc *);
 void	dwqe_mii_statchg_rk3568(struct device *);
 void	dwqe_mii_statchg_rk3588(struct device *);
@@ -78,7 +79,8 @@ dwqe_fdt_match(struct device *parent, void *cfdata, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "snps,dwmac-4.20a");
+	return OF_is_compatible(faa->fa_node, "snps,dwmac-4.20a") ||
+	    OF_is_compatible(faa->fa_node, "snps,dwmac-5.20");
 }
 
 void
@@ -103,14 +105,16 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Decide GMAC id through address */
 	switch (faa->fa_reg[0].addr) {
-	case 0xfe2a0000:
+	case 0xfe2a0000:	/* RK3568 */
+	case 0x16030000:	/* JH7110 */
 		sc->sc_gmac_id = 0;
 		break;
-	case 0xfe010000:
+	case 0xfe010000:	/* RK3568 */
+	case 0x16040000:	/* JH7110 */
 		sc->sc_gmac_id = 1;
 		break;
 	default:
-		printf(": unknown controller\n");
+		printf(": unknown controller at 0x%llx\n", faa->fa_reg[0].addr);
 		return;
 	}
 
@@ -143,8 +147,13 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	/* Enable clocks. */
 	clock_set_assigned(faa->fa_node);
 	clock_enable(faa->fa_node, "stmmaceth");
+	clock_enable(faa->fa_node, "pclk");
 	reset_deassert(faa->fa_node, "stmmaceth");
-	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac")) {
+	reset_deassert(faa->fa_node, "ahb");
+	if (OF_is_compatible(faa->fa_node, "starfive,jh7110-dwmac")) {
+		clock_enable(faa->fa_node, "tx");
+		clock_enable(faa->fa_node, "gtx");
+	} else if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac")) {
 		clock_enable(faa->fa_node, "mac_clk_rx");
 		clock_enable(faa->fa_node, "mac_clk_tx");
 		clock_enable(faa->fa_node, "aclk_mac");
@@ -153,7 +162,9 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	delay(5000);
 
 	/* Do hardware specific initializations. */
-	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
+	if (OF_is_compatible(faa->fa_node, "starfive,jh7110-dwmac"))
+		dwqe_setup_jh7110(sc);
+	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
 		dwqe_setup_rk3568(sc);
 
 	/* Power up PHY. */
@@ -292,6 +303,10 @@ dwqe_reset_phy(struct dwqe_softc *sc, uint32_t phy)
 	free(gpio, M_TEMP, len);
 }
 
+/* JH7110 registers */
+#define JH7110_PHY_INTF_RGMII		1
+#define JH7110_PHY_INTF_RMII		4
+
 /* RK3568 registers */
 #define RK3568_GRF_GMACx_CON0(x)	(0x0380 + (x) * 0x8)
 #define  RK3568_GMAC_CLK_RX_DL_CFG(val)		((0x7f << 8) << 16 | ((val) << 8))
@@ -303,6 +318,48 @@ dwqe_reset_phy(struct dwqe_softc *sc, uint32_t phy)
 #define  RK3568_GMAC_RXCLK_DLY_SET(_v)		((1 << 1) << 16 | ((_v) << 1))
 
 void	dwqe_mii_statchg_rk3568_task(void *);
+
+void
+dwqe_setup_jh7110(struct dwqe_softc *sc)
+{
+	struct regmap *rm;
+	uint32_t cells[3];
+	uint32_t phandle, offset, reg, shift;
+	char phy_mode[32];
+	uint32_t iface;
+
+	if (OF_getpropintarray(sc->sc_node, "starfive,syscon", cells,
+	    sizeof(cells)) != sizeof(cells)) {
+		printf("%s: failed to get starfive,syscon\n", __func__);
+		return;
+	}
+	phandle = cells[0];
+	offset = cells[1];
+	shift = cells[2];
+
+	rm = regmap_byphandle(phandle);
+	if (rm == NULL) {
+		printf("%s: failed to get regmap\n", __func__);
+		return;
+	}
+
+	if (OF_getprop(sc->sc_node, "phy-mode", phy_mode,
+	    sizeof(phy_mode)) <= 0)
+		return;
+
+	if (strcmp(phy_mode, "rgmii") == 0 ||
+	    strcmp(phy_mode, "rgmii-id") == 0) {
+		iface = JH7110_PHY_INTF_RGMII;
+	} else if (strcmp(phy_mode, "rmii") == 0) {
+		iface = JH7110_PHY_INTF_RMII;
+	} else
+		return;
+
+	reg = regmap_read_4(rm, offset);
+	reg &= ~(((1U << 3) - 1) << shift);
+	reg |= iface << shift;
+	regmap_write_4(rm, offset, reg);
+}
 
 void
 dwqe_setup_rk3568(struct dwqe_softc *sc)
