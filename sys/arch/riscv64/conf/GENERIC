@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.42 2023/01/24 13:28:31 jca Exp $
+#	$OpenBSD: GENERIC,v 1.43 2023/07/04 13:04:08 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -83,6 +83,7 @@ gpiorestart*	at fdt?
 
 cad*		at fdt?
 dwge*		at fdt?
+dwqe*		at fdt?
 
 dwmmc*		at fdt?
 sdmmc*		at dwmmc?
