@@ -889,3 +889,9 @@ _libre_X509v3_addr_validate_path
 _libre_X509v3_asid_validate_resource_set
 _libre_X509v3_addr_validate_resource_set
 _libre_ERR_load_X509V3_strings
+_libre_ChaCha_set_key
+_libre_ChaCha_set_iv
+_libre_ChaCha
+_libre_CRYPTO_chacha_20
+_libre_CRYPTO_xchacha_20
+_libre_CRYPTO_hchacha_20
