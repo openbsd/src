@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.194 2023/04/14 22:41:28 mbuhl Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.195 2023/07/05 15:13:28 beck Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -213,12 +213,10 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 	int error = 0, flags;
 	int ronly;
 
-#ifndef FFS_SOFTUPDATES
+	/* Ask not for whom the bell tolls */
 	if (mp->mnt_flag & MNT_SOFTDEP) {
-		printf("WARNING: soft updates isn't compiled in\n");
 		mp->mnt_flag &= ~MNT_SOFTDEP;
 	}
-#endif
 
 	/*
 	 * Soft updates is incompatible with "async",
@@ -284,8 +282,6 @@ ffs_mount(struct mount *mp, const char *path, void *data,
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
 			error = softdep_flushfiles(mp, flags, p);
-#elif FFS_SOFTUPDATES
-			mp->mnt_flag |= MNT_SOFTDEP;
 #endif
 		}
 		/*
@@ -459,10 +455,7 @@ success:
 				free(fs->fs_contigdirs, M_UFSMNT, fs->fs_ncg);
 		}
 		if (!ronly) {
-			if (mp->mnt_flag & MNT_SOFTDEP)
-				fs->fs_flags |= FS_DOSOFTDEP;
-			else
-				fs->fs_flags &= ~FS_DOSOFTDEP;
+			fs->fs_flags &= ~FS_DOSOFTDEP;
 		}
 		ffs_sbupdate(ump, MNT_WAIT);
 #if 0
@@ -923,10 +916,7 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct proc *p)
 		}
 		fs->fs_fmod = 1;
 		fs->fs_clean = 0;
-		if (mp->mnt_flag & MNT_SOFTDEP)
-			fs->fs_flags |= FS_DOSOFTDEP;
-		else
-			fs->fs_flags &= ~FS_DOSOFTDEP;
+		fs->fs_flags &= ~FS_DOSOFTDEP;
 		error = ffs_sbupdate(ump, MNT_WAIT);
 		if (error == EROFS)
 			goto out;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.149 2023/07/04 11:14:00 jsg Exp $	*/
+/*	$OpenBSD: mount.h,v 1.150 2023/07/05 15:13:28 beck Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -401,7 +401,7 @@ struct mount {
 #define	MNT_STALLED	0x00100000	/* filesystem stalled */ 
 #define	MNT_SWAPPABLE	0x00200000	/* filesystem can be used for swap */
 #define MNT_WANTRDWR	0x02000000	/* want upgrade to read/write */
-#define MNT_SOFTDEP     0x04000000      /* soft dependencies being done */
+#define MNT_SOFTDEP     0x04000000      /* soft dependencies being done - now ignored */
 #define MNT_DOOMED	0x08000000	/* device behind filesystem is gone */
 
 #ifdef _KERNEL

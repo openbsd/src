@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.151 2023/04/11 00:45:09 jsg Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.152 2023/07/05 15:13:28 beck Exp $	*/
 
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -1223,6 +1223,8 @@ softdep_mount(struct vnode *devvp, struct mount *mp, struct fs *fs,
 	struct cg *cgp;
 	struct buf *bp;
 	int error, cyl;
+
+	KASSERTMSG(1, "softdep_mount should not have been called");
 
 	/*
 	 * When doing soft updates, the counters in the

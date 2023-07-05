@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.361 2023/02/11 23:22:17 deraadt Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.362 2023/07/05 15:13:28 beck Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -239,11 +239,10 @@ update:
 	else if (mp->mnt_flag & MNT_RDONLY)
 		mp->mnt_flag |= MNT_WANTRDWR;
 	mp->mnt_flag &=~ (MNT_NOSUID | MNT_NOEXEC | MNT_WXALLOWED | MNT_NODEV |
-	    MNT_SYNCHRONOUS | MNT_ASYNC | MNT_SOFTDEP | MNT_NOATIME |
-	    MNT_NOPERM | MNT_FORCE);
+	    MNT_SYNCHRONOUS | MNT_ASYNC | MNT_NOATIME | MNT_NOPERM | MNT_FORCE);
 	mp->mnt_flag |= flags & (MNT_NOSUID | MNT_NOEXEC | MNT_WXALLOWED |
-	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_ASYNC | MNT_SOFTDEP |
-	    MNT_NOATIME | MNT_NOPERM | MNT_FORCE);
+	    MNT_NODEV | MNT_SYNCHRONOUS | MNT_ASYNC | MNT_NOATIME | MNT_NOPERM |
+	    MNT_FORCE);
 	/*
 	 * Mount the filesystem.
 	 */
