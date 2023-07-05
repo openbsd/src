@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.9 2023/07/05 14:41:18 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.10 2023/07/05 17:10:10 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -315,10 +315,8 @@ ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
 	/* Step 11: repeat until r != 0. */
 	do {
 		/* Step 3: generate random k. */
-		if (!bn_rand_interval(k, BN_value_one(), order)) {
-			ECDSAerror(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED);
+		if (!bn_rand_interval(k, BN_value_one(), order))
 			goto err;
-		}
 
 		/*
 		 * We do not want timing information to leak the length of k,
@@ -436,7 +434,7 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
 	 * can't rely on this being the case.
 	 */
 	if (BN_cmp(r, BN_value_one()) < 0 || BN_cmp(r, order) >= 0) {
-		ECDSAerror(ECDSA_R_BAD_SIGNATURE);
+		ECerror(EC_R_BAD_SIGNATURE);
 		goto err;
 	}
 
@@ -552,7 +550,7 @@ ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 		/* Steps 3-8: calculate kinv and r. */
 		if (!caller_supplied_values) {
 			if (!ECDSA_sign_setup(key, ctx, &kinv, &r)) {
-				ECDSAerror(ERR_R_ECDSA_LIB);
+				ECerror(ERR_R_EC_LIB);
 				goto err;
 			}
 		}
@@ -566,7 +564,7 @@ ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 			break;
 
 		if (caller_supplied_values) {
-			ECDSAerror(ECDSA_R_NEED_NEW_SETUP_VALUES);
+			ECerror(EC_R_NEED_NEW_SETUP_VALUES);
 			goto err;
 		}
 
@@ -648,15 +646,15 @@ ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 	int ret = -1;
 
 	if (key == NULL || sig == NULL) {
-		ECDSAerror(ECDSA_R_MISSING_PARAMETERS);
+		ECerror(EC_R_MISSING_PARAMETERS);
 		goto err;
 	}
 	if ((group = EC_KEY_get0_group(key)) == NULL) {
-		ECDSAerror(ECDSA_R_MISSING_PARAMETERS);
+		ECerror(EC_R_MISSING_PARAMETERS);
 		goto err;
 	}
 	if ((pub_key = EC_KEY_get0_public_key(key)) == NULL) {
-		ECDSAerror(ECDSA_R_MISSING_PARAMETERS);
+		ECerror(EC_R_MISSING_PARAMETERS);
 		goto err;
 	}
 
@@ -685,12 +683,12 @@ ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 
 	/* Step 1: verify that r and s are in the range [1, order). */
 	if (BN_cmp(sig->r, BN_value_one()) < 0 || BN_cmp(sig->r, order) >= 0) {
-		ECDSAerror(ECDSA_R_BAD_SIGNATURE);
+		ECerror(EC_R_BAD_SIGNATURE);
 		ret = 0;
 		goto err;
 	}
 	if (BN_cmp(sig->s, BN_value_one()) < 0 || BN_cmp(sig->s, order) >= 0) {
-		ECDSAerror(ECDSA_R_BAD_SIGNATURE);
+		ECerror(EC_R_BAD_SIGNATURE);
 		ret = 0;
 		goto err;
 	}
@@ -759,7 +757,7 @@ ECDSA_do_sign_ex(const unsigned char *digest, int digest_len,
     const BIGNUM *kinv, const BIGNUM *out_r, EC_KEY *key)
 {
 	if (key->meth->sign_sig == NULL) {
-		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+		ECerror(EC_R_NOT_IMPLEMENTED);
 		return 0;
 	}
 	return key->meth->sign_sig(digest, digest_len, kinv, out_r, key);
@@ -779,7 +777,7 @@ ECDSA_sign_ex(int type, const unsigned char *digest, int digest_len,
     const BIGNUM *r, EC_KEY *key)
 {
 	if (key->meth->sign == NULL) {
-		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+		ECerror(EC_R_NOT_IMPLEMENTED);
 		return 0;
 	}
 	return key->meth->sign(type, digest, digest_len, signature,
@@ -791,7 +789,7 @@ ECDSA_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
     BIGNUM **out_r)
 {
 	if (key->meth->sign_setup == NULL) {
-		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+		ECerror(EC_R_NOT_IMPLEMENTED);
 		return 0;
 	}
 	return key->meth->sign_setup(key, in_ctx, out_kinv, out_r);
@@ -802,7 +800,7 @@ ECDSA_do_verify(const unsigned char *digest, int digest_len,
     const ECDSA_SIG *sig, EC_KEY *key)
 {
 	if (key->meth->verify_sig == NULL) {
-		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+		ECerror(EC_R_NOT_IMPLEMENTED);
 		return 0;
 	}
 	return key->meth->verify_sig(digest, digest_len, sig, key);
@@ -813,7 +811,7 @@ ECDSA_verify(int type, const unsigned char *digest, int digest_len,
     const unsigned char *sigbuf, int sig_len, EC_KEY *key)
 {
 	if (key->meth->verify == NULL) {
-		ECDSAerror(EVP_R_METHOD_NOT_SUPPORTED);
+		ECerror(EC_R_NOT_IMPLEMENTED);
 		return 0;
 	}
 	return key->meth->verify(type, digest, digest_len, sigbuf, sig_len, key);

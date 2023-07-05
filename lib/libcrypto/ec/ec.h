@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.41 2023/04/27 07:10:05 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.42 2023/07/05 17:10:10 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -606,6 +606,7 @@ void ERR_load_EC_strings(void);
 /* Reason codes. */
 #define EC_R_ASN1_ERROR					 115
 #define EC_R_ASN1_UNKNOWN_FIELD				 116
+#define EC_R_BAD_SIGNATURE				 166
 #define EC_R_BIGNUM_OUT_OF_RANGE			 144
 #define EC_R_BUFFER_TOO_SMALL				 100
 #define EC_R_COORDINATES_OUT_OF_RANGE			 146
@@ -633,10 +634,13 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_PENTANOMIAL_BASIS			 132
 #define EC_R_INVALID_PRIVATE_KEY			 123
 #define EC_R_INVALID_TRINOMIAL_BASIS			 137
+#define EC_R_KDF_FAILED					 167
 #define EC_R_KDF_PARAMETER_ERROR			 148
+#define EC_R_KEY_TRUNCATION				 168
 #define EC_R_KEYS_NOT_SET				 140
 #define EC_R_MISSING_PARAMETERS				 124
 #define EC_R_MISSING_PRIVATE_KEY			 125
+#define EC_R_NEED_NEW_SETUP_VALUES			 170
 #define EC_R_NOT_A_NIST_PRIME				 135
 #define EC_R_NOT_A_SUPPORTED_NIST_PRIME			 136
 #define EC_R_NOT_IMPLEMENTED				 126
@@ -647,6 +651,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_PEER_KEY_ERROR				 149
 #define EC_R_PKPARAMETERS2GROUP_FAILURE			 127
 #define EC_R_POINT_AT_INFINITY				 106
+#define EC_R_POINT_ARITHMETIC_FAILURE			 169
 #define EC_R_POINT_IS_NOT_ON_CURVE			 107
 #define EC_R_SHARED_INFO_ERROR				 150
 #define EC_R_SLOT_FULL					 108

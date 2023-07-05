@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.2 2023/07/05 14:39:05 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.3 2023/07/05 17:10:10 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -187,7 +187,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 	}
 
 	if ((priv_key = EC_KEY_get0_private_key(ecdh)) == NULL) {
-		ECDHerror(ECDH_R_NO_PRIVATE_VALUE);
+		ECerror(EC_R_MISSING_PRIVATE_KEY);
 		goto err;
 	}
 
@@ -204,12 +204,12 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 	}
 
 	if (!EC_POINT_mul(group, point, NULL, pub_key, priv_key, ctx)) {
-		ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
+		ECerror(EC_R_POINT_ARITHMETIC_FAILURE);
 		goto err;
 	}
 
 	if (!EC_POINT_get_affine_coordinates(group, point, x, NULL, ctx)) {
-		ECDHerror(ECDH_R_POINT_ARITHMETIC_FAILURE);
+		ECerror(EC_R_POINT_ARITHMETIC_FAILURE);
 		goto err;
 	}
 
@@ -219,7 +219,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 	}
 	if (KDF == NULL && outlen < buflen) {
 		/* The resulting key would be truncated. */
-		ECDHerror(ECDH_R_KEY_TRUNCATION);
+		ECerror(EC_R_KEY_TRUNCATION);
 		goto err;
 	}
 	if ((buf = malloc(buflen)) == NULL) {
@@ -233,7 +233,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 
 	if (KDF != NULL) {
 		if (KDF(buf, buflen, out, &outlen) == NULL) {
-			ECDHerror(ECDH_R_KDF_FAILED);
+			ECerror(EC_R_KDF_FAILED);
 			goto err;
 		}
 	} else {

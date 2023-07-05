@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_err.c,v 1.15 2022/11/19 07:00:57 tb Exp $ */
+/* $OpenBSD: ec_err.c,v 1.16 2023/07/05 17:10:10 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -74,6 +74,7 @@ static ERR_STRING_DATA EC_str_reasons[] =
 {
 	{ERR_REASON(EC_R_ASN1_ERROR), "asn1 error"},
 	{ERR_REASON(EC_R_ASN1_UNKNOWN_FIELD), "asn1 unknown field"},
+	{ERR_REASON(EC_R_BAD_SIGNATURE), "bad signature"},
 	{ERR_REASON(EC_R_BIGNUM_OUT_OF_RANGE), "bignum out of range"},
 	{ERR_REASON(EC_R_BUFFER_TOO_SMALL), "buffer too small"},
 	{ERR_REASON(EC_R_COORDINATES_OUT_OF_RANGE), "coordinates out of range"},
@@ -101,10 +102,13 @@ static ERR_STRING_DATA EC_str_reasons[] =
 	{ERR_REASON(EC_R_INVALID_PENTANOMIAL_BASIS), "invalid pentanomial basis"},
 	{ERR_REASON(EC_R_INVALID_PRIVATE_KEY), "invalid private key"},
 	{ERR_REASON(EC_R_INVALID_TRINOMIAL_BASIS), "invalid trinomial basis"},
+	{ERR_REASON(EC_R_KDF_FAILED), "kdf failed"},
 	{ERR_REASON(EC_R_KDF_PARAMETER_ERROR), "kdf parameter error"},
+	{ERR_REASON(EC_R_KEY_TRUNCATION), "key would be truncated"},
 	{ERR_REASON(EC_R_KEYS_NOT_SET), "keys not set"},
 	{ERR_REASON(EC_R_MISSING_PARAMETERS), "missing parameters"},
 	{ERR_REASON(EC_R_MISSING_PRIVATE_KEY), "missing private key"},
+	{ERR_REASON(EC_R_NEED_NEW_SETUP_VALUES), "need new setup values"},
 	{ERR_REASON(EC_R_NOT_A_NIST_PRIME), "not a NIST prime"},
 	{ERR_REASON(EC_R_NOT_A_SUPPORTED_NIST_PRIME), "not a supported NIST prime"},
 	{ERR_REASON(EC_R_NOT_IMPLEMENTED), "not implemented"},
@@ -114,6 +118,7 @@ static ERR_STRING_DATA EC_str_reasons[] =
 	{ERR_REASON(EC_R_PASSED_NULL_PARAMETER), "passed null parameter"},
 	{ERR_REASON(EC_R_PEER_KEY_ERROR), "peer key error"},
 	{ERR_REASON(EC_R_PKPARAMETERS2GROUP_FAILURE), "pkparameters2group failure"},
+	{ERR_REASON(EC_R_POINT_ARITHMETIC_FAILURE), "point arithmetic failure"},
 	{ERR_REASON(EC_R_POINT_AT_INFINITY), "point at infinity"},
 	{ERR_REASON(EC_R_POINT_IS_NOT_ON_CURVE), "point is not on curve"},
 	{ERR_REASON(EC_R_SHARED_INFO_ERROR), "shared info error"},
