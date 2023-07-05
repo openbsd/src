@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.100 2023/04/16 06:43:49 jsg Exp $	*/
+/*	$OpenBSD: trap.c,v 1.101 2023/07/05 12:58:55 kn Exp $	*/
 /*	$NetBSD: trap.c,v 1.2 2003/05/04 23:51:56 fvdl Exp $	*/
 
 /*-
@@ -216,9 +216,8 @@ upageflttrap(struct trapframe *frame, uint64_t cr2)
 
 /*
  * kpageflttrap(frame, usermode): page fault handler
- * Returns non-zero if the fault was handled (possibly by generating
- * a signal).  Returns zero, possibly still holding the kernel lock,
- * if something was so broken that we should panic.
+ * Returns non-zero if the fault was handled (possibly by generating a signal).
+ * Returns zero if something was so broken that we should panic.
  */
 int
 kpageflttrap(struct trapframe *frame, uint64_t cr2)
@@ -240,11 +239,9 @@ kpageflttrap(struct trapframe *frame, uint64_t cr2)
 		caddr_t *nf = __nofault_start;
 		while (*nf++ != pcb->pcb_onfault) {
 			if (nf >= __nofault_end) {
-				KERNEL_LOCK();
 				fault("invalid pcb_nofault=%lx",
 				    (long)pcb->pcb_onfault);
 				return 0;
-				/* retain kernel lock */
 			}
 		}
 	}
@@ -252,19 +249,15 @@ kpageflttrap(struct trapframe *frame, uint64_t cr2)
 	/* This will only trigger if SMEP is enabled */
 	if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
 	    frame->tf_err & PGEX_I) {
-		KERNEL_LOCK();
 		fault("attempt to execute user address %p "
 		    "in supervisor mode", (void *)cr2);
-		/* retain kernel lock */
 		return 0;
 	}
 	/* This will only trigger if SMAP is enabled */
 	if (pcb->pcb_onfault == NULL && cr2 <= VM_MAXUSER_ADDRESS &&
 	    frame->tf_err & PGEX_P) {
-		KERNEL_LOCK();
 		fault("attempt to access user address %p "
 		    "in supervisor mode", (void *)cr2);
-		/* retain kernel lock */
 		return 0;
 	}
 
@@ -294,10 +287,8 @@ kpageflttrap(struct trapframe *frame, uint64_t cr2)
 	if (error) {
 		if (pcb->pcb_onfault == NULL) {
 			/* bad memory access in the kernel */
-			KERNEL_LOCK();
 			fault("uvm_fault(%p, 0x%llx, 0, %d) -> %x",
 			    map, cr2, access_type, error);
-			/* retain kernel lock */
 			return 0;
 		}
 		frame->tf_rip = (u_int64_t)pcb->pcb_onfault;
