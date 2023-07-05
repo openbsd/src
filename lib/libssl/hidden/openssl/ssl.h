@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssl.h,v 1.1 2022/11/11 11:25:18 beck Exp $	*/
+/*	$OpenBSD: ssl.h,v 1.2 2023/07/05 21:14:54 bcook Exp $	*/
 /*
  * Copyright (c) 2022 Philip Guenther <guenther@openbsd.org>
  *
@@ -18,7 +18,11 @@
 #ifndef _LIBSSL_SSL_H_
 #define _LIBSSL_SSL_H_
 
+#ifndef _MSC_VER
 #include_next <openssl/ssl.h>
+#else
+#include "../include/openssl/ssl.h"
+#endif
 #include "ssl_namespace.h"
 
 LSSL_USED(BIO_f_ssl);

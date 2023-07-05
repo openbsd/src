@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmac.h,v 1.1 2022/11/11 11:25:18 beck Exp $	*/
+/*	$OpenBSD: hmac.h,v 1.2 2023/07/05 21:14:54 bcook Exp $	*/
 /*
  * Copyright (c) 2016 Philip Guenther <guenther@openbsd.org>
  *
@@ -18,7 +18,11 @@
 #ifndef _LIBCRYPTO_HMAC_H_
 #define _LIBCRYPTO_HMAC_H_
 
+#ifndef _MSC_VER
 #include_next <openssl/hmac.h>
+#else
+#include "../include/openssl/hmac.h"
+#endif
 #include "crypto_namespace.h"
 
 LCRYPTO_USED(HMAC_CTX_new);

@@ -1,4 +1,4 @@
-/* $OpenBSD: x509v3.h,v 1.4 2023/04/30 19:31:05 tb Exp $ */
+/* $OpenBSD: x509v3.h,v 1.5 2023/07/05 21:14:54 bcook Exp $ */
 /*
  * Copyright (c) 2022 Bob Beck <beck@openbsd.org>
  *
@@ -18,7 +18,11 @@
 #ifndef _LIBCRYPTO_X509V3_H
 #define _LIBCRYPTO_X509V3_H
 
+#ifndef _MSC_VER
 #include_next <openssl/x509v3.h>
+#else
+#include "../include/openssl/x509v3.h"
+#endif
 #include "crypto_namespace.h"
 
 LCRYPTO_USED(BASIC_CONSTRAINTS_new);

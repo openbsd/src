@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha.h,v 1.1 2023/07/05 16:17:20 beck Exp $ */
+/* $OpenBSD: chacha.h,v 1.2 2023/07/05 21:14:54 bcook Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -18,7 +18,11 @@
 #ifndef _LIBCRYPTO_CHACHA_H
 #define _LIBCRYPTO_CHACHA_H
 
+#ifndef _MSC_VER
 #include_next <openssl/chacha.h>
+#else
+#include "../include/openssl/chacha.h"
+#endif
 #include "crypto_namespace.h"
 
 LCRYPTO_USED(ChaCha_set_key);
