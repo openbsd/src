@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_asn1.c,v 1.14 2023/03/25 09:09:28 tb Exp $ */
+/* $OpenBSD: ecs_asn1.c,v 1.15 2023/07/05 11:37:46 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -57,7 +57,7 @@
 #include <openssl/bn.h>
 #include <openssl/err.h>
 
-#include "ecs_local.h"
+#include "ecdsa_local.h"
 
 static const ASN1_TEMPLATE ECDSA_SIG_seq_tt[] = {
 	{

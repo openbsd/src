@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001.c,v 1.11 2022/12/01 02:58:31 jsing Exp $ */
+/* $OpenBSD: gostr341001.c,v 1.12 2023/07/05 11:37:45 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -59,7 +59,7 @@
 #include <openssl/gost.h>
 
 #include "bn_local.h"
-#include "ecs_local.h"
+#include "ecdsa_local.h"
 #include "gost_local.h"
 
 /* Convert little-endian byte array into bignum */

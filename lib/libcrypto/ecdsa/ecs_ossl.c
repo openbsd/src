@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.72 2023/07/05 08:39:40 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.73 2023/07/05 11:37:46 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -67,7 +67,7 @@
 
 #include "bn_local.h"
 #include "ec_local.h"
-#include "ecs_local.h"
+#include "ecdsa_local.h"
 
 /*
  * FIPS 186-5, section 6.4.1, step 2: convert hashed message into an integer.

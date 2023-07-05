@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_local.h,v 1.5 2023/07/05 11:28:50 tb Exp $ */
+/* $OpenBSD: ecdsa_local.h,v 1.1 2023/07/05 11:37:46 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
