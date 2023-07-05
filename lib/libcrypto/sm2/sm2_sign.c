@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2_sign.c,v 1.3 2022/11/26 16:08:54 tb Exp $ */
+/*	$OpenBSD: sm2_sign.c,v 1.4 2023/07/05 17:36:19 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -95,12 +95,12 @@ sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
 	const BIGNUM *dA;
 	BIGNUM *order = NULL, *r = NULL, *s = NULL;
 	BIGNUM *k, *rk, *tmp, *x1;
-	
+
 	if ((dA = EC_KEY_get0_private_key(key)) == NULL) {
 		SM2error(SM2_R_INVALID_FIELD);
 		goto err;
 	}
-	
+
 	if ((group = EC_KEY_get0_group(key)) == NULL) {
 		SM2error(SM2_R_INVALID_FIELD);
 		goto err;
@@ -405,7 +405,7 @@ SM2_sign(const unsigned char *dgst, int dgstlen, unsigned char *sig,
 	if ((s = sm2_sig_gen(eckey, e)) == NULL) {
 		goto err;
 	}
-	
+
 	if ((outlen = i2d_ECDSA_SIG(s, &sig)) < 0) {
 		SM2error(SM2_R_ASN1_ERROR);
 		goto err;
