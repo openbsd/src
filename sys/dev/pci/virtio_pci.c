@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.33 2023/05/29 08:13:35 sf Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.34 2023/07/05 18:11:08 patrick Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -976,7 +976,7 @@ virtio_pci_setup_msix(struct virtio_pci_softc *sc, struct pci_attach_args *pa,
 		for (i = 0; i < vsc->sc_nvqs; i++)
 			virtio_pci_set_msix_queue_vector(sc, i, 1);
 	} else {
-		for (i = 0; i <= vsc->sc_nvqs; i++) {
+		for (i = 0; i < vsc->sc_nvqs; i++) {
 			if (virtio_pci_msix_establish(sc, pa, i + 1,
 			    virtio_pci_queue_intr, &vsc->sc_vqs[i])) {
 				goto fail;
