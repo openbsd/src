@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.94 2022/11/20 16:45:10 kn Exp $
+.\"	$OpenBSD: pf.4,v 1.95 2023/07/05 12:00:01 sashan Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 20 2022 $
+.Dd $Mdocdate: July 5 2023 $
 .Dt PF 4
 .Os
 .Sh NAME
@@ -48,12 +48,25 @@ and retrieve statistics.
 The most commonly used functions are covered by
 .Xr pfctl 8 .
 .Pp
-Manipulations like loading a ruleset that involve more than a single
+Operations loading or reading a ruleset that involve more than a single
 .Xr ioctl 2
 call require a so-called
-.Em ticket ,
-which prevents the occurrence of
-multiple concurrent manipulations.
+.Sy ticket ,
+which allows
+.Nm
+to deal with concurrent operations.
+For certain
+.Xr ioctl 2
+commands (currently
+.Dv DIOCGETRULES )
+the number of tickets a program can get is limited.
+The programs must explicitly release their tickets using the
+.Dv DIOCXEND
+command to avoid hitting the limit.
+All tickets which are not freed by
+.Dv DIOCXEND
+are released when the program closes
+.Pa /dev/pf .
 .Pp
 Fields of
 .Xr ioctl 2
@@ -132,6 +145,9 @@ for subsequent
 calls and the number
 .Va nr
 of rules in the active ruleset.
+The ticket should be released by the
+.Dv DIOCXEND
+command.
 .It Dv DIOCGETRULE Fa "struct pfioc_rule *pr"
 Get a
 .Va rule
@@ -792,6 +808,10 @@ inactive rulesets since the last
 .Dv DIOCXBEGIN .
 .Dv DIOCXROLLBACK
 will silently ignore rulesets for which the ticket is invalid.
+.It Dv DIOCXEND Fa "u_int32_t *ticket"
+Release the ticket obtained by the
+.Dv DIOCGETRULES
+command.
 .It Dv DIOCSETHOSTID Fa "u_int32_t *hostid"
 Set the host ID, which is used by
 .Xr pfsync 4
