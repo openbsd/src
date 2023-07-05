@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.414 2023/07/03 06:07:40 krw Exp $	*/
+/*	$OpenBSD: editor.c,v 1.415 2023/07/05 07:28:10 krw Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <millert@openbsd.org>
@@ -520,6 +520,7 @@ int
 editor_allocspace(struct disklabel *lp_org)
 {
 	struct disklabel label;
+	struct partition *pp;
 	u_int64_t pstart, pend;
 	int i;
 
@@ -530,8 +531,11 @@ editor_allocspace(struct disklabel *lp_org)
 	for (i = 0;  i < MAXPARTITIONS; i++) {
 		if (i == RAW_PART)
 			continue;
-		pstart = DL_GETPOFFSET(&lp_org->d_partitions[i]);
-		pend = pstart + DL_GETPSIZE(&lp_org->d_partitions[i]);
+		pp = &lp_org->d_partitions[i];
+		if (DL_GETPSIZE(pp) == 0 || pp->p_fstype == FS_UNUSED)
+			continue;
+		pstart = DL_GETPOFFSET(pp);
+		pend = pstart + DL_GETPSIZE(pp);
 		if (((pstart >= starting_sector && pstart < ending_sector) ||
 		    (pend > starting_sector && pend <= ending_sector)))
 			resizeok = 0; /* Part of OBSD area is in use! */
