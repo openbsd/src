@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.421 2023/06/29 20:58:08 dv Exp $ */
+/* $OpenBSD: acpi.c,v 1.422 2023/07/05 18:51:55 tobhe Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3439,58 +3439,6 @@ acpiclose(dev_t dev, int flag, int mode, struct proc *p)
 	return (error);
 }
 
-int
-acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-{
-	int error = 0;
-	struct acpi_softc *sc;
-	struct apm_power_info *pi = (struct apm_power_info *)data;
-	int s;
-
-	if (!acpi_cd.cd_ndevs || APMUNIT(dev) != 0 ||
-	    !(sc = acpi_cd.cd_devs[APMUNIT(dev)]))
-		return (ENXIO);
-
-	s = splbio();
-	/* fake APM */
-	switch (cmd) {
-	case APM_IOC_SUSPEND:
-	case APM_IOC_STANDBY:
-		if ((flag & FWRITE) == 0) {
-			error = EBADF;
-			break;
-		}
-		acpi_addtask(sc, acpi_sleep_task, sc, SLEEP_SUSPEND);
-		acpi_wakeup(sc);
-		break;
-#ifdef HIBERNATE
-	case APM_IOC_HIBERNATE:
-		if ((error = suser(p)) != 0)
-			break;
-		if ((flag & FWRITE) == 0) {
-			error = EBADF;
-			break;
-		}
-		if (get_hibernate_io_function(swdevt[0].sw_dev) == NULL) {
-			error = EOPNOTSUPP;
-			break;
-		}
-		acpi_addtask(sc, acpi_sleep_task, sc, SLEEP_HIBERNATE);
-		acpi_wakeup(sc);
-		break;
-#endif
-	case APM_IOC_GETPOWER:
-		error = acpi_apminfo(pi);
-		break;
-
-	default:
-		error = ENOTTY;
-	}
-
-	splx(s);
-	return (error);
-}
-
 void	acpi_filtdetach(struct knote *);
 int	acpi_filtread(struct knote *, long);
 
@@ -3571,12 +3519,6 @@ acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 
 int
 acpiclose(dev_t dev, int flag, int mode, struct proc *p)
-{
-	return (ENXIO);
-}
-
-int
-acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	return (ENXIO);
 }
