@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.1 2023/07/05 12:18:21 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.2 2023/07/05 12:27:36 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -156,6 +156,33 @@ ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 	sig->r = r;
 	sig->s = s;
 	return 1;
+}
+
+int
+ECDSA_size(const EC_KEY *r)
+{
+	const EC_GROUP *group;
+	const BIGNUM *order = NULL;
+	ECDSA_SIG sig;
+	int ret = 0;
+
+	if (r == NULL)
+		goto err;
+
+	if ((group = EC_KEY_get0_group(r)) == NULL)
+		goto err;
+
+	if ((order = EC_GROUP_get0_order(group)) == NULL)
+		goto err;
+
+	sig.r = (BIGNUM *)order;
+	sig.s = (BIGNUM *)order;
+
+	if ((ret = i2d_ECDSA_SIG(&sig, NULL)) < 0)
+		ret = 0;
+
+ err:
+	return ret;
 }
 
 /*
@@ -791,31 +818,4 @@ ECDSA_verify(int type, const unsigned char *digest, int digest_len,
 		return 0;
 	}
 	return key->meth->verify(type, digest, digest_len, sigbuf, sig_len, key);
-}
-
-int
-ECDSA_size(const EC_KEY *r)
-{
-	const EC_GROUP *group;
-	const BIGNUM *order = NULL;
-	ECDSA_SIG sig;
-	int ret = 0;
-
-	if (r == NULL)
-		goto err;
-
-	if ((group = EC_KEY_get0_group(r)) == NULL)
-		goto err;
-
-	if ((order = EC_GROUP_get0_order(group)) == NULL)
-		goto err;
-
-	sig.r = (BIGNUM *)order;
-	sig.s = (BIGNUM *)order;
-
-	if ((ret = i2d_ECDSA_SIG(&sig, NULL)) < 0)
-		ret = 0;
-
- err:
-	return ret;
 }
