@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.5 2023/07/04 10:34:03 kettenis Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.6 2023/07/05 11:07:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
@@ -104,6 +104,7 @@
 #define JH7110_SYSCLK_GMAC0_GTXCLK	108
 #define JH7110_SYSCLK_GMAC0_PTP		109
 #define JH7110_SYSCLK_GMAC0_GTXC	111
+#define JH7110_SYSCLK_IOMUX_APB		112
 #define JH7110_SYSCLK_TEMP_APB		129
 #define JH7110_SYSCLK_TEMP_CORE		130
 #define JH7110_SYSCLK_UART0_CORE	146
@@ -764,6 +765,7 @@ stfclock_enable_jh7110_sys(void *cookie, uint32_t *cells, int on)
 	case JH7110_SYSCLK_GMAC0_GTXCLK:
 	case JH7110_SYSCLK_GMAC0_PTP:
 	case JH7110_SYSCLK_GMAC0_GTXC:
+	case JH7110_SYSCLK_IOMUX_APB:
 	case JH7110_SYSCLK_TEMP_APB:
 	case JH7110_SYSCLK_TEMP_CORE:
 	case JH7110_SYSCLK_UART0_CORE:
