@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.33 2023/07/05 08:39:40 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.1 2023/07/05 12:31:14 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -77,8 +77,70 @@
 #include <openssl/ec.h>
 #include <openssl/ecdh.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 
 #include "ec_local.h"
+
+/*
+ * Key derivation function from X9.63/SECG.
+ */
+
+/* Way more than we will ever need */
+#define ECDH_KDF_MAX	(1 << 30)
+
+int
+ecdh_KDF_X9_63(unsigned char *out, size_t outlen, const unsigned char *Z,
+    size_t Zlen, const unsigned char *sinfo, size_t sinfolen, const EVP_MD *md)
+{
+	EVP_MD_CTX *mctx = NULL;
+	unsigned int i;
+	size_t mdlen;
+	unsigned char ctr[4];
+	int rv = 0;
+
+	if (sinfolen > ECDH_KDF_MAX || outlen > ECDH_KDF_MAX ||
+	    Zlen > ECDH_KDF_MAX)
+		return 0;
+	mctx = EVP_MD_CTX_new();
+	if (mctx == NULL)
+		return 0;
+	mdlen = EVP_MD_size(md);
+	for (i = 1;; i++) {
+		unsigned char mtmp[EVP_MAX_MD_SIZE];
+		if (!EVP_DigestInit_ex(mctx, md, NULL))
+			goto err;
+		ctr[3] = i & 0xFF;
+		ctr[2] = (i >> 8) & 0xFF;
+		ctr[1] = (i >> 16) & 0xFF;
+		ctr[0] = (i >> 24) & 0xFF;
+		if (!EVP_DigestUpdate(mctx, Z, Zlen))
+			goto err;
+		if (!EVP_DigestUpdate(mctx, ctr, sizeof(ctr)))
+			goto err;
+		if (!EVP_DigestUpdate(mctx, sinfo, sinfolen))
+			goto err;
+		if (outlen >= mdlen) {
+			if (!EVP_DigestFinal(mctx, out, NULL))
+				goto err;
+			outlen -= mdlen;
+			if (outlen == 0)
+				break;
+			out += mdlen;
+		} else {
+			if (!EVP_DigestFinal(mctx, mtmp, NULL))
+				goto err;
+			memcpy(out, mtmp, outlen);
+			explicit_bzero(mtmp, mdlen);
+			break;
+		}
+	}
+	rv = 1;
+
+ err:
+	EVP_MD_CTX_free(mctx);
+
+	return rv;
+}
 
 /*
  * Based on the ECKAS-DH1 and ECSVDP-DH primitives in the IEEE 1363 standard.
