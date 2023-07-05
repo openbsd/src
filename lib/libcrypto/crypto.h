@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.61 2023/07/01 09:04:19 tb Exp $ */
+/* $OpenBSD: crypto.h,v 1.62 2023/07/05 13:06:06 bcook Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -487,7 +487,15 @@ int CRYPTO_mem_leaks(struct bio_st *bio);
 typedef int *CRYPTO_MEM_LEAK_CB(unsigned long, const char *, int, int, void *);
 int CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb);
 
-/* die if we have to */
+/*
+ * Because this is a public header, use a portable method of indicating the
+ * function does not return, rather than __dead.
+ */
+#ifdef _MSC_VER
+__declspec(noreturn)
+#else
+__attribute__((__noreturn__))
+#endif
 void OpenSSLDie(const char *file, int line, const char *assertion);
 #define OPENSSL_assert(e)       (void)((e) ? 0 : (OpenSSLDie(__FILE__, __LINE__, #e),1))
 
