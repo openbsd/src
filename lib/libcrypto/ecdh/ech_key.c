@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_key.c,v 1.32 2023/07/02 11:29:36 tb Exp $ */
+/* $OpenBSD: ech_key.c,v 1.33 2023/07/05 08:39:40 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -85,12 +85,11 @@
  */
 /* XXX - KDF handling moved to ECDH_compute_key().  See OpenSSL e2285d87. */
 int
-ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
-    EC_KEY *ecdh,
+ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
     void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
 {
 	BN_CTX *ctx;
-	BIGNUM *x;
+	BIGNUM *cofactor, *x;
 	const BIGNUM *priv_key;
 	const EC_GROUP *group;
 	EC_POINT *point = NULL;
@@ -111,11 +110,8 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
-
-	if ((priv_key = EC_KEY_get0_private_key(ecdh)) == NULL) {
-		ECDHerror(ECDH_R_NO_PRIVATE_VALUE);
+	if ((cofactor = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	}
 
 	if ((group = EC_KEY_get0_group(ecdh)) == NULL)
 		goto err;
@@ -126,6 +122,23 @@ ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
 	if ((point = EC_POINT_new(group)) == NULL) {
 		ECDHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
+	}
+
+	if ((priv_key = EC_KEY_get0_private_key(ecdh)) == NULL) {
+		ECDHerror(ECDH_R_NO_PRIVATE_VALUE);
+		goto err;
+	}
+
+	if ((EC_KEY_get_flags(ecdh) & EC_FLAG_COFACTOR_ECDH) != 0) {
+		if (!EC_GROUP_get_cofactor(group, cofactor, NULL)) {
+			ECDHerror(ERR_R_EC_LIB);
+			goto err;
+		}
+		if (!BN_mul(cofactor, cofactor, priv_key, ctx)) {
+			ECDHerror(ERR_R_BN_LIB);
+			goto err;
+		}
+		priv_key = cofactor;
 	}
 
 	if (!EC_POINT_mul(group, point, NULL, pub_key, priv_key, ctx)) {

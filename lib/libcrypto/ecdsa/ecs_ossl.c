@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_ossl.c,v 1.71 2023/07/04 15:09:31 tb Exp $ */
+/* $OpenBSD: ecs_ossl.c,v 1.72 2023/07/05 08:39:40 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -97,7 +97,7 @@ ecdsa_prepare_digest(const unsigned char *digest, int digest_len,
 }
 
 int
-ossl_ecdsa_sign(int type, const unsigned char *digest, int digest_len,
+ecdsa_sign(int type, const unsigned char *digest, int digest_len,
     unsigned char *signature, unsigned int *signature_len, const BIGNUM *kinv,
     const BIGNUM *r, EC_KEY *key)
 {
@@ -128,8 +128,7 @@ ossl_ecdsa_sign(int type, const unsigned char *digest, int digest_len,
  */
 
 int
-ossl_ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
-    BIGNUM **out_r)
+ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
 {
 	const EC_GROUP *group;
 	EC_POINT *point = NULL;
@@ -392,7 +391,7 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
  */
 
 ECDSA_SIG *
-ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
+ecdsa_sign_sig(const unsigned char *digest, int digest_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *key)
 {
 	BN_CTX *ctx = NULL;
@@ -485,7 +484,7 @@ ossl_ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 }
 
 int
-ossl_ecdsa_verify(int type, const unsigned char *digest, int digest_len,
+ecdsa_verify(int type, const unsigned char *digest, int digest_len,
     const unsigned char *sigbuf, int sig_len, EC_KEY *key)
 {
 	ECDSA_SIG *s;
@@ -522,7 +521,7 @@ ossl_ecdsa_verify(int type, const unsigned char *digest, int digest_len,
  */
 
 int
-ossl_ecdsa_verify_sig(const unsigned char *digest, int digest_len,
+ecdsa_verify_sig(const unsigned char *digest, int digest_len,
     const ECDSA_SIG *sig, EC_KEY *key)
 {
 	const EC_GROUP *group;

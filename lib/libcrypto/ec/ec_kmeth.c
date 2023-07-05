@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_kmeth.c,v 1.8 2023/06/25 18:52:27 tb Exp $	*/
+/*	$OpenBSD: ec_kmeth.c,v 1.9 2023/07/05 08:39:40 tb Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -74,15 +74,15 @@ static const EC_KEY_METHOD openssl_ec_key_method = {
 	.set_private = NULL,
 	.set_public = NULL,
 
-	.keygen = ossl_ec_key_gen,
-	.compute_key = ossl_ecdh_compute_key,
+	.keygen = ec_key_gen,
+	.compute_key = ecdh_compute_key,
 
-	.sign = ossl_ecdsa_sign,
-	.sign_setup = ossl_ecdsa_sign_setup,
-	.sign_sig = ossl_ecdsa_sign_sig,
+	.sign = ecdsa_sign,
+	.sign_setup = ecdsa_sign_setup,
+	.sign_sig = ecdsa_sign_sig,
 
-	.verify = ossl_ecdsa_verify,
-	.verify_sig = ossl_ecdsa_verify_sig,
+	.verify = ecdsa_verify,
+	.verify_sig = ecdsa_verify_sig,
 };
 
 const EC_KEY_METHOD *default_ec_key_meth = &openssl_ec_key_method;

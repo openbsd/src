@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_local.h,v 1.3 2023/06/25 18:45:56 tb Exp $ */
+/* $OpenBSD: ecs_local.h,v 1.4 2023/07/05 08:39:40 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -68,12 +68,12 @@ struct ECDSA_SIG_st {
 	BIGNUM *s;
 };
 
-int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
+int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
     BIGNUM **rp);
-int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+int ecdsa_sign(int type, const unsigned char *dgst, int dlen,
     unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
     const BIGNUM *r, EC_KEY *eckey);
-ECDSA_SIG *ossl_ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
+ECDSA_SIG *ecdsa_sign_sig(const unsigned char *dgst, int dgst_len,
     const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey);
 
 __END_HIDDEN_DECLS

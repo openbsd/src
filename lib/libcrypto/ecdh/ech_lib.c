@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.22 2023/06/25 19:17:43 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.23 2023/07/05 08:39:40 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -90,7 +90,7 @@ static const ECDH_METHOD *default_ECDH_method = NULL;
 
 static const ECDH_METHOD openssl_ecdh_meth = {
 	.name = "OpenSSL ECDH method",
-	.compute_key = ossl_ecdh_compute_key,
+	.compute_key = ecdh_compute_key,
 };
 
 const ECDH_METHOD *

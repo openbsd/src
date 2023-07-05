@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.22 2023/06/25 19:33:39 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.23 2023/07/05 08:39:40 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -70,9 +70,9 @@ static const ECDSA_METHOD *default_ECDSA_method = NULL;
 
 static const ECDSA_METHOD openssl_ecdsa_meth = {
 	.name = "OpenSSL ECDSA method",
-	.ecdsa_do_sign = ossl_ecdsa_sign_sig,
-	.ecdsa_sign_setup = ossl_ecdsa_sign_setup,
-	.ecdsa_do_verify = ossl_ecdsa_verify_sig,
+	.ecdsa_do_sign = ecdsa_sign_sig,
+	.ecdsa_sign_setup = ecdsa_sign_setup,
+	.ecdsa_do_verify = ecdsa_verify_sig,
 };
 
 const ECDSA_METHOD *

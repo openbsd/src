@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.23 2023/07/03 07:26:40 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.24 2023/07/05 08:39:40 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -341,12 +341,12 @@ struct ec_key_method_st {
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
-int ossl_ec_key_gen(EC_KEY *eckey);
-int ossl_ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
+int ec_key_gen(EC_KEY *eckey);
+int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
     void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen));
-int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+int ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
     const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
-int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
+int ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
     const ECDSA_SIG *sig, EC_KEY *eckey);
 
 /*
