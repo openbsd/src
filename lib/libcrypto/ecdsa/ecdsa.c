@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.6 2023/07/05 12:56:52 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.7 2023/07/05 13:01:44 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -239,7 +239,7 @@ ecdsa_sign(int type, const unsigned char *digest, int digest_len,
 
 /*
  * FIPS 186-5, section 6.4.1, steps 3-8 and 11: Generate k, calculate r and
- * kinv, and clear it. If r == 0, try again with a new random k.
+ * kinv. If r == 0, try again with a new random k.
  */
 
 int
