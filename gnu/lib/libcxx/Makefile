@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2021/12/17 14:55:43 patrick Exp $
+# $OpenBSD: Makefile,v 1.6 2023/07/05 15:34:52 robert Exp $
 
 .include <bsd.own.mk>
 
@@ -135,6 +135,9 @@ STD_HEADERS=	\
 	__algorithm/pop_heap.h \
 	__algorithm/prev_permutation.h \
 	__algorithm/push_heap.h \
+	__algorithm/ranges_find.h \
+	__algorithm/ranges_find_if.h \
+	__algorithm/ranges_find_if_not.h \
 	__algorithm/remove_copy_if.h \
 	__algorithm/remove_copy.h \
 	__algorithm/remove_if.h \
