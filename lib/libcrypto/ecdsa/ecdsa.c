@@ -1,9 +1,6 @@
-/* $OpenBSD: ecs_ossl.c,v 1.73 2023/07/05 11:37:46 tb Exp $ */
-/*
- * Written by Nils Larsch for the OpenSSL project
- */
+/* $OpenBSD: ecdsa.c,v 1.1 2023/07/05 12:18:21 tb Exp $ */
 /* ====================================================================
- * Copyright (c) 1998-2004 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,7 +22,7 @@
  * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission. For written permission, please contact
- *    openssl-core@OpenSSL.org.
+ *    licensing@OpenSSL.org.
  *
  * 5. Products derived from this software may not be called "OpenSSL"
  *    nor may "OpenSSL" appear in their names without prior written
@@ -60,6 +57,7 @@
 
 #include <openssl/opensslconf.h>
 
+#include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -68,6 +66,97 @@
 #include "bn_local.h"
 #include "ec_local.h"
 #include "ecdsa_local.h"
+
+static const ASN1_TEMPLATE ECDSA_SIG_seq_tt[] = {
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ECDSA_SIG, r),
+		.field_name = "r",
+		.item = &BIGNUM_it,
+	},
+	{
+		.flags = 0,
+		.tag = 0,
+		.offset = offsetof(ECDSA_SIG, s),
+		.field_name = "s",
+		.item = &BIGNUM_it,
+	},
+};
+
+const ASN1_ITEM ECDSA_SIG_it = {
+	.itype = ASN1_ITYPE_SEQUENCE,
+	.utype = V_ASN1_SEQUENCE,
+	.templates = ECDSA_SIG_seq_tt,
+	.tcount = sizeof(ECDSA_SIG_seq_tt) / sizeof(ASN1_TEMPLATE),
+	.funcs = NULL,
+	.size = sizeof(ECDSA_SIG),
+	.sname = "ECDSA_SIG",
+};
+
+ECDSA_SIG *ECDSA_SIG_new(void);
+void ECDSA_SIG_free(ECDSA_SIG *a);
+ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **a, const unsigned char **in, long len);
+int i2d_ECDSA_SIG(const ECDSA_SIG *a, unsigned char **out);
+
+ECDSA_SIG *
+d2i_ECDSA_SIG(ECDSA_SIG **a, const unsigned char **in, long len)
+{
+	return (ECDSA_SIG *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+	    &ECDSA_SIG_it);
+}
+
+int
+i2d_ECDSA_SIG(const ECDSA_SIG *a, unsigned char **out)
+{
+	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ECDSA_SIG_it);
+}
+
+ECDSA_SIG *
+ECDSA_SIG_new(void)
+{
+	return (ECDSA_SIG *)ASN1_item_new(&ECDSA_SIG_it);
+}
+
+void
+ECDSA_SIG_free(ECDSA_SIG *a)
+{
+	ASN1_item_free((ASN1_VALUE *)a, &ECDSA_SIG_it);
+}
+
+void
+ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
+{
+	if (pr != NULL)
+		*pr = sig->r;
+	if (ps != NULL)
+		*ps = sig->s;
+}
+
+const BIGNUM *
+ECDSA_SIG_get0_r(const ECDSA_SIG *sig)
+{
+	return sig->r;
+}
+
+const BIGNUM *
+ECDSA_SIG_get0_s(const ECDSA_SIG *sig)
+{
+	return sig->s;
+}
+
+int
+ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
+{
+	if (r == NULL || s == NULL)
+		return 0;
+
+	BN_free(sig->r);
+	BN_free(sig->s);
+	sig->r = r;
+	sig->s = s;
+	return 1;
+}
 
 /*
  * FIPS 186-5, section 6.4.1, step 2: convert hashed message into an integer.
