@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.174 2023/07/03 09:12:05 jsg Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.175 2023/07/05 15:07:28 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -7607,7 +7607,7 @@ iwx_bgscan_done(struct ieee80211com *ic,
 	free(sc->bgscan_unref_arg, M_DEVBUF, sc->bgscan_unref_arg_size);
 	sc->bgscan_unref_arg = arg;
 	sc->bgscan_unref_arg_size = arg_size;
-	iwx_add_task(sc, sc->sc_nswq, &sc->bgscan_done_task);
+	iwx_add_task(sc, systq, &sc->bgscan_done_task);
 }
 
 void
