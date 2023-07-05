@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.56 2022/09/11 17:26:03 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.57 2023/07/05 17:32:51 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -536,17 +536,13 @@ unsigned long BIO_number_read(BIO *bio);
 unsigned long BIO_number_written(BIO *bio);
 
 /* For BIO_f_asn1() */
-int
-BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix,
+int BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix,
 asn1_ps_func *prefix_free);
-int
-BIO_asn1_get_prefix(BIO *b, asn1_ps_func **pprefix,
+int BIO_asn1_get_prefix(BIO *b, asn1_ps_func **pprefix,
 asn1_ps_func **pprefix_free);
-int
-BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix,
+int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix,
 asn1_ps_func *suffix_free);
-int
-BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
+int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
 asn1_ps_func **psuffix_free);
 
 int BIO_get_new_index(void);
@@ -667,18 +663,14 @@ void BIO_copy_next_retry(BIO *b);
 
 /*long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);*/
 
-int
-BIO_printf(BIO *bio, const char *format, ...)
+int BIO_printf(BIO *bio, const char *format, ...)
 	__attribute__((__format__(__printf__, 2, 3), __nonnull__(2)));
-int
-BIO_vprintf(BIO *bio, const char *format, va_list args)
+int BIO_vprintf(BIO *bio, const char *format, va_list args)
 	__attribute__((__format__(__printf__, 2, 0), __nonnull__(2)));
-int
-BIO_snprintf(char *buf, size_t n, const char *format, ...)
+int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 	__attribute__((__deprecated__, __format__(__printf__, 3, 4),
 	    __nonnull__(3)));
-int
-BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
+int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
 	__attribute__((__deprecated__, __format__(__printf__, 3, 0),
 	    __nonnull__(3)));
 
