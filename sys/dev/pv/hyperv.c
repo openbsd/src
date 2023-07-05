@@ -407,9 +407,8 @@ hv_hypercall(struct hv_softc *sc, uint64_t control, void *input,
 	}
 
 #ifdef __amd64__
-	__asm__ volatile ("mov %0, %%r8" : : "r" (output_pa) : "r8");
-	__asm__ volatile ("call *%3" : "=a" (status) : "c" (control),
-	    "d" (input_pa), "m" (sc->sc_hc));
+	extern uint64_t hv_hypercall_trampoline(uint64_t, paddr_t, paddr_t);
+	status = hv_hypercall_trampoline(control, input_pa, output_pa);
 #else  /* __i386__ */
 	{
 		uint32_t control_hi = control >> 32;

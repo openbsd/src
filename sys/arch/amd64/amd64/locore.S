@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.134 2023/04/17 00:14:59 deraadt Exp $	*/
+/*	$OpenBSD: locore.S,v 1.135 2023/07/05 18:23:10 anton Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -1149,20 +1149,28 @@ NENTRY(rdmsr_resume)
 	lfence
 END(rdmsr_safe)
 
+#if NHYPERV > 0
+/* uint64_t hv_hypercall_trampoline(uint64_t control, paddr_t input, paddr_t output) */
+NENTRY(hv_hypercall_trampoline)
+	endbr64
+	mov	%rdx, %r8
+	mov	%rsi, %rdx
+	mov	%rdi, %rcx
+	jmp	hv_hypercall_page
+END(hv_hypercall_trampoline)
+	/* Hypercall page needs to be page aligned */
+	.text
+	.align	NBPG, 0xcc
+	.globl	hv_hypercall_page
+hv_hypercall_page:
+	.skip	0x1000, 0xcc
+#endif /* NHYPERV > 0 */
+
 #if NXEN > 0
 	/* Hypercall page needs to be page aligned */
 	.text
 	.align	NBPG, 0xcc
 	.globl	xen_hypercall_page
 xen_hypercall_page:
-	.skip	0x1000, 0xcc
-#endif /* NXEN > 0 */
-
-#if NHYPERV > 0
-	/* Hypercall page needs to be page aligned */
-	.text
-	.align	NBPG, 0xcc
-	.globl	hv_hypercall_page
-hv_hypercall_page:
 	.skip	0x1000, 0xcc
 #endif /* NXEN > 0 */
