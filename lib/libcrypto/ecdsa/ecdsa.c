@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.3 2023/07/05 12:49:42 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.4 2023/07/05 12:51:11 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -93,11 +93,6 @@ const ASN1_ITEM ECDSA_SIG_it = {
 	.size = sizeof(ECDSA_SIG),
 	.sname = "ECDSA_SIG",
 };
-
-ECDSA_SIG *ECDSA_SIG_new(void);
-void ECDSA_SIG_free(ECDSA_SIG *a);
-ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **a, const unsigned char **in, long len);
-int i2d_ECDSA_SIG(const ECDSA_SIG *a, unsigned char **out);
 
 ECDSA_SIG *
 d2i_ECDSA_SIG(ECDSA_SIG **a, const unsigned char **in, long len)
