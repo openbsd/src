@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiboot.c,v 1.5 2022/06/06 10:50:56 kettenis Exp $	*/
+/*	$OpenBSD: efiboot.c,v 1.6 2023/07/05 09:25:55 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -466,9 +466,10 @@ efi_dma_constraint(void)
 {
 	void *node;
 
-	/* StarFive JH7100 has peripherals that only support 32-bit DMA. */
+	/* StarFive JH71x0 has peripherals that only support 32-bit DMA. */
 	node = fdt_find_node("/");
-	if (fdt_node_is_compatible(node, "starfive,jh7100"))
+	if (fdt_node_is_compatible(node, "starfive,jh7100") ||
+	    fdt_node_is_compatible(node, "starfive,jh7110"))
 		dma_constraint[1] = htobe64(0xffffffff);
 
 	/* Pass DMA constraint. */
