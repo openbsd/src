@@ -1,4 +1,4 @@
-/* $OpenBSD: a_object.c,v 1.50 2023/05/23 11:51:12 tb Exp $ */
+/* $OpenBSD: a_object.c,v 1.51 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,6 +87,7 @@ ASN1_OBJECT_new(void)
 
 	return a;
 }
+LCRYPTO_ALIAS(ASN1_OBJECT_new);
 
 void
 ASN1_OBJECT_free(ASN1_OBJECT *a)
@@ -106,6 +107,7 @@ ASN1_OBJECT_free(ASN1_OBJECT *a)
 	if (a->flags & ASN1_OBJECT_FLAG_DYNAMIC)
 		free(a);
 }
+LCRYPTO_ALIAS(ASN1_OBJECT_free);
 
 ASN1_OBJECT *
 ASN1_OBJECT_create(int nid, unsigned char *data, int len,
@@ -122,6 +124,7 @@ ASN1_OBJECT_create(int nid, unsigned char *data, int len,
 	    ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	return (OBJ_dup(&o));
 }
+LCRYPTO_ALIAS(ASN1_OBJECT_create);
 
 static int
 oid_add_arc(CBB *cbb, uint64_t arc)
@@ -367,6 +370,7 @@ a2d_ASN1_OBJECT(unsigned char *out, int out_len, const char *in, int in_len)
 
 	return ret;
 }
+LCRYPTO_ALIAS(a2d_ASN1_OBJECT);
 
 static int
 i2t_ASN1_OBJECT_oid(const ASN1_OBJECT *aobj, CBB *cbb)
@@ -456,6 +460,7 @@ i2t_ASN1_OBJECT(char *buf, int buf_len, const ASN1_OBJECT *aobj)
 {
 	return i2t_ASN1_OBJECT_internal(aobj, buf, buf_len, 0);
 }
+LCRYPTO_ALIAS(i2t_ASN1_OBJECT);
 
 ASN1_OBJECT *
 t2i_ASN1_OBJECT_internal(const char *oid)
@@ -523,6 +528,7 @@ i2a_ASN1_OBJECT(BIO *bp, const ASN1_OBJECT *aobj)
 
 	return ret;
 }
+LCRYPTO_ALIAS(i2a_ASN1_OBJECT);
 
 int
 c2i_ASN1_OBJECT_cbs(ASN1_OBJECT **out_aobj, CBS *content)
@@ -627,6 +633,7 @@ i2d_ASN1_OBJECT(const ASN1_OBJECT *a, unsigned char **pp)
 	*pp = p;
 	return (objsize);
 }
+LCRYPTO_ALIAS(i2d_ASN1_OBJECT);
 
 ASN1_OBJECT *
 d2i_ASN1_OBJECT(ASN1_OBJECT **out_aobj, const unsigned char **pp, long length)
@@ -666,3 +673,4 @@ d2i_ASN1_OBJECT(ASN1_OBJECT **out_aobj, const unsigned char **pp, long length)
 
 	return aobj;
 }
+LCRYPTO_ALIAS(d2i_ASN1_OBJECT);

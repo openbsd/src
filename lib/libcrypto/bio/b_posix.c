@@ -1,4 +1,4 @@
-/* $OpenBSD: b_posix.c,v 1.2 2018/03/17 16:20:01 beck Exp $ */
+/* $OpenBSD: b_posix.c,v 1.3 2023/07/05 21:23:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,11 +72,13 @@ BIO_sock_init(void)
 		return (0);
 	return (1);
 }
+LCRYPTO_ALIAS(BIO_sock_init);
 
 void
 BIO_sock_cleanup(void)
 {
 }
+LCRYPTO_ALIAS(BIO_sock_cleanup);
 
 int
 BIO_socket_nbio(int s, int mode)
@@ -88,3 +90,4 @@ BIO_socket_nbio(int s, int mode)
 		return (fcntl(s, F_SETFL, flags & ~O_NONBLOCK) != -1);
 	return (1);
 }
+LCRYPTO_ALIAS(BIO_socket_nbio);

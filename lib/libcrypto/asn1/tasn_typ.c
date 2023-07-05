@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_typ.c,v 1.17 2021/12/26 15:20:21 tb Exp $ */
+/* $OpenBSD: tasn_typ.c,v 1.18 2023/07/05 21:23:37 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -73,24 +73,28 @@ d2i_ASN1_NULL(ASN1_NULL **a, const unsigned char **in, long len)
 	return (ASN1_NULL *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_NULL_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_NULL);
 
 int
 i2d_ASN1_NULL(ASN1_NULL *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_NULL_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_NULL);
 
 ASN1_NULL *
 ASN1_NULL_new(void)
 {
 	return (ASN1_NULL *)ASN1_item_new(&ASN1_NULL_it);
 }
+LCRYPTO_ALIAS(ASN1_NULL_new);
 
 void
 ASN1_NULL_free(ASN1_NULL *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_NULL_it);
 }
+LCRYPTO_ALIAS(ASN1_NULL_free);
 
 
 const ASN1_ITEM ASN1_UTF8STRING_it = {
@@ -105,24 +109,28 @@ d2i_ASN1_UTF8STRING(ASN1_UTF8STRING **a, const unsigned char **in, long len)
 	return (ASN1_UTF8STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_UTF8STRING_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_UTF8STRING);
 
 int
 i2d_ASN1_UTF8STRING(ASN1_UTF8STRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_UTF8STRING_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_UTF8STRING);
 
 ASN1_UTF8STRING *
 ASN1_UTF8STRING_new(void)
 {
 	return (ASN1_UTF8STRING *)ASN1_item_new(&ASN1_UTF8STRING_it);
 }
+LCRYPTO_ALIAS(ASN1_UTF8STRING_new);
 
 void
 ASN1_UTF8STRING_free(ASN1_UTF8STRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_UTF8STRING_it);
 }
+LCRYPTO_ALIAS(ASN1_UTF8STRING_free);
 
 
 const ASN1_ITEM ASN1_PRINTABLESTRING_it = {
@@ -138,24 +146,28 @@ d2i_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING **a, const unsigned char **in,
 	return (ASN1_PRINTABLESTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_PRINTABLESTRING_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_PRINTABLESTRING);
 
 int
 i2d_ASN1_PRINTABLESTRING(ASN1_PRINTABLESTRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_PRINTABLESTRING_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_PRINTABLESTRING);
 
 ASN1_PRINTABLESTRING *
 ASN1_PRINTABLESTRING_new(void)
 {
 	return (ASN1_PRINTABLESTRING *)ASN1_item_new(&ASN1_PRINTABLESTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_PRINTABLESTRING_new);
 
 void
 ASN1_PRINTABLESTRING_free(ASN1_PRINTABLESTRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_PRINTABLESTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_PRINTABLESTRING_free);
 
 
 const ASN1_ITEM ASN1_T61STRING_it = {
@@ -170,24 +182,28 @@ d2i_ASN1_T61STRING(ASN1_T61STRING **a, const unsigned char **in, long len)
 	return (ASN1_T61STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_T61STRING_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_T61STRING);
 
 int
 i2d_ASN1_T61STRING(ASN1_T61STRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_T61STRING_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_T61STRING);
 
 ASN1_T61STRING *
 ASN1_T61STRING_new(void)
 {
 	return (ASN1_T61STRING *)ASN1_item_new(&ASN1_T61STRING_it);
 }
+LCRYPTO_ALIAS(ASN1_T61STRING_new);
 
 void
 ASN1_T61STRING_free(ASN1_T61STRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_T61STRING_it);
 }
+LCRYPTO_ALIAS(ASN1_T61STRING_free);
 
 
 const ASN1_ITEM ASN1_IA5STRING_it = {
@@ -202,24 +218,28 @@ d2i_ASN1_IA5STRING(ASN1_IA5STRING **a, const unsigned char **in, long len)
 	return (ASN1_IA5STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_IA5STRING_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_IA5STRING);
 
 int
 i2d_ASN1_IA5STRING(ASN1_IA5STRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_IA5STRING_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_IA5STRING);
 
 ASN1_IA5STRING *
 ASN1_IA5STRING_new(void)
 {
 	return (ASN1_IA5STRING *)ASN1_item_new(&ASN1_IA5STRING_it);
 }
+LCRYPTO_ALIAS(ASN1_IA5STRING_new);
 
 void
 ASN1_IA5STRING_free(ASN1_IA5STRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_IA5STRING_it);
 }
+LCRYPTO_ALIAS(ASN1_IA5STRING_free);
 
 
 const ASN1_ITEM ASN1_GENERALSTRING_it = {
@@ -235,24 +255,28 @@ d2i_ASN1_GENERALSTRING(ASN1_GENERALSTRING **a, const unsigned char **in,
 	return (ASN1_GENERALSTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_GENERALSTRING_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_GENERALSTRING);
 
 int
 i2d_ASN1_GENERALSTRING(ASN1_GENERALSTRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_GENERALSTRING_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_GENERALSTRING);
 
 ASN1_GENERALSTRING *
 ASN1_GENERALSTRING_new(void)
 {
 	return (ASN1_GENERALSTRING *)ASN1_item_new(&ASN1_GENERALSTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_GENERALSTRING_new);
 
 void
 ASN1_GENERALSTRING_free(ASN1_GENERALSTRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_GENERALSTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_GENERALSTRING_free);
 
 
 const ASN1_ITEM ASN1_UTCTIME_it = {
@@ -267,24 +291,28 @@ d2i_ASN1_UTCTIME(ASN1_UTCTIME **a, const unsigned char **in, long len)
 	return (ASN1_UTCTIME *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_UTCTIME_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_UTCTIME);
 
 int
 i2d_ASN1_UTCTIME(ASN1_UTCTIME *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_UTCTIME_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_UTCTIME);
 
 ASN1_UTCTIME *
 ASN1_UTCTIME_new(void)
 {
 	return (ASN1_UTCTIME *)ASN1_item_new(&ASN1_UTCTIME_it);
 }
+LCRYPTO_ALIAS(ASN1_UTCTIME_new);
 
 void
 ASN1_UTCTIME_free(ASN1_UTCTIME *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_UTCTIME_it);
 }
+LCRYPTO_ALIAS(ASN1_UTCTIME_free);
 
 
 const ASN1_ITEM ASN1_GENERALIZEDTIME_it = {
@@ -300,24 +328,28 @@ d2i_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME **a, const unsigned char **in,
 	return (ASN1_GENERALIZEDTIME *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_GENERALIZEDTIME_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_GENERALIZEDTIME);
 
 int
 i2d_ASN1_GENERALIZEDTIME(ASN1_GENERALIZEDTIME *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_GENERALIZEDTIME_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_GENERALIZEDTIME);
 
 ASN1_GENERALIZEDTIME *
 ASN1_GENERALIZEDTIME_new(void)
 {
 	return (ASN1_GENERALIZEDTIME *)ASN1_item_new(&ASN1_GENERALIZEDTIME_it);
 }
+LCRYPTO_ALIAS(ASN1_GENERALIZEDTIME_new);
 
 void
 ASN1_GENERALIZEDTIME_free(ASN1_GENERALIZEDTIME *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_GENERALIZEDTIME_it);
 }
+LCRYPTO_ALIAS(ASN1_GENERALIZEDTIME_free);
 
 
 const ASN1_ITEM ASN1_VISIBLESTRING_it = {
@@ -333,24 +365,28 @@ d2i_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING **a, const unsigned char **in,
 	return (ASN1_VISIBLESTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_VISIBLESTRING_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_VISIBLESTRING);
 
 int
 i2d_ASN1_VISIBLESTRING(ASN1_VISIBLESTRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_VISIBLESTRING_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_VISIBLESTRING);
 
 ASN1_VISIBLESTRING *
 ASN1_VISIBLESTRING_new(void)
 {
 	return (ASN1_VISIBLESTRING *)ASN1_item_new(&ASN1_VISIBLESTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_VISIBLESTRING_new);
 
 void
 ASN1_VISIBLESTRING_free(ASN1_VISIBLESTRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_VISIBLESTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_VISIBLESTRING_free);
 
 
 const ASN1_ITEM ASN1_UNIVERSALSTRING_it = {
@@ -366,24 +402,28 @@ d2i_ASN1_UNIVERSALSTRING(ASN1_UNIVERSALSTRING **a, const unsigned char **in,
 	return (ASN1_UNIVERSALSTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_UNIVERSALSTRING_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_UNIVERSALSTRING);
 
 int
 i2d_ASN1_UNIVERSALSTRING(ASN1_UNIVERSALSTRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_UNIVERSALSTRING_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_UNIVERSALSTRING);
 
 ASN1_UNIVERSALSTRING *
 ASN1_UNIVERSALSTRING_new(void)
 {
 	return (ASN1_UNIVERSALSTRING *)ASN1_item_new(&ASN1_UNIVERSALSTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_UNIVERSALSTRING_new);
 
 void
 ASN1_UNIVERSALSTRING_free(ASN1_UNIVERSALSTRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_UNIVERSALSTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_UNIVERSALSTRING_free);
 
 
 const ASN1_ITEM ASN1_BMPSTRING_it = {
@@ -398,24 +438,28 @@ d2i_ASN1_BMPSTRING(ASN1_BMPSTRING **a, const unsigned char **in, long len)
 	return (ASN1_BMPSTRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_BMPSTRING_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_BMPSTRING);
 
 int
 i2d_ASN1_BMPSTRING(ASN1_BMPSTRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_BMPSTRING_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_BMPSTRING);
 
 ASN1_BMPSTRING *
 ASN1_BMPSTRING_new(void)
 {
 	return (ASN1_BMPSTRING *)ASN1_item_new(&ASN1_BMPSTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_BMPSTRING_new);
 
 void
 ASN1_BMPSTRING_free(ASN1_BMPSTRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_BMPSTRING_it);
 }
+LCRYPTO_ALIAS(ASN1_BMPSTRING_free);
 
 const ASN1_ITEM ASN1_ANY_it = {
 	.itype = ASN1_ITYPE_PRIMITIVE,
@@ -452,24 +496,28 @@ d2i_ASN1_PRINTABLE(ASN1_STRING **a, const unsigned char **in, long len)
 	return (ASN1_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_PRINTABLE_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_PRINTABLE);
 
 int
 i2d_ASN1_PRINTABLE(ASN1_STRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_PRINTABLE_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_PRINTABLE);
 
 ASN1_STRING *
 ASN1_PRINTABLE_new(void)
 {
 	return (ASN1_STRING *)ASN1_item_new(&ASN1_PRINTABLE_it);
 }
+LCRYPTO_ALIAS(ASN1_PRINTABLE_new);
 
 void
 ASN1_PRINTABLE_free(ASN1_STRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_PRINTABLE_it);
 }
+LCRYPTO_ALIAS(ASN1_PRINTABLE_free);
 
 
 const ASN1_ITEM DISPLAYTEXT_it = {
@@ -488,24 +536,28 @@ d2i_DISPLAYTEXT(ASN1_STRING **a, const unsigned char **in, long len)
 	return (ASN1_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &DISPLAYTEXT_it);
 }
+LCRYPTO_ALIAS(d2i_DISPLAYTEXT);
 
 int
 i2d_DISPLAYTEXT(ASN1_STRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DISPLAYTEXT_it);
 }
+LCRYPTO_ALIAS(i2d_DISPLAYTEXT);
 
 ASN1_STRING *
 DISPLAYTEXT_new(void)
 {
 	return (ASN1_STRING *)ASN1_item_new(&DISPLAYTEXT_it);
 }
+LCRYPTO_ALIAS(DISPLAYTEXT_new);
 
 void
 DISPLAYTEXT_free(ASN1_STRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &DISPLAYTEXT_it);
 }
+LCRYPTO_ALIAS(DISPLAYTEXT_free);
 
 
 const ASN1_ITEM DIRECTORYSTRING_it = {
@@ -524,24 +576,28 @@ d2i_DIRECTORYSTRING(ASN1_STRING **a, const unsigned char **in, long len)
 	return (ASN1_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &DIRECTORYSTRING_it);
 }
+LCRYPTO_ALIAS(d2i_DIRECTORYSTRING);
 
 int
 i2d_DIRECTORYSTRING(ASN1_STRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &DIRECTORYSTRING_it);
 }
+LCRYPTO_ALIAS(i2d_DIRECTORYSTRING);
 
 ASN1_STRING *
 DIRECTORYSTRING_new(void)
 {
 	return (ASN1_STRING *)ASN1_item_new(&DIRECTORYSTRING_it);
 }
+LCRYPTO_ALIAS(DIRECTORYSTRING_new);
 
 void
 DIRECTORYSTRING_free(ASN1_STRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &DIRECTORYSTRING_it);
 }
+LCRYPTO_ALIAS(DIRECTORYSTRING_free);
 
 /* Three separate BOOLEAN type: normal, DEFAULT TRUE and DEFAULT FALSE */
 
@@ -640,12 +696,14 @@ d2i_ASN1_SEQUENCE_ANY(ASN1_SEQUENCE_ANY **a, const unsigned char **in, long len)
 	return (ASN1_SEQUENCE_ANY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_SEQUENCE_ANY_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_SEQUENCE_ANY);
 
 int
 i2d_ASN1_SEQUENCE_ANY(const ASN1_SEQUENCE_ANY *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_SEQUENCE_ANY_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_SEQUENCE_ANY);
 
 ASN1_SEQUENCE_ANY *
 d2i_ASN1_SET_ANY(ASN1_SEQUENCE_ANY **a, const unsigned char **in, long len)
@@ -653,9 +711,11 @@ d2i_ASN1_SET_ANY(ASN1_SEQUENCE_ANY **a, const unsigned char **in, long len)
 	return (ASN1_SEQUENCE_ANY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_SET_ANY_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_SET_ANY);
 
 int
 i2d_ASN1_SET_ANY(const ASN1_SEQUENCE_ANY *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_SET_ANY_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_SET_ANY);

@@ -1,4 +1,4 @@
-/* $OpenBSD: t_x509.c,v 1.41 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: t_x509.c,v 1.42 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,6 +85,7 @@ X509_print_fp(FILE *fp, X509 *x)
 {
 	return X509_print_ex_fp(fp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
 }
+LCRYPTO_ALIAS(X509_print_fp);
 
 int
 X509_print_ex_fp(FILE *fp, X509 *x, unsigned long nmflag, unsigned long cflag)
@@ -101,12 +102,14 @@ X509_print_ex_fp(FILE *fp, X509 *x, unsigned long nmflag, unsigned long cflag)
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(X509_print_ex_fp);
 
 int
 X509_print(BIO *bp, X509 *x)
 {
 	return X509_print_ex(bp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
 }
+LCRYPTO_ALIAS(X509_print);
 
 int
 X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
@@ -250,6 +253,7 @@ X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	free(m);
 	return (ret);
 }
+LCRYPTO_ALIAS(X509_print_ex);
 
 int
 X509_ocspid_print(BIO *bp, X509 *x)
@@ -301,6 +305,7 @@ X509_ocspid_print(BIO *bp, X509 *x)
 	free(der);
 	return (0);
 }
+LCRYPTO_ALIAS(X509_ocspid_print);
 
 int
 X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
@@ -326,6 +331,7 @@ X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
 
 	return 1;
 }
+LCRYPTO_ALIAS(X509_signature_dump);
 
 int
 X509_signature_print(BIO *bp, const X509_ALGOR *sigalg, const ASN1_STRING *sig)
@@ -352,6 +358,7 @@ X509_signature_print(BIO *bp, const X509_ALGOR *sigalg, const ASN1_STRING *sig)
 		return 0;
 	return 1;
 }
+LCRYPTO_ALIAS(X509_signature_print);
 
 int
 ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
@@ -363,6 +370,7 @@ ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 	BIO_write(bp, "Bad time value", 14);
 	return (0);
 }
+LCRYPTO_ALIAS(ASN1_TIME_print);
 
 static const char *mon[12] = {
 	"Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -422,6 +430,7 @@ ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 	BIO_write(bp, "Bad time value", 14);
 	return (0);
 }
+LCRYPTO_ALIAS(ASN1_GENERALIZEDTIME_print);
 
 int
 ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
@@ -465,6 +474,7 @@ ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 	BIO_write(bp, "Bad time value", 14);
 	return (0);
 }
+LCRYPTO_ALIAS(ASN1_UTCTIME_print);
 
 int
 X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
@@ -510,3 +520,4 @@ X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
 	free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(X509_NAME_print);

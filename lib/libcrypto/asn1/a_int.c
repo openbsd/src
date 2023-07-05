@@ -1,4 +1,4 @@
-/* $OpenBSD: a_int.c,v 1.46 2022/08/28 17:49:25 jsing Exp $ */
+/* $OpenBSD: a_int.c,v 1.47 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,6 +79,7 @@ ASN1_INTEGER_new(void)
 {
 	return (ASN1_INTEGER *)ASN1_item_new(&ASN1_INTEGER_it);
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_new);
 
 static void
 asn1_aint_clear(ASN1_INTEGER *aint)
@@ -95,6 +96,7 @@ ASN1_INTEGER_free(ASN1_INTEGER *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_INTEGER_it);
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_free);
 
 static int
 ASN1_INTEGER_valid(const ASN1_INTEGER *a)
@@ -110,6 +112,7 @@ ASN1_INTEGER_dup(const ASN1_INTEGER *x)
 
 	return ASN1_STRING_dup(x);
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_dup);
 
 int
 ASN1_INTEGER_cmp(const ASN1_INTEGER *a, const ASN1_INTEGER *b)
@@ -125,6 +128,7 @@ ASN1_INTEGER_cmp(const ASN1_INTEGER *a, const ASN1_INTEGER *b)
 
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_cmp);
 
 int
 asn1_aint_get_uint64(CBS *cbs, uint64_t *out_val)
@@ -248,6 +252,7 @@ ASN1_INTEGER_get_uint64(uint64_t *out_val, const ASN1_INTEGER *aint)
 
 	return 1;
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_get_uint64);
 
 int
 ASN1_INTEGER_set_uint64(ASN1_INTEGER *aint, uint64_t val)
@@ -256,6 +261,7 @@ ASN1_INTEGER_set_uint64(ASN1_INTEGER *aint, uint64_t val)
 
 	return asn1_aint_set_uint64(val, &aint->data, &aint->length);
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_set_uint64);
 
 int
 ASN1_INTEGER_get_int64(int64_t *out_val, const ASN1_INTEGER *aint)
@@ -278,6 +284,7 @@ ASN1_INTEGER_get_int64(int64_t *out_val, const ASN1_INTEGER *aint)
 	return asn1_aint_get_int64(&cbs, (aint->type == V_ASN1_NEG_INTEGER),
 	    out_val);
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_get_int64);
 
 int
 ASN1_INTEGER_set_int64(ASN1_INTEGER *aint, int64_t val)
@@ -295,6 +302,7 @@ ASN1_INTEGER_set_int64(ASN1_INTEGER *aint, int64_t val)
 
 	return asn1_aint_set_uint64(uval, &aint->data, &aint->length);
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_set_int64);
 
 long
 ASN1_INTEGER_get(const ASN1_INTEGER *aint)
@@ -312,12 +320,14 @@ ASN1_INTEGER_get(const ASN1_INTEGER *aint)
 
 	return (long)val;
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_get);
 
 int
 ASN1_INTEGER_set(ASN1_INTEGER *aint, long val)
 {
 	return ASN1_INTEGER_set_int64(aint, val);
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_set);
 
 ASN1_INTEGER *
 BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
@@ -365,6 +375,7 @@ BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
 		ASN1_INTEGER_free(ret);
 	return (NULL);
 }
+LCRYPTO_ALIAS(BN_to_ASN1_INTEGER);
 
 BIGNUM *
 ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn)
@@ -380,6 +391,7 @@ ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai, BIGNUM *bn)
 		BN_set_negative(ret, 1);
 	return (ret);
 }
+LCRYPTO_ALIAS(ASN1_INTEGER_to_BN);
 
 int
 i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
@@ -420,6 +432,7 @@ i2a_ASN1_INTEGER(BIO *bp, const ASN1_INTEGER *a)
  err:
 	return (-1);
 }
+LCRYPTO_ALIAS(i2a_ASN1_INTEGER);
 
 int
 a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
@@ -509,6 +522,7 @@ a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
 	free(s);
 	return (ret);
 }
+LCRYPTO_ALIAS(a2i_ASN1_INTEGER);
 
 static void
 asn1_aint_twos_complement(uint8_t *data, size_t data_len)
@@ -757,6 +771,7 @@ i2d_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_INTEGER_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_INTEGER);
 
 ASN1_INTEGER *
 d2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **in, long len)
@@ -764,6 +779,7 @@ d2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **in, long len)
 	return (ASN1_INTEGER *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_INTEGER_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_INTEGER);
 
 /* This is a version of d2i_ASN1_INTEGER that ignores the sign bit of
  * ASN1 integers: some broken software can encode a positive INTEGER
@@ -838,3 +854,4 @@ d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp, long length)
 		ASN1_INTEGER_free(ret);
 	return (NULL);
 }
+LCRYPTO_ALIAS(d2i_ASN1_UINTEGER);

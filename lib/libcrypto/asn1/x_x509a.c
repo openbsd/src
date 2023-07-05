@@ -1,4 +1,4 @@
-/* $OpenBSD: x_x509a.c,v 1.19 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: x_x509a.c,v 1.20 2023/07/05 21:23:37 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -126,24 +126,28 @@ d2i_X509_CERT_AUX(X509_CERT_AUX **a, const unsigned char **in, long len)
 	return (X509_CERT_AUX *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_CERT_AUX_it);
 }
+LCRYPTO_ALIAS(d2i_X509_CERT_AUX);
 
 int
 i2d_X509_CERT_AUX(X509_CERT_AUX *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_CERT_AUX_it);
 }
+LCRYPTO_ALIAS(i2d_X509_CERT_AUX);
 
 X509_CERT_AUX *
 X509_CERT_AUX_new(void)
 {
 	return (X509_CERT_AUX *)ASN1_item_new(&X509_CERT_AUX_it);
 }
+LCRYPTO_ALIAS(X509_CERT_AUX_new);
 
 void
 X509_CERT_AUX_free(X509_CERT_AUX *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_CERT_AUX_it);
 }
+LCRYPTO_ALIAS(X509_CERT_AUX_free);
 
 static X509_CERT_AUX *
 aux_get(X509 *x)
@@ -172,6 +176,7 @@ X509_alias_set1(X509 *x, const unsigned char *name, int len)
 		return 0;
 	return ASN1_STRING_set(aux->alias, name, len);
 }
+LCRYPTO_ALIAS(X509_alias_set1);
 
 int
 X509_keyid_set1(X509 *x, const unsigned char *id, int len)
@@ -190,6 +195,7 @@ X509_keyid_set1(X509 *x, const unsigned char *id, int len)
 		return 0;
 	return ASN1_STRING_set(aux->keyid, id, len);
 }
+LCRYPTO_ALIAS(X509_keyid_set1);
 
 unsigned char *
 X509_alias_get0(X509 *x, int *len)
@@ -200,6 +206,7 @@ X509_alias_get0(X509 *x, int *len)
 		*len = x->aux->alias->length;
 	return x->aux->alias->data;
 }
+LCRYPTO_ALIAS(X509_alias_get0);
 
 unsigned char *
 X509_keyid_get0(X509 *x, int *len)
@@ -210,6 +217,7 @@ X509_keyid_get0(X509 *x, int *len)
 		*len = x->aux->keyid->length;
 	return x->aux->keyid->data;
 }
+LCRYPTO_ALIAS(X509_keyid_get0);
 
 int
 X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj)
@@ -232,6 +240,7 @@ X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj)
 	ASN1_OBJECT_free(objtmp);
 	return 0;
 }
+LCRYPTO_ALIAS(X509_add1_trust_object);
 
 int
 X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
@@ -254,6 +263,7 @@ X509_add1_reject_object(X509 *x, const ASN1_OBJECT *obj)
 	ASN1_OBJECT_free(objtmp);
 	return 0;
 }
+LCRYPTO_ALIAS(X509_add1_reject_object);
 
 void
 X509_trust_clear(X509 *x)
@@ -263,6 +273,7 @@ X509_trust_clear(X509 *x)
 		x->aux->trust = NULL;
 	}
 }
+LCRYPTO_ALIAS(X509_trust_clear);
 
 void
 X509_reject_clear(X509 *x)
@@ -272,3 +283,4 @@ X509_reject_clear(X509 *x)
 		x->aux->reject = NULL;
 	}
 }
+LCRYPTO_ALIAS(X509_reject_clear);

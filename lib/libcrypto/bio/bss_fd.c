@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_fd.c,v 1.20 2022/01/07 09:02:17 tb Exp $ */
+/* $OpenBSD: bss_fd.c,v 1.21 2023/07/05 21:23:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,6 +93,7 @@ BIO_s_fd(void)
 {
 	return (&methods_fdp);
 }
+LCRYPTO_ALIAS(BIO_s_fd);
 
 BIO *
 BIO_new_fd(int fd, int close_flag)
@@ -104,6 +105,7 @@ BIO_new_fd(int fd, int close_flag)
 	BIO_set_fd(ret, fd, close_flag);
 	return (ret);
 }
+LCRYPTO_ALIAS(BIO_new_fd);
 
 static int
 fd_new(BIO *bi)
@@ -251,6 +253,7 @@ BIO_fd_should_retry(int i)
 	}
 	return (0);
 }
+LCRYPTO_ALIAS(BIO_fd_should_retry);
 
 int
 BIO_fd_non_fatal_error(int err)
@@ -267,3 +270,4 @@ BIO_fd_non_fatal_error(int err)
 	}
 	return (0);
 }
+LCRYPTO_ALIAS(BIO_fd_non_fatal_error);

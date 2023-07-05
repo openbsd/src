@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.38 2023/01/13 14:46:08 tb Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.39 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,12 +79,14 @@ ASN1_BIT_STRING_new(void)
 {
 	return (ASN1_BIT_STRING *)ASN1_item_new(&ASN1_BIT_STRING_it);
 }
+LCRYPTO_ALIAS(ASN1_BIT_STRING_new);
 
 void
 ASN1_BIT_STRING_free(ASN1_BIT_STRING *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ASN1_BIT_STRING_it);
 }
+LCRYPTO_ALIAS(ASN1_BIT_STRING_free);
 
 static void
 asn1_abs_clear_unused_bits(ASN1_BIT_STRING *abs)
@@ -110,6 +112,7 @@ ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
 {
 	return ASN1_STRING_set(x, d, len);
 }
+LCRYPTO_ALIAS(ASN1_BIT_STRING_set);
 
 int
 ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
@@ -144,6 +147,7 @@ ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 
 	return (1);
 }
+LCRYPTO_ALIAS(ASN1_BIT_STRING_set_bit);
 
 int
 ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n)
@@ -156,6 +160,7 @@ ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n)
 		return (0);
 	return ((a->data[w] & v) != 0);
 }
+LCRYPTO_ALIAS(ASN1_BIT_STRING_get_bit);
 
 /*
  * Checks if the given bit string contains only bits specified by
@@ -182,6 +187,7 @@ ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a, const unsigned char *flags,
 	}
 	return ok;
 }
+LCRYPTO_ALIAS(ASN1_BIT_STRING_check);
 
 int
 ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
@@ -202,6 +208,7 @@ ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
 	BIO_puts(out, "\n");
 	return 1;
 }
+LCRYPTO_ALIAS(ASN1_BIT_STRING_name_print);
 
 int
 ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
@@ -218,6 +225,7 @@ ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(ASN1_BIT_STRING_set_asc);
 
 int
 ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl)
@@ -231,6 +239,7 @@ ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl)
 	}
 	return -1;
 }
+LCRYPTO_ALIAS(ASN1_BIT_STRING_num_asc);
 
 int
 i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
@@ -388,6 +397,7 @@ i2d_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ASN1_BIT_STRING_it);
 }
+LCRYPTO_ALIAS(i2d_ASN1_BIT_STRING);
 
 ASN1_BIT_STRING *
 d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **in, long len)
@@ -395,3 +405,4 @@ d2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a, const unsigned char **in, long len)
 	return (ASN1_BIT_STRING *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ASN1_BIT_STRING_it);
 }
+LCRYPTO_ALIAS(d2i_ASN1_BIT_STRING);

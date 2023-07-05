@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_bio.c,v 1.25 2022/01/07 09:02:17 tb Exp $ */
+/* $OpenBSD: bss_bio.c,v 1.26 2023/07/05 21:23:37 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
@@ -112,6 +112,7 @@ BIO_s_bio(void)
 {
 	return &methods_biop;
 }
+LCRYPTO_ALIAS(BIO_s_bio);
 
 struct bio_bio_st {
 	BIO *peer;	/* NULL if buf == NULL.
@@ -795,24 +796,28 @@ BIO_new_bio_pair(BIO **bio1_p, size_t writebuf1, BIO **bio2_p, size_t writebuf2)
 	*bio2_p = bio2;
 	return ret;
 }
+LCRYPTO_ALIAS(BIO_new_bio_pair);
 
 size_t
 BIO_ctrl_get_write_guarantee(BIO *bio)
 {
 	return BIO_ctrl(bio, BIO_C_GET_WRITE_GUARANTEE, 0, NULL);
 }
+LCRYPTO_ALIAS(BIO_ctrl_get_write_guarantee);
 
 size_t
 BIO_ctrl_get_read_request(BIO *bio)
 {
 	return BIO_ctrl(bio, BIO_C_GET_READ_REQUEST, 0, NULL);
 }
+LCRYPTO_ALIAS(BIO_ctrl_get_read_request);
 
 int
 BIO_ctrl_reset_read_request(BIO *bio)
 {
 	return (BIO_ctrl(bio, BIO_C_RESET_READ_REQUEST, 0, NULL) != 0);
 }
+LCRYPTO_ALIAS(BIO_ctrl_reset_read_request);
 
 
 /* BIO_nread0/nread/nwrite0/nwrite are available only for BIO pairs for now
@@ -834,6 +839,7 @@ BIO_nread0(BIO *bio, char **buf)
 	else
 		return (int) ret;
 }
+LCRYPTO_ALIAS(BIO_nread0);
 
 int
 BIO_nread(BIO *bio, char **buf, int num)
@@ -850,6 +856,7 @@ BIO_nread(BIO *bio, char **buf, int num)
 		bio->num_read += ret;
 	return ret;
 }
+LCRYPTO_ALIAS(BIO_nread);
 
 int
 BIO_nwrite0(BIO *bio, char **buf)
@@ -867,6 +874,7 @@ BIO_nwrite0(BIO *bio, char **buf)
 	else
 		return (int) ret;
 }
+LCRYPTO_ALIAS(BIO_nwrite0);
 
 int
 BIO_nwrite(BIO *bio, char **buf, int num)
@@ -883,3 +891,4 @@ BIO_nwrite(BIO *bio, char **buf, int num)
 		bio->num_write += ret;
 	return ret;
 }
+LCRYPTO_ALIAS(BIO_nwrite);

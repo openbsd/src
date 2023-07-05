@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_sock.c,v 1.25 2022/01/07 09:02:17 tb Exp $ */
+/* $OpenBSD: bss_sock.c,v 1.26 2023/07/05 21:23:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,6 +91,7 @@ BIO_s_socket(void)
 {
 	return (&methods_sockp);
 }
+LCRYPTO_ALIAS(BIO_s_socket);
 
 BIO *
 BIO_new_socket(int fd, int close_flag)
@@ -103,6 +104,7 @@ BIO_new_socket(int fd, int close_flag)
 	BIO_set_fd(ret, fd, close_flag);
 	return (ret);
 }
+LCRYPTO_ALIAS(BIO_new_socket);
 
 static int
 sock_new(BIO *bi)
@@ -222,6 +224,7 @@ BIO_sock_should_retry(int i)
 	}
 	return (0);
 }
+LCRYPTO_ALIAS(BIO_sock_should_retry);
 
 int
 BIO_sock_non_fatal_error(int err)
@@ -238,4 +241,4 @@ BIO_sock_non_fatal_error(int err)
 	}
 	return (0);
 }
-
+LCRYPTO_ALIAS(BIO_sock_non_fatal_error);

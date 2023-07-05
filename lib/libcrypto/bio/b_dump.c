@@ -1,4 +1,4 @@
-/* $OpenBSD: b_dump.c,v 1.23 2022/10/17 18:26:41 jsing Exp $ */
+/* $OpenBSD: b_dump.c,v 1.24 2023/07/05 21:23:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,6 +75,7 @@ BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
 {
 	return BIO_dump_indent_cb(cb, u, s, len, 0);
 }
+LCRYPTO_ALIAS(BIO_dump_cb);
 
 int
 BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
@@ -148,6 +149,7 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 #endif
 	return (ret);
 }
+LCRYPTO_ALIAS(BIO_dump_indent_cb);
 
 static int
 write_fp(const void *data, size_t len, void *fp)
@@ -160,12 +162,14 @@ BIO_dump_fp(FILE *fp, const char *s, int len)
 {
 	return BIO_dump_cb(write_fp, fp, s, len);
 }
+LCRYPTO_ALIAS(BIO_dump_fp);
 
 int
 BIO_dump_indent_fp(FILE *fp, const char *s, int len, int indent)
 {
 	return BIO_dump_indent_cb(write_fp, fp, s, len, indent);
 }
+LCRYPTO_ALIAS(BIO_dump_indent_fp);
 
 static int
 write_bio(const void *data, size_t len, void *bp)
@@ -178,9 +182,11 @@ BIO_dump(BIO *bp, const char *s, int len)
 {
 	return BIO_dump_cb(write_bio, bp, s, len);
 }
+LCRYPTO_ALIAS(BIO_dump);
 
 int
 BIO_dump_indent(BIO *bp, const char *s, int len, int indent)
 {
 	return BIO_dump_indent_cb(write_bio, bp, s, len, indent);
 }
+LCRYPTO_ALIAS(BIO_dump_indent);

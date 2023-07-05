@@ -1,4 +1,4 @@
-/* $OpenBSD: t_crl.c,v 1.21 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: t_crl.c,v 1.22 2023/07/05 21:23:36 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -83,6 +83,7 @@ X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(X509_CRL_print_fp);
 
 int
 X509_CRL_print(BIO *out, X509_CRL *x)
@@ -143,3 +144,4 @@ X509_CRL_print(BIO *out, X509_CRL *x)
  err:
 	return 0;
 }
+LCRYPTO_ALIAS(X509_CRL_print);

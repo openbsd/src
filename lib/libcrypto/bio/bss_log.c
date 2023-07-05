@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_log.c,v 1.23 2022/01/07 09:02:17 tb Exp $ */
+/* $OpenBSD: bss_log.c,v 1.24 2023/07/05 21:23:37 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -98,6 +98,7 @@ BIO_s_log(void)
 {
 	return (&methods_slg);
 }
+LCRYPTO_ALIAS(BIO_s_log);
 
 static int
 slg_new(BIO *bi)

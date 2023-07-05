@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_dec.c,v 1.86 2023/04/30 16:46:49 job Exp $ */
+/* $OpenBSD: tasn_dec.c,v 1.87 2023/07/05 21:23:36 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -1237,6 +1237,7 @@ ASN1_item_d2i(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 
 	return *pval;
 }
+LCRYPTO_ALIAS(ASN1_item_d2i);
 
 int
 ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long inlen,
@@ -1256,6 +1257,7 @@ ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long inlen,
 
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_item_ex_d2i);
 
 int
 ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
@@ -1273,3 +1275,4 @@ ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_template_d2i);

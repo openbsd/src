@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.23 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.24 2023/07/05 21:23:36 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -79,6 +79,7 @@ ASN1_item_new(const ASN1_ITEM *it)
 		return ret;
 	return NULL;
 }
+LCRYPTO_ALIAS(ASN1_item_new);
 
 /* Allocate an ASN1 structure */
 
@@ -87,6 +88,7 @@ ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
 	return asn1_item_ex_new(pval, it);
 }
+LCRYPTO_ALIAS(ASN1_item_ex_new);
 
 static int
 asn1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
@@ -246,6 +248,7 @@ ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
  done:
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_template_new);
 
 static void
 asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
@@ -315,6 +318,7 @@ ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 		return 1;
 	return 0;
 }
+LCRYPTO_ALIAS(ASN1_primitive_new);
 
 static void
 asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)

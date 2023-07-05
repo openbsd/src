@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_types.c,v 1.2 2022/09/03 18:52:18 jsing Exp $ */
+/* $OpenBSD: asn1_types.c,v 1.3 2023/07/05 21:23:36 beck Exp $ */
 /*
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -287,6 +287,7 @@ ASN1_tag2bit(int tag)
 
 	return 0;
 }
+LCRYPTO_ALIAS(ASN1_tag2bit);
 
 const char *
 ASN1_tag2str(int tag)
@@ -301,3 +302,4 @@ ASN1_tag2str(int tag)
 
 	return "(unknown)";
 }
+LCRYPTO_ALIAS(ASN1_tag2str);

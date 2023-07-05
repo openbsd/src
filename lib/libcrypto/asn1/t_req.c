@@ -1,4 +1,4 @@
-/* $OpenBSD: t_req.c,v 1.24 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: t_req.c,v 1.25 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,6 +91,7 @@ X509_REQ_print_fp(FILE *fp, X509_REQ *x)
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(X509_REQ_print_fp);
 
 int
 X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
@@ -254,9 +255,11 @@ X509_REQ_print_ex(BIO *bp, X509_REQ *x, unsigned long nmflags,
 	X509error(ERR_R_BUF_LIB);
 	return (0);
 }
+LCRYPTO_ALIAS(X509_REQ_print_ex);
 
 int
 X509_REQ_print(BIO *bp, X509_REQ *x)
 {
 	return X509_REQ_print_ex(bp, x, XN_FLAG_COMPAT, X509_FLAG_COMPAT);
 }
+LCRYPTO_ALIAS(X509_REQ_print);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_mem.c,v 1.21 2022/02/19 15:59:12 jsing Exp $ */
+/* $OpenBSD: bss_mem.c,v 1.22 2023/07/05 21:23:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,6 +117,7 @@ BIO_s_mem(void)
 {
 	return &mem_method;
 }
+LCRYPTO_ALIAS(BIO_s_mem);
 
 BIO *
 BIO_new_mem_buf(const void *buf, int buf_len)
@@ -148,6 +149,7 @@ BIO_new_mem_buf(const void *buf, int buf_len)
 
 	return bio;
 }
+LCRYPTO_ALIAS(BIO_new_mem_buf);
 
 static int
 mem_new(BIO *bio)

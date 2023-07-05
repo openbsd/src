@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_par.c,v 1.34 2022/02/12 03:07:24 jsing Exp $ */
+/* $OpenBSD: asn1_par.c,v 1.35 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -107,12 +107,14 @@ ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent)
 {
 	return (asn1_parse2(bp, &pp, len, 0, 0, indent, 0));
 }
+LCRYPTO_ALIAS(ASN1_parse);
 
 int
 ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent, int dump)
 {
 	return (asn1_parse2(bp, &pp, len, 0, 0, indent, dump));
 }
+LCRYPTO_ALIAS(ASN1_parse_dump);
 
 static int
 asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,

@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strex.c,v 1.32 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: a_strex.c,v 1.33 2023/07/05 21:23:36 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -570,6 +570,7 @@ X509_NAME_print_ex(BIO *out, const X509_NAME *nm, int indent,
 		return X509_NAME_print(out, nm, indent);
 	return do_name_ex(send_bio_chars, out, nm, indent, flags);
 }
+LCRYPTO_ALIAS(X509_NAME_print_ex);
 
 int
 X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent,
@@ -587,15 +588,18 @@ X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm, int indent,
 	}
 	return do_name_ex(send_fp_chars, fp, nm, indent, flags);
 }
+LCRYPTO_ALIAS(X509_NAME_print_ex_fp);
 
 int
 ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags)
 {
 	return do_print_ex(send_bio_chars, out, flags, str);
 }
+LCRYPTO_ALIAS(ASN1_STRING_print_ex);
 
 int
 ASN1_STRING_print_ex_fp(FILE *fp, const ASN1_STRING *str, unsigned long flags)
 {
 	return do_print_ex(send_fp_chars, fp, flags, str);
 }
+LCRYPTO_ALIAS(ASN1_STRING_print_ex_fp);

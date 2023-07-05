@@ -1,4 +1,4 @@
-/* $OpenBSD: b_sock.c,v 1.70 2022/12/22 20:13:45 schwarze Exp $ */
+/* $OpenBSD: b_sock.c,v 1.71 2023/07/05 21:23:37 beck Exp $ */
 /*
  * Copyright (c) 2017 Bob Beck <beck@openbsd.org>
  *
@@ -62,6 +62,7 @@ BIO_get_host_ip(const char *str, unsigned char *ip)
 	freeaddrinfo(res);
 	return (1);
 }
+LCRYPTO_ALIAS(BIO_get_host_ip);
 
 int
 BIO_get_port(const char *str, unsigned short *port_ptr)
@@ -89,6 +90,7 @@ BIO_get_port(const char *str, unsigned short *port_ptr)
 	freeaddrinfo(res);
 	return (1);
 }
+LCRYPTO_ALIAS(BIO_get_port);
 
 int
 BIO_sock_error(int sock)
@@ -101,12 +103,14 @@ BIO_sock_error(int sock)
 		return (1);
 	return (err);
 }
+LCRYPTO_ALIAS(BIO_sock_error);
 
 struct hostent *
 BIO_gethostbyname(const char *name)
 {
 	return gethostbyname(name);
 }
+LCRYPTO_ALIAS(BIO_gethostbyname);
 
 int
 BIO_socket_ioctl(int fd, long type, void *arg)
@@ -118,6 +122,7 @@ BIO_socket_ioctl(int fd, long type, void *arg)
 		SYSerror(errno);
 	return (ret);
 }
+LCRYPTO_ALIAS(BIO_socket_ioctl);
 
 int
 BIO_get_accept_socket(char *host, int bind_mode)
@@ -203,6 +208,7 @@ err:
 	}
 	return (s);
 }
+LCRYPTO_ALIAS(BIO_get_accept_socket);
 
 int
 BIO_accept(int sock, char **addr)
@@ -245,9 +251,11 @@ BIO_accept(int sock, char **addr)
 end:
 	return (ret);
 }
+LCRYPTO_ALIAS(BIO_accept);
 
 int
 BIO_set_tcp_ndelay(int s, int on)
 {
 	return (setsockopt(s, IPPROTO_TCP, TCP_NODELAY, &on, sizeof(on)) == 0);
 }
+LCRYPTO_ALIAS(BIO_set_tcp_ndelay);

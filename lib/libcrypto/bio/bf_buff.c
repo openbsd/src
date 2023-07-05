@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_buff.c,v 1.27 2022/01/14 08:40:57 tb Exp $ */
+/* $OpenBSD: bf_buff.c,v 1.28 2023/07/05 21:23:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,6 +93,7 @@ BIO_f_buffer(void)
 {
 	return (&methods_buffer);
 }
+LCRYPTO_ALIAS(BIO_f_buffer);
 
 static int
 buffer_new(BIO *bi)

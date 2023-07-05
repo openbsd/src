@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_old_lib.c,v 1.5 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: asn1_old_lib.c,v 1.6 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,6 +118,7 @@ ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
 
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_get_object);
 
 /* class 0 is constructed
  * constructed == 2 for indefinite length constructed */
@@ -151,6 +152,7 @@ ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
 		asn1_put_length(&p, length);
 	*pp = p;
 }
+LCRYPTO_ALIAS(ASN1_put_object);
 
 int
 ASN1_put_eoc(unsigned char **pp)
@@ -162,6 +164,7 @@ ASN1_put_eoc(unsigned char **pp)
 	*pp = p;
 	return 2;
 }
+LCRYPTO_ALIAS(ASN1_put_eoc);
 
 static void
 asn1_put_length(unsigned char **pp, int length)
@@ -210,3 +213,4 @@ ASN1_object_size(int constructed, int length, int tag)
 	}
 	return (ret);
 }
+LCRYPTO_ALIAS(ASN1_object_size);

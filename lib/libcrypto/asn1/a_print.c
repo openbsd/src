@@ -1,4 +1,4 @@
-/* $OpenBSD: a_print.c,v 1.12 2023/03/12 11:49:02 tb Exp $ */
+/* $OpenBSD: a_print.c,v 1.13 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,6 +94,7 @@ ASN1_PRINTABLE_type(const unsigned char *s, int len)
 		return (V_ASN1_IA5STRING);
 	return (V_ASN1_PRINTABLESTRING);
 }
+LCRYPTO_ALIAS(ASN1_PRINTABLE_type);
 
 int
 ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
@@ -123,3 +124,4 @@ ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
 	s->type = ASN1_PRINTABLE_type(s->data, s->length);
 	return (1);
 }
+LCRYPTO_ALIAS(ASN1_UNIVERSALSTRING_to_string);

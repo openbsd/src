@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.14 2023/06/15 13:58:56 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.15 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -138,6 +138,7 @@ ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
 	free(str);
 	return (1);
 }
+LCRYPTO_ALIAS(ASN1_item_digest);
 
 /*
  * ASN1_ITEM version of ASN1_dup(): follows the same model except there's no
@@ -166,6 +167,7 @@ ASN1_item_dup(const ASN1_ITEM *it, void *x)
 	free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(ASN1_item_dup);
 
 /* Pack an ASN1 object into an ASN1_STRING. */
 ASN1_STRING *
@@ -200,6 +202,7 @@ ASN1_item_pack(void *obj, const ASN1_ITEM *it, ASN1_STRING **oct)
 		ASN1_STRING_free(octmp);
 	return NULL;
 }
+LCRYPTO_ALIAS(ASN1_item_pack);
 
 /* Extract an ASN1 object from an ASN1_STRING. */
 void *
@@ -213,6 +216,7 @@ ASN1_item_unpack(const ASN1_STRING *oct, const ASN1_ITEM *it)
 		ASN1error(ASN1_R_DECODE_ERROR);
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_item_unpack);
 
 int
 ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
@@ -226,6 +230,7 @@ ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	}
 	return ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, &ctx);
 }
+LCRYPTO_ALIAS(ASN1_item_sign);
 
 int
 ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
@@ -335,6 +340,7 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_item_sign_ctx);
 
 int
 ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
@@ -420,6 +426,7 @@ ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
 
 	return ret;
 }
+LCRYPTO_ALIAS(ASN1_item_verify);
 
 #define HEADER_SIZE   8
 #define ASN1_CHUNK_INITIAL_SIZE (16 * 1024)
@@ -586,6 +593,7 @@ ASN1_item_d2i_bio(const ASN1_ITEM *it, BIO *in, void *x)
 		BUF_MEM_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(ASN1_item_d2i_bio);
 
 void *
 ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
@@ -602,6 +610,7 @@ ASN1_item_d2i_fp(const ASN1_ITEM *it, FILE *in, void *x)
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(ASN1_item_d2i_fp);
 
 int
 ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x)
@@ -629,6 +638,7 @@ ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x)
 	free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(ASN1_item_i2d_bio);
 
 int
 ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x)
@@ -645,3 +655,4 @@ ASN1_item_i2d_fp(const ASN1_ITEM *it, FILE *out, void *x)
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(ASN1_item_i2d_fp);

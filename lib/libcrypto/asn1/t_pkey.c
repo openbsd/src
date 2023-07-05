@@ -1,4 +1,4 @@
-/* $OpenBSD: t_pkey.c,v 1.19 2022/11/26 16:08:50 tb Exp $ */
+/* $OpenBSD: t_pkey.c,v 1.20 2023/07/05 21:23:36 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,6 +114,7 @@ ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
 	}
 	return (1);
 }
+LCRYPTO_ALIAS(ASN1_bn_print);
 
 #define ASN1_BUF_PRINT_WIDTH		15
 #define ASN1_BUF_PRINT_MAX_INDENT	64
@@ -143,3 +144,4 @@ ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int indent)
 
 	return 1;
 }
+LCRYPTO_ALIAS(ASN1_buf_print);

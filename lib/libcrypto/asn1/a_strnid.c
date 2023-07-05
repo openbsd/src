@@ -1,4 +1,4 @@
-/* $OpenBSD: a_strnid.c,v 1.26 2023/07/02 17:12:17 tb Exp $ */
+/* $OpenBSD: a_strnid.c,v 1.27 2023/07/05 21:23:36 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -86,12 +86,14 @@ ASN1_STRING_set_default_mask(unsigned long mask)
 {
 	global_mask = mask;
 }
+LCRYPTO_ALIAS(ASN1_STRING_set_default_mask);
 
 unsigned long
 ASN1_STRING_get_default_mask(void)
 {
 	return global_mask;
 }
+LCRYPTO_ALIAS(ASN1_STRING_get_default_mask);
 
 /*
  * This function sets the default to various "flavours" of configuration
@@ -134,6 +136,7 @@ ASN1_STRING_set_default_mask_asc(const char *p)
 	ASN1_STRING_set_default_mask(mask);
 	return 1;
 }
+LCRYPTO_ALIAS(ASN1_STRING_set_default_mask_asc);
 
 /*
  * The following function generates an ASN1_STRING based on limits in a table.
@@ -166,6 +169,7 @@ ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in, int inlen,
 		return NULL;
 	return *out;
 }
+LCRYPTO_ALIAS(ASN1_STRING_set_by_NID);
 
 /*
  * Now the tables and helper functions for the string table:
@@ -370,6 +374,7 @@ ASN1_STRING_TABLE_get(int nid)
 	return OBJ_bsearch_table(&fnd, tbl_standard,
 	    sizeof(tbl_standard) / sizeof(tbl_standard[0]));
 }
+LCRYPTO_ALIAS(ASN1_STRING_TABLE_get);
 
 /*
  * Return a string table pointer which can be modified: either directly
@@ -435,6 +440,7 @@ ASN1_STRING_TABLE_add(int nid, long minsize, long maxsize, unsigned long mask,
 
 	return 1;
 }
+LCRYPTO_ALIAS(ASN1_STRING_TABLE_add);
 
 void
 ASN1_STRING_TABLE_cleanup(void)
@@ -447,6 +453,7 @@ ASN1_STRING_TABLE_cleanup(void)
 	stable = NULL;
 	sk_ASN1_STRING_TABLE_pop_free(tmp, st_free);
 }
+LCRYPTO_ALIAS(ASN1_STRING_TABLE_cleanup);
 
 static void
 st_free(ASN1_STRING_TABLE *tbl)

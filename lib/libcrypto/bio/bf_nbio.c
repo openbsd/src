@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_nbio.c,v 1.22 2022/01/14 08:40:57 tb Exp $ */
+/* $OpenBSD: bf_nbio.c,v 1.23 2023/07/05 21:23:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,6 +100,7 @@ BIO_f_nbio_test(void)
 {
 	return (&methods_nbiof);
 }
+LCRYPTO_ALIAS(BIO_f_nbio_test);
 
 static int
 nbiof_new(BIO *bi)

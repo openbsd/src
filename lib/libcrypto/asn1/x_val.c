@@ -1,4 +1,4 @@
-/* $OpenBSD: x_val.c,v 1.11 2015/02/11 04:00:39 jsing Exp $ */
+/* $OpenBSD: x_val.c,v 1.12 2023/07/05 21:23:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,21 +90,25 @@ d2i_X509_VAL(X509_VAL **a, const unsigned char **in, long len)
 	return (X509_VAL *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_VAL_it);
 }
+LCRYPTO_ALIAS(d2i_X509_VAL);
 
 int
 i2d_X509_VAL(X509_VAL *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_VAL_it);
 }
+LCRYPTO_ALIAS(i2d_X509_VAL);
 
 X509_VAL *
 X509_VAL_new(void)
 {
 	return (X509_VAL *)ASN1_item_new(&X509_VAL_it);
 }
+LCRYPTO_ALIAS(X509_VAL_new);
 
 void
 X509_VAL_free(X509_VAL *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_VAL_it);
 }
+LCRYPTO_ALIAS(X509_VAL_free);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_asn1.c,v 1.21 2023/03/25 10:45:20 tb Exp $ */
+/* $OpenBSD: bio_asn1.c,v 1.22 2023/07/05 21:23:36 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -144,6 +144,7 @@ BIO_f_asn1(void)
 {
 	return (&methods_asn1);
 }
+LCRYPTO_ALIAS(BIO_f_asn1);
 
 static int
 asn1_bio_new(BIO *b)
@@ -470,21 +471,25 @@ BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix, asn1_ps_func *prefix_free)
 {
 	return asn1_bio_set_ex(b, BIO_C_SET_PREFIX, prefix, prefix_free);
 }
+LCRYPTO_ALIAS(BIO_asn1_set_prefix);
 
 int
 BIO_asn1_get_prefix(BIO *b, asn1_ps_func **pprefix, asn1_ps_func **pprefix_free)
 {
 	return asn1_bio_get_ex(b, BIO_C_GET_PREFIX, pprefix, pprefix_free);
 }
+LCRYPTO_ALIAS(BIO_asn1_get_prefix);
 
 int
 BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix, asn1_ps_func *suffix_free)
 {
 	return asn1_bio_set_ex(b, BIO_C_SET_SUFFIX, suffix, suffix_free);
 }
+LCRYPTO_ALIAS(BIO_asn1_set_suffix);
 
 int
 BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix, asn1_ps_func **psuffix_free)
 {
 	return asn1_bio_get_ex(b, BIO_C_GET_SUFFIX, psuffix, psuffix_free);
 }
+LCRYPTO_ALIAS(BIO_asn1_get_suffix);

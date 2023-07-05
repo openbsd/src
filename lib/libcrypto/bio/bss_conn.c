@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_conn.c,v 1.37 2022/01/14 08:40:57 tb Exp $ */
+/* $OpenBSD: bss_conn.c,v 1.38 2023/07/05 21:23:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -309,6 +309,7 @@ BIO_CONNECT_new(void)
 	memset((char *)&ret->them, 0, sizeof(ret->them));
 	return (ret);
 }
+LCRYPTO_ALIAS(BIO_CONNECT_new);
 
 void
 BIO_CONNECT_free(BIO_CONNECT *a)
@@ -320,12 +321,14 @@ BIO_CONNECT_free(BIO_CONNECT *a)
 	free(a->param_port);
 	free(a);
 }
+LCRYPTO_ALIAS(BIO_CONNECT_free);
 
 const BIO_METHOD *
 BIO_s_connect(void)
 {
 	return (&methods_connectp);
 }
+LCRYPTO_ALIAS(BIO_s_connect);
 
 static int
 conn_new(BIO *bi)
@@ -594,4 +597,4 @@ BIO_new_connect(const char *str)
 		return (NULL);
 	}
 }
-
+LCRYPTO_ALIAS(BIO_new_connect);
