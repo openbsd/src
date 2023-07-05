@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_create.1,v 1.130 2023/07/04 14:08:30 espie Exp $
+.\"	$OpenBSD: pkg_create.1,v 1.131 2023/07/05 01:21:51 jsg Exp $
 .\"
 .\" Documentation and design originally from FreeBSD. All the code has
 .\" been rewritten since. We keep the documentation's notice:
@@ -21,7 +21,7 @@
 .\" [jkh] Took John's changes back and made some additional extensions for
 .\" better integration with FreeBSD's new ports collection.
 .\"
-.Dd $Mdocdate: July 4 2023 $
+.Dd $Mdocdate: July 5 2023 $
 .Dt PKG_CREATE 1
 .Os
 .Sh NAME
@@ -162,7 +162,7 @@ annotations in the generated package, rely on the normal
 .Xr tar 1
 timestamps instead.
 (Mostly used to create firmware "packages" since
-.Xr fw_update 1
+.Xr fw_update 8
 only handles a very small subset of the
 .Xr package 5
 format.)
