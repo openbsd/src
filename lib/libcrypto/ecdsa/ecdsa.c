@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.7 2023/07/05 13:01:44 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.8 2023/07/05 14:39:05 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -261,11 +261,11 @@ ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
 	*out_r = NULL;
 
 	if (key == NULL) {
-		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
 	if ((group = EC_KEY_get0_group(key)) == NULL) {
-		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
 
@@ -277,7 +277,7 @@ ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
 	if ((ctx = in_ctx) == NULL)
 		ctx = BN_CTX_new();
 	if (ctx == NULL) {
-		ECDSAerror(ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -287,22 +287,22 @@ ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
 		goto err;
 
 	if ((point = EC_POINT_new(group)) == NULL) {
-		ECDSAerror(ERR_R_EC_LIB);
+		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	if ((order = EC_GROUP_get0_order(group)) == NULL) {
-		ECDSAerror(ERR_R_EC_LIB);
+		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 
 	if (BN_cmp(order, BN_value_one()) <= 0) {
-		ECDSAerror(EC_R_INVALID_GROUP_ORDER);
+		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
 
 	/* Reject curves with an order that is smaller than 80 bits. */
 	if ((order_bits = BN_num_bits(order)) < 80) {
-		ECDSAerror(EC_R_INVALID_GROUP_ORDER);
+		ECerror(EC_R_INVALID_GROUP_ORDER);
 		goto err;
 	}
 
@@ -343,25 +343,25 @@ ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
 
 		/* Step 5: P = k * G. */
 		if (!EC_POINT_mul(group, point, k, NULL, NULL, ctx)) {
-			ECDSAerror(ERR_R_EC_LIB);
+			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 		/* Steps 6 (and 7): from P = (x, y) retain the x-coordinate. */
 		if (!EC_POINT_get_affine_coordinates(group, point, x, NULL,
 		    ctx)) {
-			ECDSAerror(ERR_R_EC_LIB);
+			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 		/* Step 8: r = x (mod order). */
 		if (!BN_nnmod(r, x, order, ctx)) {
-			ECDSAerror(ERR_R_BN_LIB);
+			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
 	} while (BN_is_zero(r));
 
 	/* Step 4: calculate kinv. */
 	if (BN_mod_inverse_ct(k, k, order, ctx) == NULL) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
@@ -406,15 +406,15 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
 	BN_CTX_start(ctx);
 
 	if ((group = EC_KEY_get0_group(key)) == NULL) {
-		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
 	if ((order = EC_GROUP_get0_order(group)) == NULL) {
-		ECDSAerror(ERR_R_EC_LIB);
+		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	if ((priv_key = EC_KEY_get0_private_key(key)) == NULL) {
-		ECDSAerror(ERR_R_PASSED_NULL_PARAMETER);
+		ECerror(ERR_R_PASSED_NULL_PARAMETER);
 		goto err;
 	}
 
@@ -441,39 +441,39 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
 	}
 
 	if (!bn_rand_interval(b, BN_value_one(), order)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
 	if (BN_mod_inverse_ct(binv, b, order, ctx) == NULL) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
 	if (!BN_mod_mul(bxr, b, priv_key, order, ctx)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	if (!BN_mod_mul(bxr, bxr, r, order, ctx)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	if (!BN_mod_mul(be, b, e, order, ctx)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	if (!BN_mod_add(s, be, bxr, order, ctx)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	/* s = b(e + xr)k^-1 */
 	if (!BN_mod_mul(s, s, kinv, order, ctx)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	/* s = (e + xr)k^-1 */
 	if (!BN_mod_mul(s, s, binv, order, ctx)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
@@ -517,7 +517,7 @@ ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 	ECDSA_SIG *sig = NULL;
 
 	if ((ctx = BN_CTX_new()) == NULL) {
-		ECDSAerror(ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -539,11 +539,11 @@ ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 		caller_supplied_values = 1;
 
 		if ((kinv = BN_dup(in_kinv)) == NULL) {
-			ECDSAerror(ERR_R_MALLOC_FAILURE);
+			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 		if ((r = BN_dup(in_r)) == NULL) {
-			ECDSAerror(ERR_R_MALLOC_FAILURE);
+			ECerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
 	}
@@ -571,14 +571,14 @@ ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 		}
 
 		if (++attempts > ECDSA_MAX_SIGN_ITERATIONS) {
-			ECDSAerror(EC_R_WRONG_CURVE_PARAMETERS);
+			ECerror(EC_R_WRONG_CURVE_PARAMETERS);
 			goto err;
 		}
 	} while (1);
 
 	/* Step 12: output (r, s). */
 	if ((sig = ECDSA_SIG_new()) == NULL) {
-		ECDSAerror(ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	if (!ECDSA_SIG_set0(sig, r, s)) {
@@ -661,7 +661,7 @@ ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 	}
 
 	if ((ctx = BN_CTX_new()) == NULL) {
-		ECDSAerror(ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -679,7 +679,7 @@ ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 		goto err;
 
 	if ((order = EC_GROUP_get0_order(group)) == NULL) {
-		ECDSAerror(ERR_R_EC_LIB);
+		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 
@@ -701,16 +701,16 @@ ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 
 	/* Step 4: compute the inverse of s modulo order. */
 	if (BN_mod_inverse_ct(sinv, sig->s, order, ctx) == NULL) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	/* Step 5: compute u = s^-1 * e and v = s^-1 * r (modulo order). */
 	if (!BN_mod_mul(u, e, sinv, order, ctx)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	if (!BN_mod_mul(v, sig->r, sinv, order, ctx)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
@@ -720,20 +720,20 @@ ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 	 * the x coordinate.
 	 */
 	if ((point = EC_POINT_new(group)) == NULL) {
-		ECDSAerror(ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	if (!EC_POINT_mul(group, point, u, pub_key, v, ctx)) {
-		ECDSAerror(ERR_R_EC_LIB);
+		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	if (!EC_POINT_get_affine_coordinates(group, point, x, NULL, ctx)) {
-		ECDSAerror(ERR_R_EC_LIB);
+		ECerror(ERR_R_EC_LIB);
 		goto err;
 	}
 	/* Step 8: convert x to a number in [0, order). */
 	if (!BN_nnmod(x, x, order, ctx)) {
-		ECDSAerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.1 2023/07/05 12:31:14 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.2 2023/07/05 14:39:05 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -161,7 +161,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 
 	if (outlen > INT_MAX) {
 		/* Sort of, anyway. */
-		ECDHerror(ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		return -1;
 	}
 
@@ -182,7 +182,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 		goto err;
 
 	if ((point = EC_POINT_new(group)) == NULL) {
-		ECDHerror(ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 
@@ -193,11 +193,11 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 
 	if ((EC_KEY_get_flags(ecdh) & EC_FLAG_COFACTOR_ECDH) != 0) {
 		if (!EC_GROUP_get_cofactor(group, cofactor, NULL)) {
-			ECDHerror(ERR_R_EC_LIB);
+			ECerror(ERR_R_EC_LIB);
 			goto err;
 		}
 		if (!BN_mul(cofactor, cofactor, priv_key, ctx)) {
-			ECDHerror(ERR_R_BN_LIB);
+			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
 		priv_key = cofactor;
@@ -214,7 +214,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 	}
 
 	if ((buflen = ECDH_size(ecdh)) < BN_num_bytes(x)) {
-		ECDHerror(ERR_R_INTERNAL_ERROR);
+		ECerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
 	if (KDF == NULL && outlen < buflen) {
@@ -223,11 +223,11 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 		goto err;
 	}
 	if ((buf = malloc(buflen)) == NULL) {
-		ECDHerror(ERR_R_MALLOC_FAILURE);
+		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
 	if (BN_bn2binpad(x, buf, buflen) != buflen) {
-		ECDHerror(ERR_R_BN_LIB);
+		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
