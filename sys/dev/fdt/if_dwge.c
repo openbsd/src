@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.16 2023/06/25 22:36:09 jmatthew Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.17 2023/07/05 18:48:49 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -271,6 +271,7 @@ struct dwge_softc {
 #define sc_lladdr	sc_ac.ac_enaddr
 	struct mii_data		sc_mii;
 #define sc_media	sc_mii.mii_media
+	uint64_t		sc_fixed_media;
 	int			sc_link;
 	int			sc_phyloc;
 	int			sc_force_thresh_dma_mode;
@@ -386,7 +387,7 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dwge_softc *sc = (void *)self;
 	struct fdt_attach_args *faa = aux;
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
 	uint32_t phy, phy_supply;
 	uint32_t axi_config;
 	uint32_t mode, pbl;
@@ -457,6 +458,30 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	/* Reset PHY */
 	dwge_reset_phy(sc);
 
+	node = OF_getnodebyname(faa->fa_node, "fixed-link");
+	if (node) {
+		ifp->if_baudrate = IF_Mbps(OF_getpropint(node, "speed", 0));
+
+		switch (OF_getpropint(node, "speed", 0)) {
+		case 1000:
+			sc->sc_fixed_media = IFM_ETHER | IFM_1000_T;
+			break;
+		case 100:
+			sc->sc_fixed_media = IFM_ETHER | IFM_100_TX;
+			break;
+		default:
+			sc->sc_fixed_media = IFM_ETHER | IFM_AUTO;
+			break;
+		}
+		
+		if (OF_getpropbool(node, "full-duplex")) {
+			ifp->if_link_state = LINK_STATE_FULL_DUPLEX;
+			sc->sc_fixed_media |= IFM_FDX;
+		} else {
+			ifp->if_link_state = LINK_STATE_UP;
+		}
+	}
+
 	sc->sc_clk = clock_get_frequency(faa->fa_node, "stmmaceth");
 	if (sc->sc_clk > 250000000)
 		sc->sc_clk = GMAC_GMII_ADDR_CR_DIV_124;
@@ -479,7 +504,6 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	timeout_set(&sc->sc_tick, dwge_tick, sc);
 	timeout_set(&sc->sc_rxto, dwge_rxtick, sc);
 
-	ifp = &sc->sc_ac.ac_if;
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_xflags = IFXF_MPSAFE;
@@ -576,14 +600,23 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 		dwge_write(sc, GMAC_AXI_BUS_MODE, mode);
 	}
 
-	mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
-	    (sc->sc_phyloc == MII_PHY_ANY) ? 0 : MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
-		printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
-	} else
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+	if (sc->sc_fixed_media == 0) {
+		mii_attach(self, &sc->sc_mii, 0xffffffff, sc->sc_phyloc,
+		    (sc->sc_phyloc == MII_PHY_ANY) ? 0 : MII_OFFSET_ANY, 0);
+		if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+			printf("%s: no PHY found!\n", sc->sc_dev.dv_xname);
+			ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0,
+			    NULL);
+			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+		} else
+			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+	} else {
+		ifmedia_add(&sc->sc_media, sc->sc_fixed_media, 0, NULL);
+		ifmedia_set(&sc->sc_media, sc->sc_fixed_media);
+
+		/* force a configuration of the clocks/mac */
+		sc->sc_mii.mii_statchg(self);
+	}
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -759,7 +792,10 @@ dwge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		if (sc->sc_fixed_media != 0)
+			error = ENOTTY;
+		else
+			error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 
 	case SIOCGIFRXR:
@@ -858,11 +894,16 @@ dwge_mii_statchg(struct device *self)
 {
 	struct dwge_softc *sc = (void *)self;
 	uint32_t conf;
+	uint64_t media_active;
 
 	conf = dwge_read(sc, GMAC_MAC_CONF);
 	conf &= ~(GMAC_MAC_CONF_PS | GMAC_MAC_CONF_FES);
 
-	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+	media_active = sc->sc_fixed_media;
+	if (media_active == 0)
+		media_active = sc->sc_mii.mii_media_active;
+
+	switch (IFM_SUBTYPE(media_active)) {
 	case IFM_1000_SX:
 	case IFM_1000_LX:
 	case IFM_1000_CX:
@@ -886,7 +927,7 @@ dwge_mii_statchg(struct device *self)
 		return;
 
 	conf &= ~GMAC_MAC_CONF_DM;
-	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
+	if ((media_active & IFM_GMASK) == IFM_FDX)
 		conf |= GMAC_MAC_CONF_DM;
 
 	/* XXX: RX/TX flow control? */
@@ -1178,7 +1219,8 @@ dwge_up(struct dwge_softc *sc)
 	dwge_write(sc, GMAC_MAC_CONF, dwge_read(sc, GMAC_MAC_CONF) |
 	    GMAC_MAC_CONF_TE | GMAC_MAC_CONF_RE);
 
-	timeout_add_sec(&sc->sc_tick, 1);
+	if (sc->sc_fixed_media == 0)
+		timeout_add_sec(&sc->sc_tick, 1);
 }
 
 void
@@ -1190,7 +1232,8 @@ dwge_down(struct dwge_softc *sc)
 	int i;
 
 	timeout_del(&sc->sc_rxto);
-	timeout_del(&sc->sc_tick);
+	if (sc->sc_fixed_media == 0)
+		timeout_del(&sc->sc_tick);
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
@@ -1679,6 +1722,7 @@ dwge_mii_statchg_rockchip(struct device *self)
 	struct regmap *rm;
 	uint32_t grf;
 	uint32_t gmac_clk_sel = 0;
+	uint64_t media_active;
 
 	dwge_mii_statchg(self);
 
@@ -1687,7 +1731,11 @@ dwge_mii_statchg_rockchip(struct device *self)
 	if (rm == NULL)
 		return;
 
-	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+	media_active = sc->sc_fixed_media;
+	if (media_active == 0)
+		media_active = sc->sc_mii.mii_media_active;
+
+	switch (IFM_SUBTYPE(media_active)) {
 	case IFM_10_T:
 		gmac_clk_sel = sc->sc_clk_sel_2_5;
 		break;
