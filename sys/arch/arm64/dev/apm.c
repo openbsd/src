@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.22 2023/02/10 14:34:16 visa Exp $	*/
+/*	$OpenBSD: apm.c,v 1.23 2023/07/05 08:26:56 tobhe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -60,6 +60,7 @@
 struct taskq *suspend_taskq;
 struct task suspend_task;
 void	do_suspend(void *);
+void	suspend(void);
 #endif
 
 struct apm_softc {
@@ -223,7 +224,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EBADF;
 			break;
 		}
-		sleep_state(NULL, SLEEP_SUSPEND);
+		suspend();
 		break;
 #ifdef HIBERNATE
 	case APM_IOC_HIBERNATE:
