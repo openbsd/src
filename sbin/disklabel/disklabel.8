@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.155 2023/05/13 18:13:42 krw Exp $
+.\"	$OpenBSD: disklabel.8,v 1.156 2023/07/05 08:05:04 krw Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)disklabel.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd $Mdocdate: May 13 2023 $
+.Dd $Mdocdate: July 5 2023 $
 .Dt DISKLABEL 8
 .Os
 .Sh NAME
@@ -510,9 +510,9 @@ option displays the partition set that would be created and
 .Fl wA
 writes it to disk.
 .Pp
-If the default set is not suitable an alternative one can be specified via
+The default set can be overridden with
 .Fl T .
-Each line of input describes one partition using two or three fields.
+Each line of input uses three fields to describe a partition.
 There must not be whitespace before the first field,
 fields are separated by whitespace and fields cannot contain whitespace.
 .Pp
@@ -522,24 +522,19 @@ special tokens
 or
 .Sq SWAP .
 .Pp
-The second field is the size of the partition.
-This can be a simple
+The second field is the partition size.
+This can be
 .Sq *
 to make the partition as large as possible,
-an exact size (e.g. 1G) or a size range.
-A size range consists of a minimum size, a
-.Sq \(en ,
-a maximum size and an optional percentage field (e.g. 1M-10G 25%).
-An unlimited maximum size is specified with
-.Sq * .
+an exact size (e.g. 1G) or a size range
+(e.g. 1M-10G or 1G-*).
 .Pp
-When all partitions in the set have been allocated their minimum
-amount of space, the remaining free space is distributed between
-the partitions up to their maximum size.
-How much of the remaining free space a partition receives is given
-by the percentage field.
-If no percentage is provided it is assumed to be 100%.
-If percentages are specified they should add up to exactly 100.
+The third field is the partition's share of any space left after all
+minimum sizes are accounted for.
+This is expressed as a percentage from 0 (the default) to 100
+(e.g. 37%).
+The last partition receives all remaining free space up to its
+maximum size no matter what percentage is specified.
 .Sh FILES
 .Bl -tag -width "/etc/disktabXXX"
 .It Pa /etc/disktab
