@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.2 2023/07/05 12:27:36 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.3 2023/07/05 12:49:42 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -196,7 +196,7 @@ ecdsa_prepare_digest(const unsigned char *digest, int digest_len,
 	const EC_GROUP *group;
 	int digest_bits, order_bits;
 
-	if (!BN_bin2bn(digest, digest_len, e)) {
+	if (BN_bin2bn(digest, digest_len, e) == NULL) {
 		ECDSAerror(ERR_R_BN_LIB);
 		return 0;
 	}
