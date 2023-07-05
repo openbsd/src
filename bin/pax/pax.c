@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.53 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: pax.c,v 1.54 2023/07/05 18:45:14 guenther Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ char	*dirptr;		/* destination dir in a copy */
 char	*argv0;			/* root of argv[0] */
 enum op_mode op_mode;		/* what program are we acting as? */
 sigset_t s_mask;		/* signal mask for cleanup critical sect */
-FILE	*listf = stderr;	/* file pointer to print file list to */
+FILE	*listf;			/* file pointer to print file list to */
 int	listfd = STDERR_FILENO;	/* fd matching listf, for sighandler output */
 char	*tempfile;		/* tempfile to use for mkstemp(3) */
 char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
@@ -223,6 +223,8 @@ main(int argc, char **argv)
 {
 	char *tmpdir;
 	size_t tdlen;
+
+	listf = stderr;
 
 	/*
 	 * Keep a reference to cwd, so we can always come back home.

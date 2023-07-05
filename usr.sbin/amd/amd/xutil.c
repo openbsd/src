@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.19 2015/12/12 20:06:42 mmcc Exp $
+ *	$Id: xutil.c,v 1.20 2023/07/05 18:45:14 guenther Exp $
  */
 
 #include "am.h"
@@ -45,7 +45,7 @@
 #include <time.h>
 #include <unistd.h>
 
-FILE *logfp = stderr;		/* Log errors to stderr initially */
+FILE *logfp;
 int syslogging;
 int xlog_level = XLOG_ALL & ~XLOG_MAP & ~XLOG_STATS & ~XLOG_INFO;
 int xlog_level_init = ~0;
