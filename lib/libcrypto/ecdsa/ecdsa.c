@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.5 2023/07/05 12:54:46 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.6 2023/07/05 12:56:52 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -615,7 +615,7 @@ ecdsa_verify(int type, const unsigned char *digest, int digest_len,
 	if (d2i_ECDSA_SIG(&s, &p, sig_len) == NULL)
 		goto err;
 
-	/* Ensure signature uses DER and doesn't have trailing garbage */
+	/* Ensure signature uses DER and doesn't have trailing garbage. */
 	if ((der_len = i2d_ECDSA_SIG(s, &der)) != sig_len)
 		goto err;
 	if (timingsafe_memcmp(sigbuf, der, der_len))
