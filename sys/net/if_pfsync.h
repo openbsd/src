@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.h,v 1.59 2022/11/11 11:47:13 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.h,v 1.60 2023/07/06 04:55:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -177,7 +177,7 @@ struct pfsync_upd_c {
 struct pfsync_upd_req {
 	u_int64_t			id;
 	u_int32_t			creatorid;
-} __packed;
+} __packed __aligned(4);
 
 /*
  * DEL_C
@@ -295,16 +295,6 @@ enum pfsync_counters {
 	pfsyncs_ncounters,
 };
 
-extern struct cpumem *pfsynccounters;
-
-struct pfsync_deferral;
-
-static inline void
-pfsyncstat_inc(enum pfsync_counters c)
-{
-	counters_inc(pfsynccounters, c);
-}
-
 /*
  * this shows where a pf state is with respect to the syncing.
  */
@@ -315,10 +305,11 @@ pfsyncstat_inc(enum pfsync_counters c)
 #define PFSYNC_S_UPD	0x04
 #define PFSYNC_S_COUNT	0x05
 
-#define PFSYNC_S_DEFER	0xfe
-#define PFSYNC_S_NONE	0xff
+#define PFSYNC_S_NONE	0xd0
+#define PFSYNC_S_SYNC	0xd1
+#define PFSYNC_S_DEAD	0xde
 
-int			pfsync_input(struct mbuf **, int *, int, int);
+int			pfsync_input4(struct mbuf **, int *, int, int);
 int			pfsync_sysctl(int *, u_int,  void *, size_t *,
 			    void *, size_t);
 
@@ -329,6 +320,9 @@ int			pfsync_state_import(struct pfsync_state *, int);
 void			pfsync_state_export(struct pfsync_state *,
 			    struct pf_state *);
 
+void			pfsync_init_state(struct pf_state *,
+			    const struct pf_state_key *,
+			    const struct pf_state_key *, int);
 void			pfsync_insert_state(struct pf_state *);
 void			pfsync_update_state(struct pf_state *);
 void			pfsync_delete_state(struct pf_state *);
@@ -337,14 +331,10 @@ void			pfsync_clear_states(u_int32_t, const char *);
 void			pfsync_update_tdb(struct tdb *, int);
 void			pfsync_delete_tdb(struct tdb *);
 
-int			pfsync_defer(struct pf_state *, struct mbuf *,
-			    struct pfsync_deferral **);
-void			pfsync_undefer(struct pfsync_deferral *, int);
+int			pfsync_defer(struct pf_state *, struct mbuf *);
 
 int			pfsync_is_up(void);
 int			pfsync_state_in_use(struct pf_state *);
-
-void			pfsync_iack(struct pf_state *);
 #endif /* _KERNEL */
 
 #endif /* _NET_IF_PFSYNC_H_ */

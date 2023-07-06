@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.101 2023/05/18 09:59:43 mvs Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.102 2023/07/06 04:55:05 dlg Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ const struct protosw inetsw[] = {
   .pr_domain	= &inetdomain,
   .pr_protocol	= IPPROTO_PFSYNC,
   .pr_flags	= PR_ATOMIC|PR_ADDR,
-  .pr_input	= pfsync_input,
+  .pr_input	= pfsync_input4,
   .pr_ctloutput	= rip_ctloutput,
   .pr_usrreqs	= &rip_usrreqs,
   .pr_sysctl	= pfsync_sysctl

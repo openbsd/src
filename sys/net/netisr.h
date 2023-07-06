@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr.h,v 1.60 2022/07/14 10:52:21 mvs Exp $	*/
+/*	$OpenBSD: netisr.h,v 1.61 2023/07/06 04:55:05 dlg Exp $	*/
 /*	$NetBSD: netisr.h,v 1.12 1995/08/12 23:59:24 mycroft Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
  * on the lowest level routine of each protocol.
  */
 #define NETISR_IP	2		/* same as AF_INET */
-#define NETISR_PFSYNC	5		/* for pfsync "immediate" tx */
 #define NETISR_ARP	18		/* same as AF_LINK */
 #define NETISR_IPV6	24		/* same as AF_INET6 */
 #define NETISR_PIPEX	27		/* for pipex processing */
@@ -64,7 +63,6 @@ void	ipintr(void);
 void	ip6intr(void);
 void	pppintr(void);
 void	bridgeintr(void);
-void	pfsyncintr(void);
 void	pipexintr(void);
 void	pppoeintr(void);
 

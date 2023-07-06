@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.414 2023/07/04 14:23:38 sashan Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.415 2023/07/06 04:55:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1000,13 +1000,14 @@ pf_states_clr(struct pfioc_state_kill *psk)
 	}
 
 	PF_STATE_EXIT_WRITE();
-#if NPFSYNC > 0
-	pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
-#endif	/* NPFSYNC > 0 */
 	PF_UNLOCK();
 	rw_exit(&pf_state_list.pfs_rwl);
 
 	psk->psk_killed = killed;
+
+#if NPFSYNC > 0
+	pfsync_clear_states(pf_status.hostid, psk->psk_ifname);
+#endif	/* NPFSYNC > 0 */
 unlock:
 	NET_UNLOCK();
 
@@ -1190,6 +1191,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				pf_status.stateid = gettime();
 				pf_status.stateid = pf_status.stateid << 32;
 			}
+			timeout_add_sec(&pf_purge_states_to, 1);
 			timeout_add_sec(&pf_purge_to, 1);
 			pf_create_queues();
 			DPFPRINTF(LOG_NOTICE, "pf: started");
@@ -2783,8 +2785,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_default_rule.timeout[i] =
 			    pf_default_rule_new.timeout[i];
 			if (pf_default_rule.timeout[i] == PFTM_INTERVAL &&
-			    pf_default_rule.timeout[i] < old)
-				task_add(net_tq(0), &pf_purge_task);
+			    pf_default_rule.timeout[i] < old &&
+			    timeout_del(&pf_purge_to))
+				task_add(systqmp, &pf_purge_task);
 		}
 		pfi_xcommit();
 		pf_trans_set_commit();

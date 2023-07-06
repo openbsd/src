@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1181 2023/06/05 08:37:27 sashan Exp $ */
+/*	$OpenBSD: pf.c,v 1.1182 2023/07/06 04:55:05 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -100,8 +100,6 @@
 
 #if NPFSYNC > 0
 #include <net/if_pfsync.h>
-#else
-struct pfsync_deferral;
 #endif /* NPFSYNC > 0 */
 
 /*
@@ -120,10 +118,6 @@ SHA2_CTX		 pf_tcp_secret_ctx;
 u_char			 pf_tcp_secret[16];
 int			 pf_tcp_secret_init;
 int			 pf_tcp_iss_off;
-
-int		 pf_npurge;
-struct task	 pf_purge_task = TASK_INITIALIZER(pf_purge, &pf_npurge);
-struct timeout	 pf_purge_to = TIMEOUT_INITIALIZER(pf_purge_timeout, NULL);
 
 enum pf_test_status {
 	PF_TEST_FAIL = -1,
@@ -190,8 +184,7 @@ void			 pf_rule_to_actions(struct pf_rule *,
 			    struct pf_rule_actions *);
 int			 pf_test_rule(struct pf_pdesc *, struct pf_rule **,
 			    struct pf_state **, struct pf_rule **,
-			    struct pf_ruleset **, u_short *,
-			    struct pfsync_deferral **);
+			    struct pf_ruleset **, u_short *);
 static __inline int	 pf_create_state(struct pf_pdesc *, struct pf_rule *,
 			    struct pf_rule *, struct pf_rule *,
 			    struct pf_state_key **, struct pf_state_key **,
@@ -249,6 +242,10 @@ int			 pf_match_rule(struct pf_test_ctx *,
 void			 pf_counters_inc(int, struct pf_pdesc *,
 			    struct pf_state *, struct pf_rule *,
 			    struct pf_rule *);
+
+int			 pf_state_insert(struct pfi_kif *,
+			    struct pf_state_key **, struct pf_state_key **,
+			    struct pf_state *);
 
 int			 pf_state_key_isvalid(struct pf_state_key *);
 struct pf_state_key	*pf_state_key_ref(struct pf_state_key *);
@@ -1064,10 +1061,11 @@ pf_state_insert(struct pfi_kif *kif, struct pf_state_key **skwp,
 	pf_status.fcounters[FCNT_STATE_INSERT]++;
 	pf_status.states++;
 	pfi_kif_ref(kif, PFI_KIF_REF_STATE);
+	PF_STATE_EXIT_WRITE();
+
 #if NPFSYNC > 0
 	pfsync_insert_state(st);
 #endif	/* NPFSYNC > 0 */
-	PF_STATE_EXIT_WRITE();
 
 	*skwp = skw;
 	*sksp = sks;
@@ -1318,6 +1316,8 @@ pf_state_export(struct pfsync_state *sp, struct pf_state *st)
 #endif	/* NPFLOG > 0 */
 	sp->timeout = st->timeout;
 	sp->state_flags = htons(st->state_flags);
+	if (READ_ONCE(st->sync_defer) != NULL)
+		sp->state_flags |= htons(PFSTATE_ACK);
 	if (!SLIST_EMPTY(&st->src_nodes))
 		sp->sync_flags |= PFSYNC_FLAG_SRCNODE;
 
@@ -1519,9 +1519,6 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	st->rule.ptr = r;
 	st->anchor.ptr = NULL;
 
-	st->pfsync_time = getuptime();
-	st->sync_state = PFSYNC_S_NONE;
-
 	PF_REF_INIT(st->refcnt);
 	mtx_init(&st->mtx, IPL_NET);
 
@@ -1529,30 +1526,18 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 	r->states_cur++;
 	r->states_tot++;
 
+	st->sync_state = PFSYNC_S_NONE;
+	st->pfsync_time = getuptime();
 #if NPFSYNC > 0
-	if (!ISSET(flags, PFSYNC_SI_IOCTL))
-		SET(st->state_flags, PFSTATE_NOSYNC);
+	pfsync_init_state(st, skw, sks, flags);
 #endif
 
-	/*
-	 * We just set PFSTATE_NOSYNC bit, which prevents
-	 * pfsync_insert_state() to insert state to pfsync.
-	 */
 	if (pf_state_insert(kif, &skw, &sks, st) != 0) {
 		/* XXX when we have anchors, use STATE_DEC_COUNTERS */
 		r->states_cur--;
 		error = EEXIST;
 		goto cleanup_state;
 	}
-
-#if NPFSYNC > 0
-	if (!ISSET(flags, PFSYNC_SI_IOCTL)) {
-		CLR(st->state_flags, PFSTATE_NOSYNC);
-		if (ISSET(st->state_flags, PFSTATE_ACK))
-			pfsync_iack(st);
-	}
-	CLR(st->state_flags, PFSTATE_ACK);
-#endif
 
 	return (0);
 
@@ -1576,47 +1561,106 @@ pf_state_import(const struct pfsync_state *sp, int flags)
 
 /* END state table stuff */
 
-void
-pf_purge_timeout(void *unused)
-{
-	/* XXX move to systqmp to avoid KERNEL_LOCK */
-	task_add(systq, &pf_purge_task);
+void		 pf_purge_states(void *);
+struct task	 pf_purge_states_task =
+		     TASK_INITIALIZER(pf_purge_states, NULL);
+
+void		 pf_purge_states_tick(void *);
+struct timeout	 pf_purge_states_to =
+		     TIMEOUT_INITIALIZER(pf_purge_states_tick, NULL);
+
+unsigned int	 pf_purge_expired_states(unsigned int, unsigned int);
+
+/*
+ * how many states to scan this interval.
+ *
+ * this is set when the timeout fires, and reduced by the task. the
+ * task will reschedule itself until the limit is reduced to zero,
+ * and then it adds the timeout again.
+ */
+unsigned int pf_purge_states_limit;
+
+/*
+ * limit how many states are processed with locks held per run of
+ * the state purge task.
+ */
+unsigned int pf_purge_states_collect = 64;
+
+ void
+pf_purge_states_tick(void *null)
+ {
+	unsigned int limit = pf_status.states;
+	unsigned int interval = pf_default_rule.timeout[PFTM_INTERVAL];
+
+	if (limit == 0) {
+		timeout_add_sec(&pf_purge_states_to, 1);
+		return;
+	}
+ 
+	/*
+	 * process a fraction of the state table every second
+	 */
+ 
+	if (interval > 1)
+		limit /= interval;
+
+	pf_purge_states_limit = limit;
+	task_add(systqmp, &pf_purge_states_task);
 }
 
 void
-pf_purge(void *xnloops)
+pf_purge_states(void *null)
 {
-	int *nloops = xnloops;
+	unsigned int limit;
+	unsigned int scanned;
 
-	/*
-	 * process a fraction of the state table every second
-	 * Note:
-	 *     we no longer need PF_LOCK() here, because
-	 *     pf_purge_expired_states() uses pf_state_lock to maintain
-	 *     consistency.
-	 */
-	if (pf_default_rule.timeout[PFTM_INTERVAL] > 0)
-		pf_purge_expired_states(1 + (pf_status.states
-		    / pf_default_rule.timeout[PFTM_INTERVAL]));
+	limit = pf_purge_states_limit;
+	if (limit < pf_purge_states_collect)
+		limit = pf_purge_states_collect;
 
-	NET_LOCK();
+	scanned = pf_purge_expired_states(limit, pf_purge_states_collect);
+	if (scanned >= pf_purge_states_limit) {
+		/* we've run out of states to scan this "interval" */
+		timeout_add_sec(&pf_purge_states_to, 1);
+		return;
+	}
+
+	pf_purge_states_limit -= scanned;
+	task_add(systqmp, &pf_purge_states_task);
+}
+
+void		 pf_purge_tick(void *);
+struct timeout	 pf_purge_to =
+		     TIMEOUT_INITIALIZER(pf_purge_tick, NULL);
+
+void		 pf_purge(void *);
+struct task	 pf_purge_task =
+		     TASK_INITIALIZER(pf_purge, NULL);
+
+void
+pf_purge_tick(void *null)
+{
+	task_add(systqmp, &pf_purge_task);
+}
+
+void
+pf_purge(void *null)
+{
+	unsigned int interval = max(1, pf_default_rule.timeout[PFTM_INTERVAL]);
 
 	PF_LOCK();
-	/* purge other expired types every PFTM_INTERVAL seconds */
-	if (++(*nloops) >= pf_default_rule.timeout[PFTM_INTERVAL])
-		pf_purge_expired_src_nodes();
-	PF_UNLOCK();
 
+	pf_purge_expired_src_nodes();
+
+	PF_UNLOCK();
+ 
 	/*
 	 * Fragments don't require PF_LOCK(), they use their own lock.
 	 */
-	if ((*nloops) >= pf_default_rule.timeout[PFTM_INTERVAL]) {
-		pf_purge_expired_fragments();
-		*nloops = 0;
-	}
-	NET_UNLOCK();
-
-	timeout_add_sec(&pf_purge_to, 1);
+	pf_purge_expired_fragments();
+ 
+	/* interpret the interval as idle time between runs */
+	timeout_add_sec(&pf_purge_to, interval);
 }
 
 int32_t
@@ -1717,6 +1761,8 @@ pf_remove_state(struct pf_state *st)
 	if (st->timeout == PFTM_UNLINKED)
 		return;
 
+	st->timeout = PFTM_UNLINKED;
+
 	/* handle load balancing related tasks */
 	pf_postprocess_addr(st);
 
@@ -1741,7 +1787,6 @@ pf_remove_state(struct pf_state *st)
 #if NPFSYNC > 0
 	pfsync_delete_state(st);
 #endif	/* NPFSYNC > 0 */
-	st->timeout = PFTM_UNLINKED;
 	pf_src_tree_remove_state(st);
 	pf_detach_state(st);
 }
@@ -1795,6 +1840,7 @@ pf_free_state(struct pf_state *st)
 	if (pfsync_state_in_use(st))
 		return;
 #endif	/* NPFSYNC > 0 */
+
 	KASSERT(st->timeout == PFTM_UNLINKED);
 	if (--st->rule.ptr->states_cur == 0 &&
 	    st->rule.ptr->src_nodes == 0)
@@ -1819,8 +1865,8 @@ pf_free_state(struct pf_state *st)
 	pf_status.states--;
 }
 
-void
-pf_purge_expired_states(u_int32_t maxcheck)
+unsigned int
+pf_purge_expired_states(const unsigned int limit, const unsigned int collect)
 {
 	/*
 	 * this task/thread/context/whatever is the only thing that
@@ -1834,6 +1880,8 @@ pf_purge_expired_states(u_int32_t maxcheck)
 	struct pf_state		*st;
 	SLIST_HEAD(pf_state_gcl, pf_state) gcl = SLIST_HEAD_INITIALIZER(gcl);
 	time_t			 now;
+	unsigned int		 scanned;
+	unsigned int		 collected = 0;
 
 	PF_ASSERT_UNLOCKED();
 
@@ -1847,7 +1895,7 @@ pf_purge_expired_states(u_int32_t maxcheck)
 	if (head == NULL) {
 		/* the list is empty */
 		rw_exit_read(&pf_state_list.pfs_rwl);
-		return;
+		return (limit);
 	}
 
 	/* (re)start at the front of the list */
@@ -1856,13 +1904,17 @@ pf_purge_expired_states(u_int32_t maxcheck)
 
 	now = getuptime();
 
-	do {
+	for (scanned = 0; scanned < limit; scanned++) {
 		uint8_t stimeout = cur->timeout;
+		unsigned int limited = 0;
 
 		if ((stimeout == PFTM_UNLINKED) ||
 		    (pf_state_expires(cur, stimeout) <= now)) {
 			st = pf_state_ref(cur);
 			SLIST_INSERT_HEAD(&gcl, st, gc_list);
+
+			if (++collected >= collect)
+				limited = 1;
 		}
 
 		/* don't iterate past the end of our view of the list */
@@ -1872,14 +1924,18 @@ pf_purge_expired_states(u_int32_t maxcheck)
 		}
 
 		cur = TAILQ_NEXT(cur, entry_list);
-	} while (maxcheck--);
+
+		/* don't spend too much time here. */
+		if (ISSET(READ_ONCE(curcpu()->ci_schedstate.spc_schedflags),
+		     SPCF_SHOULDYIELD) || limited)
+			break;
+	}
 
 	rw_exit_read(&pf_state_list.pfs_rwl);
 
 	if (SLIST_EMPTY(&gcl))
-		return;
+		return (scanned);
 
-	NET_LOCK();
 	rw_enter_write(&pf_state_list.pfs_rwl);
 	PF_LOCK();
 	PF_STATE_ENTER_WRITE();
@@ -1892,12 +1948,13 @@ pf_purge_expired_states(u_int32_t maxcheck)
 	PF_STATE_EXIT_WRITE();
 	PF_UNLOCK();
 	rw_exit_write(&pf_state_list.pfs_rwl);
-	NET_UNLOCK();
 
 	while ((st = SLIST_FIRST(&gcl)) != NULL) {
 		SLIST_REMOVE_HEAD(&gcl, gc_list);
 		pf_state_unref(st);
 	}
+
+	return (scanned);
 }
 
 int
@@ -4262,8 +4319,7 @@ next_rule:
 
 int
 pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
-    struct pf_rule **am, struct pf_ruleset **rsm, u_short *reason,
-    struct pfsync_deferral **pdeferral)
+    struct pf_rule **am, struct pf_ruleset **rsm, u_short *reason)
 {
 	struct pf_rule		*r = NULL;
 	struct pf_rule		*a = NULL;
@@ -4475,7 +4531,7 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		 * firewall has to know about it to allow
 		 * replies through it.
 		 */
-		if (pfsync_defer(*sm, pd->m, pdeferral))
+		if (pfsync_defer(*sm, pd->m))
 			return (PF_DEFER);
 	}
 #endif	/* NPFSYNC > 0 */
@@ -4517,6 +4573,8 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 		st->state_flags |= PFSTATE_SLOPPY;
 	if (r->rule_flag & PFRULE_PFLOW)
 		st->state_flags |= PFSTATE_PFLOW;
+	if (r->rule_flag & PFRULE_NOSYNC)
+		st->state_flags |= PFSTATE_NOSYNC;
 #if NPFLOG > 0
 	st->log = act->log & PF_LOG_ALL;
 #endif	/* NPFLOG > 0 */
@@ -4535,6 +4593,7 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 	st->set_prio[1] = act->set_prio[1];
 	st->delay = act->delay;
 	SLIST_INIT(&st->src_nodes);
+
 	/*
 	 * must initialize refcnt, before pf_state_insert() gets called.
 	 * pf_state_inserts() grabs reference for pfsync!
@@ -7462,7 +7521,6 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 	int			 dir = (fwdir == PF_FWD) ? PF_OUT : fwdir;
 	u_int32_t		 qid, pqid = 0;
 	int			 have_pf_lock = 0;
-	struct pfsync_deferral	*deferral = NULL;
 
 	if (!pf_status.running)
 		return (PF_PASS);
@@ -7565,8 +7623,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 		 */
 		PF_LOCK();
 		have_pf_lock = 1;
-		action = pf_test_rule(&pd, &r, &st, &a, &ruleset, &reason,
-		    &deferral);
+		action = pf_test_rule(&pd, &r, &st, &a, &ruleset, &reason);
 		st = pf_state_ref(st);
 		if (action != PF_PASS)
 			REASON_SET(&reason, PFRES_FRAG);
@@ -7598,7 +7655,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			PF_LOCK();
 			have_pf_lock = 1;
 			action = pf_test_rule(&pd, &r, &st, &a, &ruleset,
-			    &reason, &deferral);
+			    &reason);
 			st = pf_state_ref(st);
 		}
 		break;
@@ -7630,7 +7687,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			PF_LOCK();
 			have_pf_lock = 1;
 			action = pf_test_rule(&pd, &r, &st, &a, &ruleset,
-			    &reason, &deferral);
+			    &reason);
 			st = pf_state_ref(st);
 		}
 		break;
@@ -7714,7 +7771,7 @@ pf_test(sa_family_t af, int fwdir, struct ifnet *ifp, struct mbuf **m0)
 			PF_LOCK();
 			have_pf_lock = 1;
 			action = pf_test_rule(&pd, &r, &st, &a, &ruleset,
-			    &reason, &deferral);
+			    &reason);
 			st = pf_state_ref(st);
 		}
 
@@ -7854,14 +7911,6 @@ done:
 		m_freem(pd.m);
 		/* FALLTHROUGH */
 	case PF_DEFER:
-#if NPFSYNC > 0
-		/*
-		 * We no longer hold PF_LOCK() here, so we can dispatch
-		 * deferral if we are asked to do so.
-		 */
-		if (deferral != NULL)
-			pfsync_undefer(deferral, 0);
-#endif	/* NPFSYNC > 0 */
 		pd.m = NULL;
 		action = PF_PASS;
 		break;
@@ -8210,7 +8259,7 @@ pf_state_unref(struct pf_state *st)
 #if NPFSYNC > 0
 		KASSERT((TAILQ_NEXT(st, sync_list) == NULL) ||
 		    ((TAILQ_NEXT(st, sync_list) == _Q_INVALID) &&
-		    (st->sync_state == PFSYNC_S_NONE)));
+		    (st->sync_state >= PFSYNC_S_NONE)));
 #endif	/* NPFSYNC */
 		KASSERT((TAILQ_NEXT(st, entry_list) == NULL) ||
 		    (TAILQ_NEXT(st, entry_list) == _Q_INVALID));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.240 2022/07/14 13:52:10 mvs Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.241 2023/07/06 04:55:05 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -50,6 +50,7 @@
  *	P	ipo_tdb_mtx		link policy to TDB global mutex
  *	D	tdb_sadb_mtx		SA database global mutex
  *	m	tdb_mtx			fields of struct tdb
+ *	S	pfsync			fields of struct tdb
  */
 
 /* IPSP global definitions. */
@@ -405,7 +406,6 @@ struct tdb {				/* tunnel descriptor block */
 	u_int8_t	tdb_sproto;	/* [I] IPsec protocol */
 	u_int8_t	tdb_wnd;	/* Replay window */
 	u_int8_t	tdb_satype;	/* SA type (RFC2367, PF_KEY) */
-	u_int8_t	tdb_updates;	/* pfsync update counter */
 
 	union sockaddr_union	tdb_dst;	/* [N] Destination address */
 	union sockaddr_union	tdb_src;	/* [N] Source address */
@@ -439,8 +439,8 @@ struct tdb {				/* tunnel descriptor block */
 	struct sockaddr_encap   tdb_filtermask; /* And the mask */
 
 	TAILQ_HEAD(tdb_policy_head, ipsec_policy) tdb_policy_head; /* [P] */
-	TAILQ_ENTRY(tdb)	tdb_sync_entry;
-	TAILQ_ENTRY(tdb)	tdb_sync_snap;
+	TAILQ_ENTRY(tdb)	tdb_sync_entry;	/* [S] pfsync tdb queue */
+	u_int32_t	tdb_updates;	/* [S] pfsync update counter */
 };
 
 enum tdb_counters {

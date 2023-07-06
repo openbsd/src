@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.703 2023/07/04 13:37:47 jan Exp $	*/
+/*	$OpenBSD: if.c,v 1.704 2023/07/06 04:55:04 dlg Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -1033,14 +1033,6 @@ if_netisr(void *unused)
 #endif
 		t |= n;
 	}
-
-#if NPFSYNC > 0
-	if (t & (1 << NETISR_PFSYNC)) {
-		KERNEL_LOCK();
-		pfsyncintr();
-		KERNEL_UNLOCK();
-	}
-#endif
 
 	NET_UNLOCK();
 }
