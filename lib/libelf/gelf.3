@@ -21,7 +21,7 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" $Id: gelf.3,v 1.4 2020/11/14 10:35:58 jmc Exp $
+.\" $Id: gelf.3,v 1.5 2023/07/06 06:25:49 jasper Exp $
 .\"
 .Dd June 12, 2019
 .Dt GELF 3
@@ -176,6 +176,8 @@ Retrieves the ELF class of an ELF descriptor.
 Copy back an ELF
 .Sy .dynamic
 Table entry.
+.It Fn gelf_update_ehdr
+Copy back an ELF Executable Header Table entry.
 .It Fn gelf_update_phdr
 Copy back an ELF Program Header Table entry.
 .It Fn gelf_update_rel
