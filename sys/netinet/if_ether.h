@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.h,v 1.88 2023/02/07 16:14:55 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.h,v 1.89 2023/07/06 19:46:53 kn Exp $	*/
 /*	$NetBSD: if_ether.h,v 1.22 1996/05/11 13:00:00 mycroft Exp $	*/
 
 /*
@@ -181,6 +181,9 @@ struct sockaddr_inarp {
 #define	RTF_PERMANENT_ARP RTF_PROTO3    /* only manual overwrite of entry */
 
 #ifdef _KERNEL
+
+#include <sys/refcnt.h>
+
 /*
  * Macro to map an IP multicast address to an Ethernet multicast address.
  * The high-order 25 bits of the Ethernet address are statically assigned,
@@ -318,7 +321,7 @@ void ether_extract_headers(struct mbuf *, struct ether_extracted *);
 struct ether_multi {
 	u_int8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
 	u_int8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
-	u_int	 enm_refcount;		/* no. claims to this addr/range */
+	struct refcnt enm_refcnt;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };
 

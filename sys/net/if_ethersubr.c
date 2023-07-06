@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.289 2023/07/03 15:52:51 kn Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.290 2023/07/06 19:46:53 kn Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -931,7 +931,7 @@ ether_addmulti(struct ifreq *ifr, struct arpcom *ac)
 		/*
 		 * Found it; just increment the reference count.
 		 */
-		++enm->enm_refcount;
+		refcnt_take(&enm->enm_refcnt);
 		splx(s);
 		return (0);
 	}
@@ -946,7 +946,7 @@ ether_addmulti(struct ifreq *ifr, struct arpcom *ac)
 	}
 	memcpy(enm->enm_addrlo, addrlo, ETHER_ADDR_LEN);
 	memcpy(enm->enm_addrhi, addrhi, ETHER_ADDR_LEN);
-	enm->enm_refcount = 1;
+	refcnt_init_trace(&enm->enm_refcnt, DT_REFCNT_IDX_ETHMULTI);
 	LIST_INSERT_HEAD(&ac->ac_multiaddrs, enm, enm_list);
 	ac->ac_multicnt++;
 	if (memcmp(addrlo, addrhi, ETHER_ADDR_LEN) != 0)
@@ -984,7 +984,7 @@ ether_delmulti(struct ifreq *ifr, struct arpcom *ac)
 		splx(s);
 		return (ENXIO);
 	}
-	if (--enm->enm_refcount != 0) {
+	if (refcnt_rele(&enm->enm_refcnt) == 0) {
 		/*
 		 * Still some claims to this record.
 		 */
