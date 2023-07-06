@@ -3986,7 +3986,7 @@ map_sections_to_segments (bfd *abfd)
 	goto error_return;
       m->next = NULL;
       m->p_type = PT_OPENBSD_WXNEEDED;
-      m->p_flags = 1;
+      m->p_flags = PF_X;
       m->p_flags_valid = 1;
 
       *pm = m;
@@ -4001,7 +4001,7 @@ map_sections_to_segments (bfd *abfd)
 	goto error_return;
       m->next = NULL;
       m->p_type = PT_OPENBSD_NOBTCFI;
-      m->p_flags = 1;
+      m->p_flags = PF_X;
       m->p_flags_valid = 1;
 
       *pm = m;
