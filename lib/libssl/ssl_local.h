@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_local.h,v 1.6 2023/05/26 13:44:05 tb Exp $ */
+/* $OpenBSD: ssl_local.h,v 1.7 2023/07/06 07:56:32 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -172,18 +172,6 @@ __BEGIN_HIDDEN_DECLS
 
 #ifndef LIBRESSL_HAS_DTLS1_2
 #define LIBRESSL_HAS_DTLS1_2
-#endif
-
-#ifndef LIBRESSL_HAS_TLS1_3_CLIENT
-#define LIBRESSL_HAS_TLS1_3_CLIENT
-#endif
-
-#ifndef LIBRESSL_HAS_TLS1_3_SERVER
-#define LIBRESSL_HAS_TLS1_3_SERVER
-#endif
-
-#if defined(LIBRESSL_HAS_TLS1_3_CLIENT) || defined(LIBRESSL_HAS_TLS1_3_SERVER)
-#define LIBRESSL_HAS_TLS1_3
 #endif
 
 /* LOCAL STUFF */

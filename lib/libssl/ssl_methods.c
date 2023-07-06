@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.29 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.30 2023/07/06 07:56:32 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,7 +240,6 @@ DTLS_server_method(void)
 	return &DTLS_method_data;
 }
 
-#if defined(LIBRESSL_HAS_TLS1_3_CLIENT) && defined(LIBRESSL_HAS_TLS1_3_SERVER)
 static const SSL_METHOD TLS_method_data = {
 	.dtls = 0,
 	.server = 1,
@@ -261,7 +260,6 @@ static const SSL_METHOD TLS_method_data = {
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_3_ENC_FLAGS,
 };
-#endif
 
 static const SSL_METHOD TLS_legacy_method_data = {
 	.dtls = 0,
@@ -284,7 +282,6 @@ static const SSL_METHOD TLS_legacy_method_data = {
 	.enc_flags = TLSV1_2_ENC_FLAGS,
 };
 
-#if defined(LIBRESSL_HAS_TLS1_3_CLIENT)
 static const SSL_METHOD TLS_client_method_data = {
 	.dtls = 0,
 	.server = 0,
@@ -305,30 +302,6 @@ static const SSL_METHOD TLS_client_method_data = {
 	.get_cipher = ssl3_get_cipher,
 	.enc_flags = TLSV1_3_ENC_FLAGS,
 };
-
-#else
-
-static const SSL_METHOD TLS_legacy_client_method_data = {
-	.dtls = 0,
-	.server = 0,
-	.version = TLS1_2_VERSION,
-	.min_tls_version = TLS1_VERSION,
-	.max_tls_version = TLS1_2_VERSION,
-	.ssl_new = tls1_new,
-	.ssl_clear = tls1_clear,
-	.ssl_free = tls1_free,
-	.ssl_accept = ssl3_accept,
-	.ssl_connect = ssl3_connect,
-	.ssl_shutdown = ssl3_shutdown,
-	.ssl_renegotiate = ssl_undefined_function,
-	.ssl_renegotiate_check = ssl_ok,
-	.ssl_pending = ssl3_pending,
-	.ssl_read_bytes = ssl3_read_bytes,
-	.ssl_write_bytes = ssl3_write_bytes,
-	.get_cipher = ssl3_get_cipher,
-	.enc_flags = TLSV1_2_ENC_FLAGS,
-};
-#endif
 
 static const SSL_METHOD TLSv1_method_data = {
 	.dtls = 0,
@@ -459,21 +432,13 @@ static const SSL_METHOD TLSv1_2_client_method_data = {
 const SSL_METHOD *
 TLS_client_method(void)
 {
-#if defined(LIBRESSL_HAS_TLS1_3_CLIENT)
 	return (&TLS_client_method_data);
-#else
-	return (&TLS_legacy_client_method_data);
-#endif
 }
 
 const SSL_METHOD *
 TLS_method(void)
 {
-#if defined(LIBRESSL_HAS_TLS1_3_CLIENT) && defined(LIBRESSL_HAS_TLS1_3_SERVER)
 	return (&TLS_method_data);
-#else
-	return tls_legacy_method();
-#endif
 }
 
 const SSL_METHOD *
