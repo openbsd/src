@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.92 2023/06/28 08:23:25 claudio Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.93 2023/07/06 23:24:37 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -545,9 +545,6 @@ timeout_hardclock_update(void)
 	struct timespec *lastscan = &timeout_kclock[KCLOCK_UPTIME].kc_lastscan;
 	int b, done, first, i, last, level, need_softclock = 1, off;
 
-	nanouptime(&now);
-	timespecsub(&now, lastscan, &elapsed);
-
 	mtx_enter(&timeout_mutex);
 
 	MOVEBUCKET(0, ticks);
@@ -573,6 +570,8 @@ timeout_hardclock_update(void)
 	 * completed a lap of the level and need to process buckets in the
 	 * next level.
 	 */
+	nanouptime(&now);
+	timespecsub(&now, lastscan, &elapsed);
 	for (level = 0; level < nitems(timeout_level_width); level++) {
 		first = timeout_maskwheel(level, lastscan);
 		if (elapsed.tv_sec >= timeout_level_width[level]) {
