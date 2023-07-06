@@ -1,4 +1,4 @@
-# $OpenBSD: Archive.pm,v 1.7 2014/04/20 17:34:26 zhuk Exp $
+# $OpenBSD: Archive.pm,v 1.8 2023/07/06 08:29:26 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,9 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
-use feature qw(say switch state);
+use v5.36;
 
 package LT::Archive;
 use LT::Trace;
@@ -26,10 +24,8 @@ use LT::UList;
 use LT::Util;
 use File::Path;
 
-sub extract
+sub extract($self, $dir, $archive)
 {
-	my ($self, $dir, $archive) = @_;
-
 	if (! -d $dir) {
 		tsay {"mkdir -p $dir"};
 		File::Path::mkpath($dir);
@@ -37,10 +33,8 @@ sub extract
 	LT::Exec->chdir($dir)->link('ar', 'x', $archive);
 }
 
-sub get_objlist
+sub get_objlist($self, $a)
 {
-	my ($self, $a) = @_;
-
 	open(my $arh, '-|', 'ar', 't', $a);
 	my @o = <$arh>;
 	close $arh;
@@ -48,9 +42,8 @@ sub get_objlist
 	return @o;
 }
 
-sub get_symbollist
+sub get_symbollist($self, $filepath, $regex, $objlist)
 {
-	my ($self, $filepath, $regex, $objlist) = @_;
 
 	if (@$objlist == 0) {
 		die "get_symbollist: object list is empty\n";

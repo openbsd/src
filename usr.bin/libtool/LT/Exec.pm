@@ -1,4 +1,4 @@
-# $OpenBSD: Exec.pm,v 1.5 2018/08/26 19:09:55 naddy Exp $
+# $OpenBSD: Exec.pm,v 1.6 2023/07/06 08:29:26 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,79 +15,70 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
-use feature qw(say switch state);
+use v5.36;
 
 package LT::Exec;
 use LT::Trace;
 use LT::Util;
 
+# OO singleton
 my $dry = 0;
 my $verbose = 0;
 my $performed = 0;
 
-sub performed
+sub performed($)
 {
 	return $performed;
 }
 
-sub dry_run
+sub dry_run($)
 {
 	$dry = 1;
 }
 
-sub verbose_run
+sub verbose_run($)
 {
 	$verbose = 1;
 }
 
-sub silent_run
+sub silent_run($)
 {
 	$verbose = 0;
 }
 
-sub new
+sub new($class)
 {
-	my $class = shift;
 	bless {}, $class;
 }
 
-sub chdir
+sub chdir($self, $dir)
 {
-	my ($self, $dir) = @_;
 	my $class = ref($self) || $self;
 	bless {dir => $dir}, $class;
 }
 
-sub compile
+sub compile($self, @l)
 {
-	my ($self, @l) = @_;
 	$self->command("compile", @l);	
 }
 
-sub execute
+sub execute($self, @l)
 {
-	my ($self, @l) = @_;
 	$self->command("execute", @l);
 }
 
-sub install
+sub install($self, @l)
 {
-	my ($self, @l) = @_;
 	$self->command("install", @l);
 }
 
-sub link
+sub link($self, @l)
 {
-	my ($self, @l) = @_;
 	$self->command("link", @l);
 }
 
-sub command_run
+sub command_run($self, @l)
 {
-	my ($self, @l) = @_;
-
 	if ($self->{dir}) {
 		tprint {"cd $self->{dir} && "};
 	}
@@ -110,9 +101,8 @@ sub command_run
 	}
 }
 
-sub shell
+sub shell($self, @cmds)
 {
-	my ($self, @cmds) = @_;
 	# create an object "on the run"
 	if (!ref($self)) {
 		$self = $self->new;
@@ -126,9 +116,8 @@ sub shell
 	$performed++;
 }
 
-sub command
+sub command($self, $mode, @l)
 {
-	my ($self, $mode, @l) = @_;
 	# create an object "on the run"
 	if (!ref($self)) {
 		$self = $self->new;

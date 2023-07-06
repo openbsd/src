@@ -1,4 +1,4 @@
-# $OpenBSD: LaLoFile.pm,v 1.4 2014/03/19 02:16:22 afresh1 Exp $
+# $OpenBSD: LaLoFile.pm,v 1.5 2023/07/06 08:29:26 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,9 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
-use feature qw(say switch state);
+use v5.36;
 
 package LT::LaLoFile;
 use LT::Trace;
@@ -27,25 +25,21 @@ my $cache_by_fullname = {};
 my $cache_by_inode = {};
 
 # allows special treatment for some keywords
-sub set
+sub set($self, $k, $v)
 {
-	my ($self, $k, $v) = @_;
-
 	$self->{$k} = $v;
 }
 
-sub stringize
+sub stringize($self, $k)
 {
-	my ($self, $k) = @_;
 	if (defined $self->{$k}) {
 	       return $self->{$k};
 	}
 	return '';
 }
 
-sub read
+sub read($class, $filename)
 {
-	my ($class, $filename) = @_;
 	my $info = $class->new;
 	open(my $fh, '<', $filename) or die "Cannot read $filename: $!\n";
 	while (my $line = <$fh>) {
@@ -61,10 +55,8 @@ sub read
 	return $info;
 }
 
-sub parse
+sub parse($class, $filename)
 {
-	my ($class, $filename) = @_;
-
 	tprint {"parsing $filename"};
 
 	if (defined $cache_by_fullname->{$filename}) {
@@ -81,9 +73,8 @@ sub parse
 	    $class->read($filename);
 }
 
-sub new
+sub new($class)
 {
-	my $class = shift;
 	bless {}, $class;
 }
 

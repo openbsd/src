@@ -1,4 +1,4 @@
-# $OpenBSD: Getopt.pm,v 1.13 2017/05/27 10:35:41 zhuk Exp $
+# $OpenBSD: Getopt.pm,v 1.14 2023/07/06 08:29:26 espie Exp $
 
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 #
@@ -15,13 +15,11 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 
-use strict;
-use warnings;
+use v5.36;
 
 package Option;
-sub factory
+sub factory($class, $o)
 {
-	my ($class, $o) = @_;
 	if ($o =~ m/^(.)$/) {
 		return Option::Short->new($1);
 	} elsif ($o =~ m/^(.)\:$/) {
@@ -39,15 +37,13 @@ sub factory
 	}
 }
 
-sub new
+sub new($class, $v)
 {
-	my ($class, $v) = @_;
 	bless \$v, $class;
 }
 
-sub setup
+sub setup($self, $opts, $isarray)
 {
-	my ($self, $opts, $isarray) = @_;
 	$opts->add_option_accessor($$self, $isarray);
 	return $self;
 }
@@ -55,9 +51,8 @@ sub setup
 package Option::Short;
 our @ISA = qw(Option);
 
-sub match
+sub match($self, $arg, $opts, $canonical, $code)
 {
-	my ($self, $arg, $opts, $canonical, $code) = @_;
 	if ($arg =~ m/^\-\Q$$self\E$/) {
 		&$code($opts, $canonical, 1, $arg);
 		return 1;
@@ -73,9 +68,8 @@ sub match
 package Option::ShortArg;
 our @ISA = qw(Option::Short);
 
-sub match
+sub match($self, $arg, $opts, $canonical, $code)
 {
-	my ($self, $arg, $opts, $canonical, $code) = @_;
 	if ($arg =~ m/^\-\Q$$self\E$/) {
 		&$code($opts, $canonical, (shift @main::ARGV), $arg);
 		return 1;
@@ -90,9 +84,8 @@ sub match
 package Option::Long;
 our @ISA = qw(Option);
 
-sub match
+sub match($self, $arg, $opts, $canonical, $code)
 {
-	my ($self, $arg, $opts, $canonical, $code) = @_;
 	if ($arg =~ m/^\-\Q$$self\E$/) {
 		&$code($opts, $canonical, 1, $arg);
 		return 1;
@@ -102,9 +95,8 @@ sub match
 
 package Option::LongArg0;
 our @ISA = qw(Option::Long);
-sub match
+sub match($self, $arg, $opts, $canonical, $code)
 {
-	my ($self, $arg, $opts, $canonical, $code) = @_;
 	if ($arg =~ m/^\-\Q$$self\E$/) {
 		if (@main::ARGV > 0) {
 			&$code($opts, $canonical, (shift @main::ARGV), $arg);
@@ -119,9 +111,8 @@ sub match
 package Option::LongArg;
 our @ISA = qw(Option::LongArg0);
 
-sub match
+sub match($self, $arg, $opts, $canonical, $code)
 {
-	my ($self, $arg, $opts, $canonical, $code) = @_;
 	if ($self->SUPER::match($arg, $opts, $canonical, $code)) {
 		return 1;
 	}
@@ -133,20 +124,18 @@ sub match
 }
 
 package Option::Regexp;
-sub new
+sub new($class, $re, $code)
 {
-	my ($class, $re, $code) = @_;
 	bless {re => $re, code => $code}, $class;
 }
 
-sub setup
+sub setup($self, $, $)
 {
-	return shift;
+	return $self;
 }
 
-sub match
+sub match($self, $arg, $opts)
 {
-	my ($self, $arg, $opts) = @_;
 	if (my @l = ($arg =~ m/^$self->{re}$/)) {
 		&{$self->{code}}(@l);
 		return 1;
@@ -157,28 +146,27 @@ sub match
 
 package Options;
 
-sub new
+sub new($class, $string, $code)
 {
-	my ($class, $string, $code) = @_;
-
 	if (ref($string) eq 'Regexp') {
 		return Option::Regexp->new($string, $code);
 	}
 	my @alternates = split(/\|/, $string);
 
-	bless {alt => [map { Option->factory($_); } @alternates], code => $code}, $class;
+	bless {
+		alt => [map { Option->factory($_); } @alternates], 
+		code => $code
+	}, $class;
 }
 
-sub setup
+sub setup($self, $allopts, $isarray)
 {
-	my ($self, $allopts, $isarray) = @_;
 	$self->{alt}[0]->setup($allopts, $isarray);
 	return $self;
 }
 
-sub match
+sub match($self, $arg, $opts)
 {
-	my ($self, $arg, $opts) = @_;
 
 	my $canonical = ${$self->{alt}[0]};
 	for my $s (@{$self->{alt}}) {
@@ -197,23 +185,20 @@ use LT::Util;
 # parsing an option 'all-static' will automatically add an
 # accessor $self->all_static   that maps to the option.
 
-sub add_option_accessor
+sub add_option_accessor($self, $option, $isarray)
 {
-	my ($self, $option, $isarray) = @_;
 	my $access = $option;
 	$access =~ s/^\-//;
 	$access =~ s/-/_/g;
 	my $actual = $isarray ? 
-		sub {
-		    my $self = shift;
+		sub($self) {
 		    $self->{opt}{$option} //= [];
 		    if (wantarray) {
 			    return @{$self->{opt}{$option}};
 		    } else {
 			    return scalar @{$self->{opt}{$option}};
 		    }
-		} : sub {
-		    my $self = shift;
+		} : sub($self) {
 		    return $self->{opt}{$option};
 		};
 	my $callpkg = ref($self);
@@ -223,9 +208,8 @@ sub add_option_accessor
 	}
 }
 
-sub create_options
+sub create_options($self, @l)
 {
-	my ($self, @l) = @_;
 	my @options = ();
 	# first pass creates accessors
 	push(@l, '-tag=', sub { $self->add_tag($_[2]); });
@@ -248,15 +232,14 @@ sub create_options
 				};
 			}
 		}
-		push(@options, Options->new($opt, $code)->setup($self, $isarray));
+		push(@options, 
+		    Options->new($opt, $code)->setup($self, $isarray));
 	}
 	return @options;
 }
 
-sub handle_options
+sub handle_options($self, @l)
 {
-	my ($self, @l) = @_;
-
 	my @options = $self->create_options(@l);
 
 MAINLOOP:
@@ -279,10 +262,8 @@ MAINLOOP:
 	}
 }
 
-sub handle_permuted_options
+sub handle_permuted_options($self, @l)
 {
-	my ($self, @l) = @_;
-
 	my @options = $self->create_options(@l);
 
 	$self->{kept} = [];
@@ -305,15 +286,13 @@ MAINLOOP2:
 	@main::ARGV = @{$self->{kept}};
 }
 
-sub keep_for_later
+sub keep_for_later($self, @args)
 {
-	my ($self, @args) = @_;
 	push(@{$self->{kept}}, @args);
 }
 
-sub new
+sub new($class)
 {
-	my $class = shift;
 	bless {}, $class;
 }
 

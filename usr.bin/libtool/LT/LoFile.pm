@@ -1,4 +1,4 @@
-# $OpenBSD: LoFile.pm,v 1.5 2012/07/10 11:41:10 espie Exp $
+# $OpenBSD: LoFile.pm,v 1.6 2023/07/06 08:29:26 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,9 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
-use feature qw(say switch state);
+use v5.36;
 
 package LT::LoFile;
 use parent qw(LT::LaLoFile);
@@ -25,9 +23,8 @@ use File::Basename;
 use LT::Util;
 
 # write a libtool object file
-sub write
+sub write($self, $filename)
 {
-	my ($self, $filename) = @_;
 	my $picobj = $self->stringize('picobj');
 	my $nonpicobj = $self->stringize('nonpicobj');
 
@@ -45,10 +42,8 @@ EOF
 ;
 }
 
-sub compile
+sub compile($self, $compiler, $odir, $args)
 {
-	my ($self, $compiler, $odir, $args) = @_;
-
 	mkdir "$odir/$ltdir" unless -d "$odir/$ltdir";
 	if (defined $self->{picobj}) {
 		my @cmd = @$compiler;

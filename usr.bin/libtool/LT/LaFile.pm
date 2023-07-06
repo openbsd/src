@@ -1,4 +1,4 @@
-# $OpenBSD: LaFile.pm,v 1.24 2019/09/28 06:25:57 semarie Exp $
+# $OpenBSD: LaFile.pm,v 1.25 2023/07/06 08:29:26 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,9 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
-use feature qw(say switch state);
+use v5.36;
 
 package LT::LaFile;
 use parent qw(LT::LaLoFile);
@@ -27,10 +25,8 @@ use LT::Util;
 use LT::Trace;
 
 # allows special treatment for some keywords
-sub set
+sub set($self, $k, $v)
 {
-	my ($self, $k, $v) = @_;
-
 	$self->SUPER::set($k, $v);
 	if ($k eq 'dependency_libs') {
 		my @l = split /\s+/, $v;
@@ -38,17 +34,14 @@ sub set
 	}
 }
 
-sub deplib_list
+sub deplib_list($self)
 {
-	my $self = shift;
 	return $self->{deplib_list}
 }
 
 # XXX not sure how much of this cruft we need
-sub write
+sub write($lainfo, $filename, $name)
 {
-	my ($lainfo, $filename, $name) = @_;
-
 	my $libname = $lainfo->stringize('libname');
 	my $sharedlibname = $lainfo->stringize('dlname');
 	my $staticlibname = $lainfo->stringize('old_library');
@@ -103,9 +96,8 @@ EOF
 ;
 }
 
-sub write_shared_libs_log
+sub write_shared_libs_log($self, $origv)
 {
-	my ($self, $origv) = @_;
 	if (!defined $ENV{SHARED_LIBS_LOG}) {
 	       return;
 	}
@@ -124,10 +116,8 @@ sub write_shared_libs_log
 
 # find .la file associated with a -llib flag
 # XXX pick the right one if multiple are found!
-sub find
+sub find($self, $l, $sd)
 {
-	my ($self, $l, $sd) = @_;
-
 	tsay {"searching .la for $l in $sd"};
 	foreach my $la_candidate ("$sd/lib$l.la", "$sd/$l.la") {
 		if (-f $la_candidate) {
@@ -139,10 +129,8 @@ sub find
 	return undef;
 }
 
-sub install
+sub install($class, $src, $dstdir, $instprog, $instopts, $strip)
 {
-	my ($class, $src, $dstdir, $instprog, $instopts, $strip) = @_;
-
 	my $srcdir = dirname($src);
 	my $srcfile = basename($src);
 	my $dstfile = $srcfile;
@@ -188,10 +176,8 @@ sub install
 	}
 }
 
-sub parse
+sub parse($class, $filename)
 {
-	my ($class, $filename) = @_;
-
 	my $info = $class->SUPER::parse($filename);
 
 	$info->{deplib_list} //= LT::UList->new;
