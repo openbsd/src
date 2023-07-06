@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.168 2023/07/02 19:59:15 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.169 2023/07/06 09:15:24 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -150,8 +150,8 @@ struct tcpcb {
 					 */
 
 /* auto-sizing variables */
+	uint64_t rfbuf_ts;	/* recv buffer autoscaling time stamp */
 	u_int	rfbuf_cnt;	/* recv buffer autoscaling byte count */
-	u_int32_t rfbuf_ts;	/* recv buffer autoscaling time stamp */
 
 	u_short	t_maxopd;		/* mss plus options */
 	u_short	t_peermss;		/* peer's maximum segment size */
@@ -160,11 +160,11 @@ struct tcpcb {
  * transmit timing stuff.  See below for scale of srtt and rttvar.
  * "Variance" is actually smoothed difference.
  */
-	uint32_t t_rcvtime;		/* time last segment received */
-	uint32_t t_rcvacktime;		/* time last ack received */
-	uint32_t t_sndtime;		/* time last segment sent */
-	uint32_t t_sndacktime;		/* time last ack sent */
-	uint32_t t_rtttime;		/* time we started measuring rtt */
+	uint64_t t_rcvtime;		/* time last segment received */
+	uint64_t t_rcvacktime;		/* time last ack received */
+	uint64_t t_sndtime;		/* time last segment sent */
+	uint64_t t_sndacktime;		/* time last ack sent */
+	uint64_t t_rtttime;		/* time we started measuring rtt */
 	tcp_seq	t_rtseq;		/* sequence number being timed */
 	int	t_srtt;			/* smoothed round-trip time */
 	int	t_rttvar;		/* variance in round-trip time */
@@ -183,9 +183,9 @@ struct tcpcb {
 	u_char	rcv_scale;		/* window scaling for recv window */
 	u_char	request_r_scale;	/* pending window scaling */
 	u_char	requested_s_scale;
-	u_int32_t ts_recent;		/* timestamp echo data */
-	u_int32_t ts_modulate;		/* modulation on timestamp */
-	u_int32_t ts_recent_age;	/* when last updated */
+	uint32_t ts_recent;		/* timestamp echo data */
+	uint32_t ts_modulate;		/* modulation on timestamp */
+	uint64_t ts_recent_age;		/* when last updated */
 	tcp_seq	last_ack_sent;
 
 /* pointer for syn cache entries*/
@@ -250,12 +250,9 @@ struct syn_cache {
 	long sc_win;				/* advertised window */
 	struct syn_cache_head *sc_buckethead;	/* our bucket index */
 	struct syn_cache_set *sc_set;		/* our syn cache set */
+	u_int64_t sc_timestamp;			/* timestamp from SYN */
 	u_int32_t sc_hash;
-	u_int32_t sc_timestamp;			/* timestamp from SYN */
 	u_int32_t sc_modulate;			/* our timestamp modulator */
-#if 0
-	u_int32_t sc_timebase;			/* our local timebase */
-#endif
 	union syn_cache_sa sc_src;
 	union syn_cache_sa sc_dst;
 	tcp_seq sc_irs;
@@ -657,10 +654,13 @@ tcpstat_pkt(enum tcpstat_counters pcounter, enum tcpstat_counters bcounter,
 	counters_pkt(tcpcounters, pcounter, bcounter, v);
 }
 
-static inline uint32_t
+extern uint64_t tcp_starttime;
+
+static inline uint64_t
 tcp_now(void)
 {
-	return (getnsecruntime() / 1000000);
+	/* TCP time ticks in 63 bit milliseconds with 63 bit random offset. */
+	return tcp_starttime + (getnsecruntime() / 1000000ULL);
 }
 
 #define TCP_TIME(_sec)	((_sec) * 1000)	/* tcp_now() is in milliseconds */
@@ -712,7 +712,7 @@ struct tcpcb *
 struct tcpcb *
 	 tcp_drop(struct tcpcb *, int);
 int	 tcp_dooptions(struct tcpcb *, u_char *, int, struct tcphdr *,
-		struct mbuf *, int, struct tcp_opt_info *, u_int, uint32_t);
+		struct mbuf *, int, struct tcp_opt_info *, u_int, uint64_t);
 void	 tcp_init(void);
 int	 tcp_input(struct mbuf **, int *, int, int);
 int	 tcp_mss(struct tcpcb *, int);
@@ -735,7 +735,7 @@ void	 tcp_pulloutofband(struct socket *, u_int, struct mbuf *, int);
 int	 tcp_reass(struct tcpcb *, struct tcphdr *, struct mbuf *, int *);
 void	 tcp_rscale(struct tcpcb *, u_long);
 void	 tcp_respond(struct tcpcb *, caddr_t, struct tcphdr *, tcp_seq,
-		tcp_seq, int, u_int, uint32_t);
+		tcp_seq, int, u_int, uint64_t);
 void	 tcp_setpersist(struct tcpcb *);
 void	 tcp_update_sndspace(struct tcpcb *);
 void	 tcp_update_rcvspace(struct tcpcb *);
@@ -767,7 +767,7 @@ int	 tcp_sense(struct socket *, struct stat *);
 int	 tcp_rcvoob(struct socket *, struct mbuf *, int);
 int	 tcp_sendoob(struct socket *, struct mbuf *, struct mbuf *,
 	     struct mbuf *);
-void	 tcp_xmit_timer(struct tcpcb *, int);
+void	 tcp_xmit_timer(struct tcpcb *, int32_t);
 void	 tcpdropoldhalfopen(struct tcpcb *, u_int16_t);
 void	 tcp_sack_option(struct tcpcb *,struct tcphdr *,u_char *,int);
 void	 tcp_update_sack_list(struct tcpcb *tp, tcp_seq, tcp_seq);

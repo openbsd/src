@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.388 2023/05/30 19:32:57 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.389 2023/07/06 09:15:23 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -130,8 +130,8 @@ struct timeval tcp_ackdrop_ppslim_last;
 #define TCP_PAWS_IDLE	TCP_TIME(24 * 24 * 60 * 60)
 
 /* for modulo comparisons of timestamps */
-#define TSTMP_LT(a,b)	((int)((a)-(b)) < 0)
-#define TSTMP_GEQ(a,b)	((int)((a)-(b)) >= 0)
+#define TSTMP_LT(a,b)	((int32_t)((a)-(b)) < 0)
+#define TSTMP_GEQ(a,b)	((int32_t)((a)-(b)) >= 0)
 
 /* for TCP SACK comparisons */
 #define	SEQ_MIN(a,b)	(SEQ_LT(a,b) ? (a) : (b))
@@ -190,7 +190,7 @@ void	 tcp_newreno_partialack(struct tcpcb *, struct tcphdr *);
 
 void	 syn_cache_put(struct syn_cache *);
 void	 syn_cache_rm(struct syn_cache *);
-int	 syn_cache_respond(struct syn_cache *, struct mbuf *, uint32_t);
+int	 syn_cache_respond(struct syn_cache *, struct mbuf *, uint64_t);
 void	 syn_cache_timer(void *);
 void	 syn_cache_reaper(void *);
 void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
@@ -198,10 +198,10 @@ void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, u_int);
 int	 syn_cache_add(struct sockaddr *, struct sockaddr *, struct tcphdr *,
 		unsigned int, struct socket *, struct mbuf *, u_char *, int,
-		struct tcp_opt_info *, tcp_seq *, uint32_t);
+		struct tcp_opt_info *, tcp_seq *, uint64_t);
 struct socket *syn_cache_get(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, unsigned int, unsigned int, struct socket *,
-		struct mbuf *, uint32_t);
+		struct mbuf *, uint64_t);
 struct syn_cache *syn_cache_lookup(struct sockaddr *, struct sockaddr *,
 		struct syn_cache_head **, u_int);
 
@@ -375,7 +375,7 @@ tcp_input(struct mbuf **mp, int *offp, int proto, int af)
 	short ostate;
 	caddr_t saveti;
 	tcp_seq iss, *reuse = NULL;
-	uint32_t now;
+	uint64_t now;
 	u_long tiwin;
 	struct tcp_opt_info opti;
 	struct tcphdr *th;
@@ -885,7 +885,7 @@ findpcb:
 			goto drop;
 
 	if (opti.ts_present && opti.ts_ecr) {
-		int rtt_test;
+		int32_t rtt_test;
 
 		/* subtract out the tcp timestamp modulator */
 		opti.ts_ecr -= tp->ts_modulate;
@@ -1272,7 +1272,7 @@ trimthenstep6:
 	    TSTMP_LT(opti.ts_val, tp->ts_recent)) {
 
 		/* Check to see if ts_recent is over 24 days old.  */
-		if ((int)(now - tp->ts_recent_age) > TCP_PAWS_IDLE) {
+		if (now - tp->ts_recent_age > TCP_PAWS_IDLE) {
 			/*
 			 * Invalidate ts_recent.  If this segment updates
 			 * ts_recent, the age will be reset later and ts_recent
@@ -2120,7 +2120,7 @@ drop:
 int
 tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
     struct mbuf *m, int iphlen, struct tcp_opt_info *oi,
-    u_int rtableid, uint32_t now)
+    u_int rtableid, uint64_t now)
 {
 	u_int16_t mss = 0;
 	int opt, optlen;
@@ -2686,7 +2686,7 @@ tcp_pulloutofband(struct socket *so, u_int urgent, struct mbuf *m, int off)
  * and update averages and current timeout.
  */
 void
-tcp_xmit_timer(struct tcpcb *tp, int rtt)
+tcp_xmit_timer(struct tcpcb *tp, int32_t rtt)
 {
 	int delta, rttmin;
 
@@ -3335,7 +3335,7 @@ void
 syn_cache_timer(void *arg)
 {
 	struct syn_cache *sc = arg;
-	uint32_t now;
+	uint64_t now;
 
 	NET_LOCK();
 	if (sc->sc_flags & SCF_DEAD)
@@ -3469,7 +3469,7 @@ syn_cache_lookup(struct sockaddr *src, struct sockaddr *dst,
  */
 struct socket *
 syn_cache_get(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
-    u_int hlen, u_int tlen, struct socket *so, struct mbuf *m, uint32_t now)
+    u_int hlen, u_int tlen, struct socket *so, struct mbuf *m, uint64_t now)
 {
 	struct syn_cache *sc;
 	struct syn_cache_head *scp;
@@ -3744,7 +3744,7 @@ syn_cache_unreach(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 int
 syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
     u_int iphlen, struct socket *so, struct mbuf *m, u_char *optp, int optlen,
-    struct tcp_opt_info *oi, tcp_seq *issp, uint32_t now)
+    struct tcp_opt_info *oi, tcp_seq *issp, uint64_t now)
 {
 	struct tcpcb tb, *tp;
 	long win;
@@ -3911,7 +3911,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 }
 
 int
-syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint32_t now)
+syn_cache_respond(struct syn_cache *sc, struct mbuf *m, uint64_t now)
 {
 	u_int8_t *optp;
 	int optlen, error;

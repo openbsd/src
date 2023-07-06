@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.220 2023/07/02 19:59:15 bluhm Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.221 2023/07/06 09:15:24 bluhm Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -211,7 +211,7 @@ tcp_fill_info(struct tcpcb *tp, struct socket *so, struct mbuf *m)
 	struct proc *p = curproc;
 	struct tcp_info *ti;
 	u_int t = 1000;		/* msec => usec */
-	uint32_t now;
+	uint64_t now;
 
 	if (sizeof(*ti) > MLEN) {
 		MCLGETL(m, M_WAITOK, sizeof(*ti));
