@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.50 2023/06/18 16:25:21 kettenis Exp $ */
+/* $OpenBSD: agintc.c,v 1.51 2023/07/06 09:40:36 patrick Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -339,7 +339,7 @@ agintc_attach(struct device *parent, struct device *self, void *aux)
 		}
 		sc->sc_pend = agintc_dmamem_alloc(sc->sc_dmat,
 		    GICR_PEND_SIZE, GICR_PEND_SIZE);
-		if (sc->sc_prop == NULL) {
+		if (sc->sc_pend == NULL) {
 			printf(": can't alloc LPI pending table\n");
 			goto unmap;
 		}
