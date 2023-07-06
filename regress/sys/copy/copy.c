@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.c,v 1.6 2021/12/13 16:56:49 deraadt Exp $	*/
+/*	$OpenBSD: copy.c,v 1.7 2023/07/06 07:47:04 deraadt Exp $	*/
 
 /* Written by Ted Unangst 2004 Public Domain */
 
@@ -63,9 +63,9 @@ main(int argc, char **argv)
  	/* printf("goodbuf %p badbuf %p\n", goodbuf, badbuf); */
 
  	/* copyin */
- 	if (!syscall(202, 0, 6, &kinfo, &kinfosize, 0, 0))
+ 	if (!sysctl(0, 6, &kinfo, &kinfosize, 0, 0))
  		fail("copyin did not fail on 0 buf\n");
- 	if (!syscall(202, badbuf, 6, &kinfo, &kinfosize, 0, 0))
+ 	if (!sysctl(badbuf, 6, &kinfo, &kinfosize, 0, 0))
  		fail("copyin did not fail on bad buf\n");
 
  	/* copyout */
