@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.26 2023/07/03 09:37:30 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.27 2023/07/06 15:18:02 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -207,11 +207,8 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 	BIGNUM *gen = NULL;
 	const EC_POINT *generator;
 	const char *conversion_form;
-	char *conversion = NULL;
 	const unsigned char *seed;
 	size_t seed_len;
-	unsigned char *buffer = NULL;
-	size_t buf_len, i;
 	point_conversion_form_t form;
 	int nid;
 	int ret = 0;
@@ -257,23 +254,6 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 		goto err;
 	}
 
-	buf_len = (size_t) BN_num_bytes(p);
-	if (buf_len < (i = (size_t) BN_num_bytes(a)))
-		buf_len = i;
-	if (buf_len < (i = (size_t) BN_num_bytes(b)))
-		buf_len = i;
-	if (buf_len < (i = (size_t) BN_num_bytes(gen)))
-		buf_len = i;
-	if (buf_len < (i = (size_t) BN_num_bytes(order)))
-		buf_len = i;
-	if (buf_len < (i = (size_t) BN_num_bytes(cofactor)))
-		buf_len = i;
-
-	buf_len += 10;
-	if ((buffer = calloc(1, buf_len)) == NULL) {
-		ECerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
 	if (!BIO_indent(bp, off, 128))
 		goto err;
 
@@ -281,11 +261,11 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 	if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(nid)) <= 0)
 		goto err;
 
-	if (!ASN1_bn_print(bp, "Prime:", p, buffer, off))
+	if (!bn_printf(bp, p, off, "Prime:"))
 		goto err;
-	if (!ASN1_bn_print(bp, "A:   ", a, buffer, off))
+	if (!bn_printf(bp, a, off, "A:   "))
 		goto err;
-	if (!ASN1_bn_print(bp, "B:   ", b, buffer, off))
+	if (!bn_printf(bp, b, off, "B:   "))
 		goto err;
 
 	if (form == POINT_CONVERSION_COMPRESSED)
@@ -296,16 +276,12 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 		conversion_form = "hybrid";
 	else
 		conversion_form = "unknown";
-	if (asprintf(&conversion, "Generator (%s):", conversion_form) == -1) {
-		conversion = NULL;
-		goto err;
-	}
-	if (!ASN1_bn_print(bp, conversion, gen, buffer, off))
+	if (!bn_printf(bp, gen, off, "Generator (%s):", conversion_form))
 		goto err;
 
-	if (!ASN1_bn_print(bp, "Order: ", order, buffer, off))
+	if (!bn_printf(bp, order, off, "Order: "))
 		goto err;
-	if (!ASN1_bn_print(bp, "Cofactor: ", cofactor, buffer, off))
+	if (!bn_printf(bp, cofactor, off, "Cofactor: "))
 		goto err;
 	if ((seed = EC_GROUP_get0_seed(group)) != NULL) {
 		seed_len = EC_GROUP_get_seed_len(group);
@@ -314,11 +290,9 @@ ecpk_print_explicit_parameters(BIO *bp, const EC_GROUP *group, int off)
 	}
 
 	ret = 1;
-err:
+ err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	free(buffer);
-	free(conversion);
 
 	return ret;
 }
