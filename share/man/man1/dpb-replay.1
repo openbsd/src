@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dpb-replay.1,v 1.3 2018/07/26 06:49:08 jmc Exp $
+.\"	$OpenBSD: dpb-replay.1,v 1.4 2023/07/06 10:57:03 espie Exp $
 .\"
 .\" Copyright (c) 2013 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 26 2018 $
+.Dd $Mdocdate: July 6 2023 $
 .Dt DPB-REPLAY 1
 .Os
 .Sh NAME
@@ -22,9 +22,10 @@
 .Nd replays dpb terminal output
 .Sh SYNOPSIS
 .Nm
-.Op Fl c
+.Op Fl cC
 .Op Fl e Ar regexp
 .Op Fl s Ar speedup
+.Op Fl t Ar timestamp
 .Ar file
 .Sh DESCRIPTION
 .Nm
@@ -38,7 +39,7 @@ later, usually at a much higher speed than the first run,
 for demonstration and optimization purposes.
 The options are as follows
 .Bl -tag -width keywordaaaa
-.It Fl c
+.It Fl c|C
 Color display.
 .It Fl e Ar regexp
 Start display only when information matches the
@@ -49,6 +50,12 @@ regular expression
 Sets the time acceleration to
 .Ar speedup
 (defaults to 10).
+.It Fl t Ar timestamp
+Starts display when the time matches timestamp, as either
+seconds from the epoch, or a reasonable subset of ISO8601,
+like
+.Sq 2023-07-05T12:00 .
+
 .El
 .Sh SEE ALSO
 .Xr dpb 1
