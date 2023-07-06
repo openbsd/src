@@ -1,4 +1,4 @@
-.\"	$OpenBSD: clean-old-distfiles.1,v 1.4 2020/04/24 12:56:37 schwarze Exp $
+.\"	$OpenBSD: clean-old-distfiles.1,v 1.5 2023/07/06 10:43:37 espie Exp $
 .\"
 .\" Copyright (c) 2012 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 24 2020 $
+.Dd $Mdocdate: July 6 2023 $
 .Dt CLEAN-OLD-DISTFILES 1
 .Os
 .Sh NAME
@@ -22,7 +22,7 @@
 .Nd remove obsolete ports distfiles
 .Sh SYNOPSIS
 .Nm clean-old-distfiles
-.Op Fl nv
+.Op Fl mnvx
 .Op Fl e Ar except
 .Op Fl h Ar history
 .Op Ar timestamp
@@ -51,6 +51,7 @@ from the history log.
 By default,
 .Nm
 deletes all files listed in the history log.
+.Pp
 If a
 .Ar timestamp
 is given, it is interpreted as a number of seconds since the Epoch,
@@ -59,6 +60,10 @@ similar to the
 .Fl r
 argument, and only those files are deleted that were recorded as
 obsolete at that time or earlier.
+It can also be set to a date in ISO8601 format, like
+.Sq 2023-07-01
+or
+.Sq 2023-07-02T12:00:00Z .
 .Pp
 For normal files,
 .Nm
@@ -83,12 +88,20 @@ instead of the default
 Turns on
 .Fl nv ,
 as this is a testing option.
+.It Fl m
+Causes
+.Nm
+to display the progress meter even if not on a terminal.
 .It Fl n
 Don't really remove files.
 .It Fl v
 Display what will be removed, as
 .Ql rm file
 lines.
+.It Fl x
+Causes
+.Nm
+to not display the progress meter.
 .El
 .Sh FILES
 .Bl -tag -width /usr/ports
