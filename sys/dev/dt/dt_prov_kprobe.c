@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_kprobe.c,v 1.6 2023/07/04 12:27:44 jasper Exp $	*/
+/*	$OpenBSD: dt_prov_kprobe.c,v 1.7 2023/07/06 10:53:11 jasper Exp $	*/
 
 /*
  * Copyright (c) 2020 Tom Rollet <tom.rollet@epita.fr>
@@ -289,7 +289,7 @@ dt_prov_kprobe_dealloc(struct dt_probe *dtp, struct dt_softc *sc,
 		size  = POP_RBP_SIZE;
 #endif
 	} else
-		KASSERT(0 && "Trying to dealloc not yet implemented probe type");
+		panic("Trying to dealloc not yet implemented probe type");
 
 	dtp->dtp_ref--;
 
