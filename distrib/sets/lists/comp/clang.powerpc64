@@ -68,6 +68,9 @@
 ./usr/include/c++/v1/__algorithm/pop_heap.h
 ./usr/include/c++/v1/__algorithm/prev_permutation.h
 ./usr/include/c++/v1/__algorithm/push_heap.h
+./usr/include/c++/v1/__algorithm/ranges_find.h
+./usr/include/c++/v1/__algorithm/ranges_find_if.h
+./usr/include/c++/v1/__algorithm/ranges_find_if_not.h
 ./usr/include/c++/v1/__algorithm/remove.h
 ./usr/include/c++/v1/__algorithm/remove_copy.h
 ./usr/include/c++/v1/__algorithm/remove_copy_if.h
