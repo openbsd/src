@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.17 2023/07/05 18:48:49 jmatthew Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.18 2023/07/06 08:32:37 jmatthew Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -266,6 +266,8 @@ struct dwge_softc {
 	bus_space_handle_t	sc_ioh;
 	bus_dma_tag_t		sc_dmat;
 	void			*sc_ih;
+
+	struct if_device	sc_ifd;
 
 	struct arpcom		sc_ac;
 #define sc_lladdr	sc_ac.ac_enaddr
@@ -634,6 +636,10 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	    dwge_intr, sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
+
+	sc->sc_ifd.if_node = faa->fa_node;
+	sc->sc_ifd.if_ifp = ifp;
+	if_register(&sc->sc_ifd);
 }
 
 void
