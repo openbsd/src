@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_print.c,v 1.1 2023/07/06 15:08:54 tb Exp $ */
+/*	$OpenBSD: bn_print.c,v 1.2 2023/07/06 15:11:21 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -181,12 +181,8 @@ main(void)
 {
 	const struct print_test *test;
 	size_t testcase = 0;
-	BIO *bio;
 	BIGNUM *bn;
 	int failed = 0;
-
-	if ((bio = BIO_new_fp(stdout, BIO_NOCLOSE)) == NULL)
-		errx(1, "BIO_new_fp");
 
 	/* zero */
 	if ((bn = BN_new()) == NULL)
@@ -275,6 +271,8 @@ main(void)
 		warnx("Not all tests run");
 		failed |= 1;
 	}
+
+	BN_free(bn);
 
 	return failed;
 }
