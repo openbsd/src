@@ -1318,6 +1318,9 @@ struct elf_obj_tdata
   /* TRUE if output program should be marked to request W^X permission */
   bfd_boolean wxneeded;
 
+  /* TRUE if output program should be marked to stop branch target CFI enforcement */
+  bfd_boolean nobtcfi;
+
   /* Symbol version definitions in external objects.  */
   Elf_Internal_Verdef *verdef;
 

@@ -1102,6 +1102,7 @@ get_segment_type (unsigned int p_type)
     case PT_GNU_RELRO: pt = "RELRO"; break;
     case PT_OPENBSD_RANDOMIZE: pt = "OPENBSD_RANDOMIZE"; break;
     case PT_OPENBSD_WXNEEDED: pt = "OPENBSD_WXNEEDED"; break;
+    case PT_OPENBSD_NOBTCFI: pt = "PT_OPENBSD_NOBTCFI"; break;
     case PT_OPENBSD_BOOTDATA: pt = "OPENBSD_BOOTDATA"; break;
     case PT_OPENBSD_MUTABLE: pt = "OPENBSD_MUTABLE"; break;
     default: pt = NULL; break;
@@ -2646,6 +2647,10 @@ bfd_section_from_phdr (bfd *abfd, Elf_Internal_Phdr *hdr, int index)
       return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
 					      "openbsd_wxneeded");
 
+    case PT_OPENBSD_NOBTCFI:
+      return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
+					      "openbsd_nobtcfi");
+
     case PT_OPENBSD_MUTABLE:
       return _bfd_elf_make_section_from_phdr (abfd, hdr, index,
 					      "openbsd_mutable");
@@ -3988,6 +3993,21 @@ map_sections_to_segments (bfd *abfd)
       pm = &m->next;
     }
 
+  if (elf_tdata (abfd)->nobtcfi)
+    {
+      amt = sizeof (struct elf_segment_map);
+      m = bfd_zalloc (abfd, amt);
+      if (m == NULL)
+	goto error_return;
+      m->next = NULL;
+      m->p_type = PT_OPENBSD_NOBTCFI;
+      m->p_flags = 1;
+      m->p_flags_valid = 1;
+
+      *pm = m;
+      pm = &m->next;
+    }
+
   /* If there is a .openbsd.randomdata section, throw in a PT_OPENBSD_RANDOMIZE
      segment.  */
   randomdata = bfd_get_section_by_name (abfd, ".openbsd.randomdata");
@@ -4797,6 +4817,12 @@ get_program_header_size (bfd *abfd)
   if (elf_tdata (abfd)->wxneeded)
     {
       /* We need a PT_OPENBSD_WXNEEDED segment.  */
+      ++segs;
+    }
+
+  if (elf_tdata (abfd)->nobtcfi)
+    {
+      /* We need a PT_OPENBSD_NOBTCFI segment.  */
       ++segs;
     }
 

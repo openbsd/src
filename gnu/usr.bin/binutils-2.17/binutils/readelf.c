@@ -2711,6 +2711,8 @@ get_segment_type (unsigned long p_type)
 			return "OPENBSD_BOOTDATA";
     case PT_OPENBSD_MUTABLE:
 			return "OPENBSD_MUTABLE";
+    case PT_OPENBSD_NOBTCFI:
+			return "OPENBSD_NOBTCFI";
 
     default:
       if ((p_type >= PT_LOPROC) && (p_type <= PT_HIPROC))

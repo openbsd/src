@@ -1019,6 +1019,11 @@ Marks the executable with a @code{PT_OPENBSD_WXNEEDED} segment header,
 indicating it is expected to perform W^X violating operations later
 (such as calling mprotect(2) or mmap(2) with both PROT_WRITE and PROT_EXEC).
 
+@item nobtcfi
+Marks the executable with a @code{PT_OPENBSD_NOBTCFI} segment header,
+indicating it is expected the binary is missing BTI/IBT instructions and
+thus the system should not enforce them as required.
+
 @end table
 
 Other keywords are ignored for Solaris compatibility.  

@@ -2206,6 +2206,8 @@ cat >>e${EMULATION_NAME}.c <<EOF
 	link_info.relro = FALSE;
       else if (strcmp (optarg, "wxneeded") == 0)
 	link_info.wxneeded = TRUE;
+      else if (strcmp (optarg, "nobtcfi") == 0)
+	link_info.nobtcfi = TRUE;
       else if (strcmp (optarg, "notext") == 0)
 	link_info.allow_textrel = TRUE;
       else if (strcmp (optarg, "text") == 0)

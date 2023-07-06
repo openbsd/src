@@ -312,6 +312,7 @@
 
 #define PT_OPENBSD_RANDOMIZE	0x65a3dbe6 /* Fill with random data. */
 #define PT_OPENBSD_WXNEEDED	0x65a3dbe7 /* Program does W^X violations */
+#define PT_OPENBSD_NOBTCFI	0x65a3dbe8 /* no branch target CFI */
 #define PT_OPENBSD_BOOTDATA	0x65a41be6 /* Section for boot arguments */
 #define PT_OPENBSD_MUTABLE	0x65a3dbe5 /* Like bss, but not immutable */
 
