@@ -106,9 +106,10 @@
 /* #define OPENSSL_NO_STATIC_ENGINE */
 /* #define OPENSSL_NO_STDIO */
 /* #define OPENSSL_NO_TLS */
-/* #define OPENSSL_NO_TLS1 */
-/* #define OPENSSL_NO_TLS1_1 */
-/* #define OPENSSL_NO_TLS1_1_METHOD */
+#define OPENSSL_NO_TLS1
+#define OPENSSL_NO_TLS1_1
+#define OPENSSL_NO_TLS1_METHOD
+#define OPENSSL_NO_TLS1_1_METHOD
 /* #define OPENSSL_NO_TLS1_2 */
 /* #define OPENSSL_NO_TLS1_2_METHOD */
 #ifndef LIBRESSL_HAS_TLS1_3
