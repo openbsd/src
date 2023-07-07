@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_print.c,v 1.40 2023/07/06 14:37:39 tb Exp $ */
+/*	$OpenBSD: bn_print.c,v 1.41 2023/07/07 06:41:59 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -101,6 +101,12 @@ bn_print_bignum(BIO *bio, const BIGNUM *bn, int indent)
 		if (octets++ % 15 == 0) {
 			if (BIO_printf(bio, "\n%*s", indent, "") <= 0)
 				goto err;
+		}
+		/* First nibble has the high bit set. Insert leading 0 octet. */
+		if (octets == 1 && hi >= '8') {
+			if (BIO_printf(bio, "00:") <= 0)
+				goto err;
+			octets++;
 		}
 		if (CBS_len(&cbs) == 0)
 			sep = "";
