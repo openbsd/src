@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi.c,v 1.423 2023/07/06 06:58:07 deraadt Exp $ */
+/* $OpenBSD: acpi.c,v 1.424 2023/07/07 07:37:59 claudio Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -3268,6 +3268,17 @@ acpi_foundsbs(struct aml_node *node, void *arg)
 	node->parent->attached = 1;
 
 	return (0);
+}
+
+int
+acpi_batcount(struct acpi_softc *sc)
+{
+	struct acpi_bat *bat;
+	int count = 0;
+
+	SLIST_FOREACH(bat, &sc->sc_bat, aba_link)
+		count++;
+	return count;
 }
 
 int

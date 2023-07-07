@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpivar.h,v 1.123 2023/06/29 20:58:08 dv Exp $	*/
+/*	$OpenBSD: acpivar.h,v 1.124 2023/07/07 07:37:59 claudio Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  *
@@ -385,6 +385,7 @@ void	acpi_indicator(struct acpi_softc *, int);
 void	acpi_disable_allgpes(struct acpi_softc *);
 void	acpi_enable_wakegpes(struct acpi_softc *, int);
 
+int	acpi_batcount(struct acpi_softc *);
 struct apm_power_info;
 int	acpi_apminfo(struct apm_power_info *);
 
