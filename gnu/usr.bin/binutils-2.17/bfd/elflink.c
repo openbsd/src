@@ -5111,6 +5111,7 @@ bfd_elf_size_dynamic_sections (bfd *output_bfd,
 
   elf_tdata (output_bfd)->relro = info->relro;
   elf_tdata (output_bfd)->wxneeded = info->wxneeded;
+  elf_tdata (output_bfd)->nobtcfi = info->nobtcfi;
   elf_tdata (output_bfd)->executable = info->executable;
   if (info->execstack)
     elf_tdata (output_bfd)->stack_flags = PF_R | PF_W | PF_X;
