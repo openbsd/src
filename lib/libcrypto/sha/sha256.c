@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.25 2023/07/07 15:03:55 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.26 2023/07/07 15:06:50 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -76,10 +76,9 @@ CTASSERT(sizeof(SHA_LONG) == sizeof(uint32_t));
 
 #define	HASH_BLOCK_DATA_ORDER	sha256_block_data_order
 
-#ifndef SHA256_ASM
-static
+#ifdef SHA256_ASM
+void sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num);
 #endif
-void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
 #define HASH_NO_UPDATE
 #define HASH_NO_TRANSFORM
@@ -132,15 +131,15 @@ static const SHA_LONG K256[64] = {
 	ROUND_00_15(T1, i, a, b, c, d, e, f, g, h);	} while (0)
 
 static void
-sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
+sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num)
 {
+	const uint8_t *in = _in;
+	const SHA_LONG *in32;
 	unsigned MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1;
 	SHA_LONG X[16];
 	int i;
-	const unsigned char *data = in;
 
 	while (num--) {
-
 		a = ctx->h[0];
 		b = ctx->h[1];
 		c = ctx->h[2];
@@ -150,64 +149,45 @@ sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
 		g = ctx->h[6];
 		h = ctx->h[7];
 
-		if (BYTE_ORDER != LITTLE_ENDIAN &&
-		    sizeof(SHA_LONG) == 4 && ((size_t)in % 4) == 0) {
-			const SHA_LONG *W = (const SHA_LONG *)data;
-
-			X[0] = W[0];
-			X[1] = W[1];
-			X[2] = W[2];
-			X[3] = W[3];
-			X[4] = W[4];
-			X[5] = W[5];
-			X[6] = W[6];
-			X[7] = W[7];
-			X[8] = W[8];
-			X[9] = W[9];
-			X[10] = W[10];
-			X[11] = W[11];
-			X[12] = W[12];
-			X[13] = W[13];
-			X[14] = W[14];
-			X[15] = W[15];
-
-			data += SHA256_CBLOCK;
+		if ((size_t)in % 4 == 0) {
+			/* Input is 32 bit aligned. */
+			in32 = (const SHA_LONG *)in;
+			X[0] = be32toh(in32[0]);
+			X[1] = be32toh(in32[1]);
+			X[2] = be32toh(in32[2]);
+			X[3] = be32toh(in32[3]);
+			X[4] = be32toh(in32[4]);
+			X[5] = be32toh(in32[5]);
+			X[6] = be32toh(in32[6]);
+			X[7] = be32toh(in32[7]);
+			X[8] = be32toh(in32[8]);
+			X[9] = be32toh(in32[9]);
+			X[10] = be32toh(in32[10]);
+			X[11] = be32toh(in32[11]);
+			X[12] = be32toh(in32[12]);
+			X[13] = be32toh(in32[13]);
+			X[14] = be32toh(in32[14]);
+			X[15] = be32toh(in32[15]);
 		} else {
-			SHA_LONG l;
-
-			HOST_c2l(data, l);
-			X[0] = l;
-			HOST_c2l(data, l);
-			X[1] = l;
-			HOST_c2l(data, l);
-			X[2] = l;
-			HOST_c2l(data, l);
-			X[3] = l;
-			HOST_c2l(data, l);
-			X[4] = l;
-			HOST_c2l(data, l);
-			X[5] = l;
-			HOST_c2l(data, l);
-			X[6] = l;
-			HOST_c2l(data, l);
-			X[7] = l;
-			HOST_c2l(data, l);
-			X[8] = l;
-			HOST_c2l(data, l);
-			X[9] = l;
-			HOST_c2l(data, l);
-			X[10] = l;
-			HOST_c2l(data, l);
-			X[11] = l;
-			HOST_c2l(data, l);
-			X[12] = l;
-			HOST_c2l(data, l);
-			X[13] = l;
-			HOST_c2l(data, l);
-			X[14] = l;
-			HOST_c2l(data, l);
-			X[15] = l;
+			/* Input is not 32 bit aligned. */
+			X[0] = crypto_load_be32toh(&in[0 * 4]);
+			X[1] = crypto_load_be32toh(&in[1 * 4]);
+			X[2] = crypto_load_be32toh(&in[2 * 4]);
+			X[3] = crypto_load_be32toh(&in[3 * 4]);
+			X[4] = crypto_load_be32toh(&in[4 * 4]);
+			X[5] = crypto_load_be32toh(&in[5 * 4]);
+			X[6] = crypto_load_be32toh(&in[6 * 4]);
+			X[7] = crypto_load_be32toh(&in[7 * 4]);
+			X[8] = crypto_load_be32toh(&in[8 * 4]);
+			X[9] = crypto_load_be32toh(&in[9 * 4]);
+			X[10] = crypto_load_be32toh(&in[10 * 4]);
+			X[11] = crypto_load_be32toh(&in[11 * 4]);
+			X[12] = crypto_load_be32toh(&in[12 * 4]);
+			X[13] = crypto_load_be32toh(&in[13 * 4]);
+			X[14] = crypto_load_be32toh(&in[14 * 4]);
+			X[15] = crypto_load_be32toh(&in[15 * 4]);
 		}
+		in += SHA256_CBLOCK;
 
 		ROUND_00_15(X[0], 0, a, b, c, d, e, f, g, h);
 		ROUND_00_15(X[1], 1, h, a, b, c, d, e, f, g);
