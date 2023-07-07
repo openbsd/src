@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.60 2023/05/05 12:21:44 tb Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.61 2023/07/07 10:11:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,44 +121,8 @@
 #include "bn_local.h"
 #include "rsa_local.h"
 
-static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
-    unsigned char *to, RSA *rsa, int padding);
-static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
-    unsigned char *to, RSA *rsa, int padding);
-static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
-    unsigned char *to, RSA *rsa, int padding);
-static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
-    unsigned char *to, RSA *rsa, int padding);
-static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa, BN_CTX *ctx);
-static int RSA_eay_init(RSA *rsa);
-static int RSA_eay_finish(RSA *rsa);
-
-static RSA_METHOD rsa_pkcs1_eay_meth = {
-	.name = "Eric Young's PKCS#1 RSA",
-	.rsa_pub_enc = RSA_eay_public_encrypt,
-	.rsa_pub_dec = RSA_eay_public_decrypt, /* signature verification */
-	.rsa_priv_enc = RSA_eay_private_encrypt, /* signing */
-	.rsa_priv_dec = RSA_eay_private_decrypt,
-	.rsa_mod_exp = RSA_eay_mod_exp,
-	.bn_mod_exp = BN_mod_exp_mont_ct, /* XXX probably we should not use Montgomery if  e == 3 */
-	.init = RSA_eay_init,
-	.finish = RSA_eay_finish,
-};
-
-const RSA_METHOD *
-RSA_PKCS1_OpenSSL(void)
-{
-	return &rsa_pkcs1_eay_meth;
-}
-
-const RSA_METHOD *
-RSA_PKCS1_SSLeay(void)
-{
-	return &rsa_pkcs1_eay_meth;
-}
-
 static int
-RSA_eay_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
+rsa_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
     RSA *rsa, int padding)
 {
 	BIGNUM *f, *ret;
@@ -348,7 +312,7 @@ rsa_blinding_invert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind, BN_CTX *ctx)
 
 /* signing */
 static int
-RSA_eay_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
+rsa_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
     RSA *rsa, int padding)
 {
 	BIGNUM *f, *ret, *res;
@@ -476,7 +440,7 @@ err:
 }
 
 static int
-RSA_eay_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
+rsa_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
     RSA *rsa, int padding)
 {
 	BIGNUM *f, *ret;
@@ -601,7 +565,7 @@ err:
 
 /* signature verification */
 static int
-RSA_eay_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
+rsa_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
     RSA *rsa, int padding)
 {
 	BIGNUM *f, *ret;
@@ -701,7 +665,7 @@ err:
 }
 
 static int
-RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
+rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
 	BIGNUM *r1, *m1, *vrfy;
 	BIGNUM dmp1, dmq1, c, pr1;
@@ -852,14 +816,14 @@ err:
 }
 
 static int
-RSA_eay_init(RSA *rsa)
+rsa_init(RSA *rsa)
 {
 	rsa->flags |= RSA_FLAG_CACHE_PUBLIC | RSA_FLAG_CACHE_PRIVATE;
 	return 1;
 }
 
 static int
-RSA_eay_finish(RSA *rsa)
+rsa_finish(RSA *rsa)
 {
 	BN_MONT_CTX_free(rsa->_method_mod_n);
 	BN_MONT_CTX_free(rsa->_method_mod_p);
@@ -867,3 +831,28 @@ RSA_eay_finish(RSA *rsa)
 
 	return 1;
 }
+
+static const RSA_METHOD rsa_pkcs1_meth = {
+	.name = "OpenSSL PKCS#1 RSA",
+	.rsa_pub_enc = rsa_public_encrypt,
+	.rsa_pub_dec = rsa_public_decrypt, /* signature verification */
+	.rsa_priv_enc = rsa_private_encrypt, /* signing */
+	.rsa_priv_dec = rsa_private_decrypt,
+	.rsa_mod_exp = rsa_mod_exp,
+	.bn_mod_exp = BN_mod_exp_mont_ct, /* XXX probably we should not use Montgomery if  e == 3 */
+	.init = rsa_init,
+	.finish = rsa_finish,
+};
+
+const RSA_METHOD *
+RSA_PKCS1_OpenSSL(void)
+{
+	return &rsa_pkcs1_meth;
+}
+
+const RSA_METHOD *
+RSA_PKCS1_SSLeay(void)
+{
+	return RSA_PKCS1_OpenSSL();
+}
+
