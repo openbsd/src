@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_print.c,v 1.41 2023/07/07 06:41:59 tb Exp $ */
+/*	$OpenBSD: bn_print.c,v 1.42 2023/07/07 07:04:24 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -41,7 +41,7 @@ bn_print_zero(BIO *bio, const BIGNUM *bn)
 static int
 bn_print_word(BIO *bio, const BIGNUM *bn)
 {
-	BN_ULONG word;
+	unsigned long long word;
 	const char *neg = "";
 
 	if (BN_is_zero(bn) || BN_num_bytes(bn) > BN_BYTES)
@@ -51,7 +51,7 @@ bn_print_word(BIO *bio, const BIGNUM *bn)
 		neg = "-";
 
 	word = BN_get_word(bn);
-	if (BIO_printf(bio, " %s%lu (%s0x%lx)\n", neg, word, neg, word) <= 0)
+	if (BIO_printf(bio, " %s%llu (%s0x%llx)\n", neg, word, neg, word) <= 0)
 		return 0;
 
 	return 1;
