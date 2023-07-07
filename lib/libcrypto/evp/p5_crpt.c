@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt.c,v 1.22 2023/07/07 13:54:46 beck Exp $ */
+/* $OpenBSD: p5_crpt.c,v 1.23 2023/07/07 19:37:54 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -73,7 +73,6 @@ void
 PKCS5_PBE_add(void)
 {
 }
-LCRYPTO_ALIAS(PKCS5_PBE_add);
 
 int
 PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
@@ -162,4 +161,3 @@ err:
 	PBEPARAM_free(pbe);
 	return rv;
 }
-LCRYPTO_ALIAS(PKCS5_PBE_keyivgen);

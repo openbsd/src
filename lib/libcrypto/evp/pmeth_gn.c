@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_gn.c,v 1.12 2023/07/07 13:54:46 beck Exp $ */
+/* $OpenBSD: pmeth_gn.c,v 1.13 2023/07/07 19:37:54 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -85,7 +85,6 @@ EVP_PKEY_paramgen_init(EVP_PKEY_CTX *ctx)
 		ctx->operation = EVP_PKEY_OP_UNDEFINED;
 	return ret;
 }
-LCRYPTO_ALIAS(EVP_PKEY_paramgen_init);
 
 int
 EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
@@ -115,7 +114,6 @@ EVP_PKEY_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 	}
 	return ret;
 }
-LCRYPTO_ALIAS(EVP_PKEY_paramgen);
 
 int
 EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx)
@@ -134,7 +132,6 @@ EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx)
 		ctx->operation = EVP_PKEY_OP_UNDEFINED;
 	return ret;
 }
-LCRYPTO_ALIAS(EVP_PKEY_keygen_init);
 
 int
 EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
@@ -163,21 +160,18 @@ EVP_PKEY_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 	}
 	return ret;
 }
-LCRYPTO_ALIAS(EVP_PKEY_keygen);
 
 void
 EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb)
 {
 	ctx->pkey_gencb = cb;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_set_cb);
 
 EVP_PKEY_gen_cb *
 EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx)
 {
 	return ctx->pkey_gencb;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_get_cb);
 
 /* "translation callback" to call EVP_PKEY_CTX callbacks using BN_GENCB
  * style callbacks.
@@ -207,7 +201,6 @@ EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx)
 		return 0;
 	return ctx->keygen_info[idx];
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_get_keygen_info);
 
 EVP_PKEY *
 EVP_PKEY_new_mac_key(int type, ENGINE *e, const unsigned char *key, int keylen)
@@ -230,7 +223,6 @@ merr:
 	EVP_PKEY_CTX_free(mac_ctx);
 	return mac_key;
 }
-LCRYPTO_ALIAS(EVP_PKEY_new_mac_key);
 
 int
 EVP_PKEY_check(EVP_PKEY_CTX *ctx)
@@ -252,7 +244,6 @@ EVP_PKEY_check(EVP_PKEY_CTX *ctx)
 
 	return pkey->ameth->pkey_check(pkey);
 }
-LCRYPTO_ALIAS(EVP_PKEY_check);
 
 int
 EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
@@ -274,7 +265,6 @@ EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
 
 	return pkey->ameth->pkey_public_check(pkey);
 }
-LCRYPTO_ALIAS(EVP_PKEY_public_check);
 
 int
 EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
@@ -296,4 +286,3 @@ EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
 
 	return pkey->ameth->pkey_param_check(pkey);
 }
-LCRYPTO_ALIAS(EVP_PKEY_param_check);

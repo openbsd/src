@@ -1,4 +1,4 @@
-/* $OpenBSD: pmeth_lib.c,v 1.32 2023/07/07 13:54:46 beck Exp $ */
+/* $OpenBSD: pmeth_lib.c,v 1.33 2023/07/07 19:37:54 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -149,7 +149,6 @@ EVP_PKEY_meth_find(int type)
 
 	return NULL;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_find);
 
 static EVP_PKEY_CTX *
 evp_pkey_ctx_new(EVP_PKEY *pkey, ENGINE *engine, int id)
@@ -226,7 +225,6 @@ EVP_PKEY_meth_new(int id, int flags)
 
 	return pmeth;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_new);
 
 void
 EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags, const EVP_PKEY_METHOD *meth)
@@ -236,7 +234,6 @@ EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags, const EVP_PKEY_METHOD *meth)
 	if (pflags)
 		*pflags = meth->flags;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_get0_info);
 
 void
 EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src)
@@ -251,7 +248,6 @@ EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src)
 	dst->pkey_id = preserve.pkey_id;
 	dst->flags = preserve.flags;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_copy);
 
 void
 EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
@@ -259,21 +255,18 @@ EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 	if (pmeth && (pmeth->flags & EVP_PKEY_FLAG_DYNAMIC))
 		free(pmeth);
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_free);
 
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *engine)
 {
 	return evp_pkey_ctx_new(pkey, engine, -1);
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_new);
 
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_new_id(int id, ENGINE *engine)
 {
 	return evp_pkey_ctx_new(NULL, engine, id);
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_new_id);
 
 EVP_PKEY_CTX *
 EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
@@ -315,7 +308,6 @@ EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 	EVP_PKEY_CTX_free(rctx);
 	return NULL;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_dup);
 
 int
 EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
@@ -331,7 +323,6 @@ EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_add0);
 
 void
 EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
@@ -347,7 +338,6 @@ EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 #endif
 	free(ctx);
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_free);
 
 int
 EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype, int cmd,
@@ -380,7 +370,6 @@ EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype, int cmd,
 	return ret;
 
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_ctrl);
 
 int
 EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *name, const char *value)
@@ -395,7 +384,6 @@ EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *name, const char *value)
 	}
 	return ctx->pmeth->ctrl_str(ctx, name, value);
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_ctrl_str);
 
 int
 EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)
@@ -446,7 +434,6 @@ EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx)
 {
 	return ctx->operation;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_get_operation);
 
 void
 EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen)
@@ -454,49 +441,42 @@ EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen)
 	ctx->keygen_info = dat;
 	ctx->keygen_info_count = datlen;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_set0_keygen_info);
 
 void
 EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data)
 {
 	ctx->data = data;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_set_data);
 
 void *
 EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx)
 {
 	return ctx->data;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_get_data);
 
 EVP_PKEY *
 EVP_PKEY_CTX_get0_pkey(EVP_PKEY_CTX *ctx)
 {
 	return ctx->pkey;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_get0_pkey);
 
 EVP_PKEY *
 EVP_PKEY_CTX_get0_peerkey(EVP_PKEY_CTX *ctx)
 {
 	return ctx->peerkey;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_get0_peerkey);
 
 void
 EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data)
 {
 	ctx->app_data = data;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_set_app_data);
 
 void *
 EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx)
 {
 	return ctx->app_data;
 }
-LCRYPTO_ALIAS(EVP_PKEY_CTX_get_app_data);
 
 void
 EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
@@ -504,7 +484,6 @@ EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
 {
 	pmeth->init = init;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_init);
 
 void
 EVP_PKEY_meth_set_copy(EVP_PKEY_METHOD *pmeth,
@@ -512,7 +491,6 @@ EVP_PKEY_meth_set_copy(EVP_PKEY_METHOD *pmeth,
 {
 	pmeth->copy = copy;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_copy);
 
 void
 EVP_PKEY_meth_set_cleanup(EVP_PKEY_METHOD *pmeth,
@@ -520,7 +498,6 @@ EVP_PKEY_meth_set_cleanup(EVP_PKEY_METHOD *pmeth,
 {
 	pmeth->cleanup = cleanup;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_cleanup);
 
 void
 EVP_PKEY_meth_set_paramgen(EVP_PKEY_METHOD *pmeth,
@@ -530,7 +507,6 @@ EVP_PKEY_meth_set_paramgen(EVP_PKEY_METHOD *pmeth,
 	pmeth->paramgen_init = paramgen_init;
 	pmeth->paramgen = paramgen;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_paramgen);
 
 void
 EVP_PKEY_meth_set_keygen(EVP_PKEY_METHOD *pmeth,
@@ -540,7 +516,6 @@ EVP_PKEY_meth_set_keygen(EVP_PKEY_METHOD *pmeth,
 	pmeth->keygen_init = keygen_init;
 	pmeth->keygen = keygen;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_keygen);
 
 void
 EVP_PKEY_meth_set_sign(EVP_PKEY_METHOD *pmeth,
@@ -551,7 +526,6 @@ EVP_PKEY_meth_set_sign(EVP_PKEY_METHOD *pmeth,
 	pmeth->sign_init = sign_init;
 	pmeth->sign = sign;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_sign);
 
 void
 EVP_PKEY_meth_set_verify(EVP_PKEY_METHOD *pmeth,
@@ -562,7 +536,6 @@ EVP_PKEY_meth_set_verify(EVP_PKEY_METHOD *pmeth,
 	pmeth->verify_init = verify_init;
 	pmeth->verify = verify;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_verify);
 
 void
 EVP_PKEY_meth_set_verify_recover(EVP_PKEY_METHOD *pmeth,
@@ -574,7 +547,6 @@ EVP_PKEY_meth_set_verify_recover(EVP_PKEY_METHOD *pmeth,
 	pmeth->verify_recover_init = verify_recover_init;
 	pmeth->verify_recover = verify_recover;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_verify_recover);
 
 void
 EVP_PKEY_meth_set_signctx(EVP_PKEY_METHOD *pmeth,
@@ -585,7 +557,6 @@ EVP_PKEY_meth_set_signctx(EVP_PKEY_METHOD *pmeth,
 	pmeth->signctx_init = signctx_init;
 	pmeth->signctx = signctx;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_signctx);
 
 void
 EVP_PKEY_meth_set_verifyctx(EVP_PKEY_METHOD *pmeth,
@@ -596,7 +567,6 @@ EVP_PKEY_meth_set_verifyctx(EVP_PKEY_METHOD *pmeth,
 	pmeth->verifyctx_init = verifyctx_init;
 	pmeth->verifyctx = verifyctx;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_verifyctx);
 
 void
 EVP_PKEY_meth_set_encrypt(EVP_PKEY_METHOD *pmeth,
@@ -607,7 +577,6 @@ EVP_PKEY_meth_set_encrypt(EVP_PKEY_METHOD *pmeth,
 	pmeth->encrypt_init = encrypt_init;
 	pmeth->encrypt = encryptfn;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_encrypt);
 
 void
 EVP_PKEY_meth_set_decrypt(EVP_PKEY_METHOD *pmeth,
@@ -618,7 +587,6 @@ EVP_PKEY_meth_set_decrypt(EVP_PKEY_METHOD *pmeth,
 	pmeth->decrypt_init = decrypt_init;
 	pmeth->decrypt = decrypt;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_decrypt);
 
 void
 EVP_PKEY_meth_set_derive(EVP_PKEY_METHOD *pmeth,
@@ -628,7 +596,6 @@ EVP_PKEY_meth_set_derive(EVP_PKEY_METHOD *pmeth,
 	pmeth->derive_init = derive_init;
 	pmeth->derive = derive;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_derive);
 
 void
 EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
@@ -638,14 +605,12 @@ EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
 	pmeth->ctrl = ctrl;
 	pmeth->ctrl_str = ctrl_str;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_ctrl);
 
 void
 EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth, int (*check)(EVP_PKEY *pkey))
 {
 	pmeth->check = check;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_check);
 
 void
 EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
@@ -653,7 +618,6 @@ EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
 {
 	pmeth->public_check = public_check;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_public_check);
 
 void
 EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
@@ -661,4 +625,3 @@ EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
 {
 	pmeth->param_check = param_check;
 }
-LCRYPTO_ALIAS(EVP_PKEY_meth_set_param_check);

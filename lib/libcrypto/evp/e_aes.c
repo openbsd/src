@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.52 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: e_aes.c,v 1.53 2023/07/07 19:37:53 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -572,7 +572,6 @@ EVP_aes_128_cbc(void)
 	return &aes_128_cbc;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_128_cbc);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_128_ecb = {
@@ -607,7 +606,6 @@ EVP_aes_128_ecb(void)
 	return &aes_128_ecb;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_128_ecb);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_128_ofb = {
@@ -642,7 +640,6 @@ EVP_aes_128_ofb(void)
 	return &aes_128_ofb;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_128_ofb);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_128_cfb = {
@@ -711,7 +708,6 @@ EVP_aes_128_cfb1(void)
 	return &aes_128_cfb1;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_128_cfb1);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_128_cfb8 = {
@@ -746,7 +742,6 @@ EVP_aes_128_cfb8(void)
 	return &aes_128_cfb8;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_128_cfb8);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_128_ctr = {
@@ -781,7 +776,6 @@ EVP_aes_128_ctr(void)
 	return &aes_128_ctr;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_128_ctr);
 
 
 #ifdef AESNI_CAPABLE
@@ -817,7 +811,6 @@ EVP_aes_192_cbc(void)
 	return &aes_192_cbc;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_192_cbc);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_192_ecb = {
@@ -852,7 +845,6 @@ EVP_aes_192_ecb(void)
 	return &aes_192_ecb;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_192_ecb);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_192_ofb = {
@@ -887,7 +879,6 @@ EVP_aes_192_ofb(void)
 	return &aes_192_ofb;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_192_ofb);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_192_cfb = {
@@ -956,7 +947,6 @@ EVP_aes_192_cfb1(void)
 	return &aes_192_cfb1;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_192_cfb1);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_192_cfb8 = {
@@ -991,7 +981,6 @@ EVP_aes_192_cfb8(void)
 	return &aes_192_cfb8;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_192_cfb8);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_192_ctr = {
@@ -1026,7 +1015,6 @@ EVP_aes_192_ctr(void)
 	return &aes_192_ctr;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_192_ctr);
 
 
 #ifdef AESNI_CAPABLE
@@ -1062,7 +1050,6 @@ EVP_aes_256_cbc(void)
 	return &aes_256_cbc;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_256_cbc);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_256_ecb = {
@@ -1097,7 +1084,6 @@ EVP_aes_256_ecb(void)
 	return &aes_256_ecb;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_256_ecb);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_256_ofb = {
@@ -1132,7 +1118,6 @@ EVP_aes_256_ofb(void)
 	return &aes_256_ofb;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_256_ofb);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_256_cfb = {
@@ -1201,7 +1186,6 @@ EVP_aes_256_cfb1(void)
 	return &aes_256_cfb1;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_256_cfb1);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_256_cfb8 = {
@@ -1236,7 +1220,6 @@ EVP_aes_256_cfb8(void)
 	return &aes_256_cfb8;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_256_cfb8);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_256_ctr = {
@@ -1271,7 +1254,6 @@ EVP_aes_256_ctr(void)
 	return &aes_256_ctr;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_256_ctr);
 
 static int
 aes_gcm_cleanup(EVP_CIPHER_CTX *c)
@@ -1690,7 +1672,6 @@ EVP_aes_128_gcm(void)
 	return &aes_128_gcm;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_128_gcm);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_192_gcm = {
@@ -1729,7 +1710,6 @@ EVP_aes_192_gcm(void)
 	return &aes_192_gcm;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_192_gcm);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_256_gcm = {
@@ -1768,7 +1748,6 @@ EVP_aes_256_gcm(void)
 	return &aes_256_gcm;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_256_gcm);
 
 static int
 aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
@@ -1935,7 +1914,6 @@ EVP_aes_128_xts(void)
 	return &aes_128_xts;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_128_xts);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_256_xts = {
@@ -1974,7 +1952,6 @@ EVP_aes_256_xts(void)
 	return &aes_256_xts;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_256_xts);
 
 static int
 aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
@@ -2171,7 +2148,6 @@ EVP_aes_128_ccm(void)
 	return &aes_128_ccm;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_128_ccm);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_192_ccm = {
@@ -2210,7 +2186,6 @@ EVP_aes_192_ccm(void)
 	return &aes_192_ccm;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_192_ccm);
 
 #ifdef AESNI_CAPABLE
 static const EVP_CIPHER aesni_256_ccm = {
@@ -2249,7 +2224,6 @@ EVP_aes_256_ccm(void)
 	return &aes_256_ccm;
 #endif
 }
-LCRYPTO_ALIAS(EVP_aes_256_ccm);
 
 #define EVP_AEAD_AES_GCM_TAG_LEN 16
 
@@ -2440,14 +2414,12 @@ EVP_aead_aes_128_gcm(void)
 {
 	return &aead_aes_128_gcm;
 }
-LCRYPTO_ALIAS(EVP_aead_aes_128_gcm);
 
 const EVP_AEAD *
 EVP_aead_aes_256_gcm(void)
 {
 	return &aead_aes_256_gcm;
 }
-LCRYPTO_ALIAS(EVP_aead_aes_256_gcm);
 
 typedef struct {
 	union {
@@ -2573,7 +2545,6 @@ EVP_aes_128_wrap(void)
 {
 	return &aes_128_wrap;
 }
-LCRYPTO_ALIAS(EVP_aes_128_wrap);
 
 static const EVP_CIPHER aes_192_wrap = {
 	.nid = NID_id_aes192_wrap,
@@ -2596,7 +2567,6 @@ EVP_aes_192_wrap(void)
 {
 	return &aes_192_wrap;
 }
-LCRYPTO_ALIAS(EVP_aes_192_wrap);
 
 static const EVP_CIPHER aes_256_wrap = {
 	.nid = NID_id_aes256_wrap,
@@ -2619,6 +2589,5 @@ EVP_aes_256_wrap(void)
 {
 	return &aes_256_wrap;
 }
-LCRYPTO_ALIAS(EVP_aes_256_wrap);
 
 #endif

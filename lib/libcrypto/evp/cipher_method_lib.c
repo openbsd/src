@@ -1,4 +1,4 @@
-/*	$OpenBSD: cipher_method_lib.c,v 1.9 2023/07/07 13:54:45 beck Exp $ */
+/*	$OpenBSD: cipher_method_lib.c,v 1.10 2023/07/07 19:37:53 beck Exp $ */
 /*
  * Written by Richard Levitte (levitte@openssl.org) for the OpenSSL project
  * 2015.
@@ -77,7 +77,6 @@ EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
 
 	return cipher;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_new);
 
 EVP_CIPHER *
 EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
@@ -91,14 +90,12 @@ EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher)
 
 	return copy;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_dup);
 
 void
 EVP_CIPHER_meth_free(EVP_CIPHER *cipher)
 {
 	free(cipher);
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_free);
 
 int
 EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len)
@@ -107,7 +104,6 @@ EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len)
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_set_iv_length);
 
 int
 EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags)
@@ -116,7 +112,6 @@ EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags)
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_set_flags);
 
 int
 EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher, int ctx_size)
@@ -125,7 +120,6 @@ EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher, int ctx_size)
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_set_impl_ctx_size);
 
 int
 EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
@@ -136,7 +130,6 @@ EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_set_init);
 
 int
 EVP_CIPHER_meth_set_do_cipher(EVP_CIPHER *cipher,
@@ -147,7 +140,6 @@ EVP_CIPHER_meth_set_do_cipher(EVP_CIPHER *cipher,
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_set_do_cipher);
 
 int
 EVP_CIPHER_meth_set_cleanup(EVP_CIPHER *cipher,
@@ -157,7 +149,6 @@ EVP_CIPHER_meth_set_cleanup(EVP_CIPHER *cipher,
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_set_cleanup);
 
 int
 EVP_CIPHER_meth_set_set_asn1_params(EVP_CIPHER *cipher,
@@ -167,7 +158,6 @@ EVP_CIPHER_meth_set_set_asn1_params(EVP_CIPHER *cipher,
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_set_set_asn1_params);
 
 int
 EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
@@ -177,7 +167,6 @@ EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_set_get_asn1_params);
 
 int
 EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
@@ -187,4 +176,3 @@ EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_meth_set_ctrl);

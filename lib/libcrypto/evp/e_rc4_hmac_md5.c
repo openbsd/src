@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4_hmac_md5.c,v 1.11 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: e_rc4_hmac_md5.c,v 1.12 2023/07/07 19:37:53 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -304,5 +304,4 @@ EVP_rc4_hmac_md5(void)
 {
 	return (&r4_hmac_md5_cipher);
 }
-LCRYPTO_ALIAS(EVP_rc4_hmac_md5);
 #endif

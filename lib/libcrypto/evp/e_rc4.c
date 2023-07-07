@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc4.c,v 1.16 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: e_rc4.c,v 1.17 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -115,14 +115,12 @@ EVP_rc4(void)
 {
 	return (&r4_cipher);
 }
-LCRYPTO_ALIAS(EVP_rc4);
 
 const EVP_CIPHER *
 EVP_rc4_40(void)
 {
 	return (&r4_40_cipher);
 }
-LCRYPTO_ALIAS(EVP_rc4_40);
 
 static int
 rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,

@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_enc.c,v 1.28 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: bio_enc.c,v 1.29 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -106,7 +106,6 @@ BIO_f_cipher(void)
 {
 	return (&methods_enc);
 }
-LCRYPTO_ALIAS(BIO_f_cipher);
 
 static int
 enc_new(BIO *bi)
@@ -417,4 +416,3 @@ BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
 
 	return 1;
 }
-LCRYPTO_ALIAS(BIO_set_cipher);

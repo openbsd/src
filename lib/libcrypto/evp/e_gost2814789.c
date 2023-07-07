@@ -1,4 +1,4 @@
-/* $OpenBSD: e_gost2814789.c,v 1.12 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: e_gost2814789.c,v 1.13 2023/07/07 19:37:53 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -268,7 +268,6 @@ EVP_gost2814789_ecb(void)
 {
 	return &gost2814789_ecb;
 }
-LCRYPTO_ALIAS(EVP_gost2814789_ecb);
 
 static const EVP_CIPHER gost2814789_cfb64 = {
 	.nid = NID_gost89_cfb64,
@@ -291,7 +290,6 @@ EVP_gost2814789_cfb64(void)
 {
 	return &gost2814789_cfb64;
 }
-LCRYPTO_ALIAS(EVP_gost2814789_cfb64);
 
 static const EVP_CIPHER gost2814789_cnt = {
 	.nid = NID_gost89_cnt,
@@ -314,5 +312,4 @@ EVP_gost2814789_cnt(void)
 {
 	return &gost2814789_cnt;
 }
-LCRYPTO_ALIAS(EVP_gost2814789_cnt);
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: b_dump.c,v 1.24 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: b_dump.c,v 1.25 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,7 +75,6 @@ BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
 {
 	return BIO_dump_indent_cb(cb, u, s, len, 0);
 }
-LCRYPTO_ALIAS(BIO_dump_cb);
 
 int
 BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
@@ -149,7 +148,6 @@ BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
 #endif
 	return (ret);
 }
-LCRYPTO_ALIAS(BIO_dump_indent_cb);
 
 static int
 write_fp(const void *data, size_t len, void *fp)

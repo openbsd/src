@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sha1.c,v 1.24 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: m_sha1.c,v 1.25 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,7 +110,6 @@ EVP_sha1(void)
 {
 	return &sha1_md;
 }
-LCRYPTO_ALIAS(EVP_sha1);
 #endif
 
 #ifndef OPENSSL_NO_SHA256
@@ -156,7 +155,6 @@ EVP_sha224(void)
 {
 	return &sha224_md;
 }
-LCRYPTO_ALIAS(EVP_sha224);
 
 static int
 sha256_init(EVP_MD_CTX *ctx)
@@ -195,7 +193,6 @@ EVP_sha256(void)
 {
 	return &sha256_md;
 }
-LCRYPTO_ALIAS(EVP_sha256);
 #endif	/* ifndef OPENSSL_NO_SHA256 */
 
 #ifndef OPENSSL_NO_SHA512
@@ -237,7 +234,6 @@ EVP_sha384(void)
 {
 	return &sha384_md;
 }
-LCRYPTO_ALIAS(EVP_sha384);
 
 static int
 sha512_init(EVP_MD_CTX *ctx)
@@ -276,7 +272,6 @@ EVP_sha512(void)
 {
 	return &sha512_md;
 }
-LCRYPTO_ALIAS(EVP_sha512);
 
 static int
 sha512_224_init(EVP_MD_CTX *ctx)
@@ -315,7 +310,6 @@ EVP_sha512_224(void)
 {
 	return &sha512_224_md;
 }
-LCRYPTO_ALIAS(EVP_sha512_224);
 
 static int
 sha512_256_init(EVP_MD_CTX *ctx)
@@ -354,5 +348,4 @@ EVP_sha512_256(void)
 {
 	return &sha512_256_md;
 }
-LCRYPTO_ALIAS(EVP_sha512_256);
 #endif	/* ifndef OPENSSL_NO_SHA512 */

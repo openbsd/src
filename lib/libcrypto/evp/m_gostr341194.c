@@ -1,4 +1,4 @@
-/* $OpenBSD: m_gostr341194.c,v 1.6 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: m_gostr341194.c,v 1.7 2023/07/07 19:37:53 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -97,5 +97,4 @@ EVP_gostr341194(void)
 {
 	return (&gostr341194_md);
 }
-LCRYPTO_ALIAS(EVP_gostr341194);
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pbe.c,v 1.28 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: evp_pbe.c,v 1.29 2023/07/07 19:37:53 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -170,7 +170,6 @@ EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	}
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_PBE_CipherInit);
 
 static int pbe2_cmp_BSEARCH_CMP_FN(const void *, const void *);
 static int pbe2_cmp(EVP_PBE_CTL const *, EVP_PBE_CTL const *);
@@ -247,7 +246,6 @@ EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
 	}
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_PBE_alg_add_type);
 
 int
 EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
@@ -267,7 +265,6 @@ EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 	return EVP_PBE_alg_add_type(EVP_PBE_TYPE_OUTER, nid,
 	    cipher_nid, md_nid, keygen);
 }
-LCRYPTO_ALIAS(EVP_PBE_alg_add);
 
 int
 EVP_PBE_find(int type, int pbe_nid,
@@ -300,7 +297,6 @@ EVP_PBE_find(int type, int pbe_nid,
 		*pkeygen = pbetmp->keygen;
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_PBE_find);
 
 static void
 free_evp_pbe_ctl(EVP_PBE_CTL *pbe)
@@ -314,4 +310,3 @@ EVP_PBE_cleanup(void)
 	sk_EVP_PBE_CTL_pop_free(pbe_algs, free_evp_pbe_ctl);
 	pbe_algs = NULL;
 }
-LCRYPTO_ALIAS(EVP_PBE_cleanup);

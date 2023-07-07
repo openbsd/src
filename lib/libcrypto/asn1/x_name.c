@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.39 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: x_name.c,v 1.40 2023/07/07 19:37:52 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -117,35 +117,30 @@ d2i_X509_NAME_ENTRY(X509_NAME_ENTRY **a, const unsigned char **in, long len)
 	return (X509_NAME_ENTRY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_NAME_ENTRY_it);
 }
-LCRYPTO_ALIAS(d2i_X509_NAME_ENTRY);
 
 int
 i2d_X509_NAME_ENTRY(X509_NAME_ENTRY *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_NAME_ENTRY_it);
 }
-LCRYPTO_ALIAS(i2d_X509_NAME_ENTRY);
 
 X509_NAME_ENTRY *
 X509_NAME_ENTRY_new(void)
 {
 	return (X509_NAME_ENTRY *)ASN1_item_new(&X509_NAME_ENTRY_it);
 }
-LCRYPTO_ALIAS(X509_NAME_ENTRY_new);
 
 void
 X509_NAME_ENTRY_free(X509_NAME_ENTRY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_NAME_ENTRY_it);
 }
-LCRYPTO_ALIAS(X509_NAME_ENTRY_free);
 
 X509_NAME_ENTRY *
 X509_NAME_ENTRY_dup(X509_NAME_ENTRY *x)
 {
 	return ASN1_item_dup(&X509_NAME_ENTRY_it, x);
 }
-LCRYPTO_ALIAS(X509_NAME_ENTRY_dup);
 
 /* For the "Name" type we need a SEQUENCE OF { SET OF X509_NAME_ENTRY }
  * so declare two template wrappers for this
@@ -219,35 +214,30 @@ d2i_X509_NAME(X509_NAME **a, const unsigned char **in, long len)
 	return (X509_NAME *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_NAME_it);
 }
-LCRYPTO_ALIAS(d2i_X509_NAME);
 
 int
 i2d_X509_NAME(X509_NAME *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_NAME_it);
 }
-LCRYPTO_ALIAS(i2d_X509_NAME);
 
 X509_NAME *
 X509_NAME_new(void)
 {
 	return (X509_NAME *)ASN1_item_new(&X509_NAME_it);
 }
-LCRYPTO_ALIAS(X509_NAME_new);
 
 void
 X509_NAME_free(X509_NAME *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_NAME_it);
 }
-LCRYPTO_ALIAS(X509_NAME_free);
 
 X509_NAME *
 X509_NAME_dup(X509_NAME *x)
 {
 	return ASN1_item_dup(&X509_NAME_it, x);
 }
-LCRYPTO_ALIAS(X509_NAME_dup);
 
 static int
 x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
@@ -645,7 +635,6 @@ X509_NAME_set(X509_NAME **xn, X509_NAME *name)
 	*xn = name;
 	return 1;
 }
-LCRYPTO_ALIAS(X509_NAME_set);
 
 int
 X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder, size_t *pderlen)
@@ -659,4 +648,3 @@ X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder, size_t *pderlen)
 		*pderlen = nm->bytes->length;
 	return 1;
 }
-LCRYPTO_ALIAS(X509_NAME_get0_der);

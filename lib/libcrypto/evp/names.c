@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.18 2023/07/07 13:54:46 beck Exp $ */
+/* $OpenBSD: names.c,v 1.19 2023/07/07 19:37:54 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,7 +84,6 @@ EVP_add_cipher(const EVP_CIPHER *c)
 	    (const char *)c);
 	return (r);
 }
-LCRYPTO_ALIAS(EVP_add_cipher);
 
 int
 EVP_add_digest(const EVP_MD *md)
@@ -113,7 +112,6 @@ EVP_add_digest(const EVP_MD *md)
 	}
 	return (r);
 }
-LCRYPTO_ALIAS(EVP_add_digest);
 
 const EVP_CIPHER *
 EVP_get_cipherbyname(const char *name)
@@ -126,7 +124,6 @@ EVP_get_cipherbyname(const char *name)
 	cp = (const EVP_CIPHER *)OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
 	return (cp);
 }
-LCRYPTO_ALIAS(EVP_get_cipherbyname);
 
 const EVP_MD *
 EVP_get_digestbyname(const char *name)
@@ -139,7 +136,6 @@ EVP_get_digestbyname(const char *name)
 	cp = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
 	return (cp);
 }
-LCRYPTO_ALIAS(EVP_get_digestbyname);
 
 void
 EVP_cleanup(void)
@@ -158,7 +154,6 @@ EVP_cleanup(void)
 	}
 	OBJ_sigid_free();
 }
-LCRYPTO_ALIAS(EVP_cleanup);
 
 struct doall_cipher {
 	void *arg;
@@ -190,7 +185,6 @@ EVP_CIPHER_do_all(void (*fn)(const EVP_CIPHER *ciph, const char *from,
 	dc.arg = arg;
 	OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH, do_all_cipher_fn, &dc);
 }
-LCRYPTO_ALIAS(EVP_CIPHER_do_all);
 
 void
 EVP_CIPHER_do_all_sorted(void (*fn)(const EVP_CIPHER *ciph, const char *from,
@@ -206,7 +200,6 @@ EVP_CIPHER_do_all_sorted(void (*fn)(const EVP_CIPHER *ciph, const char *from,
 	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH,
 	    do_all_cipher_fn, &dc);
 }
-LCRYPTO_ALIAS(EVP_CIPHER_do_all_sorted);
 
 struct doall_md {
 	void *arg;
@@ -238,7 +231,6 @@ EVP_MD_do_all(void (*fn)(const EVP_MD *md, const char *from, const char *to,
 	dc.arg = arg;
 	OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);
 }
-LCRYPTO_ALIAS(EVP_MD_do_all);
 
 void
 EVP_MD_do_all_sorted(void (*fn)(const EVP_MD *md,
@@ -253,4 +245,3 @@ EVP_MD_do_all_sorted(void (*fn)(const EVP_MD *md,
 	dc.arg = arg;
 	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);
 }
-LCRYPTO_ALIAS(EVP_MD_do_all_sorted);

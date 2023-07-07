@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_pkey.c,v 1.26 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: evp_pkey.c,v 1.27 2023/07/07 19:37:53 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -105,7 +105,6 @@ error:
 	EVP_PKEY_free(pkey);
 	return NULL;
 }
-LCRYPTO_ALIAS(EVP_PKCS82PKEY);
 
 /* Turn a private key into a PKCS8 structure */
 
@@ -139,7 +138,6 @@ error:
 	PKCS8_PRIV_KEY_INFO_free(p8);
 	return NULL;
 }
-LCRYPTO_ALIAS(EVP_PKEY2PKCS8);
 
 /* EVP_PKEY attribute functions */
 
@@ -148,14 +146,12 @@ EVP_PKEY_get_attr_count(const EVP_PKEY *key)
 {
 	return X509at_get_attr_count(key->attributes);
 }
-LCRYPTO_ALIAS(EVP_PKEY_get_attr_count);
 
 int
 EVP_PKEY_get_attr_by_NID(const EVP_PKEY *key, int nid, int lastpos)
 {
 	return X509at_get_attr_by_NID(key->attributes, nid, lastpos);
 }
-LCRYPTO_ALIAS(EVP_PKEY_get_attr_by_NID);
 
 int
 EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
@@ -163,21 +159,18 @@ EVP_PKEY_get_attr_by_OBJ(const EVP_PKEY *key, const ASN1_OBJECT *obj,
 {
 	return X509at_get_attr_by_OBJ(key->attributes, obj, lastpos);
 }
-LCRYPTO_ALIAS(EVP_PKEY_get_attr_by_OBJ);
 
 X509_ATTRIBUTE *
 EVP_PKEY_get_attr(const EVP_PKEY *key, int loc)
 {
 	return X509at_get_attr(key->attributes, loc);
 }
-LCRYPTO_ALIAS(EVP_PKEY_get_attr);
 
 X509_ATTRIBUTE *
 EVP_PKEY_delete_attr(EVP_PKEY *key, int loc)
 {
 	return X509at_delete_attr(key->attributes, loc);
 }
-LCRYPTO_ALIAS(EVP_PKEY_delete_attr);
 
 int
 EVP_PKEY_add1_attr(EVP_PKEY *key, X509_ATTRIBUTE *attr)
@@ -186,7 +179,6 @@ EVP_PKEY_add1_attr(EVP_PKEY *key, X509_ATTRIBUTE *attr)
 		return 1;
 	return 0;
 }
-LCRYPTO_ALIAS(EVP_PKEY_add1_attr);
 
 int
 EVP_PKEY_add1_attr_by_OBJ(EVP_PKEY *key, const ASN1_OBJECT *obj, int type,
@@ -196,7 +188,6 @@ EVP_PKEY_add1_attr_by_OBJ(EVP_PKEY *key, const ASN1_OBJECT *obj, int type,
 		return 1;
 	return 0;
 }
-LCRYPTO_ALIAS(EVP_PKEY_add1_attr_by_OBJ);
 
 int
 EVP_PKEY_add1_attr_by_NID(EVP_PKEY *key, int nid, int type,
@@ -206,7 +197,6 @@ EVP_PKEY_add1_attr_by_NID(EVP_PKEY *key, int nid, int type,
 		return 1;
 	return 0;
 }
-LCRYPTO_ALIAS(EVP_PKEY_add1_attr_by_NID);
 
 int
 EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key, const char *attrname, int type,
@@ -217,4 +207,3 @@ EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key, const char *attrname, int type,
 		return 1;
 	return 0;
 }
-LCRYPTO_ALIAS(EVP_PKEY_add1_attr_by_txt);

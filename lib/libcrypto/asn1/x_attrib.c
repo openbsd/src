@@ -1,4 +1,4 @@
-/* $OpenBSD: x_attrib.c,v 1.19 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: x_attrib.c,v 1.20 2023/07/07 19:37:52 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -111,35 +111,30 @@ d2i_X509_ATTRIBUTE(X509_ATTRIBUTE **a, const unsigned char **in, long len)
 	return (X509_ATTRIBUTE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_ATTRIBUTE_it);
 }
-LCRYPTO_ALIAS(d2i_X509_ATTRIBUTE);
 
 int
 i2d_X509_ATTRIBUTE(X509_ATTRIBUTE *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_ATTRIBUTE_it);
 }
-LCRYPTO_ALIAS(i2d_X509_ATTRIBUTE);
 
 X509_ATTRIBUTE *
 X509_ATTRIBUTE_new(void)
 {
 	return (X509_ATTRIBUTE *)ASN1_item_new(&X509_ATTRIBUTE_it);
 }
-LCRYPTO_ALIAS(X509_ATTRIBUTE_new);
 
 void
 X509_ATTRIBUTE_free(X509_ATTRIBUTE *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_ATTRIBUTE_it);
 }
-LCRYPTO_ALIAS(X509_ATTRIBUTE_free);
 
 X509_ATTRIBUTE *
 X509_ATTRIBUTE_dup(X509_ATTRIBUTE *x)
 {
 	return ASN1_item_dup(&X509_ATTRIBUTE_it, x);
 }
-LCRYPTO_ALIAS(X509_ATTRIBUTE_dup);
 
 X509_ATTRIBUTE *
 X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
@@ -168,4 +163,3 @@ X509_ATTRIBUTE_create(int nid, int atrtype, void *value)
 		ASN1_TYPE_free(val);
 	return (NULL);
 }
-LCRYPTO_ALIAS(X509_ATTRIBUTE_create);

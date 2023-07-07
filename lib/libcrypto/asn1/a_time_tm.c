@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.28 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.29 2023/07/07 19:37:52 beck Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -77,7 +77,6 @@ ASN1_time_tm_clamp_notafter(struct tm *tm)
 #endif
 	return 1;
 }
-LCRYPTO_ALIAS(ASN1_time_tm_clamp_notafter);
 
 /* Convert time to GeneralizedTime, X.690, 11.7. */
 ASN1_TIME *
@@ -567,7 +566,6 @@ ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 		return ASN1_TIME_cmp_time_t_internal(s, t, V_ASN1_UTCTIME);
 	return -2;
 }
-LCRYPTO_ALIAS(ASN1_UTCTIME_cmp_time_t);
 
 /*
  * ASN1_GENERALIZEDTIME wrappers

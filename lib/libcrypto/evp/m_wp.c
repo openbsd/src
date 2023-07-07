@@ -1,4 +1,4 @@
-/* $OpenBSD: m_wp.c,v 1.12 2023/07/07 13:54:46 beck Exp $ */
+/* $OpenBSD: m_wp.c,v 1.13 2023/07/07 19:37:54 beck Exp $ */
 
 #include <stdio.h>
 
@@ -50,5 +50,4 @@ EVP_whirlpool(void)
 {
 	return (&whirlpool_md);
 }
-LCRYPTO_ALIAS(EVP_whirlpool);
 #endif

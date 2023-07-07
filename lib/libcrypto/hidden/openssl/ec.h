@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.1 2023/07/07 13:53:52 beck Exp $ */
+/* $OpenBSD: ec.h,v 1.2 2023/07/07 19:37:54 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -29,7 +29,6 @@ LCRYPTO_USED(EC_GFp_simple_method);
 LCRYPTO_USED(EC_GFp_mont_method);
 LCRYPTO_USED(EC_GROUP_new);
 LCRYPTO_USED(EC_GROUP_free);
-LCRYPTO_USED(EC_GROUP_clear_free);
 LCRYPTO_USED(EC_GROUP_copy);
 LCRYPTO_USED(EC_GROUP_dup);
 LCRYPTO_USED(EC_GROUP_method_of);
@@ -50,8 +49,6 @@ LCRYPTO_USED(EC_GROUP_get_seed_len);
 LCRYPTO_USED(EC_GROUP_set_seed);
 LCRYPTO_USED(EC_GROUP_set_curve);
 LCRYPTO_USED(EC_GROUP_get_curve);
-LCRYPTO_USED(EC_GROUP_set_curve_GFp);
-LCRYPTO_USED(EC_GROUP_get_curve_GFp);
 LCRYPTO_USED(EC_GROUP_get_degree);
 LCRYPTO_USED(EC_GROUP_check);
 LCRYPTO_USED(EC_GROUP_check_discriminant);
@@ -63,7 +60,6 @@ LCRYPTO_USED(EC_curve_nid2nist);
 LCRYPTO_USED(EC_curve_nist2nid);
 LCRYPTO_USED(EC_POINT_new);
 LCRYPTO_USED(EC_POINT_free);
-LCRYPTO_USED(EC_POINT_clear_free);
 LCRYPTO_USED(EC_POINT_copy);
 LCRYPTO_USED(EC_POINT_dup);
 LCRYPTO_USED(EC_POINT_method_of);
@@ -71,11 +67,6 @@ LCRYPTO_USED(EC_POINT_set_to_infinity);
 LCRYPTO_USED(EC_POINT_set_affine_coordinates);
 LCRYPTO_USED(EC_POINT_get_affine_coordinates);
 LCRYPTO_USED(EC_POINT_set_compressed_coordinates);
-LCRYPTO_USED(EC_POINT_set_Jprojective_coordinates_GFp);
-LCRYPTO_USED(EC_POINT_get_Jprojective_coordinates_GFp);
-LCRYPTO_USED(EC_POINT_set_affine_coordinates_GFp);
-LCRYPTO_USED(EC_POINT_get_affine_coordinates_GFp);
-LCRYPTO_USED(EC_POINT_set_compressed_coordinates_GFp);
 LCRYPTO_USED(EC_POINT_point2oct);
 LCRYPTO_USED(EC_POINT_oct2point);
 LCRYPTO_USED(EC_POINT_point2bn);

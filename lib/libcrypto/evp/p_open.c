@@ -1,4 +1,4 @@
-/* $OpenBSD: p_open.c,v 1.22 2023/07/07 13:54:46 beck Exp $ */
+/* $OpenBSD: p_open.c,v 1.23 2023/07/07 19:37:54 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -114,7 +114,6 @@ err:
 	freezero(key, size);
 	return (ret);
 }
-LCRYPTO_ALIAS(EVP_OpenInit);
 
 int
 EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -126,5 +125,4 @@ EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		i = EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL);
 	return (i);
 }
-LCRYPTO_ALIAS(EVP_OpenFinal);
 #endif

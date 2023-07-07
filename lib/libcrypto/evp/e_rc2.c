@@ -1,4 +1,4 @@
-/* $OpenBSD: e_rc2.c,v 1.21 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: e_rc2.c,v 1.22 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,7 +180,6 @@ EVP_rc2_cbc(void)
 {
 	return &rc2_cbc;
 }
-LCRYPTO_ALIAS(EVP_rc2_cbc);
 
 static const EVP_CIPHER rc2_cfb64 = {
 	.nid = NID_rc2_cfb64,
@@ -203,7 +202,6 @@ EVP_rc2_cfb64(void)
 {
 	return &rc2_cfb64;
 }
-LCRYPTO_ALIAS(EVP_rc2_cfb64);
 
 static const EVP_CIPHER rc2_ofb = {
 	.nid = NID_rc2_ofb64,
@@ -226,7 +224,6 @@ EVP_rc2_ofb(void)
 {
 	return &rc2_ofb;
 }
-LCRYPTO_ALIAS(EVP_rc2_ofb);
 
 static const EVP_CIPHER rc2_ecb = {
 	.nid = NID_rc2_ecb,
@@ -249,7 +246,6 @@ EVP_rc2_ecb(void)
 {
 	return &rc2_ecb;
 }
-LCRYPTO_ALIAS(EVP_rc2_ecb);
 
 #define RC2_40_MAGIC	0xa0
 #define RC2_64_MAGIC	0x78
@@ -288,14 +284,12 @@ EVP_rc2_64_cbc(void)
 {
 	return (&r2_64_cbc_cipher);
 }
-LCRYPTO_ALIAS(EVP_rc2_64_cbc);
 
 const EVP_CIPHER *
 EVP_rc2_40_cbc(void)
 {
 	return (&r2_40_cbc_cipher);
 }
-LCRYPTO_ALIAS(EVP_rc2_40_cbc);
 
 static int
 rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,

@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.30 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: c_all.c,v 1.31 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -251,7 +251,6 @@ OpenSSL_add_all_ciphers(void)
 	static pthread_once_t add_all_ciphers_once = PTHREAD_ONCE_INIT;
 	(void) pthread_once(&add_all_ciphers_once, OpenSSL_add_all_ciphers_internal);
 }
-LCRYPTO_ALIAS(OpenSSL_add_all_ciphers);
 
 static void
 OpenSSL_add_all_digests_internal(void)
@@ -314,7 +313,6 @@ OpenSSL_add_all_digests(void)
 	static pthread_once_t add_all_digests_once = PTHREAD_ONCE_INIT;
 	(void) pthread_once(&add_all_digests_once, OpenSSL_add_all_digests_internal);
 }
-LCRYPTO_ALIAS(OpenSSL_add_all_digests);
 
 void
 OPENSSL_add_all_algorithms_noconf(void)
@@ -323,7 +321,6 @@ OPENSSL_add_all_algorithms_noconf(void)
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 }
-LCRYPTO_ALIAS(OPENSSL_add_all_algorithms_noconf);
 
 void
 OPENSSL_add_all_algorithms_conf(void)
@@ -331,4 +328,3 @@ OPENSSL_add_all_algorithms_conf(void)
 	OPENSSL_add_all_algorithms_noconf();
 	OPENSSL_config(NULL);
 }
-LCRYPTO_ALIAS(OPENSSL_add_all_algorithms_conf);

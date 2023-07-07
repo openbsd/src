@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.h,v 1.1 2023/07/07 13:53:52 beck Exp $ */
+/* $OpenBSD: ecdsa.h,v 1.2 2023/07/07 19:37:54 beck Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *

@@ -1,4 +1,4 @@
-/* $OpenBSD: err.c,v 1.53 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: err.c,v 1.54 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -982,12 +982,14 @@ LHASH_OF(ERR_STRING_DATA) *ERR_get_string_table(void)
 	err_fns_check();
 	return ERRFN(err_get)(0);
 }
+LCRYPTO_ALIAS(ERR_get_string_table);
 
 LHASH_OF(ERR_STATE) *ERR_get_err_state_table(void)
 {
 	err_fns_check();
 	return ERRFN(thread_get)(0);
 }
+LCRYPTO_ALIAS(ERR_get_err_state_table);
 
 void
 ERR_release_err_state_table(LHASH_OF(ERR_STATE) **hash)
@@ -1173,7 +1175,6 @@ ERR_add_error_vdata(int num, va_list args)
 	else
 		ERR_set_error_data(errbuf, ERR_TXT_MALLOCED|ERR_TXT_STRING);
 }
-LCRYPTO_ALIAS(ERR_add_error_vdata);
 
 void
 ERR_add_error_data(int num, ...)
@@ -1183,7 +1184,6 @@ ERR_add_error_data(int num, ...)
 	ERR_add_error_vdata(num, args);
 	va_end(args);
 }
-LCRYPTO_ALIAS(ERR_add_error_data);
 
 int
 ERR_set_mark(void)

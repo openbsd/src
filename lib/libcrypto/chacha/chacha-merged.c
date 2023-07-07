@@ -1,4 +1,4 @@
-/* $OpenBSD: chacha-merged.c,v 1.10 2021/10/22 17:43:00 tb Exp $ */
+/* $OpenBSD: chacha-merged.c,v 1.11 2023/07/07 19:37:53 beck Exp $ */
 /*
 chacha-merged.c version 20080118
 D. J. Bernstein
@@ -320,3 +320,4 @@ CRYPTO_hchacha_20(unsigned char subkey[32], const unsigned char key[32],
 	U32TO8_LITTLE(subkey + 24, x[14]);
 	U32TO8_LITTLE(subkey + 28, x[15]);
 }
+LCRYPTO_ALIAS(CRYPTO_hchacha_20);

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_streebog.c,v 1.6 2023/07/07 13:54:46 beck Exp $ */
+/* $OpenBSD: m_streebog.c,v 1.7 2023/07/07 19:37:54 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -124,12 +124,10 @@ EVP_streebog256(void)
 {
 	return (&streebog256_md);
 }
-LCRYPTO_ALIAS(EVP_streebog256);
 
 const EVP_MD *
 EVP_streebog512(void)
 {
 	return (&streebog512_md);
 }
-LCRYPTO_ALIAS(EVP_streebog512);
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_md4.c,v 1.20 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: m_md4.c,v 1.21 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,5 +110,4 @@ EVP_md4(void)
 {
 	return (&md4_md);
 }
-LCRYPTO_ALIAS(EVP_md4);
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.18 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: e_aes_cbc_hmac_sha1.c,v 1.19 2023/07/07 19:37:53 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2011-2013 The OpenSSL Project.  All rights reserved.
  *
@@ -581,7 +581,6 @@ EVP_aes_128_cbc_hmac_sha1(void)
 	return (OPENSSL_cpu_caps() & CPUCAP_MASK_AESNI) ?
 	    &aesni_128_cbc_hmac_sha1_cipher : NULL;
 }
-LCRYPTO_ALIAS(EVP_aes_128_cbc_hmac_sha1);
 
 const EVP_CIPHER *
 EVP_aes_256_cbc_hmac_sha1(void)
@@ -589,20 +588,17 @@ EVP_aes_256_cbc_hmac_sha1(void)
 	return (OPENSSL_cpu_caps() & CPUCAP_MASK_AESNI) ?
 	    &aesni_256_cbc_hmac_sha1_cipher : NULL;
 }
-LCRYPTO_ALIAS(EVP_aes_256_cbc_hmac_sha1);
 #else
 const EVP_CIPHER *
 EVP_aes_128_cbc_hmac_sha1(void)
 {
 	return NULL;
 }
-LCRYPTO_ALIAS(EVP_aes_128_cbc_hmac_sha1);
 
 const EVP_CIPHER *
 EVP_aes_256_cbc_hmac_sha1(void)
 {
 	    return NULL;
 }
-LCRYPTO_ALIAS(EVP_aes_256_cbc_hmac_sha1);
 #endif
 #endif

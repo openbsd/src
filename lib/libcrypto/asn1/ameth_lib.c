@@ -1,4 +1,4 @@
-/* $OpenBSD: ameth_lib.c,v 1.31 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: ameth_lib.c,v 1.32 2023/07/07 19:37:52 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -120,7 +120,6 @@ EVP_PKEY_asn1_get_count(void)
 
 	return num;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_get_count);
 
 const EVP_PKEY_ASN1_METHOD *
 EVP_PKEY_asn1_get0(int idx)
@@ -136,7 +135,6 @@ EVP_PKEY_asn1_get0(int idx)
 
 	return sk_EVP_PKEY_ASN1_METHOD_value(asn1_app_methods, idx);
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_get0);
 
 static const EVP_PKEY_ASN1_METHOD *
 pkey_asn1_find(int pkey_id)
@@ -185,7 +183,6 @@ EVP_PKEY_asn1_find(ENGINE **pe, int type)
 	}
 	return mp;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_find);
 
 const EVP_PKEY_ASN1_METHOD *
 EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
@@ -222,7 +219,6 @@ EVP_PKEY_asn1_find_str(ENGINE **pe, const char *str, int len)
 	}
 	return NULL;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_find_str);
 
 int
 EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
@@ -238,7 +234,6 @@ EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_add0);
 
 int
 EVP_PKEY_asn1_add_alias(int to, int from)
@@ -256,7 +251,6 @@ EVP_PKEY_asn1_add_alias(int to, int from)
 	}
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_add_alias);
 
 int
 EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id, int *ppkey_flags,
@@ -277,14 +271,12 @@ EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id, int *ppkey_flags,
 		*ppem_str = ameth->pem_str;
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_get0_info);
 
 const EVP_PKEY_ASN1_METHOD*
 EVP_PKEY_get0_asn1(const EVP_PKEY *pkey)
 {
 	return pkey->ameth;
 }
-LCRYPTO_ALIAS(EVP_PKEY_get0_asn1);
 
 EVP_PKEY_ASN1_METHOD*
 EVP_PKEY_asn1_new(int id, int flags, const char *pem_str, const char *info)
@@ -314,7 +306,6 @@ EVP_PKEY_asn1_new(int id, int flags, const char *pem_str, const char *info)
 	EVP_PKEY_asn1_free(ameth);
 	return NULL;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_new);
 
 void
 EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst, const EVP_PKEY_ASN1_METHOD *src)
@@ -335,7 +326,6 @@ EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst, const EVP_PKEY_ASN1_METHOD *src)
 	dst->pem_str = preserve.pem_str;
 	dst->info = preserve.info;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_copy);
 
 void
 EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth)
@@ -346,7 +336,6 @@ EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth)
 		free(ameth);
 	}
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_free);
 
 void
 EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
@@ -365,7 +354,6 @@ EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
 	ameth->pkey_size = pkey_size;
 	ameth->pkey_bits = pkey_bits;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_set_public);
 
 void
 EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
@@ -378,7 +366,6 @@ EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
 	ameth->priv_encode = priv_encode;
 	ameth->priv_print = priv_print;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_set_private);
 
 void
 EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
@@ -397,7 +384,6 @@ EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
 	ameth->param_cmp = param_cmp;
 	ameth->param_print = param_print;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_set_param);
 
 void
 EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
@@ -405,7 +391,6 @@ EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
 {
 	ameth->pkey_free = pkey_free;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_set_free);
 
 void
 EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
@@ -413,7 +398,6 @@ EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 {
 	ameth->pkey_ctrl = pkey_ctrl;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_set_ctrl);
 
 void
 EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
@@ -421,7 +405,6 @@ EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
 {
 	ameth->pkey_security_bits = pkey_security_bits;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_set_security_bits);
 
 void
 EVP_PKEY_asn1_set_check(EVP_PKEY_ASN1_METHOD *ameth,
@@ -429,7 +412,6 @@ EVP_PKEY_asn1_set_check(EVP_PKEY_ASN1_METHOD *ameth,
 {
 	ameth->pkey_check = pkey_check;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_set_check);
 
 void
 EVP_PKEY_asn1_set_public_check(EVP_PKEY_ASN1_METHOD *ameth,
@@ -437,7 +419,6 @@ EVP_PKEY_asn1_set_public_check(EVP_PKEY_ASN1_METHOD *ameth,
 {
 	ameth->pkey_public_check = pkey_public_check;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_set_public_check);
 
 void
 EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
@@ -445,4 +426,3 @@ EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
 {
 	ameth->pkey_param_check = pkey_param_check;
 }
-LCRYPTO_ALIAS(EVP_PKEY_asn1_set_param_check);

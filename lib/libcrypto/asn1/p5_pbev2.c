@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbev2.c,v 1.29 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: p5_pbev2.c,v 1.30 2023/07/07 19:37:52 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -97,28 +97,24 @@ d2i_PBE2PARAM(PBE2PARAM **a, const unsigned char **in, long len)
 	return (PBE2PARAM *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &PBE2PARAM_it);
 }
-LCRYPTO_ALIAS(d2i_PBE2PARAM);
 
 int
 i2d_PBE2PARAM(PBE2PARAM *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PBE2PARAM_it);
 }
-LCRYPTO_ALIAS(i2d_PBE2PARAM);
 
 PBE2PARAM *
 PBE2PARAM_new(void)
 {
 	return (PBE2PARAM *)ASN1_item_new(&PBE2PARAM_it);
 }
-LCRYPTO_ALIAS(PBE2PARAM_new);
 
 void
 PBE2PARAM_free(PBE2PARAM *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &PBE2PARAM_it);
 }
-LCRYPTO_ALIAS(PBE2PARAM_free);
 
 static const ASN1_TEMPLATE PBKDF2PARAM_seq_tt[] = {
 	{
@@ -161,28 +157,24 @@ d2i_PBKDF2PARAM(PBKDF2PARAM **a, const unsigned char **in, long len)
 	return (PBKDF2PARAM *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &PBKDF2PARAM_it);
 }
-LCRYPTO_ALIAS(d2i_PBKDF2PARAM);
 
 int
 i2d_PBKDF2PARAM(PBKDF2PARAM *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PBKDF2PARAM_it);
 }
-LCRYPTO_ALIAS(i2d_PBKDF2PARAM);
 
 PBKDF2PARAM *
 PBKDF2PARAM_new(void)
 {
 	return (PBKDF2PARAM *)ASN1_item_new(&PBKDF2PARAM_it);
 }
-LCRYPTO_ALIAS(PBKDF2PARAM_new);
 
 void
 PBKDF2PARAM_free(PBKDF2PARAM *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &PBKDF2PARAM_it);
 }
-LCRYPTO_ALIAS(PBKDF2PARAM_free);
 
 /* Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm:
  * yes I know this is horrible!
@@ -293,7 +285,6 @@ PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS5_pbe2_set_iv);
 
 X509_ALGOR *
 PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
@@ -301,7 +292,6 @@ PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter, unsigned char *salt,
 {
 	return PKCS5_pbe2_set_iv(cipher, iter, salt, saltlen, NULL, -1);
 }
-LCRYPTO_ALIAS(PKCS5_pbe2_set);
 
 X509_ALGOR *
 PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen, int prf_nid,
@@ -382,4 +372,3 @@ PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen, int prf_nid,
 	X509_ALGOR_free(keyfunc);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS5_pbkdf2_set);

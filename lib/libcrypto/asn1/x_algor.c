@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.24 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: x_algor.c,v 1.25 2023/07/07 19:37:52 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -109,28 +109,24 @@ d2i_X509_ALGOR(X509_ALGOR **a, const unsigned char **in, long len)
 	return (X509_ALGOR *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_ALGOR_it);
 }
-LCRYPTO_ALIAS(d2i_X509_ALGOR);
 
 int
 i2d_X509_ALGOR(X509_ALGOR *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_ALGOR_it);
 }
-LCRYPTO_ALIAS(i2d_X509_ALGOR);
 
 X509_ALGOR *
 X509_ALGOR_new(void)
 {
 	return (X509_ALGOR *)ASN1_item_new(&X509_ALGOR_it);
 }
-LCRYPTO_ALIAS(X509_ALGOR_new);
 
 void
 X509_ALGOR_free(X509_ALGOR *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X509_ALGOR_it);
 }
-LCRYPTO_ALIAS(X509_ALGOR_free);
 
 X509_ALGORS *
 d2i_X509_ALGORS(X509_ALGORS **a, const unsigned char **in, long len)
@@ -138,21 +134,18 @@ d2i_X509_ALGORS(X509_ALGORS **a, const unsigned char **in, long len)
 	return (X509_ALGORS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &X509_ALGORS_it);
 }
-LCRYPTO_ALIAS(d2i_X509_ALGORS);
 
 int
 i2d_X509_ALGORS(X509_ALGORS *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &X509_ALGORS_it);
 }
-LCRYPTO_ALIAS(i2d_X509_ALGORS);
 
 X509_ALGOR *
 X509_ALGOR_dup(X509_ALGOR *x)
 {
 	return ASN1_item_dup(&X509_ALGOR_it, x);
 }
-LCRYPTO_ALIAS(X509_ALGOR_dup);
 
 int
 X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
@@ -181,7 +174,6 @@ X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
 		ASN1_TYPE_set(alg->parameter, ptype, pval);
 	return 1;
 }
-LCRYPTO_ALIAS(X509_ALGOR_set0);
 
 void
 X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype, const void **ppval,
@@ -199,7 +191,6 @@ X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype, const void **ppval,
 			*ppval = algor->parameter->value.ptr;
 	}
 }
-LCRYPTO_ALIAS(X509_ALGOR_get0);
 
 /* Set up an X509_ALGOR DigestAlgorithmIdentifier from an EVP_MD */
 
@@ -213,7 +204,6 @@ X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
 
 	X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_type(md)), param_type, NULL);
 }
-LCRYPTO_ALIAS(X509_ALGOR_set_md);
 
 /* Returns 0 if they are equal, != 0 otherwise. */
 int
@@ -228,4 +218,3 @@ X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b)
 	}
 	return(rv);
 }
-LCRYPTO_ALIAS(X509_ALGOR_cmp);

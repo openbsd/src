@@ -1,4 +1,4 @@
-/* $OpenBSD: p_dec.c,v 1.14 2023/07/07 13:54:46 beck Exp $ */
+/* $OpenBSD: p_dec.c,v 1.15 2023/07/07 19:37:54 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,4 +92,3 @@ err:
 #endif
 	return (ret);
 }
-LCRYPTO_ALIAS(EVP_PKEY_decrypt_old);

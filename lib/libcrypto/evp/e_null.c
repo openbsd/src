@@ -1,4 +1,4 @@
-/* $OpenBSD: e_null.c,v 1.17 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: e_null.c,v 1.18 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,7 +88,6 @@ EVP_enc_null(void)
 {
 	return (&n_cipher);
 }
-LCRYPTO_ALIAS(EVP_enc_null);
 
 static int
 null_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,

@@ -1,4 +1,4 @@
-/* $OpenBSD: p_seal.c,v 1.15 2023/07/07 13:54:46 beck Exp $ */
+/* $OpenBSD: p_seal.c,v 1.16 2023/07/07 19:37:54 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -99,7 +99,6 @@ EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type, unsigned char **ek,
 	}
 	return (npubk);
 }
-LCRYPTO_ALIAS(EVP_SealInit);
 
 /* MACRO
 void EVP_SealUpdate(ctx,out,outl,in,inl)
@@ -123,4 +122,3 @@ EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		i = EVP_EncryptInit_ex(ctx, NULL, NULL, NULL, NULL);
 	return i;
 }
-LCRYPTO_ALIAS(EVP_SealFinal);

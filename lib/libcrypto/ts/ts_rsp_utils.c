@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_utils.c,v 1.10 2023/07/07 07:25:21 beck Exp $ */
+/* $OpenBSD: ts_rsp_utils.c,v 1.11 2023/07/07 19:37:54 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -434,6 +434,7 @@ STACK_OF(X509_EXTENSION) *TS_TST_INFO_get_exts(TS_TST_INFO *a)
 {
 	return a->extensions;
 }
+LCRYPTO_ALIAS(TS_TST_INFO_get_exts);
 
 void
 TS_TST_INFO_ext_free(TS_TST_INFO *a)

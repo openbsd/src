@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.51 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.52 2023/07/07 19:37:53 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -82,7 +82,6 @@ EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 		EVP_CIPHER_CTX_init(ctx);
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, enc);
 }
-LCRYPTO_ALIAS(EVP_CipherInit);
 
 int
 EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
@@ -231,7 +230,6 @@ skip_to_init:
 	ctx->block_mask = ctx->cipher->block_size - 1;
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CipherInit_ex);
 
 int
 EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -242,7 +240,6 @@ EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	else
 		return EVP_DecryptUpdate(ctx, out, outl, in, inl);
 }
-LCRYPTO_ALIAS(EVP_CipherUpdate);
 
 int
 EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -252,7 +249,6 @@ EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	else
 		return EVP_DecryptFinal_ex(ctx, out, outl);
 }
-LCRYPTO_ALIAS(EVP_CipherFinal_ex);
 
 __warn_references(EVP_CipherFinal,
     "EVP_CipherFinal is often misused, please use EVP_CipherFinal_ex and EVP_CIPHER_CTX_cleanup");
@@ -267,7 +263,6 @@ EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		ret = EVP_DecryptFinal_ex(ctx, out, outl);
 	return ret;
 }
-LCRYPTO_ALIAS(EVP_CipherFinal);
 
 int
 EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -275,7 +270,6 @@ EVP_EncryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 {
 	return EVP_CipherInit(ctx, cipher, key, iv, 1);
 }
-LCRYPTO_ALIAS(EVP_EncryptInit);
 
 int
 EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
@@ -283,7 +277,6 @@ EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 {
 	return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 1);
 }
-LCRYPTO_ALIAS(EVP_EncryptInit_ex);
 
 int
 EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
@@ -291,7 +284,6 @@ EVP_DecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 {
 	return EVP_CipherInit(ctx, cipher, key, iv, 0);
 }
-LCRYPTO_ALIAS(EVP_DecryptInit);
 
 int
 EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
@@ -299,7 +291,6 @@ EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 {
 	return EVP_CipherInit_ex(ctx, cipher, impl, key, iv, 0);
 }
-LCRYPTO_ALIAS(EVP_DecryptInit_ex);
 
 int
 EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -382,7 +373,6 @@ EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	ctx->buf_len = i;
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_EncryptUpdate);
 
 __warn_references(EVP_EncryptFinal,
     "EVP_EncryptFinal is often misused, please use EVP_EncryptFinal_ex and EVP_CIPHER_CTX_cleanup");
@@ -395,7 +385,6 @@ EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	ret = EVP_EncryptFinal_ex(ctx, out, outl);
 	return ret;
 }
-LCRYPTO_ALIAS(EVP_EncryptFinal);
 
 int
 EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -442,7 +431,6 @@ EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 	return ret;
 }
-LCRYPTO_ALIAS(EVP_EncryptFinal_ex);
 
 int
 EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -513,7 +501,6 @@ EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_DecryptUpdate);
 
 __warn_references(EVP_DecryptFinal,
     "EVP_DecryptFinal is often misused, please use EVP_DecryptFinal_ex and EVP_CIPHER_CTX_cleanup");
@@ -526,7 +513,6 @@ EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	ret = EVP_DecryptFinal_ex(ctx, out, outl);
 	return ret;
 }
-LCRYPTO_ALIAS(EVP_DecryptFinal);
 
 int
 EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -581,14 +567,12 @@ EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 		*outl = 0;
 	return (1);
 }
-LCRYPTO_ALIAS(EVP_DecryptFinal_ex);
 
 EVP_CIPHER_CTX *
 EVP_CIPHER_CTX_new(void)
 {
 	return calloc(1, sizeof(EVP_CIPHER_CTX));
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_new);
 
 void
 EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
@@ -600,21 +584,18 @@ EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 
 	free(ctx);
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_free);
 
 void
 EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 {
 	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_init);
 
 int
 EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *a)
 {
 	return EVP_CIPHER_CTX_cleanup(a);
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_reset);
 
 int
 EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
@@ -638,7 +619,6 @@ EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_cleanup);
 
 int
 EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
@@ -655,7 +635,6 @@ EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 	EVPerror(EVP_R_INVALID_KEY_LENGTH);
 	return 0;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_key_length);
 
 int
 EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
@@ -666,7 +645,6 @@ EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 		ctx->flags |= EVP_CIPH_NO_PADDING;
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_padding);
 
 int
 EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
@@ -690,7 +668,6 @@ EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 	}
 	return ret;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_ctrl);
 
 int
 EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
@@ -700,7 +677,6 @@ EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 	arc4random_buf(key, ctx->key_len);
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_rand_key);
 
 int
 EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
@@ -747,4 +723,3 @@ EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 
 	return 1;
 }
-LCRYPTO_ALIAS(EVP_CIPHER_CTX_copy);

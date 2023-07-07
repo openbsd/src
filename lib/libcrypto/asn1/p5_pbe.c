@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_pbe.c,v 1.24 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: p5_pbe.c,v 1.25 2023/07/07 19:37:52 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -95,28 +95,24 @@ d2i_PBEPARAM(PBEPARAM **a, const unsigned char **in, long len)
 	return (PBEPARAM *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &PBEPARAM_it);
 }
-LCRYPTO_ALIAS(d2i_PBEPARAM);
 
 int
 i2d_PBEPARAM(PBEPARAM *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &PBEPARAM_it);
 }
-LCRYPTO_ALIAS(i2d_PBEPARAM);
 
 PBEPARAM *
 PBEPARAM_new(void)
 {
 	return (PBEPARAM *)ASN1_item_new(&PBEPARAM_it);
 }
-LCRYPTO_ALIAS(PBEPARAM_new);
 
 void
 PBEPARAM_free(PBEPARAM *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &PBEPARAM_it);
 }
-LCRYPTO_ALIAS(PBEPARAM_free);
 
 
 /* Set an algorithm identifier for a PKCS#5 PBE algorithm */
@@ -169,7 +165,6 @@ PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
 	ASN1_STRING_free(pbe_str);
 	return 0;
 }
-LCRYPTO_ALIAS(PKCS5_pbe_set0_algor);
 
 /* Return an algorithm identifier for a PKCS#5 PBE algorithm */
 
@@ -189,4 +184,3 @@ PKCS5_pbe_set(int alg, int iter, const unsigned char *salt, int saltlen)
 	X509_ALGOR_free(ret);
 	return NULL;
 }
-LCRYPTO_ALIAS(PKCS5_pbe_set);
