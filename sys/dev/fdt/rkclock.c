@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.79 2023/07/07 16:52:57 patrick Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.80 2023/07/07 16:53:39 patrick Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -4147,6 +4147,12 @@ const struct rkclock rk3588_clocks[] = {
 		SEL(11, 10), 0,
 		{ RK3588_CLK_PMU1_400M_SRC, RK3588_CLK_PMU1_200M_SRC,
 		  RK3588_CLK_PMU1_100M_SRC, RK3588_XIN24M }
+	},
+	{
+		RK3588_CLK_PMU1PWM, RK3588_PMUCRU_CLKSEL_CON(2),
+		SEL(10, 9), 0,
+		{ RK3588_CLK_PMU1_100M_SRC, RK3588_CLK_PMU1_50M_SRC,
+		  RK3588_XIN24M }
 	},
 	{
 		RK3588_CLK_UART0_SRC, RK3588_PMUCRU_CLKSEL_CON(3),
