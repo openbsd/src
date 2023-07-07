@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.416 2023/07/02 19:02:27 cheloha Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.417 2023/07/07 16:27:46 bluhm Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -515,20 +515,22 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case KERN_MBSTAT: {
 		extern struct cpumem *mbstat;
 		uint64_t counters[MBSTAT_COUNT];
-		struct mbstat mbs;
+		struct mbstat *mbs;
 		unsigned int i;
+		int ret;
 
-		memset(&mbs, 0, sizeof(mbs));
+		mbs = malloc(sizeof(*mbs), M_TEMP, M_WAITOK | M_ZERO);
 		counters_read(mbstat, counters, MBSTAT_COUNT);
 		for (i = 0; i < MBSTAT_TYPES; i++)
-			mbs.m_mtypes[i] = counters[i];
+			mbs->m_mtypes[i] = counters[i];
 
-		mbs.m_drops = counters[MBSTAT_DROPS];
-		mbs.m_wait = counters[MBSTAT_WAIT];
-		mbs.m_drain = counters[MBSTAT_DRAIN];
+		mbs->m_drops = counters[MBSTAT_DROPS];
+		mbs->m_wait = counters[MBSTAT_WAIT];
+		mbs->m_drain = counters[MBSTAT_DRAIN];
 
-		return (sysctl_rdstruct(oldp, oldlenp, newp,
-		    &mbs, sizeof(mbs)));
+		ret = sysctl_rdstruct(oldp, oldlenp, newp, mbs, sizeof(*mbs));
+		free(mbs, M_TEMP, sizeof(*mbs));
+		return (ret);
 	}
 	case KERN_MSGBUFSIZE:
 	case KERN_CONSBUFSIZE: {
