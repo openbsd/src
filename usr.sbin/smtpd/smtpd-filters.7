@@ -1,4 +1,4 @@
-.\"	$OpenBSD: smtpd-filters.7,v 1.9 2022/03/31 17:27:31 naddy Exp $
+.\"	$OpenBSD: smtpd-filters.7,v 1.10 2023/07/07 14:52:00 op Exp $
 .\"
 .\" Copyright (c) 2008 Janne Johansson <jj@openbsd.org>
 .\" Copyright (c) 2009 Jacek Masiulaniec <jacekm@dobremiasto.net>
@@ -17,7 +17,7 @@
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 7 2023 $
 .Dt SMTPD-FILTERS 7
 .Os
 .Sh NAME
@@ -271,11 +271,8 @@ contains a colon-separated list of TLS properties including the TLS version,
 the cipher suite used by the session and the cipher strength in bits.
 .It Ic link-disconnect
 This event is generated upon disconnection of the client.
-.It Ic link-auth : Ar username result
+.It Ic link-auth : Ar result username
 This event is generated upon an authentication attempt by the client.
-.Pp
-.Ar username
-contains the username used for the authentication attempt.
 .Pp
 .Ar result
 contains the string
@@ -284,6 +281,9 @@ contains the string
 or
 .Dq error
 depending on the result of the authentication attempt.
+.Pp
+.Ar username
+contains the username used for the authentication attempt.
 .It Ic tx-reset : Op message-id
 This event is generated when a transaction is reset.
 .Pp

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lka_filter.c,v 1.72 2023/06/21 17:59:24 op Exp $	*/
+/*	$OpenBSD: lka_filter.c,v 1.73 2023/07/07 14:52:00 op Exp $	*/
 
 /*
  * Copyright (c) 2018 Gilles Chehade <gilles@poolp.org>
@@ -24,7 +24,7 @@
 #include "smtpd.h"
 #include "log.h"
 
-#define	PROTOCOL_VERSION	"0.6"
+#define	PROTOCOL_VERSION	"0.7"
 
 struct filter;
 struct filter_session;
@@ -1444,7 +1444,7 @@ lka_report_smtp_link_auth(const char *direction, struct timeval *tv, uint64_t re
 		fs->username = xstrdup(username);
 	}
 	report_smtp_broadcast(reqid, direction, tv, "link-auth", "%s|%s\n",
-	    username, result);
+	    result, username);
 }
 
 void
