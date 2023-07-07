@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_local.h,v 1.3 2023/06/06 16:10:56 tb Exp $ */
+/* $OpenBSD: cms_local.h,v 1.4 2023/07/07 16:04:57 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -388,11 +388,6 @@ struct CMS_Receipt_st {
 	ASN1_OCTET_STRING *originatorSignatureValue;
 };
 
-CMS_ContentInfo *CMS_ContentInfo_new(void);
-void CMS_ContentInfo_free(CMS_ContentInfo *a);
-CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a, const unsigned char **in, long len);
-int i2d_CMS_ContentInfo(CMS_ContentInfo *a, unsigned char **out);
-extern const ASN1_ITEM CMS_ContentInfo_it;
 extern const ASN1_ITEM CMS_SignerInfo_it;
 extern const ASN1_ITEM CMS_IssuerAndSerialNumber_it;
 extern const ASN1_ITEM CMS_Attributes_Sign_it;
