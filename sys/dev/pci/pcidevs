@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2041 2023/06/29 07:58:15 jsg Exp $
+$OpenBSD: pcidevs,v 1.2042 2023/07/07 03:50:02 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -6949,6 +6949,7 @@ product INTEL RPL_U_HB_2	0xa71b	Core 13G Host
 product INTEL RPL_U_HB_3	0xa71c	Core 13G Host
 product INTEL RPL_DTT		0xa71d	Core 13G DTT
 product INTEL RPL_XHCI		0xa71e	Core 13G xHCI
+product INTEL RPL_TBT_PCIE3	0xa71f	Core 13G PCIE
 product INTEL RPL_P_GT_1	0xa720	Graphics
 product INTEL RPL_P_GT_2	0xa721	Graphics
 product INTEL RPL_HX_HB_4	0xa728	Core 13G Host
@@ -6957,6 +6958,7 @@ product INTEL RPL_HX_HB_6	0xa72a	Core 13G Host
 product INTEL RPL_PCIE_2	0xa72d	Core 13G PCIE
 product INTEL RPL_TBT_PCIE2	0xa72f	Core 13G PCIE	
 product INTEL RPL_TBT_DMA0	0xa73e	Core 13G TBT
+product INTEL RPL_TBT_PCIE1	0xa73f	Core 13G PCIE
 product INTEL RPL_PCIE_3	0xa74d	Core 13G PCIE
 product INTEL RPL_GNA		0xa74f	Core 13G GNA
 product INTEL RPL_IPU		0xa75d	Core 13G IPU
