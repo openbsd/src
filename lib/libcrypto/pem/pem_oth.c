@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_oth.c,v 1.8 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: pem_oth.c,v 1.9 2023/07/07 13:40:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -85,3 +85,4 @@ PEM_ASN1_read_bio(d2i_of_void *d2i, const char *name, BIO *bp, void **x,
 	free(data);
 	return (ret);
 }
+LCRYPTO_ALIAS(PEM_ASN1_read_bio);

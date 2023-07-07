@@ -1,4 +1,4 @@
-/* $OpenBSD: lhash.c,v 1.19 2019/05/12 00:09:59 beck Exp $ */
+/* $OpenBSD: lhash.c,v 1.20 2023/07/07 13:40:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,6 +133,7 @@ lh_new(LHASH_HASH_FN_TYPE h, LHASH_COMP_FN_TYPE c)
 
 	return (ret);
 }
+LCRYPTO_ALIAS(lh_new);
 
 void
 lh_free(_LHASH *lh)
@@ -154,6 +155,7 @@ lh_free(_LHASH *lh)
 	free(lh->b);
 	free(lh);
 }
+LCRYPTO_ALIAS(lh_free);
 
 void *
 lh_insert(_LHASH *lh, void *data)
@@ -191,6 +193,7 @@ lh_insert(_LHASH *lh, void *data)
 	}
 	return (ret);
 }
+LCRYPTO_ALIAS(lh_insert);
 
 void *
 lh_delete(_LHASH *lh, const void *data)
@@ -220,6 +223,7 @@ lh_delete(_LHASH *lh, const void *data)
 
 	return (ret);
 }
+LCRYPTO_ALIAS(lh_delete);
 
 void *
 lh_retrieve(_LHASH *lh, const void *data)
@@ -240,6 +244,7 @@ lh_retrieve(_LHASH *lh, const void *data)
 	}
 	return (ret);
 }
+LCRYPTO_ALIAS(lh_retrieve);
 
 static void
 doall_util_fn(_LHASH *lh, int use_arg, LHASH_DOALL_FN_TYPE func,
@@ -275,12 +280,14 @@ lh_doall(_LHASH *lh, LHASH_DOALL_FN_TYPE func)
 {
 	doall_util_fn(lh, 0, func, (LHASH_DOALL_ARG_FN_TYPE)0, NULL);
 }
+LCRYPTO_ALIAS(lh_doall);
 
 void
 lh_doall_arg(_LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg)
 {
 	doall_util_fn(lh, 1, (LHASH_DOALL_FN_TYPE)0, func, arg);
 }
+LCRYPTO_ALIAS(lh_doall_arg);
 
 static void
 expand(_LHASH *lh)
@@ -426,9 +433,11 @@ lh_strhash(const char *c)
 	}
 	return (ret >> 16) ^ ret;
 }
+LCRYPTO_ALIAS(lh_strhash);
 
 unsigned long
 lh_num_items(const _LHASH *lh)
 {
 	return lh ? lh->num_items : 0;
 }
+LCRYPTO_ALIAS(lh_num_items);

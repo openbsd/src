@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_xaux.c,v 1.10 2021/10/31 16:28:50 tb Exp $ */
+/* $OpenBSD: pem_xaux.c,v 1.11 2023/07/07 13:40:44 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -71,6 +71,7 @@ PEM_read_X509_AUX(FILE *fp, X509 **x, pem_password_cb *cb, void *u)
 	return PEM_ASN1_read((d2i_of_void *)d2i_X509_AUX, PEM_STRING_X509_TRUSTED, fp,
 	    (void **)x, cb, u);
 }
+LCRYPTO_ALIAS(PEM_read_X509_AUX);
 
 int
 PEM_write_X509_AUX(FILE *fp, X509 *x)
@@ -78,6 +79,7 @@ PEM_write_X509_AUX(FILE *fp, X509 *x)
 	return PEM_ASN1_write((i2d_of_void *)i2d_X509_AUX, PEM_STRING_X509_TRUSTED, fp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }
+LCRYPTO_ALIAS(PEM_write_X509_AUX);
 
 X509 *
 PEM_read_bio_X509_AUX(BIO *bp, X509 **x, pem_password_cb *cb, void *u)
@@ -85,6 +87,7 @@ PEM_read_bio_X509_AUX(BIO *bp, X509 **x, pem_password_cb *cb, void *u)
 	return PEM_ASN1_read_bio((d2i_of_void *)d2i_X509_AUX, PEM_STRING_X509_TRUSTED, bp,
 	    (void **)x, cb, u);
 }
+LCRYPTO_ALIAS(PEM_read_bio_X509_AUX);
 
 int
 PEM_write_bio_X509_AUX(BIO *bp, X509 *x)
@@ -92,3 +95,4 @@ PEM_write_bio_X509_AUX(BIO *bp, X509 *x)
 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_X509_AUX, PEM_STRING_X509_TRUSTED, bp,
 	    x, NULL, NULL, 0, NULL, NULL);
 }
+LCRYPTO_ALIAS(PEM_write_bio_X509_AUX);

@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_pkey.c,v 1.26 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: pem_pkey.c,v 1.27 2023/07/07 13:40:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -147,6 +147,7 @@ err:
 	freezero(data, len);
 	return (ret);
 }
+LCRYPTO_ALIAS(PEM_read_bio_PrivateKey);
 
 int
 PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
@@ -159,6 +160,7 @@ PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
 	return PEM_write_bio_PrivateKey_traditional(bp, x, enc, kstr, klen, cb,
 	    u);
 }
+LCRYPTO_ALIAS(PEM_write_bio_PrivateKey);
 
 int
 PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
@@ -172,6 +174,7 @@ PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey,
 	    pem_str, bp, x, enc, kstr, klen, cb, u);
 }
+LCRYPTO_ALIAS(PEM_write_bio_PrivateKey_traditional);
 
 EVP_PKEY *
 PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
@@ -212,6 +215,7 @@ err:
 	free(data);
 	return (ret);
 }
+LCRYPTO_ALIAS(PEM_read_bio_Parameters);
 
 int
 PEM_write_bio_Parameters(BIO *bp, EVP_PKEY *x)
@@ -226,6 +230,7 @@ PEM_write_bio_Parameters(BIO *bp, EVP_PKEY *x)
 	return PEM_ASN1_write_bio((i2d_of_void *)x->ameth->param_encode,
 	    pem_str, bp, x, NULL, NULL, 0, 0, NULL);
 }
+LCRYPTO_ALIAS(PEM_write_bio_Parameters);
 
 EVP_PKEY *
 PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
@@ -242,6 +247,7 @@ PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(PEM_read_PrivateKey);
 
 int
 PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
@@ -258,4 +264,4 @@ PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
 	BIO_free(b);
 	return ret;
 }
-
+LCRYPTO_ALIAS(PEM_write_PrivateKey);

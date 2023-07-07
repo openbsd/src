@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2ofb64.c,v 1.7 2023/07/07 08:29:37 beck Exp $ */
+/* $OpenBSD: rc2ofb64.c,v 1.8 2023/07/07 13:40:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -108,3 +108,4 @@ RC2_ofb64_encrypt(const unsigned char *in, unsigned char *out,
 	t = v0 = v1 = ti[0] = ti[1] = 0;
 	*num = n;
 }
+LCRYPTO_ALIAS(RC2_ofb64_encrypt);

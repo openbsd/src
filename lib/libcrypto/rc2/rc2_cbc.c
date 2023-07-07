@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2_cbc.c,v 1.7 2023/07/07 08:29:37 beck Exp $ */
+/* $OpenBSD: rc2_cbc.c,v 1.8 2023/07/07 13:40:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,6 +136,7 @@ RC2_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
 	tin[0] = tin[1] = 0;
 }
+LCRYPTO_ALIAS(RC2_cbc_encrypt);
 
 void
 RC2_encrypt(unsigned long *d, RC2_KEY *key)
@@ -183,6 +184,7 @@ RC2_encrypt(unsigned long *d, RC2_KEY *key)
 	d[1] = (unsigned long)(x2 & 0xffff)|((unsigned long)(x3 & 0xffff) <<
 	    16L);
 }
+LCRYPTO_ALIAS(RC2_encrypt);
 
 void
 RC2_decrypt(unsigned long *d, RC2_KEY *key)
@@ -231,3 +233,4 @@ RC2_decrypt(unsigned long *d, RC2_KEY *key)
 	d[1] = (unsigned long)(x2 & 0xffff)|((unsigned long)(x3 & 0xffff) <<
 	    16L);
 }
+LCRYPTO_ALIAS(RC2_decrypt);

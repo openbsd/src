@@ -1,4 +1,4 @@
-/* $OpenBSD: pem_info.c,v 1.26 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: pem_info.c,v 1.27 2023/07/07 13:40:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,6 +93,7 @@ PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(PEM_X509_INFO_read);
 
 STACK_OF(X509_INFO) *
 PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
@@ -288,6 +289,7 @@ err:
 
 	return ret;
 }
+LCRYPTO_ALIAS(PEM_X509_INFO_read_bio);
 
 
 /* A TJH addition */
@@ -382,3 +384,4 @@ err:
 	explicit_bzero(buf, PEM_BUFSIZE);
 	return (ret);
 }
+LCRYPTO_ALIAS(PEM_X509_INFO_write_bio);

@@ -1,4 +1,4 @@
-/* $OpenBSD: rc2_ecb.c,v 1.8 2023/07/07 08:29:37 beck Exp $ */
+/* $OpenBSD: rc2_ecb.c,v 1.9 2023/07/07 13:40:44 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,3 +88,4 @@ RC2_ecb_encrypt(const unsigned char *in, unsigned char *out, RC2_KEY *ks,
 	l2c(l, out);
 	l = d[0] = d[1] = 0;
 }
+LCRYPTO_ALIAS(RC2_ecb_encrypt);
