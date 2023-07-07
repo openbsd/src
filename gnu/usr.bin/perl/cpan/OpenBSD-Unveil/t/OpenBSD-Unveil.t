@@ -1,4 +1,4 @@
-#	$OpenBSD: OpenBSD-Unveil.t,v 1.1 2019/07/09 20:41:54 afresh1 Exp $	#
+#	$OpenBSD: OpenBSD-Unveil.t,v 1.2 2023/07/07 02:07:35 afresh1 Exp $	#
 ## no critic 'version'
 ## no critic 'package'
 # Before 'make install' is performed this script should be runnable with
@@ -82,47 +82,58 @@ sub xsunveil_ok ($$)    ## no critic 'prototypes'
 
 
 xsunveil_ok "Basic Usage" => sub {
-	ok OpenBSD::Unveil::_unveil('/dev/random', 'r'),
-	    "Unveiled /dev/random r";
+	my $tmpfile = File::Temp->new("OpenBSD-Unveil-XXXXXXXXX", TMPDIR => 1);
+	$tmpfile->printflush("This is a test\n");
+
+	ok OpenBSD::Unveil::_unveil("$tmpfile", 'r'),
+	    "Unveiled tempfile r";
 	ok OpenBSD::Unveil::_unveil('/dev/null',   'wc'),
 	    "Unvailed /dev/null wc";
 
-	ok !-e '/dev/zero',   "Can't see /dev/zero";
-	ok !-w '/dev/random', "Can't write to /dev/random";
-	ok !-r '/dev/null',   "Can't read from /dev/null";
-
-	ok open(my $rfh, '<', '/dev/random'), "Opened /dev/random for reading";
-	ok read( $rfh, my $data, 64),         "Read from /dev/random";
-	ok close($rfh),                       "Closed /dev/random";
-
 	{
 		ok open(my $wfh, '>', '/dev/null'),
-		                              "Opened /dev/null for writing";
-		ok print($wfh $data),         "Printed to /dev/null";
-		ok close($wfh),               "Closed /dev/null";
+		                         "Opened /dev/null for writing";
+		ok print($wfh "Test\n"), "Printed to /dev/null";
+		ok close($wfh),          "Closed /dev/null";
 	}
 
 	ok OpenBSD::Unveil::_unveil('/dev/null',   'w'),
 	    "Unvailed /dev/null w";
 	ok OpenBSD::Unveil::_unveil(),
-		"locked unveil";
+	    "locked unveil";
+
+	ok !-e '/dev/zero', "Stat says we can't see /dev/zero";
+	ok  -w $tmpfile,    "Stat says we can write to tempfile";
+	ok !-r '/dev/null', "Stat says we can't read from /dev/null";
 
 	{
 		ok sysopen(my $wfh, '/dev/null', O_WRONLY),
 		                              "Sysopened /dev/null for writing";
-		ok syswrite($wfh, $data),     "Wrote to /dev/null";
+		ok syswrite($wfh, "Test\n"),  "Wrote to /dev/null";
 		ok close($wfh),               "Closed /dev/null";
 	}
 
 	{
+		ok open(my $rfh, '<', $tmpfile), "Opened tempfile for reading";
+		ok read( $rfh, my $data, 64),    "Read from tempfile";
+		ok close($rfh),                  "Closed tempfile";
+	}
+
+	{
+		ok !open(my $wfh, '>', $tmpfile),
+			"Unable to 'open' tempfile for writing";
+		is $!, 'Permission denied', "Expected ERRNO from open";
+	}
+
+	{
 		ok !open(my $wfh, '>', '/dev/null'),
-			"Unable to 'open' without 'create'";
+			"Unable to 'open' /dev/null without 'create'";
+		is $!, 'Permission denied', "Expected ERRNO from open";
 	}
 };
 
 xsunveil_ok "Invalid Path" => sub {
-	chdir "/tmp" or die "Unable to chdir to /tmp";
-	my $dir = File::Temp->newdir('OpenBSD-Unveil-XXXXXXXXX');
+	my $dir = File::Temp->newdir('OpenBSD-Unveil-XXXXXXXXX', TMPDIR => 1);
 	ok !OpenBSD::Unveil::_unveil("$dir/nonexist/file", 'r'),
 	    "Unable to unveil with incorrect permissions";
 	is $!, 'No such file or directory', "Expected ERRNO from _unveil";
