@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.22 2023/04/20 19:28:31 jcs Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.23 2023/07/07 10:23:39 patrick Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -218,24 +218,29 @@ vq_sync_indirect(struct virtio_softc *sc, struct virtqueue *vq, int slot,
 int
 virtio_check_vqs(struct virtio_softc *sc)
 {
-	struct virtqueue *vq;
 	int i, r = 0;
 
 	/* going backwards is better for if_vio */
-	for (i = sc->sc_nvqs - 1; i >= 0; i--) {
-		vq = &sc->sc_vqs[i];
-		if (vq->vq_queued) {
-			vq->vq_queued = 0;
-			vq_sync_aring(sc, vq, BUS_DMASYNC_POSTWRITE);
-		}
-		vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
-		if (vq->vq_used_idx != vq->vq_used->idx) {
-			if (vq->vq_done)
-				r |= (vq->vq_done)(vq);
-		}
-	}
+	for (i = sc->sc_nvqs - 1; i >= 0; i--)
+		r |= virtio_check_vq(sc, &sc->sc_vqs[i]);
 
 	return r;
+}
+
+int
+virtio_check_vq(struct virtio_softc *sc, struct virtqueue *vq)
+{
+	if (vq->vq_queued) {
+		vq->vq_queued = 0;
+		vq_sync_aring(sc, vq, BUS_DMASYNC_POSTWRITE);
+	}
+	vq_sync_uring(sc, vq, BUS_DMASYNC_POSTREAD);
+	if (vq->vq_used_idx != vq->vq_used->idx) {
+		if (vq->vq_done)
+			return (vq->vq_done)(vq);
+	}
+
+	return 0;
 }
 
 /*

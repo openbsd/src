@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio_pci.c,v 1.34 2023/07/05 18:11:08 patrick Exp $	*/
+/*	$OpenBSD: virtio_pci.c,v 1.35 2023/07/07 10:23:39 patrick Exp $	*/
 /*	$NetBSD: virtio.c,v 1.3 2011/11/02 23:05:52 njoly Exp $	*/
 
 /*
@@ -961,6 +961,13 @@ virtio_pci_setup_msix(struct virtio_pci_softc *sc, struct pci_attach_args *pa,
 	struct virtio_softc *vsc = &sc->sc_sc;
 	int i;
 
+	/* Shared needs config + queue */
+	if (shared && pci_intr_msix_count(pa) < 1 + 1)
+		return 1;
+	/* Per VQ needs config + N * queue */
+	if (!shared && pci_intr_msix_count(pa) < 1 + vsc->sc_nvqs)
+		return 1;
+
 	if (virtio_pci_msix_establish(sc, pa, 0, virtio_pci_config_intr, vsc))
 		return 1;
 	sc->sc_devcfg_offset = VIRTIO_CONFIG_DEVICE_CONFIG_MSI;
@@ -1059,10 +1066,9 @@ int
 virtio_pci_queue_intr(void *arg)
 {
 	struct virtqueue *vq = arg;
+	struct virtio_softc *vsc = vq->vq_owner;
 
-	if (vq->vq_done)
-		return (vq->vq_done)(vq);
-	return 0;
+	return virtio_check_vq(vsc, vq);
 }
 
 int
