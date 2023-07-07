@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_print.c,v 1.2 2023/07/06 15:11:21 tb Exp $ */
+/*	$OpenBSD: bn_print.c,v 1.3 2023/07/07 07:47:25 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -134,6 +134,11 @@ const struct print_test {
 			"        47:e2:1a:e6:63:b8:3d:2e:2f:78:c4:4f:db:f4:0f:\n"
 			"        a4:68:4c:55:72:6b:95:1d:4e:18:42:95:78:cc:37\n",
 	},
+	{
+		.desc = "high bit of first nibble is set",
+		.want = "    mana mana\n"
+			"        00:80:00:00:00:00:00:00:00:00\n",
+	},
 };
 
 #define N_TESTCASES	(sizeof(bn_print_tests) / sizeof(bn_print_tests[0]))
@@ -262,6 +267,15 @@ main(void)
 
 	/* shifted pubkey */
 	BN_set_negative(bn, 0);
+	if (testcase >= N_TESTCASES)
+		errx(1, "Too many tests");
+	test = &bn_print_tests[testcase++];
+	failed |= bn_print_testcase(bn, test);
+
+	/* high bit of first nibble is set. */
+	BN_zero(bn);
+	if (!BN_set_bit(bn, 71))
+		errx(1, "BN_set_bit");
 	if (testcase >= N_TESTCASES)
 		errx(1, "Too many tests");
 	test = &bn_print_tests[testcase++];
