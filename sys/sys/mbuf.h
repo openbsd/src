@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.259 2023/07/04 09:47:51 jsg Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.260 2023/07/07 14:17:34 yasuoka Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -372,7 +372,7 @@ struct mbstat {
 	u_long	m_drops;	/* times failed to find space */
 	u_long	m_wait;		/* times waited for space */
 	u_long	m_drain;	/* times drained protocols for space */
-	u_short	m_mtypes[256];	/* type specific mbuf allocations */
+	u_long	m_mtypes[256];	/* type specific mbuf allocations */
 };
 
 #define MBSTAT_TYPES           MT_NTYPES
