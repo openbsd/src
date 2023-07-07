@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.12 2022/11/23 14:51:00 kn Exp $ */
+/*	$OpenBSD: util.c,v 1.13 2023/07/07 20:38:17 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -43,6 +43,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#define _KERNEL
+#include <sys/refcnt.h>
+#undef _KERNEL
 
 #include "srp_compat.h"
 
@@ -112,6 +116,7 @@ route_insert(unsigned int rid, sa_family_t af, char *string)
 	rt = calloc(1, sizeof(*rt));
 	if (rt == NULL)
 		errx(1, "out of memory");
+	refcnt_init(&rt->rt_refcnt);
 
 	plen = inet_net_ptosa(af, string, dst, mask);
 	if (plen == -1)
@@ -132,6 +137,8 @@ route_insert(unsigned int rid, sa_family_t af, char *string)
 		inet_net_satop(af, rt_key(rt), plen, ip, sizeof(ip));
 		errx(1, "added route not found: %s\n", ip);
 	}
+	rtfree(rt);
+	rtfree(nrt);
 }
 
 /*
@@ -173,6 +180,9 @@ route_delete(unsigned int rid, sa_family_t af, char *string)
 		errx(1, "found: %s after deleting: %s", ip, ip0);
 	}
 
+	rtfree(rt);
+	assert(refcnt_read(&rt->rt_refcnt) == 0);
+
 	free(rt_key(rt));
 	free(rt);
 }
@@ -201,6 +211,8 @@ route_lookup(unsigned int rid, sa_family_t af, char *string)
 	}
 	assert(memcmp(rt_key(rt), dst, dst->sa_len) == 0);
 	assert(rt_plen(rt) == rtable_satoplen(af, mask));
+
+	rtfree(rt);
 }
 
 int
@@ -254,6 +266,7 @@ rtentry_delete(struct rtentry *rt, void *w, unsigned int rid)
 		inet_net_satop(af, rt_key(rt), rt_plen(rt), dest, sizeof(dest));
 		errx(1, "can't rm route: %s, %s\n", dest, strerror(error));
 	}
+	assert(refcnt_read(&rt->rt_refcnt) == 0);
 
 	return (0);
 }
@@ -281,13 +294,47 @@ rt_maskedcopy(struct sockaddr *src, struct sockaddr *dst,
 void
 rtref(struct rtentry *rt)
 {
-	rt->rt_refcnt.r_refs++;
+	refcnt_take(&rt->rt_refcnt);
 }
 
 void
 rtfree(struct rtentry *rt)
 {
-	assert(--(rt->rt_refcnt.r_refs) >= 0);
+	if (refcnt_rele(&rt->rt_refcnt) == 0)
+		return;
+}
+
+void
+refcnt_init(struct refcnt *r)
+{
+	r->r_refs = 1;
+}
+
+void
+refcnt_take(struct refcnt *r)
+{
+	u_int refs;
+
+	refs = ++r->r_refs;
+	assert(refs != 0);
+}
+
+int
+refcnt_rele(struct refcnt *r)
+{
+	u_int refs;
+
+	refs = --r->r_refs;
+	assert(refs != ~0);
+	if (r->r_refs == 0)
+		return (1);
+	return (0);
+}
+
+unsigned int
+refcnt_read(struct refcnt *r)
+{
+	return (r->r_refs);
 }
 
 void

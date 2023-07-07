@@ -1,7 +1,11 @@
-/*	$OpenBSD: kern_compat.h,v 1.14 2023/04/18 16:57:44 bluhm Exp $	*/
+/*	$OpenBSD: kern_compat.h,v 1.15 2023/07/07 20:38:17 bluhm Exp $	*/
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
+
+#define _KERNEL
+#include <sys/refcnt.h>
+#undef _KERNEL
 
 #include <sys/socket.h>
 #include <sys/domain.h>
@@ -77,8 +81,6 @@ extern struct domain *domains[];
 #define rw_enter_write(rwl)
 #define rw_exit_write(rwl)
 #define rw_assert_wrlock(rwl)
-
-#define refcnt_read(cnt)	1
 
 #define SET(t, f)	((t) |= (f))
 #define CLR(t, f)	((t) &= ~(f))
