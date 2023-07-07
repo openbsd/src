@@ -1,4 +1,4 @@
-/*	$OpenBSD: ocsp_test.c,v 1.6 2018/07/18 16:24:16 tb Exp $	*/
+/*	$OpenBSD: ocsp_test.c,v 1.7 2023/07/07 19:54:36 bcook Exp $	*/
 /*
  * Copyright (c) 2016 Bob Beck <beck@openbsd.org>
  *
@@ -34,6 +34,11 @@ tcp_connect(char *host, char *port)
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
+
+	if (BIO_sock_init() != 1) {
+		perror("BIO_sock_init()");
+		exit(-1);
+	}
 
 	error = getaddrinfo(host, port, &hints, &res);
 	if (error != 0) {
