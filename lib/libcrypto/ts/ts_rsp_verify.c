@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_verify.c,v 1.29 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: ts_rsp_verify.c,v 1.30 2023/07/07 07:25:21 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -230,6 +230,7 @@ err:
 
 	return ret;
 }
+LCRYPTO_ALIAS(TS_RESP_verify_signature);
 
 /*
  * The certificate chain is returned in chain. Caller is responsible for
@@ -485,6 +486,7 @@ TS_RESP_verify_response(TS_VERIFY_CTX *ctx, TS_RESP *response)
 err:
 	return ret;
 }
+LCRYPTO_ALIAS(TS_RESP_verify_response);
 
 /*
  * Tries to extract a TS_TST_INFO structure from the PKCS7 token and
@@ -502,6 +504,7 @@ TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(TS_RESP_verify_token);
 
 /*
  * Verifies whether the 'token' contains a valid time stamp token

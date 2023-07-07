@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_print.c,v 1.6 2022/07/24 08:16:47 tb Exp $ */
+/* $OpenBSD: ts_rsp_print.c,v 1.7 2023/07/07 07:25:21 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -95,6 +95,7 @@ TS_RESP_print_bio(BIO *bio, TS_RESP *a)
 
 	return 1;
 }
+LCRYPTO_ALIAS(TS_RESP_print_bio);
 
 int
 TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
@@ -177,6 +178,7 @@ TS_STATUS_INFO_print_bio(BIO *bio, TS_STATUS_INFO *a)
 
 	return 1;
 }
+LCRYPTO_ALIAS(TS_STATUS_INFO_print_bio);
 
 static int
 TS_status_map_print(BIO *bio, struct status_map_st *a, ASN1_BIT_STRING *v)
@@ -275,6 +277,7 @@ TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
 
 	return 1;
 }
+LCRYPTO_ALIAS(TS_TST_INFO_print_bio);
 
 static int
 TS_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy)

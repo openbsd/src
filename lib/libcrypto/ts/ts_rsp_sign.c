@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.30 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.31 2023/07/07 07:25:21 beck Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -149,6 +149,7 @@ TS_RESP_CTX_set_time_cb(TS_RESP_CTX *ctx, TS_time_cb cb, void *data)
 	ctx->time_cb = cb;
 	ctx->time_cb_data = data;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_time_cb);
 
 /* TS_RESP_CTX management functions. */
 
@@ -169,6 +170,7 @@ TS_RESP_CTX_new(void)
 
 	return ctx;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_new);
 
 void
 TS_RESP_CTX_free(TS_RESP_CTX *ctx)
@@ -187,6 +189,7 @@ TS_RESP_CTX_free(TS_RESP_CTX *ctx)
 	ASN1_INTEGER_free(ctx->micros);
 	free(ctx);
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_free);
 
 int
 TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
@@ -200,6 +203,7 @@ TS_RESP_CTX_set_signer_cert(TS_RESP_CTX *ctx, X509 *signer)
 	CRYPTO_add(&ctx->signer_cert->references, +1, CRYPTO_LOCK_X509);
 	return 1;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_signer_cert);
 
 int
 TS_RESP_CTX_set_signer_key(TS_RESP_CTX *ctx, EVP_PKEY *key)
@@ -210,6 +214,7 @@ TS_RESP_CTX_set_signer_key(TS_RESP_CTX *ctx, EVP_PKEY *key)
 
 	return 1;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_signer_key);
 
 int
 TS_RESP_CTX_set_def_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *def_policy)
@@ -224,6 +229,7 @@ err:
 	TSerror(ERR_R_MALLOC_FAILURE);
 	return 0;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_def_policy);
 
 int
 TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs)
@@ -247,6 +253,7 @@ TS_RESP_CTX_set_certs(TS_RESP_CTX *ctx, STACK_OF(X509) *certs)
 
 	return 1;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_certs);
 
 int
 TS_RESP_CTX_add_policy(TS_RESP_CTX *ctx, const ASN1_OBJECT *policy)
@@ -268,6 +275,7 @@ err:
 	ASN1_OBJECT_free(copy);
 	return 0;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_add_policy);
 
 int
 TS_RESP_CTX_add_md(TS_RESP_CTX *ctx, const EVP_MD *md)
@@ -285,6 +293,7 @@ err:
 	TSerror(ERR_R_MALLOC_FAILURE);
 	return 0;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_add_md);
 
 #define TS_RESP_CTX_accuracy_free(ctx)		\
 	ASN1_INTEGER_free(ctx->seconds);	\
@@ -315,12 +324,14 @@ err:
 	TSerror(ERR_R_MALLOC_FAILURE);
 	return 0;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_accuracy);
 
 void
 TS_RESP_CTX_add_flags(TS_RESP_CTX *ctx, int flags)
 {
 	ctx->flags |= flags;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_add_flags);
 
 void
 TS_RESP_CTX_set_serial_cb(TS_RESP_CTX *ctx, TS_serial_cb cb, void *data)
@@ -328,6 +339,7 @@ TS_RESP_CTX_set_serial_cb(TS_RESP_CTX *ctx, TS_serial_cb cb, void *data)
 	ctx->serial_cb = cb;
 	ctx->serial_cb_data = data;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_serial_cb);
 
 void
 TS_RESP_CTX_set_extension_cb(TS_RESP_CTX *ctx, TS_extension_cb cb, void *data)
@@ -335,6 +347,7 @@ TS_RESP_CTX_set_extension_cb(TS_RESP_CTX *ctx, TS_extension_cb cb, void *data)
 	ctx->extension_cb = cb;
 	ctx->extension_cb_data = data;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_extension_cb);
 
 int
 TS_RESP_CTX_set_status_info(TS_RESP_CTX *ctx, int status, const char *text)
@@ -368,6 +381,7 @@ err:
 	ASN1_UTF8STRING_free(utf8_text);
 	return ret;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_status_info);
 
 int
 TS_RESP_CTX_set_status_info_cond(TS_RESP_CTX *ctx, int status, const char *text)
@@ -381,6 +395,7 @@ TS_RESP_CTX_set_status_info_cond(TS_RESP_CTX *ctx, int status, const char *text)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_status_info_cond);
 
 int
 TS_RESP_CTX_add_failure_info(TS_RESP_CTX *ctx, int failure)
@@ -397,18 +412,21 @@ err:
 	TSerror(ERR_R_MALLOC_FAILURE);
 	return 0;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_add_failure_info);
 
 TS_REQ *
 TS_RESP_CTX_get_request(TS_RESP_CTX *ctx)
 {
 	return ctx->request;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_get_request);
 
 TS_TST_INFO *
 TS_RESP_CTX_get_tst_info(TS_RESP_CTX *ctx)
 {
 	return ctx->tst_info;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_get_tst_info);
 
 int
 TS_RESP_CTX_set_clock_precision_digits(TS_RESP_CTX *ctx, unsigned precision)
@@ -418,6 +436,7 @@ TS_RESP_CTX_set_clock_precision_digits(TS_RESP_CTX *ctx, unsigned precision)
 	ctx->clock_precision_digits = precision;
 	return 1;
 }
+LCRYPTO_ALIAS(TS_RESP_CTX_set_clock_precision_digits);
 
 /* Main entry method of the response generation. */
 TS_RESP *
@@ -488,6 +507,7 @@ end:
 	TS_RESP_CTX_cleanup(ctx);
 	return response;
 }
+LCRYPTO_ALIAS(TS_RESP_create_response);
 
 /* Initializes the variable part of the context. */
 static void

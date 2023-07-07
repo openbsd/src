@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_asn1.c,v 1.13 2022/07/24 08:16:47 tb Exp $ */
+/* $OpenBSD: ts_asn1.c,v 1.14 2023/07/07 07:25:21 beck Exp $ */
 /* Written by Nils Larsch for the OpenSSL project 2004.
  */
 /* ====================================================================
@@ -97,30 +97,35 @@ d2i_TS_MSG_IMPRINT(TS_MSG_IMPRINT **a, const unsigned char **in, long len)
 	return (TS_MSG_IMPRINT *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &TS_MSG_IMPRINT_it);
 }
+LCRYPTO_ALIAS(d2i_TS_MSG_IMPRINT);
 
 int
 i2d_TS_MSG_IMPRINT(const TS_MSG_IMPRINT *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_MSG_IMPRINT_it);
 }
+LCRYPTO_ALIAS(i2d_TS_MSG_IMPRINT);
 
 TS_MSG_IMPRINT *
 TS_MSG_IMPRINT_new(void)
 {
 	return (TS_MSG_IMPRINT *)ASN1_item_new(&TS_MSG_IMPRINT_it);
 }
+LCRYPTO_ALIAS(TS_MSG_IMPRINT_new);
 
 void
 TS_MSG_IMPRINT_free(TS_MSG_IMPRINT *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &TS_MSG_IMPRINT_it);
 }
+LCRYPTO_ALIAS(TS_MSG_IMPRINT_free);
 
 TS_MSG_IMPRINT *
 TS_MSG_IMPRINT_dup(TS_MSG_IMPRINT *x)
 {
 	return ASN1_item_dup(&TS_MSG_IMPRINT_it, x);
 }
+LCRYPTO_ALIAS(TS_MSG_IMPRINT_dup);
 
 #ifndef OPENSSL_NO_BIO
 TS_MSG_IMPRINT *
@@ -128,12 +133,14 @@ d2i_TS_MSG_IMPRINT_bio(BIO *bp, TS_MSG_IMPRINT **a)
 {
 	return ASN1_item_d2i_bio(&TS_MSG_IMPRINT_it, bp, a);
 }
+LCRYPTO_ALIAS(d2i_TS_MSG_IMPRINT_bio);
 
 int
 i2d_TS_MSG_IMPRINT_bio(BIO *bp, TS_MSG_IMPRINT *a)
 {
 	return ASN1_item_i2d_bio(&TS_MSG_IMPRINT_it, bp, a);
 }
+LCRYPTO_ALIAS(i2d_TS_MSG_IMPRINT_bio);
 #endif
 
 TS_MSG_IMPRINT *
@@ -141,12 +148,14 @@ d2i_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT **a)
 {
 	return ASN1_item_d2i_fp(&TS_MSG_IMPRINT_it, fp, a);
 }
+LCRYPTO_ALIAS(d2i_TS_MSG_IMPRINT_fp);
 
 int
 i2d_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT *a)
 {
 	return ASN1_item_i2d_fp(&TS_MSG_IMPRINT_it, fp, a);
 }
+LCRYPTO_ALIAS(i2d_TS_MSG_IMPRINT_fp);
 
 static const ASN1_TEMPLATE TS_REQ_seq_tt[] = {
 	{
@@ -210,30 +219,35 @@ d2i_TS_REQ(TS_REQ **a, const unsigned char **in, long len)
 	return (TS_REQ *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &TS_REQ_it);
 }
+LCRYPTO_ALIAS(d2i_TS_REQ);
 
 int
 i2d_TS_REQ(const TS_REQ *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_REQ_it);
 }
+LCRYPTO_ALIAS(i2d_TS_REQ);
 
 TS_REQ *
 TS_REQ_new(void)
 {
 	return (TS_REQ *)ASN1_item_new(&TS_REQ_it);
 }
+LCRYPTO_ALIAS(TS_REQ_new);
 
 void
 TS_REQ_free(TS_REQ *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &TS_REQ_it);
 }
+LCRYPTO_ALIAS(TS_REQ_free);
 
 TS_REQ *
 TS_REQ_dup(TS_REQ *x)
 {
 	return ASN1_item_dup(&TS_REQ_it, x);
 }
+LCRYPTO_ALIAS(TS_REQ_dup);
 
 #ifndef OPENSSL_NO_BIO
 TS_REQ *
@@ -241,12 +255,14 @@ d2i_TS_REQ_bio(BIO *bp, TS_REQ **a)
 {
 	return ASN1_item_d2i_bio(&TS_REQ_it, bp, a);
 }
+LCRYPTO_ALIAS(d2i_TS_REQ_bio);
 
 int
 i2d_TS_REQ_bio(BIO *bp, TS_REQ *a)
 {
 	return ASN1_item_i2d_bio(&TS_REQ_it, bp, a);
 }
+LCRYPTO_ALIAS(i2d_TS_REQ_bio);
 #endif
 
 TS_REQ *
@@ -254,12 +270,14 @@ d2i_TS_REQ_fp(FILE *fp, TS_REQ **a)
 {
 	return ASN1_item_d2i_fp(&TS_REQ_it, fp, a);
 }
+LCRYPTO_ALIAS(d2i_TS_REQ_fp);
 
 int
 i2d_TS_REQ_fp(FILE *fp, TS_REQ *a)
 {
 	return ASN1_item_i2d_fp(&TS_REQ_it, fp, a);
 }
+LCRYPTO_ALIAS(i2d_TS_REQ_fp);
 
 static const ASN1_TEMPLATE TS_ACCURACY_seq_tt[] = {
 	{
@@ -302,30 +320,35 @@ d2i_TS_ACCURACY(TS_ACCURACY **a, const unsigned char **in, long len)
 	return (TS_ACCURACY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &TS_ACCURACY_it);
 }
+LCRYPTO_ALIAS(d2i_TS_ACCURACY);
 
 int
 i2d_TS_ACCURACY(const TS_ACCURACY *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_ACCURACY_it);
 }
+LCRYPTO_ALIAS(i2d_TS_ACCURACY);
 
 TS_ACCURACY *
 TS_ACCURACY_new(void)
 {
 	return (TS_ACCURACY *)ASN1_item_new(&TS_ACCURACY_it);
 }
+LCRYPTO_ALIAS(TS_ACCURACY_new);
 
 void
 TS_ACCURACY_free(TS_ACCURACY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &TS_ACCURACY_it);
 }
+LCRYPTO_ALIAS(TS_ACCURACY_free);
 
 TS_ACCURACY *
 TS_ACCURACY_dup(TS_ACCURACY *x)
 {
 	return ASN1_item_dup(&TS_ACCURACY_it, x);
 }
+LCRYPTO_ALIAS(TS_ACCURACY_dup);
 
 static const ASN1_TEMPLATE TS_TST_INFO_seq_tt[] = {
 	{
@@ -417,30 +440,35 @@ d2i_TS_TST_INFO(TS_TST_INFO **a, const unsigned char **in, long len)
 	return (TS_TST_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &TS_TST_INFO_it);
 }
+LCRYPTO_ALIAS(d2i_TS_TST_INFO);
 
 int
 i2d_TS_TST_INFO(const TS_TST_INFO *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_TST_INFO_it);
 }
+LCRYPTO_ALIAS(i2d_TS_TST_INFO);
 
 TS_TST_INFO *
 TS_TST_INFO_new(void)
 {
 	return (TS_TST_INFO *)ASN1_item_new(&TS_TST_INFO_it);
 }
+LCRYPTO_ALIAS(TS_TST_INFO_new);
 
 void
 TS_TST_INFO_free(TS_TST_INFO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &TS_TST_INFO_it);
 }
+LCRYPTO_ALIAS(TS_TST_INFO_free);
 
 TS_TST_INFO *
 TS_TST_INFO_dup(TS_TST_INFO *x)
 {
 	return ASN1_item_dup(&TS_TST_INFO_it, x);
 }
+LCRYPTO_ALIAS(TS_TST_INFO_dup);
 
 #ifndef OPENSSL_NO_BIO
 TS_TST_INFO *
@@ -448,12 +476,14 @@ d2i_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO **a)
 {
 	return ASN1_item_d2i_bio(&TS_TST_INFO_it, bp, a);
 }
+LCRYPTO_ALIAS(d2i_TS_TST_INFO_bio);
 
 int
 i2d_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO *a)
 {
 	return ASN1_item_i2d_bio(&TS_TST_INFO_it, bp, a);
 }
+LCRYPTO_ALIAS(i2d_TS_TST_INFO_bio);
 #endif
 
 TS_TST_INFO *
@@ -461,12 +491,14 @@ d2i_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO **a)
 {
 	return ASN1_item_d2i_fp(&TS_TST_INFO_it, fp, a);
 }
+LCRYPTO_ALIAS(d2i_TS_TST_INFO_fp);
 
 int
 i2d_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO *a)
 {
 	return ASN1_item_i2d_fp(&TS_TST_INFO_it, fp, a);
 }
+LCRYPTO_ALIAS(i2d_TS_TST_INFO_fp);
 
 static const ASN1_TEMPLATE TS_STATUS_INFO_seq_tt[] = {
 	{
@@ -509,30 +541,35 @@ d2i_TS_STATUS_INFO(TS_STATUS_INFO **a, const unsigned char **in, long len)
 	return (TS_STATUS_INFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &TS_STATUS_INFO_it);
 }
+LCRYPTO_ALIAS(d2i_TS_STATUS_INFO);
 
 int
 i2d_TS_STATUS_INFO(const TS_STATUS_INFO *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_STATUS_INFO_it);
 }
+LCRYPTO_ALIAS(i2d_TS_STATUS_INFO);
 
 TS_STATUS_INFO *
 TS_STATUS_INFO_new(void)
 {
 	return (TS_STATUS_INFO *)ASN1_item_new(&TS_STATUS_INFO_it);
 }
+LCRYPTO_ALIAS(TS_STATUS_INFO_new);
 
 void
 TS_STATUS_INFO_free(TS_STATUS_INFO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &TS_STATUS_INFO_it);
 }
+LCRYPTO_ALIAS(TS_STATUS_INFO_free);
 
 TS_STATUS_INFO *
 TS_STATUS_INFO_dup(TS_STATUS_INFO *x)
 {
 	return ASN1_item_dup(&TS_STATUS_INFO_it, x);
 }
+LCRYPTO_ALIAS(TS_STATUS_INFO_dup);
 
 static int
 ts_resp_set_tst_info(TS_RESP *a)
@@ -620,30 +657,35 @@ d2i_TS_RESP(TS_RESP **a, const unsigned char **in, long len)
 	return (TS_RESP *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &TS_RESP_it);
 }
+LCRYPTO_ALIAS(d2i_TS_RESP);
 
 int
 i2d_TS_RESP(const TS_RESP *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &TS_RESP_it);
 }
+LCRYPTO_ALIAS(i2d_TS_RESP);
 
 TS_RESP *
 TS_RESP_new(void)
 {
 	return (TS_RESP *)ASN1_item_new(&TS_RESP_it);
 }
+LCRYPTO_ALIAS(TS_RESP_new);
 
 void
 TS_RESP_free(TS_RESP *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &TS_RESP_it);
 }
+LCRYPTO_ALIAS(TS_RESP_free);
 
 TS_RESP *
 TS_RESP_dup(TS_RESP *x)
 {
 	return ASN1_item_dup(&TS_RESP_it, x);
 }
+LCRYPTO_ALIAS(TS_RESP_dup);
 
 #ifndef OPENSSL_NO_BIO
 TS_RESP *
@@ -651,12 +693,14 @@ d2i_TS_RESP_bio(BIO *bp, TS_RESP **a)
 {
 	return ASN1_item_d2i_bio(&TS_RESP_it, bp, a);
 }
+LCRYPTO_ALIAS(d2i_TS_RESP_bio);
 
 int
 i2d_TS_RESP_bio(BIO *bp, TS_RESP *a)
 {
 	return ASN1_item_i2d_bio(&TS_RESP_it, bp, a);
 }
+LCRYPTO_ALIAS(i2d_TS_RESP_bio);
 #endif
 
 TS_RESP *
@@ -664,12 +708,14 @@ d2i_TS_RESP_fp(FILE *fp, TS_RESP **a)
 {
 	return ASN1_item_d2i_fp(&TS_RESP_it, fp, a);
 }
+LCRYPTO_ALIAS(d2i_TS_RESP_fp);
 
 int
 i2d_TS_RESP_fp(FILE *fp, TS_RESP *a)
 {
 	return ASN1_item_i2d_fp(&TS_RESP_it, fp, a);
 }
+LCRYPTO_ALIAS(i2d_TS_RESP_fp);
 
 static const ASN1_TEMPLATE ESS_ISSUER_SERIAL_seq_tt[] = {
 	{
@@ -705,30 +751,35 @@ d2i_ESS_ISSUER_SERIAL(ESS_ISSUER_SERIAL **a, const unsigned char **in, long len)
 	return (ESS_ISSUER_SERIAL *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ESS_ISSUER_SERIAL_it);
 }
+LCRYPTO_ALIAS(d2i_ESS_ISSUER_SERIAL);
 
 int
 i2d_ESS_ISSUER_SERIAL(const ESS_ISSUER_SERIAL *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ESS_ISSUER_SERIAL_it);
 }
+LCRYPTO_ALIAS(i2d_ESS_ISSUER_SERIAL);
 
 ESS_ISSUER_SERIAL *
 ESS_ISSUER_SERIAL_new(void)
 {
 	return (ESS_ISSUER_SERIAL *)ASN1_item_new(&ESS_ISSUER_SERIAL_it);
 }
+LCRYPTO_ALIAS(ESS_ISSUER_SERIAL_new);
 
 void
 ESS_ISSUER_SERIAL_free(ESS_ISSUER_SERIAL *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ESS_ISSUER_SERIAL_it);
 }
+LCRYPTO_ALIAS(ESS_ISSUER_SERIAL_free);
 
 ESS_ISSUER_SERIAL *
 ESS_ISSUER_SERIAL_dup(ESS_ISSUER_SERIAL *x)
 {
 	return ASN1_item_dup(&ESS_ISSUER_SERIAL_it, x);
 }
+LCRYPTO_ALIAS(ESS_ISSUER_SERIAL_dup);
 
 static const ASN1_TEMPLATE ESS_CERT_ID_seq_tt[] = {
 	{
@@ -764,30 +815,35 @@ d2i_ESS_CERT_ID(ESS_CERT_ID **a, const unsigned char **in, long len)
 	return (ESS_CERT_ID *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ESS_CERT_ID_it);
 }
+LCRYPTO_ALIAS(d2i_ESS_CERT_ID);
 
 int
 i2d_ESS_CERT_ID(const ESS_CERT_ID *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ESS_CERT_ID_it);
 }
+LCRYPTO_ALIAS(i2d_ESS_CERT_ID);
 
 ESS_CERT_ID *
 ESS_CERT_ID_new(void)
 {
 	return (ESS_CERT_ID *)ASN1_item_new(&ESS_CERT_ID_it);
 }
+LCRYPTO_ALIAS(ESS_CERT_ID_new);
 
 void
 ESS_CERT_ID_free(ESS_CERT_ID *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ESS_CERT_ID_it);
 }
+LCRYPTO_ALIAS(ESS_CERT_ID_free);
 
 ESS_CERT_ID *
 ESS_CERT_ID_dup(ESS_CERT_ID *x)
 {
 	return ASN1_item_dup(&ESS_CERT_ID_it, x);
 }
+LCRYPTO_ALIAS(ESS_CERT_ID_dup);
 
 static const ASN1_TEMPLATE ESS_SIGNING_CERT_seq_tt[] = {
 	{
@@ -823,30 +879,35 @@ d2i_ESS_SIGNING_CERT(ESS_SIGNING_CERT **a, const unsigned char **in, long len)
 	return (ESS_SIGNING_CERT *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ESS_SIGNING_CERT_it);
 }
+LCRYPTO_ALIAS(d2i_ESS_SIGNING_CERT);
 
 int
 i2d_ESS_SIGNING_CERT(const ESS_SIGNING_CERT *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ESS_SIGNING_CERT_it);
 }
+LCRYPTO_ALIAS(i2d_ESS_SIGNING_CERT);
 
 ESS_SIGNING_CERT *
 ESS_SIGNING_CERT_new(void)
 {
 	return (ESS_SIGNING_CERT *)ASN1_item_new(&ESS_SIGNING_CERT_it);
 }
+LCRYPTO_ALIAS(ESS_SIGNING_CERT_new);
 
 void
 ESS_SIGNING_CERT_free(ESS_SIGNING_CERT *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ESS_SIGNING_CERT_it);
 }
+LCRYPTO_ALIAS(ESS_SIGNING_CERT_free);
 
 ESS_SIGNING_CERT *
 ESS_SIGNING_CERT_dup(ESS_SIGNING_CERT *x)
 {
 	return ASN1_item_dup(&ESS_SIGNING_CERT_it, x);
 }
+LCRYPTO_ALIAS(ESS_SIGNING_CERT_dup);
 
 static const ASN1_TEMPLATE ESS_CERT_ID_V2_seq_tt[] = {
 	{
@@ -1013,3 +1074,4 @@ PKCS7_to_TS_TST_INFO(PKCS7 *token)
 	p = tst_info_der->data;
 	return d2i_TS_TST_INFO(NULL, &p, tst_info_der->length);
 }
+LCRYPTO_ALIAS(PKCS7_to_TS_TST_INFO);
