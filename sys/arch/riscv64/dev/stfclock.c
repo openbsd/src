@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.6 2023/07/05 11:07:36 kettenis Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.7 2023/07/07 08:43:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
@@ -79,6 +79,16 @@
 #define JH7110_CLK_PLL1_OUT		1
 #define JH7110_CLK_PLL2_OUT		2
 
+#define JH7110_STGCLK_PCIE0_AXI_MST0	8
+#define JH7110_STGCLK_PCIE0_APB		9
+#define JH7110_STGCLK_PCIE0_TL		10
+#define JH7110_STGCLK_PCIE1_AXI_MST0	11
+#define JH7110_STGCLK_PCIE1_APB		12
+#define JH7110_STGCLK_PCIE1_TL		13
+
+#define JH7110_STGCLK_ASSERT_OFFSET	0x74
+#define JH7110_STGCLK_STATUS_OFFSET	0x78
+
 #define JH7110_SYSCLK_CPU_ROOT		0
 #define JH7110_SYSCLK_CPU_CORE		1
 #define JH7110_SYSCLK_CPU_BUS		2
@@ -93,6 +103,7 @@
 #define JH7110_SYSCLK_SDIO1_AHB		92
 #define JH7110_SYSCLK_SDIO0_SDCARD	93
 #define JH7110_SYSCLK_SDIO1_SDCARD	94
+#define JH7110_SYSCLK_NOC_BUS_STG_AXI	96
 #define JH7110_SYSCLK_GMAC1_AHB		97
 #define JH7110_SYSCLK_GMAC1_AXI		98
 #define JH7110_SYSCLK_GMAC1_GTXCLK	100
@@ -167,6 +178,11 @@ uint32_t stfclock_get_frequency_jh7110_pll(void *, uint32_t *);
 int	stfclock_set_frequency_jh7110_pll(void *, uint32_t *, uint32_t);
 void	stfclock_enable_jh7110_pll(void *, uint32_t *, int);
 
+uint32_t stfclock_get_frequency_jh7110_stg(void *, uint32_t *);
+int	stfclock_set_frequency_jh7110_stg(void *, uint32_t *, uint32_t);
+void	stfclock_enable_jh7110_stg(void *, uint32_t *, int);
+void	stfclock_reset_jh7110_stg(void *, uint32_t *, int);
+
 uint32_t stfclock_get_frequency_jh7110_sys(void *, uint32_t *);
 int	stfclock_set_frequency_jh7110_sys(void *, uint32_t *, uint32_t);
 void	stfclock_enable_jh7110_sys(void *, uint32_t *, int);
@@ -180,6 +196,7 @@ stfclock_match(struct device *parent, void *match, void *aux)
 	return OF_is_compatible(faa->fa_node, "starfive,jh7100-clkgen") ||
 	    OF_is_compatible(faa->fa_node, "starfive,jh7110-aoncrg") ||
 	    OF_is_compatible(faa->fa_node, "starfive,jh7110-pll") ||
+	    OF_is_compatible(faa->fa_node, "starfive,jh7110-stgcrg") ||
 	    OF_is_compatible(faa->fa_node, "starfive,jh7110-syscrg");
 }
 
@@ -224,6 +241,17 @@ stfclock_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_cd.cd_set_frequency = stfclock_set_frequency_jh7110_pll;
 		sc->sc_cd.cd_enable = stfclock_enable_jh7110_pll;
 		printf(": pll\n");
+	} else if (OF_is_compatible(faa->fa_node, "starfive,jh7110-stgcrg")) {
+		sc->sc_cd.cd_get_frequency = stfclock_get_frequency_jh7110_stg;
+		sc->sc_cd.cd_set_frequency = stfclock_set_frequency_jh7110_stg;
+		sc->sc_cd.cd_enable = stfclock_enable_jh7110_stg;
+
+		sc->sc_rd.rd_node = sc->sc_node;
+		sc->sc_rd.rd_cookie = sc;
+		sc->sc_rd.rd_reset = stfclock_reset_jh7110_stg;
+		reset_register(&sc->sc_rd);
+
+		printf(": stgcrg\n");
 	} else if (OF_is_compatible(faa->fa_node, "starfive,jh7110-syscrg")) {
 		sc->sc_cd.cd_get_frequency = stfclock_get_frequency_jh7110_sys;
 		sc->sc_cd.cd_set_frequency = stfclock_set_frequency_jh7110_sys;
@@ -623,6 +651,64 @@ stfclock_enable_jh7110_pll(void *cookie, uint32_t *cells, int on)
 }
 
 uint32_t
+stfclock_get_frequency_jh7110_stg(void *cookie, uint32_t *cells)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: unknown clock 0x%08x\n", __func__, idx);
+	return 0;
+}
+
+int
+stfclock_set_frequency_jh7110_stg(void *cookie, uint32_t *cells, uint32_t freq)
+{
+	uint32_t idx = cells[0];
+
+	printf("%s: not handled 0x%08x (freq=0x%08x)\n", __func__, idx, freq);
+
+	return -1;
+}
+
+void
+stfclock_enable_jh7110_stg(void *cookie, uint32_t *cells, int on)
+{
+	struct stfclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+
+	switch (idx) {
+	case JH7110_STGCLK_PCIE0_AXI_MST0:
+	case JH7110_STGCLK_PCIE0_APB:
+	case JH7110_STGCLK_PCIE0_TL:
+	case JH7110_STGCLK_PCIE1_AXI_MST0:
+	case JH7110_STGCLK_PCIE1_APB:
+	case JH7110_STGCLK_PCIE1_TL:
+		if (on)
+			HSET4(sc, idx * 4, 1U << 31);
+		else
+			HCLR4(sc, idx * 4, 1U << 31);
+		return;
+	}
+
+	printf("%s: unknown clock 0x%08x\n", __func__, idx);
+}
+
+void
+stfclock_reset_jh7110_stg(void *cookie, uint32_t *cells, int assert)
+{
+	struct stfclock_softc *sc = cookie;
+	uint32_t idx = cells[0];
+	uint32_t bits, offset;
+
+	offset = JH7110_STGCLK_ASSERT_OFFSET + (idx / 32) * 4;
+	bits = 1U << (idx % 32);
+
+	if (assert)
+		HSET4(sc, offset, bits);
+	else
+		HCLR4(sc, offset, bits);
+}
+
+uint32_t
 stfclock_get_frequency_jh7110_sys(void *cookie, uint32_t *cells)
 {
 	struct stfclock_softc *sc = cookie;
@@ -756,6 +842,7 @@ stfclock_enable_jh7110_sys(void *cookie, uint32_t *cells, int on)
 	case JH7110_SYSCLK_SDIO1_AHB:
 	case JH7110_SYSCLK_SDIO0_SDCARD:
 	case JH7110_SYSCLK_SDIO1_SDCARD:
+	case JH7110_SYSCLK_NOC_BUS_STG_AXI:
 	case JH7110_SYSCLK_GMAC1_AHB:
 	case JH7110_SYSCLK_GMAC1_AXI:
 	case JH7110_SYSCLK_GMAC1_GTXCLK:
