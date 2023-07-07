@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.22 2023/05/28 14:54:37 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.23 2023/07/07 10:22:28 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -61,7 +61,12 @@
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 
+#include "crypto_internal.h"
+
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA256)
+
+/* Ensure that SHA_LONG and uint32_t are equivalent. */
+CTASSERT(sizeof(SHA_LONG) == sizeof(uint32_t));
 
 #define	DATA_ORDER_IS_BIG_ENDIAN
 
@@ -462,7 +467,6 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
 	size_t n = c->num;
-	unsigned long ll;
 	unsigned int nn;
 
 	p[n] = 0x80; /* there is always room for one */
@@ -473,17 +477,11 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 		n = 0;
 		sha256_block_data_order(c, p, 1);
 	}
-	memset(p + n, 0, SHA_CBLOCK - 8 - n);
 
-	p += SHA_CBLOCK - 8;
-#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
-	HOST_l2c(c->Nh, p);
-	HOST_l2c(c->Nl, p);
-#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
-	HOST_l2c(c->Nl, p);
-	HOST_l2c(c->Nh, p);
-#endif
-	p -= SHA_CBLOCK;
+	memset(p + n, 0, SHA_CBLOCK - 8 - n);
+	c->data[SHA_LBLOCK - 2] = htobe32(c->Nh);
+	c->data[SHA_LBLOCK - 1] = htobe32(c->Nl);
+
 	sha256_block_data_order(c, p, 1);
 	c->num = 0;
 	memset(p, 0, SHA_CBLOCK);
@@ -499,15 +497,15 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 	switch (c->md_len) {
 	case SHA224_DIGEST_LENGTH:
 		for (nn = 0; nn < SHA224_DIGEST_LENGTH / 4; nn++) {
-			ll = c->h[nn];
-			HOST_l2c(ll, md);
+			crypto_store_htobe32(md, c->h[nn]);
+			md += 4;
 		}
 		break;
 
 	case SHA256_DIGEST_LENGTH:
 		for (nn = 0; nn < SHA256_DIGEST_LENGTH / 4; nn++) {
-			ll = c->h[nn];
-			HOST_l2c(ll, md);
+			crypto_store_htobe32(md, c->h[nn]);
+			md += 4;
 		}
 		break;
 
@@ -515,8 +513,8 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 		if (c->md_len > SHA256_DIGEST_LENGTH)
 			return 0;
 		for (nn = 0; nn < c->md_len / 4; nn++) {
-			ll = c->h[nn];
-			HOST_l2c(ll, md);
+			crypto_store_htobe32(md, c->h[nn]);
+			md += 4;
 		}
 		break;
 	}
