@@ -1,4 +1,4 @@
-/* $OpenBSD: rand_lib.c,v 1.20 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: rand_lib.c,v 1.21 2023/07/07 12:01:32 beck Exp $ */
 /*
  * Copyright (c) 2014 Ted Unangst <tedu@openbsd.org>
  *
@@ -29,18 +29,21 @@ RAND_set_rand_method(const RAND_METHOD *meth)
 {
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_set_rand_method);
 
 const RAND_METHOD *
 RAND_get_rand_method(void)
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(RAND_get_rand_method);
 
 RAND_METHOD *
 RAND_SSLeay(void)
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(RAND_SSLeay);
 
 #ifndef OPENSSL_NO_ENGINE
 int
@@ -48,6 +51,7 @@ RAND_set_rand_engine(ENGINE *engine)
 {
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_set_rand_engine);
 #endif
 
 void
@@ -55,30 +59,35 @@ RAND_cleanup(void)
 {
 
 }
+LCRYPTO_ALIAS(RAND_cleanup);
 
 void
 RAND_seed(const void *buf, int num)
 {
 
 }
+LCRYPTO_ALIAS(RAND_seed);
 
 void
 RAND_add(const void *buf, int num, double entropy)
 {
 
 }
+LCRYPTO_ALIAS(RAND_add);
 
 int
 RAND_status(void)
 {
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_status);
 
 int
 RAND_poll(void)
 {
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_poll);
 
 /*
  * Hurray. You've made it to the good parts.
@@ -90,6 +99,7 @@ RAND_bytes(unsigned char *buf, int num)
 		arc4random_buf(buf, num);
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_bytes);
 
 int
 RAND_pseudo_bytes(unsigned char *buf, int num)
@@ -98,3 +108,4 @@ RAND_pseudo_bytes(unsigned char *buf, int num)
 		arc4random_buf(buf, num);
 	return 1;
 }
+LCRYPTO_ALIAS(RAND_pseudo_bytes);

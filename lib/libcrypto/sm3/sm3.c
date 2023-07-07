@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.2 2022/11/26 16:08:54 tb Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.3 2023/07/07 12:01:32 beck Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -35,6 +35,7 @@ SM3_Init(SM3_CTX *c)
 	c->H = SM3_H;
 	return 1;
 }
+LCRYPTO_ALIAS(SM3_Init);
 
 void
 SM3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)

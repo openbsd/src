@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm4.c,v 1.1 2019/03/17 17:42:37 tb Exp $	*/
+/*	$OpenBSD: sm4.c,v 1.2 2023/07/07 12:01:32 beck Exp $	*/
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -199,6 +199,7 @@ SM4_set_key(const uint8_t *key, SM4_KEY *k)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SM4_set_key);
 
 #define SM4_ROUNDS(k0, k1, k2, k3, F)			\
 	  do {						\
@@ -235,6 +236,7 @@ SM4_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
 	store_u32_be(B1, out + 8);
 	store_u32_be(B0, out + 12);
 }
+LCRYPTO_ALIAS(SM4_encrypt);
 
 void
 SM4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
@@ -259,5 +261,6 @@ SM4_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *k)
 	store_u32_be(B1, out + 8);
 	store_u32_be(B0, out + 12);
 }
+LCRYPTO_ALIAS(SM4_decrypt);
 
 #endif /* OPENSSL_NO_SM4 */

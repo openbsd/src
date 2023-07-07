@@ -1,6 +1,6 @@
-/* $OpenBSD: poly1305.c,v 1.4 2023/07/07 12:01:32 beck Exp $ */
+/* $OpenBSD: sm3.h,v 1.1 2023/07/07 12:01:32 beck Exp $ */
 /*
- * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,27 +15,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <openssl/poly1305.h>
-#include "poly1305-donna.c"
+#ifndef _LIBCRYPTO_SM3_H
+#define _LIBCRYPTO_SM3_H
 
-void
-CRYPTO_poly1305_init(poly1305_context *ctx, const unsigned char key[32])
-{
-	poly1305_init(ctx, key);
-}
-LCRYPTO_ALIAS(CRYPTO_poly1305_init);
+#ifndef _MSC_VER
+#include_next <openssl/sm3.h>
+#else
+#include "../include/openssl/sm3.h"
+#endif
+#include "crypto_namespace.h"
 
-void
-CRYPTO_poly1305_update(poly1305_context *ctx, const unsigned char *in,
-    size_t len)
-{
-	poly1305_update(ctx, in, len);
-}
-LCRYPTO_ALIAS(CRYPTO_poly1305_update);
+LCRYPTO_USED(SM3_Init);
+LCRYPTO_USED(SM3_Update);
+LCRYPTO_USED(SM3_Final);
 
-void
-CRYPTO_poly1305_finish(poly1305_context *ctx, unsigned char mac[16])
-{
-	poly1305_finish(ctx, mac);
-}
-LCRYPTO_ALIAS(CRYPTO_poly1305_finish);
+#endif /* _LIBCRYPTO_SM3_H */
