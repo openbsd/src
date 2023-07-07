@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.177 2023/07/02 19:59:15 bluhm Exp $	*/
+/*	$OpenBSD: inet.c,v 1.178 2023/07/07 09:15:13 yasuoka Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -1556,8 +1556,8 @@ tcpcb_dump(u_long off)
 	p("%lu", snd_cwnd, ", ");
 	p("%lu", snd_ssthresh, ", ");
 	p("%lu", max_sndwnd, "\n ");
-	p("%u", t_rcvtime, ", ");
-	p("%u", t_rtttime, ", ");
+	p("%llu", t_rcvtime, ", ");
+	p("%llu", t_rtttime, ", ");
 	p("%u", t_rtseq, "\n ");
 	p("%u", t_srtt, ", ");
 	p("%u", t_rttvar, ", ");
@@ -1570,7 +1570,7 @@ tcpcb_dump(u_long off)
 	p("%u", request_r_scale, ", ");
 	p("%u", requested_s_scale, "\n ");
 	p("%u", ts_recent, ", ");
-	p("%u", ts_recent_age, "\n ");
+	p("%llu", ts_recent_age, "\n ");
 	p("%u", last_ack_sent, "\n ");
 	HTONS(tcpcb.t_pmtud_ip_len);
 	HTONS(tcpcb.t_pmtud_nextmtu);
