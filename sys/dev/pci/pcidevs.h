@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2041 2023/06/29 07:58:15 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2042 2023/07/07 03:50:02 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -6954,6 +6954,7 @@
 #define	PCI_PRODUCT_INTEL_RPL_U_HB_3	0xa71c		/* Core 13G Host */
 #define	PCI_PRODUCT_INTEL_RPL_DTT	0xa71d		/* Core 13G DTT */
 #define	PCI_PRODUCT_INTEL_RPL_XHCI	0xa71e		/* Core 13G xHCI */
+#define	PCI_PRODUCT_INTEL_RPL_TBT_PCIE3	0xa71f		/* Core 13G PCIE */
 #define	PCI_PRODUCT_INTEL_RPL_P_GT_1	0xa720		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_P_GT_2	0xa721		/* Graphics */
 #define	PCI_PRODUCT_INTEL_RPL_HX_HB_4	0xa728		/* Core 13G Host */
@@ -6962,6 +6963,7 @@
 #define	PCI_PRODUCT_INTEL_RPL_PCIE_2	0xa72d		/* Core 13G PCIE */
 #define	PCI_PRODUCT_INTEL_RPL_TBT_PCIE2	0xa72f		/* Core 13G PCIE */
 #define	PCI_PRODUCT_INTEL_RPL_TBT_DMA0	0xa73e		/* Core 13G TBT */
+#define	PCI_PRODUCT_INTEL_RPL_TBT_PCIE1	0xa73f		/* Core 13G PCIE */
 #define	PCI_PRODUCT_INTEL_RPL_PCIE_3	0xa74d		/* Core 13G PCIE */
 #define	PCI_PRODUCT_INTEL_RPL_GNA	0xa74f		/* Core 13G GNA */
 #define	PCI_PRODUCT_INTEL_RPL_IPU	0xa75d		/* Core 13G IPU */
