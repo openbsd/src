@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.23 2023/07/07 10:22:28 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.24 2023/07/07 14:32:41 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -119,74 +119,6 @@ static const SHA_LONG K256[64] = {
 
 #define Ch(x, y, z)	(((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x, y, z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
-
-#ifdef OPENSSL_SMALL_FOOTPRINT
-
-static void
-sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
-{
-	unsigned MD32_REG_T a, b, c, d, e, f, g, h, s0, s1, T1, T2;
-	SHA_LONG	X[16], l;
-	int i;
-	const unsigned char *data = in;
-
-	while (num--) {
-
-		a = ctx->h[0];
-		b = ctx->h[1];
-		c = ctx->h[2];
-		d = ctx->h[3];
-		e = ctx->h[4];
-		f = ctx->h[5];
-		g = ctx->h[6];
-		h = ctx->h[7];
-
-		for (i = 0; i < 16; i++) {
-			HOST_c2l(data, l);
-			T1 = X[i] = l;
-			T1 += h + Sigma1(e) + Ch(e, f, g) + K256[i];
-			T2 = Sigma0(a) + Maj(a, b, c);
-			h = g;
-			g = f;
-			f = e;
-			e = d + T1;
-			d = c;
-			c = b;
-			b = a;
-			a = T1 + T2;
-		}
-
-		for (; i < 64; i++) {
-			s0 = X[(i + 1)&0x0f];
-			s0 = sigma0(s0);
-			s1 = X[(i + 14)&0x0f];
-			s1 = sigma1(s1);
-
-			T1 = X[i&0xf] += s0 + s1 + X[(i + 9)&0xf];
-			T1 += h + Sigma1(e) + Ch(e, f, g) + K256[i];
-			T2 = Sigma0(a) + Maj(a, b, c);
-			h = g;
-			g = f;
-			f = e;
-			e = d + T1;
-			d = c;
-			c = b;
-			b = a;
-			a = T1 + T2;
-		}
-
-		ctx->h[0] += a;
-		ctx->h[1] += b;
-		ctx->h[2] += c;
-		ctx->h[3] += d;
-		ctx->h[4] += e;
-		ctx->h[5] += f;
-		ctx->h[6] += g;
-		ctx->h[7] += h;
-	}
-}
-
-#else
 
 #define	ROUND_00_15(i, a, b, c, d, e, f, g, h)		do {	\
 	T1 += h + Sigma1(e) + Ch(e, f, g) + K256[i];	\
@@ -330,8 +262,6 @@ sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num)
 		ctx->h[7] += h;
 	}
 }
-
-#endif
 #endif /* SHA256_ASM */
 
 int
