@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_kmeth.c,v 1.10 2023/07/05 11:37:46 tb Exp $	*/
+/*	$OpenBSD: ec_kmeth.c,v 1.11 2023/07/07 13:54:45 beck Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -92,12 +92,14 @@ EC_KEY_OpenSSL(void)
 {
 	return &openssl_ec_key_method;
 }
+LCRYPTO_ALIAS(EC_KEY_OpenSSL);
 
 const EC_KEY_METHOD *
 EC_KEY_get_default_method(void)
 {
 	return default_ec_key_meth;
 }
+LCRYPTO_ALIAS(EC_KEY_get_default_method);
 
 void
 EC_KEY_set_default_method(const EC_KEY_METHOD *meth)
@@ -107,12 +109,14 @@ EC_KEY_set_default_method(const EC_KEY_METHOD *meth)
 	else
 		default_ec_key_meth = meth;
 }
+LCRYPTO_ALIAS(EC_KEY_set_default_method);
 
 const EC_KEY_METHOD *
 EC_KEY_get_method(const EC_KEY *key)
 {
 	return key->meth;
 }
+LCRYPTO_ALIAS(EC_KEY_get_method);
 
 int
 EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
@@ -132,6 +136,7 @@ EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
 		return meth->init(key);
 	return 1;
 }
+LCRYPTO_ALIAS(EC_KEY_set_method);
 
 EC_KEY *
 EC_KEY_new_method(ENGINE *engine)
@@ -180,6 +185,7 @@ EC_KEY_new_method(ENGINE *engine)
 	EC_KEY_free(ret);
 	return NULL;
 }
+LCRYPTO_ALIAS(EC_KEY_new_method);
 
 EC_KEY_METHOD *
 EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)
@@ -193,6 +199,7 @@ EC_KEY_METHOD_new(const EC_KEY_METHOD *meth)
 	ret->flags |= EC_KEY_METHOD_DYNAMIC;
 	return ret;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_new);
 
 void
 EC_KEY_METHOD_free(EC_KEY_METHOD *meth)
@@ -202,6 +209,7 @@ EC_KEY_METHOD_free(EC_KEY_METHOD *meth)
 	if (meth->flags & EC_KEY_METHOD_DYNAMIC)
 		free(meth);
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_free);
 
 void
 EC_KEY_METHOD_set_init(EC_KEY_METHOD *meth,
@@ -219,12 +227,14 @@ EC_KEY_METHOD_set_init(EC_KEY_METHOD *meth,
 	meth->set_private = set_private;
 	meth->set_public = set_public;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_set_init);
 
 void
 EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth, int (*keygen)(EC_KEY *key))
 {
 	meth->keygen = keygen;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_set_keygen);
 
 void
 EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
@@ -233,6 +243,7 @@ EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
 {
 	meth->compute_key = ckey;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_set_compute_key);
 
 void
 EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
@@ -249,6 +260,7 @@ EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
 	meth->sign_setup = sign_setup;
 	meth->sign_sig = sign_sig;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_set_sign);
 
 void
 EC_KEY_METHOD_set_verify(EC_KEY_METHOD *meth,
@@ -260,6 +272,7 @@ EC_KEY_METHOD_set_verify(EC_KEY_METHOD *meth,
 	meth->verify = verify;
 	meth->verify_sig = verify_sig;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_set_verify);
 
 
 void
@@ -284,6 +297,7 @@ EC_KEY_METHOD_get_init(const EC_KEY_METHOD *meth,
 	if (pset_public != NULL)
 		*pset_public = meth->set_public;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_get_init);
 
 void
 EC_KEY_METHOD_get_keygen(const EC_KEY_METHOD *meth,
@@ -292,6 +306,7 @@ EC_KEY_METHOD_get_keygen(const EC_KEY_METHOD *meth,
 	if (pkeygen != NULL)
 		*pkeygen = meth->keygen;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_get_keygen);
 
 void
 EC_KEY_METHOD_get_compute_key(const EC_KEY_METHOD *meth,
@@ -301,6 +316,7 @@ EC_KEY_METHOD_get_compute_key(const EC_KEY_METHOD *meth,
 	if (pck != NULL)
 		*pck = meth->compute_key;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_get_compute_key);
 
 void
 EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
@@ -320,6 +336,7 @@ EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
 	if (psign_sig != NULL)
 		*psign_sig = meth->sign_sig;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_get_sign);
 
 void
 EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
@@ -333,3 +350,4 @@ EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 	if (pverify_sig != NULL)
 		*pverify_sig = meth->verify_sig;
 }
+LCRYPTO_ALIAS(EC_KEY_METHOD_get_verify);

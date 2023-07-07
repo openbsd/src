@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.10 2023/07/05 17:10:10 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.11 2023/07/07 13:54:45 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -104,24 +104,28 @@ d2i_ECDSA_SIG(ECDSA_SIG **a, const unsigned char **in, long len)
 	return (ECDSA_SIG *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ECDSA_SIG_it);
 }
+LCRYPTO_ALIAS(d2i_ECDSA_SIG);
 
 int
 i2d_ECDSA_SIG(const ECDSA_SIG *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ECDSA_SIG_it);
 }
+LCRYPTO_ALIAS(i2d_ECDSA_SIG);
 
 ECDSA_SIG *
 ECDSA_SIG_new(void)
 {
 	return (ECDSA_SIG *)ASN1_item_new(&ECDSA_SIG_it);
 }
+LCRYPTO_ALIAS(ECDSA_SIG_new);
 
 void
 ECDSA_SIG_free(ECDSA_SIG *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ECDSA_SIG_it);
 }
+LCRYPTO_ALIAS(ECDSA_SIG_free);
 
 void
 ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
@@ -131,18 +135,21 @@ ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps)
 	if (ps != NULL)
 		*ps = sig->s;
 }
+LCRYPTO_ALIAS(ECDSA_SIG_get0);
 
 const BIGNUM *
 ECDSA_SIG_get0_r(const ECDSA_SIG *sig)
 {
 	return sig->r;
 }
+LCRYPTO_ALIAS(ECDSA_SIG_get0_r);
 
 const BIGNUM *
 ECDSA_SIG_get0_s(const ECDSA_SIG *sig)
 {
 	return sig->s;
 }
+LCRYPTO_ALIAS(ECDSA_SIG_get0_s);
 
 int
 ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
@@ -156,6 +163,7 @@ ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 	sig->s = s;
 	return 1;
 }
+LCRYPTO_ALIAS(ECDSA_SIG_set0);
 
 int
 ECDSA_size(const EC_KEY *r)
@@ -183,6 +191,7 @@ ECDSA_size(const EC_KEY *r)
  err:
 	return ret;
 }
+LCRYPTO_ALIAS(ECDSA_size);
 
 /*
  * FIPS 186-5, section 6.4.1, step 2: convert hashed message into an integer.
@@ -751,6 +760,7 @@ ECDSA_do_sign(const unsigned char *digest, int digest_len, EC_KEY *key)
 {
 	return ECDSA_do_sign_ex(digest, digest_len, NULL, NULL, key);
 }
+LCRYPTO_ALIAS(ECDSA_do_sign);
 
 ECDSA_SIG *
 ECDSA_do_sign_ex(const unsigned char *digest, int digest_len,
@@ -762,6 +772,7 @@ ECDSA_do_sign_ex(const unsigned char *digest, int digest_len,
 	}
 	return key->meth->sign_sig(digest, digest_len, kinv, out_r, key);
 }
+LCRYPTO_ALIAS(ECDSA_do_sign_ex);
 
 int
 ECDSA_sign(int type, const unsigned char *digest, int digest_len,
@@ -770,6 +781,7 @@ ECDSA_sign(int type, const unsigned char *digest, int digest_len,
 	return ECDSA_sign_ex(type, digest, digest_len, signature, signature_len,
 	    NULL, NULL, key);
 }
+LCRYPTO_ALIAS(ECDSA_sign);
 
 int
 ECDSA_sign_ex(int type, const unsigned char *digest, int digest_len,
@@ -783,6 +795,7 @@ ECDSA_sign_ex(int type, const unsigned char *digest, int digest_len,
 	return key->meth->sign(type, digest, digest_len, signature,
 	    signature_len, kinv, r, key);
 }
+LCRYPTO_ALIAS(ECDSA_sign_ex);
 
 int
 ECDSA_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
@@ -794,6 +807,7 @@ ECDSA_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
 	}
 	return key->meth->sign_setup(key, in_ctx, out_kinv, out_r);
 }
+LCRYPTO_ALIAS(ECDSA_sign_setup);
 
 int
 ECDSA_do_verify(const unsigned char *digest, int digest_len,
@@ -805,6 +819,7 @@ ECDSA_do_verify(const unsigned char *digest, int digest_len,
 	}
 	return key->meth->verify_sig(digest, digest_len, sig, key);
 }
+LCRYPTO_ALIAS(ECDSA_do_verify);
 
 int
 ECDSA_verify(int type, const unsigned char *digest, int digest_len,
@@ -816,3 +831,4 @@ ECDSA_verify(int type, const unsigned char *digest, int digest_len,
 	}
 	return key->meth->verify(type, digest, digest_len, sigbuf, sig_len, key);
 }
+LCRYPTO_ALIAS(ECDSA_verify);

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_md5.c,v 1.18 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: m_md5.c,v 1.19 2023/07/07 13:54:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,4 +110,5 @@ EVP_md5(void)
 {
 	return (&md5_md);
 }
+LCRYPTO_ALIAS(EVP_md5);
 #endif

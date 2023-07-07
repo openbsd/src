@@ -1,4 +1,4 @@
-/* $OpenBSD: e_camellia.c,v 1.16 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: e_camellia.c,v 1.17 2023/07/07 13:54:45 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
@@ -179,6 +179,7 @@ EVP_camellia_128_cbc(void)
 {
 	return &camellia_128_cbc;
 }
+LCRYPTO_ALIAS(EVP_camellia_128_cbc);
 
 static const EVP_CIPHER camellia_128_cfb128 = {
 	.nid = NID_camellia_128_cfb128,
@@ -201,6 +202,7 @@ EVP_camellia_128_cfb128(void)
 {
 	return &camellia_128_cfb128;
 }
+LCRYPTO_ALIAS(EVP_camellia_128_cfb128);
 
 static const EVP_CIPHER camellia_128_ofb = {
 	.nid = NID_camellia_128_ofb128,
@@ -223,6 +225,7 @@ EVP_camellia_128_ofb(void)
 {
 	return &camellia_128_ofb;
 }
+LCRYPTO_ALIAS(EVP_camellia_128_ofb);
 
 static const EVP_CIPHER camellia_128_ecb = {
 	.nid = NID_camellia_128_ecb,
@@ -245,6 +248,7 @@ EVP_camellia_128_ecb(void)
 {
 	return &camellia_128_ecb;
 }
+LCRYPTO_ALIAS(EVP_camellia_128_ecb);
 
 static int
 camellia_192_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
@@ -337,6 +341,7 @@ EVP_camellia_192_cbc(void)
 {
 	return &camellia_192_cbc;
 }
+LCRYPTO_ALIAS(EVP_camellia_192_cbc);
 
 static const EVP_CIPHER camellia_192_cfb128 = {
 	.nid = NID_camellia_192_cfb128,
@@ -359,6 +364,7 @@ EVP_camellia_192_cfb128(void)
 {
 	return &camellia_192_cfb128;
 }
+LCRYPTO_ALIAS(EVP_camellia_192_cfb128);
 
 static const EVP_CIPHER camellia_192_ofb = {
 	.nid = NID_camellia_192_ofb128,
@@ -381,6 +387,7 @@ EVP_camellia_192_ofb(void)
 {
 	return &camellia_192_ofb;
 }
+LCRYPTO_ALIAS(EVP_camellia_192_ofb);
 
 static const EVP_CIPHER camellia_192_ecb = {
 	.nid = NID_camellia_192_ecb,
@@ -403,6 +410,7 @@ EVP_camellia_192_ecb(void)
 {
 	return &camellia_192_ecb;
 }
+LCRYPTO_ALIAS(EVP_camellia_192_ecb);
 
 static int
 camellia_256_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
@@ -495,6 +503,7 @@ EVP_camellia_256_cbc(void)
 {
 	return &camellia_256_cbc;
 }
+LCRYPTO_ALIAS(EVP_camellia_256_cbc);
 
 static const EVP_CIPHER camellia_256_cfb128 = {
 	.nid = NID_camellia_256_cfb128,
@@ -517,6 +526,7 @@ EVP_camellia_256_cfb128(void)
 {
 	return &camellia_256_cfb128;
 }
+LCRYPTO_ALIAS(EVP_camellia_256_cfb128);
 
 static const EVP_CIPHER camellia_256_ofb = {
 	.nid = NID_camellia_256_ofb128,
@@ -539,6 +549,7 @@ EVP_camellia_256_ofb(void)
 {
 	return &camellia_256_ofb;
 }
+LCRYPTO_ALIAS(EVP_camellia_256_ofb);
 
 static const EVP_CIPHER camellia_256_ecb = {
 	.nid = NID_camellia_256_ecb,
@@ -561,6 +572,7 @@ EVP_camellia_256_ecb(void)
 {
 	return &camellia_256_ecb;
 }
+LCRYPTO_ALIAS(EVP_camellia_256_ecb);
 
 static int
 camellia_128_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
@@ -605,6 +617,7 @@ EVP_camellia_128_cfb1(void)
 {
 	return &camellia_128_cfb1;
 }
+LCRYPTO_ALIAS(EVP_camellia_128_cfb1);
 
 static int
 camellia_192_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
@@ -649,6 +662,7 @@ EVP_camellia_192_cfb1(void)
 {
 	return &camellia_192_cfb1;
 }
+LCRYPTO_ALIAS(EVP_camellia_192_cfb1);
 
 static int
 camellia_256_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
@@ -693,6 +707,7 @@ EVP_camellia_256_cfb1(void)
 {
 	return &camellia_256_cfb1;
 }
+LCRYPTO_ALIAS(EVP_camellia_256_cfb1);
 
 
 static int
@@ -736,6 +751,7 @@ EVP_camellia_128_cfb8(void)
 {
 	return &camellia_128_cfb8;
 }
+LCRYPTO_ALIAS(EVP_camellia_128_cfb8);
 
 static int
 camellia_192_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
@@ -778,6 +794,7 @@ EVP_camellia_192_cfb8(void)
 {
 	return &camellia_192_cfb8;
 }
+LCRYPTO_ALIAS(EVP_camellia_192_cfb8);
 
 static int
 camellia_256_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl)
@@ -820,4 +837,5 @@ EVP_camellia_256_cfb8(void)
 {
 	return &camellia_256_cfb8;
 }
+LCRYPTO_ALIAS(EVP_camellia_256_cfb8);
 #endif

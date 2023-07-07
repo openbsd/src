@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_lib.c,v 1.23 2023/07/05 08:39:40 tb Exp $ */
+/* $OpenBSD: ech_lib.c,v 1.24 2023/07/07 13:54:45 beck Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -98,12 +98,14 @@ ECDH_OpenSSL(void)
 {
 	return &openssl_ecdh_meth;
 }
+LCRYPTO_ALIAS(ECDH_OpenSSL);
 
 void
 ECDH_set_default_method(const ECDH_METHOD *meth)
 {
 	default_ECDH_method = meth;
 }
+LCRYPTO_ALIAS(ECDH_set_default_method);
 
 const ECDH_METHOD *
 ECDH_get_default_method(void)
@@ -113,12 +115,14 @@ ECDH_get_default_method(void)
 	}
 	return default_ECDH_method;
 }
+LCRYPTO_ALIAS(ECDH_get_default_method);
 
 int
 ECDH_set_method(EC_KEY *eckey, const ECDH_METHOD *meth)
 {
 	return 0;
 }
+LCRYPTO_ALIAS(ECDH_set_method);
 
 int
 ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
@@ -126,15 +130,18 @@ ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 {
 	return -1;
 }
+LCRYPTO_ALIAS(ECDH_get_ex_new_index);
 
 int
 ECDH_set_ex_data(EC_KEY *d, int idx, void *arg)
 {
 	return 0;
 }
+LCRYPTO_ALIAS(ECDH_set_ex_data);
 
 void *
 ECDH_get_ex_data(EC_KEY *d, int idx)
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(ECDH_get_ex_data);

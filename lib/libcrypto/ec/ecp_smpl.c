@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.45 2023/06/30 18:19:35 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.46 2023/07/07 13:54:45 beck Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -1604,3 +1604,4 @@ EC_GFp_simple_method(void)
 {
 	return &ec_GFp_simple_method;
 }
+LCRYPTO_ALIAS(EC_GFp_simple_method);

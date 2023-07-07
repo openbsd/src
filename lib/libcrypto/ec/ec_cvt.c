@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_cvt.c,v 1.11 2023/04/25 19:53:30 tb Exp $ */
+/* $OpenBSD: ec_cvt.c,v 1.12 2023/07/07 13:54:45 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -100,3 +100,4 @@ EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b,
 {
 	return ec_group_new_curve(EC_GFp_mont_method(), p, a, b, ctx);
 }
+LCRYPTO_ALIAS(EC_GROUP_new_curve_GFp);

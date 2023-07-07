@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_key.c,v 1.35 2023/07/05 08:39:40 tb Exp $ */
+/* $OpenBSD: ec_key.c,v 1.36 2023/07/07 13:54:45 beck Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -78,6 +78,7 @@ EC_KEY_new(void)
 {
 	return EC_KEY_new_method(NULL);
 }
+LCRYPTO_ALIAS(EC_KEY_new);
 
 EC_KEY *
 EC_KEY_new_by_curve_name(int nid)
@@ -97,6 +98,7 @@ EC_KEY_new_by_curve_name(int nid)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(EC_KEY_new_by_curve_name);
 
 void
 EC_KEY_free(EC_KEY *r)
@@ -124,6 +126,7 @@ EC_KEY_free(EC_KEY *r)
 
 	freezero(r, sizeof(EC_KEY));
 }
+LCRYPTO_ALIAS(EC_KEY_free);
 
 EC_KEY *
 EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
@@ -197,6 +200,7 @@ EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 
 	return dest;
 }
+LCRYPTO_ALIAS(EC_KEY_copy);
 
 EC_KEY *
 EC_KEY_dup(const EC_KEY *ec_key)
@@ -211,6 +215,7 @@ EC_KEY_dup(const EC_KEY *ec_key)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(EC_KEY_dup);
 
 int
 EC_KEY_up_ref(EC_KEY *r)
@@ -218,18 +223,21 @@ EC_KEY_up_ref(EC_KEY *r)
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_EC);
 	return ((i > 1) ? 1 : 0);
 }
+LCRYPTO_ALIAS(EC_KEY_up_ref);
 
 int
 EC_KEY_set_ex_data(EC_KEY *r, int idx, void *arg)
 {
 	return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
 }
+LCRYPTO_ALIAS(EC_KEY_set_ex_data);
 
 void *
 EC_KEY_get_ex_data(const EC_KEY *r, int idx)
 {
 	return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
+LCRYPTO_ALIAS(EC_KEY_get_ex_data);
 
 int
 EC_KEY_generate_key(EC_KEY *eckey)
@@ -239,6 +247,7 @@ EC_KEY_generate_key(EC_KEY *eckey)
 	ECerror(EC_R_NOT_IMPLEMENTED);
 	return 0;
 }
+LCRYPTO_ALIAS(EC_KEY_generate_key);
 
 int
 ec_key_gen(EC_KEY *eckey)
@@ -355,6 +364,7 @@ EC_KEY_check_key(const EC_KEY *eckey)
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_KEY_check_key);
 
 int
 EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
@@ -409,12 +419,14 @@ EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_KEY_set_public_key_affine_coordinates);
 
 const EC_GROUP *
 EC_KEY_get0_group(const EC_KEY *key)
 {
 	return key->group;
 }
+LCRYPTO_ALIAS(EC_KEY_get0_group);
 
 int
 EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
@@ -426,12 +438,14 @@ EC_KEY_set_group(EC_KEY *key, const EC_GROUP *group)
 	key->group = EC_GROUP_dup(group);
 	return (key->group == NULL) ? 0 : 1;
 }
+LCRYPTO_ALIAS(EC_KEY_set_group);
 
 const BIGNUM *
 EC_KEY_get0_private_key(const EC_KEY *key)
 {
 	return key->priv_key;
 }
+LCRYPTO_ALIAS(EC_KEY_get0_private_key);
 
 int
 EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
@@ -446,12 +460,14 @@ EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EC_KEY_set_private_key);
 
 const EC_POINT *
 EC_KEY_get0_public_key(const EC_KEY *key)
 {
 	return key->pub_key;
 }
+LCRYPTO_ALIAS(EC_KEY_get0_public_key);
 
 int
 EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
@@ -466,24 +482,28 @@ EC_KEY_set_public_key(EC_KEY *key, const EC_POINT *pub_key)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EC_KEY_set_public_key);
 
 unsigned int
 EC_KEY_get_enc_flags(const EC_KEY *key)
 {
 	return key->enc_flag;
 }
+LCRYPTO_ALIAS(EC_KEY_get_enc_flags);
 
 void
 EC_KEY_set_enc_flags(EC_KEY *key, unsigned int flags)
 {
 	key->enc_flag = flags;
 }
+LCRYPTO_ALIAS(EC_KEY_set_enc_flags);
 
 point_conversion_form_t
 EC_KEY_get_conv_form(const EC_KEY *key)
 {
 	return key->conv_form;
 }
+LCRYPTO_ALIAS(EC_KEY_get_conv_form);
 
 void
 EC_KEY_set_conv_form(EC_KEY *key, point_conversion_form_t cform)
@@ -492,6 +512,7 @@ EC_KEY_set_conv_form(EC_KEY *key, point_conversion_form_t cform)
 	if (key->group != NULL)
 		EC_GROUP_set_point_conversion_form(key->group, cform);
 }
+LCRYPTO_ALIAS(EC_KEY_set_conv_form);
 
 void
 EC_KEY_set_asn1_flag(EC_KEY *key, int flag)
@@ -499,6 +520,7 @@ EC_KEY_set_asn1_flag(EC_KEY *key, int flag)
 	if (key->group != NULL)
 		EC_GROUP_set_asn1_flag(key->group, flag);
 }
+LCRYPTO_ALIAS(EC_KEY_set_asn1_flag);
 
 int
 EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx)
@@ -507,21 +529,25 @@ EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx)
 		return 0;
 	return EC_GROUP_precompute_mult(key->group, ctx);
 }
+LCRYPTO_ALIAS(EC_KEY_precompute_mult);
 
 int
 EC_KEY_get_flags(const EC_KEY *key)
 {
 	return key->flags;
 }
+LCRYPTO_ALIAS(EC_KEY_get_flags);
 
 void
 EC_KEY_set_flags(EC_KEY *key, int flags)
 {
 	key->flags |= flags;
 }
+LCRYPTO_ALIAS(EC_KEY_set_flags);
 
 void
 EC_KEY_clear_flags(EC_KEY *key, int flags)
 {
 	key->flags &= ~flags;
 }
+LCRYPTO_ALIAS(EC_KEY_clear_flags);

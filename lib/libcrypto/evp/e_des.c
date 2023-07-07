@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des.c,v 1.20 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: e_des.c,v 1.21 2023/07/07 13:54:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -242,6 +242,7 @@ EVP_des_cbc(void)
 {
 	return &des_cbc;
 }
+LCRYPTO_ALIAS(EVP_des_cbc);
 
 static const EVP_CIPHER des_cfb64 = {
 	.nid = NID_des_cfb64,
@@ -264,6 +265,7 @@ EVP_des_cfb64(void)
 {
 	return &des_cfb64;
 }
+LCRYPTO_ALIAS(EVP_des_cfb64);
 
 static const EVP_CIPHER des_ofb = {
 	.nid = NID_des_ofb64,
@@ -286,6 +288,7 @@ EVP_des_ofb(void)
 {
 	return &des_ofb;
 }
+LCRYPTO_ALIAS(EVP_des_ofb);
 
 static const EVP_CIPHER des_ecb = {
 	.nid = NID_des_ecb,
@@ -308,6 +311,7 @@ EVP_des_ecb(void)
 {
 	return &des_ecb;
 }
+LCRYPTO_ALIAS(EVP_des_ecb);
 
 static const EVP_CIPHER des_cfb1 = {
 	.nid = NID_des_cfb1,
@@ -330,6 +334,7 @@ EVP_des_cfb1(void)
 {
 	return &des_cfb1;
 }
+LCRYPTO_ALIAS(EVP_des_cfb1);
 
 static const EVP_CIPHER des_cfb8 = {
 	.nid = NID_des_cfb8,
@@ -352,4 +357,5 @@ EVP_des_cfb8(void)
 {
 	return &des_cfb8;
 }
+LCRYPTO_ALIAS(EVP_des_cfb8);
 #endif

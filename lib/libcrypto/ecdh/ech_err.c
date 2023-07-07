@@ -1,4 +1,4 @@
-/* $OpenBSD: ech_err.c,v 1.7 2022/07/12 14:42:49 kn Exp $ */
+/* $OpenBSD: ech_err.c,v 1.8 2023/07/07 13:54:45 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -91,3 +91,4 @@ ERR_load_ECDH_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_ECDH_strings);

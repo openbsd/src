@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_md.c,v 1.19 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: bio_md.c,v 1.20 2023/07/07 13:54:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,6 +94,7 @@ BIO_f_md(void)
 {
 	return (&methods_md);
 }
+LCRYPTO_ALIAS(BIO_f_md);
 
 static int
 md_new(BIO *bi)

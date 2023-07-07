@@ -1,4 +1,4 @@
-/* $OpenBSD: e_bf.c,v 1.15 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: e_bf.c,v 1.16 2023/07/07 13:54:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -178,6 +178,7 @@ EVP_bf_cbc(void)
 {
 	return &bf_cbc;
 }
+LCRYPTO_ALIAS(EVP_bf_cbc);
 
 static const EVP_CIPHER bf_cfb64 = {
 	.nid = NID_bf_cfb64,
@@ -200,6 +201,7 @@ EVP_bf_cfb64(void)
 {
 	return &bf_cfb64;
 }
+LCRYPTO_ALIAS(EVP_bf_cfb64);
 
 static const EVP_CIPHER bf_ofb = {
 	.nid = NID_bf_ofb64,
@@ -222,6 +224,7 @@ EVP_bf_ofb(void)
 {
 	return &bf_ofb;
 }
+LCRYPTO_ALIAS(EVP_bf_ofb);
 
 static const EVP_CIPHER bf_ecb = {
 	.nid = NID_bf_ecb,
@@ -244,4 +247,5 @@ EVP_bf_ecb(void)
 {
 	return &bf_ecb;
 }
+LCRYPTO_ALIAS(EVP_bf_ecb);
 #endif

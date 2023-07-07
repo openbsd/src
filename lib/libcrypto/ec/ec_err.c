@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_err.c,v 1.16 2023/07/05 17:10:10 tb Exp $ */
+/* $OpenBSD: ec_err.c,v 1.17 2023/07/07 13:54:45 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -147,3 +147,4 @@ ERR_load_EC_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_EC_strings);

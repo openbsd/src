@@ -1,4 +1,4 @@
-/* $OpenBSD: e_des3.c,v 1.26 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: e_des3.c,v 1.27 2023/07/07 13:54:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -274,6 +274,7 @@ EVP_des_ede_cbc(void)
 {
 	return &des_ede_cbc;
 }
+LCRYPTO_ALIAS(EVP_des_ede_cbc);
 
 static const EVP_CIPHER des_ede_cfb64 = {
 	.nid = NID_des_ede_cfb64,
@@ -296,6 +297,7 @@ EVP_des_ede_cfb64(void)
 {
 	return &des_ede_cfb64;
 }
+LCRYPTO_ALIAS(EVP_des_ede_cfb64);
 
 static const EVP_CIPHER des_ede_ofb = {
 	.nid = NID_des_ede_ofb64,
@@ -318,6 +320,7 @@ EVP_des_ede_ofb(void)
 {
 	return &des_ede_ofb;
 }
+LCRYPTO_ALIAS(EVP_des_ede_ofb);
 
 static const EVP_CIPHER des_ede_ecb = {
 	.nid = NID_des_ede_ecb,
@@ -340,6 +343,7 @@ EVP_des_ede_ecb(void)
 {
 	return &des_ede_ecb;
 }
+LCRYPTO_ALIAS(EVP_des_ede_ecb);
 
 
 #define des_ede3_cfb64_cipher des_ede_cfb64_cipher
@@ -368,6 +372,7 @@ EVP_des_ede3_cbc(void)
 {
 	return &des_ede3_cbc;
 }
+LCRYPTO_ALIAS(EVP_des_ede3_cbc);
 
 static const EVP_CIPHER des_ede3_cfb64 = {
 	.nid = NID_des_ede3_cfb64,
@@ -390,6 +395,7 @@ EVP_des_ede3_cfb64(void)
 {
 	return &des_ede3_cfb64;
 }
+LCRYPTO_ALIAS(EVP_des_ede3_cfb64);
 
 static const EVP_CIPHER des_ede3_ofb = {
 	.nid = NID_des_ede3_ofb64,
@@ -412,6 +418,7 @@ EVP_des_ede3_ofb(void)
 {
 	return &des_ede3_ofb;
 }
+LCRYPTO_ALIAS(EVP_des_ede3_ofb);
 
 static const EVP_CIPHER des_ede3_ecb = {
 	.nid = NID_des_ede3_ecb,
@@ -434,6 +441,7 @@ EVP_des_ede3_ecb(void)
 {
 	return &des_ede3_ecb;
 }
+LCRYPTO_ALIAS(EVP_des_ede3_ecb);
 
 
 static const EVP_CIPHER des_ede3_cfb1 = {
@@ -457,6 +465,7 @@ EVP_des_ede3_cfb1(void)
 {
 	return &des_ede3_cfb1;
 }
+LCRYPTO_ALIAS(EVP_des_ede3_cfb1);
 
 
 static const EVP_CIPHER des_ede3_cfb8 = {
@@ -480,16 +489,19 @@ EVP_des_ede3_cfb8(void)
 {
 	return &des_ede3_cfb8;
 }
+LCRYPTO_ALIAS(EVP_des_ede3_cfb8);
 
 const EVP_CIPHER *
 EVP_des_ede(void)
 {
 	return &des_ede_ecb;
 }
+LCRYPTO_ALIAS(EVP_des_ede);
 
 const EVP_CIPHER *
 EVP_des_ede3(void)
 {
 	return &des_ede3_ecb;
 }
+LCRYPTO_ALIAS(EVP_des_ede3);
 #endif

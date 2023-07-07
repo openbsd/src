@@ -1,4 +1,4 @@
-/* $OpenBSD: eck_prn.c,v 1.27 2023/07/06 15:18:02 tb Exp $ */
+/* $OpenBSD: eck_prn.c,v 1.28 2023/07/07 13:54:45 beck Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -86,6 +86,7 @@ ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off)
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(ECPKParameters_print_fp);
 
 int
 EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
@@ -102,6 +103,7 @@ EC_KEY_print_fp(FILE *fp, const EC_KEY *x, int off)
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(EC_KEY_print_fp);
 
 int
 ECParameters_print_fp(FILE *fp, const EC_KEY *x)
@@ -118,6 +120,7 @@ ECParameters_print_fp(FILE *fp, const EC_KEY *x)
 	BIO_free(b);
 	return (ret);
 }
+LCRYPTO_ALIAS(ECParameters_print_fp);
 
 int
 EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
@@ -136,6 +139,7 @@ EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 	EVP_PKEY_free(pk);
 	return ret;
 }
+LCRYPTO_ALIAS(EC_KEY_print);
 
 int
 ECParameters_print(BIO *bp, const EC_KEY *x)
@@ -154,6 +158,7 @@ ECParameters_print(BIO *bp, const EC_KEY *x)
 	EVP_PKEY_free(pk);
 	return ret;
 }
+LCRYPTO_ALIAS(ECParameters_print);
 
 static int
 print_bin(BIO *fp, const char *str, const unsigned char *num,
@@ -310,6 +315,7 @@ ECPKParameters_print(BIO *bp, const EC_GROUP *group, int off)
 
 	return ecpk_print_explicit_parameters(bp, group, off);
 }
+LCRYPTO_ALIAS(ECPKParameters_print);
 
 static int
 print_bin(BIO *fp, const char *name, const unsigned char *buf,

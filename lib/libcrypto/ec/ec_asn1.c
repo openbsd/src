@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_asn1.c,v 1.46 2023/06/27 07:28:57 tb Exp $ */
+/* $OpenBSD: ec_asn1.c,v 1.47 2023/07/07 13:54:45 beck Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project.
  */
@@ -72,6 +72,7 @@ EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
 	return 0;
 }
+LCRYPTO_ALIAS(EC_GROUP_get_basis_type);
 
 /* some structures needed for the asn1 encoding */
 typedef struct x9_62_pentanomial_st {
@@ -184,12 +185,14 @@ X9_62_PENTANOMIAL_new(void)
 {
 	return (X9_62_PENTANOMIAL*)ASN1_item_new(&X9_62_PENTANOMIAL_it);
 }
+LCRYPTO_ALIAS(X9_62_PENTANOMIAL_new);
 
 void
 X9_62_PENTANOMIAL_free(X9_62_PENTANOMIAL *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X9_62_PENTANOMIAL_it);
 }
+LCRYPTO_ALIAS(X9_62_PENTANOMIAL_free);
 
 static const ASN1_TEMPLATE char_two_def_tt = {
 	.flags = 0,
@@ -284,12 +287,14 @@ X9_62_CHARACTERISTIC_TWO_new(void)
 {
 	return (X9_62_CHARACTERISTIC_TWO*)ASN1_item_new(&X9_62_CHARACTERISTIC_TWO_it);
 }
+LCRYPTO_ALIAS(X9_62_CHARACTERISTIC_TWO_new);
 
 void
 X9_62_CHARACTERISTIC_TWO_free(X9_62_CHARACTERISTIC_TWO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &X9_62_CHARACTERISTIC_TWO_it);
 }
+LCRYPTO_ALIAS(X9_62_CHARACTERISTIC_TWO_free);
 
 static const ASN1_TEMPLATE fieldID_def_tt = {
 	.flags = 0,
@@ -455,12 +460,14 @@ ECPARAMETERS_new(void)
 {
 	return (ECPARAMETERS*)ASN1_item_new(&ECPARAMETERS_it);
 }
+LCRYPTO_ALIAS(ECPARAMETERS_new);
 
 void
 ECPARAMETERS_free(ECPARAMETERS *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ECPARAMETERS_it);
 }
+LCRYPTO_ALIAS(ECPARAMETERS_free);
 
 static const ASN1_TEMPLATE ECPKPARAMETERS_ch_tt[] = {
 	{
@@ -507,24 +514,28 @@ d2i_ECPKPARAMETERS(ECPKPARAMETERS **a, const unsigned char **in, long len)
 	return (ECPKPARAMETERS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &ECPKPARAMETERS_it);
 }
+LCRYPTO_ALIAS(d2i_ECPKPARAMETERS);
 
 int
 i2d_ECPKPARAMETERS(const ECPKPARAMETERS *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &ECPKPARAMETERS_it);
 }
+LCRYPTO_ALIAS(i2d_ECPKPARAMETERS);
 
 ECPKPARAMETERS *
 ECPKPARAMETERS_new(void)
 {
 	return (ECPKPARAMETERS *)ASN1_item_new(&ECPKPARAMETERS_it);
 }
+LCRYPTO_ALIAS(ECPKPARAMETERS_new);
 
 void
 ECPKPARAMETERS_free(ECPKPARAMETERS *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &ECPKPARAMETERS_it);
 }
+LCRYPTO_ALIAS(ECPKPARAMETERS_free);
 
 static const ASN1_TEMPLATE EC_PRIVATEKEY_seq_tt[] = {
 	{
@@ -578,24 +589,28 @@ d2i_EC_PRIVATEKEY(EC_PRIVATEKEY **a, const unsigned char **in, long len)
 	return (EC_PRIVATEKEY *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &EC_PRIVATEKEY_it);
 }
+LCRYPTO_ALIAS(d2i_EC_PRIVATEKEY);
 
 int
 i2d_EC_PRIVATEKEY(const EC_PRIVATEKEY *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &EC_PRIVATEKEY_it);
 }
+LCRYPTO_ALIAS(i2d_EC_PRIVATEKEY);
 
 EC_PRIVATEKEY *
 EC_PRIVATEKEY_new(void)
 {
 	return (EC_PRIVATEKEY *)ASN1_item_new(&EC_PRIVATEKEY_it);
 }
+LCRYPTO_ALIAS(EC_PRIVATEKEY_new);
 
 void
 EC_PRIVATEKEY_free(EC_PRIVATEKEY *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &EC_PRIVATEKEY_it);
 }
+LCRYPTO_ALIAS(EC_PRIVATEKEY_free);
 
 /* some declarations of internal function */
 
@@ -1101,6 +1116,7 @@ d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 	ECPKPARAMETERS_free(params);
 	return (group);
 }
+LCRYPTO_ALIAS(d2i_ECPKParameters);
 
 int
 i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
@@ -1119,6 +1135,7 @@ i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 	ECPKPARAMETERS_free(tmp);
 	return (ret);
 }
+LCRYPTO_ALIAS(i2d_ECPKParameters);
 
 /* some EC_KEY functions */
 
@@ -1213,6 +1230,7 @@ d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 
 	return (NULL);
 }
+LCRYPTO_ALIAS(d2i_ECPrivateKey);
 
 int
 i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
@@ -1297,6 +1315,7 @@ i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 		EC_PRIVATEKEY_free(priv_key);
 	return (ok ? ret : 0);
 }
+LCRYPTO_ALIAS(i2d_ECPrivateKey);
 
 int
 i2d_ECParameters(EC_KEY *a, unsigned char **out)
@@ -1307,6 +1326,7 @@ i2d_ECParameters(EC_KEY *a, unsigned char **out)
 	}
 	return i2d_ECPKParameters(a->group, out);
 }
+LCRYPTO_ALIAS(i2d_ECParameters);
 
 EC_KEY *
 d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
@@ -1336,6 +1356,7 @@ d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
 		*a = ret;
 	return ret;
 }
+LCRYPTO_ALIAS(d2i_ECParameters);
 
 EC_KEY *
 o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
@@ -1362,6 +1383,7 @@ o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
 	*in += len;
 	return ret;
 }
+LCRYPTO_ALIAS(o2i_ECPublicKey);
 
 int
 i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
@@ -1400,3 +1422,4 @@ i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
 		*out += buf_len;
 	return buf_len;
 }
+LCRYPTO_ALIAS(i2o_ECPublicKey);

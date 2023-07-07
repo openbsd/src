@@ -1,4 +1,4 @@
-/* $OpenBSD: err_prn.c,v 1.19 2022/01/07 09:02:18 tb Exp $ */
+/* $OpenBSD: err_prn.c,v 1.20 2023/07/07 13:54:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -88,6 +88,7 @@ ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u), void *u)
 			break; /* abort outputting the error report */
 	}
 }
+LCRYPTO_ALIAS(ERR_print_errors_cb);
 
 static int
 print_fp(const char *str, size_t len, void *fp)
@@ -105,6 +106,7 @@ ERR_print_errors_fp(FILE *fp)
 {
 	ERR_print_errors_cb(print_fp, fp);
 }
+LCRYPTO_ALIAS(ERR_print_errors_fp);
 
 static int
 print_bio(const char *str, size_t len, void *bp)
@@ -117,3 +119,4 @@ ERR_print_errors(BIO *bp)
 {
 	ERR_print_errors_cb(print_bio, bp);
 }
+LCRYPTO_ALIAS(ERR_print_errors);

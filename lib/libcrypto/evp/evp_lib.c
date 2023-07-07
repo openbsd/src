@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.25 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.26 2023/07/07 13:54:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -79,6 +79,7 @@ EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 		ret = -1;
 	return (ret);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_param_to_asn1);
 
 int
 EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
@@ -93,6 +94,7 @@ EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 		ret = -1;
 	return (ret);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_asn1_to_param);
 
 int
 EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
@@ -114,6 +116,7 @@ EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	}
 	return (i);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_get_asn1_iv);
 
 int
 EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
@@ -131,6 +134,7 @@ EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 	}
 	return (i);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_set_asn1_iv);
 
 /* Convert the various cipher NIDs and dummies to a proper OID NID */
 int
@@ -184,18 +188,21 @@ EVP_CIPHER_type(const EVP_CIPHER *ctx)
 		return nid;
 	}
 }
+LCRYPTO_ALIAS(EVP_CIPHER_type);
 
 int
 EVP_CIPHER_block_size(const EVP_CIPHER *e)
 {
 	return e->block_size;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_block_size);
 
 int
 EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->block_size;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_block_size);
 
 int
 EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
@@ -203,48 +210,56 @@ EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
 {
 	return ctx->cipher->do_cipher(ctx, out, in, inl);
 }
+LCRYPTO_ALIAS(EVP_Cipher);
 
 const EVP_CIPHER *
 EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_cipher);
 
 int
 EVP_CIPHER_CTX_encrypting(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->encrypt;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_encrypting);
 
 unsigned long
 EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 {
 	return cipher->flags;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_flags);
 
 unsigned long
 EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->flags;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_flags);
 
 void *
 EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->app_data;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_get_app_data);
 
 void
 EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data)
 {
 	ctx->app_data = data;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_app_data);
 
 void *
 EVP_CIPHER_CTX_get_cipher_data(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher_data;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_get_cipher_data);
 
 void *
 EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
@@ -256,48 +271,56 @@ EVP_CIPHER_CTX_set_cipher_data(EVP_CIPHER_CTX *ctx, void *cipher_data)
 
 	return old_cipher_data;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_cipher_data);
 
 int
 EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 {
 	return cipher->iv_len;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_iv_length);
 
 int
 EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->iv_len;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_iv_length);
 
 unsigned char *
 EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx)
 {
 	return ctx->buf;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_buf_noconst);
 
 int
 EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
 {
 	return cipher->key_len;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_key_length);
 
 int
 EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->key_len;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_key_length);
 
 int
 EVP_CIPHER_nid(const EVP_CIPHER *cipher)
 {
 	return cipher->nid;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_nid);
 
 int
 EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
 {
 	return ctx->cipher->nid;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_nid);
 
 int
 EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
@@ -317,6 +340,7 @@ EVP_CIPHER_CTX_get_iv(const EVP_CIPHER_CTX *ctx, unsigned char *iv, size_t len)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_get_iv);
 
 int
 EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx, const unsigned char *iv, size_t len)
@@ -336,24 +360,28 @@ EVP_CIPHER_CTX_set_iv(EVP_CIPHER_CTX *ctx, const unsigned char *iv, size_t len)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_iv);
 
 int
 EVP_MD_block_size(const EVP_MD *md)
 {
 	return md->block_size;
 }
+LCRYPTO_ALIAS(EVP_MD_block_size);
 
 int
 EVP_MD_type(const EVP_MD *md)
 {
 	return md->type;
 }
+LCRYPTO_ALIAS(EVP_MD_type);
 
 int
 EVP_MD_pkey_type(const EVP_MD *md)
 {
 	return md->pkey_type;
 }
+LCRYPTO_ALIAS(EVP_MD_pkey_type);
 
 int
 EVP_MD_size(const EVP_MD *md)
@@ -364,12 +392,14 @@ EVP_MD_size(const EVP_MD *md)
 	}
 	return md->md_size;
 }
+LCRYPTO_ALIAS(EVP_MD_size);
 
 unsigned long
 EVP_MD_flags(const EVP_MD *md)
 {
 	return md->flags;
 }
+LCRYPTO_ALIAS(EVP_MD_flags);
 
 EVP_MD *
 EVP_MD_meth_new(int md_type, int pkey_type)
@@ -384,6 +414,7 @@ EVP_MD_meth_new(int md_type, int pkey_type)
 
 	return md;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_new);
 
 EVP_MD *
 EVP_MD_meth_dup(const EVP_MD *md)
@@ -397,12 +428,14 @@ EVP_MD_meth_dup(const EVP_MD *md)
 
 	return to;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_dup);
 
 void
 EVP_MD_meth_free(EVP_MD *md)
 {
 	freezero(md, sizeof(*md));
 }
+LCRYPTO_ALIAS(EVP_MD_meth_free);
 
 int
 EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
@@ -410,6 +443,7 @@ EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize)
 	md->block_size = blocksize;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_input_blocksize);
 
 int
 EVP_MD_meth_set_result_size(EVP_MD *md, int result_size)
@@ -417,6 +451,7 @@ EVP_MD_meth_set_result_size(EVP_MD *md, int result_size)
 	md->md_size = result_size;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_result_size);
 
 int
 EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize)
@@ -424,6 +459,7 @@ EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize)
 	md->ctx_size = datasize;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_app_datasize);
 
 int
 EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags)
@@ -431,6 +467,7 @@ EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags)
 	md->flags = flags;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_flags);
 
 int
 EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx))
@@ -438,6 +475,7 @@ EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx))
 	md->init = init;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_init);
 
 int
 EVP_MD_meth_set_update(EVP_MD *md,
@@ -446,6 +484,7 @@ EVP_MD_meth_set_update(EVP_MD *md,
 	md->update = update;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_update);
 
 int
 EVP_MD_meth_set_final(EVP_MD *md,
@@ -454,6 +493,7 @@ EVP_MD_meth_set_final(EVP_MD *md,
 	md->final = final;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_final);
 
 int
 EVP_MD_meth_set_copy(EVP_MD *md,
@@ -462,6 +502,7 @@ EVP_MD_meth_set_copy(EVP_MD *md,
 	md->copy = copy;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_copy);
 
 int
 EVP_MD_meth_set_cleanup(EVP_MD *md,
@@ -470,6 +511,7 @@ EVP_MD_meth_set_cleanup(EVP_MD *md,
 	md->cleanup = cleanup;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_cleanup);
 
 int
 EVP_MD_meth_set_ctrl(EVP_MD *md,
@@ -478,6 +520,7 @@ EVP_MD_meth_set_ctrl(EVP_MD *md,
 	md->md_ctrl = ctrl;
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_meth_set_ctrl);
 
 const EVP_MD *
 EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
@@ -486,18 +529,21 @@ EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 		return NULL;
 	return ctx->digest;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_md);
 
 void *
 EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
 {
 	return ctx->md_data;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_md_data);
 
 EVP_PKEY_CTX *
 EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
 {
 	return ctx->pctx;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_pkey_ctx);
 
 void
 EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
@@ -521,39 +567,46 @@ EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 		EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
 	}
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_set_pkey_ctx);
 
 void
 EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags)
 {
 	ctx->flags |= flags;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_set_flags);
 
 void
 EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags)
 {
 	ctx->flags &= ~flags;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_clear_flags);
 
 int
 EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
 {
 	return (ctx->flags & flags);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_test_flags);
 
 void
 EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags)
 {
 	ctx->flags |= flags;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_set_flags);
 
 void
 EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags)
 {
 	ctx->flags &= ~flags;
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_clear_flags);
 
 int
 EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 {
 	return (ctx->flags & flags);
 }
+LCRYPTO_ALIAS(EVP_CIPHER_CTX_test_flags);

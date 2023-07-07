@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.32 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.33 2023/07/07 13:54:46 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -93,6 +93,7 @@ EVP_PKEY_bits(const EVP_PKEY *pkey)
 		return pkey->ameth->pkey_bits(pkey);
 	return 0;
 }
+LCRYPTO_ALIAS(EVP_PKEY_bits);
 
 int
 EVP_PKEY_security_bits(const EVP_PKEY *pkey)
@@ -104,6 +105,7 @@ EVP_PKEY_security_bits(const EVP_PKEY *pkey)
 
 	return pkey->ameth->pkey_security_bits(pkey);
 }
+LCRYPTO_ALIAS(EVP_PKEY_security_bits);
 
 int
 EVP_PKEY_size(const EVP_PKEY *pkey)
@@ -112,6 +114,7 @@ EVP_PKEY_size(const EVP_PKEY *pkey)
 		return pkey->ameth->pkey_size(pkey);
 	return 0;
 }
+LCRYPTO_ALIAS(EVP_PKEY_size);
 
 int
 EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
@@ -136,6 +139,7 @@ EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode)
 #endif
 	return (0);
 }
+LCRYPTO_ALIAS(EVP_PKEY_save_parameters);
 
 int
 EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
@@ -155,6 +159,7 @@ EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 err:
 	return 0;
 }
+LCRYPTO_ALIAS(EVP_PKEY_copy_parameters);
 
 int
 EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
@@ -163,6 +168,7 @@ EVP_PKEY_missing_parameters(const EVP_PKEY *pkey)
 		return pkey->ameth->param_missing(pkey);
 	return 0;
 }
+LCRYPTO_ALIAS(EVP_PKEY_missing_parameters);
 
 int
 EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -173,6 +179,7 @@ EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 		return a->ameth->param_cmp(a, b);
 	return -2;
 }
+LCRYPTO_ALIAS(EVP_PKEY_cmp_parameters);
 
 int
 EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -195,6 +202,7 @@ EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 
 	return -2;
 }
+LCRYPTO_ALIAS(EVP_PKEY_cmp);
 
 EVP_PKEY *
 EVP_PKEY_new(void)
@@ -216,6 +224,7 @@ EVP_PKEY_new(void)
 	ret->save_parameters = 1;
 	return (ret);
 }
+LCRYPTO_ALIAS(EVP_PKEY_new);
 
 int
 EVP_PKEY_up_ref(EVP_PKEY *pkey)
@@ -223,6 +232,7 @@ EVP_PKEY_up_ref(EVP_PKEY *pkey)
 	int refs = CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
 	return ((refs > 1) ? 1 : 0);
 }
+LCRYPTO_ALIAS(EVP_PKEY_up_ref);
 
 /* Setup a public key ASN1 method and ENGINE from a NID or a string.
  * If pkey is NULL just return 1 or 0 if the algorithm exists.
@@ -277,6 +287,7 @@ EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
 {
 	return pkey_set_type(pkey, NULL, type, NULL, -1);
 }
+LCRYPTO_ALIAS(EVP_PKEY_set_type);
 
 EVP_PKEY *
 EVP_PKEY_new_raw_private_key(int type, ENGINE *engine,
@@ -306,6 +317,7 @@ EVP_PKEY_new_raw_private_key(int type, ENGINE *engine,
 
 	return NULL;
 }
+LCRYPTO_ALIAS(EVP_PKEY_new_raw_private_key);
 
 EVP_PKEY *
 EVP_PKEY_new_raw_public_key(int type, ENGINE *engine,
@@ -335,6 +347,7 @@ EVP_PKEY_new_raw_public_key(int type, ENGINE *engine,
 
 	return NULL;
 }
+LCRYPTO_ALIAS(EVP_PKEY_new_raw_public_key);
 
 int
 EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey,
@@ -351,6 +364,7 @@ EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get_raw_private_key);
 
 int
 EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey,
@@ -367,6 +381,7 @@ EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get_raw_public_key);
 
 EVP_PKEY *
 EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv, size_t len,
@@ -397,12 +412,14 @@ EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv, size_t len,
 	CMAC_CTX_free(cmctx);
 	return NULL;
 }
+LCRYPTO_ALIAS(EVP_PKEY_new_CMAC_key);
 
 int
 EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 {
 	return pkey_set_type(pkey, NULL, EVP_PKEY_NONE, str, len);
 }
+LCRYPTO_ALIAS(EVP_PKEY_set_type_str);
 
 int
 EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
@@ -412,12 +429,14 @@ EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 	pkey->pkey.ptr = key;
 	return (key != NULL);
 }
+LCRYPTO_ALIAS(EVP_PKEY_assign);
 
 void *
 EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
 	return pkey->pkey.ptr;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get0);
 
 const unsigned char *
 EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
@@ -434,6 +453,7 @@ EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
 
 	return os->data;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get0_hmac);
 
 #ifndef OPENSSL_NO_RSA
 RSA *
@@ -445,6 +465,7 @@ EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
 	}
 	return pkey->pkey.rsa;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get0_RSA);
 
 RSA *
 EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
@@ -456,6 +477,7 @@ EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 	RSA_up_ref(pkey->pkey.rsa);
 	return pkey->pkey.rsa;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get1_RSA);
 
 int
 EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
@@ -465,6 +487,7 @@ EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 		RSA_up_ref(key);
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_PKEY_set1_RSA);
 #endif
 
 #ifndef OPENSSL_NO_DSA
@@ -477,6 +500,7 @@ EVP_PKEY_get0_DSA(EVP_PKEY *pkey)
 	}
 	return pkey->pkey.dsa;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get0_DSA);
 
 DSA *
 EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
@@ -488,6 +512,7 @@ EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
 	DSA_up_ref(pkey->pkey.dsa);
 	return pkey->pkey.dsa;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get1_DSA);
 
 int
 EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
@@ -497,6 +522,7 @@ EVP_PKEY_set1_DSA(EVP_PKEY *pkey, DSA *key)
 		DSA_up_ref(key);
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_PKEY_set1_DSA);
 #endif
 
 #ifndef OPENSSL_NO_EC
@@ -509,6 +535,7 @@ EVP_PKEY_get0_EC_KEY(EVP_PKEY *pkey)
 	}
 	return pkey->pkey.ec;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get0_EC_KEY);
 
 EC_KEY *
 EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
@@ -520,6 +547,7 @@ EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
 	EC_KEY_up_ref(pkey->pkey.ec);
 	return pkey->pkey.ec;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get1_EC_KEY);
 
 int
 EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
@@ -529,6 +557,7 @@ EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 		EC_KEY_up_ref(key);
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_PKEY_set1_EC_KEY);
 #endif
 
 
@@ -542,6 +571,7 @@ EVP_PKEY_get0_DH(EVP_PKEY *pkey)
 	}
 	return pkey->pkey.dh;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get0_DH);
 
 DH *
 EVP_PKEY_get1_DH(EVP_PKEY *pkey)
@@ -553,6 +583,7 @@ EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 	DH_up_ref(pkey->pkey.dh);
 	return pkey->pkey.dh;
 }
+LCRYPTO_ALIAS(EVP_PKEY_get1_DH);
 
 int
 EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
@@ -562,6 +593,7 @@ EVP_PKEY_set1_DH(EVP_PKEY *pkey, DH *key)
 		DH_up_ref(key);
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_PKEY_set1_DH);
 #endif
 
 int
@@ -580,18 +612,21 @@ EVP_PKEY_type(int type)
 #endif
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_PKEY_type);
 
 int
 EVP_PKEY_id(const EVP_PKEY *pkey)
 {
 	return pkey->type;
 }
+LCRYPTO_ALIAS(EVP_PKEY_id);
 
 int
 EVP_PKEY_base_id(const EVP_PKEY *pkey)
 {
 	return EVP_PKEY_type(pkey->type);
 }
+LCRYPTO_ALIAS(EVP_PKEY_base_id);
 
 void
 EVP_PKEY_free(EVP_PKEY *x)
@@ -610,6 +645,7 @@ EVP_PKEY_free(EVP_PKEY *x)
 		sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
 	free(x);
 }
+LCRYPTO_ALIAS(EVP_PKEY_free);
 
 static void
 EVP_PKEY_free_it(EVP_PKEY *x)
@@ -643,6 +679,7 @@ EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey, int indent,
 
 	return unsup_alg(out, pkey, indent, "Public Key");
 }
+LCRYPTO_ALIAS(EVP_PKEY_print_public);
 
 int
 EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey, int indent,
@@ -653,6 +690,7 @@ EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey, int indent,
 
 	return unsup_alg(out, pkey, indent, "Private Key");
 }
+LCRYPTO_ALIAS(EVP_PKEY_print_private);
 
 int
 EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey, int indent,
@@ -662,6 +700,7 @@ EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey, int indent,
 		return pkey->ameth->param_print(out, pkey, indent, pctx);
 	return unsup_alg(out, pkey, indent, "Parameters");
 }
+LCRYPTO_ALIAS(EVP_PKEY_print_params);
 
 int
 EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
@@ -671,3 +710,4 @@ EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
 	return pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_DEFAULT_MD_NID,
 	    0, pnid);
 }
+LCRYPTO_ALIAS(EVP_PKEY_get_default_digest_nid);

@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sigver.c,v 1.11 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: m_sigver.c,v 1.12 2023/07/07 13:54:45 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -133,6 +133,7 @@ EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 {
 	return do_sigver_init(ctx, pctx, type, e, pkey, 0);
 }
+LCRYPTO_ALIAS(EVP_DigestSignInit);
 
 int
 EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
@@ -140,6 +141,7 @@ EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx, const EVP_MD *type,
 {
 	return do_sigver_init(ctx, pctx, type, e, pkey, 1);
 }
+LCRYPTO_ALIAS(EVP_DigestVerifyInit);
 
 int
 EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
@@ -198,6 +200,7 @@ EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_DigestSignFinal);
 
 int
 EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
@@ -214,6 +217,7 @@ EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen,
 
 	return EVP_DigestSignFinal(ctx, sigret, siglen);
 }
+LCRYPTO_ALIAS(EVP_DigestSign);
 
 int
 EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig, size_t siglen)
@@ -241,6 +245,7 @@ EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig, size_t siglen)
 		return r;
 	return EVP_PKEY_verify(ctx->pctx, sig, siglen, md, mdlen);
 }
+LCRYPTO_ALIAS(EVP_DigestVerifyFinal);
 
 int
 EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret, size_t siglen,
@@ -255,3 +260,4 @@ EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret, size_t siglen,
 
 	return EVP_DigestVerifyFinal(ctx, sigret, siglen);
 }
+LCRYPTO_ALIAS(EVP_DigestVerify);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ecs_lib.c,v 1.24 2023/07/05 11:37:46 tb Exp $ */
+/* $OpenBSD: ecs_lib.c,v 1.25 2023/07/07 13:54:45 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
  *
@@ -80,12 +80,14 @@ ECDSA_OpenSSL(void)
 {
 	return &openssl_ecdsa_meth;
 }
+LCRYPTO_ALIAS(ECDSA_OpenSSL);
 
 void
 ECDSA_set_default_method(const ECDSA_METHOD *meth)
 {
 	default_ECDSA_method = meth;
 }
+LCRYPTO_ALIAS(ECDSA_set_default_method);
 
 const ECDSA_METHOD *
 ECDSA_get_default_method(void)
@@ -95,12 +97,14 @@ ECDSA_get_default_method(void)
 	}
 	return default_ECDSA_method;
 }
+LCRYPTO_ALIAS(ECDSA_get_default_method);
 
 int
 ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth)
 {
 	return 0;
 }
+LCRYPTO_ALIAS(ECDSA_set_method);
 
 int
 ECDSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
@@ -108,15 +112,18 @@ ECDSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 {
 	return -1;
 }
+LCRYPTO_ALIAS(ECDSA_get_ex_new_index);
 
 int
 ECDSA_set_ex_data(EC_KEY *d, int idx, void *arg)
 {
 	return 0;
 }
+LCRYPTO_ALIAS(ECDSA_set_ex_data);
 
 void *
 ECDSA_get_ex_data(EC_KEY *d, int idx)
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(ECDSA_get_ex_data);

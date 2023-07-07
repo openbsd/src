@@ -1,4 +1,4 @@
-/* $OpenBSD: p5_crpt2.c,v 1.25 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: p5_crpt2.c,v 1.26 2023/07/07 13:54:46 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999.
  */
@@ -149,6 +149,7 @@ PKCS5_PBKDF2_HMAC(const char *pass, int passlen, const unsigned char *salt,
 	HMAC_CTX_cleanup(&hctx_tpl);
 	return 1;
 }
+LCRYPTO_ALIAS(PKCS5_PBKDF2_HMAC);
 
 int
 PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen, const unsigned char *salt,
@@ -157,6 +158,7 @@ PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen, const unsigned char *salt,
 	return PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter,
 	    EVP_sha1(), keylen, out);
 }
+LCRYPTO_ALIAS(PKCS5_PBKDF2_HMAC_SHA1);
 
 /* Now the key derivation function itself. This is a bit evil because
  * it has to check the ASN1 parameters are valid: and there are quite a
@@ -218,6 +220,7 @@ err:
 	PBE2PARAM_free(pbe2);
 	return rv;
 }
+LCRYPTO_ALIAS(PKCS5_v2_PBE_keyivgen);
 
 int
 PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,

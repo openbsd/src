@@ -1,4 +1,4 @@
-/* $OpenBSD: digest.c,v 1.36 2022/12/26 07:18:52 jmc Exp $ */
+/* $OpenBSD: digest.c,v 1.37 2023/07/07 13:54:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -130,6 +130,7 @@ EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	EVP_MD_CTX_init(ctx);
 	return EVP_DigestInit_ex(ctx, type, NULL);
 }
+LCRYPTO_ALIAS(EVP_DigestInit);
 
 int
 EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
@@ -211,12 +212,14 @@ skip_to_init:
 		return 1;
 	return ctx->digest->init(ctx);
 }
+LCRYPTO_ALIAS(EVP_DigestInit_ex);
 
 int
 EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	return ctx->update(ctx, data, count);
 }
+LCRYPTO_ALIAS(EVP_DigestUpdate);
 
 /* The caller can assume that this removes any secret data from the context */
 int
@@ -228,6 +231,7 @@ EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	EVP_MD_CTX_cleanup(ctx);
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_DigestFinal);
 
 /* The caller can assume that this removes any secret data from the context */
 int
@@ -249,6 +253,7 @@ EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	memset(ctx->md_data, 0, ctx->digest->ctx_size);
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_DigestFinal_ex);
 
 int
 EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
@@ -256,6 +261,7 @@ EVP_MD_CTX_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	EVP_MD_CTX_init(out);
 	return EVP_MD_CTX_copy_ex(out, in);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_copy);
 
 int
 EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
@@ -318,6 +324,7 @@ EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_copy_ex);
 
 int
 EVP_Digest(const void *data, size_t count,
@@ -335,12 +342,14 @@ EVP_Digest(const void *data, size_t count,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_Digest);
 
 EVP_MD_CTX *
 EVP_MD_CTX_new(void)
 {
 	return calloc(1, sizeof(EVP_MD_CTX));
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_new);
 
 void
 EVP_MD_CTX_free(EVP_MD_CTX *ctx)
@@ -352,30 +361,35 @@ EVP_MD_CTX_free(EVP_MD_CTX *ctx)
 
 	free(ctx);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_free);
 
 void
 EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_init);
 
 int
 EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
 {
 	return EVP_MD_CTX_cleanup(ctx);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_reset);
 
 EVP_MD_CTX *
 EVP_MD_CTX_create(void)
 {
 	return EVP_MD_CTX_new();
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_create);
 
 void
 EVP_MD_CTX_destroy(EVP_MD_CTX *ctx)
 {
 	EVP_MD_CTX_free(ctx);
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_destroy);
 
 /* This call frees resources associated with the context */
 int
@@ -404,6 +418,7 @@ EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 
 	return 1;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_cleanup);
 
 int
 EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
@@ -427,3 +442,4 @@ EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int type, int arg, void *ptr)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_MD_CTX_ctrl);

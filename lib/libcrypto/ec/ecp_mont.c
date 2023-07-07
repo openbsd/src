@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_mont.c,v 1.29 2023/04/11 18:58:20 jsing Exp $ */
+/* $OpenBSD: ecp_mont.c,v 1.30 2023/07/07 13:54:45 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -269,3 +269,4 @@ EC_GFp_mont_method(void)
 {
 	return &ec_GFp_mont_method;
 }
+LCRYPTO_ALIAS(EC_GFp_mont_method);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.62 2023/07/03 07:26:40 tb Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.63 2023/07/07 13:54:45 beck Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -110,6 +110,7 @@ EC_GROUP_new(const EC_METHOD *meth)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(EC_GROUP_new);
 
 
 void
@@ -128,12 +129,14 @@ EC_GROUP_free(EC_GROUP *group)
 	freezero(group->seed, group->seed_len);
 	freezero(group, sizeof *group);
 }
+LCRYPTO_ALIAS(EC_GROUP_free);
 
 void
 EC_GROUP_clear_free(EC_GROUP *group)
 {
 	EC_GROUP_free(group);
 }
+LCRYPTO_ALIAS(EC_GROUP_clear_free);
 
 int
 EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
@@ -188,6 +191,7 @@ EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 
 	return dest->meth->group_copy(dest, src);
 }
+LCRYPTO_ALIAS(EC_GROUP_copy);
 
 
 EC_GROUP *
@@ -202,6 +206,7 @@ EC_GROUP_dup(const EC_GROUP *a)
 	}
 	return t;
 }
+LCRYPTO_ALIAS(EC_GROUP_dup);
 
 
 const EC_METHOD *
@@ -209,6 +214,7 @@ EC_GROUP_method_of(const EC_GROUP *group)
 {
 	return group->meth;
 }
+LCRYPTO_ALIAS(EC_GROUP_method_of);
 
 
 int
@@ -216,6 +222,7 @@ EC_METHOD_get_field_type(const EC_METHOD *meth)
 {
 	return meth->field_type;
 }
+LCRYPTO_ALIAS(EC_METHOD_get_field_type);
 
 /*
  * If there is a user-provided cofactor, sanity check and use it. Otherwise
@@ -349,6 +356,7 @@ EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
 
 	return 1;
 }
+LCRYPTO_ALIAS(EC_GROUP_set_generator);
 
 
 const EC_POINT *
@@ -356,6 +364,7 @@ EC_GROUP_get0_generator(const EC_GROUP *group)
 {
 	return group->generator;
 }
+LCRYPTO_ALIAS(EC_GROUP_get0_generator);
 
 int
 EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
@@ -365,6 +374,7 @@ EC_GROUP_get_order(const EC_GROUP *group, BIGNUM *order, BN_CTX *ctx)
 
 	return !BN_is_zero(order);
 }
+LCRYPTO_ALIAS(EC_GROUP_get_order);
 
 const BIGNUM *
 EC_GROUP_get0_order(const EC_GROUP *group)
@@ -377,6 +387,7 @@ EC_GROUP_order_bits(const EC_GROUP *group)
 {
 	return group->meth->group_order_bits(group);
 }
+LCRYPTO_ALIAS(EC_GROUP_order_bits);
 
 int
 EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
@@ -386,6 +397,7 @@ EC_GROUP_get_cofactor(const EC_GROUP *group, BIGNUM *cofactor, BN_CTX *ctx)
 
 	return !BN_is_zero(&group->cofactor);
 }
+LCRYPTO_ALIAS(EC_GROUP_get_cofactor);
 
 
 void
@@ -393,6 +405,7 @@ EC_GROUP_set_curve_name(EC_GROUP *group, int nid)
 {
 	group->curve_name = nid;
 }
+LCRYPTO_ALIAS(EC_GROUP_set_curve_name);
 
 
 int
@@ -400,6 +413,7 @@ EC_GROUP_get_curve_name(const EC_GROUP *group)
 {
 	return group->curve_name;
 }
+LCRYPTO_ALIAS(EC_GROUP_get_curve_name);
 
 
 void
@@ -407,6 +421,7 @@ EC_GROUP_set_asn1_flag(EC_GROUP *group, int flag)
 {
 	group->asn1_flag = flag;
 }
+LCRYPTO_ALIAS(EC_GROUP_set_asn1_flag);
 
 
 int
@@ -414,6 +429,7 @@ EC_GROUP_get_asn1_flag(const EC_GROUP *group)
 {
 	return group->asn1_flag;
 }
+LCRYPTO_ALIAS(EC_GROUP_get_asn1_flag);
 
 
 void
@@ -422,6 +438,7 @@ EC_GROUP_set_point_conversion_form(EC_GROUP *group,
 {
 	group->asn1_form = form;
 }
+LCRYPTO_ALIAS(EC_GROUP_set_point_conversion_form);
 
 
 point_conversion_form_t
@@ -429,6 +446,7 @@ EC_GROUP_get_point_conversion_form(const EC_GROUP *group)
 {
 	return group->asn1_form;
 }
+LCRYPTO_ALIAS(EC_GROUP_get_point_conversion_form);
 
 
 size_t
@@ -449,6 +467,7 @@ EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
 
 	return len;
 }
+LCRYPTO_ALIAS(EC_GROUP_set_seed);
 
 
 unsigned char *
@@ -456,6 +475,7 @@ EC_GROUP_get0_seed(const EC_GROUP *group)
 {
 	return group->seed;
 }
+LCRYPTO_ALIAS(EC_GROUP_get0_seed);
 
 
 size_t
@@ -463,6 +483,7 @@ EC_GROUP_get_seed_len(const EC_GROUP *group)
 {
 	return group->seed_len;
 }
+LCRYPTO_ALIAS(EC_GROUP_get_seed_len);
 
 int
 EC_GROUP_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
@@ -488,6 +509,7 @@ EC_GROUP_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_GROUP_set_curve);
 
 int
 EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
@@ -513,6 +535,7 @@ EC_GROUP_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_GROUP_get_curve);
 
 int
 EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
@@ -520,6 +543,7 @@ EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a,
 {
 	return EC_GROUP_set_curve(group, p, a, b, ctx);
 }
+LCRYPTO_ALIAS(EC_GROUP_set_curve_GFp);
 
 int
 EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
@@ -527,6 +551,7 @@ EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b,
 {
 	return EC_GROUP_get_curve(group, p, a, b, ctx);
 }
+LCRYPTO_ALIAS(EC_GROUP_get_curve_GFp);
 
 int
 EC_GROUP_get_degree(const EC_GROUP *group)
@@ -537,6 +562,7 @@ EC_GROUP_get_degree(const EC_GROUP *group)
 	}
 	return group->meth->group_get_degree(group);
 }
+LCRYPTO_ALIAS(EC_GROUP_get_degree);
 
 
 int
@@ -562,6 +588,7 @@ EC_GROUP_check_discriminant(const EC_GROUP *group, BN_CTX *ctx_in)
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_GROUP_check_discriminant);
 
 
 int
@@ -637,6 +664,7 @@ EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 		BN_CTX_free(ctx);
 	return -1;
 }
+LCRYPTO_ALIAS(EC_GROUP_cmp);
 
 /*
  * Coordinate blinding for EC_POINT.
@@ -682,6 +710,7 @@ EC_POINT_new(const EC_GROUP *group)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_new);
 
 void
 EC_POINT_free(EC_POINT *point)
@@ -694,12 +723,14 @@ EC_POINT_free(EC_POINT *point)
 
 	freezero(point, sizeof *point);
 }
+LCRYPTO_ALIAS(EC_POINT_free);
 
 void
 EC_POINT_clear_free(EC_POINT *point)
 {
 	EC_POINT_free(point);
 }
+LCRYPTO_ALIAS(EC_POINT_clear_free);
 
 int
 EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
@@ -716,6 +747,7 @@ EC_POINT_copy(EC_POINT *dest, const EC_POINT *src)
 		return 1;
 	return dest->meth->point_copy(dest, src);
 }
+LCRYPTO_ALIAS(EC_POINT_copy);
 
 EC_POINT *
 EC_POINT_dup(const EC_POINT *a, const EC_GROUP *group)
@@ -736,12 +768,14 @@ EC_POINT_dup(const EC_POINT *a, const EC_GROUP *group)
 	} else
 		return t;
 }
+LCRYPTO_ALIAS(EC_POINT_dup);
 
 const EC_METHOD *
 EC_POINT_method_of(const EC_POINT *point)
 {
 	return point->meth;
 }
+LCRYPTO_ALIAS(EC_POINT_method_of);
 
 int
 EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
@@ -756,6 +790,7 @@ EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 	}
 	return group->meth->point_set_to_infinity(group, point);
 }
+LCRYPTO_ALIAS(EC_POINT_set_to_infinity);
 
 int
 EC_POINT_set_Jprojective_coordinates(const EC_GROUP *group, EC_POINT *point,
@@ -831,6 +866,7 @@ EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
 {
 	return EC_POINT_set_Jprojective_coordinates(group, point, x, y, z, ctx);
 }
+LCRYPTO_ALIAS(EC_POINT_set_Jprojective_coordinates_GFp);
 
 int
 EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
@@ -838,6 +874,7 @@ EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
 {
 	return EC_POINT_get_Jprojective_coordinates(group, point, x, y, z, ctx);
 }
+LCRYPTO_ALIAS(EC_POINT_get_Jprojective_coordinates_GFp);
 
 int
 EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
@@ -875,6 +912,7 @@ EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_set_affine_coordinates);
 
 int
 EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
@@ -882,6 +920,7 @@ EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
 {
 	return EC_POINT_set_affine_coordinates(group, point, x, y, ctx);
 }
+LCRYPTO_ALIAS(EC_POINT_set_affine_coordinates_GFp);
 
 int
 EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
@@ -911,6 +950,7 @@ EC_POINT_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_get_affine_coordinates);
 
 int
 EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point,
@@ -918,6 +958,7 @@ EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point
 {
 	return EC_POINT_get_affine_coordinates(group, point, x, y, ctx);
 }
+LCRYPTO_ALIAS(EC_POINT_get_affine_coordinates_GFp);
 
 int
 EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
@@ -948,6 +989,7 @@ EC_POINT_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_add);
 
 int
 EC_POINT_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
@@ -977,6 +1019,7 @@ EC_POINT_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_dbl);
 
 int
 EC_POINT_invert(const EC_GROUP *group, EC_POINT *a, BN_CTX *ctx_in)
@@ -1005,6 +1048,7 @@ EC_POINT_invert(const EC_GROUP *group, EC_POINT *a, BN_CTX *ctx_in)
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_invert);
 
 int
 EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
@@ -1019,6 +1063,7 @@ EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
 	}
 	return group->meth->is_at_infinity(group, point);
 }
+LCRYPTO_ALIAS(EC_POINT_is_at_infinity);
 
 int
 EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
@@ -1048,6 +1093,7 @@ EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_is_on_curve);
 
 int
 EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
@@ -1077,6 +1123,7 @@ EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_cmp);
 
 int
 EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx_in)
@@ -1105,6 +1152,7 @@ EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx_in)
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_make_affine);
 
 int
 EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
@@ -1137,6 +1185,7 @@ EC_POINTs_make_affine(const EC_GROUP *group, size_t num, EC_POINT *points[],
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINTs_make_affine);
 
 int
 EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
@@ -1178,6 +1227,7 @@ EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINTs_mul);
 
 int
 EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
@@ -1239,18 +1289,21 @@ EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_mul);
 
 int
 EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx_in)
 {
 	return 1;
 }
+LCRYPTO_ALIAS(EC_GROUP_precompute_mult);
 
 int
 EC_GROUP_have_precompute_mult(const EC_GROUP *group)
 {
 	return 0;
 }
+LCRYPTO_ALIAS(EC_GROUP_have_precompute_mult);
 
 int
 ec_group_simple_order_bits(const EC_GROUP *group)
@@ -1283,3 +1336,4 @@ ECParameters_dup(EC_KEY *key)
 
 	return dup;
 }
+LCRYPTO_ALIAS(ECParameters_dup);

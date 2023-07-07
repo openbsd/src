@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_print.c,v 1.12 2023/06/23 10:34:16 tb Exp $ */
+/* $OpenBSD: ec_print.c,v 1.13 2023/07/07 13:54:45 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -81,6 +81,7 @@ EC_POINT_point2bn(const EC_GROUP *group, const EC_POINT *point,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_point2bn);
 
 EC_POINT *
 EC_POINT_bn2point(const EC_GROUP *group,
@@ -117,6 +118,7 @@ EC_POINT_bn2point(const EC_GROUP *group,
 	free(buf);
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_bn2point);
 
 static const char *HEX_DIGITS = "0123456789ABCDEF";
 
@@ -159,6 +161,7 @@ EC_POINT_point2hex(const EC_GROUP *group, const EC_POINT *point,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_point2hex);
 
 EC_POINT *
 EC_POINT_hex2point(const EC_GROUP *group, const char *buf,
@@ -176,3 +179,4 @@ EC_POINT_hex2point(const EC_GROUP *group, const char *buf,
 
 	return ret;
 }
+LCRYPTO_ALIAS(EC_POINT_hex2point);

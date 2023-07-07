@@ -1,4 +1,4 @@
-/* $OpenBSD: m_gost2814789.c,v 1.4 2022/11/26 16:08:52 tb Exp $ */
+/* $OpenBSD: m_gost2814789.c,v 1.5 2023/07/07 13:54:45 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -110,4 +110,5 @@ EVP_gost2814789imit(void)
 {
 	return (&gost2814789imit_md);
 }
+LCRYPTO_ALIAS(EVP_gost2814789imit);
 #endif

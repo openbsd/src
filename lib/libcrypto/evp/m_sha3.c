@@ -1,4 +1,4 @@
-/* $OpenBSD: m_sha3.c,v 1.1 2023/04/16 17:06:19 jsing Exp $ */
+/* $OpenBSD: m_sha3.c,v 1.2 2023/07/07 13:54:45 beck Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -57,6 +57,7 @@ EVP_sha3_224(void)
 {
 	return &sha3_224_md;
 }
+LCRYPTO_ALIAS(EVP_sha3_224);
 
 static int
 sha3_256_init(EVP_MD_CTX *ctx)
@@ -95,6 +96,7 @@ EVP_sha3_256(void)
 {
 	return &sha3_256_md;
 }
+LCRYPTO_ALIAS(EVP_sha3_256);
 
 static int
 sha3_384_init(EVP_MD_CTX *ctx)
@@ -133,6 +135,7 @@ EVP_sha3_384(void)
 {
 	return &sha3_384_md;
 }
+LCRYPTO_ALIAS(EVP_sha3_384);
 
 static int
 sha3_512_init(EVP_MD_CTX *ctx)
@@ -171,3 +174,4 @@ EVP_sha3_512(void)
 {
 	return &sha3_512_md;
 }
+LCRYPTO_ALIAS(EVP_sha3_512);

@@ -1,4 +1,4 @@
-/* $OpenBSD: p_sign.c,v 1.17 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: p_sign.c,v 1.18 2023/07/07 13:54:46 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,3 +102,4 @@ EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 	EVP_PKEY_CTX_free(pkctx);
 	return ret;
 }
+LCRYPTO_ALIAS(EVP_SignFinal);
