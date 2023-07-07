@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_both.c,v 1.45 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: ssl_both.c,v 1.46 2023/07/07 08:53:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -388,6 +388,7 @@ ssl_cert_type(EVP_PKEY *pkey)
 	case NID_id_GostR3410_2001_cc:
 		return SSL_PKEY_GOST01;
 	case EVP_PKEY_RSA:
+	case EVP_PKEY_RSA_PSS:
 		return SSL_PKEY_RSA;
 	}
 
