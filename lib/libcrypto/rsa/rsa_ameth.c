@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.29 2023/05/19 17:31:20 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.30 2023/07/07 06:59:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -68,6 +68,7 @@
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
+#include "bn_local.h"
 #include "cryptlib.h"
 #include "evp_local.h"
 #include "rsa_local.h"
@@ -408,44 +409,13 @@ rsa_pss_param_print(BIO *bp, int pss_key, RSA_PSS_PARAMS *pss, int indent)
 
 }
 
-static void
-update_buflen(const BIGNUM *b, size_t *pbuflen)
-{
-	size_t i;
-
-	if (!b)
-		return;
-	if (*pbuflen < (i = (size_t)BN_num_bytes(b)))
-		*pbuflen = i;
-}
-
 static int
 pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
 {
 	const RSA *x = pkey->pkey.rsa;
-	unsigned char *m = NULL;
 	char *str;
 	const char *s;
 	int ret = 0, mod_len = 0;
-	size_t buf_len = 0;
-
-	update_buflen(x->n, &buf_len);
-	update_buflen(x->e, &buf_len);
-
-	if (priv) {
-		update_buflen(x->d, &buf_len);
-		update_buflen(x->p, &buf_len);
-		update_buflen(x->q, &buf_len);
-		update_buflen(x->dmp1, &buf_len);
-		update_buflen(x->dmq1, &buf_len);
-		update_buflen(x->iqmp, &buf_len);
-	}
-
-	m = malloc(buf_len + 10);
-	if (m == NULL) {
-		RSAerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
 
 	if (x->n != NULL)
 		mod_len = BN_num_bits(x->n);
@@ -467,29 +437,28 @@ pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
 		str = "Modulus:";
 		s = "Exponent:";
 	}
-	if (!ASN1_bn_print(bp, str, x->n, m, off))
+	if (!bn_printf(bp, x->n, off, "%s", str))
 		goto err;
-	if (!ASN1_bn_print(bp, s, x->e, m, off))
+	if (!bn_printf(bp, x->e, off, "%s", s))
 		goto err;
 	if (priv) {
-		if (!ASN1_bn_print(bp, "privateExponent:", x->d, m, off))
+		if (!bn_printf(bp, x->d, off, "privateExponent:"))
 			goto err;
-		if (!ASN1_bn_print(bp, "prime1:", x->p, m, off))
+		if (!bn_printf(bp, x->p, off, "prime1:"))
 			goto err;
-		if (!ASN1_bn_print(bp, "prime2:", x->q, m, off))
+		if (!bn_printf(bp, x->q, off, "prime2:"))
 			goto err;
-		if (!ASN1_bn_print(bp, "exponent1:", x->dmp1, m, off))
+		if (!bn_printf(bp, x->dmp1, off, "exponent1:"))
 			goto err;
-		if (!ASN1_bn_print(bp, "exponent2:", x->dmq1, m, off))
+		if (!bn_printf(bp, x->dmq1, off, "exponent2:"))
 			goto err;
-		if (!ASN1_bn_print(bp, "coefficient:", x->iqmp, m, off))
+		if (!bn_printf(bp, x->iqmp, off, "coefficient:"))
 			goto err;
 	}
 	if (pkey_is_pss(pkey) && !rsa_pss_param_print(bp, 1, x->pss, off))
 		goto err;
 	ret = 1;
  err:
-	free(m);
 	return ret;
 }
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.28 2023/04/17 05:57:17 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.29 2023/07/07 06:59:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -65,6 +65,7 @@
 #include <openssl/x509.h>
 
 #include "asn1_local.h"
+#include "bn_local.h"
 #include "dh_local.h"
 #include "evp_local.h"
 
@@ -280,17 +281,6 @@ err:
 	return 0;
 }
 
-static void
-update_buflen(const BIGNUM *b, size_t *pbuflen)
-{
-	size_t i;
-
-	if (!b)
-		return;
-	if (*pbuflen < (i = (size_t)BN_num_bytes(b)))
-		*pbuflen = i;
-}
-
 static int
 dh_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 {
@@ -313,9 +303,7 @@ dh_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 static int
 do_dh_print(BIO *bp, const DH *x, int indent, ASN1_PCTX *ctx, int ptype)
 {
-	unsigned char *m = NULL;
 	int reason = ERR_R_BUF_LIB, ret = 0;
-	size_t buf_len = 0;
 	const char *ktype = NULL;
 	BIGNUM *priv_key, *pub_key;
 
@@ -329,17 +317,6 @@ do_dh_print(BIO *bp, const DH *x, int indent, ASN1_PCTX *ctx, int ptype)
 	else
 		pub_key = NULL;
 
-	update_buflen(x->p, &buf_len);
-
-	if (buf_len == 0) {
-		reason = ERR_R_PASSED_NULL_PARAMETER;
-		goto err;
-	}
-
-	update_buflen(x->g, &buf_len);
-	update_buflen(pub_key, &buf_len);
-	update_buflen(priv_key, &buf_len);
-
 	if (ptype == 2)
 		ktype = "PKCS#3 DH Private-Key";
 	else if (ptype == 1)
@@ -347,9 +324,8 @@ do_dh_print(BIO *bp, const DH *x, int indent, ASN1_PCTX *ctx, int ptype)
 	else
 		ktype = "PKCS#3 DH Parameters";
 
-	m= malloc(buf_len + 10);
-	if (m == NULL) {
-		reason = ERR_R_MALLOC_FAILURE;
+	if (x->p == NULL) {
+		reason = ERR_R_PASSED_NULL_PARAMETER;
 		goto err;
 	}
 
@@ -359,14 +335,14 @@ do_dh_print(BIO *bp, const DH *x, int indent, ASN1_PCTX *ctx, int ptype)
 		goto err;
 	indent += 4;
 
-	if (!ASN1_bn_print(bp, "private-key:", priv_key, m, indent))
+	if (!bn_printf(bp, priv_key, indent, "private-key:"))
 		goto err;
-	if (!ASN1_bn_print(bp, "public-key:", pub_key, m, indent))
+	if (!bn_printf(bp, pub_key, indent, "public-key:"))
 		goto err;
 
-	if (!ASN1_bn_print(bp, "prime:", x->p, m, indent))
+	if (!bn_printf(bp, x->p, indent, "prime:"))
 		goto err;
-	if (!ASN1_bn_print(bp, "generator:", x->g, m, indent))
+	if (!bn_printf(bp, x->g, indent, "generator:"))
 		goto err;
 	if (x->length != 0) {
 		if (!BIO_indent(bp, indent, 128))
@@ -378,10 +354,9 @@ do_dh_print(BIO *bp, const DH *x, int indent, ASN1_PCTX *ctx, int ptype)
 
 	ret = 1;
 	if (0) {
-err:
+ err:
 		DHerror(reason);
 	}
-	free(m);
 	return(ret);
 }
 

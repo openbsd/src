@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.42 2023/03/04 21:42:49 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.43 2023/07/07 06:59:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -385,25 +385,12 @@ int_dsa_free(EVP_PKEY *pkey)
 	DSA_free(pkey->pkey.dsa);
 }
 
-static void
-update_buflen(const BIGNUM *b, size_t *pbuflen)
-{
-	size_t i;
-
-	if (!b)
-		return;
-	if (*pbuflen < (i = (size_t)BN_num_bytes(b)))
-		*pbuflen = i;
-}
-
 static int
 do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 {
-	unsigned char *m = NULL;
-	int ret = 0;
-	size_t buf_len = 0;
 	const char *ktype = NULL;
 	const BIGNUM *priv_key, *pub_key;
+	int ret = 0;
 
 	if (ptype == 2)
 		priv_key = x->priv_key;
@@ -422,18 +409,6 @@ do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 	else
 		ktype = "DSA-Parameters";
 
-	update_buflen(x->p, &buf_len);
-	update_buflen(x->q, &buf_len);
-	update_buflen(x->g, &buf_len);
-	update_buflen(priv_key, &buf_len);
-	update_buflen(pub_key, &buf_len);
-
-	m = malloc(buf_len + 10);
-	if (m == NULL) {
-		DSAerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-
 	if (priv_key) {
 		if (!BIO_indent(bp, off, 128))
 			goto err;
@@ -442,19 +417,20 @@ do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 			goto err;
 	}
 
-	if (!ASN1_bn_print(bp, "priv:", priv_key, m, off))
+	if (!bn_printf(bp, priv_key, off, "priv:"))
 		goto err;
-	if (!ASN1_bn_print(bp, "pub: ", pub_key, m, off))
+	if (!bn_printf(bp, pub_key, off, "pub: "))
 		goto err;
-	if (!ASN1_bn_print(bp, "P:   ", x->p, m, off))
+	if (!bn_printf(bp, x->p, off, "P:   "))
 		goto err;
-	if (!ASN1_bn_print(bp, "Q:   ", x->q, m, off))
+	if (!bn_printf(bp, x->q, off, "Q:   "))
 		goto err;
-	if (!ASN1_bn_print(bp, "G:   ", x->g, m, off))
+	if (!bn_printf(bp, x->g, off, "G:   "))
 		goto err;
+
 	ret = 1;
-err:
-	free(m);
+
+ err:
 	return ret;
 }
 
@@ -594,27 +570,16 @@ dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg, const ASN1_STRING *sig,
 	dsa_sig = d2i_DSA_SIG(NULL, &p, sig->length);
 	if (dsa_sig) {
 		int rv = 0;
-		size_t buf_len = 0;
-		unsigned char *m = NULL;
-
-		update_buflen(dsa_sig->r, &buf_len);
-		update_buflen(dsa_sig->s, &buf_len);
-		m = malloc(buf_len + 10);
-		if (m == NULL) {
-			DSAerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
 
 		if (BIO_write(bp, "\n", 1) != 1)
 			goto err;
 
-		if (!ASN1_bn_print(bp, "r:   ", dsa_sig->r, m, indent))
+		if (!bn_printf(bp, dsa_sig->r, indent, "r:   "))
 			goto err;
-		if (!ASN1_bn_print(bp, "s:   ", dsa_sig->s, m, indent))
+		if (!bn_printf(bp, dsa_sig->s, indent, "s:   "))
 			goto err;
 		rv = 1;
-err:
-		free(m);
+ err:
 		DSA_SIG_free(dsa_sig);
 		return rv;
 	}
