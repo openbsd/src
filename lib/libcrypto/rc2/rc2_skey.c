@@ -1,25 +1,25 @@
-/* $OpenBSD: rc2_skey.c,v 1.13 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rc2_skey.c,v 1.14 2023/07/07 08:29:37 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
  * The implementation was written so as to conform with Netscapes SSL.
- * 
+ *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
  * apply to all code found in this distribution, be it the RC4, RSA,
  * lhash, DES, etc., code; not just the SSL code.  The SSL documentation
  * included with this distribution is covered by the same copyright terms
  * except that the holder is Tim Hudson (tjh@cryptsoft.com).
- * 
+ *
  * Copyright remains Eric Young's, and as such any Copyright notices in
  * the code are not to be removed.
  * If this package is used in a product, Eric Young should be given attribution
  * as the author of the parts of the library used.
  * This can be in the form of a textual message at program startup or
  * in documentation (online or textual) provided with the package.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -34,10 +34,10 @@
  *     Eric Young (eay@cryptsoft.com)"
  *    The word 'cryptographic' can be left out if the rouines from the library
  *    being used are not cryptographic related :-).
- * 4. If you include any Windows specific code (or a derivative thereof) from 
+ * 4. If you include any Windows specific code (or a derivative thereof) from
  *    the apps directory (application code) you must include an acknowledgement:
  *    "This product includes software written by Tim Hudson (tjh@cryptsoft.com)"
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY ERIC YOUNG ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -49,7 +49,7 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * The licence and distribution terms for any publically available version or
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
@@ -91,48 +91,51 @@ static const unsigned char key_table[256]={
  * BSAFE uses the 'retarded' version.  What I previously shipped is
  * the same as specifying 1024 for the 'bits' parameter.  Bsafe uses
  * a version where the bits parameter is the same as len*8 */
-void RC2_set_key(RC2_KEY *key, int len, const unsigned char *data, int bits)
-	{
-	int i,j;
+void
+RC2_set_key(RC2_KEY *key, int len, const unsigned char *data, int bits)
+{
+	int i, j;
 	unsigned char *k;
 	RC2_INT *ki;
-	unsigned int c,d;
+	unsigned int c, d;
 
-	k= (unsigned char *)&(key->data[0]);
-	*k=0; /* for if there is a zero length key */
+	k = (unsigned char *)&(key->data[0]);
+	*k = 0; /* for if there is a zero length key */
 
-	if (len > 128) len=128;
-	if (bits <= 0) bits=1024;
-	if (bits > 1024) bits=1024;
+	if (len > 128)
+		len = 128;
+	if (bits <= 0)
+		bits = 1024;
+	if (bits > 1024)
+		bits = 1024;
 
-	for (i=0; i<len; i++)
-		k[i]=data[i];
+	for (i = 0; i < len; i++)
+		k[i] = data[i];
 
 	/* expand table */
-	d=k[len-1];
-	j=0;
-	for (i=len; i < 128; i++,j++)
-		{
-		d=key_table[(k[j]+d)&0xff];
-		k[i]=d;
-		}
+	d = k[len - 1];
+	j = 0;
+	for (i = len; i < 128; i++, j++)
+	{
+		d = key_table[(k[j] + d) & 0xff];
+		k[i] = d;
+	}
 
 	/* hmm.... key reduction to 'bits' bits */
 
-	j=(bits+7)>>3;
-	i=128-j;
-	c= (0xff>>(-bits & 0x07));
+	j = (bits + 7) >> 3;
+	i = 128 - j;
+	c = (0xff >> (-bits & 0x07));
 
-	d=key_table[k[i]&c];
-	k[i]=d;
-	while (i--)
-		{
-		d=key_table[k[i+j]^d];
-		k[i]=d;
-		}
+	d = key_table[k[i] & c];
+	k[i] = d;
+	while (i--) {
+		d = key_table[k[i + j] ^ d];
+		k[i] = d;
+	}
 
 	/* copy from bytes into RC2_INT's */
-	ki= &(key->data[63]);
-	for (i=127; i>=0; i-=2)
-		*(ki--)=((k[i]<<8)|k[i-1])&0xffff;
-	}
+	ki = &(key->data[63]);
+	for (i = 127; i >= 0; i -= 2)
+		*(ki--) = ((k[i] << 8)|k[i - 1]) & 0xffff;
+}
