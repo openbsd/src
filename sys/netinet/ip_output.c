@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.389 2023/07/04 10:48:19 bluhm Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.390 2023/07/07 08:05:02 bluhm Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -451,17 +451,9 @@ sendit:
 #endif
 
 	/*
-	 * If small enough for interface, can just send directly.
+	 * If TSO or small enough for interface, can just send directly.
 	 */
-	if (ntohs(ip->ip_len) <= mtu) {
-		in_hdr_cksum_out(m, ifp);
-		in_proto_cksum_out(m, ifp);
-		error = ifp->if_output(ifp, m, sintosa(dst), ro->ro_rt);
-		goto done;
-	}
-
-	error = tcp_if_output_tso(ifp, &m, sintosa(dst), ro->ro_rt,
-	    IFCAP_TSOv4, mtu);
+	error = if_output_tso(ifp, &m, sintosa(dst), ro->ro_rt, mtu);
 	if (error || m == NULL)
 		goto done;
 

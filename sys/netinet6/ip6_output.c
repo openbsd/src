@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.278 2023/06/13 19:34:12 bluhm Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.279 2023/07/07 08:05:02 bluhm Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -677,7 +677,8 @@ reroute:
 	 * 2-a: send as is if tlen <= interface mtu
 	 * 2-b: error if tlen > interface mtu
 	 */
-	tlen = m->m_pkthdr.len;
+	tlen = ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) ?
+	    m->m_pkthdr.ph_mss : m->m_pkthdr.len;
 
 	if (ISSET(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT)) {
 		CLR(m->m_pkthdr.csum_flags, M_IPV6_DF_OUT);
@@ -686,9 +687,8 @@ reroute:
 		dontfrag = 1;
 	else
 		dontfrag = 0;
-	if (dontfrag &&					/* case 2-b */
-	    (ISSET(m->m_pkthdr.csum_flags, M_TCP_TSO) ?
-	    m->m_pkthdr.ph_mss : tlen) > ifp->if_mtu) {
+
+	if (dontfrag && tlen > ifp->if_mtu) {		/* case 2-b */
 #ifdef IPSEC
 		if (ip_mtudisc)
 			ipsec_adjust_mtu(m, mtu);
@@ -701,15 +701,12 @@ reroute:
 	 * transmit packet without fragmentation
 	 */
 	if (dontfrag || tlen <= mtu) {			/* case 1-a and 2-a */
-		in6_proto_cksum_out(m, ifp);
-		error = ifp->if_output(ifp, m, sin6tosa(dst), ro->ro_rt);
-		goto done;
+		error = if_output_tso(ifp, &m, sin6tosa(dst), ro->ro_rt,
+		    ifp->if_mtu);
+		if (error || m == NULL)
+			goto done;
+		goto bad;				/* should not happen */
 	}
-
-	error = tcp_if_output_tso(ifp, &m, sin6tosa(dst), ro->ro_rt,
-	    IFCAP_TSOv6, mtu);
-	if (error || m == NULL)
-		goto done;
 
 	/*
 	 * try to fragment the packet.  case 1-b

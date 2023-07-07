@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.111 2023/06/16 19:18:56 bluhm Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.112 2023/07/07 08:05:02 bluhm Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.75 2001/06/29 12:42:13 jinmei Exp $	*/
 
 /*
@@ -319,25 +319,13 @@ reroute:
 	}
 #endif
 
-	error = tcp_if_output_tso(ifp, &m, sin6tosa(sin6), rt, IFCAP_TSOv6,
-	    ifp->if_mtu);
+	error = if_output_tso(ifp, &m, sin6tosa(sin6), rt, ifp->if_mtu);
 	if (error)
 		ip6stat_inc(ip6s_cantforward);
 	else if (m == NULL)
 		ip6stat_inc(ip6s_forward);
 	if (error || m == NULL)
 		goto senderr;
-
-	/* Check the size after pf_test to give pf a chance to refragment. */
-	if (m->m_pkthdr.len <= ifp->if_mtu) {
-		in6_proto_cksum_out(m, ifp);
-		error = ifp->if_output(ifp, m, sin6tosa(sin6), rt);
-		if (error)
-			ip6stat_inc(ip6s_cantforward);
-		else
-			ip6stat_inc(ip6s_forward);
-		goto senderr;
-	}
 
 	if (mcopy != NULL)
 		icmp6_error(mcopy, ICMP6_PACKET_TOO_BIG, 0, ifp->if_mtu);

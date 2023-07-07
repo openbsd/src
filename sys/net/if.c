@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.704 2023/07/06 04:55:04 dlg Exp $	*/
+/*	$OpenBSD: if.c,v 1.705 2023/07/07 08:05:02 bluhm Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -883,6 +883,57 @@ if_output_ml(struct ifnet *ifp, struct mbuf_list *ml,
 		ml_purge(ml);
 
 	return error;
+}
+
+int
+if_output_tso(struct ifnet *ifp, struct mbuf **mp, struct sockaddr *dst,
+    struct rtentry *rt, u_int mtu)
+{
+	uint32_t ifcap;
+	int error;
+
+	switch (dst->sa_family) {
+	case AF_INET:
+		ifcap = IFCAP_TSOv4;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		ifcap = IFCAP_TSOv6;
+		break;
+#endif
+	default:
+		unhandled_af(dst->sa_family);
+	}
+
+	/*
+	 * Try to send with TSO first.  When forwarding LRO may set
+	 * maximium segment size in mbuf header.  Chop TCP segment
+	 * even if it would fit interface MTU to preserve maximum
+	 * path MTU.
+	 */
+	error = tcp_if_output_tso(ifp, mp, dst, rt, ifcap, mtu);
+	if (error || *mp == NULL)
+		return error;
+
+	if ((*mp)->m_pkthdr.len <= mtu) {
+		switch (dst->sa_family) {
+		case AF_INET:
+			in_hdr_cksum_out(*mp, ifp);
+			in_proto_cksum_out(*mp, ifp);
+			break;
+#ifdef INET6
+		case AF_INET6:
+			in6_proto_cksum_out(*mp, ifp);
+			break;
+#endif
+		}
+		error = ifp->if_output(ifp, *mp, dst, rt);
+		*mp = NULL;
+		return error;
+	}
+
+	/* mp still contains mbuf that has to be fragmented or dropped. */
+	return 0;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1182 2023/07/06 04:55:05 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1183 2023/07/07 08:05:02 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -6610,15 +6610,8 @@ pf_route(struct pf_pdesc *pd, struct pf_state *st)
 		ip = mtod(m0, struct ip *);
 	}
 
-	if (ntohs(ip->ip_len) <= ifp->if_mtu) {
-		in_hdr_cksum_out(m0, ifp);
-		in_proto_cksum_out(m0, ifp);
-		ifp->if_output(ifp, m0, sintosa(dst), rt);
-		goto done;
-	}
-
-	if (tcp_if_output_tso(ifp, &m0, sintosa(dst), rt,
-	    IFCAP_TSOv4, ifp->if_mtu) || m0 == NULL)
+	if (if_output_tso(ifp, &m0, sintosa(dst), rt, ifp->if_mtu) ||
+	    m0 == NULL)
 		goto done;
 
 	/*
@@ -6745,14 +6738,8 @@ pf_route6(struct pf_pdesc *pd, struct pf_state *st)
 		goto done;
 	}
 
-	if (m0->m_pkthdr.len <= ifp->if_mtu) {
-		in6_proto_cksum_out(m0, ifp);
-		ifp->if_output(ifp, m0, sin6tosa(dst), rt);
-		goto done;
-	}
-
-	if (tcp_if_output_tso(ifp, &m0, sin6tosa(dst), rt,
-	    IFCAP_TSOv6, ifp->if_mtu) || m0 == NULL)
+	if (if_output_tso(ifp, &m0, sin6tosa(dst), rt, ifp->if_mtu) ||
+	    m0 == NULL)
 		goto done;
 
 	ip6stat_inc(ip6s_cantfrag);
