@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_gen.c,v 1.29 2023/04/13 14:58:27 tb Exp $ */
+/* $OpenBSD: dsa_gen.c,v 1.30 2023/07/08 14:28:15 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -94,6 +94,7 @@ DSA_generate_parameters_ex(DSA *ret, int bits, const unsigned char *seed_in,
 		    seed_len, NULL, counter_ret, h_ret, cb);
 	}
 }
+LCRYPTO_ALIAS(DSA_generate_parameters_ex);
 
 int
 dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits, const EVP_MD *evpmd,
@@ -375,5 +376,6 @@ DSA_generate_parameters(int bits, unsigned char *seed_in, int seed_len,
 	DSA_free(ret);
 	return NULL;
 }
+LCRYPTO_ALIAS(DSA_generate_parameters);
 
 #endif

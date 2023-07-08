@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.42 2023/03/11 15:29:03 tb Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.43 2023/07/08 14:28:15 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -84,6 +84,7 @@ DSA_set_default_method(const DSA_METHOD *meth)
 {
 	default_DSA_method = meth;
 }
+LCRYPTO_ALIAS(DSA_set_default_method);
 
 const DSA_METHOD *
 DSA_get_default_method(void)
@@ -92,12 +93,14 @@ DSA_get_default_method(void)
 		default_DSA_method = DSA_OpenSSL();
 	return default_DSA_method;
 }
+LCRYPTO_ALIAS(DSA_get_default_method);
 
 DSA *
 DSA_new(void)
 {
 	return DSA_new_method(NULL);
 }
+LCRYPTO_ALIAS(DSA_new);
 
 int
 DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
@@ -119,6 +122,7 @@ DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
 		meth->init(dsa);
 	return 1;
 }
+LCRYPTO_ALIAS(DSA_set_method);
 
 DSA *
 DSA_new_method(ENGINE *engine)
@@ -179,6 +183,7 @@ DSA_new_method(ENGINE *engine)
 
 	return ret;
 }
+LCRYPTO_ALIAS(DSA_new_method);
 
 void
 DSA_free(DSA *r)
@@ -209,6 +214,7 @@ DSA_free(DSA *r)
 	BN_free(r->r);
 	free(r);
 }
+LCRYPTO_ALIAS(DSA_free);
 
 int
 DSA_up_ref(DSA *r)
@@ -216,6 +222,7 @@ DSA_up_ref(DSA *r)
 	int i = CRYPTO_add(&r->references, 1, CRYPTO_LOCK_DSA);
 	return i > 1 ? 1 : 0;
 }
+LCRYPTO_ALIAS(DSA_up_ref);
 
 int
 DSA_size(const DSA *r)
@@ -231,6 +238,7 @@ DSA_size(const DSA *r)
 
 	return ret;
 }
+LCRYPTO_ALIAS(DSA_size);
 
 int
 DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
@@ -239,18 +247,21 @@ DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DSA, argl, argp,
 	    new_func, dup_func, free_func);
 }
+LCRYPTO_ALIAS(DSA_get_ex_new_index);
 
 int
 DSA_set_ex_data(DSA *d, int idx, void *arg)
 {
 	return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
 }
+LCRYPTO_ALIAS(DSA_set_ex_data);
 
 void *
 DSA_get_ex_data(DSA *d, int idx)
 {
 	return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
+LCRYPTO_ALIAS(DSA_get_ex_data);
 
 int
 DSA_security_bits(const DSA *d)
@@ -260,6 +271,7 @@ DSA_security_bits(const DSA *d)
 
 	return BN_security_bits(BN_num_bits(d->p), BN_num_bits(d->q));
 }
+LCRYPTO_ALIAS(DSA_security_bits);
 
 #ifndef OPENSSL_NO_DH
 DH *
@@ -301,6 +313,7 @@ err:
 	DH_free(ret);
 	return NULL;
 }
+LCRYPTO_ALIAS(DSA_dup_DH);
 #endif
 
 void
@@ -313,6 +326,7 @@ DSA_get0_pqg(const DSA *d, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 	if (g != NULL)
 		*g = d->g;
 }
+LCRYPTO_ALIAS(DSA_get0_pqg);
 
 int
 DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
@@ -336,6 +350,7 @@ DSA_set0_pqg(DSA *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 
 	return 1;
 }
+LCRYPTO_ALIAS(DSA_set0_pqg);
 
 void
 DSA_get0_key(const DSA *d, const BIGNUM **pub_key, const BIGNUM **priv_key)
@@ -345,6 +360,7 @@ DSA_get0_key(const DSA *d, const BIGNUM **pub_key, const BIGNUM **priv_key)
 	if (priv_key != NULL)
 		*priv_key = d->priv_key;
 }
+LCRYPTO_ALIAS(DSA_get0_key);
 
 int
 DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
@@ -363,66 +379,77 @@ DSA_set0_key(DSA *d, BIGNUM *pub_key, BIGNUM *priv_key)
 
 	return 1;
 }
+LCRYPTO_ALIAS(DSA_set0_key);
 
 const BIGNUM *
 DSA_get0_p(const DSA *d)
 {
 	return d->p;
 }
+LCRYPTO_ALIAS(DSA_get0_p);
 
 const BIGNUM *
 DSA_get0_q(const DSA *d)
 {
 	return d->q;
 }
+LCRYPTO_ALIAS(DSA_get0_q);
 
 const BIGNUM *
 DSA_get0_g(const DSA *d)
 {
 	return d->g;
 }
+LCRYPTO_ALIAS(DSA_get0_g);
 
 const BIGNUM *
 DSA_get0_pub_key(const DSA *d)
 {
 	return d->pub_key;
 }
+LCRYPTO_ALIAS(DSA_get0_pub_key);
 
 const BIGNUM *
 DSA_get0_priv_key(const DSA *d)
 {
 	return d->priv_key;
 }
+LCRYPTO_ALIAS(DSA_get0_priv_key);
 
 void
 DSA_clear_flags(DSA *d, int flags)
 {
 	d->flags &= ~flags;
 }
+LCRYPTO_ALIAS(DSA_clear_flags);
 
 int
 DSA_test_flags(const DSA *d, int flags)
 {
 	return d->flags & flags;
 }
+LCRYPTO_ALIAS(DSA_test_flags);
 
 void
 DSA_set_flags(DSA *d, int flags)
 {
 	d->flags |= flags;
 }
+LCRYPTO_ALIAS(DSA_set_flags);
 
 ENGINE *
 DSA_get0_engine(DSA *d)
 {
 	return d->engine;
 }
+LCRYPTO_ALIAS(DSA_get0_engine);
 
 int
 DSA_bits(const DSA *dsa)
 {
 	return BN_num_bits(dsa->p);
 }
+LCRYPTO_ALIAS(DSA_bits);
 
 int
 dsa_check_key(const DSA *dsa)

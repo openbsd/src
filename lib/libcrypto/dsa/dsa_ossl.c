@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ossl.c,v 1.51 2023/03/27 10:25:02 tb Exp $ */
+/* $OpenBSD: dsa_ossl.c,v 1.52 2023/07/08 14:28:15 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -91,6 +91,7 @@ DSA_OpenSSL(void)
 {
 	return &openssl_dsa_meth;
 }
+LCRYPTO_ALIAS(DSA_OpenSSL);
 
 /*
  * Since DSA parameters are entirely arbitrary and checking them to be
@@ -440,6 +441,7 @@ DSA_SIG_new(void)
 {
 	return calloc(1, sizeof(DSA_SIG));
 }
+LCRYPTO_ALIAS(DSA_SIG_new);
 
 void
 DSA_SIG_free(DSA_SIG *sig)
@@ -451,21 +453,25 @@ DSA_SIG_free(DSA_SIG *sig)
 	BN_free(sig->s);
 	free(sig);
 }
+LCRYPTO_ALIAS(DSA_SIG_free);
 
 int
 DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 {
 	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);
 }
+LCRYPTO_ALIAS(DSA_sign_setup);
 
 DSA_SIG *
 DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 {
 	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
 }
+LCRYPTO_ALIAS(DSA_do_sign);
 
 int
 DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig, DSA *dsa)
 {
 	return dsa->meth->dsa_do_verify(dgst, dgst_len, sig, dsa);
 }
+LCRYPTO_ALIAS(DSA_do_verify);

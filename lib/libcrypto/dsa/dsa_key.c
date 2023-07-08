@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_key.c,v 1.33 2023/01/11 04:35:26 jsing Exp $ */
+/* $OpenBSD: dsa_key.c,v 1.34 2023/07/08 14:28:15 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,6 +78,7 @@ DSA_generate_key(DSA *dsa)
 		return dsa->meth->dsa_keygen(dsa);
 	return dsa_builtin_keygen(dsa);
 }
+LCRYPTO_ALIAS(DSA_generate_key);
 
 static int
 dsa_builtin_keygen(DSA *dsa)

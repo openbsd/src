@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_prn.c,v 1.9 2022/11/19 06:33:00 tb Exp $ */
+/* $OpenBSD: dsa_prn.c,v 1.10 2023/07/08 14:28:15 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -77,6 +77,7 @@ DSA_print_fp(FILE *fp, const DSA *x, int off)
 	BIO_free(b);
 	return ret;
 }
+LCRYPTO_ALIAS(DSA_print_fp);
 
 int
 DSAparams_print_fp(FILE *fp, const DSA *x)
@@ -93,6 +94,7 @@ DSAparams_print_fp(FILE *fp, const DSA *x)
 	BIO_free(b);
 	return ret;
 }
+LCRYPTO_ALIAS(DSAparams_print_fp);
 
 int
 DSA_print(BIO *bp, const DSA *x, int off)
@@ -111,6 +113,7 @@ DSA_print(BIO *bp, const DSA *x, int off)
 	EVP_PKEY_free(pk);
 	return ret;
 }
+LCRYPTO_ALIAS(DSA_print);
 
 int
 DSAparams_print(BIO *bp, const DSA *x)
@@ -129,3 +132,4 @@ DSAparams_print(BIO *bp, const DSA *x)
 	EVP_PKEY_free(pk);
 	return ret;
 }
+LCRYPTO_ALIAS(DSAparams_print);

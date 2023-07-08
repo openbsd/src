@@ -1,4 +1,4 @@
-/*	$OpenBSD: dsa_meth.c,v 1.6 2022/11/26 16:08:52 tb Exp $	*/
+/*	$OpenBSD: dsa_meth.c,v 1.7 2023/07/08 14:28:15 beck Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -38,6 +38,7 @@ DSA_meth_new(const char *name, int flags)
 
 	return meth;
 }
+LCRYPTO_ALIAS(DSA_meth_new);
 
 void
 DSA_meth_free(DSA_METHOD *meth)
@@ -48,6 +49,7 @@ DSA_meth_free(DSA_METHOD *meth)
 	free(meth->name);
 	free(meth);
 }
+LCRYPTO_ALIAS(DSA_meth_free);
 
 DSA_METHOD *
 DSA_meth_dup(const DSA_METHOD *meth)
@@ -64,12 +66,14 @@ DSA_meth_dup(const DSA_METHOD *meth)
 
 	return copy;
 }
+LCRYPTO_ALIAS(DSA_meth_dup);
 
 const char *
 DSA_meth_get0_name(const DSA_METHOD *meth)
 {
 	return meth->name;
 }
+LCRYPTO_ALIAS(DSA_meth_get0_name);
 
 int
 DSA_meth_set1_name(DSA_METHOD *meth, const char *name)
@@ -86,6 +90,7 @@ DSA_meth_set1_name(DSA_METHOD *meth, const char *name)
 
 	return 1;
 }
+LCRYPTO_ALIAS(DSA_meth_set1_name);
 
 int
 DSA_meth_set_sign(DSA_METHOD *meth,
@@ -94,6 +99,7 @@ DSA_meth_set_sign(DSA_METHOD *meth,
 	meth->dsa_do_sign = sign;
 	return 1;
 }
+LCRYPTO_ALIAS(DSA_meth_set_sign);
 
 int
 DSA_meth_set_finish(DSA_METHOD *meth, int (*finish)(DSA *))
@@ -101,3 +107,4 @@ DSA_meth_set_finish(DSA_METHOD *meth, int (*finish)(DSA *))
 	meth->finish = finish;
 	return 1;
 }
+LCRYPTO_ALIAS(DSA_meth_set_finish);
