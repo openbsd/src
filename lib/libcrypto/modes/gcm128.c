@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.24 2023/07/08 14:55:36 beck Exp $ */
+/* $OpenBSD: gcm128.c,v 1.25 2023/07/08 14:56:54 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -784,6 +784,7 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 # endif
 #endif
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_init);
 
 void
 CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv, size_t len)
@@ -865,6 +866,7 @@ CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv, size_t len)
 	ctx->Yi.d[3] = ctr;
 #endif
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_setiv);
 
 int
 CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad, size_t len)
@@ -927,6 +929,7 @@ CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad, size_t len)
 	ctx->ares = n;
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_aad);
 
 int
 CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
@@ -1116,6 +1119,7 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 	ctx->mres = n;
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_encrypt);
 
 int
 CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
@@ -1310,6 +1314,7 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	ctx->mres = n;
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_decrypt);
 
 int
 CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
@@ -1431,6 +1436,7 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 	ctx->mres = n;
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_encrypt_ctr32);
 
 int
 CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
@@ -1559,6 +1565,7 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 	ctx->mres = n;
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_decrypt_ctr32);
 
 int
 CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
@@ -1602,6 +1609,7 @@ CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
 	else
 		return -1;
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_finish);
 
 void
 CRYPTO_gcm128_tag(GCM128_CONTEXT *ctx, unsigned char *tag, size_t len)
@@ -1610,6 +1618,7 @@ CRYPTO_gcm128_tag(GCM128_CONTEXT *ctx, unsigned char *tag, size_t len)
 	memcpy(tag, ctx->Xi.c,
 	    len <= sizeof(ctx->Xi.c) ? len : sizeof(ctx->Xi.c));
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_tag);
 
 GCM128_CONTEXT *
 CRYPTO_gcm128_new(void *key, block128_f block)
@@ -1621,9 +1630,11 @@ CRYPTO_gcm128_new(void *key, block128_f block)
 
 	return ret;
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_new);
 
 void
 CRYPTO_gcm128_release(GCM128_CONTEXT *ctx)
 {
 	freezero(ctx, sizeof(*ctx));
 }
+LCRYPTO_ALIAS(CRYPTO_gcm128_release);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ccm128.c,v 1.7 2023/07/08 14:55:36 beck Exp $ */
+/* $OpenBSD: ccm128.c,v 1.8 2023/07/08 14:56:54 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -70,6 +70,7 @@ CRYPTO_ccm128_init(CCM128_CONTEXT *ctx,
 	ctx->block = block;
 	ctx->key = key;
 }
+LCRYPTO_ALIAS(CRYPTO_ccm128_init);
 
 /* !!! Following interfaces are to be called *once* per packet !!! */
 
@@ -101,6 +102,7 @@ CRYPTO_ccm128_setiv(CCM128_CONTEXT *ctx,
 
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_ccm128_setiv);
 
 /* Then you pass additional authentication data, this is optional */
 void
@@ -152,6 +154,7 @@ CRYPTO_ccm128_aad(CCM128_CONTEXT *ctx,
 		i = 0;
 	} while (alen);
 }
+LCRYPTO_ALIAS(CRYPTO_ccm128_aad);
 
 /* Finally you encrypt or decrypt the message */
 
@@ -259,6 +262,7 @@ CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
 
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_ccm128_encrypt);
 
 int
 CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
@@ -335,6 +339,7 @@ CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_ccm128_decrypt);
 
 static void
 ctr64_add(unsigned char *counter, size_t inc)
@@ -416,6 +421,7 @@ CRYPTO_ccm128_encrypt_ccm64(CCM128_CONTEXT *ctx,
 
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_ccm128_encrypt_ccm64);
 
 int
 CRYPTO_ccm128_decrypt_ccm64(CCM128_CONTEXT *ctx,
@@ -475,6 +481,7 @@ CRYPTO_ccm128_decrypt_ccm64(CCM128_CONTEXT *ctx,
 
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_ccm128_decrypt_ccm64);
 
 size_t
 CRYPTO_ccm128_tag(CCM128_CONTEXT *ctx, unsigned char *tag, size_t len)
@@ -488,3 +495,4 @@ CRYPTO_ccm128_tag(CCM128_CONTEXT *ctx, unsigned char *tag, size_t len)
 	memcpy(tag, ctx->cmac.c, M);
 	return M;
 }
+LCRYPTO_ALIAS(CRYPTO_ccm128_tag);

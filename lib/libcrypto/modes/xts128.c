@@ -1,4 +1,4 @@
-/* $OpenBSD: xts128.c,v 1.11 2023/07/08 14:55:36 beck Exp $ */
+/* $OpenBSD: xts128.c,v 1.12 2023/07/08 14:56:54 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
@@ -194,3 +194,4 @@ CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 
 	return 0;
 }
+LCRYPTO_ALIAS(CRYPTO_xts128_encrypt);

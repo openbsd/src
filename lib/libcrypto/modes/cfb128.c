@@ -1,4 +1,4 @@
-/* $OpenBSD: cfb128.c,v 1.6 2023/07/08 14:55:36 beck Exp $ */
+/* $OpenBSD: cfb128.c,v 1.7 2023/07/08 14:56:54 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -177,6 +177,7 @@ CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 		*num = n;
 	}
 }
+LCRYPTO_ALIAS(CRYPTO_cfb128_encrypt);
 
 /* This expects a single block of size nbits for both in and out. Note that
    it corrupts any extra bits in the last byte of out */
@@ -234,6 +235,7 @@ CRYPTO_cfb128_1_encrypt(const unsigned char *in, unsigned char *out,
 		    ((d[0] & 0x80) >> (unsigned int)(n % 8));
 	}
 }
+LCRYPTO_ALIAS(CRYPTO_cfb128_1_encrypt);
 
 void
 CRYPTO_cfb128_8_encrypt(const unsigned char *in, unsigned char *out,
@@ -246,3 +248,4 @@ CRYPTO_cfb128_8_encrypt(const unsigned char *in, unsigned char *out,
 	for (n = 0; n < length; ++n)
 		cfbr_encrypt_block(&in[n], &out[n], 8, key, ivec, enc, block);
 }
+LCRYPTO_ALIAS(CRYPTO_cfb128_8_encrypt);

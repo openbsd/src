@@ -1,4 +1,4 @@
-/* $OpenBSD: ctr128.c,v 1.10 2023/07/08 14:55:36 beck Exp $ */
+/* $OpenBSD: ctr128.c,v 1.11 2023/07/08 14:56:54 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
@@ -179,6 +179,7 @@ CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 
 	*num = n;
 }
+LCRYPTO_ALIAS(CRYPTO_ctr128_encrypt);
 
 /* increment upper 96 bits of 128-bit counter by 1 */
 static void
@@ -263,3 +264,4 @@ CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
 
 	*num = n;
 }
+LCRYPTO_ALIAS(CRYPTO_ctr128_encrypt_ctr32);
