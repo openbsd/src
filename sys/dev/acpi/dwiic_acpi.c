@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiic_acpi.c,v 1.21 2023/04/23 00:33:02 dlg Exp $ */
+/* $OpenBSD: dwiic_acpi.c,v 1.22 2023/07/08 02:43:02 jcs Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -50,6 +50,8 @@ int		dwiic_acpi_found_ihidev(struct dwiic_softc *,
 		    struct aml_node *, char *, struct dwiic_crs);
 int		dwiic_acpi_found_iatp(struct dwiic_softc *, struct aml_node *,
 		    char *, struct dwiic_crs);
+int		dwiic_acpi_found_ietp(struct dwiic_softc *, struct aml_node *,
+		    char *, struct dwiic_crs);
 void		dwiic_acpi_get_params(struct dwiic_softc *, char *, uint16_t *,
 		    uint16_t *, uint32_t *);
 void		dwiic_acpi_power(struct dwiic_softc *, int);
@@ -84,6 +86,63 @@ const char *dwiic_hids[] = {
 const char *ihidev_hids[] = {
 	"PNP0C50",
 	"ACPI0C50",
+	NULL
+};
+
+const char *ietp_hids[] = {
+	"ELAN0000",
+	"ELAN0100",
+	"ELAN0600",
+	"ELAN0601",
+	"ELAN0602",
+	"ELAN0603",
+	"ELAN0604",
+	"ELAN0605",
+	"ELAN0606",
+	"ELAN0607",
+	"ELAN0608",
+	"ELAN0609",
+	"ELAN060B",
+	"ELAN060C",
+	"ELAN060F",
+	"ELAN0610",
+	"ELAN0611",
+	"ELAN0612",
+	"ELAN0615",
+	"ELAN0616",
+	"ELAN0617",
+	"ELAN0618",
+	"ELAN0619",
+	"ELAN061A",
+	"ELAN061B",
+	"ELAN061C",
+	"ELAN061D",
+	"ELAN061E",
+	"ELAN061F",
+	"ELAN0620",
+	"ELAN0621",
+	"ELAN0622",
+	"ELAN0623",
+	"ELAN0624",
+	"ELAN0625",
+	"ELAN0626",
+	"ELAN0627",
+	"ELAN0628",
+	"ELAN0629",
+	"ELAN062A",
+	"ELAN062B",
+	"ELAN062C",
+	"ELAN062D",
+	"ELAN062E",	/* Lenovo V340 Whiskey Lake U */
+	"ELAN062F",	/* Lenovo V340 Comet Lake U */
+	"ELAN0631",
+	"ELAN0632",
+	"ELAN0633",	/* Lenovo S145 */
+	"ELAN0634",	/* Lenovo V340 Ice lake */
+	"ELAN0635",	/* Lenovo V1415-IIL */
+	"ELAN0636",	/* Lenovo V1415-Dali */
+	"ELAN0637",	/* Lenovo V1415-IGLR */
+	"ELAN1000",
 	NULL
 };
 
@@ -417,6 +476,8 @@ dwiic_acpi_found_hid(struct aml_node *node, void *arg)
 		return dwiic_acpi_found_ihidev(sc, node, dev, crs);
 	else if (dwiic_matchhids(dev, iatp_hids))
 		return dwiic_acpi_found_iatp(sc, node, dev, crs);
+	else if (dwiic_matchhids(dev, ietp_hids) || dwiic_matchhids(cdev, ietp_hids))
+		return dwiic_acpi_found_ietp(sc, node, dev, crs);
 
 	memset(&ia, 0, sizeof(ia));
 	ia.ia_tag = sc->sc_iba.iba_tag;
@@ -490,6 +551,32 @@ dwiic_acpi_found_ihidev(struct dwiic_softc *sc, struct aml_node *node,
 	ia.ia_cookie = dev;
 
 	aml_freevalue(&res);
+
+	if (sc->sc_poll_ihidev)
+		ia.ia_poll = 1;
+	if (!(crs.irq_int == 0 && crs.gpio_int_node == NULL))
+		ia.ia_intr = &crs;
+
+	if (config_found(sc->sc_iic, &ia, dwiic_i2c_print)) {
+		node->parent->attached = 1;
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+dwiic_acpi_found_ietp(struct dwiic_softc *sc, struct aml_node *node,
+    char *dev, struct dwiic_crs crs)
+{
+	struct i2c_attach_args ia;
+
+	memset(&ia, 0, sizeof(ia));
+	ia.ia_tag = sc->sc_iba.iba_tag;
+	ia.ia_size = 1;
+	ia.ia_name = "ietp";
+	ia.ia_addr = crs.i2c_addr;
+	ia.ia_cookie = dev;
 
 	if (sc->sc_poll_ihidev)
 		ia.ia_poll = 1;
