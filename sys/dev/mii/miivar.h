@@ -1,4 +1,4 @@
-/*	$OpenBSD: miivar.h,v 1.37 2023/04/05 10:45:07 kettenis Exp $	*/
+/*	$OpenBSD: miivar.h,v 1.38 2023/07/08 08:18:30 kettenis Exp $	*/
 /*	$NetBSD: miivar.h,v 1.17 2000/03/06 20:56:57 thorpej Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ struct mii_data {
 	struct ifnet *mii_ifp;		/* pointer back to network interface */
 
 	int mii_flags;			/* misc. flags; see below */
+	int mii_node;			/* FDT node */
 
 	/*
 	 * For network interfaces with multiple PHYs, a list of all

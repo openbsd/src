@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.43 2023/07/04 13:04:08 kettenis Exp $
+#	$OpenBSD: GENERIC,v 1.44 2023/07/08 08:18:30 kettenis Exp $
 #
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
@@ -256,17 +256,18 @@ udl*		at uhub?		# DisplayLink USB displays
 wsdisplay*	at udl?
 bwfm*		at uhub?		# Broadcom FullMAC
 
-acphy*		at mii?		# Altima AC101 PHYs
-amphy*		at mii?		# AMD 79C873 PHYs
-atphy*		at mii?		# Attansic F1 PHYs
-bmtphy*		at mii?		# Broadcom 10/100 PHYs
-brgphy*		at mii?		# Broadcom Gigabit PHYs
-eephy*		at mii?		# Marvell 88E1000 series PHY
-rgephy*		at mii?		# Realtek 8169S/8110S PHY
-rlphy*		at mii?		# Realtek 8139 internal PHYs
-sqphy*		at mii?		# Seeq 8x220 PHYs
-ukphy*		at mii?		# "unknown" PHYs
-urlphy*		at mii?		# Realtek RTL8150L internal PHY
+acphy*		at mii?			# Altima AC101 PHYs
+amphy*		at mii?			# AMD 79C873 PHYs
+atphy*		at mii?			# Attansic F1 PHYs
+bmtphy*		at mii?			# Broadcom 10/100 PHYs
+brgphy*		at mii?			# Broadcom Gigabit PHYs
+eephy*		at mii?			# Marvell 88E1000 series PHY
+rgephy*		at mii?			# Realtek 8169S/8110S PHY
+rlphy*		at mii?			# Realtek 8139 internal PHYs
+sqphy*		at mii?			# Seeq 8x220 PHYs
+ukphy*		at mii?			# "unknown" PHYs
+urlphy*		at mii?			# Realtek RTL8150L internal PHY
+ytphy*		at mii?			# MotorComm YT8511 PHY
 
 # Pseudo-Devices
 pseudo-device	openprom
