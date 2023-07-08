@@ -1,4 +1,4 @@
-/* $OpenBSD: md4_dgst.c,v 1.19 2023/07/08 06:47:26 jsing Exp $ */
+/* $OpenBSD: md4_dgst.c,v 1.20 2023/07/08 10:45:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,6 +89,9 @@ __END_HIDDEN_DECLS
 #define	HASH_BLOCK_DATA_ORDER	md4_block_data_order
 
 #include "md32_common.h"
+LCRYPTO_ALIAS(MD4_Update);
+LCRYPTO_ALIAS(MD4_Final);
+LCRYPTO_ALIAS(MD4_Transform);
 
 /*
 #define	F(x,y,z)	(((x) & (y))  |  ((~(x)) & (z)))
@@ -133,6 +136,7 @@ MD4_Init(MD4_CTX *c)
 	c->D = INIT_DATA_D;
 	return 1;
 }
+LCRYPTO_ALIAS(MD4_Init);
 
 #ifndef md4_block_data_order
 #ifdef X

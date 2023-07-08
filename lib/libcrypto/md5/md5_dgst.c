@@ -1,4 +1,4 @@
-/* $OpenBSD: md5_dgst.c,v 1.17 2023/07/08 06:50:38 jsing Exp $ */
+/* $OpenBSD: md5_dgst.c,v 1.18 2023/07/08 10:45:57 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,6 +100,9 @@ __END_HIDDEN_DECLS
 #define	HASH_BLOCK_DATA_ORDER	md5_block_data_order
 
 #include "md32_common.h"
+LCRYPTO_ALIAS(MD5_Update);
+LCRYPTO_ALIAS(MD5_Transform);
+LCRYPTO_ALIAS(MD5_Final);
 
 /*
 #define	F(x,y,z)	(((x) & (y))  |  ((~(x)) & (z)))
@@ -153,6 +156,7 @@ MD5_Init(MD5_CTX *c)
 	c->D = INIT_DATA_D;
 	return 1;
 }
+LCRYPTO_ALIAS(MD5_Init);
 
 #ifndef md5_block_data_order
 #ifdef X

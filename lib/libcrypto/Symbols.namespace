@@ -2239,3 +2239,13 @@ _libre_OCSP_REQUEST_print
 _libre_OCSP_RESPONSE_print
 _libre_OCSP_basic_verify
 _libre_ERR_load_OCSP_strings
+_libre_MD5_Init
+_libre_MD5_Update
+_libre_MD5_Final
+_libre_MD5
+_libre_MD5_Transform
+_libre_MD4_Init
+_libre_MD4_Update
+_libre_MD4_Final
+_libre_MD4
+_libre_MD4_Transform
