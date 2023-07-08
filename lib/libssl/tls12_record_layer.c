@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.39 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.40 2023/07/08 20:38:23 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -486,7 +486,7 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 		goto err;
 
 #ifndef OPENSSL_NO_GOST
-	/* XXX die die die
+	/* XXX die die die */
 	/* Special handling for GOST... */
 	if (EVP_MD_type(rl->mac_hash) == NID_id_Gost28147_89_MAC) {
 		if (CBS_len(mac_key) != 32)
