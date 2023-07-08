@@ -2249,3 +2249,9 @@ _libre_MD4_Update
 _libre_MD4_Final
 _libre_MD4
 _libre_MD4_Transform
+_libre_TXT_DB_read
+_libre_TXT_DB_write
+_libre_TXT_DB_create_index
+_libre_TXT_DB_free
+_libre_TXT_DB_get_by_index
+_libre_TXT_DB_insert
