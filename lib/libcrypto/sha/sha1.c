@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.9 2023/07/08 07:52:25 jsing Exp $ */
+/* $OpenBSD: sha1.c,v 1.10 2023/07/08 07:58:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -105,7 +105,6 @@ void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 #define F_40_59(b, c, d)	(((b) & (c)) | (((b)|(c)) & (d)))
 #define	F_60_79(b, c, d)	F_20_39(b, c, d)
 
-#ifndef OPENSSL_SMALL_FOOTPRINT
 
 #define BODY_00_15(i, a, b, c, d, e, f, xi) \
 	(f)=xi+(e)+K_00_19+ROTATE((a),5)+F_00_19((b),(c),(d)); \
@@ -331,90 +330,6 @@ sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 }
 #endif
 
-#else	/* OPENSSL_SMALL_FOOTPRINT */
-
-#define BODY_00_15(xi)		 do {	\
-	T=E+K_00_19+F_00_19(B, C, D);	\
-	E=D, D=C, C=ROTATE(B,30), B=A;	\
-	A=ROTATE(A,5)+T+xi;	    } while(0)
-
-#define BODY_16_19(xa, xb, xc, xd)	 do {	\
-	Xupdate(T, xa, xa, xb, xc, xd);	\
-	T+=E+K_00_19+F_00_19(B, C, D);	\
-	E=D, D=C, C=ROTATE(B,30), B=A;	\
-	A=ROTATE(A,5)+T;	    } while(0)
-
-#define BODY_20_39(xa, xb, xc, xd)	 do {	\
-	Xupdate(T, xa, xa, xb, xc, xd);	\
-	T+=E+K_20_39+F_20_39(B, C, D);	\
-	E=D, D=C, C=ROTATE(B,30), B=A;	\
-	A=ROTATE(A,5)+T;	    } while(0)
-
-#define BODY_40_59(xa, xb, xc, xd)	 do {	\
-	Xupdate(T, xa, xa, xb, xc, xd);	\
-	T+=E+K_40_59+F_40_59(B, C, D);	\
-	E=D, D=C, C=ROTATE(B,30), B=A;	\
-	A=ROTATE(A,5)+T;	    } while(0)
-
-#define BODY_60_79(xa, xb, xc, xd)	 do {	\
-	Xupdate(T, xa, xa, xb, xc, xd);	\
-	T=E+K_60_79+F_60_79(B, C, D);	\
-	E=D, D=C, C=ROTATE(B,30), B=A;	\
-	A=ROTATE(A,5)+T+xa;	    } while(0)
-
-#if !defined(SHA1_ASM)
-static void
-sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
-{
-	const unsigned char *data = p;
-	unsigned MD32_REG_T A, B, C, D, E, T, l;
-	int i;
-	SHA_LONG	X[16];
-
-	A = c->h0;
-	B = c->h1;
-	C = c->h2;
-	D = c->h3;
-	E = c->h4;
-
-	for (;;) {
-		for (i = 0; i < 16; i++) {
-			HOST_c2l(data, l);
-			X[i] = l;
-			BODY_00_15(X[i]);
-		}
-		for (i = 0; i < 4; i++) {
-			BODY_16_19(X[i], X[i + 2], X[i + 8], X[(i + 13)&15]);
-		}
-		for (; i < 24; i++) {
-			BODY_20_39(X[i&15], X[(i + 2)&15], X[(i + 8)&15], X[(i + 13)&15]);
-		}
-		for (i = 0; i < 20; i++) {
-			BODY_40_59(X[(i + 8)&15], X[(i + 10)&15], X[i&15], X[(i + 5)&15]);
-		}
-		for (i = 4; i < 24; i++) {
-			BODY_60_79(X[(i + 8)&15], X[(i + 10)&15], X[i&15], X[(i + 5)&15]);
-		}
-
-		c->h0 = (c->h0 + A)&0xffffffffL;
-		c->h1 = (c->h1 + B)&0xffffffffL;
-		c->h2 = (c->h2 + C)&0xffffffffL;
-		c->h3 = (c->h3 + D)&0xffffffffL;
-		c->h4 = (c->h4 + E)&0xffffffffL;
-
-		if (--num == 0)
-			break;
-
-		A = c->h0;
-		B = c->h1;
-		C = c->h2;
-		D = c->h3;
-		E = c->h4;
-
-	}
-}
-#endif
-#endif
 
 int
 SHA1_Init(SHA_CTX *c)
