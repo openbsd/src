@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2023/07/05 21:38:22 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2023/07/08 14:49:55 bluhm Exp $
 
 .if ! (make(clean) || make(cleandir) || make(obj))
 NCPU !=		/sbin/sysctl -n hw.ncpuonline
@@ -12,13 +12,17 @@ build:
 
 REGRESS_SETUP += permissions
 permissions:
-	# The permissions in CVS tree are not as in the Perl distribution.
-	# Match expectations of t/porting/exec-bit.t and
-	# cpan/Test-Harness/t/source_tests/source.sh
-	awk '{print $$1}' ${BSDSRCDIR}/gnu/usr.bin/perl/MANIFEST |\
-	    ( cd ${BSDOBJDIR}/gnu/usr.bin/perl/ && xargs chmod -x )
-	grep -v '^#' ${BSDSRCDIR}/gnu/usr.bin/perl/Porting/exec-bit.txt |\
-	    ( cd ${BSDOBJDIR}/gnu/usr.bin/perl/ && xargs chmod +x )
+	# Permissions in CVS src tree are not as in the Perl distribution.
+	# Match expectations of cpan/Test-Harness/t/source_handler.t for
+	# cpan/Test-Harness/t/source_tests/source*.sh executalbe bits.
+	# Remove symlink and fix permissions of copy in obj directory.
+.for f in \
+    cpan/Test-Harness/t/source_tests/source.sh \
+    cpan/Test-Harness/t/source_tests/source_args.sh
+	rm -f ${BSDOBJDIR}/gnu/usr.bin/perl/$f
+	cp ${BSDSRCDIR}/gnu/usr.bin/perl/$f ${BSDOBJDIR}/gnu/usr.bin/perl/$f
+	chmod +x ${BSDOBJDIR}/gnu/usr.bin/perl/$f
+.endfor
 
 REGRESS_TARGETS +=	test
 test:

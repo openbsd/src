@@ -30,6 +30,10 @@ if ( $^O eq "vos" ) {
   skip_all( "VOS combines the read and execute permission bits." );
 }
 
+if ( $^O eq "openbsd" ) {
+  skip_all( "OpenBSD CVS src tree execute permission bits do not match Perl distribution." );
+}
+
 if ( $Config{usecrosscompile} ) {
   skip_all( "Not all files are available during cross-compilation" );
 }
