@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.7 2023/07/08 07:43:44 jsing Exp $ */
+/* $OpenBSD: sha1.c,v 1.8 2023/07/08 07:49:45 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -71,15 +71,6 @@
 #define HASH_LONG               SHA_LONG
 #define HASH_CTX                SHA_CTX
 #define HASH_CBLOCK             SHA_CBLOCK
-
-#define HASH_MAKE_STRING(c, s)   do {	\
-	unsigned long ll;		\
-	ll=(c)->h0; HOST_l2c(ll,(s));	\
-	ll=(c)->h1; HOST_l2c(ll,(s));	\
-	ll=(c)->h2; HOST_l2c(ll,(s));	\
-	ll=(c)->h3; HOST_l2c(ll,(s));	\
-	ll=(c)->h4; HOST_l2c(ll,(s));	\
-	} while (0)
 
 #define HASH_BLOCK_DATA_ORDER   	sha1_block_data_order
 #define Xupdate(a, ix, ia, ib, ic, id)	( (a)=(ia^ib^ic^id),	\
@@ -528,11 +519,19 @@ SHA1_Final(unsigned char *md, SHA_CTX *c)
 	c->num = 0;
 	memset(p, 0, SHA_CBLOCK);
 
-#ifndef HASH_MAKE_STRING
-#error "HASH_MAKE_STRING must be defined!"
-#else
-	HASH_MAKE_STRING(c, md);
-#endif
+	do {
+	unsigned long ll;
+	ll = c->h0;
+	HOST_l2c(ll, md);
+	ll = c->h1;
+	HOST_l2c(ll, md);
+	ll = c->h2;
+	HOST_l2c(ll, md);
+	ll = c->h3;
+	HOST_l2c(ll, md);
+	ll = c->h4;
+	HOST_l2c(ll, md);
+	} while (0);
 
 	return 1;
 }
