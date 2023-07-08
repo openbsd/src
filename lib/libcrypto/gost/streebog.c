@@ -1,4 +1,4 @@
-/* $OpenBSD: streebog.c,v 1.8 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: streebog.c,v 1.9 2023/07/08 14:30:44 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -1365,12 +1365,14 @@ STREEBOG512_Final(unsigned char *md, STREEBOG_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(STREEBOG512_Final);
 
 int
 STREEBOG256_Final(unsigned char *md, STREEBOG_CTX * c)
 {
 	return STREEBOG512_Final(md, c);
 }
+LCRYPTO_ALIAS(STREEBOG256_Final);
 
 int
 STREEBOG512_Update(STREEBOG_CTX *c, const void *_data, size_t len)
@@ -1411,18 +1413,21 @@ STREEBOG512_Update(STREEBOG_CTX *c, const void *_data, size_t len)
 
 	return 1;
 }
+LCRYPTO_ALIAS(STREEBOG512_Update);
 
 int
 STREEBOG256_Update(STREEBOG_CTX *c, const void *data, size_t len)
 {
 	return STREEBOG512_Update(c, data, len);
 }
+LCRYPTO_ALIAS(STREEBOG256_Update);
 
 void
 STREEBOG512_Transform(STREEBOG_CTX *c, const unsigned char *data)
 {
 	streebog_block_data_order(c, data, 1);
 }
+LCRYPTO_ALIAS(STREEBOG512_Transform);
 
 int
 STREEBOG256_Init(STREEBOG_CTX *c)
@@ -1433,6 +1438,7 @@ STREEBOG256_Init(STREEBOG_CTX *c)
 	c->md_len = STREEBOG256_LENGTH;
 	return 1;
 }
+LCRYPTO_ALIAS(STREEBOG256_Init);
 
 int
 STREEBOG512_Init(STREEBOG_CTX *c)
@@ -1444,6 +1450,7 @@ STREEBOG512_Init(STREEBOG_CTX *c)
 	c->md_len = STREEBOG512_LENGTH;
 	return 1;
 }
+LCRYPTO_ALIAS(STREEBOG512_Init);
 
 unsigned char *
 STREEBOG256(const unsigned char *d, size_t n, unsigned char *md)
@@ -1459,6 +1466,7 @@ STREEBOG256(const unsigned char *d, size_t n, unsigned char *md)
 	explicit_bzero(&c, sizeof(c));
 	return (md);
 }
+LCRYPTO_ALIAS(STREEBOG256);
 
 unsigned char *
 STREEBOG512(const unsigned char *d, size_t n, unsigned char *md)
@@ -1474,5 +1482,6 @@ STREEBOG512(const unsigned char *d, size_t n, unsigned char *md)
 	explicit_bzero(&c, sizeof(c));
 	return (md);
 }
+LCRYPTO_ALIAS(STREEBOG512);
 
 #endif

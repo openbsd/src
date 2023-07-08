@@ -103,3 +103,4 @@ ERR_load_GOST_strings(void) {
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_GOST_strings);

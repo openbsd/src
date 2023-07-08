@@ -1,4 +1,4 @@
-/* $OpenBSD: gost89_params.c,v 1.3 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: gost89_params.c,v 1.4 2023/07/08 14:30:44 beck Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -211,6 +211,7 @@ Gost2814789_set_sbox(GOST2814789_KEY *key, int nid)
 
 	return 1;
 }
+LCRYPTO_ALIAS(Gost2814789_set_sbox);
 
 int
 Gost2814789_set_key(GOST2814789_KEY *key, const unsigned char *userKey,
@@ -228,6 +229,7 @@ Gost2814789_set_key(GOST2814789_KEY *key, const unsigned char *userKey,
 
 	return 1;
 }
+LCRYPTO_ALIAS(Gost2814789_set_key);
 
 void
 Gost2814789_cryptopro_key_mesh(GOST2814789_KEY *key)
