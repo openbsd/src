@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.88 2023/06/21 07:48:41 jsing Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.89 2023/07/08 12:21:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,6 +81,7 @@ BN_new(void)
 
 	return bn;
 }
+LCRYPTO_ALIAS(BN_new);
 
 void
 BN_init(BIGNUM *a)
@@ -96,6 +97,7 @@ BN_clear(BIGNUM *a)
 	a->top = 0;
 	a->neg = 0;
 }
+LCRYPTO_ALIAS(BN_clear);
 
 void
 BN_free(BIGNUM *bn)
@@ -113,24 +115,28 @@ BN_free(BIGNUM *bn)
 
 	freezero(bn, sizeof(*bn));
 }
+LCRYPTO_ALIAS(BN_free);
 
 void
 BN_clear_free(BIGNUM *bn)
 {
 	BN_free(bn);
 }
+LCRYPTO_ALIAS(BN_clear_free);
 
 void
 BN_set_flags(BIGNUM *b, int n)
 {
 	b->flags |= n;
 }
+LCRYPTO_ALIAS(BN_set_flags);
 
 int
 BN_get_flags(const BIGNUM *b, int n)
 {
 	return b->flags & n;
 }
+LCRYPTO_ALIAS(BN_get_flags);
 
 void
 BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags)
@@ -143,6 +149,7 @@ BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags)
 	*dest = *b;
 	dest->flags = dest_flags;
 }
+LCRYPTO_ALIAS(BN_with_flags);
 
 static const BN_ULONG bn_value_one_data = 1;
 static const BIGNUM bn_value_one = {
@@ -158,18 +165,21 @@ BN_value_one(void)
 {
 	return &bn_value_one;
 }
+LCRYPTO_ALIAS(BN_value_one);
 
 int
 BN_num_bits_word(BN_ULONG w)
 {
 	return BN_BITS2 - bn_clzw(w);
 }
+LCRYPTO_ALIAS(BN_num_bits_word);
 
 int
 BN_num_bits(const BIGNUM *bn)
 {
 	return bn_bitsize(bn);
 }
+LCRYPTO_ALIAS(BN_num_bits);
 
 void
 bn_correct_top(BIGNUM *a)
@@ -253,6 +263,7 @@ BN_dup(const BIGNUM *a)
 	}
 	return t;
 }
+LCRYPTO_ALIAS(BN_dup);
 
 static inline void
 bn_copy_words(BN_ULONG *ap, const BN_ULONG *bp, int n)
@@ -284,6 +295,7 @@ BN_copy(BIGNUM *a, const BIGNUM *b)
 
 	return (a);
 }
+LCRYPTO_ALIAS(BN_copy);
 
 int
 bn_copy(BIGNUM *dst, const BIGNUM *src)
@@ -322,6 +334,7 @@ BN_swap(BIGNUM *a, BIGNUM *b)
 	b->flags = (flags_old_b & BN_FLG_MALLOCED) |
 	    (flags_old_a & BN_FLG_STATIC_DATA);
 }
+LCRYPTO_ALIAS(BN_swap);
 
 BN_ULONG
 BN_get_word(const BIGNUM *a)
@@ -333,6 +346,7 @@ BN_get_word(const BIGNUM *a)
 	/* a->top == 0 */
 	return 0;
 }
+LCRYPTO_ALIAS(BN_get_word);
 
 int
 BN_set_word(BIGNUM *a, BN_ULONG w)
@@ -344,6 +358,7 @@ BN_set_word(BIGNUM *a, BN_ULONG w)
 	a->top = (w ? 1 : 0);
 	return (1);
 }
+LCRYPTO_ALIAS(BN_set_word);
 
 int
 BN_ucmp(const BIGNUM *a, const BIGNUM *b)
@@ -362,6 +377,7 @@ BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 
 	return 0;
 }
+LCRYPTO_ALIAS(BN_ucmp);
 
 int
 BN_cmp(const BIGNUM *a, const BIGNUM *b)
@@ -382,6 +398,7 @@ BN_cmp(const BIGNUM *a, const BIGNUM *b)
 
 	return BN_ucmp(a, b);
 }
+LCRYPTO_ALIAS(BN_cmp);
 
 int
 BN_set_bit(BIGNUM *a, int n)
@@ -404,6 +421,7 @@ BN_set_bit(BIGNUM *a, int n)
 	a->d[i] |= (((BN_ULONG)1) << j);
 	return (1);
 }
+LCRYPTO_ALIAS(BN_set_bit);
 
 int
 BN_clear_bit(BIGNUM *a, int n)
@@ -422,6 +440,7 @@ BN_clear_bit(BIGNUM *a, int n)
 	bn_correct_top(a);
 	return (1);
 }
+LCRYPTO_ALIAS(BN_clear_bit);
 
 int
 BN_is_bit_set(const BIGNUM *a, int n)
@@ -436,6 +455,7 @@ BN_is_bit_set(const BIGNUM *a, int n)
 		return 0;
 	return (int)(((a->d[i]) >> j) & ((BN_ULONG)1));
 }
+LCRYPTO_ALIAS(BN_is_bit_set);
 
 int
 BN_mask_bits(BIGNUM *a, int n)
@@ -458,12 +478,14 @@ BN_mask_bits(BIGNUM *a, int n)
 	bn_correct_top(a);
 	return (1);
 }
+LCRYPTO_ALIAS(BN_mask_bits);
 
 void
 BN_set_negative(BIGNUM *bn, int neg)
 {
 	bn->neg = ~BN_is_zero(bn) & bn_ct_ne_zero(neg);
 }
+LCRYPTO_ALIAS(BN_set_negative);
 
 /*
  * Constant-time conditional swap of a and b.
@@ -517,6 +539,7 @@ BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 	}
 #undef BN_CONSTTIME_SWAP
 }
+LCRYPTO_ALIAS(BN_consttime_swap);
 
 /*
  * Constant-time conditional swap of a and b.
@@ -575,18 +598,21 @@ BN_zero(BIGNUM *a)
 	a->neg = 0;
 	a->top = 0;
 }
+LCRYPTO_ALIAS(BN_zero);
 
 int
 BN_one(BIGNUM *a)
 {
 	return BN_set_word(a, 1);
 }
+LCRYPTO_ALIAS(BN_one);
 
 int
 BN_abs_is_word(const BIGNUM *a, const BN_ULONG w)
 {
 	return (a->top == 1 && a->d[0] == w) || (w == 0 && a->top == 0);
 }
+LCRYPTO_ALIAS(BN_abs_is_word);
 
 int
 BN_is_zero(const BIGNUM *bn)
@@ -599,30 +625,35 @@ BN_is_zero(const BIGNUM *bn)
 
 	return bits == 0;
 }
+LCRYPTO_ALIAS(BN_is_zero);
 
 int
 BN_is_one(const BIGNUM *a)
 {
 	return BN_abs_is_word(a, 1) && !a->neg;
 }
+LCRYPTO_ALIAS(BN_is_one);
 
 int
 BN_is_word(const BIGNUM *a, const BN_ULONG w)
 {
 	return BN_abs_is_word(a, w) && (w == 0 || !a->neg);
 }
+LCRYPTO_ALIAS(BN_is_word);
 
 int
 BN_is_odd(const BIGNUM *a)
 {
 	return a->top > 0 && (a->d[0] & 1);
 }
+LCRYPTO_ALIAS(BN_is_odd);
 
 int
 BN_is_negative(const BIGNUM *a)
 {
 	return a->neg != 0;
 }
+LCRYPTO_ALIAS(BN_is_negative);
 
 char *
 BN_options(void)
@@ -642,6 +673,7 @@ BN_options(void)
 	}
 	return (data);
 }
+LCRYPTO_ALIAS(BN_options);
 
 /*
  * Bits of security, see SP800-57, section 5.6.11, table 2.
@@ -673,6 +705,7 @@ BN_security_bits(int L, int N)
 
 	return bits >= secbits ? secbits : bits;
 }
+LCRYPTO_ALIAS(BN_security_bits);
 
 BN_GENCB *
 BN_GENCB_new(void)
@@ -684,6 +717,7 @@ BN_GENCB_new(void)
 
 	return cb;
 }
+LCRYPTO_ALIAS(BN_GENCB_new);
 
 void
 BN_GENCB_free(BN_GENCB *cb)
@@ -692,6 +726,7 @@ BN_GENCB_free(BN_GENCB *cb)
 		return;
 	free(cb);
 }
+LCRYPTO_ALIAS(BN_GENCB_free);
 
 /* Populate a BN_GENCB structure with an "old"-style callback */
 void
@@ -701,6 +736,7 @@ BN_GENCB_set_old(BN_GENCB *gencb, void (*cb)(int, int, void *), void *cb_arg)
 	gencb->cb.cb_1 = cb;
 	gencb->arg = cb_arg;
 }
+LCRYPTO_ALIAS(BN_GENCB_set_old);
 
 /* Populate a BN_GENCB structure with a "new"-style callback */
 void
@@ -710,9 +746,11 @@ BN_GENCB_set(BN_GENCB *gencb, int (*cb)(int, int, BN_GENCB *), void *cb_arg)
 	gencb->cb.cb_2 = cb;
 	gencb->arg = cb_arg;
 }
+LCRYPTO_ALIAS(BN_GENCB_set);
 
 void *
 BN_GENCB_get_arg(BN_GENCB *cb)
 {
 	return cb->arg;
 }
+LCRYPTO_ALIAS(BN_GENCB_get_arg);

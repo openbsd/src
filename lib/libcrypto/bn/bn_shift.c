@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_shift.c,v 1.21 2023/02/13 04:25:37 jsing Exp $ */
+/* $OpenBSD: bn_shift.c,v 1.22 2023/07/08 12:21:58 beck Exp $ */
 /*
  * Copyright (c) 2022, 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -151,21 +151,25 @@ BN_lshift1(BIGNUM *r, const BIGNUM *a)
 {
 	return bn_lshift(r, a, 1);
 }
+LCRYPTO_ALIAS(BN_lshift1);
 
 int
 BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 {
 	return bn_lshift(r, a, n);
 }
+LCRYPTO_ALIAS(BN_lshift);
 
 int
 BN_rshift1(BIGNUM *r, const BIGNUM *a)
 {
 	return bn_rshift(r, a, 1);
 }
+LCRYPTO_ALIAS(BN_rshift1);
 
 int
 BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
 {
 	return bn_rshift(r, a, n);
 }
+LCRYPTO_ALIAS(BN_rshift);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_kron.c,v 1.14 2023/03/27 10:21:23 tb Exp $ */
+/* $OpenBSD: bn_kron.c,v 1.15 2023/07/08 12:21:58 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -192,3 +192,4 @@ BN_kronecker(const BIGNUM *A, const BIGNUM *B, BN_CTX *ctx)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_kronecker);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mont.c,v 1.60 2023/06/17 14:43:50 jsing Exp $ */
+/* $OpenBSD: bn_mont.c,v 1.61 2023/07/08 12:21:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -137,6 +137,7 @@ BN_MONT_CTX_new(void)
 
 	return mctx;
 }
+LCRYPTO_ALIAS(BN_MONT_CTX_new);
 
 void
 BN_MONT_CTX_free(BN_MONT_CTX *mctx)
@@ -150,6 +151,7 @@ BN_MONT_CTX_free(BN_MONT_CTX *mctx)
 	if (mctx->flags & BN_FLG_MALLOCED)
 		free(mctx);
 }
+LCRYPTO_ALIAS(BN_MONT_CTX_free);
 
 BN_MONT_CTX *
 BN_MONT_CTX_copy(BN_MONT_CTX *dst, BN_MONT_CTX *src)
@@ -168,6 +170,7 @@ BN_MONT_CTX_copy(BN_MONT_CTX *dst, BN_MONT_CTX *src)
 
 	return dst;
 }
+LCRYPTO_ALIAS(BN_MONT_CTX_copy);
 
 int
 BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
@@ -257,6 +260,7 @@ BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_MONT_CTX_set);
 
 BN_MONT_CTX *
 BN_MONT_CTX_set_locked(BN_MONT_CTX **pmctx, int lock, const BIGNUM *mod,
@@ -293,6 +297,7 @@ BN_MONT_CTX_set_locked(BN_MONT_CTX **pmctx, int lock, const BIGNUM *mod,
  done:
 	return mctx;
 }
+LCRYPTO_ALIAS(BN_MONT_CTX_set_locked);
 
 static int bn_montgomery_reduce(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mctx);
 
@@ -497,6 +502,7 @@ BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	/* Compute r = aR * bR * R^-1 mod N = abR mod N */
 	return bn_mod_mul_montgomery(r, a, b, mctx, ctx);
 }
+LCRYPTO_ALIAS(BN_mod_mul_montgomery);
 
 int
 BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mctx, BN_CTX *ctx)
@@ -504,6 +510,7 @@ BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mctx, BN_CTX *ctx)
 	/* Compute r = a * R * R * R^-1 mod N = aR mod N */
 	return bn_mod_mul_montgomery(r, a, &mctx->RR, mctx, ctx);
 }
+LCRYPTO_ALIAS(BN_to_montgomery);
 
 /*
  * bn_montgomery_reduce() performs Montgomery reduction, reducing the input
@@ -597,3 +604,4 @@ BN_from_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mctx, BN_CTX *ctx)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_from_montgomery);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_add.c,v 1.25 2023/06/12 16:17:24 jsing Exp $ */
+/* $OpenBSD: bn_add.c,v 1.26 2023/07/08 12:21:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -248,6 +248,7 @@ BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
 	return 1;
 }
+LCRYPTO_ALIAS(BN_uadd);
 
 int
 BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
@@ -277,6 +278,7 @@ BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
 	return 1;
 }
+LCRYPTO_ALIAS(BN_usub);
 
 int
 BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
@@ -306,6 +308,7 @@ BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_add);
 
 int
 BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
@@ -335,3 +338,4 @@ BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_sub);

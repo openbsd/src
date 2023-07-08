@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mod.c,v 1.21 2023/06/13 09:28:13 tb Exp $ */
+/* $OpenBSD: bn_mod.c,v 1.22 2023/07/08 12:21:58 beck Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project. */
 /* ====================================================================
@@ -146,6 +146,7 @@ BN_nnmod(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 		return BN_usub(r, m, r);
 	return 1;
 }
+LCRYPTO_ALIAS(BN_nnmod);
 
 int
 BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
@@ -159,6 +160,7 @@ BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 		return 0;
 	return BN_nnmod(r, r, m, ctx);
 }
+LCRYPTO_ALIAS(BN_mod_add);
 
 /*
  * BN_mod_add() variant that may only be used if both a and b are non-negative
@@ -177,6 +179,7 @@ BN_mod_add_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m)
 		return BN_usub(r, r, m);
 	return 1;
 }
+LCRYPTO_ALIAS(BN_mod_add_quick);
 
 int
 BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
@@ -190,6 +193,7 @@ BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 		return 0;
 	return BN_nnmod(r, r, m, ctx);
 }
+LCRYPTO_ALIAS(BN_mod_sub);
 
 /*
  * BN_mod_sub() variant that may only be used if both a and b are non-negative
@@ -208,6 +212,7 @@ BN_mod_sub_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m)
 		return 0;
 	return BN_usub(r, m, r);
 }
+LCRYPTO_ALIAS(BN_mod_sub_quick);
 
 int
 BN_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
@@ -246,12 +251,14 @@ BN_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_mod_mul);
 
 int
 BN_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 {
 	return BN_mod_mul(r, a, a, m, ctx);
 }
+LCRYPTO_ALIAS(BN_mod_sqr);
 
 int
 BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
@@ -264,6 +271,7 @@ BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 		return 0;
 	return BN_nnmod(r, r, m, ctx);
 }
+LCRYPTO_ALIAS(BN_mod_lshift1);
 
 /*
  * BN_mod_lshift1() variant that may be used if a is non-negative
@@ -282,6 +290,7 @@ BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m)
 		return BN_usub(r, r, m);
 	return 1;
 }
+LCRYPTO_ALIAS(BN_mod_lshift1_quick);
 
 int
 BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m, BN_CTX *ctx)
@@ -316,6 +325,7 @@ BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m, BN_CTX *ctx)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_mod_lshift);
 
 /*
  * BN_mod_lshift() variant that may be used if a is non-negative
@@ -356,3 +366,4 @@ BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)
 
 	return 1;
 }
+LCRYPTO_ALIAS(BN_mod_lshift_quick);

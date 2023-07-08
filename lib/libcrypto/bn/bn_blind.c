@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.22 2023/04/25 19:57:59 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.23 2023/07/08 12:21:58 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -169,6 +169,7 @@ err:
 		BN_BLINDING_free(ret);
 	return (NULL);
 }
+LCRYPTO_ALIAS(BN_BLINDING_new);
 
 void
 BN_BLINDING_free(BN_BLINDING *r)
@@ -182,6 +183,7 @@ BN_BLINDING_free(BN_BLINDING *r)
 	BN_free(r->mod);
 	free(r);
 }
+LCRYPTO_ALIAS(BN_BLINDING_free);
 
 int
 BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
@@ -215,12 +217,14 @@ err:
 		b->counter = 0;
 	return (ret);
 }
+LCRYPTO_ALIAS(BN_BLINDING_update);
 
 int
 BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 {
 	return BN_BLINDING_convert_ex(n, NULL, b, ctx);
 }
+LCRYPTO_ALIAS(BN_BLINDING_convert);
 
 int
 BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
@@ -249,12 +253,14 @@ BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_BLINDING_convert_ex);
 
 int
 BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 {
 	return BN_BLINDING_invert_ex(n, NULL, b, ctx);
 }
+LCRYPTO_ALIAS(BN_BLINDING_invert);
 
 int
 BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
@@ -274,24 +280,28 @@ BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 
 	return (ret);
 }
+LCRYPTO_ALIAS(BN_BLINDING_invert_ex);
 
 CRYPTO_THREADID *
 BN_BLINDING_thread_id(BN_BLINDING *b)
 {
 	return &b->tid;
 }
+LCRYPTO_ALIAS(BN_BLINDING_thread_id);
 
 unsigned long
 BN_BLINDING_get_flags(const BN_BLINDING *b)
 {
 	return b->flags;
 }
+LCRYPTO_ALIAS(BN_BLINDING_get_flags);
 
 void
 BN_BLINDING_set_flags(BN_BLINDING *b, unsigned long flags)
 {
 	b->flags = flags;
 }
+LCRYPTO_ALIAS(BN_BLINDING_set_flags);
 
 BN_BLINDING *
 BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m,
@@ -363,3 +373,4 @@ err:
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_BLINDING_create_param);

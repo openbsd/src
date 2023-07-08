@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_err.c,v 1.16 2023/06/13 09:12:22 tb Exp $ */
+/* $OpenBSD: bn_err.c,v 1.17 2023/07/08 12:21:58 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -105,3 +105,4 @@ ERR_load_BN_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_BN_strings);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.27 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.28 2023/07/08 12:21:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -198,12 +198,14 @@ BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
 	return bnrand(0, rnd, bits, top, bottom);
 }
+LCRYPTO_ALIAS(BN_rand);
 
 int
 BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
 	return bnrand(1, rnd, bits, top, bottom);
 }
+LCRYPTO_ALIAS(BN_pseudo_rand);
 
 #if 1
 int
@@ -279,6 +281,7 @@ BN_rand_range(BIGNUM *r, const BIGNUM *range)
 {
 	return bn_rand_range(0, r, range);
 }
+LCRYPTO_ALIAS(BN_rand_range);
 
 int
 bn_rand_interval(BIGNUM *rnd, const BIGNUM *lower_inc, const BIGNUM *upper_exc)
@@ -312,3 +315,4 @@ BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
 {
 	return bn_rand_range(1, r, range);
 }
+LCRYPTO_ALIAS(BN_pseudo_rand_range);

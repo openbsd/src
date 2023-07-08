@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_const.c,v 1.5 2018/02/20 17:02:30 jsing Exp $ */
+/* $OpenBSD: bn_const.c,v 1.6 2023/07/08 12:21:58 beck Exp $ */
 /* Insert boilerplate */
 
 #include <openssl/bn.h>
@@ -26,12 +26,14 @@ get_rfc2409_prime_768(BIGNUM *bn)
 	};
 	return BN_bin2bn(RFC2409_PRIME_768, sizeof(RFC2409_PRIME_768), bn);
 }
+LCRYPTO_ALIAS(get_rfc2409_prime_768);
 
 BIGNUM *
 BN_get_rfc2409_prime_768(BIGNUM *bn)
 {
 	return get_rfc2409_prime_768(bn);
 }
+LCRYPTO_ALIAS(BN_get_rfc2409_prime_768);
 
 /* "Second Oakley Default Group" from RFC2409, section 6.2.
  *
@@ -59,12 +61,14 @@ get_rfc2409_prime_1024(BIGNUM *bn)
 	};
 	return BN_bin2bn(RFC2409_PRIME_1024, sizeof(RFC2409_PRIME_1024), bn);
 }
+LCRYPTO_ALIAS(get_rfc2409_prime_1024);
 
 BIGNUM *
 BN_get_rfc2409_prime_1024(BIGNUM *bn)
 {
 	return get_rfc2409_prime_1024(bn);
 }
+LCRYPTO_ALIAS(BN_get_rfc2409_prime_1024);
 
 /* "1536-bit MODP Group" from RFC3526, Section 2.
  *
@@ -97,12 +101,14 @@ get_rfc3526_prime_1536(BIGNUM *bn)
 	};
 	return BN_bin2bn(RFC3526_PRIME_1536, sizeof(RFC3526_PRIME_1536), bn);
 }
+LCRYPTO_ALIAS(get_rfc3526_prime_1536);
 
 BIGNUM *
 BN_get_rfc3526_prime_1536(BIGNUM *bn)
 {
 	return get_rfc3526_prime_1536(bn);
 }
+LCRYPTO_ALIAS(BN_get_rfc3526_prime_1536);
 
 /* "2048-bit MODP Group" from RFC3526, Section 3.
  *
@@ -140,12 +146,14 @@ get_rfc3526_prime_2048(BIGNUM *bn)
 	};
 	return BN_bin2bn(RFC3526_PRIME_2048, sizeof(RFC3526_PRIME_2048), bn);
 }
+LCRYPTO_ALIAS(get_rfc3526_prime_2048);
 
 BIGNUM *
 BN_get_rfc3526_prime_2048(BIGNUM *bn)
 {
 	return get_rfc3526_prime_2048(bn);
 }
+LCRYPTO_ALIAS(BN_get_rfc3526_prime_2048);
 
 /* "3072-bit MODP Group" from RFC3526, Section 4.
  *
@@ -193,12 +201,14 @@ get_rfc3526_prime_3072(BIGNUM *bn)
 	};
 	return BN_bin2bn(RFC3526_PRIME_3072, sizeof(RFC3526_PRIME_3072), bn);
 }
+LCRYPTO_ALIAS(get_rfc3526_prime_3072);
 
 BIGNUM *
 BN_get_rfc3526_prime_3072(BIGNUM *bn)
 {
 	return get_rfc3526_prime_3072(bn);
 }
+LCRYPTO_ALIAS(BN_get_rfc3526_prime_3072);
 
 /* "4096-bit MODP Group" from RFC3526, Section 5.
  *
@@ -257,12 +267,14 @@ get_rfc3526_prime_4096(BIGNUM *bn)
 	};
 	return BN_bin2bn(RFC3526_PRIME_4096, sizeof(RFC3526_PRIME_4096), bn);
 }
+LCRYPTO_ALIAS(get_rfc3526_prime_4096);
 
 BIGNUM *
 BN_get_rfc3526_prime_4096(BIGNUM *bn)
 {
 	return get_rfc3526_prime_4096(bn);
 }
+LCRYPTO_ALIAS(BN_get_rfc3526_prime_4096);
 
 /* "6144-bit MODP Group" from RFC3526, Section 6.
  *
@@ -342,12 +354,14 @@ get_rfc3526_prime_6144(BIGNUM *bn)
 	};
 	return BN_bin2bn(RFC3526_PRIME_6144, sizeof(RFC3526_PRIME_6144), bn);
 }
+LCRYPTO_ALIAS(get_rfc3526_prime_6144);
 
 BIGNUM *
 BN_get_rfc3526_prime_6144(BIGNUM *bn)
 {
 	return get_rfc3526_prime_6144(bn);
 }
+LCRYPTO_ALIAS(BN_get_rfc3526_prime_6144);
 
 /* "8192-bit MODP Group" from RFC3526, Section 7.
  *
@@ -449,9 +463,11 @@ get_rfc3526_prime_8192(BIGNUM *bn)
 	};
 	return BN_bin2bn(RFC3526_PRIME_8192, sizeof(RFC3526_PRIME_8192), bn);
 }
+LCRYPTO_ALIAS(get_rfc3526_prime_8192);
 
 BIGNUM *
 BN_get_rfc3526_prime_8192(BIGNUM *bn)
 {
 	return get_rfc3526_prime_8192(bn);
 }
+LCRYPTO_ALIAS(BN_get_rfc3526_prime_8192);

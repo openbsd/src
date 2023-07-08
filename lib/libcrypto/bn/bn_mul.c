@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_mul.c,v 1.38 2023/06/12 16:17:24 jsing Exp $ */
+/* $OpenBSD: bn_mul.c,v 1.39 2023/07/08 12:21:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -367,3 +367,4 @@ BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_mul);

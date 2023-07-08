@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_sqrt.c,v 1.1 2023/04/11 10:08:44 tb Exp $ */
+/*	$OpenBSD: bn_mod_sqrt.c,v 1.2 2023/07/08 12:21:58 beck Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -724,3 +724,4 @@ BN_mod_sqrt(BIGNUM *in, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	return NULL;
 }
+LCRYPTO_ALIAS(BN_mod_sqrt);

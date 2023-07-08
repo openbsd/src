@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.46 2023/05/09 05:38:11 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.47 2023/07/08 12:21:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,6 +173,7 @@ BN_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_exp);
 
 /* The old fallback, simple version :-) */
 int
@@ -291,6 +292,7 @@ err:
 	BN_CTX_end(ctx);
 	return (ret);
 }
+LCRYPTO_ALIAS(BN_mod_exp_simple);
 
 /* BN_mod_exp_mont_consttime() stores the precomputed powers in a specific layout
  * so that accessing any of these table values shows the same access pattern as far
@@ -632,6 +634,7 @@ err:
 	BN_CTX_end(ctx);
 	return (ret);
 }
+LCRYPTO_ALIAS(BN_mod_exp_mont_consttime);
 
 static int
 BN_mod_exp_mont_internal(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
@@ -947,6 +950,7 @@ err:
 	BN_CTX_end(ctx);
 	return (ret);
 }
+LCRYPTO_ALIAS(BN_mod_exp_mont_word);
 
 int
 BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
@@ -1331,3 +1335,4 @@ err:
 	BN_CTX_end(ctx);
 	return (ret);
 }
+LCRYPTO_ALIAS(BN_mod_exp2_mont);

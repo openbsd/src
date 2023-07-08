@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_sqr.c,v 1.35 2023/07/02 13:11:23 jsing Exp $ */
+/* $OpenBSD: bn_sqr.c,v 1.36 2023/07/08 12:21:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -302,3 +302,4 @@ BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 
 	return ret;
 }
+LCRYPTO_ALIAS(BN_sqr);

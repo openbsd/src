@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_word.c,v 1.20 2023/03/11 14:14:54 jsing Exp $ */
+/* $OpenBSD: bn_word.c,v 1.21 2023/07/08 12:21:58 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -100,6 +100,7 @@ BN_mod_word(const BIGNUM *a, BN_ULONG w)
 	}
 	return ((BN_ULONG)ret);
 }
+LCRYPTO_ALIAS(BN_mod_word);
 
 BN_ULONG
 BN_div_word(BIGNUM *a, BN_ULONG w)
@@ -137,6 +138,7 @@ BN_div_word(BIGNUM *a, BN_ULONG w)
 
 	return (ret);
 }
+LCRYPTO_ALIAS(BN_div_word);
 
 int
 BN_add_word(BIGNUM *a, BN_ULONG w)
@@ -171,6 +173,7 @@ BN_add_word(BIGNUM *a, BN_ULONG w)
 	}
 	return (1);
 }
+LCRYPTO_ALIAS(BN_add_word);
 
 int
 BN_sub_word(BIGNUM *a, BN_ULONG w)
@@ -217,6 +220,7 @@ BN_sub_word(BIGNUM *a, BN_ULONG w)
 		a->top--;
 	return (1);
 }
+LCRYPTO_ALIAS(BN_sub_word);
 
 int
 BN_mul_word(BIGNUM *a, BN_ULONG w)
@@ -238,3 +242,4 @@ BN_mul_word(BIGNUM *a, BN_ULONG w)
 	}
 	return (1);
 }
+LCRYPTO_ALIAS(BN_mul_word);
