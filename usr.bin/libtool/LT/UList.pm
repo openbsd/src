@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UList.pm,v 1.5 2022/12/26 19:16:01 jmc Exp $
+# $OpenBSD: UList.pm,v 1.6 2023/07/08 08:45:54 espie Exp $
 #
 # Copyright (c) 2013 Vadim Zhukov <zhuk@openbsd.org>
 #
@@ -15,9 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
-use feature qw(say);
+use v5.36;
 
 # Hash that preserves order of adding items and avoids duplicates.
 # Also, some additional restrictions are applied to make sure
@@ -28,7 +26,8 @@ require Tie::Array;
 
 our @ISA = qw(Tie::Array);
 
-sub _translate_num_key($$;$) {
+sub _translate_num_key
+{
 	if ($_[1] < 0) {
 		$_[1] = @{$_[0]} - (-$_[1]);
 		die "invalid index" if $_[1] < 1;
@@ -38,9 +37,11 @@ sub _translate_num_key($$;$) {
 	die "invalid index $_[1]" if $_[1] - int($_[2] // 0) >= @{$_[0]};
 }
 
+
 # Construct new UList and returns reference to the array,
 # not to the tied object itself.
-sub new {
+sub new 
+{
 	my $class = shift;
 	tie(my @a, $class, @_);
 	return \@a;
@@ -50,7 +51,8 @@ sub new {
 #   self->[0] = { directory => 1 }
 #   self->[1 .. N] = directories in the order of addition, represented as 0..N-1
 
-sub TIEARRAY {
+sub TIEARRAY 
+{
 	my $class = shift;
 	my $self = bless [ {} ], $class;
 	$self->PUSH(@_);
@@ -61,16 +63,33 @@ sub TIEARRAY {
 # case we have EXISTS() outta there. So if you really need to check the
 # presence of particular item, call the method below on the reference
 # returned by tie() or tied() instead.
-sub exists { return exists $_[0]->[0]->{$_[1]}; }
+sub exists 
+{ 
+	return exists $_[0]->[0]->{$_[1]}; 
+}
 
-sub indexof { return exists($_[0]->[0]->{$_[1]}) ? ($_[0]->[0]->{$_[1]} - 1) : undef; }
+sub indexof 
+{ 
+	return exists($_[0]->[0]->{$_[1]}) ? ($_[0]->[0]->{$_[1]} - 1) : undef; 
+}
 
-sub FETCHSIZE { return scalar(@{$_[0]}) - 1; }
+sub FETCHSIZE 
+{ 
+	return scalar(@{$_[0]}) - 1; 
+}
 
-# not needed
-sub STORE { die "unimplemented and should not be used"; }
-sub DELETE { die "unimplemented and should not be used"; }
-sub EXTEND { }
+# not needed ?
+sub STORE { 
+	die "unimplemented and should not be used"; 
+}
+sub DELETE 
+{ 	
+	die "unimplemented and should not be used"; 
+}
+
+sub EXTEND 
+{ 
+}
 
 sub FETCH
 {
