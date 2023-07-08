@@ -1,4 +1,4 @@
-/*	$OpenBSD: efi_machdep.c,v 1.6 2023/04/30 17:24:24 kettenis Exp $	*/
+/*	$OpenBSD: efi_machdep.c,v 1.7 2023/07/08 07:18:39 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
@@ -208,11 +208,15 @@ efi_enter(struct efi_softc *sc)
 	fpu_kernel_enter();
 
 	curpcb->pcb_onfault = (void *)efi_fault;
+	if (curcpu()->ci_feature_sefflags_edx & SEFF0EDX_IBT)
+		lcr4(rcr4() & ~CR4_CET);
 }
 
 void
 efi_leave(struct efi_softc *sc)
 {
+	if (curcpu()->ci_feature_sefflags_edx & SEFF0EDX_IBT)
+		lcr4(rcr4() | CR4_CET);
 	curpcb->pcb_onfault = NULL;
 
 	fpu_kernel_exit();
