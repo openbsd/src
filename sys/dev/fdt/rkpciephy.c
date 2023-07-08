@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpciephy.c,v 1.1 2023/03/19 11:17:16 kettenis Exp $	*/
+/*	$OpenBSD: rkpciephy.c,v 1.2 2023/07/08 09:12:28 patrick Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,7 +28,7 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
-/* GRF registers */
+/* RK3568 GRF registers */
 #define GRF_PCIE30PHY_CON(idx)			((idx) * 4)
 /* CON1 */
 #define  GRF_PCIE30PHY_DA_OCM			0x80008000
@@ -41,6 +41,22 @@
 /* STATUS0 */
 #define GRF_PCIE30PHY_STATUS0			0x80
 #define  GRF_PCIE30PHY_SRAM_INIT_DONE		(1 << 14)
+
+/* RK3588 GRF registers */
+#define RK3588_PCIE3PHY_GRF_CMN_CON(idx)	((idx) * 4)
+#define  RK3588_GRF_PCIE3PHY_DA_OCM		((0x1 << 24) | (1 << 8))
+#define  RK3588_GRF_PCIE3PHY_LANE_BIFURCATE_0_1	(1 << 0)
+#define  RK3588_GRF_PCIE3PHY_LANE_BIFURCATE_2_3	(1 << 1)
+#define  RK3588_GRF_PCIE3PHY_LANE_AGGREGATE	(1 << 2)
+#define  RK3588_GRF_PCIE3PHY_LANE_MASK		(0x7 << 16)
+#define RK3588_PCIE3PHY_GRF_PHY0_STATUS1	0x904
+#define RK3588_PCIE3PHY_GRF_PHY1_STATUS1	0xa04
+#define  RK3588_PCIE3PHY_SRAM_INIT_DONE		(1 << 0)
+#define RK3588_PHP_GRF_PCIESEL_CON		0x100
+#define  RK3588_PHP_GRF_PCIE0L0_PCIE3		(1 << 0)
+#define  RK3588_PHP_GRF_PCIE0L1_PCIE3		(1 << 1)
+#define  RK3588_PHP_GRF_PCIE0L0_MASK		(0x1 << 16)
+#define  RK3588_PHP_GRF_PCIE0L1_MASK		(0x1 << 17)
 
 struct rkpciephy_softc {
 	struct device		sc_dev;
@@ -61,14 +77,16 @@ struct cfdriver rkpciephy_cd = {
 	NULL, "rkpciephy", DV_DULL
 };
 
-int	rkpciephy_enable(void *, uint32_t *);
+int	rk3568_pciephy_enable(void *, uint32_t *);
+int	rk3588_pciephy_enable(void *, uint32_t *);
 
 int
 rkpciephy_match(struct device *parent, void *match, void *aux)
 {
 	struct fdt_attach_args *faa = aux;
 
-	return OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie3-phy");
+	return (OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie3-phy") ||
+	    OF_is_compatible(faa->fa_node, "rockchip,rk3588-pcie3-phy"));
 }
 
 void
@@ -81,12 +99,15 @@ rkpciephy_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pd.pd_node = faa->fa_node;
 	sc->sc_pd.pd_cookie = sc;
-	sc->sc_pd.pd_enable = rkpciephy_enable;
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-pcie3-phy"))
+		sc->sc_pd.pd_enable = rk3568_pciephy_enable;
+	if (OF_is_compatible(faa->fa_node, "rockchip,rk3588-pcie3-phy"))
+		sc->sc_pd.pd_enable = rk3588_pciephy_enable;
 	phy_register(&sc->sc_pd);
 }
 
 int
-rkpciephy_enable(void *cookie, uint32_t *cells)
+rk3568_pciephy_enable(void *cookie, uint32_t *cells)
 {
 	struct rkpciephy_softc *sc = cookie;
 	struct regmap *rm;
@@ -125,6 +146,88 @@ rkpciephy_enable(void *cookie, uint32_t *cells)
 	for (timo = 500; timo > 0; timo--) {
 		stat = regmap_read_4(rm, GRF_PCIE30PHY_STATUS0);
 		if (stat & GRF_PCIE30PHY_SRAM_INIT_DONE)
+			break;
+		delay(100);
+	}
+	if (timo == 0) {
+		printf("%s: timeout\n", sc->sc_dev.dv_xname);
+		return ETIMEDOUT;
+	}
+
+	return 0;
+}
+
+int
+rk3588_pciephy_enable(void *cookie, uint32_t *cells)
+{
+	struct rkpciephy_softc *sc = cookie;
+	struct regmap *phy, *pipe;
+	int node = sc->sc_pd.pd_node;
+	uint32_t data_lanes[4] = { 1, 1, 1, 1 };
+	uint32_t grf, reg, stat;
+	int num_lanes, timo;
+
+	grf = OF_getpropint(node, "rockchip,phy-grf", 0);
+	phy = regmap_byphandle(grf);
+	if (phy == NULL)
+		return ENXIO;
+
+	clock_enable_all(node);
+	reset_assert(node, "phy");
+	delay(1);
+
+	regmap_write_4(phy, RK3588_PCIE3PHY_GRF_CMN_CON(0),
+	    RK3588_GRF_PCIE3PHY_DA_OCM);
+
+	num_lanes = OF_getpropintarray(node, "data-lanes", data_lanes,
+	    sizeof(data_lanes));
+	/* Use default setting in case of missing properties. */
+	if (num_lanes <= 0)
+		num_lanes = sizeof(data_lanes);
+	num_lanes /= sizeof(uint32_t);
+
+	reg = RK3588_GRF_PCIE3PHY_LANE_MASK;
+	/* If all links go to the first, aggregate toward x4 */
+	if (num_lanes >= 4 &&
+	    data_lanes[0] == 1 && data_lanes[1] == 1 &&
+	    data_lanes[2] == 1 && data_lanes[3] == 1) {
+		reg |= RK3588_GRF_PCIE3PHY_LANE_AGGREGATE;
+	} else {
+		/* If lanes 0+1 are not towards the same controller, split. */
+		if (num_lanes >= 2 && data_lanes[0] != data_lanes[1])
+			reg |= RK3588_GRF_PCIE3PHY_LANE_BIFURCATE_0_1;
+		/* If lanes 2+3 are not towards the same controller, split. */
+		if (num_lanes >= 4 && data_lanes[2] != data_lanes[3])
+			reg |= RK3588_GRF_PCIE3PHY_LANE_BIFURCATE_2_3;
+	}
+	regmap_write_4(phy, RK3588_PCIE3PHY_GRF_CMN_CON(0), reg);
+
+	grf = OF_getpropint(node, "rockchip,phy-grf", 0);
+	pipe = regmap_byphandle(grf);
+	if (pipe != NULL) {
+		reg = RK3588_PHP_GRF_PCIE0L0_MASK | RK3588_PHP_GRF_PCIE0L1_MASK;
+		/* If lane 1 is configured, move it from Combo to PCIE3 PHY */
+		if (num_lanes >= 2 && data_lanes[1] != 0) {
+			reg |= RK3588_PHP_GRF_PCIE0L0_PCIE3;
+		}
+		/* If lane 3 is configured, move it from Combo to PCIE3 PHY */
+		if (num_lanes >= 4 && data_lanes[3] != 0) {
+			reg |= RK3588_PHP_GRF_PCIE0L1_PCIE3;
+		}
+		regmap_write_4(pipe, RK3588_PHP_GRF_PCIESEL_CON, reg);
+	}
+
+	reset_deassert(node, "phy");
+
+	for (timo = 500; timo > 0; timo--) {
+		stat = regmap_read_4(phy, RK3588_PCIE3PHY_GRF_PHY0_STATUS1);
+		if (stat & RK3588_PCIE3PHY_SRAM_INIT_DONE)
+			break;
+		delay(100);
+	}
+	for (; timo > 0; timo--) {
+		stat = regmap_read_4(phy, RK3588_PCIE3PHY_GRF_PHY1_STATUS1);
+		if (stat & RK3588_PCIE3PHY_SRAM_INIT_DONE)
 			break;
 		delay(100);
 	}
