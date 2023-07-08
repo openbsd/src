@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.139 2023/01/17 13:03:22 kn Exp $
+.\"	$OpenBSD: make.1,v 1.140 2023/07/08 18:02:00 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: January 17 2023 $
+.Dd $Mdocdate: July 8 2023 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Op Fl d Ar flags
 .Op Fl f Ar mk
 .Op Fl I Ar directory
-.Op Fl j Ar max_processes
+.Op Fl j Ar max_jobs
 .Op Fl m Ar directory
 .Op Fl V Ar variable
 .Op Ar NAME Ns = Ns Ar value ...
@@ -154,7 +154,7 @@ Extended options are as follows:
 Try to be backwards compatible by executing the commands to make
 the prerequisites in a target rule in sequence.
 This is the default, in the absence of
-.Fl j Ar max_processes .
+.Fl j Ar max_jobs .
 .It Fl C Ar directory
 Enter
 .Ar directory
@@ -241,10 +241,12 @@ Multiple directories can be added to form a search path.
 Furthermore, the system include path (see the
 .Fl m
 option) will be used after this search path.
-.It Fl j Ar max_processes
-Specify the maximum number of processes that
+.It Fl j Ar max_jobs
+Specify the maximum number of jobs that
 .Nm
 may have running at any one time.
+See the discussion about recursive invocations under
+.Sx BUGS .
 .It Fl m Ar directory
 Specify a directory in which to search for system include files:
 .Pa sys.mk
