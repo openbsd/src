@@ -1,4 +1,4 @@
-# $OpenBSD: Program.pm,v 1.19 2012/07/13 11:56:12 espie Exp $
+# $OpenBSD: Program.pm,v 1.20 2023/07/08 08:15:32 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,9 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
-use feature qw(say switch state);
+use v5.36;
 
 package LT::Program;
 use File::Basename;
@@ -25,18 +23,15 @@ use LT::Archive;
 use LT::Util;
 use LT::Trace;
 
-sub new
+sub new($class)
 {
-	my $class = shift;
 	bless {}, $class;
 }
 
 # write a wrapper script for an executable so it can be executed within
 # the build directory
-sub write_wrapper
+sub write_wrapper($self)
 {
-	my $self = shift;
-
 	my $program = $self->{outfilepath};
 	my $pfile = basename($program);
 	my $realprogram = $ltdir . '/' . $pfile;
@@ -68,10 +63,8 @@ EOF
 	chmod 0755, $program;
 }
 
-sub install
+sub install($class, $src, $dst, $instprog, $instopts)
 {
-	my ($class, $src, $dst, $instprog, $instopts) = @_;
-
 	my $srcdir = dirname $src;
 	my $srcfile = basename $src;
 	my $realpath = "$srcdir/$ltdir/$srcfile";

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Link.pm,v 1.37 2020/02/27 11:27:47 jca Exp $
+# $OpenBSD: Link.pm,v 1.38 2023/07/08 08:15:32 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,9 +15,7 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-use strict;
-use warnings;
-use feature qw(say);
+use v5.36;
 
 # supplement OSConfig with stuff needed.
 package LT::OSConfig;
@@ -26,7 +24,7 @@ require LT::UList;
 my $search_dir_list = LT::UList->new;
 my $search_dir_obj = tied(@$search_dir_list);
 
-sub fillup_search_dirs
+sub fillup_search_dirs($)
 {
 	return if @$search_dir_list;
 	open(my $fh, '-|', '/sbin/ldconfig -r');
@@ -42,16 +40,14 @@ sub fillup_search_dirs
 	close($fh);
 }
 
-sub search_dirs
+sub search_dirs($self)
 {
-	my $self = shift;
 	$self->fillup_search_dirs;
 	return @$search_dir_list;
 }
 
-sub is_search_dir
+sub is_search_dir($self, $dir)
 {
-	my ($self, $dir) = @_;
 	$self->fillup_search_dirs;
 	return $search_dir_obj->exists($dir);
 }
@@ -60,28 +56,24 @@ sub is_search_dir
 # let's add the libsearchdirs and -R options there
 package LT::Options;
 
-sub add_libsearchdir
+sub add_libsearchdir($self, @p)
 {
-	my $self = shift;
-	push(@{$self->{libsearchdir}}, @_);
+	push(@{$self->{libsearchdir}}, @p);
 }
 
-sub libsearchdirs
+sub libsearchdirs($self)
 {
-	my $self = shift;
 	return @{$self->{libsearchdir}};
 }
 
 # -R options originating from .la resolution
-sub add_R
+sub add_R($self, @p)
 {
-	my $self = shift;
-	push(@{$self->{Rresolved}}, @_);
+	push(@{$self->{Rresolved}}, @p);
 }
 
-sub Rresolved
+sub Rresolved($self)
 {
-	my $self = shift;
 	$self->{Rresolved} //= [];
 	return @{$self->{Rresolved}};
 }
@@ -100,7 +92,7 @@ use constant {
 	PROGRAM	=> 2,
 };
 
-sub help
+sub help($)
 {
 	print <<"EOH";
 
@@ -112,9 +104,8 @@ EOH
 my $shared = 0;
 my $static = 1;
 
-sub run
+sub run($class, $ltprog, $gp, $ltconfig)
 {
-	my ($class, $ltprog, $gp, $ltconfig) = @_;
 
 	my $noshared  = $ltconfig->noshared;
 	my $cmd;
@@ -357,12 +348,8 @@ sub run
 }
 
 # populate arrays of non-pic and pic objects and remove these from @ARGV
-sub generate_objlist
+sub generate_objlist($objs, $sobjs, $objsource)
 {
-	my $objs = shift;
-	my $sobjs = shift;
-	my $objsource = shift;
-
 	my $result = [];
 	foreach my $a (@$objsource) {
 		if ($a =~ m/\S+\.lo$/) {
@@ -392,10 +379,8 @@ sub generate_objlist
 }
 
 # convert 4:5:8 into a list of numbers
-sub parse_version_info
+sub parse_version_info($vinfo)
 {
-	my $vinfo = shift;
-
 	if ($vinfo =~ m/^(\d+):(\d+):(\d+)$/) {
 		return ($1, $2, $3);
 	} elsif ($vinfo =~ m/^(\d+):(\d+)$/) {
@@ -410,10 +395,8 @@ sub parse_version_info
 # prepare dependency_libs information for the .la file which is installed
 # i.e. remove any .libs directories and use the final libdir for all the
 # .la files
-sub process_deplibs
+sub process_deplibs($linkflags)
 {
-	my $linkflags = shift;
-
 	my $result;
 
 	foreach my $lf (@$linkflags) {
@@ -447,9 +430,8 @@ use LT::Trace;
 
 my $calls = 0;
 
-sub build_cache
+sub build_cache($self, $lainfo, $level = 0)
 {
-	my ($self, $lainfo, $level) = @_;
 	my $o = $lainfo->{cached} = {
 	    deplibs => LT::UList->new,
 	    libdirs => LT::UList->new,
@@ -463,10 +445,8 @@ sub build_cache
 	}
 }
 
-sub internal_resolve_la
+sub internal_resolve_la($self, $o, $args, $level = 0)
 {
-	my ($self, $o, $args, $level) = @_;
-	$level //= 0;
 	tsay {"resolve level: $level"};
 	$o->{pthread} = 0;
 	foreach my $arg (@$args) {
@@ -497,10 +477,8 @@ END
 }
 
 # resolve .la files until a level with empty dependency_libs is reached.
-sub resolve_la
+sub resolve_la($self, $deplibs, $libdirs)
 {
-	my ($self, $deplibs, $libdirs) = @_;
-
 	tsay {"argvstring (pre resolve_la): @{$self->{args}}"};
 	my $o = { result => [], deplibs => $deplibs, libdirs => $libdirs};
 
@@ -518,10 +496,8 @@ sub resolve_la
 
 # Find first library or .la file for given library name.
 # Returns pair of (type, file path), or empty list on error.
-sub find_first_lib
+sub find_first_lib($self, $lib, $dirs, $gp)
 {
-	my ($self, $lib, $dirs, $gp) = @_;
-
 	my $name = $lib->{key};
 	require LT::LaFile;
 
@@ -559,11 +535,9 @@ sub find_first_lib
 # -Lfoo, -lfoo, foo.a, foo.la
 # recursively find .la files corresponding to -l flags; if there is no .la
 # file, just inspect the library file itself for any dependencies.
-sub internal_parse_linkargs1
+sub internal_parse_linkargs1($self, $deplibs, $gp, $dirs, $libs, $args, 
+    $level = 0)
 {
-	my ($self, $deplibs, $gp, $dirs, $libs, $args, $level) = @_;
-
-	$level //= 0;
 	tsay {"parse_linkargs1, level: $level"};
 	tsay {"  args: @$args"};
 	my $result   = $self->{result};
@@ -675,9 +649,8 @@ sub internal_parse_linkargs1
 	}
 }
 
-sub parse_linkargs1
+sub parse_linkargs1($self, $deplibs, $gp, $dirs, $libs)
 {
-	my ($self, $deplibs, $gp, $dirs, $libs, $args) = @_;
 	$self->{result} = [];
 	$self->internal_parse_linkargs1($deplibs, $gp, $dirs, $libs,
 	    $self->{args});
@@ -697,9 +670,8 @@ sub parse_linkargs1
 #     a .la file is found which refers to a shared library and which is not
 #     yet installed
 #     this is used to decide where to link executables and create wrappers
-sub parse_linkargs2
+sub parse_linkargs2($self, $gp, $orderedlibs, $staticlibs, $dirs, $libs)
 {
-	my ($self, $gp, $orderedlibs, $staticlibs, $dirs, $libs) = @_;
 	tsay {"parse_linkargs2"};
 	tsay {"  args: @{$self->{args}}"};
 	my $result = [];
@@ -765,9 +737,8 @@ sub parse_linkargs2
 	return $result;
 }
 
-sub new
+sub new($class, $args)
 {
-	my ($class, $args) = @_;
 	bless { args => $args, pthread => 0 }, $class;
 }
 
@@ -777,15 +748,13 @@ use LT::Util;
 use File::Basename;
 use Cwd qw(abs_path);
 
-sub new
+sub new($class)
 {
-	my $class = shift;
 	bless {}, $class;
 }
 
-sub create_symlinks
+sub create_symlinks($self, $dir, $libs)
 {
-	my ($self, $dir, $libs) = @_;
 	if (! -d $dir) {
 		mkdir($dir) or die "Cannot mkdir($dir) : $!\n";
 	}
@@ -817,15 +786,13 @@ sub create_symlinks
 	return $dir;
 }
 
-sub common1
+sub common1($self, $parser, $gp, $deplibs, $libdirs, $dirs, $libs)
 {
-	my ($self, $parser, $gp, $deplibs, $libdirs, $dirs, $libs) = @_;
-
 	$parser->resolve_la($deplibs, $libdirs);
 	my $orderedlibs = LT::UList->new;
 	my $staticlibs = [];
-	my $args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, $dirs,
-	    $libs);
+	my $args = $parser->parse_linkargs2($gp, $orderedlibs, $staticlibs, 
+	    $dirs, $libs);
 
 	my $tiedlibs = tied(@$orderedlibs);
 	my $ie = $tiedlibs->indexof("estdc++");
@@ -846,9 +813,8 @@ sub common1
 	return ($staticlibs, $orderedlibs, $args);
 }
 
-sub infer_libparameter
+sub infer_libparameter($self, $a, $k)
 {
-	my ($self, $a, $k) = @_;
 	my $lib = basename($a);
 	if ($lib =~ m/^lib(.*)\.so(\.\d+){2}$/) {
 		$lib = $1;
@@ -862,9 +828,8 @@ sub infer_libparameter
 	return "-l$lib";
 }
 
-sub export_symbols
+sub export_symbols($self, $ltconfig, $base, $gp, @o)
 {
-	my ($self, $ltconfig, $base, $gp, @o) = @_;
 	my $symbolsfile;
 	my $comment;
 	if ($gp->export_symbols) {

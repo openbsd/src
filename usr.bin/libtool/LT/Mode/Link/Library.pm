@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.7 2018/12/11 05:45:14 semarie Exp $
+# $OpenBSD: Library.pm,v 1.8 2023/07/08 08:15:32 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,16 +15,15 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
+use v5.36;
 use feature qw(say);
 
 use LT::LaFile;
 
 package LT::LaFile;
-sub link
+sub link(@p)
 {
-	return LT::Linker::LaFile->new->link(@_);
+	return LT::Linker::LaFile->new->link(@p);
 }
 
 package LT::Linker::LaFile;

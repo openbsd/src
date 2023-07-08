@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Compile.pm,v 1.13 2014/04/16 14:39:06 zhuk Exp $
+# $OpenBSD: Compile.pm,v 1.14 2023/07/08 08:15:32 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,8 +15,7 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-use strict;
-use warnings;
+use v5.36;
 
 package LT::Mode::Compile;
 our @ISA = qw(LT::Mode);
@@ -26,7 +25,7 @@ use LT::LoFile;
 use LT::Util;
 use LT::Trace;
 
-sub help
+sub help($)
 {
 	print <<"EOH";
 
@@ -38,9 +37,8 @@ EOH
 }
 
 my @valid_src = qw(asm c cc cpp cxx f s);
-sub run
+sub run($class, $ltprog, $gp, $ltconfig)
 {
-	my ($class, $ltprog, $gp, $ltconfig) = @_;
 	my $lofile = LT::LoFile->new;
 
 	my $pic = !$ltconfig->noshared;

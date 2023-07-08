@@ -1,4 +1,4 @@
-# $OpenBSD: Library.pm,v 1.13 2018/10/28 15:21:49 naddy Exp $
+# $OpenBSD: Library.pm,v 1.14 2023/07/08 08:15:32 espie Exp $
 
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,22 +15,17 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-use strict;
-use warnings;
-use feature qw(say switch state);
+use v5.36;
 
 package LT::Library::Stash;
 
-sub new
+sub new($class)
 {
-	my $class = shift;
-
 	bless {}, $class;
 }
 
-sub create
+sub create($self, $key)
 {
-	my ($self, $key) = @_;
 	if (!exists $self->{$key}) {
 		$self->{$key} = LT::Library->new($key);
 	}
@@ -44,9 +39,8 @@ use LT::Trace;
 
 # find actual library filename
 # XXX pick the right one if multiple are found!
-sub resolve_library
+sub resolve_library($self, $dirs, $shared, $staticflag, $linkmode, $gp = undef)
 {
-	my ($self, $dirs, $shared, $staticflag, $linkmode, $gp) = @_;
 
 	my $libtofind = $self->{key};
 	my $libfile = 0;
@@ -96,7 +90,7 @@ sub resolve_library
 		}
 	} else {
 		# search in .libs when priority is high
-		push @$dirs, $gp->libsearchdirs if $gp;
+		push @$dirs, $gp->libsearchdirs if defined $gp;
 		tsay {"searching for $libtofind"};
 		tsay {"search path= ", join(':', @$dirs)};
 		tsay {"search type= ", $shared ? 'shared' : 'static'};
@@ -143,9 +137,8 @@ sub resolve_library
 	}
 }
 
-sub findbest
+sub findbest($self, $sd, $name)
 {
-	my ($self, $sd, $name) = @_;
 	my $best = undef;
 	if (opendir(my $dir, $sd)) {
 		my ($major, $minor) = (-1, -1);
@@ -168,10 +161,8 @@ sub findbest
 }
 
 # give a list of library dependencies found in the actual shared library
-sub inspect
+sub inspect($self)
 {
-	my $self = shift;
-
 	my $filename = $self->{fullpath};
 	my @deps;
 
@@ -192,10 +183,8 @@ sub inspect
 }
 
 # give the list of RPATH/RUNPATH directories
-sub findrpaths
+sub findrpaths($self)
 {
-	my $self = shift;
-
 	my $filename = $self->{fullpath};
 	my @dirs;
 
@@ -216,9 +205,8 @@ sub findrpaths
 	return @dirs;
 }
 
-sub new
+sub new($class, $key)
 {
-	my ($class, $key) = @_;
 	bless { key => $key }, $class;
 }
 

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Install.pm,v 1.8 2014/09/05 10:36:39 espie Exp $
+# $OpenBSD: Install.pm,v 1.9 2023/07/08 08:15:32 espie Exp $
 #
 # Copyright (c) 2007-2010 Steven Mestdagh <steven@openbsd.org>
 # Copyright (c) 2012 Marc Espie <espie@openbsd.org>
@@ -15,8 +15,7 @@
 # WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-use strict;
-use warnings;
+use v5.36;
 
 package LT::Mode::Install;
 our @ISA = qw(LT::Mode);
@@ -26,7 +25,7 @@ use LT::Trace;
 use Getopt::Std;
 use File::Basename;
 
-sub help
+sub help($)
 {
 	print <<"EOH";
 
@@ -35,9 +34,9 @@ Install executables/libraries.
 EOH
 }
 
-sub run
+# don't care about gp or ltconfig for install !
+sub run($class, $ltprog, $, $)
 {
-	my ($class, $ltprog) = @_;
 	# we just parse the options in order to find the actual arguments
 	my @argvcopy = @ARGV;
 	my %install_opts;
@@ -96,10 +95,8 @@ sub run
 	}
 }
 
-sub is_wrapper
+sub is_wrapper($program)
 {
-	my $program = shift;
-
 	open(my $pw, '<', $program) or die "Cannot open $program: $!\n";
 	my $line = <$pw>;
 	# if the first line isn't a shell, don't even bother
