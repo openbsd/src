@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stfclock.4,v 1.1 2022/06/06 22:28:57 kettenis Exp $
+.\"	$OpenBSD: stfclock.4,v 1.2 2023/07/08 10:17:35 kettenis Exp $
 .\"
 .\" Copyright (c) 2022 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2022 $
+.Dd $Mdocdate: July 8 2023 $
 .Dt STFCLOCK 4 riscv64
 .Os
 .Sh NAME
 .Nm stfclock
-.Nd StarFive JH7100 clock controller
+.Nd StarFive JH7100/JH7110 clock controller
 .Sh SYNOPSIS
 .Cd "sfclock* at fdt?"
 .Sh DESCRIPTION
 The
 .Nm
 driver controls the clock signals for integrated components of the
-StarFive JH7100 SoC.
+StarFive JH7100/JH7110 SoCs.
 .Sh SEE ALSO
 .Xr intro 4
 .Sh HISTORY
