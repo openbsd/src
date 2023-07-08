@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_methods.c,v 1.30 2023/07/06 07:56:32 beck Exp $ */
+/* $OpenBSD: ssl_methods.c,v 1.31 2023/07/08 16:40:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -191,54 +191,63 @@ DTLSv1_client_method(void)
 {
 	return &DTLSv1_client_method_data;
 }
+LSSL_ALIAS(DTLSv1_client_method);
 
 const SSL_METHOD *
 DTLSv1_method(void)
 {
 	return &DTLSv1_method_data;
 }
+LSSL_ALIAS(DTLSv1_method);
 
 const SSL_METHOD *
 DTLSv1_server_method(void)
 {
 	return &DTLSv1_method_data;
 }
+LSSL_ALIAS(DTLSv1_server_method);
 
 const SSL_METHOD *
 DTLSv1_2_client_method(void)
 {
 	return &DTLSv1_2_client_method_data;
 }
+LSSL_ALIAS(DTLSv1_2_client_method);
 
 const SSL_METHOD *
 DTLSv1_2_method(void)
 {
 	return &DTLSv1_2_method_data;
 }
+LSSL_ALIAS(DTLSv1_2_method);
 
 const SSL_METHOD *
 DTLSv1_2_server_method(void)
 {
 	return &DTLSv1_2_method_data;
 }
+LSSL_ALIAS(DTLSv1_2_server_method);
 
 const SSL_METHOD *
 DTLS_client_method(void)
 {
 	return &DTLS_client_method_data;
 }
+LSSL_ALIAS(DTLS_client_method);
 
 const SSL_METHOD *
 DTLS_method(void)
 {
 	return &DTLS_method_data;
 }
+LSSL_ALIAS(DTLS_method);
 
 const SSL_METHOD *
 DTLS_server_method(void)
 {
 	return &DTLS_method_data;
 }
+LSSL_ALIAS(DTLS_server_method);
 
 static const SSL_METHOD TLS_method_data = {
 	.dtls = 0,
@@ -434,18 +443,21 @@ TLS_client_method(void)
 {
 	return (&TLS_client_method_data);
 }
+LSSL_ALIAS(TLS_client_method);
 
 const SSL_METHOD *
 TLS_method(void)
 {
 	return (&TLS_method_data);
 }
+LSSL_ALIAS(TLS_method);
 
 const SSL_METHOD *
 TLS_server_method(void)
 {
 	return TLS_method();
 }
+LSSL_ALIAS(TLS_server_method);
 
 const SSL_METHOD *
 tls_legacy_method(void)
@@ -458,72 +470,84 @@ SSLv23_client_method(void)
 {
 	return TLS_client_method();
 }
+LSSL_ALIAS(SSLv23_client_method);
 
 const SSL_METHOD *
 SSLv23_method(void)
 {
 	return TLS_method();
 }
+LSSL_ALIAS(SSLv23_method);
 
 const SSL_METHOD *
 SSLv23_server_method(void)
 {
 	return TLS_method();
 }
+LSSL_ALIAS(SSLv23_server_method);
 
 const SSL_METHOD *
 TLSv1_client_method(void)
 {
 	return (&TLSv1_client_method_data);
 }
+LSSL_ALIAS(TLSv1_client_method);
 
 const SSL_METHOD *
 TLSv1_method(void)
 {
 	return (&TLSv1_method_data);
 }
+LSSL_ALIAS(TLSv1_method);
 
 const SSL_METHOD *
 TLSv1_server_method(void)
 {
 	return (&TLSv1_method_data);
 }
+LSSL_ALIAS(TLSv1_server_method);
 
 const SSL_METHOD *
 TLSv1_1_client_method(void)
 {
 	return (&TLSv1_1_client_method_data);
 }
+LSSL_ALIAS(TLSv1_1_client_method);
 
 const SSL_METHOD *
 TLSv1_1_method(void)
 {
 	return (&TLSv1_1_method_data);
 }
+LSSL_ALIAS(TLSv1_1_method);
 
 const SSL_METHOD *
 TLSv1_1_server_method(void)
 {
 	return (&TLSv1_1_method_data);
 }
+LSSL_ALIAS(TLSv1_1_server_method);
 
 const SSL_METHOD *
 TLSv1_2_client_method(void)
 {
 	return (&TLSv1_2_client_method_data);
 }
+LSSL_ALIAS(TLSv1_2_client_method);
 
 const SSL_METHOD *
 TLSv1_2_method(void)
 {
 	return (&TLSv1_2_method_data);
 }
+LSSL_ALIAS(TLSv1_2_method);
 
 const SSL_METHOD *
 TLSv1_2_server_method(void)
 {
 	return (&TLSv1_2_method_data);
 }
+LSSL_ALIAS(TLSv1_2_server_method);
 
 const SSL_METHOD *
 ssl_get_method(uint16_t version)

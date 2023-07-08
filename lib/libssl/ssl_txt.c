@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_txt.c,v 1.36 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: ssl_txt.c,v 1.37 2023/07/08 16:40:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -103,6 +103,7 @@ SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)
 	BIO_free(b);
 	return ret;
 }
+LSSL_ALIAS(SSL_SESSION_print_fp);
 
 int
 SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
@@ -197,3 +198,4 @@ SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
  err:
 	return ret;
 }
+LSSL_ALIAS(SSL_SESSION_print);

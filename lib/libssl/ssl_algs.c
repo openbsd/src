@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_algs.c,v 1.31 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: ssl_algs.c,v 1.32 2023/07/08 16:40:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,4 +122,4 @@ SSL_library_init(void)
 
 	return (1);
 }
-
+LSSL_ALIAS(SSL_library_init);

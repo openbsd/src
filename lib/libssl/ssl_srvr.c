@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_srvr.c,v 1.155 2023/06/11 19:01:01 tb Exp $ */
+/* $OpenBSD: ssl_srvr.c,v 1.156 2023/07/08 16:40:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1832,8 +1832,10 @@ ssl3_get_client_kex_gost(SSL *s, CBS *cbs)
 	CBS gostblob;
 
 	/* Get our certificate private key*/
+#ifndef OPENSSL_NO_GOST
 	if ((s->s3->hs.cipher->algorithm_auth & SSL_aGOST01) != 0)
 		pkey = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+#endif
 
 	if ((pkey_ctx = EVP_PKEY_CTX_new(pkey, NULL)) == NULL)
 		goto err;
@@ -2047,6 +2049,7 @@ ssl3_get_cert_verify(SSL *s)
 			al = SSL_AD_INTERNAL_ERROR;
 			goto fatal_err;
 		}
+#ifndef OPENSSL_NO_GOST
 		if (sigalg->key_type == EVP_PKEY_GOSTR01 &&
 		    EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_VERIFY,
 		    EVP_PKEY_CTRL_GOST_SIG_FORMAT, GOST_SIG_FORMAT_RS_LE,
@@ -2054,6 +2057,7 @@ ssl3_get_cert_verify(SSL *s)
 			al = SSL_AD_INTERNAL_ERROR;
 			goto fatal_err;
 		}
+#endif
 		if (EVP_DigestVerify(mctx, CBS_data(&signature),
 		    CBS_len(&signature), hdata, hdatalen) <= 0) {
 			SSLerror(s, ERR_R_EVP_LIB);

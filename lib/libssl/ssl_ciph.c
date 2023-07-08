@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_ciph.c,v 1.135 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: ssl_ciph.c,v 1.136 2023/07/08 16:40:13 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -475,9 +475,11 @@ ssl_cipher_get_evp(const SSL_SESSION *ss, const EVP_CIPHER **enc,
 	case SSL_CAMELLIA256:
 		*enc = EVP_camellia_256_cbc();
 		break;
+#ifndef OPENSSL_NO_GOST
 	case SSL_eGOST2814789CNT:
 		*enc = EVP_gost2814789_cnt();
 		break;
+#endif
 	}
 
 	switch (ss->cipher->algorithm_mac) {
@@ -493,6 +495,7 @@ ssl_cipher_get_evp(const SSL_SESSION *ss, const EVP_CIPHER **enc,
 	case SSL_SHA384:
 		*md = EVP_sha384();
 		break;
+#ifndef OPENSSL_NO_GOST
 	case SSL_GOST89MAC:
 		*md = EVP_gost2814789imit();
 		break;
@@ -502,8 +505,8 @@ ssl_cipher_get_evp(const SSL_SESSION *ss, const EVP_CIPHER **enc,
 	case SSL_STREEBOG256:
 		*md = EVP_streebog256();
 		break;
+#endif
 	}
-
 	if (*enc == NULL || *md == NULL)
 		return 0;
 
@@ -515,15 +518,18 @@ ssl_cipher_get_evp(const SSL_SESSION *ss, const EVP_CIPHER **enc,
 		return 0;
 	if (EVP_CIPHER_mode(*enc) == EVP_CIPH_GCM_MODE)
 		return 0;
-
+#ifndef OPENSSL_NO_GOST
+	/* XXX JFC. die in fire already */
 	if (ss->cipher->algorithm_mac == SSL_GOST89MAC) {
 		*mac_pkey_type = EVP_PKEY_GOSTIMIT;
 		*mac_secret_size = 32; /* XXX */
 	} else {
+#endif
 		*mac_pkey_type = EVP_PKEY_HMAC;
 		*mac_secret_size = EVP_MD_size(*md);
+#ifndef OPENSSL_NO_GOST
 	}
-
+#endif
 	return 1;
 }
 
@@ -578,17 +584,19 @@ ssl_get_handshake_evp_md(SSL *s, const EVP_MD **md)
 	case SSL_HANDSHAKE_MAC_DEFAULT:
 		*md = EVP_md5_sha1();
 		return 1;
+#ifndef OPENSSL_NO_GOST
 	case SSL_HANDSHAKE_MAC_GOST94:
 		*md = EVP_gostr341194();
 		return 1;
+	case SSL_HANDSHAKE_MAC_STREEBOG256:
+		*md = EVP_streebog256();
+		return 1;
+#endif
 	case SSL_HANDSHAKE_MAC_SHA256:
 		*md = EVP_sha256();
 		return 1;
 	case SSL_HANDSHAKE_MAC_SHA384:
 		*md = EVP_sha384();
-		return 1;
-	case SSL_HANDSHAKE_MAC_STREEBOG256:
-		*md = EVP_streebog256();
 		return 1;
 	default:
 		break;
@@ -1406,12 +1414,14 @@ SSL_CIPHER_get_by_id(unsigned int id)
 {
 	return ssl3_get_cipher_by_id(id);
 }
+LSSL_ALIAS(SSL_CIPHER_get_by_id);
 
 const SSL_CIPHER *
 SSL_CIPHER_get_by_value(uint16_t value)
 {
 	return ssl3_get_cipher_by_value(value);
 }
+LSSL_ALIAS(SSL_CIPHER_get_by_value);
 
 char *
 SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
@@ -1565,6 +1575,7 @@ SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 
 	return (ret);
 }
+LSSL_ALIAS(SSL_CIPHER_description);
 
 const char *
 SSL_CIPHER_get_version(const SSL_CIPHER *c)
@@ -1576,6 +1587,7 @@ SSL_CIPHER_get_version(const SSL_CIPHER *c)
 	else
 		return("unknown");
 }
+LSSL_ALIAS(SSL_CIPHER_get_version);
 
 /* return the actual cipher being used */
 const char *
@@ -1585,6 +1597,7 @@ SSL_CIPHER_get_name(const SSL_CIPHER *c)
 		return (c->name);
 	return("(NONE)");
 }
+LSSL_ALIAS(SSL_CIPHER_get_name);
 
 /* number of bits for symmetric cipher */
 int
@@ -1599,18 +1612,21 @@ SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits)
 	}
 	return (ret);
 }
+LSSL_ALIAS(SSL_CIPHER_get_bits);
 
 unsigned long
 SSL_CIPHER_get_id(const SSL_CIPHER *c)
 {
 	return c->id;
 }
+LSSL_ALIAS(SSL_CIPHER_get_id);
 
 uint16_t
 SSL_CIPHER_get_value(const SSL_CIPHER *c)
 {
 	return ssl3_cipher_get_value(c);
 }
+LSSL_ALIAS(SSL_CIPHER_get_value);
 
 const SSL_CIPHER *
 SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr)
@@ -1625,6 +1641,7 @@ SSL_CIPHER_find(SSL *ssl, const unsigned char *ptr)
 
 	return ssl3_get_cipher_by_value(cipher_value);
 }
+LSSL_ALIAS(SSL_CIPHER_find);
 
 int
 SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c)
@@ -1658,6 +1675,7 @@ SSL_CIPHER_get_cipher_nid(const SSL_CIPHER *c)
 		return NID_undef;
 	}
 }
+LSSL_ALIAS(SSL_CIPHER_get_cipher_nid);
 
 int
 SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c)
@@ -1683,6 +1701,7 @@ SSL_CIPHER_get_digest_nid(const SSL_CIPHER *c)
 		return NID_undef;
 	}
 }
+LSSL_ALIAS(SSL_CIPHER_get_digest_nid);
 
 int
 SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c)
@@ -1700,6 +1719,7 @@ SSL_CIPHER_get_kx_nid(const SSL_CIPHER *c)
 		return NID_undef;
 	}
 }
+LSSL_ALIAS(SSL_CIPHER_get_kx_nid);
 
 int
 SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
@@ -1717,27 +1737,32 @@ SSL_CIPHER_get_auth_nid(const SSL_CIPHER *c)
 		return NID_undef;
 	}
 }
+LSSL_ALIAS(SSL_CIPHER_get_auth_nid);
 
 int
 SSL_CIPHER_is_aead(const SSL_CIPHER *c)
 {
 	return (c->algorithm_mac & SSL_AEAD) == SSL_AEAD;
 }
+LSSL_ALIAS(SSL_CIPHER_is_aead);
 
 void *
 SSL_COMP_get_compression_methods(void)
 {
 	return NULL;
 }
+LSSL_ALIAS(SSL_COMP_get_compression_methods);
 
 int
 SSL_COMP_add_compression_method(int id, void *cm)
 {
 	return 1;
 }
+LSSL_ALIAS(SSL_COMP_add_compression_method);
 
 const char *
 SSL_COMP_get_name(const void *comp)
 {
 	return NULL;
 }
+LSSL_ALIAS(SSL_COMP_get_name);

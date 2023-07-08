@@ -1,4 +1,4 @@
-/* $OpenBSD: tls12_record_layer.c,v 1.38 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: tls12_record_layer.c,v 1.39 2023/07/08 16:40:13 beck Exp $ */
 /*
  * Copyright (c) 2020 Joel Sing <jsing@openbsd.org>
  *
@@ -485,6 +485,8 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 	if (EVP_CIPHER_key_length(rl->cipher) != CBS_len(key))
 		goto err;
 
+#ifndef OPENSSL_NO_GOST
+	/* XXX die die die
 	/* Special handling for GOST... */
 	if (EVP_MD_type(rl->mac_hash) == NID_id_Gost28147_89_MAC) {
 		if (CBS_len(mac_key) != 32)
@@ -492,11 +494,14 @@ tls12_record_layer_ccs_cipher(struct tls12_record_layer *rl,
 		mac_type = EVP_PKEY_GOSTIMIT;
 		rp->stream_mac = 1;
 	} else {
+#endif
 		if (CBS_len(mac_key) > INT_MAX)
 			goto err;
 		if (EVP_MD_size(rl->mac_hash) != CBS_len(mac_key))
 			goto err;
+#ifndef OPENSSL_NO_GOST
 	}
+#endif
 
 	if ((rp->cipher_ctx = EVP_CIPHER_CTX_new()) == NULL)
 		goto err;

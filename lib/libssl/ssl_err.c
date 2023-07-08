@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_err.c,v 1.45 2022/11/26 16:08:55 tb Exp $ */
+/* $OpenBSD: ssl_err.c,v 1.46 2023/07/08 16:40:13 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -482,6 +482,7 @@ ERR_load_SSL_strings(void)
 	}
 #endif
 }
+LSSL_ALIAS(ERR_load_SSL_strings);
 
 void
 SSL_load_error_strings(void)
@@ -491,6 +492,7 @@ SSL_load_error_strings(void)
 	ERR_load_SSL_strings();
 #endif
 }
+LSSL_ALIAS(SSL_load_error_strings);
 
 int
 SSL_state_func_code(int state) {
