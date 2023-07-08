@@ -489,7 +489,14 @@ unless ($define{'PERL_TRACK_MEMPOOL'}) {
 }
 
 unless ($define{'PERL_MEM_LOG'}) {
-    ++$skip{PL_mem_log};
+    ++$skip{$_} foreach qw(
+                    PL_mem_log
+                    Perl_mem_log_alloc
+                    Perl_mem_log_realloc
+                    Perl_mem_log_free
+                    Perl_mem_log_new_sv
+                    Perl_mem_log_del_sv
+                );
 }
 
 unless ($define{'MULTIPLICITY'}) {

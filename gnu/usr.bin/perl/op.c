@@ -14749,13 +14749,40 @@ subroutine.
 CV *
 Perl_find_lexical_cv(pTHX_ PADOFFSET off)
 {
-    PADNAME *name = PAD_COMPNAME(off);
+    const PADNAME *name = PAD_COMPNAME(off);
     CV *compcv = PL_compcv;
     while (PadnameOUTER(name)) {
-        assert(PARENT_PAD_INDEX(name));
         compcv = CvOUTSIDE(compcv);
-        name = PadlistNAMESARRAY(CvPADLIST(compcv))
+        if (LIKELY(PARENT_PAD_INDEX(name))) {
+            name = PadlistNAMESARRAY(CvPADLIST(compcv))
                 [off = PARENT_PAD_INDEX(name)];
+        }
+        else {
+            /* In an eval() in an inner scope like a function, the
+               intermediate pad in the sub might not be populated with the
+               sub.  So search harder.
+
+               It is possible we won't find the name in this
+               particular scope, but that's fine, if we don't we'll
+               find it in some outer scope.  Finding it here will let us
+               go back to following the PARENT_PAD_INDEX() chain.
+            */
+            const PADNAMELIST * const names = PadlistNAMES(CvPADLIST(compcv));
+            PADNAME * const * const name_p = PadnamelistARRAY(names);
+            int offset;
+            for (offset = PadnamelistMAXNAMED(names); offset > 0; offset--) {
+                const PADNAME * const thisname = name_p[offset];
+                /* The pv is copied from the outer PADNAME to the
+                   inner PADNAMEs so we don't need to compare the
+                   string contents
+                */
+                if (thisname && PadnameLEN(thisname) == PadnameLEN(name)
+                    && PadnamePV(thisname) == PadnamePV(name)) {
+                    name = thisname;
+                    break;
+                }
+            }
+        }
     }
     assert(!PadnameIsOUR(name));
     if (!PadnameIsSTATE(name) && PadnamePROTOCV(name)) {

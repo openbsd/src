@@ -313,7 +313,7 @@ utils : $(utils1) $(utils2) $(utils3) $(utils4) $(utils5)
 extra.pods : miniperl
 	@ @extra_pods.com
 
-PERLDELTA_CURRENT = [.pod]perl5360delta.pod
+PERLDELTA_CURRENT = [.pod]perl5361delta.pod
 
 $(PERLDELTA_CURRENT) : [.pod]perldelta.pod
 	Copy/NoConfirm/Log $(MMS$SOURCE) $(PERLDELTA_CURRENT)

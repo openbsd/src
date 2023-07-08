@@ -33,6 +33,18 @@ sub cat_utf8 {
     $data;
 }
 
+# write a format to a plain file, then read it back in and compare
+
+sub is_format {
+    my ($glob, $want, $desc) = @_;
+    local $::Level = $::Level + 1;
+    my $file = 'Op_write.tmp';
+    open $glob, '>', $file or die "Can't create '$file': $!";
+    write $glob;
+    close $glob or die "Could not close '$file': $!";
+    is(cat($file), $want, $desc);
+}
+
 # write a format to a utf8 file, then read it back in and compare
 
 sub is_format_utf8 {
@@ -100,7 +112,8 @@ for my $tref ( @NumTests ){
 my $bas_tests = 21;
 
 # number of tests in section 3
-my $bug_tests = 66 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 6 + 2 + 3 + 96 + 11 + 14;
+my $bug_tests = 66 + 3 * 3 * 5 * 2 * 3 + 2 + 66 + 6 + 2 + 3 + 96 + 11 + 14
+                + 12;
 
 # number of tests in section 4
 my $hmb_tests = 37;
@@ -1360,6 +1373,47 @@ $v28f
 
 like_format_utf8(\*OUT28f, $qr_hash_m);
 
+my $v29a;
+format OUT29a =
+[^<<<]~~
+$v29a
+.
+
+$v29a = "-ABCD";
+is_format(\*OUT29a, "[-   ]\n[ABCD]\n");
+
+$v29a = "A-BCD";
+is_format(\*OUT29a, "[A-  ]\n[BCD ]\n");
+
+$v29a = "AB-CD";
+is_format(\*OUT29a, "[AB- ]\n[CD  ]\n");
+
+$v29a = "ABC-D";
+is_format(\*OUT29a, "[ABC-]\n[D   ]\n");
+
+$v29a = "ABCD-";
+is_format(\*OUT29a, "[ABCD]\n[-   ]\n");
+
+$v29a = "ABCDE-";
+is_format(\*OUT29a, "[ABCD]\n[E-  ]\n");
+
+$v29a = "-ABCD";
+is_format_utf8(\*OUT29a, "[-   ]\n[ABCD]\n");
+
+$v29a = "A-BCD";
+is_format_utf8(\*OUT29a, "[A-  ]\n[BCD ]\n");
+
+$v29a = "AB-CD";
+is_format_utf8(\*OUT29a, "[AB- ]\n[CD  ]\n");
+
+$v29a = "ABC-D";
+is_format_utf8(\*OUT29a, "[ABC-]\n[D   ]\n");
+
+$v29a = "ABCD-";
+is_format_utf8(\*OUT29a, "[ABCD]\n[-   ]\n");
+
+$v29a = "ABCDE-";
+is_format_utf8(\*OUT29a, "[ABCD]\n[E-  ]\n");
 
 
 {

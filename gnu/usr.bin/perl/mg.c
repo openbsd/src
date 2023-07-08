@@ -3082,25 +3082,55 @@ Perl_magic_set(pTHX_ SV *sv, MAGIC *mg)
             IoLINES(GvIOp(PL_last_in_gv)) = SvIV(sv);
         break;
     case '^':
-        Safefree(IoTOP_NAME(GvIOp(PL_defoutgv)));
-        IoTOP_NAME(GvIOp(PL_defoutgv)) = savesvpv(sv);
-        IoTOP_GV(GvIOp(PL_defoutgv)) =  gv_fetchsv(sv, GV_ADD, SVt_PVIO);
+        {
+            IO * const io = GvIO(PL_defoutgv);
+            if (!io)
+                break;
+
+            Safefree(IoTOP_NAME(io));
+            IoTOP_NAME(io) = savesvpv(sv);
+            IoTOP_GV(io) =  gv_fetchsv(sv, GV_ADD, SVt_PVIO);
+        }
         break;
     case '~':
-        Safefree(IoFMT_NAME(GvIOp(PL_defoutgv)));
-        IoFMT_NAME(GvIOp(PL_defoutgv)) = savesvpv(sv);
-        IoFMT_GV(GvIOp(PL_defoutgv)) =  gv_fetchsv(sv, GV_ADD, SVt_PVIO);
+        {
+            IO * const io = GvIO(PL_defoutgv);
+            if (!io)
+                break;
+
+            Safefree(IoFMT_NAME(io));
+            IoFMT_NAME(io) = savesvpv(sv);
+            IoFMT_GV(io) =  gv_fetchsv(sv, GV_ADD, SVt_PVIO);
+        }
         break;
     case '=':
-        IoPAGE_LEN(GvIOp(PL_defoutgv)) = (SvIV(sv));
+        {
+            IO * const io = GvIO(PL_defoutgv);
+            if (!io)
+                break;
+
+            IoPAGE_LEN(io) = (SvIV(sv));
+        }
         break;
     case '-':
-        IoLINES_LEFT(GvIOp(PL_defoutgv)) = (SvIV(sv));
-        if (IoLINES_LEFT(GvIOp(PL_defoutgv)) < 0L)
-                IoLINES_LEFT(GvIOp(PL_defoutgv)) = 0L;
+        {
+            IO * const io = GvIO(PL_defoutgv);
+            if (!io)
+                break;
+
+            IoLINES_LEFT(io) = (SvIV(sv));
+            if (IoLINES_LEFT(io) < 0L)
+                IoLINES_LEFT(io) = 0L;
+        }
         break;
     case '%':
-        IoPAGE(GvIOp(PL_defoutgv)) = (SvIV(sv));
+        {
+            IO * const io = GvIO(PL_defoutgv);
+            if (!io)
+                break;
+
+            IoPAGE(io) = (SvIV(sv));
+        }
         break;
     case '|':
         {

@@ -1160,8 +1160,7 @@ $! base name early because not all questions are worth asking on all
 $! platforms.
 $!
 $! Please use F$ELEMENT(0,"-",archname) .EQS. "VMS_AXP" (or
-$! "VMS_IA64") from here on to allow cross-platform configuration (e.g.
-$! configure a IA64 build on an Alpha).
+$! "VMS_IA64", "VMS_x86_64", etc.) from here on to query the current architecture.
 $!
 $ IF (F$GETSYI("HW_MODEL") .LT. 1024 .AND. F$GETSYI("HW_MODEL") .GT. 0)
 $ THEN 
@@ -1171,16 +1170,15 @@ $   exit 44
 $ ELSE
 $   IF (F$GETSYI("ARCH_TYPE") .EQ. 2)
 $   THEN
-$       archname = "VMS_AXP"
-$       otherarch = "IA64"
+$       archname = "VMS_AXP"  ! oops, F$GETSYI("ARCH_NAME") gives us 'Alpha' not 'AXP'
 $       arch_type = "ARCH-TYPE=__AXP__"
 $   ELSE
-$       archname = "VMS_IA64"
-$       otherarch = "Alpha"
-$       arch_type = "ARCH-TYPE=__IA64__"
+$!      This works for Itanium and x86_64 and hopefully whatever's next (AARCH64? RISC-V?)
+$       archname = "VMS_" + F$GETSYI("ARCH_NAME")
+$       arch_type = "ARCH-TYPE=__" + F$GETSYI("ARCH_NAME") + "__"
 $   ENDIF
-$   alignbytes="8"
 $ ENDIF
+$ alignbytes="8"
 $!
 $!: set the base revision
 $ baserev="5.0"

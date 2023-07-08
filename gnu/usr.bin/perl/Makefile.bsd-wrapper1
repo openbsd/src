@@ -87,6 +87,7 @@ _quick3p=
     perl5340delta 1			pod/perl5340delta.pod \
     perl5341delta 1			pod/perl5341delta.pod \
     perl5360delta 1			pod/perl5360delta.pod \
+    perl5361delta 1			pod/perl5361delta.pod \
     perl561delta 1			pod/perl561delta.pod \
     perl56delta 1			pod/perl56delta.pod \
     perl581delta 1			pod/perl581delta.pod \

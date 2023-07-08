@@ -653,15 +653,15 @@ PP(pp_formline)
                             break;
                     }
                     else {
+                        if (size == fieldsize)
+                            break;
                         if (strchr(PL_chopset, *s)) {
                             /* provisional split point */
                             /* for a non-space split char, we include
                              * the split char; hence the '+1' */
                             chophere = s + 1;
-                            itemsize = size;
+                            itemsize = size + 1;
                         }
-                        if (size == fieldsize)
-                            break;
                         if (!isCNTRL(*s))
                             gotsome = TRUE;
                     }
@@ -3347,11 +3347,16 @@ S_docatch(pTHX_ Perl_ppaddr_t firstpp)
     case 0:
         PL_op = firstpp(aTHX);
  redo_body:
-        CALLRUNOPS(aTHX);
+        if (PL_op) {
+            CALLRUNOPS(aTHX);
+        }
         break;
     case 3:
-        /* die caught by an inner eval - continue inner loop */
-        if (PL_restartop && PL_restartjmpenv == PL_top_env) {
+        if (PL_restartjmpenv == PL_top_env) {
+            /* die caught by an inner eval - continue inner loop */
+
+            if (!PL_restartop)
+                break;
             PL_restartjmpenv = NULL;
             PL_op = PL_restartop;
             PL_restartop = 0;

@@ -887,6 +887,13 @@
 #if defined(PERL_IN_SV_C)
 #define more_sv()		Perl_more_sv(aTHX)
 #endif
+#if defined(PERL_MEM_LOG)
+#define mem_log_alloc		Perl_mem_log_alloc
+#define mem_log_del_sv		Perl_mem_log_del_sv
+#define mem_log_free		Perl_mem_log_free
+#define mem_log_new_sv		Perl_mem_log_new_sv
+#define mem_log_realloc		Perl_mem_log_realloc
+#endif
 #if defined(PERL_USE_3ARG_SIGHANDLER)
 #define csighandler		Perl_csighandler
 #endif
@@ -2028,11 +2035,6 @@
 #    if defined(PERL_MEM_LOG) && !defined(PERL_MEM_LOG_NOIMPL)
 #define mem_log_common		S_mem_log_common
 #    endif
-#  endif
-#  if defined(PERL_MEM_LOG)
-#define mem_log_alloc		Perl_mem_log_alloc
-#define mem_log_free		Perl_mem_log_free
-#define mem_log_realloc		Perl_mem_log_realloc
 #  endif
 #  if defined(PERL_USES_PL_PIDSTATUS) && defined(PERL_IN_UTIL_C)
 #define pidgone(a,b)		S_pidgone(aTHX_ a,b)

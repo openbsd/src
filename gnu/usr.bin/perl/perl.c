@@ -3,7 +3,7 @@
  *
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
  *    2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012
- *    2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022
+ *    2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023
  *    by Larry Wall and others
  *
  *    You may distribute under the terms of either the GNU General Public
@@ -3832,7 +3832,7 @@ S_minus_v(pTHX)
 #endif
 
         PerlIO_printf(PIO_stdout,
-		      "\n\nCopyright 1987-2022, Larry Wall\n");
+		      "\n\nCopyright 1987-2023, Larry Wall\n");
 #ifdef OS2
         PerlIO_printf(PIO_stdout,
                       "\n\nOS/2 port Copyright (c) 1990, 1991, Raymond Chen, Kai Uwe Rommel\n"

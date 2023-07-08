@@ -25,7 +25,7 @@ if ($NoTaintSupport) {
     exit 0;
 }
 
-plan tests => 1054;
+plan tests => 1058;
 
 $| = 1;
 
@@ -2955,6 +2955,18 @@ is_tainted("$ovtaint", "overload preserves taint");
     taint_sig3($TAINT);
 }
 
+{
+	# GH 19478: panic on s///gre with tainted utf8 strings
+	my $u = "\x{10469}";
+	my $r1 = ("foo$TAINT" =~ s/./"$u"/gre);
+	is($r1, "$u$u$u", 'tainted string with utf8 s/.//gre');
+	my $r2 = ("foo$TAINT" =~ s/.*/"${u}"/gre);
+	is($r2, "$u$u", 'tainted string with utf8 s/.*//gre');
+	my $r3 = ("foo$TAINT" =~ s/.+/"${u}"/gre);
+	is($r3, $u, 'tainted string with utf8 s/.+//gre');
+	my $r4 = ("$u$TAINT" =~ s/./""/gre);
+	is($r4, '', 'tainted utf8 string with s///gre');
+}
 
 # This may bomb out with the alarm signal so keep it last
 SKIP: {

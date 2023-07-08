@@ -5259,7 +5259,7 @@ S_mem_log_common(enum mem_log_type mlt, const UV n,
 #     define MEM_LOG_TIME_FMT	"%10d.%06d: "
 #     define MEM_LOG_TIME_ARG	(int)tv.tv_sec, (int)tv.tv_usec
         struct timeval tv;
-        gettimeofday(&tv, 0);
+        PerlProc_gettimeofday(&tv, 0);
 #   else
 #     define MEM_LOG_TIME_FMT	"%10d: "
 #     define MEM_LOG_TIME_ARG	(int)when
@@ -5385,6 +5385,8 @@ Perl_mem_log_new_sv(const SV *sv,
                     const char *filename, const int linenumber,
                     const char *funcname)
 {
+    PERL_ARGS_ASSERT_MEM_LOG_NEW_SV;
+
     mem_log_common_if(MLT_NEW_SV, 0, 0, "", sv, NULL, NULL,
                       filename, linenumber, funcname);
 }
@@ -5394,6 +5396,8 @@ Perl_mem_log_del_sv(const SV *sv,
                     const char *filename, const int linenumber, 
                     const char *funcname)
 {
+    PERL_ARGS_ASSERT_MEM_LOG_DEL_SV;
+
     mem_log_common_if(MLT_DEL_SV, 0, 0, "", sv, NULL, NULL, 
                       filename, linenumber, funcname);
 }

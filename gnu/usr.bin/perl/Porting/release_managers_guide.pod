@@ -16,13 +16,13 @@ document that starts with a checklist for your release.
 This script is run as:
 
  perl Porting/make-rmg-checklist \
-     --version [5.x.y-RC#] > /tmp/rmg.pod
+     --version [5.X.Y-RC#] > /tmp/rmg.pod
 
 You can also pass the C<--html> flag to generate an HTML document instead of
 POD.
 
  perl Porting/make-rmg-checklist --html \
-     --version [5.x.y-RC#] > /tmp/rmg.html
+     --version [5.X.Y-RC#] > /tmp/rmg.html
 
 =head1 SYNOPSIS
 
@@ -67,13 +67,21 @@ of these release types.  If a step does not apply to a given
 type of release, you will see a notation to that effect at
 the beginning of the step.
 
+This guide assumes you are working on the Perl master repository (i.e.
+L<https://github.com/Perl/perl5>) and B<not> on your own fork of the perl5
+repository. While it is possible to prepare a release on your own fork
+this guide is not written with that in mind and as a result several
+key steps are missing. If you do use your own fork then extra care
+needs to be taken when setting/pushing the tag and doing the merge
+(do B<not> use a PR).
+
 =head2 Release types
 
 =over 4
 
 =item Release Candidate (RC)
 
-A release candidate is an attempt to produce a tarball that is a close as
+A release candidate is an attempt to produce a tarball that is as close as
 possible to the final release. Indeed, unless critical faults are found
 during the RC testing, the final release will be identical to the RC
 barring a few minor fixups (updating the release date in F<perlhist.pod>,
@@ -469,7 +477,7 @@ Commit your changes:
  $ git diff
  B<review the delta carefully>
 
- $ git commit -a -m 'Bump the perl version in various places for 5.x.y'
+ $ git commit -a -m 'Bump the perl version in various places for 5.X.Y'
 
 At this point you may want to compare the commit with a previous bump to
 see if they look similar.  See commit f7cf42bb69 for an example of a
@@ -525,7 +533,7 @@ to use the last known git commit by GitHub.
 Review the changes to the AUTHORS file, be sure you are not adding duplicate
 entries or removing any entries, then commit your changes.
 
- $ git commit -a AUTHORS -m 'Update AUTHORS list for 5.x.y'
+ $ git commit -a AUTHORS -m 'Update AUTHORS list for 5.X.Y'
 
 =head3 Check copyright years
 
@@ -596,7 +604,7 @@ need to freeze blead during the release. This is less important for
 BLEAD-FINAL, MAINT, and RC releases, since blead will already be frozen in
 those cases. Create the branch by running
 
- git checkout -b release-5.xx.yy
+ git checkout -b release-5.X.Y
 
 =head3 build a clean perl
 
@@ -616,7 +624,7 @@ For each Perl release since the previous release of the current branch, check
 for modules that have identical version numbers but different contents by
 running:
 
- $ ./perl -Ilib Porting/cmpVERSION.pl --tag=v5.X.YY
+ $ ./perl -Ilib Porting/cmpVERSION.pl --tag=v5.X.Y
 
 (This is done automatically by F<t/porting/cmp_version.t> for the previous
 release of the current branch, but not for any releases from other branches.)
@@ -731,7 +739,7 @@ Finally, commit the new version of Module::CoreList:
 (unless this is for MAINT; in which case commit it to blead first, then
 cherry-pick it back).
 
- $ git commit -m 'Update Module::CoreList for 5.x.y' \
+ $ git commit -m 'Update Module::CoreList for 5.X.Y' \
      dist/Module-CoreList/Changes \
      dist/Module-CoreList/lib/Module/CoreList.pm \
      dist/Module-CoreList/lib/Module/CoreList/Utils.pm
@@ -746,7 +754,7 @@ ensure all tests are passing.
 Finalize the perldelta.  In particular, fill in the Acknowledgements
 section, which can be generated with something like:
 
- $ perl Porting/acknowledgements.pl v5.15.0..HEAD
+ $ perl Porting/acknowledgements.pl v5.LAST..HEAD
 
 Fill in the "New/Updated Modules" sections now that Module::CoreList is
 updated:
@@ -919,22 +927,22 @@ Be sure to commit any changes (if applicable):
 Build perl, then make sure it passes its own test suite, and installs:
 
  $ git clean -xdf
- $ ./Configure -des -Dprefix=/tmp/perl-5.x.y-pretest
+ $ ./Configure -des -Dprefix=/tmp/perl-5.X.Y-pretest
 
  # or if it's an odd-numbered version:
- $ ./Configure -des -Dusedevel -Dprefix=/tmp/perl-5.x.y-pretest
+ $ ./Configure -des -Dusedevel -Dprefix=/tmp/perl-5.X.Y-pretest
 
  $ make test install
 
-Check that the output of C</tmp/perl-5.x.y-pretest/bin/perl -v> and
-C</tmp/perl-5.x.y-pretest/bin/perl -V> are as expected,
+Check that the output of C</tmp/perl-5.X.Y-pretest/bin/perl -v> and
+C</tmp/perl-5.X.Y-pretest/bin/perl -V> are as expected,
 especially as regards version numbers, patch and/or RC levels, and @INC
 paths. Note that as they have been built from a git working
 directory, they will still identify themselves using git tags and
 commits. (Note that for an odd-numbered version, perl will install
-itself as C<perl5.x.y>). C<perl -v> will identify itself as:
+itself as C<perl5.X.Y>). C<perl -v> will identify itself as:
 
- This is perl 5, version X, subversion Y (v5.X.Y (v5.X.Z-NNN-gdeadbeef))
+ This is perl 5, version X, subversion Y (v5.X.Y (v5.XX.Z-NNN-gdeadbeef))
 
 where 5.X.Z is the latest tag, NNN the number of commits since this tag,
 and C<< deadbeef >> commit of that tag.
@@ -943,7 +951,7 @@ Then delete the temporary installation.
 
 =head3 create the release tag
 
-Create the tag identifying this release (e.g.):
+Create the I<annotated> tag identifying this release (e.g.):
 
  $ git tag v5.11.0 -m 'First release of the v5.11 series!'
 
@@ -952,6 +960,16 @@ your git changes to the Perl master repository.  If anything goes
 wrong before you publish your newly-created tag, you can delete
 and recreate it.  Once you push your tag, we're stuck with it
 and you'll need to use a new version number for your release.
+
+Verify that your tag is annotated:
+
+ $ git show v5.X.Y
+
+The output must look similar to the following:
+
+ tag v5.X.Y
+ Tagger: Jesse Vincent <jesse@bestpractical.com>
+ Date:   Fri Oct 2 16:29:56 2009 -0400
 
 =head3 build the tarball
 
@@ -979,10 +997,6 @@ Create a tarball. Use the C<-s> option to specify a suitable suffix for
 the tarball and directory name:
 
  $ cd root/of/perl/tree
- $ make distclean           # make sure distclean works
- $ git clean -xdf           # make sure perl and git agree on files
-                         # git clean should not output anything!
- $ git status --ignored     # and there's nothing lying around
 
  $ perl Porting/makerel -x -s RC1           # for a release candidate
  $ perl Porting/makerel -x                  # for the release itself
@@ -1060,7 +1074,7 @@ which is why you should test from the tarball.
 
  $ ./perl -Ilib ./utils/perlivp
  # Or, perhaps:
- $ ./perl5.x.y ./utils/perlivp5.x.y
+ $ ./perl5.X.Y ./utils/perlivp5.X.Y
  ...
  All tests successful.
  $
@@ -1094,7 +1108,7 @@ Bootstrap the CPAN client on the clean install:
  $ bin/cpan
 
  # Or, perhaps:
- $ bin/cpan5.xx.x
+ $ bin/cpan5.X.Y
 
 =head4 Install the Inline module with CPAN and test it
 
@@ -1182,7 +1196,13 @@ Do not proceed any further until you are sure that your tarballs are on CPAN.
 Check your authors directory metacpan.org to confirm that your uploads have
 been successful.
 
- https://metacpan.org/author/YOUR_PAUSE_ID
+ https://metacpan.org/author/YOUR_PAUSE_ID/releases
+
+You can also check
+
+ https://metacpan.org/release/YOUR_PAUSE_ID/perl-5.X.Y
+
+which may be faster.
 
 =for checklist skip RC BLEAD-POINT
 
@@ -1232,9 +1252,9 @@ Merge the (local) release branch back into master now, and delete it.
 
  git checkout blead
  git pull
- git merge release-5.xx.yy
+ git merge release-5.X.Y
  git push
- git branch -d release-5.xx.yy
+ git branch -d release-5.X.Y
 
 Note: The merge will create a merge commit if other changes have been pushed
 to blead while you've been working on your release branch. Do NOT rebase your
@@ -1248,7 +1268,7 @@ Now that you've shipped the new perl release to PAUSE and pushed your changes
 to the Perl master repository, it's time to publish the tag you created
 earlier too (e.g.):
 
- $ git push origin tag v5.11.0
+ $ git push origin tag v5.X.Y
 
 =head3 update epigraphs.pod
 
@@ -1264,8 +1284,9 @@ why you chose that particular quote for your epigraph.
 
 =head3 update the link to the latest perl on perlweb
 
-Submit a pull request to L<https://github.com/perlorg/perlweb> to update the
-link in F<docs/dev/perl5/index.html> to point to your release.
+Submit a pull request to L<https://github.com/perlorg/perlweb>.  For a dev
+release, update the link in F<docs/dev/perl5/index.html>.  For a stable
+release, update F<docs/shared/tpl/stats.html>.
 
 =for checklist skip RC
 
@@ -1425,8 +1446,8 @@ the commit tagged as the current release.
 
 Assuming you're using git 1.7.x or newer:
 
- $ git checkout -b maint-5.12 v5.12.0
- $ git push origin -u maint-5.12
+ $ git checkout -b maint-5.X v5.X.0
+ $ git push origin -u maint-5.X
 
 
 =for checklist skip BLEAD-POINT MAINT RC
@@ -1555,7 +1576,7 @@ about blead's current version.
 Commit and push your changes.
 
  $ git add -u
- $ git commit -m "Prepare Module::Corelist for 5.XX.Y"
+ $ git commit -m "Prepare Module::Corelist for 5.X.Y"
  $ git push origin
 
 =back
@@ -1603,6 +1624,18 @@ Go over your notes from the release (you did take some, right?) and update
 F<Porting/release_managers_guide.pod> with any fixes or information that
 will make life easier for the next release manager.
 
+=head3 For a BLEAD-POINT .0 release
+
+This is the time for the project to decide the fate and begin to
+implement the required changes for experimental/deprecated features and
+API elements for the next BLEAD-FINAL, a year away.
+
+Fortunately your job is not to do this yourself, but merely to remind
+people that this needs to get done.  Send email to
+L<p5p|mailto:perl5-porters@perl.org>.  All of L<perlexperiment>,
+L<perldeprecation>, F<mathoms.c>, L<perlapi>, and L<perlintern> need to
+be considered.
+
 =for checklist end
 
 =head1 SOURCE
@@ -1612,4 +1645,3 @@ L<http://www.xray.mpe.mpg.de/mailing-lists/perl5-porters/2009-05/msg00608.html>,
 plus a whole bunch of other sources, including private correspondence.
 
 =cut
-

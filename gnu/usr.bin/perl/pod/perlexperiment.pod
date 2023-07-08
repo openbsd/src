@@ -184,7 +184,7 @@ L<[perl #19764]|https://github.com/Perl/perl5/issues/19764>.
 
 Introduced in Perl 5.36.0
 
-Using this feature triggers warnings in the category C<builtin::defer>.
+Using this feature triggers warnings in the category C<experimental::defer>.
 
 This feature adds a new kind of block, a C<defer> block, which will not be
 executed until the containing block is being exited.
@@ -197,7 +197,7 @@ L<[perl #17949]|https://github.com/Perl/perl5/issues/17949>.
 Introduced in Perl 5.36.0
 
 Using this feature triggers warnings in the category
-C<builtin::extra_paired_delimiters>.
+C<experimental::extra_paired_delimiters>.
 
 This feature allows for many non-ASCII pairs of mirroring delimiters, for
 example:

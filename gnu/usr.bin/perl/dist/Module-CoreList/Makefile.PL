@@ -8,7 +8,7 @@ push @extra, 'INSTALLDIRS' => 'perl' if $] >= 5.008009 and $] < 5.012;
 
 push @extra, 'META_MERGE' => {
         resources => {
-            repository => 'git://github.com/Perl/perl5.git',
+            repository => 'https://github.com/Perl/perl5.git',
             bugtracker => 'https://github.com/Perl/perl5/issues',
             homepage   => "http://dev.perl.org/",
         },

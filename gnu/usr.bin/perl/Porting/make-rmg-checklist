@@ -146,6 +146,13 @@ my ( @items, $current_element, @leading_attrs );
 my $skip_headers     = qr/^=encoding/xms;
 my $passthru_headers = qr/^= (?: over | item | back | cut )/xms;
 
+# version used when generating diffs (acknowledgements, Module::CoreList etc)
+# 5.36.0 -> 5.34.0
+# 5.36.1 -> 5.36.0
+my ($major, $minor, $point) = split(/\./, $version);
+my $last_version = join('.', $major, ($point == 0 ? ($minor - 2, 0) : ($minor, $point-1)));
+
+
 foreach my $line (@pod_lines) {
     $line =~ $skip_headers
         and next;
@@ -178,6 +185,10 @@ foreach my $line (@pod_lines) {
         or length $line == 0 # allow empty lines
         or $line =~ /^[^=]/xms
         or die "Cannot recognize line: '$line'\n";
+
+    $line =~ s/\Q5.X.Y\E/$version/g;
+    $line =~ s/\Q5.LAST\E/$last_version/g;
+    $line =~ s/\Q5.X\E-b/$major.$minor/g;
 
     $current_element->{'content'} .= "\n" . $line;
 }

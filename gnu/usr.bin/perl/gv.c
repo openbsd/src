@@ -982,7 +982,7 @@ S_gv_fetchmeth_internal(pTHX_ HV* stash, SV* meth, const char* name, STRLEN len,
         }
     }
 
-    if (topgv && GvREFCNT(topgv) == 1) {
+    if (topgv && GvREFCNT(topgv) == 1 && !(flags & GV_NOUNIVERSAL)) {
         /* cache the fact that the method is not defined */
         GvCVGEN(topgv) = topgen_cmp;
     }

@@ -2734,10 +2734,6 @@ enum mem_log_type {
   MLT_DEL_SV
 };
 #  endif
-#  if defined(PERL_IN_SV_C)  /* those are only used in sv.c */
-void Perl_mem_log_new_sv(const SV *sv, const char *filename, const int linenumber, const char *funcname);
-void Perl_mem_log_del_sv(const SV *sv, const char *filename, const int linenumber, const char *funcname);
-#  endif
 # endif
 
 #endif

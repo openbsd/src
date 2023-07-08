@@ -13,7 +13,7 @@ BEGIN {
 use strict;
 no warnings 'once';
 
-plan(tests => 162);
+plan(tests => 163);
 
 {
     # RT #126042 &{1==1} * &{1==1} would crash
@@ -713,6 +713,32 @@ SKIP: {
     sub RT123619::f { chop $_[0] }
     eval { 'RT123619'->f(); };
     like ($@, qr/Modification of a read-only value attempted/, 'RT #123619');
+}
+
+{
+    fresh_perl_is(<<'PROG', <<'EXPECT', {}, "don't negative cache NOUNIVERSAL lookups");
+use v5.36;
+
+my $foo;
+
+BEGIN {
+    $foo = bless {}, 'Foo';
+    $foo->isa('Foo') and say "->isa works!";
+ }
+
+# bump PL_sub_generation
+local *Foo::DESTROY = sub {};
+undef &Foo::DESTROY;
+local *Foo::DESTROY = sub {};
+
+$foo isa 'Foo' and say " and isa works!";
+$foo->isa('Foo') and say "->isa works!";
+
+PROG
+->isa works!
+ and isa works!
+->isa works!
+EXPECT
 }
 
 # RT#130496: assertion failure when looking for a method of undefined name

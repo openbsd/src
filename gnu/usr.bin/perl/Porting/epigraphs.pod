@@ -17,6 +17,185 @@ Consult your favorite dictionary for details.
 
 =head1 EPIGRAPHS
 
+=head2 v5.37.11 - Ben Aaronovitch, "Moon Over Soho"
+
+L<Announced on 2023-04-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2023/04/msg266242.html>
+
+My dad always said that a trumpet player likes to aim his weapon at the
+audience, but a sax man likes to cut a good profile and that they always
+have a favourite side.  It being an article of faith with my dad that
+you don't even pick up a reed instrument unless you're vain about the
+shape your face makes when you're blowing down it.
+
+=head2 v5.37.10 - Lewis Carroll "The Walrus and the Carpenter"
+
+L<Announced on 2023-03-21 by Yves Orton|https://www.nntp.perl.org/group/perl.perl5.porters/2023/03/msg266078.html>
+
+    The time has come,' the Walrus said,
+          To talk of many things:
+    Of shoes - and ships - and sealing-wax -
+          Of cabbages - and kings -
+    And why the sea is boiling hot -
+          And whether pigs have wings.'
+
+=head2 v5.37.9 - Virginia Woolf
+
+L<Announced on 2023-02-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2023/02/msg265769.html>
+
+Each has his past shut in him like the leaves of a book known to him by
+heart and his friends can only read the title.
+
+=head2 v5.37.8 - Helmut Schmidt
+
+L<Announced on 2023-01-20 by Renee Baecker|https://www.nntp.perl.org/group/perl.perl5.porters/2023/01/msg265547.html>
+
+Honesty doesn't require saying everything you think. Honesty only
+requires that you don't say anything that you don't think.
+
+=head2 v5.37.7 - Terry Pratchett, "Hogfather"
+
+L<Announced on 2022-12-20 by Richard Leach|https://www.nntp.perl.org/group/perl.perl5.porters/2022/12/msg265263.html>
+
+TO THE HOGFATHER, ALL PORK PIES ARE AS ONE PORK PIE.
+EXCEPT THE ONE LIKE A TURNIP.
+
+=head2 v5.37.6 - N. K. Jemisin - The City We Became
+
+L<Announced on 2022-11-20 by Max Maischein|https://www.nntp.perl.org/group/perl.perl5.porters/2022/11/msg265080.html>
+
+Queens sighs with the air of someone who is used to not being
+understood. She takes out her phone and starts texting someone,
+her bottom lip poked out a little.
+
+Brooklyn's expression turns grim. To Broca she says, "You said
+becoming a city punches through other universes."
+So she's not stupid. Bronca inclined her head to the woman, in
+respect if not in approval. "Yes".
+
+"Okay, so." Brooklyn visibly braces herself. "So what
+happens to those universes that our city punches through?"
+
+                      The City We Became - N.K. Jemisin
+
+=head2 v5.37.5 - Nori - The Lord of the Rings: The Rings of Power
+
+L<Announced on 2022-10-20 by Todd Rinaldo|https://www.nntp.perl.org/group/perl.perl5.porters/2022/10/msg264959.html>
+
+If we didn't do everything we weren't supposed to, we'd hardly do
+anything at all.
+
+=head2 v5.37.4 - C. F. Kettering
+
+L<Announced on 2022-09-20 by Karen Etheridge|https://www.nntp.perl.org/group/perl.perl5.porters/2022/09/msg264815.html>
+
+A problem well stated is a problem half solved.
+
+=head2 v5.37.3 - John Steinbeck, "East of Eden"
+
+L<Announced on 2022-08-20 by Neil B|https://www.nntp.perl.org/group/perl.perl5.porters/2022/08/msg264651.html>
+
+And now that you don't have to be perfect, you can be good.
+
+=head2 v5.37.2 - James Clear, "Atomic Habits"
+
+L<Announced on 2022-07-20 by Nicolas R.|https://www.nntp.perl.org/group/perl.perl5.porters/2022/07/msg264438.html>
+
+If you can get one percent better each day for one year,
+you'll end up thiry-seven times better by the time you are done
+
+=head2 v5.37.1 - Squirt, "Finding Nemo"
+
+L<Announced on 2022-06-20 by Matthew Horsfall|https://www.nntp.perl.org/group/perl.perl5.porters/2022/06/msg264107.html>
+
+Good afternoon! We're gonna have a great jump today!
+Okay, crank a hard cutback as you hit the wall.
+There's a screaming bottom curve, so watch out.
+Remember: Rip it! Roll it! And punch it!
+
+=head2 v5.37.0 - John Cage, "Lecture on Nothing"
+
+L<Announced on 2022-05-27 by Ricardo Signes|https://www.nntp.perl.org/group/perl.perl5.porters/2022/05/msg263786.html>
+
+I have nothing to say, and I am saying it.
+
+=head2 v5.36.1-RC3 - Karl Leimer & Walter Gieseking, trans. Frederick C. Rauser, "Rhythmics, Dynamics, Pedal and Other Problems of Piano Playing"
+
+L<Announced on 2023-04-16 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2023/04/msg266232.html>
+
+Generally, no clear opinions exist as to the usefulness of mental work
+in order to acquire a good technique.  We do not seem to know exactly
+what it means or how to develop technique through "brain work."
+Technique, when playing an instrument, means controlling the fingers.
+Generally, it is used only in a limited sense regarding fluency, rapid
+execution of difficult passages and steady aim.
+In order to acquire a perfect technique through brain work, an exact
+impression of the note picture upon the mind is the first problem which
+we must solve.  Thereafter we should busy ourselves with the study in
+question, as to fingering, touch, note value, etc., to achieve
+perfection along these lines in the broadest sense.  This occurs
+quickest and completely through intensive concentration of all
+intellectual powers and is, therefore, strenuous brain work.
+
+=head2 v5.36.1-RC2 - Karl Leimer & Walter Gieseking, "The Shortest Way to Pianistic Perfection"
+
+L<Announced on 2023-04-11 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2023/04/msg266203.html>
+
+In order to attain a natural manner of playing the piano, that is to
+say, with the least possible strain and exertion, it is of the utmost
+importance to learn to exert the muscles consciously, and, what is of
+still greater importance, to relax them consciously.  My manner of
+accomplishing this differs from that of many other pedagogues.  I
+contrive to raise a feeling of relaxation from within, as it were. This
+is generally attempted by the aid of visible movements.  All superfluous
+movements are injurious.  The aim should be the very least possible
+strain of the muscles when playing the piano.
+
+=head2 v5.36.1-RC1 - Josef Lhevinne, "Basic Principles in Pianoforte Playing"
+
+L<Announced on 2023-04-10 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2023/04/msg266184.html>
+
+Avoid worry and distractions of any kind when you are practicing.  Your
+mind must be every minute on what you are doing, or the value of your
+practice is lessened enormously.  By intense concentration, love of your
+work and the spirit in which you approach it, you can do more in a half
+hour than in an hour spent purposelessly.  Do not think you have been
+practicing, if you have played a single note with your mind on anything
+else.
+
+=head2 v5.36.0 - Alexandre Dumas, "The Three Musketeers"
+
+L<Announced on 2022-05-27 by Ricardo Signes|https://www.nntp.perl.org/group/perl.perl5.porters/2022/05/msg263783.html>
+
+“What!" cried he, in an accent of greater astonishment than before "your second
+witness is Monsieur Aramis?"
+
+"Doubtless! Are you not aware that we are never seen one without the others,
+and that we are called among the Musketeers and the Guards, at the court and in
+the city, Athos, Porthos, and Aramis, or the Three Inseparables?”
+
+=head2 v5.36.0-RC3 - The Three Amigos
+
+L<Announced on 2022-05-22 by Ricardo Signes|https://www.nntp.perl.org/group/perl.perl5.porters/2022/05/msg263750.html>
+
+  Lucky Day:  I'll come back one day
+  Carmen:     Why?
+    — The Three Amigos
+
+=head2 v5.36.0-RC1 - The Three Amigos
+
+L<Announced on 2022-05-20 by Ricardo Signes|https://www.nntp.perl.org/group/perl.perl5.porters/2022/05/msg263728.html>
+
+  Jefe:     I have put many beautiful piñatas in the storeroom, each of them filled
+            with little surprises.
+  El Guapo: Many piñatas?
+  Jefe:     Oh yes, many!
+  El Guapo: Would you say I have a plethora of piñatas?
+  Jefe:     A what?
+  El Guapo: A plethora.
+  Jefe:     Oh yes, you have a plethora.
+
+    — The Three Amigos
+
 =head2 v5.35.11 - Marcel Allain and Pierre Souvestre, "Fantômas"
 
 L<Announced on 2022-04-20 by Steve Hay|https://www.nntp.perl.org/group/perl.perl5.porters/2022/04/msg263644.html>

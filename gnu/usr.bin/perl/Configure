@@ -4638,7 +4638,7 @@ esac
 # so we will take those off from locincpth.
 case "$gccversion" in
 3.*)
-    echo "main(){}">try.c
+    echo "int main(){}">try.c
     for incdir in $locincpth; do
        warn=`$cc $ccflags -I$incdir -c try.c 2>&1 | \
 	     grep '^c[cp]p*[01]: warning: changing search order '`
@@ -5790,6 +5790,7 @@ case "$intsize" in
 #ifdef I_STDLIB
 #include <stdlib.h>
 #endif
+#include <stdio.h>
 int main()
 {
 	printf("intsize=%d;\n", (int)sizeof(int));
@@ -6863,6 +6864,7 @@ case "$doublesize" in
 #ifdef I_STDLIB
 #include <stdlib.h>
 #endif
+#include <stdio.h>
 int main()
 {
     printf("%d\n", (int)sizeof(double));
@@ -7907,46 +7909,20 @@ esac
 
 : compute the return types of malloc and free
 echo " "
-$cat >malloc.c <<END
-#$i_malloc I_MALLOC
-#$i_stdlib I_STDLIB
-#include <stdio.h>
-#include <sys/types.h>
-#ifdef I_MALLOC
-#include <malloc.h>
-#endif
-#ifdef I_STDLIB
-#include <stdlib.h>
-#endif
-#ifdef TRY_MALLOC
-void *malloc();
-#endif
-#ifdef TRY_FREE
-void free();
-#endif
-END
 case "$malloctype" in
 '')
-	if $cc $ccflags -c -DTRY_MALLOC malloc.c >/dev/null 2>&1; then
-		malloctype='void *'
-	else
-		malloctype='char *'
-	fi
+	malloctype='void *'
 	;;
 esac
 echo "Your system wants malloc to return '$malloctype', it would seem." >&4
 
 case "$freetype" in
 '')
-	if $cc $ccflags -c -DTRY_FREE malloc.c >/dev/null 2>&1; then
-		freetype='void'
-	else
-		freetype='int'
-	fi
+	freetype='void'
 	;;
 esac
 echo "Your system uses $freetype free(), it would seem." >&4
-$rm -f malloc.[co]
+
 : determine where site specific architecture-dependent libraries go.
 : sitelib  default is /usr/local/lib/perl5/site_perl/$version
 : sitearch default is /usr/local/lib/perl5/site_perl/$version/$archname
@@ -12624,7 +12600,7 @@ case "$dlsrc" in
 dl_dlopen.xs)
 	echo "Checking whether your dlsym() needs a leading underscore ..." >&4
 	$cat >dyna.c <<'EOM'
-fred () { }
+void fred (void) { }
 EOM
 
 $cat >fred.c<<EOM
@@ -12643,7 +12619,7 @@ $cat >fred.c<<EOM
 #include <link.h>
 #endif
 
-extern int fred() ;
+extern void fred(void) ;
 
 int main()
 {
@@ -13677,6 +13653,7 @@ $cat >try.c <<EOP
 #ifdef I_STDLIB
 #include <stdlib.h>
 #endif
+#include <string.h>
 #define FILE_ptr(fp)	$stdio_ptr
 #define FILE_cnt(fp)	$stdio_cnt
 int main() {
@@ -16184,6 +16161,7 @@ echo "Checking to see if your libm supports _LIB_VERSION..." >&4
 $cat >try.c <<EOCP
 #include <unistd.h>
 #include <math.h>
+#include <stdio.h>
 int main (int argc, char *argv[])
 {
     printf ("%d\n", _LIB_VERSION);
@@ -22081,13 +22059,15 @@ pager="$ans"
 : see if ar generates random libraries by itself
 echo " "
 echo "Checking how to generate random libraries on your machine..." >&4
-echo 'int bar1() { return bar2(); }' > bar1.c
+echo 'extern int bar2(); int bar1() { return bar2(); }' > bar1.c
 echo 'int bar2() { return 2; }' > bar2.c
 $cat > foo.c <<EOP
 #$i_stdlib I_STDLIB
 #ifdef I_STDLIB
 #include <stdlib.h>
 #endif
+#include <stdio.h>
+extern int bar1();
 int main() { printf("%d\n", bar1()); exit(0); }
 EOP
 $cc $ccflags -c bar1.c >/dev/null 2>&1
@@ -22313,7 +22293,7 @@ EOM
 			for nfd in 'int' 'size_t' 'unsigned long' 'unsigned' ; do
 				for tmo in 'struct timeval *' 'const struct timeval *'; do
 					case "$val" in
-					'')	try="$extern_C select _(($nfd, $xxx, $xxx, $xxx, $tmo));"
+					'')	try="$extern_C int select _(($nfd, $xxx, $xxx, $xxx, $tmo));"
 						if ./protochk "$try" $hdrs; then
 							echo "Your system accepts $xxx."
 							val="$xxx"

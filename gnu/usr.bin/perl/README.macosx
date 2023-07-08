@@ -10,9 +10,9 @@ perlmacosx - Perl under Mac OS X
 
 This document briefly describes Perl under Mac OS X.
 
-  curl -O https://www.cpan.org/src/perl-5.36.0.tar.gz
-  tar -xzf perl-5.36.0.tar.gz
-  cd perl-5.36.0
+  curl -O https://www.cpan.org/src/perl-5.36.1.tar.gz
+  tar -xzf perl-5.36.1.tar.gz
+  cd perl-5.36.1
   ./Configure -des -Dprefix=/usr/local/
   make
   make test
@@ -20,7 +20,7 @@ This document briefly describes Perl under Mac OS X.
 
 =head1 DESCRIPTION
 
-The latest Perl release (5.36.0 as of this writing) builds without changes
+The latest Perl release (5.36.1 as of this writing) builds without changes
 under all versions of Mac OS X from 10.3 "Panther" onwards. 
 
 In order to build your own version of Perl you will need 'make',

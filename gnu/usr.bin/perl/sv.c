@@ -5764,16 +5764,6 @@ Perl_sv_magic(pTHX_ SV *const sv, SV *const obj, const int how,
         }
     }
 
-    /* Force pos to be stored as characters, not bytes. */
-    if (SvMAGICAL(sv) && DO_UTF8(sv)
-      && (mg = mg_find(sv, PERL_MAGIC_regex_global))
-      && mg->mg_len != -1
-      && mg->mg_flags & MGf_BYTES) {
-        mg->mg_len = (SSize_t)sv_pos_b2u_flags(sv, (STRLEN)mg->mg_len,
-                                               SV_CONST_RETURN);
-        mg->mg_flags &= ~MGf_BYTES;
-    }
-
     /* Rest of work is done else where */
     mg = sv_magicext(sv,obj,how,vtable,name,namlen);
 

@@ -90,10 +90,10 @@ to F<pod/perldelta.pod> for more detailed information.
 
 =head3 Compatibility with earlier versions
 
-B<WARNING:> This version is not binary compatible with earlier versions
-of Perl.  If you have built extensions (i.e. modules that include C code)
-using an earlier version of Perl, you will need to rebuild and reinstall
-those extensions.
+B<WARNING:> This version is not binary compatible with versions of Perl
+earlier than 5.36.0.  If you have built extensions (i.e. modules that
+include C code) using an earlier version of Perl, you will need to
+rebuild and reinstall those extensions.
 
 Pure perl modules without XS or C code should continue to work fine
 without reinstallation.  See the discussion below on
@@ -683,7 +683,7 @@ The directories set up by Configure fall into three broad categories.
 
 =item Directories for the perl distribution
 
-By default, Configure will use the following directories for 5.36.0.
+By default, Configure will use the following directories for 5.36.1.
 $version is the full perl version number, including subversion, e.g.
 5.12.3, and $archname is a string like sun4-sunos,
 determined by Configure.  The full definitions of all Configure
@@ -2506,8 +2506,8 @@ L<https://www.chiark.greenend.org.uk/~sgtatham/bugs.html>
 
 =head1 Coexistence with earlier versions of perl 5
 
-Perl 5.36.0 is not binary compatible with earlier versions of Perl.
-In other words, you will have to recompile your XS modules.
+Perl 5.36.1 is not binary compatible with versions of Perl earlier than.
+5.36.0.  In other words, you will have to recompile your XS modules.
 
 In general, you can usually safely upgrade from one stable version of Perl
 (e.g. 5.30.0) to another similar minor version (e.g. 5.30.1) without
@@ -2581,9 +2581,9 @@ won't interfere with another version.  (The defaults guarantee this for
 libraries after 5.6.0, but not for executables. TODO?)  One convenient
 way to do this is by using a separate prefix for each version, such as
 
-	sh Configure -Dprefix=/opt/perl5.36.0
+	sh Configure -Dprefix=/opt/perl5.36.1
 
-and adding /opt/perl5.36.0/bin to the shell PATH variable.  Such users
+and adding /opt/perl5.36.1/bin to the shell PATH variable.  Such users
 may also wish to add a symbolic link /usr/local/bin/perl so that
 scripts can still start with #!/usr/local/bin/perl.
 
@@ -2598,11 +2598,11 @@ yet.
 
 =head2 Upgrading from 5.35.11 or earlier
 
-B<Perl 5.36.0 may not be binary compatible with Perl 5.35.11 or
+B<Perl 5.36.1 may not be binary compatible with Perl 5.35.11 or
 earlier Perl releases.>  Perl modules having binary parts
 (meaning that a C compiler is used) will have to be recompiled to be
-used with 5.36.0.  If you find you do need to rebuild an extension with
-5.36.0, you may safely do so without disturbing the older
+used with 5.36.1.  If you find you do need to rebuild an extension with
+5.36.1, you may safely do so without disturbing the older
 installations.  (See L<"Coexistence with earlier versions of perl 5">
 above.)
 
@@ -2635,15 +2635,15 @@ Firstly, the bare minimum to run this script
      print("$f\n");
   }
 
-in Linux with perl-5.36.0 is as follows (under $Config{prefix}):
+in Linux with perl-5.36.1 is as follows (under $Config{prefix}):
 
   ./bin/perl
-  ./lib/perl5/5.36.0/strict.pm
-  ./lib/perl5/5.36.0/warnings.pm
-  ./lib/perl5/5.36.0/i686-linux/File/Glob.pm
-  ./lib/perl5/5.36.0/feature.pm
-  ./lib/perl5/5.36.0/XSLoader.pm
-  ./lib/perl5/5.36.0/i686-linux/auto/File/Glob/Glob.so
+  ./lib/perl5/5.36.1/strict.pm
+  ./lib/perl5/5.36.1/warnings.pm
+  ./lib/perl5/5.36.1/i686-linux/File/Glob.pm
+  ./lib/perl5/5.36.1/feature.pm
+  ./lib/perl5/5.36.1/XSLoader.pm
+  ./lib/perl5/5.36.1/i686-linux/auto/File/Glob/Glob.so
 
 Secondly, for perl-5.10.1, the Debian perl-base package contains 591
 files, (of which 510 are for lib/unicore) totaling about 3.5MB in its

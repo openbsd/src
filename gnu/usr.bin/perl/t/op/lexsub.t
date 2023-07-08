@@ -7,7 +7,7 @@ BEGIN {
     *bar::is = *is;
     *bar::like = *like;
 }
-plan 150;
+plan 151;
 
 # -------------------- our -------------------- #
 
@@ -960,3 +960,14 @@ like runperl(
 
 is join("-", qw(aa bb), do { my sub lleexx; 123 }, qw(cc dd)),
   "aa-bb-123-cc-dd", 'do { my sub...} in a list [perl #132442]';
+
+{
+    # this would crash because find_lexical_cv() couldn't handle an
+    # intermediate scope which didn't include the sub
+    no warnings 'experimental::builtin';
+    use builtin 'ceil';
+    sub nested {
+        ok(eval 'ceil(1.5)', "no assertion failure calling a lexical sub from nested eval");
+    }
+    nested();
+}
