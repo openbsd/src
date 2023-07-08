@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.8 2023/07/08 07:49:45 jsing Exp $ */
+/* $OpenBSD: sha1.c,v 1.9 2023/07/08 07:52:25 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -494,6 +494,7 @@ int
 SHA1_Final(unsigned char *md, SHA_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
+	unsigned long ll;
 	size_t n = c->num;
 
 	p[n] = 0x80; /* there is always room for one */
@@ -519,8 +520,6 @@ SHA1_Final(unsigned char *md, SHA_CTX *c)
 	c->num = 0;
 	memset(p, 0, SHA_CBLOCK);
 
-	do {
-	unsigned long ll;
 	ll = c->h0;
 	HOST_l2c(ll, md);
 	ll = c->h1;
@@ -531,7 +530,6 @@ SHA1_Final(unsigned char *md, SHA_CTX *c)
 	HOST_l2c(ll, md);
 	ll = c->h4;
 	HOST_l2c(ll, md);
-	} while (0);
 
 	return 1;
 }
