@@ -2557,3 +2557,12 @@ _libre_OBJ_find_sigid_by_algs
 _libre_OBJ_add_sigid
 _libre_OBJ_sigid_free
 _libre_ERR_load_OBJ_strings
+_libre_CMAC_CTX_new
+_libre_CMAC_CTX_cleanup
+_libre_CMAC_CTX_free
+_libre_CMAC_CTX_get0_cipher_ctx
+_libre_CMAC_CTX_copy
+_libre_CMAC_Init
+_libre_CMAC_Update
+_libre_CMAC_Final
+_libre_CMAC_resume

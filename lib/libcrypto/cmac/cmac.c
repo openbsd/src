@@ -1,4 +1,4 @@
-/* $OpenBSD: cmac.c,v 1.13 2022/12/26 07:18:51 jmc Exp $ */
+/* $OpenBSD: cmac.c,v 1.14 2023/07/08 14:27:14 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -104,6 +104,7 @@ CMAC_CTX_new(void)
 	ctx->nlast_block = -1;
 	return ctx;
 }
+LCRYPTO_ALIAS(CMAC_CTX_new);
 
 void
 CMAC_CTX_cleanup(CMAC_CTX *ctx)
@@ -115,12 +116,14 @@ CMAC_CTX_cleanup(CMAC_CTX *ctx)
 	explicit_bzero(ctx->last_block, EVP_MAX_BLOCK_LENGTH);
 	ctx->nlast_block = -1;
 }
+LCRYPTO_ALIAS(CMAC_CTX_cleanup);
 
 EVP_CIPHER_CTX *
 CMAC_CTX_get0_cipher_ctx(CMAC_CTX *ctx)
 {
 	return &ctx->cctx;
 }
+LCRYPTO_ALIAS(CMAC_CTX_get0_cipher_ctx);
 
 void
 CMAC_CTX_free(CMAC_CTX *ctx)
@@ -131,6 +134,7 @@ CMAC_CTX_free(CMAC_CTX *ctx)
 	CMAC_CTX_cleanup(ctx);
 	free(ctx);
 }
+LCRYPTO_ALIAS(CMAC_CTX_free);
 
 int
 CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
@@ -149,6 +153,7 @@ CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 	out->nlast_block = in->nlast_block;
 	return 1;
 }
+LCRYPTO_ALIAS(CMAC_CTX_copy);
 
 int
 CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
@@ -195,6 +200,7 @@ CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(CMAC_Init);
 
 int
 CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
@@ -237,6 +243,7 @@ CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 	ctx->nlast_block = dlen;
 	return 1;
 }
+LCRYPTO_ALIAS(CMAC_Update);
 
 int
 CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
@@ -267,6 +274,7 @@ CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(CMAC_Final);
 
 int
 CMAC_resume(CMAC_CTX *ctx)
@@ -281,3 +289,4 @@ CMAC_resume(CMAC_CTX *ctx)
 	 */
 	return EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, ctx->tbl);
 }
+LCRYPTO_ALIAS(CMAC_resume);
