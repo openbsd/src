@@ -1,4 +1,4 @@
-/* $OpenBSD: ex_data.c,v 1.21 2023/06/16 11:20:01 tb Exp $ */
+/* $OpenBSD: ex_data.c,v 1.22 2023/07/08 08:28:23 beck Exp $ */
 
 /*
  * Overhaul notes;
@@ -217,6 +217,7 @@ CRYPTO_get_ex_data_implementation(void)
 	IMPL_CHECK
 	return impl;
 }
+LCRYPTO_ALIAS(CRYPTO_get_ex_data_implementation);
 
 int
 CRYPTO_set_ex_data_implementation(const CRYPTO_EX_DATA_IMPL *i)
@@ -230,6 +231,7 @@ CRYPTO_set_ex_data_implementation(const CRYPTO_EX_DATA_IMPL *i)
 	CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
 	return toret;
 }
+LCRYPTO_ALIAS(CRYPTO_set_ex_data_implementation);
 
 /****************************************************************************/
 /* Interal (default) implementation of "ex_data" support. API functions are
@@ -547,6 +549,7 @@ CRYPTO_ex_data_new_class(void)
 	IMPL_CHECK
 	return EX_IMPL(new_class)();
 }
+LCRYPTO_ALIAS(CRYPTO_ex_data_new_class);
 
 /* Release all "ex_data" state to prevent memory leaks. This can't be made
  * thread-safe without overhauling a lot of stuff, and shouldn't really be
@@ -558,6 +561,7 @@ CRYPTO_cleanup_all_ex_data(void)
 	IMPL_CHECK
 	EX_IMPL(cleanup)();
 }
+LCRYPTO_ALIAS(CRYPTO_cleanup_all_ex_data);
 
 /* Inside an existing class, get/register a new index. */
 int
@@ -571,6 +575,7 @@ CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
 	    argl, argp, new_func, dup_func, free_func);
 	return ret;
 }
+LCRYPTO_ALIAS(CRYPTO_get_ex_new_index);
 
 /* Initialise a new CRYPTO_EX_DATA for use in a particular class - including
  * calling new() callbacks for each index in the class used by this variable */
@@ -580,6 +585,7 @@ CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 	IMPL_CHECK
 	return EX_IMPL(new_ex_data)(class_index, obj, ad);
 }
+LCRYPTO_ALIAS(CRYPTO_new_ex_data);
 
 /* Duplicate a CRYPTO_EX_DATA variable - including calling dup() callbacks for
  * each index in the class used by this variable */
@@ -589,6 +595,7 @@ CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from)
 	IMPL_CHECK
 	return EX_IMPL(dup_ex_data)(class_index, to, from);
 }
+LCRYPTO_ALIAS(CRYPTO_dup_ex_data);
 
 /* Cleanup a CRYPTO_EX_DATA variable - including calling free() callbacks for
  * each index in the class used by this variable */
@@ -598,6 +605,7 @@ CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
 	IMPL_CHECK
 	EX_IMPL(free_ex_data)(class_index, obj, ad);
 }
+LCRYPTO_ALIAS(CRYPTO_free_ex_data);
 
 /* For a given CRYPTO_EX_DATA variable, set the value corresponding to a
  * particular index in the class used by this variable */
@@ -624,6 +632,7 @@ CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
 	sk_void_set(ad->sk, idx, val);
 	return (1);
 }
+LCRYPTO_ALIAS(CRYPTO_set_ex_data);
 
 /* For a given CRYPTO_EX_DATA_ variable, get the value corresponding to a
  * particular index in the class used by this variable */
@@ -637,3 +646,4 @@ CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
 	else
 		return (sk_void_value(ad->sk, idx));
 }
+LCRYPTO_ALIAS(CRYPTO_get_ex_data);

@@ -1,4 +1,4 @@
-/* $OpenBSD: mem_dbg.c,v 1.24 2019/01/29 14:40:54 deraadt Exp $ */
+/* $OpenBSD: mem_dbg.c,v 1.25 2023/07/08 08:28:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -133,30 +133,35 @@ CRYPTO_dbg_set_options(long bits)
 {
 	return;
 }
+LCRYPTO_ALIAS(CRYPTO_dbg_set_options);
 
 long
 CRYPTO_dbg_get_options(void)
 {
 	return (0);
 }
+LCRYPTO_ALIAS(CRYPTO_dbg_get_options);
 
 int
 CRYPTO_push_info_(const char *info, const char *file, int line)
 {
 	return (0);
 }
+LCRYPTO_ALIAS(CRYPTO_push_info_);
 
 int
 CRYPTO_pop_info(void)
 {
 	return (0);
 }
+LCRYPTO_ALIAS(CRYPTO_pop_info);
 
 int
 CRYPTO_remove_all_info(void)
 {
 	return (0);
 }
+LCRYPTO_ALIAS(CRYPTO_remove_all_info);
 
 void
 CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
@@ -164,12 +169,14 @@ CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 {
 	OPENSSL_assert("CRYPTO_dbg_malloc is no longer permitted");
 }
+LCRYPTO_ALIAS(CRYPTO_dbg_malloc);
 
 void
 CRYPTO_dbg_free(void *addr, int before_p)
 {
 	OPENSSL_assert("CRYPTO_dbg_free is no longer permitted");
 }
+LCRYPTO_ALIAS(CRYPTO_dbg_free);
 
 void
 CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
@@ -177,18 +184,21 @@ CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 {
 	OPENSSL_assert("CRYPTO_dbg_realloc is no longer permitted");
 }
+LCRYPTO_ALIAS(CRYPTO_dbg_realloc);
 
 int
 CRYPTO_mem_leaks(BIO *b)
 {
 	return -1;
 }
+LCRYPTO_ALIAS(CRYPTO_mem_leaks);
 
 int
 CRYPTO_mem_leaks_fp(FILE *fp)
 {
 	return -1;
 }
+LCRYPTO_ALIAS(CRYPTO_mem_leaks_fp);
 
 
 int
@@ -196,3 +206,4 @@ CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb)
 {
 	return -1;
 }
+LCRYPTO_ALIAS(CRYPTO_mem_leaks_cb);

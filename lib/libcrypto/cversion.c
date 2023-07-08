@@ -1,4 +1,4 @@
-/* $OpenBSD: cversion.c,v 1.17 2018/02/17 06:56:12 jsing Exp $ */
+/* $OpenBSD: cversion.c,v 1.18 2023/07/08 08:28:23 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,12 +78,14 @@ SSLeay_version(int t)
 	}
 	return("not available");
 }
+LCRYPTO_ALIAS(SSLeay_version);
 
 unsigned long
 SSLeay(void)
 {
 	return (SSLEAY_VERSION_NUMBER);
 }
+LCRYPTO_ALIAS(SSLeay);
 
 const char *
 OpenSSL_version(int t)
@@ -104,9 +106,11 @@ OpenSSL_version(int t)
 	}
 	return("not available");
 }
+LCRYPTO_ALIAS(OpenSSL_version);
 
 unsigned long
 OpenSSL_version_num(void)
 {
 	return SSLeay();
 }
+LCRYPTO_ALIAS(OpenSSL_version_num);

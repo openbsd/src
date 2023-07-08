@@ -1,4 +1,4 @@
-/* $OpenBSD: cryptlib.c,v 1.45 2019/01/26 11:30:32 deraadt Exp $ */
+/* $OpenBSD: cryptlib.c,v 1.46 2023/07/08 08:28:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -281,24 +281,28 @@ CRYPTO_THREADID_current(CRYPTO_THREADID *id)
 	memset(id, 0, sizeof(*id));
 	id->val = (unsigned long)pthread_self();
 }
+LCRYPTO_ALIAS(CRYPTO_THREADID_current);
 
 int
 CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b)
 {
 	return memcmp(a, b, sizeof(*a));
 }
+LCRYPTO_ALIAS(CRYPTO_THREADID_cmp);
 
 void
 CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src)
 {
 	memcpy(dest, src, sizeof(*src));
 }
+LCRYPTO_ALIAS(CRYPTO_THREADID_cpy);
 
 unsigned long
 CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
 {
 	return id->val;
 }
+LCRYPTO_ALIAS(CRYPTO_THREADID_hash);
 
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
 	defined(__INTEL__) || \
@@ -311,6 +315,7 @@ OPENSSL_cpu_caps(void)
 {
 	return OPENSSL_ia32cap_P;
 }
+LCRYPTO_ALIAS(OPENSSL_cpu_caps);
 
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM)
 #define OPENSSL_CPUID_SETUP
@@ -333,6 +338,7 @@ OPENSSL_cpu_caps(void)
 {
 	return 0;
 }
+LCRYPTO_ALIAS(OPENSSL_cpu_caps);
 #endif
 
 #if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
@@ -361,6 +367,7 @@ OpenSSLDie(const char *file, int line, const char *assertion)
 	    getuid(), getprogname(), file, line, assertion);
 	_exit(1);
 }
+LCRYPTO_ALIAS(OpenSSLDie);
 
 int
 CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)

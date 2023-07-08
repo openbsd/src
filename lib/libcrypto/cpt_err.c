@@ -1,4 +1,4 @@
-/* $OpenBSD: cpt_err.c,v 1.14 2022/07/12 14:42:48 kn Exp $ */
+/* $OpenBSD: cpt_err.c,v 1.15 2023/07/08 08:28:23 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -97,3 +97,4 @@ ERR_load_CRYPTO_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_CRYPTO_strings);

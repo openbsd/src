@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto_lock.c,v 1.5 2023/06/04 17:28:35 tb Exp $ */
+/* $OpenBSD: crypto_lock.c,v 1.6 2023/07/08 08:28:23 beck Exp $ */
 /*
  * Copyright (c) 2018 Brent Cook <bcook@openbsd.org>
  *
@@ -78,6 +78,7 @@ CRYPTO_lock(int mode, int type, const char *file, int line)
 	else if (mode & CRYPTO_UNLOCK)
 		(void) pthread_mutex_unlock(&locks[type]);
 }
+LCRYPTO_ALIAS(CRYPTO_lock);
 
 int
 CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
@@ -92,3 +93,4 @@ CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 
 	return (ret);
 }
+LCRYPTO_ALIAS(CRYPTO_add_lock);
