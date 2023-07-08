@@ -1,4 +1,4 @@
-/*	$OpenBSD: miidevs.h,v 1.135 2023/03/31 13:37:41 kettenis Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.136 2023/07/08 08:10:27 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -79,6 +79,7 @@
 #define	MII_OUI_PLESSEYSEMI	0x046b40	/* Plessey Semi. */
 #define	MII_OUI_NATSEMI	0x080017	/* National Semi. */
 #define	MII_OUI_TI	0x080028	/* Texas Instruments */
+#define	MII_OUI_MOTORCOMM	0x13d47a	/* Motorcomm */
 
 /* in the 79c873, AMD uses another OUI (which matches Davicom!) */
 #define	MII_OUI_xxALTIMA	0x000895	/* Altima */
@@ -395,6 +396,10 @@
 #define	MII_STR_MICREL_KSZ9021	"KSZ9021 10/100/1000 PHY"
 #define	MII_MODEL_MICREL_KSZ9031	0x0022
 #define	MII_STR_MICREL_KSZ9031	"KSZ9031 10/100/1000 PHY"
+
+/* Motorcomm PHYs */
+#define	MII_MODEL_MOTORCOMM_YT8531	0x0011
+#define	MII_STR_MOTORCOMM_YT8531	"YT8531 10/100/1000 PHY"
 
 /* Myson PHYs */
 #define	MII_MODEL_MYSON_MTD972	0x0000
