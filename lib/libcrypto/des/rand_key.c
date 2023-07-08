@@ -1,4 +1,4 @@
-/* $OpenBSD: rand_key.c,v 1.8 2014/10/22 13:02:04 jsing Exp $ */
+/* $OpenBSD: rand_key.c,v 1.9 2023/07/08 07:11:07 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
  *
@@ -7,7 +7,7 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
