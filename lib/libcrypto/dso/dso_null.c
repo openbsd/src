@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_null.c,v 1.7 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dso_null.c,v 1.8 2023/07/08 07:22:58 beck Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -72,3 +72,4 @@ DSO_METHOD_null(void)
 {
 	return (&dso_meth_null);
 }
+LCRYPTO_ALIAS(DSO_METHOD_null);

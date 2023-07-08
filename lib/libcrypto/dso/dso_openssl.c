@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_openssl.c,v 1.6 2014/07/11 08:44:48 jsing Exp $ */
+/* $OpenBSD: dso_openssl.c,v 1.7 2023/07/08 07:22:58 beck Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -73,3 +73,4 @@ DSO_METHOD_openssl(void)
 	return (DSO_METHOD_null());
 #endif
 }
+LCRYPTO_ALIAS(DSO_METHOD_openssl);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_prn.c,v 1.6 2021/12/18 16:34:52 tb Exp $ */
+/*	$OpenBSD: ct_prn.c,v 1.7 2023/07/08 07:22:58 beck Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -146,6 +146,7 @@ SCT_validation_status_string(const SCT *sct)
 	}
 	return "unknown status";
 }
+LCRYPTO_ALIAS(SCT_validation_status_string);
 
 void
 SCT_print(const SCT *sct, BIO *out, int indent, const CTLOG_STORE *log_store)
@@ -190,6 +191,7 @@ SCT_print(const SCT *sct, BIO *out, int indent, const CTLOG_STORE *log_store)
 	BIO_printf(out, "\n%*s            ", indent + 4, "");
 	BIO_hex_string(out, indent + 16, 16, sct->sig, sct->sig_len);
 }
+LCRYPTO_ALIAS(SCT_print);
 
 void
 SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
@@ -206,3 +208,4 @@ SCT_LIST_print(const STACK_OF(SCT) *sct_list, BIO *out, int indent,
 			BIO_printf(out, "%s", separator);
 	}
 }
+LCRYPTO_ALIAS(SCT_LIST_print);

@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_lib.c,v 1.20 2018/08/24 19:27:01 tb Exp $ */
+/* $OpenBSD: dso_lib.c,v 1.21 2023/07/08 07:22:58 beck Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -70,24 +70,28 @@ DSO_new(void)
 {
 	return (DSO_new_method(NULL));
 }
+LCRYPTO_ALIAS(DSO_new);
 
 void
 DSO_set_default_method(DSO_METHOD *meth)
 {
 	default_DSO_meth = meth;
 }
+LCRYPTO_ALIAS(DSO_set_default_method);
 
 DSO_METHOD *
 DSO_get_default_method(void)
 {
 	return (default_DSO_meth);
 }
+LCRYPTO_ALIAS(DSO_get_default_method);
 
 DSO_METHOD *
 DSO_get_method(DSO *dso)
 {
 	return (dso->meth);
 }
+LCRYPTO_ALIAS(DSO_get_method);
 
 DSO_METHOD *
 DSO_set_method(DSO *dso, DSO_METHOD *meth)
@@ -98,6 +102,7 @@ DSO_set_method(DSO *dso, DSO_METHOD *meth)
 	dso->meth = meth;
 	return (mtmp);
 }
+LCRYPTO_ALIAS(DSO_set_method);
 
 DSO *
 DSO_new_method(DSO_METHOD *meth)
@@ -132,6 +137,7 @@ DSO_new_method(DSO_METHOD *meth)
 	}
 	return (ret);
 }
+LCRYPTO_ALIAS(DSO_new_method);
 
 int
 DSO_free(DSO *dso)
@@ -163,12 +169,14 @@ DSO_free(DSO *dso)
 	free(dso);
 	return (1);
 }
+LCRYPTO_ALIAS(DSO_free);
 
 int
 DSO_flags(DSO *dso)
 {
 	return ((dso == NULL) ? 0 : dso->flags);
 }
+LCRYPTO_ALIAS(DSO_flags);
 
 
 int
@@ -184,6 +192,7 @@ DSO_up_ref(DSO *dso)
 	refs = CRYPTO_add(&dso->references, 1, CRYPTO_LOCK_DSO);
 	return ((refs > 1) ? 1 : 0);
 }
+LCRYPTO_ALIAS(DSO_up_ref);
 
 DSO *
 DSO_load(DSO *dso, const char *filename, DSO_METHOD *meth, int flags)
@@ -238,6 +247,7 @@ err:
 		DSO_free(ret);
 	return (NULL);
 }
+LCRYPTO_ALIAS(DSO_load);
 
 void *
 DSO_bind_var(DSO *dso, const char *symname)
@@ -259,6 +269,7 @@ DSO_bind_var(DSO *dso, const char *symname)
 	/* Success */
 	return (ret);
 }
+LCRYPTO_ALIAS(DSO_bind_var);
 
 DSO_FUNC_TYPE
 DSO_bind_func(DSO *dso, const char *symname)
@@ -280,6 +291,7 @@ DSO_bind_func(DSO *dso, const char *symname)
 	/* Success */
 	return (ret);
 }
+LCRYPTO_ALIAS(DSO_bind_func);
 
 /* I don't really like these *_ctrl functions very much to be perfectly
  * honest. For one thing, I think I have to return a negative value for
@@ -317,6 +329,7 @@ DSO_ctrl(DSO *dso, int cmd, long larg, void *parg)
 	}
 	return (dso->meth->dso_ctrl(dso, cmd, larg, parg));
 }
+LCRYPTO_ALIAS(DSO_ctrl);
 
 int
 DSO_set_name_converter(DSO *dso, DSO_NAME_CONVERTER_FUNC cb,
@@ -331,6 +344,7 @@ DSO_set_name_converter(DSO *dso, DSO_NAME_CONVERTER_FUNC cb,
 	dso->name_converter = cb;
 	return (1);
 }
+LCRYPTO_ALIAS(DSO_set_name_converter);
 
 const char *
 DSO_get_filename(DSO *dso)
@@ -341,6 +355,7 @@ DSO_get_filename(DSO *dso)
 	}
 	return (dso->filename);
 }
+LCRYPTO_ALIAS(DSO_get_filename);
 
 int
 DSO_set_filename(DSO *dso, const char *filename)
@@ -365,6 +380,7 @@ DSO_set_filename(DSO *dso, const char *filename)
 	dso->filename = copied;
 	return (1);
 }
+LCRYPTO_ALIAS(DSO_set_filename);
 
 char *
 DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
@@ -384,6 +400,7 @@ DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
 	}
 	return (result);
 }
+LCRYPTO_ALIAS(DSO_merge);
 
 char *
 DSO_convert_filename(DSO *dso, const char *filename)
@@ -415,6 +432,7 @@ DSO_convert_filename(DSO *dso, const char *filename)
 	}
 	return (result);
 }
+LCRYPTO_ALIAS(DSO_convert_filename);
 
 const char *
 DSO_get_loaded_filename(DSO *dso)
@@ -425,6 +443,7 @@ DSO_get_loaded_filename(DSO *dso)
 	}
 	return (dso->loaded_filename);
 }
+LCRYPTO_ALIAS(DSO_get_loaded_filename);
 
 int
 DSO_pathbyaddr(void *addr, char *path, int sz)
@@ -438,6 +457,7 @@ DSO_pathbyaddr(void *addr, char *path, int sz)
 	}
 	return (*meth->pathbyaddr)(addr, path, sz);
 }
+LCRYPTO_ALIAS(DSO_pathbyaddr);
 
 void *
 DSO_global_lookup(const char *name)
@@ -451,3 +471,4 @@ DSO_global_lookup(const char *name)
 	}
 	return (*meth->globallookup)(name);
 }
+LCRYPTO_ALIAS(DSO_global_lookup);

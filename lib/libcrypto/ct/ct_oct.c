@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_oct.c,v 1.8 2021/12/20 17:23:07 jsing Exp $ */
+/*	$OpenBSD: ct_oct.c,v 1.9 2023/07/08 07:22:58 beck Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -208,6 +208,7 @@ o2i_SCT(SCT **psct, const unsigned char **in, size_t len)
 
 	return sct;
 }
+LCRYPTO_ALIAS(o2i_SCT);
 
 int
 i2o_SCT_signature(const SCT *sct, unsigned char **out)
@@ -314,6 +315,7 @@ i2o_SCT(const SCT *sct, unsigned char **out)
 	free(pstart);
 	return -1;
 }
+LCRYPTO_ALIAS(i2o_SCT);
 
 STACK_OF(SCT) *
 o2i_SCT_LIST(STACK_OF(SCT) **out_scts, const unsigned char **pp, size_t len)
@@ -366,6 +368,7 @@ o2i_SCT_LIST(STACK_OF(SCT) **out_scts, const unsigned char **pp, size_t len)
 
 	return NULL;
 }
+LCRYPTO_ALIAS(o2i_SCT_LIST);
 
 int
 i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
@@ -422,6 +425,7 @@ i2o_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **pp)
 	}
 	return -1;
 }
+LCRYPTO_ALIAS(i2o_SCT_LIST);
 
 STACK_OF(SCT) *
 d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp, long len)
@@ -441,6 +445,7 @@ d2i_SCT_LIST(STACK_OF(SCT) **a, const unsigned char **pp, long len)
 	ASN1_OCTET_STRING_free(oct);
 	return sk;
 }
+LCRYPTO_ALIAS(d2i_SCT_LIST);
 
 int
 i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **out)
@@ -456,3 +461,4 @@ i2d_SCT_LIST(const STACK_OF(SCT) *a, unsigned char **out)
 	free(oct.data);
 	return len;
 }
+LCRYPTO_ALIAS(i2d_SCT_LIST);

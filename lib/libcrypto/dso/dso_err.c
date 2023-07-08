@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_err.c,v 1.10 2022/07/12 14:42:49 kn Exp $ */
+/* $OpenBSD: dso_err.c,v 1.11 2023/07/08 07:22:58 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -103,3 +103,4 @@ ERR_load_DSO_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_DSO_strings);

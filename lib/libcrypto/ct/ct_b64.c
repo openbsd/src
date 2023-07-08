@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_b64.c,v 1.6 2021/12/20 17:19:19 jsing Exp $ */
+/*	$OpenBSD: ct_b64.c,v 1.7 2023/07/08 07:22:58 beck Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com) and Stephen Henson
  * (steve@openssl.org) for the OpenSSL project 2014.
@@ -180,6 +180,7 @@ SCT_new_from_base64(unsigned char version, const char *logid_base64,
 	SCT_free(sct);
 	return NULL;
 }
+LCRYPTO_ALIAS(SCT_new_from_base64);
 
 /*
  * Allocate, build and returns a new |ct_log| from input |pkey_base64|
@@ -222,3 +223,4 @@ CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64, const char *name)
 
 	return 1;
 }
+LCRYPTO_ALIAS(CTLOG_new_from_base64);

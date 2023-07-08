@@ -1,4 +1,4 @@
-/* $OpenBSD: dso_dlfcn.c,v 1.29 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: dso_dlfcn.c,v 1.30 2023/07/08 07:22:58 beck Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -68,6 +68,7 @@ DSO_METHOD_dlfcn(void)
 {
 	return NULL;
 }
+LCRYPTO_ALIAS(DSO_METHOD_dlfcn);
 #else
 
 #ifdef HAVE_DLFCN_H
@@ -105,6 +106,7 @@ DSO_METHOD_dlfcn(void)
 {
 	return (&dso_meth_dlfcn);
 }
+LCRYPTO_ALIAS(DSO_METHOD_dlfcn);
 
 /* For this DSO_METHOD, our meth_data STACK will contain;
  * (i) the handle (void*) returned from dlopen().
