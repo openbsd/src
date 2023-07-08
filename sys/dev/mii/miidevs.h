@@ -1,4 +1,4 @@
-/*	$OpenBSD: miidevs.h,v 1.136 2023/07/08 08:10:27 kettenis Exp $	*/
+/*	$OpenBSD: miidevs.h,v 1.137 2023/07/08 08:13:31 kettenis Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
