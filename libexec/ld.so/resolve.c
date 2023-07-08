@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.c,v 1.99 2023/04/13 19:57:30 millert Exp $ */
+/*	$OpenBSD: resolve.c,v 1.100 2023/07/08 14:09:43 jasper Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -275,10 +275,9 @@ _dl_finalize_object(const char *objname, Elf_Dyn *dynp, Elf_Phdr *phdrp,
 	elf_object_t *object;
 	Elf_Addr gnu_hash = 0;
 
-#if 0
-	_dl_printf("objname [%s], dynp %p, objtype %x lbase %lx, obase %lx\n",
-	    objname, dynp, objtype, lbase, obase);
-#endif
+	DL_DEB(("objname [%s], dynp %p, objtype %x lbase %lx, obase %lx\n",
+	    objname, dynp, objtype, lbase, obase));
+
 	object = _dl_calloc(1, sizeof(elf_object_t));
 	if (object == NULL)
 		_dl_oom();
@@ -612,7 +611,7 @@ _dl_find_symbol_obj(elf_object_t *obj, struct symlookup *sl)
 			if (((*hashval ^ hash) >> 1) == 0) {
 				const Elf_Sym *sym = symt +
 				    (hashval - obj->chains_gnu);
-				
+
 				int r = matched_symbol(obj, sym, sl);
 				if (r)
 					return r > 0;

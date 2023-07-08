@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.10 2023/04/24 22:06:05 kettenis Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.11 2023/07/08 14:09:43 jasper Exp $ */
 
 /*
  * Copyright (c) 2016 Dale Rahn
@@ -106,7 +106,7 @@ ENTRY(_dl_bind_start)
 	ldp	x2, x3, [sp], #16
 	ldp	x0, x1, [sp], #16
 
-	// restore LR saved by PLT stub	
+	// restore LR saved by PLT stub
 	ldp	xzr, x30, [sp], #16
 	br	x17
 END(_dl_bind_start)
