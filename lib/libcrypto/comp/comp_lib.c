@@ -1,4 +1,4 @@
-/* $OpenBSD: comp_lib.c,v 1.11 2022/12/24 07:12:09 tb Exp $ */
+/* $OpenBSD: comp_lib.c,v 1.12 2023/07/08 08:26:26 beck Exp $ */
 /*
  * ---------------------------------------------------------------------------
  * Patches to this file were contributed by
@@ -136,6 +136,7 @@ COMP_CTX_new(COMP_METHOD *meth)
 	}
 	return (ret);
 }
+LCRYPTO_ALIAS(COMP_CTX_new);
 
 void
 COMP_CTX_free(COMP_CTX *ctx)
@@ -148,6 +149,7 @@ COMP_CTX_free(COMP_CTX *ctx)
 
 	free(ctx);
 }
+LCRYPTO_ALIAS(COMP_CTX_free);
 
 int
 COMP_compress_block(COMP_CTX *ctx, unsigned char *out, int olen,
@@ -165,6 +167,7 @@ COMP_compress_block(COMP_CTX *ctx, unsigned char *out, int olen,
 	}
 	return (ret);
 }
+LCRYPTO_ALIAS(COMP_compress_block);
 
 int
 COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
@@ -182,3 +185,4 @@ COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
 	}
 	return (ret);
 }
+LCRYPTO_ALIAS(COMP_expand_block);

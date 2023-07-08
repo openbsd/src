@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_api.c,v 1.15 2015/04/11 16:03:21 deraadt Exp $ */
+/* $OpenBSD: conf_api.c,v 1.16 2023/07/08 08:26:26 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -89,6 +89,7 @@ _CONF_get_section(const CONF *conf, const char *section)
 	v = lh_CONF_VALUE_retrieve(conf->data, &vv);
 	return (v);
 }
+LCRYPTO_ALIAS(_CONF_get_section);
 
 /* Up until OpenSSL 0.9.5a, this was CONF_get_section */
 STACK_OF(CONF_VALUE) *
@@ -102,6 +103,7 @@ _CONF_get_section_values(const CONF *conf, const char *section)
 	else
 		return (NULL);
 }
+LCRYPTO_ALIAS(_CONF_get_section_values);
 
 int
 _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value)
@@ -125,6 +127,7 @@ _CONF_add_string(CONF *conf, CONF_VALUE *section, CONF_VALUE *value)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(_CONF_add_string);
 
 char *
 _CONF_get_string(const CONF *conf, const char *section, const char *name)
@@ -151,6 +154,7 @@ _CONF_get_string(const CONF *conf, const char *section, const char *name)
 	} else
 		return (NULL);
 }
+LCRYPTO_ALIAS(_CONF_get_string);
 
 static unsigned long
 conf_value_hash(const CONF_VALUE *v)
@@ -193,6 +197,7 @@ _CONF_new_data(CONF *conf)
 		}
 	return 1;
 }
+LCRYPTO_ALIAS(_CONF_new_data);
 
 void
 _CONF_free_data(CONF *conf)
@@ -213,6 +218,7 @@ _CONF_free_data(CONF *conf)
 	lh_CONF_VALUE_doall(conf->data, LHASH_DOALL_FN(value_free_stack));
 	lh_CONF_VALUE_free(conf->data);
 }
+LCRYPTO_ALIAS(_CONF_free_data);
 
 static void
 value_free_hash_doall_arg(CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf)
@@ -277,3 +283,4 @@ err:
 	}
 	return (v);
 }
+LCRYPTO_ALIAS(_CONF_new_section);

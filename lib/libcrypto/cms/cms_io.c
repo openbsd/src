@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_io.c,v 1.19 2023/04/26 14:23:18 tb Exp $ */
+/* $OpenBSD: cms_io.c,v 1.20 2023/07/08 08:26:26 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -82,18 +82,21 @@ CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 
 	return 1;
 }
+LCRYPTO_ALIAS(CMS_stream);
 
 CMS_ContentInfo *
 d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
 {
 	return ASN1_item_d2i_bio(&CMS_ContentInfo_it, bp, cms);
 }
+LCRYPTO_ALIAS(d2i_CMS_bio);
 
 int
 i2d_CMS_bio(BIO *bp, CMS_ContentInfo *cms)
 {
 	return ASN1_item_i2d_bio(&CMS_ContentInfo_it, bp, cms);
 }
+LCRYPTO_ALIAS(i2d_CMS_bio);
 
 
 CMS_ContentInfo *
@@ -129,6 +132,7 @@ BIO_new_CMS(BIO *out, CMS_ContentInfo *cms)
 {
 	return BIO_new_NDEF(out, (ASN1_VALUE *)cms, &CMS_ContentInfo_it);
 }
+LCRYPTO_ALIAS(BIO_new_CMS);
 
 /* CMS wrappers round generalised stream and MIME routines */
 
@@ -138,6 +142,7 @@ i2d_CMS_bio_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags)
 	return i2d_ASN1_bio_stream(out, (ASN1_VALUE *)cms, in, flags,
 	    &CMS_ContentInfo_it);
 }
+LCRYPTO_ALIAS(i2d_CMS_bio_stream);
 
 int
 PEM_write_bio_CMS_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags)
@@ -145,6 +150,7 @@ PEM_write_bio_CMS_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags)
 	return PEM_write_bio_ASN1_stream(out, (ASN1_VALUE *)cms, in, flags,
 	    "CMS", &CMS_ContentInfo_it);
 }
+LCRYPTO_ALIAS(PEM_write_bio_CMS_stream);
 
 int
 SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
@@ -159,6 +165,7 @@ SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
 	return SMIME_write_ASN1(bio, (ASN1_VALUE *)cms, data, flags, ctype_nid,
 	    econt_nid, mdalgs, &CMS_ContentInfo_it);
 }
+LCRYPTO_ALIAS(SMIME_write_CMS);
 
 CMS_ContentInfo *
 SMIME_read_CMS(BIO *bio, BIO **bcont)
@@ -166,3 +173,4 @@ SMIME_read_CMS(BIO *bio, BIO **bcont)
 	return (CMS_ContentInfo *)SMIME_read_ASN1(bio, bcont,
 	    &CMS_ContentInfo_it);
 }
+LCRYPTO_ALIAS(SMIME_read_CMS);

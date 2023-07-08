@@ -1,4 +1,4 @@
-/* $OpenBSD: c_rle.c,v 1.11 2022/12/24 07:12:09 tb Exp $ */
+/* $OpenBSD: c_rle.c,v 1.12 2023/07/08 08:26:26 beck Exp $ */
 /*
  * ---------------------------------------------------------------------------
  * Patches to this file were contributed by
@@ -138,6 +138,7 @@ COMP_rle(void)
 {
 	return (&rle_method);
 }
+LCRYPTO_ALIAS(COMP_rle);
 
 static int
 rle_compress_block(COMP_CTX *ctx, unsigned char *out, unsigned int olen,

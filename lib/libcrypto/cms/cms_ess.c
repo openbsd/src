@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_ess.c,v 1.22 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cms_ess.c,v 1.23 2023/07/08 08:26:26 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -70,24 +70,28 @@ d2i_CMS_ReceiptRequest(CMS_ReceiptRequest **a, const unsigned char **in, long le
 	return (CMS_ReceiptRequest *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &CMS_ReceiptRequest_it);
 }
+LCRYPTO_ALIAS(d2i_CMS_ReceiptRequest);
 
 int
 i2d_CMS_ReceiptRequest(CMS_ReceiptRequest *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &CMS_ReceiptRequest_it);
 }
+LCRYPTO_ALIAS(i2d_CMS_ReceiptRequest);
 
 CMS_ReceiptRequest *
 CMS_ReceiptRequest_new(void)
 {
 	return (CMS_ReceiptRequest *)ASN1_item_new(&CMS_ReceiptRequest_it);
 }
+LCRYPTO_ALIAS(CMS_ReceiptRequest_new);
 
 void
 CMS_ReceiptRequest_free(CMS_ReceiptRequest *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &CMS_ReceiptRequest_it);
 }
+LCRYPTO_ALIAS(CMS_ReceiptRequest_free);
 
 /* ESS services: for now just Signed Receipt related */
 

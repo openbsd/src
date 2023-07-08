@@ -1,4 +1,4 @@
-/* $OpenBSD: comp_err.c,v 1.13 2022/12/23 23:23:02 schwarze Exp $ */
+/* $OpenBSD: comp_err.c,v 1.14 2023/07/08 08:26:26 beck Exp $ */
 /* ====================================================================
  * This file was written by Dr. Stephen Henson <steve@openssl.org>.
  * Copyright (c) 1999, 2005, 2008 The OpenSSL Project.  All rights reserved.
@@ -92,3 +92,4 @@ ERR_load_COMP_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_COMP_strings);

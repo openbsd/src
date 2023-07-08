@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_pwri.c,v 1.28 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cms_pwri.c,v 1.29 2023/07/08 08:26:26 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -84,6 +84,7 @@ CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri, unsigned char *pass,
 
 	return 1;
 }
+LCRYPTO_ALIAS(CMS_RecipientInfo_set0_password);
 
 CMS_RecipientInfo *
 CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter, int wrap_nid,
@@ -213,6 +214,7 @@ CMS_add0_recipient_password(CMS_ContentInfo *cms, int iter, int wrap_nid,
 
 	return NULL;
 }
+LCRYPTO_ALIAS(CMS_add0_recipient_password);
 
 /*
  * This is an implementation of the key wrapping mechanism in RFC3211, at

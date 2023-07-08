@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_asn1.c,v 1.22 2023/05/23 06:55:31 tb Exp $ */
+/* $OpenBSD: cms_asn1.c,v 1.23 2023/07/08 08:26:26 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -1619,3 +1619,4 @@ CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg,
 
 	return ASN1_item_i2d(intsi.a, pder, &CMS_SharedInfo_it);
 }
+LCRYPTO_ALIAS(CMS_SharedInfo_encode);

@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.25 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.26 2023/07/08 08:26:26 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -107,6 +107,7 @@ CMS_SignedData_init(CMS_ContentInfo *cms)
 	else
 		return 0;
 }
+LCRYPTO_ALIAS(CMS_SignedData_init);
 
 /* Check structures and fixup version numbers (if necessary) */
 
@@ -424,6 +425,7 @@ CMS_add1_signer(CMS_ContentInfo *cms, X509 *signer, EVP_PKEY *pk,
 
 	return NULL;
 }
+LCRYPTO_ALIAS(CMS_add1_signer);
 
 static int
 cms_add1_signingTime(CMS_SignerInfo *si, ASN1_TIME *t)
@@ -459,12 +461,14 @@ CMS_SignerInfo_get0_pkey_ctx(CMS_SignerInfo *si)
 {
 	return si->pctx;
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_get0_pkey_ctx);
 
 EVP_MD_CTX *
 CMS_SignerInfo_get0_md_ctx(CMS_SignerInfo *si)
 {
 	return si->mctx;
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_get0_md_ctx);
 
 STACK_OF(CMS_SignerInfo) *
 CMS_get0_SignerInfos(CMS_ContentInfo *cms)
@@ -477,6 +481,7 @@ CMS_get0_SignerInfos(CMS_ContentInfo *cms)
 
 	return sd->signerInfos;
 }
+LCRYPTO_ALIAS(CMS_get0_SignerInfos);
 
 STACK_OF(X509) *
 CMS_get0_signers(CMS_ContentInfo *cms)
@@ -504,6 +509,7 @@ CMS_get0_signers(CMS_ContentInfo *cms)
 
 	return signers;
 }
+LCRYPTO_ALIAS(CMS_get0_signers);
 
 void
 CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer)
@@ -516,6 +522,7 @@ CMS_SignerInfo_set1_signer_cert(CMS_SignerInfo *si, X509 *signer)
 	X509_free(si->signer);
 	si->signer = signer;
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_set1_signer_cert);
 
 int
 CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si, ASN1_OCTET_STRING **keyid,
@@ -523,12 +530,14 @@ CMS_SignerInfo_get0_signer_id(CMS_SignerInfo *si, ASN1_OCTET_STRING **keyid,
 {
 	return cms_SignerIdentifier_get0_signer_id(si->sid, keyid, issuer, sno);
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_get0_signer_id);
 
 int
 CMS_SignerInfo_cert_cmp(CMS_SignerInfo *si, X509 *cert)
 {
 	return cms_SignerIdentifier_cert_cmp(si->sid, cert);
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_cert_cmp);
 
 int
 CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *scerts,
@@ -577,6 +586,7 @@ CMS_set1_signers_certs(CMS_ContentInfo *cms, STACK_OF(X509) *scerts,
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(CMS_set1_signers_certs);
 
 void
 CMS_SignerInfo_get0_algs(CMS_SignerInfo *si, EVP_PKEY **pk, X509 **signer,
@@ -591,12 +601,14 @@ X509_ALGOR **pdig, X509_ALGOR **psig)
 	if (psig)
 		*psig = si->signatureAlgorithm;
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_get0_algs);
 
 ASN1_OCTET_STRING *
 CMS_SignerInfo_get0_signature(CMS_SignerInfo *si)
 {
 	return si->signature;
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_get0_signature);
 
 static int
 cms_SignerInfo_content_sign(CMS_ContentInfo *cms, CMS_SignerInfo *si, BIO *chain)
@@ -773,6 +785,7 @@ CMS_SignerInfo_sign(CMS_SignerInfo *si)
 
 	return 0;
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_sign);
 
 int
 CMS_SignerInfo_verify(CMS_SignerInfo *si)
@@ -822,6 +835,7 @@ CMS_SignerInfo_verify(CMS_SignerInfo *si)
 
 	return r;
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_verify);
 
 /* Create a chain of digest BIOs from a CMS ContentInfo */
 
@@ -931,6 +945,7 @@ CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
 
 	return r;
 }
+LCRYPTO_ALIAS(CMS_SignerInfo_verify_content);
 
 int
 CMS_add_smimecap(CMS_SignerInfo *si, STACK_OF(X509_ALGOR) *algs)
@@ -947,6 +962,7 @@ CMS_add_smimecap(CMS_SignerInfo *si, STACK_OF(X509_ALGOR) *algs)
 
 	return r;
 }
+LCRYPTO_ALIAS(CMS_add_smimecap);
 
 int
 CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs, int algnid, int keysize)
@@ -979,6 +995,7 @@ CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs, int algnid, int keysize)
 
 	return 1;
 }
+LCRYPTO_ALIAS(CMS_add_simple_smimecap);
 
 /* Check to see if a cipher exists and if so add S/MIME capabilities */
 
@@ -1015,3 +1032,4 @@ CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap)
 
 	return 1;
 }
+LCRYPTO_ALIAS(CMS_add_standard_smimecap);

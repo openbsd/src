@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_enc.c,v 1.22 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cms_enc.c,v 1.23 2023/07/08 08:26:26 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -249,6 +249,7 @@ CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
 
 	return cms_EncryptedContent_init(ec, ciph, key, keylen);
 }
+LCRYPTO_ALIAS(CMS_EncryptedData_set1_key);
 
 BIO *
 cms_EncryptedData_init_bio(CMS_ContentInfo *cms)

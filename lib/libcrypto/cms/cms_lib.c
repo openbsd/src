@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.17 2023/06/11 05:35:43 tb Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.18 2023/07/08 08:26:26 beck Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -69,24 +69,28 @@ d2i_CMS_ContentInfo(CMS_ContentInfo **a, const unsigned char **in, long len)
 	return (CMS_ContentInfo *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &CMS_ContentInfo_it);
 }
+LCRYPTO_ALIAS(d2i_CMS_ContentInfo);
 
 int
 i2d_CMS_ContentInfo(CMS_ContentInfo *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &CMS_ContentInfo_it);
 }
+LCRYPTO_ALIAS(i2d_CMS_ContentInfo);
 
 CMS_ContentInfo *
 CMS_ContentInfo_new(void)
 {
 	return (CMS_ContentInfo *)ASN1_item_new(&CMS_ContentInfo_it);
 }
+LCRYPTO_ALIAS(CMS_ContentInfo_new);
 
 void
 CMS_ContentInfo_free(CMS_ContentInfo *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &CMS_ContentInfo_it);
 }
+LCRYPTO_ALIAS(CMS_ContentInfo_free);
 
 int
 CMS_ContentInfo_print_ctx(BIO *out, CMS_ContentInfo *x, int indent, const ASN1_PCTX *pctx)
@@ -94,12 +98,14 @@ CMS_ContentInfo_print_ctx(BIO *out, CMS_ContentInfo *x, int indent, const ASN1_P
 	return ASN1_item_print(out, (ASN1_VALUE *)x, indent,
 	    &CMS_ContentInfo_it, pctx);
 }
+LCRYPTO_ALIAS(CMS_ContentInfo_print_ctx);
 
 const ASN1_OBJECT *
 CMS_get0_type(const CMS_ContentInfo *cms)
 {
 	return cms->contentType;
 }
+LCRYPTO_ALIAS(CMS_get0_type);
 
 CMS_ContentInfo *
 cms_Data_create(void)
@@ -182,6 +188,7 @@ CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 
 	return NULL;
 }
+LCRYPTO_ALIAS(CMS_dataInit);
 
 int
 CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
@@ -228,6 +235,7 @@ CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
 		return 0;
 	}
 }
+LCRYPTO_ALIAS(CMS_dataFinal);
 
 /*
  * Return an OCTET STRING pointer to content. This allows it to be accessed
@@ -311,6 +319,7 @@ CMS_get0_eContentType(CMS_ContentInfo *cms)
 
 	return NULL;
 }
+LCRYPTO_ALIAS(CMS_get0_eContentType);
 
 int
 CMS_set1_eContentType(CMS_ContentInfo *cms, const ASN1_OBJECT *oid)
@@ -330,6 +339,7 @@ CMS_set1_eContentType(CMS_ContentInfo *cms, const ASN1_OBJECT *oid)
 
 	return 1;
 }
+LCRYPTO_ALIAS(CMS_set1_eContentType);
 
 int
 CMS_is_detached(CMS_ContentInfo *cms)
@@ -344,6 +354,7 @@ CMS_is_detached(CMS_ContentInfo *cms)
 
 	return 1;
 }
+LCRYPTO_ALIAS(CMS_is_detached);
 
 int
 CMS_set_detached(CMS_ContentInfo *cms, int detached)
@@ -371,6 +382,7 @@ CMS_set_detached(CMS_ContentInfo *cms, int detached)
 
 	return 0;
 }
+LCRYPTO_ALIAS(CMS_set_detached);
 
 /* Create a digest BIO from an X509_ALGOR structure */
 
@@ -471,6 +483,7 @@ CMS_add0_CertificateChoices(CMS_ContentInfo *cms)
 
 	return cch;
 }
+LCRYPTO_ALIAS(CMS_add0_CertificateChoices);
 
 int
 CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
@@ -499,6 +512,7 @@ CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
 
 	return 1;
 }
+LCRYPTO_ALIAS(CMS_add0_cert);
 
 int
 CMS_add1_cert(CMS_ContentInfo *cms, X509 *cert)
@@ -511,6 +525,7 @@ CMS_add1_cert(CMS_ContentInfo *cms, X509 *cert)
 
 	return r;
 }
+LCRYPTO_ALIAS(CMS_add1_cert);
 
 static STACK_OF(CMS_RevocationInfoChoice) **
 cms_get0_revocation_choices(CMS_ContentInfo *cms)
@@ -553,6 +568,7 @@ CMS_add0_RevocationInfoChoice(CMS_ContentInfo *cms)
 
 	return rch;
 }
+LCRYPTO_ALIAS(CMS_add0_RevocationInfoChoice);
 
 int
 CMS_add0_crl(CMS_ContentInfo *cms, X509_CRL *crl)
@@ -567,6 +583,7 @@ CMS_add0_crl(CMS_ContentInfo *cms, X509_CRL *crl)
 
 	return 1;
 }
+LCRYPTO_ALIAS(CMS_add0_crl);
 
 int
 CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl)
@@ -579,6 +596,7 @@ CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl)
 
 	return r;
 }
+LCRYPTO_ALIAS(CMS_add1_crl);
 
 STACK_OF(X509) *
 CMS_get1_certs(CMS_ContentInfo *cms)
@@ -608,6 +626,7 @@ CMS_get1_certs(CMS_ContentInfo *cms)
 	}
 	return certs;
 }
+LCRYPTO_ALIAS(CMS_get1_certs);
 
 STACK_OF(X509_CRL) *
 CMS_get1_crls(CMS_ContentInfo *cms)
@@ -637,6 +656,7 @@ CMS_get1_crls(CMS_ContentInfo *cms)
 	}
 	return crls;
 }
+LCRYPTO_ALIAS(CMS_get1_crls);
 
 static const ASN1_OCTET_STRING *
 cms_X509_get0_subject_key_id(X509 *x)
