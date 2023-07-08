@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.6 2023/07/07 15:09:45 jsing Exp $ */
+/* $OpenBSD: sha1.c,v 1.7 2023/07/08 07:43:44 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -96,118 +96,6 @@ void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 #define HASH_NO_FINAL
 
 #include "md32_common.h"
-
-int
-SHA1_Update(SHA_CTX *c, const void *data_, size_t len)
-{
-	const unsigned char *data = data_;
-	unsigned char *p;
-	SHA_LONG l;
-	size_t n;
-
-	if (len == 0)
-		return 1;
-
-	l = (c->Nl + (((SHA_LONG)len) << 3))&0xffffffffUL;
-	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
-	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
-	if (l < c->Nl) /* overflow */
-		c->Nh++;
-	c->Nh+=(SHA_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
-	c->Nl = l;
-
-	n = c->num;
-	if (n != 0) {
-		p = (unsigned char *)c->data;
-
-		if (len >= SHA_CBLOCK || len + n >= SHA_CBLOCK) {
-			memcpy(p + n, data, SHA_CBLOCK - n);
-			sha1_block_data_order(c, p, 1);
-			n = SHA_CBLOCK - n;
-			data += n;
-			len -= n;
-			c->num = 0;
-			memset(p,0,SHA_CBLOCK);	/* keep it zeroed */
-		} else {
-			memcpy(p + n, data, len);
-			c->num += (unsigned int)len;
-			return 1;
-		}
-	}
-
-	n = len/SHA_CBLOCK;
-	if (n > 0) {
-		sha1_block_data_order(c, data, n);
-		n    *= SHA_CBLOCK;
-		data += n;
-		len -= n;
-	}
-
-	if (len != 0) {
-		p = (unsigned char *)c->data;
-		c->num = (unsigned int)len;
-		memcpy(p, data, len);
-	}
-	return 1;
-}
-
-void
-SHA1_Transform(SHA_CTX *c, const unsigned char *data)
-{
-	sha1_block_data_order(c, data, 1);
-}
-
-int
-SHA1_Final(unsigned char *md, SHA_CTX *c)
-{
-	unsigned char *p = (unsigned char *)c->data;
-	size_t n = c->num;
-
-	p[n] = 0x80; /* there is always room for one */
-	n++;
-
-	if (n > (SHA_CBLOCK - 8)) {
-		memset(p + n, 0, SHA_CBLOCK - n);
-		n = 0;
-		sha1_block_data_order(c, p, 1);
-	}
-	memset(p + n, 0, SHA_CBLOCK - 8 - n);
-
-	p += SHA_CBLOCK - 8;
-#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
-	HOST_l2c(c->Nh, p);
-	HOST_l2c(c->Nl, p);
-#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
-	HOST_l2c(c->Nl, p);
-	HOST_l2c(c->Nh, p);
-#endif
-	p -= SHA_CBLOCK;
-	sha1_block_data_order(c, p, 1);
-	c->num = 0;
-	memset(p, 0, SHA_CBLOCK);
-
-#ifndef HASH_MAKE_STRING
-#error "HASH_MAKE_STRING must be defined!"
-#else
-	HASH_MAKE_STRING(c, md);
-#endif
-
-	return 1;
-}
-
-int
-SHA1_Init(SHA_CTX *c)
-{
-	memset(c, 0, sizeof(*c));
-
-	c->h0 = 0x67452301UL;
-	c->h1 = 0xefcdab89UL;
-	c->h2 = 0x98badcfeUL;
-	c->h3 = 0x10325476UL;
-	c->h4 = 0xc3d2e1f0UL;
-
-	return 1;
-}
 
 #define K_00_19	0x5a827999UL
 #define K_20_39 0x6ed9eba1UL
@@ -536,6 +424,118 @@ sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 }
 #endif
 #endif
+
+int
+SHA1_Init(SHA_CTX *c)
+{
+	memset(c, 0, sizeof(*c));
+
+	c->h0 = 0x67452301UL;
+	c->h1 = 0xefcdab89UL;
+	c->h2 = 0x98badcfeUL;
+	c->h3 = 0x10325476UL;
+	c->h4 = 0xc3d2e1f0UL;
+
+	return 1;
+}
+
+int
+SHA1_Update(SHA_CTX *c, const void *data_, size_t len)
+{
+	const unsigned char *data = data_;
+	unsigned char *p;
+	SHA_LONG l;
+	size_t n;
+
+	if (len == 0)
+		return 1;
+
+	l = (c->Nl + (((SHA_LONG)len) << 3))&0xffffffffUL;
+	/* 95-05-24 eay Fixed a bug with the overflow handling, thanks to
+	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
+	if (l < c->Nl) /* overflow */
+		c->Nh++;
+	c->Nh+=(SHA_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
+	c->Nl = l;
+
+	n = c->num;
+	if (n != 0) {
+		p = (unsigned char *)c->data;
+
+		if (len >= SHA_CBLOCK || len + n >= SHA_CBLOCK) {
+			memcpy(p + n, data, SHA_CBLOCK - n);
+			sha1_block_data_order(c, p, 1);
+			n = SHA_CBLOCK - n;
+			data += n;
+			len -= n;
+			c->num = 0;
+			memset(p,0,SHA_CBLOCK);	/* keep it zeroed */
+		} else {
+			memcpy(p + n, data, len);
+			c->num += (unsigned int)len;
+			return 1;
+		}
+	}
+
+	n = len/SHA_CBLOCK;
+	if (n > 0) {
+		sha1_block_data_order(c, data, n);
+		n    *= SHA_CBLOCK;
+		data += n;
+		len -= n;
+	}
+
+	if (len != 0) {
+		p = (unsigned char *)c->data;
+		c->num = (unsigned int)len;
+		memcpy(p, data, len);
+	}
+	return 1;
+}
+
+void
+SHA1_Transform(SHA_CTX *c, const unsigned char *data)
+{
+	sha1_block_data_order(c, data, 1);
+}
+
+int
+SHA1_Final(unsigned char *md, SHA_CTX *c)
+{
+	unsigned char *p = (unsigned char *)c->data;
+	size_t n = c->num;
+
+	p[n] = 0x80; /* there is always room for one */
+	n++;
+
+	if (n > (SHA_CBLOCK - 8)) {
+		memset(p + n, 0, SHA_CBLOCK - n);
+		n = 0;
+		sha1_block_data_order(c, p, 1);
+	}
+	memset(p + n, 0, SHA_CBLOCK - 8 - n);
+
+	p += SHA_CBLOCK - 8;
+#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
+	HOST_l2c(c->Nh, p);
+	HOST_l2c(c->Nl, p);
+#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
+	HOST_l2c(c->Nl, p);
+	HOST_l2c(c->Nh, p);
+#endif
+	p -= SHA_CBLOCK;
+	sha1_block_data_order(c, p, 1);
+	c->num = 0;
+	memset(p, 0, SHA_CBLOCK);
+
+#ifndef HASH_MAKE_STRING
+#error "HASH_MAKE_STRING must be defined!"
+#else
+	HASH_MAKE_STRING(c, md);
+#endif
+
+	return 1;
+}
 
 unsigned char *
 SHA1(const unsigned char *d, size_t n, unsigned char *md)
