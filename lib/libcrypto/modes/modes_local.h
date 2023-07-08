@@ -1,4 +1,4 @@
-/* $OpenBSD: modes_local.h,v 1.1 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: modes_local.h,v 1.2 2023/07/08 14:55:36 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -30,28 +30,28 @@ typedef unsigned char u8;
 #if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #if defined(__GNUC__) && __GNUC__>=2
 # if defined(__x86_64) || defined(__x86_64__)
-#  define BSWAP8(x) ({	u64 ret=(x);			\
-			asm ("bswapq %0"		\
+#  define BSWAP8(x) ({	u64 ret=(x);					\
+			asm ("bswapq %0"				\
 			: "+r"(ret));	ret;		})
-#  define BSWAP4(x) ({	u32 ret=(x);			\
-			asm ("bswapl %0"		\
+#  define BSWAP4(x) ({	u32 ret=(x);					\
+			asm ("bswapl %0"				\
 			: "+r"(ret));	ret;		})
 # elif (defined(__i386) || defined(__i386__))
-#  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);	\
-			asm ("bswapl %0; bswapl %1"	\
-			: "+r"(hi),"+r"(lo));		\
+#  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);			\
+			asm ("bswapl %0; bswapl %1"			\
+			: "+r"(hi),"+r"(lo));				\
 			(u64)hi<<32|lo;			})
-#  define BSWAP4(x) ({	u32 ret=(x);			\
-			asm ("bswapl %0"		\
+#  define BSWAP4(x) ({	u32 ret=(x);					\
+			asm ("bswapl %0"				\
 			: "+r"(ret));	ret;		})
 # elif (defined(__arm__) || defined(__arm)) && !defined(__STRICT_ALIGNMENT)
-#  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);	\
-			asm ("rev %0,%0; rev %1,%1"	\
-			: "+r"(hi),"+r"(lo));		\
+#  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);			\
+			asm ("rev %0,%0; rev %1,%1"			\
+			: "+r"(hi),"+r"(lo));				\
 			(u64)hi<<32|lo;			})
-#  define BSWAP4(x) ({	u32 ret;			\
-			asm ("rev %0,%1"		\
-			: "=r"(ret) : "r"((u32)(x)));	\
+#  define BSWAP4(x) ({	u32 ret;					\
+			asm ("rev %0,%1"				\
+			: "=r"(ret) : "r"((u32)(x)));			\
 			ret;				})
 # endif
 #endif
@@ -67,7 +67,9 @@ typedef unsigned char u8;
 
 /* GCM definitions */
 
-typedef struct { u64 hi,lo; } u128;
+typedef struct {
+	u64 hi, lo;
+} u128;
 
 #ifdef	TABLE_BITS
 #undef	TABLE_BITS
@@ -80,16 +82,21 @@ typedef struct { u64 hi,lo; } u128;
 
 struct gcm128_context {
 	/* Following 6 names follow names in GCM specification */
-	union { u64 u[2]; u32 d[4]; u8 c[16]; size_t t[16/sizeof(size_t)]; }
-	  Yi,EKi,EK0,len,Xi,H;
+	union {
+		u64 u[2];
+		u32 d[4];
+		u8 c[16];
+		size_t t[16/sizeof(size_t)];
+	} Yi, EKi, EK0, len, Xi, H;
 	/* Relative position of Xi, H and pre-computed Htable is used
 	 * in some assembler modules, i.e. don't change the order! */
 #if TABLE_BITS==8
 	u128 Htable[256];
 #else
 	u128 Htable[16];
-	void (*gmult)(u64 Xi[2],const u128 Htable[16]);
-	void (*ghash)(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
+	void (*gmult)(u64 Xi[2], const u128 Htable[16]);
+	void (*ghash)(u64 Xi[2], const u128 Htable[16], const u8 *inp,
+	    size_t len);
 #endif
 	unsigned int mres, ares;
 	block128_f block;
@@ -98,11 +105,14 @@ struct gcm128_context {
 
 struct xts128_context {
 	void      *key1, *key2;
-	block128_f block1,block2;
+	block128_f block1, block2;
 };
 
 struct ccm128_context {
-	union { u64 u[2]; u8 c[16]; } nonce, cmac;
+	union {
+		u64 u[2];
+		u8 c[16];
+	} nonce, cmac;
 	u64 blocks;
 	block128_f block;
 	void *key;
