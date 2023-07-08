@@ -1,4 +1,4 @@
-/* $OpenBSD: sha512.c,v 1.40 2023/07/02 14:57:58 jsing Exp $ */
+/* $OpenBSD: sha512.c,v 1.41 2023/07/08 12:24:10 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -325,18 +325,21 @@ SHA384_Init(SHA512_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SHA384_Init);
 
 int
 SHA384_Update(SHA512_CTX *c, const void *data, size_t len)
 {
 	return SHA512_Update(c, data, len);
 }
+LCRYPTO_ALIAS(SHA384_Update);
 
 int
 SHA384_Final(unsigned char *md, SHA512_CTX *c)
 {
 	return SHA512_Final(md, c);
 }
+LCRYPTO_ALIAS(SHA384_Final);
 
 unsigned char *
 SHA384(const unsigned char *d, size_t n, unsigned char *md)
@@ -355,6 +358,7 @@ SHA384(const unsigned char *d, size_t n, unsigned char *md)
 
 	return (md);
 }
+LCRYPTO_ALIAS(SHA384);
 
 int
 SHA512_Init(SHA512_CTX *c)
@@ -374,12 +378,14 @@ SHA512_Init(SHA512_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SHA512_Init);
 
 void
 SHA512_Transform(SHA512_CTX *c, const unsigned char *data)
 {
 	sha512_block_data_order(c, data, 1);
 }
+LCRYPTO_ALIAS(SHA512_Transform);
 
 int
 SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
@@ -428,6 +434,7 @@ SHA512_Update(SHA512_CTX *c, const void *_data, size_t len)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SHA512_Update);
 
 int
 SHA512_Final(unsigned char *md, SHA512_CTX *c)
@@ -485,6 +492,7 @@ SHA512_Final(unsigned char *md, SHA512_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SHA512_Final);
 
 unsigned char *
 SHA512(const unsigned char *d, size_t n, unsigned char *md)
@@ -503,6 +511,7 @@ SHA512(const unsigned char *d, size_t n, unsigned char *md)
 
 	return (md);
 }
+LCRYPTO_ALIAS(SHA512);
 
 int
 SHA512_224_Init(SHA512_CTX *c)

@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.26 2023/07/07 15:06:50 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.27 2023/07/08 12:24:10 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -248,18 +248,21 @@ SHA224_Init(SHA256_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SHA224_Init);
 
 int
 SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
 {
 	return SHA256_Update(c, data, len);
 }
+LCRYPTO_ALIAS(SHA224_Update);
 
 int
 SHA224_Final(unsigned char *md, SHA256_CTX *c)
 {
 	return SHA256_Final(md, c);
 }
+LCRYPTO_ALIAS(SHA224_Final);
 
 unsigned char *
 SHA224(const unsigned char *d, size_t n, unsigned char *md)
@@ -278,6 +281,7 @@ SHA224(const unsigned char *d, size_t n, unsigned char *md)
 
 	return (md);
 }
+LCRYPTO_ALIAS(SHA224);
 
 int
 SHA256_Init(SHA256_CTX *c)
@@ -297,6 +301,7 @@ SHA256_Init(SHA256_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SHA256_Init);
 
 int
 SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
@@ -351,12 +356,14 @@ SHA256_Update(SHA256_CTX *c, const void *data_, size_t len)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(SHA256_Update);
 
 void
 SHA256_Transform(SHA256_CTX *c, const unsigned char *data)
 {
 	sha256_block_data_order(c, data, 1);
 }
+LCRYPTO_ALIAS(SHA256_Transform);
 
 int
 SHA256_Final(unsigned char *md, SHA256_CTX *c)
@@ -417,6 +424,7 @@ SHA256_Final(unsigned char *md, SHA256_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SHA256_Final);
 
 unsigned char *
 SHA256(const unsigned char *d, size_t n, unsigned char *md)
@@ -435,5 +443,6 @@ SHA256(const unsigned char *d, size_t n, unsigned char *md)
 
 	return (md);
 }
+LCRYPTO_ALIAS(SHA256);
 
 #endif /* OPENSSL_NO_SHA256 */

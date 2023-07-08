@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.10 2023/07/08 07:58:25 jsing Exp $ */
+/* $OpenBSD: sha1.c,v 1.11 2023/07/08 12:24:10 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -344,6 +344,7 @@ SHA1_Init(SHA_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SHA1_Init);
 
 int
 SHA1_Update(SHA_CTX *c, const void *data_, size_t len)
@@ -398,12 +399,14 @@ SHA1_Update(SHA_CTX *c, const void *data_, size_t len)
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(SHA1_Update);
 
 void
 SHA1_Transform(SHA_CTX *c, const unsigned char *data)
 {
 	sha1_block_data_order(c, data, 1);
 }
+LCRYPTO_ALIAS(SHA1_Transform);
 
 int
 SHA1_Final(unsigned char *md, SHA_CTX *c)
@@ -448,6 +451,7 @@ SHA1_Final(unsigned char *md, SHA_CTX *c)
 
 	return 1;
 }
+LCRYPTO_ALIAS(SHA1_Final);
 
 unsigned char *
 SHA1(const unsigned char *d, size_t n, unsigned char *md)
@@ -467,5 +471,6 @@ SHA1(const unsigned char *d, size_t n, unsigned char *md)
 
 	return (md);
 }
+LCRYPTO_ALIAS(SHA1);
 
 #endif
