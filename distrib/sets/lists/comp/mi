@@ -1926,6 +1926,7 @@
 ./usr/share/man/man3/EVP_DigestVerifyInit.3
 ./usr/share/man/man3/EVP_EncodeInit.3
 ./usr/share/man/man3/EVP_EncryptInit.3
+./usr/share/man/man3/EVP_MD_meth_new.3
 ./usr/share/man/man3/EVP_OpenInit.3
 ./usr/share/man/man3/EVP_PKCS82PKEY.3
 ./usr/share/man/man3/EVP_PKEY_CTX_ctrl.3
