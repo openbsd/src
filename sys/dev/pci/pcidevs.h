@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2042 2023/07/07 03:50:02 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2043 2023/07/08 09:11:51 kettenis Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -279,6 +279,7 @@
 #define	PCI_VENDOR_ENE	0x1524		/* ENE */
 #define	PCI_VENDOR_ARALION	0x1538		/* Aralion */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec */
+#define	PCI_VENDOR_PLDA	0x1556		/* PLDA */
 #define	PCI_VENDOR_PERLE	0x155f		/* Perle */
 #define	PCI_VENDOR_SYMBOL	0x1562		/* Symbol */
 #define	PCI_VENDOR_SYBA	0x1592		/* Syba */
@@ -8253,6 +8254,9 @@
 
 /* Platform */
 #define	PCI_PRODUCT_PLATFORM_ES1849	0x0100		/* ES1849 */
+
+/* PLDA products */
+#define	PCI_PRODUCT_PLDA_XR_AXI	0x1111		/* XpressRICH-AXI */
 
 /* PLX products */
 #define	PCI_PRODUCT_PLX_1076	0x1076		/* I/O 1076 */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2042 2023/07/07 03:50:02 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2043 2023/07/08 09:11:51 kettenis Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -29696,6 +29696,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "ES1849",
 	},
 	{
+	    PCI_VENDOR_PLDA, PCI_PRODUCT_PLDA_XR_AXI,
+	    "XpressRICH-AXI",
+	},
+	{
 	    PCI_VENDOR_PLX, PCI_PRODUCT_PLX_1076,
 	    "I/O 1076",
 	},
@@ -35878,6 +35882,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_TERRATEC,
 	    "TerraTec",
+	},
+	{
+	    PCI_VENDOR_PLDA,
+	    "PLDA",
 	},
 	{
 	    PCI_VENDOR_PERLE,
