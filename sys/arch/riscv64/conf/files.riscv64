@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.24 2022/06/12 10:51:55 kettenis Exp $
+#	$OpenBSD: files.riscv64,v 1.25 2023/07/08 10:06:13 kettenis Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -123,6 +123,16 @@ file	arch/riscv64/dev/sfuart.c		sfuart
 device	stfclock
 attach	stfclock at fdt
 file	arch/riscv64/dev/stfclock.c		stfclock
+
+# StarFive PCIe
+device	stfpcie: pcibus
+attach	stfpcie at fdt
+file	arch/riscv64/dev/stfpcie.c		stfpcie
+
+# StarFive PCIe PHY
+device	stfpciephy
+attach	stfpciephy at fdt
+file	arch/riscv64/dev/stfpciephy.c		stfpciephy
 
 # StarFive pinctrl
 device	stfpinctrl
