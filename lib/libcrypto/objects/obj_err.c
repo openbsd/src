@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_err.c,v 1.13 2022/07/12 14:42:49 kn Exp $ */
+/* $OpenBSD: obj_err.c,v 1.14 2023/07/08 12:27:51 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -88,3 +88,4 @@ ERR_load_OBJ_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_OBJ_strings);

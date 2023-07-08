@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_xref.c,v 1.8 2017/01/21 04:44:43 jsing Exp $ */
+/* $OpenBSD: obj_xref.c,v 1.9 2023/07/08 12:27:51 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -151,6 +151,7 @@ OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 		*ppkey_nid = rv->pkey_id;
 	return 1;
 }
+LCRYPTO_ALIAS(OBJ_find_sigid_algs);
 
 int
 OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
@@ -182,6 +183,7 @@ OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 		*psignid = (*rv)->sign_id;
 	return 1;
 }
+LCRYPTO_ALIAS(OBJ_find_sigid_by_algs);
 
 int
 OBJ_add_sigid(int signid, int dig_id, int pkey_id)
@@ -216,6 +218,7 @@ OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 
 	return 1;
 }
+LCRYPTO_ALIAS(OBJ_add_sigid);
 
 static void
 sid_free(nid_triple *tt)
@@ -235,3 +238,4 @@ OBJ_sigid_free(void)
 		sigx_app = NULL;
 	}
 }
+LCRYPTO_ALIAS(OBJ_sigid_free);
