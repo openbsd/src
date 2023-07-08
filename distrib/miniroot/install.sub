@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1250 2023/06/18 15:17:38 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.1251 2023/07/08 15:01:09 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -307,6 +307,7 @@ scan_disknames() {
 get_softraid_chunks() {
 	local _device=${1:-softraid0}
 
+	[[ -x /sbin/bioctl ]] || return
 	bioctl $_device 2>/dev/null | sed -n 's/.*<\(.*\).>$/\1/p'
 }
 
@@ -3080,6 +3081,8 @@ encrypt_root() {
 
 	# The interactive bioctl(8) passphrase prompt requires a TTY.
 	$AI && return
+
+	[[ -x /sbin/bioctl ]] || return
 
 	# Do not even try if softraid is in use already,
 	# e.g. auto-assembled at boot or done in (S)hell.
