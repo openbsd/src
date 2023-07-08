@@ -1,4 +1,4 @@
-/*	$OpenBSD: radius.h,v 1.1 2015/07/20 23:52:29 yasuoka Exp $ */
+/*	$OpenBSD: radius.h,v 1.2 2023/07/08 08:53:26 yasuoka Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -313,10 +313,14 @@
 #define RADIUS_TUNNEL_MEDIUM_TYPE_E163		7	/* E.163 (POTS) */
 #define RADIUS_TUNNEL_MEDIUM_TYPE_E164		8	/* E.164 (SMDS, Frame
 							 * Relay, ATM) */
-
-
-
+#include <sys/socket.h>
 #include <sys/cdefs.h>
+
+#include <stdbool.h>
+#include <stdint.h>
+
+struct in_addr;
+struct in6_addr;
 
 __BEGIN_DECLS
 
