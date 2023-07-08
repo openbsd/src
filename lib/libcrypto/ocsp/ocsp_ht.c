@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_ht.c,v 1.25 2018/05/13 10:42:03 tb Exp $ */
+/* $OpenBSD: ocsp_ht.c,v 1.26 2023/07/08 10:44:00 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -115,6 +115,7 @@ OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 	free(rctx->iobuf);
 	free(rctx);
 }
+LCRYPTO_ALIAS(OCSP_REQ_CTX_free);
 
 int
 OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req)
@@ -128,6 +129,7 @@ OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req)
 	rctx->asn1_len = BIO_get_mem_data(rctx->mem, NULL);
 	return 1;
 }
+LCRYPTO_ALIAS(OCSP_REQ_CTX_set1_req);
 
 int
 OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx, const char *name,
@@ -147,6 +149,7 @@ OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx, const char *name,
 		return 0;
 	return 1;
 }
+LCRYPTO_ALIAS(OCSP_REQ_CTX_add1_header);
 
 OCSP_REQ_CTX *
 OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req, int maxline)
@@ -192,6 +195,7 @@ OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req, int maxline)
 
 	return rctx;
 }
+LCRYPTO_ALIAS(OCSP_sendreq_new);
 
 /* Parse the HTTP response. This will look like this:
  * "HTTP/1.0 200 OK". We need to obtain the numeric code and
@@ -437,6 +441,7 @@ next_line:
 
 	return 0;
 }
+LCRYPTO_ALIAS(OCSP_sendreq_nbio);
 
 /* Blocking OCSP request handler: now a special case of non-blocking I/O */
 OCSP_RESPONSE *
@@ -461,3 +466,4 @@ OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req)
 
 	return NULL;
 }
+LCRYPTO_ALIAS(OCSP_sendreq_bio);

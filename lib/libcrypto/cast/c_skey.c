@@ -1,4 +1,4 @@
-/* $OpenBSD: c_skey.c,v 1.13 2023/07/08 07:25:43 jsing Exp $ */
+/* $OpenBSD: c_skey.c,v 1.14 2023/07/08 10:43:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,4 +166,4 @@ CAST_set_key(CAST_KEY *key, int len, const unsigned char *data)
 		key->data[i*2 + 1] = ((k[i + 16]) + 16)&0x1f;
 	}
 }
-
+LCRYPTO_ALIAS(CAST_set_key);

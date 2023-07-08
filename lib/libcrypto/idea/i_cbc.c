@@ -1,4 +1,4 @@
-/* $OpenBSD: i_cbc.c,v 1.5 2023/07/07 12:51:58 beck Exp $ */
+/* $OpenBSD: i_cbc.c,v 1.6 2023/07/08 10:44:00 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -136,6 +136,7 @@ idea_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
 	tin[0] = tin[1] = 0;
 }
+LCRYPTO_ALIAS(idea_cbc_encrypt);
 
 void
 idea_encrypt(unsigned long *d, IDEA_KEY_SCHEDULE *key)
@@ -172,3 +173,4 @@ idea_encrypt(unsigned long *d, IDEA_KEY_SCHEDULE *key)
 	d[0] = (t0 & 0xffff)|((x1 & 0xffff) << 16);
 	d[1] = (x4 & 0xffff)|((t1 & 0xffff) << 16);
 }
+LCRYPTO_ALIAS(idea_encrypt);

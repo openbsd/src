@@ -1,4 +1,4 @@
-/* $OpenBSD: i_cfb64.c,v 1.5 2023/07/07 12:51:58 beck Exp $ */
+/* $OpenBSD: i_cfb64.c,v 1.6 2023/07/08 10:44:00 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,3 +121,4 @@ idea_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 	v0 = v1 = ti[0] = ti[1] = t = c = cc = 0;
 	*num = n;
 }
+LCRYPTO_ALIAS(idea_cfb64_encrypt);

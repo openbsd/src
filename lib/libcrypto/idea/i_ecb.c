@@ -1,4 +1,4 @@
-/* $OpenBSD: i_ecb.c,v 1.5 2023/07/07 12:51:58 beck Exp $ */
+/* $OpenBSD: i_ecb.c,v 1.6 2023/07/08 10:44:00 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -68,6 +68,7 @@ idea_options(void)
 	else
 		return ("idea(short)");
 }
+LCRYPTO_ALIAS(idea_options);
 
 void
 idea_ecb_encrypt(const unsigned char *in, unsigned char *out,
@@ -86,3 +87,4 @@ idea_ecb_encrypt(const unsigned char *in, unsigned char *out,
 	l2n(l1, out);
 	l0 = l1 = d[0] = d[1] = 0;
 }
+LCRYPTO_ALIAS(idea_ecb_encrypt);

@@ -1,4 +1,4 @@
-/* $OpenBSD: c_ecb.c,v 1.9 2023/07/08 07:25:43 jsing Exp $ */
+/* $OpenBSD: c_ecb.c,v 1.10 2023/07/08 10:43:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,3 +80,4 @@ CAST_ecb_encrypt(const unsigned char *in, unsigned char *out,
 	l2n(l, out);
 	l = d[0] = d[1] = 0;
 }
+LCRYPTO_ALIAS(CAST_ecb_encrypt);

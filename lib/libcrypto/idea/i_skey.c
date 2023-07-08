@@ -1,4 +1,4 @@
-/* $OpenBSD: i_skey.c,v 1.6 2023/07/07 12:51:58 beck Exp $ */
+/* $OpenBSD: i_skey.c,v 1.7 2023/07/08 10:44:00 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,6 +102,7 @@ idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
 		kf += 8;
 	}
 }
+LCRYPTO_ALIAS(idea_set_encrypt_key);
 
 void
 idea_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
@@ -133,6 +134,7 @@ idea_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
 	tp[49] = tp[50];
 	tp[50] = t;
 }
+LCRYPTO_ALIAS(idea_set_decrypt_key);
 
 /* taken directly from the 'paper' I'll have a look at it later */
 static IDEA_INT

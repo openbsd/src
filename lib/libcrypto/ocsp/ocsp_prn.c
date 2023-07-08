@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_prn.c,v 1.9 2022/01/07 09:45:52 tb Exp $ */
+/* $OpenBSD: ocsp_prn.c,v 1.10 2023/07/08 10:44:00 beck Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -114,6 +114,7 @@ OCSP_response_status_str(long s)
 	};
 	return table2string(s, rstat_tbl, 6);
 }
+LCRYPTO_ALIAS(OCSP_response_status_str);
 
 const char *
 OCSP_cert_status_str(long s)
@@ -125,6 +126,7 @@ OCSP_cert_status_str(long s)
 	};
 	return table2string(s, cstat_tbl, 3);
 }
+LCRYPTO_ALIAS(OCSP_cert_status_str);
 
 const char *
 OCSP_crl_reason_str(long s)
@@ -141,6 +143,7 @@ OCSP_crl_reason_str(long s)
 	};
 	return table2string(s, reason_tbl, 8);
 }
+LCRYPTO_ALIAS(OCSP_crl_reason_str);
 
 int
 OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* o, unsigned long flags)
@@ -192,6 +195,7 @@ OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* o, unsigned long flags)
 err:
 	return 0;
 }
+LCRYPTO_ALIAS(OCSP_REQUEST_print);
 
 int
 OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
@@ -312,3 +316,4 @@ err:
 	OCSP_BASICRESP_free(br);
 	return ret;
 }
+LCRYPTO_ALIAS(OCSP_RESPONSE_print);

@@ -1,4 +1,4 @@
-/* $OpenBSD: c_cfb64.c,v 1.7 2023/07/08 07:25:43 jsing Exp $ */
+/* $OpenBSD: c_cfb64.c,v 1.8 2023/07/08 10:43:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,3 +121,4 @@ CAST_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 	v0 = v1 = ti[0] = ti[1] = t=c = cc = 0;
 	*num = n;
 }
+LCRYPTO_ALIAS(CAST_cfb64_encrypt);

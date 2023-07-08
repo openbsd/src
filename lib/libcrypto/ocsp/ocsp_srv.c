@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_srv.c,v 1.12 2022/01/07 09:45:52 tb Exp $ */
+/* $OpenBSD: ocsp_srv.c,v 1.13 2023/07/08 10:44:00 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -76,18 +76,21 @@ OCSP_request_onereq_count(OCSP_REQUEST *req)
 {
 	return sk_OCSP_ONEREQ_num(req->tbsRequest->requestList);
 }
+LCRYPTO_ALIAS(OCSP_request_onereq_count);
 
 OCSP_ONEREQ *
 OCSP_request_onereq_get0(OCSP_REQUEST *req, int i)
 {
 	return sk_OCSP_ONEREQ_value(req->tbsRequest->requestList, i);
 }
+LCRYPTO_ALIAS(OCSP_request_onereq_get0);
 
 OCSP_CERTID *
 OCSP_onereq_get0_id(OCSP_ONEREQ *one)
 {
 	return one->reqCert;
 }
+LCRYPTO_ALIAS(OCSP_onereq_get0_id);
 
 int
 OCSP_id_get0_info(ASN1_OCTET_STRING **piNameHash, ASN1_OBJECT **pmd,
@@ -105,6 +108,7 @@ OCSP_id_get0_info(ASN1_OCTET_STRING **piNameHash, ASN1_OBJECT **pmd,
 		*pserial = cid->serialNumber;
 	return 1;
 }
+LCRYPTO_ALIAS(OCSP_id_get0_info);
 
 int
 OCSP_request_is_signed(OCSP_REQUEST *req)
@@ -113,6 +117,7 @@ OCSP_request_is_signed(OCSP_REQUEST *req)
 		return 1;
 	return 0;
 }
+LCRYPTO_ALIAS(OCSP_request_is_signed);
 
 /* Create an OCSP response and encode an optional basic response */
 OCSP_RESPONSE *
@@ -139,6 +144,7 @@ err:
 		OCSP_RESPONSE_free(rsp);
 	return NULL;
 }
+LCRYPTO_ALIAS(OCSP_response_create);
 
 OCSP_SINGLERESP *
 OCSP_basic_add1_status(OCSP_BASICRESP *rsp, OCSP_CERTID *cid, int status,
@@ -205,6 +211,7 @@ err:
 	OCSP_SINGLERESP_free(single);
 	return NULL;
 }
+LCRYPTO_ALIAS(OCSP_basic_add1_status);
 
 /* Add a certificate to an OCSP request */
 int
@@ -218,6 +225,7 @@ OCSP_basic_add1_cert(OCSP_BASICRESP *resp, X509 *cert)
 	X509_up_ref(cert);
 	return 1;
 }
+LCRYPTO_ALIAS(OCSP_basic_add1_cert);
 
 int
 OCSP_basic_sign(OCSP_BASICRESP *brsp, X509 *signer, EVP_PKEY *key,
@@ -274,3 +282,4 @@ OCSP_basic_sign(OCSP_BASICRESP *brsp, X509 *signer, EVP_PKEY *key,
 err:
 	return 0;
 }
+LCRYPTO_ALIAS(OCSP_basic_sign);

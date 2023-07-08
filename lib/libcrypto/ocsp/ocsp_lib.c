@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_lib.c,v 1.25 2022/01/22 00:31:23 inoguchi Exp $ */
+/* $OpenBSD: ocsp_lib.c,v 1.26 2023/07/08 10:44:00 beck Exp $ */
 /* Written by Tom Titchener <Tom_Titchener@groove.net> for the OpenSSL
  * project. */
 
@@ -101,6 +101,7 @@ OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject, const X509 *issuer)
 
 	return OCSP_cert_id_new(dgst, iname, ikey, serial);
 }
+LCRYPTO_ALIAS(OCSP_cert_to_id);
 
 OCSP_CERTID *
 OCSP_cert_id_new(const EVP_MD *dgst, const X509_NAME *issuerName,
@@ -154,6 +155,7 @@ err:
 		OCSP_CERTID_free(cid);
 	return NULL;
 }
+LCRYPTO_ALIAS(OCSP_cert_id_new);
 
 int
 OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
@@ -168,6 +170,7 @@ OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
 		return ret;
 	return ASN1_OCTET_STRING_cmp(a->issuerKeyHash, b->issuerKeyHash);
 }
+LCRYPTO_ALIAS(OCSP_id_issuer_cmp);
 
 int
 OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
@@ -179,6 +182,7 @@ OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b)
 		return ret;
 	return ASN1_INTEGER_cmp(a->serialNumber, b->serialNumber);
 }
+LCRYPTO_ALIAS(OCSP_id_cmp);
 
 /* Parse a URL and split it up into host, port and path components and whether
  * it is SSL.
@@ -235,9 +239,11 @@ OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
 	*pport = port;
 	return 1;
 }
+LCRYPTO_ALIAS(OCSP_parse_url);
 
 OCSP_CERTID *
 OCSP_CERTID_dup(OCSP_CERTID *x)
 {
 	return ASN1_item_dup(&OCSP_CERTID_it, x);
 }
+LCRYPTO_ALIAS(OCSP_CERTID_dup);

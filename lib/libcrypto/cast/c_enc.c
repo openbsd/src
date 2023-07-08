@@ -1,4 +1,4 @@
-/* $OpenBSD: c_enc.c,v 1.9 2023/07/08 07:25:43 jsing Exp $ */
+/* $OpenBSD: c_enc.c,v 1.10 2023/07/08 10:43:59 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,6 +92,7 @@ CAST_encrypt(CAST_LONG *data, const CAST_KEY *key)
 	data[1] = l&0xffffffffL;
 	data[0] = r&0xffffffffL;
 }
+LCRYPTO_ALIAS(CAST_encrypt);
 
 void
 CAST_decrypt(CAST_LONG *data, const CAST_KEY *key)
@@ -125,6 +126,7 @@ CAST_decrypt(CAST_LONG *data, const CAST_KEY *key)
 	data[1] = l&0xffffffffL;
 	data[0] = r&0xffffffffL;
 }
+LCRYPTO_ALIAS(CAST_decrypt);
 #endif
 
 void
@@ -202,3 +204,4 @@ CAST_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	tin0 = tin1 = tout0 = tout1 = xor0 = xor1 = 0;
 	tin[0] = tin[1] = 0;
 }
+LCRYPTO_ALIAS(CAST_cbc_encrypt);

@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_asn.c,v 1.10 2022/01/07 09:45:52 tb Exp $ */
+/* $OpenBSD: ocsp_asn.c,v 1.11 2023/07/08 10:44:00 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -102,24 +102,28 @@ d2i_OCSP_SIGNATURE(OCSP_SIGNATURE **a, const unsigned char **in, long len)
 	return (OCSP_SIGNATURE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_SIGNATURE_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_SIGNATURE);
 
 int
 i2d_OCSP_SIGNATURE(OCSP_SIGNATURE *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_SIGNATURE_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_SIGNATURE);
 
 OCSP_SIGNATURE *
 OCSP_SIGNATURE_new(void)
 {
 	return (OCSP_SIGNATURE *)ASN1_item_new(&OCSP_SIGNATURE_it);
 }
+LCRYPTO_ALIAS(OCSP_SIGNATURE_new);
 
 void
 OCSP_SIGNATURE_free(OCSP_SIGNATURE *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_SIGNATURE_it);
 }
+LCRYPTO_ALIAS(OCSP_SIGNATURE_free);
 
 static const ASN1_TEMPLATE OCSP_CERTID_seq_tt[] = {
 	{
@@ -169,24 +173,28 @@ d2i_OCSP_CERTID(OCSP_CERTID **a, const unsigned char **in, long len)
 	return (OCSP_CERTID *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_CERTID_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_CERTID);
 
 int
 i2d_OCSP_CERTID(OCSP_CERTID *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_CERTID_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_CERTID);
 
 OCSP_CERTID *
 OCSP_CERTID_new(void)
 {
 	return (OCSP_CERTID *)ASN1_item_new(&OCSP_CERTID_it);
 }
+LCRYPTO_ALIAS(OCSP_CERTID_new);
 
 void
 OCSP_CERTID_free(OCSP_CERTID *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_CERTID_it);
 }
+LCRYPTO_ALIAS(OCSP_CERTID_free);
 
 static const ASN1_TEMPLATE OCSP_ONEREQ_seq_tt[] = {
 	{
@@ -222,24 +230,28 @@ d2i_OCSP_ONEREQ(OCSP_ONEREQ **a, const unsigned char **in, long len)
 	return (OCSP_ONEREQ *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_ONEREQ_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_ONEREQ);
 
 int
 i2d_OCSP_ONEREQ(OCSP_ONEREQ *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_ONEREQ_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_ONEREQ);
 
 OCSP_ONEREQ *
 OCSP_ONEREQ_new(void)
 {
 	return (OCSP_ONEREQ *)ASN1_item_new(&OCSP_ONEREQ_it);
 }
+LCRYPTO_ALIAS(OCSP_ONEREQ_new);
 
 void
 OCSP_ONEREQ_free(OCSP_ONEREQ *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_ONEREQ_it);
 }
+LCRYPTO_ALIAS(OCSP_ONEREQ_free);
 
 static const ASN1_TEMPLATE OCSP_REQINFO_seq_tt[] = {
 	{
@@ -289,24 +301,28 @@ d2i_OCSP_REQINFO(OCSP_REQINFO **a, const unsigned char **in, long len)
 	return (OCSP_REQINFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_REQINFO_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_REQINFO);
 
 int
 i2d_OCSP_REQINFO(OCSP_REQINFO *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_REQINFO_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_REQINFO);
 
 OCSP_REQINFO *
 OCSP_REQINFO_new(void)
 {
 	return (OCSP_REQINFO *)ASN1_item_new(&OCSP_REQINFO_it);
 }
+LCRYPTO_ALIAS(OCSP_REQINFO_new);
 
 void
 OCSP_REQINFO_free(OCSP_REQINFO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_REQINFO_it);
 }
+LCRYPTO_ALIAS(OCSP_REQINFO_free);
 
 static const ASN1_TEMPLATE OCSP_REQUEST_seq_tt[] = {
 	{
@@ -341,36 +357,42 @@ d2i_OCSP_REQUEST(OCSP_REQUEST **a, const unsigned char **in, long len)
 	return (OCSP_REQUEST *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_REQUEST_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_REQUEST);
 
 int
 i2d_OCSP_REQUEST(OCSP_REQUEST *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_REQUEST_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_REQUEST);
 
 OCSP_REQUEST *
 d2i_OCSP_REQUEST_bio(BIO *bp, OCSP_REQUEST **a)
 {
 	return ASN1_item_d2i_bio(&OCSP_REQUEST_it, bp, a);
 }
+LCRYPTO_ALIAS(d2i_OCSP_REQUEST_bio);
 
 int
 i2d_OCSP_REQUEST_bio(BIO *bp, OCSP_REQUEST *a)
 {
 	return ASN1_item_i2d_bio(&OCSP_REQUEST_it, bp, a);
 }
+LCRYPTO_ALIAS(i2d_OCSP_REQUEST_bio);
 
 OCSP_REQUEST *
 OCSP_REQUEST_new(void)
 {
 	return (OCSP_REQUEST *)ASN1_item_new(&OCSP_REQUEST_it);
 }
+LCRYPTO_ALIAS(OCSP_REQUEST_new);
 
 void
 OCSP_REQUEST_free(OCSP_REQUEST *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_REQUEST_it);
 }
+LCRYPTO_ALIAS(OCSP_REQUEST_free);
 
 /* OCSP_RESPONSE templates */
 
@@ -408,24 +430,28 @@ d2i_OCSP_RESPBYTES(OCSP_RESPBYTES **a, const unsigned char **in, long len)
 	return (OCSP_RESPBYTES *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_RESPBYTES_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_RESPBYTES);
 
 int
 i2d_OCSP_RESPBYTES(OCSP_RESPBYTES *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_RESPBYTES_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_RESPBYTES);
 
 OCSP_RESPBYTES *
 OCSP_RESPBYTES_new(void)
 {
 	return (OCSP_RESPBYTES *)ASN1_item_new(&OCSP_RESPBYTES_it);
 }
+LCRYPTO_ALIAS(OCSP_RESPBYTES_new);
 
 void
 OCSP_RESPBYTES_free(OCSP_RESPBYTES *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_RESPBYTES_it);
 }
+LCRYPTO_ALIAS(OCSP_RESPBYTES_free);
 
 static const ASN1_TEMPLATE OCSP_RESPONSE_seq_tt[] = {
 	{
@@ -461,36 +487,42 @@ d2i_OCSP_RESPONSE(OCSP_RESPONSE **a, const unsigned char **in, long len)
 	return (OCSP_RESPONSE *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_RESPONSE_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_RESPONSE);
 
 int
 i2d_OCSP_RESPONSE(OCSP_RESPONSE *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_RESPONSE_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_RESPONSE);
 
 OCSP_RESPONSE *
 d2i_OCSP_RESPONSE_bio(BIO *bp, OCSP_RESPONSE **a)
 {
 	return ASN1_item_d2i_bio(&OCSP_RESPONSE_it, bp, a);
 }
+LCRYPTO_ALIAS(d2i_OCSP_RESPONSE_bio);
 
 int
 i2d_OCSP_RESPONSE_bio(BIO *bp, OCSP_RESPONSE *a)
 {
 	return ASN1_item_i2d_bio(&OCSP_RESPONSE_it, bp, a);
 }
+LCRYPTO_ALIAS(i2d_OCSP_RESPONSE_bio);
 
 OCSP_RESPONSE *
 OCSP_RESPONSE_new(void)
 {
 	return (OCSP_RESPONSE *)ASN1_item_new(&OCSP_RESPONSE_it);
 }
+LCRYPTO_ALIAS(OCSP_RESPONSE_new);
 
 void
 OCSP_RESPONSE_free(OCSP_RESPONSE *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_RESPONSE_it);
 }
+LCRYPTO_ALIAS(OCSP_RESPONSE_free);
 
 static const ASN1_TEMPLATE OCSP_RESPID_ch_tt[] = {
 	{
@@ -526,24 +558,28 @@ d2i_OCSP_RESPID(OCSP_RESPID **a, const unsigned char **in, long len)
 	return (OCSP_RESPID *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_RESPID_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_RESPID);
 
 int
 i2d_OCSP_RESPID(OCSP_RESPID *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_RESPID_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_RESPID);
 
 OCSP_RESPID *
 OCSP_RESPID_new(void)
 {
 	return (OCSP_RESPID *)ASN1_item_new(&OCSP_RESPID_it);
 }
+LCRYPTO_ALIAS(OCSP_RESPID_new);
 
 void
 OCSP_RESPID_free(OCSP_RESPID *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_RESPID_it);
 }
+LCRYPTO_ALIAS(OCSP_RESPID_free);
 
 static const ASN1_TEMPLATE OCSP_REVOKEDINFO_seq_tt[] = {
 	{
@@ -579,24 +615,28 @@ d2i_OCSP_REVOKEDINFO(OCSP_REVOKEDINFO **a, const unsigned char **in, long len)
 	return (OCSP_REVOKEDINFO *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_REVOKEDINFO_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_REVOKEDINFO);
 
 int
 i2d_OCSP_REVOKEDINFO(OCSP_REVOKEDINFO *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_REVOKEDINFO_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_REVOKEDINFO);
 
 OCSP_REVOKEDINFO *
 OCSP_REVOKEDINFO_new(void)
 {
 	return (OCSP_REVOKEDINFO *)ASN1_item_new(&OCSP_REVOKEDINFO_it);
 }
+LCRYPTO_ALIAS(OCSP_REVOKEDINFO_new);
 
 void
 OCSP_REVOKEDINFO_free(OCSP_REVOKEDINFO *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_REVOKEDINFO_it);
 }
+LCRYPTO_ALIAS(OCSP_REVOKEDINFO_free);
 
 static const ASN1_TEMPLATE OCSP_CERTSTATUS_ch_tt[] = {
 	{
@@ -639,24 +679,28 @@ d2i_OCSP_CERTSTATUS(OCSP_CERTSTATUS **a, const unsigned char **in, long len)
 	return (OCSP_CERTSTATUS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_CERTSTATUS_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_CERTSTATUS);
 
 int
 i2d_OCSP_CERTSTATUS(OCSP_CERTSTATUS *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_CERTSTATUS_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_CERTSTATUS);
 
 OCSP_CERTSTATUS *
 OCSP_CERTSTATUS_new(void)
 {
 	return (OCSP_CERTSTATUS *)ASN1_item_new(&OCSP_CERTSTATUS_it);
 }
+LCRYPTO_ALIAS(OCSP_CERTSTATUS_new);
 
 void
 OCSP_CERTSTATUS_free(OCSP_CERTSTATUS *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_CERTSTATUS_it);
 }
+LCRYPTO_ALIAS(OCSP_CERTSTATUS_free);
 
 static const ASN1_TEMPLATE OCSP_SINGLERESP_seq_tt[] = {
 	{
@@ -713,24 +757,28 @@ d2i_OCSP_SINGLERESP(OCSP_SINGLERESP **a, const unsigned char **in, long len)
 	return (OCSP_SINGLERESP *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_SINGLERESP_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_SINGLERESP);
 
 int
 i2d_OCSP_SINGLERESP(OCSP_SINGLERESP *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_SINGLERESP_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_SINGLERESP);
 
 OCSP_SINGLERESP *
 OCSP_SINGLERESP_new(void)
 {
 	return (OCSP_SINGLERESP *)ASN1_item_new(&OCSP_SINGLERESP_it);
 }
+LCRYPTO_ALIAS(OCSP_SINGLERESP_new);
 
 void
 OCSP_SINGLERESP_free(OCSP_SINGLERESP *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_SINGLERESP_it);
 }
+LCRYPTO_ALIAS(OCSP_SINGLERESP_free);
 
 static const ASN1_TEMPLATE OCSP_RESPDATA_seq_tt[] = {
 	{
@@ -787,24 +835,28 @@ d2i_OCSP_RESPDATA(OCSP_RESPDATA **a, const unsigned char **in, long len)
 	return (OCSP_RESPDATA *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_RESPDATA_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_RESPDATA);
 
 int
 i2d_OCSP_RESPDATA(OCSP_RESPDATA *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_RESPDATA_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_RESPDATA);
 
 OCSP_RESPDATA *
 OCSP_RESPDATA_new(void)
 {
 	return (OCSP_RESPDATA *)ASN1_item_new(&OCSP_RESPDATA_it);
 }
+LCRYPTO_ALIAS(OCSP_RESPDATA_new);
 
 void
 OCSP_RESPDATA_free(OCSP_RESPDATA *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_RESPDATA_it);
 }
+LCRYPTO_ALIAS(OCSP_RESPDATA_free);
 
 static const ASN1_TEMPLATE OCSP_BASICRESP_seq_tt[] = {
 	{
@@ -854,24 +906,28 @@ d2i_OCSP_BASICRESP(OCSP_BASICRESP **a, const unsigned char **in, long len)
 	return (OCSP_BASICRESP *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_BASICRESP_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_BASICRESP);
 
 int
 i2d_OCSP_BASICRESP(OCSP_BASICRESP *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_BASICRESP_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_BASICRESP);
 
 OCSP_BASICRESP *
 OCSP_BASICRESP_new(void)
 {
 	return (OCSP_BASICRESP *)ASN1_item_new(&OCSP_BASICRESP_it);
 }
+LCRYPTO_ALIAS(OCSP_BASICRESP_new);
 
 void
 OCSP_BASICRESP_free(OCSP_BASICRESP *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_BASICRESP_it);
 }
+LCRYPTO_ALIAS(OCSP_BASICRESP_free);
 
 static const ASN1_TEMPLATE OCSP_CRLID_seq_tt[] = {
 	{
@@ -914,24 +970,28 @@ d2i_OCSP_CRLID(OCSP_CRLID **a, const unsigned char **in, long len)
 	return (OCSP_CRLID *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_CRLID_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_CRLID);
 
 int
 i2d_OCSP_CRLID(OCSP_CRLID *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_CRLID_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_CRLID);
 
 OCSP_CRLID *
 OCSP_CRLID_new(void)
 {
 	return (OCSP_CRLID *)ASN1_item_new(&OCSP_CRLID_it);
 }
+LCRYPTO_ALIAS(OCSP_CRLID_new);
 
 void
 OCSP_CRLID_free(OCSP_CRLID *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_CRLID_it);
 }
+LCRYPTO_ALIAS(OCSP_CRLID_free);
 
 static const ASN1_TEMPLATE OCSP_SERVICELOC_seq_tt[] = {
 	{
@@ -967,21 +1027,25 @@ d2i_OCSP_SERVICELOC(OCSP_SERVICELOC **a, const unsigned char **in, long len)
 	return (OCSP_SERVICELOC *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &OCSP_SERVICELOC_it);
 }
+LCRYPTO_ALIAS(d2i_OCSP_SERVICELOC);
 
 int
 i2d_OCSP_SERVICELOC(OCSP_SERVICELOC *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &OCSP_SERVICELOC_it);
 }
+LCRYPTO_ALIAS(i2d_OCSP_SERVICELOC);
 
 OCSP_SERVICELOC *
 OCSP_SERVICELOC_new(void)
 {
 	return (OCSP_SERVICELOC *)ASN1_item_new(&OCSP_SERVICELOC_it);
 }
+LCRYPTO_ALIAS(OCSP_SERVICELOC_new);
 
 void
 OCSP_SERVICELOC_free(OCSP_SERVICELOC *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &OCSP_SERVICELOC_it);
 }
+LCRYPTO_ALIAS(OCSP_SERVICELOC_free);

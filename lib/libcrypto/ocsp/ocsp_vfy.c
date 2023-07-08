@@ -1,4 +1,4 @@
-/* $OpenBSD: ocsp_vfy.c,v 1.22 2022/11/26 16:08:53 tb Exp $ */
+/* $OpenBSD: ocsp_vfy.c,v 1.23 2023/07/08 10:44:00 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -183,6 +183,7 @@ end:
 		sk_X509_free(untrusted);
 	return ret;
 }
+LCRYPTO_ALIAS(OCSP_basic_verify);
 
 int
 OCSP_resp_get0_signer(OCSP_BASICRESP *bs, X509 **signer,
@@ -190,6 +191,7 @@ OCSP_resp_get0_signer(OCSP_BASICRESP *bs, X509 **signer,
 {
 	return ocsp_find_signer(signer, bs, extra_certs, NULL, 0) > 0;
 }
+LCRYPTO_ALIAS(OCSP_resp_get0_signer);
 
 static int
 ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
@@ -448,6 +450,7 @@ OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store,
 	}
 	return 1;
 }
+LCRYPTO_ALIAS(OCSP_request_verify);
 
 static int
 ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req, X509_NAME *nm,
