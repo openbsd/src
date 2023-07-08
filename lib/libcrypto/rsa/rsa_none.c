@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_none.c,v 1.11 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: rsa_none.c,v 1.12 2023/07/08 12:26:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -80,6 +80,7 @@ RSA_padding_add_none(unsigned char *to, int tlen, const unsigned char *from,
 	memcpy(to, from, flen);
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_padding_add_none);
 
 int
 RSA_padding_check_none(unsigned char *to, int tlen, const unsigned char *from,
@@ -94,3 +95,4 @@ RSA_padding_check_none(unsigned char *to, int tlen, const unsigned char *from,
 	memcpy(to + tlen - flen, from, flen);
 	return tlen;
 }
+LCRYPTO_ALIAS(RSA_padding_check_none);

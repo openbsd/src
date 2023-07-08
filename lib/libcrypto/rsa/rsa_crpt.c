@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.21 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.22 2023/07/08 12:26:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,12 +78,14 @@ RSA_bits(const RSA *r)
 {
 	return BN_num_bits(r->n);
 }
+LCRYPTO_ALIAS(RSA_bits);
 
 int
 RSA_size(const RSA *r)
 {
 	return BN_num_bytes(r->n);
 }
+LCRYPTO_ALIAS(RSA_size);
 
 int
 RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
@@ -91,6 +93,7 @@ RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
 {
 	return rsa->meth->rsa_pub_enc(flen, from, to, rsa, padding);
 }
+LCRYPTO_ALIAS(RSA_public_encrypt);
 
 int
 RSA_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
@@ -98,6 +101,7 @@ RSA_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
 {
 	return rsa->meth->rsa_priv_enc(flen, from, to, rsa, padding);
 }
+LCRYPTO_ALIAS(RSA_private_encrypt);
 
 int
 RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
@@ -105,6 +109,7 @@ RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
 {
 	return rsa->meth->rsa_priv_dec(flen, from, to, rsa, padding);
 }
+LCRYPTO_ALIAS(RSA_private_decrypt);
 
 int
 RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
@@ -112,12 +117,14 @@ RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
 {
 	return rsa->meth->rsa_pub_dec(flen, from, to, rsa, padding);
 }
+LCRYPTO_ALIAS(RSA_public_decrypt);
 
 int
 RSA_flags(const RSA *r)
 {
 	return r == NULL ? 0 : r->meth->flags;
 }
+LCRYPTO_ALIAS(RSA_flags);
 
 void
 RSA_blinding_off(RSA *rsa)
@@ -126,6 +133,7 @@ RSA_blinding_off(RSA *rsa)
 	rsa->blinding = NULL;
 	rsa->flags |= RSA_FLAG_NO_BLINDING;
 }
+LCRYPTO_ALIAS(RSA_blinding_off);
 
 int
 RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
@@ -144,6 +152,7 @@ RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
 err:
 	return (ret);
 }
+LCRYPTO_ALIAS(RSA_blinding_on);
 
 static BIGNUM *
 rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p, const BIGNUM *q,
@@ -220,3 +229,4 @@ err:
 
 	return ret;
 }
+LCRYPTO_ALIAS(RSA_setup_blinding);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsa_meth.c,v 1.6 2022/11/26 16:08:54 tb Exp $	*/
+/*	$OpenBSD: rsa_meth.c,v 1.7 2023/07/08 12:26:45 beck Exp $	*/
 /*
  * Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
  *
@@ -38,6 +38,7 @@ RSA_meth_new(const char *name, int flags)
 
 	return meth;
 }
+LCRYPTO_ALIAS(RSA_meth_new);
 
 void
 RSA_meth_free(RSA_METHOD *meth)
@@ -48,6 +49,7 @@ RSA_meth_free(RSA_METHOD *meth)
 	free(meth->name);
 	free(meth);
 }
+LCRYPTO_ALIAS(RSA_meth_free);
 
 RSA_METHOD *
 RSA_meth_dup(const RSA_METHOD *meth)
@@ -64,6 +66,7 @@ RSA_meth_dup(const RSA_METHOD *meth)
 
 	return copy;
 }
+LCRYPTO_ALIAS(RSA_meth_dup);
 
 int
 RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
@@ -76,12 +79,14 @@ RSA_meth_set1_name(RSA_METHOD *meth, const char *name)
 	meth->name = new_name;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set1_name);
 
 int
 (*RSA_meth_get_finish(const RSA_METHOD *meth))(RSA *rsa)
 {
 	return meth->finish;
 }
+LCRYPTO_ALIAS(RSA_meth_get_finish);
 
 int
 RSA_meth_set_priv_enc(RSA_METHOD *meth, int (*priv_enc)(int flen,
@@ -90,6 +95,7 @@ RSA_meth_set_priv_enc(RSA_METHOD *meth, int (*priv_enc)(int flen,
 	meth->rsa_priv_enc = priv_enc;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_priv_enc);
 
 int
 RSA_meth_set_priv_dec(RSA_METHOD *meth, int (*priv_dec)(int flen,
@@ -98,6 +104,7 @@ RSA_meth_set_priv_dec(RSA_METHOD *meth, int (*priv_dec)(int flen,
 	meth->rsa_priv_dec = priv_dec;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_priv_dec);
 
 int
 RSA_meth_set_finish(RSA_METHOD *meth, int (*finish)(RSA *rsa))
@@ -105,6 +112,7 @@ RSA_meth_set_finish(RSA_METHOD *meth, int (*finish)(RSA *rsa))
 	meth->finish = finish;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_finish);
 
 int
 RSA_meth_set_pub_enc(RSA_METHOD *meth, int (*pub_enc)(int flen,
@@ -113,6 +121,7 @@ RSA_meth_set_pub_enc(RSA_METHOD *meth, int (*pub_enc)(int flen,
 	meth->rsa_pub_enc = pub_enc;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_pub_enc);
 
 int
 RSA_meth_set_pub_dec(RSA_METHOD *meth, int (*pub_dec)(int flen,
@@ -121,6 +130,7 @@ RSA_meth_set_pub_dec(RSA_METHOD *meth, int (*pub_dec)(int flen,
 	meth->rsa_pub_dec = pub_dec;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_pub_dec);
 
 int
 RSA_meth_set_mod_exp(RSA_METHOD *meth, int (*mod_exp)(BIGNUM *r0,
@@ -129,6 +139,7 @@ RSA_meth_set_mod_exp(RSA_METHOD *meth, int (*mod_exp)(BIGNUM *r0,
 	meth->rsa_mod_exp = mod_exp;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_mod_exp);
 
 int
 RSA_meth_set_bn_mod_exp(RSA_METHOD *meth, int (*bn_mod_exp)(BIGNUM *r,
@@ -138,6 +149,7 @@ RSA_meth_set_bn_mod_exp(RSA_METHOD *meth, int (*bn_mod_exp)(BIGNUM *r,
 	meth->bn_mod_exp = bn_mod_exp;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_bn_mod_exp);
 
 int
 RSA_meth_set_init(RSA_METHOD *meth, int (*init)(RSA *rsa))
@@ -145,6 +157,7 @@ RSA_meth_set_init(RSA_METHOD *meth, int (*init)(RSA *rsa))
 	meth->init = init;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_init);
 
 int
 RSA_meth_set_keygen(RSA_METHOD *meth, int (*keygen)(RSA *rsa, int bits,
@@ -153,6 +166,7 @@ RSA_meth_set_keygen(RSA_METHOD *meth, int (*keygen)(RSA *rsa, int bits,
 	meth->rsa_keygen = keygen;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_keygen);
 
 int
 RSA_meth_set_flags(RSA_METHOD *meth, int flags)
@@ -160,6 +174,7 @@ RSA_meth_set_flags(RSA_METHOD *meth, int flags)
 	meth->flags = flags;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_flags);
 
 int
 RSA_meth_set0_app_data(RSA_METHOD *meth, void *app_data)
@@ -167,12 +182,14 @@ RSA_meth_set0_app_data(RSA_METHOD *meth, void *app_data)
 	meth->app_data = app_data;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set0_app_data);
 
 const char *
 RSA_meth_get0_name(const RSA_METHOD *meth)
 {
 	return meth->name;
 }
+LCRYPTO_ALIAS(RSA_meth_get0_name);
 
 int
 (*RSA_meth_get_pub_enc(const RSA_METHOD *meth))(int flen,
@@ -180,6 +197,7 @@ int
 {
 	return meth->rsa_pub_enc;
 }
+LCRYPTO_ALIAS(RSA_meth_get_pub_enc);
 
 int
 (*RSA_meth_get_pub_dec(const RSA_METHOD *meth))(int flen,
@@ -187,6 +205,7 @@ int
 {
 	return meth->rsa_pub_dec;
 }
+LCRYPTO_ALIAS(RSA_meth_get_pub_dec);
 
 int
 (*RSA_meth_get_priv_enc(const RSA_METHOD *meth))(int flen,
@@ -194,6 +213,7 @@ int
 {
 	return meth->rsa_priv_enc;
 }
+LCRYPTO_ALIAS(RSA_meth_get_priv_enc);
 
 int
 (*RSA_meth_get_priv_dec(const RSA_METHOD *meth))(int flen,
@@ -201,6 +221,7 @@ int
 {
 	return meth->rsa_priv_dec;
 }
+LCRYPTO_ALIAS(RSA_meth_get_priv_dec);
 
 int
 (*RSA_meth_get_mod_exp(const RSA_METHOD *meth))(BIGNUM *r0, const BIGNUM *i,
@@ -208,6 +229,7 @@ int
 {
 	return meth->rsa_mod_exp;
 }
+LCRYPTO_ALIAS(RSA_meth_get_mod_exp);
 
 int
 (*RSA_meth_get_bn_mod_exp(const RSA_METHOD *meth))(BIGNUM *r,
@@ -216,12 +238,14 @@ int
 {
 	return meth->bn_mod_exp;
 }
+LCRYPTO_ALIAS(RSA_meth_get_bn_mod_exp);
 
 int
 (*RSA_meth_get_init(const RSA_METHOD *meth))(RSA *rsa)
 {
 	return meth->init;
 }
+LCRYPTO_ALIAS(RSA_meth_get_init);
 
 int
 (*RSA_meth_get_keygen(const RSA_METHOD *meth))(RSA *rsa, int bits, BIGNUM *e,
@@ -229,18 +253,21 @@ int
 {
 	return meth->rsa_keygen;
 }
+LCRYPTO_ALIAS(RSA_meth_get_keygen);
 
 int
 RSA_meth_get_flags(const RSA_METHOD *meth)
 {
 	return meth->flags;
 }
+LCRYPTO_ALIAS(RSA_meth_get_flags);
 
 void *
 RSA_meth_get0_app_data(const RSA_METHOD *meth)
 {
 	return meth->app_data;
 }
+LCRYPTO_ALIAS(RSA_meth_get0_app_data);
 
 int
 (*RSA_meth_get_sign(const RSA_METHOD *meth))(int type,
@@ -250,6 +277,7 @@ int
 {
 	return meth->rsa_sign;
 }
+LCRYPTO_ALIAS(RSA_meth_get_sign);
 
 int
 RSA_meth_set_sign(RSA_METHOD *meth, int (*sign)(int type,
@@ -259,6 +287,7 @@ RSA_meth_set_sign(RSA_METHOD *meth, int (*sign)(int type,
 	meth->rsa_sign = sign;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_sign);
 
 int
 (*RSA_meth_get_verify(const RSA_METHOD *meth))(int dtype,
@@ -267,6 +296,7 @@ int
 {
 	return meth->rsa_verify;
 }
+LCRYPTO_ALIAS(RSA_meth_get_verify);
 
 int
 RSA_meth_set_verify(RSA_METHOD *meth, int (*verify)(int dtype,
@@ -276,3 +306,4 @@ RSA_meth_set_verify(RSA_METHOD *meth, int (*verify)(int dtype,
 	meth->rsa_verify = verify;
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_meth_set_verify);

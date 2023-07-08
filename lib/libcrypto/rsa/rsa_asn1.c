@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_asn1.c,v 1.16 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rsa_asn1.c,v 1.17 2023/07/08 12:26:45 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -269,24 +269,28 @@ d2i_RSA_PSS_PARAMS(RSA_PSS_PARAMS **a, const unsigned char **in, long len)
 	return (RSA_PSS_PARAMS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &RSA_PSS_PARAMS_it);
 }
+LCRYPTO_ALIAS(d2i_RSA_PSS_PARAMS);
 
 int
 i2d_RSA_PSS_PARAMS(RSA_PSS_PARAMS *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &RSA_PSS_PARAMS_it);
 }
+LCRYPTO_ALIAS(i2d_RSA_PSS_PARAMS);
 
 RSA_PSS_PARAMS *
 RSA_PSS_PARAMS_new(void)
 {
 	return (RSA_PSS_PARAMS *)ASN1_item_new(&RSA_PSS_PARAMS_it);
 }
+LCRYPTO_ALIAS(RSA_PSS_PARAMS_new);
 
 void
 RSA_PSS_PARAMS_free(RSA_PSS_PARAMS *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &RSA_PSS_PARAMS_it);
 }
+LCRYPTO_ALIAS(RSA_PSS_PARAMS_free);
 
 static int
 rsa_oaep_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it, void *exarg)
@@ -349,24 +353,28 @@ d2i_RSA_OAEP_PARAMS(RSA_OAEP_PARAMS **a, const unsigned char **in, long len)
 	return (RSA_OAEP_PARAMS *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &RSA_OAEP_PARAMS_it);
 }
+LCRYPTO_ALIAS(d2i_RSA_OAEP_PARAMS);
 
 int
 i2d_RSA_OAEP_PARAMS(RSA_OAEP_PARAMS *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &RSA_OAEP_PARAMS_it);
 }
+LCRYPTO_ALIAS(i2d_RSA_OAEP_PARAMS);
 
 RSA_OAEP_PARAMS *
 RSA_OAEP_PARAMS_new(void)
 {
 	return (RSA_OAEP_PARAMS *)ASN1_item_new(&RSA_OAEP_PARAMS_it);
 }
+LCRYPTO_ALIAS(RSA_OAEP_PARAMS_new);
 
 void
 RSA_OAEP_PARAMS_free(RSA_OAEP_PARAMS *a)
 {
 	ASN1_item_free((ASN1_VALUE *)a, &RSA_OAEP_PARAMS_it);
 }
+LCRYPTO_ALIAS(RSA_OAEP_PARAMS_free);
 
 RSA *
 d2i_RSAPrivateKey(RSA **a, const unsigned char **in, long len)
@@ -374,12 +382,14 @@ d2i_RSAPrivateKey(RSA **a, const unsigned char **in, long len)
 	return (RSA *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &RSAPrivateKey_it);
 }
+LCRYPTO_ALIAS(d2i_RSAPrivateKey);
 
 int
 i2d_RSAPrivateKey(const RSA *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &RSAPrivateKey_it);
 }
+LCRYPTO_ALIAS(i2d_RSAPrivateKey);
 
 
 RSA *
@@ -388,21 +398,25 @@ d2i_RSAPublicKey(RSA **a, const unsigned char **in, long len)
 	return (RSA *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
 	    &RSAPublicKey_it);
 }
+LCRYPTO_ALIAS(d2i_RSAPublicKey);
 
 int
 i2d_RSAPublicKey(const RSA *a, unsigned char **out)
 {
 	return ASN1_item_i2d((ASN1_VALUE *)a, out, &RSAPublicKey_it);
 }
+LCRYPTO_ALIAS(i2d_RSAPublicKey);
 
 RSA *
 RSAPublicKey_dup(RSA *rsa)
 {
 	return ASN1_item_dup(&RSAPublicKey_it, rsa);
 }
+LCRYPTO_ALIAS(RSAPublicKey_dup);
 
 RSA *
 RSAPrivateKey_dup(RSA *rsa)
 {
 	return ASN1_item_dup(&RSAPrivateKey_it, rsa);
 }
+LCRYPTO_ALIAS(RSAPrivateKey_dup);

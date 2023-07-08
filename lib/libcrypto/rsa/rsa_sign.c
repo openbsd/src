@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_sign.c,v 1.35 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rsa_sign.c,v 1.36 2023/07/08 12:26:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,6 +166,7 @@ RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	freezero(tmps, (size_t)encoded_len);
 	return (ret);
 }
+LCRYPTO_ALIAS(RSA_sign);
 
 /*
  * int_rsa_verify verifies an RSA signature in `sigbuf' using `rsa'. It may be
@@ -276,3 +277,4 @@ RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
 
 	return int_rsa_verify(dtype, m, m_len, NULL, NULL, sigbuf, siglen, rsa);
 }
+LCRYPTO_ALIAS(RSA_verify);

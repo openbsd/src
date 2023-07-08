@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_gen.c,v 1.29 2023/04/13 15:18:29 tb Exp $ */
+/* $OpenBSD: rsa_gen.c,v 1.30 2023/07/08 12:26:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,6 +75,7 @@ RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 		return rsa->meth->rsa_keygen(rsa, bits, e_value, cb);
 	return rsa_builtin_keygen(rsa, bits, e_value, cb);
 }
+LCRYPTO_ALIAS(RSA_generate_key_ex);
 
 static int
 rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
@@ -253,3 +254,4 @@ err:
 
 	return 0;
 }
+LCRYPTO_ALIAS(RSA_generate_key);

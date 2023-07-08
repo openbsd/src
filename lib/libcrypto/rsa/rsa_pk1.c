@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pk1.c,v 1.15 2017/01/29 17:49:23 beck Exp $ */
+/* $OpenBSD: rsa_pk1.c,v 1.16 2023/07/08 12:26:45 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -90,6 +90,7 @@ RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
 
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_padding_add_PKCS1_type_1);
 
 int
 RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
@@ -139,6 +140,7 @@ RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
 
 	return j;
 }
+LCRYPTO_ALIAS(RSA_padding_check_PKCS1_type_1);
 
 int
 RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
@@ -172,6 +174,7 @@ RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
 	memcpy(p, from, flen);
 	return 1;
 }
+LCRYPTO_ALIAS(RSA_padding_add_PKCS1_type_2);
 
 int
 RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
@@ -211,3 +214,4 @@ RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
 
 	return j;
 }
+LCRYPTO_ALIAS(RSA_padding_check_PKCS1_type_2);

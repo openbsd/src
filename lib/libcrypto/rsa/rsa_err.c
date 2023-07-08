@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_err.c,v 1.21 2022/07/12 14:42:50 kn Exp $ */
+/* $OpenBSD: rsa_err.c,v 1.22 2023/07/08 12:26:45 beck Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -155,3 +155,4 @@ ERR_load_RSA_strings(void)
 	}
 #endif
 }
+LCRYPTO_ALIAS(ERR_load_RSA_strings);

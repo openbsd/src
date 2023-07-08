@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_pss.c,v 1.16 2022/11/26 16:08:54 tb Exp $ */
+/* $OpenBSD: rsa_pss.c,v 1.17 2023/07/08 12:26:45 beck Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2005.
  */
@@ -77,6 +77,7 @@ RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash, const EVP_MD *Hash,
 {
 	return RSA_verify_PKCS1_PSS_mgf1(rsa, mHash, Hash, NULL, EM, sLen);
 }
+LCRYPTO_ALIAS(RSA_verify_PKCS1_PSS);
 
 int
 RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
@@ -178,6 +179,7 @@ err:
 
 	return ret;
 }
+LCRYPTO_ALIAS(RSA_verify_PKCS1_PSS_mgf1);
 
 int
 RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
@@ -185,6 +187,7 @@ RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
 {
 	return RSA_padding_add_PKCS1_PSS_mgf1(rsa, EM, mHash, Hash, NULL, sLen);
 }
+LCRYPTO_ALIAS(RSA_padding_add_PKCS1_PSS);
 
 int
 RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
@@ -282,3 +285,4 @@ err:
 
 	return ret;
 }
+LCRYPTO_ALIAS(RSA_padding_add_PKCS1_PSS_mgf1);
