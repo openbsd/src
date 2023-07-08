@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm3.c,v 1.4 2023/07/07 19:37:54 beck Exp $	*/
+/*	$OpenBSD: sm3.c,v 1.5 2023/07/08 06:13:08 beck Exp $	*/
 /*
  * Copyright (c) 2018, Ribose Inc
  *
@@ -20,6 +20,8 @@
 #include <openssl/sm3.h>
 
 #include "sm3_local.h"
+LCRYPTO_ALIAS(SM3_Update);
+LCRYPTO_ALIAS(SM3_Final);
 
 int
 SM3_Init(SM3_CTX *c)
@@ -35,6 +37,7 @@ SM3_Init(SM3_CTX *c)
 	c->H = SM3_H;
 	return 1;
 }
+LCRYPTO_ALIAS(SM3_Init);
 
 void
 SM3_block_data_order(SM3_CTX *ctx, const void *p, size_t num)

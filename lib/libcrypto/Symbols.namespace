@@ -1792,3 +1792,6 @@ _libre_lh_node_usage_stats
 _libre_lh_stats_bio
 _libre_lh_node_stats_bio
 _libre_lh_node_usage_stats_bio
+_libre_SM3_Init
+_libre_SM3_Update
+_libre_SM3_Final
