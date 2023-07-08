@@ -2701,3 +2701,8 @@ _libre_CRYPTO_ccm128_encrypt_ccm64
 _libre_CRYPTO_ccm128_decrypt_ccm64
 _libre_CRYPTO_ccm128_tag
 _libre_CRYPTO_xts128_encrypt
+_libre_X25519_keypair
+_libre_X25519
+_libre_ED25519_keypair
+_libre_ED25519_sign
+_libre_ED25519_verify
