@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_key.c,v 1.38 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: dh_key.c,v 1.39 2023/07/08 15:29:03 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -77,12 +77,14 @@ DH_generate_key(DH *dh)
 {
 	return dh->meth->generate_key(dh);
 }
+LCRYPTO_ALIAS(DH_generate_key);
 
 int
 DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
 	return dh->meth->compute_key(key, pub_key, dh);
 }
+LCRYPTO_ALIAS(DH_compute_key);
 
 static DH_METHOD dh_ossl = {
 	.name = "OpenSSL DH Method",
@@ -98,6 +100,7 @@ DH_OpenSSL(void)
 {
 	return &dh_ossl;
 }
+LCRYPTO_ALIAS(DH_OpenSSL);
 
 static int
 generate_key(DH *dh)

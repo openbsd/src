@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.38 2023/03/07 09:27:10 jsing Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.39 2023/07/08 15:29:03 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,6 +78,7 @@ DH_set_default_method(const DH_METHOD *meth)
 {
 	default_DH_method = meth;
 }
+LCRYPTO_ALIAS(DH_set_default_method);
 
 const DH_METHOD *
 DH_get_default_method(void)
@@ -86,6 +87,7 @@ DH_get_default_method(void)
 		default_DH_method = DH_OpenSSL();
 	return default_DH_method;
 }
+LCRYPTO_ALIAS(DH_get_default_method);
 
 int
 DH_set_method(DH *dh, const DH_METHOD *meth)
@@ -108,12 +110,14 @@ DH_set_method(DH *dh, const DH_METHOD *meth)
 		meth->init(dh);
         return 1;
 }
+LCRYPTO_ALIAS(DH_set_method);
 
 DH *
 DH_new(void)
 {
 	return DH_new_method(NULL);
 }
+LCRYPTO_ALIAS(DH_new);
 
 DH *
 DH_new_method(ENGINE *engine)
@@ -174,6 +178,7 @@ DH_new_method(ENGINE *engine)
 	}
 	return ret;
 }
+LCRYPTO_ALIAS(DH_new_method);
 
 void
 DH_free(DH *r)
@@ -204,6 +209,7 @@ DH_free(DH *r)
 	BN_free(r->priv_key);
 	free(r);
 }
+LCRYPTO_ALIAS(DH_free);
 
 int
 DH_up_ref(DH *r)
@@ -212,6 +218,7 @@ DH_up_ref(DH *r)
 
 	return i > 1 ? 1 : 0;
 }
+LCRYPTO_ALIAS(DH_up_ref);
 
 int
 DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
@@ -220,30 +227,35 @@ DH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	return CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DH, argl, argp, new_func,
 	    dup_func, free_func);
 }
+LCRYPTO_ALIAS(DH_get_ex_new_index);
 
 int
 DH_set_ex_data(DH *d, int idx, void *arg)
 {
 	return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
 }
+LCRYPTO_ALIAS(DH_set_ex_data);
 
 void *
 DH_get_ex_data(DH *d, int idx)
 {
 	return CRYPTO_get_ex_data(&d->ex_data, idx);
 }
+LCRYPTO_ALIAS(DH_get_ex_data);
 
 int
 DH_size(const DH *dh)
 {
 	return BN_num_bytes(dh->p);
 }
+LCRYPTO_ALIAS(DH_size);
 
 int
 DH_bits(const DH *dh)
 {
 	return BN_num_bits(dh->p);
 }
+LCRYPTO_ALIAS(DH_bits);
 
 int
 DH_security_bits(const DH *dh)
@@ -257,12 +269,14 @@ DH_security_bits(const DH *dh)
 
 	return BN_security_bits(BN_num_bits(dh->p), N);
 }
+LCRYPTO_ALIAS(DH_security_bits);
 
 ENGINE *
 DH_get0_engine(DH *dh)
 {
 	return dh->engine;
 }
+LCRYPTO_ALIAS(DH_get0_engine);
 
 void
 DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
@@ -274,6 +288,7 @@ DH_get0_pqg(const DH *dh, const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 	if (g != NULL)
 		*g = dh->g;
 }
+LCRYPTO_ALIAS(DH_get0_pqg);
 
 int
 DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
@@ -297,6 +312,7 @@ DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 
 	return 1;
 }
+LCRYPTO_ALIAS(DH_set0_pqg);
 
 void
 DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
@@ -306,6 +322,7 @@ DH_get0_key(const DH *dh, const BIGNUM **pub_key, const BIGNUM **priv_key)
 	if (priv_key != NULL)
 		*priv_key = dh->priv_key;
 }
+LCRYPTO_ALIAS(DH_get0_key);
 
 int
 DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
@@ -321,60 +338,70 @@ DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
 
 	return 1;
 }
+LCRYPTO_ALIAS(DH_set0_key);
 
 const BIGNUM *
 DH_get0_p(const DH *dh)
 {
 	return dh->p;
 }
+LCRYPTO_ALIAS(DH_get0_p);
 
 const BIGNUM *
 DH_get0_q(const DH *dh)
 {
 	return dh->q;
 }
+LCRYPTO_ALIAS(DH_get0_q);
 
 const BIGNUM *
 DH_get0_g(const DH *dh)
 {
 	return dh->g;
 }
+LCRYPTO_ALIAS(DH_get0_g);
 
 const BIGNUM *
 DH_get0_priv_key(const DH *dh)
 {
 	return dh->priv_key;
 }
+LCRYPTO_ALIAS(DH_get0_priv_key);
 
 const BIGNUM *
 DH_get0_pub_key(const DH *dh)
 {
 	return dh->pub_key;
 }
+LCRYPTO_ALIAS(DH_get0_pub_key);
 
 void
 DH_clear_flags(DH *dh, int flags)
 {
 	dh->flags &= ~flags;
 }
+LCRYPTO_ALIAS(DH_clear_flags);
 
 int
 DH_test_flags(const DH *dh, int flags)
 {
 	return dh->flags & flags;
 }
+LCRYPTO_ALIAS(DH_test_flags);
 
 void
 DH_set_flags(DH *dh, int flags)
 {
 	dh->flags |= flags;
 }
+LCRYPTO_ALIAS(DH_set_flags);
 
 long
 DH_get_length(const DH *dh)
 {
 	return dh->length;
 }
+LCRYPTO_ALIAS(DH_get_length);
 
 int
 DH_set_length(DH *dh, long length)
@@ -385,3 +412,4 @@ DH_set_length(DH *dh, long length)
 	dh->length = length;
 	return 1;
 }
+LCRYPTO_ALIAS(DH_set_length);

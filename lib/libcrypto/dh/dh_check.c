@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.26 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: dh_check.c,v 1.27 2023/07/08 15:29:03 beck Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -227,6 +227,7 @@ DH_check(const DH *dh, int *flags)
 	BN_CTX_free(ctx);
 	return ok;
 }
+LCRYPTO_ALIAS(DH_check);
 
 int
 DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
@@ -299,3 +300,4 @@ DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *flags)
 
 	return ok;
 }
+LCRYPTO_ALIAS(DH_check_pub_key);
