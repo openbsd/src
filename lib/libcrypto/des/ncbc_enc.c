@@ -1,4 +1,4 @@
-/* $OpenBSD: ncbc_enc.c,v 1.9 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: ncbc_enc.c,v 1.10 2023/07/08 07:34:34 jsing Exp $ */
 /*
  * #included by:
  *    cbc_enc.c  (DES_cbc_encrypt)
@@ -84,8 +84,7 @@ DES_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	if (enc) {
 		c2l(iv, tout0);
 		c2l(iv, tout1);
-		for (l -= 8; l >= 0; l -= 8)
-		{
+		for (l -= 8; l >= 0; l -= 8) {
 			c2l(in, tin0);
 			c2l(in, tin1);
 			tin0 ^= tout0;
@@ -118,8 +117,7 @@ DES_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 	} else {
 		c2l(iv, xor0);
 		c2l(iv, xor1);
-		for (l -= 8; l >= 0; l -= 8)
-		{
+		for (l -= 8; l >= 0; l -= 8) {
 			c2l(in, tin0);
 			tin[0] = tin0;
 			c2l(in, tin1);
@@ -146,7 +144,7 @@ DES_ncbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			xor1 = tin1;
 #endif
 		}
-#ifndef CBC_ENC_C__DONT_UPDATE_IV 
+#ifndef CBC_ENC_C__DONT_UPDATE_IV
 		iv = &(*ivec)[0];
 		l2c(xor0, iv);
 		l2c(xor1, iv);

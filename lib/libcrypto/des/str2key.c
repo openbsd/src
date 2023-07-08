@@ -1,4 +1,4 @@
-/* $OpenBSD: str2key.c,v 1.12 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: str2key.c,v 1.13 2023/07/08 07:34:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -72,8 +72,7 @@ DES_string_to_key(const char *str, DES_cblock *key)
 	for (i = 0; i < length; i++)
 		(*key)[i % 8] ^= (str[i] << 1);
 #else /* MIT COMPATIBLE */
-	for (i = 0; i < length; i++)
-	{
+	for (i = 0; i < length; i++) {
 		j = str[i];
 		if ((i % 16) < 8)
 			(*key)[i % 8] ^= (j << 1);
@@ -111,13 +110,11 @@ DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2)
 	length = strlen(str);
 #ifdef OLD_STR_TO_KEY
 	if (length <= 8) {
-		for (i = 0; i < length; i++)
-		{
+		for (i = 0; i < length; i++) {
 			(*key2)[i] = (*key1)[i] = (str[i] << 1);
 		}
 	} else {
-		for (i = 0; i < length; i++)
-		{
+		for (i = 0; i < length; i++) {
 			if ((i/8) & 1)
 				(*key2)[i % 8] ^= (str[i] << 1);
 			else
@@ -125,8 +122,7 @@ DES_string_to_2keys(const char *str, DES_cblock *key1, DES_cblock *key2)
 		}
 	}
 #else /* MIT COMPATIBLE */
-	for (i = 0; i < length; i++)
-	{
+	for (i = 0; i < length; i++) {
 		j = str[i];
 		if ((i % 32) < 16) {
 			if ((i % 16) < 8)

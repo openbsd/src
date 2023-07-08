@@ -1,4 +1,4 @@
-/* $OpenBSD: des_enc.c,v 1.14 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: des_enc.c,v 1.15 2023/07/08 07:34:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,8 +110,7 @@ DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 		D_ENCRYPT(l, r, 28); /*  15 */
 		D_ENCRYPT(r, l, 30); /*  16 */
 #else
-		for (i = 0; i < 32; i += 4)
-		{
+		for (i = 0; i < 32; i += 4) {
 			D_ENCRYPT(l, r, i + 0); /*  1 */
 			D_ENCRYPT(r, l, i + 2); /*  2 */
 		}
@@ -135,8 +134,7 @@ DES_encrypt1(DES_LONG *data, DES_key_schedule *ks, int enc)
 		D_ENCRYPT(l, r, 2); /*  2 */
 		D_ENCRYPT(r, l, 0); /*  1 */
 #else
-		for (i = 30; i > 0; i -= 4)
-		{
+		for (i = 30; i > 0; i -= 4) {
 			D_ENCRYPT(l, r, i - 0); /* 16 */
 			D_ENCRYPT(r, l, i - 2); /* 15 */
 		}
@@ -200,8 +198,7 @@ DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 		D_ENCRYPT(l, r, 28); /*  15 */
 		D_ENCRYPT(r, l, 30); /*  16 */
 #else
-		for (i = 0; i < 32; i += 4)
-		{
+		for (i = 0; i < 32; i += 4) {
 			D_ENCRYPT(l, r, i + 0); /*  1 */
 			D_ENCRYPT(r, l, i + 2); /*  2 */
 		}
@@ -225,8 +222,7 @@ DES_encrypt2(DES_LONG *data, DES_key_schedule *ks, int enc)
 		D_ENCRYPT(l, r, 2); /*  2 */
 		D_ENCRYPT(r, l, 0); /*  1 */
 #else
-		for (i = 30; i > 0; i -= 4)
-		{
+		for (i = 30; i > 0; i -= 4) {
 			D_ENCRYPT(l, r, i - 0); /* 16 */
 			D_ENCRYPT(r, l, i - 2); /* 15 */
 		}
@@ -308,8 +304,7 @@ DES_ede3_cbc_encrypt(const unsigned char *input, unsigned char *output,
 	if (enc) {
 		c2l(iv, tout0);
 		c2l(iv, tout1);
-		for (l -= 8; l >= 0; l -= 8)
-		{
+		for (l -= 8; l >= 0; l -= 8) {
 			c2l(in, tin0);
 			c2l(in, tin1);
 			tin0 ^= tout0;
@@ -346,8 +341,7 @@ DES_ede3_cbc_encrypt(const unsigned char *input, unsigned char *output,
 
 		c2l(iv, xor0);
 		c2l(iv, xor1);
-		for (l -= 8; l >= 0; l -= 8)
-		{
+		for (l -= 8; l >= 0; l -= 8) {
 			c2l(in, tin0);
 			c2l(in, tin1);
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: enc_writ.c,v 1.16 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: enc_writ.c,v 1.17 2023/07/08 07:34:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -110,8 +110,7 @@ DES_enc_write(int fd, const void *_buf, int len,
 	/* lets recurse if we want to send the data in small chunks */
 	if (len > MAXWRITE) {
 		j = 0;
-		for (i = 0; i < len; i += k)
-		{
+		for (i = 0; i < len; i += k) {
 			k = DES_enc_write(fd, &(buf[i]),
 			    ((len - i) > MAXWRITE) ? MAXWRITE : (len - i),
 			    sched, iv);
@@ -148,8 +147,7 @@ DES_enc_write(int fd, const void *_buf, int len,
 	/* output */
 	outnum = rnum + HDRSIZE;
 
-	for (j = 0; j < outnum; j += i)
-	{
+	for (j = 0; j < outnum; j += i) {
 		/* eay 26/08/92 I was not doing writing from where we
 		 * got up to. */
 		i = write(fd, (void *)&(outbuf[j]), outnum - j);

@@ -1,4 +1,4 @@
-/* $OpenBSD: fcrypt.c,v 1.14 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: fcrypt.c,v 1.15 2023/07/08 07:34:34 jsing Exp $ */
 
 #include <stdio.h>
 
@@ -87,8 +87,7 @@ DES_fcrypt(const char *buf, const char *salt, char *ret)
 r=strlen(buf);
 r=(r+7)/8;
 */
-	for (i = 0; i < 8; i++)
-	{
+	for (i = 0; i < 8; i++) {
 		c = *(buf++);
 		if (!c)
 			break;
@@ -107,11 +106,9 @@ r=(r+7)/8;
 	y = 0;
 	u = 0x80;
 	bb[8] = 0;
-	for (i = 2; i < 13; i++)
-	{
+	for (i = 2; i < 13; i++) {
 		c = 0;
-		for (j = 0; j < 6; j++)
-		{
+		for (j = 0; j < 6; j++) {
 			c <<= 1;
 			if (bb[y] & u)
 				c |= 1;

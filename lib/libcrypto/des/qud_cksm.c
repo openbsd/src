@@ -1,4 +1,4 @@
-/* $OpenBSD: qud_cksm.c,v 1.9 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: qud_cksm.c,v 1.10 2023/07/08 07:34:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -92,8 +92,7 @@ DES_quad_cksum(const unsigned char *input, DES_cblock output[],
 	z1 = Q_B0((*seed)[4])|Q_B1((*seed)[5])|Q_B2((*seed)[6])|Q_B3(
 	    (*seed)[7]);
 
-	for (i = 0; ((i < 4) && (i < out_count)); i++)
-	{
+	for (i = 0; ((i < 4) && (i < out_count)); i++) {
 		cp = input;
 		l = length;
 		while (l > 0) {

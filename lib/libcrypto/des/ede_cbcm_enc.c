@@ -1,4 +1,4 @@
-/* $OpenBSD: ede_cbcm_enc.c,v 1.8 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: ede_cbcm_enc.c,v 1.9 2023/07/08 07:34:34 jsing Exp $ */
 /* Written by Ben Laurie <ben@algroup.co.uk> for the OpenSSL
  * project 13 Feb 1999.
  */
@@ -93,8 +93,7 @@ DES_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 		c2l(iv1, m1);
 		c2l(iv2, tout0);
 		c2l(iv2, tout1);
-		for (l -= 8; l >= -7; l -= 8)
-		{
+		for (l -= 8; l >= -7; l -= 8) {
 			tin[0] = m0;
 			tin[1] = m1;
 			DES_encrypt1(tin, ks3, 1);
@@ -139,8 +138,7 @@ DES_ede3_cbcm_encrypt(const unsigned char *in, unsigned char *out,
 		c2l(iv1, m1);
 		c2l(iv2, xor0);
 		c2l(iv2, xor1);
-		for (l -= 8; l >= -7; l -= 8)
-		{
+		for (l -= 8; l >= -7; l -= 8) {
 			tin[0] = m0;
 			tin[1] = m1;
 			DES_encrypt1(tin, ks3, 1);

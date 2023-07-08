@@ -1,4 +1,4 @@
-/* $OpenBSD: pcbc_enc.c,v 1.8 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: pcbc_enc.c,v 1.9 2023/07/08 07:34:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,8 +75,7 @@ DES_pcbc_encrypt(const unsigned char *input, unsigned char *output,
 	if (enc) {
 		c2l(iv, xor0);
 		c2l(iv, xor1);
-		for (; length > 0; length -= 8)
-		{
+		for (; length > 0; length -= 8) {
 			if (length >= 8) {
 				c2l(in, sin0);
 				c2l(in, sin1);
@@ -95,8 +94,7 @@ DES_pcbc_encrypt(const unsigned char *input, unsigned char *output,
 	} else {
 		c2l(iv, xor0);
 		c2l(iv, xor1);
-		for (; length > 0; length -= 8)
-		{
+		for (; length > 0; length -= 8) {
 			c2l(in, sin0);
 			c2l(in, sin1);
 			tin[0] = sin0;

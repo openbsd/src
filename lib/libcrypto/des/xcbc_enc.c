@@ -1,4 +1,4 @@
-/* $OpenBSD: xcbc_enc.c,v 1.11 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: xcbc_enc.c,v 1.12 2023/07/08 07:34:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -86,8 +86,7 @@ DES_xcbc_encrypt(const unsigned char *in, unsigned char *out,
 	if (enc) {
 		c2l(iv, tout0);
 		c2l(iv, tout1);
-		for (l -= 8; l >= 0; l -= 8)
-		{
+		for (l -= 8; l >= 0; l -= 8) {
 			c2l(in, tin0);
 			c2l(in, tin1);
 			tin0 ^= tout0 ^ inW0;
@@ -118,8 +117,7 @@ DES_xcbc_encrypt(const unsigned char *in, unsigned char *out,
 	} else {
 		c2l(iv, xor0);
 		c2l(iv, xor1);
-		for (l -= 8; l > 0; l -= 8)
-		{
+		for (l -= 8; l > 0; l -= 8) {
 			c2l(in, tin0);
 			tin[0] = tin0 ^ outW0;
 			c2l(in, tin1);

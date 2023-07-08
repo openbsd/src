@@ -1,4 +1,4 @@
-/* $OpenBSD: fcrypt_b.c,v 1.11 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: fcrypt_b.c,v 1.12 2023/07/08 07:34:34 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,13 +98,11 @@ fcrypt_body(DES_LONG *out, DES_key_schedule *ks, DES_LONG Eswap0,
 	E0 = Eswap0;
 	E1 = Eswap1;
 
-	for (j = 0; j < 25; j++)
-	{
+	for (j = 0; j < 25; j++) {
 #ifndef DES_UNROLL
 		int i;
 
-		for (i = 0; i < 32; i += 4)
-		{
+		for (i = 0; i < 32; i += 4) {
 			D_ENCRYPT(l, r, i + 0); /*  1 */
 			D_ENCRYPT(r, l, i + 2); /*  2 */
 		}
