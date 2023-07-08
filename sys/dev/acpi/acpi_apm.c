@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_apm.c,v 1.1 2023/07/08 08:01:10 tobhe Exp $ */
+/* $OpenBSD: acpi_apm.c,v 1.2 2023/07/08 14:44:43 tobhe Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -109,13 +109,16 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	s = splbio();
 	/* fake APM */
 	switch (cmd) {
+#ifdef SUSPEND
 	case APM_IOC_SUSPEND:
 	case APM_IOC_STANDBY:
 		if ((flag & FWRITE) == 0) {
 			error = EBADF;
 			break;
 		}
-		acpi_addtask(sc, acpi_sleep_task, sc, SLEEP_SUSPEND);
+		error = request_sleep(SLEEP_SUSPEND);
+		if (error)
+			break;
 		acpi_wakeup(sc);
 		break;
 #ifdef HIBERNATE
@@ -130,9 +133,12 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EOPNOTSUPP;
 			break;
 		}
-		acpi_addtask(sc, acpi_sleep_task, sc, SLEEP_HIBERNATE);
+		error = request_sleep(SLEEP_HIBERNATE);
+		if (error)
+			break;
 		acpi_wakeup(sc);
 		break;
+#endif
 #endif
 	case APM_IOC_GETPOWER:
 		error = acpi_apminfo(pi);
@@ -198,6 +204,23 @@ acpi_filtread(struct knote *kn, long hint)
 		kn->kn_data = hint;
 	return (1);
 }
+
+#ifdef SUSPEND
+int
+request_sleep(int sleepmode)
+{
+	struct acpi_softc *sc = acpi_softc;
+
+#ifdef HIBERNATE
+	if (sleepmode == SLEEP_HIBERNATE) {
+		if (get_hibernate_io_function(swdevt[0].sw_dev) == NULL)
+			return EOPNOTSUPP;
+	}
+#endif
+	acpi_addtask(sc, acpi_sleep_task, sc, sleepmode);
+	return 0;
+}
+#endif /* SUSPEND */
 
 #else /* SMALL_KERNEL */
 

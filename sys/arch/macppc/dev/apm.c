@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.34 2022/10/23 03:43:03 gkoehler Exp $	*/
+/*	$OpenBSD: apm.c,v 1.35 2023/07/08 14:44:43 tobhe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -336,6 +336,12 @@ apmkqfilter(dev_t dev, struct knote *kn)
 }
 
 #ifdef SUSPEND
+
+int
+request_sleep(int sleepmode)
+{
+	return EOPNOTSUPP;
+}
 
 #ifdef MULTIPROCESSOR
 

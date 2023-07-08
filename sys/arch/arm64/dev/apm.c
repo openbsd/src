@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.23 2023/07/05 08:26:56 tobhe Exp $	*/
+/*	$OpenBSD: apm.c,v 1.24 2023/07/08 14:44:43 tobhe Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -57,10 +57,13 @@
 #endif
 
 #ifdef SUSPEND
-struct taskq *suspend_taskq;
+struct taskq *sleep_taskq;
 struct task suspend_task;
 void	do_suspend(void *);
-void	suspend(void);
+#ifdef HIBERNATE
+struct task hibernate_task;
+void	do_hibernate(void *);
+#endif
 #endif
 
 struct apm_softc {
@@ -128,8 +131,11 @@ void
 apmattach(struct device *parent, struct device *self, void *aux)
 {
 #ifdef SUSPEND
-	suspend_taskq = taskq_create("suspend", 1, IPL_NONE, 0);
+	sleep_taskq = taskq_create("sleep", 1, IPL_NONE, 0);
 	task_set(&suspend_task, do_suspend, NULL);
+#ifdef HIBERNATE
+	task_set(&hibernate_task, do_hibernate, NULL);
+#endif
 #endif
 
 	acpiapm_open = apmopen;
@@ -224,7 +230,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EBADF;
 			break;
 		}
-		suspend();
+		error = request_sleep(SLEEP_SUSPEND);
 		break;
 #ifdef HIBERNATE
 	case APM_IOC_HIBERNATE:
@@ -234,11 +240,7 @@ apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 			error = EBADF;
 			break;
 		}
-		if (get_hibernate_io_function(swdevt[0].sw_dev) == NULL) {
-			error = EOPNOTSUPP;
-			break;
-		}
-		sleep_state(NULL, SLEEP_HIBERNATE);
+		error = request_sleep(SLEEP_HIBERNATE);
 		break;
 #endif
 #endif
@@ -358,11 +360,34 @@ do_suspend(void *v)
 	sleep_state(v, SLEEP_SUSPEND);
 }
 
+#ifdef HIBERNATE
 void
-suspend(void)
+do_hibernate(void *v)
 {
-	if (suspend_taskq)
-		task_add(suspend_taskq, &suspend_task);
+	sleep_state(v, SLEEP_HIBERNATE);
+}
+#endif
+
+int
+request_sleep(int sleepmode)
+{
+	if (sleep_taskq == NULL)
+		return EINVAL;
+
+	switch (sleepmode) {
+	case SLEEP_SUSPEND:
+		task_add(sleep_taskq, &suspend_task);
+		break;
+#ifdef HIBERNATE
+	case SLEEP_HIBERNATE:
+		if (get_hibernate_io_function(swdevt[0].sw_dev) == NULL)
+			return EOPNOTSUPP;
+		task_add(sleep_taskq, &hibernate_task);
+		break;
+#endif
+	}
+
+	return 0;
 }
 
 #ifdef MULTIPROCESSOR

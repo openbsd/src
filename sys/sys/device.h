@@ -1,4 +1,4 @@
-/*	$OpenBSD: device.h,v 1.65 2023/05/17 20:23:14 patrick Exp $	*/
+/*	$OpenBSD: device.h,v 1.66 2023/07/08 14:44:43 tobhe Exp $	*/
 /*	$NetBSD: device.h,v 1.15 1996/04/09 20:55:24 cgd Exp $	*/
 
 /*
@@ -199,6 +199,7 @@ void config_pending_decr(void);
 void config_mountroot(struct device *, void (*)(struct device *));
 void config_process_deferred_mountroot(void);
 
+int	request_sleep(int);
 int	sleep_state(void *, int);
 #define SLEEP_SUSPEND	0x01
 #define SLEEP_HIBERNATE	0x02
