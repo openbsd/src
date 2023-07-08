@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.80 2023/07/07 16:53:39 patrick Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.81 2023/07/08 08:37:39 patrick Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -4388,9 +4388,41 @@ rk3588_reset(void *cookie, uint32_t *cells, int on)
 	uint32_t bit, mask, reg;
 
 	switch (idx) {
+	case RK3588_SRST_PCIE0_POWER_UP:
+		reg = RK3588_CRU_SOFTRST_CON(32);
+		bit = 13;
+		break;
+	case RK3588_SRST_PCIE1_POWER_UP:
+		reg = RK3588_CRU_SOFTRST_CON(32);
+		bit = 14;
+		break;
+	case RK3588_SRST_PCIE2_POWER_UP:
+		reg = RK3588_CRU_SOFTRST_CON(32);
+		bit = 15;
+		break;
+	case RK3588_SRST_PCIE3_POWER_UP:
+		reg = RK3588_CRU_SOFTRST_CON(33);
+		bit = 0;
+		break;
 	case RK3588_SRST_PCIE4_POWER_UP:
 		reg = RK3588_CRU_SOFTRST_CON(33);
 		bit = 1;
+		break;
+	case RK3588_SRST_P_PCIE0:
+		reg = RK3588_CRU_SOFTRST_CON(33);
+		bit = 12;
+		break;
+	case RK3588_SRST_P_PCIE1:
+		reg = RK3588_CRU_SOFTRST_CON(33);
+		bit = 13;
+		break;
+	case RK3588_SRST_P_PCIE2:
+		reg = RK3588_CRU_SOFTRST_CON(33);
+		bit = 14;
+		break;
+	case RK3588_SRST_P_PCIE3:
+		reg = RK3588_CRU_SOFTRST_CON(33);
+		bit = 15;
 		break;
 	case RK3588_SRST_P_PCIE4:
 		reg = RK3588_CRU_SOFTRST_CON(34);
@@ -4411,6 +4443,10 @@ rk3588_reset(void *cookie, uint32_t *cells, int on)
 	case RK3588_SRST_P_PCIE2_PHY0:
 		reg = RK3588_PHPTOPCRU_SOFTRST_CON(0);
 		bit = 5;
+		break;
+	case RK3588_SRST_PCIE30_PHY:
+		reg = RK3588_PHPTOPCRU_SOFTRST_CON(0);
+		bit = 10;
 		break;
 	default:
 		printf("%s: 0x%08x\n", __func__, idx);
