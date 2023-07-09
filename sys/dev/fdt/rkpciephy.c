@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkpciephy.c,v 1.2 2023/07/08 09:12:28 patrick Exp $	*/
+/*	$OpenBSD: rkpciephy.c,v 1.3 2023/07/09 19:11:30 patrick Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -202,18 +202,16 @@ rk3588_pciephy_enable(void *cookie, uint32_t *cells)
 	}
 	regmap_write_4(phy, RK3588_PCIE3PHY_GRF_CMN_CON(0), reg);
 
-	grf = OF_getpropint(node, "rockchip,phy-grf", 0);
+	grf = OF_getpropint(node, "rockchip,pipe-grf", 0);
 	pipe = regmap_byphandle(grf);
 	if (pipe != NULL) {
 		reg = RK3588_PHP_GRF_PCIE0L0_MASK | RK3588_PHP_GRF_PCIE0L1_MASK;
-		/* If lane 1 is configured, move it from Combo to PCIE3 PHY */
-		if (num_lanes >= 2 && data_lanes[1] != 0) {
+		/* If lane 1 goes to PCIe3_1L0, move from Combo to PCIE3 PHY */
+		if (num_lanes >= 2 && data_lanes[1] == 2)
 			reg |= RK3588_PHP_GRF_PCIE0L0_PCIE3;
-		}
-		/* If lane 3 is configured, move it from Combo to PCIE3 PHY */
-		if (num_lanes >= 4 && data_lanes[3] != 0) {
+		/* If lane 3 goes to PCIe3_1L1, move from Combo to PCIE3 PHY */
+		if (num_lanes >= 4 && data_lanes[3] == 4)
 			reg |= RK3588_PHP_GRF_PCIE0L1_PCIE3;
-		}
 		regmap_write_4(pipe, RK3588_PHP_GRF_PCIESEL_CON, reg);
 	}
 
