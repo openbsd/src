@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.81 2023/07/08 08:37:39 patrick Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.82 2023/07/09 16:33:49 patrick Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -4173,7 +4173,25 @@ const struct rkclock rk3588_clocks[] = {
 		{ RK3588_XIN24M }
 	},
 	{
+		RK3588_CLK_REF_PIPE_PHY1_OSC_SRC, 0, 0, 0,
+		{ RK3588_XIN24M }
+	},
+	{
+		RK3588_CLK_REF_PIPE_PHY2_OSC_SRC, 0, 0, 0,
+		{ RK3588_XIN24M }
+	},
+	{
 		RK3588_CLK_REF_PIPE_PHY0_PLL_SRC, RK3588_CRU_CLKSEL_CON(176),
+		0, DIV(5, 0),
+		{ RK3588_PLL_PPLL }
+	},
+	{
+		RK3588_CLK_REF_PIPE_PHY1_PLL_SRC, RK3588_CRU_CLKSEL_CON(176),
+		0, DIV(11, 6),
+		{ RK3588_PLL_PPLL }
+	},
+	{
+		RK3588_CLK_REF_PIPE_PHY2_PLL_SRC, RK3588_CRU_CLKSEL_CON(177),
 		0, DIV(5, 0),
 		{ RK3588_PLL_PPLL }
 	},
@@ -4182,6 +4200,18 @@ const struct rkclock rk3588_clocks[] = {
 		SEL(6, 6), 0,
 		{ RK3588_CLK_REF_PIPE_PHY0_OSC_SRC,
 		  RK3588_CLK_REF_PIPE_PHY0_PLL_SRC },
+	},
+	{
+		RK3588_CLK_REF_PIPE_PHY1, RK3588_CRU_CLKSEL_CON(177),
+		SEL(7, 7), 0,
+		{ RK3588_CLK_REF_PIPE_PHY1_OSC_SRC,
+		  RK3588_CLK_REF_PIPE_PHY1_PLL_SRC },
+	},
+	{
+		RK3588_CLK_REF_PIPE_PHY2, RK3588_CRU_CLKSEL_CON(177),
+		SEL(8, 8), 0,
+		{ RK3588_CLK_REF_PIPE_PHY2_OSC_SRC,
+		  RK3588_CLK_REF_PIPE_PHY2_PLL_SRC },
 	},
 	{
 		/* Sentinel */
@@ -4440,9 +4470,25 @@ rk3588_reset(void *cookie, uint32_t *cells, int on)
 		reg = RK3588_CRU_SOFTRST_CON(77);
 		bit = 6;
 		break;
+	case RK3588_SRST_REF_PIPE_PHY1:
+		reg = RK3588_CRU_SOFTRST_CON(77);
+		bit = 7;
+		break;
+	case RK3588_SRST_REF_PIPE_PHY2:
+		reg = RK3588_CRU_SOFTRST_CON(77);
+		bit = 8;
+		break;
 	case RK3588_SRST_P_PCIE2_PHY0:
 		reg = RK3588_PHPTOPCRU_SOFTRST_CON(0);
 		bit = 5;
+		break;
+	case RK3588_SRST_P_PCIE2_PHY1:
+		reg = RK3588_PHPTOPCRU_SOFTRST_CON(0);
+		bit = 6;
+		break;
+	case RK3588_SRST_P_PCIE2_PHY2:
+		reg = RK3588_PHPTOPCRU_SOFTRST_CON(0);
+		bit = 7;
 		break;
 	case RK3588_SRST_PCIE30_PHY:
 		reg = RK3588_PHPTOPCRU_SOFTRST_CON(0);
