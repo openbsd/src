@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.5 2023/07/07 16:10:32 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.6 2023/07/09 10:36:53 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -23,6 +23,23 @@
 #ifndef OPENSSL_NO_ASM
 
 #if defined(__GNUC__)
+
+#define HAVE_BN_ADDW
+
+static inline void
+bn_addw(BN_ULONG a, BN_ULONG b, BN_ULONG *out_r1, BN_ULONG *out_r0)
+{
+	BN_ULONG carry, r0;
+
+	__asm__ (
+	    "add   %[r0], %[a], %[b] \n"
+	    "sltu  %[carry], %[r0], %[a] \n"
+	    : [carry]"=r"(carry), [r0]"=&r"(r0)
+	    : [a]"r"(a), [b]"r"(b));
+
+	*out_r1 = carry;
+	*out_r0 = r0;
+}
 
 #define HAVE_BN_MULW
  
