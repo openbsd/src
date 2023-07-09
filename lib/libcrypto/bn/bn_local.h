@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.25 2023/07/06 14:37:39 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.26 2023/07/09 18:27:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -326,6 +326,9 @@ int bn_is_prime_bpsw(int *is_prime, const BIGNUM *n, BN_CTX *ctx, size_t rounds)
 int bn_printf(BIO *bio, const BIGNUM *bn, int indent, const char *fmt, ...)
     __attribute__((__format__ (printf, 4, 5)))
     __attribute__((__nonnull__ (4)));
+
+int bn_bn2hex_nosign(const BIGNUM *bn, char **out, size_t *out_len);
+int bn_bn2hex_nibbles(const BIGNUM *bn, char **out, size_t *out_len);
 
 __END_HIDDEN_DECLS
 #endif /* !HEADER_BN_LOCAL_H */

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.13 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.14 2023/07/09 18:27:22 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -497,20 +497,27 @@ BN_dec2bn(BIGNUM **bnp, const char *s)
 }
 LCRYPTO_ALIAS(BN_dec2bn);
 
-char *
-BN_bn2hex(const BIGNUM *bn)
+static int
+bn_bn2hex_internal(const BIGNUM *bn, int include_sign, int nibbles_only,
+    char **out, size_t *out_len)
 {
 	int started = 0;
 	uint8_t *s = NULL;
-	size_t s_len;
+	size_t s_len = 0;
 	BN_ULONG v, w;
 	int i, j;
 	CBB cbb;
+	CBS cbs;
+	uint8_t nul;
+	int ret = 0;
+
+	*out = NULL;
+	*out_len = 0;
 
 	if (!CBB_init(&cbb, 0))
 		goto err;
 
-	if (BN_is_negative(bn)) {
+	if (BN_is_negative(bn) && include_sign) {
 		if (!CBB_add_u8(&cbb, '-'))
 			goto err;
 	}
@@ -524,8 +531,10 @@ BN_bn2hex(const BIGNUM *bn)
 			v = (w >> j) & 0xff;
 			if (!started && v == 0)
 				continue;
-			if (!CBB_add_u8(&cbb, hex_digits[v >> 4]))
-				goto err;
+			if (started || !nibbles_only || (v >> 4) != 0) {
+				if (!CBB_add_u8(&cbb, hex_digits[v >> 4]))
+					goto err;
+			}
 			if (!CBB_add_u8(&cbb, hex_digits[v & 0xf]))
 				goto err;
 			started = 1;
@@ -536,8 +545,45 @@ BN_bn2hex(const BIGNUM *bn)
 	if (!CBB_finish(&cbb, &s, &s_len))
 		goto err;
 
+	/* The length of a C string does not include the terminating NUL. */
+	CBS_init(&cbs, s, s_len);
+	if (!CBS_get_last_u8(&cbs, &nul))
+		goto err;
+
+	*out = (char *)CBS_data(&cbs);
+	*out_len = CBS_len(&cbs);
+	s = NULL;
+	s_len = 0;
+
+	ret = 1;
+
  err:
 	CBB_cleanup(&cbb);
+	freezero(s, s_len);
+
+	return ret;
+}
+
+int
+bn_bn2hex_nosign(const BIGNUM *bn, char **out, size_t *out_len)
+{
+	return bn_bn2hex_internal(bn, 0, 0, out, out_len);
+}
+
+int
+bn_bn2hex_nibbles(const BIGNUM *bn, char **out, size_t *out_len)
+{
+	return bn_bn2hex_internal(bn, 1, 1, out, out_len);
+}
+
+char *
+BN_bn2hex(const BIGNUM *bn)
+{
+	char *s;
+	size_t s_len;
+
+	if (!bn_bn2hex_internal(bn, 1, 0, &s, &s_len))
+		return NULL;
 
 	return s;
 }
