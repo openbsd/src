@@ -1,4 +1,4 @@
-/* $OpenBSD: unsendrecvthr.c,v 1.1 2021/12/09 23:37:18 mvs Exp $ */
+/* $OpenBSD: unsendrecvthr.c,v 1.2 2023/07/09 09:33:30 bluhm Exp $ */
 
 /*
  * Copyright (c) 2021 Vitaliy Makkoveev <mvs@openbsd.org>
@@ -180,7 +180,7 @@ main(int argc, char *argv[])
 		err(1, "socketpair");
 
 	for (i = 0; i < 2; ++i) {
-		if (!(rx_data[i] = calloc(ncpu, sizeof(*rx_data))))
+		if (!(rx_data[i] = calloc(ncpu, sizeof(struct rx_data))))
 			err(1, "calloc");
 
 		for (j = 0; j < ncpu; ++j)
@@ -194,7 +194,7 @@ main(int argc, char *argv[])
 	}
 
 	for (i = 0; i < 2; ++i) {
-		if (!(tx_args[i] = calloc(ncpu, sizeof(*tx_args))))
+		if (!(tx_args[i] = calloc(ncpu, sizeof(struct thr_tx_arg))))
 			err(1, "calloc");
 
 		for (j = 0; j < ncpu; ++j) {
