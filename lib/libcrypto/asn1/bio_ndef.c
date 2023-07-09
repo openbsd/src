@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.22 2023/04/25 19:08:30 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.23 2023/07/09 19:22:43 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -171,7 +171,7 @@ static int
 ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 {
 	NDEF_SUPPORT *ndef_aux;
-	unsigned char *p;
+	unsigned char *p = NULL;
 	int derlen;
 
 	if (!parg)
@@ -179,13 +179,13 @@ ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
 	ndef_aux = *(NDEF_SUPPORT **)parg;
 
-	derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
-	p = malloc(derlen);
+	if ((derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it)) <= 0)
+		return 0;
+
 	ndef_aux->derbuf = p;
 	*pbuf = p;
-	derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
 
-	if (!*ndef_aux->boundary)
+	if (*ndef_aux->boundary == NULL)
 		return 0;
 
 	*plen = *ndef_aux->boundary - *pbuf;
@@ -231,7 +231,7 @@ static int
 ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 {
 	NDEF_SUPPORT *ndef_aux;
-	unsigned char *p;
+	unsigned char *p = NULL;
 	int derlen;
 	const ASN1_AUX *aux;
 	ASN1_STREAM_ARG sarg;
@@ -251,14 +251,15 @@ ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	    &ndef_aux->val, ndef_aux->it, &sarg) <= 0)
 		return 0;
 
-	derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
-	p = malloc(derlen);
+	if ((derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it)) <= 0)
+		return 0;
+
 	ndef_aux->derbuf = p;
 	*pbuf = p;
-	derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
 
-	if (!*ndef_aux->boundary)
+	if (*ndef_aux->boundary == NULL)
 		return 0;
+
 	*pbuf = *ndef_aux->boundary;
 	*plen = derlen - (*ndef_aux->boundary - ndef_aux->derbuf);
 
