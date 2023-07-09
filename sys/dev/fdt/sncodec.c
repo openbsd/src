@@ -1,4 +1,4 @@
-/*	$OpenBSD: sncodec.c,v 1.2 2023/02/04 18:58:19 kettenis Exp $	*/
+/*	$OpenBSD: sncodec.c,v 1.3 2023/07/09 12:32:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -36,6 +36,7 @@
 #define  MODE_CTRL_BOP_SRC		(1 << 7)
 #define  MODE_CTRL_ISNS_PD		(1 << 4)
 #define  MODE_CTRL_VSNS_PD		(1 << 3)
+#define  MODE_CTRL_MODE_MASK		(7 << 0)
 #define  MODE_CTRL_MODE_ACTIVE		(0 << 0)
 #define  MODE_CTRL_MODE_MUTE		(1 << 0)
 #define  MODE_CTRL_MODE_SHUTDOWN	(2 << 0)
@@ -66,7 +67,6 @@ uint8_t sncodec_bop_cfg[] = {
 	0x32, 0x40, 0x30, 0x02, 0x06, 0x38, 0x40, 0x30, 0x02,
 	0x06, 0x3e, 0x37, 0x30, 0xff, 0xe6
 };
-	
 
 struct sncodec_softc {
 	struct device		sc_dev;
@@ -75,6 +75,7 @@ struct sncodec_softc {
 
 	struct dai_device	sc_dai;
 	uint8_t			sc_dvc;
+	uint8_t			sc_mute;
 };
 
 int	sncodec_match(struct device *, void *, void *);
@@ -148,6 +149,7 @@ sncodec_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Set volume to a reasonable level. */
 	sc->sc_dvc = DVC_LVL_30DB;
+	sc->sc_mute = MODE_CTRL_MODE_ACTIVE;
 	sncodec_write(sc, DVC, sc->sc_dvc);
 
 	/* Default to stereo downmix mode for now. */
@@ -251,13 +253,14 @@ sncodec_set_tdm_slot(void *cookie, int slot)
 }
 
 /*
- * Mixer controls; the gain of the TAS2770 is determined by the
+ * Mixer controls; the gain of the TAS2764 is determined by the
  * amplifier gain and digital volume control setting, but we only
  * expose the digital volume control setting through the mixer
  * interface.
  */
 enum {
 	SNCODEC_MASTER_VOL,
+	SNCODEC_MASTER_MUTE,
 	SNCODEC_OUTPUT_CLASS
 };
 
@@ -266,12 +269,25 @@ sncodec_set_port(void *priv, mixer_ctrl_t *mc)
 {
 	struct sncodec_softc *sc = priv;
 	u_char level;
+	uint8_t mode;
 
 	switch (mc->dev) {
 	case SNCODEC_MASTER_VOL:
 		level = mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
 		sc->sc_dvc = (DVC_LVL_MIN * (255 - level)) / 255;
 		sncodec_write(sc, DVC, sc->sc_dvc);
+		return 0;
+
+	case SNCODEC_MASTER_MUTE:
+		sc->sc_mute = mc->un.ord ?
+		    MODE_CTRL_MODE_MUTE : MODE_CTRL_MODE_ACTIVE;
+		mode = sncodec_read(sc, MODE_CTRL);
+		if ((mode & MODE_CTRL_MODE_MASK) == MODE_CTRL_MODE_ACTIVE ||
+		    (mode & MODE_CTRL_MODE_MASK) == MODE_CTRL_MODE_MUTE) {
+			mode &= ~MODE_CTRL_MODE_MASK;
+			mode |= sc->sc_mute;
+			sncodec_write(sc, MODE_CTRL, mode);
+		}
 		return 0;
 	}
 
@@ -290,6 +306,10 @@ sncodec_get_port(void *priv, mixer_ctrl_t *mc)
 		level = 255 - ((255 * sc->sc_dvc) / DVC_LVL_MIN);
 		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] = level;
 		return 0;
+
+	case SNCODEC_MASTER_MUTE:
+		mc->un.ord = (sc->sc_mute == MODE_CTRL_MODE_MUTE);
+		return 0;
 	}
 
 	return EINVAL;
@@ -301,12 +321,28 @@ sncodec_query_devinfo(void *priv, mixer_devinfo_t *di)
 	switch (di->index) {
 	case SNCODEC_MASTER_VOL:
 		di->mixer_class = SNCODEC_OUTPUT_CLASS;
-		di->next = di->prev = AUDIO_MIXER_LAST;
+		di->prev = AUDIO_MIXER_LAST;
+		di->next = SNCODEC_MASTER_MUTE;
 		strlcpy(di->label.name, AudioNmaster, sizeof(di->label.name));
 		di->type = AUDIO_MIXER_VALUE;
 		di->un.v.num_channels = 1;
 		strlcpy(di->un.v.units.name, AudioNvolume,
 		    sizeof(di->un.v.units.name));
+		return 0;
+
+	case SNCODEC_MASTER_MUTE:
+		di->mixer_class = SNCODEC_OUTPUT_CLASS;
+		di->prev = SNCODEC_MASTER_VOL;
+		di->next = AUDIO_MIXER_LAST;
+		strlcpy(di->label.name, AudioNmute, sizeof(di->label.name));
+		di->type = AUDIO_MIXER_ENUM;
+		di->un.e.num_mem = 2;
+		di->un.e.member[0].ord = 0;
+		strlcpy(di->un.e.member[0].label.name, AudioNoff,
+		    MAX_AUDIO_DEV_LEN);
+		di->un.e.member[1].ord = 1;
+		strlcpy(di->un.e.member[1].label.name, AudioNon,
+		    MAX_AUDIO_DEV_LEN);
 		return 0;
 
 	case SNCODEC_OUTPUT_CLASS:
@@ -327,7 +363,7 @@ sncodec_trigger_output(void *cookie, void *start, void *end, int blksize,
 	struct sncodec_softc *sc = cookie;
 
 	sncodec_write(sc, MODE_CTRL, MODE_CTRL_BOP_SRC |
-	    MODE_CTRL_ISNS_PD | MODE_CTRL_VSNS_PD | MODE_CTRL_MODE_ACTIVE);
+	    MODE_CTRL_ISNS_PD | MODE_CTRL_VSNS_PD | sc->sc_mute);
 	return 0;
 }
 
