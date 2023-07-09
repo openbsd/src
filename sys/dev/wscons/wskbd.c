@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.114 2022/11/10 12:10:54 matthieu Exp $ */
+/* $OpenBSD: wskbd.c,v 1.115 2023/07/09 08:02:14 tobhe Exp $ */
 /* $NetBSD: wskbd.c,v 1.80 2005/05/04 01:52:16 augustss Exp $ */
 
 /*
@@ -1512,6 +1512,13 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 
 	if (*type != WSCONS_EVENT_KEY_DOWN)
 		return (0);
+
+#ifdef SUSPEND
+	if (ksym == KS_Cmd_Sleep) {
+		request_sleep(SLEEP_SUSPEND);
+		return (1);
+	}
+#endif
 
 #ifdef HAVE_SCROLLBACK_SUPPORT
 #if NWSDISPLAY > 0

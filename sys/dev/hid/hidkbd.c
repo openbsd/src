@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidkbd.c,v 1.8 2022/11/09 10:05:18 robert Exp $	*/
+/*	$OpenBSD: hidkbd.c,v 1.9 2023/07/09 08:02:13 tobhe Exp $	*/
 /*      $NetBSD: ukbd.c,v 1.85 2003/03/11 16:44:00 augustss Exp $        */
 
 /*
@@ -144,6 +144,7 @@ static const struct hidkbd_translation apple_fn_trans[] = {
 	{ 61, 129 },	/* F4 -> audio lower */
 	{ 62, 128 },	/* F5 -> audio raise */
 #else
+	{ 63, 102 },	/* F6 -> sleep */
 	{ 67, 127 },	/* F10 -> audio mute */
 	{ 68, 129 },	/* F11 -> audio lower */
 	{ 69, 128 },	/* F12 -> audio raise */
@@ -557,11 +558,12 @@ hidkbd_decode(struct hidkbd *kbd, struct hidkbd_data *ud)
 		wskbd_rawinput(kbd->sc_wskbddev, cbuf, j);
 
 		/*
-		 * Pass audio and brightness keys to wskbd_input anyway.
+		 * Pass audio, brightness and sleep keys to wskbd_input anyway.
 		 */
 		for (i = 0; i < nkeys; i++) {
 			key = ibuf[i];
 			switch (key & CODEMASK) {
+			case 102:
 			case 127:
 			case 128:
 			case 129:

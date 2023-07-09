@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: makemap.awk,v 1.15 2020/11/02 19:45:18 tobhe Exp $
+#	$OpenBSD: makemap.awk,v 1.16 2023/07/09 08:02:13 tobhe Exp $
 #
 # Copyright (c) 2005, Miodrag Vallat
 #
@@ -31,7 +31,7 @@
 #
 
 BEGIN {
-	rcsid = "$OpenBSD: makemap.awk,v 1.15 2020/11/02 19:45:18 tobhe Exp $"
+	rcsid = "$OpenBSD: makemap.awk,v 1.16 2023/07/09 08:02:13 tobhe Exp $"
 	ifdepth = 0
 	ignore = 0
 	declk = 0
@@ -329,7 +329,7 @@ $1 == "#define" || $1 == "#undef" {
 		# the ``menu'' key.
 		#
 		if (nmaps++ == 0) {
-			# 102 Suspend
+			lines[102] = "    KC(102),\tKS_Cmd_Sleep,"
 			lines[116] = "    KC(116),\tKS_Open,"
 			lines[117] = "    KC(117),\tKS_Help,"
 			lines[118] = "    KC(118),\tKS_Props,"
