@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_convert.c,v 1.14 2023/07/09 18:27:22 tb Exp $ */
+/* $OpenBSD: bn_convert.c,v 1.15 2023/07/09 18:37:58 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -771,48 +771,3 @@ BN_mpi2bn(const unsigned char *d, int n, BIGNUM *ain)
 	return (a);
 }
 LCRYPTO_ALIAS(BN_mpi2bn);
-
-#ifndef OPENSSL_NO_BIO
-int
-BN_print_fp(FILE *fp, const BIGNUM *a)
-{
-	BIO *b;
-	int ret;
-
-	if ((b = BIO_new(BIO_s_file())) == NULL)
-		return (0);
-	BIO_set_fp(b, fp, BIO_NOCLOSE);
-	ret = BN_print(b, a);
-	BIO_free(b);
-	return (ret);
-}
-LCRYPTO_ALIAS(BN_print_fp);
-
-int
-BN_print(BIO *bp, const BIGNUM *a)
-{
-	int i, j, v, z = 0;
-	int ret = 0;
-
-	if ((a->neg) && (BIO_write(bp, "-", 1) != 1))
-		goto end;
-	if (BN_is_zero(a) && (BIO_write(bp, "0", 1) != 1))
-		goto end;
-	for (i = a->top - 1; i >= 0; i--) {
-		for (j = BN_BITS2 - 4; j >= 0; j -= 4) {
-			/* strip leading zeros */
-			v = ((int)(a->d[i] >> (long)j)) & 0x0f;
-			if (z || (v != 0)) {
-				if (BIO_write(bp, &hex_digits[v], 1) != 1)
-					goto end;
-				z = 1;
-			}
-		}
-	}
-	ret = 1;
-
-end:
-	return (ret);
-}
-LCRYPTO_ALIAS(BN_print);
-#endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_print.c,v 1.43 2023/07/09 18:35:52 tb Exp $ */
+/*	$OpenBSD: bn_print.c,v 1.44 2023/07/09 18:37:58 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -149,3 +150,45 @@ bn_printf(BIO *bio, const BIGNUM *bn, int indent, const char *fmt, ...)
 
 	return bn_print_bignum(bio, bn, indent);
 }
+
+int
+BN_print(BIO *bio, const BIGNUM *bn)
+{
+	char *hex = NULL;
+	size_t hex_len = 0;
+	int ret = 0;
+
+	if (!bn_bn2hex_nibbles(bn, &hex, &hex_len))
+		goto err;
+	if (BIO_printf(bio, "%s", hex) <= 0)
+		goto err;
+
+	ret = 1;
+
+ err:
+	freezero(hex, hex_len);
+
+	return ret;
+}
+LCRYPTO_ALIAS(BN_print);
+
+int
+BN_print_fp(FILE *fp, const BIGNUM *bn)
+{
+	char *hex = NULL;
+	size_t hex_len = 0;
+	int ret = 0;
+
+	if (!bn_bn2hex_nibbles(bn, &hex, &hex_len))
+		goto err;
+	if (fprintf(fp, "%s", hex) < 0)
+		goto err;
+
+	ret = 1;
+
+ err:
+	freezero(hex, hex_len);
+
+	return ret;
+}
+LCRYPTO_ALIAS(BN_print_fp);
