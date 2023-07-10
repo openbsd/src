@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: UList.pm,v 1.6 2023/07/08 08:45:54 espie Exp $
+# $OpenBSD: UList.pm,v 1.7 2023/07/10 09:29:48 espie Exp $
 #
 # Copyright (c) 2013 Vadim Zhukov <zhuk@openbsd.org>
 #
@@ -26,24 +26,24 @@ require Tie::Array;
 
 our @ISA = qw(Tie::Array);
 
-sub _translate_num_key
+sub _translate_num_key($self, $idx, $offset = 0)
 {
-	if ($_[1] < 0) {
-		$_[1] = @{$_[0]} - (-$_[1]);
-		die "invalid index" if $_[1] < 1;
+	if ($idx < 0) {
+		$idx += @$self;
+		die "invalid index" if $idx < 1;
 	} else {
-		$_[1] += 1;
+		$idx++;
 	}
-	die "invalid index $_[1]" if $_[1] - int($_[2] // 0) >= @{$_[0]};
+	die "invalid index $idx" if $idx - int($offset) >= @$self;
+	return $idx;
 }
 
 
 # Construct new UList and returns reference to the array,
 # not to the tied object itself.
-sub new 
+sub new ($class, @p)
 {
-	my $class = shift;
-	tie(my @a, $class, @_);
+	tie(my @a, $class, @p);
 	return \@a;
 }
 
@@ -51,11 +51,10 @@ sub new
 #   self->[0] = { directory => 1 }
 #   self->[1 .. N] = directories in the order of addition, represented as 0..N-1
 
-sub TIEARRAY 
+sub TIEARRAY($class, @p)
 {
-	my $class = shift;
 	my $self = bless [ {} ], $class;
-	$self->PUSH(@_);
+	$self->PUSH(@p);
 	return $self;
 }
 
@@ -63,101 +62,85 @@ sub TIEARRAY
 # case we have EXISTS() outta there. So if you really need to check the
 # presence of particular item, call the method below on the reference
 # returned by tie() or tied() instead.
-sub exists 
+sub exists($self, $key)
 { 
-	return exists $_[0]->[0]->{$_[1]}; 
+	return exists $self->[0]{$key}; 
 }
 
-sub indexof 
+sub indexof($self, $key)
 { 
-	return exists($_[0]->[0]->{$_[1]}) ? ($_[0]->[0]->{$_[1]} - 1) : undef; 
+	return exists($self->[0]{$key}) ? ($self->[0]{$key} - 1) : undef; 
 }
 
-sub FETCHSIZE 
+sub FETCHSIZE($self)
 { 
-	return scalar(@{$_[0]}) - 1; 
+	return scalar(@$self) - 1; 
 }
 
-# not needed ?
-sub STORE { 
-	die "unimplemented and should not be used"; 
+sub STORE($, $, $)
+{ 
+	die "overwriting elements is unimplemented";
 }
-sub DELETE 
+
+sub DELETE($, $)
 { 	
-	die "unimplemented and should not be used"; 
+	die "delete is unimplemented";
 }
 
-sub EXTEND 
-{ 
-}
 
-sub FETCH
+sub FETCH($self, $key)
 {
-	my ($self, $key) = (shift, shift);
-
-	# ignore?
-	die "undef given instead of directory or index" unless defined $key;
-
-	$self->_translate_num_key($key);
-	return $self->[$key];
+	return $self->[$self->_translate_num_key($key)];
 }
 
-sub STORESIZE
+sub STORESIZE($self, $newsz)
 {
-	my ($self, $newsz) = (shift, shift() + 2);
+	$newsz += 2;
 	my $sz = @$self;
 
 	if ($newsz > $sz) {
 		# XXX any better way to grow?
 		$self->[$newsz - 1] = undef;
 	} elsif ($newsz < $sz) {
-		$self->POP() for $newsz .. $sz - 1;
+		$self->POP for $newsz .. $sz - 1;
 	}
 }
 
-sub PUSH
+sub PUSH($self, @p)
 {
-	my $self = shift;
-	for (@_) {
-		next if exists $self->[0]->{$_};
-		$self->[0]->{$_} = @$self;
+	for (@p) {
+		next if exists $self->[0]{$_};
+		$self->[0]{$_} = @$self;
 		push(@$self, $_);
 	}
 }
 
-sub POP
+sub POP($self)
 {
-	my $self = shift;
 	return undef if @$self < 2;
 	my $key = pop @$self;
-	delete $self->[0]->{$key};
+	delete $self->[0]{$key};
 	return $key;
 }
 
-sub SHIFT
+sub SHIFT($self)
 {
-	my $self = shift;
 	return undef if @$self < 2;
 	my $key = splice(@$self, 1, 1);
-	delete $self->[0]->{$key};
+	delete $self->[0]{$key};
 	return $key;
 }
 
-sub UNSHIFT
+sub UNSHIFT($self, @p)
 {
-	my $self = shift;
-	$self->SPLICE(0, 0, @_);
+	$self->SPLICE(0, 0, @p);
 }
 
-sub SPLICE
+sub SPLICE($self, $offset = 0, $length = undef, @p)
 {
-	my $self = shift;
-
-	my $offset = shift // 0;
-	$self->_translate_num_key($offset, 1);
+	$offset = $self->_translate_num_key($offset, 1);
 	my $maxrm = @$self - $offset;
 
-	my $length = shift;
 	if (defined $length) {
 		if ($length < 0) {
 			$length = $maxrm - (-$length);
@@ -180,30 +163,30 @@ sub SPLICE
 
 	my @ret = splice(@$self, $offset, $length);
 	for (@ret) {
-		delete $self->[0]->{$_};
+		delete $self->[0]{$_};
 	}
 
 	my $i = 0;
 	my %seen;
-	for (@_) {
+	for (@p) {
 		next if exists $seen{$_};	# skip already added items
 		$seen{$_} = 1;
-		if (exists $self->[0]->{$_}) {
-			if ($self->[0]->{$_} >= $offset + $length) {
+		if (exists $self->[0]{$_}) {
+			if ($self->[0]{$_} >= $offset + $length) {
 				# "move" from tail to new position
-				splice(@$self, $self->[0]->{$_} - $length + $i, 1);
+				splice(@$self, $self->[0]{$_} - $length + $i, 1);
 			} else {
 				next;
 			}
 		}
 		splice(@$self, $offset + $i, 0, $_);
-		$self->[0]->{$_} = $offset + $i;
+		$self->[0]{$_} = $offset + $i;
 		$i++;
 		$delta++;
 	}
 
-	for $i ($offset + scalar(@_) .. @$self - 1) {
-		$self->[0]->{$self->[$i]} = $i;
+	for $i ($offset + scalar(@p) .. @$self - 1) {
+		$self->[0]{$self->[$i]} = $i;
 	}
 
 	return @ret;
@@ -213,8 +196,7 @@ sub SPLICE
 =head1 test
 package main;
 
-sub compare_ulists {
-	my ($list1, $list2) = @_;
+sub compare_ulists($list1, $list2) {
 	return 0 if scalar(@$list1) != scalar(@$list2);
 	for my $i (0 .. scalar(@$list1) - 1) {
 		return 0 if $list1->[$i] ne $list2->[$i];
