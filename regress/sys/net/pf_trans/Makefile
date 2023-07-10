@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2023/07/06 19:55:57 sashan Exp $
+#	$OpenBSD: Makefile,v 1.2 2023/07/10 17:46:03 anton Exp $
 
 PROGS+=	dev-limit
 PROGS+=	iocmd-limit
@@ -8,6 +8,7 @@ CFLAGS+=	-Wall
 REGRESS_ROOT_TARGETS=	run-regress-dev-limit \
 			run-regress-iocmd-limit
 
+TIMEOUT?=	10
 
 #
 # Create 2048 processes. Each child process will attempt
@@ -16,7 +17,7 @@ REGRESS_ROOT_TARGETS=	run-regress-dev-limit \
 # There should be 1023 children, which could open /dev/pf.
 #
 run-regress-dev-limit:
-	${SUDO} ./dev-limit -c 2048 -s 1023 -t 10
+	${SUDO} ./dev-limit -c 2048 -s 1023 -t ${TIMEOUT}
 
 #
 # Open 1024 tickets for DIOCGETRULES without closing them.
