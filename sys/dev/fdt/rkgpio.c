@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgpio.c,v 1.10 2023/03/05 14:45:07 patrick Exp $	*/
+/*	$OpenBSD: rkgpio.c,v 1.11 2023/07/10 13:48:02 patrick Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -56,6 +56,9 @@
 #define GPIO_INT_TYPE_H		0x0024
 #define GPIO_INT_POLARITY_L	0x0028
 #define GPIO_INT_POLARITY_H	0x002c
+#define GPIO_INT_STATUS_V2	0x0050
+#define GPIO_PORT_EOI_L		0x0060
+#define GPIO_PORT_EOI_H		0x0064
 #define GPIO_EXT_PORT		0x0070
 #define GPIO_VER_ID		0x0078
 #define  GPIO_VER_ID_1_0	0x00000000
@@ -276,7 +279,10 @@ rkgpio_intr(void *cookie)
 	uint32_t		 status, pending;
 	int			 pin, s;
 
-	status = HREAD4(sc, GPIO_INT_STATUS);
+	if (sc->sc_version == 2)
+		status = HREAD4(sc, GPIO_INT_STATUS_V2);
+	else
+		status = HREAD4(sc, GPIO_INT_STATUS);
 	pending = status;
 
 	while (pending) {
@@ -292,7 +298,13 @@ rkgpio_intr(void *cookie)
 		pending &= ~(1 << pin);
 	}
 
-	HWRITE4(sc, GPIO_PORTS_EOI, status);
+	if (sc->sc_version == 2) {
+		HWRITE4(sc, GPIO_PORT_EOI_L,
+		    (status & 0xffff) << 16 | (status & 0xffff));
+		HWRITE4(sc, GPIO_PORT_EOI_H,
+		    status >> 16 | (status & 0xffff0000));
+	} else
+		HWRITE4(sc, GPIO_PORTS_EOI, status);
 
 	return 1;
 }
