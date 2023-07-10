@@ -65,9 +65,14 @@ findme ()
     fi
     (
         cd "$1" ; shift
-        # Cut out the inode number and blocks used.
-        # Maybe later also cut out size in bytes for directories.
-        find "$@" -ls | sed 's/^ *[0-9]* *[0-9]* *//' | sort
+        # Remove unstable fields:
+        #    1: inode
+        #    2: size in blocks
+        # 8-10: last modification time
+        find "$@" -ls |
+        sed -e 's/[[:space:]][[:space:]]*/ /g' |
+        cut -d ' ' -f 3-7,11- |
+        sort
     )
 }
 
