@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev-limit.c,v 1.1 2023/07/06 19:55:58 sashan Exp $ */
+/*	$OpenBSD: dev-limit.c,v 1.2 2023/07/10 17:45:17 anton Exp $ */
 
 /*
  * Copyright (c) 2023 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -114,7 +114,7 @@ main(int argc, char *const argv[])
 	signal(SIGCHLD, handle_sigchild);
 	pids = (pid_t *)malloc(sizeof(pid_t) * chld_count);
 	if (pids == 0)
-		err(1, "%s malloc: ", argv[0]);
+		err(1, NULL);
 
 	i = 0;
 	while ((sigchild == 0) && (i < chld_count)) {

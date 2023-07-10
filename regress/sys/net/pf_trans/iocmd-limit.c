@@ -1,4 +1,4 @@
-/*	$OpenBSD: iocmd-limit.c,v 1.1 2023/07/06 19:55:58 sashan Exp $ */
+/*	$OpenBSD: iocmd-limit.c,v 1.2 2023/07/10 17:45:17 anton Exp $ */
 
 /*
  * Copyright (c) 2023 Alexandr Nedvedicky <sashan@openbsd.org>
@@ -65,7 +65,7 @@ do_DIOCGETRULES_test(int dev)
 		 * exit right away.
 		 */
 		if (errno != EBUSY)
-			err(1, "%s DIOCGETRULES: ", __func__);
+			err(1, "%s DIOCGETRULES", __func__);
 	}
 
 	return (rv);
@@ -100,9 +100,9 @@ do_DIOCXEND_test(int dev)
 	pr.rule.action = PF_PASS;
 
 	if ((rv = ioctl(dev, DIOCGETRULES, &pr)) == -1)
-		warn("%s DIOCGETRULES: ", __func__);
+		warn("%s DIOCGETRULES", __func__);
 	else if ((rv = ioctl(dev, DIOCXEND, &pr.ticket)) == -1)
-		warn("%s DIOCXEND: ", __func__);
+		warn("%s DIOCXEND", __func__);
 
 	return (rv);
 }
@@ -190,7 +190,7 @@ main(int argc, char *const argv[])
 
 	dev = open("/dev/pf", O_RDONLY);
 	if (dev < 0)
-		err(1, "open(\"dev/pf\"): ");
+		err(1, "open(\"dev/pf\")");
 
 	while (i < iterations) {
 		if (test_iocmd->iocmd_test(dev) != 0)
