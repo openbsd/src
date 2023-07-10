@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.21 2023/06/29 14:33:35 tb Exp $ */
+/*	$OpenBSD: aspa.c,v 1.22 2023/07/10 12:02:37 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -43,7 +43,7 @@ struct	parse {
 extern ASN1_OBJECT	*aspa_oid;
 
 /*
- * Types and templates for ASPA eContent draft-ietf-sidrops-aspa-profile-08
+ * Types and templates for ASPA eContent draft-ietf-sidrops-aspa-profile-15
  */
 
 typedef struct {
