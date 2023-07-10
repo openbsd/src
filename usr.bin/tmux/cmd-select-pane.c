@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-select-pane.c,v 1.68 2021/08/21 10:22:39 nicm Exp $ */
+/* $OpenBSD: cmd-select-pane.c,v 1.69 2023/07/10 09:24:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -98,7 +98,11 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	struct options_entry	*o;
 
 	if (entry == &cmd_last_pane_entry || args_has(args, 'l')) {
-		lastwp = w->last;
+		/*
+		 * Check for no last pane found in case the other pane was
+		 * spawned without being visited (for example split-window -d).
+		 */
+		lastwp = TAILQ_FIRST(&w->last_panes);
 		if (lastwp == NULL && window_count_panes(w) == 2) {
 			lastwp = TAILQ_PREV(w->active, window_panes, entry);
 			if (lastwp == NULL)

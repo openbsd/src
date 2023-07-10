@@ -1,4 +1,4 @@
-/* $OpenBSD: format.c,v 1.315 2023/07/03 10:48:26 nicm Exp $ */
+/* $OpenBSD: format.c,v 1.316 2023/07/10 09:24:53 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1902,7 +1902,7 @@ static void *
 format_cb_pane_last(struct format_tree *ft)
 {
 	if (ft->wp != NULL) {
-		if (ft->wp == ft->wp->window->last)
+		if (ft->wp == TAILQ_FIRST(&ft->wp->window->last_panes))
 			return (xstrdup("1"));
 		return (xstrdup("0"));
 	}
