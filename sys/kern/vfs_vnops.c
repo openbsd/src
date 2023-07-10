@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_vnops.c,v 1.121 2022/08/14 01:58:28 jsg Exp $	*/
+/*	$OpenBSD: vfs_vnops.c,v 1.122 2023/07/10 22:54:40 deraadt Exp $	*/
 /*	$NetBSD: vfs_vnops.c,v 1.20 1996/02/04 02:18:41 christos Exp $	*/
 
 /*
@@ -86,13 +86,13 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	int error;
 
 	/*
-	 * The only valid flag to pass in here from NDINIT is
-	 * KERNELPATH, This function will override the nameiop based
-	 * on the fmode and cmode flags, So validate that our caller
-	 * has not set other flags or operations in the nameidata
+	 * The only valid flags to pass in here from NDINIT are
+	 * KERNELPATH or BYPASSUNVEIL. This function will override the
+	 * nameiop based on the fmode and cmode flags, so validate that
+	 * our caller has not set other flags or operations in the nameidata
 	 * structure.
 	 */
-	KASSERT(ndp->ni_cnd.cn_flags == 0 || ndp->ni_cnd.cn_flags == KERNELPATH);
+	KASSERT((ndp->ni_cnd.cn_flags & ~(KERNELPATH|BYPASSUNVEIL)) == 0);
 	KASSERT(ndp->ni_cnd.cn_nameiop == 0);
 
         if ((fmode & (FREAD|FWRITE)) == 0)

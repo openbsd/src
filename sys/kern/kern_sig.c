@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.307 2023/06/28 08:23:25 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.308 2023/07/10 22:54:40 deraadt Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1699,7 +1699,7 @@ coredump(struct proc *p)
 	}
 
 	/* incrash should be 0 or KERNELPATH only */
-	NDINIT(&nd, 0, incrash, UIO_SYSSPACE, name, p);
+	NDINIT(&nd, 0, BYPASSUNVEIL | incrash, UIO_SYSSPACE, name, p);
 
 	error = vn_open(&nd, O_CREAT | FWRITE | O_NOFOLLOW | O_NONBLOCK,
 	    S_IRUSR | S_IWUSR);
