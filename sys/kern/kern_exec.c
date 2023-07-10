@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.249 2023/07/06 07:49:52 deraadt Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.250 2023/07/10 03:31:57 guenther Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -530,6 +530,11 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 	pr->ps_textvp = pack.ep_vp;
 	if (otvp)
 		vrele(otvp);
+
+	if (pack.ep_flags & EXEC_NOBTCFI)
+		atomic_setbits_int(&p->p_p->ps_flags, PS_NOBTCFI);
+	else
+		atomic_clearbits_int(&p->p_p->ps_flags, PS_NOBTCFI);
 
 	atomic_setbits_int(&pr->ps_flags, PS_EXEC);
 	if (pr->ps_flags & PS_PPWAIT) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.343 2023/07/04 11:14:00 jsg Exp $	*/
+/*	$OpenBSD: proc.h,v 1.344 2023/07/10 03:31:58 guenther Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -281,6 +281,7 @@ struct process {
 #define	PS_EXECPLEDGE	0x00400000	/* Has exec pledges */
 #define	PS_ORPHAN	0x00800000	/* Process is on an orphan list */
 #define	PS_CHROOT	0x01000000	/* Process is chrooted */
+#define	PS_NOBTCFI	0x02000000	/* No Branch Target CFI */
 
 #define	PS_BITS \
     ("\20" "\01CONTROLT" "\02EXEC" "\03INEXEC" "\04EXITING" "\05SUGID" \
@@ -288,7 +289,7 @@ struct process {
      "\013WAITED" "\014COREDUMP" "\015SINGLEEXIT" "\016SINGLEUNWIND" \
      "\017NOZOMBIE" "\020STOPPED" "\021SYSTEM" "\022EMBRYO" "\023ZOMBIE" \
      "\024NOBROADCASTKILL" "\025PLEDGE" "\026WXNEEDED" "\027EXECPLEDGE" \
-     "\030ORPHAN" "\031CHROOT")
+     "\030ORPHAN" "\031CHROOT" "\032NOBTCFI")
 
 
 struct kcov_dev;
