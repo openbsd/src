@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.135 2023/07/05 18:23:10 anton Exp $	*/
+/*	$OpenBSD: locore.S,v 1.136 2023/07/10 03:32:10 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -342,7 +342,7 @@ switch_exited:
 #endif
 	CODEPATCH_START
 	fxrstor64	(%rdi)
-	CODEPATCH_END(CPTAG_XRSTOR)
+	CODEPATCH_END(CPTAG_XRSTORS)
 	andl	$~CPUPF_USERXSTATE,CPUVAR(PFLAGS)
 
 .Lxstate_reset:
@@ -680,7 +680,7 @@ KUTEXT_PAGE_END
 	/* untouched state so can't fault */
 	CODEPATCH_START
 	fxrstor64	(%rdi)
-	CODEPATCH_END(CPTAG_XRSTOR)
+	CODEPATCH_END(CPTAG_XRSTORS)
 #if PCB_SAVEFPU != 0
 	subq	$PCB_SAVEFPU,%rdi
 #endif
@@ -868,10 +868,14 @@ KTEXT_PAGE_END
 #if PCB_SAVEFPU != 0
 	addq	$PCB_SAVEFPU,%rdi
 #endif
-	movq	xsave_mask(%rip),%rsi
-	call	xrstor_user
-	testl	%eax,%eax
-	jnz	.Lintr_xrstor_faulted
+	movq	xsave_mask(%rip),%rdx
+	movl	%edx,%eax
+	shrq	$32, %rdx
+	CODEPATCH_START
+	fxrstor64	(%rdi)
+	CODEPATCH_END(CPTAG_XRSTORS)
+	//testl	%eax,%eax
+	//jnz	.Lintr_xrstor_faulted
 .Lintr_restore_fsbase:		/* CPU doesn't have curproc's FS.base */
 	orl	$CPUPF_USERSEGS,CPUVAR(PFLAGS)
 	movq	CPUVAR(CURPCB),%rdx
@@ -894,7 +898,7 @@ KTEXT_PAGE_END
 #endif
 	CODEPATCH_START
 	fxrstor64	(%rdi)
-	CODEPATCH_END(CPTAG_XRSTOR)
+	CODEPATCH_END(CPTAG_XRSTORS)
 	movq	$T_PROTFLT,TF_TRAPNO(%rsp)
 	jmp	recall_trap
 
@@ -945,7 +949,6 @@ NENTRY(intr_fast_exit)
 	testq	$PSL_I,%rdx
 	jnz	.Lintr_exit_not_blocked
 #endif /* DIAGNOSTIC */
-	call	pku_xonly	/* XXX guenther disapproves, but foo3 locks */
 	movq	TF_RDI(%rsp),%rdi
 	movq	TF_RSI(%rsp),%rsi
 	movq	TF_R8(%rsp),%r8
@@ -992,8 +995,14 @@ END(intr_fast_exit)
 
 /*
  * FPU/"extended CPU state" handling
+ *	void xrstor_kern(sfp, mask)
+ *		using first of xrstors/xrstor/fxrstor, load given state
+ *		which is assumed to be trusted: i.e., unaltered from
+ *		xsaves/xsaveopt/xsave/fxsave by kernel
  * 	int xrstor_user(sfp, mask)
- *		load given state, returns 0/1 if okay/it trapped
+ *		using first of xrstor/fxrstor, load given state which might
+ *		not be trustable: #GP faults will be caught; returns 0/1 if
+ *		okay/it trapped.
  *	void fpusave(sfp) 
  *		save current state, but retain it in the FPU
  *	void fpusavereset(sfp)
@@ -1001,6 +1010,19 @@ END(intr_fast_exit)
  *	int xsetbv_user(reg, mask)
  *		load specified %xcr# register, returns 0/1 if okay/it trapped
  */
+
+ENTRY(xrstor_kern)
+	RETGUARD_SETUP(xrstor_kern, r11)
+	movq	%rsi, %rdx
+	movl	%esi, %eax
+	shrq	$32, %rdx
+	CODEPATCH_START
+	fxrstor64	(%rdi)
+	CODEPATCH_END(CPTAG_XRSTORS)
+	RETGUARD_CHECK(xrstor_kern, r11)
+	ret
+	lfence
+END(xrstor_kern)
 
 ENTRY(xrstor_user)
 	RETGUARD_SETUP(xrstor_user, r11)
@@ -1050,7 +1072,7 @@ ENTRY(fpusavereset)
 #endif
 	CODEPATCH_START
 	fxrstor64	(%rdi)
-	CODEPATCH_END(CPTAG_XRSTOR)
+	CODEPATCH_END(CPTAG_XRSTORS)
 	RETGUARD_CHECK(fpusavereset, r11)
 	ret
 	lfence
@@ -1081,9 +1103,17 @@ END(xsetbv_user)
 _xrstor:
 	xrstor64	(%rdi)
 
+	.globl	_xrstors
+_xrstors:
+	xrstors64	(%rdi)
+
 	.globl	_xsave
 _xsave:
-	xsave64	(%rdi)
+	xsave64		(%rdi)
+
+	.globl	_xsaves
+_xsaves:
+	xsaves64	(%rdi)
 
 	.globl	_xsaveopt
 _xsaveopt:

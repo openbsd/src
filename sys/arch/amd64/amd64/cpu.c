@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.169 2023/06/15 22:18:06 cheloha Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.170 2023/07/10 03:32:10 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -162,6 +162,7 @@ int cpu_perf_edx = 0;		/* cpuid(0xa).edx */
 int cpu_apmi_edx = 0;		/* cpuid(0x80000007).edx */
 int ecpu_ecxfeature = 0;	/* cpuid(0x80000001).ecx */
 int cpu_meltdown = 0;
+int cpu_use_xsaves = 0;
 
 void
 replacesmap(void)
@@ -699,10 +700,9 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static void
-replacexsave(void)
+replacexsave(int xsave_ext)
 {
-	extern long _xrstor, _xsave, _xsaveopt;
-	u_int32_t eax, ebx, ecx, edx;
+	extern long _xrstor, _xrstors, _xsave, _xsaves, _xsaveopt;
 	static int replacedone = 0;
 	int s;
 
@@ -710,12 +710,13 @@ replacexsave(void)
 		return;
 	replacedone = 1;
 
-	/* find out whether xsaveopt is supported */
-	CPUID_LEAF(0xd, 1, eax, ebx, ecx, edx);
 	s = splhigh();
+	codepatch_replace(CPTAG_XRSTORS,
+	    (xsave_ext & XSAVE_XSAVES) ? &_xrstors : &_xrstor, 4);
 	codepatch_replace(CPTAG_XRSTOR, &_xrstor, 4);
 	codepatch_replace(CPTAG_XSAVE,
-	    (eax & XSAVE_XSAVEOPT) ? &_xsaveopt : &_xsave, 4);
+	    (xsave_ext & XSAVE_XSAVES) ? &_xsaves :
+	    (xsave_ext & XSAVE_XSAVEOPT) ? &_xsaveopt : &_xsave, 4);
 	splx(s);
 }
 
@@ -764,20 +765,46 @@ cpu_init(struct cpu_info *ci)
 			KASSERT(ebx == fpu_save_len);
 		}
 
-		replacexsave();
+		/* check for xsaves, xsaveopt, and supervisor features */
+		CPUID_LEAF(0xd, 1, eax, ebx, ecx, edx);
+		/* Disable XSAVES on AMD family 17h due to Erratum 1386 */
+		if (!strcmp(cpu_vendor, "AuthenticAMD") &&
+		    ci->ci_family == 0x17) {
+			eax &= ~XSAVE_XSAVES;
+		}
+		if (eax & XSAVE_XSAVES) {
+#ifndef SMALL_KERNEL
+			if (ci->ci_feature_sefflags_edx & SEFF0EDX_IBT)
+				xsave_mask |= ecx & XFEATURE_CET_U;
+#endif
+			if (xsave_mask & XFEATURE_XSS_MASK) {
+				wrmsr(MSR_XSS, xsave_mask & XFEATURE_XSS_MASK);
+				CPUID_LEAF(0xd, 1, eax, ebx, ecx, edx);
+				KASSERT(ebx <= sizeof(struct savefpu));
+			}
+			if (CPU_IS_PRIMARY(ci))
+				cpu_use_xsaves = 1;
+		}
+
+		replacexsave(eax);
 	}
 
-	/* Give proc0 a clean FPU save area */
-	sfp = &proc0.p_addr->u_pcb.pcb_savefpu;
-	memset(sfp, 0, fpu_save_len);
-	sfp->fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
-	sfp->fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
-	fpureset();
-	if (xsave_mask) {
-		/* must not use xsaveopt here */
-		xsave(sfp, xsave_mask);
-	} else
-		fxsave(sfp);
+	if (CPU_IS_PRIMARY(ci)) {
+		/* Clean our FPU save area */
+		sfp = fpu_cleandata;
+		memset(sfp, 0, fpu_save_len);
+		sfp->fp_fxsave.fx_fcw = __INITIAL_NPXCW__;
+		sfp->fp_fxsave.fx_mxcsr = __INITIAL_MXCSR__;
+		xrstor_user(sfp, xsave_mask);
+		if (cpu_use_xsaves || !xsave_mask)
+			fpusave(sfp);
+		else {
+			/* must not use xsaveopt here */
+			xsave(sfp, xsave_mask);
+		}
+	} else {
+		fpureset();
+	}
 
 #if NVMM > 0
 	/* Re-enable VMM if needed */

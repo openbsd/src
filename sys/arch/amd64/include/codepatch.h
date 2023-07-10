@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.14 2020/03/11 07:27:08 guenther Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.15 2023/07/10 03:32:10 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -65,6 +65,7 @@ void codepatch_disable(void);
 #define CPTAG_MDS_VMM		10
 #define CPTAG_FENCE_SWAPGS_MIS_TAKEN	11
 #define CPTAG_FENCE_NO_SAFE_SMAP	12
+#define CPTAG_XRSTORS			13
 
 /*
  * stac/clac SMAP instructions have lfence like semantics.  Let's

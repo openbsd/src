@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.102 2023/04/22 18:27:28 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.103 2023/07/10 03:32:10 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -117,6 +117,9 @@
 #define	XFEATURE_TILECFG	0x00020000	/* AMX state */
 #define	XFEATURE_TILEDATA	0x00040000	/* AMX state */
 #define	XFEATURE_AMX		(XFEATURE_TILEDATA | XFEATURE_TILEDATA)
+
+/* valid only in xcomp_bv field: */
+#define XFEATURE_COMPRESSED	(1ULL << 63)	/* compressed format */
 
 /* which bits are for XCR0 and which for the XSS MSR? */
 #define XFEATURE_XCR0_MASK \
@@ -525,6 +528,7 @@
 #define MSR_MC3_MISC		0x413
 #define MSR_U_CET		0x6a0
 #define MSR_CET_ENDBR_EN		(1 << 2)
+#define MSR_CET_NO_TRACK_EN		(1 << 4)
 #define MSR_S_CET		0x6a2
 #define MSR_PKRS		0x6e1
 #define MSR_XSS			0xda0

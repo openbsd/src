@@ -1,4 +1,4 @@
-/*	$OpenBSD: fpu.h,v 1.18 2023/05/22 00:39:57 guenther Exp $	*/
+/*	$OpenBSD: fpu.h,v 1.19 2023/07/10 03:32:10 guenther Exp $	*/
 /*	$NetBSD: fpu.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef	_MACHINE_FPU_H_
@@ -40,6 +40,7 @@ struct savefpu {
 	struct fxsave64 fp_fxsave;	/* see above */
 	struct xstate_hdr fp_xstate;
 	u_int64_t fp_ymm[16][2];
+	u_int64_t fp_cet_u[2];
 };
 
 /*
@@ -60,6 +61,7 @@ struct cpu_info;
 extern size_t	fpu_save_len;
 extern uint32_t	fpu_mxcsr_mask;
 extern uint64_t	xsave_mask;
+extern int cpu_use_xsaves;
 
 void fpuinit(struct cpu_info *);
 int fputrap(int _type);
@@ -68,9 +70,13 @@ void fpusavereset(struct savefpu *);
 void fpu_kernel_enter(void);
 void fpu_kernel_exit(void);
 
+/* pointer to fxsave/xsave/xsaves data with everything reset */
+#define	fpu_cleandata	(&proc0.p_addr->u_pcb.pcb_savefpu)
+
 int	xrstor_user(struct savefpu *_addr, uint64_t _mask);
+void	xrstor_kern(struct savefpu *_addr, uint64_t _mask);
 #define	fpureset() \
-	xrstor_user(&proc0.p_addr->u_pcb.pcb_savefpu, xsave_mask)
+	xrstor_kern(fpu_cleandata, xsave_mask)
 int	xsetbv_user(uint32_t _reg, uint64_t _mask);
 
 #define fninit()		__asm("fninit")
@@ -87,9 +93,17 @@ xsave(struct savefpu *addr, uint64_t mask)
 
 	lo = mask;
 	hi = mask >> 32;
-	/* should be xsave64, but where we use this it doesn't matter */
-	__asm volatile("xsave %0" : "=m" (*addr) : "a" (lo), "d" (hi) :
-	    "memory");
+	__asm volatile("xsave64 %0" : "+m" (*addr) : "a" (lo), "d" (hi));
+}
+
+static inline void
+xrstors(const struct savefpu *addr, uint64_t mask)
+{
+	uint32_t lo, hi;
+
+	lo = mask;
+	hi = mask >> 32;
+	__asm volatile("xrstors64 %0" : : "m" (*addr), "a" (lo), "d" (hi));
 }
 
 #endif

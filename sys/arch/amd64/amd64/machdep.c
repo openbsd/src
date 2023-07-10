@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.284 2022/11/29 21:41:39 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.285 2023/07/10 03:32:10 guenther Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -564,6 +564,63 @@ cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	/* NOTREACHED */
 }
 
+static inline void
+maybe_enable_user_cet(struct proc *p)
+{
+#ifndef SMALL_KERNEL
+	/* Enable indirect-branch tracking if present and not disabled */
+	if ((xsave_mask & XFEATURE_CET_U) &&
+	    (p->p_p->ps_flags & PS_NOBTCFI) == 0) {
+		uint64_t msr = rdmsr(MSR_U_CET);
+		wrmsr(MSR_U_CET, msr | MSR_CET_ENDBR_EN | MSR_CET_NO_TRACK_EN);
+	}
+#endif
+}
+
+static inline void
+initialize_thread_xstate(struct proc *p)
+{
+	if (cpu_use_xsaves) {
+		xrstors(fpu_cleandata, xsave_mask);
+		maybe_enable_user_cet(p);
+	} else {
+		/* Reset FPU state in PCB */
+		memcpy(&p->p_addr->u_pcb.pcb_savefpu, fpu_cleandata,
+		    fpu_save_len);
+
+		if (curcpu()->ci_pflags & CPUPF_USERXSTATE) {
+			/* state in CPU is obsolete; reset it */
+			fpureset();
+		}
+	}
+
+	/* The reset state _is_ the userspace state for this thread now */
+	curcpu()->ci_pflags |= CPUPF_USERXSTATE;
+}
+
+/*
+ * Copy out the FPU state, massaging it to be usable from userspace
+ * and acceptable to xrstor_user()
+ */
+static inline int
+copyoutfpu(struct savefpu *sfp, char *sp, size_t len)
+{
+	uint64_t bvs[2];
+
+	if (copyout(sfp, sp, len))
+		return 1;
+	if (len > offsetof(struct savefpu, fp_xstate.xstate_bv)) {
+		sp  += offsetof(struct savefpu, fp_xstate.xstate_bv);
+		len -= offsetof(struct savefpu, fp_xstate.xstate_bv);
+		bvs[0] = sfp->fp_xstate.xstate_bv & XFEATURE_XCR0_MASK;
+		bvs[1] = sfp->fp_xstate.xstate_xcomp_bv &
+		    (XFEATURE_XCR0_MASK | XFEATURE_COMPRESSED);
+		if (copyout(bvs, sp, min(len, sizeof bvs)))
+			return 1;
+	}
+	return 0;
+}
+
 /*
  * Send an interrupt to process.
  *
@@ -613,23 +670,22 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 	else
 		sp = tf->tf_rsp - 128;
 
-	sp &= ~15ULL;	/* just in case */
-	sss = (sizeof(ksc) + 15) & ~15;
+	sp -= fpu_save_len;
+	if (cpu_use_xsaves)
+		sp &= ~63ULL;	/* just in case */
+	else
+		sp &= ~15ULL;	/* just in case */
 
 	/* Save FPU state to PCB if necessary, then copy it out */
-	if (curcpu()->ci_pflags & CPUPF_USERXSTATE) {
-		curcpu()->ci_pflags &= ~CPUPF_USERXSTATE;
-		fpusavereset(&p->p_addr->u_pcb.pcb_savefpu);
-	}
-	sp -= fpu_save_len;
-	ksc.sc_fpstate = (struct fxsave64 *)sp;
-	if (copyout(sfp, (void *)sp, fpu_save_len))
+	if (curcpu()->ci_pflags & CPUPF_USERXSTATE)
+		fpusave(&p->p_addr->u_pcb.pcb_savefpu);
+	if (copyoutfpu(sfp, (void *)sp, fpu_save_len))
 		return 1;
 
-	/* Now reset the FPU state in PCB */
-	memcpy(&p->p_addr->u_pcb.pcb_savefpu,
-	    &proc0.p_addr->u_pcb.pcb_savefpu, fpu_save_len);
+	initialize_thread_xstate(p);
 
+	ksc.sc_fpstate = (struct fxsave64 *)sp;
+	sss = (sizeof(ksc) + 15) & ~15;
 	sip = 0;
 	if (info) {
 		sip = sp - ((sizeof(*ksip) + 15) & ~15);
@@ -658,9 +714,6 @@ sendsig(sig_t catcher, int sig, sigset_t mask, const siginfo_t *ksip,
 	tf->tf_rsp = scp;
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
-	/* The reset state _is_ the userspace state for this thread now */
-	curcpu()->ci_pflags |= CPUPF_USERXSTATE;
-
 	return 0;
 }
 
@@ -682,6 +735,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sigcontext ksc, *scp = SCARG(uap, sigcntxp);
 	struct trapframe *tf = p->p_md.md_regs;
+	struct savefpu *sfp = &p->p_addr->u_pcb.pcb_savefpu;
 	int error;
 
 	if (PROC_PC(p) != p->p_p->ps_sigcoderet) {
@@ -706,7 +760,7 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 	    !USERMODE(ksc.sc_cs, ksc.sc_eflags))
 		return (EINVAL);
 
-	/* Current state is obsolete; toss it and force a reload */
+	/* Current FPU state is obsolete; toss it and force a reload */
 	if (curcpu()->ci_pflags & CPUPF_USERXSTATE) {
 		curcpu()->ci_pflags &= ~CPUPF_USERXSTATE;
 		fpureset();
@@ -714,15 +768,17 @@ sys_sigreturn(struct proc *p, void *v, register_t *retval)
 
 	/* Copy in the FPU state to restore */
 	if (__predict_true(ksc.sc_fpstate != NULL)) {
-		struct fxsave64 *fx = &p->p_addr->u_pcb.pcb_savefpu.fp_fxsave;
-
-		if ((error = copyin(ksc.sc_fpstate, fx, fpu_save_len)))
-			return (error);
-		fx->fx_mxcsr &= fpu_mxcsr_mask;
+		if ((error = copyin(ksc.sc_fpstate, sfp, fpu_save_len)))
+			return error;
+		if (xrstor_user(sfp, xsave_mask)) {
+			memcpy(sfp, fpu_cleandata, fpu_save_len);
+			return EINVAL;
+		}
+		maybe_enable_user_cet(p);
+		curcpu()->ci_pflags |= CPUPF_USERXSTATE;
 	} else {
 		/* shouldn't happen, but handle it */
-		memcpy(&p->p_addr->u_pcb.pcb_savefpu,
-		    &proc0.p_addr->u_pcb.pcb_savefpu, fpu_save_len);
+		initialize_thread_xstate(p);
 	}
 
 	tf->tf_rdi = ksc.sc_rdi;
@@ -1146,17 +1202,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack,
 {
 	struct trapframe *tf;
 
-	/* Reset FPU state in PCB */
-	memcpy(&p->p_addr->u_pcb.pcb_savefpu,
-	    &proc0.p_addr->u_pcb.pcb_savefpu, fpu_save_len);
-
-	if (curcpu()->ci_pflags & CPUPF_USERXSTATE) {
-		/* state in CPU is obsolete; reset it */
-		fpureset();
-	} else {
-		/* the reset state _is_ the userspace state now */
-		curcpu()->ci_pflags |= CPUPF_USERXSTATE;
-	}
+	initialize_thread_xstate(p);
 
 	/* To reset all registers we have to return via iretq */
 	p->p_md.md_flags |= MDP_IRET;

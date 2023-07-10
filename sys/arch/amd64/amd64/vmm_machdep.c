@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.3 2023/04/26 15:40:51 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.4 2023/07/10 03:32:10 guenther Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3733,13 +3733,8 @@ vmm_fpurestore(struct vcpu *vcpu)
 		fpusavereset(&curproc->p_addr->u_pcb.pcb_savefpu);
 	}
 
-	if (vcpu->vc_fpuinited) {
-		if (xrstor_user(&vcpu->vc_g_fpu, xsave_mask)) {
-			DPRINTF("%s: guest attempted to set invalid %s\n",
-			    __func__, "xsave/xrstor state");
-			return EINVAL;
-		}
-	}
+	if (vcpu->vc_fpuinited)
+		xrstor_kern(&vcpu->vc_g_fpu, xsave_mask);
 
 	if (xsave_mask) {
 		/* Restore guest %xcr0 */
@@ -3769,7 +3764,7 @@ vmm_fpusave(struct vcpu *vcpu)
 		vcpu->vc_gueststate.vg_xcr0 = xgetbv(0);
 
 		/* Restore host %xcr0 */
-		xsetbv(0, xsave_mask);
+		xsetbv(0, xsave_mask & XFEATURE_XCR0_MASK);
 	}
 
 	/*
