@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.46 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.47 2023/07/10 02:33:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -548,11 +548,10 @@ BIO_indent(BIO *b, int indent, int max)
 {
 	if (indent > max)
 		indent = max;
-	if (indent < 0)
-		indent = 0;
-	while (indent--)
-		if (BIO_puts(b, " ") != 1)
-			return 0;
+	if (indent <= 0)
+		return 1;
+	if (BIO_printf(b, "%*s", indent, "") <= 0)
+		return 0;
 	return 1;
 }
 LCRYPTO_ALIAS(BIO_indent);
