@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.50 2021/10/24 21:24:21 deraadt Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.51 2023/07/10 16:28:33 jeremy Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -441,6 +441,23 @@ wr_archive(ARCHD *arcn, int is_app)
 		if (hlk && (chk_lnk(arcn) < 0))
 			break;
 
+		/*
+		 * Modify the name as requested by the user
+		 */
+		if ((res = mod_name(arcn)) < 0) {
+			/*
+			 * pax finished, purge link table entry and stop
+			 */
+			purg_lnk(arcn);
+			break;
+		} else if (res > 0) {
+			/*
+			 * skipping file, purge link table entry
+			 */
+			purg_lnk(arcn);
+			continue;
+		}
+
 		if (PAX_IS_REG(arcn->type) || (arcn->type == PAX_HRG)) {
 			/*
 			 * we will have to read this file. by opening it now we
@@ -456,20 +473,7 @@ wr_archive(ARCHD *arcn, int is_app)
 			}
 		}
 
-		/*
-		 * Now modify the name as requested by the user
-		 */
-		if ((res = mod_name(arcn)) < 0) {
-			/*
-			 * name modification says to skip this file, close the
-			 * file and purge link table entry
-			 */
-			rdfile_close(arcn, &fd);
-			purg_lnk(arcn);
-			break;
-		}
-
-		if ((res > 0) || (docrc && (set_crc(arcn, fd) < 0))) {
+		if (docrc && (set_crc(arcn, fd) < 0)) {
 			/*
 			 * unable to obtain the crc we need, close the file,
 			 * purge link table entry
