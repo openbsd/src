@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.11 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.12 2023/07/10 19:10:51 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -166,17 +166,17 @@ ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s)
 LCRYPTO_ALIAS(ECDSA_SIG_set0);
 
 int
-ECDSA_size(const EC_KEY *r)
+ECDSA_size(const EC_KEY *key)
 {
 	const EC_GROUP *group;
 	const BIGNUM *order = NULL;
 	ECDSA_SIG sig;
 	int ret = 0;
 
-	if (r == NULL)
+	if (key == NULL)
 		goto err;
 
-	if ((group = EC_KEY_get0_group(r)) == NULL)
+	if ((group = EC_KEY_get0_group(key)) == NULL)
 		goto err;
 
 	if ((order = EC_GROUP_get0_order(group)) == NULL)
