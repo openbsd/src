@@ -1,4 +1,4 @@
-/* $OpenBSD: client.c,v 1.160 2023/07/10 09:35:46 nicm Exp $ */
+/* $OpenBSD: client.c,v 1.161 2023/07/10 12:00:08 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -245,9 +245,6 @@ client_main(struct event_base *base, int argc, char **argv, uint64_t flags,
 	char			*line = NULL, **caps = NULL, *cause;
 	u_int			 ncaps = 0;
 	struct args_value	*values;
-
-	/* Ignore SIGCHLD now or daemon() in the server will leave a zombie. */
-	signal(SIGCHLD, SIG_IGN);
 
 	/* Set up the initial command. */
 	if (shell_command != NULL) {
