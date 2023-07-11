@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_pkt.c,v 1.65 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: ssl_pkt.c,v 1.66 2023/07/11 17:02:47 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -536,7 +536,6 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	SSL_SESSION *sess = s->session;
 	int need_empty_fragment = 0;
 	size_t align, out_len;
-	uint16_t version;
 	CBB cbb;
 	int ret;
 
@@ -569,16 +568,6 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 		return 0;
 
 	/*
-	 * Some servers hang if initial client hello is larger than 256
-	 * bytes and record version number > TLS 1.0.
-	 */
-	version = s->version;
-	if (s->s3->hs.state == SSL3_ST_CW_CLNT_HELLO_B &&
-	    !s->renegotiate &&
-	    s->s3->hs.our_max_tls_version > TLS1_VERSION)
-		version = TLS1_VERSION;
-
-	/*
 	 * Countermeasure against known-IV weakness in CBC ciphersuites
 	 * (see http://www.openssl.org/~bodo/tls-cbc.txt). Note that this
 	 * is unnecessary for AEAD.
@@ -604,7 +593,7 @@ do_ssl3_write(SSL *s, int type, const unsigned char *buf, unsigned int len)
 	if (!CBB_init_fixed(&cbb, wb->buf + align, wb->len - align))
 		goto err;
 
-	tls12_record_layer_set_version(s->rl, version);
+	tls12_record_layer_set_version(s->rl, s->version);
 
 	if (need_empty_fragment) {
 		if (!tls12_record_layer_seal_record(s->rl, type,
