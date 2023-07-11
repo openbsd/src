@@ -1,4 +1,4 @@
-/* $OpenBSD: servertest.c,v 1.8 2023/07/11 10:09:47 tb Exp $ */
+/* $OpenBSD: servertest.c,v 1.9 2023/07/11 11:52:35 tb Exp $ */
 /*
  * Copyright (c) 2015, 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -164,12 +164,13 @@ server_hello_test(int testno, struct server_hello_test *sht)
 
 	if (SSL_accept(ssl) != 0) {
 		if (sht->accept_fails)
-			ret = 0;
+			goto done;
 		fprintf(stderr, "SSL_accept() returned non-zero\n");
 		ERR_print_errors_fp(stderr);
 		goto failure;
 	}
 
+ done:
 	ret = 0;
 
  failure:
