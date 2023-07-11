@@ -1,4 +1,4 @@
-/* $OpenBSD: servertest.c,v 1.7 2022/06/10 22:00:15 tb Exp $ */
+/* $OpenBSD: servertest.c,v 1.8 2023/07/11 10:09:47 tb Exp $ */
 /*
  * Copyright (c) 2015, 2016, 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -84,6 +84,7 @@ struct server_hello_test {
 	const SSL_METHOD *(*ssl_method)(void);
 	const long ssl_clear_options;
 	const long ssl_set_options;
+	int accept_fails;
 };
 
 static struct server_hello_test server_hello_tests[] = {
@@ -94,6 +95,7 @@ static struct server_hello_test server_hello_tests[] = {
 		.ssl_method = tls_legacy_method,
 		.ssl_clear_options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1,
 		.ssl_set_options = 0,
+		.accept_fails = 1,
 	},
 	{
 		.desc = "TLSv1.2 in SSLv2 record",
@@ -102,6 +104,7 @@ static struct server_hello_test server_hello_tests[] = {
 		.ssl_method = tls_legacy_method,
 		.ssl_clear_options = SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1,
 		.ssl_set_options = 0,
+		.accept_fails = 1,
 	},
 };
 
@@ -160,6 +163,8 @@ server_hello_test(int testno, struct server_hello_test *sht)
 	SSL_set_bio(ssl, rbio, wbio);
 
 	if (SSL_accept(ssl) != 0) {
+		if (sht->accept_fails)
+			ret = 0;
 		fprintf(stderr, "SSL_accept() returned non-zero\n");
 		ERR_print_errors_fp(stderr);
 		goto failure;
