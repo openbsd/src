@@ -70,7 +70,7 @@ findme ()
         #    2: size in blocks
         # 8-10: last modification time
         find "$@" -ls |
-        sed -e 's/[[:space:]][[:space:]]*/ /g' |
+        sed -e 's/^[[:space:]]*//' -e 's/[[:space:]][[:space:]]*/ /g' |
         cut -d ' ' -f 3-7,11- |
         sort
     )
