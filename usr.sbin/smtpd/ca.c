@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.46 2023/07/11 16:39:41 op Exp $	*/
+/*	$OpenBSD: ca.c,v 1.47 2023/07/11 16:40:22 op Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -19,7 +19,6 @@
 
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/engine.h>
 #include <pwd.h>
 #include <signal.h>
 #include <string.h>
@@ -491,24 +490,10 @@ ecdsae_do_sign(const unsigned char *dgst, int dgst_len, const BIGNUM *inv,
 static void
 rsa_engine_init(void)
 {
-	ENGINE		*e;
-	const char	*errstr, *name;
+	const char	*errstr;
 
-	if ((e = ENGINE_get_default_RSA()) == NULL) {
-		if ((e = ENGINE_new()) == NULL) {
-			errstr = "ENGINE_new";
-			goto fail;
-		}
-		if (!ENGINE_set_name(e, "RSA privsep engine")) {
-			errstr = "ENGINE_set_name";
-			goto fail;
-		}
-		if ((rsa_default = RSA_get_default_method()) == NULL) {
-			errstr = "RSA_get_default_method";
-			goto fail;
-		}
-	} else if ((rsa_default = ENGINE_get_RSA(e)) == NULL) {
-		errstr = "ENGINE_get_RSA";
+	if ((rsa_default = RSA_get_default_method()) == NULL) {
+		errstr = "RSA_get_default_method";
 		goto fail;
 	}
 
@@ -516,11 +501,6 @@ rsa_engine_init(void)
 		errstr = "RSA_meth_dup";
 		goto fail;
 	}
-
-	if ((name = ENGINE_get_name(e)) == NULL)
-		name = "unknown RSA engine";
-
-	log_debug("debug: %s: using %s", __func__, name);
 
 	RSA_meth_set_priv_enc(rsae_method, rsae_priv_enc);
 	RSA_meth_set_priv_dec(rsae_method, rsae_priv_dec);
@@ -530,14 +510,7 @@ rsa_engine_init(void)
 	RSA_meth_set0_app_data(rsae_method,
 		RSA_meth_get0_app_data(rsa_default));
 
-	if (!ENGINE_set_RSA(e, rsae_method)) {
-		errstr = "ENGINE_set_RSA";
-		goto fail;
-	}
-	if (!ENGINE_set_default_RSA(e)) {
-		errstr = "ENGINE_set_default_RSA";
-		goto fail;
-	}
+	RSA_set_default_method(rsae_method);
 
 	return;
 
@@ -549,34 +522,15 @@ rsa_engine_init(void)
 static void
 ecdsa_engine_init(void)
 {
-	ENGINE		*e;
-	const char	*errstr, *name;
 	int (*sign)(int, const unsigned char *, int, unsigned char *,
 	    unsigned int *, const BIGNUM *, const BIGNUM *, EC_KEY *);
 	int (*sign_setup)(EC_KEY *, BN_CTX *, BIGNUM **, BIGNUM **);
+	const char *errstr;
 
-	if ((e = ENGINE_get_default_EC()) == NULL) {
-		if ((e = ENGINE_new()) == NULL) {
-			errstr = "ENGINE_new";
-			goto fail;
-		}
-		if (!ENGINE_set_name(e, "ECDSA privsep engine")) {
-			errstr = "ENGINE_set_name";
-			goto fail;
-		}
-		if ((ecdsa_default = EC_KEY_get_default_method()) == NULL) {
-			errstr = "EC_KEY_get_default_method";
-			goto fail;
-		}
-	} else if ((ecdsa_default = ENGINE_get_EC(e)) == NULL) {
-		errstr = "ENGINE_get_EC";
+	if ((ecdsa_default = EC_KEY_get_default_method()) == NULL) {
+		errstr = "EC_KEY_get_default_method";
 		goto fail;
 	}
-
-	if ((name = ENGINE_get_name(e)) == NULL)
-		name = "unknown ECDSA engine";
-
-	log_debug("debug: %s: using %s", __func__, name);
 
 	if ((ecdsae_method = EC_KEY_METHOD_new(ecdsa_default)) == NULL) {
 		errstr = "EC_KEY_METHOD_new";
@@ -587,14 +541,7 @@ ecdsa_engine_init(void)
 	EC_KEY_METHOD_set_sign(ecdsae_method, sign, sign_setup,
 	    ecdsae_do_sign);
 
-	if (!ENGINE_set_EC(e, ecdsae_method)) {
-		errstr = "ENGINE_set_EC";
-		goto fail;
-	}
-	if (!ENGINE_set_default_EC(e)) {
-		errstr = "ENGINE_set_default_EC";
-		goto fail;
-	}
+	EC_KEY_set_default_method(ecdsae_method);
 
 	return;
 
