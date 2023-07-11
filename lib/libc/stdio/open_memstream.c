@@ -1,4 +1,4 @@
-/*	$OpenBSD: open_memstream.c,v 1.9 2023/06/21 13:11:49 claudio Exp $	*/
+/*	$OpenBSD: open_memstream.c,v 1.10 2023/07/11 12:14:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2011 Martin Pieuchot <mpi@openbsd.org>
@@ -135,7 +135,6 @@ open_memstream(char **pbuf, size_t *psize)
 		return (NULL);
 	}
 
-	*st->string = '\0';
 	st->pos = 0;
 	st->len = 0;
 	st->pbuf = pbuf;
