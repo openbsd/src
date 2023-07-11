@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.193 2023/06/28 08:23:25 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.194 2023/07/11 07:02:43 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -246,21 +246,12 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 
 	sleep_setup(&sls, ident, priority, wmesg);
 
-	/* XXX - We need to make sure that the mutex doesn't
-	 * unblock splsched. This can be made a bit more
-	 * correct when the sched_lock is a mutex.
-	 */
-	spl = MUTEX_OLDIPL(mtx);
-	MUTEX_OLDIPL(mtx) = splsched();
 	mtx_leave(mtx);
 	/* signal may stop the process, release mutex before that */
 	error = sleep_finish(&sls, priority, timo, 1);
 
-	if ((priority & PNORELOCK) == 0) {
+	if ((priority & PNORELOCK) == 0)
 		mtx_enter(mtx);
-		MUTEX_OLDIPL(mtx) = spl; /* put the ipl back */
-	} else
-		splx(spl);
 
 	return error;
 }
@@ -301,6 +292,7 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
 	KASSERT(ident != &nowake || ISSET(priority, PCATCH) || timo != 0);
+	KASSERT(ident != rwl);
 	rw_assert_anylock(rwl);
 	status = rw_status(rwl);
 
@@ -344,6 +336,7 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
     const char *wmesg)
 {
 	struct proc *p = curproc;
+	int s;
 
 #ifdef DIAGNOSTIC
 	if (p->p_flag & P_CANTSLEEP)
@@ -354,7 +347,7 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 		panic("tsleep: not SONPROC");
 #endif
 
-	SCHED_LOCK(sls->sls_s);
+	SCHED_LOCK(s);
 
 	TRACEPOINT(sched, sleep, NULL);
 
@@ -362,15 +355,20 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 	p->p_wmesg = wmesg;
 	p->p_slptime = 0;
 	p->p_slppri = prio & PRIMASK;
+	atomic_setbits_int(&p->p_flag, P_WSLEEP);
 	TAILQ_INSERT_TAIL(&slpque[LOOKUP(ident)], p, p_runq);
+	if (prio & PCATCH)
+		atomic_setbits_int(&p->p_flag, P_SINTR);
+	p->p_stat = SSLEEP;
 
+	SCHED_UNLOCK(s);
 }
 
 int
 sleep_finish(struct sleep_state *sls, int prio, int timo, int do_sleep)
 {
 	struct proc *p = curproc;
-	int catch, error = 0, error1 = 0;
+	int s, catch, error = 0, error1 = 0;
 
 	catch = prio & PCATCH;
 
@@ -379,6 +377,7 @@ sleep_finish(struct sleep_state *sls, int prio, int timo, int do_sleep)
 		timeout_add(&p->p_sleep_to, timo);
 	}
 
+	SCHED_LOCK(s);
 	if (catch != 0) {
 		/*
 		 * We put ourselves on the sleep queue and start our
@@ -388,28 +387,28 @@ sleep_finish(struct sleep_state *sls, int prio, int timo, int do_sleep)
 		 * us to be marked as SSLEEP without resuming us, thus
 		 * we must be ready for sleep when sleep_signal_check() is
 		 * called.
-		 * If the wakeup happens while we're stopped, p->p_wchan
-		 * will be NULL upon return from sleep_signal_check().  In
-		 * that case we need to unwind immediately.
 		 */
-		atomic_setbits_int(&p->p_flag, P_SINTR);
 		if ((error = sleep_signal_check()) != 0) {
-			p->p_stat = SONPROC;
-			catch = 0;
-			do_sleep = 0;
-		} else if (p->p_wchan == NULL) {
 			catch = 0;
 			do_sleep = 0;
 		}
 	}
 
+	/*
+	 * If the wakeup happens while going to sleep, p->p_wchan
+	 * will be NULL. In that case unwind immediately but still
+	 * check for possible signals and timeouts.
+	 */
+	if (p->p_wchan == NULL)
+		do_sleep = 0;
+
+	atomic_clearbits_int(&p->p_flag, P_WSLEEP);
 	if (do_sleep) {
-		p->p_stat = SSLEEP;
 		p->p_ru.ru_nvcsw++;
-		SCHED_ASSERT_LOCKED();
 		mi_switch();
 	} else {
 		unsleep(p);
+		p->p_stat = SONPROC;
 	}
 
 #ifdef DIAGNOSTIC
@@ -418,7 +417,7 @@ sleep_finish(struct sleep_state *sls, int prio, int timo, int do_sleep)
 #endif
 
 	p->p_cpu->ci_schedstate.spc_curpriority = p->p_usrpri;
-	SCHED_UNLOCK(sls->sls_s);
+	SCHED_UNLOCK(s);
 
 	/*
 	 * Even though this belongs to the signal handling part of sleep,
@@ -482,8 +481,12 @@ wakeup_proc(struct proc *p, const volatile void *chan, int flags)
 			atomic_setbits_int(&p->p_flag, flags);
 		if (p->p_stat == SSLEEP)
 			setrunnable(p);
-		else
+		else if (p->p_stat == SSTOP)
 			unsleep(p);
+#ifdef DIAGNOSTIC
+		else
+			panic("wakeup: p_stat is %d", (int)p->p_stat);
+#endif
 	}
 
 	return awakened;
@@ -538,12 +541,6 @@ wakeup_n(const volatile void *ident, int n)
 	qp = &slpque[LOOKUP(ident)];
 	for (p = TAILQ_FIRST(qp); p != NULL && n != 0; p = pnext) {
 		pnext = TAILQ_NEXT(p, p_runq);
-		/*
-		 * This happens if wakeup(9) is called after enqueuing
-		 * itself on the sleep queue and both `ident' collide.
-		 */
-		if (p == curproc)
-			continue;
 #ifdef DIAGNOSTIC
 		if (p->p_stat != SSLEEP && p->p_stat != SSTOP)
 			panic("wakeup: p_stat is %d", (int)p->p_stat);

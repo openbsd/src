@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.344 2023/07/10 03:31:58 guenther Exp $	*/
+/*	$OpenBSD: proc.h,v 1.345 2023/07/11 07:02:43 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -414,6 +414,7 @@ struct proc {
 #define	P_ALRMPEND	0x00000004	/* SIGVTALRM needs to be posted */
 #define	P_SIGSUSPEND	0x00000008	/* Need to restore before-suspend mask*/
 #define	P_CANTSLEEP	0x00000010	/* insomniac thread */
+#define	P_WSLEEP	0x00000020	/* Working on going to sleep. */
 #define	P_SINTR		0x00000080	/* Sleep is interruptible. */
 #define	P_SYSTEM	0x00000200	/* No sigs, stats or swapping. */
 #define	P_TIMEOUT	0x00000400	/* Timing out during sleep. */
@@ -428,7 +429,7 @@ struct proc {
 
 #define	P_BITS \
     ("\20" "\01INKTR" "\02PROFPEND" "\03ALRMPEND" "\04SIGSUSPEND" \
-     "\05CANTSLEEP" "\010SINTR" "\012SYSTEM" "\013TIMEOUT" \
+     "\05CANTSLEEP" "\06WSLEEP" "\010SINTR" "\012SYSTEM" "\013TIMEOUT" \
      "\016WEXIT" "\020OWEUPC" "\024SUSPSINGLE" "\027XX" \
      "\030CONTINUED" "\033THREAD" "\034SUSPSIG" "\035SOFTDEP" "\037CPUPEG")
 
