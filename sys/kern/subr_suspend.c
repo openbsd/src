@@ -1,4 +1,4 @@
-/* $OpenBSD: subr_suspend.c,v 1.15 2023/07/02 19:02:27 cheloha Exp $ */
+/* $OpenBSD: subr_suspend.c,v 1.16 2023/07/12 18:40:06 cheloha Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -26,6 +26,9 @@
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <dev/wscons/wsdisplayvar.h>
+#ifdef GPROF
+#include <sys/gmon.h>
+#endif
 #ifdef HIBERNATE
 #include <sys/hibernate.h>
 #endif
@@ -49,6 +52,9 @@ sleep_state(void *v, int sleepmode)
 	extern int perflevel;
 	size_t rndbuflen;
 	char *rndbuf;
+#ifdef GPROF
+	int gmon_state;
+#endif
 #if NSOFTRAID > 0
 	extern void sr_quiesce(void);
 #endif
@@ -100,6 +106,12 @@ top:
 #ifdef MULTIPROCESSOR
 	sched_stop_secondary_cpus();
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
+#endif
+#ifdef GPROF
+	gmon_state = gmoninit;
+	gmoninit = 0;
+#endif
+#ifdef MULTIPROCESSOR
 	sleep_mp();
 #endif
 
@@ -172,6 +184,11 @@ fail_suspend:
 	resume_randomness(rndbuf, rndbuflen);
 #ifdef MULTIPROCESSOR
 	resume_mp();
+#endif
+#ifdef GPROF
+	gmoninit = gmon_state;
+#endif
+#ifdef MULTIPROCESSOR
 	sched_start_secondary_cpus();
 #endif
 	vfs_stall(curproc, 0);
