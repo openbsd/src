@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.294 2023/06/12 12:48:07 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.295 2023/07/12 14:45:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -447,10 +447,7 @@ int	community_add(struct rde_community *, int, void *, size_t);
 int	community_large_add(struct rde_community *, int, void *, size_t);
 int	community_ext_add(struct rde_community *, int, int, void *, size_t);
 
-int	community_write(struct rde_community *, void *, uint16_t);
-int	community_large_write(struct rde_community *, void *, uint16_t);
-int	community_ext_write(struct rde_community *, int, void *, uint16_t);
-int	community_writebuf(struct ibuf *, struct rde_community *);
+int	community_writebuf(struct rde_community *, uint8_t, int, struct ibuf *);
 
 void			 communities_shutdown(void);
 struct rde_community	*communities_lookup(struct rde_community *);
@@ -519,8 +516,7 @@ struct pt_entry	*pt_add_flow(struct flowspec *);
 void	 pt_remove(struct pt_entry *);
 struct pt_entry	*pt_lookup(struct bgpd_addr *);
 int	 pt_prefix_cmp(const struct pt_entry *, const struct pt_entry *);
-int	 pt_write(u_char *, int, struct pt_entry *, int);
-int	 pt_writebuf(struct ibuf *, struct pt_entry *);
+int	 pt_writebuf(struct ibuf *, struct pt_entry *, int, int, uint32_t);
 
 static inline struct pt_entry *
 pt_ref(struct pt_entry *pt)
@@ -710,10 +706,8 @@ void		 up_generate_addpath_all(struct rde_peer *, struct rib_entry *,
 		    struct prefix *, struct prefix *);
 void		 up_generate_default(struct rde_peer *, uint8_t);
 int		 up_is_eor(struct rde_peer *, uint8_t);
-int		 up_dump_withdraws(u_char *, int, struct rde_peer *, uint8_t);
-int		 up_dump_mp_unreach(u_char *, int, struct rde_peer *, uint8_t);
-int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);
-int		 up_dump_mp_reach(u_char *, int, struct rde_peer *, uint8_t);
+int		 up_dump_withdraws(struct ibuf *, struct rde_peer *, uint8_t);
+int		 up_dump_update(struct ibuf *, struct rde_peer *, uint8_t);
 
 /* rde_aspa.c */
 void		 aspa_validation(struct rde_aspa *, struct aspath *,

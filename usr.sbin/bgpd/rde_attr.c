@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.133 2023/06/12 12:10:17 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.134 2023/07/12 14:45:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -28,42 +28,6 @@
 #include "bgpd.h"
 #include "rde.h"
 #include "log.h"
-
-int
-attr_write(void *p, uint16_t p_len, uint8_t flags, uint8_t type,
-    void *data, uint16_t data_len)
-{
-	u_char		*b = p;
-	uint16_t	 tmp, tot_len = 2; /* attribute header (without len) */
-
-	flags &= ~ATTR_DEFMASK;
-	if (data_len > 255) {
-		tot_len += 2 + data_len;
-		flags |= ATTR_EXTLEN;
-	} else {
-		tot_len += 1 + data_len;
-	}
-
-	if (tot_len > p_len)
-		return (-1);
-
-	*b++ = flags;
-	*b++ = type;
-	if (data_len > 255) {
-		tmp = htons(data_len);
-		memcpy(b, &tmp, sizeof(tmp));
-		b += 2;
-	} else
-		*b++ = (u_char)data_len;
-
-	if (data == NULL)
-		return (tot_len - data_len);
-
-	if (data_len != 0)
-		memcpy(b, data, data_len);
-
-	return (tot_len);
-}
 
 int
 attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,

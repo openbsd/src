@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_prefix.c,v 1.49 2023/04/19 07:09:47 claudio Exp $ */
+/*	$OpenBSD: rde_prefix.c,v 1.50 2023/07/12 14:45:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -468,143 +468,111 @@ pt_free(struct pt_entry *pte)
 
 /* dump a prefix into specified buffer */
 int
-pt_write(u_char *buf, int len, struct pt_entry *pte, int withdraw)
+pt_writebuf(struct ibuf *buf, struct pt_entry *pte, int withdraw,
+    int add_path, uint32_t pathid)
 {
 	struct pt_entry_vpn4	*pvpn4 = (struct pt_entry_vpn4 *)pte;
 	struct pt_entry_vpn6	*pvpn6 = (struct pt_entry_vpn6 *)pte;
 	struct pt_entry_flow	*pflow = (struct pt_entry_flow *)pte;
-	int			 totlen, flowlen, psize;
+	struct ibuf		*tmp;
+	int			 flowlen, psize;
 	uint8_t			 plen;
+
+	if ((tmp = ibuf_dynamic(32, UINT16_MAX)) == NULL)
+		goto fail;
+
+	if (add_path) {
+		if (ibuf_add_n32(tmp, pathid) == -1)
+			goto fail;
+	}
 
 	switch (pte->aid) {
 	case AID_INET:
 	case AID_INET6:
 		plen = pte->prefixlen;
-		totlen = PREFIX_SIZE(plen);
-
-		if (totlen > len)
-			return (-1);
-		*buf++ = plen;
-		memcpy(buf, pte->data, totlen - 1);
-		return (totlen);
+		if (ibuf_add_n8(tmp, plen) == -1)
+			goto fail;
+		if (ibuf_add(tmp, pte->data, PREFIX_SIZE(plen) - 1) == -1)
+			goto fail;
+		break;
 	case AID_VPN_IPv4:
 		plen = pvpn4->prefixlen;
-		totlen = PREFIX_SIZE(plen) + sizeof(pvpn4->rd);
 		psize = PREFIX_SIZE(plen) - 1;
 		plen += sizeof(pvpn4->rd) * 8;
 		if (withdraw) {
 			/* withdraw have one compat label as placeholder */
-			totlen += 3;
 			plen += 3 * 8;
 		} else {
-			totlen += pvpn4->labellen;
 			plen += pvpn4->labellen * 8;
 		}
 
-		if (totlen > len)
-			return (-1);
-		*buf++ = plen;
+		if (ibuf_add_n8(tmp, plen) == -1)
+			goto fail;
 		if (withdraw) {
 			/* magic compatibility label as per rfc8277 */
-			*buf++ = 0x80;
-			*buf++ = 0x0;
-			*buf++ = 0x0;
+			if (ibuf_add_n8(tmp, 0x80) == -1 ||
+			    ibuf_add_zero(tmp, 2) == -1)
+				goto fail;
 		} else {
-			memcpy(buf, &pvpn4->labelstack, pvpn4->labellen);
-			buf += pvpn4->labellen;
+			if (ibuf_add(tmp, &pvpn4->labelstack,
+			    pvpn4->labellen) == -1)
+				goto fail;
 		}
-		memcpy(buf, &pvpn4->rd, sizeof(pvpn4->rd));
-		buf += sizeof(pvpn4->rd);
-		memcpy(buf, &pvpn4->prefix4, psize);
-		return (totlen);
+		if (ibuf_add(tmp, &pvpn4->rd, sizeof(pvpn4->rd)) == -1 ||
+		    ibuf_add(tmp, &pvpn4->prefix4, psize) == -1)
+			goto fail;
+		break;
 	case AID_VPN_IPv6:
 		plen = pvpn6->prefixlen;
-		totlen = PREFIX_SIZE(plen) + sizeof(pvpn6->rd);
 		psize = PREFIX_SIZE(plen) - 1;
 		plen += sizeof(pvpn6->rd) * 8;
 		if (withdraw) {
 			/* withdraw have one compat label as placeholder */
-			totlen += 3;
 			plen += 3 * 8;
 		} else {
-			totlen += pvpn6->labellen;
 			plen += pvpn6->labellen * 8;
 		}
 
-		if (totlen > len)
-			return (-1);
-		*buf++ = plen;
+		if (ibuf_add_n8(tmp, plen) == -1)
+			goto fail;
 		if (withdraw) {
 			/* magic compatibility label as per rfc8277 */
-			*buf++ = 0x80;
-			*buf++ = 0x0;
-			*buf++ = 0x0;
+			if (ibuf_add_n8(tmp, 0x80) == -1 ||
+			    ibuf_add_zero(tmp, 2) == -1)
+				goto fail;
 		} else {
-			memcpy(buf, &pvpn6->labelstack, pvpn6->labellen);
-			buf += pvpn6->labellen;
+			if (ibuf_add(tmp, &pvpn6->labelstack,
+			    pvpn6->labellen) == -1)
+				goto fail;
 		}
-		memcpy(buf, &pvpn6->rd, sizeof(pvpn6->rd));
-		buf += sizeof(pvpn6->rd);
-		memcpy(buf, &pvpn6->prefix6, psize);
-		return (totlen);
+		if (ibuf_add(tmp, &pvpn6->rd, sizeof(pvpn6->rd)) == -1 ||
+		    ibuf_add(tmp, &pvpn6->prefix6, psize) == -1)
+			goto fail;
+		break;
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:
 		flowlen = pflow->len - PT_FLOW_SIZE;
-		totlen = flowlen < FLOWSPEC_LEN_LIMIT ? 1 : 2;
-		totlen += flowlen;
-
-		if (totlen > len)
-			return (-1);
-
 		if (flowlen < FLOWSPEC_LEN_LIMIT) {
-			*buf++ = flowlen;
+			if (ibuf_add_n8(tmp, flowlen) == -1)
+				goto fail;
 		} else {
-			*buf++ = 0xf0 | (flowlen >> 8);
-			*buf++ = flowlen & 0xff;
+			if (ibuf_add_n8(tmp, 0xf0 | (flowlen >> 8)) == -1 ||
+			    ibuf_add_n8(tmp, flowlen) == -1)
+				goto fail;
 		}
-		memcpy(buf, &pflow->flow, flowlen);
-		return (totlen);
-	default:
-		return (-1);
-	}
-}
-
-/* dump a prefix into specified ibuf, allocating space for it if needed */
-int
-pt_writebuf(struct ibuf *buf, struct pt_entry *pte)
-{
-	struct pt_entry_vpn4	*pvpn4 = (struct pt_entry_vpn4 *)pte;
-	struct pt_entry_vpn6	*pvpn6 = (struct pt_entry_vpn6 *)pte;
-	struct pt_entry_flow	*pflow = (struct pt_entry_flow *)pte;
-	int			 totlen, flowlen;
-	void			*bptr;
-
-	switch (pte->aid) {
-	case AID_INET:
-	case AID_INET6:
-		totlen = PREFIX_SIZE(pte->prefixlen);
-		break;
-	case AID_VPN_IPv4:
-		totlen = PREFIX_SIZE(pte->prefixlen) + sizeof(pvpn4->rd) +
-		    pvpn4->labellen;
-		break;
-	case AID_VPN_IPv6:
-		totlen = PREFIX_SIZE(pte->prefixlen) + sizeof(pvpn6->rd) +
-		    pvpn6->labellen;
-		break;
-	case AID_FLOWSPECv4:
-	case AID_FLOWSPECv6:
-		flowlen = pflow->len - PT_FLOW_SIZE;
-		totlen = flowlen < FLOWSPEC_LEN_LIMIT ? 1 : 2;
-		totlen += flowlen;
+		if (ibuf_add(tmp, &pflow->flow, flowlen) == -1)
+			goto fail;
 		break;
 	default:
-		return (-1);
+		goto fail;
 	}
 
-	if ((bptr = ibuf_reserve(buf, totlen)) == NULL)
-		return (-1);
-	if (pt_write(bptr, totlen, pte, 0) == -1)
-		return (-1);
-	return (0);
+	if (ibuf_add_buf(buf, tmp) == -1)
+		goto fail;
+	ibuf_free(tmp);
+	return 0;
+
+ fail:
+	ibuf_free(tmp);
+	return -1;
 }

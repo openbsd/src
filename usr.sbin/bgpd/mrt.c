@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.114 2023/04/19 09:03:00 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.115 2023/07/12 14:45:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -309,7 +309,9 @@ mrt_attr_dump(struct ibuf *buf, struct rde_aspath *a, struct rde_community *c,
 		return (-1);
 
 	/* communities */
-	if (community_writebuf(buf, c) == -1)
+	if (community_writebuf(c, ATTR_COMMUNITIES, 0, buf) == -1 ||
+	    community_writebuf(c, ATTR_EXT_COMMUNITIES, 0, buf) == -1 ||
+	    community_writebuf(c, ATTR_LARGE_COMMUNITIES, 0, buf) == -1)
 		return (-1);
 
 	/* dump all other path attributes without modification */
@@ -502,7 +504,7 @@ mrt_dump_entry_mp(struct mrt *mrt, struct prefix *p, uint16_t snum,
 		goto fail;
 	}
 
-	if (pt_writebuf(h2buf, p->pt) == -1) {
+	if (pt_writebuf(h2buf, p->pt, 0, 0, 0) == -1) {
 		log_warnx("%s: pt_writebuf error", __func__);
 		goto fail;
 	}
@@ -678,8 +680,8 @@ mrt_dump_entry_v2_rib(struct rib_entry *re, struct ibuf **nb, struct ibuf **apb,
 		}
 		len = ibuf_size(tbuf);
 		DUMP_SHORT(buf, (uint16_t)len);
-		if (ibuf_add(buf, tbuf->buf, len) == -1) {
-			log_warn("%s: ibuf_add error", __func__);
+		if (ibuf_add_buf(buf, tbuf) == -1) {
+			log_warn("%s: ibuf_add_buf error", __func__);
 			ibuf_free(tbuf);
 			goto fail;
 		}
@@ -731,7 +733,7 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 		break;
 	}
 
-	if (pt_writebuf(pbuf, re->prefix) == -1) {
+	if (pt_writebuf(pbuf, re->prefix, 0, 0, 0) == -1) {
 		log_warnx("%s: pt_writebuf error", __func__);
 		goto fail;
 	}
@@ -748,8 +750,8 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 			goto fail;
 
 		DUMP_LONG(hbuf, snum);
-		if (ibuf_add(hbuf, pbuf->buf, ibuf_size(pbuf)) == -1) {
-			log_warn("%s: ibuf_add error", __func__);
+		if (ibuf_add_buf(hbuf, pbuf) == -1) {
+			log_warn("%s: ibuf_add_buf error", __func__);
 			goto fail;
 		}
 		DUMP_SHORT(hbuf, nump);
@@ -767,8 +769,8 @@ mrt_dump_entry_v2(struct mrt *mrt, struct rib_entry *re, uint32_t snum)
 			goto fail;
 
 		DUMP_LONG(hbuf, snum);
-		if (ibuf_add(hbuf, pbuf->buf, ibuf_size(pbuf)) == -1) {
-			log_warn("%s: ibuf_add error", __func__);
+		if (ibuf_add_buf(hbuf, pbuf) == -1) {
+			log_warn("%s: ibuf_add_buf error", __func__);
 			goto fail;
 		}
 		DUMP_SHORT(hbuf, apnump);
@@ -833,8 +835,8 @@ mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf)
 	}
 
 	off = ibuf_size(buf);
-	if (ibuf_reserve(buf, sizeof(nump)) == NULL) {
-		log_warn("%s: ibuf_reserve error", __func__);
+	if (ibuf_add_zero(buf, sizeof(nump)) == -1) {
+		log_warn("%s: ibuf_add_zero error", __func__);
 		goto fail;
 	}
 	arg.nump = 0;
@@ -843,8 +845,10 @@ mrt_dump_v2_hdr(struct mrt *mrt, struct bgpd_config *conf)
 	if (arg.nump == -1)
 		goto fail;
 
-	nump = htons(arg.nump);
-	memcpy(ibuf_seek(buf, off, sizeof(nump)), &nump, sizeof(nump));
+	if (ibuf_set_n16(buf, off, arg.nump) == -1) {
+		log_warn("%s: ibuf_set_n16 error", __func__);
+		goto fail;
+	}
 
 	len = ibuf_size(buf);
 	if (mrt_dump_hdr_rde(&hbuf, MSG_TABLE_DUMP_V2,
@@ -1099,14 +1103,8 @@ mrt_write(struct mrt *mrt)
 void
 mrt_clean(struct mrt *mrt)
 {
-	struct ibuf	*b;
-
 	close(mrt->wbuf.fd);
-	while ((b = TAILQ_FIRST(&mrt->wbuf.bufs))) {
-		TAILQ_REMOVE(&mrt->wbuf.bufs, b, entry);
-		ibuf_free(b);
-	}
-	mrt->wbuf.queued = 0;
+	msgbuf_clear(&mrt->wbuf);
 }
 
 static struct imsgbuf	*mrt_imsgbuf[2];

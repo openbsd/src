@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.445 2023/05/25 14:20:25 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.446 2023/07/12 14:45:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1383,7 +1383,7 @@ session_sendmsg(struct bgp_msg *msg, struct peer *p)
 		if ((mrt->peer_id == 0 && mrt->group_id == 0) ||
 		    mrt->peer_id == p->conf.id || (mrt->group_id != 0 &&
 		    mrt->group_id == p->conf.groupid))
-			mrt_dump_bgp_msg(mrt, msg->buf->buf, msg->len, p,
+			mrt_dump_bgp_msg(mrt, ibuf_data(msg->buf), msg->len, p,
 			    msg->type);
 	}
 
@@ -1589,7 +1589,7 @@ session_open(struct peer *p)
 			uint8_t op_len = optparamlen;
 			errs += ibuf_add(buf->buf, &op_len, 1);
 		}
-		errs += ibuf_add(buf->buf, opb->buf, ibuf_size(opb));
+		errs += ibuf_add_buf(buf->buf, opb);
 	}
 
 	ibuf_free(opb);

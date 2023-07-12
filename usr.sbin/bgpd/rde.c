@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.607 2023/07/12 12:31:28 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.608 2023/07/12 14:45:42 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -86,8 +86,7 @@ static void	 rde_rpki_reload(void);
 static int	 rde_roa_reload(void);
 static int	 rde_aspa_reload(void);
 int		 rde_update_queue_pending(void);
-void		 rde_update_queue_runner(void);
-void		 rde_update6_queue_runner(uint8_t);
+void		 rde_update_queue_runner(uint8_t);
 struct rde_prefixset *rde_find_prefixset(char *, struct rde_prefixset_head *);
 void		 rde_mark_prefixsets_dirty(struct rde_prefixset_head *,
 		    struct rde_prefixset_head *);
@@ -310,9 +309,8 @@ rde_main(int debug, int verbose)
 		rib_dump_runner();
 		nexthop_runner();
 		if (ibuf_se && ibuf_se->w.queued < SESS_MSG_HIGH_MARK) {
-			rde_update_queue_runner();
-			for (aid = AID_INET6; aid < AID_MAX; aid++)
-				rde_update6_queue_runner(aid);
+			for (aid = AID_MIN; aid < AID_MAX; aid++)
+				rde_update_queue_runner(aid);
 		}
 		/* commit pftable once per poll loop */
 		rde_commit_pftable();
@@ -3452,69 +3450,11 @@ rde_update_queue_pending(void)
 }
 
 void
-rde_update_queue_runner(void)
+rde_update_queue_runner(uint8_t aid)
 {
 	struct rde_peer		*peer;
-	int			 r, sent, max = RDE_RUNNER_ROUNDS, eor;
-	uint16_t		 len, wpos;
-
-	len = sizeof(queue_buf) - MSGSIZE_HEADER;
-	do {
-		sent = 0;
-		RB_FOREACH(peer, peer_tree, &peertable) {
-			if (peer->conf.id == 0)
-				continue;
-			if (peer->state != PEER_UP)
-				continue;
-			if (peer->throttled)
-				continue;
-			eor = 0;
-			wpos = 0;
-			/* first withdraws, save 2 bytes for path attributes */
-			if ((r = up_dump_withdraws(queue_buf, len - 2, peer,
-			    AID_INET)) == -1)
-				continue;
-			wpos += r;
-
-			/* now bgp path attributes unless it is the EoR mark */
-			if (up_is_eor(peer, AID_INET)) {
-				eor = 1;
-				memset(queue_buf + wpos, 0, 2);
-				wpos += 2;
-			} else {
-				r = up_dump_attrnlri(queue_buf + wpos,
-				    len - wpos, peer);
-				wpos += r;
-			}
-
-			/* finally send message to SE */
-			if (wpos > 4) {
-				if (imsg_compose(ibuf_se, IMSG_UPDATE,
-				    peer->conf.id, 0, -1, queue_buf,
-				    wpos) == -1)
-					fatal("%s %d imsg_compose error",
-					    __func__, __LINE__);
-				sent++;
-			}
-			if (eor) {
-				int sent_eor = peer->sent_eor & (1 << AID_INET);
-				if (peer->capa.grestart.restart && !sent_eor)
-					rde_peer_send_eor(peer, AID_INET);
-				if (peer->capa.enhanced_rr && sent_eor)
-					rde_peer_send_rrefresh(peer, AID_INET,
-					    ROUTE_REFRESH_END_RR);
-			}
-		}
-		max -= sent;
-	} while (sent != 0 && max > 0);
-}
-
-void
-rde_update6_queue_runner(uint8_t aid)
-{
-	struct rde_peer		*peer;
-	int			 r, sent, max = RDE_RUNNER_ROUNDS / 2;
-	uint16_t		 len;
+	struct ibuf		*buf;
+	int			 sent, max = RDE_RUNNER_ROUNDS;
 
 	/* first withdraws ... */
 	do {
@@ -3526,22 +3466,26 @@ rde_update6_queue_runner(uint8_t aid)
 				continue;
 			if (peer->throttled)
 				continue;
-			len = sizeof(queue_buf) - MSGSIZE_HEADER;
-			r = up_dump_mp_unreach(queue_buf, len, peer, aid);
-			if (r == -1)
+			if (RB_EMPTY(&peer->withdraws[aid]))
 				continue;
-			/* finally send message to SE */
-			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
-			    0, -1, queue_buf, r) == -1)
-				fatal("%s %d imsg_compose error", __func__,
-				    __LINE__);
+
+			if ((buf = ibuf_dynamic(4, 4096 - MSGSIZE_HEADER)) ==
+			    NULL)
+				fatal("%s", __func__);
+			if (up_dump_withdraws(buf, peer, aid) == -1) {
+				ibuf_free(buf);
+				continue;
+			}
+			if (imsg_compose_ibuf(ibuf_se, IMSG_UPDATE,
+			    peer->conf.id, 0, buf) == -1)
+				fatal("%s: imsg_create error", __func__);
 			sent++;
 		}
 		max -= sent;
 	} while (sent != 0 && max > 0);
 
 	/* ... then updates */
-	max = RDE_RUNNER_ROUNDS / 2;
+	max = RDE_RUNNER_ROUNDS;
 	do {
 		sent = 0;
 		RB_FOREACH(peer, peer_tree, &peertable) {
@@ -3551,7 +3495,9 @@ rde_update6_queue_runner(uint8_t aid)
 				continue;
 			if (peer->throttled)
 				continue;
-			len = sizeof(queue_buf) - MSGSIZE_HEADER;
+			if (RB_EMPTY(&peer->updates[aid]))
+				continue;
+
 			if (up_is_eor(peer, aid)) {
 				int sent_eor = peer->sent_eor & (1 << aid);
 				if (peer->capa.grestart.restart && !sent_eor)
@@ -3561,15 +3507,17 @@ rde_update6_queue_runner(uint8_t aid)
 					    ROUTE_REFRESH_END_RR);
 				continue;
 			}
-			r = up_dump_mp_reach(queue_buf, len, peer, aid);
-			if (r == 0)
-				continue;
 
-			/* finally send message to SE */
-			if (imsg_compose(ibuf_se, IMSG_UPDATE, peer->conf.id,
-			    0, -1, queue_buf, r) == -1)
-				fatal("%s %d imsg_compose error", __func__,
-				    __LINE__);
+			if ((buf = ibuf_dynamic(4, 4096 - MSGSIZE_HEADER)) ==
+			    NULL)
+				fatal("%s", __func__);
+			if (up_dump_update(buf, peer, aid) == -1) {
+				ibuf_free(buf);
+				continue;
+			}
+			if (imsg_compose_ibuf(ibuf_se, IMSG_UPDATE,
+			    peer->conf.id, 0, buf) == -1)
+				fatal("%s: imsg_compose_ibuf error", __func__);
 			sent++;
 		}
 		max -= sent;
