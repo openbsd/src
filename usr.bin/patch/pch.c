@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.65 2023/07/12 15:44:47 florian Exp $	*/
+/*	$OpenBSD: pch.c,v 1.66 2023/07/12 15:45:34 florian Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -1484,7 +1484,8 @@ num_components(const char *path)
 	size_t n;
 	const char *cp;
 
-	for (n = 0, cp = path; (cp = strchr(cp, '/')) != NULL; n++, cp++) {
+	for (n = 0, cp = path; (cp = strchr(cp, '/')) != NULL; n++) {
+		cp++;
 		while (*cp == '/')
 			cp++;		/* skip consecutive slashes */
 	}
