@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.7 2023/06/17 08:01:22 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.8 2023/07/12 15:27:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -46,6 +46,7 @@ static int
 test_parsing(size_t num, uint8_t *in, size_t inlen)
 {
 	const char *func = "community";
+	struct ibuf *buf;
 	uint8_t flags, type, attr[256];
 	size_t skip = 2;
 	uint16_t attr_len;
@@ -80,26 +81,24 @@ test_parsing(size_t num, uint8_t *in, size_t inlen)
 		return -1;
 	}
 
-	switch (type) {
-	case ATTR_COMMUNITIES:
-		r = community_write(&comm, attr, sizeof(attr));
-		break;
-	case ATTR_EXT_COMMUNITIES:
-		r = community_ext_write(&comm, 0, attr, sizeof(attr));
-		break;
-	case ATTR_LARGE_COMMUNITIES:
-		r = community_large_write(&comm, attr, sizeof(attr));
-		break;
-	}
-
-	if (r != inlen) {
-		printf("Test %zu: %s_write return value %d != %zd\n",
-		    num, func, r, inlen);
+	if ((buf = ibuf_dynamic(0, 4096)) == NULL) {
+		printf("Test %zu: ibuf_dynamic failed\n", num);
 		return -1;
 	}
-	if (r != -1 && memcmp(attr, in, inlen) != 0) {
+
+	if (community_writebuf(&comm, type, 0, buf) == -1) {
+		printf("Test %zu: community_writebuf failed\n", num);
+		return -1;
+	}
+
+	if (ibuf_size(buf) != inlen) {
+		printf("Test %zu: %s_write return value %zd != %zd\n",
+		    num, func, ibuf_size(buf), inlen);
+		return -1;
+	}
+	if (memcmp(ibuf_data(buf), in, inlen) != 0) {
 		printf("Test %zu: %s_write unexpected encoding: ", num, func);
-		dump(attr, inlen);
+		dump(ibuf_data(buf), ibuf_size(buf));
 		printf("expected: ");
 		dump(in, inlen);
 		return -1;
@@ -226,44 +225,27 @@ log_warnx(const char *emsg, ...)
 }
 
 int
-attr_write(void *p, uint16_t p_len, uint8_t flags, uint8_t type,
-    void *data, uint16_t data_len)
-{
-	u_char		*b = p;
-	uint16_t	 tmp, tot_len = 2; /* attribute header (without len) */
-
-	flags &= ~ATTR_DEFMASK;
-	if (data_len > 255) {
-		tot_len += 2 + data_len;
-		flags |= ATTR_EXTLEN;
-	} else {
-		tot_len += 1 + data_len;
-	}
-
-	if (tot_len > p_len)
-		return (-1);
-
-	*b++ = flags;
-	*b++ = type;
-	if (data_len > 255) {
-		tmp = htons(data_len);
-		memcpy(b, &tmp, sizeof(tmp));
-		b += 2;
-	} else
-		*b++ = (u_char)data_len;
-
-	if (data == NULL)
-		return (tot_len - data_len);
-
-	if (data_len != 0)
-		memcpy(b, data, data_len);
-
-	return (tot_len);
-}
-
-int
 attr_writebuf(struct ibuf *buf, uint8_t flags, uint8_t type, void *data,
     uint16_t data_len)
 {
-	return (-1);
+	u_char  hdr[4];
+
+	flags &= ~ATTR_DEFMASK;
+	if (data_len > 255) {
+		flags |= ATTR_EXTLEN;
+		hdr[2] = (data_len >> 8) & 0xff;
+		hdr[3] = data_len & 0xff;
+	} else {
+		hdr[2] = data_len & 0xff;
+	}
+
+	hdr[0] = flags;
+	hdr[1] = type;
+
+	if (ibuf_add(buf, hdr, flags & ATTR_EXTLEN ? 4 : 3) == -1)
+		return (-1);
+	if (data != NULL && ibuf_add(buf, data, data_len) == -1)
+		return (-1);
+	return (0);
+
 }
