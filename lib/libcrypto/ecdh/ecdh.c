@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.4 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: ecdh.c,v 1.5 2023/07/12 08:54:18 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -151,7 +151,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
     void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen))
 {
 	BN_CTX *ctx;
-	BIGNUM *cofactor, *x;
+	BIGNUM *x;
 	const BIGNUM *priv_key;
 	const EC_GROUP *group;
 	EC_POINT *point = NULL;
@@ -172,8 +172,6 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 
 	if ((x = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((cofactor = BN_CTX_get(ctx)) == NULL)
-		goto err;
 
 	if ((group = EC_KEY_get0_group(ecdh)) == NULL)
 		goto err;
@@ -189,18 +187,6 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 	if ((priv_key = EC_KEY_get0_private_key(ecdh)) == NULL) {
 		ECerror(EC_R_MISSING_PRIVATE_KEY);
 		goto err;
-	}
-
-	if ((EC_KEY_get_flags(ecdh) & EC_FLAG_COFACTOR_ECDH) != 0) {
-		if (!EC_GROUP_get_cofactor(group, cofactor, NULL)) {
-			ECerror(ERR_R_EC_LIB);
-			goto err;
-		}
-		if (!BN_mul(cofactor, cofactor, priv_key, ctx)) {
-			ECerror(ERR_R_BN_LIB);
-			goto err;
-		}
-		priv_key = cofactor;
 	}
 
 	if (!EC_POINT_mul(group, point, NULL, pub_key, priv_key, ctx)) {
