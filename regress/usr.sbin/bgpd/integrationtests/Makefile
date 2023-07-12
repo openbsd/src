@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.20 2022/11/09 14:31:31 claudio Exp $
+# $OpenBSD: Makefile,v 1.21 2023/07/12 15:34:59 claudio Exp $
 
 REGRESS_TARGETS	= 	network_statement md5 ovs mrt pftable \
 			maxprefix maxprefixout maxcomm \
-			as0 med eval_all policy l3vpn
+			as0 med eval_all policy l3vpn attr
 
 BGPD ?=			/usr/sbin/bgpd
 
@@ -53,6 +53,11 @@ med:
 eval_all:
 	# install exabgp from ports for additional tests
 	@echo SKIPPED
+
+attr:
+	# install exabgp from ports for additional tests
+	@echo SKIPPED
+
 .else
 
 .SUFFIXES: .conf .in
@@ -68,6 +73,9 @@ med: api-exabgp exabgp.med.conf
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
 
 eval_all: api-exabgp exabgp.eval_all.conf
+	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
+
+attr: api-exabgp exabgp.attr.conf
 	${SUDO} ksh ${.CURDIR}/$@.sh ${BGPD} ${.CURDIR} 11 12 pair11 pair12
 
 .endif
