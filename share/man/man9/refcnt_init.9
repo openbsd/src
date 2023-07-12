@@ -1,4 +1,4 @@
-.\"	$OpenBSD: refcnt_init.9,v 1.5 2023/07/06 20:53:53 kn Exp $
+.\"	$OpenBSD: refcnt_init.9,v 1.6 2023/07/12 18:14:13 jmc Exp $
 .\"
 .\" Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 6 2023 $
+.Dd $Mdocdate: July 12 2023 $
 .Dt REFCNT_INIT 9
 .Os
 .Sh NAME
@@ -71,7 +71,7 @@ is used to release an existing reference.
 is used to release an existing reference and wakes up a process
 that is currently waiting in
 .Fn refcnt_finalize
-for all the references to released.
+for all the references to be released.
 .Pp
 .Fn refcnt_finalize
 releases the caller's reference and sleeps until all the other
