@@ -1,4 +1,4 @@
-/*	$OpenBSD: library_mquery.c,v 1.70 2023/01/29 20:30:56 gnezdo Exp $ */
+/*	$OpenBSD: library_mquery.c,v 1.71 2023/07/12 19:49:06 jasper Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -118,6 +118,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 	char hbuf[4096], *exec_start;
 	size_t exec_size;
 
+#define powerof2(x) ((((x) - 1) & (x)) == 0)
 #define ROUND_PG(x) (((x) + align) & ~(align))
 #define TRUNC_PG(x) ((x) & ~(align))
 
@@ -171,6 +172,14 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 	 */
 	phdp = (Elf_Phdr *)(hbuf + ehdr->e_phoff);
 	for (i = 0; i < ehdr->e_phnum; i++, phdp++) {
+		if (phdp->p_align > 1 && !powerof2(phdp->p_align)) {
+			_dl_printf("%s: ld.so invalid ELF input %s.\n",
+			    __progname, libname);
+			_dl_close(libfile);
+			_dl_errno = DL_CANT_MMAP;
+			return(0);
+		}
+
 		switch (phdp->p_type) {
 		case PT_LOAD:
 			off = (phdp->p_vaddr & align);
