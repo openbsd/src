@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.126 2021/07/14 13:33:57 kn Exp $	*/
+/*	$OpenBSD: server.c,v 1.127 2023/07/12 12:37:27 tb Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1299,6 +1299,11 @@ void
 server_close(struct client *clt, const char *msg)
 {
 	struct server		*srv = clt->clt_srv;
+
+	if (clt->clt_fcgi_error != NULL) {
+		clt->clt_fcgi_error = msg;
+		return;
+	}
 
 	SPLAY_REMOVE(client_tree, &srv->srv_clients, clt);
 
