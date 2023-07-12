@@ -1,0 +1,23 @@
+#! /bin/sh
+
+. ${tstdir-.}/lib.sh
+. ${tstdir-.}/conf.sh
+
+generate_tree() {
+	mkdirfile "${1}/one.txt"
+}
+
+rm -rf dir1 dir2 dir3
+# make the copy-from-here tree
+generate_tree dir1
+# make the tree we want to compare to
+generate_tree dir2
+
+# Also make the target tree and mess up some permissions in there.
+# We expect rsync to reset this to what dir1 has.
+generate_tree dir3
+chmod 070 dir3/one.txt
+touch -m -t 199901020405 dir3/one.txt
+
+$rsync -a dir1/ dir3
+compare_trees dir2 dir3
