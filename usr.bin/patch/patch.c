@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.71 2022/08/03 07:30:37 op Exp $	*/
+/*	$OpenBSD: patch.c,v 1.72 2023/07/12 11:26:13 tb Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -99,7 +99,7 @@ static void	copy_till(LINENUM, bool);
 static void	spew_output(void);
 static void	dump_line(LINENUM, bool);
 static bool	patch_match(LINENUM, LINENUM, LINENUM);
-static bool	similar(const char *, const char *, int);
+static bool	similar(const char *, const char *, ssize_t);
 static __dead void usage(void);
 
 /* true if -E was specified on command line.  */
@@ -1012,7 +1012,7 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
 	LINENUM		pat_lines = pch_ptrn_lines() - fuzz;
 	const char	*ilineptr;
 	const char	*plineptr;
-	short		plinelen;
+	ssize_t		plinelen;
 
 	for (iline = base + offset + fuzz; pline <= pat_lines; pline++, iline++) {
 		ilineptr = ifetch(iline, offset >= 0);
@@ -1048,7 +1048,7 @@ patch_match(LINENUM base, LINENUM offset, LINENUM fuzz)
  * Do two lines match with canonicalized white space?
  */
 static bool
-similar(const char *a, const char *b, int len)
+similar(const char *a, const char *b, ssize_t len)
 {
 	while (len) {
 		if (isspace((unsigned char)*b)) { /* whitespace (or \n) to match? */

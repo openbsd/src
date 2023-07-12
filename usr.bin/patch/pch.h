@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.h,v 1.13 2019/12/11 20:10:17 jca Exp $	*/
+/*	$OpenBSD: pch.h,v 1.14 2023/07/12 11:26:13 tb Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -53,7 +53,7 @@ LINENUM		pch_newfirst(void);
 LINENUM		pch_repl_lines(void);
 LINENUM		pch_end(void);
 LINENUM		pch_context(void);
-short		pch_line_len(LINENUM);
+ssize_t		pch_line_len(LINENUM);
 char		pch_char(LINENUM);
 char		*pfetch(LINENUM);
 LINENUM		pch_hunk_beg(void);
