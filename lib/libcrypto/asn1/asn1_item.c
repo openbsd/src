@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.16 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.17 2023/07/13 20:59:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -230,73 +230,59 @@ ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	return ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, &ctx);
 }
 
-int
-ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
-    ASN1_BIT_STRING *signature, void *asn, EVP_MD_CTX *ctx)
+static int
+asn1_item_set_algorithm_identifiers(EVP_MD_CTX *ctx, X509_ALGOR *algor1,
+    X509_ALGOR *algor2)
 {
-	const EVP_MD *type;
 	EVP_PKEY *pkey;
-	unsigned char *in = NULL, *out = NULL;
-	size_t out_len = 0;
-	int in_len = 0;
-	int signid, paramtype;
-	int rv = 2;
-	int ret = 0;
+	ASN1_OBJECT *aobj;
+	const EVP_MD *md;
+	int sign_id, sign_param;
 
 	if ((pkey = EVP_PKEY_CTX_get0_pkey(ctx->pctx)) == NULL) {
 		ASN1error(ASN1_R_CONTEXT_NOT_INITIALISED);
 		return 0;
 	}
 
-	if (pkey->ameth == NULL) {
-		ASN1error(ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+	if ((md = EVP_MD_CTX_md(ctx)) == NULL) {
+		ASN1error(ASN1_R_CONTEXT_NOT_INITIALISED);
 		return 0;
 	}
 
-	if (pkey->ameth->item_sign != NULL) {
-		rv = pkey->ameth->item_sign(ctx, it, asn, algor1, algor2,
-		    signature);
-		if (rv == 1) {
-			out_len = signature->length;
-			goto done;
-		}
-		/* Return value meanings:
-		 * <=0: error.
-		 *   1: method does everything.
-		 *   2: carry on as normal.
-		 *   3: ASN1 method sets algorithm identifiers: just sign.
-		 */
-		if (rv <= 0) {
-			ASN1error(ERR_R_EVP_LIB);
-			goto err;
-		}
+	if (!OBJ_find_sigid_by_algs(&sign_id, EVP_MD_nid(md),
+	    pkey->ameth->pkey_id)) {
+		ASN1error(ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+		return 0;
+	}
+	if ((aobj = OBJ_nid2obj(sign_id)) == NULL) {
+		ASN1error(ASN1_R_UNKNOWN_OBJECT_TYPE);
+		return 0;
 	}
 
-	if (rv == 2) {
-		if ((type = EVP_MD_CTX_md(ctx)) == NULL) {
-			ASN1error(ASN1_R_CONTEXT_NOT_INITIALISED);
+	sign_param = V_ASN1_UNDEF;
+	if (pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL)
+		sign_param = V_ASN1_NULL;
+
+	if (algor1 != NULL) {
+		if (!X509_ALGOR_set0(algor1, aobj, sign_param, NULL))
 			return 0;
-		}
-
-		if (!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(type),
-		    pkey->ameth->pkey_id)) {
-			ASN1error(ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
-			return 0;
-		}
-
-		if (pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL)
-			paramtype = V_ASN1_NULL;
-		else
-			paramtype = V_ASN1_UNDEF;
-
-		if (algor1)
-			X509_ALGOR_set0(algor1,
-			    OBJ_nid2obj(signid), paramtype, NULL);
-		if (algor2)
-			X509_ALGOR_set0(algor2,
-			    OBJ_nid2obj(signid), paramtype, NULL);
-
 	}
+	if (algor2 != NULL) {
+		if (!X509_ALGOR_set0(algor2, aobj, sign_param, NULL))
+			return 0;
+	}
+
+	return 1;
+}
+
+static int
+asn1_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+    ASN1_BIT_STRING *signature)
+{
+	unsigned char *in = NULL, *out = NULL;
+	size_t out_len = 0;
+	int in_len = 0;
+	int ret = 0;
 
 	if ((in_len = ASN1_item_i2d(asn, &in, it)) <= 0) {
 		in_len = 0;
@@ -325,16 +311,65 @@ ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	out = NULL;
 
 	if (!asn1_abs_set_unused_bits(signature, 0)) {
+		ASN1_STRING_set0(signature, NULL, 0);
 		ASN1error(ERR_R_ASN1_LIB);
 		goto err;
 	}
 
- done:
-	ret = out_len;
+	ret = 1;
+
  err:
-	EVP_MD_CTX_cleanup(ctx);
 	freezero(in, in_len);
 	freezero(out, out_len);
+
+	return ret;
+}
+
+int
+ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
+    ASN1_BIT_STRING *signature, void *asn, EVP_MD_CTX *ctx)
+{
+	EVP_PKEY *pkey;
+	int rv;
+	int ret = 0;
+
+	if ((pkey = EVP_PKEY_CTX_get0_pkey(ctx->pctx)) == NULL) {
+		ASN1error(ASN1_R_CONTEXT_NOT_INITIALISED);
+		goto err;
+	}
+	if (pkey->ameth == NULL) {
+		ASN1error(ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+		goto err;
+	}
+
+	/*
+	 * API insanity ahead. If the item_sign() method is absent or if it
+	 * returns 2, this means: do all the work here. If it returns 3, only
+	 * sign. If it returns 1, then there's nothing to do but to return
+	 * the signature's length. Everything else is an error.
+	 */
+
+	rv = 2;
+	if (pkey->ameth->item_sign != NULL)
+		rv = pkey->ameth->item_sign(ctx, it, asn, algor1, algor2,
+		    signature);
+	if (rv <= 0 || rv > 3)
+		goto err;
+	if (rv == 1)
+		goto done;
+	if (rv == 2) {
+		if (!asn1_item_set_algorithm_identifiers(ctx, algor1, algor2))
+			goto err;
+	}
+
+	if (!asn1_item_sign(ctx, it, asn, signature))
+		goto err;
+
+ done:
+	ret = signature->length;
+
+ err:
+	EVP_MD_CTX_cleanup(ctx);
 
 	return ret;
 }
