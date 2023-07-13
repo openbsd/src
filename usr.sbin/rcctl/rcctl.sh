@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: rcctl.sh,v 1.116 2023/04/24 14:31:15 kn Exp $
+# $OpenBSD: rcctl.sh,v 1.117 2023/07/13 13:54:27 ajacoutot Exp $
 #
 # Copyright (c) 2014, 2015-2022 Antoine Jacoutot <ajacoutot@openbsd.org>
 # Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -535,13 +535,17 @@ case ${action} in
 		shift 1
 		svcs="$*"
 		[ -z "${svcs}" ] && usage
-		# it's ok to disable a non-existing daemon
-		if [ "${action}" != "disable" ]; then
-			for svc in ${svcs}; do
+		for svc in ${svcs}; do
+			# it's ok to disable a non-existing daemon
+			if [ "${action}" != "disable" ]; then
 				svc_is_avail ${svc} || \
 					rcctl_err "service ${svc} does not exist" 2
-			done
-		fi
+			# but still check for bad input
+			else
+				_rc_check_name "${svc}" || \
+					rcctl_err "service ${svc} does not exist" 2
+			fi
+		done
 		;;
 	get|getdef)
 		svc=$2
@@ -571,6 +575,10 @@ case ${action} in
 		# it's ok to disable a non-existing daemon
 		if [ "${action} ${var} ${args}" != "set status off" ]; then
 			svc_is_avail ${svc} || \
+				rcctl_err "service ${svc} does not exist" 2
+		# but still check for bad input
+		else
+			_rc_check_name "${svc}" || \
 				rcctl_err "service ${svc} does not exist" 2
 		fi
 		[[ ${var} != @(class|execdir|flags|logger|rtable|status|timeout|user) ]] && usage
