@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.95 2023/06/15 22:18:07 cheloha Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.96 2023/07/13 08:33:36 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1010,6 +1010,8 @@ void cpu_boot_secondary(struct cpu_info *ci);
 void cpu_hatch_secondary(void);
 void cpu_hatch_secondary_spin(void);
 
+void cpu_suspend_cycle(void);
+
 void
 cpu_boot_secondary_processors(void)
 {
@@ -1224,7 +1226,7 @@ cpu_halt(void)
 				ci->ci_psci_suspend_param = 0;
 		} else
 #endif
-			__asm volatile("wfi");
+			cpu_suspend_cycle();
 		count++;
 	}
 
@@ -1266,8 +1268,15 @@ cpu_unidle(struct cpu_info *ci)
 
 void cpu_hatch_primary(void);
 
+void (*cpu_suspend_cycle_fcn)(void) = cpu_wfi;
 label_t cpu_suspend_jmpbuf;
 int cpu_suspended;
+
+void
+cpu_suspend_cycle(void)
+{
+	cpu_suspend_cycle_fcn();
+}
 
 void
 cpu_init_primary(void)
@@ -1342,7 +1351,7 @@ cpu_suspend_primary(void)
 				ci->ci_psci_suspend_param = 0;
 		} else
 #endif
-			__asm volatile("wfi");
+			cpu_suspend_cycle();
 		count++;
 	}
 

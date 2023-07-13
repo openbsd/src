@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.36 2023/06/10 19:30:48 kettenis Exp $ */
+/* $OpenBSD: cpu.h,v 1.37 2023/07/13 08:33:36 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -153,6 +153,9 @@ struct cpu_info {
 	volatile int		ci_opp_idx;
 	volatile int		ci_opp_max;
 	uint32_t		ci_cpu_supply;
+
+	u_long			ci_prev_sleep;
+	u_long			ci_last_itime;
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
@@ -343,6 +346,11 @@ void	cpu_halt(void);
 void	cpu_startclock(void);
 int	cpu_suspend_primary(void);
 void	cpu_resume_secondary(struct cpu_info *);
+
+extern void (*cpu_idle_cycle_fcn)(void);
+extern void (*cpu_suspend_cycle_fcn)(void);
+
+void	cpu_wfi(void);
 
 void	delay (unsigned);
 #define	DELAY(x)	delay(x)

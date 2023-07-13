@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplcpu.c,v 1.7 2023/05/09 10:13:23 kettenis Exp $	*/
+/*	$OpenBSD: aplcpu.c,v 1.8 2023/07/13 08:33:36 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -41,6 +41,8 @@
 #define DVFS_T8103_STATUS_CUR_PS_SHIFT	4
 #define DVFS_T8112_STATUS_CUR_PS_MASK	(0x1f << 5)
 #define DVFS_T8112_STATUS_CUR_PS_SHIFT	5
+
+#define APLCPU_DEEP_WFI_LATENCY		10 /* microseconds */
 
 struct opp {
 	uint64_t opp_hz;
@@ -97,6 +99,8 @@ uint32_t aplcpu_opp_level(struct aplcpu_softc *, int);
 int	aplcpu_clockspeed(int *);
 void	aplcpu_setperf(int level);
 void	aplcpu_refresh_sensors(void *);
+void	aplcpu_idle_cycle();
+void	aplcpu_deep_wfi(void);
 
 int
 aplcpu_match(struct device *parent, void *match, void *aux)
@@ -171,6 +175,8 @@ aplcpu_attach(struct device *parent, struct device *self, void *aux)
 	sensordev_install(&sc->sc_sensordev);
 	sensor_task_register(sc, aplcpu_refresh_sensors, 1);
 
+	cpu_idle_cycle_fcn = aplcpu_idle_cycle;
+	cpu_suspend_cycle_fcn = aplcpu_deep_wfi;
 	cpu_cpuspeed = aplcpu_clockspeed;
 	cpu_setperf = aplcpu_setperf;
 	return;
@@ -223,11 +229,8 @@ aplcpu_opp_init(struct aplcpu_softc *sc, int node)
 		return;
 
 	count = 0;
-	for (child = OF_child(node); child != 0; child = OF_peer(child)) {
-		if (OF_getproplen(child, "turbo-mode") == 0)
-			continue;
+	for (child = OF_child(node); child != 0; child = OF_peer(child))
 		count++;
-	}
 	if (count == 0)
 		return;
 
@@ -239,8 +242,6 @@ aplcpu_opp_init(struct aplcpu_softc *sc, int node)
 
 	count = 0;
 	for (child = OF_child(node); child != 0; child = OF_peer(child)) {
-		if (OF_getproplen(child, "turbo-mode") == 0)
-			continue;
 		opp_hz = OF_getpropint64(child, "opp-hz", 0);
 		opp_level = OF_getpropint(child, "opp-level", 0);
 
@@ -429,4 +430,28 @@ aplcpu_refresh_sensors(void *arg)
 			}
 		}
 	}
+}
+
+void
+aplcpu_idle_cycle(void)
+{
+	struct cpu_info *ci = curcpu();
+	struct timeval start, stop;
+	u_long itime;
+
+	microuptime(&start);
+
+	if (ci->ci_prev_sleep > 3 * APLCPU_DEEP_WFI_LATENCY)
+		aplcpu_deep_wfi();
+	else
+		cpu_wfi();
+
+	microuptime(&stop);
+	timersub(&stop, &start, &stop);
+	itime = stop.tv_sec * 1000000 + stop.tv_usec;
+
+	ci->ci_last_itime = itime;
+	itime >>= 1;
+	ci->ci_prev_sleep = (ci->ci_prev_sleep + (ci->ci_prev_sleep >> 1)
+	    + itime) >> 1;
 }

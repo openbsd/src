@@ -1,4 +1,4 @@
-/* $OpenBSD: cpufunc_asm.S,v 1.7 2020/11/20 21:48:33 patrick Exp $ */
+/* $OpenBSD: cpufunc_asm.S,v 1.8 2023/07/13 08:33:36 kettenis Exp $ */
 /*-
  * Copyright (c) 2014 Robin Randhawa
  * Copyright (c) 2015 The FreeBSD Foundation
@@ -185,3 +185,52 @@ ENTRY(cpu_icache_sync_range)
 	RETGUARD_CHECK(cpu_icache_sync_range, x15)
 	ret
 END(cpu_icache_sync_range)
+
+ENTRY(cpu_wfi)
+	RETGUARD_SETUP(cpu_wfi, x15)
+	dsb	sy
+	wfi
+	RETGUARD_CHECK(cpu_wfi, x15)
+	ret
+END(cpu_wfi)
+
+ENTRY(aplcpu_deep_wfi)
+	RETGUARD_SETUP(aplcpu_deep_wfi, x15)
+
+	stp	x30, x15, [sp, #-16]!
+	stp	x28, x29, [sp, #-16]!
+	stp	x26, x27, [sp, #-16]!
+	stp	x24, x25, [sp, #-16]!
+	stp	x22, x23, [sp, #-16]!
+	stp	x20, x21, [sp, #-16]!
+	stp	x18, x19, [sp, #-16]!
+
+	mrs	x0, daif
+	str	x0, [sp, #-16]!
+	msr	daifset, #3
+
+	mrs	x0, s3_5_c15_c5_0
+	orr	x0, x0, #(3 << 24)
+	msr	s3_5_c15_c5_0, x0
+
+	dsb	sy
+	wfi
+
+	mrs	x0, s3_5_c15_c5_0
+	bic	x0, x0, #(1 << 24)
+	msr	s3_5_c15_c5_0, x0
+
+	ldr	x0, [sp], #16
+	msr	daif, x0
+
+	ldp	x18, x19, [sp], #16
+	ldp	x20, x21, [sp], #16
+	ldp	x22, x23, [sp], #16
+	ldp	x24, x25, [sp], #16
+	ldp	x26, x27, [sp], #16
+	ldp	x28, x29, [sp], #16
+	ldp	x30, x15, [sp], #16
+
+	RETGUARD_CHECK(aplcpu_deep_wfi, x15)
+	ret
+END(aplcpu_deep_wfi)
