@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.217 2023/07/03 16:47:43 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.218 2023/07/13 06:03:48 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2186,7 +2186,7 @@ input_csi_dispatch_sgr(struct input_ctx *ictx)
 			gc->attr &= ~GRID_ATTR_OVERLINE;
 			break;
 		case 59:
-			gc->us = 0;
+			gc->us = 8;
 			break;
 		case 90:
 		case 91:
