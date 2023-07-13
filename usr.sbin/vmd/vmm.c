@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.112 2023/05/13 23:15:28 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.113 2023/07/13 18:31:59 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -700,6 +700,16 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		/* Deferred error handling from sending the vm struct. */
 		if (ret == EIO)
 			goto err;
+
+		/* Send the current local prefix configuration. */
+		sz = atomicio(vwrite, fds[0], &env->vmd_cfg.cfg_localprefix,
+		    sizeof(env->vmd_cfg.cfg_localprefix));
+		if (sz != sizeof(env->vmd_cfg.cfg_localprefix)) {
+			log_warnx("%s: failed to send local prefix for vm '%s'",
+			    __func__, vcp->vcp_name);
+			ret = EIO;
+			goto err;
+		}
 
 		/* Read back the kernel-generated vm id from the child */
 		sz = atomicio(read, fds[0], &vcp->vcp_id, sizeof(vcp->vcp_id));

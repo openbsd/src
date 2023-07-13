@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.89 2023/05/13 23:15:28 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.90 2023/07/13 18:31:59 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -258,6 +258,14 @@ vm_main(int fd, int vmm_fd)
 	vcp = &vm.vm_params.vmc_params;
 	setproctitle("%s", vcp->vcp_name);
 	log_procinit(vcp->vcp_name);
+
+	/* Receive the local prefix settings. */
+	sz = atomicio(read, fd, &env->vmd_cfg.cfg_localprefix,
+	    sizeof(env->vmd_cfg.cfg_localprefix));
+	if (sz != sizeof(env->vmd_cfg.cfg_localprefix)) {
+		log_warnx("failed to receive local prefix");
+		_exit(EIO);
+	}
 
 	/*
 	 * We need, at minimum, a vm_kernel fd to boot a vm. This is either a

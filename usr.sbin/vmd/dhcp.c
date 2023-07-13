@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.c,v 1.12 2023/04/27 22:47:27 dv Exp $	*/
+/*	$OpenBSD: dhcp.c,v 1.13 2023/07/13 18:31:59 dv Exp $	*/
 
 /*
  * Copyright (c) 2017 Reyk Floeter <reyk@openbsd.org>
@@ -40,7 +40,6 @@
 	(1500 - sizeof(struct ip) - sizeof(struct udphdr) - OPTIONS_OFFSET)
 
 static const uint8_t broadcast[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
-extern struct vmd *env;
 
 ssize_t
 dhcp_request(struct virtio_dev *dev, char *buf, size_t buflen, char **obuf)
@@ -146,8 +145,7 @@ dhcp_request(struct virtio_dev *dev, char *buf, size_t buflen, char **obuf)
 			hostname = vm->vm_params.vmc_params.vcp_name;
 	}
 
-	if ((client_addr.s_addr =
-	    vm_priv_addr(&env->vmd_cfg,
+	if ((client_addr.s_addr = vm_priv_addr(&vionet->local_prefix,
 	    dev->vm_vmid, vionet->idx, 1)) == 0)
 		return (-1);
 	memcpy(&resp.yiaddr, &client_addr,
@@ -156,8 +154,8 @@ dhcp_request(struct virtio_dev *dev, char *buf, size_t buflen, char **obuf)
 	    sizeof(client_addr));
 	ss2sin(&pc.pc_dst)->sin_port = htons(CLIENT_PORT);
 
-	if ((server_addr.s_addr = vm_priv_addr(&env->vmd_cfg, dev->vm_vmid,
-	    vionet->idx, 0)) == 0)
+	if ((server_addr.s_addr = vm_priv_addr(&vionet->local_prefix,
+	    dev->vm_vmid, vionet->idx, 0)) == 0)
 		return (-1);
 	memcpy(&resp.siaddr, &server_addr, sizeof(server_addr));
 	memcpy(&ss2sin(&pc.pc_src)->sin_addr, &server_addr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.h,v 1.122 2023/05/13 23:15:28 dv Exp $	*/
+/*	$OpenBSD: vmd.h,v 1.123 2023/07/13 18:31:59 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -341,12 +341,12 @@ struct name2id {
 };
 TAILQ_HEAD(name2idlist, name2id);
 
-struct address {
-	struct sockaddr_storage	 ss;
-	int			 prefixlen;
-	TAILQ_ENTRY(address)	 entry;
+struct local_prefix {
+	struct in_addr		 lp_in;
+	struct in_addr		 lp_mask;
+	struct in6_addr		 lp_in6;
+	struct in6_addr		 lp_mask6;
 };
-TAILQ_HEAD(addresslist, address);
 
 #define SUN_PATH_LEN		(sizeof(((struct sockaddr_un *)NULL)->sun_path))
 struct vmd_agentx {
@@ -367,8 +367,7 @@ struct vmd_config {
 
 	struct timeval		 delay;
 	int			 parallelism;
-	struct address		 cfg_localprefix;
-	struct address		 cfg_localprefix6;
+	struct local_prefix	 cfg_localprefix;
 	struct vmd_agentx	 cfg_agentx;
 };
 
@@ -473,9 +472,9 @@ int	 priv_findname(const char *, const char **);
 int	 priv_validgroup(const char *);
 int	 vm_priv_ifconfig(struct privsep *, struct vmd_vm *);
 int	 vm_priv_brconfig(struct privsep *, struct vmd_switch *);
-uint32_t vm_priv_addr(struct vmd_config *, uint32_t, int, int);
-int	 vm_priv_addr6(struct vmd_config *, uint32_t, int, int,
-	    struct in6_addr *);
+uint32_t vm_priv_addr(struct local_prefix *, uint32_t, int, int);
+int	 vm_priv_addr6(struct local_prefix *, uint32_t, int, int,
+    	    struct in6_addr *);
 
 /* vmm.c */
 void	 vmm(struct privsep *, struct privsep_proc *);
@@ -518,7 +517,8 @@ void vm_agentx_shutdown(void);
 /* parse.y */
 int	 parse_config(const char *);
 int	 cmdline_symset(char *);
-int	 host(const char *, struct address *);
+int	 parse_prefix4(const char *, struct local_prefix *, const char **);
+int	 parse_prefix6(const char *, struct local_prefix *, const char **);
 
 /* virtio.c */
 int	 virtio_get_base(int, char *, size_t, int, const char *);

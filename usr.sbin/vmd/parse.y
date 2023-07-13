@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.67 2023/04/28 21:22:20 dv Exp $	*/
+/*	$OpenBSD: parse.y,v 1.68 2023/07/13 18:31:59 dv Exp $	*/
 
 /*
  * Copyright (c) 2007-2016 Reyk Floeter <reyk@openbsd.org>
@@ -30,6 +30,7 @@
 
 #include <machine/vmmvar.h>
 
+#include <arpa/inet.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -189,32 +190,27 @@ main		: LOCAL INET6 {
 			env->vmd_cfg.cfg_flags |= VMD_CFG_INET6;
 		}
 		| LOCAL INET6 PREFIX STRING {
-			struct address	 h;
+			const char	*err;
 
-			if (host($4, &h) == -1 ||
-			    h.ss.ss_family != AF_INET6 ||
-			    h.prefixlen > 64 || h.prefixlen < 0) {
-				yyerror("invalid local inet6 prefix: %s", $4);
-				free($4);
+			if (parse_prefix6($4, &env->vmd_cfg.cfg_localprefix,
+			    &err)) {
+				yyerror("invalid local inet6 prefix: %s", err);
 				YYERROR;
+			} else {
+				env->vmd_cfg.cfg_flags |= VMD_CFG_INET6;
+				env->vmd_cfg.cfg_flags &= ~VMD_CFG_AUTOINET6;
 			}
-
-			env->vmd_cfg.cfg_flags |= VMD_CFG_INET6;
-			env->vmd_cfg.cfg_flags &= ~VMD_CFG_AUTOINET6;
-			memcpy(&env->vmd_cfg.cfg_localprefix6, &h, sizeof(h));
+			free($4);
 		}
 		| LOCAL PREFIX STRING {
-			struct address	 h;
+			const char	*err;
 
-			if (host($3, &h) == -1 ||
-			    h.ss.ss_family != AF_INET ||
-			    h.prefixlen > 32 || h.prefixlen < 0) {
-				yyerror("invalid local prefix: %s", $3);
-				free($3);
+			if (parse_prefix4($3, &env->vmd_cfg.cfg_localprefix,
+			    &err)) {
+				yyerror("invalid local prefix: %s", err);
 				YYERROR;
 			}
-
-			memcpy(&env->vmd_cfg.cfg_localprefix, &h, sizeof(h));
+			free($3);
 		}
 		| SOCKET OWNER owner_id {
 			env->vmd_ps.ps_csock.cs_uid = $3.uid;
@@ -1404,42 +1400,133 @@ parse_format(const char *word)
 	return (0);
 }
 
+/*
+ * Parse an ipv4 address and prefix for local interfaces and validate
+ * constraints for vmd networking.
+ */
 int
-host(const char *str, struct address *h)
+parse_prefix4(const char *str, struct local_prefix *out, const char **errstr)
 {
-	struct addrinfo		 hints, *res;
-	int			 prefixlen;
-	char			*s, *p;
-	const char		*errstr;
+	struct addrinfo		 hints, *res = NULL;
+	struct sockaddr_storage	 ss;
+	struct in_addr		 addr;
+	int			 mask = 16;
+	char			*p, *ps;
 
-	if ((s = strdup(str)) == NULL) {
-		log_warn("%s", __func__);
-		goto fail;
-	}
+	if ((ps = strdup(str)) == NULL)
+		fatal("%s: strdup", __func__);
 
-	if ((p = strrchr(s, '/')) != NULL) {
-		*p++ = '\0';
-		prefixlen = strtonum(p, 0, 128, &errstr);
-		if (errstr) {
-			log_warnx("prefixlen is %s: %s", errstr, p);
-			goto fail;
+	if ((p = strrchr(ps, '/')) != NULL) {
+		mask = strtonum(p + 1, 1, 16, errstr);
+		if (errstr != NULL && *errstr) {
+			free(ps);
+			return (1);
 		}
-	} else
-		prefixlen = 128;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_flags = AI_NUMERICHOST;
-	if (getaddrinfo(s, NULL, &hints, &res) == 0) {
-		memset(h, 0, sizeof(*h));
-		memcpy(&h->ss, res->ai_addr, res->ai_addrlen);
-		h->prefixlen = prefixlen;
-		freeaddrinfo(res);
-		free(s);
-		return (0);
+		p[0] = '\0';
 	}
 
- fail:
-	free(s);
-	return (-1);
+	/* Attempt to construct an address from the user input. */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_NUMERICHOST;
+
+	if (getaddrinfo(ps, NULL, &hints, &res) == 0) {
+		memset(&ss, 0, sizeof(ss));
+		memcpy(&ss, res->ai_addr, res->ai_addrlen);
+		addr.s_addr = ss2sin(&ss)->sin_addr.s_addr;
+		freeaddrinfo(res);
+	} else { /* try 10/8 parsing */
+		memset(&addr, 0, sizeof(addr));
+		if (inet_net_pton(AF_INET, ps, &addr, sizeof(addr)) == -1) {
+			if (errstr)
+				*errstr = "invalid format";
+			free(ps);
+			return (1);
+		}
+	}
+	free(ps);
+
+	/*
+	 * Validate the prefix by comparing it with the mask. Since we
+	 * constrain the mask length to 16 above, this also validates
+	 * we reserve the last 16 bits for use by vmd to assign vm id
+	 * and interface id.
+	 */
+	if ((addr.s_addr & prefixlen2mask(mask)) != addr.s_addr) {
+		if (errstr)
+			*errstr = "bad mask";
+		return (1);
+	}
+
+	/* Copy out the local prefix. */
+	out->lp_in.s_addr = addr.s_addr;
+	out->lp_mask.s_addr = prefixlen2mask(mask);
+	return (0);
+}
+
+/*
+ * Parse an ipv6 address and prefix for local interfaces and validate
+ * constraints for vmd networking.
+ */
+int
+parse_prefix6(const char *str, struct local_prefix *out, const char **errstr)
+{
+	struct addrinfo		 hints, *res = NULL;
+	struct sockaddr_storage	 ss;
+	struct in6_addr		 addr6, mask6;
+	size_t			 i;
+	int			 mask = 64, err;
+	char			*p, *ps;
+
+	if ((ps = strdup(str)) == NULL)
+		fatal("%s: strdup", __func__);
+
+	if ((p = strrchr(ps, '/')) != NULL) {
+		mask = strtonum(p + 1, 0, 64, errstr);
+		if (errstr != NULL && *errstr) {
+			free(ps);
+			return (1);
+		}
+		p[0] = '\0';
+	}
+
+	/* Attempt to construct an address from the user input. */
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET6;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_flags = AI_NUMERICHOST;
+
+	if ((err = getaddrinfo(ps, NULL, &hints, &res)) != 0) {
+		if (errstr)
+			*errstr = gai_strerror(err);
+		free(ps);
+		return (1);
+	}
+	free(ps);
+
+	memset(&ss, 0, sizeof(ss));
+	memcpy(&ss, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
+
+	memcpy(&addr6, (void*)&ss2sin6(&ss)->sin6_addr, sizeof(addr6));
+	prefixlen2mask6(mask, &mask6);
+
+	/*
+	 * Validate the prefix by comparing it with the mask. Since we
+	 * constrain the mask length to 64 above, this also validates
+	 * that we're reserving bits for the encoding of the ipv4
+	 * address, the vm id, and interface id. */
+	for (i = 0; i < 16; i++) {
+		if ((addr6.s6_addr[i] & mask6.s6_addr[i]) != addr6.s6_addr[i]) {
+			if (errstr)
+				*errstr = "bad mask";
+			return (1);
+		}
+	}
+
+	/* Copy out the local prefix. */
+	memcpy(&out->lp_in6, &addr6, sizeof(out->lp_in6));
+	memcpy(&out->lp_mask6, &mask6, sizeof(out->lp_mask6));
+	return (0);
 }

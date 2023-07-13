@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.71 2023/04/28 19:46:42 dv Exp $	*/
+/*	$OpenBSD: config.c,v 1.72 2023/07/13 18:31:59 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -47,9 +47,7 @@ static int	 config_init_localprefix(struct vmd_config *);
 static int
 config_init_localprefix(struct vmd_config *cfg)
 {
-	struct sockaddr_in6	*sin6;
-
-	if (host(VMD_DHCP_PREFIX, &cfg->cfg_localprefix) == -1)
+	if (parse_prefix4(VMD_DHCP_PREFIX, &cfg->cfg_localprefix, NULL) == -1)
 		return (-1);
 
 	/* IPv6 is disabled by default */
@@ -58,11 +56,11 @@ config_init_localprefix(struct vmd_config *cfg)
 	/* Generate random IPv6 prefix only once */
 	if (cfg->cfg_flags & VMD_CFG_AUTOINET6)
 		return (0);
-	if (host(VMD_ULA_PREFIX, &cfg->cfg_localprefix6) == -1)
+	if (parse_prefix6(VMD_ULA_PREFIX, &cfg->cfg_localprefix, NULL) == -1)
 		return (-1);
+
 	/* Randomize the 56 bits "Global ID" and "Subnet ID" */
-	sin6 = ss2sin6(&cfg->cfg_localprefix6.ss);
-	arc4random_buf(&sin6->sin6_addr.s6_addr[1], 7);
+	arc4random_buf(&cfg->cfg_localprefix.lp_in6.s6_addr[1], 7);
 	cfg->cfg_flags |= VMD_CFG_AUTOINET6;
 
 	return (0);

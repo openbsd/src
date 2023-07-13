@@ -1,4 +1,4 @@
-/*	$OpenBSD: priv.c,v 1.22 2023/01/28 14:40:53 dv Exp $	*/
+/*	$OpenBSD: priv.c,v 1.23 2023/07/13 18:31:59 dv Exp $	*/
 
 /*
  * Copyright (c) 2016 Reyk Floeter <reyk@openbsd.org>
@@ -466,7 +466,7 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 			sin4->sin_family = AF_INET;
 			sin4->sin_len = sizeof(*sin4);
 			if ((sin4->sin_addr.s_addr =
-			    vm_priv_addr(&env->vmd_cfg,
+			    vm_priv_addr(&env->vmd_cfg.cfg_localprefix,
 			    vm->vm_vmid, i, 0)) == 0)
 				return (-1);
 
@@ -493,7 +493,7 @@ vm_priv_ifconfig(struct privsep *ps, struct vmd_vm *vm)
 			sin6 = ss2sin6(&vfr.vfr_addr);
 			sin6->sin6_family = AF_INET6;
 			sin6->sin6_len = sizeof(*sin6);
-			if (vm_priv_addr6(&env->vmd_cfg,
+			if (vm_priv_addr6(&env->vmd_cfg.cfg_localprefix,
 			    vm->vm_vmid, i, 0, &sin6->sin6_addr) == -1)
 				return (-1);
 
@@ -565,43 +565,33 @@ vm_priv_brconfig(struct privsep *ps, struct vmd_switch *vsw)
 }
 
 uint32_t
-vm_priv_addr(struct vmd_config *cfg, uint32_t vmid, int idx, int isvm)
+vm_priv_addr(struct local_prefix *p, uint32_t vmid, int idx, int isvm)
 {
-	struct address		*h = &cfg->cfg_localprefix;
-	in_addr_t		 prefix, mask, addr;
+	in_addr_t		 addr;
 
-	/*
-	 * 1. Set the address prefix and mask, 100.64.0.0/10 by default.
-	 */
-	if (h->ss.ss_family != AF_INET ||
-	    h->prefixlen < 0 || h->prefixlen > 32)
-		fatal("local prefix");
-	prefix = ss2sin(&h->ss)->sin_addr.s_addr;
-	mask = prefixlen2mask(h->prefixlen);
-
-	/* 2. Encode the VM ID as a per-VM subnet range N, 100.64.N.0/24. */
+	/* Encode the VM ID as a per-VM subnet range N, 100.64.N.0/24. */
 	addr = vmid << 8;
 
 	/*
-	 * 3. Assign a /31 subnet M per VM interface, 100.64.N.M/31.
+	 * Assign a /31 subnet M per VM interface, 100.64.N.M/31.
 	 * Each subnet contains exactly two IP addresses; skip the
 	 * first subnet to avoid a gateway address ending with .0.
 	 */
 	addr |= (idx + 1) * 2;
 
-	/* 4. Use the first address for the gateway, the second for the VM. */
+	/* Use the first address for the gateway, the second for the VM. */
 	if (isvm)
 		addr++;
 
-	/* 5. Convert to network byte order and add the prefix. */
-	addr = htonl(addr) | prefix;
+	/* Convert to network byte order and add the prefix. */
+	addr = htonl(addr) | p->lp_in.s_addr;
 
 	/*
 	 * Validate the results:
 	 * - the address should not exceed the prefix (eg. VM ID to high).
 	 * - up to 126 interfaces can be encoded per VM.
 	 */
-	if (prefix != (addr & mask) || idx >= 0x7f) {
+	if (p->lp_in.s_addr != (addr & p->lp_mask.s_addr) || idx >= 0x7f) {
 		log_warnx("%s: dhcp address range exceeded,"
 		    " vm id %u interface %d", __func__, vmid, idx);
 		return (0);
@@ -611,27 +601,22 @@ vm_priv_addr(struct vmd_config *cfg, uint32_t vmid, int idx, int isvm)
 }
 
 int
-vm_priv_addr6(struct vmd_config *cfg, uint32_t vmid,
-    int idx, int isvm, struct in6_addr *in6_addr)
+vm_priv_addr6(struct local_prefix *p, uint32_t vmid, int idx, int isvm,
+    struct in6_addr *out)
 {
-	struct address		*h = &cfg->cfg_localprefix6;
-	struct in6_addr		 addr, mask;
-	uint32_t		 addr4;
+	struct in6_addr		 addr;
+	in_addr_t		 addr4;
 
-	/* 1. Set the address prefix and mask, fd00::/8 by default. */
-	if (h->ss.ss_family != AF_INET6 ||
-	    h->prefixlen < 0 || h->prefixlen > 128)
-		fatal("local prefix6");
-	addr = ss2sin6(&h->ss)->sin6_addr;
-	prefixlen2mask6(h->prefixlen, &mask);
+	/* Start with the IPv6 prefix. */
+	memcpy(&addr, &p->lp_in6, sizeof(addr));
 
-	/* 2. Encode the VM IPv4 address as subnet, fd00::NN:NN:0:0/96. */
-	if ((addr4 = vm_priv_addr(cfg, vmid, idx, 1)) == 0)
+	/* Encode the VM IPv4 address as subnet, fd00::NN:NN:0:0/96. */
+	if ((addr4 = vm_priv_addr(p, vmid, idx, 1)) == 0)
 		return (0);
 	memcpy(&addr.s6_addr[8], &addr4, sizeof(addr4));
 
 	/*
-	 * 3. Set the last octet to 1 (host) or 2 (VM).
+	 * Set the last octet to 1 (host) or 2 (VM).
 	 * The latter is currently not used inside vmd as we don't
 	 * answer rtsol requests ourselves.
 	 */
@@ -640,7 +625,7 @@ vm_priv_addr6(struct vmd_config *cfg, uint32_t vmid,
 	else
 		addr.s6_addr[15] = 2;
 
-	memcpy(in6_addr, &addr, sizeof(*in6_addr));
+	memcpy(out, &addr, sizeof(*out));
 
 	return (0);
 }
