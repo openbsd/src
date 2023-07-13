@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac_pci.c,v 1.26 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: aac_pci.c,v 1.27 2023/07/13 07:31:12 jsg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -202,10 +202,7 @@ const struct cfattach aac_pci_ca = {
  * Determine whether this is one of our supported adapters.
  */
 int
-aac_pci_probe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+aac_pci_probe(struct device *parent, void *match, void *aux)
 {
         struct pci_attach_args *pa = aux;
 	struct aac_ident *m;
@@ -224,9 +221,7 @@ aac_pci_probe(parent, match, aux)
 }
 
 void
-aac_pci_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+aac_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
