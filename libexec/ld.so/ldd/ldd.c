@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.22 2017/10/27 16:47:08 mpi Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.23 2023/07/13 19:04:50 jasper Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -117,15 +117,21 @@ doit(char *name)
 		close(fd);
 		return 1;
 	}
+
 	if (read(fd, &ehdr, sizeof(ehdr)) < 0) {
 		warn("read(%s)", name);
 		close(fd);
 		return 1;
 	}
 
-	if (memcmp(ehdr.e_ident, ELFMAG, SELFMAG) ||
-	    ehdr.e_machine != ELF_TARG_MACH) {
+	if (!IS_ELF(ehdr) || ehdr.e_machine != ELF_TARG_MACH) {
 		warnx("%s: not an ELF executable", name);
+		close(fd);
+		return 1;
+	}
+
+	if (ehdr.e_phnum == 0 || ehdr.e_phentsize == 0) {
+		warnx("%s: missing program header", name);
 		close(fd);
 		return 1;
 	}
