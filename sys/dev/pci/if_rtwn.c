@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rtwn.c,v 1.40 2022/04/21 21:03:03 stsp Exp $	*/
+/*	$OpenBSD: if_rtwn.c,v 1.41 2023/07/14 14:28:47 kevlo Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -1022,7 +1022,7 @@ rtwn_tx(void *cookie, struct mbuf *m, struct ieee80211_node *ni)
 
 	/* Fill Tx descriptor. */
 	txd = &tx_ring->desc[tx_ring->cur];
-	if (htole32(txd->txdw0) & R92C_RXDW0_OWN) {
+	if (htole32(txd->txdw0) & R92C_TXDW0_OWN) {
 		m_freem(m);
 		return (ENOBUFS);
 	}
