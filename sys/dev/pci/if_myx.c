@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_myx.c,v 1.117 2023/06/28 08:23:25 claudio Exp $	*/
+/*	$OpenBSD: if_myx.c,v 1.118 2023/07/14 07:07:08 claudio Exp $	*/
 
 /*
  * Copyright (c) 2007 Reyk Floeter <reyk@openbsd.org>
@@ -1377,7 +1377,6 @@ myx_down(struct myx_softc *sc)
 	struct ifnet		*ifp = &sc->sc_ac.ac_if;
 	volatile struct myx_status *sts = sc->sc_sts;
 	bus_dmamap_t		 map = sc->sc_sts_dma.mxm_map;
-	struct sleep_state	 sls;
 	struct myx_cmd		 mc;
 	int			 s;
 	int			 ring;
@@ -1397,9 +1396,9 @@ myx_down(struct myx_softc *sc)
 	(void)myx_cmd(sc, MYXCMD_SET_IFDOWN, &mc, NULL);
 
 	while (sc->sc_state != MYX_S_OFF) {
-		sleep_setup(&sls, sts, PWAIT, "myxdown");
+		sleep_setup(sts, PWAIT, "myxdown");
 		membar_consumer();
-		sleep_finish(&sls, PWAIT, 0, sc->sc_state != MYX_S_OFF);
+		sleep_finish(0, sc->sc_state != MYX_S_OFF);
 	}
 
 	s = splnet();

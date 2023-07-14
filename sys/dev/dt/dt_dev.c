@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_dev.c,v 1.27 2023/06/28 08:23:25 claudio Exp $ */
+/*	$OpenBSD: dt_dev.c,v 1.28 2023/07/14 07:07:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -224,7 +224,6 @@ dtclose(dev_t dev, int flags, int mode, struct proc *p)
 int
 dtread(dev_t dev, struct uio *uio, int flags)
 {
-	struct sleep_state sls;
 	struct dt_softc *sc;
 	struct dt_evt *estq;
 	struct dt_pcb *dp;
@@ -240,8 +239,8 @@ dtread(dev_t dev, struct uio *uio, int flags)
 		return (EMSGSIZE);
 
 	while (!sc->ds_evtcnt) {
-		sleep_setup(&sls, sc, PWAIT | PCATCH, "dtread");
-		error = sleep_finish(&sls, PWAIT | PCATCH, 0, !sc->ds_evtcnt);
+		sleep_setup(sc, PWAIT | PCATCH, "dtread");
+		error = sleep_finish(0, !sc->ds_evtcnt);
 		if (error == EINTR || error == ERESTART)
 			break;
 	}

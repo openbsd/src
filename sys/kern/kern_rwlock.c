@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_rwlock.c,v 1.49 2023/06/28 08:23:25 claudio Exp $	*/
+/*	$OpenBSD: kern_rwlock.c,v 1.50 2023/07/14 07:07:08 claudio Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Artur Grabowski <art@openbsd.org>
@@ -224,7 +224,6 @@ int
 rw_enter(struct rwlock *rwl, int flags)
 {
 	const struct rwlock_op *op;
-	struct sleep_state sls;
 	unsigned long inc, o;
 #ifdef MULTIPROCESSOR
 	/*
@@ -279,11 +278,11 @@ retry:
 		prio = op->wait_prio;
 		if (flags & RW_INTR)
 			prio |= PCATCH;
-		sleep_setup(&sls, rwl, prio, rwl->rwl_name);
+		sleep_setup(rwl, prio, rwl->rwl_name);
 
 		do_sleep = !rw_cas(&rwl->rwl_owner, o, set);
 
-		error = sleep_finish(&sls, prio, 0, do_sleep);
+		error = sleep_finish(0, do_sleep);
 		if ((flags & RW_INTR) &&
 		    (error != 0))
 			return (error);

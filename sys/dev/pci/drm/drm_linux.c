@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.99 2023/06/28 08:23:25 claudio Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.100 2023/07/14 07:07:08 claudio Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -133,7 +133,6 @@ schedule(void)
 long
 schedule_timeout(long timeout)
 {
-	struct sleep_state sls;
 	unsigned long deadline;
 	int wait, spl, prio, timo = 0;
 
@@ -143,7 +142,7 @@ schedule_timeout(long timeout)
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		timo = timeout;
 	prio = sch_priority;
-	sleep_setup(&sls, sch_ident, prio, "schto");
+	sleep_setup(sch_ident, prio, "schto");
 
 	wait = (sch_proc == curproc && timeout > 0);
 
@@ -153,7 +152,7 @@ schedule_timeout(long timeout)
 
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		deadline = jiffies + timeout;
-	sleep_finish(&sls, prio, timo, wait);
+	sleep_finish(timo, wait);
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		timeout = deadline - jiffies;
 

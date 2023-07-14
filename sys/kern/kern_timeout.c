@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.93 2023/07/06 23:24:37 cheloha Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.94 2023/07/14 07:07:08 claudio Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -735,7 +735,6 @@ softclock_thread(void *arg)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	struct sleep_state sls;
 	struct timeout *to;
 	int s;
 
@@ -751,8 +750,8 @@ softclock_thread(void *arg)
 
 	s = splsoftclock();
 	for (;;) {
-		sleep_setup(&sls, &timeout_proc, PSWP, "bored");
-		sleep_finish(&sls, PSWP, 0, CIRCQ_EMPTY(&timeout_proc));
+		sleep_setup(&timeout_proc, PSWP, "bored");
+		sleep_finish(0, CIRCQ_EMPTY(&timeout_proc));
 
 		mtx_enter(&timeout_mutex);
 		while (!CIRCQ_EMPTY(&timeout_proc)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.345 2023/07/11 07:02:43 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.346 2023/07/14 07:07:08 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -584,10 +584,6 @@ int	single_thread_check(struct proc *, int);
 void	child_return(void *);
 
 int	proc_cansugid(struct proc *);
-
-struct sleep_state {
-	int sls_s;
-};
 
 struct cond {
 	unsigned int	c_wait;		/* [a] initialized and waiting */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.194 2023/07/11 07:02:43 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.195 2023/07/14 07:07:08 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -115,7 +115,6 @@ extern int safepri;
 int
 tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 {
-	struct sleep_state sls;
 #ifdef MULTIPROCESSOR
 	int hold_count;
 #endif
@@ -151,8 +150,8 @@ tsleep(const volatile void *ident, int priority, const char *wmesg, int timo)
 		return (0);
 	}
 
-	sleep_setup(&sls, ident, priority, wmesg);
-	return sleep_finish(&sls, priority, timo, 1);
+	sleep_setup(ident, priority, wmesg);
+	return sleep_finish(timo, 1);
 }
 
 int
@@ -206,7 +205,6 @@ int
 msleep(const volatile void *ident, struct mutex *mtx, int priority,
     const char *wmesg, int timo)
 {
-	struct sleep_state sls;
 	int error, spl;
 #ifdef MULTIPROCESSOR
 	int hold_count;
@@ -244,11 +242,11 @@ msleep(const volatile void *ident, struct mutex *mtx, int priority,
 		return (0);
 	}
 
-	sleep_setup(&sls, ident, priority, wmesg);
+	sleep_setup(ident, priority, wmesg);
 
 	mtx_leave(mtx);
 	/* signal may stop the process, release mutex before that */
-	error = sleep_finish(&sls, priority, timo, 1);
+	error = sleep_finish(timo, 1);
 
 	if ((priority & PNORELOCK) == 0)
 		mtx_enter(mtx);
@@ -287,7 +285,6 @@ int
 rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
     const char *wmesg, int timo)
 {
-	struct sleep_state sls;
 	int error, status;
 
 	KASSERT((priority & ~(PRIMASK | PCATCH | PNORELOCK)) == 0);
@@ -296,11 +293,11 @@ rwsleep(const volatile void *ident, struct rwlock *rwl, int priority,
 	rw_assert_anylock(rwl);
 	status = rw_status(rwl);
 
-	sleep_setup(&sls, ident, priority, wmesg);
+	sleep_setup(ident, priority, wmesg);
 
 	rw_exit(rwl);
 	/* signal may stop the process, release rwlock before that */
-	error = sleep_finish(&sls, priority, timo, 1);
+	error = sleep_finish(timo, 1);
 
 	if ((priority & PNORELOCK) == 0)
 		rw_enter(rwl, status);
@@ -332,8 +329,7 @@ rwsleep_nsec(const volatile void *ident, struct rwlock *rwl, int priority,
 }
 
 void
-sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
-    const char *wmesg)
+sleep_setup(const volatile void *ident, int prio, const char *wmesg)
 {
 	struct proc *p = curproc;
 	int s;
@@ -365,12 +361,12 @@ sleep_setup(struct sleep_state *sls, const volatile void *ident, int prio,
 }
 
 int
-sleep_finish(struct sleep_state *sls, int prio, int timo, int do_sleep)
+sleep_finish(int timo, int do_sleep)
 {
 	struct proc *p = curproc;
 	int s, catch, error = 0, error1 = 0;
 
-	catch = prio & PCATCH;
+	catch = p->p_flag & P_SINTR;
 
 	if (timo != 0) {
 		KASSERT((p->p_flag & P_TIMEOUT) == 0);
@@ -825,7 +821,6 @@ refcnt_rele_wake(struct refcnt *r)
 void
 refcnt_finalize(struct refcnt *r, const char *wmesg)
 {
-	struct sleep_state sls;
 	u_int refs;
 
 	membar_exit_before_atomic();
@@ -833,9 +828,9 @@ refcnt_finalize(struct refcnt *r, const char *wmesg)
 	KASSERT(refs != ~0);
 	TRACEINDEX(refcnt, r->r_traceidx, r, refs + 1, -1);
 	while (refs) {
-		sleep_setup(&sls, r, PWAIT, wmesg);
+		sleep_setup(r, PWAIT, wmesg);
 		refs = atomic_load_int(&r->r_refs);
-		sleep_finish(&sls, PWAIT, 0, refs);
+		sleep_finish(0, refs);
 	}
 	TRACEINDEX(refcnt, r->r_traceidx, r, refs, 0);
 	/* Order subsequent loads and stores after refs == 0 load. */
@@ -879,13 +874,12 @@ cond_signal(struct cond *c)
 void
 cond_wait(struct cond *c, const char *wmesg)
 {
-	struct sleep_state sls;
 	unsigned int wait;
 
 	wait = atomic_load_int(&c->c_wait);
 	while (wait) {
-		sleep_setup(&sls, c, PWAIT, wmesg);
+		sleep_setup(c, PWAIT, wmesg);
 		wait = atomic_load_int(&c->c_wait);
-		sleep_finish(&sls, PWAIT, 0, wait);
+		sleep_finish(0, wait);
 	}
 }
