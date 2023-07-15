@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.72 2023/07/12 11:26:13 tb Exp $	*/
+/*	$OpenBSD: patch.c,v 1.73 2023/07/15 10:42:54 florian Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
 	const	char *tmpdir;
 	char	*v;
 
-	if (pledge("stdio rpath wpath cpath tmppath fattr", NULL) == -1) {
+	if (pledge("stdio rpath wpath cpath tmppath fattr unveil", NULL) == -1) {
 		perror("pledge");
 		my_exit(2);
 	}
@@ -204,6 +204,38 @@ main(int argc, char *argv[])
 	Argc = argc;
 	Argv = argv;
 	get_some_switches();
+	if (unveil(tmpdir, "rwc") == -1) {
+		perror("unveil");
+		my_exit(2);
+	}
+	if (outname != NULL)
+		if (unveil(outname, "rwc") == -1) {
+			perror("unveil");
+			my_exit(2);
+		}
+	if (filearg[0] != NULL)
+		if (unveil(filearg[0], "rwc") == -1) {
+			perror("unveil");
+			my_exit(2);
+		}
+	if (filearg[1] != NULL)
+		if (unveil(filearg[1], "r") == -1) {
+			perror("unveil");
+			my_exit(2);
+		}
+	if (unveil(".", "rwc") == -1) {
+		perror("unveil");
+		my_exit(2);
+	}
+	if (*rejname != '\0')
+		if (unveil(rejname, "rwc") == -1) {
+			perror("unveil");
+			my_exit(2);
+		}
+	if (pledge("stdio rpath wpath cpath tmppath fattr", NULL) == -1) {
+		perror("pledge");
+		my_exit(2);
+	}
 
 	if (backup_type == none) {
 		if ((v = getenv("PATCH_VERSION_CONTROL")) == NULL)
