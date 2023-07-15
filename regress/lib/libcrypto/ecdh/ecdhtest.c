@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdhtest.c,v 1.16 2023/05/20 16:00:22 tb Exp $	*/
+/*	$OpenBSD: ecdhtest.c,v 1.17 2023/07/15 20:11:37 tb Exp $	*/
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -348,14 +348,14 @@ ecdh_kat(BIO *out, const char *cname, int nid,
 		goto err;
 	if ((Ztmp = malloc(Ztmplen)) == NULL)
 		goto err;
-	if (!ECDH_compute_key(Ztmp, Ztmplen,
-	    EC_KEY_get0_public_key(key2), key1, 0))
+	if (ECDH_compute_key(Ztmp, Ztmplen,
+	    EC_KEY_get0_public_key(key2), key1, 0) <= 0)
 		goto err;
 	if (memcmp(Ztmp, Z, Zlen))
 		goto err;
 	memset(Ztmp, 0, Zlen);
-	if (!ECDH_compute_key(Ztmp, Ztmplen,
-	    EC_KEY_get0_public_key(key1), key2, 0))
+	if (ECDH_compute_key(Ztmp, Ztmplen,
+	    EC_KEY_get0_public_key(key1), key2, 0) <= 0)
 		goto err;
 	if (memcmp(Ztmp, Z, Zlen))
 		goto err;
