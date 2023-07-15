@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.104 2023/07/13 18:31:59 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.105 2023/07/15 18:32:21 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1302,8 +1302,7 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 	char *nargv[10], num[32], vmm_fd[32], t[2];
 	pid_t dev_pid;
 	int data_fds[VM_MAX_BASE_PER_DISK], sync_fds[2], async_fds[2], ret = 0;
-	size_t i, j, data_fds_sz, sz = 0;
-	struct virtio_dev *d = NULL;
+	size_t i, data_fds_sz, sz = 0;
 	struct viodev_msg msg;
 	struct imsg imsg;
 	struct imsgev *iev = &dev->sync_iev;
@@ -1347,17 +1346,6 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		ret = errno;
 		log_warn("%s: fcnt", __func__);
 		goto err;
-	}
-
-	/* Keep data file descriptors open after exec. */
-	for (i = 0; i < data_fds_sz; i++) {
-		log_debug("%s: marking fd %d !close-on-exec", __func__,
-		    data_fds[i]);
-		if (fcntl(data_fds[i], F_SETFD, 0)) {
-			ret = errno;
-			log_warn("%s: fcntl", __func__);
-			goto err;
-		}
 	}
 
 	/* Fork... */
@@ -1459,26 +1447,14 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		close_fd(async_fds[0]);
 		close_fd(sync_fds[0]);
 
-		/*
-		 * Close any other device fd's we know aren't
-		 * ours. This releases any exclusive locks held on
-		 * things like disk images.
-		 */
-		SLIST_FOREACH(d, &virtio_devs, dev_next) {
-			if (d == dev)
-				continue;
-
-			switch (d->dev_type) {
-			case VMD_DEVTYPE_DISK:
-				for (j = 0; j < d->vioblk.ndisk_fd; j++)
-					close_fd(d->vioblk.disk_fd[j]);
-				break;
-			case VMD_DEVTYPE_NET:
-				close_fd(d->vionet.data_fd);
-				break;
-			default:
-				fatalx("%s: invalid device type '%c'",
-				    __func__, d->dev_type);
+		/* Keep data file descriptors open after exec. */
+		for (i = 0; i < data_fds_sz; i++) {
+			log_debug("%s: marking fd %d !close-on-exec", __func__,
+			    data_fds[i]);
+			if (fcntl(data_fds[i], F_SETFD, 0)) {
+				ret = errno;
+				log_warn("%s: fcntl", __func__);
+				goto err;
 			}
 		}
 
