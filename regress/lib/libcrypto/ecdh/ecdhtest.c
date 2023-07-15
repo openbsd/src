@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdhtest.c,v 1.17 2023/07/15 20:11:37 tb Exp $	*/
+/*	$OpenBSD: ecdhtest.c,v 1.18 2023/07/15 23:35:02 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -67,6 +67,7 @@
  *
  */
 
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -80,6 +81,18 @@
 
 #include <openssl/ec.h>
 #include <openssl/ecdh.h>
+
+static void
+hexdump(const unsigned char *buf, size_t len)
+{
+	size_t i;
+
+	for (i = 1; i <= len; i++)
+		fprintf(stdout, " 0x%02hhx,%s", buf[i - 1], i % 8 ? "" : "\n");
+
+	if (len % 8)
+		fprintf(stdout, "\n");
+}
 
 static const int KDF1_SHA1_len = 20;
 static void *
@@ -96,335 +109,314 @@ KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 #endif
 }
 
-
 static int
-test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
+ecdh_keygen_test(int nid)
 {
-	BIGNUM *x_a = NULL, *y_a = NULL, *x_b = NULL, *y_b = NULL;
-	EC_KEY *a = NULL, *b = NULL;
-	const EC_GROUP *group;
+	EC_KEY *keya = NULL, *keyb = NULL;
+	const EC_POINT *puba, *pubb;
 	unsigned char *abuf = NULL, *bbuf = NULL;
-	int i, alen, blen, aout, bout, ret = 0;
-	char buf[12];
+	int len = KDF1_SHA1_len;
+	int failed = 1;
 
-	a = EC_KEY_new_by_curve_name(nid);
-	b = EC_KEY_new_by_curve_name(nid);
-	if (a == NULL || b == NULL)
+	if ((keya = EC_KEY_new_by_curve_name(nid)) == NULL)
+		goto err;
+	if (!EC_KEY_generate_key(keya))
+		goto err;
+	if ((puba = EC_KEY_get0_public_key(keya)) == NULL)
 		goto err;
 
-	group = EC_KEY_get0_group(a);
-
-	if ((x_a = BN_new()) == NULL)
+	if ((keyb = EC_KEY_new_by_curve_name(nid)) == NULL)
 		goto err;
-	if ((y_a = BN_new()) == NULL)
+	if (!EC_KEY_generate_key(keyb))
 		goto err;
-	if ((x_b = BN_new()) == NULL)
-		goto err;
-	if ((y_b = BN_new()) == NULL)
+	if ((pubb = EC_KEY_get0_public_key(keyb)) == NULL)
 		goto err;
 
-	BIO_puts(out, "Testing key generation with ");
-	BIO_puts(out, text);
-	(void)BIO_flush(out);
-
-	if (!EC_KEY_generate_key(a))
+	if ((abuf = calloc(1, len)) == NULL)
+		goto err;
+	if ((bbuf = calloc(1, len)) == NULL)
 		goto err;
 
-	if (!EC_POINT_get_affine_coordinates(group,
-	    EC_KEY_get0_public_key(a), x_a, y_a, ctx)) goto err;
-
-	BIO_printf(out, " .");
-	(void)BIO_flush(out);
-
-	if (!EC_KEY_generate_key(b))
+	if (ECDH_compute_key(abuf, len, pubb, keya, KDF1_SHA1) != len)
+		goto err;
+	if (ECDH_compute_key(bbuf, len, puba, keyb, KDF1_SHA1) != len)
 		goto err;
 
-	if (!EC_POINT_get_affine_coordinates(group,
-	    EC_KEY_get0_public_key(b), x_b, y_b, ctx)) goto err;
+	if (memcmp(abuf, bbuf, len) != 0) {
+		printf("key generation with %s failed\n", OBJ_nid2sn(nid));
 
-	BIO_printf(out, ".");
-	(void)BIO_flush(out);
+		EC_KEY_print_fp(stdout, keya, 1);
+		printf(" shared secret:\n");
+		hexdump(abuf, len);
 
-	alen = KDF1_SHA1_len;
-	if ((abuf = malloc(alen)) == NULL)
-		goto err;
-	aout = ECDH_compute_key(abuf, alen, EC_KEY_get0_public_key(b),
-	    a, KDF1_SHA1);
+		printf("key b:\n");
+		EC_KEY_print_fp(stdout, keyb, 1);
+		printf(" shared secret:\n");
+		hexdump(abuf, len);
 
-	BIO_printf(out, ".");
-	(void)BIO_flush(out);
-
-	blen = KDF1_SHA1_len;
-	if ((bbuf = malloc(blen)) == NULL)
-		goto err;
-	bout = ECDH_compute_key(bbuf, blen, EC_KEY_get0_public_key(a),
-	    b, KDF1_SHA1);
-
-	BIO_printf(out, ".");
-	(void)BIO_flush(out);
-
-	if ((aout < 4) || (bout != aout) || (memcmp(abuf, bbuf, aout) != 0)) {
-		BIO_printf(out, " failed\n\n");
-		BIO_printf(out, "key a:\n");
-		BIO_printf(out, "private key: ");
-		BN_print(out, EC_KEY_get0_private_key(a));
-		BIO_printf(out, "\n");
-		BIO_printf(out, "public key (x,y): ");
-		BN_print(out, x_a);
-		BIO_printf(out, ",");
-		BN_print(out, y_a);
-		BIO_printf(out, "\nkey b:\n");
-		BIO_printf(out, "private key: ");
-		BN_print(out, EC_KEY_get0_private_key(b));
-		BIO_printf(out, "\n");
-		BIO_printf(out, "public key (x,y): ");
-		BN_print(out, x_b);
-		BIO_printf(out, ",");
-		BN_print(out, y_b);
-		BIO_printf(out, "\n");
-		BIO_printf(out, "generated key a: ");
-		for (i = 0; i < bout; i++) {
-			snprintf(buf, sizeof buf, "%02X", bbuf[i]);
-			BIO_puts(out, buf);
-		}
-		BIO_printf(out, "\n");
-		BIO_printf(out, "generated key b: ");
-		for (i = 0; i < aout; i++) {
-			snprintf(buf, sizeof buf, "%02X", abuf[i]);
-			BIO_puts(out, buf);
-		}
-		BIO_printf(out, "\n");
 		fprintf(stderr, "Error in ECDH routines\n");
-		ret = 0;
-	} else {
-		BIO_printf(out, " ok\n");
-		ret = 1;
+
+		goto err;
 	}
 
-err:
+	failed = 0;
+ err:
 	ERR_print_errors_fp(stderr);
 
-	free(abuf);
-	free(bbuf);
-	BN_free(x_a);
-	BN_free(y_a);
-	BN_free(x_b);
-	BN_free(y_b);
-	EC_KEY_free(b);
-	EC_KEY_free(a);
+	EC_KEY_free(keya);
+	EC_KEY_free(keyb);
+	freezero(abuf, len);
+	freezero(bbuf, len);
 
-	return (ret);
+	return failed;
 }
 
-/* Keys and shared secrets from RFC 7027 */
-
-static const unsigned char bp256_da[] = {
-	0x81, 0xDB, 0x1E, 0xE1, 0x00, 0x15, 0x0F, 0xF2, 0xEA, 0x33, 0x8D, 0x70,
-	0x82, 0x71, 0xBE, 0x38, 0x30, 0x0C, 0xB5, 0x42, 0x41, 0xD7, 0x99, 0x50,
-	0xF7, 0x7B, 0x06, 0x30, 0x39, 0x80, 0x4F, 0x1D
+static const struct ecdh_kat_test {
+    const int nid;
+    const char *keya;
+    const char *keyb;
+    const char *want;
+} ecdh_kat_tests[] = {
+	/* Keys and shared secrets from RFC 5114 */
+	{
+		.nid =	NID_X9_62_prime192v1,
+		.keya =	"323fa3169d8e9c6593f59476bc142000ab5be0e249c43426",
+		.keyb =	"631f95bb4a67632c9c476eee9ab695ab240a0499307fcf62",
+		.want =	"ad420182633f8526bfe954acda376f05e5ff4f837f54febe",
+	},
+	{
+		.nid =	NID_secp224r1,
+		.keya =	"b558eb6c288da707bbb4f8fbae2ab9e9cb62e3bc5c7573e2"
+			"2e26d37f",
+		.keyb =	"ac3b1add3d9770e6f6a708ee9f3b8e0ab3b480e9f27f85c8"
+			"8b5e6d18",
+		.want =	"52272f50f46f4edc9151569092f46df2d96ecc3b6dc1714a"
+			"4ea949fa",
+	},
+	{
+		.nid =	NID_X9_62_prime256v1,
+		.keya =	"814264145f2f56f2e96a8e337a1284993faf432a5abce59e"
+			"867b7291d507a3af",
+		.keyb =	"2ce1788ec197e096db95a200cc0ab26a19ce6bccad562b8e"
+			"ee1b593761cf7f41",
+		.want =	"dd0f5396219d1ea393310412d19a08f1f5811e9dc8ec8eea"
+			"7f80d21c820c2788",
+	},
+	{
+		.nid =	NID_secp384r1,
+		.keya =	"d27335ea71664af244dd14e9fd1260715dfd8a7965571c48"
+			"d709ee7a7962a156d706a90cbcb5df2986f05feadb9376f1",
+		.keyb =	"52d1791fdb4b70f89c0f00d456c2f7023b6125262c36a7df"
+			"1f80231121cce3d39be52e00c194a4132c4a6c768bcd94d2",
+		.want =	"5ea1fc4af7256d2055981b110575e0a8cae53160137d904c"
+			"59d926eb1b8456e427aa8a4540884c37de159a58028abc0e",
+	},
+	{
+		.nid =	NID_secp521r1,
+		.keya =	"0113f82da825735e3d97276683b2b74277bad27335ea7166"
+			"4af2430cc4f33459b9669ee78b3ffb9b8683015d344dcbfe"
+			"f6fb9af4c6c470be254516cd3c1a1fb47362",
+		.keyb =	"00cee3480d8645a17d249f2776d28bae616952d1791fdb4b"
+			"70f7c3378732aa1b22928448bcd1dc2496d435b01048066e"
+			"be4f72903c361b1a9dc1193dc2c9d0891b96",
+		.want =	"00cdea89621cfa46b132f9e4cfe2261cde2d4368eb565663"
+			"4c7cc98c7a00cde54ed1866a0dd3e6126c9d2f845daff82c"
+			"eb1da08f5d87521bb0ebeca77911169c20cc",
+	},
+	/* Keys and shared secrets from RFC 5903 */
+	{
+		.nid =	NID_X9_62_prime256v1,
+		.keya =	"c88f01f510d9ac3f70a292daa2316de544e9aab8afe84049"
+			"c62a9c57862d1433",
+		.keyb =	"c6ef9c5d78ae012a011164acb397ce2088685d8f06bf9be0"
+			"b283ab46476bee53",
+		.want =	"d6840f6b42f6edafd13116e0e12565202fef8e9ece7dce03"
+			"812464d04b9442de",
+	},
+	{
+		.nid =	NID_secp384r1,
+		.keya =	"099f3c7034d4a2c699884d73a375a67f7624ef7c6b3c0f16"
+			"0647b67414dce655e35b538041e649ee3faef896783ab194",
+		.keyb =	"41cb0779b4bdb85d47846725fbec3c9430fab46cc8dc5060"
+			"855cc9bda0aa2942e0308312916b8ed2960e4bd55a7448fc",
+		.want =	"11187331c279962d93d604243fd592cb9d0a926f422e4718"
+			"7521287e7156c5c4d603135569b9e9d09cf5d4a270f59746",
+	},
+	{
+		.nid =	NID_secp521r1,
+		.keya =	"0037ade9319a89f4dabdb3ef411aaccca5123c61acab57b5"
+			"393dce47608172a095aa85a30fe1c2952c6771d937ba9777"
+			"f5957b2639bab072462f68c27a57382d"
+			"4a52",
+		.keyb =	"0145ba99a847af43793fdd0e872e7cdfa16be30fdc780f97"
+			"bccc3f078380201e9c677d600b343757a3bdbf2a3163e4c2"
+			"f869cca7458aa4a4effc311f5cb151685eb9",
+		.want =	"01144c7d79ae6956bc8edb8e7c787c4521cb086fa64407f9"
+			"7894e5e6b2d79b04d1427e73ca4baa240a34786859810c06"
+			"b3c715a3a8cc3151f2bee417996d19f3ddea",
+	},
+	/* Keys and shared secrets from RFC 7027 */
+	{
+		.nid =	NID_brainpoolP256r1,
+		.keya =	"81db1ee100150ff2ea338d708271be38300cb54241d79950"
+			"f77b063039804f1d",
+		.keyb =	"55e40bc41e37e3e2ad25c3c6654511ffa8474a91a0032087"
+			"593852d3e7d76bd3",
+		.want =	"89afc39d41d3b327814b80940b042590f96556ec91e6ae79"
+			"39bce31f3a18bf2b",
+	},
+	{
+		.nid =	NID_brainpoolP384r1,
+		.keya =	"1e20f5e048a5886f1f157c74e91bde2b98c8b52d58e5003d"
+			"57053fc4b0bd65d6f15eb5d1ee1610df870795143627d042",
+		.keyb =	"032640bc6003c59260f7250c3db58ce647f98e1260acce4a"
+			"cda3dd869f74e01f8ba5e0324309db6a9831497abac96670",
+		.want =	"0bd9d3a7ea0b3d519d09d8e48d0785fb744a6b355e6304bc"
+			"51c229fbbce239bbadf6403715c35d4fb2a5444f575d4f42",
+	},
+	{
+		.nid =	NID_brainpoolP512r1,
+		.keya =	"16302ff0dbbb5a8d733dab7141c1b45acbc8715939677f6a"
+			"56850a38bd87bd59b09e80279609ff333eb9d4c061231fb2"
+			"6f92eeb04982a5f1d1764cad57665422",
+		.keyb =	"230e18e1bcc88a362fa54e4ea3902009292f7f8033624fd4"
+			"71b5d8ace49d12cfabbc19963dab8e2f1eba00bffb29e4d7"
+			"2d13f2224562f405cb80503666b25429",
+		.want =	"a7927098655f1f9976fa50a9d566865dc530331846381c87"
+			"256baf3226244b76d36403c024d7bbf0aa0803eaff405d3d"
+			"24f11a9b5c0bef679fe1454b21c4cd1f",
+	},
 };
 
-static const unsigned char bp256_db[] = {
-	0x55, 0xE4, 0x0B, 0xC4, 0x1E, 0x37, 0xE3, 0xE2, 0xAD, 0x25, 0xC3, 0xC6,
-	0x65, 0x45, 0x11, 0xFF, 0xA8, 0x47, 0x4A, 0x91, 0xA0, 0x03, 0x20, 0x87,
-	0x59, 0x38, 0x52, 0xD3, 0xE7, 0xD7, 0x6B, 0xD3
-};
-
-static const unsigned char bp256_Z[] = {
-	0x89, 0xAF, 0xC3, 0x9D, 0x41, 0xD3, 0xB3, 0x27, 0x81, 0x4B, 0x80, 0x94,
-	0x0B, 0x04, 0x25, 0x90, 0xF9, 0x65, 0x56, 0xEC, 0x91, 0xE6, 0xAE, 0x79,
-	0x39, 0xBC, 0xE3, 0x1F, 0x3A, 0x18, 0xBF, 0x2B
-};
-
-static const unsigned char bp384_da[] = {
-	0x1E, 0x20, 0xF5, 0xE0, 0x48, 0xA5, 0x88, 0x6F, 0x1F, 0x15, 0x7C, 0x74,
-	0xE9, 0x1B, 0xDE, 0x2B, 0x98, 0xC8, 0xB5, 0x2D, 0x58, 0xE5, 0x00, 0x3D,
-	0x57, 0x05, 0x3F, 0xC4, 0xB0, 0xBD, 0x65, 0xD6, 0xF1, 0x5E, 0xB5, 0xD1,
-	0xEE, 0x16, 0x10, 0xDF, 0x87, 0x07, 0x95, 0x14, 0x36, 0x27, 0xD0, 0x42
-};
-
-static const unsigned char bp384_db[] = {
-	0x03, 0x26, 0x40, 0xBC, 0x60, 0x03, 0xC5, 0x92, 0x60, 0xF7, 0x25, 0x0C,
-	0x3D, 0xB5, 0x8C, 0xE6, 0x47, 0xF9, 0x8E, 0x12, 0x60, 0xAC, 0xCE, 0x4A,
-	0xCD, 0xA3, 0xDD, 0x86, 0x9F, 0x74, 0xE0, 0x1F, 0x8B, 0xA5, 0xE0, 0x32,
-	0x43, 0x09, 0xDB, 0x6A, 0x98, 0x31, 0x49, 0x7A, 0xBA, 0xC9, 0x66, 0x70
-};
-
-static const unsigned char bp384_Z[] = {
-	0x0B, 0xD9, 0xD3, 0xA7, 0xEA, 0x0B, 0x3D, 0x51, 0x9D, 0x09, 0xD8, 0xE4,
-	0x8D, 0x07, 0x85, 0xFB, 0x74, 0x4A, 0x6B, 0x35, 0x5E, 0x63, 0x04, 0xBC,
-	0x51, 0xC2, 0x29, 0xFB, 0xBC, 0xE2, 0x39, 0xBB, 0xAD, 0xF6, 0x40, 0x37,
-	0x15, 0xC3, 0x5D, 0x4F, 0xB2, 0xA5, 0x44, 0x4F, 0x57, 0x5D, 0x4F, 0x42
-};
-
-static const unsigned char bp512_da[] = {
-	0x16, 0x30, 0x2F, 0xF0, 0xDB, 0xBB, 0x5A, 0x8D, 0x73, 0x3D, 0xAB, 0x71,
-	0x41, 0xC1, 0xB4, 0x5A, 0xCB, 0xC8, 0x71, 0x59, 0x39, 0x67, 0x7F, 0x6A,
-	0x56, 0x85, 0x0A, 0x38, 0xBD, 0x87, 0xBD, 0x59, 0xB0, 0x9E, 0x80, 0x27,
-	0x96, 0x09, 0xFF, 0x33, 0x3E, 0xB9, 0xD4, 0xC0, 0x61, 0x23, 0x1F, 0xB2,
-	0x6F, 0x92, 0xEE, 0xB0, 0x49, 0x82, 0xA5, 0xF1, 0xD1, 0x76, 0x4C, 0xAD,
-	0x57, 0x66, 0x54, 0x22
-};
-
-static const unsigned char bp512_db[] = {
-	0x23, 0x0E, 0x18, 0xE1, 0xBC, 0xC8, 0x8A, 0x36, 0x2F, 0xA5, 0x4E, 0x4E,
-	0xA3, 0x90, 0x20, 0x09, 0x29, 0x2F, 0x7F, 0x80, 0x33, 0x62, 0x4F, 0xD4,
-	0x71, 0xB5, 0xD8, 0xAC, 0xE4, 0x9D, 0x12, 0xCF, 0xAB, 0xBC, 0x19, 0x96,
-	0x3D, 0xAB, 0x8E, 0x2F, 0x1E, 0xBA, 0x00, 0xBF, 0xFB, 0x29, 0xE4, 0xD7,
-	0x2D, 0x13, 0xF2, 0x22, 0x45, 0x62, 0xF4, 0x05, 0xCB, 0x80, 0x50, 0x36,
-	0x66, 0xB2, 0x54, 0x29
-};
-
-
-static const unsigned char bp512_Z[] = {
-	0xA7, 0x92, 0x70, 0x98, 0x65, 0x5F, 0x1F, 0x99, 0x76, 0xFA, 0x50, 0xA9,
-	0xD5, 0x66, 0x86, 0x5D, 0xC5, 0x30, 0x33, 0x18, 0x46, 0x38, 0x1C, 0x87,
-	0x25, 0x6B, 0xAF, 0x32, 0x26, 0x24, 0x4B, 0x76, 0xD3, 0x64, 0x03, 0xC0,
-	0x24, 0xD7, 0xBB, 0xF0, 0xAA, 0x08, 0x03, 0xEA, 0xFF, 0x40, 0x5D, 0x3D,
-	0x24, 0xF1, 0x1A, 0x9B, 0x5C, 0x0B, 0xEF, 0x67, 0x9F, 0xE1, 0x45, 0x4B,
-	0x21, 0xC4, 0xCD, 0x1F
-};
+#define N_KATS (sizeof(ecdh_kat_tests) / sizeof(ecdh_kat_tests[0]))
 
 /* Given private value and NID, create EC_KEY structure */
 
 static EC_KEY *
-mk_eckey(int nid, const unsigned char *p, size_t plen)
+mk_eckey(int nid, const char *priv_str)
 {
-	EC_KEY *k = NULL;
+	EC_KEY *key = NULL;
 	BIGNUM *priv = NULL;
 	EC_POINT *pub = NULL;
-	const EC_GROUP *grp;
-	int ok = 0;
+	const EC_GROUP *group;
+	EC_KEY *ret = NULL;
 
-	k = EC_KEY_new_by_curve_name(nid);
-	if (!k)
+	if ((key = EC_KEY_new_by_curve_name(nid)) == NULL)
 		goto err;
-	priv = BN_bin2bn(p, plen, NULL);
-	if (!priv)
+	if (!BN_hex2bn(&priv, priv_str))
 		goto err;
-	if (!EC_KEY_set_private_key(k, priv))
+	if (!EC_KEY_set_private_key(key, priv))
 		goto err;
-	grp = EC_KEY_get0_group(k);
-	pub = EC_POINT_new(grp);
-	if (!pub)
+	if ((group = EC_KEY_get0_group(key)) == NULL)
 		goto err;
-	if (!EC_POINT_mul(grp, pub, priv, NULL, NULL, NULL))
+	if ((pub = EC_POINT_new(group)) == NULL)
 		goto err;
-	if (!EC_KEY_set_public_key(k, pub))
+	if (!EC_POINT_mul(group, pub, priv, NULL, NULL, NULL))
 		goto err;
-	ok = 1;
-err:
+	if (!EC_KEY_set_public_key(key, pub))
+		goto err;
+
+	ret = key;
+	key = NULL;
+
+ err:
+	EC_KEY_free(key);
 	BN_free(priv);
 	EC_POINT_free(pub);
-	if (!ok) {
-		EC_KEY_free(k);
-		k = NULL;
-	}
-	return (k);
+
+	return ret;
 }
 
-/* Known answer test: compute shared secret and check it matches
- * expected value.
+/*
+ * Known answer test: compute shared secret and check it matches expected value.
  */
-
 static int
-ecdh_kat(BIO *out, const char *cname, int nid,
-    const unsigned char *k1, size_t k1_len,
-    const unsigned char *k2, size_t k2_len,
-    const unsigned char *Z, size_t Zlen)
+ecdh_kat(const struct ecdh_kat_test *kat)
 {
-	int rv = 0;
-	EC_KEY *key1 = NULL, *key2 = NULL;
-	unsigned char *Ztmp = NULL;
-	size_t Ztmplen;
-	BIO_puts(out, "Testing ECDH shared secret with ");
-	BIO_puts(out, cname);
-	key1 = mk_eckey(nid, k1, k1_len);
-	key2 = mk_eckey(nid, k2, k2_len);
-	if (!key1 || !key2)
-		goto err;
-	Ztmplen = ECDH_size(key1);
-	if (Ztmplen != Zlen)
-		goto err;
-	if ((Ztmp = malloc(Ztmplen)) == NULL)
-		goto err;
-	if (ECDH_compute_key(Ztmp, Ztmplen,
-	    EC_KEY_get0_public_key(key2), key1, 0) <= 0)
-		goto err;
-	if (memcmp(Ztmp, Z, Zlen))
-		goto err;
-	memset(Ztmp, 0, Zlen);
-	if (ECDH_compute_key(Ztmp, Ztmplen,
-	    EC_KEY_get0_public_key(key1), key2, 0) <= 0)
-		goto err;
-	if (memcmp(Ztmp, Z, Zlen))
-		goto err;
-	rv = 1;
+	EC_KEY *keya = NULL, *keyb = NULL;
+	const EC_POINT *puba, *pubb;
+	BIGNUM *z = NULL;
+	unsigned char *want = NULL, *got = NULL;
+	int len = 0;
+	int failed = 0;
 
-err:
-	if (rv)
-		BIO_puts(out, " ok\n");
-	else {
+	if ((keya = mk_eckey(kat->nid, kat->keya)) == NULL)
+		goto err;
+	if ((puba = EC_KEY_get0_public_key(keya)) == NULL)
+		goto err;
+	if ((keyb = mk_eckey(kat->nid, kat->keyb)) == NULL)
+		goto err;
+	if ((pubb = EC_KEY_get0_public_key(keyb)) == NULL)
+		goto err;
+
+	if ((len = ECDH_size(keya)) != ECDH_size(keyb))
+		goto err;
+
+	if ((want = calloc(1, len)) == NULL)
+		goto err;
+	if ((got = calloc(1, len)) == NULL)
+		goto err;
+
+	if (!BN_hex2bn(&z, kat->want))
+		goto err;
+	if (BN_num_bytes(z) > len)
+		goto err;
+	if (BN_bn2binpad(z, want, len) != len)
+		goto err;
+
+	if (ECDH_compute_key(got, len, pubb, keya, NULL) != len)
+		goto err;
+	if (memcmp(got, want, len) != 0)
+		goto err;
+
+	memset(got, 0, len);
+
+	if (ECDH_compute_key(got, len, puba, keyb, NULL) != len)
+		goto err;
+	if (memcmp(got, want, len) != 0)
+		goto err;
+
+	failed = 0;
+
+ err:
+	if (failed) {
+		printf("ECDH shared secret with %s failed", OBJ_nid2sn(kat->nid));
+
 		fprintf(stderr, "Error in ECDH routines\n");
 		ERR_print_errors_fp(stderr);
 	}
 
-	EC_KEY_free(key1);
-	EC_KEY_free(key2);
-	free(Ztmp);
+	EC_KEY_free(keya);
+	EC_KEY_free(keyb);
+	BN_free(z);
+	freezero(want, len);
+	freezero(got, len);
 
-	return rv;
+	return failed;
 }
-
-#define test_ecdh_kat(bio, curve, bits) \
-	ecdh_kat(bio, curve, NID_brainpoolP##bits##r1, \
-		bp##bits##_da, sizeof(bp##bits##_da), \
-		bp##bits##_db, sizeof(bp##bits##_db), \
-		bp##bits##_Z, sizeof(bp##bits##_Z))
 
 int
 main(int argc, char *argv[])
 {
-	BN_CTX *ctx = NULL;
-	int ret = 1;
-	BIO *out;
+	EC_builtin_curve *curves = NULL;
+	size_t i, n_curves;
+	int failed = 0;
 
-	out = BIO_new(BIO_s_file());
-	if (out == NULL)
-		exit(1);
-	BIO_set_fp(out, stdout, BIO_NOCLOSE);
+	if ((n_curves = EC_get_builtin_curves(NULL, 0)) == 0)
+		errx(1, "EC_get_builtin_curves failed");
+	if ((curves = calloc(n_curves, sizeof(*curves))) == NULL)
+		errx(1, NULL);
+	if (EC_get_builtin_curves(curves, n_curves) != n_curves)
+		errx(1, "EC_get_builtin_curves failed");
 
-	if ((ctx = BN_CTX_new()) == NULL)
-		goto err;
+	for (i = 0; i < n_curves; i++)
+		failed |= ecdh_keygen_test(curves[i].nid);
 
-	/* NIST PRIME CURVES TESTS */
-	if (!test_ecdh_curve(NID_X9_62_prime192v1, "NIST Prime-Curve P-192",
-	    ctx, out))
-		goto err;
-	if (!test_ecdh_curve(NID_secp224r1, "NIST Prime-Curve P-224", ctx, out))
-		goto err;
-	if (!test_ecdh_curve(NID_X9_62_prime256v1, "NIST Prime-Curve P-256",
-	    ctx, out))
-		goto err;
-	if (!test_ecdh_curve(NID_secp384r1, "NIST Prime-Curve P-384", ctx, out))
-		goto err;
-	if (!test_ecdh_curve(NID_secp521r1, "NIST Prime-Curve P-521", ctx, out))
-		goto err;
-	if (!test_ecdh_kat(out, "Brainpool Prime-Curve brainpoolP256r1", 256))
-		goto err;
-	if (!test_ecdh_kat(out, "Brainpool Prime-Curve brainpoolP384r1", 384))
-		goto err;
-	if (!test_ecdh_kat(out, "Brainpool Prime-Curve brainpoolP512r1", 512))
-		goto err;
+	for (i = 0; i < N_KATS; i++)
+		failed |= ecdh_kat(&ecdh_kat_tests[i]);
 
-	ret = 0;
-
-err:
+	free(curves);
 	ERR_print_errors_fp(stderr);
-	BN_CTX_free(ctx);
-	BIO_free(out);
-	CRYPTO_cleanup_all_ex_data();
-	ERR_remove_thread_state(NULL);
-	CRYPTO_mem_leaks_fp(stderr);
-	exit(ret);
+
+	return failed;
 }
