@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2023/07/15 19:29:44 tb Exp $
+#	$OpenBSD: Makefile,v 1.2 2023/07/15 23:40:46 tb Exp $
 
 PROG = symbols
 
-#include <bsd.own.mk>
+.include <bsd.own.mk>
 
 DPADD=		${LIBCRYPTO} ${LIBSSL}
 LDFLAGS+=	-lcrypto -lssl
