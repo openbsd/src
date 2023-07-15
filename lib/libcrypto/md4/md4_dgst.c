@@ -1,4 +1,4 @@
-/* $OpenBSD: md4_dgst.c,v 1.20 2023/07/08 10:45:57 beck Exp $ */
+/* $OpenBSD: md4_dgst.c,v 1.21 2023/07/15 15:30:43 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -146,16 +146,9 @@ void
 md4_block_data_order(MD4_CTX *c, const void *data_, size_t num)
 {
 	const unsigned char *data = data_;
-	unsigned MD32_REG_T A, B,C, D, l;
-#ifndef MD32_XARRAY
-	/* See comment in crypto/sha/sha_locl.h for details. */
-	unsigned MD32_REG_T	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
-	    XX8, XX9, XX10, XX11, XX12, XX13, XX14, XX15;
-# define X(i)	XX##i
-#else
-	MD4_LONG XX[MD4_LBLOCK];
-# define X(i)	XX[i]
-#endif
+	unsigned MD32_REG_T A, B, C, D, l;
+	unsigned MD32_REG_T X0, X1, X2, X3, X4, X5, X6, X7,
+	    X8, X9, X10, X11, X12, X13, X14, X15;
 
 	A = c->A;
 	B = c->B;
@@ -164,88 +157,88 @@ md4_block_data_order(MD4_CTX *c, const void *data_, size_t num)
 
 	for (; num--; ) {
 		HOST_c2l(data, l);
-		X( 0) = l;
+		X0 = l;
 		HOST_c2l(data, l);
-		X( 1) = l;
+		X1 = l;
 		/* Round 0 */
-		R0(A, B,C, D,X( 0), 3, 0);
+		R0(A, B, C, D, X0, 3, 0);
 		HOST_c2l(data, l);
-		X( 2) = l;
-		R0(D, A,B, C,X( 1), 7, 0);
+		X2 = l;
+		R0(D, A, B, C, X1, 7, 0);
 		HOST_c2l(data, l);
-		X( 3) = l;
-		R0(C, D,A, B,X( 2), 11, 0);
+		X3 = l;
+		R0(C, D, A, B, X2, 11, 0);
 		HOST_c2l(data, l);
-		X( 4) = l;
-		R0(B, C,D, A,X( 3), 19, 0);
+		X4 = l;
+		R0(B, C, D, A, X3, 19, 0);
 		HOST_c2l(data, l);
-		X( 5) = l;
-		R0(A, B,C, D,X( 4), 3, 0);
+		X5 = l;
+		R0(A, B, C, D, X4, 3, 0);
 		HOST_c2l(data, l);
-		X( 6) = l;
-		R0(D, A,B, C,X( 5), 7, 0);
+		X6 = l;
+		R0(D, A, B, C, X5, 7, 0);
 		HOST_c2l(data, l);
-		X( 7) = l;
-		R0(C, D,A, B,X( 6), 11, 0);
+		X7 = l;
+		R0(C, D, A, B, X6, 11, 0);
 		HOST_c2l(data, l);
-		X( 8) = l;
-		R0(B, C,D, A,X( 7), 19, 0);
+		X8 = l;
+		R0(B, C, D, A, X7, 19, 0);
 		HOST_c2l(data, l);
-		X( 9) = l;
-		R0(A, B,C, D,X( 8), 3, 0);
+		X9 = l;
+		R0(A, B, C, D, X8, 3, 0);
 		HOST_c2l(data, l);
-		X(10) = l;
-		R0(D, A,B, C,X( 9), 7, 0);
+		X10 = l;
+		R0(D, A,B, C,X9, 7, 0);
 		HOST_c2l(data, l);
-		X(11) = l;
-		R0(C, D,A, B,X(10), 11, 0);
+		X11 = l;
+		R0(C, D,A, B,X10, 11, 0);
 		HOST_c2l(data, l);
-		X(12) = l;
-		R0(B, C,D, A,X(11), 19, 0);
+		X12 = l;
+		R0(B, C,D, A,X11, 19, 0);
 		HOST_c2l(data, l);
-		X(13) = l;
-		R0(A, B,C, D,X(12), 3, 0);
+		X13 = l;
+		R0(A, B,C, D,X12, 3, 0);
 		HOST_c2l(data, l);
-		X(14) = l;
-		R0(D, A,B, C,X(13), 7, 0);
+		X14 = l;
+		R0(D, A,B, C,X13, 7, 0);
 		HOST_c2l(data, l);
-		X(15) = l;
-		R0(C, D,A, B,X(14), 11, 0);
-		R0(B, C,D, A,X(15), 19, 0);
+		X15 = l;
+		R0(C, D,A, B,X14, 11, 0);
+		R0(B, C,D, A,X15, 19, 0);
 		/* Round 1 */
-		R1(A, B,C, D,X( 0), 3, 0x5A827999L);
-		R1(D, A,B, C,X( 4), 5, 0x5A827999L);
-		R1(C, D,A, B,X( 8), 9, 0x5A827999L);
-		R1(B, C,D, A,X(12), 13, 0x5A827999L);
-		R1(A, B,C, D,X( 1), 3, 0x5A827999L);
-		R1(D, A,B, C,X( 5), 5, 0x5A827999L);
-		R1(C, D,A, B,X( 9), 9, 0x5A827999L);
-		R1(B, C,D, A,X(13), 13, 0x5A827999L);
-		R1(A, B,C, D,X( 2), 3, 0x5A827999L);
-		R1(D, A,B, C,X( 6), 5, 0x5A827999L);
-		R1(C, D,A, B,X(10), 9, 0x5A827999L);
-		R1(B, C,D, A,X(14), 13, 0x5A827999L);
-		R1(A, B,C, D,X( 3), 3, 0x5A827999L);
-		R1(D, A,B, C,X( 7), 5, 0x5A827999L);
-		R1(C, D,A, B,X(11), 9, 0x5A827999L);
-		R1(B, C,D, A,X(15), 13, 0x5A827999L);
+		R1(A, B, C, D, X0, 3, 0x5A827999L);
+		R1(D, A, B, C, X4, 5, 0x5A827999L);
+		R1(C, D, A, B, X8, 9, 0x5A827999L);
+		R1(B, C, D, A, X12, 13, 0x5A827999L);
+		R1(A, B, C, D, X1, 3, 0x5A827999L);
+		R1(D, A, B, C, X5, 5, 0x5A827999L);
+		R1(C, D, A, B, X9, 9, 0x5A827999L);
+		R1(B, C, D, A, X13, 13, 0x5A827999L);
+		R1(A, B, C, D, X2, 3, 0x5A827999L);
+		R1(D, A, B, C, X6, 5, 0x5A827999L);
+		R1(C, D, A, B, X10, 9, 0x5A827999L);
+		R1(B, C, D, A, X14, 13, 0x5A827999L);
+		R1(A, B, C, D, X3, 3, 0x5A827999L);
+		R1(D, A, B, C, X7, 5, 0x5A827999L);
+		R1(C, D, A, B, X11, 9, 0x5A827999L);
+		R1(B, C, D, A, X15, 13, 0x5A827999L);
 		/* Round 2 */
-		R2(A, B,C, D,X( 0), 3, 0x6ED9EBA1L);
-		R2(D, A,B, C,X( 8), 9, 0x6ED9EBA1L);
-		R2(C, D,A, B,X( 4), 11, 0x6ED9EBA1L);
-		R2(B, C,D, A,X(12), 15, 0x6ED9EBA1L);
-		R2(A, B,C, D,X( 2), 3, 0x6ED9EBA1L);
-		R2(D, A,B, C,X(10), 9, 0x6ED9EBA1L);
-		R2(C, D,A, B,X( 6), 11, 0x6ED9EBA1L);
-		R2(B, C,D, A,X(14), 15, 0x6ED9EBA1L);
-		R2(A, B,C, D,X( 1), 3, 0x6ED9EBA1L);
-		R2(D, A,B, C,X( 9), 9, 0x6ED9EBA1L);
-		R2(C, D,A, B,X( 5), 11, 0x6ED9EBA1L);
-		R2(B, C,D, A,X(13), 15, 0x6ED9EBA1L);
-		R2(A, B,C, D,X( 3), 3, 0x6ED9EBA1L);
-		R2(D, A,B, C,X(11), 9, 0x6ED9EBA1L);
-		R2(C, D,A, B,X( 7), 11, 0x6ED9EBA1L);
-		R2(B, C,D, A,X(15), 15, 0x6ED9EBA1L);
+		R2(A, B, C, D, X0, 3, 0x6ED9EBA1L);
+		R2(D, A, B, C, X8, 9, 0x6ED9EBA1L);
+		R2(C, D, A, B, X4, 11, 0x6ED9EBA1L);
+		R2(B, C, D, A, X12, 15, 0x6ED9EBA1L);
+		R2(A, B, C, D, X2, 3, 0x6ED9EBA1L);
+		R2(D, A, B, C, X10, 9, 0x6ED9EBA1L);
+		R2(C, D, A, B, X6, 11, 0x6ED9EBA1L);
+		R2(B, C, D, A, X14, 15, 0x6ED9EBA1L);
+		R2(A, B, C, D, X1, 3, 0x6ED9EBA1L);
+		R2(D, A, B, C, X9, 9, 0x6ED9EBA1L);
+		R2(C, D, A, B, X5, 11, 0x6ED9EBA1L);
+		R2(B, C, D, A, X13, 15, 0x6ED9EBA1L);
+		R2(A, B, C, D, X3, 3, 0x6ED9EBA1L);
+		R2(D, A, B, C, X11, 9, 0x6ED9EBA1L);
+		R2(C, D, A, B, X7, 11, 0x6ED9EBA1L);
+		R2(B, C, D, A, X15, 15, 0x6ED9EBA1L);
 
 		A = c->A += A;
 		B = c->B += B;
