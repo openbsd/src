@@ -27,6 +27,7 @@
 
 // clang-format off
 #include <sys/types.h>
+#include <sys/ptrace.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <machine/cpu.h>
@@ -36,77 +37,6 @@ using namespace lldb_private;
 using namespace lldb_private::process_openbsd;
 
 #define REG_CONTEXT_SIZE (GetGPRSize() + GetFPRSize())
-
-// ARM64 general purpose registers.
-static const uint32_t g_gpr_regnums_arm64[] = {
-    gpr_x0_arm64,       gpr_x1_arm64,   gpr_x2_arm64,  gpr_x3_arm64,
-    gpr_x4_arm64,       gpr_x5_arm64,   gpr_x6_arm64,  gpr_x7_arm64,
-    gpr_x8_arm64,       gpr_x9_arm64,   gpr_x10_arm64, gpr_x11_arm64,
-    gpr_x12_arm64,      gpr_x13_arm64,  gpr_x14_arm64, gpr_x15_arm64,
-    gpr_x16_arm64,      gpr_x17_arm64,  gpr_x18_arm64, gpr_x19_arm64,
-    gpr_x20_arm64,      gpr_x21_arm64,  gpr_x22_arm64, gpr_x23_arm64,
-    gpr_x24_arm64,      gpr_x25_arm64,  gpr_x26_arm64, gpr_x27_arm64,
-    gpr_x28_arm64,      gpr_fp_arm64,   gpr_lr_arm64,  gpr_sp_arm64,
-    gpr_pc_arm64,       gpr_cpsr_arm64, gpr_w0_arm64,  gpr_w1_arm64,
-    gpr_w2_arm64,       gpr_w3_arm64,   gpr_w4_arm64,  gpr_w5_arm64,
-    gpr_w6_arm64,       gpr_w7_arm64,   gpr_w8_arm64,  gpr_w9_arm64,
-    gpr_w10_arm64,      gpr_w11_arm64,  gpr_w12_arm64, gpr_w13_arm64,
-    gpr_w14_arm64,      gpr_w15_arm64,  gpr_w16_arm64, gpr_w17_arm64,
-    gpr_w18_arm64,      gpr_w19_arm64,  gpr_w20_arm64, gpr_w21_arm64,
-    gpr_w22_arm64,      gpr_w23_arm64,  gpr_w24_arm64, gpr_w25_arm64,
-    gpr_w26_arm64,      gpr_w27_arm64,  gpr_w28_arm64,
-    LLDB_INVALID_REGNUM // register sets need to end with this flag
-};
-static_assert(((sizeof g_gpr_regnums_arm64 / sizeof g_gpr_regnums_arm64[0]) -
-               1) == k_num_gpr_registers_arm64,
-              "g_gpr_regnums_arm64 has wrong number of register infos");
-
-// ARM64 floating point registers.
-static const uint32_t g_fpu_regnums_arm64[] = {
-    fpu_v0_arm64,       fpu_v1_arm64,   fpu_v2_arm64,  fpu_v3_arm64,
-    fpu_v4_arm64,       fpu_v5_arm64,   fpu_v6_arm64,  fpu_v7_arm64,
-    fpu_v8_arm64,       fpu_v9_arm64,   fpu_v10_arm64, fpu_v11_arm64,
-    fpu_v12_arm64,      fpu_v13_arm64,  fpu_v14_arm64, fpu_v15_arm64,
-    fpu_v16_arm64,      fpu_v17_arm64,  fpu_v18_arm64, fpu_v19_arm64,
-    fpu_v20_arm64,      fpu_v21_arm64,  fpu_v22_arm64, fpu_v23_arm64,
-    fpu_v24_arm64,      fpu_v25_arm64,  fpu_v26_arm64, fpu_v27_arm64,
-    fpu_v28_arm64,      fpu_v29_arm64,  fpu_v30_arm64, fpu_v31_arm64,
-
-    fpu_s0_arm64,       fpu_s1_arm64,   fpu_s2_arm64,  fpu_s3_arm64,
-    fpu_s4_arm64,       fpu_s5_arm64,   fpu_s6_arm64,  fpu_s7_arm64,
-    fpu_s8_arm64,       fpu_s9_arm64,   fpu_s10_arm64, fpu_s11_arm64,
-    fpu_s12_arm64,      fpu_s13_arm64,  fpu_s14_arm64, fpu_s15_arm64,
-    fpu_s16_arm64,      fpu_s17_arm64,  fpu_s18_arm64, fpu_s19_arm64,
-    fpu_s20_arm64,      fpu_s21_arm64,  fpu_s22_arm64, fpu_s23_arm64,
-    fpu_s24_arm64,      fpu_s25_arm64,  fpu_s26_arm64, fpu_s27_arm64,
-    fpu_s28_arm64,      fpu_s29_arm64,  fpu_s30_arm64, fpu_s31_arm64,
-
-    fpu_d0_arm64,       fpu_d1_arm64,   fpu_d2_arm64,  fpu_d3_arm64,
-    fpu_d4_arm64,       fpu_d5_arm64,   fpu_d6_arm64,  fpu_d7_arm64,
-    fpu_d8_arm64,       fpu_d9_arm64,   fpu_d10_arm64, fpu_d11_arm64,
-    fpu_d12_arm64,      fpu_d13_arm64,  fpu_d14_arm64, fpu_d15_arm64,
-    fpu_d16_arm64,      fpu_d17_arm64,  fpu_d18_arm64, fpu_d19_arm64,
-    fpu_d20_arm64,      fpu_d21_arm64,  fpu_d22_arm64, fpu_d23_arm64,
-    fpu_d24_arm64,      fpu_d25_arm64,  fpu_d26_arm64, fpu_d27_arm64,
-    fpu_d28_arm64,      fpu_d29_arm64,  fpu_d30_arm64, fpu_d31_arm64,
-    fpu_fpsr_arm64,     fpu_fpcr_arm64,
-    LLDB_INVALID_REGNUM // register sets need to end with this flag
-};
-static_assert(((sizeof g_fpu_regnums_arm64 / sizeof g_fpu_regnums_arm64[0]) -
-               1) == k_num_fpr_registers_arm64,
-              "g_fpu_regnums_arm64 has wrong number of register infos");
-
-namespace {
-// Number of register sets provided by this context.
-enum { k_num_register_sets = 2 };
-}
-
-// Register sets for ARM64.
-static const RegisterSet g_reg_sets_arm64[k_num_register_sets] = {
-    {"General Purpose Registers", "gpr", k_num_gpr_registers_arm64,
-     g_gpr_regnums_arm64},
-    {"Floating Point Registers", "fpu", k_num_fpr_registers_arm64,
-     g_fpu_regnums_arm64}};
 
 std::unique_ptr<NativeRegisterContextOpenBSD>
 NativeRegisterContextOpenBSD::CreateHostNativeRegisterContextOpenBSD(
@@ -122,7 +52,9 @@ static RegisterInfoInterface *
 CreateRegisterInfoInterface(const ArchSpec &target_arch) {
   assert((HostInfo::GetArchitecture().GetAddressByteSize() == 8) &&
          "Register setting path assumes this is a 64-bit host");
-  return new RegisterInfoPOSIX_arm64(target_arch, 0);
+
+  Flags opt_regsets = RegisterInfoPOSIX_arm64::eRegsetMaskPAuth;
+  return new RegisterInfoPOSIX_arm64(target_arch, opt_regsets);
 }
 
 static llvm::APInt uint128ToAPInt(__uint128_t in) {
@@ -145,23 +77,25 @@ NativeRegisterContextOpenBSD_arm64::NativeRegisterContextOpenBSD_arm64(
                                   CreateRegisterInfoInterface(target_arch)),
       m_gpr(), m_fpr() {}
 
-uint32_t NativeRegisterContextOpenBSD_arm64::GetUserRegisterCount() const {
-  uint32_t count = 0;
-  for (uint32_t set_index = 0; set_index < k_num_register_sets; ++set_index)
-    count += g_reg_sets_arm64[set_index].num_registers;
-  return count;
+RegisterInfoPOSIX_arm64 &
+NativeRegisterContextOpenBSD_arm64::GetRegisterInfo() const {
+  return static_cast<RegisterInfoPOSIX_arm64 &>(*m_register_info_interface_up);
 }
 
 uint32_t NativeRegisterContextOpenBSD_arm64::GetRegisterSetCount() const {
-  return k_num_register_sets;
+  return GetRegisterInfo().GetRegisterSetCount();
 }
 
 const RegisterSet *
 NativeRegisterContextOpenBSD_arm64::GetRegisterSet(uint32_t set_index) const {
-	if (set_index < k_num_register_sets)
-    return &g_reg_sets_arm64[set_index];
+  return GetRegisterInfo().GetRegisterSet(set_index);
+}
 
-  return nullptr;
+uint32_t NativeRegisterContextOpenBSD_arm64::GetUserRegisterCount() const {
+  uint32_t count = 0;
+  for (uint32_t set_index = 0; set_index < GetRegisterSetCount(); ++set_index)
+    count += GetRegisterSet(set_index)->num_registers;
+  return count;
 }
 
 Status
@@ -199,6 +133,18 @@ NativeRegisterContextOpenBSD_arm64::ReadRegister(const RegisterInfo *reg_info,
     // directly queried.
     error.SetErrorStringWithFormat(
         "reading register set for register \"%s\" failed", reg_info->name);
+    return error;
+  }
+
+  if (GetRegisterInfo().IsPAuthReg(reg)) {
+    uint32_t offset;
+
+    offset = reg_info->byte_offset - GetRegisterInfo().GetPAuthOffset();
+    reg_value = (uint64_t)m_pacmask[offset > 0];
+    if (reg_value.GetByteSize() > reg_info->byte_size) {
+      reg_value.SetType(reg_info);
+    }
+
     return error;
   }
 
@@ -527,6 +473,8 @@ int NativeRegisterContextOpenBSD_arm64::GetSetForNativeRegNum(
     return GPRegSet;
   else if (reg_num >= k_first_fpr_arm64 && reg_num <= k_last_fpr_arm64)
     return FPRegSet;
+  else if (GetRegisterInfo().IsPAuthReg(reg_num))
+    return PACMaskRegSet;
   else
     return -1;
 }
@@ -538,6 +486,9 @@ int NativeRegisterContextOpenBSD_arm64::ReadRegisterSet(uint32_t set) {
     return 0;
   case FPRegSet:
     ReadFPR();
+    return 0;
+  case PACMaskRegSet:
+    ReadPACMask();
     return 0;
   default:
     break;
@@ -558,4 +509,16 @@ int NativeRegisterContextOpenBSD_arm64::WriteRegisterSet(uint32_t set) {
   }
   return -1;
 }
+
+Status NativeRegisterContextOpenBSD_arm64::ReadPACMask() {
+#ifdef PT_PACMASK
+  return NativeProcessOpenBSD::PtraceWrapper(PT_PACMASK, GetProcessPid(),
+					     &m_pacmask, sizeof(m_pacmask));
+#else
+  Status error;
+  ::memset(&m_pacmask, 0, sizeof(m_pacmask));
+  return error;
+#endif
+}
+
 #endif
