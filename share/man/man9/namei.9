@@ -1,4 +1,4 @@
-.\"	$OpenBSD: namei.9,v 1.22 2019/09/30 19:57:44 kn Exp $
+.\"	$OpenBSD: namei.9,v 1.23 2023/07/15 23:01:25 kn Exp $
 .\"     $NetBSD: namei.9,v 1.9 2003/05/06 10:46:44 jmmv Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 30 2019 $
+.Dd $Mdocdate: July 15 2023 $
 .Dt NAMEI 9
 .Os
 .Sh NAME
@@ -74,6 +74,8 @@ struct nameidata {
          */
         struct  vnode *ni_startdir;     /* starting directory */
         struct  vnode *ni_rootdir;      /* logical root directory */
+        uint64_t ni_pledge;             /* expected pledge for namei */
+        u_char ni_unveil;               /* required unveil flags for namei */
         /*
          * Results: returned from/manipulated by lookup
          */
@@ -83,8 +85,9 @@ struct nameidata {
          * Shared between namei and lookup/commit routines.
          */
         size_t  ni_pathlen;             /* remaining chars in path */
-        const char *ni_next;            /* next location in pathname */
+        char *ni_next;                  /* next location in pathname */
         u_long  ni_loopcnt;             /* count of symlinks encountered */
+        struct unveil *ni_unveil_match; /* last matching unveil component */
         /*
          * Lookup parameters
          */
@@ -147,6 +150,8 @@ add entry to the name cache
 this is last component of pathname
 .It ISSYMLINK
 symlink needs interpretation
+.It REALPATH
+save pathname buffer for realpath
 .It REQUIREDIR
 must be a directory
 .It STRIPSLASHES
