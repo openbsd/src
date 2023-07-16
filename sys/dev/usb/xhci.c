@@ -1,4 +1,4 @@
-/* $OpenBSD: xhci.c,v 1.128 2023/01/01 21:45:40 kettenis Exp $ */
+/* $OpenBSD: xhci.c,v 1.129 2023/07/16 09:33:18 kettenis Exp $ */
 
 /*
  * Copyright (c) 2014-2015 Martin Pieuchot
@@ -656,7 +656,7 @@ xhci_softintr(void *v)
 {
 	struct xhci_softc *sc = v;
 
-	if (sc->sc_bus.dying)
+	if (sc->sc_dead)
 		return;
 
 	sc->sc_bus.intr_context++;
