@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.42 2023/06/11 10:30:26 op Exp $	*/
+/*	$OpenBSD: ca.c,v 1.43 2023/07/16 09:23:33 tb Exp $	*/
 
 /*
  * Copyright (c) 2014 Reyk Floeter <reyk@openbsd.org>
@@ -41,20 +41,8 @@ void	 ca_launch(void);
 int	 ca_dispatch_parent(int, struct privsep_proc *, struct imsg *);
 int	 ca_dispatch_relay(int, struct privsep_proc *, struct imsg *);
 
-int	 rsae_pub_enc(int, const u_char *, u_char *, RSA *, int);
-int	 rsae_pub_dec(int,const u_char *, u_char *, RSA *, int);
 int	 rsae_priv_enc(int, const u_char *, u_char *, RSA *, int);
 int	 rsae_priv_dec(int, const u_char *, u_char *, RSA *, int);
-int	 rsae_mod_exp(BIGNUM *, const BIGNUM *, RSA *, BN_CTX *);
-int	 rsae_bn_mod_exp(BIGNUM *, const BIGNUM *, const BIGNUM *,
-	    const BIGNUM *, BN_CTX *, BN_MONT_CTX *);
-int	 rsae_init(RSA *);
-int	 rsae_finish(RSA *);
-int	 rsae_sign(int, const u_char *, u_int, u_char *, u_int *,
-	    const RSA *);
-int	 rsae_verify(int dtype, const u_char *m, u_int, const u_char *,
-	    u_int, const RSA *);
-int	 rsae_keygen(RSA *, int, BIGNUM *, BN_GENCB *);
 
 static struct relayd *env = NULL;
 
@@ -301,7 +289,7 @@ ca_dispatch_relay(int fd, struct privsep_proc *p, struct imsg *imsg)
  * RSA privsep engine (called from unprivileged processes)
  */
 
-const RSA_METHOD *rsa_default = NULL;
+static const RSA_METHOD *rsa_default;
 static RSA_METHOD *rsae_method;
 
 static int
@@ -417,20 +405,6 @@ rsae_send_imsg(int flen, const u_char *from, u_char *to, RSA *rsa,
 }
 
 int
-rsae_pub_enc(int flen,const u_char *from, u_char *to, RSA *rsa,int padding)
-{
-	DPRINTF("%s:%d", __func__, __LINE__);
-	return RSA_meth_get_pub_enc(rsa_default)(flen, from, to, rsa, padding);
-}
-
-int
-rsae_pub_dec(int flen,const u_char *from, u_char *to, RSA *rsa,int padding)
-{
-	DPRINTF("%s:%d", __func__, __LINE__);
-	return RSA_meth_get_pub_dec(rsa_default)(flen, from, to, rsa, padding);
-}
-
-int
 rsae_priv_enc(int flen, const u_char *from, u_char *to, RSA *rsa, int padding)
 {
 	DPRINTF("%s:%d", __func__, __LINE__);
@@ -444,69 +418,10 @@ rsae_priv_dec(int flen, const u_char *from, u_char *to, RSA *rsa, int padding)
 	return rsae_send_imsg(flen, from, to, rsa, padding, IMSG_CA_PRIVDEC);
 }
 
-int
-rsae_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
-{
-	DPRINTF("%s:%d", __func__, __LINE__);
-	return RSA_meth_get_mod_exp(rsa_default)(r0, I, rsa, ctx);
-}
-
-int
-rsae_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
-{
-	DPRINTF("%s:%d", __func__, __LINE__);
-	return RSA_meth_get_bn_mod_exp(rsa_default)(r, a, p, m, ctx, m_ctx);
-}
-
-int
-rsae_init(RSA *rsa)
-{
-	DPRINTF("%s:%d", __func__, __LINE__);
-	if (RSA_meth_get_init(rsa_default) == NULL)
-		return 1;
-	return RSA_meth_get_init(rsa_default)(rsa);
-}
-
-int
-rsae_finish(RSA *rsa)
-{
-	DPRINTF("%s:%d", __func__, __LINE__);
-	if (RSA_meth_get_finish(rsa_default) == NULL)
-		return 1;
-	return RSA_meth_get_finish(rsa_default)(rsa);
-}
-
-int
-rsae_sign(int type, const u_char *m, u_int m_length, u_char *sigret,
-    u_int *siglen, const RSA *rsa)
-{
-	DPRINTF("%s:%d", __func__, __LINE__);
-	return RSA_meth_get_sign(rsa_default)(type, m, m_length,
-	    sigret, siglen, rsa);
-}
-
-int
-rsae_verify(int dtype, const u_char *m, u_int m_length, const u_char *sigbuf,
-    u_int siglen, const RSA *rsa)
-{
-	DPRINTF("%s:%d", __func__, __LINE__);
-	return RSA_meth_get_verify(rsa_default)(dtype, m, m_length,
-	    sigbuf, siglen, rsa);
-}
-
-int
-rsae_keygen(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb)
-{
-	DPRINTF("%s:%d", __func__, __LINE__);
-	return RSA_meth_get_keygen(rsa_default)(rsa, bits, e, cb);
-}
-
 void
 ca_engine_init(struct relayd *x_env)
 {
-	ENGINE		*e = NULL;
-	const char	*errstr, *name;
+	const char	*errstr;
 
 	if (env == NULL)
 		env = x_env;
@@ -514,68 +429,25 @@ ca_engine_init(struct relayd *x_env)
 	if (rsa_default != NULL)
 		return;
 
-	if ((rsae_method = RSA_meth_new("RSA privsep engine", 0)) == NULL) {
-		errstr = "RSA_meth_new";
+	if ((rsa_default = RSA_get_default_method()) == NULL) {
+		errstr = "RSA_get_default_method";
 		goto fail;
 	}
 
-	RSA_meth_set_pub_enc(rsae_method, rsae_pub_enc);
-	RSA_meth_set_pub_dec(rsae_method, rsae_pub_dec);
+	if ((rsae_method = RSA_meth_dup(rsa_default)) == NULL) {
+		errstr = "RSA_meth_dup";
+		goto fail;
+	}
+
 	RSA_meth_set_priv_enc(rsae_method, rsae_priv_enc);
 	RSA_meth_set_priv_dec(rsae_method, rsae_priv_dec);
-	RSA_meth_set_mod_exp(rsae_method, rsae_mod_exp);
-	RSA_meth_set_bn_mod_exp(rsae_method, rsae_bn_mod_exp);
-	RSA_meth_set_init(rsae_method, rsae_init);
-	RSA_meth_set_finish(rsae_method, rsae_finish);
-	RSA_meth_set_sign(rsae_method, rsae_sign);
-	RSA_meth_set_verify(rsae_method, rsae_verify);
-	RSA_meth_set_keygen(rsae_method, rsae_keygen);
 
-	if ((e = ENGINE_get_default_RSA()) == NULL) {
-		if ((e = ENGINE_new()) == NULL) {
-			errstr = "ENGINE_new";
-			goto fail;
-		}
-		if (!ENGINE_set_name(e, RSA_meth_get0_name(rsae_method))) {
-			errstr = "ENGINE_set_name";
-			goto fail;
-		}
-		if ((rsa_default = RSA_get_default_method()) == NULL) {
-			errstr = "RSA_get_default_method";
-			goto fail;
-		}
-	} else if ((rsa_default = ENGINE_get_RSA(e)) == NULL) {
-		errstr = "ENGINE_get_RSA";
-		goto fail;
-	}
-
-	if ((name = ENGINE_get_name(e)) == NULL)
-		name = "unknown RSA engine";
-
-	log_debug("%s: using %s", __func__, name);
-
-	if (RSA_meth_get_flags(rsa_default) & RSA_FLAG_SIGN_VER)
-		fatalx("unsupported RSA engine");
-
-	if (RSA_meth_get_mod_exp(rsa_default) == NULL)
-		RSA_meth_set_mod_exp(rsae_method, NULL);
-	if (RSA_meth_get_bn_mod_exp(rsa_default) == NULL)
-		RSA_meth_set_bn_mod_exp(rsae_method, NULL);
-	if (RSA_meth_get_keygen(rsa_default) == NULL)
-		RSA_meth_set_keygen(rsae_method, NULL);
 	RSA_meth_set_flags(rsae_method,
 	    RSA_meth_get_flags(rsa_default) | RSA_METHOD_FLAG_NO_CHECK);
 	RSA_meth_set0_app_data(rsae_method,
 	    RSA_meth_get0_app_data(rsa_default));
 
-	if (!ENGINE_set_RSA(e, rsae_method)) {
-		errstr = "ENGINE_set_RSA";
-		goto fail;
-	}
-	if (!ENGINE_set_default_RSA(e)) {
-		errstr = "ENGINE_set_default_RSA";
-		goto fail;
-	}
+	RSA_set_default_method(rsae_method);
 
 	return;
 
