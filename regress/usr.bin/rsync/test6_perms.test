@@ -19,7 +19,9 @@ mkdir ../dir3
 cd ../dir3
 generate_tree_1
 chmod 600 foo/bar/baz/one.txt
+touch -m -t 199901020405 foo/bar/baz/one.txt
 chmod 070 foo/bar/baz/one2.txt
+touch -m -t 199901020405 foo/bar/baz/one2.txt
 
 cd ..
 $rsync -a dir1/ dir3

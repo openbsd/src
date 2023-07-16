@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2023/04/29 00:20:46 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2023/07/16 06:36:18 anton Exp $
 
 # evaluate once in main make invocation, then get list of test from environment
 .if ! (make(clean) || make(cleandir) || make(obj))
@@ -13,27 +13,18 @@ clean:
 	rm -rf dir* find*
 
 # some of these tests pass or fail unreliably
-REGRESS_EXPECTED_FAILURES =	run-openrsync-openrsync-test10_perms \
-				run-openrsync-openrsync-test11_middlediff \
-				run-openrsync-openrsync-test11b_middlediff \
-				run-openrsync-openrsync-test3_minusexclude \
-				run-openrsync-openrsync-test3b_minusexclude \
-				run-openrsync-openrsync-test3c_minusexclude \
+REGRESS_EXPECTED_FAILURES =	run-openrsync-openrsync-test3_minusexclude \
 				run-openrsync-openrsync-test6_perms \
 				run-openrsync-openrsync-test6b_perms \
 				run-openrsync-openrsync-test7_symlinks \
-				run-openrsync-openrsync-test7b_symlinks \
-				run-openrsync-openrsync-test9_norecurse \
-				run-openrsync-rsync-test10_perms \
-				run-openrsync-rsync-test11_middlediff \
-				run-openrsync-rsync-test11b_middlediff \
+				run-openrsync-openrsync-test10_perms \
+				run-openrsync-openrsync-test13_perms \
 				run-openrsync-rsync-test3_minusexclude \
 				run-openrsync-rsync-test6_perms \
 				run-openrsync-rsync-test6b_perms \
 				run-openrsync-rsync-test7_symlinks \
-				run-rsync-openrsync-test12_inex \
-				run-openrsync-rsync-test12c_inex \
-				run-rsync-rsync-test3c_minusexclude
+				run-openrsync-rsync-test10_perms \
+				run-openrsync-rsync-test13_perms
 
 .if ! exists(${RSYNC_PORT})
 .for t in ${RSYNC_TESTS}

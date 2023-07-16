@@ -10,6 +10,7 @@ mkdir dir1
 cd dir1
 generate_tree_1
 chmod 640 foo/bar/baz/one.txt
+touch -m -t 199901020405 foo/bar/baz/one.txt
 # make the tree we want to compare to
 mkdir ../dir2
 cd ../dir2

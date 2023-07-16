@@ -18,13 +18,17 @@ mkdir ../dir2
 cd ../dir2
 generate_tree_1
 chmod 600 foo/bar/baz/one.txt
+touch -m -t 199901020405 foo/bar/baz/one.txt
 chmod 777 foo/bar/baz/one2.txt
+touch -m -t 199901020405 foo/bar/baz/one2.txt
 
 mkdir ../dir3
 cd ../dir3
 generate_tree_1
 chmod 600 foo/bar/baz/one.txt
+touch -m -t 199901020405 foo/bar/baz/one.txt
 chmod 777 foo/bar/baz/one2.txt
+touch -m -t 199901020405 foo/bar/baz/one2.txt
 
 cd ..
 # call -a without -p.
