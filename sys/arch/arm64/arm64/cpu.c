@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.96 2023/07/13 08:33:36 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.97 2023/07/16 16:13:46 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1238,8 +1238,6 @@ cpu_halt(void)
 	/* Unmask clock interrupts. */
 	WRITE_SPECIALREG(cntv_ctl_el0,
 	    READ_SPECIALREG(cntv_ctl_el0) & ~CNTV_CTL_IMASK);
-
-	printf("%s: %d wakeup events\n", ci->ci_dev->dv_xname, count);
 }
 
 void
@@ -1361,8 +1359,6 @@ resume:
 	/* Unmask clock interrupts. */
 	WRITE_SPECIALREG(cntv_ctl_el0,
 	    READ_SPECIALREG(cntv_ctl_el0) & ~CNTV_CTL_IMASK);
-
-	printf("%s: %d wakeup events\n", ci->ci_dev->dv_xname, count);
 
 	return 0;
 }
