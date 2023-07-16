@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.c,v 1.44 2023/07/07 14:17:35 yasuoka Exp $	*/
+/*	$OpenBSD: mbuf.c,v 1.45 2023/07/16 03:01:31 yasuoka Exp $	*/
 /*	$NetBSD: mbuf.c,v 1.9 1996/05/07 02:55:03 thorpej Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ static struct mbtypes {
 };
 
 int nmbtypes = sizeof(mbstat.m_mtypes) / sizeof(u_long);
-bool seen[256];			/* "have we seen this type yet?" */
+bool seen[MBSTAT_COUNT];		/* "have we seen this type yet?" */
 
 /*
  * Print mbuf statistics.
@@ -93,7 +93,7 @@ mbpr(void)
 	struct mbtypes *mp;
 	size_t size;
 
-	if (nmbtypes != 256) {
+	if (nmbtypes != MBSTAT_COUNT) {
 		fprintf(stderr,
 		    "%s: unexpected change to mbstat; check source\n",
 		    __progname);

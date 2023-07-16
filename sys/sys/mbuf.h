@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.260 2023/07/07 14:17:34 yasuoka Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.261 2023/07/16 03:01:31 yasuoka Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -363,6 +363,12 @@ u_int mextfree_register(void (*)(caddr_t, u_int, void *));
 /* length to m_copy to copy all */
 #define	M_COPYALL	1000000000
 
+#define MBSTAT_TYPES           MT_NTYPES
+#define MBSTAT_DROPS           (MBSTAT_TYPES + 0)
+#define MBSTAT_WAIT            (MBSTAT_TYPES + 1)
+#define MBSTAT_DRAIN           (MBSTAT_TYPES + 2)
+#define MBSTAT_COUNT           (MBSTAT_TYPES + 3)
+
 /*
  * Mbuf statistics.
  * For statistics related to mbuf and cluster allocations, see also the
@@ -372,14 +378,9 @@ struct mbstat {
 	u_long	m_drops;	/* times failed to find space */
 	u_long	m_wait;		/* times waited for space */
 	u_long	m_drain;	/* times drained protocols for space */
-	u_long	m_mtypes[256];	/* type specific mbuf allocations */
+	u_long	m_mtypes[MBSTAT_COUNT];
+				/* type specific mbuf allocations */
 };
-
-#define MBSTAT_TYPES           MT_NTYPES
-#define MBSTAT_DROPS           (MBSTAT_TYPES + 0)
-#define MBSTAT_WAIT            (MBSTAT_TYPES + 1)
-#define MBSTAT_DRAIN           (MBSTAT_TYPES + 2)
-#define MBSTAT_COUNT           (MBSTAT_TYPES + 3)
 
 #include <sys/mutex.h>
 
