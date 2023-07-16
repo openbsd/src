@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdhtest.c,v 1.19 2023/07/16 00:16:42 tb Exp $ */
+/*	$OpenBSD: ecdhtest.c,v 1.20 2023/07/16 07:34:07 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -72,8 +72,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/crypto.h>
-#include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/objects.h>
 #include <openssl/sha.h>
@@ -94,18 +92,16 @@ hexdump(const unsigned char *buf, size_t len)
 		fprintf(stdout, "\n");
 }
 
-static const int KDF1_SHA1_len = 20;
 static void *
 KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
 {
-#ifndef OPENSSL_NO_SHA
+#ifdef OPENSSL_NO_SHA
+	return NULL;
+#else
 	if (*outlen < SHA_DIGEST_LENGTH)
 		return NULL;
-	else
-		*outlen = SHA_DIGEST_LENGTH;
+	*outlen = SHA_DIGEST_LENGTH;
 	return SHA1(in, inlen, out);
-#else
-	return NULL;
 #endif
 }
 
@@ -115,7 +111,7 @@ ecdh_keygen_test(int nid)
 	EC_KEY *keya = NULL, *keyb = NULL;
 	const EC_POINT *puba, *pubb;
 	unsigned char *abuf = NULL, *bbuf = NULL;
-	int len = KDF1_SHA1_len;
+	int len = SHA_DIGEST_LENGTH;
 	int failed = 1;
 
 	if ((keya = EC_KEY_new_by_curve_name(nid)) == NULL)
