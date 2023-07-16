@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplsmc.c,v 1.24 2023/07/08 14:44:43 tobhe Exp $	*/
+/*	$OpenBSD: aplsmc.c,v 1.25 2023/07/16 16:11:11 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -138,6 +138,7 @@ struct aplsmc_softc {
 	struct ksensor		sc_sensors[APLSMC_MAX_SENSORS];
 	int			sc_nsensors;
 	struct ksensordev	sc_sensordev;
+	uint32_t		sc_suspend_pstr;
 };
 
 #define CH0I_DISCHARGE		(1 << 0)
@@ -175,9 +176,11 @@ struct aplsmc_sensor aplsmc_sensors[] = {
 
 int	aplsmc_match(struct device *, void *, void *);
 void	aplsmc_attach(struct device *, struct device *, void *);
+int	aplsmc_activate(struct device *, int);
 
 const struct cfattach aplsmc_ca = {
-	sizeof (struct aplsmc_softc), aplsmc_match, aplsmc_attach
+	sizeof (struct aplsmc_softc), aplsmc_match, aplsmc_attach,
+	NULL, aplsmc_activate
 };
 
 struct cfdriver aplsmc_cd = {
@@ -189,6 +192,7 @@ int	aplsmc_send_cmd(struct aplsmc_softc *, uint16_t, uint32_t, uint16_t);
 int	aplsmc_wait_cmd(struct aplsmc_softc *sc);
 int	aplsmc_read_key(struct aplsmc_softc *, uint32_t, void *, size_t);
 int	aplsmc_write_key(struct aplsmc_softc *, uint32_t, void *, size_t);
+int64_t aplsmc_convert_flt(uint32_t, int);
 void	aplsmc_refresh_sensors(void *);
 int	aplsmc_apminfo(struct apm_power_info *);
 void	aplsmc_set_pin(void *, uint32_t *, int);
@@ -357,7 +361,24 @@ aplsmc_attach(struct device *parent, struct device *self, void *aux)
 #ifdef SUSPEND
 	device_register_wakeup(&sc->sc_dev);
 #endif
+}
 
+int
+aplsmc_activate(struct device *self, int act)
+{
+#ifdef SUSPEND
+	struct aplsmc_softc *sc = (struct aplsmc_softc *)self;
+	int64_t value;
+
+	switch (act) {
+	case DVACT_WAKEUP:
+		value = aplsmc_convert_flt(sc->sc_suspend_pstr, 100);
+		printf("%s: system %lld.%02lld W\n", sc->sc_dev.dv_xname,
+		    value / 100, value % 100);
+	}
+#endif
+
+	return 0;
 }
 
 void
@@ -366,8 +387,12 @@ aplsmc_handle_notification(struct aplsmc_softc *sc, uint64_t data)
 	extern int allowpowerdown;
 #ifdef SUSPEND
 	extern int cpu_suspended;
+	uint32_t flt = 0;
 
 	if (cpu_suspended) {
+		aplsmc_read_key(sc, 'PSTR', &flt, sizeof(flt));
+		sc->sc_suspend_pstr = flt;
+
 		switch (SMC_EV_TYPE(data)) {
 		case SMC_EV_TYPE_BTN:
 			switch (SMC_EV_SUBTYPE(data)) {
@@ -542,6 +567,26 @@ aplsmc_write_key(struct aplsmc_softc *sc, uint32_t key, void *data, size_t len)
 
 #ifndef SMALL_KERNEL
 
+int64_t
+aplsmc_convert_flt(uint32_t flt, int scale)
+{
+	int64_t mant;
+	int sign, exp;
+
+	/*
+	 * Convert floating-point to integer, trying to keep as much
+	 * resolution as possible given the scaling factor.
+	 */
+	sign = (flt >> 31) ? -1 : 1;
+	exp = ((flt >> 23) & 0xff) - 127;
+	mant = (flt & 0x7fffff) | 0x800000;
+	mant *= scale;
+	if (exp < 23)
+		return sign * (mant >> (23 - exp));
+	else
+		return sign * (mant << (exp - 23));
+}
+
 void
 aplsmc_refresh_sensors(void *arg)
 {
@@ -570,26 +615,11 @@ aplsmc_refresh_sensors(void *arg)
 			value = (int64_t)ui16 * sensor->scale;
 		} else if (strcmp(sensor->key_type, "flt ") == 0) {
 			uint32_t flt;
-			int64_t mant;
-			int sign, exp;
 
 			error = aplsmc_read_key(sc, key, &flt, sizeof(flt));
 			if (sensor->flags & APLSMC_BE)
 				flt = betoh32(flt);
-
-			/*
-			 * Convert floating-point to integer, trying
-			 * to keep as much resolution as possible
-			 * given the scaling factor for this sensor.
-			 */
-			sign = (flt >> 31) ? -1 : 1;
-			exp = ((flt >> 23) & 0xff) - 127;
-			mant = (flt & 0x7fffff) | 0x800000;
-			mant *= sensor->scale;
-			if (exp < 23)
-				value = sign * (mant >> (23 - exp));
-			else
-				value = sign * (mant << (exp - 23));
+			value = aplsmc_convert_flt(flt, sensor->scale);
 		}
 
 		/* Apple reports temperatures in degC. */
