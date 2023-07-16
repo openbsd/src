@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecdhtest.c,v 1.18 2023/07/15 23:35:02 tb Exp $ */
+/*	$OpenBSD: ecdhtest.c,v 1.19 2023/07/16 00:16:42 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -149,10 +149,9 @@ ecdh_keygen_test(int nid)
 		printf(" shared secret:\n");
 		hexdump(abuf, len);
 
-		printf("key b:\n");
 		EC_KEY_print_fp(stdout, keyb, 1);
 		printf(" shared secret:\n");
-		hexdump(abuf, len);
+		hexdump(bbuf, len);
 
 		fprintf(stderr, "Error in ECDH routines\n");
 
@@ -160,6 +159,7 @@ ecdh_keygen_test(int nid)
 	}
 
 	failed = 0;
+
  err:
 	ERR_print_errors_fp(stderr);
 
@@ -338,7 +338,7 @@ ecdh_kat(const struct ecdh_kat_test *kat)
 	BIGNUM *z = NULL;
 	unsigned char *want = NULL, *got = NULL;
 	int len = 0;
-	int failed = 0;
+	int failed = 1;
 
 	if ((keya = mk_eckey(kat->nid, kat->keya)) == NULL)
 		goto err;
@@ -380,7 +380,7 @@ ecdh_kat(const struct ecdh_kat_test *kat)
 
  err:
 	if (failed) {
-		printf("ECDH shared secret with %s failed", OBJ_nid2sn(kat->nid));
+		printf("shared secret with %s failed", OBJ_nid2sn(kat->nid));
 
 		fprintf(stderr, "Error in ECDH routines\n");
 		ERR_print_errors_fp(stderr);
@@ -396,7 +396,7 @@ ecdh_kat(const struct ecdh_kat_test *kat)
 }
 
 int
-main(int argc, char *argv[])
+main(void)
 {
 	EC_builtin_curve *curves = NULL;
 	size_t i, n_curves;
