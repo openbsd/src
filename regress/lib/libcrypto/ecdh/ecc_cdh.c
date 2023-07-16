@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecc_cdh.c,v 1.1 2023/07/15 19:51:13 tb Exp $ */
+/*	$OpenBSD: ecc_cdh.c,v 1.2 2023/07/16 08:25:41 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -2484,6 +2484,7 @@ run_ecc_cdh_test(const struct ecc_cdh_test *test)
 	count++;
 
 	EC_KEY_free(key);
+	EC_POINT_free(peer_pub);
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	freezero(out, out_len);
