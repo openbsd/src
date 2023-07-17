@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipd.c,v 1.1 2022/12/12 19:18:25 kettenis Exp $	*/
+/*	$OpenBSD: tipd.c,v 1.2 2023/07/17 17:50:22 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -29,6 +29,8 @@
 
 #include <dev/i2c/i2cvar.h>
 
+#define TPS_CMD1		0x08
+#define TPS_DATA1		0x09
 #define TPS_INT_EVENT_1		0x14
 #define TPS_INT_EVENT_2		0x15
 #define TPS_INT_MASK_1		0x16
@@ -37,6 +39,11 @@
 #define TPS_INT_CLEAR_2		0x19
 #define TPS_STATUS		0x1a
 #define  TPS_STATUS_PLUG_PRESENT	(1 << 0)
+#define TPS_SYSTEM_POWER_STATE	0x20
+#define  TPS_SYSTEM_POWER_STATE_S0	0
+#define  TPS_SYSTEM_POWER_STATE_S5	5
+
+#define TPS_CMD(s)	((s[3] << 24) | (s[2] << 16) | (s[1] << 8) | s[0])
 
 /*
  * Interrupt bits on the CD321x controllers used by Apple differ from
@@ -56,9 +63,11 @@ struct tipd_softc {
 
 int	tipd_match(struct device *, void *, void *);
 void	tipd_attach(struct device *, struct device *, void *);
+int	tipd_activate(struct device *, int);
 
 const struct cfattach tipd_ca = {
-	sizeof(struct tipd_softc), tipd_match, tipd_attach
+	sizeof(struct tipd_softc), tipd_match, tipd_attach, NULL,
+	tipd_activate
 };
 
 struct cfdriver tipd_cd = {
@@ -69,7 +78,10 @@ int	tipd_intr(void *);
 
 int	tipd_read_4(struct tipd_softc *, uint8_t, uint32_t *);
 int	tipd_read_8(struct tipd_softc *, uint8_t, uint64_t *);
+int	tipd_write_4(struct tipd_softc *, uint8_t, uint32_t);
 int	tipd_write_8(struct tipd_softc *, uint8_t, uint64_t);
+int	tipd_exec(struct tipd_softc *, const char *,
+	    const void *, size_t, void *, size_t);
 
 int
 tipd_match(struct device *parent, void *match, void *aux)
@@ -105,6 +117,31 @@ tipd_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ports.dp_node = node;
 		device_ports_register(&sc->sc_ports, -1);
 	}
+}
+
+int
+tipd_activate(struct device *self, int act)
+{
+	struct tipd_softc *sc = (struct tipd_softc *)self;
+	uint8_t state;
+	int error;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		state = TPS_SYSTEM_POWER_STATE_S5;
+		error = tipd_exec(sc, "SSPS", &state, sizeof(state), NULL, 0);
+		if (error)
+			printf("%s: powerdown failed\n", sc->sc_dev.dv_xname);
+		break;
+	case DVACT_RESUME:
+		state = TPS_SYSTEM_POWER_STATE_S0;
+		error = tipd_exec(sc, "SSPS", &state, sizeof(state), NULL, 0);
+		if (error)
+			printf("%s: powerup failed\n", sc->sc_dev.dv_xname);
+		break;
+	}
+
+	return 0;
 }
 
 void
@@ -207,6 +244,23 @@ tipd_read_8(struct tipd_softc *sc, uint8_t reg, uint64_t *val)
 }
 
 int
+tipd_write_4(struct tipd_softc *sc, uint8_t reg, uint32_t val)
+{
+	uint8_t buf[5];
+	int error;
+
+	buf[0] = 4;
+	htolem32(&buf[1], val);
+
+	iic_acquire_bus(sc->sc_tag, 0);
+	error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_addr, &reg, sizeof(reg), buf, sizeof(buf), 0);
+	iic_release_bus(sc->sc_tag, 0);
+
+	return error;
+}
+
+int
 tipd_write_8(struct tipd_softc *sc, uint8_t reg, uint64_t val)
 {
 	uint8_t buf[9];
@@ -221,4 +275,67 @@ tipd_write_8(struct tipd_softc *sc, uint8_t reg, uint64_t val)
 	iic_release_bus(sc->sc_tag, 0);
 
 	return error;
+}
+
+int
+tipd_exec(struct tipd_softc *sc, const char *cmd, const void *wbuf,
+    size_t wlen, void *rbuf, size_t rlen)
+{
+	char buf[65];
+	uint32_t val;
+	int timo, error;
+	uint8_t reg = TPS_DATA1;
+
+	if (wlen >= sizeof(buf) - 1)
+		return EINVAL;
+
+	error = tipd_read_4(sc, TPS_CMD1, &val);
+	if (error)
+		return error;
+	if (val == TPS_CMD("!CMD"))
+		return EBUSY;
+
+	if (wlen > 0) {
+		buf[0] = wlen;
+		memcpy(&buf[1], wbuf, wlen);
+		iic_acquire_bus(sc->sc_tag, 0);
+		error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_addr, &reg, sizeof(reg), buf, sizeof(buf), 0);
+		iic_release_bus(sc->sc_tag, 0);
+		if (error)
+			return error;
+	}
+
+	error = tipd_write_4(sc, TPS_CMD1, TPS_CMD(cmd));
+	if (error)
+		return error;
+
+	for (timo = 1000; timo > 0; timo--) {
+		error = tipd_read_4(sc, TPS_CMD1, &val);
+		if (error)
+			return error;
+		if (val == TPS_CMD("!CMD"))
+			return EBUSY;
+		if (val == 0)
+			break;
+		delay(10);
+	}
+
+	if (timo == 0)
+		return ETIMEDOUT;
+
+	if (rlen > 0) {
+		memset(buf, 0, sizeof(buf));
+		iic_acquire_bus(sc->sc_tag, 0);
+		error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_addr, &reg, sizeof(reg), buf, sizeof(buf), 0);
+		iic_release_bus(sc->sc_tag, 0);
+		if (error)
+			return error;
+		if (buf[0] < rlen)
+			return EIO;
+		memcpy(rbuf, &buf[1], rlen);
+	}
+
+	return 0;
 }
