@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.96 2022/08/12 14:30:52 visa Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.97 2023/07/17 09:41:20 semarie Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
 
 /*-
@@ -762,27 +762,18 @@ msdosfs_check_export(struct mount *mp, struct mbuf *nam, int *exflagsp,
 	return (0);
 }
 
-#define msdosfs_vget ((int (*)(struct mount *, ino_t, struct vnode **)) \
-		      eopnotsupp)
-
-#define msdosfs_quotactl ((int (*)(struct mount *, int, uid_t, caddr_t, \
-					struct proc *))eopnotsupp)
-
-#define msdosfs_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
-                                    size_t, struct proc *))eopnotsupp)
-
 const struct vfsops msdosfs_vfsops = {
 	.vfs_mount	= msdosfs_mount,
 	.vfs_start	= msdosfs_start,
 	.vfs_unmount	= msdosfs_unmount,
 	.vfs_root	= msdosfs_root,
-	.vfs_quotactl	= msdosfs_quotactl,
+	.vfs_quotactl	= (void *)eopnotsupp,
 	.vfs_statfs	= msdosfs_statfs,
 	.vfs_sync	= msdosfs_sync,
-	.vfs_vget	= msdosfs_vget,
+	.vfs_vget	= (void *)eopnotsupp,
 	.vfs_fhtovp	= msdosfs_fhtovp,
 	.vfs_vptofh	= msdosfs_vptofh,
 	.vfs_init	= msdosfs_init,
-	.vfs_sysctl	= msdosfs_sysctl,
+	.vfs_sysctl	= (void *)eopnotsupp,
 	.vfs_checkexp	= msdosfs_check_export,
 };

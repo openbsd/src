@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_extern.h,v 1.15 2020/01/20 23:21:55 claudio Exp $	*/
+/*	$OpenBSD: cd9660_extern.h,v 1.16 2023/07/17 09:41:20 semarie Exp $	*/
 /*	$NetBSD: cd9660_extern.h,v 1.1 1997/01/24 00:24:53 cgd Exp $	*/
 
 /*-
@@ -94,8 +94,6 @@ int cd9660_vptofh(struct vnode *, struct fid *);
 int cd9660_init(struct vfsconf *);
 int cd9660_check_export(struct mount *, struct mbuf *, int *,
                              struct ucred **);
-#define cd9660_sysctl ((int (*)(int *, u_int, void *, size_t *, void *, \
-                                    size_t, struct proc *))eopnotsupp)
 
 int cd9660_mountroot(void); 
 
