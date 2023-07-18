@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg_util.c,v 1.20 2023/07/16 15:21:46 claudio Exp $	*/
+/*	$OpenBSD: imsg_util.c,v 1.21 2023/07/18 15:07:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -35,12 +35,6 @@
 /*
  * Extending the imsg buffer API for internal use
  */
-
-int
-ibuf_cat(struct ibuf *dst, struct ibuf *src)
-{
-	return (ibuf_add(dst, src->buf, ibuf_size(src)));
-}
 
 struct ibuf *
 ibuf_new(const void *data, size_t len)

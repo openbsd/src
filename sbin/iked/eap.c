@@ -1,4 +1,4 @@
-/*	$OpenBSD: eap.c,v 1.24 2023/05/23 13:57:14 claudio Exp $	*/
+/*	$OpenBSD: eap.c,v 1.25 2023/07/18 15:07:41 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -112,7 +112,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 	if ((pld = ikev2_add_payload(e)) == NULL)
 		goto done;
 	firstpayload = IKEV2_PAYLOAD_IDr;
-	if (ibuf_cat(e, id->id_buf) != 0)
+	if (ibuf_add_buf(e, id->id_buf) != 0)
 		goto done;
 	len = ibuf_size(id->id_buf);
 
@@ -127,7 +127,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 		if ((cert = ibuf_reserve(e, sizeof(*cert))) == NULL)
 			goto done;
 		cert->cert_type = certid->id_type;
-		if (ibuf_cat(e, certid->id_buf) != 0)
+		if (ibuf_add_buf(e, certid->id_buf) != 0)
 			goto done;
 		len = ibuf_size(certid->id_buf) + sizeof(*cert);
 
@@ -142,7 +142,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 			if ((cert = ibuf_reserve(e, sizeof(*cert))) == NULL)
 				goto done;
 			cert->cert_type = sa->sa_scert[i].id_type;
-			if (ibuf_cat(e, sa->sa_scert[i].id_buf) != 0)
+			if (ibuf_add_buf(e, sa->sa_scert[i].id_buf) != 0)
 				goto done;
 			len = ibuf_size(sa->sa_scert[i].id_buf) + sizeof(*cert);
 		}
@@ -157,7 +157,7 @@ eap_identity_request(struct iked *env, struct iked_sa *sa)
 	if ((auth = ibuf_reserve(e, sizeof(*auth))) == NULL)
 		goto done;
 	auth->auth_method = sa->sa_localauth.id_type;
-	if (ibuf_cat(e, sa->sa_localauth.id_buf) != 0)
+	if (ibuf_add_buf(e, sa->sa_localauth.id_buf) != 0)
 		goto done;
 	len = ibuf_size(sa->sa_localauth.id_buf) + sizeof(*auth);
 
