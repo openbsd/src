@@ -1,4 +1,4 @@
-.\"	$OpenBSD: poll.2,v 1.39 2022/01/21 15:23:36 millert Exp $
+.\"	$OpenBSD: poll.2,v 1.40 2023/07/18 04:17:17 asou Exp $
 .\"
 .\" Copyright (c) 1994 Jason R. Thorpe
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\"
-.Dd $Mdocdate: January 21 2022 $
+.Dd $Mdocdate: July 18 2023 $
 .Dt POLL 2
 .Os
 .Sh NAME
@@ -287,9 +287,9 @@ if (nready == -1)
 	err(1, "poll");
 if (nready == 0)
 	errx(1, "time out");
-if ((pfd[0].revents & (POLLERR|POLLNVAL)))
+if (pfd[0].revents & (POLLERR|POLLNVAL))
 	errx(1, "bad fd %d", pfd[0].fd);
-if ((pfd[0].revents & (POLLIN|POLLHUP))) {
+if (pfd[0].revents & (POLLIN|POLLHUP)) {
 	if (read(STDIN_FILENO, buf, sizeof(buf)) == -1)
 		err(1, "read");
 }
