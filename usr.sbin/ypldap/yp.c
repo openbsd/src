@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp.c,v 1.21 2022/08/19 03:50:32 jmatthew Exp $ */
+/*	$OpenBSD: yp.c,v 1.22 2023/07/18 13:06:33 claudio Exp $ */
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  *
@@ -44,6 +44,7 @@
 #include <rpcsvc/ypclnt.h>
 
 #include "ypldap.h"
+#include "log.h"
 
 #define BINDINGDIR		"/var/yp/binding"
 

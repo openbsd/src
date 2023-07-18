@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap_dns.c,v 1.15 2022/08/23 02:57:27 jmatthew Exp $ */
+/*	$OpenBSD: ypldap_dns.c,v 1.16 2023/07/18 13:06:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2003-2008 Henning Brauer <henning@openbsd.org>
@@ -38,6 +38,7 @@
 #include <limits.h>
 
 #include "ypldap.h"
+#include "log.h"
 
 volatile sig_atomic_t	 quit_dns = 0;
 struct imsgev		*iev_dns;
@@ -55,6 +56,9 @@ dns_sig_handler(int sig, short event, void *p)
 	case SIGTERM:
 		dns_shutdown();
 		break;
+	case SIGHUP:
+		/* ignore */
+		break;
 	default:
 		fatalx("unexpected signal");
 	}
@@ -70,7 +74,7 @@ dns_shutdown(void)
 pid_t
 ypldap_dns(int pipe_ntp[2], struct passwd *pw)
 {
-	pid_t			 pid;
+	pid_t		 pid;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
 	struct event	 ev_sighup;

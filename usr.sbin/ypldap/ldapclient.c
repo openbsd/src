@@ -1,4 +1,4 @@
-/* $OpenBSD: ldapclient.c,v 1.48 2023/05/22 05:59:05 jmatthew Exp $ */
+/* $OpenBSD: ldapclient.c,v 1.49 2023/07/18 13:06:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Alexander Schrijver <aschrijver@openbsd.org>
@@ -114,6 +114,9 @@ client_sig_handler(int sig, short event, void *p)
 	case SIGINT:
 	case SIGTERM:
 		client_shutdown();
+		break;
+	case SIGHUP:
+		/* ingore */
 		break;
 	default:
 		fatalx("unexpected signal");
@@ -326,6 +329,7 @@ ldapclient(int pipe_main2client[2])
 	struct passwd	*pw;
 	struct event	 ev_sigint;
 	struct event	 ev_sigterm;
+	struct event	 ev_sighup;
 	struct env	 env;
 
 	switch (pid = fork()) {
@@ -377,8 +381,10 @@ ldapclient(int pipe_main2client[2])
 	signal(SIGPIPE, SIG_IGN);
 	signal_set(&ev_sigint, SIGINT, client_sig_handler, NULL);
 	signal_set(&ev_sigterm, SIGTERM, client_sig_handler, NULL);
+	signal_set(&ev_sighup, SIGHUP, client_sig_handler, NULL);
 	signal_add(&ev_sigint, NULL);
 	signal_add(&ev_sigterm, NULL);
+	signal_add(&ev_sighup, NULL);
 
 	close(pipe_main2client[0]);
 	if ((env.sc_iev = calloc(1, sizeof(*env.sc_iev))) == NULL)

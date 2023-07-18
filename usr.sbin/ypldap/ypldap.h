@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypldap.h,v 1.23 2022/10/13 04:55:33 jmatthew Exp $ */
+/*	$OpenBSD: ypldap.h,v 1.24 2023/07/18 13:06:33 claudio Exp $ */
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -192,17 +192,6 @@ struct env {
 
 	int				 update_trashed;
 };
-
-/* log.c */
-void		 log_init(int);
-void		 log_warn(const char *, ...);
-void		 log_warnx(const char *, ...);
-void		 log_info(const char *, ...);
-void		 log_debug(const char *, ...);
-void		 logit(int, const char *, ...);
-void		 vlog(int, const char *, va_list);
-__dead void	 fatal(const char *);
-__dead void	 fatalx(const char *);
 
 /* parse.y */
 int		 parse_config(struct env *, const char *, int);
