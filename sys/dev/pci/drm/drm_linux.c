@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.100 2023/07/14 07:07:08 claudio Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.101 2023/07/18 06:58:59 claudio Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -98,30 +98,30 @@ tasklet_run(void *arg)
 struct mutex atomic64_mtx = MUTEX_INITIALIZER(IPL_HIGH);
 #endif
 
-struct mutex sch_mtx = MUTEX_INITIALIZER(IPL_SCHED);
-volatile struct proc *sch_proc;
-volatile void *sch_ident;
-int sch_priority;
-
 void
 set_current_state(int state)
 {
-	if (sch_ident != curproc)
-		mtx_enter(&sch_mtx);
-	MUTEX_ASSERT_LOCKED(&sch_mtx);
-	sch_ident = sch_proc = curproc;
-	sch_priority = state;
+	int prio = state;
+
+	KASSERT(state != TASK_RUNNING);
+	/* check if already on the sleep list */
+	if (curproc->p_wchan != NULL)
+		return;
+	sleep_setup(curproc, prio, "schto");
 }
 
 void
 __set_current_state(int state)
 {
+	struct proc *p = curproc;
+	int s;
+
 	KASSERT(state == TASK_RUNNING);
-	if (sch_ident == curproc) {
-		MUTEX_ASSERT_LOCKED(&sch_mtx);
-		sch_ident = NULL;
-		mtx_leave(&sch_mtx);
-	}
+	SCHED_LOCK(s);
+	unsleep(p);
+	p->p_stat = SONPROC;
+	atomic_clearbits_int(&p->p_flag, P_WSLEEP);
+	SCHED_UNLOCK(s);
 }
 
 void
@@ -134,31 +134,17 @@ long
 schedule_timeout(long timeout)
 {
 	unsigned long deadline;
-	int wait, spl, prio, timo = 0;
+	int timo = 0;
 
-	MUTEX_ASSERT_LOCKED(&sch_mtx);
 	KASSERT(!cold);
 
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		timo = timeout;
-	prio = sch_priority;
-	sleep_setup(sch_ident, prio, "schto");
-
-	wait = (sch_proc == curproc && timeout > 0);
-
-	spl = MUTEX_OLDIPL(&sch_mtx);
-	MUTEX_OLDIPL(&sch_mtx) = splsched();
-	mtx_leave(&sch_mtx);
-
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		deadline = jiffies + timeout;
-	sleep_finish(timo, wait);
+	sleep_finish(timo, timeout > 0);
 	if (timeout != MAX_SCHEDULE_TIMEOUT)
 		timeout = deadline - jiffies;
-
-	mtx_enter(&sch_mtx);
-	MUTEX_OLDIPL(&sch_mtx) = spl;
-	sch_ident = curproc;
 
 	return timeout > 0 ? timeout : 0;
 }
@@ -176,10 +162,41 @@ wake_up_process(struct proc *p)
 	int s, rv;
 
 	SCHED_LOCK(s);
-	atomic_cas_ptr(&sch_proc, p, NULL);
 	rv = wakeup_proc(p, NULL, 0);
 	SCHED_UNLOCK(s);
 	return rv;
+}
+
+int
+autoremove_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
+    int sync, void *key)
+{
+	if (wqe->private)
+		wake_up_process(wqe->private);
+	list_del_init(&wqe->entry);
+	return 0;
+}
+
+void
+prepare_to_wait(wait_queue_head_t *wqh, wait_queue_entry_t *wqe, int state)
+{
+	mtx_enter(&wqh->lock);
+	if (list_empty(&wqe->entry))
+		__add_wait_queue(wqh, wqe);
+	mtx_leave(&wqh->lock);
+
+	set_current_state(state);
+}
+
+void
+finish_wait(wait_queue_head_t *wqh, wait_queue_entry_t *wqe)
+{
+	__set_current_state(TASK_RUNNING);
+
+	mtx_enter(&wqh->lock);
+	if (!list_empty(&wqe->entry))
+		list_del_init(&wqe->entry);
+	mtx_leave(&wqh->lock);
 }
 
 void
@@ -2620,17 +2637,6 @@ pcie_aspm_enabled(struct pci_dev *pdev)
 		return true;
 	
 	return false;
-}
-
-int
-autoremove_wake_function(struct wait_queue_entry *wqe, unsigned int mode,
-    int sync, void *key)
-{
-	wakeup(wqe);
-	if (wqe->private)
-		wake_up_process(wqe->private);
-	list_del_init(&wqe->entry);
-	return 0;
 }
 
 static wait_queue_head_t bit_waitq;

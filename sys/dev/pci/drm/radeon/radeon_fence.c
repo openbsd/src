@@ -1085,7 +1085,6 @@ static signed long radeon_fence_default_wait(struct dma_fence *f, bool intr,
 			break;
 		}
 
-		KASSERT(sch_ident != NULL);
 		t = schedule_timeout(t);
 
 		if (t > 0 && intr && signal_pending(current))

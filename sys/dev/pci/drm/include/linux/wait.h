@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.9 2023/01/01 01:34:58 jsg Exp $	*/
+/*	$OpenBSD: wait.h,v 1.10 2023/07/18 06:58:59 claudio Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -22,6 +22,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
 
 #include <linux/list.h>
 #include <linux/errno.h>
@@ -36,16 +37,14 @@ struct wait_queue_entry {
 
 typedef struct wait_queue_entry wait_queue_entry_t;
 
-extern struct mutex sch_mtx;
-extern volatile struct proc *sch_proc;
-extern volatile void *sch_ident;
-extern int sch_priority;
-
 struct wait_queue_head {
 	struct mutex lock;
 	struct list_head head;
 };
 typedef struct wait_queue_head wait_queue_head_t;
+
+void	prepare_to_wait(wait_queue_head_t *, wait_queue_entry_t *, int);
+void	finish_wait(wait_queue_head_t *, wait_queue_entry_t *);
 
 static inline void
 init_waitqueue_head(wait_queue_head_t *wqh)
@@ -103,30 +102,36 @@ remove_wait_queue(wait_queue_head_t *head, wait_queue_entry_t *old)
 
 #define __wait_event_intr_timeout(wqh, condition, timo, prio)		\
 ({									\
-	long ret = timo;						\
+	long __ret = timo;						\
+	struct wait_queue_entry __wq_entry;				\
+									\
+	init_wait_entry(&__wq_entry, 0);				\
 	do {								\
-		int __error;						\
+		int __error, __wait;					\
 		unsigned long deadline;					\
 									\
 		KASSERT(!cold);						\
 									\
-		mtx_enter(&sch_mtx);					\
-		deadline = jiffies + ret;				\
-		__error = msleep(&wqh, &sch_mtx, prio, "drmweti", ret);	\
-		ret = deadline - jiffies;				\
+		prepare_to_wait(&wqh, &__wq_entry, prio);		\
+		deadline = jiffies + __ret;				\
+									\
+		__wait = !(condition);					\
+									\
+		__error = sleep_finish(__ret, __wait);			\
+		if ((timo) > 0)						\
+			__ret = deadline - jiffies;			\
+									\
 		if (__error == ERESTART || __error == EINTR) {		\
-			ret = -ERESTARTSYS;				\
-			mtx_leave(&sch_mtx);				\
+			__ret = -ERESTARTSYS;				\
 			break;						\
 		}							\
-		if ((timo) > 0 && (ret <= 0 || __error == EWOULDBLOCK)) { \
-			mtx_leave(&sch_mtx);				\
-			ret = ((condition)) ? 1 : 0;			\
+		if ((timo) > 0 && (__ret <= 0 || __error == EWOULDBLOCK)) { \
+			__ret = ((condition)) ? 1 : 0;			\
 			break;						\
  		}							\
-		mtx_leave(&sch_mtx);					\
-	} while (ret > 0 && !(condition));				\
-	ret;								\
+	} while (__ret > 0 && !(condition));				\
+	finish_wait(&wqh, &__wq_entry);					\
+	__ret;								\
 })
 
 /*
@@ -194,15 +199,23 @@ do {						\
 
 #define __wait_event_lock_irq(wqh, condition, mtx)			\
 ({									\
+	struct wait_queue_entry __wq_entry;				\
+									\
+	init_wait_entry(&__wq_entry, 0);				\
 	do {								\
+		int __wait;						\
+									\
 		KASSERT(!cold);						\
 									\
+		prepare_to_wait(&wqh, &__wq_entry, 0);			\
+									\
+		__wait = !(condition);					\
+									\
 		mtx_leave(&(mtx));					\
-		mtx_enter(&sch_mtx);					\
-		msleep(&wqh, &sch_mtx, 0, "drmweli", 0);		\
-		mtx_leave(&sch_mtx);					\
+		sleep_finish(0, __wait);				\
 		mtx_enter(&(mtx));					\
 	} while (!(condition));						\
+	finish_wait(&wqh, &__wq_entry);					\
 })
 
 /*
@@ -227,7 +240,6 @@ wake_up(wait_queue_head_t *wqh)
 		if (wqe->func != NULL)
 			wqe->func(wqe, 0, wqe->flags, NULL);
 	}
-	wakeup(wqh);
 	mtx_leave(&wqh->lock);
 }
 
@@ -244,7 +256,6 @@ wake_up_all_locked(wait_queue_head_t *wqh)
 		if (wqe->func != NULL)
 			wqe->func(wqe, 0, wqe->flags, NULL);
 	}
-	wakeup(wqh);
 }
 
 #define wake_up_interruptible(wqh)		wake_up(wqh)
@@ -256,30 +267,5 @@ wake_up_all_locked(wait_queue_head_t *wqh)
 		.func = autoremove_wake_function,	\
 		.entry = LIST_HEAD_INIT((name).entry),	\
 	}						
-
-static inline void
-prepare_to_wait(wait_queue_head_t *wqh, wait_queue_entry_t *wqe, int state)
-{
-	if (wqe->flags == 0) {
-		mtx_enter(&sch_mtx);
-		wqe->flags = 1;
-	}
-	MUTEX_ASSERT_LOCKED(&sch_mtx);
-	if (list_empty(&wqe->entry))
-		__add_wait_queue(wqh, wqe);
-	sch_proc = curproc;
-	sch_ident = wqe;
-	sch_priority = state;
-}
-
-static inline void
-finish_wait(wait_queue_head_t *wqh, wait_queue_entry_t *wqe)
-{
-	MUTEX_ASSERT_LOCKED(&sch_mtx);
-	sch_ident = NULL;
-	if (!list_empty(&wqe->entry))
-		list_del_init(&wqe->entry);
-	mtx_leave(&sch_mtx);
-}
 
 #endif
