@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.42 2023/06/29 10:22:37 job Exp $ */
+/*	$OpenBSD: print.c,v 1.43 2023/07/19 21:49:30 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -631,7 +631,7 @@ aspa_print(const X509 *x, const struct aspa *p)
 		if (p->expires)
 			json_do_int("expires", p->expires);
 		json_do_uint("customer_asid", p->custasid);
-		json_do_array("provider_set");
+		json_do_array("providers");
 	} else {
 		printf("Subject key identifier:   %s\n", pretty_key_id(p->ski));
 		x509_print(x);
@@ -645,7 +645,7 @@ aspa_print(const X509 *x, const struct aspa *p)
 		    time2str(p->notbefore));
 		printf("ASPA not after:           %s\n", time2str(p->notafter));
 		printf("Customer ASID:            %u\n", p->custasid);
-		printf("Provider set:             ");
+		printf("Providers:                ");
 	}
 
 	for (i = 0; i < p->providersz; i++) {
