@@ -1,4 +1,4 @@
-/*	$OpenBSD: entry.c,v 1.58 2023/06/13 15:36:21 millert Exp $	*/
+/*	$OpenBSD: entry.c,v 1.59 2023/07/19 21:26:02 millert Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -275,18 +275,17 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 		goto eof;
 	}
 
-	/* ch is the first character of a command, or a username */
-	unget_char(ch, file);
-
 	if (!pw) {
 		char		*username = cmd;	/* temp buffer */
 
+		unget_char(ch, file);
 		ch = get_string(username, MAX_COMMAND, file, " \t\n");
 
 		if (ch == EOF || ch == '\n' || ch == '*') {
 			ecode = e_cmd;
 			goto eof;
 		}
+		Skip_Blanks(ch, file)
 
 		pw = getpwnam(username);
 		if (pw == NULL) {
@@ -356,7 +355,6 @@ load_entry(FILE *file, void (*error_func)(const char *), struct passwd *pw,
 	/* An optional series of '-'-prefixed flags in getopt style can
 	 * occur before the command.
 	 */
-	ch = get_char(file);
 	while (ch == '-') {
 		int flags = 0, loop = 1;
 
