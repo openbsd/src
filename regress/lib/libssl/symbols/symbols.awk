@@ -1,4 +1,4 @@
-# $OpenBSD: symbols.awk,v 1.1.1.1 2023/07/15 19:29:44 tb Exp $
+# $OpenBSD: symbols.awk,v 1.2 2023/07/19 21:01:29 tb Exp $
 
 # Copyright (c) 2018,2020,2023 Theo Buehler <tb@openbsd.org>
 #
@@ -17,6 +17,8 @@
 # usage: awk -f symbols.awk < Symbols.list > symbols.c
 
 BEGIN {
+	printf("#include <stdio.h>\n\n")
+
 	printf("#include <openssl/dtls1.h>\n")
 	printf("#include <openssl/ssl.h>\n")
 	printf("#include <openssl/ssl2.h>\n")
