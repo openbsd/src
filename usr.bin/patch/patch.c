@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.73 2023/07/15 10:42:54 florian Exp $	*/
+/*	$OpenBSD: patch.c,v 1.74 2023/07/19 13:26:20 tb Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -220,6 +220,11 @@ main(int argc, char *argv[])
 		}
 	if (filearg[1] != NULL)
 		if (unveil(filearg[1], "r") == -1) {
+			perror("unveil");
+			my_exit(2);
+		}
+	if (!force && !batch)
+		if (unveil(_PATH_TTY, "r") == -1) {
 			perror("unveil");
 			my_exit(2);
 		}
