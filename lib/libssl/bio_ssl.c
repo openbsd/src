@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ssl.c,v 1.39 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: bio_ssl.c,v 1.40 2023/07/19 13:34:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -577,7 +577,7 @@ BIO_ssl_copy_session_id(BIO *t, BIO *f)
 		return (0);
 	return (1);
 }
-LSSL_ALIAS(BIO_new_ssl_connect);
+LSSL_ALIAS(BIO_ssl_copy_session_id);
 
 void
 BIO_ssl_shutdown(BIO *b)

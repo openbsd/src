@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.311 2023/07/08 16:40:13 beck Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.312 2023/07/19 13:34:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -3313,6 +3313,7 @@ void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl, int type, int val)
 {
 	return (ssl->info_callback);
 }
+LSSL_ALIAS(SSL_get_info_callback);
 
 int
 SSL_state(const SSL *ssl)
