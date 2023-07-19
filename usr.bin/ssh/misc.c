@@ -1,4 +1,4 @@
-/* $OpenBSD: misc.c,v 1.183 2023/07/14 07:44:21 dtucker Exp $ */
+/* $OpenBSD: misc.c,v 1.184 2023/07/19 14:02:27 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  * Copyright (c) 2005-2020 Damien Miller.  All rights reserved.
@@ -40,6 +40,7 @@
 #include <pwd.h>
 #include <libgen.h>
 #include <limits.h>
+#include <nlist.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -2813,4 +2814,32 @@ int
 ptimeout_isset(struct timespec *pt)
 {
 	return pt->tv_sec != -1;
+}
+
+/*
+ * Returns zero if the library at 'path' contains symbol 's', nonzero
+ * otherwise.
+ */
+int
+lib_contains_symbol(const char *path, const char *s)
+{
+	struct nlist nl[2];
+	int ret = -1, r;
+
+	memset(nl, 0, sizeof(nl));
+	nl[0].n_name = xstrdup(s);
+	nl[1].n_name = NULL;
+	if ((r = nlist(path, nl)) == -1) {
+		error_f("nlist failed for %s", path);
+		goto out;
+	}
+	if (r != 0 || nl[0].n_value == 0 || nl[0].n_type == 0) {
+		error_f("library %s does not contain symbol %s", path, s);
+		goto out;
+	}
+	/* success */
+	ret = 0;
+ out:
+	free(nl[0].n_name);
+	return ret;
 }
