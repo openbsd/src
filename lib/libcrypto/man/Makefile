@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.253 2023/07/09 06:45:03 tb Exp $
+# $OpenBSD: Makefile,v 1.254 2023/07/20 16:26:40 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -73,6 +73,7 @@ MAN=	\
 	BN_cmp.3 \
 	BN_copy.3 \
 	BN_generate_prime.3 \
+	BN_get_rfc3526_prime_8192.3 \
 	BN_kronecker.3 \
 	BN_mod_inverse.3 \
 	BN_mod_mul_montgomery.3 \
@@ -417,7 +418,6 @@ MAN=	\
 	d2i_X509_SIG.3 \
 	des_read_pw.3 \
 	evp.3 \
-	get_rfc3526_prime_8192.3 \
 	i2a_ASN1_STRING.3 \
 	i2d_CMS_bio_stream.3 \
 	i2d_PKCS7_bio_stream.3 \
