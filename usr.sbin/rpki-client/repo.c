@@ -1,4 +1,4 @@
-/*	$OpenBSD: repo.c,v 1.50 2023/06/29 14:33:35 tb Exp $ */
+/*	$OpenBSD: repo.c,v 1.51 2023/07/20 05:18:31 claudio Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -873,7 +873,7 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 	struct filepath *fp;
 	ssize_t s;
 	char *fn = NULL;
-	int fd = -1, try = 0;
+	int fd = -1, try = 0, deleted = 0;
 	int flags;
 
 	rr = rrdp_find(id);
@@ -909,8 +909,10 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 		filepath_add(&rr->deleted, uri, 0);
 	} else {
 		fp = filepath_find(&rr->deleted, uri);
-		if (fp != NULL)
+		if (fp != NULL) {
 			filepath_put(&rr->deleted, fp);
+			deleted = 1;
+		}
 
 		/* add new file to rrdp dir */
 		if ((fn = rrdp_filename(rr, uri, 0)) == NULL)
@@ -920,7 +922,7 @@ rrdp_handle_file(unsigned int id, enum publish_type pt, char *uri,
 			goto fail;
 
 		flags = O_WRONLY|O_CREAT|O_TRUNC;
-		if (pt == PUB_ADD)
+		if (pt == PUB_ADD && !deleted)
 			flags |= O_EXCL;
 		fd = open(fn, flags, 0644);
 		if (fd == -1) {
