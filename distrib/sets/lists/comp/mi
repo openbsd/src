@@ -1823,6 +1823,7 @@
 ./usr/share/man/man3/BN_cmp.3
 ./usr/share/man/man3/BN_copy.3
 ./usr/share/man/man3/BN_generate_prime.3
+./usr/share/man/man3/BN_get_rfc3526_prime_8192.3
 ./usr/share/man/man3/BN_kronecker.3
 ./usr/share/man/man3/BN_mod_inverse.3
 ./usr/share/man/man3/BN_mod_mul_montgomery.3
@@ -2595,7 +2596,6 @@
 ./usr/share/man/man3/gelf_newphdr.3
 ./usr/share/man/man3/gelf_update_ehdr.3
 ./usr/share/man/man3/gelf_xlatetof.3
-./usr/share/man/man3/get_rfc3526_prime_8192.3
 ./usr/share/man/man3/getaddrinfo.3
 ./usr/share/man/man3/getbsize.3
 ./usr/share/man/man3/getc.3
