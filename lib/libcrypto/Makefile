@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.137 2023/07/07 06:10:14 jsing Exp $
+# $OpenBSD: Makefile,v 1.138 2023/07/20 16:36:06 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -386,8 +386,6 @@ SRCS+= tb_pkmeth.c
 SRCS+= tb_rand.c
 SRCS+= tb_rsa.c
 SRCS+= tb_store.c
-# XXX unnecessary? handled in EVP now...
-# SRCS+= eng_aesni.c # local addition
 
 # err/
 SRCS+= err.c
