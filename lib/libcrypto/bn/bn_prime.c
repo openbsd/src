@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_prime.c,v 1.33 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_prime.c,v 1.34 2023/07/20 06:26:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -240,6 +240,8 @@ BN_is_prime_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed, BN_GENCB *cb)
 }
 LCRYPTO_ALIAS(BN_is_prime_ex);
 
+#define BN_PRIME_MAXIMUM_BITS (32 * 1024)
+
 int
 BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
     int do_trial_division, BN_GENCB *cb)
@@ -248,6 +250,15 @@ BN_is_prime_fasttest_ex(const BIGNUM *a, int checks, BN_CTX *ctx_passed,
 
 	if (checks < 0)
 		return -1;
+
+	/*
+	 * Prime numbers this large do not appear in everyday cryptography
+	 * and checking such numbers for primality is very expensive.
+	 */
+	if (BN_num_bits(a) > BN_PRIME_MAXIMUM_BITS) {
+		BNerror(BN_R_BIGNUM_TOO_LONG);
+		return -1;
+	}
 
 	if (checks == BN_prime_checks)
 		checks = BN_prime_checks_for_size(BN_num_bits(a));
