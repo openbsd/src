@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpmgr.c,v 1.4 2023/07/15 19:21:47 kettenis Exp $	*/
+/*	$OpenBSD: aplpmgr.c,v 1.5 2023/07/20 20:40:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -66,7 +66,6 @@ struct aplpmgr_softc {
 
 int	aplpmgr_match(struct device *, void *, void *);
 void	aplpmgr_attach(struct device *, struct device *, void *);
-int	aplpmgr_activate(struct device *, int);
 
 const struct cfattach aplpmgr_ca = {
 	sizeof (struct aplpmgr_softc), aplpmgr_match, aplpmgr_attach
