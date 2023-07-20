@@ -1,4 +1,4 @@
-.\" $OpenBSD: ENGINE_set_RSA.3,v 1.5 2019/06/06 17:41:43 schwarze Exp $
+.\" $OpenBSD: ENGINE_set_RSA.3,v 1.6 2023/07/20 09:28:30 tb Exp $
 .\" content checked up to:
 .\" OpenSSL ENGINE_add 1f13ad31 Dec 25 17:50:39 2017 +0800
 .\"
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: July 20 2023 $
 .Dt ENGINE_SET_RSA 3
 .Os
 .Sh NAME
@@ -238,8 +238,8 @@ as shown in the following table:
 .It Fn ENGINE_get_RSA Ta Xr RSA_new_method 3 , Xr RSA_new 3
 .It Fn ENGINE_get_DSA Ta Xr DSA_new_method 3 , Xr DSA_new 3
 .It Fn ENGINE_get_ECDH Ta Fn ECDH_set_method , Fn ECDH_compute_key
-.It Fn ENGINE_get_ECDSA Ta Xr ECDSA_set_method 3 , Xr ECDSA_sign_setup 3 ,
-.Xr ECDSA_do_sign_ex 3 , Xr ECDSA_do_verify 3
+.It Fn ENGINE_get_ECDSA Ta Xr ECDSA_set_method 3 ,
+.Xr ECDSA_do_sign 3 , Xr ECDSA_do_verify 3
 .It Fn ENGINE_get_DH Ta Xr DH_new_method 3 , Xr DH_new 3
 .It Fn ENGINE_get_RAND Ta unused
 .It Fn ENGINE_get_STORE Ta unused

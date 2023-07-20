@@ -1,4 +1,4 @@
-.\" $OpenBSD: ECDSA_SIG_new.3,v 1.17 2023/03/07 06:12:27 tb Exp $
+.\" $OpenBSD: ECDSA_SIG_new.3,v 1.18 2023/07/20 09:28:30 tb Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\" selective merge up to: OpenSSL da4ea0cf Aug 5 16:13:24 2019 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 7 2023 $
+.Dd $Mdocdate: July 20 2023 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -63,12 +63,9 @@
 .Nm i2d_ECDSA_SIG ,
 .Nm d2i_ECDSA_SIG ,
 .Nm ECDSA_size ,
-.Nm ECDSA_sign_setup ,
 .Nm ECDSA_sign ,
-.Nm ECDSA_sign_ex ,
 .Nm ECDSA_verify ,
 .Nm ECDSA_do_sign ,
-.Nm ECDSA_do_sign_ex ,
 .Nm ECDSA_do_verify ,
 .Nm ECDSA_OpenSSL ,
 .Nm ECDSA_get_default_method ,
@@ -121,30 +118,12 @@
 .Fa "const EC_KEY *eckey"
 .Fc
 .Ft int
-.Fo ECDSA_sign_setup
-.Fa "EC_KEY *eckey"
-.Fa "BN_CTX *ctx"
-.Fa "BIGNUM **kinv"
-.Fa "BIGNUM **rp"
-.Fc
-.Ft int
 .Fo ECDSA_sign
 .Fa "int type"
 .Fa "const unsigned char *dgst"
 .Fa "int dgstlen"
 .Fa "unsigned char *sig"
 .Fa "unsigned int *siglen"
-.Fa "EC_KEY *eckey"
-.Fc
-.Ft int
-.Fo ECDSA_sign_ex
-.Fa "int type"
-.Fa "const unsigned char *dgst"
-.Fa "int dgstlen"
-.Fa "unsigned char *sig"
-.Fa "unsigned int *siglen"
-.Fa "const BIGNUM *kinv"
-.Fa "const BIGNUM *rp"
 .Fa "EC_KEY *eckey"
 .Fc
 .Ft int
@@ -160,14 +139,6 @@
 .Fo ECDSA_do_sign
 .Fa "const unsigned char *dgst"
 .Fa "int dgst_len"
-.Fa "EC_KEY *eckey"
-.Fc
-.Ft ECDSA_SIG*
-.Fo ECDSA_do_sign_ex
-.Fa "const unsigned char *dgst"
-.Fa "int dgstlen"
-.Fa "const BIGNUM *kinv"
-.Fa "const BIGNUM *rp"
 .Fa "EC_KEY *eckey"
 .Fc
 .Ft int
@@ -284,45 +255,13 @@ returns the maximum length of a DER-encoded ECDSA signature created with
 the private EC key
 .Fa eckey .
 .Pp
-.Fn ECDSA_sign_setup
-may be used to precompute parts of the signing operation.
-.Fa eckey
-is the private EC key and
-.Fa ctx
-is a pointer to a
-.Vt BN_CTX
-structure (or
-.Dv NULL ) .
-The precomputed values are returned in
-.Fa kinv
-and
-.Fa rp
-and can be used in a later call to
-.Fa ECDSA_sign_ex
-or
-.Fa ECDSA_do_sign_ex .
-.Pp
 .Fn ECDSA_sign
-is a wrapper function for
-.Fa ECDSA_sign_ex
-with
-.Fa kinv
-and
-.Fa rp
-set to
-.Dv NULL .
-.Pp
-.Fn ECDSA_sign_ex
 computes a digital signature of the
 .Fa dgstlen
 bytes hash value
 .Fa dgst
 using the private EC key
-.Fa eckey
-and the optional pre-computed values
-.Fa kinv
-and
-.Fa rp .
+.Fa eckey .
 The DER-encoded signature is stored in
 .Fa sig
 and its length is returned in
@@ -352,26 +291,12 @@ The parameter
 is ignored.
 .Pp
 .Fn ECDSA_do_sign
-is a wrapper function for
-.Fn ECDSA_do_sign_ex
-with
-.Fa kinv
-and
-.Fa rp
-set to
-.Dv NULL .
-.Pp
-.Fn ECDSA_do_sign_ex
 computes a digital signature of the
 .Fa dgst_len
 bytes hash value
 .Fa dgst
 using the private key
-.Fa eckey
-and the optional pre-computed values
-.Fa kinv
-and
-.Fa rp .
+.Fa eckey .
 The signature is returned in a newly allocated
 .Vt ECDSA_SIG
 structure (or
@@ -418,17 +343,13 @@ object if it has been set or
 .Dv NULL
 otherwise.
 .Pp
-.Fn ECDSA_SIG_set0 ,
-.Fn ECDSA_sign ,
-.Fn ECDSA_sign_ex ,
+.Fn ECDSA_SIG_set0
 and
-.Fn ECDSA_sign_setup
+.Fn ECDSA_sign
 return 1 if successful or 0 on error.
 .Pp
 .Fn ECDSA_do_sign
-and
-.Fn ECDSA_do_sign_ex
-return a pointer to an allocated
+returns a pointer to an allocated
 .Vt ECDSA_SIG
 structure or
 .Dv NULL
@@ -516,12 +437,12 @@ if (ret == -1) {
 .Xr EC_GROUP_new 3 ,
 .Xr EC_KEY_METHOD_new 3 ,
 .Xr EC_KEY_new 3 ,
-.Xr ECDSA_set_ex_data 3 ,
+.Xr EC_KEY_set_ex_data 3 ,
 .Xr EVP_DigestSignInit 3 ,
 .Xr EVP_DigestVerifyInit 3 ,
 .Xr RSA_new 3
 .Sh STANDARDS
-ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
+ANSI X9.62, US Federal Information Processing Standard FIPS 186-5
 (Digital Signature Standard, DSS)
 .Sh HISTORY
 .Fn ECDSA_SIG_new ,
@@ -529,12 +450,9 @@ ANSI X9.62, US Federal Information Processing Standard FIPS 186-2
 .Fn i2d_ECDSA_SIG ,
 .Fn d2i_ECDSA_SIG ,
 .Fn ECDSA_size ,
-.Fn ECDSA_sign_setup ,
 .Fn ECDSA_sign ,
-.Fn ECDSA_sign_ex ,
 .Fn ECDSA_verify ,
 .Fn ECDSA_do_sign ,
-.Fn ECDSA_do_sign_ex ,
 .Fn ECDSA_do_verify ,
 .Fn ECDSA_OpenSSL ,
 .Fn ECDSA_get_default_method ,
