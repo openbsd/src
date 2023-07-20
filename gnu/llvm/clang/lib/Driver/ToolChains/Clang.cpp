@@ -1800,7 +1800,10 @@ void Clang::AddAArch64TargetArgs(const ArgList &Args,
         D.Diag(diag::err_invalid_branch_protection)
             << Scope << A->getAsString(Args);
       Key = "a_key";
-      IndirectBranches = false;
+      if (Triple.isOSOpenBSD())
+        IndirectBranches = true;
+      else
+        IndirectBranches = false;
     } else {
       StringRef Err;
       llvm::AArch64::ParsedBranchProtection PBP;
