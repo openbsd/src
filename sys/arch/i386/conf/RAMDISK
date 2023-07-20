@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.201 2021/02/16 00:03:54 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.202 2023/07/20 02:26:24 yasuoka Exp $
 
 machine		i386
 maxusers	4
@@ -81,8 +81,8 @@ wskbd*		at pckbd? mux 1
 vga0		at isa?
 vga*		at pci?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
-wsdisplay*	at vga?
-wsdisplay*	at pcdisplay?
+wsdisplay0	at vga? console 1
+wsdisplay0	at pcdisplay? console 1
 
 com0		at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1		at isa? port 0x2f8 irq 3

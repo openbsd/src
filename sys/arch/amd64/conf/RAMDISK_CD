@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.201 2023/04/02 03:40:54 kevlo Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.202 2023/07/20 02:26:24 yasuoka Exp $
 
 machine		amd64
 maxusers	4
@@ -149,7 +149,7 @@ pckbd*		at pckbc?		# PC keyboard
 wskbd*		at pckbd? mux 1
 vga0		at isa?
 vga*		at pci?
-wsdisplay*	at vga?
+wsdisplay0	at vga? console 1
 
 efifb0		at mainbus?		# EFI Framebuffer
 wsdisplay0	at efifb? console 1

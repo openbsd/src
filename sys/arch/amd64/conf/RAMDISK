@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.85 2021/12/26 13:55:36 kettenis Exp $
+#	$OpenBSD: RAMDISK,v 1.86 2023/07/20 02:26:24 yasuoka Exp $
 
 machine		amd64
 maxusers	4
@@ -74,7 +74,7 @@ pckbd*		at pckbc?	# PC keyboard
 wskbd*		at pckbd? mux 1
 vga0		at isa?
 vga*		at pci?
-wsdisplay*	at vga?
+wsdisplay0	at vga? console 1
 
 com0		at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1		at isa? port 0x2f8 irq 3
