@@ -1,4 +1,4 @@
-/* $OpenBSD: conf_mod.c,v 1.27 2017/01/29 17:49:22 beck Exp $ */
+/* $OpenBSD: conf_mod.c,v 1.28 2023/07/20 15:05:30 tb Exp $ */
 /* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
@@ -63,21 +63,11 @@
 
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
-#include <openssl/dso.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-#define DSO_mod_init_name "OPENSSL_init"
-#define DSO_mod_finish_name "OPENSSL_finish"
-
-/* This structure contains a data about supported modules.
- * entries in this table correspond to either dynamic or
- * static modules.
- */
-
+/* This structure contains data about supported modules. */
 struct conf_module_st {
-	/* DSO of this module or NULL if static */
-	DSO *dso;
 	/* Name of the module */
 	char *name;
 	/* Init function */
@@ -110,13 +100,11 @@ static void module_free(CONF_MODULE *md);
 static void module_finish(CONF_IMODULE *imod);
 static int module_run(const CONF *cnf, char *name, char *value,
     unsigned long flags);
-static CONF_MODULE *module_add(DSO *dso, const char *name,
-    conf_init_func *ifunc, conf_finish_func *ffunc);
+static CONF_MODULE *module_add(const char *name, conf_init_func *ifunc,
+    conf_finish_func *ffunc);
 static CONF_MODULE *module_find(char *name);
 static int module_init(CONF_MODULE *pmod, char *name, char *value,
     const CONF *cnf);
-static CONF_MODULE *module_load_dso(const CONF *cnf, char *name, char *value,
-    unsigned long flags);
 
 /* Main function: load modules from a CONF structure */
 
@@ -203,13 +191,7 @@ module_run(const CONF *cnf, char *name, char *value, unsigned long flags)
 	CONF_MODULE *md;
 	int ret;
 
-	md = module_find(name);
-
-	/* Module not found: try to load DSO */
-	if (!md && !(flags & CONF_MFLAGS_NO_DSO))
-		md = module_load_dso(cnf, name, value, flags);
-
-	if (!md) {
+	if ((md = module_find(name)) == NULL) {
 		if (!(flags & CONF_MFLAGS_SILENT)) {
 			CONFerror(CONF_R_UNKNOWN_MODULE_NAME);
 			ERR_asprintf_error_data("module=%s", name);
@@ -231,54 +213,9 @@ module_run(const CONF *cnf, char *name, char *value, unsigned long flags)
 	return ret;
 }
 
-/* Load a module from a DSO */
-static CONF_MODULE *
-module_load_dso(const CONF *cnf, char *name, char *value, unsigned long flags)
-{
-	DSO *dso = NULL;
-	conf_init_func *ifunc;
-	conf_finish_func *ffunc;
-	char *path = NULL;
-	int errcode = 0;
-	CONF_MODULE *md;
-
-	/* Look for alternative path in module section */
-	path = NCONF_get_string(cnf, value, "path");
-	if (!path) {
-		ERR_clear_error();
-		path = name;
-	}
-	dso = DSO_load(NULL, path, NULL, 0);
-	if (!dso) {
-		errcode = CONF_R_ERROR_LOADING_DSO;
-		goto err;
-	}
-	ifunc = (conf_init_func *)DSO_bind_func(dso, DSO_mod_init_name);
-	if (!ifunc) {
-		errcode = CONF_R_MISSING_INIT_FUNCTION;
-		goto err;
-	}
-	ffunc = (conf_finish_func *)DSO_bind_func(dso, DSO_mod_finish_name);
-	/* All OK, add module */
-	md = module_add(dso, name, ifunc, ffunc);
-
-	if (!md)
-		goto err;
-
-	return md;
-
-err:
-	if (dso)
-		DSO_free(dso);
-	CONFerror(errcode);
-	ERR_asprintf_error_data("module=%s, path=%s", name, path);
-	return NULL;
-}
-
 /* add module to list */
 static CONF_MODULE *
-module_add(DSO *dso, const char *name, conf_init_func *ifunc,
-    conf_finish_func *ffunc)
+module_add(const char *name, conf_init_func *ifunc, conf_finish_func *ffunc)
 {
 	CONF_MODULE *tmod = NULL;
 
@@ -292,7 +229,6 @@ module_add(DSO *dso, const char *name, conf_init_func *ifunc,
 	if (tmod == NULL)
 		return NULL;
 
-	tmod->dso = dso;
 	tmod->name = strdup(name);
 	tmod->init = ifunc;
 	tmod->finish = ffunc;
@@ -412,8 +348,7 @@ CONF_modules_unload(int all)
 	/* unload modules in reverse order */
 	for (i = sk_CONF_MODULE_num(supported_modules) - 1; i >= 0; i--) {
 		md = sk_CONF_MODULE_value(supported_modules, i);
-		/* If static or in use and 'all' not set ignore it */
-		if (((md->links > 0) || !md->dso) && !all)
+		if (!all)
 			continue;
 		/* Since we're working in reverse this is OK */
 		(void)sk_CONF_MODULE_delete(supported_modules, i);
@@ -429,8 +364,6 @@ CONF_modules_unload(int all)
 static void
 module_free(CONF_MODULE *md)
 {
-	if (md->dso)
-		DSO_free(md->dso);
 	free(md->name);
 	free(md);
 }
@@ -466,13 +399,9 @@ module_finish(CONF_IMODULE *imod)
 /* Add a static module to OpenSSL */
 
 int
-CONF_module_add(const char *name, conf_init_func *ifunc,
-    conf_finish_func *ffunc)
+CONF_module_add(const char *name, conf_init_func *ifunc, conf_finish_func *ffunc)
 {
-	if (module_add(NULL, name, ifunc, ffunc))
-		return 1;
-	else
-		return 0;
+	return module_add(name, ifunc, ffunc) != NULL;
 }
 
 void
