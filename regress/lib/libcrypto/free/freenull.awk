@@ -1,4 +1,4 @@
-# $OpenBSD: freenull.awk,v 1.1 2018/07/10 20:53:30 tb Exp $
+# $OpenBSD: freenull.awk,v 1.2 2023/07/20 17:27:54 tb Exp $
 # Copyright (c) 2018 Theo Buehler <tb@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
@@ -30,7 +30,6 @@
 /^OBJ_sigid_free$/				||
 /^X509V3_section_free$/				||
 /^X509V3_string_free$/				||
-/^asn1_enc_free$/				||
 /^sk_pop_free$/ {
 	next
 }
@@ -41,8 +40,6 @@
 /^EC_PRIVATEKEY_free$/				||
 /^ECPARAMETERS_free$/				||
 /^ECPKPARAMETERS_free$/				||
-/^NETSCAPE_ENCRYPTED_PKEY_free$/		||
-/^NETSCAPE_PKEY_free$/				||
 /^X9_62_CHARACTERISTIC_TWO_free$/		||
 /^X9_62_PENTANOMIAL_free$/ {
 	next
