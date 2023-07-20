@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_padlock.c,v 1.17 2022/12/26 07:18:51 jmc Exp $ */
+/* $OpenBSD: eng_padlock.c,v 1.18 2023/07/20 15:08:12 tb Exp $ */
 /*
  * Support for VIA PadLock Advanced Cryptography Engine (ACE)
  * Written by Michal Ludvig <michal@logix.cz>
@@ -69,7 +69,6 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/crypto.h>
-#include <openssl/dso.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #ifndef OPENSSL_NO_AES
