@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.38 2023/04/18 09:10:44 tb Exp $ */
+/* $OpenBSD: engine.h,v 1.39 2023/07/21 09:04:23 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -65,10 +65,6 @@
 #define HEADER_ENGINE_H
 
 #include <openssl/opensslconf.h>
-
-#ifdef OPENSSL_NO_ENGINE
-#error ENGINE is disabled.
-#endif
 
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
@@ -246,6 +242,43 @@ extern "C" {
  * commands from this value. (ie. ENGINE_CMD_BASE, ENGINE_CMD_BASE + 1, etc). */
 #define ENGINE_CMD_BASE				200
 
+/*
+ * Prototypes for the stub functions in engine_stubs.c. They are provided to
+ * build M2Crypto, Dovecot, apr-utils without patching. All the other garbage
+ * can hopefully go away soon.
+ */
+#ifdef OPENSSL_NO_ENGINE
+void ENGINE_load_builtin_engines(void);
+void ENGINE_load_dynamic(void);
+void ENGINE_load_openssl(void);
+int ENGINE_register_all_complete(void);
+
+void ENGINE_cleanup(void);
+ENGINE *ENGINE_new(void);
+
+int ENGINE_free(ENGINE *engine);
+int ENGINE_init(ENGINE *engine);
+int ENGINE_finish(ENGINE *engine);
+
+ENGINE *ENGINE_by_id(const char *id);
+const char *ENGINE_get_id(const ENGINE *engine);
+const char *ENGINE_get_name(const ENGINE *engine);
+
+int ENGINE_set_default(ENGINE *engine, unsigned int flags);
+
+ENGINE *ENGINE_get_default_RSA(void);
+int ENGINE_set_default_RSA(ENGINE *engine);
+
+int ENGINE_ctrl_cmd(ENGINE *e, const char *cmd_name, long i, void *p,
+    void (*f)(void), int cmd_optional);
+int ENGINE_ctrl_cmd_string(ENGINE *engine, const char *cmd, const char *arg,
+    int cmd_optional);
+
+EVP_PKEY *ENGINE_load_private_key(ENGINE *engine, const char *key_id,
+    UI_METHOD *ui_method, void *callback_data);
+EVP_PKEY *ENGINE_load_public_key(ENGINE *engine, const char *key_id,
+    UI_METHOD *ui_method, void *callback_data);
+#else
 /* If an ENGINE supports its own specific control commands and wishes the
  * framework to handle the above 'ENGINE_CMD_***'-manipulation commands on its
  * behalf, it should supply a null-terminated array of ENGINE_CMD_DEFN entries
@@ -714,6 +747,7 @@ typedef int (*dynamic_bind_engine)(ENGINE *e, const char *id,
 					void *ENGINE_get_static_state(void);
 
 void ERR_load_ENGINE_strings(void);
+#endif
 
 /* Error codes for the ENGINE functions. */
 
