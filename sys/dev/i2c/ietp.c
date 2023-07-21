@@ -1,6 +1,6 @@
-/* $OpenBSD: ietp.c,v 1.1 2023/07/08 02:43:02 jcs Exp $ */
+/* $OpenBSD: ietp.c,v 1.2 2023/07/21 02:19:49 jcs Exp $ */
 /*
- * elan-i2c driver
+ * Elan I2C Touchpad driver
  *
  * Copyright (c) 2015, 2016 joshua stein <jcs@openbsd.org>
  * Copyright (c) 2020, 2022 Vladimir Kondratyev <wulf@FreeBSD.org>
@@ -19,9 +19,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Protocol documentation: https://lkml.indiana.edu/hypermail/linux/kernel/1205.0/02551.html.
-   Based on FreeBSD ietp driver.
-*/
+/* Protocol documentation:
+ * https://lkml.indiana.edu/hypermail/linux/kernel/1205.0/02551.html
+ * Based on FreeBSD ietp driver.
+ */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,7 +167,7 @@ ietp_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ih = iic_intr_establish(sc->sc_tag, ia->ia_intr,
 		    IPL_TTY, ietp_intr, sc, sc->sc_dev.dv_xname);
 		if (sc->sc_ih == NULL) {
-			printf(", can't establish interrupt");
+			printf(", can't establish interrupt\n");
 			return;
 		}
 	}
@@ -177,13 +178,13 @@ ietp_attach(struct device *parent, struct device *self, void *aux)
 	buf8 = (uint8_t *)&buf;
 
 	if (ietp_iic_read_reg(sc, IETP_UNIQUEID, sizeof(buf), &buf) != 0) {
-		printf("%s: failed reading product ID\n", sc->sc_dev.dv_xname);
+		printf(": failed reading product ID\n");
 		return;
 	}
 	sc->product_id = le16toh(buf);
 
 	if (ietp_iic_read_reg(sc, IETP_PATTERN, sizeof(buf), &buf) != 0) {
-		printf("%s: failed reading pattern\n", sc->sc_dev.dv_xname);
+		printf(": failed reading pattern\n");
 		return;
 	}
 	pattern = buf == 0xFFFF ? 0 : buf8[1];
@@ -191,61 +192,62 @@ ietp_attach(struct device *parent, struct device *self, void *aux)
 
 	reg = pattern >= 0x01 ? IETP_IC_TYPE : IETP_OSM_VERSION;
 	if (ietp_iic_read_reg(sc, reg, sizeof(buf), &buf) != 0) {
-		printf("%s: failed reading IC type\n", sc->sc_dev.dv_xname);
+		printf(": failed reading IC type\n");
 		return;
 	}
 	sc->ic_type = pattern >= 0x01 ? be16toh(buf) : buf8[1];
 
 	if (ietp_iic_read_reg(sc, IETP_NSM_VERSION, sizeof(buf), &buf) != 0) {
-		printf("%s: failed reading SM version\n", sc->sc_dev.dv_xname);
+		printf(": failed reading SM version\n");
 		return;
 	}
 	sc->is_clickpad = (buf8[0] & 0x10) != 0;
 
 	if (ietp_iic_set_absolute_mode(sc, true) != 0) {
-		printf("%s: failed to set absolute mode\n", sc->sc_dev.dv_xname);
+		printf(": failed to set absolute mode\n");
 		return;
 	}
 
 	if (ietp_iic_read_reg(sc, IETP_MAX_X_AXIS, sizeof(buf), &buf) != 0) {
-		printf("%s: failed reading max x\n", sc->sc_dev.dv_xname);
+		printf(": failed reading max x\n");
 		return;
 	}
 	sc->max_x = le16toh(buf);
 
 	if (ietp_iic_read_reg(sc, IETP_MAX_Y_AXIS, sizeof(buf), &buf) != 0) {
-		printf("%s: failed reading max y\n", sc->sc_dev.dv_xname);
+		printf(": failed reading max y\n");
 		return;
 	}
 	sc->max_y = le16toh(buf);
 
 	if (ietp_iic_read_reg(sc, IETP_TRACENUM, sizeof(buf), &buf) != 0) {
-		printf("%s: failed reading trace info\n", sc->sc_dev.dv_xname);
+		printf(": failed reading trace info\n");
 		return;
 	}
 	sc->trace_x = sc->max_x / buf8[0];
 	sc->trace_y = sc->max_y / buf8[1];
 
 	if (ietp_iic_read_reg(sc, IETP_PRESSURE, sizeof(buf), &buf) != 0) {
-		printf("%s: failed reading pressure format\n", sc->sc_dev.dv_xname);
+		printf(": failed reading pressure format\n");
 		return;
 	}
 	sc->pressure_base = (buf8[0] & 0x10) ? 0 : IETP_PRESSURE_BASE;
 
 	if (ietp_iic_read_reg(sc, IETP_RESOLUTION, sizeof(buf), &buf)  != 0) {
-		printf("%s: failed reading resolution\n", sc->sc_dev.dv_xname);
+		printf(": failed reading resolution\n");
 		return;
 	}
 	/* Conversion from internal format to dot per mm */
 	sc->res_x = ietp_res2dpmm(buf8[0], sc->hi_precision);
 	sc->res_y = ietp_res2dpmm(buf8[1], sc->hi_precision);
-	
+
 	sc->report_id = sc->hi_precision ?
 	    IETP_REPORT_ID_HI : IETP_REPORT_ID_LO;
 	sc->report_len = sc->hi_precision ?
 	    IETP_REPORT_LEN_HI : IETP_REPORT_LEN_LO;
 
-	sc->sc_ibuf = malloc(IETP_REPORT_LEN_HI + 12, M_DEVBUF, M_NOWAIT | M_ZERO);
+	sc->sc_ibuf = malloc(IETP_REPORT_LEN_HI + 12, M_DEVBUF,
+	    M_NOWAIT | M_ZERO);
 	sc->sc_isize = sc->report_len + 3;
 
 	a.accessops = &ietp_mouse_access;
@@ -267,10 +269,12 @@ ietp_attach(struct device *parent, struct device *self, void *aux)
 
 	/* power down until we're opened */
 	if (ietp_set_power(sc, I2C_HID_POWER_OFF)) {
-		printf("%s: failed to power down\n", sc->sc_dev.dv_xname);
+		printf(": failed to power down\n");
 		return;
 	}
-	
+
+	printf("\n");
+
 	DPRINTF(("%s: max_x=%d, max_y=%d, %s\n", sc->sc_dev.dv_xname,
 		 sc->max_x, sc->max_y,
 		 sc->is_clickpad ? "clickpad" : "touchpad"));
@@ -359,18 +363,21 @@ ietp_iic_set_absolute_mode(struct ietp_softc *sc, bool enable)
 	}
 
 	if (require_wakeup && ietp_set_power(sc, I2C_HID_POWER_ON) != 0) {
-		printf("%s: failed writing poweron command\n", sc->sc_dev.dv_xname);
+		printf("%s: failed writing poweron command\n",
+		    sc->sc_dev.dv_xname);
 		return (EIO);
 	}
 
 	val = enable ? IETP_CTRL_ABSOLUTE : IETP_CTRL_STANDARD;
 	if (ietp_iic_write_reg(sc, IETP_CONTROL, val) != 0) {
-		printf("%s: failed setting absolute mode\n", sc->sc_dev.dv_xname);
+		printf("%s: failed setting absolute mode\n",
+		    sc->sc_dev.dv_xname);
 		error = EIO;
 	}
 
 	if (require_wakeup && ietp_set_power(sc, I2C_HID_POWER_OFF) != 0) {
-		printf("%s: failed writing poweroff command\n", sc->sc_dev.dv_xname);
+		printf("%s: failed writing poweroff command\n",
+		    sc->sc_dev.dv_xname);
 		error = EIO;
 	}
 
@@ -524,7 +531,8 @@ parse_input(struct ietp_softc *sc, u_char *report, int len)
 	if (len == 0)
 		return;
 	if (len != sc->report_len) {
-		printf("%s: wrong report length (%d vs %d expected)", sc->sc_dev.dv_xname, len, (int) sc->report_len);
+		printf("%s: wrong report length (%d vs %d expected)",
+		    sc->sc_dev.dv_xname, len, (int) sc->report_len);
 		return;
 	}
 
@@ -551,7 +559,8 @@ parse_input(struct ietp_softc *sc, u_char *report, int len)
 
 			if (x > sc->max_x || y > sc->max_y) {
 				printf("%s: [%d] x=%d y=%d over max (%d, %d)\n",
-				       sc->sc_dev.dv_xname, finger, x, y, sc->max_x, sc->max_y);
+				    sc->sc_dev.dv_xname, finger, x, y,
+				    sc->max_x, sc->max_y);
 				continue;
 			}
 
@@ -565,7 +574,8 @@ parse_input(struct ietp_softc *sc, u_char *report, int len)
 			p = 0;
 		}
 
-		DPRINTF(("position: [finger=%d, x=%d, y=%d, p=%d]\n", finger, x, y, p));
+		DPRINTF(("position: [finger=%d, x=%d, y=%d, p=%d]\n", finger,
+		    x, y, p));
 		wsmouse_mtstate(sc->sc_wsmousedev, finger, x, y, p);
 	}
 
