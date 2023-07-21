@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.112 2023/06/15 22:18:07 cheloha Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.113 2023/07/21 04:04:52 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -478,7 +478,7 @@ cpu_tsx_disable(struct cpu_info *ci)
 	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
 	    (sefflags_edx & SEFF0EDX_ARCH_CAP)) {
 		msr = rdmsr(MSR_ARCH_CAPABILITIES);
-		if (msr & ARCH_CAPABILITIES_TSX_CTRL) {
+		if (msr & ARCH_CAP_TSX_CTRL) {
 			msr = rdmsr(MSR_TSX_CTRL);
 			msr |= TSX_CTRL_RTM_DISABLE | TSX_CTRL_TSX_CPUID_CLEAR;
 			wrmsr(MSR_TSX_CTRL, msr);

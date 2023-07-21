@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore0.S,v 1.10 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: locore0.S,v 1.11 2023/07/21 04:04:52 guenther Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -178,7 +178,7 @@ start:	movw	$0x1234,0x472			# warm boot
         /* IA32_ARCH_CAPABILITIES MSR available, use it to check CPU security */
         movl	$MSR_ARCH_CAPABILITIES,%ecx
         rdmsr
-        testl	$ARCH_CAPABILITIES_RDCL_NO,%eax
+        testl	$ARCH_CAP_RDCL_NO,%eax
         jz	.Lcpu_check_finished
 
 .Lcpu_secure:

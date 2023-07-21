@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.133 2023/04/22 18:27:28 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.134 2023/07/21 04:04:51 guenther Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -1049,8 +1049,8 @@ cpu_check_vmm_cap(struct cpu_info *ci)
 		 */
 		if (ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) {
 			msr = rdmsr(MSR_ARCH_CAPABILITIES);
-			if ((msr & ARCH_CAPABILITIES_RDCL_NO) ||
-			    ((msr & ARCH_CAPABILITIES_SKIP_L1DFL_VMENTRY) &&
+			if ((msr & ARCH_CAP_RDCL_NO) ||
+			    ((msr & ARCH_CAP_SKIP_L1DFL_VMENTRY) &&
 			    ci->ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr))
 				ci->ci_vmm_cap.vcc_vmx.vmx_has_l1_flush_msr =
 				    VMX_SKIP_L1D_FLUSH;

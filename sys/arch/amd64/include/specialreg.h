@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.103 2023/07/10 03:32:10 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.104 2023/07/21 04:04:51 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -400,15 +400,29 @@
 #define MTRRcap_WC		0x400	/* bit 10 - WC type supported */
 #define MTRRcap_SMRR		0x800	/* bit 11 - SMM range reg supported */
 #define MSR_ARCH_CAPABILITIES	0x10a
-#define ARCH_CAPABILITIES_RDCL_NO	(1 << 0)	/* Meltdown safe */
-#define ARCH_CAPABILITIES_IBRS_ALL	(1 << 1)	/* enhanced IBRS */
-#define ARCH_CAPABILITIES_RSBA		(1 << 2)	/* RSB Alternate */
-#define ARCH_CAPABILITIES_SKIP_L1DFL_VMENTRY	(1 << 3)
-#define ARCH_CAPABILITIES_SSB_NO	(1 << 4)	/* Spec St Byp safe */
-#define ARCH_CAPABILITIES_MDS_NO	(1 << 5) /* microarch data-sampling */
-#define ARCH_CAPABILITIES_IF_PSCHANGE_MC_NO	(1 << 6) /* PS MCE safe */
-#define ARCH_CAPABILITIES_TSX_CTRL	(1 << 7)	/* has TSX_CTRL MSR */
-#define ARCH_CAPABILITIES_TAA_NO	(1 << 8)	/* TSX AA safe */
+#define ARCH_CAP_RDCL_NO		(1 <<  0) /* Meltdown safe */
+#define ARCH_CAP_IBRS_ALL		(1 <<  1) /* enhanced IBRS */
+#define ARCH_CAP_RSBA			(1 <<  2) /* RSB Alternate */
+#define ARCH_CAP_SKIP_L1DFL_VMENTRY	(1 <<  3)
+#define ARCH_CAP_SSB_NO			(1 <<  4) /* Spec St Byp safe */
+#define ARCH_CAP_MDS_NO			(1 <<  5) /* microarch data-sampling */
+#define ARCH_CAP_IF_PSCHANGE_MC_NO	(1 <<  6) /* PS MCE safe */
+#define ARCH_CAP_TSX_CTRL		(1 <<  7) /* has TSX_CTRL MSR */
+#define ARCH_CAP_TAA_NO			(1 <<  8) /* TSX AA safe */
+#define ARCH_CAP_MCU_CONTROL		(1 <<  9) /* has MCU_CTRL MSR */
+#define ARCH_CAP_MISC_PACKAGE_CTLS	(1 << 10) /* has MISC_PKG_CTLS MSR */
+#define ARCH_CAP_ENERGY_FILTERING_CTL	(1 << 11) /* r/w energy fltring bit */
+#define ARCH_CAP_DOITM			(1 << 12) /* Data oprnd indpdnt tmng */
+#define ARCH_CAP_SBDR_SSDP_NO		(1 << 13) /* SBDR/SSDP safe */
+#define ARCH_CAP_FBSDP_NO		(1 << 14) /* FBSDP safe */
+#define ARCH_CAP_PSDP_NO		(1 << 15) /* PSDP safe */
+#define ARCH_CAP_FB_CLEAR		(1 << 17) /* MD_CLEAR covers FB */
+#define ARCH_CAP_FB_CLEAR_CTRL		(1 << 18)
+#define ARCH_CAP_RRSBA			(1 << 19) /* has RRSBA if not dis */
+#define ARCH_CAP_BHI_NO			(1 << 20) /* BHI safe */
+#define ARCH_CAP_XAPIC_DISABLE_STATUS	(1 << 21) /* can disable xAPIC */
+#define ARCH_CAP_OVERCLOCKING_STATUS	(1 << 23) /* has OVRCLCKNG_STAT MSR */
+#define ARCH_CAP_PBRSB_NO		(1 << 24) /* PBSR safe */
 #define MSR_FLUSH_CMD		0x10b
 #define FLUSH_CMD_L1D_FLUSH	0x1	/* (1ULL << 0) */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */

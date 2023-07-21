@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.170 2023/07/10 03:32:10 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.171 2023/07/21 04:04:51 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -273,7 +273,7 @@ replacemds(void)
 
 	if (strcmp(cpu_vendor, "GenuineIntel") != 0 ||
 	    ((ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) &&
-	     (rdmsr(MSR_ARCH_CAPABILITIES) & ARCH_CAPABILITIES_MDS_NO))) {
+	     (rdmsr(MSR_ARCH_CAPABILITIES) & ARCH_CAP_MDS_NO))) {
 		/* Unaffected, nop out the handling code */
 		has_verw = 0;
 	} else if (ci->ci_feature_sefflags_edx & SEFF0EDX_MD_CLEAR) {
@@ -1242,7 +1242,7 @@ cpu_tsx_disable(struct cpu_info *ci)
 	if (strcmp(cpu_vendor, "GenuineIntel") == 0 &&
 	    (sefflags_edx & SEFF0EDX_ARCH_CAP)) {
 		msr = rdmsr(MSR_ARCH_CAPABILITIES);
-		if (msr & ARCH_CAPABILITIES_TSX_CTRL) {
+		if (msr & ARCH_CAP_TSX_CTRL) {
 			msr = rdmsr(MSR_TSX_CTRL);
 			msr |= TSX_CTRL_RTM_DISABLE | TSX_CTRL_TSX_CPUID_CLEAR;
 			wrmsr(MSR_TSX_CTRL, msr);
