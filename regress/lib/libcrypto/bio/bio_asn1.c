@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_asn1.c,v 1.4 2023/05/02 09:30:37 tb Exp $ */
+/*	$OpenBSD: bio_asn1.c,v 1.5 2023/07/21 20:22:47 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -105,13 +105,12 @@ read_leak_cb(BIO *bio, int cmd, const char *argp, int argi, long argl, long ret)
 static int
 test_prefix_leak(void)
 {
-	const char *data = "some data\n";
 	BIO *bio_in = NULL, *bio_out = NULL;
 	PKCS7 *pkcs7 = NULL;
 	char set_me = 0;
 	int failed = 1;
 
-	if ((bio_in = BIO_new_mem_buf(data, -1)) == NULL)
+	if ((bio_in = BIO_new_mem_buf("some data\n", -1)) == NULL)
 		goto err;
 
 	BIO_set_callback(bio_in, read_leak_cb);
