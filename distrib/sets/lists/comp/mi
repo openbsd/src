@@ -1767,7 +1767,6 @@
 ./usr/share/man/man3/ASN1_TIME_set.3
 ./usr/share/man/man3/ASN1_TYPE_get.3
 ./usr/share/man/man3/ASN1_UNIVERSALSTRING_to_string.3
-./usr/share/man/man3/ASN1_buf_print.3
 ./usr/share/man/man3/ASN1_generate_nconf.3
 ./usr/share/man/man3/ASN1_get_object.3
 ./usr/share/man/man3/ASN1_item_d2i.3
