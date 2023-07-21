@@ -1,4 +1,4 @@
-.\"	$OpenBSD: CONF_modules_free.3,v 1.5 2018/03/22 21:08:22 schwarze Exp $
+.\"	$OpenBSD: CONF_modules_free.3,v 1.6 2023/07/21 10:46:54 tb Exp $
 .\"	OpenSSL a528d4f0 Oct 27 13:40:11 2015 -0400
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 22 2018 $
+.Dd $Mdocdate: July 21 2023 $
 .Dt CONF_MODULES_FREE 3
 .Os
 .Sh NAME
@@ -87,10 +87,7 @@ that module may have performed.
 finishes and unloads configuration modules.
 If
 .Fa all
-is set to 0, only modules loaded from DSOs will be unloaded.
-If
-.Fa all
-is 1, all modules, including builtin modules, will be unloaded.
+is set to 1, the builtin modules will be unloaded as well.
 .Sh SEE ALSO
 .Xr CONF_modules_load_file 3 ,
 .Xr OPENSSL_config 3

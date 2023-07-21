@@ -1,4 +1,4 @@
-.\" $OpenBSD: CONF_modules_load_file.3,v 1.10 2021/08/03 18:49:30 schwarze Exp $
+.\" $OpenBSD: CONF_modules_load_file.3,v 1.11 2023/07/21 10:46:54 tb Exp $
 .\" full merge up to: e9b77246 Jan 20 19:58:49 2017 +0100
 .\" selective merge up to: d090fc00 Feb 26 13:11:10 2019 +0800
 .\"
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 3 2021 $
+.Dd $Mdocdate: July 21 2023 $
 .Dt CONF_MODULES_LOAD_FILE 3
 .Os
 .Sh NAME
@@ -143,6 +143,7 @@ Do not add any error information.
 By default, all module errors add error information to the error queue.
 .It Dv CONF_MFLAGS_NO_DSO
 Disable loading of configuration modules from DSOs.
+This flag is provided for compatibility and has no effect.
 .It Dv CONF_MFLAGS_IGNORE_MISSING_FILE
 Let
 .Fn CONF_modules_load_file
