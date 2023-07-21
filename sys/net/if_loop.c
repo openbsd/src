@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.96 2023/07/18 16:01:20 bluhm Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.97 2023/07/21 22:24:41 bluhm Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -146,6 +146,7 @@ void	lortrequest(struct ifnet *, int, struct rtentry *);
 void	loinput(struct ifnet *, struct mbuf *);
 int	looutput(struct ifnet *,
 	    struct mbuf *, struct sockaddr *, struct rtentry *);
+int	lo_bpf_mtap(caddr_t, const struct mbuf *, u_int);
 
 int	loop_clone_create(struct if_clone *, int);
 int	loop_clone_destroy(struct ifnet *);
@@ -177,6 +178,7 @@ loop_clone_create(struct if_clone *ifc, int unit)
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4 |
 	    IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6 |
 	    IFCAP_LRO | IFCAP_TSOv4 | IFCAP_TSOv6;
+	ifp->if_bpf_mtap = lo_bpf_mtap;
 	ifp->if_rtrequest = lortrequest;
 	ifp->if_ioctl = loioctl;
 	ifp->if_input = loinput;
@@ -228,6 +230,13 @@ loop_clone_destroy(struct ifnet *ifp)
 
 	if (rdomain)
 		rtable_l2set(rdomain, 0, 0);
+	return (0);
+}
+
+int
+lo_bpf_mtap(caddr_t if_bpf, const struct mbuf *m, u_int dir)
+{
+	/* loopback dumps on output, disable input bpf */
 	return (0);
 }
 
