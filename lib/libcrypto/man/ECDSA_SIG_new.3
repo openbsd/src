@@ -1,4 +1,4 @@
-.\" $OpenBSD: ECDSA_SIG_new.3,v 1.18 2023/07/20 09:28:30 tb Exp $
+.\" $OpenBSD: ECDSA_SIG_new.3,v 1.19 2023/07/21 04:44:40 tb Exp $
 .\" full merge up to: OpenSSL e9b77246 Jan 20 19:58:49 2017 +0100
 .\" selective merge up to: OpenSSL da4ea0cf Aug 5 16:13:24 2019 +0100
 .\"
@@ -50,7 +50,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 20 2023 $
+.Dd $Mdocdate: July 21 2023 $
 .Dt ECDSA_SIG_NEW 3
 .Os
 .Sh NAME
@@ -66,11 +66,7 @@
 .Nm ECDSA_sign ,
 .Nm ECDSA_verify ,
 .Nm ECDSA_do_sign ,
-.Nm ECDSA_do_verify ,
-.Nm ECDSA_OpenSSL ,
-.Nm ECDSA_get_default_method ,
-.Nm ECDSA_set_default_method ,
-.Nm ECDSA_set_method
+.Nm ECDSA_do_verify
 .Nd Elliptic Curve Digital Signature Algorithm
 .Sh SYNOPSIS
 .In openssl/ecdsa.h
@@ -147,23 +143,6 @@
 .Fa "int dgst_len"
 .Fa "const ECDSA_SIG *sig"
 .Fa "EC_KEY* eckey"
-.Fc
-.Ft const ECDSA_METHOD*
-.Fo ECDSA_OpenSSL
-.Fa void
-.Fc
-.Ft const ECDSA_METHOD*
-.Fo ECDSA_get_default_method
-.Fa void
-.Fc
-.Ft void
-.Fo ECDSA_set_default_method
-.Fa "const ECDSA_METHOD *meth"
-.Fc
-.Ft int
-.Fo ECDSA_set_method
-.Fa "EC_KEY *eckey"
-.Fa "const ECDSA_METHOD *meth"
 .Fc
 .Sh DESCRIPTION
 These functions provide a low level interface to ECDSA.
@@ -453,12 +432,8 @@ ANSI X9.62, US Federal Information Processing Standard FIPS 186-5
 .Fn ECDSA_sign ,
 .Fn ECDSA_verify ,
 .Fn ECDSA_do_sign ,
-.Fn ECDSA_do_verify ,
-.Fn ECDSA_OpenSSL ,
-.Fn ECDSA_get_default_method ,
-.Fn ECDSA_set_default_method ,
 and
-.Fn ECDSA_set_method
+.Fn ECDSA_do_verify
 first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
 .Pp
