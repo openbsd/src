@@ -1967,8 +1967,8 @@
 ./usr/share/man/man3/MD5Init.3
 ./usr/share/man/man3/NAME_CONSTRAINTS_new.3
 ./usr/share/man/man3/OBJ_NAME_add.3
-./usr/share/man/man3/OBJ_add_sigid.3
 ./usr/share/man/man3/OBJ_create.3
+./usr/share/man/man3/OBJ_find_sigid_algs.3
 ./usr/share/man/man3/OBJ_nid2obj.3
 ./usr/share/man/man3/OCSP_CRLID_new.3
 ./usr/share/man/man3/OCSP_REQUEST_new.3
