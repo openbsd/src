@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.7 2023/07/05 20:56:29 bcook Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.8 2023/07/22 17:20:50 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -292,6 +292,42 @@ ecx_pub_cmp(const EVP_PKEY *pkey1, const EVP_PKEY *pkey2)
 	    pkey1->pkey.ecx->pub_key_len) == 0;
 }
 
+/* Reimplementation of ASN1_buf_print() that adds a secondary indent of 4. */
+static int
+ecx_buf_print(BIO *bio, const uint8_t *buf, size_t buf_len, int indent)
+{
+	uint8_t u8;
+	size_t octets = 0;
+	const char *sep = ":", *nl = "";
+	CBS cbs;
+
+	if (indent > 64)
+		indent = 64;
+	indent += 4;
+	if (indent < 0)
+		indent = 0;
+
+	CBS_init(&cbs, buf, buf_len);
+	while (CBS_len(&cbs) > 0) {
+		if (!CBS_get_u8(&cbs, &u8))
+			return 0;
+		if (octets++ % 15 == 0) {
+			if (BIO_printf(bio, "%s%*s", nl, indent, "") < 0)
+				return 0;
+			nl = "\n";
+		}
+		if (CBS_len(&cbs) == 0)
+			sep = "";
+		if (BIO_printf(bio, "%02x%s", u8, sep) <= 0)
+			return 0;
+	}
+
+	if (BIO_printf(bio, "\n") <= 0)
+		return 0;
+
+	return 1;
+}
+
 static int
 ecx_pub_print(BIO *bio, const EVP_PKEY *pkey, int indent, ASN1_PCTX *ctx)
 {
@@ -309,8 +345,7 @@ ecx_pub_print(BIO *bio, const EVP_PKEY *pkey, int indent, ASN1_PCTX *ctx)
 		return 0;
 	if (BIO_printf(bio, "%*spub:\n", indent, "") <= 0)
 		return 0;
-	if (ASN1_buf_print(bio, ecx_key->pub_key, ecx_key->pub_key_len,
-	    indent + 4) == 0)
+	if (!ecx_buf_print(bio, ecx_key->pub_key, ecx_key->pub_key_len, indent))
 		return 0;
 
 	return 1;
@@ -422,13 +457,11 @@ ecx_priv_print(BIO *bio, const EVP_PKEY *pkey, int indent, ASN1_PCTX *ctx)
 		return 0;
 	if (BIO_printf(bio, "%*spriv:\n", indent, "") <= 0)
 		return 0;
-	if (ASN1_buf_print(bio, ecx_key->priv_key, ecx_key->priv_key_len,
-	    indent + 4) == 0)
+	if (!ecx_buf_print(bio, ecx_key->priv_key, ecx_key->priv_key_len, indent))
 		return 0;
 	if (BIO_printf(bio, "%*spub:\n", indent, "") <= 0)
 		return 0;
-	if (ASN1_buf_print(bio, ecx_key->pub_key, ecx_key->pub_key_len,
-	    indent + 4) == 0)
+	if (!ecx_buf_print(bio, ecx_key->pub_key, ecx_key->pub_key_len, indent))
 		return 0;
 
 	return 1;
