@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.8 2023/07/22 17:20:50 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.9 2023/07/22 19:33:25 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -301,8 +301,8 @@ ecx_buf_print(BIO *bio, const uint8_t *buf, size_t buf_len, int indent)
 	const char *sep = ":", *nl = "";
 	CBS cbs;
 
-	if (indent > 64)
-		indent = 64;
+	if (indent > 60)
+		indent = 60;
 	indent += 4;
 	if (indent < 0)
 		indent = 0;
