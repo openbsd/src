@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.10 2023/02/23 19:48:21 miod Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.11 2023/07/22 10:11:19 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -180,7 +180,8 @@ ucode_load(void)
 
 	CPUID(0, dummy, vendor[0], vendor[2], vendor[1]);
 	vendor[3] = 0; /* NULL-terminate */
-	if (strcmp((char *)vendor, "GenuineIntel") != 0)
+	if (strcmp((char *)vendor, "GenuineIntel") != 0 &&
+	    strcmp((char *)vendor, "AuthenticAMD") != 0)
 		return;
 
 	CPUID(1, signature, dummy, dummy, dummy);
@@ -192,8 +193,22 @@ ucode_load(void)
 	}
 	stepping = (signature >> 0) & 0x0f;
 
-	snprintf(path, sizeof(path), "%s:/etc/firmware/intel/%02x-%02x-%02x",
-	    cmd.bootdev, family, model, stepping);
+	if (strcmp((char *)vendor, "GenuineIntel") == 0) {
+		snprintf(path, sizeof(path),
+		    "%s:/etc/firmware/intel/%02x-%02x-%02x",
+		    cmd.bootdev, family, model, stepping);
+	} else if (strcmp((char *)vendor, "AuthenticAMD") == 0) {
+		if (family < 0x10)
+			return;
+		else if (family <= 0x14)
+			snprintf(path, sizeof(path),
+			    "%s:/etc/firmware/amd/microcode_amd.bin",
+			    cmd.bootdev);
+		else
+			snprintf(path, sizeof(path),
+			    "%s:/etc/firmware/amd/microcode_amd_fam%02xh.bin",
+			    cmd.bootdev, family);
+	}
 
 	fd = open(path, O_RDONLY);
 	if (fd == -1)
