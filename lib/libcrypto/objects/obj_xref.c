@@ -1,4 +1,4 @@
-/*	$OpenBSD: obj_xref.c,v 1.11 2023/07/22 18:32:05 tb Exp $ */
+/*	$OpenBSD: obj_xref.c,v 1.12 2023/07/22 19:08:03 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -312,7 +312,7 @@ OBJ_find_sigid_by_algs(int *sign_nid, int hash_nid, int pkey_nid)
 LCRYPTO_ALIAS(OBJ_find_sigid_by_algs);
 
 int
-OBJ_add_sigid(int signid, int dig_id, int pkey_id)
+OBJ_add_sigid(int sign_nid, int hash_nid, int pkey_nid)
 {
 	return 0;
 }
