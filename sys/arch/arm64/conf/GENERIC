@@ -1,4 +1,4 @@
-# $OpenBSD: GENERIC,v 1.276 2023/07/19 20:27:20 kettenis Exp $
+# $OpenBSD: GENERIC,v 1.277 2023/07/22 22:43:53 patrick Exp $
 #
 # GENERIC machine description file
 #
@@ -343,6 +343,7 @@ qcpon*		at qcpmic?
 qcpwm*		at qcpmic?
 qcrng*		at fdt?
 qcrtc*		at qcpmic?
+qcsdam*		at qcpmic?
 
 # Sunxi SoCs
 sxipio*		at fdt? early 1	# GPIO pins for leds & PHYs

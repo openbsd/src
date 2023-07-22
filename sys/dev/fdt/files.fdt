@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.195 2023/07/01 16:34:30 drahn Exp $
+#	$OpenBSD: files.fdt,v 1.196 2023/07/22 22:43:53 patrick Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -760,6 +760,11 @@ file	dev/fdt/qcrng.c			qcrng
 device	qcrtc
 attach	qcrtc at spmi
 file	dev/fdt/qcrtc.c			qcrtc
+
+# Qualcomm PMIC Shared Direct Access Memory
+device	qcsdam
+attach	qcsdam at spmi
+file	dev/fdt/qcsdam.c		qcsdam
 
 # TI TPS6598x Type-C controller
 device	tipd
