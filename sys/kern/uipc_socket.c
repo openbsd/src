@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.305 2023/07/04 22:28:24 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.306 2023/07/22 14:30:39 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -2366,7 +2366,8 @@ sobuf_print(struct sockbuf *sb,
 	(*pr)("\tsb_mbtail: %p\n", sb->sb_mbtail);
 	(*pr)("\tsb_lastrecord: %p\n", sb->sb_lastrecord);
 	(*pr)("\tsb_sel: ...\n");
-	(*pr)("\tsb_flags: %i\n", sb->sb_flags);
+	(*pr)("\tsb_flags: %04x\n", sb->sb_flags);
+	(*pr)("\tsb_state: %04x\n", sb->sb_state);
 	(*pr)("\tsb_timeo_nsecs: %llu\n", sb->sb_timeo_nsecs);
 }
 
