@@ -1,4 +1,4 @@
-/*	$OpenBSD: qcrtc.c,v 1.2 2023/01/16 20:12:38 patrick Exp $	*/
+/*	$OpenBSD: qcrtc.c,v 1.3 2023/07/22 22:48:35 patrick Exp $	*/
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -25,6 +25,7 @@
 #include <dev/fdt/spmivar.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
 #include <dev/clock_subr.h>
@@ -114,12 +115,14 @@ qcrtc_gettime(struct todr_chip_handle *handle, struct timeval *tv)
 		return error;
 	}
 
-	/* Retrieve RTC offset stored in UEFI. */
-	if (qcscm_uefi_rtc_get(&off) != 0)
-		return EIO;
+	/* Retrieve RTC offset from either NVRAM or UEFI. */
+	error = nvmem_read_cell(sc->sc_node, "offset", &off, sizeof(off));
+	if (error == ENXIO || (!error && off == 0))
+		error = qcscm_uefi_rtc_get(&off);
+	if (error)
+		return error;
 
-	/* Add RTC counter and 10y+1w to get seconds from epoch. */
-	tv->tv_sec = off + (reg + (10 * 365 * 86400 + 7 * 86400));
+	tv->tv_sec = off + reg;
 	tv->tv_usec = 0;
 	return 0;
 }
@@ -138,9 +141,11 @@ qcrtc_settime(struct todr_chip_handle *handle, struct timeval *tv)
 		return error;
 	}
 
-	/* Subtract RTC counter and 10y+1w to get offset for UEFI. */
-	off = tv->tv_sec - (reg + (10 * 365 * 86400 + 7 * 86400));
+	/* Store RTC offset in either NVRAM or UEFI. */
+	off = tv->tv_sec - reg;
+	error = nvmem_write_cell(sc->sc_node, "offset", &off, sizeof(off));
+	if (error == ENXIO)
+		error = qcscm_uefi_rtc_set(off);
 
-	/* Store offset in UEFI. */
-	return qcscm_uefi_rtc_set(off);
+	return error;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: qcscm.c,v 1.4 2023/05/17 23:12:04 patrick Exp $ */
+/* $OpenBSD: qcscm.c,v 1.5 2023/07/22 22:48:35 patrick Exp $ */
 /*
  * Copyright (c) 2022 Patrick Wildt <patrick@blueri.se>
  *
@@ -89,6 +89,8 @@
 #define EFI_VARIABLE_NON_VOLATILE	0x00000001
 #define EFI_VARIABLE_BOOTSERVICE_ACCESS	0x00000002
 #define EFI_VARIABLE_RUNTIME_ACCESS	0x00000004
+
+#define UNIX_GPS_EPOCH_OFFSET		315964800
 
 struct qcscm_dmamem {
 	bus_dmamap_t		qdm_map;
@@ -703,7 +705,8 @@ qcscm_uefi_rtc_get(uint32_t *off)
 	    &rtcinfosize) != 0)
 		return EIO;
 
-	*off = rtcinfo[0];
+	/* UEFI stores the offset based on GPS epoch */
+	*off = rtcinfo[0] + UNIX_GPS_EPOCH_OFFSET;
 	return 0;
 }
 
@@ -721,6 +724,9 @@ qcscm_uefi_rtc_set(uint32_t off)
 	    &qcscm_uefi_rtcinfo_guid, NULL, (uint8_t *)rtcinfo,
 	    &rtcinfosize) != 0)
 		return EIO;
+
+	/* UEFI stores the offset based on GPS epoch */
+	off -= UNIX_GPS_EPOCH_OFFSET;
 
 	/* No need to set if we're not changing anything */
 	if (rtcinfo[0] == off)
