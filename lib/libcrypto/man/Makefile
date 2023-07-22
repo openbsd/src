@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.255 2023/07/21 04:50:47 tb Exp $
+# $OpenBSD: Makefile,v 1.256 2023/07/22 06:34:59 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -214,8 +214,8 @@ MAN=	\
 	MD5.3 \
 	NAME_CONSTRAINTS_new.3 \
 	OBJ_NAME_add.3 \
-	OBJ_add_sigid.3 \
 	OBJ_create.3 \
+	OBJ_find_sigid_algs.3 \
 	OBJ_nid2obj.3 \
 	OCSP_CRLID_new.3 \
 	OCSP_REQUEST_new.3 \
