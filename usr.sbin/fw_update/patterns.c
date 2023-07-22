@@ -1,4 +1,4 @@
-/*	$OpenBSD: patterns.c,v 1.9 2023/06/27 22:31:27 patrick Exp $	*/
+/*	$OpenBSD: patterns.c,v 1.10 2023/07/22 03:46:09 jsg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -88,6 +88,8 @@ int
 main(void)
 {
 	printf("%s\n", "acx");
+	printf("%s\n", "amd");
+	printf("%s\n", "amd ^cpu0:* AMD");
 	printf("%s\n", "amdgpu");
 	print_devices("amdgpu", amdgpu_devices, nitems(amdgpu_devices));
 	printf("%s\n", "amdgpu ^vga*vendor \"ATI\", unknown product"); 
