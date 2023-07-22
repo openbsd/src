@@ -1,4 +1,4 @@
-/*	$OpenBSD: ct_sct.c,v 1.9 2023/07/08 07:22:58 beck Exp $ */
+/*	$OpenBSD: ct_sct.c,v 1.10 2023/07/22 17:02:49 tb Exp $ */
 /*
  * Written by Rob Stradling (rob@comodo.com), Stephen Henson (steve@openssl.org)
  * and Adam Eijdenberg (adam.eijdenberg@gmail.com) for the OpenSSL project 2016.
@@ -61,13 +61,15 @@
 # error "CT disabled"
 #endif
 
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <openssl/asn1.h>
 #include <openssl/ct.h>
 #include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/tls1.h>
+#include <openssl/objects.h>
 #include <openssl/x509.h>
-
-#include <string.h>
 
 #include "ct_local.h"
 
