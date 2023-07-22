@@ -1,4 +1,4 @@
-/* $OpenBSD: names.c,v 1.19 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: names.c,v 1.20 2023/07/22 18:12:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,7 +152,6 @@ EVP_cleanup(void)
 		obj_cleanup_defer = 0;
 		OBJ_cleanup();
 	}
-	OBJ_sigid_free();
 }
 
 struct doall_cipher {
