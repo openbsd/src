@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_print.c,v 1.45 2023/07/10 02:29:28 tb Exp $ */
+/*	$OpenBSD: bn_print.c,v 1.46 2023/07/22 17:14:08 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <ctype.h>
-#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -73,11 +72,9 @@ bn_print_bignum(BIO *bio, const BIGNUM *bn, int indent)
 		goto err;
 
 	/* Secondary indent is 4 spaces, capped at 128. */
-	if (indent > INT_MAX - 4)
-		goto err;
+	if (indent > 124)
+		indent = 124;
 	indent += 4;
-	if (indent > 128)
-		indent = 128;
 	if (indent < 0)
 		indent = 0;
 
