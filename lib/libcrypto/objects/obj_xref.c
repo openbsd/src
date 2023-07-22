@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_xref.c,v 1.9 2023/07/08 12:27:51 beck Exp $ */
+/* $OpenBSD: obj_xref.c,v 1.10 2023/07/22 18:12:09 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -60,17 +60,12 @@
 #include "obj_xref.h"
 
 DECLARE_STACK_OF(nid_triple)
-STACK_OF(nid_triple) *sig_app, *sigx_app;
 
 static int
 sig_cmp(const nid_triple *a, const nid_triple *b)
 {
 	return a->sign_id - b->sign_id;
 }
-
-static int sig_cmp_BSEARCH_CMP_FN(const void *, const void *);
-static int sig_cmp(nid_triple const *, nid_triple const *);
-static nid_triple *OBJ_bsearch_sig(nid_triple *key, nid_triple const *base, int num);
 
 static int
 sig_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
@@ -80,22 +75,12 @@ sig_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
 	return sig_cmp(a, b);
 }
 
-static nid_triple *
+static const nid_triple *
 OBJ_bsearch_sig(nid_triple *key, nid_triple const *base, int num)
 {
-	return (nid_triple *)OBJ_bsearch_(key, base, num, sizeof(nid_triple),
+	return OBJ_bsearch_(key, base, num, sizeof(nid_triple),
 	    sig_cmp_BSEARCH_CMP_FN);
 }
-
-static int
-sig_sk_cmp(const nid_triple * const *a, const nid_triple * const *b)
-{
-	return (*a)->sign_id - (*b)->sign_id;
-}
-
-static int sigx_cmp_BSEARCH_CMP_FN(const void *, const void *);
-static int sigx_cmp(const nid_triple * const *, const nid_triple * const *);
-static const nid_triple * *OBJ_bsearch_sigx(const nid_triple * *key, const nid_triple * const *base, int num);
 
 static int
 sigx_cmp(const nid_triple * const *a, const nid_triple * const *b)
@@ -108,7 +93,6 @@ sigx_cmp(const nid_triple * const *a, const nid_triple * const *b)
 	return (*a)->pkey_id - (*b)->pkey_id;
 }
 
-
 static int
 sigx_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
 {
@@ -117,10 +101,10 @@ sigx_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
 	return sigx_cmp(a, b);
 }
 
-static const nid_triple * *
+static const nid_triple * const*
 OBJ_bsearch_sigx(const nid_triple * *key, const nid_triple * const *base, int num)
 {
-	return (const nid_triple * *)OBJ_bsearch_(key, base, num, sizeof(const nid_triple *),
+	return OBJ_bsearch_(key, base, num, sizeof(const nid_triple *),
 	    sigx_cmp_BSEARCH_CMP_FN);
 }
 
@@ -131,19 +115,8 @@ OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 	const nid_triple *rv = NULL;
 	tmp.sign_id = signid;
 
-	if (sig_app) {
-		int idx = sk_nid_triple_find(sig_app, &tmp);
-		if (idx >= 0)
-			rv = sk_nid_triple_value(sig_app, idx);
-	}
-
-#ifndef OBJ_XREF_TEST2
-	if (rv == NULL) {
-		rv = OBJ_bsearch_sig(&tmp, sigoid_srt,
-		    sizeof(sigoid_srt) / sizeof(nid_triple));
-	}
-#endif
-	if (rv == NULL)
+	if ((rv = OBJ_bsearch_sig(&tmp, sigoid_srt,
+	    sizeof(sigoid_srt) / sizeof(nid_triple))) == NULL)
 		return 0;
 	if (pdig_nid)
 		*pdig_nid = rv->hash_id;
@@ -158,26 +131,13 @@ OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 {
 	nid_triple tmp;
 	const nid_triple *t = &tmp;
-	const nid_triple **rv = NULL;
+	const nid_triple *const *rv;
 
 	tmp.hash_id = dig_nid;
 	tmp.pkey_id = pkey_nid;
 
-	if (sigx_app) {
-		int idx = sk_nid_triple_find(sigx_app, &tmp);
-		if (idx >= 0) {
-			t = sk_nid_triple_value(sigx_app, idx);
-			rv = &t;
-		}
-	}
-
-#ifndef OBJ_XREF_TEST2
-	if (rv == NULL) {
-		rv = OBJ_bsearch_sigx(&t, sigoid_srt_xref,
-		    sizeof(sigoid_srt_xref) / sizeof(nid_triple *));
-	}
-#endif
-	if (rv == NULL)
+	if ((rv = OBJ_bsearch_sigx(&t, sigoid_srt_xref,
+	    sizeof(sigoid_srt_xref) / sizeof(nid_triple *))) == NULL)
 		return 0;
 	if (psignid)
 		*psignid = (*rv)->sign_id;
@@ -188,54 +148,12 @@ LCRYPTO_ALIAS(OBJ_find_sigid_by_algs);
 int
 OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 {
-	nid_triple *ntr;
-
-	if (!sig_app)
-		sig_app = sk_nid_triple_new(sig_sk_cmp);
-	if (!sig_app)
-		return 0;
-	if (!sigx_app)
-		sigx_app = sk_nid_triple_new(sigx_cmp);
-	if (!sigx_app)
-		return 0;
-	ntr = reallocarray(NULL, 3, sizeof(int));
-	if (!ntr)
-		return 0;
-	ntr->sign_id = signid;
-	ntr->hash_id = dig_id;
-	ntr->pkey_id = pkey_id;
-
-	if (!sk_nid_triple_push(sig_app, ntr)) {
-		free(ntr);
-		return 0;
-	}
-
-	if (!sk_nid_triple_push(sigx_app, ntr))
-		return 0;
-
-	sk_nid_triple_sort(sig_app);
-	sk_nid_triple_sort(sigx_app);
-
-	return 1;
+	return 0;
 }
 LCRYPTO_ALIAS(OBJ_add_sigid);
-
-static void
-sid_free(nid_triple *tt)
-{
-	free(tt);
-}
 
 void
 OBJ_sigid_free(void)
 {
-	if (sig_app) {
-		sk_nid_triple_pop_free(sig_app, sid_free);
-		sig_app = NULL;
-	}
-	if (sigx_app) {
-		sk_nid_triple_free(sigx_app);
-		sigx_app = NULL;
-	}
 }
 LCRYPTO_ALIAS(OBJ_sigid_free);
