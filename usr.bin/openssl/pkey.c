@@ -1,4 +1,4 @@
-/* $OpenBSD: pkey.c,v 1.19 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: pkey.c,v 1.20 2023/07/23 11:39:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006
  */
@@ -195,7 +195,7 @@ static const struct option pkey_options[] = {
 };
 
 static void
-pkey_usage()
+pkey_usage(void)
 {
 	int n = 0;
 

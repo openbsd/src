@@ -1,4 +1,4 @@
-/* $OpenBSD: rand.c,v 1.17 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: rand.c,v 1.18 2023/07/23 11:39:29 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -92,7 +92,7 @@ static const struct option rand_options[] = {
 };
 
 static void
-rand_usage()
+rand_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rand [-base64 | -hex] [-out file] num\n");

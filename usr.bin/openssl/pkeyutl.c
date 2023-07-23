@@ -1,4 +1,4 @@
-/* $OpenBSD: pkeyutl.c,v 1.19 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: pkeyutl.c,v 1.20 2023/07/23 11:39:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -239,7 +239,7 @@ static const struct option pkeyutl_options[] = {
 };
 
 static void
-pkeyutl_usage()
+pkeyutl_usage(void)
 {
 	fprintf(stderr,
 	    "usage: pkeyutl [-asn1parse] [-certin] [-decrypt] [-derive] "

@@ -1,4 +1,4 @@
-/* $OpenBSD: prime.c,v 1.17 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: prime.c,v 1.18 2023/07/23 11:39:29 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2004 The OpenSSL Project.  All rights reserved.
  *
@@ -101,7 +101,7 @@ static const struct option prime_options[] = {
 };
 
 static void
-prime_usage()
+prime_usage(void)
 {
 	fprintf(stderr,
 	    "usage: prime [-bits n] [-checks n] [-generate] [-hex] [-safe] "

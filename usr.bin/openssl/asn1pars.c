@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1pars.c,v 1.15 2023/03/10 09:44:54 tb Exp $ */
+/* $OpenBSD: asn1pars.c,v 1.16 2023/07/23 11:39:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -221,7 +221,7 @@ static const struct option asn1pars_options[] = {
 };
 
 static void
-asn1pars_usage()
+asn1pars_usage(void)
 {
 	fprintf(stderr,
 	    "usage: asn1parse [-i] [-dlimit num] [-dump] [-genconf file] "

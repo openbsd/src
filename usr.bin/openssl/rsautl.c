@@ -1,4 +1,4 @@
-/* $OpenBSD: rsautl.c,v 1.23 2023/05/05 18:01:27 tb Exp $ */
+/* $OpenBSD: rsautl.c,v 1.24 2023/07/23 11:39:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -218,7 +218,7 @@ static const struct option rsautl_options[] = {
 };
 
 static void
-rsautl_usage()
+rsautl_usage(void)
 {
 	fprintf(stderr,
 	    "usage: rsautl [-asn1parse] [-certin] [-decrypt] [-encrypt] "

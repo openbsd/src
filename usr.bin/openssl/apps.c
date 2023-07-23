@@ -1,4 +1,4 @@
-/* $OpenBSD: apps.c,v 1.65 2023/06/11 12:35:00 jsg Exp $ */
+/* $OpenBSD: apps.c,v 1.66 2023/07/23 11:39:29 tb Exp $ */
 /*
  * Copyright (c) 2014 Joel Sing <jsing@openbsd.org>
  *
@@ -1064,7 +1064,7 @@ load_config(BIO *err, CONF *cnf)
 }
 
 char *
-make_config_name()
+make_config_name(void)
 {
 	const char *t = X509_get_default_cert_area();
 	char *p;

@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs8.c,v 1.16 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: pkcs8.c,v 1.17 2023/07/23 11:39:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 1999-2004.
  */
@@ -184,7 +184,7 @@ static const struct option pkcs8_options[] = {
 };
 
 static void
-pkcs8_usage()
+pkcs8_usage(void)
 {
 	fprintf(stderr, "usage: pkcs8 [-in file] [inform der | pem] "
 	    "[-nocrypt] [-noiter]\n"

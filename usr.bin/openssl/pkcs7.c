@@ -1,4 +1,4 @@
-/* $OpenBSD: pkcs7.c,v 1.14 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: pkcs7.c,v 1.15 2023/07/23 11:39:29 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -138,7 +138,7 @@ static const struct option pkcs7_options[] = {
 };
 
 static void
-pkcs7_usage()
+pkcs7_usage(void)
 {
 	fprintf(stderr, "usage: pkcs7 [-in file] "
 	    "[-inform DER | PEM] [-noout]\n"
