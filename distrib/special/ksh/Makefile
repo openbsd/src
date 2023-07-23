@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.6 2023/02/08 17:22:10 kn Exp $
+#	$OpenBSD: Makefile,v 1.7 2023/07/23 23:42:03 kn Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c \
-	exec.c expr.c history.c io.c jobs.c lex.c mail.c main.c \
+	exec.c expr.c history.c io.c jobs.c lex.c main.c \
 	misc.c path.c shf.c syn.c table.c trap.c tree.c tty.c var.c \
 	vi.c
 

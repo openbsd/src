@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.72 2021/03/05 15:22:03 zhuk Exp $	*/
+/*	$OpenBSD: var.c,v 1.73 2023/07/23 23:42:03 kn Exp $	*/
 
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -108,9 +108,11 @@ initvar(void)
 		{ "HISTSIZE",		V_HISTSIZE },
 		{ "EDITOR",		V_EDITOR },
 		{ "VISUAL",		V_VISUAL },
+#ifndef SMALL
 		{ "MAIL",		V_MAIL },
 		{ "MAILCHECK",		V_MAILCHECK },
 		{ "MAILPATH",		V_MAILPATH },
+#endif /* SMALL */
 		{ "RANDOM",		V_RANDOM },
 		{ "SECONDS",		V_SECONDS },
 		{ "TMOUT",		V_TMOUT },
@@ -1029,6 +1031,7 @@ setspec(struct tbl *vp)
 				x_cols = l;
 		}
 		break;
+#ifndef SMALL
 	case V_MAIL:
 		mbset(str_val(vp));
 		break;
@@ -1040,6 +1043,7 @@ setspec(struct tbl *vp)
 		mcset(intval(vp));
 		vp->flag |= SPECIAL;
 		break;
+#endif /* SMALL */
 	case V_RANDOM:
 		vp->flag &= ~SPECIAL;
 		srand_deterministic((unsigned int)intval(vp));
@@ -1099,17 +1103,21 @@ unsetspec(struct tbl *vp)
 		afree(tmpdir, APERM);
 		tmpdir = NULL;
 		break;
+#ifndef SMALL
 	case V_MAIL:
 		mbset(NULL);
 		break;
 	case V_MAILPATH:
 		mpset(NULL);
 		break;
+#endif /* SMALL */
 	case V_HISTCONTROL:
 		sethistcontrol(NULL);
 		break;
 	case V_LINENO:
+#ifndef SMALL
 	case V_MAILCHECK:	/* at&t ksh leaves previous value in place */
+#endif /* SMALL */
 	case V_RANDOM:
 	case V_SECONDS:
 	case V_TMOUT:		/* at&t ksh leaves previous value in place */
