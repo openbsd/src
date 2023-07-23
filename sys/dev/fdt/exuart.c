@@ -1,4 +1,4 @@
-/* $OpenBSD: exuart.c,v 1.11 2022/07/02 08:50:42 visa Exp $ */
+/* $OpenBSD: exuart.c,v 1.12 2023/07/23 11:16:36 kettenis Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@motorola.com>
  *
@@ -40,6 +40,7 @@
 #include <dev/fdt/exuartreg.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
 #define DEVUNIT(x)      (minor(x) & 0x7f)
@@ -210,6 +211,10 @@ exuart_attach(struct device *parent, struct device *self, void *aux)
 		printf(": console");
 	}
 
+	printf("\n");
+
+	power_domain_enable(faa->fa_node);
+
 	if (OF_is_compatible(faa->fa_node, "apple,s5l-uart")) {
 		sc->sc_type = EXUART_TYPE_S5L;
 		sc->sc_rx_fifo_cnt_mask = EXUART_S5L_UFSTAT_RX_FIFO_CNT_MASK;
@@ -270,8 +275,6 @@ exuart_attach(struct device *parent, struct device *self, void *aux)
 	if(sc->sc_si == NULL)
 		panic("%s: can't establish soft interrupt.",
 		    sc->sc_dev.dv_xname);
-
-	printf("\n");
 }
 
 void
