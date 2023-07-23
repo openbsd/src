@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucode.c,v 1.5 2019/06/28 21:54:05 bluhm Exp $	*/
+/*	$OpenBSD: ucode.c,v 1.6 2023/07/23 01:46:37 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Stefan Fritsch <fritsch@genua.de>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -72,6 +72,8 @@ size_t	 cpu_ucode_size;
 void	 cpu_ucode_setup(void);
 void	 cpu_ucode_apply(struct cpu_info *);
 
+struct mutex	cpu_ucode_mtx = MUTEX_INITIALIZER(IPL_HIGH);
+
 /* Intel */
 void	 cpu_ucode_intel_apply(struct cpu_info *);
 struct intel_ucode_header *
@@ -82,7 +84,8 @@ int	 cpu_ucode_intel_match(struct intel_ucode_header *, uint32_t, uint32_t,
 uint32_t cpu_ucode_intel_rev(void);
 
 struct intel_ucode_header	*cpu_ucode_intel_applied;
-struct mutex			 cpu_ucode_intel_mtx = MUTEX_INITIALIZER(IPL_HIGH);
+
+void cpu_ucode_amd_apply(struct cpu_info *);
 
 void
 cpu_ucode_setup(void)
@@ -107,6 +110,99 @@ cpu_ucode_apply(struct cpu_info *ci)
 {
 	if (strcmp(cpu_vendor, "GenuineIntel") == 0)
 		cpu_ucode_intel_apply(ci);
+	else if (strcmp(cpu_vendor, "AuthenticAMD") == 0)
+		cpu_ucode_amd_apply(ci);
+}
+
+#define AMD_MAGIC 0x00414d44
+
+struct amd_equiv {
+	uint32_t id;
+	uint32_t a;
+	uint32_t b;
+	uint16_t eid;
+	uint16_t c;
+} __packed;
+
+struct amd_patch {
+	uint32_t type;
+	uint32_t len;
+	uint32_t a;
+	uint32_t level;
+	uint8_t c[16];
+	uint16_t eid;
+} __packed;
+
+void
+cpu_ucode_amd_apply(struct cpu_info *ci)
+{
+	uint64_t level;
+	uint32_t magic, tlen, i;
+	uint16_t eid = 0;
+	uint32_t sig, ebx, ecx, edx;
+	uint64_t start = 0;
+
+	if (cpu_ucode_data == NULL || cpu_ucode_size == 0) {
+		DPRINTF(("%s: no microcode provided\n", __func__));
+		return;
+	}
+
+	/*
+	 * Grab a mutex, because we are not allowed to run updates
+	 * simultaneously on HT siblings.
+	 */
+	mtx_enter(&cpu_ucode_mtx);
+
+	CPUID(1, sig, ebx, ecx, edx);
+
+	level = rdmsr(MSR_PATCH_LEVEL);
+	DPRINTF(("%s: cur patch level 0x%llx\n", __func__, level));
+
+	memcpy(&magic, cpu_ucode_data, 4);
+	if (magic != AMD_MAGIC) {
+		DPRINTF(("%s: bad magic %x\n", __func__, magic));
+		goto out;
+	}
+
+	memcpy(&tlen, &cpu_ucode_data[8], 4);
+
+	/* find equivalence id matching our cpu signature */
+	for (i = 12; i < 12 + tlen;) {
+		struct amd_equiv ae;
+		if (i + sizeof(ae) > cpu_ucode_size) {
+			DPRINTF(("%s: truncated etable\n", __func__));
+			goto out;
+		}
+		memcpy(&ae, &cpu_ucode_data[i], sizeof(ae));
+		i += sizeof(ae);
+		if (ae.id == sig)
+			eid = ae.eid;
+	}
+
+	/* look for newer patch with the equivalence id */
+	while (i < cpu_ucode_size) {
+		struct amd_patch ap;
+		if (i + sizeof(ap) > cpu_ucode_size) {
+			DPRINTF(("%s: truncated ptable\n", __func__));
+			goto out;
+		}
+		memcpy(&ap, &cpu_ucode_data[i], sizeof(ap));
+		if (ap.type == 1 && ap.eid == eid && ap.level > level)
+			start = (uint64_t)&cpu_ucode_data[i + 8];
+		if (i + ap.len + 8 > cpu_ucode_size) {
+			DPRINTF(("%s: truncated patch\n", __func__));
+			goto out;
+		}
+		i += ap.len + 8;
+	}
+
+	if (start != 0) {
+		wrmsr(MSR_PATCH_LOADER, start);
+		level = rdmsr(MSR_PATCH_LEVEL);
+		DPRINTF(("%s: new patch level 0x%llx\n", __func__, level));
+	}
+out:
+	mtx_leave(&cpu_ucode_mtx);
 }
 
 void
@@ -125,7 +221,7 @@ cpu_ucode_intel_apply(struct cpu_info *ci)
 	 * Grab a mutex, because we are not allowed to run updates
 	 * simultaneously on HT siblings.
 	 */
-	mtx_enter(&cpu_ucode_intel_mtx);
+	mtx_enter(&cpu_ucode_mtx);
 
 	old_rev = cpu_ucode_intel_rev();
 	update = cpu_ucode_intel_applied;
@@ -159,7 +255,7 @@ cpu_ucode_intel_apply(struct cpu_info *ci)
 	}
 
 out:
-	mtx_leave(&cpu_ucode_intel_mtx);
+	mtx_leave(&cpu_ucode_mtx);
 }
 
 struct intel_ucode_header *
