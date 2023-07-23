@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.c,v 1.76 2022/12/04 23:50:46 cheloha Exp $	*/
+/*	$OpenBSD: mount.c,v 1.77 2023/07/23 23:21:19 kn Exp $	*/
 /*	$NetBSD: mount.c,v 1.24 1995/11/18 03:34:29 cgd Exp $	*/
 
 /*
@@ -565,6 +565,7 @@ prmount(struct statfs *sf)
 			(void)printf(", %s=%d",
 			    "acdirmax", nfs_args->acdirmax);
 		}
+#ifndef SMALL
 	} else if (strcmp(sf->f_fstypename, MOUNT_MFS) == 0) {
 		int headerlen;
 		long blocksize;
@@ -573,6 +574,7 @@ prmount(struct statfs *sf)
 		header = getbsize(&headerlen, &blocksize);
 		(void)printf("%s%s=%lu %s", !f++ ? " (" : ", ",
 		    "size", sf->mount_info.mfs_args.size / blocksize, header);
+#endif /* SMALL */
 	} else if (strcmp(sf->f_fstypename, MOUNT_MSDOS) == 0) {
 		struct msdosfs_args *msdosfs_args = &sf->mount_info.msdosfs_args;
 
@@ -597,6 +599,7 @@ prmount(struct statfs *sf)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "gens");
 		if (iso_args->flags & ISOFSMNT_EXTATT)
 			(void)printf("%s%s", !f++ ? " (" : ", ", "extatt");
+#ifndef SMALL
 	} else if (strcmp(sf->f_fstypename, MOUNT_TMPFS) == 0) {
 		struct tmpfs_args *tmpfs_args = &sf->mount_info.tmpfs_args;
 
@@ -612,6 +615,7 @@ prmount(struct statfs *sf)
 		if (verbose || tmpfs_args->ta_nodes_max)
 			(void)printf("%s%s=%lu", !f++ ? " (" : ", ",
 			    "inodes", (unsigned long)tmpfs_args->ta_nodes_max);
+#endif /* SMALL */
 	}
 	(void)printf(f ? ")\n" : "\n");
 }
