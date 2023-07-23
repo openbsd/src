@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplmbox.c,v 1.5 2022/12/21 22:30:42 kettenis Exp $	*/
+/*	$OpenBSD: aplmbox.c,v 1.6 2023/07/23 11:17:49 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -25,6 +25,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
 #include <arm64/dev/aplmbox.h>
@@ -110,6 +111,8 @@ aplmbox_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	printf("\n");
+
+	power_domain_enable(faa->fa_node);
 
 	sc->sc_md.md_node = faa->fa_node;
 	sc->sc_md.md_cookie = sc;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpinctrl.c,v 1.7 2023/03/23 11:40:42 jsg Exp $	*/
+/*	$OpenBSD: aplpinctrl.c,v 1.8 2023/07/23 11:17:50 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_gpio.h>
 #include <dev/ofw/ofw_pinctrl.h>
+#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
 #define APPLE_PIN(pinmux) ((pinmux) & 0xffff)
@@ -135,6 +136,8 @@ aplpinctrl_attach(struct device *parent, struct device *self, void *aux)
 		printf(": can't map registers\n");
 		return;
 	}
+
+	power_domain_enable(faa->fa_node);
 
 	pinctrl_register(faa->fa_node, aplpinctrl_pinctrl, sc);
 
