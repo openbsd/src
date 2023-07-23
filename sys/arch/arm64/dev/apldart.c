@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldart.c,v 1.16 2022/07/21 18:24:24 kettenis Exp $	*/
+/*	$OpenBSD: apldart.c,v 1.17 2023/07/23 11:47:20 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -28,6 +28,7 @@
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_misc.h>
+#include <dev/ofw/ofw_power.h>
 #include <dev/ofw/fdt.h>
 
 /*
@@ -161,6 +162,8 @@ struct apldart_softc {
 
 	struct machine_bus_dma_tag sc_bus_dmat;
 	struct iommu_device	sc_id;
+
+	int			sc_do_suspend;
 };
 
 struct apldart_map_state {
@@ -187,9 +190,11 @@ void	apldart_dmamem_free(bus_dma_tag_t, struct apldart_dmamem *);
 
 int	apldart_match(struct device *, void *, void *);
 void	apldart_attach(struct device *, struct device *, void *);
+int	apldart_activate(struct device *, int);
 
 const struct cfattach apldart_ca = {
-	sizeof (struct apldart_softc), apldart_match, apldart_attach
+	sizeof (struct apldart_softc), apldart_match, apldart_attach, NULL,
+	apldart_activate
 };
 
 struct cfdriver apldart_cd = {
@@ -255,8 +260,10 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	sc->sc_dmat = faa->fa_dmat;
-
 	sc->sc_node = faa->fa_node;
+
+	power_domain_enable(sc->sc_node);
+
 	if (OF_is_compatible(sc->sc_node, "apple,t8110-dart")) {
 		params4 = HREAD4(sc, DART_T8110_PARAMS4);
 		sc->sc_nsid = params4 & DART_T8110_PARAMS4_NSID_MASK;
@@ -320,6 +327,11 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 			}
 		}
 	}
+
+	/*
+	 * We have full control over this DART, so do suspend it.
+	 */
+	sc->sc_do_suspend = 1;
 
 	/*
 	 * Use bypass mode if supported.  This avoids an issue with
@@ -431,6 +443,83 @@ apldart_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_id.id_map = apldart_map;
 	sc->sc_id.id_reserve = apldart_reserve;
 	iommu_device_register(&sc->sc_id);
+}
+
+void
+apldart_suspend(struct apldart_softc *sc)
+{
+	if (!sc->sc_do_suspend)
+		return;
+
+	power_domain_disable(sc->sc_node);
+}
+
+void
+apldart_resume(struct apldart_softc *sc)
+{
+	paddr_t pa;
+	int ntte, nl1, nl2;
+	uint32_t params2;
+	int sid, idx;
+
+	if (!sc->sc_do_suspend)
+		return;
+
+	power_domain_enable(sc->sc_node);
+
+	params2 = HREAD4(sc, DART_PARAMS2);
+	if (params2 & DART_PARAMS2_BYPASS_SUPPORT) {
+		for (sid = 0; sid < sc->sc_nsid; sid++)
+			HWRITE4(sc, DART_TCR(sc, sid), sc->sc_tcr_bypass);
+		return;
+	}
+
+	ntte = howmany(sc->sc_dvaend, DART_PAGE_SIZE);
+	nl2 = howmany(ntte, DART_PAGE_SIZE / sizeof(uint64_t));
+	nl1 = howmany(nl2, DART_PAGE_SIZE / sizeof(uint64_t));
+
+	/* Install page tables. */
+	for (sid = 0; sid < sc->sc_nsid; sid++) {
+		pa = APLDART_DMA_DVA(sc->sc_l1);
+		for (idx = 0; idx < nl1; idx++) {
+			HWRITE4(sc, DART_TTBR(sc, sid, idx),
+			    (pa >> DART_TTBR_SHIFT) | sc->sc_ttbr_valid);
+			pa += DART_PAGE_SIZE;
+		}
+	}
+	sc->sc_flush_tlb(sc);
+
+	/* Enable all streams. */
+	for (idx = 0; idx < howmany(sc->sc_nsid, 32); idx++)
+		HWRITE4(sc, DART_SID_ENABLE(sc, idx), ~0);
+
+	/* Enable translations. */
+	for (sid = 0; sid < sc->sc_nsid; sid++)
+		HWRITE4(sc, DART_TCR(sc, sid), sc->sc_tcr_translate_enable);
+
+	if (OF_is_compatible(sc->sc_node, "apple,t8110-dart")) {
+		HWRITE4(sc, DART_T8110_ERROR, HREAD4(sc, DART_T8110_ERROR));
+		HWRITE4(sc, DART_T8110_ERROR_MASK, 0);
+	} else {
+		HWRITE4(sc, DART_T8020_ERROR, HREAD4(sc, DART_T8020_ERROR));
+	}
+}
+
+int
+apldart_activate(struct device *self, int act)
+{
+	struct apldart_softc *sc = (struct apldart_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		apldart_suspend(sc);
+		break;
+	case DVACT_RESUME:
+		apldart_resume(sc);
+		break;
+	}
+
+	return 0;
 }
 
 bus_dma_tag_t
