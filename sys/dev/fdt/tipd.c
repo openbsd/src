@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipd.c,v 1.2 2023/07/17 17:50:22 kettenis Exp $	*/
+/*	$OpenBSD: tipd.c,v 1.3 2023/07/23 11:42:44 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -42,6 +42,7 @@
 #define TPS_SYSTEM_POWER_STATE	0x20
 #define  TPS_SYSTEM_POWER_STATE_S0	0
 #define  TPS_SYSTEM_POWER_STATE_S5	5
+#define TPS_POWER_STATUS	0x3f
 
 #define TPS_CMD(s)	((s[3] << 24) | (s[2] << 16) | (s[1] << 8) | s[0])
 
@@ -59,6 +60,7 @@ struct tipd_softc {
 	void			*sc_ih;
 
 	struct device_ports	sc_ports;
+	uint32_t		sc_status;
 };
 
 int	tipd_match(struct device *, void *, void *);
@@ -110,6 +112,7 @@ tipd_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
+	tipd_read_4(sc, TPS_STATUS, &sc->sc_status);
 	tipd_write_8(sc, TPS_INT_MASK_1, CD_INT_PLUG_EVENT);
 
 	node = OF_getnodebyname(node, "connector");
@@ -127,6 +130,9 @@ tipd_activate(struct device *self, int act)
 	int error;
 
 	switch (act) {
+	case DVACT_QUIESCE:
+		tipd_write_8(sc, TPS_INT_MASK_1, 0);
+		break;
 	case DVACT_SUSPEND:
 		state = TPS_SYSTEM_POWER_STATE_S5;
 		error = tipd_exec(sc, "SSPS", &state, sizeof(state), NULL, 0);
@@ -138,6 +144,10 @@ tipd_activate(struct device *self, int act)
 		error = tipd_exec(sc, "SSPS", &state, sizeof(state), NULL, 0);
 		if (error)
 			printf("%s: powerup failed\n", sc->sc_dev.dv_xname);
+		break;
+	case DVACT_WAKEUP:
+		tipd_read_4(sc, TPS_STATUS, &sc->sc_status);
+		tipd_write_8(sc, TPS_INT_MASK_1, CD_INT_PLUG_EVENT);
 		break;
 	}
 
@@ -197,11 +207,19 @@ tipd_intr(void *arg)
 		error = tipd_read_4(sc, TPS_STATUS, &status);
 		if (error)
 			goto fail;
-			
-		if (status & TPS_STATUS_PLUG_PRESENT)
-			tipd_connect(sc);
-		else
-			tipd_disconnect(sc);
+
+		/*
+		 * We may get a spurious plug event upon resume.  Make
+		 * sure we only signal a new connection when the plug
+		 * present state really changed.
+		 */
+		if ((status ^ sc->sc_status) & TPS_STATUS_PLUG_PRESENT) {
+			if (status & TPS_STATUS_PLUG_PRESENT)
+				tipd_connect(sc);
+			else
+				tipd_disconnect(sc);
+			sc->sc_status = status;
+		}
 	}
 
 fail:
