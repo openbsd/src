@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.23 2023/07/13 19:04:50 jasper Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.24 2023/07/24 01:02:47 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -183,6 +183,8 @@ doit(char *name)
 			_exit(0);
 		}
 
+		if (pledge(NULL, "stdio rpath") == -1)
+			err(1, "pledge");
 		execl(name, name, (char *)NULL);
 		perror(name);
 		_exit(1);
