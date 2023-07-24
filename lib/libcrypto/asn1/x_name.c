@@ -1,4 +1,4 @@
-/* $OpenBSD: x_name.c,v 1.40 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: x_name.c,v 1.41 2023/07/24 06:56:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -189,13 +189,13 @@ const ASN1_ITEM X509_NAME_INTERNAL_it = {
  */
 
 const ASN1_EXTERN_FUNCS x509_name_ff = {
-	NULL,
-	x509_name_ex_new,
-	x509_name_ex_free,
-	0,	/* Default clear behaviour is OK */
-	x509_name_ex_d2i,
-	x509_name_ex_i2d,
-	x509_name_ex_print
+	.app_data = NULL,
+	.asn1_ex_new = x509_name_ex_new,
+	.asn1_ex_free = x509_name_ex_free,
+	.asn1_ex_clear = NULL,
+	.asn1_ex_d2i = x509_name_ex_d2i,
+	.asn1_ex_i2d = x509_name_ex_i2d,
+	.asn1_ex_print = x509_name_ex_print,
 };
 
 const ASN1_ITEM X509_NAME_it = {
