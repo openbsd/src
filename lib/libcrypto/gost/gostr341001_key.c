@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_key.c,v 1.13 2023/07/08 14:30:44 beck Exp $ */
+/* $OpenBSD: gostr341001_key.c,v 1.14 2023/07/24 17:08:53 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -132,7 +132,7 @@ GOST_KEY_check_key(const GOST_KEY *key)
 		goto err;
 
 	/* testing whether the pub_key is on the elliptic curve */
-	if (EC_POINT_is_on_curve(key->group, key->pub_key, ctx) == 0) {
+	if (EC_POINT_is_on_curve(key->group, key->pub_key, ctx) <= 0) {
 		GOSTerror(EC_R_POINT_IS_NOT_ON_CURVE);
 		goto err;
 	}

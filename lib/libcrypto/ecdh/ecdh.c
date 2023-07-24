@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.5 2023/07/12 08:54:18 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.6 2023/07/24 17:08:53 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -176,7 +176,7 @@ ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh
 	if ((group = EC_KEY_get0_group(ecdh)) == NULL)
 		goto err;
 
-	if (!EC_POINT_is_on_curve(group, pub_key, ctx))
+	if (EC_POINT_is_on_curve(group, pub_key, ctx) <= 0)
 		goto err;
 
 	if ((point = EC_POINT_new(group)) == NULL) {
