@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.48 2023/03/08 04:43:08 guenther Exp $ */
+/* $OpenBSD: pckbd.c,v 1.49 2023/07/24 19:29:39 miod Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -81,6 +81,7 @@
 #include <dev/pckbc/pmsreg.h>
 
 #include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wskbdraw.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
@@ -496,104 +497,104 @@ pckbd_enable(void *v, int on)
 const u_int8_t pckbd_xtbl[] = {
 /* 0x00 */
 	0,
-	0x43,		/* F9 */
+	RAWKEY_f9,
 	0,
-	0x3f,		/* F5 */
-	0x3d,		/* F3 */
-	0x3b,		/* F1 */
-	0x3c,		/* F2 */
-	0x58,		/* F12 */
-	0x40,		/* F6 according to documentation */
-	0x44,		/* F10 */
-	0x42,		/* F8 */
-	0x40,		/* F6 according to experimentation */
-	0x3e,		/* F4 */
-	0x0f,		/* Tab */
-	0x29,		/* ` ~ */
+	RAWKEY_f5,
+	RAWKEY_f3,
+	RAWKEY_f1,
+	RAWKEY_f2,
+	RAWKEY_f12,
+	RAWKEY_f6,	/* F6 according to documentation */
+	RAWKEY_f10,
+	RAWKEY_f8,
+	RAWKEY_f6,	/* F6 according to experimentation */
+	RAWKEY_f4,
+	RAWKEY_Tab,
+	RAWKEY_grave,
 	0,
 /* 0x10 */
 	0,
-	0x38,		/* Left Alt */
-	0x2a,		/* Left Shift */
+	RAWKEY_Alt_L,
+	RAWKEY_Shift_L,
 	0,
-	0x1d,		/* Left Ctrl */
-	0x10,		/* q */
-	0x02,		/* 1 ! */
+	RAWKEY_Control_L,
+	RAWKEY_q,
+	RAWKEY_1,
 	0,
 	0,
 	0,
-	0x2c,		/* z */
-	0x1f,		/* s */
-	0x1e,		/* a */
-	0x11,		/* w */
-	0x03,		/* 2 @ */
-	0,
+	RAWKEY_z,
+	RAWKEY_s,
+	RAWKEY_a,
+	RAWKEY_w,
+	RAWKEY_2,
+	RAWKEY_Meta_L,
 /* 0x20 */	
 	0,
-	0x2e,		/* c */
-	0x2d,		/* x */
-	0x20,		/* d */
-	0x12,		/* e */
-	0x05,		/* 4 $ */
-	0x04,		/* 3 # */
+	RAWKEY_c,
+	RAWKEY_x,
+	RAWKEY_d,
+	RAWKEY_e,
+	RAWKEY_4,
+	RAWKEY_3,
 	0,
-	0,
-	0x39,		/* Space */
-	0x2f,		/* v */
-	0x21,		/* f */
-	0x14,		/* t */
-	0x13,		/* r */
-	0x06,		/* 5 % */
+	RAWKEY_Meta_R,
+	RAWKEY_space,
+	RAWKEY_v,
+	RAWKEY_f,
+	RAWKEY_t,
+	RAWKEY_r,
+	RAWKEY_5,
 	0,
 /* 0x30 */
 	0,
-	0x31,		/* n */
-	0x30,		/* b */
-	0x23,		/* h */
-	0x22,		/* g */
-	0x15,		/* y */
-	0x07,		/* 6 ^ */
+	RAWKEY_n,
+	RAWKEY_b,
+	RAWKEY_h,
+	RAWKEY_g,
+	RAWKEY_y,
+	RAWKEY_6,
 	0,
 	0,
 	0,
-	0x32,		/* m */
-	0x24,		/* j */
-	0x16,		/* u */
-	0x08,		/* 7 & */
-	0x09,		/* 8 * */
+	RAWKEY_m,
+	RAWKEY_j,
+	RAWKEY_u,
+	RAWKEY_7,
+	RAWKEY_8,
 	0,
 /* 0x40 */
 	0,
-	0x33,		/* , < */
-	0x25,		/* k */
-	0x17,		/* i */
-	0x18,		/* o */
-	0x0b,		/* 0 ) */
-	0x0a,		/* 9 ( */
+	RAWKEY_comma,
+	RAWKEY_k,
+	RAWKEY_i,
+	RAWKEY_o,
+	RAWKEY_0,
+	RAWKEY_9,
 	0,
 	0,
-	0x34,		/* . > */
-	0x35,		/* / ? */
-	0x26,		/* l */
-	0x27,		/* ; : */
-	0x19,		/* p */
-	0x0c,		/* - _ */
+	RAWKEY_period,
+	RAWKEY_slash,
+	RAWKEY_l,
+	RAWKEY_semicolon,
+	RAWKEY_p,
+	RAWKEY_minus,
 	0,
 /* 0x50 */
 	0,
 	0,
-	0x28,		/* ' " */
+	RAWKEY_apostrophe,
 	0,
-	0x1a,		/* [ { */
-	0x0d,		/* = + */
+	RAWKEY_bracketleft,
+	RAWKEY_equal,
 	0,
 	0,
-	0x3a,		/* Caps Lock */
-	0x36,		/* Right Shift */
-	0x1c,		/* Return */
-	0x1b,		/* ] } */
+	RAWKEY_Caps_Lock,
+	RAWKEY_Shift_R,
+	RAWKEY_Return,
+	RAWKEY_bracketright,
 	0,
-	0x2b,		/* \ | */
+	RAWKEY_backslash,
 	0,
 	0,
 /* 0x60 */
@@ -603,38 +604,38 @@ const u_int8_t pckbd_xtbl[] = {
 	0,
 	0,
 	0,
-	0x0e,		/* Back Space */
+	RAWKEY_BackSpace,
 	0,
 	0,
-	0x4f,		/* KP 1 */
+	RAWKEY_KP_End,
 	0,
-	0x4b,		/* KP 4 */
-	0x47,		/* KP 7 */
+	RAWKEY_KP_Left,
+	RAWKEY_KP_Home,
 	0,
 	0,
 	0,
 /* 0x70 */
-	0x52,		/* KP 0 */
-	0x53,		/* KP . */
-	0x50,		/* KP 2 */
-	0x4c,		/* KP 5 */
-	0x4d,		/* KP 6 */
-	0x48,		/* KP 8 */
-	0x01,		/* Escape */
-	0x45,		/* Num Lock */
-	0x57,		/* F11 */
-	0x4e,		/* KP + */
-	0x51,		/* KP 3 */
-	0x4a,		/* KP - */
-	0x37,		/* KP * */
-	0x49,		/* KP 9 */
-	0x46,		/* Scroll Lock */
+	RAWKEY_KP_Insert,
+	RAWKEY_KP_Delete,
+	RAWKEY_KP_Down,
+	RAWKEY_KP_Begin,
+	RAWKEY_KP_Right,
+	RAWKEY_KP_Up,
+	RAWKEY_Escape,
+	RAWKEY_Num_Lock,
+	RAWKEY_f11,
+	RAWKEY_KP_Add,
+	RAWKEY_KP_Next,
+	RAWKEY_KP_Subtract,
+	RAWKEY_KP_Multiply,
+	RAWKEY_KP_Prior,
+	RAWKEY_Hold_Screen,
 	0,
 /* 0x80 */
 	0,
 	0,
 	0,
-	0x41,		/* F7 (produced as an actual 8 bit code) */
+	RAWKEY_f7,
 	0		/* Alt-Print Screen */
 };
 
@@ -657,10 +658,10 @@ const u_int8_t pckbd_xtbl_ext[] = {
 	0,
 /* 0x10 */
 	0,
-	0x38,		/* Right Alt */
+	RAWKEY_Alt_R,
 	0,		/* E0 12, to be ignored */
 	0,
-	0x1d,		/* Right Ctrl */
+	RAWKEY_Control_R,
 	0,
 	0,
 	0,
@@ -717,7 +718,7 @@ const u_int8_t pckbd_xtbl_ext[] = {
 	0,
 	0,
 	0,
-	0x55,		/* KP / */
+	RAWKEY_KP_Divide,
 	0,
 	0,
 	0,
@@ -734,7 +735,7 @@ const u_int8_t pckbd_xtbl_ext[] = {
 	0,
 	0,
 	0,
-	0x1c,		/* KP Return */
+	RAWKEY_KP_Enter,
 	0,
 	0,
 	0,
@@ -750,29 +751,29 @@ const u_int8_t pckbd_xtbl_ext[] = {
 	0,
 	0,
 	0,
-	0x4f,		/* End */
+	RAWKEY_End,
 	0,
-	0x4b,		/* Left */
-	0x47,		/* Home */
+	RAWKEY_Left,
+	RAWKEY_Home,
 	0,
 	0,
 	0,
 /* 0x70 */
-	0x52,		/* Insert */
-	0x53,		/* Delete */
-	0x50,		/* Down */
+	RAWKEY_Insert,
+	RAWKEY_Delete,
+	RAWKEY_Down,
 	0,
-	0x4d,		/* Right */
-	0x48,		/* Up */
-	0,
-	0,
+	RAWKEY_Right,
+	RAWKEY_Up,
 	0,
 	0,
-	0x51,		/* Page Down */
 	0,
-	0x37,		/* Print Screen */
-	0x49,		/* Page Up */
-	0x46,		/* Ctrl-Break */
+	0,
+	RAWKEY_Next,
+	0,
+	RAWKEY_Print_Screen,
+	RAWKEY_Prior,
+	0xc6,		/* Ctrl-Break */
 	0
 };
 
@@ -802,12 +803,12 @@ pckbd_scancode_translate(struct pckbd_internal *id, int datain)
 		if (datain >= sizeof pckbd_xtbl_ext)
 			datain = 0;
 		else
-			datain = pckbd_xtbl_ext[datain];
+			datain = pckbd_xtbl_ext[datain] & ~0x80;
 	} else {
 		if (datain >= sizeof pckbd_xtbl)
 			datain = 0;
 		else
-			datain = pckbd_xtbl[datain];
+			datain = pckbd_xtbl[datain] & ~0x80;
 	}
 
 	if (datain == 0) {
