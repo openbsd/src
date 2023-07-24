@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_check.c,v 1.27 2023/07/08 15:29:03 beck Exp $ */
+/* $OpenBSD: dh_check.c,v 1.28 2023/07/24 16:25:02 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -289,7 +289,7 @@ DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *flags)
 		if (!BN_mod_exp_ct(residue, pub_key, dh->q, dh->p, ctx))
 			goto err;
 		if (!BN_is_one(residue))
-			*flags = DH_CHECK_PUBKEY_INVALID;
+			*flags |= DH_CHECK_PUBKEY_INVALID;
 	}
 
 	ok = 1;
