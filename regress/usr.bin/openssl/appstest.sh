@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: appstest.sh,v 1.57 2023/07/03 05:31:56 beck Exp $
+# $OpenBSD: appstest.sh,v 1.58 2023/07/24 05:54:12 tb Exp $
 #
 # Copyright (c) 2016 Kinichiro Inoguchi <inoguchi@openbsd.org>
 #
@@ -117,8 +117,6 @@ __EOF__
 
 	start_message "errstr"
 	$openssl_bin errstr 2606A074
-	check_exit_status $?
-	$openssl_bin errstr -stats 2606A074 > $user1_dir/errstr-stats.out
 	check_exit_status $?
 
 	#---------#---------#---------#---------#---------#---------#---------
