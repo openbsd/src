@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.31 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: c_all.c,v 1.32 2023/07/24 10:24:58 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -317,7 +317,6 @@ OpenSSL_add_all_digests(void)
 void
 OPENSSL_add_all_algorithms_noconf(void)
 {
-	OPENSSL_cpuid_setup();
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 }
