@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdraw.h,v 1.3 2011/01/30 16:21:05 miod Exp $	*/
+/*	$OpenBSD: wskbdraw.h,v 1.4 2023/07/24 19:28:40 miod Exp $	*/
 
 /*
  * Copyright (c) 2005, Miodrag Vallat
@@ -120,7 +120,6 @@
 #define	RAWKEY_less			0x56	/* < > on European keyboards */
 #define	RAWKEY_f11			0x57
 #define	RAWKEY_f12			0x58
-#define	RAWKEY_Print_Screen		0x67
 #define	RAWKEY_Pause			0x6a
 #define	RAWKEY_Meta_L			0x73
 #define	RAWKEY_Meta_R			0x74
@@ -128,6 +127,7 @@
 #define	RAWKEY_KP_Enter			0x9c
 #define	RAWKEY_Control_R		0x9d
 #define	RAWKEY_KP_Divide		0xb5
+#define	RAWKEY_Print_Screen		0xb7
 #define	RAWKEY_Alt_R			0xb8
 #define	RAWKEY_Home			0xc7
 #define	RAWKEY_Up			0xc8
