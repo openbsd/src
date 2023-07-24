@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.104 2023/07/21 04:04:51 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.105 2023/07/24 14:54:00 deraadt Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -590,6 +590,7 @@
 #define MSR_DE_CFG	0xc0011029	/* Decode Configuration */
 #define	DE_CFG_721	0x00000001	/* errata 721 */
 #define DE_CFG_SERIALIZE_LFENCE	(1 << 1)	/* Enable serializing lfence */
+#define DE_CFG_SERIALIZE_9 (1 << 9)	/* Zenbleed chickenbit */
 
 #define IPM_C1E_CMP_HLT	0x10000000
 #define IPM_SMI_CMP_HLT	0x08000000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.663 2023/01/30 10:49:05 jsg Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.664 2023/07/24 14:54:00 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1639,6 +1639,7 @@ identifycpu(struct cpu_info *ci)
 	char *cpu_device = ci->ci_dev->dv_xname;
 	int skipspace;
 	extern uint32_t cpu_meltdown;
+	uint64_t msr, nmsr;
 
 	if (cpuid_level == -1) {
 		name = "486DX";
@@ -1987,13 +1988,16 @@ identifycpu(struct cpu_info *ci)
 	 */
 	if (!strcmp(cpu_vendor, "AuthenticAMD")) {
 		if (ci->ci_family >= 0x10 && ci->ci_family != 0x11) {
-			uint64_t msr;
-
-			msr = rdmsr(MSR_DE_CFG);
-			if ((msr & DE_CFG_SERIALIZE_LFENCE) == 0) {
-				msr |= DE_CFG_SERIALIZE_LFENCE;
-				wrmsr(MSR_DE_CFG, msr);
-			}
+			nmsr = msr = rdmsr(MSR_DE_CFG);
+			nmsr |= DE_CFG_SERIALIZE_LFENCE;
+			if (msr != nmsr)
+				wrmsr(MSR_DE_CFG, nmsr);
+		}
+		if (family == 0x17 && ci->ci_model >= 0x31) {
+			nmsr = msr = rdmsr(MSR_DE_CFG);
+			nmsr |= DE_CFG_SERIALIZE_9;
+			if (msr != nmsr)
+				wrmsr(MSR_DE_CFG, nmsr);
 		}
 	}
 
