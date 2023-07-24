@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.36 2023/03/06 20:34:35 miod Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.37 2023/07/24 17:03:32 miod Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -617,13 +617,14 @@ wsemul_sun_output_control(struct wsemul_sun_emuldata *edp,
 		break;
 
 	case ';':		/* argument terminator */
-		edp->nargs++;
+		if (edp->nargs < SUN_EMUL_NARGS)
+			edp->nargs++;
 		break;
 
 	default:		/* end of escape sequence */
-		oargs = edp->nargs++;
-		if (edp->nargs > SUN_EMUL_NARGS)
-			edp->nargs = SUN_EMUL_NARGS;
+		oargs = edp->nargs;
+		if (edp->nargs < SUN_EMUL_NARGS)
+			edp->nargs++;
 		rc = wsemul_sun_control(edp, instate);
 		if (rc != 0) {
 			/* undo nargs progress */
