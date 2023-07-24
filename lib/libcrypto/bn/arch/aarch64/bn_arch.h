@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_arch.h,v 1.12 2023/06/21 07:56:43 jsing Exp $ */
+/*	$OpenBSD: bn_arch.h,v 1.13 2023/07/24 10:21:29 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -241,7 +241,7 @@ bn_qwmulw_addw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0, BN_ULONG b,
 	    "mul     %[c], %[a3], %[b] \n"
 	    "adcs   %[r3], %[r3], %[c] \n"
 	    "adc    %[r4], %[r4], xzr  \n"
-	    : [c]"+r"(c), [r4]"=&r"(r4), [r3]"=&r"(r3), [r2]"=&r"(r2),
+	    : [c]"+&r"(c), [r4]"=&r"(r4), [r3]"=&r"(r3), [r2]"=&r"(r2),
 		[r1]"=&r"(r1), [r0]"=&r"(r0)
 	    : [a3]"r"(a3), [a2]"r"(a2), [a1]"r"(a1), [a0]"r"(a0), [b]"r"(b)
 	    : "cc");
@@ -282,7 +282,7 @@ bn_qwmulw_addqw_addw(BN_ULONG a3, BN_ULONG a2, BN_ULONG a1, BN_ULONG a0,
 	    "adcs   %[r2], %[r2], %[c2] \n"
 	    "adcs   %[r3], %[r3], %[c3] \n"
 	    "adc    %[r4], %[r4], xzr   \n"
-	    : [d]"+r"(d), [r4]"=&r"(r4), [r3]"=&r"(r3), [r2]"=&r"(r2),
+	    : [d]"+&r"(d), [r4]"=&r"(r4), [r3]"=&r"(r3), [r2]"=&r"(r2),
 		[r1]"=&r"(r1), [r0]"=&r"(r0)
 	    : [a3]"r"(a3), [a2]"r"(a2), [a1]"r"(a1), [a0]"r"(a0), [b]"r"(b),
 		[c3]"r"(c3), [c2]"r"(c2), [c1]"r"(c1), [c0]"r"(c0)
