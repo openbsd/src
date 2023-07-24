@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciprobe.c,v 1.10 2014/03/29 18:09:29 guenther Exp $	*/
+/*	$OpenBSD: pciprobe.c,v 1.11 2023/07/24 14:02:36 jsg Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -39,12 +39,12 @@ pciprobe(void)
 {
 	bios_pciinfo_t bpi;
 	u_int32_t hw_chars, rev, rc, sig;
-	u_int32_t entry32;
+	u_int32_t entry32, lastbus;
 
 	/* PCI BIOS v2.0c+ - Installation Check */
-	__asm volatile(DOINT(0x1A) "; shll $8,%2; setc %b2"
-		: "=a" (hw_chars), "=b" (rev), "=c" (rc),
-		  "=d" (sig), "=D" (entry32)
+	__asm volatile(DOINT(0x1A)
+		: "=a" (hw_chars), "=b" (rev), "=c" (lastbus),
+		  "=d" (sig), "=D" (entry32), "=@ccc" (rc)
 		: "0" (0xB101), "4" (0x0)
 		: "cc");
 
@@ -62,7 +62,7 @@ pciprobe(void)
 	bpi.pci_chars = hw_chars & 0xFFFF;
 	bpi.pci_rev = rev & 0xFFFF;
 	bpi.pci_entry32 = entry32;
-	bpi.pci_lastbus = (rc>>8) & 0xFF;
+	bpi.pci_lastbus = lastbus & 0xFF;
 
 	addbootarg(BOOTARG_PCIINFO, sizeof(bios_pciinfo_t), &bpi);
 }
