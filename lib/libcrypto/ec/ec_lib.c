@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_lib.c,v 1.64 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: ec_lib.c,v 1.65 2023/07/25 06:57:26 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -1062,7 +1062,7 @@ EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
     BN_CTX *ctx_in)
 {
 	BN_CTX *ctx;
-	int ret = 0;
+	int ret = -1;
 
 	if ((ctx = ctx_in) == NULL)
 		ctx = BN_CTX_new();
