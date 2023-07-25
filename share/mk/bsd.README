@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.85 2020/09/22 10:31:46 martijn Exp $
+#	$OpenBSD: bsd.README,v 1.86 2023/07/25 20:19:14 asou Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -301,6 +301,8 @@ BUILDAFTER	Stuff that comes later (usually don't touch, defined correctly
 CLEANFILES	Additional files to remove for the clean and cleandir targets.
 
 COPTS		Additional flags to the compiler when creating C objects.
+
+CXXOPTS		Additional flags to the compiler when creating C++ objects.
 
 LDADD		Additional linker objects.  Usually used for libraries.
 		For example, to link with the crypto and utility
