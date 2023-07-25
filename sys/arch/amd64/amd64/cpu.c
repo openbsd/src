@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.172 2023/07/24 14:53:58 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.173 2023/07/25 04:42:00 deraadt Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1216,7 +1216,8 @@ cpu_fix_msrs(struct cpu_info *ci)
 			if (msr != nmsr)
 				wrmsr(MSR_DE_CFG, nmsr);
 		}
-		if (family == 0x17 && ci->ci_model >= 0x31) {
+		if (family == 0x17 && ci->ci_model >= 0x31 &&
+		    (cpu_ecxfeature & CPUIDECX_HV) == 0) {
 			nmsr = msr = rdmsr(MSR_DE_CFG);
 			nmsr |= DE_CFG_SERIALIZE_9;
 			if (msr != nmsr)
