@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.47 2023/07/25 08:10:30 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.48 2023/07/25 10:00:04 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -140,7 +140,7 @@ ec_GFp_simple_group_set_curve(EC_GROUP *group,
 	/* group->a */
 	if (!BN_nnmod(tmp_a, a, p, ctx))
 		goto err;
-	if (group->meth->field_encode) {
+	if (group->meth->field_encode != NULL) {
 		if (!group->meth->field_encode(group, &group->a, tmp_a, ctx))
 			goto err;
 	} else if (!bn_copy(&group->a, tmp_a))
@@ -149,7 +149,7 @@ ec_GFp_simple_group_set_curve(EC_GROUP *group,
 	/* group->b */
 	if (!BN_nnmod(&group->b, b, p, ctx))
 		goto err;
-	if (group->meth->field_encode)
+	if (group->meth->field_encode != NULL)
 		if (!group->meth->field_encode(group, &group->b, &group->b, ctx))
 			goto err;
 
@@ -341,7 +341,7 @@ ec_GFp_simple_set_Jprojective_coordinates(const EC_GROUP *group,
 			goto err;
 		Z_is_one = BN_is_one(&point->Z);
 		if (group->meth->field_encode != NULL) {
-			if (Z_is_one && (group->meth->field_set_to_one != 0)) {
+			if (Z_is_one && (group->meth->field_set_to_one != NULL)) {
 				if (!group->meth->field_set_to_one(group, &point->Z, ctx))
 					goto err;
 			} else {
@@ -469,7 +469,7 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT
 			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
-		if (group->meth->field_encode == 0) {
+		if (group->meth->field_encode == NULL) {
 			/* field_sqr works on standard representation */
 			if (!group->meth->field_sqr(group, Z_2, Z_1, ctx))
 				goto err;
@@ -487,7 +487,7 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT
 				goto err;
 		}
 		if (y != NULL) {
-			if (group->meth->field_encode == 0) {
+			if (group->meth->field_encode == NULL) {
 				/* field_mul works on standard representation */
 				if (!group->meth->field_mul(group, Z_3, Z_2, Z_1, ctx))
 					goto err;
@@ -1162,7 +1162,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *po
 			goto err;
 		}
 	}
-	if (group->meth->field_encode != 0) {
+	if (group->meth->field_encode != NULL) {
 		/*
 		 * in the Montgomery case, we just turned  R*H  (representing
 		 * H) into  1/(R*H),  but we need  R*(1/H)  (representing
@@ -1212,7 +1212,7 @@ ec_GFp_simple_points_make_affine(const EC_GROUP *group, size_t num, EC_POINT *po
 			if (!group->meth->field_mul(group, &p->Y, &p->Y, tmp1, ctx))
 				goto err;
 
-			if (group->meth->field_set_to_one != 0) {
+			if (group->meth->field_set_to_one != NULL) {
 				if (!group->meth->field_set_to_one(group, &p->Z, ctx))
 					goto err;
 			} else {
