@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.155 2023/07/04 17:29:32 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.156 2023/07/25 06:48:37 guenther Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -403,7 +403,9 @@ void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	cpu_proc_fork(struct proc *, struct proc *);
 int	amd64_pa_used(paddr_t);
+#define	cpu_idle_enter()	do { /* nothing */ } while (0)
 extern void (*cpu_idle_cycle_fcn)(void);
+#define	cpu_idle_leave()	do { /* nothing */ } while (0)
 
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);

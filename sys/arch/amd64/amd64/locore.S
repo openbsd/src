@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.136 2023/07/10 03:32:10 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.137 2023/07/25 06:48:37 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -472,16 +472,6 @@ bogus_proc_pmap:
 	.popsection
 #endif /* DIAGNOSTIC */
 END(cpu_switchto)
-
-ENTRY(cpu_idle_enter)
-	ret
-	lfence
-END(cpu_idle_enter)
-
-ENTRY(cpu_idle_leave)
-	ret
-	lfence
-END(cpu_idle_leave)
 
 /* placed here for correct static branch prediction in cpu_idle_* */
 NENTRY(retpoline_rax)
