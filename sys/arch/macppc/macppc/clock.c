@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.54 2023/02/04 23:17:05 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.55 2023/07/25 18:16:20 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -234,7 +234,6 @@ delay(unsigned n)
 void
 setstatclockrate(int newhz)
 {
-	clockintr_setstatclockrate(newhz);
 }
 
 u_int

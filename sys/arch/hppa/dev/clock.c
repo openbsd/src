@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.35 2023/02/04 19:19:36 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.36 2023/07/25 18:16:20 cheloha Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -141,7 +141,6 @@ itmr_intr(void *v)
 void
 setstatclockrate(int newhz)
 {
-	clockintr_setstatclockrate(newhz);
 }
 
 u_int

@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.27 2023/07/02 19:02:27 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.28 2023/07/25 18:16:19 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -32,39 +32,23 @@
 /*
  * Protection for global variables in this file:
  *
- *	C	Global clockintr configuration mutex (clockintr_mtx).
  *	I	Immutable after initialization.
  */
-struct mutex clockintr_mtx = MUTEX_INITIALIZER(IPL_CLOCK);
-
 u_int clockintr_flags;			/* [I] global state + behavior flags */
 uint32_t hardclock_period;		/* [I] hardclock period (ns) */
 uint32_t schedclock_period;		/* [I] schedclock period (ns) */
-volatile u_int statclock_gen = 1;	/* [C] statclock update generation */
-volatile uint32_t statclock_avg;	/* [C] average statclock period (ns) */
-uint32_t statclock_min;			/* [C] minimum statclock period (ns) */
-uint32_t statclock_mask;		/* [C] set of allowed offsets */
-uint32_t stat_avg;			/* [I] average stathz period (ns) */
-uint32_t stat_min;			/* [I] set of allowed offsets */
-uint32_t stat_mask;			/* [I] max offset from minimum (ns) */
-uint32_t prof_avg;			/* [I] average profhz period (ns) */
-uint32_t prof_min;			/* [I] minimum profhz period (ns) */
-uint32_t prof_mask;			/* [I] set of allowed offsets */
+uint32_t statclock_avg;			/* [I] average statclock period (ns) */
+uint32_t statclock_min;			/* [I] minimum statclock period (ns) */
+uint32_t statclock_mask;		/* [I] set of allowed offsets */
 
-uint64_t clockintr_advance(struct clockintr *, uint64_t);
-void clockintr_cancel(struct clockintr *);
 void clockintr_cancel_locked(struct clockintr *);
-struct clockintr *clockintr_establish(struct clockintr_queue *,
-    void (*)(struct clockintr *, void *));
 uint64_t clockintr_expiration(const struct clockintr *);
 void clockintr_hardclock(struct clockintr *, void *);
 uint64_t clockintr_nsecuptime(const struct clockintr *);
 void clockintr_schedclock(struct clockintr *, void *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
-void clockintr_stagger(struct clockintr *, uint64_t, u_int, u_int);
 void clockintr_statclock(struct clockintr *, void *);
-void clockintr_statvar_init(int, uint32_t *, uint32_t *, uint32_t *);
 uint64_t clockqueue_next(const struct clockintr_queue *);
 void clockqueue_reset_intrclock(struct clockintr_queue *);
 uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
@@ -75,6 +59,8 @@ uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
 void
 clockintr_init(u_int flags)
 {
+	uint32_t half_avg, var;
+
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 	KASSERT(clockintr_flags == 0);
 	KASSERT(!ISSET(flags, ~CL_FLAG_MASK));
@@ -83,12 +69,22 @@ clockintr_init(u_int flags)
 	hardclock_period = 1000000000 / hz;
 
 	KASSERT(stathz >= 1 && stathz <= 1000000000);
-	KASSERT(profhz >= stathz && profhz <= 1000000000);
-	KASSERT(profhz % stathz == 0);
-	clockintr_statvar_init(stathz, &stat_avg, &stat_min, &stat_mask);
-	clockintr_statvar_init(profhz, &prof_avg, &prof_min, &prof_mask);
-	SET(clockintr_flags, CL_STATCLOCK);
-	clockintr_setstatclockrate(stathz);
+
+	/*
+	 * Compute the average statclock() period.  Then find var, the
+	 * largest power of two such that var <= statclock_avg / 2.
+	 */
+	statclock_avg = 1000000000 / stathz;
+	half_avg = statclock_avg / 2;
+	for (var = 1U << 31; var > half_avg; var /= 2)
+		continue;
+
+	/*
+	 * Set a lower bound for the range using statclock_avg and var.
+	 * The mask for that range is just (var - 1).
+	 */
+	statclock_min = statclock_avg - (var / 2);
+	statclock_mask = var - 1;
 
 	KASSERT(schedhz >= 0 && schedhz <= 1000000000);
 	if (schedhz != 0)
@@ -479,70 +475,6 @@ clockintr_stagger(struct clockintr *cl, uint64_t period, u_int n, u_int count)
 	mtx_leave(&cq->cq_mtx);
 }
 
-/*
- * Compute the period (avg) for the given frequency and a range around
- * that period.  The range is [min + 1, min + mask].  The range is used
- * during dispatch to choose a new pseudorandom deadline for each statclock
- * event.
- */
-void
-clockintr_statvar_init(int freq, uint32_t *avg, uint32_t *min, uint32_t *mask)
-{
-	uint32_t half_avg, var;
-
-	KASSERT(!ISSET(clockintr_flags, CL_INIT | CL_STATCLOCK));
-	KASSERT(freq > 0 && freq <= 1000000000);
-
-	/* Compute avg, the average period. */
-	*avg = 1000000000 / freq;
-
-	/* Find var, the largest power of two such that var <= avg / 2. */
-	half_avg = *avg / 2;
-	for (var = 1U << 31; var > half_avg; var /= 2)
-		continue;
-
-	/* Using avg and var, set a lower bound for the range. */
-	*min = *avg - (var / 2);
-
-	/* The mask is just (var - 1). */
-	*mask = var - 1;
-}
-
-/*
- * Update the statclock_* variables according to the given frequency.
- * Must only be called after clockintr_statvar_init() initializes both
- * stathz_* and profhz_*.
- */
-void
-clockintr_setstatclockrate(int freq)
-{
-	u_int ogen;
-
-	KASSERT(ISSET(clockintr_flags, CL_STATCLOCK));
-
-	mtx_enter(&clockintr_mtx);
-
-	ogen = statclock_gen;
-	statclock_gen = 0;
-	membar_producer();
-	if (freq == stathz) {
-		statclock_avg = stat_avg;
-		statclock_min = stat_min;
-		statclock_mask = stat_mask;
-	} else if (freq == profhz) {
-		statclock_avg = prof_avg;
-		statclock_min = prof_min;
-		statclock_mask = prof_mask;
-	} else {
-		panic("%s: frequency is not stathz (%d) or profhz (%d): %d",
-		    __func__, stathz, profhz, freq);
-	}
-	membar_producer();
-	statclock_gen = MAX(1, ogen + 1);
-
-	mtx_leave(&clockintr_mtx);
-}
-
 uint64_t
 clockintr_nsecuptime(const struct clockintr *cl)
 {
@@ -577,24 +509,16 @@ void
 clockintr_statclock(struct clockintr *cl, void *frame)
 {
 	uint64_t count, expiration, i, uptime;
-	uint32_t mask, min, off;
-	u_int gen;
+	uint32_t off;
 
 	if (ISSET(clockintr_flags, CL_RNDSTAT)) {
-		do {
-			gen = statclock_gen;
-			membar_consumer();
-			min = statclock_min;
-			mask = statclock_mask;
-			membar_consumer();
-		} while (gen == 0 || gen != statclock_gen);
 		count = 0;
 		expiration = clockintr_expiration(cl);
 		uptime = clockintr_nsecuptime(cl);
 		while (expiration <= uptime) {
-			while ((off = (random() & mask)) == 0)
+			while ((off = (random() & statclock_mask)) == 0)
 				continue;
-			expiration += min + off;
+			expiration += statclock_min + off;
 			count++;
 		}
 		clockintr_schedule(cl, expiration);

@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.16 2023/02/04 19:19:36 cheloha Exp $ */
+/* $OpenBSD: amptimer.c,v 1.17 2023/07/25 18:16:19 cheloha Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -343,7 +343,6 @@ amptimer_delay(u_int usecs)
 void
 amptimer_setstatclockrate(int newhz)
 {
-	clockintr_setstatclockrate(newhz);
 }
 
 void

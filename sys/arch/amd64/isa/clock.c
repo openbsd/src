@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.39 2023/02/04 19:19:36 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.40 2023/07/25 18:16:19 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 2003/04/26 18:39:50 fvdl Exp $	*/
 
 /*-
@@ -519,7 +519,6 @@ setstatclockrate(int arg)
 			mc146818_write(NULL, MC_REGA,
 			    MC_BASE_32_KHz | MC_RATE_1024_Hz);
 	}
-	clockintr_setstatclockrate(arg);
 }
 
 void

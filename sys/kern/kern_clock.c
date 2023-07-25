@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.108 2023/04/25 00:58:47 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.109 2023/07/25 18:16:19 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -49,10 +49,6 @@
 #include <sys/sched.h>
 #include <sys/timetc.h>
 
-#if defined(GPROF) || defined(DDBPROF)
-#include <sys/gmon.h>
-#endif
-
 #include "dt.h"
 #if NDT > 0
 #include <dev/dt/dtvar.h>
@@ -87,8 +83,6 @@ int	schedhz;
 int	profhz;
 int	profprocs;
 int	ticks = INT_MAX - (15 * 60 * HZ);
-static int psdiv, pscnt;		/* prof => stat divider */
-int	psratio;			/* ratio: prof / stat */
 
 volatile unsigned long jiffies = ULONG_MAX - (10 * 60 * HZ);
 
@@ -99,16 +93,13 @@ void
 initclocks(void)
 {
 	/*
-	 * Set divisors to 1 (normal case) and let the machine-specific
-	 * code do its bit.
+	 * Let the machine-specific code do its bit.
 	 */
-	psdiv = pscnt = 1;
 	cpu_initclocks();
 
-	/*
-	 * Compute profhz/stathz.
-	 */
-	psratio = profhz / stathz;
+	KASSERT(profhz >= stathz && profhz <= 1000000000);
+	KASSERT(profhz % stathz == 0);
+	profclock_period = 1000000000 / profhz;
 
 	inittimecounter();
 }
@@ -256,7 +247,6 @@ startprofclock(struct process *pr)
 		atomic_setbits_int(&pr->ps_flags, PS_PROFIL);
 		if (++profprocs == 1) {
 			s = splstatclock();
-			psdiv = pscnt = psratio;
 			setstatclockrate(profhz);
 			splx(s);
 		}
@@ -275,7 +265,6 @@ stopprofclock(struct process *pr)
 		atomic_clearbits_int(&pr->ps_flags, PS_PROFIL);
 		if (--profprocs == 0) {
 			s = splstatclock();
-			psdiv = pscnt = 1;
 			setstatclockrate(stathz);
 			splx(s);
 		}
@@ -289,35 +278,13 @@ stopprofclock(struct process *pr)
 void
 statclock(struct clockframe *frame)
 {
-#if defined(GPROF) || defined(DDBPROF)
-	struct gmonparam *g;
-	u_long i;
-#endif
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct proc *p = curproc;
 	struct process *pr;
 
-	/*
-	 * Notice changes in divisor frequency, and adjust clock
-	 * frequency accordingly.
-	 */
-	if (spc->spc_psdiv != psdiv) {
-		spc->spc_psdiv = psdiv;
-		spc->spc_pscnt = psdiv;
-		if (psdiv == 1) {
-			setstatclockrate(stathz);
-		} else {
-			setstatclockrate(profhz);
-		}
-	}
-
 	if (CLKF_USERMODE(frame)) {
 		pr = p->p_p;
-		if (pr->ps_flags & PS_PROFIL)
-			addupc_intr(p, CLKF_PC(frame), 1);
-		if (--spc->spc_pscnt > 0)
-			return;
 		/*
 		 * Came from user mode; CPU was in user state.
 		 * If this process is being profiled record the tick.
@@ -328,23 +295,6 @@ statclock(struct clockframe *frame)
 		else
 			spc->spc_cp_time[CP_USER]++;
 	} else {
-#if defined(GPROF) || defined(DDBPROF)
-		/*
-		 * Kernel statistics are just like addupc_intr, only easier.
-		 */
-		g = ci->ci_gmon;
-		if (g != NULL && g->state == GMON_PROF_ON) {
-			i = CLKF_PC(frame) - g->lowpc;
-			if (i < g->textsize) {
-				i /= HISTFRACTION * sizeof(*g->kcount);
-				g->kcount[i]++;
-			}
-		}
-#endif
-		if (p != NULL && p->p_p->ps_flags & PS_PROFIL)
-			addupc_intr(p, PROC_PC(p), 1);
-		if (--spc->spc_pscnt > 0)
-			return;
 		/*
 		 * Came from kernel mode, so we were:
 		 * - spinning on a lock
@@ -371,7 +321,6 @@ statclock(struct clockframe *frame)
 			spc->spc_cp_time[spc->spc_spinning ?
 			    CP_SPIN : CP_IDLE]++;
 	}
-	spc->spc_pscnt = psdiv;
 
 	if (p != NULL) {
 		p->p_cpticks++;

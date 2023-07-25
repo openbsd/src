@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.79 2023/07/14 07:07:08 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.80 2023/07/25 18:16:19 cheloha Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -21,6 +21,8 @@
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
+#include <sys/resourcevar.h>
 #include <sys/task.h>
 #include <sys/smr.h>
 #include <sys/tracepoint.h>
@@ -84,6 +86,15 @@ sched_init_cpu(struct cpu_info *ci)
 		TAILQ_INIT(&spc->spc_qs[i]);
 
 	spc->spc_idleproc = NULL;
+
+	if (spc->spc_profclock == NULL) {
+		spc->spc_profclock = clockintr_establish(&ci->ci_queue,
+		    profclock);
+		if (spc->spc_profclock == NULL)
+			panic("%s: clockintr_establish profclock", __func__);
+		clockintr_stagger(spc->spc_profclock, profclock_period,
+		    CPU_INFO_UNIT(ci), MAXCPUS);
+	}
 
 	kthread_create_deferred(sched_kthreads_create, ci);
 
@@ -213,6 +224,11 @@ sched_exit(struct proc *p)
 	nanouptime(&ts);
 	timespecsub(&ts, &spc->spc_runtime, &ts);
 	timespecadd(&p->p_rtime, &ts, &p->p_rtime);
+
+	if (ISSET(spc->spc_schedflags, SPCF_PROFCLOCK)) {
+		atomic_clearbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
+		clockintr_cancel(spc->spc_profclock);
+	}
 
 	LIST_INSERT_HEAD(&spc->spc_deadproc, p, p_hash);
 

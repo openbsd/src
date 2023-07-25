@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.57 2020/12/25 12:49:31 visa Exp $	*/
+/*	$OpenBSD: sched.h,v 1.58 2023/07/25 18:16:19 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -90,6 +90,7 @@
 
 #define	SCHED_NQS	32			/* 32 run queues. */
 
+struct clockintr;
 struct smr_entry;
 
 /*
@@ -105,8 +106,8 @@ struct schedstate_percpu {
 	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 	u_char spc_curpriority;		/* usrpri of curproc */
 	int spc_rrticks;		/* ticks until roundrobin() */
-	int spc_pscnt;			/* prof/stat counter */
-	int spc_psdiv;			/* prof/stat divisor */	
+
+	struct clockintr *spc_profclock; /* [o] profclock handle */
 
 	u_int spc_nrun;			/* procs on the run queues */
 	fixpt_t spc_ldavg;		/* shortest load avg. for this cpu */
@@ -137,6 +138,7 @@ struct cpustats {
 #define SPCF_SWITCHCLEAR        (SPCF_SEENRR|SPCF_SHOULDYIELD)
 #define SPCF_SHOULDHALT		0x0004	/* CPU should be vacated */
 #define SPCF_HALTED		0x0008	/* CPU has been halted */
+#define SPCF_PROFCLOCK		0x0010	/* profclock() was started */
 
 #define	SCHED_PPQ	(128 / SCHED_NQS)	/* priorities per queue */
 #define NICE_WEIGHT 2			/* priorities per nice level */

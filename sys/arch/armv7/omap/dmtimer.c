@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.18 2023/02/04 19:19:36 cheloha Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.19 2023/07/25 18:16:19 cheloha Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -317,7 +317,6 @@ dmtimer_delay(u_int usecs)
 void
 dmtimer_setstatclockrate(int newhz)
 {
-	clockintr_setstatclockrate(newhz);
 }
 
 

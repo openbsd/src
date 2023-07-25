@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.77 2023/07/11 07:02:43 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.78 2023/07/25 18:16:19 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -349,6 +350,12 @@ mi_switch(void)
 	/* add the time counts for this thread to the process's total */
 	tuagg_unlocked(pr, p);
 
+	/* Stop the profclock if it's running. */
+	if (ISSET(spc->spc_schedflags, SPCF_PROFCLOCK)) {
+		atomic_clearbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
+		clockintr_cancel(spc->spc_profclock);
+	}
+
 	/*
 	 * Process is about to yield the CPU; clear the appropriate
 	 * scheduling flags.
@@ -392,6 +399,14 @@ mi_switch(void)
 	 * schedstate_percpu pointer.
 	 */
 	KASSERT(p->p_cpu == curcpu());
+
+	/* Start the profclock if profil(2) is enabled. */
+	if (ISSET(p->p_p->ps_flags, PS_PROFIL)) {
+		atomic_setbits_int(&p->p_cpu->ci_schedstate.spc_schedflags,
+		    SPCF_PROFCLOCK);
+		clockintr_advance(p->p_cpu->ci_schedstate.spc_profclock,
+		    profclock_period);
+	}
 
 	nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
 

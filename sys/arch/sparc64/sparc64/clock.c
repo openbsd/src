@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.77 2023/04/28 18:27:55 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.78 2023/07/25 18:16:21 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -576,7 +576,6 @@ cpu_initclocks(void)
 void
 setstatclockrate(int newhz)
 {
-	clockintr_setstatclockrate(newhz);
 }
 
 /*

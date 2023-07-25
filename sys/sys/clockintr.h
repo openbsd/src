@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.8 2023/06/15 22:18:06 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.9 2023/07/25 18:16:19 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -112,8 +112,7 @@ struct clockintr_queue {
 
 /* Global state flags. */
 #define CL_INIT			0x00000001	/* global init done */
-#define CL_STATCLOCK		0x00000002	/* statclock variables set */
-#define CL_STATE_MASK		0x00000003
+#define CL_STATE_MASK		0x00000001
 
 /* Global behavior flags. */
 #define CL_RNDSTAT		0x80000000	/* randomized statclock */
@@ -122,13 +121,17 @@ struct clockintr_queue {
 void clockintr_cpu_init(const struct intrclock *);
 int clockintr_dispatch(void *);
 void clockintr_init(u_int);
-void clockintr_setstatclockrate(int);
 void clockintr_trigger(void);
 
 /*
  * Kernel API
  */
 
+uint64_t clockintr_advance(struct clockintr *, uint64_t);
+void clockintr_cancel(struct clockintr *);
+struct clockintr *clockintr_establish(struct clockintr_queue *,
+    void (*)(struct clockintr *, void *));
+void clockintr_stagger(struct clockintr *, uint64_t, u_int, u_int);
 void clockqueue_init(struct clockintr_queue *);
 int sysctl_clockintr(int *, u_int, void *, size_t *, void *, size_t);
 
