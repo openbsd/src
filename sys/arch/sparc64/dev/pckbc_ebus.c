@@ -1,4 +1,4 @@
-/*	$OpenBSD: pckbc_ebus.c,v 1.16 2022/10/16 01:22:39 jsg Exp $	*/
+/*	$OpenBSD: pckbc_ebus.c,v 1.17 2023/07/25 10:00:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -112,16 +112,42 @@ pckbc_ebus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * The 8042 controller found on the Tadpole SPARCLE doesn't
+	 * Tadpole/RDI systems use a 8042 controller which does not
 	 * implement XT scan code translation.
-	 * XXX I have not checked the value of the model property on
-	 * XXX UltraAXe boards...
+	 * - on the SPARCLE and the Viper, which sport a PC-style
+	 *   keyboard with no L function keys, the keyboard defaults
+	 *   to scan code set #2.
+	 * - on the UltraBook IIe, which sports a complete Sun-style
+	 *   keyboard with L function keys and diamond keys,
+	 *   the keyboard defaults to scan code set #3.
 	 */
 	{
-		char model[128];
-		OF_getprop(ea->ea_node, "model", &model, sizeof model);
-		if (strcmp(model, "INTC,80c42") == 0)
-			flags = PCKBC_CANT_TRANSLATE | PCKBC_NEED_AUXWRITE;
+		char buf[128];
+		OF_getprop(ea->ea_node, "model", buf, sizeof buf);
+		if (strcmp(buf, "INTC,80c42") == 0) {
+			/*
+			 * This is a Tadpole/RDI system. Tell the RDI design
+			 * (UltraBook IIe) from the Tadpole design (SPARCLE)
+			 * by looking for a tadpmu child node in the latter.
+			 */
+			int sparcle = 0;
+			int node;
+			for (node = OF_child(sc->sc_node); node;
+			    node = OF_peer(node)) {
+				if (OF_getprop(node, "name", buf,
+				    sizeof buf) <= 0)
+					continue;
+				if (strcmp(buf, "tadpmu") == 0) {
+					sparcle = 1;
+					break;
+				}
+			}
+			flags = PCKBC_NEED_AUXWRITE;
+			if (sparcle)
+				flags |= PCKBC_FIXED_SET2;
+			else
+				flags |= PCKBC_FIXED_SET3;
+		}
 	}
 
 	if (console) {

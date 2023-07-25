@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbcvar.h,v 1.16 2017/03/11 11:55:03 mpi Exp $ */
+/* $OpenBSD: pckbcvar.h,v 1.17 2023/07/25 10:00:44 miod Exp $ */
 /* $NetBSD: pckbcvar.h,v 1.4 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -52,9 +52,14 @@ struct pckbc_internal {
 	u_char t_cmdbyte; /* shadow */
 
 	int t_flags;
-#define	PCKBC_CANT_TRANSLATE	0x0001	/* can't translate to XT scancodes */
-#define	PCKBC_NEED_AUXWRITE	0x0002	/* need auxwrite command to find aux */
-	int t_haveaux; /* controller has an aux port */
+	/* need auxwrite command to find aux */
+#define	PCKBC_NEED_AUXWRITE	0x0001
+	/* can't translate to XT scancodes, stuck to set #2 */
+#define	PCKBC_FIXED_SET2	0x0002
+	/* can't translate to XT scancodes, stuck to set #3 */
+#define	PCKBC_FIXED_SET3	0x0004
+#define	PCKBC_CANT_TRANSLATE	(PCKBC_FIXED_SET2 | PCKBC_FIXED_SET3)
+	int t_haveaux;	/* controller has an aux port */
 
 	struct pckbc_slotdata *t_slotdata[PCKBC_NSLOTS];
 
@@ -100,7 +105,7 @@ int pckbc_poll_data(pckbc_tag_t, pckbc_slot_t);
 int pckbc_poll_data1(bus_space_tag_t, bus_space_handle_t,
 			  bus_space_handle_t, pckbc_slot_t, int);
 void pckbc_set_poll(pckbc_tag_t, pckbc_slot_t, int);
-int pckbc_xt_translation(pckbc_tag_t);
+int pckbc_xt_translation(pckbc_tag_t, int *);
 void pckbc_slot_enable(pckbc_tag_t, pckbc_slot_t, int);
 
 void pckbc_attach(struct pckbc_softc *, int);
