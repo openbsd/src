@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioscribble.c,v 1.3 2021/06/13 21:43:35 dv Exp $	*/
+/*	$OpenBSD: vioscribble.c,v 1.4 2023/07/26 05:50:45 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -50,6 +50,8 @@
 #include <unistd.h>
 #include <assert.h>
 #include <err.h>
+#include <stdarg.h>
+#include <syslog.h>
 
 #include "vmd.h"
 #include "vmm.h"
@@ -57,7 +59,6 @@
 
 #define CLUSTERSZ 65536
 
-int verbose;
 struct virtio_backing qcowfile;
 struct virtio_backing rawfile;
 
@@ -81,7 +82,8 @@ main(int argc, char **argv)
 	char buf[64*1024], cmp[64*1024];
 	off_t len, off, qcsz, rawsz;
 
-	verbose = !!getenv("VERBOSE");
+	log_init(1, LOG_DAEMON);
+
 	qcfd = open("scribble.qcow2", O_RDWR);
 	rawfd = open("scribble.raw", O_RDWR);
 	if (qcfd == -1)
