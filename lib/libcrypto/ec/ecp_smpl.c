@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.53 2023/07/26 12:24:28 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.54 2023/07/26 12:26:48 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -417,47 +417,49 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
 			goto err;
 		if (!ec_decode_scalar(group, y, &point->Y, ctx))
 			goto err;
-	} else {
-		if (BN_mod_inverse_ct(Z_1, z, &group->field, ctx) == NULL) {
-			ECerror(ERR_R_BN_LIB);
-			goto err;
-		}
-		if (group->meth->field_encode == NULL) {
-			/* field_sqr works on standard representation */
-			if (!group->meth->field_sqr(group, Z_2, Z_1, ctx))
-				goto err;
-		} else {
-			if (!BN_mod_sqr(Z_2, Z_1, &group->field, ctx))
-				goto err;
-		}
-
-		if (x != NULL) {
-			/*
-			 * in the Montgomery case, field_mul will cancel out
-			 * Montgomery factor in X:
-			 */
-			if (!group->meth->field_mul(group, x, &point->X, Z_2, ctx))
-				goto err;
-		}
-		if (y != NULL) {
-			if (group->meth->field_encode == NULL) {
-				/* field_mul works on standard representation */
-				if (!group->meth->field_mul(group, Z_3, Z_2, Z_1, ctx))
-					goto err;
-			} else {
-				if (!BN_mod_mul(Z_3, Z_2, Z_1, &group->field, ctx))
-					goto err;
-			}
-
-			/*
-			 * in the Montgomery case, field_mul will cancel out
-			 * Montgomery factor in Y:
-			 */
-			if (!group->meth->field_mul(group, y, &point->Y, Z_3, ctx))
-				goto err;
-		}
+		goto done;
 	}
 
+	if (BN_mod_inverse_ct(Z_1, z, &group->field, ctx) == NULL) {
+		ECerror(ERR_R_BN_LIB);
+		goto err;
+	}
+	if (group->meth->field_encode == NULL) {
+		/* field_sqr works on standard representation */
+		if (!group->meth->field_sqr(group, Z_2, Z_1, ctx))
+			goto err;
+	} else {
+		if (!BN_mod_sqr(Z_2, Z_1, &group->field, ctx))
+			goto err;
+	}
+
+	if (x != NULL) {
+		/*
+		 * in the Montgomery case, field_mul will cancel out
+		 * Montgomery factor in X:
+		 */
+		if (!group->meth->field_mul(group, x, &point->X, Z_2, ctx))
+			goto err;
+	}
+	if (y != NULL) {
+		if (group->meth->field_encode == NULL) {
+			/* field_mul works on standard representation */
+			if (!group->meth->field_mul(group, Z_3, Z_2, Z_1, ctx))
+				goto err;
+		} else {
+			if (!BN_mod_mul(Z_3, Z_2, Z_1, &group->field, ctx))
+				goto err;
+		}
+
+		/*
+		 * in the Montgomery case, field_mul will cancel out
+		 * Montgomery factor in Y:
+		 */
+		if (!group->meth->field_mul(group, y, &point->Y, Z_3, ctx))
+			goto err;
+	}
+
+ done:
 	ret = 1;
 
  err:
