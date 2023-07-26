@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldma.c,v 1.5 2022/11/26 21:35:22 kettenis Exp $	*/
+/*	$OpenBSD: apldma.c,v 1.6 2023/07/26 11:09:24 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -110,9 +110,11 @@ struct apldma_softc *apldma_sc;
 
 int	apldma_match(struct device *, void *, void *);
 void	apldma_attach(struct device *, struct device *, void *);
+int	apldma_activate(struct device *, int);
 
 const struct cfattach apldma_ca = {
-	sizeof (struct apldma_softc), apldma_match, apldma_attach
+	sizeof (struct apldma_softc), apldma_match, apldma_attach, NULL,
+	apldma_activate
 };
 
 struct cfdriver apldma_cd = {
@@ -195,6 +197,23 @@ free:
 	    sc->sc_nchannels * sizeof(struct apldma_channel *));
 unmap:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, faa->fa_reg[0].size);
+}
+
+int
+apldma_activate(struct device *self, int act)
+{
+	struct apldma_softc *sc = (struct apldma_softc *)self;
+
+	switch (act) {
+	case DVACT_SUSPEND:
+		power_domain_disable(sc->sc_node);
+		break;
+	case DVACT_RESUME:
+		power_domain_enable(sc->sc_node);
+		break;
+	}
+
+	return 0;
 }
 
 void
