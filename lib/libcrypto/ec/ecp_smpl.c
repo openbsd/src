@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.50 2023/07/26 12:12:13 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.51 2023/07/26 12:16:13 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -203,12 +203,13 @@ ec_GFp_simple_group_get_degree(const EC_GROUP *group)
 int
 ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 {
-	BIGNUM *a, *b, *order, *tmp_1, *tmp_2;
-	const BIGNUM *p = &group->field;
+	BIGNUM *p, *a, *b, *order, *tmp_1, *tmp_2;
 	int ret = 0;
 
 	BN_CTX_start(ctx);
 
+	if ((p = BN_CTX_get(ctx)) == NULL)
+		goto err;
 	if ((a = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((b = BN_CTX_get(ctx)) == NULL)
@@ -220,17 +221,8 @@ ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	if ((order = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (group->meth->field_decode) {
-		if (!group->meth->field_decode(group, a, &group->a, ctx))
-			goto err;
-		if (!group->meth->field_decode(group, b, &group->b, ctx))
-			goto err;
-	} else {
-		if (!bn_copy(a, &group->a))
-			goto err;
-		if (!bn_copy(b, &group->b))
-			goto err;
-	}
+	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
+		goto err;
 
 	/*
 	 * check the discriminant: y^2 = x^3 + a*x + b is an elliptic curve
