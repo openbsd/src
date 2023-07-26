@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.48 2023/07/25 10:00:04 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.49 2023/07/26 11:58:34 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -704,11 +704,9 @@ ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a, BN_CTX 
 	BIGNUM *n0, *n1, *n2, *n3;
 	int ret = 0;
 
-	if (EC_POINT_is_at_infinity(group, a) > 0) {
-		BN_zero(&r->Z);
-		r->Z_is_one = 0;
-		return 1;
-	}
+	if (EC_POINT_is_at_infinity(group, a) > 0)
+		return EC_POINT_set_to_infinity(group, r);
+
 	field_mul = group->meth->field_mul;
 	field_sqr = group->meth->field_sqr;
 	p = &group->field;
