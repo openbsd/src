@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.54 2023/07/26 12:26:48 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.55 2023/07/26 17:15:25 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -222,7 +222,7 @@ ec_GFp_simple_group_get_degree(const EC_GROUP *group)
 int
 ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 {
-	BIGNUM *p, *a, *b, *tmp_1, *tmp_2;
+	BIGNUM *p, *a, *b, *discriminant;
 	int ret = 0;
 
 	BN_CTX_start(ctx);
@@ -233,41 +233,41 @@ ec_GFp_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 		goto err;
 	if ((b = BN_CTX_get(ctx)) == NULL)
 		goto err;
-	if ((tmp_1 = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((tmp_2 = BN_CTX_get(ctx)) == NULL)
+	if ((discriminant = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (!EC_GROUP_get_curve(group, p, a, b, ctx))
 		goto err;
 
 	/*
-	 * check the discriminant: y^2 = x^3 + a*x + b is an elliptic curve
-	 * <=> 4*a^3 + 27*b^2 != 0 (mod p) 0 =< a, b < p
+	 * Check that the discriminant 4a^3 + 27b^2 is non-zero modulo p.
 	 */
-	if (BN_is_zero(a)) {
-		if (BN_is_zero(b))
-			goto err;
-	} else if (!BN_is_zero(b)) {
-		if (!BN_mod_sqr(tmp_1, a, p, ctx))
-			goto err;
-		if (!BN_mod_mul(tmp_2, tmp_1, a, p, ctx))
-			goto err;
-		if (!BN_lshift(tmp_1, tmp_2, 2))
-			goto err;
-		/* tmp_1 = 4*a^3 */
 
-		if (!BN_mod_sqr(tmp_2, b, p, ctx))
-			goto err;
-		if (!BN_mul_word(tmp_2, 27))
-			goto err;
-		/* tmp_2 = 27*b^2 */
+	if (BN_is_zero(a) && BN_is_zero(b))
+		goto err;
+	if (BN_is_zero(a) || BN_is_zero(b))
+		goto done;
 
-		if (!BN_mod_add(a, tmp_1, tmp_2, p, ctx))
-			goto err;
-		if (BN_is_zero(a))
-			goto err;
-	}
+	/* Compute the discriminant: first 4a^3, then 27b^2, then their sum. */
+	if (!BN_mod_sqr(discriminant, a, p, ctx))
+		goto err;
+	if (!BN_mod_mul(discriminant, discriminant, a, p, ctx))
+		goto err;
+	if (!BN_lshift(discriminant, discriminant, 2))
+		goto err;
+
+	if (!BN_mod_sqr(b, b, p, ctx))
+		goto err;
+	if (!BN_mul_word(b, 27))
+		goto err;
+
+	if (!BN_mod_add(discriminant, discriminant, b, p, ctx))
+		goto err;
+
+	if (BN_is_zero(discriminant))
+		goto err;
+
+ done:
 	ret = 1;
 
  err:
