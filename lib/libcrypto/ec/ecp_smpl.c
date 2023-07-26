@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.49 2023/07/26 11:58:34 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.50 2023/07/26 12:12:13 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -114,6 +114,18 @@ ec_GFp_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	return 1;
 }
 
+static int
+ec_decode_scalar(const EC_GROUP *group, BIGNUM *bn, const BIGNUM *x, BN_CTX *ctx)
+{
+	if (bn == NULL)
+		return 1;
+
+	if (group->meth->field_decode != NULL)
+		return group->meth->field_decode(group, bn, x, ctx);
+
+	return bn_copy(bn, x);
+}
+
 int
 ec_GFp_simple_group_set_curve(EC_GROUP *group,
     const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
@@ -167,31 +179,17 @@ ec_GFp_simple_group_set_curve(EC_GROUP *group,
 }
 
 int
-ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
+ec_GFp_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p, BIGNUM *a,
+    BIGNUM *b, BN_CTX *ctx)
 {
 	if (p != NULL) {
 		if (!bn_copy(p, &group->field))
 			return 0;
 	}
-	if (group->meth->field_decode != NULL) {
-		if (a != NULL) {
-			if (!group->meth->field_decode(group, a, &group->a, ctx))
-				return 0;
-		}
-		if (b != NULL) {
-			if (!group->meth->field_decode(group, b, &group->b, ctx))
-				return 0;
-		}
-	} else {
-		if (a != NULL) {
-			if (!bn_copy(a, &group->a))
-				return 0;
-		}
-		if (b != NULL) {
-			if (!bn_copy(b, &group->b))
-				return 0;
-		}
-	}
+	if (!ec_decode_scalar(group, a, &group->a, ctx))
+		return 0;
+	if (!ec_decode_scalar(group, b, &group->b, ctx))
+		return 0;
 
 	return 1;
 }
@@ -363,33 +361,12 @@ ec_GFp_simple_get_Jprojective_coordinates(const EC_GROUP *group,
 {
 	int ret = 0;
 
-	if (group->meth->field_decode != NULL) {
-		if (x != NULL) {
-			if (!group->meth->field_decode(group, x, &point->X, ctx))
-				goto err;
-		}
-		if (y != NULL) {
-			if (!group->meth->field_decode(group, y, &point->Y, ctx))
-				goto err;
-		}
-		if (z != NULL) {
-			if (!group->meth->field_decode(group, z, &point->Z, ctx))
-				goto err;
-		}
-	} else {
-		if (x != NULL) {
-			if (!bn_copy(x, &point->X))
-				goto err;
-		}
-		if (y != NULL) {
-			if (!bn_copy(y, &point->Y))
-				goto err;
-		}
-		if (z != NULL) {
-			if (!bn_copy(z, &point->Z))
-				goto err;
-		}
-	}
+	if (!ec_decode_scalar(group, x, &point->X, ctx))
+		goto err;
+	if (!ec_decode_scalar(group, y, &point->Y, ctx))
+		goto err;
+	if (!ec_decode_scalar(group, z, &point->Z, ctx))
+		goto err;
 
 	ret = 1;
 
@@ -411,11 +388,10 @@ ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT *poin
 }
 
 int
-ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point,
-    BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
+ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group,
+    const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 {
-	BIGNUM *Z, *Z_1, *Z_2, *Z_3;
-	const BIGNUM *Z_;
+	BIGNUM *z, *Z, *Z_1, *Z_2, *Z_3;
 	int ret = 0;
 
 	if (EC_POINT_is_at_infinity(group, point) > 0) {
@@ -425,6 +401,8 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT
 
 	BN_CTX_start(ctx);
 
+	if ((z = BN_CTX_get(ctx)) == NULL)
+		goto err;
 	if ((Z = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((Z_1 = BN_CTX_get(ctx)) == NULL)
@@ -434,38 +412,18 @@ ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT
 	if ((Z_3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	/* transform  (X, Y, Z)  into  (x, y) := (X/Z^2, Y/Z^3) */
+	/* Convert from projective coordinates (X, Y, Z) into (X/Z^2, Y/Z^3). */
 
-	if (group->meth->field_decode) {
-		if (!group->meth->field_decode(group, Z, &point->Z, ctx))
+	if (!ec_decode_scalar(group, z, &point->Z, ctx))
+		goto err;
+
+	if (BN_is_one(z)) {
+		if (!ec_decode_scalar(group, x, &point->X, ctx))
 			goto err;
-		Z_ = Z;
+		if (!ec_decode_scalar(group, y, &point->Y, ctx))
+			goto err;
 	} else {
-		Z_ = &point->Z;
-	}
-
-	if (BN_is_one(Z_)) {
-		if (group->meth->field_decode) {
-			if (x != NULL) {
-				if (!group->meth->field_decode(group, x, &point->X, ctx))
-					goto err;
-			}
-			if (y != NULL) {
-				if (!group->meth->field_decode(group, y, &point->Y, ctx))
-					goto err;
-			}
-		} else {
-			if (x != NULL) {
-				if (!bn_copy(x, &point->X))
-					goto err;
-			}
-			if (y != NULL) {
-				if (!bn_copy(y, &point->Y))
-					goto err;
-			}
-		}
-	} else {
-		if (BN_mod_inverse_ct(Z_1, Z_, &group->field, ctx) == NULL) {
+		if (BN_mod_inverse_ct(Z_1, z, &group->field, ctx) == NULL) {
 			ECerror(ERR_R_BN_LIB);
 			goto err;
 		}
