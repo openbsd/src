@@ -1,4 +1,4 @@
-/*	$OpenBSD: freenull.c.head,v 1.4 2022/01/15 02:46:12 inoguchi Exp $	*/
+/*	$OpenBSD: freenull.c.head,v 1.5 2023/07/26 22:51:01 tb Exp $	*/
 
 #include <openssl/asn1.h>
 #include <openssl/cmac.h>
@@ -6,7 +6,9 @@
 #include <openssl/comp.h>
 #include <openssl/conf_api.h>
 #include <openssl/ct.h>
+#ifndef OPENSSL_NO_DSO
 #include <openssl/dso.h>
+#endif
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
