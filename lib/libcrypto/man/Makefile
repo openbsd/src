@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.257 2023/07/26 20:01:04 tb Exp $
+# $OpenBSD: Makefile,v 1.258 2023/07/26 20:08:59 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -62,7 +62,6 @@ MAN=	\
 	BIO_s_socket.3 \
 	BIO_set_callback.3 \
 	BIO_should_retry.3 \
-	BN_BLINDING_new.3 \
 	BN_CTX_new.3 \
 	BN_CTX_start.3 \
 	BN_add.3 \
