@@ -1786,7 +1786,6 @@
 ./usr/share/man/man3/BIO_ctrl.3
 ./usr/share/man/man3/BIO_dump.3
 ./usr/share/man/man3/BIO_dup_chain.3
-./usr/share/man/man3/BIO_f_asn1.3
 ./usr/share/man/man3/BIO_f_base64.3
 ./usr/share/man/man3/BIO_f_buffer.3
 ./usr/share/man/man3/BIO_f_cipher.3
