@@ -1,4 +1,4 @@
-/* $OpenBSD: arm64cap.c,v 1.2 2022/03/25 17:42:07 robert Exp $ */
+/* $OpenBSD: arm64cap.c,v 1.3 2023/07/26 09:57:34 jsing Exp $ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -29,10 +29,6 @@
 #define	 ID_AA64ISAR0_SHA2_BASE		(0x1 << ID_AA64ISAR0_SHA2_SHIFT)
 
 unsigned int OPENSSL_armcap_P;
-
-#if defined(__GNUC__) && __GNUC__ >= 2
-void OPENSSL_cpuid_setup(void) __attribute__((constructor));
-#endif
 
 #if defined(CPU_ID_AA64ISAR0)
 void
