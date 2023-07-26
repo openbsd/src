@@ -1,4 +1,4 @@
-.\" $OpenBSD: BIO_find_type.3,v 1.11 2023/04/11 15:35:31 schwarze Exp $
+.\" $OpenBSD: BIO_find_type.3,v 1.12 2023/07/26 20:01:04 tb Exp $
 .\" full merge up to: OpenSSL 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: April 11 2023 $
+.Dd $Mdocdate: July 26 2023 $
 .Dt BIO_FIND_TYPE 3
 .Os
 .Sh NAME
@@ -180,7 +180,9 @@ and
 set in their type constant.
 .Bl -column BIO_TYPE_NULL_FILTER "datagram socket" BIO_s_datagram(3)
 .It Fa type No constant   Ta Em name No string Ta Vt BIO_METHOD
-.It Dv BIO_TYPE_ASN1        Ta asn1            Ta Xr BIO_f_asn1 3
+.\" BIO_TYPE_ASN1 is intentionally undocumented because BIO_f_asn1 was
+.\" removed from the public API.
+.\" .It Dv BIO_TYPE_ASN1        Ta asn1            Ta Xr BIO_f_asn1 3
 .It Dv BIO_TYPE_BASE64      Ta base64 encoding Ta Xr BIO_f_base64 3
 .It Dv BIO_TYPE_BUFFER      Ta buffer          Ta Xr BIO_f_buffer 3
 .It Dv BIO_TYPE_CIPHER      Ta cipher          Ta Xr BIO_f_cipher 3

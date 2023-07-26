@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.256 2023/07/22 06:34:59 tb Exp $
+# $OpenBSD: Makefile,v 1.257 2023/07/26 20:01:04 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -37,7 +37,6 @@ MAN=	\
 	BIO_ctrl.3 \
 	BIO_dump.3 \
 	BIO_dup_chain.3 \
-	BIO_f_asn1.3 \
 	BIO_f_base64.3 \
 	BIO_f_buffer.3 \
 	BIO_f_cipher.3 \
