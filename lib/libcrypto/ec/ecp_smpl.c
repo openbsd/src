@@ -1,4 +1,4 @@
-/* $OpenBSD: ecp_smpl.c,v 1.52 2023/07/26 12:16:55 tb Exp $ */
+/* $OpenBSD: ecp_smpl.c,v 1.53 2023/07/26 12:24:28 tb Exp $ */
 /* Includes code written by Lenka Fibikova <fibikova@exp-math.uni-essen.de>
  * for the OpenSSL project.
  * Includes code written by Bodo Moeller for the OpenSSL project.
@@ -126,11 +126,40 @@ ec_decode_scalar(const EC_GROUP *group, BIGNUM *bn, const BIGNUM *x, BN_CTX *ctx
 	return bn_copy(bn, x);
 }
 
+static int
+ec_encode_scalar(const EC_GROUP *group, BIGNUM *bn, const BIGNUM *x, BN_CTX *ctx)
+{
+	if (!BN_nnmod(bn, x, &group->field, ctx))
+		return 0;
+
+	if (group->meth->field_encode != NULL)
+		return group->meth->field_encode(group, bn, bn, ctx);
+
+	return 1;
+}
+
+static int
+ec_encode_z_coordinate(const EC_GROUP *group, BIGNUM *bn, int *is_one,
+    const BIGNUM *z, BN_CTX *ctx)
+{
+	if (!BN_nnmod(bn, z, &group->field, ctx))
+		return 0;
+
+	*is_one = BN_is_one(bn);
+	if (*is_one && group->meth->field_set_to_one != NULL)
+		return group->meth->field_set_to_one(group, bn, ctx);
+
+	if (group->meth->field_encode != NULL)
+		return group->meth->field_encode(group, bn, bn, ctx);
+
+	return 1;
+}
+
 int
 ec_GFp_simple_group_set_curve(EC_GROUP *group,
     const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
-	BIGNUM *tmp_a;
+	BIGNUM *a_plus_3;
 	int ret = 0;
 
 	/* p must be a prime > 3 */
@@ -141,34 +170,24 @@ ec_GFp_simple_group_set_curve(EC_GROUP *group,
 
 	BN_CTX_start(ctx);
 
-	if ((tmp_a = BN_CTX_get(ctx)) == NULL)
+	if ((a_plus_3 = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	/* group->field */
 	if (!bn_copy(&group->field, p))
 		goto err;
 	BN_set_negative(&group->field, 0);
 
-	/* group->a */
-	if (!BN_nnmod(tmp_a, a, p, ctx))
+	if (!ec_encode_scalar(group, &group->a, a, ctx))
 		goto err;
-	if (group->meth->field_encode != NULL) {
-		if (!group->meth->field_encode(group, &group->a, tmp_a, ctx))
-			goto err;
-	} else if (!bn_copy(&group->a, tmp_a))
+	if (!ec_encode_scalar(group, &group->b, b, ctx))
 		goto err;
 
-	/* group->b */
-	if (!BN_nnmod(&group->b, b, p, ctx))
+	if (!BN_set_word(a_plus_3, 3))
 		goto err;
-	if (group->meth->field_encode != NULL)
-		if (!group->meth->field_encode(group, &group->b, &group->b, ctx))
-			goto err;
+	if (!BN_mod_add(a_plus_3, a_plus_3, a, &group->field, ctx))
+		goto err;
 
-	/* group->a_is_minus3 */
-	if (!BN_add_word(tmp_a, 3))
-		goto err;
-	group->a_is_minus3 = (0 == BN_cmp(tmp_a, &group->field));
+	group->a_is_minus3 = BN_is_zero(a_plus_3);
 
 	ret = 1;
 
@@ -306,39 +325,25 @@ ec_GFp_simple_set_Jprojective_coordinates(const EC_GROUP *group,
 {
 	int ret = 0;
 
+	/*
+	 * Setting individual coordinates allows the creation of bad points.
+	 * EC_POINT_set_Jprojective_coordinates() checks at the API boundary.
+	 */
+
 	if (x != NULL) {
-		if (!BN_nnmod(&point->X, x, &group->field, ctx))
+		if (!ec_encode_scalar(group, &point->X, x, ctx))
 			goto err;
-		if (group->meth->field_encode != NULL) {
-			if (!group->meth->field_encode(group, &point->X, &point->X, ctx))
-				goto err;
-		}
 	}
 	if (y != NULL) {
-		if (!BN_nnmod(&point->Y, y, &group->field, ctx))
+		if (!ec_encode_scalar(group, &point->Y, y, ctx))
 			goto err;
-		if (group->meth->field_encode != NULL) {
-			if (!group->meth->field_encode(group, &point->Y, &point->Y, ctx))
-				goto err;
-		}
 	}
 	if (z != NULL) {
-		int Z_is_one;
-
-		if (!BN_nnmod(&point->Z, z, &group->field, ctx))
+		if (!ec_encode_z_coordinate(group, &point->Z, &point->Z_is_one,
+		    z, ctx))
 			goto err;
-		Z_is_one = BN_is_one(&point->Z);
-		if (group->meth->field_encode != NULL) {
-			if (Z_is_one && (group->meth->field_set_to_one != NULL)) {
-				if (!group->meth->field_set_to_one(group, &point->Z, ctx))
-					goto err;
-			} else {
-				if (!group->meth->field_encode(group, &point->Z, &point->Z, ctx))
-					goto err;
-			}
-		}
-		point->Z_is_one = Z_is_one;
 	}
+
 	ret = 1;
 
  err:
