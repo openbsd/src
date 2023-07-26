@@ -1309,6 +1309,7 @@ drm_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_drm = dev;
 
+	kref_init(&dev->ref);
 	dev->dev = self;
 	dev->dev_private = parent;
 	dev->driver = da->driver;
