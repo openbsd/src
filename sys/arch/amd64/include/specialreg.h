@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.105 2023/07/24 14:54:00 deraadt Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.106 2023/07/27 01:51:35 guenther Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -334,12 +334,14 @@
 /*
  * AMD CPUID function 0x80000008 EBX bits
  */
+#define CPUIDEBX_INVLPGB	(1ULL <<  3)	/* INVLPG w/broadcast */
 #define CPUIDEBX_IBPB		(1ULL << 12)	/* Speculation Control IBPB */
 #define CPUIDEBX_IBRS		(1ULL << 14)	/* Speculation Control IBRS */
 #define CPUIDEBX_STIBP		(1ULL << 15)	/* Speculation Control STIBP */
 #define CPUIDEBX_IBRS_ALWAYSON	(1ULL << 16)	/* IBRS always on mode */
 #define CPUIDEBX_STIBP_ALWAYSON	(1ULL << 17)	/* STIBP always on mode */
 #define CPUIDEBX_IBRS_PREF	(1ULL << 18)	/* IBRS preferred */
+#define CPUIDEBX_IBRS_SAME_MODE	(1ULL << 19)	/* IBRS not mode-specific */
 #define CPUIDEBX_SSBD		(1ULL << 24)	/* Speculation Control SSBD */
 #define CPUIDEBX_VIRT_SSBD	(1ULL << 25)	/* Virt Spec Control SSBD */
 #define CPUIDEBX_SSBD_NOTREQ	(1ULL << 26)	/* SSBD not required */
