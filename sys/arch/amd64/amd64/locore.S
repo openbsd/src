@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.137 2023/07/25 06:48:37 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.138 2023/07/27 00:28:24 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -473,21 +473,17 @@ bogus_proc_pmap:
 #endif /* DIAGNOSTIC */
 END(cpu_switchto)
 
-/* placed here for correct static branch prediction in cpu_idle_* */
 NENTRY(retpoline_rax)
 	JMP_RETPOLINE(rax)
 
-ENTRY(cpu_idle_cycle)
-	RETGUARD_SETUP(cpu_idle_cycle, r11)
-	movq	cpu_idle_cycle_fcn,%rax
-	cmpq	$0,%rax
-	jne	retpoline_rax
+ENTRY(cpu_idle_cycle_hlt)
+	RETGUARD_SETUP(cpu_idle_cycle_hlt, r11)
 	sti
 	hlt
-	RETGUARD_CHECK(cpu_idle_cycle, r11)
+	RETGUARD_CHECK(cpu_idle_cycle_hlt, r11)
 	ret
 	lfence
-END(cpu_idle_cycle)
+END(cpu_idle_cycle_hlt)
 
 /*
  * savectx(struct pcb *pcb);
