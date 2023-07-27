@@ -1,4 +1,4 @@
-/* $OpenBSD: speed.c,v 1.33 2023/05/20 12:03:02 tb Exp $ */
+/* $OpenBSD: speed.c,v 1.34 2023/07/27 07:01:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1746,24 +1746,7 @@ show_res:
 	if (!mr) {
 		fprintf(stdout, "%s\n", SSLeay_version(SSLEAY_VERSION));
 		fprintf(stdout, "%s\n", SSLeay_version(SSLEAY_BUILT_ON));
-		printf("options:");
-		printf("%s ", BN_options());
-#ifndef OPENSSL_NO_RC4
-		printf("%s ", RC4_options());
-#endif
-#ifndef OPENSSL_NO_DES
-		printf("%s ", DES_options());
-#endif
-#ifndef OPENSSL_NO_AES
-		printf("%s ", AES_options());
-#endif
-#ifndef OPENSSL_NO_IDEA
-		printf("%s ", idea_options());
-#endif
-#ifndef OPENSSL_NO_BF
-		printf("%s ", BF_options());
-#endif
-		fprintf(stdout, "\n%s\n", SSLeay_version(SSLEAY_CFLAGS));
+		fprintf(stdout, "%s\n", SSLeay_version(SSLEAY_CFLAGS));
 	}
 	if (pr_header) {
 		if (mr)

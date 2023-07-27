@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.151 2023/07/23 11:20:11 tb Exp $
+.\" $OpenBSD: openssl.1,v 1.152 2023/07/27 07:01:50 tb Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -110,7 +110,7 @@
 .\" copied and put under another distribution licence
 .\" [including the GNU Public Licence.]
 .\"
-.Dd $Mdocdate: July 23 2023 $
+.Dd $Mdocdate: July 27 2023 $
 .Dt OPENSSL 1
 .Os
 .Sh NAME
@@ -6049,7 +6049,7 @@ itself, then 1 for the CA that signed the certificate and so on.
 .Tg version
 .Sh VERSION
 .Nm openssl version
-.Op Fl abdfopv
+.Op Fl abdfpv
 .Pp
 The
 .Nm version
@@ -6069,8 +6069,6 @@ was built.
 setting.
 .It Fl f
 Compilation flags.
-.It Fl o
-Option information: various options set when the library was built.
 .It Fl p
 Platform setting.
 .It Fl v

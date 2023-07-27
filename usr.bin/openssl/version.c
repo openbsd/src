@@ -1,4 +1,4 @@
-/* $OpenBSD: version.c,v 1.11 2023/03/06 14:32:06 tb Exp $ */
+/* $OpenBSD: version.c,v 1.12 2023/07/27 07:01:50 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -184,7 +184,6 @@ static const struct option version_options[] = {
 	},
 	{
 		.name = "o",
-		.desc = "Option information",
 		.type = OPTION_FLAG,
 		.opt.flag = &cfg.options,
 	},
@@ -206,7 +205,7 @@ static const struct option version_options[] = {
 static void
 version_usage(void)
 {
-	fprintf(stderr, "usage: version [-abdfopv]\n");
+	fprintf(stderr, "usage: version [-abdfpv]\n");
 	options_usage(version_options);
 }
 
@@ -241,23 +240,6 @@ version_main(int argc, char **argv)
 		printf("%s\n", SSLeay_version(SSLEAY_BUILT_ON));
 	if (cfg.platform)
 		printf("%s\n", SSLeay_version(SSLEAY_PLATFORM));
-	if (cfg.options) {
-		printf("options:  ");
-		printf("%s ", BN_options());
-#ifndef OPENSSL_NO_RC4
-		printf("%s ", RC4_options());
-#endif
-#ifndef OPENSSL_NO_DES
-		printf("%s ", DES_options());
-#endif
-#ifndef OPENSSL_NO_IDEA
-		printf("%s ", idea_options());
-#endif
-#ifndef OPENSSL_NO_BF
-		printf("%s ", BF_options());
-#endif
-		printf("\n");
-	}
 	if (cfg.cflags)
 		printf("%s\n", SSLeay_version(SSLEAY_CFLAGS));
 	if (cfg.dir)
