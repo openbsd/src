@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.200 2023/07/18 16:01:20 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.201 2023/07/27 20:21:25 jan Exp $	*/
 
 /******************************************************************************
 
@@ -3275,6 +3275,10 @@ ixgbe_rxeof(struct rx_ring *rxr)
 				/* Calculate header size. */
 				ether_extract_headers(sendmp, &ext);
 				hdrlen = sizeof(*ext.eh);
+#if NVLAN > 0
+				if (ext.evh)
+					hdrlen += ETHER_VLAN_ENCAP_LEN;
+#endif
 				if (ext.ip4)
 					hdrlen += ext.ip4->ip_hl << 2;
 				if (ext.ip6)

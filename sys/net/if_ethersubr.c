@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.290 2023/07/06 19:46:53 kn Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.291 2023/07/27 20:21:25 jan Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -1040,6 +1040,7 @@ ether_extract_headers(struct mbuf *mp, struct ether_extracted *ext)
 	uint64_t	 hlen;
 	int		 hoff;
 	uint8_t		 ipproto;
+	uint16_t	 ether_type;
 
 	/* Return NULL if header was not recognized. */
 	memset(ext, 0, sizeof(*ext));
@@ -1048,9 +1049,20 @@ ether_extract_headers(struct mbuf *mp, struct ether_extracted *ext)
 		return;
 
 	ext->eh = mtod(mp, struct ether_header *);
-	switch (ntohs(ext->eh->ether_type)) {
+	ether_type = ntohs(ext->eh->ether_type);
+	hlen = sizeof(*ext->eh);
+
+#if NVLAN > 0
+	if (ether_type == ETHERTYPE_VLAN) {
+		ext->evh = mtod(mp, struct ether_vlan_header *);
+		ether_type = ntohs(ext->evh->evl_proto);
+		hlen = sizeof(*ext->evh);
+	}
+#endif
+
+	switch (ether_type) {
 	case ETHERTYPE_IP:
-		m = m_getptr(mp, sizeof(*ext->eh), &hoff);
+		m = m_getptr(mp, hlen, &hoff);
 		if (m == NULL || m->m_len - hoff < sizeof(*ext->ip4))
 			return;
 		ext->ip4 = (struct ip *)(mtod(m, caddr_t) + hoff);
@@ -1064,7 +1076,7 @@ ether_extract_headers(struct mbuf *mp, struct ether_extracted *ext)
 		break;
 #ifdef INET6
 	case ETHERTYPE_IPV6:
-		m = m_getptr(mp, sizeof(*ext->eh), &hoff);
+		m = m_getptr(mp, hlen, &hoff);
 		if (m == NULL || m->m_len - hoff < sizeof(*ext->ip6))
 			return;
 		ext->ip6 = (struct ip6_hdr *)(mtod(m, caddr_t) + hoff);
