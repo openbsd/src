@@ -1,4 +1,4 @@
-/*	$OpenBSD: spl.S,v 1.19 2022/12/01 00:26:15 guenther Exp $	*/
+/*	$OpenBSD: spl.S,v 1.20 2023/07/27 00:30:07 guenther Exp $	*/
 /*	$NetBSD: spl.S,v 1.3 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -122,7 +122,8 @@ KIDTVEC(spllower)
 	RETGUARD_PUSH(r11)
 	movl	%edi,%ebx
 	leaq	1f(%rip),%r13		# address to resume loop at
-1:	movl	%ebx,%eax		# get cpl
+1:	endbr64
+	movl	%ebx,%eax		# get cpl
 	movq	CPUVAR(IUNMASK)(,%rax,8),%rax
 	cli
 	andq	CPUVAR(IPENDING),%rax		# any non-masked bits left?
@@ -153,7 +154,8 @@ KIDTVEC(doreti)
 	movq	IF_PPL(%rsp),%rbx	# get previous priority
 	decl	CPUVAR(IDEPTH)
 	leaq	1f(%rip),%r13
-1:	movl	%ebx,%eax
+1:	endbr64
+	movl	%ebx,%eax
 	movq	CPUVAR(IUNMASK)(,%rax,8),%rax
 	cli
 	andq	CPUVAR(IPENDING),%rax

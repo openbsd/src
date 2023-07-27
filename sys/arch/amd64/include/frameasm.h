@@ -1,4 +1,4 @@
-/*	$OpenBSD: frameasm.h,v 1.26 2023/04/17 00:02:14 deraadt Exp $	*/
+/*	$OpenBSD: frameasm.h,v 1.27 2023/07/27 00:30:07 guenther Exp $	*/
 /*	$NetBSD: frameasm.h,v 1.1 2003/04/26 18:39:40 fvdl Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
@@ -111,6 +111,7 @@ _ENTRY(INTRENTRY_LABEL(label)) /* from kernel */ \
  * to return to.  %r10 and %r11 are scratch.
  */
 #define	INTR_RECURSE \
+	endbr64				; \
 	/* fake the iretq_frame */	; \
 	movq	%rsp,%r10		; \
 	movl	%ss,%r11d		; \

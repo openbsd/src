@@ -1,4 +1,4 @@
-/*	$OpenBSD: vector.S,v 1.92 2023/04/17 00:02:14 deraadt Exp $	*/
+/*	$OpenBSD: vector.S,v 1.93 2023/07/27 00:30:07 guenther Exp $	*/
 /*	$NetBSD: vector.S,v 1.5 2004/06/28 09:13:11 fvdl Exp $	*/
 
 /*
@@ -551,6 +551,7 @@ IDTVEC(intr_lapic_ipi)
 	jae	2f
 END(INTRENTRY_LABEL(intr_lapic_ipi))
 KIDTVEC_FALLTHROUGH(resume_lapic_ipi)
+	endbr64
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_IPI,CPUVAR(ILEVEL)
@@ -757,6 +758,7 @@ IDTVEC(intr_lapic_ltimer)
 	jae	2f
 END(INTRENTRY_LABEL(intr_lapic_ltimer))
 KIDTVEC_FALLTHROUGH(resume_lapic_ltimer)
+	endbr64
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_CLOCK,CPUVAR(ILEVEL)
@@ -790,6 +792,7 @@ IDTVEC(intr_xen_upcall)
 	jae	2f
 END(INTRENTRY_LABEL(intr_xen_upcall))
 KIDTVEC_FALLTHROUGH(resume_xen_upcall)
+	endbr64
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_NET,CPUVAR(ILEVEL)
@@ -822,6 +825,7 @@ IDTVEC(intr_hyperv_upcall)
 	jae	2f
 END(INTRENTRY_LABEL(intr_hyperv_upcall))
 KIDTVEC_FALLTHROUGH(resume_hyperv_upcall)
+	endbr64
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_NET,CPUVAR(ILEVEL)
@@ -852,6 +856,7 @@ KIDTVEC(recurse_##name##num)						;\
 	INTR_RECURSE							;\
 END(Xrecurse_##name##num)						;\
 KIDTVEC_FALLTHROUGH(resume_##name##num)					\
+	endbr64								;\
 	movq	$IREENT_MAGIC,TF_ERR(%rsp)				;\
 	movl	%ebx,%r13d						;\
 	movq	CPUVAR(ISOURCES) + (num) * 8, %r14			;\
@@ -1268,6 +1273,7 @@ NENTRY(retpoline_r13)
 END(retpoline_r13)
 
 KIDTVEC(softtty)
+	endbr64
 	movl	$IPL_SOFTTTY, CPUVAR(ILEVEL)
 	sti
 	incl	CPUVAR(IDEPTH)
@@ -1278,6 +1284,7 @@ KIDTVEC(softtty)
 END(Xsofttty)
 
 KIDTVEC(softnet)
+	endbr64
 	movl	$IPL_SOFTNET, CPUVAR(ILEVEL)
 	sti
 	incl	CPUVAR(IDEPTH)
@@ -1288,6 +1295,7 @@ KIDTVEC(softnet)
 END(Xsoftnet)
 
 KIDTVEC(softclock)
+	endbr64
 	movl	$IPL_SOFTCLOCK, CPUVAR(ILEVEL)
 	sti
 	incl	CPUVAR(IDEPTH)
