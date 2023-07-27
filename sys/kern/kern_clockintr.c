@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.28 2023/07/25 18:16:19 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.29 2023/07/27 17:52:53 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -24,7 +24,9 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mutex.h>
+#include <sys/resourcevar.h>
 #include <sys/queue.h>
+#include <sys/sched.h>
 #include <sys/stdint.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
@@ -104,6 +106,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 	uint64_t multiplier = 0;
 	struct cpu_info *ci = curcpu();
 	struct clockintr_queue *cq = &ci->ci_queue;
+	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int reset_cq_intrclock = 0;
 
 	KASSERT(ISSET(clockintr_flags, CL_INIT));
@@ -187,6 +190,15 @@ clockintr_cpu_init(const struct intrclock *ic)
 			    multiplier, MAXCPUS);
 		}
 		clockintr_advance(cq->cq_schedclock, schedclock_period);
+	}
+
+	/*
+	 * XXX Need to find a better place to do this.  We can't do it in
+	 * sched_init_cpu() because initclocks() runs after it.
+	 */
+	if (spc->spc_profclock->cl_expiration == 0) {
+		clockintr_stagger(spc->spc_profclock, profclock_period,
+		    multiplier, MAXCPUS);
 	}
 
 	if (reset_cq_intrclock)

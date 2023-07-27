@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.80 2023/07/25 18:16:19 cheloha Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.81 2023/07/27 17:52:53 cheloha Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -92,8 +92,6 @@ sched_init_cpu(struct cpu_info *ci)
 		    profclock);
 		if (spc->spc_profclock == NULL)
 			panic("%s: clockintr_establish profclock", __func__);
-		clockintr_stagger(spc->spc_profclock, profclock_period,
-		    CPU_INFO_UNIT(ci), MAXCPUS);
 	}
 
 	kthread_create_deferred(sched_kthreads_create, ci);
