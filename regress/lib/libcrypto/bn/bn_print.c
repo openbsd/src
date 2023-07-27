@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_print.c,v 1.4 2023/07/10 20:21:37 tb Exp $ */
+/*	$OpenBSD: bn_print.c,v 1.5 2023/07/27 06:41:39 tb Exp $ */
 
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
@@ -140,6 +140,7 @@ const struct print_test {
 			"        00:80:00:00:00:00:00:00:00:00\n",
 	},
 	{
+		/* XXX - this is incorrect and should be fixed. */
 		.desc = "high bit of first nibble is set for negative number",
 		.want = "    mana mana (Negative)\n"
 			"        00:80:00:00:00:00:00:00:00:00\n",
