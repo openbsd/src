@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.367 2023/06/26 07:52:18 claudio Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.368 2023/07/27 22:20:51 mvs Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -705,7 +705,8 @@ route_output(struct mbuf *m, struct socket *so)
 	sounlock(so);
 
 	len = m->m_pkthdr.len;
-	if (len < offsetof(struct rt_msghdr, rtm_hdrlen) + 1 ||
+	if (len < offsetof(struct rt_msghdr, rtm_hdrlen) +
+	    sizeof(rtm->rtm_hdrlen) ||
 	    len != mtod(m, struct rt_msghdr *)->rtm_msglen) {
 		error = EINVAL;
 		goto fail;
