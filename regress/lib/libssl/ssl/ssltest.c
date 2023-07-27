@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.41 2023/07/04 08:47:01 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.42 2023/07/27 07:08:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -139,6 +139,9 @@
  * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
  * OTHERWISE.
  */
+
+/* XXX - USE_BIOPAIR code needs updating for BIO_n{read,write}{,0} removal. */
+/* #define USE_BIOPAIR */
 
 #define _BSD_SOURCE 1		/* Or gethostname won't be declared properly
 				   on Linux and GNU platforms. */
@@ -714,10 +717,12 @@ bad:
 	for (i = 0; i < number; i++) {
 		if (!reuse)
 			SSL_set_session(c_ssl, NULL);
+#ifdef USE_BIOPAIR
 		if (bio_pair)
 			ret = doit_biopair(s_ssl, c_ssl, bytes, &s_time,
 			    &c_time);
 		else
+#endif
 			ret = doit(s_ssl, c_ssl, bytes);
 	}
 
@@ -771,6 +776,7 @@ end:
 	return ret;
 }
 
+#if USE_BIOPAIR
 int
 doit_biopair(SSL *s_ssl, SSL *c_ssl, long count, clock_t *s_time,
     clock_t *c_time)
@@ -1114,6 +1120,7 @@ err:
 
 	return ret;
 }
+#endif
 
 
 #define W_READ	1
