@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.113 2023/07/13 18:31:59 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.114 2023/07/27 09:27:43 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -782,12 +782,15 @@ vmm_start_vm(struct imsg *imsg, uint32_t *id, pid_t *pid)
 		nargv[3] = "-n";
 		nargv[4] = "-i";
 		nargv[5] = vmm_fd;
+		nargv[6] = NULL;
 
-		if (env->vmd_verbose) {
-			nargv[6] = "-v";
+		if (env->vmd_verbose == 1) {
+			nargv[6] = VMD_VERBOSE_1;
 			nargv[7] = NULL;
-		} else
-			nargv[6] = NULL;
+		} else if (env->vmd_verbose > 1) {
+			nargv[6] = VMD_VERBOSE_2;
+			nargv[7] = NULL;
+		}
 
 		/* Control resumes in vmd main(). */
 		execvp(nargv[0], nargv);

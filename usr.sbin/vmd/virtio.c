@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.105 2023/07/15 18:32:21 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.106 2023/07/27 09:27:43 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1475,12 +1475,15 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		nargv[5] = "-i";
 		nargv[6] = vmm_fd;
 		nargv[7] = "-n";
+		nargv[8] = NULL;
 
-		if (env->vmd_verbose) {
-			nargv[8] = "-v";
+		if (env->vmd_verbose == 1) {
+			nargv[8] = VMD_VERBOSE_1;
 			nargv[9] = NULL;
-		} else
-			nargv[8] = NULL;
+		} else if (env->vmd_verbose > 1) {
+			nargv[8] = VMD_VERBOSE_2;
+			nargv[9] = NULL;
+		}
 
 		/* Control resumes in vmd.c:main(). */
 		execvp(nargv[0], nargv);
@@ -1699,8 +1702,10 @@ virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		imsg_free(&imsg);
 
 		if (msg.type == VIODEV_MSG_IO_READ && msg.data_valid) {
+#if DEBUG
 			log_debug("%s: got sync read response (reg=%s)",
 			    __func__, virtio_reg_name(msg.reg));
+#endif /* DEBUG */
 			*data = msg.data;
 			/*
 			 * It's possible we're asked to {de,}assert after the
