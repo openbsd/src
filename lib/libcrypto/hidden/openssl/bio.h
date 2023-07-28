@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.3 2023/07/28 09:58:30 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.4 2023/07/28 10:13:50 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -97,10 +97,6 @@ LCRYPTO_USED(BIO_get_retry_BIO);
 LCRYPTO_USED(BIO_get_retry_reason);
 LCRYPTO_USED(BIO_set_retry_reason);
 LCRYPTO_USED(BIO_dup_chain);
-LCRYPTO_USED(BIO_nread0);
-LCRYPTO_USED(BIO_nread);
-LCRYPTO_USED(BIO_nwrite0);
-LCRYPTO_USED(BIO_nwrite);
 LCRYPTO_USED(BIO_debug_callback);
 LCRYPTO_USED(BIO_s_mem);
 LCRYPTO_USED(BIO_new_mem_buf);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_bio.c,v 1.27 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: bss_bio.c,v 1.28 2023/07/28 10:13:50 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
  *
@@ -251,85 +251,6 @@ bio_read(BIO *bio, char *buf, int size_)
 	return size;
 }
 
-/* non-copying interface: provide pointer to available data in buffer
- *    bio_nread0:  return number of available bytes
- *    bio_nread:   also advance index
- * (example usage:  bio_nread0(), read from buffer, bio_nread()
- *  or just         bio_nread(), read from buffer)
- */
-/* WARNING: The non-copying interface is largely untested as of yet
- * and may contain bugs. */
-static ssize_t
-bio_nread0(BIO *bio, char **buf)
-{
-	struct bio_bio_st *b, *peer_b;
-	ssize_t num;
-
-	BIO_clear_retry_flags(bio);
-
-	if (!bio->init)
-		return 0;
-
-	b = bio->ptr;
-	assert(b != NULL);
-	assert(b->peer != NULL);
-	peer_b = b->peer->ptr;
-	assert(peer_b != NULL);
-	assert(peer_b->buf != NULL);
-
-	peer_b->request = 0;
-
-	if (peer_b->len == 0) {
-		char dummy;
-
-		/* avoid code duplication -- nothing available for reading */
-		return bio_read(bio, &dummy, 1); /* returns 0 or -1 */
-	}
-
-	num = peer_b->len;
-	if (peer_b->size < peer_b->offset + num)
-		/* no ring buffer wrap-around for non-copying interface */
-		num = peer_b->size - peer_b->offset;
-	assert(num > 0);
-
-	if (buf != NULL)
-		*buf = peer_b->buf + peer_b->offset;
-	return num;
-}
-
-static ssize_t
-bio_nread(BIO *bio, char **buf, size_t num_)
-{
-	struct bio_bio_st *b, *peer_b;
-	ssize_t num, available;
-
-	if (num_ > SSIZE_MAX)
-		num = SSIZE_MAX;
-	else
-		num = (ssize_t)num_;
-
-	available = bio_nread0(bio, buf);
-	if (num > available)
-		num = available;
-	if (num <= 0)
-		return num;
-
-	b = bio->ptr;
-	peer_b = b->peer->ptr;
-
-	peer_b->len -= num;
-	if (peer_b->len) {
-		peer_b->offset += num;
-		assert(peer_b->offset <= peer_b->size);
-		if (peer_b->offset == peer_b->size)
-			peer_b->offset = 0;
-	} else
-		peer_b->offset = 0;
-
-	return num;
-}
-
-
 static int
 bio_write(BIO *bio, const char *buf, int num_)
 {
@@ -401,85 +322,6 @@ bio_write(BIO *bio, const char *buf, int num_)
 
 	return num;
 }
-
-/* non-copying interface: provide pointer to region to write to
- *   bio_nwrite0:  check how much space is available
- *   bio_nwrite:   also increase length
- * (example usage:  bio_nwrite0(), write to buffer, bio_nwrite()
- *  or just         bio_nwrite(), write to buffer)
- */
-static ssize_t
-bio_nwrite0(BIO *bio, char **buf)
-{
-	struct bio_bio_st *b;
-	size_t num;
-	size_t write_offset;
-
-	BIO_clear_retry_flags(bio);
-
-	if (!bio->init)
-		return 0;
-
-	b = bio->ptr;
-
-	assert(b != NULL);
-	assert(b->peer != NULL);
-	assert(b->buf != NULL);
-
-	b->request = 0;
-	if (b->closed) {
-		BIOerror(BIO_R_BROKEN_PIPE);
-		return -1;
-	}
-
-	assert(b->len <= b->size);
-
-	if (b->len == b->size) {
-		BIO_set_retry_write(bio);
-		return -1;
-	}
-
-	num = b->size - b->len;
-	write_offset = b->offset + b->len;
-	if (write_offset >= b->size)
-		write_offset -= b->size;
-	if (write_offset + num > b->size)
-		/* no ring buffer wrap-around for non-copying interface
-		 * (to fulfil the promise by BIO_ctrl_get_write_guarantee,
-		 * BIO_nwrite may have to be called twice) */
-		num = b->size - write_offset;
-
-	if (buf != NULL)
-		*buf = b->buf + write_offset;
-	assert(write_offset + num <= b->size);
-
-	return num;
-}
-
-static ssize_t
-bio_nwrite(BIO *bio, char **buf, size_t num_)
-{
-	struct bio_bio_st *b;
-	ssize_t num, space;
-
-	if (num_ > SSIZE_MAX)
-		num = SSIZE_MAX;
-	else
-		num = (ssize_t)num_;
-
-	space = bio_nwrite0(bio, buf);
-	if (num > space)
-		num = space;
-	if (num <= 0)
-		return num;
-	b = bio->ptr;
-	assert(b != NULL);
-	b->len += num;
-	assert(b->len <= b->size);
-
-	return num;
-}
-
 
 static long
 bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
@@ -564,28 +406,7 @@ bio_ctrl(BIO *bio, int cmd, long num, void *ptr)
 		ret = 1;
 		break;
 
-	case BIO_C_NREAD0:
-		/* prepare for non-copying read */
-		ret = (long) bio_nread0(bio, ptr);
-		break;
-
-	case BIO_C_NREAD:
-		/* non-copying read */
-		ret = (long) bio_nread(bio, ptr, (size_t) num);
-		break;
-
-	case BIO_C_NWRITE0:
-		/* prepare for non-copying write */
-		ret = (long) bio_nwrite0(bio, ptr);
-		break;
-
-	case BIO_C_NWRITE:
-		/* non-copying write */
-		ret = (long) bio_nwrite(bio, ptr, (size_t) num);
-		break;
-
-
-		/* standard CTRL codes follow */
+	/* standard CTRL codes follow */
 
 	case BIO_CTRL_RESET:
 		if (b->buf != NULL) {
@@ -817,77 +638,3 @@ BIO_ctrl_reset_read_request(BIO *bio)
 	return (BIO_ctrl(bio, BIO_C_RESET_READ_REQUEST, 0, NULL) != 0);
 }
 LCRYPTO_ALIAS(BIO_ctrl_reset_read_request);
-
-
-/* BIO_nread0/nread/nwrite0/nwrite are available only for BIO pairs for now
- * (conceivably some other BIOs could allow non-copying reads and writes too.)
- */
-int
-BIO_nread0(BIO *bio, char **buf)
-{
-	long ret;
-
-	if (!bio->init) {
-		BIOerror(BIO_R_UNINITIALIZED);
-		return -2;
-	}
-
-	ret = BIO_ctrl(bio, BIO_C_NREAD0, 0, buf);
-	if (ret > INT_MAX)
-		return INT_MAX;
-	else
-		return (int) ret;
-}
-LCRYPTO_ALIAS(BIO_nread0);
-
-int
-BIO_nread(BIO *bio, char **buf, int num)
-{
-	int ret;
-
-	if (!bio->init) {
-		BIOerror(BIO_R_UNINITIALIZED);
-		return -2;
-	}
-
-	ret = (int) BIO_ctrl(bio, BIO_C_NREAD, num, buf);
-	if (ret > 0)
-		bio->num_read += ret;
-	return ret;
-}
-LCRYPTO_ALIAS(BIO_nread);
-
-int
-BIO_nwrite0(BIO *bio, char **buf)
-{
-	long ret;
-
-	if (!bio->init) {
-		BIOerror(BIO_R_UNINITIALIZED);
-		return -2;
-	}
-
-	ret = BIO_ctrl(bio, BIO_C_NWRITE0, 0, buf);
-	if (ret > INT_MAX)
-		return INT_MAX;
-	else
-		return (int) ret;
-}
-LCRYPTO_ALIAS(BIO_nwrite0);
-
-int
-BIO_nwrite(BIO *bio, char **buf, int num)
-{
-	int ret;
-
-	if (!bio->init) {
-		BIOerror(BIO_R_UNINITIALIZED);
-		return -2;
-	}
-
-	ret = BIO_ctrl(bio, BIO_C_NWRITE, num, buf);
-	if (ret > 0)
-		bio->num_write += ret;
-	return ret;
-}
-LCRYPTO_ALIAS(BIO_nwrite);

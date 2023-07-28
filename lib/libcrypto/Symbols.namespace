@@ -1195,10 +1195,6 @@ _libre_BIO_get_retry_BIO
 _libre_BIO_get_retry_reason
 _libre_BIO_set_retry_reason
 _libre_BIO_dup_chain
-_libre_BIO_nread0
-_libre_BIO_nread
-_libre_BIO_nwrite0
-_libre_BIO_nwrite
 _libre_BIO_debug_callback
 _libre_BIO_s_mem
 _libre_BIO_new_mem_buf

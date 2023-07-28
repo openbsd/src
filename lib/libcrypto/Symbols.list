@@ -325,12 +325,8 @@ BIO_new_fp
 BIO_new_mem_buf
 BIO_new_socket
 BIO_next
-BIO_nread
-BIO_nread0
 BIO_number_read
 BIO_number_written
-BIO_nwrite
-BIO_nwrite0
 BIO_pop
 BIO_printf
 BIO_ptr_ctrl
