@@ -286,24 +286,6 @@ L\$2nd
 	nop
 	.PROCEND
 
-	.EXPORT	RC4_options,ENTRY
-	.ALIGN	8
-RC4_options
-	.PROC
-	.CALLINFO	NO_CALLS
-	.ENTRY
-#ifdef __PIC__
-	addil	LT'L\$opts, %r19
-	ldw	RT'L\$opts(%r1), %r28
-#else
-	ldil	L'L\$opts, %t1
-	ldo	R'L\$opts(%t1), %r28
-#endif
-	bv	(%r2)
-	.EXIT
-	nop
-	.PROCEND
-
 	.section .rodata
 	.ALIGN	8
 L\$opts

@@ -491,19 +491,6 @@ RC4_set_key:
 	mov	%eax,-4($dat)
 	ret
 .size	RC4_set_key,.-RC4_set_key
-
-.globl	RC4_options
-.type	RC4_options,\@abi-omnipotent
-.align	16
-RC4_options:
-	endbr64
-	lea	.Lopts(%rip),%rax
-	ret
-.align	64
-.Lopts:
-.asciz	"rc4(64x,int)"
-.align	64
-.size	RC4_options,.-RC4_options
 ___
 }
 

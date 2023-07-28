@@ -11,7 +11,6 @@ AES_ecb_encrypt
 AES_encrypt
 AES_ige_encrypt
 AES_ofb128_encrypt
-AES_options
 AES_set_decrypt_key
 AES_set_encrypt_key
 AES_unwrap_key
@@ -235,7 +234,6 @@ BF_decrypt
 BF_ecb_encrypt
 BF_encrypt
 BF_ofb64_encrypt
-BF_options
 BF_set_key
 BIGNUM_it
 BIO_CONNECT_free
@@ -460,7 +458,6 @@ BN_nnmod
 BN_num_bits
 BN_num_bits_word
 BN_one
-BN_options
 BN_print
 BN_print_fp
 BN_pseudo_rand
@@ -820,7 +817,6 @@ DES_key_sched
 DES_ncbc_encrypt
 DES_ofb64_encrypt
 DES_ofb_encrypt
-DES_options
 DES_pcbc_encrypt
 DES_quad_cksum
 DES_random_key
@@ -2240,7 +2236,6 @@ RC2_encrypt
 RC2_ofb64_encrypt
 RC2_set_key
 RC4
-RC4_options
 RC4_set_key
 RIPEMD160
 RIPEMD160_Final
@@ -3634,7 +3629,6 @@ idea_cfb64_encrypt
 idea_ecb_encrypt
 idea_encrypt
 idea_ofb64_encrypt
-idea_options
 idea_set_decrypt_key
 idea_set_encrypt_key
 lh_delete

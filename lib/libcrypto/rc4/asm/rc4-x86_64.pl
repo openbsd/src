@@ -503,33 +503,6 @@ RC4_set_key:
 	mov	%eax,-4($dat)
 	ret
 .size	RC4_set_key,.-RC4_set_key
-
-.globl	RC4_options
-.type	RC4_options,\@abi-omnipotent
-.align	16
-RC4_options:
-	endbr64
-	lea	.Lopts(%rip),%rax
-	mov	OPENSSL_ia32cap_P(%rip),%edx
-	bt	\$IA32CAP_BIT0_INTELP4,%edx
-	jc	.L8xchar
-	bt	\$IA32CAP_BIT0_INTEL,%edx
-	jnc	.Ldone
-	add	\$25,%rax
-	ret
-.L8xchar:
-	add	\$12,%rax
-.Ldone:
-	ret
-.section .rodata
-.align	64
-.Lopts:
-.asciz	"rc4(8x,int)"
-.asciz	"rc4(8x,char)"
-.asciz	"rc4(16x,int)"
-.align	64
-.text
-.size	RC4_options,.-RC4_options
 ___
 
 sub reg_part {

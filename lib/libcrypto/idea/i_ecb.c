@@ -1,4 +1,4 @@
-/* $OpenBSD: i_ecb.c,v 1.6 2023/07/08 10:44:00 beck Exp $ */
+/* $OpenBSD: i_ecb.c,v 1.7 2023/07/28 10:35:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,16 +59,6 @@
 #include <openssl/idea.h>
 #include "idea_local.h"
 #include <openssl/opensslv.h>
-
-const char *
-idea_options(void)
-{
-	if (sizeof(short) != sizeof(IDEA_INT))
-		return ("idea(int)");
-	else
-		return ("idea(short)");
-}
-LCRYPTO_ALIAS(idea_options);
 
 void
 idea_ecb_encrypt(const unsigned char *in, unsigned char *out,

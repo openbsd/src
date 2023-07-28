@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_lib.c,v 1.89 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_lib.c,v 1.90 2023/07/28 10:35:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -654,26 +654,6 @@ BN_is_negative(const BIGNUM *a)
 	return a->neg != 0;
 }
 LCRYPTO_ALIAS(BN_is_negative);
-
-char *
-BN_options(void)
-{
-	static int init = 0;
-	static char data[16];
-
-	if (!init) {
-		init++;
-#ifdef BN_LLONG
-		snprintf(data,sizeof data, "bn(%d,%d)",
-		    (int)sizeof(BN_ULLONG) * 8, (int)sizeof(BN_ULONG) * 8);
-#else
-		snprintf(data,sizeof data, "bn(%d,%d)",
-		    (int)sizeof(BN_ULONG) * 8, (int)sizeof(BN_ULONG) * 8);
-#endif
-	}
-	return (data);
-}
-LCRYPTO_ALIAS(BN_options);
 
 /*
  * Bits of security, see SP800-57, section 5.6.11, table 2.

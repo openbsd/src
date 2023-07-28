@@ -384,32 +384,4 @@ $idx="edx";
 	&mov	(&DWP(-4,$out),"eax");		# key->y=0;
 &function_end("RC4_set_key");
 
-# const char *RC4_options(void);
-&static_label("opts");
-&function_begin_B("RC4_options");
-	&picsetup("edx");
-	&picsymbol("eax", &label("opts"), "edx");
-	&picsymbol("edx", "OPENSSL_ia32cap_P", "edx");;
-
-	&mov	("edx",&DWP(0,"edx"));
-	&bt	("edx","\$IA32CAP_BIT0_INTELP4");
-	&jc	(&label("1xchar"));
-	&bt	("edx","\$IA32CAP_BIT0_SSE2");
-	&jnc	(&label("ret"));
-	&add	("eax",25);
-	&ret	();
-&set_label("1xchar");
-	&add	("eax",12);
-&set_label("ret");
-	&ret	();
-&function_end_B("RC4_options");
-
-	&rodataseg();
-&set_label("opts");
-&asciz	("rc4(4x,int)");
-&asciz	("rc4(1x,char)");
-&asciz	("rc4(8x,mmx)");
-	&previous();
-
 &asm_finish();
-

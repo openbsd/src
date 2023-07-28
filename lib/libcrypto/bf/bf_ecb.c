@@ -1,4 +1,4 @@
-/* $OpenBSD: bf_ecb.c,v 1.9 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: bf_ecb.c,v 1.10 2023/07/28 10:35:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -66,18 +66,6 @@
  * (From LECTURE NOTES IN COMPUTER SCIENCE 809, FAST SOFTWARE ENCRYPTION,
  * CAMBRIDGE SECURITY WORKSHOP, CAMBRIDGE, U.K., DECEMBER 9-11, 1993)
  */
-
-const char *
-BF_options(void)
-{
-#ifdef BF_PTR
-	return("blowfish(ptr)");
-#elif defined(BF_PTR2)
-	return("blowfish(ptr2)");
-#else
-	return("blowfish(idx)");
-#endif
-}
 
 void
 BF_ecb_encrypt(const unsigned char *in, unsigned char *out,
