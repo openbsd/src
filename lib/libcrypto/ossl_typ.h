@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.27 2023/07/28 09:22:26 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.28 2023/07/28 10:21:01 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -149,8 +149,6 @@ typedef struct store_method_st STORE_METHOD;
 
 typedef struct ui_st UI;
 typedef struct ui_method_st UI_METHOD;
-
-typedef struct st_ERR_FNS ERR_FNS;
 
 typedef struct engine_st ENGINE;
 typedef struct ssl_st SSL;

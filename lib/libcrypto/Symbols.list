@@ -1123,7 +1123,6 @@ ERR_get_err_state_table
 ERR_get_error
 ERR_get_error_line
 ERR_get_error_line_data
-ERR_get_implementation
 ERR_get_next_error_library
 ERR_get_state
 ERR_get_string_table
@@ -1170,7 +1169,6 @@ ERR_release_err_state_table
 ERR_remove_state
 ERR_remove_thread_state
 ERR_set_error_data
-ERR_set_implementation
 ERR_set_mark
 ERR_unload_strings
 ESS_CERT_ID_dup

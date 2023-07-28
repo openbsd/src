@@ -1396,8 +1396,6 @@ _libre_ERR_release_err_state_table
 _libre_ERR_get_next_error_library
 _libre_ERR_set_mark
 _libre_ERR_pop_to_mark
-_libre_ERR_get_implementation
-_libre_ERR_set_implementation
 _libre_RAND_set_rand_method
 _libre_RAND_get_rand_method
 _libre_RAND_SSLeay

@@ -1,4 +1,4 @@
-/* $OpenBSD: err.h,v 1.2 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: err.h,v 1.3 2023/07/28 10:21:01 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -60,7 +60,5 @@ LCRYPTO_USED(ERR_release_err_state_table);
 LCRYPTO_USED(ERR_get_next_error_library);
 LCRYPTO_USED(ERR_set_mark);
 LCRYPTO_USED(ERR_pop_to_mark);
-LCRYPTO_USED(ERR_get_implementation);
-LCRYPTO_USED(ERR_set_implementation);
 
 #endif /* _LIBCRYPTO_ERR_H */
