@@ -1,11 +1,10 @@
-# $OpenBSD: Makefile,v 1.258 2023/07/26 20:08:59 tb Exp $
+# $OpenBSD: Makefile,v 1.259 2023/07/28 05:48:33 tb Exp $
 
 .include <bsd.own.mk>
 
 MAN=	\
 	ACCESS_DESCRIPTION_new.3 \
 	AES_encrypt.3 \
-	ASN1_BIT_STRING_num_asc.3 \
 	ASN1_BIT_STRING_set.3 \
 	ASN1_INTEGER_get.3 \
 	ASN1_NULL_new.3 \
