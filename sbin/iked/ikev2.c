@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.375 2023/07/28 07:31:38 claudio Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.376 2023/07/28 11:23:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -1443,7 +1443,7 @@ ikev2_init_ike_sa_peer(struct iked *env, struct iked_policy *pol,
 
 		log_debug("%s: added cookie, len %zu", __func__,
 		    ibuf_size(cookie));
-		print_hex(ibuf_data(cookie), 0, ibuf_size(cookie));
+		print_hexbuf(cookie);
 
 		if (ikev2_next_payload(pld, len, IKEV2_PAYLOAD_SA) == -1)
 			goto done;
@@ -5738,7 +5738,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 
 	log_debug("%s: DHSECRET with %zu bytes", SPI_SA(sa, __func__),
 	    ibuf_length(dhsecret));
-	print_hex(ibuf_data(dhsecret), 0, ibuf_length(dhsecret));
+	print_hexbuf(dhsecret);
 
 	if (!key) {
 		/*
@@ -5810,7 +5810,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 	}
 
 	log_debug("%s: S with %zu bytes", SPI_SA(sa, __func__), ibuf_length(s));
-	print_hex(ibuf_data(s), 0, ibuf_length(s));
+	print_hexbuf(s);
 
 	/*
 	 * Get the size of the key material we need and the number
@@ -5850,31 +5850,27 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 
 	log_debug("%s: SK_d with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_d));
-	print_hex(ibuf_data(sa->sa_key_d), 0, ibuf_length(sa->sa_key_d));
+	print_hexbuf(sa->sa_key_d);
 	if (!isaead) {
 		log_debug("%s: SK_ai with %zu bytes", __func__,
 		    ibuf_length(sa->sa_key_iauth));
-		print_hex(ibuf_data(sa->sa_key_iauth), 0,
-		    ibuf_length(sa->sa_key_iauth));
+		print_hexbuf(sa->sa_key_iauth);
 		log_debug("%s: SK_ar with %zu bytes", __func__,
 		    ibuf_length(sa->sa_key_rauth));
-		print_hex(ibuf_data(sa->sa_key_rauth), 0,
-		    ibuf_length(sa->sa_key_rauth));
+		print_hexbuf(sa->sa_key_rauth);
 	}
 	log_debug("%s: SK_ei with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_iencr));
-	print_hex(ibuf_data(sa->sa_key_iencr), 0,
-	    ibuf_length(sa->sa_key_iencr));
+	print_hexbuf(sa->sa_key_iencr);
 	log_debug("%s: SK_er with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_rencr));
-	print_hex(ibuf_data(sa->sa_key_rencr), 0,
-	    ibuf_length(sa->sa_key_rencr));
+	print_hexbuf(sa->sa_key_rencr);
 	log_debug("%s: SK_pi with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_iprf));
-	print_hex(ibuf_data(sa->sa_key_iprf), 0, ibuf_length(sa->sa_key_iprf));
+	print_hexbuf(sa->sa_key_iprf);
 	log_debug("%s: SK_pr with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_rprf));
-	print_hex(ibuf_data(sa->sa_key_rprf), 0, ibuf_length(sa->sa_key_rprf));
+	print_hexbuf(sa->sa_key_rprf);
 
 	ret = 0;
 
@@ -5954,11 +5950,11 @@ ikev2_prfplus(struct iked_hash *prf, struct ibuf *key, struct ibuf *seed,
 
 		log_debug("%s: T%d with %zu bytes", __func__,
 		    pad, ibuf_length(t1));
-		print_hex(ibuf_data(t1), 0, ibuf_length(t1));
+		print_hexbuf(t1);
 	}
 
 	log_debug("%s: Tn with %zu bytes", __func__, ibuf_length(t));
-	print_hex(ibuf_data(t), 0, ibuf_length(t));
+	print_hexbuf(t);
 
 	ibuf_free(t1);
 

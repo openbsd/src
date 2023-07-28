@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.98 2023/07/28 07:31:38 claudio Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.99 2023/07/28 11:23:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -446,7 +446,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src,
 		goto done;
 
 	log_debug("%s: padded length %zu", __func__, ibuf_size(src));
-	print_hex(ibuf_data(src), 0, ibuf_size(src));
+	print_hexbuf(src);
 
 	cipher_setkey(sa->sa_encr, ibuf_data(encr), ibuf_length(encr));
 	cipher_setiv(sa->sa_encr, NULL, 0);	/* XXX ivlen */
@@ -489,7 +489,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src,
 
 	log_debug("%s: length %zu, padding %d, output length %zu",
 	    __func__, len + sizeof(pad), pad, ibuf_size(dst));
-	print_hex(ibuf_data(dst), 0, ibuf_size(dst));
+	print_hexbuf(dst);
 
 	ibuf_free(src);
 	ibuf_free(out);
@@ -510,7 +510,7 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 	uint8_t			*ptr;
 
 	log_debug("%s: message length %zu", __func__, ibuf_size(src));
-	print_hex(ibuf_data(src), 0, ibuf_size(src));
+	print_hexbuf(src);
 
 	if (sa == NULL ||
 	    sa->sa_encr == NULL ||
@@ -557,7 +557,7 @@ ikev2_msg_integr(struct iked *env, struct iked_sa *sa, struct ibuf *src)
 		goto done;
 	memcpy(ptr, ibuf_data(tmp), integrlen);
 
-	print_hex(ibuf_data(tmp), 0, ibuf_size(tmp));
+	print_hexbuf(tmp);
 
 	ret = 0;
  done:
@@ -580,7 +580,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 	    sa->sa_encr == NULL ||
 	    sa->sa_integr == NULL) {
 		log_debug("%s: invalid SA", __func__);
-		print_hex(ibuf_data(src), 0, ibuf_size(src));
+		print_hexbuf(src);
 		goto done;
 	}
 
@@ -699,7 +699,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 
 	log_debug("%s: decrypted payload length %zd/%zd padding %d",
 	    __func__, outlen, encrlen, pad);
-	print_hex(ibuf_data(out), 0, ibuf_size(out));
+	print_hexbuf(out);
 
 	/* Strip padding and padding length */
 	if (ibuf_setsize(out, outlen - pad - 1) != 0)
@@ -900,7 +900,7 @@ ikev2_send_encrypted_fragments(struct iked *env, struct iked_sa *sa,
 		log_debug("%s: Fragment %zu of %zu has size of %zu bytes.",
 		    __func__, frag_num, frag_total,
 		    ibuf_size(buf) - sizeof(*hdr));
-		print_hex(ibuf_data(buf), 0,  ibuf_size(buf));
+		print_hexbuf(buf);
 
 		resp.msg_data = buf;
 		resp.msg_sa = sa;
@@ -986,7 +986,7 @@ ikev2_msg_auth(struct iked *env, struct iked_sa *sa, int response)
 	log_debug("%s: %s auth data length %zu",
 	    __func__, response ? "responder" : "initiator",
 	    ibuf_size(authmsg));
-	print_hex(ibuf_data(authmsg), 0, ibuf_size(authmsg));
+	print_hexbuf(authmsg);
 
 	return (authmsg);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.42 2023/06/16 10:28:43 tb Exp $	*/
+/*	$OpenBSD: util.c,v 1.43 2023/07/28 11:23:03 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -497,6 +497,12 @@ print_hexval(const uint8_t *buf, off_t offset, size_t length)
 	for (i = 0; i < length; i++)
 		print_debug("%02x", buf[offset + i]);
 	print_debug("\n");
+}
+
+void
+print_hexbuf(struct ibuf *ibuf)
+{
+	print_hex(ibuf_data(ibuf), 0, ibuf_size(ibuf));
 }
 
 const char *
