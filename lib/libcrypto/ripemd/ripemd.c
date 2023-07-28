@@ -1,4 +1,4 @@
-/* $OpenBSD: rmd_dgst.c,v 1.20 2023/07/08 06:52:56 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.1 2023/07/28 11:08:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -422,3 +422,20 @@ ripemd160_block_data_order(RIPEMD160_CTX *ctx, const void *p, size_t num)
 	}
 }
 #endif
+
+unsigned char *
+RIPEMD160(const unsigned char *d, size_t n,
+    unsigned char *md)
+{
+	RIPEMD160_CTX c;
+	static unsigned char m[RIPEMD160_DIGEST_LENGTH];
+
+	if (md == NULL)
+		md = m;
+	if (!RIPEMD160_Init(&c))
+		return NULL;
+	RIPEMD160_Update(&c, d, n);
+	RIPEMD160_Final(md, &c);
+	explicit_bzero(&c, sizeof(c));
+	return (md);
+}

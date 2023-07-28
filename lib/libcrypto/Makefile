@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.151 2023/07/28 11:06:28 jsing Exp $
+# $OpenBSD: Makefile,v 1.152 2023/07/28 11:08:01 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -533,8 +533,7 @@ SRCS+= rc2cfb64.c
 SRCS+= rc2ofb64.c
 
 # ripemd/
-SRCS+= rmd_dgst.c
-SRCS+= rmd_one.c
+SRCS+= ripemd.c
 
 # rsa/
 SRCS+= rsa_ameth.c
