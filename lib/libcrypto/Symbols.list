@@ -1734,7 +1734,6 @@ OBJ_NAME_init
 OBJ_NAME_new_index
 OBJ_NAME_remove
 OBJ_add_object
-OBJ_add_sigid
 OBJ_bsearch_
 OBJ_cleanup
 OBJ_cmp
@@ -1752,7 +1751,6 @@ OBJ_nid2obj
 OBJ_nid2sn
 OBJ_obj2nid
 OBJ_obj2txt
-OBJ_sigid_free
 OBJ_sn2nid
 OBJ_txt2nid
 OBJ_txt2obj

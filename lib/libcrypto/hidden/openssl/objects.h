@@ -1,4 +1,4 @@
-/* $OpenBSD: objects.h,v 1.1 2023/07/08 12:27:51 beck Exp $ */
+/* $OpenBSD: objects.h,v 1.2 2023/07/28 10:25:05 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -54,8 +54,6 @@ LCRYPTO_USED(OBJ_length);
 LCRYPTO_USED(OBJ_get0_data);
 LCRYPTO_USED(OBJ_find_sigid_algs);
 LCRYPTO_USED(OBJ_find_sigid_by_algs);
-LCRYPTO_USED(OBJ_add_sigid);
-LCRYPTO_USED(OBJ_sigid_free);
 LCRYPTO_USED(ERR_load_OBJ_strings);
 
 #endif /* _LIBCRYPTO_OBJECTS_H */

@@ -2454,8 +2454,6 @@ _libre_OBJ_length
 _libre_OBJ_get0_data
 _libre_OBJ_find_sigid_algs
 _libre_OBJ_find_sigid_by_algs
-_libre_OBJ_add_sigid
-_libre_OBJ_sigid_free
 _libre_ERR_load_OBJ_strings
 _libre_CMAC_CTX_new
 _libre_CMAC_CTX_cleanup
