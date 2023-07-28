@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.144 2023/07/28 09:42:44 tb Exp $
+# $OpenBSD: Makefile,v 1.145 2023/07/28 09:46:36 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -25,7 +25,7 @@ CFLAGS+= -DLIBRESSL_NAMESPACE -DLIBRESSL_CRYPTO_NAMESPACE
 
 
 .if !defined(NOPIC)
-CFLAGS+= -DDSO_DLFCN -DHAVE_DLFCN_H -DHAVE_FUNOPEN
+CFLAGS+= -DHAVE_FUNOPEN
 .endif
 
 # Hardware engines
@@ -317,13 +317,6 @@ SRCS+= dsa_meth.c
 SRCS+= dsa_ossl.c
 SRCS+= dsa_pmeth.c
 SRCS+= dsa_prn.c
-
-# dso/
-SRCS+= dso_dlfcn.c
-SRCS+= dso_err.c
-SRCS+= dso_lib.c
-SRCS+= dso_null.c
-SRCS+= dso_openssl.c
 
 # ec/
 SRCS+= ec_ameth.c
@@ -713,7 +706,6 @@ SRCS+= x_all.c
 	${LCRYPTO_SRC}/des \
 	${LCRYPTO_SRC}/dh \
 	${LCRYPTO_SRC}/dsa \
-	${LCRYPTO_SRC}/dso \
 	${LCRYPTO_SRC}/ec \
 	${LCRYPTO_SRC}/ecdh \
 	${LCRYPTO_SRC}/ecdsa \
@@ -774,7 +766,6 @@ HDRS=\
 	${LCRYPTO_SRC}/des/des.h \
 	${LCRYPTO_SRC}/dh/dh.h \
 	${LCRYPTO_SRC}/dsa/dsa.h \
-	${LCRYPTO_SRC}/dso/dso.h \
 	${LCRYPTO_SRC}/ec/ec.h \
 	${LCRYPTO_SRC}/ecdh/ecdh.h \
 	${LCRYPTO_SRC}/ecdsa/ecdsa.h \

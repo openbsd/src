@@ -1,4 +1,4 @@
-/* $OpenBSD: opensslfeatures.h,v 1.39 2023/07/06 06:38:01 beck Exp $ */
+/* $OpenBSD: opensslfeatures.h,v 1.40 2023/07/28 09:46:36 tb Exp $ */
 /*
  * Feature flags for LibreSSL... so you can actually tell when things
  * are enabled, rather than not being able to tell when things are
@@ -51,7 +51,7 @@
 /* #define OPENSSL_NO_DGRAM */
 /* #define OPENSSL_NO_DH */
 /* #define OPENSSL_NO_DSA */
-/* #define OPENSSL_NO_DSO */
+#define OPENSSL_NO_DSO
 /* #define OPENSSL_NO_DTLS */
 #define OPENSSL_NO_DTLS1
 #ifndef LIBRESSL_HAS_DTLS1_2
