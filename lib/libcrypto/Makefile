@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.145 2023/07/28 09:46:36 tb Exp $
+# $OpenBSD: Makefile,v 1.146 2023/07/28 09:53:55 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -27,9 +27,6 @@ CFLAGS+= -DLIBRESSL_NAMESPACE -DLIBRESSL_CRYPTO_NAMESPACE
 .if !defined(NOPIC)
 CFLAGS+= -DHAVE_FUNOPEN
 .endif
-
-# Hardware engines
-CFLAGS+= -DOPENSSL_NO_HW_PADLOCK # XXX enable this?
 
 CFLAGS+= -I${LCRYPTO_SRC}
 CFLAGS+= -I${LCRYPTO_SRC}/arch/${MACHINE_CPU}
@@ -346,28 +343,6 @@ SRCS+= ecdsa.c
 
 # engine/
 SRCS+= engine_stubs.c
-SRCS+= eng_all.c
-SRCS+= eng_cnf.c
-SRCS+= eng_ctrl.c
-SRCS+= eng_dyn.c
-SRCS+= eng_err.c
-SRCS+= eng_fat.c
-SRCS+= eng_init.c
-SRCS+= eng_lib.c
-SRCS+= eng_list.c
-SRCS+= eng_openssl.c
-SRCS+= eng_pkey.c
-SRCS+= eng_table.c
-SRCS+= tb_asnmth.c
-SRCS+= tb_cipher.c
-SRCS+= tb_dh.c
-SRCS+= tb_digest.c
-SRCS+= tb_dsa.c
-SRCS+= tb_eckey.c
-SRCS+= tb_pkmeth.c
-SRCS+= tb_rand.c
-SRCS+= tb_rsa.c
-SRCS+= tb_store.c
 
 # err/
 SRCS+= err.c

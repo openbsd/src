@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl.h,v 1.3 2023/07/08 16:40:14 beck Exp $ */
+/* $OpenBSD: ssl.h,v 1.4 2023/07/28 09:53:55 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -44,7 +44,6 @@ LSSL_USED(SSL_CTX_set_info_callback);
 LSSL_USED(SSL_CTX_get_info_callback);
 LSSL_USED(SSL_CTX_set_client_cert_cb);
 LSSL_USED(SSL_CTX_get_client_cert_cb);
-LSSL_USED(SSL_CTX_set_client_cert_engine);
 LSSL_USED(SSL_CTX_set_cookie_generate_cb);
 LSSL_USED(SSL_CTX_set_cookie_verify_cb);
 LSSL_USED(SSL_CTX_set_next_protos_advertised_cb);

@@ -1417,7 +1417,6 @@ _libre_ERR_get_implementation
 _libre_ERR_set_implementation
 _libre_RAND_set_rand_method
 _libre_RAND_get_rand_method
-_libre_RAND_set_rand_engine
 _libre_RAND_SSLeay
 _libre_ERR_load_RAND_strings
 _libre_ECDSA_SIG_new
@@ -1616,8 +1615,6 @@ _libre_TS_CONF_load_certs
 _libre_TS_CONF_load_key
 _libre_TS_CONF_get_tsa_section
 _libre_TS_CONF_set_serial
-_libre_TS_CONF_set_crypto_device
-_libre_TS_CONF_set_default_engine
 _libre_TS_CONF_set_signer_cert
 _libre_TS_CONF_set_certs
 _libre_TS_CONF_set_signer_key

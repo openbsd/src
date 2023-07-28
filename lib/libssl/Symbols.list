@@ -95,7 +95,6 @@ SSL_CTX_set_cipher_list
 SSL_CTX_set_ciphersuites
 SSL_CTX_set_client_CA_list
 SSL_CTX_set_client_cert_cb
-SSL_CTX_set_client_cert_engine
 SSL_CTX_set_cookie_generate_cb
 SSL_CTX_set_cookie_verify_cb
 SSL_CTX_set_default_passwd_cb

@@ -1,4 +1,4 @@
-/* $OpenBSD: ts.h,v 1.2 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: ts.h,v 1.3 2023/07/28 09:53:55 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -201,8 +201,6 @@ LCRYPTO_USED(TS_CONF_load_certs);
 LCRYPTO_USED(TS_CONF_load_key);
 LCRYPTO_USED(TS_CONF_get_tsa_section);
 LCRYPTO_USED(TS_CONF_set_serial);
-LCRYPTO_USED(TS_CONF_set_crypto_device);
-LCRYPTO_USED(TS_CONF_set_default_engine);
 LCRYPTO_USED(TS_CONF_set_signer_cert);
 LCRYPTO_USED(TS_CONF_set_certs);
 LCRYPTO_USED(TS_CONF_set_signer_key);
