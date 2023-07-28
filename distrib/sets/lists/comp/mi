@@ -1120,7 +1120,6 @@
 ./usr/include/openssl/des.h
 ./usr/include/openssl/dh.h
 ./usr/include/openssl/dsa.h
-./usr/include/openssl/dso.h
 ./usr/include/openssl/dtls1.h
 ./usr/include/openssl/ec.h
 ./usr/include/openssl/ecdh.h
