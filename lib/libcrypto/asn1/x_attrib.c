@@ -1,4 +1,4 @@
-/* $OpenBSD: x_attrib.c,v 1.20 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: x_attrib.c,v 1.21 2023/07/28 13:30:07 jsg Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,19 +63,6 @@
 #include <openssl/x509.h>
 
 #include "x509_local.h"
-
-/*
- * XXX - remove X509_ATTRIBUTE_SET_it with next major bump.
- */
-const ASN1_ITEM X509_ATTRIBUTE_SET_it = {
-	.itype = ASN1_ITYPE_CHOICE,
-	.utype = 0,
-	.templates = NULL,
-	.tcount = 0,
-	.funcs = NULL,
-	.size = sizeof(X509_ATTRIBUTE),
-	.sname = "X509_ATTRIBUTE",
-};
 
 static const ASN1_TEMPLATE X509_ATTRIBUTE_seq_tt[] = {
 	{
