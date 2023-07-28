@@ -1,4 +1,4 @@
-/* $OpenBSD: md5_dgst.c,v 1.19 2023/07/15 15:37:05 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.6 2023/07/28 11:06:28 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -284,3 +284,20 @@ md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
 	}
 }
 #endif
+
+unsigned char *
+MD5(const unsigned char *d, size_t n, unsigned char *md)
+{
+	MD5_CTX c;
+	static unsigned char m[MD5_DIGEST_LENGTH];
+
+	if (md == NULL)
+		md = m;
+	if (!MD5_Init(&c))
+		return NULL;
+	MD5_Update(&c, d, n);
+	MD5_Final(md, &c);
+	explicit_bzero(&c, sizeof(c));
+	return (md);
+}
+LCRYPTO_ALIAS(MD5);
