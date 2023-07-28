@@ -931,7 +931,6 @@ _libre_i2d_ASN1_BIT_STRING
 _libre_ASN1_BIT_STRING_set
 _libre_ASN1_BIT_STRING_set_bit
 _libre_ASN1_BIT_STRING_get_bit
-_libre_ASN1_BIT_STRING_check
 _libre_ASN1_BIT_STRING_name_print
 _libre_ASN1_BIT_STRING_num_asc
 _libre_ASN1_BIT_STRING_set_asc

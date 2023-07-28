@@ -1,4 +1,4 @@
-/* $OpenBSD: a_bitstr.c,v 1.39 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: a_bitstr.c,v 1.40 2023/07/28 10:30:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -161,33 +161,6 @@ ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n)
 	return ((a->data[w] & v) != 0);
 }
 LCRYPTO_ALIAS(ASN1_BIT_STRING_get_bit);
-
-/*
- * Checks if the given bit string contains only bits specified by
- * the flags vector. Returns 0 if there is at least one bit set in 'a'
- * which is not specified in 'flags', 1 otherwise.
- * 'len' is the length of 'flags'.
- */
-int
-ASN1_BIT_STRING_check(const ASN1_BIT_STRING *a, const unsigned char *flags,
-    int flags_len)
-{
-	int i, ok;
-
-	/* Check if there is one bit set at all. */
-	if (!a || !a->data)
-		return 1;
-
-	/* Check each byte of the internal representation of the bit string. */
-	ok = 1;
-	for (i = 0; i < a->length && ok; ++i) {
-		unsigned char mask = i < flags_len ? ~flags[i] : 0xff;
-		/* We are done if there is an unneeded bit set. */
-		ok = (a->data[i] & mask) == 0;
-	}
-	return ok;
-}
-LCRYPTO_ALIAS(ASN1_BIT_STRING_check);
 
 int
 ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
