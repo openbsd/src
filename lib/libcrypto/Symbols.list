@@ -557,6 +557,7 @@ CMS_SignerInfo_get0_md_ctx
 CMS_SignerInfo_get0_pkey_ctx
 CMS_SignerInfo_get0_signature
 CMS_SignerInfo_get0_signer_id
+CMS_SignerInfo_get_version
 CMS_SignerInfo_set1_signer_cert
 CMS_SignerInfo_sign
 CMS_SignerInfo_verify
@@ -597,6 +598,7 @@ CMS_get0_type
 CMS_get1_ReceiptRequest
 CMS_get1_certs
 CMS_get1_crls
+CMS_get_version
 CMS_is_detached
 CMS_set1_eContentType
 CMS_set1_signers_certs

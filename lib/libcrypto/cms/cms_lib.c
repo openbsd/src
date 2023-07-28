@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.18 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.19 2023/07/28 10:28:02 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -236,6 +236,49 @@ CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
 	}
 }
 LCRYPTO_ALIAS(CMS_dataFinal);
+
+int
+CMS_get_version(const CMS_ContentInfo *cms, long *version)
+{
+	switch (OBJ_obj2nid(cms->contentType)) {
+	case NID_pkcs7_signed:
+		*version = cms->d.signedData->version;
+		return 1;
+
+	case NID_pkcs7_enveloped:
+		*version = cms->d.envelopedData->version;
+		return 1;
+
+	case NID_pkcs7_digest:
+		*version = cms->d.digestedData->version;
+		return 1;
+
+	case NID_pkcs7_encrypted:
+		*version = cms->d.encryptedData->version;
+		return 1;
+
+	case NID_id_smime_ct_authData:
+		*version = cms->d.authenticatedData->version;
+		return 1;
+
+	case NID_id_smime_ct_compressedData:
+		*version = cms->d.compressedData->version;
+		return 1;
+
+	default:
+		CMSerror(CMS_R_UNSUPPORTED_TYPE);
+		return 0;
+	}
+}
+LCRYPTO_ALIAS(CMS_get_version);
+
+int
+CMS_SignerInfo_get_version(const CMS_SignerInfo *si, long *version)
+{
+	*version = si->version;
+	return 1;
+}
+LCRYPTO_ALIAS(CMS_SignerInfo_get_version);
 
 /*
  * Return an OCTET STRING pointer to content. This allows it to be accessed

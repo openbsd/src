@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.15 2019/08/11 10:15:30 jsing Exp $ */
+/* $OpenBSD: cms.h,v 1.16 2023/07/28 10:28:02 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -127,6 +127,9 @@ int CMS_ContentInfo_print_ctx(BIO *out, CMS_ContentInfo *x, int indent, const AS
 #define CMS_ASCIICRLF                   0x80000
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
+
+int CMS_get_version(const CMS_ContentInfo *cms, long *version);
+int CMS_SignerInfo_get_version(const CMS_SignerInfo *si, long *version);
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont);
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *bio);

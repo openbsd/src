@@ -1,4 +1,4 @@
-/* $OpenBSD: cms.h,v 1.1 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: cms.h,v 1.2 2023/07/28 10:28:02 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -35,6 +35,8 @@ LCRYPTO_USED(d2i_CMS_ReceiptRequest);
 LCRYPTO_USED(i2d_CMS_ReceiptRequest);
 LCRYPTO_USED(CMS_ContentInfo_print_ctx);
 LCRYPTO_USED(CMS_get0_type);
+LCRYPTO_USED(CMS_get_version);
+LCRYPTO_USED(CMS_SignerInfo_get_version);
 LCRYPTO_USED(CMS_dataInit);
 LCRYPTO_USED(CMS_dataFinal);
 LCRYPTO_USED(CMS_is_detached);
