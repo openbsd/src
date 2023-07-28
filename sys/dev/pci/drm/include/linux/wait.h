@@ -1,4 +1,4 @@
-/*	$OpenBSD: wait.h,v 1.10 2023/07/18 06:58:59 claudio Exp $	*/
+/*	$OpenBSD: wait.h,v 1.11 2023/07/28 09:46:13 claudio Exp $	*/
 /*
  * Copyright (c) 2013, 2014, 2015 Mark Kettenis
  * Copyright (c) 2017 Martin Pieuchot
@@ -159,11 +159,37 @@ do {						\
 	__ret;					\
 })
 
+#define __wait_event_intr_locked(wqh, condition)			\
+({									\
+	struct wait_queue_entry __wq_entry;				\
+	int __error;							\
+									\
+	init_wait_entry(&__wq_entry, 0);				\
+	do {								\
+		KASSERT(!cold);						\
+									\
+		if (list_empty(&__wq_entry.entry))			\
+			__add_wait_queue_entry_tail(&wqh, &__wq_entry);	\
+		set_current_state(TASK_INTERRUPTIBLE);			\
+									\
+		mtx_leave(&(wqh).lock);					\
+		__error = sleep_finish(0, 1);				\
+		mtx_enter(&(wqh).lock);					\
+		if (__error == ERESTART || __error == EINTR) {		\
+			__error = -ERESTARTSYS;				\
+			break;						\
+		}							\
+	} while (!(condition));						\
+	__remove_wait_queue(&(wqh), &__wq_entry);			\
+	__set_current_state(TASK_RUNNING);				\
+	__error;							\
+})
+
 #define wait_event_interruptible_locked(wqh, condition) 		\
 ({						\
 	int __ret = 0;				\
 	if (!(condition))			\
-		__ret = __wait_event_intr_timeout(wqh, condition, 0, PCATCH); \
+		__ret = __wait_event_intr_locked(wqh, condition); 	\
 	__ret;					\
 })
 
