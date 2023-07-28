@@ -1,4 +1,4 @@
-/* $OpenBSD: md4_dgst.c,v 1.21 2023/07/15 15:30:43 jsing Exp $ */
+/* $OpenBSD: md4.c,v 1.5 2023/07/28 11:04:41 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -247,3 +247,20 @@ md4_block_data_order(MD4_CTX *c, const void *data_, size_t num)
 	}
 }
 #endif
+
+unsigned char *
+MD4(const unsigned char *d, size_t n, unsigned char *md)
+{
+	MD4_CTX c;
+	static unsigned char m[MD4_DIGEST_LENGTH];
+
+	if (md == NULL)
+		md = m;
+	if (!MD4_Init(&c))
+		return NULL;
+	MD4_Update(&c, d, n);
+	MD4_Final(md, &c);
+	explicit_bzero(&c, sizeof(c));
+	return (md);
+}
+LCRYPTO_ALIAS(MD4);

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.149 2023/07/28 10:35:14 tb Exp $
+# $OpenBSD: Makefile,v 1.150 2023/07/28 11:04:41 jsing Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -445,8 +445,7 @@ SRCS+= lh_stats.c
 SRCS+= lhash.c
 
 # md4/
-SRCS+= md4_dgst.c
-SRCS+= md4_one.c
+SRCS+= md4.c
 
 # md5/
 SRCS+= md5_dgst.c
