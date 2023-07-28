@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.2 2023/07/07 19:37:54 beck Exp $ */
+/* $OpenBSD: bio.h,v 1.3 2023/07/28 09:58:30 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -63,10 +63,6 @@ LCRYPTO_USED(BIO_set_ex_data);
 LCRYPTO_USED(BIO_get_ex_data);
 LCRYPTO_USED(BIO_number_read);
 LCRYPTO_USED(BIO_number_written);
-LCRYPTO_USED(BIO_asn1_set_prefix);
-LCRYPTO_USED(BIO_asn1_get_prefix);
-LCRYPTO_USED(BIO_asn1_set_suffix);
-LCRYPTO_USED(BIO_asn1_get_suffix);
 LCRYPTO_USED(BIO_get_new_index);
 LCRYPTO_USED(BIO_s_file);
 LCRYPTO_USED(BIO_new_file);

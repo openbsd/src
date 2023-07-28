@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_local.h,v 1.2 2023/04/25 19:08:30 tb Exp $ */
+/* $OpenBSD: asn1_local.h,v 1.3 2023/07/28 09:58:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -249,6 +249,8 @@ int asn1_time_time_t_to_tm(const time_t *time, struct tm *out_tm);
 int asn1_time_tm_to_time_t(const struct tm *tm, time_t *out);
 
 int ASN1_item_ndef_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
+
+const BIO_METHOD *BIO_f_asn1(void);
 
 BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it);
 

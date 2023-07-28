@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_ndef.c,v 1.23 2023/07/09 19:22:43 tb Exp $ */
+/* $OpenBSD: bio_ndef.c,v 1.24 2023/07/28 09:58:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -60,6 +60,9 @@
 #include <openssl/err.h>
 
 #include "asn1_local.h"
+
+int BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix, asn1_ps_func *prefix_free);
+int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix, asn1_ps_func *suffix_free);
 
 /* Experimental NDEF ASN1 BIO support routines */
 

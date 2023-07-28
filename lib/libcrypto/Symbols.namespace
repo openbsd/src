@@ -1120,7 +1120,6 @@ _libre_ASN1_PCTX_get_oid_flags
 _libre_ASN1_PCTX_set_oid_flags
 _libre_ASN1_PCTX_get_str_flags
 _libre_ASN1_PCTX_set_str_flags
-_libre_BIO_f_asn1
 _libre_SMIME_crlf_copy
 _libre_SMIME_text
 _libre_ERR_load_ASN1_strings
@@ -1164,10 +1163,6 @@ _libre_BIO_set_ex_data
 _libre_BIO_get_ex_data
 _libre_BIO_number_read
 _libre_BIO_number_written
-_libre_BIO_asn1_set_prefix
-_libre_BIO_asn1_get_prefix
-_libre_BIO_asn1_set_suffix
-_libre_BIO_asn1_get_suffix
 _libre_BIO_get_new_index
 _libre_BIO_s_file
 _libre_BIO_new_file

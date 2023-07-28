@@ -253,10 +253,6 @@ BIGNUM_it
 BIO_CONNECT_free
 BIO_CONNECT_new
 BIO_accept
-BIO_asn1_get_prefix
-BIO_asn1_get_suffix
-BIO_asn1_set_prefix
-BIO_asn1_set_suffix
 BIO_callback_ctrl
 BIO_clear_flags
 BIO_copy_next_retry
@@ -275,7 +271,6 @@ BIO_dump_indent
 BIO_dump_indent_cb
 BIO_dump_indent_fp
 BIO_dup_chain
-BIO_f_asn1
 BIO_f_base64
 BIO_f_buffer
 BIO_f_cipher

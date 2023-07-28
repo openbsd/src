@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.58 2023/07/05 19:25:01 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.59 2023/07/28 09:58:30 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -371,11 +371,6 @@ int BIO_meth_set_callback_ctrl(BIO_METHOD *biom,
 #define BIO_C_RESET_READ_REQUEST		147
 #define BIO_C_SET_MD_CTX			148
 
-#define BIO_C_SET_PREFIX			149
-#define BIO_C_GET_PREFIX			150
-#define BIO_C_SET_SUFFIX			151
-#define BIO_C_GET_SUFFIX			152
-
 #define BIO_C_SET_EX_ARG			153
 #define BIO_C_GET_EX_ARG			154
 
@@ -534,16 +529,6 @@ BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 unsigned long BIO_number_read(BIO *bio);
 unsigned long BIO_number_written(BIO *bio);
-
-/* For BIO_f_asn1() */
-int BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix,
-asn1_ps_func *prefix_free);
-int BIO_asn1_get_prefix(BIO *b, asn1_ps_func **pprefix,
-asn1_ps_func **pprefix_free);
-int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix,
-asn1_ps_func *suffix_free);
-int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
-asn1_ps_func **psuffix_free);
 
 int BIO_get_new_index(void);
 const BIO_METHOD *BIO_s_file(void);
