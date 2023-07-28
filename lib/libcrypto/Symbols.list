@@ -1119,13 +1119,11 @@ ERR_error_string
 ERR_error_string_n
 ERR_free_strings
 ERR_func_error_string
-ERR_get_err_state_table
 ERR_get_error
 ERR_get_error_line
 ERR_get_error_line_data
 ERR_get_next_error_library
 ERR_get_state
-ERR_get_string_table
 ERR_lib_error_string
 ERR_load_ASN1_strings
 ERR_load_BIO_strings
@@ -1165,7 +1163,6 @@ ERR_print_errors_cb
 ERR_print_errors_fp
 ERR_put_error
 ERR_reason_error_string
-ERR_release_err_state_table
 ERR_remove_state
 ERR_remove_thread_state
 ERR_set_error_data

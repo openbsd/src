@@ -1390,9 +1390,6 @@ _libre_ERR_free_strings
 _libre_ERR_remove_thread_state
 _libre_ERR_remove_state
 _libre_ERR_get_state
-_libre_ERR_get_string_table
-_libre_ERR_get_err_state_table
-_libre_ERR_release_err_state_table
 _libre_ERR_get_next_error_library
 _libre_ERR_set_mark
 _libre_ERR_pop_to_mark

@@ -1,4 +1,4 @@
-/* $OpenBSD: err.h,v 1.30 2023/07/28 10:21:01 tb Exp $ */
+/* $OpenBSD: err.h,v 1.31 2023/07/28 10:23:19 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -398,12 +398,6 @@ void ERR_remove_thread_state(const CRYPTO_THREADID *tid);
 /* Wrapped in OPENSSL_NO_DEPRECATED in 0.9.8. Still used in 2023. */
 void ERR_remove_state(unsigned long pid);
 ERR_STATE *ERR_get_state(void);
-
-#ifndef OPENSSL_NO_LHASH
-LHASH_OF(ERR_STRING_DATA) *ERR_get_string_table(void);
-LHASH_OF(ERR_STATE) *ERR_get_err_state_table(void);
-void ERR_release_err_state_table(LHASH_OF(ERR_STATE) **hash);
-#endif
 
 int ERR_get_next_error_library(void);
 
