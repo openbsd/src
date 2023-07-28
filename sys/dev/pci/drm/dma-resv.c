@@ -572,6 +572,7 @@ int dma_resv_get_fences(struct dma_resv *obj, enum dma_resv_usage usage,
 	dma_resv_for_each_fence_unlocked(&cursor, fence) {
 
 		if (dma_resv_iter_is_restarted(&cursor)) {
+			struct dma_fence **new_fences;
 			unsigned int count;
 
 			while (*num_fences)
@@ -581,9 +582,9 @@ int dma_resv_get_fences(struct dma_resv *obj, enum dma_resv_usage usage,
 
 			/* Eventually re-allocate the array */
 #ifdef __linux__
-			*fences = krealloc_array(*fences, count,
-						 sizeof(void *),
-						 GFP_KERNEL);
+			new_fences = krealloc_array(*fences, count,
+						    sizeof(void *),
+						    GFP_KERNEL);
 #else
 			nfences = kmalloc(count * sizeof(void *),
 						 GFP_KERNEL);
@@ -592,13 +593,17 @@ int dma_resv_get_fences(struct dma_resv *obj, enum dma_resv_usage usage,
 				    (count - 1) *  sizeof(void *));
 			if (nfences) {
 				kfree(*fences);
-				*fences = nfences;
+				new_fences = nfences;
 			}
 #endif
-			if (count && !*fences) {
+			if (count && !new_fences) {
+				kfree(*fences);
+				*fences = NULL;
+				*num_fences = 0;
 				dma_resv_iter_end(&cursor);
 				return -ENOMEM;
 			}
+			*fences = new_fences;
 		}
 
 		(*fences)[(*num_fences)++] = dma_fence_get(fence);
