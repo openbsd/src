@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.8 2023/07/28 09:29:24 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.9 2023/07/28 09:30:22 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -246,20 +246,19 @@ ECDH_compute_key(void *out, size_t out_len, const EC_POINT *pub_key,
 	if (!eckey->meth->compute_key(&secret, &secret_len, pub_key, eckey))
 		goto err;
 
+	memset(out, 0, out_len);
 	if (KDF != NULL) {
 		if (KDF(secret, secret_len, out, &out_len) == NULL) {
 			ECerror(EC_R_KDF_FAILED);
 			goto err;
 		}
 	} else {
-		memset(out, 0, out_len);
 		if (out_len < secret_len) {
 			/* The resulting key would be truncated. */
 			ECerror(EC_R_KEY_TRUNCATION);
 			goto err;
 		}
-		if (out_len > secret_len)
-			out_len = secret_len;
+		out_len = secret_len;
 		memcpy(out, secret, out_len);
 	}
 
