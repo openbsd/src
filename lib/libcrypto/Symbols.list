@@ -1332,7 +1332,6 @@ ERR_load_CRYPTO_strings
 ERR_load_DH_strings
 ERR_load_DSA_strings
 ERR_load_DSO_strings
-ERR_load_ECDH_strings
 ERR_load_EC_strings
 ERR_load_ENGINE_strings
 ERR_load_ERR_strings

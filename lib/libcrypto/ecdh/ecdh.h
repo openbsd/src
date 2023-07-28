@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.h,v 1.7 2023/04/18 08:33:43 tb Exp $ */
+/* $OpenBSD: ecdh.h,v 1.8 2023/07/28 09:19:59 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -98,23 +98,6 @@ int 	  ECDH_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new
 *new_func, CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int 	  ECDH_set_ex_data(EC_KEY *d, int idx, void *arg);
 void 	  *ECDH_get_ex_data(EC_KEY *d, int idx);
-
-
-void ERR_load_ECDH_strings(void);
-
-/* Error codes for the ECDH functions. */
-
-/* Function codes. */
-#define ECDH_F_ECDH_CHECK				 102
-#define ECDH_F_ECDH_COMPUTE_KEY				 100
-#define ECDH_F_ECDH_DATA_NEW_METHOD			 101
-
-/* Reason codes. */
-#define ECDH_R_KDF_FAILED				 102
-#define ECDH_R_KEY_TRUNCATION				 104
-#define ECDH_R_NON_FIPS_METHOD				 103
-#define ECDH_R_NO_PRIVATE_VALUE				 100
-#define ECDH_R_POINT_ARITHMETIC_FAILURE			 101
 
 #ifdef  __cplusplus
 }
