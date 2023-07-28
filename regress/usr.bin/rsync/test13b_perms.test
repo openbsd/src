@@ -16,7 +16,8 @@ generate_tree dir2
 # Also make the target tree and mess up some permissions in there.
 # We expect rsync to reset this to what dir1 has.
 generate_tree dir3
-chmod 470 dir3/one.txt
+# regular user cannot read his own file, rsync must fix permissions first
+chmod 070 dir3/one.txt
 touch -m -t 199901020405 dir3/one.txt
 
 $rsync -a dir1/ dir3
