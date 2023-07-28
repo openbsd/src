@@ -1,4 +1,4 @@
-.\" $OpenBSD: CRYPTO_set_ex_data.3,v 1.13 2022/03/31 17:27:16 naddy Exp $
+.\" $OpenBSD: CRYPTO_set_ex_data.3,v 1.14 2023/07/28 14:34:54 tb Exp $
 .\" full merge up to:
 .\" OpenSSL CRYPTO_get_ex_new_index 9e183d22 Mar 11 08:56:44 2017 -0500
 .\" selective merge up to: 72a7a702 Feb 26 14:05:09 2019 +0000
@@ -52,7 +52,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: July 28 2023 $
 .Dt CRYPTO_SET_EX_DATA 3
 .Os
 .Sh NAME
@@ -161,9 +161,6 @@ retrieved as a
 .Vt void *
 type.
 .Pp
-The
-.Vt CRYPTO_EX_DATA
-type is opaque.
 To initialize the exdata part of a structure, call
 .Fn CRYPTO_new_ex_data .
 .Pp
