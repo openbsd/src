@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.1 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa.h,v 1.2 2023/07/28 10:05:16 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -66,7 +66,6 @@ LCRYPTO_USED(RSA_sign_ASN1_OCTET_STRING);
 LCRYPTO_USED(RSA_verify_ASN1_OCTET_STRING);
 LCRYPTO_USED(RSA_blinding_on);
 LCRYPTO_USED(RSA_blinding_off);
-LCRYPTO_USED(RSA_setup_blinding);
 LCRYPTO_USED(RSA_padding_add_PKCS1_type_1);
 LCRYPTO_USED(RSA_padding_check_PKCS1_type_1);
 LCRYPTO_USED(RSA_padding_add_PKCS1_type_2);

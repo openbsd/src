@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.22 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.23 2023/07/28 10:05:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -229,4 +229,3 @@ err:
 
 	return ret;
 }
-LCRYPTO_ALIAS(RSA_setup_blinding);

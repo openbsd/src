@@ -374,17 +374,6 @@ BIO_vfree
 BIO_vprintf
 BIO_vsnprintf
 BIO_write
-BN_BLINDING_convert
-BN_BLINDING_convert_ex
-BN_BLINDING_create_param
-BN_BLINDING_free
-BN_BLINDING_get_flags
-BN_BLINDING_invert
-BN_BLINDING_invert_ex
-BN_BLINDING_new
-BN_BLINDING_set_flags
-BN_BLINDING_thread_id
-BN_BLINDING_update
 BN_CTX_end
 BN_CTX_free
 BN_CTX_get
@@ -2377,7 +2366,6 @@ RSA_set_default_method
 RSA_set_ex_data
 RSA_set_flags
 RSA_set_method
-RSA_setup_blinding
 RSA_sign
 RSA_sign_ASN1_OCTET_STRING
 RSA_size

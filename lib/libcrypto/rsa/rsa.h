@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa.h,v 1.64 2023/05/05 12:30:40 tb Exp $ */
+/* $OpenBSD: rsa.h,v 1.65 2023/07/28 10:05:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -321,7 +321,6 @@ int RSA_verify_ASN1_OCTET_STRING(int type, const unsigned char *m,
 
 int RSA_blinding_on(RSA *rsa, BN_CTX *ctx);
 void RSA_blinding_off(RSA *rsa);
-BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *ctx);
 
 int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
     const unsigned char *f, int fl);

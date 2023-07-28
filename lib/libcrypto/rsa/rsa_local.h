@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_local.h,v 1.3 2023/07/21 15:26:51 tb Exp $ */
+/* $OpenBSD: rsa_local.h,v 1.4 2023/07/28 10:05:16 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -152,5 +152,7 @@ int RSA_padding_add_X931(unsigned char *to, int tlen,
 int RSA_padding_check_X931(unsigned char *to, int tlen,
     const unsigned char *f, int fl, int rsa_len);
 int RSA_X931_hash_id(int nid);
+
+BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *ctx);
 
 __END_HIDDEN_DECLS
