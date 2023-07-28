@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1t.h,v 1.22 2022/09/03 16:01:23 jsing Exp $ */
+/* $OpenBSD: asn1t.h,v 1.23 2023/07/28 10:00:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -896,17 +896,10 @@ DECLARE_STACK_OF(ASN1_VALUE)
 
 int ASN1_item_ex_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
 void ASN1_item_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
-int ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
-int ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
-
-void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
-int ASN1_template_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_TEMPLATE *tt);
 int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len, const ASN1_ITEM *it,
 				int tag, int aclass, char opt, ASN1_TLC *ctx);
 
 int ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it, int tag, int aclass);
-int ASN1_template_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_TEMPLATE *tt);
-void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
 #ifdef  __cplusplus
 }

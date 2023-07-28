@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_new.c,v 1.24 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: tasn_new.c,v 1.25 2023/07/28 10:00:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -248,7 +248,6 @@ ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
  done:
 	return ret;
 }
-LCRYPTO_ALIAS(ASN1_template_new);
 
 static void
 asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt)
@@ -318,7 +317,6 @@ ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 		return 1;
 	return 0;
 }
-LCRYPTO_ALIAS(ASN1_primitive_new);
 
 static void
 asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)

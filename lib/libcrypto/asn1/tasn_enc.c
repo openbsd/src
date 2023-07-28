@@ -1,4 +1,4 @@
-/* $OpenBSD: tasn_enc.c,v 1.32 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: tasn_enc.c,v 1.33 2023/07/28 10:00:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -270,14 +270,6 @@ ASN1_item_ex_i2d(ASN1_VALUE **pval, unsigned char **out, const ASN1_ITEM *it,
 	return 0;
 }
 LCRYPTO_ALIAS(ASN1_item_ex_i2d);
-
-int
-ASN1_template_i2d(ASN1_VALUE **pval, unsigned char **out,
-    const ASN1_TEMPLATE *tt)
-{
-	return asn1_template_ex_i2d(pval, out, tt, -1, 0);
-}
-LCRYPTO_ALIAS(ASN1_template_i2d);
 
 static int
 asn1_template_ex_i2d(ASN1_VALUE **pval, unsigned char **out,

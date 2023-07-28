@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_local.h,v 1.3 2023/07/28 09:58:30 tb Exp $ */
+/* $OpenBSD: asn1_local.h,v 1.4 2023/07/28 10:00:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -262,5 +262,11 @@ int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
     int ctype_nid, int econt_nid, STACK_OF(X509_ALGOR) *mdalgs,
     const ASN1_ITEM *it);
 ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
+
+int ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it);
+void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it);
+
+int ASN1_template_new(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
+void ASN1_template_free(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
 
 __END_HIDDEN_DECLS

@@ -216,16 +216,10 @@ ASN1_mbstring_ncopy
 ASN1_object_size
 ASN1_parse
 ASN1_parse_dump
-ASN1_primitive_free
-ASN1_primitive_new
 ASN1_put_eoc
 ASN1_put_object
 ASN1_tag2bit
 ASN1_tag2str
-ASN1_template_d2i
-ASN1_template_free
-ASN1_template_i2d
-ASN1_template_new
 ASN1_time_parse
 ASN1_time_tm_clamp_notafter
 ASN1_time_tm_cmp
