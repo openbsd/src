@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.15 2023/07/28 08:57:46 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.16 2023/07/28 09:18:10 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -57,15 +57,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
-#include <openssl/ecdsa.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
-#include <openssl/evp.h>
 
 #include "bn_local.h"
 #include "ec_local.h"
