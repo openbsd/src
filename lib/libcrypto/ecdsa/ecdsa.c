@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.14 2023/07/28 08:54:41 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.15 2023/07/28 08:57:46 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -70,9 +70,6 @@
 #include "bn_local.h"
 #include "ec_local.h"
 #include "ecdsa_local.h"
-
-static int ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
-    BIGNUM **out_r);
 
 static const ASN1_TEMPLATE ECDSA_SIG_seq_tt[] = {
 	{
@@ -254,6 +251,19 @@ ecdsa_sign(int type, const unsigned char *digest, int digest_len,
 	return ret;
 }
 
+int
+ECDSA_sign(int type, const unsigned char *digest, int digest_len,
+    unsigned char *signature, unsigned int *signature_len, EC_KEY *key)
+{
+	if (key->meth->sign == NULL) {
+		ECerror(EC_R_NOT_IMPLEMENTED);
+		return 0;
+	}
+	return key->meth->sign(type, digest, digest_len, signature,
+	    signature_len, NULL, NULL, key);
+}
+LCRYPTO_ALIAS(ECDSA_sign);
+
 /*
  * FIPS 186-5, section 6.4.1, steps 3-8 and 11: Generate k, calculate r and
  * kinv. If r == 0, try again with a new random k.
@@ -397,6 +407,17 @@ ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
 	EC_POINT_free(point);
 
 	return ret;
+}
+
+static int
+ECDSA_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
+    BIGNUM **out_r)
+{
+	if (key->meth->sign_setup == NULL) {
+		ECerror(EC_R_NOT_IMPLEMENTED);
+		return 0;
+	}
+	return key->meth->sign_setup(key, in_ctx, out_kinv, out_r);
 }
 
 /*
@@ -592,6 +613,17 @@ ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 	return sig;
 }
 
+ECDSA_SIG *
+ECDSA_do_sign(const unsigned char *digest, int digest_len, EC_KEY *key)
+{
+	if (key->meth->sign_sig == NULL) {
+		ECerror(EC_R_NOT_IMPLEMENTED);
+		return 0;
+	}
+	return key->meth->sign_sig(digest, digest_len, NULL, NULL, key);
+}
+LCRYPTO_ALIAS(ECDSA_do_sign);
+
 int
 ecdsa_verify(int type, const unsigned char *digest, int digest_len,
     const unsigned char *sigbuf, int sig_len, EC_KEY *key)
@@ -623,6 +655,18 @@ ecdsa_verify(int type, const unsigned char *digest, int digest_len,
 
 	return ret;
 }
+
+int
+ECDSA_verify(int type, const unsigned char *digest, int digest_len,
+    const unsigned char *sigbuf, int sig_len, EC_KEY *key)
+{
+	if (key->meth->verify == NULL) {
+		ECerror(EC_R_NOT_IMPLEMENTED);
+		return 0;
+	}
+	return key->meth->verify(type, digest, digest_len, sigbuf, sig_len, key);
+}
+LCRYPTO_ALIAS(ECDSA_verify);
 
 /*
  * FIPS 186-5, section 6.4.2: ECDSA signature verification.
@@ -742,41 +786,6 @@ ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 	return ret;
 }
 
-ECDSA_SIG *
-ECDSA_do_sign(const unsigned char *digest, int digest_len, EC_KEY *key)
-{
-	if (key->meth->sign_sig == NULL) {
-		ECerror(EC_R_NOT_IMPLEMENTED);
-		return 0;
-	}
-	return key->meth->sign_sig(digest, digest_len, NULL, NULL, key);
-}
-LCRYPTO_ALIAS(ECDSA_do_sign);
-
-int
-ECDSA_sign(int type, const unsigned char *digest, int digest_len,
-    unsigned char *signature, unsigned int *signature_len, EC_KEY *key)
-{
-	if (key->meth->sign == NULL) {
-		ECerror(EC_R_NOT_IMPLEMENTED);
-		return 0;
-	}
-	return key->meth->sign(type, digest, digest_len, signature,
-	    signature_len, NULL, NULL, key);
-}
-LCRYPTO_ALIAS(ECDSA_sign);
-
-static int
-ECDSA_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
-    BIGNUM **out_r)
-{
-	if (key->meth->sign_setup == NULL) {
-		ECerror(EC_R_NOT_IMPLEMENTED);
-		return 0;
-	}
-	return key->meth->sign_setup(key, in_ctx, out_kinv, out_r);
-}
-
 int
 ECDSA_do_verify(const unsigned char *digest, int digest_len,
     const ECDSA_SIG *sig, EC_KEY *key)
@@ -788,15 +797,3 @@ ECDSA_do_verify(const unsigned char *digest, int digest_len,
 	return key->meth->verify_sig(digest, digest_len, sig, key);
 }
 LCRYPTO_ALIAS(ECDSA_do_verify);
-
-int
-ECDSA_verify(int type, const unsigned char *digest, int digest_len,
-    const unsigned char *sigbuf, int sig_len, EC_KEY *key)
-{
-	if (key->meth->verify == NULL) {
-		ECerror(EC_R_NOT_IMPLEMENTED);
-		return 0;
-	}
-	return key->meth->verify(type, digest, digest_len, sigbuf, sig_len, key);
-}
-LCRYPTO_ALIAS(ECDSA_verify);
