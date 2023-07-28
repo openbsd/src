@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.173 2023/07/25 04:42:00 deraadt Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.174 2023/07/28 06:36:16 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -222,7 +222,7 @@ replacemeltdown(void)
 		/* enable reuse of PCID for U-K page tables */
 		if (pmap_use_pcid) {
 			extern long _pcid_set_reuse;
-			DPRINTF("%s: codepatching PCID use", __func__);
+			DPRINTF("%s: codepatching PCID use\n", __func__);
 			codepatch_replace(CPTAG_PCID_SET_REUSE,
 			    &_pcid_set_reuse, PCID_SET_REUSE_SIZE);
 		}
