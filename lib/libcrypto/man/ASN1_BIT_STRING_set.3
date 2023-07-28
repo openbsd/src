@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASN1_BIT_STRING_set.3,v 1.3 2023/07/28 05:49:53 tb Exp $
+.\" $OpenBSD: ASN1_BIT_STRING_set.3,v 1.4 2023/07/28 05:53:10 tb Exp $
 .\"
 .\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -20,8 +20,7 @@
 .Sh NAME
 .Nm ASN1_BIT_STRING_set ,
 .Nm ASN1_BIT_STRING_set_bit ,
-.Nm ASN1_BIT_STRING_get_bit ,
-.Nm ASN1_BIT_STRING_check
+.Nm ASN1_BIT_STRING_get_bit
 .Nd ASN.1 BIT STRING accessors
 .Sh SYNOPSIS
 .In openssl/asn1.h
@@ -41,12 +40,6 @@
 .Fo ASN1_BIT_STRING_get_bit
 .Fa "ASN1_BIT_STRING *bitstr"
 .Fa "int bitnumber"
-.Fc
-.Ft int
-.Fo ASN1_BIT_STRING_check
-.Fa "ASN1_BIT_STRING *bitstr"
-.Fa "const unsigned char *goodbits"
-.Fa "int goodbits_len"
 .Fc
 .Sh DESCRIPTION
 .Fn ASN1_BIT_STRING_set
@@ -99,21 +92,6 @@ checks that the bit with the given
 .Fa bitnumber
 is set in
 .Fa bitstr .
-.Pp
-.Fn ASN1_BIT_STRING_check
-checks that all bits set in
-.Fa bitstr
-are also set in
-.Fa goodbits .
-Expressed symbolically, it evaluates:
-.Pp
-.D1 Po Fa bitstr No & Pf \(ti Fa goodbits Pc == 0
-.Pp
-The buffer
-.Fa goodbits
-is expected to contain
-.Fa goodbits_len
-bytes.
 .Sh RETURN VALUES
 .Fn ASN1_BIT_STRING_set
 returns 1 on success or 0 if memory allocation fails or if
@@ -145,20 +123,6 @@ if
 points beyond the last data byte in
 .Fa bitstr ,
 or if the requested bit is not set.
-.Pp
-.Fn ASN1_BIT_STRING_check
-returns 0
-if at least one bit is set in
-.Fa bitstr
-that is not set in
-.Fa goodbits ,
-or 1 otherwise.
-In particular, it returns 1 if
-.Fa bitstr
-is
-.Dv NULL
-or if no bit is set in
-.Fa bitstr .
 .Sh SEE ALSO
 .Xr ASN1_BIT_STRING_new 3 ,
 .Xr ASN1_STRING_set 3 ,
@@ -172,7 +136,3 @@ and
 first appeared in SSLeay 0.9.0.
 These functions have been available since
 .Ox 2.4 .
-.Pp
-.Fn ASN1_BIT_STRING_check
-first appeared in OpenSSL 1.0.0 and has have been available since
-.Ox 4.9 .
