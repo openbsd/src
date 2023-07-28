@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.7 2022/01/12 08:58:12 tb Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.8 2023/07/28 13:05:59 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,8 +87,8 @@ cb(int p, int n, BN_GENCB *arg)
 		c = '*';
 	if (p == 3)
 		c = '\n';
-	BIO_write(BN_GENCB_get_arg(arg), &c, 1);
-	(void)BIO_flush(BN_GENCB_get_arg(arg));
+	printf("%c", c);
+	fflush(stdout);
 	return 1;
 }
 
@@ -96,21 +96,15 @@ int
 main(int argc, char *argv[])
 {
 	BN_GENCB *_cb;
-	DH *a;
-	char buf[12];
-	unsigned char *abuf=NULL;
+	DH *a = NULL;
+	unsigned char *abuf = NULL;
 	int i, alen, aout;
-	BIO *out;
 	int ret = 1;
-
-	if ((out = BIO_new(BIO_s_file())) == NULL)
-		err(1, "BIO_new");
-	BIO_set_fp(out, stdout, BIO_NOCLOSE);
 
 	if ((_cb = BN_GENCB_new()) == NULL)
 		err(1, "BN_GENCB_new");
 
-	BN_GENCB_set(_cb, &cb, out);
+	BN_GENCB_set(_cb, &cb, NULL);
 	if ((a = DH_new()) == NULL)
 		goto err;
 
@@ -120,39 +114,42 @@ main(int argc, char *argv[])
 	if (!DH_check(a, &i))
 		goto err;
 	if (i & DH_CHECK_P_NOT_PRIME)
-		BIO_puts(out, "p value is not prime\n");
+		puts("p value is not prime\n");
 	if (i & DH_CHECK_P_NOT_SAFE_PRIME)
-		BIO_puts(out, "p value is not a safe prime\n");
+		puts("p value is not a safe prime\n");
 	if (i & DH_UNABLE_TO_CHECK_GENERATOR)
-		BIO_puts(out, "unable to check the generator value\n");
+		puts("unable to check the generator value\n");
 	if (i & DH_NOT_SUITABLE_GENERATOR)
-		BIO_puts(out, "the g value is not a generator\n");
+		puts("the g value is not a generator\n");
 
-	BIO_puts(out, "\np    =");
-	BN_print(out, DH_get0_p(a));
-	BIO_puts(out, "\ng    =");
-	BN_print(out, DH_get0_g(a));
-	BIO_puts(out, "\n");
+	printf("\np    = ");
+	if (!BN_print_fp(stdout, DH_get0_p(a)))
+		goto err;
+	printf("\ng    = ");
+	if (!BN_print_fp(stdout, DH_get0_g(a)))
+		goto err;
+	printf("\n");
 
 	if (!DH_generate_key(a))
 		goto err;
-	BIO_puts(out, "pri 1=");
-	BN_print(out, DH_get0_priv_key(a));
-	BIO_puts(out, "\npub 1=");
-	BN_print(out, DH_get0_pub_key(a));
-	BIO_puts(out, "\n");
+	printf("pri1 = ");
+	if (!BN_print_fp(stdout, DH_get0_priv_key(a)))
+		goto err;
+	printf("\npub1 = ");
+	if (!BN_print_fp(stdout, DH_get0_pub_key(a)))
+		goto err;
+	printf("\n");
 
 	alen = DH_size(a);
 	if ((abuf = malloc(alen)) == NULL)
 		err(1, "malloc");
 	aout = DH_compute_key(abuf, DH_get0_pub_key(a), a);
 
-	BIO_puts(out, "key1 =");
-	for (i=0; i<aout; i++) {
-		snprintf(buf, sizeof buf, "%02X", abuf[i]);
-		BIO_puts(out, buf);
+	printf("key1 = ");
+	for (i = 0; i < aout; i++) {
+		printf("%02X", abuf[i]);
 	}
-	BIO_puts(out, "\n");
+	printf("\n");
 
 	if (aout < 4) {
 		fprintf(stderr, "Error in DH routines\n");
@@ -164,9 +161,7 @@ err:
 	ERR_print_errors_fp(stderr);
 
 	free(abuf);
-	if (a != NULL)
-		DH_free(a);
-	BIO_free(out);
+	DH_free(a);
 	BN_GENCB_free(_cb);
 
 	return (ret);
