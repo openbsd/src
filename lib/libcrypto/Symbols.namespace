@@ -1864,14 +1864,6 @@ _libre__CONF_add_string
 _libre__CONF_get_string
 _libre__CONF_new_data
 _libre__CONF_free_data
-_libre_COMP_CTX_new
-_libre_COMP_CTX_free
-_libre_COMP_compress_block
-_libre_COMP_expand_block
-_libre_COMP_rle
-_libre_COMP_zlib
-_libre_COMP_zlib_cleanup
-_libre_ERR_load_COMP_strings
 _libre_CMS_ContentInfo_new
 _libre_CMS_ContentInfo_free
 _libre_d2i_CMS_ContentInfo

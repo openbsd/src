@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.143 2023/07/28 09:22:26 tb Exp $
+# $OpenBSD: Makefile,v 1.144 2023/07/28 09:42:44 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -248,12 +248,6 @@ SRCS+= cms_lib.c
 SRCS+= cms_pwri.c
 SRCS+= cms_sd.c
 SRCS+= cms_smime.c
-
-# comp/
-SRCS+= c_rle.c
-SRCS+= c_zlib.c
-SRCS+= comp_err.c
-SRCS+= comp_lib.c
 
 # conf/
 SRCS+= conf_api.c

@@ -661,13 +661,6 @@ CMS_unsigned_get_attr_by_OBJ
 CMS_unsigned_get_attr_count
 CMS_verify
 CMS_verify_receipt
-COMP_CTX_free
-COMP_CTX_new
-COMP_compress_block
-COMP_expand_block
-COMP_rle
-COMP_zlib
-COMP_zlib_cleanup
 CONF_dump_bio
 CONF_dump_fp
 CONF_free
@@ -1312,7 +1305,6 @@ ERR_load_BIO_strings
 ERR_load_BN_strings
 ERR_load_BUF_strings
 ERR_load_CMS_strings
-ERR_load_COMP_strings
 ERR_load_CONF_strings
 ERR_load_CRYPTO_strings
 ERR_load_DH_strings
