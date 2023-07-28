@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.24 2023/07/05 08:39:40 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.25 2023/07/28 09:28:37 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -323,8 +323,8 @@ struct ec_key_method_st {
 	int (*set_private)(EC_KEY *key, const BIGNUM *priv_key);
 	int (*set_public)(EC_KEY *key, const EC_POINT *pub_key);
 	int (*keygen)(EC_KEY *key);
-	int (*compute_key)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-	    void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen));
+	int (*compute_key)(unsigned char **out, size_t *out_len,
+	    const EC_POINT *pub_key, const EC_KEY *ecdh);
 	int (*sign)(int type, const unsigned char *dgst, int dlen, unsigned char
 	    *sig, unsigned int *siglen, const BIGNUM *kinv,
 	    const BIGNUM *r, EC_KEY *eckey);
@@ -342,8 +342,8 @@ struct ec_key_method_st {
 #define EC_KEY_METHOD_DYNAMIC   1
 
 int ec_key_gen(EC_KEY *eckey);
-int ecdh_compute_key(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-    void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen));
+int ecdh_compute_key(unsigned char **out, size_t *out_len,
+    const EC_POINT *pub_key, const EC_KEY *ecdh);
 int ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
     const unsigned char *sigbuf, int sig_len, EC_KEY *eckey);
 int ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,

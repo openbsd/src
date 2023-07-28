@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_err.c,v 1.17 2023/07/07 13:54:45 beck Exp $ */
+/* $OpenBSD: ec_err.c,v 1.18 2023/07/28 09:28:37 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -98,6 +98,7 @@ static ERR_STRING_DATA EC_str_reasons[] =
 	{ERR_REASON(EC_R_INVALID_FORM), "invalid form"},
 	{ERR_REASON(EC_R_INVALID_GROUP_ORDER), "invalid group order"},
 	{ERR_REASON(EC_R_INVALID_KEY), "invalid key"},
+	{ERR_REASON(EC_R_INVALID_OUTPUT_LENGTH), "invalid output length"},
 	{ERR_REASON(EC_R_INVALID_PEER_KEY), "invalid peer key"},
 	{ERR_REASON(EC_R_INVALID_PENTANOMIAL_BASIS), "invalid pentanomial basis"},
 	{ERR_REASON(EC_R_INVALID_PRIVATE_KEY), "invalid private key"},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_kmeth.c,v 1.11 2023/07/07 13:54:45 beck Exp $	*/
+/*	$OpenBSD: ec_kmeth.c,v 1.12 2023/07/28 09:28:37 tb Exp $	*/
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -238,8 +238,8 @@ LCRYPTO_ALIAS(EC_KEY_METHOD_set_keygen);
 
 void
 EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
-   int (*ckey)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-   void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)))
+    int (*ckey)(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
+        const EC_KEY *ecdh))
 {
 	meth->compute_key = ckey;
 }
@@ -310,8 +310,8 @@ LCRYPTO_ALIAS(EC_KEY_METHOD_get_keygen);
 
 void
 EC_KEY_METHOD_get_compute_key(const EC_KEY_METHOD *meth,
-    int (**pck)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-    void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)))
+    int (**pck)(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
+        const EC_KEY *ecdh))
 {
 	if (pck != NULL)
 		*pck = meth->compute_key;

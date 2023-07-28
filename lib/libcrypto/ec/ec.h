@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.44 2023/07/28 09:25:12 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.45 2023/07/28 09:28:37 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -368,8 +368,8 @@ void EC_KEY_METHOD_set_init(EC_KEY_METHOD *meth,
 void EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth,
     int (*keygen)(EC_KEY *key));
 void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
-    int (*ckey)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-	void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)));
+    int (*ckey)(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
+        const EC_KEY *ecdh));
 void EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
     int (*sign)(int type, const unsigned char *digest, int digest_len,
 	unsigned char *signature, unsigned int *signature_len,
@@ -392,8 +392,8 @@ void EC_KEY_METHOD_get_init(const EC_KEY_METHOD *meth,
 void EC_KEY_METHOD_get_keygen(const EC_KEY_METHOD *meth,
     int (**pkeygen)(EC_KEY *key));
 void EC_KEY_METHOD_get_compute_key(const EC_KEY_METHOD *meth,
-    int (**pck)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
-	void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)));
+    int (**pck)(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
+        const EC_KEY *ecdh));
 void EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
     int (**psign)(int type, const unsigned char *digest, int digest_len,
         unsigned char *signature, unsigned int *signature_len,
@@ -684,6 +684,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_FORM				 104
 #define EC_R_INVALID_GROUP_ORDER			 122
 #define EC_R_INVALID_KEY				 165
+#define EC_R_INVALID_OUTPUT_LENGTH			 171
 #define EC_R_INVALID_PEER_KEY				 152
 #define EC_R_INVALID_PENTANOMIAL_BASIS			 132
 #define EC_R_INVALID_PRIVATE_KEY			 123
