@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.h,v 1.18 2023/07/28 09:01:25 tb Exp $ */
+/* $OpenBSD: ecdsa.h,v 1.19 2023/07/28 09:08:31 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -75,18 +75,6 @@ extern "C" {
 
 typedef struct ECDSA_SIG_st ECDSA_SIG;
 
-struct ecdsa_method {
-	const char *name;
-	ECDSA_SIG *(*ecdsa_do_sign)(const unsigned char *dgst, int dgst_len,
-	    const BIGNUM *inv, const BIGNUM *rp, EC_KEY *eckey);
-	int (*ecdsa_sign_setup)(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv,
-	    BIGNUM **r);
-	int (*ecdsa_do_verify)(const unsigned char *dgst, int dgst_len,
-	    const ECDSA_SIG *sig, EC_KEY *eckey);
-	int flags;
-	char *app_data;
-};
-
 /*
  * If this flag is set, the ECDSA method is FIPS compliant and can be used
  * in FIPS mode. This is set in the validated module method. If an
@@ -111,21 +99,12 @@ ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, int dgst_len,
 int ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
     const ECDSA_SIG *sig, EC_KEY* eckey);
 
-const ECDSA_METHOD *ECDSA_OpenSSL(void);
-void ECDSA_set_default_method(const ECDSA_METHOD *meth);
-const ECDSA_METHOD *ECDSA_get_default_method(void);
-int ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth);
 int ECDSA_size(const EC_KEY *eckey);
 
 int ECDSA_sign(int type, const unsigned char *dgst, int dgstlen,
     unsigned char *sig, unsigned int *siglen, EC_KEY *eckey);
 int ECDSA_verify(int type, const unsigned char *dgst, int dgstlen,
     const unsigned char *sig, int siglen, EC_KEY *eckey);
-
-int ECDSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-    CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
-int ECDSA_set_ex_data(EC_KEY *d, int idx, void *arg);
-void *ECDSA_get_ex_data(EC_KEY *d, int idx);
 
 /* XXX should be in ec.h, but needs ECDSA_SIG */
 void EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,

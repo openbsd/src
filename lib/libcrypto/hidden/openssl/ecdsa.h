@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.h,v 1.4 2023/07/28 09:01:25 tb Exp $ */
+/* $OpenBSD: ecdsa.h,v 1.5 2023/07/28 09:08:31 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -35,16 +35,9 @@ LCRYPTO_USED(ECDSA_SIG_get0_s);
 LCRYPTO_USED(ECDSA_SIG_set0);
 LCRYPTO_USED(ECDSA_do_sign);
 LCRYPTO_USED(ECDSA_do_verify);
-LCRYPTO_USED(ECDSA_OpenSSL);
-LCRYPTO_USED(ECDSA_set_default_method);
-LCRYPTO_USED(ECDSA_get_default_method);
-LCRYPTO_USED(ECDSA_set_method);
 LCRYPTO_USED(ECDSA_size);
 LCRYPTO_USED(ECDSA_sign);
 LCRYPTO_USED(ECDSA_verify);
-LCRYPTO_USED(ECDSA_get_ex_new_index);
-LCRYPTO_USED(ECDSA_set_ex_data);
-LCRYPTO_USED(ECDSA_get_ex_data);
 LCRYPTO_USED(EC_KEY_METHOD_set_sign);
 LCRYPTO_USED(EC_KEY_METHOD_set_verify);
 LCRYPTO_USED(EC_KEY_METHOD_get_sign);
