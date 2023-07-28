@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.13 2023/07/28 08:49:43 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.14 2023/07/28 08:54:41 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -71,11 +71,6 @@
 #include "ec_local.h"
 #include "ecdsa_local.h"
 
-static ECDSA_SIG *ECDSA_do_sign_ex(const unsigned char *dgst, int dgstlen,
-    const BIGNUM *kinv, const BIGNUM *rp, EC_KEY *eckey);
-static int ECDSA_sign_ex(int type, const unsigned char *dgst, int dgstlen,
-    unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
-    const BIGNUM *rp, EC_KEY *eckey);
 static int ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
     BIGNUM **out_r);
 
@@ -233,11 +228,16 @@ ecdsa_sign(int type, const unsigned char *digest, int digest_len,
     unsigned char *signature, unsigned int *signature_len, const BIGNUM *kinv,
     const BIGNUM *r, EC_KEY *key)
 {
-	ECDSA_SIG *sig;
+	ECDSA_SIG *sig = NULL;
 	int out_len = 0;
 	int ret = 0;
 
-	if ((sig = ECDSA_do_sign_ex(digest, digest_len, kinv, r, key)) == NULL)
+	if (kinv != NULL || r != NULL) {
+		ECerror(EC_R_NOT_IMPLEMENTED);
+		goto err;
+	}
+
+	if ((sig = ECDSA_do_sign(digest, digest_len, key)) == NULL)
 		goto err;
 
 	if ((out_len = i2d_ECDSA_SIG(sig, &signature)) < 0) {
@@ -527,9 +527,13 @@ ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 	BN_CTX *ctx = NULL;
 	BIGNUM *kinv = NULL, *r = NULL, *s = NULL;
 	BIGNUM *e;
-	int caller_supplied_values = 0;
 	int attempts = 0;
 	ECDSA_SIG *sig = NULL;
+
+	if (in_kinv != NULL || in_r != NULL) {
+		ECerror(EC_R_NOT_IMPLEMENTED);
+		goto err;
+	}
 
 	if ((ctx = BN_CTX_new()) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
@@ -545,31 +549,11 @@ ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 	if (!ecdsa_prepare_digest(digest, digest_len, key, e))
 		goto err;
 
-	if (in_kinv != NULL && in_r != NULL) {
-		/*
-		 * Use the caller's kinv and r. Don't call ECDSA_sign_setup().
-		 * If we're unable to compute a valid signature, the caller
-		 * must provide new values.
-		 */
-		caller_supplied_values = 1;
-
-		if ((kinv = BN_dup(in_kinv)) == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-		if ((r = BN_dup(in_r)) == NULL) {
-			ECerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
-	}
-
 	do {
 		/* Steps 3-8: calculate kinv and r. */
-		if (!caller_supplied_values) {
-			if (!ECDSA_sign_setup(key, ctx, &kinv, &r)) {
-				ECerror(ERR_R_EC_LIB);
-				goto err;
-			}
+		if (!ECDSA_sign_setup(key, ctx, &kinv, &r)) {
+			ECerror(ERR_R_EC_LIB);
+			goto err;
 		}
 
 		/*
@@ -579,11 +563,6 @@ ecdsa_sign_sig(const unsigned char *digest, int digest_len,
 			goto err;
 		if (s != NULL)
 			break;
-
-		if (caller_supplied_values) {
-			ECerror(EC_R_NEED_NEW_SETUP_VALUES);
-			goto err;
-		}
 
 		if (++attempts > ECDSA_MAX_SIGN_ITERATIONS) {
 			ECerror(EC_R_WRONG_CURVE_PARAMETERS);
@@ -766,42 +745,26 @@ ecdsa_verify_sig(const unsigned char *digest, int digest_len,
 ECDSA_SIG *
 ECDSA_do_sign(const unsigned char *digest, int digest_len, EC_KEY *key)
 {
-	return ECDSA_do_sign_ex(digest, digest_len, NULL, NULL, key);
-}
-LCRYPTO_ALIAS(ECDSA_do_sign);
-
-static ECDSA_SIG *
-ECDSA_do_sign_ex(const unsigned char *digest, int digest_len,
-    const BIGNUM *kinv, const BIGNUM *out_r, EC_KEY *key)
-{
 	if (key->meth->sign_sig == NULL) {
 		ECerror(EC_R_NOT_IMPLEMENTED);
 		return 0;
 	}
-	return key->meth->sign_sig(digest, digest_len, kinv, out_r, key);
+	return key->meth->sign_sig(digest, digest_len, NULL, NULL, key);
 }
+LCRYPTO_ALIAS(ECDSA_do_sign);
 
 int
 ECDSA_sign(int type, const unsigned char *digest, int digest_len,
     unsigned char *signature, unsigned int *signature_len, EC_KEY *key)
-{
-	return ECDSA_sign_ex(type, digest, digest_len, signature, signature_len,
-	    NULL, NULL, key);
-}
-LCRYPTO_ALIAS(ECDSA_sign);
-
-static int
-ECDSA_sign_ex(int type, const unsigned char *digest, int digest_len,
-    unsigned char *signature, unsigned int *signature_len, const BIGNUM *kinv,
-    const BIGNUM *r, EC_KEY *key)
 {
 	if (key->meth->sign == NULL) {
 		ECerror(EC_R_NOT_IMPLEMENTED);
 		return 0;
 	}
 	return key->meth->sign(type, digest, digest_len, signature,
-	    signature_len, kinv, r, key);
+	    signature_len, NULL, NULL, key);
 }
+LCRYPTO_ALIAS(ECDSA_sign);
 
 static int
 ECDSA_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
