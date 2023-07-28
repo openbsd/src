@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.12 2023/07/10 19:10:51 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.13 2023/07/28 08:49:43 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -70,6 +70,14 @@
 #include "bn_local.h"
 #include "ec_local.h"
 #include "ecdsa_local.h"
+
+static ECDSA_SIG *ECDSA_do_sign_ex(const unsigned char *dgst, int dgstlen,
+    const BIGNUM *kinv, const BIGNUM *rp, EC_KEY *eckey);
+static int ECDSA_sign_ex(int type, const unsigned char *dgst, int dgstlen,
+    unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
+    const BIGNUM *rp, EC_KEY *eckey);
+static int ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *in_ctx, BIGNUM **out_kinv,
+    BIGNUM **out_r);
 
 static const ASN1_TEMPLATE ECDSA_SIG_seq_tt[] = {
 	{
@@ -762,7 +770,7 @@ ECDSA_do_sign(const unsigned char *digest, int digest_len, EC_KEY *key)
 }
 LCRYPTO_ALIAS(ECDSA_do_sign);
 
-ECDSA_SIG *
+static ECDSA_SIG *
 ECDSA_do_sign_ex(const unsigned char *digest, int digest_len,
     const BIGNUM *kinv, const BIGNUM *out_r, EC_KEY *key)
 {
@@ -772,7 +780,6 @@ ECDSA_do_sign_ex(const unsigned char *digest, int digest_len,
 	}
 	return key->meth->sign_sig(digest, digest_len, kinv, out_r, key);
 }
-LCRYPTO_ALIAS(ECDSA_do_sign_ex);
 
 int
 ECDSA_sign(int type, const unsigned char *digest, int digest_len,
@@ -783,7 +790,7 @@ ECDSA_sign(int type, const unsigned char *digest, int digest_len,
 }
 LCRYPTO_ALIAS(ECDSA_sign);
 
-int
+static int
 ECDSA_sign_ex(int type, const unsigned char *digest, int digest_len,
     unsigned char *signature, unsigned int *signature_len, const BIGNUM *kinv,
     const BIGNUM *r, EC_KEY *key)
@@ -795,9 +802,8 @@ ECDSA_sign_ex(int type, const unsigned char *digest, int digest_len,
 	return key->meth->sign(type, digest, digest_len, signature,
 	    signature_len, kinv, r, key);
 }
-LCRYPTO_ALIAS(ECDSA_sign_ex);
 
-int
+static int
 ECDSA_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
     BIGNUM **out_r)
 {
@@ -807,7 +813,6 @@ ECDSA_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv,
 	}
 	return key->meth->sign_setup(key, in_ctx, out_kinv, out_r);
 }
-LCRYPTO_ALIAS(ECDSA_sign_setup);
 
 int
 ECDSA_do_verify(const unsigned char *digest, int digest_len,

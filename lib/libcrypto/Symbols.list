@@ -1028,7 +1028,6 @@ ECDSA_SIG_it
 ECDSA_SIG_new
 ECDSA_SIG_set0
 ECDSA_do_sign
-ECDSA_do_sign_ex
 ECDSA_do_verify
 ECDSA_get_default_method
 ECDSA_get_ex_data
@@ -1037,8 +1036,6 @@ ECDSA_set_default_method
 ECDSA_set_ex_data
 ECDSA_set_method
 ECDSA_sign
-ECDSA_sign_ex
-ECDSA_sign_setup
 ECDSA_size
 ECDSA_verify
 ECPARAMETERS_free

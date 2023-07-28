@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.h,v 1.16 2023/06/19 09:12:41 tb Exp $ */
+/* $OpenBSD: ecdsa.h,v 1.17 2023/07/28 08:49:43 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -108,8 +108,6 @@ int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
 
 ECDSA_SIG *ECDSA_do_sign(const unsigned char *dgst, int dgst_len,
     EC_KEY *eckey);
-ECDSA_SIG *ECDSA_do_sign_ex(const unsigned char *dgst, int dgstlen,
-    const BIGNUM *kinv, const BIGNUM *rp, EC_KEY *eckey);
 int ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
     const ECDSA_SIG *sig, EC_KEY* eckey);
 
@@ -119,13 +117,8 @@ const ECDSA_METHOD *ECDSA_get_default_method(void);
 int ECDSA_set_method(EC_KEY *eckey, const ECDSA_METHOD *meth);
 int ECDSA_size(const EC_KEY *eckey);
 
-int ECDSA_sign_setup(EC_KEY *eckey, BN_CTX *ctx, BIGNUM **kinv,
-    BIGNUM **rp);
 int ECDSA_sign(int type, const unsigned char *dgst, int dgstlen,
     unsigned char *sig, unsigned int *siglen, EC_KEY *eckey);
-int ECDSA_sign_ex(int type, const unsigned char *dgst, int dgstlen,
-    unsigned char *sig, unsigned int *siglen, const BIGNUM *kinv,
-    const BIGNUM *rp, EC_KEY *eckey);
 int ECDSA_verify(int type, const unsigned char *dgst, int dgstlen,
     const unsigned char *sig, int siglen, EC_KEY *eckey);
 
