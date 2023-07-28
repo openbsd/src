@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.7 2023/07/28 09:28:37 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.8 2023/07/28 09:29:24 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -155,7 +155,7 @@ ecdh_compute_key(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
 	const EC_GROUP *group;
 	EC_POINT *point = NULL;
 	unsigned char *buf = NULL;
-	int buflen;
+	int buf_len = 0;
 	int ret = 0;
 
 	*out = NULL;
@@ -195,22 +195,23 @@ ecdh_compute_key(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
 		goto err;
 	}
 
-	if ((buflen = ECDH_size(ecdh)) < BN_num_bytes(x)) {
+	if ((buf_len = ECDH_size(ecdh)) < BN_num_bytes(x)) {
 		ECerror(ERR_R_INTERNAL_ERROR);
 		goto err;
 	}
-	if ((buf = malloc(buflen)) == NULL) {
+	if ((buf = calloc(1, buf_len)) == NULL) {
 		ECerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	if (BN_bn2binpad(x, buf, buflen) != buflen) {
+	if (BN_bn2binpad(x, buf, buf_len) != buf_len) {
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}
 
 	*out = buf;
-	*out_len = buflen;
+	*out_len = buf_len;
 	buf = NULL;
+	buf_len = 0;
 
 	ret = 1;
 
@@ -218,7 +219,7 @@ ecdh_compute_key(unsigned char **out, size_t *out_len, const EC_POINT *pub_key,
 	EC_POINT_free(point);
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	free(buf);
+	freezero(buf, buf_len);
 
 	return ret;
 }
