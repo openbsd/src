@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.27 2023/07/28 10:19:20 tb Exp $ */
+/* $OpenBSD: safestack.h,v 1.28 2023/07/28 10:26:33 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -1808,28 +1808,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_X509_VERIFY_PARAM_pop(st) SKM_sk_pop(X509_VERIFY_PARAM, (st))
 #define sk_X509_VERIFY_PARAM_sort(st) SKM_sk_sort(X509_VERIFY_PARAM, (st))
 #define sk_X509_VERIFY_PARAM_is_sorted(st) SKM_sk_is_sorted(X509_VERIFY_PARAM, (st))
-
-#define sk_nid_triple_new(cmp) SKM_sk_new(nid_triple, (cmp))
-#define sk_nid_triple_new_null() SKM_sk_new_null(nid_triple)
-#define sk_nid_triple_free(st) SKM_sk_free(nid_triple, (st))
-#define sk_nid_triple_num(st) SKM_sk_num(nid_triple, (st))
-#define sk_nid_triple_value(st, i) SKM_sk_value(nid_triple, (st), (i))
-#define sk_nid_triple_set(st, i, val) SKM_sk_set(nid_triple, (st), (i), (val))
-#define sk_nid_triple_zero(st) SKM_sk_zero(nid_triple, (st))
-#define sk_nid_triple_push(st, val) SKM_sk_push(nid_triple, (st), (val))
-#define sk_nid_triple_unshift(st, val) SKM_sk_unshift(nid_triple, (st), (val))
-#define sk_nid_triple_find(st, val) SKM_sk_find(nid_triple, (st), (val))
-#define sk_nid_triple_find_ex(st, val) SKM_sk_find_ex(nid_triple, (st), (val))
-#define sk_nid_triple_delete(st, i) SKM_sk_delete(nid_triple, (st), (i))
-#define sk_nid_triple_delete_ptr(st, ptr) SKM_sk_delete_ptr(nid_triple, (st), (ptr))
-#define sk_nid_triple_insert(st, val, i) SKM_sk_insert(nid_triple, (st), (val), (i))
-#define sk_nid_triple_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(nid_triple, (st), (cmp))
-#define sk_nid_triple_dup(st) SKM_sk_dup(nid_triple, st)
-#define sk_nid_triple_pop_free(st, free_func) SKM_sk_pop_free(nid_triple, (st), (free_func))
-#define sk_nid_triple_shift(st) SKM_sk_shift(nid_triple, (st))
-#define sk_nid_triple_pop(st) SKM_sk_pop(nid_triple, (st))
-#define sk_nid_triple_sort(st) SKM_sk_sort(nid_triple, (st))
-#define sk_nid_triple_is_sorted(st) SKM_sk_is_sorted(nid_triple, (st))
 
 #define sk_void_new(cmp) SKM_sk_new(void, (cmp))
 #define sk_void_new_null() SKM_sk_new_null(void)
