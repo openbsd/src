@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.1 2023/07/08 08:28:23 beck Exp $ */
+/* $OpenBSD: crypto.h,v 1.2 2023/07/28 10:19:20 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -29,9 +29,6 @@ LCRYPTO_USED(OpenSSL_version);
 LCRYPTO_USED(OpenSSL_version_num);
 LCRYPTO_USED(SSLeay_version);
 LCRYPTO_USED(SSLeay);
-LCRYPTO_USED(CRYPTO_get_ex_data_implementation);
-LCRYPTO_USED(CRYPTO_set_ex_data_implementation);
-LCRYPTO_USED(CRYPTO_ex_data_new_class);
 LCRYPTO_USED(CRYPTO_get_ex_new_index);
 LCRYPTO_USED(CRYPTO_new_ex_data);
 LCRYPTO_USED(CRYPTO_dup_ex_data);

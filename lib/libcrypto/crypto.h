@@ -1,4 +1,4 @@
-/* $OpenBSD: crypto.h,v 1.62 2023/07/05 13:06:06 bcook Exp $ */
+/* $OpenBSD: crypto.h,v 1.63 2023/07/28 10:19:20 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -244,44 +244,22 @@ struct crypto_ex_data_st {
 };
 DECLARE_STACK_OF(void)
 
-/* This stuff is basically class callback functions
- * The current classes are SSL_CTX, SSL, SSL_SESSION, and a few more */
-
-typedef struct crypto_ex_data_func_st {
-	long argl;	/* Arbitrary long */
-	void *argp;	/* Arbitrary void * */
-	CRYPTO_EX_new *new_func;
-	CRYPTO_EX_free *free_func;
-	CRYPTO_EX_dup *dup_func;
-} CRYPTO_EX_DATA_FUNCS;
-
-DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
-
-/* Per class, we have a STACK of CRYPTO_EX_DATA_FUNCS for each CRYPTO_EX_DATA
- * entry.
- */
-
-#define CRYPTO_EX_INDEX_BIO		0
-#define CRYPTO_EX_INDEX_SSL		1
-#define CRYPTO_EX_INDEX_SSL_CTX		2
-#define CRYPTO_EX_INDEX_SSL_SESSION	3
-#define CRYPTO_EX_INDEX_X509_STORE	4
-#define CRYPTO_EX_INDEX_X509_STORE_CTX	5
-#define CRYPTO_EX_INDEX_RSA		6
-#define CRYPTO_EX_INDEX_DSA		7
-#define CRYPTO_EX_INDEX_DH		8
-#define CRYPTO_EX_INDEX_ENGINE		9
-#define CRYPTO_EX_INDEX_X509		10
-#define CRYPTO_EX_INDEX_UI		11
-#define CRYPTO_EX_INDEX_ECDSA		12
-#define CRYPTO_EX_INDEX_ECDH		13
-#define CRYPTO_EX_INDEX_COMP		14
-#define CRYPTO_EX_INDEX_STORE		15
-#define CRYPTO_EX_INDEX_EC_KEY		16
-
-/* Dynamically assigned indexes start from this value (don't use directly, use
- * via CRYPTO_ex_data_new_class). */
-#define CRYPTO_EX_INDEX_USER		100
+#define CRYPTO_EX_INDEX_SSL              0
+#define CRYPTO_EX_INDEX_SSL_CTX          1
+#define CRYPTO_EX_INDEX_SSL_SESSION      2
+#define CRYPTO_EX_INDEX_APP              3
+#define CRYPTO_EX_INDEX_BIO              4
+#define CRYPTO_EX_INDEX_DH               5
+#define CRYPTO_EX_INDEX_DSA              6
+#define CRYPTO_EX_INDEX_EC_KEY           7
+#define CRYPTO_EX_INDEX_ENGINE           8
+#define CRYPTO_EX_INDEX_RSA              9
+#define CRYPTO_EX_INDEX_UI               10
+#define CRYPTO_EX_INDEX_UI_METHOD        11
+#define CRYPTO_EX_INDEX_X509             12
+#define CRYPTO_EX_INDEX_X509_STORE       13
+#define CRYPTO_EX_INDEX_X509_STORE_CTX   14
+#define CRYPTO_EX_INDEX__COUNT           15
 
 #ifndef LIBRESSL_INTERNAL
 #define CRYPTO_malloc_init()		(0)
@@ -328,14 +306,6 @@ unsigned long OpenSSL_version_num(void);
 const char *SSLeay_version(int type);
 unsigned long SSLeay(void);
 
-/* An opaque type representing an implementation of "ex_data" support */
-typedef struct st_CRYPTO_EX_DATA_IMPL	CRYPTO_EX_DATA_IMPL;
-/* Return an opaque pointer to the current "ex_data" implementation */
-const CRYPTO_EX_DATA_IMPL *CRYPTO_get_ex_data_implementation(void);
-/* Sets the "ex_data" implementation to be used (if it's not too late) */
-int CRYPTO_set_ex_data_implementation(const CRYPTO_EX_DATA_IMPL *i);
-/* Get a new "ex_data" class, and return the corresponding "class_index" */
-int CRYPTO_ex_data_new_class(void);
 /* Within a given class, get/register a new index */
 int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
     CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,

@@ -1,4 +1,4 @@
-/* $OpenBSD: safestack.h,v 1.26 2023/04/25 18:53:42 tb Exp $ */
+/* $OpenBSD: safestack.h,v 1.27 2023/07/28 10:19:20 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
  *
@@ -618,28 +618,6 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 #define sk_CONF_VALUE_pop(st) SKM_sk_pop(CONF_VALUE, (st))
 #define sk_CONF_VALUE_sort(st) SKM_sk_sort(CONF_VALUE, (st))
 #define sk_CONF_VALUE_is_sorted(st) SKM_sk_is_sorted(CONF_VALUE, (st))
-
-#define sk_CRYPTO_EX_DATA_FUNCS_new(cmp) SKM_sk_new(CRYPTO_EX_DATA_FUNCS, (cmp))
-#define sk_CRYPTO_EX_DATA_FUNCS_new_null() SKM_sk_new_null(CRYPTO_EX_DATA_FUNCS)
-#define sk_CRYPTO_EX_DATA_FUNCS_free(st) SKM_sk_free(CRYPTO_EX_DATA_FUNCS, (st))
-#define sk_CRYPTO_EX_DATA_FUNCS_num(st) SKM_sk_num(CRYPTO_EX_DATA_FUNCS, (st))
-#define sk_CRYPTO_EX_DATA_FUNCS_value(st, i) SKM_sk_value(CRYPTO_EX_DATA_FUNCS, (st), (i))
-#define sk_CRYPTO_EX_DATA_FUNCS_set(st, i, val) SKM_sk_set(CRYPTO_EX_DATA_FUNCS, (st), (i), (val))
-#define sk_CRYPTO_EX_DATA_FUNCS_zero(st) SKM_sk_zero(CRYPTO_EX_DATA_FUNCS, (st))
-#define sk_CRYPTO_EX_DATA_FUNCS_push(st, val) SKM_sk_push(CRYPTO_EX_DATA_FUNCS, (st), (val))
-#define sk_CRYPTO_EX_DATA_FUNCS_unshift(st, val) SKM_sk_unshift(CRYPTO_EX_DATA_FUNCS, (st), (val))
-#define sk_CRYPTO_EX_DATA_FUNCS_find(st, val) SKM_sk_find(CRYPTO_EX_DATA_FUNCS, (st), (val))
-#define sk_CRYPTO_EX_DATA_FUNCS_find_ex(st, val) SKM_sk_find_ex(CRYPTO_EX_DATA_FUNCS, (st), (val))
-#define sk_CRYPTO_EX_DATA_FUNCS_delete(st, i) SKM_sk_delete(CRYPTO_EX_DATA_FUNCS, (st), (i))
-#define sk_CRYPTO_EX_DATA_FUNCS_delete_ptr(st, ptr) SKM_sk_delete_ptr(CRYPTO_EX_DATA_FUNCS, (st), (ptr))
-#define sk_CRYPTO_EX_DATA_FUNCS_insert(st, val, i) SKM_sk_insert(CRYPTO_EX_DATA_FUNCS, (st), (val), (i))
-#define sk_CRYPTO_EX_DATA_FUNCS_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(CRYPTO_EX_DATA_FUNCS, (st), (cmp))
-#define sk_CRYPTO_EX_DATA_FUNCS_dup(st) SKM_sk_dup(CRYPTO_EX_DATA_FUNCS, st)
-#define sk_CRYPTO_EX_DATA_FUNCS_pop_free(st, free_func) SKM_sk_pop_free(CRYPTO_EX_DATA_FUNCS, (st), (free_func))
-#define sk_CRYPTO_EX_DATA_FUNCS_shift(st) SKM_sk_shift(CRYPTO_EX_DATA_FUNCS, (st))
-#define sk_CRYPTO_EX_DATA_FUNCS_pop(st) SKM_sk_pop(CRYPTO_EX_DATA_FUNCS, (st))
-#define sk_CRYPTO_EX_DATA_FUNCS_sort(st) SKM_sk_sort(CRYPTO_EX_DATA_FUNCS, (st))
-#define sk_CRYPTO_EX_DATA_FUNCS_is_sorted(st) SKM_sk_is_sorted(CRYPTO_EX_DATA_FUNCS, (st))
 
 #define sk_CRYPTO_dynlock_new(cmp) SKM_sk_new(CRYPTO_dynlock, (cmp))
 #define sk_CRYPTO_dynlock_new_null() SKM_sk_new_null(CRYPTO_dynlock)

@@ -691,7 +691,6 @@ CRYPTO_dbg_realloc
 CRYPTO_dbg_set_options
 CRYPTO_destroy_dynlockid
 CRYPTO_dup_ex_data
-CRYPTO_ex_data_new_class
 CRYPTO_free
 CRYPTO_free_ex_data
 CRYPTO_free_locked
@@ -712,7 +711,6 @@ CRYPTO_get_dynlock_destroy_callback
 CRYPTO_get_dynlock_lock_callback
 CRYPTO_get_dynlock_value
 CRYPTO_get_ex_data
-CRYPTO_get_ex_data_implementation
 CRYPTO_get_ex_new_index
 CRYPTO_get_id_callback
 CRYPTO_get_lock_name
@@ -752,7 +750,6 @@ CRYPTO_set_dynlock_create_callback
 CRYPTO_set_dynlock_destroy_callback
 CRYPTO_set_dynlock_lock_callback
 CRYPTO_set_ex_data
-CRYPTO_set_ex_data_implementation
 CRYPTO_set_id_callback
 CRYPTO_set_locked_mem_ex_functions
 CRYPTO_set_locked_mem_functions

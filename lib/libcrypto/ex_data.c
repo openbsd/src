@@ -1,4 +1,4 @@
-/* $OpenBSD: ex_data.c,v 1.22 2023/07/08 08:28:23 beck Exp $ */
+/* $OpenBSD: ex_data.c,v 1.23 2023/07/28 10:19:20 tb Exp $ */
 
 /*
  * Overhaul notes;
@@ -141,6 +141,26 @@
 #include <openssl/err.h>
 #include <openssl/lhash.h>
 
+typedef struct crypto_ex_data_func_st {
+	long argl;	/* Arbitrary long */
+	void *argp;	/* Arbitrary void * */
+	CRYPTO_EX_new *new_func;
+	CRYPTO_EX_free *free_func;
+	CRYPTO_EX_dup *dup_func;
+} CRYPTO_EX_DATA_FUNCS;
+
+DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
+
+#define sk_CRYPTO_EX_DATA_FUNCS_new_null() SKM_sk_new_null(CRYPTO_EX_DATA_FUNCS)
+#define sk_CRYPTO_EX_DATA_FUNCS_num(st) SKM_sk_num(CRYPTO_EX_DATA_FUNCS, (st))
+#define sk_CRYPTO_EX_DATA_FUNCS_value(st, i) SKM_sk_value(CRYPTO_EX_DATA_FUNCS, (st), (i))
+#define sk_CRYPTO_EX_DATA_FUNCS_set(st, i, val) SKM_sk_set(CRYPTO_EX_DATA_FUNCS, (st), (i), (val))
+#define sk_CRYPTO_EX_DATA_FUNCS_push(st, val) SKM_sk_push(CRYPTO_EX_DATA_FUNCS, (st), (val))
+#define sk_CRYPTO_EX_DATA_FUNCS_pop_free(st, free_func) SKM_sk_pop_free(CRYPTO_EX_DATA_FUNCS, (st), (free_func))
+
+/* An opaque type representing an implementation of "ex_data" support */
+typedef struct st_CRYPTO_EX_DATA_IMPL	CRYPTO_EX_DATA_IMPL;
+
 /* What an "implementation of ex_data functionality" looks like */
 struct st_CRYPTO_EX_DATA_IMPL {
 	/*********************/
@@ -210,29 +230,6 @@ impl_check(void)
  * invoking the function (which checks again inside a lock). */
 #define IMPL_CHECK if(!impl) impl_check();
 
-/* API functions to get/set the "ex_data" implementation */
-const CRYPTO_EX_DATA_IMPL *
-CRYPTO_get_ex_data_implementation(void)
-{
-	IMPL_CHECK
-	return impl;
-}
-LCRYPTO_ALIAS(CRYPTO_get_ex_data_implementation);
-
-int
-CRYPTO_set_ex_data_implementation(const CRYPTO_EX_DATA_IMPL *i)
-{
-	int toret = 0;
-	CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
-	if (!impl) {
-		impl = i;
-		toret = 1;
-	}
-	CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
-	return toret;
-}
-LCRYPTO_ALIAS(CRYPTO_set_ex_data_implementation);
-
 /****************************************************************************/
 /* Interal (default) implementation of "ex_data" support. API functions are
  * further down. */
@@ -247,6 +244,7 @@ typedef struct st_ex_class_item {
 } EX_CLASS_ITEM;
 
 /* When assigning new class indexes, this is our counter */
+#define CRYPTO_EX_INDEX_USER		100
 static int ex_class = CRYPTO_EX_INDEX_USER;
 
 /* The global hash table of EX_CLASS_ITEM items */
@@ -540,16 +538,6 @@ skip:
 /********************************************************************/
 /* API functions that defer all "state" operations to the "ex_data"
  * implementation we have set. */
-
-/* Obtain an index for a new class (not the same as getting a new index within
- * an existing class - this is actually getting a new *class*) */
-int
-CRYPTO_ex_data_new_class(void)
-{
-	IMPL_CHECK
-	return EX_IMPL(new_class)();
-}
-LCRYPTO_ALIAS(CRYPTO_ex_data_new_class);
 
 /* Release all "ex_data" state to prevent memory leaks. This can't be made
  * thread-safe without overhauling a lot of stuff, and shouldn't really be
