@@ -1078,8 +1078,6 @@ _libre_ASN1_GENERALIZEDTIME_print
 _libre_ASN1_TIME_print
 _libre_ASN1_STRING_print
 _libre_ASN1_STRING_print_ex
-_libre_ASN1_bn_print
-_libre_ASN1_buf_print
 _libre_ASN1_parse
 _libre_ASN1_parse_dump
 _libre_ASN1_tag2bit

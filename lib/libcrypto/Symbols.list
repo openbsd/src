@@ -181,8 +181,6 @@ ASN1_VISIBLESTRING_free
 ASN1_VISIBLESTRING_it
 ASN1_VISIBLESTRING_new
 ASN1_add_oid_module
-ASN1_bn_print
-ASN1_buf_print
 ASN1_d2i_bio
 ASN1_d2i_fp
 ASN1_dup

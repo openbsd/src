@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.77 2023/07/28 09:58:30 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.78 2023/07/28 10:02:11 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -834,9 +834,6 @@ int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
 int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
 int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, const ASN1_STRING *str, unsigned long flags);
-int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
-    unsigned char *buf, int off);
-int ASN1_buf_print(BIO *bp, const unsigned char *buf, size_t buflen, int indent);
 int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent);
 int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent, int dump);
 #endif
