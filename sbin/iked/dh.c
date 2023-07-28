@@ -1,4 +1,4 @@
-/*	$OpenBSD: dh.c,v 1.32 2022/12/03 22:34:35 tobhe Exp $	*/
+/*	$OpenBSD: dh.c,v 1.33 2023/07/28 07:31:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2014 Reyk Floeter <reyk@openbsd.org>
@@ -401,7 +401,7 @@ dh_create_exchange(struct dh_group *group, struct ibuf **bufp, struct ibuf *iexc
 	if (buf == NULL)
 		return -1;
 	*bufp = buf;
-	return (group->exchange(group, buf->buf));
+	return (group->exchange(group, ibuf_data(buf)));
 }
 
 int
@@ -419,7 +419,7 @@ dh_create_shared(struct dh_group *group, struct ibuf **secretp, struct ibuf *exc
 	if (buf == NULL)
 		return -1;
 	*secretp = buf;
-	return (group->shared(group, buf->buf, exchange->buf));
+	return (group->shared(group, ibuf_data(buf), ibuf_data(exchange)));
 }
 
 int
@@ -801,7 +801,7 @@ kemsx_create_exchange2(struct dh_group *group, struct ibuf **bufp,
 		buf = ibuf_new(NULL, need);
 		if (buf == NULL)
 			return -1;
-		cp = buf->buf;
+		cp = ibuf_data(buf);
 		memcpy(cp, kemsx->public,
 		    crypto_kem_sntrup761_PUBLICKEYBYTES);
 		cp += crypto_kem_sntrup761_PUBLICKEYBYTES;
@@ -819,8 +819,8 @@ kemsx_create_exchange2(struct dh_group *group, struct ibuf **bufp,
 		buf = ibuf_new(NULL, need);
 		if (buf == NULL)
 			return -1;
-		cp = buf->buf;
-		pk = iexchange->buf;
+		cp = ibuf_data(buf);
+		pk = ibuf_data(iexchange);
 		crypto_kem_sntrup761_enc(cp, kemsx->kemkey, pk);
 		cp += crypto_kem_sntrup761_CIPHERTEXTBYTES;
 	}
@@ -850,7 +850,7 @@ kemsx_create_shared2(struct dh_group *group, struct ibuf **sharedp,
 		return (-1);
 
 	have = ibuf_size(exchange);
-	cp = exchange->buf;
+	cp = ibuf_data(exchange);
 	if (kemsx->initiator) {
 		/* input */
 		need = crypto_kem_sntrup761_CIPHERTEXTBYTES +
@@ -878,7 +878,7 @@ kemsx_create_shared2(struct dh_group *group, struct ibuf **sharedp,
 	    EVP_DigestInit_ex(ctx, EVP_sha512(), NULL) != 1 ||
 	    EVP_DigestUpdate(ctx, kemsx->kemkey, sizeof(kemsx->kemkey)) != 1 ||
 	    EVP_DigestUpdate(ctx, shared, sizeof(shared)) != 1 ||
-	    EVP_DigestFinal_ex(ctx, buf->buf, &len) != 1) {
+	    EVP_DigestFinal_ex(ctx, ibuf_data(buf), &len) != 1) {
 		EVP_MD_CTX_free(ctx);
 		ibuf_free(buf);
 		return (-1);

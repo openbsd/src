@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.374 2023/07/18 15:07:41 claudio Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.375 2023/07/28 07:31:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -5738,14 +5738,14 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 
 	log_debug("%s: DHSECRET with %zu bytes", SPI_SA(sa, __func__),
 	    ibuf_length(dhsecret));
-	print_hex(dhsecret->buf, 0, ibuf_length(dhsecret));
+	print_hex(ibuf_data(dhsecret), 0, ibuf_length(dhsecret));
 
 	if (!key) {
 		/*
 		 * Set PRF key to generate SKEYSEED = prf(Ni | Nr, g^ir)
 		 */
-		if ((ninr = ibuf_new(sa->sa_inonce->buf, ilen)) == NULL ||
-		    ibuf_add(ninr, sa->sa_rnonce->buf, rlen) != 0) {
+		if ((ninr = ibuf_new(ibuf_data(sa->sa_inonce), ilen)) == NULL ||
+		    ibuf_add(ninr, ibuf_data(sa->sa_rnonce), rlen) != 0) {
 			log_info("%s: failed to get nonce key buffer",
 			    SPI_SA(sa, __func__));
 			goto done;
@@ -5755,15 +5755,15 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 		/*
 		 * Set PRF key to generate SKEYSEED = prf(key, g^ir | Ni | Nr)
 		 */
-		if (ibuf_add(dhsecret, sa->sa_inonce->buf, ilen) != 0 ||
-		    ibuf_add(dhsecret, sa->sa_rnonce->buf, rlen) != 0) {
+		if (ibuf_add(dhsecret, ibuf_data(sa->sa_inonce), ilen) != 0 ||
+		    ibuf_add(dhsecret, ibuf_data(sa->sa_rnonce), rlen) != 0) {
 			log_info("%s: failed to get nonce key buffer",
 			    SPI_SA(sa, __func__));
 			goto done;
 		}
 	}
 
-	if ((hash_setkey(prf, key->buf, ibuf_length(key))) == NULL) {
+	if ((hash_setkey(prf, ibuf_data(key), ibuf_length(key))) == NULL) {
 		log_info("%s: failed to set prf key", SPI_SA(sa, __func__));
 		goto done;
 	}
@@ -5776,11 +5776,11 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 
 	tmplen = 0;
 	hash_init(prf);
-	hash_update(prf, dhsecret->buf, ibuf_length(dhsecret));
-	hash_final(prf, skeyseed->buf, &tmplen);
+	hash_update(prf, ibuf_data(dhsecret), ibuf_length(dhsecret));
+	hash_final(prf, ibuf_data(skeyseed), &tmplen);
 
 	log_debug("%s: SKEYSEED with %zu bytes", __func__, tmplen);
-	print_hex(skeyseed->buf, 0, tmplen);
+	print_hex(ibuf_data(skeyseed), 0, tmplen);
 
 	if (ibuf_setsize(skeyseed, tmplen) == -1) {
 		log_info("%s: failed to set keymaterial length",
@@ -5800,8 +5800,8 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 	ispi = htobe64(sa->sa_hdr.sh_ispi);
 	rspi = htobe64(sa->sa_hdr.sh_rspi);
 
-	if ((s = ibuf_new(sa->sa_inonce->buf, ilen)) == NULL ||
-	    ibuf_add(s, sa->sa_rnonce->buf, rlen) != 0 ||
+	if ((s = ibuf_new(ibuf_data(sa->sa_inonce), ilen)) == NULL ||
+	    ibuf_add(s, ibuf_data(sa->sa_rnonce), rlen) != 0 ||
 	    ibuf_add(s, &ispi, sizeof(ispi)) != 0 ||
 	    ibuf_add(s, &rspi, sizeof(rspi)) != 0) {
 		log_info("%s: failed to set S buffer",
@@ -5810,7 +5810,7 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 	}
 
 	log_debug("%s: S with %zu bytes", SPI_SA(sa, __func__), ibuf_length(s));
-	print_hex(s->buf, 0, ibuf_length(s));
+	print_hex(ibuf_data(s), 0, ibuf_length(s));
 
 	/*
 	 * Get the size of the key material we need and the number
@@ -5850,29 +5850,31 @@ ikev2_sa_keys(struct iked *env, struct iked_sa *sa, struct ibuf *key)
 
 	log_debug("%s: SK_d with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_d));
-	print_hex(sa->sa_key_d->buf, 0, ibuf_length(sa->sa_key_d));
+	print_hex(ibuf_data(sa->sa_key_d), 0, ibuf_length(sa->sa_key_d));
 	if (!isaead) {
 		log_debug("%s: SK_ai with %zu bytes", __func__,
 		    ibuf_length(sa->sa_key_iauth));
-		print_hex(sa->sa_key_iauth->buf, 0,
+		print_hex(ibuf_data(sa->sa_key_iauth), 0,
 		    ibuf_length(sa->sa_key_iauth));
 		log_debug("%s: SK_ar with %zu bytes", __func__,
 		    ibuf_length(sa->sa_key_rauth));
-		print_hex(sa->sa_key_rauth->buf, 0,
+		print_hex(ibuf_data(sa->sa_key_rauth), 0,
 		    ibuf_length(sa->sa_key_rauth));
 	}
 	log_debug("%s: SK_ei with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_iencr));
-	print_hex(sa->sa_key_iencr->buf, 0, ibuf_length(sa->sa_key_iencr));
+	print_hex(ibuf_data(sa->sa_key_iencr), 0,
+	    ibuf_length(sa->sa_key_iencr));
 	log_debug("%s: SK_er with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_rencr));
-	print_hex(sa->sa_key_rencr->buf, 0, ibuf_length(sa->sa_key_rencr));
+	print_hex(ibuf_data(sa->sa_key_rencr), 0,
+	    ibuf_length(sa->sa_key_rencr));
 	log_debug("%s: SK_pi with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_iprf));
-	print_hex(sa->sa_key_iprf->buf, 0, ibuf_length(sa->sa_key_iprf));
+	print_hex(ibuf_data(sa->sa_key_iprf), 0, ibuf_length(sa->sa_key_iprf));
 	log_debug("%s: SK_pr with %zu bytes", __func__,
 	    ibuf_length(sa->sa_key_rprf));
-	print_hex(sa->sa_key_rprf->buf, 0, ibuf_length(sa->sa_key_rprf));
+	print_hex(ibuf_data(sa->sa_key_rprf), 0, ibuf_length(sa->sa_key_rprf));
 
 	ret = 0;
 
@@ -5930,33 +5932,33 @@ ikev2_prfplus(struct iked_hash *prf, struct ibuf *key, struct ibuf *seed,
 
 	for (i = 0; i < rlen; i++) {
 		if (t1 != NULL) {
-			t2 = ibuf_new(t1->buf, ibuf_length(t1));
+			t2 = ibuf_new(ibuf_data(t1), ibuf_length(t1));
 			ibuf_free(t1);
 		} else
 			t2 = ibuf_new(NULL, 0);
 		t1 = ibuf_new(NULL, hash_keylength(prf));
 
-		ibuf_add(t2, seed->buf, ibuf_length(seed));
+		ibuf_add_buf(t2, seed);
 		pad = i + 1;
 		ibuf_add(t2, &pad, 1);
 
 		hash_init(prf);
-		hash_update(prf, t2->buf, ibuf_length(t2));
-		hash_final(prf, t1->buf, &hashlen);
+		hash_update(prf, ibuf_data(t2), ibuf_length(t2));
+		hash_final(prf, ibuf_data(t1), &hashlen);
 
 		if (hashlen != hash_length(prf))
 			fatalx("ikev2_prfplus: hash length mismatch");
 
 		ibuf_free(t2);
-		ibuf_add(t, t1->buf, ibuf_length(t1));
+		ibuf_add_buf(t, t1);
 
 		log_debug("%s: T%d with %zu bytes", __func__,
 		    pad, ibuf_length(t1));
-		print_hex(t1->buf, 0, ibuf_length(t1));
+		print_hex(ibuf_data(t1), 0, ibuf_length(t1));
 	}
 
 	log_debug("%s: Tn with %zu bytes", __func__, ibuf_length(t));
-	print_hex(t->buf, 0, ibuf_length(t));
+	print_hex(ibuf_data(t), 0, ibuf_length(t));
 
 	ibuf_free(t1);
 

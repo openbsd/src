@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.97 2023/07/18 15:07:41 claudio Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.98 2023/07/28 07:31:38 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -448,7 +448,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src,
 	log_debug("%s: padded length %zu", __func__, ibuf_size(src));
 	print_hex(ibuf_data(src), 0, ibuf_size(src));
 
-	cipher_setkey(sa->sa_encr, encr->buf, ibuf_length(encr));
+	cipher_setkey(sa->sa_encr, ibuf_data(encr), ibuf_length(encr));
 	cipher_setiv(sa->sa_encr, NULL, 0);	/* XXX ivlen */
 	if (cipher_init_encrypt(sa->sa_encr) == -1) {
 		log_info("%s: error initiating cipher.", __func__);
@@ -619,22 +619,23 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 		if ((tmp = ibuf_new(NULL, hash_keylength(sa->sa_integr))) == NULL)
 			goto done;
 
-		hash_setkey(sa->sa_integr, integr->buf, ibuf_length(integr));
+		hash_setkey(sa->sa_integr, ibuf_data(integr),
+		    ibuf_length(integr));
 		hash_init(sa->sa_integr);
 		hash_update(sa->sa_integr, ibuf_data(msg),
 		    ibuf_size(msg) - integrlen);
-		hash_final(sa->sa_integr, tmp->buf, &tmplen);
+		hash_final(sa->sa_integr, ibuf_data(tmp), &tmplen);
 
 		integrdata = ibuf_seek(src, integroff, integrlen);
 		if (integrdata == NULL)
 			goto done;
-		if (memcmp(tmp->buf, integrdata, integrlen) != 0) {
+		if (memcmp(ibuf_data(tmp), integrdata, integrlen) != 0) {
 			log_debug("%s: integrity check failed", __func__);
 			goto done;
 		}
 
 		log_debug("%s: integrity check succeeded", __func__);
-		print_hex(tmp->buf, 0, tmplen);
+		print_hex(ibuf_data(tmp), 0, tmplen);
 
 		ibuf_free(tmp);
 		tmp = NULL;
@@ -648,7 +649,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 		goto done;
 	}
 
-	cipher_setkey(sa->sa_encr, encr->buf, ibuf_length(encr));
+	cipher_setkey(sa->sa_encr, ibuf_data(encr), ibuf_length(encr));
 	cipher_setiv(sa->sa_encr, ibuf_seek(src, ivoff, ivlen), ivlen);
 	if (cipher_init_decrypt(sa->sa_encr) == -1) {
 		log_info("%s: error initiating cipher.", __func__);
