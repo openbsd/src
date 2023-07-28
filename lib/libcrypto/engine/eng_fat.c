@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_fat.c,v 1.18 2023/07/28 09:08:31 tb Exp $ */
+/* $OpenBSD: eng_fat.c,v 1.19 2023/07/28 09:22:26 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -85,10 +85,6 @@ ENGINE_set_default(ENGINE *e, unsigned int flags)
 	if ((flags & ENGINE_METHOD_DH) && !ENGINE_set_default_DH(e))
 		return 0;
 #endif
-#ifndef OPENSSL_NO_ECDH
-	if ((flags & ENGINE_METHOD_ECDH) && !ENGINE_set_default_ECDH(e))
-		return 0;
-#endif
 #ifndef OPENSSL_NO_EC
 	if ((flags & ENGINE_METHOD_EC) && !ENGINE_set_default_EC(e))
 		return 0;
@@ -117,8 +113,6 @@ int_def_cb(const char *alg, int len, void *arg)
 		*pflags |= ENGINE_METHOD_RSA;
 	else if (!strncmp(alg, "DSA", len))
 		*pflags |= ENGINE_METHOD_DSA;
-	else if (!strncmp(alg, "ECDH", len))
-		*pflags |= ENGINE_METHOD_ECDH;
 	else if (!strncmp(alg, "DH", len))
 		*pflags |= ENGINE_METHOD_DH;
 	else if (strncmp(alg, "EC", len) == 0)
@@ -167,9 +161,6 @@ ENGINE_register_complete(ENGINE *e)
 #endif
 #ifndef OPENSSL_NO_DH
 	ENGINE_register_DH(e);
-#endif
-#ifndef OPENSSL_NO_ECDH
-	ENGINE_register_ECDH(e);
 #endif
 #ifndef OPENSSL_NO_EC
 	ENGINE_register_EC(e);

@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_openssl.c,v 1.18 2023/07/28 09:08:31 tb Exp $ */
+/* $OpenBSD: eng_openssl.c,v 1.19 2023/07/28 09:22:26 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -145,9 +145,6 @@ bind_helper(ENGINE *e)
 #endif
 #ifndef OPENSSL_NO_DSA
 	    || !ENGINE_set_DSA(e, DSA_get_default_method())
-#endif
-#ifndef OPENSSL_NO_ECDH
-	    || !ENGINE_set_ECDH(e, ECDH_OpenSSL())
 #endif
 #ifndef OPENSSL_NO_DH
 	    || !ENGINE_set_DH(e, DH_get_default_method())

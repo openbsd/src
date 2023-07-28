@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.h,v 1.1 2023/07/08 06:04:33 beck Exp $ */
+/* $OpenBSD: ecdh.h,v 1.2 2023/07/28 09:22:26 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -25,15 +25,7 @@
 #endif
 #include "crypto_namespace.h"
 
-LCRYPTO_USED(ECDH_OpenSSL);
-LCRYPTO_USED(ECDH_set_default_method);
-LCRYPTO_USED(ECDH_get_default_method);
-LCRYPTO_USED(ECDH_set_method);
 LCRYPTO_USED(ECDH_size);
 LCRYPTO_USED(ECDH_compute_key);
-LCRYPTO_USED(ECDH_get_ex_new_index);
-LCRYPTO_USED(ECDH_set_ex_data);
-LCRYPTO_USED(ECDH_get_ex_data);
-LCRYPTO_USED(ERR_load_ECDH_strings);
 
 #endif /* _LIBCRYPTO_ECDH_H */

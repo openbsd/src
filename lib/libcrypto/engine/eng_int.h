@@ -1,4 +1,4 @@
-/* $OpenBSD: eng_int.h,v 1.11 2023/07/28 09:08:31 tb Exp $ */
+/* $OpenBSD: eng_int.h,v 1.12 2023/07/28 09:22:26 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -157,7 +157,6 @@ struct engine_st {
 	const RSA_METHOD *rsa_meth;
 	const DSA_METHOD *dsa_meth;
 	const DH_METHOD *dh_meth;
-	const ECDH_METHOD *ecdh_meth;
 	const EC_KEY_METHOD *ec_meth;
 	const RAND_METHOD *rand_meth;
 	const STORE_METHOD *store_meth;
