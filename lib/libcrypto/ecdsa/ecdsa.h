@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.h,v 1.17 2023/07/28 08:49:43 tb Exp $ */
+/* $OpenBSD: ecdsa.h,v 1.18 2023/07/28 09:01:25 tb Exp $ */
 /*
  * Written by Nils Larsch for the OpenSSL project
  */
@@ -156,27 +156,6 @@ void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
 	const unsigned char *sigbuf, int sig_len, EC_KEY *eckey),
     int (**pverify_sig)(const unsigned char *dgst, int dgst_len,
 	const ECDSA_SIG *sig, EC_KEY *eckey));
-
-void ERR_load_ECDSA_strings(void);
-
-/* Error codes for the ECDSA functions. */
-
-/* Function codes. */
-#define ECDSA_F_ECDSA_CHECK				 104
-#define ECDSA_F_ECDSA_DATA_NEW_METHOD			 100
-#define ECDSA_F_ECDSA_DO_SIGN				 101
-#define ECDSA_F_ECDSA_DO_VERIFY				 102
-#define ECDSA_F_ECDSA_SIGN_SETUP			 103
-
-/* Reason codes. */
-#define ECDSA_R_BAD_SIGNATURE				 100
-#define ECDSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 101
-#define ECDSA_R_ERR_EC_LIB				 102
-#define ECDSA_R_MISSING_PARAMETERS			 103
-#define ECDSA_R_NEED_NEW_SETUP_VALUES			 106
-#define ECDSA_R_NON_FIPS_METHOD				 107
-#define ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED		 104
-#define ECDSA_R_SIGNATURE_MALLOC_FAILED			 105
 
 #ifdef  __cplusplus
 }

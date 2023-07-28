@@ -1444,7 +1444,6 @@ _libre_EC_KEY_METHOD_set_sign
 _libre_EC_KEY_METHOD_set_verify
 _libre_EC_KEY_METHOD_get_sign
 _libre_EC_KEY_METHOD_get_verify
-_libre_ERR_load_ECDSA_strings
 _libre_HKDF
 _libre_HKDF_extract
 _libre_HKDF_expand
