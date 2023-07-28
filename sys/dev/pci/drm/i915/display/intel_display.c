@@ -7396,7 +7396,6 @@ static void intel_atomic_commit_fence_wait(struct intel_atomic_state *intel_stat
 	struct wait_queue_entry wait_fence, wait_reset;
 	struct drm_i915_private *dev_priv = to_i915(intel_state->base.dev);
 
-#ifdef notyet
 	init_wait_entry(&wait_fence, 0);
 	init_wait_entry(&wait_reset, 0);
 	for (;;) {
@@ -7417,22 +7416,6 @@ static void intel_atomic_commit_fence_wait(struct intel_atomic_state *intel_stat
 	finish_wait(bit_waitqueue(&to_gt(dev_priv)->reset.flags,
 				  I915_RESET_MODESET),
 		    &wait_reset);
-#else
-	/* XXX above recurses sch_mtx */
-	init_wait_entry(&wait_fence, 0);
-	for (;;) {
-		prepare_to_wait(&intel_state->commit_ready.wait,
-				&wait_fence, TASK_UNINTERRUPTIBLE);
-
-
-		if (i915_sw_fence_done(&intel_state->commit_ready) ||
-		    test_bit(I915_RESET_MODESET, &to_gt(dev_priv)->reset.flags))
-			break;
-
-		schedule();
-	}
-	finish_wait(&intel_state->commit_ready.wait, &wait_fence);
-#endif
 }
 
 static void intel_cleanup_dsbs(struct intel_atomic_state *state)
