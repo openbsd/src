@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.42 2023/07/05 17:10:10 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.43 2023/07/28 09:16:17 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -326,6 +326,31 @@ void EC_KEY_set_default_method(const EC_KEY_METHOD *meth);
 const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key);
 int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth);
 EC_KEY *EC_KEY_new_method(ENGINE *engine);
+
+typedef struct ECDSA_SIG_st ECDSA_SIG;
+
+ECDSA_SIG *ECDSA_SIG_new(void);
+void ECDSA_SIG_free(ECDSA_SIG *sig);
+int i2d_ECDSA_SIG(const ECDSA_SIG *sig, unsigned char **pp);
+ECDSA_SIG *d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, long len);
+
+const BIGNUM *ECDSA_SIG_get0_r(const ECDSA_SIG *sig);
+const BIGNUM *ECDSA_SIG_get0_s(const ECDSA_SIG *sig);
+void ECDSA_SIG_get0(const ECDSA_SIG *sig, const BIGNUM **pr, const BIGNUM **ps);
+int ECDSA_SIG_set0(ECDSA_SIG *sig, BIGNUM *r, BIGNUM *s);
+
+int ECDSA_size(const EC_KEY *eckey);
+
+ECDSA_SIG *ECDSA_do_sign(const unsigned char *digest, int digest_len,
+    EC_KEY *eckey);
+int ECDSA_do_verify(const unsigned char *digest, int digest_len,
+    const ECDSA_SIG *sig, EC_KEY *eckey);
+
+int ECDSA_sign(int type, const unsigned char *digest, int digest_len,
+    unsigned char *signature, unsigned int *signature_len, EC_KEY *eckey);
+int ECDSA_verify(int type, const unsigned char *digest, int digest_len,
+    const unsigned char *signature, int signature_len, EC_KEY *eckey);
+
 EC_KEY_METHOD *EC_KEY_METHOD_new(const EC_KEY_METHOD *meth);
 void EC_KEY_METHOD_free(EC_KEY_METHOD *meth);
 void EC_KEY_METHOD_set_init(EC_KEY_METHOD *meth,
@@ -340,6 +365,18 @@ void EC_KEY_METHOD_set_keygen(EC_KEY_METHOD *meth,
 void EC_KEY_METHOD_set_compute_key(EC_KEY_METHOD *meth,
     int (*ckey)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
 	void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)));
+void EC_KEY_METHOD_set_sign(EC_KEY_METHOD *meth,
+    int (*sign)(int type, const unsigned char *digest, int digest_len,
+	unsigned char *signature, unsigned int *signature_len,
+	const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey),
+    int (*sign_setup)(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp),
+    ECDSA_SIG *(*sign_sig)(const unsigned char *digest, int digest_len,
+        const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey));
+void EC_KEY_METHOD_set_verify(EC_KEY_METHOD *meth,
+    int (*verify)(int type, const unsigned char *digest, int digest_len,
+	const unsigned char *signature, int signature_len, EC_KEY *eckey),
+    int (*verify_sig)(const unsigned char *digest, int digest_len,
+	const ECDSA_SIG *sig, EC_KEY *eckey));
 void EC_KEY_METHOD_get_init(const EC_KEY_METHOD *meth,
     int (**pinit)(EC_KEY *key),
     void (**pfinish)(EC_KEY *key),
@@ -352,6 +389,18 @@ void EC_KEY_METHOD_get_keygen(const EC_KEY_METHOD *meth,
 void EC_KEY_METHOD_get_compute_key(const EC_KEY_METHOD *meth,
     int (**pck)(void *out, size_t outlen, const EC_POINT *pub_key, EC_KEY *ecdh,
 	void *(*KDF) (const void *in, size_t inlen, void *out, size_t *outlen)));
+void EC_KEY_METHOD_get_sign(const EC_KEY_METHOD *meth,
+    int (**psign)(int type, const unsigned char *digest, int digest_len,
+        unsigned char *signature, unsigned int *signature_len,
+	const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey),
+    int (**psign_setup)(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp),
+    ECDSA_SIG *(**psign_sig)(const unsigned char *digest, int digest_len,
+        const BIGNUM *in_kinv, const BIGNUM *in_r, EC_KEY *eckey));
+void EC_KEY_METHOD_get_verify(const EC_KEY_METHOD *meth,
+    int (**pverify)(int type, const unsigned char *digest, int digest_len,
+	const unsigned char *signature, int signature_len, EC_KEY *eckey),
+    int (**pverify_sig)(const unsigned char *digest, int digest_len,
+	const ECDSA_SIG *sig, EC_KEY *eckey));
 
 EC_KEY *ECParameters_dup(EC_KEY *key);
 
