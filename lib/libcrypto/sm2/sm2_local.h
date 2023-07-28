@@ -1,4 +1,4 @@
-/*	$OpenBSD: sm2_local.h,v 1.2 2022/11/26 17:23:18 tb Exp $ */
+/*	$OpenBSD: sm2_local.h,v 1.3 2023/07/28 15:50:33 tb Exp $ */
 /*
  * Copyright (c) 2017, 2019 Ribose Inc
  *
@@ -19,7 +19,6 @@
 #define HEADER_SM2_LOCAL_H
 
 #include <openssl/ec.h>
-#include <openssl/ecdsa.h>
 
 __BEGIN_HIDDEN_DECLS
 

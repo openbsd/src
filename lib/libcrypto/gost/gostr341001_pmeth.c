@@ -1,4 +1,4 @@
-/* $OpenBSD: gostr341001_pmeth.c,v 1.18 2023/07/05 11:37:45 tb Exp $ */
+/* $OpenBSD: gostr341001_pmeth.c,v 1.19 2023/07/28 15:50:33 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -59,7 +59,6 @@
 #include <openssl/err.h>
 #include <openssl/gost.h>
 #include <openssl/ec.h>
-#include <openssl/ecdsa.h>
 #include <openssl/x509.h>
 
 #include "ecdsa_local.h"

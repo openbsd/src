@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_local.h,v 1.25 2023/07/28 09:28:37 tb Exp $ */
+/* $OpenBSD: ec_local.h,v 1.26 2023/07/28 15:50:33 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -73,7 +73,6 @@
 
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/ecdsa.h>
 #include <openssl/objects.h>
 
 #include "bn_local.h"

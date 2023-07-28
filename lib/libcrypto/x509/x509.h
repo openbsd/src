@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.100 2023/04/25 18:57:57 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.101 2023/07/28 15:50:33 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -81,12 +81,6 @@
 #endif
 #ifndef OPENSSL_NO_EC
 #include <openssl/ec.h>
-#endif
-#ifndef OPENSSL_NO_ECDSA
-#include <openssl/ecdsa.h>
-#endif
-#ifndef OPENSSL_NO_ECDH
-#include <openssl/ecdh.h>
 #endif
 #ifndef OPENSSL_NO_EVP
 #include <openssl/evp.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: gost_local.h,v 1.2 2022/11/26 17:23:18 tb Exp $ */
+/* $OpenBSD: gost_local.h,v 1.3 2023/07/28 15:50:33 tb Exp $ */
 /*
  * Copyright (c) 2014 Dmitry Eremin-Solenikov <dbaryshkov@gmail.com>
  * Copyright (c) 2005-2006 Cryptocom LTD
@@ -53,7 +53,6 @@
 #define HEADER_GOST_LOCAL_H
 
 #include <openssl/ec.h>
-#include <openssl/ecdsa.h>
 
 __BEGIN_HIDDEN_DECLS
 
