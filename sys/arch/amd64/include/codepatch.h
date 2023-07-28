@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.15 2023/07/10 03:32:10 guenther Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.16 2023/07/28 06:18:35 guenther Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -96,5 +96,21 @@ void codepatch_disable(void);
 	.byte	0x0f, 0x1f, 0x84, 0x00, 0x00, 0x00, 0x00, 0x00	;\
 	.byte	0x0f, 0x1f, 0x40, 0x00				;\
 	CODEPATCH_END2(997, CPTAG_PCID_SET_REUSE)
+
+/* Would be neat if these could be in something like .cptext */
+#define CODEPATCH_CODE(symbol, instructions...)		\
+	.section .rodata;				\
+	.globl	symbol;					\
+symbol:	instructions;					\
+	.size	symbol, . - symbol
+
+/* provide a (short) variable with the length of the patch */
+#define CODEPATCH_CODE_LEN(symbol, instructions...)	\
+	CODEPATCH_CODE(symbol, instructions);		\
+996:	.globl	symbol##_len;				\
+	.align	2;					\
+symbol##_len:						\
+	.short	996b - symbol;				\
+	.size	symbol##_len, 2
 
 #endif /* _MACHINE_CODEPATCH_H_ */

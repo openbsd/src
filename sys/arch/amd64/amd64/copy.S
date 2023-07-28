@@ -1,4 +1,4 @@
-/*	$OpenBSD: copy.S,v 1.18 2023/01/31 15:18:54 deraadt Exp $	*/
+/*	$OpenBSD: copy.S,v 1.19 2023/07/28 06:18:35 guenther Exp $	*/
 /*	$NetBSD: copy.S,v 1.1 2003/04/26 18:39:26 fvdl Exp $	*/
 
 /*
@@ -299,11 +299,5 @@ copystr_return:
 	ret
 	lfence
 
-	.section .rodata
-	.globl	_stac
-_stac:
-	stac
-
-	.globl	_clac
-_clac:
-	clac
+CODEPATCH_CODE(_stac,	stac)
+CODEPATCH_CODE(_clac,	clac)
