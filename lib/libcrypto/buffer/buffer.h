@@ -1,4 +1,4 @@
-/* $OpenBSD: buffer.h,v 1.16 2022/07/12 14:42:48 kn Exp $ */
+/* $OpenBSD: buffer.h,v 1.17 2023/07/28 10:17:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,9 +58,6 @@
 
 #ifndef HEADER_BUFFER_H
 #define HEADER_BUFFER_H
-#if !defined(HAVE_ATTRIBUTE__BOUNDED__) && !defined(__OpenBSD__)
-#define __bounded__(x, y, z)
-#endif
 
 #include <openssl/ossl_typ.h>
 
@@ -84,19 +81,6 @@ BUF_MEM *BUF_MEM_new(void);
 void	BUF_MEM_free(BUF_MEM *a);
 int	BUF_MEM_grow(BUF_MEM *str, size_t len);
 int	BUF_MEM_grow_clean(BUF_MEM *str, size_t len);
-
-#ifndef LIBRESSL_INTERNAL
-char *	BUF_strdup(const char *str);
-char *	BUF_strndup(const char *str, size_t siz);
-void *	BUF_memdup(const void *data, size_t siz);
-void	BUF_reverse(unsigned char *out, const unsigned char *in, size_t siz);
-
-/* safe string functions */
-size_t BUF_strlcpy(char *dst, const char *src, size_t siz)
-	__attribute__ ((__bounded__(__string__,1,3)));
-size_t BUF_strlcat(char *dst, const char *src, size_t siz)
-	__attribute__ ((__bounded__(__string__,1,3)));
-#endif
 
 void ERR_load_BUF_strings(void);
 

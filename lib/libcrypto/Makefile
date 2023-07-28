@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.147 2023/07/28 10:02:11 tb Exp $
+# $OpenBSD: Makefile,v 1.148 2023/07/28 10:17:21 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -201,7 +201,6 @@ SRCS+= bn_word.c
 
 # buffer/
 SRCS+= buf_err.c
-SRCS+= buf_str.c
 SRCS+= buffer.c
 
 # bytestring/

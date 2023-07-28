@@ -495,12 +495,6 @@ BUF_MEM_free
 BUF_MEM_grow
 BUF_MEM_grow_clean
 BUF_MEM_new
-BUF_memdup
-BUF_reverse
-BUF_strdup
-BUF_strlcat
-BUF_strlcpy
-BUF_strndup
 CAST_cbc_encrypt
 CAST_cfb64_encrypt
 CAST_decrypt
