@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.43 2023/07/28 09:16:17 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.44 2023/07/28 09:25:12 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -326,6 +326,11 @@ void EC_KEY_set_default_method(const EC_KEY_METHOD *meth);
 const EC_KEY_METHOD *EC_KEY_get_method(const EC_KEY *key);
 int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth);
 EC_KEY *EC_KEY_new_method(ENGINE *engine);
+
+int ECDH_size(const EC_KEY *ecdh);
+int ECDH_compute_key(void *out, size_t outlen, const EC_POINT *pub_key,
+    EC_KEY *ecdh,
+    void *(*KDF)(const void *in, size_t inlen, void *out, size_t *outlen));
 
 typedef struct ECDSA_SIG_st ECDSA_SIG;
 

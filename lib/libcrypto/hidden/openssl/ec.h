@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.3 2023/07/28 09:16:17 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.4 2023/07/28 09:25:12 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -132,6 +132,8 @@ LCRYPTO_USED(EC_KEY_set_default_method);
 LCRYPTO_USED(EC_KEY_get_method);
 LCRYPTO_USED(EC_KEY_set_method);
 LCRYPTO_USED(EC_KEY_new_method);
+LCRYPTO_USED(ECDH_size);
+LCRYPTO_USED(ECDH_compute_key);
 LCRYPTO_USED(ECDSA_SIG_new);
 LCRYPTO_USED(ECDSA_SIG_free);
 LCRYPTO_USED(i2d_ECDSA_SIG);
