@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.201 2023/07/27 20:21:25 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.202 2023/07/28 20:25:08 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -3225,30 +3225,27 @@ ixgbe_rxeof(struct rx_ring *rxr)
 		sendmp = rxbuf->fmp;
 		rxbuf->buf = rxbuf->fmp = NULL;
 
-		if (sendmp != NULL) { /* secondary frag */
-			sendmp->m_pkthdr.len += mp->m_len;
-
-			/*
-			 * This function iterates over interleaved descriptors.
-			 * Thus, we reuse ph_mss as global segment counter per
-			 * TCP connection, instead of introducing a new variable
-			 * in m_pkthdr.
-			 */
-			if (rsccnt)
-				sendmp->m_pkthdr.ph_mss += rsccnt - 1;
-		} else {
+		if (sendmp == NULL) {
 			/* first desc of a non-ps chain */
 			sendmp = mp;
-			sendmp->m_pkthdr.len = mp->m_len;
-			if (rsccnt)
-				sendmp->m_pkthdr.ph_mss = rsccnt - 1;
+			sendmp->m_pkthdr.len = 0;
+			sendmp->m_pkthdr.ph_mss = 0;
 #if NVLAN > 0
 			if (sc->vlan_stripping && staterr & IXGBE_RXD_STAT_VP) {
 				sendmp->m_pkthdr.ether_vtag = vtag;
-				sendmp->m_flags |= M_VLANTAG;
+				SET(sendmp->m_flags, M_VLANTAG);
 			}
 #endif
 		}
+		sendmp->m_pkthdr.len += mp->m_len;
+		/*
+		 * This function iterates over interleaved descriptors.
+		 * Thus, we reuse ph_mss as global segment counter per
+		 * TCP connection, instead of introducing a new variable
+		 * in m_pkthdr.
+		 */
+		if (rsccnt)
+			sendmp->m_pkthdr.ph_mss += rsccnt - 1;
 
 		/* Pass the head pointer on */
 		if (eop == 0) {
@@ -3296,7 +3293,8 @@ ixgbe_rxeof(struct rx_ring *rxr)
 				 * mark it as TSO, set a correct mss,
 				 * and recalculate the TCP checksum.
 				 */
-				paylen = sendmp->m_pkthdr.len - hdrlen;
+				paylen = sendmp->m_pkthdr.len > hdrlen ?
+				    sendmp->m_pkthdr.len - hdrlen : 0;
 				if (ext.tcp && paylen >= pkts) {
 					SET(sendmp->m_pkthdr.csum_flags,
 					    M_TCP_TSO);
