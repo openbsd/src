@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.2 2023/07/28 10:05:16 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.3 2023/07/28 10:07:30 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -131,16 +131,8 @@ LCRYPTO_USED(BN_MONT_CTX_free);
 LCRYPTO_USED(BN_MONT_CTX_set);
 LCRYPTO_USED(BN_MONT_CTX_copy);
 LCRYPTO_USED(BN_MONT_CTX_set_locked);
-LCRYPTO_USED(get_rfc2409_prime_768);
-LCRYPTO_USED(get_rfc2409_prime_1024);
 LCRYPTO_USED(BN_get_rfc2409_prime_768);
 LCRYPTO_USED(BN_get_rfc2409_prime_1024);
-LCRYPTO_USED(get_rfc3526_prime_1536);
-LCRYPTO_USED(get_rfc3526_prime_2048);
-LCRYPTO_USED(get_rfc3526_prime_3072);
-LCRYPTO_USED(get_rfc3526_prime_4096);
-LCRYPTO_USED(get_rfc3526_prime_6144);
-LCRYPTO_USED(get_rfc3526_prime_8192);
 LCRYPTO_USED(BN_get_rfc3526_prime_1536);
 LCRYPTO_USED(BN_get_rfc3526_prime_2048);
 LCRYPTO_USED(BN_get_rfc3526_prime_3072);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_const.c,v 1.7 2023/07/10 03:26:30 tb Exp $ */
+/* $OpenBSD: bn_const.c,v 1.8 2023/07/28 10:07:30 tb Exp $ */
 /* Insert boilerplate */
 
 #include <openssl/bn.h>
@@ -22,13 +22,6 @@ static const unsigned char RFC2409_PRIME_768[] = {
 	0xE4, 0x85, 0xB5, 0x76, 0x62, 0x5E, 0x7E, 0xC6, 0xF4, 0x4C, 0x42, 0xE9,
 	0xA6, 0x3A, 0x36, 0x20, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
-
-BIGNUM *
-get_rfc2409_prime_768(BIGNUM *bn)
-{
-	return BN_bin2bn(RFC2409_PRIME_768, sizeof(RFC2409_PRIME_768), bn);
-}
-LCRYPTO_ALIAS(get_rfc2409_prime_768);
 
 BIGNUM *
 BN_get_rfc2409_prime_768(BIGNUM *bn)
@@ -59,13 +52,6 @@ static const unsigned char RFC2409_PRIME_1024[] = {
 	0x7C, 0x4B, 0x1F, 0xE6, 0x49, 0x28, 0x66, 0x51, 0xEC, 0xE6, 0x53, 0x81,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
-
-BIGNUM *
-get_rfc2409_prime_1024(BIGNUM *bn)
-{
-	return BN_bin2bn(RFC2409_PRIME_1024, sizeof(RFC2409_PRIME_1024), bn);
-}
-LCRYPTO_ALIAS(get_rfc2409_prime_1024);
 
 BIGNUM *
 BN_get_rfc2409_prime_1024(BIGNUM *bn)
@@ -101,13 +87,6 @@ static const unsigned char RFC3526_PRIME_1536[] = {
 	0x67, 0x0C, 0x35, 0x4E, 0x4A, 0xBC, 0x98, 0x04, 0xF1, 0x74, 0x6C, 0x08,
 	0xCA, 0x23, 0x73, 0x27, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
-
-BIGNUM *
-get_rfc3526_prime_1536(BIGNUM *bn)
-{
-	return BN_bin2bn(RFC3526_PRIME_1536, sizeof(RFC3526_PRIME_1536), bn);
-}
-LCRYPTO_ALIAS(get_rfc3526_prime_1536);
 
 BIGNUM *
 BN_get_rfc3526_prime_1536(BIGNUM *bn)
@@ -148,13 +127,6 @@ static const unsigned char RFC3526_PRIME_2048[] = {
 	0x15, 0x72, 0x8E, 0x5A, 0x8A, 0xAC, 0xAA, 0x68, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF,
 };
-
-BIGNUM *
-get_rfc3526_prime_2048(BIGNUM *bn)
-{
-	return BN_bin2bn(RFC3526_PRIME_2048, sizeof(RFC3526_PRIME_2048), bn);
-}
-LCRYPTO_ALIAS(get_rfc3526_prime_2048);
 
 BIGNUM *
 BN_get_rfc3526_prime_2048(BIGNUM *bn)
@@ -205,13 +177,6 @@ static const unsigned char RFC3526_PRIME_3072[] = {
 	0x43, 0xDB, 0x5B, 0xFC, 0xE0, 0xFD, 0x10, 0x8E, 0x4B, 0x82, 0xD1, 0x20,
 	0xA9, 0x3A, 0xD2, 0xCA, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
-
-BIGNUM *
-get_rfc3526_prime_3072(BIGNUM *bn)
-{
-	return BN_bin2bn(RFC3526_PRIME_3072, sizeof(RFC3526_PRIME_3072), bn);
-}
-LCRYPTO_ALIAS(get_rfc3526_prime_3072);
 
 BIGNUM *
 BN_get_rfc3526_prime_3072(BIGNUM *bn)
@@ -273,13 +238,6 @@ static const unsigned char RFC3526_PRIME_4096[] = {
 	0x90, 0xA6, 0xC0, 0x8F, 0x4D, 0xF4, 0x35, 0xC9, 0x34, 0x06, 0x31, 0x99,
 	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
-
-BIGNUM *
-get_rfc3526_prime_4096(BIGNUM *bn)
-{
-	return BN_bin2bn(RFC3526_PRIME_4096, sizeof(RFC3526_PRIME_4096), bn);
-}
-LCRYPTO_ALIAS(get_rfc3526_prime_4096);
 
 BIGNUM *
 BN_get_rfc3526_prime_4096(BIGNUM *bn)
@@ -362,13 +320,6 @@ static const unsigned char RFC3526_PRIME_6144[] = {
 	0x12, 0xBF, 0x2D, 0x5B, 0x0B, 0x74, 0x74, 0xD6, 0xE6, 0x94, 0xF9, 0x1E,
 	0x6D, 0xCC, 0x40, 0x24, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 };
-
-BIGNUM *
-get_rfc3526_prime_6144(BIGNUM *bn)
-{
-	return BN_bin2bn(RFC3526_PRIME_6144, sizeof(RFC3526_PRIME_6144), bn);
-}
-LCRYPTO_ALIAS(get_rfc3526_prime_6144);
 
 BIGNUM *
 BN_get_rfc3526_prime_6144(BIGNUM *bn)
@@ -473,13 +424,6 @@ static const unsigned char RFC3526_PRIME_8192[] = {
 	0x60, 0xC9, 0x80, 0xDD, 0x98, 0xED, 0xD3, 0xDF, 0xFF, 0xFF, 0xFF, 0xFF,
 	0xFF, 0xFF, 0xFF, 0xFF,
 };
-
-BIGNUM *
-get_rfc3526_prime_8192(BIGNUM *bn)
-{
-	return BN_bin2bn(RFC3526_PRIME_8192, sizeof(RFC3526_PRIME_8192), bn);
-}
-LCRYPTO_ALIAS(get_rfc3526_prime_8192);
 
 BIGNUM *
 BN_get_rfc3526_prime_8192(BIGNUM *bn)

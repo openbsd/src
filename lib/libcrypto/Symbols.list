@@ -3435,14 +3435,6 @@ d2i_X509_SIG
 d2i_X509_VAL
 d2i_X509_bio
 d2i_X509_fp
-get_rfc2409_prime_1024
-get_rfc2409_prime_768
-get_rfc3526_prime_1536
-get_rfc3526_prime_2048
-get_rfc3526_prime_3072
-get_rfc3526_prime_4096
-get_rfc3526_prime_6144
-get_rfc3526_prime_8192
 hex_to_string
 i2a_ACCESS_DESCRIPTION
 i2a_ASN1_ENUMERATED

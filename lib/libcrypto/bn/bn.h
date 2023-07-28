@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.73 2023/07/28 10:05:16 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.74 2023/07/28 10:07:30 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -450,18 +450,10 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
     const BIGNUM *mod, BN_CTX *ctx);
 
 /* Primes from RFC 2409 */
-BIGNUM *get_rfc2409_prime_768(BIGNUM *bn);
-BIGNUM *get_rfc2409_prime_1024(BIGNUM *bn);
 BIGNUM *BN_get_rfc2409_prime_768(BIGNUM *bn);
 BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn);
 
 /* Primes from RFC 3526 */
-BIGNUM *get_rfc3526_prime_1536(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_2048(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_3072(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_4096(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_6144(BIGNUM *bn);
-BIGNUM *get_rfc3526_prime_8192(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_1536(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_2048(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_3072(BIGNUM *bn);
