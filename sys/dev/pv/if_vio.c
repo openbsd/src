@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vio.c,v 1.24 2023/07/03 07:40:52 kn Exp $	*/
+/*	$OpenBSD: if_vio.c,v 1.25 2023/07/28 16:54:48 dv Exp $	*/
 
 /*
  * Copyright (c) 2012 Stefan Fritsch, Alexander Fiveg.
@@ -529,7 +529,7 @@ vio_attach(struct device *parent, struct device *self, void *aux)
 	vsc->sc_child = self;
 	vsc->sc_ipl = IPL_NET;
 	vsc->sc_vqs = &sc->sc_vq[0];
-	vsc->sc_config_change = 0;
+	vsc->sc_config_change = NULL;
 	vsc->sc_driver_features = VIRTIO_NET_F_MAC | VIRTIO_NET_F_STATUS |
 	    VIRTIO_NET_F_CTRL_VQ | VIRTIO_NET_F_CTRL_RX |
 	    VIRTIO_NET_F_MRG_RXBUF | VIRTIO_NET_F_CSUM |
