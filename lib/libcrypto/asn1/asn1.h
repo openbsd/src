@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1.h,v 1.79 2023/07/28 10:30:16 tb Exp $ */
+/* $OpenBSD: asn1.h,v 1.80 2023/07/28 10:33:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -576,14 +576,6 @@ extern const ASN1_ITEM ASN1_BIT_STRING_it;
 int ASN1_BIT_STRING_set(ASN1_BIT_STRING *a, unsigned char *d, int length);
 int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value);
 int ASN1_BIT_STRING_get_bit(const ASN1_BIT_STRING *a, int n);
-
-#ifndef OPENSSL_NO_BIO
-int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
-    BIT_STRING_BITNAME *tbl, int indent);
-#endif
-int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
-int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
-    BIT_STRING_BITNAME *tbl);
 
 ASN1_INTEGER *ASN1_INTEGER_new(void);
 void ASN1_INTEGER_free(ASN1_INTEGER *a);
