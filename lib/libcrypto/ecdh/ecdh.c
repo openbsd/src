@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdh.c,v 1.9 2023/07/28 09:30:22 tb Exp $ */
+/* $OpenBSD: ecdh.c,v 1.10 2023/07/28 09:31:21 tb Exp $ */
 /* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
@@ -71,11 +71,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/ecdh.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
