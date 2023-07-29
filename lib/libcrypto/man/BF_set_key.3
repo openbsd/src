@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BF_set_key.3,v 1.10 2019/06/06 01:06:58 schwarze Exp $
+.\"	$OpenBSD: BF_set_key.3,v 1.11 2023/07/29 03:05:35 tb Exp $
 .\"	OpenSSL 99d63d46 Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: July 29 2023 $
 .Dt BF_SET_KEY 3
 .Os
 .Sh NAME
@@ -60,7 +60,6 @@
 .Nm BF_cbc_encrypt ,
 .Nm BF_cfb64_encrypt ,
 .Nm BF_ofb64_encrypt ,
-.Nm BF_options
 .Nd Blowfish encryption
 .Sh SYNOPSIS
 .In openssl/blowfish.h
@@ -114,10 +113,6 @@
 .Fa "BF_KEY *schedule"
 .Fa "unsigned char *ivec"
 .Fa "int *num"
-.Fc
-.Ft const char *
-.Fo BF_options
-.Fa void
 .Fc
 .Sh DESCRIPTION
 This library implements the Blowfish cipher,
@@ -265,9 +260,8 @@ and big-endian on big-endian ones.
 .Fn BF_ecb_encrypt ,
 .Fn BF_cbc_encrypt ,
 .Fn BF_cfb64_encrypt ,
-.Fn BF_ofb64_encrypt ,
 and
-.Fn BF_options
+.Fn BF_ofb64_encrypt
 first appeared in SSLeay 0.6.6.
 .Fn BF_decrypt
 first appeared in SSLeay 0.9.0.
