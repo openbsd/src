@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.h,v 1.8 2021/12/29 07:15:13 anton Exp $	*/
+/*	$OpenBSD: kcov.h,v 1.9 2023/07/29 06:52:08 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -40,6 +40,8 @@ struct kio_remote_attach {
 #ifdef _KERNEL
 
 struct proc;
+
+extern int kcov_cold;
 
 void kcov_exit(struct proc *);
 int kcov_vnode(struct vnode *);

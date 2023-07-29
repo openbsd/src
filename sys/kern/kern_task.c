@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_task.c,v 1.33 2022/08/15 11:38:35 mvs Exp $ */
+/*	$OpenBSD: kern_task.c,v 1.34 2023/07/29 06:52:08 anton Exp $ */
 
 /*
  * Copyright (c) 2013 David Gwynne <dlg@openbsd.org>
@@ -363,7 +363,8 @@ task_add(struct taskq *tq, struct task *w)
 		SET(w->t_flags, TASK_ONQUEUE);
 		TAILQ_INSERT_TAIL(&tq->tq_worklist, w, t_entry);
 #if NKCOV > 0
-		w->t_process = curproc->p_p;
+		if (!kcov_cold)
+			w->t_process = curproc->p_p;
 #endif
 	}
 	mtx_leave(&tq->tq_mtx);

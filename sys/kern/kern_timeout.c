@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.94 2023/07/14 07:07:08 claudio Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.95 2023/07/29 06:52:08 anton Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -307,7 +307,8 @@ timeout_add(struct timeout *new, int to_ticks)
 		CIRCQ_INSERT_TAIL(&timeout_new, &new->to_list);
 	}
 #if NKCOV > 0
-	new->to_process = curproc->p_p;
+	if (!kcov_cold)
+		new->to_process = curproc->p_p;
 #endif
 	tostat.tos_added++;
 	mtx_leave(&timeout_mutex);
@@ -406,7 +407,8 @@ timeout_abs_ts(struct timeout *to, const struct timespec *abstime)
 		CIRCQ_INSERT_TAIL(&timeout_new, &to->to_list);
 	}
 #if NKCOV > 0
-	to->to_process = curproc->p_p;
+	if (!kcov_cold)
+		to->to_process = curproc->p_p;
 #endif
 	tostat.tos_added++;
 
