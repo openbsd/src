@@ -285,11 +285,6 @@ L\$2nd
 	.EXIT
 	nop
 	.PROCEND
-
-	.section .rodata
-	.ALIGN	8
-L\$opts
-	.STRINGZ "rc4(4x,`$SZ==1?"char":"int"`)"
 ___
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 $code =~ s/cmpib,\*/comib,/gm	if ($SIZE_T==4);
