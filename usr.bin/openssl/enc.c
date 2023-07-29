@@ -1,4 +1,4 @@
-/* $OpenBSD: enc.c,v 1.30 2023/06/11 12:06:08 tb Exp $ */
+/* $OpenBSD: enc.c,v 1.31 2023/07/29 17:15:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,16 +59,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "apps.h"
 
 #include <openssl/bio.h>
-#include <openssl/comp.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
 
 int set_hex(char *in, unsigned char *out, int size);
 
