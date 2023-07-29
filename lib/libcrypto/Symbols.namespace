@@ -1820,6 +1820,8 @@ _libre_d2i_CMS_ReceiptRequest
 _libre_i2d_CMS_ReceiptRequest
 _libre_CMS_ContentInfo_print_ctx
 _libre_CMS_get0_type
+_libre_CMS_get_version
+_libre_CMS_SignerInfo_get_version
 _libre_CMS_dataInit
 _libre_CMS_dataFinal
 _libre_CMS_is_detached
