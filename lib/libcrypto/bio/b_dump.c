@@ -1,10 +1,10 @@
-/* $OpenBSD: b_dump.c,v 1.25 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: b_dump.c,v 1.26 2023/07/29 02:32:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
  * This package is an SSL implementation written
  * by Eric Young (eay@cryptsoft.com).
-* The implementation was written so as to conform with Netscapes SSL.
+ * The implementation was written so as to conform with Netscapes SSL.
  *
  * This library is free for commercial and non-commercial use as long as
  * the following conditions are aheared to.  The following conditions
