@@ -1,4 +1,4 @@
-/*	$OpenBSD: kcov.c,v 1.48 2022/01/19 06:46:55 anton Exp $	*/
+/*	$OpenBSD: kcov.c,v 1.49 2023/07/29 06:52:50 anton Exp $	*/
 
 /*
  * Copyright (c) 2018 Anton Lindqvist <anton@openbsd.org>
@@ -119,7 +119,6 @@ struct kcov_remote *kr_lookup(int, void *);
 static struct kcov_dev *kd_curproc(int);
 static struct kcov_cpu *kd_curcpu(void);
 static uint64_t kd_claim(struct kcov_dev *, int, int);
-static inline int inintr(void);
 
 TAILQ_HEAD(, kcov_dev) kd_list = TAILQ_HEAD_INITIALIZER(kd_list);
 TAILQ_HEAD(, kcov_remote) kr_list = TAILQ_HEAD_INITIALIZER(kr_list);
@@ -130,10 +129,21 @@ int kr_cold = 1;
 struct mutex kcov_mtx = MUTEX_INITIALIZER(IPL_MPFLOOR);
 struct pool kr_pool;
 
+static inline int
+inintr(struct cpu_info *ci)
+{
+#if defined(__amd64__) || defined(__arm__) || defined(__arm64__) || \
+    defined(__i386__)
+	return (ci->ci_idepth > 0);
+#else
+	return (0);
+#endif
+}
+
 /*
  * Compiling the kernel with the `-fsanitize-coverage=trace-pc' option will
  * cause the following function to be called upon function entry and before
- * each block instructions that maps to a single line in the original source
+ * each block of instructions that maps to a single line in the original source
  * code.
  *
  * If kcov is enabled for the current thread, the kernel program counter will
@@ -564,6 +574,7 @@ kd_free(struct kcov_dev *kd)
 static struct kcov_dev *
 kd_curproc(int mode)
 {
+	struct cpu_info *ci;
 	struct kcov_dev *kd;
 
 	/*
@@ -574,7 +585,8 @@ kd_curproc(int mode)
 	if (__predict_false(kcov_cold))
 		return (NULL);
 
-	kd = curproc->p_kd;
+	ci = curcpu();
+	kd = ci->ci_curproc->p_kd;
 	if (__predict_true(kd == NULL) || kd->kd_mode != mode)
 		return (NULL);
 
@@ -586,7 +598,7 @@ kd_curproc(int mode)
 		return (NULL);
 
 	/* Do not trace in interrupt context unless this is a remote section. */
-	if (inintr() && kd->kd_intr == 0)
+	if (inintr(ci) && kd->kd_intr == 0)
 		return (NULL);
 
 	return (kd);
@@ -628,20 +640,10 @@ kd_claim(struct kcov_dev *kd, int stride, int nmemb)
 	}
 }
 
-static inline int
-inintr(void)
-{
-#if defined(__amd64__) || defined(__arm__) || defined(__arm64__) || \
-    defined(__i386__)
-	return (curcpu()->ci_idepth > 0);
-#else
-	return (0);
-#endif
-}
-
 void
 kcov_remote_enter(int subsystem, void *id)
 {
+	struct cpu_info *ci;
 	struct kcov_cpu *kc;
 	struct kcov_dev *kd;
 	struct kcov_remote *kr;
@@ -654,8 +656,9 @@ kcov_remote_enter(int subsystem, void *id)
 	kd = kr->kr_kd;
 	if (kd == NULL || kd->kd_state != KCOV_STATE_TRACE)
 		goto out;
-	p = curproc;
-	if (inintr()) {
+	ci = curcpu();
+	p = ci->ci_curproc;
+	if (inintr(ci)) {
 		/*
 		 * XXX we only expect to be called from softclock interrupts at
 		 * this point.
@@ -683,18 +686,20 @@ out:
 void
 kcov_remote_leave(int subsystem, void *id)
 {
+	struct cpu_info *ci;
 	struct kcov_cpu *kc;
 	struct kcov_remote *kr;
 	struct proc *p;
 
 	mtx_enter(&kcov_mtx);
-	p = curproc;
+	ci = curcpu();
+	p = ci->ci_curproc;
 	if (p->p_kd == NULL)
 		goto out;
 	kr = kr_lookup(subsystem, id);
 	if (kr == NULL)
 		goto out;
-	if (inintr()) {
+	if (inintr(ci)) {
 		kc = kd_curcpu();
 		if (kc == NULL || kc->kc_kd.kd_intr == 0)
 			goto out;
