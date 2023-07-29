@@ -1986,7 +1986,6 @@ _libre_CAST_decrypt
 _libre_CAST_cbc_encrypt
 _libre_CAST_cfb64_encrypt
 _libre_CAST_ofb64_encrypt
-_libre_idea_options
 _libre_idea_ecb_encrypt
 _libre_idea_set_encrypt_key
 _libre_idea_set_decrypt_key
@@ -2188,7 +2187,6 @@ _libre_BN_is_odd
 _libre_BN_zero
 _libre_BN_one
 _libre_BN_value_one
-_libre_BN_options
 _libre_BN_CTX_new
 _libre_BN_CTX_free
 _libre_BN_CTX_start

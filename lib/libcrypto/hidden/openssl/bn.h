@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.3 2023/07/28 10:07:30 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.4 2023/07/29 03:13:38 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -42,7 +42,6 @@ LCRYPTO_USED(BN_is_odd);
 LCRYPTO_USED(BN_zero);
 LCRYPTO_USED(BN_one);
 LCRYPTO_USED(BN_value_one);
-LCRYPTO_USED(BN_options);
 LCRYPTO_USED(BN_CTX_new);
 LCRYPTO_USED(BN_CTX_free);
 LCRYPTO_USED(BN_CTX_start);

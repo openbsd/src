@@ -1,4 +1,4 @@
-/* $OpenBSD: idea.h,v 1.1 2023/07/08 10:44:00 beck Exp $ */
+/* $OpenBSD: idea.h,v 1.2 2023/07/29 03:13:38 tb Exp $ */
 /*
  * Copyright (c) 2023 Bob Beck <beck@openbsd.org>
  *
@@ -25,7 +25,6 @@
 #endif
 #include "crypto_namespace.h"
 
-LCRYPTO_USED(idea_options);
 LCRYPTO_USED(idea_ecb_encrypt);
 LCRYPTO_USED(idea_set_encrypt_key);
 LCRYPTO_USED(idea_set_decrypt_key);
