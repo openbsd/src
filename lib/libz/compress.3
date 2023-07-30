@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.23 2022/12/27 17:10:08 jmc Exp $
+.\"	$OpenBSD: compress.3,v 1.24 2023/07/30 16:43:28 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -23,7 +23,7 @@
 .\"
 .\" This page corresponds to zlib version 1.2.3
 .\"
-.Dd $Mdocdate: December 27 2022 $
+.Dd $Mdocdate: July 30 2023 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -353,6 +353,12 @@ are set to
 .Dv NULL ,
 .Fn deflateInit
 updates them to use default allocation functions.
+.Fa total_in ,
+.Fa total_out ,
+.Fa adler ,
+and
+.Fa msg
+are initialized.
 .Pp
 The compression level must be
 .Dv Z_DEFAULT_COMPRESSION ,
@@ -702,6 +708,12 @@ are set to
 .Dv NULL ,
 .Fn inflateInit
 updates them to use default allocation functions.
+.Fa total_in ,
+.Fa total_out ,
+.Fa adler ,
+and
+.Fa msg
+are initialized.
 .Pp
 .Fn inflateInit
 returns
@@ -1315,6 +1327,12 @@ followed by
 but does not free and reallocate the internal compression state.
 The stream will leave the compression level and any other attributes
 that may have been set unchanged.
+.Fa total_in ,
+.Fa total_out ,
+.Fa adler ,
+and
+.Fa msg
+are initialized.
 .Pp
 .Fn deflateReset
 returns
@@ -1562,8 +1580,8 @@ and give up.
 If
 .Fn deflateSetHeader
 is not used, the default gzip header has text false,
-the time set to zero, and os set to 255, with no extra, name, or comment
-fields.
+the time set to zero, and os set to the current operating system, with no
+extra, name, or comment fields.
 The gzip header is returned to the default state by
 .Fn deflateReset .
 .Pp
@@ -1828,6 +1846,12 @@ followed by
 but does not free and reallocate the internal decompression state.
 The stream will keep attributes that may have been set by
 .Fn inflateInit2 .
+.Fa total_in ,
+.Fa total_out ,
+.Fa adler ,
+and
+.Fa msg
+are initialized.
 .Pp
 .Fn inflateReset
 returns
