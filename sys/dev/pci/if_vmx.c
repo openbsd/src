@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.76 2023/07/30 03:40:08 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.77 2023/07/30 04:10:58 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -720,18 +720,16 @@ vmxnet3_rxfill(struct vmxnet3_rxring *ring)
 
 		rxd = &ring->rxd[prod];
 		rxd->rx_addr = htole64(DMAADDR(map));
-
-		if (++prod == NRXDESC) {
-			prod = 0;
-			rgen ^= VMX_RX_GEN;
-		}
-
-		ring->fill = prod;
 		bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&ring->dmamem),
 		    0, VMX_DMA_LEN(&ring->dmamem),
 		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTWRITE);
 		rxd->rx_word2 = (htole32(m->m_pkthdr.len & VMXNET3_RX_LEN_M) <<
 		    VMXNET3_RX_LEN_S) | type | rgen;
+
+		if (++prod == NRXDESC) {
+			prod = 0;
+			rgen ^= VMX_RX_GEN;
+		}
 	} while (--slots > 0);
 
 	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&ring->dmamem),
@@ -739,6 +737,7 @@ vmxnet3_rxfill(struct vmxnet3_rxring *ring)
 
 	if_rxr_put(&ring->rxr, slots);
 
+	ring->fill = prod;
 	ring->gen = rgen;
 
 	if (if_rxr_inuse(&ring->rxr) == 0)
