@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.77 2023/07/30 04:10:58 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.78 2023/07/30 04:27:01 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -88,6 +88,7 @@ struct vmxnet3_txring {
 
 struct vmxnet3_rxring {
 	struct vmxnet3_softc *sc;
+	struct vmxnet3_rxq_shared *rs; /* copy of the rxqueue rs */
 	struct vmx_dmamem dmamem;
 	struct mbuf *m[NRXDESC];
 	bus_dmamap_t dmap[NRXDESC];
@@ -95,6 +96,7 @@ struct vmxnet3_rxring {
 	struct if_rxring rxr;
 	struct timeout refill;
 	struct vmxnet3_rxdesc *rxd;
+	bus_size_t rxh;
 	u_int fill;
 	u_int32_t gen;
 	u_int8_t rid;
@@ -623,6 +625,10 @@ vmxnet3_alloc_rxring(struct vmxnet3_softc *sc, int queue, int intr)
 			    JUMBO_LEN, 0, BUS_DMA_NOWAIT, &ring->dmap[idx]))
 				return -1;
 		}
+
+		ring->rs = rq->rs;
+		ring->rxh = (i == 0) ?
+		    VMXNET3_BAR0_RXH1(queue) : VMXNET3_BAR0_RXH2(queue);
 	}
 
 	rs = rq->rs;
@@ -742,6 +748,9 @@ vmxnet3_rxfill(struct vmxnet3_rxring *ring)
 
 	if (if_rxr_inuse(&ring->rxr) == 0)
 		timeout_add(&ring->refill, 1);
+
+	if (ring->rs->update_rxhead)
+		WRITE_BAR0(sc, ring->rxh, prod);
 }
 
 void
@@ -1096,14 +1105,14 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		if (letoh32(rxcd->rxc_word2 & VMXNET3_RXC_ERROR)) {
 			ifp->if_ierrors++;
 			m_freem(m);
-			goto skip_buffer;
+			continue;
 		}
 
 		len = letoh32((rxcd->rxc_word2 >> VMXNET3_RXC_LEN_S) &
 		    VMXNET3_RXC_LEN_M);
 		if (len < VMXNET3_MIN_MTU) {
 			m_freem(m);
-			goto skip_buffer;
+			continue;
 		}
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -1120,20 +1129,6 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 		}
 
 		ml_enqueue(&ml, m);
-
-skip_buffer:
-		if (rq->rs->update_rxhead) {
-			u_int qid = letoh32((rxcd->rxc_word0 >>
-			    VMXNET3_RXC_QID_S) & VMXNET3_RXC_QID_M);
-
-			idx = (idx + 1) % NRXDESC;
-			if (qid < sc->sc_nqueues) {
-				WRITE_BAR0(sc, VMXNET3_BAR0_RXH1(qid), idx);
-			} else {
-				qid -= sc->sc_nqueues;
-				WRITE_BAR0(sc, VMXNET3_BAR0_RXH2(qid), idx);
-			}
-		}
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&comp_ring->dmamem),
