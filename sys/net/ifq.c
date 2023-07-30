@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.49 2023/01/09 03:39:14 dlg Exp $ */
+/*	$OpenBSD: ifq.c,v 1.50 2023/07/30 05:39:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -148,6 +148,20 @@ ifq_start_task(void *p)
 }
 
 void
+ifq_set_oactive(struct ifqueue *ifq)
+{
+	if (ifq->ifq_oactive)
+		return;
+
+	mtx_enter(&ifq->ifq_mtx);
+	if (!ifq->ifq_oactive) {
+		ifq->ifq_oactive = 1;
+		ifq->ifq_oactives++;
+	}
+	mtx_leave(&ifq->ifq_mtx);
+}
+
+void
 ifq_restart_task(void *p)
 {
 	struct ifqueue *ifq = p;
@@ -202,6 +216,7 @@ struct ifq_kstat_data {
 	struct kstat_kv kd_qlen;
 	struct kstat_kv kd_maxqlen;
 	struct kstat_kv kd_oactive;
+	struct kstat_kv kd_oactives;
 };
 
 static const struct ifq_kstat_data ifq_kstat_tpl = {
@@ -218,6 +233,7 @@ static const struct ifq_kstat_data ifq_kstat_tpl = {
 	KSTAT_KV_UNIT_INITIALIZER("maxqlen",
 	    KSTAT_KV_T_UINT32, KSTAT_KV_U_PACKETS),
 	KSTAT_KV_INITIALIZER("oactive", KSTAT_KV_T_BOOL),
+	KSTAT_KV_INITIALIZER("oactives", KSTAT_KV_T_COUNTER32),
 };
 
 int
@@ -234,6 +250,7 @@ ifq_kstat_copy(struct kstat *ks, void *dst)
 	kstat_kv_u32(&kd->kd_qlen) = ifq->ifq_len;
 	kstat_kv_u32(&kd->kd_maxqlen) = ifq->ifq_maxlen;
 	kstat_kv_bool(&kd->kd_oactive) = ifq->ifq_oactive;
+	kstat_kv_u32(&kd->kd_oactives) = ifq->ifq_oactives;
 
 	return (0);
 }
@@ -243,7 +260,7 @@ void
 ifq_init(struct ifqueue *ifq, struct ifnet *ifp, unsigned int idx)
 {
 	ifq->ifq_if = ifp;
-	ifq->ifq_softnet = net_tq(ifp->if_index + idx);
+	ifq->ifq_softnet = net_tq(idx);
 	ifq->ifq_softc = NULL;
 
 	mtx_init(&ifq->ifq_mtx, IPL_NET);
@@ -635,7 +652,7 @@ void
 ifiq_init(struct ifiqueue *ifiq, struct ifnet *ifp, unsigned int idx)
 {
 	ifiq->ifiq_if = ifp;
-	ifiq->ifiq_softnet = net_tq(ifp->if_index + idx);
+	ifiq->ifiq_softnet = net_tq(idx);
 	ifiq->ifiq_softc = NULL;
 
 	mtx_init(&ifiq->ifiq_mtx, IPL_NET);

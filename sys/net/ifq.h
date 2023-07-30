@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.37 2023/01/09 03:37:44 dlg Exp $ */
+/*	$OpenBSD: ifq.h,v 1.38 2023/07/30 05:39:52 dlg Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -54,6 +54,7 @@ struct ifqueue {
 	uint64_t		 ifq_qdrops;
 	uint64_t		 ifq_errors;
 	uint64_t		 ifq_mcasts;
+	uint32_t		 ifq_oactives;
 
 	struct kstat		*ifq_kstat;
 
@@ -441,7 +442,7 @@ void		*ifq_q_enter(struct ifqueue *, const struct ifq_ops *);
 void		 ifq_q_leave(struct ifqueue *, void *);
 void		 ifq_serialize(struct ifqueue *, struct task *);
 void		 ifq_barrier(struct ifqueue *);
-
+void		 ifq_set_oactive(struct ifqueue *);
 
 int		 ifq_deq_sleep(struct ifqueue *, struct mbuf **, int, int,
 		     const char *, volatile unsigned int *,
@@ -455,12 +456,6 @@ static inline int
 ifq_is_priq(struct ifqueue *ifq)
 {
 	return (ifq->ifq_ops == ifq_priq_ops);
-}
-
-static inline void
-ifq_set_oactive(struct ifqueue *ifq)
-{
-	ifq->ifq_oactive = 1;
 }
 
 static inline void
