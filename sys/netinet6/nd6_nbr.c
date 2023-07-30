@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.150 2023/07/29 15:59:27 krw Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.151 2023/07/30 12:52:03 krw Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -1158,21 +1158,24 @@ nd6_dad_stop(struct ifaddr *ifa)
 void
 nd6_dad_timer(void *xifa)
 {
-	struct ifaddr *ifa = xifa;
-	struct in6_ifaddr *ia6 = ifatoia6(ifa);
+	struct ifaddr *ifa;
+	struct in6_ifaddr *ia6;
 	struct in6_addr daddr6, taddr6;
-	struct ifnet *ifp = ifa->ifa_ifp;
+	struct ifnet *ifp;
 	struct dadq *dp;
 	char addr[INET6_ADDRSTRLEN];
 
 	NET_LOCK();
 
 	/* Sanity check */
-	if (ia6 == NULL) {
+	if (xifa == NULL) {
 		log(LOG_ERR, "%s: called with null parameter\n", __func__);
 		goto done;
 	}
+	ifa = xifa;
+	ia6 = ifatoia6(ifa);
 	taddr6 = ia6->ia_addr.sin6_addr;
+	ifp = ifa->ifa_ifp;
 	dp = nd6_dad_find(ifa);
 	if (dp == NULL) {
 		log(LOG_ERR, "%s: DAD structure not found\n", __func__);
