@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.70 2022/09/11 08:38:39 yasuoka Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.71 2023/07/30 01:15:42 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -101,6 +101,7 @@ struct vmxnet3_txqueue {
 	struct vmxnet3_txq_shared *ts;
 	struct ifqueue *ifq;
 	struct kstat *txkstat;
+	unsigned int queue;
 } __aligned(64);
 
 struct vmxnet3_rxqueue {
@@ -534,6 +535,8 @@ vmxnet3_alloc_txring(struct vmxnet3_softc *sc, int queue, int intr)
 	struct vmxnet3_comp_ring *comp_ring = &tq->comp_ring;
 	bus_addr_t pa, comp_pa;
 	int idx;
+
+	tq->queue = queue;
 
 	ring->txd = vmxnet3_dma_allocmem(sc, NTXDESC * sizeof ring->txd[0], 512, &pa);
 	if (ring->txd == NULL)
@@ -1405,7 +1408,7 @@ vmxnet3_start(struct ifqueue *ifq)
 	ring->prod = prod;
 	ring->gen = rgen;
 
-	WRITE_BAR0(sc, VMXNET3_BAR0_TXH(0), prod);
+	WRITE_BAR0(sc, VMXNET3_BAR0_TXH(tq->queue), prod);
 }
 
 void
