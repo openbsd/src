@@ -16,7 +16,7 @@
 #define __GFP_RETRY_MAYFAIL	0
 #define __GFP_MOVABLE		0
 #define __GFP_COMP		0
-#define __GFP_KSWAPD_RECLAIM	0
+#define __GFP_KSWAPD_RECLAIM	M_NOWAIT
 #define __GFP_HIGHMEM		0
 #define __GFP_RECLAIMABLE	0
 #define __GFP_NOMEMALLOC	0
