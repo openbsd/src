@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.71 2023/07/30 01:15:42 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.72 2023/07/30 01:41:05 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -68,8 +68,8 @@ struct vmxnet3_txring {
 	bus_dmamap_t dmap[NTXDESC];
 	struct vmxnet3_txdesc *txd;
 	u_int32_t gen;
-	u_int prod;
-	u_int cons;
+	volatile u_int prod;
+	volatile u_int cons;
 };
 
 struct vmxnet3_rxring {
@@ -927,18 +927,20 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 	struct vmxnet3_txcompdesc *txcd;
 	bus_dmamap_t map;
 	struct mbuf *m;
-	u_int cons, next;
+	u_int prod, cons, next;
 	uint32_t rgen;
 
+	prod = ring->prod;
 	cons = ring->cons;
-	if (cons == ring->prod)
+
+	if (cons == prod)
 		return;
 
 	next = comp_ring->next;
 	rgen = comp_ring->gen;
 
 	/* postread */
-	for (;;) {
+	do {
 		txcd = &comp_ring->txcd[next];
 		if ((txcd->txc_word3 & VMX_TXC_GEN) != rgen)
 			break;
@@ -961,7 +963,7 @@ vmxnet3_txintr(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 		    VMXNET3_TXC_EOPIDX_M;
 		cons++;
 		cons %= NTXDESC;
-	}
+	} while (cons != prod);
 	/* preread */
 
 	comp_ring->next = next;
@@ -1394,6 +1396,7 @@ vmxnet3_start(struct ifqueue *ifq)
 			    VMXNET3_TX_VLANTAG_M) << VMXNET3_TX_VLANTAG_S);
 		}
 
+		ring->prod = prod;
 		/* Change the ownership by flipping the "generation" bit */
 		membar_producer();
 		sop->tx_word2 ^= VMX_TX_GEN;
@@ -1405,7 +1408,6 @@ vmxnet3_start(struct ifqueue *ifq)
 	if (!post)
 		return;
 
-	ring->prod = prod;
 	ring->gen = rgen;
 
 	WRITE_BAR0(sc, VMXNET3_BAR0_TXH(tq->queue), prod);
