@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.74 2023/07/30 02:10:00 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.75 2023/07/30 03:35:50 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -88,6 +88,7 @@ struct vmxnet3_txring {
 
 struct vmxnet3_rxring {
 	struct vmxnet3_softc *sc;
+	struct vmx_dmamem dmamem;
 	struct mbuf *m[NRXDESC];
 	bus_dmamap_t dmap[NRXDESC];
 	struct mutex mtx;
@@ -596,21 +597,20 @@ vmxnet3_alloc_rxring(struct vmxnet3_softc *sc, int queue, int intr)
 	struct vmxnet3_rxq_shared *rs;
 	struct vmxnet3_rxring *ring;
 	struct vmxnet3_comp_ring *comp_ring;
-	bus_addr_t pa[2], comp_pa;
 	int i, idx;
 
 	for (i = 0; i < 2; i++) {
 		ring = &rq->cmd_ring[i];
-		ring->rxd = vmxnet3_dma_allocmem(sc, NRXDESC * sizeof ring->rxd[0],
-		    512, &pa[i]);
-		if (ring->rxd == NULL)
+		if (vmx_dmamem_alloc(sc, &ring->dmamem,
+		    NRXDESC * sizeof(struct vmxnet3_rxdesc), 512) != 0)
 			return -1;
+		ring->rxd = VMX_DMA_KVA(&ring->dmamem);
 	}
 	comp_ring = &rq->comp_ring;
-	comp_ring->rxcd = vmxnet3_dma_allocmem(sc,
-	    NRXCOMPDESC * sizeof comp_ring->rxcd[0], 512, &comp_pa);
-	if (comp_ring->rxcd == NULL)
+	if (vmx_dmamem_alloc(sc, &comp_ring->dmamem,
+	    NRXCOMPDESC * sizeof(comp_ring->rxcd[0]), 512) != 0)
 		return -1;
+	comp_ring->rxcd = VMX_DMA_KVA(&comp_ring->dmamem);
 
 	for (i = 0; i < 2; i++) {
 		ring = &rq->cmd_ring[i];
@@ -627,11 +627,11 @@ vmxnet3_alloc_rxring(struct vmxnet3_softc *sc, int queue, int intr)
 
 	rs = rq->rs;
 	bzero(rs, sizeof *rs);
-	rs->cmd_ring[0] = pa[0];
-	rs->cmd_ring[1] = pa[1];
+	rs->cmd_ring[0] = VMX_DMA_DVA(&rq->cmd_ring[0].dmamem);
+	rs->cmd_ring[1] = VMX_DMA_DVA(&rq->cmd_ring[1].dmamem);
 	rs->cmd_ring_len[0] = NRXDESC;
 	rs->cmd_ring_len[1] = NRXDESC;
-	rs->comp_ring = comp_pa;
+	rs->comp_ring = VMX_DMA_DVA(&comp_ring->dmamem);
 	rs->comp_ring_len = NRXCOMPDESC;
 	rs->driver_data = ~0ULL;
 	rs->driver_data_len = 0;
@@ -689,10 +689,17 @@ vmxnet3_rxfill(struct vmxnet3_rxring *ring)
 
 	MUTEX_ASSERT_LOCKED(&ring->mtx);
 
+	slots = if_rxr_get(&ring->rxr, NRXDESC);
+	if (slots == 0)
+		return;
+
 	prod = ring->fill;
 	rgen = ring->gen;
 
-	for (slots = if_rxr_get(&ring->rxr, NRXDESC); slots > 0; slots--) {
+	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&ring->dmamem),
+	    0, VMX_DMA_LEN(&ring->dmamem), BUS_DMASYNC_POSTWRITE);
+
+	do {
 		KASSERT(ring->m[prod] == NULL);
 
 		m = MCLGETL(NULL, M_DONTWAIT, JUMBO_LEN);
@@ -713,18 +720,25 @@ vmxnet3_rxfill(struct vmxnet3_rxring *ring)
 
 		rxd = &ring->rxd[prod];
 		rxd->rx_addr = htole64(DMAADDR(map));
-		membar_producer();
-		rxd->rx_word2 = (htole32(m->m_pkthdr.len & VMXNET3_RX_LEN_M) <<
-		    VMXNET3_RX_LEN_S) | type | rgen;
 
 		if (++prod == NRXDESC) {
 			prod = 0;
 			rgen ^= VMX_RX_GEN;
 		}
-	}
+
+		ring->fill = prod;
+		bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&ring->dmamem),
+		    0, VMX_DMA_LEN(&ring->dmamem),
+		    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTWRITE);
+		rxd->rx_word2 = (htole32(m->m_pkthdr.len & VMXNET3_RX_LEN_M) <<
+		    VMXNET3_RX_LEN_S) | type | rgen;
+	} while (--slots > 0);
+
+	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&ring->dmamem),
+	    0, VMX_DMA_LEN(&ring->dmamem), BUS_DMASYNC_PREWRITE);
+
 	if_rxr_put(&ring->rxr, slots);
 
-	ring->fill = prod;
 	ring->gen = rgen;
 
 	if (if_rxr_inuse(&ring->rxr) == 0)
@@ -740,10 +754,14 @@ vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 
 	for (i = 0; i < 2; i++) {
 		ring = &rq->cmd_ring[i];
+		if_rxr_init(&ring->rxr, 2, NRXDESC - 1);
 		ring->fill = 0;
 		ring->gen = VMX_RX_GEN;
-		bzero(ring->rxd, NRXDESC * sizeof ring->rxd[0]);
-		if_rxr_init(&ring->rxr, 2, NRXDESC - 1);
+
+		memset(VMX_DMA_KVA(&ring->dmamem), 0,
+		    VMX_DMA_LEN(&ring->dmamem));
+		bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&ring->dmamem),
+		    0, VMX_DMA_LEN(&ring->dmamem), BUS_DMASYNC_PREWRITE);
 	}
 
 	/* XXX only fill ring 0 */
@@ -755,7 +773,11 @@ vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 	comp_ring = &rq->comp_ring;
 	comp_ring->next = 0;
 	comp_ring->gen = VMX_RXC_GEN;
-	bzero(comp_ring->rxcd, NRXCOMPDESC * sizeof comp_ring->rxcd[0]);
+
+	memset(VMX_DMA_KVA(&comp_ring->dmamem), 0,
+	    VMX_DMA_LEN(&comp_ring->dmamem));
+	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&comp_ring->dmamem),
+	    0, VMX_DMA_LEN(&comp_ring->dmamem), BUS_DMASYNC_PREREAD);
 }
 
 void
@@ -787,10 +809,16 @@ void
 vmxnet3_rxstop(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 {
 	struct vmxnet3_rxring *ring;
+	struct vmxnet3_comp_ring *comp_ring = &rq->comp_ring;
 	int i, idx;
+
+	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&comp_ring->dmamem),
+	    0, VMX_DMA_LEN(&comp_ring->dmamem), BUS_DMASYNC_POSTREAD);
 
 	for (i = 0; i < 2; i++) {
 		ring = &rq->cmd_ring[i];
+		bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&ring->dmamem),
+		    0, VMX_DMA_LEN(&ring->dmamem), BUS_DMASYNC_POSTWRITE);
 		timeout_del(&ring->refill);
 		for (idx = 0; idx < NRXDESC; idx++) {
 			struct mbuf *m = ring->m[idx];
@@ -1034,6 +1062,9 @@ vmxnet3_rxintr(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rq)
 	next = comp_ring->next;
 	rgen = comp_ring->gen;
 
+	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&comp_ring->dmamem),
+	    0, VMX_DMA_LEN(&comp_ring->dmamem), BUS_DMASYNC_POSTREAD);
+
 	for (;;) {
 		rxcd = &comp_ring->rxcd[next];
 		if ((rxcd->rxc_word3 & VMX_RXC_GEN) != rgen)
@@ -1105,6 +1136,9 @@ skip_buffer:
 			}
 		}
 	}
+
+	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&comp_ring->dmamem),
+	    0, VMX_DMA_LEN(&comp_ring->dmamem), BUS_DMASYNC_PREREAD);
 
 	comp_ring->next = next;
 	comp_ring->gen = rgen;
