@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.75 2023/07/30 03:35:50 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.76 2023/07/30 03:40:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -211,7 +211,7 @@ int vmxnet3_media_change(struct ifnet *);
 void *vmxnet3_dma_allocmem(struct vmxnet3_softc *, u_int, u_int, bus_addr_t *);
 
 static int	vmx_dmamem_alloc(struct vmxnet3_softc *, struct vmx_dmamem *,
-                    bus_size_t, u_int);
+		    bus_size_t, u_int);
 #ifdef notyet
 static void	vmx_dmamem_free(struct vmxnet3_softc *, struct vmx_dmamem *);
 #endif
@@ -1405,7 +1405,7 @@ vmxnet3_start(struct ifqueue *ifq)
 	struct vmxnet3_txring *ring = &tq->cmd_ring;
 	struct vmxnet3_txdesc *txd, *sop;
 	bus_dmamap_t map;
-        unsigned int prod, free, i;
+	unsigned int prod, free, i;
 	unsigned int post = 0;
 	uint32_t rgen, gen;
 
@@ -1667,7 +1667,7 @@ vmx_kstat_read(struct kstat *ks)
 	for (i = 0; i < n; i++)
 		kstat_kv_u64(&kvs[i]) = lemtoh64(&vs[i]);
 
- 	TIMEVAL_TO_TIMESPEC(&sc->sc_kstat_updated, &ks->ks_updated);
+	TIMEVAL_TO_TIMESPEC(&sc->sc_kstat_updated, &ks->ks_updated);
 
 	return (0);
 }
