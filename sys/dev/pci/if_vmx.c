@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vmx.c,v 1.73 2023/07/30 01:59:23 dlg Exp $	*/
+/*	$OpenBSD: if_vmx.c,v 1.74 2023/07/30 02:10:00 dlg Exp $	*/
 
 /*
  * Copyright (c) 2013 Tsubai Masanari
@@ -659,6 +659,8 @@ vmxnet3_txinit(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 	    VMX_DMA_LEN(&comp_ring->dmamem));
 	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&comp_ring->dmamem),
 	    0, VMX_DMA_LEN(&comp_ring->dmamem), BUS_DMASYNC_PREREAD);
+
+	ifq_clr_oactive(tq->ifq);
 }
 
 void
@@ -761,6 +763,7 @@ vmxnet3_txstop(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 {
 	struct vmxnet3_txring *ring = &tq->cmd_ring;
 	struct vmxnet3_comp_ring *comp_ring = &tq->comp_ring;
+	struct ifqueue *ifq = tq->ifq;
 	int idx;
 
 	bus_dmamap_sync(sc->sc_dmat, VMX_DMA_MAP(&comp_ring->dmamem),
@@ -775,6 +778,9 @@ vmxnet3_txstop(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *tq)
 			ring->m[idx] = NULL;
 		}
 	}
+
+	ifq_purge(ifq);
+	ifq_clr_oactive(ifq);
 }
 
 void
@@ -1194,7 +1200,6 @@ vmxnet3_stop(struct ifnet *ifp)
 	int queue;
 
 	ifp->if_flags &= ~IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
 	ifp->if_timer = 0;
 
 	vmxnet3_disable_all_intrs(sc);
@@ -1260,7 +1265,6 @@ vmxnet3_init(struct vmxnet3_softc *sc)
 	vmxnet3_link_state(sc);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
 
 	return 0;
 }
