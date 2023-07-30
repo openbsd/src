@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.7 2023/07/07 08:43:47 kettenis Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.8 2023/07/30 17:28:19 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
@@ -98,6 +98,7 @@
 #define JH7110_SYSCLK_AHB0		9
 #define JH7110_SYSCLK_AHB1		10
 #define JH7110_SYSCLK_APB_BUS		11
+#define JH7110_SYSCLK_APB0		12
 
 #define JH7110_SYSCLK_SDIO0_AHB		91
 #define JH7110_SYSCLK_SDIO1_AHB		92
@@ -118,6 +119,13 @@
 #define JH7110_SYSCLK_IOMUX_APB		112
 #define JH7110_SYSCLK_TEMP_APB		129
 #define JH7110_SYSCLK_TEMP_CORE		130
+#define JH7110_SYSCLK_I2C0_APB		138
+#define JH7110_SYSCLK_I2C1_APB		139
+#define JH7110_SYSCLK_I2C2_APB		140
+#define JH7110_SYSCLK_I2C3_APB		141
+#define JH7110_SYSCLK_I2C4_APB		142
+#define JH7110_SYSCLK_I2C5_APB		143
+#define JH7110_SYSCLK_I2C6_APB		144
 #define JH7110_SYSCLK_UART0_CORE	146
 
 #define JH7110_SYSCLK_OSC		190
@@ -757,6 +765,10 @@ stfclock_get_frequency_jh7110_sys(void *cookie, uint32_t *cells)
 	case JH7110_SYSCLK_APB_BUS:
 		parent = JH7110_SYSCLK_STG_AXIAHB;
 		break;
+	case JH7110_SYSCLK_APB0:
+		parent = JH7110_SYSCLK_APB_BUS;
+		div = 1;
+		break;
 	case JH7110_SYSCLK_SDIO0_AHB:
 	case JH7110_SYSCLK_SDIO1_AHB:
 		parent = JH7110_SYSCLK_AHB0;
@@ -787,6 +799,19 @@ stfclock_get_frequency_jh7110_sys(void *cookie, uint32_t *cells)
 		break;
 	case JH7110_SYSCLK_TEMP_CORE:
 		parent = JH7110_SYSCLK_OSC;
+		break;
+	case JH7110_SYSCLK_I2C0_APB:
+	case JH7110_SYSCLK_I2C1_APB:
+	case JH7110_SYSCLK_I2C2_APB:
+		parent = JH7110_SYSCLK_APB0;
+		div = 1;
+		break;
+	case JH7110_SYSCLK_I2C3_APB:
+	case JH7110_SYSCLK_I2C4_APB:
+	case JH7110_SYSCLK_I2C5_APB:
+	case JH7110_SYSCLK_I2C6_APB:
+		parent = JH7110_SYSCLK_APB_BUS;
+		div = 1;
 		break;
 	case JH7110_SYSCLK_UART0_CORE:
 		parent = JH7110_SYSCLK_OSC;
@@ -855,6 +880,13 @@ stfclock_enable_jh7110_sys(void *cookie, uint32_t *cells, int on)
 	case JH7110_SYSCLK_IOMUX_APB:
 	case JH7110_SYSCLK_TEMP_APB:
 	case JH7110_SYSCLK_TEMP_CORE:
+	case JH7110_SYSCLK_I2C0_APB:
+	case JH7110_SYSCLK_I2C1_APB:
+	case JH7110_SYSCLK_I2C2_APB:
+	case JH7110_SYSCLK_I2C3_APB:
+	case JH7110_SYSCLK_I2C4_APB:
+	case JH7110_SYSCLK_I2C5_APB:
+	case JH7110_SYSCLK_I2C6_APB:
 	case JH7110_SYSCLK_UART0_CORE:
 		if (on)
 			HSET4(sc, idx * 4, 1U << 31);
