@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1183 2023/07/07 08:05:02 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1184 2023/07/31 11:13:09 dlg Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4697,6 +4697,10 @@ pf_create_state(struct pf_pdesc *pd, struct pf_rule *r, struct pf_rule *a,
 			SLIST_INSERT_HEAD(&st->src_nodes, sni, next);
 			sni->sn->states++;
 		}
+
+#if NPFSYNC > 0
+	pfsync_init_state(st, *skw, *sks, 0);
+#endif
 
 	if (pf_state_insert(BOUND_IFACE(r, pd->kif), skw, sks, st)) {
 		*sks = *skw = NULL;

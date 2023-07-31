@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.318 2023/07/06 04:55:05 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.319 2023/07/31 11:13:09 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1676,11 +1676,14 @@ pfsync_init_state(struct pf_state *st, const struct pf_state_key *skw,
 	}
 
 	/* state came off the wire */
-	if (ISSET(st->state_flags, PFSTATE_ACK)) {
-		CLR(st->state_flags, PFSTATE_ACK);
+	if (ISSET(flags, PFSYNC_SI_PFSYNC)) {
+		if (ISSET(st->state_flags, PFSTATE_ACK)) {
+			CLR(st->state_flags, PFSTATE_ACK);
 
-		/* peer wants an iack, not an insert */
-		st->sync_state = PFSYNC_S_SYNC;
+			/* peer wants an iack, not an insert */
+			st->sync_state = PFSYNC_S_SYNC;
+		} else
+			st->sync_state = PFSYNC_S_PFSYNC;
 	}
 }
 
@@ -1712,6 +1715,10 @@ pfsync_insert_state(struct pf_state *st)
 			st->sync_state = PFSYNC_S_NONE; /* gross */
 			pfsync_q_ins(s, st, PFSYNC_S_IACK);
 			pfsync_slice_sched(s); /* the peer is waiting */
+			break;
+		case PFSYNC_S_PFSYNC:
+			/* state was just inserted by pfsync */
+			st->sync_state = PFSYNC_S_NONE;
 			break;
 		default:
 			panic("%s: state %p unexpected sync_state %d",
@@ -2829,7 +2836,7 @@ pfsync_in_ins(struct pfsync_softc *sc,
 			continue;
 		}
 
-		if (pf_state_import(sp, 0) == ENOMEM) {
+		if (pf_state_import(sp, PFSYNC_SI_PFSYNC) == ENOMEM) {
 			/* drop out, but process the rest of the actions */
 			break;
 		}
@@ -3009,7 +3016,7 @@ pfsync_in_upd(struct pfsync_softc *sc,
 		if (st == NULL) {
 			/* insert the update */
 			PF_LOCK();
-			error = pf_state_import(sp, 0);
+			error = pf_state_import(sp, PFSYNC_SI_PFSYNC);
 			if (error)
 				pfsyncstat_inc(pfsyncs_badstate);
 			PF_UNLOCK();
