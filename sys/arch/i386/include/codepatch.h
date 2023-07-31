@@ -1,4 +1,4 @@
-/*      $OpenBSD: codepatch.h,v 1.2 2017/07/01 19:42:59 sf Exp $    */
+/*      $OpenBSD: codepatch.h,v 1.3 2023/07/31 17:10:31 bluhm Exp $    */
 /*
  * Copyright (c) 2014-2015 Stefan Fritsch <sf@sfritsch.de>
  *
@@ -26,7 +26,7 @@ void *codepatch_maprw(vaddr_t *nva, vaddr_t dest);
 void codepatch_unmaprw(vaddr_t nva);
 void codepatch_fill_nop(void *caddr, uint16_t len);
 void codepatch_nop(uint16_t tag);
-void codepatch_replace(uint16_t tag, void *code, size_t len);
+void codepatch_replace(uint16_t tag, const void *code, size_t len);
 void codepatch_call(uint16_t tag, void *func);
 
 #endif /* !_LOCORE */
