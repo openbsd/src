@@ -1,4 +1,4 @@
-/*	$OpenBSD: onyx.c,v 1.17 2022/10/26 20:19:07 kn Exp $	*/
+/*	$OpenBSD: onyx.c,v 1.18 2023/07/31 12:00:07 tobhe Exp $	*/
 
 /*-
  * Copyright (c) 2005 Tsubai Masanari.  All rights reserved.
@@ -59,6 +59,9 @@
 /* PCM3052 registers */
 #define PCM3052_REG_LEFT_VOLUME		0x41
 #define PCM3052_REG_RIGHT_VOLUME	0x42
+#define PCM3052_REG_ADC_CONTROL	0x48
+
+#define PCM3052_ADC_INPUT_MIC	0x20
 
 /* XXX */
 #define onyx_softc i2s_softc
@@ -71,6 +74,7 @@ int onyx_match(struct device *, void *, void *);
 void onyx_attach(struct device *, struct device *, void *);
 void onyx_defer(struct device *);
 void onyx_set_volume(struct onyx_softc *, int, int);
+void onyx_set_input(struct onyx_softc *, int);
 
 const struct cfattach onyx_ca = {
 	sizeof(struct onyx_softc), onyx_match, onyx_attach
@@ -134,6 +138,7 @@ onyx_attach(struct device *parent, struct device *self, void *aux)
 	struct onyx_softc *sc = (struct onyx_softc *)self;
 
 	sc->sc_setvolume = onyx_set_volume;
+	sc->sc_setinput = onyx_set_input;
 
 	i2s_attach(parent, sc, aux);
 	config_defer(self, onyx_defer);
@@ -160,6 +165,7 @@ onyx_defer(struct device *dev)
 
 	deq_reset(sc);
 	onyx_set_volume(sc, 192, 192);
+	onyx_set_input(sc, 1);
 }
 
 void
@@ -177,4 +183,25 @@ onyx_set_volume(struct onyx_softc *sc, int left, int right)
 	data = 128 + (right >> 1);
 	kiic_write(sc->sc_i2c, PCM3052_I2C_ADDR,
 	    PCM3052_REG_RIGHT_VOLUME, &data, 1);
+}
+
+void
+onyx_set_input(struct onyx_softc *sc, int mask)
+{
+	uint8_t data = 0;
+
+	sc->sc_record_source = mask;
+
+	switch (mask) {
+	case 1 << 0: /* microphone */
+		data = PCM3052_ADC_INPUT_MIC;
+		break;
+	case 1 << 1: /* line in */
+		data = 0;
+		break;
+	}
+	data |= 12; /* +4dB */
+
+	kiic_write(sc->sc_i2c, PCM3052_I2C_ADDR,
+	    PCM3052_REG_ADC_CONTROL, &data, 1);
 }
