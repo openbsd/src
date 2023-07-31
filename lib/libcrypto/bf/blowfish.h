@@ -1,4 +1,4 @@
-/* $OpenBSD: blowfish.h,v 1.16 2022/11/11 12:08:29 jsing Exp $ */
+/* $OpenBSD: blowfish.h,v 1.17 2023/07/31 05:04:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -102,7 +102,6 @@ void BF_cfb64_encrypt(const unsigned char *in, unsigned char *out, long length,
     const BF_KEY *schedule, unsigned char *ivec, int *num, int enc);
 void BF_ofb64_encrypt(const unsigned char *in, unsigned char *out, long length,
     const BF_KEY *schedule, unsigned char *ivec, int *num);
-const char *BF_options(void);
 
 #ifdef  __cplusplus
 }

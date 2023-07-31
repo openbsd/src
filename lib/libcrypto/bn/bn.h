@@ -1,4 +1,4 @@
-/* $OpenBSD: bn.h,v 1.74 2023/07/28 10:07:30 tb Exp $ */
+/* $OpenBSD: bn.h,v 1.75 2023/07/31 05:04:06 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -318,7 +318,6 @@ void BN_zero(BIGNUM *a);
 int BN_one(BIGNUM *a);
 
 const BIGNUM *BN_value_one(void);
-char *	BN_options(void);
 BN_CTX *BN_CTX_new(void);
 void	BN_CTX_free(BN_CTX *c);
 void	BN_CTX_start(BN_CTX *ctx);

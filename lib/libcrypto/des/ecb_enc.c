@@ -1,4 +1,4 @@
-/* $OpenBSD: ecb_enc.c,v 1.18 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: ecb_enc.c,v 1.19 2023/07/31 05:04:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -59,46 +59,6 @@
 #include "des_local.h"
 #include <openssl/opensslv.h>
 #include <openssl/bio.h>
-
-const char *
-DES_options(void)
-{
-	static int init = 1;
-	static char buf[32];
-
-	if (init) {
-		const char *ptr, *unroll, *risc, *size;
-
-#ifdef DES_PTR
-		ptr = "ptr";
-#else
-		ptr = "idx";
-#endif
-#if defined(DES_RISC1) || defined(DES_RISC2)
-#ifdef DES_RISC1
-		risc = "risc1";
-#endif
-#ifdef DES_RISC2
-		risc = "risc2";
-#endif
-#else
-		risc = "cisc";
-#endif
-#ifdef DES_UNROLL
-		unroll = "16";
-#else
-		unroll = "2";
-#endif
-		if (sizeof(DES_LONG) != sizeof(long))
-			size = "int";
-		else
-			size = "long";
-		snprintf(buf, sizeof buf, "des(%s,%s,%s,%s)", ptr, risc, unroll,
-		    size);
-		init = 0;
-	}
-	return (buf);
-}
 
 void
 DES_ecb_encrypt(const_DES_cblock *input, DES_cblock *output,

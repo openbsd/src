@@ -1,4 +1,4 @@
-/* $OpenBSD: des.h,v 1.20 2023/07/08 07:11:07 beck Exp $ */
+/* $OpenBSD: des.h,v 1.21 2023/07/31 05:04:06 tb Exp $ */
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -107,7 +107,6 @@ typedef struct DES_ks {
 extern int DES_check_key;	/* defaults to false */
 extern int DES_rw_mode;		/* defaults to DES_PCBC_MODE */
 
-const char *DES_options(void);
 void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,
     DES_key_schedule *ks1, DES_key_schedule *ks2,
     DES_key_schedule *ks3, int enc);
