@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.17 2023/07/06 20:02:36 uaa Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.18 2023/07/31 09:00:43 kettenis Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -438,6 +438,10 @@ axppmic_i2c_write(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
 
 /* RSB interface */
 
+#include "sxirsb.h"
+
+#if NSXIRSB > 0
+
 int	axppmic_rsb_match(struct device *, void *, void *);
 void	axppmic_rsb_attach(struct device *, struct device *, void *);
 
@@ -488,6 +492,8 @@ axppmic_rsb_write(struct axppmic_softc *sc, uint8_t reg, uint8_t value)
 {
 	rsb_write_1(sc->sc_cookie, sc->sc_addr, reg, value);
 }
+
+#endif
 
 /* Common code */
 

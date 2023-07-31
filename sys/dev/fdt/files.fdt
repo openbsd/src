@@ -1,4 +1,4 @@
-#	$OpenBSD: files.fdt,v 1.196 2023/07/22 22:43:53 patrick Exp $
+#	$OpenBSD: files.fdt,v 1.197 2023/07/31 09:00:43 kettenis Exp $
 #
 # Config file and device description for machine-independent FDT code.
 # Included by ports that need it.
@@ -48,7 +48,7 @@ file	dev/fdt/sxipio.c		sxipio
 define	rsb {}
 device	sxirsb: rsb
 attach	sxirsb at fdt
-file	dev/fdt/sxirsb.c		sxirsb
+file	dev/fdt/sxirsb.c		sxirsb needs-flag
 
 device	sxipwm
 attach	sxipwm at fdt
