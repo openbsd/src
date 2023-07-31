@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.174 2023/07/28 06:36:16 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.175 2023/07/31 04:01:07 guenther Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -187,11 +187,7 @@ replacemeltdown(void)
 {
 	static int replacedone = 0;
 	struct cpu_info *ci = &cpu_info_primary;
-	int swapgs_vuln = 0, s;
-
-	if (replacedone)
-		return;
-	replacedone = 1;
+	int swapgs_vuln = 0, ibrs = 0, s;
 
 	if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
 		int family = ci->ci_family;
@@ -208,9 +204,39 @@ replacemeltdown(void)
 			/* KnightsLanding */
 			swapgs_vuln = 0;
 		}
+		if ((ci->ci_feature_sefflags_edx & SEFF0EDX_ARCH_CAP) &&
+		    (rdmsr(MSR_ARCH_CAPABILITIES) & ARCH_CAP_IBRS_ALL)) {
+			ibrs = 2;
+		} else if (ci->ci_feature_sefflags_edx & SEFF0EDX_IBRS) {
+			ibrs = 1;
+		}
+        } else if (strcmp(cpu_vendor, "AuthenticAMD") == 0 &&
+            ci->ci_pnfeatset >= 0x80000008) {
+		if (ci->ci_feature_amdspec_ebx & CPUIDEBX_IBRS_ALWAYSON) {
+			ibrs = 2;
+		} else if ((ci->ci_feature_amdspec_ebx & CPUIDEBX_IBRS) &&
+		    (ci->ci_feature_amdspec_ebx & CPUIDEBX_IBRS_PREF)) {
+			ibrs = 1;
+		}
 	}
 
+	/* Enhanced IBRS: turn it on once on each CPU and don't touch again */
+	if (ibrs == 2)
+		wrmsr(MSR_SPEC_CTRL, SPEC_CTRL_IBRS);
+
+	if (replacedone)
+		return;
+	replacedone = 1;
+
 	s = splhigh();
+	if (ibrs == 2 || (ci->ci_feature_sefflags_edx & SEFF0EDX_IBT)) {
+		extern const char _jmprax, _jmpr11, _jmpr13;
+		extern const short _jmprax_len, _jmpr11_len, _jmpr13_len;
+		codepatch_replace(CPTAG_RETPOLINE_RAX, &_jmprax, _jmprax_len);
+		codepatch_replace(CPTAG_RETPOLINE_R11, &_jmpr11, _jmpr11_len);
+		codepatch_replace(CPTAG_RETPOLINE_R13, &_jmpr13, _jmpr13_len);
+	}
+
 	if (!cpu_meltdown)
 		codepatch_nop(CPTAG_MELTDOWN_NOP);
 	else {

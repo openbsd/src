@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.139 2023/07/28 06:18:35 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.140 2023/07/31 04:01:07 guenther Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -474,7 +474,16 @@ bogus_proc_pmap:
 END(cpu_switchto)
 
 NENTRY(retpoline_rax)
+	CODEPATCH_START
 	JMP_RETPOLINE(rax)
+	CODEPATCH_END(CPTAG_RETPOLINE_RAX)
+END(retpoline_rax)
+
+NENTRY(__x86_indirect_thunk_r11)
+	CODEPATCH_START
+	JMP_RETPOLINE(r11)
+	CODEPATCH_END(CPTAG_RETPOLINE_R11)
+END(__x86_indirect_thunk_r11)
 
 ENTRY(cpu_idle_cycle_hlt)
 	RETGUARD_SETUP(cpu_idle_cycle_hlt, r11)
