@@ -1,4 +1,4 @@
-/*	$OpenBSD: ec_point_conversion.c,v 1.13 2023/04/26 09:31:12 tb Exp $ */
+/*	$OpenBSD: ec_point_conversion.c,v 1.14 2023/08/01 17:19:49 tb Exp $ */
 /*
  * Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Joel Sing <jsing@openbsd.org>
@@ -23,8 +23,6 @@
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/objects.h>
-
-int bn_rand_interval(BIGNUM *, const BIGNUM *, const BIGNUM *);
 
 int forms[] = {
 	POINT_CONVERSION_COMPRESSED,
