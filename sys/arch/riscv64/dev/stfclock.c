@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.8 2023/07/30 17:28:19 kettenis Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.9 2023/08/01 18:20:07 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
@@ -143,6 +143,36 @@
 #define CLKDIV_MASK		0x00ffffff
 #define CLKDIV_SHIFT		0
 
+#define PLL0DACPD_MASK		0x01000000
+#define PLL0DACPD_SHIFT		24
+#define PLL0DSMPD_MASK		0x02000000
+#define PLL0DSMPD_SHIFT		25
+#define PLL0FBDIV_MASK		0x00000fff
+#define PLL0FBDIV_SHIFT		0
+#define PLLDACPD_MASK		0x00008000
+#define PLLDACPD_SHIFT		15
+#define PLLDSMPD_MASK		0x00010000
+#define PLLDSMPD_SHIFT		16
+#define PLLFBDIV_MASK		0x1ffe0000
+#define PLLFBDIV_SHIFT		17
+#define PLLFRAC_MASK		0x00ffffff
+#define PLLFRAC_SHIFT		0
+#define PLLPOSTDIV1_MASK	0x30000000
+#define PLLPOSTDIV1_SHIFT	28
+#define PLLPREDIV_MASK		0x0000003f
+#define PLLPREDIV_SHIFT		0
+
+#define JH7110_PLL0_BASE	0x0018
+#define JH7110_PLL1_BASE	0x0024
+#define JH7110_PLL2_BASE	0x002c
+#define JH7110_PLL0_PD_OFF	0x0000
+#define JH7110_PLL0_FBDIV_OFF	0x0004
+#define JH7110_PLL0_FRAC_OFF	0x0008
+#define JH7110_PLL0_PREDIV_OFF	0x000c
+#define JH7110_PLL_PD_OFF	0x0000
+#define JH7110_PLL_FRAC_OFF	0x0004
+#define JH7110_PLL_PREDIV_OFF	0x0008
+
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
 #define HWRITE4(sc, reg, val)						\
@@ -156,6 +186,7 @@ struct stfclock_softc {
 	struct device		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	struct regmap		*sc_rm;
 	int			sc_node;
 
 	struct clock_device	sc_cd;
@@ -214,7 +245,17 @@ stfclock_attach(struct device *parent, struct device *self, void *aux)
 	struct stfclock_softc *sc = (struct stfclock_softc *)self;
 	struct fdt_attach_args *faa = aux;
 
-	if (faa->fa_nreg >= 1) {
+	if (OF_is_compatible(faa->fa_node, "starfive,jh7110-pll")) {
+		sc->sc_rm = regmap_bynode(OF_parent(faa->fa_node));
+		if (sc->sc_rm == NULL) {
+			printf(": can't get regmap\n");
+			return;
+		}
+	} else {
+		if (faa->fa_nreg < 1) {
+			printf(": no registers\n");
+			return;
+		}
 		sc->sc_iot = faa->fa_iot;
 		if (bus_space_map(sc->sc_iot, faa->fa_reg[0].addr,
 		    faa->fa_reg[0].size, 0, &sc->sc_ioh)) {
@@ -555,8 +596,6 @@ stfclock_get_frequency_jh7110_pll(void *cookie, uint32_t *cells)
 	uint32_t idx = cells[0];
 	uint32_t dacpd, dsmpd, fbdiv, frac, prediv, postdiv1, reg;
 	uint64_t frac_val, parent_freq;
-	struct regmap *pllrm;
-	int syscon_node;
 	bus_size_t base;
 
 	parent_freq = clock_get_frequency_idx(sc->sc_node, 0);
@@ -567,60 +606,49 @@ stfclock_get_frequency_jh7110_pll(void *cookie, uint32_t *cells)
 
 	switch (idx) {
 	case JH7110_CLK_PLL0_OUT:
-		base = 0x18;
+		base = JH7110_PLL0_BASE;
 		break;
 	case JH7110_CLK_PLL1_OUT:
-		base = 0x24;
+		base = JH7110_PLL1_BASE;
 		break;
 	case JH7110_CLK_PLL2_OUT:
-		base = 0x2c;
+		base = JH7110_PLL2_BASE;
 		break;
 	default:
 		printf("%s: unknown clock 0x08%x\n", __func__, idx);
 		return 0;
 	}
 
-	syscon_node = OF_parent(sc->sc_node);
-	if (syscon_node < 0) {
-		printf("%s: failed to find pll clock parent\n", __func__);
-		return 0;
-	}
-	pllrm = regmap_bynode(syscon_node);
-	if (pllrm == NULL) {
-		printf("%s: failed to get pll regmap\n", __func__);
-		return 0;
-	}
-
 	switch (idx) {
 	case JH7110_CLK_PLL0_OUT:
-		reg = regmap_read_4(pllrm, base + 0);
-		dacpd = (reg >> 24) & 1;
-		dsmpd = (reg >> 25) & 1;
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_PD_OFF);
+		dacpd = (reg & PLL0DACPD_MASK) >> PLL0DACPD_SHIFT;
+		dsmpd = (reg & PLL0DSMPD_MASK) >> PLL0DSMPD_SHIFT;
 
-		reg = regmap_read_4(pllrm, base + 4);
-		fbdiv = (reg >> 0) & ((1UL << 12) - 1);
-	
-		reg = regmap_read_4(pllrm, base + 8);
-		frac = (reg >> 0) & ((1UL << 24) - 1);
-		postdiv1 = 1 << ((reg >> 28) & ((1UL << 2) - 1));
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_FBDIV_OFF);
+		fbdiv = (reg & PLL0FBDIV_MASK) >> PLL0FBDIV_SHIFT;
 
-		reg = regmap_read_4(pllrm, base + 12);
-		prediv = (reg >> 0) & ((1UL << 6) - 1);
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_FRAC_OFF);
+		frac = (reg & PLLFRAC_MASK) >> PLLFRAC_SHIFT;
+		postdiv1 = 1 << ((reg & PLLPOSTDIV1_MASK) >> PLLPOSTDIV1_SHIFT);
+
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_PREDIV_OFF);
+		prediv = (reg & PLLPREDIV_MASK) >> PLLPREDIV_SHIFT;
 		break;
 
 	case JH7110_CLK_PLL1_OUT:
 	case JH7110_CLK_PLL2_OUT:
-		reg = regmap_read_4(pllrm, base + 0);
-		dacpd = (reg >> 15) & 1;
-		dsmpd = (reg >> 16) & 1;
-		fbdiv = (reg >> 17) & ((1UL << 12) - 1);
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL_PD_OFF);
+		dacpd = (reg & PLLDACPD_MASK) >> PLLDACPD_SHIFT;
+		dsmpd = (reg & PLLDSMPD_MASK) >> PLLDSMPD_SHIFT;
+		fbdiv = (reg & PLLFBDIV_MASK) >> PLLFBDIV_SHIFT;
 
-		reg = regmap_read_4(pllrm, base + 4);
-		frac = (reg >> 0) & ((1UL << 24) - 1);
-		postdiv1 = 1 << ((reg >> 28) & ((1UL << 2) - 1));
-		
-		reg = regmap_read_4(pllrm, base + 8);
-		prediv = (reg >> 0) & ((1UL << 6) - 1);
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL_FRAC_OFF);
+		frac = (reg & PLLFRAC_MASK) >> PLLFRAC_SHIFT;
+		postdiv1 = 1 << ((reg & PLLPOSTDIV1_MASK) >> PLLPOSTDIV1_SHIFT);
+
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL_PREDIV_OFF);
+		prediv = (reg & PLLPREDIV_MASK) >> PLLPREDIV_SHIFT;
 		break;
 	}
 
@@ -632,7 +660,7 @@ stfclock_get_frequency_jh7110_pll(void *cookie, uint32_t *cells)
 	if (dacpd != dsmpd)
 		return 0;
 
-	/* Integer mode (dacpd/dsmpd both 0) or fraction mode (both 1). */
+	/* Integer mode (dacpd/dsmpd both 1) or fraction mode (both 0). */
 	frac_val = 0;
 	if (dacpd == 0 && dsmpd == 0)
 		frac_val = ((uint64_t)frac * 1000) / (1 << 24);
@@ -643,7 +671,59 @@ stfclock_get_frequency_jh7110_pll(void *cookie, uint32_t *cells)
 int
 stfclock_set_frequency_jh7110_pll(void *cookie, uint32_t *cells, uint32_t freq)
 {
+	struct stfclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t dacpd, dsmpd, fbdiv, prediv, postdiv1, reg;
+	bus_size_t base = JH7110_PLL0_BASE;
+
+	switch (idx) {
+	case JH7110_CLK_PLL0_OUT:
+		/*
+		 * Supported frequencies are carefully selected such
+		 * that they can be obtained by only changing the
+		 * pre-divider.
+		 */
+		switch (freq) {
+		case 375000000:
+			prediv = 8;
+			break;
+		case 500000000:
+			prediv = 6;
+			break;
+		case 750000000:
+			prediv = 4;
+			break;
+		case 1000000000:
+			prediv = 3;
+			break;
+		case 1500000000:
+			prediv = 2;
+			break;
+		default:
+			return -1;
+		}
+
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_PD_OFF);
+		dacpd = (reg & PLL0DACPD_MASK) >> PLL0DACPD_SHIFT;
+		dsmpd = (reg & PLL0DSMPD_MASK) >> PLL0DSMPD_SHIFT;
+
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_FBDIV_OFF);
+		fbdiv = (reg & PLL0FBDIV_MASK) >> PLL0FBDIV_SHIFT;
+
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_FRAC_OFF);
+		postdiv1 = 1 << ((reg & PLLPOSTDIV1_MASK) >> PLLPOSTDIV1_SHIFT);
+
+		if (dacpd != 1 || dsmpd != 1 || fbdiv != 125 || postdiv1 != 1) {
+			printf("%s: misconfigured PLL0\n", __func__);
+			return -1;
+		}
+
+		reg = regmap_read_4(sc->sc_rm, base + JH7110_PLL0_PREDIV_OFF);
+		reg &= ~PLLPREDIV_MASK;
+		reg |= (prediv << PLLPREDIV_SHIFT);
+		regmap_write_4(sc->sc_rm, base + JH7110_PLL0_PREDIV_OFF, reg);
+		return 0;
+	}
 
 	printf("%s: not handled 0x%08x (freq=0x%08x)\n", __func__, idx, freq);
 
@@ -834,7 +914,17 @@ stfclock_get_frequency_jh7110_sys(void *cookie, uint32_t *cells)
 int
 stfclock_set_frequency_jh7110_sys(void *cookie, uint32_t *cells, uint32_t freq)
 {
+	struct stfclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t parent;
+
+	switch (idx) {
+	case JH7110_SYSCLK_CPU_ROOT:
+		return clock_set_frequency(sc->sc_node, "pll0_out", freq);
+	case JH7110_SYSCLK_CPU_CORE:
+		parent = JH7110_SYSCLK_CPU_ROOT;
+		return stfclock_set_frequency_jh7110_sys(sc, &parent, freq);
+	}
 
 	printf("%s: not handled 0x%08x (freq=0x%08x)\n", __func__, idx, freq);
 
