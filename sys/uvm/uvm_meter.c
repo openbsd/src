@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.44 2023/06/21 21:16:21 cheloha Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.45 2023/08/01 14:15:44 claudio Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -82,15 +82,13 @@ void uvm_total(struct vmtotal *);
 void uvmexp_read(struct uvmexp *);
 
 /*
- * uvm_meter: calculate load average and wake up the swapper (if needed)
+ * uvm_meter: calculate load average
  */
 void
 uvm_meter(void)
 {
 	if ((gettime() % 5) == 0)
 		uvm_loadav(&averunnable);
-	if (proc0.p_slptime > (maxslp / 2))
-		wakeup(&proc0);
 }
 
 /*
