@@ -41,9 +41,20 @@ jiffies_to_nsecs(const unsigned long x)
 #define nsecs_to_jiffies(x)	(((uint64_t)(x)) * hz / 1000000000)
 #define nsecs_to_jiffies64(x)	(((uint64_t)(x)) * hz / 1000000000)
 #define get_jiffies_64()	jiffies
-#define time_after(a,b)		((long)(b) - (long)(a) < 0)
+
+static inline int
+time_after(const unsigned long a, const unsigned long b)
+{
+	return((long)(b - a) < 0);
+}
+#define time_before(a,b)	time_after(b,a)
+
+static inline int
+time_after_eq(const unsigned long a, const unsigned long b)
+{
+	return((long)(b - a) <= 0);
+}
+
 #define time_after32(a,b)	((int32_t)((uint32_t)(b) - (uint32_t)(a)) < 0)
-#define time_after_eq(a,b)	((long)(b) - (long)(a) <= 0)
-#define time_before(a,b)	((long)(a) - (long)(b) < 0)
 
 #endif
