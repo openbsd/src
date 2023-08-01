@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.109 2023/07/25 18:16:19 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.110 2023/08/01 07:57:55 claudio Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -84,7 +84,8 @@ int	profhz;
 int	profprocs;
 int	ticks = INT_MAX - (15 * 60 * HZ);
 
-volatile unsigned long jiffies = ULONG_MAX - (10 * 60 * HZ);
+/* Don't force early wrap around, triggers bug in inteldrm */
+volatile unsigned long jiffies;
 
 /*
  * Initialize clock frequencies and start both clocks running.
