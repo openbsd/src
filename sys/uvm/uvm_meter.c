@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.45 2023/08/01 14:15:44 claudio Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.46 2023/08/02 13:54:45 cheloha Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -100,43 +100,29 @@ uvm_loadav(struct loadavg *avg)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	int i, nrun;
-	struct proc *p;
-	int nrun_cpu[MAXCPUS];
+	struct schedstate_percpu *spc;
+	u_int i, nrun = 0, nrun_cpu;
+	int s;
 
-	nrun = 0;
-	memset(nrun_cpu, 0, sizeof(nrun_cpu));
 
-	LIST_FOREACH(p, &allproc, p_list) {
-		switch (p->p_stat) {
-		case SSTOP:
-		case SSLEEP:
-			break;
-		case SRUN:
-		case SONPROC:
-			if (p == p->p_cpu->ci_schedstate.spc_idleproc)
-				continue;
-		/* FALLTHROUGH */
-		case SIDL:
-			nrun++;
-			if (p->p_cpu)
-				nrun_cpu[CPU_INFO_UNIT(p->p_cpu)]++;
-		}
+	SCHED_LOCK(s);
+	CPU_INFO_FOREACH(cii, ci) {
+		spc = &ci->ci_schedstate;
+		nrun_cpu = spc->spc_nrun;
+		if (ci->ci_curproc != spc->spc_idleproc)
+			nrun_cpu++;
+		if (nrun_cpu == 0)
+			continue;
+		spc->spc_ldavg = (cexp[0] * spc->spc_ldavg +
+		    nrun_cpu * FSCALE *
+		    (FSCALE - cexp[0])) >> FSHIFT;
+		nrun += nrun_cpu;
 	}
+	SCHED_UNLOCK(s);
 
 	for (i = 0; i < 3; i++) {
 		avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
 		    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
-	}
-
-	CPU_INFO_FOREACH(cii, ci) {
-		struct schedstate_percpu *spc = &ci->ci_schedstate;
-
-		if (nrun_cpu[CPU_INFO_UNIT(ci)] == 0)
-			continue;
-		spc->spc_ldavg = (cexp[0] * spc->spc_ldavg +
-		    nrun_cpu[CPU_INFO_UNIT(ci)] * FSCALE *
-		    (FSCALE - cexp[0])) >> FSHIFT;
 	}
 }
 
