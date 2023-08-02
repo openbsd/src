@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.30 2023/08/02 08:44:38 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.31 2023/08/02 08:50:02 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -136,10 +136,9 @@ BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 {
 	BN_BLINDING *ret = NULL;
 
-
 	if ((ret = calloc(1, sizeof(BN_BLINDING))) == NULL) {
 		BNerror(ERR_R_MALLOC_FAILURE);
-		return (NULL);
+		return NULL;
 	}
 	if (A != NULL) {
 		if ((ret->A = BN_dup(A))  == NULL)
@@ -163,10 +162,11 @@ BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 	CRYPTO_THREADID_current(&ret->tid);
 	return (ret);
 
-err:
+ err:
 	if (ret != NULL)
 		BN_BLINDING_free(ret);
-	return (NULL);
+
+	return NULL;
 }
 
 void
@@ -187,7 +187,7 @@ BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
 {
 	int ret = 0;
 
-	if ((b->A == NULL) || (b->Ai == NULL)) {
+	if (b->A == NULL || b->Ai == NULL) {
 		BNerror(BN_R_NOT_INITIALIZED);
 		goto err;
 	}
@@ -208,10 +208,11 @@ BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
 
 	ret = 1;
 
-err:
+ err:
 	if (b->counter == BN_BLINDING_COUNTER)
 		b->counter = 0;
-	return (ret);
+
+	return ret;
 }
 
 int
@@ -219,17 +220,16 @@ BN_BLINDING_convert(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 {
 	int ret = 1;
 
-
-	if ((b->A == NULL) || (b->Ai == NULL)) {
+	if (b->A == NULL || b->Ai == NULL) {
 		BNerror(BN_R_NOT_INITIALIZED);
-		return (0);
+		return 0;
 	}
 
 	if (b->counter == -1)
 		/* Fresh blinding, doesn't need updating. */
 		b->counter = 0;
 	else if (!BN_BLINDING_update(b, ctx))
-		return (0);
+		return 0;
 
 	if (r != NULL) {
 		if (!bn_copy(r, b->Ai))
@@ -247,7 +247,6 @@ BN_BLINDING_invert(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 {
 	int ret;
 
-
 	if (r != NULL)
 		ret = BN_mod_mul(n, n, r, b->mod, ctx);
 	else {
@@ -258,7 +257,7 @@ BN_BLINDING_invert(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 		ret = BN_mod_mul(n, n, b->Ai, b->mod, ctx);
 	}
 
-	return (ret);
+	return ret;
 }
 
 CRYPTO_THREADID *
@@ -272,8 +271,8 @@ BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m,
     BN_CTX *ctx, int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx)
 {
-	int    retry_counter = 32;
 	BN_BLINDING *ret = NULL;
+	int retry_counter = 32;
 
 	if (b == NULL)
 		ret = BN_BLINDING_new(NULL, NULL, m);
@@ -329,7 +328,7 @@ BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m,
 
 	return ret;
 
-err:
+ err:
 	if (b == NULL && ret != NULL) {
 		BN_BLINDING_free(ret);
 		ret = NULL;
