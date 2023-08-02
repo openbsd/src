@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_map.c,v 1.318 2023/05/20 12:48:36 mpi Exp $	*/
+/*	$OpenBSD: uvm_map.c,v 1.319 2023/08/02 09:19:47 mpi Exp $	*/
 /*	$NetBSD: uvm_map.c,v 1.86 2000/11/27 08:40:03 chs Exp $	*/
 
 /*
@@ -5396,33 +5396,6 @@ vm_map_unlock_read_ln(struct vm_map *map, char *file, int line)
 		rw_exit_read(&map->lock);
 	else
 		mtx_leave(&map->mtx);
-}
-
-void
-vm_map_downgrade_ln(struct vm_map *map, char *file, int line)
-{
-	uvm_tree_sanity(map, file, line);
-	uvm_tree_size_chk(map, file, line);
-	LPRINTF(("map unlock: %p (at %s %d)\n", map, file, line));
-	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
-	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
-	if ((map->flags & VM_MAP_INTRSAFE) == 0)
-		rw_enter(&map->lock, RW_DOWNGRADE);
-}
-
-void
-vm_map_upgrade_ln(struct vm_map *map, char *file, int line)
-{
-	/* XXX: RO */ uvm_tree_sanity(map, file, line);
-	/* XXX: RO */ uvm_tree_size_chk(map, file, line);
-	LPRINTF(("map unlock: %p (at %s %d)\n", map, file, line));
-	KASSERT((map->flags & VM_MAP_INTRSAFE) == 0);
-	if ((map->flags & VM_MAP_INTRSAFE) == 0) {
-		rw_exit_read(&map->lock);
-		rw_enter_write(&map->lock);
-	}
-	LPRINTF(("map   lock: %p (at %s %d)\n", map, file, line));
-	uvm_tree_sanity(map, file, line);
 }
 
 void
