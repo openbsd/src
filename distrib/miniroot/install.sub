@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1251 2023/07/08 15:01:09 kn Exp $
+#	$OpenBSD: install.sub,v 1.1252 2023/08/02 08:51:16 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3088,7 +3088,7 @@ encrypt_root() {
 	# e.g. auto-assembled at boot or done in (S)hell.
 	[[ -z $(get_softraid_volumes) ]] || return
 
-	ask_yn 'Encrypt the root disk? (passphrase CRYPTO softraid)' || return
+	ask_yn 'Encrypt the root disk with a passphrase?' || return
 
 	_chunk=$ROOTDISK
 	echo "\nConfiguring the crypto chunk $_chunk...\n"
