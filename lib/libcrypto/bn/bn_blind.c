@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.24 2023/07/28 10:05:16 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.25 2023/08/02 08:02:56 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -123,7 +123,7 @@ struct bn_blinding_st {
 	BIGNUM *A;
 	BIGNUM *Ai;
 	BIGNUM *e;
-	BIGNUM *mod; /* just a reference */
+	BIGNUM *mod;
 	CRYPTO_THREADID tid;
 	int counter;
 	unsigned long flags;
