@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.62 2023/07/08 12:26:45 beck Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.63 2023/08/02 08:44:38 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -282,7 +282,7 @@ rsa_blinding_convert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind, BN_CTX *ctx)
 		 * Local blinding: store the unblinding factor
 		 * in BN_BLINDING.
 		 */
-		return BN_BLINDING_convert_ex(f, NULL, b, ctx);
+		return BN_BLINDING_convert(f, NULL, b, ctx);
 	else {
 		/*
 		 * Shared blinding: store the unblinding factor
@@ -290,7 +290,7 @@ rsa_blinding_convert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind, BN_CTX *ctx)
 		 */
 		int ret;
 		CRYPTO_w_lock(CRYPTO_LOCK_RSA_BLINDING);
-		ret = BN_BLINDING_convert_ex(f, unblind, b, ctx);
+		ret = BN_BLINDING_convert(f, unblind, b, ctx);
 		CRYPTO_w_unlock(CRYPTO_LOCK_RSA_BLINDING);
 		return ret;
 	}
@@ -300,14 +300,14 @@ static int
 rsa_blinding_invert(BN_BLINDING *b, BIGNUM *f, BIGNUM *unblind, BN_CTX *ctx)
 {
 	/*
-	 * For local blinding, unblind is set to NULL, and BN_BLINDING_invert_ex
+	 * For local blinding, unblind is set to NULL, and BN_BLINDING_invert()
 	 * will use the unblinding factor stored in BN_BLINDING.
 	 * If BN_BLINDING is shared between threads, unblind must be non-null:
-	 * BN_BLINDING_invert_ex will then use the local unblinding factor,
+	 * BN_BLINDING_invert() will then use the local unblinding factor,
 	 * and will only read the modulus from BN_BLINDING.
 	 * In both cases it's safe to access the blinding without a lock.
 	 */
-	return BN_BLINDING_invert_ex(f, unblind, b, ctx);
+	return BN_BLINDING_invert(f, unblind, b, ctx);
 }
 
 /* signing */
