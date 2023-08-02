@@ -1,4 +1,4 @@
-/*	$OpenBSD: axppmic.c,v 1.19 2023/07/31 12:23:35 kettenis Exp $	*/
+/*	$OpenBSD: axppmic.c,v 1.20 2023/08/02 11:52:18 uaa Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -123,6 +123,21 @@ const struct axppmic_regdata axp221_regdata[] = {
 	  0x91, 0x1f, 700000, 100000, 27 },
 	{ "ldo_io1", 0x92, 0x07, 0x03, 0x04,
 	  0x93, 0x1f, 700000, 100000, 27 },
+	{ NULL }
+};
+
+const struct axppmic_regdata axp313a_regdata[] = {
+	/* dcdc1: 1.6-3.4V (100mV step) not supported */
+	{ "dcdc1", 0x10, (1 << 0), (1 << 0), (0 << 0),
+	  0x13, 0x7f, 500000, 10000, 71, 122000, 20000, 17 },
+	{ "dcdc2", 0x10, (1 << 1), (1 << 1), (0 << 1),
+	  0x14, 0x7f, 500000, 10000, 71, 122000, 20000, 17 },
+	{ "dcdc3", 0x10, (1 << 2), (1 << 2), (0 << 2),
+	  0x15, 0x7f, 500000, 10000, 71, 122000, 20000, 32 },
+	{ "aldo1", 0x10, (1 << 3), (1 << 3), (0 << 3),
+	  0x16, 0x1f, 500000, 100000, 31 },
+	{ "dldo1", 0x10, (1 << 4), (1 << 4), (0 << 4),
+	  0x17, 0x1f, 500000, 100000, 31 },
 	{ NULL }
 };
 
@@ -354,6 +369,7 @@ const struct axppmic_device axppmic_devices[] = {
 	{ "x-powers,axp221", "AXP221", axp221_regdata, axp221_sensdata },
 	{ "x-powers,axp223", "AXP223", axp221_regdata, axp221_sensdata },
 	{ "x-powers,axp305", "AXP305", axp806_regdata },
+	{ "x-powers,axp313a", "AXP313A", axp313a_regdata },
 	{ "x-powers,axp803", "AXP803", axp803_regdata, axp803_sensdata },
 	{ "x-powers,axp805", "AXP805", axp806_regdata },
 	{ "x-powers,axp806", "AXP806", axp806_regdata },
