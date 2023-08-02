@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.127 2023/02/11 23:07:27 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.128 2023/08/02 06:14:46 miod Exp $	*/
 /*
  * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1998 Steve Murphree, Jr.
@@ -1650,15 +1650,25 @@ double_reg_fixup(struct trapframe *frame, int fault)
 	if (copyinsn(NULL, (u_int32_t *)pc, (u_int32_t *)&instr) != 0)
 		return SIGSEGV;
 
-	switch (instr & 0xfc00ff00) {
+	switch (instr & 0xfc00ffe0) {
 	case 0xf4001000:	/* ld.d rD, rS1, rS2 */
 		addr = frame->tf_r[(instr >> 16) & 0x1f]
 		    + frame->tf_r[(instr & 0x1f)];
 		store = 0;
 		break;
+	case 0xf4001200:	/* ld.d rD, rS1[rS2] */
+		addr = frame->tf_r[(instr >> 16) & 0x1f]
+		    + 8 * frame->tf_r[(instr & 0x1f)];
+		store = 0;
+		break;
 	case 0xf4002000:	/* st.d rD, rS1, rS2 */
 		addr = frame->tf_r[(instr >> 16) & 0x1f]
 		    + frame->tf_r[(instr & 0x1f)];
+		store = 1;
+		break;
+	case 0xf4002200:	/* st.d rD, rS1[rS2] */
+		addr = frame->tf_r[(instr >> 16) & 0x1f]
+		    + 8 * frame->tf_r[(instr & 0x1f)];
 		store = 1;
 		break;
 	default:
