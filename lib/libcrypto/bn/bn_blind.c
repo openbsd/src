@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.25 2023/08/02 08:02:56 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.26 2023/08/02 08:26:55 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -279,18 +279,6 @@ CRYPTO_THREADID *
 BN_BLINDING_thread_id(BN_BLINDING *b)
 {
 	return &b->tid;
-}
-
-unsigned long
-BN_BLINDING_get_flags(const BN_BLINDING *b)
-{
-	return b->flags;
-}
-
-void
-BN_BLINDING_set_flags(BN_BLINDING *b, unsigned long flags)
-{
-	b->flags = flags;
 }
 
 BN_BLINDING *
