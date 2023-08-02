@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.31 2023/08/02 08:50:02 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.32 2023/08/02 09:25:36 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -141,7 +141,7 @@ BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 		return NULL;
 	}
 	if (A != NULL) {
-		if ((ret->A = BN_dup(A))  == NULL)
+		if ((ret->A = BN_dup(A)) == NULL)
 			goto err;
 	}
 	if (Ai != NULL) {
@@ -236,7 +236,7 @@ BN_BLINDING_convert(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 			ret = 0;
 	}
 
-	if (!BN_mod_mul(n, n,b->A, b->mod, ctx))
+	if (!BN_mod_mul(n, n, b->A, b->mod, ctx))
 		ret = 0;
 
 	return ret;
@@ -267,9 +267,9 @@ BN_BLINDING_thread_id(BN_BLINDING *b)
 }
 
 BN_BLINDING *
-BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m,
-    BN_CTX *ctx, int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx)
+BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
+    int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx)
 {
 	BN_BLINDING *ret = NULL;
 	int retry_counter = 32;
@@ -282,7 +282,7 @@ BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m,
 	if (ret == NULL)
 		goto err;
 
-	if (ret->A  == NULL && (ret->A = BN_new()) == NULL)
+	if (ret->A == NULL && (ret->A = BN_new()) == NULL)
 		goto err;
 	if (ret->Ai == NULL && (ret->Ai = BN_new()) == NULL)
 		goto err;
