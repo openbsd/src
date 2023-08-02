@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.118 2023/04/06 11:29:55 kn Exp $
+.\"	$OpenBSD: route.8,v 1.119 2023/08/02 23:34:13 aisha Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	@(#)route.8	8.3 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: April 6 2023 $
+.Dd $Mdocdate: August 2 2023 $
 .Dt ROUTE 8
 .Os
 .Sh NAME
@@ -281,7 +281,8 @@ and/or a gateway.
 .Op Fl T Ar rtable
 .Tg
 .Cm exec
-.Op Ar command ...
+.Ar command
+.Op Ar arg ...
 .Xc
 Execute a command, forcing the process and its children to use the
 routing table and appropriate routing domain as specified with the
@@ -513,6 +514,35 @@ are looked up using
 host and network name database
 .It Pa /etc/mygate
 default gateway address
+.El
+.Sh EXIT STATUS
+For commands other than
+.Cm exec ,
+the
+.Nm
+utility exits 0 on success, and >0 if an error occurs.
+.Pp
+For the
+.Cm exec
+command the
+.Nm
+utility exits with the exit status of
+.Ar command
+if it could be invoked.
+Otherwise the
+.Nm
+utility exits with one of the following values:
+.Bl -tag -width Ds
+.It 1
+An invalid command line option was passed to
+.Nm
+or setting the routing table failed.
+.It 126
+.Ar command
+was found but could not be invoked.
+.It 127
+.Ar command
+could not be found.
 .El
 .Sh EXAMPLES
 Show the current IPv4 routing tables,
