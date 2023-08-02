@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.26 2023/08/02 08:26:55 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.27 2023/08/02 08:31:12 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -126,7 +126,6 @@ struct bn_blinding_st {
 	BIGNUM *mod;
 	CRYPTO_THREADID tid;
 	int counter;
-	unsigned long flags;
 	BN_MONT_CTX *m_ctx;
 	int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
@@ -196,12 +195,11 @@ BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
 	if (b->counter == -1)
 		b->counter = 0;
 
-	if (++b->counter == BN_BLINDING_COUNTER && b->e != NULL &&
-	    !(b->flags & BN_BLINDING_NO_RECREATE)) {
+	if (++b->counter == BN_BLINDING_COUNTER && b->e != NULL) {
 		/* re-create blinding parameters */
 		if (!BN_BLINDING_create_param(b, NULL, NULL, ctx, NULL, NULL))
 			goto err;
-	} else if (!(b->flags & BN_BLINDING_NO_UPDATE)) {
+	} else {
 		if (!BN_mod_mul(b->A, b->A, b->A, b->mod, ctx))
 			goto err;
 		if (!BN_mod_mul(b->Ai, b->Ai, b->Ai, b->mod, ctx))
