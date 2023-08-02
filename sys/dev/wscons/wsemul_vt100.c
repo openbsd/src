@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_vt100.c,v 1.46 2023/07/24 17:03:32 miod Exp $ */
+/* $OpenBSD: wsemul_vt100.c,v 1.47 2023/08/02 19:20:19 miod Exp $ */
 /* $NetBSD: wsemul_vt100.c,v 1.13 2000/04/28 21:56:16 mycroft Exp $ */
 
 /*
@@ -862,7 +862,7 @@ wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp,
 	case '0': case '1': case '2': case '3': case '4':
 	case '5': case '6': case '7': case '8': case '9':
 		/* argument digit */
-		if (edp->nargs > VT100_EMUL_NARGS - 1)
+		if (edp->nargs >= VT100_EMUL_NARGS)
 			break;
 		edp->args[edp->nargs] = (edp->args[edp->nargs] * 10) +
 		    (instate->inchar - '0');
@@ -1084,6 +1084,7 @@ wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp,
 			edp->nargs++;
 		rc = wsemul_vt100_handle_csi(edp, instate);
 		if (rc != 0) {
+			/* undo nargs progress */
 			edp->nargs = oargs;
 			return rc;
 		}
