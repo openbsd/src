@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.28 2023/08/02 08:34:42 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.29 2023/08/02 08:39:04 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -215,12 +215,6 @@ err:
 }
 
 int
-BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
-{
-	return BN_BLINDING_convert_ex(n, NULL, b, ctx);
-}
-
-int
 BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 {
 	int ret = 1;
@@ -246,12 +240,6 @@ BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 		ret = 0;
 
 	return ret;
-}
-
-int
-BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
-{
-	return BN_BLINDING_invert_ex(n, NULL, b, ctx);
 }
 
 int
