@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.46 2023/08/02 13:54:45 cheloha Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.47 2023/08/03 16:08:12 claudio Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ struct loadavg averunnable;
  * 5 second intervals.
  */
 
-static fixpt_t cexp[3] = {
+static const fixpt_t cexp[3] = {
 	0.9200444146293232 * FSCALE,	/* exp(-1/12) */
 	0.9834714538216174 * FSCALE,	/* exp(-1/60) */
 	0.9944598480048967 * FSCALE,	/* exp(-1/180) */
