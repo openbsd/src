@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.81 2023/07/27 17:52:53 cheloha Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.82 2023/08/03 16:12:08 claudio Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -373,7 +373,6 @@ sched_choosecpu_fork(struct proc *parent, int flags)
 {
 #ifdef MULTIPROCESSOR
 	struct cpu_info *choice = NULL;
-	fixpt_t load, best_load = ~0;
 	int run, best_run = INT_MAX;
 	struct cpu_info *ci;
 	struct cpuset set;
@@ -407,13 +406,10 @@ sched_choosecpu_fork(struct proc *parent, int flags)
 	while ((ci = cpuset_first(&set)) != NULL) {
 		cpuset_del(&set, ci);
 
-		load = ci->ci_schedstate.spc_ldavg;
 		run = ci->ci_schedstate.spc_nrun;
 
-		if (choice == NULL || run < best_run ||
-		    (run == best_run &&load < best_load)) {
+		if (choice == NULL || run < best_run) {
 			choice = ci;
-			best_load = load;
 			best_run = run;
 		}
 	}
@@ -605,11 +601,6 @@ sched_proc_to_cpu_cost(struct cpu_info *ci, struct proc *p)
 	 */
 	if (CPU_IS_PRIMARY(ci))
 		cost += sched_cost_runnable;
-
-	/*
-	 * Higher load on the destination means we don't want to go there.
-	 */
-	cost += ((sched_cost_load * spc->spc_ldavg) >> FSHIFT);
 
 	/*
 	 * If the proc is on this cpu already, lower the cost by how much
