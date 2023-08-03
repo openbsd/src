@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.202 2023/07/28 20:25:08 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.203 2023/08/03 18:56:32 jan Exp $	*/
 
 /******************************************************************************
 
@@ -3231,7 +3231,7 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			sendmp->m_pkthdr.len = 0;
 			sendmp->m_pkthdr.ph_mss = 0;
 #if NVLAN > 0
-			if (sc->vlan_stripping && staterr & IXGBE_RXD_STAT_VP) {
+			if (staterr & IXGBE_RXD_STAT_VP) {
 				sendmp->m_pkthdr.ether_vtag = vtag;
 				SET(sendmp->m_flags, M_VLANTAG);
 			}
@@ -3273,7 +3273,8 @@ ixgbe_rxeof(struct rx_ring *rxr)
 				ether_extract_headers(sendmp, &ext);
 				hdrlen = sizeof(*ext.eh);
 #if NVLAN > 0
-				if (ext.evh)
+				if (ISSET(sendmp->m_flags, M_VLANTAG) ||
+				    ext.evh)
 					hdrlen += ETHER_VLAN_ENCAP_LEN;
 #endif
 				if (ext.ip4)
@@ -3361,20 +3362,8 @@ ixgbe_rx_checksum(uint32_t staterr, struct mbuf * mp)
 void
 ixgbe_setup_vlan_hw_support(struct ix_softc *sc)
 {
-	struct ifnet	*ifp = &sc->arpcom.ac_if;
-	uint32_t	 ctrl;
-	int		 i;
-
-	/*
-	 * We have to disable VLAN striping when using TCP offloading, due to a
-	 * firmware bug.
-	 */
-	if (ISSET(ifp->if_xflags, IFXF_LRO)) {
-		sc->vlan_stripping = 0;
-		return;
-	}
-
-	sc->vlan_stripping = 1;
+	uint32_t	ctrl;
+	int		i;
 
 	/*
 	 * A soft reset zero's out the VFTA, so
