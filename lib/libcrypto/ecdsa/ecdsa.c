@@ -1,4 +1,4 @@
-/* $OpenBSD: ecdsa.c,v 1.16 2023/07/28 09:18:10 tb Exp $ */
+/* $OpenBSD: ecdsa.c,v 1.17 2023/08/03 18:53:56 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2000-2002 The OpenSSL Project.  All rights reserved.
  *
@@ -338,7 +338,7 @@ ecdsa_sign_setup(EC_KEY *key, BN_CTX *in_ctx, BIGNUM **out_kinv, BIGNUM **out_r)
 	/* Step 11: repeat until r != 0. */
 	do {
 		/* Step 3: generate random k. */
-		if (!bn_rand_interval(k, BN_value_one(), order))
+		if (!bn_rand_interval(k, 1, order))
 			goto err;
 
 		/*
@@ -472,7 +472,7 @@ ecdsa_compute_s(BIGNUM **out_s, const BIGNUM *e, const BIGNUM *kinv,
 		goto err;
 	}
 
-	if (!bn_rand_interval(b, BN_value_one(), order)) {
+	if (!bn_rand_interval(b, 1, order)) {
 		ECerror(ERR_R_BN_LIB);
 		goto err;
 	}

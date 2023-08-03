@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_isqrt.c,v 1.3 2023/03/08 06:28:08 tb Exp $ */
+/*	$OpenBSD: bn_isqrt.c,v 1.4 2023/08/03 18:53:56 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -194,8 +194,8 @@ isqrt_test(void)
 	if (!BN_set_bit(upper, UPPER_BITS))
 		errx(1, "BN_set_bit(upper, %d)", UPPER_BITS);
 
-	if (!bn_rand_interval(n, lower, upper))
-		errx(1, "bn_rand_interval n");
+	if (!bn_rand_in_range(n, lower, upper))
+		errx(1, "bn_rand_in_range n");
 
 	/* n_sqr = n^2 */
 	if (!BN_sqr(n_sqr, n, ctx))
@@ -246,8 +246,8 @@ isqrt_test(void)
 	 */
 
 	for (i = 0; i < N_TESTS; i++) {
-		if (!bn_rand_interval(testcase, n_sqr, upper))
-			errx(1, "bn_rand_interval testcase");
+		if (!bn_rand_in_range(testcase, n_sqr, upper))
+			errx(1, "bn_rand_in_range testcase");
 
 		if (!bn_isqrt(isqrt, &is_perfect_square, testcase, ctx))
 			errx(1, "bn_isqrt testcase");

@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_key.c,v 1.34 2023/07/08 14:28:15 beck Exp $ */
+/* $OpenBSD: dsa_key.c,v 1.35 2023/08/03 18:53:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -95,7 +95,7 @@ dsa_builtin_keygen(DSA *dsa)
 	if ((ctx = BN_CTX_new()) == NULL)
 		goto err;
 
-	if (!bn_rand_interval(priv_key, BN_value_one(), dsa->q))
+	if (!bn_rand_interval(priv_key, 1, dsa->q))
 		goto err;
 	if (!BN_mod_exp_ct(pub_key, dsa->g, priv_key, dsa->p, ctx))
 		goto err;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_mod_sqrt.c,v 1.2 2023/07/08 12:21:58 beck Exp $ */
+/*	$OpenBSD: bn_mod_sqrt.c,v 1.3 2023/08/03 18:53:55 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -237,15 +237,13 @@ static int
 bn_mod_sqrt_find_sylow_generator(BIGNUM *out_generator, const BIGNUM *p,
     const BIGNUM *q, BN_CTX *ctx)
 {
-	BIGNUM *n, *p_abs, *thirty_two;
+	BIGNUM *n, *p_abs;
 	int i, is_non_residue;
 	int ret = 0;
 
 	BN_CTX_start(ctx);
 
 	if ((n = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((thirty_two = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((p_abs = BN_CTX_get(ctx)) == NULL)
 		goto err;
@@ -259,14 +257,12 @@ bn_mod_sqrt_find_sylow_generator(BIGNUM *out_generator, const BIGNUM *p,
 			goto found;
 	}
 
-	if (!BN_set_word(thirty_two, 32))
-		goto err;
 	if (!bn_copy(p_abs, p))
 		goto err;
 	BN_set_negative(p_abs, 0);
 
 	for (i = 0; i < 128; i++) {
-		if (!bn_rand_interval(n, thirty_two, p_abs))
+		if (!bn_rand_interval(n, 32, p_abs))
 			goto err;
 		if (!bn_mod_sqrt_n_is_non_residue(&is_non_residue, n, p, ctx))
 			goto err;

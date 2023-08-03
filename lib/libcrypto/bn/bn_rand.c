@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_rand.c,v 1.28 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_rand.c,v 1.29 2023/08/03 18:53:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -284,29 +284,46 @@ BN_rand_range(BIGNUM *r, const BIGNUM *range)
 LCRYPTO_ALIAS(BN_rand_range);
 
 int
-bn_rand_interval(BIGNUM *rnd, const BIGNUM *lower_inc, const BIGNUM *upper_exc)
+bn_rand_in_range(BIGNUM *rnd, const BIGNUM *lower_inc, const BIGNUM *upper_exc)
 {
-	BIGNUM *len = NULL;
+	BIGNUM *len;
 	int ret = 0;
-
-	if (BN_cmp(lower_inc, upper_exc) >= 0)
-		goto err;
 
 	if ((len = BN_new()) == NULL)
 		goto err;
-
 	if (!BN_sub(len, upper_exc, lower_inc))
 		goto err;
-
-	if (!bn_rand_range(0, rnd, len))
+	if (!BN_rand_range(rnd, len))
 		goto err;
-
 	if (!BN_add(rnd, rnd, lower_inc))
 		goto err;
 
 	ret = 1;
+
  err:
 	BN_free(len);
+
+	return ret;
+}
+
+int
+bn_rand_interval(BIGNUM *rnd, BN_ULONG lower_word, const BIGNUM *upper_exc)
+{
+	BIGNUM *lower_inc = NULL;
+	int ret = 0;
+
+	if ((lower_inc = BN_new()) == NULL)
+		goto err;
+	if (!BN_set_word(lower_inc, lower_word))
+		goto err;
+	if (!bn_rand_in_range(rnd, lower_inc, upper_exc))
+		goto err;
+
+	ret = 1;
+
+ err:
+	BN_free(lower_inc);
+
 	return ret;
 }
 

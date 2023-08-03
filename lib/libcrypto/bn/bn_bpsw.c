@@ -1,4 +1,4 @@
-/*	$OpenBSD: bn_bpsw.c,v 1.10 2023/05/10 21:05:24 tb Exp $ */
+/*	$OpenBSD: bn_bpsw.c,v 1.11 2023/08/03 18:53:55 tb Exp $ */
 /*
  * Copyright (c) 2022 Martin Grenouilloux <martin.grenouilloux@lse.epita.fr>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -385,7 +385,7 @@ bn_miller_rabin(int *is_pseudoprime, const BIGNUM *n, BN_CTX *ctx,
     size_t rounds)
 {
 	BN_MONT_CTX *mctx = NULL;
-	BIGNUM *base, *k, *n_minus_one, *three;
+	BIGNUM *base, *k, *n_minus_one;
 	size_t i;
 	int s;
 	int ret = 0;
@@ -397,8 +397,6 @@ bn_miller_rabin(int *is_pseudoprime, const BIGNUM *n, BN_CTX *ctx,
 	if ((k = BN_CTX_get(ctx)) == NULL)
 		goto err;
 	if ((n_minus_one = BN_CTX_get(ctx)) == NULL)
-		goto err;
-	if ((three = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
 	if (BN_is_word(n, 2) || BN_is_word(n, 3)) {
@@ -451,11 +449,8 @@ bn_miller_rabin(int *is_pseudoprime, const BIGNUM *n, BN_CTX *ctx,
 	 * risk of false positives in BPSW.
 	 */
 
-	if (!BN_set_word(three, 3))
-		goto err;
-
 	for (i = 0; i < rounds; i++) {
-		if (!bn_rand_interval(base, three, n_minus_one))
+		if (!bn_rand_interval(base, 3, n_minus_one))
 			goto err;
 
 		if (!bn_fermat(is_pseudoprime, n, n_minus_one, k, s, base, ctx,

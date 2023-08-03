@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.32 2023/08/02 08:44:38 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.33 2023/08/03 18:53:55 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -274,7 +274,8 @@ void bn_div_rem_words(BN_ULONG h, BN_ULONG l, BN_ULONG d, BN_ULONG *out_q,
     BN_ULONG *out_r);
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);
-int bn_rand_interval(BIGNUM *rnd, const BIGNUM *lower_inc, const BIGNUM *upper_exc);
+int bn_rand_in_range(BIGNUM *rnd, const BIGNUM *lower_inc, const BIGNUM *upper_exc);
+int bn_rand_interval(BIGNUM *rnd, BN_ULONG lower_word, const BIGNUM *upper_exc);
 
 void	BN_init(BIGNUM *);
 
