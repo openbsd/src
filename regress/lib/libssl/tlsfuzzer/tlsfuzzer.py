@@ -1,4 +1,4 @@
-#   $OpenBSD: tlsfuzzer.py,v 1.50 2023/07/02 17:21:33 beck Exp $
+#   $OpenBSD: tlsfuzzer.py,v 1.51 2023/08/03 20:13:12 tb Exp $
 #
 # Copyright (c) 2020 Theo Buehler <tb@openbsd.org>
 #
@@ -383,6 +383,12 @@ tls12_tests = TestGroup("TLSv1.2 tests", [
         "test-atypical-padding.py", [
             "-e", "sanity - encrypt then MAC",
             "-e", "2^14 bytes of AppData with 256 bytes of padding (SHA1 + Encrypt then MAC)",
+        ]
+    ),
+    Test(
+        "test-ccs.py", [
+            "-x", "two bytes long CCS",
+            "-X", "does not match received \"decode_error\"",
         ]
     ),
     Test(
