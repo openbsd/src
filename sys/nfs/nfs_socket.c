@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.143 2022/08/13 21:01:46 mvs Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.144 2023/08/03 09:49:09 mvs Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -258,7 +258,6 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		MGET(nam, M_WAIT, MT_SONAME);
 
 	so = nmp->nm_so;
-	solock(so);
 	nmp->nm_soflags = so->so_proto->pr_flags;
 
 	/*
@@ -282,7 +281,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
 		sin->sin_port = htons(0);
+		solock(so);
 		error = sobind(so, nam, &proc0);
+		sounlock(so);
 		if (error)
 			goto bad;
 
@@ -294,6 +295,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			goto bad;
 	}
 
+	solock(so);
 	/*
 	 * Protocols that do not require connections may be optionally left
 	 * unconnected for servers that reply from a port other than NFS_PORT.
@@ -301,12 +303,12 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	if (nmp->nm_flag & NFSMNT_NOCONN) {
 		if (nmp->nm_soflags & PR_CONNREQUIRED) {
 			error = ENOTCONN;
-			goto bad;
+			goto bad_locked;
 		}
 	} else {
 		error = soconnect(so, nmp->nm_nam);
 		if (error)
-			goto bad;
+			goto bad_locked;
 
 		/*
 		 * Wait for the connection to complete. Cribbed from the
@@ -320,13 +322,13 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 			    so->so_error == 0 && rep &&
 			    (error = nfs_sigintr(nmp, rep, rep->r_procp)) != 0){
 				so->so_state &= ~SS_ISCONNECTING;
-				goto bad;
+				goto bad_locked;
 			}
 		}
 		if (so->so_error) {
 			error = so->so_error;
 			so->so_error = 0;
-			goto bad;
+			goto bad_locked;
 		}
 	}
 	/*
@@ -338,6 +340,7 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 		so->so_snd.sb_timeo_nsecs = SEC_TO_NSEC(5);
 	else
 		so->so_snd.sb_timeo_nsecs = INFSLP;
+	sounlock(so);
 	if (nmp->nm_sotype == SOCK_DGRAM) {
 		sndreserve = nmp->nm_wsize + NFS_MAXPKTHDR;
 		rcvreserve = (max(nmp->nm_rsize, nmp->nm_readdirsize) +
@@ -360,9 +363,10 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	} else {
 		panic("%s: nm_sotype %d", __func__, nmp->nm_sotype);
 	}
+	solock(so);
 	error = soreserve(so, sndreserve, rcvreserve);
 	if (error)
-		goto bad;
+		goto bad_locked;
 	so->so_rcv.sb_flags |= SB_NOINTR;
 	so->so_snd.sb_flags |= SB_NOINTR;
 	sounlock(so);
@@ -377,8 +381,9 @@ nfs_connect(struct nfsmount *nmp, struct nfsreq *rep)
 	nmp->nm_timeouts = 0;
 	return (0);
 
-bad:
+bad_locked:
 	sounlock(so);
+bad:
 
 	m_freem(mopt);
 	m_freem(nam);

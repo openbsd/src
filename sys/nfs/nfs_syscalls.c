@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.118 2022/06/06 14:45:41 claudio Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.119 2023/08/03 09:49:09 mvs Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -249,8 +249,8 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 		siz = NFS_MAXPACKET;
 	solock(so);
 	error = soreserve(so, siz, siz); 
+	sounlock(so);
 	if (error) {
-		sounlock(so);
 		m_freem(mynam);
 		return (error);
 	}
@@ -275,6 +275,7 @@ nfssvc_addsock(struct file *fp, struct mbuf *mynam)
 		sosetopt(so, IPPROTO_TCP, TCP_NODELAY, m);
 		m_freem(m);
 	}
+	solock(so);
 	so->so_rcv.sb_flags &= ~SB_NOINTR;
 	so->so_rcv.sb_timeo_nsecs = INFSLP;
 	so->so_snd.sb_flags &= ~SB_NOINTR;
