@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tar.1,v 1.64 2022/03/31 17:27:14 naddy Exp $
+.\"	$OpenBSD: tar.1,v 1.65 2023/08/03 18:17:54 aisha Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: August 3 2023 $
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -331,16 +331,16 @@ and
 .Pp
 .Dl $ tar c bonvole sekve
 .Pp
-Output a
+Create a
 .Xr gzip 1
-compressed archive containing the files
+compressed archive, called
+.Pa foriru.tar.gz ,
+containing the files
 .Pa bonvole
 and
-.Pa sekve
-to a file called
-.Pa foriru.tar.gz :
+.Pa sekve :
 .Pp
-.Dl $ tar zcf foriru.tar.gz bonvole sekve
+.Dl $ tar czf foriru.tar.gz bonvole sekve
 .Pp
 Verbosely create an archive, called
 .Pa backup.tar.gz ,
@@ -349,7 +349,7 @@ of all files matching the shell
 function
 .Pa *.c :
 .Pp
-.Dl $ tar zcvf backup.tar.gz *.c
+.Dl $ tar cvzf backup.tar.gz *.c
 .Pp
 Verbosely list, but do not extract, all files ending in
 .Pa .jpeg
@@ -358,6 +358,13 @@ from a compressed archive named
 Note that the glob pattern has been quoted to avoid expansion by the shell:
 .Pp
 .Dl $ tar tvzf backup.tar.gz '*.jpeg'
+.Pp
+Verbosely extract an archive, called
+.Pa foo.tar.gz ,
+to the directory
+.Pa /var/foo :
+.Pp
+.Dl $ tar xvzf foo.tar.gz -C /var/foo
 .Pp
 For more detailed examples, see
 .Xr pax 1 .
