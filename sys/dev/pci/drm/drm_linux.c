@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.101 2023/07/18 06:58:59 claudio Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.102 2023/08/04 09:31:20 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -2007,14 +2007,14 @@ dma_fence_get_stub(void)
 }
 
 struct dma_fence *
-dma_fence_allocate_private_stub(void)
+dma_fence_allocate_private_stub(ktime_t ts)
 {
 	struct dma_fence *f = malloc(sizeof(*f), M_DRM,
 	    M_ZERO | M_WAITOK | M_CANFAIL);
 	if (f == NULL)
 		return ERR_PTR(-ENOMEM);
 	dma_fence_init(f, &dma_fence_stub_ops, &dma_fence_stub_mtx, 0, 0);
-	dma_fence_signal(f);
+	dma_fence_signal_timestamp(f, ts);
 	return f;
 }
 
