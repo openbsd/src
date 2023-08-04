@@ -1,9 +1,9 @@
-dnl	$OpenBSD: hardware,v 1.19 2022/09/07 10:30:03 jsg Exp $
+dnl	$OpenBSD: hardware,v 1.20 2023/08/04 10:29:09 fcambus Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5/H6
 		Pine64 Pine 64/64+
-		Pine64 Pine H64
+		Pine64 H64
 		Pine64 Pinebook
 		NanoPi A64
 		Orange Pi PC2
@@ -13,6 +13,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 		SoftIron OverDrive 1000
 		SoftIron OverDrive 3000
 	Amlogic G12B/SM1
+		Banana Pi BPI-M5
 		Hardkernel ODROID-N2
 		Hardkernel ODROID-C4
 		Hardkernel ODROID-HC4
@@ -45,6 +46,8 @@ The following machines are targeted by OpenBSD/MACHINE:
 		GL.iNet Brume
 	Marvell ARMADA 7K/8K
 		SolidRun/Marvell MACCHIATObin
+	Qualcomm Snapdragon 7cx (SC7180/SC7180P)
+		Acer Aspire One
 	Qualcomm Snapdragon 8cx Gen 3 (SC8280XP)
 		Lenovo ThinkPad X13s Gen 1
 	Rockchip RK3328/RK3399(pro)
@@ -55,5 +58,10 @@ The following machines are targeted by OpenBSD/MACHINE:
 		FriendlyElec NanoPC-T4
 		Theobroma Systems RK3399-Q7
 		Radxa Rock Pi N10
+	Rockchip RK3566/RK3568
+		Pine64 Quartz64 Model A
+		Pine64 Quartz64 Model B
+		ROC-RK3566-PC
+		NanoPi R5S
 	Socionext SC2A11
 		Socionext SynQuacer-E Developerbox
