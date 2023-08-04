@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.446 2023/07/12 14:45:43 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.447 2023/08/04 09:20:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -3461,7 +3461,8 @@ peer_matched(struct peer *p, struct ctl_neighbor *n)
 			return 0;
 	} else if (n && n->descr[0]) {
 		s = n->is_group ? p->conf.group : p->conf.descr;
-		if (strcmp(s, n->descr))
+		/* cannot trust n->descr to be properly terminated */
+		if (strncmp(s, n->descr, sizeof(n->descr)))
 			return 0;
 	}
 	return 1;

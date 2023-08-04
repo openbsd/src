@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.111 2023/07/20 11:10:03 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.112 2023/08/04 09:20:12 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -314,7 +314,6 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
 			    sizeof(struct ctl_neighbor)) {
 				neighbor = imsg.data;
-				neighbor->descr[PEER_DESCR_LEN - 1] = 0;
 			} else {
 				neighbor = NULL;
 			}
@@ -370,7 +369,6 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 			}
 
 			neighbor = imsg.data;
-			neighbor->descr[PEER_DESCR_LEN - 1] = 0;
 
 			matched = 0;
 			RB_FOREACH(p, peer_head, peers) {
@@ -474,7 +472,6 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 
 			ribreq = imsg.data;
 			neighbor = &ribreq->neighbor;
-			neighbor->descr[PEER_DESCR_LEN - 1] = 0;
 
 			/* check if at least one neighbor exists */
 			RB_FOREACH(p, peer_head, peers)
