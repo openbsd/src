@@ -1,4 +1,4 @@
-# $OpenBSD: files.drm,v 1.59 2023/01/01 01:34:34 jsg Exp $
+# $OpenBSD: files.drm,v 1.60 2023/08/04 08:49:46 jsg Exp $
 
 #file	dev/pci/drm/aperture.c		drm
 file	dev/pci/drm/dma-resv.c			drm
@@ -1182,6 +1182,7 @@ file	dev/pci/drm/amd/display/dmub/src/dmub_dcn301.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_dcn302.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_dcn303.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_dcn31.c		amdgpu
+file	dev/pci/drm/amd/display/dmub/src/dmub_dcn314.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_dcn315.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_dcn316.c		amdgpu
 file	dev/pci/drm/amd/display/dmub/src/dmub_dcn32.c		amdgpu
