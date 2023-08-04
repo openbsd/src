@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_msg.c,v 1.99 2023/07/28 11:23:03 claudio Exp $	*/
+/*	$OpenBSD: ikev2_msg.c,v 1.100 2023/08/04 19:06:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -292,7 +292,7 @@ ikev2_msg_send(struct iked *env, struct iked_message *msg)
 	    betoh32(hdr->ike_msgid),
 	    print_addr(&msg->msg_peer),
 	    print_addr(&msg->msg_local),
-	    ibuf_length(buf), isnatt ? ", NAT-T" : "");
+	    ibuf_size(buf), isnatt ? ", NAT-T" : "");
 
 	if (isnatt) {
 		struct ibuf *new;
@@ -448,7 +448,7 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src,
 	log_debug("%s: padded length %zu", __func__, ibuf_size(src));
 	print_hexbuf(src);
 
-	cipher_setkey(sa->sa_encr, ibuf_data(encr), ibuf_length(encr));
+	cipher_setkey(sa->sa_encr, ibuf_data(encr), ibuf_size(encr));
 	cipher_setiv(sa->sa_encr, NULL, 0);	/* XXX ivlen */
 	if (cipher_init_encrypt(sa->sa_encr) == -1) {
 		log_info("%s: error initiating cipher.", __func__);
@@ -466,8 +466,8 @@ ikev2_msg_encrypt(struct iked *env, struct iked_sa *sa, struct ibuf *src,
 
 	/* Add AAD for AEAD ciphers */
 	if (sa->sa_integr->hash_isaead)
-		cipher_aad(sa->sa_encr, ibuf_data(aad),
-		    ibuf_length(aad), &outlen);
+		cipher_aad(sa->sa_encr, ibuf_data(aad), ibuf_size(aad),
+		    &outlen);
 
 	if (cipher_update(sa->sa_encr, ibuf_data(src), encrlen,
 	    ibuf_data(out), &outlen) == -1) {
@@ -620,7 +620,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 			goto done;
 
 		hash_setkey(sa->sa_integr, ibuf_data(integr),
-		    ibuf_length(integr));
+		    ibuf_size(integr));
 		hash_init(sa->sa_integr);
 		hash_update(sa->sa_integr, ibuf_data(msg),
 		    ibuf_size(msg) - integrlen);
@@ -649,7 +649,7 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 		goto done;
 	}
 
-	cipher_setkey(sa->sa_encr, ibuf_data(encr), ibuf_length(encr));
+	cipher_setkey(sa->sa_encr, ibuf_data(encr), ibuf_size(encr));
 	cipher_setiv(sa->sa_encr, ibuf_seek(src, ivoff, ivlen), ivlen);
 	if (cipher_init_decrypt(sa->sa_encr) == -1) {
 		log_info("%s: error initiating cipher.", __func__);
@@ -675,13 +675,14 @@ ikev2_msg_decrypt(struct iked *env, struct iked_sa *sa,
 	 * Add additional authenticated data for AEAD ciphers
 	 */
 	if (sa->sa_integr->hash_isaead) {
-		log_debug("%s: AAD length %zu", __func__, ibuf_length(msg) - ibuf_length(src));
-		print_hex(ibuf_data(msg), 0, ibuf_length(msg) - ibuf_length(src));
+		log_debug("%s: AAD length %zu", __func__,
+		    ibuf_size(msg) - ibuf_size(src));
+		print_hex(ibuf_data(msg), 0, ibuf_size(msg) - ibuf_size(src));
 		cipher_aad(sa->sa_encr, ibuf_data(msg),
-		    ibuf_length(msg) - ibuf_length(src), &outlen);
+		    ibuf_size(msg) - ibuf_size(src), &outlen);
 	}
 
-	if ((outlen = ibuf_length(out)) != 0) {
+	if ((outlen = ibuf_size(out)) != 0) {
 		if (cipher_update(sa->sa_encr, ibuf_seek(src, encroff, encrlen),
 		    encrlen, ibuf_data(out), &outlen) == -1) {
 			log_info("%s: error updating cipher.", __func__);

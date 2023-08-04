@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.95 2023/06/28 14:10:24 tobhe Exp $	*/
+/*	$OpenBSD: ca.c,v 1.96 2023/08/04 19:06:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -207,7 +207,7 @@ int
 ca_certbundle_add(struct ibuf *buf, struct iked_id *id)
 {
 	uint8_t		 type = id->id_type;
-	size_t		 len = ibuf_length(id->id_buf);
+	size_t		 len = ibuf_size(id->id_buf);
 	void		*val = ibuf_data(id->id_buf);
 
 	if (id == NULL ||
@@ -416,16 +416,16 @@ ca_setcert(struct iked *env, struct iked_sahdr *sh, struct iked_id *id,
 	/* Must send the cert and a valid Id to the ca process */
 	if (procid == PROC_CERT) {
 		if (id == NULL || id->id_type == IKEV2_ID_NONE ||
-		    ibuf_length(id->id_buf) > IKED_ID_SIZE)
+		    ibuf_size(id->id_buf) > IKED_ID_SIZE)
 			return (-1);
 		bzero(&idb, sizeof(idb));
 
 		/* Convert to a static Id */
 		idb.id_type = id->id_type;
 		idb.id_offset = id->id_offset;
-		idb.id_length = ibuf_length(id->id_buf);
+		idb.id_length = ibuf_size(id->id_buf);
 		memcpy(&idb.id_data, ibuf_data(id->id_buf),
-		    ibuf_length(id->id_buf));
+		    ibuf_size(id->id_buf));
 
 		iov[iovcnt].iov_base = &idb;
 		iov[iovcnt].iov_len = sizeof(idb);
@@ -491,13 +491,13 @@ ca_setreq(struct iked *env, struct iked_sa *sa,
 	if (ikev2_policy2id(localid, &id, 1) != 0)
 		return (-1);
 
-	if (ibuf_length(id.id_buf) > IKED_ID_SIZE)
+	if (ibuf_size(id.id_buf) > IKED_ID_SIZE)
 		return (-1);
 	bzero(&idb, sizeof(idb));
 	idb.id_type = id.id_type;
 	idb.id_offset = id.id_offset;
-	idb.id_length = ibuf_length(id.id_buf);
-	memcpy(&idb.id_data, ibuf_data(id.id_buf), ibuf_length(id.id_buf));
+	idb.id_length = ibuf_size(id.id_buf);
+	memcpy(&idb.id_data, ibuf_data(id.id_buf), ibuf_size(id.id_buf));
 	iov[iovcnt].iov_base = &idb;
 	iov[iovcnt].iov_len = sizeof(idb);
 	iovcnt++;
@@ -637,7 +637,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 				ret = ca_pubkey_serialize(certkey, &key);
 				if (ret == 0) {
 					ptr = ibuf_data(key.id_buf);
-					len = ibuf_length(key.id_buf);
+					len = ibuf_size(key.id_buf);
 					type = key.id_type;
 					break;
 				}
@@ -668,7 +668,7 @@ ca_getcert(struct iked *env, struct imsg *imsg)
 		ret = ca_validate_pubkey(env, &id, NULL, 0, &key);
 		if (ret == 0) {
 			ptr = ibuf_data(key.id_buf);
-			len = ibuf_length(key.id_buf);
+			len = ibuf_size(key.id_buf);
 			type = key.id_type;
 		}
 		break;
@@ -1060,18 +1060,18 @@ ca_reload(struct iked *env)
 		}
 	}
 
-	if (ibuf_length(env->sc_certreq)) {
+	if (ibuf_size(env->sc_certreq)) {
 		env->sc_certreqtype = IKEV2_CERT_X509_CERT;
 		iov[0].iov_base = &env->sc_certreqtype;
 		iov[0].iov_len = sizeof(env->sc_certreqtype);
 		iovcnt++;
 		iov[1].iov_base = ibuf_data(env->sc_certreq);
-		iov[1].iov_len = ibuf_length(env->sc_certreq);
+		iov[1].iov_len = ibuf_size(env->sc_certreq);
 		iovcnt++;
 
 		log_debug("%s: loaded %zu ca certificate%s", __func__,
-		    ibuf_length(env->sc_certreq) / SHA_DIGEST_LENGTH,
-		    ibuf_length(env->sc_certreq) == SHA_DIGEST_LENGTH ?
+		    ibuf_size(env->sc_certreq) / SHA_DIGEST_LENGTH,
+		    ibuf_size(env->sc_certreq) == SHA_DIGEST_LENGTH ?
 		    "" : "s");
 
 		(void)proc_composev(&env->sc_ps, PROC_IKEV2, IMSG_CERTREQ,
@@ -1252,7 +1252,7 @@ ca_cert_local(struct iked *env, X509  *cert)
 	int		 ret = 0;
 
 	if ((localpub = ca_bytes_to_pkey(ibuf_data(store->ca_pubkey.id_buf),
-	    ibuf_length(store->ca_pubkey.id_buf))) == NULL)
+	    ibuf_size(store->ca_pubkey.id_buf))) == NULL)
 		goto done;
 
 	if ((certkey = X509_get0_pubkey(cert)) == NULL) {
@@ -1579,7 +1579,7 @@ ca_privkey_to_method(struct iked_id *privkey)
 		break;
 	case IKEV2_CERT_ECDSA:
 		if ((rawcert = BIO_new_mem_buf(ibuf_data(privkey->id_buf),
-		    ibuf_length(privkey->id_buf))) == NULL)
+		    ibuf_size(privkey->id_buf))) == NULL)
 			goto out;
 		if ((ec = d2i_ECPrivateKey_bio(rawcert, NULL)) == NULL)
 			goto out;

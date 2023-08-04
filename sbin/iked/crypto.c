@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto.c,v 1.45 2023/07/28 07:31:38 claudio Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.46 2023/08/04 19:06:25 claudio Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -328,7 +328,7 @@ void
 hash_init(struct iked_hash *hash)
 {
 	HMAC_Init_ex(hash->hash_ctx, ibuf_data(hash->hash_key),
-	    ibuf_length(hash->hash_key), hash->hash_priv, NULL);
+	    ibuf_size(hash->hash_key), hash->hash_priv, NULL);
 }
 
 void
@@ -923,7 +923,7 @@ dsa_init(struct iked_dsa *dsa, const void *buf, size_t len)
 
 	if (dsa->dsa_hmac) {
 		if (!HMAC_Init_ex(dsa->dsa_ctx, ibuf_data(dsa->dsa_keydata),
-		    ibuf_length(dsa->dsa_keydata), dsa->dsa_priv, NULL))
+		    ibuf_size(dsa->dsa_keydata), dsa->dsa_priv, NULL))
 			return (-1);
 		return (0);
 	}
