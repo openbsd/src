@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.h,v 1.41 2023/07/28 09:22:26 tb Exp $ */
+/* $OpenBSD: engine.h,v 1.42 2023/08/04 05:44:51 tb Exp $ */
 /* Written by Geoff Thorpe (geoff@geoffthorpe.net) for the OpenSSL
  * project 2000.
  */
@@ -246,8 +246,8 @@ void ENGINE_load_openssl(void);
 int ENGINE_register_all_complete(void);
 
 void ENGINE_cleanup(void);
-ENGINE *ENGINE_new(void);
 
+ENGINE *ENGINE_new(void);
 int ENGINE_free(ENGINE *engine);
 int ENGINE_init(ENGINE *engine);
 int ENGINE_finish(ENGINE *engine);
