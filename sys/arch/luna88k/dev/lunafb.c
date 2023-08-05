@@ -1,4 +1,4 @@
-/* $OpenBSD: lunafb.c,v 1.31 2022/11/06 13:01:22 aoyama Exp $ */
+/* $OpenBSD: lunafb.c,v 1.32 2023/08/05 00:34:19 aoyama Exp $ */
 /* $NetBSD: lunafb.c,v 1.7.6.1 2002/08/07 01:48:34 lukem Exp $ */
 
 /*-
@@ -260,7 +260,11 @@ omfbioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return omsetcmap(sc, (struct wsdisplay_cmap *)data);
 
 	case WSDISPLAYIO_GETSUPPORTEDDEPTH:
-		*(u_int *)data = WSDISPLAYIO_DEPTH_1;
+		if (dc->dc_depth == 8)
+			*(u_int *)data =
+			    WSDISPLAYIO_DEPTH_8 | WSDISPLAYIO_DEPTH_1;
+		else
+			*(u_int *)data = WSDISPLAYIO_DEPTH_1;
 		break;
 
 	case WSDISPLAYIO_SETGFXMODE:
