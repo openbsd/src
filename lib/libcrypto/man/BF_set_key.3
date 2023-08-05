@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BF_set_key.3,v 1.11 2023/07/29 03:05:35 tb Exp $
+.\"	$OpenBSD: BF_set_key.3,v 1.12 2023/08/05 18:27:55 jmc Exp $
 .\"	OpenSSL 99d63d46 Jul 19 09:27:53 2016 -0400
 .\"
 .\" This file was written by Richard Levitte <levitte@openssl.org>.
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 29 2023 $
+.Dd $Mdocdate: August 5 2023 $
 .Dt BF_SET_KEY 3
 .Os
 .Sh NAME
@@ -59,7 +59,7 @@
 .Nm BF_ecb_encrypt ,
 .Nm BF_cbc_encrypt ,
 .Nm BF_cfb64_encrypt ,
-.Nm BF_ofb64_encrypt ,
+.Nm BF_ofb64_encrypt
 .Nd Blowfish encryption
 .Sh SYNOPSIS
 .In openssl/blowfish.h
