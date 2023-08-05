@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.64 2022/12/08 01:25:45 guenther Exp $ */
+/*	$OpenBSD: context.S,v 1.65 2023/08/05 05:46:36 guenther Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -65,16 +65,6 @@ LEAF(savectx, 0)
 	j	ra
 	 move	v0, zero
 END(savectx)
-
-LEAF(cpu_idle_enter, 0)
-	j	ra
-	 NOP
-END(cpu_idle_enter)
-
-LEAF(cpu_idle_leave, 0)
-	j	ra
-	 NOP
-END(cpu_idle_leave)
 
 LEAF(cpu_idle_cycle_nop, 0)
 	j	ra
