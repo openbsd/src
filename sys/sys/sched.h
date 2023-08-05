@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.59 2023/08/03 16:12:08 claudio Exp $	*/
+/*	$OpenBSD: sched.h,v 1.60 2023/08/05 20:07:56 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -107,6 +107,7 @@ struct schedstate_percpu {
 	u_char spc_curpriority;		/* usrpri of curproc */
 	int spc_rrticks;		/* ticks until roundrobin() */
 
+	struct clockintr *spc_itimer;	/* [o] itimer_update handle */
 	struct clockintr *spc_profclock; /* [o] profclock handle */
 
 	u_int spc_nrun;			/* procs on the run queues */
@@ -138,6 +139,7 @@ struct cpustats {
 #define SPCF_SHOULDHALT		0x0004	/* CPU should be vacated */
 #define SPCF_HALTED		0x0008	/* CPU has been halted */
 #define SPCF_PROFCLOCK		0x0010	/* profclock() was started */
+#define SPCF_ITIMER		0x0020	/* itimer_update() was started */
 
 #define	SCHED_PPQ	(128 / SCHED_NQS)	/* priorities per queue */
 #define NICE_WEIGHT 2			/* priorities per nice level */

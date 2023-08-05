@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.163 2023/02/15 10:07:50 claudio Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.164 2023/08/05 20:07:55 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/proc.h>
@@ -43,6 +44,7 @@
 #include <sys/stdint.h>
 #include <sys/pledge.h>
 #include <sys/task.h>
+#include <sys/time.h>
 #include <sys/timeout.h>
 #include <sys/timetc.h>
 
@@ -52,6 +54,7 @@
 #include <dev/clock_subr.h>
 
 int itimerfix(struct itimerval *);
+void process_reset_itimer_flag(struct process *);
 
 /* 
  * Time of day and interval timer support.
@@ -551,6 +554,10 @@ setitimer(int which, const struct itimerval *itv, struct itimerval *olditv)
 				timeout_del(&pr->ps_realit_to);
 		}
 		*itimer = its;
+		if (which == ITIMER_VIRTUAL || which == ITIMER_PROF) {
+			process_reset_itimer_flag(pr);
+			need_resched(curcpu());
+		}
 	}
 
 	if (which == ITIMER_REAL)
@@ -729,47 +736,70 @@ itimerfix(struct itimerval *itv)
 }
 
 /*
- * Decrement an interval timer by the given number of nanoseconds.
+ * Decrement an interval timer by the given duration.
  * If the timer expires and it is periodic then reload it.  When reloading
  * the timer we subtract any overrun from the next period so that the timer
  * does not drift.
  */
 int
-itimerdecr(struct itimerspec *itp, long nsec)
+itimerdecr(struct itimerspec *itp, const struct timespec *decrement)
 {
-	struct timespec decrement;
-
-	NSEC_TO_TIMESPEC(nsec, &decrement);
-
-	mtx_enter(&itimer_mtx);
-
-	/*
-	 * Double-check that the timer is enabled.  A different thread
-	 * in setitimer(2) may have disabled it while we were entering
-	 * the mutex.
-	 */
-	if (!timespecisset(&itp->it_value)) {
-		mtx_leave(&itimer_mtx);
+	timespecsub(&itp->it_value, decrement, &itp->it_value);
+	if (itp->it_value.tv_sec >= 0 && timespecisset(&itp->it_value))
 		return (1);
-	}
-
-	/*
-	 * The timer is enabled.  Update and reload it as needed.
-	 */
-	timespecsub(&itp->it_value, &decrement, &itp->it_value);
-	if (itp->it_value.tv_sec >= 0 && timespecisset(&itp->it_value)) {
-		mtx_leave(&itimer_mtx);
-		return (1);
-	}
 	if (!timespecisset(&itp->it_interval)) {
 		timespecclear(&itp->it_value);
-		mtx_leave(&itimer_mtx);
 		return (0);
 	}
 	while (itp->it_value.tv_sec < 0 || !timespecisset(&itp->it_value))
 		timespecadd(&itp->it_value, &itp->it_interval, &itp->it_value);
-	mtx_leave(&itimer_mtx);
 	return (0);
+}
+
+void
+itimer_update(struct clockintr *cl, void *cf)
+{
+	struct timespec elapsed;
+	uint64_t nsecs;
+	struct clockframe *frame = cf;
+	struct proc *p = curproc;
+	struct process *pr;
+
+	if (p == NULL || ISSET(p->p_flag, P_SYSTEM | P_WEXIT))
+		return;
+
+	pr = p->p_p;
+	if (!ISSET(pr->ps_flags, PS_ITIMER))
+		return;
+
+	nsecs = clockintr_advance(cl, hardclock_period) * hardclock_period;
+	NSEC_TO_TIMESPEC(nsecs, &elapsed);
+
+	mtx_enter(&itimer_mtx);
+	if (CLKF_USERMODE(frame) &&
+	    timespecisset(&pr->ps_timer[ITIMER_VIRTUAL].it_value) &&
+	    itimerdecr(&pr->ps_timer[ITIMER_VIRTUAL], &elapsed) == 0) {
+		process_reset_itimer_flag(pr);
+		atomic_setbits_int(&p->p_flag, P_ALRMPEND);
+		need_proftick(p);
+	}
+	if (timespecisset(&pr->ps_timer[ITIMER_PROF].it_value) &&
+	    itimerdecr(&pr->ps_timer[ITIMER_PROF], &elapsed) == 0) {
+		process_reset_itimer_flag(pr);
+		atomic_setbits_int(&p->p_flag, P_PROFPEND);
+		need_proftick(p);
+	}
+	mtx_leave(&itimer_mtx);
+}
+
+void
+process_reset_itimer_flag(struct process *ps)
+{
+	if (timespecisset(&ps->ps_timer[ITIMER_VIRTUAL].it_value) ||
+	    timespecisset(&ps->ps_timer[ITIMER_PROF].it_value))
+		atomic_setbits_int(&ps->ps_flags, PS_ITIMER);
+	else
+		atomic_clearbits_int(&ps->ps_flags, PS_ITIMER);
 }
 
 struct mutex ratecheck_mtx = MUTEX_INITIALIZER(IPL_HIGH);

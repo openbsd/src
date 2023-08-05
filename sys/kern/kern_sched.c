@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.83 2023/08/05 12:41:04 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.84 2023/08/05 20:07:55 cheloha Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -24,6 +24,7 @@
 #include <sys/clockintr.h>
 #include <sys/resourcevar.h>
 #include <sys/task.h>
+#include <sys/time.h>
 #include <sys/smr.h>
 #include <sys/tracepoint.h>
 
@@ -87,6 +88,14 @@ sched_init_cpu(struct cpu_info *ci)
 
 	spc->spc_idleproc = NULL;
 
+	if (spc->spc_itimer == NULL) {
+		spc->spc_itimer = clockintr_establish(&ci->ci_queue,
+		    itimer_update);
+		if (spc->spc_itimer == NULL) {
+			panic("%s: clockintr_establish itimer_update",
+			    __func__);
+		}
+	}
 	if (spc->spc_profclock == NULL) {
 		spc->spc_profclock = clockintr_establish(&ci->ci_queue,
 		    profclock);
@@ -223,6 +232,10 @@ sched_exit(struct proc *p)
 	timespecsub(&ts, &spc->spc_runtime, &ts);
 	timespecadd(&p->p_rtime, &ts, &p->p_rtime);
 
+	if (ISSET(spc->spc_schedflags, SPCF_ITIMER)) {
+		atomic_clearbits_int(&spc->spc_schedflags, SPCF_ITIMER);
+		clockintr_cancel(spc->spc_itimer);
+	}
 	if (ISSET(spc->spc_schedflags, SPCF_PROFCLOCK)) {
 		atomic_clearbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
 		clockintr_cancel(spc->spc_profclock);

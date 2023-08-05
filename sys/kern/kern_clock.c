@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.110 2023/08/01 07:57:55 claudio Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.111 2023/08/05 20:07:55 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -106,41 +106,12 @@ initclocks(void)
 }
 
 /*
- * hardclock does the accounting needed for ITIMER_PROF and ITIMER_VIRTUAL.
- * We don't want to send signals with psignal from hardclock because it makes
- * MULTIPROCESSOR locking very complicated. Instead, to use an idea from
- * FreeBSD, we set a flag on the thread and when it goes to return to
- * userspace it signals itself.
- */
-
-/*
  * The real-time timer, interrupting hz times per second.
  */
 void
 hardclock(struct clockframe *frame)
 {
-	struct proc *p;
 	struct cpu_info *ci = curcpu();
-
-	p = curproc;
-	if (p && ((p->p_flag & (P_SYSTEM | P_WEXIT)) == 0)) {
-		struct process *pr = p->p_p;
-
-		/*
-		 * Run current process's virtual and profile time, as needed.
-		 */
-		if (CLKF_USERMODE(frame) &&
-		    timespecisset(&pr->ps_timer[ITIMER_VIRTUAL].it_value) &&
-		    itimerdecr(&pr->ps_timer[ITIMER_VIRTUAL], tick_nsec) == 0) {
-			atomic_setbits_int(&p->p_flag, P_ALRMPEND);
-			need_proftick(p);
-		}
-		if (timespecisset(&pr->ps_timer[ITIMER_PROF].it_value) &&
-		    itimerdecr(&pr->ps_timer[ITIMER_PROF], tick_nsec) == 0) {
-			atomic_setbits_int(&p->p_flag, P_PROFPEND);
-			need_proftick(p);
-		}
-	}
 
 	if (--ci->ci_schedstate.spc_rrticks <= 0)
 		roundrobin(ci);

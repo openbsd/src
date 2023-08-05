@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.78 2023/07/25 18:16:19 cheloha Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.79 2023/08/05 20:07:55 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -350,7 +350,11 @@ mi_switch(void)
 	/* add the time counts for this thread to the process's total */
 	tuagg_unlocked(pr, p);
 
-	/* Stop the profclock if it's running. */
+	/* Stop any optional clock interrupts. */
+	if (ISSET(spc->spc_schedflags, SPCF_ITIMER)) {
+		atomic_clearbits_int(&spc->spc_schedflags, SPCF_ITIMER);
+		clockintr_cancel(spc->spc_itimer);
+	}
 	if (ISSET(spc->spc_schedflags, SPCF_PROFCLOCK)) {
 		atomic_clearbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
 		clockintr_cancel(spc->spc_profclock);
@@ -400,7 +404,13 @@ mi_switch(void)
 	 */
 	KASSERT(p->p_cpu == curcpu());
 
-	/* Start the profclock if profil(2) is enabled. */
+	/* Start any optional clock interrupts needed by the thread. */
+	if (ISSET(p->p_p->ps_flags, PS_ITIMER)) {
+		atomic_setbits_int(&p->p_cpu->ci_schedstate.spc_schedflags,
+		    SPCF_ITIMER);
+		clockintr_advance(p->p_cpu->ci_schedstate.spc_itimer,
+		    hardclock_period);
+	}
 	if (ISSET(p->p_p->ps_flags, PS_PROFIL)) {
 		atomic_setbits_int(&p->p_cpu->ci_schedstate.spc_schedflags,
 		    SPCF_PROFCLOCK);

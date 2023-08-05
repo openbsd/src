@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.163 2023/07/14 07:07:08 claudio Exp $	*/
+/*	$OpenBSD: systm.h,v 1.164 2023/08/05 20:07:56 cheloha Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -232,6 +232,8 @@ struct timespec;
 int	tvtohz(const struct timeval *);
 int	tstohz(const struct timespec *);
 void	realitexpire(void *);
+
+extern uint32_t hardclock_period;
 
 struct clockframe;
 void	hardclock(struct clockframe *);
