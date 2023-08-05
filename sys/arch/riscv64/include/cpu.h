@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 2023/07/25 18:16:21 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.17 2023/08/05 05:45:52 guenther Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -267,6 +267,9 @@ void fpu_save(struct proc *, struct trapframe *);
 void fpu_load(struct proc *);
 
 extern int cpu_errata_sifive_cip_1200;
+
+#define	cpu_idle_enter()	do { /* nothing */ } while (0)
+#define	cpu_idle_leave()	do { /* nothing */ } while (0)
 
 #endif /* _KERNEL */
 
