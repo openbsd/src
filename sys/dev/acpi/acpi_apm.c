@@ -1,4 +1,4 @@
-/* $OpenBSD: acpi_apm.c,v 1.2 2023/07/08 14:44:43 tobhe Exp $ */
+/* $OpenBSD: acpi_apm.c,v 1.3 2023/08/06 14:30:08 tobhe Exp $ */
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Jordan Hargrave <jordan@openbsd.org>
@@ -47,6 +47,9 @@ acpiopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct acpi_softc *sc = acpi_softc;
 	int s;
 
+	if (sc == NULL)
+		return (ENXIO);
+
 	s = splbio();
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
@@ -82,6 +85,9 @@ acpiclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct acpi_softc *sc = acpi_softc;
 	int s;
 
+	if (sc == NULL)
+		return (ENXIO);
+
 	s = splbio();
 	switch (APMDEV(dev)) {
 	case APMDEV_CTL:
@@ -105,6 +111,9 @@ acpiioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct acpi_softc *sc = acpi_softc;
 	struct apm_power_info *pi = (struct apm_power_info *)data;
 	int s;
+
+	if (sc == NULL)
+		return (ENXIO);
 
 	s = splbio();
 	/* fake APM */
@@ -167,6 +176,9 @@ acpikqfilter(dev_t dev, struct knote *kn)
 {
 	struct acpi_softc *sc = acpi_softc;
 	int s;
+
+	if (sc == NULL)
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
