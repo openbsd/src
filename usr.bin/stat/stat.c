@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.23 2018/09/18 15:14:06 tb Exp $ */
+/*	$OpenBSD: stat.c,v 1.24 2023/08/06 19:33:54 guenther Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -635,7 +635,6 @@ format1(const struct stat *st,
 		}
 		small = (sizeof(secs) == 4);
 		data = secs;
-		small = 1;
 		tm = localtime(&secs);
 		(void)strftime(path, sizeof(path), timefmt, tm);
 		sdata = path;
@@ -817,8 +816,8 @@ format1(const struct stat *st,
 				(void)snprintf(tmp, sizeof(tmp), "%d", size);
 				(void)strlcat(lfmt, tmp, sizeof(lfmt));
 			}
-			(void)strlcat(lfmt, "d", sizeof(lfmt));
-			n = snprintf(buf, blen, lfmt, secs);
+			(void)strlcat(lfmt, "lld", sizeof(lfmt));
+			n = snprintf(buf, blen, lfmt, (long long)secs);
 			return (n >= blen ? blen : n);
 		}
 
@@ -842,7 +841,7 @@ format1(const struct stat *st,
 			(void)snprintf(tmp, sizeof(tmp), "%d", size);
 			(void)strlcat(lfmt, tmp, sizeof(lfmt));
 		}
-		(void)strlcat(lfmt, "d", sizeof(lfmt));
+		(void)strlcat(lfmt, "lld", sizeof(lfmt));
 
 		/*
 		 * The stuff after the decimal point always needs zero
@@ -854,7 +853,7 @@ format1(const struct stat *st,
 		 * We can "print" at most nine digits of precision.  The
 		 * rest we will pad on at the end.
 		 */
-		(void)snprintf(tmp, sizeof(tmp), "%dd", prec > 9 ? 9 : prec);
+		(void)snprintf(tmp, sizeof(tmp), "%dld", prec > 9 ? 9 : prec);
 		(void)strlcat(lfmt, tmp, sizeof(lfmt));
 
 		/*
@@ -868,7 +867,7 @@ format1(const struct stat *st,
 		 * Use the format, and then tack on any zeroes that
 		 * might be required to make up the requested precision.
 		 */
-		l = snprintf(buf, blen, lfmt, secs, nsecs);
+		l = snprintf(buf, blen, lfmt, (long long)secs, nsecs);
 		if (l >= blen)
 			return (l);
 		for (; prec > 9 && l < blen; prec--, l++)
