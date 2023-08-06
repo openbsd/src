@@ -1,4 +1,4 @@
-/*	$OpenBSD: stat.c,v 1.24 2023/08/06 19:33:54 guenther Exp $ */
+/*	$OpenBSD: stat.c,v 1.25 2023/08/06 19:36:13 guenther Exp $ */
 /*	$NetBSD: stat.c,v 1.19 2004/06/20 22:20:16 jmc Exp $ */
 
 /*
@@ -611,27 +611,27 @@ format1(const struct stat *st,
 	case SHOW_st_atime:
 		gottime = 1;
 		secs = st->st_atime;
-		nsecs = st->st_atimensec;
+		nsecs = st->st_atim.tv_nsec;
 		/* FALLTHROUGH */
 	case SHOW_st_mtime:
 		if (!gottime) {
 			gottime = 1;
 			secs = st->st_mtime;
-			nsecs = st->st_mtimensec;
+			nsecs = st->st_mtim.tv_nsec;
 		}
 		/* FALLTHROUGH */
 	case SHOW_st_ctime:
 		if (!gottime) {
 			gottime = 1;
 			secs = st->st_ctime;
-			nsecs = st->st_ctimensec;
+			nsecs = st->st_ctim.tv_nsec;
 		}
 		/* FALLTHROUGH */
 	case SHOW_st_btime:
 		if (!gottime) {
 			gottime = 1;
-			secs = st->__st_birthtimespec.tv_sec;
-			nsecs = st->__st_birthtimespec.tv_nsec;
+			secs = st->__st_birthtime;
+			nsecs = st->__st_birthtim.tv_nsec;
 		}
 		small = (sizeof(secs) == 4);
 		data = secs;
