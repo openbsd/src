@@ -1,4 +1,4 @@
-/*	$OpenBSD: bio_chain.c,v 1.15 2023/03/04 12:13:11 tb Exp $	*/
+/*	$OpenBSD: bio_chain.c,v 1.16 2023/08/07 11:00:54 tb Exp $	*/
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  *
@@ -460,6 +460,47 @@ bio_set_next_link_test(void)
 	return link_chains(use_bio_push);
 }
 
+static long
+dup_leak_cb(BIO *bio, int cmd, const char *argp, int argi, long argl, long ret)
+{
+	if (argi == BIO_CTRL_DUP)
+		return 0;
+
+	return ret;
+}
+
+static int
+bio_dup_chain_leak(void)
+{
+	BIO *bio[CHAIN_POP_LEN];
+	BIO *dup;
+	int failed = 1;
+
+	if (!bio_chain_create(BIO_s_null(), bio, nitems(bio)))
+		goto err;
+
+	if ((dup = BIO_dup_chain(bio[0])) == NULL) {
+		fprintf(stderr, "BIO_set_callback() failed\n");
+		goto err;
+	}
+
+	BIO_set_callback(bio[CHAIN_POP_LEN - 1], dup_leak_cb);
+
+	BIO_free_all(dup);
+	if ((dup = BIO_dup_chain(bio[0])) != NULL) {
+		fprintf(stderr, "BIO_dup_chain() succeeded unexpectedly\n");
+		BIO_free_all(dup);
+		goto err;
+	}
+
+	failed = 0;
+
+ err:
+	bio_chain_destroy(bio, nitems(bio));
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -468,6 +509,7 @@ main(int argc, char **argv)
 	failed |= bio_chain_pop_test();
 	failed |= bio_push_link_test();
 	failed |= bio_set_next_link_test();
+	failed |= bio_dup_chain_leak();
 
 	return failed;
 }
