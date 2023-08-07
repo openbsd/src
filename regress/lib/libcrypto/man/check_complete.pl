@@ -61,7 +61,6 @@ my %obsolete = (
     )],
     bn => [qw(
 	BN_HEX_FMT1 BN_HEX_FMT2 BN_MASK
-	BN_options BN_prime_checks
     )],
     objects => [qw(
 	_DECLARE_OBJ_BSEARCH_CMP_FN
