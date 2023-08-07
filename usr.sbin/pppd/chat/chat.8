@@ -1,7 +1,7 @@
-.\"	$OpenBSD: chat.8,v 1.20 2022/03/31 17:27:31 naddy Exp $
+.\"	$OpenBSD: chat.8,v 1.21 2023/08/07 06:21:53 guenther Exp $
 .\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp $
 .\" manual page [] for chat 1.8
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: August 7 2023 $
 .Dt CHAT 8
 .Os
 .Sh NAME
@@ -537,7 +537,9 @@ The delay is 1/10th of a second.
 Suppress writing the string to the
 .Xr syslog 3
 file.
-The string ?????? is written to the log in its place.
+The string
+.Dq hidden
+is written to the log in its place.
 (Not valid in expect.)
 .It \er
 Send or expect a carriage return.
