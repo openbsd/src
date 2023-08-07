@@ -1,4 +1,4 @@
-/* $OpenBSD: format-draw.c,v 1.26 2022/02/22 11:07:25 nicm Exp $ */
+/* $OpenBSD: format-draw.c,v 1.27 2023/08/07 10:04:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1083,7 +1083,7 @@ format_trim_left(const char *expanded, u_int limit)
 	struct utf8_data	 ud;
 	enum utf8_state		 more;
 
-	out = copy = xcalloc(1, strlen(expanded) + 1);
+	out = copy = xcalloc(2, strlen(expanded) + 1);
 	while (*cp != '\0') {
 		if (width >= limit)
 			break;
@@ -1150,7 +1150,7 @@ format_trim_right(const char *expanded, u_int limit)
 		return (xstrdup(expanded));
 	skip = total_width - limit;
 
-	out = copy = xcalloc(1, strlen(expanded) + 1);
+	out = copy = xcalloc(2, strlen(expanded) + 1);
 	while (*cp != '\0') {
 		if (*cp == '#') {
 			end = format_leading_hashes(cp, &n, &leading_width);
