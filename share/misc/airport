@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.91 2023/06/14 01:16:08 kn Exp $
+#	$OpenBSD: airport,v 1.92 2023/08/07 08:22:52 mbuhl Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information from the Airport Search Engine at
@@ -984,6 +984,7 @@ LIN:Linate, Milan, Italy
 LIR:Liberia, Costa Rica
 LIS:Lisbon, Portugal
 LIT:Little Rock Regional, Arkansas, USA
+LJG:Lijiang Sanyi International Airport, Yunnan, China
 LJU:Brnik, Ljubljana, Slovenia
 LKE:Lake Union Sea Plane Base, Seattle, Washington, USA
 LKN:Leknes, Norway
