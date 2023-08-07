@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.724 2023/04/23 00:20:26 dlg Exp $
+#	$OpenBSD: files,v 1.725 2023/08/07 01:59:38 dlg Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -572,6 +572,7 @@ pseudo-device vlan: ifnet, ether
 pseudo-device carp: ifnet, ether
 pseudo-device sppp: ifnet
 pseudo-device gif: ifnet
+pseudo-device sec: ifnet
 pseudo-device gre: ifnet, ether, etherbridge
 pseudo-device crypto: ifnet
 pseudo-device trunk: ifnet, ether, ifmedia
@@ -1006,6 +1007,7 @@ file uvm/uvm_vnode.c
 
 # IPv6
 file net/if_gif.c			gif			needs-count
+file net/if_sec.c			sec			needs-count
 file netinet/ip_ecn.c
 file netinet6/in6_pcb.c			inet6
 file netinet6/in6.c			inet6
