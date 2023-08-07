@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike.c,v 1.83 2022/06/25 20:33:40 mbuhl Exp $	*/
+/*	$OpenBSD: ike.c,v 1.84 2023/08/07 04:10:08 dlg Exp $	*/
 /*
  * Copyright (c) 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -148,6 +148,10 @@ ike_section_ipsec(struct ipsec_rule *r, FILE *fd)
 
 	if (r->tag)
 		fprintf(fd, SET "[%s]:PF-Tag=%s force\n", r->p2name, r->tag);
+	if (r->flags & IPSEC_RULE_F_IFACE) {
+		fprintf(fd, SET "[%s]:Interface=%u force\n", r->p2name,
+		    r->iface);
+	}
 }
 
 static int
@@ -842,21 +846,30 @@ ike_setup_ids(struct ipsec_rule *r)
 			err(1, "ike_setup_ids");
 
 	/* Phase 2 name is from and to network, protocol, port*/
-	sproto[0] = ssport[0] = sdport[0] = 0;
-	if (r->proto)
-		snprintf(sproto, sizeof sproto, "=%u", r->proto);
-	if (r->sport)
-		snprintf(ssport, sizeof ssport, ":%u", ntohs(r->sport));
-	if (r->dport)
-		snprintf(sdport, sizeof sdport, ":%u", ntohs(r->dport));
-	/* from-network/masklen=proto:port */
-	if (asprintf(&r->p2lid, "from-%s%s%s", r->src->name, sproto, ssport)
-	    == -1)
-		err(1, "ike_setup_ids");
-	/* to-network/masklen=proto:port */
-	if (asprintf(&r->p2rid, "to-%s%s%s", r->dst->name, sproto, sdport)
-	    == -1)
-		err(1, "ike_setup_ids");
+	if (r->flags & IPSEC_RULE_F_IFACE) {
+		if (asprintf(&r->p2lid, "from-sec%u", r->iface) == -1)
+			err(1, "ike_setup_ids");
+		if (asprintf(&r->p2rid, "to-sec%u", r->iface) == -1)
+			err(1, "ike_setup_ids");
+	} else {
+		sproto[0] = ssport[0] = sdport[0] = 0;
+		if (r->proto)
+			snprintf(sproto, sizeof sproto, "=%u", r->proto);
+		if (r->sport)
+			snprintf(ssport, sizeof ssport, ":%u", ntohs(r->sport));
+		if (r->dport)
+			snprintf(sdport, sizeof sdport, ":%u", ntohs(r->dport));
+
+		/* from-network/masklen=proto:port */
+		if (asprintf(&r->p2lid, "from-%s%s%s", r->src->name,
+		    sproto, ssport) == -1)
+			err(1, "ike_setup_ids");
+		/* to-network/masklen=proto:port */
+		if (asprintf(&r->p2rid, "to-%s%s%s", r->dst->name,
+		    sproto, sdport) == -1)
+			err(1, "ike_setup_ids");
+	}
+
 	/* from-network/masklen=proto:port-to-network/masklen=proto:port */
 	if (asprintf(&r->p2name, "%s-%s", r->p2lid , r->p2rid) == -1)
 		err(1, "ike_setup_ids");

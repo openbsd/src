@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.h,v 1.75 2021/10/22 12:30:54 bluhm Exp $	*/
+/*	$OpenBSD: ipsecctl.h,v 1.76 2023/08/07 04:10:08 dlg Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -178,6 +178,9 @@ TAILQ_HEAD(dst_bundle_queue, ipsec_rule);
 struct ipsec_rule {
 	u_int8_t	 type;
 
+	unsigned int	 flags;
+#define IPSEC_RULE_F_IFACE		(1 << 0) /* iface is valid */
+
 	struct ipsec_addr_wrap *src;
 	struct ipsec_addr_wrap *dst;
 	struct ipsec_addr_wrap *dst2;
@@ -215,6 +218,7 @@ struct ipsec_rule {
 	u_int32_t	 spi;
 	u_int32_t	 spi2;
 	u_int32_t	 nr;
+	unsigned int	 iface;
 
 	TAILQ_ENTRY(ipsec_rule) rule_entry;
 	TAILQ_ENTRY(ipsec_rule) bundle_entry;

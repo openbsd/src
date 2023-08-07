@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.56 2023/03/07 17:43:59 guenther Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.57 2023/08/07 04:10:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -62,6 +62,7 @@ static void	print_mtu(struct sadb_ext *, struct sadb_msg *, int);
 static void	print_tap(struct sadb_ext *, struct sadb_msg *, int);
 static void	print_satype(struct sadb_ext *, struct sadb_msg *, int);
 static void	print_counter(struct sadb_ext *, struct sadb_msg *, int);
+static void	print_iface(struct sadb_ext *, struct sadb_msg *, int);
 
 static struct idname *lookup(struct idname *, u_int32_t);
 static char    *lookup_name(struct idname *, u_int32_t);
@@ -115,6 +116,7 @@ struct idname ext_types[] = {
 	{ SADB_X_EXT_TAP,		"tap",			print_tap },
 	{ SADB_X_EXT_SATYPE2,		"satype2",		print_satype },
 	{ SADB_X_EXT_COUNTER,		"counter",		print_counter },
+	{ SADB_X_EXT_IFACE,		"interface",		print_iface },
 	{ 0,				NULL,			NULL }
 };
 
@@ -461,6 +463,24 @@ print_counter(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 	p(sadb_x_counter_odrops, "\t\t%llu packet%s dropped on output\n");
 #undef p
 #undef plural
+}
+
+static void
+print_iface(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
+{
+	struct sadb_x_iface *siface = (struct sadb_x_iface *)ext;
+	const char *dir = "unknown";
+
+	switch (siface->sadb_x_iface_direction) {
+	case IPSP_DIRECTION_IN:
+		dir = "in";
+		break;
+	case IPSP_DIRECTION_OUT:
+		dir = "out";
+		break;
+	}
+
+	printf("sec%u direction %s", siface->sadb_x_iface_unit, dir);
 }
 
 static char *

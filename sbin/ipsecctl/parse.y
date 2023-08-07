@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.182 2023/04/19 13:33:37 jsg Exp $	*/
+/*	$OpenBSD: parse.y,v 1.183 2023/08/07 04:10:08 dlg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -232,6 +232,7 @@ struct ipsec_transforms *ipsec_transforms;
 typedef struct {
 	union {
 		int64_t	 	 number;
+		uint32_t	 unit;
 		u_int8_t	 ikemode;
 		u_int8_t	 dir;
 		u_int8_t	 satype;	/* encapsulating prococol */
@@ -284,9 +285,10 @@ typedef struct {
 %token	AUTHKEY ENCKEY FILENAME AUTHXF ENCXF ERROR IKE MAIN QUICK AGGRESSIVE
 %token	PASSIVE ACTIVE ANY IPIP IPCOMP COMPXF TUNNEL TRANSPORT DYNAMIC LIFETIME
 %token	TYPE DENY BYPASS LOCAL PROTO USE ACQUIRE REQUIRE DONTACQ GROUP PORT TAG
-%token	INCLUDE BUNDLE UDPENCAP
+%token	INCLUDE BUNDLE UDPENCAP INTERFACE
 %token	<v.string>		STRING
 %token	<v.number>		NUMBER
+%type	<v.unit>		iface
 %type	<v.string>		string
 %type	<v.dir>			dir
 %type	<v.satype>		satype
@@ -400,6 +402,41 @@ ikerule		: IKE ikemode satype tmode proto hosts peers
 
 			if (expand_rule(r, &$7, 0, 0, NULL, NULL, NULL))
 				errx(1, "ikerule: expand_rule");
+		}
+
+		/* ike interface sec0 local $h_self peer $h_s2s1 ... */
+		| IKE ikemode iface peers
+		    phase1mode phase2mode ids ikeauth {
+			uint8_t			 proto = 0; // IPPROTO_IPIP;
+			struct ipsec_hosts	 hosts;
+			struct ike_mode		*phase1mode = $5;
+			struct ike_mode		*phase2mode = $6;
+			uint8_t			 satype = IPSEC_ESP;
+			uint8_t			 tmode = IPSEC_TUNNEL;
+			uint8_t			 mode = $2;
+			struct ike_auth		*authtype = &$8;
+			char			*tag = NULL;
+
+			struct ipsec_rule	*r;
+
+			hosts.src = host_v4("0.0.0.0/0", 1);
+			hosts.sport = htons(0);
+			hosts.dst = host_v4("0.0.0.0/0", 1);
+			hosts.dport = htons(0);
+
+			r = create_ike(proto, &hosts, phase1mode, phase2mode,
+			    satype, tmode, mode, $7.srcid, $7.dstid,
+			    authtype, tag);
+			if (r == NULL) {
+				YYERROR;
+			}
+
+			r->flags |= IPSEC_RULE_F_IFACE;
+			r->iface = $3;
+
+			if (expand_rule(r, &$4, 0, 0, NULL, NULL, NULL))
+				errx(1, "ikerule: expand interface rule");
+
 		}
 		;
 
@@ -909,6 +946,30 @@ tag		: /* empty */
 		}
 		;
 
+iface		: INTERFACE STRING		{
+			static const char prefix[] = "sec";
+			const char *errstr = NULL;
+			size_t len, plen;
+
+			plen = strlen(prefix);
+			len = strlen($2);
+
+			if (len <= plen || memcmp($2, prefix, plen) != 0) {
+				yyerror("invalid %s interface name", prefix);
+				free($2);
+				YYERROR;
+			}
+
+			$$ = strtonum($2 + plen, 0, UINT_MAX, &errstr);
+			free($2);
+			if (errstr != NULL) {
+				yyerror("invalid %s interface unit: %s",
+				    prefix, errstr);
+				YYERROR;
+			}
+		}
+		;
+
 string		: string STRING
 		{
 			if (asprintf(&$$, "%s %s", $1, $2) == -1)
@@ -1009,6 +1070,7 @@ lookup(char *s)
 		{ "ike",		IKE },
 		{ "in",			IN },
 		{ "include",		INCLUDE },
+		{ "interface",		INTERFACE },
 		{ "ipcomp",		IPCOMP },
 		{ "ipip",		IPIP },
 		{ "lifetime",		LIFETIME },
@@ -2216,6 +2278,7 @@ copyrule(struct ipsec_rule *rule)
 	r->enckey = copykey(rule->enckey);
 	r->tag = copytag(rule->tag);
 
+	r->flags = rule->flags;
 	r->p1ie = rule->p1ie;
 	r->p2ie = rule->p2ie;
 	r->type = rule->type;
@@ -2231,6 +2294,7 @@ copyrule(struct ipsec_rule *rule)
 	r->udpencap = rule->udpencap;
 	r->udpdport = rule->udpdport;
 	r->nr = rule->nr;
+	r->iface = rule->iface;
 
 	return (r);
 }
