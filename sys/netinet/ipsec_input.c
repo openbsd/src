@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.204 2023/05/13 13:35:17 bluhm Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.205 2023/08/07 03:43:57 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -36,6 +36,7 @@
  */
 
 #include "pf.h"
+#include "sec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +62,10 @@
 
 #if NPF > 0
 #include <net/pfvar.h>
+#endif
+
+#if NSEC > 0
+#include <net/if_sec.h>
 #endif
 
 #ifdef INET6
@@ -544,6 +549,22 @@ ipsec_common_input_cb(struct mbuf **mp, struct tdb *tdbp, int skip, int protoff)
 		}
 	}
 #endif
+
+	if (ISSET(tdbp->tdb_flags, TDBF_IFACE)) {
+#if NSEC > 0
+		if (ISSET(tdbp->tdb_flags, TDBF_TUNNELING) &&
+		    tdbp->tdb_iface_dir == IPSP_DIRECTION_IN) {
+			struct sec_softc *sc = sec_get(tdbp->tdb_iface);
+			if (sc == NULL)
+				goto baddone;
+
+			sec_input(sc, af, prot, m);
+			sec_put(sc);
+			return IPPROTO_DONE;
+		}
+#endif /* NSEC > 0 */
+		goto baddone;
+	}
 
 #if NPF > 0
 	/*

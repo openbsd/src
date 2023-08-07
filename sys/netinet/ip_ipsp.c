@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.275 2022/11/11 18:09:58 cheloha Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.276 2023/08/07 03:43:57 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -39,6 +39,7 @@
 
 #include "pf.h"
 #include "pfsync.h"
+#include "sec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +66,10 @@
 
 #if NPFSYNC > 0
 #include <net/if_pfsync.h>
+#endif
+
+#if NSEC > 0
+#include <net/if_sec.h>
 #endif
 
 #include <netinet/ip_ipsp.h>
@@ -852,14 +857,6 @@ puttdb_locked(struct tdb *tdbp)
 	tdbp->tdb_hnext = tdbh[hashval];
 	tdbh[hashval] = tdbp;
 
-	hashval = tdb_hash(0, &tdbp->tdb_dst, tdbp->tdb_sproto);
-	tdbp->tdb_dnext = tdbdst[hashval];
-	tdbdst[hashval] = tdbp;
-
-	hashval = tdb_hash(0, &tdbp->tdb_src, tdbp->tdb_sproto);
-	tdbp->tdb_snext = tdbsrc[hashval];
-	tdbsrc[hashval] = tdbp;
-
 	tdb_count++;
 #ifdef IPSEC
 	if ((tdbp->tdb_flags & (TDBF_INVALID|TDBF_TUNNELING)) == TDBF_TUNNELING)
@@ -867,6 +864,21 @@ puttdb_locked(struct tdb *tdbp)
 #endif /* IPSEC */
 
 	ipsec_last_added = getuptime();
+
+	if (ISSET(tdbp->tdb_flags, TDBF_IFACE)) {
+#if NSEC > 0
+		sec_tdb_insert(tdbp);
+#endif
+		return;
+	}
+
+	hashval = tdb_hash(0, &tdbp->tdb_dst, tdbp->tdb_sproto);
+	tdbp->tdb_dnext = tdbdst[hashval];
+	tdbdst[hashval] = tdbp;
+
+	hashval = tdb_hash(0, &tdbp->tdb_src, tdbp->tdb_sproto);
+	tdbp->tdb_snext = tdbsrc[hashval];
+	tdbsrc[hashval] = tdbp;
 }
 
 void
@@ -901,6 +913,22 @@ tdb_unlink_locked(struct tdb *tdbp)
 
 	tdbp->tdb_hnext = NULL;
 
+	tdb_count--;
+#ifdef IPSEC
+	if ((tdbp->tdb_flags & (TDBF_INVALID|TDBF_TUNNELING)) ==
+	    TDBF_TUNNELING) {
+		ipsecstat_dec(ipsec_tunnels);
+		ipsecstat_inc(ipsec_prevtunnels);
+	}
+#endif /* IPSEC */
+
+	if (ISSET(tdbp->tdb_flags, TDBF_IFACE)) {
+#if NSEC > 0
+		sec_tdb_remove(tdbp);
+#endif
+		return;
+	}
+
 	hashval = tdb_hash(0, &tdbp->tdb_dst, tdbp->tdb_sproto);
 
 	if (tdbdst[hashval] == tdbp) {
@@ -932,14 +960,6 @@ tdb_unlink_locked(struct tdb *tdbp)
 	}
 
 	tdbp->tdb_snext = NULL;
-	tdb_count--;
-#ifdef IPSEC
-	if ((tdbp->tdb_flags & (TDBF_INVALID|TDBF_TUNNELING)) ==
-	    TDBF_TUNNELING) {
-		ipsecstat_dec(ipsec_tunnels);
-		ipsecstat_inc(ipsec_prevtunnels);
-	}
-#endif /* IPSEC */
 }
 
 void
