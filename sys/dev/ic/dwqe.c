@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.10 2023/07/04 12:48:42 kettenis Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.11 2023/08/07 20:28:47 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -608,6 +608,9 @@ dwqe_tx_proc(struct dwqe_softc *sc)
 		if (txd->sd_tdes3 & TDES3_OWN)
 			break;
 
+		if (txd->sd_tdes3 & TDES3_ES)
+			ifp->if_oerrors++;
+
 		txb = &sc->sc_txbuf[idx];
 		if (txb->tb_m) {
 			bus_dmamap_sync(sc->sc_dmat, txb->tb_map, 0,
@@ -808,7 +811,7 @@ dwqe_up(struct dwqe_softc *sc)
 	if (sc->sc_force_thresh_dma_mode) {
 		mode &= ~GMAC_MTL_CHAN_TX_OP_MODE_TSF;
 		mode &= ~GMAC_MTL_CHAN_TX_OP_MODE_TTC_MASK;
-		mode |= GMAC_MTL_CHAN_TX_OP_MODE_TTC_128;
+		mode |= GMAC_MTL_CHAN_TX_OP_MODE_TTC_512;
 	} else {
 		mode |= GMAC_MTL_CHAN_TX_OP_MODE_TSF;
 	}
