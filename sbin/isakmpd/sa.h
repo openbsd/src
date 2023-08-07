@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.54 2018/01/15 09:54:48 mpi Exp $	 */
+/* $OpenBSD: sa.h,v 1.55 2023/08/07 04:01:30 dlg Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -211,6 +211,9 @@ struct sa {
 
 	/* The add a pf tag to packets matching the established SA. */
 	char           *tag;
+
+	/* IPsec with Interface SAs, enabled with SA_FLAG_IFACE */
+	unsigned int	iface;
 };
 
 /* This SA is alive.  */
@@ -243,6 +246,9 @@ struct sa {
 /* NAT-T encapsulation state. Kept in isakmp_sa for the new p2 exchange.  */
 #define SA_FLAG_NAT_T_ENABLE	0x100
 #define SA_FLAG_NAT_T_KEEPALIVE	0x200
+
+/* Policy is handled by routing/filtering on the specified iface */
+#define SA_FLAG_IFACE		0x400
 
 extern void     proto_free(struct proto * proto);
 extern int	sa_add_transform(struct sa *, struct payload *, int,

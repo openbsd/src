@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.204 2022/01/31 23:51:15 sthen Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.205 2023/08/07 04:01:30 dlg Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -890,6 +890,7 @@ pf_key_v2_set_spi(struct sa *sa, struct proto *proto, int incoming,
 	struct sadb_protocol flowtype, tprotocol;
 	struct sadb_x_udpencap udpencap;
 	char           *addr_str, *s;
+	char		iface_str[32];
 
 	msg.sadb_msg_type = incoming ? SADB_UPDATE : SADB_ADD;
 	switch (proto->proto) {
@@ -1378,16 +1379,37 @@ nodid:
 			goto cleanup;
 	}
 
+	if (sa->flags & SA_FLAG_IFACE) {
+		struct sadb_x_iface *siface;
+
+		len = sizeof(*siface);
+		siface = calloc(1, len);
+		if (siface == NULL)
+			goto cleanup;
+
+		siface->sadb_x_iface_len = len / PF_KEY_V2_CHUNK;
+		siface->sadb_x_iface_exttype = SADB_X_EXT_IFACE;
+		siface->sadb_x_iface_unit = sa->iface;
+		siface->sadb_x_iface_direction = incoming ?
+		    IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
+
+		if (pf_key_v2_msg_add(update, (struct sadb_ext *)siface,
+		    PF_KEY_V2_NODE_MALLOCED) == -1)
+			goto cleanup;
+
+		snprintf(iface_str, sizeof(iface_str), "iface %u", sa->iface);
+	}
+
 	/* XXX Here can sensitivity extensions be setup.  */
 
 	if (sockaddr2text(dst, &addr_str, 0))
 		addr_str = 0;
 
 	LOG_DBG((LOG_SYSDEP, 10, "pf_key_v2_set_spi: "
-	    "satype %d dst %s SPI 0x%x%s%s", msg.sadb_msg_satype,
+	    "satype %d dst %s SPI 0x%x%s%s%s", msg.sadb_msg_satype,
 	    addr_str ? addr_str : "unknown",
 	    ntohl(ssa.sadb_sa_spi), sa->tag ? " tag " : "",
-	    sa->tag ? sa->tag : ""));
+	    sa->tag ? sa->tag : "", iface_str));
 
 	free(addr_str);
 

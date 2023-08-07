@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsec.c,v 1.152 2022/01/16 14:30:11 naddy Exp $	 */
+/* $OpenBSD: ipsec.c,v 1.153 2023/08/07 04:01:29 dlg Exp $	 */
 /* $EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	 */
 
 /*
@@ -38,6 +38,7 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 #include <net/if.h>
 #include <net/pfvar.h>
@@ -131,6 +132,7 @@ static int      ipsec_validate_transform_id(u_int8_t, u_int8_t);
 static int      ipsec_sa_check_flow(struct sa *, void *);
 static int      ipsec_sa_check_flow_any(struct sa *, void *);
 static int      ipsec_sa_tag(struct exchange *, struct sa *, struct sa *);
+static int      ipsec_sa_iface(struct exchange *, struct sa *, struct sa *);
 
 static struct doi ipsec_doi = {
 	{0}, IPSEC_DOI_IPSEC,
@@ -272,6 +274,12 @@ ipsec_sa_check_flow_any(struct sa *sa, void *v_arg)
 	    isa->dport != isa2->dport)
 		return 0;
 
+	if ((sa->flags & SA_FLAG_IFACE) != (sa2->flags & SA_FLAG_IFACE))
+		return 0;
+
+	if (sa->flags & SA_FLAG_IFACE)
+		return sa->iface == sa2->iface;
+
 	/*
 	 * If at least one of the IPsec SAs is incomplete, we're done.
 	 */
@@ -379,6 +387,30 @@ ipsec_sa_tag(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
 	return (error);
 }
 
+static int
+ipsec_sa_iface(struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
+{
+	char *section, *value;
+	const char *errstr = NULL;
+
+	sa->tag = NULL;
+
+	if (exchange->name == NULL ||
+	    (section = exchange->name) == NULL ||
+	    (value = conf_get_str(section, "Interface")) == NULL)
+		return (0);	/* ignore if not present */
+
+	sa->iface = strtonum(value, 0, UINT_MAX, &errstr);
+	if (errstr != NULL) {
+		log_error("[%s]:Interface %s", section, errstr);
+		return (-1);
+	}
+
+	sa->flags |= SA_FLAG_IFACE;
+
+	return (0);
+}
+
 /*
  * Do IPsec DOI specific finalizations task for the exchange where MSG was
  * the final message.
@@ -463,6 +495,9 @@ ipsec_finalize_exchange(struct message *msg)
 				if (ipsec_sa_tag(exchange, sa, isakmp_sa) == -1)
 					return;
 
+				if (ipsec_sa_iface(exchange, sa, isakmp_sa) == -1)
+					return;
+
 				for (proto = TAILQ_FIRST(&sa->protos),
 				    last_proto = 0; proto;
 				    proto = TAILQ_NEXT(proto, link)) {
@@ -514,6 +549,7 @@ ipsec_finalize_exchange(struct message *msg)
 				 * (a.k.a. flow) set up.
 				 */
 				if (!(sa->flags & SA_FLAG_ONDEMAND ||
+				    sa->flags & SA_FLAG_IFACE ||
 				    conf_get_str("General", "Acquire-Only") ||
 				    acquire_only) &&
 				    pf_key_v2_enable_sa(sa, isakmp_sa))
@@ -1596,7 +1632,8 @@ ipsec_delete_spi(struct sa *sa, struct proto *proto, int incoming)
 	 * We ignore any errors from the disabling of the flow.
 	 */
 	if (sa->flags & SA_FLAG_READY && !(sa->flags & SA_FLAG_ONDEMAND ||
-	    sa->flags & SA_FLAG_REPLACED || acquire_only ||
+	    sa->flags & SA_FLAG_REPLACED || sa->flags & SA_FLAG_IFACE ||
+	    acquire_only ||
 	    conf_get_str("General", "Acquire-Only")))
 		pf_key_v2_disable_sa(sa, incoming);
 
