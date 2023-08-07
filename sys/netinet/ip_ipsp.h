@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.h,v 1.241 2023/07/06 04:55:05 dlg Exp $	*/
+/*	$OpenBSD: ip_ipsp.h,v 1.242 2023/08/07 01:44:51 dlg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -357,6 +357,7 @@ struct tdb {				/* tunnel descriptor block */
 #define	TDBF_PFSYNC_RPL		0x80000	/* Replay counter should be bumped */
 #define	TDBF_ESN		0x100000 /* 64-bit sequence numbers (ESN) */
 #define	TDBF_PFSYNC_SNAPPED	0x200000 /* entry is being dispatched to peer */
+#define	TDBF_IFACE		0x400000 /* entry policy is via sec(4) */ 
 
 #define TDBF_BITS ("\20" \
 	"\1UNIQUE\2TIMER\3BYTES\4ALLOCATIONS" \
@@ -364,7 +365,7 @@ struct tdb {				/* tunnel descriptor block */
 	"\11SOFT_BYTES\12SOFT_ALLOCATIONS\13SOFT_FIRSTUSE\14PFS" \
 	"\15TUNNELING" \
 	"\21USEDTUNNEL\22UDPENCAP\23PFSYNC\24PFSYNC_RPL" \
-	"\25ESN")
+	"\25ESN" "\26IFACE")
 
 	u_int32_t	tdb_flags;	/* [m] Flags related to this TDB */
 
@@ -406,6 +407,7 @@ struct tdb {				/* tunnel descriptor block */
 	u_int8_t	tdb_sproto;	/* [I] IPsec protocol */
 	u_int8_t	tdb_wnd;	/* Replay window */
 	u_int8_t	tdb_satype;	/* SA type (RFC2367, PF_KEY) */
+	u_int8_t	tdb_iface_dir;	/* [I] sec(4) iface direction */
 
 	union sockaddr_union	tdb_dst;	/* [N] Destination address */
 	union sockaddr_union	tdb_src;	/* [N] Source address */
@@ -431,6 +433,7 @@ struct tdb {				/* tunnel descriptor block */
 
 	u_int16_t	tdb_tag;		/* Packet filter tag */
 	u_int32_t	tdb_tap;		/* Alternate enc(4) interface */
+	unsigned int	tdb_iface;		/* [I] sec(4) iface */
 
 	u_int		tdb_rdomain;		/* [I] Routing domain */
 	u_int		tdb_rdomain_post;	/* [I] Change domain */
