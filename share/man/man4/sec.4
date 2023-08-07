@@ -1,4 +1,4 @@
-.\" $OpenBSD: sec.4,v 1.1 2023/08/07 03:17:42 dlg Exp $
+.\" $OpenBSD: sec.4,v 1.2 2023/08/07 16:29:36 jmc Exp $
 .\"
 .\" Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
 .\"
@@ -19,32 +19,33 @@
 .Os
 .Sh NAME
 .Nm sec
-.Nd Route-based IPsec VPN tunnel interface pseudo-device
+.Nd route based IPsec VPN tunnel interface pseudo-device
 .Sh SYNOPSIS
 .Cd "pseudo-device sec"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides point-to-point tunnel interfaces for IPv4 and IPv6
-protected by the Encapsulating Security Payload (ESP)
+protected by the
 .Xr ipsec 4
+Encapsulating Security Payload (ESP)
 protocol.
 .Pp
 Traffic is encapsulated in the ESP protocol and forwarded to the
-remote endpoint by routing over an
-.Nm sec
+remote endpoint by routing over a
+.Nm
 interface rather than matching policy in the IPsec Security Policy
 Database (SPD).
 .Nm
-interfaces require the configuration of IPsec Security Associations
+interfaces require the configuration of IPsec Security Associations (SAs)
 .\" with the interface extension
 between the local and remote endpoints.
 Negotiation of interface SAs is supported by
-.Xr iked 8 ,
+.Xr iked 8
 and
 .Xr isakmpd 8
-with
-.Xr ipsecctl 8 .
+(the latter via
+.Xr ipsecctl 8 ) .
 .Pp
 .Nm
 interfaces can be created at runtime using the
