@@ -1,0 +1,75 @@
+.\" $OpenBSD: sec.4,v 1.1 2023/08/07 03:17:42 dlg Exp $
+.\"
+.\" Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: August 7 2023 $
+.Dt SEC 4
+.Os
+.Sh NAME
+.Nm sec
+.Nd Route-based IPsec VPN tunnel interface pseudo-device
+.Sh SYNOPSIS
+.Cd "pseudo-device sec"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides point-to-point tunnel interfaces for IPv4 and IPv6
+protected by the Encapsulating Security Payload (ESP)
+.Xr ipsec 4
+protocol.
+.Pp
+Traffic is encapsulated in the ESP protocol and forwarded to the
+remote endpoint by routing over an
+.Nm sec
+interface rather than matching policy in the IPsec Security Policy
+Database (SPD).
+.Nm
+interfaces require the configuration of IPsec Security Associations
+.\" with the interface extension
+between the local and remote endpoints.
+Negotiation of interface SAs is supported by
+.Xr iked 8 ,
+and
+.Xr isakmpd 8
+with
+.Xr ipsecctl 8 .
+.Pp
+.Nm
+interfaces can be created at runtime using the
+.Ic ifconfig sec Ns Ar N Ic create
+command or by setting up a
+.Xr hostname.if 5
+configuration file for
+.Xr netstart 8 .
+The interface itself can be configured with
+.Xr ifconfig 8 ;
+see its manual page for more information.
+.Sh SEE ALSO
+.Xr ipsec 4 ,
+.Xr netintro 4 ,
+.Xr hostname.if 5 ,
+.Xr pf.conf 5 ,
+.Xr ifconfig 8 ,
+.Xr iked 8 ,
+.Xr ipsecctl 8 ,
+.Xr isakmpd 8 ,
+.Xr netstart 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 7.4 .
+.Sh AUTHORS
+.An David Gwynne Aq Mt dlg@openbsd.org .
