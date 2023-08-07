@@ -51,6 +51,7 @@ my %obsolete = (
 	X509_algor_st
     )],
     bio => [qw(
+	asn1_ps_func
 	BIO_C_GET_PROXY_PARAM BIO_C_GET_SOCKS
 	BIO_C_SET_PROXY_PARAM BIO_C_SET_SOCKS
 	BIO_get_no_connect_return BIO_get_proxies
