@@ -204,7 +204,7 @@ static const struct pci_matchid amdgpu_devices[] = {
 
 	/* GC 11.0.0, DCN 3.2.0, dGPU, "Navi 31" */
 	{0x1002, 0x7448 },	/* Radeon Pro W7900 */
-	{0x1002, 0x744c },	/* Radeon RX 7900 XT/XTX */
+	{0x1002, 0x744c },	/* Radeon RX 7900 XT/XTX/GRE */
 	{0x1002, 0x745e },	/* Radeon Pro W7800 */
 
 	/* GC 11.0.1, DCN 3.1.4, APU, Ryzen 7040 "Phoenix" */
