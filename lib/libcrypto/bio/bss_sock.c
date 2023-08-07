@@ -1,4 +1,4 @@
-/* $OpenBSD: bss_sock.c,v 1.26 2023/07/05 21:23:37 beck Exp $ */
+/* $OpenBSD: bss_sock.c,v 1.27 2023/08/07 10:54:14 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -173,7 +173,7 @@ sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 	switch (cmd) {
 	case BIO_C_SET_FD:
 		sock_free(b);
-		b->num= *((int *)ptr);
+		b->num = *((int *)ptr);
 		b->shutdown = (int)num;
 		b->init = 1;
 		break;
