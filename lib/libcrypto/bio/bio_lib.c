@@ -1,4 +1,4 @@
-/* $OpenBSD: bio_lib.c,v 1.47 2023/07/10 02:33:33 tb Exp $ */
+/* $OpenBSD: bio_lib.c,v 1.48 2023/08/07 10:58:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -816,7 +816,8 @@ LCRYPTO_ALIAS(BIO_free_all);
 BIO *
 BIO_dup_chain(BIO *in)
 {
-	BIO *ret = NULL, *eoc = NULL, *bio, *new_bio;
+	BIO *new_chain = NULL, *new_bio = NULL, *tail = NULL;
+	BIO *bio;
 
 	for (bio = in; bio != NULL; bio = bio->next_bio) {
 		if ((new_bio = BIO_new(bio->method)) == NULL)
@@ -827,33 +828,30 @@ BIO_dup_chain(BIO *in)
 		new_bio->init = bio->init;
 		new_bio->shutdown = bio->shutdown;
 		new_bio->flags = bio->flags;
-
-		/* This will let SSL_s_sock() work with stdin/stdout */
 		new_bio->num = bio->num;
 
-		if (!BIO_dup_state(bio, (char *)new_bio)) {
-			BIO_free(new_bio);
+		if (!BIO_dup_state(bio, new_bio))
 			goto err;
-		}
 
-		/* copy app data */
 		if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_BIO,
 		    &new_bio->ex_data, &bio->ex_data))
 			goto err;
 
-		if (ret == NULL) {
-			eoc = new_bio;
-			ret = eoc;
-		} else {
-			BIO_push(eoc, new_bio);
-			eoc = new_bio;
-		}
-	}
-	return (ret);
-err:
-	BIO_free(ret);
-	return (NULL);
+		if (BIO_push(tail, new_bio) == NULL)
+			goto err;
 
+		tail = new_bio;
+		if (new_chain == NULL)
+			new_chain = new_bio;
+	}
+
+	return new_chain;
+
+ err:
+	BIO_free(new_bio);
+	BIO_free_all(new_chain);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(BIO_dup_chain);
 
