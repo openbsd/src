@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.256 2023/04/22 20:51:56 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.257 2023/08/07 03:35:06 dlg Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -868,6 +868,9 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp,
 		i += sizeof(struct sadb_x_tap);
 #endif
 
+	if (ISSET(tdb->tdb_flags, TDBF_IFACE))
+		i += sizeof(struct sadb_x_iface);
+
 	if (lenp)
 		*lenp = i;
 
@@ -978,6 +981,12 @@ pfkeyv2_get(struct tdb *tdb, void **headers, void **buffer, int *lenp,
 		export_tap(&p, tdb);
 	}
 #endif
+
+	/* Export sec(4) interface information, if present */
+	if (ISSET(tdb->tdb_flags, TDBF_IFACE)) {
+		headers[SADB_X_EXT_IFACE] = p;
+		export_iface(&p, tdb);
+	}
 
 	headers[SADB_X_EXT_COUNTER] = p;
 	export_counter(&p, tdb);
@@ -1360,6 +1369,7 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 			import_tag(newsa, headers[SADB_X_EXT_TAG]);
 			import_tap(newsa, headers[SADB_X_EXT_TAP]);
 #endif
+			import_iface(newsa, headers[SADB_X_EXT_IFACE]);
 
 			/* Exclude sensitive data from reply message. */
 			headers[SADB_EXT_KEY_AUTH] = NULL;
@@ -1411,6 +1421,8 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 			import_tag(sa2, headers[SADB_X_EXT_TAG]);
 			import_tap(sa2, headers[SADB_X_EXT_TAP]);
 #endif
+			import_iface(sa2, headers[SADB_X_EXT_IFACE]);
+
 			if (headers[SADB_EXT_ADDRESS_SRC] ||
 			    headers[SADB_EXT_ADDRESS_PROXY]) {
 				mtx_enter(&tdb_sadb_mtx);
@@ -1535,6 +1547,7 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 			import_tag(newsa, headers[SADB_X_EXT_TAG]);
 			import_tap(newsa, headers[SADB_X_EXT_TAP]);
 #endif
+			import_iface(newsa, headers[SADB_X_EXT_IFACE]);
 
 			/* Exclude sensitive data from reply message. */
 			headers[SADB_EXT_KEY_AUTH] = NULL;

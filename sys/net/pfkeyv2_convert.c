@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_convert.c,v 1.79 2022/01/20 17:13:12 bluhm Exp $	*/
+/*	$OpenBSD: pfkeyv2_convert.c,v 1.80 2023/08/07 03:35:06 dlg Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@keromytis.org)
  *
@@ -950,6 +950,30 @@ export_tap(void **p, struct tdb *tdb)
 	*p += sizeof(struct sadb_x_tap);
 }
 #endif
+
+/* Import interface information for SA */
+void
+import_iface(struct tdb *tdb, struct sadb_x_iface *siface)
+{
+	if (siface != NULL) {
+		SET(tdb->tdb_flags, TDBF_IFACE);
+		tdb->tdb_iface = siface->sadb_x_iface_unit;
+		tdb->tdb_iface_dir = siface->sadb_x_iface_direction;
+	}
+}
+
+/* Export interface information for SA */
+void
+export_iface(void **p, struct tdb *tdb)
+{
+	struct sadb_x_iface *siface = (struct sadb_x_iface *)*p;
+
+	siface->sadb_x_iface_len = sizeof(*siface) / sizeof(uint64_t);
+	siface->sadb_x_iface_unit = tdb->tdb_iface;
+	siface->sadb_x_iface_direction = tdb->tdb_iface_dir;
+
+	*p += sizeof(*siface);
+}
 
 void
 export_satype(void **p, struct tdb *tdb)

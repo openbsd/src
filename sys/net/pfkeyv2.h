@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.93 2022/08/27 20:28:01 mvs Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.94 2023/08/07 03:35:06 dlg Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  *
@@ -252,6 +252,14 @@ struct sadb_x_mtu {
 	uint32_t  sadb_x_mtu_mtu;
 };
 
+struct sadb_x_iface {
+	uint16_t  sadb_x_iface_len;
+	uint16_t  sadb_x_iface_exttype;
+	uint32_t  sadb_x_iface_unit;
+	uint8_t   sadb_x_iface_direction;
+	uint8_t   sadb_x_iface_reserved[7];
+};
+
 #ifdef _KERNEL
 #define SADB_X_GETSPROTO(x) \
 	( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
@@ -300,7 +308,8 @@ struct sadb_x_mtu {
 #define SADB_X_EXT_RDOMAIN            37
 #define SADB_X_EXT_MTU                38
 #define SADB_X_EXT_REPLAY             39
-#define SADB_EXT_MAX                  39
+#define SADB_X_EXT_IFACE              40
+#define SADB_EXT_MAX                  40
 
 /* Fix pfkeyv2.c struct pfkeyv2_socket if SATYPE_MAX > 31 */
 #define SADB_SATYPE_UNSPEC		 0
@@ -438,6 +447,7 @@ void export_mtu(void **, struct tdb *);
 void export_tap(void **, struct tdb *);
 void export_satype(void **, struct tdb *);
 void export_counter(void **, struct tdb *);
+void export_iface(void **, struct tdb *);
 
 void import_address(struct sockaddr *, struct sadb_address *);
 void import_identities(struct ipsec_ids **, int, struct sadb_ident *,
@@ -452,6 +462,7 @@ void import_udpencap(struct tdb *, struct sadb_x_udpencap *);
 void import_tag(struct tdb *, struct sadb_x_tag *);
 void import_rdomain(struct tdb *, struct sadb_x_rdomain *);
 void import_tap(struct tdb *, struct sadb_x_tap *);
+void import_iface(struct tdb *, struct sadb_x_iface *);
 
 extern const uint64_t sadb_exts_allowed_out[SADB_MAX+1];
 extern const uint64_t sadb_exts_required_out[SADB_MAX+1];
