@@ -45,6 +45,7 @@ my %obsolete = (
 	ASN1_i2d_bio ASN1_i2d_bio_of ASN1_i2d_bio_of_const
 	ASN1_i2d_fp ASN1_i2d_fp_of ASN1_i2d_fp_of_const
 	ASN1_LONG_UNDEF
+	BIT_STRING_BITNAME
 	ub_title
 	V_ASN1_PRIMATIVE_TAG
 	X509_algor_st
