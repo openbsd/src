@@ -441,6 +441,15 @@ try_again:
 		$_ .= <$in_fh>;
 		goto try_again;
 	}
+	# The name of the function return type is so long
+	# that it requires a line break afterwards.
+	if (/^\w{30,}$/) {
+		my $next_line = <$in_fh>;
+		if ($next_line =~ /^ {4}\w/) {
+			$_ .= $next_line;
+			goto try_again;
+		}
+	}
 	die "parse error: $_";
 }
 close $in_fh;
