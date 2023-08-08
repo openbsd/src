@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.33 2023/08/08 13:59:04 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.34 2023/08/08 14:40:56 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -179,6 +179,45 @@ BN_BLINDING_free(BN_BLINDING *r)
 }
 
 static int
+BN_BLINDING_setup(BN_BLINDING *ret, BN_CTX *ctx)
+{
+	int retry_counter = 32;
+
+	/*
+	 * XXX - remove this loop. If we happen to find a non-invertible A,
+	 * we have basically factored mod = (p-1)(q-1)...
+	 */
+	do {
+		if (!BN_rand_range(ret->A, ret->mod))
+			return 0;
+		if (BN_mod_inverse_ct(ret->Ai, ret->A, ret->mod, ctx) == NULL) {
+			/* this should almost never happen for good RSA keys */
+			unsigned long error = ERR_peek_last_error();
+			if (ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
+				if (retry_counter-- == 0) {
+					BNerror(BN_R_TOO_MANY_ITERATIONS);
+					return 0;
+				}
+				ERR_clear_error();
+			} else
+				return 0;
+		} else
+			break;
+	} while (1);
+
+	if (ret->bn_mod_exp != NULL && ret->m_ctx != NULL) {
+		if (!ret->bn_mod_exp(ret->A, ret->A, ret->e, ret->mod,
+		    ctx, ret->m_ctx))
+			return 0;
+	} else {
+		if (!BN_mod_exp_ct(ret->A, ret->A, ret->e, ret->mod, ctx))
+			return 0;
+	}
+
+	return 1;
+}
+
+static int
 BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
 {
 	int ret = 0;
@@ -187,8 +226,7 @@ BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
 		b->counter = 0;
 
 	if (++b->counter == BN_BLINDING_COUNTER) {
-		/* re-create blinding parameters */
-		if (!BN_BLINDING_create_param(b, NULL, NULL, ctx, NULL, NULL))
+		if (!BN_BLINDING_setup(b, ctx))
 			goto err;
 	} else {
 		if (!BN_mod_mul(b->A, b->A, b->A, b->mod, ctx))
@@ -258,7 +296,6 @@ BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m, BN_CTX *ctx
 	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx)
 {
 	BN_BLINDING *ret = NULL;
-	int retry_counter = 32;
 
 	if ((ret = b) == NULL)
 		ret = BN_BLINDING_new(e, m);
@@ -270,32 +307,8 @@ BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m, BN_CTX *ctx
 	if (m_ctx != NULL)
 		ret->m_ctx = m_ctx;
 
-	do {
-		if (!BN_rand_range(ret->A, ret->mod))
-			goto err;
-		if (BN_mod_inverse_ct(ret->Ai, ret->A, ret->mod, ctx) == NULL) {
-			/* this should almost never happen for good RSA keys */
-			unsigned long error = ERR_peek_last_error();
-			if (ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
-				if (retry_counter-- == 0) {
-					BNerror(BN_R_TOO_MANY_ITERATIONS);
-					goto err;
-				}
-				ERR_clear_error();
-			} else
-				goto err;
-		} else
-			break;
-	} while (1);
-
-	if (ret->bn_mod_exp != NULL && ret->m_ctx != NULL) {
-		if (!ret->bn_mod_exp(ret->A, ret->A, ret->e, ret->mod,
-		    ctx, ret->m_ctx))
-			goto err;
-	} else {
-		if (!BN_mod_exp_ct(ret->A, ret->A, ret->e, ret->mod, ctx))
-			goto err;
-	}
+	if (!BN_BLINDING_setup(ret, ctx))
+		goto err;
 
 	return ret;
 
