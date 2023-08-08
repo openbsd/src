@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs.c,v 1.37 2023/04/25 08:57:11 krw Exp $	*/
+/*	$OpenBSD: ffs.c,v 1.38 2023/08/08 04:45:44 guenther Exp $	*/
 /*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
@@ -611,9 +611,9 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	dinp->di_atime = cur->inode->st.st_atime;
 	dinp->di_mtime = cur->inode->st.st_mtime;
 	dinp->di_ctime = cur->inode->st.st_ctime;
-	dinp->di_atimensec = cur->inode->st.st_atimensec;
-	dinp->di_mtimensec = cur->inode->st.st_mtimensec;
-	dinp->di_ctimensec = cur->inode->st.st_ctimensec;
+	dinp->di_atimensec = cur->inode->st.st_atim.tv_nsec;
+	dinp->di_mtimensec = cur->inode->st.st_mtim.tv_nsec;
+	dinp->di_ctimensec = cur->inode->st.st_ctim.tv_nsec;
 		/* not set: di_db, di_ib, di_blocks, di_spare */
 
 	membuf = NULL;
@@ -653,9 +653,9 @@ ffs_build_dinode2(struct ufs2_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 	dinp->di_atime = cur->inode->st.st_atime;
 	dinp->di_mtime = cur->inode->st.st_mtime;
 	dinp->di_ctime = cur->inode->st.st_ctime;
-	dinp->di_atimensec = cur->inode->st.st_atimensec;
-	dinp->di_mtimensec = cur->inode->st.st_mtimensec;
-	dinp->di_ctimensec = cur->inode->st.st_ctimensec;
+	dinp->di_atimensec = cur->inode->st.st_atim.tv_nsec;
+	dinp->di_mtimensec = cur->inode->st.st_mtim.tv_nsec;
+	dinp->di_ctimensec = cur->inode->st.st_ctim.tv_nsec;
 		/* not set: di_db, di_ib, di_blocks, di_spare */
 
 	membuf = NULL;
