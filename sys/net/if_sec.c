@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.2 2023/08/08 10:14:29 dlg Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.3 2023/08/08 10:19:15 dlg Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -83,6 +83,7 @@
 
 struct sec_softc {
 	struct ifnet			sc_if;
+	unsigned int			sc_dead;
 	unsigned int			sc_up;
 
 	struct task			sc_send;
@@ -175,6 +176,7 @@ sec_clone_destroy(struct ifnet *ifp)
 	struct sec_softc *sc = ifp->if_softc;
 
 	NET_LOCK();
+	sc->sc_dead = 1;
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		sec_down(sc);
 	NET_UNLOCK();
@@ -239,6 +241,9 @@ sec_up(struct sec_softc *sc)
 
 	NET_ASSERT_LOCKED();
 	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING));
+
+	if (sc->sc_dead)
+		return (ENXIO);
 
 	/*
 	 * coordinate with sec_down(). if sc_up is still up and
