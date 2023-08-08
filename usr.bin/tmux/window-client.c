@@ -1,4 +1,4 @@
-/* $OpenBSD: window-client.c,v 1.33 2022/05/30 12:55:25 nicm Exp $ */
+/* $OpenBSD: window-client.c,v 1.34 2023/08/08 07:41:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -242,7 +242,7 @@ window_client_draw(__unused void *modedata, void *itemdata,
 		screen_write_cursormove(ctx, cx, cy + 2, 0);
 	else
 		screen_write_cursormove(ctx, cx, cy + sy - 1 - lines, 0);
-	screen_write_hline(ctx, sx, 0, 0);
+	screen_write_hline(ctx, sx, 0, 0, BOX_LINES_DEFAULT, NULL);
 
 	if (at != 0)
 		screen_write_cursormove(ctx, cx, cy, 0);

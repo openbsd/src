@@ -1,4 +1,4 @@
-/* $OpenBSD: menu.c,v 1.49 2023/02/05 21:26:48 nicm Exp $ */
+/* $OpenBSD: menu.c,v 1.50 2023/08/08 07:41:04 nicm Exp $ */
 
 /*
  * Copyright (c) 2019 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -203,7 +203,8 @@ menu_draw_cb(struct client *c, void *data,
 
 	screen_write_start(&ctx, s);
 	screen_write_clearscreen(&ctx, 8);
-	screen_write_menu(&ctx, menu, md->choice, &gc);
+	screen_write_menu(&ctx, menu, md->choice, BOX_LINES_DEFAULT,
+	    &grid_default_cell, &grid_default_cell, &gc);
 	screen_write_stop(&ctx);
 
 	for (i = 0; i < screen_size_y(&md->s); i++) {
