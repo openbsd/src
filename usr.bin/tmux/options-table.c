@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.165 2022/09/09 11:02:23 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.166 2023/08/08 08:08:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -325,6 +325,33 @@ const struct options_table_entry options_table[] = {
 	  .default_str = "",
 	  .text = "Location of the command prompt history file. "
 		  "Empty does not write a history file."
+	},
+
+	{ .name = "menu-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .default_str = "default",
+	  .separator = ",",
+	  .text = "Default style of menu."
+	},
+
+	{ .name = "menu-border-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Default style of menu borders."
+	},
+
+	{ .name = "menu-border-lines",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .choices = options_table_popup_border_lines_list,
+	  .default_num = BOX_LINES_SINGLE,
+	  .text = "Type of characters used to draw menu border lines. Some of "
+	          "these are only supported on terminals with UTF-8 support."
 	},
 
 	{ .name = "message-limit",

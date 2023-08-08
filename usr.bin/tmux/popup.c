@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.50 2023/06/21 06:28:18 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.51 2023/08/08 08:08:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -575,8 +575,8 @@ menu:
 		x = m->x - (pd->menu->width + 4) / 2;
 	else
 		x = 0;
-	pd->md = menu_prepare(pd->menu, 0, 0, NULL, x, m->y, c, NULL,
-	    popup_menu_done, pd);
+	pd->md = menu_prepare(pd->menu, 0, 0, NULL, x, m->y, c,
+	    BOX_LINES_DEFAULT, NULL, NULL, NULL, popup_menu_done, pd);
 	c->flags |= CLIENT_REDRAWOVERLAY;
 
 out:

@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.216 2023/08/08 07:41:04 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.217 2023/08/08 08:08:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -713,15 +713,16 @@ screen_write_menu(struct screen_write_ctx *ctx, struct menu *menu, int choice,
 		name = menu->items[i].name;
 		if (name == NULL) {
 			screen_write_cursormove(ctx, cx, cy + 1 + i, 0);
-			screen_write_hline(ctx, width + 4, 1, 1, lines, gc);
+			screen_write_hline(ctx, width + 4, 1, 1, lines,
+			    border_gc);
 			continue;
 		}
 
 		if (choice >= 0 && i == (u_int)choice && *name != '-')
 			gc = choice_gc;
 
-		screen_write_cursormove(ctx, cx + 2, cy + 1 + i, 0);
-		for (j = 0; j < width; j++)
+		screen_write_cursormove(ctx, cx + 1, cy + 1 + i, 0);
+		for (j = 0; j < width + 2; j++)
 			screen_write_putc(ctx, gc, ' ');
 
 		screen_write_cursormove(ctx, cx + 2, cy + 1 + i, 0);

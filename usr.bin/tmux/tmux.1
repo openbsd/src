@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.924 2023/07/11 16:09:09 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.925 2023/08/08 08:08:47 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 11 2023 $
+.Dd $Mdocdate: August 8 2023 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -4073,6 +4073,26 @@ The default is to run
 .Xr lock 1
 with
 .Fl np .
+.It Ic menu-style Ar style
+Set the menu style.
+See the
+.Sx STYLES
+section on how to specify
+.Ar style .
+Attributes are ignored.
+.It Ic menu-border-style Ar style
+Set the menu border style.
+See the
+.Sx STYLES
+section on how to specify
+.Ar style .
+Attributes are ignored.
+.It Ic menu-border-lines Ar type
+Set the type of characters used for drawing menu borders.
+See
+.Ic popup-border-lines
+for possible values for
+.Ar type .
 .It Ic message-command-style Ar style
 Set status line message command style.
 This is used for the command prompt with
@@ -4540,20 +4560,18 @@ Attributes are ignored.
 .Pp
 .It Ic popup-style Ar style
 Set the popup style.
-For how to specify
-.Ar style ,
-see the
+See the
 .Sx STYLES
-section.
+section on how to specify
+.Ar style .
 Attributes are ignored.
 .Pp
 .It Ic popup-border-style Ar style
 Set the popup border style.
-For how to specify
-.Ar style ,
-see the
+See the
 .Sx STYLES
-section.
+section on how to specify
+.Ar style .
 Attributes are ignored.
 .Pp
 .It Ic popup-border-lines Ar type
@@ -6028,9 +6046,12 @@ the default is
 .Tg menu
 .It Xo Ic display-menu
 .Op Fl O
+.Op Fl b Ar border-lines
 .Op Fl c Ar target-client
+.Op Fl s Ar style
+.Op Fl S Ar border-style
 .Op Fl t Ar target-pane
-.Op Fl S Ar starting-choice
+.Op Fl C Ar starting-choice
 .Op Fl T Ar title
 .Op Fl x Ar position
 .Op Fl y Ar position
@@ -6057,10 +6078,24 @@ may not be chosen.
 The name may be empty for a separator line, in which case both the key and
 command should be omitted.
 .Pp
+.Fl b
+sets the type of characters used for drawing menu borders.
+See
+.Ic popup-border-lines
+for possible values for
+.Ar border-lines .
+.Pp
+.Fl s
+sets the style for the menu and
+.Fl S
+sets the style for the menu border (see
+.Sx STYLES ) .
+.Pp
 .Fl T
 is a format for the menu title (see
 .Sx FORMATS ) .
-.Fl S
+.Pp
+.Fl C
 sets the menu item selected by default, if the menu is not bound to a mouse key
 binding.
 .Pp
@@ -6175,8 +6210,8 @@ forwards any input read from stdin to the empty pane given by
 .Op Fl d Ar start-directory
 .Op Fl e Ar environment
 .Op Fl h Ar height
-.Op Fl s Ar style
-.Op Fl S Ar border-style
+.Op Fl s Ar border-style
+.Op Fl S Ar style
 .Op Fl t Ar target-pane
 .Op Fl T Ar title
 .Op Fl w Ar width
@@ -6219,7 +6254,7 @@ If omitted, half of the terminal size is used.
 does not surround the popup by a border.
 .Pp
 .Fl b
-sets the type of border line for the popup.
+sets the type of characters used for drawing popup borders.
 When
 .Fl B
 is specified, the
@@ -6233,12 +6268,8 @@ for possible values for
 .Fl s
 sets the style for the popup and
 .Fl S
-sets the style for the popup border.
-For how to specify
-.Ar style ,
-see the
-.Sx STYLES
-section.
+sets the style for the popup border (see
+.Sx STYLES ) .
 .Pp
 .Fl e
 takes the form
