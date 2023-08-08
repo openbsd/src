@@ -31,8 +31,7 @@ my %internal = (
 	BN_TBIT BN_ULLONG
     )],
     objects => [qw(
-	OBJ_bsearch OBJ_bsearch_ OBJ_bsearch_ex OBJ_bsearch_ex_
-	USE_OBJ_MAC
+	OBJ_bsearch_ OBJ_bsearch_ex_
     )],
     x509_vfy => [qw(
 	X509_VERIFY_PARAM_ID
@@ -61,11 +60,6 @@ my %obsolete = (
     )],
     bn => [qw(
 	BN_HEX_FMT1 BN_HEX_FMT2 BN_MASK
-    )],
-    objects => [qw(
-	_DECLARE_OBJ_BSEARCH_CMP_FN
-	DECLARE_OBJ_BSEARCH_CMP_FN DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN
-	IMPLEMENT_OBJ_BSEARCH_CMP_FN IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN
     )],
 );
 
