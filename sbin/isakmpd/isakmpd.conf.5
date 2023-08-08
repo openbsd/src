@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.138 2022/03/31 17:27:20 naddy Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.139 2023/08/08 10:31:03 dlg Exp $
 .\" $EOM: isakmpd.conf.5,v 1.57 2000/12/21 14:43:17 ho Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -28,7 +28,7 @@
 .\"
 .\" Manual page, using -mandoc macros
 .\"
-.Dd $Mdocdate: March 31 2022 $
+.Dd $Mdocdate: August 8 2023 $
 .Dt ISAKMPD.CONF 5
 .Os
 .Sh NAME
@@ -670,6 +670,16 @@ expands to
 The variable expansion for the
 .Ar PF-Tag
 directive occurs only at runtime, not during configuration file parse time.
+.It Em Interface
+Specify a
+.Xr sec 4
+interface minor number that the SAs will be used with.
+Configuring
+.Ar Interface
+also disables the insertion of flows, and instead relies on the
+routing of packets over the associated
+.Xr sec 4
+interface.
 .El
 .It Aq Sy IPsec-configuration
 Parameters for IPsec configuration
