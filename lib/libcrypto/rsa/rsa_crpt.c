@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.23 2023/07/28 10:05:16 tb Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.24 2023/08/08 13:49:45 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -187,44 +187,39 @@ err:
 BN_BLINDING *
 RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 {
-	BIGNUM *e;
+	BIGNUM *e = NULL;
 	BIGNUM n;
-	BN_CTX *ctx;
+	BN_CTX *ctx = NULL;
 	BN_BLINDING *ret = NULL;
 
-	if (in_ctx == NULL) {
-		if ((ctx = BN_CTX_new()) == NULL)
-			return 0;
-	} else
-		ctx = in_ctx;
+	if ((ctx = in_ctx) == NULL)
+		ctx = BN_CTX_new();
+	if (ctx == NULL)
+		goto err;
 
 	BN_CTX_start(ctx);
 
-	if (rsa->e == NULL) {
+	if ((e = rsa->e) == NULL)
 		e = rsa_get_public_exp(rsa->d, rsa->p, rsa->q, ctx);
-		if (e == NULL) {
-			RSAerror(RSA_R_NO_PUBLIC_EXPONENT);
-			goto err;
-		}
-	} else
-		e = rsa->e;
+	if (e == NULL) {
+		RSAerror(RSA_R_NO_PUBLIC_EXPONENT);
+		goto err;
+	}
 
 	BN_init(&n);
 	BN_with_flags(&n, rsa->n, BN_FLG_CONSTTIME);
 
-	ret = BN_BLINDING_create_param(NULL, e, &n, ctx, rsa->meth->bn_mod_exp,
-	    rsa->_method_mod_n);
-
-	if (ret == NULL) {
+	if ((ret = BN_BLINDING_create_param(NULL, e, &n, ctx,
+	    rsa->meth->bn_mod_exp, rsa->_method_mod_n)) == NULL) {
 		RSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	CRYPTO_THREADID_current(BN_BLINDING_thread_id(ret));
 err:
 	BN_CTX_end(ctx);
-	if (in_ctx == NULL)
+	if (ctx != in_ctx)
 		BN_CTX_free(ctx);
-	if (rsa->e == NULL)
+	if (e != rsa->e)
 		BN_free(e);
 
 	return ret;
