@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.24 2023/08/08 13:49:45 tb Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.25 2023/08/08 15:18:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -209,13 +209,14 @@ RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 	BN_init(&n);
 	BN_with_flags(&n, rsa->n, BN_FLG_CONSTTIME);
 
-	if ((ret = BN_BLINDING_create_param(NULL, e, &n, ctx,
-	    rsa->meth->bn_mod_exp, rsa->_method_mod_n)) == NULL) {
+	if ((ret = BN_BLINDING_create_param(e, &n, ctx, rsa->meth->bn_mod_exp,
+	    rsa->_method_mod_n)) == NULL) {
 		RSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
 	CRYPTO_THREADID_current(BN_BLINDING_thread_id(ret));
-err:
+
+ err:
 	BN_CTX_end(ctx);
 	if (ctx != in_ctx)
 		BN_CTX_free(ctx);

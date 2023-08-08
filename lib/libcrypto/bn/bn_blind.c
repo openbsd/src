@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.35 2023/08/08 15:10:34 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.36 2023/08/08 15:18:24 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -291,15 +291,13 @@ BN_BLINDING_thread_id(BN_BLINDING *b)
 }
 
 BN_BLINDING *
-BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
+BN_BLINDING_create_param(const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
     int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx)
 {
 	BN_BLINDING *ret = NULL;
 
-	if ((ret = b) == NULL)
-		ret = BN_BLINDING_new(e, m);
-	if (ret == NULL)
+	if ((ret = BN_BLINDING_new(e, m)) == NULL)
 		goto err;
 
 	if (bn_mod_exp != NULL)
@@ -313,8 +311,7 @@ BN_BLINDING_create_param(BN_BLINDING *b, const BIGNUM *e, BIGNUM *m, BN_CTX *ctx
 	return ret;
 
  err:
-	if (ret != b)
-		BN_BLINDING_free(ret);
+	BN_BLINDING_free(ret);
 
 	return NULL;
 }

@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.33 2023/08/03 18:53:55 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.34 2023/08/08 15:18:24 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -297,8 +297,7 @@ int BN_BLINDING_convert(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
 int BN_BLINDING_invert(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *);
 
 CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
-BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
-    const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
+BN_BLINDING *BN_BLINDING_create_param(const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
     int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
     BN_MONT_CTX *m_ctx);
