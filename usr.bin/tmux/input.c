@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.218 2023/07/13 06:03:48 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.219 2023/08/08 08:21:29 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2755,6 +2755,9 @@ input_osc_133(struct input_ctx *ictx, const char *p)
 	switch (*p) {
 	case 'A':
 		gl->flags |= GRID_LINE_START_PROMPT;
+		break;
+	case 'C':
+		gl->flags |= GRID_LINE_START_OUTPUT;
 		break;
 	}
 }
