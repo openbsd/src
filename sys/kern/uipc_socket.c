@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.307 2023/08/03 09:49:08 mvs Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.308 2023/08/08 22:06:27 mvs Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -1856,6 +1856,9 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 		case SO_SNDLOWAT:
 		case SO_RCVLOWAT:
 		    {
+			struct sockbuf *sb = (optname == SO_SNDBUF ||
+			    optname == SO_SNDLOWAT ?
+			    &so->so_snd : &so->so_rcv);
 			u_long cnt;
 
 			if (m == NULL || m->m_len < sizeof (int))
@@ -1867,40 +1870,23 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 			solock(so);
 			switch (optname) {
 			case SO_SNDBUF:
-				if (so->so_snd.sb_state & SS_CANTSENDMORE) {
-					error = EINVAL;
-					break;
-				}
-				if (sbcheckreserve(cnt, so->so_snd.sb_wat) ||
-				    sbreserve(so, &so->so_snd, cnt)) {
-					error = ENOBUFS;
-					break;
-				}
-				so->so_snd.sb_wat = cnt;
-				break;
-
 			case SO_RCVBUF:
-				if (so->so_rcv.sb_state & SS_CANTRCVMORE) {
+				if (sb->sb_state &
+				    (SS_CANTSENDMORE | SS_CANTRCVMORE)) {
 					error = EINVAL;
 					break;
 				}
-				if (sbcheckreserve(cnt, so->so_rcv.sb_wat) ||
-				    sbreserve(so, &so->so_rcv, cnt)) {
+				if (sbcheckreserve(cnt, sb->sb_wat) ||
+				    sbreserve(so, sb, cnt)) {
 					error = ENOBUFS;
 					break;
 				}
-				so->so_rcv.sb_wat = cnt;
+				sb->sb_wat = cnt;
 				break;
-
 			case SO_SNDLOWAT:
-				so->so_snd.sb_lowat =
-				    (cnt > so->so_snd.sb_hiwat) ?
-				    so->so_snd.sb_hiwat : cnt;
-				break;
 			case SO_RCVLOWAT:
-				so->so_rcv.sb_lowat =
-				    (cnt > so->so_rcv.sb_hiwat) ?
-				    so->so_rcv.sb_hiwat : cnt;
+				sb->sb_lowat = (cnt > sb->sb_hiwat) ?
+				    sb->sb_hiwat : cnt;
 				break;
 			}
 			sounlock(so);
@@ -1910,6 +1896,8 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 		case SO_SNDTIMEO:
 		case SO_RCVTIMEO:
 		    {
+			struct sockbuf *sb = (optname == SO_SNDTIMEO ?
+			    &so->so_snd : &so->so_rcv);
 			struct timeval tv;
 			uint64_t nsecs;
 
@@ -1925,14 +1913,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m)
 				nsecs = INFSLP;
 
 			solock(so);
-			switch (optname) {
-			case SO_SNDTIMEO:
-				so->so_snd.sb_timeo_nsecs = nsecs;
-				break;
-			case SO_RCVTIMEO:
-				so->so_rcv.sb_timeo_nsecs = nsecs;
-				break;
-			}
+			sb->sb_timeo_nsecs = nsecs;
 			sounlock(so);
 			break;
 		    }
