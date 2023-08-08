@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.34 2023/08/08 14:40:56 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.35 2023/08/08 15:10:34 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -179,7 +179,7 @@ BN_BLINDING_free(BN_BLINDING *r)
 }
 
 static int
-BN_BLINDING_setup(BN_BLINDING *ret, BN_CTX *ctx)
+BN_BLINDING_setup(BN_BLINDING *b, BN_CTX *ctx)
 {
 	int retry_counter = 32;
 
@@ -188,9 +188,9 @@ BN_BLINDING_setup(BN_BLINDING *ret, BN_CTX *ctx)
 	 * we have basically factored mod = (p-1)(q-1)...
 	 */
 	do {
-		if (!BN_rand_range(ret->A, ret->mod))
+		if (!BN_rand_range(b->A, b->mod))
 			return 0;
-		if (BN_mod_inverse_ct(ret->Ai, ret->A, ret->mod, ctx) == NULL) {
+		if (BN_mod_inverse_ct(b->Ai, b->A, b->mod, ctx) == NULL) {
 			/* this should almost never happen for good RSA keys */
 			unsigned long error = ERR_peek_last_error();
 			if (ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
@@ -205,12 +205,12 @@ BN_BLINDING_setup(BN_BLINDING *ret, BN_CTX *ctx)
 			break;
 	} while (1);
 
-	if (ret->bn_mod_exp != NULL && ret->m_ctx != NULL) {
-		if (!ret->bn_mod_exp(ret->A, ret->A, ret->e, ret->mod,
-		    ctx, ret->m_ctx))
+	if (b->bn_mod_exp != NULL && b->m_ctx != NULL) {
+		if (!b->bn_mod_exp(b->A, b->A, b->e, b->mod,
+		    ctx, b->m_ctx))
 			return 0;
 	} else {
-		if (!BN_mod_exp_ct(ret->A, ret->A, ret->e, ret->mod, ctx))
+		if (!BN_mod_exp_ct(b->A, b->A, b->e, b->mod, ctx))
 			return 0;
 	}
 
