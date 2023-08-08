@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.1 2023/08/07 01:57:33 dlg Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.2 2023/08/08 10:14:29 dlg Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -83,6 +83,7 @@
 
 struct sec_softc {
 	struct ifnet			sc_if;
+	unsigned int			sc_up;
 
 	struct task			sc_send;
 
@@ -237,10 +238,19 @@ sec_up(struct sec_softc *sc)
 	unsigned int idx = stoeplitz_h32(sc->sc_unit) % nitems(sec_map);
 
 	NET_ASSERT_LOCKED();
+	KASSERT(!ISSET(ifp->if_flags, IFF_RUNNING));
 
-	SET(ifp->if_flags, IFF_RUNNING);
+	/*
+	 * coordinate with sec_down(). if sc_up is still up and
+	 * we're here then something else is running sec_down.
+	 */
+	if (sc->sc_up)
+		return (EBUSY);
+
+	sc->sc_up = 1;
+
 	refcnt_init(&sc->sc_refs);
-
+	SET(ifp->if_flags, IFF_RUNNING);
 	SMR_SLIST_INSERT_HEAD_LOCKED(&sec_map[idx], sc, sc_entry);
 
 	return (0);
@@ -253,15 +263,27 @@ sec_down(struct sec_softc *sc)
 	unsigned int idx = stoeplitz_h32(sc->sc_unit) % nitems(sec_map);
 
 	NET_ASSERT_LOCKED();
+	KASSERT(ISSET(ifp->if_flags, IFF_RUNNING));
+
+	/*
+	 * taking sec down involves waiting for it to stop running
+	 * in various contexts. this thread cannot hold netlock
+	 * while waiting for a barrier for a task that could be trying
+	 * to take netlock itself. so give up netlock, but don't clear
+	 * sc_up to prevent sec_up from running.
+	 */
 
 	CLR(ifp->if_flags, IFF_RUNNING);
-
-	SMR_SLIST_REMOVE_LOCKED(&sec_map[idx], sc, sec_softc, sc_entry);
+	NET_UNLOCK();
 
 	smr_barrier();
 	taskq_del_barrier(systq, &sc->sc_send);
 
 	refcnt_finalize(&sc->sc_refs, "secdown");
+
+	NET_LOCK();
+	SMR_SLIST_REMOVE_LOCKED(&sec_map[idx], sc, sec_softc, sc_entry);
+	sc->sc_up = 0;
 
 	return (0);
 }
