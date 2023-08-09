@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.37 2023/08/08 15:24:02 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.38 2023/08/09 08:29:23 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -266,21 +266,12 @@ BN_BLINDING_convert(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 }
 
 int
-BN_BLINDING_invert(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
+BN_BLINDING_invert(BIGNUM *n, const BIGNUM *inv, BN_BLINDING *b, BN_CTX *ctx)
 {
-	int ret;
+	if (inv == NULL)
+		inv = b->Ai;
 
-	if (r != NULL)
-		ret = BN_mod_mul(n, n, r, b->mod, ctx);
-	else {
-		if (b->Ai == NULL) {
-			BNerror(BN_R_NOT_INITIALIZED);
-			return (0);
-		}
-		ret = BN_mod_mul(n, n, b->Ai, b->mod, ctx);
-	}
-
-	return ret;
+	return BN_mod_mul(n, n, inv, b->mod, ctx);
 }
 
 CRYPTO_THREADID *
