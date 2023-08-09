@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.64 2023/08/09 09:32:23 tb Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.65 2023/08/09 12:09:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -222,7 +222,6 @@ rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 {
 	BN_BLINDING *ret;
 	int got_write_lock = 0;
-	CRYPTO_THREADID cur;
 
 	CRYPTO_r_lock(CRYPTO_LOCK_RSA);
 
@@ -235,24 +234,14 @@ rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 			rsa->blinding = RSA_setup_blinding(rsa, ctx);
 	}
 
-	ret = rsa->blinding;
-	if (ret == NULL)
+	if ((ret = rsa->blinding) == NULL)
 		goto err;
 
-	CRYPTO_THREADID_current(&cur);
-	if (!CRYPTO_THREADID_cmp(&cur, BN_BLINDING_thread_id(ret))) {
-		/* rsa->blinding is ours! */
-		*local = 1;
-	} else {
-		/* resort to rsa->mt_blinding instead */
-		/*
-		 * Instruct rsa_blinding_convert(), rsa_blinding_invert()
-		 * that the BN_BLINDING is shared, meaning that accesses
-		 * require locks, and that the blinding factor must be
-		 * stored outside the BN_BLINDING
-		 */
-		*local = 0;
-
+	/*
+	 * We need a shared blinding. Accesses require locks and a copy of the
+	 * blinding factor needs to be retained on use.
+	 */
+	if ((*local = BN_BLINDING_is_local(ret)) == 0) {
 		if (rsa->mt_blinding == NULL) {
 			if (!got_write_lock) {
 				CRYPTO_r_unlock(CRYPTO_LOCK_RSA);
@@ -266,11 +255,12 @@ rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 		ret = rsa->mt_blinding;
 	}
 
-err:
+ err:
 	if (got_write_lock)
 		CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
 	else
 		CRYPTO_r_unlock(CRYPTO_LOCK_RSA);
+
 	return ret;
 }
 

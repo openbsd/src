@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_blinding.c,v 1.2 2023/08/09 09:26:43 tb Exp $ */
+/* $OpenBSD: rsa_blinding.c,v 1.3 2023/08/09 12:09:06 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -109,6 +109,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <pthread.h>
 #include <stdio.h>
 
 #include <openssl/opensslconf.h>
@@ -126,7 +127,7 @@ struct bn_blinding_st {
 	BIGNUM *Ai;
 	BIGNUM *e;
 	BIGNUM *mod;
-	CRYPTO_THREADID tid;
+	pthread_t tid;
 	int counter;
 	BN_MONT_CTX *m_ctx;
 	int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
@@ -157,7 +158,7 @@ BN_BLINDING_new(const BIGNUM *e, const BIGNUM *mod, BN_CTX *ctx,
 
 	/* Update on first use. */
 	ret->counter = BN_BLINDING_COUNTER - 1;
-	CRYPTO_THREADID_current(&ret->tid);
+	ret->tid = pthread_self();
 
 	if (bn_mod_exp != NULL)
 		ret->bn_mod_exp = bn_mod_exp;
@@ -254,10 +255,10 @@ BN_BLINDING_invert(BIGNUM *n, const BIGNUM *inv, BN_BLINDING *b, BN_CTX *ctx)
 	return BN_mod_mul(n, n, inv, b->mod, ctx);
 }
 
-CRYPTO_THREADID *
-BN_BLINDING_thread_id(BN_BLINDING *b)
+int
+BN_BLINDING_is_local(BN_BLINDING *b)
 {
-	return &b->tid;
+	return pthread_equal(pthread_self(), b->tid) != 0;
 }
 
 static BIGNUM *
@@ -320,7 +321,6 @@ RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 		RSAerror(ERR_R_BN_LIB);
 		goto err;
 	}
-	CRYPTO_THREADID_current(BN_BLINDING_thread_id(ret));
 
  err:
 	BN_CTX_end(ctx);
