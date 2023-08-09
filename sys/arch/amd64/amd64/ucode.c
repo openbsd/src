@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucode.c,v 1.6 2023/07/23 01:46:37 jsg Exp $	*/
+/*	$OpenBSD: ucode.c,v 1.7 2023/08/09 02:59:41 jsg Exp $	*/
 /*
  * Copyright (c) 2018 Stefan Fritsch <fritsch@genua.de>
  * Copyright (c) 2018 Patrick Wildt <patrick@blueri.se>
@@ -261,7 +261,7 @@ out:
 struct intel_ucode_header *
 cpu_ucode_intel_find(char *data, size_t left, uint32_t current)
 {
-	uint64_t platform_id = (rdmsr(MSR_PLATFORM_ID) >> 50) & 0xff;
+	uint64_t platform_id = (rdmsr(MSR_PLATFORM_ID) >> 50) & 7;
 	uint32_t sig, dummy1, dummy2, dummy3;
 	uint32_t mask = 1UL << platform_id;
 	struct intel_ucode_header *hdr;
