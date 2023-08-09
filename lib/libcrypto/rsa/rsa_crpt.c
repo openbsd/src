@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_crpt.c,v 1.26 2023/08/09 09:09:24 tb Exp $ */
+/* $OpenBSD: rsa_crpt.c,v 1.27 2023/08/09 09:25:13 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -126,34 +126,6 @@ RSA_flags(const RSA *r)
 }
 LCRYPTO_ALIAS(RSA_flags);
 
-void
-RSA_blinding_off(RSA *rsa)
-{
-	BN_BLINDING_free(rsa->blinding);
-	rsa->blinding = NULL;
-	rsa->flags |= RSA_FLAG_NO_BLINDING;
-}
-LCRYPTO_ALIAS(RSA_blinding_off);
-
-int
-RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
-{
-	int ret = 0;
-
-	if (rsa->blinding != NULL)
-		RSA_blinding_off(rsa);
-
-	rsa->blinding = RSA_setup_blinding(rsa, ctx);
-	if (rsa->blinding == NULL)
-		goto err;
-
-	rsa->flags &= ~RSA_FLAG_NO_BLINDING;
-	ret = 1;
-err:
-	return (ret);
-}
-LCRYPTO_ALIAS(RSA_blinding_on);
-
 static BIGNUM *
 rsa_get_public_exp(const BIGNUM *d, const BIGNUM *p, const BIGNUM *q,
     BN_CTX *ctx)
@@ -225,3 +197,31 @@ RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 
 	return ret;
 }
+
+void
+RSA_blinding_off(RSA *rsa)
+{
+	BN_BLINDING_free(rsa->blinding);
+	rsa->blinding = NULL;
+	rsa->flags |= RSA_FLAG_NO_BLINDING;
+}
+LCRYPTO_ALIAS(RSA_blinding_off);
+
+int
+RSA_blinding_on(RSA *rsa, BN_CTX *ctx)
+{
+	int ret = 0;
+
+	if (rsa->blinding != NULL)
+		RSA_blinding_off(rsa);
+
+	rsa->blinding = RSA_setup_blinding(rsa, ctx);
+	if (rsa->blinding == NULL)
+		goto err;
+
+	rsa->flags &= ~RSA_FLAG_NO_BLINDING;
+	ret = 1;
+err:
+	return (ret);
+}
+LCRYPTO_ALIAS(RSA_blinding_on);
