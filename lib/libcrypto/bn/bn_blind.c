@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.41 2023/08/09 08:39:46 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.42 2023/08/09 09:09:24 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -131,8 +131,10 @@ struct bn_blinding_st {
 	    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx);
 };
 
-static BN_BLINDING *
-BN_BLINDING_new(const BIGNUM *e, const BIGNUM *mod)
+BN_BLINDING *
+BN_BLINDING_new(const BIGNUM *e, BIGNUM *mod, BN_CTX *ctx,
+    int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx)
 {
 	BN_BLINDING *ret = NULL;
 
@@ -154,6 +156,11 @@ BN_BLINDING_new(const BIGNUM *e, const BIGNUM *mod)
 	/* Update on first use. */
 	ret->counter = BN_BLINDING_COUNTER - 1;
 	CRYPTO_THREADID_current(&ret->tid);
+
+	if (bn_mod_exp != NULL)
+		ret->bn_mod_exp = bn_mod_exp;
+	if (m_ctx != NULL)
+		ret->m_ctx = m_ctx;
 
 	return ret;
 
@@ -249,27 +256,4 @@ CRYPTO_THREADID *
 BN_BLINDING_thread_id(BN_BLINDING *b)
 {
 	return &b->tid;
-}
-
-BN_BLINDING *
-BN_BLINDING_create_param(const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
-    int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
-	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx)
-{
-	BN_BLINDING *ret = NULL;
-
-	if ((ret = BN_BLINDING_new(e, m)) == NULL)
-		goto err;
-
-	if (bn_mod_exp != NULL)
-		ret->bn_mod_exp = bn_mod_exp;
-	if (m_ctx != NULL)
-		ret->m_ctx = m_ctx;
-
-	return ret;
-
- err:
-	BN_BLINDING_free(ret);
-
-	return NULL;
 }
