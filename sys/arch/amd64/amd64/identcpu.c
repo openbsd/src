@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.135 2023/07/27 01:51:35 guenther Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.136 2023/08/09 00:01:44 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -649,6 +649,21 @@ identifycpu(struct cpu_info *ci)
 
 	printf(", %02x-%02x-%02x", ci->ci_family, ci->ci_model,
 	    ci->ci_signature & 0x0f);
+
+	if ((cpu_ecxfeature & CPUIDECX_HV) == 0) {
+		uint64_t level = 0;
+		uint32_t dummy;
+
+		if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+			level = rdmsr(MSR_PATCH_LEVEL);
+		} else if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+			wrmsr(MSR_BIOS_SIGN, 0);
+			CPUID(1, dummy, dummy, dummy, dummy);
+			level = rdmsr(MSR_BIOS_SIGN) >> 32;
+		}
+		if (level != 0)
+			printf(", patch %08llx", level);
+	}
 
 	printf("\n%s: ", ci->ci_dev->dv_xname);
 

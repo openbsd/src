@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.665 2023/07/25 04:42:02 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.666 2023/08/09 00:01:44 jsg Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1858,6 +1858,21 @@ identifycpu(struct cpu_info *ci)
 	if (cpuid_level != -1)
 		printf(", %02x-%02x-%02x", ci->ci_family, ci->ci_model,
 		    step);
+
+	if ((cpu_ecxfeature & CPUIDECX_HV) == 0) {
+		uint64_t level = 0;
+		uint32_t dummy;
+
+		if (strcmp(cpu_vendor, "AuthenticAMD") == 0) {
+			level = rdmsr(MSR_PATCH_LEVEL);
+		} else if (strcmp(cpu_vendor, "GenuineIntel") == 0) {
+			wrmsr(MSR_BIOS_SIGN, 0);
+			CPUID(1, dummy, dummy, dummy, dummy);
+			level = rdmsr(MSR_BIOS_SIGN) >> 32;
+		}
+		if (level != 0)
+			printf(", patch %08llx", level);
+	}
 
 	printf("\n");
 
