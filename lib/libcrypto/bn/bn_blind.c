@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.39 2023/08/09 08:31:13 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.40 2023/08/09 08:35:59 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -181,29 +181,10 @@ BN_BLINDING_free(BN_BLINDING *r)
 static int
 BN_BLINDING_setup(BN_BLINDING *b, BN_CTX *ctx)
 {
-	int retry_counter = 32;
-
-	/*
-	 * XXX - remove this loop. If we happen to find a non-invertible A,
-	 * we have basically factored mod = (p-1)(q-1)...
-	 */
-	do {
-		if (!BN_rand_range(b->A, b->mod))
-			return 0;
-		if (BN_mod_inverse_ct(b->Ai, b->A, b->mod, ctx) == NULL) {
-			/* this should almost never happen for good RSA keys */
-			unsigned long error = ERR_peek_last_error();
-			if (ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
-				if (retry_counter-- == 0) {
-					BNerror(BN_R_TOO_MANY_ITERATIONS);
-					return 0;
-				}
-				ERR_clear_error();
-			} else
-				return 0;
-		} else
-			break;
-	} while (1);
+	if (!bn_rand_interval(b->A, 1, b->mod))
+		return 0;
+	if (BN_mod_inverse_ct(b->Ai, b->A, b->mod, ctx) == NULL)
+		return 0;
 
 	if (b->bn_mod_exp != NULL && b->m_ctx != NULL) {
 		if (!b->bn_mod_exp(b->A, b->A, b->e, b->mod, ctx, b->m_ctx))
