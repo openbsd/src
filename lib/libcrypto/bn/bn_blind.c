@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.40 2023/08/09 08:35:59 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.41 2023/08/09 08:39:46 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -151,10 +151,8 @@ BN_BLINDING_new(const BIGNUM *e, const BIGNUM *mod)
 	if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
 		BN_set_flags(ret->mod, BN_FLG_CONSTTIME);
 
-	/* Set the counter to the special value -1
-	 * to indicate that this is never-used fresh blinding
-	 * that does not need updating before first use. */
-	ret->counter = -1;
+	/* Update on first use. */
+	ret->counter = BN_BLINDING_COUNTER - 1;
 	CRYPTO_THREADID_current(&ret->tid);
 
 	return ret;
@@ -202,12 +200,10 @@ BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
 {
 	int ret = 0;
 
-	if (b->counter == -1)
-		b->counter = 0;
-
-	if (++b->counter == BN_BLINDING_COUNTER) {
+	if (++b->counter >= BN_BLINDING_COUNTER) {
 		if (!BN_BLINDING_setup(b, ctx))
 			goto err;
+		b->counter = 0;
 	} else {
 		if (!BN_mod_sqr(b->A, b->A, b->mod, ctx))
 			goto err;
@@ -218,31 +214,25 @@ BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
 	ret = 1;
 
  err:
-	if (b->counter == BN_BLINDING_COUNTER)
-		b->counter = 0;
-
 	return ret;
 }
 
 int
-BN_BLINDING_convert(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
+BN_BLINDING_convert(BIGNUM *n, BIGNUM *inv, BN_BLINDING *b, BN_CTX *ctx)
 {
-	int ret = 1;
+	int ret = 0;
 
-	if (b->counter == -1)
-		/* Fresh blinding, doesn't need updating. */
-		b->counter = 0;
-	else if (!BN_BLINDING_update(b, ctx))
-		return 0;
+	if (!BN_BLINDING_update(b, ctx))
+		goto err;
 
-	if (r != NULL) {
-		if (!bn_copy(r, b->Ai))
-			ret = 0;
+	if (inv != NULL) {
+		if (!bn_copy(inv, b->Ai))
+			goto err;
 	}
 
-	if (!BN_mod_mul(n, n, b->A, b->mod, ctx))
-		ret = 0;
+	ret = BN_mod_mul(n, n, b->A, b->mod, ctx);
 
+ err:
 	return ret;
 }
 
@@ -275,9 +265,6 @@ BN_BLINDING_create_param(const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
 		ret->bn_mod_exp = bn_mod_exp;
 	if (m_ctx != NULL)
 		ret->m_ctx = m_ctx;
-
-	if (!BN_BLINDING_setup(ret, ctx))
-		goto err;
 
 	return ret;
 
