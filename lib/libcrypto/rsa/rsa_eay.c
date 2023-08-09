@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_eay.c,v 1.63 2023/08/02 08:44:38 tb Exp $ */
+/* $OpenBSD: rsa_eay.c,v 1.64 2023/08/09 09:32:23 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -857,3 +857,56 @@ RSA_PKCS1_SSLeay(void)
 	return RSA_PKCS1_OpenSSL();
 }
 LCRYPTO_ALIAS(RSA_PKCS1_SSLeay);
+
+int
+RSA_bits(const RSA *r)
+{
+	return BN_num_bits(r->n);
+}
+LCRYPTO_ALIAS(RSA_bits);
+
+int
+RSA_size(const RSA *r)
+{
+	return BN_num_bytes(r->n);
+}
+LCRYPTO_ALIAS(RSA_size);
+
+int
+RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+	return rsa->meth->rsa_pub_enc(flen, from, to, rsa, padding);
+}
+LCRYPTO_ALIAS(RSA_public_encrypt);
+
+int
+RSA_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+	return rsa->meth->rsa_priv_enc(flen, from, to, rsa, padding);
+}
+LCRYPTO_ALIAS(RSA_private_encrypt);
+
+int
+RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+	return rsa->meth->rsa_priv_dec(flen, from, to, rsa, padding);
+}
+LCRYPTO_ALIAS(RSA_private_decrypt);
+
+int
+RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
+    RSA *rsa, int padding)
+{
+	return rsa->meth->rsa_pub_dec(flen, from, to, rsa, padding);
+}
+LCRYPTO_ALIAS(RSA_public_decrypt);
+
+int
+RSA_flags(const RSA *r)
+{
+	return r == NULL ? 0 : r->meth->flags;
+}
+LCRYPTO_ALIAS(RSA_flags);
