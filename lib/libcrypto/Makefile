@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.153 2023/07/29 06:46:20 tb Exp $
+# $OpenBSD: Makefile,v 1.154 2023/08/09 09:23:03 tb Exp $
 
 LIB=	crypto
 LIBREBUILD=y
@@ -168,7 +168,6 @@ SRCS+= bss_sock.c
 
 # bn/
 SRCS+= bn_add.c
-SRCS+= bn_blind.c
 SRCS+= bn_bpsw.c
 SRCS+= bn_const.c
 SRCS+= bn_convert.c
@@ -534,6 +533,7 @@ SRCS+= ripemd.c
 # rsa/
 SRCS+= rsa_ameth.c
 SRCS+= rsa_asn1.c
+SRCS+= rsa_blinding.c
 SRCS+= rsa_chk.c
 SRCS+= rsa_crpt.c
 SRCS+= rsa_eay.c

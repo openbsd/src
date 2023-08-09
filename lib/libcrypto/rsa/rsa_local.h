@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_local.h,v 1.4 2023/07/28 10:05:16 tb Exp $ */
+/* $OpenBSD: rsa_local.h,v 1.5 2023/08/09 09:23:03 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -153,6 +153,13 @@ int RSA_padding_check_X931(unsigned char *to, int tlen,
     const unsigned char *f, int fl, int rsa_len);
 int RSA_X931_hash_id(int nid);
 
+BN_BLINDING *BN_BLINDING_new(const BIGNUM *e, const BIGNUM *mod, BN_CTX *ctx,
+    int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx);
+void BN_BLINDING_free(BN_BLINDING *b);
+int BN_BLINDING_convert(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
+int BN_BLINDING_invert(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *);
+CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *);
 BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *ctx);
 
 __END_HIDDEN_DECLS

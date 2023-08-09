@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.43 2023/08/09 09:20:00 tb Exp $ */
+/* $OpenBSD: rsa_blinding.c,v 1.1 2023/08/09 09:23:03 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -114,8 +114,10 @@
 #include <openssl/opensslconf.h>
 
 #include <openssl/err.h>
+#include <openssl/rsa.h>
 
 #include "bn_local.h"
+#include "rsa_local.h"
 
 #define BN_BLINDING_COUNTER	32
 
