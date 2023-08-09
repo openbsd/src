@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2044 2023/08/06 14:40:25 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2045 2023/08/09 21:27:47 kmos Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -9326,6 +9326,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CREATIVELABS, PCI_PRODUCT_CREATIVELABS_EV1938,
 	    "Ectiva 1938",
+	},
+	{
+	    PCI_VENDOR_CRUCIAL, PCI_PRODUCT_CRUCIAL_P5PLUS,
+	    "P5 Plus",
 	},
 	{
 	    PCI_VENDOR_CYCLADES, PCI_PRODUCT_CYCLADES_CYCLOMY_1,
@@ -36334,6 +36338,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_PARALLELS,
 	    "Parallels",
+	},
+	{
+	    PCI_VENDOR_CRUCIAL,
+	    "Crucial",
 	},
 	{
 	    PCI_VENDOR_TIGERJET,
