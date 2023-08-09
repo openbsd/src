@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_local.h,v 1.36 2023/08/09 09:09:24 tb Exp $ */
+/* $OpenBSD: bn_local.h,v 1.37 2023/08/09 09:20:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -292,7 +292,7 @@ int	BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 int	BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
     BN_RECP_CTX *recp, BN_CTX *ctx);
 
-BN_BLINDING *BN_BLINDING_new(const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
+BN_BLINDING *BN_BLINDING_new(const BIGNUM *e, const BIGNUM *mod, BN_CTX *ctx,
     int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx);
 void BN_BLINDING_free(BN_BLINDING *b);

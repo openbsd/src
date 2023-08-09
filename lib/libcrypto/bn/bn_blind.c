@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.42 2023/08/09 09:09:24 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.43 2023/08/09 09:20:00 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -132,7 +132,7 @@ struct bn_blinding_st {
 };
 
 BN_BLINDING *
-BN_BLINDING_new(const BIGNUM *e, BIGNUM *mod, BN_CTX *ctx,
+BN_BLINDING_new(const BIGNUM *e, const BIGNUM *mod, BN_CTX *ctx,
     int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx), BN_MONT_CTX *m_ctx)
 {
