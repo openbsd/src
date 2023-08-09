@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_blind.c,v 1.38 2023/08/09 08:29:23 tb Exp $ */
+/* $OpenBSD: bn_blind.c,v 1.39 2023/08/09 08:31:13 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -228,9 +228,9 @@ BN_BLINDING_update(BN_BLINDING *b, BN_CTX *ctx)
 		if (!BN_BLINDING_setup(b, ctx))
 			goto err;
 	} else {
-		if (!BN_mod_mul(b->A, b->A, b->A, b->mod, ctx))
+		if (!BN_mod_sqr(b->A, b->A, b->mod, ctx))
 			goto err;
-		if (!BN_mod_mul(b->Ai, b->Ai, b->Ai, b->mod, ctx))
+		if (!BN_mod_sqr(b->Ai, b->Ai, b->mod, ctx))
 			goto err;
 	}
 
