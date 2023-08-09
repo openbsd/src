@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.3 2023/08/08 10:19:15 dlg Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.4 2023/08/09 02:08:14 jsg Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -34,40 +34,25 @@
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
-#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/timeout.h>
-#include <sys/queue.h>
-#include <sys/tree.h>
-#include <sys/pool.h>
 #include <sys/smr.h>
 #include <sys/refcnt.h>
+#include <sys/task.h>
+#include <sys/mutex.h>
 
 #include <net/if.h>
 #include <net/if_var.h>
 #include <net/if_types.h>
-#include <net/if_media.h>
-#include <net/route.h>
 #include <net/toeplitz.h>
 
 #include <netinet/in.h>
-#include <netinet/in_var.h>
-#include <netinet/if_ether.h>
 #include <netinet/ip.h>
-#include <netinet/ip_var.h>
-#include <netinet/ip_ecn.h>
 #include <netinet/ip_ipsp.h>
 
 #ifdef INET6
 #include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
-#include <netinet6/in6_var.h>
 #endif
-
-#ifdef MPLS
-#include <netmpls/mpls.h>
-#endif /* MPLS */
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
