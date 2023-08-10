@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1252 2023/08/02 08:51:16 kn Exp $
+#	$OpenBSD: install.sub,v 1.1253 2023/08/10 17:09:34 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3097,7 +3097,7 @@ encrypt_root() {
 	md_prep_fdisk $_chunk
 	echo 'RAID *' | disklabel -w -A -T- $_chunk
 
-	until bioctl -c C -l ${_chunk}a softraid0 >/dev/null; do
+	until bioctl -Cforce -cC -l${_chunk}a softraid0 >/dev/null; do
 		# Most likely botched passphrases, silently retry twice.
 		((++_tries < 3)) || exit
 	done
