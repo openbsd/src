@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_table.c,v 1.144 2023/01/05 10:06:58 sashan Exp $	*/
+/*	$OpenBSD: pf_table.c,v 1.145 2023/08/10 16:44:04 sashan Exp $	*/
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -1565,8 +1565,10 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 			xadd++;
 		} else if (!(flags & PFR_FLAG_DUMMY) &&
 		    !(p->pfrkt_flags & PFR_TFLAG_ACTIVE)) {
-			p->pfrkt_nflags = (p->pfrkt_flags &
-			    ~PFR_TFLAG_USRMASK) | PFR_TFLAG_ACTIVE;
+			p->pfrkt_nflags =
+			    (p->pfrkt_flags & ~PFR_TFLAG_USRMASK) |
+			    (n->pfrkt_flags & PFR_TFLAG_USRMASK) |
+			    PFR_TFLAG_ACTIVE;
 			SLIST_INSERT_HEAD(&changeq, p, pfrkt_workq);
 		}
 	}
