@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.10 2023/08/10 13:58:34 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.11 2023/08/10 13:59:31 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -140,9 +140,6 @@ __END_HIDDEN_DECLS
  */
 
 #ifndef md5_block_data_order
-#ifdef X
-#undef X
-#endif
 void
 md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
 {
