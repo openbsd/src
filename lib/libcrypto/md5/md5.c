@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.11 2023/08/10 13:59:31 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.12 2023/08/10 14:03:47 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -87,13 +87,6 @@ __END_HIDDEN_DECLS
 #define HASH_UPDATE		MD5_Update
 #define HASH_TRANSFORM		MD5_Transform
 #define HASH_FINAL		MD5_Final
-#define	HASH_MAKE_STRING(c,s)	do {	\
-	unsigned long ll;		\
-	ll=(c)->A; HOST_l2c(ll,(s));	\
-	ll=(c)->B; HOST_l2c(ll,(s));	\
-	ll=(c)->C; HOST_l2c(ll,(s));	\
-	ll=(c)->D; HOST_l2c(ll,(s));	\
-	} while (0)
 #define	HASH_BLOCK_DATA_ORDER	md5_block_data_order
 
 #define HASH_NO_UPDATE
@@ -371,11 +364,18 @@ MD5_Final(unsigned char *md, MD5_CTX *c)
 	c->num = 0;
 	memset(p, 0, MD5_CBLOCK);
 
-#ifndef HASH_MAKE_STRING
-#error "HASH_MAKE_STRING must be defined!"
-#else
-	HASH_MAKE_STRING(c, md);
-#endif
+	do {
+	unsigned long ll;
+
+	ll = c->A;
+	HOST_l2c(ll, md);
+	ll = c->B;
+	HOST_l2c(ll, md);
+	ll = c->C;
+	HOST_l2c(ll, md);
+	ll = c->D;
+	HOST_l2c(ll, md);
+	} while (0);
 
 	return 1;
 }
