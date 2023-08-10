@@ -1,4 +1,4 @@
-/*	$OpenBSD: savefile.c,v 1.17 2020/05/27 04:24:01 dlg Exp $	*/
+/*	$OpenBSD: savefile.c,v 1.18 2023/08/10 15:47:05 sashan Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -160,7 +160,65 @@ pcap_fopen_offline(FILE *fp, char *errbuf)
 	}
 	p->tzoff = hdr.thiszone;
 	p->snapshot = hdr.snaplen;
-	p->linktype = hdr.linktype;
+	/*
+	 * Handle some LINKTYPE_ values in pcap headers that aren't
+	 * the same as the corresponding OpenBSD DLT_ values.
+	 *
+	 * Those LINKTYPE_ values were assigned for DLT_s whose
+	 * numerical values differ between platforms, so that
+	 * the link-layer type value in pcap file headers can
+	 * be platform-independent.  This means that code reading
+	 * a pcap file doesn't have to know on which platform a
+	 * file was written in order to read it correctly.
+	 *
+	 * See
+	 *
+	 *     https://www.tcpdump.org/linktypes.html
+	 *
+	 * for the current list of LINKTYPE_ values and the corresponding
+	 * DLT_ values.
+	 */
+	switch (hdr.linktype) {
+
+	case 100:
+		/* LINKTYPE_ATM_RFC1483 */
+		p->linktype = DLT_ATM_RFC1483;
+		break;
+
+	case 101:
+		/* LINKTYPE_RAW */
+		p->linktype = DLT_RAW;
+		break;
+
+	case 102:
+		/* LINKTYPE_SLIP_BSDOS */
+		p->linktype = DLT_SLIP_BSDOS;
+		break;
+
+	case 103:
+		/* LINKTYPE_PPP_BSDOS */
+		p->linktype = DLT_PPP_BSDOS;
+		break;
+
+	case 108:
+		/* LINKTYPE_LOOP */
+		p->linktype = DLT_LOOP;
+		break;
+
+	case 109:
+		/* LINKTYPE_ENC */
+		p->linktype = DLT_ENC;
+		break;
+
+	case 256:
+		/* LINKTYPE_PFSYNC */
+		p->linktype = DLT_PFSYNC;
+		break;
+
+	default:
+		p->linktype = hdr.linktype;
+		break;
+	}
 	p->sf.rfile = fp;
 	p->bufsize = hdr.snaplen;
 
