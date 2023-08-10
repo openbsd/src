@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.31 2023/08/10 09:43:51 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.32 2023/08/10 15:11:16 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -130,48 +130,49 @@ err:
 static int
 dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
-	DH *dh;
-	int ptype;
-	unsigned char *penc = NULL;
-	int penclen;
-	ASN1_STRING *str;
+	const DH *dh = pkey->pkey.dh;
+	ASN1_STRING *str = NULL;
+	int ptype = V_ASN1_SEQUENCE;
 	ASN1_INTEGER *pub_key = NULL;
+	ASN1_OBJECT *aobj;
+	unsigned char *data = NULL, *penc = NULL;
+	int datalen = 0, penclen = 0;
 
-	dh=pkey->pkey.dh;
-
-	str = ASN1_STRING_new();
-	if (str == NULL) {
+	if ((datalen = i2d_DHparams(dh, &data)) <= 0) {
+		DHerror(ERR_R_MALLOC_FAILURE);
+		datalen = 0;
+		goto err;
+	}
+	if ((str = ASN1_STRING_new()) == NULL) {
 		DHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
+	ASN1_STRING_set0(str, data, datalen);
+	data = NULL;
+	datalen = 0;
 
-	str->length = i2d_DHparams(dh, &str->data);
-	if (str->length <= 0) {
+	if ((pub_key = BN_to_ASN1_INTEGER(dh->pub_key, NULL)) == NULL)
+		goto err;
+	if ((penclen = i2d_ASN1_INTEGER(pub_key, &penc)) <= 0) {
 		DHerror(ERR_R_MALLOC_FAILURE);
+		penclen = 0;
 		goto err;
 	}
-	ptype = V_ASN1_SEQUENCE;
-
-	pub_key = BN_to_ASN1_INTEGER(dh->pub_key, NULL);
-	if (!pub_key)
-		goto err;
-
-	penclen = i2d_ASN1_INTEGER(pub_key, &penc);
-
 	ASN1_INTEGER_free(pub_key);
+	pub_key = NULL;
 
-	if (penclen <= 0) {
-		DHerror(ERR_R_MALLOC_FAILURE);
+	if ((aobj = OBJ_nid2obj(EVP_PKEY_DH)) == NULL)
 		goto err;
-		}
+	if (!X509_PUBKEY_set0_param(pk, aobj, ptype, str, penc, penclen))
+		goto err;
 
-	if (X509_PUBKEY_set0_param(pk, OBJ_nid2obj(EVP_PKEY_DH), ptype,
-	    (void *)str, penc, penclen))
-		return 1;
+	return 1;
 
-err:
-	free(penc);
+ err:
 	ASN1_STRING_free(str);
+	ASN1_INTEGER_free(pub_key);
+	freezero(data, datalen);
+	freezero(penc, penclen);
 
 	return 0;
 }

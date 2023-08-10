@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.44 2023/08/10 09:43:51 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.45 2023/08/10 15:11:16 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -138,47 +138,54 @@ err:
 static int
 dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
-	DSA *dsa;
-	ASN1_INTEGER *pubint = NULL;
+	const DSA *dsa = pkey->pkey.dsa;
 	ASN1_STRING *str = NULL;
 	int ptype = V_ASN1_UNDEF;
-	unsigned char *penc = NULL;
-	int penclen;
+	ASN1_INTEGER *pub_key = NULL;
+	ASN1_OBJECT *aobj;
+	unsigned char *data = NULL, *penc = NULL;
+	int datalen = 0, penclen = 0;
 
-	dsa = pkey->pkey.dsa;
 	if (pkey->save_parameters && dsa->p && dsa->q && dsa->g) {
+		if ((datalen = i2d_DSAparams(dsa, &data)) <= 0) {
+			DSAerror(ERR_R_MALLOC_FAILURE);
+			datalen = 0;
+			goto err;
+		}
 		if ((str = ASN1_STRING_new()) == NULL) {
 			DSAerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
-		str->length = i2d_DSAparams(dsa, &str->data);
-		if (str->length <= 0) {
-			DSAerror(ERR_R_MALLOC_FAILURE);
-			goto err;
-		}
+		ASN1_STRING_set0(str, data, datalen);
+		data = NULL;
+		datalen = 0;
 		ptype = V_ASN1_SEQUENCE;
 	}
 
-	if ((pubint = BN_to_ASN1_INTEGER(dsa->pub_key, NULL)) == NULL) {
+	if ((pub_key = BN_to_ASN1_INTEGER(dsa->pub_key, NULL)) == NULL) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-
-	penclen = i2d_ASN1_INTEGER(pubint, &penc);
-	ASN1_INTEGER_free(pubint);
-
-	if (penclen <= 0) {
+	if ((penclen = i2d_ASN1_INTEGER(pub_key, &penc)) <= 0) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
+		penclen = 0;
 		goto err;
 	}
+	ASN1_INTEGER_free(pub_key);
+	pub_key = NULL;
 
-	if (X509_PUBKEY_set0_param(pk, OBJ_nid2obj(EVP_PKEY_DSA), ptype, str,
-	    penc, penclen))
-		return 1;
+	if ((aobj = OBJ_nid2obj(EVP_PKEY_DSA)) == NULL)
+		goto err;
+	if (!X509_PUBKEY_set0_param(pk, aobj, ptype, str, penc, penclen))
+		goto err;
+
+	return 1;
 
  err:
-	free(penc);
 	ASN1_STRING_free(str);
+	ASN1_INTEGER_free(pub_key);
+	freezero(data, datalen);
+	freezero(penc, penclen);
 
 	return 0;
 }
