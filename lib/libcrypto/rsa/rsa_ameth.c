@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.31 2023/08/10 09:36:37 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.32 2023/08/10 15:05:28 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -136,21 +136,28 @@ rsa_param_decode(RSA *rsa, const X509_ALGOR *alg)
 static int
 rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
-	unsigned char *penc = NULL;
-	int penclen;
-	ASN1_STRING *str;
+	ASN1_STRING *str = NULL;
 	int strtype;
+	unsigned char *penc = NULL;
+	int penclen = 0;
+	ASN1_OBJECT *aobj;
 
 	if (!rsa_param_encode(pkey, &str, &strtype))
-		return 0;
-	penclen = i2d_RSAPublicKey(pkey->pkey.rsa, &penc);
-	if (penclen <= 0)
-		return 0;
-	if (X509_PUBKEY_set0_param(pk, OBJ_nid2obj(pkey->ameth->pkey_id),
-	    strtype, str, penc, penclen))
-		return 1;
+		goto err;
+	if ((penclen = i2d_RSAPublicKey(pkey->pkey.rsa, &penc)) <= 0) {
+		penclen = 0;
+		goto err;
+	}
+	if ((aobj = OBJ_nid2obj(pkey->ameth->pkey_id)) == NULL)
+		goto err;
+	if (!X509_PUBKEY_set0_param(pk, aobj, strtype, str, penc, penclen))
+		goto err;
 
-	free(penc);
+	return 1;
+
+ err:
+	ASN1_STRING_free(str);
+	freezero(penc, penclen);
 
 	return 0;
 }
