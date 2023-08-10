@@ -1,4 +1,4 @@
-/* $OpenBSD: gcm128.c,v 1.25 2023/07/08 14:56:54 beck Exp $ */
+/* $OpenBSD: gcm128.c,v 1.26 2023/08/10 07:18:43 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
  *
@@ -64,8 +64,6 @@
 /* redefine, because alignment is ensured */
 #undef	GETU32
 #define	GETU32(p)	BSWAP4(*(const u32 *)(p))
-#undef	PUTU32
-#define	PUTU32(p,v)	*(u32 *)(p) = BSWAP4(v)
 #endif
 
 #define	PACK(s)		((size_t)(s)<<(sizeof(size_t)*8-16))
@@ -234,26 +232,8 @@ gcm_gmult_8bit(u64 Xi[2], const u128 Htable[256])
 #endif
 	}
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP8
-	Xi[0] = BSWAP8(Z.hi);
-	Xi[1] = BSWAP8(Z.lo);
-#else
-	u8 *p = (u8 *)Xi;
-	u32 v;
-	v = (u32)(Z.hi >> 32);
-	PUTU32(p, v);
-	v = (u32)(Z.hi);
-	PUTU32(p + 4, v);
-	v = (u32)(Z.lo >> 32);
-	PUTU32(p + 8, v);
-	v = (u32)(Z.lo);
-	PUTU32(p + 12, v);
-#endif
-#else /* BIG_ENDIAN */
-	Xi[0] = Z.hi;
-	Xi[1] = Z.lo;
-#endif
+	Xi[0] = htobe64(Z.hi);
+	Xi[1] = htobe64(Z.lo);
 }
 #define GCM_MUL(ctx,Xi)   gcm_gmult_8bit(ctx->Xi.u,ctx->Htable)
 
@@ -389,26 +369,8 @@ gcm_gmult_4bit(u64 Xi[2], const u128 Htable[16])
 		Z.lo ^= Htable[nlo].lo;
 	}
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP8
-	Xi[0] = BSWAP8(Z.hi);
-	Xi[1] = BSWAP8(Z.lo);
-#else
-	u8 *p = (u8 *)Xi;
-	u32 v;
-	v = (u32)(Z.hi >> 32);
-	PUTU32(p, v);
-	v = (u32)(Z.hi);
-	PUTU32(p + 4, v);
-	v = (u32)(Z.lo >> 32);
-	PUTU32(p + 8, v);
-	v = (u32)(Z.lo);
-	PUTU32(p + 12, v);
-#endif
-#else /* BIG_ENDIAN */
-	Xi[0] = Z.hi;
-	Xi[1] = Z.lo;
-#endif
+	Xi[0] = htobe64(Z.hi);
+	Xi[1] = htobe64(Z.lo);
 }
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
@@ -563,26 +525,8 @@ gcm_ghash_4bit(u64 Xi[2], const u128 Htable[16],
 		Z.hi ^= ((u64)rem_8bit[rem << 4]) << 48;
 #endif
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP8
-		Xi[0] = BSWAP8(Z.hi);
-		Xi[1] = BSWAP8(Z.lo);
-#else
-		u8 *p = (u8 *)Xi;
-		u32 v;
-		v = (u32)(Z.hi >> 32);
-		PUTU32(p, v);
-		v = (u32)(Z.hi);
-		PUTU32(p + 4, v);
-		v = (u32)(Z.lo >> 32);
-		PUTU32(p + 8, v);
-		v = (u32)(Z.lo);
-		PUTU32(p + 12, v);
-#endif
-#else /* BIG_ENDIAN */
-		Xi[0] = Z.hi;
-		Xi[1] = Z.lo;
-#endif
+		Xi[0] = htobe64(Z.hi);
+		Xi[1] = htobe64(Z.lo);
 	} while (inp += 16, len -= 16);
 }
 #endif
@@ -640,26 +584,8 @@ gcm_gmult_1bit(u64 Xi[2], const u64 H[2])
 		}
 	}
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP8
-	Xi[0] = BSWAP8(Z.hi);
-	Xi[1] = BSWAP8(Z.lo);
-#else
-	u8 *p = (u8 *)Xi;
-	u32 v;
-	v = (u32)(Z.hi >> 32);
-	PUTU32(p, v);
-	v = (u32)(Z.hi);
-	PUTU32(p + 4, v);
-	v = (u32)(Z.lo >> 32);
-	PUTU32(p + 8, v);
-	v = (u32)(Z.lo);
-	PUTU32(p + 12, v);
-#endif
-#else /* BIG_ENDIAN */
-	Xi[0] = Z.hi;
-	Xi[1] = Z.lo;
-#endif
+	Xi[0] = htobe64(Z.hi);
+	Xi[1] = htobe64(Z.lo);
 }
 #define GCM_MUL(ctx,Xi)	  gcm_gmult_1bit(ctx->Xi.u,ctx->H.u)
 
@@ -724,20 +650,9 @@ CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 
 	(*block)(ctx->H.c, ctx->H.c, key);
 
-#if BYTE_ORDER == LITTLE_ENDIAN
 	/* H is stored in host byte order */
-#ifdef BSWAP8
-	ctx->H.u[0] = BSWAP8(ctx->H.u[0]);
-	ctx->H.u[1] = BSWAP8(ctx->H.u[1]);
-#else
-	u8 *p = ctx->H.c;
-	u64 hi, lo;
-	hi = (u64)GETU32(p) << 32|GETU32(p + 4);
-	lo = (u64)GETU32(p + 8) << 32|GETU32(p + 12);
-	ctx->H.u[0] = hi;
-	ctx->H.u[1] = lo;
-#endif
-#endif
+	ctx->H.u[0] = be64toh(ctx->H.u[0]);
+	ctx->H.u[1] = be64toh(ctx->H.u[1]);
 
 #if	TABLE_BITS==8
 	gcm_init_8bit(ctx->Htable, ctx->H.u);
@@ -824,47 +739,16 @@ CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv, size_t len)
 			GCM_MUL(ctx, Yi);
 		}
 		len0 <<= 3;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP8
-		ctx->Yi.u[1] ^= BSWAP8(len0);
-#else
-		ctx->Yi.c[8] ^= (u8)(len0 >> 56);
-		ctx->Yi.c[9] ^= (u8)(len0 >> 48);
-		ctx->Yi.c[10] ^= (u8)(len0 >> 40);
-		ctx->Yi.c[11] ^= (u8)(len0 >> 32);
-		ctx->Yi.c[12] ^= (u8)(len0 >> 24);
-		ctx->Yi.c[13] ^= (u8)(len0 >> 16);
-		ctx->Yi.c[14] ^= (u8)(len0 >> 8);
-		ctx->Yi.c[15] ^= (u8)(len0);
-#endif
-#else /* BIG_ENDIAN */
-		ctx->Yi.u[1] ^= len0;
-#endif
+		ctx->Yi.u[1] ^= htobe64(len0);
 
 		GCM_MUL(ctx, Yi);
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-		ctr = BSWAP4(ctx->Yi.d[3]);
-#else
-		ctr = GETU32(ctx->Yi.c + 12);
-#endif
-#else /* BIG_ENDIAN */
-		ctr = ctx->Yi.d[3];
-#endif
+		ctr = be32toh(ctx->Yi.d[3]);
 	}
 
 	(*ctx->block)(ctx->Yi.c, ctx->EK0.c, ctx->key);
 	++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-	ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-	PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-	ctx->Yi.d[3] = ctr;
-#endif
+	ctx->Yi.d[3] = htobe32(ctr);
 }
 LCRYPTO_ALIAS(CRYPTO_gcm128_setiv);
 
@@ -960,15 +844,7 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 		ctx->ares = 0;
 	}
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-	ctr = BSWAP4(ctx->Yi.d[3]);
-#else
-	ctr = GETU32(ctx->Yi.c + 12);
-#endif
-#else /* BIG_ENDIAN */
-	ctr = ctx->Yi.d[3];
-#endif
+	ctr = be32toh(ctx->Yi.d[3]);
 
 	n = ctx->mres;
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
@@ -1002,15 +878,8 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 
 					(*block)(ctx->Yi.c, ctx->EKi.c, key);
 					++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-					ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-					PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-					ctx->Yi.d[3] = ctr;
-#endif
+					ctx->Yi.d[3] = htobe32(ctr);
+
 					for (i = 0; i < 16/sizeof(size_t); ++i)
 						out_t[i] = in_t[i] ^
 						    ctx->EKi.t[i];
@@ -1030,15 +899,8 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 
 					(*block)(ctx->Yi.c, ctx->EKi.c, key);
 					++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-					ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-					PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-					ctx->Yi.d[3] = ctr;
-#endif
+					ctx->Yi.d[3] = htobe32(ctr);
+
 					for (i = 0; i < 16/sizeof(size_t); ++i)
 						out_t[i] = in_t[i] ^
 						    ctx->EKi.t[i];
@@ -1055,15 +917,8 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 
 				(*block)(ctx->Yi.c, ctx->EKi.c, key);
 				++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-				ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-				PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-				ctx->Yi.d[3] = ctr;
-#endif
+				ctx->Yi.d[3] = htobe32(ctr);
+
 				for (i = 0; i < 16/sizeof(size_t); ++i)
 					ctx->Xi.t[i] ^=
 					    out_t[i] = in_t[i] ^ ctx->EKi.t[i];
@@ -1076,15 +931,8 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 			if (len) {
 				(*block)(ctx->Yi.c, ctx->EKi.c, key);
 				++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-				ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-				PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-				ctx->Yi.d[3] = ctr;
-#endif
+				ctx->Yi.d[3] = htobe32(ctr);
+
 				while (len--) {
 					ctx->Xi.c[n] ^= out[n] = in[n] ^
 					    ctx->EKi.c[n];
@@ -1100,15 +948,7 @@ CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 		if (n == 0) {
 			(*block)(ctx->Yi.c, ctx->EKi.c, key);
 			++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-			ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-			PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-			ctx->Yi.d[3] = ctr;
-#endif
+			ctx->Yi.d[3] = htobe32(ctr);
 		}
 		ctx->Xi.c[n] ^= out[i] = in[i] ^ ctx->EKi.c[n];
 		n = (n + 1) % 16;
@@ -1150,15 +990,7 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 		ctx->ares = 0;
 	}
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-	ctr = BSWAP4(ctx->Yi.d[3]);
-#else
-	ctr = GETU32(ctx->Yi.c + 12);
-#endif
-#else /* BIG_ENDIAN */
-	ctr = ctx->Yi.d[3];
-#endif
+	ctr = be32toh(ctx->Yi.d[3]);
 
 	n = ctx->mres;
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
@@ -1194,15 +1026,8 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
 					(*block)(ctx->Yi.c, ctx->EKi.c, key);
 					++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-					ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-					PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-					ctx->Yi.d[3] = ctr;
-#endif
+					ctx->Yi.d[3] = htobe32(ctr);
+
 					for (i = 0; i < 16/sizeof(size_t); ++i)
 						out_t[i] = in_t[i] ^
 						    ctx->EKi.t[i];
@@ -1220,15 +1045,8 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
 					(*block)(ctx->Yi.c, ctx->EKi.c, key);
 					++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-					ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-					PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-					ctx->Yi.d[3] = ctr;
-#endif
+					ctx->Yi.d[3] = htobe32(ctr);
+
 					for (i = 0; i < 16/sizeof(size_t); ++i)
 						out_t[i] = in_t[i] ^
 						    ctx->EKi.t[i];
@@ -1244,15 +1062,8 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
 				(*block)(ctx->Yi.c, ctx->EKi.c, key);
 				++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-				ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-				PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-				ctx->Yi.d[3] = ctr;
-#endif
+				ctx->Yi.d[3] = htobe32(ctr);
+
 				for (i = 0; i < 16/sizeof(size_t); ++i) {
 					size_t c = in[i];
 					out[i] = c ^ ctx->EKi.t[i];
@@ -1267,15 +1078,8 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 			if (len) {
 				(*block)(ctx->Yi.c, ctx->EKi.c, key);
 				++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-				ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-				PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-				ctx->Yi.d[3] = ctr;
-#endif
+				ctx->Yi.d[3] = htobe32(ctr);
+
 				while (len--) {
 					u8 c = in[n];
 					ctx->Xi.c[n] ^= c;
@@ -1293,15 +1097,7 @@ CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 		if (n == 0) {
 			(*block)(ctx->Yi.c, ctx->EKi.c, key);
 			++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-			ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-			PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-			ctx->Yi.d[3] = ctr;
-#endif
+			ctx->Yi.d[3] = htobe32(ctr);
 		}
 		c = in[i];
 		out[i] = c ^ ctx->EKi.c[n];
@@ -1344,15 +1140,7 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 		ctx->ares = 0;
 	}
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-	ctr = BSWAP4(ctx->Yi.d[3]);
-#else
-	ctr = GETU32(ctx->Yi.c + 12);
-#endif
-#else /* BIG_ENDIAN */
-	ctr = ctx->Yi.d[3];
-#endif
+	ctr = be32toh(ctx->Yi.d[3]);
 
 	n = ctx->mres;
 	if (n) {
@@ -1372,15 +1160,7 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 	while (len >= GHASH_CHUNK) {
 		(*stream)(in, out, GHASH_CHUNK/16, key, ctx->Yi.c);
 		ctr += GHASH_CHUNK/16;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-		ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-		PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-		ctx->Yi.d[3] = ctr;
-#endif
+		ctx->Yi.d[3] = htobe32(ctr);
 		GHASH(ctx, out, GHASH_CHUNK);
 		out += GHASH_CHUNK;
 		in += GHASH_CHUNK;
@@ -1392,15 +1172,7 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 
 		(*stream)(in, out, j, key, ctx->Yi.c);
 		ctr += (unsigned int)j;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-		ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-		PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-		ctx->Yi.d[3] = ctr;
-#endif
+		ctx->Yi.d[3] = htobe32(ctr);
 		in += i;
 		len -= i;
 #if defined(GHASH)
@@ -1418,15 +1190,7 @@ CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 	if (len) {
 		(*ctx->block)(ctx->Yi.c, ctx->EKi.c, key);
 		++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-		ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-		PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-		ctx->Yi.d[3] = ctr;
-#endif
+		ctx->Yi.d[3] = htobe32(ctr);
 		while (len--) {
 			ctx->Xi.c[n] ^= out[n] = in[n] ^ ctx->EKi.c[n];
 			++n;
@@ -1466,15 +1230,7 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 		ctx->ares = 0;
 	}
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-	ctr = BSWAP4(ctx->Yi.d[3]);
-#else
-	ctr = GETU32(ctx->Yi.c + 12);
-#endif
-#else /* BIG_ENDIAN */
-	ctr = ctx->Yi.d[3];
-#endif
+	ctr = be32toh(ctx->Yi.d[3]);
 
 	n = ctx->mres;
 	if (n) {
@@ -1497,15 +1253,7 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 		GHASH(ctx, in, GHASH_CHUNK);
 		(*stream)(in, out, GHASH_CHUNK/16, key, ctx->Yi.c);
 		ctr += GHASH_CHUNK/16;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-		ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-		PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-		ctx->Yi.d[3] = ctr;
-#endif
+		ctx->Yi.d[3] = htobe32(ctr);
 		out += GHASH_CHUNK;
 		in += GHASH_CHUNK;
 		len -= GHASH_CHUNK;
@@ -1529,15 +1277,7 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 #endif
 		(*stream)(in, out, j, key, ctx->Yi.c);
 		ctr += (unsigned int)j;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-		ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-		PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-		ctx->Yi.d[3] = ctr;
-#endif
+		ctx->Yi.d[3] = htobe32(ctr);
 		out += i;
 		in += i;
 		len -= i;
@@ -1545,15 +1285,7 @@ CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 	if (len) {
 		(*ctx->block)(ctx->Yi.c, ctx->EKi.c, key);
 		++ctr;
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP4
-		ctx->Yi.d[3] = BSWAP4(ctr);
-#else
-		PUTU32(ctx->Yi.c + 12, ctr);
-#endif
-#else /* BIG_ENDIAN */
-		ctx->Yi.d[3] = ctr;
-#endif
+		ctx->Yi.d[3] = htobe32(ctr);
 		while (len--) {
 			u8 c = in[n];
 			ctx->Xi.c[n] ^= c;
@@ -1580,25 +1312,8 @@ CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
 	if (ctx->mres || ctx->ares)
 		GCM_MUL(ctx, Xi);
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#ifdef BSWAP8
-	alen = BSWAP8(alen);
-	clen = BSWAP8(clen);
-#else
-	{
-		u8 *p = ctx->len.c;
-
-		ctx->len.u[0] = alen;
-		ctx->len.u[1] = clen;
-
-		alen = (u64)GETU32(p) << 32|GETU32(p + 4);
-		clen = (u64)GETU32(p + 8) << 32|GETU32(p + 12);
-	}
-#endif
-#endif
-
-	ctx->Xi.u[0] ^= alen;
-	ctx->Xi.u[1] ^= clen;
+	ctx->Xi.u[0] ^= htobe64(alen);
+	ctx->Xi.u[1] ^= htobe64(clen);
 	GCM_MUL(ctx, Xi);
 
 	ctx->Xi.u[0] ^= ctx->EK0.u[0];
