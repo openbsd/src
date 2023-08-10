@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.83 2023/07/13 08:33:36 kettenis Exp $ */
+/* $OpenBSD: machdep.c,v 1.84 2023/08/10 21:01:50 kettenis Exp $ */
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -209,6 +209,7 @@ consinit(void)
 void
 cpu_idle_enter(void)
 {
+	disable_irq_daif();
 }
 
 void (*cpu_idle_cycle_fcn)(void) = cpu_wfi;
@@ -216,13 +217,15 @@ void (*cpu_idle_cycle_fcn)(void) = cpu_wfi;
 void
 cpu_idle_cycle(void)
 {
-	enable_irq_daif();
 	cpu_idle_cycle_fcn();
+	enable_irq_daif();
+	disable_irq_daif();
 }
 
 void
 cpu_idle_leave(void)
 {
+	enable_irq_daif();
 }
 
 /* Dummy trapframe for proc0. */
