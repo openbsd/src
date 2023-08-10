@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.43 2023/07/07 06:59:18 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.44 2023/08/10 09:43:51 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -265,46 +265,51 @@ done:
 static int
 dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
+	const DSA *dsa = pkey->pkey.dsa;
 	ASN1_STRING *params = NULL;
 	ASN1_INTEGER *prkey = NULL;
-	unsigned char *dp = NULL;
-	int dplen;
+	ASN1_OBJECT *aobj;
+	unsigned char *data = NULL, *dp = NULL;
+	int datalen = 0, dplen = 0;
 
-	params = ASN1_STRING_new();
-	if (!params) {
+	if ((datalen = i2d_DSAparams(dsa, &data)) <= 0) {
+		DSAerror(ERR_R_MALLOC_FAILURE);
+		datalen = 0;
+		goto err;
+	}
+	if ((params = ASN1_STRING_type_new(V_ASN1_SEQUENCE)) == NULL) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
+	ASN1_STRING_set0(params, data, datalen);
+	data = NULL;
+	datalen = 0;
 
-	params->length = i2d_DSAparams(pkey->pkey.dsa, &params->data);
-	if (params->length <= 0) {
-		DSAerror(ERR_R_MALLOC_FAILURE);
-		goto err;
-	}
-	params->type = V_ASN1_SEQUENCE;
-
-	/* Get private key into integer */
-	prkey = BN_to_ASN1_INTEGER(pkey->pkey.dsa->priv_key, NULL);
-	if (!prkey) {
+	if ((prkey = BN_to_ASN1_INTEGER(dsa->priv_key, NULL)) == NULL) {
 		DSAerror(DSA_R_BN_ERROR);
 		goto err;
 	}
-
-	dplen = i2d_ASN1_INTEGER(prkey, &dp);
-
+	if ((dplen = i2d_ASN1_INTEGER(prkey, &dp)) <= 0) {
+		DSAerror(ERR_R_MALLOC_FAILURE);
+		dplen = 0;
+		goto err;
+	}
 	ASN1_INTEGER_free(prkey);
 	prkey = NULL;
 
-	if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_dsa), 0, V_ASN1_SEQUENCE,
-	    params, dp, dplen))
+	if ((aobj = OBJ_nid2obj(NID_dsa)) == NULL)
+		goto err;
+	if (!PKCS8_pkey_set0(p8, aobj, 0, V_ASN1_SEQUENCE, params, dp, dplen))
 		goto err;
 
 	return 1;
 
-err:
-	free(dp);
+ err:
 	ASN1_STRING_free(params);
 	ASN1_INTEGER_free(prkey);
+	freezero(data, datalen);
+	freezero(dp, dplen);
+
 	return 0;
 }
 
