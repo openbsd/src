@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.30 2023/07/07 06:59:18 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.31 2023/08/10 09:36:37 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -212,29 +212,33 @@ old_rsa_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
 static int
 rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
-	unsigned char *rk = NULL;
-	int rklen;
-	ASN1_STRING *str;
+	ASN1_STRING *str = NULL;
+	ASN1_OBJECT *aobj;
 	int strtype;
+	unsigned char *rk = NULL;
+	int rklen = 0;
 
 	if (!rsa_param_encode(pkey, &str, &strtype))
-		return 0;
-
-	rklen = i2d_RSAPrivateKey(pkey->pkey.rsa, &rk);
-	if (rklen <= 0) {
+		goto err;
+	if ((rklen = i2d_RSAPrivateKey(pkey->pkey.rsa, &rk)) <= 0) {
 		RSAerror(ERR_R_MALLOC_FAILURE);
-		ASN1_STRING_free(str);
-		return 0;
+		rklen = 0;
+		goto err;
 	}
-
-	if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(pkey->ameth->pkey_id), 0,
-	    strtype, str, rk, rklen)) {
+	if ((aobj = OBJ_nid2obj(pkey->ameth->pkey_id)) == NULL)
+		goto err;
+	if (!PKCS8_pkey_set0(p8, aobj, 0, strtype, str, rk, rklen)) {
 		RSAerror(ERR_R_MALLOC_FAILURE);
-		ASN1_STRING_free(str);
-		return 0;
+		goto err;
 	}
 
 	return 1;
+
+ err:
+	ASN1_STRING_free(str);
+	freezero(rk, rklen);
+
+	return 0;
 }
 
 static int
