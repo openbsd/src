@@ -1,6 +1,6 @@
-.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.3 2021/11/12 14:05:28 schwarze Exp $
+.\" $OpenBSD: X509_STORE_get_by_subject.3,v 1.4 2023/08/10 14:15:16 schwarze Exp $
 .\"
-.\" Copyright (c) 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2021, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -14,16 +14,18 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: November 12 2021 $
+.Dd $Mdocdate: August 10 2023 $
 .Dt X509_STORE_GET_BY_SUBJECT 3
 .Os
 .Sh NAME
 .Nm X509_STORE_CTX_get_by_subject ,
 .Nm X509_STORE_CTX_get_obj_by_subject ,
+.Nm X509_STORE_CTX_get1_certs ,
+.Nm X509_STORE_CTX_get1_crls ,
+.Nm X509_STORE_CTX_get1_issuer ,
 .Nm X509_STORE_get_by_subject ,
 .Nm X509_STORE_get1_certs ,
-.Nm X509_STORE_get1_crls ,
-.Nm X509_STORE_CTX_get1_issuer
+.Nm X509_STORE_get1_crls
 .Nd retrieve objects from a certificate store
 .Sh SYNOPSIS
 .In openssl/x509_vfy.h
@@ -39,6 +41,22 @@
 .Fa "X509_STORE_CTX *ctx"
 .Fa "X509_LOOKUP_TYPE type"
 .Fa "X509_NAME *name"
+.Fc
+.Ft STACK_OF(X509) *
+.Fo X509_STORE_CTX_get1_certs
+.Fa "X509_STORE_CTX *ctx"
+.Fa "X509_NAME *name"
+.Fc
+.Ft STACK_OF(X509_CRL) *
+.Fo X509_STORE_CTX_get1_crls
+.Fa "X509_STORE_CTX *ctx"
+.Fa "X509_NAME *name"
+.Fc
+.Ft int
+.Fo X509_STORE_CTX_get1_issuer
+.Fa "X509 **issuer"
+.Fa "X509_STORE_CTX *ctx"
+.Fa "X509 *certificate"
 .Fc
 .Ft int
 .Fo X509_STORE_get_by_subject
@@ -56,12 +74,6 @@
 .Fo X509_STORE_get1_crls
 .Fa "X509_STORE_CTX *ctx"
 .Fa "X509_NAME *name"
-.Fc
-.Ft int
-.Fo X509_STORE_CTX_get1_issuer
-.Fa "X509 **issuer"
-.Fa "X509_STORE_CTX *ctx"
-.Fa "X509 *certificate"
 .Fc
 .Sh DESCRIPTION
 .Fn X509_STORE_CTX_get_by_subject
@@ -101,11 +113,7 @@ is empty is the responsibility of the caller.
 .Fn X509_STORE_CTX_get_obj_by_subject
 is similar except that a new object is allocated and returned.
 .Pp
-.Fn X509_STORE_get_by_subject
-is a deprecated alias for
-.Fn X509_STORE_CTX_get_by_subject .
-.Pp
-.Fn X509_STORE_get1_certs
+.Fn X509_STORE_CTX_get1_certs
 retrieves all certificates matching the subject
 .Vt name
 from the
@@ -113,15 +121,15 @@ from the
 associated with
 .Fa ctx .
 If there are none yet,
-.Fn X509_STORE_get_by_subject
+.Fn X509_STORE_CTX_get_by_subject
 is called to try and add some.
 In case of success, the reference counts of all certificates
 added to the returned array are incremented by 1.
 .Pp
-.Fn X509_STORE_get1_crls
+.Fn X509_STORE_CTX_get1_crls
 is similar except that it operates on certificate revocation lists
 rather than on certificates and that it always calls
-.Fn X509_STORE_get_by_subject ,
+.Fn X509_STORE_CTX_get_by_subject ,
 even if the
 .Vt X509_STORE
 already contains a matching revocation list.
@@ -138,7 +146,7 @@ associated with
 Internally, the issuer name is retrieved with
 .Xr X509_get_issuer_name 3
 and the candidate issuer CA certificate with
-.Fn X509_STORE_get_by_subject
+.Fn X509_STORE_X509_get_by_subject
 using that issuer name.
 .Xr X509_check_issued 3
 or a user-supplied replacement function is used to check whether the
@@ -151,6 +159,13 @@ If verification parameters associated with
 encourage checking of validity times, CAs with a valid time are
 preferred, but if no matching CA has a valid time, one with an
 invalid time is accepted anyway.
+.Pp
+The following are deprecated aliases:
+.Bl -column X509_STORE_get_by_subject F X509_STORE_CTX_get_by_subject
+.It Fn X509_STORE_get_by_subject Ta for Ta Fn X509_STORE_CTX_get_by_subject
+.It Fn X509_STORE_get1_certs     Ta for Ta Fn X509_STORE_CTX_get1_certs
+.It Fn X509_STORE_get1_crls      Ta for Ta Fn X509_STORE_CTX_get1_crls
+.El
 .Sh RETURN VALUES
 .Fn X509_STORE_CTX_get_by_subject
 and
@@ -167,20 +182,24 @@ returns the new object or
 .Dv NULL
 on failure, in particular if no match is found or memory allocation fails.
 .Pp
+.Fn X509_STORE_CTX_get1_certs
+and
 .Fn X509_STORE_get1_certs
-returns a newly allocated and populated array of certificates or
+return a newly allocated and populated array of certificates or
 .Dv NULL
 on failure.
-It fails if no match is found, if
-.Fn X509_STORE_get_by_subject
+They fail if no match is found, if
+.Fn X509_STORE_CTX_get_by_subject
 fails, or if memory allocation fails.
 .Pp
+.Fn X509_STORE_CTX_get1_crls
+and
 .Fn X509_STORE_get1_crls
-returns a newly allocated and populated array of CRLs or
+return a newly allocated and populated array of CRLs or
 .Dv NULL
 on failure.
-It fails if
-.Fn X509_STORE_get_by_subject
+They fail if
+.Fn X509_STORE_CTX_get_by_subject
 finds no new match, even if the associated
 .Vt X509_STORE
 already contains matching CRLs, or if memory allocation fails.
@@ -222,3 +241,9 @@ and
 .Fn X509_STORE_CTX_get_obj_by_subject
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 7.1 .
+.Pp
+.Fn X509_STORE_CTX_get1_certs
+and
+.Fn X509_STORE_CTX_get1_crls
+first appeared in OpenSSL 1.1.0 and have been available since
+.Ox 7.4 .
