@@ -1,4 +1,4 @@
-/* $OpenBSD: md4.c,v 1.6 2023/08/10 07:15:23 jsing Exp $ */
+/* $OpenBSD: md4.c,v 1.7 2023/08/10 13:41:56 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -57,11 +57,9 @@
  */
 
 #include <stdio.h>
-#include <openssl/opensslv.h>
-#include <openssl/crypto.h>
-
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/opensslconf.h>
 #include <openssl/md4.h>
 
