@@ -1,4 +1,4 @@
-/* $OpenBSD: sha1.c,v 1.11 2023/07/08 12:24:10 beck Exp $ */
+/* $OpenBSD: sha1.c,v 1.12 2023/08/10 07:15:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -141,8 +141,8 @@ static void
 sha1_block_data_order(SHA_CTX *c, const void *p, size_t num)
 {
 	const unsigned char *data = p;
-	unsigned MD32_REG_T A, B, C, D, E, T, l;
-	unsigned MD32_REG_T X0, X1, X2, X3, X4, X5, X6, X7,
+	unsigned int A, B, C, D, E, T, l;
+	unsigned int X0, X1, X2, X3, X4, X5, X6, X7,
 	    X8, X9, X10, X11, X12, X13, X14, X15;
 
 	A = c->h0;

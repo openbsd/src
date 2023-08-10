@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.6 2023/07/28 11:06:28 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.7 2023/08/10 07:15:23 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,8 +166,8 @@ void
 md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
 {
 	const unsigned char *data = data_;
-	unsigned MD32_REG_T A, B, C, D, l;
-	unsigned MD32_REG_T X0, X1, X2, X3, X4, X5, X6, X7,
+	unsigned int A, B, C, D, l;
+	unsigned int X0, X1, X2, X3, X4, X5, X6, X7,
 	    X8, X9, X10, X11, X12, X13, X14, X15;
 
 	A = c->A;

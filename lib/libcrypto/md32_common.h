@@ -1,4 +1,4 @@
-/* $OpenBSD: md32_common.h,v 1.25 2023/05/27 18:33:34 jsing Exp $ */
+/* $OpenBSD: md32_common.h,v 1.26 2023/08/10 07:15:23 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
@@ -306,36 +306,4 @@ int HASH_FINAL (unsigned char *md, HASH_CTX *c)
 
 	return 1;
 }
-#endif
-
-#ifndef MD32_REG_T
-#if defined(__alpha) || defined(__sparcv9) || defined(__mips)
-#define MD32_REG_T long
-/*
- * This comment was originally written for MD5, which is why it
- * discusses A-D. But it basically applies to all 32-bit digests,
- * which is why it was moved to common header file.
- *
- * In case you wonder why A-D are declared as long and not
- * as MD5_LONG. Doing so results in slight performance
- * boost on LP64 architectures. The catch is we don't
- * really care if 32 MSBs of a 64-bit register get polluted
- * with eventual overflows as we *save* only 32 LSBs in
- * *either* case. Now declaring 'em long excuses the compiler
- * from keeping 32 MSBs zeroed resulting in 13% performance
- * improvement under SPARC Solaris7/64 and 5% under AlphaLinux.
- * Well, to be honest it should say that this *prevents*
- * performance degradation.
- *				<appro@fy.chalmers.se>
- */
-#else
-/*
- * Above is not absolute and there are LP64 compilers that
- * generate better code if MD32_REG_T is defined int. The above
- * pre-processor condition reflects the circumstances under which
- * the conclusion was made and is subject to further extension.
- *				<appro@fy.chalmers.se>
- */
-#define MD32_REG_T int
-#endif
 #endif
