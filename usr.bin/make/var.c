@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.104 2022/06/09 13:13:14 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.105 2023/08/10 10:52:43 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -104,6 +104,8 @@ static char	varNoError[] = "";
 bool		errorIsOkay;
 static bool	checkEnvFirst;	/* true if environment should be searched for
 				 * variables before the global context */
+				/* do we need to recompute varname_list */
+static bool	varname_list_changed = true;
 
 void
 Var_setCheckEnvFirst(bool yes)
@@ -222,6 +224,7 @@ typedef struct Var_ {
 #define VAR_FROM_ENV	8	/* Special source: environment */
 #define VAR_SEEN_ENV	16	/* No need to go look up environment again */
 #define VAR_IS_SHELL	32	/* Magic behavior */
+#define VAR_IS_NAMES	1024	/* Very expensive, only defined when needed */
 /* XXX there are also some flag values which are part of the visible API
  * and thus defined inside var.h, don't forget to look there if you want
  * to define some new flags !
@@ -231,6 +234,8 @@ typedef struct Var_ {
 	char name[1];		/* the variable's name */
 }  Var;
 
+/* for GNU make compatibility */
+#define VARNAME_LIST ".VARIABLES"
 
 static struct ohash_info var_info = {
 	offsetof(Var, name),
@@ -245,10 +250,11 @@ static void fill_from_env(Var *);
 static Var *create_var(const char *, const char *);
 static void var_set_initial_value(Var *, const char *);
 static void var_set_value(Var *, const char *);
-#define var_get_value(v)	((v)->flags & VAR_EXEC_LATER ? \
-	var_exec_cmd(v) : \
-	Buf_Retrieve(&((v)->val)))
-static char *var_exec_cmd(Var *);
+static char *var_get_value(Var *);
+static void var_exec_cmd(Var *);
+static void varname_list_retrieve(Var *);
+
+
 static void var_append_value(Var *, const char *);
 static void poison_check(Var *);
 static void var_set_append(const char *, const char *, const char *, int, bool);
@@ -423,6 +429,7 @@ var_set_initial_value(Var *v, const char *val)
 	len = strlen(val);
 	Buf_Init(&(v->val), len+1);
 	Buf_AddChars(&(v->val), len, val);
+	varname_list_changed = true;
 }
 
 /* Normal version of var_set_value(), to be called after variable is fully
@@ -438,6 +445,16 @@ var_set_value(Var *v, const char *val)
 		var_set_initial_value(v, val);
 		v->flags &= ~VAR_DUMMY;
 	}
+}
+
+static char *
+var_get_value(Var *v)
+{
+	if (v->flags & VAR_IS_NAMES)
+		varname_list_retrieve(v);
+	else if (v->flags & VAR_EXEC_LATER)
+		var_exec_cmd(v);
+	return Buf_Retrieve(&(v->val));
 }
 
 /* Add to a variable, insert a separating space if the variable was already
@@ -628,6 +645,7 @@ Var_Deletei(const char *name, const char *ename)
 
 	ohash_remove(&global_variables, slot);
 	delete_var(v);
+	varname_list_changed = true;
 }
 
 /* Set or add a global variable, either to VAR_CMD or VAR_GLOBAL.
@@ -687,7 +705,7 @@ Var_Appendi_with_ctxt(const char *name, const char *ename, const char *val,
 	var_set_append(name, ename, val, ctxt, true);
 }
 
-static char *
+static void
 var_exec_cmd(Var *v)
 {
 	char *arg = Buf_Retrieve(&(v->val));
@@ -699,7 +717,30 @@ var_exec_cmd(Var *v)
 	var_set_value(v, res1);
 	free(res1);
 	v->flags &= ~VAR_EXEC_LATER;
-	return Buf_Retrieve(&(v->val));
+}
+
+static void
+varname_list_retrieve(Var *v)
+{
+	unsigned int i;
+	void *e;
+	bool first = true;
+
+	if (!varname_list_changed)
+		return;
+	for (e = ohash_first(&global_variables, &i); e != NULL;
+	    e = ohash_next(&global_variables, &i)) {
+	    	Var *v2 = e;
+		if (v2->flags & VAR_DUMMY)
+			continue;
+
+		if (first)
+			var_set_value(v, v2->name);
+		else
+			var_append_value(v, v2->name);
+		first = false;
+	}
+	varname_list_changed = false;
 }
 
 /* XXX different semantics for Var_Valuei() and Var_Definedi():
@@ -1339,6 +1380,22 @@ set_magic_shell_variable()
 	v->flags = VAR_IS_SHELL | VAR_SEEN_ENV;
 }
 
+static void
+set_magic_name_list_variable()
+{
+	const char *name = VARNAME_LIST;
+	const char *ename = NULL;
+	uint32_t k;
+	Var *v;
+
+	k = ohash_interval(name, &ename);
+	v = find_global_var_without_env(name, ename, k);
+	/* XXX We need to set a "dummy" value because that variable can't be
+	 * VAR_DUMMY, since we wouldn't hit var_get_value otherwise.
+	 */
+	var_set_initial_value(v, "");
+	v->flags = VAR_IS_NAMES;
+}
 /*
  * Var_Init
  *	Initialize the module
@@ -1348,11 +1405,10 @@ Var_Init(void)
 {
 	ohash_init(&global_variables, 10, &var_info);
 	set_magic_shell_variable();
-
+	set_magic_name_list_variable();
 
 	errorIsOkay = true;
 	Var_setCheckEnvFirst(false);
-
 	VarModifiers_Init();
 	Buf_Init(&subst_buffer, MAKE_BSIZE);
 }
