@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.12 2023/08/10 14:03:47 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.13 2023/08/10 14:04:54 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -339,6 +339,7 @@ int
 MD5_Final(unsigned char *md, MD5_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
+	unsigned long ll;
 	size_t n = c->num;
 
 	p[n] = 0x80; /* there is always room for one */
@@ -364,9 +365,6 @@ MD5_Final(unsigned char *md, MD5_CTX *c)
 	c->num = 0;
 	memset(p, 0, MD5_CBLOCK);
 
-	do {
-	unsigned long ll;
-
 	ll = c->A;
 	HOST_l2c(ll, md);
 	ll = c->B;
@@ -375,7 +373,6 @@ MD5_Final(unsigned char *md, MD5_CTX *c)
 	HOST_l2c(ll, md);
 	ll = c->D;
 	HOST_l2c(ll, md);
-	} while (0);
 
 	return 1;
 }
