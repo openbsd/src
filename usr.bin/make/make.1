@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.140 2023/07/08 18:02:00 espie Exp $
+.\"	$OpenBSD: make.1,v 1.141 2023/08/10 10:56:34 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -30,7 +30,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd $Mdocdate: July 8 2023 $
+.Dd $Mdocdate: August 10 2023 $
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -830,6 +830,8 @@ Possibly the file name of the last makefile that has been read.
 It should not be used; see the
 .Sx BUGS
 section below.
+.It Va .VARIABLES
+List of all the names of global variables that have been set.
 .El
 .Pp
 Variable expansion may be modified to select or modify each word of the
