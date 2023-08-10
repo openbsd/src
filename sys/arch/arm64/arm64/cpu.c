@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.97 2023/07/16 16:13:46 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.98 2023/08/10 19:29:32 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -919,6 +919,16 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		cpu_id_aa64pfr0 &= ~ID_AA64PFR0_EL2_MASK;
 		cpu_id_aa64pfr0 &= ~ID_AA64PFR0_EL3_MASK;
 
+		/*
+		 * Lenovo X13s ships with broken EL2 firmware that
+		 * hangs the machine if we enable PAuth.
+		 */
+		if (hw_vendor && strcmp(hw_vendor, "LENOVO") == 0 &&
+		    hw_prod && strncmp(hw_prod, "21BX", 4) == 0) {
+			cpu_id_aa64isar1 &= ~ID_AA64ISAR1_APA_MASK;
+			cpu_id_aa64isar1 &= ~ID_AA64ISAR1_GPA_MASK;
+		}
+
 		cpu_identify(ci);
 
 		if (OF_getproplen(ci->ci_node, "clocks") > 0) {
@@ -945,7 +955,6 @@ cpu_init(void)
 {
 	uint64_t id_aa64mmfr1, sctlr;
 	uint64_t id_aa64pfr0;
-	uint64_t id_aa64isar1;
 	uint64_t tcr;
 
 	WRITE_SPECIALREG(ttbr0_el1, pmap_kernel()->pm_pt0pa);
@@ -971,8 +980,8 @@ cpu_init(void)
 		__asm volatile (".arch armv8.4-a; msr dit, #1");
 
 	/* Enable PAuth. */
-	id_aa64isar1 = READ_SPECIALREG(id_aa64isar1_el1);
-	if (ID_AA64ISAR1_API(id_aa64isar1) >= ID_AA64ISAR1_API_BASE) {
+	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_BASE ||
+	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_BASE) {
 		sctlr = READ_SPECIALREG(sctlr_el1);
 		sctlr |= SCTLR_EnIA | SCTLR_EnDA;
 		sctlr |= SCTLR_EnIB | SCTLR_EnDB;

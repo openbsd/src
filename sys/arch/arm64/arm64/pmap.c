@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.98 2023/06/11 21:42:01 kettenis Exp $ */
+/* $OpenBSD: pmap.c,v 1.99 2023/08/10 19:29:32 kettenis Exp $ */
 /*
  * Copyright (c) 2008-2009,2014-2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -2231,7 +2231,8 @@ pmap_show_mapping(uint64_t va)
 void
 pmap_setpauthkeys(struct pmap *pm)
 {
-	if (ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_BASE) {
+	if (ID_AA64ISAR1_APA(cpu_id_aa64isar1) >= ID_AA64ISAR1_APA_BASE ||
+	    ID_AA64ISAR1_API(cpu_id_aa64isar1) >= ID_AA64ISAR1_API_BASE) {
 		__asm volatile (".arch armv8.3-a; msr apiakeylo_el1, %0"
 		    :: "r"(pm->pm_apiakey[0]));
 		__asm volatile (".arch armv8.3-a; msr apiakeyhi_el1, %0"
@@ -2250,7 +2251,8 @@ pmap_setpauthkeys(struct pmap *pm)
 		    :: "r"(pm->pm_apdbkey[1]));
 	}
 
-	if (ID_AA64ISAR1_GPI(cpu_id_aa64isar1) >= ID_AA64ISAR1_GPI_IMPL) {
+	if (ID_AA64ISAR1_GPA(cpu_id_aa64isar1) >= ID_AA64ISAR1_GPA_IMPL ||
+	    ID_AA64ISAR1_GPI(cpu_id_aa64isar1) >= ID_AA64ISAR1_GPI_IMPL) {
 		__asm volatile (".arch armv8.3-a; msr apgakeylo_el1, %0"
 		    :: "r"(pm->pm_apgakey[0]));
 		__asm volatile (".arch armv8.3-a; msr apgakeyhi_el1, %0"

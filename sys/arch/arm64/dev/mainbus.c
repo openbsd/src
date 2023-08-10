@@ -1,4 +1,4 @@
-/* $OpenBSD: mainbus.c,v 1.27 2023/07/19 21:52:55 kettenis Exp $ */
+/* $OpenBSD: mainbus.c,v 1.28 2023/08/10 19:29:32 kettenis Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
@@ -133,6 +133,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	mainbus_attach_psci(self);
+	mainbus_attach_efi(self);
 
 	/* Attach primary CPU first. */
 	mainbus_attach_cpus(self, mainbus_match_primary);
@@ -140,7 +141,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach secondary CPUs. */
 	mainbus_attach_cpus(self, mainbus_match_secondary);
 
-	mainbus_attach_efi(self);
 	mainbus_attach_firmware(self);
 	mainbus_attach_resvmem(self);
 
