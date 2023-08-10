@@ -1,4 +1,4 @@
-/* $OpenBSD: ripemd.c,v 1.5 2023/08/10 11:04:30 jsing Exp $ */
+/* $OpenBSD: ripemd.c,v 1.6 2023/08/10 11:06:36 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -125,7 +125,17 @@ __END_HIDDEN_DECLS
 #define RIPEMD160_D	0x10325476L
 #define RIPEMD160_E	0xC3D2E1F0L
 
-#include "rmdconst.h"
+#define KL0 0x00000000L
+#define KL1 0x5A827999L
+#define KL2 0x6ED9EBA1L
+#define KL3 0x8F1BBCDCL
+#define KL4 0xA953FD4EL
+
+#define KR0 0x50A28BE6L
+#define KR1 0x5C4DD124L
+#define KR2 0x6D703EF3L
+#define KR3 0x7A6D76E9L
+#define KR4 0x00000000L
 
 #define RIP1(a,b,c,d,e,w,s) { \
 	a+=F1(b,c,d)+w; \
