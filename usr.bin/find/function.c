@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.54 2023/04/01 05:27:44 tb Exp $	*/
+/*	$OpenBSD: function.c,v 1.55 2023/08/11 04:45:05 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -1205,9 +1205,9 @@ int
 f_newer(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_mtimespec.tv_sec > plan->t_data.tv_sec ||
-	    (entry->fts_statp->st_mtimespec.tv_sec == plan->t_data.tv_sec &&
-	    entry->fts_statp->st_mtimespec.tv_nsec > plan->t_data.tv_nsec));
+	return (entry->fts_statp->st_mtim.tv_sec > plan->t_data.tv_sec ||
+	    (entry->fts_statp->st_mtim.tv_sec == plan->t_data.tv_sec &&
+	    entry->fts_statp->st_mtim.tv_nsec > plan->t_data.tv_nsec));
 }
 
 PLAN *
@@ -1221,7 +1221,7 @@ c_newer(char *filename, char ***ignored, int unused)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_NEWER, f_newer);
-	memcpy(&new->t_data, &sb.st_mtimespec, sizeof(struct timespec));
+	memcpy(&new->t_data, &sb.st_mtim, sizeof(struct timespec));
 	return (new);
 }
 
@@ -1236,9 +1236,9 @@ int
 f_anewer(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_atimespec.tv_sec > plan->t_data.tv_sec ||
-	    (entry->fts_statp->st_atimespec.tv_sec == plan->t_data.tv_sec &&
-	    entry->fts_statp->st_atimespec.tv_nsec > plan->t_data.tv_nsec));
+	return (entry->fts_statp->st_atim.tv_sec > plan->t_data.tv_sec ||
+	    (entry->fts_statp->st_atim.tv_sec == plan->t_data.tv_sec &&
+	    entry->fts_statp->st_atim.tv_nsec > plan->t_data.tv_nsec));
 }
 
 PLAN *
@@ -1252,7 +1252,7 @@ c_anewer(char *filename, char ***ignored, int unused)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_NEWER, f_anewer);
-	memcpy(&new->t_data, &sb.st_atimespec, sizeof(struct timespec));
+	memcpy(&new->t_data, &sb.st_atim, sizeof(struct timespec));
 	return (new);
 }
 
@@ -1267,9 +1267,9 @@ int
 f_cnewer(PLAN *plan, FTSENT *entry)
 {
 
-	return (entry->fts_statp->st_ctimespec.tv_sec > plan->t_data.tv_sec ||
-	    (entry->fts_statp->st_ctimespec.tv_sec == plan->t_data.tv_sec &&
-	    entry->fts_statp->st_ctimespec.tv_nsec > plan->t_data.tv_nsec));
+	return (entry->fts_statp->st_ctim.tv_sec > plan->t_data.tv_sec ||
+	    (entry->fts_statp->st_ctim.tv_sec == plan->t_data.tv_sec &&
+	    entry->fts_statp->st_ctim.tv_nsec > plan->t_data.tv_nsec));
 }
 
 PLAN *
@@ -1283,7 +1283,7 @@ c_cnewer(char *filename, char ***ignored, int unused)
 	if (stat(filename, &sb))
 		err(1, "%s", filename);
 	new = palloc(N_NEWER, f_cnewer);
-	memcpy(&new->t_data, &sb.st_ctimespec, sizeof(struct timespec));
+	memcpy(&new->t_data, &sb.st_ctim, sizeof(struct timespec));
 	return (new);
 }
 

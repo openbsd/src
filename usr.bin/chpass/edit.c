@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.35 2015/01/16 06:40:06 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.36 2023/08/11 04:45:05 guenther Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@ edit(char *tempname, struct passwd *pw)
 		pw_edit(1, tempname);
 		if (lstat(tempname, &end) == -1 || S_ISLNK(end.st_mode))
 			return (EDIT_ERROR);
-		if (!timespeccmp(&begin.st_mtimespec, &end.st_mtimespec, -) &&
+		if (!timespeccmp(&begin.st_mtim, &end.st_mtim, -) &&
 		    begin.st_size == end.st_size) {
 			warnx("no changes made");
 			return (EDIT_NOCHANGE);

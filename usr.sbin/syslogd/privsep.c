@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.75 2023/03/08 04:43:15 guenther Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.76 2023/08/11 04:45:06 guenther Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -319,8 +319,8 @@ priv_exec(char *conf, int numeric, int child, int argc, char *argv[])
 		case PRIV_CONFIG_MODIFIED:
 			log_debug("[priv]: msg PRIV_CONFIG_MODIFIED received");
 			if (stat(conf, &cf_stat) == -1 ||
-			    timespeccmp(&cf_info.st_mtimespec,
-			    &cf_stat.st_mtimespec, <) ||
+			    timespeccmp(&cf_info.st_mtim,
+			    &cf_stat.st_mtim, <) ||
 			    cf_info.st_size != cf_stat.st_size) {
 				log_debug("config file modified: restarting");
 				restart = result = 1;

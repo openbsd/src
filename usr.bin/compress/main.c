@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.104 2022/10/26 00:40:40 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.105 2023/08/11 04:45:05 guenther Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -756,10 +756,8 @@ dodecompress(const char *in, char *out, struct stat *sb)
 	}
 	if (storename && !cat) {
 		if (info.mtime != 0) {
-			sb->st_mtimespec.tv_sec =
-			    sb->st_atimespec.tv_sec = info.mtime;
-			sb->st_mtimespec.tv_nsec =
-			    sb->st_atimespec.tv_nsec = 0;
+			sb->st_mtim.tv_sec = sb->st_atim.tv_sec = info.mtime;
+			sb->st_mtim.tv_nsec = sb->st_atim.tv_nsec = 0;
 		}
 	}
 	if (error != FAILURE)

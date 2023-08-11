@@ -1,4 +1,4 @@
-/*	$OpenBSD: vipw.c,v 1.26 2021/10/24 21:24:19 deraadt Exp $	 */
+/*	$OpenBSD: vipw.c,v 1.27 2023/08/11 04:45:05 guenther Exp $	 */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -88,7 +88,7 @@ main(int argc, char *argv[])
 		pw_edit(0, NULL);
 		if (stat(_PATH_MASTERPASSWD_LOCK, &end))
 			pw_error(_PATH_MASTERPASSWD_LOCK, 1, 1);
-		if (timespeccmp(&begin.st_mtimespec, &end.st_mtimespec, ==) &&
+		if (timespeccmp(&begin.st_mtim, &end.st_mtim, ==) &&
 		    begin.st_size == end.st_size) {
 			warnx("no changes made");
 			pw_error((char *)NULL, 0, 0);
