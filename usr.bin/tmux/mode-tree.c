@@ -1,4 +1,4 @@
-/* $OpenBSD: mode-tree.c,v 1.64 2023/08/08 08:08:47 nicm Exp $ */
+/* $OpenBSD: mode-tree.c,v 1.65 2023/08/11 17:09:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2017 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -497,7 +497,7 @@ mode_tree_build(struct mode_tree_data *mtd)
 	mode_tree_clear_lines(mtd);
 	mode_tree_build_lines(mtd, &mtd->children, 0);
 
-	if (tag == UINT64_MAX)
+	if (mtd->line_list != NULL && tag == UINT64_MAX)
 		tag = mtd->line_list[mtd->current].item->tag;
 	mode_tree_set_current(mtd, tag);
 
