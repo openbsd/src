@@ -1,4 +1,4 @@
-/* $OpenBSD: ossl_typ.h,v 1.29 2023/08/11 04:45:26 tb Exp $ */
+/* $OpenBSD: ossl_typ.h,v 1.30 2023/08/11 05:10:35 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
  *
@@ -99,8 +99,8 @@ typedef struct comp_method_st COMP_METHOD;
 
 typedef struct evp_cipher_st EVP_CIPHER;
 typedef struct evp_cipher_ctx_st EVP_CIPHER_CTX;
-typedef struct env_md_st EVP_MD;
-typedef struct env_md_ctx_st EVP_MD_CTX;
+typedef struct evp_md_st EVP_MD;
+typedef struct evp_md_ctx_st EVP_MD_CTX;
 typedef struct evp_pkey_st EVP_PKEY;
 
 typedef struct evp_pkey_asn1_method_st EVP_PKEY_ASN1_METHOD;
