@@ -1,4 +1,4 @@
-/* $OpenBSD: ec.h,v 1.45 2023/07/28 09:28:37 tb Exp $ */
+/* $OpenBSD: ec.h,v 1.46 2023/08/11 04:45:27 tb Exp $ */
 /*
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
@@ -261,9 +261,6 @@ int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off);
 #endif
 int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
-
-typedef struct ec_key_st EC_KEY;
-typedef struct ec_key_method_st EC_KEY_METHOD;
 
 #define EC_PKEY_NO_PARAMETERS	0x001
 #define EC_PKEY_NO_PUBKEY	0x002
