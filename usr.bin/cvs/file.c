@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.275 2021/10/24 21:24:16 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.276 2023/08/11 04:48:14 guenther Exp $	*/
 /*
  * Copyright (c) 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
@@ -1068,8 +1068,7 @@ int
 cvs_file_copy(const char *from, const char *to)
 {
 	struct stat st;
-	struct timeval tv[2];
-	time_t atime, mtime;
+	struct timespec ts[2];
 	int src, dst, ret;
 
 	ret = 0;
@@ -1084,9 +1083,6 @@ cvs_file_copy(const char *from, const char *to)
 
 	if (fstat(src, &st) == -1)
 		fatal("cvs_file_copy: `%s': %s", from, strerror(errno));
-
-	atime = st.st_atimespec.tv_sec;
-	mtime = st.st_mtimespec.tv_sec;
 
 	if (S_ISREG(st.st_mode)) {
 		char *p;
@@ -1120,10 +1116,10 @@ cvs_file_copy(const char *from, const char *to)
 
 		(void)munmap(p, st.st_size);
 
-		tv[0].tv_sec = atime;
-		tv[1].tv_sec = mtime;
+		ts[0] = st.st_atim;
+		ts[1] = st.st_mtim;
 
-		if (futimes(dst, tv) == -1) {
+		if (futimens(dst, ts) == -1) {
 			saved_errno = errno;
 			(void)unlink(to);
 			fatal("cvs_file_copy: futimes: %s",
