@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.24 2023/08/10 22:58:04 cheloha Exp $ */
+/* $OpenBSD: agtimer.c,v 1.25 2023/08/11 01:28:19 cheloha Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -328,7 +328,7 @@ agtimer_delay(u_int usecs)
 	start = agtimer_readcnt64();
 	cycles = (uint64_t)usecs * agtimer_frequency / 1000000;
 	while (agtimer_readcnt64() - start < cycles)
-		continue;
+		CPU_BUSY_CYCLE();
 }
 
 void
