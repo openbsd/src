@@ -1,4 +1,4 @@
-/* $OpenBSD: hkdf.h,v 1.2 2018/04/03 13:33:53 tb Exp $ */
+/* $OpenBSD: hkdf.h,v 1.3 2023/08/11 04:52:08 tb Exp $ */
 /* Copyright (c) 2014, Google Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -33,7 +33,7 @@ extern "C" {
  * a key from a password.
  */
 
-int HKDF(uint8_t *out_key, size_t out_len, const struct env_md_st *digest,
+int HKDF(uint8_t *out_key, size_t out_len, const EVP_MD *digest,
     const uint8_t *secret, size_t secret_len, const uint8_t *salt,
     size_t salt_len, const uint8_t *info, size_t info_len);
 
@@ -43,9 +43,9 @@ int HKDF(uint8_t *out_key, size_t out_len, const struct env_md_st *digest,
  * and outputs |out_len| bytes to |out_key|. The maximum output size
  * is |EVP_MAX_MD_SIZE|.  It returns one on success and zero on error.
  */
-int HKDF_extract(uint8_t *out_key, size_t *out_len,
-    const struct env_md_st *digest, const uint8_t *secret,
-    size_t secret_len, const uint8_t *salt, size_t salt_len);
+int HKDF_extract(uint8_t *out_key, size_t *out_len, const EVP_MD *digest,
+    const uint8_t *secret, size_t secret_len,
+    const uint8_t *salt, size_t salt_len);
 
 /*
  * HKDF_expand computes a HKDF OKM (as specified by RFC 5869) of
