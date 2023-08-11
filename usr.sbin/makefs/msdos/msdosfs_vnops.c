@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.9 2021/10/06 00:40:41 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.10 2023/08/11 04:51:36 guenther Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.17 2016/01/30 09:59:27 mlelstv Exp $ */
 
 /*-
@@ -93,10 +93,10 @@ static void
 msdosfs_times(struct msdosfsmount *pmp, struct denode *dep,
     const struct stat *st)
 {
-	struct timespec at = st->st_atimespec;
-	struct timespec mt = st->st_mtimespec;
-	unix2dostime(&at, pmp->pm_minuteswest, &dep->de_ADate, NULL, NULL);
-	unix2dostime(&mt, pmp->pm_minuteswest, &dep->de_MDate, &dep->de_MTime, NULL);
+	unix2dostime(&st->st_atim, pmp->pm_minuteswest, &dep->de_ADate,
+	    NULL, NULL);
+	unix2dostime(&st->st_mtim, pmp->pm_minuteswest, &dep->de_MDate,
+	    &dep->de_MTime, NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.2 2021/10/06 00:40:41 deraadt Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.3 2023/08/11 04:51:36 guenther Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.24 1997/10/17 11:23:54 ws Exp $	*/
 
 /*-
@@ -91,7 +91,7 @@ u_short lastdtime;
  * file timestamps. The passed in unix time is assumed to be in GMT.
  */
 void
-unix2dostime(struct timespec *tsp, int minuteswest, u_int16_t *ddp,
+unix2dostime(const struct timespec *tsp, int minuteswest, u_int16_t *ddp,
     u_int16_t *dtp, u_int8_t *dhp)
 {
 	time_t t;

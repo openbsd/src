@@ -1,4 +1,4 @@
-/*	$OpenBSD: direntry.h,v 1.2 2021/12/23 04:37:12 jsg Exp $	*/
+/*	$OpenBSD: direntry.h,v 1.3 2023/08/11 04:51:36 guenther Exp $	*/
 /*	$NetBSD: direntry.h,v 1.13 1997/10/17 11:23:45 ws Exp $	*/
 
 /*-
@@ -121,8 +121,8 @@ struct winentry {
 #define DD_YEAR_MASK		0xFE00	/* year - 1980 */
 #define DD_YEAR_SHIFT		9
 
-void	unix2dostime(struct timespec *tsp, int minuteswest, u_int16_t *ddp,
-	    u_int16_t *dtp, u_int8_t *dhp);
+void	unix2dostime(const struct timespec *tsp, int minuteswest,
+	    u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp);
 int	unix2dosfn(u_char *un, u_char dn[11], int unlen, u_int gen);
 int	unix2winfn(u_char *un, int unlen, struct winentry *wep, int cnt,
 	    int chksum);
