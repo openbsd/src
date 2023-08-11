@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.310 2023/07/14 07:07:08 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.311 2023/08/11 07:54:18 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1970,6 +1970,9 @@ userret(struct proc *p)
 	struct sigctx ctx;
 	int signum;
 
+	if (p->p_flag & P_SUSPSINGLE)
+		single_thread_check(p, 0);
+
 	/* send SIGPROF or SIGVTALRM if their timers interrupted this thread */
 	if (p->p_flag & P_PROFPEND) {
 		atomic_clearbits_int(&p->p_flag, P_PROFPEND);
@@ -2002,9 +2005,6 @@ userret(struct proc *p)
 		while ((signum = cursig(p, &ctx)) != 0)
 			postsig(p, signum, &ctx);
 	}
-
-	if (p->p_flag & P_SUSPSINGLE)
-		single_thread_check(p, 0);
 
 	WITNESS_WARN(WARN_PANIC, NULL, "userret: returning");
 
