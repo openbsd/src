@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.48 2023/08/11 11:47:21 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.49 2023/08/11 13:51:33 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -507,14 +507,14 @@ dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent, ASN1_PCTX *ctx)
 }
 
 static int
-old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
+old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **key, int key_len)
 {
 	DSA *dsa = NULL;
 	BN_CTX *ctx = NULL;
 	BIGNUM *result;
 	int ret = 0;
 
-	if ((dsa = d2i_DSAPrivateKey(NULL, pder, derlen)) == NULL) {
+	if ((dsa = d2i_DSAPrivateKey(NULL, key, key_len)) == NULL) {
 		DSAerror(ERR_R_DSA_LIB);
 		goto err;
 	}
@@ -581,9 +581,9 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 }
 
 static int
-old_dsa_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
+old_dsa_priv_encode(const EVP_PKEY *pkey, unsigned char **key)
 {
-	return i2d_DSAPrivateKey(pkey->pkey.dsa, pder);
+	return i2d_DSAPrivateKey(pkey->pkey.dsa, key);
 }
 
 static int
