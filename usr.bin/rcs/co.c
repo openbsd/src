@@ -1,4 +1,4 @@
-/*	$OpenBSD: co.c,v 1.126 2019/06/28 13:35:03 deraadt Exp $	*/
+/*	$OpenBSD: co.c,v 1.127 2023/08/11 05:02:21 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -52,7 +52,7 @@ checkout_main(int argc, char **argv)
 	const char *author, *date, *state;
 	char fpath[PATH_MAX];
 	char *rev_str, *username;
-	time_t rcs_mtime = -1;
+	struct timespec rcs_mtime = { .tv_sec = 0, .tv_nsec = UTIME_OMIT };
 
 	flags = ret = 0;
 	kflag = RCS_KWEXP_ERR;

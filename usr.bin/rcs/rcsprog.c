@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsprog.c,v 1.164 2023/03/08 04:43:12 guenther Exp $	*/
+/*	$OpenBSD: rcsprog.c,v 1.165 2023/08/11 05:02:21 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -191,7 +191,7 @@ rcs_main(int argc, char **argv)
 	RCSFILE *file;
 	RCSNUM *logrev;
 	struct rcs_access *acp;
-	time_t rcs_mtime = -1;
+	struct timespec rcs_mtime = { .tv_sec = 0, .tv_nsec = UTIME_OMIT };
 
 	kflag = RCS_KWEXP_ERR;
 	lkmode = RCS_LOCK_INVAL;

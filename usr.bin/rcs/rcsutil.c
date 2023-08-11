@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.c,v 1.47 2020/10/14 20:07:19 naddy Exp $	*/
+/*	$OpenBSD: rcsutil.c,v 1.48 2023/08/11 05:02:21 guenther Exp $	*/
 /*
  * Copyright (c) 2005, 2006 Joris Vink <joris@openbsd.org>
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
@@ -44,44 +44,42 @@
  * rcs_get_mtime()
  *
  * Get <filename> last modified time.
- * Returns last modified time on success, or -1 on failure.
+ * Returns last modified time on success, or a timespec with tv_nsec
+ * set to UTIME_OMIT on failure.
  */
-time_t
+struct timespec
 rcs_get_mtime(RCSFILE *file)
 {
 	struct stat st;
-	time_t mtime;
+	struct timespec mtime = { .tv_sec = 0, .tv_nsec = UTIME_OMIT };
 
 	if (file->rf_file == NULL)
-		return (-1);
+		return mtime;
 
 	if (fstat(fileno(file->rf_file), &st) == -1) {
 		warn("%s", file->rf_path);
-		return (-1);
+		return mtime;
 	}
 
-	mtime = st.st_mtimespec.tv_sec;
-
-	return (mtime);
+	return st.st_mtim;
 }
 
 /*
  * rcs_set_mtime()
  *
- * Set <filename> last modified time to <mtime> if it's not set to -1.
+ * Set <filename> last modified time to <mtime> if its tv_nsec isn't UTIME_OMIT
  */
 void
-rcs_set_mtime(RCSFILE *file, time_t mtime)
+rcs_set_mtime(RCSFILE *file, struct timespec mtime)
 {
-	static struct timeval tv[2];
+	struct timespec ts[2];
 
-	if (file->rf_file == NULL || mtime == -1)
+	if (file->rf_file == NULL || mtime.tv_nsec == UTIME_OMIT)
 		return;
 
-	tv[0].tv_sec = mtime;
-	tv[1].tv_sec = tv[0].tv_sec;
+	ts[0] = ts[1] = mtime;
 
-	if (futimes(fileno(file->rf_file), tv) == -1)
+	if (futimens(fileno(file->rf_file), ts) == -1)
 		err(1, "utimes");
 }
 

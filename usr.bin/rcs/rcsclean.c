@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsclean.c,v 1.56 2016/08/26 09:02:54 guenther Exp $	*/
+/*	$OpenBSD: rcsclean.c,v 1.57 2023/08/11 05:02:21 guenther Exp $	*/
 /*
  * Copyright (c) 2005 Joris Vink <joris@openbsd.org>
  * All rights reserved.
@@ -25,6 +25,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <dirent.h>
 #include <err.h>
@@ -137,7 +138,7 @@ rcsclean_file(char *fname, const char *rev_str)
 	char fpath[PATH_MAX], numb[RCS_REV_BUFSZ];
 	RCSNUM *rev;
 	BUF *b1, *b2;
-	time_t rcs_mtime = -1;
+	struct timespec rcs_mtime = { .tv_sec = 0, .tv_nsec = UTIME_OMIT };
 
 	b1 = b2 = NULL;
 	file = NULL;

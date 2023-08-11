@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsutil.h,v 1.15 2016/07/04 01:39:12 millert Exp $	*/
+/*	$OpenBSD: rcsutil.h,v 1.16 2023/08/11 05:02:21 guenther Exp $	*/
 /*
  * Copyright (c) 2006 Xavier Santolaria <xsa@openbsd.org>
  * All rights reserved.
@@ -50,9 +50,9 @@ struct rcs_argvector {
 
 /* rcsutil.c */
 int			 rcs_getopt(int, char **, const char *);
-void			 rcs_set_mtime(RCSFILE *, time_t);
+void			 rcs_set_mtime(RCSFILE *, struct timespec);
 int			 rcs_choosefile(const char *, char *, size_t);
-time_t			 rcs_get_mtime(RCSFILE *);
+struct timespec		 rcs_get_mtime(RCSFILE *);
 RCSNUM			*rcs_getrevnum(const char *, RCSFILE *);
 char			*rcs_prompt(const char *, int);
 u_int			 rcs_rev_select(RCSFILE *, const char *);
