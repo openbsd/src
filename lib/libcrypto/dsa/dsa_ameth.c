@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.49 2023/08/11 13:51:33 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.50 2023/08/11 13:53:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -459,12 +459,12 @@ do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 }
 
 static int
-dsa_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
+dsa_param_decode(EVP_PKEY *pkey, const unsigned char **params, int params_len)
 {
 	DSA *dsa = NULL;
 	int ret = 0;
 
-	if ((dsa = d2i_DSAparams(NULL, pder, derlen)) == NULL) {
+	if ((dsa = d2i_DSAparams(NULL, params, params_len)) == NULL) {
 		DSAerror(ERR_R_DSA_LIB);
 		goto err;
 	}
@@ -483,9 +483,9 @@ dsa_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 }
 
 static int
-dsa_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
+dsa_param_encode(const EVP_PKEY *pkey, unsigned char **params)
 {
-	return i2d_DSAparams(pkey->pkey.dsa, pder);
+	return i2d_DSAparams(pkey->pkey.dsa, params);
 }
 
 static int

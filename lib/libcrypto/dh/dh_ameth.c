@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.34 2023/08/11 11:32:19 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.35 2023/08/11 13:53:45 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -298,12 +298,12 @@ dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 }
 
 static int
-dh_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
+dh_param_decode(EVP_PKEY *pkey, const unsigned char **params, int params_len)
 {
 	DH *dh = NULL;
 	int ret = 0;
 
-	if ((dh = d2i_DHparams(NULL, pder, derlen)) == NULL) {
+	if ((dh = d2i_DHparams(NULL, params, params_len)) == NULL) {
 		DHerror(ERR_R_DH_LIB);
 		goto err;
 	}
@@ -320,9 +320,9 @@ dh_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 }
 
 static int
-dh_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
+dh_param_encode(const EVP_PKEY *pkey, unsigned char **params)
 {
-	return i2d_DHparams(pkey->pkey.dh, pder);
+	return i2d_DHparams(pkey->pkey.dh, params);
 }
 
 static int
