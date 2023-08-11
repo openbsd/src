@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.29 2023/08/11 15:25:36 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.30 2023/08/11 15:27:28 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -68,23 +68,9 @@
 /* Ensure that SHA_LONG and uint32_t are equivalent. */
 CTASSERT(sizeof(SHA_LONG) == sizeof(uint32_t));
 
-#define	DATA_ORDER_IS_BIG_ENDIAN
-
-#define	HASH_LONG		SHA_LONG
-#define	HASH_CTX		SHA256_CTX
-#define	HASH_CBLOCK		SHA_CBLOCK
-
-#define	HASH_BLOCK_DATA_ORDER	sha256_block_data_order
-
 #ifdef SHA256_ASM
 void sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num);
 #endif
-
-#define HASH_NO_UPDATE
-#define HASH_NO_TRANSFORM
-#define HASH_NO_FINAL
-
-#include "md32_common.h"
 
 #ifndef SHA256_ASM
 static const SHA_LONG K256[64] = {
