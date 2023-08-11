@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.377 2023/08/04 19:06:25 claudio Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.378 2023/08/11 11:24:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -6532,63 +6532,65 @@ ikev2_childsa_enable(struct iked *env, struct iked_sa *sa)
 	peer_changed = (memcmp(&sa->sa_peer_loaded, &sa->sa_peer,
 	    sizeof(sa->sa_peer_loaded)) != 0);
 
-	TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
-		/* re-load the flow if the peer for the flow has changed */
-		reload = 0;
-		if (flow->flow_loaded) {
-			if (!peer_changed) {
-				log_debug("%s: flow already loaded %p",
-				    __func__, flow);
-				continue;
+	if (!(sa->sa_policy->pol_flags & IKED_POLICY_ROUTING)) {
+		TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
+			/* re-load the flow if the peer for the flow has changed */
+			reload = 0;
+			if (flow->flow_loaded) {
+				if (!peer_changed) {
+					log_debug("%s: flow already loaded %p",
+					    __func__, flow);
+					continue;
+				}
+				RB_REMOVE(iked_flows, &env->sc_activeflows, flow);
+				(void)pfkey_flow_delete(env, flow);
+				flow->flow_loaded = 0; /* we did RB_REMOVE */
+				reload = 1;
 			}
-			RB_REMOVE(iked_flows, &env->sc_activeflows, flow);
-			(void)pfkey_flow_delete(env, flow);
-			flow->flow_loaded = 0; /* we did RB_REMOVE */
-			reload = 1;
-		}
 
-		if (pfkey_flow_add(env, flow) != 0) {
-			log_debug("%s: failed to load flow", __func__);
-			goto done;
-		}
+			if (pfkey_flow_add(env, flow) != 0) {
+				log_debug("%s: failed to load flow", __func__);
+				goto done;
+			}
 
-		if ((oflow = RB_FIND(iked_flows, &env->sc_activeflows, flow))
-		    != NULL) {
-			log_debug("%s: replaced old flow %p with %p",
-			    __func__, oflow, flow);
-			oflow->flow_loaded = 0;
-			RB_REMOVE(iked_flows, &env->sc_activeflows, oflow);
-		}
+			if ((oflow = RB_FIND(iked_flows, &env->sc_activeflows, flow))
+			    != NULL) {
+				log_debug("%s: replaced old flow %p with %p",
+				    __func__, oflow, flow);
+				oflow->flow_loaded = 0;
+				RB_REMOVE(iked_flows, &env->sc_activeflows, oflow);
+			}
 
-		RB_INSERT(iked_flows, &env->sc_activeflows, flow);
+			RB_INSERT(iked_flows, &env->sc_activeflows, flow);
 
-		log_debug("%s: %sloaded flow %p", __func__,
-		    reload ? "re" : "", flow);
+			log_debug("%s: %sloaded flow %p", __func__,
+			    reload ? "re" : "", flow);
 
-		/* append flow to log buffer */
-		if (flow->flow_dir == IPSP_DIRECTION_OUT &&
-		    flow->flow_prenat.addr_af != 0)
-			snprintf(prenat_mask, sizeof(prenat_mask), "%d",
-			    flow->flow_prenat.addr_mask);
-		else
-			prenat_mask[0] = '\0';
-		if (flow->flow_dir == IPSP_DIRECTION_OUT) {
-			if (ftello(flowf) > 0)
-				fputs(", ", flowf);
-			fprintf(flowf, "%s-%s/%d%s%s%s%s%s=%s/%d(%u)%s",
-			    print_map(flow->flow_saproto, ikev2_saproto_map),
-			    print_addr(&flow->flow_src.addr),
-			    flow->flow_src.addr_mask,
-			    flow->flow_prenat.addr_af != 0 ? "[": "",
-			    flow->flow_prenat.addr_af != 0 ?
-			    print_addr(&flow->flow_prenat.addr) : "",
-			    flow->flow_prenat.addr_af != 0 ? "/" : "",
-			    flow->flow_prenat.addr_af != 0 ? prenat_mask : "",
-			    flow->flow_prenat.addr_af != 0 ? "]": "",
-			    print_addr(&flow->flow_dst.addr),
-			    flow->flow_dst.addr_mask,
-			    flow->flow_ipproto,
-			    reload ? "-R" : "");
+			/* append flow to log buffer */
+			if (flow->flow_dir == IPSP_DIRECTION_OUT &&
+			    flow->flow_prenat.addr_af != 0)
+				snprintf(prenat_mask, sizeof(prenat_mask), "%d",
+				    flow->flow_prenat.addr_mask);
+			else
+				prenat_mask[0] = '\0';
+			if (flow->flow_dir == IPSP_DIRECTION_OUT) {
+				if (ftello(flowf) > 0)
+					fputs(", ", flowf);
+				fprintf(flowf, "%s-%s/%d%s%s%s%s%s=%s/%d(%u)%s",
+				    print_map(flow->flow_saproto, ikev2_saproto_map),
+				    print_addr(&flow->flow_src.addr),
+				    flow->flow_src.addr_mask,
+				    flow->flow_prenat.addr_af != 0 ? "[": "",
+				    flow->flow_prenat.addr_af != 0 ?
+				    print_addr(&flow->flow_prenat.addr) : "",
+				    flow->flow_prenat.addr_af != 0 ? "/" : "",
+				    flow->flow_prenat.addr_af != 0 ? prenat_mask : "",
+				    flow->flow_prenat.addr_af != 0 ? "]": "",
+				    print_addr(&flow->flow_dst.addr),
+				    flow->flow_dst.addr_mask,
+				    flow->flow_ipproto,
+				    reload ? "-R" : "");
+			}
 		}
 	}
 

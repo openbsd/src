@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.143 2023/06/14 14:09:29 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.144 2023/08/11 11:24:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -2519,6 +2519,10 @@ create_ike(char *name, int af, struct ipsec_addr_wrap *ipproto,
 	}
 
 	if (iface != NULL) {
+		/* sec(4) */
+		if (strncmp("sec", iface, strlen("sec")) == 0)
+			pol.pol_flags |= IKED_POLICY_ROUTING;
+
 		pol.pol_iface = if_nametoindex(iface);
 		if (pol.pol_iface == 0) {
 			yyerror("invalid iface");

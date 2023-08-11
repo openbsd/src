@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.82 2023/06/13 12:34:12 tb Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.83 2023/08/11 11:24:55 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -25,6 +25,7 @@
 
 #include <netinet/in.h>
 #include <netinet/ip_ipsp.h>
+#include <net/if.h>
 #include <net/pfkeyv2.h>
 
 #include <err.h>
@@ -40,7 +41,7 @@
 #include "ikev2.h"
 
 #define ROUNDUP(x) (((x) + (PFKEYV2_CHUNK - 1)) & ~(PFKEYV2_CHUNK - 1))
-#define IOV_CNT 27
+#define IOV_CNT 28
 
 #define PFKEYV2_CHUNK sizeof(uint64_t)
 #define PFKEY_REPLY_TIMEOUT 1000
@@ -453,6 +454,7 @@ pfkey_flow(struct iked *env, uint8_t satype, uint8_t action, struct iked_flow *f
 int
 pfkey_sa(struct iked *env, uint8_t satype, uint8_t action, struct iked_childsa *sa)
 {
+	char			 iface[IF_NAMESIZE];
 	struct sadb_msg		 smsg;
 	struct sadb_sa		 sadb;
 	struct sadb_address	 sa_src, sa_dst, sa_pxy;
@@ -460,6 +462,7 @@ pfkey_sa(struct iked *env, uint8_t satype, uint8_t action, struct iked_childsa *
 	struct sadb_lifetime	 sa_ltime_hard, sa_ltime_soft;
 	struct sadb_x_udpencap	 udpencap;
 	struct sadb_x_tag	 sa_tag;
+	struct sadb_x_iface	 sa_iface;
 	char			*tag = NULL;
 	struct sadb_x_tap	 sa_tap;
 	struct sadb_x_rdomain	 sa_rdomain;
@@ -469,6 +472,8 @@ pfkey_sa(struct iked *env, uint8_t satype, uint8_t action, struct iked_childsa *
 	struct iked_policy	*pol;
 	struct iked_addr	*dst;
 	struct iovec		 iov[IOV_CNT];
+	const char		*errstr = NULL;
+	uint32_t		 ifminor;
 	uint32_t		 jitter;
 	int			 iov_cnt;
 	int			 ret, dotap = 0;
@@ -549,6 +554,7 @@ pfkey_sa(struct iked *env, uint8_t satype, uint8_t action, struct iked_childsa *
 	bzero(&udpencap, sizeof udpencap);
 	bzero(&sa_ltime_hard, sizeof(sa_ltime_hard));
 	bzero(&sa_ltime_soft, sizeof(sa_ltime_soft));
+	bzero(&sa_iface, sizeof(sa_iface));
 
 	if (pol->pol_rdomain >= 0) {
 		bzero(&sa_rdomain, sizeof(sa_rdomain));
@@ -688,6 +694,24 @@ pfkey_sa(struct iked *env, uint8_t satype, uint8_t action, struct iked_childsa *
 		sa_tap.sadb_x_tap_unit = pol->pol_tap;
 	}
 
+	if (pol->pol_flags & IKED_POLICY_ROUTING) {
+		sa_iface.sadb_x_iface_exttype = SADB_X_EXT_IFACE;
+		sa_iface.sadb_x_iface_len = sizeof(sa_iface) / 8;
+		if (if_indextoname(pol->pol_iface, iface) == NULL) {
+			log_warnx("%s: unsupported interface %s",
+			    __func__, iface);
+			return (-1);
+		}
+		ifminor = strtonum(iface + strlen("sec"), 0, UINT_MAX, &errstr);
+		if (errstr != NULL) {
+			log_warnx("%s: unsupported interface %s",
+			    __func__, iface);
+			return (-1);
+		}
+		sa_iface.sadb_x_iface_unit = ifminor;
+		sa_iface.sadb_x_iface_direction = sa->csa_dir;
+	}
+
  send:
 
 #define PAD(len)					\
@@ -814,6 +838,13 @@ pfkey_sa(struct iked *env, uint8_t satype, uint8_t action, struct iked_childsa *
 		smsg.sadb_msg_len += sa_tag.sadb_x_tag_len;
 		iov_cnt++;
 		PAD(strlen(tag) + 1);
+	}
+
+	if (sa_iface.sadb_x_iface_len) {
+		iov[iov_cnt].iov_base = &sa_iface;
+		iov[iov_cnt].iov_len = sa_iface.sadb_x_iface_len * 8;
+		smsg.sadb_msg_len += sa_iface.sadb_x_iface_len;
+		iov_cnt++;
 	}
 
 	if (dotap != 0) {
