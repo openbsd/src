@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.29 2018/09/16 02:41:16 millert Exp $	*/
+/*	$OpenBSD: spec.c,v 1.30 2023/08/11 05:07:28 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -253,11 +253,11 @@ set(char *t, NODE *ip)
 			}
 			break;
 		case F_TIME:
-			ip->st_mtimespec.tv_sec = strtoul(val, &ep, 10);
+			ip->st_mtim.tv_sec = strtoull(val, &ep, 10);
 			if (*ep != '.')
 				error("invalid time %s", val);
 			val = ep + 1;
-			ip->st_mtimespec.tv_nsec = strtoul(val, &ep, 10);
+			ip->st_mtim.tv_nsec = strtoul(val, &ep, 10);
 			if (*ep)
 				error("invalid time %s", val);
 			break;

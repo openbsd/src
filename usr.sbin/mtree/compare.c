@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.29 2021/10/24 21:24:19 deraadt Exp $	*/
+/*	$OpenBSD: compare.c,v 1.30 2023/08/11 05:07:28 guenther Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -196,20 +196,19 @@ typeerr:		LABEL;
 	 * Doesn't display microsecond differences.
 	 */
 	if (s->flags & F_TIME) {
-		struct timeval tv[2];
+		struct timespec ts[2];
 
-		TIMESPEC_TO_TIMEVAL(&tv[0], &s->st_mtimespec);
-		TIMESPEC_TO_TIMEVAL(&tv[1], &p->fts_statp->st_mtimespec);
-		if (tv[0].tv_sec != tv[1].tv_sec ||
-		    tv[0].tv_usec != tv[1].tv_usec) {
+		ts[0] = s->st_mtim;
+		ts[1] = p->fts_statp->st_mtim;
+		if (ts[0].tv_sec != ts[1].tv_sec ||
+		    ts[0].tv_nsec != ts[1].tv_nsec) {
 			LABEL;
 			(void)printf("%smodification time (%.24s, ",
-			    tab, ctime(&s->st_mtimespec.tv_sec));
-			(void)printf("%.24s",
-			    ctime(&p->fts_statp->st_mtimespec.tv_sec));
+			    tab, ctime(&s->st_mtime));
+			(void)printf("%.24s", ctime(&p->fts_statp->st_mtime));
 			if (tflag) {
-				tv[1] = tv[0];
-				if (utimes(p->fts_accpath, tv))
+				ts[1] = ts[0];
+				if (utimensat(AT_FDCWD, p->fts_accpath, ts, 0))
 					(void)printf(", not modified: %s)\n",
 					    strerror(errno));
 				else

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.h,v 1.13 2012/07/08 21:19:42 naddy Exp $	*/
+/*	$OpenBSD: mtree.h,v 1.14 2023/08/11 05:07:28 guenther Exp $	*/
 /*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ typedef struct _node {
 	struct _node	*parent, *child;	/* up, down */
 	struct _node	*prev, *next;		/* left, right */
 	off_t	st_size;			/* size */
-	struct timespec	st_mtimespec;		/* last modification time */
+	struct timespec	st_mtim;		/* last modification time */
 	u_int32_t cksum;			/* check sum */
 	char	*md5digest;			/* MD5 digest */
 	char	*rmd160digest;			/* RIPEMD-160 digest */
