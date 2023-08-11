@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.46 2023/08/10 16:57:15 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.47 2023/08/11 11:32:19 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -75,31 +75,32 @@
 static int
 dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 {
-	const unsigned char *p, *pm;
-	int pklen, pmlen;
+	X509_ALGOR *algor;
 	int ptype;
 	const void *pval;
-	const ASN1_STRING *pstr;
-	X509_ALGOR *palg;
-	ASN1_INTEGER *public_key = NULL;
-
+	const ASN1_STRING *params;
+	const unsigned char *key_der, *params_der, *p;
+	int key_len, params_len;
+	ASN1_INTEGER *key = NULL;
 	DSA *dsa = NULL;
+	int ret = 0;
 
-	if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
-		return 0;
-	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
+	if (!X509_PUBKEY_get0_param(NULL, &key_der, &key_len, &algor, pubkey))
+		goto err;
+	X509_ALGOR_get0(NULL, &ptype, &pval, algor);
 
 	if (ptype == V_ASN1_SEQUENCE) {
-		pstr = pval;
-		pm = pstr->data;
-		pmlen = pstr->length;
+		params = pval;
+		params_der = params->data;
+		params_len = params->length;
 
-		if (!(dsa = d2i_DSAparams(NULL, &pm, pmlen))) {
+		p = params_der;
+		if ((dsa = d2i_DSAparams(NULL, &p, params_len)) == NULL) {
 			DSAerror(DSA_R_DECODE_ERROR);
 			goto err;
 		}
 	} else if (ptype == V_ASN1_NULL || ptype == V_ASN1_UNDEF) {
-		if (!(dsa = DSA_new())) {
+		if ((dsa = DSA_new()) == NULL) {
 			DSAerror(ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
@@ -108,31 +109,32 @@ dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		goto err;
 	}
 
-	if (!(public_key = d2i_ASN1_INTEGER(NULL, &p, pklen))) {
+	p = key_der;
+	if ((key = d2i_ASN1_INTEGER(NULL, &p, key_len)) == NULL) {
 		DSAerror(DSA_R_DECODE_ERROR);
 		goto err;
 	}
-
-	if (!(dsa->pub_key = ASN1_INTEGER_to_BN(public_key, NULL))) {
+	if ((dsa->pub_key = ASN1_INTEGER_to_BN(key, NULL)) == NULL) {
 		DSAerror(DSA_R_BN_DECODE_ERROR);
 		goto err;
 	}
-
 	/* We can only check for key consistency if we have parameters. */
 	if (ptype == V_ASN1_SEQUENCE) {
 		if (!dsa_check_key(dsa))
 			goto err;
 	}
 
-	ASN1_INTEGER_free(public_key);
-	EVP_PKEY_assign_DSA(pkey, dsa);
-	return 1;
+	if (!EVP_PKEY_assign_DSA(pkey, dsa))
+		goto err;
+	dsa = NULL;
 
-err:
-	if (public_key)
-		ASN1_INTEGER_free(public_key);
+	ret = 1;
+
+ err:
+	ASN1_INTEGER_free(key);
 	DSA_free(dsa);
-	return 0;
+
+	return ret;
 }
 
 static int
@@ -192,81 +194,85 @@ dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	return ret;
 }
 
-/* In PKCS#8 DSA: you just get a private key integer and parameters in the
+/*
+ * In PKCS#8 DSA: you just get a private key integer and parameters in the
  * AlgorithmIdentifier the pubkey must be recalculated.
  */
 static int
 dsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 {
-	const unsigned char *p, *pm;
-	int pklen, pmlen;
+	const X509_ALGOR *algor;
 	int ptype;
 	const void *pval;
-	const ASN1_STRING *pstr;
-	const X509_ALGOR *palg;
-	ASN1_INTEGER *privkey = NULL;
+	const ASN1_STRING *params;
+	const unsigned char *key_der, *params_der, *p;
+	int key_len, params_len;
+	ASN1_INTEGER *key = NULL;
 	BN_CTX *ctx = NULL;
 	DSA *dsa = NULL;
 	int ret = 0;
 
-	if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
-		return 0;
-	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
-	if (ptype != V_ASN1_SEQUENCE)
-		goto decerr;
+	if (!PKCS8_pkey_get0(NULL, &key_der, &key_len, &algor, p8))
+		goto err;
+	X509_ALGOR_get0(NULL, &ptype, &pval, algor);
 
-	if ((privkey = d2i_ASN1_INTEGER(NULL, &p, pklen)) == NULL)
-		goto decerr;
-	if (privkey->type == V_ASN1_NEG_INTEGER)
-		goto decerr;
+	if (ptype != V_ASN1_SEQUENCE) {
+		DSAerror(DSA_R_PARAMETER_ENCODING_ERROR);
+		goto err;
+	}
 
-	pstr = pval;
-	pm = pstr->data;
-	pmlen = pstr->length;
-	if (!(dsa = d2i_DSAparams(NULL, &pm, pmlen)))
-		goto decerr;
-	/* We have parameters now set private key */
-	if (!(dsa->priv_key = ASN1_INTEGER_to_BN(privkey, NULL))) {
-		DSAerror(DSA_R_BN_ERROR);
-		goto dsaerr;
+	params = pval;
+	params_der = params->data;
+	params_len = params->length;
+
+	p = params_der;
+	if ((dsa = d2i_DSAparams(NULL, &p, params_len)) == NULL) {
+		DSAerror(DSA_R_DECODE_ERROR);
+		goto err;
+	}
+	p = key_der;
+	if ((key = d2i_ASN1_INTEGER(NULL, &p, key_len)) == NULL) {
+		DSAerror(DSA_R_DECODE_ERROR);
+		goto err;
+	}
+	if ((dsa->priv_key = ASN1_INTEGER_to_BN(key, NULL)) == NULL) {
+		DSAerror(DSA_R_BN_DECODE_ERROR);
+		goto err;
 	}
 
 	/* Check the key for basic consistency before doing expensive things. */
 	if (!dsa_check_key(dsa))
-		goto dsaerr;
+		goto err;
 
 	/* Calculate public key */
-	if (!(dsa->pub_key = BN_new())) {
+	if ((dsa->pub_key = BN_new()) == NULL) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
-		goto dsaerr;
+		goto err;
 	}
 
 	if ((ctx = BN_CTX_new()) == NULL) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
-		goto dsaerr;
+		goto err;
 	}
 
 	BN_CTX_start(ctx);
 
 	if (!BN_mod_exp_ct(dsa->pub_key, dsa->g, dsa->priv_key, dsa->p, ctx)) {
 		DSAerror(DSA_R_BN_ERROR);
-		goto dsaerr;
+		goto err;
 	}
 
 	if (!EVP_PKEY_assign_DSA(pkey, dsa))
-		goto decerr;
+		goto err;
+	dsa = NULL;
 
 	ret = 1;
-	goto done;
 
-decerr:
-	DSAerror(DSA_R_DECODE_ERROR);
-dsaerr:
+ err:
 	DSA_free(dsa);
-done:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
-	ASN1_INTEGER_free(privkey);
+	ASN1_INTEGER_free(key);
 
 	return ret;
 }
@@ -454,18 +460,25 @@ do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 static int
 dsa_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 {
-	DSA *dsa;
+	DSA *dsa = NULL;
+	int ret = 0;
 
-	if (!(dsa = d2i_DSAparams(NULL, pder, derlen))) {
+	if ((dsa = d2i_DSAparams(NULL, pder, derlen)) == NULL) {
 		DSAerror(ERR_R_DSA_LIB);
-		return 0;
+		goto err;
 	}
-	if (!dsa_check_key(dsa)) {
-		DSA_free(dsa);
-		return 0;
-	}
-	EVP_PKEY_assign_DSA(pkey, dsa);
-	return 1;
+	if (!dsa_check_key(dsa))
+		goto err;
+	if (!EVP_PKEY_assign_DSA(pkey, dsa))
+		goto err;
+	dsa = NULL;
+
+	ret = 1;
+
+ err:
+	DSA_free(dsa);
+
+	return ret;
 }
 
 static int
@@ -495,9 +508,10 @@ dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent, ASN1_PCTX *ctx)
 static int
 old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 {
-	DSA *dsa;
+	DSA *dsa = NULL;
 	BN_CTX *ctx = NULL;
 	BIGNUM *result;
+	int ret = 0;
 
 	if ((dsa = d2i_DSAPrivateKey(NULL, pder, derlen)) == NULL) {
 		DSAerror(ERR_R_DSA_LIB);
@@ -551,17 +565,18 @@ old_dsa_priv_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 		goto err;
 	}
 
-	BN_CTX_end(ctx);
-	BN_CTX_free(ctx);
+	if (!EVP_PKEY_assign_DSA(pkey, dsa))
+		goto err;
+	dsa = NULL;
 
-	EVP_PKEY_assign_DSA(pkey, dsa);
-	return 1;
+	ret = 1;
 
  err:
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	DSA_free(dsa);
-	return 0;
+
+	return ret;
 }
 
 static int
