@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.84 2023/08/05 20:07:55 cheloha Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.85 2023/08/11 22:02:50 cheloha Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -101,6 +101,12 @@ sched_init_cpu(struct cpu_info *ci)
 		    profclock);
 		if (spc->spc_profclock == NULL)
 			panic("%s: clockintr_establish profclock", __func__);
+	}
+	if (spc->spc_roundrobin == NULL) {
+		spc->spc_roundrobin = clockintr_establish(&ci->ci_queue,
+		    roundrobin);
+		if (spc->spc_roundrobin == NULL)
+			panic("%s: clockintr_establish roundrobin", __func__);
 	}
 
 	kthread_create_deferred(sched_kthreads_create, ci);

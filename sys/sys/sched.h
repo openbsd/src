@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.60 2023/08/05 20:07:56 cheloha Exp $	*/
+/*	$OpenBSD: sched.h,v 1.61 2023/08/11 22:02:50 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -105,10 +105,10 @@ struct schedstate_percpu {
 	u_int spc_schedticks;		/* ticks for schedclock() */
 	u_int64_t spc_cp_time[CPUSTATES]; /* CPU state statistics */
 	u_char spc_curpriority;		/* usrpri of curproc */
-	int spc_rrticks;		/* ticks until roundrobin() */
 
 	struct clockintr *spc_itimer;	/* [o] itimer_update handle */
 	struct clockintr *spc_profclock; /* [o] profclock handle */
+	struct clockintr *spc_roundrobin; /* [o] roundrobin handle */
 
 	u_int spc_nrun;			/* procs on the run queues */
 
@@ -145,16 +145,16 @@ struct cpustats {
 #define NICE_WEIGHT 2			/* priorities per nice level */
 #define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - SCHED_PPQ)
 
+extern uint32_t roundrobin_period;
 extern int schedhz;			/* ideally: 16 */
-extern int rrticks_init;		/* ticks per roundrobin() */
 
 struct proc;
 void schedclock(struct proc *);
-struct cpu_info;
-void roundrobin(struct cpu_info *);
+void roundrobin(struct clockintr *, void *);
 void scheduler_start(void);
 void userret(struct proc *p);
 
+struct cpu_info;
 void sched_init_cpu(struct cpu_info *);
 void sched_idle(void *);
 void sched_exit(struct proc *);

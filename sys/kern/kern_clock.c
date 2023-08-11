@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.111 2023/08/05 20:07:55 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.112 2023/08/11 22:02:50 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -112,9 +112,6 @@ void
 hardclock(struct clockframe *frame)
 {
 	struct cpu_info *ci = curcpu();
-
-	if (--ci->ci_schedstate.spc_rrticks <= 0)
-		roundrobin(ci);
 
 #if NDT > 0
 	DT_ENTER(profile, NULL);
