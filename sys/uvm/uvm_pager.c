@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.90 2023/05/13 09:24:59 mpi Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.91 2023/08/11 17:53:22 mpi Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -755,14 +755,12 @@ void
 uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, boolean_t write,
     int error)
 {
-	struct uvm_object *uobj;
 	struct vm_page *pg;
 	struct rwlock *slock;
 	boolean_t swap;
 	int i, swslot;
 
 	slock = NULL;
-	uobj = NULL;
 	pg = pgs[0];
 	swap = (pg->uanon != NULL && pg->uobject == NULL) ||
 		(pg->pg_flags & PQ_AOBJ) != 0;
