@@ -1,4 +1,4 @@
-/* $OpenBSD: sha256.c,v 1.28 2023/08/10 07:15:23 jsing Exp $ */
+/* $OpenBSD: sha256.c,v 1.29 2023/08/11 15:25:36 jsing Exp $ */
 /* ====================================================================
  * Copyright (c) 1998-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -106,36 +106,77 @@ static const SHA_LONG K256[64] = {
 	0x90befffaUL, 0xa4506cebUL, 0xbef9a3f7UL, 0xc67178f2UL,
 };
 
-/*
- * FIPS specification refers to right rotations, while our ROTATE macro
- * is left one. This is why you might notice that rotation coefficients
- * differ from those observed in FIPS document by 32-N...
- */
-#define Sigma0(x)	(ROTATE((x),30) ^ ROTATE((x),19) ^ ROTATE((x),10))
-#define Sigma1(x)	(ROTATE((x),26) ^ ROTATE((x),21) ^ ROTATE((x),7))
-#define sigma0(x)	(ROTATE((x),25) ^ ROTATE((x),14) ^ ((x)>>3))
-#define sigma1(x)	(ROTATE((x),15) ^ ROTATE((x),13) ^ ((x)>>10))
+static inline SHA_LONG
+Sigma0(SHA_LONG x)
+{
+	return crypto_ror_u32(x, 2) ^ crypto_ror_u32(x, 13) ^
+	    crypto_ror_u32(x, 22);
+}
 
-#define Ch(x, y, z)	(((x) & (y)) ^ ((~(x)) & (z)))
-#define Maj(x, y, z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+static inline SHA_LONG
+Sigma1(SHA_LONG x)
+{
+	return crypto_ror_u32(x, 6) ^ crypto_ror_u32(x, 11) ^
+	    crypto_ror_u32(x, 25);
+}
 
-#define	ROUND_00_15(x, i, a, b, c, d, e, f, g, h)	do {	\
-	T1 = x + h + Sigma1(e) + Ch(e, f, g) + K256[i];	\
-	h = Sigma0(a) + Maj(a, b, c);				\
-	d += T1;	h += T1;		} while (0)
+static inline SHA_LONG
+sigma0(SHA_LONG x)
+{
+	return crypto_ror_u32(x, 7) ^ crypto_ror_u32(x, 18) ^ (x >> 3);
+}
 
-#define	ROUND_16_63(i, a, b, c, d, e, f, g, h, X)	do {	\
-	s0 = X[(i+1)&0x0f];	s0 = sigma0(s0);		\
-	s1 = X[(i+14)&0x0f];	s1 = sigma1(s1);		\
-	T1 = X[(i)&0x0f] += s0 + s1 + X[(i+9)&0x0f];		\
-	ROUND_00_15(T1, i, a, b, c, d, e, f, g, h);	} while (0)
+static inline SHA_LONG
+sigma1(SHA_LONG x)
+{
+	return crypto_ror_u32(x, 17) ^ crypto_ror_u32(x, 19) ^ (x >> 10);
+}
+
+static inline SHA_LONG
+Ch(SHA_LONG x, SHA_LONG y, SHA_LONG z)
+{
+	return (x & y) ^ (~x & z);
+}
+
+static inline SHA_LONG
+Maj(SHA_LONG x, SHA_LONG y, SHA_LONG z)
+{
+	return (x & y) ^ (x & z) ^ (y & z);
+}
+
+static inline void
+sha256_msg_schedule_update(SHA_LONG *W0, SHA_LONG W1,
+    SHA_LONG W9, SHA_LONG W14)
+{
+	*W0 = sigma1(W14) + W9 + sigma0(W1) + *W0;
+}
+
+static inline void
+sha256_round(SHA_LONG *a, SHA_LONG *b, SHA_LONG *c, SHA_LONG *d,
+    SHA_LONG *e, SHA_LONG *f, SHA_LONG *g, SHA_LONG *h,
+    SHA_LONG Kt, SHA_LONG Wt)
+{
+	SHA_LONG T1, T2;
+
+	T1 = *h + Sigma1(*e) + Ch(*e, *f, *g) + Kt + Wt;
+	T2 = Sigma0(*a) + Maj(*a, *b, *c);
+
+	*h = *g;
+	*g = *f;
+	*f = *e;
+	*e = *d + T1;
+	*d = *c;
+	*c = *b;
+	*b = *a;
+	*a = T1 + T2;
+}
 
 static void
 sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num)
 {
 	const uint8_t *in = _in;
 	const SHA_LONG *in32;
-	unsigned int a, b, c, d, e, f, g, h, s0, s1, T1;
+	SHA_LONG a, b, c, d, e, f, g, h;
 	SHA_LONG X[16];
 	int i;
 
@@ -189,33 +230,57 @@ sha256_block_data_order(SHA256_CTX *ctx, const void *_in, size_t num)
 		}
 		in += SHA256_CBLOCK;
 
-		ROUND_00_15(X[0], 0, a, b, c, d, e, f, g, h);
-		ROUND_00_15(X[1], 1, h, a, b, c, d, e, f, g);
-		ROUND_00_15(X[2], 2, g, h, a, b, c, d, e, f);
-		ROUND_00_15(X[3], 3, f, g, h, a, b, c, d, e);
-		ROUND_00_15(X[4], 4, e, f, g, h, a, b, c, d);
-		ROUND_00_15(X[5], 5, d, e, f, g, h, a, b, c);
-		ROUND_00_15(X[6], 6, c, d, e, f, g, h, a, b);
-		ROUND_00_15(X[7], 7, b, c, d, e, f, g, h, a);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[0], X[0]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[1], X[1]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[2], X[2]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[3], X[3]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[4], X[4]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[5], X[5]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[6], X[6]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[7], X[7]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[8], X[8]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[9], X[9]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[10], X[10]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[11], X[11]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[12], X[12]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[13], X[13]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[14], X[14]);
+		sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[15], X[15]);
 
-		ROUND_00_15(X[8], 8, a, b, c, d, e, f, g, h);
-		ROUND_00_15(X[9], 9, h, a, b, c, d, e, f, g);
-		ROUND_00_15(X[10], 10, g, h, a, b, c, d, e, f);
-		ROUND_00_15(X[11], 11, f, g, h, a, b, c, d, e);
-		ROUND_00_15(X[12], 12, e, f, g, h, a, b, c, d);
-		ROUND_00_15(X[13], 13, d, e, f, g, h, a, b, c);
-		ROUND_00_15(X[14], 14, c, d, e, f, g, h, a, b);
-		ROUND_00_15(X[15], 15, b, c, d, e, f, g, h, a);
+		for (i = 16; i < 64; i += 16) {
+			sha256_msg_schedule_update(&X[0], X[1], X[9], X[14]);
+			sha256_msg_schedule_update(&X[1], X[2], X[10], X[15]);
+			sha256_msg_schedule_update(&X[2], X[3], X[11], X[0]);
+			sha256_msg_schedule_update(&X[3], X[4], X[12], X[1]);
+			sha256_msg_schedule_update(&X[4], X[5], X[13], X[2]);
+			sha256_msg_schedule_update(&X[5], X[6], X[14], X[3]);
+			sha256_msg_schedule_update(&X[6], X[7], X[15], X[4]);
+			sha256_msg_schedule_update(&X[7], X[8], X[0], X[5]);
+			sha256_msg_schedule_update(&X[8], X[9], X[1], X[6]);
+			sha256_msg_schedule_update(&X[9], X[10], X[2], X[7]);
+			sha256_msg_schedule_update(&X[10], X[11], X[3], X[8]);
+			sha256_msg_schedule_update(&X[11], X[12], X[4], X[9]);
+			sha256_msg_schedule_update(&X[12], X[13], X[5], X[10]);
+			sha256_msg_schedule_update(&X[13], X[14], X[6], X[11]);
+			sha256_msg_schedule_update(&X[14], X[15], X[7], X[12]);
+			sha256_msg_schedule_update(&X[15], X[0], X[8], X[13]);
 
-		for (i = 16; i < 64; i += 8) {
-			ROUND_16_63(i + 0, a, b, c, d, e, f, g, h, X);
-			ROUND_16_63(i + 1, h, a, b, c, d, e, f, g, X);
-			ROUND_16_63(i + 2, g, h, a, b, c, d, e, f, X);
-			ROUND_16_63(i + 3, f, g, h, a, b, c, d, e, X);
-			ROUND_16_63(i + 4, e, f, g, h, a, b, c, d, X);
-			ROUND_16_63(i + 5, d, e, f, g, h, a, b, c, X);
-			ROUND_16_63(i + 6, c, d, e, f, g, h, a, b, X);
-			ROUND_16_63(i + 7, b, c, d, e, f, g, h, a, X);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 0], X[0]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 1], X[1]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 2], X[2]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 3], X[3]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 4], X[4]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 5], X[5]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 6], X[6]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 7], X[7]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 8], X[8]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 9], X[9]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 10], X[10]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 11], X[11]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 12], X[12]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 13], X[13]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 14], X[14]);
+			sha256_round(&a, &b, &c, &d, &e, &f, &g, &h, K256[i + 15], X[15]);
 		}
 
 		ctx->h[0] += a;
