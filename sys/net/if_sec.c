@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.4 2023/08/09 02:08:14 jsg Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.5 2023/08/11 02:34:56 dlg Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -84,7 +84,7 @@ static int	sec_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
 static int	sec_enqueue(struct ifnet *, struct mbuf *);
 static void	sec_send(void *);
-static void	sec_start(struct ifnet *);
+static void	sec_start(struct ifqueue *);
 
 static int	sec_ioctl(struct ifnet *, u_long, caddr_t);
 static int	sec_up(struct sec_softc *);
@@ -135,12 +135,12 @@ sec_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_type = IFT_TUNNEL;
 	ifp->if_mtu = SEC_MTU;
 	ifp->if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
-	ifp->if_xflags = IFXF_CLONED;
+	ifp->if_xflags = IFXF_CLONED | IFXF_MPSAFE;
 	ifp->if_bpf_mtap = p2p_bpf_mtap;
 	ifp->if_input = p2p_input;
 	ifp->if_output = sec_output;
 	ifp->if_enqueue = sec_enqueue;
-	ifp->if_start = sec_start;
+	ifp->if_qstart = sec_start;
 	ifp->if_ioctl = sec_ioctl;
 	ifp->if_rtrequest = p2p_rtrequest;
 
@@ -381,9 +381,13 @@ purge:
 }
 
 static void
-sec_start(struct ifnet *ifp)
+sec_start(struct ifqueue *ifq)
 {
-	counters_add(ifp->if_counters, ifc_oerrors, ifq_purge(&ifp->if_snd));
+	struct ifnet *ifp = ifq->ifq_if;
+	struct sec_softc *sc = ifp->if_softc;
+
+	/* move this back to systq for KERNEL_LOCK */
+	task_add(systq, &sc->sc_send);
 }
 
 /*
