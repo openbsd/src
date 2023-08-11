@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.35 2023/08/11 13:53:45 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.36 2023/08/11 13:57:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -81,14 +81,14 @@ dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	X509_ALGOR *algor;
 	int ptype;
 	const void *pval;
-	const ASN1_STRING *params;
-	const unsigned char *key_der, *params_der, *p;
+	const ASN1_STRING *astr;
+	const unsigned char *key, *params, *p;
 	int key_len, params_len;
-	ASN1_INTEGER *key = NULL;
+	ASN1_INTEGER *aint = NULL;
 	DH *dh = NULL;
 	int ret = 0;
 
-	if (!X509_PUBKEY_get0_param(NULL, &key_der, &key_len, &algor, pubkey))
+	if (!X509_PUBKEY_get0_param(NULL, &key, &key_len, &algor, pubkey))
 		goto err;
 	X509_ALGOR_get0(NULL, &ptype, &pval, algor);
 
@@ -97,21 +97,21 @@ dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		goto err;
 	}
 
-	params = pval;
-	params_der = params->data;
-	params_len = params->length;
+	astr = pval;
+	params = astr->data;
+	params_len = astr->length;
 
-	p = params_der;
+	p = params;
 	if ((dh = d2i_DHparams(NULL, &p, params_len)) == NULL) {
 		DHerror(DH_R_DECODE_ERROR);
 		goto err;
 	}
-	p = key_der;
-	if ((key = d2i_ASN1_INTEGER(NULL, &p, key_len)) == NULL) {
+	p = key;
+	if ((aint = d2i_ASN1_INTEGER(NULL, &p, key_len)) == NULL) {
 		DHerror(DH_R_DECODE_ERROR);
 		goto err;
 	}
-	if ((dh->pub_key = ASN1_INTEGER_to_BN(key, NULL)) == NULL) {
+	if ((dh->pub_key = ASN1_INTEGER_to_BN(aint, NULL)) == NULL) {
 		DHerror(DH_R_BN_DECODE_ERROR);
 		goto err;
 	}
@@ -123,7 +123,7 @@ dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	ret = 1;
 
  err:
-	ASN1_INTEGER_free(key);
+	ASN1_INTEGER_free(aint);
 	DH_free(dh);
 
 	return ret;
@@ -133,30 +133,30 @@ static int
 dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
 	const DH *dh = pkey->pkey.dh;
-	ASN1_STRING *params = NULL;
+	ASN1_STRING *astr = NULL;
 	int ptype = V_ASN1_SEQUENCE;
-	ASN1_INTEGER *key = NULL;
+	ASN1_INTEGER *aint = NULL;
 	ASN1_OBJECT *aobj;
-	unsigned char *params_der = NULL, *key_der = NULL;
+	unsigned char *params = NULL, *key = NULL;
 	int params_len = 0, key_len = 0;
 	int ret = 0;
 
-	if ((params_len = i2d_DHparams(dh, &params_der)) <= 0) {
+	if ((params_len = i2d_DHparams(dh, &params)) <= 0) {
 		DHerror(ERR_R_MALLOC_FAILURE);
 		params_len = 0;
 		goto err;
 	}
-	if ((params = ASN1_STRING_new()) == NULL) {
+	if ((astr = ASN1_STRING_new()) == NULL) {
 		DHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	ASN1_STRING_set0(params, params_der, params_len);
-	params_der = NULL;
+	ASN1_STRING_set0(astr, params, params_len);
+	params = NULL;
 	params_len = 0;
 
-	if ((key = BN_to_ASN1_INTEGER(dh->pub_key, NULL)) == NULL)
+	if ((aint = BN_to_ASN1_INTEGER(dh->pub_key, NULL)) == NULL)
 		goto err;
-	if ((key_len = i2d_ASN1_INTEGER(key, &key_der)) <= 0) {
+	if ((key_len = i2d_ASN1_INTEGER(aint, &key)) <= 0) {
 		DHerror(ERR_R_MALLOC_FAILURE);
 		key_len = 0;
 		goto err;
@@ -164,19 +164,19 @@ dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 
 	if ((aobj = OBJ_nid2obj(EVP_PKEY_DH)) == NULL)
 		goto err;
-	if (!X509_PUBKEY_set0_param(pk, aobj, ptype, params, key_der, key_len))
+	if (!X509_PUBKEY_set0_param(pk, aobj, ptype, astr, key, key_len))
 		goto err;
-	params = NULL;
-	key_der = NULL;
+	astr = NULL;
+	key = NULL;
 	key_len = 0;
 
 	ret = 1;
 
  err:
-	ASN1_STRING_free(params);
-	ASN1_INTEGER_free(key);
-	freezero(params_der, params_len);
-	freezero(key_der, key_len);
+	ASN1_STRING_free(astr);
+	ASN1_INTEGER_free(aint);
+	freezero(params, params_len);
+	freezero(key, key_len);
 
 	return ret;
 }
@@ -193,14 +193,14 @@ dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 	const X509_ALGOR *algor;
 	int ptype;
 	const void *pval;
-	const ASN1_STRING *params;
-	const unsigned char *key_der, *params_der, *p;
+	const ASN1_STRING *astr;
+	const unsigned char *key, *params, *p;
 	int key_len, params_len;
-	ASN1_INTEGER *key = NULL;
+	ASN1_INTEGER *aint = NULL;
 	DH *dh = NULL;
 	int ret = 0;
 
-	if (!PKCS8_pkey_get0(NULL, &key_der, &key_len, &algor, p8))
+	if (!PKCS8_pkey_get0(NULL, &key, &key_len, &algor, p8))
 		goto err;
 	X509_ALGOR_get0(NULL, &ptype, &pval, algor);
 
@@ -209,21 +209,21 @@ dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 		goto err;
 	}
 
-	params = pval;
-	params_der = params->data;
-	params_len = params->length;
+	astr = pval;
+	params = astr->data;
+	params_len = astr->length;
 
-	p = params_der;
+	p = params;
 	if ((dh = d2i_DHparams(NULL, &p, params_len)) == NULL) {
 		DHerror(DH_R_DECODE_ERROR);
 		goto err;
 	}
-	p = key_der;
-	if ((key = d2i_ASN1_INTEGER(NULL, &p, key_len)) == NULL) {
+	p = key;
+	if ((aint = d2i_ASN1_INTEGER(NULL, &p, key_len)) == NULL) {
 		DHerror(DH_R_DECODE_ERROR);
 		goto err;
 	}
-	if ((dh->priv_key = ASN1_INTEGER_to_BN(key, NULL)) == NULL) {
+	if ((dh->priv_key = ASN1_INTEGER_to_BN(aint, NULL)) == NULL) {
 		DHerror(DH_R_BN_DECODE_ERROR);
 		goto err;
 	}
@@ -237,7 +237,7 @@ dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 	ret = 1;
 
  err:
-	ASN1_INTEGER_free(key);
+	ASN1_INTEGER_free(aint);
 	DH_free(dh);
 
 	return ret;
@@ -247,32 +247,32 @@ static int
 dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
 	const DH *dh = pkey->pkey.dh;
-	ASN1_STRING *params = NULL;
+	ASN1_STRING *astr = NULL;
 	int ptype = V_ASN1_SEQUENCE;
-	ASN1_INTEGER *key = NULL;
+	ASN1_INTEGER *aint = NULL;
 	ASN1_OBJECT *aobj;
-	unsigned char *params_der = NULL, *key_der = NULL;
+	unsigned char *params = NULL, *key = NULL;
 	int params_len = 0, key_len = 0;
 	int ret = 0;
 
-	if ((params_len = i2d_DHparams(dh, &params_der)) <= 0) {
+	if ((params_len = i2d_DHparams(dh, &params)) <= 0) {
 		DHerror(ERR_R_MALLOC_FAILURE);
 		params_len = 0;
 		goto err;
 	}
-	if ((params = ASN1_STRING_type_new(V_ASN1_SEQUENCE)) == NULL) {
+	if ((astr = ASN1_STRING_type_new(V_ASN1_SEQUENCE)) == NULL) {
 		DHerror(ERR_R_MALLOC_FAILURE);
 		goto err;
 	}
-	ASN1_STRING_set0(params, params_der, params_len);
-	params_der = NULL;
+	ASN1_STRING_set0(astr, params, params_len);
+	params = NULL;
 	params_len = 0;
 
-	if ((key = BN_to_ASN1_INTEGER(dh->priv_key, NULL)) == NULL) {
+	if ((aint = BN_to_ASN1_INTEGER(dh->priv_key, NULL)) == NULL) {
 		DHerror(DH_R_BN_ERROR);
 		goto err;
 	}
-	if ((key_len = i2d_ASN1_INTEGER(key, &key_der)) <= 0) {
+	if ((key_len = i2d_ASN1_INTEGER(aint, &key)) <= 0) {
 		DHerror(ERR_R_MALLOC_FAILURE);
 		key_len = 0;
 		goto err;
@@ -280,19 +280,19 @@ dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
 	if ((aobj = OBJ_nid2obj(NID_dhKeyAgreement)) == NULL)
 		goto err;
-	if (!PKCS8_pkey_set0(p8, aobj, 0, ptype, params, key_der, key_len))
+	if (!PKCS8_pkey_set0(p8, aobj, 0, ptype, astr, key, key_len))
 		goto err;
-	params = NULL;
-	key_der = NULL;
+	astr = NULL;
+	key = NULL;
 	key_len = 0;
 
 	ret = 1;
 
  err:
-	ASN1_STRING_free(params);
-	ASN1_INTEGER_free(key);
-	freezero(params_der, params_len);
-	freezero(key_der, key_len);
+	ASN1_STRING_free(astr);
+	ASN1_INTEGER_free(aint);
+	freezero(params, params_len);
+	freezero(key, key_len);
 
 	return ret;
 }
