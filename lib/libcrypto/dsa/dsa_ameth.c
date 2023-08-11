@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.47 2023/08/11 11:32:19 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.48 2023/08/11 11:47:21 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -118,6 +118,7 @@ dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		DSAerror(DSA_R_BN_DECODE_ERROR);
 		goto err;
 	}
+
 	/* We can only check for key consistency if we have parameters. */
 	if (ptype == V_ASN1_SEQUENCE) {
 		if (!dsa_check_key(dsa))
