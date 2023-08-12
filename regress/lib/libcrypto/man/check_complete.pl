@@ -30,6 +30,10 @@ my %internal = (
 	BN_MASK2 BN_MASK2h BN_MASK2h1 BN_MASK2l
 	BN_TBIT BN_ULLONG
     )],
+    evp => [qw(
+        EVP_MD_CTRL_ALG_CTRL
+        EVP_MD_CTX_FLAG_CLEANED EVP_MD_CTX_FLAG_REUSE
+    )],
     objects => [qw(
 	OBJ_bsearch_ OBJ_bsearch_ex_
     )],
@@ -60,6 +64,11 @@ my %obsolete = (
     )],
     bn => [qw(
 	BN_HEX_FMT1 BN_HEX_FMT2 BN_MASK
+    )],
+    evp => [qw(
+        EVP_MD_CTRL_DIGALGID
+        EVP_MD_CTX_FLAG_NON_FIPS_ALLOW EVP_MD_CTX_FLAG_PAD_MASK
+        EVP_MD_CTX_FLAG_PAD_PKCS1 EVP_MD_CTX_FLAG_PAD_PSS
     )],
 );
 
@@ -267,7 +276,7 @@ try_again:
 			print "D- $line\n" if $verbose;
 			next;
 		}
-		if ($id =~ /^(?:ASN1|BIO|BN|X509(?:V3)?)_[FR]_\w+$/) {
+		if ($id =~ /^(?:ASN1|BIO|BN|EVP|X509(?:V3)?)_[FR]_\w+$/) {
 			print "D- $line\n" if $verbose;
 			next;
 		}
