@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.757 2023/06/12 11:26:24 jsg Exp $
+$OpenBSD: usbdevs,v 1.758 2023/08/12 20:43:49 miod Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4634,6 +4634,7 @@ product WACOM GRAPHIRE3_4X5	0x0013	Graphire3 4x5
 product WACOM GRAPHIRE4_4X5	0x0015	Graphire4 Classic A6
 product WACOM INTUOSA5		0x0021	Intuos A5
 product WACOM INTUOS_DRAW	0x033b	Intuos Draw (CTL-490)
+product WACOM INTUOS_S		0x0374	Intuos S (CTL-4100)
 product WACOM ONE_S		0x037a	One S (CTL-472)
 product WACOM ONE_M		0x037b	One M (CTL-672)
 product WACOM INTUOS_PRO_S	0x0392	Intuos Pro S
