@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.51 2023/08/11 13:57:24 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.52 2023/08/12 07:43:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -353,12 +353,9 @@ dsa_security_bits(const EVP_PKEY *pkey)
 static int
 dsa_missing_parameters(const EVP_PKEY *pkey)
 {
-	DSA *dsa;
+	const DSA *dsa = pkey->pkey.dsa;
 
-	dsa = pkey->pkey.dsa;
-	if (dsa->p == NULL || dsa->q == NULL || dsa->g == NULL)
-		return 1;
-	return 0;
+	return dsa->p == NULL || dsa->q == NULL || dsa->g == NULL;
 }
 
 static int

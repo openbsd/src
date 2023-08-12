@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.36 2023/08/11 13:57:24 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.37 2023/08/12 07:43:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -432,11 +432,11 @@ dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 }
 
 static int
-dh_missing_parameters(const EVP_PKEY *a)
+dh_missing_parameters(const EVP_PKEY *pkey)
 {
-	if (!a->pkey.dh->p || !a->pkey.dh->g)
-		return 1;
-	return 0;
+	const DH *dh = pkey->pkey.dh;
+
+	return dh->p == NULL || dh->g == NULL;
 }
 
 static int
