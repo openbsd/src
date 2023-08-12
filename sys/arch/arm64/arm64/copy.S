@@ -1,4 +1,4 @@
-/* $OpenBSD: copy.S,v 1.9 2020/10/09 17:36:47 kettenis Exp $ */
+/* $OpenBSD: copy.S,v 1.10 2023/08/12 06:28:13 miod Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -161,7 +161,7 @@ ENTRY(copyout)
 	cbnz	x2, 3b
 
 .Lcopyout0:
-	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
+	str	x4, [x3, #(PCB_ONFAULT)]	// restore handler
 	mov	x0, xzr
 	RETGUARD_CHECK(copy, x15)
 	ret
@@ -215,7 +215,7 @@ ENTRY(kcopy)
 	cbnz	x2, 3b
 
 .Lkcopy0:
-	str	x4, [x3, #(PCB_ONFAULT)]	// clear handler
+	str	x4, [x3, #(PCB_ONFAULT)]	// restore handler
 	mov	x0, xzr
 	RETGUARD_CHECK(copy, x15)
 	ret
