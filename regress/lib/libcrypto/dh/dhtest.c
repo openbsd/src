@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.9 2023/08/12 06:23:59 tb Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.10 2023/08/12 06:25:26 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,13 +121,13 @@ main(int argc, char *argv[])
 	if (!DH_check(a, &i))
 		goto err;
 	if (i & DH_CHECK_P_NOT_PRIME)
-		puts("p value is not prime\n");
+		printf("p value is not prime\n");
 	if (i & DH_CHECK_P_NOT_SAFE_PRIME)
-		puts("p value is not a safe prime\n");
+		printf("p value is not a safe prime\n");
 	if (i & DH_UNABLE_TO_CHECK_GENERATOR)
-		puts("unable to check the generator value\n");
+		printf("unable to check the generator value\n");
 	if (i & DH_NOT_SUITABLE_GENERATOR)
-		puts("the g value is not a generator\n");
+		printf("the g value is not a generator\n");
 
 	printf("\np    = ");
 	if (!BN_print_fp(stdout, DH_get0_p(a)))
