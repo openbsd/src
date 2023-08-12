@@ -1,4 +1,4 @@
-.\"	$OpenBSD: DSA_dup_DH.3,v 1.8 2019/06/10 14:58:48 schwarze Exp $
+.\"	$OpenBSD: DSA_dup_DH.3,v 1.9 2023/08/12 08:26:38 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,7 +48,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 10 2019 $
+.Dd $Mdocdate: August 12 2023 $
 .Dt DSA_DUP_DH 3
 .Os
 .Sh NAME
@@ -67,10 +67,6 @@ duplicates
 parameters/keys as
 .Vt DH
 parameters/keys.
-.Fa r->q
-is lost during that conversion, but the resulting
-.Vt DH
-parameters contain its length.
 .Sh RETURN VALUES
 .Fn DSA_dup_DH
 returns the new
