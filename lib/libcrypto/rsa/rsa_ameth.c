@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.32 2023/08/10 15:05:28 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.33 2023/08/12 08:02:43 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -273,7 +273,7 @@ rsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 }
 
 static int
-int_rsa_size(const EVP_PKEY *pkey)
+rsa_size(const EVP_PKEY *pkey)
 {
 	return RSA_size(pkey->pkey.rsa);
 }
@@ -291,7 +291,7 @@ rsa_security_bits(const EVP_PKEY *pkey)
 }
 
 static void
-int_rsa_free(EVP_PKEY *pkey)
+rsa_free(EVP_PKEY *pkey)
 {
 	RSA_free(pkey->pkey.rsa);
 }
@@ -1088,13 +1088,13 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] = {
 		.priv_encode = rsa_priv_encode,
 		.priv_print = rsa_priv_print,
 
-		.pkey_size = int_rsa_size,
+		.pkey_size = rsa_size,
 		.pkey_bits = rsa_bits,
 		.pkey_security_bits = rsa_security_bits,
 
 		.sig_print = rsa_sig_print,
 
-		.pkey_free = int_rsa_free,
+		.pkey_free = rsa_free,
 		.pkey_ctrl = rsa_pkey_ctrl,
 		.old_priv_decode = old_rsa_priv_decode,
 		.old_priv_encode = old_rsa_priv_encode,
@@ -1130,13 +1130,13 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
 	.priv_encode = rsa_priv_encode,
 	.priv_print = rsa_priv_print,
 
-	.pkey_size = int_rsa_size,
+	.pkey_size = rsa_size,
 	.pkey_bits = rsa_bits,
 	.pkey_security_bits = rsa_security_bits,
 
 	.sig_print = rsa_sig_print,
 
-	.pkey_free = int_rsa_free,
+	.pkey_free = rsa_free,
 	.pkey_ctrl = rsa_pkey_ctrl,
 	.item_verify = rsa_item_verify,
 	.item_sign = rsa_item_sign
