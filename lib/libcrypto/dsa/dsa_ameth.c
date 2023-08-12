@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.52 2023/08/12 07:43:48 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.53 2023/08/12 07:46:14 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -150,7 +150,7 @@ dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	int params_len = 0, key_len = 0;
 	int ret = 0;
 
-	if (pkey->save_parameters && dsa->p && dsa->q && dsa->g) {
+	if (pkey->save_parameters > 0 && !EVP_PKEY_missing_parameters(pkey)) {
 		if ((params_len = i2d_DSAparams(dsa, &params)) <= 0) {
 			DSAerror(ERR_R_MALLOC_FAILURE);
 			params_len = 0;
