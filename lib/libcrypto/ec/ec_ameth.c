@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.41 2023/07/07 06:59:18 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.42 2023/08/12 08:07:35 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -359,7 +359,7 @@ eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 }
 
 static int
-int_ec_size(const EVP_PKEY *pkey)
+ec_size(const EVP_PKEY *pkey)
 {
 	return ECDSA_size(pkey->pkey.ec);
 }
@@ -419,7 +419,7 @@ ec_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 }
 
 static void
-int_ec_free(EVP_PKEY *pkey)
+ec_free(EVP_PKEY *pkey)
 {
 	EC_KEY_free(pkey->pkey.ec);
 }
@@ -994,7 +994,7 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
 	.priv_encode = eckey_priv_encode,
 	.priv_print = eckey_priv_print,
 
-	.pkey_size = int_ec_size,
+	.pkey_size = ec_size,
 	.pkey_bits = ec_bits,
 	.pkey_security_bits = ec_security_bits,
 
@@ -1005,7 +1005,7 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
 	.param_cmp = ec_cmp_parameters,
 	.param_print = eckey_param_print,
 
-	.pkey_free = int_ec_free,
+	.pkey_free = ec_free,
 	.pkey_ctrl = ec_pkey_ctrl,
 	.old_priv_decode = old_ec_priv_decode,
 	.old_priv_encode = old_ec_priv_encode,
