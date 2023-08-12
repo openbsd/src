@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.10 2023/08/12 06:25:26 tb Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.11 2023/08/12 06:28:04 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -96,7 +96,7 @@ int
 main(int argc, char *argv[])
 {
 	BN_GENCB *_cb;
-	DH *a = NULL;
+	DH *dh = NULL;
 	unsigned char *abuf = NULL;
 	int i, alen, aout;
 	int ret = 1;
@@ -105,20 +105,20 @@ main(int argc, char *argv[])
 		err(1, "BN_GENCB_new");
 
 	BN_GENCB_set(_cb, &cb, NULL);
-	if ((a = DH_new()) == NULL)
+	if ((dh = DH_new()) == NULL)
 		goto err;
 
 #ifdef OPENSSL_NO_ENGINE
-	if (DH_get0_engine(a) != NULL) {
+	if (DH_get0_engine(dh) != NULL) {
 		fprintf(stderr, "ENGINE was not NULL\n");
 		goto err;
 	}
 #endif
 
-	if (!DH_generate_parameters_ex(a, 64, DH_GENERATOR_5, _cb))
+	if (!DH_generate_parameters_ex(dh, 64, DH_GENERATOR_5, _cb))
 		goto err;
 
-	if (!DH_check(a, &i))
+	if (!DH_check(dh, &i))
 		goto err;
 	if (i & DH_CHECK_P_NOT_PRIME)
 		printf("p value is not prime\n");
@@ -130,27 +130,27 @@ main(int argc, char *argv[])
 		printf("the g value is not a generator\n");
 
 	printf("\np    = ");
-	if (!BN_print_fp(stdout, DH_get0_p(a)))
+	if (!BN_print_fp(stdout, DH_get0_p(dh)))
 		goto err;
 	printf("\ng    = ");
-	if (!BN_print_fp(stdout, DH_get0_g(a)))
+	if (!BN_print_fp(stdout, DH_get0_g(dh)))
 		goto err;
 	printf("\n");
 
-	if (!DH_generate_key(a))
+	if (!DH_generate_key(dh))
 		goto err;
 	printf("pri1 = ");
-	if (!BN_print_fp(stdout, DH_get0_priv_key(a)))
+	if (!BN_print_fp(stdout, DH_get0_priv_key(dh)))
 		goto err;
 	printf("\npub1 = ");
-	if (!BN_print_fp(stdout, DH_get0_pub_key(a)))
+	if (!BN_print_fp(stdout, DH_get0_pub_key(dh)))
 		goto err;
 	printf("\n");
 
-	alen = DH_size(a);
+	alen = DH_size(dh);
 	if ((abuf = malloc(alen)) == NULL)
 		err(1, "malloc");
-	aout = DH_compute_key(abuf, DH_get0_pub_key(a), a);
+	aout = DH_compute_key(abuf, DH_get0_pub_key(dh), dh);
 
 	printf("key1 = ");
 	for (i = 0; i < aout; i++) {
@@ -168,7 +168,7 @@ err:
 	ERR_print_errors_fp(stderr);
 
 	free(abuf);
-	DH_free(a);
+	DH_free(dh);
 	BN_GENCB_free(_cb);
 
 	return (ret);
