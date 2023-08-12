@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.112 2023/08/11 22:02:50 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.113 2023/08/12 13:19:28 miod Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -111,7 +111,9 @@ initclocks(void)
 void
 hardclock(struct clockframe *frame)
 {
+#if defined(MULTIPROCESSOR) || defined(__hppa__) /* XXX */
 	struct cpu_info *ci = curcpu();
+#endif
 
 #if NDT > 0
 	DT_ENTER(profile, NULL);
