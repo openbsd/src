@@ -1,4 +1,4 @@
-/* $OpenBSD: ihidev.c,v 1.28 2022/08/31 15:14:01 kettenis Exp $ */
+/* $OpenBSD: ihidev.c,v 1.29 2023/08/12 10:03:05 kettenis Exp $ */
 /*
  * HID-over-i2c driver
  *
@@ -198,6 +198,9 @@ ihidev_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_subdevs[repid] = (struct ihidev *)dev;
 	}
 
+	if (sc->sc_refcnt > 0)
+		return;
+	
 	/* power down until we're opened */
 	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_POWER, &I2C_HID_POWER_OFF)) {
 		printf("%s: failed to power down\n", sc->sc_dev.dv_xname);
