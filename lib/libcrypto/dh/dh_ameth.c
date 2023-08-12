@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.37 2023/08/12 07:43:48 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.38 2023/08/12 07:50:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -111,6 +111,7 @@ dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		DHerror(DH_R_DECODE_ERROR);
 		goto err;
 	}
+	BN_free(dh->pub_key);
 	if ((dh->pub_key = ASN1_INTEGER_to_BN(aint, NULL)) == NULL) {
 		DHerror(DH_R_BN_DECODE_ERROR);
 		goto err;
@@ -223,6 +224,7 @@ dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 		DHerror(DH_R_DECODE_ERROR);
 		goto err;
 	}
+	BN_free(dh->priv_key);
 	if ((dh->priv_key = ASN1_INTEGER_to_BN(aint, NULL)) == NULL) {
 		DHerror(DH_R_BN_DECODE_ERROR);
 		goto err;

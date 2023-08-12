@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.53 2023/08/12 07:46:14 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.54 2023/08/12 07:50:47 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -114,6 +114,7 @@ dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		DSAerror(DSA_R_DECODE_ERROR);
 		goto err;
 	}
+	BN_free(dsa->pub_key);
 	if ((dsa->pub_key = ASN1_INTEGER_to_BN(aint, NULL)) == NULL) {
 		DSAerror(DSA_R_BN_DECODE_ERROR);
 		goto err;
@@ -236,6 +237,7 @@ dsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 		DSAerror(DSA_R_DECODE_ERROR);
 		goto err;
 	}
+	BN_free(dsa->priv_key);
 	if ((dsa->priv_key = ASN1_INTEGER_to_BN(aint, NULL)) == NULL) {
 		DSAerror(DSA_R_BN_DECODE_ERROR);
 		goto err;
@@ -246,6 +248,7 @@ dsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 		goto err;
 
 	/* Calculate public key */
+	BN_free(dsa->pub_key);
 	if ((dsa->pub_key = BN_new()) == NULL) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
 		goto err;
