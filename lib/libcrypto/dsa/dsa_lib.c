@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_lib.c,v 1.43 2023/07/08 14:28:15 beck Exp $ */
+/* $OpenBSD: dsa_lib.c,v 1.44 2023/08/12 06:14:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -127,61 +127,46 @@ LCRYPTO_ALIAS(DSA_set_method);
 DSA *
 DSA_new_method(ENGINE *engine)
 {
-	DSA *ret;
+	DSA *dsa;
 
-	ret = malloc(sizeof(DSA));
-	if (ret == NULL) {
+	if ((dsa = calloc(1, sizeof(DSA))) == NULL) {
 		DSAerror(ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
-	ret->meth = DSA_get_default_method();
+
+	dsa->meth = DSA_get_default_method();
+	dsa->flags = dsa->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
+	dsa->references = 1;
+
 #ifndef OPENSSL_NO_ENGINE
 	if (engine) {
 		if (!ENGINE_init(engine)) {
 			DSAerror(ERR_R_ENGINE_LIB);
-			free(ret);
-			return NULL;
+			goto err;
 		}
-		ret->engine = engine;
+		dsa->engine = engine;
 	} else
-		ret->engine = ENGINE_get_default_DSA();
-	if (ret->engine) {
-		ret->meth = ENGINE_get_DSA(ret->engine);
-		if (ret->meth == NULL) {
+		dsa->engine = ENGINE_get_default_DSA();
+	if (dsa->engine != NULL) {
+		if ((dsa->meth = ENGINE_get_DSA(dsa->engine)) == NULL) {
 			DSAerror(ERR_R_ENGINE_LIB);
-			ENGINE_finish(ret->engine);
-			free(ret);
-			return NULL;
+			goto err;
 		}
+		dsa->flags = dsa->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
 	}
 #endif
 
-	ret->pad = 0;
-	ret->version = 0;
-	ret->p = NULL;
-	ret->q = NULL;
-	ret->g = NULL;
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, dsa, &dsa->ex_data))
+		goto err;
+	if (dsa->meth->init != NULL && !dsa->meth->init(dsa))
+		goto err;
 
-	ret->pub_key = NULL;
-	ret->priv_key = NULL;
+	return dsa;
 
-	ret->kinv = NULL;
-	ret->r = NULL;
-	ret->method_mont_p = NULL;
+ err:
+	DSA_free(dsa);
 
-	ret->references = 1;
-	ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
-	if (ret->meth->init != NULL && !ret->meth->init(ret)) {
-#ifndef OPENSSL_NO_ENGINE
-		ENGINE_finish(ret->engine);
-#endif
-		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
-		free(ret);
-		ret = NULL;
-	}
-
-	return ret;
+	return NULL;
 }
 LCRYPTO_ALIAS(DSA_new_method);
 
@@ -197,7 +182,7 @@ DSA_free(DSA *r)
 	if (i > 0)
 		return;
 
-	if (r->meth->finish)
+	if (r->meth != NULL && r->meth->finish != NULL)
 		r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_finish(r->engine);

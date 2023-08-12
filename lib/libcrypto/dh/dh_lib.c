@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_lib.c,v 1.39 2023/07/08 15:29:03 beck Exp $ */
+/* $OpenBSD: dh_lib.c,v 1.40 2023/08/12 06:14:36 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -122,61 +122,47 @@ LCRYPTO_ALIAS(DH_new);
 DH *
 DH_new_method(ENGINE *engine)
 {
-	DH *ret;
+	DH *dh;
 
-	ret = malloc(sizeof(DH));
-	if (ret == NULL) {
+	if ((dh = calloc(1, sizeof(*dh))) == NULL) {
 		DHerror(ERR_R_MALLOC_FAILURE);
-		return NULL;
+		goto err;
 	}
 
-	ret->meth = DH_get_default_method();
+	dh->meth = DH_get_default_method();
+	dh->flags = dh->meth->flags & ~DH_FLAG_NON_FIPS_ALLOW;
+	dh->references = 1;
+
 #ifndef OPENSSL_NO_ENGINE
-	if (engine) {
+	if (engine != NULL) {
 		if (!ENGINE_init(engine)) {
 			DHerror(ERR_R_ENGINE_LIB);
-			free(ret);
-			return NULL;
+			goto err;
 		}
-		ret->engine = engine;
+		dh->engine = engine;
 	} else
-		ret->engine = ENGINE_get_default_DH();
-	if(ret->engine) {
-		ret->meth = ENGINE_get_DH(ret->engine);
-		if (ret->meth == NULL) {
+		dh->engine = ENGINE_get_default_DH();
+	if (dh->engine != NULL) {
+		if ((dh->meth = ENGINE_get_DH(dh->engine)) == NULL) {
 			DHerror(ERR_R_ENGINE_LIB);
-			ENGINE_finish(ret->engine);
-			free(ret);
-			return NULL;
+			goto err;
 		}
+		dh->flags = dh->meth->flags & ~DH_FLAG_NON_FIPS_ALLOW;
 	}
 #endif
 
-	ret->pad = 0;
-	ret->version = 0;
-	ret->p = NULL;
-	ret->g = NULL;
-	ret->length = 0;
-	ret->pub_key = NULL;
-	ret->priv_key = NULL;
-	ret->q = NULL;
-	ret->j = NULL;
-	ret->seed = NULL;
-	ret->seedlen = 0;
-	ret->counter = NULL;
-	ret->method_mont_p=NULL;
-	ret->references = 1;
-	ret->flags = ret->meth->flags & ~DH_FLAG_NON_FIPS_ALLOW;
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
-	if (ret->meth->init != NULL && !ret->meth->init(ret)) {
-#ifndef OPENSSL_NO_ENGINE
-		ENGINE_finish(ret->engine);
-#endif
-		CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
-		free(ret);
-		ret = NULL;
-	}
-	return ret;
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, dh, &dh->ex_data))
+		goto err;
+
+	if (dh->meth->init != NULL && !dh->meth->init(dh))
+		goto err;
+
+	return dh;
+
+ err:
+	DH_free(dh);
+
+	return NULL;
 }
 LCRYPTO_ALIAS(DH_new_method);
 
@@ -191,7 +177,7 @@ DH_free(DH *r)
 	if (i > 0)
 		return;
 
-	if (r->meth->finish)
+	if (r->meth != NULL && r->meth->finish != NULL)
 		r->meth->finish(r);
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE_finish(r->engine);
