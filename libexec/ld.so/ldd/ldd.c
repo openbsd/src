@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.24 2023/07/24 01:02:47 deraadt Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.25 2023/08/12 13:43:22 gnezdo Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -96,7 +96,8 @@ doit(char *name)
 {
 	Elf_Ehdr ehdr;
 	Elf_Phdr *phdr;
-	int fd, i, size, status, interp=0;
+	size_t size;
+	int fd, i, status, interp=0;
 	char buf[PATH_MAX];
 	struct stat st;
 	void * dlhandle;
@@ -118,8 +119,8 @@ doit(char *name)
 		return 1;
 	}
 
-	if (read(fd, &ehdr, sizeof(ehdr)) < 0) {
-		warn("read(%s)", name);
+	if (read(fd, &ehdr, sizeof(ehdr)) != sizeof(ehdr)) {
+		warnx("%s: incomplete ELF header", name);
 		close(fd);
 		return 1;
 	}
@@ -141,7 +142,7 @@ doit(char *name)
 	size = ehdr.e_phnum * sizeof(Elf_Phdr);
 
 	if (pread(fd, phdr, size, ehdr.e_phoff) != size) {
-		warn("read(%s)", name);
+		warnx("%s: incomplete program header", name);
 		close(fd);
 		free(phdr);
 		return 1;
