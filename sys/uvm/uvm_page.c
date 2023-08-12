@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.172 2023/05/13 09:24:59 mpi Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.173 2023/08/12 07:22:56 mpi Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /*
@@ -1219,10 +1219,15 @@ struct vm_page *
 uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	/* XXX if stack is too much, handroll */
-	struct vm_page pg;
+	struct vm_page p, *pg;
 
-	pg.offset = off;
-	return RBT_FIND(uvm_objtree, &obj->memt, &pg);
+	p.offset = off;
+	pg = RBT_FIND(uvm_objtree, &obj->memt, &p);
+
+	KASSERT(pg == NULL || obj->uo_npages != 0);
+	KASSERT(pg == NULL || (pg->pg_flags & PG_RELEASED) == 0 ||
+	    (pg->pg_flags & PG_BUSY) != 0);
+	return (pg);
 }
 
 /*
