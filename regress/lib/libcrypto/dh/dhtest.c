@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.11 2023/08/12 06:28:04 tb Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.12 2023/08/12 06:30:43 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -97,8 +97,8 @@ main(int argc, char *argv[])
 {
 	BN_GENCB *_cb;
 	DH *dh = NULL;
-	unsigned char *abuf = NULL;
-	int i, alen, aout;
+	unsigned char *buf = NULL;
+	int i, buf_len, secret_len;
 	int ret = 1;
 
 	if ((_cb = BN_GENCB_new()) == NULL)
@@ -147,18 +147,18 @@ main(int argc, char *argv[])
 		goto err;
 	printf("\n");
 
-	alen = DH_size(dh);
-	if ((abuf = malloc(alen)) == NULL)
+	buf_len = DH_size(dh);
+	if ((buf = malloc(buf_len)) == NULL)
 		err(1, "malloc");
-	aout = DH_compute_key(abuf, DH_get0_pub_key(dh), dh);
+	secret_len = DH_compute_key(buf, DH_get0_pub_key(dh), dh);
 
 	printf("key1 = ");
-	for (i = 0; i < aout; i++) {
-		printf("%02X", abuf[i]);
+	for (i = 0; i < secret_len; i++) {
+		printf("%02X", buf[i]);
 	}
 	printf("\n");
 
-	if (aout < 4) {
+	if (secret_len < 4) {
 		fprintf(stderr, "Error in DH routines\n");
 		goto err;
 	}
@@ -167,7 +167,7 @@ main(int argc, char *argv[])
 err:
 	ERR_print_errors_fp(stderr);
 
-	free(abuf);
+	free(buf);
 	DH_free(dh);
 	BN_GENCB_free(_cb);
 
