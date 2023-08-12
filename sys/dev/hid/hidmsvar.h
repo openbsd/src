@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidmsvar.h,v 1.2 2021/01/10 16:32:48 thfr Exp $ */
+/*	$OpenBSD: hidmsvar.h,v 1.3 2023/08/12 20:47:06 miod Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -36,11 +36,16 @@
 struct tsscale {
 	int	minx, maxx;
 	int	miny, maxy;
+	int 	minz, maxz;
+	int 	minw, maxw;
 	int	swapxy;
 	int	resx, resy;
 };
 
 struct hidms {
+	struct device	*sc_device;
+	struct device	*sc_wsmousedev;
+
 	int		sc_enabled;
 	int		sc_flags;	/* device configuration */
 #define HIDMS_SPUR_BUT_UP	0x0001	/* spurious button up events */
@@ -51,17 +56,20 @@ struct hidms {
 #define HIDMS_LEADINGBYTE	0x0020	/* Unknown leading byte */
 #define HIDMS_ABSX		0x0040	/* X-axis is absolute */
 #define HIDMS_ABSY		0x0080	/* Y-axis is absolute */
-#define HIDMS_TIP		0x0100   /* Tip switch on a digitiser pen */
+#define HIDMS_TIP		0x0100	/* Tip switch on a digitiser pen */
 #define HIDMS_BARREL		0x0200	/* Barrel switch on a digitiser pen */
-#define HIDMS_ERASER		0x0400   /* Eraser switch on a digitiser pen */
+#define HIDMS_ERASER		0x0400	/* Eraser switch on a digitiser pen */
 #define HIDMS_MS_BAD_CLASS	0x0800	/* Mouse doesn't identify properly */
 #define HIDMS_VENDOR_BUTTONS	0x1000	/* extra buttons in vendor page */
+#define HIDMS_SEC_BARREL	0x2000	/* Secondary Barrel switch on a digitiser pen */
+#define HIDMS_WACOM_SETUP	0x4000	/* Requires Wacom-style setup */
 
 	int		sc_num_buttons;
 	u_int32_t	sc_buttons;	/* mouse button status */
 
-	struct device	*sc_device;
-	struct device	*sc_wsmousedev;
+	/* Wacom-specific fields */
+	int 		sc_num_pad_buttons;
+	int 		sc_num_stylus_buttons;
 
 	/* locators */
 	struct hid_location sc_loc_x;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hidms.c,v 1.9 2022/06/16 20:52:38 bru Exp $ */
+/*	$OpenBSD: hidms.c,v 1.10 2023/08/12 20:47:06 miod Exp $ */
 /*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -61,6 +61,188 @@ int	hidmsdebug = 0;
 #define MOUSE_FLAGS_MASK	(HIO_CONST | HIO_RELATIVE)
 #define NOTMOUSE(f)		(((f) & MOUSE_FLAGS_MASK) != HIO_RELATIVE)
 
+void
+hidms_stylus_hid_parse(struct hidms *ms, struct hid_data *d,
+    struct hid_location *loc_stylus_btn)
+{
+	struct hid_item h;
+
+	while (hid_get_item(d, &h)) {
+		if (h.kind == hid_endcollection)
+			break;
+		if (h.kind != hid_input || (h.flags & HIO_CONST) != 0)
+			continue;
+		/* All the possible stylus reported usages go here */
+#ifdef HIDMS_DEBUG
+		printf("stylus usage: 0x%x\n", h.usage);
+#endif
+		switch (h.usage) {
+		/* Buttons */
+		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_TIP_SWITCH):
+			DPRINTF("Stylus usage tip set\n");
+			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
+				break;
+			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
+			ms->sc_flags |= HIDMS_TIP;
+			break;
+		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_BARREL_SWITCH):
+			DPRINTF("Stylus usage barrel set\n");
+			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
+				break;
+			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
+			ms->sc_flags |= HIDMS_BARREL;
+			break;
+		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS,
+		    HUD_SECONDARY_BARREL_SWITCH):
+			DPRINTF("Stylus usage secondary barrel set\n");
+			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
+				break;
+			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
+			ms->sc_flags |= HIDMS_SEC_BARREL;
+			break;
+		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_IN_RANGE):
+			DPRINTF("Stylus usage in range set\n");
+			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
+				break;
+			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
+			break;
+		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_QUALITY):
+			DPRINTF("Stylus usage quality set\n");
+			if (ms->sc_num_stylus_buttons >= MAX_BUTTONS)
+				break;
+			loc_stylus_btn[ms->sc_num_stylus_buttons++] = h.loc;
+			break;
+		/* Axes */
+		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_WACOM_X):
+			DPRINTF("Stylus usage x set\n");
+			ms->sc_loc_x = h.loc;
+			ms->sc_tsscale.minx = h.logical_minimum;
+			ms->sc_tsscale.maxx = h.logical_maximum;
+			ms->sc_flags |= HIDMS_ABSX;
+			break;
+		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_WACOM_Y):
+			DPRINTF("Stylus usage y set\n");
+			ms->sc_loc_y = h.loc;
+			ms->sc_tsscale.miny = h.logical_minimum;
+			ms->sc_tsscale.maxy = h.logical_maximum;
+			ms->sc_flags |= HIDMS_ABSY;
+			break;
+		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_TIP_PRESSURE):
+			DPRINTF("Stylus usage pressure set\n");
+			ms->sc_loc_z = h.loc;
+			ms->sc_tsscale.minz = h.logical_minimum;
+			ms->sc_tsscale.maxz = h.logical_maximum;
+			ms->sc_flags |= HIDMS_Z;
+			break;
+		case HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_WACOM_DISTANCE):
+			DPRINTF("Stylus usage distance set\n");
+			ms->sc_loc_w = h.loc;
+			ms->sc_tsscale.minw = h.logical_minimum;
+			ms->sc_tsscale.maxw = h.logical_maximum;
+			ms->sc_flags |= HIDMS_W;
+			break;
+		default:
+#ifdef HIDMS_DEBUG
+			printf("Unknown stylus usage: 0x%x\n",
+			    h.usage);
+#endif
+			break;
+		}
+	}
+}
+
+void
+hidms_pad_buttons_hid_parse(struct hidms *ms, struct hid_data *d,
+    struct hid_location *loc_pad_btn)
+{
+	struct hid_item h;
+
+	while (hid_get_item(d, &h)) {
+		if (h.kind == hid_endcollection)
+			break;
+		if (h.kind == hid_input && (h.flags & HIO_CONST) != 0 &&
+		    h.usage == HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS,
+		    HUD_WACOM_PAD_BUTTONS00 | ms->sc_num_pad_buttons)) {
+			if (ms->sc_num_pad_buttons >= MAX_BUTTONS)
+				break;
+			loc_pad_btn[ms->sc_num_pad_buttons++] = h.loc;
+		}
+	}
+}
+
+int
+hidms_wacom_setup(struct device *self, struct hidms *ms, void *desc, int dlen)
+{
+	struct hid_data *hd;
+	int i;
+	struct hid_location loc_pad_btn[MAX_BUTTONS];
+	struct hid_location loc_stylus_btn[MAX_BUTTONS];
+
+	ms->sc_flags = 0;
+
+	/* Set x,y,z and w to zero by default */
+	ms->sc_loc_x.size = 0;
+	ms->sc_loc_y.size = 0;
+	ms->sc_loc_z.size = 0;
+	ms->sc_loc_w.size = 0;
+
+	if ((hd = hid_get_collection_data(desc, dlen,
+	     HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_DIGITIZER),
+	     HCOLL_APPLICATION))) {
+		DPRINTF("found the global collection\n");
+		hid_end_parse(hd);
+		if ((hd = hid_get_collection_data(desc, dlen,
+		     HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_STYLUS),
+		     HCOLL_PHYSICAL))) {
+			DPRINTF("found stylus collection\n");
+			hidms_stylus_hid_parse(ms, hd, loc_stylus_btn);
+			hid_end_parse(hd);
+		}
+		if ((hd = hid_get_collection_data(desc, dlen,
+		     HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_TABLET_FKEYS),
+		     HCOLL_PHYSICAL))) {
+			DPRINTF("found tablet keys collection\n");
+			hidms_pad_buttons_hid_parse(ms, hd, loc_pad_btn);
+			hid_end_parse(hd);
+		}
+#ifdef notyet
+		if ((hd = hid_get_collection_data(desc, dlen,
+		     HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_WACOM_BATTERY),
+		     HCOLL_PHYSICAL))) {
+			DPRINTF("found battery collection\n");
+			/* parse and set the battery info */
+			/* not yet used */
+			hid_end_parse(hd);
+		}
+#endif
+		/*
+		 * Ignore the device config, it's not really needed;
+		 * Ignore the usage 0x10AC which is the debug collection, and
+		 * ignore firmware collection and other collections for now.
+		 */
+	}
+
+	/* Map the pad and stylus buttons to mouse buttons */
+	for (i = 0; i < ms->sc_num_stylus_buttons; i++)
+		memcpy(&ms->sc_loc_btn[i], &loc_stylus_btn[i],
+		    sizeof(struct hid_location));
+	if (ms->sc_num_pad_buttons + ms->sc_num_stylus_buttons >= MAX_BUTTONS)
+		ms->sc_num_pad_buttons =
+		    MAX_BUTTONS - ms->sc_num_stylus_buttons;
+	for (; i < ms->sc_num_pad_buttons + ms->sc_num_stylus_buttons; i++)
+		memcpy(&ms->sc_loc_btn[i], &loc_pad_btn[i],
+		    sizeof(struct hid_location));
+	ms->sc_num_buttons = i;
+	DPRINTF("Button information\n");
+#ifdef HIDMS_DEBUG
+	for (i = 0; i < ms->sc_num_buttons; i++)
+		printf("size: 0x%x, pos: 0x%x, count: 0x%x\n",
+		    ms->sc_loc_btn[i].size, ms->sc_loc_btn[i].pos,
+		    ms->sc_loc_btn[i].count);
+#endif
+	return 0;
+}
+
 int
 hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
     int id, void *desc, int dlen)
@@ -75,11 +257,15 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 
 	ms->sc_flags = quirks;
 
+	/* We are setting up a Wacom tablet, not a regular mouse */
+	if (quirks & HIDMS_WACOM_SETUP)
+		return hidms_wacom_setup(self, ms, desc, dlen);
+
 	if (!hid_locate(desc, dlen, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X), id,
 	    hid_input, &ms->sc_loc_x, &flags))
 		ms->sc_loc_x.size = 0;
 
-	switch(flags & MOUSE_FLAGS_MASK) {
+	switch (flags & MOUSE_FLAGS_MASK) {
 	case 0:
 		ms->sc_flags |= HIDMS_ABSX;
 		break;
@@ -189,7 +375,7 @@ hidms_setup(struct device *self, struct hidms *ms, uint32_t quirks,
 			break;
 	ms->sc_num_buttons = i - 1;
 
-	/* 
+	/*
 	 * The Kensington Slimblade reports some of its buttons as binary
 	 * inputs in the first vendor usage page (0xff00). Add such inputs
 	 * as buttons if the device has this quirk.

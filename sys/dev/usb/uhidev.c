@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.108 2022/05/20 05:03:45 anton Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.109 2023/08/12 20:47:06 miod Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.14 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
@@ -137,6 +137,22 @@ uhidev_match(struct device *parent, void *match, void *aux)
 		return (UMATCH_NONE);
 
 	return (UMATCH_IFACECLASS_GENERIC);
+}
+
+int
+uhidev_attach_repid(struct uhidev_softc *sc, struct uhidev_attach_arg *uha,
+    int repid)
+{
+	struct device *dev;
+
+	/* Could already be assigned by uhidev_set_report_dev(). */
+	if (sc->sc_subdevs[repid] != NULL)
+		return 0;
+
+	uha->reportid = repid;
+	dev = config_found_sm(&sc->sc_dev, uha, uhidevprint, NULL);
+	sc->sc_subdevs[repid] = (struct uhidev *)dev;
+	return 1;
 }
 
 void
@@ -283,6 +299,35 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 	free(uha.claimed, M_TEMP, nrepid);
 	uha.claimed = NULL;
 
+	/* Special case for Wacom tablets */
+	if (uha.uaa->vendor == USB_VENDOR_WACOM) {
+		int ndigitizers = 0;
+		/*
+		 * Get all the needed collections (only 3 seem to be of
+		 * interest currently).
+		 */
+		repid = hid_get_id_of_collection(desc, size,
+		    HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_STYLUS),
+		    HCOLL_PHYSICAL);
+		if (repid >= 0 && repid < nrepid)
+			ndigitizers += uhidev_attach_repid(sc, &uha, repid);
+		repid = hid_get_id_of_collection(desc, size,
+		    HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_TABLET_FKEYS),
+		    HCOLL_PHYSICAL);
+		if (repid >= 0 && repid < nrepid)
+			ndigitizers += uhidev_attach_repid(sc, &uha, repid);
+#ifdef notyet	/* not handled in hidms_wacom_setup() yet */
+		repid = hid_get_id_of_collection(desc, size,
+		    HID_USAGE2(HUP_WACOM | HUP_DIGITIZERS, HUD_WACOM_BATTERY),
+		    HCOLL_PHYSICAL);
+		if (repid >= 0 && repid < nrepid)
+			ndigitizers += uhidev_attach_repid(sc, &uha, repid);
+#endif
+
+		if (ndigitizers != 0)
+			return;
+	}
+
 	for (repid = 0; repid < nrepid; repid++) {
 		DPRINTF(("%s: try repid=%d\n", __func__, repid));
 		if (hid_report_size(desc, size, hid_input, repid) == 0 &&
@@ -290,13 +335,7 @@ uhidev_attach(struct device *parent, struct device *self, void *aux)
 		    hid_report_size(desc, size, hid_feature, repid) == 0)
 			continue;
 
-		/* Could already be assigned by uhidev_set_report_dev(). */
-		if (sc->sc_subdevs[repid] != NULL)
-			continue;
-
-		uha.reportid = repid;
-		dev = config_found_sm(self, &uha, uhidevprint, NULL);
-		sc->sc_subdevs[repid] = (struct uhidev *)dev;
+		uhidev_attach_repid(sc, &uha, repid);
 	}
 }
 
