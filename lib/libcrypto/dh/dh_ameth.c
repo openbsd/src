@@ -1,4 +1,4 @@
-/* $OpenBSD: dh_ameth.c,v 1.38 2023/08/12 07:50:47 tb Exp $ */
+/* $OpenBSD: dh_ameth.c,v 1.39 2023/08/12 07:59:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -70,7 +70,7 @@
 #include "evp_local.h"
 
 static void
-int_dh_free(EVP_PKEY *pkey)
+dh_free(EVP_PKEY *pkey)
 {
 	DH_free(pkey->pkey.dh);
 }
@@ -388,7 +388,7 @@ do_dh_print(BIO *bp, const DH *x, int indent, ASN1_PCTX *ctx, int ptype)
 }
 
 static int
-int_dh_size(const EVP_PKEY *pkey)
+dh_size(const EVP_PKEY *pkey)
 {
 	return DH_size(pkey->pkey.dh);
 }
@@ -538,7 +538,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
 	.priv_encode = dh_priv_encode,
 	.priv_print = dh_private_print,
 
-	.pkey_size = int_dh_size,
+	.pkey_size = dh_size,
 	.pkey_bits = dh_bits,
 	.pkey_security_bits = dh_security_bits,
 
@@ -549,7 +549,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
 	.param_cmp = dh_cmp_parameters,
 	.param_print = dh_param_print,
 
-	.pkey_free = int_dh_free,
+	.pkey_free = dh_free,
 
 	.pkey_check = NULL,
 	.pkey_public_check = dh_pkey_public_check,

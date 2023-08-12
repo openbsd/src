@@ -1,4 +1,4 @@
-/* $OpenBSD: dsa_ameth.c,v 1.54 2023/08/12 07:50:47 tb Exp $ */
+/* $OpenBSD: dsa_ameth.c,v 1.55 2023/08/12 07:59:48 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -336,7 +336,7 @@ dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 }
 
 static int
-int_dsa_size(const EVP_PKEY *pkey)
+dsa_size(const EVP_PKEY *pkey)
 {
 	return DSA_size(pkey->pkey.dsa);
 }
@@ -404,7 +404,7 @@ dsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 }
 
 static void
-int_dsa_free(EVP_PKEY *pkey)
+dsa_free(EVP_PKEY *pkey)
 {
 	DSA_free(pkey->pkey.dsa);
 }
@@ -717,7 +717,7 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = {
 		.priv_encode = dsa_priv_encode,
 		.priv_print = dsa_priv_print,
 
-		.pkey_size = int_dsa_size,
+		.pkey_size = dsa_size,
 		.pkey_bits = dsa_bits,
 		.pkey_security_bits = dsa_security_bits,
 
@@ -729,7 +729,7 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = {
 		.param_print = dsa_param_print,
 		.sig_print = dsa_sig_print,
 
-		.pkey_free = int_dsa_free,
+		.pkey_free = dsa_free,
 		.pkey_ctrl = dsa_pkey_ctrl,
 		.old_priv_decode = old_dsa_priv_decode,
 		.old_priv_encode = old_dsa_priv_encode
