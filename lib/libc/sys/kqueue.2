@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.48 2023/08/13 08:29:28 visa Exp $
+.\"	$OpenBSD: kqueue.2,v 1.49 2023/08/13 10:23:26 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -457,11 +457,11 @@ Establishes an arbitrary timer identified by
 .Fa ident .
 When adding a timer,
 .Fa data
-specifies the timeout period in units described below, or, if
+specifies the timeout period in units described below or, if
 .Dv NOTE_ABSTIME
 is set in
 .Va fflags ,
-specifies the absolute time at which the timer should fire.
+the absolute time at which the timer should fire.
 The timer will repeat unless
 .Dv EV_ONESHOT
 is set in
