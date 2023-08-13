@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.21 2023/06/27 14:17:00 claudio Exp $ */
+/*	$OpenBSD: map.c,v 1.22 2023/08/13 09:48:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -134,10 +134,10 @@ map_insert(struct map *map, const char *key, struct bt_arg *bval,
 	mep = mget(map, key);
 	switch (bval->ba_type) {
 	case B_AT_STR:
-	case B_AT_LONG:
 		free(mep->mval);
-		mep->mval = bval;
+		mep->mval = ba_new(ba2str(bval, dtev), B_AT_LONG);
 		break;
+	case B_AT_LONG:
 	case B_AT_BI_PID:
 	case B_AT_BI_TID:
 	case B_AT_BI_CPU:
