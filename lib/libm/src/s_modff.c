@@ -45,6 +45,8 @@ modff(float x, float *iptr)
 	} else {			/* no fraction part */
 	    u_int32_t ix;
 	    *iptr = x*one;
+	    if (jj0 == 0x80)		/* +-inf or NaN */
+ 		return (0.0 / x);		/* +-0 or NaN */
 	    GET_FLOAT_WORD(ix,x);
 	    SET_FLOAT_WORD(x,ix&0x80000000);	/* return +-0 */
 	    return x;
