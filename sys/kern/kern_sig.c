@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.311 2023/08/11 07:54:18 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.312 2023/08/13 15:53:31 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1151,8 +1151,9 @@ ptsignal(struct proc *p, int signum, enum signal_type type)
 				atomic_clearbits_int(siglist, mask);
 			if (action == SIG_CATCH)
 				goto runfast;
-			if (p->p_wchan == NULL || p->p_flag & P_WSLEEP)
+			if (p->p_wchan == NULL)
 				goto run;
+			atomic_clearbits_int(&p->p_flag, P_WSLEEP);
 			p->p_stat = SSLEEP;
 			goto out;
 		}
@@ -2203,10 +2204,12 @@ single_thread_clear(struct proc *p, int flag)
 		 * it back into some sleep queue
 		 */
 		if (q->p_stat == SSTOP && (q->p_flag & flag) == 0) {
-			if (p->p_wchan == NULL || p->p_flag & P_WSLEEP)
+			if (q->p_wchan == NULL)
 				setrunnable(q);
-			else
+			else {
+				atomic_clearbits_int(&q->p_flag, P_WSLEEP);
 				q->p_stat = SSLEEP;
+			}
 		}
 	}
 	SCHED_UNLOCK(s);
