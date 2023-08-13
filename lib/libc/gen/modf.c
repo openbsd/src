@@ -1,4 +1,4 @@
-/*	$OpenBSD: modf.c,v 1.6 2013/07/03 04:46:36 espie Exp $	*/
+/*	$OpenBSD: modf.c,v 1.7 2023/08/13 06:55:37 miod Exp $	*/
 /*	$NetBSD: modf.c,v 1.1 1995/02/10 17:50:25 cgd Exp $	*/
 
 /*
@@ -51,11 +51,13 @@ modf(double val, double *iptr)
 	u_int64_t frac;
 
 	/*
-	 * If input is Inf or NaN, return it and leave i alone.
+	 * If input is +/-Inf or NaN, return +/-0 or NaN.
 	 */
 	u.v = val;
-	if (u.s.dbl_exp == DBL_EXP_INFNAN)
-		return (u.v);
+	if (u.s.dbl_exp == DBL_EXP_INFNAN) {
+		*iptr = u.v;
+		return (0.0 / u.v);
+	}
 
 	/*
 	 * If input can't have a fractional part, return
