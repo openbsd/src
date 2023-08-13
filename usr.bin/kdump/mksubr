@@ -1,5 +1,5 @@
 #!/bin/sh
-# $OpenBSD: mksubr,v 1.39 2022/12/19 22:55:12 guenther Exp $
+# $OpenBSD: mksubr,v 1.40 2023/08/13 08:29:28 visa Exp $
 #
 # Copyright (c) 2006 David Kirchner <dpk@dpk.net>
 #
@@ -559,6 +559,29 @@ _EOF_
 		++i; \
 		printf "\t\tif_print_or(fflags, %s, or);\n", $i }'
 cat <<_EOF_
+		break;
+	case EVFILT_TIMER:
+#define NOTE_TIMER_UNITMASK \
+    (NOTE_SECONDS|NOTE_MSECONDS|NOTE_USECONDS|NOTE_NSECONDS)
+		switch (fflags & NOTE_TIMER_UNITMASK) {
+		case NOTE_SECONDS:
+			printf("NOTE_SECONDS");
+			break;
+		case NOTE_MSECONDS:
+			printf("NOTE_MSECONDS");
+			break;
+		case NOTE_USECONDS:
+			printf("NOTE_USECONDS");
+			break;
+		case NOTE_NSECONDS:
+			printf("NOTE_NSECONDS");
+			break;
+		default:
+			printf("invalid");
+			break;
+		}
+		or = 1;
+		if_print_or(fflags, NOTE_ABSTIME, or);
 		break;
 	}
 	printf(">");

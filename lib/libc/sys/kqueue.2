@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.47 2022/10/22 06:27:46 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.48 2023/08/13 08:29:28 visa Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: October 22 2022 $
+.Dd $Mdocdate: August 13 2023 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -457,17 +457,71 @@ Establishes an arbitrary timer identified by
 .Fa ident .
 When adding a timer,
 .Fa data
-specifies the timeout period in milliseconds.
-The timer will be periodic unless
+specifies the timeout period in units described below, or, if
+.Dv NOTE_ABSTIME
+is set in
+.Va fflags ,
+specifies the absolute time at which the timer should fire.
+The timer will repeat unless
 .Dv EV_ONESHOT
-is specified.
+is set in
+.Va flags
+or
+.Dv NOTE_ABSTIME
+is set in
+.Va fflags .
 On return,
 .Fa data
 contains the number of times the timeout has expired since the last call to
 .Fn kevent .
-This filter automatically sets the
+This filter automatically sets
 .Dv EV_CLEAR
-flag internally.
+in
+.Va flags
+for periodic timers.
+Timers created with
+.Dv NOTE_ABSTIME
+remain activated on the kqueue once the absolute time has passed unless
+.Dv EV_CLEAR
+or
+.Dv EV_ONESHOT
+are also specified.
+.Pp
+The filter accepts the following flags in the
+.Va fflags
+argument:
+.Bl -tag -width NOTE_MSECONDS
+.It Dv NOTE_SECONDS
+The timer value in
+.Va data
+is expressed in seconds.
+.It Dv NOTE_MSECONDS
+The timer value in
+.Va data
+is expressed in milliseconds.
+.It Dv NOTE_USECONDS
+The timer value in
+.Va data
+is expressed in microseconds.
+.It Dv NOTE_NSECONDS
+The timer value in
+.Va data
+is expressed in nanoseconds.
+.It Dv NOTE_ABSTIME
+The timer value is an absolute time with
+.Dv CLOCK_REALTIME
+as the reference clock.
+.El
+.Pp
+Note that
+.Dv NOTE_SECONDS ,
+.Dv NOTE_MSECONDS ,
+.Dv NOTE_USECONDS ,
+and
+.Dv NOTE_NSECONDS
+are mutually exclusive; behavior is undefined if more than one are specified.
+If a timer value unit is not specified, the default is
+.Dv NOTE_MSECONDS .
 .Pp
 If an existing timer is re-added, the existing timer and related pending events
 will be cancelled.
@@ -558,6 +612,7 @@ No memory was available to register the event.
 The specified process to attach to does not exist.
 .El
 .Sh SEE ALSO
+.Xr clock_gettime 2 ,
 .Xr poll 2 ,
 .Xr read 2 ,
 .Xr select 2 ,

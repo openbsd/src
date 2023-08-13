@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue-timer.c,v 1.4 2021/06/12 13:30:14 visa Exp $	*/
+/*	$OpenBSD: kqueue-timer.c,v 1.5 2023/08/13 08:29:28 visa Exp $	*/
 /*
  * Copyright (c) 2015 Bret Stephen Lambert <blambert@openbsd.org>
  *
@@ -22,6 +22,7 @@
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -31,9 +32,13 @@
 int
 do_timer(void)
 {
-	int kq, n;
+	static const int units[] = {
+		NOTE_SECONDS, NOTE_MSECONDS, NOTE_USECONDS, NOTE_NSECONDS
+	};
 	struct kevent ev;
-	struct timespec ts;
+	struct timespec ts, start, end, now;
+	int64_t usecs;
+	int i, kq, n;
 
 	ASS((kq = kqueue()) >= 0,
 	    warn("kqueue"));
@@ -68,6 +73,125 @@ do_timer(void)
 	n = kevent(kq, NULL, 0, &ev, 1, &ts);
 	ASSX(n == 1);
 
+	/* Test with different time units */
+
+	for (i = 0; i < sizeof(units) / sizeof(units[0]); i++) {
+		memset(&ev, 0, sizeof(ev));
+		ev.filter = EVFILT_TIMER;
+		ev.flags = EV_ADD | EV_ENABLE;
+		ev.fflags = units[i];
+		ev.data = 1;
+
+		n = kevent(kq, &ev, 1, NULL, 0, NULL);
+		ASSX(n != -1);
+
+		ts.tv_sec = 2;			/* wait 2s for kqueue timeout */
+		ts.tv_nsec = 0;
+
+		n = kevent(kq, NULL, 0, &ev, 1, &ts);
+		ASSX(n == 1);
+
+		/* Delete timer to clear EV_CLEAR */
+
+		memset(&ev, 0, sizeof(ev));
+		ev.filter = EVFILT_TIMER;
+		ev.flags = EV_DELETE;
+
+		n = kevent(kq, &ev, 1, NULL, 0, NULL);
+		ASSX(n != -1);
+
+		/* Test with NOTE_ABSTIME, deadline in the future */
+
+		clock_gettime(CLOCK_MONOTONIC, &start);
+
+		clock_gettime(CLOCK_REALTIME, &now);
+		memset(&ev, 0, sizeof(ev));
+		ev.filter = EVFILT_TIMER;
+		ev.flags = EV_ADD | EV_ENABLE;
+		ev.fflags = NOTE_ABSTIME | units[i];
+
+		switch (units[i]) {
+		case NOTE_SECONDS:
+			ev.data = now.tv_sec + 1;
+			break;
+		case NOTE_MSECONDS:
+			ev.data = now.tv_sec * 1000 + now.tv_nsec / 1000000
+			     + 100;
+			break;
+		case NOTE_USECONDS:
+			ev.data = now.tv_sec * 1000000 + now.tv_nsec / 1000
+			    + 100 * 1000;
+			break;
+		case NOTE_NSECONDS:
+			ev.data = now.tv_sec * 1000000000 + now.tv_nsec
+			    + 100 * 1000000;
+			break;
+		}
+
+		n = kevent(kq, &ev, 1, NULL, 0, NULL);
+		ASSX(n != -1);
+
+		ts.tv_sec = 2;			/* wait 2s for kqueue timeout */
+		ts.tv_nsec = 0;
+
+		n = kevent(kq, NULL, 0, &ev, 1, &ts);
+		ASSX(n == 1);
+
+		clock_gettime(CLOCK_MONOTONIC, &end);
+		timespecsub(&end, &start, &ts);
+		usecs = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+		ASSX(usecs > 0);
+		ASSX(usecs < 1500000);		/* allow wide margin */
+
+		/* Test with NOTE_ABSTIME, deadline in the past. */
+
+		clock_gettime(CLOCK_MONOTONIC, &start);
+
+		memset(&ev, 0, sizeof(ev));
+		ev.filter = EVFILT_TIMER;
+		ev.flags = EV_ADD | EV_ENABLE;
+		ev.fflags = NOTE_ABSTIME | units[i];
+
+		clock_gettime(CLOCK_REALTIME, &now);
+		switch (units[i]) {
+		case NOTE_SECONDS:
+			ev.data = now.tv_sec - 1;
+			break;
+		case NOTE_MSECONDS:
+			ev.data = now.tv_sec * 1000 + now.tv_nsec / 1000000
+			     - 100;
+			break;
+		case NOTE_USECONDS:
+			ev.data = now.tv_sec * 1000000 + now.tv_nsec / 1000
+			    - 100 * 1000;
+			break;
+		case NOTE_NSECONDS:
+			ev.data = now.tv_sec * 1000000000 + now.tv_nsec
+			    - 100 * 1000000;
+			break;
+		}
+
+		n = kevent(kq, &ev, 1, NULL, 0, NULL);
+		ASSX(n != -1);
+
+		n = kevent(kq, NULL, 0, &ev, 1, &ts);
+		ASSX(n == 1);
+
+		clock_gettime(CLOCK_MONOTONIC, &end);
+		timespecsub(&end, &start, &ts);
+		usecs = ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+		ASSX(usecs > 0);
+		ASSX(usecs < 100000);		/* allow wide margin */
+
+		/* Test that the event remains active */
+
+		ts.tv_sec = 2;			/* wait 2s for kqueue timeout */
+		ts.tv_nsec = 0;
+
+		n = kevent(kq, NULL, 0, &ev, 1, &ts);
+		ASSX(n == 1);
+	}
+
 	return (0);
 }
 
@@ -95,6 +219,37 @@ do_invalid_timer(void)
 		    warn("kevent: timeout %lld %ld",
 		    (long long)invalid_ts[i].tv_sec, invalid_ts[i].tv_nsec));
 	}
+
+	/* Test invalid fflags */
+
+	memset(&ev, 0, sizeof(ev));
+	ev.filter = EVFILT_TIMER;
+	ev.flags = EV_ADD | EV_ENABLE;
+	ev.fflags = ~NOTE_SECONDS;
+	ev.data = 1;
+
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	ASSX(n == -1 && errno == EINVAL);
+
+	memset(&ev, 0, sizeof(ev));
+	ev.filter = EVFILT_TIMER;
+	ev.flags = EV_ADD | EV_ENABLE;
+	ev.fflags = NOTE_MSECONDS;
+	ev.data = 500;
+
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	ASSX(n == 0);
+
+	/* Modify the existing timer */
+
+	memset(&ev, 0, sizeof(ev));
+	ev.filter = EVFILT_TIMER;
+	ev.flags = EV_ADD | EV_ENABLE;
+	ev.fflags = ~NOTE_SECONDS;
+	ev.data = 1;
+
+	n = kevent(kq, &ev, 1, NULL, 0, NULL);
+	ASSX(n == -1 && errno == EINVAL);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.196 2023/04/11 00:45:09 jsg Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.197 2023/08/13 08:29:28 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -449,17 +449,61 @@ filt_proc(struct knote *kn, long hint)
 	return (kn->kn_fflags != 0);
 }
 
-static void
-filt_timer_timeout_add(struct knote *kn)
+#define NOTE_TIMER_UNITMASK \
+	(NOTE_SECONDS|NOTE_MSECONDS|NOTE_USECONDS|NOTE_NSECONDS)
+
+static int
+filt_timervalidate(int sfflags, int64_t sdata, struct timespec *ts)
 {
-	struct timeval tv;
+	if (sfflags & ~(NOTE_TIMER_UNITMASK | NOTE_ABSTIME))
+		return (EINVAL);
+
+	switch (sfflags & NOTE_TIMER_UNITMASK) {
+	case NOTE_SECONDS:
+		ts->tv_sec = sdata;
+		ts->tv_nsec = 0;
+		break;
+	case NOTE_MSECONDS:
+		ts->tv_sec = sdata / 1000;
+		ts->tv_nsec = (sdata % 1000) * 1000000;
+		break;
+	case NOTE_USECONDS:
+		ts->tv_sec = sdata / 1000000;
+		ts->tv_nsec = (sdata % 1000000) * 1000;
+		break;
+	case NOTE_NSECONDS:
+		ts->tv_sec = sdata / 1000000000;
+		ts->tv_nsec = sdata % 1000000000;
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	return (0);
+}
+
+static void
+filt_timeradd(struct knote *kn, struct timespec *ts)
+{
+	struct timespec expiry, now;
 	struct timeout *to = kn->kn_hook;
 	int tticks;
 
-	tv.tv_sec = kn->kn_sdata / 1000;
-	tv.tv_usec = (kn->kn_sdata % 1000) * 1000;
-	tticks = tvtohz(&tv);
-	/* Remove extra tick from tvtohz() if timeout has fired before. */
+	if (kn->kn_sfflags & NOTE_ABSTIME) {
+		nanotime(&now);
+		if (timespeccmp(ts, &now, >)) {
+			timespecsub(ts, &now, &expiry);
+			/* XXX timeout_abs_ts with CLOCK_REALTIME */
+			timeout_add(to, tstohz(&expiry));
+		} else {
+			/* Expire immediately. */
+			filt_timerexpire(kn);
+		}
+		return;
+	}
+
+	tticks = tstohz(ts);
+	/* Remove extra tick from tstohz() if timeout has fired before. */
 	if (timeout_triggered(to))
 		tticks--;
 	timeout_add(to, (tticks > 0) ? tticks : 1);
@@ -468,6 +512,7 @@ filt_timer_timeout_add(struct knote *kn)
 void
 filt_timerexpire(void *knx)
 {
+	struct timespec ts;
 	struct knote *kn = knx;
 	struct kqueue *kq = kn->kn_kq;
 
@@ -476,28 +521,37 @@ filt_timerexpire(void *knx)
 	knote_activate(kn);
 	mtx_leave(&kq->kq_lock);
 
-	if ((kn->kn_flags & EV_ONESHOT) == 0)
-		filt_timer_timeout_add(kn);
+	if ((kn->kn_flags & EV_ONESHOT) == 0 &&
+	    (kn->kn_sfflags & NOTE_ABSTIME) == 0) {
+		(void)filt_timervalidate(kn->kn_sfflags, kn->kn_sdata, &ts);
+		filt_timeradd(kn, &ts);
+	}
 }
 
-
 /*
- * data contains amount of time to sleep, in milliseconds
+ * data contains amount of time to sleep
  */
 int
 filt_timerattach(struct knote *kn)
 {
+	struct timespec ts;
 	struct timeout *to;
+	int error;
+
+	error = filt_timervalidate(kn->kn_sfflags, kn->kn_sdata, &ts);
+	if (error != 0)
+		return (error);
 
 	if (kq_ntimeouts > kq_timeoutmax)
 		return (ENOMEM);
 	kq_ntimeouts++;
 
-	kn->kn_flags |= EV_CLEAR;	/* automatically set */
+	if ((kn->kn_sfflags & NOTE_ABSTIME) == 0)
+		kn->kn_flags |= EV_CLEAR;	/* automatically set */
 	to = malloc(sizeof(*to), M_KEVENT, M_WAITOK);
 	timeout_set(to, filt_timerexpire, kn);
 	kn->kn_hook = to;
-	filt_timer_timeout_add(kn);
+	filt_timeradd(kn, &ts);
 
 	return (0);
 }
@@ -516,8 +570,17 @@ filt_timerdetach(struct knote *kn)
 int
 filt_timermodify(struct kevent *kev, struct knote *kn)
 {
+	struct timespec ts;
 	struct kqueue *kq = kn->kn_kq;
 	struct timeout *to = kn->kn_hook;
+	int error;
+
+	error = filt_timervalidate(kev->fflags, kev->data, &ts);
+	if (error != 0) {
+		kev->flags |= EV_ERROR;
+		kev->data = error;
+		return (0);
+	}
 
 	/* Reset the timer. Any pending events are discarded. */
 
@@ -533,7 +596,7 @@ filt_timermodify(struct kevent *kev, struct knote *kn)
 	knote_assign(kev, kn);
 	/* Reinit timeout to invoke tick adjustment again. */
 	timeout_set(to, filt_timerexpire, kn);
-	filt_timer_timeout_add(kn);
+	filt_timeradd(kn, &ts);
 
 	return (0);
 }

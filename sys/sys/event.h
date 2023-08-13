@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.69 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.70 2023/08/13 08:29:28 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -121,6 +121,13 @@ struct kevent {
 
 /* data/hint flags for EVFILT_DEVICE, shared with userspace */
 #define NOTE_CHANGE	0x00000001		/* device change event */
+
+/* additional flags for EVFILT_TIMER */
+#define NOTE_MSECONDS	0x00000000		/* data is milliseconds */
+#define NOTE_SECONDS	0x00000001		/* data is seconds */
+#define NOTE_USECONDS	0x00000002		/* data is microseconds */
+#define NOTE_NSECONDS	0x00000003		/* data is nanoseconds */
+#define NOTE_ABSTIME	0x00000010		/* timeout is absolute */
 
 /*
  * This is currently visible to userland to work around broken
