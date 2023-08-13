@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 2023/08/10 16:44:04 sashan Exp $
+#	$OpenBSD: Makefile,v 1.5 2023/08/13 21:21:53 sashan Exp $
 
 REGRESS_TARGETS=	hit miss cleanup flags
 CLEANFILES=		stamp-*	\
@@ -13,7 +13,7 @@ CLEANFILES=		stamp-*	\
 
 
 stamp-setup:
-	${SUDO} pfctl -a regress/ttest -Fa
+	${SUDO} pfctl -q -a regress/ttest -Fa || exit 0
 	${SUDO} pfctl -qt __regress_tbl -T add -f ${.CURDIR}/table.in
 	date >$@
 
