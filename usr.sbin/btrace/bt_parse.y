@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.49 2022/12/28 21:30:16 jmc Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.50 2023/08/13 13:19:23 dv Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -115,7 +115,7 @@ static int pflag;
 %token	<v.i>		ERROR ENDFILT
 %token	<v.i>		OP_EQ OP_NE OP_LE OP_LT OP_GE OP_GT OP_LAND OP_LOR
 /* Builtins */
-%token	<v.i>		BUILTIN BEGIN END HZ IF
+%token	<v.i>		BUILTIN BEGIN END HZ IF STR
 /* Functions and Map operators */
 %token  <v.i>		F_DELETE F_PRINT
 %token	<v.i>		MFUNC FUNC0 FUNC1 FUNCN OP1 OP2 OP4 MOP0 MOP1
@@ -127,7 +127,7 @@ static int pflag;
 %type	<v.probe>	plist probe pname
 %type	<v.filter>	filter
 %type	<v.stmt>	action stmt stmtblck stmtlist block
-%type	<v.arg>		pat vargs mentry mpat pargs staticv
+%type	<v.arg>		vargs mentry mpat pargs staticv
 %type	<v.arg>		expr term fterm variable factor func
 %%
 
@@ -169,11 +169,7 @@ mentry	: gvar '[' vargs ']'		{ $$ = bm_find($1, $3); }
 	;
 
 mpat	: MOP0 '(' ')'			{ $$ = ba_new(NULL, $1); }
-	| MOP1 '(' pat ')'		{ $$ = ba_new($3, $1); }
-	| pat
-	;
-
-pat	: CSTRING			{ $$ = ba_new($1, B_AT_STR); }
+	| MOP1 '(' expr ')'		{ $$ = ba_new($3, $1); }
 	| expr
 	;
 
@@ -226,15 +222,15 @@ factor : '(' expr ')'		{ $$ = $2; }
 	;
 
 func	: STR '(' staticv ')'		{ $$ = ba_new($3, B_AT_FN_STR); }
-	| STR '(' staticv ',' pat ')'	{ $$ = ba_op(B_AT_FN_STR, $3, $5); }
+	| STR '(' staticv ',' expr ')'	{ $$ = ba_op(B_AT_FN_STR, $3, $5); }
 	;
 
-vargs	: pat
-	| vargs ',' pat			{ $$ = ba_append($1, $3); }
+vargs	: expr
+	| vargs ',' expr		{ $$ = ba_append($1, $3); }
 	;
 
 pargs	: expr
-	| gvar ',' pat			{ $$ = ba_append(bg_find($1), $3); }
+	| gvar ',' expr			{ $$ = ba_append(bg_find($1), $3); }
 	;
 
 NL	: /* empty */
@@ -242,17 +238,17 @@ NL	: /* empty */
 	;
 
 stmt	: ';' NL			{ $$ = NULL; }
-	| gvar '=' pat			{ $$ = bg_store($1, $3); }
-	| lvar '=' pat			{ $$ = bl_store($1, $3); }
+	| gvar '=' expr			{ $$ = bg_store($1, $3); }
+	| lvar '=' expr			{ $$ = bl_store($1, $3); }
 	| gvar '[' vargs ']' '=' mpat	{ $$ = bm_insert($1, $3, $6); }
 	| FUNCN '(' vargs ')'		{ $$ = bs_new($1, $3, NULL); }
-	| FUNC1 '(' pat ')'		{ $$ = bs_new($1, $3, NULL); }
+	| FUNC1 '(' expr ')'		{ $$ = bs_new($1, $3, NULL); }
 	| MFUNC '(' variable ')'	{ $$ = bs_new($1, $3, NULL); }
 	| FUNC0 '(' ')'			{ $$ = bs_new($1, NULL, NULL); }
 	| F_DELETE '(' mentry ')'	{ $$ = bm_op($1, $3, NULL); }
 	| F_PRINT '(' pargs ')'		{ $$ = bs_new($1, $3, NULL); }
-	| gvar '=' OP1 '(' pat ')'	{ $$ = bh_inc($1, $5, NULL); }
-	| gvar '=' OP4 '(' pat ',' vargs ')'	{ $$ = bh_inc($1, $5, $7); }
+	| gvar '=' OP1 '(' expr ')'	{ $$ = bh_inc($1, $5, NULL); }
+	| gvar '=' OP4 '(' expr ',' vargs ')'	{ $$ = bh_inc($1, $5, $7); }
 	;
 
 stmtblck: IF '(' expr ')' block			{ $$ = bt_new($3, $5); }
