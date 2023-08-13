@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbdreg.h,v 1.2 2003/10/22 09:44:22 jmc Exp $ */
+/* $OpenBSD: pckbdreg.h,v 1.3 2023/08/13 21:54:02 miod Exp $ */
 /* $NetBSD: pckbdreg.h,v 1.2 1998/04/07 13:43:16 hannken Exp $ */
 
 /*
@@ -12,6 +12,7 @@
 #define	KBC_DISABLE	0xF5	/* as per KBC_SETDEFAULT, but also disable key scanning */
 #define	KBC_ENABLE	0xF4	/* enable key scanning */
 #define	KBC_TYPEMATIC	0xF3	/* set typematic rate and delay */
+#define	KBC_GETID	0xF2	/* get keyboard ID (not supported on AT kbd) */
 #define	KBC_SETTABLE	0xF0	/* set scancode translation table */
 #define	KBC_MODEIND	0xED	/* set mode indicators (i.e. LEDs) */
 #define	KBC_ECHO	0xEE	/* request an echo from the keyboard */

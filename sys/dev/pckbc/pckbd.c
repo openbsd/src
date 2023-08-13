@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbd.c,v 1.50 2023/07/25 10:00:44 miod Exp $ */
+/* $OpenBSD: pckbd.c,v 1.51 2023/08/13 21:54:02 miod Exp $ */
 /* $NetBSD: pckbd.c,v 1.24 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -344,7 +344,7 @@ pckbdprobe(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct pckbc_attach_args *pa = aux;
-	u_char cmd[1], resp[1];
+	u_char cmd[1], resp[2];
 	int res;
 
 	/*
@@ -363,10 +363,40 @@ pckbdprobe(struct device *parent, void *match, void *aux)
 	/* Reset the keyboard. */
 	cmd[0] = KBC_RESET;
 	res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 1, resp, 1);
-	if (res) {
+	if (res != 0) {
 #ifdef DEBUG
 		printf("pckbdprobe: reset error %d\n", res);
 #endif
+	} else if (resp[0] != KBR_RSTDONE) {
+#ifdef DEBUG
+		printf("pckbdprobe: reset response 0x%x\n", resp[0]);
+#endif
+		res = EINVAL;
+	}
+#if defined(__i386__) || defined(__amd64__)
+	if (res) {
+		/*
+		 * The 8042 emulation on Chromebooks fails the reset
+		 * command but otherwise appears to work correctly.
+		 * Try a "get ID" command to give it a second chance.
+		 */
+		cmd[0] = KBC_GETID;
+		res = pckbc_poll_cmd(pa->pa_tag, pa->pa_slot,
+		    cmd, 1, 2, resp, 0);
+		if (res != 0) {
+#ifdef DEBUG
+			printf("pckbdprobe: getid error %d\n", res);
+#endif
+		} else if (resp[0] != 0xab || resp[1] != 0x83) {
+#ifdef DEBUG
+			printf("pckbdprobe: unexpected id 0x%x/0x%x\n",
+			    resp[0], resp[1]);
+#endif
+			res = EINVAL;
+		}
+	}
+#endif
+	if (res) {
 		/*
 		 * There is probably no keyboard connected.
 		 * Let the probe succeed if the keyboard is used
@@ -386,10 +416,6 @@ pckbdprobe(struct device *parent, void *match, void *aux)
 		}
 #endif
 		return (pckbd_is_console(pa->pa_tag, pa->pa_slot) ? 1 : 0);
-	}
-	if (resp[0] != KBR_RSTDONE) {
-		printf("pckbdprobe: reset response 0x%x\n", resp[0]);
-		return (0);
 	}
 
 	/*
