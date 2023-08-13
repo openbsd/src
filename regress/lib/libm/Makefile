@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.15 2019/02/21 16:14:45 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.16 2023/08/13 07:02:36 miod Exp $
 
-SUBDIR+= exp fenv floor fpaccuracy lgamma nextafter msun rint round \
+SUBDIR+= exp fenv floor fpaccuracy lgamma modf msun nextafter rint round \
 	 tgamma toint trivial1
 
 .if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
