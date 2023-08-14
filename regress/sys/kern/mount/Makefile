@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.8 2020/12/16 23:10:48 bluhm Exp $
+# $OpenBSD: Makefile,v 1.9 2023/08/14 12:03:12 miod Exp $
 
 # This regress test uses a vnd device to run mount and unmount.
 # All tests have to be run as root.
@@ -75,7 +75,7 @@ run-unmount-busy: mount
 
 run-readonly-busy run-readonly-dangling:
 	# Remounting a file system read-only that has dangling vnodes fails
-	# currently.  It is marked as clean but has unreferneced files.
+	# currently.  It is marked as clean but has unreferenced files.
 	@echo DISABLED
 
 # Create a 1 GB vnd partition and fill the ffs file system it with
