@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.83 2023/08/11 11:24:55 tobhe Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.84 2023/08/14 12:02:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -697,9 +697,9 @@ pfkey_sa(struct iked *env, uint8_t satype, uint8_t action, struct iked_childsa *
 	if (pol->pol_flags & IKED_POLICY_ROUTING) {
 		sa_iface.sadb_x_iface_exttype = SADB_X_EXT_IFACE;
 		sa_iface.sadb_x_iface_len = sizeof(sa_iface) / 8;
-		if (if_indextoname(pol->pol_iface, iface) == NULL) {
-			log_warnx("%s: unsupported interface %s",
-			    __func__, iface);
+		if (if_indextoname(pol->pol_iface, iface) == 0) {
+			log_warn("%s: unsupported interface %d",
+			    __func__, pol->pol_iface);
 			return (-1);
 		}
 		ifminor = strtonum(iface + strlen("sec"), 0, UINT_MAX, &errstr);
