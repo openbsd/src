@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.225 2023/01/04 12:53:38 deraadt Exp $ */
+/* $OpenBSD: netcat.c,v 1.226 2023/08/14 08:07:27 tb Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  * Copyright (c) 2015 Bob Beck.  All rights reserved.
@@ -1177,7 +1177,7 @@ readwrite(int net_fd, struct tls *tls_ctx)
 			pfd[POLL_NETIN].fd = -1;
 
 		if (pfd[POLL_NETOUT].revents & POLLHUP) {
-			if (Nflag)
+			if (pfd[POLL_NETOUT].fd != -1 && Nflag)
 				shutdown(pfd[POLL_NETOUT].fd, SHUT_WR);
 			pfd[POLL_NETOUT].fd = -1;
 		}
@@ -1256,7 +1256,7 @@ readwrite(int net_fd, struct tls *tls_ctx)
 			if (netinbufpos == BUFSIZE)
 				pfd[POLL_NETIN].events = 0;
 			/* handle telnet */
-			if (tflag)
+			if (pfd[POLL_NETIN].fd != -1 && tflag)
 				atelnet(pfd[POLL_NETIN].fd, netinbuf,
 				    netinbufpos);
 		}
@@ -1297,6 +1297,9 @@ drainbuf(int fd, unsigned char *buf, size_t *bufpos, struct tls *tls)
 	ssize_t n;
 	ssize_t adjust;
 
+	if (fd == -1)
+		return -1;
+
 	if (tls) {
 		n = tls_write(tls, buf, *bufpos);
 		if (n == -1)
@@ -1322,6 +1325,9 @@ fillbuf(int fd, unsigned char *buf, size_t *bufpos, struct tls *tls)
 {
 	size_t num = BUFSIZE - *bufpos;
 	ssize_t n;
+
+	if (fd == -1)
+		return -1;
 
 	if (tls) {
 		n = tls_read(tls, buf + *bufpos, num);
