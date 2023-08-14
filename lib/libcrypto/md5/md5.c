@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.14 2023/08/14 15:26:01 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.15 2023/08/14 15:48:16 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -256,19 +256,16 @@ md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
 }
 #endif
 
-#define INIT_DATA_A (unsigned long)0x67452301L
-#define INIT_DATA_B (unsigned long)0xefcdab89L
-#define INIT_DATA_C (unsigned long)0x98badcfeL
-#define INIT_DATA_D (unsigned long)0x10325476L
-
 int
 MD5_Init(MD5_CTX *c)
 {
 	memset(c, 0, sizeof(*c));
-	c->A = INIT_DATA_A;
-	c->B = INIT_DATA_B;
-	c->C = INIT_DATA_C;
-	c->D = INIT_DATA_D;
+
+	c->A = 0x67452301UL;
+	c->B = 0xefcdab89UL;
+	c->C = 0x98badcfeUL;
+	c->D = 0x10325476UL;
+
 	return 1;
 }
 LCRYPTO_ALIAS(MD5_Init);
