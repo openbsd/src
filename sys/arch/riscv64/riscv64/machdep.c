@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 2023/08/05 05:45:52 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 2023/08/14 13:49:42 miod Exp $	*/
 
 /*
  * Copyright (c) 2014 Patrick Wildt <patrick@blueri.se>
@@ -871,7 +871,7 @@ process_kernel_args(void)
 		if (*cp++ == '\0')
 			return;
 
-	while (*cp != 0) {
+	while (*++cp != 0) {
 		switch (*cp) {
 		case 'a':
 			boothowto |= RB_ASKNAME;
@@ -889,7 +889,6 @@ process_kernel_args(void)
 			printf("unknown option `%c'\n", *cp);
 			break;
 		}
-		cp++;
 	}
 }
 
