@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.95 2023/06/13 12:34:12 tb Exp $	*/
+/*	$OpenBSD: policy.c,v 1.96 2023/08/14 11:55:03 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2020-2021 Tobias Heider <tobhe@openbsd.org>
@@ -737,9 +737,13 @@ sa_configure_iface(struct iked *env, struct iked_sa *sa, int add)
 
 		switch(saflow->flow_src.addr_af) {
 		case AF_INET:
+			if (sa->sa_cp_addr == NULL)
+				continue;
 			caddr = (struct sockaddr *)&sa->sa_cp_addr->addr;
 			break;
 		case AF_INET6:
+			if (sa->sa_cp_addr6 == NULL)
+				continue;
 			caddr = (struct sockaddr *)&sa->sa_cp_addr6->addr;
 			break;
 		default:
