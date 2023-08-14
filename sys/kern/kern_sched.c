@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.85 2023/08/11 22:02:50 cheloha Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.86 2023/08/14 08:33:24 mpi Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -547,6 +547,9 @@ sched_steal_proc(struct cpu_info *self)
 	}
 	if (best == NULL)
 		return (NULL);
+
+	TRACEPOINT(sched, steal, best->p_tid + THREAD_PID_OFFSET,
+	    best->p_p->ps_pid, CPU_INFO_UNIT(self));
 
 	remrunqueue(best);
 	best->p_cpu = self;

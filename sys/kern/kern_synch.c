@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.196 2023/08/10 20:44:52 claudio Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.197 2023/08/14 08:33:24 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*
@@ -520,7 +520,7 @@ unsleep(struct proc *p)
 	if (p->p_wchan != NULL) {
 		TAILQ_REMOVE(&slpque[LOOKUP(p->p_wchan)], p, p_runq);
 		p->p_wchan = NULL;
-		TRACEPOINT(sched, wakeup, p->p_tid + THREAD_PID_OFFSET,
+		TRACEPOINT(sched, unsleep, p->p_tid + THREAD_PID_OFFSET,
 		    p->p_p->ps_pid);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.248 2023/07/02 11:16:03 deraadt Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.249 2023/08/14 08:33:24 mpi Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/ptrace.h>
 #include <sys/atomic.h>
 #include <sys/unistd.h>
+#include <sys/tracepoint.h>
 
 #include <sys/syscallargs.h>
 
@@ -316,6 +317,8 @@ fork_thread_start(struct proc *p, struct proc *parent, int flags)
 
 	SCHED_LOCK(s);
 	ci = sched_choosecpu_fork(parent, flags);
+	TRACEPOINT(sched, fork, p->p_tid + THREAD_PID_OFFSET,
+	    p->p_p->ps_pid, CPU_INFO_UNIT(ci));
 	setrunqueue(ci, p, p->p_usrpri);
 	SCHED_UNLOCK(s);
 }

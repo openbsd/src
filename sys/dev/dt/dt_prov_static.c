@@ -1,4 +1,4 @@
-/*	$OpenBSD: dt_prov_static.c,v 1.20 2023/07/06 19:46:53 kn Exp $ */
+/*	$OpenBSD: dt_prov_static.c,v 1.21 2023/08/14 08:33:24 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 Martin Pieuchot <mpi@openbsd.org>
@@ -39,11 +39,14 @@ struct dt_provider dt_prov_static = {
  */
 DT_STATIC_PROBE2(sched, dequeue, "pid_t", "pid_t");
 DT_STATIC_PROBE2(sched, enqueue, "pid_t", "pid_t");
+DT_STATIC_PROBE3(sched, fork, "pid_t", "pid_t", "int");
 DT_STATIC_PROBE2(sched, off__cpu, "pid_t", "pid_t");
 DT_STATIC_PROBE0(sched, on__cpu);
 DT_STATIC_PROBE0(sched, remain__cpu);
 DT_STATIC_PROBE0(sched, sleep);
-DT_STATIC_PROBE0(sched, wakeup);
+DT_STATIC_PROBE3(sched, steal, "pid_t", "pid_t", "int");
+DT_STATIC_PROBE2(sched, unsleep, "pid_t", "pid_t");
+DT_STATIC_PROBE3(sched, wakeup, "pid_t", "pid_t", "int");
 
 /*
  * Raw syscalls
@@ -106,10 +109,13 @@ struct dt_probe *const dtps_static[] = {
 	/* Scheduler */
 	&_DT_STATIC_P(sched, dequeue),
 	&_DT_STATIC_P(sched, enqueue),
+	&_DT_STATIC_P(sched, fork),
 	&_DT_STATIC_P(sched, off__cpu),
 	&_DT_STATIC_P(sched, on__cpu),
 	&_DT_STATIC_P(sched, remain__cpu),
 	&_DT_STATIC_P(sched, sleep),
+	&_DT_STATIC_P(sched, steal),
+	&_DT_STATIC_P(sched, unsleep),
 	&_DT_STATIC_P(sched, wakeup),
 	/* Raw syscalls */
 	&_DT_STATIC_P(raw_syscalls, sys_enter),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.80 2023/08/11 22:02:50 cheloha Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.81 2023/08/14 08:33:24 mpi Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -462,6 +462,7 @@ setrunnable(struct proc *p)
 			atomic_setbits_int(&p->p_siglist, sigmask(pr->ps_xsig));
 		prio = p->p_usrpri;
 		unsleep(p);
+		setrunqueue(NULL, p, prio);
 		break;
 	case SSLEEP:
 		prio = p->p_slppri;
@@ -470,9 +471,11 @@ setrunnable(struct proc *p)
 		/* if not yet asleep, don't add to runqueue */
 		if (ISSET(p->p_flag, P_WSLEEP))
 			return;
+		setrunqueue(NULL, p, prio);
+		TRACEPOINT(sched, wakeup, p->p_tid + THREAD_PID_OFFSET,
+		    p->p_p->ps_pid, CPU_INFO_UNIT(p->p_cpu));
 		break;
 	}
-	setrunqueue(NULL, p, prio);
 	if (p->p_slptime > 1) {
 		uint32_t newcpu;
 
