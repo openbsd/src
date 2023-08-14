@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2022/05/20 20:08:43 mbuhl Exp $
+#	$OpenBSD: Makefile,v 1.13 2023/08/14 09:26:37 anton Exp $
 
 # Copyright (c) 2021 Moritz Buhl <mbuhl@openbsd.org>
 #
@@ -50,7 +50,7 @@ FAILING = run-cexp_test-{2,3,4} run-csqrt_test-{1,2,3} \
 	run-ctrig_test-{2,3,4,6} run-fma_test-7 \
 	run-invctrig_test-{1,2,3,4} run-invtrig_test-{1,2,3,5,6} \
 	run-logarithm_test-1 run-lround_test-1 run-nan_test-1 \
-	run-nearbyint_test-1 run-next_test-5 run-rem_test-3
+	run-next_test-5 run-rem_test-3
 
 . if ${MACHINE} == amd64
 FAILING+=	run-cexp_test-{1,7}
@@ -66,6 +66,7 @@ FAILING+=	run-fma_test-{1,2,4,5,6,7}
 FAILING+=	run-invtrig_test-7
 FAILING+=	run-logarithm_test-5
 FAILING+=	run-lrint_test-1
+FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,4}
 FAILING+=	run-rem_test-{1,2}
 FAILING+=	run-trig_test-1
@@ -75,6 +76,7 @@ FAILING+=	run-ctrig_test-{1,5}
 FAILING+=	run-exponential_test-1 
 FAILING+=	run-invtrig_test-7
 FAILING+=	run-lrint_test-1
+FAILING+=	run-nearbyint_test-1
 FAILING+=	run-trig_test-1
 . elif ${MACHINE} == i386
 FAILING+=	run-cexp_test-{1,7}
@@ -83,12 +85,14 @@ FAILING+=	run-fma_test-{1,6}
 FAILING+=	run-invtrig_test-4
 FAILING+=	run-logarithm_test-3
 FAILING+=	run-lrint_test-1
+FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,4}
 . elif ${MACHINE} == powerpc64
 FAILING+=	run-cexp_test-7
 FAILING+=	run-ctrig_test-{1,5}
 FAILING+=	run-exponential_test-1 
 FAILING+=	run-invtrig_test-7
+FAILING+=	run-nearbyint_test-1
 . elif ${MACHINE} == macppc
 FAILING+=	run-cexp_test-7
 FAILING+=	run-ctrig_test-{1,5}
@@ -97,6 +101,7 @@ FAILING+=	run-fenv_test-{7,8}
 FAILING+=	run-invtrig_test-7
 FAILING+=	run-logarithm_test-3
 FAILING+=	run-lrint_test-1
+FAILING+=	run-nearbyint_test-1
 . elif ${MACHINE} == sparc64
 FAILING+=	run-ctrig_test-5
 FAILING+=	run-exponential_test-1 
@@ -104,6 +109,7 @@ FAILING+=	run-fma_test-{1,2,4,5,6}
 FAILING+=	run-invtrig_test-{4,7}
 FAILING+=	run-logarithm_test-5
 FAILING+=	run-lrint_test-1
+FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,4}
 FAILING+=	run-rem_test-{1,2}
 FAILING+=	run-trig_test-{1,2}
@@ -115,6 +121,7 @@ FAILING+=	run-fma_test-{1,2,3,4,5,6}
 FAILING+=	run-invtrig_test-{4,7}
 FAILING+=	run-logarithm_test-5
 FAILING+=	run-lrint_test-1
+FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,3,4}
 FAILING+=	run-rem_test-{1,2}
 FAILING+=	run-trig_test-{1,2}
@@ -127,6 +134,7 @@ FAILING+=	run-ilogb_test-3
 FAILING+=	run-invtrig_test-{4,7}
 FAILING+=	run-logarithm_test-5
 FAILING+=	run-lrint_test-1
+FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,4}
 FAILING+=	run-rem_test-{1,2}
 FAILING+=	run-trig_test-{1,2}
