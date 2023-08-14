@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.15 2023/01/31 15:18:55 deraadt Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.16 2023/08/14 07:40:08 miod Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -665,6 +665,56 @@ ENTRY(_copyin)
 	.long	memcpy
 	SET_ENTRY_SIZE(_copyin)
 
+/*
+ * int copyin32(const void *usrc, void *kdst)
+ */
+ENTRY(copyin32)
+	mov.l	r14,	@-r15
+	sts.l	pr,	@-r15
+	mov	r15,	r14
+
+	mov	#3,	r3
+	mov	#EFAULT, r0		/* assume there was a problem */
+	and	r4,	r3
+	tst	r3,	r3
+	bf	2f			/* punt if not aligned */
+
+	mov.l	.L_copyin32_VM_MAXUSER_ADDRESS, r1
+	cmp/hi	r1,	r4		/* bomb if uaddr isn't in user space */
+	bt	2f
+
+	mov.l	.L_copyin32_curpcb, r1	/* set fault handler */
+	mov.l	@r1,	r2
+	mov.l	.L_copyin32_onfault, r3
+	mov.l	r3,	@(PCB_ONFAULT,r2)
+
+	mov.l	@r4,	r1
+	mov	#0,	r0
+	mov.l	r1,	@r5
+	mov.l	r0,	@(PCB_ONFAULT,r2)
+2:
+	mov	r14,	r15
+	lds.l	@r15+,	pr
+	rts
+	 mov.l	@r15+,	r14
+
+3:
+	mov.l	.L_copyin32_curpcb, r1	/* clear fault handler */
+	mov.l	@r1,	r2
+	mov	#0,	r1
+	mov.l	r1,	@(PCB_ONFAULT,r2)
+
+	bra	2b
+	 mov	#EFAULT, r0
+
+	.align 2
+.L_copyin32_onfault:
+	.long	3b
+.L_copyin32_VM_MAXUSER_ADDRESS:
+	.long	VM_MAXUSER_ADDRESS - 4	/* sizeof(uint32_t) */
+.L_copyin32_curpcb:
+	.long	curpcb
+	SET_ENTRY_SIZE(copyin32)
 
 /*
  * LINTSTUB: Func: int copyoutstr(const void *ksrc, void *udst, size_t maxlen, size_t *lencopied)
