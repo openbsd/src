@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.13 2023/08/10 14:04:54 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.14 2023/08/14 15:26:01 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -75,7 +75,7 @@
 
 __BEGIN_HIDDEN_DECLS
 
-void md5_block_data_order (MD5_CTX *c, const void *p, size_t num);
+void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
 
 __END_HIDDEN_DECLS
 
@@ -264,7 +264,7 @@ md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
 int
 MD5_Init(MD5_CTX *c)
 {
-	memset (c, 0, sizeof(*c));
+	memset(c, 0, sizeof(*c));
 	c->A = INIT_DATA_A;
 	c->B = INIT_DATA_B;
 	c->C = INIT_DATA_C;
@@ -313,8 +313,8 @@ MD5_Update(MD5_CTX *c, const void *data_, size_t len)
 
 	n = len/MD5_CBLOCK;
 	if (n > 0) {
-		md5_block_data_order (c, data, n);
-		n    *= MD5_CBLOCK;
+		md5_block_data_order(c, data, n);
+		n *= MD5_CBLOCK;
 		data += n;
 		len -= n;
 	}
@@ -322,7 +322,7 @@ MD5_Update(MD5_CTX *c, const void *data_, size_t len)
 	if (len != 0) {
 		p = (unsigned char *)c->data;
 		c->num = (unsigned int)len;
-		memcpy (p, data, len);
+		memcpy(p, data, len);
 	}
 	return 1;
 }
