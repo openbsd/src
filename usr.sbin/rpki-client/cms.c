@@ -1,4 +1,4 @@
-/*	$OpenBSD: cms.c,v 1.38 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: cms.c,v 1.39 2023/08/14 08:25:26 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -100,6 +100,7 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	const ASN1_OBJECT		*obj, *octype;
 	ASN1_OCTET_STRING		*kid = NULL;
 	CMS_ContentInfo			*cms;
+	long				 version;
 	STACK_OF(X509)			*certs = NULL;
 	STACK_OF(X509_CRL)		*crls;
 	STACK_OF(CMS_SignerInfo)	*sinfos;
@@ -142,7 +143,6 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 	}
 
 	/* RFC 6488 section 3 verify the CMS */
-	/* the version of SignedData and SignerInfos can't be verified */
 
 	/* Should only return NULL if cms is not of type SignedData. */
 	if ((sinfos = CMS_get0_SignerInfos(cms)) == NULL) {
@@ -160,6 +160,23 @@ cms_parse_validate_internal(X509 **xp, const char *fn, const unsigned char *der,
 		goto out;
 	}
 	si = sk_CMS_SignerInfo_value(sinfos, 0);
+
+	if (!CMS_get_version(cms, &version)) {
+		warnx("%s: Failed to retrieve SignedData version", fn);
+		goto out;
+	}
+	if (version != 3) {
+		warnx("%s: SignedData version %ld != 3", fn, version);
+		goto out;
+	}
+	if (!CMS_SignerInfo_get_version(si, &version)) {
+		warnx("%s: Failed to retrieve SignerInfo version", fn);
+		goto out;
+	}
+	if (version != 3) {
+		warnx("%s: SignerInfo version %ld != 3", fn, version);
+		goto out;
+	}
 
 	nattrs = CMS_signed_get_attr_count(si);
 	if (nattrs <= 0) {
