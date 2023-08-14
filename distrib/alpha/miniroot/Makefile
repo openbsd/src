@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.27 2023/04/30 22:44:18 krw Exp $
+#	$OpenBSD: Makefile,v 1.28 2023/08/14 08:16:26 miod Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		6080
@@ -111,9 +111,11 @@ install:
 .endif
 
 clean cleandir:
-	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
-	    *.o *.lo *.c \
-	    lib*.a lib*.olist instbin.map ${CLEANFILES}
+	rm -f *.core mr.fs instbin instbin.mk instbin*.cache \
+	    *.o *.lo *.c bsd bsd.rd bsd.gz bsd.strip \
+	    lib*.a lib*.olist instbin.map instbin.conf ${FS} ${CLEANFILES}
 	rm -rf mr.fs.d
+	rm -f ${CDROM}
+	rm -rf cd-dir
 
 .include <bsd.obj.mk>
