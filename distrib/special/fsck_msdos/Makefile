@@ -1,7 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2014/12/23 17:16:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2023/08/14 08:56:20 kn Exp $
 
 PROG=	fsck_msdos
-MAN=	fsck_msdos.8
 SRCS=	main.c check.c boot.c fat.c dir.c fsutil.c
 .PATH: ${.CURDIR}/../../../sbin/fsck
 CFLAGS+= -I${.CURDIR}/../../../sbin/fsck

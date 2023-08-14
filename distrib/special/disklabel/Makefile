@@ -1,10 +1,9 @@
-#	$OpenBSD: Makefile,v 1.13 2021/09/21 18:36:09 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.14 2023/08/14 08:56:20 kn Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
 DPADD=	${LIBUTIL}
 LDADD=	-lutil
-MAN=	disklabel.8 disklabel.5
 
 CLEANFILES += disklabel.cat8 manual.c
 

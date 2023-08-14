@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2023/07/23 23:42:03 kn Exp $
+#	$OpenBSD: Makefile,v 1.8 2023/08/14 08:56:20 kn Exp $
 
 PROG=	ksh
 SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c \
@@ -8,7 +8,6 @@ SRCS=	alloc.c c_ksh.c c_sh.c c_test.c c_ulimit.c edit.c emacs.c eval.c \
 
 DEFS=	-Wall -DEMACS -DSMALL
 CFLAGS+=${DEFS} -I. -I${.CURDIR}/../../../bin/ksh -I${.CURDIR}/../../../lib/libc/gen
-MAN=	ksh.1 sh.1
 
 LINKS=	${BINDIR}/ksh ${BINDIR}/rksh
 LINKS+=	${BINDIR}/ksh ${BINDIR}/sh

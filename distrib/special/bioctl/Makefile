@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2014/12/23 17:16:01 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 2023/08/14 08:56:20 kn Exp $
 
 PROG=	bioctl
 SRCS=	bioctl.c
@@ -14,8 +14,6 @@ CDIAGFLAGS+=    -Wmissing-prototypes
 CDIAGFLAGS+=    -Wunused
 CDIAGFLAGS+=    -Wsign-compare
 CDIAGFLAGS+=    -Wshadow
-
-MAN=	bioctl.8
 
 .PATH:  ${.CURDIR}/../../../sbin/bioctl
 .include <bsd.prog.mk>

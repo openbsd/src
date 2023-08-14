@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.6 2022/05/23 16:58:11 krw Exp $
+#	$OpenBSD: Makefile,v 1.7 2023/08/14 08:56:20 kn Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 #
@@ -37,8 +37,6 @@ manual.c:	fdisk.cat8
 	cat fdisk.cat8 | gzip -9c | hexdump -ve '"0x" 1/1 "%02x,"'; \
 	echo '};'; echo 'const int manpage_sz = sizeof(manpage);') > manual.c
 .endif
-
-MAN=	fdisk.8
 
 .if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || ${MACHINE} == "landisk"
 CFLAGS += -DHAS_MBR
