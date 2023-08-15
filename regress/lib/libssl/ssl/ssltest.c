@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssltest.c,v 1.42 2023/07/27 07:08:09 tb Exp $ */
+/*	$OpenBSD: ssltest.c,v 1.43 2023/08/15 11:20:57 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -281,8 +281,8 @@ verify_alpn(SSL *client, SSL *server)
 	free(alpn_selected);
 	alpn_selected = NULL;
 
-	if (client_proto_len != server_proto_len ||
-	    memcmp(client_proto, server_proto, client_proto_len) != 0) {
+	if (client_proto_len != server_proto_len || (client_proto_len > 0 &&
+	    memcmp(client_proto, server_proto, client_proto_len) != 0)) {
 		BIO_printf(bio_stdout, "ALPN selected protocols differ!\n");
 		goto err;
 	}
