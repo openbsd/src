@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.14 2023/07/05 21:23:36 beck Exp $ */
+/* $OpenBSD: a_string.c,v 1.15 2023/08/15 17:38:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -119,10 +119,12 @@ ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 		return -1;
 	if ((cmp = (a->length - b->length)) != 0)
 		return cmp;
-	if ((cmp = memcmp(a->data, b->data, a->length)) != 0)
-		return cmp;
+	if (a->length != 0) {
+		if ((cmp = memcmp(a->data, b->data, a->length)) != 0)
+			return 0;
+	}
 
-	return (a->type - b->type);
+	return a->type - b->type;
 }
 LCRYPTO_ALIAS(ASN1_STRING_cmp);
 
