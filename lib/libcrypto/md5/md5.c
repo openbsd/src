@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.17 2023/08/15 08:35:33 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.18 2023/08/15 08:39:27 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -64,6 +64,11 @@
 
 #include <openssl/md5.h>
 
+#include "crypto_internal.h"
+
+/* Ensure that MD5_LONG and uint32_t are equivalent size. */
+CTASSERT(sizeof(MD5_LONG) == sizeof(uint32_t));
+
 #ifdef MD5_ASM
 void md5_block_asm_data_order(MD5_CTX *c, const void *p, size_t num);
 #define md5_block_data_order md5_block_asm_data_order
@@ -119,15 +124,14 @@ void md5_block_asm_data_order(MD5_CTX *c, const void *p, size_t num);
 	a=ROTATE(a,s); \
 	a+=b; };
 
-/* Implemented from RFC1321 The MD5 Message-Digest Algorithm
- */
+/* Implemented from RFC1321 The MD5 Message-Digest Algorithm. */
 
 #ifndef MD5_ASM
 static void
-md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
+md5_block_data_order(MD5_CTX *c, const void *_in, size_t num)
 {
-	const unsigned char *data = data_;
-	MD5_LONG A, B, C, D, l;
+	const uint8_t *in = _in;
+	MD5_LONG A, B, C, D;
 	MD5_LONG X0, X1, X2, X3, X4, X5, X6, X7,
 	    X8, X9, X10, X11, X12, X13, X14, X15;
 
@@ -137,53 +141,39 @@ md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
 	D = c->D;
 
 	for (; num--; ) {
-		HOST_c2l(data, l);
-		X0 = l;
-		HOST_c2l(data, l);
-		X1 = l;
+		X0 = crypto_load_le32toh(&in[0 * 4]);
+		X1 = crypto_load_le32toh(&in[1 * 4]);
+		X2 = crypto_load_le32toh(&in[2 * 4]);
+		X3 = crypto_load_le32toh(&in[3 * 4]);
+		X4 = crypto_load_le32toh(&in[4 * 4]);
+		X5 = crypto_load_le32toh(&in[5 * 4]);
+		X6 = crypto_load_le32toh(&in[6 * 4]);
+		X7 = crypto_load_le32toh(&in[7 * 4]);
+		X8 = crypto_load_le32toh(&in[8 * 4]);
+		X9 = crypto_load_le32toh(&in[9 * 4]);
+		X10 = crypto_load_le32toh(&in[10 * 4]);
+		X11 = crypto_load_le32toh(&in[11 * 4]);
+		X12 = crypto_load_le32toh(&in[12 * 4]);
+		X13 = crypto_load_le32toh(&in[13 * 4]);
+		X14 = crypto_load_le32toh(&in[14 * 4]);
+		X15 = crypto_load_le32toh(&in[15 * 4]);
+		in += MD5_CBLOCK;
+
 		/* Round 0 */
 		R0(A, B, C, D, X0, 7, 0xd76aa478L);
-		HOST_c2l(data, l);
-		X2 = l;
 		R0(D, A, B, C, X1, 12, 0xe8c7b756L);
-		HOST_c2l(data, l);
-		X3 = l;
 		R0(C, D, A, B, X2, 17, 0x242070dbL);
-		HOST_c2l(data, l);
-		X4 = l;
 		R0(B, C, D, A, X3, 22, 0xc1bdceeeL);
-		HOST_c2l(data, l);
-		X5 = l;
 		R0(A, B, C, D, X4, 7, 0xf57c0fafL);
-		HOST_c2l(data, l);
-		X6 = l;
 		R0(D, A, B, C, X5, 12, 0x4787c62aL);
-		HOST_c2l(data, l);
-		X7 = l;
 		R0(C, D, A, B, X6, 17, 0xa8304613L);
-		HOST_c2l(data, l);
-		X8 = l;
 		R0(B, C, D, A, X7, 22, 0xfd469501L);
-		HOST_c2l(data, l);
-		X9 = l;
 		R0(A, B, C, D, X8, 7, 0x698098d8L);
-		HOST_c2l(data, l);
-		X10 = l;
 		R0(D, A, B, C, X9, 12, 0x8b44f7afL);
-		HOST_c2l(data, l);
-		X11 = l;
 		R0(C, D, A, B, X10, 17, 0xffff5bb1L);
-		HOST_c2l(data, l);
-		X12 = l;
 		R0(B, C, D, A, X11, 22, 0x895cd7beL);
-		HOST_c2l(data, l);
-		X13 = l;
 		R0(A, B, C, D, X12, 7, 0x6b901122L);
-		HOST_c2l(data, l);
-		X14 = l;
 		R0(D, A, B, C, X13, 12, 0xfd987193L);
-		HOST_c2l(data, l);
-		X15 = l;
 		R0(C, D, A, B, X14, 17, 0xa679438eL);
 		R0(B, C, D, A, X15, 22, 0x49b40821L);
 		/* Round 1 */
@@ -326,7 +316,6 @@ int
 MD5_Final(unsigned char *md, MD5_CTX *c)
 {
 	unsigned char *p = (unsigned char *)c->data;
-	unsigned long ll;
 	size_t n = c->num;
 
 	p[n] = 0x80; /* there is always room for one */
@@ -337,29 +326,19 @@ MD5_Final(unsigned char *md, MD5_CTX *c)
 		n = 0;
 		md5_block_data_order(c, p, 1);
 	}
-	memset(p + n, 0, MD5_CBLOCK - 8 - n);
 
-	p += MD5_CBLOCK - 8;
-#if   defined(DATA_ORDER_IS_BIG_ENDIAN)
-	HOST_l2c(c->Nh, p);
-	HOST_l2c(c->Nl, p);
-#elif defined(DATA_ORDER_IS_LITTLE_ENDIAN)
-	HOST_l2c(c->Nl, p);
-	HOST_l2c(c->Nh, p);
-#endif
-	p -= MD5_CBLOCK;
+	memset(p + n, 0, MD5_CBLOCK - 8 - n);
+	c->data[MD5_LBLOCK - 2] = htole32(c->Nl);
+	c->data[MD5_LBLOCK - 1] = htole32(c->Nh);
+
 	md5_block_data_order(c, p, 1);
 	c->num = 0;
 	memset(p, 0, MD5_CBLOCK);
 
-	ll = c->A;
-	HOST_l2c(ll, md);
-	ll = c->B;
-	HOST_l2c(ll, md);
-	ll = c->C;
-	HOST_l2c(ll, md);
-	ll = c->D;
-	HOST_l2c(ll, md);
+	crypto_store_htole32(&md[0 * 4], c->A);
+	crypto_store_htole32(&md[1 * 4], c->B);
+	crypto_store_htole32(&md[2 * 4], c->C);
+	crypto_store_htole32(&md[3 * 4], c->D);
 
 	return 1;
 }

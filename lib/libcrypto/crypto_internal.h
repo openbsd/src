@@ -1,4 +1,4 @@
-/*	$OpenBSD: crypto_internal.h,v 1.6 2023/05/27 09:18:17 jsing Exp $ */
+/*	$OpenBSD: crypto_internal.h,v 1.7 2023/08/15 08:39:27 jsing Exp $ */
 /*
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
  *
@@ -83,6 +83,37 @@ static inline void
 crypto_store_htobe64(uint8_t *dst, uint64_t v)
 {
 	v = htobe64(v);
+	memcpy(dst, &v, sizeof(v));
+}
+#endif
+
+/*
+ * crypto_load_le32toh() loads a 32 bit unsigned little endian value as a 32 bit
+ * unsigned host endian value, from the specified address in memory. The memory
+ * address may have any alignment.
+ */
+#ifndef HAVE_CRYPTO_LOAD_BE32TOH
+static inline uint32_t
+crypto_load_le32toh(const uint8_t *src)
+{
+	uint32_t v;
+
+	memcpy(&v, src, sizeof(v));
+
+	return le32toh(v);
+}
+#endif
+
+/*
+ * crypto_store_htole32() stores a 32 bit unsigned host endian value as a 32 bit
+ * unsigned little endian value, at the specified address in memory. The memory
+ * address may have any alignment.
+ */
+#ifndef HAVE_CRYPTO_STORE_HTOBE32
+static inline void
+crypto_store_htole32(uint8_t *dst, uint32_t v)
+{
+	v = htole32(v);
 	memcpy(dst, &v, sizeof(v));
 }
 #endif
