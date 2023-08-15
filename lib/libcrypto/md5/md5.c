@@ -1,4 +1,4 @@
-/* $OpenBSD: md5.c,v 1.15 2023/08/14 15:48:16 jsing Exp $ */
+/* $OpenBSD: md5.c,v 1.16 2023/08/15 08:30:49 jsing Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -65,19 +65,9 @@
 #include <openssl/md5.h>
 
 #ifdef MD5_ASM
-# if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || \
-     defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
-#  define md5_block_data_order md5_block_asm_data_order
-# elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
-#  define md5_block_data_order md5_block_asm_data_order
-# endif
+void md5_block_asm_data_order(MD5_CTX *c, const void *p, size_t num);
+#define md5_block_data_order md5_block_asm_data_order
 #endif
-
-__BEGIN_HIDDEN_DECLS
-
-void md5_block_data_order(MD5_CTX *c, const void *p, size_t num);
-
-__END_HIDDEN_DECLS
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
 
@@ -132,8 +122,8 @@ __END_HIDDEN_DECLS
 /* Implemented from RFC1321 The MD5 Message-Digest Algorithm
  */
 
-#ifndef md5_block_data_order
-void
+#ifndef MD5_ASM
+static void
 md5_block_data_order(MD5_CTX *c, const void *data_, size_t num)
 {
 	const unsigned char *data = data_;
