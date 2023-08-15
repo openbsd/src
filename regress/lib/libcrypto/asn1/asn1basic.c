@@ -1,6 +1,7 @@
-/* $OpenBSD: asn1basic.c,v 1.14 2023/08/15 19:14:42 tb Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.15 2023/08/15 21:05:44 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -967,12 +968,157 @@ asn1_string_new_test(void)
 	return failed;
 }
 
+static char *comparison_str = "mystring";
+
+static int
+asn1_string_cmp_test(void)
+{
+	ASN1_STRING *a = NULL, *b = NULL;
+	int got, want;
+	int failed = 1;
+
+	if ((got = ASN1_STRING_cmp(NULL, NULL)) != -1) {
+		fprintf(stderr, "ASN1_STRING_cmp(NULL, NULL): %d != -1\n", got);
+		goto err;
+	}
+
+	if ((a = ASN1_STRING_new()) == NULL) {
+		fprintf(stderr, "a = ASN1_STRING_new() failed\n");
+		goto err;
+	}
+	if ((b = ASN1_STRING_type_new(V_ASN1_UTF8STRING)) == NULL) {
+		fprintf(stderr, "b = ASN1_STRING_type_new() failed\n");
+		goto err;
+	}
+
+	if ((got = ASN1_STRING_cmp(a, NULL)) != -1) {
+		fprintf(stderr, "ASN1_STRING_cmp(a, NULL): %d != -1\n", got);
+		goto err;
+	}
+	if ((got = ASN1_STRING_cmp(NULL, a)) != -1) {
+		fprintf(stderr, "ASN1_STRING_cmp(NULL, a): %d != -1\n", got);
+		goto err;
+	}
+
+	if (ASN1_STRING_cmp(a, b) >= 0) {
+		fprintf(stderr, "V_ASN1_OCTET_STRING >= V_ASN1_UTF8STRING\n");
+		goto err;
+	}
+	want = V_ASN1_UTF8STRING - V_ASN1_OCTET_STRING;
+	if ((got = ASN1_STRING_cmp(b, a)) != want) {
+		fprintf(stderr, "comparison of octet with utf8 string:"
+		    "want %d, got %d\n", want, got);
+		goto err;
+	}
+
+	ASN1_STRING_set0(a, comparison_str, strlen(comparison_str));
+	ASN1_STRING_set0(b, comparison_str, strlen(comparison_str));
+
+	/* Ensure any data set on a or b isn't freed/zeroed. */
+	a->flags |= ASN1_STRING_FLAG_NDEF;
+	b->flags |= ASN1_STRING_FLAG_NDEF;
+
+	if ((got = ASN1_STRING_cmp(b, a)) != want) {
+		fprintf(stderr, "comparison of octet with utf8 string:"
+		    "want %d, got %d\n", want, got);
+		goto err;
+	}
+
+	b->type = V_ASN1_OCTET_STRING;
+
+	if ((got = ASN1_STRING_cmp(a, b)) != 0) {
+		fprintf(stderr, "same string on both. want 0, got %d\n", got);
+		goto err;
+	}
+
+	if (!ASN1_STRING_set(b, "myString", -1)) {
+		fprintf(stderr, "ASN1_STRING_set(b) failed\n");
+		goto err;
+	}
+
+	if ((got = ASN1_STRING_cmp(a, b)) <= 0) {
+		fprintf(stderr, "capitalized letter compares larger: got %d\n",
+		    got);
+		goto err;
+	}
+	if ((got = ASN1_STRING_cmp(b, a)) >= 0) {
+		fprintf(stderr, "capitalized letter is larger 2: %d\n", got);
+		goto err;
+	}
+
+	ASN1_STRING_length_set(b, 2);
+
+	want = strlen(comparison_str) - 2;
+
+	if ((got = ASN1_STRING_cmp(a, b)) != want) {
+		fprintf(stderr, "comparison of a with truncated b: "
+		    "want %d, got %d\n", want, got);
+		goto err;
+	}
+
+	want = -want;
+
+	if ((got = ASN1_STRING_cmp(b, a)) != want) {
+		fprintf(stderr, "comparison of truncated b with a: "
+		    "want %d, got %d\n", want, got);
+		goto err;
+	}
+
+	ASN1_STRING_length_set(a, 2);
+
+	if ((got = ASN1_STRING_cmp(a, b)) != 0) {
+		fprintf(stderr, "both truncated compared to %d\n", got);
+		goto err;
+	}
+
+	ASN1_STRING_length_set(a, strlen(comparison_str));
+
+	ASN1_STRING_set0(b, NULL, 0);
+
+	want = strlen(comparison_str);
+	if ((got = ASN1_STRING_cmp(a, b)) != want) {
+		fprintf(stderr, "comparison of a with zeroed b: "
+		    "want %d, got %d\n", want, got);
+		goto err;
+	}
+
+	ASN1_STRING_set0(b, "", 0);
+	b->flags |= ASN1_STRING_FLAG_NDEF;
+
+	if ((got = ASN1_STRING_cmp(a, b)) != want) {
+		fprintf(stderr, "comparison of a with zero-length b: "
+		    "want %d, got %d\n", want, got);
+		goto err;
+	}
+
+	ASN1_STRING_set0(a, NULL, 0);
+	if ((got = ASN1_STRING_cmp(a, b)) != 0) {
+		fprintf(stderr, "comparison of zeroed a with zero-length b: "
+		    "want 0, got %d\n", got);
+		goto err;
+	}
+	if ((got = ASN1_STRING_cmp(b, a)) != 0) {
+		fprintf(stderr, "comparison of zero-length b with zeroed a: "
+		    "want 0, got %d\n", got);
+		goto err;
+	}
+
+	failed = 0;
+
+ err:
+	ASN1_STRING_free(a);
+	ASN1_STRING_free(b);
+
+	return failed;
+}
+
 static int
 asn1_string_test(void)
 {
 	int failed = 0;
 
 	failed |= asn1_string_new_test();
+	failed |= asn1_string_cmp_test();
 
 	return failed;
 }
