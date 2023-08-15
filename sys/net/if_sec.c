@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.5 2023/08/11 02:34:56 dlg Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.6 2023/08/15 02:31:07 dlg Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -364,6 +364,12 @@ sec_send(void *arg)
 
 #if NPF > 0
 		pf_pkt_addr_changed(m);
+#endif
+
+#if NBPFILTER > 0
+		if (ifp->if_bpf)
+			bpf_mtap_af(ifp->if_bpf, m->m_pkthdr.ph_family, m,
+			    BPF_DIRECTION_OUT);
 #endif
 
 		error = ipsp_process_packet(m, tdb,
