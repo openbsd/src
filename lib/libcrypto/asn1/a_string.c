@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.16 2023/08/15 17:40:06 tb Exp $ */
+/* $OpenBSD: a_string.c,v 1.17 2023/08/15 18:05:15 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -186,7 +186,7 @@ ASN1_STRING_set(ASN1_STRING *astr, const void *_data, int len)
 
 	if ((astr->data = calloc(1, len + 1)) == NULL) {
 		ASN1error(ERR_R_MALLOC_FAILURE);
-		return (0);
+		return 0;
 	}
 	astr->length = len;
 
