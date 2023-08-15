@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.104 2023/01/29 20:30:56 gnezdo Exp $ */
+/*	$OpenBSD: resolve.h,v 1.105 2023/08/15 06:26:34 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -346,6 +346,9 @@ void	_dl_unsetenv(const char *, char **) __boot;
 void	_dl_trace_setup(char **) __boot;
 void	_dl_trace_object_setup(elf_object_t *);
 int	_dl_trace_plt(const elf_object_t *, const char *);
+
+/* dlfcn.c */
+void	_dl_show_objects(elf_object_t *_object);
 
 /* tib.c */
 void	_dl_allocate_tls_offsets(void) __boot;

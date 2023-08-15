@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.114 2023/07/08 14:09:43 jasper Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.115 2023/08/15 06:26:34 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -39,7 +39,6 @@
 #include "archdep.h"
 
 int _dl_errno;
-static int _dl_tracelib;
 
 static int _dl_real_close(void *handle);
 static lock_cb *_dl_thread_fnc = NULL;
@@ -72,7 +71,6 @@ dlopen(const char *libname, int flags)
 
 	if ((flags & RTLD_TRACE) == RTLD_TRACE) {
 		_dl_traceld = 1;
-		_dl_tracelib = 1;
 	}
 
 	DL_DEB(("dlopen: loading: %s\n", libname));
@@ -110,6 +108,11 @@ dlopen(const char *libname, int flags)
 		/* if opened but grpsym_vec has not been filled in */
 		if (object->grpsym_vec.len == 0)
 			_dl_cache_grpsym_list_setup(object);
+		if (_dl_traceld) {
+			_dl_show_objects(object);
+			_dl_unload_shlib(object);
+			_dl_exit(0);
+		}
 		goto loaded;
 	}
 
@@ -126,7 +129,7 @@ dlopen(const char *libname, int flags)
 		int err;
 		DL_DEB(("tail %s\n", object->load_name ));
 		if (_dl_traceld) {
-			_dl_show_objects();
+			_dl_show_objects(object);
 			_dl_unload_shlib(object);
 			_dl_exit(0);
 		}
@@ -250,7 +253,7 @@ dlctl(void *handle, int command, void *data)
 		break;
 	}
 	case 0x20:
-		_dl_show_objects();
+		_dl_show_objects(NULL);
 		retval = 0;
 		break;
 	case 0x21:
@@ -486,7 +489,7 @@ _dl_tracefmt(int fd, elf_object_t *object, const char *fmt1, const char *fmt2,
 }
 
 void
-_dl_show_objects(void)
+_dl_show_objects(elf_object_t *trace)
 {
 	elf_object_t *object;
 	char *objtypename;
@@ -514,12 +517,15 @@ _dl_show_objects(void)
 		_dl_dprintf(outputfd, "\tStart   %s End     %s Type  Open Ref GrpRef Name\n",
 		    pad, pad);
 
-	if (_dl_tracelib) {
-		for (; object != NULL; object = object->next)
+	if (trace != NULL) {
+		for (; object != NULL; object = object->next) {
+			if (object == trace)
+				break;
 			if (object->obj_type == OBJTYPE_LDR) {
 				object = object->next;
 				break;
 			}
+		}
 	}
 
 	for (; object != NULL; object = object->next) {

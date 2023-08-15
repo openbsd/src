@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.213 2023/07/08 14:09:43 jasper Exp $ */
+/*	$OpenBSD: loader.c,v 1.214 2023/08/15 06:26:34 guenther Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -701,7 +701,7 @@ _dl_boot(const char **argv, char **envp, const long dyn_loff, long *dl_data)
 	if (_dl_debug || _dl_traceld) {
 		if (_dl_traceld)
 			_dl_pledge("stdio rpath", NULL);
-		_dl_show_objects();
+		_dl_show_objects(NULL);
 	}
 
 	DL_DEB(("dynamic loading done, %s.\n",

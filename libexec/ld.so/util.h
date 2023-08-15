@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.38 2023/01/29 20:30:21 gnezdo Exp $	*/
+/*	$OpenBSD: util.h,v 1.39 2023/08/15 06:26:34 guenther Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <millert@openbsd.org>
@@ -59,7 +59,6 @@ size_t _dl_strlcat(char *dst, const char *src, size_t siz);
 void _dl_printf(const char *fmt, ...);
 void _dl_vprintf(const char *fmt, va_list ap);
 void _dl_dprintf(int, const char *fmt, ...);
-void _dl_show_objects(void);
 void _dl_arc4randombuf(void *, size_t);
 u_int32_t _dl_arc4random(void);
 ssize_t _dl_write(int fd, const char* buf, size_t len);
