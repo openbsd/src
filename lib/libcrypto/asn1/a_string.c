@@ -1,4 +1,4 @@
-/* $OpenBSD: a_string.c,v 1.15 2023/08/15 17:38:00 tb Exp $ */
+/* $OpenBSD: a_string.c,v 1.16 2023/08/15 17:40:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -121,7 +121,7 @@ ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 		return cmp;
 	if (a->length != 0) {
 		if ((cmp = memcmp(a->data, b->data, a->length)) != 0)
-			return 0;
+			return cmp;
 	}
 
 	return a->type - b->type;
