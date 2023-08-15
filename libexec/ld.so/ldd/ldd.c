@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldd.c,v 1.25 2023/08/12 13:43:22 gnezdo Exp $	*/
+/*	$OpenBSD: ldd.c,v 1.26 2023/08/15 13:50:53 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -47,6 +47,9 @@ int
 main(int argc, char **argv)
 {
 	int c, xflag, ret;
+
+	if (pledge("stdio rpath proc exec prot_exec", NULL) == -1)
+		err(1, "pledge");
 
 	xflag = 0;
 	while ((c = getopt(argc, argv, "x")) != -1) {
@@ -163,6 +166,8 @@ doit(char *name)
 		err(1, "fork");
 	case 0:
 		if (ehdr.e_type == ET_DYN && !interp) {
+			if (pledge("stdio rpath prot_exec", NULL) == -1)
+				err(1, "pledge");
 			if (realpath(name, buf) == NULL) {
 				printf("realpath(%s): %s", name,
 				    strerror(errno));
@@ -178,14 +183,13 @@ doit(char *name)
 			_exit(0);
 		}
 
+		if (pledge("stdio rpath exec", "stdio rpath") == -1)
+			err(1, "pledge");
 		if (i == ehdr.e_phnum) {
 			printf("not a dynamic executable\n");
 			fflush(stdout);
 			_exit(0);
 		}
-
-		if (pledge(NULL, "stdio rpath") == -1)
-			err(1, "pledge");
 		execl(name, name, (char *)NULL);
 		perror(name);
 		_exit(1);
