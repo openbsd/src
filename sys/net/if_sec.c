@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sec.c,v 1.6 2023/08/15 02:31:07 dlg Exp $ */
+/*	$OpenBSD: if_sec.c,v 1.7 2023/08/15 09:46:30 dlg Exp $ */
 
 /*
  * Copyright (c) 2022 The University of Queensland
@@ -72,6 +72,7 @@ struct sec_softc {
 	unsigned int			sc_up;
 
 	struct task			sc_send;
+	int				sc_txprio;
 
 	unsigned int			sc_unit;
 	SMR_SLIST_ENTRY(sec_softc)	sc_entry;
@@ -100,6 +101,7 @@ static void	sec_tdb_gc(void *);
 static struct if_clone sec_cloner =
     IF_CLONE_INITIALIZER("sec", sec_clone_create, sec_clone_destroy);
 
+static unsigned int		 sec_mix;
 static struct sec_bucket	 sec_map[256] __aligned(CACHELINESIZE);
 static struct tdb		*sec_tdbh[256] __aligned(CACHELINESIZE);
 
@@ -112,6 +114,7 @@ static struct mutex		 sec_tdb_gc_mtx =
 void
 secattach(int n)
 {
+	sec_mix = arc4random();
 	if_clone_attach(&sec_cloner);
 }
 
@@ -350,6 +353,7 @@ sec_send(void *arg)
 	struct tdb *tdb;
 	struct mbuf *m;
 	int error;
+	unsigned int flowid;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
 		return;
@@ -357,6 +361,8 @@ sec_send(void *arg)
 	tdb = sec_tdb_get(sc->sc_unit);
 	if (tdb == NULL)
 		goto purge;
+
+	flowid = sc->sc_unit ^ sec_mix;
 
 	NET_LOCK();
 	while ((m = ifq_dequeue(ifq)) != NULL) {
@@ -371,6 +377,10 @@ sec_send(void *arg)
 			bpf_mtap_af(ifp->if_bpf, m->m_pkthdr.ph_family, m,
 			    BPF_DIRECTION_OUT);
 #endif
+
+		m->m_pkthdr.pf.prio = sc->sc_txprio;
+		SET(m->m_pkthdr.csum_flags, M_FLOWID);
+		m->m_pkthdr.ph_flowid = flowid;
 
 		error = ipsp_process_packet(m, tdb,
 		    m->m_pkthdr.ph_family, /* already tunnelled? */ 0);
