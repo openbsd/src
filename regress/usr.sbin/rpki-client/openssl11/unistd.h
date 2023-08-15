@@ -8,6 +8,9 @@
 
 #include <openssl/stack.h>
 
+#define CMS_get_version(cms, version) (*(version) = 3, 1)
+#define CMS_SignerInfo_get_version(cms, version) (*(version) = 3, 1)
+
 #ifndef DECLARE_STACK_OF
 #define DECLARE_STACK_OF DEFINE_STACK_OF
 #endif
