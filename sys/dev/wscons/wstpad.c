@@ -1,4 +1,4 @@
-/* $OpenBSD: wstpad.c,v 1.32 2023/07/02 21:44:04 bru Exp $ */
+/* $OpenBSD: wstpad.c,v 1.33 2023/08/15 08:27:30 miod Exp $ */
 
 /*
  * Copyright (c) 2015, 2016 Ulf Brosziewski
@@ -151,7 +151,7 @@ struct tpad_touch {
 #define WSTPAD_DISABLE		(1 << 7)
 #define WSTPAD_MTBUTTONS	(1 << 8)
 
-#define WSTPAD_MT		(1 << 31)
+#define WSTPAD_MT		(1U << 31)
 
 
 struct wstpad {

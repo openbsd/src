@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.18 2023/07/06 08:32:37 jmatthew Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.19 2023/08/15 08:27:30 miod Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -194,7 +194,7 @@ struct dwge_desc {
 #define TDES0_PCE		(1 << 12)
 #define TDES0_JT		(1 << 14)
 #define TDES0_IHE		(1 << 16)
-#define TDES0_OWN		(1 << 31)
+#define TDES0_OWN		(1U << 31)
 
 #define ETDES0_TCH		(1 << 20)
 #define ETDES0_FS		(1 << 28)
@@ -217,7 +217,7 @@ struct dwge_desc {
 #define RDES0_FL_MASK		0x3fff
 #define RDES0_FL_SHIFT		16
 #define RDES0_AFM		(1 << 30)
-#define RDES0_OWN		(1 << 31)
+#define RDES0_OWN		(1U << 31)
 
 /* Tx size bits */
 #define TDES1_TBS1		(0xfff << 0)
@@ -229,12 +229,12 @@ struct dwge_desc {
 #define TDES1_CIC_FULL		(3 << 27)
 #define TDES1_FS		(1 << 29)
 #define TDES1_LS		(1 << 30)
-#define TDES1_IC		(1 << 31)
+#define TDES1_IC		(1U << 31)
 
 /* Rx size bits */
 #define RDES1_RBS1		(0xfff << 0)
 #define RDES1_RCH		(1 << 24)
-#define RDES1_DIC		(1 << 31)
+#define RDES1_DIC		(1U << 31)
 
 #define ERDES1_RCH		(1 << 14)
 

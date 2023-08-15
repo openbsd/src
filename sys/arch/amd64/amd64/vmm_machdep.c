@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.4 2023/07/10 03:32:10 guenther Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.5 2023/08/15 08:27:29 miod Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -6447,7 +6447,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 		/* Handle vmd(8) injected interrupts */
 		/* Is there an interrupt pending injection? */
 		if (irq != 0xFFFF && vcpu->vc_irqready) {
-			vmcb->v_eventinj = (irq & 0xFF) | (1 << 31);
+			vmcb->v_eventinj = (irq & 0xFF) | (1U << 31);
 			irq = 0xFFFF;
 		}
 
@@ -6467,7 +6467,7 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 				case VMM_EX_AC:
 					vmcb->v_eventinj |= (1ULL << 11);
 			}
-			vmcb->v_eventinj |= (vcpu->vc_event) | (1 << 31);
+			vmcb->v_eventinj |= (vcpu->vc_event) | (1U << 31);
 			vmcb->v_eventinj |= (3ULL << 8); /* Exception */
 			vcpu->vc_event = 0;
 		}

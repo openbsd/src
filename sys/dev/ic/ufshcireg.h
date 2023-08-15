@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufshcireg.h,v 1.2 2023/02/17 08:01:03 jsg Exp $ */
+/*	$OpenBSD: ufshcireg.h,v 1.3 2023/08/15 08:27:30 miod Exp $ */
 
 /*
  * Copyright (c) 2022 Marcus Glocker <mglocker@openbsd.org>
@@ -119,7 +119,7 @@
 #define UFSHCI_REG_UECDME		0x48
 /* UTP Transfer Request Interrupt Aggregation Control Register */
 #define UFSHCI_REG_UTRIACR		0x4C
-#define  UFSHCI_REG_UTRIACR_IAEN	(1 << 31) /* RW */
+#define  UFSHCI_REG_UTRIACR_IAEN	(1U << 31) /* RW */
 #define  UFSHCI_REG_UTRIACR_IAPWEN	(1 << 24) /* WO */
 #define  UFSHCI_REG_UTRIACR_IASB	(1 << 20) /* RO */
 #define  UFSHCI_REG_UTRIACR_CTR		(1 << 16) /* WO */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: amlclock.c,v 1.14 2022/06/28 23:43:12 naddy Exp $	*/
+/*	$OpenBSD: amlclock.c,v 1.15 2023/08/15 08:27:29 miod Exp $	*/
 /*
  * Copyright (c) 2019 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -89,7 +89,7 @@
 #define HHI_NAND_CLK_CNTL	0x97
 #define HHI_SD_EMMC_CLK_CNTL	0x99
 #define HHI_SYS_PLL_CNTL0	0xbd
-#define  HHI_SYS_DPLL_LOCK	(1 << 31)
+#define  HHI_SYS_DPLL_LOCK	(1U << 31)
 #define  HHI_SYS_DPLL_RESET	(1 << 29)
 #define  HHI_SYS_DPLL_EN	(1 << 28)
 #define  HHI_SYS_DPLL_OD(x)	(((x) >> 16) & 0x7)

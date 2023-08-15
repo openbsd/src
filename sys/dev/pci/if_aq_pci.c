@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.22 2023/05/02 12:32:22 kettenis Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.23 2023/08/15 08:27:30 miod Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -175,7 +175,7 @@
 #define AQ_INTR_CTRL_IRQMODE_MSIX		2
 #define  AQ_INTR_CTRL_MULTIVEC			(1 << 2)
 #define  AQ_INTR_CTRL_RESET_DIS			(1 << 29)
-#define  AQ_INTR_CTRL_RESET_IRQ			(1 << 31)
+#define  AQ_INTR_CTRL_RESET_IRQ			(1U << 31)
 #define AQ_MBOXIF_POWER_GATING_CONTROL_REG	0x32a8
 
 #define FW_MPI_MBOX_ADDR_REG			0x0360
@@ -220,12 +220,12 @@
 #define  RPF_L2UC_MSW_MACADDR_HI		0xFFFF
 #define  RPF_L2UC_MSW_ACTION			0x70000
 #define  RPF_L2UC_MSW_TAG			0x03c00000
-#define  RPF_L2UC_MSW_EN			(1 << 31)
+#define  RPF_L2UC_MSW_EN			(1U << 31)
 #define AQ_HW_MAC_NUM				34
 
 /* RPF_MCAST_FILTER_REG[8] 0x5250-0x5270 */
 #define RPF_MCAST_FILTER_REG(i)			(0x5250 + (i) * 4)
-#define  RPF_MCAST_FILTER_EN			(1 << 31)
+#define  RPF_MCAST_FILTER_EN			(1U << 31)
 #define RPF_MCAST_FILTER_MASK_REG		0x5270
 #define  RPF_MCAST_FILTER_MASK_ALLMULTI		(1 << 14)
 
@@ -240,14 +240,14 @@
 
 /* RPF_ETHERTYPE_FILTER_REG[AQ_RINGS_NUM] 0x5300-0x5380 */
 #define RPF_ETHERTYPE_FILTER_REG(i)		(0x5300 + (i) * 4)
-#define  RPF_ETHERTYPE_FILTER_EN		(1 << 31)
+#define  RPF_ETHERTYPE_FILTER_EN		(1U << 31)
 
 /* RPF_L3_FILTER_REG[8] 0x5380-0x53a0 */
 #define RPF_L3_FILTER_REG(i)			(0x5380 + (i) * 4)
-#define  RPF_L3_FILTER_L4_EN			(1 << 31)
+#define  RPF_L3_FILTER_L4_EN			(1U << 31)
 
 #define RX_FLR_RSS_CONTROL1_REG			0x54c0
-#define  RX_FLR_RSS_CONTROL1_EN			(1 << 31)
+#define  RX_FLR_RSS_CONTROL1_EN			(1U << 31)
 
 #define RPF_RPB_RX_TC_UPT_REG                   0x54c4
 #define  RPF_RPB_RX_TC_UPT_MASK(i)              (0x00000007 << ((i) * 4))
@@ -278,7 +278,7 @@
 #define RPB_RXB_BUFSIZE_REG(i)			(0x5710 + (i) * 0x10)
 #define  RPB_RXB_BUFSIZE			0x1FF
 #define RPB_RXB_XOFF_REG(i)			(0x5714 + (i) * 0x10)
-#define  RPB_RXB_XOFF_EN			(1 << 31)
+#define  RPB_RXB_XOFF_EN			(1U << 31)
 #define  RPB_RXB_XOFF_THRESH_HI                 0x3FFF0000
 #define  RPB_RXB_XOFF_THRESH_LO                 0x3FFF
 
@@ -301,7 +301,7 @@
 #define  RX_DMA_DESC_RESET			(1 << 25)
 #define  RX_DMA_DESC_HEADER_SPLIT		(1 << 28)
 #define  RX_DMA_DESC_VLAN_STRIP			(1 << 29)
-#define  RX_DMA_DESC_EN				(1 << 31)
+#define  RX_DMA_DESC_EN				(1U << 31)
 #define RX_DMA_DESC_HEAD_PTR_REG(i)		(0x5b0c + (i) * 0x20)
 #define  RX_DMA_DESC_HEAD_PTR			0xFFF
 #define RX_DMA_DESC_TAIL_PTR_REG(i)		(0x5b10 + (i) * 0x20)
@@ -313,10 +313,10 @@
 #define  RX_DMA_DCAD_CPUID			0xFF
 #define  RX_DMA_DCAD_PAYLOAD_EN			(1 << 29)
 #define  RX_DMA_DCAD_HEADER_EN			(1 << 30)
-#define  RX_DMA_DCAD_DESC_EN			(1 << 31)
+#define  RX_DMA_DCAD_DESC_EN			(1U << 31)
 
 #define RX_DMA_DCA_REG				0x6180
-#define  RX_DMA_DCA_EN				(1 << 31)
+#define  RX_DMA_DCA_EN				(1U << 31)
 #define  RX_DMA_DCA_MODE			0xF
 
 #define TX_SYSCONTROL_REG			0x7000
@@ -328,7 +328,7 @@
 #define TPS_DESC_VM_ARB_MODE_REG		0x7300
 #define  TPS_DESC_VM_ARB_MODE			(1 << 0)
 #define TPS_DESC_RATE_REG			0x7310
-#define  TPS_DESC_RATE_TA_RST			(1 << 31)
+#define  TPS_DESC_RATE_TA_RST			(1U << 31)
 #define  TPS_DESC_RATE_LIM			0x7FF
 #define TPS_DESC_TC_ARB_MODE_REG		0x7200
 #define  TPS_DESC_TC_ARB_MODE			0x3
@@ -393,7 +393,7 @@
 #define  TDM_DCAD_CPUID_EN			0x80000000
 
 #define TDM_DCA_REG				0x8480
-#define  TDM_DCA_EN				(1 << 31)
+#define  TDM_DCA_EN				(1U << 31)
 #define  TDM_DCA_MODE				0xF
 
 #define TX_INTR_MODERATION_CTL_REG(i)		(0x8980 + (i) * 4)
@@ -418,7 +418,7 @@
 #define  AQ2_MIF_BOOT_CRASH_INIT		(1 << 27)
 #define  AQ2_MIF_BOOT_BOOT_CODE_FAILED		(1 << 28)
 #define  AQ2_MIF_BOOT_FW_INIT_FAILED		(1 << 29)
-#define  AQ2_MIF_BOOT_FW_INIT_COMP_SUCCESS	(1 << 31)
+#define  AQ2_MIF_BOOT_FW_INIT_COMP_SUCCESS	(1U << 31)
 
 /* AQ2 action resolver table */
 #define AQ2_ART_ACTION_ACT_SHIFT		8

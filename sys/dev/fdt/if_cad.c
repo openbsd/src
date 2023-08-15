@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cad.c,v 1.12 2022/08/14 21:10:08 jca Exp $	*/
+/*	$OpenBSD: if_cad.c,v 1.13 2023/08/15 08:27:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2021-2022 Visa Hankala
@@ -220,7 +220,7 @@ struct cad_desc64 {
 #define GEM_RXD_ADDR_WRAP	(1 << 1)
 #define GEM_RXD_ADDR_USED	(1 << 0)
 
-#define GEM_RXD_BCAST		(1 << 31)
+#define GEM_RXD_BCAST		(1U << 31)
 #define GEM_RXD_MCAST		(1 << 30)
 #define GEM_RXD_UCAST		(1 << 29)
 #define GEM_RXD_SPEC		(1 << 27)
@@ -237,7 +237,7 @@ struct cad_desc64 {
 #define GEM_RXD_BADFCS		(1 << 13)
 #define GEM_RXD_LEN_MASK	0x1fff
 
-#define GEM_TXD_USED		(1 << 31)
+#define GEM_TXD_USED		(1U << 31)
 #define GEM_TXD_WRAP		(1 << 30)
 #define GEM_TXD_RLIMIT		(1 << 29)
 #define GEM_TXD_CORRUPT		(1 << 27)

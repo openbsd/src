@@ -1,4 +1,4 @@
-/* $OpenBSD: tpm.c,v 1.17 2022/04/06 18:59:27 naddy Exp $ */
+/* $OpenBSD: tpm.c,v 1.18 2023/08/15 08:27:29 miod Exp $ */
 
 /*
  * Minimal interface to Trusted Platform Module chips implementing the
@@ -150,7 +150,7 @@
 #define TPM_CRB_CTRL_CANCEL_CLEAR	0x0
 
 #define TPM_CRB_CTRL_START_CMD		(1 << 0)
-#define TPM_CRB_INT_ENABLED_BIT		(1 << 31)
+#define TPM_CRB_INT_ENABLED_BIT		(1U << 31)
 
 #define TPM2_RC_SUCCESS			0x0000
 #define TPM2_RC_INITIALIZE		0x0100

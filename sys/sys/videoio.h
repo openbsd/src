@@ -1,4 +1,4 @@
-/*	$OpenBSD: videoio.h,v 1.17 2020/11/20 05:27:29 mglocker Exp $	*/
+/*	$OpenBSD: videoio.h,v 1.18 2023/08/15 08:27:30 miod Exp $	*/
 /*
  *  Video for Linux Two header file
  *
@@ -1070,7 +1070,7 @@ enum v4l2_detect_md_mode {
 /*  Four-character-code (FOURCC) */
 #define v4l2_fourcc(a, b, c, d)\
 	((u_int32_t)(a) | ((u_int32_t)(b) << 8) | ((u_int32_t)(c) << 16) | ((u_int32_t)(d) << 24))
-#define v4l2_fourcc_be(a, b, c, d)	(v4l2_fourcc(a, b, c, d) | (1 << 31))
+#define v4l2_fourcc_be(a, b, c, d)	(v4l2_fourcc(a, b, c, d) | (1U << 31))
 
 /*
  *	E N U M S

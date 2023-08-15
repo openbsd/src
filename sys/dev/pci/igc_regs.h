@@ -1,4 +1,4 @@
-/*	$OpenBSD: igc_regs.h,v 1.1 2021/10/31 14:52:57 patrick Exp $	*/
+/*	$OpenBSD: igc_regs.h,v 1.2 2023/08/15 08:27:30 miod Exp $	*/
 /*-
  * Copyright 2021 Intel Corp
  * Copyright 2021 Rubicon Communications, LLC (Netgate)
@@ -333,7 +333,7 @@
 /* ETQF register bit definitions */
 #define IGC_ETQF_FILTER_ENABLE	(1 << 26)
 #define IGC_ETQF_IMM_INT	(1 << 29)
-#define IGC_ETQF_QUEUE_ENABLE	(1 << 31)
+#define IGC_ETQF_QUEUE_ENABLE	(1U << 31)
 #define IGC_ETQF_QUEUE_SHIFT	16
 #define IGC_ETQF_QUEUE_MASK	0x00070000
 #define IGC_ETQF_ETYPE_MASK	0x0000FFFF

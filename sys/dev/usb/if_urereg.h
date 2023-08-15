@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_urereg.h,v 1.12 2023/05/06 08:07:10 kevlo Exp $	*/
+/*	$OpenBSD: if_urereg.h,v 1.13 2023/08/15 08:27:30 miod Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * All rights reserved.
@@ -567,11 +567,11 @@ struct ure_rxpkt {
 
 struct ure_txpkt {
 	uint32_t ure_pktlen;
-#define	URE_TXPKT_TX_FS		(1 << 31)
+#define	URE_TXPKT_TX_FS		(1U << 31)
 #define	URE_TXPKT_TX_LS		(1 << 30)
 #define	URE_TXPKT_LEN_MASK	0xffff
 	uint32_t ure_vlan;
-#define	URE_TXPKT_UDP		(1 << 31)
+#define	URE_TXPKT_UDP		(1U << 31)
 #define	URE_TXPKT_TCP		(1 << 30)
 #define	URE_TXPKT_IPV4		(1 << 29)
 #define	URE_TXPKT_IPV6		(1 << 28)

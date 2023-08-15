@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.107 2023/06/06 01:40:04 dlg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.108 2023/08/15 08:27:30 miod Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -149,8 +149,8 @@ CTASSERT(MCX_MAX_QUEUES * MCX_WQ_DOORBELL_STRIDE <
 #define MCX_CMDQ_DOORBELL		0x0018
 
 #define MCX_STATE			0x01fc
-#define MCX_STATE_MASK				(1 << 31)
-#define MCX_STATE_INITIALIZING			(1 << 31)
+#define MCX_STATE_MASK				(1U << 31)
+#define MCX_STATE_INITIALIZING			(1U << 31)
 #define MCX_STATE_READY				(0 << 31)
 #define MCX_STATE_INTERFACE_MASK		(0x3 << 24)
 #define MCX_STATE_INTERFACE_FULL_DRIVER		(0x0 << 24)
@@ -1405,7 +1405,7 @@ struct mcx_cmd_create_tir_mb_in {
 #define MCX_TIR_CTX_HASH_SEL_SPORT	(1 << 2)
 #define MCX_TIR_CTX_HASH_SEL_DPORT	(1 << 3)
 #define MCX_TIR_CTX_HASH_SEL_IPV4	(0 << 31)
-#define MCX_TIR_CTX_HASH_SEL_IPV6	(1 << 31)
+#define MCX_TIR_CTX_HASH_SEL_IPV6	(1U << 31)
 #define MCX_TIR_CTX_HASH_SEL_TCP	(0 << 30)
 #define MCX_TIR_CTX_HASH_SEL_UDP	(1 << 30)
 	uint32_t		cmd_rx_hash_sel_inner;
@@ -1675,7 +1675,7 @@ CTASSERT(sizeof(struct mcx_wq_ctx) == 0xC0);
 
 struct mcx_sq_ctx {
 	uint32_t		sq_flags;
-#define MCX_SQ_CTX_RLKEY			(1 << 31)
+#define MCX_SQ_CTX_RLKEY			(1U << 31)
 #define MCX_SQ_CTX_FRE_SHIFT			(1 << 29)
 #define MCX_SQ_CTX_FLUSH_IN_ERROR		(1 << 28)
 #define MCX_SQ_CTX_MIN_WQE_INLINE_SHIFT		24
@@ -1722,7 +1722,7 @@ struct mcx_sq_entry {
 	/* ethernet segment */
 	uint32_t		sqe_reserved1;
 	uint32_t		sqe_mss_csum;
-#define MCX_SQE_L4_CSUM				(1 << 31)
+#define MCX_SQE_L4_CSUM				(1U << 31)
 #define MCX_SQE_L3_CSUM				(1 << 30)
 	uint32_t		sqe_reserved2;
 	uint16_t		sqe_inline_header_size;
@@ -1789,7 +1789,7 @@ struct mcx_cmd_destroy_sq_out {
 
 struct mcx_rq_ctx {
 	uint32_t		rq_flags;
-#define MCX_RQ_CTX_RLKEY			(1 << 31)
+#define MCX_RQ_CTX_RLKEY			(1U << 31)
 #define MCX_RQ_CTX_VLAN_STRIP_DIS		(1 << 28)
 #define MCX_RQ_CTX_MEM_RQ_TYPE_SHIFT		24
 #define MCX_RQ_CTX_STATE_SHIFT			20

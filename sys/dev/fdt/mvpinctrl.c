@@ -1,4 +1,4 @@
-/* $OpenBSD: mvpinctrl.c,v 1.11 2022/06/28 23:43:12 naddy Exp $ */
+/* $OpenBSD: mvpinctrl.c,v 1.12 2023/08/15 08:27:30 miod Exp $ */
 /*
  * Copyright (c) 2013,2016 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -332,7 +332,7 @@ mvpinctrl_set_pin(void *cookie, uint32_t *cells, int val)
 /* Armada 3700 XTAL block */
 
 #define XTAL			0xc
-#define  XTAL_MODE			(1 << 31)
+#define  XTAL_MODE			(1U << 31)
 
 uint32_t
 a3700_xtal_get_frequency(void *cookie, uint32_t *cells)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwxe.c,v 1.21 2022/07/09 20:51:39 kettenis Exp $	*/
+/*	$OpenBSD: if_dwxe.c,v 1.22 2023/08/15 08:27:30 miod Exp $	*/
 /*
  * Copyright (c) 2008 Mark Kettenis
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -184,7 +184,7 @@ struct dwxe_desc {
 #define DWXE_TX_PAYLOAD_ERR		(1 << 12)
 #define DWXE_TX_LENGTH_ERR		(1 << 14)
 #define DWXE_TX_HEADER_ERR		(1 << 16)
-#define DWXE_TX_DESC_CTL		(1 << 31)
+#define DWXE_TX_DESC_CTL		(1U << 31)
 
 /* Rx status bits */
 #define DWXE_RX_PAYLOAD_ERR		(1 << 0)
@@ -202,7 +202,7 @@ struct dwxe_desc {
 #define DWXE_RX_FRM_LEN_MASK		0x3fff
 #define DWXE_RX_FRM_LEN_SHIFT		16
 #define DWXE_RX_DAF_FAIL		(1 << 30)
-#define DWXE_RX_DESC_CTL		(1 << 31)
+#define DWXE_RX_DESC_CTL		(1U << 31)
 
 /* Tx size bits */
 #define DWXE_TX_BUF_SIZE		(0xfff << 0)
@@ -213,11 +213,11 @@ struct dwxe_desc {
 #define DWXE_TX_CHECKSUM_CTL_FULL	(3 << 27)
 #define DWXE_TX_FIR_DESC		(1 << 29)
 #define DWXE_TX_LAST_DESC		(1 << 30)
-#define DWXE_TX_INT_CTL		(1 << 31)
+#define DWXE_TX_INT_CTL		(1U << 31)
 
 /* Rx size bits */
 #define DWXE_RX_BUF_SIZE		(0xfff << 0)
-#define DWXE_RX_INT_CTL		(1 << 31)
+#define DWXE_RX_INT_CTL		(1U << 31)
 
 /* EMAC syscon bits */
 #define SYSCON_EMAC			0x30

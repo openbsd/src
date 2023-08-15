@@ -1,4 +1,4 @@
-/*	$OpenBSD: ixgbe_type.h,v 1.37 2023/05/18 08:22:37 jan Exp $	*/
+/*	$OpenBSD: ixgbe_type.h,v 1.38 2023/08/15 08:27:30 miod Exp $	*/
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4454,7 +4454,7 @@ struct ixgbe_bypass_eeprom {
 #define IXGBE_KRM_LINK_CTRL_1_TETH_EEE_CAP_KR		(1 << 26)
 #define IXGBE_KRM_LINK_S1_MAC_AN_COMPLETE		(1 << 28)
 #define IXGBE_KRM_LINK_CTRL_1_TETH_AN_ENABLE		(1 << 29)
-#define IXGBE_KRM_LINK_CTRL_1_TETH_AN_RESTART		(1 << 31)
+#define IXGBE_KRM_LINK_CTRL_1_TETH_AN_RESTART		(1U << 31)
 
 #define IXGBE_KRM_AN_CNTL_1_SYM_PAUSE			(1 << 28)
 #define IXGBE_KRM_AN_CNTL_1_ASM_PAUSE			(1 << 29)
@@ -4484,7 +4484,7 @@ struct ixgbe_bypass_eeprom {
 #define IXGBE_KRM_TX_COEFF_CTRL_1_CMINUS1_OVRRD_EN	(1 << 1)
 #define IXGBE_KRM_TX_COEFF_CTRL_1_CPLUS1_OVRRD_EN	(1 << 2)
 #define IXGBE_KRM_TX_COEFF_CTRL_1_CZERO_EN		(1 << 3)
-#define IXGBE_KRM_TX_COEFF_CTRL_1_OVRRD_EN		(1 << 31)
+#define IXGBE_KRM_TX_COEFF_CTRL_1_OVRRD_EN		(1U << 31)
 
 #define IXGBE_SB_IOSF_INDIRECT_CTRL	0x00011144
 #define IXGBE_SB_IOSF_INDIRECT_DATA	0x00011148

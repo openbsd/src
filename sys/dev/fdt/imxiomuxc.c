@@ -1,4 +1,4 @@
-/* $OpenBSD: imxiomuxc.c,v 1.7 2021/10/24 17:52:26 mpi Exp $ */
+/* $OpenBSD: imxiomuxc.c,v 1.8 2023/08/15 08:27:30 miod Exp $ */
 /*
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -35,7 +35,7 @@
 
 #define IOMUX_CONFIG_SION		(1 << 4)
 
-#define IMX_PINCTRL_NO_PAD_CTL		(1 << 31)
+#define IMX_PINCTRL_NO_PAD_CTL		(1U << 31)
 #define IMX_PINCTRL_SION		(1 << 30)
 
 struct imxiomuxc_softc {
