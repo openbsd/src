@@ -1,4 +1,4 @@
-/* $OpenBSD: com_fdt.c,v 1.7 2022/01/11 11:51:14 uaa Exp $ */
+/* $OpenBSD: com_fdt.c,v 1.8 2023/08/15 07:56:27 miod Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -130,7 +130,7 @@ com_fdt_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_uarttype = COM_UART_16550;
 	sc->sc_frequency = freq ? freq : COM_FREQ;
 
-	if (OF_is_compatible(stdout_node, "ns16550a")) {
+	if (OF_is_compatible(faa->fa_node, "ns16550a")) {
 		width = 1;
 		shift = 0;
 	} else {
