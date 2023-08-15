@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1basic.c,v 1.13 2022/11/26 16:08:56 tb Exp $ */
+/* $OpenBSD: asn1basic.c,v 1.14 2023/08/15 19:14:42 tb Exp $ */
 /*
  * Copyright (c) 2017, 2021 Joel Sing <jsing@openbsd.org>
  *
@@ -750,6 +750,233 @@ asn1_integer_test(void)
 	return failed;
 }
 
+static const struct asn1_string_new_test {
+	const char *name;
+	ASN1_STRING *(*new)(void);
+	void (*free)(ASN1_STRING *);
+	int type;
+	long flags;
+} asn1_string_new_tests[] = {
+	{
+		.name = "ASN1_STRING",
+		.new = ASN1_STRING_new,
+		.free = ASN1_STRING_free,
+		.type = V_ASN1_OCTET_STRING,
+	},
+	{
+		.name = "ASN1_OCTET_STRING",
+		.new = ASN1_OCTET_STRING_new,
+		.free = ASN1_OCTET_STRING_free,
+		.type = V_ASN1_OCTET_STRING,
+	},
+	{
+		.name = "ASN1_BIT_STRING",
+		.new = ASN1_BIT_STRING_new,
+		.free = ASN1_BIT_STRING_free,
+		.type = V_ASN1_BIT_STRING,
+	},
+	{
+		.name = "ASN1_INTEGER",
+		.new = ASN1_INTEGER_new,
+		.free = ASN1_INTEGER_free,
+		.type = V_ASN1_INTEGER,
+	},
+	{
+		.name = "ASN1_ENUMERATED",
+		.new = ASN1_ENUMERATED_new,
+		.free = ASN1_ENUMERATED_free,
+		.type = V_ASN1_ENUMERATED,
+	},
+	{
+		.name = "ASN1_UTF8STRING",
+		.new = ASN1_UTF8STRING_new,
+		.free = ASN1_UTF8STRING_free,
+		.type = V_ASN1_UTF8STRING,
+	},
+	{
+		.name = "ASN1_IA5STRING",
+		.new = ASN1_IA5STRING_new,
+		.free = ASN1_IA5STRING_free,
+		.type = V_ASN1_IA5STRING,
+	},
+	{
+		.name = "ASN1_UNIVERSALSTRING",
+		.new = ASN1_UNIVERSALSTRING_new,
+		.free = ASN1_UNIVERSALSTRING_free,
+		.type = V_ASN1_UNIVERSALSTRING,
+	},
+	{
+		.name = "ASN1_BMPSTRING",
+		.new = ASN1_BMPSTRING_new,
+		.free = ASN1_BMPSTRING_free,
+		.type = V_ASN1_BMPSTRING,
+	},
+	{
+		.name = "ASN1_GENERALSTRING",
+		.new = ASN1_GENERALSTRING_new,
+		.free = ASN1_GENERALSTRING_free,
+		.type = V_ASN1_GENERALSTRING,
+	},
+	{
+		.name = "ASN1_T61STRING",
+		.new = ASN1_T61STRING_new,
+		.free = ASN1_T61STRING_free,
+		.type = V_ASN1_T61STRING,
+	},
+	{
+		.name = "ASN1_VISIBLESTRING",
+		.new = ASN1_VISIBLESTRING_new,
+		.free = ASN1_VISIBLESTRING_free,
+		.type = V_ASN1_VISIBLESTRING,
+	},
+	{
+		.name = "ASN1_PRINTABLESTRING",
+		.new = ASN1_PRINTABLESTRING_new,
+		.free = ASN1_PRINTABLESTRING_free,
+		.type = V_ASN1_PRINTABLESTRING,
+	},
+	{
+		.name = "ASN1_PRINTABLE",
+		.new = ASN1_PRINTABLE_new,
+		.free = ASN1_PRINTABLE_free,
+		.type = V_ASN1_UNDEF,
+		.flags = ASN1_STRING_FLAG_MSTRING,
+	},
+	{
+		.name = "DIRECTORYSTRING",
+		.new = DIRECTORYSTRING_new,
+		.free = DIRECTORYSTRING_free,
+		.type = V_ASN1_UNDEF,
+		.flags = ASN1_STRING_FLAG_MSTRING,
+	},
+	{
+		.name = "DISPLAYTEXT",
+		.new = DISPLAYTEXT_new,
+		.free = DISPLAYTEXT_free,
+		.type = V_ASN1_UNDEF,
+		.flags = ASN1_STRING_FLAG_MSTRING,
+	},
+	{
+		.name = "ASN1_GENERALIZEDTIME",
+		.new = ASN1_GENERALIZEDTIME_new,
+		.free = ASN1_GENERALIZEDTIME_free,
+		.type = V_ASN1_GENERALIZEDTIME,
+	},
+	{
+		.name = "ASN1_UTCTIME",
+		.new = ASN1_UTCTIME_new,
+		.free = ASN1_UTCTIME_free,
+		.type = V_ASN1_UTCTIME,
+	},
+	{
+		.name = "ASN1_TIME",
+		.new = ASN1_TIME_new,
+		.free = ASN1_TIME_free,
+		.type = V_ASN1_UNDEF,
+		.flags = ASN1_STRING_FLAG_MSTRING,
+	},
+};
+
+#define N_ASN1_STRING_NEW_TESTS \
+    (sizeof(asn1_string_new_tests) / sizeof(asn1_string_new_tests[0]))
+
+static int
+asn1_string_new_test(void)
+{
+	size_t i;
+	ASN1_STRING *astr = NULL;
+	int failed = 1;
+
+	for (i = 0; i < N_ASN1_STRING_NEW_TESTS; i++) {
+		const struct asn1_string_new_test *asnt = &asn1_string_new_tests[i];
+
+		if ((astr = asnt->new()) == NULL) {
+			fprintf(stderr, "%s_new() failed\n", asnt->name);
+			goto err;
+		}
+		if (ASN1_STRING_type(astr) != asnt->type) {
+			fprintf(stderr, "%s type: want %d, got %d\n",
+			    asnt->name, asnt->type, ASN1_STRING_type(astr));
+			goto err;
+		}
+		if (ASN1_STRING_data(astr) != NULL) {
+			fprintf(stderr, "%s data != NULL\n", asnt->name);
+			goto err;
+		}
+		if (ASN1_STRING_get0_data(astr) != NULL) {
+			fprintf(stderr, "%s data != NULL\n", asnt->name);
+			goto err;
+		}
+		if (ASN1_STRING_length(astr) != 0) {
+			fprintf(stderr, "%s length %d != 0\n", asnt->name,
+			    ASN1_STRING_length(astr));
+			goto err;
+		}
+		ASN1_STRING_length_set(astr, 20);
+		if (ASN1_STRING_length(astr) != 20) {
+			fprintf(stderr, "%s length %d != 20\n", asnt->name,
+			    ASN1_STRING_length(astr));
+			goto err;
+		}
+		astr->flags |= ASN1_STRING_FLAG_NDEF;
+		if (astr->flags != (asnt->flags | ASN1_STRING_FLAG_NDEF)) {
+			fprintf(stderr, "%s flags: %lx\n", asnt->name,
+			    astr->flags);
+			goto err;
+		}
+		/* ASN1_STRING_set0() clears ASN1_STRING_FLAG_NDEF. */
+		ASN1_STRING_set0(astr, NULL, 0);
+		if (astr->flags != asnt->flags) {
+			fprintf(stderr, "%s flags: %lx != %lx\n", asnt->name,
+			    astr->flags, asnt->flags);
+			goto err;
+		}
+		asnt->free(astr);
+		astr = NULL;
+
+		if ((astr = ASN1_STRING_type_new(asnt->type)) == NULL) {
+			fprintf(stderr, "ASN1_STRING_type_new(%s) failed\n",
+			    asnt->name);
+			goto err;
+		}
+		if (ASN1_STRING_type(astr) != asnt->type) {
+			fprintf(stderr, "%s type: want %d, got %d\n",
+			    asnt->name, asnt->type, ASN1_STRING_type(astr));
+			goto err;
+		}
+		if (ASN1_STRING_data(astr) != NULL) {
+			fprintf(stderr, "%s data != NULL\n", asnt->name);
+			goto err;
+		}
+		/* ASN1_STRING_type_new() does not set flags. */
+		if (astr->flags != 0) {
+			fprintf(stderr, "%s flags %lx\n", asnt->name,
+			    astr->flags);
+			goto err;
+		}
+		asnt->free(astr);
+		astr = NULL;
+
+	}
+
+	failed = 0;
+
+ err:
+	ASN1_STRING_free(astr);
+
+	return failed;
+}
+
+static int
+asn1_string_test(void)
+{
+	int failed = 0;
+
+	failed |= asn1_string_new_test();
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -758,6 +985,7 @@ main(int argc, char **argv)
 	failed |= asn1_bit_string_test();
 	failed |= asn1_boolean_test();
 	failed |= asn1_integer_test();
+	failed |= asn1_string_test();
 
 	return (failed);
 }
