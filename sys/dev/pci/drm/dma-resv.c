@@ -588,13 +588,12 @@ int dma_resv_get_fences(struct dma_resv *obj, enum dma_resv_usage usage,
 #else
 			nfences = kmalloc(count * sizeof(void *),
 						 GFP_KERNEL);
-			if (nfences != NULL && *fences != NULL)
+			if (nfences != NULL && *fences != NULL) {
 				memcpy(nfences, *fences,
 				    (count - 1) *  sizeof(void *));
-			if (nfences) {
 				kfree(*fences);
-				new_fences = nfences;
 			}
+			new_fences = nfences;
 #endif
 			if (count && !new_fences) {
 				kfree(*fences);
