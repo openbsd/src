@@ -1,4 +1,4 @@
-/* $OpenBSD: tmux.h,v 1.1204 2023/08/08 08:21:30 nicm Exp $ */
+/* $OpenBSD: tmux.h,v 1.1205 2023/08/15 07:01:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3308,12 +3308,12 @@ void		 menu_add_item(struct menu *, const struct menu_item *,
 void		 menu_free(struct menu *);
 struct menu_data *menu_prepare(struct menu *, int, int, struct cmdq_item *,
 		    u_int, u_int, struct client *, enum box_lines, const char *,
-		    const char *, struct cmd_find_state *, menu_choice_cb,
-		    void *);
+		    const char *, const char *, struct cmd_find_state *,
+		    menu_choice_cb, void *);
 int		 menu_display(struct menu *, int, int, struct cmdq_item *,
 		    u_int, u_int, struct client *, enum box_lines, const char *,
-		    const char *, struct cmd_find_state *, menu_choice_cb,
-		    void *);
+		    const char *, const char *, struct cmd_find_state *,
+		    menu_choice_cb, void *);
 struct screen	*menu_mode_cb(struct client *, void *, u_int *, u_int *);
 void		 menu_check_cb(struct client *, void *, u_int, u_int, u_int,
 		    struct overlay_ranges *);

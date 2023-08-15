@@ -1,4 +1,4 @@
-/* $OpenBSD: popup.c,v 1.51 2023/08/08 08:08:47 nicm Exp $ */
+/* $OpenBSD: popup.c,v 1.52 2023/08/15 07:01:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2020 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -576,7 +576,7 @@ menu:
 	else
 		x = 0;
 	pd->md = menu_prepare(pd->menu, 0, 0, NULL, x, m->y, c,
-	    BOX_LINES_DEFAULT, NULL, NULL, NULL, popup_menu_done, pd);
+	    BOX_LINES_DEFAULT, NULL, NULL, NULL, NULL, popup_menu_done, pd);
 	c->flags |= CLIENT_REDRAWOVERLAY;
 
 out:

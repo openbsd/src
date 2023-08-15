@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.217 2023/08/08 08:08:47 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.218 2023/08/15 07:01:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -733,7 +733,7 @@ screen_write_menu(struct screen_write_ctx *ctx, struct menu *menu, int choice,
 			continue;
 		}
 
-		format_draw(ctx, gc, width, name, NULL, gc == choice_gc);
+		format_draw(ctx, gc, width, name, NULL, 0);
 		gc = &default_gc;
 	}
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.166 2023/08/08 08:08:47 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.167 2023/08/15 07:01:47 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -334,6 +334,15 @@ const struct options_table_entry options_table[] = {
 	  .default_str = "default",
 	  .separator = ",",
 	  .text = "Default style of menu."
+	},
+
+	{ .name = "menu-selected-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .default_str = "bg=yellow,fg=black",
+	  .separator = ",",
+	  .text = "Default style of selected menu item."
 	},
 
 	{ .name = "menu-border-style",
@@ -962,8 +971,8 @@ const struct options_table_entry options_table[] = {
 	{ .name = "mode-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "bg=yellow,fg=black",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .default_str = "bg=yellow,fg=black",
 	  .separator = ",",
 	  .text = "Style of indicators and highlighting in modes."
 	},
