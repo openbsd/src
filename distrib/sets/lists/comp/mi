@@ -1952,6 +1952,7 @@
 ./usr/share/man/man3/EVP_VerifyInit.3
 ./usr/share/man/man3/EVP_aes_128_cbc.3
 ./usr/share/man/man3/EVP_camellia_128_cbc.3
+./usr/share/man/man3/EVP_chacha20.3
 ./usr/share/man/man3/EVP_des_cbc.3
 ./usr/share/man/man3/EVP_rc4.3
 ./usr/share/man/man3/EVP_sha3_224.3
