@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.3 2021/07/18 15:18:48 deraadt Exp $
+#	$OpenBSD: list,v 1.4 2023/08/15 14:24:53 jsg Exp $
 
 SRCDIRS distrib/special
 
@@ -31,7 +31,6 @@ LINK	instbin					sbin/dmesg
 LINK	instbin					sbin/fdisk
 LINK	instbin					sbin/fsck
 LINK	instbin					sbin/fsck_ffs
-LINK	instbin					sbin/fsck_msdos
 LINK	instbin					sbin/ifconfig
 LINK	instbin					sbin/init
 LINK	instbin					sbin/kbd
@@ -39,7 +38,6 @@ LINK	instbin					sbin/mknod
 LINK	instbin					sbin/mount
 LINK	instbin					sbin/mount_cd9660
 LINK	instbin					sbin/mount_ffs
-LINK	instbin					sbin/mount_msdos
 LINK	instbin					sbin/newfs
 LINK	instbin					sbin/ping sbin/ping6
 LINK	instbin					sbin/reboot sbin/halt
