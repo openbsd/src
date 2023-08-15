@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.91 2023/07/12 19:49:06 jasper Exp $ */
+/*	$OpenBSD: library.c,v 1.92 2023/08/15 06:23:31 guenther Exp $ */
 
 /*
  * Copyright (c) 2002 Dale Rahn
@@ -345,7 +345,7 @@ _dl_tryload_shlib(const char *libname, int type, int flags, int nodelete)
 			_dl_set_tls(object, ptls, libaddr, libname);
 
 		/* Request permission for system calls in libc.so's text segment */
-		if (soname != NULL &&
+		if (soname != NULL && !_dl_traceld &&
 		    _dl_strncmp(soname, "libc.so.", 8) == 0) {
 			if (_dl_msyscall(exec_start, exec_size) == -1)
 				_dl_printf("msyscall %lx %lx error\n",
