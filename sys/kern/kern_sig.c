@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.312 2023/08/13 15:53:31 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.313 2023/08/16 07:55:52 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1251,7 +1251,6 @@ cursig(struct proc *p, struct sigctx *sctx)
 {
 	struct process *pr = p->p_p;
 	int signum, mask, prop;
-	int dolock = (p->p_flag & P_SINTR) == 0;
 	sigset_t ps_siglist;
 	int s;
 
@@ -1294,11 +1293,9 @@ cursig(struct proc *p, struct sigctx *sctx)
 			single_thread_set(p, SINGLE_SUSPEND, 0);
 			pr->ps_xsig = signum;
 
-			if (dolock)
-				SCHED_LOCK(s);
+			SCHED_LOCK(s);
 			proc_stop(p, 1);
-			if (dolock)
-				SCHED_UNLOCK(s);
+			SCHED_UNLOCK(s);
 
 			/*
 			 * re-take the signal before releasing
@@ -1371,11 +1368,9 @@ cursig(struct proc *p, struct sigctx *sctx)
 				    prop & SA_TTYSTOP))
 					break;	/* == ignore */
 				pr->ps_xsig = signum;
-				if (dolock)
-					SCHED_LOCK(s);
+				SCHED_LOCK(s);
 				proc_stop(p, 1);
-				if (dolock)
-					SCHED_UNLOCK(s);
+				SCHED_UNLOCK(s);
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
