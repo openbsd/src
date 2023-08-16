@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.235 2023/04/20 12:44:28 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.236 2023/08/16 08:38:40 job Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 20 2023 $
+.Dd $Mdocdate: August 16 2023 $
 .Dt BGPD.CONF 5
 .Os
 .Sh NAME
@@ -453,7 +453,6 @@ rules.
 .Ic { Ic customer-as Ar as-number
 .Op Ic expires Ar seconds
 .Ic provider-as Ic { Ar as-number
-.Op Ic inet Ns | Ns Ic inet6
 .Ic ... Ic } ... Ic }
 .Xc
 The
@@ -466,7 +465,7 @@ and the ASPA Validation State (AVS) is set.
 .Ic expires
 can be set to the seconds since Epoch until when this VAP is valid.
 .Bd -literal -offset indent
-roa-set {
+aspa-set {
 	customer-as 64511 provider-as { 64496 65496 }
 	customer-as 64496 provider-as { 65496 64544 }
 }
