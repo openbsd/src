@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.73 2023/08/15 20:51:45 dv Exp $ */
+/*	$OpenBSD: btrace.c,v 1.74 2023/08/16 13:07:11 dv Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -117,7 +117,6 @@ size_t			 dt_ndtpi;	/* # of elements in the array */
 struct dtioc_arg_info  **dt_args;	/* array of probe arguments */
 
 struct dt_evt		 bt_devt;	/* fake event for BEGIN/END */
-#define DTEV_PBN_BEGINEND	0	/* fake probe number for BEGIN/END */
 uint64_t		 bt_filtered;	/* # of events filtered out */
 
 struct syms		*kelf, *uelf;
@@ -298,7 +297,6 @@ dtai_cache(int fd, struct dtioc_probe_info *dtpi)
 			err(1, NULL);
 	}
 
-	assert(dtpi->dtpi_pbn > 0);
 	if (dt_args[dtpi->dtpi_pbn - 1] != NULL)
 		return;
 
@@ -327,7 +325,6 @@ dtpi_print_list(int fd)
 		    dtpi->dtpi_name);
 		if (strncmp(dtpi->dtpi_prov, "tracepoint", DTNAMESIZE) == 0) {
 			dtai_cache(fd, dtpi);
-			assert(dtpi->dtpi_pbn > 0);
 			dtai = dt_args[dtpi->dtpi_pbn - 1];
 			printf("(");
 			for (j = 0; j < dtpi->dtpi_nargs; j++, dtai++) {
@@ -546,7 +543,7 @@ rules_setup(int fd)
 		kelf = kelf_open(_PATH_KSYMS);
 
 	/* Initialize "fake" event for BEGIN/END */
-	bt_devt.dtev_pbn = DTEV_PBN_BEGINEND;
+	bt_devt.dtev_pbn = -1;
 	strlcpy(bt_devt.dtev_comm, getprogname(), sizeof(bt_devt.dtev_comm));
 	bt_devt.dtev_pid = getpid();
 	bt_devt.dtev_tid = getthrid();
@@ -584,7 +581,7 @@ rules_apply(int fd, struct dt_evt *dtev)
 			if (bp->bp_type != B_PT_PROBE ||
 			    bp->bp_pbn != dtev->dtev_pbn)
 				continue;
-			assert(dtev->dtev_pbn > 0);
+
 			dtai_cache(fd, &dt_dtpis[dtev->dtev_pbn - 1]);
 			rule_eval(r, dtev);
 		}
@@ -784,12 +781,8 @@ builtin_arg(struct dt_evt *dtev, enum bt_argtype dat)
 	const char *argtype, *fmt;
 	long value;
 
-	argn = dat - B_AT_BI_ARG0;
-
-	if (dtev->dtev_pbn == DTEV_PBN_BEGINEND)
-		errx(1, "arg%d builtin is not valid in BEGIN or END actions",
-		    argn);
 	dtai = dt_args[dtev->dtev_pbn - 1];
+	argn = dat - B_AT_BI_ARG0;
 	argtype = dtai[argn].dtai_argtype;
 
 	if (strncmp(argtype, "int", DTNAMESIZE) == 0) {
@@ -800,7 +793,7 @@ builtin_arg(struct dt_evt *dtev, enum bt_argtype dat)
 		value = dtev->dtev_args[argn];
 	}
 
-	snprintf(buf, sizeof(buf), fmt, value);
+	snprintf(buf, sizeof(buf), fmt, dtev->dtev_args[argn]);
 
 	return buf;
 }
@@ -1607,7 +1600,6 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = buf;
 		break;
 	case B_AT_BI_PROBE:
-		assert(dtev->dtev_pbn > 0);
 		dtpi = &dt_dtpis[dtev->dtev_pbn - 1];
 		if (dtpi != NULL)
 			snprintf(buf, sizeof(buf), "%s:%s:%s",
