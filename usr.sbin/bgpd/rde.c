@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.609 2023/08/04 09:20:12 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.610 2023/08/16 08:26:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1319,23 +1319,11 @@ rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
 			memcpy(aspa->tas, imsg.data,
 			    aspa->num * sizeof(uint32_t));
 			break;
-		case IMSG_RECONF_ASPA_TAS_AID:
-			if (aspa == NULL)
-				fatalx("unexpected IMSG_RECONF_ASPA_TAS_AID");
-			if (imsg.hdr.len - IMSG_HEADER_SIZE !=
-			    TAS_AID_SIZE(aspa->num))
-				fatalx("IMSG_RECONF_ASPA_TAS_AID bad len");
-			aspa->tas_aid = malloc(TAS_AID_SIZE(aspa->num));
-			if (aspa->tas_aid == NULL)
-				fatal("IMSG_RECONF_ASPA_TAS_AID");
-			memcpy(aspa->tas_aid, imsg.data,
-			    TAS_AID_SIZE(aspa->num));
-			break;
 		case IMSG_RECONF_ASPA_DONE:
 			if (aspa_new == NULL)
 				fatalx("unexpected IMSG_RECONF_ASPA");
 			aspa_add_set(aspa_new, aspa->as, aspa->tas,
-			    aspa->num, (void *)aspa->tas_aid);
+			    aspa->num);
 			free_aspa(aspa);
 			aspa = NULL;
 			break;
@@ -2729,20 +2717,10 @@ rde_aspa_validity(struct rde_peer *peer, struct rde_aspath *asp, uint8_t aid)
 	if (peer->role == ROLE_NONE)
 		return ASPA_UNKNOWN;
 
-	switch (aid) {
-	case AID_INET:
-		if (peer->role == ROLE_CUSTOMER)
-			return asp->aspa_state.downup_v4;
-		else
-			return asp->aspa_state.onlyup_v4;
-	case AID_INET6:
-		if (peer->role == ROLE_CUSTOMER)
-			return asp->aspa_state.downup_v6;
-		else
-			return asp->aspa_state.onlyup_v6;
-	default:
-		return ASPA_NEVER_KNOWN;	/* not reachable */
-	}
+	if (peer->role == ROLE_CUSTOMER)
+		return asp->aspa_state.downup;
+	else
+		return asp->aspa_state.onlyup;
 }
 
 /*

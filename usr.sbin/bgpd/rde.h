@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.295 2023/07/12 14:45:43 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.296 2023/08/16 08:26:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -108,10 +108,8 @@ struct rde_peer {
 
 struct rde_aspa;
 struct rde_aspa_state {
-	uint8_t		onlyup_v4;
-	uint8_t		downup_v4;
-	uint8_t		onlyup_v6;
-	uint8_t		downup_v6;
+	uint8_t		onlyup;
+	uint8_t		downup;
 };
 
 #define AS_SET			1
@@ -714,7 +712,7 @@ void		 aspa_validation(struct rde_aspa *, struct aspath *,
 		    struct rde_aspa_state *);
 struct rde_aspa	*aspa_table_prep(uint32_t, size_t);
 void		 aspa_add_set(struct rde_aspa *, uint32_t, const uint32_t *,
-		    uint32_t, const uint32_t *);
+		    uint32_t);
 void		 aspa_table_free(struct rde_aspa *);
 void		 aspa_table_stats(const struct rde_aspa *,
 		    struct ctl_show_set *);

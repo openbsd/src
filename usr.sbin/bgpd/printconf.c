@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.167 2023/04/28 13:23:52 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.168 2023/08/16 08:26:35 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -723,11 +723,8 @@ print_aspa(struct aspa_tree *a)
 		if (aspa->expires != 0)
 			printf(" expires %lld", (long long)aspa->expires);
 		printf(" provider-as { ");
-		for (i = 0; i < aspa->num; i++) {
+		for (i = 0; i < aspa->num; i++)
 			printf("%s ", log_as(aspa->tas[i]));
-			if (aspa->tas_aid[i] != AID_UNSPEC)
-				printf("%s ", print_af(aspa->tas_aid[i]));
-		}
 		printf("}");
 	}
 	printf("\n}\n\n");

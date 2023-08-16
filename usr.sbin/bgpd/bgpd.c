@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.258 2023/04/19 07:12:22 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.259 2023/08/16 08:26:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -721,9 +721,6 @@ send_config(struct bgpd_config *conf)
 			return (-1);
 		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA_TAS, 0, 0,
 		    -1, aspa->tas, sizeof(*aspa->tas) * aspa->num) == -1)
-			return (-1);
-		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA_TAS_AID,
-		    0, 0, -1, aspa->tas_aid, aspa->num) == -1)
 			return (-1);
 		if (imsg_compose(ibuf_rtr, IMSG_RECONF_ASPA_DONE, 0, 0, -1,
 		    NULL, 0) == -1)

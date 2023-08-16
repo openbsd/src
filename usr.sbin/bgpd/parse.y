@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.454 2023/04/28 13:23:52 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.455 2023/08/16 08:26:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -134,7 +134,6 @@ struct aspa_tas_l {
 	struct aspa_tas_l	*next;
 	uint32_t		 as;
 	uint32_t		 num;
-	uint8_t			 aid;
 };
 
 struct flowspec_context {
@@ -667,14 +666,12 @@ aspa_tas	: as4number_any {
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				fatal(NULL);
 			$$->as = $1;
-			$$->aid = AID_UNSPEC;
 			$$->num = 1;
 		}
 		| as4number_any af {
 			if (($$ = calloc(1, sizeof(*$$))) == NULL)
 				fatal(NULL);
 			$$->as = $1;
-			$$->aid = $2;
 			$$->num = 1;
 		}
 		;
@@ -5448,7 +5445,6 @@ merge_aspa_set(uint32_t as, struct aspa_tas_l *tas, time_t expires)
 {
 	struct aspa_set	*aspa, needle = { .as = as };
 	uint32_t i, num, *newtas;
-	uint8_t *newtasaid = NULL;
 
 	aspa = RB_FIND(aspa_tree, &conf->aspa, &needle);
 	if (aspa == NULL) {
@@ -5471,25 +5467,14 @@ merge_aspa_set(uint32_t as, struct aspa_tas_l *tas, time_t expires)
 		yyerror("out of memory");
 		return -1;
 	}
-	newtasaid = recallocarray(aspa->tas_aid, aspa->num, num, 1);
-	if (newtasaid == NULL) {
-		free(newtas);
-		yyerror("out of memory");
-		return -1;
-	}
-
 	/* fill starting at the end since the tas list is reversed */
 	if (num > 0) {
-		for (i = num - 1; tas; tas = tas->next, i--) {
+		for (i = num - 1; tas; tas = tas->next, i--)
 			newtas[i] = tas->as;
-			if (tas->aid != AID_UNSPEC)
-				newtasaid[i] = tas->aid;
-		}
 	}
 
 	aspa->num = num;
 	aspa->tas = newtas;
-	aspa->tas_aid = newtasaid;
 	/* take the longest expiry time, same logic as for ROA entries */
 	if (aspa->expires != 0 && expires != 0 && expires > aspa->expires)
 		aspa->expires = expires;

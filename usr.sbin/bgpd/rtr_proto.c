@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.16 2023/03/28 12:15:23 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.17 2023/08/16 08:26:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -150,8 +150,8 @@ struct rtr_session {
 	TAILQ_ENTRY(rtr_session)	entry;
 	char				descr[PEER_DESCR_LEN];
 	struct roa_tree			roa_set;
-	struct aspa_tree		aspa_v4;
-	struct aspa_tree		aspa_v6;
+	struct aspa_tree		aspa;
+	struct aspa_tree		aspa_oldv6;
 	struct ibuf_read		r;
 	struct msgbuf			w;
 	struct timer_head		timers;
@@ -224,8 +224,8 @@ rtr_reset_cache(struct rtr_session *rs)
 	rs->session_id = -1;
 	timer_stop(&rs->timers, Timer_Rtr_Expire);
 	free_roatree(&rs->roa_set);
-	free_aspatree(&rs->aspa_v4);
-	free_aspatree(&rs->aspa_v6);
+	free_aspatree(&rs->aspa);
+	free_aspatree(&rs->aspa_oldv6);
 }
 
 static struct ibuf *
@@ -627,7 +627,6 @@ rtr_parse_aspa(struct rtr_session *rs, uint8_t *buf, size_t len)
 	struct aspa_set *aspa, *a;
 	size_t offset;
 	uint16_t cnt, i;
-	uint8_t aid;
 
 	memcpy(&rtr_aspa, buf + sizeof(struct rtr_header), sizeof(rtr_aspa));
 	offset = sizeof(struct rtr_header) + sizeof(rtr_aspa);
@@ -647,11 +646,9 @@ rtr_parse_aspa(struct rtr_session *rs, uint8_t *buf, size_t len)
 	}
 
 	if (rtr_aspa.afi_flags & FLAG_AFI_V6) {
-		aid = AID_INET6;
-		aspatree = &rs->aspa_v6;
+		aspatree = &rs->aspa_oldv6;
 	} else {
-		aid = AID_INET;
-		aspatree = &rs->aspa_v4;
+		aspatree = &rs->aspa;
 	}
 
 	/* create aspa_set entry from the rtr aspa pdu */
@@ -664,8 +661,7 @@ rtr_parse_aspa(struct rtr_session *rs, uint8_t *buf, size_t len)
 	aspa->as = ntohl(rtr_aspa.cas);
 	aspa->num = cnt;
 	if (cnt > 0) {
-		if ((aspa->tas = calloc(cnt, sizeof(uint32_t))) == NULL ||
-		    (aspa->tas_aid = calloc(cnt, 1)) == NULL) {
+		if ((aspa->tas = calloc(cnt, sizeof(uint32_t))) == NULL) {
 			free_aspa(aspa);
 			log_warn("rtr %s: received %s",
 			    log_rtr(rs), log_rtr_type(ASPA));
@@ -678,7 +674,6 @@ rtr_parse_aspa(struct rtr_session *rs, uint8_t *buf, size_t len)
 			memcpy(&tas, buf + offset + i * sizeof(tas),
 			    sizeof(tas));
 			aspa->tas[i] = ntohl(tas);
-			aspa->tas_aid[i] = aid;
 		}
 	}
 
@@ -1245,8 +1240,8 @@ rtr_new(uint32_t id, char *descr)
 		fatal("RTR session %s", descr);
 
 	RB_INIT(&rs->roa_set);
-	RB_INIT(&rs->aspa_v4);
-	RB_INIT(&rs->aspa_v6);
+	RB_INIT(&rs->aspa);
+	RB_INIT(&rs->aspa_oldv6);
 	TAILQ_INIT(&rs->timers);
 	msgbuf_init(&rs->w);
 
@@ -1359,9 +1354,9 @@ rtr_aspa_merge(struct aspa_tree *at)
 	struct aspa_set *aspa;
 
 	TAILQ_FOREACH(rs, &rtrs, entry) {
-		RB_FOREACH(aspa, aspa_tree, &rs->aspa_v4)
+		RB_FOREACH(aspa, aspa_tree, &rs->aspa)
 			rtr_aspa_insert(at, aspa);
-		RB_FOREACH(aspa, aspa_tree, &rs->aspa_v6)
+		RB_FOREACH(aspa, aspa_tree, &rs->aspa_oldv6)
 			rtr_aspa_insert(at, aspa);
 	}
 }
