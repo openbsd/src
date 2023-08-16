@@ -1,4 +1,4 @@
-/* $OpenBSD: pms.c,v 1.97 2022/07/23 05:55:16 sdk Exp $ */
+/* $OpenBSD: pms.c,v 1.98 2023/08/16 20:53:47 bru Exp $ */
 /* $NetBSD: psm.c,v 1.11 2000/06/05 22:20:57 sommerfeld Exp $ */
 
 /*-
@@ -1075,7 +1075,11 @@ synaptics_get_hwinfo(struct pms_softc *sc)
 	hw->y_max = (max_coords ?
 	    SYNAPTICS_Y_LIMIT(max_coords) : SYNAPTICS_YMAX_BEZEL);
 
-	hw->contacts_max = SYNAPTICS_MAX_FINGERS;
+	if ((syn->capabilities & SYNAPTICS_CAP_MULTIFINGER) ||
+	    SYNAPTICS_SUPPORTS_AGM(syn->ext_capabilities))
+		hw->contacts_max = SYNAPTICS_MAX_FINGERS;
+	else
+		hw->contacts_max = 1;
 
 	syn->sec_buttons = 0;
 
