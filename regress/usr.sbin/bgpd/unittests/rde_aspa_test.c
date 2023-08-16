@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_aspa_test.c,v 1.4 2023/01/24 11:31:13 claudio Exp $ */
+/*	$OpenBSD: rde_aspa_test.c,v 1.5 2023/08/16 08:29:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2022 Claudio Jeker <claudio@openbsd.org>
@@ -32,7 +32,6 @@ struct aspa_test_set {
 	uint32_t	customeras;
 	const uint32_t	*providers;
 	uint32_t	pascnt;
-	const uint32_t	*afimasks;
 };
 
 struct cp_test {
@@ -56,118 +55,115 @@ struct aspa_test {
 
 struct aspa_test_set testset[] = {
 	/* test vectors from  github.com/benmaddison/aspa-fuzz */
-	{ 1, (const uint32_t []){ 4, 5, 6 }, 3, NULL },
-	{ 2, (const uint32_t []){ 10, 11 }, 2, NULL },
-	{ 3, (const uint32_t []){ 1, 13, 14 }, 3, NULL },
-	{ 4, (const uint32_t []){ 16, 24 }, 2, NULL },
-	{ 5, (const uint32_t []){ 1, 17, 25 }, 3, NULL },
-	{ 8, (const uint32_t []){ 0 }, 1, NULL },
-	{ 9, (const uint32_t []){ 2 }, 1, NULL },
-	{ 10, (const uint32_t []){ 0 }, 1, NULL },
-	{ 11, (const uint32_t []){ 2 }, 1, NULL },
-	{ 12, (const uint32_t []){ 3 }, 1, NULL },
-	{ 13, (const uint32_t []){ 0 }, 1, NULL },
-	{ 14, (const uint32_t []){ 3, 25 }, 2, NULL },
-	{ 15, (const uint32_t []){ 4 }, 1, NULL },
-	{ 16, (const uint32_t []){ 4 }, 1, NULL },
-	{ 17, (const uint32_t []){ 5 }, 1, NULL },
-	{ 18, (const uint32_t []){ 6 }, 1, NULL },
-	{ 20, (const uint32_t []){ 19 }, 1, NULL },
-	{ 21, (const uint32_t []){ 0 }, 1, NULL },
-	{ 23, (const uint32_t []){ 22 }, 1, NULL },
-	{ 24, (const uint32_t []){ 0 }, 1, NULL },
-	{ 25, (const uint32_t []){ 0 }, 1, NULL },
-	{ 26, (const uint32_t []){ 5 }, 1, NULL },
-	{ 27, (const uint32_t []){ 14 }, 1, NULL },
+	{ 1, (const uint32_t []){ 4, 5, 6 }, 3 },
+	{ 2, (const uint32_t []){ 10, 11 }, 2 },
+	{ 3, (const uint32_t []){ 1, 13, 14 }, 3 },
+	{ 4, (const uint32_t []){ 16, 24 }, 2 },
+	{ 5, (const uint32_t []){ 1, 17, 25 }, 3 },
+	{ 8, (const uint32_t []){ 0 }, 1 },
+	{ 9, (const uint32_t []){ 2 }, 1 },
+	{ 10, (const uint32_t []){ 0 }, 1 },
+	{ 11, (const uint32_t []){ 2 }, 1 },
+	{ 12, (const uint32_t []){ 3 }, 1 },
+	{ 13, (const uint32_t []){ 0 }, 1 },
+	{ 14, (const uint32_t []){ 3, 25 }, 2 },
+	{ 15, (const uint32_t []){ 4 }, 1 },
+	{ 16, (const uint32_t []){ 4 }, 1 },
+	{ 17, (const uint32_t []){ 5 }, 1 },
+	{ 18, (const uint32_t []){ 6 }, 1 },
+	{ 20, (const uint32_t []){ 19 }, 1 },
+	{ 21, (const uint32_t []){ 0 }, 1 },
+	{ 23, (const uint32_t []){ 22 }, 1 },
+	{ 24, (const uint32_t []){ 0 }, 1 },
+	{ 25, (const uint32_t []){ 0 }, 1 },
+	{ 26, (const uint32_t []){ 5 }, 1 },
+	{ 27, (const uint32_t []){ 14 }, 1 },
 	/* tests to simulate slides-110-sidrops-sriram-aspa-alg-accuracy-01 */
-	{ 101, (const uint32_t []){ 102 }, 1, NULL },
-	{ 102, (const uint32_t []){ 103, 104, 105 }, 3, NULL },
-	{ 103, (const uint32_t []){ 111, 112, 203 }, 3, NULL },
+	{ 101, (const uint32_t []){ 102 }, 1 },
+	{ 102, (const uint32_t []){ 103, 104, 105 }, 3 },
+	{ 103, (const uint32_t []){ 111, 112, 203 }, 3 },
 	/* 104 no ASPA */
-	{ 105, (const uint32_t []){ 0 }, 1, NULL },
+	{ 105, (const uint32_t []){ 0 }, 1 },
 
 	/* 111 no ASPA */
-	{ 112, (const uint32_t []){ 0 }, 1, NULL },
-	{ 113, (const uint32_t []){ 104, 105, 204, 205 }, 4, NULL },
+	{ 112, (const uint32_t []){ 0 }, 1 },
+	{ 113, (const uint32_t []){ 104, 105, 204, 205 }, 4 },
 
-	{ 121, (const uint32_t []){ 131, 132, 133 }, 3, NULL },
-	{ 123, (const uint32_t []){ 0 }, 1, NULL },
-	{ 131, (const uint32_t []){ 121, 122, 123 }, 3, NULL },
-	{ 133, (const uint32_t []){ 0 }, 1, NULL },
+	{ 121, (const uint32_t []){ 131, 132, 133 }, 3 },
+	{ 123, (const uint32_t []){ 0 }, 1 },
+	{ 131, (const uint32_t []){ 121, 122, 123 }, 3 },
+	{ 133, (const uint32_t []){ 0 }, 1 },
 	
 
-	{ 201, (const uint32_t []){ 202 }, 1, NULL },
-	{ 202, (const uint32_t []){ 203, 204, 205 }, 3, NULL },
-	{ 203, (const uint32_t []){ 103, 111, 112 }, 3, NULL },
+	{ 201, (const uint32_t []){ 202 }, 1 },
+	{ 202, (const uint32_t []){ 203, 204, 205 }, 3 },
+	{ 203, (const uint32_t []){ 103, 111, 112 }, 3 },
 	/* 204 no ASPA */
-	{ 205, (const uint32_t []){ 0 }, 1, NULL },
+	{ 205, (const uint32_t []){ 0 }, 1 },
 
 	/* extra test for big table test */
 	{ 65000, (const uint32_t []){
 	    3, 5, 10, 15, 20, 21, 22, 23, 24, 25, 
 	    30, 35, 40, 45, 50, 51, 52, 53, 54, 55, 
-	    60, 65, 70, 75, 80, 81, 82, 83, 87, 90 }, 30, NULL },
-	/* extra test for AFI check */
-	{ 196618, (const uint32_t []){ 1, 2, 3, 4 }, 4,
-	    (const uint32_t []){ 0xf9 }},
+	    60, 65, 70, 75, 80, 81, 82, 83, 87, 90 }, 30 },
+	{ 196618, (const uint32_t []){ 1, 2, 3, 4 }, 4 },
 };
 
 struct cp_test cp_testset[] = {
-	{ 6, 1, CP(UNKNOWN, UNKNOWN) },
-	{ 42, 1, CP(UNKNOWN, UNKNOWN) },
+	{ 6, 1, UNKNOWN },
+	{ 42, 1, UNKNOWN },
 
-	{ 1, 2, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 1, 3, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 1, 7, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 5, 2, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 5, 16, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 5, 18, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 5, 24, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 5, 26, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 8, 2, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 9, 5, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 27, 13, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 27, 15, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 1, 2, NOT_PROVIDER },
+	{ 1, 3, NOT_PROVIDER },
+	{ 1, 7, NOT_PROVIDER },
+	{ 5, 2, NOT_PROVIDER },
+	{ 5, 16, NOT_PROVIDER },
+	{ 5, 18, NOT_PROVIDER },
+	{ 5, 24, NOT_PROVIDER },
+	{ 5, 26, NOT_PROVIDER },
+	{ 8, 2, NOT_PROVIDER },
+	{ 9, 5, NOT_PROVIDER },
+	{ 27, 13, NOT_PROVIDER },
+	{ 27, 15, NOT_PROVIDER },
 
-	{ 1, 4, CP(PROVIDER, PROVIDER) },
-	{ 1, 5, CP(PROVIDER, PROVIDER) },
-	{ 1, 6, CP(PROVIDER, PROVIDER) },
-	{ 2, 10, CP(PROVIDER, PROVIDER) },
-	{ 2, 11, CP(PROVIDER, PROVIDER) },
-	{ 9, 2, CP(PROVIDER, PROVIDER) },
-	{ 27, 14, CP(PROVIDER, PROVIDER) },
+	{ 1, 4, PROVIDER },
+	{ 1, 5, PROVIDER },
+	{ 1, 6, PROVIDER },
+	{ 2, 10, PROVIDER },
+	{ 2, 11, PROVIDER },
+	{ 9, 2, PROVIDER },
+	{ 27, 14, PROVIDER },
 
-	/* per AID tests */
-	{ 196618, 1, CP(PROVIDER, NOT_PROVIDER) },
-	{ 196618, 2, CP(NOT_PROVIDER, PROVIDER) },
-	{ 196618, 3, CP(PROVIDER, PROVIDER) },
-	{ 196618, 4, CP(PROVIDER, PROVIDER) },
-	{ 196618, 5, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 196618, 1, PROVIDER },
+	{ 196618, 2, PROVIDER },
+	{ 196618, 3, PROVIDER },
+	{ 196618, 4, PROVIDER },
+	{ 196618, 5, NOT_PROVIDER },
 
 	/* big provider set test */
-	{ 65000, 1, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 2, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 3, CP(PROVIDER, PROVIDER) },
-	{ 65000, 4, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 5, CP(PROVIDER, PROVIDER) },
-	{ 65000, 15, CP(PROVIDER, PROVIDER) },
-	{ 65000, 19, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 20, CP(PROVIDER, PROVIDER) },
-	{ 65000, 21, CP(PROVIDER, PROVIDER) },
-	{ 65000, 22, CP(PROVIDER, PROVIDER) },
-	{ 65000, 23, CP(PROVIDER, PROVIDER) },
-	{ 65000, 24, CP(PROVIDER, PROVIDER) },
-	{ 65000, 25, CP(PROVIDER, PROVIDER) },
-	{ 65000, 26, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 85, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 86, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 87, CP(PROVIDER, PROVIDER) },
-	{ 65000, 88, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 89, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 90, CP(PROVIDER, PROVIDER) },
-	{ 65000, 91, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 92, CP(NOT_PROVIDER, NOT_PROVIDER) },
-	{ 65000, 6666, CP(NOT_PROVIDER, NOT_PROVIDER) },
+	{ 65000, 1, NOT_PROVIDER },
+	{ 65000, 2, NOT_PROVIDER },
+	{ 65000, 3, PROVIDER },
+	{ 65000, 4, NOT_PROVIDER },
+	{ 65000, 5, PROVIDER },
+	{ 65000, 15, PROVIDER },
+	{ 65000, 19, NOT_PROVIDER },
+	{ 65000, 20, PROVIDER },
+	{ 65000, 21, PROVIDER },
+	{ 65000, 22, PROVIDER },
+	{ 65000, 23, PROVIDER },
+	{ 65000, 24, PROVIDER },
+	{ 65000, 25, PROVIDER },
+	{ 65000, 26, NOT_PROVIDER },
+	{ 65000, 85, NOT_PROVIDER },
+	{ 65000, 86, NOT_PROVIDER },
+	{ 65000, 87, PROVIDER },
+	{ 65000, 88, NOT_PROVIDER },
+	{ 65000, 89, NOT_PROVIDER },
+	{ 65000, 90, PROVIDER },
+	{ 65000, 91, NOT_PROVIDER },
+	{ 65000, 92, NOT_PROVIDER },
+	{ 65000, 6666, NOT_PROVIDER },
 };
 
 struct aspath_test	aspath_testset[] = {
@@ -379,19 +375,14 @@ load_test_set(struct aspa_test_set *testv, uint32_t numentries)
 	size_t data_size = 0;
 	uint32_t i;
 
-	for (i = 0; i < numentries; i++) {
+	for (i = 0; i < numentries; i++)
 		data_size += testv[i].pascnt * sizeof(uint32_t);
-		if (testv[i].afimasks)
-			data_size += (testv[i].pascnt * 2 + 31) / 8;
-	}
 
 	aspa = aspa_table_prep(numentries, data_size);
 
-	for (i = numentries; i > 0; i--) {
+	for (i = numentries; i > 0; i--)
 		aspa_add_set(aspa, testv[i - 1].customeras,
-		    testv[i - 1].providers, testv[i - 1].pascnt,
-		    testv[i - 1].afimasks);
-	}
+		    testv[i - 1].providers, testv[i - 1].pascnt);
 
 	return aspa;
 }
@@ -399,16 +390,10 @@ load_test_set(struct aspa_test_set *testv, uint32_t numentries)
 static uint8_t
 vstate_for_role(struct rde_aspa_state *vstate, enum role role)
 {
-	if (vstate->onlyup_v4 != vstate->onlyup_v6 ||
-	    vstate->downup_v4 != vstate->downup_v6) {
-		printf("failed: vstate differ per AID ");
-			return 0xff;
-	}
-
 	if (role != ROLE_CUSTOMER) {
-		return (vstate->onlyup_v4);
+		return (vstate->onlyup);
 	} else {
-		return (vstate->downup_v4);
+		return (vstate->downup);
 	}
 }
 
@@ -451,13 +436,13 @@ main(int argc, char **argv)
 
 	printf("testing aspa_check_aspath: ");
 	for (i = 0; i < num_aspath; i++) {
-		struct aspa_state st[2], revst;
+		struct aspa_state st, revst;
 		struct aspath *a;
 
-		memset(st, 0, sizeof(st));
+		memset(&st, 0, sizeof(st));
 		a = build_aspath(aspath_testset[i].aspath,
 		    aspath_testset[i].aspathcnt, 0);
-		if (aspa_check_aspath(aspa, a, st) == -1) {
+		if (aspa_check_aspath(aspa, a, &st) == -1) {
 			printf("failed: aspath_testset[%zu]: "
 			    "aspath %s got -1\n", i,
 			    print_aspath(aspath_testset[i].aspath,
@@ -465,30 +450,21 @@ main(int argc, char **argv)
 			aspath_failed = 1;
 		}
 
-		if (memcmp(&aspath_testset[i].state, st, sizeof(*st))) {
+		if (memcmp(&aspath_testset[i].state, &st, sizeof(st))) {
 			printf("failed: aspath_testset[%zu]: aspath %s "
 			    "bad state", i,
 			    print_aspath(aspath_testset[i].aspath,
 			    aspath_testset[i].aspathcnt));
-			print_state(&aspath_testset[i].state, st);
-			printf("\n");
-			aspath_failed = 1;
-		}
-		if (memcmp(&aspath_testset[i].state, st + 1, sizeof(*st))) {
-			printf("failed: aspath_testset[%zu]: aspath %s "
-			    "bad state AID_INET6", i,
-			    print_aspath(aspath_testset[i].aspath,
-			    aspath_testset[i].aspathcnt));
-			print_state(&aspath_testset[i].state, st + 1);
+			print_state(&aspath_testset[i].state, &st);
 			printf("\n");
 			aspath_failed = 1;
 		}
 		free(a);
 
-		memset(st, 0, sizeof(st));
+		memset(&st, 0, sizeof(st));
 		a = build_aspath(aspath_testset[i].aspath,
 		    aspath_testset[i].aspathcnt, 1);
-		if (aspa_check_aspath(aspa, a, st) == -1) {
+		if (aspa_check_aspath(aspa, a, &st) == -1) {
 			printf("failed: reverse aspath_testset[%zu]: "
 			    "aspath %s got -1\n", i,
 			    print_aspath(aspath_testset[i].aspath,
@@ -497,21 +473,12 @@ main(int argc, char **argv)
 		}
 
 		reverse_state(&aspath_testset[i].state, &revst);
-		if (memcmp(&revst, st, sizeof(*st))) {
+		if (memcmp(&revst, &st, sizeof(st))) {
 			printf("failed: reverse aspath_testset[%zu]: aspath %s "
 			    "bad state", i,
 			    print_aspath(aspath_testset[i].aspath,
 			    aspath_testset[i].aspathcnt));
-			print_state(&revst, st);
-			printf("\n");
-			aspath_failed = 1;
-		}
-		if (memcmp(&revst, st + 1, sizeof(*st))) {
-			printf("failed: reverse aspath_testset[%zu]: aspath %s "
-			    "bad state AID_INET6", i,
-			    print_aspath(aspath_testset[i].aspath,
-			    aspath_testset[i].aspathcnt));
-			print_state(&revst, st + 1);
+			print_state(&revst, &st);
 			printf("\n");
 			aspath_failed = 1;
 		}
