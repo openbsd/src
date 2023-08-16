@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.136 2023/08/09 00:01:44 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.137 2023/08/16 04:07:37 jsg Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -271,6 +271,8 @@ const struct {
 	{ ARCH_CAP_XAPIC_DISABLE_STATUS, "XAPIC_DIS" },
 	{ ARCH_CAP_OVERCLOCKING_STATUS,	"OVERCLOCK" },
 	{ ARCH_CAP_PBRSB_NO,		"PBRSB_NO" },
+	{ ARCH_CAP_GDS_CTRL,		"GDS_CTRL" },
+	{ ARCH_CAP_GDS_NO,		"GDS_NO" },
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.107 2023/07/27 16:33:56 guenther Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.108 2023/08/16 04:07:37 jsg Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -425,6 +425,8 @@
 #define ARCH_CAP_XAPIC_DISABLE_STATUS	(1 << 21) /* can disable xAPIC */
 #define ARCH_CAP_OVERCLOCKING_STATUS	(1 << 23) /* has OVRCLCKNG_STAT MSR */
 #define ARCH_CAP_PBRSB_NO		(1 << 24) /* PBSR safe */
+#define ARCH_CAP_GDS_CTRL		(1 << 25) /* has GDS_MITG_DIS/LOCK */
+#define ARCH_CAP_GDS_NO			(1 << 26) /* GDS safe */
 #define MSR_FLUSH_CMD		0x10b
 #define FLUSH_CMD_L1D_FLUSH	0x1	/* (1ULL << 0) */
 #define	MSR_BBL_CR_ADDR		0x116	/* PII+ only */
