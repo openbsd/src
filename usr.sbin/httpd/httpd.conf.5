@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.122 2022/09/02 07:38:14 benno Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.123 2023/08/17 07:25:57 op Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2022 $
+.Dd $Mdocdate: August 17 2023 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ Macros are not expanded inside quotes.
 For example:
 .Bd -literal -offset indent
 ext_ip="10.0.0.1"
-server "default" {
+server "example.com" {
 	listen on $ext_ip port 80
 }
 .Ed
@@ -179,7 +179,11 @@ The configured web servers.
 Each
 .Ic server
 section starts with a declaration of the server
-.Ar name :
+.Ar name .
+If a request does not match any server name, it is handled by the
+first defined
+.Ic server
+section that matches the listening port.
 .Bl -tag -width Ds
 .It Ic server Ar name Brq ...
 Match the server name using shell globbing rules.
@@ -779,7 +783,7 @@ It additionally defines some media types overriding the defaults.
 .Bd -literal -offset indent
 prefork 2
 
-server "default" {
+server "example.com" {
 	listen on * port 80
 }
 
@@ -800,7 +804,7 @@ address of the network interface that is a member of the
 .Qq egress
 group.
 .Bd -literal -offset indent
-server "default" {
+server "example.com" {
 	listen on egress port 80
 }
 .Ed
