@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cargo-module.5,v 1.4 2021/07/25 11:29:42 espie Exp $
+.\"	$OpenBSD: cargo-module.5,v 1.5 2023/08/17 05:43:09 tb Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\" Copyright (c) 2017 Daniel Jakots
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 25 2021 $
+.Dd $Mdocdate: August 17 2023 $
 .Dt CARGO-MODULE 5
 .Os
 .Sh NAME
@@ -85,7 +85,7 @@ By default
 is used to download the crates.
 .Pp
 This module defines:
-.Bl -tag -width MODCARGO_CRATES_UPDATE
+.Bl -tag -width MODCARGO_INSTALL_TARGET_PATH
 .It MODCARGO_CARGOTOML
 Path to cargo manifest.
 Defaults to
@@ -96,6 +96,12 @@ Crates that will be downloaded by the module.
 List of crates to update, overriding the version listed in Cargo.lock.
 .It MODCARGO_FEATURES
 List of features to be used when building.
+.It MODCARGO_INSTALL_TARGET_PATH
+Path to pass to
+.Cm cargo install
+instead of
+.Pa \&. .
+Needs to be set for some virtual manifests.
 .It MODCARGO_VENDOR_DIR
 Name of the local directory for vendoring crates.
 Defaults to
