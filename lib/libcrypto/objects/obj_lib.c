@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_lib.c,v 1.18 2023/07/08 12:27:51 beck Exp $ */
+/* $OpenBSD: obj_lib.c,v 1.19 2023/08/17 09:13:01 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -124,11 +124,12 @@ LCRYPTO_ALIAS(OBJ_dup);
 int
 OBJ_cmp(const ASN1_OBJECT *a, const ASN1_OBJECT *b)
 {
-	int ret;
+	int cmp;
 
-	ret = (a->length - b->length);
-	if (ret)
-		return (ret);
-	return (memcmp(a->data, b->data, a->length));
+	if ((cmp = a->length - b->length) != 0)
+		return cmp;
+	if (a->length == 0)
+		return 0;
+	return memcmp(a->data, b->data, a->length);
 }
 LCRYPTO_ALIAS(OBJ_cmp);
