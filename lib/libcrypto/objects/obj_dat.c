@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.54 2023/07/08 12:27:51 beck Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.55 2023/08/17 09:18:21 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -188,10 +188,7 @@ added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
 	b = cb->obj;
 	switch (ca->type) {
 	case ADDED_DATA:
-		i = (a->length - b->length);
-		if (i)
-			return (i);
-		return (memcmp(a->data, b->data, (size_t)a->length));
+		return OBJ_cmp(a, b);
 	case ADDED_SNAME:
 		if (a->sn == NULL)
 			return (-1);
@@ -432,16 +429,11 @@ LCRYPTO_ALIAS(OBJ_nid2ln);
 static int
 obj_cmp(const ASN1_OBJECT * const *ap, const unsigned int *bp)
 {
-	int j;
-	const ASN1_OBJECT *a= *ap;
+	const ASN1_OBJECT *a = *ap;
 	const ASN1_OBJECT *b = &nid_objs[*bp];
 
-	j = (a->length - b->length);
-	if (j)
-		return (j);
-	return (memcmp(a->data, b->data, a->length));
+	return OBJ_cmp(a, b);
 }
-
 
 static int
 obj_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)
