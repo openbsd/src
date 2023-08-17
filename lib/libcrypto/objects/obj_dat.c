@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.58 2023/08/17 09:26:09 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.59 2023/08/17 09:27:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -178,7 +178,7 @@ static IMPLEMENT_LHASH_HASH_FN(added_obj, ADDED_OBJ)
 static int
 added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
 {
-	ASN1_OBJECT *a, *b;
+	const ASN1_OBJECT *a, *b;
 	int cmp;
 
 	if ((cmp = ca->type - cb->type) != 0)
