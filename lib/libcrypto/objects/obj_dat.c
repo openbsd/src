@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.55 2023/08/17 09:18:21 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.56 2023/08/17 09:22:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -179,11 +179,11 @@ static int
 added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
 {
 	ASN1_OBJECT *a, *b;
-	int i;
+	int cmp;
 
-	i = ca->type - cb->type;
-	if (i)
-		return (i);
+	if ((cmp = ca->type - cb->type) != 0)
+		return cmp;
+
 	a = ca->obj;
 	b = cb->obj;
 	switch (ca->type) {
