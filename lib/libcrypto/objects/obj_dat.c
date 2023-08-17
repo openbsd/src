@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.57 2023/08/17 09:24:50 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.58 2023/08/17 09:26:09 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -192,17 +192,15 @@ added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
 	case ADDED_SNAME:
 		if (a->sn == NULL)
 			return -1;
-		else if (b->sn == NULL)
+		if (b->sn == NULL)
 			return 1;
-		else
-			return strcmp(a->sn, b->sn);
+		return strcmp(a->sn, b->sn);
 	case ADDED_LNAME:
 		if (a->ln == NULL)
 			return -1;
-		else if (b->ln == NULL)
+		if (b->ln == NULL)
 			return 1;
-		else
-			return strcmp(a->ln, b->ln);
+		return strcmp(a->ln, b->ln);
 	case ADDED_NID:
 		return a->nid - b->nid;
 	default:
