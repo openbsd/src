@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.59 2023/08/17 09:27:43 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.60 2023/08/17 09:28:43 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -166,7 +166,6 @@ added_obj_hash(const ADDED_OBJ *ca)
 		ret = a->nid;
 		break;
 	default:
-		/* abort(); */
 		return 0;
 	}
 	ret &= 0x3fffffffL;
@@ -204,7 +203,6 @@ added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
 	case ADDED_NID:
 		return a->nid - b->nid;
 	default:
-		/* abort(); */
 		return 0;
 	}
 }
