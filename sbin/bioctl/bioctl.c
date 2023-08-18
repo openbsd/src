@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.151 2022/10/18 07:04:20 kn Exp $ */
+/* $OpenBSD: bioctl.c,v 1.152 2023/08/18 14:09:19 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -94,7 +94,7 @@ char			*password;
 
 void			*bio_cookie;
 
-int rpp_flag = RPP_REQUIRE_TTY;
+int interactive = 1;
 
 int
 main(int argc, char *argv[])
@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 			al_arg = optarg;
 			break;
 		case 's':
-			rpp_flag = RPP_STDIN;
+			interactive = 0;
 			break;
 		case 't': /* patrol */
 			func |= BIOC_PATROL;
@@ -989,7 +989,7 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 	derive_key(kdfinfo->pbkdf.generic.type, kdfinfo->pbkdf.rounds,
 	    kdfinfo->maskkey, sizeof(kdfinfo->maskkey),
 	    kdfinfo->pbkdf.salt, sizeof(kdfinfo->pbkdf.salt),
-	    "New passphrase: ", 1);
+	    "New passphrase: ", interactive);
 }
 
 int
@@ -1316,6 +1316,7 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 	size_t		pl;
 	struct stat	sb;
 	char		passphrase[1024], verifybuf[1024];
+	int		rpp_flag = RPP_ECHO_OFF;
 
 	if (!key)
 		errx(1, "Invalid key");
@@ -1351,6 +1352,8 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 
 		fclose(f);
 	} else {
+		rpp_flag |= interactive ? RPP_REQUIRE_TTY : RPP_STDIN;
+
 		if (readpassphrase(prompt, passphrase, sizeof(passphrase),
 		    rpp_flag) == NULL)
 			err(1, "unable to read passphrase");
