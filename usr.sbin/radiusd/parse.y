@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.13 2021/10/15 15:01:28 naddy Exp $	*/
+/*	$OpenBSD: parse.y,v 1.14 2023/08/18 06:37:20 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -167,7 +167,9 @@ listen_addr	: STRING optport {
 optport		: { $$ = 0; }
 		| PORT NUMBER	{ $$ = $2; }
 		;
-client		: CLIENT prefix optnl clientopts_b {
+client		: CLIENT {
+			radiusd_client_init(&client);
+		  } prefix optnl '{' clientopts '}' {
 			struct radiusd_client *client0;
 
 			if (client.secret[0] == '\0') {
@@ -181,31 +183,33 @@ client		: CLIENT prefix optnl clientopts_b {
 			strlcpy(client0->secret, client.secret,
 			    sizeof(client0->secret));
 			client0->msgauth_required = client.msgauth_required;
-			client0->af = $2.af;
-			client0->addr = $2.addr;
-			client0->mask = $2.mask;
+			client0->af = $3.af;
+			client0->addr = $3.addr;
+			client0->mask = $3.mask;
 			TAILQ_INSERT_TAIL(&conf->client, client0, next);
-			radiusd_client_init(&client);
 		}
 
-clientopts_b	: '{' optnl_l clientopts_l optnl_l '}'
-		| '{' optnl_l '}'	/* allow empty block */
+clientopts	: clientopts '\n' clientopt
+		| clientopt
 		;
 
-clientopts_l	: clientopts_l nl clientopts
-		| clientopts
-		;
-
-clientopts	: SECRET STRING {
-			if (strlcpy(client.secret, $2, sizeof(client.secret))
-			    >= sizeof(client.secret)) {
+clientopt	: SECRET STRING {
+			if (client.secret[0] != '\0') {
+				free($2);
+				yyerror("secret is specified already");
+				YYERROR;
+			} else if (strlcpy(client.secret, $2,
+			    sizeof(client.secret)) >= sizeof(client.secret)) {
+				free($2);
 				yyerror("secret is too long");
 				YYERROR;
 			}
+			free($2);
 		}
 		| MSGAUTH_REQUIRED yesno {
 			client.msgauth_required = $2;
 		}
+		|
 		;
 
 prefix		: STRING '/' NUMBER {
@@ -297,34 +301,37 @@ setstrerr:
 			free_str_l(&$5);
 		}
 		;
-authenticate	: AUTHENTICATE str_l optnl authopts_b {
+authenticate	: AUTHENTICATE {
+			radiusd_authentication_init(&authen);
+		} str_l optnl '{' authopts '}' {
 			struct radiusd_authentication *a;
 
 			if ((a = calloc(1,
 			    sizeof(struct radiusd_authentication))) == NULL) {
-				free_str_l(&$2);
+				free_str_l(&$3);
 				goto outofmemory;
 			}
 			a->auth = authen.auth;
+			authen.auth = NULL;
 			a->deco = authen.deco;
-			a->username = $2.v;
+			a->username = $3.v;
 
 			TAILQ_INSERT_TAIL(&conf->authen, a, next);
-			radiusd_authentication_init(&authen);
 		}
 		;
 
-authopts_b	: '{' optnl_l authopts_l optnl_l '}'
-		| '{' optnl_l '}'	/* empty options */
+authopts	: authopts '\n' authopt
+		| authopt
 		;
 
-authopts_l	: authopts_l nl authopts
-		| authopts
-		;
-
-authopts	: AUTHENTICATE_BY STRING {
+authopt		: AUTHENTICATE_BY STRING {
 			struct radiusd_module_ref	*modref;
 
+			if (authen.auth != NULL) {
+				free($2);
+				yyerror("authenticate is specified already");
+				YYERROR;
+			}
 			modref = create_module_ref($2);
 			free($2);
 			if (modref == NULL)
@@ -346,6 +353,7 @@ authopts	: AUTHENTICATE_BY STRING {
 			}
 			free_str_l(&$2);
 		}
+		|
 		;
 str_l		: str_l strnum {
 			int	  i;
@@ -378,11 +386,6 @@ strnum		: STRING	{ $$ = $1; }
 		;
 optnl		:
 		| '\n'
-		;
-nl		: '\n' optnl		/* one new line or more */
-		;
-optnl_l		:
-		| '\n' optnl_l
 		;
 yesno		: YES { $$ = true; }
 		| NO  { $$ = false; }
@@ -717,7 +720,6 @@ parse_config(const char *filename, struct radiusd *radiusd)
 	radiusd_conf_init(conf);
 	radiusd_authentication_init(&authen);
 	radiusd_client_init(&client);
-	authen.auth = NULL;
 
 	if ((file = pushfile(filename)) == NULL) {
 		errors++;
@@ -745,8 +747,7 @@ parse_config(const char *filename, struct radiusd *radiusd)
 	TAILQ_FOREACH(l, &conf->listen, next) {
 		l->sock = -1;
 	}
-	if (authen.auth != NULL)
-		free(authen.auth);
+	radiusd_authentication_init(&authen);
 	TAILQ_FOREACH_SAFE(m, &authen.deco, next, mt) {
 		TAILQ_REMOVE(&authen.deco, m, next);
 		free(m);
@@ -805,6 +806,7 @@ create_module_ref(const char *modulename)
 static void
 radiusd_authentication_init(struct radiusd_authentication *auth)
 {
+	free(auth->auth);
 	memset(auth, 0, sizeof(struct radiusd_authentication));
 	TAILQ_INIT(&auth->deco);
 }
