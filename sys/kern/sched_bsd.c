@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.81 2023/08/14 08:33:24 mpi Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.82 2023/08/18 09:18:52 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -61,8 +61,23 @@ int	lbolt;			/* once a second sleep address */
 struct __mp_lock sched_lock;
 #endif
 
+void			update_loadavg(void *);
 void			schedcpu(void *);
 uint32_t		decay_aftersleep(uint32_t, uint32_t);
+
+extern struct cpuset sched_idle_cpus;
+
+/*
+ * constants for averages over 1, 5, and 15 minutes when sampling at
+ * 5 second intervals.
+ */
+static const fixpt_t cexp[3] = {
+	0.9200444146293232 * FSCALE,	/* exp(-1/12) */
+	0.9834714538216174 * FSCALE,	/* exp(-1/60) */
+	0.9944598480048967 * FSCALE,	/* exp(-1/180) */
+};
+
+struct loadavg averunnable;
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -93,6 +108,34 @@ roundrobin(struct clockintr *cl, void *cf)
 
 	if (spc->spc_nrun)
 		need_resched(ci);
+}
+
+
+
+/*
+ * update_loadav: compute a tenex style load average of a quantity on
+ * 1, 5, and 15 minute intervals.
+ */
+void
+update_loadavg(void *arg)
+{
+	struct timeout *to = (struct timeout *)arg;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	u_int i, nrun = 0;
+
+	CPU_INFO_FOREACH(cii, ci) {
+		if (!cpuset_isset(&sched_idle_cpus, ci))
+			nrun++;
+		nrun += ci->ci_schedstate.spc_nrun;
+	}
+
+	for (i = 0; i < 3; i++) {
+		averunnable.ldavg[i] = (cexp[i] * averunnable.ldavg[i] +
+		    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
+	}
+
+	timeout_add_sec(to, 5);
 }
 
 /*
@@ -236,7 +279,6 @@ schedcpu(void *arg)
 		}
 		SCHED_UNLOCK(s);
 	}
-	uvm_meter();
 	wakeup(&lbolt);
 	timeout_add_sec(to, 1);
 }
@@ -691,6 +733,7 @@ void
 scheduler_start(void)
 {
 	static struct timeout schedcpu_to;
+	static struct timeout loadavg_to;
 
 	/*
 	 * We avoid polluting the global namespace by keeping the scheduler
@@ -699,7 +742,10 @@ scheduler_start(void)
 	 * its job.
 	 */
 	timeout_set(&schedcpu_to, schedcpu, &schedcpu_to);
+	timeout_set(&loadavg_to, update_loadavg, &loadavg_to);
+
 	schedcpu(&schedcpu_to);
+	update_loadavg(&loadavg_to);
 
 #ifndef SMALL_KERNEL
 	if (perfpolicy == PERFPOL_AUTO)

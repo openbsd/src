@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_meter.c,v 1.48 2023/08/03 16:12:08 claudio Exp $	*/
+/*	$OpenBSD: uvm_meter.c,v 1.49 2023/08/18 09:18:52 claudio Exp $	*/
 /*	$NetBSD: uvm_meter.c,v 1.21 2001/07/14 06:36:03 matt Exp $	*/
 
 /*
@@ -63,57 +63,11 @@
 #define	MAXSLP	20
 
 int maxslp = MAXSLP;	/* patchable ... */
-struct loadavg averunnable;
 
-/*
- * constants for averages over 1, 5, and 15 minutes when sampling at
- * 5 second intervals.
- */
+extern struct loadavg averunnable;
 
-static const fixpt_t cexp[3] = {
-	0.9200444146293232 * FSCALE,	/* exp(-1/12) */
-	0.9834714538216174 * FSCALE,	/* exp(-1/60) */
-	0.9944598480048967 * FSCALE,	/* exp(-1/180) */
-};
-
-
-static void uvm_loadav(struct loadavg *);
 void uvm_total(struct vmtotal *);
 void uvmexp_read(struct uvmexp *);
-
-/*
- * uvm_meter: calculate load average
- */
-void
-uvm_meter(void)
-{
-	if ((gettime() % 5) == 0)
-		uvm_loadav(&averunnable);
-}
-
-/*
- * uvm_loadav: compute a tenex style load average of a quantity on
- * 1, 5, and 15 minute intervals.
- */
-static void
-uvm_loadav(struct loadavg *avg)
-{
-	extern struct cpuset sched_idle_cpus;
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
-	u_int i, nrun = 0;
-
-	CPU_INFO_FOREACH(cii, ci) {
-		if (!cpuset_isset(&sched_idle_cpus, ci))
-			nrun++;
-		nrun += ci->ci_schedstate.spc_nrun;
-	}
-
-	for (i = 0; i < 3; i++) {
-		avg->ldavg[i] = (cexp[i] * avg->ldavg[i] +
-		    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
-	}
-}
 
 char malloc_conf[16];
 
