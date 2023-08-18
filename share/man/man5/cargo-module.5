@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cargo-module.5,v 1.6 2023/08/18 08:20:27 tb Exp $
+.\"	$OpenBSD: cargo-module.5,v 1.7 2023/08/18 08:22:29 tb Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\" Copyright (c) 2017 Daniel Jakots
@@ -86,27 +86,27 @@ is used to download the crates.
 .Pp
 This module defines:
 .Bl -tag -width MODCARGO_INSTALL_TARGET_PATH
-.It MODCARGO_CARGOTOML
+.It Ev MODCARGO_CARGOTOML
 Path to cargo manifest.
 Defaults to
 .Pa ${WRKSRC}/Cargo.toml .
-.It MODCARGO_CRATES
+.It Ev MODCARGO_CRATES
 Crates that will be downloaded by the module.
-.It MODCARGO_CRATES_UPDATE
+.It Ev MODCARGO_CRATES_UPDATE
 List of crates to update, overriding the version listed in Cargo.lock.
-.It MODCARGO_FEATURES
+.It Ev MODCARGO_FEATURES
 List of features to be used when building.
-.It MODCARGO_INSTALL_TARGET_PATH
+.It Ev MODCARGO_INSTALL_TARGET_PATH
 Path to pass to
 .Cm cargo install
 instead of
 .Pa \&. .
 Needs to be set for some virtual manifests.
-.It MODCARGO_VENDOR_DIR
+.It Ev MODCARGO_VENDOR_DIR
 Name of the local directory for vendoring crates.
 Defaults to
 .Pa ${WRKSRC}/modcargo-crates .
-.It MODCARGO_WANTLIB
+.It Ev MODCARGO_WANTLIB
 Architecture-specific
 .Ev WANTLIB
 entries required by all Rust code.
