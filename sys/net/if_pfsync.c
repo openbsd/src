@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.319 2023/07/31 11:13:09 dlg Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.320 2023/08/18 08:03:57 jsg Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1528,7 +1528,7 @@ pfsync_sendout(struct pfsync_softc *sc, struct mbuf *m)
 {
 	struct ip_moptions imo;
 	unsigned int len = m->m_pkthdr.len;
-#if NBPF > 0
+#if NBPFILTER > 0
 	caddr_t if_bpf = sc->sc_if.if_bpf;
 	if (if_bpf)
 		bpf_mtap(if_bpf, m, BPF_DIRECTION_OUT);
@@ -2628,9 +2628,6 @@ pfsync_input(struct mbuf *m, uint8_t ttl, unsigned int hlen)
 	unsigned int len;
 	void (*in)(struct pfsync_softc *,
 	    const caddr_t, unsigned int, unsigned int);
-#if NBPF > 0
-	caddr_t if_bpf;
-#endif
 
 	pfsyncstat_inc(pfsyncs_ipackets);
 
@@ -2649,9 +2646,6 @@ pfsync_input(struct mbuf *m, uint8_t ttl, unsigned int hlen)
 		pfsyncstat_inc(pfsyncs_badif);
 		goto leave;
 	}
-
-#if NBPF > 0
-#endif
 
 	/* verify that the IP TTL is 255. */
 	if (ttl != PFSYNC_DFLTTL) {
