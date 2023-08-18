@@ -1,4 +1,4 @@
-/* $OpenBSD: mux.c,v 1.99 2023/08/04 06:32:40 dtucker Exp $ */
+/* $OpenBSD: mux.c,v 1.100 2023/08/18 01:37:41 djm Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -1464,7 +1464,9 @@ mux_client_read(int fd, struct sshbuf *b, size_t need, int timeout_ms)
 		if (len == -1) {
 			switch (errno) {
 			case EAGAIN:
-				if (waitrfd(fd, &timeout_ms) == -1)
+				if (waitrfd(fd, &timeout_ms,
+				    &muxclient_terminate) == -1 &&
+				    errno != EINTR)
 					return -1;	/* timeout */
 				/* FALLTHROUGH */
 			case EINTR:
