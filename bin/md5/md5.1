@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.48 2019/01/25 00:19:25 millert Exp $
+.\"	$OpenBSD: md5.1,v 1.49 2023/08/18 14:10:33 kn Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: January 25 2019 $
+.Dd $Mdocdate: August 18 2023 $
 .Dt MD5 1
 .Os
 .Sh NAME
@@ -89,7 +89,7 @@ Place the checksum into
 .Ar hashfile
 instead of stdout.
 .It Fl p
-Echoes stdin to stdout and appends the
+Echo stdin to stdout and append the
 checksum to stdout.
 .It Fl q
 Only print the checksum (quiet mode) or if used in conjunction with the
@@ -100,16 +100,16 @@ Reverse the format of the hash algorithm output, making
 it match the output format used by
 .Xr cksum 1 .
 .It Fl s Ar string
-Prints a checksum of the given
+Print a checksum of the given
 .Ar string .
 .It Fl t
-Runs a built-in time trial.
+Run a built-in time trial.
 Specifying
 .Fl t
 multiple times results in the number of rounds being multiplied
 by 10 for each additional flag.
 .It Fl x
-Runs a built-in test script.
+Run a built-in test script.
 .El
 .Sh EXIT STATUS
 These utilities exit 0 on success,

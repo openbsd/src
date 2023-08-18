@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cksum.1,v 1.40 2022/08/04 06:20:24 jsg Exp $
+.\"	$OpenBSD: cksum.1,v 1.41 2023/08/18 14:10:33 kn Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)cksum.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd $Mdocdate: August 4 2022 $
+.Dd $Mdocdate: August 18 2023 $
 .Dt CKSUM 1
 .Os
 .Sh NAME
@@ -131,7 +131,7 @@ Place the checksum into
 .Ar hashfile
 instead of stdout.
 .It Fl p
-Echoes stdin to stdout and appends the
+Echo stdin to stdout and append the
 checksum to stdout.
 .It Fl q
 Only print the checksum (quiet mode) or if used in conjunction with the
@@ -141,16 +141,16 @@ flag, only print the failed cases.
 Reverse the format of the hash algorithm output, making
 it match the checksum output format.
 .It Fl s Ar string
-Prints a checksum of the given
+Print a checksum of the given
 .Ar string .
 .It Fl t
-Runs a built-in time trial.
+Run a built-in time trial.
 Specifying
 .Fl t
 multiple times results in the number of rounds being multiplied
 by 10 for each additional flag.
 .It Fl x
-Runs a built-in test script.
+Run a built-in test script.
 .El
 .Pp
 The default CRC used is based on the polynomial used for CRC error checking
