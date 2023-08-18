@@ -1,4 +1,4 @@
-/*	$OpenBSD: wg_cookie.c,v 1.4 2022/03/17 18:51:56 tb Exp $ */
+/*	$OpenBSD: wg_cookie.c,v 1.5 2023/08/18 08:11:47 jsg Exp $ */
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
  * Copyright (C) 2019-2020 Matt Dunwoodie <ncon@noconroy.net>
@@ -385,7 +385,7 @@ ratelimit_allow(struct ratelimit *rl, struct sockaddr *sa)
 		 * lapsed since our last_time, adding that, ensuring that we
 		 * cap the tokens at TOKEN_MAX. If the endpoint has no tokens
 		 * left (that is tokens <= INITIATION_COST) then we block the
-		 * request, otherwise we subtract the INITITIATION_COST and
+		 * request, otherwise we subtract the INITIATION_COST and
 		 * return OK. */
 		diff = r->r_last_time;
 		getnanouptime(&r->r_last_time);
