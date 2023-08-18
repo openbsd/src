@@ -1,4 +1,4 @@
-.\"	$OpenBSD: compress.3,v 1.24 2023/07/30 16:43:28 tb Exp $
+.\"	$OpenBSD: compress.3,v 1.25 2023/08/18 06:08:19 tb Exp $
 .\"
 .\"  Copyright (C) 1995-2017 Jean-loup Gailly and Mark Adler
 .\"
@@ -23,7 +23,7 @@
 .\"
 .\" This page corresponds to zlib version 1.2.3
 .\"
-.Dd $Mdocdate: July 30 2023 $
+.Dd $Mdocdate: August 18 2023 $
 .Dt COMPRESS 3
 .Os
 .Sh NAME
@@ -551,8 +551,10 @@ or a
 .Dv Z_SYNC_FLUSH ,
 make sure that
 .Fa avail_out
-is greater than six to avoid repeated flush markers due to avail_out == 0
-on return.
+is greater than six when the flush marker begins,
+in order to avoid repeated flush markers upon calling
+.Fn deflate
+again when avail_out == 0.
 .Pp
 If the parameter
 .Fa flush
