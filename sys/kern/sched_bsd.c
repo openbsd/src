@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.82 2023/08/18 09:18:52 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.83 2023/08/19 11:14:11 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -442,26 +442,23 @@ mi_switch(void)
 
 	/*
 	 * We're running again; record our new start time.  We might
-	 * be running on a new CPU now, so don't use the cache'd
-	 * schedstate_percpu pointer.
+	 * be running on a new CPU now, so refetch the schedstate_percpu
+	 * pointer.
 	 */
 	KASSERT(p->p_cpu == curcpu());
+	spc = &p->p_cpu->ci_schedstate;
 
 	/* Start any optional clock interrupts needed by the thread. */
 	if (ISSET(p->p_p->ps_flags, PS_ITIMER)) {
-		atomic_setbits_int(&p->p_cpu->ci_schedstate.spc_schedflags,
-		    SPCF_ITIMER);
-		clockintr_advance(p->p_cpu->ci_schedstate.spc_itimer,
-		    hardclock_period);
+		atomic_setbits_int(&spc->spc_schedflags, SPCF_ITIMER);
+		clockintr_advance(spc->spc_itimer, hardclock_period);
 	}
 	if (ISSET(p->p_p->ps_flags, PS_PROFIL)) {
-		atomic_setbits_int(&p->p_cpu->ci_schedstate.spc_schedflags,
-		    SPCF_PROFCLOCK);
-		clockintr_advance(p->p_cpu->ci_schedstate.spc_profclock,
-		    profclock_period);
+		atomic_setbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
+		clockintr_advance(spc->spc_profclock, profclock_period);
 	}
 
-	nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
+	nanouptime(&spc->spc_runtime);
 
 #ifdef MULTIPROCESSOR
 	/*
