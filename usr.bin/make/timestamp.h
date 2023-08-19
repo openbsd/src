@@ -1,7 +1,7 @@
 #ifndef TIMESTAMP_H
 #define TIMESTAMP_H
 
-/*	$OpenBSD: timestamp.h,v 1.10 2013/05/22 12:14:08 espie Exp $ */
+/*	$OpenBSD: timestamp.h,v 1.11 2023/08/19 04:21:06 guenther Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -51,8 +51,7 @@
 
 #define ts_set_from_stat(s, t) \
 do { \
-	(t).tv_sec = (s).st_mtime; \
-	(t).tv_nsec = (s).st_mtimensec; \
+	(t) = (s).st_mtim; \
 	if (is_out_of_date(t)) \
 		(t).tv_nsec++; \
 } while (0)

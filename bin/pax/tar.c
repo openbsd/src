@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.71 2023/06/26 18:00:59 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.72 2023/08/19 04:21:05 guenther Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -414,8 +414,7 @@ tar_rd(ARCHD *arcn, char *buf)
 		arcn->sb.st_mtime = MAX_TIME_T;
 	else
 		arcn->sb.st_mtime = val;
-	arcn->sb.st_ctime = arcn->sb.st_atime = arcn->sb.st_mtime;
-	arcn->sb.st_ctimensec = arcn->sb.st_atimensec = arcn->sb.st_mtimensec;
+	arcn->sb.st_ctim = arcn->sb.st_atim = arcn->sb.st_mtim;
 
 	/*
 	 * have to look at the last character, it may be a '/' and that is used
@@ -793,12 +792,10 @@ reset:
 			arcn->sb.st_mtime = val;
 	}
 	if (arcn->sb.st_ctime == 0) {
-		arcn->sb.st_ctime = arcn->sb.st_mtime;
-		arcn->sb.st_ctimensec = arcn->sb.st_mtimensec;
+		arcn->sb.st_ctim = arcn->sb.st_mtim;
 	}
 	if (arcn->sb.st_atime == 0) {
-		arcn->sb.st_atime = arcn->sb.st_mtime;
-		arcn->sb.st_atimensec = arcn->sb.st_mtimensec;
+		arcn->sb.st_atim = arcn->sb.st_mtim;
 	}
 
 	/*

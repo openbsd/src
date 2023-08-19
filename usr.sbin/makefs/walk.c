@@ -1,4 +1,4 @@
-/*	$OpenBSD: walk.c,v 1.11 2022/01/11 05:34:32 jsg Exp $	*/
+/*	$OpenBSD: walk.c,v 1.12 2023/08/19 04:21:06 guenther Exp $	*/
 /*	$NetBSD: walk.c,v 1.29 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
@@ -205,12 +205,10 @@ create_fsnode(const char *root, const char *path, const char *name,
 	cur->inode->nlink = 1;
 	cur->inode->st = *stbuf;
 	if (Tflag) {
-		cur->inode->st.st_atime = stampts;
-		cur->inode->st.st_mtime = stampts;
-		cur->inode->st.st_ctime = stampts;
-		cur->inode->st.st_atimensec = 0;
-		cur->inode->st.st_mtimensec = 0;
-		cur->inode->st.st_ctimensec = 0;
+		cur->inode->st.st_atim.tv_sec = stampts;
+		cur->inode->st.st_atim.tv_nsec = 0;
+		cur->inode->st.st_mtim = cur->inode->st.st_ctim =
+		    cur->inode->st.st_atim;
 	}
 	return (cur);
 }
