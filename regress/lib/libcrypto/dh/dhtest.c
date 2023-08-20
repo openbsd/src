@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.12 2023/08/12 06:30:43 tb Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.13 2023/08/20 22:20:12 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -98,7 +98,8 @@ main(int argc, char *argv[])
 	BN_GENCB *_cb;
 	DH *dh = NULL;
 	unsigned char *buf = NULL;
-	int i, buf_len, secret_len;
+	int flags, buf_len, secret_len;
+	int i;
 	int ret = 1;
 
 	if ((_cb = BN_GENCB_new()) == NULL)
@@ -118,15 +119,15 @@ main(int argc, char *argv[])
 	if (!DH_generate_parameters_ex(dh, 64, DH_GENERATOR_5, _cb))
 		goto err;
 
-	if (!DH_check(dh, &i))
+	if (!DH_check(dh, &flags))
 		goto err;
-	if (i & DH_CHECK_P_NOT_PRIME)
+	if (flags & DH_CHECK_P_NOT_PRIME)
 		printf("p value is not prime\n");
-	if (i & DH_CHECK_P_NOT_SAFE_PRIME)
+	if (flags & DH_CHECK_P_NOT_SAFE_PRIME)
 		printf("p value is not a safe prime\n");
-	if (i & DH_UNABLE_TO_CHECK_GENERATOR)
+	if (flags & DH_UNABLE_TO_CHECK_GENERATOR)
 		printf("unable to check the generator value\n");
-	if (i & DH_NOT_SUITABLE_GENERATOR)
+	if (flags & DH_NOT_SUITABLE_GENERATOR)
 		printf("the g value is not a generator\n");
 
 	printf("\np    = ");
