@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.h,v 1.6 2021/06/12 13:30:14 visa Exp $	*/
+/*	$OpenBSD: main.h,v 1.7 2023/08/20 15:19:34 visa Exp $	*/
 /*
  *	Written by Alexaner Bluhm <bluhm@openbsd.org> 2016 Public Domain
  */
@@ -16,6 +16,7 @@
 	    __FILE__, __LINE__))
 
 int check_inheritance(void);
+int do_exec(const char *);
 int do_fdpass(void);
 int do_flock(void);
 int do_invalid_timer(void);

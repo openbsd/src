@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 2021/06/12 13:30:14 visa Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 2023/08/20 15:19:34 visa Exp $	*/
 /*
  *	Written by Artur Grabowski <art@openbsd.org> 2002 Public Domain
  */
@@ -17,8 +17,11 @@ main(int argc, char **argv)
 	int n, ret, c;
 
 	ret = 0;
-	while ((c = getopt(argc, argv, "fFiIjlpPrR:stT:")) != -1) {
+	while ((c = getopt(argc, argv, "efFiIjlpPrR:stT:")) != -1) {
 		switch (c) {
+		case 'e':
+			ret |= do_exec(argv[0]);
+			break;
 		case 'f':
 			ret |= check_inheritance();
 			break;
