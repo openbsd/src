@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.66 2023/06/02 17:44:29 cheloha Exp $
+.\" $OpenBSD: pledge.2,v 1.67 2023/08/20 15:17:53 visa Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 2 2023 $
+.Dd $Mdocdate: August 20 2023 $
 .Dt PLEDGE 2
 .Os
 .Sh NAME
@@ -198,6 +198,7 @@ As a result, all the expected functionalities of libc stdio work.
 .Xr issetugid 2 ,
 .Xr kevent 2 ,
 .Xr kqueue 2 ,
+.Xr kqueue1 2 ,
 .Xr lseek 2 ,
 .Xr madvise 2 ,
 .Xr minherit 2 ,

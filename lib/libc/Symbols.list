@@ -121,6 +121,7 @@ _thread_sys_issetugid
 _thread_sys_kevent
 _thread_sys_kill
 _thread_sys_kqueue
+_thread_sys_kqueue1
 _thread_sys_ktrace
 _thread_sys_lchown
 _thread_sys_link
@@ -322,6 +323,7 @@ issetugid
 kevent
 kill
 kqueue
+kqueue1
 ktrace
 lchown
 link

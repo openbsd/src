@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.49 2023/08/13 10:23:26 jmc Exp $
+.\"	$OpenBSD: kqueue.2,v 1.50 2023/08/20 15:17:53 visa Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -26,11 +26,12 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.18 2001/02/14 08:48:35 guido Exp $
 .\"
-.Dd $Mdocdate: August 13 2023 $
+.Dd $Mdocdate: August 20 2023 $
 .Dt KQUEUE 2
 .Os
 .Sh NAME
 .Nm kqueue ,
+.Nm kqueue1 ,
 .Nm kevent ,
 .Nm EV_SET
 .Nd kernel event notification mechanism
@@ -43,6 +44,12 @@
 .Ft int
 .Fn kevent "int kq" "const struct kevent *changelist" "int nchanges" "struct kevent *eventlist" "int nevents" "const struct timespec *timeout"
 .Fn EV_SET "&kev" ident filter flags fflags data udata
+.In sys/types.h
+.In sys/event.h
+.In sys/time.h
+.In fcntl.h
+.Ft int
+.Fn kqueue1 "int flags"
 .Sh DESCRIPTION
 .Fn kqueue
 provides a generic method of notifying the user when an event
@@ -77,6 +84,17 @@ creates a new kernel event queue and returns a descriptor.
 The queue is not inherited by a child created with
 .Xr fork 2 .
 Similarly, kqueues cannot be passed across UNIX-domain sockets.
+.Pp
+The
+.Fn kqueue1
+function is identical to
+.Fn kqueue
+except that the close-on-exec flag on the new file descriptor
+is determined by the
+.Dv O_CLOEXEC flag
+in the
+.Fa flags
+argument.
 .Pp
 .Fn kevent
 is used to register events with the queue, and return any pending
@@ -545,7 +563,9 @@ contains the events which triggered the filter.
 .El
 .Sh RETURN VALUES
 .Fn kqueue
-creates a new kernel event queue and returns a file descriptor.
+and
+.Fn kqueue1
+create a new kernel event queue and returns a file descriptor.
 If there was an error creating the kernel event queue, a value of -1 is
 returned and
 .Va errno
@@ -577,7 +597,9 @@ returns 0.
 .Sh ERRORS
 The
 .Fn kqueue
-function fails if:
+and
+.Fn kqueue1
+functions fail if:
 .Bl -tag -width Er
 .It Bq Er ENOMEM
 The kernel failed to allocate enough memory for the kernel queue.
@@ -585,6 +607,15 @@ The kernel failed to allocate enough memory for the kernel queue.
 The per-process descriptor table is full.
 .It Bq Er ENFILE
 The system file table is full.
+.El
+.Pp
+In addition,
+.Fn kqueue1
+fails if:
+.Bl -tag -width Er
+.It Bq Er EINVAL
+.Fa flags
+is invalid.
 .El
 .Pp
 The

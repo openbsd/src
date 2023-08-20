@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.173 2023/02/27 14:59:33 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.174 2023/08/20 15:17:53 visa Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -73,7 +73,7 @@ ASM=	__semctl.o __thrsigdivert.o \
 	getpriority.o getresgid.o getresuid.o \
 	getrlimit.o getrusage.o getsid.o getsockname.o \
 	getsockopt.o ioctl.o \
-	kevent.o kill.o kqueue.o ktrace.o lchown.o \
+	kevent.o kill.o kqueue.o kqueue1.o ktrace.o lchown.o \
 	link.o linkat.o listen.o lseek.o lstat.o \
 	madvise.o mimmutable.o minherit.o mkdir.o mkdirat.o mkfifo.o mkfifoat.o \
 	mknod.o mknodat.o mlock.o mlockall.o mmap.o mount.o mprotect.o \

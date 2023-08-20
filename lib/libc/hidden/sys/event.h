@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.1 2023/05/18 16:11:09 guenther Exp $	*/
+/*	$OpenBSD: event.h,v 1.2 2023/08/20 15:17:53 visa Exp $	*/
 /*
  * Copyright (c) 2023 Philip Guenther <guenther@openbsd.org>
  *
@@ -22,5 +22,6 @@
 
 PROTO_NORMAL(kevent);
 PROTO_NORMAL(kqueue);
+PROTO_NORMAL(kqueue1);
 
 #endif /* !_LIBC_SYS_EVENT_H_ */
