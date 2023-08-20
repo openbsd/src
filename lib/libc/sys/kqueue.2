@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kqueue.2,v 1.50 2023/08/20 15:17:53 visa Exp $
+.\"	$OpenBSD: kqueue.2,v 1.51 2023/08/20 19:52:40 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -91,7 +91,8 @@ function is identical to
 .Fn kqueue
 except that the close-on-exec flag on the new file descriptor
 is determined by the
-.Dv O_CLOEXEC flag
+.Dv O_CLOEXEC
+flag
 in the
 .Fa flags
 argument.
