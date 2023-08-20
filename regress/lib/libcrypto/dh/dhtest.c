@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhtest.c,v 1.13 2023/08/20 22:20:12 tb Exp $	*/
+/*	$OpenBSD: dhtest.c,v 1.14 2023/08/20 22:21:00 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -55,12 +55,6 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
-
-/* Until the key-gen callbacks are modified to use newer prototypes, we allow
- * deprecated functions for openssl-internal code */
-#ifdef OPENSSL_NO_DEPRECATED
-#undef OPENSSL_NO_DEPRECATED
-#endif
 
 #include <err.h>
 #include <stdio.h>
