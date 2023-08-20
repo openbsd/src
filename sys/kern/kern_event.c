@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.197 2023/08/13 08:29:28 visa Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.198 2023/08/20 15:13:43 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -60,6 +60,7 @@
 #define KLIST_ASSERT_LOCKED(kl)	((void)(kl))
 #endif
 
+int	dokqueue(struct proc *, int, register_t *);
 struct	kqueue *kqueue_alloc(struct filedesc *);
 void	kqueue_terminate(struct proc *p, struct kqueue *);
 void	KQREF(struct kqueue *);
@@ -912,12 +913,14 @@ kqueue_alloc(struct filedesc *fdp)
 }
 
 int
-sys_kqueue(struct proc *p, void *v, register_t *retval)
+dokqueue(struct proc *p, int flags, register_t *retval)
 {
 	struct filedesc *fdp = p->p_fd;
 	struct kqueue *kq;
 	struct file *fp;
-	int fd, error;
+	int cloexec, error, fd;
+
+	cloexec = (flags & O_CLOEXEC) ? UF_EXCLOSE : 0;
 
 	kq = kqueue_alloc(fdp);
 
@@ -925,20 +928,38 @@ sys_kqueue(struct proc *p, void *v, register_t *retval)
 	error = falloc(p, &fp, &fd);
 	if (error)
 		goto out;
-	fp->f_flag = FREAD | FWRITE;
+	fp->f_flag = FREAD | FWRITE | (flags & FNONBLOCK);
 	fp->f_type = DTYPE_KQUEUE;
 	fp->f_ops = &kqueueops;
 	fp->f_data = kq;
 	*retval = fd;
 	LIST_INSERT_HEAD(&fdp->fd_kqlist, kq, kq_next);
 	kq = NULL;
-	fdinsert(fdp, fd, 0, fp);
+	fdinsert(fdp, fd, cloexec, fp);
 	FRELE(fp, p);
 out:
 	fdpunlock(fdp);
 	if (kq != NULL)
 		pool_put(&kqueue_pool, kq);
 	return (error);
+}
+
+int
+sys_kqueue(struct proc *p, void *v, register_t *retval)
+{
+	return (dokqueue(p, 0, retval));
+}
+
+int
+sys_kqueue1(struct proc *p, void *v, register_t *retval)
+{
+	struct sys_kqueue1_args /* {
+		syscallarg(int)	flags;
+	} */ *uap = v;
+
+	if (SCARG(uap, flags) & ~(O_CLOEXEC | FNONBLOCK))
+		return (EINVAL);
+	return (dokqueue(p, SCARG(uap, flags), retval));
 }
 
 int

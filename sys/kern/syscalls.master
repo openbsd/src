@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.249 2023/07/24 19:32:23 miod Exp $
+;	$OpenBSD: syscalls.master,v 1.250 2023/08/20 15:13:43 visa Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -462,7 +462,7 @@
 267	OBSOL		pad_preadv
 268	OBSOL		pad_pwritev
 269	STD NOLOCK	{ int sys_kqueue(void); }
-270	OBSOL		t32_kevent
+270	STD NOLOCK	{ int sys_kqueue1(int flags); }
 271	STD		{ int sys_mlockall(int flags); }
 272	STD		{ int sys_munlockall(void); }
 273	UNIMPL		sys_getpeereid

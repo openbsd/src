@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.70 2023/08/13 08:29:28 visa Exp $	*/
+/*	$OpenBSD: event.h,v 1.71 2023/08/20 15:13:43 visa Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -369,6 +369,7 @@ struct timespec;
 
 __BEGIN_DECLS
 int	kqueue(void);
+int	kqueue1(int flags);
 int	kevent(int kq, const struct kevent *changelist, int nchanges,
 		    struct kevent *eventlist, int nevents,
 		    const struct timespec *timeout);
