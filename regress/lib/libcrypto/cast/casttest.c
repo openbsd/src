@@ -1,4 +1,4 @@
-/*	$OpenBSD: casttest.c,v 1.3 2023/08/20 22:26:24 tb Exp $	*/
+/*	$OpenBSD: casttest.c,v 1.4 2023/08/20 22:27:52 tb Exp $	*/
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -63,8 +63,6 @@
 
 #include <openssl/cast.h>
 
-#define FULL_TEST
-
 static unsigned char k[16] = {
 	0x01, 0x23, 0x45, 0x67, 0x12, 0x34, 0x56, 0x78,
 	0x23, 0x45, 0x67, 0x89, 0x34, 0x56, 0x78, 0x9A
@@ -128,10 +126,8 @@ static unsigned char cfb_cipher64[CFB_TEST_SIZE] = {
 int
 main(int argc, char *argv[])
 {
-#ifdef FULL_TEST
 	long l;
 	CAST_KEY key_b;
-#endif
 	int i, z, err = 0;
 	CAST_KEY key;
 
@@ -171,7 +167,6 @@ main(int argc, char *argv[])
 	if (err == 0)
 		printf("ecb cast5 ok\n");
 
-#ifdef FULL_TEST
 	{
 		unsigned char out_a[16], out_b[16];
 		static char *hex = "0123456789ABCDEF";
@@ -223,7 +218,6 @@ main(int argc, char *argv[])
 		} else
 			printf(" ok\n");
 	}
-#endif
 
 	exit(err);
 }
