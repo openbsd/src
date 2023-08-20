@@ -958,6 +958,8 @@ SipHash_Update
 /* locale */
 __mb_cur_max
 btowc
+c16rtomb
+c32rtomb
 duplocale
 freelocale
 isalnum_l
@@ -1007,6 +1009,8 @@ mbsnrtowcs
 mbsrtowcs
 mbstowcs
 newlocale
+mbrtoc16
+mbrtoc32
 mbtowc
 nl_langinfo
 nl_langinfo_l

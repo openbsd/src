@@ -1435,6 +1435,7 @@
 ./usr/include/time.h
 ./usr/include/tls.h
 ./usr/include/ttyent.h
+./usr/include/uchar.h
 ./usr/include/ufs
 ./usr/include/ufs/ext2fs
 ./usr/include/ufs/ext2fs/ext2fs.h
@@ -2295,6 +2296,7 @@
 ./usr/share/man/man3/btowc.3
 ./usr/share/man/man3/btree.3
 ./usr/share/man/man3/bzero.3
+./usr/share/man/man3/c16rtomb.3
 ./usr/share/man/man3/cacos.3
 ./usr/share/man/man3/cacosh.3
 ./usr/share/man/man3/carg.3
@@ -2715,6 +2717,7 @@
 ./usr/share/man/man3/malloc.3
 ./usr/share/man/man3/mblen.3
 ./usr/share/man/man3/mbrlen.3
+./usr/share/man/man3/mbrtoc16.3
 ./usr/share/man/man3/mbrtowc.3
 ./usr/share/man/man3/mbsinit.3
 ./usr/share/man/man3/mbsrtowcs.3
