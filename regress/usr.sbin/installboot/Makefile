@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 2023/08/20 22:38:49 kn Exp $
+#	$OpenBSD: Makefile,v 1.40 2023/08/21 14:25:22 kn Exp $
 
 INSTALLBOOT ?=		/usr/sbin/installboot
 DRY_RUN =		${INSTALLBOOT} -n
@@ -103,11 +103,13 @@ REGRESS_TARGETS =	prepare
 prepare:
 	${SUDO} ${REAL_RUN} -p -- "$$(<${ROOTDEVFILE})"
 
-REGRESS_TARGETS +=	dry-prepare \
+SUCCESS_TESTS +=	dry-prepare \
 			dry-default \
 			dry-root \
 			root \
 			root-stages
+REGRESS_TARGETS +=	${SUCCESS_TESTS}
+REGRESS_ROOT_TARGETS +=	${SUCCESS_TESTS}
 
 dry-prepare:
 	${SUDO} ${DRY_RUN} -p -- "$$(<${ROOTDEVFILE})"
@@ -122,12 +124,14 @@ root-stages:
 	${SUDO} ${REAL_RUN} -- "$$(<${ROOTDEVFILE})" ${STAGEFILES}
 
 
-REGRESS_EXPECTED_FAILURES =	dry-prepare-root \
+FAILURE_TESTS =			dry-prepare-root \
 				dry-prepare-stages \
 				dry-nodisk-stages \
 				dry-toofew \
 				dry-toomany
-REGRESS_TARGETS +=		${REGRESS_EXPECTED_FAILURES}
+REGRESS_EXPECTED_FAILURES +=	${FAILURE_TESTS}
+REGRESS_TARGETS +=		${FAILURE_TESTS}
+REGRESS_ROOT_TARGETS +=		dry-nodisk-stages
 
 dry-prepare-root:
 	${DRY_RUN} -p -r/ -- "$$(<${ROOTDEVFILE})" 2>/dev/null
