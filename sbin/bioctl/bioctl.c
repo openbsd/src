@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.153 2023/08/21 08:13:37 kn Exp $ */
+/* $OpenBSD: bioctl.c,v 1.154 2023/08/21 08:33:11 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -1355,6 +1355,7 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 	} else {
 		rpp_flag |= interactive ? RPP_REQUIRE_TTY : RPP_STDIN;
 
+ retry:
 		if (readpassphrase(prompt, passphrase, sizeof(passphrase),
 		    rpp_flag) == NULL)
 			err(1, "unable to read passphrase");
@@ -1371,6 +1372,10 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 		    (strcmp(passphrase, verifybuf) != 0)) {
 			explicit_bzero(passphrase, sizeof(passphrase));
 			explicit_bzero(verifybuf, sizeof(verifybuf));
+			if (interactive) {
+				warnx("Passphrases did not match, try again");
+				goto retry;
+			}
 			errx(1, "Passphrases did not match");
 		}
 		/* forget the re-typed one */
