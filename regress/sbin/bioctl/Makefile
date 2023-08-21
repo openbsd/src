@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2023/08/20 23:19:00 kn Exp $
+#	$OpenBSD: Makefile,v 1.2 2023/08/21 05:10:25 anton Exp $
 
 BIOCTL ?=		/sbin/bioctl
 
@@ -9,17 +9,17 @@ VOLDEVFILE =		vol.txt
 OLDPW =			oldsecret
 NEWPW =			securenew
 
-
 REGRESS_SETUP_ONCE =	create-chunk
 
 create-chunk:
-	dd if=/dev/zero  of=${CHUNKFILE} bs=512k count=0 seek=1 status=none
+	dd if=/dev/zero of=${CHUNKFILE} bs=512k count=0 seek=1 status=none
 	${SUDO} vnconfig -- ${CHUNKFILE} 1>${CHUNKDEVFILE}
 	echo 'RAID *' | ${SUDO} disklabel -wAT- -- "$$(<${CHUNKDEVFILE})"
 
 
 REGRESS_TARGETS =		scripted-create-volume \
 				scripted-change-passphrase
+REGRESS_ROOT_TARGETS =		${REGRESS_TARGETS}
 
 scripted-create-volume:
 	printf '%s\n' '${OLDPW}' | \
