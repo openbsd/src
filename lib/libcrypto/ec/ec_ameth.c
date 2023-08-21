@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.42 2023/08/12 08:07:35 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.43 2023/08/21 09:52:30 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -75,6 +75,17 @@ static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
 static int ecdh_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
 
+static void
+eckey_param_free(int ptype, void *pval)
+{
+	if (pval == NULL)
+		return;
+	if (ptype == V_ASN1_OBJECT)
+		ASN1_OBJECT_free(pval);		/* XXX - really necessary? */
+	else
+		ASN1_STRING_free(pval);
+}
+
 static int
 eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 {
@@ -110,36 +121,37 @@ eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 static int
 eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
-	EC_KEY *ec_key = pkey->pkey.ec;
+	EC_KEY *eckey = pkey->pkey.ec;
+	int ptype = V_ASN1_UNDEF;
 	void *pval = NULL;
-	int ptype;
-	unsigned char *penc = NULL, *p;
-	int penclen;
+	ASN1_OBJECT *aobj;
+	unsigned char *key = NULL;
+	int key_len = 0;
+	int ret = 0;
 
-	if (!eckey_param2type(&ptype, &pval, ec_key)) {
+	if (!eckey_param2type(&ptype, &pval, eckey)) {
 		ECerror(ERR_R_EC_LIB);
-		return 0;
+		goto err;
 	}
-	penclen = i2o_ECPublicKey(ec_key, NULL);
-	if (penclen <= 0)
+	if ((key_len = i2o_ECPublicKey(eckey, &key)) <= 0) {
+		key_len = 0;
 		goto err;
-	penc = malloc(penclen);
-	if (!penc)
+	}
+	if ((aobj = OBJ_nid2obj(EVP_PKEY_EC)) == NULL)
 		goto err;
-	p = penc;
-	penclen = i2o_ECPublicKey(ec_key, &p);
-	if (penclen <= 0)
+	if (!X509_PUBKEY_set0_param(pk, aobj, ptype, pval, key, key_len))
 		goto err;
-	if (X509_PUBKEY_set0_param(pk, OBJ_nid2obj(EVP_PKEY_EC),
-		ptype, pval, penc, penclen))
-		return 1;
+	pval = NULL;
+	key = NULL;
+	key_len = 0;
+
+	ret = 1;
+
  err:
-	if (ptype == V_ASN1_OBJECT)
-		ASN1_OBJECT_free(pval);
-	else
-		ASN1_STRING_free(pval);
-	free(penc);
-	return 0;
+	eckey_param_free(ptype, pval);
+	freezero(key, key_len);
+
+	return ret;
 }
 
 static EC_KEY *
@@ -308,54 +320,47 @@ eckey_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 static int
 eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
-	EC_KEY *ec_key;
-	unsigned char *ep, *p;
-	int eplen, ptype;
-	void *pval;
-	unsigned int tmp_flags, old_flags;
+	EC_KEY *eckey = pkey->pkey.ec;
+	void *pval = NULL;
+	int ptype = V_ASN1_UNDEF;
+	ASN1_OBJECT *aobj;
+	unsigned char *key = NULL;
+	int key_len = 0;
+	unsigned int flags;
+	int ret = 0;
 
-	ec_key = pkey->pkey.ec;
+	flags = EC_KEY_get_enc_flags(eckey);
 
-	if (!eckey_param2type(&ptype, &pval, ec_key)) {
+	if (!eckey_param2type(&ptype, &pval, eckey)) {
 		ECerror(EC_R_DECODE_ERROR);
-		return 0;
+		goto err;
 	}
-	/* set the private key */
 
-	/*
-	 * do not include the parameters in the SEC1 private key see PKCS#11
-	 * 12.11
-	 */
-	old_flags = EC_KEY_get_enc_flags(ec_key);
-	tmp_flags = old_flags | EC_PKEY_NO_PARAMETERS;
-	EC_KEY_set_enc_flags(ec_key, tmp_flags);
-	eplen = i2d_ECPrivateKey(ec_key, NULL);
-	if (!eplen) {
-		EC_KEY_set_enc_flags(ec_key, old_flags);
+	/* PKCS#11 12.11: don't include parameters in the SEC1 private key. */
+	EC_KEY_set_enc_flags(eckey, flags | EC_PKEY_NO_PARAMETERS);
+
+	if ((key_len = i2d_ECPrivateKey(eckey, &key)) <= 0) {
 		ECerror(ERR_R_EC_LIB);
-		return 0;
+		key_len = 0;
+		goto err;
 	}
-	ep = malloc(eplen);
-	if (!ep) {
-		EC_KEY_set_enc_flags(ec_key, old_flags);
-		ECerror(ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	p = ep;
-	if (!i2d_ECPrivateKey(ec_key, &p)) {
-		EC_KEY_set_enc_flags(ec_key, old_flags);
-		free(ep);
-		ECerror(ERR_R_EC_LIB);
-		return 0;
-	}
-	/* restore old encoding flags */
-	EC_KEY_set_enc_flags(ec_key, old_flags);
+	if ((aobj = OBJ_nid2obj(NID_X9_62_id_ecPublicKey)) == NULL)
+		goto err;
+	if (!PKCS8_pkey_set0(p8, aobj, 0, ptype, pval, key, key_len))
+		goto err;
+	pval = NULL;
+	key = NULL;
+	key_len = 0;
 
-	if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_X9_62_id_ecPublicKey), 0,
-		ptype, pval, ep, eplen))
-		return 0;
+	ret = 1;
 
-	return 1;
+ err:
+	eckey_param_free(ptype, pval);
+	freezero(key, key_len);
+
+	EC_KEY_set_enc_flags(eckey, flags);
+
+	return ret;
 }
 
 static int
