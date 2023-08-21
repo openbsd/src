@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.44 2022/03/22 06:51:12 miod Exp $	*/
+/*	$OpenBSD: locore.S,v 1.45 2023/08/21 01:35:43 guenther Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -105,10 +105,6 @@ cpu_hatch_and_stop:
 
 #endif
 
-	.globl cpu_idle_enter
-cpu_idle_enter:
-	blr
-
 	.globl cpu_idle_spin
 cpu_idle_spin:
 	blr
@@ -190,10 +186,6 @@ cpu_idle_restore_context:
 	mtcr	%r4
 	mtsrr0	%r5
 	rfid	/* return from system reset interrupt */
-
-	.globl cpu_idle_leave
-cpu_idle_leave:
-	blr
 
 	.globl cpu_switchto_asm
 cpu_switchto_asm:
