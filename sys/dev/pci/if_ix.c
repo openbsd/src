@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.203 2023/08/03 18:56:32 jan Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.204 2023/08/21 21:45:18 bluhm Exp $	*/
 
 /******************************************************************************
 
@@ -3230,12 +3230,6 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			sendmp = mp;
 			sendmp->m_pkthdr.len = 0;
 			sendmp->m_pkthdr.ph_mss = 0;
-#if NVLAN > 0
-			if (staterr & IXGBE_RXD_STAT_VP) {
-				sendmp->m_pkthdr.ether_vtag = vtag;
-				SET(sendmp->m_flags, M_VLANTAG);
-			}
-#endif
 		}
 		sendmp->m_pkthdr.len += mp->m_len;
 		/*
@@ -3256,7 +3250,12 @@ ixgbe_rxeof(struct rx_ring *rxr)
 			uint16_t pkts;
 
 			ixgbe_rx_checksum(staterr, sendmp);
-
+#if NVLAN > 0
+			if (staterr & IXGBE_RXD_STAT_VP) {
+				sendmp->m_pkthdr.ether_vtag = vtag;
+				SET(sendmp->m_flags, M_VLANTAG);
+			}
+#endif
 			if (hashtype != IXGBE_RXDADV_RSSTYPE_NONE) {
 				sendmp->m_pkthdr.ph_flowid = hash;
 				SET(sendmp->m_pkthdr.csum_flags, M_FLOWID);
