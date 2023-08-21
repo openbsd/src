@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.152 2023/08/18 14:09:19 kn Exp $ */
+/* $OpenBSD: bioctl.c,v 1.153 2023/08/21 08:13:37 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -376,7 +376,8 @@ bio_status(struct bio_status *bs)
 		prefix = __progname;
 
 	for (i = 0; i < bs->bs_msg_count; i++)
-		printf("%s: %s\n", prefix, bs->bs_msgs[i].bm_msg);
+		fprintf(bs->bs_msgs[i].bm_type == BIO_MSG_INFO ?
+		    stdout : stderr, "%s: %s\n", prefix, bs->bs_msgs[i].bm_msg);
 
 	if (bs->bs_status == BIO_STATUS_ERROR) {
 		if (bs->bs_msg_count == 0)
