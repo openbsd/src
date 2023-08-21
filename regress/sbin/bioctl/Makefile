@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2023/08/21 05:10:25 anton Exp $
+#	$OpenBSD: Makefile,v 1.3 2023/08/21 15:59:38 kn Exp $
 
 BIOCTL ?=		/sbin/bioctl
 
@@ -17,9 +17,10 @@ create-chunk:
 	echo 'RAID *' | ${SUDO} disklabel -wAT- -- "$$(<${CHUNKDEVFILE})"
 
 
-REGRESS_TARGETS =		scripted-create-volume \
+SUCCESS_TESTS =			scripted-create-volume \
 				scripted-change-passphrase
-REGRESS_ROOT_TARGETS =		${REGRESS_TARGETS}
+REGRESS_TARGETS =		${SUCCESS_TESTS}
+REGRESS_ROOT_TARGETS =		${SUCCESS_TESTS}
 
 scripted-create-volume:
 	printf '%s\n' '${OLDPW}' | \
@@ -29,6 +30,19 @@ scripted-create-volume:
 scripted-change-passphrase:
 	printf '%s\n%s\n' '${OLDPW}' '${NEWPW}' | \
 		${SUDO} ${BIOCTL} -s -P -- "$$(<${VOLDEVFILE})"
+
+
+FAILURE_TESTS =			recreate-existing-volume \
+				set-empty-passphrase
+REGRESS_EXPECTED_FAILURES +=	${FAILURE_TESTS}
+REGRESS_TARGETS +=		${FAILURE_TESTS}
+REGRESS_ROOT_TARGETS =		${FAILURE_TESTS}
+
+recreate-existing-volume:
+	${SUDO} ${BIOCTL} -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0
+
+set-empty-passphrase:
+	printf '\n' | ${SUDO} ${BIOCTL} -s -P -- "$$(<${VOLDEVFILE})"
 
 
 CLEANFILES =		*.txt *.img
