@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.5 2022/08/29 02:01:18 jsg Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.6 2023/08/21 20:17:30 miod Exp $	*/
 
 /*-
  * Copyright (c) 2014 Andrew Turner
@@ -98,10 +98,6 @@ load_satp(uint64_t val)
 {
 	__asm volatile("csrw satp, %0" :: "r"(val));
 }
-
-#define	cpufunc_nullop()		riscv_nullop()
-
-void riscv_nullop(void);
 
 #endif	/* _KERNEL */
 #endif	/* _MACHINE_CPUFUNC_H_ */
