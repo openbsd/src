@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.580 2023/08/21 10:12:23 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.581 2023/08/21 12:54:04 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -3204,7 +3204,9 @@ and
 .Ev PATCHFILES*
 is admissible, and in fact, expected, as it is much simpler to build
 an error-free list of files to retrieve in that way.
-See the xanim port for an example.
+See the
+.Pa devel/jdk/1.8
+port for an example.
 .It Ev SYSCONFDIR
 Location for this port's configuration files, should always be derived
 from
