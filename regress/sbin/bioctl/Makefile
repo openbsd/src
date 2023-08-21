@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2023/08/21 17:55:51 kn Exp $
+#	$OpenBSD: Makefile,v 1.6 2023/08/21 18:56:06 kn Exp $
 
 BIOCTL ?=		/sbin/bioctl
 
@@ -18,6 +18,7 @@ create-chunk:
 
 
 SUCCESS_TESTS =			scripted-create-volume \
+				scripted-recreate-volume \
 				scripted-change-passphrase
 REGRESS_TARGETS =		${SUCCESS_TESTS}
 REGRESS_ROOT_TARGETS =		${SUCCESS_TESTS}
@@ -25,6 +26,11 @@ REGRESS_ROOT_TARGETS =		${SUCCESS_TESTS}
 scripted-create-volume:
 	printf '%s\n' '${OLDPW}' | \
 		${SUDO} ${BIOCTL} -s -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
+		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
+
+scripted-recreate-volume: detach-volume
+	printf '%s\n' '${OLDPW}' | \
+		${SUDO} ${BIOCTL} -s -Cforce -r17 -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
 		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
 
 scripted-change-passphrase:
@@ -48,8 +54,9 @@ set-empty-passphrase:
 CLEANFILES =		*.txt *.img
 REGRESS_CLEANUP =	cleanup
 
-cleanup:
+detach-volume:
 	${SUDO} ${BIOCTL} -d -- "$$(<${VOLDEVFILE})" 2>/dev/null
+cleanup: detach-volume
 	${SUDO} vnconfig  -u -- "$$(<${CHUNKDEVFILE})" 2>/dev/null
 
 .include <bsd.regress.mk>
