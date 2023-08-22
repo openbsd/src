@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.20 2023/08/22 08:44:15 tb Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.21 2023/08/22 08:59:44 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -152,34 +152,30 @@ CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 		CMSerror(CMS_R_NO_CONTENT);
 		goto err;
 	}
-	switch (OBJ_obj2nid(cms->contentType)) {
 
+	switch (OBJ_obj2nid(cms->contentType)) {
 	case NID_pkcs7_data:
 		return cont;
-
 	case NID_pkcs7_signed:
-		cmsbio = cms_SignedData_init_bio(cms);
+		if ((cmsbio = cms_SignedData_init_bio(cms)) == NULL)
+			goto err;
 		break;
-
 	case NID_pkcs7_digest:
-		cmsbio = cms_DigestedData_init_bio(cms);
+		if ((cmsbio = cms_DigestedData_init_bio(cms)) == NULL)
+			goto err;
 		break;
-
 	case NID_pkcs7_encrypted:
-		cmsbio = cms_EncryptedData_init_bio(cms);
+		if ((cmsbio = cms_EncryptedData_init_bio(cms)) == NULL)
+			goto err;
 		break;
-
 	case NID_pkcs7_enveloped:
-		cmsbio = cms_EnvelopedData_init_bio(cms);
+		if ((cmsbio = cms_EnvelopedData_init_bio(cms)) == NULL)
+			goto err;
 		break;
-
 	default:
 		CMSerror(CMS_R_UNSUPPORTED_TYPE);
 		goto err;
 	}
-
-	if (cmsbio == NULL)
-		goto err;
 
 	return BIO_push(cmsbio, cont);
 
