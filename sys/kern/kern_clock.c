@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.113 2023/08/12 13:19:28 miod Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.114 2023/08/22 13:46:20 jsg Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -111,13 +111,9 @@ initclocks(void)
 void
 hardclock(struct clockframe *frame)
 {
-#if defined(MULTIPROCESSOR) || defined(__hppa__) /* XXX */
-	struct cpu_info *ci = curcpu();
-#endif
-
 #if NDT > 0
 	DT_ENTER(profile, NULL);
-	if (CPU_IS_PRIMARY(ci))
+	if (CPU_IS_PRIMARY(curcpu()))
 		DT_ENTER(interval, NULL);
 #endif
 
@@ -125,7 +121,7 @@ hardclock(struct clockframe *frame)
 	 * If we are not the primary CPU, we're not allowed to do
 	 * any more work.
 	 */
-	if (CPU_IS_PRIMARY(ci) == 0)
+	if (CPU_IS_PRIMARY(curcpu()) == 0)
 		return;
 
 	tc_ticktock();
