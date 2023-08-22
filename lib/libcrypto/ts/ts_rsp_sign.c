@@ -1,4 +1,4 @@
-/* $OpenBSD: ts_rsp_sign.c,v 1.31 2023/07/07 07:25:21 beck Exp $ */
+/* $OpenBSD: ts_rsp_sign.c,v 1.32 2023/08/22 08:09:36 tb Exp $ */
 /* Written by Zoltan Glozik (zglozik@stones.com) for the OpenSSL
  * project 2002.
  */
@@ -98,18 +98,21 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
 static ASN1_INTEGER *
 def_serial_cb(struct TS_resp_ctx *ctx, void *data)
 {
-	ASN1_INTEGER *serial = ASN1_INTEGER_new();
+	ASN1_INTEGER *serial;
 
-	if (!serial)
+	if ((serial = ASN1_INTEGER_new()) == NULL)
 		goto err;
 	if (!ASN1_INTEGER_set(serial, 1))
 		goto err;
+
 	return serial;
 
-err:
+ err:
+	ASN1_INTEGER_free(serial);
 	TSerror(ERR_R_MALLOC_FAILURE);
 	TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
 	    "Error during serial number generation.");
+
 	return NULL;
 }
 
