@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.100 2023/07/25 18:16:20 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.101 2023/08/23 01:55:46 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -241,7 +241,6 @@ int	copy_on_fault(void);
 void	proc_trampoline(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(void);
-void	cpu_startclock(void);
 
 static inline unsigned int
 cpu_rnd_messybits(void)

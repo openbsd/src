@@ -1,4 +1,4 @@
-/* $OpenBSD: amptimer.c,v 1.17 2023/07/25 18:16:19 cheloha Exp $ */
+/* $OpenBSD: amptimer.c,v 1.18 2023/08/23 01:55:46 cheloha Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  *
@@ -301,10 +301,6 @@ amptimer_cpu_initclocks(void)
 	/* Enable private timer counter and interrupt. */
 	bus_space_write_4(sc->sc_iot, sc->sc_pioh, PTIMER_CTRL,
 	    (PTIMER_CTRL_ENABLE | PTIMER_CTRL_IRQEN));
-
-	/* Start the clock interrupt cycle. */
-	clockintr_cpu_init(&amptimer_intrclock);
-	clockintr_trigger();
 }
 
 void

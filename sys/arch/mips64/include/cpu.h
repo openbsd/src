@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.143 2023/08/05 05:46:36 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.144 2023/08/23 01:55:47 cheloha Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -260,6 +260,7 @@ void	smp_rendezvous_cpus(unsigned long, void (*)(void *), void *arg);
 
 #define CPU_BUSY_CYCLE()	do {} while (0)
 
+extern void (*md_initclock)(void);
 extern void (*md_startclock)(struct cpu_info *);
 extern void (*md_triggerclock)(void);
 void	cp0_calibrate(struct cpu_info *);

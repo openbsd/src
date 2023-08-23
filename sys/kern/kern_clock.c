@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.114 2023/08/22 13:46:20 jsg Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.115 2023/08/23 01:55:45 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -103,6 +103,9 @@ initclocks(void)
 	profclock_period = 1000000000 / profhz;
 
 	inittimecounter();
+
+	/* Start dispatching clock interrupts on the primary CPU. */
+	cpu_startclock();
 }
 
 /*

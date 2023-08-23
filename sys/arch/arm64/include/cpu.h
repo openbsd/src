@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.h,v 1.38 2023/07/25 18:16:20 cheloha Exp $ */
+/* $OpenBSD: cpu.h,v 1.39 2023/08/23 01:55:46 cheloha Exp $ */
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
  *
@@ -344,7 +344,6 @@ intr_restore(u_long daif)
 }
 
 void	cpu_halt(void);
-void	cpu_startclock(void);
 int	cpu_suspend_primary(void);
 void	cpu_resume_secondary(struct cpu_info *);
 

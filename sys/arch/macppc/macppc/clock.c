@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.55 2023/07/25 18:16:20 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.56 2023/08/23 01:55:47 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -147,8 +147,6 @@ decr_intr(struct clockframe *frame)
 	(void) ppc_intr_disable();
 }
 
-void cpu_startclock(void);
-
 void
 cpu_initclocks(void)
 {
@@ -204,15 +202,13 @@ cpu_initclocks(void)
 
 	evcount_attach(&clk_count, "clock", &clk_irq);
 
-	clock_initialized = 1;
-	cpu_startclock();
-
 	ppc_intr_enable(intrstate);
 }
 
 void
 cpu_startclock(void)
 {
+	clock_initialized = 1;
 	clockintr_cpu_init(&dec_intrclock);
 	clockintr_trigger();
 }

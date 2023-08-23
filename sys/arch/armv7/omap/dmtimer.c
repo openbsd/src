@@ -1,4 +1,4 @@
-/*	$OpenBSD: dmtimer.c,v 1.19 2023/07/25 18:16:19 cheloha Exp $	*/
+/*	$OpenBSD: dmtimer.c,v 1.20 2023/08/23 01:55:46 cheloha Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -102,6 +102,7 @@ int dmtimer_intr(void *frame);
 void dmtimer_reset_tisr(void);
 void dmtimer_wait(int reg);
 void dmtimer_cpu_initclocks(void);
+void dmtimer_cpu_startclock(void);
 void dmtimer_delay(u_int);
 void dmtimer_setstatclockrate(int newhz);
 
@@ -195,7 +196,7 @@ dmtimer_attach(struct device *parent, struct device *self, void *args)
 		dmtimer_timecounter.tc_priv = sc;
 		tc_init(&dmtimer_timecounter);
 		arm_clock_register(dmtimer_cpu_initclocks, dmtimer_delay,
-		    dmtimer_setstatclockrate, NULL);
+		    dmtimer_setstatclockrate, dmtimer_cpu_startclock);
 	}
 	else
 		panic("attaching too many dmtimers at 0x%lx",
@@ -247,7 +248,11 @@ dmtimer_cpu_initclocks(void)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TLDR, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TIER, DM_TIER_OVF_EN);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh[0], DM_TWER, DM_TWER_OVF_EN);
+}
 
+void
+dmtimer_cpu_startclock(void)
+{
 	/* start the clock interrupt cycle */
 	clockintr_cpu_init(&dmtimer_intrclock);
 	clockintr_trigger();

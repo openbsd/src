@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.55 2023/02/09 01:41:15 cheloha Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.56 2023/08/23 01:55:46 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -327,8 +327,6 @@ lapic_initclocks(void)
 	stathz = hz;
 	profhz = stathz * 10;
 	clockintr_init(CL_RNDSTAT);
-
-	lapic_startclock();
 }
 
 extern int gettick(void);	/* XXX put in header file */
@@ -422,6 +420,7 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	    lapic_per_second * (1ULL << 32) / 1000000000;
 	lapic_timer_nsec_max = UINT64_MAX / lapic_timer_nsec_cycle_ratio;
 	initclock_func = lapic_initclocks;
+	startclock_func = lapic_startclock;
 }
 
 /*

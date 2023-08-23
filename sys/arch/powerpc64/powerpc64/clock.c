@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 2023/07/25 18:16:21 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.12 2023/08/23 01:55:47 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -53,8 +53,6 @@ static struct timecounter tb_timecounter = {
 	.tc_user = TC_TB,
 };
 
-void	cpu_startclock(void);
-
 void
 dec_rearm(void *unused, uint64_t nsecs)
 {
@@ -99,8 +97,6 @@ cpu_initclocks(void)
 	clockintr_init(CL_RNDSTAT);
 
 	evcount_attach(&clock_count, "clock", NULL);
-
-	cpu_startclock();
 }
 
 void

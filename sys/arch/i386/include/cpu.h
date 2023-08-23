@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.182 2023/07/25 18:16:20 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.183 2023/08/23 01:55:46 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -399,6 +399,9 @@ extern int i386_has_sse2;
 
 extern void (*update_cpuspeed)(void);
 
+extern void (*initclock_func)(void);
+extern void (*startclock_func)(void);
+
 /* machdep.c */
 void	dumpconf(void);
 void	cpu_reset(void);
@@ -416,7 +419,6 @@ void	switch_exit(struct proc *);
 void	proc_trampoline(void);
 
 /* clock.c */
-extern void (*initclock_func)(void);
 void	startclocks(void);
 void	rtcinit(void);
 void	rtcstart(void);
@@ -424,6 +426,7 @@ void	rtcstop(void);
 void	i8254_delay(int);
 void	i8254_initclocks(void);
 void	i8254_startclock(void);
+void	i8254_start_both_clocks(void);
 void	i8254_inittimecounter(void);
 void	i8254_inittimecounter_simple(void);
 

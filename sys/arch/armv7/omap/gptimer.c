@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.20 2023/07/25 18:16:19 cheloha Exp $ */
+/* $OpenBSD: gptimer.c,v 1.21 2023/08/23 01:55:46 cheloha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -99,6 +99,7 @@ void gptimer_attach(struct device *parent, struct device *self, void *args);
 int gptimer_intr(void *frame);
 void gptimer_wait(int reg);
 void gptimer_cpu_initclocks(void);
+void gptimer_cpu_startclock(void);
 void gptimer_delay(u_int);
 void gptimer_reset_tisr(void);
 void gptimer_setstatclockrate(int newhz);
@@ -176,7 +177,7 @@ gptimer_attach(struct device *parent, struct device *self, void *args)
 		    aa->aa_dev->mem[0].addr);
 
 	arm_clock_register(gptimer_cpu_initclocks, gptimer_delay,
-	    gptimer_setstatclockrate, NULL);
+	    gptimer_setstatclockrate, gptimer_cpu_startclock);
 }
 
 int
@@ -216,7 +217,11 @@ gptimer_cpu_initclocks(void)
 	gptimer_wait(GP_TWPS_ALL);
 	bus_space_write_4(gptimer_iot, gptimer_ioh0, GP_TWER, GP_TWER_OVF_EN);
 	gptimer_wait(GP_TWPS_ALL);
+}
 
+void
+gptimer_cpu_startclock(void)
+{
 	/* start the clock interrupt cycle */
 	clockintr_cpu_init(&gptimer_intrclock);
 	clockintr_trigger();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.286 2023/07/27 00:28:25 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.287 2023/08/23 01:55:45 cheloha Exp $	*/
 /*	$NetBSD: machdep.c,v 1.3 2003/05/07 22:58:18 fvdl Exp $	*/
 
 /*-
@@ -227,6 +227,7 @@ paddr_t avail_end;
 
 void (*delay_func)(int) = i8254_delay;
 void (*initclock_func)(void) = i8254_initclocks;
+void (*startclock_func)(void) = i8254_start_both_clocks;
 
 /*
  * Format of boot information passed to us by 32-bit /boot
@@ -1878,6 +1879,12 @@ void
 cpu_initclocks(void)
 {
 	(*initclock_func)();
+}
+
+void
+cpu_startclock(void)
+{
+	(*startclock_func)();
 }
 
 void

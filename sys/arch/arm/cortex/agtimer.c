@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.18 2023/07/25 18:16:19 cheloha Exp $ */
+/* $OpenBSD: agtimer.c,v 1.19 2023/08/23 01:55:46 cheloha Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -227,7 +227,6 @@ void
 agtimer_cpu_initclocks(void)
 {
 	struct agtimer_softc	*sc = agtimer_cd.cd_devs[0];
-	uint32_t		 reg;
 
 	stathz = hz;
 	profhz = stathz * 10;
@@ -237,21 +236,11 @@ agtimer_cpu_initclocks(void)
 		agtimer_set_clockrate(agtimer_frequency);
 	}
 
-	clockintr_cpu_init(&agtimer_intrclock);
-
 	/* Setup secure and non-secure timer IRQs. */
 	arm_intr_establish_fdt_idx(sc->sc_node, 0, IPL_CLOCK,
 	    agtimer_intr, NULL, "tick");
 	arm_intr_establish_fdt_idx(sc->sc_node, 1, IPL_CLOCK,
 	    agtimer_intr, NULL, "tick");
-
-	reg = agtimer_get_ctrl();
-	reg &= ~GTIMER_CNTP_CTL_IMASK;
-	reg |= GTIMER_CNTP_CTL_ENABLE;
-	agtimer_set_tval(INT32_MAX);
-	agtimer_set_ctrl(reg);
-
-	clockintr_trigger();
 }
 
 void

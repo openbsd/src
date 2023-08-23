@@ -1,4 +1,4 @@
-/*	$OpenBSD: mips64_machdep.c,v 1.42 2023/07/25 18:16:20 cheloha Exp $ */
+/*	$OpenBSD: mips64_machdep.c,v 1.43 2023/08/23 01:55:47 cheloha Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2012 Miodrag Vallat.
@@ -219,6 +219,7 @@ tlb_asid_wrap(struct cpu_info *ci)
  *	Mips machine independent clock routines.
  */
 
+void (*md_initclock)(void);
 void (*md_startclock)(struct cpu_info *);
 void (*md_triggerclock)(void);
 
@@ -323,11 +324,18 @@ cpu_initclocks(void)
 		tc_init(&cp0_timecounter);
 	}
 
+	if (md_initclock != NULL)
+		(*md_initclock)();
+}
+
+void
+cpu_startclock(void)
+{
 #ifdef DIAGNOSTIC
 	if (md_startclock == NULL)
 		panic("no clock");
 #endif
-	(*md_startclock)(ci);
+	(*md_startclock)(curcpu());
 }
 
 void

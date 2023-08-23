@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.63 2023/07/25 18:16:19 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.64 2023/08/23 01:55:46 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.34 2003/06/23 11:01:08 martin Exp $	*/
 
 /*
@@ -328,8 +328,6 @@ intr_restore(u_long cpsr)
 {
 	__asm volatile ("msr cpsr_c, %0" :: "r"(cpsr));
 }
-
-void	cpu_startclock(void);
 
 #endif /* _KERNEL */
 

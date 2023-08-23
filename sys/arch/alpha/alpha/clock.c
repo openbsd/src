@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.29 2023/08/21 15:19:09 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.30 2023/08/23 01:55:45 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.29 2000/06/05 21:47:10 thorpej Exp $	*/
 
 /*
@@ -192,7 +192,11 @@ cpu_initclocks(void)
 	stathz = hz;
 	profhz = stathz;
 	clockintr_init(0);
+}
 
+void
+cpu_startclock(void)
+{
 	clockintr_cpu_init(NULL);
 
 	/*

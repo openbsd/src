@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.158 2023/07/27 00:28:24 guenther Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.159 2023/08/23 01:55:46 cheloha Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
 
 /*-
@@ -408,6 +408,8 @@ int	amd64_pa_used(paddr_t);
 extern void (*cpu_idle_cycle_fcn)(void);
 #define	cpu_idle_cycle()	(*cpu_idle_cycle_fcn)()
 #define	cpu_idle_leave()	do { /* nothing */ } while (0)
+extern void (*initclock_func)(void);
+extern void (*startclock_func)(void);
 
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
@@ -418,7 +420,6 @@ void	switch_exit(struct proc *, void (*)(struct proc *));
 void	proc_trampoline(void);
 
 /* clock.c */
-extern void (*initclock_func)(void);
 void	startclocks(void);
 void	rtcinit(void);
 void	rtcstart(void);
@@ -426,6 +427,7 @@ void	rtcstop(void);
 void	i8254_delay(int);
 void	i8254_initclocks(void);
 void	i8254_startclock(void);
+void	i8254_start_both_clocks(void);
 void	i8254_inittimecounter(void);
 void	i8254_inittimecounter_simple(void);
 

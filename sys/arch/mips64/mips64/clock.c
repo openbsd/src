@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.50 2023/01/18 19:12:43 cheloha Exp $ */
+/*	$OpenBSD: clock.c,v 1.51 2023/08/23 01:55:47 cheloha Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -70,6 +70,7 @@ const struct intrclock cp0_intrclock = {
 	.ic_trigger = cp0_trigger_int5_wrapper
 };
 
+void	cp0_initclock(void);
 uint32_t cp0_int5(uint32_t, struct trapframe *);
 void 	cp0_startclock(struct cpu_info *);
 void	cp0_trigger_int5(void);
@@ -104,6 +105,7 @@ clockattach(struct device *parent, struct device *self, void *aux)
 	/* try to avoid getting clock interrupts early */
 	cp0_set_compare(cp0_get_count() - 1);
 
+	md_initclock = cp0_initclock;
 	md_startclock = cp0_startclock;
 	md_triggerclock = cp0_trigger_int5;
 }
@@ -232,6 +234,16 @@ cp0_trigger_int5_wrapper(void *unused)
 	cp0_trigger_int5();
 }
 
+void
+cp0_initclock(void)
+{
+	KASSERT(CPU_IS_PRIMARY(curcpu()));
+
+	stathz = hz;
+	profhz = stathz * 10;
+	clockintr_init(CL_RNDSTAT);
+}
+
 /*
  * Start the clock interrupt dispatch cycle.
  */
@@ -240,11 +252,7 @@ cp0_startclock(struct cpu_info *ci)
 {
 	int s;
 
-	if (CPU_IS_PRIMARY(ci)) {
-		stathz = hz;
-		profhz = stathz * 10;
-		clockintr_init(CL_RNDSTAT);
-	} else {
+	if (!CPU_IS_PRIMARY(ci)) {
 		s = splhigh();
 		nanouptime(&ci->ci_schedstate.spc_runtime);
 		splx(s);

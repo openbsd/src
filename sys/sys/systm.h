@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.164 2023/08/05 20:07:56 cheloha Exp $	*/
+/*	$OpenBSD: systm.h,v 1.165 2023/08/23 01:55:45 cheloha Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -243,6 +243,7 @@ void	initclocks(void);
 void	inittodr(time_t);
 void	resettodr(void);
 void	cpu_initclocks(void);
+void	cpu_startclock(void);
 
 void	startprofclock(struct process *);
 void	stopprofclock(struct process *);
