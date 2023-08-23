@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.11 2023/05/09 07:19:24 tb Exp $
+.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.12 2023/08/23 13:46:42 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, Google Inc.
 .\" Parts of the text were written by Adam Langley and David Benjamin.
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 9 2023 $
+.Dd $Mdocdate: August 23 2023 $
 .Dt EVP_AEAD_CTX_INIT 3
 .Os
 .Sh NAME
@@ -245,23 +245,44 @@ All cipher algorithms have a fixed key length unless otherwise stated.
 The following ciphers are available:
 .Bl -tag -width Ds -offset indent
 .It Fn EVP_aead_aes_128_gcm
-AES-128 in Galois Counter Mode.
+AES-128 in Galois Counter Mode, using a
+.Fa key_len
+of 16 bytes and a
+.Fa nonce_len
+of 12 bytes.
 .It Fn EVP_aead_aes_256_gcm
-AES-256 in Galois Counter Mode.
+AES-256 in Galois Counter Mode, using a
+.Fa key_len
+of 32 bytes and a
+.Fa nonce_len
+of 12 bytes.
 .It Fn EVP_aead_chacha20_poly1305
-ChaCha20 with a Poly1305 authenticator.
+ChaCha20 with a Poly1305 authenticator, using a
+.Fa key_len
+of 32 bytes and a
+.Fa nonce_len
+of 12 bytes.
 .It Fn EVP_aead_xchacha20_poly1305
-XChaCha20 with a Poly1305 authenticator.
+XChaCha20 with a Poly1305 authenticator, using a
+.Fa key_len
+of 32 bytes and a
+.Fa nonce_len
+of 24 bytes.
 .El
 .Pp
-Where possible the
+Unless compatibility with other implementations
+like OpenSSL or BoringSSL is required, using the
 .Sy EVP_AEAD
-interface to AEAD ciphers should be used in preference to the older
-.Sy EVP
-variants or to the low level interfaces.
-This is because the code then becomes transparent to the AEAD cipher
-used and much more flexible.
-It is also safer to use as it prevents common mistakes with the native APIs.
+interface to AEAD ciphers is recommended
+in preference to the functions documented in the
+.Xr EVP_EncryptInit 3 ,
+.Xr EVP_aes_256_gcm 3 ,
+and
+.Xr EVP_chacha20_poly1305 3
+manual pages.
+The code then becomes transparent to the AEAD cipher used
+and much more flexible.
+It is also safer to use as it prevents common mistakes with the EVP APIs.
 .Sh RETURN VALUES
 .Fn EVP_AEAD_CTX_new
 returns the new
@@ -319,6 +340,41 @@ EVP_AEAD_CTX_free(ctx);
 .Rs
 .%A A. Langley
 .%A W. Chang
+.%A N. Mavrogiannopoulos
+.%A J. Strombergson
+.%A S. Josefsson
+.%D June 2016
+.%R RFC 7905
+.%T ChaCha20-Poly1305 Cipher Suites for Transport Layer Security (TLS)
+.Re
+.Pp
+.Rs
+.%A S. Arciszewski
+.%D October 2018
+.%R draft-arciszewski-xchacha-02
+.%T XChaCha: eXtended-nonce ChaCha and AEAD_XChaCha20_Poly1305
+.Re
+.Sh HISTORY
+AEAD is based on the implementation by
+.An Adam Langley
+.\" OpenSSL commit 9a8646510b Sep 9 12:13:24 2013 -0400
+for Chromium/BoringSSL and first appeared in
+.Ox 5.6 .
+.Pp
+.Fn EVP_AEAD_CTX_new
+and
+.Fn EVP_AEAD_CTX_free
+first appeared in
+.Ox 7.1 .
+.Sh CAVEATS
+The original publications and code by
+.An Adam Langley
+used a modified AEAD construction that is incompatible with the common
+style used by AEAD in TLS and incompatible with RFC 7905:
+.Pp
+.Rs
+.%A A. Langley
+.%A W. Chang
 .%D November 2013
 .%R draft-agl-tls-chacha20poly1305-04
 .%T ChaCha20 and Poly1305 based Cipher Suites for TLS
@@ -332,20 +388,6 @@ EVP_AEAD_CTX_free(ctx);
 .%T ChaCha20 and Poly1305 for IETF Protocols
 .Re
 .Pp
-.Rs
-.%A S. Arciszewski
-.%D October 2018
-.%R draft-arciszewski-xchacha-02
-.%T XChaCha: eXtended-nonce ChaCha and AEAD_XChaCha20_Poly1305
-.Re
-.Sh HISTORY
-AEAD is based on the implementation by
-.An Adam Langley
-for Chromium/BoringSSL and first appeared in
-.Ox 5.6 .
-.Pp
-.Fn EVP_AEAD_CTX_new
-and
-.Fn EVP_AEAD_CTX_free
-first appeared in
-.Ox 7.1 .
+In particular, the original version used a
+.Fa nonce_len
+of 8 bytes.

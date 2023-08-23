@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_chacha20.3,v 1.3 2023/08/21 03:26:42 jsg Exp $
+.\" $OpenBSD: EVP_chacha20.3,v 1.4 2023/08/23 13:46:42 schwarze Exp $
 .\" full merge up to: OpenSSL 35fd9953 May 28 14:49:38 2019 +0200
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 21 2023 $
+.Dd $Mdocdate: August 23 2023 $
 .Dt EVP_CHACHA20 3
 .Os
 .Sh NAME
@@ -114,6 +114,16 @@ objects created from
 .Pp
 .Fn EVP_chacha20_poly1305
 provides authenticated encryption with ChaCha20-Poly1305.
+Unless compatibility with other implementations
+like OpenSSL or BoringSSL is required, using
+.Xr EVP_AEAD_CTX_init 3
+with
+.Xr EVP_aead_chacha20_poly1305 3
+is recommended instead because the code then becomes transparent
+to the AEAD cipher used, more flexible, and less error prone.
+.Pp
+With
+.Fn EVP_chacha20_poly1305 ,
 .Xr EVP_EncryptInit_ex 3 ,
 .Xr EVP_DecryptInit_ex 3 ,
 and
@@ -237,6 +247,32 @@ returns 1 for success or 0 for failure.
 .Rs
 .%A A. Langley
 .%A W. Chang
+.%A N. Mavrogiannopoulos
+.%A J. Strombergson
+.%A S. Josefsson
+.%D June 2016
+.%R RFC 7905
+.%T ChaCha20-Poly1305 Cipher Suites for Transport Layer Security (TLS)
+.Re
+.Sh HISTORY
+.Fn EVP_chacha20
+first appeared in
+.Ox 5.6 .
+.Pp
+.Fn EVP_chacha20_poly1305
+first appeared in OpenSSL 1.1.0
+.\" OpenSSL commit bd989745 Dec 9 21:30:56 2015 +0100 Andy Polyakov
+and has been available since
+.Ox 7.2 .
+.Sh CAVEATS
+The original publications and code by
+.An Adam Langley
+used a modified AEAD construction that is incompatible with the common
+style used by AEAD in TLS and incompatible with RFC 7905:
+.Pp
+.Rs
+.%A A. Langley
+.%A W. Chang
 .%D November 2013
 .%R draft-agl-tls-chacha20poly1305-04
 .%T ChaCha20 and Poly1305 based Cipher Suites for TLS
@@ -249,11 +285,5 @@ returns 1 for success or 0 for failure.
 .%R RFC 7539
 .%T ChaCha20 and Poly1305 for IETF Protocols
 .Re
-.Sh HISTORY
-.Fn EVP_chacha20
-first appeared in
-.Ox 5.6 .
 .Pp
-.Fn EVP_chacha20_poly1305
-first appeared in OpenSSL 1.1.0 and has been available since
-.Ox 7.2 .
+In particular, the original version used a nonce of 8 instead of 12 bytes.
