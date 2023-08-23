@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.219 2023/08/08 08:21:29 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.220 2023/08/23 08:30:07 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2248,10 +2248,13 @@ input_dcs_dispatch(struct input_ctx *ictx)
 
 	if (wp == NULL)
 		return (0);
-	if (ictx->flags & INPUT_DISCARD)
+	if (ictx->flags & INPUT_DISCARD) {
+		log_debug("%s: %zu bytes (discard)", __func__, len);
 		return (0);
-	allow_passthrough = options_get_number(wp->options,
-	    "allow-passthrough");
+	}
+	log_debug("%s: %zu bytes", __func__, len);
+
+	allow_passthrough = options_get_number(wp->options, "allow-passthrough");
 	if (!allow_passthrough)
 		return (0);
 	log_debug("%s: \"%s\"", __func__, buf);
