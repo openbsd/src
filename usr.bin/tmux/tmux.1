@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.928 2023/08/17 14:10:28 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.929 2023/08/23 08:40:25 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 17 2023 $
+.Dd $Mdocdate: August 23 2023 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -6639,6 +6639,7 @@ option.
 .Tg run
 .It Xo Ic run-shell
 .Op Fl bC
+.Op Fl c Ar start-directory
 .Op Fl d Ar delay
 .Op Fl t Ar target-pane
 .Op Ar shell-command
@@ -6665,6 +6666,10 @@ the command is run in the background.
 waits for
 .Ar delay
 seconds before starting the command.
+If
+.Fl c
+is given, the current working directory is set to
+.Ar start-directory .
 If
 .Fl C
 is not given, any output to stdout is displayed in view mode (in the pane
