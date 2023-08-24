@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.21 2023/08/22 08:59:44 tb Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.22 2023/08/24 04:46:56 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -142,34 +142,34 @@ cms_content_bio(CMS_ContentInfo *cms)
 }
 
 BIO *
-CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
+CMS_dataInit(CMS_ContentInfo *cms, BIO *in_content_bio)
 {
-	BIO *cmsbio = NULL, *cont = NULL;
+	BIO *cms_bio = NULL, *content_bio = NULL;
 
-	if ((cont = icont) == NULL)
-		cont = cms_content_bio(cms);
-	if (cont == NULL) {
+	if ((content_bio = in_content_bio) == NULL)
+		content_bio = cms_content_bio(cms);
+	if (content_bio == NULL) {
 		CMSerror(CMS_R_NO_CONTENT);
 		goto err;
 	}
 
 	switch (OBJ_obj2nid(cms->contentType)) {
 	case NID_pkcs7_data:
-		return cont;
+		return content_bio;
 	case NID_pkcs7_signed:
-		if ((cmsbio = cms_SignedData_init_bio(cms)) == NULL)
+		if ((cms_bio = cms_SignedData_init_bio(cms)) == NULL)
 			goto err;
 		break;
 	case NID_pkcs7_digest:
-		if ((cmsbio = cms_DigestedData_init_bio(cms)) == NULL)
+		if ((cms_bio = cms_DigestedData_init_bio(cms)) == NULL)
 			goto err;
 		break;
 	case NID_pkcs7_encrypted:
-		if ((cmsbio = cms_EncryptedData_init_bio(cms)) == NULL)
+		if ((cms_bio = cms_EncryptedData_init_bio(cms)) == NULL)
 			goto err;
 		break;
 	case NID_pkcs7_enveloped:
-		if ((cmsbio = cms_EnvelopedData_init_bio(cms)) == NULL)
+		if ((cms_bio = cms_EnvelopedData_init_bio(cms)) == NULL)
 			goto err;
 		break;
 	default:
@@ -177,11 +177,11 @@ CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 		goto err;
 	}
 
-	return BIO_push(cmsbio, cont);
+	return BIO_push(cms_bio, content_bio);
 
  err:
-	if (cont != icont)
-		BIO_free(cont);
+	if (content_bio != in_content_bio)
+		BIO_free(content_bio);
 
 	return NULL;
 }
