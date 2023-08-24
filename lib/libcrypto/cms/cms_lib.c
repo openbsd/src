@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.22 2023/08/24 04:46:56 tb Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.23 2023/08/24 04:54:26 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -124,20 +124,20 @@ cms_Data_create(void)
 BIO *
 cms_content_bio(CMS_ContentInfo *cms)
 {
-	ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
+	ASN1_OCTET_STRING **pos;
 
-	if (!pos)
+	if ((pos = CMS_get0_content(cms)) == NULL)
 		return NULL;
-	/* If content detached data goes nowhere: create NULL BIO */
-	if (!*pos)
+
+	/* If content is detached, data goes nowhere: create null BIO. */
+	if (*pos == NULL)
 		return BIO_new(BIO_s_null());
-	/*
-	 * If content not detached and created return memory BIO
-	 */
-	if (!*pos || ((*pos)->flags == ASN1_STRING_FLAG_CONT))
+
+	/* If content is not detached and was created, return memory BIO. */
+	if ((*pos)->flags == ASN1_STRING_FLAG_CONT)
 		return BIO_new(BIO_s_mem());
 
-	/* Else content was read in: return read only BIO for it */
+	/* Else content was read in: return read-only BIO for it. */
 	return BIO_new_mem_buf((*pos)->data, (*pos)->length);
 }
 
