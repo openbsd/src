@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_lib.c,v 1.23 2023/08/24 04:54:26 tb Exp $ */
+/* $OpenBSD: cms_lib.c,v 1.24 2023/08/24 04:56:36 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -121,7 +121,7 @@ cms_Data_create(void)
 	return cms;
 }
 
-BIO *
+static BIO *
 cms_content_bio(CMS_ContentInfo *cms)
 {
 	ASN1_OCTET_STRING **pos;

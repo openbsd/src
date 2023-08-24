@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_local.h,v 1.4 2023/07/07 16:04:57 tb Exp $ */
+/* $OpenBSD: cms_local.h,v 1.5 2023/08/24 04:56:36 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -409,8 +409,6 @@ void CMS_IssuerAndSerialNumber_free(CMS_IssuerAndSerialNumber *a);
 #define CMS_OIK_ISSUER_SERIAL           0
 #define CMS_OIK_KEYIDENTIFIER           1
 #define CMS_OIK_PUBKEY                  2
-
-BIO *cms_content_bio(CMS_ContentInfo *cms);
 
 CMS_ContentInfo *cms_Data_create(void);
 
