@@ -1,4 +1,4 @@
-/* $OpenBSD: e_chacha20poly1305.c,v 1.30 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_chacha20poly1305.c,v 1.31 2023/08/24 04:33:08 tb Exp $ */
 
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
@@ -106,7 +106,7 @@ poly1305_pad16(poly1305_state *poly1305, size_t data_len)
 	static const unsigned char zero_pad16[16];
 	size_t pad_len;
 
-	/* pad16() is defined in RFC 7539 2.8.1. */
+	/* pad16() is defined in RFC 8439 2.8.1. */
 	if ((pad_len = data_len % 16) == 0)
 		return;
 
@@ -330,7 +330,7 @@ aead_xchacha20_poly1305_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
 	return 1;
 }
 
-/* RFC 7539 */
+/* RFC 8439 */
 static const EVP_AEAD aead_chacha20_poly1305 = {
 	.key_len = 32,
 	.nonce_len = CHACHA20_NONCE_LEN,
