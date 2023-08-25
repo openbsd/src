@@ -1,4 +1,4 @@
-.\" $OpenBSD: evp.3,v 1.17 2023/08/15 11:26:49 schwarze Exp $
+.\" $OpenBSD: evp.3,v 1.18 2023/08/25 05:29:35 tb Exp $
 .\" full merge up to: OpenSSL man7/evp 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>,
@@ -51,7 +51,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 15 2023 $
+.Dd $Mdocdate: August 25 2023 $
 .Dt EVP 3
 .Os
 .Sh NAME
@@ -194,6 +194,7 @@ operations are more efficient using the high-level interfaces.
 .Xr ENGINE_get_cipher 3 ,
 .Xr ENGINE_register_RSA 3 ,
 .Xr EVP_AEAD_CTX_init 3 ,
+.Xr EVP_add_cipher 3 ,
 .Xr EVP_aes_128_cbc 3 ,
 .Xr EVP_BytesToKey 3 ,
 .Xr EVP_camellia_128_cbc 3 ,
