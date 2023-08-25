@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_add_cipher.3,v 1.1 2023/08/25 05:29:35 tb Exp $
+.\" $OpenBSD: EVP_add_cipher.3,v 1.2 2023/08/25 05:38:52 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -133,12 +133,14 @@ They are implemented as macros.
 .Sh RETURN VALUES
 These functions return 1 on success and 0 on failure.
 .Sh SEE ALSO
+.Xr evp 3 ,
 .Xr EVP_CIPHER_meth_new 3 ,
 .Xr EVP_get_cipherbyname 3 ,
 .Xr EVP_get_digestbyname 3 ,
 .Xr EVP_MD_meth_new 3 ,
 .Xr OBJ_create 3 ,
-.Xr OBJ_NAME_add 3
+.Xr OBJ_NAME_add 3 ,
+.Xr OpenSSL_add_all_algorithms 3
 .Sh HISTORY
 .Fn EVP_add_cipher
 and
