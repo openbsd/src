@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_add_cipher.3,v 1.4 2023/08/25 11:43:14 tb Exp $
+.\" $OpenBSD: EVP_add_cipher.3,v 1.5 2023/08/25 13:26:27 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -22,8 +22,8 @@
 .Nm EVP_add_cipher_alias ,
 .Nm EVP_delete_cipher_alias ,
 .Nm EVP_add_digest ,
-.Nm EVP_add_cipher_alias ,
-.Nm EVP_delete_cipher_alias
+.Nm EVP_add_digest_alias ,
+.Nm EVP_delete_digest_alias
 .Nd maintain cipher and digest lookup by names
 .Sh SYNOPSIS
 .In openssl/evp.h
@@ -37,7 +37,7 @@
 .Fa "const char *alias"
 .Fc
 .Ft int
-.Fo EVP_remove_cipher_alias
+.Fo EVP_delete_cipher_alias
 .Fa "const char *alias"
 .Fc
 .Ft int
@@ -50,7 +50,7 @@
 .Fa "const char *alias"
 .Fc
 .Ft int
-.Fo EVP_remove_digest_alias
+.Fo EVP_delete_digest_alias
 .Fa "const char *alias"
 .Fc
 .Sh DESCRIPTION
@@ -79,7 +79,7 @@ the type
 .Pp
 .Fn EVP_add_cipher_alias
 and
-.Fn EVP_remove_cipher_alias
+.Fn EVP_delete_cipher_alias
 add and remove the
 .Fa alias
 for the cipher
@@ -131,7 +131,7 @@ The aliases are added with
 .Pp
 .Fn EVP_add_digest_alias
 and
-.Fn EVP_remove_digest_alias
+.Fn EVP_delete_digest_alias
 add and remove the
 .Fa alias
 for the digest
@@ -166,9 +166,9 @@ first appeared in OpenSSL 0.9.0 and have been available since
 .Pp
 .Fn EVP_add_cipher_alias ,
 .Fn EVP_delete_cipher_alias ,
-.Fn EVP_add_cipher_alias ,
+.Fn EVP_add_digest_alias ,
 and
-.Fn EVP_delete_cipher_alias
+.Fn EVP_delete_digest_alias
 first appeared in OpenSSL 0.9.4 and have been available since
 .Ox 2.6 .
 .Sh BUGS
