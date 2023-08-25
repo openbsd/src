@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.118 2023/04/25 18:39:12 tb Exp $ */
+/* $OpenBSD: evp.h,v 1.119 2023/08/25 12:37:33 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -310,7 +310,7 @@ typedef struct evp_cipher_info_st {
 } EVP_CIPHER_INFO;
 
 /* Password based encryption function */
-typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
+typedef int EVP_PBE_KEYGEN(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
     ASN1_TYPE *param, const EVP_CIPHER *cipher, const EVP_MD *md, int en_de);
 
 #ifndef OPENSSL_NO_RSA
@@ -925,7 +925,7 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
 void PKCS5_PBE_add(void);
 
-int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
+int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de);
 
 /* PBE type */
@@ -965,8 +965,8 @@ int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id, int *ppkey_flags,
     const char **pinfo, const char **ppem_str,
     const EVP_PKEY_ASN1_METHOD *ameth);
 
-const EVP_PKEY_ASN1_METHOD* EVP_PKEY_get0_asn1(const EVP_PKEY *pkey);
-EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags, const char *pem_str,
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_get0_asn1(const EVP_PKEY *pkey);
+EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_new(int id, int flags, const char *pem_str,
     const char *info);
 void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst,
     const EVP_PKEY_ASN1_METHOD *src);
@@ -1073,7 +1073,7 @@ void EVP_PKEY_asn1_set_param_check(EVP_PKEY_ASN1_METHOD *ameth,
 #define EVP_PKEY_FLAG_SIGCTX_CUSTOM	4
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
-EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags);
+EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags);
 void EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags,
     const EVP_PKEY_METHOD *meth);
 void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src);

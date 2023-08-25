@@ -1,4 +1,4 @@
-/* $OpenBSD: bio.h,v 1.59 2023/07/28 09:58:30 tb Exp $ */
+/* $OpenBSD: bio.h,v 1.60 2023/08/25 12:37:33 schwarze Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -524,9 +524,8 @@ int BIO_ctrl_reset_read_request(BIO *b);
 /* void BIO_set_ex_free_func(BIO *bio,int idx,void (*cb)()); */
 int BIO_set_ex_data(BIO *bio, int idx, void *data);
 void *BIO_get_ex_data(BIO *bio, int idx);
-int
-BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
-CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
+int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
+    CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 unsigned long BIO_number_read(BIO *bio);
 unsigned long BIO_number_written(BIO *bio);
 
@@ -600,12 +599,10 @@ int BIO_dgram_non_fatal_error(int _error);
 
 int BIO_fd_should_retry(int i);
 int BIO_fd_non_fatal_error(int _error);
-int
-BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
-void *u, const char *s, int len);
-int
-BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
-void *u, const char *s, int len, int indent);
+int BIO_dump_cb(int (*cb)(const void *data, size_t len, void *u),
+    void *u, const char *s, int len);
+int BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
+    void *u, const char *s, int len, int indent);
 int BIO_dump(BIO *b, const char *bytes, int len);
 int BIO_dump_indent(BIO *b, const char *bytes, int len, int indent);
 int BIO_dump_fp(FILE *fp, const char *s, int len);
@@ -636,9 +633,8 @@ BIO *BIO_new_fd(int fd, int close_flag);
 BIO *BIO_new_connect(const char *host_port);
 BIO *BIO_new_accept(const char *host_port);
 
-int
-BIO_new_bio_pair(BIO **bio1, size_t writebuf1,
-BIO **bio2, size_t writebuf2);
+int BIO_new_bio_pair(BIO **bio1, size_t writebuf1,
+    BIO **bio2, size_t writebuf2);
 /* If successful, returns 1 and in *bio1, *bio2 two BIO pair endpoints.
  * Otherwise returns 0 and sets *bio1 and *bio2 to NULL.
  * Size 0 uses default value.
