@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_add_cipher.3,v 1.5 2023/08/25 13:26:27 schwarze Exp $
+.\" $OpenBSD: EVP_add_cipher.3,v 1.6 2023/08/25 18:39:04 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -24,7 +24,7 @@
 .Nm EVP_add_digest ,
 .Nm EVP_add_digest_alias ,
 .Nm EVP_delete_digest_alias
-.Nd maintain cipher and digest lookup by names
+.Nd maintain lookup tables for cipher and digest names
 .Sh SYNOPSIS
 .In openssl/evp.h
 .Ft int
@@ -147,7 +147,17 @@ set to the bitwise or of
 and
 .Dv OBJ_NAME_ALIAS .
 .Sh RETURN VALUES
-These functions return 1 on success and 0 on failure.
+.Fn EVP_add_cipher ,
+.Fn EVP_add_cipher_alias ,
+.Fn EVP_add_digest ,
+and
+.Fn EVP_add_digest_alias
+return 1 on success or 0 if memory allocation fails.
+.Pp
+.Fn EVP_delete_cipher_alias
+and
+.Fn EVP_delete_digest_alias
+return 1 if one alias was removed or 0 otherwise.
 .Sh SEE ALSO
 .Xr evp 3 ,
 .Xr EVP_CIPHER_meth_new 3 ,
