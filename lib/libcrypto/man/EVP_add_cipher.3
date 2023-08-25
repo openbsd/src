@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_add_cipher.3,v 1.2 2023/08/25 05:38:52 tb Exp $
+.\" $OpenBSD: EVP_add_cipher.3,v 1.3 2023/08/25 10:54:44 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -38,7 +38,6 @@
 .Fc
 .Ft int
 .Fo EVP_remove_cipher_alias
-.Fa "const char *name"
 .Fa "const char *alias"
 .Fc
 .Ft int
@@ -52,7 +51,6 @@
 .Fc
 .Ft int
 .Fo EVP_remove_digest_alias
-.Fa "const char *name"
 .Fa "const char *alias"
 .Fc
 .Sh DESCRIPTION
@@ -86,7 +84,16 @@ add and remove the
 .Fa alias
 for the cipher
 .Fa name .
-They are implemented as macros.
+They are implemented as macros wrapping
+.Xr OBJ_NAME_add 3
+and
+.Xr OBJ_NAME_remove 3
+with
+.Fa type
+set to the bitwise or of
+.Dv OBJ_NAME_TYPE_CIPHER_METH
+and
+.Dv OBJ_NAME_ALIAS .
 .Pp
 .Fn EVP_add_digest
 adds
@@ -105,11 +112,11 @@ If the
 has an associated public key signing algorithm (see
 .Xr EVP_MD_pkey_type 3 )
 distinct from the
-.Fa md Ns 's
-NID, the signing algorithm's short and long names are added as aliases for
+.Fa md ,
+the signing algorithm's short and long names are added as aliases for
 the short name of
 .Fa md .
-It is the caller's responsibility to ensure that the long
+It is the caller's responsibility to ensure that all long
 and short names are not
 .Dv NULL .
 Internally, the lookup table is the global associative array and
@@ -129,7 +136,16 @@ add and remove the
 .Fa alias
 for the digest
 .Fa name .
-They are implemented as macros.
+They are implemented as macros wrapping
+.Xr OBJ_NAME_add 3
+and
+.Xr OBJ_NAME_remove 3
+with
+.Fa type
+set to the bitwise or of
+.Dv OBJ_NAME_TYPE_MD_METH
+and
+.Dv OBJ_NAME_ALIAS .
 .Sh RETURN VALUES
 These functions return 1 on success and 0 on failure.
 .Sh SEE ALSO
@@ -157,4 +173,5 @@ first appeared in OpenSSL 0.9.4 and have been available since
 .Ox 2.6 .
 .Sh BUGS
 Key-value pairs already added before an error occurred
-remain in the global associative array.
+remain in the global associative array,
+leaving it in an unknown state.
