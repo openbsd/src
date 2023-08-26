@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.51 2023/04/18 22:01:23 mvs Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.52 2023/08/26 11:33:46 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -138,7 +138,6 @@ void		 umb_close_bulkpipes(struct umb_softc *);
 int		 umb_ioctl(struct ifnet *, u_long, caddr_t);
 int		 umb_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 		    struct rtentry *);
-void		 umb_input(struct ifnet *, struct mbuf *);
 void		 umb_start(struct ifnet *);
 void		 umb_rtrequest(struct ifnet *, int, struct rtentry *);
 void		 umb_watchdog(struct ifnet *);
@@ -610,7 +609,8 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 	    sizeof (struct ncm_pointer16);
 	ifp->if_mtu = 1500;		/* use a common default */
 	ifp->if_hardmtu = sc->sc_maxpktlen;
-	ifp->if_input = umb_input;
+	ifp->if_bpf_mtap = p2p_bpf_mtap;
+	ifp->if_input = p2p_input;
 	ifp->if_output = umb_output;
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -908,48 +908,6 @@ umb_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	}
 	m->m_pkthdr.ph_family = dst->sa_family;
 	return if_enqueue(ifp, m);
-}
-
-void
-umb_input(struct ifnet *ifp, struct mbuf *m)
-{
-	uint32_t af;
-
-	if ((ifp->if_flags & IFF_UP) == 0) {
-		m_freem(m);
-		return;
-	}
-	if (m->m_pkthdr.len < sizeof (struct ip) + sizeof(af)) {
-		ifp->if_ierrors++;
-		DPRINTFN(4, "%s: dropping short packet (len %d)\n", __func__,
-		    m->m_pkthdr.len);
-		m_freem(m);
-		return;
-	}
-	m->m_pkthdr.ph_rtableid = ifp->if_rdomain;
-
-	/* pop off DLT_LOOP header, no longer needed */
-	af = *mtod(m, uint32_t *);
-	m_adj(m, sizeof (af));
-	af = ntohl(af);
-
-	ifp->if_ibytes += m->m_pkthdr.len;
-	switch (af) {
-	case AF_INET:
-		ipv4_input(ifp, m);
-		return;
-#ifdef INET6
-	case AF_INET6:
-		ipv6_input(ifp, m);
-		return;
-#endif /* INET6 */
-	default:
-		ifp->if_ierrors++;
-		DPRINTFN(4, "%s: dropping packet with bad IP version (af %d)\n",
-		    __func__, af);
-		m_freem(m);
-		return;
-	}
 }
 
 static inline int
@@ -2376,7 +2334,7 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 	struct ifnet *ifp = GET_IFP(sc);
 	int	 s;
 	void	*buf;
-	uint32_t len, af = 0;
+	uint32_t len;
 	char	*dp;
 	struct ncm_header16 *hdr16;
 	struct ncm_header32 *hdr32;
@@ -2499,20 +2457,14 @@ umb_decap(struct umb_softc *sc, struct usbd_xfer *xfer)
 			ifp->if_iqdrops++;
 			continue;
 		}
-		m = m_prepend(m, sizeof(uint32_t), M_DONTWAIT);
-		if (m == NULL) {
-			ifp->if_iqdrops++;
-			continue;
-		}
 		switch (*dp & 0xf0) {
 		case 4 << 4:
-			af = htonl(AF_INET);
+			m->m_pkthdr.ph_family = AF_INET;
 			break;
 		case 6 << 4:
-			af = htonl(AF_INET6);
+			m->m_pkthdr.ph_family = AF_INET6;
 			break;
 		}
-		*mtod(m, uint32_t *) = af;
 		ml_enqueue(&ml, m);
 	}
 done:
