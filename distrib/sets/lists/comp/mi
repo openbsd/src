@@ -1917,6 +1917,7 @@
 ./usr/share/man/man3/ESS_SIGNING_CERT_new.3
 ./usr/share/man/man3/EVP_AEAD_CTX_init.3
 ./usr/share/man/man3/EVP_BytesToKey.3
+./usr/share/man/man3/EVP_CIPHER_CTX_get_cipher_data.3
 ./usr/share/man/man3/EVP_CIPHER_meth_new.3
 ./usr/share/man/man3/EVP_DigestInit.3
 ./usr/share/man/man3/EVP_DigestSignInit.3
@@ -1964,6 +1965,7 @@
 ./usr/share/man/man3/EXTENDED_KEY_USAGE_new.3
 ./usr/share/man/man3/GENERAL_NAME_new.3
 ./usr/share/man/man3/HMAC.3
+./usr/share/man/man3/MB_CUR_MAX.3
 ./usr/share/man/man3/MD5.3
 ./usr/share/man/man3/MD5Init.3
 ./usr/share/man/man3/NAME_CONSTRAINTS_new.3
