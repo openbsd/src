@@ -1,4 +1,4 @@
-/* $OpenBSD: pckbc.c,v 1.54 2023/07/25 10:00:44 miod Exp $ */
+/* $OpenBSD: pckbc.c,v 1.55 2023/08/26 15:01:00 jmc Exp $ */
 /* $NetBSD: pckbc.c,v 1.5 2000/06/09 04:58:35 soda Exp $ */
 
 /*
@@ -459,7 +459,7 @@ pckbc_release_console(void)
 	 * In that case, we want to release ourselves from console
 	 * duties, unless we have been able to attach a mouse,
 	 * which would mean this is a real PS/2 controller
-	 * afterwards.
+	 * after all.
 	 */
 	if (pckbc_console != 0) {
 		extern void wscn_input_init(int);
