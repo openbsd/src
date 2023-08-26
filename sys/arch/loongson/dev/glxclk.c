@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxclk.c,v 1.8 2022/11/19 16:23:48 cheloha Exp $	*/
+/*	$OpenBSD: glxclk.c,v 1.9 2023/08/26 09:37:43 visa Exp $	*/
 
 /*
  * Copyright (c) 2013 Paul Irofti.
@@ -18,8 +18,10 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/stdint.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -38,6 +40,8 @@ struct glxclk_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+
+	struct intrclock	sc_intrclock;
 };
 
 struct cfdriver glxclk_cd = {
@@ -47,8 +51,10 @@ struct cfdriver glxclk_cd = {
 int	glxclk_match(struct device *, void *, void *);
 void	glxclk_attach(struct device *, struct device *, void *);
 int	glxclk_intr(void *);
-int	glxclk_stat_intr(void *arg);
+void	glxclk_initclock(void);
 void	glxclk_startclock(struct cpu_info *);
+void	glxclk_rearm(void *, uint64_t);
+void	glxclk_trigger(void *);
 
 const struct cfattach glxclk_ca = {
 	sizeof(struct glxclk_softc), glxclk_match, glxclk_attach,
@@ -59,17 +65,17 @@ const struct cfattach glxclk_ca = {
 #define	MSR_MFGPT_SIZE		0x40
 #define	MSR_MFGPT_ADDR_MASK	0xffc0
 
+/*
+ * Experience shows that the clock source goes crazy on scale factors
+ * lower than 8, so keep it at 8.
+ */
+
 #define	AMD5536_MFGPT1_CMP2	0x0000000a	/* Compare value for CMP2 */
 #define	AMD5536_MFGPT1_CNT	0x0000000c	/* Up counter */
 #define	AMD5536_MFGPT1_SETUP	0x0000000e	/* Setup register */
-#define	AMD5536_MFGPT1_SCALE	0x7		/* Set to 128 */
+#define	AMD5536_MFGPT1_SCALE	0x3		/* Set divider to 8 */
+#define	AMD5536_MFGPT1_CLOCK	(1 << 15)	/* Clock frequency */
 #define	AMD5536_MFGPT1_C2_IRQM	0x00000200
-
-#define	AMD5536_MFGPT2_CMP2	0x00000012	/* Compare value for CMP2 */
-#define	AMD5536_MFGPT2_CNT	0x00000014	/* Up counter */
-#define	AMD5536_MFGPT2_SETUP	0x00000016	/* Setup register */
-#define	AMD5536_MFGPT2_SCALE	0x3		/* Divide by 8 */
-#define	AMD5536_MFGPT2_C2_IRQM	0x00000400
 
 #define	AMD5536_MFGPT_CNT_EN	(1 << 15)	/* Enable counting */
 #define	AMD5536_MFGPT_CMP2	(1 << 14)	/* Compare 2 output */
@@ -81,18 +87,6 @@ const struct cfattach glxclk_ca = {
 
 
 struct glxclk_softc *glxclk_sc;
-
-/*
- * Statistics clock interval and variance, in usec.  Variance must be a
- * power of two.  Since this gives us an even number, not an odd number,
- * we discard one case and compensate.  That is, a variance of 1024 would
- * give us offsets in [0..1023].  Instead, we take offsets in [1..1023].
- * This is symmetric about the point 512, or statvar/2, and thus averages
- * to that value (assuming uniform random numbers).
- */
-/* XXX fix comment to match value */
-int statvar = 8192;
-int statmin;			/* statclock interval - 1/2*variance */
 
 int
 glxclk_match(struct device *parent, void *match, void *aux)
@@ -112,10 +106,6 @@ glxclk_attach(struct device *parent, struct device *self, void *aux)
 	glxclk_sc = (struct glxclk_softc *)self;
 	struct glxpcib_attach_args *gaa = aux;
 	u_int64_t wa;
-	int statint, minint;
-
-	printf(" not configured\n");
-	return;
 
 	glxclk_sc->sc_iot = gaa->gaa_iot;
 	glxclk_sc->sc_ioh = gaa->gaa_ioh;
@@ -133,15 +123,6 @@ glxclk_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/*
-	 * MFGPT runs on powers of two, adjust the hz value accordingly.
-	 */
-	stathz = hz = 128;
-	tick = 1000000 / hz;
-	tick_nsec = 1000000000 / hz;
-
-	printf(": clock");
-
 	/* Set comparator 2 */
 	bus_space_write_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
 	    AMD5536_MFGPT1_CMP2, 1);
@@ -155,8 +136,7 @@ glxclk_attach(struct device *parent, struct device *self, void *aux)
 	 * After they're set the first time all further writes are
 	 * ignored.
 	 */
-	uint16_t setup = (AMD5536_MFGPT1_SCALE | AMD5536_MFGPT_CMP2MODE |
-	    AMD5536_MFGPT_CMP1 | AMD5536_MFGPT_CMP2 | AMD5536_MFGPT_CNT_EN);
+	uint16_t setup = (AMD5536_MFGPT1_SCALE | AMD5536_MFGPT_CMP2MODE);
 
 	bus_space_write_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
 	    AMD5536_MFGPT1_SETUP, setup);
@@ -182,99 +162,48 @@ glxclk_attach(struct device *parent, struct device *self, void *aux)
 	wa |= 7 << 20;
 	wrmsr(PIC_ZSEL_LOW, wa);
 
-	/* Start the counter */
-	setup = (AMD5536_MFGPT_CNT_EN | AMD5536_MFGPT_CMP2);
-	bus_space_write_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT1_SETUP, setup);
-
 	/*
 	 * The interrupt argument is NULL in order to notify the dispatcher
 	 * to pass the clock frame as argument. This trick also forces keeping
-	 * the soft state global because during the interrupt we need to clear
-	 * the comp2 event in the MFGPT setup register.
+	 * the soft state global because during the interrupt we need to
+	 * disable the counter in the MFGPT setup register.
 	 */
-	isa_intr_establish(sys_platform->isa_chipset, 7, IST_PULSE, IPL_CLOCK,
+	isa_intr_establish(sys_platform->isa_chipset, 7, IST_LEVEL, IPL_CLOCK,
 	    glxclk_intr, NULL, "clock");
 
+	glxclk_sc->sc_intrclock.ic_cookie = glxclk_sc;
+	glxclk_sc->sc_intrclock.ic_rearm = glxclk_rearm;
+	glxclk_sc->sc_intrclock.ic_trigger = glxclk_trigger;
+
+	md_initclock = glxclk_initclock;
 	md_startclock = glxclk_startclock;
-
-	printf(", prof");
-
-
-	/*
-	 * Try to be as close as possible, w/o the variance, to the hardclock.
-	 * The stat clock has its source set to the 14MHz clock so that the
-	 * variance interval can be more generous. 
-	 *
-	 * Experience shows that the clock source goes crazy on scale factors
-	 * lower than 8, so keep it at 8 and adjust the counter (statint) so
-	 * that it results a 128Hz statclock, just like the hardclock.
-	 */
-	statint = 16000;
-	minint = statint / 2 + 100;
-	while (statvar > minint)
-		statvar >>= 1;
-
-	/* Set comparator 2 */
-	bus_space_write_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT2_CMP2, statint);
-	statmin = statint - (statvar >> 1);
-
-	/* Reset counter to 0 */
-	bus_space_write_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT2_CNT, 0);
-
-	/*
-	 * All the bits in the range 11:0 have to be written at once.
-	 * After they're set the first time all further writes are
-	 * ignored.
-	 */
-	setup = (AMD5536_MFGPT2_SCALE | AMD5536_MFGPT_CMP2MODE |
-	    AMD5536_MFGPT_CLKSEL | AMD5536_MFGPT_CMP1 | AMD5536_MFGPT_CMP2 |
-	    AMD5536_MFGPT_CNT_EN);
-
-	bus_space_write_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT2_SETUP, setup);
-
-	/* Check to see if the MFGPT_SETUP bit was set */
-	setup = bus_space_read_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT2_SETUP);
-	if ((setup & AMD5536_MFGPT_SETUP) == 0) {
-		printf(" not configured\n");
-		return;
-	}
-
-	/* Enable MFGPT2 Comparator 2 Output to the Interrupt Mapper */
-	wa = rdmsr(MFGPT_IRQ);
-	wa |= AMD5536_MFGPT2_C2_IRQM;
-	wrmsr(MFGPT_IRQ, wa);
-
-	/*
-	 * Tie PIC input 6 to IG8 for glxstat(4).
-	 */
-	wa = rdmsr(PIC_ZSEL_LOW);
-	wa &= ~(0xfUL << 24);
-	wa |= 8 << 24;
-	wrmsr(PIC_ZSEL_LOW, wa);
-
-	/*
-	 * The interrupt argument is NULL in order to notify the dispatcher
-	 * to pass the clock frame as argument. This trick also forces keeping
-	 * the soft state global because during the interrupt we need to clear
-	 * the comp2 event in the MFGPT setup register.
-	 */
-	isa_intr_establish(sys_platform->isa_chipset, 8, IST_PULSE,
-	    IPL_STATCLOCK, glxclk_stat_intr, NULL, "prof");
 
 	printf("\n");
 }
 
 void
+glxclk_initclock(void)
+{
+	/*
+	 * MFGPT runs on powers of two, adjust the hz value accordingly.
+	 */
+	stathz = hz = 128;
+	profhz = hz * 10;
+	tick = 1000000 / hz;
+	tick_nsec = 1000000000 / hz;
+
+	clockintr_init(CL_RNDSTAT);
+}
+
+void
 glxclk_startclock(struct cpu_info *ci)
 {
+	clockintr_cpu_init(&glxclk_sc->sc_intrclock);
+
 	/* Start the clock. */
 	int s = splclock();
 	ci->ci_clock_started++;
+	clockintr_trigger();
 	splx(s);
 }
 
@@ -282,57 +211,45 @@ int
 glxclk_intr(void *arg)
 {
 	struct clockframe *frame = arg;
-	uint16_t setup = 0;
 	struct cpu_info *ci = curcpu();
+	struct glxclk_softc *sc = glxclk_sc;
 
-	/* Clear the current event */
-	setup = bus_space_read_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT1_SETUP);
-	setup |= AMD5536_MFGPT_CMP2;
-	bus_space_write_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT1_SETUP, setup);
+	/* Clear the current event and disable the counter. */
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMD5536_MFGPT1_SETUP,
+	    AMD5536_MFGPT_CMP1 | AMD5536_MFGPT_CMP2);
 
 	if (ci->ci_clock_started == 0)
 		return 1;
 
-	hardclock(frame);
+	clockintr_dispatch(frame);
 
 	return 1;
 }
 
-int
-glxclk_stat_intr(void *arg)
+void
+glxclk_rearm(void *cookie, uint64_t nsecs)
 {
-	struct clockframe *frame = arg;
-	uint16_t setup = 0;
-	struct cpu_info *ci = curcpu();
-	u_long newint, r, var;
+	const uint64_t freq = AMD5536_MFGPT1_CLOCK >> AMD5536_MFGPT1_SCALE;
+	const uint64_t nsec_ratio = (freq << 32) / 1000000000;
+	/* Subtract 1 to leave room for rounding. */
+	const uint64_t nsec_max = UINT64_MAX / nsec_ratio - 1;
+	struct glxclk_softc *sc = cookie;
+	uint64_t count;
+	register_t sr;
 
-	/* Clear the current event */
-	setup = bus_space_read_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT2_SETUP);
-	setup |= AMD5536_MFGPT_CMP2;
-	bus_space_write_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT2_SETUP, setup);
+	nsecs = MIN(nsecs, nsec_max);
+	count = MAX((nsecs * nsec_ratio + (1U << 31)) >> 32, 1);
 
-	if (ci->ci_clock_started == 0)
-		return 1;
+	sr = disableintr();
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMD5536_MFGPT1_CMP2, count);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMD5536_MFGPT1_CNT, 0);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh, AMD5536_MFGPT1_SETUP,
+	    AMD5536_MFGPT_CNT_EN | AMD5536_MFGPT_CMP2);
+	setsr(sr);
+}
 
-	statclock(frame);
-
-	/*
-	 * Compute new randomized interval.  The intervals are uniformly
-	 * distributed on [statint - statvar / 2, statint + statvar / 2],
-	 * and therefore have mean statint, giving a stathz frequency clock.
-	 */
-	var = statvar;
-	do {
-		r = random() & (var - 1);
-	} while (r == 0);
-	newint = statmin + r;
-
-	bus_space_write_2(glxclk_sc->sc_iot, glxclk_sc->sc_ioh,
-	    AMD5536_MFGPT2_CMP2, newint);
-
-	return 1;
+void
+glxclk_trigger(void *cookie)
+{
+	glxclk_rearm(cookie, 0);
 }
