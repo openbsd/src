@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_CIPHER_meth_new.3,v 1.1 2023/03/16 15:05:23 tb Exp $
+.\" $OpenBSD: EVP_CIPHER_meth_new.3,v 1.2 2023/08/26 15:14:28 schwarze Exp $
 .\" selective merge up to: OpenSSL b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
 .\" The original file was written by Richard Levitte <levitte@openssl.org>
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 16 2023 $
+.Dd $Mdocdate: August 26 2023 $
 .Dt EVP_CIPHER_METH_NEW 3
 .Os
 .Sh NAME
@@ -179,7 +179,10 @@ At most one of the following cipher modes can be set:
 .Dv EVP_CIPH_XTS_MODE ,
 and
 .Dv EVP_CIPH_WRAP_MODE .
-The available flags are:
+.Pp
+Zero or more of the following flags can be OR'ed into the
+.Fa flags
+argument:
 .Bl -tag -width Ds
 .It EVP_CIPH_VARIABLE_LENGTH
 This cipher is of variable length.
@@ -329,6 +332,7 @@ All
 .Fn EVP_CIPHER_meth_set_*
 functions return 1.
 .Sh SEE ALSO
+.Xr evp 3 .
 .Xr EVP_EncryptInit 3
 .Sh HISTORY
 These functions first appeared in OpenSSL 1.1.0 and have been available since
