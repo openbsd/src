@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glxclk.4,v 1.8 2022/02/17 12:24:08 jsg Exp $
+.\"	$OpenBSD: glxclk.4,v 1.9 2023/08/26 11:10:05 visa Exp $
 .\"
 .\" Copyright (c) 2013 Paul Irofti.
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 17 2022 $
+.Dd $Mdocdate: August 26 2023 $
 .Dt GLXCLK 4 loongson
 .Os
 .Sh NAME
@@ -25,23 +25,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver enables two of the multi-function general purpose timers found on the
-Geode companion chip to be used as the system clock and the statistics clock.
-.Pp
-The statistics clock is implemented with interval variance support based on
-Chris Torek's paper on randomized sampling.
+driver enables one of the multi-function general purpose timers found on the
+Geode companion chip to be used as the system clock.
 .Sh SEE ALSO
 .Xr glxpcib 4 ,
 .Xr intro 4
-.Rs
-.%A Steven McCanne
-.%A Chris Torek
-.%T "A Randomized Sampling Clock for CPU Utilization Estimation and Code Profiling"
-.%B "In Proc. Winter 1993 USENIX Conference"
-.%D 1993
-.%P pp. 387\(en394
-.%I USENIX Association
-.Re
 .Sh HISTORY
 The
 .Nm
