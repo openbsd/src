@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.175 2023/07/05 15:07:28 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.176 2023/08/26 09:05:34 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -425,7 +425,7 @@ void	iwx_scan_umac_dwell_v10(struct iwx_softc *,
 void	iwx_scan_umac_fill_general_p_v10(struct iwx_softc *,
 	    struct iwx_scan_general_params_v10 *, uint16_t, int);
 void	iwx_scan_umac_fill_ch_p_v6(struct iwx_softc *,
-	    struct iwx_scan_channel_params_v6 *, uint32_t, int, int);
+	    struct iwx_scan_channel_params_v6 *, uint32_t, int);
 int	iwx_umac_scan_v14(struct iwx_softc *, int);
 void	iwx_mcc_update(struct iwx_softc *, struct iwx_mcc_chub_notif *);
 uint8_t	iwx_ridx2rate(struct ieee80211_rateset *, int);
@@ -6855,7 +6855,7 @@ iwx_rm_sta(struct iwx_softc *sc, struct iwx_node *in)
 uint8_t
 iwx_umac_scan_fill_channels(struct iwx_softc *sc,
     struct iwx_scan_channel_cfg_umac *chan, size_t chan_nitems,
-    int n_ssids, int bgscan)
+    int n_ssids, uint32_t channel_cfg_flags)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_channel *c;
@@ -6886,8 +6886,8 @@ iwx_umac_scan_fill_channels(struct iwx_softc *sc,
 			chan->v1.iter_count = 1;
 			chan->v1.iter_interval = htole16(0);
 		}
-		if (n_ssids != 0 && !bgscan)
-			chan->flags = htole32(1 << 0); /* select SSID 0 */
+
+		chan->flags = htole32(channel_cfg_flags);
 		chan++;
 		nchan++;
 	}
@@ -7128,12 +7128,12 @@ iwx_scan_umac_fill_general_p_v10(struct iwx_softc *sc,
 void
 iwx_scan_umac_fill_ch_p_v6(struct iwx_softc *sc,
     struct iwx_scan_channel_params_v6 *cp, uint32_t channel_cfg_flags,
-    int n_ssid, int bgscan)
+    int n_ssid)
 {
 	cp->flags = IWX_SCAN_CHANNEL_FLAG_ENABLE_CHAN_ORDER;
 
 	cp->count = iwx_umac_scan_fill_channels(sc, cp->channel_config,
-	    nitems(cp->channel_config), n_ssid, bgscan);
+	    nitems(cp->channel_config), n_ssid, channel_cfg_flags);
 
 	cp->n_aps_override[0] = IWX_SCAN_ADWELL_N_APS_GO_FRIENDLY;
 	cp->n_aps_override[1] = IWX_SCAN_ADWELL_N_APS_SOCIAL_CHS;
@@ -7188,7 +7188,7 @@ iwx_umac_scan_v14(struct iwx_softc *sc, int bgscan)
 	}
 
 	iwx_scan_umac_fill_ch_p_v6(sc, &scan_p->channel_params, bitmap_ssid,
-	    n_ssid, bgscan);
+	    n_ssid);
 
 	hcmd.len[0] = sizeof(*cmd);
 	hcmd.data[0] = (void *)cmd;
