@@ -1,10 +1,10 @@
-.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.19 2022/09/11 04:39:46 jsg Exp $
+.\" $OpenBSD: EVP_PKEY_set1_RSA.3,v 1.20 2023/08/27 13:08:15 schwarze Exp $
 .\" full merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2019, 2020 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2019, 2020, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 11 2022 $
+.Dd $Mdocdate: August 27 2023 $
 .Dt EVP_PKEY_SET1_RSA 3
 .Os
 .Sh NAME
@@ -92,7 +92,8 @@
 .Nm EVP_PKEY_base_id ,
 .Nm EVP_PKEY_id ,
 .Nm EVP_PKEY_type ,
-.Nm EVP_PKEY_set_type
+.Nm EVP_PKEY_set_type ,
+.Nm EVP_PKEY_set_type_str
 .\" The function X509_certificate_type(3) is intentionally undocumented
 .\" and scheduled for deletion from the library.  BoringSSL already
 .\" deleted it and OpenSSL deprecates it in version 3.0.
@@ -207,6 +208,12 @@
 .Fo EVP_PKEY_set_type
 .Fa "EVP_PKEY *pkey"
 .Fa "int type"
+.Fc
+.Ft int
+.Fo EVP_PKEY_set_type_str
+.Fa "EVP_PKEY *pkey"
+.Fa "const char *str"
+.Fa "int len"
 .Fc
 .Sh DESCRIPTION
 .Fn EVP_PKEY_set1_RSA ,
@@ -361,6 +368,36 @@ and
 .Fn EVP_PKEY_id
 can be passed.
 .Pp
+.Fn EVP_PKEY_set_type_str
+frees the key referenced in
+.Fa pkey ,
+if any, and sets the key type of
+.Fa pkey
+according to the PEM type string given by the first
+.Fa len
+bytes of
+.Fa str .
+If
+.Fa len
+is \-1, the
+.Xr strlen 3
+of
+.Fa str
+is used instead.
+The PEM type strings supported by default are listed in the table above.
+This function does not reference a new key from
+.Fa pkey .
+.Pp
+If
+.Fa pkey
+is a
+.Dv NULL
+pointer,
+.Fn EVP_PKEY_set_type
+and
+.Fn EVP_PKEY_set_type_str
+check that a matching key type exists but do not change any object.
+.Pp
 In accordance with the OpenSSL naming convention, the key obtained from
 or assigned to
 .Fa pkey
@@ -379,8 +416,9 @@ functions must be freed as well as
 .Fn EVP_PKEY_assign_EC_KEY ,
 .Fn EVP_PKEY_assign_GOST ,
 .Fn EVP_PKEY_assign ,
+.Fn EVP_PKEY_set_type ,
 and
-.Fn EVP_PKEY_set_type
+.Fn EVP_PKEY_set_type_str
 return 1 for success or 0 for failure.
 .Pp
 .Fn EVP_PKEY_get1_RSA ,
@@ -454,10 +492,11 @@ first appeared in OpenSSL 0.9.8 and have been available since
 .Ox 4.5 .
 .Pp
 .Fn EVP_PKEY_get0 ,
-.Fn EVP_PKEY_set_type ,
 .Fn EVP_PKEY_base_id ,
+.Fn EVP_PKEY_id ,
+.Fn EVP_PKEY_set_type ,
 and
-.Fn EVP_PKEY_id
+.Fn EVP_PKEY_set_type_str
 first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
 .Pp
