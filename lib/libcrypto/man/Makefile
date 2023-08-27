@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.263 2023/08/25 18:22:41 schwarze Exp $
+# $OpenBSD: Makefile,v 1.264 2023/08/27 15:33:08 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -205,6 +205,7 @@ MAN=	\
 	EVP_chacha20.3 \
 	EVP_des_cbc.3 \
 	EVP_rc4.3 \
+	EVP_sha1.3 \
 	EVP_sha3_224.3 \
 	EVP_sm3.3 \
 	EVP_sm4_cbc.3 \

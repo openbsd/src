@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.28 2023/08/14 14:22:32 schwarze Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.29 2023/08/27 15:33:08 schwarze Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -70,7 +70,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 14 2023 $
+.Dd $Mdocdate: August 27 2023 $
 .Dt EVP_DIGESTINIT 3
 .Os
 .Sh NAME
@@ -107,9 +107,6 @@
 .Nm EVP_MD_CTX_pkey_ctx ,
 .Nm EVP_MD_CTX_set_pkey_ctx ,
 .Nm EVP_md_null ,
-.Nm EVP_md5 ,
-.Nm EVP_md5_sha1 ,
-.Nm EVP_sha1 ,
 .Nm EVP_sha224 ,
 .Nm EVP_sha256 ,
 .Nm EVP_sha384 ,
@@ -270,12 +267,6 @@
 .Ft const EVP_MD *
 .Fn EVP_md_null void
 .Ft const EVP_MD *
-.Fn EVP_md5 void
-.Ft const EVP_MD *
-.Fn EVP_md5_sha1 void
-.Ft const EVP_MD *
-.Fn EVP_sha1 void
-.Ft const EVP_MD *
 .Fn EVP_sha224 void
 .Ft const EVP_MD *
 .Fn EVP_sha256 void
@@ -413,7 +404,7 @@ from
 The
 .Fa type
 will typically be supplied by a function such as
-.Fn EVP_sha1 .
+.Fn EVP_sha512 .
 If
 .Fa impl
 is
@@ -537,9 +528,9 @@ and
 .Fn EVP_MD_CTX_type
 return the NID of the OBJECT IDENTIFIER representing the message digest.
 For example
-.Fn EVP_MD_type EVP_sha1()
+.Fn EVP_MD_type EVP_sha512()
 returns
-.Dv NID_sha1 .
+.Dv NID_sha512 .
 These functions are normally used when setting ASN.1 OIDs.
 .Pp
 .Fn EVP_MD_CTX_md_data
@@ -563,9 +554,9 @@ for more information.
 returns the NID of the public key signing algorithm associated with this
 digest.
 For example
-.Fn EVP_sha1
+.Fn EVP_sha512
 is associated with RSA so this will return
-.Dv NID_sha1WithRSAEncryption .
+.Dv NID_sha512WithRSAEncryption .
 Since digests and signature algorithms are no longer linked, this
 function is only retained for compatibility reasons.
 .Pp
@@ -619,8 +610,6 @@ is dissociated from it as described above, but no new
 .Vt EVP_PKEY_CTX
 is assigned.
 .Pp
-.Fn EVP_md5 ,
-.Fn EVP_sha1 ,
 .Fn EVP_sha224 ,
 .Fn EVP_sha256 ,
 .Fn EVP_sha384 ,
@@ -629,7 +618,7 @@ and
 .Fn EVP_ripemd160
 return
 .Vt EVP_MD
-structures for the MD5, SHA1, SHA224, SHA256, SHA384, SHA512 and
+structures for the SHA224, SHA256, SHA384, SHA512 and
 RIPEMD160 digest algorithms respectively.
 .Pp
 .Fn EVP_sha512_224
@@ -639,11 +628,6 @@ return an
 .Vt EVP_MD
 structure that provides the truncated SHA512 variants SHA512/224 and SHA512/256,
 respectively.
-.Pp
-.Fn EVP_md5_sha1
-returns an
-.Vt EVP_MD
-structure that provides concatenated MD5 and SHA1 message digests.
 .Pp
 .Fn EVP_md_null
 is a "null" message digest that does nothing:
@@ -670,9 +654,6 @@ The EVP interface to message digests should almost always be used
 in preference to the low-level interfaces.
 This is because the code then becomes transparent to the digest used and
 much more flexible.
-.Pp
-New applications should use the SHA2 digest algorithms such as SHA256.
-The other digest algorithms are still in common use.
 .Pp
 For most applications the
 .Fa impl
@@ -757,10 +738,7 @@ if
 is
 .Dv NULL .
 .Pp
-.Fn EVP_md_null ,
-.Fn EVP_md5 ,
-.Fn EVP_md5_sha1 ,
-.Fn EVP_sha1 ,
+.Fn EVP_md_null
 and
 .Fn EVP_ripemd160
 return pointers to the corresponding
@@ -830,6 +808,7 @@ main(int argc, char *argv[])
 .Xr EVP_MD_meth_new 3 ,
 .Xr EVP_PKEY_CTX_set_signature_md 3 ,
 .Xr EVP_PKEY_meth_set_signctx 3 ,
+.Xr EVP_sha1 3 ,
 .Xr EVP_sha3_224 3 ,
 .Xr EVP_SignInit 3 ,
 .Xr EVP_sm3 3 ,
@@ -847,10 +826,8 @@ main(int argc, char *argv[])
 .Fn EVP_DigestInit ,
 .Fn EVP_DigestUpdate ,
 .Fn EVP_DigestFinal ,
-.Dv EVP_MAX_MD_SIZE ,
-.Fn EVP_md5 ,
 and
-.Fn EVP_sha1
+.Dv EVP_MAX_MD_SIZE
 first appeared in SSLeay 0.5.1.
 .Fn EVP_MD_size
 first appeared in SSLeay 0.6.6.
@@ -869,8 +846,6 @@ first appeared in SSLeay 0.8.1.
 .Fn EVP_MD_block_size ,
 .Fn EVP_MD_CTX_size ,
 .Fn EVP_MD_CTX_block_size ,
-.Fn EVP_rc4_40 ,
-.Fn EVP_rc2_40_cbc ,
 and
 .Fn EVP_ripemd160
 first appeared in SSLeay 0.9.0.
@@ -920,9 +895,8 @@ first appeared in OpenSSL 1.1.0 and has been available since
 .Pp
 .Fn EVP_MD_CTX_new ,
 .Fn EVP_MD_CTX_reset ,
-.Fn EVP_MD_CTX_free ,
 and
-.Fn EVP_md5_sha1
+.Fn EVP_MD_CTX_free
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 6.3 .
 .Pp
@@ -940,8 +914,3 @@ and
 .Fn EVP_sha512_256
 first appeared in OpenSSL 1.1.1 and have been available since
 .Ox 7.4 .
-.Pp
-The link between digests and signing algorithms was fixed in OpenSSL 1.0
-and later, so now
-.Fn EVP_sha1
-can be used with RSA and DSA.
