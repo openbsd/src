@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.389 2023/07/06 09:15:23 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.390 2023/08/28 14:50:01 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -192,7 +192,6 @@ void	 syn_cache_put(struct syn_cache *);
 void	 syn_cache_rm(struct syn_cache *);
 int	 syn_cache_respond(struct syn_cache *, struct mbuf *, uint64_t);
 void	 syn_cache_timer(void *);
-void	 syn_cache_reaper(void *);
 void	 syn_cache_insert(struct syn_cache *, struct tcpcb *);
 void	 syn_cache_reset(struct sockaddr *, struct sockaddr *,
 		struct tcphdr *, u_int);
@@ -3091,6 +3090,7 @@ int	tcp_syn_cache_limit = TCP_SYN_HASH_SIZE*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_bucket_limit = 3*TCP_SYN_BUCKET_SIZE;
 int	tcp_syn_use_limit = 100000;
 
+struct pool syn_cache_pool;
 struct syn_cache_set tcp_syn_cache[2];
 int tcp_syn_cache_active;
 
@@ -3138,24 +3138,26 @@ syn_cache_rm(struct syn_cache *sc)
 	TAILQ_REMOVE(&sc->sc_buckethead->sch_bucket, sc, sc_bucketq);
 	sc->sc_tp = NULL;
 	LIST_REMOVE(sc, sc_tpq);
+	refcnt_rele(&sc->sc_refcnt);
 	sc->sc_buckethead->sch_length--;
-	timeout_del(&sc->sc_timer);
+	if (timeout_del(&sc->sc_timer))
+		refcnt_rele(&sc->sc_refcnt);
 	sc->sc_set->scs_count--;
 }
 
 void
 syn_cache_put(struct syn_cache *sc)
 {
+	if (refcnt_rele(&sc->sc_refcnt) == 0)
+		return;
+
 	m_free(sc->sc_ipopts);
 	if (sc->sc_route4.ro_rt != NULL) {
 		rtfree(sc->sc_route4.ro_rt);
 		sc->sc_route4.ro_rt = NULL;
 	}
-	timeout_set(&sc->sc_timer, syn_cache_reaper, sc);
-	timeout_add(&sc->sc_timer, 0);
+	pool_put(&syn_cache_pool, sc);
 }
-
-struct pool syn_cache_pool;
 
 /*
  * We don't estimate RTT with SYNs, so each packet starts with the default
@@ -3166,9 +3168,8 @@ do {									\
 	TCPT_RANGESET((sc)->sc_rxtcur,					\
 	    TCPTV_SRTTDFLT * tcp_backoff[(sc)->sc_rxtshift], TCPTV_MIN,	\
 	    TCPTV_REXMTMAX);						\
-	if (!timeout_initialized(&(sc)->sc_timer))			\
-		timeout_set_proc(&(sc)->sc_timer, syn_cache_timer, (sc)); \
-	timeout_add_msec(&(sc)->sc_timer, (sc)->sc_rxtcur);		\
+	if (timeout_add_msec(&(sc)->sc_timer, (sc)->sc_rxtcur))		\
+		refcnt_take(&(sc)->sc_refcnt);				\
 } while (/*CONSTCOND*/0)
 
 void
@@ -3306,6 +3307,7 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	SYN_CACHE_TIMER_ARM(sc);
 
 	/* Link it from tcpcb entry */
+	refcnt_take(&sc->sc_refcnt);
 	LIST_INSERT_HEAD(&tp->t_sc, sc, sc_tpq);
 
 	/* Put it into the bucket. */
@@ -3336,10 +3338,11 @@ syn_cache_timer(void *arg)
 {
 	struct syn_cache *sc = arg;
 	uint64_t now;
+	int lastref;
 
 	NET_LOCK();
 	if (sc->sc_flags & SCF_DEAD)
-		goto out;
+		goto freeit;
 
 	now = tcp_now();
 
@@ -3364,24 +3367,26 @@ syn_cache_timer(void *arg)
 	sc->sc_rxtshift++;
 	SYN_CACHE_TIMER_ARM(sc);
 
- out:
+	/*
+	 * Decrement reference of this timer.  We know there is another timer
+	 * as we just added it.  So just deref, free is not necessary.
+	 */
+	lastref = refcnt_rele(&sc->sc_refcnt);
+	KASSERT(lastref == 0);
+	(void)lastref;
 	NET_UNLOCK();
 	return;
 
  dropit:
 	tcpstat_inc(tcps_sc_timed_out);
 	syn_cache_rm(sc);
+	/* Decrement reference of the timer and free object after remove. */
+	lastref = refcnt_rele(&sc->sc_refcnt);
+	KASSERT(lastref == 0);
+	(void)lastref;
+ freeit:
 	syn_cache_put(sc);
 	NET_UNLOCK();
-}
-
-void
-syn_cache_reaper(void *arg)
-{
-	struct syn_cache *sc = arg;
-
-	pool_put(&syn_cache_pool, (sc));
-	return;
 }
 
 /*
@@ -3826,6 +3831,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		m_free(ipopts);
 		return (-1);
 	}
+	refcnt_init_trace(&sc->sc_refcnt, DT_REFCNT_IDX_SYNCACHE);
+	timeout_set_proc(&sc->sc_timer, syn_cache_timer, sc);
 
 	/*
 	 * Fill in the cache, and put the necessary IP and TCP

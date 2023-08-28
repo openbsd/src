@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.169 2023/07/06 09:15:24 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.170 2023/08/28 14:50:02 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -236,6 +236,7 @@ union syn_cache_sa {
 
 struct syn_cache {
 	TAILQ_ENTRY(syn_cache) sc_bucketq;	/* link on bucket list */
+	struct refcnt sc_refcnt;		/* ref count list and timer */
 	struct timeout sc_timer;		/* rexmt timer */
 	union {					/* cached route */
 		struct route route4;
