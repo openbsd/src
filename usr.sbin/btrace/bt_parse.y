@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.50 2023/08/13 13:19:23 dv Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.51 2023/08/28 21:23:46 dv Exp $	*/
 
 /*
  * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
@@ -109,7 +109,8 @@ typedef struct {
 static void	 yyerror(const char *, ...);
 static int	 yylex(void);
 
-static int pflag;
+static int 	 pflag = 0;		/* probe parsing context flag */
+static int 	 beflag = 0;		/* BEGIN/END parsing context flag */
 %}
 
 %token	<v.i>		ERROR ENDFILT
@@ -137,7 +138,7 @@ grammar	: /* empty */
 	| grammar error
 	;
 
-rule	: plist filter action		{ br_new($1, $2, $3); }
+rule	: plist filter action		{ br_new($1, $2, $3); beflag = 0; }
 	;
 
 beginend: BEGIN	| END ;
@@ -147,7 +148,7 @@ plist	: plist ',' probe		{ $$ = bp_append($1, $3); }
 	;
 
 probe	: { pflag = 1; } pname		{ $$ = $2; pflag = 0; }
-	| beginend			{ $$ = bp_new(NULL, NULL, NULL, $1); }
+	| { beflag = 1; } beginend	{ $$ = bp_new(NULL, NULL, NULL, $2); }
 	;
 
 pname	: STRING ':' STRING ':' STRING	{ $$ = bp_new($1, $3, $5, 0); }
@@ -962,6 +963,12 @@ again:
 				yylval.v.string = kwp->word;
 				return STRING;
 			}
+		} else if (beflag) {
+			/* Interpret tokens in a BEGIN/END context. */
+			if (kwp->type >= B_AT_BI_ARG0 &&
+			    kwp->type <= B_AT_BI_ARG9)
+				yyerror("the %s builtin cannot be used with "
+				    "BEGIN or END probes", kwp->word);
 		}
 		yylval.v.i = kwp->type;
 		return kwp->token;
