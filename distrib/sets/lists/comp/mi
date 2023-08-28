@@ -1958,7 +1958,6 @@
 ./usr/share/man/man3/EVP_chacha20.3
 ./usr/share/man/man3/EVP_des_cbc.3
 ./usr/share/man/man3/EVP_rc4.3
-./usr/share/man/man3/EVP_sha1.3
 ./usr/share/man/man3/EVP_sha3_224.3
 ./usr/share/man/man3/EVP_sm3.3
 ./usr/share/man/man3/EVP_sm4_cbc.3
