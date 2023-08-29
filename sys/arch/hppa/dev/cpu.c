@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.45 2023/06/15 22:18:07 cheloha Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.46 2023/08/29 16:19:34 claudio Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -262,6 +262,10 @@ cpu_hatch(void)
 	/* Wait for additional CPUs to spinup. */
 	while (!start_secondary_cpu)
 		;
+
+	s = splhigh();
+	nanouptime(&ci->ci_schedstate.spc_runtime);
+	splx(s);
 
 	SCHED_LOCK(s);
 	cpu_switchto(NULL, sched_chooseproc());

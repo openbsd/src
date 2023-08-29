@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.77 2023/02/04 19:33:03 cheloha Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.78 2023/08/29 16:19:34 claudio Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ struct plimit	*lim_copy(struct plimit *);
 struct plimit	*lim_write_begin(void);
 void		 lim_write_commit(struct plimit *);
 
-void	tuagg_sub(struct tusage *, struct proc *);
+void	tuagg_sub(struct tusage *, struct proc *, const struct timespec *);
 
 /*
  * Patchable maximum data and stack limits.
@@ -368,9 +368,10 @@ sys_getrlimit(struct proc *p, void *v, register_t *retval)
 }
 
 void
-tuagg_sub(struct tusage *tup, struct proc *p)
+tuagg_sub(struct tusage *tup, struct proc *p, const struct timespec *ts)
 {
-	timespecadd(&tup->tu_runtime, &p->p_rtime, &tup->tu_runtime);
+	if (ts != NULL)
+		timespecadd(&tup->tu_runtime, ts, &tup->tu_runtime);
 	tup->tu_uticks += p->p_uticks;
 	tup->tu_sticks += p->p_sticks;
 	tup->tu_iticks += p->p_iticks;
@@ -381,11 +382,10 @@ tuagg_sub(struct tusage *tup, struct proc *p)
  * totals for the thread and process
  */
 void
-tuagg_unlocked(struct process *pr, struct proc *p)
+tuagg_locked(struct process *pr, struct proc *p, const struct timespec *ts)
 {
-	tuagg_sub(&pr->ps_tu, p);
-	tuagg_sub(&p->p_tu, p);
-	timespecclear(&p->p_rtime);
+	tuagg_sub(&pr->ps_tu, p, ts);
+	tuagg_sub(&p->p_tu, p, ts);
 	p->p_uticks = 0;
 	p->p_sticks = 0;
 	p->p_iticks = 0;
@@ -397,7 +397,7 @@ tuagg(struct process *pr, struct proc *p)
 	int s;
 
 	SCHED_LOCK(s);
-	tuagg_unlocked(pr, p);
+	tuagg_locked(pr, p, NULL);
 	SCHED_UNLOCK(s);
 }
 

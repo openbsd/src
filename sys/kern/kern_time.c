@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.164 2023/08/05 20:07:55 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.165 2023/08/29 16:19:34 claudio Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -130,13 +130,11 @@ clock_gettime(struct proc *p, clockid_t clock_id, struct timespec *tp)
 		nanouptime(tp);
 		timespecsub(tp, &curcpu()->ci_schedstate.spc_runtime, tp);
 		timespecadd(tp, &p->p_p->ps_tu.tu_runtime, tp);
-		timespecadd(tp, &p->p_rtime, tp);
 		break;
 	case CLOCK_THREAD_CPUTIME_ID:
 		nanouptime(tp);
 		timespecsub(tp, &curcpu()->ci_schedstate.spc_runtime, tp);
 		timespecadd(tp, &p->p_tu.tu_runtime, tp);
-		timespecadd(tp, &p->p_rtime, tp);
 		break;
 	default:
 		/* check for clock from pthread_getcpuclockid() */

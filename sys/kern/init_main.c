@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.321 2023/06/15 22:18:06 cheloha Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.322 2023/08/29 16:19:34 claudio Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -481,16 +481,12 @@ main(void *framep)
 
 	/*
 	 * Now can look at time, having had a chance to verify the time
-	 * from the file system.  Reset p->p_rtime as it may have been
-	 * munched in mi_switch() after the time got set.
+	 * from the file system. 
 	 */
 	LIST_FOREACH(pr, &allprocess, ps_list) {
 		nanouptime(&pr->ps_start);
-		TAILQ_FOREACH(p, &pr->ps_threads, p_thr_link) {
-			nanouptime(&p->p_cpu->ci_schedstate.spc_runtime);
-			timespecclear(&p->p_rtime);
-		}
 	}
+	nanouptime(&curcpu()->ci_schedstate.spc_runtime);
 
 	uvm_swap_init();
 

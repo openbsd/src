@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.211 2023/04/25 18:14:06 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.212 2023/08/29 16:19:34 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 {
 	struct process *pr, *qr, *nqr;
 	struct rusage *rup;
+	struct timespec ts;
 	int s;
 
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
@@ -298,7 +299,14 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 
 	/* add thread's accumulated rusage into the process's total */
 	ruadd(rup, &p->p_ru);
-	tuagg(pr, p);
+	nanouptime(&ts);
+	if (timespeccmp(&ts, &curcpu()->ci_schedstate.spc_runtime, <))
+		timespecclear(&ts);
+	else
+		timespecsub(&ts, &curcpu()->ci_schedstate.spc_runtime, &ts);
+	SCHED_LOCK(s);
+	tuagg_locked(pr, p, &ts);
+	SCHED_UNLOCK(s);
 
 	/*
 	 * clear %cpu usage during swap
