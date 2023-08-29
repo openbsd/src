@@ -1,4 +1,4 @@
-/*	$Id: key.c,v 1.7 2022/12/18 12:08:49 tb Exp $ */
+/*	$Id: key.c,v 1.8 2023/08/29 14:44:53 op Exp $ */
 /*
  * Copyright (c) 2019 Renaud Allard <renaud@allard.it>
  * Copyright (c) 2016 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -23,7 +23,6 @@
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
-#include <openssl/ecdsa.h>
 #include <openssl/ec.h>
 #include <openssl/obj_mac.h>
 
@@ -80,7 +79,7 @@ ec_key_create(FILE *f, const char *fname)
 	EC_KEY		*eckey = NULL;
 	EVP_PKEY	*pkey = NULL;
 
-	if ((eckey = EC_KEY_new_by_curve_name(NID_secp384r1)) == NULL ) {
+	if ((eckey = EC_KEY_new_by_curve_name(NID_secp384r1)) == NULL) {
 		warnx("EC_KEY_new_by_curve_name");
 		goto err;
 	}
@@ -89,10 +88,6 @@ ec_key_create(FILE *f, const char *fname)
 		warnx("EC_KEY_generate_key");
 		goto err;
 	}
-
-	/* set OPENSSL_EC_NAMED_CURVE to be able to load the key */
-
-	EC_KEY_set_asn1_flag(eckey, OPENSSL_EC_NAMED_CURVE);
 
 	/* Serialise the key to the disc in EC format */
 
@@ -108,7 +103,7 @@ ec_key_create(FILE *f, const char *fname)
 		goto err;
 	}
 	if (!EVP_PKEY_set1_EC_KEY(pkey, eckey)) {
-		warnx("EVP_PKEY_assign_EC_KEY");
+		warnx("EVP_PKEY_set1_EC_KEY");
 		goto err;
 	}
 
@@ -121,8 +116,6 @@ out:
 	EC_KEY_free(eckey);
 	return pkey;
 }
-
-
 
 EVP_PKEY *
 key_load(FILE *f, const char *fname)
