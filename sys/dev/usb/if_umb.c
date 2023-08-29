@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.53 2023/08/29 23:26:40 dlg Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.54 2023/08/29 23:28:38 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1710,7 +1710,7 @@ umb_decode_signal_state(struct umb_softc *sc, void *data, int len)
 	}
 	sc->sc_info.rssi = rssi;
 	sc->sc_info.ber = letoh32(ss->err_rate);
-	if (sc->sc_info.ber == -99)
+	if (sc->sc_info.ber == 99)
 		sc->sc_info.ber = UMB_VALUE_UNKNOWN;
 
 #if NKSTAT > 0
