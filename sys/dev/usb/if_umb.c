@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.52 2023/08/26 11:33:46 dlg Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.53 2023/08/29 23:26:40 dlg Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -23,13 +23,16 @@
  * Compliance testing guide
  * https://www.usb.org/sites/default/files/MBIM-Compliance-1.0.pdf
  */
+
 #include "bpfilter.h"
+#include "kstat.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
 #include <sys/syslog.h>
+#include <sys/kstat.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
@@ -202,6 +205,17 @@ void		 umb_decode_cid(struct umb_softc *, uint32_t, void *, int);
 void		 umb_decode_qmi(struct umb_softc *, uint8_t *, int);
 
 void		 umb_intr(struct usbd_xfer *, void *, usbd_status);
+
+#if NKSTAT > 0
+void		 umb_kstat_attach(struct umb_softc *);
+void		 umb_kstat_detach(struct umb_softc *);
+
+struct umb_kstat_signal {
+	struct kstat_kv		rssi;
+	struct kstat_kv		error_rate;
+	struct kstat_kv		reports;
+};
+#endif
 
 int		 umb_xfer_tout = USBD_DEFAULT_TIMEOUT;
 
@@ -618,6 +632,11 @@ umb_attach(struct device *parent, struct device *self, void *aux)
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_LOOP, sizeof(uint32_t));
 #endif
+
+#if NKSTAT > 0
+	umb_kstat_attach(sc);
+#endif
+
 	/*
 	 * Open the device now so that we are able to query device information.
 	 * XXX maybe close when done?
@@ -644,6 +663,10 @@ umb_detach(struct device *self, int flags)
 	if (ifp->if_flags & IFF_RUNNING)
 		umb_down(sc, 1);
 	umb_close(sc);
+
+#if NKSTAT > 0
+	umb_kstat_detach(sc);
+#endif
 
 	usb_rem_wait_task(sc->sc_udev, &sc->sc_get_response_task);
 	if (timeout_initialized(&sc->sc_statechg_timer))
@@ -1670,6 +1693,9 @@ umb_decode_signal_state(struct umb_softc *sc, void *data, int len)
 	struct mbim_cid_signal_state *ss = data;
 	struct ifnet *ifp = GET_IFP(sc);
 	int	 rssi;
+#if NKSTAT > 0
+	struct kstat *ks;
+#endif
 
 	if (len < sizeof (*ss))
 		return 0;
@@ -1686,6 +1712,35 @@ umb_decode_signal_state(struct umb_softc *sc, void *data, int len)
 	sc->sc_info.ber = letoh32(ss->err_rate);
 	if (sc->sc_info.ber == -99)
 		sc->sc_info.ber = UMB_VALUE_UNKNOWN;
+
+#if NKSTAT > 0
+	ks = sc->sc_kstat_signal;
+	if (ks != NULL) {
+		struct umb_kstat_signal *uks = ks->ks_data;
+
+		rw_enter_write(&sc->sc_kstat_lock);
+		kstat_kv_u64(&uks->reports)++;
+
+		if (sc->sc_info.rssi == UMB_VALUE_UNKNOWN)
+			uks->rssi.kv_type = KSTAT_KV_T_NULL;
+		else {
+			uks->rssi.kv_type = KSTAT_KV_T_INT32;
+			kstat_kv_s32(&uks->rssi) = sc->sc_info.rssi;
+		}
+	
+		if (sc->sc_info.ber == UMB_VALUE_UNKNOWN)
+			uks->error_rate.kv_type = KSTAT_KV_T_NULL;
+		else {
+			uks->error_rate.kv_type = KSTAT_KV_T_INT32;
+			kstat_kv_s32(&uks->error_rate) = sc->sc_info.ber;
+		}
+
+		ks->ks_interval.tv_sec = letoh32(ss->ss_intvl);
+		getnanouptime(&ks->ks_updated);
+		rw_exit_write(&sc->sc_kstat_lock);
+	}
+#endif
+
 	return 1;
 }
 
@@ -3146,3 +3201,51 @@ umb_dump(void *buf, int len)
 	addlog("\n");
 }
 #endif /* UMB_DEBUG */
+
+#if NKSTAT > 0
+
+void
+umb_kstat_attach(struct umb_softc *sc)
+{
+	struct kstat *ks;
+	struct umb_kstat_signal *uks;
+
+	rw_init(&sc->sc_kstat_lock, "umbkstat");
+
+	ks = kstat_create(DEVNAM(sc), 0, "mbim-signal", 0, KSTAT_T_KV, 0);
+	if (ks == NULL)
+		return;
+
+	uks = malloc(sizeof(*uks), M_DEVBUF, M_WAITOK|M_ZERO);
+	kstat_kv_init(&uks->rssi, "rssi", KSTAT_KV_T_NULL);
+	kstat_kv_init(&uks->error_rate, "error rate", KSTAT_KV_T_NULL);
+	kstat_kv_init(&uks->reports, "reports", KSTAT_KV_T_COUNTER64);
+
+	kstat_set_rlock(ks, &sc->sc_kstat_lock);
+	ks->ks_data = uks;
+	ks->ks_datalen = sizeof(*uks);
+	ks->ks_read = kstat_read_nop;
+
+	ks->ks_softc = sc;
+	sc->sc_kstat_signal = ks;
+	kstat_install(ks);
+}
+
+void
+umb_kstat_detach(struct umb_softc *sc)
+{
+	struct kstat *ks = sc->sc_kstat_signal;
+	struct umb_kstat_signal *uks;
+
+	if (ks == NULL)
+		return;
+
+	kstat_remove(ks);
+	sc->sc_kstat_signal = NULL;
+
+	uks = ks->ks_data;
+	free(uks, M_DEVBUF, sizeof(*uks));
+
+	kstat_destroy(ks);
+}
+#endif /* NKSTAT > 0 */
