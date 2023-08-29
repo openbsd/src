@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dwiic.4,v 1.5 2023/04/23 00:44:44 dlg Exp $
+.\"	$OpenBSD: dwiic.4,v 1.6 2023/08/29 12:11:08 kettenis Exp $
 .\"
 .\" Copyright (c) 2016 Jonathan Gray <jsg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 23 2023 $
+.Dd $Mdocdate: August 29 2023 $
 .Dt DWIIC 4
 .Os
 .Sh NAME
@@ -22,6 +22,7 @@
 .Nd Synopsys DesignWare I2C controller
 .Sh SYNOPSIS
 .Cd "dwiic* at acpi?"
+.Cd "dwiic* at fdt?"
 .Cd "dwiic* at pci?"
 .Cd "iic* at dwiic?"
 .Sh DESCRIPTION
