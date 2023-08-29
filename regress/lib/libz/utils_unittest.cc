@@ -1,4 +1,4 @@
-// $OpenBSD: utils_unittest.cc,v 1.4 2022/11/10 14:51:01 kn Exp $
+// $OpenBSD: utils_unittest.cc,v 1.5 2023/08/29 07:54:01 yasuoka Exp $
 //
 // Copyright 2020 The Chromium Authors. All rights reserved.
 //
@@ -29,6 +29,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <cstddef>
+#include <cstdio>
 #include <vector>
 
 #include <assert.h>
