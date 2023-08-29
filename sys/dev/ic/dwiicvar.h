@@ -1,4 +1,4 @@
-/* $OpenBSD: dwiicvar.h,v 1.5 2022/08/31 15:14:01 kettenis Exp $ */
+/* $OpenBSD: dwiicvar.h,v 1.6 2023/08/29 12:09:40 kettenis Exp $ */
 /*
  * Synopsys DesignWare I2C controller
  *
@@ -21,19 +21,20 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
+#ifdef __HAVE_ACPI
+#include "acpi.h"
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpidev.h>
 #include <dev/acpi/amltypes.h>
 #include <dev/acpi/dsdt.h>
+#endif
 
 #include <dev/pci/pcivar.h>
 
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/ic/dwiicreg.h>
-
-#include "acpi.h"
 
 /* #define DWIIC_DEBUG */
 
