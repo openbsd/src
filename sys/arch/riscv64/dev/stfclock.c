@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.9 2023/08/01 18:20:07 kettenis Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.10 2023/08/30 19:07:23 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
@@ -498,6 +498,8 @@ stfclock_get_frequency_jh7110_aon(void *cookie, uint32_t *cells)
 		return clock_get_frequency(sc->sc_node, "stg_axiahb");
 	case JH7110_AONCLK_GMAC0_RMII_REFIN:
 		return clock_get_frequency(sc->sc_node, "gmac0_rmii_refin");
+	case JH7110_AONCLK_GMAC0_GTXCLK:
+		return clock_get_frequency(sc->sc_node, "gmac0_gtxclk");
 	}
 
 	reg = HREAD4(sc, idx * 4);
@@ -506,7 +508,7 @@ stfclock_get_frequency_jh7110_aon(void *cookie, uint32_t *cells)
 
 	switch (idx) {
 	case JH7110_AONCLK_GMAC0_TX:
-		parent = mux ? JH7110_AONCLK_GMAC0_RMII_RTX:
+		parent = mux ? JH7110_AONCLK_GMAC0_RMII_RTX :
 		    JH7110_AONCLK_GMAC0_GTXCLK;
 		return stfclock_get_frequency_jh7110_aon(sc, &parent);
 	}
@@ -540,11 +542,49 @@ stfclock_get_frequency_jh7110_aon(void *cookie, uint32_t *cells)
 int
 stfclock_set_frequency_jh7110_aon(void *cookie, uint32_t *cells, uint32_t freq)
 {
+	struct stfclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
+	uint32_t parent, parent_freq;
+	uint32_t reg, div, mux;
 
-	printf("%s: not handled 0x%08x (freq=0x%08x)\n", __func__, idx, freq);
+	switch (idx) {
+	case JH7110_AONCLK_GMAC0_RMII_REFIN:
+		return clock_set_frequency(sc->sc_node, "gmac0_rmii_refin", freq);
+	case JH7110_AONCLK_GMAC0_GTXCLK:
+		return clock_set_frequency(sc->sc_node, "gmac0_gtxclk", freq);
+	}
 
-	return -1;
+	reg = HREAD4(sc, idx * 4);
+	mux = (reg & CLKMUX_MASK) >> CLKMUX_SHIFT;
+
+	switch (idx) {
+	case JH7110_AONCLK_GMAC0_TX:
+		parent = mux ? JH7110_AONCLK_GMAC0_RMII_RTX :
+		    JH7110_AONCLK_GMAC0_GTXCLK;
+		return stfclock_set_frequency_jh7110_aon(sc, &parent, freq);
+	case JH7110_AONCLK_GMAC0_TX_INV:
+		parent = JH7110_AONCLK_GMAC0_TX;
+		return stfclock_set_frequency_jh7110_aon(sc, &parent, freq);
+	}
+
+	switch (idx) {
+	case JH7110_AONCLK_GMAC0_RMII_RTX:
+		parent = JH7110_AONCLK_GMAC0_RMII_REFIN;
+		break;
+	default:
+		printf("%s: not handled 0x%08x (freq=0x%08x)\n",
+		    __func__, idx, freq);
+		return -1;
+	}
+
+	parent_freq = stfclock_get_frequency_jh7110_sys(sc, &parent);
+	div = parent_freq / freq;
+
+	reg &= ~CLKDIV_MASK;
+	reg |= (div << CLKDIV_SHIFT);
+	HWRITE4(sc, idx * 4, reg);
+
+	return 0;
 }
 
 void
@@ -807,6 +847,8 @@ stfclock_get_frequency_jh7110_sys(void *cookie, uint32_t *cells)
 	switch (idx) {
 	case JH7110_SYSCLK_OSC:
 		return clock_get_frequency(sc->sc_node, "osc");
+	case JH7110_SYSCLK_GMAC1_RMII_REFIN:
+		return clock_get_frequency(sc->sc_node, "gmac1_rmii_refin");
 	case JH7110_SYSCLK_PLL0_OUT:
 		return clock_get_frequency(sc->sc_node, "pll0_out");
 	case JH7110_SYSCLK_PLL1_OUT:
@@ -827,6 +869,10 @@ stfclock_get_frequency_jh7110_sys(void *cookie, uint32_t *cells)
 	case JH7110_SYSCLK_BUS_ROOT:
 		mux = (reg >> 24) & 1;
 		parent = mux ? JH7110_SYSCLK_PLL2_OUT : JH7110_SYSCLK_OSC;
+		return stfclock_get_frequency_jh7110_sys(sc, &parent);
+	case JH7110_SYSCLK_GMAC1_TX:
+		parent = mux ? JH7110_SYSCLK_GMAC1_RMII_RTX :
+		    JH7110_SYSCLK_GMAC1_GTXCLK;
 		return stfclock_get_frequency_jh7110_sys(sc, &parent);
 	}
 
@@ -916,7 +962,8 @@ stfclock_set_frequency_jh7110_sys(void *cookie, uint32_t *cells, uint32_t freq)
 {
 	struct stfclock_softc *sc = cookie;
 	uint32_t idx = cells[0];
-	uint32_t parent;
+	uint32_t parent, parent_freq;
+	uint32_t reg, div, mux;
 
 	switch (idx) {
 	case JH7110_SYSCLK_CPU_ROOT:
@@ -924,11 +971,47 @@ stfclock_set_frequency_jh7110_sys(void *cookie, uint32_t *cells, uint32_t freq)
 	case JH7110_SYSCLK_CPU_CORE:
 		parent = JH7110_SYSCLK_CPU_ROOT;
 		return stfclock_set_frequency_jh7110_sys(sc, &parent, freq);
+	case JH7110_SYSCLK_GMAC1_RMII_REFIN:
+		return clock_set_frequency(sc->sc_node, "gmac1_rmii_refin", freq);
 	}
 
-	printf("%s: not handled 0x%08x (freq=0x%08x)\n", __func__, idx, freq);
+	reg = HREAD4(sc, idx * 4);
+	mux = (reg & CLKMUX_MASK) >> CLKMUX_SHIFT;
 
-	return -1;
+	switch (idx) {
+	case JH7110_SYSCLK_GMAC1_TX:
+		parent = mux ? JH7110_SYSCLK_GMAC1_RMII_RTX :
+		    JH7110_SYSCLK_GMAC1_GTXCLK;
+		return stfclock_set_frequency_jh7110_sys(sc, &parent, freq);
+	case JH7110_SYSCLK_GMAC1_TX_INV:
+		parent = JH7110_SYSCLK_GMAC1_TX;
+		return stfclock_set_frequency_jh7110_sys(sc, &parent, freq);
+	}
+
+	switch (idx) {
+	case JH7110_SYSCLK_GMAC1_GTXCLK:
+		parent = JH7110_SYSCLK_PLL0_OUT;
+		break;
+	case JH7110_SYSCLK_GMAC1_RMII_RTX:
+		parent = JH7110_SYSCLK_GMAC1_RMII_REFIN;
+		break;
+	case JH7110_SYSCLK_GMAC0_GTXCLK:
+		parent = JH7110_SYSCLK_PLL0_OUT;
+		break;
+	default:
+		printf("%s: not handled 0x%08x (freq=0x%08x)\n",
+		    __func__, idx, freq);
+		return -1;
+	}
+
+	parent_freq = stfclock_get_frequency_jh7110_sys(sc, &parent);
+	div = parent_freq / freq;
+
+	reg &= ~CLKDIV_MASK;
+	reg |= (div << CLKDIV_SHIFT);
+	HWRITE4(sc, idx * 4, reg);
+
+	return 0;
 }
 
 void
