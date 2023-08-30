@@ -1,13 +1,15 @@
-#	$OpenBSD: Makefile,v 1.6 2023/08/21 18:56:06 kn Exp $
+#	$OpenBSD: Makefile,v 1.7 2023/08/30 16:45:57 kn Exp $
 
 BIOCTL ?=		/sbin/bioctl
 
 CHUNKFILE =		disk.img
 CHUNKDEVFILE =		chunk.txt
 VOLDEVFILE =		vol.txt
+ROUNDSFILE =		rounds.txt
 
 OLDPW =			oldsecret
 NEWPW =			securenew
+NROUNDS ?=		17
 
 REGRESS_SETUP_ONCE =	create-chunk
 
@@ -19,7 +21,8 @@ create-chunk:
 
 SUCCESS_TESTS =			scripted-create-volume \
 				scripted-recreate-volume \
-				scripted-change-passphrase
+				scripted-change-passphrase \
+				verify-increased-rounds
 REGRESS_TARGETS =		${SUCCESS_TESTS}
 REGRESS_ROOT_TARGETS =		${SUCCESS_TESTS}
 
@@ -30,12 +33,19 @@ scripted-create-volume:
 
 scripted-recreate-volume: detach-volume
 	printf '%s\n' '${OLDPW}' | \
-		${SUDO} ${BIOCTL} -s -Cforce -r17 -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
+		${SUDO} ${BIOCTL} -s -Cforce -r${NROUNDS} -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
 		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
 
 scripted-change-passphrase:
 	printf '%s\n%s\n' '${OLDPW}' '${NEWPW}' | \
-		${SUDO} ${BIOCTL} -s -P -- "$$(<${VOLDEVFILE})"
+		${SUDO} ${BIOCTL} -s -P -v -- "$$(<${VOLDEVFILE})" | \
+		tee -- ${ROUNDSFILE}
+
+verify-increased-rounds:
+	awk -safe -vOLD=${NROUNDS} -- '\
+		NR == 1 { old = $$7 }; \
+		NR == 2 { new = $$7 }; \
+		END     { exit !(OLD == old && old <= new) }' ${ROUNDSFILE}
 
 
 FAILURE_TESTS =			reuse-active-chunk \
