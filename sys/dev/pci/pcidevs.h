@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2045 2023/08/09 21:27:47 kmos Exp 
+ *	OpenBSD: pcidevs,v 1.2046 2023/08/30 07:11:48 kevlo Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -8241,6 +8241,7 @@
 
 /* Phison products */
 #define	PCI_PRODUCT_PHISON_PS5000	0x5000		/* PS5000 */
+#define	PCI_PRODUCT_PHISON_PS5021	0x5021		/* PS5021 */
 
 /* Picopower */
 #define	PCI_PRODUCT_PICOPOWER_PT80C826	0x0000		/* PT80C826 */

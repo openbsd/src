@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2045 2023/08/09 21:27:47 kmos Exp 
+ *	OpenBSD: pcidevs,v 1.2046 2023/08/30 07:11:48 kevlo Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -29662,6 +29662,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_PHISON, PCI_PRODUCT_PHISON_PS5000,
 	    "PS5000",
+	},
+	{
+	    PCI_VENDOR_PHISON, PCI_PRODUCT_PHISON_PS5021,
+	    "PS5021",
 	},
 	{
 	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT80C826,
