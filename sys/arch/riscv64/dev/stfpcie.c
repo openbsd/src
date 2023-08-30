@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfpcie.c,v 1.1 2023/07/08 10:06:13 kettenis Exp $	*/
+/*	$OpenBSD: stfpcie.c,v 1.2 2023/08/30 09:01:51 kettenis Exp $	*/
 /*
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -80,16 +80,23 @@
 #define  TRSL_ID_PCIE_RX_TX		0
 #define  TRSL_ID_PCIE_CONFIG		1
 
-#define STG_ARFUN_AXI4_SLVL_MASK	(0x7ffff << 8)
-#define STG_ARFUN_AXI4_SLVL_SHIFT	8
-#define STG_AWFUN_AXI4_SLVL_MASK	(0x7ffff << 0)
-#define STG_AWFUN_AXI4_SLVL_SHIFT	0
-#define STG_AWFUN_CKREF_SRC_MASK	(0x3 << 18)
-#define STG_AWFUN_CKREF_SRC_SHIFT	18
-#define STG_AWFUN_CLKREQ		(1 << 22)
-#define STG_PHY_FUNC_SHIFT		9
-#define STG_K_RP_NEP			(1 << 8)
-#define STG_DATA_LINK_ACTIVE		(1 << 5)
+#define STG_PCIE0_BASE			0x048
+#define STG_PCIE1_BASE			0x1f8
+
+#define STG_ARFUN			0x078
+#define  STG_ARFUN_AXI4_SLVL_MASK	(0x7ffff << 8)
+#define  STG_ARFUN_AXI4_SLVL_SHIFT	8
+#define  STG_PHY_FUNC_SHIFT		9
+#define STG_AWFUN			0x07c
+#define  STG_AWFUN_AXI4_SLVL_MASK	(0x7ffff << 0)
+#define  STG_AWFUN_AXI4_SLVL_SHIFT	0
+#define  STG_AWFUN_CKREF_SRC_MASK	(0x3 << 18)
+#define  STG_AWFUN_CKREF_SRC_SHIFT	18
+#define  STG_AWFUN_CLKREQ		(1 << 22)
+#define STG_RP_NEP			0x0e8
+#define  STG_K_RP_NEP			(1 << 8)
+#define STG_LNKSTA			0x170
+#define  STG_DATA_LINK_ACTIVE		(1 << 5)
 
 #define HREAD4(sc, reg)							\
     (bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))
@@ -228,15 +235,18 @@ stfpcie_attach(struct device *parent, struct device *self, void *aux)
 	uint32_t bus_range[2];
 	bus_addr_t cfg_base;
 	bus_size_t cfg_size;
-	uint32_t *reset_gpio;
-	int reset_gpiolen;
-	uint32_t stg[5], arfun, awfun, rp_nep, lnksta;
-	uint32_t reg;
+	bus_size_t stg_base;
+	uint32_t *perst_gpio;
+	int perst_gpiolen;
+	uint32_t reg, stg;
 	int idx, node, timo;
 
 	sc->sc_iot = faa->fa_iot;
 
-	idx = OF_getindex(faa->fa_node, "reg", "reg-names");
+	idx = OF_getindex(faa->fa_node, "apb", "reg-names");
+	/* XXX Preliminary bindings used a different name. */
+	if (idx < 0)
+		idx = OF_getindex(faa->fa_node, "reg", "reg-names");
 	if (idx < 0 || idx >= faa->fa_nreg ||
 	    bus_space_map(sc->sc_iot, faa->fa_reg[idx].addr,
 	    faa->fa_reg[idx].size, 0, &sc->sc_ioh)) {
@@ -244,7 +254,10 @@ stfpcie_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	idx = OF_getindex(faa->fa_node, "config", "reg-names");
+	idx = OF_getindex(faa->fa_node, "cfg", "reg-names");
+	/* XXX Preliminary bindings used a different name. */
+	if (idx < 0)
+		idx = OF_getindex(faa->fa_node, "config", "reg-names");
 	if (idx < 0 || idx >= faa->fa_nreg ||
 	    bus_space_map(sc->sc_iot, faa->fa_reg[idx].addr,
 	    faa->fa_reg[idx].size, 0, &sc->sc_cfg_ioh)) {
@@ -257,34 +270,48 @@ stfpcie_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = faa->fa_dmat;
 	sc->sc_node = faa->fa_node;
 
-	if (OF_getpropintarray(sc->sc_node, "starfive,stg-syscon", stg,
-	    sizeof(stg)) != sizeof(stg)) {
+	switch (cfg_base) {
+	case 0x940000000:
+		stg_base = STG_PCIE0_BASE;
+		break;
+	case 0x9c0000000:
+		stg_base = STG_PCIE1_BASE;
+		break;
+	default:
+		printf(": unknown controller at 0x%lx\n", cfg_base);
+		return;
+	}
+
+	/*
+	 * XXX This was an array in the preliminary bindings; simplify
+	 * when we drop support for those.
+	 */
+	if (OF_getpropintarray(sc->sc_node, "starfive,stg-syscon", &stg,
+	    sizeof(stg)) < sizeof(stg)) {
 		printf(": failed to get starfive,stg-syscon\n");
 		return;
 	}
-	arfun = stg[1];
-	awfun = stg[2];
-	rp_nep = stg[3];
-	lnksta = stg[4];
 
-	rm = regmap_byphandle(stg[0]);
+	rm = regmap_byphandle(stg);
 	if (rm == NULL) {
 		printf(": can't get regmap\n");
 		return;
 	}
 
-	reg = regmap_read_4(rm, rp_nep);
-	reg |= STG_K_RP_NEP;
-	regmap_write_4(rm, rp_nep, reg);
+	pinctrl_byname(sc->sc_node, "default");
 
-	reg = regmap_read_4(rm, awfun);
+	reg = regmap_read_4(rm, stg_base + STG_RP_NEP);
+	reg |= STG_K_RP_NEP;
+	regmap_write_4(rm, stg_base + STG_RP_NEP, reg);
+
+	reg = regmap_read_4(rm, stg_base + STG_AWFUN);
 	reg &= ~STG_AWFUN_CKREF_SRC_MASK;
 	reg |= (2 << STG_AWFUN_CKREF_SRC_SHIFT);
-	regmap_write_4(rm, awfun, reg);
+	regmap_write_4(rm, stg_base + STG_AWFUN, reg);
 
-	reg = regmap_read_4(rm, awfun);
+	reg = regmap_read_4(rm, stg_base + STG_AWFUN);
 	reg |= STG_AWFUN_CLKREQ;
-	regmap_write_4(rm, awfun, reg);
+	regmap_write_4(rm, stg_base + STG_AWFUN, reg);
 
 	clock_enable_all(sc->sc_node);
 	reset_deassert_all(sc->sc_node);
@@ -348,38 +375,44 @@ stfpcie_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	reset_gpiolen = OF_getproplen(sc->sc_node, "reset-gpios");
-	if (reset_gpiolen <= 0)
+	perst_gpiolen = OF_getproplen(sc->sc_node, "perst-gpios");
+	/* XXX Preliminary bindings used a different name. */
+	if (perst_gpiolen <= 0)
+		perst_gpiolen = OF_getproplen(sc->sc_node, "reset-gpios");
+	if (perst_gpiolen <= 0)
 		return;
 
 	/* Assert PERST#. */
-	reset_gpio = malloc(reset_gpiolen, M_TEMP, M_WAITOK);
-	OF_getpropintarray(sc->sc_node, "reset-gpios",
-	    reset_gpio, reset_gpiolen);
-	gpio_controller_config_pin(reset_gpio, GPIO_CONFIG_OUTPUT);
-	gpio_controller_set_pin(reset_gpio, 1);
+	perst_gpio = malloc(perst_gpiolen, M_TEMP, M_WAITOK);
+	if (OF_getpropintarray(sc->sc_node, "perst-gpios",
+	    perst_gpio, perst_gpiolen) != perst_gpiolen) {
+		OF_getpropintarray(sc->sc_node, "reset-gpios",
+		    perst_gpio, perst_gpiolen);
+	}
+	gpio_controller_config_pin(perst_gpio, GPIO_CONFIG_OUTPUT);
+	gpio_controller_set_pin(perst_gpio, 1);
 
 	/* Disable additonal functions. */
 	for (i = 1; i < 4; i++) {
-		reg = regmap_read_4(rm, arfun);
+		reg = regmap_read_4(rm, stg_base + STG_ARFUN);
 		reg &= ~STG_ARFUN_AXI4_SLVL_MASK;
 		reg |= (i << STG_PHY_FUNC_SHIFT) << STG_ARFUN_AXI4_SLVL_SHIFT;
-		regmap_write_4(rm, arfun, reg);
-		reg = regmap_read_4(rm, awfun);
+		regmap_write_4(rm, stg_base + STG_ARFUN, reg);
+		reg = regmap_read_4(rm, stg_base + STG_AWFUN);
 		reg &= ~STG_AWFUN_AXI4_SLVL_MASK;
 		reg |= (i << STG_PHY_FUNC_SHIFT) << STG_AWFUN_AXI4_SLVL_SHIFT;
-		regmap_write_4(rm, awfun, reg);
+		regmap_write_4(rm, stg_base + STG_AWFUN, reg);
 
 		reg = HREAD4(sc, PCIE_PCI_IOV_DW0);
 		reg |= PHY_FUNCTION_DIS;
 		HWRITE4(sc, PCIE_PCI_IOV_DW0, reg);
 	}
-	reg = regmap_read_4(rm, arfun);
+	reg = regmap_read_4(rm, stg_base + STG_ARFUN);
 	reg &= ~STG_ARFUN_AXI4_SLVL_MASK;
-	regmap_write_4(rm, arfun, reg);
-	reg = regmap_read_4(rm, awfun);
+	regmap_write_4(rm, stg_base + STG_ARFUN, reg);
+	reg = regmap_read_4(rm, stg_base + STG_AWFUN);
 	reg &= ~STG_AWFUN_AXI4_SLVL_MASK;
-	regmap_write_4(rm, awfun, reg);
+	regmap_write_4(rm, stg_base + STG_AWFUN, reg);
 
 	/* Configure controller as root port. */
 	reg = HREAD4(sc, GEN_SETTINGS);
@@ -433,12 +466,12 @@ stfpcie_attach(struct device *parent, struct device *self, void *aux)
 	delay(100000);
 
 	/* Deassert PERST#. */
-	gpio_controller_set_pin(reset_gpio, 0);
-	free(reset_gpio, M_TEMP, reset_gpiolen);
+	gpio_controller_set_pin(perst_gpio, 0);
+	free(perst_gpio, M_TEMP, perst_gpiolen);
 
 	/* Wait for link to come up. */
 	for (timo = 100; timo > 0; timo--) {
-		reg = regmap_read_4(rm, lnksta);
+		reg = regmap_read_4(rm, stg_base + STG_LNKSTA);
 		if (reg & STG_DATA_LINK_ACTIVE)
 			break;
 		delay(1000);
