@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2023/08/30 16:45:57 kn Exp $
+#	$OpenBSD: Makefile,v 1.8 2023/08/30 17:21:40 kn Exp $
 
 BIOCTL ?=		/sbin/bioctl
 
@@ -6,21 +6,27 @@ CHUNKFILE =		disk.img
 CHUNKDEVFILE =		chunk.txt
 VOLDEVFILE =		vol.txt
 ROUNDSFILE =		rounds.txt
+PASSFILE =		passphrase.txt
 
 OLDPW =			oldsecret
 NEWPW =			securenew
 NROUNDS ?=		17
 
-REGRESS_SETUP_ONCE =	create-chunk
+REGRESS_SETUP_ONCE =	create-chunk create-passfile
 
 create-chunk:
 	dd if=/dev/zero of=${CHUNKFILE} bs=512k count=0 seek=1 status=none
 	${SUDO} vnconfig -- ${CHUNKFILE} 1>${CHUNKDEVFILE}
 	echo 'RAID *' | ${SUDO} disklabel -wAT- -- "$$(<${CHUNKDEVFILE})"
 
+create-passfile:
+	${SUDO} install -o root -m u=rw,go= /dev/null ${PASSFILE}
+	printf '%s\n' '${OLDPW}' | ${SUDO} tee ${PASSFILE} 1>/dev/null
+
 
 SUCCESS_TESTS =			scripted-create-volume \
 				scripted-recreate-volume \
+				reopen-volume-with-passfile \
 				scripted-change-passphrase \
 				verify-increased-rounds
 REGRESS_TARGETS =		${SUCCESS_TESTS}
@@ -34,6 +40,10 @@ scripted-create-volume:
 scripted-recreate-volume: detach-volume
 	printf '%s\n' '${OLDPW}' | \
 		${SUDO} ${BIOCTL} -s -Cforce -r${NROUNDS} -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
+		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
+
+reopen-volume-with-passfile: detach-volume create-passfile
+	${SUDO} ${BIOCTL} -p${PASSFILE} -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
 		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
 
 scripted-change-passphrase:
