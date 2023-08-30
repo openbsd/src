@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.97 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.98 2023/08/30 10:01:52 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -616,7 +616,7 @@ parse_load_file(struct entity *entp, unsigned char **f, size_t *flen)
 }
 
 /*
- * Process an entity and responing to parent process.
+ * Process an entity and respond to parent process.
  */
 static void
 parse_entity(struct entityq *q, struct msgbuf *msgq)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.244 2023/06/29 14:33:35 tb Exp $ */
+/*	$OpenBSD: main.c,v 1.245 2023/08/30 10:01:52 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -136,7 +136,7 @@ get_current_time(void)
 
 /*
  * Read a queue entity from the descriptor.
- * Matched by entity_buffer_req().
+ * Matched by entity_write_req().
  * The pointer must be passed entity_free().
  */
 void
