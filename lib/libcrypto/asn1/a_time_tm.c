@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.29 2023/07/07 19:37:52 beck Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.30 2023/08/30 10:13:12 job Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -610,6 +610,8 @@ ASN1_TIME_normalize(ASN1_TIME *t)
 {
 	struct tm tm;
 
+	if (t == NULL)
+		return 0;
 	if (!ASN1_TIME_to_tm(t, &tm))
 		return 0;
 	return tm_to_rfc5280_time(&tm, t) != NULL;
