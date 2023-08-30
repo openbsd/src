@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.84 2023/08/29 16:19:34 claudio Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.85 2023/08/30 09:02:38 claudio Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -106,7 +106,7 @@ roundrobin(struct clockintr *cl, void *cf)
 		}
 	}
 
-	if (spc->spc_nrun)
+	if (spc->spc_nrun || spc->spc_schedflags & SPCF_SHOULDYIELD)
 		need_resched(ci);
 }
 
