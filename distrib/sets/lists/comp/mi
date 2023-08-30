@@ -1918,6 +1918,7 @@
 ./usr/share/man/man3/EVP_AEAD_CTX_init.3
 ./usr/share/man/man3/EVP_BytesToKey.3
 ./usr/share/man/man3/EVP_CIPHER_CTX_get_cipher_data.3
+./usr/share/man/man3/EVP_CIPHER_do_all.3
 ./usr/share/man/man3/EVP_CIPHER_meth_new.3
 ./usr/share/man/man3/EVP_DigestInit.3
 ./usr/share/man/man3/EVP_DigestSignInit.3
