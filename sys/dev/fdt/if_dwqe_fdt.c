@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.14 2023/07/08 08:18:30 kettenis Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.15 2023/08/30 19:08:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -64,6 +64,7 @@
 int	dwqe_fdt_match(struct device *, void *, void *);
 void	dwqe_fdt_attach(struct device *, struct device *, void *);
 void	dwqe_setup_jh7110(struct dwqe_softc *);
+void	dwqe_mii_statchg_jh7110(struct device *);
 void	dwqe_setup_rk3568(struct dwqe_softc *);
 void	dwqe_mii_statchg_rk3568(struct device *);
 void	dwqe_mii_statchg_rk3588(struct device *);
@@ -238,7 +239,10 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (dwqe_attach(sc) != 0)
 		return;
 
-	if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
+	if (OF_is_compatible(faa->fa_node, "starfive,jh7110-dwmac") &&
+	    !OF_getpropbool(faa->fa_node, "starfive,tx-use-rgmii-clk"))
+		sc->sc_mii.mii_statchg = dwqe_mii_statchg_jh7110;
+	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
 		sc->sc_mii.mii_statchg = dwqe_mii_statchg_rk3568;
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3588-gmac"))
 		sc->sc_mii.mii_statchg = dwqe_mii_statchg_rk3588;
@@ -318,6 +322,7 @@ dwqe_reset_phy(struct dwqe_softc *sc, uint32_t phy)
 #define  RK3568_GMAC_TXCLK_DLY_SET(_v)		((1 << 0) << 16 | ((_v) << 0))
 #define  RK3568_GMAC_RXCLK_DLY_SET(_v)		((1 << 1) << 16 | ((_v) << 1))
 
+void	dwqe_mii_statchg_jh7110_task(void *);
 void	dwqe_mii_statchg_rk3568_task(void *);
 
 void
@@ -360,6 +365,38 @@ dwqe_setup_jh7110(struct dwqe_softc *sc)
 	reg &= ~(((1U << 3) - 1) << shift);
 	reg |= iface << shift;
 	regmap_write_4(rm, offset, reg);
+
+	task_set(&sc->sc_statchg_task,
+	    dwqe_mii_statchg_jh7110_task, sc);
+}
+
+void
+dwqe_mii_statchg_jh7110_task(void *arg)
+{
+	struct dwqe_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ac.ac_if;
+
+	dwqe_mii_statchg(&sc->sc_dev);
+
+	switch (ifp->if_baudrate) {
+	case IF_Mbps(10):
+		clock_set_frequency(sc->sc_node, "tx", 2500000);
+		break;
+	case IF_Mbps(100):
+		clock_set_frequency(sc->sc_node, "tx", 25000000);
+		break;
+	case IF_Mbps(1000):
+		clock_set_frequency(sc->sc_node, "tx", 125000000);
+		break;
+	}
+}
+
+void
+dwqe_mii_statchg_jh7110(struct device *self)
+{
+	struct dwqe_softc *sc = (void *)self;
+
+	task_add(systq, &sc->sc_statchg_task);
 }
 
 void
