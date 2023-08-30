@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: BaseState.pm,v 1.3 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: BaseState.pm,v 1.4 2023/08/30 12:04:09 espie Exp $
 #
 # Copyright (c) 2007-2022 Marc Espie <espie@openbsd.org>
 #
@@ -171,7 +171,7 @@ sub child_error($self, $error = $?)
 	}
 	if ($error & 127) {
 		return $self->f("killed by signal #1#2",
-		    find_signal($error & 127), $extra);
+		    $self->find_signal($error & 127), $extra);
 	} else {
 		return $self->f("exit(#1)#2", ($error >> 8), $extra);
 	}
