@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2023/08/30 17:21:40 kn Exp $
+#	$OpenBSD: Makefile,v 1.9 2023/08/30 17:40:08 kn Exp $
 
 BIOCTL ?=		/sbin/bioctl
 
@@ -42,7 +42,7 @@ scripted-recreate-volume: detach-volume
 		${SUDO} ${BIOCTL} -s -Cforce -r${NROUNDS} -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
 		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
 
-reopen-volume-with-passfile: detach-volume create-passfile
+reopen-volume-with-passfile: detach-volume
 	${SUDO} ${BIOCTL} -p${PASSFILE} -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0 | \
 		grep -o 'sd[0-9]*$$' -- 1>${VOLDEVFILE}
 
@@ -59,6 +59,8 @@ verify-increased-rounds:
 
 
 FAILURE_TESTS =			reuse-active-chunk \
+				use-public-passfile \
+				use-foreign-passfile \
 				set-empty-passphrase
 REGRESS_EXPECTED_FAILURES +=	${FAILURE_TESTS}
 REGRESS_TARGETS +=		${FAILURE_TESTS}
@@ -66,6 +68,14 @@ REGRESS_ROOT_TARGETS +=		${FAILURE_TESTS}
 
 reuse-active-chunk:
 	${SUDO} ${BIOCTL} -cC -l"$$(<${CHUNKDEVFILE})a" -- softraid0
+
+use-public-passfile:
+	${SUDO} chmod a=rwx ${PASSFILE}
+	${SUDO} ${BIOCTL} -p${PASSFILE} -P -- "$$(<${VOLDEVFILE})"
+
+use-foreign-passfile:
+	${SUDO} chown build ${PASSFILE}
+	${SUDO} ${BIOCTL} -p${PASSFILE} -P -- "$$(<${VOLDEVFILE})"
 
 set-empty-passphrase:
 	printf '\n' | ${SUDO} ${BIOCTL} -s -P -- "$$(<${VOLDEVFILE})"
