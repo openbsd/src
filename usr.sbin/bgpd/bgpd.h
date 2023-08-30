@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.476 2023/08/16 08:26:35 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.477 2023/08/30 08:16:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -691,7 +691,8 @@ enum ctl_results {
 	CTL_RES_NOMEM,
 	CTL_RES_BADPEER,
 	CTL_RES_BADSTATE,
-	CTL_RES_NOSUCHRIB
+	CTL_RES_NOSUCHRIB,
+	CTL_RES_OPNOTSUPP,
 };
 
 /* needed for session.h parse prototype */
@@ -1709,7 +1710,8 @@ static const char * const ctl_res_strerror[] = {
 	"out of memory",
 	"not a cloned peer",
 	"peer still active, down peer first",
-	"no such RIB"
+	"no such RIB",
+	"operation not supported",
 };
 
 static const char * const timernames[] = {
