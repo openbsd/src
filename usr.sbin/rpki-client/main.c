@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.245 2023/08/30 10:01:52 job Exp $ */
+/*	$OpenBSD: main.c,v 1.246 2023/08/30 10:02:28 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -174,7 +174,7 @@ entity_write_req(const struct entity *ent)
 }
 
 static void
-entity_write_repo(struct repo *rp)
+entity_write_repo(const struct repo *rp)
 {
 	struct ibuf *b;
 	enum rtype type = RTYPE_REPO;
