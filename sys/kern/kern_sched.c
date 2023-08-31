@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.87 2023/08/29 16:19:34 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.88 2023/08/31 19:29:51 cheloha Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -88,26 +88,15 @@ sched_init_cpu(struct cpu_info *ci)
 
 	spc->spc_idleproc = NULL;
 
-	if (spc->spc_itimer == NULL) {
-		spc->spc_itimer = clockintr_establish(&ci->ci_queue,
-		    itimer_update);
-		if (spc->spc_itimer == NULL) {
-			panic("%s: clockintr_establish itimer_update",
-			    __func__);
-		}
-	}
-	if (spc->spc_profclock == NULL) {
-		spc->spc_profclock = clockintr_establish(&ci->ci_queue,
-		    profclock);
-		if (spc->spc_profclock == NULL)
-			panic("%s: clockintr_establish profclock", __func__);
-	}
-	if (spc->spc_roundrobin == NULL) {
-		spc->spc_roundrobin = clockintr_establish(&ci->ci_queue,
-		    roundrobin);
-		if (spc->spc_roundrobin == NULL)
-			panic("%s: clockintr_establish roundrobin", __func__);
-	}
+	spc->spc_itimer = clockintr_establish(&ci->ci_queue, itimer_update);
+	if (spc->spc_itimer == NULL)
+		panic("%s: clockintr_establish itimer_update", __func__);
+	spc->spc_profclock = clockintr_establish(&ci->ci_queue, profclock);
+	if (spc->spc_profclock == NULL)
+		panic("%s: clockintr_establish profclock", __func__);
+	spc->spc_roundrobin = clockintr_establish(&ci->ci_queue, roundrobin);
+	if (spc->spc_roundrobin == NULL)
+		panic("%s: clockintr_establish roundrobin", __func__);
 
 	kthread_create_deferred(sched_kthreads_create, ci);
 
