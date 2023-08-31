@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.265 2023/08/30 00:58:57 tb Exp $
+# $OpenBSD: Makefile,v 1.266 2023/08/31 17:27:41 schwarze Exp $
 
 .include <bsd.own.mk>
 
@@ -164,9 +164,12 @@ MAN=	\
 	ESS_SIGNING_CERT_new.3 \
 	EVP_AEAD_CTX_init.3 \
 	EVP_BytesToKey.3 \
+	EVP_CIPHER_CTX_ctrl.3 \
 	EVP_CIPHER_CTX_get_cipher_data.3 \
+	EVP_CIPHER_CTX_set_flags.3 \
 	EVP_CIPHER_do_all.3 \
 	EVP_CIPHER_meth_new.3 \
+	EVP_CIPHER_nid.3 \
 	EVP_DigestInit.3 \
 	EVP_DigestSignInit.3 \
 	EVP_DigestVerifyInit.3 \
