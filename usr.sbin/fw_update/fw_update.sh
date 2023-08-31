@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.45 2023/08/31 18:19:21 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.46 2023/08/31 19:00:00 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -259,18 +259,23 @@ lock_db() {
 	[ -e /usr/bin/perl ] || return 0
 
 	set -o monitor
-	perl <<'EOL' |&
-		use v5.16;
-		use warnings;
+	perl <<-'EOL' |&
 		no lib ('/usr/local/libdata/perl5/site_perl');
+		use v5.36;
 		use OpenBSD::PackageInfo qw< lock_db >;
 
 		$|=1;
 
+		$0 = "fw_update: lock_db";
 		lock_db(0);
 
 		say $$;
-		sleep;
+
+		# Wait for STDOUT to be readable, which won't happen
+		# but if our parent exits unexpectedly it will close.
+		my $rin = '';
+		vec($rin, fileno(STDOUT), 1) = 1;
+		select $rin, '', '', undef;
 EOL
 	set +o monitor
 
