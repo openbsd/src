@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.46 2023/08/31 19:00:00 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.47 2023/08/31 21:29:53 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -707,7 +707,7 @@ for f in "${add[@]}" _update_ "${update[@]}"; do
 				if "$pending_status"; then
 					echo " failed."
 				elif ! ((VERBOSE)); then
-					status "failed (${f##*/})"
+					status " failed (${f##*/})"
 				fi
 				continue
 			}
@@ -730,7 +730,7 @@ for f in "${add[@]}" _update_ "${update[@]}"; do
 					if "$pending_status"; then
 						echo " failed."
 					elif ! ((VERBOSE)); then
-						status "failed ($i)"
+						status " failed ($i)"
 					fi
 					continue
 				}
@@ -741,7 +741,7 @@ for f in "${add[@]}" _update_ "${update[@]}"; do
 			if "$pending_status"; then
 				echo " failed."
 			elif ! ((VERBOSE)); then
-				status "failed (${f##*/})"
+				status " failed (${f##*/})"
 			fi
 			continue
 		}
