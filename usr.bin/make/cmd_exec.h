@@ -1,6 +1,6 @@
 #ifndef CMD_EXEC_H
 #define CMD_EXEC_H
-/*	$OpenBSD: cmd_exec.h,v 1.4 2010/07/19 19:46:43 espie Exp $ */
+/*	$OpenBSD: cmd_exec.h,v 1.5 2023/08/31 06:53:28 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -34,4 +34,6 @@
  *	The output result should always be freed by the caller.  */
 extern char *Cmd_Exec(const char *, char **);
 
+extern void CmdExec_Init(void);
+extern __dead void run_command(const char *, bool);
 #endif

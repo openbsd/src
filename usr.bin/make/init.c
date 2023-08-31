@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.8 2020/01/16 16:07:18 espie Exp $ */
+/*	$OpenBSD: init.c,v 1.9 2023/08/31 06:53:28 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -37,11 +37,13 @@
 #include "targ.h"
 #include "suff.h"
 #include "job.h"
+#include "cmd_exec.h"
 
 void
 Init(void)
 {
 	Sigset_Init();
+	CmdExec_Init();
 	Init_Timestamp();
 	Init_Stats();
 	Targ_Init();
