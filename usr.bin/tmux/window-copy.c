@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.342 2023/08/08 08:21:30 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.343 2023/09/01 14:29:11 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -3763,8 +3763,7 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 			}
 		}
 		endline = gd->hsize + gd->sy - 1;
-	}
-	else {
+	} else {
 		window_copy_move_left(s, &fx, &fy, wrapflag);
 		endline = 0;
 	}
@@ -3806,8 +3805,7 @@ window_copy_search(struct window_mode_entry *wme, int direction, int regex)
 				data->cy = fy - screen_hsize(data->backing) +
 				    data-> oy;
 			}
-		}
-		else {
+		} else {
 			/*
 			 * When searching backward, position the cursor at the
 			 * beginning of the mark.
