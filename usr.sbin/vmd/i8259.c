@@ -1,4 +1,4 @@
-/* $OpenBSD: i8259.c,v 1.21 2022/11/10 18:58:02 mbuhl Exp $ */
+/* $OpenBSD: i8259.c,v 1.22 2023/09/01 19:42:26 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -222,20 +222,16 @@ i8259_assert_irq(uint8_t irq)
 {
 	mutex_lock(&pic_mtx);
 	if (irq <= 7) {
-		if (!ISSET(pics[MASTER].imr, 1 << irq)) {
-			SET(pics[MASTER].irr, 1 << irq);
-			pics[MASTER].asserted = 1;
-		}
+		SET(pics[MASTER].irr, 1 << irq);
+		pics[MASTER].asserted = 1;
 	} else {
 		irq -= 8;
-		if (!ISSET(pics[SLAVE].imr, 1 << irq)) {
-			SET(pics[SLAVE].irr, 1 << irq);
-			pics[SLAVE].asserted = 1;
+		SET(pics[SLAVE].irr, 1 << irq);
+		pics[SLAVE].asserted = 1;
 
-			/* Assert cascade IRQ on master PIC */
-			SET(pics[MASTER].irr, 1 << 2);
-			pics[MASTER].asserted = 1;
-		}
+		/* Assert cascade IRQ on master PIC */
+		SET(pics[MASTER].irr, 1 << 2);
+		pics[MASTER].asserted = 1;
 	}
 	mutex_unlock(&pic_mtx);
 }

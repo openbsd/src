@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.4 2023/05/28 05:28:50 asou Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.5 2023/09/01 19:42:26 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -39,7 +39,8 @@ extern char *__progname;
 extern struct vmd_vm *current_vm;
 
 static const char *disk_type(int);
-static uint32_t handle_io_read(struct viodev_msg *, struct virtio_dev *);
+static uint32_t handle_io_read(struct viodev_msg *, struct virtio_dev *,
+    int8_t *);
 static int handle_io_write(struct viodev_msg *, struct virtio_dev *);
 void vioblk_notify_rx(struct vioblk_dev *);
 int vioblk_notifyq(struct vioblk_dev *);
@@ -723,6 +724,7 @@ handle_sync_io(int fd, short event, void *arg)
 	struct viodev_msg msg;
 	struct imsg imsg;
 	ssize_t n;
+	int8_t intr = INTR_STATE_NOOP;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -770,8 +772,9 @@ handle_sync_io(int fd, short event, void *arg)
 			}
 		case VIODEV_MSG_IO_READ:
 			/* Read IO: make sure to send a reply */
-			msg.data = handle_io_read(&msg, dev);
+			msg.data = handle_io_read(&msg, dev, &intr);
 			msg.data_valid = 1;
+			msg.state = intr;
 			imsg_compose_event(iev, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
 			    sizeof(msg));
 			break;
@@ -844,7 +847,7 @@ handle_io_write(struct viodev_msg *msg, struct virtio_dev *dev)
 }
 
 static uint32_t
-handle_io_read(struct viodev_msg *msg, struct virtio_dev *dev)
+handle_io_read(struct viodev_msg *msg, struct virtio_dev *dev, int8_t *intr)
 {
 	struct vioblk_dev *vioblk = &dev->vioblk;
 	uint8_t sz = msg->io_sz;
@@ -1001,7 +1004,8 @@ handle_io_read(struct viodev_msg *msg, struct virtio_dev *dev)
 	case VIRTIO_CONFIG_ISR_STATUS:
 		data = vioblk->cfg.isr_status;
 		vioblk->cfg.isr_status = 0;
-		virtio_deassert_pic_irq(dev, 0);
+		if (intr != NULL)
+			*intr = INTR_STATE_DEASSERT;
 		break;
 	default:
 		return (0xFFFFFFFF);
