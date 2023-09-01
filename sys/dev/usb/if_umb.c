@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.54 2023/08/29 23:28:38 dlg Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.55 2023/09/01 20:24:29 mvs Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1851,7 +1851,6 @@ umb_add_inet_config(struct umb_softc *sc, struct in_addr ip, u_int prefixlen,
 	info.rti_info[RTAX_GATEWAY] = sintosa(&ifra.ifra_dstaddr);
 
 	rv = rtrequest(RTM_ADD, &info, 0, &rt, ifp->if_rdomain);
-	NET_UNLOCK();
 	if (rv) {
 		printf("%s: unable to set IPv4 default route, "
 		    "error %d\n", DEVNAM(ifp->if_softc), rv);
@@ -1862,6 +1861,7 @@ umb_add_inet_config(struct umb_softc *sc, struct in_addr ip, u_int prefixlen,
 		rtm_send(rt, RTM_ADD, rv, ifp->if_rdomain);
 		rtfree(rt);
 	}
+	NET_UNLOCK();
 
 	if (ifp->if_flags & IFF_DEBUG) {
 		char str[3][INET_ADDRSTRLEN];
@@ -1932,7 +1932,6 @@ umb_add_inet6_config(struct umb_softc *sc, struct in6_addr *ip, u_int prefixlen,
 	info.rti_info[RTAX_GATEWAY] = sin6tosa(&ifra.ifra_dstaddr);
 
 	rv = rtrequest(RTM_ADD, &info, 0, &rt, ifp->if_rdomain);
-	NET_UNLOCK();
 	if (rv) {
 		printf("%s: unable to set IPv6 default route, "
 		    "error %d\n", DEVNAM(ifp->if_softc), rv);
@@ -1943,6 +1942,7 @@ umb_add_inet6_config(struct umb_softc *sc, struct in6_addr *ip, u_int prefixlen,
 		rtm_send(rt, RTM_ADD, rv, ifp->if_rdomain);
 		rtfree(rt);
 	}
+	NET_UNLOCK();
 
 	if (ifp->if_flags & IFF_DEBUG) {
 		char str[3][INET6_ADDRSTRLEN];
