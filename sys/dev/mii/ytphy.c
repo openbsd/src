@@ -1,4 +1,4 @@
-/*	$OpenBSD: ytphy.c,v 1.3 2023/07/08 08:18:30 kettenis Exp $	*/
+/*	$OpenBSD: ytphy.c,v 1.4 2023/09/01 20:35:31 kettenis Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
  * Copyright (c) 2023 Mark Kettenis <kettenis@openbsd.org>
@@ -57,12 +57,22 @@
 
 #define YT8521_EXT_CHIP_CONFIG		0xa001
 #define  YT8521_RXC_DLY_EN		(1 << 8)
+#define  YT8521_CFG_LDO_MASK		(0x3 << 4)
+#define  YT8521_CFG_LDO_3V3		0x0
+#define  YT8521_CFG_LDO_2V5		0x1
+#define  YT8521_CFG_LDO_1V8		0x2	/* or 0x3 */
 #define YT8521_EXT_RGMII_CONFIG1	0xa003
 #define  YT8521_TX_CLK_SEL		(1 << 14)
 #define  YT8521_RX_DELAY_SEL_MASK	(0xf << 10)
 #define  YT8521_RX_DELAY_SEL_SHIFT	10
 #define  YT8521_TX_DELAY_SEL_MASK	(0xf << 0)
 #define  YT8521_TX_DELAY_SEL_SHIFT	0
+#define YT8521_EXT_PAD_DRIVE_STRENGTH	0xa010
+#define  YT8531_RGMII_RXC_DS_MASK	(0x7 << 13)
+#define  YT8531_RGMII_RXC_DS_SHIFT	13
+#define  YT8531_RGMII_RXD_DS_MASK	((0x1 << 12) | (0x3 << 4))
+#define  YT8531_RGMII_RXD_DS_LOW(x)	(((x) & 0x3) << 4)
+#define  YT8531_RGMII_RXD_DS_HIGH(x)	(((x) >> 2) << 12)
 
 int	ytphy_match(struct device *, void *, void *);
 void	ytphy_attach(struct device *, struct device *, void *);
@@ -79,6 +89,7 @@ int	ytphy_service(struct mii_softc *, struct mii_data *, int);
 void	ytphy_yt8511_init(struct mii_softc *);
 void	ytphy_yt8521_init(struct mii_softc *);
 void	ytphy_yt8521_update(struct mii_softc *);
+void	ytphy_yt8531_init(struct mii_softc *);
 
 const struct mii_phy_funcs ytphy_funcs = {
 	ytphy_service, ukphy_status, mii_phy_reset,
@@ -138,8 +149,10 @@ ytphy_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ma->mii_id1 == 0x0000 && ma->mii_id2 == 0x010a)
 		ytphy_yt8511_init(sc);
-	else
+	else if (ma->mii_id1 == 0x0000 && ma->mii_id2 == 0x011a)
 		ytphy_yt8521_init(sc);
+	else
+		ytphy_yt8531_init(sc);
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
@@ -361,4 +374,98 @@ ytphy_yt8521_update(struct mii_softc *sc)
 	/* Restore address register. */
 	PHY_WRITE(sc, YT8511_REG_ADDR, addr);
 #endif
+}
+
+/* The RGMII drive strength depends on the voltage level. */
+
+struct ytphy_ds_map {
+	uint32_t volt;		/* mV */
+	uint16_t amp;		/* uA */
+	uint16_t ds;
+};
+
+struct ytphy_ds_map ytphy_yt8531_ds_map[] = {
+	{ 1800, 1200, 0 },
+	{ 1800, 2100, 1 },
+	{ 1800, 2700, 2 },
+	{ 1800, 2910, 3 },
+	{ 1800, 3110, 4 },
+	{ 1800, 3600, 5 },
+	{ 1800, 3970, 6 },
+	{ 1800, 4350, 7 },
+	{ 3300, 3070, 0 },
+	{ 3300, 4080, 1 },
+	{ 3300, 4370, 2 },
+	{ 3300, 4680, 3 },
+	{ 3300, 5020, 4 },
+	{ 3300, 5450, 5 },
+	{ 3300, 5740, 6 },
+	{ 3300, 6140, 7 },
+};
+
+uint32_t
+ytphy_yt8531_ds(struct mii_softc *sc, uint32_t volt, uint32_t amp)
+{
+	int i;
+
+	for (i = 0; i < nitems(ytphy_yt8531_ds_map); i++) {
+		if (ytphy_yt8531_ds_map[i].volt == volt &&
+		    ytphy_yt8531_ds_map[i].amp == amp)
+			return ytphy_yt8531_ds_map[i].ds;
+	}
+
+	if (amp) {
+		printf("%s: unknown drive strength (%d uA at %d mV)\n",
+		    sc->mii_dev.dv_xname, amp, volt);
+	}
+
+	/* Default drive strength. */
+	return 3;
+}
+
+void
+ytphy_yt8531_init(struct mii_softc *sc)
+{
+	uint32_t rx_clk_drv = 0;
+	uint32_t rx_data_drv = 0;
+	uint16_t addr, data;
+	uint16_t volt;
+
+	ytphy_yt8521_init(sc);
+
+#ifdef __HAVE_FDT
+	if (sc->mii_pdata->mii_node) {
+		rx_clk_drv = OF_getpropint(sc->mii_pdata->mii_node,
+		    "motorcomm,rx-clk-drv-microamp", 0);
+		rx_data_drv = OF_getpropint(sc->mii_pdata->mii_node,
+		    "motorcomm,rx-data-drv-microamp", 0);
+	}
+#endif
+
+	/* Save address register. */
+	addr = PHY_READ(sc, YT8511_REG_ADDR);
+
+	PHY_WRITE(sc, YT8511_REG_ADDR, YT8521_EXT_CHIP_CONFIG);
+	data = PHY_READ(sc, YT8511_REG_DATA);
+	if ((data & YT8521_CFG_LDO_MASK) == YT8521_CFG_LDO_3V3)
+		volt = 3300;
+	else if ((data & YT8521_CFG_LDO_MASK) == YT8521_CFG_LDO_2V5)
+		volt = 2500;
+	else
+		volt = 1800;
+
+	rx_clk_drv = ytphy_yt8531_ds(sc, volt, rx_clk_drv);
+	rx_data_drv = ytphy_yt8531_ds(sc, volt, rx_data_drv);
+
+	PHY_WRITE(sc, YT8511_REG_ADDR, YT8521_EXT_PAD_DRIVE_STRENGTH);
+	data = PHY_READ(sc, YT8511_REG_DATA);
+	data &= ~YT8531_RGMII_RXC_DS_MASK;
+	data |= rx_clk_drv << YT8531_RGMII_RXC_DS_SHIFT;
+	data &= ~YT8531_RGMII_RXD_DS_MASK;
+	data |= YT8531_RGMII_RXD_DS_LOW(rx_data_drv);
+	data |= YT8531_RGMII_RXD_DS_HIGH(rx_data_drv);
+	PHY_WRITE(sc, YT8511_REG_DATA, data);
+
+	/* Restore address register. */
+	PHY_WRITE(sc, YT8511_REG_ADDR, addr);
 }
