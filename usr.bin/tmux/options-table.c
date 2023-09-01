@@ -1,4 +1,4 @@
-/* $OpenBSD: options-table.c,v 1.167 2023/08/15 07:01:47 nicm Exp $ */
+/* $OpenBSD: options-table.c,v 1.168 2023/09/01 13:48:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2011 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -86,7 +86,7 @@ static const char *options_table_remain_on_exit_list[] = {
 	"off", "on", "failed", NULL
 };
 static const char *options_table_detach_on_destroy_list[] = {
-	"off", "on", "no-detached", NULL
+	"off", "on", "no-detached", "previous", "next", NULL
 };
 static const char *options_table_extended_keys_list[] = {
 	"off", "on", "always", NULL

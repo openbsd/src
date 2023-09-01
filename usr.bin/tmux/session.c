@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.94 2023/07/19 13:03:36 nicm Exp $ */
+/* $OpenBSD: session.c,v 1.95 2023/09/01 13:48:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -367,11 +367,9 @@ session_detach(struct session *s, struct winlink *wl)
 
 	session_group_synchronize_from(s);
 
-	if (RB_EMPTY(&s->windows)) {
-		session_destroy(s, 1, __func__);
+	if (RB_EMPTY(&s->windows))
 		return (1);
-	}
-	return (0);
+       	return (0);
 }
 
 /* Return if session has window. */
