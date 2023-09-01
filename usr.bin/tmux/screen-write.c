@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.219 2023/09/01 14:29:11 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.220 2023/09/01 16:01:54 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1791,6 +1791,8 @@ screen_write_collect_add(struct screen_write_ctx *ctx,
 	struct screen_write_citem	*ci;
 	u_int				 sx = screen_size_x(s);
 	int				 collect;
+
+	ctx->flags &= ~SCREEN_WRITE_COMBINE;
 
 	/*
 	 * Don't need to check that the attributes and whatnot are still the
