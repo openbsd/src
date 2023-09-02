@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.167 2023/06/30 13:19:32 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.168 2023/09/02 20:03:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1492,8 +1492,6 @@ tty_keys_colours(struct tty *tty, const char *buf, size_t len, size_t *size)
 	int		 n;
 
 	*size = 0;
-	if ((tty->flags & TTY_HAVEFG) && (tty->flags & TTY_HAVEBG))
-		return (-1);
 
 	/* First four bytes are always \033]1 and 0 or 1 and ;. */
 	if (buf[0] != '\033')
@@ -1539,11 +1537,9 @@ tty_keys_colours(struct tty *tty, const char *buf, size_t len, size_t *size)
 	if (n != -1 && buf[3] == '0') {
 		log_debug("%s: foreground is %s", c->name, colour_tostring(n));
 		tty->fg = n;
-		tty->flags |= TTY_HAVEFG;
 	} else if (n != -1) {
 		log_debug("%s: background is %s", c->name, colour_tostring(n));
 		tty->bg = n;
-		tty->flags |= TTY_HAVEBG;
 	}
 
 	return (0);

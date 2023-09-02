@@ -1,4 +1,4 @@
-/* $OpenBSD: server-client.c,v 1.401 2023/08/17 14:10:28 nicm Exp $ */
+/* $OpenBSD: server-client.c,v 1.402 2023/09/02 20:03:10 nicm Exp $ */
 
 /*
  * Copyright (c) 2009 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2770,6 +2770,7 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 			break;
 		server_client_update_latest(c);
 		tty_resize(&c->tty);
+		tty_repeat_requests(&c->tty);
 		recalculate_sizes();
 		if (c->overlay_resize == NULL)
 			server_client_clear_overlay(c);
