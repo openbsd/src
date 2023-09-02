@@ -1,4 +1,4 @@
-/* $OpenBSD: p_lib.c,v 1.35 2023/09/01 17:12:19 tb Exp $ */
+/* $OpenBSD: p_lib.c,v 1.36 2023/09/02 04:15:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -449,12 +449,13 @@ EVP_PKEY_get0_RSA(EVP_PKEY *pkey)
 RSA *
 EVP_PKEY_get1_RSA(EVP_PKEY *pkey)
 {
-	if (pkey->type != EVP_PKEY_RSA) {
-		EVPerror(EVP_R_EXPECTING_AN_RSA_KEY);
-		return NULL;
+	if (pkey->type == EVP_PKEY_RSA || pkey->type == EVP_PKEY_RSA_PSS) {
+		RSA_up_ref(pkey->pkey.rsa);
+		return pkey->pkey.rsa;
 	}
-	RSA_up_ref(pkey->pkey.rsa);
-	return pkey->pkey.rsa;
+
+	EVPerror(EVP_R_EXPECTING_AN_RSA_KEY);
+	return NULL;
 }
 
 int
