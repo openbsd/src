@@ -3,11 +3,11 @@
 BEGIN
 {
 
-	printf("Hello from BEGIN\n");
+	printf("Hello from %s\n", probe);
 }
 
 END
 {
 	// Comment inside of a block
-	printf("Bye from END\n");
+	printf("Bye from %s\n", probe);
 }

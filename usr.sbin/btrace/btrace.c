@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.74 2023/08/16 13:07:11 dv Exp $ */
+/*	$OpenBSD: btrace.c,v 1.75 2023/09/02 15:16:12 dv Exp $ */
 
 /*
  * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
@@ -117,6 +117,8 @@ size_t			 dt_ndtpi;	/* # of elements in the array */
 struct dtioc_arg_info  **dt_args;	/* array of probe arguments */
 
 struct dt_evt		 bt_devt;	/* fake event for BEGIN/END */
+#define EVENT_BEGIN	 0
+#define EVENT_END	 (unsigned int)(-1)
 uint64_t		 bt_filtered;	/* # of events filtered out */
 
 struct syms		*kelf, *uelf;
@@ -543,7 +545,7 @@ rules_setup(int fd)
 		kelf = kelf_open(_PATH_KSYMS);
 
 	/* Initialize "fake" event for BEGIN/END */
-	bt_devt.dtev_pbn = -1;
+	bt_devt.dtev_pbn = EVENT_BEGIN;
 	strlcpy(bt_devt.dtev_comm, getprogname(), sizeof(bt_devt.dtev_comm));
 	bt_devt.dtev_pid = getpid();
 	bt_devt.dtev_tid = getthrid();
@@ -623,6 +625,7 @@ rules_teardown(int fd)
 	uelf = NULL;
 
 	/* Update "fake" event for BEGIN/END */
+	bt_devt.dtev_pbn = EVENT_END;
 	clock_gettime(CLOCK_REALTIME, &bt_devt.dtev_tsp);
 
 	if (rend)
@@ -1600,6 +1603,13 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 		str = buf;
 		break;
 	case B_AT_BI_PROBE:
+		if (dtev->dtev_pbn == EVENT_BEGIN) {
+			str = "BEGIN";
+			break;
+		} else if (dtev->dtev_pbn == EVENT_END) {
+			str = "END";
+			break;
+		}
 		dtpi = &dt_dtpis[dtev->dtev_pbn - 1];
 		if (dtpi != NULL)
 			snprintf(buf, sizeof(buf), "%s:%s:%s",
