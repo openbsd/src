@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.409 2023/09/02 08:57:46 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.410 2023/09/02 09:02:18 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9205,6 +9205,9 @@ iwm_delete_key(struct ieee80211com *ic, struct ieee80211_node *ni,
                 ieee80211_delete_key(ic, ni, k);
 		return;
 	}
+
+	if ((sc->sc_flags & IWM_FLAG_STA_ACTIVE) == 0)
+		return;
 
 	if (!isset(sc->sc_ucode_api, IWM_UCODE_TLV_API_TKIP_MIC_KEYS))
 		return iwm_delete_key_v1(ic, ni, k);
