@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.28 2023/08/28 21:23:46 dv Exp $
+# $OpenBSD: Makefile,v 1.29 2023/09/02 19:28:46 dv Exp $
 
 BTRACE?=		 /usr/sbin/btrace
 ALLOWDT!=		sysctl -n kern.allowdt 2>/dev/null
@@ -14,7 +14,7 @@ BT_LANG_SCRIPTS=	arithm beginend beginend-argn boolean comments delete \
 BT_ARG_LANG_SCRIPTS=	staticv str
 
 # scripts that use kernel probes
-BT_KERN_SCRIPTS=	filters mapoverwrite multiprobe
+BT_KERN_SCRIPTS=	empty-stmts filters mapoverwrite multiprobe
 
 REGRESS_EXPECTED_FAILURES=	run-maxoperand
 
