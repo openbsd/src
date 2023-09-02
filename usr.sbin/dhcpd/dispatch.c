@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.44 2021/11/20 11:47:02 kn Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.45 2023/09/02 10:18:45 kn Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -112,9 +112,7 @@ discover_interfaces(int *rdomain)
 	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		/*
 		 * See if this is the sort of interface we want to
-		 * deal with.  Skip loopback and point-to-point
-		 * interfaces, except don't skip down interfaces if we're
-		 * trying to get a list of configurable interfaces.
+		 * deal with.
 		 */
 		if ((ifa->ifa_flags & IFF_LOOPBACK) ||
 		    (ifa->ifa_flags & IFF_POINTOPOINT) ||
