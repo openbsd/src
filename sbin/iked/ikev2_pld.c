@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2_pld.c,v 1.132 2023/08/04 19:06:25 claudio Exp $	*/
+/*	$OpenBSD: ikev2_pld.c,v 1.133 2023/09/02 18:36:30 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -796,6 +796,10 @@ ikev2_validate_cert(struct iked_message *msg, size_t offset, size_t left,
 		return (-1);
 	}
 	memcpy(cert, msgbuf + offset, sizeof(*cert));
+	if (cert->cert_type == IKEV2_CERT_NONE) {
+		log_debug("%s: malformed payload: invalid cert type", __func__);
+		return (-1);
+	}
 
 	return (0);
 }
