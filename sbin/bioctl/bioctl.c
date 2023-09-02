@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.154 2023/08/21 08:33:11 kn Exp $ */
+/* $OpenBSD: bioctl.c,v 1.155 2023/09/02 09:14:47 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -89,7 +89,7 @@ int			devh = -1;
 int			human;
 int			verbose;
 u_int32_t		cflags = 0;
-int			rflag = 0;
+int			rflag = -1;	/* auto */
 char			*password;
 
 void			*bio_cookie;
@@ -182,7 +182,7 @@ main(int argc, char *argv[])
 				rflag = -1;
 				break;
 			}
-			rflag = strtonum(optarg, 4, 1<<30, &errstr);
+			rflag = strtonum(optarg, 16, 1<<30, &errstr);
 			if (errstr != NULL)
 				errx(1, "number of KDF rounds is %s: %s",
 				    errstr, optarg);
@@ -979,7 +979,7 @@ bio_kdf_generate(struct sr_crypto_kdfinfo *kdfinfo)
 
 	kdfinfo->pbkdf.generic.len = sizeof(kdfinfo->pbkdf);
 	kdfinfo->pbkdf.generic.type = SR_CRYPTOKDFT_BCRYPT_PBKDF;
-	kdfinfo->pbkdf.rounds = rflag ? rflag : 16;
+	kdfinfo->pbkdf.rounds = rflag;
 
 	kdfinfo->flags = SR_CRYPTOKDF_KEY | SR_CRYPTOKDF_HINT;
 	kdfinfo->len = sizeof(*kdfinfo);
@@ -1119,12 +1119,14 @@ bio_changepass(char *dev)
 	/* Current passphrase. */
 	bio_kdf_derive(&kdfinfo1, &kdfhint, "Old passphrase: ", 0);
 
-	/*
-	 * Unless otherwise specified, keep the previous number of rounds as
-	 * long as we're using the same KDF.
-	 */
-	if (kdfhint.generic.type == SR_CRYPTOKDFT_BCRYPT_PBKDF && !rflag)
-		rflag = kdfhint.rounds;
+	if (rflag == -1) {
+		rflag = bcrypt_pbkdf_autorounds();
+
+		/* Use previous number of rounds for the same KDF if higher. */
+		if (kdfhint.generic.type == SR_CRYPTOKDFT_BCRYPT_PBKDF &&
+		    rflag < kdfhint.rounds)
+			rflag = kdfhint.rounds;
+	}
 
 	/* New passphrase. */
 	bio_kdf_generate(&kdfinfo2);
@@ -1328,7 +1330,7 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 	    type != SR_CRYPTOKDFT_BCRYPT_PBKDF)
 		errx(1, "unknown KDF type %d", type);
 
-	if (rounds < (type == SR_CRYPTOKDFT_PKCS5_PBKDF2 ? 1000 : 4))
+	if (rounds < (type == SR_CRYPTOKDFT_PKCS5_PBKDF2 ? 1000 : 16))
 		errx(1, "number of KDF rounds is too small: %d", rounds);
 
 	/* get passphrase */

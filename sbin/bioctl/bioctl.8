@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bioctl.8,v 1.113 2023/08/21 08:33:11 kn Exp $
+.\"	$OpenBSD: bioctl.8,v 1.114 2023/09/02 09:14:47 kn Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Marco Peereboom
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 21 2023 $
+.Dd $Mdocdate: September 2 2023 $
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -282,11 +282,12 @@ passphrase into a key, in order to create a new encrypted volume or change the
 passphrase of an existing encrypted volume.
 A larger number of iterations takes more time, but offers increased resistance
 against passphrase guessing attacks.
-If
+By default, or if
 .Ar rounds
-is specified as "auto", the number of rounds will be automatically determined
-based on system performance.
-Otherwise the minimum is 4 rounds and the default is 16.
+is specified as
+.Cm auto ,
+the number of rounds will automatically be based on system performance.
+The minimum is 16 rounds.
 .It Fl s
 Read passphrases from
 .Pa /dev/stdin
