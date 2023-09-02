@@ -1,4 +1,4 @@
-/*	$OpenBSD: ca.c,v 1.96 2023/08/04 19:06:25 claudio Exp $	*/
+/*	$OpenBSD: ca.c,v 1.97 2023/09/02 18:16:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -210,8 +210,7 @@ ca_certbundle_add(struct ibuf *buf, struct iked_id *id)
 	size_t		 len = ibuf_size(id->id_buf);
 	void		*val = ibuf_data(id->id_buf);
 
-	if (id == NULL ||
-	    buf == NULL ||
+	if (buf == NULL ||
 	    ibuf_add(buf, &type, sizeof(type)) != 0 ||
 	    ibuf_add(buf, &len, sizeof(len)) != 0 ||
 	    ibuf_add(buf, val, len) != 0)
