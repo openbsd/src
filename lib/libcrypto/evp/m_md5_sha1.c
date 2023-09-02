@@ -1,4 +1,4 @@
-/* $OpenBSD: m_md5_sha1.c,v 1.7 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: m_md5_sha1.c,v 1.8 2023/09/02 04:55:18 tb Exp $ */
 /*
  * Copyright (c) 2017 Joel Sing <jsing@openbsd.org>
  *
@@ -44,7 +44,7 @@ md5_sha1_init(EVP_MD_CTX *ctx)
 	return 1;
 }
 
-static int 
+static int
 md5_sha1_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 {
 	struct md5_sha1_ctx *mdctx = ctx->md_data;
