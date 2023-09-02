@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_fault.c,v 1.133 2022/11/04 09:36:44 mpi Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.134 2023/09/02 08:24:40 mpi Exp $	*/
 /*	$NetBSD: uvm_fault.c,v 1.51 2000/08/06 00:22:53 thorpej Exp $	*/
 
 /*
@@ -396,7 +396,6 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			 * anon and try again.
 			 */
 			if (pg->pg_flags & PG_RELEASED) {
-				pmap_page_protect(pg, PROT_NONE);
 				KASSERT(anon->an_ref == 0);
 				/*
 				 * Released while we had unlocked amap.

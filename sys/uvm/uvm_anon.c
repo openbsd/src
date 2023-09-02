@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_anon.c,v 1.55 2023/04/11 00:45:09 jsg Exp $	*/
+/*	$OpenBSD: uvm_anon.c,v 1.56 2023/09/02 08:24:40 mpi Exp $	*/
 /*	$NetBSD: uvm_anon.c,v 1.10 2000/11/25 06:27:59 chs Exp $	*/
 
 /*
@@ -255,6 +255,7 @@ uvm_anon_release(struct vm_anon *anon)
 	KASSERT(anon->an_ref == 0);
 
 	uvm_lock_pageq();
+	pmap_page_protect(pg, PROT_NONE);
 	uvm_pagefree(pg);
 	uvm_unlock_pageq();
 	KASSERT(anon->an_page == NULL);
