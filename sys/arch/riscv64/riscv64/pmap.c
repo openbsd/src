@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.30 2023/04/13 15:23:22 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.31 2023/09/03 00:03:30 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -1523,6 +1523,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			pmap_page_ro(pted->pted_pmap, pted->pted_va, prot);
 		}
 		mtx_leave(&pg->mdpage.pv_mtx);
+		return;
 	}
 
 	mtx_enter(&pg->mdpage.pv_mtx);
