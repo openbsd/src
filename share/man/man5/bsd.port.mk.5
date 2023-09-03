@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.583 2023/09/02 17:19:57 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.584 2023/09/03 12:22:21 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 2 2023 $
+.Dd $Mdocdate: September 3 2023 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2808,6 +2808,10 @@ derived from the
 Do not override without very good reasons,
 namely software that coexist as different incompatible versions with the
 same stem, e.g., already a mess.
+Also See the description of
+.Fl P
+in
+.Xr pkg_create 1
 .It Ev PKGSTEM
 Base for the package name without any version number.
 Used in
@@ -2840,12 +2844,6 @@ plists actually get saved into
 .Pa ${PLIST_REPOSITORY}/${MACHINE_ARCH}
 .Pc .
 If set to empty, will not register anything: very much unsafe.
-.It Ev PORTS_BUILD_XENOCARA_TOO
-EXPERIMENTAL.
-Set to
-.Sq Yes
-to build xenocara through ports.
-This is highly experimental and not recommended.
 .It Ev PORTROACH
 Controls the behavior of
 .Pa misc/portroach
