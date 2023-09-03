@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.127 2023/07/12 12:37:27 tb Exp $	*/
+/*	$OpenBSD: server.c,v 1.128 2023/09/03 10:18:18 nicm Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -1461,7 +1461,7 @@ server_bufferevent_write_chunk(struct client *clt,
     struct evbuffer *buf, size_t size)
 {
 	int ret;
-	ret = server_bufferevent_write(clt, buf->buffer, size);
+	ret = server_bufferevent_write(clt, EVBUFFER_DATA(buf), size);
 	if (ret != -1)
 		evbuffer_drain(buf, size);
 	return (ret);
