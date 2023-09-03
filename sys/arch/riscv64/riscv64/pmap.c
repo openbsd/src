@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.31 2023/09/03 00:03:30 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2023/09/03 00:15:46 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -431,23 +431,19 @@ pmap_vp_page_free(struct pool *pp, void *v)
 	km_free(v, pp->pr_pgsize, &kv_any, &kp_dirty);
 }
 
-u_int32_t PTED_MANAGED(struct pte_desc *pted);
-u_int32_t PTED_WIRED(struct pte_desc *pted);
-u_int32_t PTED_VALID(struct pte_desc *pted);
-
-u_int32_t
+static inline u_int32_t
 PTED_MANAGED(struct pte_desc *pted)
 {
 	return (pted->pted_va & PTED_VA_MANAGED_M);
 }
 
-u_int32_t
+static inline u_int32_t
 PTED_WIRED(struct pte_desc *pted)
 {
 	return (pted->pted_va & PTED_VA_WIRED_M);
 }
 
-u_int32_t
+static inline u_int32_t
 PTED_VALID(struct pte_desc *pted)
 {
 	return (pted->pted_pte != 0);
@@ -608,7 +604,7 @@ pmap_remove(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		if (pted == NULL)
 			continue;
 
-		if (pted->pted_va & PTED_VA_WIRED_M) {
+		if (PTED_WIRED(pted)) {
 			pm->pm_stats.wired_count--;
 			pted->pted_va &= ~PTED_VA_WIRED_M;
 		}
@@ -627,7 +623,7 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 {
 	pm->pm_stats.resident_count--;
 
-	if (pted->pted_va & PTED_VA_WIRED_M) {
+	if (PTED_WIRED(pted)) {
 		pm->pm_stats.wired_count--;
 		pted->pted_va &= ~PTED_VA_WIRED_M;
 	}
@@ -747,7 +743,7 @@ pmap_kremove_pg(vaddr_t va)
 	if (PTED_MANAGED(pted))
 		pmap_remove_pv(pted);
 
-	if (pted->pted_va & PTED_VA_WIRED_M)
+	if (PTED_WIRED(pted))
 		pm->pm_stats.wired_count--;
 
 	/* invalidate pted; */
@@ -1869,7 +1865,7 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 
 	pmap_lock(pm);
 	pted = pmap_vp_lookup(pm, va, NULL);
-	if ((pted != NULL) && (pted->pted_va & PTED_VA_WIRED_M)) {
+	if (pted != NULL && PTED_WIRED(pted)) {
 		pm->pm_stats.wired_count--;
 		pted->pted_va &= ~PTED_VA_WIRED_M;
 	}
