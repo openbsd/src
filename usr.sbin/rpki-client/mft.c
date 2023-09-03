@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.96 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.97 2023/09/03 10:48:50 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -233,6 +233,7 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 	int			 rc = 0;
 	struct mftfile		*fent;
 	enum rtype		 type;
+	size_t			 new_idx = 0;
 
 	if (!valid_mft_filename(fh->file->data, fh->file->length)) {
 		warnx("%s: RFC 6486 section 4.2.2: bad filename", p->fn);
@@ -256,8 +257,15 @@ mft_parse_filehash(struct parse *p, const FileAndHash *fh)
 		p->found_crl = 1;
 	}
 
-	/* Insert the filename and hash value. */
-	fent = &p->res->files[p->res->filesz++];
+	if (filemode)
+		fent = &p->res->files[p->res->filesz++];
+	else {
+		/* Fisher-Yates shuffle */
+		new_idx = arc4random_uniform(p->res->filesz + 1);
+		p->res->files[p->res->filesz++] = p->res->files[new_idx];
+		fent = &p->res->files[new_idx];
+	}
+
 	fent->type = type;
 	fent->file = fn;
 	fn = NULL;
