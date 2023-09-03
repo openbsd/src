@@ -1,4 +1,4 @@
-/*	$OpenBSD: specialreg.h,v 1.108 2023/08/16 04:07:37 jsg Exp $	*/
+/*	$OpenBSD: specialreg.h,v 1.109 2023/09/03 09:30:43 mlarkin Exp $	*/
 /*	$NetBSD: specialreg.h,v 1.1 2003/04/26 18:39:48 fvdl Exp $	*/
 /*	$NetBSD: x86/specialreg.h,v 1.2 2003/04/25 21:54:30 fvdl Exp $	*/
 
@@ -329,6 +329,7 @@
  * "Advanced Power Management Information" bits (CPUID function 0x80000007):
  * EDX bits.
  */
+#define CPUIDEDX_HWPSTATE	(1 << 7)	/* Hardware P State Control */
 #define CPUIDEDX_ITSC		(1 << 8)	/* Invariant TSC */
 
 /*

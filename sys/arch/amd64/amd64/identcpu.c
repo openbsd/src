@@ -1,4 +1,4 @@
-/*	$OpenBSD: identcpu.c,v 1.137 2023/08/16 04:07:37 jsg Exp $	*/
+/*	$OpenBSD: identcpu.c,v 1.138 2023/09/03 09:30:43 mlarkin Exp $	*/
 /*	$NetBSD: identcpu.c,v 1.1 2003/04/26 18:39:28 fvdl Exp $	*/
 
 /*
@@ -228,6 +228,7 @@ const struct {
 }, cpu_cpuid_perf_eax[] = {
 	{ CPUIDEAX_VERID,	"PERF" },
 }, cpu_cpuid_apmi_edx[] = {
+	{ CPUIDEDX_HWPSTATE,	"HWPSTATE" },
 	{ CPUIDEDX_ITSC,	"ITSC" },
 }, cpu_amdspec_ebxfeatures[] = {
 	{ CPUIDEBX_INVLPGB,		"INVLPGB" },
