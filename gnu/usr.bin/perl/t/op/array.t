@@ -6,7 +6,7 @@ BEGIN {
     set_up_inc('.', '../lib');
 }
 
-plan (194);
+plan (195);
 
 #
 # @foo, @bar, and @ary are also used from tie-stdarray after tie-ing them
@@ -685,5 +685,9 @@ $#a = -1; $#a++;
     is "[@a]", "[7 3 1]",
        'holes passed to sub do not lose their position (aelem, mg)';
 }
+
+# GH #21235
+fresh_perl_is('my @x;$x[0] = 1;shift @x;$x[22] = 1;$x[25] = 1;','',
+  {}, 'unshifting and growing an array initializes trailing elements');
 
 "We're included by lib/Tie/Array/std.t so we need to return something true";

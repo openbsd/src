@@ -103,12 +103,19 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
             "panic: av_extend_guts() negative count (%" IVdf ")", (IV)key);
 
     if (key > *maxp) {
-        SSize_t ary_offset = *maxp + 1;
-        SSize_t to_null = 0;
+        SSize_t ary_offset = *maxp + 1; /* Start NULL initialization
+                                         * from this element */
+        SSize_t to_null = 0; /* How many elements to Zero */
         SSize_t newmax  = 0;
 
         if (av && *allocp != *arrayp) { /* a shifted SV* array exists */
+
+            /* to_null will contain the number of elements currently
+             * shifted and about to be unshifted. If the array has not
+             * been shifted to the maximum possible extent, this will be
+             * a smaller number than (*maxp - AvFILLp(av)). */
             to_null = *arrayp - *allocp;
+
             *maxp += to_null;
             ary_offset = AvFILLp(av) + 1;
 
@@ -116,6 +123,13 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
 
             if (key > *maxp - 10) {
                 newmax = key + *maxp;
+
+                /* Zero everything above AvFILLp(av), which could be more
+                 * elements than have actually been shifted. If we don't
+                 * do this, trailing elements at the end of the resized
+                 * array may not be correctly initialized. */
+                to_null = *maxp - AvFILLp(av);
+
                 goto resize;
             }
         } else if (*allocp) { /* a full SV* array exists */
@@ -167,7 +181,9 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
 #ifdef Perl_safesysmalloc_size
           resized:
 #endif
-            to_null += newmax - *maxp;
+            to_null += newmax - *maxp; /* Initialize all new elements
+                                        * (newmax - *maxp) in addition to
+                                        * any previously specified */
             *maxp = newmax;
 
             /* See GH#18014 for discussion of when this might be needed: */
@@ -193,7 +209,7 @@ Perl_av_extend_guts(pTHX_ AV *av, SSize_t key, SSize_t *maxp, SV ***allocp,
              * don't get any special treatment here.
              * See https://github.com/Perl/perl5/pull/18690 for more detail */
             ary_offset = 0;
-            to_null = *maxp+1;
+            to_null = *maxp+1; /* Initialize all new array elements */
             goto zero;
         }
 
