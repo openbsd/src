@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.584 2023/09/03 12:22:21 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.585 2023/09/03 12:24:16 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2151,6 +2151,7 @@ Defaults to
 If set, points to a local directory common for all instances of
 concurrent ports builds.
 .It Ev LOCK_CMD
+User settings.
 Expands to a command that will acquire a lock, namely
 .Xr portlock 1 .
 See also
