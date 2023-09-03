@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.390 2023/08/28 14:50:01 bluhm Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.391 2023/09/03 21:37:17 bluhm Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -3159,19 +3159,6 @@ syn_cache_put(struct syn_cache *sc)
 	pool_put(&syn_cache_pool, sc);
 }
 
-/*
- * We don't estimate RTT with SYNs, so each packet starts with the default
- * RTT and each timer step has a fixed timeout value.
- */
-#define	SYN_CACHE_TIMER_ARM(sc)						\
-do {									\
-	TCPT_RANGESET((sc)->sc_rxtcur,					\
-	    TCPTV_SRTTDFLT * tcp_backoff[(sc)->sc_rxtshift], TCPTV_MIN,	\
-	    TCPTV_REXMTMAX);						\
-	if (timeout_add_msec(&(sc)->sc_timer, (sc)->sc_rxtcur))		\
-		refcnt_take(&(sc)->sc_refcnt);				\
-} while (/*CONSTCOND*/0)
-
 void
 syn_cache_init(void)
 {
@@ -3300,11 +3287,17 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 	}
 
 	/*
-	 * Initialize the entry's timer.
+	 * Initialize the entry's timer.  We don't estimate RTT
+	 * with SYNs, so each packet starts with the default RTT
+	 * and each timer step has a fixed timeout value.
 	 */
 	sc->sc_rxttot = 0;
 	sc->sc_rxtshift = 0;
-	SYN_CACHE_TIMER_ARM(sc);
+	TCPT_RANGESET(sc->sc_rxtcur,
+	    TCPTV_SRTTDFLT * tcp_backoff[sc->sc_rxtshift], TCPTV_MIN,
+	    TCPTV_REXMTMAX);
+	if (timeout_add_msec(&sc->sc_timer, sc->sc_rxtcur))
+		refcnt_take(&sc->sc_refcnt);
 
 	/* Link it from tcpcb entry */
 	refcnt_take(&sc->sc_refcnt);
@@ -3365,15 +3358,12 @@ syn_cache_timer(void *arg)
 
 	/* Advance the timer back-off. */
 	sc->sc_rxtshift++;
-	SYN_CACHE_TIMER_ARM(sc);
+	TCPT_RANGESET(sc->sc_rxtcur,
+	    TCPTV_SRTTDFLT * tcp_backoff[sc->sc_rxtshift], TCPTV_MIN,
+	    TCPTV_REXMTMAX);
+	if (!timeout_add_msec(&sc->sc_timer, sc->sc_rxtcur))
+		syn_cache_put(sc);
 
-	/*
-	 * Decrement reference of this timer.  We know there is another timer
-	 * as we just added it.  So just deref, free is not necessary.
-	 */
-	lastref = refcnt_rele(&sc->sc_refcnt);
-	KASSERT(lastref == 0);
-	(void)lastref;
 	NET_UNLOCK();
 	return;
 
