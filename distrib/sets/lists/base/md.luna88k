@@ -85,6 +85,7 @@
 ./usr/libdata/perl5/m88k-openbsd/CORE/scope.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/sv.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/sv_inline.h
+./usr/libdata/perl5/m88k-openbsd/CORE/syscall_emulator.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/thread.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/time64.h
 ./usr/libdata/perl5/m88k-openbsd/CORE/time64_config.h

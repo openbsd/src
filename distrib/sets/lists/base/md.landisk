@@ -86,6 +86,7 @@
 ./usr/libdata/perl5/sh-openbsd/CORE/scope.h
 ./usr/libdata/perl5/sh-openbsd/CORE/sv.h
 ./usr/libdata/perl5/sh-openbsd/CORE/sv_inline.h
+./usr/libdata/perl5/sh-openbsd/CORE/syscall_emulator.h
 ./usr/libdata/perl5/sh-openbsd/CORE/thread.h
 ./usr/libdata/perl5/sh-openbsd/CORE/time64.h
 ./usr/libdata/perl5/sh-openbsd/CORE/time64_config.h

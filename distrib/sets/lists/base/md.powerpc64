@@ -87,6 +87,7 @@
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/scope.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/sv.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/sv_inline.h
+./usr/libdata/perl5/powerpc64-openbsd/CORE/syscall_emulator.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/thread.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/time64.h
 ./usr/libdata/perl5/powerpc64-openbsd/CORE/time64_config.h
