@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.32 2023/09/03 00:15:46 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.33 2023/09/03 00:23:25 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -577,9 +577,8 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	 */
 	if (flags & (PROT_READ|PROT_WRITE|PROT_EXEC|PMAP_WIRED)) {
 		pmap_pte_insert(pted);
+		tlb_flush_page(pm, va & ~PAGE_MASK);
 	}
-
-	tlb_flush_page(pm, va & ~PAGE_MASK);
 
 	error = 0;
 out:
@@ -629,7 +628,6 @@ pmap_remove_pted(pmap_t pm, struct pte_desc *pted)
 	}
 
 	pmap_pte_remove(pted, pm != pmap_kernel());
-
 	tlb_flush_page(pm, pted->pted_va & ~PAGE_MASK);
 
 	if (pted->pted_va & PTED_VA_EXEC_M) {
@@ -686,7 +684,6 @@ _pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, int flags, int cache)
 	 * so map the page!
 	 */
 	pmap_pte_insert(pted);
-
 	tlb_flush_page(pm, va & ~PAGE_MASK);
 
 	pg = PHYS_TO_VM_PAGE(pa);
@@ -734,7 +731,6 @@ pmap_kremove_pg(vaddr_t va)
 	 * or that the mapping is not present in the hash table.
 	 */
 	pmap_pte_remove(pted, 0);
-
 	tlb_flush_page(pm, pted->pted_va & ~PAGE_MASK);
 
 	if (pted->pted_va & PTED_VA_EXEC_M)
@@ -1495,10 +1491,7 @@ pmap_page_ro(pmap_t pm, vaddr_t va, vm_prot_t prot)
 		pted->pted_pte &= ~PROT_EXEC;
 	}
 	pmap_pte_update(pted, pl3);
-
 	tlb_flush_page(pm, pted->pted_va & ~PAGE_MASK);
-
-	return;
 }
 
 /*
@@ -1655,8 +1648,6 @@ pmap_pte_remove(struct pte_desc *pted, int remove_pted)
 	vp3->l3[VP_IDX3(pted->pted_va)] = 0;
 	if (remove_pted)
 		vp3->vp[VP_IDX3(pted->pted_va)] = NULL;
-
-	tlb_flush_page(pm, pted->pted_va);
 }
 
 /*
@@ -1758,8 +1749,6 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype)
 
 	/* We actually made a change, so flush it and sync. */
 	pmap_pte_update(pted, pl3);
-
-	/* Flush tlb. */
 	tlb_flush_page(pm, va & ~PAGE_MASK);
 
 	retcode = 1;
