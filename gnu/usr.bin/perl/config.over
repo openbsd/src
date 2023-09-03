@@ -1,7 +1,7 @@
 #
 # Override default paths when building in the OpenBSD src tree
 #
-# $OpenBSD: config.over,v 1.22 2017/02/05 00:33:38 afresh1 Exp $
+# $OpenBSD: config.over,v 1.23 2023/09/03 01:43:09 afresh1 Exp $
 #
 
 # We use a different architecture name than the default
@@ -64,3 +64,9 @@ myuname='openbsd'
 
 # force to use ranlib
 ranlib='ranlib'
+
+# Enable the syscall emulator,
+# enabling syscall even if we don't have it
+d_syscall=define
+d_syscallproto=define
+
