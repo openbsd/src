@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.31 2023/03/02 17:09:54 jmc Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.32 2023/09/03 20:19:13 stsp Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: March 2 2023 $
+.Dd $Mdocdate: September 3 2023 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -145,17 +145,27 @@ which a newly booted client would not be able to grasp.
 The names of the network interfaces on which
 .Nm
 should listen for broadcasts may be specified on the command line.
-This should be done on systems where
+Listing interfaces on the command line is usually optional but is required
+for running
 .Nm
-is unable to identify non-broadcast interfaces,
-but should not be required on other systems.
+in an
+.Xr rdomain 4
+other than 0, or on systems where
+.Nm
+is unable to identify non-broadcast interfaces.
+All specified interfaces must share the same routing domain and
+.Nm
+will set its own routing domain accordingly.
+.Pp
 If no interface names are specified on the command line,
-and the
-.Fl u
-option is not given,
 .Nm
-will identify all network interfaces which are up, eliminating non-broadcast
-interfaces if possible, and listen for DHCP broadcasts on each interface.
+will run in routing domain 0, and if the
+.Fl u
+option is not given
+.Nm
+will identify all network interfaces in all routing domains,
+eliminating non-broadcast interfaces if possible,
+and listen for DHCP broadcasts on each interface.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -464,6 +474,7 @@ DHCPD lease file.
 .El
 .Sh SEE ALSO
 .Xr pf 4 ,
+.Xr rdomain 4 ,
 .Xr dhcpd.conf 5 ,
 .Xr dhcpd.leases 5 ,
 .Xr dhclient 8 ,
