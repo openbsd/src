@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.32 2023/09/03 20:19:13 stsp Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.33 2023/09/04 16:11:00 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: September 3 2023 $
+.Dd $Mdocdate: September 4 2023 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -92,6 +92,12 @@ to renew them in order to continue to use the addresses.
 Once a lease has expired, the client to which that lease was assigned is no
 longer permitted to use the leased IP address.
 .Pp
+Whenever changes are made to the
+.Pa dhcpd.conf
+file,
+.Nm
+must be restarted.
+.Pp
 In order to keep track of leases across system reboots and server restarts,
 .Nm
 keeps a list of leases it has assigned in the
@@ -112,60 +118,34 @@ reads the
 .Pa dhcpd.leases
 file to refresh its memory about what leases have been assigned.
 .Pp
-BOOTP support is also provided by this server.
-Unlike DHCP, the BOOTP protocol does not provide a protocol for recovering
-dynamically-assigned addresses once they are no longer needed.
-It is still possible to dynamically assign addresses to BOOTP clients, but
-some administrative process for reclaiming addresses is required.
-By default, leases are granted to BOOTP clients in perpetuity, although
-the network administrator may set an earlier cutoff date or a shorter
-lease length for BOOTP leases if that makes sense.
-.Pp
-BOOTP clients may also be served in the old standard way, which is
-simply to provide a declaration in the
-.Pa dhcpd.conf
-file for each BOOTP client, permanently assigning an address to each client.
-.Pp
-Whenever changes are made to the
-.Pa dhcpd.conf
-file,
+When
 .Nm
-must be restarted.
-Because the DHCP server database is not as lightweight as a BOOTP database,
+starts up, it
+identifies all network interfaces in all routing domains,
+eliminating non-broadcast interfaces if possible,
+and listens for DHCP broadcasts on each interface.
+The names of the network interfaces on which
 .Nm
-does not automatically restart itself when it sees a change to the
-.Pa dhcpd.conf
-file.
+should listen for broadcasts may also be specified on the command line
+on systems where
+.Nm
+is unable to identify non-broadcast interfaces.
+.Pp
+.Nm
+normally runs in routing domain 0.
+In order to run in another
+.Xr rdomain 4 ,
+.Nm
+needs to be started with a list of interfaces
+which share the same routing domain,
+which allows
+.Nm
+to set its own routing domain accordingly.
 .Pp
 DHCP traffic always bypasses IPsec.
 Otherwise there could be situations when a server has an IPsec SA for the
 client and sends replies over that,
 which a newly booted client would not be able to grasp.
-.Sh COMMAND LINE
-The names of the network interfaces on which
-.Nm
-should listen for broadcasts may be specified on the command line.
-Listing interfaces on the command line is usually optional but is required
-for running
-.Nm
-in an
-.Xr rdomain 4
-other than 0, or on systems where
-.Nm
-is unable to identify non-broadcast interfaces.
-All specified interfaces must share the same routing domain and
-.Nm
-will set its own routing domain accordingly.
-.Pp
-If no interface names are specified on the command line,
-.Nm
-will run in routing domain 0, and if the
-.Fl u
-option is not given
-.Nm
-will identify all network interfaces in all routing domains,
-eliminating non-broadcast interfaces if possible,
-and listen for DHCP broadcasts on each interface.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -286,6 +266,21 @@ See also
 .Sx SYNCHRONISATION
 below.
 .El
+.Sh BOOTP
+.Nm
+also provides BOOTP support.
+Unlike DHCP, the BOOTP protocol does not provide a protocol for recovering
+dynamically-assigned addresses once they are no longer needed.
+It is still possible to dynamically assign addresses to BOOTP clients, but
+some administrative process for reclaiming addresses is required.
+By default, leases are granted to BOOTP clients in perpetuity, although
+the network administrator may set an earlier cutoff date or a shorter
+lease length for BOOTP leases if that makes sense.
+.Pp
+BOOTP clients may also be served in the old standard way, which is
+simply to provide a declaration in the
+.Pa dhcpd.conf
+file for each BOOTP client, permanently assigning an address to each client.
 .Sh CONFIGURATION
 The syntax of the
 .Xr dhcpd.conf 5
