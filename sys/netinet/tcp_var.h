@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.170 2023/08/28 14:50:02 bluhm Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.171 2023/09/04 23:00:36 bluhm Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -288,9 +288,9 @@ struct syn_cache_head {
 
 struct syn_cache_set {
 	struct		syn_cache_head *scs_buckethead;
+	long		scs_use;
 	int		scs_size;
 	int		scs_count;
-	int		scs_use;
 	u_int32_t	scs_random[5];
 };
 
@@ -430,7 +430,7 @@ struct	tcpstat {
 	u_int64_t tcps_sc_entry_limit;	/* limit of syn cache entries */
 	u_int64_t tcps_sc_bucket_maxlen;/* maximum # of entries in any bucket */
 	u_int64_t tcps_sc_bucket_limit;	/* limit of syn cache bucket list */
-	u_int64_t tcps_sc_uses_left;	/* use counter of current syn cache */
+	int64_t tcps_sc_uses_left;	/* use counter of current syn cache */
 
 	u_int64_t tcps_conndrained;	/* # of connections drained */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.178 2023/07/07 09:15:13 yasuoka Exp $	*/
+/*	$OpenBSD: inet.c,v 1.179 2023/09/04 23:00:36 bluhm Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -498,7 +498,7 @@ tcp_stats(char *name)
 	    "\t%llu entr%s in current SYN cache, limit is %llu\n");
 	p2b(tcps_sc_bucket_maxlen, tcps_sc_bucket_limit,
 	    "\t%llu longest bucket length in current SYN cache, limit is %llu\n");
-	p(tcps_sc_uses_left, "\t%llu use%s of current SYN cache left\n");
+	p(tcps_sc_uses_left, "\t%lld use%s of current SYN cache left\n");
 
 	p(tcps_sack_recovery_episode, "\t%llu SACK recovery episode%s\n");
 	p(tcps_sack_rexmits,
