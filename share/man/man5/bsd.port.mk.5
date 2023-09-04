@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.585 2023/09/03 12:24:16 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.586 2023/09/04 12:40:44 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 3 2023 $
+.Dd $Mdocdate: September 4 2023 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -302,7 +302,7 @@ ${FETCH_CMD} retrieve from
 .Ev MASTER_SITES0
 to
 .Ev MASTER_SITES9
-instead.
+instead (deprecated).
 .Pp
 Preferably, adding a suffix to
 .Ev DISTFILES ,
@@ -327,6 +327,14 @@ Transfers in progress are stored as
 .Ar filenamesufx.part
 and moved after completion.
 .Pp
+The actual filesystem paths to all distfiles (resp. patchfiles) after
+url/filename substitution, including suffixed sources, is conveniently
+stored as
+.Ev ALL_DISTFILES
+.Po
+resp.
+.Ev ALL_PATCHFILES
+.Pc .
 The ports framework uses
 .Pa ${DISTDIR}/${DIST_SUBDIR}
 (aliased to
@@ -343,6 +351,8 @@ Use of
 hooks is forbidden, as this would make mirroring of distfiles very complicated.
 .Pp
 See
+.Ev ALL_DISTFILES ,
+.Ev ALL_PATCHFILES ,
 .Ev CHECKSUMFILES ,
 .Ev DISTDIR ,
 .Ev DISTFILES* ,
@@ -926,6 +936,7 @@ setting, after applying the
 conversion, occasionally useful for setting
 .Ev EXTRACT_ONLY
 manually.
+Read-only.
 .It Ev ALL_FAKE_FLAGS
 Flags passed to ${MAKE} invocations during the fake process.
 Equals
@@ -937,6 +948,7 @@ List of all actual files coming from every
 setting, after applying the
 .Sq Ar filename Ns { Ns Ar url Ns } Ns Ar sufx
 conversion.
+Read-only.
 .It Ev ALL_TEST_ENV
 Environment passed to test.
 Equals
@@ -4382,6 +4394,10 @@ somewhere, or it runs strips during fake anyway.
 It can also occur if
 .Ev DEBUG_PACKAGES
 includes subpackages with no files holding debug info.
+.It "Warning: old style distfiles <files>... found"
+See
+.Cm fetch
+for the newer way.
 .It "Warning: symlink(s) point to non existent file."
 Warning message comes from
 .Xr pkg_create 1 .
