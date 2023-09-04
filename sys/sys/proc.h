@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.348 2023/08/29 16:19:34 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.349 2023/09/04 13:18:41 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -173,8 +173,8 @@ struct process {
 	u_int	ps_flags;		/* [a] PS_* flags. */
 	int	ps_siglist;		/* Signals pending for the process. */
 
-	struct	proc *ps_single;	/* [S] Thread for single-threading. */
-	u_int	ps_singlecount;		/* [a] Not yet suspended threads. */
+	struct	proc *ps_single;	/* [m] Thread for single-threading. */
+	u_int	ps_singlecnt;		/* [m] Number of suspended threads. */
 
 	int	ps_traceflag;		/* Kernel trace points. */
 	struct	vnode *ps_tracevp;	/* Trace to vnode. */
@@ -242,7 +242,7 @@ struct process {
 
 /* End area that is copied on creation. */
 #define ps_endcopy	ps_threadcnt
-	u_int	ps_threadcnt;		/* Number of threads. */
+	u_int	ps_threadcnt;		/* [m] Number of threads. */
 
 	struct	timespec ps_start;	/* starting uptime. */
 	struct	timeout ps_realit_to;	/* [m] ITIMER_REAL timeout */

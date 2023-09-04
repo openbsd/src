@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.212 2023/08/29 16:19:34 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.213 2023/09/04 13:18:41 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -119,7 +119,7 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	struct process *pr, *qr, *nqr;
 	struct rusage *rup;
 	struct timespec ts;
-	int s;
+	int s, wake;
 
 	atomic_setbits_int(&p->p_flag, P_WEXIT);
 
@@ -161,9 +161,17 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	TAILQ_REMOVE(&pr->ps_threads, p, p_thr_link);
 	SCHED_UNLOCK(s);
 
+	mtx_enter(&pr->ps_mtx);
+	pr->ps_threadcnt--;
+	wake = (pr->ps_single && pr->ps_singlecnt == pr->ps_threadcnt);
+	mtx_leave(&pr->ps_mtx);
+	if (wake)
+		wakeup(&pr->ps_singlecnt);
+
 	if ((p->p_flag & P_THREAD) == 0) {
 		/* main thread gotta wait because it has the pid, et al */
-		while (pr->ps_threadcnt > 1)
+		/* XXX locking depends on kernel lock here. */
+		while (pr->ps_threadcnt > 0)
 			tsleep_nsec(&pr->ps_threads, PWAIT, "thrdeath", INFSLP);
 		if (pr->ps_flags & PS_PROFIL)
 			stopprofclock(pr);
@@ -337,9 +345,8 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	/* just a thread? detach it from its process */
 	if (p->p_flag & P_THREAD) {
 		/* scheduler_wait_hook(pr->ps_mainproc, p); XXX */
-		if (--pr->ps_threadcnt == 1)
+		if (pr->ps_threadcnt == 0)
 			wakeup(&pr->ps_threads);
-		KASSERT(pr->ps_threadcnt > 0);
 	}
 
 	/* Release the thread's read reference of resource limit structure. */
@@ -823,7 +830,7 @@ process_zap(struct process *pr)
 	if (otvp)
 		vrele(otvp);
 
-	KASSERT(pr->ps_threadcnt == 1);
+	KASSERT(pr->ps_threadcnt == 0);
 	if (pr->ps_ptstat != NULL)
 		free(pr->ps_ptstat, M_SUBPROC, sizeof(*pr->ps_ptstat));
 	pool_put(&rusage_pool, pr->ps_ru);
