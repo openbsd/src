@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_radius.c,v 1.18 2022/12/28 21:30:18 jmc Exp $	*/
+/*	$OpenBSD: radiusd_radius.c,v 1.19 2023/09/04 10:49:20 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -138,6 +138,8 @@ main(int argc, char *argv[])
 	module_start(module_radius.base);
 	event_loop(0);
 
+	module_destroy(module_radius.base);
+
 	exit(EXIT_SUCCESS);
 }
 
@@ -219,8 +221,7 @@ module_radius_config_set(void *ctx, const char *paramname, int paramvalc,
 	} else if (strcmp(paramname, "_debug") == 0)
 		log_init(1);
 	else if (strncmp(paramname, "_", 1) == 0)
-		/* ignore all internal messages */
-		module_send_message(module->base, IMSG_OK, NULL);
+		/* nothing */; /* ignore all internal messages */
 	else {
 		module_send_message(module->base, IMSG_NG,
 		    "Unknown config parameter name `%s'", paramname);
