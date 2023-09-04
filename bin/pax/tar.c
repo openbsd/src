@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.72 2023/08/19 04:21:05 guenther Exp $	*/
+/*	$OpenBSD: tar.c,v 1.73 2023/09/04 17:05:34 jca Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -59,9 +59,7 @@ static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
 static int ull_oct(unsigned long long, char *, int, int);
-#ifndef SMALL
 static int rd_xheader(ARCHD *arcn, int, off_t);
-#endif
 
 static uid_t uid_nobody;
 static uid_t uid_warn;
@@ -721,14 +719,11 @@ ustar_rd(ARCHD *arcn, char *buf)
 	if (ustar_id(buf, BLKMULT) < 0)
 		return(-1);
 
-#ifndef SMALL
 reset:
-#endif
 	memset(arcn, 0, sizeof(*arcn));
 	arcn->org_name = arcn->name;
 	arcn->sb.st_nlink = 1;
 
-#ifndef SMALL
 	/* Process Extended headers. */
 	if (hd->typeflag == XHDRTYPE || hd->typeflag == GHDRTYPE) {
 		if (rd_xheader(arcn, hd->typeflag == GHDRTYPE,
@@ -745,7 +740,6 @@ reset:
 		if (hd->typeflag == XHDRTYPE || hd->typeflag == GHDRTYPE)
 			goto reset;
 	}
-#endif
 
 	if (!arcn->nlen) {
 		/*
@@ -1190,8 +1184,6 @@ expandname(char *buf, size_t len, char **gnu_name, const char *name,
 	return(nlen);
 }
 
-#ifndef SMALL
-
 /* shortest possible extended record: "5 a=\n" */
 #define MINXHDRSZ	5
 
@@ -1331,4 +1323,3 @@ rd_xheader(ARCHD *arcn, int global, off_t size)
 		return (-1);
 	return (ret);
 }
-#endif
