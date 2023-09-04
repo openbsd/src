@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.586 2023/09/04 12:40:44 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.587 2023/09/04 22:36:55 thfr Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1574,6 +1574,40 @@ To be used in the rare cases where a port heeds DESTDIR in a few
 directories and needs to be configured with
 .Sq gnu dest ,
 so that those few directories do not get in the way.
+.It Ev DIST_TUPLE
+List of distfile templates to use, each consisting of five entries:
+.Ar name account project tagname/commithash targetdir .
+The template
+.Ar name
+should be one of
+.Sq github ,
+.Sq gitlab ,
+or
+.Sq srht
+at the moment
+.Po see
+.Pa ${PORTSDIR}/db/dist-tuple.pattern ,
+additional
+.Ev TEMPLATE_DISTFILES.<name>
+and
+.Ev TEMPLATE_HOMEPAGE.<name>
+entries can be added as needed
+.Pc .
+The components are used to build
+.Ev MASTER_SITES.name
+.Ev DISTFILES.name
+and
+.Ev HOMEPAGE .
+.Pp
+At the end of
+.Cm post-extract ,
+the files are moved to
+.Pa ${WRKDIST}/<targetdir> .
+Using
+.Sq \&.
+for
+.Ar targetdir
+will disable the move.
 .It Ev DISTDIR
 User settings.
 Directory where all ports distribution files and patchfiles are stashed.
@@ -1802,6 +1836,11 @@ Note that
 will only be set in the absence of
 .Ev DISTFILES.sufx
 as well.
+.It Ev EXTRACT_SUFX.<name>
+The
+.Ev EXTRACT_SUFX
+for a template defined with
+.Ev DIST_TUPLE .
 .It Ev EXTRACT_FILES
 Set to the list of files to actually extract from distfiles.
 Its content is subject to shell evaluation as part of
@@ -1982,7 +2021,7 @@ including flavors and subpackages.
 See
 .Xr pkgpath 7 .
 .It Ev GH_*
-Support for GitHub-hosted projects.
+Simple support for GitHub-hosted projects.
 Leave empty for non hosted projects.
 Yields a suitable default for
 .Ev MASTER_SITES_GITHUB
@@ -3249,6 +3288,47 @@ Set to the list of special targets for a port
 and module hooks
 .Pc .
 Used by introspection tools such as the sqlports package.
+.It Ev TEMPLATE_DISTFILES.<name>
+Template used to construct
+.Ev DISTFILES.name
+based on a
+.Ev DIST_TUPLE
+entry by filling in placeholder strings.
+For instance,
+.Ev TEMPLATE_DISTFILES.github
+defaults to
+.Bd -literal
+<account>-<project>-{<account>/<project>/archive/<subdir>}<id>.tar.gz
+.Ed .
+.Pp
+with
+.Li DIST_TUPLE += github foo bar baz qux.
+We end up with the following
+.Ev DISTFILES.github
+entry:
+.Bd -literal -offset indent
+foo-bar-{foo/bar/archive/ref/tags}baz.tar.gz
+.Ed
+.Pp
+Placeholders
+.Sq account ,
+.Sq project ,
+.Sq id
+are self-explanatory.
+.Sq subdir
+is set automatically by figuring out whether
+.Ar id
+is a
+.Ar tagname
+or a
+.Ar hash .
+.It Ev TEMPLATE_HOMEPAGE.<name>
+Template for automatically generated
+.Ev HOMEPAGE
+when using
+.Ev DIST_TUPLE .
+Very similar to
+.Ev TEMPLATE_DISTFILES.<name> .
 .It Ev TEMPLATES
 Base location for the templates used in the
 .Cm readmes
