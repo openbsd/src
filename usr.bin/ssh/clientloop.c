@@ -1,4 +1,4 @@
-/* $OpenBSD: clientloop.c,v 1.395 2023/09/04 00:04:02 djm Exp $ */
+/* $OpenBSD: clientloop.c,v 1.396 2023/09/04 00:08:14 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -524,7 +524,8 @@ send_chaff(struct ssh *ssh)
  * output fd should be polled.
  */
 static int
-obfuscate_keystroke_timing(struct ssh *ssh, struct timespec *timeout)
+obfuscate_keystroke_timing(struct ssh *ssh, struct timespec *timeout,
+    int channel_did_enqueue)
 {
 	static int active;
 	static struct timespec next_interval, chaff_until;
@@ -549,7 +550,8 @@ obfuscate_keystroke_timing(struct ssh *ssh, struct timespec *timeout)
 	    ssh_packet_have_data_to_write(ssh)) {
 		/* Stop if the output buffer has more than a few keystrokes */
 		stop_reason = "output buffer filling";
-	} else if (active && ssh_packet_have_data_to_write(ssh)) {
+	} else if (active && channel_did_enqueue &&
+	    ssh_packet_have_data_to_write(ssh)) {
 		/* Still in active mode and have a keystroke queued. */
 		had_keystroke = 1;
 	} else if (active) {
@@ -578,7 +580,8 @@ obfuscate_keystroke_timing(struct ssh *ssh, struct timespec *timeout)
 	 * interactively. In this case, start quantising outbound packets to
 	 * fixed time intervals to hide inter-keystroke timing.
 	 */
-	if (!active && ssh_packet_interactive_data_to_write(ssh)) {
+	if (!active && ssh_packet_interactive_data_to_write(ssh) &&
+	    channel_did_enqueue && ssh_packet_have_data_to_write(ssh)) {
 		debug3_f("starting: interval %d",
 		    options.obscure_keystroke_timing_interval);
 		just_started = had_keystroke = active = 1;
@@ -628,7 +631,7 @@ obfuscate_keystroke_timing(struct ssh *ssh, struct timespec *timeout)
  */
 static void
 client_wait_until_can_do_something(struct ssh *ssh, struct pollfd **pfdp,
-    u_int *npfd_allocp, u_int *npfd_activep, int rekeying,
+    u_int *npfd_allocp, u_int *npfd_activep, int channel_did_enqueue,
     int *conn_in_readyp, int *conn_out_readyp)
 {
 	struct timespec timeout;
@@ -652,7 +655,7 @@ client_wait_until_can_do_something(struct ssh *ssh, struct pollfd **pfdp,
 		return;
 	}
 
-	oready = obfuscate_keystroke_timing(ssh, &timeout);
+	oready = obfuscate_keystroke_timing(ssh, &timeout, channel_did_enqueue);
 
 	/* Monitor server connection on reserved pollfd entries */
 	(*pfdp)[0].fd = connection_in;
@@ -671,7 +674,7 @@ client_wait_until_can_do_something(struct ssh *ssh, struct pollfd **pfdp,
 		ptimeout_deadline_monotime(&timeout, control_persist_exit_time);
 	if (options.server_alive_interval > 0)
 		ptimeout_deadline_monotime(&timeout, server_alive_time);
-	if (options.rekey_interval > 0 && !rekeying) {
+	if (options.rekey_interval > 0 && !ssh_packet_is_rekeying(ssh)) {
 		ptimeout_deadline_sec(&timeout,
 		    ssh_packet_get_rekey_timeout(ssh));
 	}
@@ -1393,7 +1396,7 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 	struct pollfd *pfd = NULL;
 	u_int npfd_alloc = 0, npfd_active = 0;
 	double start_time, total_time;
-	int r, len;
+	int channel_did_enqueue = 0, r, len;
 	u_int64_t ibytes, obytes;
 	int conn_in_ready, conn_out_ready;
 
@@ -1483,6 +1486,7 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 
 	/* Main loop of the client for the interactive session mode. */
 	while (!quit_pending) {
+		channel_did_enqueue = 0;
 
 		/* Process buffered packets sent by the server. */
 		client_process_buffered_input_packets(ssh);
@@ -1504,7 +1508,7 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 			 * enqueue them for sending to the server.
 			 */
 			if (ssh_packet_not_very_much_data_to_write(ssh))
-				channel_output_poll(ssh);
+				channel_did_enqueue = channel_output_poll(ssh);
 
 			/*
 			 * Check if the window size has changed, and buffer a
@@ -1520,7 +1524,7 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 		 * available on one of the descriptors).
 		 */
 		client_wait_until_can_do_something(ssh, &pfd, &npfd_alloc,
-		    &npfd_active, ssh_packet_is_rekeying(ssh),
+		    &npfd_active, channel_did_enqueue,
 		    &conn_in_ready, &conn_out_ready);
 
 		if (quit_pending)
