@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.47 2017/12/05 17:47:09 millert Exp $	*/
+/*	$OpenBSD: for.c,v 1.48 2023/09/04 11:35:11 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
@@ -63,7 +63,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
 #include "defines.h"
 #include "buf.h"
 #include "for.h"

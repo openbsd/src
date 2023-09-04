@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.164 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: job.c,v 1.165 2023/09/04 11:35:11 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -93,7 +93,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "config.h"
 #include "defines.h"
 #include "job.h"
 #include "engine.h"

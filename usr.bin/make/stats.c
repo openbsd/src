@@ -1,4 +1,4 @@
-/* $OpenBSD: stats.c,v 1.11 2014/04/22 12:21:17 espie Exp $ */
+/* $OpenBSD: stats.c,v 1.12 2023/09/04 11:35:11 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -34,7 +34,6 @@
    to allow for concurrent adjustment to variables.
  */
 
-#include "config.h"
 #include "defines.h"
 #include "stats.h"
 

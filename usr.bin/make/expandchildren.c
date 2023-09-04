@@ -1,4 +1,4 @@
-/*	$OpenBSD: expandchildren.c,v 1.2 2020/01/26 12:41:21 espie Exp $ */
+/*	$OpenBSD: expandchildren.c,v 1.3 2023/09/04 11:35:11 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -44,7 +44,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
 #include "defines.h"
 #include "direxpand.h"
 #include "engine.h"

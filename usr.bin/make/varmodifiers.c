@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.48 2020/08/30 12:16:04 tb Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.49 2023/09/04 11:35:11 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -65,6 +65,7 @@
  * is also called directly by Var_SubstVar.  */
 
 
+#include <assert.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <regex.h>
@@ -72,7 +73,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
 #include "defines.h"
 #include "buf.h"
 #include "var.h"
@@ -100,19 +100,13 @@
 #define VAR_BANG_EQUAL	0x100
 
 typedef struct {
-	char	  *lbuffer; /* left string to free */
+	char	  *lbuffer; /* Left string to free */
 	char	  *lhs;     /* String to match */
 	size_t	  leftLen;  /* Length of string */
 	char	  *rhs;     /* Replacement string (w/ &'s removed) */
 	size_t	  rightLen; /* Length of replacement */
 	int 	  flags;
 } VarPattern;
-
-struct LoopStuff {
-	struct LoopVar	*var;
-	char	*expand;
-	bool	err;
-};
 
 static bool VarHead(struct Name *, bool, Buffer, void *);
 static bool VarTail(struct Name *, bool, Buffer, void *);
@@ -121,8 +115,6 @@ static bool VarRoot(struct Name *, bool, Buffer, void *);
 static bool VarMatch(struct Name *, bool, Buffer, void *);
 static bool VarSYSVMatch(struct Name *, bool, Buffer, void *);
 static bool VarNoMatch(struct Name *, bool, Buffer, void *);
-static bool VarUniq(struct Name *, bool, Buffer, void *);
-static bool VarLoop(struct Name *, bool, Buffer, void *);
 
 
 static void VarREError(int, regex_t *, const char *);
@@ -149,62 +141,36 @@ static char *do_upper(const char *, const struct Name *, void *);
 static char *do_lower(const char *, const struct Name *, void *);
 static void *check_shcmd(const char **, SymTable *, bool, int);
 static char *do_shcmd(const char *, const struct Name *, void *);
-static char *do_sort(const char *, const struct Name *, void *);
-static char *finish_loop(const char *, const struct Name *, void *);
-static int NameCompare(const void *, const void *);
-static char *do_label(const char *, const struct Name *, void *);
-static char *do_path(const char *, const struct Name *, void *);
-static char *do_def(const char *, const struct Name *, void *);
-static char *do_undef(const char *, const struct Name *, void *);
-static char *do_assign(const char *, const struct Name *, void *);
-static char *do_exec(const char *, const struct Name *, void *);
-
-static void *assign_get_value(const char **, SymTable *, bool, int);
-static void *get_cmd(const char **, SymTable *, bool, int);
-static void *get_value(const char **, SymTable *, bool, int);
 static void *get_stringarg(const char **, SymTable *, bool, int);
 static void free_stringarg(void *);
 static void *get_patternarg(const char **, SymTable *, bool, int);
 static void *get_spatternarg(const char **, SymTable *, bool, int);
 static void *common_get_patternarg(const char **, SymTable *, bool, int, bool);
 static void free_patternarg(void *);
-static void free_looparg(void *);
 static void *get_sysvpattern(const char **, SymTable *, bool, int);
-static void *get_loop(const char **, SymTable *, bool, int);
-static char *LoopGrab(const char **);
 
 static struct Name dummy;
 static struct Name *dummy_arg = &dummy;
 
 static struct modifier {
-	    bool atstart;
 	    void * (*getarg)(const char **, SymTable *, bool, int);
 	    char * (*apply)(const char *, const struct Name *, void *);
 	    bool (*word_apply)(struct Name *, bool, Buffer, void *);
 	    void   (*freearg)(void *);
 } *choose_mod[256],
-	match_mod = {false, get_stringarg, NULL, VarMatch, free_stringarg},
-	nomatch_mod = {false, get_stringarg, NULL, VarNoMatch, free_stringarg},
-	subst_mod = {false, get_spatternarg, NULL, VarSubstitute, free_patternarg},
-	resubst_mod = {false, get_patternarg, do_regex, NULL, free_patternarg},
-	quote_mod = {false, check_quote, VarQuote, NULL , free},
-	tail_mod = {false, check_empty, NULL, VarTail, NULL},
-	head_mod = {false, check_empty, NULL, VarHead, NULL},
-	suffix_mod = {false, check_empty, NULL, VarSuffix, NULL},
-	root_mod = {false, check_empty, NULL, VarRoot, NULL},
-	upper_mod = {false, check_empty, do_upper, NULL, NULL},
-	lower_mod = {false, check_empty, do_lower, NULL, NULL},
-	shcmd_mod = {false, check_shcmd, do_shcmd, NULL, NULL},
-	sysv_mod = {false, get_sysvpattern, NULL, VarSYSVMatch, free_patternarg},
-	uniq_mod = {false, check_empty, NULL, VarUniq, NULL},
-	sort_mod = {false, check_empty, do_sort, NULL, NULL},
-	loop_mod = {false, get_loop, finish_loop, VarLoop, free_looparg},
-	undef_mod = {true, get_value, do_undef, NULL, NULL},
-	def_mod = {true, get_value, do_def, NULL, NULL},
-	label_mod = {true, check_empty, do_label, NULL, NULL},
-	path_mod = {true, check_empty, do_path, NULL, NULL},
-	assign_mod = {true, assign_get_value, do_assign, NULL, free_patternarg},
-	exec_mod = {true, get_cmd, do_exec, NULL, free_patternarg}
+	match_mod = {get_stringarg, NULL, VarMatch, free_stringarg},
+	nomatch_mod = {get_stringarg, NULL, VarNoMatch, free_stringarg},
+	subst_mod = {get_spatternarg, NULL, VarSubstitute, free_patternarg},
+	resubst_mod = {get_patternarg, do_regex, NULL, free_patternarg},
+	quote_mod = {check_quote, VarQuote, NULL , free},
+	tail_mod = {check_empty, NULL, VarTail, NULL},
+	head_mod = {check_empty, NULL, VarHead, NULL},
+	suffix_mod = {check_empty, NULL, VarSuffix, NULL},
+	root_mod = {check_empty, NULL, VarRoot, NULL},
+	upper_mod = {check_empty, do_upper, NULL, NULL},
+	lower_mod = {check_empty, do_lower, NULL, NULL},
+	shcmd_mod = {check_shcmd, do_shcmd, NULL, NULL},
+	sysv_mod = {get_sysvpattern, NULL, VarSYSVMatch, free_patternarg}
 ;
 
 void
@@ -219,27 +185,9 @@ VarModifiers_Init()
 	choose_mod['H'] = &head_mod;
 	choose_mod['E'] = &suffix_mod;
 	choose_mod['R'] = &root_mod;
-	if (FEATURES(FEATURE_UPPERLOWER)) {
-		choose_mod['U'] = &upper_mod;
-		choose_mod['L'] = &lower_mod;
-	}
-	if (FEATURES(FEATURE_SUNSHCMD))
-		choose_mod['s'] = &shcmd_mod;
-	if (FEATURES(FEATURE_UNIQ))
-		choose_mod['u'] = &uniq_mod;
-	if (FEATURES(FEATURE_SORT))
-		choose_mod['O'] = &sort_mod;
-	if (FEATURES(FEATURE_ODE)) {
-		choose_mod['@'] = &loop_mod;
-		choose_mod['D'] = &def_mod;
-		choose_mod['U'] = &undef_mod;
-		choose_mod['L'] = &label_mod;
-		choose_mod['P'] = &path_mod;
-	}
-	if (FEATURES(FEATURE_ASSIGN))
-		choose_mod[':'] = &assign_mod;
-	if (FEATURES(FEATURE_EXECMOD))
-		choose_mod['!'] = &exec_mod;
+	choose_mod['U'] = &upper_mod;
+	choose_mod['L'] = &lower_mod;
+	choose_mod['s'] = &shcmd_mod;
 }
 
 /* All modifiers handle addSpace (need to add a space before placing the
@@ -345,8 +293,7 @@ VarRoot(struct Name *word, bool addSpace, Buffer buf, void *dummy UNUSED)
  *-----------------------------------------------------------------------
  */
 static bool
-VarMatch(struct Name *word, bool addSpace, Buffer buf,
-    void *pattern) /* Pattern the word must match */
+VarMatch(struct Name *word, bool addSpace, Buffer buf, void *pattern)
 {
 	const char *pat = pattern;
 
@@ -366,8 +313,7 @@ VarMatch(struct Name *word, bool addSpace, Buffer buf,
  *-----------------------------------------------------------------------
  */
 static bool
-VarNoMatch(struct Name *word, bool addSpace, Buffer buf,
-    void *pattern) /* Pattern the word must not match */
+VarNoMatch(struct Name *word, bool addSpace, Buffer buf, void *pattern)
 {
 	const char *pat = pattern;
 
@@ -378,198 +324,6 @@ VarNoMatch(struct Name *word, bool addSpace, Buffer buf,
 		return true;
 	} else
 		return addSpace;
-}
-
-static bool
-VarUniq(struct Name *word, bool addSpace, Buffer buf, void *lastp)
-{
-	struct Name *last = lastp;
-
-	/* does not match */
-	if (last->s == NULL || last->e - last->s != word->e - word->s ||
-	    strncmp(word->s, last->s, word->e - word->s) != 0) {
-		if (addSpace)
-			Buf_AddSpace(buf);
-		Buf_Addi(buf, word->s, word->e);
-		addSpace = true;
-	}
-	last->s = word->s;
-	last->e = word->e;
-	return addSpace;
-}
-
-static bool
-VarLoop(struct Name *word, bool addSpace, Buffer buf, void *vp)
-{
-	struct LoopStuff *v = vp;
-
-	if (addSpace)
-		Buf_AddSpace(buf);
-	Var_SubstVar(buf, v->expand, v->var, word->s);
-	return true;
-}
-
-static char *
-finish_loop(const char *s, const struct Name *n UNUSED , void *p)
-{
-	struct LoopStuff *l = p;
-
-	return Var_Subst(s, NULL,  l->err);
-}
-
-static int
-NameCompare(const void *ap, const void *bp)
-{
-	const struct Name *a, *b;
-	size_t n, m;
-	int c;
-
-	a = ap;
-	b = bp;
-	n = a->e - a->s;
-	m = b->e - b->s;
-	if (n < m) {
-		c = strncmp(a->s, b->s, n);
-		if (c != 0)
-			return c;
-		else
-			return -1;
-    	} else if (m < n) {
-		c = strncmp(a->s, b->s, m);
-		if (c != 0)
-			return c;
-		else
-			return 1;
-    	} else
-		return strncmp(a->s, b->s, n);
-}
-
-static char *
-do_sort(const char *s, const struct Name *dummy UNUSED, void *arg UNUSED)
-{
-	struct Name *t;
-	unsigned long n, i, j;
-	const char *start, *end;
-
-	n = 1024;	/* start at 1024 words */
-	t = ereallocarray(NULL, n, sizeof(struct Name));
-	start = s;
-	end = start;
-
-	for (i = 0;; i++) {
-		if (i == n) {
-			n *= 2;
-			t = ereallocarray(t, n, sizeof(struct Name));
-		}
-		start = iterate_words(&end);
-		if (start == NULL)
-			break;
-		t[i].s = start;
-		t[i].e = end;
-	}
-	if (i > 0) {
-		BUFFER buf;
-
-		Buf_Init(&buf, end - s);
-		qsort(t, i, sizeof(struct Name), NameCompare);
-		Buf_Addi(&buf, t[0].s, t[0].e);
-		for (j = 1; j < i; j++) {
-			Buf_AddSpace(&buf);
-			Buf_Addi(&buf, t[j].s, t[j].e);
-		}
-		free(t);
-		return Buf_Retrieve(&buf);
-	} else {
-		free(t);
-		return "";
-	}
-}
-
-static char *
-do_label(const char *s UNUSED, const struct Name *n, void *arg UNUSED)
-{
-	return Str_dupi(n->s, n->e);
-}
-
-static char *
-do_path(const char *s UNUSED, const struct Name *n, void *arg UNUSED)
-{
-	GNode *gn;
-
-	gn = Targ_FindNodei(n->s, n->e, TARG_NOCREATE);
-	if (gn == NULL)
-		return Str_dupi(n->s, n->e);
-	else
-		return strdup(gn->path);
-}
-
-static char *
-do_def(const char *s, const struct Name *n UNUSED, void *arg)
-{
-	VarPattern *v = arg;
-	if (s == NULL) {
-		free_patternarg(v);
-		return NULL;
-	} else
-		return v->lbuffer;
-}
-
-static char *
-do_undef(const char *s, const struct Name *n UNUSED, void *arg)
-{
-	VarPattern *v = arg;
-	if (s != NULL) {
-		free_patternarg(v);
-		return NULL;
-	} else
-		return v->lbuffer;
-}
-
-static char *
-do_assign(const char *s, const struct Name *n, void *arg)
-{
-	VarPattern *v = arg;
-	char *msg;
-	char *result;
-
-	switch (v->flags) {
-	case VAR_EQUAL:
-		Var_Seti(n->s, n->e, v->lbuffer);
-		break;
-	case VAR_MAY_EQUAL:
-		if (s == NULL)
-			Var_Seti(n->s, n->e, v->lbuffer);
-		break;
-	case VAR_ADD_EQUAL:
-		if (s == NULL)
-			Var_Seti(n->s, n->e, v->lbuffer);
-		else
-			Var_Appendi(n->s, n->e, v->lbuffer);
-		break;
-	case VAR_BANG_EQUAL:
-		result = Cmd_Exec(v->lbuffer, &msg);
-		if (result != NULL) {
-			Var_Seti(n->s, n->e, result);
-			free(result);
-		} else
-			Error(msg, v->lbuffer);
-		break;
-
-	}
-	return NULL;
-}
-
-static char *
-do_exec(const char *s UNUSED, const struct Name *n UNUSED, void *arg)
-{
-	VarPattern *v = arg;
-	char *msg;
-	char *result;
-
-	result = Cmd_Exec(v->lbuffer, &msg);
-	if (result == NULL)
-		Error(msg, v->lbuffer);
-	return result;
 }
 
 /*-
@@ -958,7 +712,7 @@ VarRESubstitute(struct Name *word, bool addSpace, Buffer buf, void *patternp)
  *-----------------------------------------------------------------------
  * VarModify --
  *	Modify each of the words of the passed string using the given
- *	function. Used to implement all modifiers.
+ *	function. Used to implement most modifiers.
  *
  * Results:
  *	A string of all the words modified appropriately.
@@ -1218,56 +972,6 @@ get_spatternarg(const char **p, SymTable *ctxt, bool err, int endc)
 	return common_get_patternarg(p, ctxt, err, endc, true);
 }
 
-static void
-free_looparg(void *arg)
-{
-	struct LoopStuff *l = arg;
-
-	Var_DeleteLoopVar(l->var);
-	free(l->expand);
-}
-
-static char *
-LoopGrab(const char **s)
-{
-	const char *p, *start;
-
-	start = *s;
-	for (p = start; *p != '@'; p++) {
-		if (*p == '\\')
-			p++;
-		if (*p == 0)
-			return NULL;
-	}
-	*s = p+1;
-	return escape_dupi(start, p, "@\\");
-}
-
-static void *
-get_loop(const char **p, SymTable *ctxt UNUSED, bool err, int endc)
-{
-	static struct LoopStuff loop;
-	const char *s;
-	const char *var;
-
-	s = *p +1;
-
-	loop.var = NULL;
-	loop.expand = NULL;
-	loop.err = err;
-	var = LoopGrab(&s);
-	if (var != NULL) {
-		loop.expand = LoopGrab(&s);
-		if (*s == endc || *s == ':') {
-			*p = s;
-			loop.var = Var_NewLoopVar(var, NULL);
-			return &loop;
-		}
-	}
-	free_looparg(&loop);
-	return NULL;
-}
-
 static void *
 common_get_patternarg(const char **p, SymTable *ctxt, bool err, int endc,
     bool dosubst)
@@ -1328,71 +1032,6 @@ common_get_patternarg(const char **p, SymTable *ctxt, bool err, int endc,
 	return NULL;
 }
 
-static void *
-assign_get_value(const char **p, SymTable *ctxt, bool err, int endc)
-{
-	const char *s;
-	int flags;
-	VarPattern *arg;
-
-	s = *p + 1;
-	if (s[0] == '=')
-		flags = VAR_EQUAL;
-	else if (s[0] == '?' && s[1] == '=')
-		flags = VAR_MAY_EQUAL;
-	else if (s[0] == '+' && s[1] == '=')
-		flags = VAR_ADD_EQUAL;
-	else if (s[0] == '!' && s[1] == '=')
-		flags = VAR_BANG_EQUAL;
-	else
-		return NULL;
-
-	arg = get_value(&s, ctxt, err, endc);
-	if (arg != NULL) {
-		*p = s;
-		arg->flags = flags;
-	}
-	return arg;
-}
-
-static void *
-get_value(const char **p, SymTable *ctxt, bool err, int endc)
-{
-	VarPattern *pattern;
-	const char *s;
-
-	pattern = emalloc(sizeof(VarPattern));
-	s = *p + 1;
-	pattern->rhs = NULL;
-	pattern->lbuffer = VarGetPattern(ctxt, err, &s, ':', endc,
-	    &pattern->leftLen, NULL);
-	if (s[-1] == endc || s[-1] == ':') {
-		*p = s-1;
-		return pattern;
-	}
-	free_patternarg(pattern);
-	return NULL;
-}
-
-static void *
-get_cmd(const char **p, SymTable *ctxt, bool err, int endc UNUSED)
-{
-	VarPattern *pattern;
-	const char *s;
-
-	pattern = emalloc(sizeof(VarPattern));
-	s = *p + 1;
-	pattern->rhs = NULL;
-	pattern->lbuffer = VarGetPattern(ctxt, err, &s, '!', '!',
-	    &pattern->leftLen, NULL);
-	if (s[-1] == '!') {
-		*p = s-1;
-		return pattern;
-	}
-	free_patternarg(pattern);
-	return NULL;
-}
-
 static void
 free_patternarg(void *p)
 {
@@ -1435,7 +1074,6 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
     bool err, bool *freePtr, const char **pscan, int paren)
 {
 	const char *tstr;
-	bool atstart;    /* Some ODE modifiers only make sense at start */
 	char endc = paren == '(' ? ')' : '}';
 	const char *start = *pscan;
 
@@ -1462,7 +1100,6 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
 	 *				the invocation.
 	 */
 
-	atstart = true;
 	while (*tstr != endc && *tstr != '\0') {
 		struct modifier *mod;
 		void *arg;
@@ -1479,26 +1116,18 @@ VarModifiers_Apply(char *str, const struct Name *name, SymTable *ctxt,
 		mod = choose_mod[(unsigned char)*tstr];
 		arg = NULL;
 
-		if (mod != NULL && (!mod->atstart || atstart))
+		if (mod != NULL)
 			arg = mod->getarg(&tstr, ctxt, err, endc);
-		if (FEATURES(FEATURE_SYSVVARSUB) && arg == NULL) {
+		if (arg == NULL) {
 			mod = &sysv_mod;
 			arg = mod->getarg(&tstr, ctxt, err, endc);
 		}
-		atstart = false;
 		if (arg != NULL) {
-			if (str != NULL || (mod->atstart && name != NULL)) {
+			if (str != NULL) {
 				if (mod->word_apply != NULL) {
 					newStr = VarModify(str,
 					    mod->word_apply, arg);
-					if (mod->apply != NULL) {
-						char *newStr2;
-
-						newStr2 = mod->apply(newStr,
-						    name, arg);
-						free(newStr);
-						newStr = newStr2;
-					}
+					assert(mod->apply == NULL);
 				} else
 					newStr = mod->apply(str, name, arg);
 				if (*freePtr)

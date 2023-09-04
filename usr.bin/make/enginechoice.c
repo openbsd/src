@@ -1,4 +1,4 @@
-/*	$OpenBSD: enginechoice.c,v 1.3 2021/03/04 09:34:30 espie Exp $ */
+/*	$OpenBSD: enginechoice.c,v 1.4 2023/09/04 11:35:11 espie Exp $ */
 /*
  * Copyright (c) 2020 Marc Espie.
  *
@@ -23,7 +23,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "config.h"
 #include "defines.h"
 #include "compat.h"
 #include "make.h"

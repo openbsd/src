@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_exec.c,v 1.12 2023/08/31 06:53:28 espie Exp $ */
+/*	$OpenBSD: cmd_exec.c,v 1.13 2023/09/04 11:35:11 espie Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "config.h"
 #include "defines.h"
 #include "cmd_exec.h"
 #include "buf.h"

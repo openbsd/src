@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsevar.c,v 1.16 2016/10/23 14:54:14 espie Exp $	*/
+/*	$OpenBSD: parsevar.c,v 1.17 2023/09/04 11:35:11 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -30,7 +30,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include "config.h"
 #include "defines.h"
 #include "var.h"
 #include "varname.h"
@@ -84,8 +83,7 @@ parse_variable_assignment(const char *line, int ctxt)
 	int type;
 	struct Name name;
 
-	arg = VarName_Get(line, &name, NULL, true,
-	    FEATURES(FEATURE_SUNSHCMD) ? find_op1 : find_op2);
+	arg = VarName_Get(line, &name, NULL, true, find_op1);
 
 	while (ISSPACE(*arg))
 		arg++;
@@ -113,8 +111,7 @@ parse_variable_assignment(const char *line, int ctxt)
 			break;
 
 		case ':':
-			if (FEATURES(FEATURE_SUNSHCMD) &&
-			    strncmp(arg, "sh", 2) == 0) {
+			if (strncmp(arg, "sh", 2) == 0) {
 				type = VAR_SUNSHELL;
 				arg += 2;
 				while (*arg != '=' && *arg != '\0')

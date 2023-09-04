@@ -1,4 +1,4 @@
-/*	$OpenBSD: lstInt.h,v 1.15 2010/07/19 19:46:44 espie Exp $	*/
+/*	$OpenBSD: lstInt.h,v 1.16 2023/09/04 11:35:12 espie Exp $	*/
 /*	$NetBSD: lstInt.h,v 1.7 1996/11/06 17:59:44 christos Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #ifndef _LSTINT_H_
 #define _LSTINT_H_
 
-#include "config.h"
 #include "defines.h"
 #include "lst.h"
 

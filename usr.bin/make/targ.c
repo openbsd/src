@@ -1,4 +1,4 @@
-/*	$OpenBSD: targ.c,v 1.85 2020/01/26 12:41:21 espie Exp $ */
+/*	$OpenBSD: targ.c,v 1.86 2023/09/04 11:35:11 espie Exp $ */
 /*	$NetBSD: targ.c,v 1.11 1997/02/20 16:51:50 christos Exp $	*/
 
 /*
@@ -102,7 +102,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ohash.h>
-#include "config.h"
 #include "defines.h"
 #include "stats.h"
 #include "suff.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.131 2023/07/08 21:51:45 jmc Exp $ */
+/*	$OpenBSD: main.c,v 1.132 2023/09/04 11:35:11 espie Exp $ */
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -45,7 +45,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "config.h"
 #include "defines.h"
 #include "var.h"
 #include "lowparse.h"
@@ -517,7 +516,7 @@ figure_out_CURDIR()
 	struct stat sa, sb;
 
 	/* curdir is cwd... */
-	cwd = dogetcwd();
+	cwd = getcwd(NULL, 0);
 	if (cwd == NULL)
 		err(2, "getcwd");
 

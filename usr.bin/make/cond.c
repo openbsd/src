@@ -1,4 +1,4 @@
-/*	$OpenBSD: cond.c,v 1.54 2019/12/21 15:29:25 espie Exp $	*/
+/*	$OpenBSD: cond.c,v 1.55 2023/09/04 11:35:11 espie Exp $	*/
 /*	$NetBSD: cond.c,v 1.7 1996/11/06 17:59:02 christos Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ohash.h>
-#include "config.h"
 #include "defines.h"
 #include "dir.h"
 #include "buf.h"

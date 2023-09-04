@@ -1,4 +1,4 @@
-/*	$OpenBSD: timestamp.c,v 1.10 2013/05/22 12:14:08 espie Exp $ */
+/*	$OpenBSD: timestamp.c,v 1.11 2023/09/04 11:35:11 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -27,7 +27,6 @@
 #include <sys/time.h>
 #include <stdio.h>
 #include <string.h>
-#include "config.h"
 #include "defines.h"
 #include "timestamp.h"
 

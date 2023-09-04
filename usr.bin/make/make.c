@@ -1,4 +1,4 @@
-/*	$OpenBSD: make.c,v 1.83 2023/07/08 18:42:27 espie Exp $	*/
+/*	$OpenBSD: make.c,v 1.84 2023/09/04 11:35:11 espie Exp $	*/
 /*	$NetBSD: make.c,v 1.10 1996/11/06 17:59:15 christos Exp $	*/
 
 /*
@@ -64,7 +64,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ohash.h>
-#include "config.h"
 #include "defines.h"
 #include "dir.h"
 #include "job.h"

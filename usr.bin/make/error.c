@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.25 2015/09/27 16:58:16 guenther Exp $ */
+/*	$OpenBSD: error.c,v 1.26 2023/09/04 11:35:11 espie Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -31,7 +31,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include "config.h"
 #include "defines.h"
 #include "error.h"
 #include "job.h"

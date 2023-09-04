@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.68 2016/10/21 16:12:38 espie Exp $ */
+/*	$OpenBSD: dir.c,v 1.69 2023/09/04 11:35:11 espie Exp $ */
 /*	$NetBSD: dir.c,v 1.14 1997/03/29 16:51:26 christos Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ohash.h>
-#include "config.h"
 #include "defines.h"
 #include "dir.h"
 #include "lst.h"

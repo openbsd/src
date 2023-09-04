@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.135 2023/05/30 04:42:21 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.136 2023/09/04 11:35:11 espie Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -68,7 +68,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ohash.h>
-#include "config.h"
 #include "defines.h"
 #include "dir.h"
 #include "direxpand.h"
@@ -1555,23 +1554,20 @@ parse_as_special_line(Buffer buf, Buffer copy, const char *line)
 {
 	if (*line == '.' && handle_bsd_command(buf, copy, line+1))
 		return true;
-	if (FEATURES(FEATURE_SYSVINCLUDE) &&
-	    strncmp(line, "include", 7) == 0 &&
+	if (strncmp(line, "include", 7) == 0 &&
 	    ISSPACE(line[7]) &&
 	    strchr(line, ':') == NULL) {
 	    /* It's an S3/S5-style "include".  */
 		lookup_sysv_include(line + 7, "include");
 		return true;
 	}
-	if (FEATURES(FEATURE_CONDINCLUDE) &&
-	    strncmp(line, "sinclude", 8) == 0 &&
+	if (strncmp(line, "sinclude", 8) == 0 &&
 	    ISSPACE(line[8]) &&
 	    strchr(line, ':') == NULL) {
 		lookup_conditional_include(line+8, "sinclude");
 		return true;
 	}
-	if (FEATURES(FEATURE_CONDINCLUDE) &&
-	    strncmp(line, "-include", 8) == 0 &&
+	if (strncmp(line, "-include", 8) == 0 &&
 	    ISSPACE(line[8]) &&
 	    strchr(line, ':') == NULL) {
 		lookup_conditional_include(line+8, "-include");

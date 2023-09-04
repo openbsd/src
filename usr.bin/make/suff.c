@@ -1,4 +1,4 @@
-/*	$OpenBSD: suff.c,v 1.102 2020/01/13 15:41:53 espie Exp $ */
+/*	$OpenBSD: suff.c,v 1.103 2023/09/04 11:35:11 espie Exp $ */
 /*	$NetBSD: suff.c,v 1.13 1996/11/06 17:59:25 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ohash.h>
-#include "config.h"
 #include "defines.h"
 #include "dir.h"
 #include "engine.h"

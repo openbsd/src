@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.29 2020/01/13 13:54:44 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.30 2023/09/04 11:35:11 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $ */
 
 /*
@@ -75,7 +75,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
-#include "config.h"
 #include "defines.h"
 #include "buf.h"
 #include "stats.h"

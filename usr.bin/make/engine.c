@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.72 2023/08/31 06:53:28 espie Exp $ */
+/*	$OpenBSD: engine.c,v 1.73 2023/09/04 11:35:11 espie Exp $ */
 /*
  * Copyright (c) 2012 Marc Espie.
  *
@@ -73,7 +73,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "config.h"
 #include "defines.h"
 #include "cmd_exec.h"
 #include "dir.h"

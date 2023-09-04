@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.105 2023/08/10 10:52:43 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.106 2023/09/04 11:35:11 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -69,7 +69,6 @@
 #include <string.h>
 #include <ohash.h>
 
-#include "config.h"
 #include "defines.h"
 #include "buf.h"
 #include "cmd_exec.h"

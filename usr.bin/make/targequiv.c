@@ -1,4 +1,4 @@
-/*	$OpenBSD: targequiv.c,v 1.9 2019/12/21 15:29:25 espie Exp $ */
+/*	$OpenBSD: targequiv.c,v 1.10 2023/09/04 11:35:11 espie Exp $ */
 /*
  * Copyright (c) 2007-2008 Marc Espie.
  *
@@ -37,7 +37,6 @@
 #include <string.h>
 #include <ohash.h>
 #include <limits.h>
-#include "config.h"
 #include "defines.h"
 #include "memory.h"
 #include "gnode.h"
