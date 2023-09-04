@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.14 2023/08/18 06:37:20 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.15 2023/09/04 12:28:18 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -99,6 +99,7 @@ typedef struct {
 %type	<v.prefix>		prefix
 %type	<v.yesno>		yesno
 %type	<v.string>		strnum
+%type	<v.string>		key
 %%
 
 grammar		: /* empty */
@@ -276,7 +277,7 @@ module		: MODULE LOAD STRING STRING {
 			free($4);
 			TAILQ_INSERT_TAIL(&conf->module, module, next);
 		}
-		| MODULE SET STRING STRING str_l {
+		| MODULE SET STRING key str_l {
 			struct radiusd_module	*module;
 
 			module = find_module($3);
@@ -301,6 +302,11 @@ setstrerr:
 			free_str_l(&$5);
 		}
 		;
+
+key		: STRING
+		| SECRET { $$ = strdup("secret"); }
+		;
+
 authenticate	: AUTHENTICATE {
 			radiusd_authentication_init(&authen);
 		} str_l optnl '{' authopts '}' {
