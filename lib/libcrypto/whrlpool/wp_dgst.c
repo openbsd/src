@@ -1,4 +1,4 @@
-/* $OpenBSD: wp_dgst.c,v 1.6 2023/09/04 08:36:48 robert Exp $ */
+/* $OpenBSD: wp_dgst.c,v 1.7 2023/09/04 08:43:41 tb Exp $ */
 /**
  * The Whirlpool hashing function.
  *
@@ -52,11 +52,11 @@
  * input. This is done for performance.
  */
 
-#include <sys/types.h>
+#include <string.h>
+
+#include <openssl/crypto.h>
 
 #include "wp_local.h"
-#include <openssl/crypto.h>
-#include <string.h>
 
 int WHIRLPOOL_Init(WHIRLPOOL_CTX *c)
 	{

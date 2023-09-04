@@ -1,4 +1,4 @@
-/* $OpenBSD: cmll_local.h,v 1.2 2022/11/26 17:23:17 tb Exp $ */
+/* $OpenBSD: cmll_local.h,v 1.3 2023/09/04 08:43:41 tb Exp $ */
 /* ====================================================================
  * Copyright 2006 NTT (Nippon Telegraph and Telephone Corporation) . 
  * ALL RIGHTS RESERVED.
@@ -67,6 +67,8 @@
 
 #ifndef HEADER_CAMELLIA_LOCAL_H
 #define HEADER_CAMELLIA_LOCAL_H
+
+#include <sys/types.h>
 
 __BEGIN_HIDDEN_DECLS
 
