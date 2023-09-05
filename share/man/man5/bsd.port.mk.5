@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.599 2023/09/05 13:15:31 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.600 2023/09/05 13:47:25 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1855,6 +1855,9 @@ for instance to flag erroneous combinations of
 and
 .Ev BROKEN
 for other common issues).
+.Pp
+Note that setting fatal errors defeats all introspection mechanisms and breaks
+.Pa sqlports .
 .It Ev EXTRACT_CASES
 In the normal extraction stage (when
 .Ev EXTRACT_ONLY
