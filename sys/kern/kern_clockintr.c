@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.33 2023/08/26 22:21:00 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.34 2023/09/05 22:25:41 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -42,6 +42,7 @@ uint32_t statclock_avg;			/* [I] average statclock period (ns) */
 uint32_t statclock_min;			/* [I] minimum statclock period (ns) */
 uint32_t statclock_mask;		/* [I] set of allowed offsets */
 
+uint64_t clockintr_advance_random(struct clockintr *, uint64_t, uint32_t);
 void clockintr_cancel_locked(struct clockintr *);
 uint64_t clockintr_expiration(const struct clockintr *);
 void clockintr_hardclock(struct clockintr *, void *);
@@ -345,6 +346,25 @@ clockintr_advance(struct clockintr *cl, uint64_t period)
 	return count;
 }
 
+uint64_t
+clockintr_advance_random(struct clockintr *cl, uint64_t min, uint32_t mask)
+{
+	uint64_t count = 0;
+	struct clockintr_queue *cq = cl->cl_queue;
+	uint32_t off;
+
+	KASSERT(cl == &cq->cq_shadow);
+
+	while (cl->cl_expiration <= cq->cq_uptime) {
+		while ((off = (random() & mask)) == 0)
+			continue;
+		cl->cl_expiration += min + off;
+		count++;
+	}
+	SET(cl->cl_flags, CLST_SHADOW_PENDING);
+	return count;
+}
+
 void
 clockintr_cancel(struct clockintr *cl)
 {
@@ -498,20 +518,11 @@ clockintr_hardclock(struct clockintr *cl, void *frame)
 void
 clockintr_statclock(struct clockintr *cl, void *frame)
 {
-	uint64_t count, expiration, i, uptime;
-	uint32_t off;
+	uint64_t count, i;
 
 	if (ISSET(clockintr_flags, CL_RNDSTAT)) {
-		count = 0;
-		expiration = clockintr_expiration(cl);
-		uptime = clockintr_nsecuptime(cl);
-		while (expiration <= uptime) {
-			while ((off = (random() & statclock_mask)) == 0)
-				continue;
-			expiration += statclock_min + off;
-			count++;
-		}
-		clockintr_schedule(cl, expiration);
+		count = clockintr_advance_random(cl, statclock_min,
+		    statclock_mask);
 	} else {
 		count = clockintr_advance(cl, statclock_avg);
 	}
