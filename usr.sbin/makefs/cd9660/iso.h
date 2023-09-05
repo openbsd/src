@@ -1,4 +1,4 @@
-/*	$OpenBSD: iso.h,v 1.2 2016/12/17 16:22:04 krw Exp $	*/
+/*	$OpenBSD: iso.h,v 1.3 2023/09/05 15:33:40 robert Exp $	*/
 /*	$NetBSD: iso.h,v 1.10 2011/09/27 01:01:44 christos Exp $	*/
 
 /*-
@@ -190,8 +190,7 @@ isonum_712(const u_char *p)
 
 /* 7.2.1: unsigned little-endian 16-bit value.  NOT USED IN KERNEL. */
 static __inline int
-isonum_721(p)
-	u_char *p;
+isonum_721(u_char *p)
 {
 #if !defined(__STRICT_ALIGNMENT) && (BYTE_ORDER == LITTLE_ENDIAN)
 	return *(u_int16_t *)p;
@@ -202,8 +201,7 @@ isonum_721(p)
 
 /* 7.2.2: unsigned big-endian 16-bit value.  NOT USED IN KERNEL. */
 static __inline int
-isonum_722(p)
-	unsigned char *p;
+isonum_722(unsigned char *p)
 {
 #if !defined(__STRICT_ALIGNMENT) && (BYTE_ORDER == BIG_ENDIAN)
 	return *(u_int16_t *)p;
@@ -230,8 +228,7 @@ isonum_723(u_char *p)
 
 /* 7.3.1: unsigned little-endian 32-bit value.  NOT USED IN KERNEL. */
 static __inline int
-isonum_731(p)
-	u_char *p;
+isonum_731(u_char *p)
 {
 #if !defined(__STRICT_ALIGNMENT) && (BYTE_ORDER == LITTLE_ENDIAN)
 	return *(u_int32_t *)p;
@@ -242,8 +239,7 @@ isonum_731(p)
 
 /* 7.3.2: unsigned big-endian 32-bit value.  NOT USED IN KERNEL. */
 static __inline int
-isonum_732(p)
-	unsigned char *p;
+isonum_732(unsigned char *p)
 {
 #if !defined(__STRICT_ALIGNMENT) && (BYTE_ORDER == BIG_ENDIAN)
 	return *(u_int32_t *)p;
