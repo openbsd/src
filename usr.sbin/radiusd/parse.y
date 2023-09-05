@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.15 2023/09/04 12:28:18 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.16 2023/09/05 00:32:01 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -312,6 +312,11 @@ authenticate	: AUTHENTICATE {
 		} str_l optnl '{' authopts '}' {
 			struct radiusd_authentication *a;
 
+			if (authen.auth == NULL) {
+				free_str_l(&$3);
+				yyerror("no authentication module specified");
+				YYERROR;
+			}
 			if ((a = calloc(1,
 			    sizeof(struct radiusd_authentication))) == NULL) {
 				free_str_l(&$3);

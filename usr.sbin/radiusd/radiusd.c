@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.30 2023/09/04 23:55:23 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.31 2023/09/05 00:32:01 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -490,6 +490,8 @@ radiusd_listen_on_event(int fd, short evmask, void *ctx)
 			goto on_error;
 		}
 found:
+		RADIUSD_ASSERT(authen->auth != NULL);
+
 		if (!MODULE_DO_USERPASS(authen->auth->module) &&
 		    !MODULE_DO_ACCSREQ(authen->auth->module)) {
 			log_warnx("Received %s(code=%d) from %s id=%d "
