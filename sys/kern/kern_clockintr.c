@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.34 2023/09/05 22:25:41 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.35 2023/09/05 22:29:28 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -46,7 +46,6 @@ uint64_t clockintr_advance_random(struct clockintr *, uint64_t, uint32_t);
 void clockintr_cancel_locked(struct clockintr *);
 uint64_t clockintr_expiration(const struct clockintr *);
 void clockintr_hardclock(struct clockintr *, void *);
-uint64_t clockintr_nsecuptime(const struct clockintr *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
 void clockintr_statclock(struct clockintr *, void *);
@@ -496,13 +495,6 @@ clockintr_stagger(struct clockintr *cl, uint64_t period, u_int n, u_int count)
 		panic("%s: clock interrupt pending", __func__);
 	cl->cl_expiration = period / count * n;
 	mtx_leave(&cq->cq_mtx);
-}
-
-uint64_t
-clockintr_nsecuptime(const struct clockintr *cl)
-{
-	KASSERT(cl == &cl->cl_queue->cq_shadow);
-	return cl->cl_queue->cq_uptime;
 }
 
 void
