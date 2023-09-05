@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.9 2023/07/03 15:54:07 tobhe Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.10 2023/09/05 11:04:06 tobhe Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -575,17 +575,22 @@ apldchidev_handle_gpio_req(struct apldchidev_softc *sc, uint8_t iface,
 	if (sc->sc_ngpios >= APLDCHIDEV_NUM_GPIOS)
 		return;
 
-	if (iface == sc->sc_iface_mt)
-		node = OF_getnodebyname(sc->sc_node, "multi-touch");
-	else if (iface == sc->sc_iface_stm)
-		node = OF_getnodebyname(sc->sc_node, "stm");
-	if (node == -1)
-		return;
-
+	node = sc->sc_node;
 	snprintf(name, sizeof(name), "apple,%s-gpios", req->name);
 	len = OF_getproplen(node, name);
-	if (len <= 0 || len > sizeof(gpio))
-		return;
+	if (len <= 0 || len > sizeof(gpio)) {
+		/* XXX: older device trees store gpios in sub-nodes */
+		if (iface == sc->sc_iface_mt)
+			node = OF_getnodebyname(sc->sc_node, "multi-touch");
+		else if (iface == sc->sc_iface_stm)
+			node = OF_getnodebyname(sc->sc_node, "stm");
+		if (node == -1)
+			return;
+		len = OF_getproplen(node, name);
+		if (len <= 0 || len > sizeof(gpio))
+			return;
+	}
+
 	OF_getpropintarray(node, name, gpio, len);
 	gpio_controller_config_pin(gpio, GPIO_CONFIG_OUTPUT);
 	gpio_controller_set_pin(gpio, 0);
