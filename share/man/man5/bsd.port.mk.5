@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.597 2023/09/05 13:04:58 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.598 2023/09/05 13:13:50 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -63,9 +63,9 @@ notice.
 .Pp
 This documentation contains sections covering targets, variables,
 diagnostics, and filenames, ordered in alphabetic order, followed
-by a section covering the fake framework, a section
-explaining flavors and multi-packages, and a section covering
-the generation of package information.
+by a section covering the fake framework, a section covering debug
+packages generation, a section explaining flavors and multi-packages,
+and a section covering the generation of package information.
 .Pp
 It ends with sections covering some obsolete targets, variables and files,
 outlining conversion
@@ -1343,8 +1343,9 @@ See also
 .It Ev CHECKSUM_FILE
 Location for this port's checksums, used by
 .Cm checksum ,
+.Cm makesum ,
 and
-.Cm makesum .
+.Xr dpb 1 .
 Defaults to
 .Pa distinfo .
 .It Ev CHECKSUM_PACKAGES
