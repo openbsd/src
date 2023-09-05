@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.35 2023/09/05 22:29:28 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.36 2023/09/05 22:41:14 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -44,7 +44,6 @@ uint32_t statclock_mask;		/* [I] set of allowed offsets */
 
 uint64_t clockintr_advance_random(struct clockintr *, uint64_t, uint32_t);
 void clockintr_cancel_locked(struct clockintr *);
-uint64_t clockintr_expiration(const struct clockintr *);
 void clockintr_hardclock(struct clockintr *, void *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
@@ -419,21 +418,6 @@ clockintr_establish(struct clockintr_queue *cq,
 	TAILQ_INSERT_TAIL(&cq->cq_est, cl, cl_elink);
 	mtx_leave(&cq->cq_mtx);
 	return cl;
-}
-
-uint64_t
-clockintr_expiration(const struct clockintr *cl)
-{
-	uint64_t expiration;
-	struct clockintr_queue *cq = cl->cl_queue;
-
-	if (cl == &cq->cq_shadow)
-		return cl->cl_expiration;
-
-	mtx_enter(&cq->cq_mtx);
-	expiration = cl->cl_expiration;
-	mtx_leave(&cq->cq_mtx);
-	return expiration;
 }
 
 void
