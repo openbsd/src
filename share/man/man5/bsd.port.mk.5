@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.589 2023/09/05 10:31:48 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.590 2023/09/05 11:25:12 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -84,6 +84,13 @@ run it, or to run regression tests.
 The output is formatted as package specification pairs, in a form suitable
 for
 .Xr tsort 1 .
+.Pp
+Note that is is possible to obtain reverse dependency information by
+using
+.Nm show-reverse-deps
+from the
+.Pa sqlports
+package.
 .It Cm full-{build,run,all,test}-depends
 Print all dependencies a package depends upon for building, running,
 or both, as a list of package names, sorted by dependency order with
@@ -235,6 +242,14 @@ for details.
 .It Cm dump-vars
 Dump the values of all relevant variables in a port, prepended with the
 port's FULLPKGPATH.
+.Pp
+Can be limited to some specific information by setting
+.Ev DPB
+to nothing or
+.Sq fetch .
+Mostly used by
+.Xr dpb 1
+for obtaining vital information from the ports tree.
 .It Cm extract
 Extract the distribution files under
 .Pa ${WRKDIR}
@@ -258,9 +273,10 @@ There is no
 .Cm do-fake
 and
 .Cm post-fake
-hooks.
+hooks:
+instead
 .Cm fake
-actually uses
+runs
 .Cm pre-fake ,
 .Cm pre-install ,
 .Cm do-install
@@ -272,9 +288,20 @@ Override
 or
 .Cm post-install
 to change behavior.
-Do not touch
+.Pp
+There are only a handful of ports that use
+.Cm pre-fake :
+that hook can be used to finish setting up a
+.Pa fake
+directory before starting the installation proper.
+Stuff run during
 .Cm pre-fake
-unless you really know what you are doing.
+will not register with
+.Cm update-plist ,
+whereas stuff run during
+.Cm pre-install
+will be considered part of the installation process.
+.Pp
 See
 .Sx THE FAKE FRAMEWORK
 section below.
@@ -346,9 +373,10 @@ all files relevant to a port,
 .Cm dpb Fl F
 is more efficient.
 .Pp
-Use of
+There are no
 .Cm {pre,do,post}-fetch
-hooks is forbidden, as this would make mirroring of distfiles very complicated.
+hooks, as this would break
+.Xr dpb 1 .
 .Pp
 See
 .Ev ALL_DISTFILES ,
@@ -362,8 +390,6 @@ See
 .Ev FULLDISTDIR ,
 .Ev MAKESUMFILES ,
 .Ev MASTER_SITES* ,
-.Ev MASTER_SITES0 , ... ,
-.Ev MASTER_SITES9 ,
 .Ev PATCHFILES* ,
 .Ev SUPDISTFILES* ,
 .Ev REFETCH .
@@ -372,7 +398,7 @@ Like
 .Cm fetch ,
 but also fetches
 .Ev SUPDISTFILES* ,
-for use with e.g.,
+for use by e.g.,
 .Cm makesum .
 .It Cm fix-permissions
 Ensure permissions are correct when using
@@ -477,14 +503,18 @@ Seldom used, see
 .Xr ports 7
 for details.
 .It Cm makesum
-Run
+Uses
+.Cm fetch-all
+to fetch missing ${MAKESUMFILES}
+without verifying their digest, then run
 .Xr sha256 1
-on ${MAKESUMFILES}
-that is, files listed in ${DISTFILES*}, ${SUPDISTFILES*} and ${PATCHFILES*},
-and store the result in ${CHECKSUM_FILE}, normally
+on them that is,
+files listed in ${DISTFILES*}, ${SUPDISTFILES*} and ${PATCHFILES*}.
+The result is stored in ${CHECKSUM_FILE}, normally
 .Pa distinfo .
 Also store the lengths of all files for a quick check during
-.Cm fetch .
+.Cm fetch ,
+.Cm fetch-all .
 .It Cm no-lib-depends-args
 Degenerate form of
 .Cm lib-depends-args
@@ -1733,9 +1763,13 @@ If defined,
 .Nm
 will provide dummy values for variables mandatory for a minimally functional
 port.
-Used by various pieces of the ports tree to perform introspection and get to
+Used by
+.Pa sqlports
+and
+.Xr dpb 1
+to perform introspection and obtain
 .Nm Ns 's
-variables.
+default values for variables without needing to access any specific port.
 .It Ev ECHO_MSG
 User settings.
 Used to display
@@ -3661,6 +3695,10 @@ A
 target may be used to complete that skeleton tree.
 For instance, a few ports may need supplementary stuff to be present (as
 it would be installed if the port's dependencies were present).
+.Pp
+In most cases,
+.Cm pre-install
+is preferred.
 .Pp
 If
 .Cm {pre,do,post}-install
