@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.588 2023/09/05 10:29:16 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.589 2023/09/05 10:31:48 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -3338,13 +3338,6 @@ when using
 .Ev DIST_TUPLE .
 Very similar to
 .Ev TEMPLATE_DISTFILES.<name> .
-.It Ev TEMPLATES
-Base location for the templates used in the
-.Cm readmes
-target.
-User settings.
-Defaults to
-.Pa ${PORTSDIR}/infrastructure/templates .
 .It Ev TEST_DEPENDS
 See
 .Ev BUILD_DEPENDS
