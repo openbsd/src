@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.h,v 1.88 2022/11/06 18:17:56 mbuhl Exp $ */
+/* $OpenBSD: if_em_hw.h,v 1.89 2023/09/05 13:06:43 naddy Exp $ */
 /* $FreeBSD: if_em_hw.h,v 1.15 2005/05/26 23:32:02 tackerman Exp $ */
 
 /* if_em_hw.h
@@ -428,7 +428,7 @@ boolean_t em_get_flash_presence_i210(struct em_hw *);
 
 /* Filters (multicast, vlan, receive) */
 void em_mc_addr_list_update(struct em_hw *hw, uint8_t * mc_addr_list, uint32_t mc_addr_count,
-				uint32_t pad, uint32_t rar_used_count);
+				uint32_t pad);
 uint32_t em_hash_mc_addr(struct em_hw *hw, uint8_t *mc_addr);
 void em_mta_set(struct em_hw *hw, uint32_t hash_value);
 void em_rar_set(struct em_hw *hw, uint8_t *mc_addr, uint32_t rar_index);

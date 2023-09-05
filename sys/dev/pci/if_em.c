@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_em.c,v 1.365 2023/02/09 21:21:27 naddy Exp $ */
+/* $OpenBSD: if_em.c,v 1.366 2023/09/05 13:06:42 naddy Exp $ */
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
 
 #include <dev/pci/if_em.h>
@@ -1474,7 +1474,7 @@ em_iff(struct em_softc *sc)
 			ETHER_NEXT_MULTI(step, enm);
 		}
 
-		em_mc_addr_list_update(&sc->hw, mta, ac->ac_multicnt, 0, 1);
+		em_mc_addr_list_update(&sc->hw, mta, ac->ac_multicnt, 0);
 	}
 
 	E1000_WRITE_REG(&sc->hw, RCTL, reg_rctl);

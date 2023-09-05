@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.117 2023/04/11 00:45:08 jsg Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.118 2023/09/05 13:06:42 naddy Exp $ */
 /*
  * if_em_hw.c Shared functions for accessing and configuring the MAC
  */
@@ -7884,20 +7884,16 @@ em_init_rx_addrs(struct em_hw *hw)
  * mc_addr_list - the list of new multicast addresses
  * mc_addr_count - number of addresses
  * pad - number of bytes between addresses in the list
- * rar_used_count - offset where to start adding mc addresses into the RAR's
  *
- * The given list replaces any existing list. Clears the last 15 receive
- * address registers and the multicast table. Uses receive address registers
- * for the first 15 multicast addresses, and hashes the rest into the
+ * The given list replaces any existing list and hashes the addresses into the
  * multicast table.
  *****************************************************************************/
 void
 em_mc_addr_list_update(struct em_hw *hw, uint8_t *mc_addr_list,
-    uint32_t mc_addr_count, uint32_t pad, uint32_t rar_used_count)
+    uint32_t mc_addr_count, uint32_t pad)
 {
 	uint32_t hash_value;
 	uint32_t i;
-	uint32_t num_rar_entry;
 	uint32_t num_mta_entry;
 	DEBUGFUNC("em_mc_addr_list_update");
 	/*
@@ -7905,28 +7901,6 @@ em_mc_addr_list_update(struct em_hw *hw, uint8_t *mc_addr_list,
 	 * use.
 	 */
 	hw->num_mc_addrs = mc_addr_count;
-
-	/* Clear RAR[1-15] */
-	DEBUGOUT(" Clearing RAR[1-15]\n");
-	num_rar_entry = E1000_RAR_ENTRIES;
-	if (IS_ICH8(hw->mac_type))
-		num_rar_entry = E1000_RAR_ENTRIES_ICH8LAN;
-	if (hw->mac_type == em_ich8lan)
-		num_rar_entry -= 1;
-	/*
-	 * Reserve a spot for the Locally Administered Address to work around
-	 * an 82571 issue in which a reset on one port will reload the MAC on
-	 * the other port.
-	 */
-	if ((hw->mac_type == em_82571) && (hw->laa_is_present == TRUE))
-		num_rar_entry -= 1;
-
-	for (i = rar_used_count; i < num_rar_entry; i++) {
-		E1000_WRITE_REG_ARRAY(hw, RA, (i << 1), 0);
-		E1000_WRITE_FLUSH(hw);
-		E1000_WRITE_REG_ARRAY(hw, RA, ((i << 1) + 1), 0);
-		E1000_WRITE_FLUSH(hw);
-	}
 
 	/* Clear the MTA */
 	DEBUGOUT(" Clearing MTA\n");
@@ -7954,18 +7928,7 @@ em_mc_addr_list_update(struct em_hw *hw, uint8_t *mc_addr_list,
 		    (i * (ETH_LENGTH_OF_ADDRESS + pad)));
 
 		DEBUGOUT1(" Hash value = 0x%03X\n", hash_value);
-		/*
-		 * Place this multicast address in the RAR if there is room, *
-		 * else put it in the MTA
-		 */
-		if (rar_used_count < num_rar_entry) {
-			em_rar_set(hw, mc_addr_list + 
-			    (i * (ETH_LENGTH_OF_ADDRESS + pad)),
-			    rar_used_count);
-			rar_used_count++;
-		} else {
-			em_mta_set(hw, hash_value);
-		}
+		em_mta_set(hw, hash_value);
 	}
 	DEBUGOUT("MC Update Complete\n");
 }
