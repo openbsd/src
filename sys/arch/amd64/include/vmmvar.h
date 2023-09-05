@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.92 2023/09/03 09:30:43 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.93 2023/09/05 14:00:41 mlarkin Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -559,7 +559,9 @@ struct vm_mprotect_ept_params {
     CPUIDEBX_STIBP | CPUIDEBX_IBRS_ALWAYSON | CPUIDEBX_STIBP_ALWAYSON | \
     CPUIDEBX_IBRS_PREF | CPUIDEBX_SSBD | CPUIDEBX_VIRT_SSBD | \
     CPUIDEBX_SSBD_NOTREQ)
-#define VMM_APMI_EDX_MASK ~(CPUIDEDX_HWPSTATE)
+
+/* This mask is an include list for bits we want to expose */
+#define VMM_APMI_EDX_INCLUDE_MASK (CPUIDEDX_ITSC)
 
 /*
  * SEFF flags - copy from host minus:
