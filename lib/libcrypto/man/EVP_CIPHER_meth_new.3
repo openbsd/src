@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_CIPHER_meth_new.3,v 1.3 2023/09/05 14:19:02 schwarze Exp $
+.\" $OpenBSD: EVP_CIPHER_meth_new.3,v 1.4 2023/09/05 14:37:00 schwarze Exp $
 .\" selective merge up to: OpenSSL b0edda11 Mar 20 13:00:17 2018 +0000
 .\"
 .\" This file is a derived work.
@@ -201,11 +201,11 @@ Zero or more of the following flags can be OR'ed into the
 .Fa flags
 argument:
 .Bl -tag -width Ds
-.It EVP_CIPH_VARIABLE_LENGTH
+.It Dv EVP_CIPH_VARIABLE_LENGTH
 This cipher has a variable key length, and the function
 .Xr EVP_CIPHER_CTX_set_key_length 3
 can be used with it.
-.It EVP_CIPH_CUSTOM_IV
+.It Dv EVP_CIPH_CUSTOM_IV
 Instruct
 .Xr EVP_CipherInit_ex 3
 and similar initialization functions to leave storing and initialising
@@ -214,7 +214,7 @@ If this flag is set,
 the implementation is typically expected to do that in its
 .Fa init
 function.
-.It EVP_CIPH_ALWAYS_CALL_INIT
+.It Dv EVP_CIPH_ALWAYS_CALL_INIT
 Instruct
 .Xr EVP_CipherInit_ex 3
 and similar initialization functions to call the implementation's
@@ -223,7 +223,7 @@ function even if the
 .Fa key
 argument is
 .Dv NULL .
-.It EVP_CIPH_CTRL_INIT
+.It Dv EVP_CIPH_CTRL_INIT
 Instruct
 .Xr EVP_CipherInit_ex 3
 and similar initialization functions to call the implementation's
@@ -233,7 +233,7 @@ function with a command
 of
 .Dv EVP_CTRL_INIT
 early during the setup.
-.It EVP_CIPH_CUSTOM_KEY_LENGTH
+.It Dv EVP_CIPH_CUSTOM_KEY_LENGTH
 Instruct
 .Xr EVP_CIPHER_CTX_set_key_length 3
 to not check and set the key length itself,
@@ -245,13 +245,13 @@ of
 .Dv EVP_CTRL_SET_KEY_LENGTH
 and the key length in
 .Fa arg .
-.It EVP_CIPH_NO_PADDING
+.It Dv EVP_CIPH_NO_PADDING
 Instruct
 .Xr EVP_CipherFinal_ex 3
 and similar finalization functions to not use standard block padding
 but instead report an error if the total amount of data
 to be encrypted or decrypted is not a multiple of the block size.
-.It EVP_CIPH_RAND_KEY
+.It Dv EVP_CIPH_RAND_KEY
 Instruct
 .Xr EVP_CIPHER_CTX_rand_key 3
 to not generate a random key using
@@ -264,7 +264,7 @@ of
 .Dv EVP_CTRL_RAND_KEY
 and the pointer to the key memory storage in
 .Fa ptr .
-.It EVP_CIPH_CUSTOM_COPY
+.It Dv EVP_CIPH_CUSTOM_COPY
 Instruct
 .Xr EVP_CIPHER_CTX_copy 3
 to call the implementation's
@@ -282,7 +282,7 @@ The intended use is for further things to deal with after the
 implementation specific data block has been copied.
 The implementation-specific data block is reached with
 .Xr EVP_CIPHER_CTX_get_cipher_data 3 .
-.It EVP_CIPH_FLAG_DEFAULT_ASN1
+.It Dv EVP_CIPH_FLAG_DEFAULT_ASN1
 Instruct
 .Xr EVP_CIPHER_param_to_asn1 3
 to use
@@ -296,12 +296,12 @@ to use
 if no
 .Fa get_asn1_parameters
 function is installed.
-.It EVP_CIPH_FLAG_LENGTH_BITS
+.It Dv EVP_CIPH_FLAG_LENGTH_BITS
 Signals that the length of the input buffer for encryption / decryption
 is to be understood as the number of bits instead of bytes for this
 implementation.
 This is only useful for CFB1 ciphers.
-.It EVP_CIPH_FLAG_CUSTOM_CIPHER
+.It Dv EVP_CIPH_FLAG_CUSTOM_CIPHER
 Instruct
 .Xr EVP_CipherUpdate 3 ,
 .Xr EVP_CipherFinal_ex 3 ,
@@ -310,7 +310,7 @@ that the implementation's
 .Fa do_cipher
 function takes care of everything,
 including padding, buffering and finalization.
-.It EVP_CIPH_FLAG_AEAD_CIPHER
+.It Dv EVP_CIPH_FLAG_AEAD_CIPHER
 This indicates that this is an AEAD cipher implementation.
 .El
 .Pp
