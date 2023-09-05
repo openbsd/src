@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.595 2023/09/05 12:58:01 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.596 2023/09/05 13:02:11 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -41,7 +41,7 @@ tree
 framework, in the form of documented public targets,
 variables and paths.
 .Pp
-The actual 
+The actual
 .Nm
 file lives under
 .Pa ${PORTSDIR}/infrastructure/mk ,
@@ -2175,12 +2175,17 @@ to simplify bulk-package builds.
 Set to
 .Sq Yes
 if port needs human interaction to build.
-Porters should strive to minimize
+.Pp
+Note that
 .Ev IS_INTERACTIVE
-ports, by using
-.Ev FLAVORS
-for multiple choice ports, and by postponing human intervention
-to package installation time.
+ports won't be built as official packages,
+so avoid at all cost.
+.Pp
+Human intervention should be moved to binary package
+installation and/or post-installation configuration instead.
+.Pp
+Discrete Yes/No choices are better modelled as
+.Ev FLAVORS .
 .It Ev LE_ARCHS
 Set to the list of little-endian architectures.
 Read-only.
