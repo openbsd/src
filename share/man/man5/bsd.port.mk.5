@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.592 2023/09/05 12:10:34 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.593 2023/09/05 12:47:54 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -40,6 +40,22 @@ tree
 .Xr make 1
 framework, in the form of documented public targets,
 variables and paths.
+.Pp
+The actual 
+.Nm
+file lives under
+.Pa ${PORTSDIR}/infrastructure/mk ,
+with
+.Xr make 1 Ns 's
+system include file redirecting to it.
+.Pp
+Optional parts of this framework have been moved to
+.Xr port-modules 5
+in an effort to shrink the main file
+.Po
+see also
+.Ev MODULES
+.Pc .
 .Pp
 Identifiers beginning with an underscore
 are internal-use only and likely to change without
@@ -489,8 +505,8 @@ Check that
 .Ev PERMIT_PACKAGE
 settings match:
 if any dependency has a more restrictive setting, warn about it.
-This warning is advisory, because the automated license checking cannot
-figure out which ports were used only for building and did not taint
+This warning is advisory, because automated license checking cannot
+know that some ports were only used for building and did not taint
 the current port.
 .It Cm lock
 Manually obtain a lock on a given directory.
@@ -539,9 +555,18 @@ for each package in the
 .Ev MULTI_PACKAGES
 list.
 If the repository already contains up-to-date packages, they are not rebuilt.
-If PLIST_REPOSITORY is set, the resulting packaging information is compared
-with existing stuff, and saved if new, with loud complaints if it changed
-without a REVISION bump.
+If PLIST_REPOSITORY is set (the default), the resulting packaging
+information is compared with existing stuff, and saved if new,
+with loud complaints if it changed without a
+.Ev REVISION
+bump.
+.Pp
+if
+.Ev DEBUG_PACKAGES
+is set, some debug information may also be set aside and saved
+in
+.Pa debug-*
+packages transparently.
 .Pp
 Also note that
 .Pa ${PLIST_REPOSITORY}/${MACHINE_ARCH}/history
