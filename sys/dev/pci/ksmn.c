@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksmn.c,v 1.8 2023/06/23 03:47:10 mlarkin Exp $	*/
+/*	$OpenBSD: ksmn.c,v 1.9 2023/09/05 13:06:01 stsp Exp $	*/
 
 /*
  * Copyright (c) 2019 Bryan Steele <brynet@openbsd.org>
@@ -105,6 +105,7 @@ static const struct pci_matchid ksmn_devices[] = {
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_1X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_3X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_17_6X_RC },
+	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_4X_RC },
 	{ PCI_VENDOR_AMD, PCI_PRODUCT_AMD_19_6X_RC },
 };
 
