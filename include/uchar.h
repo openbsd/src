@@ -1,4 +1,4 @@
-/*	$OpenBSD: uchar.h,v 1.1 2023/08/20 15:02:50 schwarze Exp $	*/
+/*	$OpenBSD: uchar.h,v 1.2 2023/09/05 23:16:01 schwarze Exp $	*/
 /*
  * Written by Ingo Schwarze <schwarze@openbsd.org>
  * and placed in the public domain on March 19, 2022.
@@ -23,8 +23,10 @@ typedef __size_t	size_t;
 #define __STDC_UTF_16__	1
 #define __STDC_UTF_32__	1
 
+#if !defined(__cplusplus) || __cplusplus < 201103L
 typedef __uint16_t	char16_t;
 typedef __uint32_t	char32_t;
+#endif
 
 __BEGIN_DECLS
 size_t	mbrtoc16(char16_t * __restrict, const char * __restrict, size_t,
