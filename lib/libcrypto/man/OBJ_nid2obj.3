@@ -1,11 +1,11 @@
-.\" $OpenBSD: OBJ_nid2obj.3,v 1.20 2023/07/21 05:02:53 tb Exp $
+.\" $OpenBSD: OBJ_nid2obj.3,v 1.21 2023/09/05 13:50:22 schwarze Exp $
 .\" full merge up to: OpenSSL c264592d May 14 11:28:00 2006 +0000
 .\" selective merge up to: OpenSSL 35fd9953 May 28 14:49:38 2019 +0200
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2017, 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2017, 2021, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 21 2023 $
+.Dd $Mdocdate: September 5 2023 $
 .Dt OBJ_NID2OBJ 3
 .Os
 .Sh NAME
@@ -89,19 +89,19 @@
 .In openssl/objects.h
 .Ft ASN1_OBJECT *
 .Fo OBJ_nid2obj
-.Fa "int n"
+.Fa "int nid"
 .Fc
 .Ft const char *
 .Fo OBJ_nid2ln
-.Fa "int n"
+.Fa "int nid"
 .Fc
 .Ft const char *
 .Fo OBJ_nid2sn
-.Fa "int n"
+.Fa "int nid"
 .Fc
 .Ft int
 .Fo OBJ_obj2nid
-.Fa "const ASN1_OBJECT *o"
+.Fa "const ASN1_OBJECT *object"
 .Fc
 .Ft int
 .Fo OBJ_ln2nid
@@ -124,7 +124,7 @@
 .Fo OBJ_obj2txt
 .Fa "char *buf"
 .Fa "int buf_len"
-.Fa "const ASN1_OBJECT *a"
+.Fa "const ASN1_OBJECT *object"
 .Fa "int no_name"
 .Fc
 .Ft int
@@ -134,86 +134,102 @@
 .Fc
 .Ft ASN1_OBJECT *
 .Fo OBJ_dup
-.Fa "const ASN1_OBJECT *o"
+.Fa "const ASN1_OBJECT *object"
 .Fc
 .In openssl/asn1.h
 .Ft int
 .Fo i2t_ASN1_OBJECT
 .Fa "char *buf"
 .Fa "int buf_len"
-.Fa "const ASN1_OBJECT *a"
+.Fa "const ASN1_OBJECT *object"
 .Fc
 .Ft int
 .Fo i2a_ASN1_OBJECT
 .Fa "BIO *out_bio"
-.Fa "const ASN1_OBJECT *a"
+.Fa "const ASN1_OBJECT *object"
 .Fc
 .Sh DESCRIPTION
 The ASN.1 object utility functions process
 .Vt ASN1_OBJECT
-structures which are a representation of the ASN.1 OBJECT IDENTIFIER
-(OID) type.
-For convenience, OIDs are usually represented in source code as
-numeric identifiers, or NIDs.
-OpenSSL has an internal table of OIDs that are generated when the
-library is built, and their corresponding NIDs are available as
-defined constants.
-For the functions below, application code should treat all returned
-values \(em OIDs, NIDs, or names \(em as constants.
+structures, in the following called
+.Dq objects .
+An object represents an ASN.1
+.Vt OBJECT IDENTIFIER
+.Pq OID .
+The library maintains an internal global table of objects.
+Many of these objects are built into the library
+and contained in the global table by default.
+The application program can add additional objects to the global table
+by using functions documented in the
+.Xr OBJ_create 3
+manual page.
+Consequently, there are three classes of objects:
+built-in table objects, user-defined table objects, and non-table objects.
 .Pp
-.Fn OBJ_nid2obj ,
-.Fn OBJ_nid2ln ,
+In addition to the OID, each object can hold
+a long name, a short name, and a numerical identifier (NID).
+Even though the concept of NIDs is specific to the library
+and not standardized, using the NID is often the most convenient way
+for source code to refer to a specific OID.
+The NIDs of the built-in objects are available as defined constants.
+.Pp
+Built-in table objects have certain advantages
+over objects that are not in the global table:
+for example, their NIDs can be used in C language switch statements.
+They are also shared:
+there is only a single static constant structure for each built-on OID.
+.Pp
+Some functions operate on table objects only:
+.Pp
+.Fn OBJ_nid2obj
+retrieves the table object associated with the
+.Fa nid .
+.Fn OBJ_nid2ln
 and
 .Fn OBJ_nid2sn
-convert the NID
-.Fa n
-to an
-.Vt ASN1_OBJECT
-structure, its long name, and its short name, respectively, or return
-.Dv NULL
-if an error occurred.
+retrieve its long and short name, respectively.
 .Pp
-.Fn OBJ_obj2nid ,
-.Fn OBJ_ln2nid ,
+.Fn OBJ_obj2nid
+retrieves the NID associated with the given
+.Fa object ,
+which is either the NID stored in the
+.Fa object
+itself, if any, or otherwise the NID stored in a table object
+containing the same OID.
+.Pp
+.Fn OBJ_ln2nid
 and
 .Fn OBJ_sn2nid
-return the corresponding NID for the object
-.Fa o ,
-the long name
-.Fa ln ,
+retrieve the NID from the table object with the long name
+.Fa ln
 or the short name
 .Fa sn ,
-respectively, or
-.Dv NID_undef
-if an error occurred.
+respectively.
 .Pp
 .Fn OBJ_txt2nid
-returns the NID corresponding to text string
-.Fa s .
-.Fa s
-can be a long name, a short name, or the numerical representation
-of an object.
+retrieves the NID from the table object described by the text string
+.Fa s ,
+which can be a long name, a short name,
+or the numerical representation of an OID.
+.Pp
+The remaining functions can be used both on table objects
+and on objects that are not in the global table:
 .Pp
 .Fn OBJ_txt2obj
-converts the text string
-.Fa s
-into an
-.Vt ASN1_OBJECT
-structure.
+retrieves or creates an object matching the text string
+.Fa s .
 If
 .Fa no_name
-is 0 then long names and short names will be interpreted as well as
-numerical forms.
+is 1, only the numerical representation of an OID is accepted.
 If
 .Fa no_name
-is 1, only the numerical form is acceptable.
+is 0, long names and short names are accepted as well.
 .Pp
 .Fn OBJ_obj2txt
-converts the
-.Vt ASN1_OBJECT
-.Fa a
-into a textual representation.
-The representation is written as a NUL terminated string to
+writes a NUL terminated textual representation
+of the OID contained in the given
+.Fa object
+into
 .Fa buf .
 At most
 .Fa buf_len
@@ -221,8 +237,13 @@ bytes are written, truncating the result if necessary.
 The total amount of space required is returned.
 If
 .Fa no_name
-is 0 and the object has a long or short name, then that will be used,
-otherwise the numerical form will be used.
+is 0 and the table object containing the same OID
+contains a long name, the long name is written.
+Otherwise, if
+.Fa no_name
+is 0 and the table object containing the same OID
+contains a short name, the short name is written.
+Otherwise, the numerical representation of the OID is written.
 .Pp
 .Fn i2t_ASN1_OBJECT
 is the same as
@@ -232,18 +253,18 @@ with
 set to 0.
 .Pp
 .Fn i2a_ASN1_OBJECT
-writes a textual representation of
-.Fa a
+writes a textual representation of the OID contained in the given
+.Fa object
 to
 .Fa out_bio
 using
 .Xr BIO_write 3 .
 It does not write a terminating NUL byte.
-If
-.Fa a
-is
+If the
+.Fa object
+argument is
 .Dv NULL
-or contains no data, it writes the 4-byte string
+or contains no OID, it writes the 4-byte string
 .Qq NULL .
 If
 .Fn i2t_ASN1_OBJECT
@@ -255,103 +276,128 @@ Otherwise, it writes the string constructed with
 .Fn i2t_ASN1_OBJECT .
 .Pp
 .Fn OBJ_cmp
-compares
+tests whether
 .Fa a
-to
-.Fa b .
-If the two are identical, 0 is returned.
+and
+.Fa b
+represent the same ASN.1
+.Vt OBJECT IDENTIFIER .
+Any names and NIDs contained in the two objects are ignored,
+even if they differ between both objects.
 .Pp
 .Fn OBJ_dup
-returns a deep copy of
-.Fa o
-if
-.Fa o
-is marked as dynamically allocated.
-The new object and all data contained in it is marked as dynamically
+returns a deep copy of the given
+.Fa object
+if it is marked as dynamically allocated.
+The new object and all data contained in it are marked as dynamically
 allocated.
-If
-.Fa o
+If the given
+.Fa object
 is not marked as dynamically allocated,
 .Fn OBJ_dup
-just returns
-.Fa o
+just returns a pointer to the
+.Fa object
 itself.
-.Pp
-Objects can have a short name, a long name, and a numerical
-identifier (NID) associated with them.
-A standard set of objects is represented in an internal table.
-The appropriate values are defined in the header file
-.In openssl/objects.h .
-.Pp
-For example, the OID for commonName has the following definitions:
-.Bd -literal
-#define SN_commonName                   "CN"
-#define LN_commonName                   "commonName"
-#define NID_commonName                  13
-.Ed
-.Pp
-New objects can be added by calling
-.Xr OBJ_create 3 .
-.Pp
-Table objects have certain advantages over other objects: for example
-their NIDs can be used in a C language switch statement.
-They are also static constant structures which are shared: that is there
-is only a single constant structure for each table object.
-.Pp
-Objects which are not in the table have the NID value
-.Dv NID_undef .
-.Pp
-Objects do not need to be in the internal tables to be processed:
-the functions
-.Fn OBJ_txt2obj
-and
-.Fn OBJ_obj2txt
-can process the numerical form of an OID.
 .Sh RETURN VALUES
-.Fn OBJ_nid2obj ,
-.Fn OBJ_txt2obj ,
-and
-.Fn OBJ_dup
-return an
-.Vt ASN1_OBJECT
-object or
+Application code should treat all returned values \(em
+objects, names, and NIDs \(em as constants.
+.Pp
+.Fn OBJ_nid2obj
+returns a pointer to a table object owned by the library or
 .Dv NULL
-if an error occurs.
+if no matching table object is found.
 .Pp
 .Fn OBJ_nid2ln
 and
 .Fn OBJ_nid2sn
-return a valid string or
+return a pointer to a string owned by a table object or
 .Dv NULL
-on error.
-.Pp
-.Fn OBJ_obj2nid ,
-.Fn OBJ_ln2nid ,
-.Fn OBJ_sn2nid ,
+if no matching table object is found.
+For
+.Dv NID_undef ,
+they return the constant static strings
+.Qq undefined
 and
-.Fn OBJ_txt2nid
-return a NID or
+.Qq UNDEF ,
+respectively.
+.Pp
+.Fn OBJ_obj2nid
+returns an NID on success, or
 .Dv NID_undef
-on error.
+if
+.Fa object
+is
+.Dv NULL ,
+does not contain an OID,
+if no table object matching the OID is found,
+or if the matching object does not contain an NID.
+.Pp
+.Fn OBJ_ln2nid
+and
+.Fn OBJ_sn2nid
+return an NID on success or
+.Dv NID_undef
+if no matching table object is found
+or if the matching object does not contain an NID.
+.Pp
+.Fn OBJ_txt2nid
+returns an NID on success or
+.Dv NID_undef
+if parsing of
+.Fa s
+or memory allocation fails, if no matching table object is found,
+or if the matching object does not contain an NID.
+.Pp
+.Fn OBJ_txt2obj
+returns a pointer to a table object owned by the library if lookup of
+.Fa s
+as a long or short name succeeds.
+Otherwise, it returns a newly created object,
+transferring ownership to the caller, or
+.Dv NULL
+if parsing of
+.Fa s
+or memory allocation fails.
 .Pp
 .Fn OBJ_obj2txt
 and
 .Fn i2t_ASN1_OBJECT
 return the amount of space required in bytes,
-including the terminating NUL byte.
-.Pp
-.Fn i2a_ASN1_OBJECT
-returns the number of bytes written, even if
-.Fa a
-is invalid or contains invalid data,
-but a negative value if memory allocation or a write operation fails.
+including the terminating NUL byte,
+or zero if an error occurs before the required space can be calculated,
+in particular if
+.Fa buf_len
+is negative,
+.Fa object
+is
+.Dv NULL
+or does not contain an OID,
+or if memory allocation fails.
 .Pp
 .Fn OBJ_cmp
-returns 0 if the contents of
-.Fa a
-and
-.Fa b
-are identical, or non-zero otherwise.
+returns 0 if both objects refer to the same OID
+or neither of them are associated with any OID,
+or a non-zero value if at least one of them refers to an OID
+but the other one does not refer to the same OID.
+.Pp
+.Fn OBJ_dup
+returns the pointer to the original
+.Fa object
+if it is not marked as dynamically allocated.
+Otherwise, it returns a newly created object,
+transferring ownership to the caller, or
+.Dv NULL
+if
+.Fa object
+is
+.Dv NULL
+or memory allocation fails.
+.Pp
+.Fn i2a_ASN1_OBJECT
+returns the number of bytes written, even if the given
+.Fa object
+is invalid or contains invalid data,
+but a negative value if memory allocation or a write operation fails.
 .Pp
 In some cases of failure of
 .Fn OBJ_nid2obj ,
@@ -367,23 +413,23 @@ and
 the reason can be determined with
 .Xr ERR_get_error 3 .
 .Sh EXAMPLES
-Create an object for
+Retrieve the object for
 .Sy commonName :
 .Bd -literal -offset indent
-ASN1_OBJECT *o;
-o = OBJ_nid2obj(NID_commonName);
+ASN1_OBJECT *object;
+object = OBJ_nid2obj(NID_commonName);
 .Ed
 .Pp
-Check if an object is
+Check whether an object contains the OID for
 .Sy commonName :
 .Bd -literal -offset indent
-if (OBJ_obj2nid(obj) == NID_commonName)
+if (OBJ_obj2nid(object) == NID_commonName)
 	/* Do something */
 .Ed
 .Pp
 Create a new object directly:
 .Bd -literal -offset indent
-obj = OBJ_txt2obj("1.2.3.4", 1);
+object = OBJ_txt2obj("1.2.3.4", 1);
 .Ed
 .Sh SEE ALSO
 .Xr ASN1_OBJECT_new 3 ,
@@ -416,7 +462,52 @@ first appeared in OpenSSL 0.9.2b.
 first appeared in OpenSSL 0.9.4.
 Both functions have been available since
 .Ox 2.6 .
+.Sh CAVEATS
+The API contract of
+.Fn OBJ_txt2obj
+when called with a
+.Fa no_name
+argument of 0 and of
+.Fn OBJ_dup
+is scary in so far as the caller cannot find out from the returned
+object whether it is owned by the library or whether ownership was
+transferred to the caller.
+Consequently, it is best practice to assume that ownership of the object
+may have been transferred and call
+.Xr ASN1_OBJECT_free 3
+on the returned object when the caller no longer needs it.
+In case the library retained ownership of the returned object,
+.Xr ASN1_OBJECT_free 3
+has no effect and is harmless.
+.Pp
+Objects returned from
+.Fn OBJ_txt2obj
+with a
+.Fa no_name
+argument of 1 always require
+.Xr ASN1_OBJECT_free 3
+to prevent memory leaks.
+.Pp
+Objects returned from
+.Fn OBJ_nid2obj
+never require
+.Xr ASN1_OBJECT_free 3 ,
+but calling it anyway has no effect and is harmless.
 .Sh BUGS
+Usually, an object is expected to contain an NID other than
+.Dv NID_undef
+if and only if it is a table object.
+However, this is not an invariant guaranteed by the API.
+In particular,
+.Xr ASN1_OBJECT_create 3
+allows the creation of non-table objects containing bogus NIDs.
+.Fn OBJ_obj2nid
+returns such bogus NIDs even though
+.Fn OBJ_nid2obj
+cannot use them for retrieval.
+On top of that, the global table contains one built-in object with an NID of
+.Dv NID_undef .
+.Pp
 .Fn OBJ_obj2txt
 is awkward and messy to use: it doesn't follow the convention of other
 OpenSSL functions where the buffer can be set to
