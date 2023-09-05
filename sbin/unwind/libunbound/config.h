@@ -368,6 +368,9 @@
 /* Define if we have LibreSSL */
 #define HAVE_LIBRESSL 1
 
+/* Define to 1 if you have the <linux/net_tstamp.h> header file. */
+/* #undef HAVE_LINUX_NET_TSTAMP_H */
+
 /* Define to 1 if you have the `localtime_r' function. */
 #define HAVE_LOCALTIME_R 1
 
@@ -773,7 +776,7 @@
 #define PACKAGE_NAME "unbound"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "unbound 1.17.0"
+#define PACKAGE_STRING "unbound 1.18.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "unbound"
@@ -782,7 +785,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "1.17.0"
+#define PACKAGE_VERSION "1.18.0"
 
 /* default pidfile location */
 #define PIDFILE ""
@@ -805,7 +808,7 @@
 #define ROOT_CERT_FILE "/var/unbound/etc/icannbundle.pem"
 
 /* version number for resource files */
-#define RSRC_PACKAGE_VERSION 1,17,0,0
+#define RSRC_PACKAGE_VERSION 1,18,0,0
 
 /* Directory to chdir to */
 #define RUN_DIR "/var/unbound/etc"
@@ -1072,39 +1075,39 @@
 
 #if defined(OMITTED__D_GNU_SOURCE) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE 1
-#endif 
+#endif
 
 #if defined(OMITTED__D_BSD_SOURCE) && !defined(_BSD_SOURCE)
 #define _BSD_SOURCE 1
-#endif 
+#endif
 
 #if defined(OMITTED__D_DEFAULT_SOURCE) && !defined(_DEFAULT_SOURCE)
 #define _DEFAULT_SOURCE 1
-#endif 
+#endif
 
 #if defined(OMITTED__D__EXTENSIONS__) && !defined(__EXTENSIONS__)
 #define __EXTENSIONS__ 1
-#endif 
+#endif
 
 #if defined(OMITTED__D_POSIX_C_SOURCE_200112) && !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112
-#endif 
+#endif
 
 #if defined(OMITTED__D_XOPEN_SOURCE_600) && !defined(_XOPEN_SOURCE)
 #define _XOPEN_SOURCE 600
-#endif 
+#endif
 
 #if defined(OMITTED__D_XOPEN_SOURCE_EXTENDED_1) && !defined(_XOPEN_SOURCE_EXTENDED)
 #define _XOPEN_SOURCE_EXTENDED 1
-#endif 
+#endif
 
 #if defined(OMITTED__D_ALL_SOURCE) && !defined(_ALL_SOURCE)
 #define _ALL_SOURCE 1
-#endif 
+#endif
 
 #if defined(OMITTED__D_LARGEFILE_SOURCE_1) && !defined(_LARGEFILE_SOURCE)
 #define _LARGEFILE_SOURCE 1
-#endif 
+#endif
 
 
 
@@ -1188,7 +1191,7 @@
 #endif
 
 
- 
+
 #ifdef HAVE_ATTR_FORMAT
 #  define ATTR_FORMAT(archetype, string_index, first_to_check) \
     __attribute__ ((format (archetype, string_index, first_to_check)))
@@ -1298,7 +1301,7 @@ void* reallocarray(void *ptr, size_t nmemb, size_t size);
 #ifdef HAVE_WINSOCK2_H
 #define FD_SET_T (u_int)
 #else
-#define FD_SET_T 
+#define FD_SET_T
 #endif
 
 
