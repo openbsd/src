@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.593 2023/09/05 12:47:54 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.594 2023/09/05 12:53:43 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -840,7 +840,12 @@ Print the list of
 .Xr pkgpath 7
 for all ports that will be affected by the
 current port changing.
-Works by walking the list of dependencies, in reverse.
+Works by walking the full list of all dependencies of all ports, in reverse.
+.Pp
+Very slow, prefer installing the
+.Pa sqlports
+package and using
+.Nm show-reverse-deps .
 .It Cm show-run-depends
 Print all running dependencies for a port, one per-line, without duplicates.
 .It Cm subpackage
