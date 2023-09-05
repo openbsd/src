@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.591 2023/09/05 11:51:44 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.592 2023/09/05 12:10:34 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -267,8 +267,8 @@ and
 .Cm do-extract
 hooks.
 .It Cm fake
-Do a fake port installation, that is, simulate the port installation under
-${WRKINST}.
+Do a fake port installation, that is, simulate the port installation into
+the staging area ${WRKINST}.
 There is no
 .Cm do-fake
 and
@@ -479,10 +479,11 @@ Verify that the
 .Ev LIB_DEPENDS
 and
 .Ev WANTLIB
-are accurate for the port.
+recorded in the port's packages are accurate.
 See
 .Cm port-lib-depends-check ,
-which is quicker.
+which checks files under the fake staging directory instead,
+and thus has faster turn-around.
 .It Cm license-check
 Check that
 .Ev PERMIT_PACKAGE
@@ -1914,7 +1915,7 @@ Target built by ${MAKE_PROGRAM} on fake invocation.
 Defaults to ${INSTALL_TARGET}.
 .It Ev FAKEOBJDIR
 User settings.
-If non empty, used as a base for the fake area.
+If non empty, used as a base for the fake staging area.
 The real fake directory ${WRKINST} is created there.
 Can be set on a per-${PKGPATH} basis.
 For instance, setting FAKEOBJDIR_www/mozilla-firefox=/tmp/obj
@@ -3625,7 +3626,8 @@ Subdirectory of ${WRKDIR} where the actual source is.
 Base for configuration (default: ${WRKDIST}).
 Note that WRKSRC may be a symbolic link, if set to ${WRKDIR}.
 .It Ev WRKINST
-Subdirectory of ${WRKDIR} where port normally installs (see the
+Subdirectory of ${WRKDIR} used as a staging area for installing the port.
+(See
 .Cm fake
 target).
 .It Ev WRKOBJDIR
@@ -3673,14 +3675,16 @@ Set to bison if needed.
 .Sh THE FAKE FRAMEWORK
 The
 .Cm fake
-target is used to install the port in a private directory first, ready for
+target is used to install the port under a staging directory first, ready for
 packaging by the
 .Cm package
-target, so that the actual installation will use the package.
+target, so that the actual
+.Cm install
+target will use the binary package instead.
 .Pp
 Essentially,
 .Cm fake
-invokes a real install process after tweaking a few variables.
+invokes the install process after tweaking a few variables.
 .Pp
 .Cm fake
 first creates a skeleton tree under ${WRKINST}, using
