@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.600 2023/09/05 13:47:25 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.601 2023/09/05 13:55:57 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -334,7 +334,7 @@ and
 .Ev PATCHFILES*
 using ${FETCH_CMD}.
 Files are normally retrieved from the list of sites in
-.Ev MASTER_SITES* .
+.Ev SITES* .
 .Pp
 Appending
 .Sq :0
@@ -342,9 +342,9 @@ to
 .Sq :9
 to an entry will let
 ${FETCH_CMD} retrieve from
-.Ev MASTER_SITES0
+.Ev SITES0
 to
-.Ev MASTER_SITES9
+.Ev SITES9
 instead (deprecated).
 .Pp
 Preferably, adding a suffix to
@@ -352,11 +352,11 @@ Preferably, adding a suffix to
 .Ev PATCHFILES ,
 .Ev SUPDISTFILES
 will switch the site entry to the corresponding
-.Ev MASTER_SITES
+.Ev SITES
 variable, e.g.,
 .Bd -literal -offset indent
 DISTFILES.go = ...
-MASTER_SITES.go = ...
+SITES.go = ...
 .Ed
 .Pp
 If the rest of the entry parses as
@@ -405,10 +405,10 @@ See
 .Ev FETCH_MANUALLY ,
 .Ev FULLDISTDIR ,
 .Ev MAKESUMFILES ,
-.Ev MASTER_SITES* ,
 .Ev PATCHFILES* ,
 .Ev SUPDISTFILES* ,
 .Ev REFETCH .
+.Ev SITES* ,
 .It Cm fetch-all
 Like
 .Cm fetch ,
@@ -622,7 +622,7 @@ will be applied under
 .Ev WRKDIST .
 .It Cm peek-ftp
 Connect to the first site in
-.Ev MASTER_SITES ,
+.Ev SITES ,
 in the right directory, and leaves user at
 .Xr ftp 1 Ns 's
 prompt.
@@ -1654,7 +1654,7 @@ and
 entries can be added as needed
 .Pc .
 The components are used to build
-.Ev MASTER_SITES.name
+.Ev SITES.name
 .Ev DISTFILES.name
 and (optionally)
 .Ev HOMEPAGE .
@@ -1682,7 +1682,7 @@ into account.
 .It Ev DISTFILES*
 The main port's distribution files (the actual software source, except
 for binary-only ports).
-Will be retrieved from the corresponding MASTER_SITES* (see
+Will be retrieved from the corresponding SITES* (see
 .Cm fetch ) ,
 checksummed and extracted (see
 .Cm checksum ,
@@ -1693,16 +1693,16 @@ normally holds a list of files, possibly with
 to
 .Sq :9
 appended to select a different
-.Ev MASTER_SITES .
+.Ev SITES .
 .Pp
 Preferably, adding a suffix to
 .Ev DISTFILES ,
 will switch the site entry to the corresponding
-.Ev MASTER_SITES
+.Ev SITES
 variable, e.g.,
 .Bd -literal -offset indent
 DISTFILES.go = ...
-MASTER_SITES.go = ...
+SITES.go = ...
 .Ed
 .Pp
 Each entry may optionally be of the form
@@ -1735,7 +1735,7 @@ proper operation.
 If no
 .Ev DISTFILES*
 is set and if
-.Ev MASTER_SITES
+.Ev SITES
 is not null, then
 .Ev DISTFILES
 will be set to
@@ -2100,7 +2100,7 @@ See
 Simple support for GitHub-hosted projects.
 Leave empty for non hosted projects.
 Yields a suitable default for
-.Ev MASTER_SITES_GITHUB
+.Ev SITES_GITHUB
 and
 .Ev DISTNAME .
 .It Ev GH_ACCOUNT
@@ -2354,11 +2354,11 @@ prepended and with master site selection extension removed.
 Read-only.
 See also
 .Ev CHECKSUMFILES .
-.It Ev MASTER_SITE_BACKUP
+.It Ev SITE_BACKUP
 User settings.
 List of sites to try after normal master sites.
-Normally includes ${MASTER_SITE_OPENBSD} and ${MASTER_SITE_FREEBSD}.
-.It Ev MASTER_SITE_*
+Normally includes ${SITE_OPENBSD} and ${SITE_FREEBSD}.
+.It Ev SITE_*
 Lists of standard sites to retrieve files from, refer to
 .Pa ${PORTSDIR}/infrastructure/db/network.conf
 for a complete list.
@@ -2367,20 +2367,20 @@ Generally used with the standard
 .Xr make 1 Ns 's
 .Li ${VARIABLE:=subdir/}
 construct to append the relevant subdir at the end of each entry, e.g.,
-.Dl MASTER_SITES = ${MASTER_SITE_GNU:=cgicc/}
-.It Ev MASTER_SITES
+.Dl SITES = ${SITE_GNU:=cgicc/}
+.It Ev _SITES
 List of primary locations from which distribution files and patchfiles are
 retrieved.
 See the
 .Cm fetch
 target for details.
-Defaults to ${MASTER_SITES_GITHUB} for GitHub-hosted projects,
+Defaults to ${SITES_GITHUB} for GitHub-hosted projects,
 see
 .Ev GH_* .
 See
 .Xr ports 7
 for user configuration.
-.It Ev MASTER_SITES*
+.It Ev SITES*
 List of alternate locations from which ${DISTFILES*}, ${PATCHFILES*},
 ${SUPDISTFILES*} are retrieved.
 See
@@ -2390,7 +2390,7 @@ Suffix should start with
 .Sq \&.
 for consistency.
 .Pp
-.It Ev MASTER_SITES0 , ... , MASTER_SITES9
+.It Ev SITES0 , ... , SITES9
 Supplementary locations from which distribution files and patchfiles are
 retrieved.
 .It Ev MESSAGE
@@ -4471,7 +4471,7 @@ resulting in a double inclusion.
 This would lead to weird results, such as
 .Ev PKG_ARGS
 being defined twice.
-.It "Fatal: MASTER_SITES* is not defined but referenced by <file> in <DISTFILES*/PATCHFILES*/SUPDISTFILES*>"
+.It "Fatal: SITES* is not defined but referenced by <file> in <DISTFILES*/PATCHFILES*/SUPDISTFILES*>"
 Pretty much self-explanatory.
 .It "Fatal: SUBPACKAGES should always begin with -: <offending list>"
 That is the only way to differentiate between
