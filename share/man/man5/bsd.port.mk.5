@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.590 2023/09/05 11:25:12 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.591 2023/09/05 11:51:44 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -451,9 +451,6 @@ and before
 or
 .Cm update-plist .
 Always rerun, as it is cheap enough.
-.It Cm index
-Top-level target, see
-.Xr ports 7 .
 .It Cm install-depends
 Before package installation, install and verify dependencies constructed from
 .Ev RUN_DEPENDS , LIB_DEPENDS ,
