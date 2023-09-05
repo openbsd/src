@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.601 2023/09/05 13:55:57 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.602 2023/09/05 13:58:49 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2354,45 +2354,6 @@ prepended and with master site selection extension removed.
 Read-only.
 See also
 .Ev CHECKSUMFILES .
-.It Ev SITE_BACKUP
-User settings.
-List of sites to try after normal master sites.
-Normally includes ${SITE_OPENBSD} and ${SITE_FREEBSD}.
-.It Ev SITE_*
-Lists of standard sites to retrieve files from, refer to
-.Pa ${PORTSDIR}/infrastructure/db/network.conf
-for a complete list.
-.Pp
-Generally used with the standard
-.Xr make 1 Ns 's
-.Li ${VARIABLE:=subdir/}
-construct to append the relevant subdir at the end of each entry, e.g.,
-.Dl SITES = ${SITE_GNU:=cgicc/}
-.It Ev _SITES
-List of primary locations from which distribution files and patchfiles are
-retrieved.
-See the
-.Cm fetch
-target for details.
-Defaults to ${SITES_GITHUB} for GitHub-hosted projects,
-see
-.Ev GH_* .
-See
-.Xr ports 7
-for user configuration.
-.It Ev SITES*
-List of alternate locations from which ${DISTFILES*}, ${PATCHFILES*},
-${SUPDISTFILES*} are retrieved.
-See
-.Cm fetch
-for details.
-Suffix should start with
-.Sq \&.
-for consistency.
-.Pp
-.It Ev SITES0 , ... , SITES9
-Supplementary locations from which distribution files and patchfiles are
-retrieved.
 .It Ev MESSAGE
 File recorded in the package and displayed during installation.
 Defaults to ${PKGDIR}/MESSAGE if this file exists.
@@ -3198,6 +3159,45 @@ Porters of software using libtool should make sure
 .Ev MAKE_FLAGS
 get propagated to the libtool invocations.
 This should be enough in most cases.
+.It Ev SITE_BACKUP
+User settings.
+List of sites to try after normal master sites.
+Normally includes ${SITE_OPENBSD} and ${SITE_FREEBSD}.
+.It Ev SITE_*
+Lists of standard sites to retrieve files from, refer to
+.Pa ${PORTSDIR}/infrastructure/db/network.conf
+for a complete list.
+.Pp
+Generally used with the standard
+.Xr make 1 Ns 's
+.Li ${VARIABLE:=subdir/}
+construct to append the relevant subdir at the end of each entry, e.g.,
+.Dl SITES = ${SITE_GNU:=cgicc/}
+.It Ev SITES
+List of primary locations from which distribution files and patchfiles are
+retrieved.
+See the
+.Cm fetch
+target for details.
+Defaults to ${SITES_GITHUB} for GitHub-hosted projects,
+see
+.Ev GH_* .
+See
+.Xr ports 7
+for user configuration.
+.It Ev SITES*
+List of alternate locations from which ${DISTFILES*}, ${PATCHFILES*},
+${SUPDISTFILES*} are retrieved.
+See
+.Cm fetch
+for details.
+Suffix should start with
+.Sq \&.
+for consistency.
+.Pp
+.It Ev SITES0 , ... , SITES9
+Supplementary locations from which distribution files and patchfiles are
+retrieved (deprecated).
 .It Ev SKIPDIR
 See
 .Xr ports 7 .
