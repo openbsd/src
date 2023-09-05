@@ -226,9 +226,16 @@ make_query(char* qname, char* qtype, char* qclass)
 		printf("cannot parse query name: '%s'\n", qname);
 		exit(1);
 	}
-
 	qinfo.qtype = sldns_get_rr_type_by_name(qtype);
+	if(qinfo.qtype == 0 && strcmp(qtype, "TYPE0") != 0) {
+		printf("cannot parse query type: '%s'\n", qtype);
+		exit(1);
+	}
 	qinfo.qclass = sldns_get_rr_class_by_name(qclass);
+	if(qinfo.qclass == 0 && strcmp(qclass, "CLASS0") != 0) {
+		printf("cannot parse query class: '%s'\n", qclass);
+		exit(1);
+	}
 	qinfo.local_alias = NULL;
 
 	qinfo_query_encode(buf, &qinfo); /* flips buffer */
@@ -573,6 +580,7 @@ int main(int argc, char** argv)
 #endif
 	checklock_start();
 	log_init(0, 0, 0);
+	log_ident_set("dohclient");
 
 	h2_session = http2_session_create();
 	if(!h2_session) fatal_exit("out of memory");
