@@ -1,4 +1,4 @@
-/* $OpenBSD: obj_dat.c,v 1.60 2023/08/17 09:28:43 tb Exp $ */
+/* $OpenBSD: obj_dat.c,v 1.61 2023/09/05 14:59:00 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -208,15 +208,6 @@ added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
 }
 static IMPLEMENT_LHASH_COMP_FN(added_obj, ADDED_OBJ)
 
-static int
-init_added(void)
-{
-	if (added != NULL)
-		return (1);
-	added = lh_ADDED_OBJ_new();
-	return (added != NULL);
-}
-
 static void
 cleanup1_doall(ADDED_OBJ *a)
 {
@@ -289,13 +280,16 @@ LCRYPTO_ALIAS(OBJ_new_nid);
 int
 OBJ_add_object(const ASN1_OBJECT *obj)
 {
-	ASN1_OBJECT *o;
+	ASN1_OBJECT *o = NULL;
 	ADDED_OBJ *ao[4] = {NULL, NULL, NULL, NULL}, *aop;
 	int i;
 
 	if (added == NULL)
-		if (!init_added())
-			return (0);
+		added = lh_ADDED_OBJ_new();
+	if (added == NULL)
+		goto err;
+	if (obj == NULL || obj->nid == NID_undef)
+		goto err;
 	if ((o = OBJ_dup(obj)) == NULL)
 		goto err;
 	if (!(ao[ADDED_NID] = malloc(sizeof(ADDED_OBJ))))
