@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.596 2023/09/05 13:02:11 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.597 2023/09/05 13:04:58 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1327,7 +1327,10 @@ This is essentially the same as running
 after each package build.
 Defaults to
 .Sq \&No ,
-as this can be a big performance hit.
+as this can be a big performance hit, and also because
+.Ev lib-depends-check
+doesn't know about library subdirectories or dynamic loading through
+.Xr dlopen 3 .
 .It Ev CHECKSUMFILES
 List of all files that need to be retrieved by
 .Cm fetch ,
