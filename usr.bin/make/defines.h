@@ -1,7 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-/*	$OpenBSD: defines.h,v 1.15 2015/10/14 13:50:22 espie Exp $ */
+/*	$OpenBSD: defines.h,v 1.16 2023/09/05 14:05:41 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Marc Espie.
@@ -61,16 +61,8 @@ typedef struct Suff_ Suff;
 
 #ifdef __GNUC__
 # define UNUSED	__attribute__((__unused__))
-# define HAS_INLINES
-# define INLINE  __inline__
 #else
 # define UNUSED
-#endif
-
-#ifdef HAS_INLINES
-# ifndef INLINE
-#  define INLINE	inline
-# endif
 #endif
 
 /*

@@ -1,7 +1,7 @@
 #ifndef _LST_H_
 #define _LST_H_
 
-/*	$OpenBSD: lst.h,v 1.2 2015/10/14 13:52:11 espie Exp $ */
+/*	$OpenBSD: lst.h,v 1.3 2023/09/05 14:05:41 jsg Exp $ */
 /*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $ */
 
 /*
@@ -154,25 +154,16 @@ extern void *	Lst_DeQueue(Lst);
 #define Lst_Adv(ln)	((ln)->nextPtr)
 #define Lst_Rev(ln)	((ln)->prevPtr)
 
-
-/* Inlines are preferable to macros here because of the type checking. */
-#ifdef HAS_INLINES
-static INLINE LstNode
+static inline LstNode
 Lst_FindConst(Lst l, FindProcConst cProc, const void *d)
 {
 	return Lst_FindFrom(Lst_First(l), (FindProc)cProc, (void *)d);
 }
 
-static INLINE LstNode
+static inline LstNode
 Lst_FindFromConst(LstNode ln, FindProcConst cProc, const void *d)
 {
 	return Lst_FindFrom(ln, (FindProc)cProc, (void *)d);
 }
-#else
-#define Lst_FindConst(l, cProc, d) \
-	Lst_FindFrom(Lst_First(l), (FindProc)cProc, (void *)d)
-#define Lst_FindFromConst(ln, cProc, d) \
-	Lst_FindFrom(ln, (FindProc)cProc, (void *)d)
-#endif
 
 #endif /* _LST_H_ */
