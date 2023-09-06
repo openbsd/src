@@ -1,4 +1,4 @@
-/*	$OpenBSD: tput.c,v 1.28 2023/02/08 15:56:32 millert Exp $	*/
+/*	$OpenBSD: tput.c,v 1.29 2023/09/06 05:04:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 1999 Todd C. Miller <millert@openbsd.org>
@@ -193,7 +193,7 @@ main(int argc, char *argv[])
 static char **
 process(char *cap, char *str, char **argv)
 {
-	char *cp, *s, *nargv[NUM_PARM] = {0};
+	char *s, *nargv[NUM_PARM] = {0};
 	char *p_is_s[NUM_PARM];
 	int arg_need, i;
 
