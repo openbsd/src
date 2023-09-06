@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.c,v 1.24 2021/09/22 20:40:06 deraadt Exp $ */
+/*	$OpenBSD: exec.c,v 1.25 2023/09/06 03:51:20 jsg Exp $ */
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -161,7 +161,7 @@ execvpe(const char *name, char *const *argv, char *const *envp)
 	int eacces = 0;
 	char *bp, *cur, *path, buf[PATH_MAX];
 	size_t maplen;
-	int save_errno, n;
+	int save_errno;
 
 	/*
 	 * Do not allow null name
