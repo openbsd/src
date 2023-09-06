@@ -1,4 +1,4 @@
-/* $OpenBSD: servconf.c,v 1.399 2023/09/06 23:23:53 djm Exp $ */
+/* $OpenBSD: servconf.c,v 1.400 2023/09/06 23:26:37 djm Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -1876,10 +1876,6 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 		break;
 
 	case sSubsystem:
-		if (options->num_subsystems >= MAX_SUBSYSTEMS) {
-			fatal("%s line %d: too many subsystems defined.",
-			    filename, linenum);
-		}
 		arg = argv_next(&ac, &av);
 		if (!arg || *arg == '\0')
 			fatal("%s line %d: %s missing argument.",
@@ -1901,6 +1897,18 @@ process_server_config_line_depth(ServerOptions *options, char *line,
 			argv_consume(&ac);
 			break;
 		}
+		options->subsystem_name = xrecallocarray(
+		    options->subsystem_name, options->num_subsystems,
+		    options->num_subsystems + 1,
+		    sizeof(options->subsystem_name));
+		options->subsystem_command = xrecallocarray(
+		    options->subsystem_command, options->num_subsystems,
+		    options->num_subsystems + 1,
+		    sizeof(options->subsystem_command));
+		options->subsystem_args = xrecallocarray(
+		    options->subsystem_args, options->num_subsystems,
+		    options->num_subsystems + 1,
+		    sizeof(options->subsystem_args));
 		options->subsystem_name[options->num_subsystems] = xstrdup(arg);
 		arg = argv_next(&ac, &av);
 		if (!arg || *arg == '\0') {
