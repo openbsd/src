@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.89 2019/12/21 21:40:00 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.90 2023/09/06 12:15:30 jca Exp $
 
 .include <bsd.own.mk>
 
+CFLAGS+=	-std=gnu89
 CFLAGS+=	${PIE_DEFAULT}
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDSTATIC}"
 # This allows moving the whole binutils installation around for 

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.31 2023/01/27 22:01:02 kettenis Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.32 2023/09/06 12:15:30 jca Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ TARGET_ARCH?=	${MACHINE_ARCH}
 SUBDIRS=	opcodes bfd
 CONF_SUBDIRS=	opcodes bfd
 
+CFLAGS+=	-std=gnu89
 CFLAGS+=	${PIE_DEFAULT}
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" LDFLAGS="${LDSTATIC}"
 # This allows moving the whole binutils installation around for 

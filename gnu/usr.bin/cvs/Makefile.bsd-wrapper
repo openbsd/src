@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.59 2019/12/21 21:40:00 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.60 2023/09/06 12:15:30 jca Exp $
 
 .include <bsd.own.mk>
 
 MAN=	man/cvs.1 man/cvs.5 man/cvsbug.8 man/rcs2log.1
+CFLAGS+=	-std=gnu89
 XCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" CPP="${CPP}"
 CLEANFILES=	src/version.c lib/getdate.c lib/getdate.h macintosh/Makefile \
 		os2/Makefile zlib/Makefile \
