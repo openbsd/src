@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.608 2023/09/06 13:33:46 caspar Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.609 2023/09/06 15:02:51 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -397,6 +397,7 @@ hooks, as this would break
 See
 .Ev ALL_DISTFILES ,
 .Ev ALL_PATCHFILES ,
+.Ev ALL_SUPDISTFILES ,
 .Ev CHECKSUMFILES ,
 .Ev DISTDIR ,
 .Ev DISTFILES* ,
@@ -1007,6 +1008,12 @@ setting, after applying the
 .Sq Ar filename Ns { Ns Ar url Ns } Ns Ar sufx
 conversion.
 Read-only.
+.It Ev ALL_SUPDISTFILES
+List of all actual files coming from every
+.Ev SUPDISTFILES*
+setting, after applying the
+.Sq Ar filename Ns { Ns Ar url Ns } Ns Ar sufx
+conversion.  Read-only.
 .It Ev ALL_TEST_ENV
 Environment passed to test.
 Equals
@@ -1875,7 +1882,7 @@ with
 in order, which is then processed by a case switch: ${EXTRACT_CASES}.
 .Pp
 .Nm
-detects extensions in ${EXTRACT_ONLY} and ${ALL_PATCHFILES} 
+detects extensions in ${CHECKSUMFILES}
 and automatically adds
 .Ev BUILD_DEPENDS
 and fragments to handle the following archives:
@@ -1913,18 +1920,23 @@ should not be extracted during the
 stage.
 Defaults to ${ALL_DISTFILES}, can even be set to empty.
 .It Ev EXTRACT_SUFX
-Used to set DISTFILES default value to ${DISTNAME}${EXTRACT_SUFX}.
-Default value is .tar.gz.
+Used to set
+.Ev DISTFILES
+default value to ${DISTNAME}${EXTRACT_SUFX}.
+Default value is 
+.Pa .tar.gz .
 .Pp
 Note that
 .Ev DISTFILES
 will only be set in the absence of
 .Ev DISTFILES.sufx
-as well.
+as well, or if
+.Ev SITES
+is not empty.
 .It Ev EXTRACT_SUFX.<name>
 The
 .Ev EXTRACT_SUFX
-for a template defined with
+value for a template defined through
 .Ev DIST_TUPLE .
 .It Ev EXTRACT_FILES
 Set to the list of files to actually extract from distfiles.
@@ -2591,7 +2603,7 @@ shell fragment:
 .Bd -literal
 set -e
 cd ${FULLDISTDIR}
-for patchfile in ${_LIST_PATCHFILES}
+for patchfile in ${ALL_PATCHFILES}
 do
     case $$patchfile in
 	*.bz2)
