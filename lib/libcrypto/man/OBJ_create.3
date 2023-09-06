@@ -1,13 +1,13 @@
-.\" $OpenBSD: OBJ_create.3,v 1.7 2023/07/21 05:02:53 tb Exp $
+.\" $OpenBSD: OBJ_create.3,v 1.8 2023/09/06 12:26:59 schwarze Exp $
 .\" full merge up to:
 .\" OpenSSL OBJ_nid2obj.pod 9b86974e Aug 17 15:21:33 2015 -0400
 .\" selective merge up to:
-.\" OpenSSL OBJ_nid2obj.pod 35fd9953 May 28 14:49:38 2019 +0200
+.\" OpenSSL OBJ_nid2obj.pod 0c5bc96f Mar 15 13:57:22 2022 +0000
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
-.\" Copyright (c) 2017, 2021 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2017, 2021, 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -69,7 +69,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 21 2023 $
+.Dd $Mdocdate: September 6 2023 $
 .Dt OBJ_CREATE 3
 .Os
 .Sh NAME
@@ -217,11 +217,15 @@ The opposite order will usually not work.
 returns the new NID.
 .Pp
 .Fn OBJ_add_object
-returns the NID associated with the
+returns the NID of the added
 .Fa object
 or
 .Dv NID_undef
-if memory allocation fails.
+if no object was added because the
+.Fa object
+argument was
+.Dv NULL ,
+did not contain an NID, or memory allocation failed.
 .Pp
 .Fn OBJ_create
 returns the new NID or
@@ -271,6 +275,29 @@ and
 .Fn check_defer
 first appeared in OpenSSL 1.0.0 and have been available since
 .Ox 4.9 .
+.Sh CAVEATS
+.Fn OBJ_add_object
+indicates success even after adding an incomplete object that was created with
+.Xr ASN1_OBJECT_create 3
+but lacks a short name, a long name, or an OID.
+.Pp
+Even
+.Fn OBJ_create
+tolerates
+.Dv NULL
+pointers being passed for the
+.Fa sn
+and/or
+.Fa ln
+arguments, in which case
+.Xr OBJ_nid2sn 3
+and
+.Xr OBJ_sn2nid 3
+or
+.Xr OBJ_nid2ln 3
+and
+.Xr OBJ_ln2nid 3
+will not work on the added object, respectively.
 .Sh BUGS
 .Fn OBJ_new_nid
 does not reserve any return value to indicate an error.
