@@ -427,8 +427,8 @@ init_gnuv3_ops (void)
   gnu_v3_abi_ops.shortname = "gnu-v3";
   gnu_v3_abi_ops.longname = "GNU G++ Version 3 ABI";
   gnu_v3_abi_ops.doc = "G++ Version 3 ABI";
-  gnu_v3_abi_ops.is_destructor_name = is_gnu_v3_mangled_dtor;
-  gnu_v3_abi_ops.is_constructor_name = is_gnu_v3_mangled_ctor;
+  gnu_v3_abi_ops.is_destructor_name = (enum dtor_kinds (*)(const char *))is_gnu_v3_mangled_dtor;
+  gnu_v3_abi_ops.is_constructor_name = (enum ctor_kinds (*)(const char *))is_gnu_v3_mangled_ctor;
   gnu_v3_abi_ops.is_vtable_name = gnuv3_is_vtable_name;
   gnu_v3_abi_ops.is_operator_name = gnuv3_is_operator_name;
   gnu_v3_abi_ops.rtti_type = gnuv3_rtti_type;
