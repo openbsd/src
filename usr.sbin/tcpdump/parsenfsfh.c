@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsenfsfh.c,v 1.14 2016/01/15 18:02:18 mmcc Exp $	*/
+/*	$OpenBSD: parsenfsfh.c,v 1.15 2023/09/06 05:54:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Jeffrey C. Mogul, Digital Equipment Corporation,
@@ -97,12 +97,9 @@
 static int is_UCX(unsigned char *);
 
 void
-Parse_fh(fh, fsidp, inop, osnamep, fsnamep)
-caddr_t *fh;
-my_fsid *fsidp;
-ino_t *inop;
-char **osnamep;		/* if non-NULL, return OS name here */
-char **fsnamep;		/* if non-NULL, return server fs name here (for VMS) */
+Parse_fh(caddr_t *fh, my_fsid *fsidp, ino_t *inop,
+    char **osnamep,	/* if non-NULL, return OS name here */
+    char **fsnamep)	/* if non-NULL, return server fs name here (for VMS) */
 {
 	unsigned char *fhp = (unsigned char *)fh;
 	u_int32_t temp;
@@ -392,8 +389,7 @@ char **fsnamep;		/* if non-NULL, return server fs name here (for VMS) */
  *	(3) followed by string of nulls
  */
 static int
-is_UCX(fhp)
-unsigned char *fhp;
+is_UCX(unsigned char *fhp)
 {
 	int i;
 	int seen_null = 0;

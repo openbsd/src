@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-sunrpc.c,v 1.22 2022/01/05 05:29:54 dlg Exp $	*/
+/*	$OpenBSD: print-sunrpc.c,v 1.23 2023/09/06 05:54:07 jsg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
@@ -91,8 +91,7 @@ sunrpcrequest_print(const u_char *bp, u_int length, const u_char *bp2)
 }
 
 static char *
-progstr(prog)
-	u_int32_t prog;
+progstr(u_int32_t prog)
 {
 	char progname[32];
 	static char buf[32];
