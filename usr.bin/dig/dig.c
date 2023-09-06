@@ -14,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: dig.c,v 1.19 2020/12/20 11:27:47 florian Exp $ */
+/* $Id: dig.c,v 1.20 2023/09/06 04:57:28 jsg Exp $ */
 
 /*! \file */
 #include <sys/types.h>
@@ -1924,7 +1924,7 @@ void dig_query_setup(int is_batchfile, int config_only,
 	}
 }
 
-void dig_startup() {
+void dig_startup(void) {
 	isc_result_t result;
 
 	debug("dig_startup()");
@@ -1935,7 +1935,7 @@ void dig_startup() {
 }
 
 void
-dig_shutdown() {
+dig_shutdown(void) {
 	destroy_lookup(default_lookup);
 	if (batchname != NULL) {
 		if (batchfp != stdin)
