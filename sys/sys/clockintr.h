@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.11 2023/09/06 02:09:58 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.12 2023/09/06 02:33:18 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -72,7 +72,7 @@ struct clockintr {
 	TAILQ_ENTRY(clockintr) cl_plink;		/* [m] cq_pend glue */
 	void (*cl_func)(struct clockintr *, void *);	/* [I] callback */
 	struct clockintr_queue *cl_queue;		/* [I] parent queue */
-	u_int cl_flags;					/* [m] CLST_* flags */
+	uint32_t cl_flags;				/* [m] CLST_* flags */
 };
 
 #define CLST_PENDING		0x00000001	/* scheduled to run */
@@ -100,9 +100,9 @@ struct clockintr_queue {
 	struct clockintr *cq_statclock;	/* [o] statclock handle */
 	struct intrclock cq_intrclock;	/* [I] local interrupt clock */
 	struct clockintr_stat cq_stat;	/* [o] dispatch statistics */
-	volatile u_int cq_gen;		/* [o] cq_stat update generation */ 
-	volatile u_int cq_dispatch;	/* [o] dispatch is running */
-	u_int cq_flags;			/* [I] CQ_* flags; see below */
+	volatile uint32_t cq_gen;	/* [o] cq_stat update generation */ 
+	volatile uint32_t cq_dispatch;	/* [o] dispatch is running */
+	uint32_t cq_flags;		/* [I] CQ_* flags; see below */
 };
 
 #define CQ_INIT			0x00000001	/* clockintr_cpu_init() done */
@@ -119,7 +119,7 @@ struct clockintr_queue {
 
 void clockintr_cpu_init(const struct intrclock *);
 int clockintr_dispatch(void *);
-void clockintr_init(u_int);
+void clockintr_init(uint32_t);
 void clockintr_trigger(void);
 
 /*
@@ -130,7 +130,7 @@ uint64_t clockintr_advance(struct clockintr *, uint64_t);
 void clockintr_cancel(struct clockintr *);
 struct clockintr *clockintr_establish(struct cpu_info *,
     void (*)(struct clockintr *, void *));
-void clockintr_stagger(struct clockintr *, uint64_t, u_int, u_int);
+void clockintr_stagger(struct clockintr *, uint64_t, uint32_t, uint32_t);
 void clockqueue_init(struct clockintr_queue *);
 int sysctl_clockintr(int *, u_int, void *, size_t *, void *, size_t);
 

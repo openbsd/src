@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.37 2023/09/06 02:09:58 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.38 2023/09/06 02:33:18 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -36,7 +36,7 @@
  *
  *	I	Immutable after initialization.
  */
-u_int clockintr_flags;			/* [I] global state + behavior flags */
+uint32_t clockintr_flags;		/* [I] global state + behavior flags */
 uint32_t hardclock_period;		/* [I] hardclock period (ns) */
 uint32_t statclock_avg;			/* [I] average statclock period (ns) */
 uint32_t statclock_min;			/* [I] minimum statclock period (ns) */
@@ -58,7 +58,7 @@ uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
  * Initialize global state.  Set flags and compute intervals.
  */
 void
-clockintr_init(u_int flags)
+clockintr_init(uint32_t flags)
 {
 	uint32_t half_avg, var;
 
@@ -219,7 +219,7 @@ clockintr_dispatch(void *frame)
 	struct cpu_info *ci = curcpu();
 	struct clockintr *cl;
 	struct clockintr_queue *cq = &ci->ci_queue;
-	u_int ogen;
+	uint32_t ogen;
 
 	if (cq->cq_dispatch != 0)
 		panic("%s: recursive dispatch", __func__);
@@ -469,7 +469,8 @@ clockintr_schedule_locked(struct clockintr *cl, uint64_t expiration)
 }
 
 void
-clockintr_stagger(struct clockintr *cl, uint64_t period, u_int n, u_int count)
+clockintr_stagger(struct clockintr *cl, uint64_t period, uint32_t n,
+    uint32_t count)
 {
 	struct clockintr_queue *cq = cl->cl_queue;
 
@@ -589,7 +590,7 @@ sysctl_clockintr(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 	struct clockintr_queue *cq;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-	u_int gen;
+	uint32_t gen;
 
 	if (namelen != 1)
 		return ENOTDIR;
