@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.254 2022/08/21 14:15:55 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.255 2023/09/06 11:09:43 bluhm Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1572,11 +1572,11 @@ ip6_send_dispatch(void *xmq)
 	if (ml_empty(&ml))
 		return;
 
-	NET_LOCK();
+	NET_LOCK_SHARED();
 	while ((m = ml_dequeue(&ml)) != NULL) {
 		ip6_output(m, NULL, NULL, 0, NULL, NULL);
 	}
-	NET_UNLOCK();
+	NET_UNLOCK_SHARED();
 }
 
 void
