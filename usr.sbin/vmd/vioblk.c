@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.6 2023/09/06 19:26:39 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.7 2023/09/06 19:27:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -84,7 +84,7 @@ vioblk_main(int fd, int fd_vmm)
 	sz = atomicio(read, fd, &dev, sizeof(dev));
 	if (sz != sizeof(dev)) {
 		ret = errno;
-		log_warn("failed to receive vionet");
+		log_warn("failed to receive vioblk");
 		goto fail;
 	}
 	if (dev.dev_type != VMD_DEVTYPE_DISK) {
