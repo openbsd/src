@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.611 2023/09/06 21:14:43 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.612 2023/09/06 22:28:50 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2125,6 +2125,10 @@ Yields a suitable default for
 .Ev SITES_GITHUB
 and
 .Ev DISTNAME .
+.Pp
+Use
+.Ev DIST_TUPLE
+for more complicated situations.
 .It Ev GH_ACCOUNT
 Account name of the GitHub user hosting the project.
 .It Ev GH_COMMIT
@@ -2388,15 +2392,6 @@ is set,
 will contain the list of missing distfiles or patchfiles that need to
 be fetched manually.
 Read-only.
-.It Ev MTREE_FILE
-.Xr mtree 8
-specification used during
-.Ar fake .
-Replaced by direct use of
-.Xr mkdir 1
-now that
-.Ar fake
-no longer happens as root.
 .It Ev MODGNU_CONFIG_GUESS_DIRS
 If a port uses config.guess outside WRKSRC, the directories
 containing the other copies must be set here.
