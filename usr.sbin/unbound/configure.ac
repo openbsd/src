@@ -547,7 +547,6 @@ ACX_CHECK_NONBLOCKING_BROKEN
 ACX_MKDIR_ONE_ARG
 AC_CHECK_FUNCS([strptime],[AC_CHECK_STRPTIME_WORKS],[AC_LIBOBJ([strptime])])
 
-
 # check if we can use SO_REUSEPORT
 reuseport_default=0
 if echo "$host" | $GREP -i -e linux >/dev/null; then reuseport_default=1; fi
