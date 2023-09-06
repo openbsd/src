@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukcutil.c,v 1.26 2021/11/20 03:13:37 jcs Exp $ */
+/*	$OpenBSD: ukcutil.c,v 1.27 2023/09/06 05:00:37 jsg Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -1309,8 +1309,6 @@ config(void)
 
 	/* Edit cycle */
 	do {
-		char lbuf[100];
-
 again:
 		/* Get input */
 		if (cmdfile == NULL) {
