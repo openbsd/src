@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.86 2023/02/16 08:38:17 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.87 2023/09/06 15:32:54 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -412,6 +412,13 @@ IPAddressFamily_afi_safi(const IPAddressFamily *af, uint16_t *out_afi,
 	uint16_t afi;
 	uint8_t safi = 0;
 	int got_safi = 0;
+
+	if (out_afi != NULL)
+		*out_afi = 0;
+	if (out_safi != NULL) {
+		*out_safi = 0;
+		*safi_is_set = 0;
+	}
 
 	CBS_init(&cbs, af->addressFamily->data, af->addressFamily->length);
 
