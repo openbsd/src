@@ -1,4 +1,4 @@
-/*	$OpenBSD: mopchk.c,v 1.20 2023/03/08 04:43:14 guenther Exp $	*/
+/*	$OpenBSD: mopchk.c,v 1.21 2023/09/06 11:03:30 jsg Exp $	*/
 
 /*
  * Copyright (c) 1995-96 Mats O Jansson.  All rights reserved.
@@ -52,9 +52,7 @@ extern char *__progname;
 extern char version[];
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char **argv)
 {
 	struct dllist dl;
 	int     op, i;
@@ -142,7 +140,7 @@ main(argc, argv)
 }
 
 void
-Usage()
+Usage(void)
 {
 	fprintf(stderr, "usage: %s [-av] [file ...]\n", __progname);
 	exit(1);
@@ -152,9 +150,7 @@ Usage()
  * Process incoming packages, NOT. 
  */
 void
-mopProcess(ii, pkt)
-	struct if_info *ii;
-	u_char *pkt;
+mopProcess(struct if_info *ii, u_char *pkt)
 {
 }
 
