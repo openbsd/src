@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.604 2023/09/05 23:45:53 jsg Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.605 2023/09/06 09:50:45 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 5 2023 $
+.Dd $Mdocdate: September 6 2023 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -1858,6 +1858,13 @@ for other common issues).
 .Pp
 Note that setting fatal errors defeats all introspection mechanisms and breaks
 .Pa sqlports .
+.Pp
+Tip: if you need to debug a fatal error, you can always override
+.Ev ERRORS
+on the command line, e.g.,
+.Bd -literal -offset indent
+make ERRORS= show=<var>
+.Ed
 .It Ev EXTRACT_CASES
 In the normal extraction stage (when
 .Ev EXTRACT_ONLY
@@ -4401,6 +4408,10 @@ Note that some of these messages are actually emitted by some other external
 commands, but grouped here for convenience: easier to look for in
 .Xr dpb 1 Ns 's
 logs.
+.Pp
+See
+.Ev ERRORS
+for more details about internal diagnostics.
 .Bl -diag
 .It "/bin/sh: cd .../pkg - No such file or directory"
 Emitted during
