@@ -16304,7 +16304,6 @@ fi
 done
 
 
-
 # check if we can use SO_REUSEPORT
 reuseport_default=0
 if echo "$host" | $GREP -i -e linux >/dev/null; then reuseport_default=1; fi
