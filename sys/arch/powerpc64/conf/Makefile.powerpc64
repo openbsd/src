@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc64,v 1.16 2023/09/06 01:47:37 jsg Exp $
+#	$OpenBSD: Makefile.powerpc64,v 1.17 2023/09/06 09:12:49 kettenis Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -56,7 +56,7 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant \
 		-Wframe-larger-than=2047
 
-CMACHFLAGS=	-mabi=elfv2 -msoft-float -mno-altivec -mno-vsx
+CMACHFLAGS=	-msoft-float -mno-altivec -mno-vsx
 CMACHFLAGS+=	-ffreestanding
 SORTR=		sort -R
 .if ${IDENT:M-DNO_PROPOLICE}
