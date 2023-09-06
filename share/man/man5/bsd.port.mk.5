@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.606 2023/09/06 11:47:36 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.607 2023/09/06 12:08:31 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1874,9 +1874,11 @@ with
 .Ev EXTRACT_ONLY
 in order, which is then processed by a case switch: ${EXTRACT_CASES}.
 .Pp
-Fragments are automatically appended to extract the following archives and
-add the relevant compression tool to
-.Ev BUILD_DEPENDS :
+.Nm
+detects extensions in ${EXTRACT_ONLY} and ${ALL_PATCHFILES} 
+and automatically adds
+.Ev BUILD_DEPENDS
+and fragments to handle the following archives:
 .Pp
 .Bl -tag -width archivers/lzip/lunzip -offset indent -compact
 .It gzip
@@ -1912,8 +1914,6 @@ stage.
 Defaults to ${ALL_DISTFILES}, can even be set to empty.
 .It Ev EXTRACT_SUFX
 Used to set DISTFILES default value to ${DISTNAME}${EXTRACT_SUFX}.
-The decompression tool needed will be automatically added as
-.Ev BUILD_DEPENDS .
 Default value is .tar.gz.
 .Pp
 Note that
