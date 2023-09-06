@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.5 2023/09/01 19:42:26 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.6 2023/09/06 19:26:39 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -305,7 +305,6 @@ vioblk_start_read(struct vioblk_dev *dev, off_t sector, size_t sz)
 		goto nomem;
 	info->len = sz;
 	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
-	info->file = &dev->file;
 	return info;
 
 nomem:
@@ -316,17 +315,15 @@ nomem:
 
 
 static const uint8_t *
-vioblk_finish_read(struct ioinfo *info)
+vioblk_finish_read(struct vioblk_dev *dev, struct ioinfo *info)
 {
-	struct virtio_backing *file;
+	struct virtio_backing *file = &dev->file;
 
-	file = info->file;
 	if (file == NULL || file->pread == NULL) {
 		log_warnx("%s: XXX null?!", __func__);
 		return NULL;
 	}
 	if (file->pread(file->p, info->buf, info->len, info->offset) != info->len) {
-		info->error = errno;
 		log_warn("vioblk read error");
 		return NULL;
 	}
@@ -355,7 +352,6 @@ vioblk_start_write(struct vioblk_dev *dev, off_t sector,
 		goto nomem;
 	info->len = len;
 	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
-	info->file = &dev->file;
 
 	if (read_mem(addr, info->buf, info->len)) {
 		vioblk_free_info(info);
@@ -371,11 +367,10 @@ nomem:
 }
 
 static int
-vioblk_finish_write(struct ioinfo *info)
+vioblk_finish_write(struct vioblk_dev *dev, struct ioinfo *info)
 {
-	struct virtio_backing *file;
+	struct virtio_backing *file = &dev->file;
 
-	file = info->file;
 	if (file->pwrite(file->p, info->buf, info->len, info->offset) != info->len) {
 		log_warn("vioblk write error");
 		return EIO;
@@ -479,7 +474,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 				}
 
 				/* read the data, use current data descriptor */
-				secdata = vioblk_finish_read(info);
+				secdata = vioblk_finish_read(dev, info);
 				if (secdata == NULL) {
 					vioblk_free_info(info);
 					log_warnx("vioblk: block read error, "
@@ -557,7 +552,7 @@ vioblk_notifyq(struct vioblk_dev *dev)
 					goto out;
 				}
 
-				if (vioblk_finish_write(info)) {
+				if (vioblk_finish_write(dev, info)) {
 					log_warnx("wr vioblk: disk write "
 					    "error");
 					vioblk_free_info(info);
