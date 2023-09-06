@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmmvar.h,v 1.93 2023/09/05 14:00:41 mlarkin Exp $	*/
+/*	$OpenBSD: vmmvar.h,v 1.94 2023/09/06 03:35:57 dv Exp $	*/
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -456,6 +456,7 @@ struct vm_run_params {
 	uint32_t	vrp_vcpu_id;
 	uint8_t		vrp_continue;		/* Continuing from an exit */
 	uint16_t	vrp_irq;		/* IRQ to inject */
+	uint8_t		vrp_intr_pending;	/* Additional intrs pending? */
 
 	/* Input/output parameter to VMM_IOC_RUN */
 	struct vm_exit	*vrp_exit;		/* updated exit data */

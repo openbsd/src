@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.90 2023/07/13 18:31:59 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.91 2023/09/06 03:35:57 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1610,22 +1610,8 @@ vcpu_run_loop(void *arg)
 		} else
 			vrp->vrp_irq = 0xFFFF;
 
-		/* Still more pending? */
-		if (i8259_is_pending()) {
-			/*
-			 * XXX can probably avoid ioctls here by providing intr
-			 * in vrp
-			 */
-			if (vcpu_pic_intr(vrp->vrp_vm_id,
-			    vrp->vrp_vcpu_id, 1)) {
-				fatal("can't set INTR");
-			}
-		} else {
-			if (vcpu_pic_intr(vrp->vrp_vm_id,
-			    vrp->vrp_vcpu_id, 0)) {
-				fatal("can't clear INTR");
-			}
-		}
+		/* Still more interrupts pending? */
+		vrp->vrp_intr_pending = i8259_is_pending();
 
 		if (ioctl(env->vmd_fd, VMM_IOC_RUN, vrp) == -1) {
 			/* If run ioctl failed, exit */

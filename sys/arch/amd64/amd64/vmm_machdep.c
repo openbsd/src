@@ -1,4 +1,4 @@
-/* $OpenBSD: vmm_machdep.c,v 1.7 2023/09/05 14:00:40 mlarkin Exp $ */
+/* $OpenBSD: vmm_machdep.c,v 1.8 2023/09/06 03:35:57 dv Exp $ */
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -3973,6 +3973,11 @@ vcpu_run_vmx(struct vcpu *vcpu, struct vm_run_params *vrp)
 	 */
 	irq = vrp->vrp_irq;
 
+	if (vrp->vrp_intr_pending)
+		vcpu->vc_intr = 1;
+	else
+		vcpu->vc_intr = 0;
+
 	if (vrp->vrp_continue) {
 		switch (vcpu->vc_gueststate.vg_exit_reason) {
 		case VMX_EXIT_IO:
@@ -6380,6 +6385,11 @@ vcpu_run_svm(struct vcpu *vcpu, struct vm_run_params *vrp)
 	struct vmcb *vmcb = (struct vmcb *)vcpu->vc_control_va;
 
 	irq = vrp->vrp_irq;
+
+	if (vrp->vrp_intr_pending)
+		vcpu->vc_intr = 1;
+	else
+		vcpu->vc_intr = 0;
 
 	/*
 	 * If we are returning from userspace (vmd) because we exited
