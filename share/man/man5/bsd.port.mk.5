@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.610 2023/09/06 16:03:29 schwarze Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.611 2023/09/06 21:14:43 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -3133,6 +3133,18 @@ as
 .Sq p${REVISION}
 to form a full package-name conforming to
 .Xr packages-specs 7 .
+.It Ev ROACH_SITES
+Selects the correct list of sites corresponding to
+.Ev ROACH_URL ,
+in order to help portroach.
+.It Ev ROACH_URL
+The canonical url corresponding to the current port.
+Gets deduced from ${DISTFILES} by default, using the first value
+or the first entry in ${DISTFILES.sufx} if there's only one suffix.
+Conversion rules for
+.Ev DISTFILES
+are applied to yield only the url part of the distfile.
+Set manually if the automatic rules don't find the right one.
 .It Ev RUN_DEPENDS
 Specification of ports this port needs installed to be functional.
 Same format as
