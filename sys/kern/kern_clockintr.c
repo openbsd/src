@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.36 2023/09/05 22:41:14 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.37 2023/09/06 02:09:58 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -112,12 +112,12 @@ clockintr_cpu_init(const struct intrclock *ic)
 
 	/* TODO: Remove these from struct clockintr_queue. */
 	if (cq->cq_hardclock == NULL) {
-		cq->cq_hardclock = clockintr_establish(cq, clockintr_hardclock);
+		cq->cq_hardclock = clockintr_establish(ci, clockintr_hardclock);
 		if (cq->cq_hardclock == NULL)
 			panic("%s: failed to establish hardclock", __func__);
 	}
 	if (cq->cq_statclock == NULL) {
-		cq->cq_statclock = clockintr_establish(cq, clockintr_statclock);
+		cq->cq_statclock = clockintr_establish(ci, clockintr_statclock);
 		if (cq->cq_statclock == NULL)
 			panic("%s: failed to establish statclock", __func__);
 	}
@@ -403,10 +403,11 @@ clockintr_cancel_locked(struct clockintr *cl)
 }
 
 struct clockintr *
-clockintr_establish(struct clockintr_queue *cq,
+clockintr_establish(struct cpu_info *ci,
     void (*func)(struct clockintr *, void *))
 {
 	struct clockintr *cl;
+	struct clockintr_queue *cq = &ci->ci_queue;
 
 	cl = malloc(sizeof *cl, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (cl == NULL)

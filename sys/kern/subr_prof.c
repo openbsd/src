@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.36 2023/07/25 18:16:19 cheloha Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.37 2023/09/06 02:09:58 cheloha Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -101,8 +101,7 @@ prof_init(void)
 
 	/* Allocate and initialize one profiling buffer per CPU. */
 	CPU_INFO_FOREACH(cii, ci) {
-		ci->ci_gmonclock = clockintr_establish(&ci->ci_queue,
-		    gmonclock);
+		ci->ci_gmonclock = clockintr_establish(ci, gmonclock);
 		if (ci->ci_gmonclock == NULL) {
 			printf("%s: clockintr_establish gmonclock\n", __func__);
 			return;
