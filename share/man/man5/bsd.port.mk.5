@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.605 2023/09/06 09:50:45 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.606 2023/09/06 11:47:36 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1866,12 +1866,14 @@ on the command line, e.g.,
 make ERRORS= show=<var>
 .Ed
 .It Ev EXTRACT_CASES
-In the normal extraction stage (when
+The extraction stage runs a loop under
+.Pa ${WRKDIR}
+with
+.Ev archive
+(shell variable) set to each element of
 .Ev EXTRACT_ONLY
-is not empty), this is the contents of a
-.Xr sh 1
-.Em case conditional ,
-used to extract files.
+in order, which is then processed by a case switch: ${EXTRACT_CASES}.
+.Pp
 Fragments are automatically appended to extract the following archives and
 add the relevant compression tool to
 .Ev BUILD_DEPENDS :
@@ -1896,7 +1898,7 @@ rpm
 Other cases not supported directly in
 .Nm
 can be added, and existing cases can be overridden.
-For example the following example sets extra conversion flags to unzip,
+For example the following snippet sets extra conversion flags to unzip,
 and adds support for rar:
 .Bd -literal
 	*.zip) ${UNZIP} -Laq ${FULLDISTDIR}/$$archive -d ${WRKDIR};; \\
@@ -1907,7 +1909,7 @@ Set to the list of distfiles to actually extract if some distfiles
 should not be extracted during the
 .Cm do-extract
 stage.
-Defaults to all distfiles, can even be set to empty.
+Defaults to ${ALL_DISTFILES}, can even be set to empty.
 .It Ev EXTRACT_SUFX
 Used to set DISTFILES default value to ${DISTNAME}${EXTRACT_SUFX}.
 The decompression tool needed will be automatically added as
