@@ -828,8 +828,8 @@ daemon_cleanup(struct daemon* daemon)
 	 * defer the cleanup until we know whether the new configuration allows
 	 * the reuse.  (If we're exiting, cleanup should be done here). */
 	if(!daemon->reuse_cache || daemon->need_to_exit) {
-	slabhash_clear(&daemon->env->rrset_cache->table);
-	slabhash_clear(daemon->env->msg_cache);
+		slabhash_clear(&daemon->env->rrset_cache->table);
+		slabhash_clear(daemon->env->msg_cache);
 	}
 	daemon->old_num = daemon->num; /* save the current num */
 	local_zones_delete(daemon->local_zones);

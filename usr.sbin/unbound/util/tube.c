@@ -420,7 +420,7 @@ pollit(int fd, struct timeval* t)
 		return 0;
 	if(pret != 0)
 		return 1;
-		return 0;
+	return 0;
 }
 
 int tube_poll(struct tube* tube)
