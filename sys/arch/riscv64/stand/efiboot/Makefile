@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2023/02/23 19:48:22 miod Exp $
+#	$OpenBSD: Makefile,v 1.6 2023/09/06 01:47:37 jsg Exp $
 
 NOMAN=		#
 
@@ -54,9 +54,6 @@ COPTS+=		-Wno-attributes -Wno-format
 COPTS+=		-ffreestanding -fno-stack-protector
 COPTS+=		-fshort-wchar -fPIC -fno-builtin
 COPTS+=		-Wall -Werror
-# XXX Workaround for zlib + clang 15
-# https://github.com/madler/zlib/issues/633
-COPTS+=		-Wno-deprecated-non-prototype -Wno-unknown-warning-option
 
 PROG.elf=	${PROG:S/.EFI/.elf/}
 CLEANFILES+=	${PROG.elf} ${PROG.elf}.tmp

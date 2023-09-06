@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.powerpc64,v 1.15 2023/01/01 01:34:33 jsg Exp $
+#	$OpenBSD: Makefile.powerpc64,v 1.16 2023/09/06 01:47:37 jsg Exp $
 
 # For instructions on building kernels consult the config(8) and options(4)
 # manual pages.
@@ -55,9 +55,6 @@ CWARNFLAGS=	-Werror -Wall -Wimplicit-function-declaration \
 		-Wno-constant-conversion -Wno-address-of-packed-member \
 		-Wno-unused-but-set-variable -Wno-gnu-folding-constant \
 		-Wframe-larger-than=2047
-# XXX Workaround for zlib + clang 15
-# https://github.com/madler/zlib/issues/633
-CWARNFLAGS+=	-Wno-deprecated-non-prototype -Wno-unknown-warning-option
 
 CMACHFLAGS=	-mabi=elfv2 -msoft-float -mno-altivec -mno-vsx
 CMACHFLAGS+=	-ffreestanding
