@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.do_name.c,v 1.11 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.do_name.c,v 1.12 2023/09/06 11:53:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -118,7 +118,6 @@ do_mname(void)
 	coord cc;
 	int cx,cy,lth,i;
 	struct monst *mtmp, *mtmp2;
-	extern char *lmonnam();
 
 	cc = getpos(0, "the monster you want to name");
 	cx = cc.x;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.makemon.c,v 1.8 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.makemon.c,v 1.9 2023/09/06 11:53:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -64,7 +64,6 @@
 #include "hack.h"
 
 extern char fut_geno[];
-extern struct obj *mkobj_at();
 struct monst zeromonst;
 
 /*

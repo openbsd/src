@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack.objnam.c,v 1.11 2016/01/09 18:33:15 mestre Exp $	*/
+/*	$OpenBSD: hack.objnam.c,v 1.12 2023/09/06 11:53:56 jsg Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -609,7 +609,6 @@ any:
 	typ = probtype(let);
 typfnd:
 	{ struct obj *otmp;
-	  extern struct obj *mksobj();
 	let = objects[typ].oc_olet;
 	otmp = mksobj(typ);
 	if(heavy)
