@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.609 2023/09/06 15:02:51 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.610 2023/09/06 16:03:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1013,7 +1013,8 @@ List of all actual files coming from every
 .Ev SUPDISTFILES*
 setting, after applying the
 .Sq Ar filename Ns { Ns Ar url Ns } Ns Ar sufx
-conversion.  Read-only.
+conversion.
+Read-only.
 .It Ev ALL_TEST_ENV
 Environment passed to test.
 Equals
@@ -1923,7 +1924,7 @@ Defaults to ${ALL_DISTFILES}, can even be set to empty.
 Used to set
 .Ev DISTFILES
 default value to ${DISTNAME}${EXTRACT_SUFX}.
-Default value is 
+Default value is
 .Pa .tar.gz .
 .Pp
 Note that
@@ -3215,7 +3216,6 @@ for details.
 Suffix should start with
 .Sq \&.
 for consistency.
-.Pp
 .It Ev SITES0 , ... , SITES9
 Supplementary locations from which distribution files and patchfiles are
 retrieved (deprecated).
@@ -3401,7 +3401,7 @@ For instance,
 defaults to
 .Bd -literal
 <account>-<project>-{<account>/<project>/archive/<subdir>}<id>.tar.gz
-.Ed .
+.Ed
 .Pp
 with
 .Li DIST_TUPLE += github foo bar baz qux.
