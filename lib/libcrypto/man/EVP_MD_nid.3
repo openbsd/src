@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_MD_nid.3,v 1.1 2023/09/07 14:22:11 schwarze Exp $
+.\" $OpenBSD: EVP_MD_nid.3,v 1.2 2023/09/07 15:57:04 schwarze Exp $
 .\" full merge up to: OpenSSL man3/EVP_DigestInit.pod
 .\" 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -117,58 +117,62 @@
 .Fc
 .Sh DESCRIPTION
 .Fn EVP_MD_type
-and
-.Fn EVP_MD_CTX_type
-return the NID of the OBJECT IDENTIFIER representing the message digest.
-For example
+returns the numerical identifier (NID) of
+.Fa md .
+The NID is an internal value which may or may not have
+a corresponding ASN.1 OBJECT IDENTIFIER; see
+.Xr OBJ_nid2obj 3
+for details.
+For example ,
 .Fn EVP_MD_type EVP_sha512()
 returns
 .Dv NID_sha512 .
+.Fn EVP_MD_CTX_type
+returns the NID of the message digest algorithm that
+.Fa ctx
+is configured to use.
 These functions are normally used when setting ASN.1 OIDs.
 .Pp
 .Fn EVP_MD_size
-and
+returns the size in bytes of the message digests (hashes) produced by
+.Fa md .
 .Fn EVP_MD_CTX_size
-return the size of the message digest when passed an
-.Vt EVP_MD
-or an
-.Vt EVP_MD_CTX
-structure, i.e. the size of the hash.
+return the size of the hashes produced by the message digest algorithm that
+.Fa ctx
+is configured to use.
 .Pp
 .Fn EVP_MD_block_size
-and
+returns the block size in bytes of
+.Fa md .
 .Fn EVP_MD_CTX_block_size
-return the block size of the message digest when passed an
-.Vt EVP_MD
-or an
-.Vt EVP_MD_CTX
-structure.
+returns the block size of the message digest algorithm that
+.Fa ctx
+is configured to use.
 .Pp
 .Fn EVP_MD_flags
-returns the
-.Fa md
-flags.
-These are different from the
-.Vt EVP_MD_CTX
-ones.
-See
+returns the message digest flags used by
+.Fa md .
+The meaning of the flags is described in the
 .Xr EVP_MD_meth_set_flags 3
-for more information.
+manual page.
+Be careful to not confuse these flags with the unrelated
+message digest context flags that can be inspected with
+.Xr EVP_MD_CTX_test_flags 3 .
 .Pp
 .Fn EVP_MD_pkey_type
 returns the NID of the public key signing algorithm associated with this
 digest.
-For example
-.Fn EVP_sha512
-is associated with RSA so this will return
+For example,
+.Xr EVP_sha512 3
+is associated with RSA, so this returns
 .Dv NID_sha512WithRSAEncryption .
 Since digests and signature algorithms are no longer linked, this
 function is only retained for compatibility reasons.
 .Pp
+.Fn EVP_MD_CTX_type ,
 .Fn EVP_MD_CTX_size ,
-.Fn EVP_MD_CTX_block_size ,
 and
-.Fn EVP_MD_CTX_type
+.Fn EVP_MD_CTX_block_size
 are implemented as macros.
 .Sh RETURN VALUES
 .Fn EVP_MD_type ,
@@ -211,3 +215,14 @@ All these functions have been available since
 first appeared in OpenSSL 1.0.0
 and has been available since
 .Ox 4.9 .
+.Sh CAVEATS
+The behaviour of the functions taking an
+.Vt EVP_MD_CTX
+argument is undefined if they are called on a
+.Fa ctx
+that has no message digest configured yet,
+for example one freshly returned from
+.Xr EVP_MD_CTX_new 3 .
+In that case, the program may for example be terminated by a
+.Dv NULL
+pointer access.
