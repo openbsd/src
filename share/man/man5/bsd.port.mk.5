@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.613 2023/09/07 15:12:38 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.614 2023/09/07 15:23:00 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2665,6 +2665,10 @@ ports:
 .Bd -literal
 PATCH_LIST=${PORTSDIR}/x11/kde/libs2/patches/p-* patch-*
 .Ed
+.Pp
+But beware that minor variations will result in
+.Cm update-patches
+creating useless churn !
 .It Ev PATCH_STRIP
 Patch option used to strip directory levels while applying port's patches.
 Defaults to -p0.
