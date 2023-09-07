@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.30 2023/09/07 14:22:11 schwarze Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.31 2023/09/07 19:59:58 schwarze Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -89,7 +89,6 @@
 .Nm EVP_DigestInit ,
 .Nm EVP_DigestFinal ,
 .Nm EVP_MD_CTX_copy ,
-.Nm EVP_MAX_MD_SIZE ,
 .Nm EVP_MD_CTX_md ,
 .Nm EVP_md_null ,
 .Nm EVP_sha224 ,
@@ -177,7 +176,6 @@
 .Fa "EVP_MD_CTX *out"
 .Fa "EVP_MD_CTX *in"
 .Fc
-.Fd #define EVP_MAX_MD_SIZE 64	/* SHA512 */
 .Ft const EVP_MD *
 .Fo EVP_MD_CTX_md
 .Fa "const EVP_MD_CTX *ctx"
@@ -460,14 +458,19 @@ or
 if
 .Fa ctx
 is
-.Dv NULL .
+.Dv NULL
+or does not have any message digest algorithm assigned yet.
 .Pp
-.Fn EVP_md_null
+.Fn EVP_md_null ,
+.Fn EVP_sha224 ,
+.Fn EVP_sha256 ,
+.Fn EVP_sha384 ,
+.Fn EVP_sha512 ,
+.Fn EVP_sha512_224 ,
+.Fn EVP_sha512_256 ,
 and
 .Fn EVP_ripemd160
-return pointers to the corresponding
-.Vt EVP_MD
-structures.
+return pointers to constant static objects owned by the library.
 .Pp
 .Fn EVP_get_digestbyname ,
 .Fn EVP_get_digestbynid ,
@@ -551,9 +554,8 @@ main(int argc, char *argv[])
 .Sh HISTORY
 .Fn EVP_DigestInit ,
 .Fn EVP_DigestUpdate ,
-.Fn EVP_DigestFinal ,
 and
-.Dv EVP_MAX_MD_SIZE
+.Fn EVP_DigestFinal
 first appeared in SSLeay 0.5.1.
 .Fn EVP_md_null
 and
