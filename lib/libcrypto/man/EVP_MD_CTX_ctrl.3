@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_MD_CTX_ctrl.3,v 1.1 2023/09/07 14:22:11 schwarze Exp $
+.\" $OpenBSD: EVP_MD_CTX_ctrl.3,v 1.2 2023/09/07 19:28:37 schwarze Exp $
 .\" full merge up to: OpenSSL man3/EVP_DigestInit.pod
 .\" 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -246,6 +246,12 @@ returns 1 for success or 0 for failure.
 returns the bitwise OR of the
 .Fa flags
 argument and the flags set in
+.Fa ctx .
+.Pp
+.Fn EVP_MD_CTX_pkey_ctx
+and
+.Fn EVP_MD_CTX_md_data
+return pointers to storage owned by
 .Fa ctx .
 .Sh SEE ALSO
 .Xr evp 3 ,
