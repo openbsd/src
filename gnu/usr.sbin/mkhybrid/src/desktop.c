@@ -36,6 +36,8 @@
 /* from "data.h" - libhfs routines */
 void d_putw(unsigned char *, short);
 void d_putl(unsigned char *, long);
+/* from volume.c */
+void write_fork(hfsfile *, long);
 
 extern hce_mem *hce;		/* libhfs/mkisofs extras */
 

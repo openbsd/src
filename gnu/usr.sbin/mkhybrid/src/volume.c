@@ -19,6 +19,11 @@
 #include "write.h"
 #include <errno.h>
 
+/* from desktop.c */
+int make_desktop(hfsvol *, int);
+/* from libhfs_iso/hfs.c */
+void hfs_vsetbless(hfsvol *, unsigned long);
+
 static hfsvol *vol_save = 0;	/* used to "destroy" an HFS volume */
 
 int DECL(copy_to_mac_vol, (hfsvol *, struct directory *));

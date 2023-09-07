@@ -24,6 +24,9 @@
 #include "mac_label_proto.h"
 #include <mac_label.h>
 
+/* from libhfs_iso/data.h */
+short d_getw(unsigned char *);
+
 int
 gen_mac_label(defer *mac_boot)
 {
