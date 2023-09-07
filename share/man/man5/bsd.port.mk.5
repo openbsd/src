@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.614 2023/09/07 15:23:00 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.615 2023/09/07 15:28:48 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2769,7 +2769,10 @@ as per default.
 Setting of env variable
 .Ev HOME
 for most shell invocations.
-Default will trip ports that try to write into $HOME while building.
+Default will trip ports that try to write into $HOME while building:
+non-existent
+.Pa /${PKGPATH}_writes_to_HOME/ .
+
 .It Ev PORTPATH
 Path used by most shell invocations.
 Don't override unless really needed.
