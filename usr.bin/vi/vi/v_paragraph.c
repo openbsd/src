@@ -1,4 +1,4 @@
-/*	$OpenBSD: v_paragraph.c,v 1.9 2017/04/18 01:45:35 deraadt Exp $	*/
+/*	$OpenBSD: v_paragraph.c,v 1.10 2023/09/07 11:17:32 tobhe Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -41,15 +41,20 @@
 	if (p[0] == '\014') {						\
 		if (!--cnt)						\
 			goto found;					\
+		if (pstate == P_INTEXT && !--cnt)			\
+			goto found;					\
 		continue;						\
 	}								\
 	if (p[0] != '.' || len < 2)					\
 		continue;						\
 	for (lp = VIP(sp)->ps; *lp != '\0'; lp += 2)			\
 		if (lp[0] == p[1] &&					\
-		    ((lp[1] == ' ' && len == 2) || lp[1] == p[2]) &&	\
-		    !--cnt)						\
-			goto found;					\
+		    (lp[1] == ' ' && len == 2 || lp[1] == p[2])) {	\
+			if (!--cnt)					\
+				goto found;				\
+			if (pstate == P_INTEXT && !--cnt)		\
+				goto found;				\
+		}							\
 }
 
 /*
