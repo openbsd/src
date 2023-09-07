@@ -30748,6 +30748,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "8821AE",
 	},
 	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8852AE,
+	    "8852AE",
+	},
+	{
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8723BE,
 	    "8723BE",
 	},
