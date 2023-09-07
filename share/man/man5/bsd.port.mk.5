@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.616 2023/09/07 17:15:29 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.617 2023/09/07 17:17:43 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -3201,6 +3201,15 @@ to handle this mechanism correctly.
 User settings.
 List of sites to try after normal master sites.
 Normally includes ${SITE_OPENBSD} and ${SITE_FREEBSD}.
+.Po
+For now the ports tree is transitioning from
+.Ev MASTER_SITES*
+to
+.Ev SITES*
+which means that
+.Ev MASTER_SITE_BACKUP
+should be set instead until the transition is complete.
+.Pc
 .It Ev SITE_*
 Lists of standard sites to retrieve files from, refer to
 .Pa ${PORTSDIR}/infrastructure/db/network.conf
