@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.619 2023/09/07 17:24:39 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.620 2023/09/07 17:26:14 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1801,9 +1801,9 @@ If defined,
 .Nm
 will provide dummy values for variables mandatory for a minimally functional
 port.
-Used by
+Used by the
 .Pa sqlports
-and
+package and
 .Xr dpb 1
 to perform introspection and obtain
 .Nm Ns 's
@@ -1865,7 +1865,9 @@ and
 for other common issues).
 .Pp
 Note that setting fatal errors defeats all introspection mechanisms and breaks
-.Pa sqlports .
+the
+.Pa sqlports
+package.
 .Pp
 Tip: if you need to debug a fatal error, you can always override
 .Ev ERRORS
@@ -3413,7 +3415,9 @@ Set to the list of special targets for a port
 .Cm {pre,do,post}-*
 and module hooks
 .Pc .
-Used by introspection tools such as the sqlports package.
+Used by introspection tools such as the
+.Pa sqlports
+package.
 .It Ev TEMPLATE_DISTFILES.<name>
 Template used to construct
 .Ev DISTFILES.name
