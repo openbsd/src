@@ -23,10 +23,10 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ports.7,v 1.131 2023/02/19 14:37:54 sdk Exp $
+.\" $OpenBSD: ports.7,v 1.132 2023/09/07 17:19:19 espie Exp $
 .\" $FreeBSD: ports.7,v 1.7 1998/06/23 04:38:50 hoek Exp $
 .\"
-.Dd $Mdocdate: February 19 2023 $
+.Dd $Mdocdate: September 7 2023 $
 .Dt PORTS 7
 .Os
 .Sh NAME
@@ -242,7 +242,7 @@ or
 .It Cm fetch
 Fetch all of the files needed to build this port from the site(s)
 listed in
-.Ev MASTER_SITES .
+.Ev SITES .
 See
 .Ev FETCH_CMD .
 Use
@@ -563,7 +563,7 @@ Variable names starting with
 .Sq _
 are private to the ports infrastructure,
 should not be changed by the user, and are liable to change without notice.
-.Bl -tag -width MASTER_SITES
+.Bl -tag -width PORTS_PRIVSEP
 .It Ev PORTS_PRIVSEP
 If set to
 .Sq Yes ,
@@ -599,7 +599,7 @@ If set to empty, it will revert to a file under
 Where to install things in general
 (usually
 .Pa /usr/local ) .
-.It Ev MASTER_SITES
+.It Ev SITES
 Primary sites for distribution files if not found locally.
 .It Ev CLEANDEPENDS
 If set to
