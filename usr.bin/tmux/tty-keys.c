@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.169 2023/09/07 07:19:21 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.170 2023/09/07 10:21:46 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1396,6 +1396,9 @@ tty_keys_device_attributes2(struct tty *tty, const char *buf, size_t len,
 	/* Add terminal features. */
 	switch (p[0]) {
 	case 41: /* VT420 */
+	case 61: /* VT510 */
+	case 64: /* VT520 */
+	case 65: /* VT525 */
 		tty_add_features(features, "margins,rectfill", ",");
 		break;
 	case 'M': /* mintty */
