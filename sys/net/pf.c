@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1184 2023/07/31 11:13:09 dlg Exp $ */
+/*	$OpenBSD: pf.c,v 1.1185 2023/09/07 09:59:43 sashan Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4148,6 +4148,10 @@ enter_ruleset:
 			    (r->rule_flag & PFRULE_STATESLOPPY) == 0 &&
 			    ctx->icmp_dir != PF_IN),
 				TAILQ_NEXT(r, entries));
+			/* icmp packet must match existing state */
+			PF_TEST_ATTRIB(r->keep_state && ctx->state_icmp &&
+			    (r->rule_flag & PFRULE_STATESLOPPY) == 0,
+				TAILQ_NEXT(r, entries));
 			break;
 
 		case IPPROTO_ICMPV6:
@@ -4164,6 +4168,10 @@ enter_ruleset:
 			    (r->rule_flag & PFRULE_STATESLOPPY) == 0 &&
 			    ctx->icmp_dir != PF_IN &&
 			    ctx->icmptype != ND_NEIGHBOR_ADVERT),
+				TAILQ_NEXT(r, entries));
+			/* icmp packet must match existing state */
+			PF_TEST_ATTRIB(r->keep_state && ctx->state_icmp &&
+			    (r->rule_flag & PFRULE_STATESLOPPY) == 0,
 				TAILQ_NEXT(r, entries));
 			break;
 
