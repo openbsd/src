@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.618 2023/09/07 17:21:10 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.619 2023/09/07 17:24:39 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -3380,14 +3380,13 @@ in
 the ports tree will only invoke root's privileges for the parts that
 really require it.
 .It Ev SUPDISTFILES*
-Supplementary files that need to be retrieved under some specific
-circumstances.
-For instance, a port might need architecture-specific files.
+Supplementary distribution files for mirroring and creating checksums with
+.Cm makesum .
+For instance, a port might need architecture-specific files, or have
+some flavor that requires more code.
 .Ev SUPDISTFILES*
-should hold a list of all distribution files and patchfiles that are not
-always needed, so that a mirror will be able to grab all files, or that
-.Cm makesum
-will work.
+should hold a list of all those distribution files and patchfiles
+that are not always needed.
 Having an overlap between
 .Ev SUPDISTFILES*
 and
