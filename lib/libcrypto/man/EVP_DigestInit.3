@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_DigestInit.3,v 1.29 2023/08/27 15:33:08 schwarze Exp $
+.\" $OpenBSD: EVP_DigestInit.3,v 1.30 2023/09/07 14:22:11 schwarze Exp $
 .\" full merge up to: OpenSSL 7f572e95 Dec 2 13:57:04 2015 +0000
 .\" selective merge up to: OpenSSL 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -70,7 +70,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 27 2023 $
+.Dd $Mdocdate: September 7 2023 $
 .Dt EVP_DIGESTINIT 3
 .Os
 .Sh NAME
@@ -81,10 +81,6 @@
 .Nm EVP_MD_CTX_create ,
 .Nm EVP_MD_CTX_cleanup ,
 .Nm EVP_MD_CTX_destroy ,
-.Nm EVP_MD_CTX_ctrl ,
-.Nm EVP_MD_CTX_set_flags ,
-.Nm EVP_MD_CTX_clear_flags ,
-.Nm EVP_MD_CTX_test_flags ,
 .Nm EVP_DigestInit_ex ,
 .Nm EVP_DigestUpdate ,
 .Nm EVP_DigestFinal_ex ,
@@ -94,18 +90,7 @@
 .Nm EVP_DigestFinal ,
 .Nm EVP_MD_CTX_copy ,
 .Nm EVP_MAX_MD_SIZE ,
-.Nm EVP_MD_type ,
-.Nm EVP_MD_pkey_type ,
-.Nm EVP_MD_size ,
-.Nm EVP_MD_block_size ,
-.Nm EVP_MD_flags ,
 .Nm EVP_MD_CTX_md ,
-.Nm EVP_MD_CTX_size ,
-.Nm EVP_MD_CTX_block_size ,
-.Nm EVP_MD_CTX_type ,
-.Nm EVP_MD_CTX_md_data ,
-.Nm EVP_MD_CTX_pkey_ctx ,
-.Nm EVP_MD_CTX_set_pkey_ctx ,
 .Nm EVP_md_null ,
 .Nm EVP_sha224 ,
 .Nm EVP_sha256 ,
@@ -143,28 +128,6 @@
 .Ft void
 .Fo EVP_MD_CTX_destroy
 .Fa "EVP_MD_CTX *ctx"
-.Fc
-.Ft int
-.Fo EVP_MD_CTX_ctrl
-.Fa "EVP_MD_CTX *ctx"
-.Fa "int command"
-.Fa "int p1"
-.Fa "void* p2"
-.Fc
-.Ft void
-.Fo EVP_MD_CTX_set_flags
-.Fa "EVP_MD_CTX *ctx"
-.Fa "int flags"
-.Fc
-.Ft void
-.Fo EVP_MD_CTX_clear_flags
-.Fa "EVP_MD_CTX *ctx"
-.Fa "int flags"
-.Fc
-.Ft int
-.Fo EVP_MD_CTX_test_flags
-.Fa "const EVP_MD_CTX *ctx"
-.Fa "int flags"
 .Fc
 .Ft int
 .Fo EVP_DigestInit_ex
@@ -215,54 +178,9 @@
 .Fa "EVP_MD_CTX *in"
 .Fc
 .Fd #define EVP_MAX_MD_SIZE 64	/* SHA512 */
-.Ft int
-.Fo EVP_MD_type
-.Fa "const EVP_MD *md"
-.Fc
-.Ft int
-.Fo EVP_MD_pkey_type
-.Fa "const EVP_MD *md"
-.Fc
-.Ft int
-.Fo EVP_MD_size
-.Fa "const EVP_MD *md"
-.Fc
-.Ft int
-.Fo EVP_MD_block_size
-.Fa "const EVP_MD *md"
-.Fc
-.Ft unsigned long
-.Fo EVP_MD_flags
-.Fa "const EVP_MD *md"
-.Fc
 .Ft const EVP_MD *
 .Fo EVP_MD_CTX_md
 .Fa "const EVP_MD_CTX *ctx"
-.Fc
-.Ft int
-.Fo EVP_MD_CTX_size
-.Fa "const EVP_MD_CTX *ctx"
-.Fc
-.Ft int
-.Fo EVP_MD_CTX_block_size
-.Fa "const EVP_MD_CTX *ctx"
-.Fc
-.Ft int
-.Fo EVP_MD_CTX_type
-.Fa "const EVP_MD_CTX *ctx"
-.Fc
-.Ft void *
-.Fo EVP_MD_CTX_md_data
-.Fa "const EVP_MD_CTX *ctx"
-.Fc
-.Ft EVP_PKEY_CTX *
-.Fo EVP_MD_CTX_pkey_ctx
-.Fa "const EVP_MD_CTX *ctx"
-.Fc
-.Ft void
-.Fo EVP_MD_CTX_set_pkey_ctx
-.Fa "EVP_MD_CTX *ctx"
-.Fa "EVP_PKEY_CTX *pctx"
 .Fc
 .Ft const EVP_MD *
 .Fn EVP_md_null void
@@ -328,70 +246,6 @@ are deprecated aliases for
 and
 .Fn EVP_MD_CTX_free ,
 respectively.
-.Pp
-.Fn EVP_MD_CTX_ctrl
-performs the digest-specific control
-.Fa command
-with the command-specific arguments
-.Fa p1
-and
-.Fa p2
-on
-.Fa ctx ,
-which needs to already be set up with
-.Fn EVP_DigestInit_ex
-before calling this function.
-Other restrictions may apply depending on the control
-.Fa command
-and digest implementation.
-.Pp
-If the
-.Fa command
-is
-.Dv EVP_MD_CTRL_MICALG ,
-.Fa p1
-is ignored and
-.Fa p2
-is an output argument of the type
-.Fa "char **p2" .
-A string specifying the digest Message Integrity Check algorithm
-is allocated and a pointer to this string is returned in
-.Pf * Fa p2 .
-It is the responsibility of the caller to
-.Xr free 3
-.Pf * Fa p2
-when it is no longer needed.
-This
-.Fa command
-is used by
-.Xr SMIME_write_ASN1 3
-when creating S/MIME multipart/signed messages as specified in RFC 3851.
-.Pp
-.Fn EVP_MD_CTX_set_flags
-sets and
-.Fn EVP_MD_CTX_clear_flags
-clears all the flag bits in
-.Fa ctx
-that are set in the
-.Fa flags
-argument.
-.Fn EVP_MD_CTX_test_flags
-tests which of the flag bits that are set in the
-.Fa flags
-argument are also set in
-.Fa ctx .
-Possible flag bits are:
-.Bl -tag -width Ds -offset 2n
-.It Dv EVP_MD_CTX_FLAG_NO_INIT
-Instruct
-.Fn EVP_DigestInit_ex
-and functions calling it not to initialise the internal data
-that is specific to the digest method and its implementation.
-.It Dv EVP_MD_CTX_FLAG_ONESHOT
-Instruct the digest to optimize for one update only, if possible.
-For digest algorithms built into the library, this flag usually
-has no effect.
-.El
 .Pp
 .Fn EVP_DigestInit_ex
 sets up the digest context
@@ -505,111 +359,6 @@ except that it requires
 before a context that was already used can be passed as
 .Fa out .
 .Pp
-.Fn EVP_MD_size
-and
-.Fn EVP_MD_CTX_size
-return the size of the message digest when passed an
-.Vt EVP_MD
-or an
-.Vt EVP_MD_CTX
-structure, i.e. the size of the hash.
-.Pp
-.Fn EVP_MD_block_size
-and
-.Fn EVP_MD_CTX_block_size
-return the block size of the message digest when passed an
-.Vt EVP_MD
-or an
-.Vt EVP_MD_CTX
-structure.
-.Pp
-.Fn EVP_MD_type
-and
-.Fn EVP_MD_CTX_type
-return the NID of the OBJECT IDENTIFIER representing the message digest.
-For example
-.Fn EVP_MD_type EVP_sha512()
-returns
-.Dv NID_sha512 .
-These functions are normally used when setting ASN.1 OIDs.
-.Pp
-.Fn EVP_MD_CTX_md_data
-returns the digest method private data of
-.Fa ctx .
-The space was allocated and its size set with
-.Xr EVP_MD_meth_set_app_datasize 3 .
-.Pp
-.Fn EVP_MD_flags
-returns the
-.Fa md
-flags.
-These are different from the
-.Vt EVP_MD_CTX
-ones.
-See
-.Xr EVP_MD_meth_set_flags 3
-for more information.
-.Pp
-.Fn EVP_MD_pkey_type
-returns the NID of the public key signing algorithm associated with this
-digest.
-For example
-.Fn EVP_sha512
-is associated with RSA so this will return
-.Dv NID_sha512WithRSAEncryption .
-Since digests and signature algorithms are no longer linked, this
-function is only retained for compatibility reasons.
-.Pp
-.Fn EVP_MD_CTX_pkey_ctx
-returns the
-.Vt EVP_PKEY_CTX
-assigned to
-.Fa ctx .
-The returned pointer should not be freed by the caller.
-.Pp
-.Fn EVP_MD_CTX_set_pkey_ctx
-assigns
-.Fa pctx
-to
-.Fa ctx .
-This is normally used to provide a customized
-.Vt EVP_PKEY_CTX
-to
-.Xr EVP_DigestSignInit 3
-or
-.Xr EVP_DigestVerifyInit 3 .
-The caller retains ownership of the
-.Fa pctx
-passed to this function and is responsible for freeing it
-when it is no longer needed.
-.Pp
-If the
-.Fa ctx
-already contains a
-.Vt EVP_PKEY_CTX
-when this function is called, that old
-.Vt EVP_PKEY_CTX
-is freed if it was created internally, but if it was also installed with
-.Fn EVP_MD_CTX_set_pkey_ctx ,
-the pointer to the old
-.Vt EVP_PKEY_CTX
-is merely replaced by the new pointer and ownership of the old
-.Vt EVP_PKEY_CTX
-remains with the previous caller.
-.Pp
-Passing a
-.Dv NULL
-pointer for the
-.Fa pctx
-argument is also allowed.
-In that case, any
-.Vt EVP_PKEY_CTX
-already assigned to
-.Fa ctx
-is dissociated from it as described above, but no new
-.Vt EVP_PKEY_CTX
-is assigned.
-.Pp
 .Fn EVP_sha224 ,
 .Fn EVP_sha256 ,
 .Fn EVP_sha384 ,
@@ -642,10 +391,7 @@ return an
 structure when passed a digest name, a digest NID, or an ASN1_OBJECT
 structure respectively.
 .Pp
-.Fn EVP_MD_CTX_size ,
-.Fn EVP_MD_CTX_block_size ,
-.Fn EVP_MD_CTX_type ,
-.Fn EVP_get_digestbynid ,
+.Fn EVP_get_digestbynid
 and
 .Fn EVP_get_digestbyobj
 are implemented as macros.
@@ -693,7 +439,6 @@ and
 .Fn EVP_MD_CTX_cleanup
 always return 1.
 .Pp
-.Fn EVP_MD_CTX_ctrl ,
 .Fn EVP_DigestInit_ex ,
 .Fn EVP_DigestUpdate ,
 .Fn EVP_DigestFinal_ex ,
@@ -704,27 +449,6 @@ always return 1.
 and
 .Fn EVP_MD_CTX_copy
 return 1 for success or 0 for failure.
-.Pp
-.Fn EVP_MD_CTX_test_flags
-returns the bitwise OR of the
-.Fa flags
-argument and the flags set in
-.Fa ctx .
-.Pp
-.Fn EVP_MD_type ,
-.Fn EVP_MD_pkey_type ,
-and
-.Fn EVP_MD_CTX_type
-return the NID of the corresponding OBJECT IDENTIFIER or
-.Dv NID_undef
-if none exists.
-.Pp
-.Fn EVP_MD_size ,
-.Fn EVP_MD_block_size ,
-.Fn EVP_MD_CTX_size ,
-and
-.Fn EVP_MD_CTX_block_size
-return the digest or block size in bytes.
 .Pp
 .Fn EVP_MD_CTX_md
 returns the
@@ -805,7 +529,9 @@ main(int argc, char *argv[])
 .Xr EVP_BytesToKey 3 ,
 .Xr EVP_DigestSignInit 3 ,
 .Xr EVP_DigestVerifyInit 3 ,
+.Xr EVP_MD_CTX_ctrl 3 ,
 .Xr EVP_MD_meth_new 3 ,
+.Xr EVP_MD_nid 3 ,
 .Xr EVP_PKEY_CTX_set_signature_md 3 ,
 .Xr EVP_PKEY_meth_set_signctx 3 ,
 .Xr EVP_sha1 3 ,
@@ -829,24 +555,14 @@ main(int argc, char *argv[])
 and
 .Dv EVP_MAX_MD_SIZE
 first appeared in SSLeay 0.5.1.
-.Fn EVP_MD_size
-first appeared in SSLeay 0.6.6.
-.Fn EVP_MD_CTX_size ,
-.Fn EVP_MD_CTX_type ,
-.Fn EVP_md_null ,
+.Fn EVP_md_null
 and
 .Fn EVP_get_digestbyname
 first appeared in SSLeay 0.8.0.
-.Fn EVP_MD_type ,
-.Fn EVP_MD_pkey_type ,
-.Fn EVP_get_digestbynid ,
+.Fn EVP_get_digestbynid
 and
 .Fn EVP_get_digestbyobj
 first appeared in SSLeay 0.8.1.
-.Fn EVP_MD_block_size ,
-.Fn EVP_MD_CTX_size ,
-.Fn EVP_MD_CTX_block_size ,
-and
 .Fn EVP_ripemd160
 first appeared in SSLeay 0.9.0.
 All these functions have been available since
@@ -864,9 +580,6 @@ first appeared in OpenSSL 0.9.5 and has been available since
 .Fn EVP_MD_CTX_create ,
 .Fn EVP_MD_CTX_cleanup ,
 .Fn EVP_MD_CTX_destroy ,
-.Fn EVP_MD_CTX_set_flags ,
-.Fn EVP_MD_CTX_clear_flags ,
-.Fn EVP_MD_CTX_test_flags ,
 .Fn EVP_DigestInit_ex ,
 .Fn EVP_DigestFinal_ex ,
 .Fn EVP_Digest ,
@@ -884,30 +597,12 @@ first appeared in OpenSSL 0.9.7h and 0.9.8a
 and have been available since
 .Ox 4.0 .
 .Pp
-.Fn EVP_MD_flags
-first appeared in OpenSSL 1.0.0
-and has been available since
-.Ox 4.9 .
-.Pp
-.Fn EVP_MD_CTX_ctrl
-first appeared in OpenSSL 1.1.0 and has been available since
-.Ox 5.7 .
-.Pp
 .Fn EVP_MD_CTX_new ,
 .Fn EVP_MD_CTX_reset ,
 and
 .Fn EVP_MD_CTX_free
 first appeared in OpenSSL 1.1.0 and have been available since
 .Ox 6.3 .
-.Pp
-.Fn EVP_MD_CTX_md_data
-and
-.Fn EVP_MD_CTX_pkey_ctx
-first appeared in OpenSSL 1.1.0 and
-.Fn EVP_MD_CTX_set_pkey_ctx
-in OpenSSL 1.1.1.
-These functions have been available since
-.Ox 7.1 .
 .Pp
 .Fn EVP_sha512_224
 and
