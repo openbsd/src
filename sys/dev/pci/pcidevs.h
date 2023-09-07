@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2048 2023/09/06 23:47:14 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2049 2023/09/07 01:41:09 jsg Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7324,6 +7324,7 @@
 #define	PCI_PRODUCT_MELLANOX_MT28908	0x101b		/* ConnectX-6 */
 #define	PCI_PRODUCT_MELLANOX_MT28908VF	0x101c		/* ConnectX-6 VF */
 #define	PCI_PRODUCT_MELLANOX_MT2892	0x101d		/* ConnectX-6 Dx */
+#define	PCI_PRODUCT_MELLANOX_MT2894	0x101f		/* ConnectX-6 Lx */
 #define	PCI_PRODUCT_MELLANOX_CONNECTX_EN	0x6368		/* ConnectX EN */
 
 /* Mentor */
