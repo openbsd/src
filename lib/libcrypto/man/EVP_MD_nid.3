@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_MD_nid.3,v 1.2 2023/09/07 15:57:04 schwarze Exp $
+.\" $OpenBSD: EVP_MD_nid.3,v 1.3 2023/09/07 16:32:41 schwarze Exp $
 .\" full merge up to: OpenSSL man3/EVP_DigestInit.pod
 .\" 24a535ea Sep 22 13:14:20 2020 +0100
 .\"
@@ -69,11 +69,13 @@
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd $Mdocdate: September 7 2023 $
-.Dt EVP_MD_TYPE 3
+.Dt EVP_MD_NID 3
 .Os
 .Sh NAME
+.Nm EVP_MD_nid ,
 .Nm EVP_MD_type ,
 .Nm EVP_MD_CTX_type ,
+.Nm EVP_MD_name ,
 .Nm EVP_MD_size ,
 .Nm EVP_MD_CTX_size ,
 .Nm EVP_MD_block_size ,
@@ -84,12 +86,20 @@
 .Sh SYNOPSIS
 .In openssl/evp.h
 .Ft int
+.Fo EVP_MD_nid
+.Fa "const EVP_MD *md"
+.Fc
+.Ft int
 .Fo EVP_MD_type
 .Fa "const EVP_MD *md"
 .Fc
 .Ft int
 .Fo EVP_MD_CTX_type
 .Fa "const EVP_MD_CTX *ctx"
+.Fc
+.Ft const char *
+.Fo EVP_MD_name
+.Fa "const EVP_MD *md"
 .Fc
 .Ft int
 .Fo EVP_MD_size
@@ -116,8 +126,10 @@
 .Fa "const EVP_MD *md"
 .Fc
 .Sh DESCRIPTION
+.Fn EVP_MD_nid
+and
 .Fn EVP_MD_type
-returns the numerical identifier (NID) of
+are identical and return the numerical identifier (NID) of
 .Fa md .
 The NID is an internal value which may or may not have
 a corresponding ASN.1 OBJECT IDENTIFIER; see
@@ -132,6 +144,12 @@ returns the NID of the message digest algorithm that
 .Fa ctx
 is configured to use.
 These functions are normally used when setting ASN.1 OIDs.
+.Pp
+.Fn EVP_MD_name
+converts the NID of
+.Fa md
+to its short name with
+.Xr OBJ_nid2sn 3 .
 .Pp
 .Fn EVP_MD_size
 returns the size in bytes of the message digests (hashes) produced by
@@ -169,12 +187,15 @@ is associated with RSA, so this returns
 Since digests and signature algorithms are no longer linked, this
 function is only retained for compatibility reasons.
 .Pp
+.Fn EVP_MD_nid ,
 .Fn EVP_MD_CTX_type ,
+.Fn EVP_MD_name ,
 .Fn EVP_MD_CTX_size ,
 and
 .Fn EVP_MD_CTX_block_size
 are implemented as macros.
 .Sh RETURN VALUES
+.Fn EVP_MD_nid ,
 .Fn EVP_MD_type ,
 .Fn EVP_MD_CTX_type ,
 and
@@ -182,6 +203,15 @@ and
 return the NID of the corresponding OBJECT IDENTIFIER or
 .Dv NID_undef
 if none exists.
+.Pp
+.Fn EVP_MD_name
+returns a pointer to a string
+that is owned by an internal library object or
+.Dv NULL
+if the NID is neither built into the library nor added to the global
+object table by one of the functions documented in the manual page
+.Xr OBJ_create 3 ,
+or if the object does not contain a short name.
 .Pp
 .Fn EVP_MD_size ,
 .Fn EVP_MD_CTX_size ,
@@ -192,7 +222,8 @@ return the digest or block size in bytes.
 .Sh SEE ALSO
 .Xr evp 3 ,
 .Xr EVP_DigestInit 3 ,
-.Xr EVP_MD_CTX_ctrl 3
+.Xr EVP_MD_CTX_ctrl 3 ,
+.Xr OBJ_nid2obj 3
 .Sh HISTORY
 .Fn EVP_MD_size
 first appeared in SSLeay 0.6.6,
@@ -210,6 +241,12 @@ and
 in SSLeay 0.9.0.
 All these functions have been available since
 .Ox 2.4 .
+.Pp
+.Fn EVP_MD_nid
+and
+.Fn EVP_MD_name
+first appeared in OpenSSL 0.9.7 and have been available since
+.Ox 3.2 .
 .Pp
 .Fn EVP_MD_flags
 first appeared in OpenSSL 1.0.0
