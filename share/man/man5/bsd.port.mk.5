@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.615 2023/09/07 15:28:48 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.616 2023/09/07 17:15:29 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2994,8 +2994,8 @@ and
 .Xr pkg_create 1
 to use their progress-meter even in the absence of a terminal.
 .It Ev PROPERTIES
-List of properties specific to a given machine architecture.
-Most often obtained through
+List of properties specific to a given machine architecture,
+obtained through the inclusion of
 .Xr bsd.port.arch.mk 5 .
 These can be checked like this
 .Bd -literal -offset indent
@@ -3194,7 +3194,9 @@ port.
 Porters of software using libtool should make sure
 .Ev MAKE_FLAGS
 get propagated to the libtool invocations.
-This should be enough in most cases.
+.Pp
+Most common build systems in the ports tree have been modified
+to handle this mechanism correctly.
 .It Ev SITE_BACKUP
 User settings.
 List of sites to try after normal master sites.
