@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.168 2023/09/02 20:03:10 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.169 2023/09/07 07:19:21 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1314,11 +1314,16 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
 			break;
 	}
 
-	/* Add terminal features. */
+	/*
+	 * Add terminal features. Technically, VT420 and VT525 do not support
+	 * SIXEL, but some modern terminals report it anyway so we accept it
+	 * here too.
+	 */
 	switch (p[0]) {
 	case 62: /* VT220 */
 	case 63: /* VT320 */
 	case 64: /* VT420 */
+	case 65: /* VT525 */
 		for (i = 1; i < n; i++) {
 			log_debug("%s: DA feature: %d", c->name, p[i]);
 			if (p[i] == 4)
