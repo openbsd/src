@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd_local.h,v 1.5 2019/04/01 11:05:41 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd_local.h,v 1.6 2023/09/08 05:56:22 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013 Internet Initiative Japan Inc.
@@ -122,6 +122,7 @@ struct radius_query {
 	int				 req_modified;
 	char				 username[256]; /* original username */
 	TAILQ_ENTRY(radius_query)	 next;
+	struct radiusd_module_ref	*deco;
 };
 #ifndef nitems
 #define nitems(_x)    (sizeof((_x)) / sizeof((_x)[0]))
@@ -149,6 +150,12 @@ struct radius_query {
 #define	MODULE_DO_ACCSREQ(_m)					\
 	((_m)->fd >= 0 &&					\
 	    ((_m)->capabilities & RADIUSD_MODULE_CAP_ACCSREQ) != 0)
+#define	MODULE_DO_REQDECO(_m)					\
+	((_m)->fd >= 0 &&					\
+	    ((_m)->capabilities & RADIUSD_MODULE_CAP_REQDECO) != 0)
+#define	MODULE_DO_RESDECO(_m)					\
+	((_m)->fd >= 0 &&					\
+	    ((_m)->capabilities & RADIUSD_MODULE_CAP_RESDECO) != 0)
 
 extern struct radiusd_module mod_standard;
 extern struct radiusd_module mod_radius;

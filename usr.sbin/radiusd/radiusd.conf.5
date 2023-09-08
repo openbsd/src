@@ -1,7 +1,7 @@
-.\"	$OpenBSD: radiusd.conf.5,v 1.16 2023/09/04 12:28:18 yasuoka Exp $
+.\"	$OpenBSD: radiusd.conf.5,v 1.17 2023/09/08 05:56:22 yasuoka Exp $
 .\"
 .\" Copyright (c) 2014 Esdenera Networks GmbH
-.\" Copyright (c) 2014 Internet Initiative Japan Inc.
+.\" Copyright (c) 2014, 2023 Internet Initiative Japan Inc.
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
 .\" purpose with or without fee is hereby granted, provided that the above
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 4 2023 $
+.Dd $Mdocdate: September 8 2023 $
 .Dt RADIUSD.CONF 5
 .Os
 .Sh NAME
@@ -68,6 +68,7 @@ The following modules are available:
 .It Sy "Path" Ta Sy "Description"
 .It Pa /usr/libexec/radiusd/radiusd_bsdauth Ta Do bsdauth Dc module
 .It Pa /usr/libexec/radiusd/radiusd_radius Ta Do radius Dc module
+.It Pa /usr/libexec/radiusd/radiusd_standard Ta Do standard Dc module
 .El
 .Bl -tag -width Ds
 .It Do bsdauth Dc module
@@ -83,6 +84,11 @@ It only supports PAP, password based authentication.
 The
 .Dq radius
 module provides authentication from upstream RADIUS servers.
+.It Do standard Dc module
+The
+.Dq standard
+module provides standard decorations for Access-Request messages or its
+response messages.
 .El
 .It Ic module set Ar module key value ...
 Configure the module specific configurations by
@@ -146,6 +152,34 @@ and
 .Ar max-failover
 will not be used.
 .El
+.Pp
+The
+.Dq standard
+module supports the following configuration key and value:
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Ic strip-atmark-realm Ar true | false
+Remove the realm part which starts with @
+.Pq atmark
+from the User-Name attribute of the Access-Request.
+.Pp
+.It Ic strip-nt-domain Ar true | false
+Remove NT domain which ends with \\
+.Pq backslash
+from the User-Name attribute of the Access-Request.
+.Pp
+.It Cm remove-request-attribute Oo Ar vendor Oc Ar type
+.It Cm remove-response-attribute Oo Ar vendor Oc Ar type
+Remove all the specified attributes from request or response
+messages of Access-Request.
+Specify
+.Ar type
+of the attribute in a decimal number.
+To specify a vendor attribute,
+specify the Vendor-Id
+in a decimal number for
+.Ar vendor .
+.El
 .It Ic authenticate Ar username-pattern ... Brq ...
 Specify an authentication configuration for the users specified by
 .Ar username-pattern .
@@ -161,6 +195,8 @@ matches an authenticating user is used.
 It is followed by a block of options enclosed in curly brackets:
 .Bl -tag -width Ds
 .It Ic authenticate-by Ar module
+Specify the module name.
+.It Ic decorate-by Ar module
 Specify the module name.
 .El
 .El
@@ -182,28 +218,32 @@ module executable.
 .Sh EXAMPLES
 .Bd -literal -offset indent
 listen on 0.0.0.0
-#listen on ::
+listen on ::
 
 client 127.0.0.1/32 {
 	secret "secret"
+	msgauth-required no
 }
 client 192.168.0.0/24 {
 	secret "secret"
-	msgauth-required yes
 }
 
 module load bsdauth "/usr/libexec/radiusd/radiusd_bsdauth"
-module set bsdauth  restrict-group "operator"
+module set bsdauth restrict-group operator
 
 module load radius "/usr/libexec/radiusd/radiusd_radius"
 module set radius secret "testing123"
 module set radius server "127.0.0.1"
 
-authenticate *@example.com {
-	authenticate-by radius
+module load strip-realm "/usr/libexec/radiusd/radiusd_standard"
+module set strip-realm strip-atmark-realm true
+
+authenticate *@local {
+	authenticate-by bsdauth
+	decorate-by strip-realm
 }
 authenticate * {
-	authenticate-by bsdauth
+	authenticate-by radius
 }
 .Ed
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.16 2023/09/05 00:32:01 yasuoka Exp $	*/
+/*	$OpenBSD: parse.y,v 1.17 2023/09/08 05:56:22 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -349,7 +349,6 @@ authopt		: AUTHENTICATE_BY STRING {
 				YYERROR;
 			authen.auth = modref;
 		}
-		/* XXX decoration doesn't work for this moment.  */
 		| DECORATE_BY str_l {
 			int				 i;
 			struct radiusd_module_ref	*modref;

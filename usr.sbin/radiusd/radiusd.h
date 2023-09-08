@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.h,v 1.4 2019/04/03 11:54:56 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.h,v 1.5 2023/09/08 05:56:22 yasuoka Exp $	*/
 
 #ifndef	RADIUSD_H
 #define	RADIUSD_H 1
@@ -17,6 +17,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include <sys/types.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 #define	RADIUSD_MODULE_NAME_LEN		32
@@ -38,6 +40,10 @@ enum imsg_type {
 	/* Check the response's authenticator if the module doesn't */
 	IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER,
 	IMSG_RADIUSD_MODULE_ACCSREQ_ABORTED,
+	IMSG_RADIUSD_MODULE_REQDECO,
+	IMSG_RADIUSD_MODULE_REQDECO_DONE,
+	IMSG_RADIUSD_MODULE_RESDECO,
+	IMSG_RADIUSD_MODULE_RESDECO_DONE,
 	IMSG_RADIUSD_MODULE_STOP
 };
 
@@ -46,6 +52,8 @@ struct radiusd_module_load_arg {
 	uint32_t	cap;	/* module capabity bits */
 #define RADIUSD_MODULE_CAP_USERPASS	0x1
 #define RADIUSD_MODULE_CAP_ACCSREQ	0x2
+#define RADIUSD_MODULE_CAP_REQDECO	0x4
+#define RADIUSD_MODULE_CAP_RESDECO	0x8
 };
 
 struct radiusd_module_object {

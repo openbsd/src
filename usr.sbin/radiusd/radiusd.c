@@ -1,7 +1,7 @@
-/*	$OpenBSD: radiusd.c,v 1.31 2023/09/05 00:32:01 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.32 2023/09/08 05:56:22 yasuoka Exp $	*/
 
 /*
- * Copyright (c) 2013 Internet Initiative Japan Inc.
+ * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -17,13 +17,14 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <sys/queue.h>
+#include <sys/socket.h>
+#include <sys/time.h>
 #include <sys/uio.h>
 #include <sys/wait.h>
-#include <netinet/in.h>
 
-#include <dlfcn.h>
 #include <err.h>
 #include <errno.h>
 #include <event.h>
@@ -40,7 +41,6 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <util.h>
 
 #include <radius.h>
 
@@ -58,9 +58,8 @@ static void		 radiusd_on_sigterm(int, short, void *);
 static void		 radiusd_on_sigint(int, short, void *);
 static void		 radiusd_on_sighup(int, short, void *);
 static void		 radiusd_on_sigchld(int, short, void *);
-static int		 radius_query_request_decoration(struct radius_query *);
-static int		 radius_query_response_decoration(
-			    struct radius_query *);
+static void		 radius_query_request(struct radius_query *);
+static void		 radius_query_response(struct radius_query *);
 static const char	*radius_code_string(int);
 static int		 radiusd_access_response_fixup (struct radius_query *);
 
@@ -84,6 +83,12 @@ static void		 radiusd_module_userpass(struct radiusd_module *,
 			    struct radius_query *);
 static void		 radiusd_module_access_request(struct radiusd_module *,
 			    struct radius_query *);
+static void		 radiusd_module_request_decoration(
+			    struct radiusd_module *, struct radius_query *);
+static void		 radiusd_module_response_decoration(
+			    struct radiusd_module *, struct radius_query *);
+static int		 imsg_compose_radius_packet(struct imsgbuf *,
+			    uint32_t, u_int, RADIUS_PACKET *);
 
 static u_int		 radius_query_id_seq = 0;
 int			 debug = 0;
@@ -482,6 +487,7 @@ radiusd_listen_on_event(int fd, short evmask, void *ctx)
 					goto found;
 			}
 		}
+found:
 		if (authen == NULL) {
 			log_warnx("Received %s(code=%d) from %s id=%d "
 			    "username=%s: no `authenticate' matches.",
@@ -489,7 +495,6 @@ radiusd_listen_on_event(int fd, short evmask, void *ctx)
 			    req_id, username);
 			goto on_error;
 		}
-found:
 		RADIUSD_ASSERT(authen->auth != NULL);
 
 		if (!MODULE_DO_USERPASS(authen->auth->module) &&
@@ -515,25 +520,13 @@ found:
 		q->req_id = req_id;
 		radius_get_authenticator(packet, q->req_auth);
 
-		if (radius_query_request_decoration(q) != 0) {
-			log_warnx(
-			    "Received %s(code=%d) from %s id=%d username=%s "
-			    "q=%u: failed to decorate the request",
-			    radius_code_string(req_code), req_code, peerstr,
-			    q->req_id, q->username, q->id);
-			radiusd_access_request_aborted(q);
-			return;
-		}
 		log_info("Received %s(code=%d) from %s id=%d username=%s "
 		    "q=%u: `%s' authentication is starting",
 		    radius_code_string(req_code), req_code, peerstr, q->req_id,
 		    q->username, q->id, q->authen->auth->module->name);
 		TAILQ_INSERT_TAIL(&listn->radiusd->query, q, next);
 
-		if (MODULE_DO_ACCSREQ(authen->auth->module)) {
-			radiusd_module_access_request(authen->auth->module, q);
-		} else if (MODULE_DO_USERPASS(authen->auth->module))
-			radiusd_module_userpass(authen->auth->module, q);
+		radius_query_request(q);
 
 		return;
 	}
@@ -546,77 +539,52 @@ on_error:
 	return;
 }
 
-static int
-radius_query_request_decoration(struct radius_query *q)
+static void
+radius_query_request(struct radius_query *q)
 {
-	struct radiusd_module_ref	*deco;
+	struct radiusd_authentication	*authen = q->authen;
 
-	TAILQ_FOREACH(deco, &q->authen->deco, next) {
-		/* XXX decoration doesn't work for this moment.  */
-		if (deco->module->request_decoration != NULL &&
-		    deco->module->request_decoration(NULL, q) != 0) {
-			log_warnx("q=%u request decoration `%s' failed", q->id,
-			    deco->module->name);
-			return (-1);
-		}
+	/* first or next request decoration */
+	for (;;) {
+		if (q->deco == NULL)
+			q->deco = TAILQ_FIRST(&q->authen->deco);
+		else
+			q->deco = TAILQ_NEXT(q->deco, next);
+		if (q->deco == NULL || MODULE_DO_REQDECO(q->deco->module))
+			break;
 	}
 
-	return (0);
-}
-
-static int
-radius_query_response_decoration(struct radius_query *q)
-{
-	struct radiusd_module_ref	*deco;
-
-	TAILQ_FOREACH(deco, &q->authen->deco, next) {
-		/* XXX decoration doesn't work for this moment.  */
-		if (deco->module->response_decoration != NULL &&
-		    deco->module->response_decoration(NULL, q) != 0) {
-			log_warnx("q=%u response decoration `%s' failed", q->id,
-			    deco->module->name);
-			return (-1);
-		}
+	if (q->deco != NULL)
+		radiusd_module_request_decoration(q->deco->module, q);
+	else {
+		RADIUSD_ASSERT(authen->auth != NULL);
+		if (MODULE_DO_ACCSREQ(authen->auth->module))
+			radiusd_module_access_request(authen->auth->module, q);
+		else if (MODULE_DO_USERPASS(authen->auth->module))
+			radiusd_module_userpass(authen->auth->module, q);
 	}
-
-	return (0);
 }
 
-/***********************************************************************
- * Callback functions from the modules
- ***********************************************************************/
-void
-radiusd_access_request_answer(struct radius_query *q)
+static void
+radius_query_response(struct radius_query *q)
 {
 	int		 sz, res_id, res_code;
 	char		 buf[NI_MAXHOST + NI_MAXSERV + 30];
-	const char	*authen_secret = q->authen->auth->module->secret;
 
-	radius_set_request_packet(q->res, q->req);
-
-	if (authen_secret == NULL) {
-		/*
-		 * The module couldn't check the authenticators
-		 */
-		if (radius_check_response_authenticator(q->res,
-		    q->client->secret) != 0) {
-			log_info("Response from module has bad response "
-			    "authenticator: id=%d", q->id);
-			goto on_error;
-		}
-		if (radius_has_attr(q->res,
-		    RADIUS_TYPE_MESSAGE_AUTHENTICATOR) &&
-		    radius_check_message_authenticator(q->res,
-		    q->client->secret) != 0) {
-			log_info("Response from module has bad message "
-			    "authenticator: id=%d", q->id);
-			goto on_error;
-		}
+	/* first or next response decoration */
+	for (;;) {
+		if (q->deco == NULL)
+			q->deco = TAILQ_FIRST(&q->authen->deco);
+		else
+			q->deco = TAILQ_NEXT(q->deco, next);
+		if (q->deco == NULL || MODULE_DO_RESDECO(q->deco->module))
+			break;
 	}
 
-	/* Decorate the response */
-	if (radius_query_response_decoration(q) != 0)
-		goto on_error;
+	if (q->deco != NULL) {
+		radiusd_module_response_decoration(q->deco->module, q);
+		return;
+	}
 
 	if (radiusd_access_response_fixup(q) != 0)
 		goto on_error;
@@ -639,6 +607,45 @@ radiusd_access_request_answer(struct radius_query *q)
 	    radius_get_length(q->res), 0,
 	    (struct sockaddr *)&q->clientaddr, q->clientaddrlen)) <= 0)
 		log_warn("Sending a RADIUS response failed");
+on_error:
+	radiusd_access_request_aborted(q);
+
+}
+
+/***********************************************************************
+ * Callback functions from the modules
+ ***********************************************************************/
+void
+radiusd_access_request_answer(struct radius_query *q)
+{
+	const char	*authen_secret = q->authen->auth->module->secret;
+
+	radius_set_request_packet(q->res, q->req);
+
+	if (authen_secret == NULL) {
+		/*
+		 * The module diddn't check the authenticators
+		 */
+		if (radius_check_response_authenticator(q->res,
+		    q->client->secret) != 0) {
+			log_info("Response from module has bad response "
+			    "authenticator: id=%d", q->id);
+			goto on_error;
+		}
+		if (radius_has_attr(q->res,
+		    RADIUS_TYPE_MESSAGE_AUTHENTICATOR) &&
+		    radius_check_message_authenticator(q->res,
+		    q->client->secret) != 0) {
+			log_info("Response from module has bad message "
+			    "authenticator: id=%d", q->id);
+			goto on_error;
+		}
+	}
+
+	RADIUSD_ASSERT(q->deco == NULL);
+	radius_query_response(q);
+
+	return;
 on_error:
 	radiusd_access_request_aborted(q);
 }
@@ -754,23 +761,6 @@ radiusd_conf_init(struct radiusd *conf)
 	TAILQ_INIT(&conf->authen);
 	TAILQ_INIT(&conf->client);
 
-	/*
-	 * TODO: load the standard modules
-	 */
-#if 0
-static struct radiusd_module *radiusd_standard_modules[] = {
-	NULL
-};
-
-	u_int			 i;
-	struct radiusd_module	*module;
-	for (i = 0; radiusd_standard_modules[i] != NULL; i++) {
-		module = radiusd_create_module_class(
-		    radiusd_standard_modules[i]);
-		TAILQ_INSERT_TAIL(&conf->module, module, next);
-	}
-#endif
-
 	return;
 }
 
@@ -792,6 +782,9 @@ radiusd_access_response_fixup(struct radius_query *q)
 	    timingsafe_bcmp(q->req_auth, req_auth, 16) != 0) {
 		const char *olds = q->client->secret;
 		const char *news = authen_secret;
+
+		if (news == NULL)
+			news = olds;
 
 		/* RFC 2865 Tunnel-Password */
 		attrlen = sizeof(attrlen);
@@ -1238,28 +1231,77 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 		break;
 	    }
 	case IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER:
+	case IMSG_RADIUSD_MODULE_REQDECO_DONE:
+	case IMSG_RADIUSD_MODULE_RESDECO_DONE:
 	    {
 		static struct radiusd_module_radpkt_arg *ans;
+		const char *typestr = "unknown";
+
+		switch (imsg->hdr.type) {
+		case IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER:
+			typestr = "ACCSREQ_ANSWER";
+			break;
+		case IMSG_RADIUSD_MODULE_REQDECO_DONE:
+			typestr = "REQDECO_DONE";
+			break;
+		case IMSG_RADIUSD_MODULE_RESDECO_DONE:
+			typestr = "RESDECO_DONE";
+			break;
+		}
+
 		if (datalen <
 		    (ssize_t)sizeof(struct radiusd_module_radpkt_arg)) {
-			log_warnx("Received ACCSREQ_ANSWER message, but "
-			    "length is wrong");
+			log_warnx("Received %s message, but length is wrong",
+			    typestr);
 			break;
 		}
 		q_id = ((struct radiusd_module_radpkt_arg *)imsg->data)->q_id;
 		q = radiusd_find_query(module->radiusd, q_id);
 		if (q == NULL) {
-			log_warnx("Received ACCSREQ_ANSWER from %s, but query "
-			    "id=%u unknown", module->name, q_id);
+			log_warnx("Received %s from %s, but query id=%u "
+			    "unknown", typestr, module->name, q_id);
 			break;
 		}
 		if ((ans = radiusd_module_recv_radpkt(module, imsg,
-		    IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER,
-		    "ACCSREQ_ANSWER")) != NULL) {
-			q->res = radius_convert_packet(
-			    module->radpkt, module->radpktoff);
-			radiusd_access_request_answer(q);
+		    imsg->hdr.type, typestr)) != NULL) {
+			RADIUS_PACKET *radpkt = NULL;
+
+			if (module->radpktoff > 0 &&
+			    (radpkt = radius_convert_packet(
+			    module->radpkt, module->radpktoff)) == NULL) {
+				log_warn("q=%u radius_convert_packet() failed",
+				    q->id);
+				radiusd_access_request_aborted(q);
+				break;
+			}
 			module->radpktoff = 0;
+			switch (imsg->hdr.type) {
+			case IMSG_RADIUSD_MODULE_REQDECO_DONE:
+				if (radpkt != NULL) {
+					radius_delete_packet(q->req);
+					q->req = radpkt;
+				}
+				radius_query_request(q);
+				break;
+			case IMSG_RADIUSD_MODULE_ACCSREQ_ANSWER:
+				if (radpkt == NULL) {
+					log_warn("q=%u wrong pkt from module",
+					    q->id);
+					radiusd_access_request_aborted(q);
+				}
+				q->res = radpkt;
+				radiusd_access_request_answer(q);
+				break;
+			case IMSG_RADIUSD_MODULE_RESDECO_DONE:
+				if (radpkt != NULL) {
+					radius_delete_packet(q->res);
+					radius_set_request_packet(radpkt,
+					    q->req);
+					q->res = radpkt;
+				}
+				radius_query_response(q);
+				break;
+			}
 		}
 		break;
 	    }
@@ -1276,8 +1318,8 @@ radiusd_module_imsg(struct radiusd_module *module, struct imsg *imsg)
 		break;
 	    }
 	default:
-		RADIUSD_DBG(("Unhandled imsg type=%d",
-		    imsg->hdr.type));
+		RADIUSD_DBG(("Unhandled imsg type=%d from %s", imsg->hdr.type,
+		    module->name));
 	}
 }
 
@@ -1306,9 +1348,11 @@ radiusd_module_recv_radpkt(struct radiusd_module *module, struct imsg *imsg,
 		    "received length is too big", type_str, module->name);
 		goto on_fail;
 	}
-	memcpy(module->radpkt + module->radpktoff,
-	    (caddr_t)(ans + 1), chunklen);
-	module->radpktoff += chunklen;
+	if (chunklen > 0) {
+		memcpy(module->radpkt + module->radpktoff,
+		    (caddr_t)(ans + 1), chunklen);
+		module->radpktoff += chunklen;
+	}
 	if (!ans->final)
 		return (NULL);	/* again */
 	if (module->radpktoff != ans->pktlen) {
@@ -1427,11 +1471,9 @@ radiusd_module_userpass(struct radiusd_module *module, struct radius_query *q)
 		userpass.has_pass = true;
 	else
 		userpass.has_pass = false;
-
-	if (strlcpy(userpass.user, q->username, sizeof(userpass.user))
-	    >= sizeof(userpass.user)) {
-		log_warnx("Could request USERPASS to module `%s': "
-		    "User-Name too long", module->name);
+	if (radius_get_string_attr(q->req, RADIUS_TYPE_USER_NAME,
+	    userpass.user, sizeof(userpass.user)) != 0) {
+		log_warnx("q=%u no User-Name attribute", q->id);
 		goto on_error;
 	}
 	imsg_compose(&module->ibuf, IMSG_RADIUSD_MODULE_USERPASS, 0, 0, -1,
@@ -1446,16 +1488,14 @@ static void
 radiusd_module_access_request(struct radiusd_module *module,
     struct radius_query *q)
 {
-	struct radiusd_module_radpkt_arg	 accsreq;
-	struct iovec				 iov[2];
-	int					 off = 0, len, siz;
-	const u_char				*pkt;
 	RADIUS_PACKET				*radpkt;
 	char					 pass[256];
 
 	if ((radpkt = radius_convert_packet(radius_get_data(q->req),
 	    radius_get_length(q->req))) == NULL) {
-		log_warn("Could not send ACCSREQ for `%s'", module->name);
+		log_warn("q=%u Could not send ACCSREQ to `%s'", q->id,
+		    module->name);
+		radiusd_access_request_aborted(q);
 		return;
 	}
 	if (q->client->secret[0] != '\0' && module->secret != NULL &&
@@ -1465,30 +1505,85 @@ radiusd_module_access_request(struct radiusd_module *module,
 		(void)radius_put_raw_attr(radpkt, RADIUS_TYPE_USER_PASSWORD,
 		    pass, strlen(pass));
 	}
-
-	pkt = radius_get_data(radpkt);
-	len = radius_get_length(radpkt);
-	memset(&accsreq, 0, sizeof(accsreq));
-	accsreq.q_id = q->id;
-	accsreq.pktlen = len;
-	while (off < len) {
-		siz = MAX_IMSGSIZE - sizeof(accsreq);
-		if (len - off > siz)
-			accsreq.final = false;
-		else {
-			accsreq.final = true;
-			siz = len - off;
-		}
-		iov[0].iov_base = &accsreq;
-		iov[0].iov_len = sizeof(accsreq);
-		iov[1].iov_base = (caddr_t)pkt + off;
-		iov[1].iov_len = siz;
-		imsg_composev(&module->ibuf, IMSG_RADIUSD_MODULE_ACCSREQ, 0, 0,
-		    -1, iov, 2);
-		off += siz;
+	if (imsg_compose_radius_packet(&module->ibuf,
+	    IMSG_RADIUSD_MODULE_ACCSREQ, q->id, radpkt) == -1) {
+		log_warn("q=%u Could not send ACCSREQ to `%s'", q->id,
+		    module->name);
+		radiusd_access_request_aborted(q);
 	}
 	radiusd_module_reset_ev_handler(module);
 	radius_delete_packet(radpkt);
+}
 
-	return;
+static void
+radiusd_module_request_decoration(struct radiusd_module *module,
+    struct radius_query *q)
+{
+	if (module->fd < 0) {
+		log_warnx("q=%u Could not send REQDECO to `%s': module is "
+		    "not running?", q->id, module->name);
+		radiusd_access_request_aborted(q);
+		return;
+	}
+	if (imsg_compose_radius_packet(&module->ibuf,
+	    IMSG_RADIUSD_MODULE_REQDECO, q->id, q->req) == -1) {
+		log_warn("q=%u Could not send REQDECO to `%s'", q->id,
+		    module->name);
+		radiusd_access_request_aborted(q);
+		return;
+	}
+	radiusd_module_reset_ev_handler(module);
+}
+
+static void
+radiusd_module_response_decoration(struct radiusd_module *module,
+    struct radius_query *q)
+{
+	if (module->fd < 0) {
+		log_warnx("q=%u Could not send RESDECO to `%s': module is "
+		    "not running?", q->id, module->name);
+		radiusd_access_request_aborted(q);
+		return;
+	}
+	if (imsg_compose_radius_packet(&module->ibuf,
+	    IMSG_RADIUSD_MODULE_RESDECO, q->id, q->res) == -1) {
+		log_warn("q=%u Could not send RESDECO to `%s'", q->id,
+		    module->name);
+		radiusd_access_request_aborted(q);
+		return;
+	}
+	radiusd_module_reset_ev_handler(module);
+}
+
+static int
+imsg_compose_radius_packet(struct imsgbuf *ibuf, uint32_t type, u_int q_id,
+    RADIUS_PACKET *radpkt)
+{
+	struct radiusd_module_radpkt_arg	 arg;
+	int					 off = 0, len, siz;
+	struct iovec				 iov[2];
+	const u_char				*pkt;
+
+	pkt = radius_get_data(radpkt);
+	len = radius_get_length(radpkt);
+	memset(&arg, 0, sizeof(arg));
+	arg.q_id = q_id;
+	arg.pktlen = len;
+	while (off < len) {
+		siz = MAX_IMSGSIZE - sizeof(arg);
+		if (len - off > siz)
+			arg.final = false;
+		else {
+			arg.final = true;
+			siz = len - off;
+		}
+		iov[0].iov_base = &arg;
+		iov[0].iov_len = sizeof(arg);
+		iov[1].iov_base = (caddr_t)pkt + off;
+		iov[1].iov_len = siz;
+		if (imsg_composev(ibuf, type, 0, 0, -1, iov, 2) == -1)
+			return (-1);
+		off += siz;
+	}
+	return (0);
 }
