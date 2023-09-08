@@ -1,4 +1,4 @@
-/*	$OpenBSD: hotplug.c,v 1.22 2022/07/02 08:50:41 visa Exp $	*/
+/*	$OpenBSD: hotplug.c,v 1.23 2023/09/08 20:00:27 mvs Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
  *
@@ -25,6 +25,7 @@
 #include <sys/fcntl.h>
 #include <sys/hotplug.h>
 #include <sys/ioctl.h>
+#include <sys/selinfo.h>
 #include <sys/vnode.h>
 
 #define HOTPLUG_MAXEVENTS	64

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.168 2023/02/10 14:34:17 visa Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.169 2023/09/08 20:00:28 mvs Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -37,8 +37,8 @@
 
 #include <sys/buf.h>
 #include <sys/types.h>
+#include <sys/event.h>
 #include <sys/queue.h>
-#include <sys/selinfo.h>
 #include <sys/tree.h>
 
 /*
@@ -127,7 +127,7 @@ struct vnode {
 	TAILQ_HEAD(, namecache) v_cache_dst;	 /* cache entries to us */
 
 	void	*v_data;			/* private data for fs */
-	struct	selinfo v_selectinfo;		/* identity of poller(s) */
+	struct	klist v_klist;			/* identity of poller(s) */
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
@@ -246,7 +246,7 @@ extern int		vttoif_tab[];
 #define	VATTR_NULL(vap)	vattr_null(vap)
 #define	NULLVP	((struct vnode *)NULL)
 #define	VN_KNOTE(vp, b)					\
-	knote_locked(&vp->v_selectinfo.si_note, (b))
+	knote_locked(&vp->v_klist, (b))
 
 /*
  * Global vnode data.

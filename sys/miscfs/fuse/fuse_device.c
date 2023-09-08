@@ -1,4 +1,4 @@
-/* $OpenBSD: fuse_device.c,v 1.38 2022/08/29 06:08:04 jsg Exp $ */
+/* $OpenBSD: fuse_device.c,v 1.39 2023/09/08 20:00:28 mvs Exp $ */
 /*
  * Copyright (c) 2012-2013 Sylvestre Gallon <ccna.syl@gmail.com>
  *
@@ -25,6 +25,7 @@
 #include <sys/statvfs.h>
 #include <sys/vnode.h>
 #include <sys/fusebuf.h>
+#include <sys/selinfo.h>
 
 #include "fusefs_node.h"
 #include "fusefs.h"
