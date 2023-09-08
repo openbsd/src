@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.28 2020/12/30 21:40:33 kn Exp $
+#	$OpenBSD: Makefile,v 1.29 2023/09/08 21:15:02 bluhm Exp $
 
 # The following ports must be installed:
 #
@@ -90,6 +90,10 @@ FRAG6_SCRIPTS !!=	cd ${.CURDIR} && ls -1 frag6*.py
 run-stack-frag6_queuelimit.py:
 	# the stack does not limit the amount of fragments during reassembly
 	@echo DISABLED
+
+run-stack-frag6_doubleatomic.py: addr.py stamp-stack
+	# IPv6 stack accepts double atomic fragement, this is not a big issue
+	set +e; ${SUDO} ${PYTHON}frag6_doubleatomic.py; [[ $$? == 1 ]]
 
 .for sp in stack pf
 
