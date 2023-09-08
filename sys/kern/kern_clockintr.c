@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.38 2023/09/06 02:33:18 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.39 2023/09/08 22:14:57 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -43,7 +43,6 @@ uint32_t statclock_min;			/* [I] minimum statclock period (ns) */
 uint32_t statclock_mask;		/* [I] set of allowed offsets */
 
 uint64_t clockintr_advance_random(struct clockintr *, uint64_t, uint32_t);
-void clockintr_cancel_locked(struct clockintr *);
 void clockintr_hardclock(struct clockintr *, void *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
@@ -51,6 +50,7 @@ void clockintr_statclock(struct clockintr *, void *);
 void clockqueue_intrclock_install(struct clockintr_queue *,
     const struct intrclock *);
 uint64_t clockqueue_next(const struct clockintr_queue *);
+void clockqueue_pend_delete(struct clockintr_queue *, struct clockintr *);
 void clockqueue_reset_intrclock(struct clockintr_queue *);
 uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
 
@@ -255,7 +255,7 @@ clockintr_dispatch(void *frame)
 			if (cq->cq_uptime < cl->cl_expiration)
 				break;
 		}
-		clockintr_cancel_locked(cl);
+		clockqueue_pend_delete(cq, cl);
 		cq->cq_shadow.cl_expiration = cl->cl_expiration;
 		cq->cq_running = cl;
 		mtx_leave(&cq->cq_mtx);
@@ -330,7 +330,7 @@ clockintr_advance(struct clockintr *cl, uint64_t period)
 	expiration = cl->cl_expiration;
 	count = nsec_advance(&expiration, period, nsecuptime());
 	if (ISSET(cl->cl_flags, CLST_PENDING))
-		clockintr_cancel_locked(cl);
+		clockqueue_pend_delete(cq, cl);
 	clockintr_schedule_locked(cl, expiration);
 	if (ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
 		if (cl == TAILQ_FIRST(&cq->cq_pend)) {
@@ -377,7 +377,7 @@ clockintr_cancel(struct clockintr *cl)
 	mtx_enter(&cq->cq_mtx);
 	if (ISSET(cl->cl_flags, CLST_PENDING)) {
 		was_next = cl == TAILQ_FIRST(&cq->cq_pend);
-		clockintr_cancel_locked(cl);
+		clockqueue_pend_delete(cq, cl);
 		if (ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
 			if (was_next && !TAILQ_EMPTY(&cq->cq_pend)) {
 				if (cq == &curcpu()->ci_queue)
@@ -388,18 +388,6 @@ clockintr_cancel(struct clockintr *cl)
 	if (cl == cq->cq_running)
 		SET(cl->cl_flags, CLST_IGNORE_SHADOW);
 	mtx_leave(&cq->cq_mtx);
-}
-
-void
-clockintr_cancel_locked(struct clockintr *cl)
-{
-	struct clockintr_queue *cq = cl->cl_queue;
-
-	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
-	KASSERT(ISSET(cl->cl_flags, CLST_PENDING));
-
-	TAILQ_REMOVE(&cq->cq_pend, cl, cl_plink);
-	CLR(cl->cl_flags, CLST_PENDING);
 }
 
 struct clockintr *
@@ -434,7 +422,7 @@ clockintr_schedule(struct clockintr *cl, uint64_t expiration)
 
 	mtx_enter(&cq->cq_mtx);
 	if (ISSET(cl->cl_flags, CLST_PENDING))
-		clockintr_cancel_locked(cl);
+		clockqueue_pend_delete(cq, cl);
 	clockintr_schedule_locked(cl, expiration);
 	if (ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
 		if (cl == TAILQ_FIRST(&cq->cq_pend)) {
@@ -539,6 +527,16 @@ clockqueue_next(const struct clockintr_queue *cq)
 {
 	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
 	return TAILQ_FIRST(&cq->cq_pend)->cl_expiration;
+}
+
+void
+clockqueue_pend_delete(struct clockintr_queue *cq, struct clockintr *cl)
+{
+	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
+	KASSERT(ISSET(cl->cl_flags, CLST_PENDING));
+
+	TAILQ_REMOVE(&cq->cq_pend, cl, cl_plink);
+	CLR(cl->cl_flags, CLST_PENDING);
 }
 
 void
