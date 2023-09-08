@@ -68,4 +68,5 @@ for a in ans:
 if not reply:
 	print("NO ECHO REPLY FROM 64 FRAGMENTS")
 	exit(1)
+print("echo reply from 64 fragments")
 exit(0)

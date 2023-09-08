@@ -63,3 +63,5 @@ for p in permute:
 	else:
 		print("NO ECHO REPLY")
 		exit(2)
+print("permutation done")
+exit(0)
