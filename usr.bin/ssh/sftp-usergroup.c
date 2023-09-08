@@ -105,9 +105,9 @@ lookup_and_record(struct sftp_conn *conn,
 	u_int i;
 	char **usernames = NULL, **groupnames = NULL;
 
-	if ((r = do_get_users_groups_by_id(conn, uids, nuids, gids, ngids,
+	if ((r = sftp_get_users_groups_by_id(conn, uids, nuids, gids, ngids,
 	    &usernames, &groupnames)) != 0) {
-		debug_fr(r, "do_get_users_groups_by_id");
+		debug_fr(r, "sftp_get_users_groups_by_id");
 		return;
 	}
 	for (i = 0; i < nuids; i++) {
@@ -175,7 +175,7 @@ get_remote_user_groups_from_glob(struct sftp_conn *conn, glob_t *g)
 {
 	u_int *uids = NULL, nuids = 0, *gids = NULL, ngids = 0;
 
-	if (!can_get_users_groups_by_id(conn))
+	if (!sftp_can_get_users_groups_by_id(conn))
 		return;
 
 	collect_ids_from_glob(g, 1, &uids, &nuids);
@@ -214,7 +214,7 @@ get_remote_user_groups_from_dirents(struct sftp_conn *conn, SFTP_DIRENT **d)
 {
 	u_int *uids = NULL, nuids = 0, *gids = NULL, ngids = 0;
 
-	if (!can_get_users_groups_by_id(conn))
+	if (!sftp_can_get_users_groups_by_id(conn))
 		return;
 
 	collect_ids_from_dirents(d, 1, &uids, &nuids);
