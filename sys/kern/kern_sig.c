@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.314 2023/09/04 13:18:41 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.315 2023/09/08 09:06:31 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -2105,12 +2105,11 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
 	}
 	pr->ps_singlecnt = 1; /* count ourselfs in already */
 	pr->ps_single = p;
-	mtx_leave(&pr->ps_mtx);
 
-	SCHED_LOCK(s);
 	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		if (q == p)
 			continue;
+		SCHED_LOCK(s);
 		if (q->p_flag & P_WEXIT) {
 			if (mode == SINGLE_EXIT && q->p_stat == SSTOP)
 				setrunnable(q);
@@ -2146,10 +2145,9 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
 			signotify(q);
 			break;
 		}
+		SCHED_UNLOCK(s);
 	}
-	SCHED_UNLOCK(s);
 
-	mtx_enter(&pr->ps_mtx);
 	pr->ps_singlecnt += count;
 	mtx_leave(&pr->ps_mtx);
 
@@ -2194,11 +2192,10 @@ single_thread_clear(struct proc *p, int flag)
 	KASSERT(pr->ps_single == p);
 	KASSERT(curproc == p);
 
-	/* can do this without holding pr->ps_mtx since no concurrency */
+	mtx_enter(&pr->ps_mtx);
 	pr->ps_single = NULL;
 	atomic_clearbits_int(&pr->ps_flags, PS_SINGLEUNWIND | PS_SINGLEEXIT);
 
-	SCHED_LOCK(s);
 	TAILQ_FOREACH(q, &pr->ps_threads, p_thr_link) {
 		if (q == p || (q->p_flag & P_SUSPSINGLE) == 0)
 			continue;
@@ -2209,6 +2206,7 @@ single_thread_clear(struct proc *p, int flag)
 		 * then clearing that either makes it runnable or puts
 		 * it back into some sleep queue
 		 */
+		SCHED_LOCK(s);
 		if (q->p_stat == SSTOP && (q->p_flag & flag) == 0) {
 			if (q->p_wchan == NULL)
 				setrunnable(q);
@@ -2217,8 +2215,9 @@ single_thread_clear(struct proc *p, int flag)
 				q->p_stat = SSLEEP;
 			}
 		}
+		SCHED_UNLOCK(s);
 	}
-	SCHED_UNLOCK(s);
+	mtx_leave(&pr->ps_mtx);
 }
 
 void

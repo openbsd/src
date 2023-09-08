@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.349 2023/09/04 13:18:41 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.350 2023/09/08 09:06:31 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -138,7 +138,7 @@ struct process {
 	struct	ucred *ps_ucred;	/* Process owner's identity. */
 
 	LIST_ENTRY(process) ps_list;	/* List of all processes. */
-	TAILQ_HEAD(,proc) ps_threads;	/* [K|S] Threads in this process. */
+	TAILQ_HEAD(,proc) ps_threads;	/* [K|m] Threads in this process. */
 
 	LIST_ENTRY(process) ps_pglist;	/* List of processes in pgrp. */
 	struct	process *ps_pptr; 	/* Pointer to parent process. */
@@ -310,13 +310,14 @@ struct p_inentry {
  *	U	uidinfolk
  *	l	read only reference, see lim_read_enter()
  *	o	owned (read/modified only) by this thread
+ *	m	this proc's' `p->p_p->ps_mtx'
  */
 struct proc {
 	TAILQ_ENTRY(proc) p_runq;	/* [S] current run/sleep queue */
 	LIST_ENTRY(proc) p_list;	/* List of all threads. */
 
 	struct	process *p_p;		/* [I] The process of this thread. */
-	TAILQ_ENTRY(proc) p_thr_link;	/* Threads in a process linkage. */
+	TAILQ_ENTRY(proc) p_thr_link;	/* [K|m] Threads in a process linkage. */
 
 	TAILQ_ENTRY(proc) p_fut_link;	/* Threads in a futex linkage. */
 	struct	futex	*p_futex;	/* Current sleeping futex. */
