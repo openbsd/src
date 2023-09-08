@@ -1,4 +1,4 @@
-/* $OpenBSD: tty-keys.c,v 1.171 2023/09/08 06:52:31 nicm Exp $ */
+/* $OpenBSD: tty-keys.c,v 1.172 2023/09/08 07:05:06 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1399,8 +1399,17 @@ tty_keys_device_attributes2(struct tty *tty, const char *buf, size_t len,
 			break;
 	}
 
-	/* Add terminal features. */
+	/*
+	 * Add terminal features. We add DECSLRM and DECFRA for some
+	 * identification codes here, notably 64 will catch VT520, even though
+	 * we can't use level 5 from DA because of VTE.
+	 */
 	switch (p[0]) {
+	case 41: /* VT420 */
+	case 61: /* VT510 */
+	case 64: /* VT520 */
+		tty_add_features(features, "margins,rectfill", ",");
+		break;
 	case 'M': /* mintty */
 		tty_default_features(features, "mintty", 0);
 		break;
