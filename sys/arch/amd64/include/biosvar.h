@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosvar.h,v 1.31 2023/01/18 23:25:32 jsg Exp $	*/
+/*	$OpenBSD: biosvar.h,v 1.32 2023/09/08 20:47:22 kn Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -171,14 +171,6 @@ typedef struct _bios_consdev {
 	int		reg_width;
 	int		reg_shift;
 } __packed bios_consdev_t;
-
-/* Old interface; remove after OpenBSD 7.3 is released */
-typedef struct _bios_oconsdev {
-	dev_t	consdev;
-	int	conspeed;
-	int	consaddr;
-	int	consfreq;
-} __packed bios_oconsdev_t;
 
 #define BOOTARG_BOOTMAC	7
 typedef struct _bios_bootmac {
