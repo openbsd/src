@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.43 2023/09/09 16:34:39 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.44 2023/09/09 16:59:01 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -410,12 +410,11 @@ clockintr_schedule(struct clockintr *cl, uint64_t expiration)
 	if (cl == &cq->cq_shadow) {
 		cl->cl_expiration = expiration;
 		SET(cl->cl_flags, CLST_SHADOW_PENDING);
-		return;
+	} else {
+		mtx_enter(&cq->cq_mtx);
+		clockintr_schedule_locked(cl, expiration);
+		mtx_leave(&cq->cq_mtx);
 	}
-
-	mtx_enter(&cq->cq_mtx);
-	clockintr_schedule_locked(cl, expiration);
-	mtx_leave(&cq->cq_mtx);
 }
 
 void
