@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.623 2023/09/09 00:10:20 bentley Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.624 2023/09/09 10:06:59 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -2643,13 +2643,6 @@ Don't touch unless the default
 target needs to be redefined.
 Ideally, user-defined patch subtargets ought to test checkpatch.
 In practice, they don't.
-.It Ev PATCH_DEBUG
-If set to
-.Sq Yes ,
-the
-.Cm patch
-stage will output extra debug information.
-This is the default.
 .It Ev PATCH_DIST_ARGS
 Full list of options used while applying distribution patches.
 .It Ev PATCH_DIST_STRIP
