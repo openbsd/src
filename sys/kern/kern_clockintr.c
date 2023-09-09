@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.40 2023/09/08 22:23:30 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.41 2023/09/09 03:03:45 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -258,10 +258,11 @@ clockintr_dispatch(void *frame)
 		}
 		clockqueue_pend_delete(cq, cl);
 		cq->cq_shadow.cl_expiration = cl->cl_expiration;
+		cq->cq_shadow.cl_func = cl->cl_func;
 		cq->cq_running = cl;
 		mtx_leave(&cq->cq_mtx);
 
-		cl->cl_func(&cq->cq_shadow, frame);
+		cq->cq_shadow.cl_func(&cq->cq_shadow, frame);
 
 		mtx_enter(&cq->cq_mtx);
 		cq->cq_running = NULL;
