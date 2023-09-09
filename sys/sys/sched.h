@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.61 2023/08/11 22:02:50 cheloha Exp $	*/
+/*	$OpenBSD: sched.h,v 1.62 2023/09/09 18:19:03 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -146,7 +146,6 @@ struct cpustats {
 #define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - SCHED_PPQ)
 
 extern uint32_t roundrobin_period;
-extern int schedhz;			/* ideally: 16 */
 
 struct proc;
 void schedclock(struct proc *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.115 2023/08/23 01:55:45 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.116 2023/09/09 18:19:03 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -79,7 +79,6 @@
  */
 
 int	stathz;
-int	schedhz;
 int	profhz;
 int	profprocs;
 int	ticks = INT_MAX - (15 * 60 * HZ);
@@ -295,13 +294,10 @@ statclock(struct clockframe *frame)
 	if (p != NULL) {
 		p->p_cpticks++;
 		/*
-		 * If no schedclock is provided, call it here at ~~12-25 Hz;
-		 * ~~16 Hz is best
+		 * schedclock() runs every fourth statclock().
 		 */
-		if (schedhz == 0) {
-			if ((++spc->spc_schedticks & 3) == 0)
-				schedclock(p);
-		}
+		if ((++spc->spc_schedticks & 3) == 0)
+			schedclock(p);
 	}
 }
 
