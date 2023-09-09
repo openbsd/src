@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.42 2023/09/09 16:20:48 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.43 2023/09/09 16:34:39 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -332,17 +332,7 @@ clockintr_advance(struct clockintr *cl, uint64_t period)
 	mtx_enter(&cq->cq_mtx);
 	expiration = cl->cl_expiration;
 	count = nsec_advance(&expiration, period, nsecuptime());
-	if (ISSET(cl->cl_flags, CLST_PENDING))
-		clockqueue_pend_delete(cq, cl);
-	clockqueue_pend_insert(cq, cl, expiration);
-	if (ISSET(cq->cq_flags, CQ_INTRCLOCK)) {
-		if (cl == TAILQ_FIRST(&cq->cq_pend)) {
-			if (cq == &curcpu()->ci_queue)
-				clockqueue_reset_intrclock(cq);
-		}
-	}
-	if (cl == cq->cq_running)
-		SET(cl->cl_flags, CLST_IGNORE_SHADOW);
+	clockintr_schedule_locked(cl, expiration);
 	mtx_leave(&cq->cq_mtx);
 	return count;
 }
