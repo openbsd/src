@@ -1,7 +1,24 @@
-.\" $OpenBSD: EVP_PKEY_derive.3,v 1.8 2018/03/23 04:34:23 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_derive.3,v 1.9 2023/09/09 14:26:35 schwarze Exp $
 .\" full merge up to: OpenSSL 48e5119a Jan 19 10:49:22 2018 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2006, 2009, 2013, 2018 The OpenSSL Project.
 .\" All rights reserved.
 .\"
@@ -49,12 +66,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: March 23 2018 $
+.Dd $Mdocdate: September 9 2023 $
 .Dt EVP_PKEY_DERIVE 3
 .Os
 .Sh NAME
 .Nm EVP_PKEY_derive_init ,
 .Nm EVP_PKEY_derive_set_peer ,
+.Nm EVP_PKEY_CTX_get0_peerkey ,
 .Nm EVP_PKEY_derive
 .Nd derive public key algorithm shared secret
 .Sh SYNOPSIS
@@ -66,7 +84,11 @@
 .Ft int
 .Fo EVP_PKEY_derive_set_peer
 .Fa "EVP_PKEY_CTX *ctx"
-.Fa "EVP_PKEY *peer"
+.Fa "EVP_PKEY *peerkey"
+.Fc
+.Ft EVP_PKEY *
+.Fo EVP_PKEY_CTX_get0_peerkey
+.Fa "EVP_PKEY_CTX *ctx"
 .Fc
 .Ft int
 .Fo EVP_PKEY_derive
@@ -75,19 +97,51 @@
 .Fa "size_t *keylen"
 .Fc
 .Sh DESCRIPTION
-The
 .Fn EVP_PKEY_derive_init
-function initializes a public key algorithm context using key
-.Fa ctx->pkey
-for shared secret derivation.
+initializes the public key algorithm context
+.Fa ctx
+for shared secret derivation using the
+.Vt EVP_PKEY
+object already stored in
+.Fa ctx .
+The library provides built-in support for keys with an
+.Xr EVP_PKEY_base_id 3
+of
+.Dv EVP_PKEY_DH ,
+.Dv EVP_PKEY_EC ,
+.Dv EVP_PKEY_GOSTR01 ,
+.Dv EVP_PKEY_HKDF ,
+and
+.Dv EVP_PKEY_X25519 .
 .Pp
-The
+After the call to
+.Fn EVP_PKEY_derive_init ,
+algorithm specific control operations can optionally be performed
+to set any appropriate parameters for the operation.
+.Pp
 .Fn EVP_PKEY_derive_set_peer
-function sets the peer key: this will normally be a public key.
+configures the
+.Fa ctx ,
+which already needs to be initialized with
+.Fn EVP_PKEY_derive_init ,
+.Xr EVP_PKEY_encrypt_init 3 ,
+or
+.Xr EVP_PKEY_decrypt_init 3 ,
+to use the
+.Fa peerkey ,
+which is normally a public key.
+In case of success, the reference count of the
+.Fa peerkey
+is incremented by one.
+Consequently, the caller needs to call
+.Xr EVP_PKEY_free 3
+on the
+.Fa peerkey
+when the caller no longer needs it, even if it is still in use by
+.Fa ctx .
 .Pp
-The
 .Fn EVP_PKEY_derive
-function derives a shared secret using
+derives a shared secret using
 .Fa ctx .
 If
 .Fa key
@@ -110,22 +164,45 @@ If the call is successful, the shared secret is written to
 and the amount of data written to
 .Fa keylen .
 .Pp
-After the call to
-.Fn EVP_PKEY_derive_init ,
-algorithm specific control operations can be performed to set any
-appropriate parameters for the operation.
-.Pp
 The function
 .Fn EVP_PKEY_derive
 can be called more than once on the same context if several operations
 are performed using the same parameters.
 .Sh RETURN VALUES
-.Fn EVP_PKEY_derive_init
+.Fn EVP_PKEY_derive_init ,
+.Fn EVP_PKEY_derive_set_peer ,
 and
 .Fn EVP_PKEY_derive
 return 1 for success and 0 or a negative value for failure.
-In particular, a return value of -2 indicates the operation is not
+In particular, a return value of \-2 indicates the operation is not
 supported by the public key algorithm.
+.Pp
+For
+.Fn EVP_PKEY_derive_set_peer ,
+a return value of \-1 can for example occur if
+.Fa ctx
+is not properly initialized, does not contain an
+.Vt EVP_PKEY
+that can be retrieved with
+.Xr EVP_PKEY_CTX_get0_pkey 3 ,
+the
+.Xr EVP_PKEY_id 3
+of both keys mismatch, or
+.Xr EVP_PKEY_cmp_parameters 3
+reports mismatching key parameters.
+.Pp
+.Fn EVP_PKEY_derive
+fails with a return value of \-1 for example if
+.Fa ctx
+has not been successfully initialized with
+.Fn EVP_PKEY_derive_init .
+.Pp
+.Fn EVP_PKEY_CTX_get0_peerkey
+returns an internal pointer to the
+.Fa peerkey
+used by
+.Fa ctx
+without incrementing its reference count.
 .Sh EXAMPLES
 Derive shared secret (for example DH or EC keys):
 .Bd -literal -offset indent
@@ -173,6 +250,7 @@ if (EVP_PKEY_derive(ctx, skey, &skeylen) <= 0)
 .Sh HISTORY
 .Fn EVP_PKEY_derive_init ,
 .Fn EVP_PKEY_derive_set_peer ,
+.Fn EVP_PKEY_CTX_get0_peerkey ,
 and
 .Fn EVP_PKEY_derive
 first appeared in OpenSSL 1.0.0 and have been available since
