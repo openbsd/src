@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.28 2022/09/01 15:21:28 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.29 2023/09/09 18:59:43 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -427,19 +427,28 @@ int string(void)
 				break;
 
 			case 'x':	/* hex  \x0-9a-fA-F + */
-			    {	char xbuf[100], *px;
-				for (px = xbuf; (c = input()) != 0 && px-xbuf < 100-2; ) {
-					if (isdigit(c)
-					 || (c >= 'a' && c <= 'f')
-					 || (c >= 'A' && c <= 'F'))
-						*px++ = c;
-					else
+			    {
+				int i;
+
+				n = 0;
+				for (i = 1; i <= 2; i++) {
+					c = input();
+					if (c == 0)
+						break;
+					if (isxdigit(c)) {
+						c = tolower(c);
+						n *= 16;
+						if (isdigit(c))
+							n += (c - '0');
+						else
+							n += 10 + (c - 'a');
+					} else
 						break;
 				}
-				*px = 0;
-				unput(c);
-	  			sscanf(xbuf, "%x", (unsigned int *) &n);
-				*bp++ = n;
+				if (n)
+					*bp++ = n;
+				else
+					unput(c);
 				break;
 			    }
 

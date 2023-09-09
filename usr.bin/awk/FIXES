@@ -25,6 +25,12 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August 1987.
 
+Dec 15, 2022:
+	Force hex escapes in strings to be no more than two characters,
+	as they already are in regular expressions. This brings internal
+	consistency, as well as consistency with gawk. Thanks to
+	Arnold Robbins.
+
 Sep 12, 2022:
 	adjbuf minlen error (cannot be 0) in cat, resulting in NULL pbuf.
 	discovered by todd miller. also use-after-free issue with
