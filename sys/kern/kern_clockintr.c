@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.44 2023/09/09 16:59:01 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.45 2023/09/09 17:07:59 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -326,14 +326,13 @@ clockintr_advance(struct clockintr *cl, uint64_t period)
 	if (cl == &cq->cq_shadow) {
 		count = nsec_advance(&cl->cl_expiration, period, cq->cq_uptime);
 		SET(cl->cl_flags, CLST_SHADOW_PENDING);
-		return count;
+	} else {
+		mtx_enter(&cq->cq_mtx);
+		expiration = cl->cl_expiration;
+		count = nsec_advance(&expiration, period, nsecuptime());
+		clockintr_schedule_locked(cl, expiration);
+		mtx_leave(&cq->cq_mtx);
 	}
-
-	mtx_enter(&cq->cq_mtx);
-	expiration = cl->cl_expiration;
-	count = nsec_advance(&expiration, period, nsecuptime());
-	clockintr_schedule_locked(cl, expiration);
-	mtx_leave(&cq->cq_mtx);
 	return count;
 }
 
