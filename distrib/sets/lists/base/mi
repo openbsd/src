@@ -2514,6 +2514,7 @@
 ./usr/libexec/radiusd
 ./usr/libexec/radiusd/radiusd_bsdauth
 ./usr/libexec/radiusd/radiusd_radius
+./usr/libexec/radiusd/radiusd_standard
 ./usr/libexec/reorder_kernel
 ./usr/libexec/rpc.rquotad
 ./usr/libexec/rpc.rstatd
