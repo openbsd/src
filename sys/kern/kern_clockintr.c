@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.41 2023/09/09 03:03:45 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.42 2023/09/09 16:20:48 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -45,6 +45,7 @@ uint32_t statclock_mask;		/* [I] set of allowed offsets */
 uint64_t clockintr_advance_random(struct clockintr *, uint64_t, uint32_t);
 void clockintr_hardclock(struct clockintr *, void *);
 void clockintr_schedule(struct clockintr *, uint64_t);
+void clockintr_schedule_locked(struct clockintr *, uint64_t);
 void clockintr_statclock(struct clockintr *, void *);
 void clockqueue_intrclock_install(struct clockintr_queue *,
     const struct intrclock *);
@@ -423,6 +424,17 @@ clockintr_schedule(struct clockintr *cl, uint64_t expiration)
 	}
 
 	mtx_enter(&cq->cq_mtx);
+	clockintr_schedule_locked(cl, expiration);
+	mtx_leave(&cq->cq_mtx);
+}
+
+void
+clockintr_schedule_locked(struct clockintr *cl, uint64_t expiration)
+{
+	struct clockintr_queue *cq = cl->cl_queue;
+
+	MUTEX_ASSERT_LOCKED(&cq->cq_mtx);
+
 	if (ISSET(cl->cl_flags, CLST_PENDING))
 		clockqueue_pend_delete(cq, cl);
 	clockqueue_pend_insert(cq, cl, expiration);
@@ -434,7 +446,6 @@ clockintr_schedule(struct clockintr *cl, uint64_t expiration)
 	}
 	if (cl == cq->cq_running)
 		SET(cl->cl_flags, CLST_IGNORE_SHADOW);
-	mtx_leave(&cq->cq_mtx);
 }
 
 void
