@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.624 2023/09/09 10:06:59 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.625 2023/09/09 10:56:22 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -3713,10 +3713,6 @@ During ports building,
 .Pa ${WRKDIR}/bin
 is put at the front of the
 .Ev PATH .
-.It Ev WRKDIR_LINKNAME
-Name of a symbolic link to create within the port directory which will
-point to the port's ${WRKDIR}.
-Deprecated.
 .It Ev WRKDIST
 Subdirectory of ${WRKDIR} in which the distribution files normally unpack.
 Base for all patches.
