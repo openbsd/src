@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ure.c,v 1.32 2023/05/06 08:07:10 kevlo Exp $	*/
+/*	$OpenBSD: if_ure.c,v 1.33 2023/09/09 14:23:37 kevlo Exp $	*/
 /*-
  * Copyright (c) 2015, 2016, 2019 Kevin Lo <kevlo@openbsd.org>
  * Copyright (c) 2020 Jonathon Fletcher <jonathon.fletcher@gmail.com>
@@ -126,7 +126,6 @@ const struct usb_devno ure_devs[] = {
 	{ USB_VENDOR_TPLINK, USB_PRODUCT_TPLINK_EU300 },
 	{ USB_VENDOR_TPLINK, USB_PRODUCT_TPLINK_RTL8152B_1 },
 	{ USB_VENDOR_TPLINK, USB_PRODUCT_TPLINK_RTL8152B_2 },
-	{ USB_VENDOR_TPLINK, USB_PRODUCT_TPLINK_RTL8153 },
 	{ USB_VENDOR_TRENDNET, USB_PRODUCT_TRENDNET_RTL8156 },
 	{ USB_VENDOR_TTL, USB_PRODUCT_TTL_RTL8153 },
 	{ USB_VENDOR_TWINHEAD, USB_PRODUCT_TWINHEAD_RTL8153B },

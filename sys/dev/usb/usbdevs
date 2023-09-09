@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.758 2023/08/12 20:43:49 miod Exp $
+$OpenBSD: usbdevs,v 1.759 2023/09/09 14:23:37 kevlo Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -4478,7 +4478,7 @@ product TPLINK RTL8188EUS	0x010c	RTL8188EUS
 product TPLINK EU300		0x0601	EU300
 product TPLINK RTL8152B_1	0x0602	RTL8152B
 product TPLINK RTL8152B_2	0x0603	RTL8152B
-product TPLINK RTL8153		0x0604	RTL8153
+product TPLINK UB500		0x0604	UB500
 
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
