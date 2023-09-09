@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.289 2023/06/30 06:24:58 otto Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.290 2023/09/09 06:52:40 asou Exp $	*/
 /*
  * Copyright (c) 2008, 2010, 2011, 2016, 2023 Otto Moerbeek <otto@drijf.net>
  * Copyright (c) 2012 Matthew Dempsky <matthew@openbsd.org>
@@ -2338,6 +2338,22 @@ RBT_PROTOTYPE(leaktree, leaknode, entry, leakcmp);
 RBT_GENERATE(leaktree, leaknode, entry, leakcmp);
 
 static void
+wrtwarning(const char *func, char *msg, ...)
+{
+	int		saved_errno = errno;
+	va_list		ap;
+
+	dprintf(STDERR_FILENO, "%s(%d) in %s(): ", __progname,
+	    getpid(), func != NULL ? func : "unknown");
+	va_start(ap, msg);
+	vdprintf(STDERR_FILENO, msg, ap);
+	va_end(ap);
+	dprintf(STDERR_FILENO, "\n");
+
+	errno = saved_errno;
+}
+
+static void
 putleakinfo(struct leaktree *leaks, void *f, size_t sz, int cnt)
 {
 	struct leaknode key, *p;
@@ -2353,8 +2369,10 @@ putleakinfo(struct leaktree *leaks, void *f, size_t sz, int cnt)
 		if (page == NULL ||
 		    used >= MALLOC_PAGESIZE / sizeof(struct leaknode)) {
 			page = MMAP(MALLOC_PAGESIZE, 0);
-			if (page == MAP_FAILED)
+			if (page == MAP_FAILED) {
+				wrtwarning(__func__, strerror(errno));
 				return;
+			}
 			used = 0;
 		}
 		p = &page[used++];
