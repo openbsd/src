@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.45 2023/09/09 17:07:59 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.46 2023/09/10 01:41:16 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -219,7 +219,7 @@ clockintr_dispatch(void *frame)
 {
 	uint64_t lateness, run = 0, start;
 	struct cpu_info *ci = curcpu();
-	struct clockintr *cl;
+	struct clockintr *cl, *shadow;
 	struct clockintr_queue *cq = &ci->ci_queue;
 	uint32_t ogen;
 
@@ -257,24 +257,29 @@ clockintr_dispatch(void *frame)
 			if (cq->cq_uptime < cl->cl_expiration)
 				break;
 		}
+
+		/*
+		 * This clockintr has expired.  Initialize a shadow copy
+		 * and execute it.
+		 */
 		clockqueue_pend_delete(cq, cl);
-		cq->cq_shadow.cl_expiration = cl->cl_expiration;
-		cq->cq_shadow.cl_func = cl->cl_func;
+		shadow = &cq->cq_shadow;
+		shadow->cl_expiration = cl->cl_expiration;
+		shadow->cl_func = cl->cl_func;
 		cq->cq_running = cl;
 		mtx_leave(&cq->cq_mtx);
 
-		cq->cq_shadow.cl_func(&cq->cq_shadow, frame);
+		shadow->cl_func(shadow, frame);
 
 		mtx_enter(&cq->cq_mtx);
 		cq->cq_running = NULL;
 		if (ISSET(cl->cl_flags, CLST_IGNORE_SHADOW)) {
 			CLR(cl->cl_flags, CLST_IGNORE_SHADOW);
-			CLR(cq->cq_shadow.cl_flags, CLST_SHADOW_PENDING);
+			CLR(shadow->cl_flags, CLST_SHADOW_PENDING);
 		}
-		if (ISSET(cq->cq_shadow.cl_flags, CLST_SHADOW_PENDING)) {
-			CLR(cq->cq_shadow.cl_flags, CLST_SHADOW_PENDING);
-			clockqueue_pend_insert(cq, cl,
-			    cq->cq_shadow.cl_expiration);
+		if (ISSET(shadow->cl_flags, CLST_SHADOW_PENDING)) {
+			CLR(shadow->cl_flags, CLST_SHADOW_PENDING);
+			clockqueue_pend_insert(cq, cl, shadow->cl_expiration);
 		}
 		run++;
 	}
