@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.29 2023/09/09 18:59:43 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.30 2023/09/10 14:59:00 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -588,7 +588,7 @@ int regexpr(void)
 	*bp = 0;
 	if (c == 0)
 		SYNTAX("non-terminated regular expression %.10s...", buf);
-	yylval.s = buf;
+	yylval.s = tostring(buf);
 	unput('/');
 	RET(REGEXPR);
 }

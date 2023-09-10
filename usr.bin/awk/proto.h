@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.20 2020/12/09 20:00:11 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.21 2023/09/10 14:59:00 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -69,7 +69,7 @@ extern	void	freefa(fa *);
 extern	int	pgetc(void);
 extern	char	*cursource(void);
 
-extern	Node	*nodealloc(int);
+extern	Node	*nodealloc(size_t);
 extern	Node	*exptostat(Node *);
 extern	Node	*node1(int, Node *);
 extern	Node	*node2(int, Node *, Node *);

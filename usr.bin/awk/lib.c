@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.49 2022/09/01 15:21:28 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.50 2023/09/10 14:59:00 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -148,11 +148,6 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 	}
 	DPRINTF("RS=<%s>, FS=<%s>, ARGC=%g, FILENAME=%s\n",
 		*RS, *FS, *ARGC, *FILENAME);
-	if (isrecord) {
-		donefld = false;
-		donerec = true;
-		savefs();
-	}
 	saveb0 = buf[0];
 	buf[0] = 0;
 	while (argno < *ARGC || infile == stdin) {
@@ -192,6 +187,9 @@ int getrec(char **pbuf, int *pbufsize, bool isrecord)	/* get next input record *
 					fldtab[0]->fval = result;
 					fldtab[0]->tval |= NUM;
 				}
+				donefld = false;
+				donerec = true;
+				savefs();
 			}
 			setfval(nrloc, nrloc->fval+1);
 			setfval(fnrloc, fnrloc->fval+1);

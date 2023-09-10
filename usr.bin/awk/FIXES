@@ -25,6 +25,14 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August 1987.
 
+Sep 06, 2023:
+	Fix edge case where FS is changed on commandline. Thanks to 
+	Gordon Shephard and Miguel Pineiro Jr.
+
+	Fix regular expression clobbering in the lexer, where lexer does
+	not make a copy of regexp literals. also makedfa memory leaks have
+	been plugged. Thanks to Miguel Pineiro Jr.
+	
 Dec 15, 2022:
 	Force hex escapes in strings to be no more than two characters,
 	as they already are in regular expressions. This brings internal
