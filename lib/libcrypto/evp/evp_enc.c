@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_enc.c,v 1.52 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: evp_enc.c,v 1.53 2023/09/10 16:53:56 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -78,8 +78,8 @@ int
 EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
     const unsigned char *key, const unsigned char *iv, int enc)
 {
-	if (cipher)
-		EVP_CIPHER_CTX_init(ctx);
+	if (cipher != NULL)
+		EVP_CIPHER_CTX_cleanup(ctx);
 	return EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, enc);
 }
 
