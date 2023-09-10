@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.12 2023/09/06 02:33:18 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.13 2023/09/10 03:08:05 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -70,7 +70,8 @@ struct clockintr {
 	uint64_t cl_expiration;				/* [m] dispatch time */
 	TAILQ_ENTRY(clockintr) cl_elink;		/* [m] cq_est glue */
 	TAILQ_ENTRY(clockintr) cl_plink;		/* [m] cq_pend glue */
-	void (*cl_func)(struct clockintr *, void *);	/* [I] callback */
+	void *cl_arg;					/* [I] argument */
+	void (*cl_func)(struct clockintr *, void *, void *); /* [I] callback */
 	struct clockintr_queue *cl_queue;		/* [I] parent queue */
 	uint32_t cl_flags;				/* [m] CLST_* flags */
 };
@@ -129,7 +130,7 @@ void clockintr_trigger(void);
 uint64_t clockintr_advance(struct clockintr *, uint64_t);
 void clockintr_cancel(struct clockintr *);
 struct clockintr *clockintr_establish(struct cpu_info *,
-    void (*)(struct clockintr *, void *));
+    void (*)(struct clockintr *, void *, void *), void *);
 void clockintr_stagger(struct clockintr *, uint64_t, uint32_t, uint32_t);
 void clockqueue_init(struct clockintr_queue *);
 int sysctl_clockintr(int *, u_int, void *, size_t *, void *, size_t);

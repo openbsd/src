@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.37 2023/09/06 02:09:58 cheloha Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.38 2023/09/10 03:08:05 cheloha Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ u_int gmon_cpu_count;		/* [K] number of CPUs with profiling enabled */
 
 extern char etext[];
 
-void gmonclock(struct clockintr *, void *);
+void gmonclock(struct clockintr *, void *, void *);
 
 void
 prof_init(void)
@@ -101,7 +101,7 @@ prof_init(void)
 
 	/* Allocate and initialize one profiling buffer per CPU. */
 	CPU_INFO_FOREACH(cii, ci) {
-		ci->ci_gmonclock = clockintr_establish(ci, gmonclock);
+		ci->ci_gmonclock = clockintr_establish(ci, gmonclock, NULL);
 		if (ci->ci_gmonclock == NULL) {
 			printf("%s: clockintr_establish gmonclock\n", __func__);
 			return;
@@ -236,7 +236,7 @@ sysctl_doprof(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 }
 
 void
-gmonclock(struct clockintr *cl, void *cf)
+gmonclock(struct clockintr *cl, void *cf, void *arg)
 {
 	uint64_t count;
 	struct clockframe *frame = cf;
@@ -307,7 +307,7 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 }
 
 void
-profclock(struct clockintr *cl, void *cf)
+profclock(struct clockintr *cl, void *cf, void *arg)
 {
 	uint64_t count;
 	struct clockframe *frame = cf;
