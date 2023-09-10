@@ -843,6 +843,9 @@ radeondrm_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		if (ws_set_param == NULL)
 			return 0;
 		return ws_set_param(dp);
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
+		return 0;
 	default:
 		return -1;
 	}

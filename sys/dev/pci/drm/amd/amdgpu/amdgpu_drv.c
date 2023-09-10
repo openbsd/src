@@ -3349,6 +3349,9 @@ amdgpu_wsioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 			return 0;
 		}
 		break;
+	case WSDISPLAYIO_SVIDEO:
+	case WSDISPLAYIO_GVIDEO:
+		return 0;
 	}
 
 	return (-1);
