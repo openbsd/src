@@ -1,4 +1,4 @@
-/*	$OpenBSD: l2tp_subr.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $	*/
+/*	$OpenBSD: l2tp_subr.c,v 1.5 2023/09/11 07:33:07 yasuoka Exp $	*/
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-/* $Id: l2tp_subr.c,v 1.4 2012/05/08 13:15:11 yasuoka Exp $ */
+/* $Id: l2tp_subr.c,v 1.5 2023/09/11 07:33:07 yasuoka Exp $ */
 /**@file L2TP related sub-routines */
 #include <sys/types.h>
 #include <sys/time.h>
@@ -80,10 +80,10 @@ avp_enum(struct l2tp_avp *avp, const u_char *pkt, int pktlen, int filldata)
 	avp->attr_type |= *(pkt + 1);
 	pkt += 2;
 
-	if (avp->length > pktlen)
+	if (avp->length < 6 || avp->length > pktlen)
 		return -1;
 
-	if (filldata != 0)
+	if (avp->length > 6 && filldata != 0)
 		memcpy(avp->attr_value, pkt, avp->length - 6);
 
 	return avp->length;
@@ -285,9 +285,8 @@ avp_find(struct l2tp_avp *avp, const u_char *pkt, int pktlen,
 
 	while (pktlen >= 6 &&
 	    (avpsz = avp_enum(avp, pkt, pktlen, fill_data)) > 0) {
+		L2TP_SUBR_ASSERT(avpsz >= 6);
 		if (avp->vendor_id != vendor_id || avp->attr_type != attr_type) {
-			if (avpsz < 6)
-				return NULL;
 			pkt += avpsz;
 			pktlen -= avpsz;
 			continue;
