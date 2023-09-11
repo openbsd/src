@@ -1,4 +1,4 @@
-/* $OpenBSD: rkdrm.h,v 1.3 2023/01/01 01:34:33 jsg Exp $ */
+/* $OpenBSD: rkdrm.h,v 1.4 2023/09/11 04:51:24 jsg Exp $ */
 /* $NetBSD: rk_drm.h,v 1.1 2019/11/09 23:30:14 jmcneill Exp $ */
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -84,12 +84,6 @@ struct rkdrm_softc {
 struct rkdrm_framebuffer {
 	struct drm_framebuffer	base;
 	struct drm_gem_dma_object *obj;
-};
-
-struct rkdrm_ports {
-	int			phandle;
-	struct drm_device	*ddev;
-	TAILQ_ENTRY(rkdrm_ports) entries;
 };
 
 struct rkdrm_fbdev {
