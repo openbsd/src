@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolver.c,v 1.160 2023/04/18 09:57:51 florian Exp $	*/
+/*	$OpenBSD: resolver.c,v 1.161 2023/09/11 06:00:23 florian Exp $	*/
 
 
 /*
@@ -920,6 +920,8 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	uint8_t			*p, *data;
 	uint8_t			 answer_imsg[MAX_IMSGSIZE - IMSG_HEADER_SIZE];
 
+	log_debug("%s: %d", __func__, rcode);
+
 	clock_gettime(CLOCK_MONOTONIC, &tp);
 
 	query_imsg = (struct query_imsg *)arg;
@@ -1074,14 +1076,17 @@ resolve_done(struct uw_resolver *res, void *arg, int rcode,
 	goto out;
 
  servfail:
+	log_debug("%s: foo: 1", __func__);
 	/* try_next_resolver() might free rq */
 	if (try_next_resolver(rq) != 0 && running_res == 0) {
 		/* we are the last one, send SERVFAIL */
 		answer_header->srvfail = 1;
+		log_debug("%s: foo: 2", __func__);
 		resolver_imsg_compose_frontend(IMSG_ANSWER, 0,
 		    answer_imsg, sizeof(*answer_header));
 	}
  out:
+	log_debug("%s: foo: 3", __func__);
 	free(query_imsg);
 	sldns_buffer_free(buf);
 	regional_destroy(region);
