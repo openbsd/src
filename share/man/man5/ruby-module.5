@@ -1,4 +1,5 @@
-.\"	$OpenBSD: ruby-module.5,v 1.40 2023/05/31 15:27:45 jeremy Exp $
+m
+.\"	$OpenBSD: ruby-module.5,v 1.41 2023/09/11 20:02:38 jeremy Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie, Jeremy Evans
 .\"
@@ -24,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 31 2023 $
+.Dd $Mdocdate: September 11 2023 $
 .Dt RUBY-MODULE 5
 .Os
 .Sh NAME
@@ -38,48 +39,40 @@ in the
 tree.
 .Pp
 Sets
-.Ev MODRUBY_REV ,
-.Ev RUBY ,
-.Ev RAKE ,
-.Ev RSPEC ,
-.Ev MODRUBY_BIN_TESTRB ,
-.Ev MODRUBY_BIN_RSPEC ,
-.Ev MODRUBY_WANTLIB ,
-.Ev MODRUBY_RUN_DEPENDS ,
-.Ev MODRUBY_LIB_DEPENDS ,
-.Ev MODRUBY_BUILD_DEPENDS ,
-.Ev MODRUBY_RSPEC_DEPENDS ,
-.Ev MODRUBY_RSPEC3_DEPENDS ,
-.Ev MODRUBY_RUBY_ADJ ,
+.Ev GEM ,
+.Ev GEM_BASE_BIN ,
+.Ev GEM_BASE_LIB ,
+.Ev GEM_BIN ,
+.Ev GEM_BIN_SUFFIX ,
+.Ev GEM_EXTENSIONS_DIR,
+.Ev GEM_FLAGS ,
+.Ev GEM_LIB ,
+.Ev GEM_MAN_SUFFIX ,
 .Ev MODRUBY_ADJ_FILES ,
-.Ev MODRUBY_LIBDIR ,
-.Ev MODRUBY_DOCDIR ,
+.Ev MODRUBY_ARCH ,
+.Ev MODRUBY_BINREV ,
+.Ev MODRUBY_BIN_RSPEC ,
+.Ev MODRUBY_BUILD_DEPENDS ,
+.Ev MODRUBY_BUILDDEP ,
+.Ev MODRUBY_FLAVOR ,
+.Ev MODRUBY_HANDLE_FLAVORS ,
+.Ev MODRUBY_LIBREV ,
+.Ev MODRUBY_LIB_DEPENDS ,
+.Ev MODRUBY_PKG_PREFIX ,
+.Ev MODRUBY_RELEXAMPLEDIR ,
+.Ev MODRUBY_REV ,
+.Ev MODRUBY_RUBY_ADJ ,
+.Ev MODRUBY_RUN_DEPENDS ,
+.Ev MODRUBY_RUNDEP ,
 .Ev MODRUBY_SITEARCHDIR ,
 .Ev MODRUBY_SITEDIR ,
-.Ev MODRUBY_EXAMPLEDIR ,
-.Ev MODRUBY_ARCH ,
-.Ev MODRUBY_LIBREV ,
-.Ev MODRUBY_BINREV ,
-.Ev MODRUBY_HANDLE_FLAVORS ,
-.Ev MODRUBY_PKG_PREFIX ,
-.Ev MODRUBY_FLAVOR ,
 .Ev MODRUBY_TEST ,
-.Ev MODRUBY_TEST_TARGET ,
-.Ev MODRUBY_TEST_DIR ,
 .Ev MODRUBY_TEST_ENV ,
-.Ev MODRUBY_BUILD_TARGET ,
-.Ev MODRUBY_INSTALL_TARGET ,
-.Ev MODRUBY_EXTRACT_TARGET ,
-.Ev GEM ,
-.Ev GEM_BIN ,
-.Ev GEM_LIB ,
-.Ev GEM_BASE_LIB ,
-.Ev GEM_ABS_PATH ,
-.Ev GEM_BASE_BIN ,
-.Ev GEM_BIN_SUFFIX ,
-.Ev GEM_MAN_SUFFIX ,
+.Ev MODRUBY_TEST_TARGET ,
+.Ev MODRUBY_WANTLIB ,
+.Ev RAKE ,
 and
-.Ev GEM_FLAGS .
+.Ev RUBY .
 .Pp
 Appends to
 .Ev CATEGORIES
@@ -98,23 +91,17 @@ unless
 .Ev MODRUBY_RUNDEP
 is set to No.
 .Pp
-.Ev MODRUBY_RSPEC_DEPENDS
-is set to the dependency line for the rspec 1 port for the version of ruby in
-use.
 .Ev MODRUBY_RSPEC3_DEPENDS
 is set to the dependency line for the rspec 3 port for the version of ruby in
 use.
 .Ev RUBY ,
-.Ev RAKE ,
 and
-.Ev MODRUBY_BIN_TESTRB
-are the path to the ruby, rake, and
-testrb binaries for the related ruby implementation.
-.Ev RSPEC
-and
+.Ev RAKE
+are the path to the ruby and rake
+binaries for the related ruby implementation.
 .Ev MODRUBY_BIN_RSPEC
-are the path to the spec (rspec 1) and
-rspec (rspec 3) binaries for the related ruby implementation.
+is the path to the rspec (rspec 3) binaries for the related ruby
+implementation.
 .Pp
 .Ev MODRUBY_RUBY_ADJ
 is a command that takes filename arguments and replaces
@@ -129,14 +116,10 @@ Creates a do-test target if
 .Ev MODRUBY_TEST
 is used and one is not already defined.
 .Ev MODRUBY_TEST
-can be set to ruby, rake, rspec, rspec3, or testrb to
+can be set to ruby, rake, rspec3, or testrb to
 choose the appropriate binary to run the regress tests.
 .Ev MODRUBY_TEST_ENV
 can be used to set environment variables for the regress tests.
-.Ev MODRUBY_TEST_DIR
-can be used to set the directory in which to execute
-the regress tests, it defaults to
-.Ev WRKSRC .
 .Ev MODRUBY_TEST_TARGET
 sets the argument to the regress test program.
 .Pp
@@ -152,7 +135,7 @@ The "ruby gem"
 should be used for pure ruby gems without C extensions.
 This adds
 .Ev PKG_ARCH
-= * and adds ruby30, ruby31, ruby32, and jruby
+= * and adds ruby30, ruby31, and ruby32
 .Ev FLAVOR Ns s
 to the port, so the same port can build packages for multiple versions of ruby.
 .It
@@ -192,8 +175,7 @@ instead of ruby as the package prefix.
 Specifying
 .Ev MODRUBY_FLAVOR
 is necessary so that if a ruby x.y package is being built for the current
-port, it depends on the ruby x.y package of the
-dependencies.
+port, it depends on the ruby x.y package of the dependencies.
 .Pp
 The ports system defaults to using ruby 3.2 if the version of ruby is not
 specified.
@@ -202,7 +184,7 @@ If you want to specify a version for a gem port, use a specific
 such as ruby31 to use ruby 3.1.
 If you want to specify a version for a non-gem port, set
 .Ev MODRUBY_REV
-for the version of ruby you want to use (3.0, 3.1, 3.2, jruby).
+for the version of ruby you want to use (3.0, 3.1, 3.2).
 .Pp
 If you do not want the ports system to automatically set up
 .Ev FLAVOR Ns s
@@ -218,7 +200,7 @@ When
 .Ev MODRUBY_HANDLE_FLAVORS
 is Yes, the ports system automatically adds the appropriate prefix to the
 .Ev FULLPKGNAME
-(e.g. jruby- for jruby, ruby32- for ruby 3.2).
+(e.g. ruby31- for ruby 3.1, ruby32- for ruby 3.2).
 Additionally, it adds
 .Ev GEM_BIN_SUFFIX
 and
