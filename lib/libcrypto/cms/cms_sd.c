@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.26 2023/07/08 08:26:26 beck Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.27 2023/09/11 09:24:14 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -721,119 +721,113 @@ cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain)
 int
 CMS_SignerInfo_sign(CMS_SignerInfo *si)
 {
-	EVP_MD_CTX *mctx = si->mctx;
-	EVP_PKEY_CTX *pctx = NULL;
-	unsigned char *abuf = NULL;
-	int alen;
-	size_t siglen;
-	const EVP_MD *md = NULL;
+	const EVP_MD *md;
+	unsigned char *buf = NULL, *sig = NULL;
+	int buf_len = 0;
+	size_t sig_len = 0;
+	int ret = 0;
 
-	md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
-	if (md == NULL)
-		return 0;
+	if ((md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm)) == NULL)
+		goto err;
 
 	if (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0) {
 		if (!cms_add1_signingTime(si, NULL))
 			goto err;
 	}
 
-	if (si->pctx)
-		pctx = si->pctx;
-	else {
-		EVP_MD_CTX_reset(mctx);
-		if (EVP_DigestSignInit(mctx, &pctx, md, NULL, si->pkey) <= 0)
+	if (si->pctx == NULL) {
+		EVP_MD_CTX_reset(si->mctx);
+		if (!EVP_DigestSignInit(si->mctx, &si->pctx, md, NULL, si->pkey))
 			goto err;
-		si->pctx = pctx;
 	}
 
-	if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
+	if (EVP_PKEY_CTX_ctrl(si->pctx, -1, EVP_PKEY_OP_SIGN,
 	    EVP_PKEY_CTRL_CMS_SIGN, 0, si) <= 0) {
 		CMSerror(CMS_R_CTRL_ERROR);
 		goto err;
 	}
 
-	alen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &abuf,
-	    &CMS_Attributes_Sign_it);
-	if (!abuf)
+	if ((buf_len = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &buf,
+	    &CMS_Attributes_Sign_it)) <= 0) {
+		buf_len = 0;
 		goto err;
-	if (EVP_DigestSignUpdate(mctx, abuf, alen) <= 0)
+	}
+	if (!EVP_DigestSign(si->mctx, NULL, &sig_len, buf, buf_len))
 		goto err;
-	if (EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0)
+	if ((sig = calloc(1, sig_len)) == NULL)
 		goto err;
-	free(abuf);
-	abuf = malloc(siglen);
-	if (abuf == NULL)
-		goto err;
-	if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
+	if (!EVP_DigestSign(si->mctx, sig, &sig_len, buf, buf_len))
 		goto err;
 
-	if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
+	if (EVP_PKEY_CTX_ctrl(si->pctx, -1, EVP_PKEY_OP_SIGN,
 	    EVP_PKEY_CTRL_CMS_SIGN, 1, si) <= 0) {
 		CMSerror(CMS_R_CTRL_ERROR);
 		goto err;
 	}
 
-	EVP_MD_CTX_reset(mctx);
+	ASN1_STRING_set0(si->signature, sig, sig_len);
+	sig = NULL;
 
-	ASN1_STRING_set0(si->signature, abuf, siglen);
-
-	return 1;
+	ret = 1;
 
  err:
-	free(abuf);
-	EVP_MD_CTX_reset(mctx);
+	if (si->mctx != NULL)
+		EVP_MD_CTX_reset(si->mctx);
+	freezero(buf, buf_len);
+	freezero(sig, sig_len);
 
-	return 0;
+	return ret;
 }
 LCRYPTO_ALIAS(CMS_SignerInfo_sign);
 
 int
 CMS_SignerInfo_verify(CMS_SignerInfo *si)
 {
-	EVP_MD_CTX *mctx = NULL;
-	unsigned char *abuf = NULL;
-	int alen, r = -1;
-	const EVP_MD *md = NULL;
+	const EVP_MD *md;
+	unsigned char *buf = NULL;
+	int buf_len = 0;
+	int ret = -1;
 
-	if (!si->pkey) {
+	if ((md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm)) == NULL)
+		goto err;
+
+	if (si->pkey == NULL) {
 		CMSerror(CMS_R_NO_PUBLIC_KEY);
-		return -1;
+		goto err;
 	}
 
-	md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
-	if (md == NULL)
-		return -1;
-	if (si->mctx == NULL && (si->mctx = EVP_MD_CTX_new()) == NULL) {
+	if (si->mctx == NULL)
+		si->mctx = EVP_MD_CTX_new();
+	if (si->mctx == NULL) {
 		CMSerror(ERR_R_MALLOC_FAILURE);
-		return -1;
+		goto err;
 	}
-	mctx = si->mctx;
-	if (EVP_DigestVerifyInit(mctx, &si->pctx, md, NULL, si->pkey) <= 0)
+
+	if (EVP_DigestVerifyInit(si->mctx, &si->pctx, md, NULL, si->pkey) <= 0)
 		goto err;
 
 	if (!cms_sd_asn1_ctrl(si, 1))
 		goto err;
 
-	alen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &abuf,
-	    &CMS_Attributes_Verify_it);
-	if (!abuf)
-		goto err;
-	r = EVP_DigestVerifyUpdate(mctx, abuf, alen);
-	free(abuf);
-	if (r <= 0) {
-		r = -1;
+	if ((buf_len = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &buf,
+	    &CMS_Attributes_Verify_it)) <= 0) {
+		buf_len = 0;
 		goto err;
 	}
 
-	r = EVP_DigestVerifyFinal(mctx, si->signature->data,
-	    si->signature->length);
-	if (r <= 0)
+	ret = EVP_DigestVerify(si->mctx, si->signature->data, si->signature->length,
+	    buf, buf_len);
+	if (ret <= 0) {
 		CMSerror(CMS_R_VERIFICATION_FAILURE);
+		goto err;
+	}
 
  err:
-	EVP_MD_CTX_reset(mctx);
+	if (si->mctx != NULL)
+		EVP_MD_CTX_reset(si->mctx);
+	freezero(buf, buf_len);
 
-	return r;
+	return ret;
 }
 LCRYPTO_ALIAS(CMS_SignerInfo_verify);
 
