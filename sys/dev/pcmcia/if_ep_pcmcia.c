@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pcmcia.c,v 1.50 2022/04/06 18:59:30 naddy Exp $	*/
+/*	$OpenBSD: if_ep_pcmcia.c,v 1.51 2023/09/11 08:41:27 mvs Exp $	*/
 /*	$NetBSD: if_ep_pcmcia.c,v 1.16 1998/08/17 23:20:40 thorpej Exp $  */
 
 /*-
@@ -69,7 +69,6 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/selinfo.h>
 #include <sys/timeout.h>
 #include <sys/device.h>
 

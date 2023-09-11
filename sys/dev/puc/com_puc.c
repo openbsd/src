@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.27 2022/04/06 18:59:30 naddy Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.28 2023/09/11 08:41:27 mvs Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -31,7 +31,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
-#include <sys/selinfo.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/uio.h>

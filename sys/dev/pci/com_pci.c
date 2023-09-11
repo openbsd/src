@@ -1,4 +1,4 @@
-/* $OpenBSD: com_pci.c,v 1.2 2022/04/06 18:59:29 naddy Exp $ */
+/* $OpenBSD: com_pci.c,v 1.3 2023/09/11 08:41:26 mvs Exp $ */
 /*
  * Copyright (c) 2020 Patrick Wildt <patrick@blueri.se>
  *
@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/selinfo.h>
 #include <sys/tty.h>
 
 #include <dev/pci/pcidevs.h>

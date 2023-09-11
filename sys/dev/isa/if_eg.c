@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_eg.c,v 1.51 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: if_eg.c,v 1.52 2023/09/11 08:41:26 mvs Exp $	*/
 /*	$NetBSD: if_eg.c,v 1.26 1996/05/12 23:52:27 mycroft Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
-#include <sys/selinfo.h>
 #include <sys/device.h>
 
 #include <net/if.h>

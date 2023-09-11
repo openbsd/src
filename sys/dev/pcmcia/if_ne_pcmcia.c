@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.101 2022/04/06 18:59:30 naddy Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.102 2023/09/11 08:41:27 mvs Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -32,7 +32,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/selinfo.h>
 #include <sys/device.h>
 #include <sys/socket.h>
 

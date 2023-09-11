@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isapnp.c,v 1.17 2022/04/06 18:59:28 naddy Exp $	*/
+/*	$OpenBSD: if_ne_isapnp.c,v 1.18 2023/09/11 08:41:26 mvs Exp $	*/
 /*	$NetBSD: if_ne_isapnp.c,v 1.7 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
@@ -40,7 +40,6 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
-#include <sys/selinfo.h>
 #include <sys/device.h>
 
 #include <net/if.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: auixp.c,v 1.51 2022/10/26 20:19:08 kn Exp $ */
+/* $OpenBSD: auixp.c,v 1.52 2023/09/11 08:41:26 mvs Exp $ */
 /* $NetBSD: auixp.c,v 1.9 2005/06/27 21:13:09 thorpej Exp $ */
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
-#include <sys/selinfo.h>
 #include <sys/audioio.h>
 #include <sys/queue.h>
 

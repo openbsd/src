@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_pci.c,v 1.36 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_ep_pci.c,v 1.37 2023/09/11 08:41:26 mvs Exp $	*/
 /*	$NetBSD: if_ep_pci.c,v 1.13 1996/10/21 22:56:38 thorpej Exp $	*/
 
 /*
@@ -41,7 +41,6 @@
 #include <sys/errno.h>
 #include <sys/timeout.h>
 #include <sys/syslog.h>
-#include <sys/selinfo.h>
 #include <sys/device.h>
 
 #include <net/if.h>
