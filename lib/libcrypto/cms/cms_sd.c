@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_sd.c,v 1.27 2023/09/11 09:24:14 tb Exp $ */
+/* $OpenBSD: cms_sd.c,v 1.28 2023/09/11 09:29:30 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -256,16 +256,16 @@ static int
 cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
 {
 	EVP_PKEY *pkey = si->pkey;
-	int i;
+	int ret;
 
-	if (!pkey->ameth || !pkey->ameth->pkey_ctrl)
+	if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
 		return 1;
-	i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
-	if (i == -2) {
+	ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
+	if (ret == -2) {
 		CMSerror(CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
 		return 0;
 	}
-	if (i <= 0) {
+	if (ret <= 0) {
 		CMSerror(CMS_R_CTRL_FAILURE);
 		return 0;
 	}
