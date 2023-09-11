@@ -1,4 +1,4 @@
-/*	$OpenBSD: aacvar.h,v 1.17 2023/07/13 07:31:12 jsg Exp $	*/
+/*	$OpenBSD: aacvar.h,v 1.18 2023/09/11 08:40:25 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -395,7 +395,6 @@ struct aac_softc
 	struct aac_aif_command	aac_aifq[AAC_AIFQ_LENGTH];
 	int			aac_aifq_head;
 	int			aac_aifq_tail;
-	struct selinfo		aac_select;
 	struct proc		*aifthread;
 	int			aifflags;
 #define AAC_AIFFLAGS_RUNNING	(1 << 0)
