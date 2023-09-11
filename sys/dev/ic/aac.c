@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.95 2023/07/13 07:31:12 jsg Exp $	*/
+/*	$OpenBSD: aac.c,v 1.96 2023/09/11 12:10:47 mvs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -53,7 +53,6 @@
 #include <sys/kthread.h>
 #include <sys/malloc.h>
 #include <sys/rwlock.h>
-#include <sys/selinfo.h>
 #include <sys/time.h>
 
 #include <machine/bus.h>
