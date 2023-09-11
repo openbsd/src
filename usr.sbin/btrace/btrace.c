@@ -1,7 +1,7 @@
-/*	$OpenBSD: btrace.c,v 1.75 2023/09/02 15:16:12 dv Exp $ */
+/*	$OpenBSD: btrace.c,v 1.76 2023/09/11 19:01:26 mpi Exp $ */
 
 /*
- * Copyright (c) 2019 - 2021 Martin Pieuchot <mpi@openbsd.org>
+ * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -95,6 +95,7 @@ bool			 stmt_test(struct bt_stmt *, struct dt_evt *);
 void			 stmt_time(struct bt_stmt *, struct dt_evt *);
 void			 stmt_zero(struct bt_stmt *);
 struct bt_arg		*ba_read(struct bt_arg *);
+struct bt_arg		*baeval(struct bt_arg *, struct dt_evt *);
 const char		*ba2hash(struct bt_arg *, struct dt_evt *);
 long			 baexpr2long(struct bt_arg *, struct dt_evt *);
 const char		*ba2bucket(struct bt_arg *, struct bt_arg *,
@@ -854,6 +855,7 @@ stmt_bucketize(struct bt_stmt *bs, struct dt_evt *dtev)
 	struct bt_arg *brange, *bhist = SLIST_FIRST(&bs->bs_args);
 	struct bt_arg *bval = (struct bt_arg *)bs->bs_var;
 	struct bt_var *bv = bhist->ba_value;
+	struct hist *hist;
 	const char *bucket;
 	long step = 0;
 
@@ -870,8 +872,17 @@ stmt_bucketize(struct bt_stmt *bs, struct dt_evt *dtev)
 	debug("hist=%p '%s' increment bucket '%s'\n", bv->bv_value,
 	    bv_name(bv), bucket);
 
-	bv->bv_value = (struct bt_arg *)
-	    hist_increment((struct hist *)bv->bv_value, bucket, step);
+	/* hist is NULL before first insert or after clear() */
+	hist = (struct hist *)bv->bv_value;
+	if (hist == NULL)
+		hist = hist_new(step);
+
+	hist_increment(hist, bucket);
+
+	debug("hist=%p '%s' increment bucket=%p '%s' bval=%p\n", hist,
+	    bv_name(bv), brange, bucket, bval);
+
+	bv->bv_value = (struct bt_arg *)hist;
 	bv->bv_type = B_VT_HIST;
 }
 
@@ -943,6 +954,7 @@ stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 	struct bt_var *bv = bmap->ba_value;
 	struct map *map;
 	const char *hash;
+	long val;
 
 	assert(bmap->ba_type == B_AT_MAP);
 	assert(SLIST_NEXT(bval, ba_next) == NULL);
@@ -952,7 +964,36 @@ stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 
 	/* map is NULL before first insert or after clear() */
 	map = (struct map *)bv->bv_value;
-	map = map_insert(map, hash, bval, dtev);
+	if (map == NULL)
+		map = map_new();
+
+	/* Operate on existring value for count(), max(), min() and sum(). */
+	switch (bval->ba_type) {
+	case B_AT_MF_COUNT:
+		val = ba2long(map_get(map, hash), NULL);
+		val++;
+		bval = ba_new(val, B_AT_LONG);
+		break;
+	case B_AT_MF_MAX:
+		val = ba2long(map_get(map, hash), NULL);
+		val = MAXIMUM(val, ba2long(bval->ba_value, dtev));
+		bval = ba_new(val, B_AT_LONG);
+		break;
+	case B_AT_MF_MIN:
+		val = ba2long(map_get(map, hash), NULL);
+		val = MINIMUM(val, ba2long(bval->ba_value, dtev));
+		bval = ba_new(val, B_AT_LONG);
+		break;
+	case B_AT_MF_SUM:
+		val = ba2long(map_get(map, hash), NULL);
+		val += ba2long(bval->ba_value, dtev);
+		bval = ba_new(val, B_AT_LONG);
+		break;
+	default:
+		break;
+	}
+
+	map_insert(map, hash, bval);
 
 	debug("map=%p '%s' insert key=%p '%s' bval=%p\n", map,
 	    bv_name(bv), bkey, hash, bval);
@@ -1018,7 +1059,7 @@ void
 stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 {
 	struct bt_arg *ba = SLIST_FIRST(&bs->bs_args);
-	struct bt_var *bv = bs->bs_var;
+	struct bt_var *bvar, *bv = bs->bs_var;
 
 	assert(SLIST_NEXT(ba, ba_next) == NULL);
 
@@ -1031,33 +1072,33 @@ stmt_store(struct bt_stmt *bs, struct dt_evt *dtev)
 		bv->bv_value = ba;
 		bv->bv_type = B_VT_LONG;
 		break;
+	case B_AT_VAR:
+		bvar = ba->ba_value;
+		bv->bv_type = bvar->bv_type;
+		bv->bv_value = bvar->bv_value;
+		break;
+	case B_AT_TUPLE:
+		bv->bv_value = baeval(ba, dtev);
+		bv->bv_type = B_VT_TUPLE;
+		break;
 	case B_AT_BI_PID:
-		bv->bv_value = ba_new((long)dtev->dtev_pid, B_AT_LONG);
-		bv->bv_type = B_VT_LONG;
-		break;
 	case B_AT_BI_TID:
-		bv->bv_value = ba_new((long)dtev->dtev_tid, B_AT_LONG);
-		bv->bv_type = B_VT_LONG;
-		break;
 	case B_AT_BI_NSECS:
-		bv->bv_value = ba_new(builtin_nsecs(dtev), B_AT_LONG);
-		bv->bv_type = B_VT_LONG;
-		break;
 	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
-	/* FALLTHROUGH */
 	case B_AT_OP_PLUS ... B_AT_OP_LOR:
-		bv->bv_value = ba_new(ba2long(ba, dtev), B_AT_LONG);
+		bv->bv_value = baeval(ba, dtev);
 		bv->bv_type = B_VT_LONG;
 		break;
 	case B_AT_FN_STR:
-		bv->bv_value = ba_new(ba2str(ba, dtev), B_AT_STR);
+		bv->bv_value = baeval(ba, dtev);
 		bv->bv_type = B_VT_STR;
 		break;
 	default:
 		xabort("store not implemented for type %d", ba->ba_type);
 	}
 
-	debug("bv=%p var '%s' store (%p)\n", bv, bv_name(bv), bv->bv_value);
+	debug("bv=%p var '%s' store (%p)='%s'\n", bv, bv_name(bv), bv->bv_value,
+	    ba2str(bv->bv_value, dtev));
 }
 
 /*
@@ -1160,7 +1201,6 @@ ba_read(struct bt_arg *ba)
 	struct bt_var *bv = ba->ba_value;
 
 	assert(ba->ba_type == B_AT_VAR);
-
 	debug("bv=%p read '%s' (%p)\n", bv, bv_name(bv), bv->bv_value);
 
 	/* Handle map/hist access after clear(). */
@@ -1170,6 +1210,57 @@ ba_read(struct bt_arg *ba)
 	return bv->bv_value;
 }
 
+// XXX
+extern struct bt_arg	*ba_append(struct bt_arg *, struct bt_arg *);
+
+/*
+ * Return a new argument that doesn't depend on `dtev'.  This is used
+ * when storing values in variables, maps, etc.
+ */
+struct bt_arg *
+baeval(struct bt_arg *bval, struct dt_evt *dtev)
+{
+	struct bt_arg *ba, *bh = NULL;
+
+	switch (bval->ba_type) {
+	case B_AT_VAR:
+		ba = baeval(ba_read(bval), NULL);
+		break;
+	case B_AT_LONG:
+	case B_AT_BI_PID:
+	case B_AT_BI_TID:
+	case B_AT_BI_CPU:
+	case B_AT_BI_NSECS:
+	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
+	case B_AT_BI_RETVAL:
+	case B_AT_OP_PLUS ... B_AT_OP_LOR:
+		ba = ba_new(ba2long(bval, dtev), B_AT_LONG);
+		break;
+	case B_AT_STR:
+	case B_AT_BI_COMM:
+	case B_AT_BI_KSTACK:
+	case B_AT_BI_USTACK:
+	case B_AT_BI_PROBE:
+	case B_AT_FN_STR:
+		ba = ba_new(ba2str(bval, dtev), B_AT_STR);
+		break;
+	case B_AT_TUPLE:
+		ba = bval->ba_value;
+		do {
+			bh = ba_append(bh, baeval(ba, dtev));
+		} while ((ba = SLIST_NEXT(ba, ba_next)) != NULL);
+		ba = ba_new(bh, B_AT_TUPLE);
+		break;
+	default:
+		xabort("no eval support for type %d", bval->ba_type);
+	}
+
+	return ba;
+}
+
+/*
+ * Return a string of coma-separated values
+ */
 const char *
 ba2hash(struct bt_arg *ba, struct dt_evt *dtev)
 {
@@ -1556,6 +1647,7 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	static char buf[STRLEN];
 	struct bt_var *bv;
 	struct dtioc_probe_info *dtpi;
+	unsigned long idx;
 	const char *str;
 
 	buf[0] = '\0';
@@ -1566,6 +1658,26 @@ ba2str(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_LONG:
 		snprintf(buf, sizeof(buf), "%ld",(long)ba->ba_value);
 		str = buf;
+		break;
+	case B_AT_TUPLE:
+		snprintf(buf, sizeof(buf), "(%s)", ba2hash(ba->ba_value, dtev));
+		str = buf;
+		break;
+	case B_AT_TMEMBER:
+		idx = (unsigned long)ba->ba_key;
+		bv = ba->ba_value;
+		/* Uninitialized tuple */
+		if (bv->bv_value == NULL) {
+			str = buf;
+			break;
+		}
+		ba = bv->bv_value;
+		assert(ba->ba_type == B_AT_TUPLE);
+		ba = ba->ba_value;
+		while (ba != NULL && idx-- > 0) {
+			ba = SLIST_NEXT(ba, ba_next);
+		}
+		str = ba2str(ba, dtev);
 		break;
 	case B_AT_NIL:
 		str = "";
@@ -1674,6 +1786,8 @@ ba2dtflags(struct bt_arg *ba)
 		switch (bval->ba_type) {
 		case B_AT_STR:
 		case B_AT_LONG:
+		case B_AT_TUPLE:
+		case B_AT_TMEMBER:
 		case B_AT_VAR:
 	    	case B_AT_HIST:
 		case B_AT_NIL:
@@ -1720,6 +1834,8 @@ ba2dtflags(struct bt_arg *ba)
 long
 bacmp(struct bt_arg *a, struct bt_arg *b)
 {
+	long val;
+
 	if (a->ba_type != b->ba_type)
 		return a->ba_type - b->ba_type;
 
@@ -1728,8 +1844,24 @@ bacmp(struct bt_arg *a, struct bt_arg *b)
 		return ba2long(a, NULL) - ba2long(b, NULL);
 	case B_AT_STR:
 		return strcmp(ba2str(a, NULL), ba2str(b, NULL));
+	case B_AT_TUPLE:
+		/* Compare two lists of arguments one by one. */
+		do {
+			val = bacmp(a, b);
+			if (val != 0)
+				break;
+
+			a = SLIST_NEXT(a, ba_next);
+			b = SLIST_NEXT(b, ba_next);
+			if (a == NULL && b != NULL)
+				val = -1;
+			else if (a != NULL && b == NULL)
+				val = 1;
+		} while (a != NULL && b != NULL);
+
+		return val;
 	default:
-		errx(1, "no compare support for type %d", a->ba_type);
+		xabort("no compare support for type %d", a->ba_type);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.h,v 1.12 2023/05/12 14:14:16 claudio Exp $ */
+/*	$OpenBSD: btrace.h,v 1.13 2023/09/11 19:01:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -46,14 +46,15 @@ int			 kelf_snprintsym(struct syms *, char *, size_t,
 /* map.c */
 struct map;
 struct hist;
+struct map		*map_new(void);
 void			 map_clear(struct map *);
 void			 map_delete(struct map *, const char *);
 struct bt_arg		*map_get(struct map *, const char *);
-struct map		*map_insert(struct map *, const char *, struct bt_arg *,
-			    struct dt_evt *);
+void			 map_insert(struct map *, const char *, void *);
 void			 map_print(struct map *, size_t, const char *);
 void			 map_zero(struct map *);
-struct hist		*hist_increment(struct hist *, const char *, long);
+struct hist		*hist_new(long);
+void			 hist_increment(struct hist *, const char *);
 void			 hist_print(struct hist *, const char *);
 
 #define KLEN	1024	/* # of characters in map key, contain a stack trace */

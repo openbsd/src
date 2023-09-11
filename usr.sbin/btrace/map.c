@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.23 2023/09/03 10:26:35 mpi Exp $ */
+/*	$OpenBSD: map.c,v 1.24 2023/09/11 19:01:26 mpi Exp $ */
 
 /*
  * Copyright (c) 2020 Martin Pieuchot <mpi@openbsd.org>
@@ -32,14 +32,6 @@
 
 #include "bt_parser.h"
 #include "btrace.h"
-
-#ifndef MIN
-#define	MIN(_a,_b) ((_a) < (_b) ? (_a) : (_b))
-#endif
-
-#ifndef MAX
-#define	MAX(_a,_b) ((_a) > (_b) ? (_a) : (_b))
-#endif
 
 RB_HEAD(map, mentry);
 
@@ -77,6 +69,18 @@ mget(struct map *map, const char *key)
 	}
 
 	return mep;
+}
+
+struct map *
+map_new(void)
+{
+	struct map *map;
+
+	map = calloc(1, sizeof(struct map));
+	if (map == NULL)
+		err(1, "map: calloc");
+
+	return map;
 }
 
 void
@@ -118,75 +122,14 @@ map_get(struct map *map, const char *key)
 	return mep->mval;
 }
 
-struct map *
-map_insert(struct map *map, const char *key, struct bt_arg *bval,
-    struct dt_evt *dtev)
+void
+map_insert(struct map *map, const char *key, void *cookie)
 {
 	struct mentry *mep;
-	long val;
-
-	if (map == NULL) {
-		map = calloc(1, sizeof(struct map));
-		if (map == NULL)
-			err(1, "map: calloc");
-	}
 
 	mep = mget(map, key);
-	switch (bval->ba_type) {
-	case B_AT_STR:
-		free(mep->mval);
-		mep->mval = ba_new(ba2str(bval, dtev), B_AT_LONG);
-		break;
-	case B_AT_LONG:
-	case B_AT_BI_PID:
-	case B_AT_BI_TID:
-	case B_AT_BI_CPU:
-	case B_AT_BI_NSECS:
-	case B_AT_BI_ARG0 ... B_AT_BI_ARG9:
-	case B_AT_BI_RETVAL:
-	case B_AT_BI_PROBE:
-		free(mep->mval);
-		mep->mval = ba_new(ba2long(bval, dtev), B_AT_LONG);
-		break;
-	case B_AT_MF_COUNT:
-		if (mep->mval == NULL)
-			mep->mval = ba_new(0, B_AT_LONG);
-		val = (long)mep->mval->ba_value;
-		val++;
-		mep->mval->ba_value = (void *)val;
-		break;
-	case B_AT_MF_MAX:
-		if (mep->mval == NULL)
-			mep->mval = ba_new(0, B_AT_LONG);
-		val = (long)mep->mval->ba_value;
-		val = MAX(val, ba2long(bval->ba_value, dtev));
-		mep->mval->ba_value = (void *)val;
-		break;
-	case B_AT_MF_MIN:
-		if (mep->mval == NULL)
-			mep->mval = ba_new(0, B_AT_LONG);
-		val = (long)mep->mval->ba_value;
-		val = MIN(val, ba2long(bval->ba_value, dtev));
-		mep->mval->ba_value = (void *)val;
-		break;
-	case B_AT_MF_SUM:
-		if (mep->mval == NULL)
-			mep->mval = ba_new(0, B_AT_LONG);
-		val = (long)mep->mval->ba_value;
-		val += ba2long(bval->ba_value, dtev);
-		mep->mval->ba_value = (void *)val;
-		break;
-	case B_AT_BI_COMM:
-	case B_AT_BI_KSTACK:
-	case B_AT_BI_USTACK:
-		free(mep->mval);
-		mep->mval = ba_new(ba2str(bval, dtev), B_AT_STR);
-		break;
-	default:
-		errx(1, "no insert support for type %d", bval->ba_type);
-	}
-
-	return map;
+	free(mep->mval);
+	mep->mval = cookie;
 }
 
 static int
@@ -248,26 +191,36 @@ map_zero(struct map *map)
 /*
  * Histogram implemented with map.
  */
-
 struct hist {
 	struct map	hmap;
 	int		hstep;
 };
 
 struct hist *
-hist_increment(struct hist *hist, const char *key, long step)
+hist_new(long step)
 {
-	static struct bt_arg incba = BA_INITIALIZER(NULL, B_AT_MF_COUNT);
+	struct hist *hist;
 
-	if (hist == NULL) {
-		hist = calloc(1, sizeof(struct hist));
-		if (hist == NULL)
-			err(1, "hist: calloc");
-		hist->hstep = step;
-	}
-	assert(hist->hstep == step);
+	hist = calloc(1, sizeof(struct hist));
+	if (hist == NULL)
+		err(1, "hist: calloc");
+	hist->hstep = step;
 
-	return (struct hist *)map_insert(&hist->hmap, key, &incba, NULL);
+	return hist;
+}
+
+void
+hist_increment(struct hist *hist, const char *bucket)
+{
+	struct bt_arg *ba;
+	long val;
+
+	ba = map_get(&hist->hmap, bucket);
+
+	assert(ba->ba_type == B_AT_LONG);
+	val = (long)ba->ba_value;
+	val++;
+	ba->ba_value = (void *)val;
 }
 
 long

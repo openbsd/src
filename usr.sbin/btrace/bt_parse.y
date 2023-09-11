@@ -1,7 +1,7 @@
-/*	$OpenBSD: bt_parse.y,v 1.52 2023/09/02 19:28:46 dv Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.53 2023/09/11 19:01:26 mpi Exp $	*/
 
 /*
- * Copyright (c) 2019-2021 Martin Pieuchot <mpi@openbsd.org>
+ * Copyright (c) 2019-2023 Martin Pieuchot <mpi@openbsd.org>
  * Copyright (c) 2019 Tobias Heider <tobhe@openbsd.org>
  * Copyright (c) 2015 Ted Unangst <tedu@openbsd.org>
  *
@@ -71,6 +71,8 @@ struct bt_var	*bg_lookup(const char *);
 struct bt_stmt	*bg_store(const char *, struct bt_arg *);
 struct bt_arg	*bg_find(const char *);
 struct bt_var	*bg_get(const char *);
+
+struct bt_arg	*bi_find(struct bt_arg *, unsigned long);
 
 struct bt_var	*bl_lookup(const char *);
 struct bt_stmt	*bl_store(const char *, struct bt_arg *);
@@ -210,9 +212,11 @@ fterm	: fterm '*' factor	{ $$ = ba_op(B_AT_OP_MULT, $1, $3); }
 
 variable: lvar			{ $$ = bl_find($1); }
 	| gvar			{ $$ = bg_find($1); }
+	| variable '.' NUMBER	{ $$ = bi_find($1, $3); }
 	;
 
 factor : '(' expr ')'		{ $$ = $2; }
+	| '(' vargs ',' expr ')'{ $$ = ba_new(ba_append($2, $4), B_AT_TUPLE); }
 	| NUMBER		{ $$ = ba_new($1, B_AT_LONG); }
 	| BUILTIN		{ $$ = ba_new(NULL, $1); }
 	| CSTRING		{ $$ = ba_new($1, B_AT_STR); }
@@ -419,7 +423,7 @@ ba_new0(void *val, enum bt_argtype type)
 
 /*
  * Link two arguments together, to build an argument list used in
- * function calls.
+ * operators, tuples and function calls.
  */
 struct bt_arg *
 ba_append(struct bt_arg *da0, struct bt_arg *da1)
@@ -592,6 +596,17 @@ bl_store(const char *vname, struct bt_arg *vval)
 	return bs_new(B_AC_STORE, vval, bv);
 }
 
+/* Create an argument that points to a tuple variable and a given index */
+struct bt_arg *
+bi_find(struct bt_arg *ba, unsigned long index)
+{
+	struct bt_var *bv = ba->ba_value;
+
+	ba = ba_new(bv, B_AT_TMEMBER);
+	ba->ba_key = (void *)index;
+	return ba;
+}
+
 struct bt_stmt *
 bm_op(enum bt_action mact, struct bt_arg *ba, struct bt_arg *mval)
 {
@@ -610,7 +625,7 @@ bm_insert(const char *mname, struct bt_arg *mkey, struct bt_arg *mval)
 	return bs_new(B_AC_INSERT, ba, (struct bt_var *)mval);
 }
 
-/* Create an argument that points to a variable and attach a key to it. */
+/* Create an argument that points to a map variable and attach a key to it. */
 struct bt_arg *
 bm_find(const char *vname, struct bt_arg *mkey)
 {
