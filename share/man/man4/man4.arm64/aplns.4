@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aplns.4,v 1.1 2021/05/28 04:49:44 dlg Exp $
+.\"	$OpenBSD: aplns.4,v 1.2 2023/09/11 04:21:30 jsg Exp $
 .\"
 .\" Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,19 +14,19 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 28 2021 $
+.Dd $Mdocdate: September 11 2023 $
 .Dt APLNS 4 arm64
 .Os
 .Sh NAME
 .Nm aplns
-.Nd Apple NVME Storage controller
+.Nd Apple NVMe Storage controller
 .Sh SYNOPSIS
 .Cd "aplns* at fdt?"
 .Cd "nvme* at aplns?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the NVME Storage controller found on
+driver provides support for the NVMe Storage controller found on
 various Apple SoCs.
 .Sh SEE ALSO
 .Xr intro 4 ,
