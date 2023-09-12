@@ -1,8 +1,25 @@
-.\" $OpenBSD: EVP_MD_meth_new.3,v 1.3 2023/08/12 16:48:23 schwarze Exp $
+.\" $OpenBSD: EVP_MD_meth_new.3,v 1.4 2023/09/12 12:11:05 schwarze Exp $
 .\" selective merge up to:
 .\" OpenSSL man3/EVP_MD_meth_new 0388d212 Dec 14 12:47:07 2018 -0800
 .\"
-.\" This file was written by Richard Levitte <levitte@openssl.org>
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Richard Levitte <levitte@openssl.org>
 .\" Copyright (c) 2015 The OpenSSL Project.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -49,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 12 2023 $
+.Dd $Mdocdate: September 12 2023 $
 .Dt EVP_MD_METH_NEW 3
 .Os
 .Sh NAME
@@ -179,26 +196,59 @@ sets the flags to describe optional behaviours in the particular
 Several flags can be or'd together.
 The available flags are:
 .Bl -tag -width Ds
-.It EVP_MD_FLAG_ONESHOT
-This digest method can only handle one block of input.
-.It EVP_MD_FLAG_DIGALGID_NULL
-When setting up a DigestAlgorithmIdentifier, this flag will have the
-parameter set to NULL by default.
+.It Dv EVP_MD_FLAG_DIGALGID_NULL
+When setting up a
+.Vt DigestAlgorithmIdentifier
+with
+.Xr X509_ALGOR_set_md 3 ,
+set the parameter type to
+.Dv V_ASN1_NULL
+and the parameter value to
+.Dv NULL .
+This is the default, which means that it takes effect for
+.Vt EVP_MD
+objects that do not have
+.Dv EVP_MD_FLAG_DIGALGID_ABSENT
+set.
 Use this for PKCS#1.
-.Em Note: if combined with EVP_MD_FLAG_DIGALGID_ABSENT, the latter will override.
-.It EVP_MD_FLAG_DIGALGID_ABSENT
-When setting up a DigestAlgorithmIdentifier, this flag will have the
-parameter be left absent by default.
-.Em Note: if combined with EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.
-.It EVP_MD_FLAG_DIGALGID_CUSTOM
-Custom DigestAlgorithmIdentifier handling via ctrl, with
-.Sy EVP_MD_FLAG_DIGALGID_ABSENT
-as default.
-.Em Note: if combined with EVP_MD_FLAG_DIGALGID_NULL, the latter will be overridden.
-Currently unused.
-.It EVP_MD_FLAG_FIPS
-This digest method is suitable for use in FIPS mode.
-Currently unused.
+.It Dv EVP_MD_FLAG_DIGALGID_ABSENT
+When setting up a
+.Vt DigestAlgorithmIdentifier
+with
+.Xr X509_ALGOR_set_md 3 ,
+set the parameter type to
+.Dv V_ASN1_UNDEF
+and the parameter value to
+.Dv NULL .
+This is used by the
+.Vt EVP_MD
+objects documented in the manual page
+.Xr EVP_sha3_224 3
+and by the objects returned from
+.Xr EVP_sha512 3 ,
+.Xr EVP_sha512_256 3 ,
+.Xr EVP_sha512_224 3 ,
+.Xr EVP_sha384 3 ,
+.Xr EVP_sha256 3 ,
+.Xr EVP_sha224 3 ,
+.Xr EVP_sha1 3 ,
+and
+.Xr EVP_sm3 3 .
+.It Dv EVP_MD_FLAG_DIGALGID_CUSTOM
+This flag is reserved for used-defined
+.Vt EVP_MD
+objects supporting custom
+.Vt DigestAlgorithmIdentifier
+handling via
+.Xr EVP_MD_CTX_ctrl 3 ,
+but actually, it is ignored by both LibreSSL and OpenSSL
+and such user-defined behaviour is not supported by the libraries.
+.It Dv EVP_MD_FLAG_FIPS
+Mark the digest method as suitable for FIPS mode.
+This flag is ignored by both LibreSSL and OpenSSL.
+.It Dv EVP_MD_FLAG_ONESHOT
+Intended to indicate that the digest method can only handle one block
+of input, but actually, this flag is ignored by both LibreSSL and OpenSSL.
 .El
 .Pp
 .Fn EVP_MD_meth_set_init
