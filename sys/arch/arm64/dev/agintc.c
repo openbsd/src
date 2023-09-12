@@ -1,4 +1,4 @@
-/* $OpenBSD: agintc.c,v 1.52 2023/07/07 10:11:39 patrick Exp $ */
+/* $OpenBSD: agintc.c,v 1.53 2023/09/12 08:29:28 jmatthew Exp $ */
 /*
  * Copyright (c) 2007, 2009, 2011, 2017 Dale Rahn <drahn@dalerahn.com>
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -1797,6 +1797,8 @@ agintc_msi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ic.ic_establish_msi = agintc_intr_establish_msi;
 	sc->sc_ic.ic_disestablish = agintc_intr_disestablish_msi;
 	sc->sc_ic.ic_barrier = agintc_intr_barrier_msi;
+	sc->sc_ic.ic_gic_its_id = OF_getpropint(faa->fa_node,
+	    "openbsd,gic-its-id", 0);
 	arm_intr_register_fdt(&sc->sc_ic);
 	return;
 

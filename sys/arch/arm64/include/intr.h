@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.21 2022/12/21 22:30:42 kettenis Exp $ */
+/*	$OpenBSD: intr.h,v 1.22 2023/09/12 08:29:28 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -162,6 +162,7 @@ struct interrupt_controller {
 	LIST_ENTRY(interrupt_controller) ic_list;
 	uint32_t ic_phandle;
 	uint32_t ic_cells;
+	uint32_t ic_gic_its_id;
 };
 
 void	 arm_intr_init_fdt(void);
