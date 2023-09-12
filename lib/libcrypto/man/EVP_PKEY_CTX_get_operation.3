@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_get_operation.3,v 1.2 2023/09/10 04:05:26 jsg Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_get_operation.3,v 1.3 2023/09/12 16:15:23 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 10 2023 $
+.Dd $Mdocdate: September 12 2023 $
 .Dt EVP_PKEY_CTX_GET_OPERATION 3
 .Os
 .Sh NAME
@@ -92,11 +92,30 @@ was freshly returned from
 or
 .Xr EVP_PKEY_CTX_new_id 3
 and not yet initialized.
+.Pp
+The following masks are defined as the logical OR of two or more of the above
+.Dv EVP_PKEY_OP_*
+bits:
+.Pp
+.Bl -tag -width EVP_PKEY_OP_TYPE_NOGEN -compact
+.It Dv EVP_PKEY_OP_TYPE_CRYPT
+DECRYPT | ENCRYPT
+.It Dv EVP_PKEY_OP_TYPE_GEN
+KEYGEN | PARAMGEN
+.It Dv EVP_PKEY_OP_TYPE_NOGEN
+CRYPT | DERIVE | SIG
+.It Dv EVP_PKEY_OP_TYPE_SIG
+SIGN | SIGNCTX | VERIFY | VERIFYCTX | VERIFYRECOVER
+.El
 .Sh RETURN VALUES
 .Fn EVP_PKEY_CTX_get_operation
-returns one of the
+returns one of the single-bit
 .Dv EVP_PKEY_OP_*
-constants.
+constants or
+.Dv EVP_PKEY_OP_UNDEFINED
+if
+.Fa ctx
+is not initialized.
 .Pp
 .Fn EVP_PKEY_CTX_get0_pkey
 returns an internal pointer to the
