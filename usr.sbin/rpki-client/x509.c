@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.73 2023/06/23 15:32:15 tb Exp $ */
+/*	$OpenBSD: x509.c,v 1.74 2023/09/12 09:33:30 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
@@ -856,6 +856,86 @@ x509_location(const char *fn, const char *descr, const char *proto,
 
 	if ((*out = strndup(uri->data, uri->length)) == NULL)
 		err(1, NULL);
+
+	return 1;
+}
+
+/*
+ * Check that the subject only contains commonName and serialNumber.
+ * Return 0 on failure.
+ */
+int
+x509_valid_subject(const char *fn, const X509 *x)
+{
+	const X509_NAME *xn;
+	const X509_NAME_ENTRY *ne;
+	const ASN1_OBJECT *ao;
+	const ASN1_STRING *as;
+	int cn = 0, sn = 0;
+	int i, nid;
+
+	if ((xn = X509_get_subject_name(x)) == NULL) {
+		warnx("%s: X509_get_subject_name", fn);
+		return 0;
+	}
+
+	for (i = 0; i < X509_NAME_entry_count(xn); i++) {
+		if ((ne = X509_NAME_get_entry(xn, i)) == NULL) {
+			warnx("%s: X509_NAME_get_entry", fn);
+			return 0;
+		}
+		if ((ao = X509_NAME_ENTRY_get_object(ne)) == NULL) {
+			warnx("%s: X509_NAME_ENTRY_get_object", fn);
+			return 0;
+		}
+
+		nid = OBJ_obj2nid(ao);
+		switch (nid) {
+		case NID_commonName:
+			if (cn++ > 0) {
+				warnx("%s: duplicate commonName in subject",
+				    fn);
+				return 0;
+			}
+			if ((as = X509_NAME_ENTRY_get_data(ne)) == NULL) {
+				warnx("%s: X509_NAME_ENTRY_get_data failed",
+				    fn);
+				return 0;
+			}
+/*
+ * The following check can be enabled after AFRINIC re-issues CA certs.
+ * https://lists.afrinic.net/pipermail/dbwg/2023-March/000436.html
+ */
+#if 0
+			if (ASN1_STRING_type(as) != V_ASN1_PRINTABLESTRING) {
+				warnx("%s: RFC 6487 section 4.5: commonName is"
+				    " not PrintableString", fn);
+				return 0;
+			}
+#endif
+			break;
+		case NID_serialNumber:
+			if (sn++ > 0) {
+				warnx("%s: duplicate serialNumber in subject",
+				    fn);
+				return 0;
+			}
+			break;
+		case NID_undef:
+			warnx("%s: OBJ_obj2nid failed", fn);
+			return 0;
+		default:
+			warnx("%s: RFC 6487 section 4.5: unexpected attribute "
+			    "%s", fn, OBJ_nid2sn(nid));
+			return 0;
+		}
+	}
+
+	if (cn == 0) {
+		warnx("%s: RFC 6487 section 4.5: subject missing commonName",
+		    fn);
+		return 0;
+	}
 
 	return 1;
 }

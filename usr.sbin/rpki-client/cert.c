@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.114 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.115 2023/09/12 09:33:30 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -594,9 +594,8 @@ certificate_policies(struct parse *p, X509_EXTENSION *ext)
 }
 
 /*
- * Lightweight version of cert_parse_pre() for ASPA, ROA, and RSC EE certs.
- * This only parses the RFC 3779 extensions since these are necessary for
- * validation.
+ * Lightweight version of cert_parse_pre() for EE certs.
+ * Parses the two RFC 3779 extensions, and performs some sanity checks.
  * Returns cert on success and NULL on failure.
  */
 struct cert *
@@ -615,6 +614,9 @@ cert_parse_ee_cert(const char *fn, X509 *x)
 		warnx("%s: RFC 6487 4.1: X.509 version must be v3", fn);
 		goto out;
 	}
+
+	if (!x509_valid_subject(fn, x))
+		goto out;
 
 	if (X509_get_key_usage(x) != KU_DIGITAL_SIGNATURE) {
 		warnx("%s: RFC 6487 section 4.8.4: KU must be digitalSignature",
@@ -726,6 +728,9 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		    fn);
 		goto out;
 	}
+
+	if (!x509_valid_subject(p.fn, x))
+		goto out;
 
 	/* Look for X509v3 extensions. */
 
