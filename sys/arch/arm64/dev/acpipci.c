@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.39 2023/04/18 12:39:32 kettenis Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.40 2023/09/12 08:32:58 jmatthew Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -124,7 +124,10 @@ void	*acpipci_intr_establish(void *, pci_intr_handle_t, int,
 	    struct cpu_info *, int (*)(void *), void *, char *);
 void	acpipci_intr_disestablish(void *, void *);
 
-uint32_t acpipci_iort_map_msi(pci_chipset_tag_t, pcitag_t);
+uint32_t acpipci_iort_map_msi(pci_chipset_tag_t, pcitag_t,
+	    struct interrupt_controller **);
+	
+extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
 
 int
 acpipci_match(struct device *parent, void *match, void *aux)
@@ -190,7 +193,6 @@ acpipci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_bus_memt._space_map = acpipci_bs_map;
 	sc->sc_bus_memt._space_mmap = acpipci_bs_mmap;
 
-	extern LIST_HEAD(, interrupt_controller) interrupt_controllers;
 	LIST_FOREACH(ic, &interrupt_controllers, ic_list) {
 		if (ic->ic_establish_msi)
 			break;
@@ -632,7 +634,7 @@ acpipci_intr_establish(void *v, pci_intr_handle_t ih, int level,
 		KASSERT(ic);
 
 		/* Map Requester ID through IORT to get sideband data. */
-		data = acpipci_iort_map_msi(ih.ih_pc, ih.ih_tag);
+		data = acpipci_iort_map_msi(ih.ih_pc, ih.ih_tag, &ic);
 		cookie = ic->ic_establish_msi(ic->ic_cookie, &addr,
 		    &data, level, ci, func, arg, name);
 		if (cookie == NULL)
@@ -797,11 +799,12 @@ pci_lookup_segment(int segment)
  * IORT support.
  */
 
-uint32_t acpipci_iort_map(struct acpi_iort *, uint32_t, uint32_t);
+uint32_t acpipci_iort_map(struct acpi_iort *, uint32_t, uint32_t,
+    struct interrupt_controller **);
 
 uint32_t
 acpipci_iort_map_node(struct acpi_iort *iort,
-    struct acpi_iort_node *node, uint32_t id)
+    struct acpi_iort_node *node, uint32_t id, struct interrupt_controller **ic)
 {
 	struct acpi_iort_mapping *map =
 	    (struct acpi_iort_mapping *)((char *)node + node->mapping_offset);
@@ -812,14 +815,14 @@ acpipci_iort_map_node(struct acpi_iort *iort,
 
 		if (map[i].flags & ACPI_IORT_MAPPING_SINGLE) {
 			id = map[i].output_base;
-			return acpipci_iort_map(iort, offset, id);
+			return acpipci_iort_map(iort, offset, id, ic);
 		}
 
 		/* Mapping encodes number of IDs in the range minus one. */
 		if (map[i].input_base <= id &&
 		    id <= map[i].input_base + map[i].number_of_ids) {
 			id = map[i].output_base + (id - map[i].input_base);
-			return acpipci_iort_map(iort, offset, id);
+			return acpipci_iort_map(iort, offset, id, ic);
 		}
 	}
 
@@ -827,24 +830,39 @@ acpipci_iort_map_node(struct acpi_iort *iort,
 }
 
 uint32_t
-acpipci_iort_map(struct acpi_iort *iort, uint32_t offset, uint32_t id)
+acpipci_iort_map(struct acpi_iort *iort, uint32_t offset, uint32_t id,
+    struct interrupt_controller **ic)
 {
 	struct acpi_iort_node *node =
 	    (struct acpi_iort_node *)((char *)iort + offset);
+	struct interrupt_controller *icl;
+	struct acpi_iort_its_node *itsn;
+	int i;
 
 	switch (node->type) {
 	case ACPI_IORT_ITS:
+		itsn = (struct acpi_iort_its_node *)&node[1];
+		LIST_FOREACH(icl, &interrupt_controllers, ic_list) {
+			for (i = 0; i < itsn->number_of_itss; i++) {
+				if (icl->ic_gic_its_id == itsn->its_ids[i]) {
+					*ic = icl;
+					break;
+				}
+			}
+		}
+
 		return id;
 	case ACPI_IORT_SMMU:
 	case ACPI_IORT_SMMU_V3:
-		return acpipci_iort_map_node(iort, node, id);
+		return acpipci_iort_map_node(iort, node, id, ic);
 	}
 
 	return id;
 }
 
 uint32_t
-acpipci_iort_map_msi(pci_chipset_tag_t pc, pcitag_t tag)
+acpipci_iort_map_msi(pci_chipset_tag_t pc, pcitag_t tag,
+    struct interrupt_controller **ic)
 {
 	struct acpipci_softc *sc = pc->pc_intr_v;
 	struct acpi_table_header *hdr;
@@ -877,7 +895,8 @@ acpipci_iort_map_msi(pci_chipset_tag_t pc, pcitag_t tag)
 		case ACPI_IORT_ROOT_COMPLEX:
 			rc = (struct acpi_iort_rc_node *)&node[1];
 			if (rc->segment == sc->sc_seg)
-				return acpipci_iort_map_node(iort, node, rid);
+				return acpipci_iort_map_node(iort, node, rid,
+				    ic);
 			break;
 		}
 		offset += node->length;

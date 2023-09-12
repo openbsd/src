@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpireg.h,v 1.59 2022/11/24 04:04:39 jmatthew Exp $	*/
+/*	$OpenBSD: acpireg.h,v 1.60 2023/09/12 08:32:58 jmatthew Exp $	*/
 /*
  * Copyright (c) 2005 Thorsten Lockert <tholo@sigmasoft.com>
  * Copyright (c) 2005 Marco Peereboom <marco@openbsd.org>
@@ -716,6 +716,11 @@ struct acpi_iort_node {
 	uint32_t	reserved1;
 	uint32_t	number_of_mappings;
 	uint32_t	mapping_offset;
+} __packed;
+
+struct acpi_iort_its_node {
+	uint32_t	number_of_itss;
+	uint32_t	its_ids[];
 } __packed;
 
 struct acpi_iort_nc_node {
