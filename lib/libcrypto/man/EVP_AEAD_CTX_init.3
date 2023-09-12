@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.14 2023/09/12 13:29:38 schwarze Exp $
+.\" $OpenBSD: EVP_AEAD_CTX_init.3,v 1.15 2023/09/12 13:58:06 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, Google Inc.
 .\" Parts of the text were written by Adam Langley and David Benjamin.
@@ -279,6 +279,9 @@ ChaCha20 with a Poly1305 authenticator, using a
 of 32 bytes and a
 .Fa nonce_len
 of 12 bytes.
+The constant
+.Dv EVP_CHACHAPOLY_TLS_TAG_LEN
+specifies the length of the authentication tag in bytes and has a value of 16.
 .It Fn EVP_aead_xchacha20_poly1305
 XChaCha20 with a Poly1305 authenticator, using a
 .Fa key_len
