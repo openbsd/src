@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.76 2023/09/11 19:01:26 mpi Exp $ */
+/*	$OpenBSD: btrace.c,v 1.77 2023/09/13 13:47:58 mpi Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -990,6 +990,7 @@ stmt_insert(struct bt_stmt *bs, struct dt_evt *dtev)
 		bval = ba_new(val, B_AT_LONG);
 		break;
 	default:
+		bval = baeval(bval, dtev);
 		break;
 	}
 
