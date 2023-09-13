@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_PKEY_CTX_set_hkdf_md.3,v 1.2 2022/05/06 10:10:10 tb Exp $
+.\" $OpenBSD: EVP_PKEY_CTX_set_hkdf_md.3,v 1.3 2023/09/13 13:46:52 schwarze Exp $
 .\" full merge up to: OpenSSL 1cb7eff4 Sep 10 13:56:40 2019 +0100
 .\"
 .\" This file was written by Alessandro Ghedini <alessandro@ghedini.me>,
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: May 6 2022 $
+.Dd $Mdocdate: September 13 2023 $
 .Dt EVP_PKEY_CTX_SET_HKDF_MD 3
 .Os
 .Sh NAME
@@ -90,7 +90,9 @@
 .Fa "int infolen"
 .Fc
 .Sh DESCRIPTION
-The EVP_PKEY_HKDF algorithm implements the HKDF key derivation function.
+The
+.Dv EVP_PKEY_HKDF
+algorithm implements the HKDF key derivation function.
 HKDF follows the "extract-then-expand" paradigm, where the KDF logically
 consists of two modules.
 The first stage takes the input keying material and "extracts" from it a
@@ -106,7 +108,9 @@ There are three modes that are currently defined:
 This is the default mode.
 Calling
 .Xr EVP_PKEY_derive 3
-on an EVP_PKEY_CTX set up for HKDF will perform an extract followed by
+on an
+.Vt EVP_PKEY_CTX
+set up for HKDF will perform an extract followed by
 an expand operation in one go.
 The derived key returned will be the result after the expand operation.
 The intermediate fixed-length pseudorandom key K is not returned.
