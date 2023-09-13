@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.251 2023/09/08 09:06:31 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.252 2023/09/13 14:25:49 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -519,7 +519,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 	struct proc *p;
 	pid_t tid;
 	vaddr_t uaddr;
-	int error;
+	int s, error;
 
 	if (stack == NULL)
 		return EINVAL;
@@ -543,6 +543,7 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 
 	/* other links */
 	p->p_p = pr;
+	pr->ps_threadcnt++;
 
 	/* local copies */
 	p->p_fd		= pr->ps_fd;
@@ -561,17 +562,18 @@ thread_fork(struct proc *curp, void *stack, void *tcb, pid_t *tidptr,
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	LIST_INSERT_HEAD(TIDHASH(p->p_tid), p, p_hash);
 
-	mtx_enter(&pr->ps_mtx);
+	SCHED_LOCK(s);
 	TAILQ_INSERT_TAIL(&pr->ps_threads, p, p_thr_link);
-	pr->ps_threadcnt++;
 
 	/*
 	 * if somebody else wants to take us to single threaded mode,
 	 * count ourselves in.
 	 */
-	if (pr->ps_single)
+	if (pr->ps_single) {
+		atomic_inc_int(&pr->ps_singlecount);
 		atomic_setbits_int(&p->p_flag, P_SUSPSINGLE);
-	mtx_leave(&pr->ps_mtx);
+	}
+	SCHED_UNLOCK(s);
 
 	/*
 	 * Return tid to parent thread and copy it out to userspace

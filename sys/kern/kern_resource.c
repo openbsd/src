@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.79 2023/09/08 09:06:31 claudio Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.80 2023/09/13 14:25:49 claudio Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.38 1996/10/23 07:19:38 matthias Exp $	*/
 
 /*-
@@ -212,13 +212,11 @@ donice(struct proc *curp, struct process *chgpr, int n)
 	if (n < chgpr->ps_nice && suser(curp))
 		return (EACCES);
 	chgpr->ps_nice = n;
-	mtx_enter(&chgpr->ps_mtx);
+	SCHED_LOCK(s);
 	TAILQ_FOREACH(p, &chgpr->ps_threads, p_thr_link) {
-		SCHED_LOCK(s);
 		setpriority(p, p->p_estcpu, n);
-		SCHED_UNLOCK(s);
 	}
-	mtx_leave(&chgpr->ps_mtx);
+	SCHED_UNLOCK(s);
 	return (0);
 }
 
@@ -478,9 +476,8 @@ dogetrusage(struct proc *p, int who, struct rusage *rup)
 	struct process *pr = p->p_p;
 	struct proc *q;
 
-	KERNEL_ASSERT_LOCKED();
-
 	switch (who) {
+
 	case RUSAGE_SELF:
 		/* start with the sum of dead threads, if any */
 		if (pr->ps_ru != NULL)
