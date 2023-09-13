@@ -1500,7 +1500,8 @@ bool radeon_get_legacy_connector_info_from_table(struct drm_device *dev)
 		} else if (of_machine_is_compatible("PowerMac3,5")) {
 			/* PowerMac G4 Silver radeon 7500 */
 			rdev->mode_info.connector_table = CT_MAC_G4_SILVER;
-		} else if (of_machine_is_compatible("PowerMac4,4")) {
+		} else if (of_machine_is_compatible("PowerMac4,4") ||
+			   of_machine_is_compatible("PowerMac6,4")) {
 			/* emac */
 			rdev->mode_info.connector_table = CT_EMAC;
 		} else if (of_machine_is_compatible("PowerMac10,1")) {
