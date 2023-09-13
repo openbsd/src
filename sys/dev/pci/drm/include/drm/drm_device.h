@@ -2,7 +2,7 @@
 #define _DRM_DEVICE_H_
 
 #include <sys/types.h>
-#include <sys/selinfo.h>
+#include <sys/event.h>
 
 #include <linux/list.h>
 #include <linux/kref.h>
