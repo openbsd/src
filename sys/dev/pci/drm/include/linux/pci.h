@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.h,v 1.13 2023/01/01 01:34:58 jsg Exp $	*/
+/*	$OpenBSD: pci.h,v 1.14 2023/09/13 12:31:49 jsg Exp $	*/
 /*
  * Copyright (c) 2015 Mark Kettenis
  *
@@ -302,6 +302,27 @@ pcie_capability_write_word(struct pci_dev *pdev, int off, u16 val)
 	    &pos, NULL))
 		return -EINVAL;
 	pci_write_config_word(pdev, pos + off, val);
+	return 0;
+}
+
+static inline int
+pcie_capability_set_word(struct pci_dev *pdev, int off, u16 val)
+{
+	u16 r;
+	pcie_capability_read_word(pdev, off, &r);
+	r |= val;
+	pcie_capability_write_word(pdev, off, r);
+	return 0;
+}
+
+static inline int
+pcie_capability_clear_and_set_word(struct pci_dev *pdev, int off, u16 c, u16 s)
+{
+	u16 r;
+	pcie_capability_read_word(pdev, off, &r);
+	r &= ~c;
+	r |= s;
+	pcie_capability_write_word(pdev, off, r);
 	return 0;
 }
 
