@@ -1,7 +1,24 @@
-.\" $OpenBSD: EVP_PKEY_get_default_digest_nid.3,v 1.6 2023/09/13 14:39:54 schwarze Exp $
+.\" $OpenBSD: EVP_PKEY_get_default_digest_nid.3,v 1.7 2023/09/13 14:57:21 schwarze Exp $
 .\" full merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
-.\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
+.\" This file is a derived work.
+.\" The changes are covered by the following Copyright and license:
+.\"
+.\" Copyright (c) 2023 Ingo Schwarze <schwarze@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.\" The original file was written by Dr. Stephen Henson <steve@openssl.org>.
 .\" Copyright (c) 2006, 2009, 2013, 2018 The OpenSSL Project.
 .\" All rights reserved.
 .\"
@@ -66,9 +83,9 @@
 The
 .Fn EVP_PKEY_get_default_digest_nid
 function sets
-.Fa pnid
+.Pf * Fa pnid
 to the default message digest NID for the public key signature
-operations associated with key
+operations associated with
 .Fa pkey .
 .Pp
 Some signature algorithms, for example
@@ -79,7 +96,18 @@ In this case,
 is set to
 .Dv NID_undef .
 .Pp
-For all current standard OpenSSL public key algorithms, SHA1 is returned.
+Support for the following public key algorithms is built into the library:
+.Pp
+.Bl -column -compact EVP_PKEY_base_id(3) NID_id_Gost28147_89_MAC mandatory
+.It Xr EVP_PKEY_base_id 3 Ta Pf * Fa pnid               Ta return value
+.It Dv EVP_PKEY_DSA       Ta Dv NID_sha1                Ta mandatory
+.It Dv EVP_PKEY_EC        Ta Dv NID_sha1                Ta mandatory
+.It Dv EVP_PKEY_ED25519   Ta Dv NID_undef               Ta mandatory
+.It Dv EVP_PKEY_GOSTIMIT  Ta Dv NID_id_Gost28147_89_MAC Ta mandatory
+.It Dv EVP_PKEY_GOSTR01   Ta variable                   Ta mandatory
+.It Dv EVP_PKEY_HMAC      Ta Dv NID_sha1                Ta advisory
+.It Dv EVP_PKEY_RSA       Ta Dv NID_sha256              Ta advisory
+.El
 .Sh RETURN VALUES
 The
 .Fn EVP_PKEY_get_default_digest_nid
