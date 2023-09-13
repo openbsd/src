@@ -1,8 +1,9 @@
-.\"	$OpenBSD: EVP_PKEY_get_default_digest_nid.3,v 1.5 2019/06/06 01:06:58 schwarze Exp $
-.\"	OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
+.\" $OpenBSD: EVP_PKEY_get_default_digest_nid.3,v 1.6 2023/09/13 14:39:54 schwarze Exp $
+.\" full merge up to: OpenSSL df75c2bf Dec 9 01:02:36 2018 +0100
 .\"
 .\" This file was written by Dr. Stephen Henson <steve@openssl.org>.
-.\" Copyright (c) 2006, 2009, 2013 The OpenSSL Project.  All rights reserved.
+.\" Copyright (c) 2006, 2009, 2013, 2018 The OpenSSL Project.
+.\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -48,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: June 6 2019 $
+.Dd $Mdocdate: September 13 2023 $
 .Dt EVP_PKEY_GET_DEFAULT_DIGEST_NID 3
 .Os
 .Sh NAME
@@ -69,6 +70,14 @@ function sets
 to the default message digest NID for the public key signature
 operations associated with key
 .Fa pkey .
+.Pp
+Some signature algorithms, for example
+.Dv EVP_PKEY_ED25519 ,
+do not use a digest during signing.
+In this case,
+.Pf * Fa pnid
+is set to
+.Dv NID_undef .
 .Pp
 For all current standard OpenSSL public key algorithms, SHA1 is returned.
 .Sh RETURN VALUES
