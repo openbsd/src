@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.48 2023/09/14 19:39:47 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.49 2023/09/14 19:51:17 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -42,7 +42,6 @@ uint32_t statclock_avg;			/* [I] average statclock period (ns) */
 uint32_t statclock_min;			/* [I] minimum statclock period (ns) */
 uint32_t statclock_mask;		/* [I] set of allowed offsets */
 
-uint64_t clockintr_advance_random(struct clockintr *, uint64_t, uint32_t);
 void clockintr_hardclock(struct clockintr *, void *, void *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
