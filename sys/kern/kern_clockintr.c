@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.50 2023/09/14 20:58:51 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.51 2023/09/14 22:07:11 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -87,17 +87,12 @@ clockintr_cpu_init(const struct intrclock *ic)
 	if (ic != NULL)
 		clockqueue_intrclock_install(cq, ic);
 
-	/* TODO: Remove these from struct clockintr_queue. */
+	/* TODO: Remove this from struct clockintr_queue. */
 	if (cq->cq_hardclock == NULL) {
 		cq->cq_hardclock = clockintr_establish(ci, clockintr_hardclock,
 		    NULL);
 		if (cq->cq_hardclock == NULL)
 			panic("%s: failed to establish hardclock", __func__);
-	}
-	if (cq->cq_statclock == NULL) {
-		cq->cq_statclock = clockintr_establish(ci, statclock, NULL);
-		if (cq->cq_statclock == NULL)
-			panic("%s: failed to establish statclock", __func__);
 	}
 
 	/*
@@ -144,12 +139,12 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 * stagger a randomized statclock.
 	 */
 	if (!statclock_is_randomized) {
-		if (cq->cq_statclock->cl_expiration == 0) {
-			clockintr_stagger(cq->cq_statclock, statclock_avg,
+		if (spc->spc_statclock->cl_expiration == 0) {
+			clockintr_stagger(spc->spc_statclock, statclock_avg,
 			    multiplier, MAXCPUS);
 		}
 	}
-	clockintr_advance(cq->cq_statclock, statclock_avg);
+	clockintr_advance(spc->spc_statclock, statclock_avg);
 
 	/*
 	 * XXX Need to find a better place to do this.  We can't do it in

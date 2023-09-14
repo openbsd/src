@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.15 2023/09/14 19:51:18 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.16 2023/09/14 22:07:11 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -98,7 +98,6 @@ struct clockintr_queue {
 	TAILQ_HEAD(, clockintr) cq_pend;/* [m] pending clockintr list */
 	struct clockintr *cq_running;	/* [m] running clockintr */
 	struct clockintr *cq_hardclock;	/* [o] hardclock handle */
-	struct clockintr *cq_statclock;	/* [o] statclock handle */
 	struct intrclock cq_intrclock;	/* [I] local interrupt clock */
 	struct clockintr_stat cq_stat;	/* [o] dispatch statistics */
 	volatile uint32_t cq_gen;	/* [o] cq_stat update generation */ 

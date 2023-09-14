@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.63 2023/09/10 03:08:05 cheloha Exp $	*/
+/*	$OpenBSD: sched.h,v 1.64 2023/09/14 22:07:11 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -109,6 +109,7 @@ struct schedstate_percpu {
 	struct clockintr *spc_itimer;	/* [o] itimer_update handle */
 	struct clockintr *spc_profclock; /* [o] profclock handle */
 	struct clockintr *spc_roundrobin; /* [o] roundrobin handle */
+	struct clockintr *spc_statclock; /* [o] statclock handle */
 
 	u_int spc_nrun;			/* procs on the run queues */
 
