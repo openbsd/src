@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfe_filter.c,v 1.64 2023/09/14 09:51:14 yasuoka Exp $	*/
+/*	$OpenBSD: pfe_filter.c,v 1.65 2023/09/14 09:54:31 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2006 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -486,20 +486,6 @@ sync_ruleset(struct relayd *env, struct rdr *rdr, int enable)
 		if (ioctl(env->sc_pf->dev, DIOCADDRULE, &rio) == -1)
 			fatal("cannot add rule");
 		log_debug("%s: rule added to anchor \"%s\"", __func__, anchor);
-
-		/*
-		 * Create "pass out" rule for "route to" which is needed to
-		 * make the states sloppy, short timeout and so on.
-		 */
-		if (t->conf.fwdmode == FWD_ROUTE) {
-			rio.rule.direction = PF_OUT;
-			rio.rule.rt &= ~PF_ROUTETO;
-			rio.rule.route.addr.type = PF_ADDR_NONE;
-			if (ioctl(env->sc_pf->dev, DIOCADDRULE, &rio) == -1)
-				fatal("cannot add rule");
-			log_debug("%s: rule added to anchor \"%s\"", __func__,
-			    anchor);
-		}
 	}
 	if (transaction_commit(env) == -1)
 		log_warn("%s: add rules transaction failed", __func__);
