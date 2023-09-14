@@ -1,4 +1,4 @@
-.\"	$OpenBSD: port-modules.5,v 1.265 2023/08/17 10:51:54 sthen Exp $
+.\"	$OpenBSD: port-modules.5,v 1.266 2023/09/14 03:53:26 bentley Exp $
 .\"
 .\" Copyright (c) 2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 17 2023 $
+.Dd $Mdocdate: September 14 2023 $
 .Dt PORT-MODULES 5
 .Os
 .Sh NAME
@@ -705,7 +705,7 @@ A
 .Cm do-install
 target is provided if the port itself does not provide it.
 This installs fonts from
-.Ev FONT_DISTSUBDIR
+.Ev WRKSRC
 in the distribution.
 If one or more file extensions are listed in
 .Ev FONTTYPES ,
