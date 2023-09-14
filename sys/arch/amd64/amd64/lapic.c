@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.69 2023/08/23 01:55:46 cheloha Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.70 2023/09/14 19:39:47 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
@@ -498,7 +498,8 @@ lapic_initclocks(void)
 
 	stathz = hz;
 	profhz = stathz * 10;
-	clockintr_init(CL_RNDSTAT);
+	statclock_is_randomized = 1;
+	clockintr_init(0);
 }
 
 

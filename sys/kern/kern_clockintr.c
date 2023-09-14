@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.47 2023/09/10 03:08:05 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.48 2023/09/14 19:39:47 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -169,7 +169,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 	 * We can always advance the statclock.  There is no reason to
 	 * stagger a randomized statclock.
 	 */
-	if (!ISSET(clockintr_flags, CL_RNDSTAT)) {
+	if (!statclock_is_randomized) {
 		if (cq->cq_statclock->cl_expiration == 0) {
 			clockintr_stagger(cq->cq_statclock, statclock_avg,
 			    multiplier, MAXCPUS);
@@ -475,7 +475,7 @@ clockintr_statclock(struct clockintr *cl, void *frame, void *arg)
 {
 	uint64_t count, i;
 
-	if (ISSET(clockintr_flags, CL_RNDSTAT)) {
+	if (statclock_is_randomized) {
 		count = clockintr_advance_random(cl, statclock_min,
 		    statclock_mask);
 	} else {

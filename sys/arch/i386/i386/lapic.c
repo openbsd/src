@@ -1,4 +1,4 @@
-/*	$OpenBSD: lapic.c,v 1.56 2023/08/23 01:55:46 cheloha Exp $	*/
+/*	$OpenBSD: lapic.c,v 1.57 2023/09/14 19:39:48 cheloha Exp $	*/
 /* $NetBSD: lapic.c,v 1.1.2.8 2000/02/23 06:10:50 sommerfeld Exp $ */
 
 /*-
@@ -326,7 +326,8 @@ lapic_initclocks(void)
 
 	stathz = hz;
 	profhz = stathz * 10;
-	clockintr_init(CL_RNDSTAT);
+	statclock_is_randomized = 1;
+	clockintr_init(0);
 }
 
 extern int gettick(void);	/* XXX put in header file */

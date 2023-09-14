@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.116 2023/09/09 18:19:03 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.117 2023/09/14 19:39:47 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -85,6 +85,8 @@ int	ticks = INT_MAX - (15 * 60 * HZ);
 
 /* Don't force early wrap around, triggers bug in inteldrm */
 volatile unsigned long jiffies;
+
+int statclock_is_randomized;	/* [I] fixed or pseudorandom period? */
 
 /*
  * Initialize clock frequencies and start both clocks running.

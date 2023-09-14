@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.80 2023/08/23 01:55:47 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.81 2023/09/14 19:39:48 cheloha Exp $	*/
 /*	$NetBSD: clock.c,v 1.41 2001/07/24 19:29:25 eeh Exp $ */
 
 /*
@@ -501,7 +501,8 @@ cpu_initclocks(void)
 
 	stathz = hz;
 	profhz = stathz * 10;
-	clockintr_init(CL_RNDSTAT);
+	statclock_is_randomized = 1;
+	clockintr_init(0);
 
 	/* Make sure we have a sane cpu_clockrate -- we'll need it */
 	if (!cpu_clockrate) 

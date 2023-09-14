@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.13 2023/09/10 03:08:05 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.14 2023/09/14 19:39:47 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -115,8 +115,7 @@ struct clockintr_queue {
 #define CL_STATE_MASK		0x00000001
 
 /* Global behavior flags. */
-#define CL_RNDSTAT		0x80000000	/* randomized statclock */
-#define CL_FLAG_MASK		0x80000000
+#define CL_FLAG_MASK		0x00000000
 
 void clockintr_cpu_init(const struct intrclock *);
 int clockintr_dispatch(void *);

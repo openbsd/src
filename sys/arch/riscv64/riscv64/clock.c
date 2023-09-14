@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 2023/08/23 01:55:47 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.12 2023/09/14 19:39:48 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -92,7 +92,8 @@ cpu_initclocks(void)
 
 	stathz = hz;
 	profhz = stathz * 10;
-	clockintr_init(CL_RNDSTAT);
+	statclock_is_randomized = 1;
+	clockintr_init(0);
 
 	riscv_intc_intr_establish(IRQ_TIMER_SUPERVISOR, 0,
 	    clock_intr, NULL, NULL);
