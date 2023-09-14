@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.7 2023/09/06 19:27:54 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.8 2023/09/14 15:25:43 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -37,13 +37,18 @@
 
 extern char *__progname;
 extern struct vmd_vm *current_vm;
+struct iovec io_v[VIOBLK_QUEUE_SIZE];
 
 static const char *disk_type(int);
 static uint32_t handle_io_read(struct viodev_msg *, struct virtio_dev *,
     int8_t *);
 static int handle_io_write(struct viodev_msg *, struct virtio_dev *);
-void vioblk_notify_rx(struct vioblk_dev *);
-int vioblk_notifyq(struct vioblk_dev *);
+
+static void vioblk_update_qs(struct vioblk_dev *);
+static void vioblk_update_qa(struct vioblk_dev *);
+static int vioblk_notifyq(struct vioblk_dev *);
+static ssize_t vioblk_rw(struct vioblk_dev *, int, off_t,
+    struct vring_desc *, struct vring_desc **);
 
 static void dev_dispatch_vm(int, short, void *);
 static void handle_sync_io(int, short, void *);
@@ -79,6 +84,9 @@ vioblk_main(int fd, int fd_vmm)
 	if (pledge("stdio vmm proc", NULL) == -1)
 		fatal("pledge");
 
+	/* Zero and initialize io work queue. */
+	memset(io_v, 0, nitems(io_v)*sizeof(io_v[0]));
+
 	/* Receive our virtio_dev, mostly preconfigured. */
 	memset(&dev, 0, sizeof(dev));
 	sz = atomicio(read, fd, &dev, sizeof(dev));
@@ -96,9 +104,9 @@ vioblk_main(int fd, int fd_vmm)
 	vioblk = &dev.vioblk;
 
 	log_debug("%s: got viblk dev. num disk fds = %d, sync fd = %d, "
-	    "async fd = %d, sz = %lld maxfer = %d, vmm fd = %d", __func__,
-	    vioblk->ndisk_fd, dev.sync_fd, dev.async_fd, vioblk->sz,
-	    vioblk->max_xfer, fd_vmm);
+	    "async fd = %d, capacity = %lld seg_max = %u, vmm fd = %d",
+	    __func__, vioblk->ndisk_fd, dev.sync_fd, dev.async_fd,
+	    vioblk->capacity, vioblk->seg_max, fd_vmm);
 
 	/* Receive our vm information from the vm process. */
 	memset(&vm, 0, sizeof(vm));
@@ -145,9 +153,9 @@ vioblk_main(int fd, int fd_vmm)
 		log_warnx("failed to init disk %s image", disk_type(type));
 		goto fail;
 	}
-	vioblk->sz = szp / 512;
-	log_debug("%s: initialized vioblk[%d] with %s image (sz=%lld)",
-	    __func__, vioblk->idx, disk_type(type), vioblk->sz);
+	vioblk->capacity = szp / 512;
+	log_debug("%s: initialized vioblk[%d] with %s image (capacity=%lld)",
+	    __func__, vioblk->idx, disk_type(type), vioblk->capacity);
 
 	/* If we're restoring hardware, reinitialize the virtqueue hva. */
 	if (vm.vm_state & VM_STATE_RECEIVED)
@@ -240,7 +248,7 @@ vioblk_cmd_name(uint32_t type)
 	}
 }
 
-void
+static void
 vioblk_update_qa(struct vioblk_dev *dev)
 {
 	struct virtio_vq_info *vq_info;
@@ -259,7 +267,7 @@ vioblk_update_qa(struct vioblk_dev *dev)
 	vq_info->q_hva = hva;
 }
 
-void
+static void
 vioblk_update_qs(struct vioblk_dev *dev)
 {
 	struct virtio_vq_info *vq_info;
@@ -277,122 +285,26 @@ vioblk_update_qs(struct vioblk_dev *dev)
 	dev->cfg.queue_size = vq_info->qs;
 }
 
-static void
-vioblk_free_info(struct ioinfo *info)
-{
-	if (!info)
-		return;
-	free(info->buf);
-	free(info);
-}
-
-static struct ioinfo *
-vioblk_start_read(struct vioblk_dev *dev, off_t sector, size_t sz)
-{
-	struct ioinfo *info;
-
-	/* Limit to 64M for now */
-	if (sz > (1 << 26)) {
-		log_warnx("%s: read size exceeded 64M", __func__);
-		return (NULL);
-	}
-
-	info = calloc(1, sizeof(*info));
-	if (!info)
-		goto nomem;
-	info->buf = malloc(sz);
-	if (info->buf == NULL)
-		goto nomem;
-	info->len = sz;
-	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
-	return info;
-
-nomem:
-	free(info);
-	log_warn("malloc error vioblk read");
-	return (NULL);
-}
-
-
-static const uint8_t *
-vioblk_finish_read(struct vioblk_dev *dev, struct ioinfo *info)
-{
-	struct virtio_backing *file = &dev->file;
-
-	if (file == NULL || file->pread == NULL) {
-		log_warnx("%s: XXX null?!", __func__);
-		return NULL;
-	}
-	if (file->pread(file->p, info->buf, info->len, info->offset) != info->len) {
-		log_warn("vioblk read error");
-		return NULL;
-	}
-
-	return info->buf;
-}
-
-static struct ioinfo *
-vioblk_start_write(struct vioblk_dev *dev, off_t sector,
-    paddr_t addr, size_t len)
-{
-	struct ioinfo *info;
-
-	/* Limit to 64M for now */
-	if (len > (1 << 26)) {
-		log_warnx("%s: write size exceeded 64M", __func__);
-		return (NULL);
-	}
-
-	info = calloc(1, sizeof(*info));
-	if (!info)
-		goto nomem;
-
-	info->buf = malloc(len);
-	if (info->buf == NULL)
-		goto nomem;
-	info->len = len;
-	info->offset = sector * VIRTIO_BLK_SECTOR_SIZE;
-
-	if (read_mem(addr, info->buf, info->len)) {
-		vioblk_free_info(info);
-		return NULL;
-	}
-
-	return info;
-
-nomem:
-	free(info);
-	log_warn("malloc error vioblk write");
-	return (NULL);
-}
-
-static int
-vioblk_finish_write(struct vioblk_dev *dev, struct ioinfo *info)
-{
-	struct virtio_backing *file = &dev->file;
-
-	if (file->pwrite(file->p, info->buf, info->len, info->offset) != info->len) {
-		log_warn("vioblk write error");
-		return EIO;
-	}
-	return 0;
-}
-
 /*
- * XXX in various cases, ds should be set to VIRTIO_BLK_S_IOERR, if we can
+ * Process virtqueue notifications. If an unrecoverable error occurs, puts
+ * device into a "needs reset" state.
+ *
+ * Returns 1 if an we need to assert an IRQ.
  */
-int
+static int
 vioblk_notifyq(struct vioblk_dev *dev)
 {
-	uint16_t idx, cmd_desc_idx, secdata_desc_idx, ds_desc_idx;
+	uint32_t cmd_len;
+	uint16_t idx, cmd_desc_idx;
 	uint8_t ds;
-	int cnt;
-	off_t secbias;
+	off_t offset;
+	ssize_t sz;
+	int is_write, notify, i;
 	char *vr;
-	struct vring_desc *desc, *cmd_desc, *secdata_desc, *ds_desc;
+	struct vring_desc *table, *desc;
 	struct vring_avail *avail;
 	struct vring_used *used;
-	struct virtio_blk_req_hdr cmd;
+	struct virtio_blk_req_hdr *cmd;
 	struct virtio_vq_info *vq_info;
 
 	/* Invalid queue? */
@@ -400,253 +312,117 @@ vioblk_notifyq(struct vioblk_dev *dev)
 		return (0);
 
 	vq_info = &dev->vq[dev->cfg.queue_notify];
+	idx = vq_info->last_avail;
 	vr = vq_info->q_hva;
 	if (vr == NULL)
 		fatalx("%s: null vring", __func__);
 
-	/* Compute offsets in ring of descriptors, avail ring, and used ring */
-	desc = (struct vring_desc *)(vr);
+	/* Compute offsets in table of descriptors, avail ring, and used ring */
+	table = (struct vring_desc *)(vr);
 	avail = (struct vring_avail *)(vr + vq_info->vq_availoffset);
 	used = (struct vring_used *)(vr + vq_info->vq_usedoffset);
 
-	idx = vq_info->last_avail & VIOBLK_QUEUE_MASK;
+	while (idx != avail->idx) {
+		/* Retrieve Command descriptor. */
+		cmd_desc_idx = avail->ring[idx & VIOBLK_QUEUE_MASK];
+		desc = &table[cmd_desc_idx];
+		cmd_len = desc->len;
 
-	if ((avail->idx & VIOBLK_QUEUE_MASK) == idx) {
-		log_debug("%s - nothing to do?", __func__);
-		return (0);
-	}
-
-	while (idx != (avail->idx & VIOBLK_QUEUE_MASK)) {
-
-		ds = VIRTIO_BLK_S_IOERR;
-		cmd_desc_idx = avail->ring[idx] & VIOBLK_QUEUE_MASK;
-		cmd_desc = &desc[cmd_desc_idx];
-
-		if ((cmd_desc->flags & VRING_DESC_F_NEXT) == 0) {
-			log_warnx("unchained vioblk cmd descriptor received "
-			    "(idx %d)", cmd_desc_idx);
-			goto out;
+		/*
+		 * Validate Command descriptor. It should be chained to another
+		 * descriptor and not be itself writable.
+		 */
+		if ((desc->flags & VRING_DESC_F_NEXT) == 0) {
+			log_warnx("%s: unchained cmd descriptor", __func__);
+			goto reset;
+		}
+		if (DESC_WRITABLE(desc)) {
+			log_warnx("%s: invalid cmd descriptor state", __func__);
+			goto reset;
 		}
 
-		/* Read command from descriptor ring */
-		if (cmd_desc->flags & VRING_DESC_F_WRITE) {
-			log_warnx("vioblk: unexpected writable cmd descriptor "
-			    "%d", cmd_desc_idx);
-			goto out;
-		}
-		if (read_mem(cmd_desc->addr, &cmd, sizeof(cmd))) {
-			log_warnx("vioblk: command read_mem error @ 0x%llx",
-			    cmd_desc->addr);
-			goto out;
-		}
+		/* Retrieve the vioblk command request. */
+		cmd = hvaddr_mem(desc->addr, sizeof(*cmd));
+		if (cmd == NULL)
+			goto reset;
 
-		switch (cmd.type) {
+		/* Advance to the 2nd descriptor. */
+		desc = &table[desc->next & VIOBLK_QUEUE_MASK];
+
+		/* Process each available command & chain. */
+		switch (cmd->type) {
 		case VIRTIO_BLK_T_IN:
-			/* first descriptor */
-			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			secdata_desc = &desc[secdata_desc_idx];
-
-			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-				log_warnx("unchained vioblk data descriptor "
-				    "received (idx %d)", cmd_desc_idx);
-				goto out;
-			}
-
-			cnt = 0;
-			secbias = 0;
-			do {
-				struct ioinfo *info;
-				const uint8_t *secdata;
-
-				if ((secdata_desc->flags & VRING_DESC_F_WRITE)
-				    == 0) {
-					log_warnx("vioblk: unwritable data "
-					    "descriptor %d", secdata_desc_idx);
-					goto out;
-				}
-
-				info = vioblk_start_read(dev,
-				    cmd.sector + secbias, secdata_desc->len);
-
-				if (info == NULL) {
-					log_warnx("vioblk: can't start read");
-					goto out;
-				}
-
-				/* read the data, use current data descriptor */
-				secdata = vioblk_finish_read(dev, info);
-				if (secdata == NULL) {
-					vioblk_free_info(info);
-					log_warnx("vioblk: block read error, "
-					    "sector %lld", cmd.sector);
-					goto out;
-				}
-
-				if (write_mem(secdata_desc->addr, secdata,
-					secdata_desc->len)) {
-					log_warnx("can't write sector "
-					    "data to gpa @ 0x%llx",
-					    secdata_desc->addr);
-					vioblk_free_info(info);
-					goto out;
-				}
-
-				vioblk_free_info(info);
-
-				secbias += (secdata_desc->len /
-				    VIRTIO_BLK_SECTOR_SIZE);
-				secdata_desc_idx = secdata_desc->next &
-				    VIOBLK_QUEUE_MASK;
-				secdata_desc = &desc[secdata_desc_idx];
-
-				/* Guard against infinite chains */
-				if (++cnt >= VIOBLK_QUEUE_SIZE) {
-					log_warnx("%s: descriptor table "
-					    "invalid", __func__);
-					goto out;
-				}
-			} while (secdata_desc->flags & VRING_DESC_F_NEXT);
-
-			ds_desc_idx = secdata_desc_idx;
-			ds_desc = secdata_desc;
-
-			ds = VIRTIO_BLK_S_OK;
-			break;
 		case VIRTIO_BLK_T_OUT:
-			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			secdata_desc = &desc[secdata_desc_idx];
-
-			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-				log_warnx("wr vioblk: unchained vioblk data "
-				    "descriptor received (idx %d)",
-				    cmd_desc_idx);
-				goto out;
-			}
-
-			if (secdata_desc->len > dev->max_xfer) {
-				log_warnx("%s: invalid read size %d requested",
-				    __func__, secdata_desc->len);
-				goto out;
-			}
-
-			cnt = 0;
-			secbias = 0;
-			do {
-				struct ioinfo *info;
-
-				if (secdata_desc->flags & VRING_DESC_F_WRITE) {
-					log_warnx("wr vioblk: unexpected "
-					    "writable data descriptor %d",
-					    secdata_desc_idx);
-					goto out;
-				}
-
-				info = vioblk_start_write(dev,
-				    cmd.sector + secbias,
-				    secdata_desc->addr, secdata_desc->len);
-
-				if (info == NULL) {
-					log_warnx("wr vioblk: can't read "
-					    "sector data @ 0x%llx",
-					    secdata_desc->addr);
-					goto out;
-				}
-
-				if (vioblk_finish_write(dev, info)) {
-					log_warnx("wr vioblk: disk write "
-					    "error");
-					vioblk_free_info(info);
-					goto out;
-				}
-
-				vioblk_free_info(info);
-
-				secbias += secdata_desc->len /
-				    VIRTIO_BLK_SECTOR_SIZE;
-
-				secdata_desc_idx = secdata_desc->next &
-				    VIOBLK_QUEUE_MASK;
-				secdata_desc = &desc[secdata_desc_idx];
-
-				/* Guard against infinite chains */
-				if (++cnt >= VIOBLK_QUEUE_SIZE) {
-					log_warnx("%s: descriptor table "
-					    "invalid", __func__);
-					goto out;
-				}
-			} while (secdata_desc->flags & VRING_DESC_F_NEXT);
-
-			ds_desc_idx = secdata_desc_idx;
-			ds_desc = secdata_desc;
-
-			ds = VIRTIO_BLK_S_OK;
-			break;
-		case VIRTIO_BLK_T_FLUSH:
-		case VIRTIO_BLK_T_FLUSH_OUT:
-			ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			ds_desc = &desc[ds_desc_idx];
-
-			ds = VIRTIO_BLK_S_UNSUPP;
+			/* Read (IN) & Write (OUT) */
+			is_write = (cmd->type == VIRTIO_BLK_T_OUT) ? 1 : 0;
+			offset = cmd->sector * VIRTIO_BLK_SECTOR_SIZE;
+			sz = vioblk_rw(dev, is_write, offset, table, &desc);
+			if (sz == -1)
+				ds = VIRTIO_BLK_S_IOERR;
+			else
+				ds = VIRTIO_BLK_S_OK;
 			break;
 		case VIRTIO_BLK_T_GET_ID:
-			secdata_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			secdata_desc = &desc[secdata_desc_idx];
-
 			/*
 			 * We don't support this command yet. While it's not
 			 * officially part of the virtio spec (will be in v1.2)
 			 * there's no feature to negotiate. Linux drivers will
 			 * often send this command regardless.
-			 *
-			 * When the command is received, it should appear as a
-			 * chain of 3 descriptors, similar to the IN/OUT
-			 * commands. The middle descriptor should have have a
-			 * length of VIRTIO_BLK_ID_BYTES bytes.
 			 */
-			if ((secdata_desc->flags & VRING_DESC_F_NEXT) == 0) {
-				log_warnx("id vioblk: unchained vioblk data "
-				    "descriptor received (idx %d)",
-				    cmd_desc_idx);
-				goto out;
-			}
-
-			/* Skip the data descriptor. */
-			ds_desc_idx = secdata_desc->next & VIOBLK_QUEUE_MASK;
-			ds_desc = &desc[ds_desc_idx];
-
 			ds = VIRTIO_BLK_S_UNSUPP;
-			break;
 		default:
-			log_warnx("%s: unsupported command 0x%x", __func__,
-			    cmd.type);
-			ds_desc_idx = cmd_desc->next & VIOBLK_QUEUE_MASK;
-			ds_desc = &desc[ds_desc_idx];
-
+			log_warnx("%s: unsupported vioblk command %d", __func__,
+			    cmd->type);
 			ds = VIRTIO_BLK_S_UNSUPP;
 			break;
 		}
 
-		if ((ds_desc->flags & VRING_DESC_F_WRITE) == 0) {
-			log_warnx("%s: ds descriptor %d unwritable", __func__,
-			    ds_desc_idx);
-			goto out;
-		}
-		if (write_mem(ds_desc->addr, &ds, sizeof(ds))) {
-			log_warnx("%s: can't write device status data @ 0x%llx",
-			    __func__, ds_desc->addr);
-			goto out;
+		/* Advance to the end of the chain, if needed. */
+		i = 0;
+		while (desc->flags & VRING_DESC_F_NEXT) {
+			desc = &table[desc->next & VIOBLK_QUEUE_MASK];
+			if (++i >= VIOBLK_QUEUE_SIZE) {
+				/*
+				 * If we encounter an infinite/looping chain,
+				 * not much we can do but say we need a reset.
+				 */
+				log_warnx("%s: descriptor chain overflow",
+				    __func__);
+				goto reset;
+			}
 		}
 
-		dev->cfg.isr_status = 1;
+		/* Provide the status of our command processing. */
+		if (!DESC_WRITABLE(desc)) {
+			log_warnx("%s: status descriptor unwritable", __func__);
+			goto reset;
+		}
+		/* Overkill as ds is 1 byte, but validates gpa. */
+		if (write_mem(desc->addr, &ds, sizeof(ds)))
+			log_warnx("%s: can't write device status data "
+			    "@ 0x%llx",__func__, desc->addr);
+
+		dev->cfg.isr_status |= 1;
+		notify = 1;
+
 		used->ring[used->idx & VIOBLK_QUEUE_MASK].id = cmd_desc_idx;
-		used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_desc->len;
+		used->ring[used->idx & VIOBLK_QUEUE_MASK].len = cmd_len;
+
 		__sync_synchronize();
 		used->idx++;
-
-		vq_info->last_avail = avail->idx & VIOBLK_QUEUE_MASK;
-		idx = (idx + 1) & VIOBLK_QUEUE_MASK;
+		idx++;
 	}
-out:
+
+	vq_info->last_avail = idx;
+	return (notify);
+
+reset:
+	/*
+	 * When setting the "needs reset" flag, the driver is notified
+	 * via a configuration change interrupt.
+	 */
+	dev->cfg.device_status |= DEVICE_NEEDS_RESET;
+	dev->cfg.isr_status |= VIRTIO_CONFIG_ISR_CONFIG_CHANGE;
 	return (1);
 }
 
@@ -815,9 +591,12 @@ handle_io_write(struct viodev_msg *msg, struct virtio_dev *dev)
 		vioblk_update_qs(vioblk);
 		break;
 	case VIRTIO_CONFIG_QUEUE_NOTIFY:
-		vioblk->cfg.queue_notify = data;
-		if (vioblk_notifyq(vioblk))
-			intr = 1;
+		/* XXX We should be stricter about status checks. */
+		if (!(vioblk->cfg.device_status & DEVICE_NEEDS_RESET)) {
+			vioblk->cfg.queue_notify = data;
+			if (vioblk_notifyq(vioblk))
+				intr = 1;
+		}
 		break;
 	case VIRTIO_CONFIG_DEVICE_STATUS:
 		vioblk->cfg.device_status = data;
@@ -857,15 +636,15 @@ handle_io_read(struct viodev_msg *msg, struct virtio_dev *dev, int8_t *intr)
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI:
 		switch (sz) {
 		case 4:
-			data = (uint32_t)(vioblk->sz);
+			data = (uint32_t)(vioblk->capacity);
 			break;
 		case 2:
 			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->sz) & 0xFFFF;
+			data |= (uint32_t)(vioblk->capacity) & 0xFFFF;
 			break;
 		case 1:
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->sz) & 0xFF;
+			data |= (uint32_t)(vioblk->capacity) & 0xFF;
 			break;
 		}
 		/* XXX handle invalid sz */
@@ -873,39 +652,39 @@ handle_io_read(struct viodev_msg *msg, struct virtio_dev *dev, int8_t *intr)
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 1:
 		if (sz == 1) {
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->sz >> 8) & 0xFF;
+			data |= (uint32_t)(vioblk->capacity >> 8) & 0xFF;
 		}
 		/* XXX handle invalid sz */
 		break;
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 2:
 		if (sz == 1) {
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->sz >> 16) & 0xFF;
+			data |= (uint32_t)(vioblk->capacity >> 16) & 0xFF;
 		} else if (sz == 2) {
 			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->sz >> 16) & 0xFFFF;
+			data |= (uint32_t)(vioblk->capacity >> 16) & 0xFFFF;
 		}
 		/* XXX handle invalid sz */
 		break;
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 3:
 		if (sz == 1) {
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->sz >> 24) & 0xFF;
+			data |= (uint32_t)(vioblk->capacity >> 24) & 0xFF;
 		}
 		/* XXX handle invalid sz */
 		break;
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 4:
 		switch (sz) {
 		case 4:
-			data = (uint32_t)(vioblk->sz >> 32);
+			data = (uint32_t)(vioblk->capacity >> 32);
 			break;
 		case 2:
 			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->sz >> 32) & 0xFFFF;
+			data |= (uint32_t)(vioblk->capacity >> 32) & 0xFFFF;
 			break;
 		case 1:
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->sz >> 32) & 0xFF;
+			data |= (uint32_t)(vioblk->capacity >> 32) & 0xFF;
 			break;
 		}
 		/* XXX handle invalid sz */
@@ -913,65 +692,65 @@ handle_io_read(struct viodev_msg *msg, struct virtio_dev *dev, int8_t *intr)
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 5:
 		if (sz == 1) {
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->sz >> 40) & 0xFF;
+			data |= (uint32_t)(vioblk->capacity >> 40) & 0xFF;
 		}
 		/* XXX handle invalid sz */
 		break;
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 6:
 		if (sz == 1) {
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->sz >> 48) & 0xFF;
+			data |= (uint32_t)(vioblk->capacity >> 48) & 0xFF;
 		} else if (sz == 2) {
 			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->sz >> 48) & 0xFFFF;
+			data |= (uint32_t)(vioblk->capacity >> 48) & 0xFFFF;
 		}
 		/* XXX handle invalid sz */
 		break;
 	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 7:
 		if (sz == 1) {
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->sz >> 56) & 0xFF;
+			data |= (uint32_t)(vioblk->capacity >> 56) & 0xFF;
 		}
 		/* XXX handle invalid sz */
 		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 8:
+	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 12:
 		switch (sz) {
 		case 4:
-			data = (uint32_t)(vioblk->max_xfer);
+			data = (uint32_t)(vioblk->seg_max);
 			break;
 		case 2:
 			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->max_xfer) & 0xFFFF;
+			data |= (uint32_t)(vioblk->seg_max) & 0xFFFF;
 			break;
 		case 1:
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->max_xfer) & 0xFF;
+			data |= (uint32_t)(vioblk->seg_max) & 0xFF;
 			break;
 		}
 		/* XXX handle invalid sz */
 		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 9:
+	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 13:
 		if (sz == 1) {
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->max_xfer >> 8) & 0xFF;
+			data |= (uint32_t)(vioblk->seg_max >> 8) & 0xFF;
 		}
 		/* XXX handle invalid sz */
 		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 10:
+	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 14:
 		if (sz == 1) {
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->max_xfer >> 16) & 0xFF;
+			data |= (uint32_t)(vioblk->seg_max >> 16) & 0xFF;
 		} else if (sz == 2) {
 			data &= 0xFFFF0000;
-			data |= (uint32_t)(vioblk->max_xfer >> 16)
+			data |= (uint32_t)(vioblk->seg_max >> 16)
 			    & 0xFFFF;
 		}
 		/* XXX handle invalid sz */
 		break;
-	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 11:
+	case VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI + 15:
 		if (sz == 1) {
 			data &= 0xFFFFFF00;
-			data |= (uint32_t)(vioblk->max_xfer >> 24) & 0xFF;
+			data |= (uint32_t)(vioblk->seg_max >> 24) & 0xFF;
 		}
 		/* XXX handle invalid sz */
 		break;
@@ -1007,4 +786,85 @@ handle_io_read(struct viodev_msg *msg, struct virtio_dev *dev, int8_t *intr)
 	}
 
 	return (data);
+}
+
+/*
+ * Emulate read/write io. Walks the descriptor chain, collecting io work and
+ * then emulates the read or write.
+ *
+ * On success, returns bytes read/written.
+ * On error, returns -1 and descriptor (desc) remains at its current position.
+ */
+static ssize_t
+vioblk_rw(struct vioblk_dev *dev, int is_write, off_t offset,
+    struct vring_desc *desc_tbl, struct vring_desc **desc)
+{
+	struct iovec *iov = NULL;
+	ssize_t sz = 0;
+	size_t io_idx = 0;		/* Index into iovec workqueue. */
+	size_t xfer_sz = 0;		/* Total accumulated io bytes. */
+
+	do {
+		iov = &io_v[io_idx];
+
+		/*
+		 * Reads require writable descriptors. Writes require
+		 * non-writeable descriptors.
+		 */
+		if ((!is_write) ^ DESC_WRITABLE(*desc)) {
+			log_warnx("%s: invalid descriptor for %s command",
+			    __func__, is_write ? "write" : "read");
+			return (-1);
+		}
+
+		/* Collect the IO segment information. */
+		iov->iov_len = (size_t)(*desc)->len;
+		iov->iov_base = hvaddr_mem((*desc)->addr, iov->iov_len);
+		if (iov->iov_base == NULL)
+			return (-1);
+
+		/* Move our counters. */
+		xfer_sz += iov->iov_len;
+		io_idx++;
+
+		/* Guard against infinite chains */
+		if (io_idx >= nitems(io_v)) {
+			log_warnx("%s: descriptor table "
+			    "invalid", __func__);
+			return (-1);
+		}
+
+		/* Advance to the next descriptor. */
+		*desc = &desc_tbl[(*desc)->next & VIOBLK_QUEUE_MASK];
+	} while ((*desc)->flags & VRING_DESC_F_NEXT);
+
+	/*
+	 * Validate the requested block io operation alignment and size.
+	 * Checking offset is just an extra caution as it is derived from
+	 * a disk sector and is done for completeness in bounds checking.
+	 */
+	if (offset % VIRTIO_BLK_SECTOR_SIZE != 0 &&
+	    xfer_sz % VIRTIO_BLK_SECTOR_SIZE != 0) {
+		log_warnx("%s: unaligned read", __func__);
+		return (-1);
+	}
+	if (xfer_sz > SSIZE_MAX) {	/* iovec_copyin limit */
+		log_warnx("%s: invalid %s size: %zu", __func__,
+		    is_write ? "write" : "read", xfer_sz);
+		return (-1);
+	}
+
+	/* Emulate the Read or Write operation. */
+	if (is_write)
+		sz = dev->file.pwritev(dev->file.p, io_v, io_idx, offset);
+	else
+		sz = dev->file.preadv(dev->file.p, io_v, io_idx, offset);
+	if (sz != (ssize_t)xfer_sz) {
+		log_warnx("%s: %s failure at offset 0x%llx, xfer_sz=%zu, "
+		    "sz=%ld", __func__, (is_write ? "write" : "read"), offset,
+		    xfer_sz, sz);
+		return (-1);
+	}
+
+	return (sz);
 }

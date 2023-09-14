@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioraw.c,v 1.10 2023/05/28 05:28:50 asou Exp $	*/
+/*	$OpenBSD: vioraw.c,v 1.11 2023/09/14 15:25:43 dv Exp $	*/
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
  *
@@ -32,9 +32,21 @@ raw_pread(void *file, char *buf, size_t len, off_t off)
 }
 
 static ssize_t
+raw_preadv(void *file, struct iovec *iov, int cnt, off_t offset)
+{
+	return preadv(*(int *)file, iov, cnt, offset);
+}
+
+static ssize_t
 raw_pwrite(void *file, char *buf, size_t len, off_t off)
 {
 	return pwrite(*(int *)file, buf, len, off);
+}
+
+static ssize_t
+raw_pwritev(void *file, struct iovec *iov, int cnt, off_t offset)
+{
+	return pwritev(*(int *)file, iov, cnt, offset);
 }
 
 static void
@@ -68,7 +80,9 @@ virtio_raw_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 	*fdp = fd[0];
 	file->p = fdp;
 	file->pread = raw_pread;
+	file->preadv = raw_preadv;
 	file->pwrite = raw_pwrite;
+	file->pwritev = raw_pwritev;
 	file->close = raw_close;
 	*szp = sz;
 	return (0);

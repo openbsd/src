@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.h,v 1.47 2023/09/06 19:26:39 dv Exp $	*/
+/*	$OpenBSD: virtio.h,v 1.48 2023/09/14 15:25:43 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -33,12 +33,13 @@
 #define ALIGNSZ(sz, align)	((sz + align - 1) & ~(align - 1))
 #define MIN(a,b)		(((a)<(b))?(a):(b))
 
-/* Queue sizes must be power of two */
+/* Queue sizes must be power of two and less than IOV_MAX (1024). */
 #define VIORND_QUEUE_SIZE	64
 #define VIORND_QUEUE_MASK	(VIORND_QUEUE_SIZE - 1)
 
 #define VIOBLK_QUEUE_SIZE	128
 #define VIOBLK_QUEUE_MASK	(VIOBLK_QUEUE_SIZE - 1)
+#define VIOBLK_SEG_MAX		(VIOBLK_QUEUE_SIZE - 2)
 
 #define VIOSCSI_QUEUE_SIZE	128
 #define VIOSCSI_QUEUE_MASK	(VIOSCSI_QUEUE_SIZE - 1)
@@ -69,6 +70,10 @@
  * Rename the address config register to be more descriptive.
  */
 #define VIRTIO_CONFIG_QUEUE_PFN	VIRTIO_CONFIG_QUEUE_ADDRESS
+#define DEVICE_NEEDS_RESET	VIRTIO_CONFIG_DEVICE_STATUS_DEVICE_NEEDS_RESET
+#define DESC_WRITABLE(/* struct vring_desc */ x)	\
+	(((x)->flags & VRING_DESC_F_WRITE) ? 1 : 0)
+
 
 /*
  * VM <-> Device messaging.
@@ -115,9 +120,11 @@ struct virtio_io_cfg {
 
 struct virtio_backing {
 	void  *p;
-	ssize_t  (*pread)(void *p, char *buf, size_t len, off_t off);
-	ssize_t  (*pwrite)(void *p, char *buf, size_t len, off_t off);
-	void (*close)(void *p, int);
+	ssize_t (*pread)(void *, char *, size_t, off_t);
+	ssize_t (*preadv)(void *, struct iovec *, int, off_t);
+	ssize_t (*pwrite)(void *, char *, size_t, off_t);
+	ssize_t (*pwritev)(void *, struct iovec *, int, off_t);
+	void (*close)(void *, int);
 };
 
 /*
@@ -212,8 +219,8 @@ struct vioblk_dev {
 
 	int disk_fd[VM_MAX_BASE_PER_DISK];	/* fds for disk image(s) */
 	uint8_t ndisk_fd;	/* number of valid disk fds */
-	uint64_t sz;		/* size in 512 byte sectors */
-	uint32_t max_xfer;
+	uint64_t capacity;	/* size in 512 byte sectors */
+	uint32_t seg_max;	/* maximum number of segments */
 
 	unsigned int idx;
 };
@@ -318,6 +325,7 @@ struct vmmci_dev {
 	uint8_t pci_id;
 };
 
+/* XXX to be removed once vioscsi is adapted to vectorized io. */
 struct ioinfo {
 	uint8_t *buf;
 	ssize_t len;
@@ -354,9 +362,6 @@ int virtio_raw_init(struct virtio_backing *, off_t *, int*, size_t);
 
 int vioblk_dump(int);
 int vioblk_restore(int, struct vmd_vm *, int[][VM_MAX_BASE_PER_DISK]);
-void vioblk_update_qs(struct vioblk_dev *);
-void vioblk_update_qa(struct vioblk_dev *);
-int vioblk_notifyq(struct vioblk_dev *);
 
 int vionet_dump(int);
 int vionet_restore(int, struct vmd_vm *, int *);

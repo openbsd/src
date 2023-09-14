@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioqcow2.c,v 1.23 2023/05/28 05:28:50 asou Exp $	*/
+/*	$OpenBSD: vioqcow2.c,v 1.24 2023/09/14 15:25:43 dv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ori Bernstein <ori@eigenstate.org>
@@ -105,7 +105,9 @@ static void inc_refs(struct qcdisk *, off_t, int);
 static off_t mkcluster(struct qcdisk *, struct qcdisk *, off_t, off_t);
 static int qc2_open(struct qcdisk *, int *, size_t);
 static ssize_t qc2_pread(void *, char *, size_t, off_t);
+static ssize_t qc2_preadv(void *, struct iovec *, int, off_t);
 static ssize_t qc2_pwrite(void *, char *, size_t, off_t);
+static ssize_t qc2_pwritev(void *, struct iovec *, int, off_t);
 static void qc2_close(void *, int);
 
 /*
@@ -128,7 +130,9 @@ virtio_qcow2_init(struct virtio_backing *file, off_t *szp, int *fd, size_t nfd)
 	}
 	file->p = diskp;
 	file->pread = qc2_pread;
+	file->preadv = qc2_preadv;
 	file->pwrite = qc2_pwrite;
+	file->pwritev = qc2_pwritev;
 	file->close = qc2_close;
 	*szp = diskp->disksz;
 	return 0;
@@ -305,6 +309,24 @@ qc2_open(struct qcdisk *disk, int *fds, size_t nfd)
 }
 
 static ssize_t
+qc2_preadv(void *p, struct iovec *iov, int cnt, off_t offset)
+{
+	int i;
+	off_t pos = offset;
+	ssize_t sz = 0, total = 0;
+
+	for (i = 0; i < cnt; i++, iov++) {
+		sz = qc2_pread(p, iov->iov_base, iov->iov_len, pos);
+		if (sz == -1)
+			return (sz);
+		total += sz;
+		pos += sz;
+	}
+
+	return (total);
+}
+
+static ssize_t
 qc2_pread(void *p, char *buf, size_t len, off_t off)
 {
 	struct qcdisk *disk, *d;
@@ -359,7 +381,25 @@ qc2_pread(void *p, char *buf, size_t len, off_t off)
 	return len;
 }
 
-ssize_t
+static ssize_t
+qc2_pwritev(void *p, struct iovec *iov, int cnt, off_t offset)
+{
+	int i;
+	off_t pos = offset;
+	ssize_t sz = 0, total = 0;
+
+	for (i = 0; i < cnt; i++, iov++) {
+		sz = qc2_pwrite(p, iov->iov_base, iov->iov_len, pos);
+		if (sz == -1)
+			return (sz);
+		total += sz;
+		pos += sz;
+	}
+
+	return (total);
+}
+
+static ssize_t
 qc2_pwrite(void *p, char *buf, size_t len, off_t off)
 {
 	struct qcdisk *disk, *d;

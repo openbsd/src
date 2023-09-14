@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.106 2023/07/27 09:27:43 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.107 2023/09/14 15:25:43 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -650,8 +650,8 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 			    + sizeof(uint16_t) * (2 + VIOBLK_QUEUE_SIZE));
 			dev->vioblk.vq[0].last_avail = 0;
 			dev->vioblk.cfg.device_feature =
-			    VIRTIO_BLK_F_SIZE_MAX;
-			dev->vioblk.max_xfer = 1048576;
+			    VIRTIO_BLK_F_SEG_MAX;
+			dev->vioblk.seg_max = VIOBLK_SEG_MAX;
 
 			/*
 			 * Initialize disk fds to an invalid fd (-1), then
