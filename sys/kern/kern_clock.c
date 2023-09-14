@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.118 2023/09/14 20:58:51 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.119 2023/09/14 22:27:09 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -87,6 +87,7 @@ int	ticks = INT_MAX - (15 * 60 * HZ);
 /* Don't force early wrap around, triggers bug in inteldrm */
 volatile unsigned long jiffies;
 
+uint32_t hardclock_period;	/* [I] hardclock period (ns) */
 uint32_t statclock_avg;		/* [I] average statclock period (ns) */
 uint32_t statclock_min;		/* [I] minimum statclock period (ns) */
 uint32_t statclock_mask;	/* [I] set of allowed offsets */
@@ -104,6 +105,10 @@ initclocks(void)
 	 * Let the machine-specific code do its bit.
 	 */
 	cpu_initclocks();
+
+	KASSERT(hz > 0 && hz <= 1000000000);
+	hardclock_period = 1000000000 / hz;
+	roundrobin_period = hardclock_period * 10;
 
 	KASSERT(stathz >= 1 && stathz <= 1000000000);
 

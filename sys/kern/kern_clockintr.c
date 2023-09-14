@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.51 2023/09/14 22:07:11 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.52 2023/09/14 22:27:09 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -37,7 +37,6 @@
  *	I	Immutable after initialization.
  */
 uint32_t clockintr_flags;		/* [I] global state + behavior flags */
-uint32_t hardclock_period;		/* [I] hardclock period (ns) */
 
 void clockintr_hardclock(struct clockintr *, void *, void *);
 void clockintr_schedule(struct clockintr *, uint64_t);
@@ -60,10 +59,6 @@ clockintr_init(uint32_t flags)
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 	KASSERT(clockintr_flags == 0);
 	KASSERT(!ISSET(flags, ~CL_FLAG_MASK));
-
-	KASSERT(hz > 0 && hz <= 1000000000);
-	hardclock_period = 1000000000 / hz;
-	roundrobin_period = hardclock_period * 10;
 
 	SET(clockintr_flags, flags | CL_INIT);
 }
