@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_sh.c,v 1.64 2020/05/22 07:50:07 benno Exp $	*/
+/*	$OpenBSD: c_sh.c,v 1.65 2023/09/14 18:32:03 cheloha Exp $	*/
 
 /*
  * built-in Bourne commands
@@ -680,14 +680,10 @@ static void
 p_tv(struct shf *shf, int posix, struct timeval *tv, int width, char *prefix,
     char *suffix)
 {
-	if (posix)
-		shf_fprintf(shf, "%s%*lld.%02ld%s", prefix ? prefix : "",
-		    width, (long long)tv->tv_sec, tv->tv_usec / 10000, suffix);
-	else
-		shf_fprintf(shf, "%s%*lldm%02lld.%02lds%s", prefix ? prefix : "",
-		    width, (long long)tv->tv_sec / 60,
-		    (long long)tv->tv_sec % 60,
-		    tv->tv_usec / 10000, suffix);
+	struct timespec ts;
+
+	TIMEVAL_TO_TIMESPEC(tv, &ts);
+	p_ts(shf, posix, &ts, width, prefix, suffix);
 }
 
 static void
