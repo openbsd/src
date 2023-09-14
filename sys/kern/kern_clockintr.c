@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.49 2023/09/14 19:51:17 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.50 2023/09/14 20:58:51 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -38,14 +38,10 @@
  */
 uint32_t clockintr_flags;		/* [I] global state + behavior flags */
 uint32_t hardclock_period;		/* [I] hardclock period (ns) */
-uint32_t statclock_avg;			/* [I] average statclock period (ns) */
-uint32_t statclock_min;			/* [I] minimum statclock period (ns) */
-uint32_t statclock_mask;		/* [I] set of allowed offsets */
 
 void clockintr_hardclock(struct clockintr *, void *, void *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
-void clockintr_statclock(struct clockintr *, void *, void *);
 void clockqueue_intrclock_install(struct clockintr_queue *,
     const struct intrclock *);
 uint64_t clockqueue_next(const struct clockintr_queue *);
@@ -61,8 +57,6 @@ uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
 void
 clockintr_init(uint32_t flags)
 {
-	uint32_t half_avg, var;
-
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 	KASSERT(clockintr_flags == 0);
 	KASSERT(!ISSET(flags, ~CL_FLAG_MASK));
@@ -70,24 +64,6 @@ clockintr_init(uint32_t flags)
 	KASSERT(hz > 0 && hz <= 1000000000);
 	hardclock_period = 1000000000 / hz;
 	roundrobin_period = hardclock_period * 10;
-
-	KASSERT(stathz >= 1 && stathz <= 1000000000);
-
-	/*
-	 * Compute the average statclock() period.  Then find var, the
-	 * largest power of two such that var <= statclock_avg / 2.
-	 */
-	statclock_avg = 1000000000 / stathz;
-	half_avg = statclock_avg / 2;
-	for (var = 1U << 31; var > half_avg; var /= 2)
-		continue;
-
-	/*
-	 * Set a lower bound for the range using statclock_avg and var.
-	 * The mask for that range is just (var - 1).
-	 */
-	statclock_min = statclock_avg - (var / 2);
-	statclock_mask = var - 1;
 
 	SET(clockintr_flags, flags | CL_INIT);
 }
@@ -119,8 +95,7 @@ clockintr_cpu_init(const struct intrclock *ic)
 			panic("%s: failed to establish hardclock", __func__);
 	}
 	if (cq->cq_statclock == NULL) {
-		cq->cq_statclock = clockintr_establish(ci, clockintr_statclock,
-		    NULL);
+		cq->cq_statclock = clockintr_establish(ci, statclock, NULL);
 		if (cq->cq_statclock == NULL)
 			panic("%s: failed to establish statclock", __func__);
 	}
@@ -467,21 +442,6 @@ clockintr_hardclock(struct clockintr *cl, void *frame, void *arg)
 	count = clockintr_advance(cl, hardclock_period);
 	for (i = 0; i < count; i++)
 		hardclock(frame);
-}
-
-void
-clockintr_statclock(struct clockintr *cl, void *frame, void *arg)
-{
-	uint64_t count, i;
-
-	if (statclock_is_randomized) {
-		count = clockintr_advance_random(cl, statclock_min,
-		    statclock_mask);
-	} else {
-		count = clockintr_advance(cl, statclock_avg);
-	}
-	for (i = 0; i < count; i++)
-		statclock(frame);
 }
 
 void

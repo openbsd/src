@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.117 2023/09/14 19:39:47 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.118 2023/09/14 20:58:51 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/clockintr.h>
 #include <sys/timeout.h>
 #include <sys/kernel.h>
 #include <sys/limits.h>
@@ -86,6 +87,9 @@ int	ticks = INT_MAX - (15 * 60 * HZ);
 /* Don't force early wrap around, triggers bug in inteldrm */
 volatile unsigned long jiffies;
 
+uint32_t statclock_avg;		/* [I] average statclock period (ns) */
+uint32_t statclock_min;		/* [I] minimum statclock period (ns) */
+uint32_t statclock_mask;	/* [I] set of allowed offsets */
 int statclock_is_randomized;	/* [I] fixed or pseudorandom period? */
 
 /*
@@ -94,10 +98,30 @@ int statclock_is_randomized;	/* [I] fixed or pseudorandom period? */
 void
 initclocks(void)
 {
+	uint32_t half_avg, var;
+
 	/*
 	 * Let the machine-specific code do its bit.
 	 */
 	cpu_initclocks();
+
+	KASSERT(stathz >= 1 && stathz <= 1000000000);
+
+	/*
+	 * Compute the average statclock() period.  Then find var, the
+	 * largest power of two such that var <= statclock_avg / 2.
+	 */
+	statclock_avg = 1000000000 / stathz;
+	half_avg = statclock_avg / 2;
+	for (var = 1U << 31; var > half_avg; var /= 2)
+		continue;
+
+	/*
+	 * Set a lower bound for the range using statclock_avg and var.
+	 * The mask for that range is just (var - 1).
+	 */
+	statclock_min = statclock_avg - (var / 2);
+	statclock_mask = var - 1;
 
 	KASSERT(profhz >= stathz && profhz <= 1000000000);
 	KASSERT(profhz % stathz == 0);
@@ -247,12 +271,21 @@ stopprofclock(struct process *pr)
  * do process and kernel statistics.
  */
 void
-statclock(struct clockframe *frame)
+statclock(struct clockintr *cl, void *cf, void *arg)
 {
+	uint64_t count, i;
+	struct clockframe *frame = cf;
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct proc *p = curproc;
 	struct process *pr;
+
+	if (statclock_is_randomized) {
+		count = clockintr_advance_random(cl, statclock_min,
+		    statclock_mask);
+	} else {
+		count = clockintr_advance(cl, statclock_avg);
+	}
 
 	if (CLKF_USERMODE(frame)) {
 		pr = p->p_p;
@@ -260,11 +293,11 @@ statclock(struct clockframe *frame)
 		 * Came from user mode; CPU was in user state.
 		 * If this process is being profiled record the tick.
 		 */
-		p->p_uticks++;
+		p->p_uticks += count;
 		if (pr->ps_nice > NZERO)
-			spc->spc_cp_time[CP_NICE]++;
+			spc->spc_cp_time[CP_NICE] += count;
 		else
-			spc->spc_cp_time[CP_USER]++;
+			spc->spc_cp_time[CP_USER] += count;
 	} else {
 		/*
 		 * Came from kernel mode, so we were:
@@ -281,25 +314,27 @@ statclock(struct clockframe *frame)
 		 */
 		if (CLKF_INTR(frame)) {
 			if (p != NULL)
-				p->p_iticks++;
+				p->p_iticks += count;
 			spc->spc_cp_time[spc->spc_spinning ?
-			    CP_SPIN : CP_INTR]++;
+			    CP_SPIN : CP_INTR] += count;
 		} else if (p != NULL && p != spc->spc_idleproc) {
-			p->p_sticks++;
+			p->p_sticks += count;
 			spc->spc_cp_time[spc->spc_spinning ?
-			    CP_SPIN : CP_SYS]++;
+			    CP_SPIN : CP_SYS] += count;
 		} else
 			spc->spc_cp_time[spc->spc_spinning ?
-			    CP_SPIN : CP_IDLE]++;
+			    CP_SPIN : CP_IDLE] += count;
 	}
 
 	if (p != NULL) {
-		p->p_cpticks++;
+		p->p_cpticks += count;
 		/*
 		 * schedclock() runs every fourth statclock().
 		 */
-		if ((++spc->spc_schedticks & 3) == 0)
-			schedclock(p);
+		for (i = 0; i < count; i++) {
+			if ((++spc->spc_schedticks & 3) == 0)
+				schedclock(p);
+		}
 	}
 }
 
