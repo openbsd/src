@@ -1,4 +1,4 @@
-/* $OpenBSD: tty.c,v 1.434 2023/09/02 20:03:10 nicm Exp $ */
+/* $OpenBSD: tty.c,v 1.435 2023/09/15 15:49:05 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2091,6 +2091,9 @@ tty_cmd_cell(struct tty *tty, const struct tty_ctx *ctx)
 
 	tty_cell(tty, ctx->cell, &ctx->defaults, ctx->palette,
 	    ctx->s->hyperlinks);
+
+	if (ctx->num == 1)
+		tty_invalidate(tty);
 }
 
 void
