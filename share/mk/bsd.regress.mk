@@ -1,4 +1,4 @@
-# $OpenBSD: bsd.regress.mk,v 1.25 2022/12/09 09:30:54 tb Exp $
+# $OpenBSD: bsd.regress.mk,v 1.26 2023/09/15 07:13:35 tb Exp $
 # Documented in bsd.regress.mk(5)
 
 # No man pages for regression tests.
@@ -21,7 +21,7 @@ all: regress
 REGRESS_LOG?=/dev/null
 REGRESS_SKIP_TARGETS?=
 REGRESS_SKIP_SLOW?=no
-REGRESS_FAIL_EARLY?=no
+REGRESS_FAIL_EARLY?=yes
 
 .if ! ${REGRESS_LOG:M/*}
 ERRORS += "Fatal: REGRESS_LOG=${REGRESS_LOG} is not an absolute path"
