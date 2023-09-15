@@ -1,4 +1,4 @@
-/* $OpenBSD: input.c,v 1.221 2023/09/15 06:28:15 nicm Exp $ */
+/* $OpenBSD: input.c,v 1.222 2023/09/15 06:31:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -1835,7 +1835,7 @@ input_csi_dispatch_sm_private(struct input_ctx *ictx)
 
 /* Handle CSI graphics SM. */
 static void
-input_csi_dispatch_sm_graphics(struct input_ctx *ictx)
+input_csi_dispatch_sm_graphics(__unused struct input_ctx *ictx)
 {
 }
 

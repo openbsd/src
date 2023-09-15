@@ -1,4 +1,4 @@
-.\" $OpenBSD: tmux.1,v 1.931 2023/09/02 09:17:23 nicm Exp $
+.\" $OpenBSD: tmux.1,v 1.932 2023/09/15 06:31:49 nicm Exp $
 .\"
 .\" Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
 .\"
@@ -14,7 +14,7 @@
 .\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 .\" OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 2 2023 $
+.Dd $Mdocdate: September 15 2023 $
 .Dt TMUX 1
 .Os
 .Sh NAME
@@ -1546,6 +1546,7 @@ show debugging information about jobs and terminals.
 .Tg source
 .It Xo Ic source-file
 .Op Fl Fnqv
+.Op Fl t Ar target-pane
 .Ar path ...
 .Xc
 .D1 Pq alias: Ic source

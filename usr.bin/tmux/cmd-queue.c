@@ -1,4 +1,4 @@
-/* $OpenBSD: cmd-queue.c,v 1.114 2023/02/05 21:15:32 nicm Exp $ */
+/* $OpenBSD: cmd-queue.c,v 1.115 2023/09/15 06:31:49 nicm Exp $ */
 
 /*
  * Copyright (c) 2013 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -237,8 +237,10 @@ cmdq_link_state(struct cmdq_state *state)
 
 /* Make a copy of a state. */
 struct cmdq_state *
-cmdq_copy_state(struct cmdq_state *state)
+cmdq_copy_state(struct cmdq_state *state, struct cmd_find_state *current)
 {
+	if (current != NULL)
+		return (cmdq_new_state(current, &state->event, state->flags));
 	return (cmdq_new_state(&state->current, &state->event, state->flags));
 }
 
