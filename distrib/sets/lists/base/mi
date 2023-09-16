@@ -327,6 +327,9 @@
 ./etc/signify/openbsd-74-pkg.pub
 ./etc/signify/openbsd-74-syspatch.pub
 ./etc/signify/openbsd-75-base.pub
+./etc/signify/openbsd-75-fw.pub
+./etc/signify/openbsd-75-pkg.pub
+./etc/signify/openbsd-75-syspatch.pub
 ./etc/skel
 ./etc/skel/.ssh
 ./etc/ssh
