@@ -1,4 +1,4 @@
-/*	$OpenBSD: acpipci.c,v 1.40 2023/09/12 08:32:58 jmatthew Exp $	*/
+/*	$OpenBSD: acpipci.c,v 1.41 2023/09/16 23:25:16 jmatthew Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis
  *
@@ -844,7 +844,8 @@ acpipci_iort_map(struct acpi_iort *iort, uint32_t offset, uint32_t id,
 		itsn = (struct acpi_iort_its_node *)&node[1];
 		LIST_FOREACH(icl, &interrupt_controllers, ic_list) {
 			for (i = 0; i < itsn->number_of_itss; i++) {
-				if (icl->ic_gic_its_id == itsn->its_ids[i]) {
+				if (icl->ic_establish_msi != NULL &&
+				    icl->ic_gic_its_id == itsn->its_ids[i]) {
 					*ic = icl;
 					break;
 				}
