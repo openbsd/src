@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip6_divert.c,v 1.89 2023/04/04 10:12:03 bluhm Exp $ */
+/*      $OpenBSD: ip6_divert.c,v 1.90 2023/09/16 09:33:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2009 Michele Marchetto <michele@openbsd.org>
@@ -358,7 +358,7 @@ divert6_sysctl_div6stat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(div6stat) == (nitems(counters) * sizeof(u_long)));
 
-	counters_read(div6counters, counters, nitems(counters));
+	counters_read(div6counters, counters, nitems(counters), NULL);
 
 	for (i = 0; i < nitems(counters); i++)
 		words[i] = (u_long)counters[i];

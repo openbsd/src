@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.707 2023/08/18 08:10:16 jsg Exp $	*/
+/*	$OpenBSD: if.c,v 1.708 2023/09/16 09:33:27 mpi Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -2797,7 +2797,8 @@ if_getdata(struct ifnet *ifp, struct if_data *data)
 	if (ifp->if_counters != NULL) {
 		uint64_t counters[ifc_ncounters];
 
-		counters_read(ifp->if_counters, counters, nitems(counters));
+		counters_read(ifp->if_counters, counters, nitems(counters),
+		    NULL);
 
 		data->ifi_ipackets += counters[ifc_ipackets];
 		data->ifi_ierrors += counters[ifc_ierrors];

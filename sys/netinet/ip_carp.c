@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.357 2023/05/16 14:32:54 jan Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.358 2023/09/16 09:33:27 mpi Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -749,7 +749,8 @@ carp_sysctl_carpstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(carpstat) == (carps_ncounters * sizeof(uint64_t)));
 	memset(&carpstat, 0, sizeof carpstat);
-	counters_read(carpcounters, (uint64_t *)&carpstat, carps_ncounters);
+	counters_read(carpcounters, (uint64_t *)&carpstat, carps_ncounters,
+	    NULL);
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
 	    &carpstat, sizeof(carpstat)));
 }

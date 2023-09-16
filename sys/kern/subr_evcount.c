@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_evcount.c,v 1.15 2022/12/05 08:58:49 visa Exp $ */
+/*	$OpenBSD: subr_evcount.c,v 1.16 2023/09/16 09:33:27 mpi Exp $ */
 /*
  * Copyright (c) 2004 Artur Grabowski <art@openbsd.org>
  * Copyright (c) 2004 Aaron Campbell <aaron@openbsd.org>
@@ -101,7 +101,7 @@ evcount_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 {
 	int error = 0, s, nintr, i;
 	struct evcount *ec;
-	u_int64_t count;
+	uint64_t count, scratch;
 
 	if (newp != NULL)
 		return (EPERM);
@@ -129,7 +129,7 @@ evcount_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		if (ec == NULL)
 			return (ENOENT);
 		if (ec->ec_percpu != NULL) {
-			counters_read(ec->ec_percpu, &count, 1);
+			counters_read(ec->ec_percpu, &count, 1, &scratch);
 		} else {
 			s = splhigh();
 			count = ec->ec_count;

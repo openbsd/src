@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ip6.c,v 1.172 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: raw_ip6.c,v 1.173 2023/09/16 09:33:27 mpi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.69 2001/03/04 15:55:44 itojun Exp $	*/
 
 /*
@@ -784,7 +784,8 @@ rip6_sysctl_rip6stat(void *oldp, size_t *oldplen, void *newp)
 	struct rip6stat rip6stat;
 
 	CTASSERT(sizeof(rip6stat) == rip6s_ncounters * sizeof(uint64_t));
-	counters_read(rip6counters, (uint64_t *)&rip6stat, rip6s_ncounters);
+	counters_read(rip6counters, (uint64_t *)&rip6stat, rip6s_ncounters,
+	    NULL);
 
 	return (sysctl_rdstruct(oldp, oldplen, newp,
 	    &rip6stat, sizeof(rip6stat)));

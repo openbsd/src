@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_etherip.c,v 1.50 2022/02/28 00:12:11 dlg Exp $	*/
+/*	$OpenBSD: if_etherip.c,v 1.51 2023/09/16 09:33:27 mpi Exp $	*/
 /*
  * Copyright (c) 2015 Kazuya GODA <goda@openbsd.org>
  *
@@ -789,7 +789,7 @@ etherip_sysctl_etheripstat(void *oldp, size_t *oldlenp, void *newp)
 	    sizeof(uint64_t)));
 	memset(&etheripstat, 0, sizeof etheripstat);
 	counters_read(etheripcounters, (uint64_t *)&etheripstat,
-	    etherips_ncounters);
+	    etherips_ncounters, NULL);
 	return (sysctl_rdstruct(oldp, oldlenp, newp, &etheripstat,
 	    sizeof(etheripstat)));
 }

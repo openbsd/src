@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.369 2023/07/28 09:33:16 mvs Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.370 2023/09/16 09:33:27 mpi Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -2245,7 +2245,7 @@ sysctl_rtable_rtstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(rtstat) == (nitems(counters) * sizeof(uint32_t)));
 	memset(&rtstat, 0, sizeof rtstat);
-	counters_read(rtcounters, counters, nitems(counters));
+	counters_read(rtcounters, counters, nitems(counters), NULL);
 
 	for (i = 0; i < nitems(counters); i++)
 		words[i] = (uint32_t)counters[i];

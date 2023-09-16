@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.82 2022/09/08 10:22:06 kn Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.83 2023/09/16 09:33:27 mpi Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -687,7 +687,7 @@ igmp_sysctl_igmpstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(igmpstat) == (nitems(counters) * sizeof(u_long)));
 	memset(&igmpstat, 0, sizeof igmpstat);
-	counters_read(igmpcounters, counters, nitems(counters));
+	counters_read(igmpcounters, counters, nitems(counters), NULL);
 
 	for (i = 0; i < nitems(counters); i++)
 		words[i] = (u_long)counters[i];

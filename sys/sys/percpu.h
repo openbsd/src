@@ -1,4 +1,4 @@
-/*	$OpenBSD: percpu.h,v 1.8 2018/08/28 15:15:02 mpi Exp $ */
+/*	$OpenBSD: percpu.h,v 1.9 2023/09/16 09:33:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -113,7 +113,8 @@ static struct {								\
 struct cpumem	*counters_alloc(unsigned int);
 struct cpumem	*counters_alloc_ncpus(struct cpumem *, unsigned int);
 void		 counters_free(struct cpumem *, unsigned int);
-void		 counters_read(struct cpumem *, uint64_t *, unsigned int);
+void		 counters_read(struct cpumem *, uint64_t *, unsigned int,
+		     uint64_t *);
 void		 counters_zero(struct cpumem *, unsigned int);
 
 static inline uint64_t *

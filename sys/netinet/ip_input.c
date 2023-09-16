@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.386 2023/09/06 11:09:43 bluhm Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.387 2023/09/16 09:33:27 mpi Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -1747,7 +1747,7 @@ ip_sysctl_ipstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(ipstat) == (nitems(counters) * sizeof(u_long)));
 	memset(&ipstat, 0, sizeof ipstat);
-	counters_read(ipcounters, counters, nitems(counters));
+	counters_read(ipcounters, counters, nitems(counters), NULL);
 
 	for (i = 0; i < nitems(counters); i++)
 		words[i] = (u_long)counters[i];

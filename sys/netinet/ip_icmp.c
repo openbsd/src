@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.191 2022/05/05 13:57:40 claudio Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.192 2023/09/16 09:33:27 mpi Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -917,7 +917,7 @@ icmp_sysctl_icmpstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(icmpstat) == (nitems(counters) * sizeof(u_long)));
 	memset(&icmpstat, 0, sizeof icmpstat);
-	counters_read(icmpcounters, counters, nitems(counters));
+	counters_read(icmpcounters, counters, nitems(counters), NULL);
 
 	for (i = 0; i < nitems(counters); i++)
 		words[i] = (u_long)counters[i];

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.255 2023/09/06 11:09:43 bluhm Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.256 2023/09/16 09:33:27 mpi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -1466,7 +1466,7 @@ ip6_sysctl_ip6stat(void *oldp, size_t *oldlenp, void *newp)
 	CTASSERT(sizeof(*ip6stat) == (ip6s_ncounters * sizeof(uint64_t)));
 
 	ip6stat = malloc(sizeof(*ip6stat), M_TEMP, M_WAITOK);
-	counters_read(ip6counters, (uint64_t *)ip6stat, ip6s_ncounters);
+	counters_read(ip6counters, (uint64_t *)ip6stat, ip6s_ncounters, NULL);
 	ret = sysctl_rdstruct(oldp, oldlenp, newp,
 	    ip6stat, sizeof(*ip6stat));
 	free(ip6stat, M_TEMP, sizeof(*ip6stat));

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: counters_alloc.9,v 1.12 2022/02/20 23:11:01 dlg Exp $
+.\"	$OpenBSD: counters_alloc.9,v 1.13 2023/09/16 09:33:28 mpi Exp $
 .\"
 .\" Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: February 20 2022 $
+.Dd $Mdocdate: September 16 2023 $
 .Dt COUNTERS_ALLOC 9
 .Os
 .Sh NAME
@@ -64,6 +64,7 @@
 .Fa "struct cpumem *cm"
 .Fa "uint64_t *counters"
 .Fa "unsigned int ncounters"
+.Fa "uint64_t *scratch"
 .Fc
 .Ft void
 .Fn counters_zero "struct cpumem *cm" "unsigned int ncounters"
@@ -191,6 +192,12 @@ The sum of the counters is written to the
 array.
 The number of counters is specified with
 .Fa ncounters .
+.Fa scratch
+may point to a buffer used to temporarily hold
+.Fa counters .
+If
+.Dv NULL ,
+one will be dynamically allocated and freed.
 .Pp
 .Fn counters_zero
 iterates over each CPU's set of counters referenced by

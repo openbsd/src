@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.98 2022/01/02 22:36:04 jsg Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.99 2023/09/16 09:33:27 mpi Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -573,7 +573,8 @@ ipip_sysctl_ipipstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(ipipstat) == (ipips_ncounters * sizeof(uint64_t)));
 	memset(&ipipstat, 0, sizeof ipipstat);
-	counters_read(ipipcounters, (uint64_t *)&ipipstat, ipips_ncounters);
+	counters_read(ipipcounters, (uint64_t *)&ipipstat, ipips_ncounters,
+	    NULL);
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
 	    &ipipstat, sizeof(ipipstat)));
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.305 2023/01/22 12:05:44 mvs Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.306 2023/09/16 09:33:27 mpi Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -1314,7 +1314,7 @@ udp_sysctl_udpstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(udpstat) == (nitems(counters) * sizeof(u_long)));
 	memset(&udpstat, 0, sizeof udpstat);
-	counters_read(udpcounters, counters, nitems(counters));
+	counters_read(udpcounters, counters, nitems(counters), NULL);
 
 	for (i = 0; i < nitems(counters); i++)
 		words[i] = (u_long)counters[i];

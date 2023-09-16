@@ -1,4 +1,4 @@
-/*	$OpenBSD: pipex.c,v 1.148 2022/08/30 19:42:29 bluhm Exp $ */
+/*	$OpenBSD: pipex.c,v 1.149 2023/09/16 09:33:27 mpi Exp $ */
 
 /*-
  * Copyright (c) 2009 Internet Initiative Japan Inc.
@@ -558,7 +558,7 @@ pipex_export_session_stats(struct pipex_session *session,
 
 	memset(stats, 0, sizeof(*stats));
 
-	counters_read(session->stat_counters, counters, pxc_ncounters);
+	counters_read(session->stat_counters, counters, pxc_ncounters, NULL);
 	stats->ipackets = counters[pxc_ipackets];
 	stats->ierrors = counters[pxc_ierrors];
 	stats->ibytes = counters[pxc_ibytes];

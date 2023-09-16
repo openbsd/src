@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.205 2023/08/07 03:43:57 dlg Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.206 2023/09/16 09:33:27 mpi Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -664,7 +664,7 @@ esp_sysctl_espstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(espstat) == (esps_ncounters * sizeof(uint64_t)));
 	memset(&espstat, 0, sizeof espstat);
-	counters_read(espcounters, (uint64_t *)&espstat, esps_ncounters);
+	counters_read(espcounters, (uint64_t *)&espstat, esps_ncounters, NULL);
 	return (sysctl_rdstruct(oldp, oldlenp, newp, &espstat,
 	    sizeof(espstat)));
 }
@@ -698,7 +698,7 @@ ah_sysctl_ahstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(ahstat) == (ahs_ncounters * sizeof(uint64_t)));
 	memset(&ahstat, 0, sizeof ahstat);
-	counters_read(ahcounters, (uint64_t *)&ahstat, ahs_ncounters);
+	counters_read(ahcounters, (uint64_t *)&ahstat, ahs_ncounters, NULL);
 	return (sysctl_rdstruct(oldp, oldlenp, newp, &ahstat, sizeof(ahstat)));
 }
 
@@ -733,7 +733,7 @@ ipcomp_sysctl_ipcompstat(void *oldp, size_t *oldlenp, void *newp)
 	CTASSERT(sizeof(ipcompstat) == (ipcomps_ncounters * sizeof(uint64_t)));
 	memset(&ipcompstat, 0, sizeof ipcompstat);
 	counters_read(ipcompcounters, (uint64_t *)&ipcompstat,
-	    ipcomps_ncounters);
+	    ipcomps_ncounters, NULL);
 	return (sysctl_rdstruct(oldp, oldlenp, newp, &ipcompstat,
 	    sizeof(ipcompstat)));
 }
@@ -745,7 +745,8 @@ ipsec_sysctl_ipsecstat(void *oldp, size_t *oldlenp, void *newp)
 
 	CTASSERT(sizeof(ipsecstat) == (ipsec_ncounters * sizeof(uint64_t)));
 	memset(&ipsecstat, 0, sizeof ipsecstat);
-	counters_read(ipseccounters, (uint64_t *)&ipsecstat, ipsec_ncounters);
+	counters_read(ipseccounters, (uint64_t *)&ipsecstat, ipsec_ncounters,
+	    NULL);
 	return (sysctl_rdstruct(oldp, oldlenp, newp, &ipsecstat,
 	    sizeof(ipsecstat)));
 }

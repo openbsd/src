@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_percpu.c,v 1.10 2022/10/03 14:10:53 bluhm Exp $ */
+/*	$OpenBSD: subr_percpu.c,v 1.11 2023/09/16 09:33:27 mpi Exp $ */
 
 /*
  * Copyright (c) 2016 David Gwynne <dlg@openbsd.org>
@@ -159,17 +159,19 @@ counters_free(struct cpumem *cm, unsigned int n)
 }
 
 void
-counters_read(struct cpumem *cm, uint64_t *output, unsigned int n)
+counters_read(struct cpumem *cm, uint64_t *output, unsigned int n,
+    uint64_t *scratch)
 {
 	struct cpumem_iter cmi;
-	uint64_t *gen, *counters, *temp;
+	uint64_t *gen, *counters, *temp = scratch;
 	uint64_t enter, leave;
 	unsigned int i;
 
 	for (i = 0; i < n; i++)
 		output[i] = 0;
 
-	temp = mallocarray(n, sizeof(uint64_t), M_TEMP, M_WAITOK);
+	if (scratch == NULL)
+		temp = mallocarray(n, sizeof(uint64_t), M_TEMP, M_WAITOK);
 
 	gen = cpumem_first(&cmi, cm);
 	do {
@@ -202,7 +204,8 @@ counters_read(struct cpumem *cm, uint64_t *output, unsigned int n)
 		gen = cpumem_next(&cmi, cm);
 	} while (gen != NULL);
 
-	free(temp, M_TEMP, n * sizeof(uint64_t));
+	if (scratch == NULL)
+		free(temp, M_TEMP, n * sizeof(uint64_t));
 }
 
 void
@@ -305,7 +308,8 @@ counters_free(struct cpumem *cm, unsigned int n)
 }
 
 void
-counters_read(struct cpumem *cm, uint64_t *output, unsigned int n)
+counters_read(struct cpumem *cm, uint64_t *output, unsigned int n,
+    uint64_t *scratch)
 {
 	uint64_t *counters;
 	unsigned int i;

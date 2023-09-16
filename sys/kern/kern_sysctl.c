@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.418 2023/07/16 03:01:31 yasuoka Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.419 2023/09/16 09:33:27 mpi Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -519,7 +519,7 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 		unsigned int i;
 
 		memset(&mbs, 0, sizeof(mbs));
-		counters_read(mbstat, counters, MBSTAT_COUNT);
+		counters_read(mbstat, counters, MBSTAT_COUNT, NULL);
 		for (i = 0; i < MBSTAT_TYPES; i++)
 			mbs.m_mtypes[i] = counters[i];
 
