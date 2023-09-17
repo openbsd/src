@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.52 2023/09/14 19:39:48 cheloha Exp $ */
+/*	$OpenBSD: clock.c,v 1.53 2023/09/17 14:50:51 cheloha Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -242,7 +242,6 @@ cp0_initclock(void)
 	stathz = hz;
 	profhz = stathz * 10;
 	statclock_is_randomized = 1;
-	clockintr_init(0);
 }
 
 /*

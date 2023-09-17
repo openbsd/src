@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.13 2023/09/14 19:39:48 cheloha Exp $	*/
+/*	$OpenBSD: clock.c,v 1.14 2023/09/17 14:50:51 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -95,7 +95,6 @@ cpu_initclocks(void)
 	stathz = hz;
 	profhz = stathz * 10;
 	statclock_is_randomized = 1;
-	clockintr_init(0);
 
 	evcount_attach(&clock_count, "clock", NULL);
 }

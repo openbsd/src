@@ -1,4 +1,4 @@
-/* $OpenBSD: gptimer.c,v 1.22 2023/09/14 19:39:47 cheloha Exp $ */
+/* $OpenBSD: gptimer.c,v 1.23 2023/09/17 14:50:51 cheloha Exp $ */
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  *
@@ -199,7 +199,6 @@ gptimer_cpu_initclocks(void)
 	stathz = hz;
 	profhz = stathz * 10;
 	statclock_is_randomized = 1;
-	clockintr_init(0);
 
 	gptimer_nsec_cycle_ratio = TIMER_FREQUENCY * (1ULL << 32) / 1000000000;
 	gptimer_nsec_max = UINT64_MAX / gptimer_nsec_cycle_ratio;

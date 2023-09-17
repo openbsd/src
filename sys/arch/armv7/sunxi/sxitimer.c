@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxitimer.c,v 1.23 2023/09/14 19:39:47 cheloha Exp $	*/
+/*	$OpenBSD: sxitimer.c,v 1.24 2023/09/17 14:50:51 cheloha Exp $	*/
 /*
  * Copyright (c) 2007,2009 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Raphael Graf <r@undefined.ch>
@@ -181,7 +181,6 @@ sxitimer_attach(struct device *parent, struct device *self, void *aux)
 	stathz = hz;
 	profhz = stathz * 10;
 	statclock_is_randomized = 1;
-	clockintr_init(0);
 
 	/* stop timer, and set clk src */
 	bus_space_write_4(sxitimer_iot, sxitimer_ioh,

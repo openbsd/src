@@ -1,4 +1,4 @@
-/* $OpenBSD: agtimer.c,v 1.27 2023/09/14 19:39:47 cheloha Exp $ */
+/* $OpenBSD: agtimer.c,v 1.28 2023/09/17 14:50:51 cheloha Exp $ */
 /*
  * Copyright (c) 2011 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2013 Patrick Wildt <patrick@blueri.se>
@@ -294,7 +294,6 @@ agtimer_cpu_initclocks(void)
 	stathz = hz;
 	profhz = stathz * 10;
 	statclock_is_randomized = 1;
-	clockintr_init(0);
 
 	if (sc->sc_ticks_per_second != agtimer_frequency) {
 		agtimer_set_clockrate(agtimer_frequency);

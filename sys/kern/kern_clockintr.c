@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.53 2023/09/15 11:48:49 deraadt Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.54 2023/09/17 14:50:50 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -31,13 +31,6 @@
 #include <sys/sysctl.h>
 #include <sys/time.h>
 
-/*
- * Protection for global variables in this file:
- *
- *	I	Immutable after initialization.
- */
-uint32_t clockintr_flags;		/* [I] global state + behavior flags */
-
 void clockintr_hardclock(struct clockintr *, void *, void *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
@@ -49,19 +42,6 @@ void clockqueue_pend_insert(struct clockintr_queue *, struct clockintr *,
     uint64_t);
 void clockqueue_reset_intrclock(struct clockintr_queue *);
 uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
-
-/*
- * Initialize global state.  Set flags and compute intervals.
- */
-void
-clockintr_init(uint32_t flags)
-{
-	KASSERT(CPU_IS_PRIMARY(curcpu()));
-	KASSERT(clockintr_flags == 0);
-	KASSERT(!ISSET(flags, ~CL_FLAG_MASK));
-
-	SET(clockintr_flags, flags | CL_INIT);
-}
 
 /*
  * Ready the calling CPU for clockintr_dispatch().  If this is our
@@ -76,8 +56,6 @@ clockintr_cpu_init(const struct intrclock *ic)
 	struct clockintr_queue *cq = &ci->ci_queue;
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	int reset_cq_intrclock = 0;
-
-	KASSERT(ISSET(clockintr_flags, CL_INIT));
 
 	if (ic != NULL)
 		clockqueue_intrclock_install(cq, ic);

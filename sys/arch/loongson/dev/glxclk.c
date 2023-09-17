@@ -1,4 +1,4 @@
-/*	$OpenBSD: glxclk.c,v 1.10 2023/09/14 19:39:48 cheloha Exp $	*/
+/*	$OpenBSD: glxclk.c,v 1.11 2023/09/17 14:50:51 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2013 Paul Irofti.
@@ -192,8 +192,6 @@ glxclk_initclock(void)
 	statclock_is_randomized = 1;
 	tick = 1000000 / hz;
 	tick_nsec = 1000000000 / hz;
-
-	clockintr_init(0);
 }
 
 void
