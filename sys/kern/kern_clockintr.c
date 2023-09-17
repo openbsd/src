@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.55 2023/09/17 15:05:45 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.56 2023/09/17 15:24:35 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -333,10 +333,9 @@ clockintr_cancel(struct clockintr *cl)
 }
 
 struct clockintr *
-clockintr_establish(void *vci,
+clockintr_establish(struct cpu_info *ci,
     void (*func)(struct clockintr *, void *, void *), void *arg)
 {
-	struct cpu_info *ci = vci;
 	struct clockintr *cl;
 	struct clockintr_queue *cq = &ci->ci_queue;
 

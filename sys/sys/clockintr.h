@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.19 2023/09/17 15:05:44 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.20 2023/09/17 15:24:35 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -34,6 +34,8 @@ struct clockintr_stat {
 
 #include <sys/mutex.h>
 #include <sys/queue.h>
+
+struct cpu_info;
 
 /*
  * Platform API
@@ -120,7 +122,7 @@ void clockintr_trigger(void);
 uint64_t clockintr_advance(struct clockintr *, uint64_t);
 uint64_t clockintr_advance_random(struct clockintr *, uint64_t, uint32_t);
 void clockintr_cancel(struct clockintr *);
-struct clockintr *clockintr_establish(void *,
+struct clockintr *clockintr_establish(struct cpu_info *,
     void (*)(struct clockintr *, void *, void *), void *);
 void clockintr_stagger(struct clockintr *, uint64_t, uint32_t, uint32_t);
 void clockqueue_init(struct clockintr_queue *);
