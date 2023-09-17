@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.54 2023/09/17 14:50:50 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.55 2023/09/17 15:05:45 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -348,7 +348,7 @@ clockintr_establish(void *vci,
 	cl->cl_queue = cq;
 
 	mtx_enter(&cq->cq_mtx);
-	TAILQ_INSERT_TAIL(&cq->cq_est, cl, cl_elink);
+	TAILQ_INSERT_TAIL(&cq->cq_all, cl, cl_alink);
 	mtx_leave(&cq->cq_mtx);
 	return cl;
 }
@@ -421,7 +421,7 @@ clockqueue_init(struct clockintr_queue *cq)
 
 	cq->cq_shadow.cl_queue = cq;
 	mtx_init(&cq->cq_mtx, IPL_CLOCK);
-	TAILQ_INIT(&cq->cq_est);
+	TAILQ_INIT(&cq->cq_all);
 	TAILQ_INIT(&cq->cq_pend);
 	cq->cq_gen = 1;
 	SET(cq->cq_flags, CQ_INIT);
@@ -601,7 +601,7 @@ db_show_clockintr_cpu(struct cpu_info *ci)
 		db_show_clockintr(cq->cq_running, "run", cpu);
 	TAILQ_FOREACH(elm, &cq->cq_pend, cl_plink)
 		db_show_clockintr(elm, "pend", cpu);
-	TAILQ_FOREACH(elm, &cq->cq_est, cl_elink) {
+	TAILQ_FOREACH(elm, &cq->cq_all, cl_alink) {
 		if (!ISSET(elm->cl_flags, CLST_PENDING))
 			db_show_clockintr(elm, "idle", cpu);
 	}

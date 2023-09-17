@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.18 2023/09/17 14:50:50 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.19 2023/09/17 15:05:44 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -68,7 +68,7 @@ intrclock_trigger(struct intrclock *ic)
 struct clockintr_queue;
 struct clockintr {
 	uint64_t cl_expiration;				/* [m] dispatch time */
-	TAILQ_ENTRY(clockintr) cl_elink;		/* [m] cq_est glue */
+	TAILQ_ENTRY(clockintr) cl_alink;		/* [m] cq_all glue */
 	TAILQ_ENTRY(clockintr) cl_plink;		/* [m] cq_pend glue */
 	void *cl_arg;					/* [I] argument */
 	void (*cl_func)(struct clockintr *, void *, void *); /* [I] callback */
@@ -94,7 +94,7 @@ struct clockintr_queue {
 	struct clockintr cq_shadow;	/* [o] copy of running clockintr */
 	struct mutex cq_mtx;		/* [a] per-queue mutex */
 	uint64_t cq_uptime;		/* [o] cached uptime */
-	TAILQ_HEAD(, clockintr) cq_est;	/* [m] established clockintr list */
+	TAILQ_HEAD(, clockintr) cq_all;	/* [m] established clockintr list */
 	TAILQ_HEAD(, clockintr) cq_pend;/* [m] pending clockintr list */
 	struct clockintr *cq_running;	/* [m] running clockintr */
 	struct clockintr *cq_hardclock;	/* [o] hardclock handle */
