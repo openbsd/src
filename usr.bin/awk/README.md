@@ -1,10 +1,40 @@
-$OpenBSD: README.md,v 1.6 2022/01/27 16:58:37 millert Exp $
+$OpenBSD: README.md,v 1.7 2023/09/17 14:49:44 millert Exp $
 
 # The One True Awk
 
 This is the version of `awk` described in _The AWK Programming Language_,
-by Al Aho, Brian Kernighan, and Peter Weinberger
-(Addison-Wesley, 1988, ISBN 0-201-07981-X).
+Second Edition, by Al Aho, Brian Kernighan, and Peter Weinberger
+(Addison-Wesley, 2024, ISBN-13 978-0138269722, ISBN-10 0138269726).
+
+## What's New? ##
+
+This version of Awk handles UTF-8 and comma-separated values (CSV) input.
+
+### Strings ###
+
+Functions that process strings now count Unicode code points, not bytes;
+this affects `length`, `substr`, `index`, `match`, `split`,
+`sub`, `gsub`, and others.  Note that code
+points are not necessarily characters.
+
+UTF-8 sequences may appear in literal strings and regular expressions.
+Aribtrary characters may be included with `\u` followed by 1 to 8 hexadecimal digits.
+
+### Regular expressions ###
+
+Regular expressions may include UTF-8 code points, including `\u`.
+Character classes are likely to be limited to about 256 characters
+when expanded.
+
+### CSV ###
+
+The option `--csv` turns on CSV processing of input:
+fields are separated by commas, fields may be quoted with
+double-quote (`"`) characters, fields may contain embedded newlines.
+In CSV mode, `FS` is ignored.
+
+If no explicit separator argument is provided,
+field-splitting in `split` is determined by CSV mode.
 
 ## Copyright
 
@@ -69,22 +99,22 @@ The program itself is created by
 
 which should produce a sequence of messages roughly like this:
 
-	yacc -d awkgram.y
-	conflicts: 43 shift/reduce, 85 reduce/reduce
-	mv y.tab.c ytab.c
-	mv y.tab.h ytab.h
-	cc -c ytab.c
-	cc -c b.c
-	cc -c main.c
-	cc -c parse.c
-	cc maketab.c -o maketab
-	./maketab >proctab.c
-	cc -c proctab.c
-	cc -c tran.c
-	cc -c lib.c
-	cc -c run.c
-	cc -c lex.c
-	cc ytab.o b.o main.o parse.o proctab.o tran.o lib.o run.o lex.o -lm
+	bison -d  awkgram.y
+	awkgram.y: warning: 44 shift/reduce conflicts [-Wconflicts-sr]
+	awkgram.y: warning: 85 reduce/reduce conflicts [-Wconflicts-rr]
+	awkgram.y: note: rerun with option '-Wcounterexamples' to generate conflict counterexamples
+	gcc -g -Wall -pedantic -Wcast-qual   -O2   -c -o awkgram.tab.o awkgram.tab.c
+	gcc -g -Wall -pedantic -Wcast-qual   -O2   -c -o b.o b.c
+	gcc -g -Wall -pedantic -Wcast-qual   -O2   -c -o main.o main.c
+	gcc -g -Wall -pedantic -Wcast-qual   -O2   -c -o parse.o parse.c
+	gcc -g -Wall -pedantic -Wcast-qual -O2 maketab.c -o maketab
+	./maketab awkgram.tab.h >proctab.c
+	gcc -g -Wall -pedantic -Wcast-qual   -O2   -c -o proctab.o proctab.c
+	gcc -g -Wall -pedantic -Wcast-qual   -O2   -c -o tran.o tran.c
+	gcc -g -Wall -pedantic -Wcast-qual   -O2   -c -o lib.o lib.c
+	gcc -g -Wall -pedantic -Wcast-qual   -O2   -c -o run.o run.c
+	gcc -g -Wall -pedantic -Wcast-qual   -O2   -c -o lex.o lex.c
+	gcc -g -Wall -pedantic -Wcast-qual   -O2 awkgram.tab.o b.o main.o parse.o proctab.o tran.o lib.o run.o lex.o   -lm
 
 This produces an executable `a.out`; you will eventually want to
 move this to some place like `/usr/bin/awk`.
@@ -104,14 +134,9 @@ the standard developer tools.
 You can also use `make CC=g++` to build with the GNU C++ compiler,
 should you choose to do so.
 
-The version of `malloc` that comes with some systems is sometimes
-astonishly slow.  If `awk` seems slow, you might try fixing that.
-More generally, turning on optimization can significantly improve
-`awk`'s speed, perhaps by 1/3 for highest levels.
-
 ## A Note About Releases
 
-We don't usually do releases. 
+We don't usually do releases.
 
 ## A Note About Maintenance
 
@@ -122,5 +147,4 @@ is not at the top of our priority list.
 
 #### Last Updated
 
-Sun 23 Jan 2022 03:48:01 PM EST
-
+Sun Sep  3 09:26:43 EDT 2023

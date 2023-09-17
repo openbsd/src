@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.74 2022/09/21 01:42:59 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.75 2023/09/17 14:49:44 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -27,7 +27,6 @@ THIS SOFTWARE.
 #include <stdio.h>
 #include <ctype.h>
 #include <errno.h>
-#include <wchar.h>
 #include <wctype.h>
 #include <fcntl.h>
 #include <setjmp.h>
@@ -41,8 +40,10 @@ THIS SOFTWARE.
 #include "awk.h"
 #include "awkgram.tab.h"
 
+
 static void stdinit(void);
 static void flush_all(void);
+static char *wide_char_to_byte_str(int rune, size_t *outlen);
 
 #if 1
 #define tempfree(x)	do { if (istemp(x)) tfree(x); } while (/*CONSTCOND*/0)
@@ -580,11 +581,225 @@ Cell *intest(Node **a, int n)	/* a[0] is index (list), a[1] is symtab */
 }
 
 
+/* ======== utf-8 code ========== */
+
+/*
+ * Awk strings can contain ascii, random 8-bit items (eg Latin-1),
+ * or utf-8.  u8_isutf tests whether a string starts with a valid
+ * utf-8 sequence, and returns 0 if not (e.g., high bit set).
+ * u8_nextlen returns length of next valid sequence, which is
+ * 1 for ascii, 2..4 for utf-8, or 1 for high bit non-utf.
+ * u8_strlen returns length of string in valid utf-8 sequences
+ * and/or high-bit bytes.  Conversion functions go between byte
+ * number and character number.
+ *
+ * In theory, this behaves the same as before for non-utf8 bytes.
+ *
+ * Limited checking! This is a potential security hole.
+ */
+
+/* is s the beginning of a valid utf-8 string? */
+/* return length 1..4 if yes, 0 if no */
+int u8_isutf(const char *s)
+{
+	int n, ret;
+	unsigned char c;
+
+	c = s[0];
+	if (c < 128)
+		return 1; /* what if it's 0? */
+
+	n = strlen(s);
+	if (n >= 2 && ((c>>5) & 0x7) == 0x6 && (s[1] & 0xC0) == 0x80) {
+		ret = 2; /* 110xxxxx 10xxxxxx */
+	} else if (n >= 3 && ((c>>4) & 0xF) == 0xE && (s[1] & 0xC0) == 0x80
+			 && (s[2] & 0xC0) == 0x80) {
+		ret = 3; /* 1110xxxx 10xxxxxx 10xxxxxx */
+	} else if (n >= 4 && ((c>>3) & 0x1F) == 0x1E && (s[1] & 0xC0) == 0x80
+			 && (s[2] & 0xC0) == 0x80 && (s[3] & 0xC0) == 0x80) {
+		ret = 4; /* 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */
+	} else {
+		ret = 0;
+	}
+	return ret;
+}
+
+/* Convert (prefix of) utf8 string to utf-32 rune. */
+/* Sets *rune to the value, returns the length. */
+/* No error checking: watch out. */
+int u8_rune(int *rune, const char *s)
+{
+	int n, ret;
+	unsigned char c;
+
+	c = s[0];
+	if (c < 128) {
+		*rune = c;
+		return 1;
+	}
+
+	n = strlen(s);
+	if (n >= 2 && ((c>>5) & 0x7) == 0x6 && (s[1] & 0xC0) == 0x80) {
+		*rune = ((c & 0x1F) << 6) | (s[1] & 0x3F); /* 110xxxxx 10xxxxxx */
+		ret = 2;
+	} else if (n >= 3 && ((c>>4) & 0xF) == 0xE && (s[1] & 0xC0) == 0x80
+			  && (s[2] & 0xC0) == 0x80) {
+		*rune = ((c & 0xF) << 12) | ((s[1] & 0x3F) << 6) | (s[2] & 0x3F);
+			/* 1110xxxx 10xxxxxx 10xxxxxx */
+		ret = 3;
+	} else if (n >= 4 && ((c>>3) & 0x1F) == 0x1E && (s[1] & 0xC0) == 0x80
+			  && (s[2] & 0xC0) == 0x80 && (s[3] & 0xC0) == 0x80) {
+		*rune = ((c & 0x7) << 18) | ((s[1] & 0x3F) << 12) | ((s[2] & 0x3F) << 6) | (s[3] & 0x3F);
+			/* 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx */
+		ret = 4;
+	} else {
+		*rune = c;
+		ret = 1;
+	}
+	return ret; /* returns one byte if sequence doesn't look like utf */
+}
+
+/* return length of next sequence: 1 for ascii or random, 2..4 for valid utf8 */
+int u8_nextlen(const char *s)
+{
+	int len;
+
+	len = u8_isutf(s);
+	if (len == 0)
+		len = 1;
+	return len;
+}
+
+/* return number of utf characters or single non-utf bytes */
+int u8_strlen(const char *s)
+{
+	int i, len, n, totlen;
+	unsigned char c;
+
+	n = strlen(s);
+	totlen = 0;
+	for (i = 0; i < n; i += len) {
+		c = s[i];
+		if (c < 128) {
+			len = 1;
+		} else {
+			len = u8_nextlen(&s[i]);
+		}
+		totlen++;
+		if (i > n)
+			FATAL("bad utf count [%s] n=%d i=%d\n", s, n, i);
+	}
+	return totlen;
+}
+
+/* convert utf-8 char number in a string to its byte offset */
+int u8_char2byte(const char *s, int charnum)
+{
+	int n;
+	int bytenum = 0;
+
+	while (charnum > 0) {
+		n = u8_nextlen(s);
+		s += n;
+		bytenum += n;
+		charnum--;
+	}
+	return bytenum;
+}
+
+/* convert byte offset in s to utf-8 char number that starts there */
+int u8_byte2char(const char *s, int bytenum)
+{
+	int i, len, b;
+	int charnum = 0; /* BUG: what origin? */
+	/* should be 0 to match start==0 which means no match */	
+
+	b = strlen(s);
+	if (bytenum > b) {
+		return -1; /* ??? */
+	}
+	for (i = 0; i <= bytenum; i += len) {
+		len = u8_nextlen(s+i);
+		charnum++;
+	}
+	return charnum;
+}
+
+/* runetochar() adapted from rune.c in the Plan 9 distributione */
+
+enum
+{
+	Runeerror = 128, /* from somewhere else */
+	Runemax = 0x10FFFF,
+
+	Bit1    = 7,
+	Bitx    = 6,
+	Bit2    = 5,
+	Bit3    = 4,
+	Bit4    = 3,
+	Bit5    = 2,
+
+	T1      = ((1<<(Bit1+1))-1) ^ 0xFF,     /* 0000 0000 */
+	Tx      = ((1<<(Bitx+1))-1) ^ 0xFF,     /* 1000 0000 */
+	T2      = ((1<<(Bit2+1))-1) ^ 0xFF,     /* 1100 0000 */
+	T3      = ((1<<(Bit3+1))-1) ^ 0xFF,     /* 1110 0000 */
+	T4      = ((1<<(Bit4+1))-1) ^ 0xFF,     /* 1111 0000 */
+	T5      = ((1<<(Bit5+1))-1) ^ 0xFF,     /* 1111 1000 */
+
+	Rune1   = (1<<(Bit1+0*Bitx))-1,	 	/* 0000 0000 0000 0000 0111 1111 */
+	Rune2   = (1<<(Bit2+1*Bitx))-1,	 	/* 0000 0000 0000 0111 1111 1111 */
+	Rune3   = (1<<(Bit3+2*Bitx))-1,	 	/* 0000 0000 1111 1111 1111 1111 */
+	Rune4   = (1<<(Bit4+3*Bitx))-1,	 	/* 0011 1111 1111 1111 1111 1111 */
+
+	Maskx   = (1<<Bitx)-1,		  	/* 0011 1111 */
+	Testx   = Maskx ^ 0xFF,		 	/* 1100 0000 */
+
+};
+
+int runetochar(char *str, int c)
+{	
+	/* one character sequence 00000-0007F => 00-7F */     
+	if (c <= Rune1) {
+		str[0] = c;
+		return 1;
+	}
+	
+	/* two character sequence 00080-007FF => T2 Tx */
+	if (c <= Rune2) {
+		str[0] = T2 | (c >> 1*Bitx);
+		str[1] = Tx | (c & Maskx);
+		return 2;
+	}
+
+	/* three character sequence 00800-0FFFF => T3 Tx Tx */
+	if (c > Runemax)
+		c = Runeerror;
+	if (c <= Rune3) {
+		str[0] = T3 |  (c >> 2*Bitx);
+		str[1] = Tx | ((c >> 1*Bitx) & Maskx);
+		str[2] = Tx |  (c & Maskx);
+		return 3;
+	}
+	
+	/* four character sequence 010000-1FFFFF => T4 Tx Tx Tx */
+	str[0] = T4 |  (c >> 3*Bitx);
+	str[1] = Tx | ((c >> 2*Bitx) & Maskx);
+	str[2] = Tx | ((c >> 1*Bitx) & Maskx);
+	str[3] = Tx |  (c & Maskx);
+	return 4;
+}               
+
+
+/* ========== end of utf8 code =========== */
+
+
+
 Cell *matchop(Node **a, int n)	/* ~ and match() */
 {
 	Cell *x, *y;
 	char *s, *t;
 	int i;
+	int cstart, cpatlen, len;
 	fa *pfa;
 	int (*mf)(fa *, const char *) = match, mode = 0;
 
@@ -605,9 +820,21 @@ Cell *matchop(Node **a, int n)	/* ~ and match() */
 	}
 	tempfree(x);
 	if (n == MATCHFCN) {
-		int start = patbeg - s + 1;
-		if (patlen < 0)
-			start = 0;
+		int start = patbeg - s + 1; /* origin 1 */
+		if (patlen < 0) {
+			start = 0; /* not found */
+		} else {
+			cstart = u8_byte2char(s, start-1);
+			cpatlen = 0;
+			for (i = 0; i < patlen; i += len) {
+				len = u8_nextlen(patbeg+i);
+				cpatlen++;
+			}
+
+			start = cstart;
+			patlen = cpatlen;
+		}
+
 		setfval(rstartloc, (Awkfloat) start);
 		setfval(rlengthloc, (Awkfloat) patlen);
 		x = gettemp();
@@ -658,10 +885,15 @@ Cell *relop(Node **a, int n)	/* a[0 < a[1], etc. */
 	int i;
 	Cell *x, *y;
 	Awkfloat j;
+	bool x_is_nan, y_is_nan;
 
 	x = execute(a[0]);
 	y = execute(a[1]);
+	x_is_nan = isnan(x->fval);
+	y_is_nan = isnan(y->fval);
 	if (x->tval&NUM && y->tval&NUM) {
+		if ((x_is_nan || y_is_nan) && n != NE)
+			return(False);
 		j = x->fval - y->fval;
 		i = j<0? -1: (j>0? 1: 0);
 	} else {
@@ -674,7 +906,8 @@ Cell *relop(Node **a, int n)	/* a[0 < a[1], etc. */
 			else return(False);
 	case LE:	if (i<=0) return(True);
 			else return(False);
-	case NE:	if (i!=0) return(True);
+	case NE:	if (x_is_nan && y_is_nan) return(True);
+			else if (i!=0) return(True);
 			else return(False);
 	case EQ:	if (i == 0) return(True);
 			else return(False);
@@ -743,6 +976,7 @@ Cell *indirect(Node **a, int n)	/* $( a[0] ) */
 Cell *substr(Node **a, int nnn)		/* substr(a[0], a[1], a[2]) */
 {
 	int k, m, n;
+	int mb, nb;
 	char *s;
 	int temp;
 	Cell *x, *y, *z = NULL;
@@ -778,12 +1012,16 @@ Cell *substr(Node **a, int nnn)		/* substr(a[0], a[1], a[2]) */
 		n = 0;
 	else if (n > k - m)
 		n = k - m;
+	/* m is start, n is length from there */
 	DPRINTF("substr: m=%d, n=%d, s=%s\n", m, n, s);
 	y = gettemp();
-	temp = s[n+m-1];	/* with thanks to John Linderman */
-	s[n+m-1] = '\0';
-	setsval(y, s + m - 1);
-	s[n+m-1] = temp;
+	mb = u8_char2byte(s, m-1); /* byte offset of start char in s */
+	nb = u8_char2byte(s, m-1+n);  /* byte offset of end+1 char in s */
+
+	temp = s[nb];	/* with thanks to John Linderman */
+	s[nb] = '\0';
+	setsval(y, s + mb);
+	s[nb] = temp;
 	tempfree(x);
 	return(y);
 }
@@ -804,7 +1042,15 @@ Cell *sindex(Node **a, int nnn)		/* index(a[0], a[1]) */
 		for (q = p1, p2 = s2; *p2 != '\0' && *q == *p2; q++, p2++)
 			continue;
 		if (*p2 == '\0') {
-			v = (Awkfloat) (p1 - s1 + 1);	/* origin 1 */
+			/* v = (Awkfloat) (p1 - s1 + 1);	 origin 1 */
+
+		   /* should be a function: used in match() as well */
+			int i, len;
+			v = 0;
+			for (i = 0; i < p1-s1+1; i += len) {
+				len = u8_nextlen(s1+i);
+				v++;
+			}
 			break;
 		}
 	}
@@ -812,6 +1058,18 @@ Cell *sindex(Node **a, int nnn)		/* index(a[0], a[1]) */
 	tempfree(y);
 	setfval(z, v);
 	return(z);
+}
+
+int has_utf8(char *s)	/* return 1 if s contains any utf-8 (2 bytes or more) character */
+{
+	int n;
+
+	for (n = 0; *s != 0; s += n) {
+		n = u8_nextlen(s);
+		if (n > 1)
+			return 1;
+	}
+	return 0;
 }
 
 #define	MAXNUMSIZE	50
@@ -856,7 +1114,6 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			s += 2;
 			continue;
 		}
-		/* have to be real careful in case this is a huge number, eg, %100000d */
 		fmtwd = atoi(s+1);
 		if (fmtwd < 0)
 			fmtwd = -fmtwd;
@@ -929,7 +1186,8 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			n = fmtwd;
 		adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format5");
 		switch (flag) {
-		case '?':	snprintf(p, BUFSZ(p), "%s", fmt);	/* unknown, so dump it too */
+		case '?':
+			snprintf(p, BUFSZ(p), "%s", fmt);	/* unknown, so dump it too */
 			t = getsval(x);
 			n = strlen(t);
 			if (fmtwd > n)
@@ -943,29 +1201,176 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 		case 'f':	snprintf(p, BUFSZ(p), fmt, getfval(x)); break;
 		case 'd':	snprintf(p, BUFSZ(p), fmt, (intmax_t) getfval(x)); break;
 		case 'u':	snprintf(p, BUFSZ(p), fmt, (uintmax_t) getfval(x)); break;
-		case 's':
+
+		case 's': {
 			t = getsval(x);
 			n = strlen(t);
-			if (fmtwd > n)
-				n = fmtwd;
-			if (!adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format7"))
-				FATAL("huge string/format (%d chars) in printf %.30s... ran format() out of memory", n, t);
-			snprintf(p, BUFSZ(p), fmt, t);
+			/* if simple format or no utf-8 in the string, sprintf works */
+			if (!has_utf8(t) || strcmp(fmt,"%s") == 0) {
+				if (fmtwd > n)
+					n = fmtwd;
+				if (!adjbuf(&buf, &bufsize, 1+n+p-buf, recsize, &p, "format7"))
+					FATAL("huge string/format (%d chars) in printf %.30s..." \
+						" ran format() out of memory", n, t);
+				snprintf(p, BUFSZ(p), fmt, t);
+				break;
+			}
+
+			/* get here if string has utf-8 chars and fmt is not plain %s */
+			/* "%-w.ps", where -, w and .p are all optional */
+			/* '0' before the w is a flag character */
+			/* fmt points at % */
+			int ljust = 0, wid = 0, prec = n, pad = 0;
+			char *f = fmt+1;
+			if (f[0] == '-') {
+				ljust = 1;
+				f++;
+			}
+			// flags '0' and '+' are recognized but skipped
+			if (f[0] == '0') {
+				f++;
+				if (f[0] == '+')
+					f++;
+			}
+			if (f[0] == '+') {
+				f++;
+				if (f[0] == '0')
+					f++;
+			}
+			if (isdigit((uschar)f[0])) { /* there is a wid */
+				wid = strtol(f, &f, 10);
+			}
+			if (f[0] == '.') { /* there is a .prec */
+				prec = strtol(++f, &f, 10);
+			}
+			if (prec > u8_strlen(t))
+				prec = u8_strlen(t);
+			pad = wid>prec ? wid - prec : 0;  // has to be >= 0
+			int i, k, n;
+			
+			if (ljust) { // print prec chars from t, then pad blanks
+				n = u8_char2byte(t, prec);
+				for (k = 0; k < n; k++) {
+					//putchar(t[k]);
+					*p++ = t[k];
+				}
+				for (i = 0; i < pad; i++) {
+					//printf(" ");
+					*p++ = ' ';
+				}
+			} else { // print pad blanks, then prec chars from t
+				for (i = 0; i < pad; i++) {
+					//printf(" ");
+					*p++ = ' ';
+				}
+				n = u8_char2byte(t, prec);
+				for (k = 0; k < n; k++) {
+					//putchar(t[k]);
+					*p++ = t[k];
+				}
+			}
+			*p = 0;
 			break;
-		case 'c':
+		}
+
+               case 'c': {
+			/*
+			 * If a numeric value is given, awk should just turn
+			 * it into a character and print it:
+			 *      BEGIN { printf("%c\n", 65) }
+			 * prints "A".
+			 *
+			 * But what if the numeric value is > 128 and
+			 * represents a valid Unicode code point?!? We do
+			 * our best to convert it back into UTF-8. If we
+			 * can't, we output the encoding of the Unicode
+			 * "invalid character", 0xFFFD.
+			 */
 			if (isnum(x)) {
-				if ((int)getfval(x))
-					snprintf(p, BUFSZ(p), fmt, (int) getfval(x));
-				else {
+				int charval = (int) getfval(x);
+
+				if (charval != 0) {
+					if (charval < 128)
+						snprintf(p, BUFSZ(p), fmt, charval);
+					else {
+						// possible unicode character
+						size_t count;
+						char *bs = wide_char_to_byte_str(charval, &count);
+
+						if (bs == NULL)	{ // invalid character
+							// use unicode invalid character, 0xFFFD
+							bs = "\357\277\275";
+							count = 3;
+						}
+						t = bs;
+						n = count;
+						goto format_percent_c;
+					}
+				} else {
 					*p++ = '\0'; /* explicit null byte */
 					*p = '\0';   /* next output will start here */
 				}
-			} else
+				break;
+			}
+			t = getsval(x);
+			n = u8_nextlen(t);
+		format_percent_c:
+			if (n < 2) { /* not utf8 */
 				snprintf(p, BUFSZ(p), fmt, getsval(x)[0]);
+				break;
+			}
+
+			// utf8 character, almost same song and dance as for %s
+			int ljust = 0, wid = 0, prec = n, pad = 0;
+			char *f = fmt+1;
+			if (f[0] == '-') {
+				ljust = 1;
+				f++;
+			}
+			// flags '0' and '+' are recognized but skipped
+			if (f[0] == '0') {
+				f++;
+				if (f[0] == '+')
+					f++;
+			}
+			if (f[0] == '+') {
+				f++;
+				if (f[0] == '0')
+					f++;
+			}
+			if (isdigit((uschar)f[0])) { /* there is a wid */
+				wid = strtol(f, &f, 10);
+			}
+			if (f[0] == '.') { /* there is a .prec */
+				prec = strtol(++f, &f, 10);
+			}
+			if (prec > 1)           // %c --> only one character
+				prec = 1;
+			pad = wid>prec ? wid - prec : 0;  // has to be >= 0
+			int i;
+
+			if (ljust) { // print one char from t, then pad blanks
+				for (int i = 0; i < n; i++)
+					*p++ = t[i];
+				for (i = 0; i < pad; i++) {
+					//printf(" ");
+					*p++ = ' ';
+				}
+			} else { // print pad blanks, then prec chars from t
+				for (i = 0; i < pad; i++) {
+					//printf(" ");
+					*p++ = ' ';
+				}
+				for (int i = 0; i < n; i++)
+					*p++ = t[i];
+			}
+			*p = 0;
 			break;
+		}
 		default:
 			FATAL("can't happen: bad conversion %c in format()", flag);
 		}
+
 		tempfree(x);
 		p += strlen(p);
 		s++;
@@ -1265,7 +1670,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	char *origfs = NULL;
 	int sep;
 	char temp, num[50];
-	int n, tempstat, arg3type;
+	int j, n, tempstat, arg3type;
 	double result;
 
 	y = execute(a[0]);	/* source string */
@@ -1274,20 +1679,22 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 		FATAL("out of space in split");
 	tempfree(y);
 	arg3type = ptoi(a[3]);
-	if (a[2] == NULL)		/* fs string */
+	if (a[2] == NULL) {		/* BUG: CSV should override implicit fs but not explicit */
 		fs = getsval(fsloc);
-	else if (arg3type == STRING) {	/* split(str,arr,"string") */
+	} else if (arg3type == STRING) {	/* split(str,arr,"string") */
 		x = execute(a[2]);
 		fs = origfs = strdup(getsval(x));
 		if (fs == NULL)
 			FATAL("out of space in split");
 		tempfree(x);
-	} else if (arg3type == REGEXPR)
+	} else if (arg3type == REGEXPR) {
 		fs = "(regexpr)";	/* split(str,arr,/regexpr/) */
-	else
+	} else {
 		FATAL("illegal type of split");
+	}
 	sep = *fs;
 	ap = execute(a[1]);	/* array name */
+	/* BUG 7/26/22: this appears not to reset array: see C1/asplit */
 	freesymtab(ap);
 	DPRINTF("split: s=|%s|, a=%s, sep=|%s|\n", s, NN(ap->nval), fs);
 	ap->tval &= ~STR;
@@ -1341,7 +1748,41 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 			setsymtab(num, s, 0.0, STR, (Array *) ap->sval);
   spdone:
 		pfa = NULL;
-	} else if (sep == ' ') {
+
+	} else if (a[2] == NULL && CSV) {	/* CSV only if no explicit separator */
+		char *newt = (char *) malloc(strlen(s)); /* for building new string; reuse for each field */
+		for (;;) {
+			char *fr = newt;
+			n++;
+			if (*s == '"' ) { /* start of "..." */
+				for (s++ ; *s != '\0'; ) {
+					if (*s == '"' && s[1] != '\0' && s[1] == '"') {
+						s += 2; /* doubled quote */
+						*fr++ = '"';
+					} else if (*s == '"' && (s[1] == '\0' || s[1] == ',')) {
+						s++; /* skip over closing quote */
+						break;
+					} else {
+						*fr++ = *s++;
+					}
+				}
+				*fr++ = 0;
+			} else {	/* unquoted field */
+				while (*s != ',' && *s != '\0')
+					*fr++ = *s++;
+				*fr++ = 0;
+			}
+			snprintf(num, sizeof(num), "%d", n);
+			if (is_number(newt, &result))
+				setsymtab(num, newt, result, STR|NUM, (Array *) ap->sval);
+			else
+				setsymtab(num, newt, 0.0, STR, (Array *) ap->sval);
+			if (*s++ == '\0')
+				break;
+		}
+		free(newt);
+
+	} else if (!CSV && sep == ' ') { /* usual case: split on white space */
 		for (n = 0; ; ) {
 #define ISWS(c)	((c) == ' ' || (c) == '\t' || (c) == '\n')
 			while (ISWS(*s))
@@ -1364,19 +1805,25 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 			if (*s != '\0')
 				s++;
 		}
+
 	} else if (sep == 0) {	/* new: split(s, a, "") => 1 char/elem */
-		for (n = 0; *s != '\0'; s++) {
-			char buf[2];
+		for (n = 0; *s != '\0'; s += u8_nextlen(s)) {
+			char buf[10];
 			n++;
 			snprintf(num, sizeof(num), "%d", n);
-			buf[0] = *s;
-			buf[1] = '\0';
+
+			for (j = 0; j < u8_nextlen(s); j++) {
+				buf[j] = s[j];
+			}
+			buf[j] = '\0';
+
 			if (isdigit((uschar)buf[0]))
 				setsymtab(num, buf, atof(buf), STR|NUM, (Array *) ap->sval);
 			else
 				setsymtab(num, buf, 0.0, STR, (Array *) ap->sval);
 		}
-	} else if (*s != '\0') {
+
+	} else if (*s != '\0') {  /* some random single character */
 		for (;;) {
 			n++;
 			t = s;
@@ -1535,6 +1982,7 @@ static char *nawk_convert(const char *s, int (*fun_c)(int),
 	size_t n       = 0;
 	wchar_t wc;
 	size_t sz = MB_CUR_MAX;
+	int unused;
 
 	if (sz == 1) {
 		buf = tostring(s);
@@ -1554,7 +2002,7 @@ static char *nawk_convert(const char *s, int (*fun_c)(int),
 		 * doesn't work.)
 		 * Increment said variable to avoid a different warning.
 		 */
-		int unused = wctomb(NULL, L'\0');
+		unused = wctomb(NULL, L'\0');
 		unused++;
 
 		ps   = s;
@@ -1629,7 +2077,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		if (isarr(x))
 			u = ((Array *) x->sval)->nelem;	/* GROT.  should be function*/
 		else
-			u = strlen(getsval(x));
+			u = u8_strlen(getsval(x));
 		break;
 	case FLOG:
 		errno = 0;
@@ -2401,4 +2849,42 @@ void backsub(char **pb_ptr, const char **sptr_ptr)	/* handle \\& variations */
 
 	*pb_ptr = pb;
 	*sptr_ptr = sptr;
+}
+
+static char *wide_char_to_byte_str(int rune, size_t *outlen)
+{
+	static char buf[5];
+	int len;
+
+	if (rune < 0 || rune > 0x10FFFF)
+		return NULL;
+
+	memset(buf, 0, sizeof(buf));
+
+	len = 0;
+	if (rune <= 0x0000007F) {
+		buf[len++] = rune;
+	} else if (rune <= 0x000007FF) {
+		// 110xxxxx 10xxxxxx
+		buf[len++] = 0xC0 | (rune >> 6);
+		buf[len++] = 0x80 | (rune & 0x3F);
+	} else if (rune <= 0x0000FFFF) {
+		// 1110xxxx 10xxxxxx 10xxxxxx
+		buf[len++] = 0xE0 | (rune >> 12);
+		buf[len++] = 0x80 | ((rune >> 6) & 0x3F);
+		buf[len++] = 0x80 | (rune & 0x3F);
+
+	} else {
+		// 0x00010000 - 0x10FFFF
+		// 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+		buf[len++] = 0xF0 | (rune >> 18);
+		buf[len++] = 0x80 | ((rune >> 12) & 0x3F);
+		buf[len++] = 0x80 | ((rune >> 6) & 0x3F);
+		buf[len++] = 0x80 | (rune & 0x3F);
+	}
+
+	*outlen = len;
+	buf[len++] = '\0';
+
+	return buf;
 }

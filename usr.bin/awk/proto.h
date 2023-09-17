@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.21 2023/09/10 14:59:00 millert Exp $	*/
+/*	$OpenBSD: proto.h,v 1.22 2023/09/17 14:49:44 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -44,14 +44,13 @@ extern	fa	*mkdfa(const char *, bool);
 extern	int	makeinit(fa *, bool);
 extern	void	penter(Node *);
 extern	void	freetr(Node *);
-extern	int	hexstr(const uschar **);
 extern	int	quoted(const uschar **);
-extern	char	*cclenter(const char *);
+extern	int	*cclenter(const char *);
 extern	noreturn void	overflo(const char *);
 extern	void	cfoll(fa *, Node *);
 extern	int	first(Node *);
 extern	void	follow(Node *);
-extern	int	member(int, const char *);
+extern	int	member(int, int *);
 extern	int	match(fa *, const char *);
 extern	int	pmatch(fa *, const char *);
 extern	int	nematch(fa *, const char *);

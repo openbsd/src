@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.64 2023/09/15 15:07:08 jsg Exp $
+.\"	$OpenBSD: awk.1,v 1.65 2023/09/17 14:49:44 millert Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 15 2023 $
+.Dd $Mdocdate: September 17 2023 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@
 .Op Fl safe
 .Op Fl V
 .Op Fl d Ns Op Ar n
-.Op Fl F Ar fs
+.Op Fl F Ar fs | Fl -csv
 .Op Fl v Ar var Ns = Ns Ar value
 .Op Ar prog | Fl f Ar progfile
 .Ar
@@ -64,6 +64,14 @@ and is executed at the time it would have been opened if it were a filename.
 .Pp
 The options are as follows:
 .Bl -tag -width "-safe "
+.It Fl -csv
+Process records using the (more or less) standard comma-separated values
+.Pq CSV
+format instead of the input field separator.
+When the
+.Fl -csv
+option is specified, attempts to change the input field separator
+or record separator are ignored.
 .It Fl d Ns Op Ar n
 Debug mode.
 Set debug level to
@@ -1058,4 +1066,5 @@ to it.
 The scope rules for variables in functions are a botch;
 the syntax is worse.
 .Pp
-Only eight-bit character sets are handled correctly.
+Input is expected to be UTF-8 encoded.
+Other multibyte character sets are not handled.

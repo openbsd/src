@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.58 2023/09/10 14:59:00 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.59 2023/09/17 14:49:44 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-const char	*version = "version 20230909";
+const char	*version = "version 20230913";
 
 #define DEBUG
 #include <stdio.h>
@@ -52,6 +52,7 @@ static size_t	maxpfile;	/* max program filename */
 static size_t	npfile;		/* number of filenames */
 static size_t	curpfile;	/* current filename */
 
+bool	CSV = false;		/* true for csv input */
 bool	safe = false;		/* true => "safe" mode */
 bool	do_posix = false;	/* true => POSIX mode */
 
@@ -170,6 +171,12 @@ int main(int argc, char *argv[])
 			argv++;
 			break;
 		}
+		if (strcmp(argv[1], "--csv") == 0) {	/* turn on csv input processing */
+			CSV = true;
+			argc--;
+			argv++;
+			continue;
+		}
 		switch (argv[1][1]) {
 		case 's':
 			if (strcmp(argv[1], "-safe") == 0)
@@ -179,7 +186,7 @@ int main(int argc, char *argv[])
 			fn = getarg(&argc, &argv, "no program filename");
 			if (npfile >= maxpfile) {
 				maxpfile += 20;
-				pfile = (char **) realloc(pfile, maxpfile * sizeof(*pfile));
+				pfile = (char **) reallocarray(pfile, maxpfile, sizeof(*pfile));
 				if (pfile == NULL)
 					FATAL("error allocating space for -f options");
  			}
