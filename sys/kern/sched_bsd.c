@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.86 2023/09/10 03:08:05 cheloha Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.87 2023/09/17 13:02:24 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -117,9 +117,9 @@ roundrobin(struct clockintr *cl, void *cf, void *arg)
  * 1, 5, and 15 minute intervals.
  */
 void
-update_loadavg(void *arg)
+update_loadavg(void *unused)
 {
-	struct timeout *to = (struct timeout *)arg;
+	static struct timeout to = TIMEOUT_INITIALIZER(update_loadavg, NULL);
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	u_int i, nrun = 0;
@@ -135,7 +135,7 @@ update_loadavg(void *arg)
 		    nrun * FSCALE * (FSCALE - cexp[i])) >> FSHIFT;
 	}
 
-	timeout_add_sec(to, 5);
+	timeout_add_sec(&to, 5);
 }
 
 /*
@@ -227,9 +227,9 @@ fixpt_t	ccpu = 0.95122942450071400909 * FSCALE;		/* exp(-1/20) */
  * Recompute process priorities, every second.
  */
 void
-schedcpu(void *arg)
+schedcpu(void *unused)
 {
-	struct timeout *to = (struct timeout *)arg;
+	static struct timeout to = TIMEOUT_INITIALIZER(schedcpu, NULL);
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 	struct proc *p;
 	int s;
@@ -280,7 +280,7 @@ schedcpu(void *arg)
 		SCHED_UNLOCK(s);
 	}
 	wakeup(&lbolt);
-	timeout_add_sec(to, 1);
+	timeout_add_sec(&to, 1);
 }
 
 /*
@@ -726,23 +726,14 @@ sysctl_hwperfpolicy(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
 }
 #endif
 
+/*
+ * Start the scheduler's periodic timeouts.
+ */
 void
 scheduler_start(void)
 {
-	static struct timeout schedcpu_to;
-	static struct timeout loadavg_to;
-
-	/*
-	 * We avoid polluting the global namespace by keeping the scheduler
-	 * timeouts static in this function.
-	 * We setup the timeout here and kick schedcpu once to make it do
-	 * its job.
-	 */
-	timeout_set(&schedcpu_to, schedcpu, &schedcpu_to);
-	timeout_set(&loadavg_to, update_loadavg, &loadavg_to);
-
-	schedcpu(&schedcpu_to);
-	update_loadavg(&loadavg_to);
+	schedcpu(NULL);
+	update_loadavg(NULL);
 
 #ifndef SMALL_KERNEL
 	if (perfpolicy == PERFPOL_AUTO)
