@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.38 2023/09/17 14:49:44 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.39 2023/09/18 19:32:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -834,7 +834,7 @@ bool fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
 				buf[k++] = (c = getc(f)) != EOF ? c : 0;
 			}
 			c = (uschar)buf[j];
-			if (c < 128)
+			if (c < 128 || awk_mb_cur_max == 1)
 				rune = c;
 			else {
 				j--;

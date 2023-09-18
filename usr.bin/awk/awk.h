@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.29 2023/09/17 14:49:44 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.30 2023/09/18 19:32:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -65,6 +65,8 @@ extern bool	do_posix;	/* true if POSIXLY_CORRECT set */
 
 #define	RECSIZE	(8 * 1024)	/* sets limit on records, fields, etc., etc. */
 extern int	recsize;	/* size of current record, orig RECSIZE */
+
+extern size_t	awk_mb_cur_max;	/* max size of a multi-byte character */
 
 extern char	EMPTY[];	/* this avoid -Wwritable-strings issues */
 extern char	**FS;

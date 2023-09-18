@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.76 2023/09/18 15:16:22 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.77 2023/09/18 19:32:19 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -606,7 +606,7 @@ int u8_isutf(const char *s)
 	unsigned char c;
 
 	c = s[0];
-	if (c < 128)
+	if (c < 128 || awk_mb_cur_max == 1)
 		return 1; /* what if it's 0? */
 
 	n = strlen(s);
@@ -633,7 +633,7 @@ int u8_rune(int *rune, const char *s)
 	unsigned char c;
 
 	c = s[0];
-	if (c < 128) {
+	if (c < 128 || awk_mb_cur_max == 1) {
 		*rune = c;
 		return 1;
 	}
@@ -680,7 +680,7 @@ int u8_strlen(const char *s)
 	totlen = 0;
 	for (i = 0; i < n; i += len) {
 		c = s[i];
-		if (c < 128) {
+		if (c < 128 || awk_mb_cur_max == 1) {
 			len = 1;
 		} else {
 			len = u8_nextlen(&s[i]);
@@ -1290,7 +1290,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 				int charval = (int) getfval(x);
 
 				if (charval != 0) {
-					if (charval < 128)
+					if (charval < 128 || awk_mb_cur_max == 1)
 						snprintf(p, BUFSZ(p), fmt, charval);
 					else {
 						// possible unicode character
