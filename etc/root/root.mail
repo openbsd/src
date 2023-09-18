@@ -1,9 +1,9 @@
-From deraadt@do-not-reply.openbsd.org Mon Apr 10 07:03:00 MDT 2023
+From deraadt@do-not-reply.openbsd.org Mon Oct 27 07:04:00 MDT 2023
 Return-Path: root
-Date: Apr 10 07:03:00 MDT 2023
+Date: Oct 27 07:04:00 MDT 2023
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
-Subject: Welcome to OpenBSD 7.3!
+Subject: Welcome to OpenBSD 7.4!
 
 This message attempts to describe the most basic initial questions that a
 system administrator of an OpenBSD box might have.  You are urged to save
