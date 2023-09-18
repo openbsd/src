@@ -2,10 +2,10 @@
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/bin/ld.bfd
-./usr/lib/gcc-lib/m88k-unknown-openbsd7.3
-./usr/lib/gcc-lib/m88k-unknown-openbsd7.3/3.3.6/fPIC/libgcc.a
-./usr/lib/gcc-lib/m88k-unknown-openbsd7.3/3.3.6/fpic/libgcc.a
-./usr/lib/gcc-lib/m88k-unknown-openbsd7.3/3.3.6/libgcc.a
+./usr/lib/gcc-lib/m88k-unknown-openbsd7.4
+./usr/lib/gcc-lib/m88k-unknown-openbsd7.4/3.3.6/fPIC/libgcc.a
+./usr/lib/gcc-lib/m88k-unknown-openbsd7.4/3.3.6/fpic/libgcc.a
+./usr/lib/gcc-lib/m88k-unknown-openbsd7.4/3.3.6/libgcc.a
 ./usr/lib/libstdc++.so.57.0
 ./usr/libdata/perl5/m88k-openbsd
 ./usr/libdata/perl5/m88k-openbsd/.packlist
