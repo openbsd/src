@@ -1,4 +1,4 @@
-.\" $OpenBSD: tls_read.3,v 1.7 2019/07/09 17:58:33 jsing Exp $
+.\" $OpenBSD: tls_read.3,v 1.8 2023/09/18 17:25:15 schwarze Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Ted Unangst <tedu@openbsd.org>
 .\" Copyright (c) 2015 Doug Hogan <doug@openbsd.org>
@@ -18,7 +18,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: July 9 2019 $
+.Dd $Mdocdate: September 18 2023 $
 .Dt TLS_READ 3
 .Os
 .Sh NAME
@@ -26,8 +26,7 @@
 .Nm tls_write ,
 .Nm tls_handshake ,
 .Nm tls_error ,
-.Nm tls_close ,
-.Nm tls_reset
+.Nm tls_close
 .Nd use a TLS connection
 .Sh SYNOPSIS
 .In tls.h
@@ -49,8 +48,6 @@
 .Fn tls_error "struct tls *ctx"
 .Ft int
 .Fn tls_close "struct tls *ctx"
-.Ft void
-.Fn tls_reset "struct tls *ctx"
 .Sh DESCRIPTION
 .Fn tls_read
 reads
@@ -92,7 +89,6 @@ After closing the connection,
 .Fa ctx
 can be passed to
 .Xr tls_free 3 .
-.\" XXX Fn tls_reset does what?
 .Sh RETURN VALUES
 .Fn tls_read
 and
@@ -146,7 +142,7 @@ during or since the last call to
 .Fn tls_write ,
 .Fn tls_close ,
 or
-.Fn tls_reset
+.Xr tls_reset 3
 involving
 .Fa ctx ,
 or if memory allocation failed while trying to assemble the string
@@ -213,9 +209,8 @@ while (len > 0) {
 .Fn tls_read ,
 .Fn tls_write ,
 .Fn tls_error ,
-.Fn tls_close ,
 and
-.Fn tls_reset
+.Fn tls_close
 appeared in
 .Ox 5.6
 and got their final names in
