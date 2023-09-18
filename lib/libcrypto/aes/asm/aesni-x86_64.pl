@@ -1025,6 +1025,7 @@ $code.=<<___;
 .type	aesni_ctr32_encrypt_blocks,\@function,5
 .align	16
 aesni_ctr32_encrypt_blocks:
+	endbr64
 	lea	(%rsp),%rax
 	push	%rbp
 	sub	\$$frame_size,%rsp
