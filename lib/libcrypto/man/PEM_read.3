@@ -1,4 +1,4 @@
-.\" $OpenBSD: PEM_read.3,v 1.14 2022/01/15 23:38:50 jsg Exp $
+.\" $OpenBSD: PEM_read.3,v 1.15 2023/09/18 15:26:46 schwarze Exp $
 .\" full merge up to: OpenSSL 83cf7abf May 29 13:07:08 2018 +0100
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 15 2022 $
+.Dd $Mdocdate: September 18 2023 $
 .Dt PEM_READ 3
 .Os
 .Sh NAME
@@ -124,21 +124,21 @@
 .Fa "unsigned char *data"
 .Fa "long *len"
 .Fa "pem_password_cb *cb"
-.Fa "void *u"
+.Fa "void *userdata"
 .Fc
 .Ft int
 .Fo PEM_def_callback
 .Fa "char *password"
 .Fa "int size"
 .Fa "int verify"
-.Fa "void *u"
+.Fa "void *userdata"
 .Fc
 .Ft typedef int
 .Fo pem_password_cb
 .Fa "char *password"
 .Fa "int size"
 .Fa "int verify"
-.Fa "void *u"
+.Fa "void *userdata"
 .Fc
 .Sh DESCRIPTION
 These functions read and write PEM-encoded objects, using the PEM type
@@ -289,16 +289,22 @@ The
 buffer needs to be at least
 .Fa size
 bytes long.
+Unless
+.Fa userdata
+is
+.Dv NULL ,
 .Fn PEM_def_callback
-silently truncates the NUL-terminated byte string
-.Fa u
-to at most
-.Fa num
-bytes and copies it into
+ignores the
+.Fa verify
+argument and copies the NUL-terminated byte string
+.Fa userdata
+to
 .Fa password
-without a terminating NUL byte.
+without a terminating NUL byte, silently truncating the copy to at most
+.Fa size
+bytes.
 If
-.Fa u
+.Fa userdata
 is
 .Dv NULL ,
 .Fn PEM_def_callback
@@ -317,7 +323,7 @@ bytes are accepted from the user and copied into the byte string buffer
 A callback function
 .Fa cb
 supplied by the application may use
-.Fa u
+.Fa userdata
 for a different purpose than
 .Fn PEM_def_callback
 does, e.g., as auxiliary data to use while acquiring the password.
@@ -328,7 +334,7 @@ flag is non-zero, the user is prompted twice for the password to
 make typos less likely and it is checked that both inputs agree.
 This flag is not set by
 .Fn PEM_do_header
-nor by other read functions.
+nor by other read functions, but it is typically set by write functions.
 .Pp
 If the data is a priori known to not be encrypted, then neither
 .Fn PEM_get_EVP_CIPHER_INFO
@@ -366,7 +372,7 @@ or a negative value on failure, and
 .Fa cb
 is expected to behave in the same way.
 If
-.Fa u
+.Fa userdata
 is
 .Dv NULL ,
 .Fn PEM_def_callback
