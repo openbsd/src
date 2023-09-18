@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.39 2023/09/18 19:32:19 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.40 2023/09/18 23:33:21 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -533,7 +533,7 @@ int first(Node *p)	/* collects initially active leaves of p into setvec */
 			setvec[lp] = 1;
 			setcnt++;
 		}
-		if (type(p) == CCL && (*(char *) right(p)) == '\0')
+		if (type(p) == CCL && (*(int *) right(p)) == '\0')
 			return(0);		/* empty CCL */
 		return(1);
 	case PLUS:
