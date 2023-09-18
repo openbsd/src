@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.33 2023/09/03 00:23:25 jca Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.34 2023/09/18 17:01:41 jca Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Brian Bamsch <bbamsch@google.com>
@@ -1807,17 +1807,13 @@ int
 pmap_clear_modify(struct vm_page *pg)
 {
 	struct pte_desc *pted;
-	pt_entry_t *pl3 = NULL;
 
 	atomic_clearbits_int(&pg->pg_flags, PG_PMAP_MOD);
 
 	mtx_enter(&pg->mdpage.pv_mtx);
 	LIST_FOREACH(pted, &(pg->mdpage.pv_list), pted_pv_list) {
-		if (pmap_vp_lookup(pted->pted_pmap, pted->pted_va & ~PAGE_MASK, &pl3) == NULL)
-			panic("failed to look up pte");
-		*pl3 &= ~PTE_W;
 		pted->pted_pte &= ~PROT_WRITE;
-
+		pmap_pte_insert(pted);
 		tlb_flush_page(pted->pted_pmap, pted->pted_va & ~PAGE_MASK);
 	}
 	mtx_leave(&pg->mdpage.pv_mtx);
