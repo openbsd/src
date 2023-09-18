@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.59 2023/09/17 14:49:44 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.60 2023/09/18 15:20:48 jmc Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -144,8 +144,9 @@ int main(int argc, char *argv[])
 	}
 
 	if (argc == 1) {
-		fprintf(stderr, "usage: %s [-safe] [-V] [-d[n]] [-F fs] "
-		    "[-v var=value] [prog | -f progfile]\n\tfile ...\n",
+		fprintf(stderr, "usage: %s [-safe] [-V] [-d[n]] "
+		    "[-f fs | --csv] [-v var=value]\n"
+		    "\t   [prog | -f progfile] file ...\n",
 		    cmdname);
 		exit(1);
 	}

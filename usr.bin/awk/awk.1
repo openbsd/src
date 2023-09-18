@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.65 2023/09/17 14:49:44 millert Exp $
+.\"	$OpenBSD: awk.1,v 1.66 2023/09/18 15:20:48 jmc Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 17 2023 $
+.Dd $Mdocdate: September 18 2023 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -350,8 +350,8 @@ and
 .Pf / Ar re Ns /
 is a constant regular expression;
 any string (constant or variable) may be used
-as a regular expression, except in the position of an isolated regular expression
-in a pattern.
+as a regular expression,
+except in the position of an isolated regular expression in a pattern.
 .Pp
 A pattern may consist of two patterns separated by a comma;
 in this case, the action is performed for all lines
