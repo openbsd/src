@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mcx.c,v 1.109 2023/09/07 01:43:46 jsg Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.110 2023/09/18 06:47:21 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -192,6 +192,7 @@ CTASSERT(MCX_MAX_QUEUES * MCX_WQ_DOORBELL_STRIDE <
 #define MCX_ETHER_CAP_100G_CR4		20
 #define MCX_ETHER_CAP_100G_SR4		21
 #define MCX_ETHER_CAP_100G_KR4		22
+#define MCX_ETHER_CAP_100G_LR4		23
 #define MCX_ETHER_CAP_25G_CR		27
 #define MCX_ETHER_CAP_25G_KR		28
 #define MCX_ETHER_CAP_25G_SR		29
@@ -2682,6 +2683,7 @@ static const struct mcx_eth_proto_capability mcx_eth_cap_map[] = {
 	[MCX_ETHER_CAP_100G_CR4]	= { IFM_100G_CR4,	IF_Gbps(100) },
 	[MCX_ETHER_CAP_100G_SR4]	= { IFM_100G_SR4,	IF_Gbps(100) },
 	[MCX_ETHER_CAP_100G_KR4]	= { IFM_100G_KR4,	IF_Gbps(100) },
+	[MCX_ETHER_CAP_100G_LR4]	= { IFM_100G_LR4,	IF_Gbps(100) },
 	[MCX_ETHER_CAP_25G_CR]		= { IFM_25G_CR,		IF_Gbps(25) },
 	[MCX_ETHER_CAP_25G_KR]		= { IFM_25G_KR,		IF_Gbps(25) },
 	[MCX_ETHER_CAP_25G_SR]		= { IFM_25G_SR,		IF_Gbps(25) },
