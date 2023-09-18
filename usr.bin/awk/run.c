@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.75 2023/09/17 14:49:44 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.76 2023/09/18 15:16:22 deraadt Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1350,7 +1350,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			int i;
 
 			if (ljust) { // print one char from t, then pad blanks
-				for (int i = 0; i < n; i++)
+				for (i = 0; i < n; i++)
 					*p++ = t[i];
 				for (i = 0; i < pad; i++) {
 					//printf(" ");
@@ -1361,7 +1361,7 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 					//printf(" ");
 					*p++ = ' ';
 				}
-				for (int i = 0; i < n; i++)
+				for (i = 0; i < n; i++)
 					*p++ = t[i];
 			}
 			*p = 0;
