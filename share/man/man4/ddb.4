@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ddb.4,v 1.105 2022/12/22 19:53:22 kn Exp $
+.\"	$OpenBSD: ddb.4,v 1.106 2023/09/19 11:36:33 claudio Exp $
 .\"	$NetBSD: ddb.4,v 1.5 1994/11/30 16:22:09 jtc Exp $
 .\"
 .\" Mach Operating System
@@ -25,7 +25,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd $Mdocdate: December 22 2022 $
+.Dd $Mdocdate: September 19 2023 $
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -771,7 +771,11 @@ Valid modifiers:
 Print the pagelist for this pool.
 .El
 .\" --------------------
-.It Ic show proc Op Ar addr
+.It Xo
+.Ic show proc
+.Op Cm /t
+.Op Ar addr
+.Xc
 Prints the
 .Vt struct proc
 at
@@ -779,6 +783,11 @@ at
 If an optional address is not specified,
 .Li curproc
 is assumed.
+The
+.Cm /t
+modifier interprets the
+.Ar addr
+argument as the TID of a proc.
 .\" --------------------
 .It Ic show registers Op Cm /u
 Display the register set.
