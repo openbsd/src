@@ -1,4 +1,4 @@
-/* $OpenBSD: ssl_lib.c,v 1.313 2023/09/19 01:19:45 tb Exp $ */
+/* $OpenBSD: ssl_lib.c,v 1.314 2023/09/19 01:22:31 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -292,7 +292,7 @@ SSL_new(SSL_CTX *ctx)
 
 	CRYPTO_add(&ctx->references, 1, CRYPTO_LOCK_SSL_CTX);
 	s->ctx = ctx;
-	s->tlsext_debug_cb = 0;
+	s->tlsext_debug_cb = NULL;
 	s->tlsext_debug_arg = NULL;
 	s->tlsext_ticket_expected = 0;
 	s->tlsext_status_type = -1;
@@ -2093,10 +2093,10 @@ SSL_CTX_new(const SSL_METHOD *meth)
 	/* We take the system default */
 	ret->session_timeout = ssl_get_default_timeout();
 
-	ret->new_session_cb = 0;
-	ret->remove_session_cb = 0;
-	ret->get_session_cb = 0;
-	ret->generate_session_id = 0;
+	ret->new_session_cb = NULL;
+	ret->remove_session_cb = NULL;
+	ret->get_session_cb = NULL;
+	ret->generate_session_id = NULL;
 
 	memset((char *)&ret->stats, 0, sizeof(ret->stats));
 
@@ -2105,12 +2105,12 @@ SSL_CTX_new(const SSL_METHOD *meth)
 
 	ret->info_callback = NULL;
 
-	ret->app_verify_callback = 0;
+	ret->app_verify_callback = NULL;
 	ret->app_verify_arg = NULL;
 
 	ret->max_cert_list = SSL_MAX_CERT_LIST_DEFAULT;
 	ret->read_ahead = 0;
-	ret->msg_callback = 0;
+	ret->msg_callback = NULL;
 	ret->msg_callback_arg = NULL;
 	ret->verify_mode = SSL_VERIFY_NONE;
 	ret->sid_ctx_length = 0;
