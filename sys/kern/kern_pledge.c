@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_pledge.c,v 1.307 2023/08/20 15:13:43 visa Exp $	*/
+/*	$OpenBSD: kern_pledge.c,v 1.308 2023/09/19 10:43:33 claudio Exp $	*/
 
 /*
  * Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
@@ -580,7 +580,7 @@ pledge_fail(struct proc *p, int error, uint64_t code)
 
 	/* Stop threads immediately, because this process is suspect */
 	if (P_HASSIBLING(p))
-		single_thread_set(p, SINGLE_SUSPEND, 1);
+		single_thread_set(p, SINGLE_UNWIND, 1);
 
 	/* Send uncatchable SIGABRT for coredump */
 	sigabort(p);

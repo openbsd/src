@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.317 2023/09/13 14:25:49 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.318 2023/09/19 10:43:33 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1559,7 +1559,7 @@ sigexit(struct proc *p, int signum)
 
 		/* if there are other threads, pause them */
 		if (P_HASSIBLING(p))
-			single_thread_set(p, SINGLE_SUSPEND, 1);
+			single_thread_set(p, SINGLE_UNWIND, 1);
 
 		if (coredump(p) == 0)
 			signum |= WCOREFLAG;
@@ -2059,10 +2059,10 @@ single_thread_check(struct proc *p, int deep)
 /*
  * Stop other threads in the process.  The mode controls how and
  * where the other threads should stop:
- *  - SINGLE_SUSPEND: stop wherever they are, will later either be told to exit
- *    (by setting to SINGLE_EXIT) or be released (via single_thread_clear())
+ *  - SINGLE_SUSPEND: stop wherever they are, will later be released (via
+ *    single_thread_clear())
  *  - SINGLE_UNWIND: just unwind to kernel boundary, will be told to exit
- *    or released as with SINGLE_SUSPEND
+ *    (by setting to SINGLE_EXIT) or released as with SINGLE_SUSPEND
  *  - SINGLE_EXIT: unwind to kernel boundary and exit
  */
 int
