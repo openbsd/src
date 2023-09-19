@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_proc.c,v 1.94 2023/01/02 23:09:48 guenther Exp $	*/
+/*	$OpenBSD: kern_proc.c,v 1.95 2023/09/19 11:35:30 claudio Exp $	*/
 /*	$NetBSD: kern_proc.c,v 1.14 1996/02/09 18:59:41 christos Exp $	*/
 
 /*
@@ -489,18 +489,22 @@ proc_printit(struct proc *p, const char *modif,
 	else
 		pst = pstat[(int)p->p_stat - 1];
 
-	(*pr)("PROC (%s) pid=%d stat=%s\n", p->p_p->ps_comm, p->p_tid, pst);
+	(*pr)("PROC (%s) tid=%d pid=%d tcnt=%d stat=%s\n", p->p_p->ps_comm,
+	    p->p_tid, p->p_p->ps_pid, p->p_p->ps_threadcnt, pst);
 	(*pr)("    flags process=%b proc=%b\n",
 	    p->p_p->ps_flags, PS_BITS, p->p_flag, P_BITS);
-	(*pr)("    pri=%u, usrpri=%u, nice=%d\n",
-	    p->p_runpri, p->p_usrpri, p->p_p->ps_nice);
+	(*pr)("    runpri=%u, usrpri=%u, slppri=%u, nice=%d\n",
+	    p->p_runpri, p->p_usrpri, p->p_slppri, p->p_p->ps_nice);
+	(*pr)("    wchan=%p, wmesg=%s, ps_single=%p\n",
+	    p->p_wchan, (p->p_wchan && p->p_wmesg) ?  p->p_wmesg : "",
+	    p->p_p->ps_single);
 	(*pr)("    forw=%p, list=%p,%p\n",
 	    TAILQ_NEXT(p, p_runq), p->p_list.le_next, p->p_list.le_prev);
 	(*pr)("    process=%p user=%p, vmspace=%p\n",
 	    p->p_p, p->p_addr, p->p_vmspace);
-	(*pr)("    estcpu=%u, cpticks=%d, pctcpu=%u.%u\n",
-	    p->p_estcpu, p->p_cpticks, p->p_pctcpu / 100, p->p_pctcpu % 100);
-	(*pr)("    user=%u, sys=%u, intr=%u\n",
+	(*pr)("    estcpu=%u, cpticks=%d, pctcpu=%u.%u, "
+	    "user=%u, sys=%u, intr=%u\n",
+	    p->p_estcpu, p->p_cpticks, p->p_pctcpu / 100, p->p_pctcpu % 100,
 	    p->p_uticks, p->p_sticks, p->p_iticks);
 }
 #include <machine/db_machdep.h>
