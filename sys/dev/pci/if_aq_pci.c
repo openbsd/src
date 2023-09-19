@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.23 2023/08/15 08:27:30 miod Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.24 2023/09/19 14:14:35 jsg Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -2606,7 +2606,7 @@ aq_hw_init_rx_path(struct aq_softc *sc)
 		    0, AQ2_RPF_TAG_VLAN_MASK | AQ2_RPF_TAG_UNTAG_MASK,
 		    AQ2_ART_ACTION_DROP);
 
-		for (int i = 0; i < 8; i++) {
+		for (i = 0; i < 8; i++) {
 			aq2_filter_art_set(sc, AQ2_RPF_INDEX_PCP_TO_TC + i,
 			    (i << AQ2_RPF_TAG_PCP_SHIFT), AQ2_RPF_TAG_PCP_MASK,
 			    AQ2_ART_ACTION_ASSIGN_TC(i % sc->sc_nqueues));
