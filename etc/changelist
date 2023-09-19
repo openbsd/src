@@ -1,4 +1,4 @@
-#	$OpenBSD: changelist,v 1.136 2023/04/24 16:36:54 kn Exp $
+#	$OpenBSD: changelist,v 1.137 2023/09/19 15:02:54 naddy Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.
@@ -126,8 +126,6 @@
 +/etc/soii.key
 +/etc/spwd.db
 /etc/ssh/ssh_config
-+/etc/ssh/ssh_host_dsa_key
-/etc/ssh/ssh_host_dsa_key.pub
 +/etc/ssh/ssh_host_ecdsa_key
 /etc/ssh/ssh_host_ecdsa_key.pub
 +/etc/ssh/ssh_host_ed25519_key

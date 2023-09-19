@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.128 2022/05/12 22:13:06 sthen Exp $
+#	$OpenBSD: special,v 1.129 2023/09/19 15:02:55 naddy Exp $
 #
 # Hand-crafted mtree specification for the dangerous files.
 #
@@ -101,8 +101,6 @@ soii.key	type=file mode=0600 uname=root gname=wheel optional
 spwd.db		type=file mode=0640 uname=root gname=_shadow
 ssh		type=dir mode=0755 uname=root gname=wheel optional
 ssh_config	type=file mode=0644 uname=root gname=wheel
-ssh_host_dsa_key	type=file mode=0600 uname=root gname=wheel optional
-ssh_host_dsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
 ssh_host_ecdsa_key	type=file mode=0600 uname=root gname=wheel optional
 ssh_host_ecdsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
 ssh_host_ed25519_key	type=file mode=0600 uname=root gname=wheel optional
