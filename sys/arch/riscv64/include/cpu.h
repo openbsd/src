@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.18 2023/08/23 01:55:47 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.19 2023/09/19 19:20:33 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Mike Larkin <mlarkin@openbsd.org>
@@ -100,6 +100,11 @@ struct cpu_info {
 	int			ci_mutex_level;
 #endif
 	int			ci_want_resched;
+
+	struct opp_table	*ci_opp_table;
+	volatile int		ci_opp_idx;
+	volatile int		ci_opp_max;
+	uint32_t		ci_cpu_supply;
 
 #ifdef MULTIPROCESSOR
 	struct srp_hazard	ci_srp_hazards[SRP_HAZARD_NUM];
