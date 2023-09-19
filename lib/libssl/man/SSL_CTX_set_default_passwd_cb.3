@@ -1,4 +1,4 @@
-.\" $OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.8 2023/09/19 08:18:13 schwarze Exp $
+.\" $OpenBSD: SSL_CTX_set_default_passwd_cb.3,v 1.9 2023/09/19 09:40:35 schwarze Exp $
 .\" full merge up to: OpenSSL 9b86974e Aug 17 15:21:33 2015 -0400
 .\" selective merge up to: OpenSSL 18bad535 Apr 9 15:13:55 2019 +0100
 .\"
@@ -175,7 +175,14 @@ or
 if none is set.
 .Sh EXAMPLES
 The following example provides a subset of the functionality of
-.Xr PEM_def_callback 3 .
+.Xr PEM_def_callback 3 ,
+except that
+.Xr PEM_def_callback 3
+does not NUL-terminate and copies up to
+.Fa size
+rather than
+.Fa size No \- 1
+bytes.
 It interprets
 .Fa userdata
 as a NUL-terminated string and copies it to the
