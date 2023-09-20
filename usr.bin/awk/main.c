@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.61 2023/09/18 19:32:19 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.62 2023/09/20 16:57:12 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -170,6 +170,10 @@ int main(int argc, char *argv[])
 	yyin = NULL;
 	symtab = makesymtab(NSYMTAB);
 	while (argc > 1 && argv[1][0] == '-' && argv[1][1] != '\0') {
+		if (strcmp(argv[1], "--version") == 0) {
+			printf("awk %s\n", version);
+			return 0;
+		}
 		if (strcmp(argv[1], "--") == 0) {	/* explicit end of args */
 			argc--;
 			argv++;
@@ -214,8 +218,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'V':	/* added for exptools "standard" */
 			printf("awk %s\n", version);
-			exit(0);
-			break;
+			return 0;
 		default:
 			WARNING("unknown option %s ignored", argv[1]);
 			break;
