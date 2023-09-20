@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.77 2023/09/18 19:32:19 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.78 2023/09/20 16:49:13 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -1981,7 +1981,7 @@ static char *nawk_convert(const char *s, int (*fun_c)(int),
 	const char *ps = NULL;
 	size_t n       = 0;
 	wchar_t wc;
-	size_t sz = MB_CUR_MAX;
+	const size_t sz = awk_mb_cur_max;
 	int unused;
 
 	if (sz == 1) {
