@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.41 2023/09/19 01:14:05 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.42 2023/09/21 17:19:06 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -951,7 +951,7 @@ Node *primary(void)
 		rtok = relex();
 		if (rtok == ')') {	/* special pleading for () */
 			rtok = relex();
-			return unary(op2(CCL, NIL, (Node *) tostring("")));
+			return unary(op2(CCL, NIL, (Node *) cclenter("")));
 		}
 		np = regexp();
 		if (rtok == ')') {
@@ -974,7 +974,7 @@ Node *concat(Node *np)
 		return (concat(op2(CAT, np, primary())));
 	case EMPTYRE:
 		rtok = relex();
-		return (concat(op2(CAT, op2(CCL, NIL, (Node *) tostring("")),
+		return (concat(op2(CAT, op2(CCL, NIL, (Node *) cclenter("")),
 				primary())));
 	}
 	return (np);
