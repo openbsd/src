@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.215 2023/09/13 14:25:49 claudio Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.216 2023/09/21 13:49:25 claudio Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -165,8 +165,6 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		/* main thread gotta wait because it has the pid, et al */
 		while (pr->ps_threadcnt > 1)
 			tsleep_nsec(&pr->ps_threads, PWAIT, "thrdeath", INFSLP);
-		if (pr->ps_flags & PS_PROFIL)
-			stopprofclock(pr);
 	}
 
 	rup = pr->ps_ru;
@@ -190,6 +188,9 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 #endif
 
 	if ((p->p_flag & P_THREAD) == 0) {
+		if (pr->ps_flags & PS_PROFIL)
+			stopprofclock(pr);
+
 		sigio_freelist(&pr->ps_sigiolst);
 
 		/* close open files and release open-file table */
@@ -223,6 +224,15 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 	}
 
 	p->p_fd = NULL;		/* zap the thread's copy */
+
+	/* Release the thread's read reference of resource limit structure. */
+	if (p->p_limit != NULL) {
+		struct plimit *limit;
+
+		limit = p->p_limit;
+		p->p_limit = NULL;
+		lim_free(limit);
+	}
 
         /*
 	 * Remove proc from pidhash chain and allproc so looking
@@ -340,15 +350,6 @@ exit1(struct proc *p, int xexit, int xsig, int flags)
 		if (--pr->ps_threadcnt == 1)
 			wakeup(&pr->ps_threads);
 		KASSERT(pr->ps_threadcnt > 0);
-	}
-
-	/* Release the thread's read reference of resource limit structure. */
-	if (p->p_limit != NULL) {
-		struct plimit *limit;
-
-		limit = p->p_limit;
-		p->p_limit = NULL;
-		lim_free(limit);
 	}
 
 	/*
