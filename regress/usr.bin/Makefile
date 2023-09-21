@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.48 2023/09/21 20:55:02 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.49 2023/09/21 21:08:48 bluhm Exp $
 
 SUBDIR+= apply
 SUBDIR+= basename bc
@@ -19,7 +19,7 @@ SUBDIR+= wc
 SUBDIR+= xargs
 
 .if defined(REGRESS_FULL) || make(clean) || make(cleandir) || make(obj)
-SUBDIR+= cap_mkdb libtool make patch pkg-config rcs ssh
+SUBDIR+= libtool make patch pkg-config rcs ssh
 .endif
 
 .include <bsd.subdir.mk>
