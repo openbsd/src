@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.67 2023/09/21 16:30:54 schwarze Exp $
+.\"	$OpenBSD: awk.1,v 1.68 2023/09/21 18:16:12 jmc Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -1047,7 +1047,8 @@ mode, treating non-ASCII input bytes as non-letter characters rather
 than as input encoding errors intentionally violates the specification.
 .Pp
 The flags
-.Op Fl \&dV
+.Op Fl \&dV ,
+.Op Fl -csv ,
 and
 .Op Fl safe ,
 support for regular expressions in
