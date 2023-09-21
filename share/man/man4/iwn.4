@@ -1,4 +1,4 @@
-.\" $OpenBSD: iwn.4,v 1.60 2022/01/05 17:39:24 jmc Exp $
+.\" $OpenBSD: iwn.4,v 1.61 2023/09/21 09:07:53 stsp Exp $
 .\"
 .\" Copyright (c) 2007,2008
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: January 5 2022 $
+.Dd $Mdocdate: September 21 2023 $
 .Dt IWN 4
 .Os
 .Sh NAME
@@ -212,8 +212,3 @@ driver was written by
 .An Damien Bergamini Aq Mt damien.bergamini@free.fr .
 .Sh CAVEATS
 802.11n operation is currently limited to data rates MCS 0 to MCS 7.
-.Pp
-Support for 802.11n 40MHz channels is not yet implemented.
-Additional work is required in
-.Xr ieee80211 9
-before this feature can be supported.
