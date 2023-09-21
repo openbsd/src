@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.74 2022/07/02 08:50:42 visa Exp $ */
+/*	$OpenBSD: ucom.c,v 1.75 2023/09/21 00:05:36 krw Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -138,19 +138,19 @@ int	ucom_to_tiocm(struct ucom_softc *);
 void	ucom_lock(struct ucom_softc *);
 void	ucom_unlock(struct ucom_softc *);
 
-int ucom_match(struct device *, void *, void *); 
-void ucom_attach(struct device *, struct device *, void *); 
-int ucom_detach(struct device *, int); 
+int ucom_match(struct device *, void *, void *);
+void ucom_attach(struct device *, struct device *, void *);
+int ucom_detach(struct device *, int);
 
-struct cfdriver ucom_cd = { 
-	NULL, "ucom", DV_TTY 
-}; 
+struct cfdriver ucom_cd = {
+	NULL, "ucom", DV_TTY
+};
 
-const struct cfattach ucom_ca = { 
-	sizeof(struct ucom_softc), 
-	ucom_match, 
-	ucom_attach, 
-	ucom_detach, 
+const struct cfattach ucom_ca = {
+	sizeof(struct ucom_softc),
+	ucom_match,
+	ucom_attach,
+	ucom_detach,
 };
 
 void
