@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofw_misc.h,v 1.30 2023/05/17 23:25:45 patrick Exp $	*/
+/*	$OpenBSD: ofw_misc.h,v 1.31 2023/09/21 20:26:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2017-2021 Mark Kettenis
  *
@@ -278,6 +278,8 @@ struct iommu_device {
 };
 
 void	iommu_device_register(struct iommu_device *);
+int	iommu_device_lookup(int, uint32_t *, uint32_t *);
+int	iommu_device_lookup_pci(int, uint32_t, uint32_t *, uint32_t *);
 bus_dma_tag_t iommu_device_map(int, bus_dma_tag_t);
 bus_dma_tag_t iommu_device_map_pci(int, uint32_t, bus_dma_tag_t);
 void	iommu_reserve_region_pci(int, uint32_t, bus_addr_t, bus_size_t);

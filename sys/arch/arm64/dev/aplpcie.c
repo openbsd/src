@@ -1,4 +1,4 @@
-/*	$OpenBSD: aplpcie.c,v 1.16 2023/04/16 12:09:01 kettenis Exp $	*/
+/*	$OpenBSD: aplpcie.c,v 1.17 2023/09/21 20:26:17 kettenis Exp $	*/
 /*
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -70,6 +70,10 @@
 #define  PCIE_PORT_REFCLK_CGDIS		(1 << 8)
 #define PCIE_PORT_PERST			0x0814
 #define  PCIE_PORT_PERST_DIS		(1 << 0)
+#define PCIE_PORT_RID2SID(idx)		(0x0828 + (idx) * 4)
+#define  PCIE_PORT_RID2SID_VALID	(1U << 31)
+#define  PCIE_PORT_RID2SID_SID_SHIFT	16
+#define  PCIE_PORT_RID2SID_RID_MASK	0x0000ffff
 
 #define PCIE_T6020_PORT_MSI_DOORBELL_LO	0x016c
 #define PCIE_T6020_PORT_MSI_DOORBELL_HI	0x0170
@@ -438,7 +442,7 @@ aplpcie_init_port(struct aplpcie_softc *sc, int node)
 	uint32_t *reset_gpio;
 	int pwren_gpiolen, reset_gpiolen;
 	uint32_t stat;
-	int port, timo;
+	int idx, port, timo;
 
 	if (OF_getprop(node, "status", status, sizeof(status)) > 0 &&
 	    strcmp(status, "disabled") == 0)
@@ -464,6 +468,12 @@ aplpcie_init_port(struct aplpcie_softc *sc, int node)
 	    PCIE_PORT_MSI_CTRL_32 | PCIE_PORT_MSI_CTRL_ENABLE);
 	PWRITE4(sc, port, PCIE_PORT_MSI_REMAP, 0);
 	PWRITE4(sc, port, PCIE_PORT_MSI_DOORBELL, sc->sc_msi_doorbell);
+
+	/*
+	 * Clear stream ID mappings.
+	 */
+	for (idx = 0; idx < 16; idx++)
+		PWRITE4(sc, port, PCIE_PORT_RID2SID(idx), 0);
 
 	/* Check if the link is already up. */
 	stat = PREAD4(sc, port, PCIE_PORT_LINK_STAT);
@@ -749,14 +759,74 @@ aplpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 }
 
 int
+aplpcie_find_port(struct aplpcie_softc *sc, int bus)
+{
+	uint32_t bus_range[2];
+	uint32_t reg[5];
+	int node;
+
+	for (node = OF_child(sc->sc_node); node; node = OF_peer(node)) {
+		/* Check if bus is in the range for this node. */
+		if (OF_getpropintarray(node, "bus-range", bus_range,
+		    sizeof(bus_range)) != sizeof(bus_range))
+			continue;
+		if (bus < bus_range[0] || bus > bus_range[1])
+			continue;
+
+		if (OF_getpropintarray(node, "reg", reg,
+		    sizeof(reg)) != sizeof(reg))
+			continue;
+		return reg[0] >> 11;
+	}
+
+	return -1;
+}
+
+int
 aplpcie_probe_device_hook(void *v, struct pci_attach_args *pa)
 {
 	struct aplpcie_softc *sc = v;
+	uint32_t phandle, reg, sid;
 	uint16_t rid;
+	int idx, port;
 
 	rid = pci_requester_id(pa->pa_pc, pa->pa_tag);
 	pa->pa_dmat = iommu_device_map_pci(sc->sc_node, rid, pa->pa_dmat);
+	if (iommu_device_lookup_pci(sc->sc_node, rid, &phandle, &sid))
+		return 0;
 
+	/*
+	 * Create a stream ID mapping for this device.  The mappings
+	 * are per-port so we first need to find the port for this
+	 * device.  Then we find a free mapping slot to enter the
+	 * mapping.  If we run out of mappings, we print a warning; as
+	 * long as the device doesn't do DMA, it will still work.
+	 */
+
+	port = aplpcie_find_port(sc, pa->pa_bus);
+	if (port == -1)
+		return EINVAL;
+
+	for (idx = 0; idx < 16; idx++) {
+		reg = PREAD4(sc, port, PCIE_PORT_RID2SID(idx));
+
+		/* If already mapped, we're done. */
+		if ((reg & PCIE_PORT_RID2SID_RID_MASK) == rid)
+			return 0;
+
+		/* Is this an empty slot? */
+		if (reg & PCIE_PORT_RID2SID_VALID)
+			continue;
+
+		/* Map using this slot. */
+		reg = (sid << PCIE_PORT_RID2SID_SID_SHIFT) | rid |
+		    PCIE_PORT_RID2SID_VALID;
+		PWRITE4(sc, port, PCIE_PORT_RID2SID(idx), reg);
+		return 0;
+	}
+
+	printf("%s: out of stream ID mapping slots\n",
+		    sc->sc_dev.dv_xname);
 	return 0;
 }
 
