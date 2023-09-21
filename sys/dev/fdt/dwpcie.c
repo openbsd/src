@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwpcie.c,v 1.49 2023/05/03 15:25:25 jsg Exp $	*/
+/*	$OpenBSD: dwpcie.c,v 1.50 2023/09/21 19:39:41 patrick Exp $	*/
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -1601,10 +1601,40 @@ dwpcie_bus_maxdevs(void *v, int bus)
 	return 32;
 }
 
+int
+dwpcie_find_node(int node, int bus, int device, int function)
+{
+	uint32_t reg[5];
+	uint32_t phys_hi;
+	int child;
+
+	phys_hi = ((bus << 16) | (device << 11) | (function << 8));
+
+	for (child = OF_child(node); child; child = OF_peer(child)) {
+		if (OF_getpropintarray(child, "reg",
+		    reg, sizeof(reg)) != sizeof(reg))
+			continue;
+
+		if (reg[0] == phys_hi)
+			return child;
+
+		node = dwpcie_find_node(child, bus, device, function);
+		if (node)
+			return node;
+	}
+
+	return 0;
+}
+
 pcitag_t
 dwpcie_make_tag(void *v, int bus, int device, int function)
 {
-	return ((bus << 24) | (device << 19) | (function << 16));
+	struct dwpcie_softc *sc = v;
+	int node;
+
+	node = dwpcie_find_node(sc->sc_node, bus, device, function);
+	return (((pcitag_t)node << 32) |
+	    (bus << 24) | (device << 19) | (function << 16));
 }
 
 void
@@ -1635,17 +1665,19 @@ dwpcie_conf_read(void *v, pcitag_t tag, int reg)
 	if (bus == sc->sc_bus) {
 		KASSERT(dev == 0);
 		tag = dwpcie_make_tag(sc, 0, dev, fn);
-		return HREAD4(sc, tag | reg);
+		return HREAD4(sc, PCITAG_OFFSET(tag) | reg);
 	}
 
 	if (bus == sc->sc_bus + 1) {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_CFG0,
-		    sc->sc_conf_base, tag, sc->sc_conf_size);
+		    sc->sc_conf_base, PCITAG_OFFSET(tag),
+		    sc->sc_conf_size);
 	} else {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_CFG1,
-		    sc->sc_conf_base, tag, sc->sc_conf_size);
+		    sc->sc_conf_base, PCITAG_OFFSET(tag),
+		    sc->sc_conf_size);
 	}
 
 	ret = bus_space_read_4(sc->sc_iot, sc->sc_conf_ioh, reg);
@@ -1669,18 +1701,20 @@ dwpcie_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	if (bus == sc->sc_bus) {
 		KASSERT(dev == 0);
 		tag = dwpcie_make_tag(sc, 0, dev, fn);
-		HWRITE4(sc, tag | reg, data);
+		HWRITE4(sc, PCITAG_OFFSET(tag) | reg, data);
 		return;
 	}
 
 	if (bus == sc->sc_bus + 1) {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_CFG0,
-		    sc->sc_conf_base, tag, sc->sc_conf_size);
+		    sc->sc_conf_base, PCITAG_OFFSET(tag),
+		    sc->sc_conf_size);
 	} else {
 		dwpcie_atu_config(sc, IATU_VIEWPORT_INDEX1,
 		    IATU_REGION_CTRL_1_TYPE_CFG1,
-		    sc->sc_conf_base, tag, sc->sc_conf_size);
+		    sc->sc_conf_base, PCITAG_OFFSET(tag),
+		    sc->sc_conf_size);
 	}
 
 	bus_space_write_4(sc->sc_iot, sc->sc_conf_ioh, reg, data);
