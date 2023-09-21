@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk.1,v 1.66 2023/09/18 15:20:48 jmc Exp $
+.\"	$OpenBSD: awk.1,v 1.67 2023/09/21 16:30:54 schwarze Exp $
 .\"
 .\" Copyright (C) Lucent Technologies 1997
 .\" All Rights Reserved
@@ -22,7 +22,7 @@
 .\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 .\" THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 18 2023 $
+.Dd $Mdocdate: September 21 2023 $
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -879,6 +879,16 @@ Returns integer argument x shifted by n bits to the right.
 The following environment variables affect the execution of
 .Nm :
 .Bl -tag -width POSIXLY_CORRECT
+.It Ev LC_CTYPE
+The character encoding
+.Xr locale 1 .
+It decides which byte sequences form characters, which characters are
+letters, and how letters are mapped from lower to upper case and vice versa.
+If unset or set to
+.Qq C ,
+.Qq POSIX ,
+or an unsupported value, each byte is treated as a character,
+and non-ASCII bytes are not regarded as letters.
 .It Ev POSIXLY_CORRECT
 When set, behave in accordance with the standard, even when it conflicts
 with historical behavior.
@@ -1031,6 +1041,11 @@ and
 .Fn srand
 has been changed to support non-deterministic random numbers.
 .Pp
+In
+.Ev LC_CTYPE Ns Li =POSIX
+mode, treating non-ASCII input bytes as non-letter characters rather
+than as input encoding errors intentionally violates the specification.
+.Pp
 The flags
 .Op Fl \&dV
 and
@@ -1065,6 +1080,3 @@ to it.
 .Pp
 The scope rules for variables in functions are a botch;
 the syntax is worse.
-.Pp
-Input is expected to be UTF-8 encoded.
-Other multibyte character sets are not handled.
