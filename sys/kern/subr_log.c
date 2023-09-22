@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.77 2023/07/14 07:07:08 claudio Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.78 2023/09/22 20:03:05 mvs Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/filedesc.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
+#include <sys/event.h>
 #include <sys/fcntl.h>
 #include <sys/mutex.h>
 #include <sys/timeout.h>
@@ -75,7 +76,7 @@
  */
 struct logsoftc {
 	int	sc_state;		/* [L] see above for possibilities */
-	struct	selinfo sc_selp;	/* process waiting on select call */
+	struct	klist sc_klist;		/* process waiting on kevent call */
 	struct	sigio_ref sc_sigio;	/* async I/O registration */
 	int	sc_need_wakeup;		/* if set, wake up waiters */
 	struct timeout sc_tick;		/* wakeup poll timeout */
@@ -99,12 +100,16 @@ struct	mutex log_mtx =
 
 void filt_logrdetach(struct knote *kn);
 int filt_logread(struct knote *kn, long hint);
+int filt_logmodify(struct kevent *, struct knote *);
+int filt_logprocess(struct knote *, struct kevent *);
 
 const struct filterops logread_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_logrdetach,
 	.f_event	= filt_logread,
+	.f_modify	= filt_logmodify,
+	.f_process	= filt_logprocess,
 };
 
 int dosendsyslog(struct proc *, const char *, size_t, int, enum uio_seg);
@@ -191,11 +196,9 @@ msgbuf_getlen(struct msgbuf *mbp)
 {
 	long len;
 
-	mtx_enter(&log_mtx);
 	len = mbp->msg_bufx - mbp->msg_bufr;
 	if (len < 0)
 		len += mbp->msg_bufs;
-	mtx_leave(&log_mtx);
 	return (len);
 }
 
@@ -205,6 +208,7 @@ logopen(dev_t dev, int flags, int mode, struct proc *p)
 	if (log_open)
 		return (EBUSY);
 	log_open = 1;
+	klist_init_mutex(&logsoftc.sc_klist, &log_mtx);
 	sigio_init(&logsoftc.sc_sigio);
 	timeout_set(&logsoftc.sc_tick, logtick, NULL);
 	timeout_add_msec(&logsoftc.sc_tick, LOG_TICK);
@@ -225,6 +229,10 @@ logclose(dev_t dev, int flag, int mode, struct proc *p)
 		FRELE(fp, p);
 	log_open = 0;
 	timeout_del(&logsoftc.sc_tick);
+
+	klist_invalidate(&logsoftc.sc_klist);
+	klist_free(&logsoftc.sc_klist);
+
 	logsoftc.sc_state = 0;
 	sigio_free(&logsoftc.sc_sigio);
 	return (0);
@@ -301,11 +309,10 @@ int
 logkqfilter(dev_t dev, struct knote *kn)
 {
 	struct klist *klist;
-	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &logsoftc.sc_selp.si_note;
+		klist = &logsoftc.sc_klist;
 		kn->kn_fop = &logread_filtops;
 		break;
 	default:
@@ -313,10 +320,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 	}
 
 	kn->kn_hook = (void *)msgbufp;
-
-	s = splhigh();
-	klist_insert_locked(klist, kn);
-	splx(s);
+	klist_insert(klist, kn);
 
 	return (0);
 }
@@ -324,11 +328,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 void
 filt_logrdetach(struct knote *kn)
 {
-	int s;
-
-	s = splhigh();
-	klist_remove_locked(&logsoftc.sc_selp.si_note, kn);
-	splx(s);
+	klist_remove(&logsoftc.sc_klist, kn);
 }
 
 int
@@ -338,6 +338,30 @@ filt_logread(struct knote *kn, long hint)
 
 	kn->kn_data = msgbuf_getlen(mbp);
 	return (kn->kn_data != 0);
+}
+
+int
+filt_logmodify(struct kevent *kev, struct knote *kn)
+{
+	int active;
+
+	mtx_enter(&log_mtx);
+	active = knote_modify(kev, kn);
+	mtx_leave(&log_mtx);
+
+	return (active);
+}
+
+int
+filt_logprocess(struct knote *kn, struct kevent *kev)
+{
+	int active;
+
+	mtx_enter(&log_mtx);
+	active = knote_process(kn, kev);
+	mtx_leave(&log_mtx);
+
+	return (active);
 }
 
 void
@@ -380,9 +404,9 @@ logtick(void *arg)
 	state = logsoftc.sc_state;
 	if (logsoftc.sc_state & LOG_RDWAIT)
 		logsoftc.sc_state &= ~LOG_RDWAIT;
+	knote_locked(&logsoftc.sc_klist, 0);
 	mtx_leave(&log_mtx);
 
-	selwakeup(&logsoftc.sc_selp);
 	if (state & LOG_ASYNC)
 		pgsigio(&logsoftc.sc_sigio, SIGIO, 0);
 	if (state & LOG_RDWAIT)
@@ -401,7 +425,9 @@ logioctl(dev_t dev, u_long com, caddr_t data, int flag, struct proc *p)
 
 	/* return number of characters immediately available */
 	case FIONREAD:
+		mtx_enter(&log_mtx);
 		*(int *)data = (int)msgbuf_getlen(msgbufp);
+		mtx_leave(&log_mtx);
 		break;
 
 	case FIONBIO:
