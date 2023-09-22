@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscon.c,v 1.7 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: syscon.c,v 1.8 2023/09/22 01:10:44 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis
  *
@@ -26,13 +26,7 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
-#ifdef __armv7__
-#include <arm/simplebus/simplebusvar.h>
-#elif defined(__riscv64__)
-#include <riscv64/dev/simplebusvar.h>
-#else
-#include <arm64/dev/simplebusvar.h>
-#endif
+#include <machine/simplebusvar.h>
 
 extern void (*cpuresetfn)(void);
 extern void (*powerdownfn)(void);

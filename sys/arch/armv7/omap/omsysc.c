@@ -1,4 +1,4 @@
-/* $OpenBSD: omsysc.c,v 1.3 2022/04/06 18:59:26 naddy Exp $ */
+/* $OpenBSD: omsysc.c,v 1.4 2023/09/22 01:10:43 jsg Exp $ */
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -24,7 +24,7 @@
 #include <dev/ofw/ofw_clock.h>
 #include <dev/ofw/fdt.h>
 
-#include <arm/simplebus/simplebusvar.h>
+#include <machine/simplebusvar.h>
 
 struct omsysc_softc {
 	struct simplebus_softc	sc_bus;

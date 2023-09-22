@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvmdio.c,v 1.4 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: mvmdio.c,v 1.5 2023/09/22 01:10:44 jsg Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -35,12 +35,7 @@
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
-
-#ifdef __armv7__
-#include <arm/simplebus/simplebusvar.h>
-#else
-#include <arm64/dev/simplebusvar.h>
-#endif
+#include <machine/simplebusvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>

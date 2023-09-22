@@ -1,4 +1,4 @@
-/* $OpenBSD: mvmbus.c,v 1.4 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: mvmbus.c,v 1.5 2023/09/22 01:10:43 jsg Exp $ */
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
  *
@@ -22,7 +22,7 @@
 #include <machine/bus.h>
 #include <machine/fdt.h>
 
-#include <arm/simplebus/simplebusvar.h>
+#include <machine/simplebusvar.h>
 #include <armv7/marvell/mvmbusvar.h>
 
 #include <dev/ofw/openfirm.h>

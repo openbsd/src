@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkgrf.c,v 1.6 2023/04/06 19:02:29 kettenis Exp $	*/
+/*	$OpenBSD: rkgrf.c,v 1.7 2023/09/22 01:10:44 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -27,11 +27,7 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
-#ifdef __armv7__
-#include <arm/simplebus/simplebusvar.h>
-#else
-#include <arm64/dev/simplebusvar.h>
-#endif
+#include <machine/simplebusvar.h>
 
 struct rkgrf_softc {
 	struct simplebus_softc	sc_sbus;

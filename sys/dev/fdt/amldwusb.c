@@ -1,4 +1,4 @@
-/*	$OpenBSD: amldwusb.c,v 1.4 2021/10/24 17:52:26 mpi Exp $	*/
+/*	$OpenBSD: amldwusb.c,v 1.5 2023/09/22 01:10:44 jsg Exp $	*/
 /*
  * Copyright (c) 2019 Mark kettenis <kettenis@openbsd.org>
  *
@@ -22,8 +22,7 @@
 
 #include <machine/bus.h>
 #include <machine/fdt.h>
-
-#include <arm64/dev/simplebusvar.h>
+#include <machine/simplebusvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>

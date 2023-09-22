@@ -1,4 +1,4 @@
-/* $OpenBSD: expower.c,v 1.10 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: expower.c,v 1.11 2023/09/22 01:10:43 jsg Exp $ */
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  *
@@ -26,7 +26,7 @@
 #include <dev/ofw/ofw_misc.h>
 #include <dev/ofw/fdt.h>
 
-#include <arm/simplebus/simplebusvar.h>
+#include <machine/simplebusvar.h>
 
 #define HREAD4(sc, reg)							\
 	(bus_space_read_4((sc)->sc_iot, (sc)->sc_ioh, (reg)))

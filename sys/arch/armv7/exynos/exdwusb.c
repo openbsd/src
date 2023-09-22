@@ -1,4 +1,4 @@
-/*	$OpenBSD: exdwusb.c,v 1.5 2021/10/24 17:52:27 mpi Exp $	*/
+/*	$OpenBSD: exdwusb.c,v 1.6 2023/09/22 01:10:43 jsg Exp $	*/
 /*
  * Copyright (c) 2017 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -19,8 +19,7 @@
 #include <sys/device.h>
 
 #include <machine/fdt.h>
-
-#include <arm/simplebus/simplebusvar.h>
+#include <machine/simplebusvar.h>
 
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_clock.h>

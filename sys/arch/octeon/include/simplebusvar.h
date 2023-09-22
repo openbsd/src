@@ -1,4 +1,4 @@
-/*	$OpenBSD: simplebusvar.h,v 1.2 2021/05/12 01:20:52 jsg Exp $	*/
+/*	$OpenBSD: simplebusvar.h,v 1.1 2023/09/22 01:10:43 jsg Exp $	*/
 
 /*
  * Copyright (c) 2016 Patrick Wildt <patrick@blueri.se>
@@ -25,14 +25,10 @@ struct simplebus_softc {
 	int			 sc_scells;
 	int			 sc_pacells;
 	int			 sc_pscells;
-	struct bus_space	 sc_bus;
-	struct machine_bus_dma_tag sc_dma;
+	bus_space_t		 sc_bus;
 	int			*sc_ranges;
 	int			 sc_rangeslen;
-	int			*sc_dmaranges;
-	int			 sc_dmarangeslen;
 	int			 sc_early;
-	int			 sc_early_nodes[64];
 };
 
 extern void simplebus_attach(struct device *, struct device *, void *);

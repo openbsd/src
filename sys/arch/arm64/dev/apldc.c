@@ -1,4 +1,4 @@
-/*	$OpenBSD: apldc.c,v 1.10 2023/09/05 11:04:06 tobhe Exp $	*/
+/*	$OpenBSD: apldc.c,v 1.11 2023/09/22 01:10:43 jsg Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -40,7 +40,7 @@
 #include <dev/hid/hidmsvar.h>
 
 #include <arm64/dev/rtkit.h>
-#include <arm64/dev/simplebusvar.h>
+#include <machine/simplebusvar.h>
 
 #include "apldc.h"
 
