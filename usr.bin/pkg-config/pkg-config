@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $OpenBSD: pkg-config,v 1.96 2023/06/08 08:55:27 espie Exp $
+# $OpenBSD: pkg-config,v 1.97 2023/09/22 07:28:31 espie Exp $
 
 # Copyright (c) 2006 Chris Kuethe <ckuethe@openbsd.org>
 # Copyright (c) 2011-2020 Jasper Lievisse Adriaanse <jasper@openbsd.org>
@@ -279,6 +279,26 @@ if ($mode{cflags} || $mode{libs} || $mode{variable}) {
 exit $rc;
 
 ###########################################################################
+sub set_variables_from_env($file)
+{
+	    state (%done, @l);
+
+	    if (!defined $done{$file}) {
+		    my $pkg = $file;
+
+		    $pkg =~ s/(^.*\/)?(.*?)\.pc$/$2/g;
+		    $pkg = uc($pkg);
+		    if (!@l) {
+			    @l = grep {/PKG_CONFIG_/} keys %ENV;
+		    }
+		    for my $k (@l) {
+			    next unless $k =~ m/PKG_CONFIG_${pkg}_(\w+)/;
+			    $variables->{lc($1)} = $ENV{$k};
+		    }
+		    $done{$file} = 1;
+	    }
+
+}
 
 sub handle_config($p, $op, $v, $list)
 {
@@ -300,22 +320,7 @@ sub handle_config($p, $op, $v, $list)
 	}
 
 	my $get_props = sub($property) {
-	    my $pkg;
-
-	    # See if there's anything in the environment that we need to
-	    # take into account.
-	    ($pkg = $p) =~ s/(^.*\/)?(.*?)\.pc$/$2/g;
-	    $pkg = uc($pkg);
-
-	    if (grep {/PKG_CONFIG_${pkg}.*/} keys %ENV) {
-		    # Now that we know we have something to look for, do
-		    # the inefficient iteration.
-		    while (my ($k, $v) = each %ENV) {
-			    if ($k =~ /^PKG_CONFIG_${pkg}_(\w+)/) {
-				    $variables->{lc($1)} = $v;
-			    }
-		    }
-	    }
+	    set_variables_from_env($p);
 
 	    my $deps = $cfg->get_property($property, $variables);
 	    return unless defined $deps;
