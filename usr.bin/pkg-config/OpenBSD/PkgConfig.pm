@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgConfig.pm,v 1.10 2023/06/08 08:55:27 espie Exp $
+# $OpenBSD: PkgConfig.pm,v 1.11 2023/09/22 07:29:14 espie Exp $
 #
 # Copyright (c) 2006 Marc Espie <espie@openbsd.org>
 #
@@ -15,6 +15,7 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 
 use v5.36;
+
 
 # interface to the *.pc file format of pkg-config.
 package OpenBSD::PkgConfig;
@@ -72,10 +73,14 @@ sub add_variable($self, $name, $value)
 
 sub parse_value($self, $name, $value)
 {
+	my $class = "OpenBSD::PkgConfig::NoExpand";
+	if ($value =~ m/\$\{.*\}/) {
+		$class = "OpenBSD::PkgConfig::ToExpand";
+	}
 	if (defined $parse->{$name}) {
-		return $parse->{$name}($value);
+		return bless $parse->{$name}($value), $class;
 	} else {
-		return [split /(?<!\\)\s+/o, $value];
+		return bless [split /(?<!\\)\s+/o, $value], $class;
 	}
 }
 
@@ -89,7 +94,7 @@ sub add_property($self, $name, $value)
 	if (defined $value) {
 		$v = $self->parse_value($name, $value);
 	} else {
-		$v = [];
+		$v = bless [], "OpenBSD::PkgConfig::NoExpand";
 	}
 	$self->{properties}{$name} = $v;
 }
@@ -121,8 +126,9 @@ sub read_fh($class, $fh, $name = '')
 		}
 	}
 	if (defined $cfg->{properties}{Libs}) {
-		$cfg->{properties}{Libs} =
-		    $cfg->compress_list($cfg->{properties}{Libs});
+		$cfg->{properties}{Libs} = bless
+		    $cfg->compress_list($cfg->{properties}{Libs}),
+		    ref($cfg->{properties}{Libs});
 	}
 	return $cfg;
 }
@@ -220,6 +226,9 @@ sub get_property($self, $k, $extra = {})
 	if (!defined $l) {
 		return undef;
 	}
+	if ($l->noexpand) {
+		return [@$l];
+	}
 	my $r = [];
 	for my $v (@$l) {
 		my $w = $self->expanded($v, $extra);
@@ -263,4 +272,17 @@ sub add_bases($self, $extra)
 	}
 }
 
+package OpenBSD::PkgConfig::NoExpand;
+our @ISA = qw(OpenBSD::PkgConfig);
+sub noexpand($)
+{
+	1
+}
+
+package OpenBSD::PkgConfig::ToExpand;
+our @ISA = qw(OpenBSD::PkgConfig);
+sub noexpand($)
+{
+	0
+}
 1;
