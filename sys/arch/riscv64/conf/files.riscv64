@@ -1,4 +1,4 @@
-#	$OpenBSD: files.riscv64,v 1.26 2023/08/21 20:17:30 miod Exp $
+#	$OpenBSD: files.riscv64,v 1.27 2023/09/23 18:29:55 kettenis Exp $
 
 # Standard stanzas config(8) can't run without
 maxpartitions 16
@@ -137,6 +137,11 @@ file	arch/riscv64/dev/stfpciephy.c		stfpciephy
 device	stfpinctrl
 attach	stfpinctrl at fdt
 file	arch/riscv64/dev/stfpinctrl.c		stfpinctrl
+
+# StarFive random number generator
+device	stfrng
+attach	stfrng at fdt
+file	arch/riscv64/dev/stfrng.c		stfrng
 
 # StarFive temperature sensor
 device	stftemp

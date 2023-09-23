@@ -1,4 +1,4 @@
-/*	$OpenBSD: stfclock.c,v 1.11 2023/09/19 19:15:08 kettenis Exp $	*/
+/*	$OpenBSD: stfclock.c,v 1.12 2023/09/23 18:29:55 kettenis Exp $	*/
 /*
  * Copyright (c) 2022 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2023 Joel Sing <jsing@openbsd.org>
@@ -85,6 +85,8 @@
 #define JH7110_STGCLK_PCIE1_AXI_MST0	11
 #define JH7110_STGCLK_PCIE1_APB		12
 #define JH7110_STGCLK_PCIE1_TL		13
+#define JH7110_STGCLK_SEC_AHB		15
+#define JH7110_STGCLK_SEC_MISC_AHB	16
 
 #define JH7110_STGCLK_ASSERT_OFFSET	0x74
 #define JH7110_STGCLK_STATUS_OFFSET	0x78
@@ -810,6 +812,8 @@ stfclock_enable_jh7110_stg(void *cookie, uint32_t *cells, int on)
 	case JH7110_STGCLK_PCIE1_AXI_MST0:
 	case JH7110_STGCLK_PCIE1_APB:
 	case JH7110_STGCLK_PCIE1_TL:
+	case JH7110_STGCLK_SEC_AHB:
+	case JH7110_STGCLK_SEC_MISC_AHB:
 		if (on)
 			HSET4(sc, idx * 4, 1U << 31);
 		else
