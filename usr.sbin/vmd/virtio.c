@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.107 2023/09/14 15:25:43 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.108 2023/09/23 12:31:41 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1656,7 +1656,7 @@ virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		ret = imsg_compose(ibuf, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
 		    sizeof(msg));
 		if (ret == -1) {
-			log_warn("%s: failed to send async io event to vionet"
+			log_warn("%s: failed to send async io event to virtio"
 			    " device", __func__);
 			return (ret);
 		}
@@ -1671,7 +1671,7 @@ virtio_pci_io(int dir, uint16_t reg, uint32_t *data, uint8_t *intr,
 		ret = imsg_compose(ibuf, IMSG_DEVOP_MSG, 0, 0, -1, &msg,
 		    sizeof(msg));
 		if (ret == -1) {
-			log_warnx("%s: failed to send sync io event to vionet"
+			log_warnx("%s: failed to send sync io event to virtio"
 			    " device", __func__);
 			return (ret);
 		}
