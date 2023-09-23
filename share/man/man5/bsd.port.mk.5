@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.632 2023/09/23 16:06:10 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.633 2023/09/23 16:08:46 espie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -336,18 +336,7 @@ using ${FETCH_CMD}.
 Files are normally retrieved from the list of sites in
 .Ev SITES* .
 .Pp
-Appending
-.Sq :0
-to
-.Sq :9
-to an entry will let
-${FETCH_CMD} retrieve from
-.Ev SITES0
-to
-.Ev SITES9
-instead (deprecated).
-.Pp
-Preferably, adding a suffix to
+Adding a suffix to
 .Ev DISTFILES ,
 .Ev PATCHFILES ,
 .Ev SUPDISTFILES
@@ -3242,9 +3231,6 @@ for details.
 Suffix should start with
 .Sq \&.
 and be all lowercase for consistency.
-.It Ev SITES0 , ... , SITES9
-Supplementary locations from which distribution files and patchfiles are
-retrieved (deprecated).
 .It Ev SKIPDIR
 See
 .Xr ports 7 .
@@ -4341,6 +4327,13 @@ Old location for scripts related to the current port.
 There is no reason for the semantic distinction, use
 .Ev FILESDIR
 for those.
+.It Ev SITES0 , ... , SITES9
+Supplementary locations from which distribution files and patchfiles were
+retrieved, superseded by the more generic
+.Ev SITES.sufx
+matching
+.Ev DISTFILES.sufx
+construct.
 .It Ev USE_BZIP2
 The framework will automatically detect the presence of
 .Pa .tar.bz2
