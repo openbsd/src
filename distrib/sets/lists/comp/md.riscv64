@@ -43,6 +43,7 @@
 ./usr/include/riscv64/sbi.h
 ./usr/include/riscv64/setjmp.h
 ./usr/include/riscv64/signal.h
+./usr/include/riscv64/simplebusvar.h
 ./usr/include/riscv64/softintr.h
 ./usr/include/riscv64/spinlock.h
 ./usr/include/riscv64/sysarch.h
