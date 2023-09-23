@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.213 2023/08/03 09:49:08 mvs Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.214 2023/09/23 09:17:21 jan Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -1214,15 +1214,11 @@ sys_setsockopt(struct proc *p, void *v, register_t *retval)
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if (SCARG(uap, valsize) > MLEN) {
-			MCLGET(m, M_DONTWAIT);
+			MCLGET(m, M_WAIT);
 			if ((m->m_flags & M_EXT) == 0) {
 				error = ENOBUFS;
 				goto bad;
 			}
-		}
-		if (m == NULL) {
-			error = ENOBUFS;
-			goto bad;
 		}
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    SCARG(uap, valsize));
