@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.91 2023/09/06 03:35:57 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.92 2023/09/23 12:27:21 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1617,7 +1617,7 @@ vcpu_run_loop(void *arg)
 			/* If run ioctl failed, exit */
 			ret = errno;
 			log_warn("%s: vm %d / vcpu %d run ioctl failed",
-			    __func__, vrp->vrp_vm_id, n);
+			    __func__, current_vm->vm_vmid, n);
 			break;
 		}
 
