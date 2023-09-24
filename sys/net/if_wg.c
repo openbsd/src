@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.29 2023/08/03 09:49:08 mvs Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.30 2023/09/24 05:56:06 yasuoka Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -517,6 +517,9 @@ wg_peer_destroy(struct wg_peer *peer)
 
 	taskq_barrier(wg_crypt_taskq);
 	taskq_barrier(net_tq(sc->sc_if.if_index));
+
+	if (!mq_empty(&peer->p_stage_queue))
+		mq_purge(&peer->p_stage_queue);
 
 	DPRINTF(sc, "Peer %llu destroyed\n", peer->p_id);
 	explicit_bzero(peer, sizeof(*peer));
