@@ -1877,6 +1877,7 @@
 ./usr/share/man/man4/riscv64/sfuart.4
 ./usr/share/man/man4/riscv64/stfclock.4
 ./usr/share/man/man4/riscv64/stfpinctrl.4
+./usr/share/man/man4/riscv64/stfrng.4
 ./usr/share/man/man4/rkanxdp.4
 ./usr/share/man/man4/rkclock.4
 ./usr/share/man/man4/rkcomphy.4
