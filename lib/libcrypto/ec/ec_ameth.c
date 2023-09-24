@@ -1,4 +1,4 @@
-/* $OpenBSD: ec_ameth.c,v 1.44 2023/09/24 07:58:31 tb Exp $ */
+/* $OpenBSD: ec_ameth.c,v 1.45 2023/09/24 08:08:54 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -288,9 +288,10 @@ eckey_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 static int
 eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-	int r;
 	const EC_GROUP *group = EC_KEY_get0_group(b->pkey.ec);
-	const EC_POINT *pa = EC_KEY_get0_public_key(a->pkey.ec), *pb = EC_KEY_get0_public_key(b->pkey.ec);
+	const EC_POINT *pa = EC_KEY_get0_public_key(a->pkey.ec);
+	const EC_POINT *pb = EC_KEY_get0_public_key(b->pkey.ec);
+	int r;
 
 	r = EC_POINT_cmp(group, pa, pb, NULL);
 	if (r == 0)
@@ -464,7 +465,9 @@ ec_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 static int
 ec_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-	const EC_GROUP *group_a = EC_KEY_get0_group(a->pkey.ec), *group_b = EC_KEY_get0_group(b->pkey.ec);
+	const EC_GROUP *group_a = EC_KEY_get0_group(a->pkey.ec);
+	const EC_GROUP *group_b = EC_KEY_get0_group(b->pkey.ec);
+
 	if (EC_GROUP_cmp(group_a, group_b, NULL))
 		return 0;
 	else
