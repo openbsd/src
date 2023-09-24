@@ -98,6 +98,7 @@
 ./usr/include/octeon/reloc.h
 ./usr/include/octeon/setjmp.h
 ./usr/include/octeon/signal.h
+./usr/include/octeon/simplebusvar.h
 ./usr/include/octeon/spinlock.h
 ./usr/include/octeon/sysarch.h
 ./usr/include/octeon/tcb.h
