@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.56 2023/09/17 15:24:35 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.57 2023/09/24 12:27:16 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -454,7 +454,6 @@ clockqueue_pend_delete(struct clockintr_queue *cq, struct clockintr *cl)
 	TAILQ_REMOVE(&cq->cq_pend, cl, cl_plink);
 	CLR(cl->cl_flags, CLST_PENDING);
 }
-
 
 void
 clockqueue_pend_insert(struct clockintr_queue *cq, struct clockintr *cl,
