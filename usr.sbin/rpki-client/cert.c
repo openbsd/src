@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.116 2023/09/25 14:56:20 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.117 2023/09/25 15:33:08 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -159,7 +159,7 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
 {
 	const ASIdOrRanges	*aors = NULL;
 	struct cert_as		*as = NULL;
-	size_t			 asz, new_asz = 0;
+	size_t			 asz = 0, sz;
 	int			 i;
 
 	assert(*out_as == NULL && *out_asz == 0);
@@ -178,11 +178,11 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
 
 	switch (asidentifiers->asnum->type) {
 	case ASIdentifierChoice_inherit:
-		asz = 1;
+		sz = 1;
 		break;
 	case ASIdentifierChoice_asIdsOrRanges:
 		aors = asidentifiers->asnum->u.asIdsOrRanges;
-		asz = sk_ASIdOrRange_num(aors);
+		sz = sk_ASIdOrRange_num(aors);
 		break;
 	default:
 		warnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
@@ -190,21 +190,21 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
 		goto out;
 	}
 
-	if (asz == 0) {
+	if (sz == 0) {
 		warnx("%s: RFC 6487 section 4.8.11: empty asIdsOrRanges", fn);
 		goto out;
 	}
-	if (asz >= MAX_AS_SIZE) {
+	if (sz >= MAX_AS_SIZE) {
 		warnx("%s: too many AS number entries: limit %d",
 		    fn, MAX_AS_SIZE);
 		goto out;
 	}
-	as = calloc(asz, sizeof(struct cert_as));
+	as = calloc(sz, sizeof(struct cert_as));
 	if (as == NULL)
 		err(1, NULL);
 
 	if (aors == NULL) {
-		if (!sbgp_as_inherit(fn, as, &new_asz))
+		if (!sbgp_as_inherit(fn, as, &asz))
 			goto out;
 	}
 
@@ -214,11 +214,11 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
 		aor = sk_ASIdOrRange_value(aors, i);
 		switch (aor->type) {
 		case ASIdOrRange_id:
-			if (!sbgp_as_id(fn, as, &new_asz, aor->u.id))
+			if (!sbgp_as_id(fn, as, &asz, aor->u.id))
 				goto out;
 			break;
 		case ASIdOrRange_range:
-			if (!sbgp_as_range(fn, as, &new_asz, aor->u.range))
+			if (!sbgp_as_range(fn, as, &asz, aor->u.range))
 				goto out;
 			break;
 		default:
@@ -229,7 +229,7 @@ sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
 	}
 
 	*out_as = as;
-	*out_asz = new_asz;
+	*out_asz = asz;
 
 	return 1;
 
@@ -361,7 +361,7 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 	const IPAddressOrRange	*aor;
 	enum afi		 afi;
 	struct cert_ip		*ips = NULL;
-	size_t			 ipsz, new_ipsz = 0;
+	size_t			 ipsz = 0, sz;
 	int			 i, j;
 
 	assert(*out_ips == NULL && *out_ipsz == 0);
@@ -372,27 +372,26 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 		switch (af->ipAddressChoice->type) {
 		case IPAddressChoice_inherit:
 			aors = NULL;
-			ipsz = new_ipsz + 1;
+			sz = ipsz + 1;
 			break;
 		case IPAddressChoice_addressesOrRanges:
 			aors = af->ipAddressChoice->u.addressesOrRanges;
-			ipsz = new_ipsz + sk_IPAddressOrRange_num(aors);
+			sz = ipsz + sk_IPAddressOrRange_num(aors);
 			break;
 		default:
 			warnx("%s: RFC 3779: IPAddressChoice: unknown type %d",
 			    fn, af->ipAddressChoice->type);
 			goto out;
 		}
-		if (ipsz == new_ipsz) {
+		if (sz == ipsz) {
 			warnx("%s: RFC 6487 section 4.8.10: "
 			    "empty ipAddressesOrRanges", fn);
 			goto out;
 		}
 
-		if (ipsz >= MAX_IP_SIZE)
+		if (sz >= MAX_IP_SIZE)
 			goto out;
-		ips = recallocarray(ips, new_ipsz, ipsz,
-		    sizeof(struct cert_ip));
+		ips = recallocarray(ips, ipsz, sz, sizeof(struct cert_ip));
 		if (ips == NULL)
 			err(1, NULL);
 
@@ -402,7 +401,7 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 		}
 
 		if (aors == NULL) {
-			if (!sbgp_addr_inherit(fn, ips, &new_ipsz, afi))
+			if (!sbgp_addr_inherit(fn, ips, &ipsz, afi))
 				goto out;
 			continue;
 		}
@@ -411,12 +410,12 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 			aor = sk_IPAddressOrRange_value(aors, j);
 			switch (aor->type) {
 			case IPAddressOrRange_addressPrefix:
-				if (!sbgp_addr(fn, ips, &new_ipsz, afi,
+				if (!sbgp_addr(fn, ips, &ipsz, afi,
 				    aor->u.addressPrefix))
 					goto out;
 				break;
 			case IPAddressOrRange_addressRange:
-				if (!sbgp_addr_range(fn, ips, &new_ipsz, afi,
+				if (!sbgp_addr_range(fn, ips, &ipsz, afi,
 				    aor->u.addressRange))
 					goto out;
 				break;
@@ -429,7 +428,7 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 	}
 
 	*out_ips = ips;
-	*out_ipsz = new_ipsz;
+	*out_ipsz = ipsz;
 
 	return 1;
 
