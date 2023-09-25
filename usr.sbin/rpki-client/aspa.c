@@ -1,4 +1,4 @@
-/*	$OpenBSD: aspa.c,v 1.22 2023/07/10 12:02:37 job Exp $ */
+/*	$OpenBSD: aspa.c,v 1.23 2023/09/25 11:08:45 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -159,7 +159,8 @@ aspa_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
  * Returns the payload or NULL if the file was malformed.
  */
 struct aspa *
-aspa_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
+aspa_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
+    size_t len)
 {
 	struct parse	 p;
 	size_t		 cmsz;

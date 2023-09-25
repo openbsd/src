@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.13 2023/03/10 12:44:56 job Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.14 2023/09/25 11:08:45 tb Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -100,7 +100,7 @@ geofeed_parse_geoip(struct geofeed *res, char *cidr, char *loc)
  * Returns the Geofeed, or NULL if the object was malformed.
  */
 struct geofeed *
-geofeed_parse(X509 **x509, const char *fn, char *buf, size_t len)
+geofeed_parse(X509 **x509, const char *fn, int talid, char *buf, size_t len)
 {
 	struct parse	 p;
 	char		*delim, *line, *loc, *nl;

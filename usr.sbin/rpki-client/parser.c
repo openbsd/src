@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.98 2023/08/30 10:01:52 job Exp $ */
+/*	$OpenBSD: parser.c,v 1.99 2023/09/25 11:08:45 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -126,7 +126,7 @@ parse_filepath(unsigned int repoid, const char *path, const char *file,
  */
 static struct roa *
 proc_parser_roa(char *file, const unsigned char *der, size_t len,
-    const char *mftaki)
+    const struct entity *entp)
 {
 	struct roa		*roa;
 	struct auth		*a;
@@ -134,10 +134,10 @@ proc_parser_roa(char *file, const unsigned char *der, size_t len,
 	X509			*x509;
 	const char		*errstr;
 
-	if ((roa = roa_parse(&x509, file, der, len)) == NULL)
+	if ((roa = roa_parse(&x509, file, entp->talid, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, roa->ski, roa->aki, mftaki);
+	a = valid_ski_aki(file, &auths, roa->ski, roa->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -276,7 +276,7 @@ proc_parser_mft_pre(struct entity *entp, enum location loc, char **file,
 	if (der == NULL && errno != ENOENT)
 		warn("parse file %s", *file);
 
-	if ((mft = mft_parse(&x509, *file, der, len)) == NULL) {
+	if ((mft = mft_parse(&x509, *file, entp->talid, der, len)) == NULL) {
 		free(der);
 		return NULL;
 	}
@@ -493,7 +493,7 @@ proc_parser_root_cert(char *file, const unsigned char *der, size_t len,
  */
 static struct gbr *
 proc_parser_gbr(char *file, const unsigned char *der, size_t len,
-    const char *mftaki)
+    const struct entity *entp)
 {
 	struct gbr	*gbr;
 	X509		*x509;
@@ -501,10 +501,10 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
 	struct auth	*a;
 	const char	*errstr;
 
-	if ((gbr = gbr_parse(&x509, file, der, len)) == NULL)
+	if ((gbr = gbr_parse(&x509, file, entp->talid, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, gbr->ski, gbr->aki, mftaki);
+	a = valid_ski_aki(file, &auths, gbr->ski, gbr->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	/* return value can be ignored since nothing happens here */
@@ -526,7 +526,7 @@ proc_parser_gbr(char *file, const unsigned char *der, size_t len,
  */
 static struct aspa *
 proc_parser_aspa(char *file, const unsigned char *der, size_t len,
-    const char *mftaki)
+    const struct entity *entp)
 {
 	struct aspa	*aspa;
 	struct auth	*a;
@@ -534,10 +534,10 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
 	X509		*x509;
 	const char	*errstr;
 
-	if ((aspa = aspa_parse(&x509, file, der, len)) == NULL)
+	if ((aspa = aspa_parse(&x509, file, entp->talid, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, aspa->ski, aspa->aki, mftaki);
+	a = valid_ski_aki(file, &auths, aspa->ski, aspa->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -560,7 +560,7 @@ proc_parser_aspa(char *file, const unsigned char *der, size_t len,
  */
 static struct tak *
 proc_parser_tak(char *file, const unsigned char *der, size_t len,
-    const char *mftaki)
+    const struct entity *entp)
 {
 	struct tak	*tak;
 	X509		*x509;
@@ -569,10 +569,10 @@ proc_parser_tak(char *file, const unsigned char *der, size_t len,
 	const char	*errstr;
 	int		 rc = 0;
 
-	if ((tak = tak_parse(&x509, file, der, len)) == NULL)
+	if ((tak = tak_parse(&x509, file, entp->talid, der, len)) == NULL)
 		return NULL;
 
-	a = valid_ski_aki(file, &auths, tak->ski, tak->aki, mftaki);
+	a = valid_ski_aki(file, &auths, tak->ski, tak->aki, entp->mftaki);
 	crl = crl_get(&crlt, a);
 
 	if (!valid_x509(file, ctx, x509, a, crl, &errstr)) {
@@ -729,7 +729,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_ROA:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			roa = proc_parser_roa(file, f, flen, entp->mftaki);
+			roa = proc_parser_roa(file, f, flen, entp);
 			if (roa != NULL)
 				mtime = roa->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
@@ -742,7 +742,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_GBR:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			gbr = proc_parser_gbr(file, f, flen, entp->mftaki);
+			gbr = proc_parser_gbr(file, f, flen, entp);
 			if (gbr != NULL)
 				mtime = gbr->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
@@ -751,7 +751,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_ASPA:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			aspa = proc_parser_aspa(file, f, flen, entp->mftaki);
+			aspa = proc_parser_aspa(file, f, flen, entp);
 			if (aspa != NULL)
 				mtime = aspa->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));
@@ -764,7 +764,7 @@ parse_entity(struct entityq *q, struct msgbuf *msgq)
 		case RTYPE_TAK:
 			file = parse_load_file(entp, &f, &flen);
 			io_str_buffer(b, file);
-			tak = proc_parser_tak(file, f, flen, entp->mftaki);
+			tak = proc_parser_tak(file, f, flen, entp);
 			if (tak != NULL)
 				mtime = tak->signtime;
 			io_simple_buffer(b, &mtime, sizeof(mtime));

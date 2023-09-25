@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.27 2023/06/20 12:39:50 job Exp $ */
+/*	$OpenBSD: gbr.c,v 1.28 2023/09/25 11:08:45 tb Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -40,7 +40,8 @@ extern ASN1_OBJECT	*gbr_oid;
  * Returns the payload or NULL if the document was malformed.
  */
 struct gbr *
-gbr_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
+gbr_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
+    size_t len)
 {
 	struct parse	 p;
 	struct cert	*cert = NULL;

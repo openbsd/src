@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.97 2023/09/03 10:48:50 job Exp $ */
+/*	$OpenBSD: mft.c,v 1.98 2023/09/25 11:08:45 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -358,7 +358,8 @@ mft_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
  * The MFT content is otherwise returned.
  */
 struct mft *
-mft_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
+mft_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
+    size_t len)
 {
 	struct parse	 p;
 	struct cert	*cert = NULL;

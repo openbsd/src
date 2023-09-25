@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.34 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.35 2023/09/25 11:08:45 tb Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -346,7 +346,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 
 	switch (type) {
 	case RTYPE_ASPA:
-		aspa = aspa_parse(&x509, file, buf, len);
+		aspa = aspa_parse(&x509, file, -1, buf, len);
 		if (aspa == NULL)
 			break;
 		aia = aspa->aia;
@@ -378,7 +378,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		crl_print(crl);
 		break;
 	case RTYPE_MFT:
-		mft = mft_parse(&x509, file, buf, len);
+		mft = mft_parse(&x509, file, -1, buf, len);
 		if (mft == NULL)
 			break;
 		aia = mft->aia;
@@ -387,7 +387,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		notafter = &mft->nextupdate;
 		break;
 	case RTYPE_GBR:
-		gbr = gbr_parse(&x509, file, buf, len);
+		gbr = gbr_parse(&x509, file, -1, buf, len);
 		if (gbr == NULL)
 			break;
 		aia = gbr->aia;
@@ -396,7 +396,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		notafter = &gbr->notafter;
 		break;
 	case RTYPE_GEOFEED:
-		geofeed = geofeed_parse(&x509, file, buf, len);
+		geofeed = geofeed_parse(&x509, file, -1, buf, len);
 		if (geofeed == NULL)
 			break;
 		aia = geofeed->aia;
@@ -405,7 +405,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		notafter = &geofeed->notafter;
 		break;
 	case RTYPE_ROA:
-		roa = roa_parse(&x509, file, buf, len);
+		roa = roa_parse(&x509, file, -1, buf, len);
 		if (roa == NULL)
 			break;
 		aia = roa->aia;
@@ -414,7 +414,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		notafter = &roa->notafter;
 		break;
 	case RTYPE_RSC:
-		rsc = rsc_parse(&x509, file, buf, len);
+		rsc = rsc_parse(&x509, file, -1, buf, len);
 		if (rsc == NULL)
 			break;
 		aia = rsc->aia;
@@ -423,7 +423,7 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 		notafter = &rsc->notafter;
 		break;
 	case RTYPE_TAK:
-		tak = tak_parse(&x509, file, buf, len);
+		tak = tak_parse(&x509, file, -1, buf, len);
 		if (tak == NULL)
 			break;
 		aia = tak->aia;

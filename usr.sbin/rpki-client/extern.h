@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.190 2023/09/25 08:48:14 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.191 2023/09/25 11:08:45 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -624,33 +624,33 @@ void		 cert_insert_brks(struct brk_tree *, struct cert *);
 enum rtype	 rtype_from_file_extension(const char *);
 void		 mft_buffer(struct ibuf *, const struct mft *);
 void		 mft_free(struct mft *);
-struct mft	*mft_parse(X509 **, const char *, const unsigned char *,
+struct mft	*mft_parse(X509 **, const char *, int, const unsigned char *,
 		    size_t);
 struct mft	*mft_read(struct ibuf *);
 int		 mft_compare(const struct mft *, const struct mft *);
 
 void		 roa_buffer(struct ibuf *, const struct roa *);
 void		 roa_free(struct roa *);
-struct roa	*roa_parse(X509 **, const char *, const unsigned char *,
+struct roa	*roa_parse(X509 **, const char *, int, const unsigned char *,
 		    size_t);
 struct roa	*roa_read(struct ibuf *);
 void		 roa_insert_vrps(struct vrp_tree *, struct roa *,
 		    struct repo *);
 
 void		 gbr_free(struct gbr *);
-struct gbr	*gbr_parse(X509 **, const char *, const unsigned char *,
+struct gbr	*gbr_parse(X509 **, const char *, int, const unsigned char *,
 		    size_t);
 
 void		 geofeed_free(struct geofeed *);
-struct geofeed	*geofeed_parse(X509 **, const char *, char *, size_t);
+struct geofeed	*geofeed_parse(X509 **, const char *, int, char *, size_t);
 
 void		 rsc_free(struct rsc *);
-struct rsc	*rsc_parse(X509 **, const char *, const unsigned char *,
+struct rsc	*rsc_parse(X509 **, const char *, int, const unsigned char *,
 		    size_t);
 
 void		 takey_free(struct takey *);
 void		 tak_free(struct tak *);
-struct tak	*tak_parse(X509 **, const char *, const unsigned char *,
+struct tak	*tak_parse(X509 **, const char *, int, const unsigned char *,
 		    size_t);
 struct tak	*tak_read(struct ibuf *);
 
@@ -658,7 +658,7 @@ void		 aspa_buffer(struct ibuf *, const struct aspa *);
 void		 aspa_free(struct aspa *);
 void		 aspa_insert_vaps(struct vap_tree *, struct aspa *,
 		    struct repo *);
-struct aspa	*aspa_parse(X509 **, const char *, const unsigned char *,
+struct aspa	*aspa_parse(X509 **, const char *, int, const unsigned char *,
 		    size_t);
 struct aspa	*aspa_read(struct ibuf *);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.27 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.28 2023/09/25 11:08:45 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -371,7 +371,8 @@ rsc_parse_econtent(const unsigned char *d, size_t dsz, struct parse *p)
  * Returns the RSC or NULL if the object was malformed.
  */
 struct rsc *
-rsc_parse(X509 **x509, const char *fn, const unsigned char *der, size_t len)
+rsc_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
+    size_t len)
 {
 	struct parse		 p;
 	unsigned char		*cms;
