@@ -1,10 +1,11 @@
-# $OpenBSD: Makefile,v 1.268 2023/09/09 14:39:09 schwarze Exp $
+# $OpenBSD: Makefile,v 1.269 2023/09/25 01:14:34 tb Exp $
 
 .include <bsd.own.mk>
 
 MAN=	\
 	ACCESS_DESCRIPTION_new.3 \
 	AES_encrypt.3 \
+	ASIdentifiers_new.3 \
 	ASN1_BIT_STRING_set.3 \
 	ASN1_INTEGER_get.3 \
 	ASN1_NULL_new.3 \
@@ -389,6 +390,8 @@ MAN=	\
 	X509_verify_cert.3 \
 	X509at_add1_attr.3 \
 	X509at_get_attr.3 \
+	X509v3_addr_add_inherit.3 \
+	X509v3_asid_add_id_or_range.3 \
 	X509v3_get_ext_by_NID.3 \
 	a2d_ASN1_OBJECT.3 \
 	crypto.3 \
@@ -431,8 +434,8 @@ MAN=	\
 	i2d_PKCS7_bio_stream.3 \
 	lh_new.3 \
 	lh_stats.3 \
-	s2i_ASN1_INTEGER.3 \
 	openssl.cnf.5 \
+	s2i_ASN1_INTEGER.3 \
 	x509v3.cnf.5
 
 all clean cleandir depend includes obj tags:
