@@ -1,0 +1,257 @@
+.\" $OpenBSD: ASRange_new.3,v 1.1 2023/09/25 11:59:10 tb Exp $
+.\"
+.\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd $Mdocdate: September 25 2023 $
+.Dt ASRANGE_NEW 3
+.Os
+.Sh NAME
+.Nm ASRange_new ,
+.Nm ASRange_free ,
+.Nm d2i_ASRange ,
+.Nm i2d_ASRange ,
+.Nm ASIdOrRange_new ,
+.Nm ASIdOrRange_free ,
+.Nm d2i_ASIdOrRange ,
+.Nm i2d_ASIdOrRange
+.Nd Autonomous system identifiers and ranges
+.Sh SYNOPSIS
+.In openssl/x509v3.h
+.Ft "ASRange *"
+.Fn ASRange_new void
+.Ft void
+.Fn ASRange_free "ASRange *"
+.Ft ASRange *
+.Fo d2i_ASRange
+.Fa "ASRange **asrange"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_ASRange
+.Fa "ASRange *asrange"
+.Fa "unsigned char **der_out"
+.Fc
+.Ft "ASIdOrRange *"
+.Fn ASIdOrRange_new void
+.Ft void
+.Fn ASIdOrRange_free "ASIdOrRange *aor"
+.Ft ASIdOrRange *
+.Fo d2i_ASIdOrRange
+.Fa "ASIdOrRange **aor"
+.Fa "const unsigned char **der_in"
+.Fa "long length"
+.Fc
+.Ft int
+.Fo i2d_ASIdOrRange
+.Fa "ASIdOrRange *aor"
+.Fa "unsigned char **der_out"
+.Fc
+.Sh DESCRIPTION
+.Vt ASRange
+and
+.Vt ASIdOrRange
+are building blocks of the RFC 3779
+.Vt ASIdentifiers
+type representing the autonomous system identifier delegation extension.
+See
+.Xr ASIdentifiers_new 3
+and
+.Xr X509v3_asid_add_id_or_range 3
+for more details.
+.Pp
+All
+.Vt ASN1_INTEGER Ns s
+in this manual should be representable as unsigned 32-bit integers.
+The library provides no convenient way of setting the value of an
+.Vt ASN1_INTEGER
+directly.
+A detour via a
+.Vt BIGNUM
+or a string is unavoidable.
+.Pp
+The
+.Vt ASRange
+type defined in RFC 3779 section 3.2.3.8 is implemented as
+.Bd -literal -offset indent
+typedef struct ASRange_st {
+	ASN1_INTEGER *min;
+	ASN1_INTEGER *max;
+} ASRange;
+.Ed
+.Pp
+It represents the closed range [min,max] of AS identifiers between
+.Fa min
+and
+.Fa max ,
+where
+.Fa min
+should be strictly smaller than
+.Fa max .
+.Pp
+.Fn ASRange_new
+allocates a new
+.Vt ASRange
+object with allocated, empty
+.Fa min
+and
+.Fa max ,
+thus representing the invalid range [0,0].
+.Pp
+.Fn ASRange_free
+frees
+.Fa asrange
+including any data contained in it.
+If
+.Fa asrange
+is
+.Dv NULL ,
+no action occurs.
+.Pp
+The
+.Vt ASIdOrRange
+type defined in RFC 3779 section 3.2.3.5 is implemented as
+.Bd -literal -offset indent
+typedef struct ASIdOrRange_st {
+	int type;
+	union {
+		ASN1_INTEGER *id;
+		ASRange *range;
+	} u;
+} ASIdOrRange;
+.Ed
+.Pp
+representing an individual AS identifier or a range.
+When populating an
+.Vt ASIdOrRange
+object by hand, its
+.Fa type
+should be set to
+.Dv ASIdOrRange_id
+or
+.Dv ASIdOrRange_range
+to indicate which member of the union
+.Fa u
+is valid.
+.Pp
+.Fn ASIdOrRange_new
+returns a new
+.Vt ASIdOrRange
+object with invalid type and
+.Dv NULL
+members of the union
+.Fa u .
+.Pp
+.Fn ASIdOrRange_free
+frees
+.Fa aor
+including any data contained in it,
+provided
+.Fa type
+is set correctly.
+If
+.Fa asrange
+is
+.Dv NULL ,
+no action occurs.
+.Pp
+.Fn d2i_ASRange ,
+.Fn i2d_ASRange ,
+.Fn d2i_ASIdOrRange ,
+and
+.Fn i2d_ASIdOrRange
+decode and encode ASN.1
+.Vt ASRange
+and
+.Vt ASIdOrRange
+objects.
+For details about the semantics, examples, caveats, and bugs, see
+.Xr ASN1_item_d2i 3 .
+In order for the encoding produced by
+.Fn i2d_ASRange
+to be correct,
+.Fa min
+must be strictly less than
+.Fa max .
+Similarly for
+.Fn i2d_ASIdOrRange
+and an
+.Fa ASIdOrRange
+object of
+.Fa type
+.Dv ASIdOrRange_range .
+.Sh RETURN VALUES
+.Fn ASRange_new
+returns a new
+.Vt ASRange
+object or
+.Dv NULL
+if an error occurs.
+.Pp
+.Fn ASIdOrRange_new
+returns a new, empty
+.Vt ASIdOrRange
+object or
+.Dv NULL
+if an error occurs.
+.Pp
+The encoding functions
+.Fn d2i_ASRange
+and
+.Fn d2i_ASIdOrRange
+return an
+.Vt ASRange
+or an
+.Vt ASIdOrRange
+object, respectively,
+or
+.Dv NULL
+if an error occurs.
+.Pp
+The encoding functions
+.Fn i2d_ASRange
+and
+.Fn i2d_ASIdOrRange
+return the number of bytes successfully encoded
+or a value <= 0 if an error occurs.
+.Sh SEE ALSO
+.Xr ASIdentifiers_new 3 ,
+.Xr BN_set_word 3 ,
+.Xr BN_to_ASN1_INTEGER 3 ,
+.Xr crypto 3 ,
+.Xr s2i_ASN1_INTEGER 3 ,
+.Xr X509_new 3 ,
+.Xr X509v3_asid_add_id_or_range 3 ,
+.Xr X509v3_asid_is_canonical 3
+.Sh STANDARDS
+RFC 3779: X.509 Extensions for IP Addresses and AS Identifiers:
+.Bl -dash -compact
+.It
+section 3.2.3: Syntax
+.It
+section 3.2.3.5: Type ASIdOrRange
+.It
+section 3.2.3.6: Element id
+.It
+section 3.2.3.7: Element range
+.It
+section 3.2.3.8: Type ASRange
+.It
+section 3.2.3.9: Elements min and max
+.El
+.Sh HISTORY
+These functions first appeared in OpenSSL 0.9.8e
+and have been available since
+.Ox 7.1 .
