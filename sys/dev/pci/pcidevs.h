@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2049 2023/09/07 01:41:09 jsg Exp 
+ *	OpenBSD: pcidevs,v 1.2051 2023/09/25 15:37:36 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
@@ -7310,6 +7310,7 @@
 #define	PCI_PRODUCT_MEINBERG_PCI509	0x0102		/* PCI509 */
 #define	PCI_PRODUCT_MEINBERG_PCI511	0x0104		/* PCI511 */
 #define	PCI_PRODUCT_MEINBERG_PEX511	0x0105		/* PEX511 */
+#define	PCI_PRODUCT_MEINBERG_PZF180PEX	0x0106		/* PZF180PEX */
 #define	PCI_PRODUCT_MEINBERG_GPS170PCI	0x0204		/* GPS170PCI */
 
 /* Mellanox */
