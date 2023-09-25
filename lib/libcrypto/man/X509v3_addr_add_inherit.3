@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.1 2023/09/25 01:14:34 tb Exp $
+.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.2 2023/09/25 10:34:44 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -247,7 +247,7 @@ The error conditions are generally indistinguishable.
 returns 1 if
 .Fa addrblocks
 is in canonical form.
-A return value of 0 can indicate non-canonical form or corrupted list.
+A return value of 0 can indicate non-canonical form or a corrupted list.
 .Sh EXAMPLES
 Construct the first extension from RFC 3779, Appendix B.
 .Bd -literal
@@ -382,7 +382,7 @@ i2d_IPAddrBlocks(IPAddrBlocks *addrblocks, unsigned char **out)
 }
 .Ed
 .Pp
-the use of the undocumented macro
+The use of the undocumented macro
 .Dv ASN1_ITEM_ptr()
 is necessary if compatibility with modern versions of other implementations
 is desired.
