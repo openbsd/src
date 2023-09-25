@@ -1780,6 +1780,7 @@
 ./usr/share/man/man3/ASN1_parse_dump.3
 ./usr/share/man/man3/ASN1_put_object.3
 ./usr/share/man/man3/ASN1_time_parse.3
+./usr/share/man/man3/ASRange_new.3
 ./usr/share/man/man3/AUTHORITY_KEYID_new.3
 ./usr/share/man/man3/BASIC_CONSTRAINTS_new.3
 ./usr/share/man/man3/BF_set_key.3
