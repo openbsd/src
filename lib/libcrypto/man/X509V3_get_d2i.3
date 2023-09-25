@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509V3_get_d2i.3,v 1.20 2023/02/23 18:12:32 job Exp $
+.\" $OpenBSD: X509V3_get_d2i.3,v 1.21 2023/09/25 07:47:52 tb Exp $
 .\" full merge up to: OpenSSL ff7fbfd5 Nov 2 11:52:01 2015 +0000
 .\" selective merge up to: OpenSSL 99d63d46 Oct 26 13:56:48 2016 -0400
 .\"
@@ -49,7 +49,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 23 2023 $
+.Dd $Mdocdate: September 25 2023 $
 .Dt X509V3_GET_D2I 3
 .Os
 .Sh NAME
@@ -339,6 +339,9 @@ as RFC 5280.
 .It Policy Mappings               Ta Dv NID_policy_mappings
 .It Policy Constraints            Ta Dv NID_policy_constraints
 .It Inhibit Any Policy            Ta Dv NID_inhibit_any_policy
+.It IP Address Delegation         Ta Dv NID_sbgp_ipAddrBlock
+.It Autonomous System Identifier Delegation\
+                                  Ta Dv NID_sbgp_autonomousSysNum
 .El
 .Ss Netscape Certificate Extensions
 The following are (largely obsolete) Netscape certificate extensions.
