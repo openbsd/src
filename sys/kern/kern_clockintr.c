@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.57 2023/09/24 12:27:16 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.58 2023/09/25 00:29:31 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -576,12 +576,14 @@ db_show_all_clockintr(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	struct timespec now;
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
+	int width = sizeof(long) * 2 + 2;	/* +2 for "0x" prefix */
 
 	nanouptime(&now);
 	db_printf("%20s\n", "UPTIME");
 	db_printf("%10lld.%09ld\n", now.tv_sec, now.tv_nsec);
 	db_printf("\n");
-	db_printf("%20s  %5s  %3s  %s\n", "EXPIRATION", "STATE", "CPU", "NAME");
+	db_printf("%20s  %5s  %3s  %*s  %s\n",
+	    "EXPIRATION", "STATE", "CPU", width, "ARG", "NAME");
 	CPU_INFO_FOREACH(cii, ci) {
 		if (ISSET(ci->ci_queue.cq_flags, CQ_INIT))
 			db_show_clockintr_cpu(ci);
@@ -611,13 +613,15 @@ db_show_clockintr(const struct clockintr *cl, const char *state, u_int cpu)
 	struct timespec ts;
 	char *name;
 	db_expr_t offset;
+	int width = sizeof(long) * 2;
 
 	NSEC_TO_TIMESPEC(cl->cl_expiration, &ts);
 	db_find_sym_and_offset((vaddr_t)cl->cl_func, &name, &offset);
 	if (name == NULL)
 		name = "?";
-	db_printf("%10lld.%09ld  %5s  %3u  %s\n",
-	    ts.tv_sec, ts.tv_nsec, state, cpu, name);
+	db_printf("%10lld.%09ld  %5s  %3u  0x%0*lx  %s\n",
+	    ts.tv_sec, ts.tv_nsec, state, cpu,
+	    width, (unsigned long)cl->cl_arg, name);
 }
 
 #endif /* DDB */
