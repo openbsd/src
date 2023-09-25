@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2050 2023/09/07 02:11:26 daniel Exp $
+$OpenBSD: pcidevs,v 1.2051 2023/09/25 15:37:36 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -7305,6 +7305,7 @@ product MEINBERG PCI32		0x0101	PCI32
 product MEINBERG PCI509		0x0102	PCI509
 product MEINBERG PCI511		0x0104	PCI511
 product MEINBERG PEX511		0x0105	PEX511
+product MEINBERG PZF180PEX	0x0106	PZF180PEX
 product MEINBERG GPS170PCI	0x0204	GPS170PCI
 
 /* Mellanox */
