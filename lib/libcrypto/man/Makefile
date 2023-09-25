@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.270 2023/09/25 11:59:10 tb Exp $
+# $OpenBSD: Makefile,v 1.271 2023/09/25 12:00:49 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,6 @@ MAN=	\
 	ACCESS_DESCRIPTION_new.3 \
 	AES_encrypt.3 \
 	ASIdentifiers_new.3 \
-	ASRange_new.3 \
 	ASN1_BIT_STRING_set.3 \
 	ASN1_INTEGER_get.3 \
 	ASN1_NULL_new.3 \
@@ -31,6 +30,7 @@ MAN=	\
 	ASN1_parse_dump.3 \
 	ASN1_put_object.3 \
 	ASN1_time_parse.3 \
+	ASRange_new.3 \
 	AUTHORITY_KEYID_new.3 \
 	BASIC_CONSTRAINTS_new.3 \
 	BF_set_key.3 \
