@@ -1,4 +1,4 @@
-/*	$Id: test-geofeed.c,v 1.4 2023/05/30 12:14:48 claudio Exp $ */
+/*	$Id: test-geofeed.c,v 1.5 2023/09/25 11:09:30 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 
 	for (i = 0; i < argc; i++) {
 		buf = load_file(argv[i], &len);
-		if ((p = geofeed_parse(&xp, argv[i], buf, len)) == NULL) {
+		if ((p = geofeed_parse(&xp, argv[i], -1, buf, len)) == NULL) {
 			free(buf);
 			break;
 		}
