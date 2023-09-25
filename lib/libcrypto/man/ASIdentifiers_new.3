@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASIdentifiers_new.3,v 1.1 2023/09/25 01:14:34 tb Exp $
+.\" $OpenBSD: ASIdentifiers_new.3,v 1.2 2023/09/25 11:12:08 tb Exp $
 .\"
 .\" Copyright (c) 2021 Theo Buehler <tb@openbsd.org>
 .\"
@@ -75,11 +75,11 @@ and
 .Fn i2d_ASIdentifiers
 decode and encode ASN.1
 .Vt ASIdentifiers
-structures as defined in RFC 3779, section 3.2.3.1.
+objects as defined in RFC 3779, section 3.2.3.1.
 For details about the semantics, examples, caveats, and bugs, see
 .Xr ASN1_item_d2i 3 .
 In order for the encoding produced by
-.Fn d2i_ASIdentifiers
+.Fn i2d_ASIdentifiers
 to conform to RFC 3779,
 .Fa asid
 must be in
