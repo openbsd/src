@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.48 2023/04/28 01:24:14 kevlo Exp $
+#	$OpenBSD: list,v 1.49 2023/09/25 16:42:19 sthen Exp $
 
 SRCDIRS distrib/special
 
@@ -105,69 +105,69 @@ COPY    ${DESTDIR}/etc/firmware/urtwn-rtl8192eu	etc/firmware/urtwn-rtl8192eu
 MKDIR						usr/mdec/am335x
 COPY	/usr/local/share/u-boot/am335x_evm/MLO	usr/mdec/am335x/MLO
 COPY	/usr/local/share/u-boot/am335x_evm/u-boot.img	usr/mdec/am335x/u-boot.img
-COPY	/usr/local/share/dtb/arm/am335x-bone.dtb	usr/mdec/am335x/am335x-bone.dtb
-COPY	/usr/local/share/dtb/arm/am335x-boneblack.dtb	usr/mdec/am335x/am335x-boneblack.dtb
-COPY	/usr/local/share/dtb/arm/am335x-pocketbeagle.dtb	usr/mdec/am335x/am335x-pocketbeagle.dtb
-COPY	/usr/local/share/dtb/arm/am335x-boneblack-wireless.dtb	usr/mdec/am335x/am335x-boneblack-wireless.dtb
-COPY	/usr/local/share/dtb/arm/am335x-boneblue.dtb	usr/mdec/am335x/am335x-boneblue.dtb
-COPY	/usr/local/share/dtb/arm/am335x-bonegreen.dtb	usr/mdec/am335x/am335x-bonegreen.dtb
-COPY	/usr/local/share/dtb/arm/am335x-bonegreen-wireless.dtb	usr/mdec/am335x/am335x-bonegreen-wireless.dtb
-COPY	/usr/local/share/dtb/arm/am335x-evm.dtb		usr/mdec/am335x/am335x-evm.dtb
-COPY	/usr/local/share/dtb/arm/am335x-evmsk.dtb	usr/mdec/am335x/am335x-evmsk.dtb
-COPY	/usr/local/share/dtb/arm/am335x-icev2.dtb	usr/mdec/am335x/am335x-icev2.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-bone.dtb	usr/mdec/am335x/am335x-bone.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-boneblack.dtb	usr/mdec/am335x/am335x-boneblack.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-pocketbeagle.dtb	usr/mdec/am335x/am335x-pocketbeagle.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-boneblack-wireless.dtb	usr/mdec/am335x/am335x-boneblack-wireless.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-boneblue.dtb	usr/mdec/am335x/am335x-boneblue.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-bonegreen.dtb	usr/mdec/am335x/am335x-bonegreen.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-bonegreen-wireless.dtb	usr/mdec/am335x/am335x-bonegreen-wireless.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-evm.dtb		usr/mdec/am335x/am335x-evm.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-evmsk.dtb	usr/mdec/am335x/am335x-evmsk.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/am335x-icev2.dtb	usr/mdec/am335x/am335x-icev2.dtb
 
 MKDIR							usr/mdec/cubie
 COPY	/usr/local/share/u-boot/Cubieboard2/u-boot-sunxi-with-spl.bin	usr/mdec/cubie/u-boot-sunxi-with-spl.bin
-COPY	/usr/local/share/dtb/arm/sun7i-a20-cubieboard2.dtb	usr/mdec/cubie/sun7i-a20-cubieboard2.dtb
+COPY	/usr/local/share/dtb/arm/allwinner/sun7i-a20-cubieboard2.dtb	usr/mdec/cubie/sun7i-a20-cubieboard2.dtb
 
 MKDIR							usr/mdec/panda
 COPY	/usr/local/share/u-boot/omap4_panda/MLO		usr/mdec/panda/MLO
 COPY	/usr/local/share/u-boot/omap4_panda/u-boot.img	usr/mdec/panda/u-boot.img
-COPY	/usr/local/share/dtb/arm/omap4-duovero-parlor.dtb	usr/mdec/panda/omap4-duovero-parlor.dtb
-COPY	/usr/local/share/dtb/arm/omap4-panda-a4.dtb	usr/mdec/panda/omap4-panda-a4.dtb
-COPY	/usr/local/share/dtb/arm/omap4-panda-es.dtb	usr/mdec/panda/omap4-panda-es.dtb
-COPY	/usr/local/share/dtb/arm/omap4-panda.dtb	usr/mdec/panda/omap4-panda.dtb
-COPY	/usr/local/share/dtb/arm/omap4-sdp.dtb		usr/mdec/panda/omap4-sdp.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/omap4-duovero-parlor.dtb	usr/mdec/panda/omap4-duovero-parlor.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/omap4-panda-a4.dtb	usr/mdec/panda/omap4-panda-a4.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/omap4-panda-es.dtb	usr/mdec/panda/omap4-panda-es.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/omap4-panda.dtb	usr/mdec/panda/omap4-panda.dtb
+COPY	/usr/local/share/dtb/arm/ti/omap/omap4-sdp.dtb		usr/mdec/panda/omap4-sdp.dtb
 
 MKDIR							usr/mdec/cubox
 COPY	/usr/local/share/u-boot/mx6cuboxi/SPL		usr/mdec/cubox/SPL
 COPY	/usr/local/share/u-boot/mx6cuboxi/u-boot.img	usr/mdec/cubox/u-boot.img
-COPY	/usr/local/share/dtb/arm/imx6dl-cubox-i.dtb	usr/mdec/cubox/imx6dl-cubox-i.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-cubox-i-emmc-som-v15.dtb	usr/mdec/cubox/imx6dl-cubox-i-emmc-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-cubox-i-som-v15.dtb	usr/mdec/cubox/imx6dl-cubox-i-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard.dtb	usr/mdec/cubox/imx6dl-hummingboard.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard-emmc-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard-emmc-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard2.dtb	usr/mdec/cubox/imx6dl-hummingboard2.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard2-emmc-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard2-emmc-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-hummingboard2-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard2-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-cubox-i.dtb	usr/mdec/cubox/imx6q-cubox-i.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-cubox-i-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-cubox-i-emmc-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-cubox-i-som-v15.dtb	usr/mdec/cubox/imx6q-cubox-i-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-hummingboard.dtb	usr/mdec/cubox/imx6q-hummingboard.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-hummingboard-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard-emmc-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-hummingboard-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-hummingboard2.dtb	usr/mdec/cubox/imx6q-hummingboard2.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-hummingboard2-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard2-emmc-som-v15.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-hummingboard2-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard2-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-cubox-i.dtb	usr/mdec/cubox/imx6dl-cubox-i.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-cubox-i-emmc-som-v15.dtb	usr/mdec/cubox/imx6dl-cubox-i-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-cubox-i-som-v15.dtb	usr/mdec/cubox/imx6dl-cubox-i-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-hummingboard.dtb	usr/mdec/cubox/imx6dl-hummingboard.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-hummingboard-emmc-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-hummingboard-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-hummingboard2.dtb	usr/mdec/cubox/imx6dl-hummingboard2.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-hummingboard2-emmc-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard2-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-hummingboard2-som-v15.dtb	usr/mdec/cubox/imx6dl-hummingboard2-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-cubox-i.dtb	usr/mdec/cubox/imx6q-cubox-i.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-cubox-i-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-cubox-i-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-cubox-i-som-v15.dtb	usr/mdec/cubox/imx6q-cubox-i-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-hummingboard.dtb	usr/mdec/cubox/imx6q-hummingboard.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-hummingboard-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-hummingboard-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-hummingboard2.dtb	usr/mdec/cubox/imx6q-hummingboard2.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-hummingboard2-emmc-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard2-emmc-som-v15.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-hummingboard2-som-v15.dtb	usr/mdec/cubox/imx6q-hummingboard2-som-v15.dtb
 
 MKDIR							usr/mdec/nitrogen
-COPY	/usr/local/share/dtb/arm/imx6dl-nitrogen6x.dtb	usr/mdec/nitrogen/imx6dl-nitrogen6x.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-sabrelite.dtb	usr/mdec/nitrogen/imx6dl-sabrelite.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-nitrogen6_max.dtb	usr/mdec/nitrogen/imx6q-nitrogen6_max.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-nitrogen6x.dtb	usr/mdec/nitrogen/imx6q-nitrogen6x.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-sabrelite.dtb	usr/mdec/nitrogen/imx6q-sabrelite.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-nitrogen6x.dtb	usr/mdec/nitrogen/imx6dl-nitrogen6x.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-sabrelite.dtb	usr/mdec/nitrogen/imx6dl-sabrelite.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-nitrogen6_max.dtb	usr/mdec/nitrogen/imx6q-nitrogen6_max.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-nitrogen6x.dtb	usr/mdec/nitrogen/imx6q-nitrogen6x.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-sabrelite.dtb	usr/mdec/nitrogen/imx6q-sabrelite.dtb
 
 MKDIR							usr/mdec/wandboard
 COPY	/usr/local/share/u-boot/wandboard/SPL		usr/mdec/wandboard/SPL
 COPY	/usr/local/share/u-boot/wandboard/u-boot.img	usr/mdec/wandboard/u-boot.img
-COPY	/usr/local/share/dtb/arm/imx6dl-wandboard.dtb	usr/mdec/wandboard/imx6dl-wandboard.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-wandboard-revb1.dtb	usr/mdec/wandboard/imx6dl-wandboard-revb1.dtb
-COPY	/usr/local/share/dtb/arm/imx6dl-wandboard-revd1.dtb	usr/mdec/wandboard/imx6dl-wandboard-revd1.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-wandboard.dtb	usr/mdec/wandboard/imx6q-wandboard.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-wandboard-revb1.dtb	usr/mdec/wandboard/imx6q-wandboard-revb1.dtb
-COPY	/usr/local/share/dtb/arm/imx6q-wandboard-revd1.dtb	usr/mdec/wandboard/imx6q-wandboard-revd1.dtb
-COPY	/usr/local/share/dtb/arm/imx6qp-wandboard-revd1.dtb	usr/mdec/wandboard/imx6qp-wandboard-revd1.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-wandboard.dtb	usr/mdec/wandboard/imx6dl-wandboard.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-wandboard-revb1.dtb	usr/mdec/wandboard/imx6dl-wandboard-revb1.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6dl-wandboard-revd1.dtb	usr/mdec/wandboard/imx6dl-wandboard-revd1.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-wandboard.dtb	usr/mdec/wandboard/imx6q-wandboard.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-wandboard-revb1.dtb	usr/mdec/wandboard/imx6q-wandboard-revb1.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6q-wandboard-revd1.dtb	usr/mdec/wandboard/imx6q-wandboard-revd1.dtb
+COPY	/usr/local/share/dtb/arm/nxp/imx/imx6qp-wandboard-revd1.dtb	usr/mdec/wandboard/imx6qp-wandboard-revd1.dtb
 
 # copy the MAKEDEV script and make some devices
 SCRIPT	${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV

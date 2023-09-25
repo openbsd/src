@@ -1,5 +1,6 @@
 BOARD=	wandboard
 PLATFORM=IMX
+DTBDIR= nxp/imx/
 UBOOT=	wandboard
 DTBS=\
 	imx6dl-wandboard.dtb \

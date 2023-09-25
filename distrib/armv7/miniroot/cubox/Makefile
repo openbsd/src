@@ -1,5 +1,6 @@
 BOARD=	cubox
 PLATFORM=IMX
+DTBDIR= nxp/imx/
 UBOOT=	mx6cuboxi
 DTBS=\
 	imx6dl-cubox-i.dtb \

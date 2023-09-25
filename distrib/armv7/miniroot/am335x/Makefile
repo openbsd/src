@@ -1,5 +1,6 @@
 BOARD=	am335x
 PLATFORM=OMAP
+DTBDIR= ti/omap/
 UBOOT=	am335x_evm
 DTBS=\
 	am335x-bone.dtb \

@@ -1,5 +1,6 @@
 BOARD=	panda
 PLATFORM=OMAP
+DTBDIR= ti/omap/
 UBOOT=	omap4_panda
 DTBS=\
 	omap4-duovero-parlor.dtb \

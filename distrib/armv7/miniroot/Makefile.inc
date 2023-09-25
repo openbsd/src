@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.31 2023/04/24 15:31:14 krw Exp $
+#	$OpenBSD: Makefile.inc,v 1.32 2023/09/25 16:42:19 sthen Exp $
 
 FS=		miniroot-${BOARD}-${OSrev}.img
 FSSIZE=		71424	# ffs+msdos, actually
@@ -24,7 +24,7 @@ ${FS}: bsd.rd
 	mount -o-l /dev/`cat vnd`i ${MOUNT_POINT}
 
 .for DTB in ${DTBS}
-	cp ${PDTB}/${DTB} ${MOUNT_POINT}/
+	cp ${PDTB}/${DTBDIR}${DTB} ${MOUNT_POINT}/
 .endfor
 .if ${PLATFORM} == "OMAP"
 	cp ${PUBOOT}/${UBOOT}/{MLO,u-boot.img} ${MOUNT_POINT}/

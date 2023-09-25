@@ -1,5 +1,6 @@
 BOARD=	nitrogen
 PLATFORM=IMX
+DTBDIR= nxp/imx/
 UBOOT=	nitrogen6q
 DTBS=\
 	imx6dl-nitrogen6x.dtb \
