@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.191 2023/09/25 11:08:45 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.192 2023/09/25 14:56:20 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -723,6 +723,9 @@ int		 sbgp_addr(const char *, struct cert_ip *, size_t *,
 int		 sbgp_addr_range(const char *, struct cert_ip *, size_t *,
 		    enum afi, const IPAddressRange *);
 
+int		 sbgp_parse_ipaddrblk(const char *, const IPAddrBlocks *,
+		    struct cert_ip **, size_t *);
+
 /* Work with RFC 3779 AS numbers, ranges. */
 
 int		 as_id_parse(const ASN1_INTEGER *, uint32_t *);
@@ -735,6 +738,9 @@ int		 sbgp_as_id(const char *, struct cert_as *, size_t *,
 		    const ASN1_INTEGER *);
 int		 sbgp_as_range(const char *, struct cert_as *, size_t *,
 		    const ASRange *);
+
+int		 sbgp_parse_assysnum(const char *, const ASIdentifiers *,
+		    struct cert_as **, size_t *);
 
 /* Parser-specific */
 void		 entity_free(struct entity *);

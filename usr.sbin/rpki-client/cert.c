@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.115 2023/09/12 09:33:30 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.116 2023/09/25 14:56:20 tb Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -153,40 +153,26 @@ sbgp_as_inherit(const char *fn, struct cert_as *ases, size_t *asz)
 	return append_as(fn, ases, asz, &as);
 }
 
-/*
- * Parse RFC 6487 4.8.11 X509v3 extension, with syntax documented in RFC
- * 3779 starting in section 3.2.
- * Returns zero on failure, non-zero on success.
- */
-static int
-sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
+int
+sbgp_parse_assysnum(const char *fn, const ASIdentifiers *asidentifiers,
+    struct cert_as **out_as, size_t *out_asz)
 {
-	ASIdentifiers		*asidentifiers = NULL;
 	const ASIdOrRanges	*aors = NULL;
-	size_t			 asz;
-	int			 i, rc = 0;
+	struct cert_as		*as = NULL;
+	size_t			 asz, new_asz = 0;
+	int			 i;
 
-	if (!X509_EXTENSION_get_critical(ext)) {
-		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "extension not critical", p->fn);
-		goto out;
-	}
-
-	if ((asidentifiers = X509V3_EXT_d2i(ext)) == NULL) {
-		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "failed extension parse", p->fn);
-		goto out;
-	}
+	assert(*out_as == NULL && *out_asz == 0);
 
 	if (asidentifiers->rdi != NULL) {
 		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "should not have RDI values", p->fn);
+		    "should not have RDI values", fn);
 		goto out;
 	}
 
 	if (asidentifiers->asnum == NULL) {
 		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
-		    "no AS number resource set", p->fn);
+		    "no AS number resource set", fn);
 		goto out;
 	}
 
@@ -200,26 +186,25 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 		break;
 	default:
 		warnx("%s: RFC 3779 section 3.2.3.2: ASIdentifierChoice: "
-		    "unknown type %d", p->fn, asidentifiers->asnum->type);
+		    "unknown type %d", fn, asidentifiers->asnum->type);
 		goto out;
 	}
 
 	if (asz == 0) {
-		warnx("%s: RFC 6487 section 4.8.11: empty asIdsOrRanges",
-		    p->fn);
+		warnx("%s: RFC 6487 section 4.8.11: empty asIdsOrRanges", fn);
 		goto out;
 	}
 	if (asz >= MAX_AS_SIZE) {
 		warnx("%s: too many AS number entries: limit %d",
-		    p->fn, MAX_AS_SIZE);
+		    fn, MAX_AS_SIZE);
 		goto out;
 	}
-	p->res->as = calloc(asz, sizeof(struct cert_as));
-	if (p->res->as == NULL)
+	as = calloc(asz, sizeof(struct cert_as));
+	if (as == NULL)
 		err(1, NULL);
 
 	if (aors == NULL) {
-		if (!sbgp_as_inherit(p->fn, p->res->as, &p->res->asz))
+		if (!sbgp_as_inherit(fn, as, &new_asz))
 			goto out;
 	}
 
@@ -229,21 +214,57 @@ sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
 		aor = sk_ASIdOrRange_value(aors, i);
 		switch (aor->type) {
 		case ASIdOrRange_id:
-			if (!sbgp_as_id(p->fn, p->res->as, &p->res->asz,
-			    aor->u.id))
+			if (!sbgp_as_id(fn, as, &new_asz, aor->u.id))
 				goto out;
 			break;
 		case ASIdOrRange_range:
-			if (!sbgp_as_range(p->fn, p->res->as, &p->res->asz,
-			    aor->u.range))
+			if (!sbgp_as_range(fn, as, &new_asz, aor->u.range))
 				goto out;
 			break;
 		default:
 			warnx("%s: RFC 3779 section 3.2.3.5: ASIdOrRange: "
-			    "unknown type %d", p->fn, aor->type);
+			    "unknown type %d", fn, aor->type);
 			goto out;
 		}
 	}
+
+	*out_as = as;
+	*out_asz = new_asz;
+
+	return 1;
+
+ out:
+	free(as);
+
+	return 0;
+}
+
+/*
+ * Parse RFC 6487 4.8.11 X509v3 extension, with syntax documented in RFC
+ * 3779 starting in section 3.2.
+ * Returns zero on failure, non-zero on success.
+ */
+static int
+sbgp_assysnum(struct parse *p, X509_EXTENSION *ext)
+{
+	ASIdentifiers		*asidentifiers = NULL;
+	int			 rc = 0;
+
+	if (!X509_EXTENSION_get_critical(ext)) {
+		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
+		    "extension not critical", p->fn);
+		goto out;
+	}
+
+	if ((asidentifiers = X509V3_EXT_d2i(ext)) == NULL) {
+		warnx("%s: RFC 6487 section 4.8.11: autonomousSysNum: "
+		    "failed extension parse", p->fn);
+		goto out;
+	}
+
+	if (!sbgp_parse_assysnum(p->fn, asidentifiers,
+	    &p->res->as, &p->res->asz))
+		goto out;
 
 	rc = 1;
  out:
@@ -331,6 +352,93 @@ sbgp_addr_inherit(const char *fn, struct cert_ip *ips, size_t *ipsz,
 	return append_ip(fn, ips, ipsz, &ip);
 }
 
+int
+sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
+    struct cert_ip **out_ips, size_t *out_ipsz)
+{
+	const IPAddressFamily	*af;
+	const IPAddressOrRanges	*aors;
+	const IPAddressOrRange	*aor;
+	enum afi		 afi;
+	struct cert_ip		*ips = NULL;
+	size_t			 ipsz, new_ipsz = 0;
+	int			 i, j;
+
+	assert(*out_ips == NULL && *out_ipsz == 0);
+
+	for (i = 0; i < sk_IPAddressFamily_num(addrblk); i++) {
+		af = sk_IPAddressFamily_value(addrblk, i);
+
+		switch (af->ipAddressChoice->type) {
+		case IPAddressChoice_inherit:
+			aors = NULL;
+			ipsz = new_ipsz + 1;
+			break;
+		case IPAddressChoice_addressesOrRanges:
+			aors = af->ipAddressChoice->u.addressesOrRanges;
+			ipsz = new_ipsz + sk_IPAddressOrRange_num(aors);
+			break;
+		default:
+			warnx("%s: RFC 3779: IPAddressChoice: unknown type %d",
+			    fn, af->ipAddressChoice->type);
+			goto out;
+		}
+		if (ipsz == new_ipsz) {
+			warnx("%s: RFC 6487 section 4.8.10: "
+			    "empty ipAddressesOrRanges", fn);
+			goto out;
+		}
+
+		if (ipsz >= MAX_IP_SIZE)
+			goto out;
+		ips = recallocarray(ips, new_ipsz, ipsz,
+		    sizeof(struct cert_ip));
+		if (ips == NULL)
+			err(1, NULL);
+
+		if (!ip_addr_afi_parse(fn, af->addressFamily, &afi)) {
+			warnx("%s: RFC 3779: invalid AFI", fn);
+			goto out;
+		}
+
+		if (aors == NULL) {
+			if (!sbgp_addr_inherit(fn, ips, &new_ipsz, afi))
+				goto out;
+			continue;
+		}
+
+		for (j = 0; j < sk_IPAddressOrRange_num(aors); j++) {
+			aor = sk_IPAddressOrRange_value(aors, j);
+			switch (aor->type) {
+			case IPAddressOrRange_addressPrefix:
+				if (!sbgp_addr(fn, ips, &new_ipsz, afi,
+				    aor->u.addressPrefix))
+					goto out;
+				break;
+			case IPAddressOrRange_addressRange:
+				if (!sbgp_addr_range(fn, ips, &new_ipsz, afi,
+				    aor->u.addressRange))
+					goto out;
+				break;
+			default:
+				warnx("%s: RFC 3779: IPAddressOrRange: "
+				    "unknown type %d", fn, aor->type);
+				goto out;
+			}
+		}
+	}
+
+	*out_ips = ips;
+	*out_ipsz = new_ipsz;
+
+	return 1;
+
+ out:
+	free(ips);
+
+	return 0;
+}
+
 /*
  * Parse an sbgp-ipAddrBlock X509 extension, RFC 6487 4.8.10, with
  * syntax documented in RFC 3779 starting in section 2.2.
@@ -340,12 +448,7 @@ static int
 sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 {
 	STACK_OF(IPAddressFamily)	*addrblk = NULL;
-	const IPAddressFamily		*af;
-	const IPAddressOrRanges		*aors;
-	const IPAddressOrRange		*aor;
-	enum afi			 afi;
-	size_t				 ipsz;
-	int				 i, j, rc = 0;
+	int				 rc = 0;
 
 	if (!X509_EXTENSION_get_critical(ext)) {
 		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
@@ -359,68 +462,8 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 		goto out;
 	}
 
-	for (i = 0; i < sk_IPAddressFamily_num(addrblk); i++) {
-		af = sk_IPAddressFamily_value(addrblk, i);
-
-		switch (af->ipAddressChoice->type) {
-		case IPAddressChoice_inherit:
-			aors = NULL;
-			ipsz = p->res->ipsz + 1;
-			break;
-		case IPAddressChoice_addressesOrRanges:
-			aors = af->ipAddressChoice->u.addressesOrRanges;
-			ipsz = p->res->ipsz + sk_IPAddressOrRange_num(aors);
-			break;
-		default:
-			warnx("%s: RFC 3779: IPAddressChoice: unknown type %d",
-			    p->fn, af->ipAddressChoice->type);
-			goto out;
-		}
-		if (ipsz == p->res->ipsz) {
-			warnx("%s: RFC 6487 section 4.8.10: "
-			    "empty ipAddressesOrRanges", p->fn);
-			goto out;
-		}
-
-		if (ipsz >= MAX_IP_SIZE)
-			goto out;
-		p->res->ips = recallocarray(p->res->ips, p->res->ipsz, ipsz,
-		    sizeof(struct cert_ip));
-		if (p->res->ips == NULL)
-			err(1, NULL);
-
-		if (!ip_addr_afi_parse(p->fn, af->addressFamily, &afi)) {
-			warnx("%s: RFC 3779: invalid AFI", p->fn);
-			goto out;
-		}
-
-		if (aors == NULL) {
-			if (!sbgp_addr_inherit(p->fn, p->res->ips,
-			    &p->res->ipsz, afi))
-				goto out;
-			continue;
-		}
-
-		for (j = 0; j < sk_IPAddressOrRange_num(aors); j++) {
-			aor = sk_IPAddressOrRange_value(aors, j);
-			switch (aor->type) {
-			case IPAddressOrRange_addressPrefix:
-				if (!sbgp_addr(p->fn, p->res->ips,
-				    &p->res->ipsz, afi, aor->u.addressPrefix))
-					goto out;
-				break;
-			case IPAddressOrRange_addressRange:
-				if (!sbgp_addr_range(p->fn, p->res->ips,
-				    &p->res->ipsz, afi, aor->u.addressRange))
-					goto out;
-				break;
-			default:
-				warnx("%s: RFC 3779: IPAddressOrRange: "
-				    "unknown type %d", p->fn, aor->type);
-				goto out;
-			}
-		}
-	}
+	if (!sbgp_parse_ipaddrblk(p->fn, addrblk, &p->res->ips, &p->res->ipsz))
+		goto out;
 
 	if (p->res->ipsz == 0) {
 		warnx("%s: RFC 6487 section 4.8.10: empty ipAddrBlock", p->fn);
