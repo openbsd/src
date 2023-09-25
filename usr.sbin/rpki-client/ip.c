@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.27 2022/11/29 20:41:32 job Exp $ */
+/*	$OpenBSD: ip.c,v 1.28 2023/09/25 08:48:14 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -249,6 +249,38 @@ ip_addr_print(const struct ip_addr *addr,
 	if (inet_ntop(af, addr->addr, ipbuf, sizeof(ipbuf)) == NULL)
 		err(1, "inet_ntop");
 	ret = snprintf(buf, bufsz, "%s/%hhu", ipbuf, addr->prefixlen);
+	if (ret < 0 || (size_t)ret >= bufsz)
+		err(1, "malformed IP address");
+}
+
+/*
+ * Convert a ip_addr into a NUL-terminated range notation string.
+ * The size of the buffer must be at least 95 (inclusive).
+ */
+void
+ip_addr_range_print(const struct ip_addr_range *range,
+    enum afi afi, char *buf, size_t bufsz)
+{
+	char min[INET6_ADDRSTRLEN], max[INET6_ADDRSTRLEN];
+	int ret, af;
+
+	switch (afi) {
+	case AFI_IPV4:
+		af = AF_INET;
+		break;
+	case AFI_IPV6:
+		af = AF_INET6;
+		break;
+	default:
+		errx(1, "unsupported address family identifier");
+	}
+
+	if (inet_ntop(af, &range->min, min, sizeof(min)) == NULL)
+		err(1, "inet_ntop");
+	if (inet_ntop(af, &range->max, max, sizeof(max)) == NULL)
+		err(1, "inet_ntop");
+
+	ret = snprintf(buf, bufsz, "%s--%s", min, max);
 	if (ret < 0 || (size_t)ret >= bufsz)
 		err(1, "malformed IP address");
 }

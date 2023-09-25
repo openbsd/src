@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.66 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: validate.c,v 1.67 2023/09/25 08:48:14 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -135,48 +135,63 @@ valid_cert(const char *fn, struct auth *a, const struct cert *cert)
 {
 	size_t		 i;
 	uint32_t	 min, max;
-	char		 buf1[64], buf2[64];
+	char		 buf[128];
 
 	for (i = 0; i < cert->asz; i++) {
 		if (cert->as[i].type == CERT_AS_INHERIT)
 			continue;
-		min = cert->as[i].type == CERT_AS_ID ?
-		    cert->as[i].id : cert->as[i].range.min;
-		max = cert->as[i].type == CERT_AS_ID ?
-		    cert->as[i].id : cert->as[i].range.max;
+
+		if (cert->as[i].type == CERT_AS_ID) {
+			min = cert->as[i].id;
+			max = cert->as[i].id;
+		} else {
+			min = cert->as[i].range.min;
+			max = cert->as[i].range.max;
+		}
+
 		if (valid_as(a, min, max))
 			continue;
-		warnx("%s: RFC 6487: uncovered AS: "
-		    "%u--%u", fn, min, max);
+
+		switch (cert->as[i].type) {
+		case CERT_AS_ID:
+			warnx("%s: RFC 6487: uncovered AS: %u", fn, min);
+			break;
+		case CERT_AS_RANGE:
+			warnx("%s: RFC 6487: uncovered AS: %u--%u", fn,
+			    min, max);
+			break;
+		case CERT_AS_INHERIT:
+			warnx("%s: RFC 6487: uncovered AS: (inherit)", fn);
+			break;
+		}
+
 		return 0;
 	}
 
 	for (i = 0; i < cert->ipsz; i++) {
 		if (cert->ips[i].type == CERT_IP_INHERIT)
 			continue;
+
 		if (valid_ip(a, cert->ips[i].afi, cert->ips[i].min,
 		    cert->ips[i].max))
 			continue;
+
 		switch (cert->ips[i].type) {
-		case CERT_IP_RANGE:
-			ip_addr_print(&cert->ips[i].range.min,
-			    cert->ips[i].afi, buf1, sizeof(buf1));
-			ip_addr_print(&cert->ips[i].range.max,
-			    cert->ips[i].afi, buf2, sizeof(buf2));
-			warnx("%s: RFC 6487: uncovered IP: "
-			    "%s--%s", fn, buf1, buf2);
-			break;
 		case CERT_IP_ADDR:
 			ip_addr_print(&cert->ips[i].ip,
-			    cert->ips[i].afi, buf1, sizeof(buf1));
-			warnx("%s: RFC 6487: uncovered IP: "
-			    "%s", fn, buf1);
+			    cert->ips[i].afi, buf, sizeof(buf));
+			warnx("%s: RFC 6487: uncovered IP: %s", fn, buf);
+			break;
+		case CERT_IP_RANGE:
+			ip_addr_range_print(&cert->ips[i].range,
+			    cert->ips[i].afi, buf, sizeof(buf));
+			warnx("%s: RFC 6487: uncovered IP: %s", fn, buf);
 			break;
 		case CERT_IP_INHERIT:
-			warnx("%s: RFC 6487: uncovered IP: "
-			    "(inherit)", fn);
+			warnx("%s: RFC 6487: uncovered IP: (inherit)", fn);
 			break;
 		}
+
 		return 0;
 	}
 
@@ -458,25 +473,28 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 {
 	size_t		i;
 	uint32_t	min, max;
-	char		buf1[64], buf2[64];
+	char		buf[128];
 
 	for (i = 0; i < rsc->asz; i++) {
-		min = rsc->as[i].type == CERT_AS_RANGE ? rsc->as[i].range.min
-		    : rsc->as[i].id;
-		max = rsc->as[i].type == CERT_AS_RANGE ? rsc->as[i].range.max
-		    : rsc->as[i].id;
+		if (rsc->as[i].type == CERT_AS_ID) {
+			min = rsc->as[i].id;
+			max = rsc->as[i].id;
+		} else {
+			min = rsc->as[i].range.min;
+			max = rsc->as[i].range.max;
+		}
 
 		if (as_check_covered(min, max, cert->as, cert->asz) > 0)
 			continue;
 
 		switch (rsc->as[i].type) {
 		case CERT_AS_ID:
-			warnx("%s: RSC resourceBlock: uncovered AS Identifier: "
-			    "%u", fn, rsc->as[i].id);
+			warnx("%s: RSC resourceBlock: uncovered AS: %u", fn,
+			    min);
 			break;
 		case CERT_AS_RANGE:
-			warnx("%s: RSC resourceBlock: uncovered AS Range: "
-			    "%u--%u", fn, min, max);
+			warnx("%s: RSC resourceBlock: uncovered AS: %u--%u",
+			    fn, min, max);
 			break;
 		default:
 			break;
@@ -490,19 +508,17 @@ valid_rsc(const char *fn, struct cert *cert, struct rsc *rsc)
 			continue;
 
 		switch (rsc->ips[i].type) {
-		case CERT_IP_RANGE:
-			ip_addr_print(&rsc->ips[i].range.min,
-			    rsc->ips[i].afi, buf1, sizeof(buf1));
-			ip_addr_print(&rsc->ips[i].range.max,
-			    rsc->ips[i].afi, buf2, sizeof(buf2));
-			warnx("%s: RSC ResourceBlock: uncovered IP Range: "
-			    "%s--%s", fn, buf1, buf2);
-			break;
 		case CERT_IP_ADDR:
-			ip_addr_print(&rsc->ips[i].ip,
-			    rsc->ips[i].afi, buf1, sizeof(buf1));
-			warnx("%s: RSC ResourceBlock: uncovered IP: "
-			    "%s", fn, buf1);
+			ip_addr_print(&rsc->ips[i].ip, rsc->ips[i].afi, buf,
+			    sizeof(buf));
+			warnx("%s: RSC ResourceBlock: uncovered IP: %s", fn,
+			    buf);
+			break;
+		case CERT_IP_RANGE:
+			ip_addr_range_print(&rsc->ips[i].range, rsc->ips[i].afi,
+			    buf, sizeof(buf));
+			warnx("%s: RSC ResourceBlock: uncovered IP: %s", fn,
+			    buf);
 			break;
 		default:
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.189 2023/09/12 09:33:30 job Exp $ */
+/*	$OpenBSD: extern.h,v 1.190 2023/09/25 08:48:14 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -708,6 +708,8 @@ int		 ip_addr_parse(const ASN1_BIT_STRING *,
 			enum afi, const char *, struct ip_addr *);
 void		 ip_addr_print(const struct ip_addr *, enum afi, char *,
 			size_t);
+void		 ip_addr_range_print(const struct ip_addr_range *, enum afi,
+			char *, size_t);
 int		 ip_addr_cmp(const struct ip_addr *, const struct ip_addr *);
 int		 ip_addr_check_overlap(const struct cert_ip *,
 			const char *, const struct cert_ip *, size_t);
