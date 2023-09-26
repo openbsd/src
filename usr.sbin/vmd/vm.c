@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.93 2023/09/26 01:23:02 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.94 2023/09/26 01:53:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -257,7 +257,7 @@ vm_main(int fd, int vmm_fd)
 	/* Update process with the vm name. */
 	vcp = &vm.vm_params.vmc_params;
 	setproctitle("%s", vcp->vcp_name);
-	log_procinit(vcp->vcp_name);
+	log_procinit("vm/%s", vcp->vcp_name);
 
 	/* Receive the local prefix settings. */
 	sz = atomicio(read, fd, &env->vmd_cfg.cfg_localprefix,
@@ -565,6 +565,8 @@ vm_dispatch_vmm(int fd, short event, void *arg)
 			IMSG_SIZE_CHECK(&imsg, &verbose);
 			memcpy(&verbose, imsg.data, sizeof(verbose));
 			log_setverbose(verbose);
+			virtio_broadcast_imsg(vm, IMSG_CTL_VERBOSE, &verbose,
+			    sizeof(verbose));
 			break;
 		case IMSG_VMDOP_VM_SHUTDOWN:
 			if (vmmci_ctl(VMMCI_SHUTDOWN) == -1)

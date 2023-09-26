@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.8 2017/03/21 12:06:56 bluhm Exp $	*/
+/*	$OpenBSD: log.c,v 1.9 2023/09/26 01:53:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -24,30 +24,11 @@
 #include <errno.h>
 #include <time.h>
 
+#include "proc.h"
+
 static int	 debug;
 static int	 verbose;
-const char	*log_procname;
-
-void	log_init(int, int);
-void	log_procinit(const char *);
-void	log_setverbose(int);
-int	log_getverbose(void);
-void	log_warn(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_warnx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_info(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	log_debug(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-void	logit(int, const char *, ...)
-	    __attribute__((__format__ (printf, 2, 3)));
-void	vlog(int, const char *, va_list)
-	    __attribute__((__format__ (printf, 2, 0)));
-__dead void fatal(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
-__dead void fatalx(const char *, ...)
-	    __attribute__((__format__ (printf, 1, 2)));
+static char	 log_procname[2048];
 
 void
 log_init(int n_debug, int facility)
@@ -56,7 +37,7 @@ log_init(int n_debug, int facility)
 
 	debug = n_debug;
 	verbose = n_debug;
-	log_procinit(__progname);
+	log_procinit("%s", __progname);
 
 	if (!debug)
 		openlog(__progname, LOG_PID | LOG_NDELAY, facility);
@@ -65,10 +46,12 @@ log_init(int n_debug, int facility)
 }
 
 void
-log_procinit(const char *procname)
+log_procinit(const char *fmt, ...)
 {
-	if (procname != NULL)
-		log_procname = procname;
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(log_procname, sizeof(log_procname), fmt, ap);
+	va_end(ap);
 }
 
 void
@@ -101,7 +84,7 @@ vlog(int pri, const char *fmt, va_list ap)
 
 	if (debug) {
 		/* best effort in out of mem situations */
-		if (asprintf(&nfmt, "%s\n", fmt) == -1) {
+		if (asprintf(&nfmt, "%s: %s\n", log_procname, fmt) == -1) {
 			vfprintf(stderr, fmt, ap);
 			fprintf(stderr, "\n");
 		} else {

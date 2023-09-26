@@ -1,4 +1,4 @@
-/*	$OpenBSD: vionet.c,v 1.5 2023/09/23 12:31:41 dv Exp $	*/
+/*	$OpenBSD: vionet.c,v 1.6 2023/09/26 01:53:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -72,8 +72,6 @@ vionet_main(int fd, int fd_vmm)
 	ssize_t			 sz;
 	int			 ret;
 
-	log_procinit("vionet");
-
 	/*
 	 * stdio - needed for read/write to disk fds and channels to the vm.
 	 * vmm + proc - needed to create shared vm mappings.
@@ -110,7 +108,8 @@ vionet_main(int fd, int fd_vmm)
 	}
 	vcp = &vm.vm_params.vmc_params;
 	current_vm = &vm;
-	setproctitle("%s/vionet[%d]", vcp->vcp_name, vionet->idx);
+	setproctitle("%s/vionet%d", vcp->vcp_name, vionet->idx);
+	log_procinit("vm/%s/vionet%d", vcp->vcp_name, vionet->idx);
 
 	/* Now that we have our vm information, we can remap memory. */
 	ret = remap_guest_mem(&vm, fd_vmm);
@@ -688,6 +687,7 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg	 	 imsg;
 	ssize_t			 n = 0;
+	int			 verbose;
 
 	if (dev == NULL)
 		fatalx("%s: missing vionet pointer", __func__);
@@ -738,6 +738,11 @@ dev_dispatch_vm(int fd, short event, void *arg)
 			if (vionet->cfg.device_status
 			    & VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK)
 				event_add(&ev_tap, NULL);
+			break;
+		case IMSG_CTL_VERBOSE:
+			IMSG_SIZE_CHECK(&imsg, &verbose);
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_setverbose(verbose);
 			break;
 		}
 		imsg_free(&imsg);

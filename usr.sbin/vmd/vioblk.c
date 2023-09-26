@@ -1,4 +1,4 @@
-/*	$OpenBSD: vioblk.c,v 1.8 2023/09/14 15:25:43 dv Exp $	*/
+/*	$OpenBSD: vioblk.c,v 1.9 2023/09/26 01:53:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2023 Dave Voutila <dv@openbsd.org>
@@ -75,8 +75,6 @@ vioblk_main(int fd, int fd_vmm)
 	off_t			 szp = 0;
 	int			 i, ret, type;
 
-	log_procinit("vioblk");
-
 	/*
 	 * stdio - needed for read/write to disk fds and channels to the vm.
 	 * vmm + proc - needed to create shared vm mappings.
@@ -118,7 +116,9 @@ vioblk_main(int fd, int fd_vmm)
 	}
 	vcp = &vm.vm_params.vmc_params;
 	current_vm = &vm;
-	setproctitle("%s/vioblk[%d]", vcp->vcp_name, vioblk->idx);
+
+	setproctitle("%s/vioblk%d", vcp->vcp_name, vioblk->idx);
+	log_procinit("vm/%s/vioblk%d", vcp->vcp_name, vioblk->idx);
 
 	/* Now that we have our vm information, we can remap memory. */
 	ret = remap_guest_mem(&vm, fd_vmm);
@@ -154,7 +154,7 @@ vioblk_main(int fd, int fd_vmm)
 		goto fail;
 	}
 	vioblk->capacity = szp / 512;
-	log_debug("%s: initialized vioblk[%d] with %s image (capacity=%lld)",
+	log_debug("%s: initialized vioblk%d with %s image (capacity=%lld)",
 	    __func__, vioblk->idx, disk_type(type), vioblk->capacity);
 
 	/* If we're restoring hardware, reinitialize the virtqueue hva. */
@@ -434,6 +434,7 @@ dev_dispatch_vm(int fd, short event, void *arg)
 	struct imsgbuf		*ibuf = &iev->ibuf;
 	struct imsg	 	 imsg;
 	ssize_t			 n = 0;
+	int			 verbose;
 
 	if (event & EV_READ) {
 		if ((n = imsg_read(ibuf)) == -1 && errno != EAGAIN)
@@ -471,6 +472,11 @@ dev_dispatch_vm(int fd, short event, void *arg)
 			break;
 		case IMSG_VMDOP_UNPAUSE_VM:
 			log_debug("%s: unpausing", __func__);
+			break;
+		case IMSG_CTL_VERBOSE:
+			IMSG_SIZE_CHECK(&imsg, &verbose);
+			memcpy(&verbose, imsg.data, sizeof(verbose));
+			log_setverbose(verbose);
 			break;
 		default:
 			log_warnx("%s: unhandled imsg type %d", __func__,

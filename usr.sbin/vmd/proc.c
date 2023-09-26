@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.c,v 1.20 2023/02/15 20:44:01 tobhe Exp $	*/
+/*	$OpenBSD: proc.c,v 1.21 2023/09/26 01:53:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2010 - 2016 Reyk Floeter <reyk@openbsd.org>
@@ -287,7 +287,7 @@ proc_setup(struct privsep *ps, struct privsep_proc *procs, unsigned int nproc)
 	struct privsep_pipes	*pp;
 
 	/* Initialize parent title, ps_instances and procs. */
-	ps->ps_title[PROC_PARENT] = "parent";
+	ps->ps_title[PROC_PARENT] = "vmd";
 
 	for (src = 0; src < PROC_MAX; src++)
 		/* Default to 1 process instance */
@@ -514,7 +514,7 @@ proc_run(struct privsep *ps, struct privsep_proc *p,
 	const char		*root;
 	struct control_sock	*rcs;
 
-	log_procinit(p->p_title);
+	log_procinit("%s", p->p_title);
 
 	/* Set the process group of the current process */
 	setpgid(0, 0);

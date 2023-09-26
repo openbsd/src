@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmm.c,v 1.114 2023/07/27 09:27:43 dv Exp $	*/
+/*	$OpenBSD: vmm.c,v 1.115 2023/09/26 01:53:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -233,7 +233,7 @@ vmm_dispatch_parent(int fd, struct privsep_proc *p, struct imsg *imsg)
 		IMSG_SIZE_CHECK(imsg, &verbose);
 		memcpy(&verbose, imsg->data, sizeof(verbose));
 		log_setverbose(verbose);
-
+		env->vmd_verbose = verbose;
 		/* Forward message to each VM process */
 		TAILQ_FOREACH(vm, env->vmd_vms, vm_entry) {
 			imsg_compose_event(&vm->vm_iev,

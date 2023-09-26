@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.108 2023/09/23 12:31:41 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.109 2023/09/26 01:53:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1144,6 +1144,7 @@ vionet_dump(int fd)
 			return (-1);
 		}
 
+		/* Clear volatile state. Will reinitialize on restore. */
 		temp.vionet.vq[RXQ].q_hva = NULL;
 		temp.vionet.vq[TXQ].q_hva = NULL;
 		temp.async_fd = -1;
@@ -1202,6 +1203,7 @@ vioblk_dump(int fd)
 			return (-1);
 		}
 
+		/* Clear volatile state. Will reinitialize on restore. */
 		temp.vioblk.vq[0].q_hva = NULL;
 		temp.async_fd = -1;
 		temp.sync_fd = -1;
@@ -1261,36 +1263,33 @@ virtio_dump(int fd)
 	return (0);
 }
 
-void
-virtio_stop(struct vmd_vm *vm)
+void virtio_broadcast_imsg(struct vmd_vm *vm, uint16_t type, void *data,
+    uint16_t datalen)
 {
 	struct virtio_dev *dev;
 	int ret;
 
 	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
-		ret = imsg_compose_event(&dev->async_iev, IMSG_VMDOP_PAUSE_VM,
-		    0, 0, -1, NULL, 0);
+		ret = imsg_compose_event(&dev->async_iev, type, 0, 0, -1, data,
+		    datalen);
 		if (ret == -1) {
-			log_warnx("%s: failed to compose pause msg to device",
-				__func__);
+			log_warnx("%s: failed to broadcast imsg type %u",
+			    __func__, type);
 		}
 	}
+
+}
+
+void
+virtio_stop(struct vmd_vm *vm)
+{
+	return virtio_broadcast_imsg(vm, IMSG_VMDOP_PAUSE_VM, NULL, 0);
 }
 
 void
 virtio_start(struct vmd_vm *vm)
 {
-	struct virtio_dev *dev;
-	int ret;
-
-	SLIST_FOREACH(dev, &virtio_devs, dev_next) {
-		ret = imsg_compose_event(&dev->async_iev, IMSG_VMDOP_UNPAUSE_VM,
-		    0, 0, -1, NULL, 0);
-		if (ret == -1) {
-			log_warnx("%s: failed to compose start msg to device",
-			    __func__);
-		}
-	}
+	return virtio_broadcast_imsg(vm, IMSG_VMDOP_UNPAUSE_VM, NULL, 0);
 }
 
 /*
@@ -1299,7 +1298,7 @@ virtio_start(struct vmd_vm *vm)
 static int
 virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 {
-	char *nargv[10], num[32], vmm_fd[32], t[2];
+	char *nargv[12], num[32], vmm_fd[32], vm_name[VM_NAME_MAX], t[2];
 	pid_t dev_pid;
 	int data_fds[VM_MAX_BASE_PER_DISK], sync_fds[2], async_fds[2], ret = 0;
 	size_t i, data_fds_sz, sz = 0;
@@ -1311,13 +1310,13 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 	case VMD_DEVTYPE_NET:
 		data_fds[0] = dev->vionet.data_fd;
 		data_fds_sz = 1;
-		log_debug("%s: launching vionet[%d]",
+		log_debug("%s: launching vionet%d",
 		    vm->vm_params.vmc_params.vcp_name, dev->vionet.idx);
 		break;
 	case VMD_DEVTYPE_DISK:
 		memcpy(&data_fds, dev->vioblk.disk_fd, sizeof(data_fds));
 		data_fds_sz = dev->vioblk.ndisk_fd;
-		log_debug("%s: launching vioblk[%d]",
+		log_debug("%s: launching vioblk%d",
 		    vm->vm_params.vmc_params.vcp_name, dev->vioblk.idx);
 		break;
 		/* NOTREACHED */
@@ -1463,6 +1462,9 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		snprintf(num, sizeof(num), "%d", sync_fds[1]);
 		memset(vmm_fd, 0, sizeof(vmm_fd));
 		snprintf(vmm_fd, sizeof(vmm_fd), "%d", env->vmd_fd);
+		memset(vm_name, 0, sizeof(vm_name));
+		snprintf(vm_name, sizeof(vm_name), "%s",
+		    vm->vm_params.vmc_params.vcp_name);
 
 		t[0] = dev->dev_type;
 		t[1] = '\0';
@@ -1474,15 +1476,17 @@ virtio_dev_launch(struct vmd_vm *vm, struct virtio_dev *dev)
 		nargv[4] = t;
 		nargv[5] = "-i";
 		nargv[6] = vmm_fd;
-		nargv[7] = "-n";
-		nargv[8] = NULL;
+		nargv[7] = "-p";
+		nargv[8] = vm_name;
+		nargv[9] = "-n";
+		nargv[10] = NULL;
 
 		if (env->vmd_verbose == 1) {
-			nargv[8] = VMD_VERBOSE_1;
-			nargv[9] = NULL;
+			nargv[10] = VMD_VERBOSE_1;
+			nargv[11] = NULL;
 		} else if (env->vmd_verbose > 1) {
-			nargv[8] = VMD_VERBOSE_2;
-			nargv[9] = NULL;
+			nargv[10] = VMD_VERBOSE_2;
+			nargv[11] = NULL;
 		}
 
 		/* Control resumes in vmd.c:main(). */

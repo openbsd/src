@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmd.c,v 1.151 2023/07/03 08:32:20 jasper Exp $	*/
+/*	$OpenBSD: vmd.c,v 1.152 2023/09/26 01:53:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
@@ -439,7 +439,7 @@ vmd_dispatch_vmm(int fd, struct privsep_proc *p, struct imsg *imsg)
 			break;
 		}
 
-		log_info("%s: started vm %d successfully, tty %s",
+		log_info("started %s (vm %d) successfully, tty %s",
 		    vcp->vcp_name, vm->vm_vmid, vm->vm_ttyname);
 		break;
 	case IMSG_VMDOP_TERMINATE_VM_RESPONSE:
@@ -801,7 +801,7 @@ main(int argc, char **argv)
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
-	while ((ch = getopt(argc, argv, "D:P:I:V:X:df:i:nt:v")) != -1) {
+	while ((ch = getopt(argc, argv, "D:P:I:V:X:df:i:nt:vp:")) != -1) {
 		switch (ch) {
 		case 'D':
 			if (cmdline_symset(optarg) < 0)
@@ -834,6 +834,9 @@ main(int argc, char **argv)
 				fatalx("invalid process instance");
 			break;
 		/* child vm and device fork/exec */
+		case 'p':
+			title = optarg;
+			break;
 		case 'V':
 			vm_launch = VMD_LAUNCH_VM;
 			vm_fd = strtonum(optarg, 0, 128, &errp);
@@ -908,9 +911,11 @@ main(int argc, char **argv)
 		/* NOTREACHED */
 	} else if (vm_launch == VMD_LAUNCH_DEV) {
 		if (dev_type == VMD_DEVTYPE_NET) {
+			log_procinit("vm/%s/vionet", title);
 			vionet_main(vm_fd, vmm_fd);
 			/* NOTREACHED */
 		} else if (dev_type == VMD_DEVTYPE_DISK) {
+			log_procinit("vm/%s/vioblk", title);
 			vioblk_main(vm_fd, vmm_fd);
 			/* NOTREACHED */
 		}
@@ -941,7 +946,6 @@ main(int argc, char **argv)
 	proc_init(ps, procs, nitems(procs), env->vmd_debug, argc0, argv,
 	    proc_id);
 
-	log_procinit("parent");
 	if (!env->vmd_debug && daemon(0, 0) == -1)
 		fatal("can't daemonize");
 
@@ -970,7 +974,7 @@ main(int argc, char **argv)
 
 	event_dispatch();
 
-	log_debug("parent exiting");
+	log_debug("exiting");
 
 	return (0);
 }
@@ -1164,7 +1168,7 @@ vmd_shutdown(void)
 	proc_kill(&env->vmd_ps);
 	free(env);
 
-	log_warnx("parent terminating");
+	log_warnx("terminating");
 	exit(0);
 }
 

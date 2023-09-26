@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.22 2022/10/31 14:02:11 dv Exp $	*/
+/*	$OpenBSD: proc.h,v 1.23 2023/09/26 01:53:54 dv Exp $	*/
 
 /*
  * Copyright (c) 2010-2015 Reyk Floeter <reyk@openbsd.org>
@@ -190,7 +190,7 @@ int	 control_listen(struct control_sock *);
 
 /* log.c */
 void	log_init(int, int);
-void	log_procinit(const char *);
+void	log_procinit(const char *, ...);
 void	log_setverbose(int);
 int	log_getverbose(void);
 void	log_warn(const char *, ...)
