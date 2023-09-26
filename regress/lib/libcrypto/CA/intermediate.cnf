@@ -1,4 +1,4 @@
-#	$OpenBSD: intermediate.cnf,v 1.4 2022/03/14 21:30:48 tb Exp $
+#	$OpenBSD: intermediate.cnf,v 1.5 2023/09/26 21:17:03 tb Exp $
 # For regression tests
 default_ca = CA_regress
 
@@ -83,21 +83,21 @@ emailAddress_default            = evilsoandsos@openbsd.org
 commonName_default              = Regress Intermediate CA
 
 [ v3_ca ]
-# Extensions for a typical CA (`man x509v3_config`).
+# Extensions for a typical CA (`man x509v3.cnf`).
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid:always,issuer
 basicConstraints = critical, CA:true
 keyUsage = critical, digitalSignature, cRLSign, keyCertSign
 
 [ v3_intermediate_ca ]
-# Extensions for a typical intermediate CA (`man x509v3_config`).
+# Extensions for a typical intermediate CA (`man x509v3.cnf`).
 subjectKeyIdentifier = hash
 authorityKeyIdentifier = keyid:always,issuer
 basicConstraints = critical, CA:true, pathlen:0
 keyUsage = critical, digitalSignature, cRLSign, keyCertSign
 
 [ usr_cert ]
-# Extensions for client certificates (`man x509v3_config`).
+# Extensions for client certificates (`man x509v3.cnf`).
 basicConstraints = CA:FALSE
 nsCertType = client, email
 nsComment = "OpenSSL Generated Client Certificate"
@@ -111,7 +111,7 @@ subjectAltName = critical, @usr_san
 email.0 = evilsoandsos@test.openbsd.org
 
 [ server_cert ]
-# Extensions for server certificates (`man x509v3_config`).
+# Extensions for server certificates (`man x509v3.cnf`).
 basicConstraints = CA:FALSE
 nsCertType = server
 nsComment = "OpenSSL Generated Server Certificate"
@@ -121,7 +121,7 @@ keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
 
 [ crl_ext ]
-# Extension for CRLs (`man x509v3_config`).
+# Extension for CRLs (`man x509v3.cnf`).
 authorityKeyIdentifier=keyid:always
 
 [ ocsp ]
