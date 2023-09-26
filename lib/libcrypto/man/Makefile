@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.271 2023/09/25 12:00:49 tb Exp $
+# $OpenBSD: Makefile,v 1.272 2023/09/26 15:34:23 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -222,6 +222,7 @@ MAN=	\
 	EXTENDED_KEY_USAGE_new.3 \
 	GENERAL_NAME_new.3 \
 	HMAC.3 \
+	IPAddressRange_new.3 \
 	MD5.3 \
 	NAME_CONSTRAINTS_new.3 \
 	OBJ_NAME_add.3 \
