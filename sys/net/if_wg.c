@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.30 2023/09/24 05:56:06 yasuoka Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.31 2023/09/26 15:16:44 sthen Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -1527,6 +1527,8 @@ wg_encap(struct wg_softc *sc, struct mbuf *m)
 	 * back to random buckets.
 	 */
 	mc->m_pkthdr.ph_flowid = m->m_pkthdr.ph_flowid;
+
+	mc->m_pkthdr.pf.prio = m->m_pkthdr.pf.prio;
 
 	res = noise_remote_encrypt(&peer->p_remote, &data->r_idx, &nonce,
 				   data->buf, plaintext_len);
