@@ -2273,6 +2273,7 @@
 ./usr/share/man/man3/X509at_get_attr.3
 ./usr/share/man/man3/X509v3_addr_add_inherit.3
 ./usr/share/man/man3/X509v3_addr_get_range.3
+./usr/share/man/man3/X509v3_addr_inherits.3
 ./usr/share/man/man3/X509v3_asid_add_id_or_range.3
 ./usr/share/man/man3/X509v3_get_ext_by_NID.3
 ./usr/share/man/man3/__tfork_thread.3
