@@ -1,4 +1,4 @@
-/*	$OpenBSD: midivar.h,v 1.13 2022/03/21 19:22:40 miod Exp $	*/
+/*	$OpenBSD: midivar.h,v 1.14 2023/09/26 19:55:24 mvs Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -21,7 +21,7 @@
 
 #include <dev/midi_if.h>
 #include <sys/device.h>
-#include <sys/selinfo.h>
+#include <sys/event.h>
 #include <sys/proc.h>
 #include <sys/timeout.h>
 
@@ -34,8 +34,7 @@
 #define MIDIBUF_MASK		(MIDIBUF_SIZE - 1)
 
 struct midi_buffer {
-	void	     *softintr;		/* context to call selwakeup() */
-	struct	      selinfo sel;	/* to record & wakeup poll(2) */
+	struct	      klist klist;	/* to record & wakeup poll(2) */
 	int	      blocking;		/* read/write blocking */
 	unsigned char data[MIDIBUF_SIZE]; 
 	unsigned      start, used;

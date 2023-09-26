@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.55 2022/07/02 08:50:41 visa Exp $	*/
+/*	$OpenBSD: midi.c,v 1.56 2023/09/26 19:55:24 mvs Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
@@ -31,7 +31,6 @@
 #include <dev/audio_if.h>
 #include <dev/midivar.h>
 
-#define IPL_SOFTMIDI		IPL_SOFTNET
 #define DEVNAME(sc)		((sc)->dev.dv_xname)
 
 int	midiopen(dev_t, int, int, struct proc *);
@@ -65,41 +64,38 @@ struct cfdriver midi_cd = {
 
 void filt_midiwdetach(struct knote *);
 int filt_midiwrite(struct knote *, long);
+int filt_midimodify(struct kevent *, struct knote *);
+int filt_midiprocess(struct knote *, struct kevent *);
 
 const struct filterops midiwrite_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_midiwdetach,
 	.f_event	= filt_midiwrite,
+	.f_modify	= filt_midimodify,
+	.f_process	= filt_midiprocess,
 };
 
 void filt_midirdetach(struct knote *);
 int filt_midiread(struct knote *, long);
 
 const struct filterops midiread_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_midirdetach,
 	.f_event	= filt_midiread,
+	.f_modify	= filt_midimodify,
+	.f_process	= filt_midiprocess,
 };
 
 void
-midi_buf_wakeup(void *addr)
+midi_buf_wakeup(struct midi_buffer *buf)
 {
-	struct midi_buffer *buf = addr;
-
 	if (buf->blocking) {
 		wakeup(&buf->blocking);
 		buf->blocking = 0;
 	}
-	/*
-	 * As long as selwakeup() grabs the KERNEL_LOCK() make sure it is
-	 * already held here to avoid lock ordering problems with `audio_lock'
-	 */
-	KERNEL_ASSERT_LOCKED();
-	mtx_enter(&audio_lock);
-	selwakeup(&buf->sel);
-	mtx_leave(&audio_lock);
+	knote_locked(&buf->klist, 0);
 }
 
 void
@@ -117,13 +113,7 @@ midi_iintr(void *addr, int data)
 
 	MIDIBUF_WRITE(mb, data);
 
-	/*
-	 * As long as selwakeup() needs to be protected by the
-	 * KERNEL_LOCK() we have to delay the wakeup to another
-	 * context to keep the interrupt context KERNEL_LOCK()
-	 * free.
-	 */
-	softintr_schedule(sc->inbuf.softintr);
+	midi_buf_wakeup(mb);
 }
 
 int
@@ -226,14 +216,7 @@ void
 midi_out_stop(struct midi_softc *sc)
 {
 	sc->isbusy = 0;
-
-	/*
-	 * As long as selwakeup() needs to be protected by the
-	 * KERNEL_LOCK() we have to delay the wakeup to another
-	 * context to keep the interrupt context KERNEL_LOCK()
-	 * free.
-	 */
-	softintr_schedule(sc->outbuf.softintr);
+	midi_buf_wakeup(&sc->outbuf);
 }
 
 void
@@ -342,11 +325,11 @@ midikqfilter(dev_t dev, struct knote *kn)
 	error = 0;
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->inbuf.sel.si_note;
+		klist = &sc->inbuf.klist;
 		kn->kn_fop = &midiread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->outbuf.sel.si_note;
+		klist = &sc->outbuf.klist;
 		kn->kn_fop = &midiwrite_filtops;
 		break;
 	default:
@@ -355,9 +338,7 @@ midikqfilter(dev_t dev, struct knote *kn)
 	}
 	kn->kn_hook = (void *)sc;
 
-	mtx_enter(&audio_lock);
-	klist_insert_locked(klist, kn);
-	mtx_leave(&audio_lock);
+	klist_insert(klist, kn);
 done:
 	device_unref(&sc->dev);
 	return error;
@@ -368,24 +349,15 @@ filt_midirdetach(struct knote *kn)
 {
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
 
-	mtx_enter(&audio_lock);
-	klist_remove_locked(&sc->inbuf.sel.si_note, kn);
-	mtx_leave(&audio_lock);
+	klist_remove(&sc->inbuf.klist, kn);
 }
 
 int
 filt_midiread(struct knote *kn, long hint)
 {
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
-	int retval;
 
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_enter(&audio_lock);
-	retval = !MIDIBUF_ISEMPTY(&sc->inbuf);
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_leave(&audio_lock);
-
-	return (retval);
+	return (!MIDIBUF_ISEMPTY(&sc->inbuf));
 }
 
 void
@@ -393,24 +365,39 @@ filt_midiwdetach(struct knote *kn)
 {
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
 
-	mtx_enter(&audio_lock);
-	klist_remove_locked(&sc->outbuf.sel.si_note, kn);
-	mtx_leave(&audio_lock);
+	klist_remove(&sc->outbuf.klist, kn);
 }
 
 int
 filt_midiwrite(struct knote *kn, long hint)
 {
 	struct midi_softc *sc = (struct midi_softc *)kn->kn_hook;
-	int		   retval;
 
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_enter(&audio_lock);
-	retval = !MIDIBUF_ISFULL(&sc->outbuf);
-	if ((hint & NOTE_SUBMIT) == 0)
-		mtx_leave(&audio_lock);
+	return (!MIDIBUF_ISFULL(&sc->outbuf));
+}
 
-	return (retval);
+int
+filt_midimodify(struct kevent *kev, struct knote *kn)
+{
+	int active;
+
+	mtx_enter(&audio_lock);
+	active = knote_modify(kev, kn);
+	mtx_leave(&audio_lock);
+
+	return active;
+}
+
+int
+filt_midiprocess(struct knote *kn, struct kevent *kev)
+{
+	int active;
+
+	mtx_enter(&audio_lock);
+	active = knote_process(kn, kev);
+	mtx_leave(&audio_lock);
+
+	return active;
 }
 
 int
@@ -531,20 +518,8 @@ midiattach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 
-	sc->inbuf.softintr = softintr_establish(IPL_SOFTMIDI,
-	    midi_buf_wakeup, &sc->inbuf);
-	if (sc->inbuf.softintr == NULL) {
-		printf("%s: can't establish input softintr\n", DEVNAME(sc));
-		return;
-	}
-
-	sc->outbuf.softintr = softintr_establish(IPL_SOFTMIDI,
-	    midi_buf_wakeup, &sc->outbuf);
-	if (sc->outbuf.softintr == NULL) {
-		printf("%s: can't establish output softintr\n", DEVNAME(sc));
-		softintr_disestablish(sc->inbuf.softintr);
-		return;
-	}
+	klist_init_mutex(&sc->inbuf.klist, &audio_lock);
+	klist_init_mutex(&sc->outbuf.klist, &audio_lock);
 
 	sc->hw_if = hwif;
 	sc->hw_hdl = hdl;
@@ -578,29 +553,19 @@ mididetach(struct device *self, int flags)
 	 */
 	if (sc->flags) {
 		KERNEL_ASSERT_LOCKED();
-		if (sc->flags & FREAD) {
+		if (sc->flags & FREAD)
 			wakeup(&sc->inbuf.blocking);
-			mtx_enter(&audio_lock);
-			selwakeup(&sc->inbuf.sel);
-			mtx_leave(&audio_lock);
-		}
-		if (sc->flags & FWRITE) {
+		if (sc->flags & FWRITE)
 			wakeup(&sc->outbuf.blocking);
-			mtx_enter(&audio_lock);
-			selwakeup(&sc->outbuf.sel);
-			mtx_leave(&audio_lock);
-		}
 		sc->hw_if->close(sc->hw_hdl);
 		sc->flags = 0;
 	}
 
-	klist_invalidate(&sc->inbuf.sel.si_note);
-	klist_invalidate(&sc->outbuf.sel.si_note);
+	klist_invalidate(&sc->inbuf.klist);
+	klist_invalidate(&sc->outbuf.klist);
+	klist_free(&sc->inbuf.klist);
+	klist_free(&sc->outbuf.klist);
 
-	if (sc->inbuf.softintr)
-		softintr_disestablish(sc->inbuf.softintr);
-	if (sc->outbuf.softintr)
-		softintr_disestablish(sc->outbuf.softintr);
 	return 0;
 }
 
