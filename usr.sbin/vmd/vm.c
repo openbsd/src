@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm.c,v 1.92 2023/09/23 12:27:21 dv Exp $	*/
+/*	$OpenBSD: vm.c,v 1.93 2023/09/26 01:23:02 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -1565,6 +1565,8 @@ vcpu_run_loop(void *arg)
 				return ((void *)ret);
 			}
 
+			/* i8259 may be firing as we pause, release run mtx. */
+			mutex_unlock(&vcpu_run_mtx[n]);
 			ret = pthread_cond_wait(&vcpu_unpause_cond[n],
 			    &vcpu_unpause_mtx[n]);
 			if (ret) {
@@ -1573,6 +1575,8 @@ vcpu_run_loop(void *arg)
 				    __func__, (int)ret);
 				break;
 			}
+			mutex_lock(&vcpu_run_mtx[n]);
+
 			ret = pthread_mutex_unlock(&vcpu_unpause_mtx[n]);
 			if (ret) {
 				log_warnx("%s: can't unlock unpause mtx (%d)",
@@ -2136,18 +2140,12 @@ vcpu_assert_pic_irq(uint32_t vm_id, uint32_t vcpu_id, int irq)
 	if (i8259_is_pending()) {
 		if (vcpu_pic_intr(vm_id, vcpu_id, 1))
 			fatalx("%s: can't assert INTR", __func__);
-
-		ret = pthread_mutex_lock(&vcpu_run_mtx[vcpu_id]);
-		if (ret)
-			fatalx("%s: can't lock vcpu mtx (%d)", __func__, ret);
-
+		mutex_lock(&vcpu_run_mtx[vcpu_id]);
 		vcpu_hlt[vcpu_id] = 0;
 		ret = pthread_cond_signal(&vcpu_run_cond[vcpu_id]);
 		if (ret)
 			fatalx("%s: can't signal (%d)", __func__, ret);
-		ret = pthread_mutex_unlock(&vcpu_run_mtx[vcpu_id]);
-		if (ret)
-			fatalx("%s: can't unlock vcpu mtx (%d)", __func__, ret);
+		mutex_unlock(&vcpu_run_mtx[vcpu_id]);
 	}
 }
 
