@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmt.c,v 1.30 2023/01/07 06:40:21 asou Exp $ */
+/*	$OpenBSD: vmt.c,v 1.31 2023/09/26 08:30:13 mvs Exp $ */
 
 /*
  * Copyright (c) 2007 David Crawshaw <david@zentus.com>
@@ -471,7 +471,7 @@ vmt_attach(struct device *parent, struct device *self, void *aux)
 
 	config_mountroot(self, vmt_tick_hook);
 
-	timeout_set(&sc->sc_tclo_tick, vmt_tclo_tick, sc);
+	timeout_set_proc(&sc->sc_tclo_tick, vmt_tclo_tick, sc);
 	timeout_add_sec(&sc->sc_tclo_tick, 1);
 	sc->sc_tclo_ping = 1;
 
@@ -899,9 +899,12 @@ vmt_tclo_broadcastip(struct vmt_softc *sc)
 {
 	struct ifnet *iface;
 	struct sockaddr_in *guest_ip;
+	char ip[INET_ADDRSTRLEN];
 
 	/* find first available ipv4 address */
 	guest_ip = NULL;
+
+	NET_LOCK_SHARED();
 	TAILQ_FOREACH(iface, &ifnetlist, if_list) {
 		struct ifaddr *iface_addr;
 
@@ -918,14 +921,14 @@ vmt_tclo_broadcastip(struct vmt_softc *sc)
 				continue;
 
 			guest_ip = satosin(iface_addr->ifa_addr);
+			inet_ntop(AF_INET, &guest_ip->sin_addr, ip,
+			    sizeof(ip));
 			break;
 		}
 	}
+	NET_UNLOCK_SHARED();
 
 	if (guest_ip != NULL) {
-		char ip[INET_ADDRSTRLEN];
-
-		inet_ntop(AF_INET, &guest_ip->sin_addr, ip, sizeof(ip));
 		if (vm_rpc_send_rpci_tx(sc, "info-set guestinfo.ip %s",
 		    ip) != 0) {
 			DPRINTF("%s: unable to send guest IP address\n",
