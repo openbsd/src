@@ -1,4 +1,4 @@
-.\" $OpenBSD: IPAddressRange_new.3,v 1.3 2023/09/26 20:42:45 tb Exp $
+.\" $OpenBSD: IPAddressRange_new.3,v 1.4 2023/09/27 08:46:46 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2023 $
+.Dd $Mdocdate: September 27 2023 $
 .Dt IPADDRESSRANGE_NEW 3
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@
 .Nm IPAddressFamily_free ,
 .Nm d2i_IPAddressFamily ,
 .Nm i2d_IPAddressFamily
-.Nd IP address prefixes and ranges
+.Nd RFC 3779 IP address prefixes and ranges
 .Sh SYNOPSIS
 .In openssl/x509v3.h
 .Ft "IPAddressRange *"
@@ -106,25 +106,21 @@ and
 are building blocks of the RFC 3779
 .Vt IPAddrBlocks
 type representing the IP address delegation extension.
-See
-.Xr X509v3_addr_add_inherit 3
-for more details.
 .Pp
 Per RFC 3779, section 2.1.1,
 an IPv4 or an IPv6 address is encoded in network byte order in an
 ASN.1 BIT STRING of bit size 32 or 128 bits, respectively.
-The bit size of a prefix is its prefix length,
-in other words, all insignificant zero bits are omitted.
+The bit size of a prefix is its prefix length.
+In other words, all insignificant zero bits are omitted
+from the encoding.
 An address range is expressed as a pair of BIT STRINGs
 where all least significant zero bits of the lower bound
 and the all least significant one bits of the upper bound are omitted.
-Whether a prefix or a range represents a range of IPv4 address or
-an IPv6 address must be derived from the context.
 .Pp
 The library provides no API for directly converting an IP address or
 prefix (in any form) to and from an
-.Vt ASN1_BIT_STRING
-and it also provides no API for directly handling ranges.
+.Vt ASN1_BIT_STRING .
+It also provides no API for directly handling ranges.
 The
 .Vt ASN1_BIT_STRING
 internals are subtle and directly manipulating them in the
@@ -175,7 +171,7 @@ is
 .Dv NULL ,
 no action occurs.
 .Pp
-There is no dedicated type to represent the
+There is no dedicated type representing the
 .Vt IPAddress
 type defined in RFC 3779 section 2.2.3.8.
 The API uses
@@ -404,11 +400,11 @@ structure, see
 .Fn IPAddressRange_new
 returns a new
 .Vt IPAddressRange
-object or
+object with allocated, empty members, or
 .Dv NULL
 if an error occurs.
 .Pp
-.Fn IPAddressRange_new
+.Fn IPAddressOrRange_new
 returns a new, empty
 .Vt IPAddressOrRange
 object or
@@ -423,8 +419,8 @@ object or
 if an error occurs.
 .Pp
 .Fn IPAddressFamily_new
-returns a new,
-.Vt IPAddressChoice
+returns a new
+.Vt IPAddressFamily
 object with allocated, empty members, or
 .Dv NULL
 if an error occurs.
@@ -513,3 +509,8 @@ However, constructing objects is very error prone, be it
 by hand or using the bug-ridden
 .Xr X509v3_addr_add_inherit 3
 API.
+.Pp
+RFC 3779 has element
+.Dq addressesOrRanges .
+Its type in this API is
+.Vt IPAddressOrRanges .

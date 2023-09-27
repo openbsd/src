@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_asid_add_id_or_range.3,v 1.4 2023/09/26 20:42:45 tb Exp $
+.\" $OpenBSD: X509v3_asid_add_id_or_range.3,v 1.5 2023/09/27 08:46:46 tb Exp $
 .\"
 .\" Copyright (c) 2021-2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2023 $
+.Dd $Mdocdate: September 27 2023 $
 .Dt X509V3_ASID_ADD_ID_OR_RANGE 3
 .Os
 .Sh NAME
@@ -22,8 +22,7 @@
 .Nm X509v3_asid_add_inherit ,
 .Nm X509v3_asid_canonize ,
 .Nm X509v3_asid_is_canonical
-.Nd construct and validate individual X509v3 certificate extensions for
-autonomous system identifier delegation
+.Nd RFC 3779 autonomous system identifier delegation extension
 .Sh SYNOPSIS
 .In openssl/x509v3.h
 .Ft int
@@ -57,7 +56,7 @@ and its internals are documented in
 .Xr ASRange_new 3 .
 .Pp
 An autonomous system is identified by an unsigned 32-bit integer,
-called an AS number.
+called an AS identifier or AS number.
 An
 .Vt ASIdentifiers
 object can hold two lists:
@@ -132,15 +131,14 @@ or
 .Dv V3_ASID_RDI )
 in
 .Fa asid
-and marks it
+if necessary and marks it
 .Dq inherit .
 This fails if
 .Fa asid
 already contains a list of
 .Fa type
-that isn't marked
-.Dq inherit ,
-otherwise no action occurs.
+that is not marked
+.Dq inherit .
 .Pp
 .Fn X509v3_asid_canonize
 attempts to bring both lists in

@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.4 2023/09/26 18:35:34 tb Exp $
+.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.5 2023/09/27 08:46:46 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2023 $
+.Dd $Mdocdate: September 27 2023 $
 .Dt X509V3_ADDR_ADD_INHERIT 3
 .Os
 .Sh NAME
@@ -23,8 +23,7 @@
 .Nm X509v3_addr_add_range ,
 .Nm X509v3_addr_canonize ,
 .Nm X509v3_addr_is_canonical
-.Nd construct X509v3 IP address blocks extensions and
-bring them into canonical form
+.Nd RFC 3779 IP address delegation extensions
 .Sh SYNOPSIS
 .In openssl/x509v3.h
 .Ft int
@@ -63,15 +62,18 @@ An
 object represents the content of
 an X509v3 IP address blocks delegation extension
 as defined in RFC 3779, section 2.2.3.1.
-It can hold lists of delegated IP address prefixes and
-IP address ranges.
+It holds lists of IP address prefixes and IP address ranges
+delegated from the issuer to the subject of the certificate.
 It can be instantiated as explained in the EXAMPLES section
 and its internals are documented in
 .Xr IPAddressRange_new 3 .
-Each list is uniquely identified by
+.Pp
+Each list in a well-formed
+.Vt IPAddrBlocks
+object is uniquely identified by
 an address family identifier (AFI) and
 an optional subsequent address family identifier (SAFI).
-Each list can be absent or it can contain a single
+Lists can be absent or can contain an
 .Dq inherit
 marker to indicate that the resources are to be inherited
 from the corresponding list of the issuer certificate.
@@ -171,7 +173,7 @@ In case the range of IP addresses between
 .Fa min
 and
 .Fa max
-is a prefix, a prefix will be added.
+is a prefix, a prefix will be added instead of a range.
 It is the caller's responsibility to ensure that
 .Fa min
 is less than or equal to
@@ -190,7 +192,8 @@ An
 .Vt IPAddrBlocks
 object is said to be in canonical form if it conforms
 to the ordering specified in RFC 3779:
-section 2.2.3.3 requires that the lists be sorted first by increasing
+section 2.2.3.3 requires that
+the list of lists be sorted first by increasing
 .Fa afi
 and then by increasing
 .Fa safi ,
@@ -397,7 +400,7 @@ is desired.
 .Xr IPAddressRange_new 3 ,
 .Xr X509_new 3 ,
 .Xr X509v3_asid_add_id_or_range 3 ,
-.Xr X509v3_asid_get_range 3
+.Xr X509v3_addr_get_range 3
 .Sh STANDARDS
 RFC 3779: X.509 Extensions for IP Addresses and AS Identifiers:
 .Bl -dash -compact
@@ -434,12 +437,12 @@ is not public.
 The above examples show how to implement the four missing functions
 with public API.
 .Pp
-.Fn X509v3_asid_add_range
+.Fn X509v3_addr_add_range
 should check for inverted range bounds and overlaps
 on insertion and fail instead of creating a nonsensical
-.Fa asid
+.Fa addr
 that fails to be canonized by
-.Fn X509v3_asid_canonize .
+.Fn X509v3_addr_canonize .
 .Pp
 If
 .Dv NULL
@@ -457,4 +460,13 @@ crashes with a
 .Dv NULL
 dereference.
 .Pp
-The only supported AFIs are IPv4 and IPv6, but this is not enforced.
+The code only supports the IPv4 and IPv6 AFIs.
+This is not consistently enforced across implementations.
+.Pp
+.Fn X509v3_addr_add_range
+fails to clear the unused bits set to 1 in the last octet of
+the
+.Vt ASN1_BIT_STRING
+representation of
+.Fa max .
+This confuses some software.

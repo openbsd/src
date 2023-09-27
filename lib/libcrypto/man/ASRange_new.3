@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASRange_new.3,v 1.4 2023/09/26 15:34:23 tb Exp $
+.\" $OpenBSD: ASRange_new.3,v 1.5 2023/09/27 08:46:46 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2023 $
+.Dd $Mdocdate: September 27 2023 $
 .Dt ASRANGE_NEW 3
 .Os
 .Sh NAME
@@ -30,7 +30,7 @@
 .Nm ASIdentifierChoice_free ,
 .Nm d2i_ASIdentifierChoice ,
 .Nm i2d_ASIdentifierChoice
-.Nd Autonomous system identifiers and ranges
+.Nd RFC 3779 autonomous system identifiers and ranges
 .Sh SYNOPSIS
 .In openssl/x509v3.h
 .Ft "ASRange *"
@@ -87,21 +87,21 @@ are building blocks of the
 .Vt ASIdentifiers
 type representing the RFC 3779
 autonomous system identifier delegation extension.
-See
-.Xr ASIdentifiers_new 3
-and
-.Xr X509v3_asid_add_id_or_range 3
-for more details.
 .Pp
 All
 .Vt ASN1_INTEGER Ns s
 in this manual should be representable as unsigned 32-bit integers.
+The API performs no corresponding checks.
 The library provides no convenient way of setting the value of an
 .Vt ASN1_INTEGER
 directly.
 A detour via a
 .Vt BIGNUM
 or a string is unavoidable.
+To retrieve the value of an
+.Vt ASN1_INTEGER ,
+use
+.Xr ASN1_INTEGER_get_uint64 3 .
 .Pp
 The
 .Vt ASRange
@@ -310,7 +310,7 @@ object of
 .Fn ASRange_new
 returns a new
 .Vt ASRange
-object or
+object with allocated, empty members, or
 .Dv NULL
 if an error occurs.
 .Pp
