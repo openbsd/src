@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.89 2023/09/11 00:50:47 job Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.90 2023/09/27 11:29:22 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -388,14 +388,17 @@ IPAddressFamily_set_inheritance(IPAddressFamily *af)
  * What's the address length associated with this AFI?
  */
 static int
-length_from_afi(const unsigned afi)
+length_from_afi(const unsigned afi, int *length)
 {
 	switch (afi) {
 	case IANA_AFI_IPV4:
-		return 4;
+		*length = 4;
+		return 1;
 	case IANA_AFI_IPV6:
-		return 16;
+		*length = 16;
+		return 1;
 	default:
+		*length = 0;
 		return 0;
 	}
 }
@@ -423,6 +426,9 @@ IPAddressFamily_afi_safi(const IPAddressFamily *af, uint16_t *out_afi,
 	CBS_init(&cbs, af->addressFamily->data, af->addressFamily->length);
 
 	if (!CBS_get_u16(&cbs, &afi))
+		return 0;
+
+	if (afi != IANA_AFI_IPV4 && afi != IANA_AFI_IPV6)
 		return 0;
 
 	/* Fetch the optional SAFI. */
@@ -471,9 +477,7 @@ IPAddressFamily_afi_length(const IPAddressFamily *af, int *out_length)
 	if (!IPAddressFamily_afi(af, &afi))
 		return 0;
 
-	*out_length = length_from_afi(afi);
-
-	return 1;
+	return length_from_afi(afi, out_length);
 }
 
 #define MINIMUM(a, b) (((a) < (b)) ? (a) : (b))
@@ -879,16 +883,15 @@ make_addressPrefix(IPAddressOrRange **out_aor, uint8_t *addr, uint32_t afi,
     int prefix_len)
 {
 	IPAddressOrRange *aor = NULL;
-	int afi_len, max_len, num_bits, num_octets;
+	int afi_len, num_bits, num_octets;
 	uint8_t unused_bits;
 
 	if (prefix_len < 0)
 		goto err;
 
-	max_len = 16;
-	if ((afi_len = length_from_afi(afi)) > 0)
-		max_len = afi_len;
-	if (prefix_len > 8 * max_len)
+	if (!length_from_afi(afi, &afi_len))
+		goto err;
+	if (prefix_len > 8 * afi_len)
 		goto err;
 
 	num_octets = (prefix_len + 7) / 8;
@@ -1062,11 +1065,14 @@ make_IPAddressFamily(IPAddrBlocks *addr, const unsigned afi,
 	if (!CBB_init(&cbb, 0))
 		goto err;
 
-	/* XXX - should afi <= 65535 and *safi <= 255 be checked here? */
-
+	if (afi != IANA_AFI_IPV4 && afi != IANA_AFI_IPV6)
+		goto err;
 	if (!CBB_add_u16(&cbb, afi))
 		goto err;
+
 	if (safi != NULL) {
+		if (*safi > 255)
+			goto err;
 		if (!CBB_add_u8(&cbb, *safi))
 			goto err;
 	}
@@ -1197,7 +1203,8 @@ X509v3_addr_add_range(IPAddrBlocks *addr, const unsigned afi,
 	if ((aors = make_prefix_or_range(addr, afi, safi)) == NULL)
 		return 0;
 
-	length = length_from_afi(afi);
+	if (!length_from_afi(afi, &length))
+		return 0;
 
 	if (!make_addressRange(&aor, min, max, afi, length))
 		return 0;
@@ -1258,7 +1265,7 @@ X509v3_addr_get_range(IPAddressOrRange *aor, const unsigned afi,
 {
 	int afi_len;
 
-	if ((afi_len = length_from_afi(afi)) == 0)
+	if (!length_from_afi(afi, &afi_len))
 		return 0;
 
 	if (length < afi_len)
@@ -1401,7 +1408,8 @@ IPAddressOrRanges_canonize(IPAddressOrRanges *aors, const unsigned afi)
 	unsigned char b_min[ADDR_RAW_BUF_LEN], b_max[ADDR_RAW_BUF_LEN];
 	int i, j, length;
 
-	length = length_from_afi(afi);
+	if (!length_from_afi(afi, &length))
+		return 0;
 
 	/*
 	 * Sort the IPAddressOrRanges sequence.
@@ -1548,7 +1556,8 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 			break;
 		}
 
-		length = length_from_afi(afi);
+		if (!length_from_afi(afi, &length))
+			goto err;
 
 		/*
 		 * Handle SAFI, if any, and strdup() so we can null-terminate
@@ -1658,7 +1667,7 @@ v2i_IPAddrBlocks(const struct v3_ext_method *method, struct v3_ext_ctx *ctx,
 				X509V3_conf_err(val);
 				goto err;
 			}
-			if (memcmp(min, max, length_from_afi(afi)) > 0) {
+			if (memcmp(min, max, length) > 0) {
 				X509V3error(X509V3_R_EXTENSION_VALUE_ERROR);
 				X509V3_conf_err(val);
 				goto err;
