@@ -1849,6 +1849,7 @@
 ./usr/share/man/man4/qcpmicgpio.4
 ./usr/share/man/man4/qcpon.4
 ./usr/share/man/man4/qcpwm.4
+./usr/share/man/man4/qcrng.4
 ./usr/share/man/man4/qcrtc.4
 ./usr/share/man/man4/qcspmi.4
 ./usr/share/man/man4/qla.4
