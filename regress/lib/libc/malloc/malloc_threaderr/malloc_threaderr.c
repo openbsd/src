@@ -15,9 +15,12 @@
  */
 
 #include <err.h>
+#include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <unistd.h>
+#include <sys/resource.h>
 
 pthread_cond_t cond;
 pthread_mutex_t mutex;
@@ -39,12 +42,23 @@ void *f(void *arg)
 	return NULL;
 }
 
+void
+catch(int x)
+{
+	_exit(0);
+}
+
 int
 main(void)
 {
+	const struct rlimit lim = {0, 0};
 	pthread_t t1, t2;
 
-	printf("This test is supposed to print a malloc error and create a core dump\n");
+	/* prevent coredumps */
+	setrlimit(RLIMIT_CORE, &lim);
+	printf("This test is supposed to print a malloc error\n");
+
+	signal(SIGABRT, catch);
 
 	if (pthread_create(&t1, NULL, m, NULL))
 		err(1, "pthread_create");
@@ -54,5 +68,5 @@ main(void)
 		err(1, "pthread_create");
 	pthread_join(t2, NULL);
 
-	return 0;
+	return 1;
 }
