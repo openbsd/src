@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.634 2023/09/24 09:15:43 op Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.635 2023/09/27 08:20:50 semarie Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: September 24 2023 $
+.Dd $Mdocdate: September 27 2023 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2282,7 +2282,9 @@ Seldom used, as it is only needed to link binary data without using the
 compiler.
 .It Ev LLVM_ARCHS
 Set to the list of architectures where LLVM/Clang could be used,
-e.g., via lang/clang port module, see
+e.g., via
+.Sq lang/clang
+port module, see
 .Xr port-modules 5 .
 Read-only.
 Use with
@@ -3567,9 +3569,10 @@ instead just set
 .Li BUILD_DEPENDS = devel/libtool .
 .It Ev USE_LLD
 Set to
-.Sq Yes
-or
+.Sq Yes ,
 .Sq \&No
+or
+.Sq ports
 to force the use of
 .Xr ld.lld 1
 .Po
@@ -3577,6 +3580,11 @@ as opposed to
 bfd's
 .Xr ld 1
 .Pc .
+.Sq ports
+force the use of
+.Xr ld.lld 1
+from lang/clang module.
+.Pc
 Defaults to the appropriate value for the current architecture
 .Po
 see
