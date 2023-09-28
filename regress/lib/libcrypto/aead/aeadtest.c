@@ -1,4 +1,4 @@
-/*	$OpenBSD: aeadtest.c,v 1.24 2023/07/07 07:44:59 bcook Exp $	*/
+/*	$OpenBSD: aeadtest.c,v 1.25 2023/09/28 11:35:10 tb Exp $	*/
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2014, Google Inc.
@@ -203,6 +203,7 @@ run_cipher_aead_encrypt_test(const EVP_CIPHER *cipher,
 	EVP_CIPHER_CTX *ctx;
 	size_t out_len;
 	int len;
+	int ivlen;
 	int ret = 0;
 
 	if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
@@ -217,6 +218,13 @@ run_cipher_aead_encrypt_test(const EVP_CIPHER *cipher,
 
 	if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, lengths[NONCE], NULL)) {
 		fprintf(stderr, "FAIL: EVP_CTRL_AEAD_SET_IVLEN\n");
+		goto err;
+	}
+
+	ivlen = EVP_CIPHER_CTX_iv_length(ctx);
+	if (ivlen != (int)lengths[NONCE]) {
+		fprintf(stderr, "FAIL = ivlen %d != nonce length %d\n", ivlen,
+		    (int)lengths[NONCE]);
 		goto err;
 	}
 
