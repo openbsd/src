@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.112 2023/08/04 09:20:12 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.113 2023/09/28 07:01:26 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -388,14 +388,20 @@ control_dispatch_msg(struct pollfd *pfd, struct peer_head *peers)
 					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_DOWN:
-					p->conf.down = 1;
+					neighbor->reason[
+					    sizeof(neighbor->reason) - 1] =
+					    '\0';
 					strlcpy(p->conf.reason,
 					    neighbor->reason,
 					    sizeof(p->conf.reason));
+					p->conf.down = 1;
 					session_stop(p, ERR_CEASE_ADMIN_DOWN);
 					control_result(c, CTL_RES_OK);
 					break;
 				case IMSG_CTL_NEIGHBOR_CLEAR:
+					neighbor->reason[
+					    sizeof(neighbor->reason) - 1] =
+					    '\0';
 					strlcpy(p->conf.reason,
 					    neighbor->reason,
 					    sizeof(p->conf.reason));
