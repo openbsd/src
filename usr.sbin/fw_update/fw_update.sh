@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.47 2023/08/31 21:29:53 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.48 2023/09/28 00:45:22 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -600,7 +600,6 @@ if [ "${devices[*]:-}" ]; then
 				fi
 				continue
 			fi
-			f="$LOCALSRC/$f"
 		elif ! "$INSTALL" && ! grep -Fq "($f)" "$CFILE" ; then
 			warn "Cannot download local file $f"
 			exit 1
@@ -624,6 +623,12 @@ if [ "${devices[*]:-}" ]; then
 					fi
 				done
 			fi
+		fi
+
+		# Fetch an unqualified file into LOCALSRC
+		# if it doesn't exist in the current directory.
+		if [ "$f" = "${f##/}" ] && [ ! -e "$f" ]; then
+			f="$LOCALSRC/$f"
 		fi
 
 		if "$verify_existing" && [ -e "$f" ]; then
