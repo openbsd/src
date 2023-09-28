@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_local.h,v 1.4 2023/08/11 05:10:35 tb Exp $ */
+/* $OpenBSD: evp_local.h,v 1.5 2023/09/28 11:29:10 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -60,6 +60,12 @@
 #define HEADER_EVP_LOCAL_H
 
 __BEGIN_HIDDEN_DECLS
+
+/* XXX - move these to evp.h after unlock. */
+#define	EVP_CTRL_GET_IVLEN		0x25
+#define	EVP_CIPH_FLAG_CUSTOM_IV_LENGTH	0x400000
+
+#define	EVP_CTRL_AEAD_GET_IVLEN		EVP_CTRL_GET_IVLEN
 
 /*
  * Don't free md_ctx->pctx in EVP_MD_CTX_cleanup().  Needed for ownership

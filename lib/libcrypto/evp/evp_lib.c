@@ -1,4 +1,4 @@
-/* $OpenBSD: evp_lib.c,v 1.27 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: evp_lib.c,v 1.28 2023/09/28 11:29:10 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -266,7 +266,20 @@ EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 int
 EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
 {
-	return ctx->cipher->iv_len;
+	int iv_length = 0;
+
+	if ((ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_IV_LENGTH) == 0)
+		return ctx->cipher->iv_len;
+
+	/*
+	 * XXX - sanity would suggest to pass the size of the pointer along,
+	 * but unfortunately we have to match the other crowd.
+	 */
+	if (EVP_CIPHER_CTX_ctrl((EVP_CIPHER_CTX *)ctx, EVP_CTRL_GET_IVLEN, 0,
+	    &iv_length) != 1)
+		return -1;
+
+	return iv_length;
 }
 
 unsigned char *

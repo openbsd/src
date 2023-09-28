@@ -1,4 +1,4 @@
-/* $OpenBSD: e_aes.c,v 1.53 2023/07/07 19:37:53 beck Exp $ */
+/* $OpenBSD: e_aes.c,v 1.54 2023/09/28 11:29:10 tb Exp $ */
 /* ====================================================================
  * Copyright (c) 2001-2011 The OpenSSL Project.  All rights reserved.
  *
@@ -1305,7 +1305,11 @@ aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		gctx->tls_aad_len = -1;
 		return 1;
 
-	case EVP_CTRL_GCM_SET_IVLEN:
+	case EVP_CTRL_AEAD_GET_IVLEN:
+		*(int *)ptr = gctx->ivlen;
+		return 1;
+
+	case EVP_CTRL_AEAD_SET_IVLEN:
 		if (arg <= 0)
 			return 0;
 		/* Allocate memory for IV if needed */
@@ -1631,6 +1635,7 @@ aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 #define CUSTOM_FLAGS \
     ( EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV | \
+      EVP_CIPH_FLAG_CUSTOM_IV_LENGTH | \
       EVP_CIPH_FLAG_CUSTOM_CIPHER | EVP_CIPH_ALWAYS_CALL_INIT | \
       EVP_CIPH_CTRL_INIT | EVP_CIPH_CUSTOM_COPY )
 
@@ -1968,7 +1973,11 @@ aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		cctx->len_set = 0;
 		return 1;
 
-	case EVP_CTRL_CCM_SET_IVLEN:
+	case EVP_CTRL_AEAD_GET_IVLEN:
+		*(int *)ptr = 15 - cctx->L;
+		return 1;
+
+	case EVP_CTRL_AEAD_SET_IVLEN:
 		arg = 15 - arg;
 
 	case EVP_CTRL_CCM_SET_L:
