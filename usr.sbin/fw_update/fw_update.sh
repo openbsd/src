@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.49 2023/09/28 00:52:16 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.50 2023/09/28 01:18:52 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -320,7 +320,8 @@ detect_firmware() {
 }
 
 add_firmware () {
-	local _f="${1##*/}" _m="${2:-Install}" _pkgname
+	local _f="${1##*/}" _m="${2:-Install}"
+	local _pkgdir="${DESTDIR}/var/db/pkg" _pkg
 	FWPKGTMP="$( tmpdir "${DESTDIR}/var/db/pkg/.firmware" )"
 	local _flags=-vm
 	case "$VERBOSE" in
@@ -333,9 +334,16 @@ add_firmware () {
 		    -s ",^firmware,${DESTDIR}/etc/firmware," \
 		    -C / -zxphf - "+*" "firmware/*"
 
-	_pkgname="$( sed -n '/^@name /{s///p;q;}' "${FWPKGTMP}/+CONTENTS" )"
-	if [ ! "$_pkgname" ]; then
-		echo "Failed to extract name from $1, partial install" 2>&1
+	_pkg="$( sed -n '/^@name /{s///p;q;}' "${FWPKGTMP}/+CONTENTS" )"
+	if [ ! "$_pkg" ]; then
+		warn "Failed to extract name from $1, partial install"
+		rm -rf "$FWPKGTMP"
+		unset FWPKGTMP
+		return 1
+	fi
+
+	if [ -e "$_pkgdir/$_pkg" ]; then
+		warn "Failed to register: $_pkgdir/$_pkg is not firmware"
 		rm -rf "$FWPKGTMP"
 		unset FWPKGTMP
 		return 1
@@ -351,7 +359,7 @@ w
 EOL
 
 	chmod 755 "$FWPKGTMP"
-	mv "$FWPKGTMP" "${DESTDIR}/var/db/pkg/${_pkgname}"
+	mv "$FWPKGTMP" "$_pkgdir/$_pkg"
 	unset FWPKGTMP
 }
 
