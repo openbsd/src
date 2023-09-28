@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.48 2023/09/28 00:45:22 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.49 2023/09/28 00:52:16 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -763,3 +763,5 @@ done
 
 [ "$unregister" ] && status "; unregister ${unregister:#,}"
 [ "$kept"       ] && status "; keep ${kept:#,}"
+
+exit 0
