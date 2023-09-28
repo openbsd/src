@@ -1,4 +1,4 @@
-.\" $OpenBSD: imsg_init.3,v 1.29 2023/09/28 16:41:36 schwarze Exp $
+.\" $OpenBSD: imsg_init.3,v 1.30 2023/09/28 17:00:21 schwarze Exp $
 .\"
 .\" Copyright (c) 2010 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -466,7 +466,9 @@ replaces a part of
 .Fa buf
 at offset
 .Fa pos
-with the data of extent
+with the
+.Fa data
+of extent
 .Fa len .
 0 is returned on success and \-1 on failure.
 .Pp
