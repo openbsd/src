@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.5 2023/09/28 11:39:35 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.6 2023/09/28 14:54:39 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -382,11 +382,10 @@ evp_pkey_iv_len_testcase(const struct evp_iv_len_test *test)
 	}
 
  done:
-	EVP_CIPHER_CTX_free(ctx);
-
 	failure = 0;
 
  failure:
+	EVP_CIPHER_CTX_free(ctx);
 
 	return failure;
 }
