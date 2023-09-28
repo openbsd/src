@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.4 2023/03/11 14:27:38 jsing Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.5 2023/09/28 11:39:35 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -14,6 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <assert.h>
+#include <stdio.h>
 
 #include <openssl/evp.h>
 #include <openssl/ossl_typ.h>
@@ -137,6 +140,269 @@ evp_pkey_method_test(void)
 	return failed;
 }
 
+static const struct evp_iv_len_test {
+	const EVP_CIPHER *(*cipher)(void);
+	int iv_len;
+	int setlen;
+	int expect;
+} evp_iv_len_tests[] = {
+	{
+		.cipher = EVP_aes_128_ccm,
+		.iv_len = 7,
+		.setlen = 11,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_aes_128_ccm,
+		.iv_len = 7,
+		.setlen = 6,
+		.expect = 0,
+	},
+	{
+		.cipher = EVP_aes_128_ccm,
+		.iv_len = 7,
+		.setlen = 13,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_aes_128_ccm,
+		.iv_len = 7,
+		.setlen = 14,
+		.expect = 0,
+	},
+
+	{
+		.cipher = EVP_aes_192_ccm,
+		.iv_len = 7,
+		.setlen = 11,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_aes_192_ccm,
+		.iv_len = 7,
+		.setlen = 6,
+		.expect = 0,
+	},
+	{
+		.cipher = EVP_aes_192_ccm,
+		.iv_len = 7,
+		.setlen = 13,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_aes_192_ccm,
+		.iv_len = 7,
+		.setlen = 14,
+		.expect = 0,
+	},
+
+	{
+		.cipher = EVP_aes_256_ccm,
+		.iv_len = 7,
+		.setlen = 11,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_aes_256_ccm,
+		.iv_len = 7,
+		.setlen = 6,
+		.expect = 0,
+	},
+	{
+		.cipher = EVP_aes_256_ccm,
+		.iv_len = 7,
+		.setlen = 13,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_aes_256_ccm,
+		.iv_len = 7,
+		.setlen = 14,
+		.expect = 0,
+	},
+
+	{
+		.cipher = EVP_aes_128_gcm,
+		.iv_len = 12,
+		.setlen = 16,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_aes_128_gcm,
+		.iv_len = 12,
+		.setlen = 0,
+		.expect = 0,
+	},
+	{
+		.cipher = EVP_aes_128_gcm,
+		.iv_len = 12,
+		.setlen = 1,
+		.expect = 1,
+	},
+	/* XXX - GCM IV length isn't capped... */
+	{
+		.cipher = EVP_aes_128_gcm,
+		.iv_len = 12,
+		.setlen = 1024 * 1024,
+		.expect = 1,
+	},
+
+	{
+		.cipher = EVP_aes_192_gcm,
+		.iv_len = 12,
+		.setlen = 16,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_aes_192_gcm,
+		.iv_len = 12,
+		.setlen = 0,
+		.expect = 0,
+	},
+	{
+		.cipher = EVP_aes_192_gcm,
+		.iv_len = 12,
+		.setlen = 1,
+		.expect = 1,
+	},
+	/* XXX - GCM IV length isn't capped... */
+	{
+		.cipher = EVP_aes_128_gcm,
+		.iv_len = 12,
+		.setlen = 1024 * 1024,
+		.expect = 1,
+	},
+
+	{
+		.cipher = EVP_aes_256_gcm,
+		.iv_len = 12,
+		.setlen = 16,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_aes_256_gcm,
+		.iv_len = 12,
+		.setlen = 0,
+		.expect = 0,
+	},
+	{
+		.cipher = EVP_aes_256_gcm,
+		.iv_len = 12,
+		.setlen = 1,
+		.expect = 1,
+	},
+	/* XXX - GCM IV length isn't capped... */
+	{
+		.cipher = EVP_aes_128_gcm,
+		.iv_len = 12,
+		.setlen = 1024 * 1024,
+		.expect = 1,
+	},
+
+	{
+		.cipher = EVP_aes_128_ecb,
+		.iv_len = 0,
+		.setlen = 11,
+		.expect = 0,
+	},
+
+	{
+		.cipher = EVP_chacha20_poly1305,
+		.iv_len = 12,
+		.setlen = 11,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_chacha20_poly1305,
+		.iv_len = 12,
+		.setlen = 12,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_chacha20_poly1305,
+		.iv_len = 12,
+		.setlen = 13,
+		.expect = 0,
+	},
+	{
+		.cipher = EVP_chacha20_poly1305,
+		.iv_len = 12,
+		.setlen = 1,
+		.expect = 1,
+	},
+	{
+		.cipher = EVP_chacha20_poly1305,
+		.iv_len = 12,
+		.setlen = 0,
+		.expect = 0,
+	},
+};
+
+#define N_EVP_IV_LEN_TESTS \
+    (sizeof(evp_iv_len_tests) / sizeof(evp_iv_len_tests[0]))
+
+static int
+evp_pkey_iv_len_testcase(const struct evp_iv_len_test *test)
+{
+	const EVP_CIPHER *cipher = test->cipher();
+	const char *name = OBJ_nid2ln(EVP_CIPHER_nid(cipher));
+	EVP_CIPHER_CTX *ctx;
+	int ret;
+	int failure = 1;
+
+	assert(name != NULL);
+
+	if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
+		fprintf(stderr, "FAIL: %s: EVP_CIPHER_CTX_new()\n", name);
+		goto failure;
+	}
+
+	if ((ret = EVP_EncryptInit_ex(ctx, cipher, NULL, NULL, NULL)) <= 0) {
+		fprintf(stderr, "FAIL: %s: EVP_EncryptInit_ex:"
+		    " want %d, got %d\n", name, 1, ret);
+		goto failure;
+	}
+	if ((ret = EVP_CIPHER_CTX_iv_length(ctx)) != test->iv_len) {
+		fprintf(stderr, "FAIL: %s EVP_CIPHER_CTX_iv_length (before set)"
+		    " want %d, got %d\n", name, test->iv_len, ret);
+		goto failure;
+	}
+	if ((ret = EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
+	    test->setlen, NULL)) != test->expect) {
+		fprintf(stderr, "FAIL: %s EVP_CIPHER_CTX_ctrl"
+		    " want %d, got %d\n", name, test->expect, ret);
+		goto failure;
+	}
+	if (test->expect == 0)
+		goto done;
+	if ((ret = EVP_CIPHER_CTX_iv_length(ctx)) != test->setlen) {
+		fprintf(stderr, "FAIL: %s EVP_CIPHER_CTX_iv_length (after set)"
+		    " want %d, got %d\n", name, test->setlen, ret);
+		goto failure;
+	}
+
+ done:
+	EVP_CIPHER_CTX_free(ctx);
+
+	failure = 0;
+
+ failure:
+
+	return failure;
+}
+
+static int
+evp_pkey_iv_len_test(void)
+{
+	size_t i;
+	int failure = 0;
+
+	for (i = 0; i < N_EVP_IV_LEN_TESTS; i++)
+		failure |= evp_pkey_iv_len_testcase(&evp_iv_len_tests[i]);
+
+	return failure;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -144,6 +410,7 @@ main(int argc, char **argv)
 
 	failed |= evp_asn1_method_test();
 	failed |= evp_pkey_method_test();
+	failed |= evp_pkey_iv_len_test();
 
 	OPENSSL_cleanup();
 
