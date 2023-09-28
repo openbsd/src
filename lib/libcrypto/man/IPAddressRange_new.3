@@ -1,4 +1,4 @@
-.\" $OpenBSD: IPAddressRange_new.3,v 1.4 2023/09/27 08:46:46 tb Exp $
+.\" $OpenBSD: IPAddressRange_new.3,v 1.5 2023/09/28 12:35:31 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2023 $
+.Dd $Mdocdate: September 28 2023 $
 .Dt IPADDRESSRANGE_NEW 3
 .Os
 .Sh NAME
@@ -110,12 +110,12 @@ type representing the IP address delegation extension.
 Per RFC 3779, section 2.1.1,
 an IPv4 or an IPv6 address is encoded in network byte order in an
 ASN.1 BIT STRING of bit size 32 or 128 bits, respectively.
-The bit size of a prefix is its prefix length.
-In other words, all insignificant zero bits are omitted
+The bit size of a prefix is its prefix length;
+all insignificant zero bits are omitted
 from the encoding.
 An address range is expressed as a pair of BIT STRINGs
-where all least significant zero bits of the lower bound
-and the all least significant one bits of the upper bound are omitted.
+where all the least significant zero bits of the lower bound
+and all the least significant one bits of the upper bound are omitted.
 .Pp
 The library provides no API for directly converting an IP address or
 prefix (in any form) to and from an
@@ -127,8 +127,11 @@ internals are subtle and directly manipulating them in the
 context of the RFC 3779 API is discouraged.
 The bit size of an
 .Vt ASN1_BIT_STRING
-representing an IP address prefix or range is eight times its length
-member minus the lowest three bits of its flags, provided the
+representing an IP address prefix or range is eight times its
+.Fa length
+member minus the lowest three bits of its
+.Fa flags ,
+provided the
 .Dv ASN1_STRING_FLAG_BITS_LEFT
 flag is set.
 .Pp
@@ -460,7 +463,8 @@ or a value <= 0 if an error occurs.
 .Xr crypto 3 ,
 .Xr X509_new 3 ,
 .Xr X509v3_addr_add_inherit 3 ,
-.Xr X509v3_addr_inherits 3
+.Xr X509v3_addr_inherits 3 ,
+.Xr X509v3_addr_subset 3
 .Sh STANDARDS
 RFC 3779: X.509 Extensions for IP Addresses and AS Identifiers:
 .Bl -dash -compact
@@ -483,7 +487,7 @@ section 2.2.3.7: Type IPAddressOrRange
 .It
 section 2.2.3.8: Element addressPrefix and Type IPAddress
 .It
-section 2.2.3.9: Elements addressRange and Type IPAddressRange
+section 2.2.3.9: Element addressRange and Type IPAddressRange
 .El
 .Pp
 ITU-T Recommendation X.690, also known as ISO/IEC 8825-1:

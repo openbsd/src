@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASRange_new.3,v 1.5 2023/09/27 08:46:46 tb Exp $
+.\" $OpenBSD: ASRange_new.3,v 1.6 2023/09/28 12:35:31 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2023 $
+.Dd $Mdocdate: September 28 2023 $
 .Dt ASRANGE_NEW 3
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ autonomous system identifier delegation extension.
 .Pp
 All
 .Vt ASN1_INTEGER Ns s
-in this manual should be representable as unsigned 32-bit integers.
+in this manual must be representable as unsigned 32-bit integers.
 The API performs no corresponding checks.
 The library provides no convenient way of setting the value of an
 .Vt ASN1_INTEGER
@@ -358,6 +358,7 @@ or a value <= 0 if an error occurs.
 .Xr crypto 3 ,
 .Xr IPAddressRange_new 3 ,
 .Xr s2i_ASN1_INTEGER 3 ,
+.Xr STACK_OF 3 ,
 .Xr X509_new 3 ,
 .Xr X509v3_asid_add_id_or_range 3
 .Sh STANDARDS
