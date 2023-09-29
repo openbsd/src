@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_validate_path.3,v 1.1 2023/09/29 08:57:49 tb Exp $
+.\" $OpenBSD: X509v3_addr_validate_path.3,v 1.2 2023/09/29 09:28:21 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -114,7 +114,7 @@ for
 .Fa asid .
 .Sh RETURN VALUES
 All these functions return 1 on successful validation and 0 otherwise.
-.Pa
+.Pp
 For
 .Fn X509v3_addr_validate_path
 and
@@ -141,12 +141,13 @@ With the exception of an allocation error,
 no error codes are set on the error stack.
 .Pp
 .Fn X509v3_addr_validate_resource_set
-and
-.Fn X509v3_asid_validate_resource_set
-accept a
+accepts a
 .Dv NULL
 .Fa addrblocks
-or
+and
+.Fn X509v3_asid_validate_resource_set
+accepts a
+.Dv NULL
 .Fa asid
 as valid.
 They fail if
