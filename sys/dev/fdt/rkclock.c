@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkclock.c,v 1.82 2023/07/09 16:33:49 patrick Exp $	*/
+/*	$OpenBSD: rkclock.c,v 1.83 2023/09/29 15:51:48 kettenis Exp $	*/
 /*
  * Copyright (c) 2017, 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -2952,6 +2952,24 @@ rk3399_enable(void *cookie, uint32_t *cells, int on)
 	}
 
 	switch (idx) {
+	case RK3399_CLK_USB2PHY0_REF:
+		HWRITE4(sc, RK3399_CRU_CLKGATE_CON(6), (5 << 0) << 16);
+		break;
+	case RK3399_CLK_USB2PHY1_REF:
+		HWRITE4(sc, RK3399_CRU_CLKGATE_CON(6), (6 << 0) << 16);
+		break;
+	case RK3399_CLK_UPHY0_TCPDPHY_REF:
+		HWRITE4(sc, RK3399_CRU_CLKGATE_CON(13), (4 << 0) << 16);
+		break;
+	case RK3399_CLK_UPHY0_TCPDCORE:
+		HWRITE4(sc, RK3399_CRU_CLKGATE_CON(13), (5 << 0) << 16);
+		break;
+	case RK3399_CLK_UPHY1_TCPDPHY_REF:
+		HWRITE4(sc, RK3399_CRU_CLKGATE_CON(13), (6 << 0) << 16);
+		break;
+	case RK3399_CLK_UPHY1_TCPDCORE:
+		HWRITE4(sc, RK3399_CRU_CLKGATE_CON(13), (7 << 0) << 16);
+		break;
 	case RK3399_ACLK_GMAC:
 		HWRITE4(sc, RK3399_CRU_CLKGATE_CON(32), (1 << 0) << 16);
 		break;

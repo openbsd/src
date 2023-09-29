@@ -1,4 +1,4 @@
-/*	$OpenBSD: rkusbphy.c,v 1.2 2023/04/03 01:21:31 dlg Exp $ */
+/*	$OpenBSD: rkusbphy.c,v 1.3 2023/09/29 15:51:48 kettenis Exp $ */
 
 /*
  * Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
@@ -59,6 +59,54 @@ struct rkusbphy_regs {
 struct rkusbphy_chip {
 	bus_addr_t			 c_base_addr;
 	const struct rkusbphy_regs	*c_regs;
+};
+
+/*
+ * Since OpenBSD only supports USB ports in host mode, this driver
+ * actually powers down the OTG part of the PHY when it is enabled.
+ * This is why the OTG values in the tables below differ from this in
+ * (for example) Linux.
+ */
+
+/*
+ * RK3399 has two USB2PHY nodes that share a GRF.
+ */
+
+static const struct rkusbphy_regs rkusbphy_rk3399_usb0_regs = {
+	/*				shift,	mask,	set */
+	.clk_enable =	{ 0xe450,	4,	0x1,	0x0 },
+
+	.otg = {
+		.phy_enable =	{ 0xe454,	0,	0x3,	0x2 },
+	},
+
+	.host = {
+		.phy_enable =	{ 0xe458,	0,	0x3,	0x1 },
+	},
+};
+
+static const struct rkusbphy_regs rkusbphy_rk3399_usb1_regs = {
+	/*				shift,	mask,	set */
+	.clk_enable =	{ 0xe460,	4,	0x1,	0x0 },
+
+	.otg = {
+		.phy_enable =	{ 0xe464,	0,	0x3,	0x2 },
+	},
+
+	.host = {
+		.phy_enable =	{ 0xe468,	0,	0x3,	0x1 },
+	},
+};
+
+static const struct rkusbphy_chip rkusbphy_rk3399[] = {
+	{
+		.c_base_addr = 0xe450,
+		.c_regs = &rkusbphy_rk3399_usb0_regs,
+	},
+	{
+		.c_base_addr = 0xe460,
+		.c_regs = &rkusbphy_rk3399_usb1_regs,
+	},
 };
 
 /*
@@ -158,6 +206,7 @@ struct rkusbphy_id {
 #define RKUSBPHY_ID(_n, _c) { _n, _c, nitems(_c) }
 
 static const struct rkusbphy_id rkusbphy_ids[] = {
+	RKUSBPHY_ID("rockchip,rk3399-usb2phy", rkusbphy_rk3399),
 	RKUSBPHY_ID("rockchip,rk3568-usb2phy", rkusbphy_rk3568),
 };
 
@@ -213,7 +262,10 @@ rkusbphy_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_node = faa->fa_node;
 
 	grfph = OF_getpropint(sc->sc_node, "rockchip,usbgrf", 0);
-	sc->sc_grf = regmap_byphandle(grfph);
+	if (grfph)
+		sc->sc_grf = regmap_byphandle(grfph);
+	else
+		sc->sc_grf = regmap_bynode(OF_parent(sc->sc_node));
 	if (sc->sc_grf == NULL) {
 		printf("%s: rockchip,usbgrf 0x%x not found\n", DEVNAME(sc),
 		    grfph);
