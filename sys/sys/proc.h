@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.351 2023/09/13 14:25:49 claudio Exp $	*/
+/*	$OpenBSD: proc.h,v 1.352 2023/09/29 12:47:34 claudio Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -571,12 +571,15 @@ refreshcreds(struct proc *p)
 		dorefreshcreds(pr, p);
 }
 
-enum single_thread_mode {
-	SINGLE_SUSPEND,		/* other threads to stop wherever they are */
-	SINGLE_UNWIND,		/* other threads to unwind and stop */
-	SINGLE_EXIT		/* other threads to unwind and then exit */
-};
-int	single_thread_set(struct proc *, enum single_thread_mode, int);
+#define	SINGLE_SUSPEND	0x01	/* other threads to stop wherever they are */
+#define	SINGLE_UNWIND	0x02	/* other threads to unwind and stop */
+#define	SINGLE_EXIT	0x03	/* other threads to unwind and then exit */
+#define	SINGLE_MASK	0x0f
+/* extra flags for single_thread_set */
+#define	SINGLE_DEEP	0x10	/* call is in deep */
+#define	SINGLE_NOWAIT	0x20	/* do not wait for other threads to stop */
+
+int	single_thread_set(struct proc *, int);
 int	single_thread_wait(struct process *, int);
 void	single_thread_clear(struct proc *, int);
 int	single_thread_check(struct proc *, int);

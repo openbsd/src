@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.318 2023/09/19 10:43:33 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.319 2023/09/29 12:47:34 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -840,7 +840,7 @@ trapsignal(struct proc *p, int signum, u_long trapno, int code,
 		    signum != SIGKILL && (p->p_sigmask & mask) != 0) {
 			int s;
 
-			single_thread_set(p, SINGLE_SUSPEND, 0);
+			single_thread_set(p, SINGLE_SUSPEND | SINGLE_NOWAIT);
 			pr->ps_xsig = signum;
 
 			SCHED_LOCK(s);
@@ -1290,7 +1290,7 @@ cursig(struct proc *p, struct sigctx *sctx)
 		 */
 		if (((pr->ps_flags & (PS_TRACED | PS_PPWAIT)) == PS_TRACED) &&
 		    signum != SIGKILL) {
-			single_thread_set(p, SINGLE_SUSPEND, 0);
+			single_thread_set(p, SINGLE_SUSPEND | SINGLE_NOWAIT);
 			pr->ps_xsig = signum;
 
 			SCHED_LOCK(s);
@@ -1559,7 +1559,7 @@ sigexit(struct proc *p, int signum)
 
 		/* if there are other threads, pause them */
 		if (P_HASSIBLING(p))
-			single_thread_set(p, SINGLE_UNWIND, 1);
+			single_thread_set(p, SINGLE_UNWIND);
 
 		if (coredump(p) == 0)
 			signum |= WCOREFLAG;
@@ -2066,16 +2066,16 @@ single_thread_check(struct proc *p, int deep)
  *  - SINGLE_EXIT: unwind to kernel boundary and exit
  */
 int
-single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
+single_thread_set(struct proc *p, int flags)
 {
 	struct process *pr = p->p_p;
 	struct proc *q;
-	int error, s;
+	int error, s, mode = flags & SINGLE_MASK;
 
 	KASSERT(curproc == p);
 
 	SCHED_LOCK(s);
-	error = single_thread_check_locked(p, (mode == SINGLE_UNWIND), s);
+	error = single_thread_check_locked(p, flags & SINGLE_DEEP, s);
 	if (error) {
 		SCHED_UNLOCK(s);
 		return error;
@@ -2146,7 +2146,7 @@ single_thread_set(struct proc *p, enum single_thread_mode mode, int wait)
 	}
 	SCHED_UNLOCK(s);
 
-	if (wait)
+	if ((flags & SINGLE_NOWAIT) == 0)
 		single_thread_wait(pr, 1);
 
 	return 0;
