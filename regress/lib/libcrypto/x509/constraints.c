@@ -1,4 +1,4 @@
-/*	$OpenBSD: constraints.c,v 1.15 2022/11/28 07:24:03 tb Exp $	*/
+/*	$OpenBSD: constraints.c,v 1.16 2023/09/29 15:53:59 beck Exp $	*/
 /*
  * Copyright (c) 2020 Bob Beck <beck@openbsd.org>
  *
@@ -154,10 +154,25 @@ unsigned char *invaliduri[] = {
 	"https://.www.openbsd.org/",
 	"https://www.ope|nbsd.org%",
 	"https://www.openbsd.org.#",
+	"https://192.168.1.1./",
+	"https://192.168.1.1|/",
+	"https://.192.168.1.1/",
+	"https://192.168..1.1/",
+	"https://.2001:0DB8:AC10:FE01::/",
+	"https://.2001:0DB8:AC10:FE01::|/",
 	"///",
 	"//",
 	"/",
 	"",
+	NULL,
+};
+
+unsigned char *validuri[] = {
+	"https://www.openbsd.org/meep/meep/meep/",
+	"https://192.168.1.1/",
+	"https://2001:0DB8:AC10:FE01::/",
+	"https://192.168.1/",  /* Not an IP, but valid component */
+	"https://999.999.999.999/", /* Not an IP, but valid component */
 	NULL,
 };
 
@@ -169,7 +184,7 @@ test_valid_hostnames(void)
 	for (i = 0; valid_hostnames[i] != NULL; i++) {
 		CBS cbs;
 		CBS_init(&cbs, valid_hostnames[i], strlen(valid_hostnames[i]));
-		if (!x509_constraints_valid_host(&cbs)) {
+		if (!x509_constraints_valid_host(&cbs, 0)) {
 			FAIL("Valid hostname '%s' rejected\n",
 			    valid_hostnames[i]);
 			failure = 1;
@@ -183,6 +198,7 @@ test_valid_hostnames(void)
 			goto done;
 		}
 	}
+
  done:
 	return failure;
 }
@@ -202,6 +218,7 @@ test_valid_sandns_names(void)
 			goto done;
 		}
 	}
+
  done:
 	return failure;
 }
@@ -221,6 +238,7 @@ test_valid_domain_constraints(void)
 			goto done;
 		}
 	}
+
  done:
 	return failure;
 }
@@ -245,6 +263,7 @@ test_valid_mbox_names(void)
 		free(name.local);
 		name.local = NULL;
 	}
+
  done:
 	return failure;
 }
@@ -259,7 +278,7 @@ test_invalid_hostnames(void)
 	for (i = 0; invalid_hostnames[i] != NULL; i++) {
 		CBS_init(&cbs, invalid_hostnames[i],
 		    strlen(invalid_hostnames[i]));
-		if (x509_constraints_valid_host(&cbs)) {
+		if (x509_constraints_valid_host(&cbs, 0)) {
 			FAIL("Invalid hostname '%s' accepted\n",
 			    invalid_hostnames[i]);
 			failure = 1;
@@ -267,7 +286,7 @@ test_invalid_hostnames(void)
 		}
 	}
 	CBS_init(&cbs, nulhost, strlen(nulhost) + 1);
-	if (x509_constraints_valid_host(&cbs)) {
+	if (x509_constraints_valid_host(&cbs, 0)) {
 		FAIL("hostname with NUL byte accepted\n");
 		failure = 1;
 		goto done;
@@ -278,6 +297,7 @@ test_invalid_hostnames(void)
 		failure = 1;
 		goto done;
 	}
+
  done:
 	return failure;
 }
@@ -297,6 +317,7 @@ test_invalid_sandns_names(void)
 			goto done;
 		}
 	}
+
  done:
 	return failure;
 }
@@ -321,6 +342,7 @@ test_invalid_mbox_names(void)
 		free(name.local);
 		name.local = NULL;
 	}
+
  done:
 	return failure;
 }
@@ -340,6 +362,7 @@ test_invalid_domain_constraints(void)
 			goto done;
 		}
 	}
+
  done:
 	return failure;
 }
@@ -355,6 +378,27 @@ test_invalid_uri(void)
 		    strlen(invaliduri[j]), &hostpart) != 0) {
 			FAIL("invalid URI '%s' accepted\n",
 			    invaliduri[j]);
+			failure = 1;
+			goto done;
+		}
+		free(hostpart);
+		hostpart = NULL;
+	}
+
+ done:
+	return failure;
+}
+static int
+test_valid_uri(void)
+{
+	int j, failure = 0;
+	char *hostpart = NULL;
+
+	for (j = 0; validuri[j] != NULL; j++) {
+		if (x509_constraints_uri_host(validuri[j],
+		    strlen(invaliduri[j]), &hostpart) == 0) {
+			FAIL("Valid URI '%s' NOT accepted\n",
+			    validuri[j]);
 			failure = 1;
 			goto done;
 		}
@@ -513,6 +557,7 @@ test_constraints1(void)
 		failure = 1;
 		goto done;
 	}
+
  done:
 	return failure;
 }
@@ -531,6 +576,7 @@ main(int argc, char **argv)
 	failed |= test_valid_domain_constraints();
 	failed |= test_invalid_domain_constraints();
 	failed |= test_invalid_uri();
+	failed |= test_valid_uri();
 	failed |= test_constraints1();
 
 	return (failed);
