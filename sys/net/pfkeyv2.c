@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.257 2023/08/07 03:35:06 dlg Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.258 2023/09/29 18:40:08 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1162,6 +1162,10 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 
 	rdomain = kp->kcb_rdomain;
 
+	/* Validate message format */
+	if ((rval = pfkeyv2_parsemessage(message, len, headers)) != 0)
+		goto ret;
+
 	/* If we have any promiscuous listeners, send them a copy of the message */
 	if (promisc) {
 		struct mbuf *packet;
@@ -1207,10 +1211,6 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 		freeme = NULL;
 		freeme_sz = 0;
 	}
-
-	/* Validate message format */
-	if ((rval = pfkeyv2_parsemessage(message, len, headers)) != 0)
-		goto ret;
 
 	/* use specified rdomain */
 	srdomain = (struct sadb_x_rdomain *) headers[SADB_X_EXT_RDOMAIN];
