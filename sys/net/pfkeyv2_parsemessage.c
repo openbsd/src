@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.61 2023/08/07 03:35:06 dlg Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.62 2023/09/29 18:45:42 tobhe Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -327,16 +327,8 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	}
 
 	if (sadb_msg->sadb_msg_errno) {
-		if (left) {
-			DPRINTF("too-large error message");
-			return (EINVAL);
-		}
-		return (0);
-	}
-
-	if (sadb_msg->sadb_msg_type == SADB_X_PROMISC) {
-		DPRINTF("message type promiscuous");
-		return (0);
+		DPRINTF("errno set");
+		return (EINVAL);
 	}
 
 	allow = sadb_exts_allowed_in[sadb_msg->sadb_msg_type];
