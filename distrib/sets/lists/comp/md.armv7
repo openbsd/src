@@ -43,6 +43,7 @@
 ./usr/include/arm/reloc.h
 ./usr/include/arm/setjmp.h
 ./usr/include/arm/signal.h
+./usr/include/arm/simplebusvar.h
 ./usr/include/arm/softintr.h
 ./usr/include/arm/spinlock.h
 ./usr/include/arm/sysarch.h
@@ -91,6 +92,7 @@
 ./usr/include/armv7/reloc.h
 ./usr/include/armv7/setjmp.h
 ./usr/include/armv7/signal.h
+./usr/include/armv7/simplebusvar.h
 ./usr/include/armv7/spinlock.h
 ./usr/include/armv7/sysarch.h
 ./usr/include/armv7/tcb.h
