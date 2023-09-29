@@ -1,4 +1,4 @@
-/*	$OpenBSD: evp_test.c,v 1.6 2023/09/28 14:54:39 tb Exp $ */
+/*	$OpenBSD: evp_test.c,v 1.7 2023/09/29 06:53:05 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -345,11 +345,13 @@ static int
 evp_pkey_iv_len_testcase(const struct evp_iv_len_test *test)
 {
 	const EVP_CIPHER *cipher = test->cipher();
-	const char *name = OBJ_nid2ln(EVP_CIPHER_nid(cipher));
+	const char *name;
 	EVP_CIPHER_CTX *ctx;
 	int ret;
 	int failure = 1;
 
+	assert(cipher != NULL);
+	name = OBJ_nid2ln(EVP_CIPHER_nid(cipher));
 	assert(name != NULL);
 
 	if ((ctx = EVP_CIPHER_CTX_new()) == NULL) {
