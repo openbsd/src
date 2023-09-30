@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_validate_path.3,v 1.4 2023/09/30 14:26:09 schwarze Exp $
+.\" $OpenBSD: X509v3_addr_validate_path.3,v 1.5 2023/09/30 19:07:38 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -49,19 +49,18 @@ path validation.
 The initial set of allowed IP address and AS number resources is defined in
 the trust anchor, where inheritance is not allowed.
 .It
-All IP address delegation or AS number delegation extensions
+An issuer may only delegate subsets of resources present in its
+RFC 3779 extensions or subsets of resources inherited from its issuer.
+.It
+If an RFC 3779 extension is present in a certificate,
+the same type of extension must also be present in its issuer.
+.It
+All RFC 3779 extensions
 appearing in the validation path must be in canonical form
 according to
 .Xr X509v3_addr_is_canonical 3
 and
 .Xr X509v3_asid_is_canonical 3 .
-.It
-If the IP address delegation extension is present in a certificate,
-it must also be present in its issuer.
-Similarly for the AS identifiers delegation extension.
-.It
-An issuer may only delegate subsets of resources present in its
-RFC 3779 extensions or subsets of resources inherited from its issuer.
 .El
 .Pp
 .Fn X509v3_addr_validate_path
