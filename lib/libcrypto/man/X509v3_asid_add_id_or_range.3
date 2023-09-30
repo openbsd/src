@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_asid_add_id_or_range.3,v 1.7 2023/09/29 08:57:49 tb Exp $
+.\" $OpenBSD: X509v3_asid_add_id_or_range.3,v 1.8 2023/09/30 14:29:41 schwarze Exp $
 .\"
 .\" Copyright (c) 2021-2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 29 2023 $
+.Dd $Mdocdate: September 30 2023 $
 .Dt X509V3_ASID_ADD_ID_OR_RANGE 3
 .Os
 .Sh NAME
@@ -163,6 +163,7 @@ Ranges must not overlap,
 .\" contain at least two elements,
 and adjacent ranges must be fully merged.
 .El
+.Pp
 .Fn X509v3_asid_canonize
 merges adjacent ranges
 but refuses to merge overlapping ranges or to discard duplicates.
@@ -286,8 +287,12 @@ arguments on failure.
 .Pp
 RFC 3779 does not explicitly disallow ranges where the minimum
 is equal to the maximum.
-The isolated AS identifier a and
-the AS range [a,a] where the minimum and the maximum are equal to a
+The isolated AS identifier
+.Fa min
+and the AS range
+.Bq Fa min , Ns Fa min
+where the minimum and the maximum are equal to
+.Fa min
 have the same semantics.
 .Fn X509v3_asid_is_canonical
 accepts both representations as valid and
