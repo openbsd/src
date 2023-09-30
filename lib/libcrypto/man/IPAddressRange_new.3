@@ -1,4 +1,4 @@
-.\" $OpenBSD: IPAddressRange_new.3,v 1.5 2023/09/28 12:35:31 tb Exp $
+.\" $OpenBSD: IPAddressRange_new.3,v 1.6 2023/09/30 13:58:29 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 28 2023 $
+.Dd $Mdocdate: September 30 2023 $
 .Dt IPADDRESSRANGE_NEW 3
 .Os
 .Sh NAME
@@ -240,7 +240,7 @@ typedef STACK_OF(IPAddressOrRange) IPAddressOrRanges;
 Since an
 .Vt IPAddressOrRanges
 object should be sorted in a specific way (see
-.Xr X509v3_addr_canonize 3 Ns ),
+.Xr X509v3_addr_canonize 3 ) ,
 a comparison function is needed for a correct instantiation
 with
 .Xr sk_new 3 .
@@ -383,7 +383,7 @@ and related functions.
 .Fn i2d_IPAddressChoice ,
 .Fn d2i_IPAddressFamily ,
 and
-.Fn i2d_IPAddressFamily ,
+.Fn i2d_IPAddressFamily
 decode and encode ASN.1
 .Vt IPAddressRange ,
 .Vt IPAddressOrRange ,
@@ -428,12 +428,12 @@ object with allocated, empty members, or
 .Dv NULL
 if an error occurs.
 .Pp
-The encoding functions
+The decoding functions
 .Fn d2i_IPAddressRange ,
 .Fn d2i_IPAddressOrRange ,
 .Fn d2i_IPAddressChoice ,
 and
-.Fn d2i_IPAddressFamily ,
+.Fn d2i_IPAddressFamily
 return an
 .Vt IPAddressRange ,
 an
@@ -452,7 +452,7 @@ The encoding functions
 .Fn i2d_IPAddressOrRange ,
 .Fn i2d_IPAddressChoice ,
 and
-.Fn i2d_IPAddressFamily ,
+.Fn i2d_IPAddressFamily
 return the number of bytes successfully encoded
 or a value <= 0 if an error occurs.
 .Sh SEE ALSO
