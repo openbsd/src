@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_inherits.3,v 1.2 2023/09/27 08:46:46 tb Exp $
+.\" $OpenBSD: X509v3_addr_inherits.3,v 1.3 2023/09/30 14:21:57 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 27 2023 $
+.Dd $Mdocdate: September 30 2023 $
 .Dt X509V3_ADDR_INHERITS 3
 .Os
 .Sh NAME
@@ -65,9 +65,7 @@ or the
 lists has
 .Fa type
 .Dv ASIdentifierChoice_inherit .
-Otherwise
-.Fn X509v3_asid_inherits 3
-returns 0.
+Otherwise it returns 0.
 .Sh SEE ALSO
 .Xr ASIdentifiers_new 3 ,
 .Xr ASRange_new 3 ,
@@ -102,5 +100,5 @@ There is no API that determines whether all lists contained in an
 .Vt ASIdentifiers
 or an
 .Vt IPAddrBlocks
-objects inherit.
+object inherit.
 See RFC 9287, 5.1.2 for an example where this is relevant.
