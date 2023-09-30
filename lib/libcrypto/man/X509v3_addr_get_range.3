@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_get_range.3,v 1.1 2023/09/26 18:35:34 tb Exp $
+.\" $OpenBSD: X509v3_addr_get_range.3,v 1.2 2023/09/30 14:12:40 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 26 2023 $
+.Dd $Mdocdate: September 30 2023 $
 .Dt X509V3_ADDR_GET_RANGE 3
 .Os
 .Sh NAME
@@ -53,15 +53,13 @@ The
 .Fa length
 must be large enough to accommodate an address for
 .Fa afi ,
-which for
-.Dv IANA_AFI_IPV4 ,
-is at least 4,
-and for
-.Dv IANA_AFI_IPV6
-at least 16.
+which is at least 4 for
+.Dv IANA_AFI_IPV4
+and at least 16 for
+.Dv IANA_AFI_IPV6 .
 .Sh RETURN VALUES
 .Fn X509v3_addr_get_afi
-returns the afi encoded in
+returns the AFI encoded in
 .Fa af
 or 0 if
 .Fa af
