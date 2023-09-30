@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_subset.3,v 1.1 2023/09/28 12:36:36 tb Exp $
+.\" $OpenBSD: X509v3_addr_subset.3,v 1.2 2023/09/30 14:24:00 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 28 2023 $
+.Dd $Mdocdate: September 30 2023 $
 .Dt X509V3_ADDR_SUBSET 3
 .Os
 .Sh NAME
@@ -62,12 +62,12 @@ then
 .Fa child
 is a subset of
 .Fa parent .
-(In particular, a
+In particular, a
 .Dv NULL
 .Fa parent
 is allowed for a
 .Dv NULL
-.Fa child Ns .)
+.Fa child .
 .It
 If
 .Fa parent
@@ -159,7 +159,7 @@ If both
 and
 .Fa parent
 are in canonical form,
-they cannot fail.
+these functions cannot fail.
 .Sh SEE ALSO
 .Xr ASIdentifiers_new 3 ,
 .Xr ASRange_new 3 ,
