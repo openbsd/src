@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.8 2023/09/30 14:10:56 schwarze Exp $
+.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.9 2023/09/30 16:01:18 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -443,7 +443,7 @@ with public API.
 .Fn X509v3_addr_add_range
 should check for inverted range bounds and overlaps
 on insertion and fail instead of creating a nonsensical
-.Fa addr
+.Fa addrblocks
 that fails to be canonized by
 .Fn X509v3_addr_canonize .
 .Pp
