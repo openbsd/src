@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.7 2023/09/29 08:57:49 tb Exp $
+.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.8 2023/09/30 14:10:56 schwarze Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 29 2023 $
+.Dd $Mdocdate: September 30 2023 $
 .Dt X509V3_ADDR_ADD_INHERIT 3
 .Os
 .Sh NAME
@@ -128,9 +128,11 @@ the call fails.
 is expected to be a byte array in network byte order.
 It should point at enough memory to accommodate
 .Fa prefixlen
-bits and it is recommended that all the bits not covered by
-the prefixlen be set to 0.
-It is the caller's responsibility to ensure that the prefix
+bits and it is recommended that all the bits not covered by the
+.Fa prefixlen
+be set to 0.
+It is the caller's responsibility to ensure that the
+.Fa prefix
 has no address in common with any of
 the prefixes or ranges already in the list.
 If
@@ -281,7 +283,7 @@ hexdump(const unsigned char *buf, size_t len)
 	size_t i;
 
 	for (i = 1; i <= len; i++)
-		printf(" 0x%02x,%s", buf[i - 1], i % 8 ? "" : "\en");
+		printf(" 0x%02x,%s", buf[i \- 1], i % 8 ? "" : "\en");
 	if (len % 8)
 		printf("\en");
 }
@@ -295,7 +297,7 @@ main(void)
 	int der_len;
 	size_t i;
 
-	if (pledge("stdio", NULL) == -1)
+	if (pledge("stdio", NULL) == \-1)
 		err(1, "pledge");
 
 	/*
@@ -319,7 +321,7 @@ main(void)
 
 		len = inet_net_pton(AF_INET, prefixes[i], addr,
 		    sizeof(addr));
-		if (len == -1)
+		if (len == \-1)
 			errx(1, "inet_net_pton(%s)", prefixes[i]);
 		if (!X509v3_addr_add_prefix(addrblocks, IANA_AFI_IPV4,
 		    &unicast, addr, len))
@@ -373,7 +375,7 @@ d2i_IPAddrBlocks(IPAddrBlocks **addrblocks, const unsigned char **in,
 	if ((v3_addr = X509V3_EXT_get_nid(NID_sbgp_ipAddrBlock)) == NULL)
 		return NULL;
 	return (IPAddrBlocks *)ASN1_item_d2i((ASN1_VALUE **)addrblocks,
-	    in, len, ASN1_ITEM_ptr(v3_addr->it));
+	    in, len, ASN1_ITEM_ptr(v3_addr\->it));
 }
 
 int
@@ -382,9 +384,9 @@ i2d_IPAddrBlocks(IPAddrBlocks *addrblocks, unsigned char **out)
 	const X509V3_EXT_METHOD *v3_addr;
 
 	if ((v3_addr = X509V3_EXT_get_nid(NID_sbgp_ipAddrBlock)) == NULL)
-		return -1;
+		return \-1;
 	return ASN1_item_i2d((ASN1_VALUE *)addrblocks, out,
-	    ASN1_ITEM_ptr(v3_addr->it));
+	    ASN1_ITEM_ptr(v3_addr\->it));
 }
 .Ed
 .Pp
@@ -415,12 +417,12 @@ RFC 7249: Internet Number Registries
 .Pp
 .Rs
 .%T Address Family Numbers
-.%U https://www.iana.org/assignments/address-family-numbers
+.%U https://www.iana.org/assignments/address\-family\-numbers
 .Re
 .Pp
 .Rs
 .%T Subsequent Address Family Identifiers (SAFI) Parameters
-.%U https://www.iana.org/assignments/safi-namespace
+.%U https://www.iana.org/assignments/safi\-namespace
 .Re
 .Sh HISTORY
 These functions first appeared in OpenSSL 0.9.8e
