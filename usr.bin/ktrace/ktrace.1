@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.32 2022/07/30 07:19:30 jsg Exp $
+.\"	$OpenBSD: ktrace.1,v 1.33 2023/09/30 13:03:40 naddy Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 30 2022 $
+.Dd $Mdocdate: September 30 2023 $
 .Dt KTRACE 1
 .Os
 .Sh NAME
@@ -119,6 +119,7 @@ By default all trace points except for
 are enabled.
 .Pp
 .Bl -tag -width flag -offset indent -compact
+.\" Keep this list in sync with kdump(1) and ltrace(1).
 .It Cm c
 trace system calls
 .It Cm i

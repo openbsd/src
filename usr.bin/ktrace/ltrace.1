@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ltrace.1,v 1.10 2016/07/18 09:36:50 guenther Exp $
+.\"	$OpenBSD: ltrace.1,v 1.11 2023/09/30 13:03:40 naddy Exp $
 .\"
 .\" Copyright (c) 2013 Miodrag Vallat.
 .\"
@@ -43,7 +43,7 @@
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: July 18 2016 $
+.Dd $Mdocdate: September 30 2023 $
 .Dt LTRACE 1
 .Os
 .Sh NAME
@@ -107,6 +107,7 @@ The default is just
 The following table equates the letters with the trace points:
 .Pp
 .Bl -tag -width flag -offset indent -compact
+.\" Keep this list in sync with kdump(1) and ktrace(1).
 .It Cm c
 trace system calls
 .It Cm i
