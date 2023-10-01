@@ -1,4 +1,4 @@
-.\" $OpenBSD: s2i_ASN1_INTEGER.3,v 1.5 2023/05/12 08:12:09 tb Exp $
+.\" $OpenBSD: s2i_ASN1_INTEGER.3,v 1.6 2023/10/01 10:51:19 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 12 2023 $
+.Dd $Mdocdate: October 1 2023 $
 .Dt I2S_ASN1_INTEGER 3
 .Os
 .Sh NAME
@@ -122,8 +122,8 @@ is then obtained with
 .Fn i2s_ASN1_OCTET_STRING
 converts the octets in
 .Fa aos
-into a string where the octets are represented by pairs of colon-separated
-hexadecimal digits.
+into a string where the octets are colon-separated and
+represented as pairs of uppercase hexadecimal digits.
 .Pp
 .Fn s2i_ASN1_OCTET_STRING
 converts the NUL-terminated string
@@ -196,6 +196,7 @@ Error codes can sometimes be obtained by
 .Xr ASN1_INTEGER_new 3 ,
 .Xr ASN1_INTEGER_to_BN 3 ,
 .Xr ASN1_OCTET_STRING_new 3 ,
+.Xr crypto 3 ,
 .Xr X509V3_get_d2i 3
 .Sh HISTORY
 These functions first appeared in OpenSSL 0.9.4 and
