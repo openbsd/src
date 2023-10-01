@@ -1,4 +1,4 @@
-.\" $OpenBSD: EVP_CIPHER_CTX_ctrl.3,v 1.1 2023/08/31 17:27:41 schwarze Exp $
+.\" $OpenBSD: EVP_CIPHER_CTX_ctrl.3,v 1.2 2023/10/01 18:23:50 tb Exp $
 .\" full merge up to: OpenSSL 5211e094 Nov 11 14:39:11 2014 -0800
 .\"
 .\" This file is a derived work.
@@ -67,7 +67,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: August 31 2023 $
+.Dd $Mdocdate: October 1 2023 $
 .Dt EVP_CIPHER_CTX_CTRL 3
 .Os
 .Sh NAME
@@ -178,7 +178,9 @@ return the IV length of a cipher when passed an
 .Vt EVP_CIPHER_CTX
 or
 .Vt EVP_CIPHER .
-It will return zero if the cipher does not use an IV.
+They will return zero if the cipher does not use an IV.
+.Fn EVP_CIPHER_CTX_iv_length
+can fail and return \-1.
 The constant
 .Dv EVP_MAX_IV_LENGTH
 is the maximum IV length for all ciphers.
@@ -220,6 +222,8 @@ return the key length.
 and
 .Fn EVP_CIPHER_iv_length
 return the IV length or zero if the cipher does not use an IV.
+.Fn EVP_CIPHER_CTX_iv_length
+can fail and return \-1.
 .Sh SEE ALSO
 .Xr evp 3 ,
 .Xr EVP_CIPHER_nid 3 ,
