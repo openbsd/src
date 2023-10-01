@@ -1,4 +1,4 @@
-.\" $OpenBSD: IPAddressRange_new.3,v 1.7 2023/10/01 08:17:52 tb Exp $
+.\" $OpenBSD: IPAddressRange_new.3,v 1.8 2023/10/01 08:23:58 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -113,7 +113,8 @@ ASN.1 BIT STRING of bit size 32 or 128 bits, respectively.
 The bit size of a prefix is its prefix length;
 all insignificant zero bits are omitted
 from the encoding.
-An address range is expressed as a pair of BIT STRINGs
+Per section 2.1.2,
+an address range is expressed as a pair of BIT STRINGs
 where all the least significant zero bits of the lower bound
 and all the least significant one bits of the upper bound are omitted.
 .Pp
@@ -468,6 +469,10 @@ or a value <= 0 if an error occurs.
 .Sh STANDARDS
 RFC 3779: X.509 Extensions for IP Addresses and AS Identifiers:
 .Bl -dash -compact
+.It
+section 2.1.1: Encoding of an IP Address or Prefix
+.It
+section 2.1.2: Encoding of a Range of IP Addresses
 .It
 section 2.2.3: Syntax
 .It
