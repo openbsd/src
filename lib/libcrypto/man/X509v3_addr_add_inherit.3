@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.10 2023/10/01 08:29:12 tb Exp $
+.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.11 2023/10/01 22:46:21 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -271,7 +271,7 @@ Construct the first extension from RFC 3779, Appendix B.
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-const char *prefixes[6] = {
+const char *prefixes[] = {
 	"10.0.32/20", "10.0.64/24", "10.1/16",
 	"10.2.48/20", "10.2.64/24", "10.3/16",
 };
