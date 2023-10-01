@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhc.c,v 1.75 2023/04/19 02:01:02 dlg Exp $	*/
+/*	$OpenBSD: sdhc.c,v 1.76 2023/10/01 08:56:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -244,6 +244,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	struct sdmmcbus_attach_args saa;
 	struct sdhc_host *hp;
 	uint32_t caps;
+	int major, minor;
 	int error = 1;
 	int max_clock;
 
@@ -310,8 +311,20 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		goto err;
 	}
 
-	printf("%s: SDHC %d.0, %d MHz base clock\n", DEVNAME(sc),
-	    SDHC_SPEC_VERSION(hp->version) + 1, hp->clkbase / 1000);
+	switch (SDHC_SPEC_VERSION(hp->version)) {
+	case SDHC_SPEC_VERS_4_10:
+		major = 4, minor = 10;
+		break;
+	case SDHC_SPEC_VERS_4_20:
+		major = 4, minor = 20;
+		break;
+	default:
+		major = SDHC_SPEC_VERSION(hp->version) + 1, minor = 0;
+		break;
+	}
+
+	printf("%s: SDHC %d.%02d, %d MHz base clock\n", DEVNAME(sc),
+	    major, minor, hp->clkbase / 1000);
 
 	/*
 	 * XXX Set the data timeout counter value according to

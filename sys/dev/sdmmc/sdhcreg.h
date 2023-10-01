@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdhcreg.h,v 1.9 2018/09/06 10:15:17 patrick Exp $	*/
+/*	$OpenBSD: sdhcreg.h,v 1.10 2023/10/01 08:56:24 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2006 Uwe Stuehler <uwe@openbsd.org>
@@ -201,6 +201,8 @@
 #define SDHC_HOST_CTL_VERSION		0xfe
 #define  SDHC_SPEC_VERS_SHIFT		0
 #define  SDHC_SPEC_VERS_MASK		0xff
+#define  SDHC_SPEC_VERS_4_10		0x04
+#define  SDHC_SPEC_VERS_4_20		0x05
 #define  SDHC_VENDOR_VERS_SHIFT		8
 #define  SDHC_VENDOR_VERS_MASK		0xff
 #define  SDHC_SPEC_V1			0
