@@ -1,4 +1,4 @@
-.\" $OpenBSD: IPAddressRange_new.3,v 1.6 2023/09/30 13:58:29 schwarze Exp $
+.\" $OpenBSD: IPAddressRange_new.3,v 1.7 2023/10/01 08:17:52 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2023 $
+.Dd $Mdocdate: October 1 2023 $
 .Dt IPADDRESSRANGE_NEW 3
 .Os
 .Sh NAME
@@ -162,7 +162,7 @@ object with allocated, empty
 .Fa min
 and
 .Fa max ,
-thus representing the entire address space.
+thus representing the entire address space invalidly as a non-prefix.
 .Pp
 .Fn IPAddressRange_free
 frees
