@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.24 2023/09/19 14:14:35 jsg Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.25 2023/10/01 09:03:14 kettenis Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -339,6 +339,8 @@
 #define TPS_DATA_TCT_REG(i)			(0x7110 + (i) * 4)
 #define  TPS_DATA_TCT_CREDIT_MAX		0xFFF0000
 #define  TPS_DATA_TCT_WEIGHT			0x1FF
+#define  TPS2_DATA_TCT_CREDIT_MAX		0xFFFF0000
+#define  TPS2_DATA_TCT_WEIGHT			0x7FFF
 /* TPS_DATA_TCT_REG[AQ_TRAFFICCLASS_NUM] 0x7210-0x7230 */
 #define TPS_DESC_TCT_REG(i)			(0x7210 + (i) * 4)
 #define  TPS_DESC_TCT_CREDIT_MAX		0xFFF0000
@@ -346,6 +348,8 @@
 
 #define AQ_HW_TXBUF_MAX         160
 #define AQ_HW_RXBUF_MAX         320
+#define AQ2_HW_TXBUF_MAX	128
+#define AQ2_HW_RXBUF_MAX	192
 
 #define TPO_HWCSUM_REG				0x7800
 #define  TPO_HWCSUM_L4CSUM_EN			(1 << 0)
@@ -2760,10 +2764,17 @@ aq_hw_qos_set(struct aq_softc *sc)
 	AQ_WRITE_REG_BIT(sc, TPS_DESC_TC_ARB_MODE_REG, TPS_DESC_TC_ARB_MODE, 0);
 	AQ_WRITE_REG_BIT(sc, TPS_DATA_TC_ARB_MODE_REG, TPS_DATA_TC_ARB_MODE, 0);
 
-	AQ_WRITE_REG_BIT(sc, TPS_DATA_TCT_REG(tc),
-	    TPS_DATA_TCT_CREDIT_MAX, 0xfff);
-	AQ_WRITE_REG_BIT(sc, TPS_DATA_TCT_REG(tc),
-	    TPS_DATA_TCT_WEIGHT, 0x64);
+	if (HWTYPE_AQ2_P(sc)) {
+		AQ_WRITE_REG_BIT(sc, TPS_DATA_TCT_REG(tc),
+		    TPS2_DATA_TCT_CREDIT_MAX, 0xfff0);
+		AQ_WRITE_REG_BIT(sc, TPS_DATA_TCT_REG(tc),
+		    TPS2_DATA_TCT_WEIGHT, 0x640);
+	} else {
+		AQ_WRITE_REG_BIT(sc, TPS_DATA_TCT_REG(tc),
+		    TPS_DATA_TCT_CREDIT_MAX, 0xfff);
+		AQ_WRITE_REG_BIT(sc, TPS_DATA_TCT_REG(tc),
+		    TPS_DATA_TCT_WEIGHT, 0x64);
+	}
 	AQ_WRITE_REG_BIT(sc, TPS_DESC_TCT_REG(tc),
 	    TPS_DESC_TCT_CREDIT_MAX, 0x50);
 	AQ_WRITE_REG_BIT(sc, TPS_DESC_TCT_REG(tc),
@@ -2771,7 +2782,7 @@ aq_hw_qos_set(struct aq_softc *sc)
 
 	/* Tx buf size */
 	tc = 0;
-	buff_size = AQ_HW_TXBUF_MAX;
+	buff_size = HWTYPE_AQ2_P(sc) ? AQ2_HW_TXBUF_MAX : AQ_HW_TXBUF_MAX;
 	AQ_WRITE_REG_BIT(sc, TPB_TXB_BUFSIZE_REG(tc), TPB_TXB_BUFSIZE,
 	    buff_size);
 	AQ_WRITE_REG_BIT(sc, TPB_TXB_THRESH_REG(tc), TPB_TXB_THRESH_HI,
@@ -2781,7 +2792,7 @@ aq_hw_qos_set(struct aq_softc *sc)
 
 	/* QoS Rx buf size per TC */
 	tc = 0;
-	buff_size = AQ_HW_RXBUF_MAX;
+	buff_size = HWTYPE_AQ2_P(sc) ? AQ2_HW_RXBUF_MAX : AQ_HW_RXBUF_MAX;
 	AQ_WRITE_REG_BIT(sc, RPB_RXB_BUFSIZE_REG(tc), RPB_RXB_BUFSIZE,
 	    buff_size);
 	AQ_WRITE_REG_BIT(sc, RPB_RXB_XOFF_REG(tc), RPB_RXB_XOFF_EN, 0);
