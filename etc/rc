@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.571 2023/04/26 14:28:09 phessler Exp $
+#	$OpenBSD: rc,v 1.572 2023/10/01 20:15:23 naddy Exp $
 
 # System startup script run by init on autoboot or after single-user.
 # Output and error are redirected to console by init, and the console is the
@@ -137,6 +137,7 @@ make_keys() {
 	local _isakmpd_pub=/etc/isakmpd/local.pub
 	local _iked_key=/etc/iked/private/local.key
 	local _iked_pub=/etc/iked/local.pub
+	local _ssh_pub=/etc/ssh/ssh_host_ed25519_key.pub _show_ssh_fp=false
 
 	if [[ ! -f $_isakmpd_key ]]; then
 		echo -n "openssl: generating isakmpd RSA keys... "
@@ -162,7 +163,10 @@ make_keys() {
 		fi
 	fi
 
+	[[ -f $_ssh_pub ]] || _show_ssh_fp=true
 	ssh-keygen -A
+	$_show_ssh_fp && ssh-keygen -lf $_ssh_pub |
+	    (read sz fp comm type && echo "sshd: $type $fp")
 
 	if [[ ! -f /etc/soii.key ]]; then
 		openssl rand -hex 16 > /etc/soii.key &&
