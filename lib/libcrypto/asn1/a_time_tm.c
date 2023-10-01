@@ -1,4 +1,4 @@
-/* $OpenBSD: a_time_tm.c,v 1.30 2023/08/30 10:13:12 job Exp $ */
+/* $OpenBSD: a_time_tm.c,v 1.31 2023/10/01 22:14:36 tb Exp $ */
 /*
  * Copyright (c) 2015 Bob Beck <beck@openbsd.org>
  *
@@ -503,7 +503,7 @@ ASN1_TIME_compare(const ASN1_TIME *t1, const ASN1_TIME *t2)
 	if (ASN1_time_parse(t1->data, t1->length, &tm1, t1->type) == -1)
 		return -2;
 
-	if (ASN1_time_parse(t1->data, t2->length, &tm2, t2->type) == -1)
+	if (ASN1_time_parse(t2->data, t2->length, &tm2, t2->type) == -1)
 		return -2;
 
 	return ASN1_time_tm_cmp(&tm1, &tm2);
