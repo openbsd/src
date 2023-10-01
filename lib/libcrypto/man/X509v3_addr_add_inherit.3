@@ -1,4 +1,4 @@
-.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.9 2023/09/30 16:01:18 tb Exp $
+.\" $OpenBSD: X509v3_addr_add_inherit.3,v 1.10 2023/10/01 08:29:12 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: September 30 2023 $
+.Dd $Mdocdate: October 1 2023 $
 .Dt X509V3_ADDR_ADD_INHERIT 3
 .Os
 .Sh NAME
@@ -339,7 +339,7 @@ main(void)
 	if (!X509v3_addr_canonize(addrblocks))
 		errx(1, "X509v3_addr_canonize");
 
-	/* Create the extension. The 1 indicates that it is critical. */
+	/* Create the extension with the correct OID; mark it critical. */
 	ext = X509V3_EXT_i2d(NID_sbgp_ipAddrBlock, 1, addrblocks);
 	if (ext == NULL)
 		errx(1, "X509V3_EXT_i2d");
