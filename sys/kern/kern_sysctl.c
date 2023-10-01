@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.419 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.420 2023/10/01 15:58:12 krw Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -86,6 +86,8 @@
 
 #include <dev/cons.h>
 
+#include <dev/usb/ucomvar.h>
+
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
@@ -116,6 +118,7 @@
 #include "audio.h"
 #include "dt.h"
 #include "pf.h"
+#include "ucom.h"
 #include "video.h"
 
 extern struct forkstat forkstat;
@@ -768,6 +771,14 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 	case HW_ALLOWPOWERDOWN:
 		return (sysctl_securelevel_int(oldp, oldlenp, newp, newlen,
 		    &allowpowerdown));
+#if NUCOM > 0
+	case HW_UCOMNAMES: {
+		const char *str = sysctl_ucominit();
+		if (str == NULL)
+			return EINVAL;
+		return (sysctl_rdstring(oldp, oldlenp, newp, str));
+	}
+#endif	/* NUCOM > 0 */
 #ifdef __HAVE_CPU_TOPOLOGY
 	case HW_SMT:
 		return (sysctl_hwsmt(oldp, oldlenp, newp, newlen));

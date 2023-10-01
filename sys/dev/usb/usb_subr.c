@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.159 2023/09/11 08:41:27 mvs Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.160 2023/10/01 15:58:11 krw Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1328,6 +1328,59 @@ usbd_fill_deviceinfo(struct usbd_device *dev, struct usb_device_info *di)
 	if (dev->serial != NULL)
 		strlcpy(di->udi_serial, dev->serial,
 		    sizeof(di->udi_serial));
+}
+
+int
+usbd_get_routestring(struct usbd_device *dev, uint32_t *route)
+{
+	struct usbd_device *hub;
+	uint32_t r;
+	uint8_t port;
+
+	/*
+	 * Calculate the Route String.  Assume that there is no hub with
+	 * more than 15 ports and that they all have a depth < 6.  See
+	 * section 8.9 of USB 3.1 Specification for more details.
+	 */
+	r = dev->powersrc ? dev->powersrc->portno : 0;
+	for (hub = dev->myhub; hub && hub->depth; hub = hub->myhub) {
+		port = hub->powersrc ? hub->powersrc->portno : 0;
+		if (port > 15)
+			return -1;
+		r <<= 4;
+		r |= port;
+	}
+
+	*route = r;
+	return 0;
+}
+
+int
+usbd_get_location(struct usbd_device *dev, struct usbd_interface *iface,
+    uint8_t *bus, uint32_t *route, uint8_t *ifaceidx)
+{
+	int i;
+	uint32_t r;
+
+	if (dev == NULL || usbd_is_dying(dev) ||
+	    dev->cdesc == NULL ||
+	    dev->cdesc->bNumInterfaces == 0 ||
+	    dev->bus == NULL ||
+	    dev->bus->usbctl == NULL ||
+	    dev->myhub == NULL ||
+	    dev->powersrc == NULL)
+		return -1;
+
+	for(i = 0; i < dev->cdesc->bNumInterfaces; i++) {
+		if (iface == &dev->ifaces[i]) {
+			*bus = dev->bus->usbctl->dv_unit;
+			*route = (usbd_get_routestring(dev, &r)) ? 0 : r;
+			*ifaceidx = i;
+			return 0;
+		}
+	}
+
+	return -1;
 }
 
 /* Retrieve a complete descriptor for a certain device and index. */

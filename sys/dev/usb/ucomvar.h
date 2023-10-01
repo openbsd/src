@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucomvar.h,v 1.19 2022/04/09 20:07:44 naddy Exp $ */
+/*	$OpenBSD: ucomvar.h,v 1.20 2023/10/01 15:58:11 krw Exp $ */
 /*	$NetBSD: ucomvar.h,v 1.10 2001/12/31 12:15:21 augustss Exp $	*/
 
 /*
@@ -98,6 +98,8 @@ struct ucom_attach_args {
 };
 
 int ucomsubmatch(struct device *, void *, void *);
+
+char *sysctl_ucominit(void);
 
 int ucomprint(void *aux, const char *pnp);
 void ucom_status_change(struct ucom_softc *);

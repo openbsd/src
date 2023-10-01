@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.234 2023/07/04 11:14:00 jsg Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.235 2023/10/01 15:58:12 krw Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -949,6 +949,7 @@ struct kinfo_file {
 #define	HW_NCPUONLINE		25	/* int: number of cpus being used */
 #define	HW_POWER		26	/* int: machine has wall-power */
 #define	HW_BATTERY		27	/* node: battery */
+#define	HW_UCOMNAMES		28	/* strings: ucom names */
 #define	HW_MAXID		30	/* number of valid hw ids */
 
 #define	CTL_HW_NAMES { \
@@ -980,6 +981,7 @@ struct kinfo_file {
 	{ "ncpuonline", CTLTYPE_INT }, \
 	{ "power", CTLTYPE_INT }, \
 	{ "battery", CTLTYPE_NODE }, \
+	{ "ucomnames", CTLTYPE_STRING }, \
 }
 
 /*

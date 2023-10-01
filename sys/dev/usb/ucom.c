@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.75 2023/09/21 00:05:36 krw Exp $ */
+/*	$OpenBSD: ucom.c,v 1.76 2023/10/01 15:58:11 krw Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -44,6 +44,7 @@
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #include <dev/usb/usb.h>
 
@@ -153,6 +154,9 @@ const struct cfattach ucom_ca = {
 	ucom_detach,
 };
 
+static int ucom_change;
+struct rwlock sysctl_ucomlock = RWLOCK_INITIALIZER("sysctlulk");
+
 void
 ucom_lock(struct ucom_softc *sc)
 {
@@ -201,6 +205,7 @@ ucom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_tty = tp;
 	sc->sc_cua = 0;
 
+	ucom_change = 1;
 	rw_init(&sc->sc_lock, "ucomlk");
 }
 
@@ -273,6 +278,7 @@ ucom_detach(struct device *self, int flags)
 		sc->sc_tty = NULL;
 	}
 
+	ucom_change = 1;
 	return (0);
 }
 
@@ -1223,7 +1229,53 @@ ucom_cleanup(struct ucom_softc *sc)
 	}
 }
 
-#endif /* NUCOM > 0 */
+/*
+ * Update ucom names for export by sysctl.
+ */
+char *
+sysctl_ucominit(void)
+{
+	static char *ucoms = NULL;
+	static size_t ucomslen = 0;
+	char name[34];	/* sizeof(dv_xname) + strlen(":usb000.00000.000,") */
+	struct ucom_softc *sc;
+	int rslt;
+	unsigned int unit;
+	uint32_t route;
+	uint8_t bus, ifaceidx;
+
+	KERNEL_ASSERT_LOCKED();
+
+	if (rw_enter(&sysctl_ucomlock, RW_WRITE|RW_INTR) != 0)
+		return NULL;
+
+	if (ucoms == NULL || ucom_change) {
+		free(ucoms, M_SYSCTL, ucomslen);
+		ucomslen = ucom_cd.cd_ndevs * sizeof(name);
+		ucoms = malloc(ucomslen, M_SYSCTL, M_WAITOK | M_ZERO);
+		for (unit = 0; unit < ucom_cd.cd_ndevs; unit++) {
+			sc = ucom_cd.cd_devs[unit];
+			if (sc == NULL || sc->sc_iface == NULL)
+				continue;
+			if (usbd_get_location(sc->sc_uparent, sc->sc_iface,
+			    &bus, &route, &ifaceidx) == -1)
+				continue;
+			rslt = snprintf(name, sizeof(name), "%s:usb%u.%05x.%u,",
+			    sc->sc_dev.dv_xname, bus, route, ifaceidx);
+			if (rslt < sizeof(name) && (strlen(ucoms) + rslt) < ucomslen)
+				strlcat(ucoms, name, ucomslen);
+		}
+	}
+
+	/* Remove trailing ','. */
+	if (strlen(ucoms))
+		ucoms[strlen(ucoms) - 1] = '\0';
+
+	rw_exit_write(&sysctl_ucomlock);
+
+	return ucoms;
+}
+#endif	/* NUCOM > 0 */
 
 int
 ucomprint(void *aux, const char *pnp)
