@@ -1,6 +1,6 @@
-From deraadt@do-not-reply.openbsd.org Mon Oct 27 07:04:00 MDT 2023
+From deraadt@do-not-reply.openbsd.org Mon Oct 23 07:04:00 MDT 2023
 Return-Path: root
-Date: Oct 27 07:04:00 MDT 2023
+Date: Oct 23 07:04:00 MDT 2023
 From: deraadt@do-not-reply.openbsd.org (Theo de Raadt)
 To: root
 Subject: Welcome to OpenBSD 7.4!
