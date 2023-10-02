@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.76 2023/10/01 15:58:11 krw Exp $ */
+/*	$OpenBSD: ucom.c,v 1.77 2023/10/02 23:38:11 krw Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -74,6 +74,9 @@ int ucomdebug = 0;
 
 #define	UCOMUNIT(x)		(minor(x) & UCOMUNIT_MASK)
 #define	UCOMCUA(x)		(minor(x) & UCOMCUA_MASK)
+
+#define ROUTEROOTPORT(_x)	((_x) & 0xff)
+#define ROUTESTRING(_x)		(((_x) >> 8) & 0xfffff)
 
 struct ucom_softc {
 	struct device		sc_dev;		/* base device */
@@ -178,13 +181,15 @@ ucom_match(struct device *parent, void *match, void *aux)
 void
 ucom_attach(struct device *parent, struct device *self, void *aux)
 {
+	char path[32];	/* "usb000.000.00000.000" */
 	struct ucom_softc *sc = (struct ucom_softc *)self;
 	struct ucom_attach_args *uca = aux;
 	struct tty *tp;
+	uint32_t route;
+	uint8_t bus, ifaceno;
 
 	if (uca->info != NULL)
 		printf(", %s", uca->info);
-	printf("\n");
 
 	sc->sc_uparent = uca->device;
 	sc->sc_iface = uca->iface;
@@ -198,6 +203,15 @@ ucom_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_methods = uca->methods;
 	sc->sc_parent = uca->arg;
 	sc->sc_portno = uca->portno;
+
+	if (usbd_get_location(sc->sc_uparent, sc->sc_iface, &bus, &route,
+	    &ifaceno) == 0) {
+		if (snprintf(path, sizeof(path), "usb%u.%u.%05x.%u", bus,
+		    ROUTEROOTPORT(route), ROUTESTRING(route), ifaceno) <
+		    sizeof(path))
+			printf(": %s", path);
+	}
+	printf("\n");
 
 	tp = ttymalloc(1000000);
 	tp->t_oproc = ucomstart;
@@ -1237,7 +1251,7 @@ sysctl_ucominit(void)
 {
 	static char *ucoms = NULL;
 	static size_t ucomslen = 0;
-	char name[34];	/* sizeof(dv_xname) + strlen(":usb000.00000.000,") */
+	char name[64];	/* dv_xname + ":usb000.000.00000.000," */
 	struct ucom_softc *sc;
 	int rslt;
 	unsigned int unit;
@@ -1260,9 +1274,11 @@ sysctl_ucominit(void)
 			if (usbd_get_location(sc->sc_uparent, sc->sc_iface,
 			    &bus, &route, &ifaceidx) == -1)
 				continue;
-			rslt = snprintf(name, sizeof(name), "%s:usb%u.%05x.%u,",
-			    sc->sc_dev.dv_xname, bus, route, ifaceidx);
-			if (rslt < sizeof(name) && (strlen(ucoms) + rslt) < ucomslen)
+			rslt = snprintf(name, sizeof(name),
+			    "%s:usb%u.%u.%05x.%u,", sc->sc_dev.dv_xname, bus,
+			    ROUTEROOTPORT(route), ROUTESTRING(route), ifaceidx);
+			if (rslt < sizeof(name) && (strlen(ucoms) + rslt) <
+			    ucomslen)
 				strlcat(ucoms, name, ucomslen);
 		}
 	}

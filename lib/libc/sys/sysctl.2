@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.54 2023/10/02 05:29:59 jmc Exp $
+.\"	$OpenBSD: sysctl.2,v 1.55 2023/10/02 23:38:11 krw Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -403,13 +403,13 @@ A comma-separated list of currently attached
 devices in the following format:
 .Pp
 .Sm off
-.D1 Sy ucom Ar N : Sy usb Ar bus.route.interface
+.D1 Sy ucom Ar N : Sy usb Ar bus.rootport.route.interface
 .Sm on
 .Pp
 The
 .Ar route
-consists of five hexadecimal digits and identifies the port
-containing the
+consists of five hexadecimal digits identifying the path from
+the root port to the port containing the
 .Ar interface .
 .It Dv HW_USERMEM
 The amount of available non-kernel memory in bytes.

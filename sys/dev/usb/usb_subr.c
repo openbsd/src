@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.160 2023/10/01 15:58:11 krw Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.161 2023/10/02 23:38:11 krw Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1343,13 +1343,18 @@ usbd_get_routestring(struct usbd_device *dev, uint32_t *route)
 	 * section 8.9 of USB 3.1 Specification for more details.
 	 */
 	r = dev->powersrc ? dev->powersrc->portno : 0;
-	for (hub = dev->myhub; hub && hub->depth; hub = hub->myhub) {
+	for (hub = dev->myhub; hub && hub->depth > 1; hub = hub->myhub) {
 		port = hub->powersrc ? hub->powersrc->portno : 0;
 		if (port > 15)
 			return -1;
 		r <<= 4;
 		r |= port;
 	}
+
+	/* Add in the host root port, of which there may be 255. */
+	port = (hub && hub->powersrc) ? hub->powersrc->portno : 0;
+	r <<= 8;
+	r |= port;
 
 	*route = r;
 	return 0;
