@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.17 2023/08/30 10:13:12 job Exp $ */
+/* $OpenBSD: asn1time.c,v 1.18 2023/10/02 09:42:58 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -28,7 +28,7 @@ struct asn1_time_test {
 	time_t time;
 };
 
-struct asn1_time_test asn1_invtime_tests[] = {
+static const struct asn1_time_test asn1_invtime_tests[] = {
 	{
 		.str = "",
 	},
@@ -72,7 +72,7 @@ struct asn1_time_test asn1_invtime_tests[] = {
 	},
 };
 
-struct asn1_time_test asn1_invgentime_tests[] = {
+static const struct asn1_time_test asn1_invgentime_tests[] = {
 	/* Generalized time with omitted seconds, should fail */
 	{
 		.str = "201612081934Z",
@@ -83,22 +83,7 @@ struct asn1_time_test asn1_invgentime_tests[] = {
 	},
 };
 
-struct asn1_time_test asn1_goodtime_tests[] = {
-	{
-		.str = "99990908234339Z",
-		.time = 1,
-	},
-	{
-		.str = "201612081934Z",
-		.time = 1,
-	},
-	{
-		.str = "1609082343Z",
-		.time = 0,
-	},
-};
-
-struct asn1_time_test asn1_gentime_tests[] = {
+static const struct asn1_time_test asn1_gentime_tests[] = {
 	{
 		.str = "20161208193400Z",
 		.data = "20161208193400Z",
@@ -131,7 +116,7 @@ struct asn1_time_test asn1_gentime_tests[] = {
 	},
 };
 
-struct asn1_time_test asn1_utctime_tests[] = {
+static const struct asn1_time_test asn1_utctime_tests[] = {
 	{
 		.str = "700101000000Z",
 		.data = "700101000000Z",
@@ -211,7 +196,8 @@ asn1_compare_bytes(int test_no, const unsigned char *d1,
 }
 
 static int
-asn1_compare_str(int test_no, struct asn1_string_st *asn1str, const char *str)
+asn1_compare_str(int test_no, const struct asn1_string_st *asn1str,
+    const char *str)
 {
 	int length = strlen(str);
 
@@ -230,7 +216,7 @@ asn1_compare_str(int test_no, struct asn1_string_st *asn1str, const char *str)
 }
 
 static int
-asn1_invtime_test(int test_no, struct asn1_time_test *att, int gen)
+asn1_invtime_test(int test_no, const struct asn1_time_test *att, int gen)
 {
 	ASN1_GENERALIZEDTIME *gt = NULL;
 	ASN1_UTCTIME *ut = NULL;
@@ -282,7 +268,7 @@ asn1_invtime_test(int test_no, struct asn1_time_test *att, int gen)
 }
 
 static int
-asn1_gentime_test(int test_no, struct asn1_time_test *att)
+asn1_gentime_test(int test_no, const struct asn1_time_test *att)
 {
 	const unsigned char *der;
 	unsigned char *p = NULL;
@@ -361,7 +347,7 @@ asn1_gentime_test(int test_no, struct asn1_time_test *att)
 }
 
 static int
-asn1_utctime_test(int test_no, struct asn1_time_test *att)
+asn1_utctime_test(int test_no, const struct asn1_time_test *att)
 {
 	const unsigned char *der;
 	unsigned char *p = NULL;
@@ -424,7 +410,7 @@ asn1_utctime_test(int test_no, struct asn1_time_test *att)
 }
 
 static int
-asn1_time_test(int test_no, struct asn1_time_test *att, int type)
+asn1_time_test(int test_no, const struct asn1_time_test *att, int type)
 {
 	ASN1_TIME *t = NULL, *tx509 = NULL;
 	int failure = 1;
@@ -490,7 +476,7 @@ asn1_time_test(int test_no, struct asn1_time_test *att, int type)
 int
 main(int argc, char **argv)
 {
-	struct asn1_time_test *att;
+	const struct asn1_time_test *att;
 	int failed = 0;
 	size_t i;
 
