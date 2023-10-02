@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.19 2023/10/02 10:40:43 tb Exp $ */
+/* $OpenBSD: asn1time.c,v 1.20 2023/10/02 11:14:15 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -518,6 +518,19 @@ asn1_time_compare_families(const struct asn1_time_test *fam1, size_t fam1_size,
 				    att1->str, att2->str, time_cmp, asn1_cmp);
 				comparison_failure |= 1;
 			}
+
+			time_cmp = ASN1_TIME_cmp_time_t(t1, att2->time);
+			if (time_cmp != asn1_cmp) {
+				fprintf(stderr, "%s vs. %lld: want %d, got %d\n",
+				    att1->str, (long long)att2->time,
+				    asn1_cmp, time_cmp);
+				comparison_failure |= 1;
+			}
+
+			/*
+			 * XXX - add ASN1_UTCTIME_cmp_time_t later. Don't want
+			 * to mess with LIBRESSL_INTERNAL right before lock.
+			 */
 		}
 	}
 
