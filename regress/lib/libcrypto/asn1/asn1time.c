@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1time.c,v 1.18 2023/10/02 09:42:58 tb Exp $ */
+/* $OpenBSD: asn1time.c,v 1.19 2023/10/02 10:40:43 tb Exp $ */
 /*
  * Copyright (c) 2015 Joel Sing <jsing@openbsd.org>
  *
@@ -473,6 +473,80 @@ asn1_time_test(int test_no, const struct asn1_time_test *att, int type)
 	return (failure);
 }
 
+static int
+time_t_cmp(time_t t1, time_t t2)
+{
+	if (t1 < t2)
+		return -1;
+	if (t2 < t1)
+		return 1;
+	return 0;
+}
+
+static int
+asn1_time_compare_families(const struct asn1_time_test *fam1, size_t fam1_size,
+    const struct asn1_time_test *fam2, size_t fam2_size)
+{
+	const struct asn1_time_test *att1, *att2;
+	ASN1_TIME *t1 = NULL, *t2 = NULL;
+	size_t i, j;
+	int asn1_cmp, time_cmp;
+	int comparison_failure = 0;
+	int failure = 1;
+
+	if ((t1 = ASN1_TIME_new()) == NULL)
+		goto done;
+	if ((t2 = ASN1_TIME_new()) == NULL)
+		goto done;
+
+	for (i = 0; i < fam1_size; i++) {
+		att1 = &fam1[i];
+
+		if (!ASN1_TIME_set_string(t1, att1->str))
+			goto done;
+		for (j = 0; j < fam2_size; j++) {
+			att2 = &fam2[j];
+
+			if (!ASN1_TIME_set_string(t2, att2->str))
+				goto done;
+
+			time_cmp = time_t_cmp(att1->time, att2->time);
+			asn1_cmp = ASN1_TIME_compare(t1, t2);
+
+			if (time_cmp != asn1_cmp) {
+				fprintf(stderr, "%s vs. %s: want %d, got %d\n",
+				    att1->str, att2->str, time_cmp, asn1_cmp);
+				comparison_failure |= 1;
+			}
+		}
+	}
+
+	failure = comparison_failure;
+
+ done:
+	ASN1_TIME_free(t1);
+	ASN1_TIME_free(t2);
+
+	return failure;
+}
+
+static int
+asn1_time_compare_test(void)
+{
+	const struct asn1_time_test *gen = asn1_gentime_tests;
+	size_t gen_size = N_GENTIME_TESTS;
+	const struct asn1_time_test *utc = asn1_utctime_tests;
+	size_t utc_size = N_UTCTIME_TESTS;
+	int failed = 0;
+
+	failed |= asn1_time_compare_families(gen, gen_size, gen, gen_size);
+	failed |= asn1_time_compare_families(gen, gen_size, utc, utc_size);
+	failed |= asn1_time_compare_families(utc, utc_size, gen, gen_size);
+	failed |= asn1_time_compare_families(utc, utc_size, utc, utc_size);
+
+	return failed;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -513,6 +587,9 @@ main(int argc, char **argv)
 		att = &asn1_gentime_tests[i];
 		failed |= asn1_time_test(i, att, V_ASN1_GENERALIZEDTIME);
 	}
+
+	fprintf(stderr, "ASN1_TIME_compare tests...\n");
+	failed |= asn1_time_compare_test();
 
 	/* Check for a leak in ASN1_TIME_normalize(). */
 	failed |= ASN1_TIME_normalize(NULL) != 0;
