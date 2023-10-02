@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2023/08/14 09:26:37 anton Exp $
+#	$OpenBSD: Makefile,v 1.14 2023/10/02 16:11:09 bluhm Exp $
 
 # Copyright (c) 2021 Moritz Buhl <mbuhl@openbsd.org>
 #
@@ -92,7 +92,6 @@ FAILING+=	run-cexp_test-7
 FAILING+=	run-ctrig_test-{1,5}
 FAILING+=	run-exponential_test-1 
 FAILING+=	run-invtrig_test-7
-FAILING+=	run-nearbyint_test-1
 . elif ${MACHINE} == macppc
 FAILING+=	run-cexp_test-7
 FAILING+=	run-ctrig_test-{1,5}
@@ -101,7 +100,6 @@ FAILING+=	run-fenv_test-{7,8}
 FAILING+=	run-invtrig_test-7
 FAILING+=	run-logarithm_test-3
 FAILING+=	run-lrint_test-1
-FAILING+=	run-nearbyint_test-1
 . elif ${MACHINE} == sparc64
 FAILING+=	run-ctrig_test-5
 FAILING+=	run-exponential_test-1 
@@ -109,7 +107,6 @@ FAILING+=	run-fma_test-{1,2,4,5,6}
 FAILING+=	run-invtrig_test-{4,7}
 FAILING+=	run-logarithm_test-5
 FAILING+=	run-lrint_test-1
-FAILING+=	run-nearbyint_test-1
 FAILING+=	run-next_test-{1,2,4}
 FAILING+=	run-rem_test-{1,2}
 FAILING+=	run-trig_test-{1,2}
