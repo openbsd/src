@@ -1,4 +1,4 @@
-/* $OpenBSD: cu.c,v 1.28 2019/06/28 13:35:00 deraadt Exp $ */
+/* $OpenBSD: cu.c,v 1.29 2023/10/02 14:48:11 krw Exp $ */
 
 /*
  * Copyright (c) 2012 Nicholas Marriott <nicm@openbsd.org>
@@ -16,10 +16,13 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/sysctl.h>
 
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <event.h>
 #include <fcntl.h>
 #include <getopt.h>
@@ -64,6 +67,8 @@ void		stream_error(struct bufferevent *, short, void *);
 void		line_read(struct bufferevent *, void *);
 void		line_error(struct bufferevent *, short, void *);
 void		try_remote(const char *, const char *, const char *);
+char		*get_ucomnames(void);
+char 		*find_ucom(const char *, char *);
 
 __dead void
 usage(void)
@@ -78,8 +83,10 @@ int
 main(int argc, char **argv)
 {
 	const char	*errstr;
-	char		*tmp, *s, *host;
+	char		*tmp, *s, *host, *ucomnames;
 	int		 opt, i, flags;
+
+	ucomnames = get_ucomnames();
 
 	if (pledge("stdio rpath wpath cpath getpw proc exec tty",
 	    NULL) == -1)
@@ -166,6 +173,12 @@ main(int argc, char **argv)
 	if (is_direct == -1)
 		is_direct = 0;
 
+	if (strncasecmp(line_path, "usb", 3) == 0) {
+		tmp = find_ucom(line_path, ucomnames);
+		if (tmp == NULL)
+			errx(1, "No ucom matched '%s'", line_path);
+		line_path = tmp;
+	}
 	if (strchr(line_path, '/') == NULL) {
 		if (asprintf(&tmp, "%s%s", _PATH_DEV, line_path) == -1)
 			err(1, "asprintf");
@@ -460,4 +473,55 @@ no_change:
 	if (out == NULL)
 		cu_err(1, "strdup");
 	return (out);
+}
+
+char *
+get_ucomnames(void)
+{
+	char *names;
+	int mib[2];
+	size_t size;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_UCOMNAMES;
+	names = NULL;
+	size = 0;
+	for (;;) {
+		if (sysctl(mib, 2, NULL, &size, NULL, 0) == -1 || size == 0)
+			err(1, "hw.ucomnames");
+		if ((names = realloc(names, size)) == NULL)
+			err(1, NULL);
+		if (sysctl(mib, 2, names, &size, NULL, 0) != -1)
+			break;
+		if (errno != ENOMEM)
+			err(1, "hw.ucomnames");
+	}
+	return names;
+}
+
+char *
+find_ucom(const char *usbid, char *names)
+{
+	char *cua, *id, *ucom;
+
+	if (names == NULL)
+		return NULL;
+
+	/* names is a comma separated list of "ucom<unit#>-<usb id>". */
+	cua = NULL;
+	for (ucom = strsep(&names, ","); ucom; ucom = strsep(&names, ",")) {
+		if (*ucom == '\0' || strncasecmp(ucom, "ucom", 4))
+			continue;
+		ucom += 4;
+		id = strchr(ucom, ':');
+		if (id == NULL)
+			continue;
+		*id++ = '\0';
+		if (strcasecmp(id, usbid) == 0) {
+			if (asprintf(&cua, "cuaU%s", ucom) == -1)
+				err(1, NULL);
+			break;
+		}
+	}
+	return cua;
 }
