@@ -1,4 +1,4 @@
-.\" $OpenBSD: IPAddressRange_new.3,v 1.8 2023/10/01 08:23:58 tb Exp $
+.\" $OpenBSD: IPAddressRange_new.3,v 1.9 2023/10/03 09:58:06 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 1 2023 $
+.Dd $Mdocdate: October 3 2023 $
 .Dt IPADDRESSRANGE_NEW 3
 .Os
 .Sh NAME
@@ -103,9 +103,9 @@
 .Vt IPAddressChoice ,
 and
 .Vt IPAddressFamily
-are building blocks of the RFC 3779
+are building blocks of the
 .Vt IPAddrBlocks
-type representing the IP address delegation extension.
+type representing the RFC 3779 IP address delegation extension.
 .Pp
 Per RFC 3779, section 2.1.1,
 an IPv4 or an IPv6 address is encoded in network byte order in an
@@ -183,7 +183,7 @@ The API uses
 for this.
 .Pp
 The
-.Vt IpAddressOrRange
+.Vt IPAddressOrRange
 type defined in RFC 3779 section 2.2.3.7 is implemented as
 .Bd -literal -offset indent
 typedef struct IPAddressOrRange_st {
