@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.321 2023/09/16 09:33:27 mpi Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.322 2023/10/03 10:22:10 sthen Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -1537,6 +1537,7 @@ pfsync_sendout(struct pfsync_softc *sc, struct mbuf *m)
 	imo.imo_ifidx = sc->sc_sync_ifidx;
 	imo.imo_ttl = PFSYNC_DFLTTL;
 	imo.imo_loop = 0;
+	m->m_pkthdr.ph_rtableid = sc->sc_if.if_rdomain;
 
 	if (ip_output(m, NULL, NULL, IP_RAWOUTPUT, &imo, NULL, 0) == 0) {
 		counters_pkt(sc->sc_if.if_counters, ifc_opackets,
