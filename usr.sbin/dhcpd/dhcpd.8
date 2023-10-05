@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.33 2023/09/04 16:11:00 jmc Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.34 2023/10/05 18:46:14 mvs Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .\" see ``http://www.isc.org/''.  To learn more about Vixie
 .\" Enterprises, see ``http://www.vix.com''.
 .\"
-.Dd $Mdocdate: September 4 2023 $
+.Dd $Mdocdate: October 5 2023 $
 .Dt DHCPD 8
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Sh SYNOPSIS
 .Nm dhcpd
 .Bk -words
-.Op Fl dfn
+.Op Fl dfnv
 .Op Fl A Ar abandoned_ip_table
 .Op Fl C Ar changed_ip_table
 .Op Fl c Ar config-file
@@ -239,6 +239,8 @@ is specified,
 .Nm
 will bind to that address; otherwise
 the limited broadcast address (255.255.255.255) is used as the default.
+.It Fl v
+Produce more verbose output.
 .It Fl Y Ar synctarget
 Add target
 .Ar synctarget

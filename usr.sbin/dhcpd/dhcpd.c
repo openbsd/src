@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.57 2019/08/06 11:07:37 krw Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.58 2023/10/05 18:46:14 mvs Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -87,7 +87,8 @@ char *leased_tab = NULL;
 int
 main(int argc, char *argv[])
 {
-	int ch, cftest = 0, daemonize = 1, rdomain = -1, udpsockmode = 0;
+	int ch, cftest = 0, rdomain = -1, udpsockmode = 0;
+	int debug = 0, verbose = 0;
 	char *sync_iface = NULL;
 	char *sync_baddr = NULL;
 	u_short sync_port = 0;
@@ -98,7 +99,7 @@ main(int argc, char *argv[])
 	log_setverbose(1);
 
 	opterr = 0;
-	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nu::Y:y:")) != -1)
+	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nu::vY:y:")) != -1)
 		switch (ch) {
 		case 'Y':
 			syncsend = 1;
@@ -117,7 +118,7 @@ main(int argc, char *argv[])
 	udpaddr.s_addr = htonl(INADDR_BROADCAST);
 
 	optreset = optind = opterr = 1;
-	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nu::Y:y:")) != -1)
+	while ((ch = getopt(argc, argv, "A:C:L:c:dfl:nu::vY:y:")) != -1)
 		switch (ch) {
 		case 'A':
 			abandoned_tab = optarg;
@@ -132,16 +133,15 @@ main(int argc, char *argv[])
 			path_dhcpd_conf = optarg;
 			break;
 		case 'd':
-			daemonize = 0;
-			break;
+			/* FALLTHROUGH */
 		case 'f':
-			daemonize = 0;
+			debug = 1;
 			break;
 		case 'l':
 			path_dhcpd_db = optarg;
 			break;
 		case 'n':
-			daemonize = 0;
+			debug = 1;
 			cftest = 1;
 			break;
 		case 'u':
@@ -151,6 +151,9 @@ main(int argc, char *argv[])
 					errx(1, "Cannot parse binding IP "
 					    "address: %s", optarg);
 			}
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case 'Y':
 			if (sync_addhost(optarg, sync_port) != 0)
@@ -206,11 +209,11 @@ main(int argc, char *argv[])
 			err(1, "sync init");
 	}
 
-	if (daemonize)
-		daemon(0, 0);
+	log_init(debug, LOG_DAEMON);
+	log_setverbose(verbose);
 
-	log_init(0, LOG_DAEMON);	/* stop logging to stderr */
-	log_setverbose(0);
+	if (!debug)
+		daemon(0, 0);
 
 	if ((pw = getpwnam("_dhcp")) == NULL)
 		fatalx("user \"_dhcp\" not found");
