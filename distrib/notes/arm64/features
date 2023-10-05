@@ -1,4 +1,4 @@
-dnl	$OpenBSD: features,v 1.4 2023/03/16 18:04:08 miod Exp $
+dnl	$OpenBSD: features,v 1.5 2023/10/05 11:58:34 kn Exp $
 dnl
 dnl This file lists almost all the conditional features of this port,
 dnl which are used to provide accurate installation notes.
@@ -38,3 +38,6 @@ define({:-MDXAPERTURE-:},)dnl
 dnl
 dnl define if the X server can start without a configuration file
 define({:-MDXDM-:},1)dnl
+dnl
+dnl define if boot loaders support softraid(4) volumes
+define({:-MDBOOTSR-:},1)dnl

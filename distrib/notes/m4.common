@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.135 2022/10/10 10:42:42 jsg Exp $
+dnl	$OpenBSD: m4.common,v 1.136 2023/10/05 11:58:34 kn Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -432,7 +432,11 @@ dnl install.sh ask whether to use DUIDs before the md_prep_disklabel loop
 	The installation program will now tell you which disks it can
 	install on, and ask you which it should use.
 
-	Reply with the name of your root disk.-:})dnl
+	Reply with the name of your root disk.ifelse(MDBOOTSR,,,{:-
+
+	You will be given the possibility to encrypt the contents of that
+	disk with a passphrase.-:})dnl
+-:})dnl
 dnl install.sh md_prep_disklabel loop
 dnl
 dnl OpenBSDInstallMBRPart1
