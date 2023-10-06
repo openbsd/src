@@ -1,4 +1,4 @@
-/*	$OpenBSD: fvwrite.c,v 1.20 2017/03/17 16:06:33 millert Exp $ */
+/*	$OpenBSD: fvwrite.c,v 1.21 2023/10/06 16:41:02 millert Exp $ */
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 #include <unistd.h>
 #include "local.h"
 #include "fvwrite.h"
@@ -58,10 +57,8 @@ __sfvwrite(FILE *fp, struct __suio *uio)
 	if ((len = uio->uio_resid) == 0)
 		return (0);
 	/* make sure we can write */
-	if (cantwrite(fp)) {
-		errno = EBADF;
+	if (cantwrite(fp))
 		return (EOF);
-	}
 
 #define	MIN(a, b) ((a) < (b) ? (a) : (b))
 #define	COPY(n)	  (void)memcpy(fp->_p, p, n)

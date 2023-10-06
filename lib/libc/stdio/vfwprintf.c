@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfwprintf.c,v 1.22 2021/09/08 15:57:27 jca Exp $ */
+/*	$OpenBSD: vfwprintf.c,v 1.23 2023/10/06 16:41:02 millert Exp $ */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -451,10 +451,8 @@ __vfwprintf(FILE * __restrict fp, const wchar_t * __restrict fmt0, __va_list ap)
 
 	_SET_ORIENTATION(fp, 1);
 	/* sorry, fwprintf(read_only_file, "") returns EOF, not 0 */
-	if (cantwrite(fp)) {
-		errno = EBADF;
+	if (cantwrite(fp))
 		return (EOF);
-	}
 
 	/* optimise fwprintf(stderr) (and other unbuffered Unix files) */
 	if ((fp->_flags & (__SNBF|__SWR|__SRW)) == (__SNBF|__SWR) &&
