@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwx.c,v 1.176 2023/08/26 09:05:34 stsp Exp $	*/
+/*	$OpenBSD: if_iwx.c,v 1.177 2023/10/06 15:15:29 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -10125,6 +10125,16 @@ iwx_rx_pkt(struct iwx_softc *sc, struct iwx_rx_data *data, struct mbuf_list *ml)
 		}
 
 		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP, IWX_RLC_CONFIG_CMD):
+			break;
+
+		/*
+		 * Ignore for now. The Linux driver only acts on this request
+		 * with 160Mhz channels in 11ax mode.
+		 */
+		case IWX_WIDE_ID(IWX_DATA_PATH_GROUP,
+		    IWX_THERMAL_DUAL_CHAIN_REQUEST):
+			DPRINTF(("%s: thermal dual-chain request received\n",
+			    DEVNAME(sc)));
 			break;
 
 		/* undocumented notification from iwx-ty-a0-gf-a0-77 image */
