@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.58 2023/10/05 18:46:14 mvs Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.59 2023/10/06 05:31:54 jmc Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -276,7 +276,7 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-dfn] [-A abandoned_ip_table]",
+	fprintf(stderr, "usage: %s [-dfnv] [-A abandoned_ip_table]",
 	    __progname);
 	fprintf(stderr, " [-C changed_ip_table]\n");
 	fprintf(stderr, "\t[-c config-file] [-L leased_ip_table]");
