@@ -1,4 +1,4 @@
-.\"	$OpenBSD: register-plist.1,v 1.6 2020/06/10 07:44:38 espie Exp $
+.\"	$OpenBSD: register-plist.1,v 1.7 2023/10/06 12:45:45 espie Exp $
 .\"
 .\" Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 10 2020 $
+.Dd $Mdocdate: October 6 2023 $
 .Dt REGISTER-PLIST 1
 .Os
 .Sh NAME
@@ -38,10 +38,18 @@
 is used to check that a packing-list for a given package name doesn't change.
 By default, it is invoked at the end of
 .Li make package ,
+and compares a temporary package with the
+.Pa ${PLIST_REPOSITORY}
+before moving it to
+.Pa ${PACKAGE_REPOSITORY}/${MACHINE_ARCH}/all
+.Po
 see
 .Ev PACKAGE_REPOSITORY
+and
+.Ev PLIST_REPOSITORY
 in
-.Xr bsd.port.mk 5 .
+.Xr bsd.port.mk 5
+.Pc .
 Package names (package stem plus version) are used to uniquely identify
 packages.
 When something in the package changes, the package name should change,
