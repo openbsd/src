@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.319 2023/09/29 12:47:34 claudio Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.320 2023/10/06 08:58:13 claudio Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1812,7 +1812,6 @@ sys_nosys(struct proc *p, void *v, register_t *retval)
 int
 sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 {
-	static int sigwaitsleep;
 	struct sys___thrsigdivert_args /* {
 		syscallarg(sigset_t) sigmask;
 		syscallarg(siginfo_t *) info;
@@ -1863,8 +1862,7 @@ sys___thrsigdivert(struct proc *p, void *v, register_t *retval)
 		if (error != 0)
 			break;
 
-		error = tsleep_nsec(&sigwaitsleep, PPAUSE|PCATCH, "sigwait",
-		    nsecs);
+		error = tsleep_nsec(&nowake, PPAUSE|PCATCH, "sigwait", nsecs);
 	}
 
 	if (error == 0) {
