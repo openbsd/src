@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.77 2023/10/02 23:38:11 krw Exp $ */
+/*	$OpenBSD: ucom.c,v 1.78 2023/10/06 16:06:11 krw Exp $ */
 /*	$NetBSD: ucom.c,v 1.49 2003/01/01 00:10:25 thorpej Exp $	*/
 
 /*
@@ -1256,7 +1256,7 @@ sysctl_ucominit(void)
 	int rslt;
 	unsigned int unit;
 	uint32_t route;
-	uint8_t bus, ifaceidx;
+	uint8_t bus, ifaceno;
 
 	KERNEL_ASSERT_LOCKED();
 
@@ -1272,11 +1272,11 @@ sysctl_ucominit(void)
 			if (sc == NULL || sc->sc_iface == NULL)
 				continue;
 			if (usbd_get_location(sc->sc_uparent, sc->sc_iface,
-			    &bus, &route, &ifaceidx) == -1)
+			    &bus, &route, &ifaceno) == -1)
 				continue;
 			rslt = snprintf(name, sizeof(name),
 			    "%s:usb%u.%u.%05x.%u,", sc->sc_dev.dv_xname, bus,
-			    ROUTEROOTPORT(route), ROUTESTRING(route), ifaceidx);
+			    ROUTEROOTPORT(route), ROUTESTRING(route), ifaceno);
 			if (rslt < sizeof(name) && (strlen(ucoms) + rslt) <
 			    ucomslen)
 				strlcat(ucoms, name, ucomslen);

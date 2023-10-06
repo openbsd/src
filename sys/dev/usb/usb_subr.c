@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.161 2023/10/02 23:38:11 krw Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.162 2023/10/06 16:06:11 krw Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -1362,7 +1362,7 @@ usbd_get_routestring(struct usbd_device *dev, uint32_t *route)
 
 int
 usbd_get_location(struct usbd_device *dev, struct usbd_interface *iface,
-    uint8_t *bus, uint32_t *route, uint8_t *ifaceidx)
+    uint8_t *bus, uint32_t *route, uint8_t *ifaceno)
 {
 	int i;
 	uint32_t r;
@@ -1380,7 +1380,7 @@ usbd_get_location(struct usbd_device *dev, struct usbd_interface *iface,
 		if (iface == &dev->ifaces[i]) {
 			*bus = dev->bus->usbctl->dv_unit;
 			*route = (usbd_get_routestring(dev, &r)) ? 0 : r;
-			*ifaceidx = i;
+			*ifaceno = i;
 			return 0;
 		}
 	}
