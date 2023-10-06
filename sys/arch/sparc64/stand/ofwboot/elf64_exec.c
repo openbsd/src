@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf64_exec.c,v 1.16 2023/06/03 21:37:53 krw Exp $	*/
+/*	$OpenBSD: elf64_exec.c,v 1.17 2023/10/06 09:34:19 kn Exp $	*/
 /*	$NetBSD: elfXX_exec.c,v 1.2 2001/08/15 20:08:15 eeh Exp $	*/
 
 /*
@@ -106,15 +106,9 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 			if (phdr.p_filesz < BOOTDATA_LEN_SOFTRAID)
 				continue;
 
-			/*
-			 * Kernels up to and including OpenBSD 6.7
-			 * check for an exact match if the length.
-			 * Lie here to make sure we can still boot
-			 * older kernels with softraid.
-			 */
 			obd = (struct openbsd_bootdata *)(long)phdr.p_paddr;
 			obd->version = BOOTDATA_VERSION;
-			obd->len = BOOTDATA_LEN_SOFTRAID;
+			obd->len = sizeof(struct openbsd_bootdata);
 
 #ifdef SOFTRAID
 			/*
@@ -134,7 +128,7 @@ elf64_exec(int fd, Elf_Ehdr *elf, u_int64_t *entryp, void **ssymp, void **esymp)
 
 #endif
 
-			if (phdr.p_filesz < BOOTDATA_LEN_BOOTHOWTO)
+			if (phdr.p_filesz < sizeof(struct openbsd_bootdata))
 				continue;
 
 			obd->boothowto = boothowto;
