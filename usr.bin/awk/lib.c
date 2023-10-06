@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.51 2023/09/17 14:49:44 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.52 2023/10/06 22:29:24 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -234,6 +234,7 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag)	/* read one rec
 	} else if (*rs && rs[1]) {
 		bool found;
 
+		memset(buf, 0, bufsize);
 		fa *pfa = makedfa(rs, 1);
 		if (newflag)
 			found = fnematch(pfa, inf, &buf, &bufsize, recsize);

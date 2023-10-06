@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.78 2023/09/20 16:49:13 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.79 2023/10/06 22:29:24 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -2587,6 +2587,7 @@ Cell *gsub(Node **a, int nnn)	/* global substitute */
 	fa *pfa;
 	int mflag, tempstat, num;
 	int bufsz = recsize;
+	int charlen = 0;
 
 	if ((buf = (char *) malloc(bufsz)) == NULL)
 		FATAL("out of memory in gsub");
@@ -2628,7 +2629,9 @@ Cell *gsub(Node **a, int nnn)	/* global substitute */
 				if (*t == '\0')	/* at end */
 					goto done;
 				adjbuf(&buf, &bufsz, 2+pb-buf, recsize, &pb, "gsub");
-				*pb++ = *t++;
+				charlen = u8_nextlen(t);
+				while (charlen-- > 0)
+					*pb++ = *t++;
 				if (pb > buf + bufsz)	/* BUG: not sure of this test */
 					FATAL("gsub result0 %.30s too big; can't happen", buf);
 				mflag = 0;

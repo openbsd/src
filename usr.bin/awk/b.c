@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.42 2023/09/21 17:19:06 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.43 2023/10/06 22:29:24 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -80,6 +80,8 @@ int	patlen;
 #define	NFA	128	/* cache this many dynamic fa's */
 fa	*fatab[NFA];
 int	nfatab	= 0;	/* entries in fatab */
+
+extern int u8_nextlen(const char *s);
 
 
 /* utf-8 mechanism:
@@ -760,33 +762,59 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 	return (0);
 }
 
-static int getrune(FILE *fp, char **pbuf, int *pbufsize, int quantum,
-		   int *curpos, int *lastpos)
-{
-	int c = 0;
-	char *buf = *pbuf;
-	static const int max_bytes = 4;	// max multiple bytes in UTF-8 is 4
-	int i, rune;
-	uschar private_buf[max_bytes + 1];
 
-	for (i = 0; i <= max_bytes; i++) {
-		if (++*curpos == *lastpos) {
-			if (*lastpos == *pbufsize)
-				if (!adjbuf((char **) pbuf, pbufsize, *pbufsize+1, quantum, 0, "getrune"))
-					FATAL("stream '%.30s...' too long", buf);
-			buf[(*lastpos)++] = (c = getc(fp)) != EOF ? c : 0;
-			private_buf[i] = c;
-		}
-		if (c == 0 || c < 128 ||  (c >> 6) == 4) { // 10xxxxxx starts a new character
-			ungetc(c, fp);
-			private_buf[i] = 0;
-			break;
-		}
+#define MAX_UTF_BYTES	4	// UTF-8 is up to 4 bytes long
+
+// Read one rune at a time from the given FILE*. Return both
+// the bytes and the actual rune.
+
+struct runedata {
+	int rune;
+	size_t len;
+	char bytes[6];
+};
+
+struct runedata getrune(FILE *fp)
+{
+	struct runedata result;
+	int c, i, next;
+
+	memset(&result, 0, sizeof(result));
+
+	c = getc(fp);
+	if (c == EOF)
+		return result;	// result.rune == 0 --> EOF
+	else if (c < 128 || awk_mb_cur_max == 1) {
+		result.bytes[0] = c;
+		result.len = 1;
+		result.rune = c;
+
+		return result;
 	}
 
-	u8_rune(& rune, private_buf);
+	// need to get bytes and fill things in
+	result.bytes[0] = c;
+	result.len = 1;
 
-	return rune;
+	next = 1;
+	for (i = 1; i < MAX_UTF_BYTES; i++) {
+		c = getc(fp);
+		if (c == EOF)
+			break;
+		result.bytes[next++] = c;
+		result.len++;
+	}
+
+	// put back any extra input bytes
+	int actual_len = u8_nextlen(result.bytes);
+	while (result.len > actual_len) {
+		ungetc(result.bytes[--result.len], fp);
+	}
+
+	result.bytes[result.len] = '\0';
+	(void) u8_rune(& result.rune, (uschar *) result.bytes);
+
+	return result;
 }
 
 
@@ -809,8 +837,8 @@ bool fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
 {
 	char *buf = *pbuf;
 	int bufsize = *pbufsize;
-	int c, i, j, k, ns, s;
-	int rune;
+	int i, j, k, ns, s;
+	struct runedata r;
 
 	s = pfa->initstat;
 	patlen = 0;
@@ -819,42 +847,38 @@ bool fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
 	 * All indices relative to buf.
 	 * i <= j <= k <= bufsize
 	 *
-	 * i: origin of active substring
-	 * j: current character
+	 * i: origin of active substring (first byte of first character)
+	 * j: current character		(last byte of current character)
 	 * k: destination of next getc()
 	 */
 	i = -1, k = 0;
         do {
 		j = i++;
 		do {
-			if (++j == k) {
-				if (k == bufsize)
+			r = getrune(f);
+			if ((++j + r.len) >= k) {
+				if (k >= bufsize)
 					if (!adjbuf(&buf, &bufsize, bufsize+1, quantum, 0, "fnematch"))
 						FATAL("stream '%.30s...' too long", buf);
-				buf[k++] = (c = getc(f)) != EOF ? c : 0;
 			}
-			c = (uschar)buf[j];
-			if (c < 128 || awk_mb_cur_max == 1)
-				rune = c;
-			else {
-				j--;
-				k--;
-				ungetc(c, f);
-				rune = getrune(f, &buf, &bufsize, quantum, &j, &k);
-			}
+			memcpy(buf + k, r.bytes, r.len);
+			j += r.len - 1;	// incremented next time around the loop
+			k += r.len;
 
-			if ((ns = get_gototab(pfa, s, rune)) != 0)
+			if ((ns = get_gototab(pfa, s, r.rune)) != 0)
 				s = ns;
 			else
-				s = cgoto(pfa, s, rune);
+				s = cgoto(pfa, s, r.rune);
 
 			if (pfa->out[s]) {	/* final state */
 				patlen = j - i + 1;
-				if (c == 0)	/* don't count $ */
+				if (r.rune == 0)	/* don't count $ */
 					patlen--;
 			}
 		} while (buf[j] && s != 1);
 		s = 2;
+		if (r.len > 1)
+			i += r.len - 1;	// i incremented around the loop
 	} while (buf[i] && !patlen);
 
 	/* adjbuf() may have relocated a resized buffer. Inform the world. */
@@ -874,10 +898,12 @@ bool fnematch(fa *pfa, FILE *f, char **pbuf, int *pbufsize, int quantum)
 		 * (except for EOF's nullbyte, if present) and null
 		 * terminate the buffer.
 		 */
-		do
-			if (buf[--k] && ungetc(buf[k], f) == EOF)
-				FATAL("unable to ungetc '%c'", buf[k]);
-		while (k > i + patlen);
+		do {
+			int ii;
+			for (ii = r.len; ii > 0; ii--)
+				if (buf[--k] && ungetc(buf[k], f) == EOF)
+					FATAL("unable to ungetc '%c'", buf[k]);
+		} while (k > i + patlen);
 		buf[k] = '\0';
 		return true;
 	}
