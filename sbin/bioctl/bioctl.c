@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.155 2023/09/02 09:14:47 kn Exp $ */
+/* $OpenBSD: bioctl.c,v 1.156 2023/10/06 09:55:02 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -90,7 +90,7 @@ int			human;
 int			verbose;
 u_int32_t		cflags = 0;
 int			rflag = -1;	/* auto */
-char			*password;
+char			*passfile;
 
 void			*bio_cookie;
 
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 			changepass = 1;
 			break;
 		case 'p':
-			password = optarg;
+			passfile = optarg;
 			break;
 		case 'r':
 			if (strcmp(optarg, "auto") == 0) {
@@ -1334,8 +1334,8 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 		errx(1, "number of KDF rounds is too small: %d", rounds);
 
 	/* get passphrase */
-	if (password) {
-		if ((f = fopen(password, "r")) == NULL)
+	if (passfile) {
+		if ((f = fopen(passfile, "r")) == NULL)
 			err(1, "invalid passphrase file");
 
 		if (fstat(fileno(f), &sb) == -1)
@@ -1363,7 +1363,7 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 			err(1, "unable to read passphrase");
 	}
 
-	if (verify && !password) {
+	if (verify && !passfile) {
 		/* request user to re-type it */
 		if (readpassphrase("Re-type passphrase: ", verifybuf,
 		    sizeof(verifybuf), rpp_flag) == NULL) {
