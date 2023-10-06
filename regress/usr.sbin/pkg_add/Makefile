@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.86 2022/05/10 09:42:32 bluhm Exp $
+# $OpenBSD: Makefile,v 1.87 2023/10/06 06:00:18 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -23,6 +23,8 @@ REGRESS_EXPECTED_FAILURES = collision-check1 collision-check2 \
 	exotest tying-2
 
 PERLSCRIPT = perl -I ${.CURDIR} ${.CURDIR}
+
+WAVE_PLIST=-DREGRESSION_TESTING=plist_checks
 
 ADD_PKG = ${PERLSCRIPT}/my add -Dchecksum
 DELETE_PKG = ${PERLSCRIPT}/my delete -Dchecksum
@@ -353,22 +355,22 @@ rep0/intb-0.tgz:
 	@${CREATE_PKG} -P't/inta:inta-*:inta-0' ${EMPTY} $@
  
 rep1/o-1.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p:p-*:p-0' -W'coincoin.0.0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -P't/p:p-*:p-0' -W'coincoin.0.0' ${EMPTY} $@
 
 rep1/o1-1.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p1:p1-*:p1-0' -W'coincoin.0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -P't/p1:p1-*:p1-0' -W'coincoin.0' ${EMPTY} $@
 
 rep1/o2-1.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/p2:p2-*:p2-0' -W'coincoin.0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -P't/p2:p2-*:p2-0' -W'coincoin.0' ${EMPTY} $@
 
 rep0/o3-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'unlikelylibraryname.0.0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W'unlikelylibraryname.0.0' ${EMPTY} $@
 
 rep1/p-0.tgz rep1/p1-0.tgz: plist8
 	@${WITH} -B src13 -DLIBcoincoin_VERSION=0.0 -f plist8 $@ ${CPKG}
 
 rep1/p2-0.tgz: plist8
-	@${WITH} -DREGRESSION_TESTING -B src14 -DLIBcoincoin_VERSION=0 -f plist8 $@ ${CPKG}
+	@${WITH} ${WAVE_PLIST} -B src14 -DLIBcoincoin_VERSION=0 -f plist8 $@ ${CPKG}
 
 rep0/p4-0.tgz: plist12
 	@${WITH} -B src15 -DLIBa_VERSION=0.0 -f plist12 $@ ${CPKG}
@@ -377,31 +379,31 @@ rep1/p4-1.tgz: plist12
 	@${WITH} -B src31 -DLIBa_VERSION=1.0 -f plist12 $@ ${CPKG}
 
 rep0/boost-0.tgz: 
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W'a.0.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
 	
 rep1/boost-0.tgz: 
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.1.0' -P't/p4:p4-*:p4-1' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W'a.1.0' -P't/p4:p4-*:p4-1' ${EMPTY} $@
 
 rep0/Imath-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/boots:boost-*:boost-0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -P't/boots:boost-*:boost-0' ${EMPTY} $@
 
 rep1/Imath-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/boots:boost-*:boost-0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -P't/boots:boost-*:boost-0' ${EMPTY} $@
 
 rep0/o4-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.1.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W'a.1.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
 
 rep0/o5-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.2' -P't/p4:p4-*:p4-0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W'a.0.2' -P't/p4:p4-*:p4-0' ${EMPTY} $@
 
 rep0/o6-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W'a.0.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
 
 rep0/oo6-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'a.0.0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W'a.0.0' ${EMPTY} $@
 
 rep0/o7-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W'dir/a.0.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W'dir/a.0.0' -P't/p4:p4-*:p4-0' ${EMPTY} $@
 
 rep1/b-1.tgz:
 	@${CREATE_PKG} -P't/a:a-*:a-1' ${EMPTY} $@
@@ -589,14 +591,14 @@ rep1/ol-1.tgz: plist21
 CUPS_FILES += rep2/$o.tgz
 rep2/$o.tgz: ${.CURDIR}/oldcups/$o/+CONTENTS
 	mkdir -p rep2
-	cd rep2 && pkg_create -DREGRESSION_TESTING -Dstub -f ${.CURDIR}/oldcups/$o/+CONTENTS
+	cd rep2 && pkg_create ${WAVE_PLIST} -Dstub -f ${.CURDIR}/oldcups/$o/+CONTENTS
 .endfor
 
 .for n in cups-2.2.8 cups-filters-1.20.3 cups-libs-2.2.8 ghostscript-9.07p7
 CUPS_FILES += rep3/$n.tgz
 rep3/$n.tgz: ${.CURDIR}/newcups/$n/+CONTENTS
 	mkdir -p rep3
-	cd rep3 && pkg_create -DREGRESSION_TESTING -Dstub -f ${.CURDIR}/newcups/$n/+CONTENTS
+	cd rep3 && pkg_create ${WAVE_PLIST} -Dstub -f ${.CURDIR}/newcups/$n/+CONTENTS
 .endfor
 
 cups-bug: ${CUPS_FILES}
@@ -651,10 +653,10 @@ rep5/gnutls-0.tgz:
 	@${CREATE_PKG} -P't/libnettle:libnettle-*:libnettle-1' ${EMPTY} $@
 
 rep4/gtk+3-cups-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W nettle.0.0 -P't/cups-libs:cups-libs-*:cups-libs-0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W nettle.0.0 -P't/cups-libs:cups-libs-*:cups-libs-0' ${EMPTY} $@
 
 rep5/gtk+3-cups-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -W nettle.1.0 -P't/cups-libs:cups-libs-*:cups-libs-0' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -W nettle.1.0 -P't/cups-libs:cups-libs-*:cups-libs-0' ${EMPTY} $@
 
 rep5/libnettle-1.tgz: plist22
 	@${WITH} -B src24 -DLIBnettle_VERSION=1.0 -f plist22 $@ ${CPKG}
@@ -766,10 +768,10 @@ rep6/avahi-0.tgz: plist25
 	@${WITH} -B src28 -DLIBavahi_VERSION=0.0 -f plist25 $@ ${CPKG}
 
 rep6/cups-0.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/avahi:avahi-*:avahi-0' -W avahi.0.0 ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -P't/avahi:avahi-*:avahi-0' -W avahi.0.0 ${EMPTY} $@
 
 rep7/avahi-1.tgz: 
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/avahi-libs:avahi-libs-*:avahi-libs-1' ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -P't/avahi-libs:avahi-libs-*:avahi-libs-1' ${EMPTY} $@
 
 rep7/avahi-libs-1.tgz: plist27
 	@${WITH} -B src28 -f plist27 $@ ${CPKG}
@@ -778,7 +780,7 @@ rep7/avahi-glib-1.tgz: plist26
 	@${WITH} -B src28 -DLIBavahi_VERSION=0.0 -f plist26 $@ ${CPKG}
 
 rep7/cups-1.tgz:
-	@${CREATE_PKG} -DREGRESSION_TESTING -P't/avahi-libs:avahi-libs-*:avahi-libs-0' -P't/avahi-glib:avahi-glib-*:avahi-glib-1' -W avahi.0.0 ${EMPTY} $@
+	@${CREATE_PKG} ${WAVE_PLIST} -P't/avahi-libs:avahi-libs-*:avahi-libs-0' -P't/avahi-glib:avahi-glib-*:avahi-glib-1' -W avahi.0.0 ${EMPTY} $@
 
 
 rep0/sym-0.tgz: plist19
