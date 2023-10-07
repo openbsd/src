@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.143 2023/07/03 19:12:08 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.144 2023/10/07 09:11:26 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1112,6 +1112,16 @@ sub grab_debug_package($class, $d, $dbg, $state)
 	}
 }
 
+sub report_cantupdate($state, $cantupdate)
+{
+	if ($state->tracker->did_something) {
+		$state->say("Couldn't find updates for #1", 
+		    join(' ', sort @$cantupdate));
+	} else {
+		$state->say("Couldn't find any update");
+	}
+}
+
 sub inform_user_of_problems($state)
 {
 	my @cantupdate = $state->tracker->cant_list;
@@ -1120,10 +1130,8 @@ sub inform_user_of_problems($state)
 		    sub($quirks) {
 			$quirks->filter_obsolete(\@cantupdate, $state);
 		    });
-
-		$state->say("Couldn't find updates for #1", 
-		    join(' ', sort @cantupdate)) if @cantupdate > 0;
 		if (@cantupdate > 0) {
+			report_cantupdate($state, \@cantupdate);
 			$state->{bad}++;
 		}
 	}
