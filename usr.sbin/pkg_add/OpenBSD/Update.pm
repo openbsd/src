@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.170 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: Update.pm,v 1.171 2023/10/07 09:10:03 espie Exp $
 #
 # Copyright (c) 2004-2014 Marc Espie <espie@openbsd.org>
 #
@@ -117,6 +117,7 @@ sub process_handle($self, $set, $h, $state)
 
 	if ($plist->has('firmware') && !$state->defines('FW_UPDATE')) {
 		$set->move_kept($h);
+		$h->{is_firmware} = 1;
 		return 0;
 	}
 

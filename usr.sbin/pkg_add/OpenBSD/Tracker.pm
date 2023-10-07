@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.31 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.32 2023/10/07 09:10:03 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -101,6 +101,9 @@ sub add_set($self, $set)
 	for my $n ($set->kept) {
 		delete $self->{to_update}{$n->pkgname};
 		$self->{uptodate}{$n->pkgname} = 1;
+		if ($n->{is_firmware}) {
+			$self->{firmware}{$n->pkgname} = 1;
+		}
 	}
 	$self->known($set);
 	$self->handle_set($set);
@@ -134,6 +137,9 @@ sub uptodate($self, $set)
 	$self->remove_set($set);
 	for my $n ($set->older, $set->kept) {
 		$self->{uptodate}{$n->pkgname} = 1;
+		if ($n->{is_firmware}) {
+			$self->{firmware}{$n->pkgname} = 1;
+		}
 	}
 }
 
@@ -196,6 +202,15 @@ sub is_to_update($self, $pkg)
 sub cant_list($self)
 {
 	return keys %{$self->{cant_update}};
+}
+
+sub did_something($self)
+{
+	for my $k (keys %{$self->{uptodate}}) {
+		next if $self->{firmware}{$k};
+		return 1;
+	}
+	return 0;
 }
 
 sub cant_install_list($self)
