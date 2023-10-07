@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCreate.pm,v 1.195 2023/07/20 17:56:37 espie Exp $
+# $OpenBSD: PkgCreate.pm,v 1.196 2023/10/07 09:09:07 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1684,7 +1684,7 @@ sub run_command($self, $state)
 	}
 	$state->{stash} = {};
 
-	if ($state->{bad} && !$state->defines('REGRESSION_TESTING')) {
+	if ($state->{bad} && !$state->{regression}{plist_checks}) {
 		$state->fatal("can't continue");
 	}
 	$state->{bad} = 0;
