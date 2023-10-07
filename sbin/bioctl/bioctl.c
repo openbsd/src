@@ -1,4 +1,4 @@
-/* $OpenBSD: bioctl.c,v 1.156 2023/10/06 09:55:02 kn Exp $ */
+/* $OpenBSD: bioctl.c,v 1.157 2023/10/07 12:20:10 kn Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Marco Peereboom
@@ -1361,6 +1361,12 @@ derive_key(u_int32_t type, int rounds, u_int8_t *key, size_t keysz,
 		if (readpassphrase(prompt, passphrase, sizeof(passphrase),
 		    rpp_flag) == NULL)
 			err(1, "unable to read passphrase");
+		if (*passphrase == '\0') {
+			warnx("invalid passphrase length");
+			if (interactive)
+				goto retry;
+			exit(1);
+		}
 	}
 
 	if (verify && !passfile) {
