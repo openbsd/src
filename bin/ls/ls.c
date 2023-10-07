@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.54 2020/10/07 21:03:09 millert Exp $	*/
+/*	$OpenBSD: ls.c,v 1.55 2023/10/07 11:51:08 schwarze Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -436,6 +436,7 @@ display(FTSENT *p, FTSENT *list)
 	unsigned long long btotal;
 	blkcnt_t maxblock;
 	ino_t maxinode;
+	unsigned int maxmajor, maxminor;
 	int bcfile, flen, glen, ulen, maxflags, maxgroup, maxuser, maxlen;
 	int entries, needstats;
 	int width;
@@ -449,6 +450,7 @@ display(FTSENT *p, FTSENT *list)
 	btotal = maxblock = maxinode = maxlen = maxnlink = 0;
 	bcfile = 0;
 	maxuser = maxgroup = maxflags = 0;
+	maxmajor = maxminor = 0;
 	maxsize = 0;
 	for (cur = list, entries = 0; cur != NULL; cur = cur->fts_link) {
 		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
@@ -523,9 +525,13 @@ display(FTSENT *p, FTSENT *list)
 				(void)strlcpy(np->group, group, glen + 1);
 
 				if (S_ISCHR(sp->st_mode) ||
-				    S_ISBLK(sp->st_mode))
+				    S_ISBLK(sp->st_mode)) {
 					bcfile = 1;
-
+					if (maxmajor < major(sp->st_rdev))
+						maxmajor = major(sp->st_rdev);
+					if (maxminor < minor(sp->st_rdev))
+						maxminor = minor(sp->st_rdev);
+				}
 				if (f_flags) {
 					np->flags = &np->data[ulen + 1 + glen + 1];
 					(void)strlcpy(np->flags, flags, flen + 1);
@@ -551,7 +557,6 @@ display(FTSENT *p, FTSENT *list)
 	d.entries = entries;
 	d.maxlen = maxlen;
 	if (needstats) {
-		d.bcfile = bcfile;
 		d.btotal = btotal;
 		(void)snprintf(buf, sizeof(buf), "%llu",
 		    (unsigned long long)maxblock);
@@ -570,6 +575,17 @@ display(FTSENT *p, FTSENT *list)
 			d.s_size = strlen(buf);
 		} else
 			d.s_size = FMT_SCALED_STRSIZE-2; /* no - or '\0' */
+		d.s_major = d.s_minor = 3;
+		if (bcfile) {
+			(void)snprintf(buf, sizeof(buf), "%u", maxmajor);
+			d.s_major = strlen(buf);
+			(void)snprintf(buf, sizeof(buf), "%u", maxminor);
+			d.s_minor = strlen(buf);
+			if (d.s_size <= d.s_major + 2 + d.s_minor)
+				d.s_size = d.s_major + 2 + d.s_minor;
+			else
+				d.s_major = d.s_size - 2 - d.s_minor;
+		}
 		d.s_user = maxuser;
 	}
 
