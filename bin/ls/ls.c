@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.55 2023/10/07 11:51:08 schwarze Exp $	*/
+/*	$OpenBSD: ls.c,v 1.56 2023/10/07 13:29:08 schwarze Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -442,7 +442,6 @@ display(FTSENT *p, FTSENT *list)
 	int width;
 	const char *user, *group;
 	char nuser[12], ngroup[12];
-	char buf[21];	/* 64 bits == 20 digits */
 	char *flags = NULL;
 
 	needstats = f_inode || f_longform || f_size;
@@ -558,29 +557,23 @@ display(FTSENT *p, FTSENT *list)
 	d.maxlen = maxlen;
 	if (needstats) {
 		d.btotal = btotal;
-		(void)snprintf(buf, sizeof(buf), "%llu",
+		d.s_block = snprintf(NULL, 0, "%llu",
 		    (unsigned long long)maxblock);
-		d.s_block = strlen(buf);
 		d.s_flags = maxflags;
 		d.s_group = maxgroup;
-		(void)snprintf(buf, sizeof(buf), "%llu",
+		d.s_inode = snprintf(NULL, 0, "%llu",
 		    (unsigned long long)maxinode);
-		d.s_inode = strlen(buf);
-		(void)snprintf(buf, sizeof(buf), "%lu",
+		d.s_nlink = snprintf(NULL, 0, "%lu",
 		    (unsigned long)maxnlink);
-		d.s_nlink = strlen(buf);
-		if (!f_humanval) {
-			(void)snprintf(buf, sizeof(buf), "%lld",
+		if (!f_humanval)
+			d.s_size = snprintf(NULL, 0, "%lld",
 			    (long long)maxsize);
-			d.s_size = strlen(buf);
-		} else
+		else
 			d.s_size = FMT_SCALED_STRSIZE-2; /* no - or '\0' */
 		d.s_major = d.s_minor = 3;
 		if (bcfile) {
-			(void)snprintf(buf, sizeof(buf), "%u", maxmajor);
-			d.s_major = strlen(buf);
-			(void)snprintf(buf, sizeof(buf), "%u", maxminor);
-			d.s_minor = strlen(buf);
+			d.s_major = snprintf(NULL, 0, "%u", maxmajor);
+			d.s_minor = snprintf(NULL, 0, "%u", maxminor);
 			if (d.s_size <= d.s_major + 2 + d.s_minor)
 				d.s_size = d.s_major + 2 + d.s_minor;
 			else
