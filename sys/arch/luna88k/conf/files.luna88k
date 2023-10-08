@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.33 2022/03/05 11:03:30 aoyama Exp $
+#	$OpenBSD: files.luna88k,v 1.34 2023/10/08 10:40:23 aoyama Exp $
 #
 maxpartitions 16
 
@@ -110,3 +110,8 @@ file	arch/luna88k/luna88k/locore.S
 file	arch/luna88k/luna88k/machdep.c
 file	arch/luna88k/luna88k/pmap_table.c
 file	arch/luna88k/luna88k/romcons.c
+
+# Actually these devices are not supported on luna88k, but we need them in
+# order to create attribute header files (e.g. "ucom.h") required in MI part.
+include "dev/hid/files.hid"
+include "dev/usb/files.usb"
