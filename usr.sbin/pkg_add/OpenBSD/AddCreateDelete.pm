@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.53 2023/10/08 06:55:02 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.54 2023/10/08 09:17:27 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -55,6 +55,24 @@ sub add_interactive_options($self)
 	return $self;
 }
 
+my $setup = {
+	nowantlib => sub() {
+	    eval {
+	    	use OpenBSD::Dependencies::SolverBase;
+		no warnings qw(redefine);
+		package OpenBSD::Dependencies::SolverBase;
+		sub solve_wantlibs($, $) { 1 }
+	    }; 
+	},
+	norun => sub() {
+	    eval {
+		package OpenBSD::State;
+		sub _system(@) { 0 }
+	    }; 
+	},
+};
+		
+
 sub handle_options($state, $opt_string, @usage)
 {
 	my $i;
@@ -81,6 +99,9 @@ sub handle_options($state, $opt_string, @usage)
 	if ($state->defines('REGRESSION_TESTING')) {
 		for my $i (split(',', $state->defines('REGRESSION_TESTING'))) {
 			$state->{regression}{$i} = 1;
+			if (defined $setup->{$i}) {
+				&{$setup->{$i}}();
+			}
 		}
 	}
 }
