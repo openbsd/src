@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: LibSpec.pm,v 1.20 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: LibSpec.pm,v 1.21 2023/10/08 12:45:31 espie Exp $
 #
 # Copyright (c) 2010 Marc Espie <espie@openbsd.org>
 #
@@ -18,6 +18,11 @@
 use v5.36;
 
 package OpenBSD::LibObject;
+
+sub systemlibraryclass($self)
+{
+	return ref($self);
+}
 
 sub key($self)
 {
@@ -142,6 +147,11 @@ sub find_best($repo, $stem)
 package OpenBSD::Library;
 our @ISA = qw(OpenBSD::LibObject);
 
+sub systemlibraryclass($)
+{
+	"OpenBSD::Library::System";
+}
+
 sub from_string($class, $filename)
 {
 	if (my ($dir, $stem, $major, $minor) = $filename =~ m/^(.*)\/lib([^\/]+)\.so\.(\d+)\.(\d+)$/o) {
@@ -160,6 +170,9 @@ sub to_string($self)
 sub set_origin($self, $origin)
 {
 	$self->{origin} = $origin;
+	if ($origin eq 'system') {
+		bless $self, $self->systemlibraryclass;
+	}
 	return $self;
 }
 
@@ -186,6 +199,11 @@ sub is_better($self, $other)
     	}
 	return 0;
 }
+
+# could be used for better reporting
+# is used for regression testing
+package OpenBSD::Library::System;
+our @ISA = qw(OpenBSD::Library);
 
 package OpenBSD::LibSpec;
 our @ISA = qw(OpenBSD::LibObject);
