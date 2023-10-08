@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.20 2023/09/17 15:24:35 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.21 2023/10/08 21:08:00 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -46,18 +46,6 @@ struct intrclock {
 	void (*ic_rearm)(void *, uint64_t);
 	void (*ic_trigger)(void *);
 };
-
-static inline void
-intrclock_rearm(struct intrclock *ic, uint64_t nsecs)
-{
-	ic->ic_rearm(ic->ic_cookie, nsecs);
-}
-
-static inline void
-intrclock_trigger(struct intrclock *ic)
-{
-	ic->ic_trigger(ic->ic_cookie);
-}
 
 /*
  * Schedulable clock interrupt callback.

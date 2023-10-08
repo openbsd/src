@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.58 2023/09/25 00:29:31 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.59 2023/10/08 21:08:00 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -41,6 +41,8 @@ void clockqueue_pend_delete(struct clockintr_queue *, struct clockintr *);
 void clockqueue_pend_insert(struct clockintr_queue *, struct clockintr *,
     uint64_t);
 void clockqueue_reset_intrclock(struct clockintr_queue *);
+void intrclock_rearm(struct intrclock *, uint64_t);
+void intrclock_trigger(struct intrclock *);
 uint64_t nsec_advance(uint64_t *, uint64_t, uint64_t);
 
 /*
@@ -490,6 +492,18 @@ clockqueue_reset_intrclock(struct clockintr_queue *cq)
 		intrclock_rearm(&cq->cq_intrclock, exp - now);
 	else
 		intrclock_trigger(&cq->cq_intrclock);
+}
+
+void
+intrclock_rearm(struct intrclock *ic, uint64_t nsecs)
+{
+	ic->ic_rearm(ic->ic_cookie, nsecs);
+}
+
+void
+intrclock_trigger(struct intrclock *ic)
+{
+	ic->ic_trigger(ic->ic_cookie);
 }
 
 /*
