@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Tracker.pm,v 1.32 2023/10/07 09:10:03 espie Exp $
+# $OpenBSD: Tracker.pm,v 1.33 2023/10/08 09:16:39 espie Exp $
 #
 # Copyright (c) 2009 Marc Espie <espie@openbsd.org>
 #
@@ -53,7 +53,7 @@ sub dump2($set)
 	    join(",", $set->hint_names));
 }
 
-sub dump()
+sub dump($)
 {
 	return unless defined $s;
 	for my $l ('to_install', 'to_update') {
