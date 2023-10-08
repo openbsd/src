@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.51 2023/10/05 11:08:56 bluhm Exp $ */
+/*	$OpenBSD: ifq.c,v 1.52 2023/10/08 07:44:52 claudio Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -527,14 +527,6 @@ ifq_hdatalen(struct ifqueue *ifq)
 	}
 
 	return (len);
-}
-
-void
-ifq_set_maxlen(struct ifqueue *ifq, unsigned int maxlen)
-{
-	mtx_enter(&ifq->ifq_mtx);
-	ifq->ifq_maxlen = maxlen;
-	mtx_leave(&ifq->ifq_mtx);
 }
 
 unsigned int
