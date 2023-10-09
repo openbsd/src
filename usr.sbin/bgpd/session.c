@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.447 2023/08/04 09:20:12 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.448 2023/10/09 07:11:20 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1204,7 +1204,7 @@ session_setup_socket(struct peer *p)
 
 /* compare two sockaddrs by converting them into bgpd_addr */
 static int
-sa_cmp(struct sockaddr *a, struct sockaddr *b)
+sa_equal(struct sockaddr *a, struct sockaddr *b)
 {
 	struct bgpd_addr ba, bb;
 
@@ -1223,8 +1223,7 @@ get_alternate_addr(struct sockaddr *sa, struct bgpd_addr *alt)
 		fatal("getifaddrs");
 
 	for (match = ifap; match != NULL; match = match->ifa_next)
-		if (match->ifa_addr != NULL &&
-		    sa_cmp(sa, match->ifa_addr) == 0)
+		if (match->ifa_addr != NULL && sa_equal(sa, match->ifa_addr))
 			break;
 
 	if (match == NULL) {
