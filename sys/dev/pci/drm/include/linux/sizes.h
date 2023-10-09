@@ -19,5 +19,6 @@
 #define SZ_8M	(8 << 20)
 #define SZ_16M	(16 << 20)
 #define SZ_1G	(1 << 30)
+#define SZ_4G	(4ULL << 30)
 
 #endif
