@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgDelete.pm,v 1.50 2023/06/16 10:08:17 espie Exp $
+# $OpenBSD: PkgDelete.pm,v 1.51 2023/10/09 07:12:22 espie Exp $
 #
 # Copyright (c) 2003-2010 Marc Espie <espie@openbsd.org>
 #
@@ -290,6 +290,7 @@ sub process_set($self, $set, $state)
 			}
 		}
 	}
+	# that's where I should check for alternates in bad
 	if (keys %$bad > 0) {
 		if (!$state->{do_automatic} || $state->verbose) {
 			$state->errsay("can't delete #1 without deleting #2",
