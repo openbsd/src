@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsecctl.c,v 1.85 2023/03/07 17:43:59 guenther Exp $	*/
+/*	$OpenBSD: ipsecctl.c,v 1.86 2023/10/09 15:32:14 tobhe Exp $	*/
 /*
  * Copyright (c) 2004, 2005 Hans-Joerg Hoexer <hshoexer@openbsd.org>
  *
@@ -57,10 +57,10 @@ void		 ipsecctl_print_flow(struct ipsec_rule *, int);
 void		 ipsecctl_print_sa(struct ipsec_rule *, int);
 void		 ipsecctl_print_sabundle(struct ipsec_rule *, int);
 int		 ipsecctl_flush(int);
-void		 ipsecctl_get_rules(struct ipsecctl *);
+char		*ipsecctl_get_rules(struct ipsecctl *, size_t *);
+void		 ipsecctl_parse_rules(struct ipsecctl *, char *, size_t);
 void		 ipsecctl_print_title(char *);
-void		 ipsecctl_show_flows(int);
-void		 ipsecctl_show_sas(int);
+void		 ipsecctl_show(int);
 int		 ipsecctl_monitor(int);
 void		 usage(void);
 const char	*ipsecctl_lookup_option(char *, const char **);
@@ -595,30 +595,37 @@ ipsecctl_flush(int opts)
 	return (0);
 }
 
-void
-ipsecctl_get_rules(struct ipsecctl *ipsec)
+char *
+ipsecctl_get_rules(struct ipsecctl *ipsec, size_t *need)
 {
-	struct sadb_msg *msg;
-	struct ipsec_rule *rule, *last = NULL;
 	int		 mib[4];
-	size_t		 need;
-	char		*buf, *lim, *next;
+	char		*buf;
 
 	mib[0] = CTL_NET;
 	mib[1] = PF_KEY;
 	mib[2] = PF_KEY_V2;
 	mib[3] = NET_KEY_SPD_DUMP;
 
-	if (sysctl(mib, 4, NULL, &need, NULL, 0) == -1)
+	if (sysctl(mib, 4, NULL, need, NULL, 0) == -1)
 		err(1, "ipsecctl_get_rules: sysctl");
-	if (need == 0)
-		return;
-	if ((buf = malloc(need)) == NULL)
+	if (*need == 0)
+		return NULL;
+	if ((buf = malloc(*need)) == NULL)
 		err(1, "ipsecctl_get_rules: malloc");
-	if (sysctl(mib, 4, buf, &need, NULL, 0) == -1)
+	if (sysctl(mib, 4, buf, need, NULL, 0) == -1)
 		err(1, "ipsecctl_get_rules: sysctl");
-	lim = buf + need;
 
+	return buf;
+}
+
+void
+ipsecctl_parse_rules(struct ipsecctl *ipsec, char *buf, size_t need)
+{
+	struct sadb_msg *msg;
+	struct ipsec_rule *rule, *last = NULL;
+	char		*lim, *next;
+
+	lim = buf + need;
 	for (next = buf; next < lim; next += msg->sadb_msg_len *
 	    PFKEYV2_CHUNK) {
 		msg = (struct sadb_msg *)next;
@@ -627,13 +634,13 @@ ipsecctl_get_rules(struct ipsecctl *ipsec)
 
 		rule = calloc(1, sizeof(struct ipsec_rule));
 		if (rule == NULL)
-			err(1, "ipsecctl_get_rules: calloc");
+			err(1, "ipsecctl_parse_rules: calloc");
 		rule->nr = ipsec->rule_nr++;
 		rule->type |= RULE_FLOW;
 		TAILQ_INIT(&rule->collapsed_rules);
 
 		if (pfkey_parse(msg, rule))
-			errx(1, "ipsecctl_get_rules: "
+			errx(1, "ipsecctl_parse_rules: "
 			    "failed to parse PF_KEY message");
 
 		/*
@@ -663,108 +670,117 @@ ipsecctl_print_title(char *title)
 }
 
 void
-ipsecctl_show_flows(int opts)
+ipsecctl_show(int opts)
 {
 	struct ipsecctl ipsec;
 	struct ipsec_rule *rp;
-
-	bzero(&ipsec, sizeof(ipsec));
-	ipsec.opts = opts;
-	TAILQ_INIT(&ipsec.rule_queue);
-
-	ipsecctl_get_rules(&ipsec);
-
-	if (opts & IPSECCTL_OPT_SHOWALL)
-		ipsecctl_print_title("FLOWS:");
-
-	if (TAILQ_FIRST(&ipsec.rule_queue) == 0) {
-		if (opts & IPSECCTL_OPT_SHOWALL)
-			printf("No flows\n");
-		return;
-	}
-
-	while ((rp = TAILQ_FIRST(&ipsec.rule_queue))) {
-		TAILQ_REMOVE(&ipsec.rule_queue, rp, rule_entry);
-
-		ipsecctl_print_rule(rp, ipsec.opts);
-
-		free(rp->src->name);
-		free(rp->src);
-		free(rp->dst->name);
-		free(rp->dst);
-		if (rp->local) {
-			free(rp->local->name);
-			free(rp->local);
-		}
-		if (rp->peer) {
-			free(rp->peer->name);
-			free(rp->peer);
-		}
-		if (rp->auth) {
-			free(rp->auth->srcid);
-			free(rp->auth->dstid);
-			free(rp->auth);
-		}
-		free(rp);
-	}
-}
-
-void
-ipsecctl_show_sas(int opts)
-{
 	struct sadb_msg *msg;
 	struct sad	*sad;
 	int		 mib[5], sacount, i;
-	size_t		 need = 0;
-	char		*buf, *lim, *next;
+	size_t		 need = 0, rlen;
+	char		*sbuf = NULL, *rbuf = NULL, *lim, *next;
 
-	mib[0] = CTL_NET;
-	mib[1] = PF_KEY;
-	mib[2] = PF_KEY_V2;
-	mib[3] = NET_KEY_SADB_DUMP;
-	mib[4] = SADB_SATYPE_UNSPEC;
+	if (opts & IPSECCTL_OPT_SHOWFLOWS) {
+		bzero(&ipsec, sizeof(ipsec));
+		ipsec.opts = opts;
+		TAILQ_INIT(&ipsec.rule_queue);
+		rbuf = ipsecctl_get_rules(&ipsec, &rlen);
+	}
 
-	if (opts & IPSECCTL_OPT_SHOWALL)
-		ipsecctl_print_title("SAD:");
+	if (opts & IPSECCTL_OPT_SHOWSAS) {
+		mib[0] = CTL_NET;
+		mib[1] = PF_KEY;
+		mib[2] = PF_KEY_V2;
+		mib[3] = NET_KEY_SADB_DUMP;
+		mib[4] = SADB_SATYPE_UNSPEC;
 
-	/* When the SAD is empty we get ENOENT, no need to err(). */
-	if (sysctl(mib, 5, NULL, &need, NULL, 0) == -1 && errno != ENOENT)
-		err(1, "ipsecctl_show_sas: sysctl");
-	if (need == 0) {
+		/* When the SAD is empty we get ENOENT, no need to err(). */
+		if (sysctl(mib, 5, NULL, &need, NULL, 0) == -1 &&
+		    errno != ENOENT)
+			err(1, "ipsecctl_show: sysctl");
+		if (need > 0) {
+			if ((sbuf = malloc(need)) == NULL)
+				err(1, "ipsecctl_show: malloc");
+			if (sysctl(mib, 5, sbuf, &need, NULL, 0) == -1)
+				err(1, "ipsecctl_show: sysctl");
+		}
+	}
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
+
+	if (rbuf != NULL) {
+		ipsecctl_parse_rules(&ipsec, rbuf, rlen);
+
 		if (opts & IPSECCTL_OPT_SHOWALL)
-			printf("No entries\n");
-		return;
+			ipsecctl_print_title("FLOWS:");
+
+		if (TAILQ_FIRST(&ipsec.rule_queue) != NULL) {
+			while ((rp = TAILQ_FIRST(&ipsec.rule_queue))) {
+				TAILQ_REMOVE(&ipsec.rule_queue, rp, rule_entry);
+
+				ipsecctl_print_rule(rp, ipsec.opts);
+
+				free(rp->src->name);
+				free(rp->src);
+				free(rp->dst->name);
+				free(rp->dst);
+				if (rp->local) {
+					free(rp->local->name);
+					free(rp->local);
+				}
+				if (rp->peer) {
+					free(rp->peer->name);
+					free(rp->peer);
+				}
+				if (rp->auth) {
+					free(rp->auth->srcid);
+					free(rp->auth->dstid);
+					free(rp->auth);
+				}
+				free(rp);
+			}
+		}
+	} else if (opts & IPSECCTL_OPT_SHOWALL) {
+		ipsecctl_print_title("FLOWS:");
+		if (opts & IPSECCTL_OPT_SHOWALL)
+			printf("No flows\n");
 	}
-	if ((buf = malloc(need)) == NULL)
-		err(1, "ipsecctl_show_sas: malloc");
-	if (sysctl(mib, 5, buf, &need, NULL, 0) == -1)
-		err(1, "ipsecctl_show_sas: sysctl");
-	sacount = 0;
-	lim = buf + need;
-	for (next = buf; next < lim;
-	    next += msg->sadb_msg_len * PFKEYV2_CHUNK) {
-		msg = (struct sadb_msg *)next;
-		if (msg->sadb_msg_len == 0)
-			break;
-		sacount++;
+
+	if (sbuf != NULL) {
+		if (opts & IPSECCTL_OPT_SHOWALL)
+			ipsecctl_print_title("SAD:");
+
+		sacount = 0;
+		lim = sbuf + need;
+		for (next = sbuf; next < lim;
+		    next += msg->sadb_msg_len * PFKEYV2_CHUNK) {
+			msg = (struct sadb_msg *)next;
+			if (msg->sadb_msg_len == 0)
+				break;
+			sacount++;
+		}
+		if ((sad = calloc(sacount, sizeof(*sad))) == NULL)
+			err(1, "ipsecctl_show: calloc");
+		i = 0;
+		for (next = sbuf; next < lim;
+		    next += msg->sadb_msg_len * PFKEYV2_CHUNK) {
+			msg = (struct sadb_msg *)next;
+			if (msg->sadb_msg_len == 0)
+				break;
+			sad[i].sad_spi = pfkey_get_spi(msg);
+			sad[i].sad_msg = msg;
+			i++;
+		}
+		qsort(sad, sacount, sizeof(*sad), sacompare);
+		for (i = 0; i < sacount; i++)
+			pfkey_print_sa(sad[i].sad_msg, opts);
+		free(sad);
+		free(sbuf);
+	} else if (opts & IPSECCTL_OPT_SHOWALL) {
+		ipsecctl_print_title("SAD:");
+		printf("No entries\n");
 	}
-	if ((sad = calloc(sacount, sizeof(*sad))) == NULL)
-		err(1, "ipsecctl_show_sas: calloc");
-	i = 0;
-	for (next = buf; next < lim;
-	    next += msg->sadb_msg_len * PFKEYV2_CHUNK) {
-		msg = (struct sadb_msg *)next;
-		if (msg->sadb_msg_len == 0)
-			break;
-		sad[i].sad_spi = pfkey_get_spi(msg);
-		sad[i].sad_msg = msg;
-		i++;
-	}
-	qsort(sad, sacount, sizeof(*sad), sacompare);
-	for (i = 0; i < sacount; i++)
-		pfkey_print_sa(sad[i].sad_msg, opts);
-	free(sad);
-	free(buf);
 }
 
 int
@@ -882,16 +898,18 @@ main(int argc, char *argv[])
 	if (showopt != NULL) {
 		switch (*showopt) {
 		case 'f':
-			ipsecctl_show_flows(opts);
+			opts |= IPSECCTL_OPT_SHOWFLOWS;
 			break;
 		case 's':
-			ipsecctl_show_sas(opts);
+			opts |= IPSECCTL_OPT_SHOWSAS;
 			break;
 		case 'a':
+			opts |= IPSECCTL_OPT_SHOWFLOWS;
+			opts |= IPSECCTL_OPT_SHOWSAS;
 			opts |= IPSECCTL_OPT_SHOWALL;
-			ipsecctl_show_flows(opts);
-			ipsecctl_show_sas(opts);
+			break;
 		}
+		ipsecctl_show(opts);
 	}
 
 	if (opts & IPSECCTL_OPT_MONITOR)

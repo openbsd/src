@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.63 2021/10/22 12:30:54 bluhm Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.64 2023/10/09 15:32:14 tobhe Exp $	*/
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
  * Copyright (c) 2003, 2004 Markus Friedl <markus@openbsd.org>
@@ -1323,6 +1323,9 @@ pfkey_monitor(int opts)
 		return -1;
 	if (pfkey_promisc() < 0)
 		return -1;
+
+	if (pledge("stdio", NULL) == -1)
+		err(1, "pledge");
 
 	pfd[0].fd = fd;
 	pfd[0].events = POLLIN;
