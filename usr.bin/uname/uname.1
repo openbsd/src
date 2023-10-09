@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uname.1,v 1.18 2022/07/25 02:25:56 jsg Exp $
+.\"	$OpenBSD: uname.1,v 1.19 2023/10/09 19:28:42 schwarze Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)du.1	6.13 (Berkeley) 6/20/91
 .\"
-.Dd $Mdocdate: July 25 2022 $
+.Dd $Mdocdate: October 9 2023 $
 .Dt UNAME 1
 .Os
 .Sh NAME
@@ -41,8 +41,9 @@
 .Sh DESCRIPTION
 The
 .Nm uname
-utility writes symbols representing one or more system characteristics
+utility writes strings representing one or more system characteristics
 to the standard output.
+The formats and meanings of all these strings vary among operating systems.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -51,19 +52,71 @@ Behave as though all of the options
 .Fl mnrsv
 were specified.
 .It Fl m
-Print the machine hardware name.
+Print the name of the hardware type.
+On
+.Ox ,
+this is the kernel architecture as returned by
+.Xr machine 1 .
 .It Fl n
-Print the nodename (the nodename may be a name
-that the system is known by to a communications
-network).
+Print the network name of this machine.
+On
+.Ox ,
+the same name can be printed with
+.Xr hostname 1 .
 .It Fl p
-Print the machine processor architecture name.
+Print the application architecture as returned by
+.Xr arch 1
+.Fl s .
 .It Fl r
 Print the operating system release.
+On
+.Ox ,
+the format is
+.Sm off
+.Ar digit . digit Bq \- Ar flavor .
+.Sm on
+.Pp
+The meaning of the
+.Pf \- Ar flavor
+suffix is as follows:
+.Bl -tag -width "no suffix"
+.It \-beta
+A development version preceding the
+.Ar digit . Ns Ar digit
+release.
+.It no suffix
+A public release,
+or a development version very closely preceding that release.
+.It \-stable
+A branch based on the
+.Ar digit . Ns Ar digit
+release that only contains patches to fix very important bugs.
+.It \-current
+A development version coming after the
+.Ar digit . Ns Ar digit
+release.
+Some time before the subsequent release, the second
+.Ar digit
+is incremented and the
+.Pf \- Ar flavor
+switched to \-beta.
+.El
 .It Fl s
 Print the operating system name.
+On
+.Ox ,
+this is always
+.Dq Ox .
 .It Fl v
 Print the operating system version.
+On
+.Ox ,
+the format is
+.Ar SYSTEMNAME Ns # Ns Ar buildnumber
+with the
+.Ar SYSTEMNAME
+mentioned in
+.Xr config 8 .
 .El
 .Pp
 If no options are specified,
@@ -71,6 +124,14 @@ If no options are specified,
 prints the operating system name as if the
 .Fl s
 option had been specified.
+.Pp
+If
+.Fl a
+or more than one option is specified,
+.Ox
+prints the selected fields separated by single space characters
+in the following order: operating system name, network name,
+release, version, kernel architecture, application architecture.
 .Sh EXIT STATUS
 .Ex -std uname
 .Sh SEE ALSO
