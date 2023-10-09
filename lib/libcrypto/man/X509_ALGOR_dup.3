@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.17 2023/10/09 16:03:57 tb Exp $
+.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.18 2023/10/09 16:59:55 tb Exp $
 .\"	OpenSSL 4692340e Jun 7 15:49:08 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -125,7 +125,13 @@ certificate revocation lists, and certificate requests.
 .Pp
 .Fn X509_ALGOR_free
 frees
-.Fa alg .
+.Fa alg
+and any data contained in it.
+If
+.Fa alg
+is
+.Dv NULL ,
+no action occurs.
 .Pp
 .Fn X509_ALGOR_dup
 copies
