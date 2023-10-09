@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.11 2023/08/07 20:28:47 kettenis Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.12 2023/10/09 14:25:00 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -34,18 +34,9 @@
 #include <sys/timeout.h>
 
 #include <machine/bus.h>
-#include <machine/fdt.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
-
-#include <dev/ofw/openfirm.h>
-#include <dev/ofw/ofw_clock.h>
-#include <dev/ofw/ofw_gpio.h>
-#include <dev/ofw/ofw_misc.h>
-#include <dev/ofw/ofw_pinctrl.h>
-#include <dev/ofw/ofw_regulator.h>
-#include <dev/ofw/fdt.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>

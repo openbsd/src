@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.15 2023/08/30 19:08:48 kettenis Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.16 2023/10/09 14:25:00 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -61,16 +61,22 @@
 #include <dev/ic/dwqevar.h>
 #include <dev/ic/dwqereg.h>
 
+struct dwqe_fdt_softc {
+	struct dwqe_softc	sc_sc;
+	struct if_device	sc_ifd;
+	int			sc_gmac_id;
+};
+
 int	dwqe_fdt_match(struct device *, void *, void *);
 void	dwqe_fdt_attach(struct device *, struct device *, void *);
 void	dwqe_setup_jh7110(struct dwqe_softc *);
 void	dwqe_mii_statchg_jh7110(struct device *);
-void	dwqe_setup_rk3568(struct dwqe_softc *);
+void	dwqe_setup_rk3568(struct dwqe_fdt_softc *);
 void	dwqe_mii_statchg_rk3568(struct device *);
 void	dwqe_mii_statchg_rk3588(struct device *);
 
 const struct cfattach dwqe_fdt_ca = {
-	sizeof(struct dwqe_softc), dwqe_fdt_match, dwqe_fdt_attach
+	sizeof(struct dwqe_fdt_softc), dwqe_fdt_match, dwqe_fdt_attach
 };
 
 void	dwqe_reset_phy(struct dwqe_softc *, uint32_t);
@@ -87,7 +93,8 @@ dwqe_fdt_match(struct device *parent, void *cfdata, void *aux)
 void
 dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct dwqe_softc *sc = (void *)self;
+	struct dwqe_fdt_softc *fsc = (void *)self;
+	struct dwqe_softc *sc = &fsc->sc_sc;
 	struct fdt_attach_args *faa = aux;
 	char phy_mode[16] = { 0 };
 	uint32_t phy, phy_supply;
@@ -108,18 +115,18 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	switch (faa->fa_reg[0].addr) {
 	case 0xfe2a0000:	/* RK3568 */
 	case 0x16030000:	/* JH7110 */
-		sc->sc_gmac_id = 0;
+		fsc->sc_gmac_id = 0;
 		break;
 	case 0xfe010000:	/* RK3568 */
 	case 0x16040000:	/* JH7110 */
-		sc->sc_gmac_id = 1;
+		fsc->sc_gmac_id = 1;
 		break;
 	default:
 		printf(": unknown controller at 0x%llx\n", faa->fa_reg[0].addr);
 		return;
 	}
 
-	printf(" gmac %d", sc->sc_gmac_id);
+	printf(" gmac %d", fsc->sc_gmac_id);
 
 	OF_getprop(faa->fa_node, "phy-mode", phy_mode, sizeof(phy_mode));
 	if (strcmp(phy_mode, "rgmii") == 0)
@@ -167,7 +174,7 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (OF_is_compatible(faa->fa_node, "starfive,jh7110-dwmac"))
 		dwqe_setup_jh7110(sc);
 	else if (OF_is_compatible(faa->fa_node, "rockchip,rk3568-gmac"))
-		dwqe_setup_rk3568(sc);
+		dwqe_setup_rk3568(fsc);
 
 	/* Power up PHY. */
 	phy_supply = OF_getpropint(faa->fa_node, "phy-supply", 0);
@@ -252,9 +259,9 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_ih == NULL)
 		printf("%s: can't establish interrupt\n", sc->sc_dev.dv_xname);
 
-	sc->sc_ifd.if_node = faa->fa_node;
-	sc->sc_ifd.if_ifp = ifp;
-	if_register(&sc->sc_ifd);
+	fsc->sc_ifd.if_node = faa->fa_node;
+	fsc->sc_ifd.if_ifp = ifp;
+	if_register(&fsc->sc_ifd);
 
 	/* force a configuration of the clocks/mac */
 	if (sc->sc_fixed_link)
@@ -400,8 +407,9 @@ dwqe_mii_statchg_jh7110(struct device *self)
 }
 
 void
-dwqe_setup_rk3568(struct dwqe_softc *sc)
+dwqe_setup_rk3568(struct dwqe_fdt_softc *fsc)
 {
+	struct dwqe_softc *sc = &fsc->sc_sc;
 	char phy_mode[32];
 	struct regmap *rm;
 	uint32_t grf;
@@ -439,12 +447,12 @@ dwqe_setup_rk3568(struct dwqe_softc *sc)
 		return;
 
 	/* Program clock delay lines. */
-	regmap_write_4(rm, RK3568_GRF_GMACx_CON0(sc->sc_gmac_id),
+	regmap_write_4(rm, RK3568_GRF_GMACx_CON0(fsc->sc_gmac_id),
 	    RK3568_GMAC_CLK_TX_DL_CFG(tx_delay) |
 	    RK3568_GMAC_CLK_RX_DL_CFG(rx_delay));
 
 	/* Set interface and enable/disable clock delay. */
-	regmap_write_4(rm, RK3568_GRF_GMACx_CON1(sc->sc_gmac_id), iface |
+	regmap_write_4(rm, RK3568_GRF_GMACx_CON1(fsc->sc_gmac_id), iface |
 	    RK3568_GMAC_TXCLK_DLY_SET(tx_delay > 0 ? 1 : 0) |
 	    RK3568_GMAC_RXCLK_DLY_SET(rx_delay > 0 ? 1 : 0));
 
