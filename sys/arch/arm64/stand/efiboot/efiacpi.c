@@ -1,4 +1,4 @@
-/*	$OpenBSD: efiacpi.c,v 1.15 2023/09/12 08:22:07 jmatthew Exp $	*/
+/*	$OpenBSD: efiacpi.c,v 1.16 2023/10/09 22:05:27 patrick Exp $	*/
 
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
@@ -573,7 +573,8 @@ efi_acpi_madt(struct acpi_table_header *hdr)
 		reg[3] = htobe64(0x100);
 		break;
 	case 3:
-		/* GICv3 */
+	case 4:
+		/* GICv3 and GICv4 */
 		compat = "arm,gic-v3";
 		reg[0] = htobe64(gicd_base);
 		reg[1] = htobe64(0x10000);
