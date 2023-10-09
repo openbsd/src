@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.16 2021/07/06 16:05:44 schwarze Exp $
+.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.17 2023/10/09 16:03:57 tb Exp $
 .\"	OpenSSL 4692340e Jun 7 15:49:08 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -65,7 +65,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: July 6 2021 $
+.Dd $Mdocdate: October 9 2023 $
 .Dt X509_ALGOR_DUP 3
 .Os
 .Sh NAME
@@ -147,8 +147,20 @@ with value
 If
 .Fa ptype
 is
+.Dv V_ASN1_UNDEF ,
+the parameter is omitted and
+.Fa pval
+is ignored.
+If
+.Fa ptype
+is zero,
+.Fa pval
+is ignored and the existing parameter is left unchanged, or if
+.Fa alg
+does not contain a parameter, a new, empty parameter of type
 .Dv V_ASN1_UNDEF
-the parameter is omitted, otherwise
+is added.
+Otherwise
 .Fa ptype
 and
 .Fa pval
@@ -158,9 +170,13 @@ and
 .Fa value
 parameters to
 .Xr ASN1_TYPE_set 3 .
-All the supplied parameters are used internally so must
-.Sy NOT
-be freed after this call.
+Ownership of
+.Fa aobj
+and, unless it is ignored, of
+.Fa pval
+is transferred to
+.Fa alg
+on success.
 .Pp
 .Fn X509_ALGOR_get0
 is the inverse of
@@ -179,6 +195,21 @@ sets
 .Fa alg
 to appropriate values for the message digest
 .Fa md .
+If the
+.Dv EVP_MD_FLAG_DIGALGID_ABSENT
+flag is not set on
+.Fa md ,
+.Fn X509_ALGOR_set_md
+can leave
+.Fa alg
+in a corrupted state due to memory allocation failure.
+This problem can be avoided by preallocating with an error-checked call to
+.Fn X509_ALGOR_set0 alg NULL 0 NULL ,
+or the failure can be identified by
+.Fn X509_ALGOR_get0 &aobj NULL NULL alg
+returning a
+.Dv NULL
+.Fa aobj .
 .Pp
 .Fn X509_ALGOR_cmp
 compares
@@ -196,7 +227,11 @@ object or
 if an error occurs.
 .Pp
 .Fn X509_ALGOR_set0
-returns 1 for success or 0 for failure.
+returns 1 for success or 0 if
+.Fa alg
+is
+.Dv NULL
+or memory allocation fails.
 .Pp
 .Fn X509_ALGOR_cmp
 returns 0 if
@@ -240,3 +275,6 @@ and has been available since
 .Fn X509_ALGOR_set_md
 first appeared in OpenSSL 1.0.1 and has been available since
 .Ox 5.3 .
+.Sh BUGS
+.Fn X509_ALGOR_set_md
+can fail but cannot communicate failure to the caller.
