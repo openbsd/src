@@ -1,4 +1,4 @@
-/* $OpenBSD: bwfm.c,v 1.109 2023/03/28 14:01:42 jsg Exp $ */
+/* $OpenBSD: bwfm.c,v 1.110 2023/10/09 21:49:34 kettenis Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
  * Copyright (c) 2016,2017 Patrick Wildt <patrick@blueri.se>
@@ -1089,15 +1089,9 @@ void
 bwfm_chip_ai_reset(struct bwfm_softc *sc, struct bwfm_core *core,
     uint32_t prereset, uint32_t reset, uint32_t postreset)
 {
-	struct bwfm_core *core2 = NULL;
 	int i;
 
-	if (core->co_id == BWFM_AGENT_CORE_80211)
-		core2 = bwfm_chip_get_core_idx(sc, BWFM_AGENT_CORE_80211, 1);
-
 	bwfm_chip_ai_disable(sc, core, prereset, reset);
-	if (core2)
-		bwfm_chip_ai_disable(sc, core2, prereset, reset);
 
 	for (i = 50; i > 0; i--) {
 		if ((sc->sc_buscore_ops->bc_read(sc,
@@ -1110,32 +1104,12 @@ bwfm_chip_ai_reset(struct bwfm_softc *sc, struct bwfm_core *core,
 	}
 	if (i == 0)
 		printf("%s: timeout on core reset\n", DEVNAME(sc));
-	if (core2) {
-		for (i = 50; i > 0; i--) {
-			if ((sc->sc_buscore_ops->bc_read(sc,
-			    core2->co_wrapbase + BWFM_AGENT_RESET_CTL) &
-			    BWFM_AGENT_RESET_CTL_RESET) == 0)
-				break;
-			sc->sc_buscore_ops->bc_write(sc,
-			    core2->co_wrapbase + BWFM_AGENT_RESET_CTL, 0);
-			delay(60);
-		}
-		if (i == 0)
-			printf("%s: timeout on core reset\n", DEVNAME(sc));
-	}
 
 	sc->sc_buscore_ops->bc_write(sc,
 	    core->co_wrapbase + BWFM_AGENT_IOCTL,
 	    postreset | BWFM_AGENT_IOCTL_CLK);
 	sc->sc_buscore_ops->bc_read(sc,
 	    core->co_wrapbase + BWFM_AGENT_IOCTL);
-	if (core2) {
-		sc->sc_buscore_ops->bc_write(sc,
-		    core2->co_wrapbase + BWFM_AGENT_IOCTL,
-		    postreset | BWFM_AGENT_IOCTL_CLK);
-		sc->sc_buscore_ops->bc_read(sc,
-		    core2->co_wrapbase + BWFM_AGENT_IOCTL);
-	}
 }
 
 void
@@ -1338,6 +1312,7 @@ bwfm_chip_ca7_set_passive(struct bwfm_softc *sc)
 {
 	struct bwfm_core *core;
 	uint32_t val;
+	int i = 0;
 
 	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_ARM_CA7);
 	val = sc->sc_buscore_ops->bc_read(sc,
@@ -1347,10 +1322,11 @@ bwfm_chip_ca7_set_passive(struct bwfm_softc *sc)
 	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT,
 	    BWFM_AGENT_IOCTL_ARMCR4_CPUHALT);
 
-	core = bwfm_chip_get_core(sc, BWFM_AGENT_CORE_80211);
-	sc->sc_chip.ch_core_reset(sc, core, BWFM_AGENT_D11_IOCTL_PHYRESET |
-	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN, BWFM_AGENT_D11_IOCTL_PHYCLOCKEN,
-	    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN);
+	while ((core = bwfm_chip_get_core_idx(sc, BWFM_AGENT_CORE_80211, i++)))
+		sc->sc_chip.ch_core_disable(sc, core,
+		    BWFM_AGENT_D11_IOCTL_PHYRESET |
+		    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN,
+		    BWFM_AGENT_D11_IOCTL_PHYCLOCKEN);
 }
 
 int
