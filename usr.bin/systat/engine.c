@@ -1,4 +1,4 @@
-/* $OpenBSD: engine.c,v 1.29 2021/07/02 15:34:16 millert Exp $	 */
+/* $OpenBSD: engine.c,v 1.30 2023/10/10 09:30:06 tb Exp $	 */
 /*
  * Copyright (c) 2001, 2007 Can Erkin Acar <canacar@openbsd.org>
  *
@@ -122,7 +122,6 @@ tb_end(void)
 
 int
 tbprintf(char *format, ...)
-	GCC_PRINTFLIKE(1,2)       /* defined in curses.h */
 {
 	int len;
 	va_list arg;
@@ -146,7 +145,6 @@ tbprintf(char *format, ...)
 
 int
 tbprintft(char *format, ...)
-	GCC_PRINTFLIKE(1,2)       /* defined in curses.h */
 {
 	int len;
 	va_list arg;
