@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.1187 2023/10/10 11:25:31 bluhm Exp $ */
+/*	$OpenBSD: pf.c,v 1.1188 2023/10/10 16:26:06 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4467,8 +4467,6 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 		goto cleanup;
 	}
 
-	action = PF_PASS;
-
 	if (pd->virtual_proto != PF_VPROTO_FRAGMENT
 	    && !ctx.state_icmp && r->keep_state) {
 
@@ -4511,6 +4509,8 @@ pf_test_rule(struct pf_pdesc *pd, struct pf_rule **rm, struct pf_state **sm,
 #endif /* INET6 */
 
 	} else {
+		action = PF_PASS;
+
 		while ((ctx.ri = SLIST_FIRST(&ctx.rules))) {
 			SLIST_REMOVE_HEAD(&ctx.rules, entry);
 			pool_put(&pf_rule_item_pl, ctx.ri);
