@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqevar.h,v 1.7 2023/10/09 14:25:00 stsp Exp $	*/
+/*	$OpenBSD: dwqevar.h,v 1.8 2023/10/10 07:11:50 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -80,6 +80,7 @@ struct dwqe_softc {
 	struct task		sc_statchg_task;
 
 	uint32_t		sc_clk;
+	uint32_t		sc_clkrate;
 
 	bus_size_t		sc_clk_sel;
 	uint32_t		sc_clk_sel_125;

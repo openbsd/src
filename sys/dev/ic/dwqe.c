@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.12 2023/10/09 14:25:00 stsp Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.13 2023/10/10 07:11:50 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -772,7 +772,7 @@ dwqe_up(struct dwqe_softc *sc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifq_clr_oactive(&ifp->if_snd);
 
-	dwqe_write(sc, GMAC_MAC_1US_TIC_CTR, (sc->sc_clk / 1000000) - 1);
+	dwqe_write(sc, GMAC_MAC_1US_TIC_CTR, (sc->sc_clkrate / 1000000) - 1);
 
 	/* Start receive DMA */
 	reg = dwqe_read(sc, GMAC_CHAN_RX_CONTROL(0));

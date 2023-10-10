@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwqe_fdt.c,v 1.16 2023/10/09 14:25:00 stsp Exp $	*/
+/*	$OpenBSD: if_dwqe_fdt.c,v 1.17 2023/10/10 07:11:50 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -193,18 +193,18 @@ dwqe_fdt_attach(struct device *parent, struct device *self, void *aux)
 		    LINK_STATE_FULL_DUPLEX : LINK_STATE_HALF_DUPLEX;
 	}
 
-	sc->sc_clk = clock_get_frequency(faa->fa_node, "stmmaceth");
-	if (sc->sc_clk > 500000000)
+	sc->sc_clkrate = clock_get_frequency(faa->fa_node, "stmmaceth");
+	if (sc->sc_clkrate > 500000000)
 		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_500_800;
-	else if (sc->sc_clk > 300000000)
+	else if (sc->sc_clkrate > 300000000)
 		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_300_500;
-	else if (sc->sc_clk > 150000000)
+	else if (sc->sc_clkrate > 150000000)
 		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_150_250;
-	else if (sc->sc_clk > 100000000)
+	else if (sc->sc_clkrate > 100000000)
 		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_100_150;
-	else if (sc->sc_clk > 60000000)
+	else if (sc->sc_clkrate > 60000000)
 		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_60_100;
-	else if (sc->sc_clk > 35000000)
+	else if (sc->sc_clkrate > 35000000)
 		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_35_60;
 	else
 		sc->sc_clk = GMAC_MAC_MDIO_ADDR_CR_20_35;
