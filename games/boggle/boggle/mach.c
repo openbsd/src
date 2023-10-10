@@ -1,4 +1,4 @@
-/*	$OpenBSD: mach.c,v 1.22 2016/09/11 14:21:17 tb Exp $	*/
+/*	$OpenBSD: mach.c,v 1.23 2023/10/10 08:22:19 tb Exp $	*/
 /*	$NetBSD: mach.c,v 1.5 1995/04/28 22:28:48 mycroft Exp $	*/
 
 /*-
@@ -686,7 +686,7 @@ tty_showboard(char *b)
 	clear();
 	move(BOARD_LINE, BOARD_COL);
 	line = BOARD_LINE;
-	printw(separator);
+	printw("%s", separator);
 	move(++line, BOARD_COL);
 	for (i = 0; i < ncubes; i++) {
 		printw("| ");
@@ -702,7 +702,7 @@ tty_showboard(char *b)
 		if ((i + 1) % grid == 0) {
 			printw("|");
 			move(++line, BOARD_COL);
-			printw(separator);
+			printw("%s", separator);
 			move(++line, BOARD_COL);
 		}
 	}
