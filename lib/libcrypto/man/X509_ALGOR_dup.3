@@ -1,9 +1,10 @@
-.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.18 2023/10/09 16:59:55 tb Exp $
+.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.19 2023/10/10 13:59:47 tb Exp $
 .\"	OpenSSL 4692340e Jun 7 15:49:08 2016 -0400
 .\"
 .\" This file is a derived work.
 .\" The changes are covered by the following Copyright and license:
 .\"
+.\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\" Copyright (c) 2016 Ingo Schwarze <schwarze@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -65,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 9 2023 $
+.Dd $Mdocdate: October 10 2023 $
 .Dt X509_ALGOR_DUP 3
 .Os
 .Sh NAME
@@ -112,16 +113,38 @@
 .Fa "const X509_ALGOR *b"
 .Fc
 .Sh DESCRIPTION
-.Fn X509_ALGOR_new
-allocates and initializes an empty
+An
 .Vt X509_ALGOR
-object, representing an ASN.1
+object represents an ASN.1
 .Vt AlgorithmIdentifier
 structure defined in RFC 5280 section 4.1.1.2.
-Such objects can specify a cryptographic algorithm together
-with algorithm-specific parameters.
-They are used by many other objects, for example certificates,
+It specifies a cryptographic
+.Fa algorithm
+by an ASN.1 object identifier (OID) that can be obtained from
+.Xr OBJ_nid2obj 3 ,
+together with optional algorithm-specific
+.Fa parameters
+of the type
+.Vt ASN1_TYPE ,
+see
+.Xr ASN1_TYPE_set 3 .
+.Vt X509_ALGOR
+objects are used by many other objects, for example certificates,
 certificate revocation lists, and certificate requests.
+.Pp
+.Fn X509_ALGOR_new
+allocates a new
+.Vt X509_ALGOR
+object containing the object that
+.Xr OBJ_nid2obj 3
+returns for
+.Dv NID_undef
+as the
+.Fa algorithm
+and a
+.Dv NULL
+pointer as the
+.Fa parameters .
 .Pp
 .Fn X509_ALGOR_free
 frees
@@ -210,12 +233,7 @@ can leave
 .Fa alg
 in a corrupted state due to memory allocation failure.
 This problem can be avoided by preallocating with an error-checked call to
-.Fn X509_ALGOR_set0 alg NULL 0 NULL ,
-or the failure can be identified by
-.Fn X509_ALGOR_get0 &aobj NULL NULL alg
-returning a
-.Dv NULL
-.Fa aobj .
+.Fn X509_ALGOR_set0 alg NULL 0 NULL .
 .Pp
 .Fn X509_ALGOR_cmp
 compares
@@ -249,6 +267,7 @@ have identical encodings or non-zero otherwise.
 .Xr ASN1_TYPE_set 3 ,
 .Xr d2i_X509_ALGOR 3 ,
 .Xr EVP_DigestInit 3 ,
+.Xr OBJ_nid2obj 3 ,
 .Xr X509_get0_signature 3 ,
 .Xr X509_new 3 ,
 .Xr X509_PUBKEY_get0_param 3 ,
