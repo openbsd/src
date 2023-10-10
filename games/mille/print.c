@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.9 2016/01/08 18:09:59 mestre Exp $	*/
+/*	$OpenBSD: print.c,v 1.10 2023/10/10 09:42:56 tb Exp $	*/
 /*	$NetBSD: print.c,v 1.4 1995/03/24 05:02:02 cgd Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ prboard(void)
 	pp = &Player[PLAYER];
 	for (i = 0; i < HAND_SZ; i++)
 		show_card(i + 6, temp, pp->hand[i], &pp->sh_hand[i]);
-	mvprintw(6, COMP_STRT + CARD_STRT, "%2d", Topcard - Deck);
+	mvprintw(6, COMP_STRT + CARD_STRT, "%2td", Topcard - Deck);
 	show_card(8, COMP_STRT + CARD_STRT, Discard, &Sh_discard);
 	if (End == 1000) {
 		move(EXT_Y, EXT_X);

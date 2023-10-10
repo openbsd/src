@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.13 2016/01/08 18:09:59 mestre Exp $	*/
+/*	$OpenBSD: misc.c,v 1.14 2023/10/10 09:42:56 tb Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/24 05:01:54 cgd Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ error(char *str, ...)
 
 	va_start(ap, str);
 	wmove(Score, ERR_Y, ERR_X);
-	vwprintw(Score, str, ap);
+	vw_printw(Score, str, ap);
 	wclrtoeol(Score);
 	beep();
 	refresh();
