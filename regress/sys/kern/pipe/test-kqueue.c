@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-kqueue.c,v 1.4 2021/10/22 05:03:57 anton Exp $	*/
+/*	$OpenBSD: test-kqueue.c,v 1.5 2023/10/10 18:18:05 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -137,6 +137,8 @@ test_kqueue_write(void)
 		n = read(ctx.c_pipe[0], &c, 1);
 		if (n == -1)
 			err(1, "read");
+		if (n == 0)
+			break;
 		if (n != 1)
 			errx(1, "read: %ld != 1", n);
 	}
@@ -295,6 +297,8 @@ kqueue_thread(void *arg)
 	ctx_lock(ctx);
 	ctx->c_alive = 0;
 	ctx_unlock(ctx);
+
+	close(fd);
 
 	return NULL;
 }
