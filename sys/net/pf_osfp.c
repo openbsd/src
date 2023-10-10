@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_osfp.c,v 1.46 2023/05/07 12:45:21 kn Exp $ */
+/*	$OpenBSD: pf_osfp.c,v 1.47 2023/10/10 11:25:31 bluhm Exp $ */
 
 /*
  * Copyright (c) 2003 Mike Frantzen <frantzen@w4g.org>
@@ -111,8 +111,7 @@ pf_osfp_fingerprint(struct pf_pdesc *pd)
 		ip6 = mtod(pd->m, struct ip6_hdr *);
 		break;
 	}
-	if (!pf_pull_hdr(pd->m, pd->off, hdr, th->th_off << 2, NULL, NULL,
-	    pd->af))
+	if (!pf_pull_hdr(pd->m, pd->off, hdr, th->th_off << 2, NULL, pd->af))
 		return (NULL);
 
 	return (pf_osfp_fingerprint_hdr(ip, ip6, (struct tcphdr *)hdr));

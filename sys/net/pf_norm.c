@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.228 2023/07/06 04:55:05 dlg Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.229 2023/10/10 11:25:31 bluhm Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1075,7 +1075,7 @@ pf_normalize_ip6(struct pf_pdesc *pd, u_short *reason)
 	if (pd->fragoff == 0)
 		goto no_fragment;
 
-	if (!pf_pull_hdr(pd->m, pd->fragoff, &frag, sizeof(frag), NULL, reason,
+	if (!pf_pull_hdr(pd->m, pd->fragoff, &frag, sizeof(frag), reason,
 	    AF_INET6))
 		return (PF_DROP);
 
@@ -1216,7 +1216,7 @@ pf_normalize_tcp_init(struct pf_pdesc *pd, struct pf_state_peer *src)
 
 	olen = (th->th_off << 2) - sizeof(*th);
 	if (olen < TCPOLEN_TIMESTAMP || !pf_pull_hdr(pd->m,
-	    pd->off + sizeof(*th), opts, olen, NULL, NULL, pd->af))
+	    pd->off + sizeof(*th), opts, olen, NULL, pd->af))
 		return (0);
 
 	opt = opts;
@@ -1299,7 +1299,7 @@ pf_normalize_tcp_stateful(struct pf_pdesc *pd, u_short *reason,
 	if (olen >= TCPOLEN_TIMESTAMP &&
 	    ((src->scrub && (src->scrub->pfss_flags & PFSS_TIMESTAMP)) ||
 	    (dst->scrub && (dst->scrub->pfss_flags & PFSS_TIMESTAMP))) &&
-	    pf_pull_hdr(pd->m, pd->off + sizeof(*th), opts, olen, NULL, NULL,
+	    pf_pull_hdr(pd->m, pd->off + sizeof(*th), opts, olen, NULL,
 	    pd->af)) {
 
 		/* Modulate the timestamps.  Can be used for NAT detection, OS
@@ -1633,7 +1633,7 @@ pf_normalize_mss(struct pf_pdesc *pd, u_int16_t maxmss)
 	olen = (pd->hdr.tcp.th_off << 2) - sizeof(struct tcphdr);
 	optsoff = pd->off + sizeof(struct tcphdr);
 	if (olen < TCPOLEN_MAXSEG ||
-	    !pf_pull_hdr(pd->m, optsoff, opts, olen, NULL, NULL, pd->af))
+	    !pf_pull_hdr(pd->m, optsoff, opts, olen, NULL, pd->af))
 		return (0);
 
 	opt = opts;

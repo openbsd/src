@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.533 2023/07/06 04:55:05 dlg Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.534 2023/10/10 11:25:31 bluhm Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1192,12 +1192,6 @@ enum pfi_kif_refs {
 #define SCNT_SRC_NODE_REMOVALS	2
 #define SCNT_MAX		3
 
-#define ACTION_SET(a, x) \
-	do { \
-		if ((a) != NULL) \
-			*(a) = (x); \
-	} while (0)
-
 #define REASON_SET(a, x) \
 	do { \
 		if ((void *)(a) != NULL) { \
@@ -1649,8 +1643,7 @@ void	pf_poolmask(struct pf_addr *, struct pf_addr*,
 	    struct pf_addr *, struct pf_addr *, sa_family_t);
 void	pf_addr_inc(struct pf_addr *, sa_family_t);
 
-void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, u_short *,
-	    sa_family_t);
+void   *pf_pull_hdr(struct mbuf *, int, void *, int, u_short *, sa_family_t);
 #define PF_HI (true)
 #define PF_LO (!PF_HI)
 #define PF_ALGNMNT(off) (((off) % 2) == 0 ? PF_HI : PF_LO)
