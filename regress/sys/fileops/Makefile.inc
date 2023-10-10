@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.4 2020/12/16 21:49:20 bluhm Exp $
+# $OpenBSD: Makefile.inc,v 1.5 2023/10/10 18:17:25 anton Exp $
 
 PERL_REQUIRE != perl -e 'eval { require File::Slurp } or print $$@'
 
@@ -6,9 +6,9 @@ TESTS1=		create read mmap
 TESTS2=		many_files_root many_files_subdir file_write
 TESTS= ${TESTS1} ${TESTS2}
 
-FILEOPS_MNT=	/mnt/regress-fileops
+FILEOPS_MNT=	/mnt/regress-fileops-${FS}
 FILEOPS_PROG=	${.OBJDIR}/../fileops
-CLEANFILES=	diskimage
+CLEANFILES=	diskimage vnd
 
 .poison !defined (MOUNT)
 .poison !defined (NEWFS)
@@ -17,13 +17,13 @@ CLEANFILES=	diskimage
 
 disk: unconfig
 	dd if=/dev/urandom of=diskimage bs=1M count=64
-	vnconfig vnd0 diskimage
-	${NEWFS} /dev/rvnd0c
+	vnconfig diskimage >vnd
+	${NEWFS} /dev/r$$(<vnd)c
 
 REGRESS_SETUP_ONCE+=	mount
 mount: disk
 	mkdir -p ${FILEOPS_MNT}
-	${MOUNT} /dev/vnd0c ${FILEOPS_MNT}
+	${MOUNT} /dev/$$(<vnd)c ${FILEOPS_MNT}
 
 REGRESS_CLEANUP+=	umount
 umount:
@@ -31,9 +31,9 @@ umount:
 
 REGRESS_CLEANUP+=	unconfig
 unconfig:
-	-umount -f /dev/vnd0c 2>/dev/null || true
+	-umount -f /dev/$$(<vnd)c 2>/dev/null || true
 	-rmdir ${FILEOPS_MNT} 2>/dev/null || true
-	-vnconfig -u vnd0 2>/dev/null || true
+	-vnconfig -u $$(<vnd) 2>/dev/null || true
 	rm -f stamp-setup
 
 ${.OBJDIR}/../fileops:

@@ -1,5 +1,6 @@
-# $OpenBSD: Makefile,v 1.1 2017/05/29 11:01:16 sf Exp $
+# $OpenBSD: Makefile,v 1.2 2023/10/10 18:17:25 anton Exp $
 
+FS = ffs
 NEWFS = newfs
 MOUNT = mount
 
