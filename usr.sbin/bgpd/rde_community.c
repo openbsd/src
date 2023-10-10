@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community.c,v 1.13 2023/07/12 14:45:43 claudio Exp $ */
+/*	$OpenBSD: rde_community.c,v 1.14 2023/10/10 14:36:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -556,10 +556,9 @@ community_writebuf(struct rde_community *comm, uint8_t type, int ebgp,
 	start = -1;
 	for (l = 0; l < comm->nentries; l++) {
 		cp = &comm->communities[l];
-
-		if (ebgp && non_transitive_ext_community(cp))
-			continue;
 		if ((uint8_t)cp->flags == t) {
+			if (ebgp && non_transitive_ext_community(cp))
+				continue;
 			num++;
 			if (start == -1)
 				start = l;
