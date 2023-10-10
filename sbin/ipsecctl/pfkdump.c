@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkdump.c,v 1.57 2023/08/07 04:10:08 dlg Exp $	*/
+/*	$OpenBSD: pfkdump.c,v 1.58 2023/10/10 16:16:16 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2003 Markus Friedl.  All rights reserved.
@@ -406,9 +406,11 @@ print_tag(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
 	struct sadb_x_tag *stag = (struct sadb_x_tag *)ext;
 	char *p;
+	int plen;
 
 	p = (char *)(stag + 1);
-	printf("%s", p);
+	plen = stag->sadb_x_tag_len * 8 - sizeof(*stag);
+	printf("%.*s", plen, p);
 }
 
 static void
@@ -590,10 +592,12 @@ static void
 print_ident(struct sadb_ext *ext, struct sadb_msg *msg, int opts)
 {
 	struct sadb_ident *ident = (struct sadb_ident *)ext;
+	int ilen;
 
-	printf("type %s id %llu: %s",
+	ilen = ident->sadb_ident_len * 8 - sizeof(*ident);
+	printf("type %s id %llu: %.*s",
 	    lookup_name(identity_types, ident->sadb_ident_type),
-	    ident->sadb_ident_id, (char *)(ident + 1));
+	    ident->sadb_ident_id, ilen, (char *)(ident + 1));
 }
 
 static void
