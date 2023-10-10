@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqereg.h,v 1.2 2023/02/16 14:43:53 kettenis Exp $	*/
+/*	$OpenBSD: dwqereg.h,v 1.3 2023/10/10 19:06:42 kettenis Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -39,8 +39,6 @@
 #define  GMAC_MAC_PACKET_FILTER_PR	(1 << 0)
 #define GMAC_MAC_HASH_TAB_REG0	0x0010
 #define GMAC_MAC_HASH_TAB_REG1	0x0014
-#define GMAC_VERSION		0x0020
-#define  GMAC_VERSION_SNPS_MASK		0xff
 #define GMAC_INT_MASK		0x003c
 #define  GMAC_INT_MASK_LPIIM		(1 << 10)
 #define  GMAC_INT_MASK_PIM		(1 << 3)
@@ -60,6 +58,8 @@
 #define GMAC_INT_STATUS		0x00b0
 #define GMAC_INT_EN		0x00b4
 #define GMAC_MAC_1US_TIC_CTR	0x00dc
+#define GMAC_VERSION		0x0110
+#define  GMAC_VERSION_SNPS_MASK		0xff
 #define GMAC_MAC_HW_FEATURE(x)	(0x011c + (x) * 0x4)
 #define  GMAC_MAC_HW_FEATURE1_TXFIFOSIZE(x) (((x) >> 6) & 0x1f)
 #define  GMAC_MAC_HW_FEATURE1_RXFIFOSIZE(x) (((x) >> 0) & 0x3f)
