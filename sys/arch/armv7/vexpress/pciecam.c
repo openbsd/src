@@ -1,4 +1,4 @@
-/* $OpenBSD: pciecam.c,v 1.5 2021/10/24 17:52:28 mpi Exp $ */
+/* $OpenBSD: pciecam.c,v 1.6 2023/10/10 18:40:34 miod Exp $ */
 /*
  * Copyright (c) 2013,2017 Patrick Wildt <patrick@blueri.se>
  *
@@ -28,6 +28,7 @@
 #include <dev/pci/pcivar.h>
 
 #include <dev/ofw/fdt.h>
+#include <dev/ofw/ofw_pci.h>
 #include <dev/ofw/openfirm.h>
 
 /* Assembling ECAM Configuration Address */
@@ -195,14 +196,21 @@ pciecam_attach(struct device *parent, struct device *self, void *aux)
 	    M_DEVBUF, NULL, 0, EX_NOWAIT | EX_FILLED);
 
 	for (i = 0; i < nranges; i++) {
-		if (sc->sc_pciranges[i].flags >> 24 == 0)
-			continue;
-		if (sc->sc_pciranges[i].flags >> 24 == 1)
+		switch (sc->sc_pciranges[i].flags & OFW_PCI_PHYS_HI_SPACEMASK) {
+		case OFW_PCI_PHYS_HI_SPACE_IO:
 			extent_free(sc->sc_ioex, sc->sc_pciranges[i].pci_base,
 			    sc->sc_pciranges[i].size, EX_NOWAIT);
-		else
+			break;
+		case OFW_PCI_PHYS_HI_SPACE_MEM64:
+			if (sc->sc_pciranges[i].pci_base +
+			    sc->sc_pciranges[i].size >= (1ULL << 32))
+				break;
+			/* FALLTHROUGH */
+		case OFW_PCI_PHYS_HI_SPACE_MEM32:
 			extent_free(sc->sc_memex, sc->sc_pciranges[i].pci_base,
 			    sc->sc_pciranges[i].size, EX_NOWAIT);
+			break;
+		}
 	}
 
 	memcpy(&sc->sc_bus, sc->sc_iot, sizeof(sc->sc_bus));
