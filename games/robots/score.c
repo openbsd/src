@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.16 2019/06/28 13:32:52 deraadt Exp $	*/
+/*	$OpenBSD: score.c,v 1.17 2023/10/10 09:48:06 tb Exp $	*/
 /*	$NetBSD: score.c,v 1.3 1995/04/22 10:09:12 cgd Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ score(int score_wfd)
 		move((scp - Top) + 1, 6);
 		if (!done_show && scp->s_uid == uid && scp->s_score == Score)
 			standout();
-		printw(" %d\t%d\t%-*s ", (scp - Top) + 1, scp->s_score,
+		printw(" %td\t%d\t%-*s ", (scp - Top) + 1, scp->s_score,
 			(int)(sizeof scp->s_name), scp->s_name);
 		if (!done_show && scp->s_uid == uid && scp->s_score == Score) {
 			standend();
