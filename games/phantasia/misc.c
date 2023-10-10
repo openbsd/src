@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.21 2016/01/10 13:35:10 mestre Exp $	*/
+/*	$OpenBSD: misc.c,v 1.22 2023/10/10 09:43:52 tb Exp $	*/
 /*	$NetBSD: misc.c,v 1.2 1995/03/24 03:59:03 cgd Exp $	*/
 
 /*
@@ -545,7 +545,7 @@ allstatslist(void)
 	mvprintw(13, 0, "Sin       : %9.5f", Player.p_sin);
 	mvprintw(14, 0, "Poison    : %9.5f", Player.p_poison);
 	mvprintw(15, 0, "Gems      : %9.0f", Player.p_gems);
-	mvprintw(16, 0, "Age       : %9d", Player.p_age);
+	mvprintw(16, 0, "Age       : %9ld", Player.p_age);
 	mvprintw(10, 40, "Holy Water: %9d", Player.p_holywater);
 	mvprintw(11, 40, "Amulets   : %9d", Player.p_amulets);
 	mvprintw(12, 40, "Charms    : %9d", Player.p_charms);
