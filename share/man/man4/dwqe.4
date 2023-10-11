@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dwqe.4,v 1.2 2023/04/19 00:56:10 jsg Exp $
+.\"	$OpenBSD: dwqe.4,v 1.3 2023/10/11 12:57:53 stsp Exp $
 .\"
 .\" Copyright (c) 2023 David Gwynne <dlg@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: April 19 2023 $
+.Dd $Mdocdate: October 11 2023 $
 .Dt DWQE 4
 .Os
 .Sh NAME
@@ -22,12 +22,14 @@
 .Nd Synopsys DesignWare Ethernet Quality-of-Service Controller
 .Sh SYNOPSIS
 .Cd "dwqe* at fdt?"
+.Cd "dwqe* at pci?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for various Ethernet controllers based on the
 Synopsys DesignWare Ethernet Quality-of-Service Controller IP.
-These controllers are found on Rockchip RK3566, RK3568, and RK3588 SoCs.
+These controllers are found on Rockchip RK3566, RK3568, and RK3588 SoCs,
+and on Intel Elkhart Lake SoCs.
 .Pp
 The
 .Nm
