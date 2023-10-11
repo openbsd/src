@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2022/04/29 17:27:37 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.10 2023/10/11 18:07:56 anton Exp $
 
 # Copyright (c) 2017-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -45,8 +45,9 @@ regress:
 	@echo SKIPPED
 .endif
 
-PF_SKIP !=	${SUDO} /sbin/pfctl -sI -v | sed -n 's/ (skip)//p'
-.if ! empty(PF_SKIP:Mlo*:Nlo0)
+PF_SKIP !=	${SUDO} /sbin/pfctl -sI -v | sed -n 's/ (skip)//p' | \
+		grep -w -e lo${N1} -e lo${N2} || :
+.if ! empty(PF_SKIP)
 regress:
 	@echo pf skip: "${PF_SKIP}"
 	@echo Do not set skip on interface lo, lo${N1}, or lo${N2}.
