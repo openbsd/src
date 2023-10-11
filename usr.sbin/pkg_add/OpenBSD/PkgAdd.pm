@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgAdd.pm,v 1.144 2023/10/07 09:11:26 espie Exp $
+# $OpenBSD: PkgAdd.pm,v 1.145 2023/10/11 13:52:29 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -1081,7 +1081,7 @@ sub may_grab_debug_for($class, $orig, $kept, $state)
 
 sub grab_debug_package($class, $d, $dbg, $state)
 {
-	my $o = $state->locator->find($dbg);
+	my $o = $state->locator->find($dbg, $state);
 	return if !defined $o;
 	require OpenBSD::Temp;
 	my ($fh, $name) = OpenBSD::Temp::permanent_file($d, "debug-pkg");
