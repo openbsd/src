@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 2023/05/12 08:28:05 tb Exp $
+#	$OpenBSD: Makefile,v 1.25 2023/10/11 12:49:00 tb Exp $
 
 PROGS = \
 	asn1api \
@@ -12,7 +12,8 @@ PROGS = \
 	asn1time \
 	asn1x509 \
 	rfc5280time \
-	string_table
+	string_table \
+	x509_algor
 
 DPADD+=		${LIBCRYPTO}
 WARNINGS=	Yes
