@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.28 2023/10/11 13:10:13 tb Exp $ */
+/* $OpenBSD: x_algor.c,v 1.29 2023/10/11 13:12:46 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -184,6 +184,10 @@ X509_ALGOR_get0(const ASN1_OBJECT **out_aobj, int *out_type,
 
 	if (out_aobj != NULL)
 		*out_aobj = alg->algorithm;
+
+	/* Ensure out_value is not left uninitialized if out_type is NULL. */
+	if (out_value != NULL)
+		*out_value = NULL;
 
 	if (out_type == NULL)
 		return;
