@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.26 2023/10/11 12:51:07 tb Exp $ */
+/* $OpenBSD: x_algor.c,v 1.27 2023/10/11 13:05:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -192,17 +192,25 @@ X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype, const void **ppval,
 	}
 }
 
-/* Set up an X509_ALGOR DigestAlgorithmIdentifier from an EVP_MD */
-
-void
-X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
+int
+X509_ALGOR_set_evp_md(X509_ALGOR *alg, const EVP_MD *md)
 {
+	ASN1_OBJECT *aobj;
 	int param_type = V_ASN1_NULL;
 
 	if ((EVP_MD_flags(md) & EVP_MD_FLAG_DIGALGID_ABSENT) != 0)
 		param_type = V_ASN1_UNDEF;
 
-	X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_type(md)), param_type, NULL);
+	if ((aobj = OBJ_nid2obj(EVP_MD_type(md))) == NULL)
+		return 0;
+
+	return X509_ALGOR_set0(alg, aobj, param_type, NULL);
+}
+
+void
+X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
+{
+	(void)X509_ALGOR_set_evp_md(alg, md);
 }
 
 int

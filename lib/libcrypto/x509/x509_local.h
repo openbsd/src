@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_local.h,v 1.9 2023/05/28 05:25:24 tb Exp $ */
+/*	$OpenBSD: x509_local.h,v 1.10 2023/10/11 13:05:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2013.
  */
@@ -378,6 +378,8 @@ struct x509_store_ctx_st {
 int x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int quiet);
 
 int name_cmp(const char *name, const char *cmp);
+
+int X509_ALGOR_set_evp_md(X509_ALGOR *alg, const EVP_MD *md);
 
 int X509_policy_check(const STACK_OF(X509) *certs,
     const STACK_OF(ASN1_OBJECT) *user_policies, unsigned long flags,
