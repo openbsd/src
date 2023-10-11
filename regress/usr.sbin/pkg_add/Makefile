@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.87 2023/10/06 06:00:18 espie Exp $
+# $OpenBSD: Makefile,v 1.88 2023/10/11 13:54:43 espie Exp $
 
 REGRESS_TARGETS=pkgnames pkgpaths signatures depends-check longnames pkgcfl \
 	collision-check1 collision-check2 collision-check3 \
@@ -25,6 +25,8 @@ REGRESS_EXPECTED_FAILURES = collision-check1 collision-check2 \
 PERLSCRIPT = perl -I ${.CURDIR} ${.CURDIR}
 
 WAVE_PLIST=-DREGRESSION_TESTING=plist_checks
+STUB=-DREGRESSION_TESTING=stub
+WAVE_PLIST_STUB=-DREGRESSION_TESTING=plist_checks,stub
 
 ADD_PKG = ${PERLSCRIPT}/my add -Dchecksum
 DELETE_PKG = ${PERLSCRIPT}/my delete -Dchecksum
@@ -591,21 +593,21 @@ rep1/ol-1.tgz: plist21
 CUPS_FILES += rep2/$o.tgz
 rep2/$o.tgz: ${.CURDIR}/oldcups/$o/+CONTENTS
 	mkdir -p rep2
-	cd rep2 && pkg_create ${WAVE_PLIST} -Dstub -f ${.CURDIR}/oldcups/$o/+CONTENTS
+	cd rep2 && pkg_create ${WAVE_PLIST_STUB} -f ${.CURDIR}/oldcups/$o/+CONTENTS
 .endfor
 
 .for n in cups-2.2.8 cups-filters-1.20.3 cups-libs-2.2.8 ghostscript-9.07p7
 CUPS_FILES += rep3/$n.tgz
 rep3/$n.tgz: ${.CURDIR}/newcups/$n/+CONTENTS
 	mkdir -p rep3
-	cd rep3 && pkg_create ${WAVE_PLIST} -Dstub -f ${.CURDIR}/newcups/$n/+CONTENTS
+	cd rep3 && pkg_create ${WAVE_PLIST_STUB} -f ${.CURDIR}/newcups/$n/+CONTENTS
 .endfor
 
 cups-bug: ${CUPS_FILES}
 	rm -rf ${D36}
 	mkdir -p ${D36}/vardbpkg ${D36}/usr/local
-	ROOT=${D36} PKG_PATH=${.OBJDIR}/rep2 INJECT=inject-order ${ADD_PKG} -Dstub cups
-	ROOT=${D36} PKG_PATH=${.OBJDIR}/rep3 INJECT=inject-order ${ADD_PKG} -Dstub -u
+	ROOT=${D36} PKG_PATH=${.OBJDIR}/rep2 INJECT=inject-order ${ADD_PKG} ${STUB} cups
+	ROOT=${D36} PKG_PATH=${.OBJDIR}/rep3 INJECT=inject-order ${ADD_PKG} ${STUB} -u
 
 usertest-1:
 	@if ${CREATE_PKG} -u ${.CURDIR}/baduser1 \

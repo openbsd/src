@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.195 2023/06/13 09:07:16 espie Exp $
+# $OpenBSD: Add.pm,v 1.196 2023/10/11 13:54:43 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -91,7 +91,7 @@ sub record_partial_installation($plist, $state, $h)
 
 sub perform_installation($handle, $state)
 {
-	return if $state->defines('stub');
+	return if $state->{regression}{stub} && $handle->pkgname !~ /^quirks\-/;
 
 	$state->{partial} = $handle->{partial};
 	$state->progress->visit_with_size($handle->{plist}, 'install');
@@ -122,7 +122,7 @@ sub skip_to_the_end($handle, $state, $tied, $p)
 
 sub perform_extraction($handle, $state)
 {
-	return if $state->defines('stub');
+	return if $state->{regression}{stub} && $handle->pkgname !~ /^quirks\-/;
 
 	$handle->{partial} = {};
 	$state->{partial} = $handle->{partial};
@@ -444,7 +444,7 @@ sub prepare_for_addition($self, $state, $pkgname, $)
 		$state->{problems}++;
 		return;
 	}
-	return if $state->defines('stub');
+	return if $state->{regression}{stub} && $pkgname !~ /^quirks\-/;
 	my $s = $state->vstat->add($fname, 
 	    $self->{tieto} ? 0 : $self->retrieve_size, $pkgname);
 	return unless defined $s;

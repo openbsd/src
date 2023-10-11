@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Delete.pm,v 1.168 2023/06/13 09:07:17 espie Exp $
+# $OpenBSD: Delete.pm,v 1.169 2023/10/11 13:54:43 espie Exp $
 #
 # Copyright (c) 2003-2014 Marc Espie <espie@openbsd.org>
 #
@@ -121,7 +121,7 @@ sub delete_plist($plist, $state)
 {
 	my $pkgname = $plist->pkgname;
 	$state->{pkgname} = $pkgname;
-	if (!$state->defines('stub')) {
+	if (!$state->{regression}{stub} || $pkgname =~ /^quirks\-/) {
 		if (!$state->{size_only}) {
 			$plist->register_manpage($state, 'rmman');
 			manpages_unindex($state);
