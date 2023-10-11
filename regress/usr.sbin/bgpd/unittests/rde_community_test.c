@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_community_test.c,v 1.8 2023/07/12 15:27:11 claudio Exp $ */
+/*	$OpenBSD: rde_community_test.c,v 1.9 2023/10/11 07:05:11 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -43,64 +43,85 @@ dump(uint8_t *b, size_t len)
 }
 
 static int
-test_parsing(size_t num, uint8_t *in, size_t inlen)
+test_parsing(size_t num, uint8_t *in, size_t inlen, uint8_t *out, size_t outlen)
 {
-	const char *func = "community";
 	struct ibuf *buf;
 	uint8_t flags, type, attr[256];
-	size_t skip = 2;
+	size_t skip;
 	uint16_t attr_len;
 	int r;
 
 	communities_clean(&comm);
 
-	flags = in[0];
-	type = in[1];
-	if (flags & ATTR_EXTLEN) {
-		memcpy(&attr_len, in + 2, sizeof(attr_len));
-		attr_len = ntohs(attr_len);
-		skip += 2;
-	} else {
-		attr_len = in[2];
-		skip += 1;
-	}
+	do {
+		flags = in[0];
+		type = in[1];
+		skip = 2;
+		if (flags & ATTR_EXTLEN) {
+			memcpy(&attr_len, in + 2, sizeof(attr_len));
+			attr_len = ntohs(attr_len);
+			skip += 2;
+		} else {
+			attr_len = in[2];
+			skip += 1;
+		}
+		if (skip + attr_len > inlen) {
+			printf("Test %zu: attribute parse failure\n", num);
+			return -1;
+		}
 
-	switch (type) {
-	case ATTR_COMMUNITIES:
-		r = community_add(&comm, flags, in + skip, attr_len);
-		break;
-	case ATTR_EXT_COMMUNITIES:
-		r = community_ext_add(&comm, flags, 0, in + skip, attr_len);
-		break;
-	case ATTR_LARGE_COMMUNITIES:
-		r = community_large_add(&comm, flags, in + skip, attr_len);
-		break;
-	}
-	if (r == -1) {
-		printf("Test %zu: %s_add failed\n", num, func);
-		return -1;
-	}
+		switch (type) {
+		case ATTR_COMMUNITIES:
+			r = community_add(&comm, flags, in + skip, attr_len);
+			break;
+		case ATTR_EXT_COMMUNITIES:
+			r = community_ext_add(&comm, flags, 0, in + skip,
+			    attr_len);
+			break;
+		case ATTR_LARGE_COMMUNITIES:
+			r = community_large_add(&comm, flags, in + skip,
+			    attr_len);
+			break;
+		}
+		if (r == -1) {
+			printf("Test %zu: community_add failed\n", num);
+			return -1;
+		}
+		in += skip + attr_len;
+		inlen -= (skip + attr_len);
+	} while (inlen > 0);
 
 	if ((buf = ibuf_dynamic(0, 4096)) == NULL) {
 		printf("Test %zu: ibuf_dynamic failed\n", num);
 		return -1;
 	}
 
-	if (community_writebuf(&comm, type, 0, buf) == -1) {
+	if (community_writebuf(&comm, ATTR_COMMUNITIES, 1, buf) == -1) {
+		printf("Test %zu: community_writebuf failed\n", num);
+		return -1;
+	}
+	if (community_writebuf(&comm, ATTR_EXT_COMMUNITIES, 1, buf) == -1) {
+		printf("Test %zu: community_writebuf failed\n", num);
+		return -1;
+	}
+	if (community_writebuf(&comm, ATTR_LARGE_COMMUNITIES, 1, buf) == -1) {
 		printf("Test %zu: community_writebuf failed\n", num);
 		return -1;
 	}
 
-	if (ibuf_size(buf) != inlen) {
-		printf("Test %zu: %s_write return value %zd != %zd\n",
-		    num, func, ibuf_size(buf), inlen);
-		return -1;
-	}
-	if (memcmp(ibuf_data(buf), in, inlen) != 0) {
-		printf("Test %zu: %s_write unexpected encoding: ", num, func);
+	if (ibuf_size(buf) != outlen) {
+		printf("Test %zu: ibuf size value %zd != %zd:",
+		    num, ibuf_size(buf), outlen);
 		dump(ibuf_data(buf), ibuf_size(buf));
 		printf("expected: ");
-		dump(in, inlen);
+		dump(out, outlen);
+		return -1;
+	}
+	if (memcmp(ibuf_data(buf), out, outlen) != 0) {
+		printf("Test %zu: unexpected encoding: ", num);
+		dump(ibuf_data(buf), ibuf_size(buf));
+		printf("expected: ");
+		dump(out, outlen);
 		return -1;
 	}
 
@@ -185,7 +206,16 @@ main(int argc, char *argv[])
 	int error = 0;
 
 	for (t = 0; t < sizeof(vectors) / sizeof(*vectors); t++) {
-		if (test_parsing(t, vectors[t].data, vectors[t].size) == -1)
+		size_t outlen = vectors[t].expsize;
+		uint8_t *out = vectors[t].expected;
+
+		if (vectors[t].expected == NULL) {
+			outlen = vectors[t].size;
+			out = vectors[t].data;
+		}
+
+		if (test_parsing(t, vectors[t].data, vectors[t].size,
+		    out, outlen) == -1)
 			error = 1;
 	}
 
