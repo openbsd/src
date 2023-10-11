@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_algor.c,v 1.2 2023/10/11 13:00:16 tb Exp $ */
+/*	$OpenBSD: x509_algor.c,v 1.3 2023/10/11 13:13:25 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -284,8 +284,8 @@ x509_algor_get0_test(void)
 	pval = oid;
 	X509_ALGOR_get0(NULL, NULL, &pval, alg);
 	if (pval != NULL) {
-		/* XXX */
-		fprintf(stderr, "expected FAIL: %s: got non-NULL pval\n", __func__);
+		fprintf(stderr, "FAIL: %s: got non-NULL pval\n", __func__);
+		goto failure;
 	}
 
 	aobj = NULL;
