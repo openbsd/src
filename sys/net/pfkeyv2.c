@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.258 2023/09/29 18:40:08 tobhe Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.259 2023/10/11 22:13:16 tobhe Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -1391,6 +1391,9 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 
 			/* Delete old version of the SA, insert new one */
 			tdb_delete(sa2);
+
+			tdb_addtimeouts(newsa);
+
 			puttdb(newsa);
 		} else {
 			/*
@@ -1422,6 +1425,8 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 			import_tap(sa2, headers[SADB_X_EXT_TAP]);
 #endif
 			import_iface(sa2, headers[SADB_X_EXT_IFACE]);
+
+			tdb_addtimeouts(sa2);
 
 			if (headers[SADB_EXT_ADDRESS_SRC] ||
 			    headers[SADB_EXT_ADDRESS_PROXY]) {
@@ -1564,6 +1569,8 @@ pfkeyv2_dosend(struct socket *so, void *message, int len)
 				NET_UNLOCK();
 				goto ret;
 			}
+
+			tdb_addtimeouts(newsa);
 
 			/* Add TDB in table */
 			puttdb(newsa);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.276 2023/08/07 03:43:57 dlg Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.277 2023/10/11 22:13:16 tobhe Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -714,6 +714,23 @@ tdb_firstuse(void *v)
 	/* decrement refcount of the timeout argument */
 	tdb_unref(tdb);
 	NET_UNLOCK();
+}
+
+void
+tdb_addtimeouts(struct tdb *tdbp)
+{
+	mtx_enter(&tdbp->tdb_mtx);
+	if (tdbp->tdb_flags & TDBF_TIMER) {
+		if (timeout_add_sec(&tdbp->tdb_timer_tmo,
+		    tdbp->tdb_exp_timeout))
+			tdb_ref(tdbp);
+	}
+	if (tdbp->tdb_flags & TDBF_SOFT_TIMER) {
+		if (timeout_add_sec(&tdbp->tdb_stimer_tmo,
+		    tdbp->tdb_soft_timeout))
+			tdb_ref(tdbp);
+	}
+	mtx_leave(&tdbp->tdb_mtx);
 }
 
 void
