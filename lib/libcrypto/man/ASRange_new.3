@@ -1,4 +1,4 @@
-.\" $OpenBSD: ASRange_new.3,v 1.7 2023/10/01 05:20:41 tb Exp $
+.\" $OpenBSD: ASRange_new.3,v 1.8 2023/10/11 12:06:11 tb Exp $
 .\"
 .\" Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 1 2023 $
+.Dd $Mdocdate: October 11 2023 $
 .Dt ASRANGE_NEW 3
 .Os
 .Sh NAME
@@ -92,16 +92,10 @@ All
 .Vt ASN1_INTEGER Ns s
 in this manual must be representable as unsigned 32-bit integers.
 The API performs no corresponding checks.
-The library provides no convenient way of setting the value of an
+An
 .Vt ASN1_INTEGER
-directly.
-A detour via a
-.Vt BIGNUM
-or a string is unavoidable.
-To retrieve the value of an
-.Vt ASN1_INTEGER ,
-use
-.Xr ASN1_INTEGER_get_uint64 3 .
+can be set using
+.Xr ASN1_INTEGER_set_uint64 3 .
 .Pp
 The
 .Vt ASRange
@@ -353,8 +347,7 @@ return the number of bytes successfully encoded
 or a value <= 0 if an error occurs.
 .Sh SEE ALSO
 .Xr ASIdentifiers_new 3 ,
-.Xr BN_set_word 3 ,
-.Xr BN_to_ASN1_INTEGER 3 ,
+.Xr ASN1_INTEGER_set_uint64 3 ,
 .Xr crypto 3 ,
 .Xr IPAddressRange_new 3 ,
 .Xr s2i_ASN1_INTEGER 3 ,
