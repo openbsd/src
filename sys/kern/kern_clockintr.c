@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.59 2023/10/08 21:08:00 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.60 2023/10/11 00:02:25 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -390,17 +390,17 @@ clockintr_schedule_locked(struct clockintr *cl, uint64_t expiration)
 }
 
 void
-clockintr_stagger(struct clockintr *cl, uint64_t period, uint32_t n,
-    uint32_t count)
+clockintr_stagger(struct clockintr *cl, uint64_t period, uint32_t numer,
+    uint32_t denom)
 {
 	struct clockintr_queue *cq = cl->cl_queue;
 
-	KASSERT(n < count);
+	KASSERT(numer < denom);
 
 	mtx_enter(&cq->cq_mtx);
 	if (ISSET(cl->cl_flags, CLST_PENDING))
 		panic("%s: clock interrupt pending", __func__);
-	cl->cl_expiration = period / count * n;
+	cl->cl_expiration = period / denom * numer;
 	mtx_leave(&cq->cq_mtx);
 }
 
