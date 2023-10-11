@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.21 2023/10/08 21:08:00 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.22 2023/10/11 15:07:04 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -112,6 +112,7 @@ uint64_t clockintr_advance_random(struct clockintr *, uint64_t, uint32_t);
 void clockintr_cancel(struct clockintr *);
 struct clockintr *clockintr_establish(struct cpu_info *,
     void (*)(struct clockintr *, void *, void *), void *);
+void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_stagger(struct clockintr *, uint64_t, uint32_t, uint32_t);
 void clockqueue_init(struct clockintr_queue *);
 int sysctl_clockintr(int *, u_int, void *, size_t *, void *, size_t);

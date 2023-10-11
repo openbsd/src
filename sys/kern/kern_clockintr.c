@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.60 2023/10/11 00:02:25 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.61 2023/10/11 15:07:04 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -32,7 +32,6 @@
 #include <sys/time.h>
 
 void clockintr_hardclock(struct clockintr *, void *, void *);
-void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
 void clockqueue_intrclock_install(struct clockintr_queue *,
     const struct intrclock *);
