@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_algor.c,v 1.1 2023/10/11 12:49:00 tb Exp $ */
+/*	$OpenBSD: x509_algor.c,v 1.2 2023/10/11 13:00:16 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -338,6 +338,10 @@ x509_algor_set_md_test(void)
 		    V_ASN1_UNDEF, ptype);
 		goto failure;
 	}
+
+	/* Preallocate as recommended in the manual. */
+	if (!X509_ALGOR_set0(alg, NULL, 0, NULL))
+		errx(1, "%s: X509_ALGOR_set0", __func__);
 
 	X509_ALGOR_set_md(alg, EVP_md5());
 	X509_ALGOR_get0(&aobj, &ptype, NULL, alg);
