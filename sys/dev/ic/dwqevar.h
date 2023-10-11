@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqevar.h,v 1.8 2023/10/10 07:11:50 stsp Exp $	*/
+/*	$OpenBSD: dwqevar.h,v 1.9 2023/10/11 12:52:00 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -97,6 +97,8 @@ struct dwqe_softc {
 	int			sc_pbl;
 	int			sc_txpbl;
 	int			sc_rxpbl;
+	int			sc_txfifo_size;
+	int			sc_rxfifo_size;
 	int			sc_axi_config;
 	int			sc_lpi_en;
 	int			sc_xit_frm;
