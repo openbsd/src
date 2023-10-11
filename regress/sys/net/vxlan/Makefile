@@ -1,9 +1,11 @@
-#	$OpenBSD: Makefile,v 1.5 2022/04/29 17:27:38 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.6 2023/10/11 18:07:15 anton Exp $
 
 REGRESS_TARGETS=	vxlan_1 vxlan_2.inet vxlan_2.dyn
 REGRESS_ROOT_TARGETS=	vxlan_1 vxlan_2.inet vxlan_2.dyn
 
-RDOMAINS=		11 12
+N1=			11
+N2=			12
+RDOMAINS=		${N1} ${N2}
 IFACE_NUMS=		11 12
 
 vxlan_1:
