@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqereg.h,v 1.3 2023/10/10 19:06:42 kettenis Exp $	*/
+/*	$OpenBSD: dwqereg.h,v 1.4 2023/10/11 12:32:46 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -62,7 +62,7 @@
 #define  GMAC_VERSION_SNPS_MASK		0xff
 #define GMAC_MAC_HW_FEATURE(x)	(0x011c + (x) * 0x4)
 #define  GMAC_MAC_HW_FEATURE1_TXFIFOSIZE(x) (((x) >> 6) & 0x1f)
-#define  GMAC_MAC_HW_FEATURE1_RXFIFOSIZE(x) (((x) >> 0) & 0x3f)
+#define  GMAC_MAC_HW_FEATURE1_RXFIFOSIZE(x) (((x) >> 0) & 0x1f)
 #define GMAC_MAC_MDIO_ADDR	0x0200
 #define  GMAC_MAC_MDIO_ADDR_PA_SHIFT	21
 #define  GMAC_MAC_MDIO_ADDR_RDA_SHIFT	16
