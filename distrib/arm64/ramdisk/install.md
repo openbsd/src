@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.47 2023/04/27 17:04:17 caspar Exp $
+#	$OpenBSD: install.md,v 1.48 2023/10/11 17:53:52 kn Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -116,14 +116,14 @@ md_prep_fdisk() {
 				KEEP_EFI_SYS=true
 
 				# Is this a boot disk?
-				if [[ $_disk == @($ROOTDISK|$CRYPTOCHUNK) ]]; then
+				if [[ $_disk == $ROOTDISK ]]; then
 					fdisk -Ay -b "${bootsectorsize}" ${_disk} >/dev/null
 				else
 					fdisk -Ay ${_disk} >/dev/null
 				fi
 			elif disk_has $_disk gpt; then
 				# Is this a boot disk?
-				if [[ $_disk == @($ROOTDISK|$CRYPTOCHUNK) ]]; then
+				if [[ $_disk == $ROOTDISK ]]; then
 					fdisk -gy -b "${bootsectorsize}" ${_disk} >/dev/null
 
 					# With root on softraid,
