@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.29 2023/10/11 13:12:46 tb Exp $ */
+/* $OpenBSD: x_algor.c,v 1.30 2023/10/11 13:20:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -150,28 +150,24 @@ X509_ALGOR_dup(X509_ALGOR *x)
 int
 X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
 {
-	if (!alg)
+	if (alg == NULL)
 		return 0;
-	if (ptype != V_ASN1_UNDEF) {
+
+	if (ptype == V_ASN1_UNDEF) {
+		ASN1_TYPE_free(alg->parameter);
+		alg->parameter = NULL;
+	} else {
 		if (alg->parameter == NULL)
 			alg->parameter = ASN1_TYPE_new();
 		if (alg->parameter == NULL)
 			return 0;
+		if (ptype != 0)
+			ASN1_TYPE_set(alg->parameter, ptype, pval);
 	}
-	if (alg) {
-		if (alg->algorithm)
-			ASN1_OBJECT_free(alg->algorithm);
-		alg->algorithm = aobj;
-	}
-	if (ptype == 0)
-		return 1;
-	if (ptype == V_ASN1_UNDEF) {
-		if (alg->parameter) {
-			ASN1_TYPE_free(alg->parameter);
-			alg->parameter = NULL;
-		}
-	} else
-		ASN1_TYPE_set(alg->parameter, ptype, pval);
+
+	ASN1_OBJECT_free(alg->algorithm);
+	alg->algorithm = aobj;
+
 	return 1;
 }
 
