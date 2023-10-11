@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.64 2023/09/14 22:07:11 cheloha Exp $	*/
+/*	$OpenBSD: sched.h,v 1.65 2023/10/11 15:42:44 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -146,7 +146,7 @@ struct cpustats {
 #define NICE_WEIGHT 2			/* priorities per nice level */
 #define	ESTCPULIM(e) min((e), NICE_WEIGHT * PRIO_MAX - SCHED_PPQ)
 
-extern uint32_t roundrobin_period;
+extern uint64_t roundrobin_period;
 
 struct proc;
 void schedclock(struct proc *);

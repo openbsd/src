@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.87 2023/09/17 13:02:24 cheloha Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.88 2023/10/11 15:42:44 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -54,7 +54,7 @@
 #include <sys/ktrace.h>
 #endif
 
-uint32_t roundrobin_period;	/* [I] roundrobin period (ns) */
+uint64_t roundrobin_period;	/* [I] roundrobin period (ns) */
 int	lbolt;			/* once a second sleep address */
 
 #ifdef MULTIPROCESSOR

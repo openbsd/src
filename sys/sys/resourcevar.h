@@ -1,4 +1,4 @@
-/*	$OpenBSD: resourcevar.h,v 1.29 2023/09/10 03:08:05 cheloha Exp $	*/
+/*	$OpenBSD: resourcevar.h,v 1.30 2023/10/11 15:42:44 cheloha Exp $	*/
 /*	$NetBSD: resourcevar.h,v 1.12 1995/11/22 23:01:53 cgd Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ do {									\
 
 struct clockintr;
 
-extern uint32_t profclock_period;
+extern uint64_t profclock_period;
 
 void	 addupc_intr(struct proc *, u_long, u_long);
 void	 addupc_task(struct proc *, u_long, u_int);

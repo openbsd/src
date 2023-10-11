@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.38 2023/09/10 03:08:05 cheloha Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.39 2023/10/11 15:42:44 cheloha Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
 #include <sys/syscallargs.h>
 #include <sys/user.h>
 
-uint32_t profclock_period;
+uint64_t profclock_period;
 
 #if defined(GPROF) || defined(DDBPROF)
 #include <sys/malloc.h>
