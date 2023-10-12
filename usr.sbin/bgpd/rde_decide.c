@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.101 2023/03/13 16:52:42 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.102 2023/10/12 14:22:08 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -568,9 +568,12 @@ prefix_evaluate(struct rib_entry *re, struct prefix *new, struct prefix *old)
 	 * to be passed on (not only a change of the best prefix).
 	 * rde_generate_updates() will then take care of distribution.
 	 */
-	if (rde_evaluate_all())
-		if ((new != NULL && prefix_eligible(new)) || old != NULL)
+	if (rde_evaluate_all()) {
+		if (new != NULL && !prefix_eligible(new))
+			new = NULL;
+		if (new != NULL || old != NULL)
 			rde_generate_updates(re, new, old, EVAL_ALL);
+	}
 }
 
 void
@@ -578,7 +581,7 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
     enum nexthop_state oldstate)
 {
 	struct rib_entry *re = prefix_re(p);
-	struct prefix	*newbest, *oldbest;
+	struct prefix	*newbest, *oldbest, *new, *old;
 	struct rib	*rib;
 
 	/* Skip non local-RIBs or RIBs that are flagged as noeval. */
@@ -608,6 +611,7 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 	 * Re-evaluate the prefix by removing the prefix then updating the
 	 * nexthop state and reinserting the prefix again.
 	 */
+	old = p;
 	oldbest = prefix_best(re);
 	prefix_remove(p, re);
 
@@ -618,6 +622,9 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 
 	prefix_insert(p, NULL, re);
 	newbest = prefix_best(re);
+	new = p;
+	if (!prefix_eligible(new))
+		new = NULL;
 
 	/*
 	 * If the active prefix changed or the active prefix was removed
@@ -631,7 +638,7 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 		 */
 		if ((rib->flags & F_RIB_NOFIB) == 0)
 			rde_send_kroute(rib, newbest, oldbest);
-		rde_generate_updates(re, p, p, EVAL_DEFAULT);
+		rde_generate_updates(re, new, old, EVAL_DEFAULT);
 		return;
 	}
 
@@ -641,5 +648,5 @@ prefix_evaluate_nexthop(struct prefix *p, enum nexthop_state state,
 	 * rde_generate_updates() will then take care of distribution.
 	 */
 	if (rde_evaluate_all())
-		rde_generate_updates(re, p, p, EVAL_ALL);
+		rde_generate_updates(re, new, old, EVAL_ALL);
 }
