@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.163 2023/07/12 14:45:43 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.164 2023/10/12 14:16:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -350,6 +350,11 @@ up_generate_addpath_all(struct rde_peer *peer, struct rib_entry *re,
 
 		new = prefix_best(re);
 		all = 1;
+	}
+
+	if (new != NULL && !prefix_eligible(new)) {
+		/* only allow valid prefixes */
+		new = NULL;
 	}
 
 	if (old != NULL) {
