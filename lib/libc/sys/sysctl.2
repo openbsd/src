@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.2,v 1.55 2023/10/02 23:38:11 krw Exp $
+.\"	$OpenBSD: sysctl.2,v 1.56 2023/10/12 12:56:26 schwarze Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 2 2023 $
+.Dd $Mdocdate: October 12 2023 $
 .Dt SYSCTL 2
 .Os
 .Sh NAME
@@ -327,7 +327,11 @@ An array of
 .Vt struct diskstats
 structures containing disk statistics.
 .It Dv HW_MACHINE Pq Va hw.machine
-The machine class.
+The kernel architecture as returned by
+.Xr uname 1
+.Fl m
+and by
+.Xr machine 1 .
 .It Dv HW_MODEL Pq Va hw.model
 The machine model.
 .It Dv HW_NCPU Pq Va hw.ncpu
@@ -596,7 +600,11 @@ This structure contains the array described in
 and a bit mask indicating the status of the CPU specified by the
 third level name.
 .It Dv KERN_DOMAINNAME Pq Va kern.domainname
-Get or set the YP domain name.
+Get or set the YP domain name like with
+.Xr getdomainname 3 ,
+.Xr setdomainname 3 ,
+and
+.Xr domainname 1 .
 .It Dv KERN_FILE Pq Va kern.file
 Return the entire file table, or a subset of it.
 An array of
@@ -638,7 +646,11 @@ When set to 0, processes may only attach to their own descendants.
 .It Dv KERN_HOSTID Pq Va kern.hostid
 Get or set the host ID.
 .It Dv KERN_HOSTNAME Pq Va kern.hostname
-Get or set the hostname.
+Get or set the hostname like with
+.Xr gethostname 3 ,
+.Xr sethostname 3 ,
+and
+.Xr hostname 1 .
 .It Dv KERN_JOB_CONTROL Pq Va kern.job_control
 Return 1 if job control is available on this system, otherwise 0.
 .It Dv KERN_MALLOCSTATS Pq Va kern.malloc
@@ -736,13 +748,21 @@ The number of entries in the kernel thread table.
 .It Dv KERN_NUMVNODES Pq Va kern.numvnodes
 Number of vnodes in use.
 .It Dv KERN_OSRELEASE Pq Va kern.osrelease
-The system release string.
+The system release string as returned by
+.Xr uname 1
+.Fl r .
 .It Dv KERN_OSREV Pq Va kern.osrevision
 The system revision number.
 .It Dv KERN_OSTYPE Pq Va kern.ostype
-The system type string.
+The system type string as returned by
+.Xr uname 1
+.Fl s ;
+it is always
+.Dq Ox .
 .It Dv KERN_OSVERSION Pq Va kern.osversion
-The kernel build version.
+The kernel build version as returned by
+.Xr uname 1
+.Fl v .
 .It Dv KERN_PFSTATUS
 The
 .Vt struct pf_status
