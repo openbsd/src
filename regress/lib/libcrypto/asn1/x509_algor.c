@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_algor.c,v 1.3 2023/10/11 13:13:25 tb Exp $ */
+/*	$OpenBSD: x509_algor.c,v 1.4 2023/10/12 04:53:45 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -18,6 +18,9 @@
 #include <err.h>
 #include <stdio.h>
 
+#include <openssl/asn1.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
 #include <openssl/x509.h>
 
 static int
