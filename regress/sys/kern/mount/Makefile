@@ -1,41 +1,41 @@
-# $OpenBSD: Makefile,v 1.9 2023/08/14 12:03:12 miod Exp $
+# $OpenBSD: Makefile,v 1.10 2023/10/12 16:59:24 anton Exp $
 
 # This regress test uses a vnd device to run mount and unmount.
 # All tests have to be run as root.
 
-CLEANFILES=	diskimage *.log
+CLEANFILES=	diskimage vnd *.log
 
 .PHONY: disk mount unconfig clean
 
 disk: unconfig
 	dd if=/dev/null of=diskimage bs=1m seek=1100
-	vnconfig vnd0 diskimage
-	disklabel -wA -T ${.CURDIR}/disktemplate vnd0
-	disklabel vnd0
-	disklabel vnd0 | grep -q '16 partitions:'
-	[ `disklabel vnd0 | grep -c '\<4.2BSD\>'` -eq 15 ]
+	vnconfig diskimage >vnd
+	disklabel -wA -T ${.CURDIR}/disktemplate $$(<vnd)
+	disklabel $$(<vnd)
+	disklabel $$(<vnd) | grep -q '16 partitions:'
+	[ `disklabel $$(<vnd) | grep -c '\<4.2BSD\>'` -eq 15 ]
 
 mount: disk
-	newfs vnd0a
+	newfs $$(<vnd)a
 	mkdir -p /mnt/regress-mount
-	mount /dev/vnd0a /mnt/regress-mount
+	mount /dev/$$(<vnd)a /mnt/regress-mount
 
 mount-nested: mount
 .for p in b d e f g h i j k l m n o p
-	newfs -O 1 vnd0${p}
+	newfs -O 1 $$(<vnd)${p}
 .endfor
 	mkdir /mnt/regress-mount/b
-	mount /dev/vnd0b /mnt/regress-mount/b
+	mount /dev/$$(<vnd)b /mnt/regress-mount/b
 	f=/mnt/regress-mount; for p in d e f g h i j k l m n o p;\
-	    do f=$$f/$$p; mkdir $$f; mount /dev/vnd0$$p $$f; done
+	    do f=$$f/$$p; mkdir $$f; mount /dev/$$(<vnd)$$p $$f; done
 	mount
-	[ `mount | grep -c '/dev/vnd0. on /mnt/regress-mount\>'` -eq 15 ]
+	[ `mount | grep -c "/dev/$$(<vnd). on /mnt/regress-mount\>"` -eq 15 ]
 
 REGRESS_CLEANUP =	unconfig
 unconfig:
-	-umount -f /dev/vnd0a 2>/dev/null || true
+	-umount -f /dev/$$(<vnd)a 2>/dev/null || true
 	-rmdir /mnt/regress-mount 2>/dev/null || true
-	-vnconfig -u vnd0 2>/dev/null || true
+	-vnconfig -u $$(<vnd) 2>/dev/null || true
 
 # The unmount-nested test uses a disk template to create 15 partitions
 # on a vnd device.  All are initialized with a ffs file system.
@@ -50,7 +50,7 @@ run-unmount-nested: mount-nested
 	! umount /mnt/regress-mount
 	umount -f /mnt/regress-mount
 	mount
-	[ `mount | grep -c '/dev/vnd0. on /mnt/regress-mount\>'` -eq 0 ]
+	[ `mount | grep -c "/dev/$$(<vnd). on /mnt/regress-mount\>"` -eq 0 ]
 
 # Create a 1 GB vnd partition and fill the ffs file system it with
 # cp -r.  After 15 seconds clean it with rm -rf.  While this is
@@ -66,8 +66,8 @@ run-unmount-busy: mount
 	rm -rf /mnt/regress-mount/usr &
 	sleep .1
 	umount -f /mnt/regress-mount
-	fsck -y /dev/rvnd0a 2>&1 | tee fsck-clean.log
-	fsck -f -y /dev/rvnd0a 2>&1 | tee fsck-force.log
+	fsck -y /dev/r$$(<vnd)a 2>&1 | tee fsck-clean.log
+	fsck -f -y /dev/r$$(<vnd)a 2>&1 | tee fsck-force.log
 	egrep -q 'File system is clean' \
 	    fsck-clean.log
 	! egrep -q 'yes|FILE SYSTEM WAS MODIFIED|MARKING FILE SYSTEM CLEAN' \
@@ -99,8 +99,8 @@ run-readonly-busy: mount
 	    pgrep -xf 'rm -rf /mnt/regress-mount/usr' || \
 	    break; sleep 1; done
 	umount /mnt/regress-mount
-	fsck -y /dev/rvnd0a 2>&1 | tee fsck-clean.log
-	fsck -f -y /dev/rvnd0a 2>&1 | tee fsck-force.log
+	fsck -y /dev/r$$(<vnd)a 2>&1 | tee fsck-clean.log
+	fsck -f -y /dev/r$$(<vnd)a 2>&1 | tee fsck-force.log
 	! egrep -q 'File system is clean' fsck-clean.log || \
 	! egrep -q 'yes|FILE SYSTEM WAS MODIFIED|MARKING FILE SYSTEM CLEAN' \
 	    fsck-force.log
@@ -119,8 +119,8 @@ run-readonly-dangling: mount
 	pkill -xf 'sleep 73'
 	sleep .1
 	umount /mnt/regress-mount
-	fsck -y /dev/rvnd0a 2>&1 | tee fsck-clean.log
-	fsck -f -y /dev/rvnd0a 2>&1 | tee fsck-force.log
+	fsck -y /dev/r$$(<vnd)a 2>&1 | tee fsck-clean.log
+	fsck -f -y /dev/r$$(<vnd)a 2>&1 | tee fsck-force.log
 	! egrep -q 'File system is clean' fsck-clean.log
 	egrep -q 'yes|FILE SYSTEM WAS MODIFIED|MARKING FILE SYSTEM CLEAN' \
 	    fsck-clean.log fsck-force.log

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 2023/01/17 06:33:49 anton Exp $
+#	$OpenBSD: Makefile,v 1.36 2023/10/12 16:59:24 anton Exp $
 
 # The following ports must be installed for the regression tests:
 # p5-Socket6		Perl defines relating to AF_INET6 sockets
@@ -36,7 +36,7 @@ REGRESS_SKIP_TARGETS =	${REGRESS_TARGETS:Mrun-args-rsyslog*}
 LDFLAGS +=		-lutil
 CLEANFILES +=		*.log *.log.? *.conf ktrace.out stamp-* *.pid
 CLEANFILES +=		*.out *.sock *.ktrace *.fstat ttylog *.ph */*.ph
-CLEANFILES +=		*.pem *.req *.key *.crt *.srl empty toobig diskimage
+CLEANFILES +=		*.pem *.req *.key *.crt *.srl empty toobig diskimage vnd
 
 run-args-rsyslog-client-tls.pl run-args-rsyslog-tls.pl:
 	# rsyslogd TLS client side is totally unreliable.  Startup of
@@ -112,17 +112,17 @@ sys/syscall.ph: /usr/include/sys/syscall.h
 
 disk: unconfig
 	dd if=/dev/zero of=diskimage bs=512 count=4k
-	vnconfig vnd0 diskimage
-	newfs -b 4096 -f 2048 -m 0 vnd0c
+	vnconfig diskimage >vnd
+	newfs -b 4096 -f 2048 -m 0 $$(<vnd)c
 
 mount: disk
 	mkdir -p /mnt/regress-syslogd
-	mount /dev/vnd0c /mnt/regress-syslogd
+	mount /dev/$$(<vnd)c /mnt/regress-syslogd
 
 unconfig:
-	-umount -f /dev/vnd0c 2>/dev/null || true
+	-umount -f /dev/$$(<vnd)c 2>/dev/null || true
 	-rmdir /mnt/regress-syslogd 2>/dev/null || true
-	-vnconfig -u vnd0 2>/dev/null || true
+	-vnconfig -u $$(<vnd) 2>/dev/null || true
 
 stamp-filesystem:
 	${SUDO} ${.MAKE} -C ${.CURDIR} mount

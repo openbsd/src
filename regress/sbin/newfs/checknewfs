@@ -1,10 +1,10 @@
 #!/bin/ksh
-#	$OpenBSD: checknewfs,v 1.9 2021/07/26 20:38:18 bluhm Exp $
+#	$OpenBSD: checknewfs,v 1.10 2023/10/12 16:59:23 anton Exp $
 # Written by Otto Moerbeek, 2007,  Public domain
 
 
 cleanup() {
-	vnconfig -u vnd0
+	[ -z "$vnd" ] || { vnconfig -u "$vnd" || :; }
 	rm -f $image
 }
 
@@ -18,14 +18,14 @@ dotest() {
 	fi
 	image=$(mktemp -t imageXXXXXXXXXX);
 	dd if=/dev/random of=$image bs=512 count=$1 2>/dev/null &&
-	vnconfig vnd0 $image &&
-	disklabel -w vnd0 $2 &&
-	newfs -O 1 $3 /dev/rvnd0a
+	vnd=$(vnconfig $image) || exit 1
+	disklabel -w $vnd $2 &&
+	newfs -O 1 $3 /dev/r${vnd}a
 	if [ $? != 0 ]; then
 		ret=$(($ret + 1))
 		echo TEST $1 $2 \"$3\" failed
 	else
-		(fsck -nf /dev/vnd0a | fgrep SALVAGE)
+		(fsck -nf /dev/${vnd}a | fgrep SALVAGE)
 		if [ $? == 0 ]; then
 			ret=$(($ret + 1))
 			echo TEST $1 $2 \"$3\" failed
@@ -40,8 +40,8 @@ dotest() {
 }
 
 ret=0
+vnd=
 
-vnconfig -u vnd0 > /dev/null 2>&1
 if [ $# == 0 ]; then 
 	clean=1
 	dotest 3800 rdroot "-m 0 -o space -i 4096" 

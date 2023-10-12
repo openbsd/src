@@ -1,27 +1,27 @@
-# $OpenBSD: Makefile,v 1.6 2020/12/17 14:22:42 bluhm Exp $
+# $OpenBSD: Makefile,v 1.7 2023/10/12 16:59:24 anton Exp $
 
 # Call unveil(2) in combination with unlink(2), chroot(2), chdir(2).
 # Use umount(8) to check that the mountpoint leaks no vnode.
 # There were vnode reference counting bugs in the kernel.
 
 PROGS=		unveil-unlink unveil-chroot unveil-perm unveil-chdir
-CLEANFILES=	diskimage
+CLEANFILES=	diskimage vnd
 
 .PHONY: mount unconfig clean
 
 diskimage: unconfig
 	${SUDO} dd if=/dev/zero of=diskimage bs=512 count=4k
-	${SUDO} vnconfig vnd0 diskimage
-	${SUDO} newfs vnd0c
+	${SUDO} vnconfig diskimage >vnd
+	${SUDO} newfs $$(<vnd)c
 
 mount: diskimage
 	${SUDO} mkdir -p /mnt/regress-unveil
-	${SUDO} mount /dev/vnd0c /mnt/regress-unveil
+	${SUDO} mount /dev/$$(<vnd)c /mnt/regress-unveil
 
 unconfig:
-	-${SUDO} umount -f /dev/vnd0c 2>/dev/null || true
+	-${SUDO} umount -f /dev/$$(<vnd)c 2>/dev/null || true
 	-${SUDO} rmdir /mnt/regress-unveil 2>/dev/null || true
-	-${SUDO} vnconfig -u vnd0 2>/dev/null || true
+	-${SUDO} vnconfig -u $$(<vnd) 2>/dev/null || true
 	-${SUDO} rm -f stamp-setup
 
 REGRESS_SETUP	=	${PROGS} mount

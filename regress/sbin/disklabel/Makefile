@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2023/05/30 15:10:39 krw Exp $
+#	$OpenBSD: Makefile,v 1.8 2023/10/12 16:59:23 anton Exp $
 #
 # Copyright (c) 2010 Theo de Raadt <deraadt@openbsd.org>
 # Copyright (c) 2018 Kenneth R Westerback <krw@openbsd.org>
@@ -54,7 +54,7 @@ OK= ok
 
 DISKLABEL ?=	${.OBJDIR}/disklabel
 
-CLEANFILES +=	*.tmp *.out *.dl *.fstab diskimage disklabel.c manual.c
+CLEANFILES +=	*.tmp *.out *.dl *.fstab diskimage disklabel.c manual.c vnd
 
 .PATH:		${.CURDIR}/../../../sbin/disklabel
 PROG =		disklabel
@@ -82,21 +82,21 @@ run-disklabel-$s: $s.out
 
 $s.out: ${DISKLABEL}
 	rm -f $s.tmp $s.out
-	${SUDO} vnconfig -u vnd0 || true
 	rm -f diskimage
 	echo "=== Start ${s}MB disk ===" >$s.tmp
 	dd if=/dev/zero of=diskimage bs=1m count=1 seek=$s status=none
-	${SUDO} vnconfig vnd0 diskimage
-	${SUDO} fdisk ${FDISKOPT} vnd0 >>$s.tmp
+	${SUDO} vnconfig diskimage >vnd
+	${SUDO} fdisk ${FDISKOPT} $$(<vnd) >>$s.tmp
 	echo >>$s.tmp
-	${SUDO} ${DISKLABEL} -A -p g vnd0 >$s.dl
-	${SUDO} ${DISKLABEL} -Aw -f $s.fstab vnd0 >>$s.dl
-	${SUDO} ${DISKLABEL} vnd0 >>$s.dl
+	${SUDO} ${DISKLABEL} -A -p g $$(<vnd) >$s.dl
+	${SUDO} ${DISKLABEL} -Aw -f $s.fstab $$(<vnd) >>$s.dl
+	${SUDO} ${DISKLABEL} $$(<vnd) >>$s.dl
 	grep '^  [a-p]: ' $s.dl | egrep -v "unused" | sort >>$s.tmp
 	echo >>$s.tmp
 	cat $s.fstab >>$s.tmp
 	echo "=== End ${s}MB disk ===" >>$s.tmp
 	mv $s.tmp $s.out
+	${SUDO} vnconfig -u $$(<vnd) || true
 
 $s-update: $s.out
 	cp $s.out ${.CURDIR}/$s.${OK}
@@ -108,7 +108,7 @@ update: $s-update
 
 REGRESS_CLEANUP +=	cleanup
 cleanup:
-	-${SUDO} vnconfig -u vnd0
+	-${SUDO} vnconfig -u $$(<vnd)
 	rm -f diskimage
 
 .include <bsd.regress.mk>
