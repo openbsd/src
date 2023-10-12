@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.95 2023/07/29 06:52:08 anton Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.96 2023/10/12 15:32:38 cheloha Exp $	*/
 /*
  * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
@@ -75,6 +75,9 @@ struct circq timeout_wheel_kc[BUCKETS];	/* [T] Clock-based timeouts */
 struct circq timeout_new;		/* [T] New, unscheduled timeouts */
 struct circq timeout_todo;		/* [T] Due or needs rescheduling */
 struct circq timeout_proc;		/* [T] Due + needs process context */
+#ifdef MULTIPROCESSOR
+struct circq timeout_proc_mp;		/* [T] Process ctx + no kernel lock */
+#endif
 
 time_t timeout_level_width[WHEELCOUNT];	/* [I] Wheel level width (seconds) */
 struct timespec tick_ts;		/* [I] Length of a tick (1/hz secs) */
@@ -171,6 +174,9 @@ void softclock_create_thread(void *);
 void softclock_process_kclock_timeout(struct timeout *, int);
 void softclock_process_tick_timeout(struct timeout *, int);
 void softclock_thread(void *);
+#ifdef MULTIPROCESSOR
+void softclock_thread_mp(void *);
+#endif
 void timeout_barrier_timeout(void *);
 uint32_t timeout_bucket(const struct timeout *);
 uint32_t timeout_maskwheel(uint32_t, const struct timespec *);
@@ -228,6 +234,9 @@ timeout_startup(void)
 	CIRCQ_INIT(&timeout_new);
 	CIRCQ_INIT(&timeout_todo);
 	CIRCQ_INIT(&timeout_proc);
+#ifdef MULTIPROCESSOR
+	CIRCQ_INIT(&timeout_proc_mp);
+#endif
 	for (b = 0; b < nitems(timeout_wheel); b++)
 		CIRCQ_INIT(&timeout_wheel[b]);
 	for (b = 0; b < nitems(timeout_wheel_kc); b++)
@@ -261,10 +270,16 @@ void
 timeout_set_flags(struct timeout *to, void (*fn)(void *), void *arg, int kclock,
     int flags)
 {
+	KASSERT(!ISSET(flags, ~(TIMEOUT_PROC | TIMEOUT_MPSAFE)));
+
 	to->to_func = fn;
 	to->to_arg = arg;
 	to->to_kclock = kclock;
 	to->to_flags = flags | TIMEOUT_INITIALIZED;
+
+	/* For now, only process context timeouts may be marked MP-safe. */
+	if (ISSET(to->to_flags, TIMEOUT_MPSAFE))
+		KASSERT(ISSET(to->to_flags, TIMEOUT_PROC));
 }
 
 void
@@ -455,13 +470,13 @@ timeout_barrier(struct timeout *to)
 {
 	struct timeout barrier;
 	struct cond c;
-	int procflag;
+	int flags;
 
-	procflag = (to->to_flags & TIMEOUT_PROC);
-	timeout_sync_order(procflag);
+	flags = to->to_flags & (TIMEOUT_PROC | TIMEOUT_MPSAFE);
+	timeout_sync_order(ISSET(flags, TIMEOUT_PROC));
 
 	timeout_set_flags(&barrier, timeout_barrier_timeout, &c, KCLOCK_NONE,
-	    procflag);
+	    flags);
 	barrier.to_process = curproc->p_p;
 	cond_init(&c);
 
@@ -469,16 +484,26 @@ timeout_barrier(struct timeout *to)
 
 	barrier.to_time = ticks;
 	SET(barrier.to_flags, TIMEOUT_ONQUEUE);
-	if (procflag)
-		CIRCQ_INSERT_TAIL(&timeout_proc, &barrier.to_list);
-	else
+	if (ISSET(flags, TIMEOUT_PROC)) {
+#ifdef MULTIPROCESSOR
+		if (ISSET(flags, TIMEOUT_MPSAFE))
+			CIRCQ_INSERT_TAIL(&timeout_proc_mp, &barrier.to_list);
+		else
+#endif
+			CIRCQ_INSERT_TAIL(&timeout_proc, &barrier.to_list);
+	} else
 		CIRCQ_INSERT_TAIL(&timeout_todo, &barrier.to_list);
 
 	mtx_leave(&timeout_mutex);
 
-	if (procflag)
-		wakeup_one(&timeout_proc);
-	else
+	if (ISSET(flags, TIMEOUT_PROC)) {
+#ifdef MULTIPROCESSOR
+		if (ISSET(flags, TIMEOUT_MPSAFE))
+			wakeup_one(&timeout_proc_mp);
+		else
+#endif
+			wakeup_one(&timeout_proc);
+	} else
 		softintr_schedule(softclock_si);
 
 	cond_wait(&c, "tmobar");
@@ -659,7 +684,12 @@ softclock_process_kclock_timeout(struct timeout *to, int new)
 	if (!new && timespeccmp(&to->to_abstime, &kc->kc_late, <=))
 		tostat.tos_late++;
 	if (ISSET(to->to_flags, TIMEOUT_PROC)) {
-		CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);
+#ifdef MULTIPROCESSOR
+		if (ISSET(to->to_flags, TIMEOUT_MPSAFE))
+			CIRCQ_INSERT_TAIL(&timeout_proc_mp, &to->to_list);
+		else
+#endif
+			CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);
 		return;
 	}
 	timeout_run(to);
@@ -681,7 +711,12 @@ softclock_process_tick_timeout(struct timeout *to, int new)
 	if (!new && delta < 0)
 		tostat.tos_late++;
 	if (ISSET(to->to_flags, TIMEOUT_PROC)) {
-		CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);
+#ifdef MULTIPROCESSOR
+		if (ISSET(to->to_flags, TIMEOUT_MPSAFE))
+			CIRCQ_INSERT_TAIL(&timeout_proc_mp, &to->to_list);
+		else
+#endif
+			CIRCQ_INSERT_TAIL(&timeout_proc, &to->to_list);
 		return;
 	}
 	timeout_run(to);
@@ -699,6 +734,9 @@ softclock(void *arg)
 {
 	struct timeout *first_new, *to;
 	int needsproc, new;
+#ifdef MULTIPROCESSOR
+	int need_proc_mp;
+#endif
 
 	first_new = NULL;
 	new = 0;
@@ -719,10 +757,17 @@ softclock(void *arg)
 	}
 	tostat.tos_softclocks++;
 	needsproc = !CIRCQ_EMPTY(&timeout_proc);
+#ifdef MULTIPROCESSOR
+	need_proc_mp = !CIRCQ_EMPTY(&timeout_proc_mp);
+#endif
 	mtx_leave(&timeout_mutex);
 
 	if (needsproc)
 		wakeup(&timeout_proc);
+#ifdef MULTIPROCESSOR
+	if (need_proc_mp)
+		wakeup(&timeout_proc_mp);
+#endif
 }
 
 void
@@ -730,6 +775,10 @@ softclock_create_thread(void *arg)
 {
 	if (kthread_create(softclock_thread, NULL, NULL, "softclock"))
 		panic("fork softclock");
+#ifdef MULTIPROCESSOR
+	if (kthread_create(softclock_thread_mp, NULL, NULL, "softclockmp"))
+		panic("kthread_create softclock_thread_mp");
+#endif
 }
 
 void
@@ -751,11 +800,8 @@ softclock_thread(void *arg)
 	sched_peg_curproc(ci);
 
 	s = splsoftclock();
+	mtx_enter(&timeout_mutex);
 	for (;;) {
-		sleep_setup(&timeout_proc, PSWP, "bored");
-		sleep_finish(0, CIRCQ_EMPTY(&timeout_proc));
-
-		mtx_enter(&timeout_mutex);
 		while (!CIRCQ_EMPTY(&timeout_proc)) {
 			to = timeout_from_circq(CIRCQ_FIRST(&timeout_proc));
 			CIRCQ_REMOVE(&to->to_list);
@@ -763,10 +809,35 @@ softclock_thread(void *arg)
 			tostat.tos_run_thread++;
 		}
 		tostat.tos_thread_wakeups++;
-		mtx_leave(&timeout_mutex);
+		msleep_nsec(&timeout_proc, &timeout_mutex, PSWP, "tmoslp",
+		    INFSLP);
 	}
 	splx(s);
 }
+
+#ifdef MULTIPROCESSOR
+void
+softclock_thread_mp(void *arg)
+{
+	struct timeout *to;
+
+	KERNEL_ASSERT_LOCKED();
+	KERNEL_UNLOCK();
+
+	mtx_enter(&timeout_mutex);
+	for (;;) {
+		while (!CIRCQ_EMPTY(&timeout_proc_mp)) {
+			to = timeout_from_circq(CIRCQ_FIRST(&timeout_proc_mp));
+			CIRCQ_REMOVE(&to->to_list);
+			timeout_run(to);
+			tostat.tos_run_thread++;
+		}
+		tostat.tos_thread_wakeups++;
+		msleep_nsec(&timeout_proc_mp, &timeout_mutex, PSWP, "tmoslp",
+		    INFSLP);
+	}
+}
+#endif /* MULTIPROCESSOR */
 
 #ifndef SMALL_KERNEL
 void
@@ -875,6 +946,10 @@ db_show_timeout(struct timeout *to, struct circq *bucket)
 		where = "softint";
 	else if (bucket == &timeout_proc)
 		where = "thread";
+#ifdef MULTIPROCESSOR
+	else if (bucket == &timeout_proc_mp)
+		where = "thread-mp";
+#endif
 	else {
 		if (to->to_kclock != KCLOCK_NONE)
 			wheel = timeout_wheel_kc;
@@ -888,11 +963,11 @@ db_show_timeout(struct timeout *to, struct circq *bucket)
 	if (to->to_kclock != KCLOCK_NONE) {
 		kc = &timeout_kclock[to->to_kclock];
 		timespecsub(&to->to_abstime, &kc->kc_lastscan, &remaining);
-		db_printf("%20s  %8s  %7s  0x%0*lx  %s\n",
+		db_printf("%20s  %8s  %9s  0x%0*lx  %s\n",
 		    db_timespec(&remaining), db_kclock(to->to_kclock), where,
 		    width, (ulong)to->to_arg, name);
 	} else {
-		db_printf("%20d  %8s  %7s  0x%0*lx  %s\n",
+		db_printf("%20d  %8s  %9s  0x%0*lx  %s\n",
 		    to->to_time - ticks, "ticks", where,
 		    width, (ulong)to->to_arg, name);
 	}
@@ -913,11 +988,14 @@ db_show_callout(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 		    db_timespec(&kc->kc_lastscan), db_kclock(i));
 	}
 	db_printf("\n");
-	db_printf("%20s  %8s  %7s  %*s  %s\n",
+	db_printf("%20s  %8s  %9s  %*s  %s\n",
 	    "remaining", "clock", "wheel", width, "arg", "func");
 	db_show_callout_bucket(&timeout_new);
 	db_show_callout_bucket(&timeout_todo);
 	db_show_callout_bucket(&timeout_proc);
+#ifdef MULTIPROCESSOR
+	db_show_callout_bucket(&timeout_proc_mp);
+#endif
 	for (b = 0; b < nitems(timeout_wheel); b++)
 		db_show_callout_bucket(&timeout_wheel[b]);
 	for (b = 0; b < nitems(timeout_wheel_kc); b++)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.56 2023/01/01 01:19:18 cheloha Exp $
+.\"	$OpenBSD: timeout.9,v 1.57 2023/10/12 15:32:38 cheloha Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" Copyright (c) 2021, 2022 Scott Cheloha <cheloha@openbsd.org>
@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: January 1 2023 $
+.Dd $Mdocdate: October 12 2023 $
 .Dt TIMEOUT_SET 9
 .Os
 .Sh NAME
@@ -193,11 +193,16 @@ Counts the time elapsed since the system booted.
 The timeout's behavior may be configured with the bitwise OR of
 zero or more of the following
 .Fa flags :
-.Bl -tag -width TIMEOUT_PROC
+.Bl -tag -width TIMEOUT_MPSAFE
 .It Dv TIMEOUT_PROC
 Execute the timeout in a process context instead of the default
 .Dv IPL_SOFTCLOCK
 interrupt context.
+.It Dv TIMEOUT_MPSAFE
+Execute the timeout without the kernel lock.
+Requires the
+.Dv TIMEOUT_PROC
+flag.
 .El
 .El
 .Pp
@@ -367,8 +372,9 @@ The function
 .Fa fn
 must not block and must be safe to execute on any CPU in the system.
 .Pp
-Currently,
-all timeouts are executed under the kernel lock.
+Timeouts without the
+.Dv TIMEOUT_MPSAFE
+flag are executed under the kernel lock.
 .Sh RETURN VALUES
 .Fn timeout_add ,
 .Fn timeout_add_sec ,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.47 2022/12/31 16:06:24 cheloha Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.48 2023/10/12 15:32:38 cheloha Exp $	*/
 /*
  * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -54,6 +54,7 @@ struct timeout {
 #define TIMEOUT_ONQUEUE		0x02	/* on any timeout queue */
 #define TIMEOUT_INITIALIZED	0x04	/* initialized */
 #define TIMEOUT_TRIGGERED	0x08	/* running or ran */
+#define TIMEOUT_MPSAFE		0x10	/* run without kernel lock */
 
 struct timeoutstat {
 	uint64_t tos_added;		/* timeout_add*(9) calls */
