@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_algor.c,v 1.4 2023/10/12 04:53:45 tb Exp $ */
+/*	$OpenBSD: x509_algor.c,v 1.5 2023/10/12 17:14:17 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -193,32 +193,32 @@ x509_algor_set0_test(void)
 
 	if ((ret = X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, aint)) != 1) {
 		fprintf(stderr, "Fail: %s: "
-		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, anull)"
+		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, aint)"
 		    ", want: %d, got %d\n", __func__, 1, ret);
 		goto failure;
 	}
 	aint = NULL;
 	if (alg->algorithm != oid) {
 		fprintf(stderr, "FAIL: %s: unexpected oid on alg after "
-		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, anull)"
+		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, aint)"
 		    ", want: %d, got %d\n", __func__, 1, ret);
 		goto failure;
 	}
 	if (alg->parameter == NULL) {
 		fprintf(stderr, "FAIL: %s: expected non-NULL parameter after "
-		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, anull)"
+		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, aint)"
 		    ", want: %d, got %d\n", __func__, 1, ret);
 		goto failure;
 	}
 	if (alg->parameter->type != V_ASN1_INTEGER) {
 		fprintf(stderr, "FAIL: %s: want %d parameter type after "
-		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, anull), got %d\n",
+		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, aint), got %d\n",
 		    __func__, V_ASN1_INTEGER, alg->parameter->type);
 		goto failure;
 	}
 	if (alg->parameter->value.asn1_string != aint_ref) {
 		fprintf(stderr, "FAIL: %s: unexpected parameter value after "
-		    "X509_ALGOR_set0(alg, oid, V_ASN1_NULL, anull)\n", __func__);
+		    "X509_ALGOR_set0(alg, oid, V_ASN1_NULL, aint)\n", __func__);
 		goto failure;
 	}
 
@@ -267,7 +267,7 @@ x509_algor_get0_test(void)
 
 	if ((ret = X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, aint)) != 1) {
 		fprintf(stderr, "Fail: %s: "
-		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, anull)"
+		    "X509_ALGOR_set0(alg, oid, V_ASN1_INTEGER, aint)"
 		    ", want: %d, got %d\n", __func__, 1, ret);
 		goto failure;
 	}
