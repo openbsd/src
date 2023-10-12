@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.76 2023/08/11 04:45:06 guenther Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.77 2023/10/12 22:36:54 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -742,8 +742,8 @@ priv_config_parse_done(void)
 /* Name/service to address translation.  Response is placed into addr.
  * Return 0 for success or < 0 for error like getaddrinfo(3) */
 int
-priv_getaddrinfo(char *proto, char *host, char *serv, struct sockaddr *addr,
-    size_t addr_len)
+priv_getaddrinfo(const char *proto, const char *host, const char *serv,
+    struct sockaddr *addr, size_t addr_len)
 {
 	char protocpy[5], hostcpy[NI_MAXHOST], servcpy[NI_MAXSERV];
 	int cmd, ret_len;

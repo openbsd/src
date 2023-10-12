@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.h,v 1.36 2022/01/13 10:34:07 martijn Exp $ */
+/*	$OpenBSD: syslogd.h,v 1.37 2023/10/12 22:36:54 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2017 Alexander Bluhm <bluhm@genua.de>
@@ -34,7 +34,8 @@ FILE *priv_open_utmp(void);
 FILE *priv_open_config(void);
 void  priv_config_parse_done(void);
 int   priv_config_modified(void);
-int   priv_getaddrinfo(char *, char *, char *, struct sockaddr *, size_t);
+int   priv_getaddrinfo(const char *, const char *, const char *,
+    struct sockaddr *, size_t);
 int   priv_getnameinfo(struct sockaddr *, socklen_t, char *, size_t);
 
 #define IOVCNT		7

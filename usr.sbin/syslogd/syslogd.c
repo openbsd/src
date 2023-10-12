@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.277 2023/03/16 18:22:08 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.278 2023/10/12 22:36:54 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -156,9 +156,12 @@ struct filed {
 			struct sockaddr_storage	 f_addr;
 			struct buffertls	 f_buftls;
 			struct bufferevent	*f_bufev;
+			struct event		 f_ev;
 			struct tls		*f_ctx;
+			char			*f_ipproto;
 			char			*f_host;
-			int			 f_reconnectwait;
+			char			*f_port;
+			int			 f_retrywait;
 		} f_forw;		/* forwarding address */
 		char	f_fname[PATH_MAX];
 		struct {
@@ -319,7 +322,9 @@ void	 tcp_dropcb(struct bufferevent *, void *);
 void	 tcp_writecb(struct bufferevent *, void *);
 void	 tcp_errorcb(struct bufferevent *, short, void *);
 void	 tcp_connectcb(int, short, void *);
-void	 tcp_connect_retry(struct bufferevent *, struct filed *);
+int	 loghost_resolve(struct filed *);
+void	 loghost_retry(struct filed *);
+void	 udp_resolvecb(int, short, void *);
 int	 tcpbuf_countmsg(struct bufferevent *bufev);
 void	 die_signalcb(int, short, void *);
 void	 mark_timercb(int, short, void *);
@@ -962,12 +967,15 @@ socket_bind(const char *proto, const char *host, const char *port,
 		    res->ai_socktype | SOCK_NONBLOCK, res->ai_protocol)) == -1)
 			continue;
 
-		if (getnameinfo(res->ai_addr, res->ai_addrlen, hostname,
+		error = getnameinfo(res->ai_addr, res->ai_addrlen, hostname,
 		    sizeof(hostname), servname, sizeof(servname),
 		    NI_NUMERICHOST | NI_NUMERICSERV |
-		    (res->ai_socktype == SOCK_DGRAM ? NI_DGRAM : 0)) != 0) {
-			log_debug("Malformed bind address");
-			hostname[0] = servname[0] = '\0';
+		    (res->ai_socktype == SOCK_DGRAM ? NI_DGRAM : 0));
+		if (error) {
+			log_warnx("malformed bind address host \"%s\": %s",
+			    host, gai_strerror(error));
+			strlcpy(hostname, hostname_unknown, sizeof(hostname));
+			strlcpy(servname, hostname_unknown, sizeof(servname));
 		}
 		if (shutread && shutdown(*fdp, SHUT_RD) == -1) {
 			log_warn("shutdown SHUT_RD "
@@ -1130,7 +1138,7 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 	socklen_t		 sslen;
 	char			 hostname[NI_MAXHOST], servname[NI_MAXSERV];
 	char			*peername;
-	int			 fd;
+	int			 fd, error;
 
 	sslen = sizeof(ss);
 	if ((fd = reserve_accept4(lfd, event, ev, tcp_acceptcb,
@@ -1143,17 +1151,21 @@ acceptcb(int lfd, short event, void *arg, int usetls)
 	}
 	log_debug("Accepting tcp connection");
 
-	if (getnameinfo((struct sockaddr *)&ss, sslen, hostname,
+	error = getnameinfo((struct sockaddr *)&ss, sslen, hostname,
 	    sizeof(hostname), servname, sizeof(servname),
-	    NI_NUMERICHOST | NI_NUMERICSERV) != 0 ||
-	    asprintf(&peername, ss.ss_family == AF_INET6 ?
+	    NI_NUMERICHOST | NI_NUMERICSERV);
+	if (error) {
+		log_warnx("malformed TCP accept address: %s",
+		    gai_strerror(error));
+		peername = hostname_unknown;
+	} else if (asprintf(&peername, ss.ss_family == AF_INET6 ?
 	    "[%s]:%s" : "%s:%s", hostname, servname) == -1) {
-		log_debug("Malformed accept address");
+		log_warn("allocate hostname \"%s\"", hostname);
 		peername = hostname_unknown;
 	}
 	log_debug("Peer address and port %s", peername);
 	if ((p = malloc(sizeof(*p))) == NULL) {
-		log_warn("allocate \"%s\"", peername);
+		log_warn("allocate peername \"%s\"", peername);
 		close(fd);
 		return;
 	}
@@ -1380,7 +1392,7 @@ tcp_writecb(struct bufferevent *bufev, void *arg)
 	 * Successful write, connection to server is good, reset wait time.
 	 */
 	log_debug("loghost \"%s\" successful write", f->f_un.f_forw.f_loghost);
-	f->f_un.f_forw.f_reconnectwait = 0;
+	f->f_un.f_forw.f_retrywait = 0;
 
 	if (f->f_dropped > 0 &&
 	    EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->output) < MAX_TCPBUF) {
@@ -1440,7 +1452,7 @@ tcp_errorcb(struct bufferevent *bufev, short event, void *arg)
 		f->f_dropped++;
 	}
 
-	tcp_connect_retry(bufev, f);
+	loghost_retry(f);
 
 	/* Log the connection error to the fresh buffer after reconnecting. */
 	log_info(LOG_WARNING, "%s", ebuf);
@@ -1453,8 +1465,15 @@ tcp_connectcb(int fd, short event, void *arg)
 	struct bufferevent	*bufev = f->f_un.f_forw.f_bufev;
 	int			 s;
 
+	if (f->f_un.f_forw.f_addr.ss_family == AF_UNSPEC) {
+		if (loghost_resolve(f) != 0) {
+			loghost_retry(f);
+			return;
+		}
+	}
+
 	if ((s = tcp_socket(f)) == -1) {
-		tcp_connect_retry(bufev, f);
+		loghost_retry(f);
 		return;
 	}
 	log_debug("tcp connect callback: socket success, event %#x", event);
@@ -1503,29 +1522,87 @@ tcp_connectcb(int fd, short event, void *arg)
 	}
 	close(f->f_file);
 	f->f_file = -1;
-	tcp_connect_retry(bufev, f);
+	loghost_retry(f);
+}
+
+int
+loghost_resolve(struct filed *f)
+{
+	char	hostname[NI_MAXHOST];
+	int	error;
+
+	error = priv_getaddrinfo(f->f_un.f_forw.f_ipproto,
+	    f->f_un.f_forw.f_host, f->f_un.f_forw.f_port,
+	    (struct sockaddr *)&f->f_un.f_forw.f_addr,
+	    sizeof(f->f_un.f_forw.f_addr));
+	if (error) {
+		log_warnx("bad hostname \"%s\"", f->f_un.f_forw.f_loghost);
+		f->f_un.f_forw.f_addr.ss_family = AF_UNSPEC;
+		return (error);
+	}
+
+	error = getnameinfo((struct sockaddr *)&f->f_un.f_forw.f_addr,
+	    f->f_un.f_forw.f_addr.ss_len, hostname, sizeof(hostname), NULL, 0,
+	    NI_NUMERICHOST | NI_NUMERICSERV |
+	    (strncmp(f->f_un.f_forw.f_ipproto, "udp", 3) == 0 ? NI_DGRAM : 0));
+	if (error) {
+		log_warnx("malformed UDP address loghost \"%s\": %s",
+		    f->f_un.f_forw.f_loghost, gai_strerror(error));
+		strlcpy(hostname, hostname_unknown, sizeof(hostname));
+	}
+
+	log_debug("resolved loghost \"%s\" address %s",
+	    f->f_un.f_forw.f_loghost, hostname);
+	return (0);
 }
 
 void
-tcp_connect_retry(struct bufferevent *bufev, struct filed *f)
+loghost_retry(struct filed *f)
 {
 	struct timeval		 to;
 
-	if (f->f_un.f_forw.f_reconnectwait == 0)
-		f->f_un.f_forw.f_reconnectwait = 1;
+	if (f->f_un.f_forw.f_retrywait == 0)
+		f->f_un.f_forw.f_retrywait = 1;
 	else
-		f->f_un.f_forw.f_reconnectwait <<= 1;
-	if (f->f_un.f_forw.f_reconnectwait > 600)
-		f->f_un.f_forw.f_reconnectwait = 600;
-	to.tv_sec = f->f_un.f_forw.f_reconnectwait;
+		f->f_un.f_forw.f_retrywait <<= 1;
+	if (f->f_un.f_forw.f_retrywait > 600)
+		f->f_un.f_forw.f_retrywait = 600;
+	to.tv_sec = f->f_un.f_forw.f_retrywait;
 	to.tv_usec = 0;
+	evtimer_add(&f->f_un.f_forw.f_ev, &to);
 
-	log_debug("tcp connect retry: wait %d",
-	    f->f_un.f_forw.f_reconnectwait);
-	bufferevent_setfd(bufev, -1);
-	/* We can reuse the write event as bufferevent is disabled. */
-	evtimer_set(&bufev->ev_write, tcp_connectcb, f);
-	evtimer_add(&bufev->ev_write, &to);
+	log_debug("retry loghost \"%s\" wait %d",
+	    f->f_un.f_forw.f_loghost, f->f_un.f_forw.f_retrywait);
+}
+
+void
+udp_resolvecb(int fd, short event, void *arg)
+{
+	struct filed		*f = arg;
+	struct timeval		 to;
+
+	if (loghost_resolve(f) != 0) {
+		loghost_retry(f);
+		return;
+	}
+
+	switch (f->f_un.f_forw.f_addr.ss_family) {
+	case AF_INET:
+		f->f_file = fd_udp;
+		break;
+	case AF_INET6:
+		f->f_file = fd_udp6;
+		break;
+	}
+	f->f_un.f_forw.f_retrywait = 0;
+
+	if (f->f_dropped > 0) {
+		char ebuf[ERRBUFSIZE];
+
+		snprintf(ebuf, sizeof(ebuf), "to udp loghost \"%s\"",
+		    f->f_un.f_forw.f_loghost);
+		dropped_warn(&f->f_dropped, ebuf);
+	}
 }
 
 int
@@ -1933,6 +2010,11 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_FORWUDP:
 		log_debug(" %s", f->f_un.f_forw.f_loghost);
+		if (f->f_un.f_forw.f_addr.ss_family == AF_UNSPEC) {
+			log_warnx("not resolved \"%s\"",
+			    f->f_un.f_forw.f_loghost);
+			break;
+		}
 		l = iov[0].iov_len + iov[1].iov_len + iov[2].iov_len +
 		    iov[3].iov_len + iov[4].iov_len + iov[5].iov_len +
 		    iov[6].iov_len;
@@ -2168,9 +2250,13 @@ wallmsg(struct filed *f, struct iovec *iov)
 void
 cvthname(struct sockaddr *f, char *result, size_t res_len)
 {
-	if (getnameinfo(f, f->sa_len, result, res_len, NULL, 0,
-	    NI_NUMERICHOST|NI_NUMERICSERV|NI_DGRAM) != 0) {
-		log_debug("Malformed from address");
+	int error;
+
+	error = getnameinfo(f, f->sa_len, result, res_len, NULL, 0,
+	    NI_NUMERICHOST | NI_NUMERICSERV | NI_DGRAM);
+	if (error) {
+		log_warnx("malformed UDP from address: %s",
+		    gai_strerror(error));
 		strlcpy(result, hostname_unknown, res_len);
 		return;
 	}
@@ -2295,23 +2381,33 @@ init(void)
 			fprintlog(f, 0, (char *)NULL);
 
 		switch (f->f_type) {
+		case F_FORWUDP:
+			evtimer_del(&f->f_un.f_forw.f_ev);
+			free(f->f_un.f_forw.f_ipproto);
+			free(f->f_un.f_forw.f_host);
+			free(f->f_un.f_forw.f_port);
+			break;
 		case F_FORWTLS:
 			if (f->f_un.f_forw.f_ctx) {
 				tls_close(f->f_un.f_forw.f_ctx);
 				tls_free(f->f_un.f_forw.f_ctx);
 			}
-			free(f->f_un.f_forw.f_host);
 			/* FALLTHROUGH */
 		case F_FORWTCP:
+			evtimer_del(&f->f_un.f_forw.f_ev);
 			tcpbuf_dropped += f->f_dropped +
 			     tcpbuf_countmsg(f->f_un.f_forw.f_bufev);
 			bufferevent_free(f->f_un.f_forw.f_bufev);
+			free(f->f_un.f_forw.f_ipproto);
+			free(f->f_un.f_forw.f_host);
+			free(f->f_un.f_forw.f_port);
 			/* FALLTHROUGH */
 		case F_FILE:
 			if (f->f_type == F_FILE) {
 				file_dropped += f->f_dropped;
 				f->f_dropped = 0;
 			}
+			/* FALLTHROUGH */
 		case F_TTY:
 		case F_CONSOLE:
 		case F_PIPE:
@@ -2704,16 +2800,31 @@ cfline(char *line, char *progblock, char *hostblock)
 			    f->f_un.f_forw.f_loghost);
 			break;
 		}
-		if (priv_getaddrinfo(ipproto, host, port,
-		    (struct sockaddr*)&f->f_un.f_forw.f_addr,
-		    sizeof(f->f_un.f_forw.f_addr)) != 0) {
-			log_warnx("bad hostname \"%s\"",
+		f->f_un.f_forw.f_ipproto = strdup(ipproto);
+		f->f_un.f_forw.f_host = strdup(host);
+		f->f_un.f_forw.f_port = strdup(port);
+		if (f->f_un.f_forw.f_ipproto == NULL ||
+		    f->f_un.f_forw.f_host == NULL ||
+		    f->f_un.f_forw.f_port == NULL) {
+			log_warnx("strdup ipproto host port \"%s\"",
 			    f->f_un.f_forw.f_loghost);
+			free(f->f_un.f_forw.f_ipproto);
+			free(f->f_un.f_forw.f_host);
+			free(f->f_un.f_forw.f_port);
 			break;
 		}
 		f->f_file = -1;
+		loghost_resolve(f);
 		if (strncmp(proto, "udp", 3) == 0) {
+			evtimer_set(&f->f_un.f_forw.f_ev, udp_resolvecb, f);
 			switch (f->f_un.f_forw.f_addr.ss_family) {
+			case AF_UNSPEC:
+				log_debug("resolve \"%s\" delayed",
+				    f->f_un.f_forw.f_loghost);
+				to.tv_sec = 0;
+				to.tv_usec = 1;
+				evtimer_add(&f->f_un.f_forw.f_ev, &to);
+				break;
 			case AF_INET:
 				f->f_file = fd_udp;
 				break;
@@ -2727,26 +2838,23 @@ cfline(char *line, char *progblock, char *hostblock)
 			    tcp_dropcb, tcp_writecb, tcp_errorcb, f)) == NULL) {
 				log_warn("bufferevent \"%s\"",
 				    f->f_un.f_forw.f_loghost);
+				free(f->f_un.f_forw.f_ipproto);
+				free(f->f_un.f_forw.f_host);
+				free(f->f_un.f_forw.f_port);
 				break;
-			}
-			if (strncmp(proto, "tls", 3) == 0) {
-				f->f_un.f_forw.f_host = strdup(host);
-				f->f_type = F_FORWTLS;
-			} else {
-				f->f_type = F_FORWTCP;
 			}
 			/*
 			 * If we try to connect to a TLS server immediately
 			 * syslogd gets an SIGPIPE as the signal handlers have
 			 * not been set up.  Delay the connection until the
-			 * event loop is started.  We can reuse the write event
-			 * for that as bufferevent is still disabled.
+			 * event loop is started.
 			 */
+			evtimer_set(&f->f_un.f_forw.f_ev, tcp_connectcb, f);
 			to.tv_sec = 0;
 			to.tv_usec = 1;
-			evtimer_set(&f->f_un.f_forw.f_bufev->ev_write,
-			    tcp_connectcb, f);
-			evtimer_add(&f->f_un.f_forw.f_bufev->ev_write, &to);
+			evtimer_add(&f->f_un.f_forw.f_ev, &to);
+			f->f_type = (strncmp(proto, "tls", 3) == 0) ?
+			    F_FORWTLS : F_FORWTCP;
 		}
 		break;
 
