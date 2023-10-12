@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflog.c,v 1.97 2021/01/20 23:25:19 bluhm Exp $	*/
+/*	$OpenBSD: if_pflog.c,v 1.98 2023/10/12 19:15:21 bluhm Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -204,7 +204,9 @@ pflog_packet(struct pf_pdesc *pd, u_int8_t reason, struct pf_rule *rm,
 
 	bzero(&hdr, sizeof(hdr));
 	hdr.length = PFLOG_REAL_HDRLEN;
-	hdr.action = rm->action;
+	/* Default rule does not pass packets dropped for other reasons. */
+	hdr.action = (rm->nr == (u_int32_t)-1 && reason != PFRES_MATCH) ?
+	    PF_DROP : rm->action;
 	hdr.reason = reason;
 	memcpy(hdr.ifname, pd->kif->pfik_name, sizeof(hdr.ifname));
 
