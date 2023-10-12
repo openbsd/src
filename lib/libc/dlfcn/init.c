@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.18 2023/02/27 15:00:17 deraadt Exp $ */
+/*	$OpenBSD: init.c,v 1.19 2023/10/12 16:37:05 deraadt Exp $ */
 /*
  * Copyright (c) 2014,2015 Philip Guenther <guenther@openbsd.org>
  *
@@ -154,6 +154,11 @@ _libc_preinit(int argc, char **argv, char **envp, dl_cb_cb *cb)
 			extern const int _execve_size;
 
 			pinsyscall(SYS_execve, &HIDDEN(execve), _execve_size);
+		} else {
+			static const int not_syscall;
+
+			/* Static binary which does not use execve() */
+			pinsyscall(SYS_execve, (void *)&not_syscall, 1);
 		}
 #endif
 	}
