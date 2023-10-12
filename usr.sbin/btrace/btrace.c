@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.78 2023/09/15 10:59:02 claudio Exp $ */
+/*	$OpenBSD: btrace.c,v 1.79 2023/10/12 15:16:44 cheloha Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -1416,6 +1416,9 @@ baexpr2long(struct bt_arg *ba, struct dt_evt *dtev)
 	case B_AT_OP_DIVIDE:
 		result = lval / rval;
 		break;
+	case B_AT_OP_MODULO:
+		result = lval % rval;
+		break;
 	case B_AT_OP_BAND:
 		result = lval & rval;
 		break;
@@ -1526,6 +1529,8 @@ ba_name(struct bt_arg *ba)
 		return "*";
 	case B_AT_OP_DIVIDE:
 		return "/";
+	case B_AT_OP_MODULO:
+		return "%";
 	case B_AT_OP_BAND:
 		return "&";
 	case B_AT_OP_XOR:

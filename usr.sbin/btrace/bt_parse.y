@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_parse.y,v 1.53 2023/09/11 19:01:26 mpi Exp $	*/
+/*	$OpenBSD: bt_parse.y,v 1.54 2023/10/12 15:16:44 cheloha Exp $	*/
 
 /*
  * Copyright (c) 2019-2023 Martin Pieuchot <mpi@openbsd.org>
@@ -184,7 +184,7 @@ filter	: /* empty */			{ $$ = NULL; }
  * Give higher precedence to:
  *  1. && and ||
  *  2. ==, !=, <<, <, >=, >, +, =, &, ^, |
- *  3. * and /
+ *  3. *, /, %
  */
 expr	: expr OP_LAND term	{ $$ = ba_op(B_AT_OP_LAND, $1, $3); }
 	| expr OP_LOR term	{ $$ = ba_op(B_AT_OP_LOR, $1, $3); }
@@ -207,6 +207,7 @@ term	: term OP_EQ fterm	{ $$ = ba_op(B_AT_OP_EQ, $1, $3); }
 
 fterm	: fterm '*' factor	{ $$ = ba_op(B_AT_OP_MULT, $1, $3); }
 	| fterm '/' factor	{ $$ = ba_op(B_AT_OP_DIVIDE, $1, $3); }
+	| fterm '%' factor	{ $$ = ba_op(B_AT_OP_MODULO, $1, $3); }
 	| factor
 	;
 
