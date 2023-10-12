@@ -1,6 +1,6 @@
 #!/bin/ksh
 #
-# $OpenBSD: sysupgrade.sh,v 1.48 2022/06/08 09:03:11 mglocker Exp $
+# $OpenBSD: sysupgrade.sh,v 1.49 2023/10/12 12:31:15 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015 Robert Peichaer <rpe@openbsd.org>
@@ -185,7 +185,6 @@ fi
 cat <<__EOT >/auto_upgrade.conf
 Location of sets = disk
 Pathname to the sets = ${SETSDIR}/
-Set name(s) = done
 Directory does not contain SHA256.sig. Continue without verification = yes
 __EOT
 
