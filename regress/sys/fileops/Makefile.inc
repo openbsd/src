@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.inc,v 1.5 2023/10/10 18:17:25 anton Exp $
+# $OpenBSD: Makefile.inc,v 1.6 2023/10/13 19:28:59 anton Exp $
 
 PERL_REQUIRE != perl -e 'eval { require File::Slurp } or print $$@'
 
@@ -27,7 +27,7 @@ mount: disk
 
 REGRESS_CLEANUP+=	umount
 umount:
-	umount ${FILEOPS_MNT}
+	umount -f ${FILEOPS_MNT} || true
 
 REGRESS_CLEANUP+=	unconfig
 unconfig:
