@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2018/12/23 11:23:21 natano Exp $
+#	$OpenBSD: Makefile,v 1.2 2023/10/13 19:30:18 anton Exp $
 
 PROG=   nopermtest
 CDIAGFLAGS=	-Wall
@@ -15,20 +15,24 @@ REGRESS_SETUP_ONCE=	mount
 REGRESS_CLEANUP=	umount
 REGRESS_TARGETS=	run-regress-locked run-regress-unlocked
 
+MNT=	/mnt/regress-mfs_noperm
+
 mount:
-	mount_mfs -s1M -o noperm swap /mnt
+	mkdir -p ${MNT}
+	mount_mfs -s1M -o noperm swap ${MNT}
 
 umount:
-	umount -f /mnt
+	umount -f ${MNT} || true
+	rmdir ${MNT} || true
 
 run-regress-locked: ${PROG}
-	chown root:wheel /mnt
-	chmod 700 /mnt
-	su build -c './${PROG} /mnt locked'
+	chown root:wheel ${MNT}
+	chmod 700 ${MNT}
+	su build -c './${PROG} ${MNT} locked'
 
 run-regress-unlocked: ${PROG}
-	chown build /mnt
-	chmod 700 /mnt
-	su build -c './${PROG} /mnt unlocked'
+	chown build ${MNT}
+	chmod 700 ${MNT}
+	su build -c './${PROG} ${MNT} unlocked'
 
 .include <bsd.regress.mk>
