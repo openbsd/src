@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.21 2023/10/13 05:47:35 tb Exp $
+.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.22 2023/10/13 05:49:34 tb Exp $
 .\"	OpenSSL 4692340e Jun 7 15:49:08 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -158,7 +158,7 @@ no action occurs.
 .Pp
 .Fn X509_ALGOR_dup
 creates a deep copy of
-.Vt X509_ALGOR .
+.Fa alg .
 It is implemented by calling
 .Xr ASN1_item_dup 3
 with arguments of
