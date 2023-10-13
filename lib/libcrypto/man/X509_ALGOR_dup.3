@@ -1,4 +1,4 @@
-.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.20 2023/10/11 06:08:57 tb Exp $
+.\"	$OpenBSD: X509_ALGOR_dup.3,v 1.21 2023/10/13 05:47:35 tb Exp $
 .\"	OpenSSL 4692340e Jun 7 15:49:08 2016 -0400
 .\"
 .\" This file is a derived work.
@@ -66,7 +66,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: October 11 2023 $
+.Dd $Mdocdate: October 13 2023 $
 .Dt X509_ALGOR_DUP 3
 .Os
 .Sh NAME
@@ -157,9 +157,15 @@ is
 no action occurs.
 .Pp
 .Fn X509_ALGOR_dup
-copies
-.Fa alg
-by calling
+creates a deep copy of
+.Vt X509_ALGOR .
+It is implemented by calling
+.Xr ASN1_item_dup 3
+with arguments of
+.Dv X509_ALGOR_it
+and
+.Fa alg ,
+which is equivalent to calling
 .Xr i2d_X509_ALGOR 3
 and
 .Xr d2i_X509_ALGOR 3 .
