@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.62 2022/04/04 19:53:15 naddy Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.63 2023/10/13 13:28:02 fcambus Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -78,11 +78,6 @@
 #define HAVE_FONT 1
 #endif
 
-#ifdef FONT_BOLD8x16_ISO1
-#define HAVE_FONT 1
-#include <dev/wsfont/bold8x16-iso1.h>
-#endif
-
 /*
  * Make sure we always have at least one font.
  * Unless otherwise configured, all platforms provide both a 8x16 font and a
@@ -147,29 +142,26 @@ static struct font builtin_fonts[] = {
 #ifdef FONT_BOLD8x16
 	BUILTIN_FONT(bold8x16, 1),
 #endif
-#ifdef FONT_BOLD8x16_ISO1
-	BUILTIN_FONT(bold8x16_iso1, 2),
-#endif
 #ifdef FONT_GALLANT12x22
-	BUILTIN_FONT(gallant12x22, 3),
+	BUILTIN_FONT(gallant12x22, 2),
 #endif
 #ifdef FONT_SPLEEN5x8
-	BUILTIN_FONT(spleen5x8, 4),
+	BUILTIN_FONT(spleen5x8, 3),
 #endif
 #ifdef FONT_SPLEEN6x12
-	BUILTIN_FONT(spleen6x12, 5),
+	BUILTIN_FONT(spleen6x12, 4),
 #endif
 #ifdef FONT_SPLEEN8x16
-	BUILTIN_FONT(spleen8x16, 6),
+	BUILTIN_FONT(spleen8x16, 5),
 #endif
 #ifdef FONT_SPLEEN12x24
-	BUILTIN_FONT(spleen12x24, 7),
+	BUILTIN_FONT(spleen12x24, 6),
 #endif
 #ifdef FONT_SPLEEN16x32
-	BUILTIN_FONT(spleen16x32, 8),
+	BUILTIN_FONT(spleen16x32, 7),
 #endif
 #ifdef FONT_SPLEEN32x64
-	BUILTIN_FONT(spleen32x64, 9),
+	BUILTIN_FONT(spleen32x64, 8),
 #endif
 #undef BUILTIN_FONT
 };
