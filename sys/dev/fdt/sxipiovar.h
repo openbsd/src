@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxipiovar.h,v 1.1 2017/01/21 08:26:49 patrick Exp $	*/
+/*	$OpenBSD: sxipiovar.h,v 1.2 2023/10/13 15:41:25 kettenis Exp $	*/
 /*
  * Copyright (c) 2013 Artturi Alm
  *
@@ -25,7 +25,7 @@ struct sxipio_func {
 struct sxipio_pin {
 	const char *name;
 	int port, pin;
-	struct sxipio_func funcs[8];
+	struct sxipio_func funcs[10];
 };
 
 #define SXIPIO_PORT_A	0
