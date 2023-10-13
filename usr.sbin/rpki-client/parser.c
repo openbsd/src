@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.99 2023/09/25 11:08:45 tb Exp $ */
+/*	$OpenBSD: parser.c,v 1.100 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -441,6 +441,13 @@ proc_parser_cert(char *file, const unsigned char *der, size_t len,
 
 	cert->talid = a->cert->talid;
 
+	if (cert->purpose == CERT_PURPOSE_BGPSEC_ROUTER) {
+		if (!constraints_validate(file, cert)) {
+			cert_free(cert);
+			return NULL;
+		}
+	}
+
 	/*
 	 * Add validated CA certs to the RPKI auth tree.
 	 */
@@ -813,6 +820,7 @@ proc_parser(int fd)
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 	x509_init_oid();
+	constraints_parse();
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		err(1, "X509_STORE_CTX_new");

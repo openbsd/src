@@ -1,4 +1,4 @@
-/*	$OpenBSD: geofeed.c,v 1.14 2023/09/25 11:08:45 tb Exp $ */
+/*	$OpenBSD: geofeed.c,v 1.15 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -252,7 +252,7 @@ geofeed_parse(X509 **x509, const char *fn, int talid, char *buf, size_t len)
 	if (!x509_get_notafter(*x509, fn, &p.res->notafter))
 		goto out;
 
-	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
+	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
 	if (x509_any_inherits(*x509)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.192 2023/09/25 14:56:20 tb Exp $ */
+/*	$OpenBSD: extern.h,v 1.193 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -613,7 +613,7 @@ struct tal	*tal_read(struct ibuf *);
 void		 cert_buffer(struct ibuf *, const struct cert *);
 void		 cert_free(struct cert *);
 void		 auth_tree_free(struct auth_tree *);
-struct cert	*cert_parse_ee_cert(const char *, X509 *);
+struct cert	*cert_parse_ee_cert(const char *, int, X509 *);
 struct cert	*cert_parse_pre(const char *, const unsigned char *, size_t);
 struct cert	*cert_parse(const char *, struct cert *);
 struct cert	*ta_parse(const char *, struct cert *, const unsigned char *,
@@ -712,11 +712,12 @@ void		 ip_addr_range_print(const struct ip_addr_range *, enum afi,
 			char *, size_t);
 int		 ip_addr_cmp(const struct ip_addr *, const struct ip_addr *);
 int		 ip_addr_check_overlap(const struct cert_ip *,
-			const char *, const struct cert_ip *, size_t);
+			const char *, const struct cert_ip *, size_t, int);
 int		 ip_addr_check_covered(enum afi, const unsigned char *,
 			const unsigned char *, const struct cert_ip *, size_t);
 int		 ip_cert_compose_ranges(struct cert_ip *);
 void		 ip_roa_compose_ranges(struct roa_ip *);
+void		 ip_warn(const char *, const struct cert_ip *, const char *);
 
 int		 sbgp_addr(const char *, struct cert_ip *, size_t *,
 		    enum afi, const ASN1_BIT_STRING *);
@@ -730,9 +731,10 @@ int		 sbgp_parse_ipaddrblk(const char *, const IPAddrBlocks *,
 
 int		 as_id_parse(const ASN1_INTEGER *, uint32_t *);
 int		 as_check_overlap(const struct cert_as *, const char *,
-			const struct cert_as *, size_t);
+			const struct cert_as *, size_t, int);
 int		 as_check_covered(uint32_t, uint32_t,
 			const struct cert_as *, size_t);
+void		 as_warn(const char *, const struct cert_as *, const char *);
 
 int		 sbgp_as_id(const char *, struct cert_as *, size_t *,
 		    const ASN1_INTEGER *);
@@ -741,6 +743,12 @@ int		 sbgp_as_range(const char *, struct cert_as *, size_t *,
 
 int		 sbgp_parse_assysnum(const char *, const ASIdentifiers *,
 		    struct cert_as **, size_t *);
+
+/* Constraints-specific */
+void		 constraints_load(void);
+void		 constraints_unload(void);
+void		 constraints_parse(void);
+int		 constraints_validate(const char *, const struct cert *);
 
 /* Parser-specific */
 void		 entity_free(struct entity *);
@@ -863,6 +871,10 @@ void		 rsc_print(const X509 *, const struct rsc *);
 void		 aspa_print(const X509 *, const struct aspa *);
 void		 tak_print(const X509 *, const struct tak *);
 void		 geofeed_print(const X509 *, const struct geofeed *);
+
+/* Missing RFC 3779 API */
+IPAddrBlocks *IPAddrBlocks_new(void);
+void IPAddrBlocks_free(IPAddrBlocks *);
 
 /* Output! */
 

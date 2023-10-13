@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.117 2023/09/25 15:33:08 tb Exp $ */
+/*	$OpenBSD: cert.c,v 1.118 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -57,7 +57,7 @@ static int
 append_ip(const char *fn, struct cert_ip *ips, size_t *ipsz,
     const struct cert_ip *ip)
 {
-	if (!ip_addr_check_overlap(ip, fn, ips, *ipsz))
+	if (!ip_addr_check_overlap(ip, fn, ips, *ipsz, 0))
 		return 0;
 	ips[(*ipsz)++] = *ip;
 	return 1;
@@ -72,7 +72,7 @@ static int
 append_as(const char *fn, struct cert_as *ases, size_t *asz,
     const struct cert_as *as)
 {
-	if (!as_check_overlap(as, fn, ases, *asz))
+	if (!as_check_overlap(as, fn, ases, *asz, 0))
 		return 0;
 	ases[(*asz)++] = *as;
 	return 1;
@@ -446,8 +446,8 @@ sbgp_parse_ipaddrblk(const char *fn, const IPAddrBlocks *addrblk,
 static int
 sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 {
-	STACK_OF(IPAddressFamily)	*addrblk = NULL;
-	int				 rc = 0;
+	IPAddrBlocks	*addrblk = NULL;
+	int		 rc = 0;
 
 	if (!X509_EXTENSION_get_critical(ext)) {
 		warnx("%s: RFC 6487 section 4.8.10: sbgp-ipAddrBlock: "
@@ -471,7 +471,7 @@ sbgp_ipaddrblk(struct parse *p, X509_EXTENSION *ext)
 
 	rc = 1;
  out:
-	sk_IPAddressFamily_pop_free(addrblk, IPAddressFamily_free);
+	IPAddrBlocks_free(addrblk);
 	return rc;
 }
 
@@ -641,7 +641,7 @@ certificate_policies(struct parse *p, X509_EXTENSION *ext)
  * Returns cert on success and NULL on failure.
  */
 struct cert *
-cert_parse_ee_cert(const char *fn, X509 *x)
+cert_parse_ee_cert(const char *fn, int talid, X509 *x)
 {
 	struct parse		 p;
 	X509_EXTENSION		*ext;
@@ -690,6 +690,11 @@ cert_parse_ee_cert(const char *fn, X509 *x)
 	}
 
 	p.res->x509 = x;
+	p.res->talid = talid;
+
+	if (!constraints_validate(fn, p.res))
+		goto out;
+
 	return p.res;
 
  out:

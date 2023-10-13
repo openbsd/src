@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.246 2023/08/30 10:02:28 job Exp $ */
+/*	$OpenBSD: main.c,v 1.247 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2021 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1094,6 +1094,9 @@ main(int argc, char *argv[])
 	if (talsz == 0)
 		err(1, "no TAL files found in %s", "/etc/rpki");
 
+	/* Load optional constraint files sitting next to the TALs. */
+	constraints_load();
+
 	/*
 	 * Create the file reader as a jailed child process.
 	 * It will be responsible for reading all of the files (ROAs,
@@ -1107,6 +1110,9 @@ main(int argc, char *argv[])
 		else
 			proc_filemode(proc);
 	}
+
+	/* Constraints are only needed in the filemode and parser processes. */
+	constraints_unload();
 
 	/*
 	 * Create a process that will do the rsync'ing.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.12 2023/05/23 06:39:31 tb Exp $ */
+/*	$OpenBSD: as.c,v 1.13 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -45,7 +45,7 @@ as_id_parse(const ASN1_INTEGER *v, uint32_t *out)
  */
 int
 as_check_overlap(const struct cert_as *a, const char *fn,
-    const struct cert_as *as, size_t asz)
+    const struct cert_as *as, size_t asz, int quiet)
 {
 	size_t	 i;
 
@@ -53,6 +53,8 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 
 	if (asz &&
 	    (a->type == CERT_AS_INHERIT || as[0].type == CERT_AS_INHERIT)) {
+		if (quiet)
+			return 0;
 		warnx("%s: RFC 3779 section 3.2.3.3: "
 		    "cannot have inheritance and multiple ASnum or "
 		    "multiple inheritance", fn);
@@ -68,6 +70,8 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 			case CERT_AS_ID:
 				if (a->id != as[i].id)
 					break;
+				if (quiet)
+					return 0;
 				warnx("%s: RFC 3779 section 3.2.3.4: "
 				    "cannot have overlapping ASnum", fn);
 				return 0;
@@ -75,6 +79,8 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 				if (as->range.min > as[i].id ||
 				    as->range.max < as[i].id)
 					break;
+				if (quiet)
+					return 0;
 				warnx("%s: RFC 3779 section 3.2.3.4: "
 				    "cannot have overlapping ASnum", fn);
 				return 0;
@@ -88,6 +94,8 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 				if (as[i].range.min > a->id ||
 				    as[i].range.max < a->id)
 					break;
+				if (quiet)
+					return 0;
 				warnx("%s: RFC 3779 section 3.2.3.4: "
 				    "cannot have overlapping ASnum", fn);
 				return 0;
@@ -95,6 +103,8 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 				if (a->range.max < as[i].range.min ||
 				    a->range.min > as[i].range.max)
 					break;
+				if (quiet)
+					return 0;
 				warnx("%s: RFC 3779 section 3.2.3.4: "
 				    "cannot have overlapping ASnum", fn);
 				return 0;
@@ -134,4 +144,24 @@ as_check_covered(uint32_t min, uint32_t max,
 	}
 
 	return -1;
+}
+
+void
+as_warn(const char *fn, const struct cert_as *cert, const char *msg)
+{
+	switch (cert->type) {
+	case CERT_AS_ID:
+		warnx("%s: AS %u: %s", fn, cert->id, msg);
+		break;
+	case CERT_AS_INHERIT:
+		warnx("%s: AS (inherit): %s", fn, msg);
+		break;
+	case CERT_AS_RANGE:
+		warnx("%s: AS range %u--%u: %s", fn, cert->range.min,
+		    cert->range.max, msg);
+		break;
+	default:
+		warnx("%s: corrupt cert", fn);
+		break;
+	}
 }

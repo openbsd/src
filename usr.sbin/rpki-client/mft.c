@@ -1,4 +1,4 @@
-/*	$OpenBSD: mft.c,v 1.98 2023/09/25 11:08:45 tb Exp $ */
+/*	$OpenBSD: mft.c,v 1.99 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -428,7 +428,7 @@ mft_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if (mft_parse_econtent(cms, cmsz, &p) == 0)
 		goto out;
 
-	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
+	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
 	if (p.res->signtime > p.res->nextupdate) {

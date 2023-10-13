@@ -1,4 +1,4 @@
-/*	$OpenBSD: gbr.c,v 1.28 2023/09/25 11:08:45 tb Exp $ */
+/*	$OpenBSD: gbr.c,v 1.29 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
  *
@@ -88,7 +88,7 @@ gbr_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 		goto out;
 	}
 
-	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
+	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
 	return p.res;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tak.c,v 1.12 2023/09/25 11:08:45 tb Exp $ */
+/*	$OpenBSD: tak.c,v 1.13 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
@@ -274,7 +274,7 @@ tak_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if (!tak_parse_econtent(cms, cmsz, &p))
 		goto out;
 
-	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
+	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
 	if (strcmp(p.res->aki, p.res->current->ski) != 0) {

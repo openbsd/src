@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.28 2023/09/25 08:48:14 job Exp $ */
+/*	$OpenBSD: ip.c,v 1.29 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -103,7 +103,7 @@ ip_addr_check_covered(enum afi afi,
  */
 int
 ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
-    const struct cert_ip *ips, size_t ipsz)
+    const struct cert_ip *ips, size_t ipsz, int quiet)
 {
 	size_t	 i, sz = ip->afi == AFI_IPV4 ? 4 : 16;
 	int	 inherit_v4 = 0, inherit_v6 = 0;
@@ -135,6 +135,8 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 	     ip->type == CERT_IP_INHERIT) ||
 	    (has_v6 && ip->afi == AFI_IPV6 &&
 	     ip->type == CERT_IP_INHERIT)) {
+		if (quiet)
+			return 0;
 		warnx("%s: RFC 3779 section 2.2.3.5: "
 		    "cannot have multiple inheritance or inheritance and "
 		    "addresses of the same class", fn);
@@ -151,6 +153,8 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 		if (memcmp(ips[i].max, ip->min, sz) <= 0 ||
 		    memcmp(ips[i].min, ip->max, sz) >= 0)
 			continue;
+		if (quiet)
+			return 0;
 		socktype = (ips[i].afi == AFI_IPV4) ? AF_INET : AF_INET6,
 		    warnx("%s: RFC 3779 section 2.2.3.5: "
 		    "cannot have overlapping IP addresses", fn);
@@ -341,4 +345,27 @@ ip_roa_compose_ranges(struct roa_ip *p)
 	memcpy(p->max, p->addr.addr, sz);
 	if (sz > 0 && p->addr.prefixlen % 8 != 0)
 		p->max[sz - 1] |= (1 << (8 - p->addr.prefixlen % 8)) - 1;
+}
+
+void
+ip_warn(const char *fn, const struct cert_ip *cert, const char *msg)
+{
+	char buf[128];
+
+	switch (cert->type) {
+	case CERT_IP_ADDR:
+		ip_addr_print(&cert->ip, cert->afi, buf, sizeof(buf));
+		warnx("%s: %s: %s", fn, buf, msg);
+		break;
+	case CERT_IP_INHERIT:
+		warnx("%s: (inherit): %s", fn, msg);
+		break;
+	case CERT_IP_RANGE:
+		ip_addr_range_print(&cert->range, cert->afi, buf, sizeof(buf));
+		warnx("%s: %s: %s", fn, buf, msg);
+		break;
+	default:
+		warnx("%s: corrupt cert", fn);
+		break;
+	}
 }

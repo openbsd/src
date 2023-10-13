@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpki-client.8,v 1.97 2023/06/26 18:39:53 job Exp $
+.\"	$OpenBSD: rpki-client.8,v 1.98 2023/10/13 12:06:49 job Exp $
 .\"
 .\" Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: June 26 2023 $
+.Dd $Mdocdate: October 13 2023 $
 .Dt RPKI-CLIENT 8
 .Os
 .Sh NAME
@@ -251,6 +251,44 @@ should be run hourly by
 use
 .Xr crontab 1
 to uncomment the entry in root's crontab.
+.Sh TRUST ANCHOR CONSTRAINTS
+.Nm
+can impose locally configured
+.Em constraints
+on cryptographic products subordinate to publicly-trusted
+.Em Trust Anchors .
+.Pp
+Constraining a Trust Anchor's effective signing authority to a limited set of
+.Em Internet Number Resources
+allows Relying Parties to take advantage of the potential benefits of
+assuming trust, while deriving trust within a bounded scope.
+.Pp
+Each
+.Em .constraints
+file imposes constraints on the Trust Anchor reachable via the same-named
+.Em .tal
+file.
+One entry per line.
+Entries can be IP prefixes, IP address ranges, AS identifiers, or AS identifier ranges.
+Ranges are a minimum and maximum separated by a hyphen
+.Pq Sq - .
+Comments can be put anywhere in the file using a hash mark
+.Pq Sq # ,
+and extend to the end of the current line.
+.Em deny
+entries may not overlap with other
+.Em deny
+entries.
+.Em allow
+entries may not overlap with other
+.Em allow
+entries.
+.Pp
+A given EE certificate's resources may not overlap with any
+.Em deny
+entry, and must be fully contained within the
+.Em allow
+entries.
 .Sh ENVIRONMENT
 .Nm
 utilizes the following environment variables:
@@ -264,6 +302,10 @@ URL of HTTP proxy to use.
 default TAL files used unless
 .Fl t Ar tal
 is specified.
+.It Pa /etc/rpki/*.constraints
+files containing registry-specific constraints to restrict what IP addresses
+and AS identifiers may or may not appear in EE certificates subordinate to the
+same-named Trust Anchor.
 .It Pa /etc/rpki/skiplist
 default skiplist file, unless
 .Fl S Ar skiplist
@@ -396,6 +438,12 @@ agreement regarding ARIN service restrictions.
 .%T On the use of the CMS signing-time attribute in RPKI Signed Objects
 .%U https://datatracker.ietf.org/doc/html/draft-spaghetti-sidrops-cms-signing-time
 .%D June, 2023
+.Re
+.Pp
+.Rs
+.%T Constraining RPKI Trust Anchors
+.%U https://datatracker.ietf.org/doc/html/draft-snijders-constraining-rpki-trust-anchors
+.%D September, 2023
 .Re
 .Sh HISTORY
 .Nm

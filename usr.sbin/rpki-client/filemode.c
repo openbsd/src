@@ -1,4 +1,4 @@
-/*	$OpenBSD: filemode.c,v 1.35 2023/09/25 11:08:45 tb Exp $ */
+/*	$OpenBSD: filemode.c,v 1.36 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -468,6 +468,17 @@ proc_parser_file(char *file, unsigned char *buf, size_t len)
 				break;
 			}
 		}
+		if (status && cert == NULL) {
+			struct cert *eecert;
+
+			eecert = cert_parse_ee_cert(file, a->cert->talid, x509);
+			if (eecert == NULL)
+				status = 0;
+			cert_free(eecert);
+		} else if (status) {
+			cert->talid = a->cert->talid;
+			status = constraints_validate(file, cert);
+		}
 	} else if (is_ta) {
 		if ((tal = find_tal(cert)) != NULL) {
 			cert = ta_parse(file, cert, tal->pkey, tal->pkeysz);
@@ -648,6 +659,7 @@ proc_filemode(int fd)
 	OpenSSL_add_all_ciphers();
 	OpenSSL_add_all_digests();
 	x509_init_oid();
+	constraints_parse();
 
 	if ((ctx = X509_STORE_CTX_new()) == NULL)
 		err(1, "X509_STORE_CTX_new");

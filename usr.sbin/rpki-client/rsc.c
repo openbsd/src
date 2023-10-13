@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsc.c,v 1.28 2023/09/25 11:08:45 tb Exp $ */
+/*	$OpenBSD: rsc.c,v 1.29 2023/10/13 12:06:49 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2022 Job Snijders <job@fastly.com>
@@ -423,7 +423,7 @@ rsc_parse(X509 **x509, const char *fn, int talid, const unsigned char *der,
 	if (!rsc_parse_econtent(cms, cmsz, &p))
 		goto out;
 
-	if ((cert = cert_parse_ee_cert(fn, *x509)) == NULL)
+	if ((cert = cert_parse_ee_cert(fn, talid, *x509)) == NULL)
 		goto out;
 
 	p.res->valid = valid_rsc(fn, cert, p.res);
