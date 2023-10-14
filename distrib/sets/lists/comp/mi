@@ -862,7 +862,6 @@
 ./usr/include/dev/wscons/wsmousevar.h
 ./usr/include/dev/wscons/wsmuxvar.h
 ./usr/include/dev/wsfont
-./usr/include/dev/wsfont/bold8x16-iso1.h
 ./usr/include/dev/wsfont/bold8x16.h
 ./usr/include/dev/wsfont/gallant12x22.h
 ./usr/include/dev/wsfont/spleen12x24.h
