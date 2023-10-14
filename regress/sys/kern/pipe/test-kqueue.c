@@ -1,4 +1,4 @@
-/*	$OpenBSD: test-kqueue.c,v 1.5 2023/10/10 18:18:05 anton Exp $	*/
+/*	$OpenBSD: test-kqueue.c,v 1.6 2023/10/14 13:05:43 anton Exp $	*/
 
 /*
  * Copyright (c) 2019 Anton Lindqvist <anton@openbsd.org>
@@ -75,6 +75,8 @@ test_kqueue_read(void)
 
 		n = write(ctx.c_pipe[1], &ctx.c_buf[0], 1);
 		if (n == -1) {
+			if (errno == EPIPE)
+				break;
 			if (errno == EAGAIN)
 				continue;
 			err(1, "write");
