@@ -1,4 +1,4 @@
-/*	$OpenBSD: logmsg.c,v 1.9 2022/08/24 17:14:02 claudio Exp $ */
+/*	$OpenBSD: logmsg.c,v 1.10 2023/10/14 09:46:14 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -60,55 +60,54 @@ log_fmt_peer(const struct peer_config *peer)
 void
 log_peer_info(const struct peer_config *peer, const char *emsg, ...)
 {
-	char	*p, *nfmt;
+	char	*p, *msg;
 	va_list	 ap;
 
 	p = log_fmt_peer(peer);
-	if (asprintf(&nfmt, "%s: %s", p, emsg) == -1)
-		fatal(NULL);
 	va_start(ap, emsg);
-	vlog(LOG_INFO, nfmt, ap);
+	if (vasprintf(&msg, emsg, ap) == -1)
+		fatal(NULL);
 	va_end(ap);
+	logit(LOG_INFO, "%s: %s", p, msg);
+	free(msg);
 	free(p);
-	free(nfmt);
 }
 
 void
 log_peer_warn(const struct peer_config *peer, const char *emsg, ...)
 {
-	char	*p, *nfmt;
+	char	*p, *msg;
 	va_list	 ap;
+	int	 saved_errno = errno;
 
 	p = log_fmt_peer(peer);
 	if (emsg == NULL) {
-		if (asprintf(&nfmt, "%s: %s", p, strerror(errno)) == -1)
-			fatal(NULL);
+		logit(LOG_ERR, "%s: %s", p, strerror(saved_errno));
 	} else {
-		if (asprintf(&nfmt, "%s: %s: %s", p, emsg, strerror(errno)) ==
-		    -1)
+		va_start(ap, emsg);
+		if (vasprintf(&msg, emsg, ap) == -1)
 			fatal(NULL);
+		va_end(ap);
+		logit(LOG_ERR, "%s: %s: %s", p, msg, strerror(saved_errno));
+		free(msg);
 	}
-	va_start(ap, emsg);
-	vlog(LOG_ERR, nfmt, ap);
-	va_end(ap);
 	free(p);
-	free(nfmt);
 }
 
 void
 log_peer_warnx(const struct peer_config *peer, const char *emsg, ...)
 {
-	char	*p, *nfmt;
+	char	*p, *msg;
 	va_list	 ap;
 
 	p = log_fmt_peer(peer);
-	if (asprintf(&nfmt, "%s: %s", p, emsg) == -1)
-		fatal(NULL);
 	va_start(ap, emsg);
-	vlog(LOG_ERR, nfmt, ap);
+	if (vasprintf(&msg, emsg, ap) == -1)
+		fatal(NULL);
 	va_end(ap);
+	logit(LOG_ERR, "%s: %s", p, msg);
+	free(msg);
 	free(p);
-	free(nfmt);
 }
 
 void
