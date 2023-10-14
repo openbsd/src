@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: fw_update.sh,v 1.50 2023/09/28 01:18:52 afresh1 Exp $
+#	$OpenBSD: fw_update.sh,v 1.51 2023/10/14 18:10:47 afresh1 Exp $
 #
 # Copyright (c) 2021,2023 Andrew Hewus Fresh <afresh1@openbsd.org>
 #
@@ -180,7 +180,7 @@ fetch_cfile() {
 		set +o noclobber # we want to get the latest CFILE
 		fetch "$CFILE" || return 1
 		set -o noclobber
-		! signify -qVep "$FWPUB_KEY" -x "$CFILE" -m "$CFILE" &&
+		! signify -qVep "$FWPUB_KEY" -x "$CFILE" -m /dev/null &&
 		    warn "Signature check of SHA256.sig failed" &&
 		    rm -f "$CFILE" && return 1
 	elif [ ! -e "$CFILE" ]; then
