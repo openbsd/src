@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.c,v 1.54 2023/07/05 18:45:14 guenther Exp $	*/
+/*	$OpenBSD: pax.c,v 1.55 2023/10/15 09:49:57 kn Exp $	*/
 /*	$NetBSD: pax.c,v 1.5 1996/03/26 23:54:20 mrg Exp $	*/
 
 /*-
@@ -271,13 +271,13 @@ main(int argc, char **argv)
 	 * so can't pledge at all then.
 	 */
 	if (pmode == 0 || (act != EXTRACT && act != COPY)) {
-		if (pledge("stdio rpath wpath cpath fattr dpath getpw proc exec tape",
-		    NULL) == -1)
-			err(1, "pledge");
-
 		/* Copy mode, or no gzip -- don't need to fork/exec. */
 		if (gzip_program == NULL || act == COPY) {
 			if (pledge("stdio rpath wpath cpath fattr dpath getpw tape",
+			    NULL) == -1)
+				err(1, "pledge");
+		} else {
+			if (pledge("stdio rpath wpath cpath fattr dpath getpw proc exec tape",
 			    NULL) == -1)
 				err(1, "pledge");
 		}
