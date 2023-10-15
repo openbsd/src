@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.25 2017/08/21 13:38:02 schwarze Exp $	*/
+/*	$OpenBSD: time.c,v 1.26 2023/10/15 18:20:25 cheloha Exp $	*/
 /*	$NetBSD: time.c,v 1.7 1995/06/27 00:34:00 jtc Exp $	*/
 
 /*
@@ -69,7 +69,6 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-
 	argc -= optind;
 	argv += optind;
 
@@ -77,21 +76,21 @@ main(int argc, char *argv[])
 		usage();
 
 	clock_gettime(CLOCK_MONOTONIC, &before);
-	switch(pid = vfork()) {
+	switch (pid = vfork()) {
 	case -1:			/* error */
 		warn("fork");
 		return 1;
 	case 0:				/* child */
 		execvp(*argv, argv);
 		warn("%s", *argv);
-		_exit((errno == ENOENT) ? 127 : 126);
+		_exit(errno == ENOENT ? 127 : 126);
 	}
 
 	/* parent */
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	while (wait3(&status, 0, &ru) != pid)
-		;
+		continue;
 	clock_gettime(CLOCK_MONOTONIC, &after);
 	if (WIFSIGNALED(status))
 		exitonsig = WTERMSIG(status);
@@ -101,18 +100,18 @@ main(int argc, char *argv[])
 
 	if (portableflag) {
 		fprintf(stderr, "real %9lld.%02ld\n",
-			(long long)during.tv_sec, during.tv_nsec/10000000);
+		    (long long)during.tv_sec, during.tv_nsec / 10000000);
 		fprintf(stderr, "user %9lld.%02ld\n",
-			(long long)ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
+		    (long long)ru.ru_utime.tv_sec, ru.ru_utime.tv_usec / 10000);
 		fprintf(stderr, "sys  %9lld.%02ld\n",
-			(long long)ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
+		    (long long)ru.ru_stime.tv_sec, ru.ru_stime.tv_usec / 10000);
 	} else {
 		fprintf(stderr, "%9lld.%02ld real ",
-			(long long)during.tv_sec, during.tv_nsec/10000000);
+		    (long long)during.tv_sec, during.tv_nsec / 10000000);
 		fprintf(stderr, "%9lld.%02ld user ",
-			(long long)ru.ru_utime.tv_sec, ru.ru_utime.tv_usec/10000);
+		    (long long)ru.ru_utime.tv_sec, ru.ru_utime.tv_usec / 10000);
 		fprintf(stderr, "%9lld.%02ld sys\n",
-			(long long)ru.ru_stime.tv_sec, ru.ru_stime.tv_usec/10000);
+		    (long long)ru.ru_stime.tv_sec, ru.ru_stime.tv_usec / 10000);
 	}
 
 	if (lflag) {
@@ -129,38 +128,37 @@ main(int argc, char *argv[])
 			err(1, "sysctl");
 
 		hz = clkinfo.hz;
-
 		ticks = hz * (ru.ru_utime.tv_sec + ru.ru_stime.tv_sec) +
 		     hz * (ru.ru_utime.tv_usec + ru.ru_stime.tv_usec) / 1000000;
 
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_maxrss, "maximum resident set size");
+		    ru.ru_maxrss, "maximum resident set size");
 		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_ixrss / ticks : 0,
-			"average shared memory size");
+		    "average shared memory size");
 		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_idrss / ticks : 0,
-			"average unshared data size");
+		    "average unshared data size");
 		fprintf(stderr, "%10ld  %s\n", ticks ? ru.ru_isrss / ticks : 0,
-			"average unshared stack size");
+		    "average unshared stack size");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_minflt, "minor page faults");
+		    ru.ru_minflt, "minor page faults");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_majflt, "major page faults");
+		    ru.ru_majflt, "major page faults");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_nswap, "swaps");
+		    ru.ru_nswap, "swaps");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_inblock, "block input operations");
+		    ru.ru_inblock, "block input operations");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_oublock, "block output operations");
+		    ru.ru_oublock, "block output operations");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_msgsnd, "messages sent");
+		    ru.ru_msgsnd, "messages sent");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_msgrcv, "messages received");
+		    ru.ru_msgrcv, "messages received");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_nsignals, "signals received");
+		    ru.ru_nsignals, "signals received");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_nvcsw, "voluntary context switches");
+		    ru.ru_nvcsw, "voluntary context switches");
 		fprintf(stderr, "%10ld  %s\n",
-			ru.ru_nivcsw, "involuntary context switches");
+		    ru.ru_nivcsw, "involuntary context switches");
 	}
 
 	if (exitonsig) {
