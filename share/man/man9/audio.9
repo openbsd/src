@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.34 2022/11/02 10:41:34 kn Exp $
+.\"	$OpenBSD: audio.9,v 1.35 2023/10/15 15:49:47 chrisz Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 2 2022 $
+.Dd $Mdocdate: October 15 2023 $
 .Dt AUDIO 9
 .Os
 .Sh NAME
@@ -227,6 +227,10 @@ It can be used to initialize looping DMA for hardware that needs it.
 This function returns 0 on success, otherwise an error code.
 .It Ft int Fn (*start_output) "void *hdl" "void *block" "int bsize" \
 "void (*intr)(void *)" "void *intrarg"
+This function is deprecated.
+Use
+.Fn trigger_output
+instead.
 This function is called to start the transfer of
 .Fa bsize
 bytes from
@@ -245,6 +249,10 @@ will normally initiate another call to
 This function returns 0 on success, otherwise an error code.
 .It Ft int Fn (*start_input) "void *hdl" "void *block" "int bsize" \
 "void (*intr)(void *)" "void *intrarg"
+This function is deprecated.
+Use
+.Fn trigger_input
+instead.
 This function is called to start the transfer of
 .Fa bsize
 bytes to
@@ -263,12 +271,12 @@ will normally initiate another call to
 This function returns 0 on success, otherwise an error code.
 .It Ft int Fn (*halt_output) "void *hdl"
 This function is called to abort the output transfer (started by
-.Fn start_output )
+.Fn trigger_output )
 in progress.
 This function returns 0 on success, otherwise an error code.
 .It Ft int Fn (*halt_input) "void *hdl"
 This function is called to abort the input transfer (started by
-.Fn start_input )
+.Fn trigger_input )
 in progress.
 This function returns 0 on success, otherwise an error code.
 .It Ft int Fn (*set_port) "void *hdl" "struct mixer_ctrl *mc"
@@ -335,8 +343,7 @@ and
 must be consistent.
 .It Ft int Fn (*trigger_output) "void *hdl" "void *start" "void *end" "int blksize" \
 "void (*intr)(void *)" "void *intrarg" "struct audio_params *param"
-This function is optional.
-If supplied, it is called to start the transfer of data from the circular
+This function is called to start the transfer of data from the circular
 buffer delimited by
 .Fa start
 and
@@ -357,8 +364,7 @@ Once started, the transfer may be stopped using
 This function returns 0 on success, otherwise an error code.
 .It Ft int Fn (*trigger_input) "void *hdl" "void *start" "void *end" "int blksize" \
 "void (*intr)(void *)" "void *intrarg" "struct audio_params *param"
-This function is optional.
-If supplied, it is called to start the transfer of data from the audio
+This function is called to start the transfer of data from the audio
 hardware, parameterized as in
 .Fa param ,
 to the circular buffer delimited by
