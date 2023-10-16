@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.305 2023/06/01 09:47:34 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.306 2023/10/16 10:25:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -168,8 +168,6 @@ struct kroute6	*kroute6_match(struct ktable *, struct bgpd_addr *, int);
 void		 kroute_detach_nexthop(struct ktable *, struct knexthop *);
 
 uint8_t		prefixlen_classful(in_addr_t);
-uint8_t		mask2prefixlen(in_addr_t);
-uint8_t		mask2prefixlen6(struct sockaddr_in6 *);
 uint64_t	ift2ifm(uint8_t);
 const char	*get_media_descr(uint64_t);
 const char	*get_linkstate(uint8_t, int);
@@ -2419,21 +2417,28 @@ prefixlen_classful(in_addr_t ina)
 		return (8);
 }
 
-uint8_t
-mask2prefixlen(in_addr_t ina)
+static uint8_t
+mask2prefixlen4(struct sockaddr_in *sa_in)
 {
+	in_addr_t ina;
+
+	if (sa_in->sin_len == 0)
+		return (0);
+	ina = sa_in->sin_addr.s_addr;
 	if (ina == 0)
 		return (0);
 	else
 		return (33 - ffs(ntohl(ina)));
 }
 
-uint8_t
+static uint8_t
 mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 {
 	uint8_t	*ap, *ep;
 	u_int	 l = 0;
 
+	if (sa_in6->sin6_len == 0)
+		return (0);
 	/*
 	 * sin6_len is the size of the sockaddr so subtract the offset of
 	 * the possibly truncated sin6_addr struct.
@@ -2478,6 +2483,19 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	if (l > sizeof(struct in6_addr) * 8)
 		fatalx("%s: prefixlen %d out of bound", __func__, l);
 	return (l);
+}
+
+uint8_t
+mask2prefixlen(sa_family_t af, struct sockaddr *mask)
+{
+	switch (af) {
+	case AF_INET:
+		return mask2prefixlen4((struct sockaddr_in *)mask);
+	case AF_INET6:
+		return mask2prefixlen6((struct sockaddr_in6 *)mask);
+	default:
+		fatalx("%s: unsupported af", __func__);
+	}
 }
 
 const struct if_status_description
@@ -3079,9 +3097,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kf)
 	case AF_INET:
 		sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
 		if (sa_in != NULL) {
-			if (sa_in->sin_len != 0)
-				kf->prefixlen =
-				    mask2prefixlen(sa_in->sin_addr.s_addr);
+			kf->prefixlen = mask2prefixlen4(sa_in);
 		} else if (rtm->rtm_flags & RTF_HOST)
 			kf->prefixlen = 32;
 		else
@@ -3091,8 +3107,7 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kf)
 	case AF_INET6:
 		sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
 		if (sa_in6 != NULL) {
-			if (sa_in6->sin6_len != 0)
-				kf->prefixlen = mask2prefixlen6(sa_in6);
+			kf->prefixlen = mask2prefixlen6(sa_in6);
 		} else if (rtm->rtm_flags & RTF_HOST)
 			kf->prefixlen = 128;
 		else

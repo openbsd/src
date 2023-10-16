@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.448 2023/10/09 07:11:20 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.449 2023/10/16 10:25:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1202,37 +1202,64 @@ session_setup_socket(struct peer *p)
 	return (0);
 }
 
-/* compare two sockaddrs by converting them into bgpd_addr */
+/*
+ * compare the bgpd_addr with the sockaddr by converting the latter into
+ * a bgpd_addr. Return true if the two are equal, including any scope
+ */
 static int
-sa_equal(struct sockaddr *a, struct sockaddr *b)
+sa_equal(struct bgpd_addr *ba, struct sockaddr *b)
 {
-	struct bgpd_addr ba, bb;
+	struct bgpd_addr bb;
 
-	sa2addr(a, &ba, NULL);
 	sa2addr(b, &bb, NULL);
-
-	return (memcmp(&ba, &bb, sizeof(ba)) == 0);
+	return (memcmp(ba, &bb, sizeof(*ba)) == 0);
 }
 
 static void
-get_alternate_addr(struct sockaddr *sa, struct bgpd_addr *alt)
+get_alternate_addr(struct bgpd_addr *local, struct bgpd_addr *remote,
+    struct bgpd_addr *alt, unsigned int *scope)
 {
 	struct ifaddrs	*ifap, *ifa, *match;
+	int connected = 0;
+	u_int8_t plen;
 
 	if (getifaddrs(&ifap) == -1)
 		fatal("getifaddrs");
 
-	for (match = ifap; match != NULL; match = match->ifa_next)
-		if (match->ifa_addr != NULL && sa_equal(sa, match->ifa_addr))
+	for (match = ifap; match != NULL; match = match->ifa_next) {
+		if (match->ifa_addr == NULL)
+			continue;
+		if (match->ifa_addr->sa_family != AF_INET &&
+		    match->ifa_addr->sa_family != AF_INET6)
+			continue;
+		if (sa_equal(local, match->ifa_addr)) {
+			if (match->ifa_flags & IFF_POINTOPOINT &&
+			    match->ifa_dstaddr) {
+				if (sa_equal(remote, match->ifa_dstaddr))
+					connected = 1;
+			} else if (match->ifa_netmask) {
+				plen = mask2prefixlen(
+				    match->ifa_addr->sa_family,
+				    match->ifa_netmask);
+				if (plen != 0xff &&
+				    prefix_compare(local, remote, plen) == 0)
+					connected = 1;
+			}
 			break;
+		}
+	}
 
 	if (match == NULL) {
 		log_warnx("%s: local address not found", __func__);
 		return;
 	}
+	if (connected)
+		*scope = if_nametoindex(match->ifa_name);
+	else
+		*scope = 0;
 
-	switch (sa->sa_family) {
-	case AF_INET6:
+	switch (local->aid) {
+	case AID_INET6:
 		for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 			if (ifa->ifa_addr != NULL &&
 			    ifa->ifa_addr->sa_family == AF_INET &&
@@ -1242,7 +1269,7 @@ get_alternate_addr(struct sockaddr *sa, struct bgpd_addr *alt)
 			}
 		}
 		break;
-	case AF_INET:
+	case AID_INET:
 		for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 			if (ifa->ifa_addr != NULL &&
 			    ifa->ifa_addr->sa_family == AF_INET6 &&
@@ -1260,8 +1287,8 @@ get_alternate_addr(struct sockaddr *sa, struct bgpd_addr *alt)
 		}
 		break;
 	default:
-		log_warnx("%s: unsupported address family %d", __func__,
-		    sa->sa_family);
+		log_warnx("%s: unsupported address family %s", __func__,
+		    aid2str(local->aid));
 		break;
 	}
 
@@ -1278,11 +1305,13 @@ session_tcp_established(struct peer *peer)
 	if (getsockname(peer->fd, (struct sockaddr *)&ss, &len) == -1)
 		log_warn("getsockname");
 	sa2addr((struct sockaddr *)&ss, &peer->local, &peer->local_port);
-	get_alternate_addr((struct sockaddr *)&ss, &peer->local_alt);
 	len = sizeof(ss);
 	if (getpeername(peer->fd, (struct sockaddr *)&ss, &len) == -1)
 		log_warn("getpeername");
 	sa2addr((struct sockaddr *)&ss, &peer->remote, &peer->remote_port);
+
+	get_alternate_addr(&peer->local, &peer->remote, &peer->local_alt,
+	    &peer->if_scope);
 }
 
 void
@@ -3546,6 +3575,7 @@ session_up(struct peer *p)
 		sup.local_v4_addr = p->local_alt;
 	}
 	sup.remote_addr = p->remote;
+	sup.if_scope = p->if_scope;
 
 	sup.remote_bgpid = p->remote_bgpid;
 	sup.short_as = p->short_as;

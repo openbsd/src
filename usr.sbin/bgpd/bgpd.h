@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.477 2023/08/30 08:16:28 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.478 2023/10/16 10:25:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -796,6 +796,7 @@ struct session_up {
 	struct bgpd_addr	remote_addr;
 	struct capabilities	capa;
 	uint32_t		remote_bgpid;
+	unsigned int		if_scope;
 	uint16_t		short_as;
 };
 
@@ -1439,6 +1440,7 @@ void		 kr_ifinfo(char *);
 void		 kr_net_reload(u_int, uint64_t, struct network_head *);
 int		 kr_reload(void);
 int		 get_mpe_config(const char *, u_int *, u_int *);
+uint8_t		 mask2prefixlen(sa_family_t, struct sockaddr *);
 
 /* log.c */
 void		 log_peer_info(const struct peer_config *, const char *, ...)

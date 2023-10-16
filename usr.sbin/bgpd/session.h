@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.162 2023/03/28 12:15:23 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.163 2023/10/16 10:25:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -240,6 +240,7 @@ struct peer {
 	int			 lasterr;
 	u_int			 errcnt;
 	u_int			 IdleHoldTime;
+	unsigned int		 if_scope;	/* interface scope for IPv6 */
 	uint32_t		 remote_bgpid;
 	enum session_state	 state;
 	enum session_state	 prev_state;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.260 2023/04/23 11:39:10 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.261 2023/10/16 10:25:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1910,7 +1910,7 @@ nexthop_compare(struct nexthop *na, struct nexthop *nb)
 	case AID_INET6:
 		return (memcmp(&a->v6, &b->v6, sizeof(struct in6_addr)));
 	default:
-		fatalx("nexthop_cmp: unknown af");
+		fatalx("nexthop_cmp: %s is unsupported", aid2str(a->aid));
 	}
 	return (-1);
 }

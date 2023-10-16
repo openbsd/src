@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_peer.c,v 1.32 2023/04/19 13:23:33 claudio Exp $ */
+/*	$OpenBSD: rde_peer.c,v 1.33 2023/10/16 10:25:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2019 Claudio Jeker <claudio@openbsd.org>
@@ -430,6 +430,7 @@ peer_up(struct rde_peer *peer, struct session_up *sup)
 	peer->remote_addr = sup->remote_addr;
 	peer->local_v4_addr = sup->local_v4_addr;
 	peer->local_v6_addr = sup->local_v6_addr;
+	peer->local_if_scope = sup->if_scope;
 	memcpy(&peer->capa, &sup->capa, sizeof(peer->capa));
 
 	/* clear eor markers depending on GR flags */

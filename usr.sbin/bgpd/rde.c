@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.610 2023/08/16 08:26:35 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.611 2023/10/16 10:25:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -59,7 +59,7 @@ int		 rde_attr_parse(u_char *, uint16_t, struct rde_peer *,
 int		 rde_attr_add(struct filterstate *, u_char *, uint16_t);
 uint8_t		 rde_attr_missing(struct rde_aspath *, int, uint16_t);
 int		 rde_get_mp_nexthop(u_char *, uint16_t, uint8_t,
-		    struct filterstate *);
+		    struct rde_peer *, struct filterstate *);
 void		 rde_as4byte_fixup(struct rde_peer *, struct rde_aspath *);
 uint8_t		 rde_aspa_validity(struct rde_peer *, struct rde_aspath *,
 		    uint8_t);
@@ -1797,7 +1797,8 @@ rde_update_dispatch(struct rde_peer *peer, struct imsg *imsg)
 		/* unlock the previously locked nexthop, it is no longer used */
 		nexthop_unref(state.nexthop);
 		state.nexthop = NULL;
-		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, &state)) == -1) {
+		if ((pos = rde_get_mp_nexthop(mpp, mplen, aid, peer,
+		    &state)) == -1) {
 			log_peer_warnx(&peer->conf, "bad nlri nexthop");
 			rde_update_err(peer, ERR_UPDATE, ERR_UPD_OPTATTR,
 			    mpa.reach, mpa.reach_len);
@@ -2482,7 +2483,7 @@ rde_attr_missing(struct rde_aspath *a, int ebgp, uint16_t nlrilen)
 
 int
 rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
-    struct filterstate *state)
+    struct rde_peer *peer, struct filterstate *state)
 {
 	struct bgpd_addr	nexthop;
 	uint8_t			totlen, nhlen;
@@ -2509,12 +2510,22 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 		 * traffic.
 		 */
 		if (nhlen != 16 && nhlen != 32) {
-			log_warnx("bad %s nexthop, bad size %d", aid2str(aid),
-			    nhlen);
+			log_peer_warnx(&peer->conf, "bad %s nexthop, "
+			    "bad size %d", aid2str(aid), nhlen);
 			return (-1);
 		}
 		memcpy(&nexthop.v6.s6_addr, data, 16);
 		nexthop.aid = AID_INET6;
+		if (IN6_IS_ADDR_LINKLOCAL(&nexthop.v6)) {
+			if (peer->local_if_scope != 0) {
+				nexthop.scope_id = peer->local_if_scope;
+			} else {
+				log_peer_warnx(&peer->conf,
+				    "unexpected link-local nexthop: %s",
+				    log_addr(&nexthop));
+				return (-1);
+			}
+		}
 		break;
 	case AID_VPN_IPv4:
 		/*
@@ -2531,8 +2542,8 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 		 * AID_VPN_IPv4 in nexthop and kroute.
 		 */
 		if (nhlen != 12) {
-			log_warnx("bad %s nexthop, bad size %d", aid2str(aid),
-			    nhlen);
+			log_peer_warnx(&peer->conf, "bad %s nexthop, "
+			    "bad size %d", aid2str(aid), nhlen);
 			return (-1);
 		}
 		nexthop.aid = AID_INET;
@@ -2541,26 +2552,37 @@ rde_get_mp_nexthop(u_char *data, uint16_t len, uint8_t aid,
 		break;
 	case AID_VPN_IPv6:
 		if (nhlen != 24) {
-			log_warnx("bad %s nexthop, bad size %d", aid2str(aid),
-			    nhlen);
+			log_peer_warnx(&peer->conf, "bad %s nexthop, "
+			    "bad size %d", aid2str(aid), nhlen);
 			return (-1);
 		}
 		memcpy(&nexthop.v6, data + sizeof(uint64_t),
 		    sizeof(nexthop.v6));
 		nexthop.aid = AID_INET6;
+		if (IN6_IS_ADDR_LINKLOCAL(&nexthop.v6)) {
+			if (peer->local_if_scope != 0) {
+				nexthop.scope_id = peer->local_if_scope;
+			} else {
+				log_peer_warnx(&peer->conf,
+				    "unexpected link-local nexthop: %s",
+				    log_addr(&nexthop));
+				return (-1);
+			}
+		}
 		break;
 	case AID_FLOWSPECv4:
 	case AID_FLOWSPECv6:
 		/* nexthop must be 0 and ignored for flowspec */
 		if (nhlen != 0) {
-			log_warnx("bad %s nexthop, bad size %d", aid2str(aid),
-			    nhlen);
+			log_peer_warnx(&peer->conf, "bad %s nexthop, "
+			    "bad size %d", aid2str(aid), nhlen);
 			return (-1);
 		}
 		/* also ignore reserved (old SNPA) field as per RFC4760 */
 		return (totlen + 1);
 	default:
-		log_warnx("bad multiprotocol nexthop, bad AID");
+		log_peer_warnx(&peer->conf, "bad multiprotocol nexthop, "
+		    "bad AID");
 		return (-1);
 	}
 
