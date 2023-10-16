@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: lladdr.sh,v 1.1 2023/10/16 10:26:51 claudio Exp $
+#	$OpenBSD: lladdr.sh,v 1.2 2023/10/16 12:49:15 claudio Exp $
 
 set -e
 
@@ -86,8 +86,8 @@ route -T ${RDOMAIN2} exec ${BGPD} \
 
 sleep 1
 
-route -T11 exec bgpctl nei RDOMAIN2 up
-route -T11 exec bgpctl nei RDOMAIN2_2 up
+route -T12 exec bgpctl nei RDOMAIN1 up
+route -T12 exec bgpctl nei RDOMAIN1_2 up
 
 sleep 2
 
