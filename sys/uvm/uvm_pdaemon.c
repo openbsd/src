@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.106 2023/05/30 08:30:01 jsg Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.107 2023/10/16 11:32:54 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -102,8 +102,9 @@ extern void drmbackoff(long);
  */
 
 struct rwlock	*uvmpd_trylockowner(struct vm_page *);
-void		uvmpd_scan(struct uvm_pmalloc *);
-void		uvmpd_scan_inactive(struct uvm_pmalloc *, struct pglist *);
+void		uvmpd_scan(struct uvm_pmalloc *, struct uvm_constraint_range *);
+void		uvmpd_scan_inactive(struct uvm_pmalloc *,
+		    struct uvm_constraint_range *, struct pglist *);
 void		uvmpd_tune(void);
 void		uvmpd_drop(struct pglist *);
 void		uvmpd_dropswap(struct vm_page *);
@@ -283,7 +284,7 @@ uvm_pageout(void *arg)
 		if (pma != NULL ||
 		    ((uvmexp.free - BUFPAGES_DEFICIT) < uvmexp.freetarg) ||
 		    ((uvmexp.inactive + BUFPAGES_INACT) < uvmexp.inactarg)) {
-			uvmpd_scan(pma);
+			uvmpd_scan(pma, &constraint);
 		}
 
 		/*
@@ -425,7 +426,8 @@ uvmpd_dropswap(struct vm_page *pg)
  * => we return TRUE if we are exiting because we met our target
  */
 void
-uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
+uvmpd_scan_inactive(struct uvm_pmalloc *pma,
+    struct uvm_constraint_range *constraint, struct pglist *pglst)
 {
 	int free, result;
 	struct vm_page *p, *nextpg;
@@ -440,6 +442,7 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 	boolean_t swap_backed;
 	vaddr_t start;
 	int dirtyreacts;
+	paddr_t paddr;
 
 	/*
 	 * swslot is non-zero if we are building a swap cluster.  we want
@@ -451,22 +454,12 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
 	dirtyreacts = 0;
 	p = NULL;
 
-	/* Start with the first page on the list that fit in pma's ranges */
-	if (pma != NULL) {
-		paddr_t paddr;
-
-		TAILQ_FOREACH(p, pglst, pageq) {
-			paddr = atop(VM_PAGE_TO_PHYS(p));
-			if (paddr >= pma->pm_constraint.ucr_low &&
-			    paddr < pma->pm_constraint.ucr_high)
-				break;
-		}
-
-	}
-
-	if (p == NULL) {
-		p = TAILQ_FIRST(pglst);
-		pma = NULL;
+	/* Start with the first page on the list that fit in `constraint' */
+	TAILQ_FOREACH(p, pglst, pageq) {
+		paddr = atop(VM_PAGE_TO_PHYS(p));
+		if (paddr >= constraint->ucr_low &&
+		    paddr < constraint->ucr_high)
+			break;
 	}
 
 	for (; p != NULL || swslot != 0; p = nextpg) {
@@ -875,11 +868,12 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma, struct pglist *pglst)
  */
 
 void
-uvmpd_scan(struct uvm_pmalloc *pma)
+uvmpd_scan(struct uvm_pmalloc *pma, struct uvm_constraint_range *constraint)
 {
 	int free, inactive_shortage, swap_shortage, pages_freed;
 	struct vm_page *p, *nextpg;
 	struct rwlock *slock;
+	paddr_t paddr;
 
 	MUTEX_ASSERT_LOCKED(&uvm.pageqlock);
 
@@ -911,7 +905,7 @@ uvmpd_scan(struct uvm_pmalloc *pma)
 	 */
 
 	pages_freed = uvmexp.pdfreed;
-	(void) uvmpd_scan_inactive(pma, &uvm.page_inactive);
+	(void) uvmpd_scan_inactive(pma, constraint, &uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
 
 	/*
@@ -940,6 +934,14 @@ uvmpd_scan(struct uvm_pmalloc *pma)
 		if (p->pg_flags & PG_BUSY) {
 			continue;
 		}
+
+		/*
+		 * skip this page if it doesn't match the constraint.
+		 */
+		paddr = atop(VM_PAGE_TO_PHYS(p));
+		if (paddr < constraint->ucr_low &&
+		    paddr >= constraint->ucr_high)
+			continue;
 
 		/*
 		 * lock the page's owner.
