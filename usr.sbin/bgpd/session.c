@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.449 2023/10/16 10:25:46 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.450 2023/10/17 17:58:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1241,8 +1241,7 @@ get_alternate_addr(struct bgpd_addr *local, struct bgpd_addr *remote,
 				plen = mask2prefixlen(
 				    match->ifa_addr->sa_family,
 				    match->ifa_netmask);
-				if (plen != 0xff &&
-				    prefix_compare(local, remote, plen) == 0)
+				if (prefix_compare(local, remote, plen) == 0)
 					connected = 1;
 			}
 			break;
