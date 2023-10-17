@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.65 2023/09/10 03:08:05 cheloha Exp $	*/
+/*	$OpenBSD: time.h,v 1.66 2023/10/17 00:04:02 cheloha Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -330,8 +330,8 @@ uint64_t	getnsecuptime(void);
 struct proc;
 int	clock_gettime(struct proc *, clockid_t, struct timespec *);
 
-struct clockintr;
-void itimer_update(struct clockintr *, void *, void *);
+struct clockrequest;
+void itimer_update(struct clockrequest *, void *, void *);
 
 void	cancel_all_itimers(void);
 int	settime(const struct timespec *);

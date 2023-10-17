@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prof.c,v 1.39 2023/10/11 15:42:44 cheloha Exp $	*/
+/*	$OpenBSD: subr_prof.c,v 1.40 2023/10/17 00:04:02 cheloha Exp $	*/
 /*	$NetBSD: subr_prof.c,v 1.12 1996/04/22 01:38:50 christos Exp $	*/
 
 /*-
@@ -64,7 +64,7 @@ u_int gmon_cpu_count;		/* [K] number of CPUs with profiling enabled */
 
 extern char etext[];
 
-void gmonclock(struct clockintr *, void *, void *);
+void gmonclock(struct clockrequest *, void *, void *);
 
 void
 prof_init(void)
@@ -236,14 +236,14 @@ sysctl_doprof(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
 }
 
 void
-gmonclock(struct clockintr *cl, void *cf, void *arg)
+gmonclock(struct clockrequest *cr, void *cf, void *arg)
 {
 	uint64_t count;
 	struct clockframe *frame = cf;
 	struct gmonparam *g = curcpu()->ci_gmon;
 	u_long i;
 
-	count = clockintr_advance(cl, profclock_period);
+	count = clockrequest_advance(cr, profclock_period);
 	if (count > ULONG_MAX)
 		count = ULONG_MAX;
 
@@ -307,13 +307,13 @@ sys_profil(struct proc *p, void *v, register_t *retval)
 }
 
 void
-profclock(struct clockintr *cl, void *cf, void *arg)
+profclock(struct clockrequest *cr, void *cf, void *arg)
 {
 	uint64_t count;
 	struct clockframe *frame = cf;
 	struct proc *p = curproc;
 
-	count = clockintr_advance(cl, profclock_period);
+	count = clockrequest_advance(cr, profclock_period);
 	if (count > ULONG_MAX)
 		count = ULONG_MAX;
 

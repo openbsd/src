@@ -1,4 +1,4 @@
-/* $OpenBSD: clockintr.h,v 1.22 2023/10/11 15:07:04 cheloha Exp $ */
+/* $OpenBSD: clockintr.h,v 1.23 2023/10/17 00:04:02 cheloha Exp $ */
 /*
  * Copyright (c) 2020-2022 Scott Cheloha <cheloha@openbsd.org>
  *
@@ -35,6 +35,7 @@ struct clockintr_stat {
 #include <sys/mutex.h>
 #include <sys/queue.h>
 
+struct clockrequest;
 struct cpu_info;
 
 /*
@@ -61,14 +62,29 @@ struct clockintr {
 	TAILQ_ENTRY(clockintr) cl_alink;		/* [m] cq_all glue */
 	TAILQ_ENTRY(clockintr) cl_plink;		/* [m] cq_pend glue */
 	void *cl_arg;					/* [I] argument */
-	void (*cl_func)(struct clockintr *, void *, void *); /* [I] callback */
+	void (*cl_func)(struct clockrequest *, void*, void*); /* [I] callback */
 	struct clockintr_queue *cl_queue;		/* [I] parent queue */
 	uint32_t cl_flags;				/* [m] CLST_* flags */
 };
 
 #define CLST_PENDING		0x00000001	/* scheduled to run */
-#define CLST_SHADOW_PENDING	0x00000002	/* shadow is scheduled to run */
-#define CLST_IGNORE_SHADOW	0x00000004	/* ignore shadow copy */
+#define CLST_IGNORE_REQUEST	0x00000002	/* ignore callback requests */
+
+/*
+ * Interface for callback rescheduling requests.
+ *
+ * Struct member protections:
+ *
+ *	I	Immutable after initialization.
+ *	o	Owned by a single CPU.
+ */
+struct clockrequest {
+	uint64_t cr_expiration;			/* [o] copy of dispatch time */
+	struct clockintr_queue *cr_queue;	/* [I] enclosing queue */
+	uint32_t cr_flags;			/* [o] CR_* flags */
+};
+
+#define CR_RESCHEDULE		0x00000001	/* reschedule upon return */
 
 /*
  * Per-CPU clock interrupt state.
@@ -81,7 +97,7 @@ struct clockintr {
  *	o	Owned by a single CPU.
  */
 struct clockintr_queue {
-	struct clockintr cq_shadow;	/* [o] copy of running clockintr */
+	struct clockrequest cq_request;	/* [o] callback request object */
 	struct mutex cq_mtx;		/* [a] per-queue mutex */
 	uint64_t cq_uptime;		/* [o] cached uptime */
 	TAILQ_HEAD(, clockintr) cq_all;	/* [m] established clockintr list */
@@ -108,12 +124,13 @@ void clockintr_trigger(void);
  */
 
 uint64_t clockintr_advance(struct clockintr *, uint64_t);
-uint64_t clockintr_advance_random(struct clockintr *, uint64_t, uint32_t);
 void clockintr_cancel(struct clockintr *);
 struct clockintr *clockintr_establish(struct cpu_info *,
-    void (*)(struct clockintr *, void *, void *), void *);
+    void (*)(struct clockrequest *, void *, void *), void *);
 void clockintr_schedule(struct clockintr *, uint64_t);
 void clockintr_stagger(struct clockintr *, uint64_t, uint32_t, uint32_t);
+uint64_t clockrequest_advance(struct clockrequest *, uint64_t);
+uint64_t clockrequest_advance_random(struct clockrequest *, uint64_t, uint32_t);
 void clockqueue_init(struct clockintr_queue *);
 int sysctl_clockintr(int *, u_int, void *, size_t *, void *, size_t);
 

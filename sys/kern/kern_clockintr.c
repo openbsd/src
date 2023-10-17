@@ -1,4 +1,4 @@
-/* $OpenBSD: kern_clockintr.c,v 1.61 2023/10/11 15:07:04 cheloha Exp $ */
+/* $OpenBSD: kern_clockintr.c,v 1.62 2023/10/17 00:04:02 cheloha Exp $ */
 /*
  * Copyright (c) 2003 Dale Rahn <drahn@openbsd.org>
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -31,7 +31,7 @@
 #include <sys/sysctl.h>
 #include <sys/time.h>
 
-void clockintr_hardclock(struct clockintr *, void *, void *);
+void clockintr_hardclock(struct clockrequest *, void *, void *);
 void clockintr_schedule_locked(struct clockintr *, uint64_t);
 void clockqueue_intrclock_install(struct clockintr_queue *,
     const struct intrclock *);
@@ -164,8 +164,11 @@ clockintr_dispatch(void *frame)
 {
 	uint64_t lateness, run = 0, start;
 	struct cpu_info *ci = curcpu();
-	struct clockintr *cl, *shadow;
+	struct clockintr *cl;
 	struct clockintr_queue *cq = &ci->ci_queue;
+	struct clockrequest *request = &cq->cq_request;
+	void *arg;
+	void (*func)(struct clockrequest *, void *, void *);
 	uint32_t ogen;
 
 	if (cq->cq_dispatch != 0)
@@ -204,28 +207,26 @@ clockintr_dispatch(void *frame)
 		}
 
 		/*
-		 * This clockintr has expired.  Initialize a shadow copy
-		 * and execute it.
+		 * This clockintr has expired.  Execute it.
 		 */
 		clockqueue_pend_delete(cq, cl);
-		shadow = &cq->cq_shadow;
-		shadow->cl_expiration = cl->cl_expiration;
-		shadow->cl_arg = cl->cl_arg;
-		shadow->cl_func = cl->cl_func;
+		request->cr_expiration = cl->cl_expiration;
+		arg = cl->cl_arg;
+		func = cl->cl_func;
 		cq->cq_running = cl;
 		mtx_leave(&cq->cq_mtx);
 
-		shadow->cl_func(shadow, frame, shadow->cl_arg);
+		func(request, frame, arg);
 
 		mtx_enter(&cq->cq_mtx);
 		cq->cq_running = NULL;
-		if (ISSET(cl->cl_flags, CLST_IGNORE_SHADOW)) {
-			CLR(cl->cl_flags, CLST_IGNORE_SHADOW);
-			CLR(shadow->cl_flags, CLST_SHADOW_PENDING);
+		if (ISSET(cl->cl_flags, CLST_IGNORE_REQUEST)) {
+			CLR(cl->cl_flags, CLST_IGNORE_REQUEST);
+			CLR(request->cr_flags, CR_RESCHEDULE);
 		}
-		if (ISSET(shadow->cl_flags, CLST_SHADOW_PENDING)) {
-			CLR(shadow->cl_flags, CLST_SHADOW_PENDING);
-			clockqueue_pend_insert(cq, cl, shadow->cl_expiration);
+		if (ISSET(request->cr_flags, CR_RESCHEDULE)) {
+			CLR(request->cr_flags, CR_RESCHEDULE);
+			clockqueue_pend_insert(cq, cl, request->cr_expiration);
 		}
 		run++;
 	}
@@ -274,35 +275,43 @@ clockintr_advance(struct clockintr *cl, uint64_t period)
 	uint64_t count, expiration;
 	struct clockintr_queue *cq = cl->cl_queue;
 
-	if (cl == &cq->cq_shadow) {
-		count = nsec_advance(&cl->cl_expiration, period, cq->cq_uptime);
-		SET(cl->cl_flags, CLST_SHADOW_PENDING);
-	} else {
-		mtx_enter(&cq->cq_mtx);
-		expiration = cl->cl_expiration;
-		count = nsec_advance(&expiration, period, nsecuptime());
-		clockintr_schedule_locked(cl, expiration);
-		mtx_leave(&cq->cq_mtx);
-	}
+	mtx_enter(&cq->cq_mtx);
+	expiration = cl->cl_expiration;
+	count = nsec_advance(&expiration, period, nsecuptime());
+	clockintr_schedule_locked(cl, expiration);
+	mtx_leave(&cq->cq_mtx);
+
 	return count;
 }
 
 uint64_t
-clockintr_advance_random(struct clockintr *cl, uint64_t min, uint32_t mask)
+clockrequest_advance(struct clockrequest *cr, uint64_t period)
+{
+	struct clockintr_queue *cq = cr->cr_queue;
+
+	KASSERT(cr == &cq->cq_request);
+
+	SET(cr->cr_flags, CR_RESCHEDULE);
+	return nsec_advance(&cr->cr_expiration, period, cq->cq_uptime);
+}
+
+uint64_t
+clockrequest_advance_random(struct clockrequest *cr, uint64_t min,
+    uint32_t mask)
 {
 	uint64_t count = 0;
-	struct clockintr_queue *cq = cl->cl_queue;
+	struct clockintr_queue *cq = cr->cr_queue;
 	uint32_t off;
 
-	KASSERT(cl == &cq->cq_shadow);
+	KASSERT(cr == &cq->cq_request);
 
-	while (cl->cl_expiration <= cq->cq_uptime) {
+	while (cr->cr_expiration <= cq->cq_uptime) {
 		while ((off = (random() & mask)) == 0)
 			continue;
-		cl->cl_expiration += min + off;
+		cr->cr_expiration += min + off;
 		count++;
 	}
-	SET(cl->cl_flags, CLST_SHADOW_PENDING);
+	SET(cr->cr_flags, CR_RESCHEDULE);
 	return count;
 }
 
@@ -311,11 +320,6 @@ clockintr_cancel(struct clockintr *cl)
 {
 	struct clockintr_queue *cq = cl->cl_queue;
 	int was_next;
-
-	if (cl == &cq->cq_shadow) {
-		CLR(cl->cl_flags, CLST_SHADOW_PENDING);
-		return;
-	}
 
 	mtx_enter(&cq->cq_mtx);
 	if (ISSET(cl->cl_flags, CLST_PENDING)) {
@@ -329,13 +333,13 @@ clockintr_cancel(struct clockintr *cl)
 		}
 	}
 	if (cl == cq->cq_running)
-		SET(cl->cl_flags, CLST_IGNORE_SHADOW);
+		SET(cl->cl_flags, CLST_IGNORE_REQUEST);
 	mtx_leave(&cq->cq_mtx);
 }
 
 struct clockintr *
 clockintr_establish(struct cpu_info *ci,
-    void (*func)(struct clockintr *, void *, void *), void *arg)
+    void (*func)(struct clockrequest *, void *, void *), void *arg)
 {
 	struct clockintr *cl;
 	struct clockintr_queue *cq = &ci->ci_queue;
@@ -358,14 +362,9 @@ clockintr_schedule(struct clockintr *cl, uint64_t expiration)
 {
 	struct clockintr_queue *cq = cl->cl_queue;
 
-	if (cl == &cq->cq_shadow) {
-		cl->cl_expiration = expiration;
-		SET(cl->cl_flags, CLST_SHADOW_PENDING);
-	} else {
-		mtx_enter(&cq->cq_mtx);
-		clockintr_schedule_locked(cl, expiration);
-		mtx_leave(&cq->cq_mtx);
-	}
+	mtx_enter(&cq->cq_mtx);
+	clockintr_schedule_locked(cl, expiration);
+	mtx_leave(&cq->cq_mtx);
 }
 
 void
@@ -385,7 +384,7 @@ clockintr_schedule_locked(struct clockintr *cl, uint64_t expiration)
 		}
 	}
 	if (cl == cq->cq_running)
-		SET(cl->cl_flags, CLST_IGNORE_SHADOW);
+		SET(cl->cl_flags, CLST_IGNORE_REQUEST);
 }
 
 void
@@ -404,11 +403,11 @@ clockintr_stagger(struct clockintr *cl, uint64_t period, uint32_t numer,
 }
 
 void
-clockintr_hardclock(struct clockintr *cl, void *frame, void *arg)
+clockintr_hardclock(struct clockrequest *cr, void *frame, void *arg)
 {
 	uint64_t count, i;
 
-	count = clockintr_advance(cl, hardclock_period);
+	count = clockrequest_advance(cr, hardclock_period);
 	for (i = 0; i < count; i++)
 		hardclock(frame);
 }
@@ -419,7 +418,7 @@ clockqueue_init(struct clockintr_queue *cq)
 	if (ISSET(cq->cq_flags, CQ_INIT))
 		return;
 
-	cq->cq_shadow.cl_queue = cq;
+	cq->cq_request.cr_queue = cq;
 	mtx_init(&cq->cq_mtx, IPL_CLOCK);
 	TAILQ_INIT(&cq->cq_all);
 	TAILQ_INIT(&cq->cq_pend);

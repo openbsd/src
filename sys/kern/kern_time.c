@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.166 2023/09/10 03:08:05 cheloha Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.167 2023/10/17 00:04:02 cheloha Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -755,7 +755,7 @@ itimerdecr(struct itimerspec *itp, const struct timespec *decrement)
 }
 
 void
-itimer_update(struct clockintr *cl, void *cf, void *arg)
+itimer_update(struct clockrequest *cr, void *cf, void *arg)
 {
 	struct timespec elapsed;
 	uint64_t nsecs;
@@ -770,7 +770,7 @@ itimer_update(struct clockintr *cl, void *cf, void *arg)
 	if (!ISSET(pr->ps_flags, PS_ITIMER))
 		return;
 
-	nsecs = clockintr_advance(cl, hardclock_period) * hardclock_period;
+	nsecs = clockrequest_advance(cr, hardclock_period) * hardclock_period;
 	NSEC_TO_TIMESPEC(nsecs, &elapsed);
 
 	mtx_enter(&itimer_mtx);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.120 2023/10/11 15:42:44 cheloha Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.121 2023/10/17 00:04:02 cheloha Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -277,7 +277,7 @@ stopprofclock(struct process *pr)
  * do process and kernel statistics.
  */
 void
-statclock(struct clockintr *cl, void *cf, void *arg)
+statclock(struct clockrequest *cr, void *cf, void *arg)
 {
 	uint64_t count, i;
 	struct clockframe *frame = cf;
@@ -287,10 +287,10 @@ statclock(struct clockintr *cl, void *cf, void *arg)
 	struct process *pr;
 
 	if (statclock_is_randomized) {
-		count = clockintr_advance_random(cl, statclock_min,
+		count = clockrequest_advance_random(cr, statclock_min,
 		    statclock_mask);
 	} else {
-		count = clockintr_advance(cl, statclock_avg);
+		count = clockrequest_advance(cr, statclock_avg);
 	}
 
 	if (CLKF_USERMODE(frame)) {

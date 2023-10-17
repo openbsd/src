@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched_bsd.c,v 1.88 2023/10/11 15:42:44 cheloha Exp $	*/
+/*	$OpenBSD: sched_bsd.c,v 1.89 2023/10/17 00:04:02 cheloha Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -83,13 +83,13 @@ struct loadavg averunnable;
  * Force switch among equal priority processes every 100ms.
  */
 void
-roundrobin(struct clockintr *cl, void *cf, void *arg)
+roundrobin(struct clockrequest *cr, void *cf, void *arg)
 {
 	uint64_t count;
 	struct cpu_info *ci = curcpu();
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 
-	count = clockintr_advance(cl, roundrobin_period);
+	count = clockrequest_advance(cr, roundrobin_period);
 
 	if (ci->ci_curproc != NULL) {
 		if (spc->spc_schedflags & SPCF_SEENRR || count >= 2) {

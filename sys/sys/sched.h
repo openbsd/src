@@ -1,4 +1,4 @@
-/*	$OpenBSD: sched.h,v 1.65 2023/10/11 15:42:44 cheloha Exp $	*/
+/*	$OpenBSD: sched.h,v 1.66 2023/10/17 00:04:02 cheloha Exp $	*/
 /* $NetBSD: sched.h,v 1.2 1999/02/28 18:14:58 ross Exp $ */
 
 /*-
@@ -150,7 +150,8 @@ extern uint64_t roundrobin_period;
 
 struct proc;
 void schedclock(struct proc *);
-void roundrobin(struct clockintr *, void *, void *);
+struct clockrequest;
+void roundrobin(struct clockrequest *, void *, void *);
 void scheduler_start(void);
 void userret(struct proc *p);
 
