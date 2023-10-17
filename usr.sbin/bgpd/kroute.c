@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.306 2023/10/16 10:25:45 claudio Exp $ */
+/*	$OpenBSD: kroute.c,v 1.307 2023/10/17 17:59:59 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -2422,8 +2422,6 @@ mask2prefixlen4(struct sockaddr_in *sa_in)
 {
 	in_addr_t ina;
 
-	if (sa_in->sin_len == 0)
-		return (0);
 	ina = sa_in->sin_addr.s_addr;
 	if (ina == 0)
 		return (0);
@@ -2437,8 +2435,6 @@ mask2prefixlen6(struct sockaddr_in6 *sa_in6)
 	uint8_t	*ap, *ep;
 	u_int	 l = 0;
 
-	if (sa_in6->sin6_len == 0)
-		return (0);
 	/*
 	 * sin6_len is the size of the sockaddr so subtract the offset of
 	 * the possibly truncated sin6_addr struct.
@@ -3096,20 +3092,20 @@ dispatch_rtmsg_addr(struct rt_msghdr *rtm, struct kroute_full *kf)
 	switch (sa->sa_family) {
 	case AF_INET:
 		sa_in = (struct sockaddr_in *)rti_info[RTAX_NETMASK];
-		if (sa_in != NULL) {
-			kf->prefixlen = mask2prefixlen4(sa_in);
-		} else if (rtm->rtm_flags & RTF_HOST)
+		if (rtm->rtm_flags & RTF_HOST)
 			kf->prefixlen = 32;
+		else if (sa_in != NULL)
+			kf->prefixlen = mask2prefixlen4(sa_in);
 		else
 			kf->prefixlen =
 			    prefixlen_classful(kf->prefix.v4.s_addr);
 		break;
 	case AF_INET6:
 		sa_in6 = (struct sockaddr_in6 *)rti_info[RTAX_NETMASK];
-		if (sa_in6 != NULL) {
-			kf->prefixlen = mask2prefixlen6(sa_in6);
-		} else if (rtm->rtm_flags & RTF_HOST)
+		if (rtm->rtm_flags & RTF_HOST)
 			kf->prefixlen = 128;
+		else if (sa_in6 != NULL)
+			kf->prefixlen = mask2prefixlen6(sa_in6);
 		else
 			fatalx("in6 net addr without netmask");
 		break;
