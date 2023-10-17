@@ -1,7 +1,6 @@
-/* $OpenBSD: trace_xnames.c,v 1.4 2010/01/12 23:22:07 nicm Exp $ */
-
 /****************************************************************************
- * Copyright (c) 1999,2000 Free Software Foundation, Inc.                   *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 2009-2010,2011 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,49 +28,53 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1999                        *
+ *  Author: Thomas E. Dickey                                                *
  ****************************************************************************/
-/*
- *	trace_xnames.c - Tracing/Debugging buffers (TERMTYPE extended names)
- */
+#include <progs.priv.h>
+#include <string.h>
 
-#include <curses.priv.h>
-#include <term_entry.h>
+#include <transform.h>
 
-MODULE_ID("$Id: trace_xnames.c,v 1.4 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: transform.c,v 1.1 2023/10/17 09:52:10 nicm Exp $")
 
-NCURSES_EXPORT(void)
-_nc_trace_xnames(TERMTYPE * tp GCC_UNUSED)
+#ifdef SUFFIX_IGNORED
+static void
+trim_suffix(const char *a, size_t *len)
 {
-#ifdef TRACE
-#if NCURSES_XNAMES
-    int limit = tp->ext_Booleans + tp->ext_Numbers + tp->ext_Strings;
-    int n, m;
-    if (limit) {
-	int begin_num = tp->ext_Booleans;
-	int begin_str = tp->ext_Booleans + tp->ext_Numbers;
+    const char ignore[] = SUFFIX_IGNORED;
 
-	_tracef("extended names (%s) %d = %d+%d+%d of %d+%d+%d",
-		tp->term_names,
-		limit,
-		tp->ext_Booleans, tp->ext_Numbers, tp->ext_Strings,
-		tp->num_Booleans, tp->num_Numbers, tp->num_Strings);
-	for (n = 0; n < limit; n++) {
-	    if ((m = n - begin_str) >= 0) {
-		_tracef("[%d] %s = %s", n,
-			tp->ext_Names[n],
-			_nc_visbuf(tp->Strings[tp->num_Strings + m - tp->ext_Strings]));
-	    } else if ((m = n - begin_num) >= 0) {
-		_tracef("[%d] %s = %d (num)", n,
-			tp->ext_Names[n],
-			tp->Numbers[tp->num_Numbers + m - tp->ext_Numbers]);
-	    } else {
-		_tracef("[%d] %s = %d (bool)", n,
-			tp->ext_Names[n],
-			tp->Booleans[tp->num_Booleans + n - tp->ext_Booleans]);
+    if (sizeof(ignore) != 0) {
+	bool trim = FALSE;
+	size_t need = (sizeof(ignore) - 1);
+
+	if (*len > need) {
+	    size_t first = *len - need;
+	    size_t n;
+	    trim = TRUE;
+	    for (n = first; n < *len; ++n) {
+		if (tolower(UChar(a[n])) != tolower(UChar(ignore[n - first]))) {
+		    trim = FALSE;
+		    break;
+		}
+	    }
+	    if (trim) {
+		*len -= need;
 	    }
 	}
     }
+}
+#else
+#define trim_suffix(a, len)	/* nothing */
 #endif
-#endif
+
+bool
+same_program(const char *a, const char *b)
+{
+    size_t len_a = strlen(a);
+    size_t len_b = strlen(b);
+
+    trim_suffix(a, &len_a);
+    trim_suffix(b, &len_b);
+
+    return (len_a == len_b) && (strncmp(a, b, len_a) == 0);
 }

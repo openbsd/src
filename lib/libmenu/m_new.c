@@ -1,7 +1,8 @@
-/* $OpenBSD: m_new.c,v 1.8 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_new.c,v 1.9 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2004,2006 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,12 +40,12 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_new.c,v 1.8 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_new.c,v 1.9 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  MENU *new_menu(ITEM **items)
-|   
+|   Facility      :  libnmenu
+|   Function      :  MENU* _nc_new_menu(SCREEN*, ITEM **items)
+|
 |   Description   :  Creates a new menu connected to the item pointer
 |                    array items and returns a pointer to the new menu.
 |                    The new menu is initialized with the values from the
@@ -52,27 +53,37 @@ MODULE_ID("$Id: m_new.c,v 1.8 2010/01/12 23:22:08 nicm Exp $")
 |
 |   Return Values :  NULL on error
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(MENU *)
-new_menu(ITEM ** items)
+MENU_EXPORT(MENU *)
+NCURSES_SP_NAME(new_menu) (NCURSES_SP_DCLx ITEM **items)
 {
   int err = E_SYSTEM_ERROR;
-  MENU *menu = (MENU *) calloc(1, sizeof(MENU));
+  MENU *menu = typeCalloc(MENU, 1);
 
-  T((T_CALLED("new_menu(%p)"), items));
+  T((T_CALLED("new_menu(%p,%p)"), (void *)SP_PARM, (void *)items));
   if (menu)
     {
+      T((T_CREATE("menu %p"), (void *)menu));
       *menu = _nc_Default_Menu;
       menu->status = 0;
       menu->rows = menu->frows;
       menu->cols = menu->fcols;
+#if NCURSES_SP_FUNCS
+      /* This ensures userwin and usersub are always non-null,
+         so we can derive always the SCREEN that this menu is
+         running on. */
+      menu->userwin = SP_PARM->_stdscr;
+      menu->usersub = SP_PARM->_stdscr;
+#endif
       if (items && *items)
 	{
 	  if (!_nc_Connect_Items(menu, items))
 	    {
 	      err = E_NOT_CONNECTED;
 	      free(menu);
-	      menu = (MENU *) 0;
+	      menu = (MENU *)0;
 	    }
+	  else
+	    err = E_OK;
 	}
     }
 
@@ -83,20 +94,39 @@ new_menu(ITEM ** items)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int free_menu(MENU *menu)  
-|   
-|   Description   :  Disconnects menu from its associated item pointer 
+|   Facility      :  libnmenu
+|   Function      :  MENU *new_menu(ITEM **items)
+|
+|   Description   :  Creates a new menu connected to the item pointer
+|                    array items and returns a pointer to the new menu.
+|                    The new menu is initialized with the values from the
+|                    default menu.
+|
+|   Return Values :  NULL on error
++--------------------------------------------------------------------------*/
+#if NCURSES_SP_FUNCS
+MENU_EXPORT(MENU *)
+new_menu(ITEM **items)
+{
+  return NCURSES_SP_NAME(new_menu) (CURRENT_SCREEN, items);
+}
+#endif
+
+/*---------------------------------------------------------------------------
+|   Facility      :  libnmenu
+|   Function      :  int free_menu(MENU *menu)
+|
+|   Description   :  Disconnects menu from its associated item pointer
 |                    array and frees the storage allocated for the menu.
 |
 |   Return Values :  E_OK               - success
 |                    E_BAD_ARGUMENT     - Invalid menu pointer passed
 |                    E_POSTED           - Menu is already posted
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-free_menu(MENU * menu)
+MENU_EXPORT(int)
+free_menu(MENU *menu)
 {
-  T((T_CALLED("free_menu(%p)"), menu));
+  T((T_CALLED("free_menu(%p)"), (void *)menu));
   if (!menu)
     RETURN(E_BAD_ARGUMENT);
 

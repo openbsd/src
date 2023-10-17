@@ -1,7 +1,8 @@
-/* $OpenBSD: hashed_db.c,v 1.1 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: hashed_db.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2006 Free Software Foundation, Inc.                        *
+ * Copyright 2019,2020 Thomas E. Dickey                                     *
+ * Copyright 2006-2011,2013 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,7 +30,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey                        2006                    *
+ *  Author: Thomas E. Dickey                        2006-on                 *
  ****************************************************************************/
 
 #include <curses.priv.h>
@@ -38,11 +39,80 @@
 
 #if USE_HASHED_DB
 
-MODULE_ID("$Id: hashed_db.c,v 1.1 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: hashed_db.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 #if HASHED_DB_API >= 2
 static DBC *cursor;
 #endif
+
+typedef struct _myconn {
+    struct _myconn *next;
+    DB *db;
+    char *path;
+    bool modify;
+} MYCONN;
+
+static MYCONN *connections;
+
+static void
+cleanup(void)
+{
+    while (connections != 0) {
+	_nc_db_close(connections->db);
+    }
+}
+
+static DB *
+find_connection(const char *path, bool modify)
+{
+    DB *result = 0;
+    MYCONN *p;
+
+    for (p = connections; p != 0; p = p->next) {
+	if (!strcmp(p->path, path) && p->modify == modify) {
+	    result = p->db;
+	    break;
+	}
+    }
+
+    return result;
+}
+
+static void
+drop_connection(DB * db)
+{
+    MYCONN *p, *q;
+
+    for (p = connections, q = 0; p != 0; q = p, p = p->next) {
+	if (p->db == db) {
+	    if (q != 0)
+		q->next = p->next;
+	    else
+		connections = p->next;
+	    free(p->path);
+	    free(p);
+	    break;
+	}
+    }
+}
+
+static void
+make_connection(DB * db, const char *path, bool modify)
+{
+    MYCONN *p = typeCalloc(MYCONN, 1);
+
+    if (p != 0) {
+	p->db = db;
+	p->path = strdup(path);
+	p->modify = modify;
+	if (p->path != 0) {
+	    p->next = connections;
+	    connections = p;
+	} else {
+	    free(p);
+	}
+    }
+}
 
 /*
  * Open the database.
@@ -51,49 +121,60 @@ NCURSES_EXPORT(DB *)
 _nc_db_open(const char *path, bool modify)
 {
     DB *result = 0;
-
-#if HASHED_DB_API >= 4
-    db_create(&result, NULL, 0);
-    result->open(result,
-		 NULL,
-		 path,
-		 NULL,
-		 DB_HASH,
-		 modify ? DB_CREATE : DB_RDONLY,
-		 0644);
-#elif HASHED_DB_API >= 3
-    db_create(&result, NULL, 0);
-    result->open(result,
-		 path,
-		 NULL,
-		 DB_HASH,
-		 modify ? DB_CREATE : DB_RDONLY,
-		 0644);
-#elif HASHED_DB_API >= 2
     int code;
 
-    if ((code = db_open(path,
-			DB_HASH,
-			modify ? DB_CREATE : DB_RDONLY,
-			0644,
-			(DB_ENV *) 0,
-			(DB_INFO *) 0,
-			&result)) != 0) {
-	T(("cannot open %s: %s", path, strerror(code)));
-	result = 0;
-    } else {
-	T(("opened %s", path));
-    }
+    if (connections == 0)
+	atexit(cleanup);
+
+    if ((result = find_connection(path, modify)) == 0) {
+
+#if HASHED_DB_API >= 4
+	db_create(&result, NULL, 0);
+	if ((code = result->open(result,
+				 NULL,
+				 path,
+				 NULL,
+				 DB_HASH,
+				 modify ? DB_CREATE : DB_RDONLY,
+				 0644)) != 0) {
+	    result = 0;
+	}
+#elif HASHED_DB_API >= 3
+	db_create(&result, NULL, 0);
+	if ((code = result->open(result,
+				 path,
+				 NULL,
+				 DB_HASH,
+				 modify ? DB_CREATE : DB_RDONLY,
+				 0644)) != 0) {
+	    result = 0;
+	}
+#elif HASHED_DB_API >= 2
+	if ((code = db_open(path,
+			    DB_HASH,
+			    modify ? DB_CREATE : DB_RDONLY,
+			    0644,
+			    (DB_ENV *) 0,
+			    (DB_INFO *) 0,
+			    &result)) != 0) {
+	    result = 0;
+	}
 #else
-    result = dbopen(path,
-		    modify ? (O_CREAT | O_RDWR) : O_RDONLY,
-		    0644,
-		    DB_HASH,
-		    NULL);
-    if (result != 0) {
-	T(("opened %s", path));
-    }
+	if ((result = dbopen(path,
+			     modify ? (O_CREAT | O_RDWR) : O_RDONLY,
+			     0644,
+			     DB_HASH,
+			     NULL)) == 0) {
+	    code = errno;
+	}
 #endif
+	if (result != 0) {
+	    make_connection(result, path, modify);
+	    T(("opened %s", path));
+	} else {
+	    T(("cannot open %s: %s", path, strerror(code)));
+	}
+    }
     return result;
 }
 
@@ -105,6 +186,7 @@ _nc_db_close(DB * db)
 {
     int result;
 
+    drop_connection(db);
 #if HASHED_DB_API >= 2
     result = db->close(db, 0);
 #else
@@ -194,7 +276,7 @@ _nc_db_next(DB * db, DBT * key, DBT * data)
 	result = -1;
     }
 #else
-    result = db->seq(db, key, data, 0);
+    result = db->seq(db, key, data, R_NEXT);
 #endif
     return result;
 }
@@ -207,7 +289,7 @@ NCURSES_EXPORT(bool)
 _nc_db_have_index(DBT * key, DBT * data, char **buffer, int *size)
 {
     bool result = FALSE;
-    int used = data->size - 1;
+    int used = (int) data->size - 1;
     char *have = (char *) data->data;
 
     (void) key;
@@ -230,7 +312,7 @@ NCURSES_EXPORT(bool)
 _nc_db_have_data(DBT * key, DBT * data, char **buffer, int *size)
 {
     bool result = FALSE;
-    int used = data->size - 1;
+    int used = (int) data->size - 1;
     char *have = (char *) data->data;
 
     if (*have++ == 0) {

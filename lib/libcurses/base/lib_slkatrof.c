@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_slkatrof.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_slkatrof.c,v 1.4 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2000,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2005,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -40,21 +41,29 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_slkatrof.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_slkatrof.c,v 1.4 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
-slk_attroff(const chtype attr)
+NCURSES_SP_NAME(slk_attroff) (NCURSES_SP_DCLx const chtype attr)
 {
-    T((T_CALLED("slk_attroff(%s)"), _traceattr(attr)));
+    T((T_CALLED("slk_attroff(%p,%s)"), (void *) SP_PARM, _traceattr(attr)));
 
-    if (SP != 0 && SP->_slk != 0) {
-	TR(TRACE_ATTRS, ("... current %s", _tracech_t(CHREF(SP->_slk->attr))));
-	RemAttr(SP->_slk->attr, attr);
+    if (SP_PARM != 0 && SP_PARM->_slk != 0) {
+	TR(TRACE_ATTRS, ("... current %s", _tracech_t(CHREF(SP_PARM->_slk->attr))));
+	RemAttr(SP_PARM->_slk->attr, attr);
 	if ((attr & A_COLOR) != 0) {
-	    SetPair(SP->_slk->attr, 0);
+	    SetPair(SP_PARM->_slk->attr, 0);
 	}
-	TR(TRACE_ATTRS, ("new attribute is %s", _tracech_t(CHREF(SP->_slk->attr))));
+	TR(TRACE_ATTRS, ("new attribute is %s", _tracech_t(CHREF(SP_PARM->_slk->attr))));
 	returnCode(OK);
     } else
 	returnCode(ERR);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+slk_attroff(const chtype attr)
+{
+    return NCURSES_SP_NAME(slk_attroff) (CURRENT_SCREEN, attr);
+}
+#endif

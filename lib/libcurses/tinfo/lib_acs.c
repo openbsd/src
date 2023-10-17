@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_acs.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_acs.c,v 1.6 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2018-2019,2020 Thomas E. Dickey                                *
+ * Copyright 1998-2014,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -32,17 +33,21 @@
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Juergen Pfeifer                         2008                    *
  ****************************************************************************/
 
 #include <curses.priv.h>
-#include <term.h>		/* ena_acs, acs_chars */
 
-MODULE_ID("$Id: lib_acs.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
+#ifndef CUR
+#define CUR SP_TERMTYPE
+#endif
+
+MODULE_ID("$Id: lib_acs.c,v 1.6 2023/10/17 09:52:09 nicm Exp $")
 
 #if BROKEN_LINKER || USE_REENTRANT
 #define MyBuffer _nc_prescreen.real_acs_map
-NCURSES_EXPORT_VAR(chtype *)
-_nc_acs_map(void)
+NCURSES_EXPORT(chtype *)
+NCURSES_PUBLIC_VAR(acs_map) (void)
 {
     if (MyBuffer == 0)
 	MyBuffer = typeCalloc(chtype, ACS_LEN);
@@ -50,17 +55,35 @@ _nc_acs_map(void)
 }
 #undef MyBuffer
 #else
-NCURSES_EXPORT_VAR(chtype) acs_map[ACS_LEN] =
+NCURSES_EXPORT_VAR (chtype) acs_map[ACS_LEN] =
 {
     0
 };
 #endif
 
+#ifdef USE_TERM_DRIVER
+NCURSES_EXPORT(chtype)
+NCURSES_SP_NAME(_nc_acs_char) (NCURSES_SP_DCLx int c)
+{
+    chtype *map;
+    if (c < 0 || c >= ACS_LEN)
+	return (chtype) 0;
+    map = (SP_PARM != 0) ? SP_PARM->_acs_map :
+#if BROKEN_LINKER || USE_REENTRANT
+	_nc_prescreen.real_acs_map
+#else
+	acs_map
+#endif
+	;
+    return map[c];
+}
+#endif /* USE_TERM_DRIVER */
+
 NCURSES_EXPORT(void)
-_nc_init_acs(void)
+NCURSES_SP_NAME(_nc_init_acs) (NCURSES_SP_DCL0)
 {
     chtype *fake_map = acs_map;
-    chtype *real_map = SP != 0 ? SP->_acs_map : fake_map;
+    chtype *real_map = SP_PARM != 0 ? SP_PARM->_acs_map : fake_map;
     int j;
 
     T(("initializing ACS map"));
@@ -73,9 +96,9 @@ _nc_init_acs(void)
     if (real_map != fake_map) {
 	for (j = 1; j < ACS_LEN; ++j) {
 	    real_map[j] = 0;
-	    fake_map[j] = A_ALTCHARSET | j;
-	    if (SP)
-		SP->_screen_acs_map[j] = FALSE;
+	    fake_map[j] = A_ALTCHARSET | (chtype) j;
+	    if (SP_PARM)
+		SP_PARM->_screen_acs_map[j] = FALSE;
 	}
     } else {
 	for (j = 1; j < ACS_LEN; ++j) {
@@ -120,12 +143,38 @@ _nc_init_acs(void)
     real_map['{'] = '*';	/* should be greek pi */
     real_map['|'] = '!';	/* should be not-equal */
     real_map['}'] = 'f';	/* should be pound-sterling symbol */
+    /* thick-line-drawing */
+    real_map['L'] = '+';	/* upper left corner */
+    real_map['M'] = '+';	/* lower left corner */
+    real_map['K'] = '+';	/* upper right corner */
+    real_map['J'] = '+';	/* lower right corner */
+    real_map['T'] = '+';	/* tee pointing left */
+    real_map['U'] = '+';	/* tee pointing right */
+    real_map['V'] = '+';	/* tee pointing up */
+    real_map['W'] = '+';	/* tee pointing down */
+    real_map['Q'] = '-';	/* horizontal line */
+    real_map['X'] = '|';	/* vertical line */
+    real_map['N'] = '+';	/* large plus or crossover */
+    /* double-line-drawing */
+    real_map['C'] = '+';	/* upper left corner */
+    real_map['D'] = '+';	/* lower left corner */
+    real_map['B'] = '+';	/* upper right corner */
+    real_map['A'] = '+';	/* lower right corner */
+    real_map['G'] = '+';	/* tee pointing left */
+    real_map['F'] = '+';	/* tee pointing right */
+    real_map['H'] = '+';	/* tee pointing up */
+    real_map['I'] = '+';	/* tee pointing down */
+    real_map['R'] = '-';	/* horizontal line */
+    real_map['Y'] = '|';	/* vertical line */
+    real_map['E'] = '+';	/* large plus or crossover */
 
+#ifdef USE_TERM_DRIVER
+    CallDriver_2(SP_PARM, td_initacs, real_map, fake_map);
+#else
     if (ena_acs != NULL) {
-	TPUTS_TRACE("ena_acs");
-	putp(ena_acs);
+	NCURSES_PUTP2("ena_acs", ena_acs);
     }
-#if NCURSES_EXT_FUNCS
+#if NCURSES_EXT_FUNCS && defined(enter_pc_charset_mode) && defined(exit_pc_charset_mode)
     /*
      * Linux console "supports" the "PC ROM" character set by the coincidence
      * that smpch/rmpch and smacs/rmacs have the same values.  ncurses has
@@ -142,7 +191,7 @@ _nc_init_acs(void)
 	size_t i;
 	for (i = 1; i < ACS_LEN; ++i) {
 	    if (real_map[i] == 0) {
-		real_map[i] = i;
+		real_map[i] = (chtype) i;
 		if (real_map != fake_map) {
 		    if (SP != 0)
 			SP->_screen_acs_map[i] = TRUE;
@@ -159,8 +208,13 @@ _nc_init_acs(void)
 	while (i + 1 < length) {
 	    if (acs_chars[i] != 0 && UChar(acs_chars[i]) < ACS_LEN) {
 		real_map[UChar(acs_chars[i])] = UChar(acs_chars[i + 1]) | A_ALTCHARSET;
-		if (SP != 0)
+		T(("#%d real_map[%s] = %s",
+		   (int) i,
+		   _tracechar(UChar(acs_chars[i])),
+		   _tracechtype(real_map[UChar(acs_chars[i])])));
+		if (SP != 0) {
 		    SP->_screen_acs_map[UChar(acs_chars[i])] = TRUE;
+		}
 	    }
 	    i += 2;
 	}
@@ -193,4 +247,82 @@ _nc_init_acs(void)
 	_nc_unlock_global(tracef);
     }
 #endif /* TRACE */
+#endif
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(void)
+_nc_init_acs(void)
+{
+    NCURSES_SP_NAME(_nc_init_acs) (CURRENT_SCREEN);
+}
+#endif
+
+#if !NCURSES_WCWIDTH_GRAPHICS
+NCURSES_EXPORT(int)
+_nc_wacs_width(unsigned ch)
+{
+    int result;
+    switch (ch) {
+    case 0x00a3:		/* FALLTHRU - ncurses pound-sterling symbol */
+    case 0x00b0:		/* FALLTHRU - VT100 degree symbol */
+    case 0x00b1:		/* FALLTHRU - VT100 plus/minus */
+    case 0x00b7:		/* FALLTHRU - VT100 bullet */
+    case 0x03c0:		/* FALLTHRU - ncurses greek pi */
+    case 0x2190:		/* FALLTHRU - Teletype arrow pointing left */
+    case 0x2191:		/* FALLTHRU - Teletype arrow pointing up */
+    case 0x2192:		/* FALLTHRU - Teletype arrow pointing right */
+    case 0x2193:		/* FALLTHRU - Teletype arrow pointing down */
+    case 0x2260:		/* FALLTHRU - ncurses not-equal */
+    case 0x2264:		/* FALLTHRU - ncurses less-than-or-equal-to */
+    case 0x2265:		/* FALLTHRU - ncurses greater-than-or-equal-to */
+    case 0x23ba:		/* FALLTHRU - VT100 scan line 1 */
+    case 0x23bb:		/* FALLTHRU - ncurses scan line 3 */
+    case 0x23bc:		/* FALLTHRU - ncurses scan line 7 */
+    case 0x23bd:		/* FALLTHRU - VT100 scan line 9 */
+    case 0x2500:		/* FALLTHRU - VT100 horizontal line */
+    case 0x2501:		/* FALLTHRU - thick horizontal line */
+    case 0x2502:		/* FALLTHRU - VT100 vertical line */
+    case 0x2503:		/* FALLTHRU - thick vertical line */
+    case 0x250c:		/* FALLTHRU - VT100 upper left corner */
+    case 0x250f:		/* FALLTHRU - thick upper left corner */
+    case 0x2510:		/* FALLTHRU - VT100 upper right corner */
+    case 0x2513:		/* FALLTHRU - thick upper right corner */
+    case 0x2514:		/* FALLTHRU - VT100 lower left corner */
+    case 0x2517:		/* FALLTHRU - thick lower left corner */
+    case 0x2518:		/* FALLTHRU - VT100 lower right corner */
+    case 0x251b:		/* FALLTHRU - thick lower right corner */
+    case 0x251c:		/* FALLTHRU - VT100 tee pointing left */
+    case 0x2523:		/* FALLTHRU - thick tee pointing left */
+    case 0x2524:		/* FALLTHRU - VT100 tee pointing right */
+    case 0x252b:		/* FALLTHRU - thick tee pointing right */
+    case 0x252c:		/* FALLTHRU - VT100 tee pointing down */
+    case 0x2533:		/* FALLTHRU - thick tee pointing down */
+    case 0x2534:		/* FALLTHRU - VT100 tee pointing up */
+    case 0x253b:		/* FALLTHRU - thick tee pointing up */
+    case 0x253c:		/* FALLTHRU - VT100 large plus or crossover */
+    case 0x254b:		/* FALLTHRU - thick large plus or crossover */
+    case 0x2550:		/* FALLTHRU - double horizontal line */
+    case 0x2551:		/* FALLTHRU - double vertical line */
+    case 0x2554:		/* FALLTHRU - double upper left corner */
+    case 0x2557:		/* FALLTHRU - double upper right corner */
+    case 0x255a:		/* FALLTHRU - double lower left corner */
+    case 0x255d:		/* FALLTHRU - double lower right corner */
+    case 0x2560:		/* FALLTHRU - double tee pointing right */
+    case 0x2563:		/* FALLTHRU - double tee pointing left */
+    case 0x2566:		/* FALLTHRU - double tee pointing down */
+    case 0x2569:		/* FALLTHRU - double tee pointing up */
+    case 0x256c:		/* FALLTHRU - double large plus or crossover */
+    case 0x2592:		/* FALLTHRU - VT100 checker board (stipple) */
+    case 0x25ae:		/* FALLTHRU - Teletype solid square block */
+    case 0x25c6:		/* FALLTHRU - VT100 diamond */
+    case 0x2603:		/* FALLTHRU - Teletype lantern symbol */
+	result = 1;
+	break;
+    default:
+	result = wcwidth(ch);
+	break;
+    }
+    return result;
+}
+#endif /* !NCURSES_WCWIDTH_GRAPHICS */

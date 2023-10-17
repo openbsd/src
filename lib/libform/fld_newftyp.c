@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_newftyp.c,v 1.7 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_newftyp.c,v 1.8 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2004,2007 Free Software Foundation, Inc.              *
+ * Copyright 2018,2020 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,9 +34,9 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_newftyp.c,v 1.7 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_newftyp.c,v 1.8 2023/10/17 09:52:10 nicm Exp $")
 
-static FIELDTYPE const default_fieldtype =
+static FIELDTYPE default_fieldtype =
 {
   0,				/* status                                      */
   0L,				/* reference count                             */
@@ -44,14 +45,17 @@ static FIELDTYPE const default_fieldtype =
   NULL,				/* makearg function                            */
   NULL,				/* copyarg function                            */
   NULL,				/* freearg function                            */
-  NULL,				/* field validation function                   */
-  NULL,				/* Character check function                    */
-  NULL,				/* enumerate next function                     */
-  NULL				/* enumerate previous function                 */
+  INIT_FT_FUNC(NULL),		/* field validation function                   */
+  INIT_FT_FUNC(NULL),		/* Character check function                    */
+  INIT_FT_FUNC(NULL),		/* enumerate next function                     */
+  INIT_FT_FUNC(NULL),		/* enumerate previous function                 */
+#if NCURSES_INTEROP_FUNCS
+  NULL				/* generic callback alternative to makearg     */
+#endif
 };
 
-NCURSES_EXPORT_VAR(const FIELDTYPE *)
-_nc_Default_FieldType = &default_fieldtype;
+FORM_EXPORT_VAR(FIELDTYPE *)
+  _nc_Default_FieldType = &default_fieldtype;
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform
@@ -68,23 +72,33 @@ _nc_Default_FieldType = &default_fieldtype;
 |
 |   Return Values :  Fieldtype pointer or NULL if error occurred
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(FIELDTYPE *)
+FORM_EXPORT(FIELDTYPE *)
 new_fieldtype(bool (*const field_check) (FIELD *, const void *),
 	      bool (*const char_check) (int, const void *))
 {
   FIELDTYPE *nftyp = (FIELDTYPE *)0;
 
-  T((T_CALLED("new_fieldtype(%p,%p)"), field_check, char_check));
+  TR_FUNC_BFR(2);
+
+  T((T_CALLED("new_fieldtype(%s,%s)"),
+     TR_FUNC_ARG(0, field_check),
+     TR_FUNC_ARG(1, char_check)));
+
   if ((field_check) || (char_check))
     {
       nftyp = typeMalloc(FIELDTYPE, 1);
 
       if (nftyp)
 	{
-	  T((T_CREATE("fieldtype %p"), nftyp));
+	  T((T_CREATE("fieldtype %p"), (void *)nftyp));
 	  *nftyp = default_fieldtype;
+#if NCURSES_INTEROP_FUNCS
+	  nftyp->fieldcheck.ofcheck = field_check;
+	  nftyp->charcheck.occheck = char_check;
+#else
 	  nftyp->fcheck = field_check;
 	  nftyp->ccheck = char_check;
+#endif
 	}
       else
 	{
@@ -108,10 +122,10 @@ new_fieldtype(bool (*const field_check) (FIELD *, const void *),
 |                    E_CONNECTED     - there are fields referencing the type
 |                    E_BAD_ARGUMENT  - invalid fieldtype pointer
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 free_fieldtype(FIELDTYPE *typ)
 {
-  T((T_CALLED("free_fieldtype(%p)"), typ));
+  T((T_CALLED("free_fieldtype(%p)"), (void *)typ));
 
   if (!typ)
     RETURN(E_BAD_ARGUMENT);

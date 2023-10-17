@@ -1,7 +1,6 @@
-/* $OpenBSD: lib_tracechr.c,v 1.5 2010/01/12 23:22:07 nicm Exp $ */
-
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 2016 Free Software Foundation, Inc.                            *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,59 +28,39 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
- *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
- *     and: Thomas E. Dickey                        1996-on                 *
+ *  Author: Thomas E Dickey                                                 *
  ****************************************************************************/
 
 /*
- *	lib_tracechr.c - Tracing/Debugging routines
+ * $Id: reset_cmd.h,v 1.1 2023/10/17 09:52:10 nicm Exp $
+ *
+ * Utility functions for resetting terminal.
  */
-#include <curses.priv.h>
+#ifndef RESET_CMD_H
+#define RESET_CMD_H 1
+/* *INDENT-OFF* */
 
-#include <ctype.h>
+#define USE_LIBTINFO
+#define __INTERNAL_CAPS_VISIBLE	/* we need to see has_hardware_tabs */
+#include <progs.priv.h>
 
-MODULE_ID("$Id: lib_tracechr.c,v 1.5 2010/01/12 23:22:07 nicm Exp $")
+#undef CTRL
+#define CTRL(x)	((x) & 0x1f)
 
-#ifdef TRACE
+extern bool send_init_strings(int /* fd */, TTY * /* old_settings */);
+extern void print_tty_chars(TTY * /* old_settings */, TTY * /* new_settings */);
+extern void reset_flush(void);
+extern void reset_start(FILE * /* fp */, bool /* is_reset */, bool /* is_init */ );
+extern void reset_tty_settings(int /* fd */, TTY * /* tty_settings */, int /* noset */);
+extern void set_control_chars(TTY * /* tty_settings */, int /* erase */, int /* intr */, int /* kill */);
+extern void set_conversions(TTY * /* tty_settings */);
 
-NCURSES_EXPORT(char *)
-_nc_tracechar(SCREEN *sp, int ch)
-{
-    NCURSES_CONST char *name;
-    char *MyBuffer = ((sp != 0)
-		      ? sp->tracechr_buf
-		      : _nc_globals.tracechr_buf);
-    size_t len = ((sp != 0)
-		  ? _nc_screen_tracechr_buf_size
-		  : _nc_globals_traceatr_color_buf_size);
-
-    if (ch > KEY_MIN || ch < 0) {
-	name = _nc_keyname(sp, ch);
-	if (name == 0 || *name == '\0')
-	    name = "NULL";
-	(void) snprintf(MyBuffer, len, "'%.30s' = %#03o", name, ch);
-    } else if (!is8bits(ch) || !isprint(UChar(ch))) {
-	/*
-	 * workaround for glibc bug:
-	 * sprintf changes the result from unctrl() to an empty string if it
-	 * does not correspond to a valid multibyte sequence.
-	 */
-	(void) snprintf(MyBuffer, len, "%#03o", ch);
-    } else {
-	name = _nc_unctrl(sp, (chtype) ch);
-	if (name == 0 || *name == 0)
-	    name = "null";	/* shouldn't happen */
-	(void) snprintf(MyBuffer, len, "'%.30s' = %#03o", name, ch);
-    }
-    return (MyBuffer);
-}
-
-NCURSES_EXPORT(char *)
-_tracechar(int ch)
-{
-    return _nc_tracechar(SP, ch);
-}
-#else
-EMPTY_MODULE(_nc_lib_tracechr)
+#if HAVE_SIZECHANGE
+extern void set_window_size(int /* fd */, short * /* high */, short * /* wide */);
 #endif
+
+extern const char *_nc_progname;
+
+/* *INDENT-ON* */
+
+#endif /* RESET_CMD_H */

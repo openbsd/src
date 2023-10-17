@@ -1,8 +1,9 @@
 '\" t
-.\" $OpenBSD: menu_hook.3,v 1.8 2015/11/15 22:10:16 jmc Exp $
+.\" $OpenBSD: menu_hook.3,v 1.9 2023/10/17 09:52:10 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2007,2010 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,79 +30,74 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: menu_hook.3,v 1.8 2015/11/15 22:10:16 jmc Exp $
-.TH menu_hook 3 ""
+.\" $Id: menu_hook.3,v 1.9 2023/10/17 09:52:10 nicm Exp $
+.TH menu_hook 3 2023-07-01 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBset_item_init\fR, \fBitem_init\fR,
-\fBset_item_term\fR, \fBitem_term\fR,
-\fBset_menu_init\fR, \fBmenu_init\fR,
-\fBset_menu_term\fR, \fBmenu_term\fR
-- set hooks for automatic invocation by applications
+\fBmenu_hook\fP \- set hooks for automatic invocation by applications
 .SH SYNOPSIS
-\fB#include <menu.h>\fR
+\fB#include <menu.h>\fP
+.sp
+\fBint set_item_init(MENU *\fImenu\fB, Menu_Hook \fIfunc);\fR
 .br
-int set_item_init(MENU *menu, Menu_Hook func);
+\fBMenu_Hook item_init(const MENU *\fImenu);\fR
+.sp
+\fBint set_item_term(MENU *\fImenu\fB, Menu_Hook \fIfunc);\fR
 .br
-Menu_Hook item_init(const MENU *menu);
+\fBMenu_Hook item_term(const MENU *\fImenu);\fR
+.sp
+\fBint set_menu_init(MENU *\fImenu\fB, Menu_Hook \fIfunc);\fR
 .br
-int set_item_term(MENU *menu, Menu_Hook func);
+\fBMenu_Hook menu_init(const MENU *\fImenu);\fR
+.sp
+\fBint set_menu_term(MENU *\fImenu\fB, Menu_Hook \fIfunc);\fR
 .br
-Menu_Hook item_term(const MENU *menu);
-.br
-int set_menu_init(MENU *menu, Menu_Hook func);
-.br
-Menu_Hook menu_init(const MENU *menu);
-.br
-int set_menu_term(MENU *menu, Menu_Hook func);
-.br
-Menu_Hook menu_term(const MENU *menu);
-.br
+\fBMenu_Hook menu_term(const MENU *\fImenu);\fR
 .SH DESCRIPTION
 These functions make it possible to set hook functions to be called at various
-points in the automatic processing of input event codes by \fBmenu_driver\fR.
+points in the automatic processing of input event codes by \fBmenu_driver\fP.
 .PP
-The function \fBset_item_init\fR sets a hook to be called at menu-post time and
-each time the selected item changes (after the change).  \fBitem_init\fR
-returns the current item init hook, if any (\fBNULL\fR if there is no such
+The function \fBset_item_init\fP sets a hook to be called at menu-post time and
+each time the selected item changes (after the change).
+\fBitem_init\fP
+returns the current item init hook, if any (\fBNULL\fP if there is no such
 hook).
 .PP
-The function \fBset_item_term\fR sets a hook to be called at menu-unpost time
-and each time the selected item changes (before the change).  \fBitem_term\fR
-returns the current item term hook, if any (\fBNULL\fR if there is no such
+The function \fBset_item_term\fP sets a hook to be called at menu-unpost time
+and each time the selected item changes (before the change).
+\fBitem_term\fP
+returns the current item term hook, if any (\fBNULL\fP if there is no such
 hook).
 .PP
-The function \fBset_menu_init\fR sets a hook to be called at menu-post time and
-just after the top row on the menu changes once it is posted.  \fBmenu_init\fR
-returns the current menu init hook, if any (\fBNULL\fR if there is no such
+The function \fBset_menu_init\fP sets a hook to be called at menu-post time and
+just after the top row on the menu changes once it is posted.
+\fBmenu_init\fP
+returns the current menu init hook, if any (\fBNULL\fP if there is no such
 hook).
 .PP
-The function \fBset_menu_term\fR sets a hook to be called at menu-unpost time
+The function \fBset_menu_term\fP sets a hook to be called at menu-unpost time
 and just before the top row on the menu changes once it is posted.
-\fBmenu_term\fR returns the current menu term hook, if any (\fBNULL\fR if there
+\fBmenu_term\fP returns the current menu term hook, if any (\fBNULL\fP if there
 is no such hook).
 .SH RETURN VALUE
-Routines that return pointers return \fBNULL\fR on error.  Other routines
+Routines that return pointers return \fBNULL\fP on error.
+Other routines
 return one of the following:
 .TP 5
 .B E_OK
 The routine succeeded.
 .TP 5
 .B E_SYSTEM_ERROR
-System error occurred (see \fBerrno\fR).
+System error occurred (see \fBerrno\fP(3)).
 .SH SEE ALSO
-\fBcurses\fR(3), \fBmenu\fR(3).
+\fBcurses\fP(3), \fBmenu\fP(3).
 .SH NOTES
-The header file \fB<menu.h>\fR automatically includes the header file
-\fB<curses.h>\fR.
+The header file \fB<menu.h>\fP automatically includes the header file
+\fB<curses.h>\fP.
 .SH PORTABILITY
-These routines emulate the System V menu library.  They were not supported on
+These routines emulate the System V menu library.
+They were not supported on
 Version 7 or BSD versions.
 .SH AUTHORS
-Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
+Juergen Pfeifer.
+Manual pages and adaptation for new curses by Eric
 S. Raymond.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:

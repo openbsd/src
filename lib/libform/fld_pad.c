@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_pad.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_pad.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2004,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,12 +34,12 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_pad.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_pad.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int set_field_pad(FIELD *field, int ch)
-|   
+|
 |   Description   :  Set the pad character used to fill the field. This must
 |                    be a printable character.
 |
@@ -46,12 +47,12 @@ MODULE_ID("$Id: fld_pad.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
 |                    E_BAD_ARGUMENT - invalid field pointer or pad character
 |                    E_SYSTEM_ERROR - system error
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 set_field_pad(FIELD *field, int ch)
 {
   int res = E_BAD_ARGUMENT;
 
-  T((T_CALLED("set_field_pad(%p,%d)"), field, ch));
+  T((T_CALLED("set_field_pad(%p,%d)"), (void *)field, ch));
 
   Normalize_Field(field);
   if (isprint(UChar(ch)))
@@ -68,17 +69,17 @@ set_field_pad(FIELD *field, int ch)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int field_pad(const FIELD *field)
-|   
-|   Description   :  Retrieve the fields pad character.
+|
+|   Description   :  Retrieve the field's pad character.
 |
 |   Return Values :  The pad character.
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 field_pad(const FIELD *field)
 {
-  T((T_CALLED("field_pad(%p)"), field));
+  T((T_CALLED("field_pad(%p)"), (const void *)field));
 
   returnCode(Normalize_Field(field)->pad);
 }

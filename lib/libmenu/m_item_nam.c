@@ -1,7 +1,8 @@
-/* $OpenBSD: m_item_nam.c,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_item_nam.c,v 1.8 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2004,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,35 +40,35 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_item_nam.c,v 1.7 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_item_nam.c,v 1.8 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  char *item_name(const ITEM *item)
-|   
+|
 |   Description   :  Return name of menu item
 |
 |   Return Values :  See above; returns NULL if item is invalid
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(const char *)
-item_name(const ITEM * item)
+MENU_EXPORT(const char *)
+item_name(const ITEM *item)
 {
-  T((T_CALLED("item_name(%p)"), item));
+  T((T_CALLED("item_name(%p)"), (const void *)item));
   returnCPtr((item) ? item->name.str : (char *)0);
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  char *item_description(const ITEM *item)
-|   
+|
 |   Description   :  Returns description of item
 |
 |   Return Values :  See above; Returns NULL if item is invalid
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(const char *)
-item_description(const ITEM * item)
+MENU_EXPORT(const char *)
+item_description(const ITEM *item)
 {
-  T((T_CALLED("item_description(%p)"), item));
+  T((T_CALLED("item_description(%p)"), (const void *)item));
   returnCPtr((item) ? item->description.str : (char *)0);
 }
 

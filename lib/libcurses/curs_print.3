@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_print.3,v 1.9 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_print.3,v 1.10 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2021,2022 Thomas E. Dickey                                *
+.\" Copyright 1998-2010,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,29 +29,32 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_print.3,v 1.9 2010/01/12 23:21:59 nicm Exp $
-.TH curs_print 3 ""
+.\" $Id: curs_print.3,v 1.10 2023/10/17 09:52:08 nicm Exp $
+.TH curs_print 3 2022-02-12 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBmcprint\fR - ship binary data to printer
+\fBmcprint\fP \- ship binary data to printer
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 .sp
-\fBint mcprint(char *data, int len);\fR
+\fBint mcprint(char *\fIdata\fB, int \fIlen\fB);\fR
 .SH DESCRIPTION
-This function uses the \fBmc5p\fR or \fBmc4\fR and \fBmc5\fR capabilities,
+This function uses the \fBmc5p\fP or \fBmc4\fP and \fBmc5\fP capabilities,
 if they are present, to ship given data to a printer attached to the terminal.
 .PP
-Note that the \fBmcprint\fR code has no way to do flow control with the printer
-or to know how much buffering it has.  Your application is responsible for
+Note that the \fBmcprint\fP code has no way to do flow control with the printer
+or to know how much buffering it has.
+Your application is responsible for
 keeping the rate of writes to the printer below its continuous throughput rate
-(typically about half of its nominal cps rating).  Dot-matrix printers and
+(typically about half of its nominal cps rating).
+Dot-matrix printers and
 6-page-per-minute lasers can typically handle 80cps, so a good conservative
 rule of thumb is to sleep for a second after shipping each 80-character line.
 .
 .SH RETURN VALUE
-The \fBmcprint\fR function returns \fBERR\fR if the write operation aborted
-for some reason.  In this case, errno will contain either an error associated
-with \fBwrite(2)\fR or one of the following:
+The \fBmcprint\fP function returns \fBERR\fP if the write operation aborted
+for some reason.
+In this case, \fBerrno\fP will contain either an error associated
+with \fBwrite\fP(2) or one of the following:
 .TP 5
 ENODEV
 Capabilities for printer redirection do not exist.
@@ -58,19 +62,13 @@ Capabilities for printer redirection do not exist.
 ENOMEM
 Couldn't allocate sufficient memory to buffer the printer write.
 .PP
-When \fBmcprint\fR succeeds, it returns the number of characters actually
+When \fBmcprint\fP succeeds, it returns the number of characters actually
 sent to the printer.
 .SH PORTABILITY
-The \fBmcprint\fR call was designed for \fBncurses\fR(3), and is not found
+The \fBmcprint\fP call was designed for \fBncurses\fP(3), and is not found
 in SVr4 curses, 4.4BSD curses, or any other previous version of curses.
 .SH BUGS
-Padding in the \fBmc5p\fR, \fBmc4\fR and \fBmc5\fR capabilities will not be
+Padding in the \fBmc5p\fP, \fBmc4\fP and \fBmc5\fP capabilities will not be
 interpreted.
 .SH SEE ALSO
-\fBcurses\fR(3)\fR
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3)

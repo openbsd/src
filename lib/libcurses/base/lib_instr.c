@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_instr.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_instr.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2005,2007 Free Software Foundation, Inc.              *
+ * Copyright 2020-2021,2023 Thomas E. Dickey                                *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -43,56 +44,65 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_instr.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_instr.c,v 1.4 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
 winnstr(WINDOW *win, char *str, int n)
 {
-    int i = 0, row, col;
+    int i = 0;
 
-    T((T_CALLED("winnstr(%p,%p,%d)"), win, str, n));
+    T((T_CALLED("winnstr(%p,%p,%d)"), (void *) win, str, n));
 
-    if (!str)
-	returnCode(0);
-
-    if (win) {
-	getyx(win, row, col);
+    if (!win || !str) {
+	i = ERR;
+    } else {
+	int row = win->_cury;
+	int col = win->_curx;
+	NCURSES_CH_T *text = win->_line[row].text;
 
 	if (n < 0)
-	    n = win->_maxx - win->_curx + 1;
+	    n = win->_maxx - col + 1;
 
 	for (; i < n;) {
 #if USE_WIDEC_SUPPORT
-	    cchar_t *cell = &(win->_line[row].text[col]);
-	    wchar_t *wch;
+	    cchar_t *cell = &(text[col]);
 	    attr_t attrs;
-	    short pair;
-	    int n2;
-	    bool done = FALSE;
-	    mbstate_t state;
-	    size_t i3, n3;
+	    NCURSES_PAIRS_T pair;
 	    char *tmp;
 
 	    if (!isWidecExt(*cell)) {
+		wchar_t *wch;
+		int n2;
+
 		n2 = getcchar(cell, 0, 0, 0, 0);
 		if (n2 > 0
 		    && (wch = typeCalloc(wchar_t, (unsigned) n2 + 1)) != 0) {
+		    bool done = FALSE;
+
 		    if (getcchar(cell, wch, &attrs, &pair, 0) == OK) {
+			mbstate_t state;
+			size_t n3;
 
 			init_mb(state);
-			n3 = wcstombs(0, wch, 0);
-			if (isEILSEQ(n3) || (n3 == 0)) {
-			    ;
-			} else if ((int) (n3 + i) > n) {
-			    done = TRUE;
-			} else if ((tmp = typeCalloc(char, n3 + 10)) == 0) {
-			    done = TRUE;
-			} else {
-			    init_mb(state);
-			    wcstombs(tmp, wch, n3);
-			    for (i3 = 0; i3 < n3; ++i3)
-				str[i++] = tmp[i3];
-			    free(tmp);
+			n3 = wcstombs(0, wch, (size_t) 0);
+			if (!isEILSEQ(n3) && (n3 != 0) && (n3 <= MB_LEN_MAX)) {
+			    size_t need = n3 + 10 + (size_t) i;
+			    int have = (int) n3 + i;
+
+			    /* check for loop-done as well as overflow */
+			    if (have > n || (int) need <= 0) {
+				done = TRUE;
+			    } else if ((tmp = typeCalloc(char, need)) == 0) {
+				done = TRUE;
+			    } else {
+				size_t i3;
+
+				init_mb(state);
+				wcstombs(tmp, wch, n3);
+				for (i3 = 0; i3 < n3; ++i3)
+				    str[i++] = tmp[i3];
+				free(tmp);
+			    }
 			}
 		    }
 		    free(wch);
@@ -101,14 +111,14 @@ winnstr(WINDOW *win, char *str, int n)
 		}
 	    }
 #else
-	    str[i++] = (char) CharOf(win->_line[row].text[col]);
+	    str[i++] = (char) CharOf(text[col]);
 #endif
 	    if (++col > win->_maxx) {
 		break;
 	    }
 	}
+	str[i] = '\0';		/* SVr4 does not seem to count the null */
     }
-    str[i] = '\0';		/* SVr4 does not seem to count the null */
     T(("winnstr returns %s", _nc_visbuf(str)));
     returnCode(i);
 }

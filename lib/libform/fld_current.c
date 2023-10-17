@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_current.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_current.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2010,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +34,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_current.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_current.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform
@@ -48,12 +49,12 @@ MODULE_ID("$Id: fld_current.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
 |                    E_INVALID_FIELD   - current field can't be left
 |                    E_SYSTEM_ERROR    - system error
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 set_current_field(FORM *form, FIELD *field)
 {
   int err = E_OK;
 
-  T((T_CALLED("set_current_field(%p,%p)"), form, field));
+  T((T_CALLED("set_current_field(%p,%p)"), (void *)form, (void *)field));
   if (form == 0 || field == 0)
     {
       RETURN(E_BAD_ARGUMENT);
@@ -77,7 +78,7 @@ set_current_field(FORM *form, FIELD *field)
 	{
 	  if (form->current != field)
 	    {
-	      if (!_nc_Internal_Validation(form))
+	      if (form->current && !_nc_Internal_Validation(form))
 		{
 		  err = E_INVALID_FIELD;
 		}
@@ -105,16 +106,42 @@ set_current_field(FORM *form, FIELD *field)
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform
+|   Function      :  int unfocus_current_field(FORM * form)
+|
+|   Description   :  Removes focus from the current field.
+|
+|   Return Values :  E_OK              - success
+|                    E_BAD_ARGUMENT    - invalid form pointer
+|                    E_REQUEST_DENIED  - there is no current field to unfocus
++--------------------------------------------------------------------------*/
+FORM_EXPORT(int)
+unfocus_current_field(FORM *const form)
+{
+  T((T_CALLED("unfocus_current_field(%p)"), (const void *)form));
+  if (form == 0)
+    {
+      RETURN(E_BAD_ARGUMENT);
+    }
+  else if (form->current == 0)
+    {
+      RETURN(E_REQUEST_DENIED);
+    }
+  _nc_Unset_Current_Field(form);
+  RETURN(E_OK);
+}
+
+/*---------------------------------------------------------------------------
+|   Facility      :  libnform
 |   Function      :  FIELD *current_field(const FORM * form)
 |
 |   Description   :  Return the current field.
 |
 |   Return Values :  Pointer to the current field.
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(FIELD *)
+FORM_EXPORT(FIELD *)
 current_field(const FORM *form)
 {
-  T((T_CALLED("current_field(%p)"), form));
+  T((T_CALLED("current_field(%p)"), (const void *)form));
   returnField(Normalize_Form(form)->current);
 }
 
@@ -128,10 +155,10 @@ current_field(const FORM *form)
 |   Return Values :  >= 0   : field index
 |                    -1     : fieldpointer invalid or field not connected
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 field_index(const FIELD *field)
 {
-  T((T_CALLED("field_index(%p)"), field));
+  T((T_CALLED("field_index(%p)"), (const void *)field));
   returnCode((field != 0 && field->form != 0) ? (int)field->index : -1);
 }
 

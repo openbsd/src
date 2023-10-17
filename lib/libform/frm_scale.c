@@ -1,6 +1,7 @@
-/*	$OpenBSD: frm_scale.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: frm_scale.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2004,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,22 +34,25 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_scale.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: frm_scale.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int scale_form( const FORM *form, int *rows, int *cols )
-|   
+|
 |   Description   :  Retrieve size of form
 |
 |   Return Values :  E_OK              - no error
 |                    E_BAD_ARGUMENT    - invalid form pointer
 |                    E_NOT_CONNECTED   - no fields connected to form
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 scale_form(const FORM *form, int *rows, int *cols)
 {
-  T((T_CALLED("scale_form(%p,%p,%p)"), form, rows, cols));
+  T((T_CALLED("scale_form(%p,%p,%p)"),
+     (const void *)form,
+     (void *)rows,
+     (void *)cols));
 
   if (!form)
     RETURN(E_BAD_ARGUMENT);

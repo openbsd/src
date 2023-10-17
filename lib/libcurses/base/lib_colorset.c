@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_colorset.c,v 1.5 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_colorset.c,v 1.6 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2014,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -30,7 +31,7 @@
 
 /****************************************************************************
  *  Author: Juergen Pfeifer,  1998                                          *
- *     and: Thomas E. Dickey, 2005                                          *
+ *     and: Thomas E. Dickey, 2005-on                                       *
  ****************************************************************************/
 
 /*
@@ -43,20 +44,24 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$Id: lib_colorset.c,v 1.5 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_colorset.c,v 1.6 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
-wcolor_set(WINDOW *win, short color_pair_number, void *opts)
+wcolor_set(WINDOW *win, NCURSES_PAIRS_T pair_arg, void *opts)
 {
-    T((T_CALLED("wcolor_set(%p,%d)"), win, color_pair_number));
+    int code = ERR;
+    int color_pair = pair_arg;
+
+    T((T_CALLED("wcolor_set(%p,%d)"), (void *) win, color_pair));
+    set_extended_pair(opts, color_pair);
     if (win
-	&& !opts
-	&& (color_pair_number >= 0)
-	&& (color_pair_number < COLOR_PAIRS)) {
+	&& (SP != 0)
+	&& (color_pair >= 0)
+	&& (color_pair < SP->_pair_limit)) {
 	TR(TRACE_ATTRS, ("... current %ld", (long) GET_WINDOW_PAIR(win)));
-	SET_WINDOW_PAIR(win, color_pair_number);
-	if_EXT_COLORS(win->_color = color_pair_number);
-	returnCode(OK);
-    } else
-	returnCode(ERR);
+	SET_WINDOW_PAIR(win, color_pair);
+	if_EXT_COLORS(win->_color = color_pair);
+	code = OK;
+    }
+    returnCode(code);
 }

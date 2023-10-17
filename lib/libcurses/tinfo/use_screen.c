@@ -1,7 +1,8 @@
-/* $OpenBSD: use_screen.c,v 1.1 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: use_screen.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2007,2008 Free Software Foundation, Inc.                   *
+ * Copyright 2018,2020 Thomas E. Dickey                                     *
+ * Copyright 2007-2009,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,22 +35,26 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: use_screen.c,v 1.1 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: use_screen.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
 use_screen(SCREEN *screen, NCURSES_SCREEN_CB func, void *data)
 {
     SCREEN *save_SP;
     int code = OK;
+    TR_FUNC_BFR(1);
 
-    T((T_CALLED("use_screen(%p,%p,%p)"), screen, func, data));
+    T((T_CALLED("use_screen(%p,%s,%p)"),
+       (void *) screen,
+       TR_FUNC_ARG(0, func),
+       (void *) data));
 
     /*
      * FIXME - add a flag so a given thread can check if _it_ has already
      * recurred through this point, return an error if so.
      */
     _nc_lock_global(curses);
-    save_SP = SP;
+    save_SP = CURRENT_SCREEN;
     set_term(screen);
 
     code = func(screen, data);

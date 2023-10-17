@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_addch.c,v 1.5 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_addch.c,v 1.6 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.              *
+ * Copyright 2019-2021,2022 Thomas E. Dickey                                *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -38,7 +39,7 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$Id: lib_addch.c,v 1.5 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_addch.c,v 1.6 2023/10/17 09:52:08 nicm Exp $")
 
 static const NCURSES_CH_T blankchar = NewChar(BLANK_TEXT);
 
@@ -53,7 +54,7 @@ static const NCURSES_CH_T blankchar = NewChar(BLANK_TEXT);
  */
 
 /* Return bit mask for clearing color pair number if given ch has color */
-#define COLOR_MASK(ch) (~(attr_t)((ch) & A_COLOR ? A_COLOR : 0))
+#define COLOR_MASK(ch) (~(attr_t)(((ch) & A_COLOR) ? A_COLOR : 0))
 
 static NCURSES_INLINE NCURSES_CH_T
 render_char(WINDOW *win, NCURSES_CH_T ch)
@@ -79,12 +80,6 @@ render_char(WINDOW *win, NCURSES_CH_T ch)
 	    if ((pair = GET_WINDOW_PAIR(win)) == 0)
 		pair = GetPair(win->_nc_bkgd);
 	}
-#if 0
-	if (pair > 255) {
-	    NCURSES_CH_T fixme = ch;
-	    SetPair(fixme, pair);
-	}
-#endif
 	AddAttr(ch, (a & COLOR_MASK(AttrOf(ch))));
 	SetPair(ch, pair);
     }
@@ -125,15 +120,19 @@ _nc_render(WINDOW *win, NCURSES_CH_T ch)
 #endif
 
 static bool
-newline_forces_scroll(WINDOW *win, NCURSES_SIZE_T * ypos)
+newline_forces_scroll(WINDOW *win, NCURSES_SIZE_T *ypos)
 {
     bool result = FALSE;
 
-    if (*ypos >= win->_regtop && *ypos == win->_regbottom) {
-	*ypos = win->_regbottom;
-	result = TRUE;
-    } else {
-	*ypos += 1;
+    if (*ypos >= win->_regtop && *ypos <= win->_regbottom) {
+	if (*ypos == win->_regbottom) {
+	    *ypos = win->_regbottom;
+	    result = TRUE;
+	} else if (*ypos < win->_maxy) {
+	    *ypos = (NCURSES_SIZE_T) (*ypos + 1);
+	}
+    } else if (*ypos < win->_maxy) {
+	*ypos = (NCURSES_SIZE_T) (*ypos + 1);
     }
     return result;
 }
@@ -143,7 +142,7 @@ newline_forces_scroll(WINDOW *win, NCURSES_SIZE_T * ypos)
  * wrapped the cursor.  We don't do anything with this flag except set it when
  * wrapping, and clear it whenever we move the cursor.  If we try to wrap at
  * the lower-right corner of a window, we cannot move the cursor (since that
- * wouldn't be legal).  So we return an error (which is what SVr4 does). 
+ * wouldn't be legal).  So we return an error (which is what SVr4 does).
  * Unlike SVr4, we can successfully add a character to the lower-right corner
  * (Solaris 2.6 does this also, however).
  */
@@ -178,8 +177,8 @@ fill_cells(WINDOW *win, int count)
 	if (waddch_literal(win, blank) == ERR)
 	    break;
     }
-    win->_curx = save_x;
-    win->_cury = save_y;
+    win->_curx = (NCURSES_SIZE_T) save_x;
+    win->_cury = (NCURSES_SIZE_T) save_y;
 }
 #endif
 
@@ -211,13 +210,28 @@ _nc_build_wch(WINDOW *win, ARG_CH_T ch)
     WINDOW_EXT(win, addch_x) = x;
     WINDOW_EXT(win, addch_y) = y;
 
+    /*
+     * If the background character is a wide-character, that may interfere with
+     * processing multibyte characters in this function.
+     */
+    if (!is8bits(CharOf(CHDEREF(ch)))) {
+	if (WINDOW_EXT(win, addch_used) != 0) {
+	    /* discard the incomplete multibyte character */
+	    WINDOW_EXT(win, addch_used) = 0;
+	    TR(TRACE_VIRTPUT,
+	       ("Alert discarded incomplete multibyte"));
+	}
+	return 1;
+    }
+
     init_mb(state);
     buffer[WINDOW_EXT(win, addch_used)] = (char) CharOf(CHDEREF(ch));
     WINDOW_EXT(win, addch_used) += 1;
     buffer[WINDOW_EXT(win, addch_used)] = '\0';
-    if ((len = mbrtowc(&result,
-		       buffer,
-		       WINDOW_EXT(win, addch_used), &state)) > 0) {
+    if ((len = (int) mbrtowc(&result,
+			     buffer,
+			     (size_t) WINDOW_EXT(win, addch_used),
+			     &state)) > 0) {
 	attr_t attrs = AttrOf(CHDEREF(ch));
 	if_EXT_COLORS(int pair = GetPair(CHDEREF(ch)));
 	SetChar(CHDEREF(ch), result, attrs);
@@ -262,20 +276,37 @@ waddch_literal(WINDOW *win, NCURSES_CH_T ch)
     /*
      * Build up multibyte characters until we have a wide-character.
      */
+#if NCURSES_SP_FUNCS
+#define DeriveSP() SCREEN *sp = _nc_screen_of(win);
+#else
+#define DeriveSP()		/*nothing */
+#endif
     if_WIDEC({
+	DeriveSP();
 	if (WINDOW_EXT(win, addch_used) != 0 || !Charable(ch)) {
 	    int len = _nc_build_wch(win, CHREF(ch));
 
 	    if (len >= -1) {
-		/* handle EILSEQ */
-		if (is8bits(CharOf(ch))) {
-		    const char *s = unctrl((chtype) CharOf(ch));
-		    if (s[1] != 0) {
-			return waddstr(win, s);
+		attr_t attr = AttrOf(ch);
+
+		/* handle EILSEQ (i.e., when len >= -1) */
+		if (len == -1 && is8bits(CharOf(ch))) {
+		    const char *s = NCURSES_SP_NAME(unctrl)
+		      (NCURSES_SP_ARGx (chtype) CharOf(ch));
+
+		    if (s[1] != '\0') {
+			int rc = OK;
+			while (*s != '\0') {
+			    rc = waddch(win, UChar(*s) | attr);
+			    if (rc != OK)
+				break;
+			    ++s;
+			}
+			return rc;
 		    }
 		}
 		if (len == -1)
-		    return waddch(win, ' ');
+		    return waddch(win, ' ' | attr);
 	    } else {
 		return OK;
 	    }
@@ -289,23 +320,32 @@ waddch_literal(WINDOW *win, NCURSES_CH_T ch)
      * adjustments.
      */
     if_WIDEC({
-	int len = wcwidth(CharOf(ch));
+	int len = _nc_wacs_width(CharOf(ch));
 	int i;
 	int j;
-	wchar_t *chars;
 
 	if (len == 0) {		/* non-spacing */
 	    if ((x > 0 && y >= 0)
 		|| (win->_maxx >= 0 && win->_cury >= 1)) {
-		if (x > 0 && y >= 0)
-		    chars = (win->_line[y].text[x - 1].chars);
-		else
-		    chars = (win->_line[y - 1].text[win->_maxx].chars);
+		NCURSES_CH_T *dst;
+		wchar_t *chars;
+		if (x > 0 && y >= 0) {
+		    for (j = x - 1; j >= 0; --j) {
+			if (!isWidecExt(win->_line[y].text[j])) {
+			    win->_curx = (NCURSES_SIZE_T) j;
+			    break;
+			}
+		    }
+		    dst = &(win->_line[y].text[j]);
+		} else {
+		    dst = &(win->_line[y - 1].text[win->_maxx]);
+		}
+		chars = dst->chars;
 		for (i = 0; i < CCHARW_MAX; ++i) {
 		    if (chars[i] == 0) {
 			TR(TRACE_VIRTPUT,
-			   ("added non-spacing %d: %x",
-			    x, (int) CharOf(ch)));
+			   ("adding non-spacing %s (level %d)",
+			    _tracech_t(CHREF(ch)), i));
 			chars[i] = CharOf(ch);
 			break;
 		    }
@@ -329,6 +369,8 @@ waddch_literal(WINDOW *win, NCURSES_CH_T ch)
 		    return ERR;
 		x = win->_curx;
 		y = win->_cury;
+		CHECK_POSITION(win, x, y);
+		line = win->_line + y;
 	    }
 	    /*
 	     * Check for cells which are orphaned by adding this character, set
@@ -379,14 +421,14 @@ waddch_literal(WINDOW *win, NCURSES_CH_T ch)
   testwrapping:
     );
 
-    TR(TRACE_VIRTPUT, ("cell (%ld, %ld..%d) = %s",
-		       (long) win->_cury, (long) win->_curx, x - 1,
-		       _tracech_t(CHREF(ch))));
+    TR(TRACE_VIRTPUT, ("cell (%d, %d..%d) = %s",
+		       win->_cury, win->_curx, x - 1,
+		       _tracech_t(CHREF(line->text[win->_curx]))));
 
     if (x > win->_maxx) {
 	return wrap_to_next_line(win);
     }
-    win->_curx = x;
+    win->_curx = (NCURSES_SIZE_T) x;
     return OK;
 }
 
@@ -395,30 +437,36 @@ waddch_nosync(WINDOW *win, const NCURSES_CH_T ch)
 /* the workhorse function -- add a character to the given window */
 {
     NCURSES_SIZE_T x, y;
-    chtype t = CharOf(ch);
-    const char *s = unctrl(t);
+    chtype t = (chtype) CharOf(ch);
+#if USE_WIDEC_SUPPORT || NCURSES_SP_FUNCS || USE_REENTRANT
+    SCREEN *sp = _nc_screen_of(win);
+#endif
+    const char *s = NCURSES_SP_NAME(unctrl) (NCURSES_SP_ARGx t);
+    int tabsize = 8;
 
     /*
      * If we are using the alternate character set, forget about locale.
      * Otherwise, if unctrl() returns a single-character or the locale
-     * claims the code is printable, treat it that way.
+     * claims the code is printable (and not also a control character),
+     * treat it that way.
      */
     if ((AttrOf(ch) & A_ALTCHARSET)
 	|| (
 #if USE_WIDEC_SUPPORT
-	       (SP != 0 && SP->_legacy_coding) &&
+	       (sp != 0 && sp->_legacy_coding) &&
 #endif
 	       s[1] == 0
 	)
 	|| (
-	       isprint(t)
+	       (isprint((int) t) && !iscntrl((int) t))
 #if USE_WIDEC_SUPPORT
-	       || ((SP == 0 || !SP->_legacy_coding) &&
+	       || ((sp == 0 || !sp->_legacy_coding) &&
 		   (WINDOW_EXT(win, addch_used)
 		    || !_nc_is_charable(CharOf(ch))))
 #endif
-	))
+	)) {
 	return waddch_literal(win, ch);
+    }
 
     /*
      * Handle carriage control and other codes that are not printable, or are
@@ -426,11 +474,16 @@ waddch_nosync(WINDOW *win, const NCURSES_CH_T ch)
      */
     x = win->_curx;
     y = win->_cury;
+    CHECK_POSITION(win, x, y);
 
     switch (t) {
     case '\t':
-	x += (TABSIZE - (x % TABSIZE));
-
+#if USE_REENTRANT
+	tabsize = *ptrTabsize(sp);
+#else
+	tabsize = TABSIZE;
+#endif
+	x = (NCURSES_SIZE_T) (x + (tabsize - (x % tabsize)));
 	/*
 	 * Space-fill the tab on the bottom line so that we'll get the
 	 * "correct" cursor position.
@@ -480,7 +533,7 @@ waddch_nosync(WINDOW *win, const NCURSES_CH_T ch)
     default:
 	while (*s) {
 	    NCURSES_CH_T sch;
-	    SetChar(sch, *s++, AttrOf(ch));
+	    SetChar(sch, UChar(*s++), AttrOf(ch));
 	    if_EXT_COLORS(SetPair(sch, GetPair(ch)));
 	    if (waddch_literal(win, sch) == ERR)
 		return ERR;
@@ -516,7 +569,7 @@ waddch(WINDOW *win, const chtype ch)
     NCURSES_CH_T wch;
     SetChar2(wch, ch);
 
-    TR(TRACE_VIRTPUT | TRACE_CCALLS, (T_CALLED("waddch(%p, %s)"), win,
+    TR(TRACE_VIRTPUT | TRACE_CCALLS, (T_CALLED("waddch(%p, %s)"), (void *) win,
 				      _tracechtype(ch)));
 
     if (win && (waddch_nosync(win, wch) != ERR)) {
@@ -535,7 +588,8 @@ wechochar(WINDOW *win, const chtype ch)
     NCURSES_CH_T wch;
     SetChar2(wch, ch);
 
-    TR(TRACE_VIRTPUT | TRACE_CCALLS, (T_CALLED("wechochar(%p, %s)"), win,
+    TR(TRACE_VIRTPUT | TRACE_CCALLS, (T_CALLED("wechochar(%p, %s)"),
+				      (void *) win,
 				      _tracechtype(ch)));
 
     if (win && (waddch_nosync(win, wch) != ERR)) {

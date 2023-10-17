@@ -1,23 +1,17 @@
-#	$OpenBSD: Makefile,v 1.11 2022/07/11 03:11:49 daniel Exp $
+#	$OpenBSD: Makefile,v 1.12 2023/10/17 09:52:10 nicm Exp $
 
 PROG=	tic
-SRCS=	dump_entry.c tic.c
-MAN=	tic.1 captoinfo.1 infotocap.1
-LINKS=	${BINDIR}/tic ${BINDIR}/infotocap ${BINDIR}/tic ${BINDIR}/captoinfo
-DPADD=	${LIBCURSES}
-LDADD=	-lcurses
+SRCS=	dump_entry.c tic.c tparm_type.c transform.c
 CURSES=	${.CURDIR}/../../lib/libcurses
+DPADD=	${LIBCURSES}
+LDADD=	 -lcurses
+LINKS=	${BINDIR}/tic ${BINDIR}/captoinfo ${BINDIR}/tic ${BINDIR}/infotocap
 CFLAGS+= -I${CURSES} -I${.CURDIR} -I.
-CLEANFILES+= termsort.c
+CLEANFILES+= termsort.h
 
-# Work around gcc optimization bug on sh
-.if (${MACHINE_ARCH} == sh)
-COPTS+=	-O0
-.endif
+dump_entry.o: termsort.h
 
-dump_entry.o: termsort.c
-
-termsort.c: MKtermsort.sh
+termsort.h: ${.CURDIR}/MKtermsort.sh
 	sh ${.CURDIR}/MKtermsort.sh awk ${CURSES}/Caps > ${.TARGET}
 
 .include <bsd.prog.mk>

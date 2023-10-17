@@ -1,7 +1,8 @@
-/* $OpenBSD: legacy_coding.c,v 1.1 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: legacy_coding.c,v 1.2 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2005 Free Software Foundation, Inc.                        *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 2005,2009 Free Software Foundation, Inc.                       *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,22 +30,31 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey                                                *
+ *  Author: Thomas E. Dickey          2005                                  *
+ *          Juergen Pfeifer           2009                                  *
  ****************************************************************************/
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: legacy_coding.c,v 1.1 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: legacy_coding.c,v 1.2 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
-use_legacy_coding(int level)
+NCURSES_SP_NAME(use_legacy_coding) (NCURSES_SP_DCLx int level)
 {
     int result = ERR;
 
-    T((T_CALLED("use_legacy_coding(%d)"), level));
-    if (level >= 0 && level <= 2 && SP != 0) {
-	result = SP->_legacy_coding;
-	SP->_legacy_coding = level;
+    T((T_CALLED("use_legacy_coding(%p,%d)"), (void *) SP_PARM, level));
+    if (level >= 0 && level <= 2 && SP_PARM != 0) {
+	result = SP_PARM->_legacy_coding;
+	SP_PARM->_legacy_coding = level;
     }
     returnCode(result);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+use_legacy_coding(int level)
+{
+    return NCURSES_SP_NAME(use_legacy_coding) (CURRENT_SCREEN, level);
+}
+#endif

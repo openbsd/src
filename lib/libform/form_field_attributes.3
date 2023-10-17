@@ -1,8 +1,9 @@
 '\" t
-.\" $OpenBSD: form_field_attributes.3,v 1.9 2015/11/14 01:35:38 jmc Exp $
+.\" $OpenBSD: form_field_attributes.3,v 1.10 2023/10/17 09:52:10 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2002,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2006,2010 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,41 +30,45 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: form_field_attributes.3,v 1.9 2015/11/14 01:35:38 jmc Exp $
-.TH form_field_attributes 3 ""
+.\" $Id: form_field_attributes.3,v 1.10 2023/10/17 09:52:10 nicm Exp $
+.TH form_field_attributes 3 2023-07-01 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
 .SH NAME
-\fBset_field_fore\fR, \fBfield_fore\fR,
-\fBset_field_back\fR, \fBfield_back\fR,
-\fBset_field_pad\fR, \fBfield_pad\fR
-- color and attribute control for form fields
+\fBform_field_attributes\fP \- color and attribute control for form fields
 .SH SYNOPSIS
-\fB#include <form.h>\fR
+\fB#include <form.h>\fP
+.sp
+\fBint set_field_fore(FIELD *\fIfield\fB, chtype \fIattr\fB);\fR
 .br
-int set_field_fore(FIELD *field, chtype attr);
+\fBchtype field_fore(const FIELD *\fIfield\fB);\fR
+.sp
+\fBint set_field_back(FIELD *\fIfield\fB, chtype \fIattr\fB);\fR
 .br
-chtype field_fore(const FIELD *field);
+\fBchtype field_back(const FIELD *\fIfield\fB);\fR
+.sp
+\fBint set_field_pad(FIELD *\fIfield\fB, int \fIpad\fB);\fR
 .br
-int set_field_back(FIELD *field, chtype attr);
-.br
-chtype field_back(const FIELD *field);
-.br
-int set_field_pad(FIELD *field, int pad);
-.br
-int field_pad(const FIELD *field);
-.br
+\fBint field_pad(const FIELD *\fIfield\fB);\fR
 .SH DESCRIPTION
-The function \fBset_field_fore\fR sets the foreground attribute of
-\fIfield\fR. This is the highlight used to display the field contents.  The
-function \fBfield_fore\fR returns the foreground attribute.  The default is
-\fBA_STANDOUT\fR.
+The function \fBset_field_fore\fP sets the foreground attribute of
+\fIfield\fP. This is the highlight used to display the field contents.  The
+function \fBfield_fore\fP returns the foreground attribute.
+The default is
+\fBA_STANDOUT\fP.
 .PP
-The function \fBset_field_back\fR sets the background attribute of
-\fIform\fR. This is the highlight used to display the extent fields in the
-form.  The function \fBfield_back\fR returns the background attribute.  The
-default is \fBA_NORMAL\fR.
+The function \fBset_field_back\fP sets the background attribute of
+\fIform\fP. This is the highlight used to display the extent fields in the
+form.
+The function \fBfield_back\fP returns the background attribute.
+The
+default is \fBA_NORMAL\fP.
 .PP
-The function \fBset_field_pad\fR sets the character used to fill the field.
-The function \fBfield_pad\fR returns the given form's pad character.  The
+The function \fBset_field_pad\fP sets the character used to fill the field.
+The function \fBfield_pad\fP returns the given form's pad character.
+The
 default is a blank.
 .SH RETURN VALUE
 These routines return one of the following:
@@ -75,23 +80,18 @@ The routine succeeded.
 Routine detected an incorrect or out-of-range argument.
 .TP 5
 .B E_SYSTEM_ERROR
-System error occurred (see \fBerrno\fR).
+System error occurred (see \fBerrno\fP(3)).
 .
 .SH SEE ALSO
-\fBcurses\fR(3) and related pages whose names begin "form_" for detailed
+\fBcurses\fP(3) and related pages whose names begin \*(``form_\*('' for detailed
 descriptions of the entry points.
 .SH NOTES
-The header file \fB<form.h>\fR automatically includes the header file
-\fB<curses.h>\fR.
+The header file \fB<form.h>\fP automatically includes the header file
+\fB<curses.h>\fP.
 .SH PORTABILITY
-These routines emulate the System V forms library.  They were not supported on
+These routines emulate the System V forms library.
+They were not supported on
 Version 7 or BSD versions.
 .SH AUTHORS
-Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
-S. Raymond.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+Juergen Pfeifer.
+Manual pages and adaptation for new curses by Eric S. Raymond.

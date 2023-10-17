@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_overlay.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_overlay.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2013,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,21 +43,19 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_overlay.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_overlay.c,v 1.4 2023/10/17 09:52:08 nicm Exp $")
 
 static int
 overlap(const WINDOW *const src, WINDOW *const dst, int const flag)
 {
     int rc = ERR;
-    int sx1, sy1, sx2, sy2;
-    int dx1, dy1, dx2, dy2;
-    int sminrow, smincol;
-    int dminrow, dmincol;
-    int dmaxrow, dmaxcol;
 
-    T((T_CALLED("overlap(%p,%p,%d)"), src, dst, flag));
+    T((T_CALLED("overlap(%p,%p,%d)"), (const void *) src, (void *) dst, flag));
 
     if (src != 0 && dst != 0) {
+	int sx1, sy1, sx2, sy2;
+	int dx1, dy1, dx2, dy2;
+
 	_nc_lock_global(curses);
 
 	T(("src : begy %ld, begx %ld, maxy %ld, maxx %ld",
@@ -81,12 +80,12 @@ overlap(const WINDOW *const src, WINDOW *const dst, int const flag)
 	dy2 = dy1 + dst->_maxy;
 
 	if (dx2 >= sx1 && dx1 <= sx2 && dy2 >= sy1 && dy1 <= sy2) {
-	    sminrow = max(sy1, dy1) - sy1;
-	    smincol = max(sx1, dx1) - sx1;
-	    dminrow = max(sy1, dy1) - dy1;
-	    dmincol = max(sx1, dx1) - dx1;
-	    dmaxrow = min(sy2, dy2) - dy1;
-	    dmaxcol = min(sx2, dx2) - dx1;
+	    int sminrow = max(sy1, dy1) - sy1;
+	    int smincol = max(sx1, dx1) - sx1;
+	    int dminrow = max(sy1, dy1) - dy1;
+	    int dmincol = max(sx1, dx1) - dx1;
+	    int dmaxrow = min(sy2, dy2) - dy1;
+	    int dmaxcol = min(sx2, dx2) - dx1;
 
 	    rc = copywin(src, dst,
 			 sminrow, smincol,
@@ -112,7 +111,7 @@ overlap(const WINDOW *const src, WINDOW *const dst, int const flag)
 NCURSES_EXPORT(int)
 overlay(const WINDOW *win1, WINDOW *win2)
 {
-    T((T_CALLED("overlay(%p,%p)"), win1, win2));
+    T((T_CALLED("overlay(%p,%p)"), (const void *) win1, (void *) win2));
     returnCode(overlap(win1, win2, TRUE));
 }
 
@@ -129,7 +128,7 @@ overlay(const WINDOW *win1, WINDOW *win2)
 NCURSES_EXPORT(int)
 overwrite(const WINDOW *win1, WINDOW *win2)
 {
-    T((T_CALLED("overwrite(%p,%p)"), win1, win2));
+    T((T_CALLED("overwrite(%p,%p)"), (const void *) win1, (void *) win2));
     returnCode(overlap(win1, win2, FALSE));
 }
 
@@ -141,15 +140,21 @@ copywin(const WINDOW *src, WINDOW *dst,
 	int over)
 {
     int rc = ERR;
-    int sx, sy, dx, dy;
-    bool touched;
-    attr_t bk;
-    attr_t mask;
 
     T((T_CALLED("copywin(%p, %p, %d, %d, %d, %d, %d, %d, %d)"),
-       src, dst, sminrow, smincol, dminrow, dmincol, dmaxrow, dmaxcol, over));
+       (const void *) src,
+       (void *) dst,
+       sminrow, smincol,
+       dminrow, dmincol,
+       dmaxrow, dmaxcol, over));
 
-    if (src && dst) {
+    if (src != 0
+	&& dst != 0
+	&& dmaxrow >= dminrow
+	&& dmaxcol >= dmincol) {
+	attr_t bk;
+	attr_t mask;
+
 	_nc_lock_global(curses);
 
 	bk = AttrOf(dst->_nc_bkgd);
@@ -163,17 +168,28 @@ copywin(const WINDOW *src, WINDOW *dst,
 
 	    /* make sure rectangle fits in destination */
 	    if (dmaxrow <= dst->_maxy && dmaxcol <= dst->_maxx) {
+		int sx, sy, dx, dy;
+		bool copied = FALSE;
 
 		T(("rectangle fits in destination"));
 
 		for (dy = dminrow, sy = sminrow;
 		     dy <= dmaxrow;
 		     sy++, dy++) {
+		    bool touched;
+
+		    if (dy < 0 || sy < 0)
+			continue;
 
 		    touched = FALSE;
 		    for (dx = dmincol, sx = smincol;
 			 dx <= dmaxcol;
 			 sx++, dx++) {
+
+			if (dx < 0 || sx < 0)
+			    continue;
+			copied = TRUE;
+
 			if (over) {
 			    if ((CharOf(src->_line[sy].text[sx]) != L(' ')) &&
 				(!CharEq(dst->_line[dy].text[dx],
@@ -199,7 +215,8 @@ copywin(const WINDOW *src, WINDOW *dst,
 		    }
 		}
 		T(("finished copywin"));
-		rc = OK;
+		if (copied)
+		    rc = OK;
 	    }
 	}
 	_nc_unlock_global(curses);

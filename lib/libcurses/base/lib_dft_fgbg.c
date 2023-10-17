@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_dft_fgbg.c,v 1.8 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_dft_fgbg.c,v 1.9 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2004,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2014,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,49 +30,77 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey                                                *
+ *  Author: Thomas E. Dickey          1998-on                               *
+ *          Juergen Pfeifer           2009                                  *
  ****************************************************************************/
 
 #include <curses.priv.h>
-#include <term.h>
 
-MODULE_ID("$Id: lib_dft_fgbg.c,v 1.8 2010/01/12 23:22:05 nicm Exp $")
+#ifndef CUR
+#define CUR SP_TERMTYPE
+#endif
+
+MODULE_ID("$Id: lib_dft_fgbg.c,v 1.9 2023/10/17 09:52:08 nicm Exp $")
 
 /*
  * Modify the behavior of color-pair 0 so that the library doesn't assume that
  * it is white on black.  This is an extension to XSI curses.
  */
 NCURSES_EXPORT(int)
+NCURSES_SP_NAME(use_default_colors) (NCURSES_SP_DCL0)
+{
+    T((T_CALLED("use_default_colors(%p)"), (void *) SP_PARM));
+    returnCode(NCURSES_SP_NAME(assume_default_colors) (NCURSES_SP_ARGx -1, -1));
+}
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
 use_default_colors(void)
 {
-    T((T_CALLED("use_default_colors()")));
-    returnCode(assume_default_colors(-1, -1));
+    return NCURSES_SP_NAME(use_default_colors) (CURRENT_SCREEN);
 }
+#endif
 
 /*
  * Modify the behavior of color-pair 0 so that the library assumes that it
  * is something specific, possibly not white on black.
  */
 NCURSES_EXPORT(int)
+NCURSES_SP_NAME(assume_default_colors) (NCURSES_SP_DCLx int fg, int bg)
+{
+    int code = ERR;
+
+    T((T_CALLED("assume_default_colors(%p,%d,%d)"), (void *) SP_PARM, fg, bg));
+    if (SP_PARM != 0) {
+#ifdef USE_TERM_DRIVER
+	code = CallDriver_2(SP_PARM, td_defaultcolors, fg, bg);
+#else
+	if ((orig_pair || orig_colors) && !initialize_pair) {
+
+	    SP_PARM->_default_color = isDefaultColor(fg) || isDefaultColor(bg);
+	    SP_PARM->_has_sgr_39_49 = (tigetflag("AX") == TRUE);
+	    SP_PARM->_default_fg = isDefaultColor(fg) ? COLOR_DEFAULT : fg;
+	    SP_PARM->_default_bg = isDefaultColor(bg) ? COLOR_DEFAULT : bg;
+	    if (SP_PARM->_color_pairs != 0) {
+		bool save = SP_PARM->_default_color;
+		SP_PARM->_assumed_color = TRUE;
+		SP_PARM->_default_color = TRUE;
+		NCURSES_SP_NAME(init_pair) (NCURSES_SP_ARGx 0,
+					    (short)fg,
+					    (short)bg);
+		SP_PARM->_default_color = save;
+	    }
+	    code = OK;
+	}
+#endif
+    }
+    returnCode(code);
+}
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
 assume_default_colors(int fg, int bg)
 {
-    T((T_CALLED("assume_default_colors(%d,%d)"), fg, bg));
-
-    if (!orig_pair && !orig_colors)
-	returnCode(ERR);
-
-    if (initialize_pair)	/* don't know how to handle this */
-	returnCode(ERR);
-
-    SP->_default_color = isDefaultColor(fg) || isDefaultColor(bg);
-    SP->_has_sgr_39_49 = (tigetflag("AX") == TRUE);
-    SP->_default_fg = isDefaultColor(fg) ? COLOR_DEFAULT : (fg & C_MASK);
-    SP->_default_bg = isDefaultColor(bg) ? COLOR_DEFAULT : (bg & C_MASK);
-    if (SP->_color_pairs != 0) {
-	bool save = SP->_default_color;
-	SP->_default_color = TRUE;
-	init_pair(0, (short) fg, (short) bg);
-	SP->_default_color = save;
-    }
-    returnCode(OK);
+    return NCURSES_SP_NAME(assume_default_colors) (CURRENT_SCREEN, fg, bg);
 }
+#endif

@@ -1,7 +1,8 @@
-/* $OpenBSD: entries.c,v 1.1 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: entries.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2006-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2019-2022,2023 Thomas E. Dickey                                *
+ * Copyright 2006-2012,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -30,6 +31,7 @@
 
 /****************************************************************************
  *  Author: Thomas E. Dickey                                                *
+ *     and: Juergen Pfeifer                                                 *
  ****************************************************************************/
 
 #include <curses.priv.h>
@@ -37,9 +39,8 @@
 #include <ctype.h>
 
 #include <tic.h>
-#include <term_entry.h>
 
-MODULE_ID("$Id: entries.c,v 1.1 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: entries.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 /****************************************************************************
  *
@@ -65,8 +66,34 @@ MODULE_ID("$Id: entries.c,v 1.1 2010/01/12 23:22:06 nicm Exp $")
 NCURSES_EXPORT_VAR(ENTRY *) _nc_head = 0;
 NCURSES_EXPORT_VAR(ENTRY *) _nc_tail = 0;
 
+static ENTRY *
+_nc_delink_entry(ENTRY * headp, const TERMTYPE2 *const tterm)
+/* delink the allocated storage for the given list entry */
+{
+    ENTRY *ep, *last;
+
+    for (last = 0, ep = headp; ep != 0; last = ep, ep = ep->next) {
+	if (&(ep->tterm) == tterm) {
+	    if (last != 0) {
+		last->next = ep->next;
+	    }
+	    if (ep->next != 0) {
+		ep->next->last = last;
+	    }
+	    if (ep == _nc_head) {
+		_nc_head = ep->next;
+	    }
+	    if (ep == _nc_tail) {
+		_nc_tail = last;
+	    }
+	    break;
+	}
+    }
+    return ep;
+}
+
 NCURSES_EXPORT(void)
-_nc_free_entry(ENTRY * headp, TERMTYPE *tterm)
+_nc_free_entry(ENTRY * headp, TERMTYPE2 *tterm)
 /* free the allocated storage consumed by the given list entry */
 {
     ENTRY *ep;
@@ -83,31 +110,8 @@ _nc_free_entries(ENTRY * headp)
     (void) headp;		/* unused - _nc_head is altered here! */
 
     while (_nc_head != 0) {
-	_nc_free_termtype(&(_nc_head->tterm));
+	_nc_free_termtype2(&(_nc_head->tterm));
     }
-}
-
-NCURSES_EXPORT(ENTRY *)
-_nc_delink_entry(ENTRY * headp, TERMTYPE *tterm)
-/* delink the allocated storage for the given list entry */
-{
-    ENTRY *ep, *last;
-
-    for (last = 0, ep = headp; ep != 0; last = ep, ep = ep->next) {
-	if (&(ep->tterm) == tterm) {
-	    if (last != 0) {
-		last->next = ep->next;
-	    }
-	    if (ep == _nc_head) {
-		_nc_head = ep->next;
-	    }
-	    if (ep == _nc_tail) {
-		_nc_tail = last;
-	    }
-	    break;
-	}
-    }
-    return ep;
 }
 
 NCURSES_EXPORT(void)
@@ -117,22 +121,56 @@ _nc_leaks_tinfo(void)
     char *s;
 #endif
 
-    T((T_CALLED("_nc_free_tinfo()")));
+    T((T_CALLED("_nc_leaks_tinfo()")));
 #if NO_LEAKS
-    _nc_free_tparm();
+    _nc_globals.leak_checking = TRUE;
+    _nc_free_tparm(cur_term);
     _nc_tgetent_leaks();
+
+#ifdef USE_PTHREADS
+    /*
+     * Discard any prescreen data which is not used for the current screen.
+     */
+    _nc_lock_global(screen);
+    {
+	PRESCREEN_LIST *p;
+	pthread_t id = GetThreadID();
+	for (p = _nc_prescreen.allocated; p != 0; p = p->next) {
+	    if (p->id == id && p->sp != CURRENT_SCREEN) {
+		FreeAndNull(p->sp);
+	    }
+	}
+    }
+    _nc_unlock_global(screen);
+#endif
+    if (TerminalOf(CURRENT_SCREEN) != 0) {
+	del_curterm(TerminalOf(CURRENT_SCREEN));
+    }
+    _nc_forget_prescr();
+
+    _nc_comp_captab_leaks();
+    _nc_comp_userdefs_leaks();
     _nc_free_entries(_nc_head);
     _nc_get_type(0);
     _nc_first_name(0);
+    _nc_db_iterator_leaks();
     _nc_keyname_leaks();
 #if BROKEN_LINKER || USE_REENTRANT
     _nc_names_leaks();
     _nc_codes_leaks();
     FreeIfNeeded(_nc_prescreen.real_acs_map);
 #endif
+    _nc_comp_error_leaks();
 
     if ((s = _nc_home_terminfo()) != 0)
 	free(s);
+
+#ifdef TRACE
+    T((T_RETURN("")));
+    curses_trace(0);
+    _nc_trace_buf(-1, (size_t) 0);
+#endif
+
 #endif /* NO_LEAKS */
     returnVoid;
 }
@@ -141,7 +179,18 @@ _nc_leaks_tinfo(void)
 NCURSES_EXPORT(void)
 _nc_free_tinfo(int code)
 {
+    T((T_CALLED("_nc_free_tinfo(%d)"), code));
     _nc_leaks_tinfo();
     exit(code);
 }
 #endif
+
+NCURSES_EXPORT(void)
+exit_terminfo(int code)
+{
+    T((T_CALLED("exit_terminfo(%d)"), code));
+#if NO_LEAKS
+    _nc_leaks_tinfo();
+#endif
+    exit(code);
+}

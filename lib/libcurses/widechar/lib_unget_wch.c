@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_unget_wch.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_unget_wch.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2002-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020,2023 Thomas E. Dickey                                     *
+ * Copyright 2002-2011,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_unget_wch.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_unget_wch.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 /*
  * Wrapper for wcrtomb() which obtains the length needed for the given
@@ -57,24 +58,23 @@ _nc_wcrtomb(char *target, wchar_t source, mbstate_t * state)
 	const wchar_t *tempp = temp;
 	temp[0] = source;
 	temp[1] = 0;
-	result = wcsrtombs(NULL, &tempp, 0, state);
+	result = (int) wcsrtombs(NULL, &tempp, (size_t) 0, state);
     } else {
-	result = wcrtomb(target, source, state);
+	result = (int) wcrtomb(target, source, state);
     }
-    if (!isEILSEQ(result) && (result == 0))
+    if (!isEILSEQ(result) && ((result == 0) || (result > MB_LEN_MAX)))
 	result = 1;
-    return result;
+    return (size_t) result;
 }
 
 NCURSES_EXPORT(int)
-unget_wch(const wchar_t wch)
+NCURSES_SP_NAME(unget_wch) (NCURSES_SP_DCLx const wchar_t wch)
 {
     int result = OK;
     mbstate_t state;
     size_t length;
-    int n;
 
-    T((T_CALLED("unget_wch(%#lx)"), (unsigned long) wch));
+    T((T_CALLED("unget_wch(%p, %#lx)"), (void *) SP_PARM, (unsigned long) wch));
 
     init_mb(state);
     length = _nc_wcrtomb(0, wch, &state);
@@ -84,11 +84,15 @@ unget_wch(const wchar_t wch)
 	char *string;
 
 	if ((string = (char *) malloc(length)) != 0) {
+	    int n;
+
 	    init_mb(state);
-	    wcrtomb(string, wch, &state);
+	    /* ignore the result, since we already validated the character */
+	    IGNORE_RC((int) wcrtomb(string, wch, &state));
 
 	    for (n = (int) (length - 1); n >= 0; --n) {
-		if (_nc_ungetch(SP, string[n]) != OK) {
+		if (NCURSES_SP_NAME(ungetch) (NCURSES_SP_ARGx
+					      UChar(string[n])) !=OK) {
 		    result = ERR;
 		    break;
 		}
@@ -103,3 +107,11 @@ unget_wch(const wchar_t wch)
 
     returnCode(result);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+unget_wch(const wchar_t wch)
+{
+    return NCURSES_SP_NAME(unget_wch) (CURRENT_SCREEN, wch);
+}
+#endif

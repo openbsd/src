@@ -1,7 +1,8 @@
-/* $OpenBSD: nc_tparm.h,v 1.2 2020/06/05 19:50:59 denis Exp $ */
+/* $OpenBSD: nc_tparm.h,v 1.3 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2006 Free Software Foundation, Inc.                        *
+ * Copyright 2018-2020,2023 Thomas E. Dickey                                *
+ * Copyright 2006-2012,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -32,13 +33,26 @@
  *  Author: Thomas E. Dickey                        2006                    *
  ****************************************************************************/
 
-/* $Id: nc_tparm.h,v 1.2 2020/06/05 19:50:59 denis Exp $ */
+/* $Id: nc_tparm.h,v 1.3 2023/10/17 09:52:08 nicm Exp $ */
+
+#ifndef NC_TPARM_included
+#define NC_TPARM_included 1
+
+#include <ncurses_cfg.h>
+#include <curses.h>
 
 /*
  * Cast parameters past the formatting-string for tparm() to match the
  * assumption of the varargs code.
  */
+#ifndef TPARM_ARG
+#ifdef NCURSES_TPARM_ARG
+#define TPARM_ARG NCURSES_TPARM_ARG
+#else
 #define TPARM_ARG long
+#endif
+#endif /* TPARAM_ARG */
+
 #define TPARM_N(n) (TPARM_ARG)(n)
 
 #define TPARM_9(a,b,c,d,e,f,g,h,i,j) tparm(a,TPARM_N(b),TPARM_N(c),TPARM_N(d),TPARM_N(e),TPARM_N(f),TPARM_N(g),TPARM_N(h),TPARM_N(i),TPARM_N(j))
@@ -64,3 +78,18 @@
 #define TPARM_1(a,b) TPARM_2(a,b,0)
 #define TPARM_0(a) TPARM_1(a,0)
 #endif
+
+#ifdef NCURSES_INTERNALS
+#define TIPARM_0(s) _nc_tiparm(0,s)
+#define TIPARM_1(s,a) _nc_tiparm(1,s,a)
+#define TIPARM_2(s,a,b) _nc_tiparm(2,s,a,b)
+#define TIPARM_3(s,a,b,c) _nc_tiparm(3,s,a,b,c)
+#define TIPARM_4(s,a,b,c,d) _nc_tiparm(4,s,a,b,c,d)
+#define TIPARM_5(s,a,b,c,d,e) _nc_tiparm(5,s,a,b,c,d,e)
+#define TIPARM_6(s,a,b,c,d,e,f) _nc_tiparm(6,s,a,b,c,d,e,f)
+#define TIPARM_7(s,a,b,c,d,e,f,g) _nc_tiparm(7,s,a,b,c,d,e,f,g)
+#define TIPARM_8(s,a,b,c,d,e,f,g,h) _nc_tiparm(8,s,a,b,c,d,e,f,g,h)
+#define TIPARM_9(s,a,b,c,d,e,f,g,h,i) _nc_tiparm(9,s,a,b,c,d,e,f,g,h,i)
+#endif
+
+#endif /* NC_TPARM_included */

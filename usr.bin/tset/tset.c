@@ -1,7 +1,8 @@
-/*	$OpenBSD: tset.c,v 1.44 2022/12/04 23:50:49 cheloha Exp $	*/
+/*	$OpenBSD: tset.c,v 1.45 2023/10/17 09:52:11 nicm Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,6 +34,22 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
+
+/*
+ * Notes:
+ * The initial adaptation from 4.4BSD Lite sources in September 1995 used 686
+ * lines from that version, and made changes/additions for 150 lines.  There
+ * was no reformatting, so with/without ignoring whitespace, the amount of
+ * change is the same.
+ *
+ * Comparing with current (2009) source, excluding this comment:
+ * a) 209 lines match identically to the 4.4BSD Lite sources, with 771 lines
+ *    changed/added.
+ * a) Ignoring whitespace, the current version still uses 516 lines from the
+ *    4.4BSD Lite sources, with 402 lines changed/added.
+ *
+ * Raymond's original comment on this follows...
+ */
 
 /*
  * tset.c - terminal initialization utility
@@ -71,60 +88,29 @@
  * SUCH DAMAGE.
  */
 
-#define USE_LIBTINFO
-#define __INTERNAL_CAPS_VISIBLE	/* we need to see has_hardware_tabs */
-#include <progs.priv.h>
-
-#include <errno.h>
-#include <stdio.h>
+#include <reset_cmd.h>
 #include <termcap.h>
-#include <fcntl.h>
+#include <transform.h>
+#include <tty_settings.h>
 
-#if HAVE_GETTTYNAM && HAVE_TTYENT_H
+#if HAVE_GETTTYNAM
 #include <ttyent.h>
 #endif
 #ifdef NeXT
 char *ttyname(int fd);
 #endif
 
-#if HAVE_SIZECHANGE
-# if !defined(sun) || !TERMIOS
-#  if HAVE_SYS_IOCTL_H
-#   include <sys/ioctl.h>
-#  endif
-# endif
-#endif
 
-#if NEED_PTEM_H
-/* they neglected to define struct winsize in termios.h -- it's only
-   in termio.h	*/
-#include <sys/stream.h>
-#include <sys/ptem.h>
-#endif
 
-#include <dump_entry.h>
-#include <transform.h>
-
+#ifndef environ
 extern char **environ;
+#endif
 
-#undef CTRL
-#define CTRL(x)	((x) & 0x1f)
-
-const char *_nc_progname;
-
-static TTY mode, oldmode, original;
-
-static bool opt_c;		/* set control-chars */
-static bool opt_w;		/* set window-size */
-
-static bool can_restore = FALSE;
-static bool isreset = FALSE;	/* invoked as reset */
-static int terasechar = -1;	/* new erase character */
-static int intrchar = -1;	/* new interrupt character */
-static int tkillchar = -1;	/* new kill character */
-static int tlines, tcolumns;	/* window size */
+const char *_nc_progname = "tset";
 
 #define LOWERCASE(c) ((isalpha(UChar(c)) && isupper(UChar(c))) ? tolower(UChar(c)) : (c))
+
+static GCC_NORETURN void exit_error(void);
 
 static int
 CaselessCmp(const char *a, const char *b)
@@ -138,19 +124,18 @@ CaselessCmp(const char *a, const char *b)
     return LOWERCASE(*a) - LOWERCASE(*b);
 }
 
-static void
+static GCC_NORETURN void
 exit_error(void)
 {
-    if (can_restore)
-	tcsetattr(STDERR_FILENO, TCSADRAIN, &original);
+    restore_tty_settings();
     (void) fprintf(stderr, "\n");
     fflush(stderr);
     ExitProgram(EXIT_FAILURE);
     /* NOTREACHED */
 }
 
-static void
-err(const char *fmt,...)
+static GCC_NORETURN void
+err(const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -161,35 +146,22 @@ err(const char *fmt,...)
     /* NOTREACHED */
 }
 
-static void
+static GCC_NORETURN void
 failed(const char *msg)
 {
-    fprintf(stderr, "%s: ", _nc_progname);
-    perror(msg);
+    char temp[BUFSIZ];
+    size_t len = strlen(_nc_progname) + 2;
+
+    if ((int) len < (int) sizeof(temp) - 12) {
+	_nc_STRCPY(temp, _nc_progname, sizeof(temp));
+	_nc_STRCAT(temp, ": ", sizeof(temp));
+    } else {
+	_nc_STRCPY(temp, "tset: ", sizeof(temp));
+    }
+    _nc_STRNCAT(temp, msg, sizeof(temp), sizeof(temp) - strlen(temp) - 2);
+    perror(temp);
     exit_error();
     /* NOTREACHED */
-}
-
-static void
-cat(char *file)
-{
-    FILE *fp;
-    size_t nr;
-    char buf[BUFSIZ];
-
-    if ((fp = fopen(file, "r")) == 0)
-	failed(file);
-
-    while ((nr = fread(buf, sizeof(char), sizeof(buf), fp)) != 0)
-	if (fwrite(buf, sizeof(char), nr, stderr) != nr)
-	      failed("write to stderr");
-    fclose(fp);
-}
-
-static int
-outc(int c)
-{
-    return putc(c, stderr);
 }
 
 /* Prompt the user for a terminal type. */
@@ -205,14 +177,17 @@ askuser(const char *dflt)
 	exit_error();
 	/* NOTREACHED */
     }
+
     for (;;) {
+	char *p;
+
 	if (dflt)
 	    (void) fprintf(stderr, "Terminal type? [%s] ", dflt);
 	else
 	    (void) fprintf(stderr, "Terminal type? ");
 	(void) fflush(stderr);
 
-	if (fgets(answer, sizeof(answer), stdin) == NULL) {
+	if (fgets(answer, sizeof(answer), stdin) == 0) {
 	    if (dflt == 0) {
 		exit_error();
 		/* NOTREACHED */
@@ -220,7 +195,8 @@ askuser(const char *dflt)
 	    return (dflt);
 	}
 
-	answer[strcspn(answer, "\n")] = '\0';
+	if ((p = strchr(answer, '\n')) != 0)
+	    *p = '\0';
 	if (answer[0])
 	    return (answer);
 	if (dflt != 0)
@@ -252,87 +228,142 @@ typedef struct map {
 
 static MAP *cur, *maplist;
 
+#define DATA(name,value) { { name }, value }
+
 typedef struct speeds {
-    const char *string;
+    const char string[8];
     int speed;
 } SPEEDS;
 
+#if defined(EXP_WIN32_DRIVER)
 static const SPEEDS speeds[] =
 {
-    {"0", B0},
-    {"50", B50},
-    {"75", B75},
-    {"110", B110},
-    {"134", B134},
-    {"134.5", B134},
-    {"150", B150},
-    {"200", B200},
-    {"300", B300},
-    {"600", B600},
-    {"1200", B1200},
-    {"1800", B1800},
-    {"2400", B2400},
-    {"4800", B4800},
-    {"9600", B9600},
+    {"0", 0}
+};
+#else
+static const SPEEDS speeds[] =
+{
+    DATA("0", B0),
+    DATA("50", B50),
+    DATA("75", B75),
+    DATA("110", B110),
+    DATA("134", B134),
+    DATA("134.5", B134),
+    DATA("150", B150),
+    DATA("200", B200),
+    DATA("300", B300),
+    DATA("600", B600),
+    DATA("1200", B1200),
+    DATA("1800", B1800),
+    DATA("2400", B2400),
+    DATA("4800", B4800),
+    DATA("9600", B9600),
     /* sgttyb may define up to this point */
 #ifdef B19200
-    {"19200", B19200},
+    DATA("19200", B19200),
 #endif
 #ifdef B38400
-    {"38400", B38400},
+    DATA("38400", B38400),
 #endif
 #ifdef B19200
-    {"19200", B19200},
+    DATA("19200", B19200),
 #endif
 #ifdef B38400
-    {"38400", B38400},
+    DATA("38400", B38400),
 #endif
 #ifdef B19200
-    {"19200", B19200},
+    DATA("19200", B19200),
 #else
 #ifdef EXTA
-    {"19200", EXTA},
+    DATA("19200", EXTA),
 #endif
 #endif
 #ifdef B38400
-    {"38400", B38400},
+    DATA("38400", B38400),
 #else
 #ifdef EXTB
-    {"38400", EXTB},
+    DATA("38400", EXTB),
 #endif
 #endif
 #ifdef B57600
-    {"57600", B57600},
+    DATA("57600", B57600),
+#endif
+#ifdef B76800
+    DATA("76800", B57600),
 #endif
 #ifdef B115200
-    {"115200", B115200},
+    DATA("115200", B115200),
+#endif
+#ifdef B153600
+    DATA("153600", B153600),
 #endif
 #ifdef B230400
-    {"230400", B230400},
+    DATA("230400", B230400),
+#endif
+#ifdef B307200
+    DATA("307200", B307200),
 #endif
 #ifdef B460800
-    {"460800", B460800},
+    DATA("460800", B460800),
 #endif
-    {(char *) 0, 0}
+#ifdef B500000
+    DATA("500000", B500000),
+#endif
+#ifdef B576000
+    DATA("576000", B576000),
+#endif
+#ifdef B921600
+    DATA("921600", B921600),
+#endif
+#ifdef B1000000
+    DATA("1000000", B1000000),
+#endif
+#ifdef B1152000
+    DATA("1152000", B1152000),
+#endif
+#ifdef B1500000
+    DATA("1500000", B1500000),
+#endif
+#ifdef B2000000
+    DATA("2000000", B2000000),
+#endif
+#ifdef B2500000
+    DATA("2500000", B2500000),
+#endif
+#ifdef B3000000
+    DATA("3000000", B3000000),
+#endif
+#ifdef B3500000
+    DATA("3500000", B3500000),
+#endif
+#ifdef B4000000
+    DATA("4000000", B4000000),
+#endif
 };
+#undef DATA
+#endif
 
 static int
 tbaudrate(char *rate)
 {
-    const SPEEDS *sp;
-    int found = FALSE;
+    const SPEEDS *sp = 0;
+    size_t n;
 
     /* The baudrate number can be preceded by a 'B', which is ignored. */
     if (*rate == 'B')
 	++rate;
 
-    for (sp = speeds; sp->string; ++sp) {
-	if (!CaselessCmp(rate, sp->string)) {
-	    found = TRUE;
+    for (n = 0; n < SIZEOF(speeds); ++n) {
+	if (n > 0 && (speeds[n].speed <= speeds[n - 1].speed)) {
+	    /* if the speeds are not increasing, likely a numeric overflow */
+	    break;
+	}
+	if (!CaselessCmp(rate, speeds[n].string)) {
+	    sp = speeds + n;
 	    break;
 	}
     }
-    if (!found)
+    if (sp == 0)
 	err("unknown baud rate %s", rate);
     return (sp->speed);
 }
@@ -351,9 +382,13 @@ add_mapping(const char *port, char *arg)
     char *base = 0;
 
     copy = strdup(arg);
-    mapp = malloc(sizeof(MAP));
+    mapp = typeMalloc(MAP, 1);
     if (copy == 0 || mapp == 0)
 	failed("malloc");
+
+    assert(copy != 0);
+    assert(mapp != 0);
+
     mapp->next = 0;
     if (maplist == 0)
 	cur = maplist = mapp;
@@ -415,9 +450,6 @@ add_mapping(const char *port, char *arg)
 	mapp->speed = tbaudrate(p);
     }
 
-    if (arg == (char *) 0)	/* Non-optional type. */
-	goto badmopt;
-
     mapp->type = arg;
 
     /* Terminate porttype, if specified. */
@@ -475,19 +507,19 @@ mapped(const char *type)
 		match = TRUE;
 		break;
 	    case EQ:
-		match = (ospeed == mapp->speed);
+		match = ((int) ospeed == mapp->speed);
 		break;
 	    case GE:
-		match = (ospeed >= mapp->speed);
+		match = ((int) ospeed >= mapp->speed);
 		break;
 	    case GT:
-		match = (ospeed > mapp->speed);
+		match = ((int) ospeed > mapp->speed);
 		break;
 	    case LE:
-		match = (ospeed <= mapp->speed);
+		match = ((int) ospeed <= mapp->speed);
 		break;
 	    case LT:
-		match = (ospeed < mapp->speed);
+		match = ((int) ospeed < mapp->speed);
 		break;
 	    default:
 		match = FALSE;
@@ -510,17 +542,21 @@ mapped(const char *type)
  * its termcap entry.
  */
 static const char *
-get_termcap_entry(char *userarg)
+get_termcap_entry(int fd, char *userarg)
 {
     int errret;
     char *p;
     const char *ttype;
+#if HAVE_PATH_TTYS
 #if HAVE_GETTTYNAM
     struct ttyent *t;
 #else
     FILE *fp;
 #endif
     char *ttypath;
+#endif /* HAVE_PATH_TTYS */
+
+    (void) fd;
 
     if (userarg) {
 	ttype = userarg;
@@ -531,7 +567,8 @@ get_termcap_entry(char *userarg)
     if ((ttype = getenv("TERM")) != 0)
 	goto map;
 
-    if ((ttypath = ttyname(STDERR_FILENO)) != 0) {
+#if HAVE_PATH_TTYS
+    if ((ttypath = ttyname(fd)) != 0) {
 	p = _nc_basename(ttypath);
 #if HAVE_GETTTYNAM
 	/*
@@ -549,7 +586,7 @@ get_termcap_entry(char *userarg)
 	    char buffer[BUFSIZ];
 	    char *s, *t, *d;
 
-	    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+	    while (fgets(buffer, sizeof(buffer) - 1, fp) != 0) {
 		for (s = buffer, t = d = 0; *s; s++) {
 		    if (isspace(UChar(*s)))
 			*s = '\0';
@@ -568,6 +605,7 @@ get_termcap_entry(char *userarg)
 	}
 #endif /* HAVE_GETTTYNAM */
     }
+#endif /* HAVE_PATH_TTYS */
 
     /* If still undefined, use "unknown". */
     ttype = "unknown";
@@ -579,13 +617,14 @@ get_termcap_entry(char *userarg)
      * real entry from /etc/termcap.  This prevents us from being fooled
      * by out of date stuff in the environment.
      */
-  found:if ((p = getenv("TERMCAP")) != 0 && !_nc_is_abs_path(p)) {
+  found:
+    if ((p = getenv("TERMCAP")) != 0 && !_nc_is_abs_path(p)) {
 	/* 'unsetenv("TERMCAP")' is not portable.
 	 * The 'environ' array is better.
 	 */
 	int n;
 	for (n = 0; environ[n] != 0; n++) {
-	    if (!strncmp("TERMCAP=", environ[n], 8)) {
+	    if (!strncmp("TERMCAP=", environ[n], (size_t) 8)) {
 		while ((environ[n] = environ[n + 1]) != 0) {
 		    n++;
 		}
@@ -605,7 +644,7 @@ get_termcap_entry(char *userarg)
 	    ttype = askuser(0);
     }
     /* Find the terminfo entry.  If it doesn't exist, ask the user. */
-    while (setupterm((NCURSES_CONST char *) ttype, STDOUT_FILENO, &errret)
+    while (setupterm((NCURSES_CONST char *) ttype, fd, &errret)
 	   != OK) {
 	if (errret == 0) {
 	    (void) fprintf(stderr, "%s: unknown terminal type %s\n",
@@ -627,435 +666,9 @@ get_termcap_entry(char *userarg)
 
 /**************************************************************************
  *
- * Mode-setting logic
- *
- **************************************************************************/
-
-/* some BSD systems have these built in, some systems are missing
- * one or more definitions. The safest solution is to override unless the
- * commonly-altered ones are defined.
- */
-#if !(defined(CERASE) && defined(CINTR) && defined(CKILL) && defined(CQUIT))
-#undef CEOF
-#undef CERASE
-#undef CINTR
-#undef CKILL
-#undef CLNEXT
-#undef CRPRNT
-#undef CQUIT
-#undef CSTART
-#undef CSTOP
-#undef CSUSP
-#endif
-
-/* control-character defaults */
-#ifndef CEOF
-#define CEOF	CTRL('D')
-#endif
-#ifndef CERASE
-#define CERASE	CTRL('H')
-#endif
-#ifndef CINTR
-#define CINTR	127		/* ^? */
-#endif
-#ifndef CKILL
-#define CKILL	CTRL('U')
-#endif
-#ifndef CLNEXT
-#define CLNEXT  CTRL('v')
-#endif
-#ifndef CRPRNT
-#define CRPRNT  CTRL('r')
-#endif
-#ifndef CQUIT
-#define CQUIT	CTRL('\\')
-#endif
-#ifndef CSTART
-#define CSTART	CTRL('Q')
-#endif
-#ifndef CSTOP
-#define CSTOP	CTRL('S')
-#endif
-#ifndef CSUSP
-#define CSUSP	CTRL('Z')
-#endif
-
-#if defined(_POSIX_VDISABLE)
-#define DISABLED(val)   (((_POSIX_VDISABLE != -1) \
-		       && ((val) == _POSIX_VDISABLE)) \
-		      || ((val) <= 0))
-#else
-#define DISABLED(val)   ((int)(val) <= 0)
-#endif
-
-#define CHK(val, dft)   (DISABLED(val) ? dft : val)
-
-static bool set_tabs(void);
-
-/*
- * Reset the terminal mode bits to a sensible state.  Very useful after
- * a child program dies in raw mode.
- */
-static void
-reset_mode(void)
-{
-#ifdef TERMIOS
-    tcgetattr(STDERR_FILENO, &mode);
-#else
-    stty(STDERR_FILENO, &mode);
-#endif
-
-#ifdef TERMIOS
-#if defined(VDISCARD) && defined(CDISCARD)
-    mode.c_cc[VDISCARD] = CHK(mode.c_cc[VDISCARD], CDISCARD);
-#endif
-    mode.c_cc[VEOF] = CHK(mode.c_cc[VEOF], CEOF);
-    mode.c_cc[VERASE] = CHK(mode.c_cc[VERASE], CERASE);
-#if defined(VFLUSH) && defined(CFLUSH)
-    mode.c_cc[VFLUSH] = CHK(mode.c_cc[VFLUSH], CFLUSH);
-#endif
-    mode.c_cc[VINTR] = CHK(mode.c_cc[VINTR], CINTR);
-    mode.c_cc[VKILL] = CHK(mode.c_cc[VKILL], CKILL);
-#if defined(VLNEXT) && defined(CLNEXT)
-    mode.c_cc[VLNEXT] = CHK(mode.c_cc[VLNEXT], CLNEXT);
-#endif
-    mode.c_cc[VQUIT] = CHK(mode.c_cc[VQUIT], CQUIT);
-#if defined(VREPRINT) && defined(CRPRNT)
-    mode.c_cc[VREPRINT] = CHK(mode.c_cc[VREPRINT], CRPRNT);
-#endif
-#if defined(VSTART) && defined(CSTART)
-    mode.c_cc[VSTART] = CHK(mode.c_cc[VSTART], CSTART);
-#endif
-#if defined(VSTOP) && defined(CSTOP)
-    mode.c_cc[VSTOP] = CHK(mode.c_cc[VSTOP], CSTOP);
-#endif
-#if defined(VSUSP) && defined(CSUSP)
-    mode.c_cc[VSUSP] = CHK(mode.c_cc[VSUSP], CSUSP);
-#endif
-#if defined(VWERASE) && defined(CWERASE)
-    mode.c_cc[VWERASE] = CHK(mode.c_cc[VWERASE], CWERASE);
-#endif
-
-    mode.c_iflag &= ~(IGNBRK | PARMRK | INPCK | ISTRIP | INLCR | IGNCR
-#ifdef IUCLC
-		      | IUCLC
-#endif
-#ifdef IXANY
-		      | IXANY
-#endif
-		      | IXOFF);
-
-    mode.c_iflag |= (BRKINT | IGNPAR | ICRNL | IXON
-#ifdef IMAXBEL
-		     | IMAXBEL
-#endif
-	);
-
-    mode.c_oflag &= ~(0
-#ifdef OLCUC
-		      | OLCUC
-#endif
-#ifdef OCRNL
-		      | OCRNL
-#endif
-#ifdef ONOCR
-		      | ONOCR
-#endif
-#ifdef ONLRET
-		      | ONLRET
-#endif
-#ifdef OFILL
-		      | OFILL
-#endif
-#ifdef OFDEL
-		      | OFDEL
-#endif
-#ifdef NLDLY
-		      | NLDLY
-#endif
-#ifdef CRDLY
-		      | CRDLY
-#endif
-#ifdef TABDLY
-		      | TABDLY
-#endif
-#ifdef BSDLY
-		      | BSDLY
-#endif
-#ifdef VTDLY
-		      | VTDLY
-#endif
-#ifdef FFDLY
-		      | FFDLY
-#endif
-	);
-
-    mode.c_oflag |= (OPOST
-#ifdef ONLCR
-		     | ONLCR
-#endif
-	);
-
-    mode.c_cflag &= ~(CSIZE | CSTOPB | PARENB | PARODD | CLOCAL);
-    mode.c_cflag |= (CS8 | CREAD);
-    mode.c_lflag &= ~(ECHONL | NOFLSH
-#ifdef TOSTOP
-		      | TOSTOP
-#endif
-#ifdef ECHOPTR
-		      | ECHOPRT
-#endif
-#ifdef XCASE
-		      | XCASE
-#endif
-	);
-
-    mode.c_lflag |= (ISIG | ICANON | ECHO | ECHOE | ECHOK
-#ifdef ECHOCTL
-		     | ECHOCTL
-#endif
-#ifdef ECHOKE
-		     | ECHOKE
-#endif
-	);
-#endif
-
-    tcsetattr(STDERR_FILENO, TCSADRAIN, &mode);
-}
-
-/*
- * Returns a "good" value for the erase character.  This is loosely based on
- * the BSD4.4 logic.
- */
-#ifdef TERMIOS
-static int
-default_erase(void)
-{
-    int result;
-
-    if (over_strike
-	&& key_backspace != 0
-	&& strlen(key_backspace) == 1)
-	result = key_backspace[0];
-    else
-	result = CERASE;
-
-    return result;
-}
-#endif
-
-/*
- * Update the values of the erase, interrupt, and kill characters in 'mode'.
- *
- * SVr4 tset (e.g., Solaris 2.5) only modifies the intr, quit or erase
- * characters if they're unset, or if we specify them as options.  This differs
- * from BSD 4.4 tset, which always sets erase.
- */
-static void
-set_control_chars(void)
-{
-#ifdef TERMIOS
-    if (DISABLED(mode.c_cc[VERASE]) || terasechar >= 0)
-	mode.c_cc[VERASE] = (terasechar >= 0) ? terasechar : default_erase();
-
-    if (DISABLED(mode.c_cc[VINTR]) || intrchar >= 0)
-	mode.c_cc[VINTR] = (intrchar >= 0) ? intrchar : CINTR;
-
-    if (DISABLED(mode.c_cc[VKILL]) || tkillchar >= 0)
-	mode.c_cc[VKILL] = (tkillchar >= 0) ? tkillchar : CKILL;
-#endif
-}
-
-/*
- * Set up various conversions in 'mode', including parity, tabs, returns,
- * echo, and case, according to the termcap entry.  If the program we're
- * running was named with a leading upper-case character, map external
- * uppercase to internal lowercase.
- */
-static void
-set_conversions(void)
-{
-#ifdef __OBSOLETE__
-    /*
-     * Conversion logic for some *really* ancient terminal glitches,
-     * not supported in terminfo.  Left here for succeeding generations
-     * to marvel at.
-     */
-    if (tgetflag("UC")) {
-#ifdef IUCLC
-	mode.c_iflag |= IUCLC;
-	mode.c_oflag |= OLCUC;
-#endif
-    } else if (tgetflag("LC")) {
-#ifdef IUCLC
-	mode.c_iflag &= ~IUCLC;
-	mode.c_oflag &= ~OLCUC;
-#endif
-    }
-    mode.c_iflag &= ~(PARMRK | INPCK);
-    mode.c_lflag |= ICANON;
-    if (tgetflag("EP")) {
-	mode.c_cflag |= PARENB;
-	mode.c_cflag &= ~PARODD;
-    }
-    if (tgetflag("OP")) {
-	mode.c_cflag |= PARENB;
-	mode.c_cflag |= PARODD;
-    }
-#endif /* __OBSOLETE__ */
-
-#ifdef TERMIOS
-#ifdef ONLCR
-    mode.c_oflag |= ONLCR;
-#endif
-    mode.c_iflag |= ICRNL;
-    mode.c_lflag |= ECHO;
-#ifdef OXTABS
-    mode.c_oflag |= OXTABS;
-#endif /* OXTABS */
-
-    /* test used to be tgetflag("NL") */
-    if (newline != (char *) 0 && newline[0] == '\n' && !newline[1]) {
-	/* Newline, not linefeed. */
-#ifdef ONLCR
-	mode.c_oflag &= ~ONLCR;
-#endif
-	mode.c_iflag &= ~ICRNL;
-    }
-#ifdef __OBSOLETE__
-    if (tgetflag("HD"))		/* Half duplex. */
-	mode.c_lflag &= ~ECHO;
-#endif /* __OBSOLETE__ */
-#ifdef OXTABS
-    /* test used to be tgetflag("pt") */
-    if (VALID_STRING(set_tab) && VALID_STRING(clear_all_tabs))
-	mode.c_oflag &= ~OXTABS;
-#endif /* OXTABS */
-    mode.c_lflag |= (ECHOE | ECHOK);
-#endif
-}
-
-/* Output startup string. */
-static void
-set_init(void)
-{
-    char *p;
-    bool settle;
-
-#ifdef __OBSOLETE__
-    if (pad_char != (char *) 0)	/* Get/set pad character. */
-	PC = pad_char[0];
-#endif /* OBSOLETE */
-
-#ifdef TAB3
-    if (oldmode.c_oflag & (TAB3 | ONLCR | OCRNL | ONLRET)) {
-	oldmode.c_oflag &= (TAB3 | ONLCR | OCRNL | ONLRET);
-	tcsetattr(STDERR_FILENO, TCSADRAIN, &oldmode);
-    }
-#endif
-    settle = set_tabs();
-
-    if (isreset) {
-	if ((p = reset_1string) != 0) {
-	    tputs(p, 0, outc);
-	    settle = TRUE;
-	}
-	if ((p = reset_2string) != 0) {
-	    tputs(p, 0, outc);
-	    settle = TRUE;
-	}
-	/* What about rf, rs3, as per terminfo man page? */
-	/* also might be nice to send rmacs, rmul, rmm */
-	if ((p = reset_file) != 0
-	    || (p = init_file) != 0) {
-	    cat(p);
-	    settle = TRUE;
-	}
-    }
-
-    if (settle) {
-	(void) putc('\r', stderr);
-	(void) fflush(stderr);
-	(void) napms(1000);	/* Settle the terminal. */
-    }
-}
-
-/*
- * Set the hardware tabs on the terminal, using the ct (clear all tabs),
- * st (set one tab) and ch (horizontal cursor addressing) capabilities.
- * This is done before if and is, so they can patch in case we blow this.
- * Return TRUE if we set any tab stops, FALSE if not.
- */
-static bool
-set_tabs(void)
-{
-    if (set_tab && clear_all_tabs) {
-	int c;
-
-	(void) putc('\r', stderr);	/* Force to left margin. */
-	tputs(clear_all_tabs, 0, outc);
-
-	for (c = 8; c < tcolumns; c += 8) {
-	    /* Get to the right column.  In BSD tset, this
-	     * used to try a bunch of half-clever things
-	     * with cup and hpa, for an average saving of
-	     * somewhat less than two character times per
-	     * tab stop, less than .01 sec at 2400cps. We
-	     * lost all this cruft because it seemed to be
-	     * introducing some odd bugs.
-	     * -----------12345678----------- */
-	    (void) fputs("        ", stderr);
-	    tputs(set_tab, 0, outc);
-	}
-	putc('\r', stderr);
-	return (TRUE);
-    }
-    return (FALSE);
-}
-
-/**************************************************************************
- *
  * Main sequence
  *
  **************************************************************************/
-
-/*
- * Tell the user if a control key has been changed from the default value.
- */
-#ifdef TERMIOS
-static void
-report(const char *name, int which, unsigned def)
-{
-    unsigned older, newer;
-    char *p;
-
-    newer = mode.c_cc[which];
-    older = oldmode.c_cc[which];
-
-    if (older == newer && older == def)
-	return;
-
-    (void) fprintf(stderr, "%s %s ", name, older == newer ? "is" : "set to");
-
-    if (DISABLED(newer))
-	(void) fprintf(stderr, "undef.\n");
-    /*
-     * Check 'delete' before 'backspace', since the key_backspace value
-     * is ambiguous.
-     */
-    else if (newer == 0177)
-	(void) fprintf(stderr, "delete.\n");
-    else if ((p = key_backspace) != 0
-	     && newer == (unsigned char) p[0]
-	     && p[1] == '\0')
-	(void) fprintf(stderr, "backspace.\n");
-    else if (newer < 040) {
-	newer ^= 0100;
-	(void) fprintf(stderr, "control-%c (^%c).\n", UChar(newer), UChar(newer));
-    } else
-	(void) fprintf(stderr, "%c.\n", UChar(newer));
-}
-#endif
 
 /*
  * Convert the obsolete argument forms into something that getopt can handle.
@@ -1092,13 +705,58 @@ obsolete(char **argv)
 }
 
 static void
+print_shell_commands(const char *ttype)
+{
+    const char *p;
+    int len;
+    char *var;
+    char *leaf;
+    /*
+     * Figure out what shell we're using.  A hack, we look for an
+     * environmental variable SHELL ending in "csh".
+     */
+    if ((var = getenv("SHELL")) != 0
+	&& ((len = (int) strlen(leaf = _nc_basename(var))) >= 3)
+	&& !strcmp(leaf + len - 3, "csh"))
+	p = "set noglob;\nsetenv TERM %s;\nunset noglob;\n";
+    else
+	p = "TERM=%s;\n";
+    (void) printf(p, ttype);
+}
+
+static void
 usage(void)
 {
-    (void) fprintf(stderr, "usage: %s [-cIQqrsVw] [-] "
-	"[-e ch] [-i ch] [-k ch] [-m mapping] [terminal]",
-	_nc_progname);
-
-    exit_error();
+#define SKIP(s)			/* nothing */
+#define KEEP(s) s "\n"
+    static const char msg[] =
+    {
+	KEEP("")
+	KEEP("Options:")
+	SKIP("  -a arpanet  (obsolete)")
+	KEEP("  -c          set control characters")
+	SKIP("  -d dialup   (obsolete)")
+	KEEP("  -e ch       erase character")
+	KEEP("  -I          no initialization strings")
+	KEEP("  -i ch       interrupt character")
+	KEEP("  -k ch       kill character")
+	KEEP("  -m mapping  map identifier to type")
+	SKIP("  -p plugboard (obsolete)")
+	KEEP("  -Q          do not output control key settings")
+	KEEP("  -q          display term only, do no changes")
+	KEEP("  -r          display term on stderr")
+	SKIP("  -S          (obsolete)")
+	KEEP("  -s          output TERM set command")
+	KEEP("  -V          print curses-version")
+	KEEP("  -w          set window-size")
+	KEEP("")
+	KEEP("If neither -c/-w are given, both are assumed.")
+    };
+#undef KEEP
+#undef SKIP
+    (void) fprintf(stderr, "Usage: %s [options] [terminal]\n", _nc_progname);
+    fputs(msg, stderr);
+    ExitProgram(EXIT_FAILURE);
     /* NOTREACHED */
 }
 
@@ -1114,8 +772,14 @@ int
 main(int argc, char **argv)
 {
     int ch, noinit, noset, quiet, Sflag, sflag, showterm;
-    const char *p;
     const char *ttype;
+    int terasechar = -1;	/* new erase character */
+    int intrchar = -1;		/* new interrupt character */
+    int tkillchar = -1;		/* new kill character */
+    int my_fd;
+    bool opt_c = FALSE;		/* set control-chars */
+    bool opt_w = FALSE;		/* set window-size */
+    TTY mode, oldmode;
 
     _nc_progname = _nc_rootname(*argv);
 
@@ -1124,7 +788,7 @@ main(int argc, char **argv)
 
     obsolete(argv);
     noinit = noset = quiet = Sflag = sflag = showterm = 0;
-    while ((ch = getopt(argc, argv, "a:cd:e:Ii:k:m:np:qQSrsVw")) != -1) {
+    while ((ch = getopt(argc, argv, "a:cd:e:Ii:k:m:np:qQrSsVw")) != -1) {
 	switch (ch) {
 	case 'c':		/* set control-chars */
 	    opt_c = TRUE;
@@ -1176,10 +840,12 @@ main(int argc, char **argv)
 	case 'w':		/* set window-size */
 	    opt_w = TRUE;
 	    break;
+	case '?':
 	default:
 	    usage();
 	}
     }
+
     argc -= optind;
     argv += optind;
 
@@ -1189,95 +855,66 @@ main(int argc, char **argv)
     if (!opt_c && !opt_w)
 	opt_c = opt_w = TRUE;
 
-    if (tcgetattr(STDERR_FILENO, &mode) < 0)
-	failed("standard error");
-    can_restore = TRUE;
-    original = oldmode = mode;
+    my_fd = save_tty_settings(&mode, TRUE);
+    oldmode = mode;
 #ifdef TERMIOS
     ospeed = (NCURSES_OSPEED) cfgetospeed(&mode);
+#elif defined(EXP_WIN32_DRIVER)
+    ospeed = 0;
 #else
     ospeed = (NCURSES_OSPEED) mode.sg_ospeed;
 #endif
 
-    if (!strcmp(_nc_progname, PROG_RESET)) {
-	isreset = TRUE;
-	reset_mode();
+    if (same_program(_nc_progname, PROG_RESET)) {
+	reset_start(stderr, TRUE, FALSE);
+	reset_tty_settings(my_fd, &mode, noset);
+    } else {
+	reset_start(stderr, FALSE, TRUE);
     }
 
-    ttype = get_termcap_entry(*argv);
+    ttype = get_termcap_entry(my_fd, *argv);
 
     if (!noset) {
-	tcolumns = columns;
-	tlines = lines;
-
 #if HAVE_SIZECHANGE
 	if (opt_w) {
-	    struct winsize win;
-	    /* Set window size if not set already */
-	    if (ioctl(STDERR_FILENO, TIOCGWINSZ, &win) == 0) {
-	        if (win.ws_row == 0 &&
-		    win.ws_col == 0 &&
-		    tlines > 0 && tcolumns > 0) {
-		    win.ws_row = tlines;
-		    win.ws_col = tcolumns;
-		    (void) ioctl(STDERR_FILENO, TIOCSWINSZ, &win);
-		}
-	    }
+	    set_window_size(my_fd, &lines, &columns);
 	}
 #endif
 	if (opt_c) {
-	    set_control_chars();
-	    set_conversions();
+	    set_control_chars(&mode, terasechar, intrchar, tkillchar);
+	    set_conversions(&mode);
 
-	    if (!noinit)
-		set_init();
-
-	    /* Set the modes if they've changed. */
-	    if (memcmp(&mode, &oldmode, sizeof(mode))) {
-		tcsetattr(STDERR_FILENO, TCSADRAIN, &mode);
+	    if (!noinit) {
+		if (send_init_strings(my_fd, &oldmode)) {
+		    (void) putc('\r', stderr);
+		    (void) fflush(stderr);
+		    (void) napms(1000);		/* Settle the terminal. */
+		}
 	    }
+
+	    update_tty_settings(&oldmode, &mode);
 	}
     }
 
-    /* Get the terminal name from the entry. */
-    ttype = _nc_first_name(cur_term->type.term_names);
-
-    if (noset)
+    if (noset) {
 	(void) printf("%s\n", ttype);
-    else {
+    } else {
 	if (showterm)
 	    (void) fprintf(stderr, "Terminal type is %s.\n", ttype);
 	/*
 	 * If erase, kill and interrupt characters could have been
 	 * modified and not -Q, display the changes.
 	 */
-#ifdef TERMIOS
 	if (!quiet) {
-	    report("Erase", VERASE, CERASE);
-	    report("Kill", VKILL, CKILL);
-	    report("Interrupt", VINTR, CINTR);
+	    print_tty_chars(&oldmode, &mode);
 	}
-#endif
     }
 
     if (Sflag)
 	err("The -S option is not supported under terminfo.");
 
     if (sflag) {
-	int len;
-	char *var;
-	char *leaf;
-	/*
-	 * Figure out what shell we're using.  A hack, we look for an
-	 * environmental variable SHELL ending in "csh".
-	 */
-	if ((var = getenv("SHELL")) != 0
-	    && ((len = (int) strlen(leaf = _nc_basename(var))) >= 3)
-	    && !strcmp(leaf + len - 3, "csh"))
-	    p = "set noglob;\nsetenv TERM %s;\nunset noglob;\n";
-	else
-	    p = "TERM=%s;\n";
-	(void) printf(p, ttype);
+	print_shell_commands(ttype);
     }
 
     ExitProgram(EXIT_SUCCESS);

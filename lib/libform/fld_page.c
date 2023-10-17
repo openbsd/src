@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_page.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_page.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,49 +34,49 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_page.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_page.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int set_new_page(FIELD *field, bool new_page_flag)
-|   
-|   Description   :  Marks the field as the beginning of a new page of 
+|
+|   Description   :  Marks the field as the beginning of a new page of
 |                    the form.
 |
 |   Return Values :  E_OK         - success
 |                    E_CONNECTED  - field is connected
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 set_new_page(FIELD *field, bool new_page_flag)
 {
-  T((T_CALLED("set_new_page(%p,%d)"), field, new_page_flag));
+  T((T_CALLED("set_new_page(%p,%d)"), (void *)field, new_page_flag));
 
   Normalize_Field(field);
   if (field->form)
     RETURN(E_CONNECTED);
 
   if (new_page_flag)
-    field->status |= _NEWPAGE;
+    SetStatus(field, _NEWPAGE);
   else
-    field->status &= ~_NEWPAGE;
+    ClrStatus(field, _NEWPAGE);
 
   RETURN(E_OK);
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  bool new_page(const FIELD *field)
-|   
-|   Description   :  Retrieve the info whether or not the field starts a
-|                    new page on the form.
+|
+|   Description   :  Retrieve the information whether or not the field starts
+|                    a new page on the form.
 |
 |   Return Values :  TRUE  - field starts a new page
 |                    FALSE - field doesn't start a new page
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(bool)
+FORM_EXPORT(bool)
 new_page(const FIELD *field)
 {
-  T((T_CALLED("new_page(%p)"), field));
+  T((T_CALLED("new_page(%p)"), (const void *)field));
 
   returnBool((Normalize_Field(field)->status & _NEWPAGE) ? TRUE : FALSE);
 }

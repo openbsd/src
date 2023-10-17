@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_move.c,v 1.4 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_move.c,v 1.5 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2000,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2004,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -43,12 +44,12 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_move.c,v 1.4 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_move.c,v 1.5 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
 wmove(WINDOW *win, int y, int x)
 {
-    T((T_CALLED("wmove(%p,%d,%d)"), win, y, x));
+    T((T_CALLED("wmove(%p,%d,%d)"), (void *) win, y, x));
 
     if (LEGALYX(win, y, x)) {
 	win->_curx = (NCURSES_SIZE_T) x;

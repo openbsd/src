@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_raw.c,v 1.8 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_raw.c,v 1.9 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2002,2007 Free Software Foundation, Inc.              *
+ * Copyright 2020,2023 Thomas E. Dickey                                     *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,7 +32,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
- *     and: Thomas E. Dickey 1998 on                                        *
+ *     and: Thomas E. Dickey                        1998-on                 *
+ *     and: Juergen Pfeifer                         2009                    *
  ****************************************************************************/
 
 /*
@@ -49,13 +51,8 @@
  */
 
 #include <curses.priv.h>
-#include <term.h>		/* cur_term */
 
-MODULE_ID("$Id: lib_raw.c,v 1.8 2010/01/12 23:22:06 nicm Exp $")
-
-#if SVR4_TERMIO && !defined(_POSIX_SOURCE)
-#define _POSIX_SOURCE
-#endif
+MODULE_ID("$Id: lib_raw.c,v 1.9 2023/10/17 09:52:09 nicm Exp $")
 
 #if HAVE_SYS_TERMIO_H
 #include <sys/termio.h>		/* needed for ISC */
@@ -63,9 +60,14 @@ MODULE_ID("$Id: lib_raw.c,v 1.8 2010/01/12 23:22:06 nicm Exp $")
 
 #ifdef __EMX__
 #include <io.h>
-#define _nc_setmode(mode) setmode(SP->_ifd, mode)
+#define _nc_setmode(mode) setmode(SP_PARM->_ifd, mode)
 #else
 #define _nc_setmode(mode)	/* nothing */
+#endif
+
+#if USE_KLIBC_KBD
+#define INCL_KBD
+#include <os2.h>
 #endif
 
 #define COOKED_INPUT	(IXON|BRKINT|PARMRK)
@@ -79,187 +81,275 @@ MODULE_ID("$Id: lib_raw.c,v 1.8 2010/01/12 23:22:06 nicm Exp $")
 #endif /* TRACE */
 
 NCURSES_EXPORT(int)
-raw(void)
+NCURSES_SP_NAME(raw) (NCURSES_SP_DCL0)
 {
     int result = ERR;
+    TERMINAL *termp;
 
-    T((T_CALLED("raw()")));
-
-    if (SP != 0 && cur_term != 0) {
+    T((T_CALLED("raw(%p)"), (void *) SP_PARM));
+    if ((termp = TerminalOf(SP_PARM)) != 0) {
 	TTY buf;
 
 	BEFORE("raw");
 	_nc_setmode(O_BINARY);
 
-	buf = cur_term->Nttyb;
+	buf = termp->Nttyb;
 #ifdef TERMIOS
-	buf.c_lflag &= ~(ICANON | ISIG | IEXTEN);
-	buf.c_iflag &= ~(COOKED_INPUT);
+	buf.c_lflag &= (unsigned) ~(ICANON | ISIG | IEXTEN);
+	buf.c_iflag &= (unsigned) ~(COOKED_INPUT);
 	buf.c_cc[VMIN] = 1;
 	buf.c_cc[VTIME] = 0;
+#elif defined(EXP_WIN32_DRIVER)
+	buf.dwFlagIn &= (unsigned long) ~CONMODE_NORAW;
 #else
 	buf.sg_flags |= RAW;
 #endif
-	if ((result = _nc_set_tty_mode(&buf)) == OK) {
-	    SP->_raw = TRUE;
-	    SP->_cbreak = 1;
-	    cur_term->Nttyb = buf;
+	result = NCURSES_SP_NAME(_nc_set_tty_mode) (NCURSES_SP_ARGx &buf);
+	if (result == OK) {
+#if USE_KLIBC_KBD
+	    KBDINFO kbdinfo;
+
+	    kbdinfo.cb = sizeof(kbdinfo);
+	    KbdGetStatus(&kbdinfo, 0);
+
+	    kbdinfo.cb = sizeof(kbdinfo);
+	    kbdinfo.fsMask &= ~KEYBOARD_ASCII_MODE;
+	    kbdinfo.fsMask |= KEYBOARD_BINARY_MODE;
+	    KbdSetStatus(&kbdinfo, 0);
+#endif
+	    if (SP_PARM) {
+		IsRaw(SP_PARM) = TRUE;
+		IsCbreak(SP_PARM) = 1;
+	    }
+	    termp->Nttyb = buf;
 	}
 	AFTER("raw");
     }
     returnCode(result);
 }
 
+#if NCURSES_SP_FUNCS
 NCURSES_EXPORT(int)
-cbreak(void)
+raw(void)
+{
+    return NCURSES_SP_NAME(raw) (CURRENT_SCREEN);
+}
+#endif
+
+NCURSES_EXPORT(int)
+NCURSES_SP_NAME(cbreak) (NCURSES_SP_DCL0)
 {
     int result = ERR;
+    TERMINAL *termp;
 
-    T((T_CALLED("cbreak()")));
-
-    if (SP != 0 && cur_term != 0) {
+    T((T_CALLED("cbreak(%p)"), (void *) SP_PARM));
+    if ((termp = TerminalOf(SP_PARM)) != 0) {
 	TTY buf;
 
 	BEFORE("cbreak");
 	_nc_setmode(O_BINARY);
 
-	buf = cur_term->Nttyb;
+	buf = termp->Nttyb;
 #ifdef TERMIOS
-	buf.c_lflag &= ~ICANON;
-	buf.c_iflag &= ~ICRNL;
+	buf.c_lflag &= (unsigned) ~ICANON;
+	buf.c_iflag &= (unsigned) ~ICRNL;
 	buf.c_lflag |= ISIG;
 	buf.c_cc[VMIN] = 1;
 	buf.c_cc[VTIME] = 0;
+#elif defined(EXP_WIN32_DRIVER)
+	buf.dwFlagIn |= CONMODE_NORAW;
+	buf.dwFlagIn &= (unsigned long) ~CONMODE_NOCBREAK;
 #else
 	buf.sg_flags |= CBREAK;
 #endif
-	if ((result = _nc_set_tty_mode(&buf)) == OK) {
-	    SP->_cbreak = 1;
-	    cur_term->Nttyb = buf;
+	result = NCURSES_SP_NAME(_nc_set_tty_mode) (NCURSES_SP_ARGx &buf);
+	if (result == OK) {
+	    if (SP_PARM) {
+		IsCbreak(SP_PARM) = 1;
+	    }
+	    termp->Nttyb = buf;
 	}
 	AFTER("cbreak");
     }
     returnCode(result);
 }
 
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+cbreak(void)
+{
+    return NCURSES_SP_NAME(cbreak) (CURRENT_SCREEN);
+}
+#endif
+
 /*
  * Note:
  * this implementation may be wrong.  See the comment under intrflush().
  */
 NCURSES_EXPORT(void)
-qiflush(void)
+NCURSES_SP_NAME(qiflush) (NCURSES_SP_DCL0)
 {
-    int result = ERR;
+    TERMINAL *termp;
 
-    T((T_CALLED("qiflush()")));
-
-    if (cur_term != 0) {
+    T((T_CALLED("qiflush(%p)"), (void *) SP_PARM));
+    if ((termp = TerminalOf(SP_PARM)) != 0) {
 	TTY buf;
+	int result;
 
 	BEFORE("qiflush");
-	buf = cur_term->Nttyb;
+	buf = termp->Nttyb;
 #ifdef TERMIOS
-	buf.c_lflag &= ~(NOFLSH);
-	result = _nc_set_tty_mode(&buf);
+	buf.c_lflag &= (unsigned) ~(NOFLSH);
+	result = NCURSES_SP_NAME(_nc_set_tty_mode) (NCURSES_SP_ARGx &buf);
 #else
+	result = ERR;
 	/* FIXME */
 #endif
 	if (result == OK)
-	    cur_term->Nttyb = buf;
+	    termp->Nttyb = buf;
 	AFTER("qiflush");
     }
     returnVoid;
 }
 
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(void)
+qiflush(void)
+{
+    NCURSES_SP_NAME(qiflush) (CURRENT_SCREEN);
+}
+#endif
+
 NCURSES_EXPORT(int)
-noraw(void)
+NCURSES_SP_NAME(noraw) (NCURSES_SP_DCL0)
 {
     int result = ERR;
+    TERMINAL *termp;
 
-    T((T_CALLED("noraw()")));
-
-    if (SP != 0 && cur_term != 0) {
+    T((T_CALLED("noraw(%p)"), (void *) SP_PARM));
+    if ((termp = TerminalOf(SP_PARM)) != 0) {
 	TTY buf;
 
 	BEFORE("noraw");
 	_nc_setmode(O_TEXT);
 
-	buf = cur_term->Nttyb;
+	buf = termp->Nttyb;
 #ifdef TERMIOS
 	buf.c_lflag |= ISIG | ICANON |
-	    (cur_term->Ottyb.c_lflag & IEXTEN);
+	    (termp->Ottyb.c_lflag & IEXTEN);
 	buf.c_iflag |= COOKED_INPUT;
+#elif defined(EXP_WIN32_DRIVER)
+	buf.dwFlagIn |= CONMODE_NORAW;
 #else
 	buf.sg_flags &= ~(RAW | CBREAK);
 #endif
-	if ((result = _nc_set_tty_mode(&buf)) == OK) {
-	    SP->_raw = FALSE;
-	    SP->_cbreak = 0;
-	    cur_term->Nttyb = buf;
+	result = NCURSES_SP_NAME(_nc_set_tty_mode) (NCURSES_SP_ARGx &buf);
+	if (result == OK) {
+#if USE_KLIBC_KBD
+	    KBDINFO kbdinfo;
+
+	    kbdinfo.cb = sizeof(kbdinfo);
+	    KbdGetStatus(&kbdinfo, 0);
+
+	    kbdinfo.cb = sizeof(kbdinfo);
+	    kbdinfo.fsMask &= ~KEYBOARD_BINARY_MODE;
+	    kbdinfo.fsMask |= KEYBOARD_ASCII_MODE;
+	    KbdSetStatus(&kbdinfo, 0);
+#endif
+	    if (SP_PARM) {
+		IsRaw(SP_PARM) = FALSE;
+		IsCbreak(SP_PARM) = 0;
+	    }
+	    termp->Nttyb = buf;
 	}
 	AFTER("noraw");
     }
     returnCode(result);
 }
 
+#if NCURSES_SP_FUNCS
 NCURSES_EXPORT(int)
-nocbreak(void)
+noraw(void)
+{
+    return NCURSES_SP_NAME(noraw) (CURRENT_SCREEN);
+}
+#endif
+
+NCURSES_EXPORT(int)
+NCURSES_SP_NAME(nocbreak) (NCURSES_SP_DCL0)
 {
     int result = ERR;
+    TERMINAL *termp;
 
-    T((T_CALLED("nocbreak()")));
-
-    if (SP != 0 && cur_term != 0) {
+    T((T_CALLED("nocbreak(%p)"), (void *) SP_PARM));
+    if ((termp = TerminalOf(SP_PARM)) != 0) {
 	TTY buf;
 
 	BEFORE("nocbreak");
 	_nc_setmode(O_TEXT);
 
-	buf = cur_term->Nttyb;
+	buf = termp->Nttyb;
 #ifdef TERMIOS
 	buf.c_lflag |= ICANON;
 	buf.c_iflag |= ICRNL;
+#elif defined(EXP_WIN32_DRIVER)
+	buf.dwFlagIn |= (CONMODE_NOCBREAK | CONMODE_NORAW);
 #else
 	buf.sg_flags &= ~CBREAK;
 #endif
-	if ((result = _nc_set_tty_mode(&buf)) == OK) {
-	    SP->_cbreak = 0;
-	    cur_term->Nttyb = buf;
+	result = NCURSES_SP_NAME(_nc_set_tty_mode) (NCURSES_SP_ARGx &buf);
+	if (result == OK) {
+	    if (SP_PARM) {
+		IsCbreak(SP_PARM) = 0;
+	    }
+	    termp->Nttyb = buf;
 	}
 	AFTER("nocbreak");
     }
     returnCode(result);
 }
 
-/*
- * Note:
- * this implementation may be wrong.  See the comment under intrflush().
- */
-NCURSES_EXPORT(void)
-noqiflush(void)
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+nocbreak(void)
 {
-    int result = ERR;
+    return NCURSES_SP_NAME(nocbreak) (CURRENT_SCREEN);
+}
+#endif
 
-    T((T_CALLED("noqiflush()")));
+NCURSES_EXPORT(void)
+NCURSES_SP_NAME(noqiflush) (NCURSES_SP_DCL0)
+{
+    TERMINAL *termp;
 
-    if (cur_term != 0) {
+    T((T_CALLED("noqiflush(%p)"), (void *) SP_PARM));
+    if ((termp = TerminalOf(SP_PARM)) != 0) {
 	TTY buf;
+	int result;
 
 	BEFORE("noqiflush");
-	buf = cur_term->Nttyb;
+	buf = termp->Nttyb;
 #ifdef TERMIOS
 	buf.c_lflag |= NOFLSH;
-	result = _nc_set_tty_mode(&buf);
+	result = NCURSES_SP_NAME(_nc_set_tty_mode) (NCURSES_SP_ARGx &buf);
 #else
 	/* FIXME */
+	result = ERR;
 #endif
-	if (result == OK) {
-	    cur_term->Nttyb = buf;
-	}
+	if (result == OK)
+	    termp->Nttyb = buf;
 	AFTER("noqiflush");
     }
     returnVoid;
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(void)
+noqiflush(void)
+{
+    NCURSES_SP_NAME(noqiflush) (CURRENT_SCREEN);
+}
+#endif
 
 /*
  * This call does the same thing as the qiflush()/noqiflush() pair.  We know
@@ -269,30 +359,82 @@ noqiflush(void)
  * curs_inopts(3x) is too exact to be coincidence.
  */
 NCURSES_EXPORT(int)
-intrflush(WINDOW *win GCC_UNUSED, bool flag)
+NCURSES_SP_NAME(intrflush) (NCURSES_SP_DCLx WINDOW *win GCC_UNUSED, bool flag)
 {
     int result = ERR;
+    TERMINAL *termp;
 
-    T((T_CALLED("intrflush(%d)"), flag));
+    T((T_CALLED("intrflush(%p,%d)"), (void *) SP_PARM, flag));
+    if (SP_PARM == 0)
+	returnCode(ERR);
 
-    if (cur_term != 0) {
+    if ((termp = TerminalOf(SP_PARM)) != 0) {
 	TTY buf;
 
 	BEFORE("intrflush");
-	buf = cur_term->Nttyb;
+	buf = termp->Nttyb;
 #ifdef TERMIOS
 	if (flag)
-	    buf.c_lflag &= ~(NOFLSH);
+	    buf.c_lflag &= (unsigned) ~(NOFLSH);
 	else
 	    buf.c_lflag |= (NOFLSH);
-	result = _nc_set_tty_mode(&buf);
+	result = NCURSES_SP_NAME(_nc_set_tty_mode) (NCURSES_SP_ARGx &buf);
 #else
 	/* FIXME */
 #endif
 	if (result == OK) {
-	    cur_term->Nttyb = buf;
+	    termp->Nttyb = buf;
 	}
 	AFTER("intrflush");
     }
     returnCode(result);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+intrflush(WINDOW *win GCC_UNUSED, bool flag)
+{
+    return NCURSES_SP_NAME(intrflush) (CURRENT_SCREEN, win, flag);
+}
+#endif
+
+#if NCURSES_EXT_FUNCS
+
+/*
+ * SCREEN is always opaque, but nl/raw/cbreak/echo set properties in it.
+ * As an extension, provide a way to query the properties.
+ *
+ * There are other properties which could be queried, e.g., filter, keypad,
+ * use_env, use_meta, but these particular properties are saved/restored within
+ * the wgetnstr() and wgetn_wstr() functions, which requires that the higher
+ * level curses library knows about the internal state of the lower level
+ * terminfo library.
+ */
+
+#define is_TEST(show,what) \
+    NCURSES_EXPORT(int) \
+    NCURSES_SP_NAME(show) (NCURSES_SP_DCL0) \
+    { \
+	return ((SP_PARM != NULL) ? (what(SP_PARM) ? 1 : 0) : -1); \
+    }
+
+is_TEST(is_nl, IsNl);
+is_TEST(is_raw, IsRaw);
+is_TEST(is_cbreak, IsCbreak);
+is_TEST(is_echo, IsEcho);
+
+#if NCURSES_SP_FUNCS
+#undef is_TEST
+#define is_TEST(show) \
+    NCURSES_EXPORT(int) \
+    show(void) \
+    { \
+	return NCURSES_SP_NAME(show) (CURRENT_SCREEN); \
+    }
+is_TEST(is_nl);
+is_TEST(is_raw);
+is_TEST(is_cbreak);
+is_TEST(is_echo);
+#endif
+
+#endif /* extensions */

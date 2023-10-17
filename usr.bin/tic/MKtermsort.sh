@@ -1,11 +1,12 @@
+# $OpenBSD: MKtermsort.sh,v 1.6 2023/10/17 09:52:10 nicm Exp $
 #!/bin/sh
-# $OpenBSD: MKtermsort.sh,v 1.5 2010/01/12 23:22:14 nicm Exp $
-# $Id: MKtermsort.sh,v 1.5 2010/01/12 23:22:14 nicm Exp $
+# $Id: MKtermsort.sh,v 1.6 2023/10/17 09:52:10 nicm Exp $
 #
 # MKtermsort.sh -- generate indirection vectors for the various sort methods
 #
 ##############################################################################
-# Copyright (c) 1998-2003,2008 Free Software Foundation, Inc.                #
+# Copyright 2020-2021,2022 Thomas E. Dickey                                  #
+# Copyright 1998-2015,2017 Free Software Foundation, Inc.                    #
 #                                                                            #
 # Permission is hereby granted, free of charge, to any person obtaining a    #
 # copy of this software and associated documentation files (the "Software"), #
@@ -47,15 +48,26 @@ AWK=${1-awk}
 DATA=${2-../include/Caps}
 
 data=data$$
-trap 'rm -f $data' 1 2 5 15
-sed -e 's/[	][	]*/	/g' < $DATA >$data
+trap 'rm -f $data; exit 1' 1 2 3 15
+sed -e 's/[	][	]*/	/g' < "$DATA" >$data
 DATA=$data
 
-echo "/*";
-echo " * termsort.c --- sort order arrays for use by infocmp.";
-echo " *";
-echo " * Note: this file is generated using MKtermsort.sh, do not edit by hand.";
-echo " */";
+cat <<EOF
+/*
+ * termsort.h --- sort order arrays for use by infocmp.
+ *
+ * Note: this file is generated using MKtermsort.sh, do not edit by hand.
+ */
+#ifndef _TERMSORT_H
+#define _TERMSORT_H 1
+#include <curses.h>
+
+#ifndef DUMP_ENTRY_H
+typedef unsigned PredType;
+typedef unsigned PredIdx;
+#endif
+
+EOF
 
 echo "static const PredIdx bool_terminfo_sort[] = {";
 $AWK <$DATA '
@@ -140,26 +152,36 @@ echo "";
 
 echo "static const bool bool_from_termcap[] = {";
 $AWK <$DATA '
-$3 == "bool" && substr($7, 1, 1) == "-"       {print "\tFALSE,\t/* ", $2, " */";}
-$3 == "bool" && substr($7, 1, 1) == "Y"       {print "\tTRUE,\t/* ", $2, " */";}
+BEGIN { count = 0; valid = 0; }
+$3 == "bool" && substr($7, 1, 1) == "-"       {print "\tFALSE,\t/* ", $2, " */"; count++; }
+$3 == "bool" && substr($7, 1, 1) == "Y"       {print "\tTRUE,\t/* ", $2, " */"; valid = count++; }
+END { printf "#define OK_bool_from_termcap %d\n", valid; }
 '
 echo "};";
 echo "";
 
 echo "static const bool num_from_termcap[] = {";
 $AWK <$DATA '
-$3 == "num" && substr($7, 1, 1) == "-"        {print "\tFALSE,\t/* ", $2, " */";}
-$3 == "num" && substr($7, 1, 1) == "Y"        {print "\tTRUE,\t/* ", $2, " */";}
+BEGIN { count = 0; valid = 0; }
+$3 == "num" && substr($7, 1, 1) == "-"        {print "\tFALSE,\t/* ", $2, " */"; count++; }
+$3 == "num" && substr($7, 1, 1) == "Y"        {print "\tTRUE,\t/* ", $2, " */"; valid = count++; }
+END { printf "#define OK_num_from_termcap %d\n", valid; }
 '
 echo "};";
 echo "";
 
 echo "static const bool str_from_termcap[] = {";
 $AWK <$DATA '
-$3 == "str" && substr($7, 1, 1) == "-"        {print "\tFALSE,\t/* ", $2, " */";}
-$3 == "str" && substr($7, 1, 1) == "Y"        {print "\tTRUE,\t/* ", $2, " */";}
+BEGIN { count = 0; valid = 0; }
+$3 == "str" && substr($7, 1, 1) == "-"        {print "\tFALSE,\t/* ", $2, " */"; count++; }
+$3 == "str" && substr($7, 1, 1) == "Y"        {print "\tTRUE,\t/* ", $2, " */"; valid = count++; }
+END { printf "#define OK_str_from_termcap %d\n", valid; }
 '
-echo "};";
-echo "";
+
+cat <<EOF
+};
+
+#endif /* _TERMSORT_H */
+EOF
 
 rm -f $data

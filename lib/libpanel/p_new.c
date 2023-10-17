@@ -1,7 +1,8 @@
-/* $OpenBSD: p_new.c,v 1.5 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: p_new.c,v 1.6 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2005,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -36,15 +37,33 @@
  ****************************************************************************/
 
 /* p_new.c
- * Creation of a new panel 
+ * Creation of a new panel
  */
 #include "panel.priv.h"
 
-MODULE_ID("$Id: p_new.c,v 1.5 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: p_new.c,v 1.6 2023/10/17 09:52:10 nicm Exp $")
 
 #ifdef TRACE
 static char *stdscr_id;
 static char *new_id;
+
+static PANEL *
+AllocPanel(const char *name)
+{
+  PANEL *result = typeMalloc(PANEL, 1);
+
+  _tracef("create :%s %p", name, (void *)result);
+  return result;
+}
+#define InitUser(name) \
+	if (!name ## _id) \
+	    name ## _id = strdup(#name); \
+	pan->user = name ## _id; \
+	_tracef("create :user_ptr %p", pan->user)
+#else
+#define AllocPanel(name) typeMalloc(PANEL, 1)
+#define InitUser(name) \
+	  pan->user = (void *)0
 #endif
 
 /*+-------------------------------------------------------------------------
@@ -52,63 +71,60 @@ static char *new_id;
   Establish the pseudo panel for stdscr if necessary.
 --------------------------------------------------------------------------*/
 static PANEL *
-root_panel(void)
+root_panel(NCURSES_SP_DCL0)
 {
-  if (_nc_stdscr_pseudo_panel == (PANEL *) 0)
+#if NCURSES_SP_FUNCS
+  struct panelhook *ph = NCURSES_SP_NAME(_nc_panelhook) (sp);
+
+#elif NO_LEAKS
+  struct panelhook *ph = _nc_panelhook();
+#endif
+
+  if (_nc_stdscr_pseudo_panel == (PANEL *)0)
     {
 
-      assert(stdscr && !_nc_bottom_panel && !_nc_top_panel);
+      assert(SP_PARM && SP_PARM->_stdscr && !_nc_bottom_panel && !_nc_top_panel);
 #if NO_LEAKS
-      _nc_panelhook()->destroy = del_panel;
+      ph->destroy = del_panel;
 #endif
-      _nc_stdscr_pseudo_panel = (PANEL *) malloc(sizeof(PANEL));
+      _nc_stdscr_pseudo_panel = AllocPanel("root_panel");
       if (_nc_stdscr_pseudo_panel != 0)
 	{
 	  PANEL *pan = _nc_stdscr_pseudo_panel;
-	  WINDOW *win = stdscr;
+	  WINDOW *win = SP_PARM->_stdscr;
 
 	  pan->win = win;
-	  pan->below = (PANEL *) 0;
-	  pan->above = (PANEL *) 0;
-#ifdef TRACE
-	  if (!stdscr_id)
-	    stdscr_id = strdup("stdscr");
-	  pan->user = stdscr_id;
-#else
-	  pan->user = (void *)0;
-#endif
+	  pan->below = (PANEL *)0;
+	  pan->above = (PANEL *)0;
+	  InitUser(stdscr);
 	  _nc_bottom_panel = _nc_top_panel = pan;
 	}
     }
   return _nc_stdscr_pseudo_panel;
 }
 
-NCURSES_EXPORT(PANEL *)
+PANEL_EXPORT(PANEL *)
 new_panel(WINDOW *win)
 {
-  PANEL *pan = (PANEL *) 0;
+  PANEL *pan = (PANEL *)0;
 
-  T((T_CALLED("new_panel(%p)"), win));
+  GetWindowHook(win);
+
+  T((T_CALLED("new_panel(%p)"), (void *)win));
 
   if (!win)
     returnPanel(pan);
 
   if (!_nc_stdscr_pseudo_panel)
-    (void)root_panel();
+    (void)root_panel(NCURSES_SP_ARG);
   assert(_nc_stdscr_pseudo_panel);
 
-  if (!(win->_flags & _ISPAD) && (pan = (PANEL *) malloc(sizeof(PANEL))))
+  if ((pan = AllocPanel("new_panel")) != NULL)
     {
       pan->win = win;
-      pan->above = (PANEL *) 0;
-      pan->below = (PANEL *) 0;
-#ifdef TRACE
-      if (!new_id)
-	new_id = strdup("new");
-      pan->user = new_id;
-#else
-      pan->user = (char *)0;
-#endif
+      pan->above = (PANEL *)0;
+      pan->below = (PANEL *)0;
+      InitUser(new);
       (void)show_panel(pan);
     }
   returnPanel(pan);

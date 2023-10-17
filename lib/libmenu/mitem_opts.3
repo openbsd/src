@@ -1,8 +1,9 @@
 '\" t
-.\" $OpenBSD: mitem_opts.3,v 1.7 2016/03/26 14:36:37 schwarze Exp $
+.\" $OpenBSD: mitem_opts.3,v 1.8 2023/10/17 09:52:10 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2010,2015 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,59 +30,56 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: mitem_opts.3,v 1.7 2016/03/26 14:36:37 schwarze Exp $
-.TH SET_ITEM_OPTS 3 ""
+.\" $Id: mitem_opts.3,v 1.8 2023/10/17 09:52:10 nicm Exp $
+.TH mitem_opts 3 2023-07-01 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBset_item_opts\fR, \fBitem_opts_on\fR, \fBitem_opts_off\fR,
-\fBitem_opts\fR - set and get menu item options
+\fBset_item_opts\fP,
+\fBitem_opts_on\fP,
+\fBitem_opts_off\fP,
+\fBitem_opts\fP \- set and get menu item options
 .SH SYNOPSIS
-\fB#include <menu.h>\fR
+\fB#include <menu.h>\fP
+.sp
+\fBint set_item_opts(ITEM *\fIitem\fB, Item_Options \fIopts\fB);\fR
 .br
-int set_item_opts(ITEM *item, Item_Options opts);
+\fBItem_Options item_opts(const ITEM *\fIitem\fB);\fR
+.sp
+\fBint item_opts_on(ITEM *\fIitem\fB, Item_Options \fIopts\fB);\fR
 .br
-int item_opts_on(ITEM *item, Item_Options opts);
-.br
-int item_opts_off(ITEM *item, Item_Options opts);
-.br
-Item_Options item_opts(const ITEM *item);
-.br
+\fBint item_opts_off(ITEM *\fIitem\fB, Item_Options \fIopts\fB);\fR
 .SH DESCRIPTION
-The function \fBset_item_opts\fR sets all the given item's option bits (menu
-option bits may be logically OR'ed together).
+The function \fBset_item_opts\fP sets all the given item's option bits (menu
+option bits may be logically-OR'ed together).
 .PP
-The function \fBitem_opts_on\fR turns on the given option bits, and leaves
+The function \fBitem_opts_on\fP turns on the given option bits, and leaves
 others alone.
 .PP
-The function \fBitem_opts_off\fR turns off the given option bits, and leaves
+The function \fBitem_opts_off\fP turns off the given option bits, and leaves
 others alone.
 .PP
-The function \fBitem_opts\fR returns the item's current option bits.
+The function \fBitem_opts\fP returns the item's current option bits.
 .PP
-There is only one defined option bit mask, \fBO_SELECTABLE\fR.  When this is
-on, the item may be selected during menu processing.  This option defaults
+There is only one defined option bit mask, \fBO_SELECTABLE\fP.  When this is
+on, the item may be selected during menu processing.
+This option defaults
 to on.
 .SH RETURN VALUE
-Except for \fBitem_opts\fR, each routine returns one of the following:
+Except for \fBitem_opts\fP, each routine returns one of the following:
 .TP 5
 .B E_OK
 The routine succeeded.
 .TP 5
 .B E_SYSTEM_ERROR
-System error occurred (see \fBerrno\fR).
+System error occurred (see \fBerrno\fP(3)).
 .SH SEE ALSO
-\fBcurses\fR(3), \fBmenu\fR(3).
+\fBcurses\fP(3), \fBmenu\fP(3).
 .SH NOTES
-The header file \fB<menu.h>\fR automatically includes the header file
-\fB<curses.h>\fR.
+The header file \fB<menu.h>\fP automatically includes the header file
+\fB<curses.h>\fP.
 .SH PORTABILITY
-These routines emulate the System V menu library.  They were not supported on
+These routines emulate the System V menu library.
+They were not supported on
 Version 7 or BSD versions.
 .SH AUTHORS
-Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
-S. Raymond.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+Juergen Pfeifer.
+Manual pages and adaptation for new curses by Eric S. Raymond.

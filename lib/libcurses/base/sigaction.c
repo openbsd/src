@@ -1,7 +1,6 @@
-/* $OpenBSD: trace_tries.c,v 1.5 2010/01/12 23:22:07 nicm Exp $ */
-
 /****************************************************************************
- * Copyright (c) 1999-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2002,2003 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,55 +28,73 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1999                        *
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-2003               *
  ****************************************************************************/
-/*
- *	trace_tries.c - Tracing/Debugging buffers (keycode tries-trees)
- */
 
-#include <curses.priv.h>
+/* This file provides sigaction() emulation using sigvec() */
+/* Use only if this is non POSIX system */
 
-MODULE_ID("$Id: trace_tries.c,v 1.5 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: sigaction.c,v 1.6 2023/10/17 09:52:09 nicm Exp $")
 
-#ifdef TRACE
-#define my_buffer _nc_globals.tracetry_buf
-#define my_length _nc_globals.tracetry_used
-
-static void
-recur_tries(TRIES * tree, unsigned level)
+static int
+_nc_sigaction(int sig, sigaction_t * sigact, sigaction_t * osigact)
 {
-    if (level > my_length) {
-	my_length = (level + 1) * 4;
-	my_buffer = (unsigned char *) realloc(my_buffer, my_length);
-    }
-
-    while (tree != 0) {
-	if ((my_buffer[level] = tree->ch) == 0)
-	    my_buffer[level] = 128;
-	my_buffer[level + 1] = 0;
-	if (tree->value != 0) {
-	    _tracef("%5d: %s (%s)", tree->value,
-		    _nc_visbuf((char *) my_buffer), keyname(tree->value));
-	}
-	if (tree->child)
-	    recur_tries(tree->child, level + 1);
-	tree = tree->sibling;
-    }
+    return sigvec(sig, sigact, osigact);
 }
 
-NCURSES_EXPORT(void)
-_nc_trace_tries(TRIES * tree)
+static int
+_nc_sigemptyset(sigset_t * mask)
 {
-    my_buffer = typeMalloc(unsigned char, my_length = 80);
-    _tracef("BEGIN tries %p", tree);
-    recur_tries(tree, 0);
-    _tracef(". . . tries %p", tree);
-    free(my_buffer);
+    *mask = 0;
+    return 0;
 }
 
-#else
-NCURSES_EXPORT(void)
-_nc_trace_tries(TRIES * tree)
+static int
+_nc_sigprocmask(int mode, sigset_t * mask, sigset_t * omask)
 {
+    sigset_t current = sigsetmask(0);
+
+    if (omask)
+	*omask = current;
+
+    if (mode == SIG_BLOCK)
+	current |= *mask;
+    else if (mode == SIG_UNBLOCK)
+	current &= ~*mask;
+    else if (mode == SIG_SETMASK)
+	current = *mask;
+
+    sigsetmask(current);
+    return 0;
+}
+
+static int
+_nc_sigaddset(sigset_t * mask, int sig)
+{
+    *mask |= sigmask(sig);
+    return 0;
+}
+
+/* not used in lib_tstp.c */
+#if 0
+static int
+_nc_sigsuspend(sigset_t * mask)
+{
+    return sigpause(*mask);
+}
+
+static int
+_nc_sigdelset(sigset_t * mask, int sig)
+{
+    *mask &= ~sigmask(sig);
+    return 0;
+}
+
+static int
+_nc_sigismember(sigset_t * mask, int sig)
+{
+    return (*mask & sigmask(sig)) != 0;
 }
 #endif

@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_insnstr.c,v 1.1 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_insnstr.c,v 1.2 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2004 Free Software Foundation, Inc.                        *
+ * Copyright 2018-2020,2022 Thomas E. Dickey                                *
+ * Copyright 2004-2009,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,29 +43,56 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$Id: lib_insnstr.c,v 1.1 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_insnstr.c,v 1.2 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
 winsnstr(WINDOW *win, const char *s, int n)
 {
     int code = ERR;
-    NCURSES_SIZE_T oy;
-    NCURSES_SIZE_T ox;
     const unsigned char *str = (const unsigned char *) s;
-    const unsigned char *cp;
 
-    T((T_CALLED("winsnstr(%p,%s,%d)"), win, _nc_visbufn(s, n), n));
+    T((T_CALLED("winsnstr(%p,%s,%d)"), (void *) win, _nc_visbufn(s, n), n));
 
     if (win != 0 && str != 0) {
-	oy = win->_cury;
-	ox = win->_curx;
-	for (cp = str; *cp && (n <= 0 || (cp - str) < n); cp++) {
-	    _nc_insert_ch(win, (chtype) UChar(*cp));
+	SCREEN *sp = _nc_screen_of(win);
+#if USE_WIDEC_SUPPORT
+	/*
+	 * If the output contains "wide" (multibyte) characters, we will not
+	 * really know the width of a character until we get the last byte
+	 * of the character.  Since the preceding byte(s) may use more columns
+	 * on the screen than the final character, it is best to route the
+	 * call to the wins_nwstr() function.
+	 */
+	if (sp->_screen_unicode) {
+	    size_t nn = (n > 0) ? (size_t) n : strlen(s);
+	    wchar_t *buffer = typeMalloc(wchar_t, nn + 1);
+	    if (buffer != 0) {
+		mbstate_t state;
+		size_t n3;
+		init_mb(state);
+		n3 = mbstowcs(buffer, s, nn);
+		if (n3 != (size_t) (-1)) {
+		    buffer[n3] = '\0';
+		    code = wins_nwstr(win, buffer, (int) n3);
+		}
+		free(buffer);
+	    }
 	}
-	win->_curx = ox;
-	win->_cury = oy;
-	_nc_synchook(win);
-	code = OK;
+	if (code == ERR)
+#endif
+	{
+	    NCURSES_SIZE_T oy = win->_cury;
+	    NCURSES_SIZE_T ox = win->_curx;
+	    const unsigned char *cp;
+
+	    for (cp = str; (n <= 0 || (cp - str) < n) && *cp; cp++) {
+		_nc_insert_ch(sp, win, (chtype) UChar(*cp));
+	    }
+	    win->_curx = ox;
+	    win->_cury = oy;
+	    _nc_synchook(win);
+	    code = OK;
+	}
     }
     returnCode(code);
 }

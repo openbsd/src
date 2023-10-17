@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_getyx.3,v 1.7 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_getyx.3,v 1.8 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
+.\" Copyright 2020-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2007,2010 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,58 +29,57 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_getyx.3,v 1.7 2010/01/12 23:21:59 nicm Exp $
-.TH curs_getyx 3 ""
+.\" $Id: curs_getyx.3,v 1.8 2023/10/17 09:52:08 nicm Exp $
+.TH curs_getyx 3 2023-07-01 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBgetyx\fR,
-\fBgetparyx\fR,
-\fBgetbegyx\fR,
-\fBgetmaxyx\fR - get \fBcurses\fR cursor and window coordinates
+\fBgetyx\fP,
+\fBgetparyx\fP,
+\fBgetbegyx\fP,
+\fBgetmaxyx\fP \- get \fBcurses\fP cursor and window coordinates
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 .sp
-\fBvoid getyx(WINDOW *win, int y, int x);\fR
+\fBvoid getyx(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB);\fR
 .br
-\fBvoid getparyx(WINDOW *win, int y, int x);\fR
+\fBvoid getparyx(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB);\fR
 .br
-\fBvoid getbegyx(WINDOW *win, int y, int x);\fR
+\fBvoid getbegyx(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB);\fR
 .br
-\fBvoid getmaxyx(WINDOW *win, int y, int x);\fR
-.br
+\fBvoid getmaxyx(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB);\fR
 .SH DESCRIPTION
-The \fBgetyx\fR macro places the current cursor position of the given window in
-the two integer variables \fIy\fR and \fIx\fR.
+The \fBgetyx\fP macro places the current cursor position of the given window in
+the two integer variables \fIy\fP and \fIx\fP.
 .PP
-If \fIwin\fR is a subwindow, the \fBgetparyx\fR macro places the beginning
+If \fIwin\fP is a subwindow, the \fBgetparyx\fP macro places the beginning
 coordinates of the subwindow relative to the parent window into two integer
-variables \fIy\fR and \fIx\fR.
-Otherwise, \fB-1\fR is placed into \fIy\fR and \fIx\fR.
+variables \fIy\fP and \fIx\fP.
+Otherwise, \fB\-1\fP is placed into \fIy\fP and \fIx\fP.
 .PP
-Like \fBgetyx\fR, the \fBgetbegyx\fR and \fBgetmaxyx\fR macros store
+Like \fBgetyx\fP, the \fBgetbegyx\fP and \fBgetmaxyx\fP macros store
 the current beginning coordinates and size of the specified window.
 .SH RETURN VALUE
 The return values of these macros are undefined (i.e.,
 they should not be used as the right-hand side of assignment statements).
 .SH NOTES
 All of these interfaces are macros.
-A "\fB&\fR" is not necessary before the variables \fIy\fR and \fIx\fR.
+A "\fB&\fP" is not necessary before the variables \fIy\fP and \fIx\fP.
 .SH PORTABILITY
 The
-\fBgetyx\fR,
-\fBgetparyx\fR,
-\fBgetbegyx\fR and
-\fBgetmaxyx\fR
+\fBgetyx\fP,
+\fBgetparyx\fP,
+\fBgetbegyx\fP and
+\fBgetmaxyx\fP
 macros are described in the XSI Curses standard, Issue 4.
 .PP
 This implementation also provides functions
-\fBgetbegx\fR,
-\fBgetbegy\fR,
-\fBgetcurx\fR,
-\fBgetcury\fR,
-\fBgetmaxx\fR,
-\fBgetmaxy\fR,
-\fBgetparx\fR and
-\fBgetpary\fR
+\fBgetbegx\fP,
+\fBgetbegy\fP,
+\fBgetcurx\fP,
+\fBgetcury\fP,
+\fBgetmaxx\fP,
+\fBgetmaxy\fP,
+\fBgetparx\fP and
+\fBgetpary\fP
 for compatibility with older versions of curses.
 .PP
 Although X/Open Curses does not address this,
@@ -97,12 +97,6 @@ have (at least since release 1.8.1) differed by one from some
 other implementations.
 The difference is hidden by means of the macro \fBgetmaxyx\fP.
 .SH SEE ALSO
-\fBcurses\fR(3),
-\fBcurs_legacy\fR(3),
-\fBcurs_opaque\fR(3)
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3),
+\fBcurs_legacy\fP(3),
+\fBcurs_opaque\fP(3)

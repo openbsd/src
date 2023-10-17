@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_pecho_wchar.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_pecho_wchar.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2004 Free Software Foundation, Inc.                        *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 2004,2009 Free Software Foundation, Inc.                       *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,17 +35,17 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_pecho_wchar.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_pecho_wchar.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
-pecho_wchar(WINDOW *pad, const cchar_t * wch)
+pecho_wchar(WINDOW *pad, const cchar_t *wch)
 {
-    T((T_CALLED("pecho_wchar(%p, %s)"), pad, _tracech_t(wch)));
+    T((T_CALLED("pecho_wchar(%p, %s)"), (void *) pad, _tracech_t(wch)));
 
     if (pad == 0)
 	returnCode(ERR);
 
-    if (!(pad->_flags & _ISPAD))
+    if (!IS_PAD(pad))
 	returnCode(wecho_wchar(pad, wch));
 
     wadd_wch(pad, wch);

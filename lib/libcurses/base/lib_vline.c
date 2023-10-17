@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_vline.c,v 1.4 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_vline.c,v 1.5 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2001,2006 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +32,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Sven Verdoolaege                        2001                    *
  ****************************************************************************/
 
 /*
@@ -42,22 +45,21 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_vline.c,v 1.4 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_vline.c,v 1.5 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
 wvline(WINDOW *win, chtype ch, int n)
 {
     int code = ERR;
-    NCURSES_SIZE_T row, col;
-    NCURSES_SIZE_T end;
 
-    T((T_CALLED("wvline(%p,%s,%d)"), win, _tracechtype(ch), n));
+    T((T_CALLED("wvline(%p,%s,%d)"), (void *) win, _tracechtype(ch), n));
 
     if (win) {
 	NCURSES_CH_T wch;
-	row = win->_cury;
-	col = win->_curx;
-	end = row + n - 1;
+	int row = win->_cury;
+	int col = win->_curx;
+	int end = row + n - 1;
+
 	if (end > win->_maxy)
 	    end = win->_maxy;
 
@@ -69,6 +71,14 @@ wvline(WINDOW *win, chtype ch, int n)
 
 	while (end >= row) {
 	    struct ldat *line = &(win->_line[end]);
+#if USE_WIDEC_SUPPORT
+	    if (col > 0 && isWidecExt(line->text[col])) {
+		SetChar2(line->text[col - 1], ' ');
+	    }
+	    if (col < win->_maxx && isWidecExt(line->text[col + 1])) {
+		SetChar2(line->text[col + 1], ' ');
+	    }
+#endif
 	    line->text[col] = wch;
 	    CHANGED_CELL(line, col);
 	    end--;

@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_extend.3,v 1.6 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_extend.3,v 1.7 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1999-2004,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1999-2010,2016 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -30,8 +31,12 @@
 .\"
 .\" Author: Thomas E. Dickey 1999-on
 .\"
-.\" $Id: curs_extend.3,v 1.6 2010/01/12 23:21:59 nicm Exp $
-.TH curs_extend 3 ""
+.\" $Id: curs_extend.3,v 1.7 2023/10/17 09:52:08 nicm Exp $
+.TH curs_extend 3 2023-07-01 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
 .SH NAME
 \fBcurses_version\fP,
 \fBuse_extended_names\fP \- miscellaneous curses extensions
@@ -41,47 +46,51 @@
 .sp
 \fBconst char * curses_version(void);\fP
 .br
-\fBint use_extended_names(bool enable);\fP
+\fBint use_extended_names(bool \fIenable\fB);\fR
 .SH DESCRIPTION
 These functions are extensions to the curses library
 which do not fit easily into other categories.
-.PP
-Use
-.I curses_version()
-to get the version number, including patch level of the library, e.g.,
-.B 5.0.19991023
-.PP
-The
-.I use_extended_names()
+.SS curses_version
+Use \fBcurses_version\fP
+to get the version number, including patch level of the library,
+prefixed by \*(``ncurses\*('', e.g.,
+.RS
+.sp
+.B ncurses 5.0.19991023
+.RE
+.SS use_extended_names
+The \fBuse_extended_names\fP
 function controls whether the calling application
 is able to use user-defined or nonstandard names
 which may be compiled into the terminfo
 description, i.e., via the terminfo or termcap interfaces.
 Normally these names are available for use, since the essential decision
-is made by using the \fB-x\fP option of \fBtic\fP to compile
+is made by using the \fB\-x\fP option of \fBtic\fP to compile
 extended terminal definitions.
 However you can disable this feature
 to ensure compatibility with other implementations of curses.
+.SH RETURN VALUE
+\fBcurses_version\fP returns a pointer to static memory; you should not free
+this in your application.
+.PP
+\fBuse_extended_names\fP returns the previous state, allowing you to
+save this and restore it.
 .SH PORTABILITY
-These routines are specific to ncurses.  They were not supported on
-Version 7, BSD or System V implementations.  It is recommended that
+These routines are specific to ncurses.
+They were not supported on
+Version 7, BSD or System V implementations.
+It is recommended that
 any code depending on them be conditioned using NCURSES_VERSION.
 .SH SEE ALSO
-\fBcurs_getch\fR(3),
-\fBcurs_mouse\fR(3),
-\fBcurs_print\fR(3),
-\fBcurs_util\fR(3),
-\fBdefault_colors\fR(3),
-\fBdefine_key\fR(3),
-\fBkeybound\fR(3),
-\fBkeyok\fR(3),
-\fBresizeterm\fR(3),
-\fBwresize\fR(3).
+\fBcurs_getch\fP(3),
+\fBcurs_mouse\fP(3),
+\fBcurs_print\fP(3),
+\fBcurs_util\fP(3),
+\fBdefault_colors\fP(3),
+\fBdefine_key\fP(3),
+\fBkeybound\fP(3),
+\fBkeyok\fP(3),
+\fBresizeterm\fP(3),
+\fBwresize\fP(3).
 .SH AUTHOR
 Thomas Dickey.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:

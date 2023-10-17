@@ -1,6 +1,7 @@
-/*	$OpenBSD: fty_regex.c,v 1.9 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fty_regex.c,v 1.10 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
+ * Copyright 2018-2020,2021 Thomas E. Dickey                                *
+ * Copyright 1998-2012,2015 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -35,10 +36,48 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fty_regex.c,v 1.9 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fty_regex.c,v 1.10 2023/10/17 09:52:10 nicm Exp $")
 
-#if HAVE_REGEX_H_FUNCS		/* We prefer POSIX regex */
+#if HAVE_REGEX_H_FUNCS || HAVE_LIB_PCRE2	/* We prefer POSIX regex */
+
+#if HAVE_PCRE2POSIX_H
+#include <pcre2posix.h>
+
+/* pcre2 used to provide its "POSIX" entrypoints using the same names as the
+ * standard ones in the C runtime, but that never worked because the linker
+ * would use the C runtime.  Debian patched the library to fix this symbol
+ * conflict, but overlooked the header file, and Debian's patch was made
+ * obsolete when pcre2 was changed early in 2019 to provide different names.
+ *
+ * Here is a workaround to make the older version of Debian's package work.
+ */
+#if !defined(PCRE2regcomp) && defined(HAVE_PCRE2REGCOMP)
+
+#undef regcomp
+#undef regexec
+#undef regfree
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+  PCRE2POSIX_EXP_DECL int PCRE2regcomp(regex_t *, const char *, int);
+  PCRE2POSIX_EXP_DECL int PCRE2regexec(const regex_t *, const char *, size_t,
+				       regmatch_t *, int);
+  PCRE2POSIX_EXP_DECL void PCRE2regfree(regex_t *);
+#ifdef __cplusplus
+}				/* extern "C" */
+#endif
+#define regcomp(r,s,n)          PCRE2regcomp(r,s,n)
+#define regexec(r,s,n,m,x)      PCRE2regexec(r,s,n,m,x)
+#define regfree(r)              PCRE2regfree(r)
+#endif
+/* end workaround... */
+#elif HAVE_PCREPOSIX_H
+#include <pcreposix.h>
+#else
 #include <regex.h>
+#endif
 
 typedef struct
   {
@@ -91,6 +130,114 @@ RegExp_Arg;
 
 #endif
 
+#if HAVE_REGEX_H_FUNCS | HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
+# define MAYBE_UNUSED
+#else
+# define MAYBE_UNUSED GCC_UNUSED
+#endif
+
+/*---------------------------------------------------------------------------
+|   Facility      :  libnform
+|   Function      :  static void *Generic_RegularExpression_Type(void * arg)
+|
+|   Description   :  Allocate structure for regex type argument.
+|
+|   Return Values :  Pointer to argument structure or NULL on error
++--------------------------------------------------------------------------*/
+static void *
+Generic_RegularExpression_Type(void *arg MAYBE_UNUSED)
+{
+#if HAVE_REGEX_H_FUNCS
+  char *rx = (char *)arg;
+  RegExp_Arg *preg = (RegExp_Arg *)0;
+
+  if (rx)
+    {
+      preg = typeCalloc(RegExp_Arg, 1);
+
+      if (preg)
+	{
+	  T((T_CREATE("RegExp_Arg %p"), (void *)preg));
+	  if (((preg->pRegExp = typeMalloc(regex_t, 1)) != 0)
+	      && !regcomp(preg->pRegExp, rx,
+			  (REG_EXTENDED | REG_NOSUB | REG_NEWLINE)))
+	    {
+	      T((T_CREATE("regex_t %p"), (void *)preg->pRegExp));
+	      if ((preg->refCount = typeMalloc(unsigned long, 1)) != 0)
+		 *(preg->refCount) = 1;
+	    }
+	  else
+	    {
+	      if (preg->pRegExp)
+		free(preg->pRegExp);
+	      free(preg);
+	      preg = (RegExp_Arg *)0;
+	    }
+	}
+    }
+  return ((void *)preg);
+#elif HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
+  char *rx = (char *)arg;
+  RegExp_Arg *pArg = (RegExp_Arg *)0;
+
+  if (rx)
+    {
+      pArg = typeMalloc(RegExp_Arg, 1);
+
+      if (pArg)
+	{
+	  int blen = RX_INCREMENT;
+
+	  T((T_CREATE("RegExp_Arg %p"), pArg));
+	  pArg->compiled_expression = NULL;
+	  if ((pArg->refCount = typeMalloc(unsigned long, 1)) != 0)
+	     *(pArg->refCount) = 1;
+
+	  do
+	    {
+	      char *buf = typeMalloc(char, blen);
+
+	      if (buf)
+		{
+#if HAVE_REGEXP_H_FUNCS
+		  char *last_pos = compile(rx, buf, &buf[blen], '\0');
+
+#else /* HAVE_REGEXPR_H_FUNCS */
+		  char *last_pos = compile(rx, buf, &buf[blen]);
+#endif
+		  if (reg_errno)
+		    {
+		      free(buf);
+		      if (reg_errno == 50)
+			blen += RX_INCREMENT;
+		      else
+			{
+			  free(pArg);
+			  pArg = NULL;
+			  break;
+			}
+		    }
+		  else
+		    {
+		      pArg->compiled_expression = buf;
+		      break;
+		    }
+		}
+	    }
+	  while (blen <= MAX_RX_LEN);
+	}
+      if (pArg && !pArg->compiled_expression)
+	{
+	  free(pArg);
+	  pArg = NULL;
+	}
+    }
+  return (void *)pArg;
+#else
+  return 0;
+#endif
+}
+
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform
 |   Function      :  static void *Make_RegularExpression_Type(va_list * ap)
@@ -102,91 +249,9 @@ RegExp_Arg;
 static void *
 Make_RegularExpression_Type(va_list *ap)
 {
-#if HAVE_REGEX_H_FUNCS
   char *rx = va_arg(*ap, char *);
-  RegExp_Arg *preg;
 
-  preg = typeMalloc(RegExp_Arg, 1);
-
-  if (preg)
-    {
-      T((T_CREATE("RegExp_Arg %p"), preg));
-      if (((preg->pRegExp = typeMalloc(regex_t, 1)) != 0)
-	  && !regcomp(preg->pRegExp, rx,
-		      (REG_EXTENDED | REG_NOSUB | REG_NEWLINE)))
-	{
-	  T((T_CREATE("regex_t %p"), preg->pRegExp));
-	  preg->refCount = typeMalloc(unsigned long, 1);
-
-	  *(preg->refCount) = 1;
-	}
-      else
-	{
-	  if (preg->pRegExp)
-	    free(preg->pRegExp);
-	  free(preg);
-	  preg = (RegExp_Arg *)0;
-	}
-    }
-  return ((void *)preg);
-#elif HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
-  char *rx = va_arg(*ap, char *);
-  RegExp_Arg *pArg;
-
-  pArg = typeMalloc(RegExp_Arg, 1);
-
-  if (pArg)
-    {
-      int blen = RX_INCREMENT;
-
-      T((T_CREATE("RegExp_Arg %p"), pArg));
-      pArg->compiled_expression = NULL;
-      pArg->refCount = typeMalloc(unsigned long, 1);
-
-      *(pArg->refCount) = 1;
-
-      do
-	{
-	  char *buf = typeMalloc(char, blen);
-
-	  if (buf)
-	    {
-#if HAVE_REGEXP_H_FUNCS
-	      char *last_pos = compile(rx, buf, &buf[blen], '\0');
-
-#else /* HAVE_REGEXPR_H_FUNCS */
-	      char *last_pos = compile(rx, buf, &buf[blen]);
-#endif
-	      if (reg_errno)
-		{
-		  free(buf);
-		  if (reg_errno == 50)
-		    blen += RX_INCREMENT;
-		  else
-		    {
-		      free(pArg);
-		      pArg = NULL;
-		      break;
-		    }
-		}
-	      else
-		{
-		  pArg->compiled_expression = buf;
-		  break;
-		}
-	    }
-	}
-      while (blen <= MAX_RX_LEN);
-    }
-  if (pArg && !pArg->compiled_expression)
-    {
-      free(pArg);
-      pArg = NULL;
-    }
-  return (void *)pArg;
-#else
-  return 0;
-#endif
+  return Generic_RegularExpression_Type((void *)rx);
 }
 
 /*---------------------------------------------------------------------------
@@ -199,7 +264,7 @@ Make_RegularExpression_Type(va_list *ap)
 |   Return Values :  Pointer to argument structure or NULL on error.
 +--------------------------------------------------------------------------*/
 static void *
-Copy_RegularExpression_Type(const void *argp)
+Copy_RegularExpression_Type(const void *argp MAYBE_UNUSED)
 {
 #if (HAVE_REGEX_H_FUNCS | HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS)
   const RegExp_Arg *ap = (const RegExp_Arg *)argp;
@@ -225,7 +290,7 @@ Copy_RegularExpression_Type(const void *argp)
 |   Return Values :  -
 +--------------------------------------------------------------------------*/
 static void
-Free_RegularExpression_Type(void *argp)
+Free_RegularExpression_Type(void *argp MAYBE_UNUSED)
 {
 #if HAVE_REGEX_H_FUNCS | HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
   RegExp_Arg *ap = (RegExp_Arg *)argp;
@@ -239,6 +304,7 @@ Free_RegularExpression_Type(void *argp)
 	    {
 	      free(ap->refCount);
 	      regfree(ap->pRegExp);
+	      free(ap->pRegExp);
 	    }
 #elif HAVE_REGEXP_H_FUNCS | HAVE_REGEXPR_H_FUNCS
 	  if (ap->compiled_expression)
@@ -265,7 +331,8 @@ Free_RegularExpression_Type(void *argp)
 |                    FALSE - field is invalid
 +--------------------------------------------------------------------------*/
 static bool
-Check_RegularExpression_Field(FIELD *field, const void *argp)
+Check_RegularExpression_Field(FIELD *field MAYBE_UNUSED,
+			      const void *argp MAYBE_UNUSED)
 {
   bool match = FALSE;
 
@@ -296,12 +363,27 @@ static FIELDTYPE typeREGEXP =
   Make_RegularExpression_Type,
   Copy_RegularExpression_Type,
   Free_RegularExpression_Type,
-  Check_RegularExpression_Field,
-  NULL,
-  NULL,
-  NULL
+  INIT_FT_FUNC(Check_RegularExpression_Field),
+  INIT_FT_FUNC(NULL),
+  INIT_FT_FUNC(NULL),
+  INIT_FT_FUNC(NULL),
+#if NCURSES_INTEROP_FUNCS
+  Generic_RegularExpression_Type
+#endif
 };
 
-NCURSES_EXPORT_VAR(FIELDTYPE*) TYPE_REGEXP = &typeREGEXP;
+FORM_EXPORT_VAR(FIELDTYPE *) TYPE_REGEXP = &typeREGEXP;
+
+#if NCURSES_INTEROP_FUNCS
+/* The next routines are to simplify the use of ncurses from
+   programming languages with restrictions on interop with C level
+   constructs (e.g. variable access or va_list + ellipsis constructs)
+*/
+FORM_EXPORT(FIELDTYPE *)
+_nc_TYPE_REGEXP(void)
+{
+  return TYPE_REGEXP;
+}
+#endif
 
 /* fty_regex.c ends here */

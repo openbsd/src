@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_deleteln.3,v 1.10 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_deleteln.3,v 1.11 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2007,2010 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,66 +29,66 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_deleteln.3,v 1.10 2010/01/12 23:21:59 nicm Exp $
-.TH curs_deleteln 3 ""
+.\" $Id: curs_deleteln.3,v 1.11 2023/10/17 09:52:08 nicm Exp $
+.TH curs_deleteln 3 2023-07-01 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBdeleteln\fR,
-\fBwdeleteln\fR,
-\fBinsdelln\fR,
-\fBwinsdelln\fR,
-\fBinsertln\fR,
-\fBwinsertln\fR - delete and insert lines in a \fBcurses\fR window
+\fBdeleteln\fP,
+\fBwdeleteln\fP,
+\fBinsdelln\fP,
+\fBwinsdelln\fP,
+\fBinsertln\fP,
+\fBwinsertln\fP \- delete and insert lines in a \fBcurses\fP window
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 .sp
-\fBint deleteln(void);\fR
+\fBint deleteln(void);\fP
 .br
-\fBint wdeleteln(WINDOW *win);\fR
+\fBint wdeleteln(WINDOW *\fIwin\fB);\fR
+.sp
+\fBint insdelln(int \fIn\fB);\fR
 .br
-\fBint insdelln(int n);\fR
+\fBint winsdelln(WINDOW *\fIwin\fB, int \fIn\fB);\fR
+.sp
+\fBint insertln(void);\fP
 .br
-\fBint winsdelln(WINDOW *win, int n);\fR
-.br
-\fBint insertln(void);\fR
-.br
-\fBint winsertln(WINDOW *win);\fR
-.br
+\fBint winsertln(WINDOW *\fIwin\fB);\fR
 .SH DESCRIPTION
-The \fBdeleteln\fR and \fBwdeleteln\fR routines delete the line under the
+The \fBdeleteln\fP and \fBwdeleteln\fP routines delete the line under the
 cursor in the window; all lines below the current line are moved up one line.
-The bottom line of the window is cleared.  The cursor position does not change.
+The bottom line of the window is cleared.
+The cursor position does not change.
 .PP
-The \fBinsdelln\fR and \fBwinsdelln\fR routines, for positive \fIn\fR, insert
-\fIn\fR lines into the specified window above the current line.  The \fIn\fR
-bottom lines are lost.  For negative \fIn\fR, delete \fIn\fR lines (starting
-with the one under the cursor), and move the remaining lines up.  The bottom
-\fIn\fR lines are cleared.  The current cursor position remains the same.
+The \fBinsdelln\fP and \fBwinsdelln\fP routines, for positive \fIn\fP, insert
+\fIn\fP lines into the specified window above the current line.
+The \fIn\fP
+bottom lines are lost.
+For negative \fIn\fP, delete \fIn\fP lines (starting
+with the one under the cursor), and move the remaining lines up.
+The bottom
+\fIn\fP lines are cleared.
+The current cursor position remains the same.
 .PP
-The \fBinsertln\fR and \fBwinsertln\fR routines insert a blank line above the
+The \fBinsertln\fP and \fBwinsertln\fP routines insert a blank line above the
 current line and the bottom line is lost.
 .SH RETURN VALUE
-All routines return the integer \fBERR\fR upon failure and an \fBOK\fR (SVr4
-specifies only "an integer value other than \fBERR\fR") upon successful
+All routines return the integer \fBERR\fP upon failure and an \fBOK\fP (SVr4
+specifies only "an integer value other than \fBERR\fP") upon successful
 completion.
 .PP
 X/Open defines no error conditions.
 In this implementation,
 if the window parameter is null, an error is returned.
 .SH PORTABILITY
-These functions are described in the XSI Curses standard, Issue 4.  The
-standard specifies that they return \fBERR\fR on failure, but specifies no
+These functions are described in the XSI Curses standard, Issue 4.
+The
+standard specifies that they return \fBERR\fP on failure, but specifies no
 error conditions.
 .SH NOTES
-Note that all but \fBwinsdelln\fR may be macros.
+Note that all but \fBwinsdelln\fP may be macros.
 .PP
 These routines do not require a hardware line delete or insert feature in the
-terminal.  In fact, they will not use hardware line delete/insert unless
-\fBidlok(..., TRUE)\fR has been set on the current window.
+terminal.
+In fact, they will not use hardware line delete/insert unless
+\fBidlok(..., TRUE)\fP has been set on the current window.
 .SH SEE ALSO
-\fBcurses\fR(3)
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3)

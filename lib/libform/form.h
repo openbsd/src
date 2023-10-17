@@ -1,6 +1,7 @@
-/*	$OpenBSD: form.h,v 1.8 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: form.h,v 1.9 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2018-2019-2020,2021 Thomas E. Dickey                           *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,10 +32,11 @@
  *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
-/* $Id: form.h,v 1.8 2015/01/23 22:48:51 krw Exp $ */
+/* $Id: form.h,v 1.9 2023/10/17 09:52:10 nicm Exp $ */
 
 #ifndef FORM_H
 #define FORM_H
+/* *INDENT-OFF*/
 
 #include <curses.h>
 #include <eti.h>
@@ -42,6 +44,17 @@
 #ifdef __cplusplus
   extern "C" {
 #endif
+
+#if defined(BUILDING_FORM)
+# define FORM_IMPEXP NCURSES_EXPORT_GENERAL_EXPORT
+#else
+# define FORM_IMPEXP NCURSES_EXPORT_GENERAL_IMPORT
+#endif
+
+#define FORM_WRAPPED_VAR(type,name) extern FORM_IMPEXP type NCURSES_PUBLIC_VAR(name)(void)
+
+#define FORM_EXPORT(type) FORM_IMPEXP type NCURSES_API
+#define FORM_EXPORT_VAR(type) FORM_IMPEXP type
 
 #ifndef FORM_PRIV_H
 typedef void *FIELD_CELL;
@@ -58,18 +71,24 @@ typedef int Field_Options;
 	*  _PAGE  *
 	**********/
 
-typedef struct {
+typedef struct pagenode
+#if !NCURSES_OPAQUE_FORM
+{
   short pmin;		/* index of first field on page			*/
   short pmax;		/* index of last field on page			*/
   short smin;		/* index of top leftmost field on page		*/
   short smax;		/* index of bottom rightmost field on page	*/
-} _PAGE;
+}
+#endif /* !NCURSES_OPAQUE_FORM */
+_PAGE;
 
 	/**********
 	*  FIELD  *
 	**********/
 
-typedef struct fieldnode {
+typedef struct fieldnode
+#if 1			/* not yet: !NCURSES_OPAQUE_FORM */
+{
   unsigned short	status;		/* flags			*/
   short			rows;		/* size in rows			*/
   short			cols;		/* size in cols			*/
@@ -98,42 +117,25 @@ typedef struct fieldnode {
   /*
    * The wide-character configuration requires extra information.  Because
    * there are existing applications that manipulate the members of FIELD
-   * directly, we cannot make the struct opaque.  Offsets of members up to
-   * this point are the same in the narrow- and wide-character configuration.
-   * But note that the type of buf depends on the configuration, and is made
-   * opaque for that reason.
+   * directly, we cannot make the struct opaque, except by changing the ABI.
+   * Offsets of members up to this point are the same in the narrow- and
+   * wide-character configuration.  But note that the type of buf depends on
+   * the configuration, and is made opaque for that reason.
    */
   NCURSES_FIELD_INTERNALS
-} FIELD;
+}
+#endif /* NCURSES_OPAQUE_FORM */
+FIELD;
 
-	/**************
-	*  FIELDTYPE  *
-	**************/
-
-typedef struct typenode {
-  unsigned short	status;			/* flags		*/
-  long			ref;			/* reference count	*/
-  struct typenode *	left;			/* ptr to operand for | */
-  struct typenode *	right;			/* ptr to operand for | */
-
-  void* (*makearg)(va_list *);			/* make fieldtype arg	*/
-  void* (*copyarg)(const void *);		/* copy fieldtype arg	*/
-  void	(*freearg)(void *);			/* free fieldtype arg	*/
-
-  bool	(*fcheck)(FIELD *,const void *);	/* field validation	*/
-  bool	(*ccheck)(int,const void *);		/* character validation */
-
-  bool	(*next)(FIELD *,const void *);		/* enumerate next value */
-  bool	(*prev)(FIELD *,const void *);		/* enumerate prev value */
-
-} FIELDTYPE;
 
 	/*********
 	*  FORM  *
 	*********/
 
-typedef struct formnode {
-  unsigned short	status;		/* flags			*/
+typedef struct formnode
+#if 1			/* not yet: !NCURSES_OPAQUE_FORM */
+{
+  unsigned short	status;	  	/* flags			*/
   short			rows;		/* size in rows			*/
   short			cols;		/* size in cols			*/
   int			currow;		/* current row in field window	*/
@@ -157,7 +159,56 @@ typedef struct formnode {
   void			(*fieldinit)(struct formnode *);
   void			(*fieldterm)(struct formnode *);
 
-} FORM;
+}
+#endif /* !NCURSES_OPAQUE_FORM */
+FORM;
+
+
+	/**************
+	*  FIELDTYPE  *
+	**************/
+
+typedef struct typenode
+#if !NCURSES_OPAQUE_FORM
+{
+  unsigned short	status;			/* flags		    */
+  long			ref;			/* reference count	    */
+  struct typenode *	left;			/* ptr to operand for |     */
+  struct typenode *	right;			/* ptr to operand for |     */
+
+  void* (*makearg)(va_list *);			/* make fieldtype arg	    */
+  void* (*copyarg)(const void *);		/* copy fieldtype arg 	    */
+  void	(*freearg)(void *);			/* free fieldtype arg	    */
+
+#if NCURSES_INTEROP_FUNCS
+  union {
+    bool (*ofcheck)(FIELD *,const void *);	/* field validation	    */
+    bool (*gfcheck)(FORM*,FIELD *,const void*);	/* generic field validation */
+  } fieldcheck;
+  union {
+    bool (*occheck)(int,const void *);		/* character validation     */
+    bool (*gccheck)(int,FORM*,
+		    FIELD*,const void*);        /* generic char validation  */
+  } charcheck;
+  union {
+    bool (*onext)(FIELD *,const void *);        /* enumerate next value     */
+    bool (*gnext)(FORM*,FIELD*,const void*);    /* generic enumerate next   */
+  } enum_next;
+  union {
+    bool (*oprev)(FIELD *,const void *);	/* enumerate prev value     */
+    bool (*gprev)(FORM*,FIELD*,const void*);    /* generic enumerate prev   */
+  } enum_prev;
+  void* (*genericarg)(void*);                   /* Alternate Arg method     */
+#else
+  bool	(*fcheck)(FIELD *,const void *);	/* field validation	*/
+  bool	(*ccheck)(int,const void *);		/* character validation */
+
+  bool	(*next)(FIELD *,const void *);		/* enumerate next value */
+  bool	(*prev)(FIELD *,const void *);		/* enumerate prev value */
+#endif
+}
+#endif /* !NCURSES_OPAQUE_FORM */
+FIELDTYPE;
 
 typedef void (*Form_Hook)(FORM *);
 
@@ -182,6 +233,10 @@ typedef void (*Form_Hook)(FORM *);
 #define O_NULLOK		(0x0080U)
 #define O_PASSOK		(0x0100U)
 #define O_STATIC		(0x0200U)
+#define O_DYNAMIC_JUSTIFY	(0x0400U)	/* ncurses extension	*/
+#define O_NO_LEFT_STRIP		(0x0800U)	/* ncurses extension	*/
+#define O_EDGE_INSERT_STAY      (0x1000U)	/* ncurses extension	*/
+#define O_INPUT_LIMIT           (0x2000U)	/* ncurses extension	*/
 
 /* form options */
 #define O_NL_OVERLOAD		(0x0001U)
@@ -266,139 +321,141 @@ typedef void (*Form_Hook)(FORM *);
 	/*************************
 	*  standard field types  *
 	*************************/
-extern NCURSES_EXPORT_VAR(FIELDTYPE *) TYPE_ALPHA;
-extern NCURSES_EXPORT_VAR(FIELDTYPE *) TYPE_ALNUM;
-extern NCURSES_EXPORT_VAR(FIELDTYPE *) TYPE_ENUM;
-extern NCURSES_EXPORT_VAR(FIELDTYPE *) TYPE_INTEGER;
-extern NCURSES_EXPORT_VAR(FIELDTYPE *) TYPE_NUMERIC;
-extern NCURSES_EXPORT_VAR(FIELDTYPE *) TYPE_REGEXP;
+extern FORM_EXPORT_VAR(FIELDTYPE *) TYPE_ALPHA;
+extern FORM_EXPORT_VAR(FIELDTYPE *) TYPE_ALNUM;
+extern FORM_EXPORT_VAR(FIELDTYPE *) TYPE_ENUM;
+extern FORM_EXPORT_VAR(FIELDTYPE *) TYPE_INTEGER;
+extern FORM_EXPORT_VAR(FIELDTYPE *) TYPE_NUMERIC;
+extern FORM_EXPORT_VAR(FIELDTYPE *) TYPE_REGEXP;
 
 	/************************************
 	*  built-in additional field types  *
 	*  They are not defined in SVr4     *
 	************************************/
-extern NCURSES_EXPORT_VAR(FIELDTYPE *) TYPE_IPV4;      /* Internet IP Version 4 address */
-
-	/***********************
-	*   Default objects    *
-	***********************/
-extern NCURSES_EXPORT_VAR(FORM *)	_nc_Default_Form;
-extern NCURSES_EXPORT_VAR(FIELD *)	_nc_Default_Field;
-
+extern FORM_EXPORT_VAR(FIELDTYPE *) TYPE_IPV4;      /* Internet IP Version 4 address */
 
 	/***********************
 	*  FIELDTYPE routines  *
 	***********************/
-extern NCURSES_EXPORT(FIELDTYPE *) new_fieldtype (
+extern FORM_EXPORT(FIELDTYPE *) new_fieldtype (
 		    bool (* const field_check)(FIELD *,const void *),
 		    bool (* const char_check)(int,const void *));
-extern NCURSES_EXPORT(FIELDTYPE *) link_fieldtype(
+extern FORM_EXPORT(FIELDTYPE *) link_fieldtype(
 		    FIELDTYPE *, FIELDTYPE *);
 
-extern NCURSES_EXPORT(int)	free_fieldtype (FIELDTYPE *);
-extern NCURSES_EXPORT(int)	set_fieldtype_arg (FIELDTYPE *,
+extern FORM_EXPORT(int)	free_fieldtype (FIELDTYPE *);
+extern FORM_EXPORT(int)	set_fieldtype_arg (FIELDTYPE *,
 		    void * (* const make_arg)(va_list *),
 		    void * (* const copy_arg)(const void *),
 		    void (* const free_arg)(void *));
-extern NCURSES_EXPORT(int)	 set_fieldtype_choice (FIELDTYPE *,
+extern FORM_EXPORT(int)	 set_fieldtype_choice (FIELDTYPE *,
 		    bool (* const next_choice)(FIELD *,const void *),
 	      	    bool (* const prev_choice)(FIELD *,const void *));
 
 	/*******************
 	*  FIELD routines  *
 	*******************/
-extern NCURSES_EXPORT(FIELD *)	new_field (int,int,int,int,int,int);
-extern NCURSES_EXPORT(FIELD *)	dup_field (FIELD *,int,int);
-extern NCURSES_EXPORT(FIELD *)	link_field (FIELD *,int,int);
+extern FORM_EXPORT(FIELD *)	new_field (int,int,int,int,int,int);
+extern FORM_EXPORT(FIELD *)	dup_field (FIELD *,int,int);
+extern FORM_EXPORT(FIELD *)	link_field (FIELD *,int,int);
 
-extern NCURSES_EXPORT(int)	free_field (FIELD *);
-extern NCURSES_EXPORT(int)	field_info (const FIELD *,int *,int *,int *,int *,int *,int *);
-extern NCURSES_EXPORT(int)	dynamic_field_info (const FIELD *,int *,int *,int *);
-extern NCURSES_EXPORT(int)	set_max_field ( FIELD *,int);
-extern NCURSES_EXPORT(int)	move_field (FIELD *,int,int);
-extern NCURSES_EXPORT(int)	set_field_type (FIELD *,FIELDTYPE *,...);
-extern NCURSES_EXPORT(int)	set_new_page (FIELD *,bool);
-extern NCURSES_EXPORT(int)	set_field_just (FIELD *,int);
-extern NCURSES_EXPORT(int)	field_just (const FIELD *);
-extern NCURSES_EXPORT(int)	set_field_fore (FIELD *,chtype);
-extern NCURSES_EXPORT(int)	set_field_back (FIELD *,chtype);
-extern NCURSES_EXPORT(int)	set_field_pad (FIELD *,int);
-extern NCURSES_EXPORT(int)	field_pad (const FIELD *);
-extern NCURSES_EXPORT(int)	set_field_buffer (FIELD *,int,const char *);
-extern NCURSES_EXPORT(int)	set_field_status (FIELD *,bool);
-extern NCURSES_EXPORT(int)	set_field_userptr (FIELD *, void *);
-extern NCURSES_EXPORT(int)	set_field_opts (FIELD *,Field_Options);
-extern NCURSES_EXPORT(int)	field_opts_on (FIELD *,Field_Options);
-extern NCURSES_EXPORT(int)	field_opts_off (FIELD *,Field_Options);
+extern FORM_EXPORT(int)	free_field (FIELD *);
+extern FORM_EXPORT(int)	field_info (const FIELD *,int *,int *,int *,int *,int *,int *);
+extern FORM_EXPORT(int)	dynamic_field_info (const FIELD *,int *,int *,int *);
+extern FORM_EXPORT(int)	set_max_field ( FIELD *,int);
+extern FORM_EXPORT(int)	move_field (FIELD *,int,int);
+extern FORM_EXPORT(int)	set_field_type (FIELD *,FIELDTYPE *,...);
+extern FORM_EXPORT(int)	set_new_page (FIELD *,bool);
+extern FORM_EXPORT(int)	set_field_just (FIELD *,int);
+extern FORM_EXPORT(int)	field_just (const FIELD *);
+extern FORM_EXPORT(int)	set_field_fore (FIELD *,chtype);
+extern FORM_EXPORT(int)	set_field_back (FIELD *,chtype);
+extern FORM_EXPORT(int)	set_field_pad (FIELD *,int);
+extern FORM_EXPORT(int)	field_pad (const FIELD *);
+extern FORM_EXPORT(int)	set_field_buffer (FIELD *,int,const char *);
+extern FORM_EXPORT(int)	set_field_status (FIELD *,bool);
+extern FORM_EXPORT(int)	set_field_userptr (FIELD *, void *);
+extern FORM_EXPORT(int)	set_field_opts (FIELD *,Field_Options);
+extern FORM_EXPORT(int)	field_opts_on (FIELD *,Field_Options);
+extern FORM_EXPORT(int)	field_opts_off (FIELD *,Field_Options);
 
-extern NCURSES_EXPORT(chtype)	field_fore (const FIELD *);
-extern NCURSES_EXPORT(chtype)	field_back (const FIELD *);
+extern FORM_EXPORT(chtype)	field_fore (const FIELD *);
+extern FORM_EXPORT(chtype)	field_back (const FIELD *);
 
-extern NCURSES_EXPORT(bool)	new_page (const FIELD *);
-extern NCURSES_EXPORT(bool)	field_status (const FIELD *);
+extern FORM_EXPORT(bool)	new_page (const FIELD *);
+extern FORM_EXPORT(bool)	field_status (const FIELD *);
 
-extern NCURSES_EXPORT(void *)	field_arg (const FIELD *);
+extern FORM_EXPORT(void *)	field_arg (const FIELD *);
 
-extern NCURSES_EXPORT(void *)	field_userptr (const FIELD *);
+extern FORM_EXPORT(void *)	field_userptr (const FIELD *);
 
-extern NCURSES_EXPORT(FIELDTYPE *)	field_type (const FIELD *);
+extern FORM_EXPORT(FIELDTYPE *)	field_type (const FIELD *);
 
-extern NCURSES_EXPORT(char *)	field_buffer (const FIELD *,int);
+extern FORM_EXPORT(char *)	field_buffer (const FIELD *,int);
 
-extern NCURSES_EXPORT(Field_Options)	field_opts (const FIELD *);
+extern FORM_EXPORT(Field_Options)	field_opts (const FIELD *);
 
 	/******************
 	*  FORM routines  *
 	******************/
 
-extern NCURSES_EXPORT(FORM *)	new_form (FIELD **);
+extern FORM_EXPORT(FORM *)	new_form (FIELD **);
 
-extern NCURSES_EXPORT(FIELD **)	form_fields (const FORM *);
-extern NCURSES_EXPORT(FIELD *)	current_field (const FORM *);
+extern FORM_EXPORT(FIELD **)	form_fields (const FORM *);
+extern FORM_EXPORT(FIELD *)	current_field (const FORM *);
 
-extern NCURSES_EXPORT(WINDOW *)	form_win (const FORM *);
-extern NCURSES_EXPORT(WINDOW *)	form_sub (const FORM *);
+extern FORM_EXPORT(WINDOW *)	form_win (const FORM *);
+extern FORM_EXPORT(WINDOW *)	form_sub (const FORM *);
 
-extern NCURSES_EXPORT(Form_Hook)	form_init (const FORM *);
-extern NCURSES_EXPORT(Form_Hook)	form_term (const FORM *);
-extern NCURSES_EXPORT(Form_Hook)	field_init (const FORM *);
-extern NCURSES_EXPORT(Form_Hook)	field_term (const FORM *);
+extern FORM_EXPORT(Form_Hook)	form_init (const FORM *);
+extern FORM_EXPORT(Form_Hook)	form_term (const FORM *);
+extern FORM_EXPORT(Form_Hook)	field_init (const FORM *);
+extern FORM_EXPORT(Form_Hook)	field_term (const FORM *);
 
-extern NCURSES_EXPORT(int)	free_form (FORM *);
-extern NCURSES_EXPORT(int)	set_form_fields (FORM *,FIELD **);
-extern NCURSES_EXPORT(int)	field_count (const FORM *);
-extern NCURSES_EXPORT(int)	set_form_win (FORM *,WINDOW *);
-extern NCURSES_EXPORT(int)	set_form_sub (FORM *,WINDOW *);
-extern NCURSES_EXPORT(int)	set_current_field (FORM *,FIELD *);
-extern NCURSES_EXPORT(int)	field_index (const FIELD *);
-extern NCURSES_EXPORT(int)	set_form_page (FORM *,int);
-extern NCURSES_EXPORT(int)	form_page (const FORM *);
-extern NCURSES_EXPORT(int)	scale_form (const FORM *,int *,int *);
-extern NCURSES_EXPORT(int)	set_form_init (FORM *,Form_Hook);
-extern NCURSES_EXPORT(int)	set_form_term (FORM *,Form_Hook);
-extern NCURSES_EXPORT(int)	set_field_init (FORM *,Form_Hook);
-extern NCURSES_EXPORT(int)	set_field_term (FORM *,Form_Hook);
-extern NCURSES_EXPORT(int)	post_form (FORM *);
-extern NCURSES_EXPORT(int)	unpost_form (FORM *);
-extern NCURSES_EXPORT(int)	pos_form_cursor (FORM *);
-extern NCURSES_EXPORT(int)	form_driver (FORM *,int);
-extern NCURSES_EXPORT(int)	set_form_userptr (FORM *,void *);
-extern NCURSES_EXPORT(int)	set_form_opts (FORM *,Form_Options);
-extern NCURSES_EXPORT(int)	form_opts_on (FORM *,Form_Options);
-extern NCURSES_EXPORT(int)	form_opts_off (FORM *,Form_Options);
-extern NCURSES_EXPORT(int)	form_request_by_name (const char *);
+extern FORM_EXPORT(int)	free_form (FORM *);
+extern FORM_EXPORT(int)	set_form_fields (FORM *,FIELD **);
+extern FORM_EXPORT(int)	field_count (const FORM *);
+extern FORM_EXPORT(int)	set_form_win (FORM *,WINDOW *);
+extern FORM_EXPORT(int)	set_form_sub (FORM *,WINDOW *);
+extern FORM_EXPORT(int)	set_current_field (FORM *,FIELD *);
+extern FORM_EXPORT(int)	unfocus_current_field (FORM *);
+extern FORM_EXPORT(int)	field_index (const FIELD *);
+extern FORM_EXPORT(int)	set_form_page (FORM *,int);
+extern FORM_EXPORT(int)	form_page (const FORM *);
+extern FORM_EXPORT(int)	scale_form (const FORM *,int *,int *);
+extern FORM_EXPORT(int)	set_form_init (FORM *,Form_Hook);
+extern FORM_EXPORT(int)	set_form_term (FORM *,Form_Hook);
+extern FORM_EXPORT(int)	set_field_init (FORM *,Form_Hook);
+extern FORM_EXPORT(int)	set_field_term (FORM *,Form_Hook);
+extern FORM_EXPORT(int)	post_form (FORM *);
+extern FORM_EXPORT(int)	unpost_form (FORM *);
+extern FORM_EXPORT(int)	pos_form_cursor (FORM *);
+extern FORM_EXPORT(int)	form_driver (FORM *,int);
+# if NCURSES_WIDECHAR
+extern FORM_EXPORT(int)	form_driver_w (FORM *,int,wchar_t);
+# endif
+extern FORM_EXPORT(int)	set_form_userptr (FORM *,void *);
+extern FORM_EXPORT(int)	set_form_opts (FORM *,Form_Options);
+extern FORM_EXPORT(int)	form_opts_on (FORM *,Form_Options);
+extern FORM_EXPORT(int)	form_opts_off (FORM *,Form_Options);
+extern FORM_EXPORT(int)	form_request_by_name (const char *);
 
-extern NCURSES_EXPORT(const char *)	form_request_name (int);
+extern FORM_EXPORT(const char *)	form_request_name (int);
 
-extern NCURSES_EXPORT(void *)	form_userptr (const FORM *);
+extern FORM_EXPORT(void *)	form_userptr (const FORM *);
 
-extern NCURSES_EXPORT(Form_Options)	form_opts (const FORM *);
+extern FORM_EXPORT(Form_Options)	form_opts (const FORM *);
 
-extern NCURSES_EXPORT(bool)	data_ahead (const FORM *);
-extern NCURSES_EXPORT(bool)	data_behind (const FORM *);
+extern FORM_EXPORT(bool)	data_ahead (const FORM *);
+extern FORM_EXPORT(bool)	data_behind (const FORM *);
+
+#if NCURSES_SP_FUNCS
+extern FORM_EXPORT(FORM *)	NCURSES_SP_NAME(new_form) (SCREEN*, FIELD **);
+#endif
 
 #ifdef __cplusplus
   }
 #endif
+/* *INDENT-ON*/
 
-#endif	/* FORM_H */
+#endif /* FORM_H */

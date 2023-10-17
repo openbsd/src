@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_slkattr.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_slkattr.c,v 1.4 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -40,19 +41,27 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_slkattr.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_slkattr.c,v 1.4 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(attr_t)
-slk_attr(void)
+NCURSES_SP_NAME(slk_attr) (NCURSES_SP_DCL0)
 {
-    T((T_CALLED("slk_attr()")));
+    T((T_CALLED("slk_attr(%p)"), (void *) SP_PARM));
 
-    if (SP != 0 && SP->_slk != 0) {
-	attr_t result = AttrOf(SP->_slk->attr) & ALL_BUT_COLOR;
-	int pair = GetPair(SP->_slk->attr);
+    if (SP_PARM != 0 && SP_PARM->_slk != 0) {
+	attr_t result = AttrOf(SP_PARM->_slk->attr) & ALL_BUT_COLOR;
+	int pair = GetPair(SP_PARM->_slk->attr);
 
-	result |= COLOR_PAIR(pair);
+	result |= (attr_t) ColorPair(pair);
 	returnAttr(result);
     } else
 	returnAttr(0);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(attr_t)
+slk_attr(void)
+{
+    return NCURSES_SP_NAME(slk_attr) (CURRENT_SCREEN);
+}
+#endif

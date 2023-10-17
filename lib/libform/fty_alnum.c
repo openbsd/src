@@ -1,6 +1,7 @@
-/*	$OpenBSD: fty_alnum.c,v 1.9 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fty_alnum.c,v 1.10 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -35,7 +36,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fty_alnum.c,v 1.9 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fty_alnum.c,v 1.10 2023/10/17 09:52:10 nicm Exp $")
 
 #define thisARG alnumARG
 
@@ -44,6 +45,32 @@ typedef struct
     int width;
   }
 thisARG;
+
+/*---------------------------------------------------------------------------
+|   Facility      :  libnform
+|   Function      :  static void *Generic_This_Type(void *arg)
+|
+|   Description   :  Allocate structure for alphanumeric type argument.
+|
+|   Return Values :  Pointer to argument structure or NULL on error
++--------------------------------------------------------------------------*/
+static void *
+Generic_This_Type(void *arg)
+{
+  thisARG *argp = (thisARG *)0;
+
+  if (arg)
+    {
+      argp = typeMalloc(thisARG, 1);
+
+      if (argp)
+	{
+	  T((T_CREATE("thisARG %p"), (void *)argp));
+	  argp->width = *((int *)arg);
+	}
+    }
+  return ((void *)argp);
+}
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform
@@ -56,15 +83,9 @@ thisARG;
 static void *
 Make_This_Type(va_list *ap)
 {
-  thisARG *argp = typeMalloc(thisARG, 1);
+  int w = va_arg(*ap, int);
 
-  if (argp)
-    {
-      T((T_CREATE("thisARG %p"), argp));
-      argp->width = va_arg(*ap, int);
-    }
-
-  return ((void *)argp);
+  return Generic_This_Type((void *)&w);
 }
 
 /*---------------------------------------------------------------------------
@@ -83,7 +104,7 @@ Copy_This_Type(const void *argp)
 
   if (result)
     {
-      T((T_CREATE("thisARG %p"), result));
+      T((T_CREATE("thisARG %p"), (void *)result));
       *result = *ap;
     }
 
@@ -120,7 +141,7 @@ static bool
 Check_This_Character(int c, const void *argp GCC_UNUSED)
 {
 #if USE_WIDEC_SUPPORT
-  if (iswalnum((wint_t) c))
+  if (iswalnum((wint_t)c))
     return TRUE;
 #endif
   return (isalnum(UChar(c)) ? TRUE : FALSE);
@@ -157,12 +178,27 @@ static FIELDTYPE typeTHIS =
   Make_This_Type,
   Copy_This_Type,
   Free_This_Type,
-  Check_This_Field,
-  Check_This_Character,
-  NULL,
-  NULL
+  INIT_FT_FUNC(Check_This_Field),
+  INIT_FT_FUNC(Check_This_Character),
+  INIT_FT_FUNC(NULL),
+  INIT_FT_FUNC(NULL),
+#if NCURSES_INTEROP_FUNCS
+  Generic_This_Type
+#endif
 };
 
-NCURSES_EXPORT_VAR(FIELDTYPE*) TYPE_ALNUM = &typeTHIS;
+FORM_EXPORT_VAR(FIELDTYPE *) TYPE_ALNUM = &typeTHIS;
+
+#if NCURSES_INTEROP_FUNCS
+/* The next routines are to simplify the use of ncurses from
+   programming languages with restrictions on interop with C level
+   constructs (e.g. variable access or va_list + ellipsis constructs)
+*/
+FORM_EXPORT(FIELDTYPE *)
+_nc_TYPE_ALNUM(void)
+{
+  return TYPE_ALNUM;
+}
+#endif
 
 /* fty_alnum.c ends here */

@@ -1,7 +1,8 @@
-/* $OpenBSD: m_format.c,v 1.7 2010/01/12 23:22:07 nicm Exp $ */
+/* $OpenBSD: m_format.c,v 1.8 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +40,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_format.c,v 1.7 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: m_format.c,v 1.8 2023/10/17 09:52:10 nicm Exp $")
 
 #define minimum(a,b) ((a)<(b) ? (a): (b))
 
@@ -57,18 +58,19 @@ MODULE_ID("$Id: m_format.c,v 1.7 2010/01/12 23:22:07 nicm Exp $")
 |                    E_NOT_CONNECTED        - there are no items connected
 |                    E_POSTED               - the menu is already posted
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-set_menu_format(MENU * menu, int rows, int cols)
+MENU_EXPORT(int)
+set_menu_format(MENU *menu, int rows, int cols)
 {
-  int total_rows, total_cols;
 
-  T((T_CALLED("set_menu_format(%p,%d,%d)"), menu, rows, cols));
+  T((T_CALLED("set_menu_format(%p,%d,%d)"), (void *)menu, rows, cols));
 
   if (rows < 0 || cols < 0)
     RETURN(E_BAD_ARGUMENT);
 
   if (menu)
     {
+      int total_rows, total_cols;
+
       if (menu->status & _POSTED)
 	RETURN(E_POSTED);
 
@@ -83,8 +85,8 @@ set_menu_format(MENU * menu, int rows, int cols)
       if (menu->pattern)
 	Reset_Pattern(menu);
 
-      menu->frows = rows;
-      menu->fcols = cols;
+      menu->frows = (short)rows;
+      menu->fcols = (short)cols;
 
       assert(rows > 0 && cols > 0);
       total_rows = (menu->nitems - 1) / cols + 1;
@@ -92,21 +94,21 @@ set_menu_format(MENU * menu, int rows, int cols)
 	minimum(menu->nitems, cols) :
 	(menu->nitems - 1) / total_rows + 1;
 
-      menu->rows = total_rows;
-      menu->cols = total_cols;
-      menu->arows = minimum(total_rows, rows);
+      menu->rows = (short)total_rows;
+      menu->cols = (short)total_cols;
+      menu->arows = (short)minimum(total_rows, rows);
       menu->toprow = 0;
       menu->curitem = *(menu->items);
       assert(menu->curitem);
-      menu->status |= _LINK_NEEDED;
+      SetStatus(menu, _LINK_NEEDED);
       _nc_Calculate_Item_Length_and_Width(menu);
     }
   else
     {
       if (rows > 0)
-	_nc_Default_Menu.frows = rows;
+	_nc_Default_Menu.frows = (short)rows;
       if (cols > 0)
-	_nc_Default_Menu.fcols = cols;
+	_nc_Default_Menu.fcols = (short)cols;
     }
 
   RETURN(E_OK);
@@ -121,8 +123,8 @@ set_menu_format(MENU * menu, int rows, int cols)
 |
 |   Return Values :  -
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(void)
-menu_format(const MENU * menu, int *rows, int *cols)
+MENU_EXPORT(void)
+menu_format(const MENU *menu, int *rows, int *cols)
 {
   if (rows)
     *rows = Normalize_Menu(menu)->frows;

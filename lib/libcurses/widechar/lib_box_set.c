@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_box_set.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_box_set.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2002 Free Software Foundation, Inc.                        *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 2002-2009,2011 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_box_set.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_box_set.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
 wborder_set(WINDOW *win,
@@ -54,8 +55,8 @@ wborder_set(WINDOW *win,
     NCURSES_SIZE_T endx, endy;
     NCURSES_CH_T wls, wrs, wts, wbs, wtl, wtr, wbl, wbr;
 
-    T((T_CALLED("wborder(%p,%s,%s,%s,%s,%s,%s,%s,%s)"),
-       win,
+    T((T_CALLED("wborder_set(%p,%s,%s,%s,%s,%s,%s,%s,%s)"),
+       (void *) win,
        _tracech_t2(1, ls),
        _tracech_t2(2, rs),
        _tracech_t2(3, ts),

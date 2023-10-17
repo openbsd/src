@@ -1,7 +1,8 @@
-/* $OpenBSD: m_req_name.c,v 1.6 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_req_name.c,v 1.7 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2005,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2012,2015 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,41 +40,43 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_req_name.c,v 1.6 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_req_name.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
-static const char *request_names[MAX_MENU_COMMAND - MIN_MENU_COMMAND + 1] =
+#define DATA(s) { s }
+
+static const char request_names[MAX_MENU_COMMAND - MIN_MENU_COMMAND + 1][14] =
 {
-  "LEFT_ITEM",
-  "RIGHT_ITEM",
-  "UP_ITEM",
-  "DOWN_ITEM",
-  "SCR_ULINE",
-  "SCR_DLINE",
-  "SCR_DPAGE",
-  "SCR_UPAGE",
-  "FIRST_ITEM",
-  "LAST_ITEM",
-  "NEXT_ITEM",
-  "PREV_ITEM",
-  "TOGGLE_ITEM",
-  "CLEAR_PATTERN",
-  "BACK_PATTERN",
-  "NEXT_MATCH",
-  "PREV_MATCH"
+  DATA("LEFT_ITEM"),
+  DATA("RIGHT_ITEM"),
+  DATA("UP_ITEM"),
+  DATA("DOWN_ITEM"),
+  DATA("SCR_ULINE"),
+  DATA("SCR_DLINE"),
+  DATA("SCR_DPAGE"),
+  DATA("SCR_UPAGE"),
+  DATA("FIRST_ITEM"),
+  DATA("LAST_ITEM"),
+  DATA("NEXT_ITEM"),
+  DATA("PREV_ITEM"),
+  DATA("TOGGLE_ITEM"),
+  DATA("CLEAR_PATTERN"),
+  DATA("BACK_PATTERN"),
+  DATA("NEXT_MATCH"),
+  DATA("PREV_MATCH")
 };
 
 #define A_SIZE (sizeof(request_names)/sizeof(request_names[0]))
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  const char * menu_request_name (int request);
-|   
+|
 |   Description   :  Get the external name of a menu request.
 |
 |   Return Values :  Pointer to name      - on success
 |                    NULL                 - on invalid request code
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(const char *)
+MENU_EXPORT(const char *)
 menu_request_name(int request)
 {
   T((T_CALLED("menu_request_name(%d)"), request));
@@ -87,37 +90,41 @@ menu_request_name(int request)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  int menu_request_by_name (const char *str);
-|   
+|
 |   Description   :  Search for a request with this name.
 |
 |   Return Values :  Request Id       - on success
 |                    E_NO_MATCH       - request not found
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+MENU_EXPORT(int)
 menu_request_by_name(const char *str)
 {
   /* because the table is so small, it doesn't really hurt
      to run sequentially through it.
    */
-  unsigned int i = 0;
-  char buf[16];
+  size_t i = 0;
 
   T((T_CALLED("menu_request_by_name(%s)"), _nc_visbuf(str)));
 
-  if (str)
+  if (str != 0 && (i = strlen(str)) != 0)
     {
-      strncpy(buf, str, sizeof(buf));
-      while ((i < sizeof(buf)) && (buf[i] != '\0'))
+      char buf[16];
+
+      if (i > sizeof(buf) - 2)
+	i = sizeof(buf) - 2;
+      memcpy(buf, str, i);
+      buf[i] = '\0';
+
+      for (i = 0; buf[i] != '\0'; ++i)
 	{
-	  buf[i] = toupper(UChar(buf[i]));
-	  i++;
+	  buf[i] = (char)toupper(UChar(buf[i]));
 	}
 
       for (i = 0; i < A_SIZE; i++)
 	{
-	  if (strncmp(request_names[i], buf, sizeof(buf)) == 0)
+	  if (strcmp(request_names[i], buf) == 0)
 	    returnCode(MIN_MENU_COMMAND + (int)i);
 	}
     }

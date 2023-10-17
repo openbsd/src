@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_attr.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_attr.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2010,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,17 +34,17 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_attr.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_attr.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*----------------------------------------------------------------------------
   Field-Attribute manipulation routines
   --------------------------------------------------------------------------*/
-/* "Template" macro to generate a function to set a fields attribute */
+/* "Template" macro to generate a function to set a field's attribute */
 #define GEN_FIELD_ATTR_SET_FCT( name ) \
-NCURSES_IMPEXP int NCURSES_API set_field_ ## name (FIELD * field, chtype attr)\
+FORM_IMPEXP int NCURSES_API set_field_ ## name (FIELD * field, chtype attr)\
 {\
    int res = E_BAD_ARGUMENT;\
-   T((T_CALLED("set_field_" #name "(%p,%s)"), field, _traceattr(attr)));\
+   T((T_CALLED("set_field_" #name "(%p,%s)"), (void *)field, _traceattr(attr)));\
    if ( attr==A_NORMAL || ((attr & A_ATTRIBUTES)==attr) )\
      {\
        Normalize_Field( field );\
@@ -63,11 +64,11 @@ NCURSES_IMPEXP int NCURSES_API set_field_ ## name (FIELD * field, chtype attr)\
    RETURN(res);\
 }
 
-/* "Template" macro to generate a function to get a fields attribute */
+/* "Template" macro to generate a function to get a field's attribute */
 #define GEN_FIELD_ATTR_GET_FCT( name ) \
-NCURSES_IMPEXP chtype NCURSES_API field_ ## name (const FIELD * field)\
+FORM_IMPEXP chtype NCURSES_API field_ ## name (const FIELD * field)\
 {\
-   T((T_CALLED("field_" #name "(%p)"), field));\
+   T((T_CALLED("field_" #name "(%p)"), (const void *) field));\
    returnAttr( A_ATTRIBUTES & (Normalize_Field( field ) -> name) );\
 }
 
@@ -88,7 +89,7 @@ GEN_FIELD_ATTR_SET_FCT(fore)
 |   Facility      :  libnform
 |   Function      :  chtype field_fore(const FIELD *)
 |
-|   Description   :  Retrieve fields foreground attribute
+|   Description   :  Retrieve field's foreground attribute
 |
 |   Return Values :  The foreground attribute
 +--------------------------------------------------------------------------*/
@@ -99,7 +100,7 @@ GEN_FIELD_ATTR_GET_FCT(fore)
 |   Function      :  int set_field_back(FIELD *field, chtype attr)
 |
 |   Description   :  Sets the background of the field used to display the
-|                    fields extend.
+|                    field's extend.
 |
 |   Return Values :  E_OK             - success
 |                    E_BAD_ARGUMENT   - invalid attributes
@@ -111,7 +112,7 @@ GEN_FIELD_ATTR_SET_FCT(back)
 |   Facility      :  libnform
 |   Function      :  chtype field_back(const
 |
-|   Description   :  Retrieve fields background attribute
+|   Description   :  Retrieve field's background attribute
 |
 |   Return Values :  The background attribute
 +--------------------------------------------------------------------------*/

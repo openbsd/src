@@ -1,7 +1,8 @@
-/* $OpenBSD: keybound.c,v 1.5 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: keybound.c,v 1.6 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1999-2005,2006 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1999-2009,2011 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,26 +30,37 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey                 1999-on                        *
+ *  Author: Thomas E. Dickey                        1999-on                 *
+ *     and: Juergen Pfeifer                         2009                    *
  ****************************************************************************/
 
 #include <curses.priv.h>
-#include <limits.h>
 
-MODULE_ID("$Id: keybound.c,v 1.5 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: keybound.c,v 1.6 2023/10/17 09:52:08 nicm Exp $")
 
 /*
  * Returns the count'th string definition which is associated with the
  * given keycode.  The result is malloc'd, must be freed by the caller.
  */
 NCURSES_EXPORT(char *)
-keybound(int code, int count)
+NCURSES_SP_NAME(keybound) (NCURSES_SP_DCLx int code, int count)
 {
     char *result = 0;
 
-    T((T_CALLED("keybound(%d,%d)"), code, count));
-    if (SP != 0 && code >= 0) {
-	result = _nc_expand_try(SP->_keytry, (unsigned) code, &count, 0);
+    T((T_CALLED("keybound(%p, %d,%d)"), (void *) SP_PARM, code, count));
+    if (SP_PARM != 0 && code >= 0) {
+	result = _nc_expand_try(SP_PARM->_keytry,
+				(unsigned) code,
+				&count,
+				(size_t) 0);
     }
     returnPtr(result);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(char *)
+keybound(int code, int count)
+{
+    return NCURSES_SP_NAME(keybound) (CURRENT_SCREEN, code, count);
+}
+#endif

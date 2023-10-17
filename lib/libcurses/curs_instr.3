@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_instr.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_instr.3,v 1.9 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2010,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,64 +29,72 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_instr.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
-.TH curs_instr 3 ""
+.\" $Id: curs_instr.3,v 1.9 2023/10/17 09:52:08 nicm Exp $
+.TH curs_instr 3 2023-07-01 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
+.de bP
+.ie n  .IP \(bu 4
+.el    .IP \(bu 2
+..
 .SH NAME
-\fBinstr\fR,
-\fBinnstr\fR,
-\fBwinstr\fR,
-\fBwinnstr\fR,
-\fBmvinstr\fR,
-\fBmvinnstr\fR,
-\fBmvwinstr\fR,
-\fBmvwinnstr\fR - get a string of characters from a \fBcurses\fR window
+\fBinstr\fP,
+\fBinnstr\fP,
+\fBwinstr\fP,
+\fBwinnstr\fP,
+\fBmvinstr\fP,
+\fBmvinnstr\fP,
+\fBmvwinstr\fP,
+\fBmvwinnstr\fP \- get a string of characters from a \fBcurses\fP window
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 .sp
-\fBint instr(char *str);\fR
+\fBint instr(char *\fIstr\fB);\fR
 .br
-\fBint innstr(char *str, int n);\fR
+\fBint innstr(char *\fIstr\fB, int \fIn\fB);\fR
 .br
-\fBint winstr(WINDOW *win, char *str);\fR
+\fBint winstr(WINDOW *\fIwin\fB, char *\fIstr\fB);\fR
 .br
-\fBint winnstr(WINDOW *win, char *str, int n);\fR
+\fBint winnstr(WINDOW *\fIwin\fB, char *\fIstr\fB, int \fIn\fB);\fR
+.sp
+\fBint mvinstr(int \fIy\fB, int \fIx\fB, char *\fIstr\fB);\fR
 .br
-\fBint mvinstr(int y, int x, char *str);\fR
+\fBint mvinnstr(int \fIy\fB, int \fIx\fB, char *\fIstr\fB, int \fIn\fB);\fR
 .br
-\fBint mvinnstr(int y, int x, char *str, int n);\fR
+\fBint mvwinstr(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, char *\fIstr\fB);\fR
 .br
-\fBint mvwinstr(WINDOW *win, int y, int x, char *str);\fR
-.br
-\fBint mvwinnstr(WINDOW *win, int y, int x, char *str, int n);\fR
-.br
+\fBint mvwinnstr(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, char *\fIstr\fB, int \fIn\fB);\fR
 .SH DESCRIPTION
-These routines return a string of characters in \fIstr\fR, extracted starting
+These routines return a string of characters in \fIstr\fP, extracted starting
 at the current cursor position in the named window.
-Attributes are stripped from the characters.  The four
-functions with \fIn\fR as the last argument return a leading substring at most
-\fIn\fR characters long (exclusive of the trailing NUL).
+Attributes are stripped from the characters.
+The four
+functions with \fIn\fP as the last argument return a leading substring at most
+\fIn\fP characters long (exclusive of the trailing NUL).
 .SH RETURN VALUE
-All of the functions return \fBERR\fR upon failure,
+All of the functions return \fBERR\fP upon failure,
 or the number of characters actually read into the string.
 .PP
-X/Open defines no error conditions.
-In this implementation,
-if the window parameter is null or the str parameter is null,
-a zero is returned.
+X/Open Curses defines no error conditions.
+In this implementation:
+.bP
+If the \fIwin\fP parameter is null, an error is returned,
+.bP
+If the \fIchstr\fP parameter is null, an error is returned,
+.PP
+Functions with a \*(``mv\*('' prefix first perform a cursor movement using
+\fBwmove\fP, and return an error if the position is outside the window,
+or if the window pointer is null.
 .SH NOTES
-Note that all routines except \fBwinnstr\fR may be macros.
+Note that all routines except \fBwinnstr\fP may be macros.
 .SH PORTABILITY
 SVr4 does not
 document whether a length limit includes or excludes the trailing NUL.
 .PP
 The ncurses library extends the XSI description by allowing a negative
-value for \fIn\fR.
+value for \fIn\fP.
 In this case, the functions return the string ending at the right margin.
 .SH SEE ALSO
-\fBcurses\fR(3).
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3).

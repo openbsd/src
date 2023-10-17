@@ -1,6 +1,7 @@
-/*	$OpenBSD: frm_data.c,v 1.8 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: frm_data.c,v 1.9 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2004,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2013 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,24 +34,24 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_data.c,v 1.8 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: frm_data.c,v 1.9 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  bool data_behind(const FORM *form)
-|   
+|
 |   Description   :  Check for off-screen data behind. This is nearly trivial
 |                    because the beginning of a field is fixed.
 |
 |   Return Values :  TRUE   - there are off-screen data behind
 |                    FALSE  - there are no off-screen data behind
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(bool)
+FORM_EXPORT(bool)
 data_behind(const FORM *form)
 {
   bool result = FALSE;
 
-  T((T_CALLED("data_behind(%p)"), form));
+  T((T_CALLED("data_behind(%p)"), (const void *)form));
 
   if (form && (form->status & _POSTED) && form->current)
     {
@@ -70,12 +71,12 @@ data_behind(const FORM *form)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static char * Only_Padding(
 |                                    WINDOW *w,
 |                                    int len,
 |                                    int pad)
-|   
+|
 |   Description   :  Test if 'length' cells starting at the current position
 |                    contain a padding character.
 |
@@ -104,7 +105,7 @@ Only_Padding(WINDOW *w, int len, int pad)
 		}
 	    }
 #else
-	  cell = winch(w);
+	  cell = (FIELD_CELL)winch(w);
 	  if (ChCharOf(cell) != ChCharOf(pad))
 	    {
 	      result = FALSE;
@@ -123,21 +124,21 @@ Only_Padding(WINDOW *w, int len, int pad)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  bool data_ahead(const FORM *form)
-|   
+|
 |   Description   :  Check for off-screen data ahead. This is more difficult
-|                    because a dynamic field has a variable end. 
+|                    because a dynamic field has a variable end.
 |
 |   Return Values :  TRUE   - there are off-screen data ahead
 |                    FALSE  - there are no off-screen data ahead
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(bool)
+FORM_EXPORT(bool)
 data_ahead(const FORM *form)
 {
   bool result = FALSE;
 
-  T((T_CALLED("data_ahead(%p)"), form));
+  T((T_CALLED("data_ahead(%p)"), (const void *)form));
 
   if (form && (form->status & _POSTED) && form->current)
     {
@@ -150,12 +151,11 @@ data_ahead(const FORM *form)
 
       if (Single_Line_Field(field))
 	{
-	  int check_len;
-
 	  pos = form->begincol + field->cols;
 	  while (pos < field->dcols)
 	    {
-	      check_len = field->dcols - pos;
+	      int check_len = field->dcols - pos;
+
 	      if (check_len >= field->cols)
 		check_len = field->cols;
 	      cursor_moved = TRUE;

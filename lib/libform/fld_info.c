@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_info.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_info.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2004,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,31 +34,31 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_info.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_info.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int field_info(const FIELD *field,
 |                                   int *rows, int *cols,
 |                                   int *frow, int *fcol,
 |                                   int *nrow, int *nbuf)
-|   
-|   Description   :  Retrieve infos about the fields creation parameters.
+|
+|   Description   :  Retrieve information about the field's creation parameters.
 |
 |   Return Values :  E_OK           - success
 |                    E_BAD_ARGUMENT - invalid field pointer
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 field_info(const FIELD *field,
 	   int *rows, int *cols,
 	   int *frow, int *fcol,
 	   int *nrow, int *nbuf)
 {
   T((T_CALLED("field_info(%p,%p,%p,%p,%p,%p,%p)"),
-     field,
-     rows, cols,
-     frow, fcol,
-     nrow, nbuf));
+     (const void *)field,
+     (void *)rows, (void *)cols,
+     (void *)frow, (void *)fcol,
+     (void *)nrow, (void *)nbuf));
 
   if (!field)
     RETURN(E_BAD_ARGUMENT);
@@ -78,21 +79,25 @@ field_info(const FIELD *field,
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int dynamic_field_info(const FIELD *field,
 |                                           int *drows, int *dcols,
 |                                           int *maxgrow)
-|   
-|   Description   :  Retrieve informations about a dynamic fields current
+|
+|   Description   :  Retrieve information about a dynamic field's current
 |                    dynamic parameters.
 |
 |   Return Values :  E_OK           - success
 |                    E_BAD_ARGUMENT - invalid argument
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 dynamic_field_info(const FIELD *field, int *drows, int *dcols, int *maxgrow)
 {
-  T((T_CALLED("dynamic_field_info(%p,%p,%p,%p)"), field, drows, dcols, maxgrow));
+  T((T_CALLED("dynamic_field_info(%p,%p,%p,%p)"),
+     (const void *)field,
+     (void *)drows,
+     (void *)dcols,
+     (void *)maxgrow));
 
   if (!field)
     RETURN(E_BAD_ARGUMENT);

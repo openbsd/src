@@ -1,7 +1,8 @@
-/* $OpenBSD: m_item_opt.c,v 1.9 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_item_opt.c,v 1.10 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2004,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,12 +40,12 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_item_opt.c,v 1.9 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_item_opt.c,v 1.10 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int set_item_opts(ITEM *item, Item_Options opts)  
-|   
+|   Facility      :  libnmenu
+|   Function      :  int set_item_opts(ITEM *item, Item_Options opts)
+|
 |   Description   :  Set the options of the item. If there are relevant
 |                    changes, the item is connected and the menu is posted,
 |                    the menu will be redisplayed.
@@ -52,10 +53,10 @@ MODULE_ID("$Id: m_item_opt.c,v 1.9 2010/01/12 23:22:08 nicm Exp $")
 |   Return Values :  E_OK            - success
 |                    E_BAD_ARGUMENT  - invalid item options
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-set_item_opts(ITEM * item, Item_Options opts)
+MENU_EXPORT(int)
+set_item_opts(ITEM *item, Item_Options opts)
 {
-  T((T_CALLED("set_menu_opts(%p,%d)"), item, opts));
+  T((T_CALLED("set_menu_opts(%p,%d)"), (void *)item, opts));
 
   opts &= ALL_ITEM_OPTS;
 
@@ -87,22 +88,22 @@ set_item_opts(ITEM * item, Item_Options opts)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int item_opts_off(ITEM *item, Item_Options opts)   
-|   
+|   Facility      :  libnmenu
+|   Function      :  int item_opts_off(ITEM *item, Item_Options opts)
+|
 |   Description   :  Switch of the options for this item.
 |
 |   Return Values :  E_OK            - success
 |                    E_BAD_ARGUMENT  - invalid options
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-item_opts_off(ITEM * item, Item_Options opts)
+MENU_EXPORT(int)
+item_opts_off(ITEM *item, Item_Options opts)
 {
   ITEM *citem = item;		/* use a copy because set_item_opts must detect
 
 				   NULL item itself to adjust its behavior */
 
-  T((T_CALLED("item_opts_off(%p,%d)"), item, opts));
+  T((T_CALLED("item_opts_off(%p,%d)"), (void *)item, opts));
 
   if (opts & ~ALL_ITEM_OPTS)
     RETURN(E_BAD_ARGUMENT);
@@ -115,22 +116,22 @@ item_opts_off(ITEM * item, Item_Options opts)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int item_opts_on(ITEM *item, Item_Options opts)   
-|   
+|   Facility      :  libnmenu
+|   Function      :  int item_opts_on(ITEM *item, Item_Options opts)
+|
 |   Description   :  Switch on the options for this item.
 |
 |   Return Values :  E_OK            - success
 |                    E_BAD_ARGUMENT  - invalid options
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-item_opts_on(ITEM * item, Item_Options opts)
+MENU_EXPORT(int)
+item_opts_on(ITEM *item, Item_Options opts)
 {
   ITEM *citem = item;		/* use a copy because set_item_opts must detect
 
 				   NULL item itself to adjust its behavior */
 
-  T((T_CALLED("item_opts_on(%p,%d)"), item, opts));
+  T((T_CALLED("item_opts_on(%p,%d)"), (void *)item, opts));
 
   opts &= ALL_ITEM_OPTS;
   if (opts & ~ALL_ITEM_OPTS)
@@ -144,17 +145,17 @@ item_opts_on(ITEM * item, Item_Options opts)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  Item_Options item_opts(const ITEM *item)   
-|   
+|   Facility      :  libnmenu
+|   Function      :  Item_Options item_opts(const ITEM *item)
+|
 |   Description   :  Switch of the options for this item.
 |
 |   Return Values :  Items options
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(Item_Options)
-item_opts(const ITEM * item)
+MENU_EXPORT(Item_Options)
+item_opts(const ITEM *item)
 {
-  T((T_CALLED("item_opts(%p)"), item));
+  T((T_CALLED("item_opts(%p)"), (const void *)item));
   returnItemOpts(ALL_ITEM_OPTS & Normalize_Item(item)->opt);
 }
 

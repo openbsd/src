@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_ungetch.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_ungetch.c,v 1.4 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2011,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -32,6 +33,7 @@
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Juergen Pfeifer                         2009                    *
  ****************************************************************************/
 
 /*
@@ -43,7 +45,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_ungetch.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_ungetch.c,v 1.4 2023/10/17 09:52:09 nicm Exp $")
 
 #include <fifo_defs.h>
 
@@ -59,17 +61,20 @@ _nc_fifo_dump(SCREEN *sp)
 #endif /* TRACE */
 
 NCURSES_EXPORT(int)
-_nc_ungetch(SCREEN *sp, int ch)
+safe_ungetch(SCREEN *sp, int ch)
 {
     int rc = ERR;
 
-    if (tail != -1) {
-	if (head == -1) {
+    T((T_CALLED("ungetch(%p,%s)"), (void *) sp, _nc_tracechar(sp, ch)));
+
+    if (sp != 0 && tail >= 0) {
+	if (head < 0) {
 	    head = 0;
 	    t_inc();
 	    peek = tail;	/* no raw keys */
-	} else
+	} else {
 	    h_dec();
+	}
 
 	sp->_fifo[head] = ch;
 	T(("ungetch %s ok", _nc_tracechar(sp, ch)));
@@ -81,12 +86,11 @@ _nc_ungetch(SCREEN *sp, int ch)
 #endif
 	rc = OK;
     }
-    return rc;
+    returnCode(rc);
 }
 
 NCURSES_EXPORT(int)
 ungetch(int ch)
 {
-    T((T_CALLED("ungetch(%s)"), _nc_tracechar(SP, ch)));
-    returnCode(_nc_ungetch(SP, ch));
+    return safe_ungetch(CURRENT_SCREEN, ch);
 }

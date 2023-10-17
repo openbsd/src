@@ -1,6 +1,7 @@
-/*	$OpenBSD: fty_enum.c,v 1.11 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fty_enum.c,v 1.12 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -35,7 +36,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fty_enum.c,v 1.11 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fty_enum.c,v 1.12 2023/10/17 09:52:10 nicm Exp $")
 
 typedef struct
   {
@@ -46,10 +47,82 @@ typedef struct
   }
 enumARG;
 
+typedef struct
+  {
+    char **kwds;
+    int ccase;
+    int cunique;
+  }
+enumParams;
+
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
+|   Function      :  static void *Generic_Enum_Type(void * arg)
+|
+|   Description   :  Allocate structure for enumeration type argument.
+|
+|   Return Values :  Pointer to argument structure or NULL on error
++--------------------------------------------------------------------------*/
+static void *
+Generic_Enum_Type(void *arg)
+{
+  enumARG *argp = (enumARG *)0;
+  enumParams *params = (enumParams *)arg;
+
+  if (params)
+    {
+      argp = typeMalloc(enumARG, 1);
+
+      if (argp)
+	{
+	  int cnt = 0;
+	  char **kp = (char **)0;
+	  char **kwds = (char **)0;
+	  int ccase, cunique;
+
+	  T((T_CREATE("enumARG %p"), (void *)argp));
+	  kwds = params->kwds;
+	  ccase = params->ccase;
+	  cunique = params->cunique;
+
+	  argp->checkcase = ccase ? TRUE : FALSE;
+	  argp->checkunique = cunique ? TRUE : FALSE;
+	  argp->kwds = (char **)0;
+
+	  kp = kwds;
+	  while (kp && (*kp++))
+	    cnt++;
+	  argp->count = cnt;
+
+	  if (cnt > 0)
+	    {
+	      char **kptarget;
+
+	      /* We copy the keywords, because we can't rely on the fact
+	         that the caller doesn't relocate or free the memory used
+	         for the keywords (maybe he has GC)
+	       */
+	      argp->kwds = typeMalloc(char *, cnt + 1);
+
+	      kp = kwds;
+	      if ((kptarget = argp->kwds) != 0)
+		{
+		  while (kp && (*kp))
+		    {
+		      (*kptarget++) = strdup(*kp++);
+		    }
+		  *kptarget = (char *)0;
+		}
+	    }
+	}
+    }
+  return (void *)argp;
+}
+
+/*---------------------------------------------------------------------------
+|   Facility      :  libnform
 |   Function      :  static void *Make_Enum_Type( va_list * ap )
-|   
+|
 |   Description   :  Allocate structure for enumeration type argument.
 |
 |   Return Values :  Pointer to argument structure or NULL on error
@@ -57,35 +130,20 @@ enumARG;
 static void *
 Make_Enum_Type(va_list *ap)
 {
-  enumARG *argp = typeMalloc(enumARG, 1);
+  enumParams params;
 
-  if (argp)
-    {
-      int cnt = 0;
-      char **kp = (char **)0;
-      int ccase, cunique;
+  params.kwds = va_arg(*ap, char **);
+  params.ccase = va_arg(*ap, int);
+  params.cunique = va_arg(*ap, int);
 
-      T((T_CREATE("enumARG %p"), argp));
-      argp->kwds = va_arg(*ap, char **);
-      ccase = va_arg(*ap, int);
-      cunique = va_arg(*ap, int);
-
-      argp->checkcase = ccase ? TRUE : FALSE;
-      argp->checkunique = cunique ? TRUE : FALSE;
-
-      kp = argp->kwds;
-      while (kp && (*kp++))
-	cnt++;
-      argp->count = cnt;
-    }
-  return (void *)argp;
+  return Generic_Enum_Type((void *)&params);
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static void *Copy_Enum_Type( const void * argp )
-|   
-|   Description   :  Copy structure for enumeration type argument.  
+|
+|   Description   :  Copy structure for enumeration type argument.
 |
 |   Return Values :  Pointer to argument structure or NULL on error.
 +--------------------------------------------------------------------------*/
@@ -102,17 +160,33 @@ Copy_Enum_Type(const void *argp)
 
       if (result)
 	{
-	  T((T_CREATE("enumARG %p"), result));
+	  T((T_CREATE("enumARG %p"), (void *)result));
 	  *result = *ap;
+
+	  if (ap->count > 0)
+	    {
+	      char **kptarget;
+	      char **kp = ap->kwds;
+	      result->kwds = typeMalloc(char *, 1 + ap->count);
+
+	      if ((kptarget = result->kwds) != 0)
+		{
+		  while (kp && (*kp))
+		    {
+		      (*kptarget++) = strdup(*kp++);
+		    }
+		  *kptarget = (char *)0;
+		}
+	    }
 	}
     }
   return (void *)result;
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static void Free_Enum_Type( void * argp )
-|   
+|
 |   Description   :  Free structure for enumeration type argument.
 |
 |   Return Values :  -
@@ -121,7 +195,24 @@ static void
 Free_Enum_Type(void *argp)
 {
   if (argp)
-    free(argp);
+    {
+      const enumARG *ap = (const enumARG *)argp;
+
+      if (ap->kwds && ap->count > 0)
+	{
+	  char **kp = ap->kwds;
+	  int cnt = 0;
+
+	  while (kp && (*kp))
+	    {
+	      free(*kp++);
+	      cnt++;
+	    }
+	  assert(cnt == ap->count);
+	  free(ap->kwds);
+	}
+      free(argp);
+    }
 }
 
 #define SKIP_SPACE(x) while(((*(x))!='\0') && (is_blank(*(x)))) (x)++
@@ -130,11 +221,11 @@ Free_Enum_Type(void *argp)
 #define EXACT   2
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
-|   Function      :  static int Compare(const unsigned char * s,  
+|   Facility      :  libnform
+|   Function      :  static int Compare(const unsigned char * s,
 |                                       const unsigned char * buf,
 |                                       bool  ccase )
-|   
+|
 |   Description   :  Check whether or not the text in 'buf' matches the
 |                    text in 's', at least partial.
 |
@@ -185,11 +276,11 @@ Compare(const unsigned char *s, const unsigned char *buf,
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static bool Check_Enum_Field(
 |                                      FIELD * field,
 |                                      const void  * argp)
-|   
+|
 |   Description   :  Validate buffer content to be a valid enumeration value
 |
 |   Return Values :  TRUE  - field is valid
@@ -203,10 +294,11 @@ Check_Enum_Field(FIELD *field, const void *argp)
   bool unique = ((const enumARG *)argp)->checkunique;
   unsigned char *bp = (unsigned char *)field_buffer(field, 0);
   char *s, *t, *p;
-  int res;
 
   while (kwds && (s = (*kwds++)))
     {
+      int res;
+
       if ((res = Compare((unsigned char *)s, bp, ccase)) != NOMATCH)
 	{
 	  p = t = s;		/* t is at least a partial match */
@@ -242,10 +334,10 @@ static const char *dummy[] =
 {(char *)0};
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static bool Next_Enum(FIELD * field,
 |                                          const void * argp)
-|   
+|
 |   Description   :  Check for the next enumeration value
 |
 |   Return Values :  TRUE  - next value found and loaded
@@ -279,11 +371,11 @@ Next_Enum(FIELD *field, const void *argp)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static bool Previous_Enum(
 |                                          FIELD * field,
 |                                          const void * argp)
-|   
+|
 |   Description   :  Check for the previous enumeration value
 |
 |   Return Values :  TRUE  - previous value found and loaded
@@ -327,13 +419,27 @@ static FIELDTYPE typeENUM =
   Make_Enum_Type,
   Copy_Enum_Type,
   Free_Enum_Type,
-  Check_Enum_Field,
-  NULL,
-  Next_Enum,
-  Previous_Enum
+  INIT_FT_FUNC(Check_Enum_Field),
+  INIT_FT_FUNC(NULL),
+  INIT_FT_FUNC(Next_Enum),
+  INIT_FT_FUNC(Previous_Enum),
+#if NCURSES_INTEROP_FUNCS
+  Generic_Enum_Type
+#endif
 };
 
-NCURSES_EXPORT_VAR(FIELDTYPE *)
-TYPE_ENUM = &typeENUM;
+FORM_EXPORT_VAR(FIELDTYPE *) TYPE_ENUM = &typeENUM;
+
+#if NCURSES_INTEROP_FUNCS
+/* The next routines are to simplify the use of ncurses from
+   programming languages with restrictions on interop with C level
+   constructs (e.g. variable access or va_list + ellipsis constructs)
+*/
+FORM_EXPORT(FIELDTYPE *)
+_nc_TYPE_ENUM(void)
+{
+  return TYPE_ENUM;
+}
+#endif
 
 /* fty_enum.c ends here */

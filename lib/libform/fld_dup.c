@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_dup.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_dup.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2004,2007 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +34,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_dup.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_dup.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnform
@@ -48,21 +49,21 @@ MODULE_ID("$Id: fld_dup.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
 |
 |   Return Values :  Pointer to the new field or NULL if failure
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(FIELD *)
+FORM_EXPORT(FIELD *)
 dup_field(FIELD *field, int frow, int fcol)
 {
   FIELD *New_Field = (FIELD *)0;
   int err = E_BAD_ARGUMENT;
 
-  T((T_CALLED("dup_field(%p,%d,%d)"), field, frow, fcol));
+  T((T_CALLED("dup_field(%p,%d,%d)"), (void *)field, frow, fcol));
   if (field && (frow >= 0) && (fcol >= 0) &&
       ((err = E_SYSTEM_ERROR) != 0) &&	/* trick : this resets the default error */
       (New_Field = typeMalloc(FIELD, 1)))
     {
-      T((T_CREATE("field %p"), New_Field));
+      T((T_CREATE("field %p"), (void *)New_Field));
       *New_Field = *_nc_Default_Field;
-      New_Field->frow = frow;
-      New_Field->fcol = fcol;
+      New_Field->frow = (short)frow;
+      New_Field->fcol = (short)fcol;
       New_Field->link = New_Field;
       New_Field->rows = field->rows;
       New_Field->cols = field->cols;
@@ -80,13 +81,12 @@ dup_field(FIELD *field, int frow, int fcol)
 
       if (_nc_Copy_Type(New_Field, field))
 	{
-	  size_t i, len;
+	  size_t len;
 
 	  len = Total_Buffer_Size(New_Field);
-	  if ((New_Field->buf = (FIELD_CELL *)malloc(len)))
+	  if ((New_Field->buf = (FIELD_CELL *)malloc(len * 20)))
 	    {
-	      for (i = 0; i < len; ++i)
-		New_Field->buf[i] = field->buf[i];
+	      memcpy(New_Field->buf, field->buf, len);
 	      returnField(New_Field);
 	    }
 	}

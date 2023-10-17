@@ -1,7 +1,8 @@
-/* $OpenBSD: m_item_new.c,v 1.9 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_item_new.c,v 1.10 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
+ * Copyright 2020-2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -46,12 +47,12 @@
 #endif
 #endif
 
-MODULE_ID("$Id: m_item_new.c,v 1.9 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_item_new.c,v 1.10 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  bool Is_Printable_String(const char *s)
-|   
+|
 |   Description   :  Checks whether or not the string contains only printable
 |                    characters.
 |
@@ -64,7 +65,7 @@ Is_Printable_String(const char *s)
   int result = TRUE;
 
 #if USE_WIDEC_SUPPORT
-  int count = mbstowcs(0, s, 0);
+  int count = (int)mbstowcs(0, s, 0);
   wchar_t *temp = 0;
 
   assert(s);
@@ -76,7 +77,7 @@ Is_Printable_String(const char *s)
 
       mbstowcs(temp, s, (unsigned)count);
       for (n = 0; n < count; ++n)
-	if (!iswprint((wint_t) temp[n]))
+	if (!iswprint((wint_t)temp[n]))
 	  {
 	    result = FALSE;
 	    break;
@@ -99,16 +100,16 @@ Is_Printable_String(const char *s)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  ITEM *new_item(char *name, char *description)
-|   
+|
 |   Description   :  Create a new item with name and description. Return
 |                    a pointer to this new item.
 |                    N.B.: an item must(!) have a name.
 |
 |   Return Values :  The item pointer or NULL if creation failed.
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(ITEM *)
+MENU_EXPORT(ITEM *)
 new_item(const char *name, const char *description)
 {
   ITEM *item;
@@ -119,23 +120,25 @@ new_item(const char *name, const char *description)
 
   if (!name || (*name == '\0') || !Is_Printable_String(name))
     {
-      item = (ITEM *) 0;
+      item = (ITEM *)0;
       SET_ERROR(E_BAD_ARGUMENT);
     }
   else
     {
-      item = (ITEM *) calloc(1, sizeof(ITEM));
+      item = typeCalloc(ITEM, 1);
+
       if (item)
 	{
+	  T((T_CREATE("item %p"), (void *)item));
 	  *item = _nc_Default_Item;	/* hope we have struct assignment */
 
-	  item->name.length = strlen(name);
+	  item->name.length = (unsigned short)strlen(name);
 	  item->name.str = name;
 
 	  if (description && (*description != '\0') &&
 	      Is_Printable_String(description))
 	    {
-	      item->description.length = strlen(description);
+	      item->description.length = (unsigned short)strlen(description);
 	      item->description.str = description;
 	    }
 	  else
@@ -151,20 +154,20 @@ new_item(const char *name, const char *description)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  int free_item(ITEM *item)
-|   
-|   Description   :  Free the allocated storage for this item. 
+|
+|   Description   :  Free the allocated storage for this item.
 |                    N.B.: a connected item can't be freed.
 |
 |   Return Values :  E_OK              - success
 |                    E_BAD_ARGUMENT    - invalid value has been passed
-|                    E_CONNECTED       - item is still connected to a menu    
+|                    E_CONNECTED       - item is still connected to a menu
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-free_item(ITEM * item)
+MENU_EXPORT(int)
+free_item(ITEM *item)
 {
-  T((T_CALLED("free_item(%p)"), item));
+  T((T_CALLED("free_item(%p)"), (void *)item));
 
   if (!item)
     RETURN(E_BAD_ARGUMENT);
@@ -178,31 +181,31 @@ free_item(ITEM * item)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  int set_menu_mark( MENU *menu, const char *mark )
-|   
+|
 |   Description   :  Set the mark string used to indicate the current
 |                    item (single-valued menu) or the selected items
 |                    (multi-valued menu).
-|                    The mark argument may be NULL, in which case no 
+|                    The mark argument may be NULL, in which case no
 |                    marker is used.
-|                    This might be a little bit tricky, because this may 
-|                    affect the geometry of the menu, which we don't allow 
+|                    This might be a little bit tricky, because this may
+|                    affect the geometry of the menu, which we don't allow
 |                    if it is already posted.
 |
 |   Return Values :  E_OK               - success
 |                    E_BAD_ARGUMENT     - an invalid value has been passed
 |                    E_SYSTEM_ERROR     - no memory to store mark
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-set_menu_mark(MENU * menu, const char *mark)
+MENU_EXPORT(int)
+set_menu_mark(MENU *menu, const char *mark)
 {
-  unsigned l;
+  short l;
 
-  T((T_CALLED("set_menu_mark(%p,%s)"), menu, _nc_visbuf(mark)));
+  T((T_CALLED("set_menu_mark(%p,%s)"), (void *)menu, _nc_visbuf(mark)));
 
   if (mark && (*mark != '\0') && Is_Printable_String(mark))
-    l = strlen(mark);
+    l = (short)strlen(mark);
   else
     l = 0;
 
@@ -215,22 +218,22 @@ set_menu_mark(MENU * menu, const char *mark)
 	{
 	  /* If the menu is already posted, the geometry is fixed. Then
 	     we can only accept a mark with exactly the same length */
-	  if (menu->marklen != (int)l)
+	  if (menu->marklen != l)
 	    RETURN(E_BAD_ARGUMENT);
 	}
       menu->marklen = l;
       if (l)
 	{
-	  menu->mark = (char *)malloc(l + 1);
+	  menu->mark = strdup(mark);
 	  if (menu->mark)
 	    {
-	      strlcpy(menu->mark, mark, l+1);
 	      if (menu != &_nc_Default_Menu)
-		menu->status |= _MARK_ALLOCATED;
+		SetStatus(menu, _MARK_ALLOCATED);
 	    }
 	  else
 	    {
 	      menu->mark = old_mark;
+	      menu->marklen = (short)((old_mark != 0) ? strlen(old_mark) : 0);
 	      RETURN(E_SYSTEM_ERROR);
 	    }
 	}
@@ -259,17 +262,17 @@ set_menu_mark(MENU * menu, const char *mark)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  char *menu_mark(const MENU *menu)
-|   
+|
 |   Description   :  Return a pointer to the marker string
 |
 |   Return Values :  The marker string pointer or NULL if no marker defined
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(const char *)
-menu_mark(const MENU * menu)
+MENU_EXPORT(const char *)
+menu_mark(const MENU *menu)
 {
-  T((T_CALLED("menu_mark(%p)"), menu));
+  T((T_CALLED("menu_mark(%p)"), (const void *)menu));
   returnPtr(Normalize_Menu(menu)->mark);
 }
 

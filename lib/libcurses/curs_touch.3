@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_touch.3,v 1.7 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_touch.3,v 1.8 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2015,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,91 +29,101 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_touch.3,v 1.7 2010/01/12 23:21:59 nicm Exp $
-.TH curs_touch 3 ""
+.\" $Id: curs_touch.3,v 1.8 2023/10/17 09:52:08 nicm Exp $
+.TH curs_touch 3 2023-07-01 "ncurses 6.4" "Library calls"
 .na
 .hy 0
 .SH NAME
-\fBtouchwin\fR,
-\fBtouchline\fR,
-\fBuntouchwin\fR,
-\fBwtouchln\fR,
-\fBis_linetouched\fR,
-\fBis_wintouched\fR - \fBcurses\fR refresh control routines
+\fBtouchwin\fP,
+\fBtouchline\fP,
+\fBuntouchwin\fP,
+\fBwtouchln\fP,
+\fBis_linetouched\fP,
+\fBis_wintouched\fP \- \fBcurses\fP refresh control routines
 .ad
 .hy
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
+.sp
+\fBint touchline(WINDOW *\fIwin\fB, int \fIstart\fB, int \fIcount\fB);\fR
+.sp
+\fBint touchwin(WINDOW *\fIwin\fB);\fR
 .br
-\fBint touchwin(WINDOW *win);\fR
+\fBint wtouchln(WINDOW *\fIwin\fB, int \fIy\fB, int \fIn\fB, int \fIchanged\fB);\fR
+.sp
+\fBint untouchwin(WINDOW *\fIwin\fB);\fR
+.sp
+\fBbool is_linetouched(WINDOW *\fIwin\fB, int \fIline\fB);\fR
 .br
-\fBint touchline(WINDOW *win, int start, int count);\fR
-.br
-\fBint untouchwin(WINDOW *win);\fR
-.br
-\fBint wtouchln(WINDOW *win, int y, int n, int changed);\fR
-.br
-\fBbool is_linetouched(WINDOW *win, int line);\fR
-.br
-\fBbool is_wintouched(WINDOW *win);\fR
-.br
+\fBbool is_wintouched(WINDOW *\fIwin\fB);\fR
 .SH DESCRIPTION
-The \fBtouchwin\fR and \fBtouchline\fR routines throw away all
+The \fBtouchwin\fP and \fBtouchline\fP routines throw away all
 optimization information about which parts of the window have been
-touched, by pretending that the entire window has been drawn on.  This
+touched, by pretending that the entire window has been drawn on.
+This
 is sometimes necessary when using overlapping windows, since a change
 to one window affects the other window, but the records of which lines
-have been changed in the other window do not reflect the change.  The
-routine \fBtouchline\fR only pretends that \fIcount\fR lines have been
-changed, beginning with line \fIstart\fR.
+have been changed in the other window do not reflect the change.
+The
+routine \fBtouchline\fP only pretends that \fIcount\fP lines have been
+changed, beginning with line \fIstart\fP.
 .PP
-The \fBuntouchwin\fR routine marks all lines in the window as unchanged since
-the last call to \fBwrefresh\fR.
+The \fBuntouchwin\fP routine marks all lines in the window as unchanged since
+the last call to \fBwrefresh\fP.
 .PP
-The \fBwtouchln\fR routine makes \fIn\fR lines in the window, starting
-at line \fIy\fR, look as if they have (\fIchanged\fR\fB=1\fR) or have
-not (\fIchanged\fR\fB=0\fR) been changed since the last call to
-\fBwrefresh\fR.
+The \fBwtouchln\fP routine makes \fIn\fP lines in the window, starting
+at line \fIy\fR, look as if they have (\fIchanged\fB=1\fR) or have
+not (\fIchanged\fB=0\fR) been changed since the last call to
+\fBwrefresh\fP.
 .PP
-The \fBis_linetouched\fR and \fBis_wintouched\fR routines return
-\fBTRUE\fR if the specified line/window was modified since the last
-call to \fBwrefresh\fR; otherwise they return \fBFALSE\fR.  In
-addition, \fBis_linetouched\fR returns \fBERR\fR if \fIline\fR is not
+The \fBis_linetouched\fP and \fBis_wintouched\fP routines return
+\fBTRUE\fP if the specified line/window was modified since the last
+call to \fBwrefresh\fP; otherwise they return \fBFALSE\fP.  In
+addition, \fBis_linetouched\fP returns \fBERR\fP if \fIline\fP is not
 valid for the given window.
 .SH RETURN VALUE
-All routines return the integer \fBERR\fR upon failure and an integer value
-other than \fBERR\fR upon successful completion, unless otherwise noted in the
+All routines return the integer \fBERR\fP upon failure and an integer value
+other than \fBERR\fP upon successful completion, unless otherwise noted in the
 preceding routine descriptions.
 .PP
 X/Open does not define any error conditions.
 In this implementation
-.RS
+.RS 3
 .TP 5
 \fBis_linetouched\fP
-returns an error 
+returns an error
 if the window pointer is null, or
 if the line number is outside the window.
-Note that ERR is distinct from TRUE and FALSE, which are the normal return values of this function.
+.IP
+The constant \fBERR\fP is distinct from \fBTRUE\fP and \fBFALSE\fP,
+which are the normal return values of this function.
+Because the function returns a \fBbool\fP,
+returning \fBERR\fP (which is neither \fBTRUE\fP nor \fBFALSE\fP)
+may not be supported by the compiler.
+.IP
+To provide error-checking and also match the X/Open function prototype,
+the \fBERR\fP is provided by a macro named \fBis_linetouched\fP.
+The actual function returns \fBFALSE\fP when it detects an error.
 .TP 5
 \fBwtouchln\fP
-returns an error 
+returns an error
 if the window pointer is null, or
 if the line number is outside the window.
 .RE
 .SH PORTABILITY
-The XSI Curses standard, Issue 4 describes these functions.
+These functions were introduced by SVr4.
+The Solaris curses header file,
+for instance, defines both an actual function and macro for each.
+The macros give the same result as the actual functions.
+SVr4 curses does not check the window parameter \fIwin\fP to ensure
+that it is not \fBNULL\fP;
+otherwise this implementation behaves the same as SVr4.
 .PP
-Some historic curses implementations had, as an undocumented feature, the
-ability to do the equivalent of \fBclearok(..., 1)\fR by saying
-\fBtouchwin(stdscr)\fR or \fBclear(stdscr)\fR.  This will not work under
-ncurses.
+The XSI Curses standard, Issue 4 describes these functions,
+but defines no error conditions.
 .SH NOTES
-Note that all routines except \fBwtouchln\fR may be macros.
+All of these routines except \fBwtouchln\fP may be macros.
 .SH SEE ALSO
-\fBcurses\fR(3), \fBcurs_refresh\fR(3).
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3),
+\fBcurs_refresh\fP(3),
+\fBcurs_variables\fP(3).

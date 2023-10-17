@@ -1,7 +1,8 @@
-/* $OpenBSD: p_bottom.c,v 1.6 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: p_bottom.c,v 1.7 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2000,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2008,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,27 +32,29 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1995                    *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Juergen Pfeifer                         1997-1999,2008          *
  ****************************************************************************/
 
 /* p_bottom.c
- * Place a panel on bottom of the stack; may already be in the stack 
+ * Place a panel on bottom of the stack; may already be in the stack
  */
 #include "panel.priv.h"
 
-MODULE_ID("$Id: p_bottom.c,v 1.6 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: p_bottom.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
-NCURSES_EXPORT(int)
+PANEL_EXPORT(int)
 bottom_panel(PANEL * pan)
 {
   int err = OK;
 
-  T((T_CALLED("bottom_panel(%p)"), pan));
+  T((T_CALLED("bottom_panel(%p)"), (void *)pan));
   if (pan)
     {
+      GetHook(pan);
       if (!Is_Bottom(pan))
 	{
 
-	  dBug(("--> bottom_panel %s", USER_PTR(pan->user)));
+	  dBug(("--> bottom_panel %s", USER_PTR(pan->user, 1)));
 
 	  HIDE_PANEL(pan, err, OK);
 	  assert(_nc_bottom_panel == _nc_stdscr_pseudo_panel);

@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_has_cap.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_has_cap.c,v 1.4 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2000,2003 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2009,2013 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -32,6 +33,7 @@
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  *     and: Thomas E. Dickey                        1996-2003               *
+ *     and: Juergen Pfeifer                         2009                    *
  ****************************************************************************/
 
 /*
@@ -43,25 +45,53 @@
 
 #include <curses.priv.h>
 
-#include <term.h>
+#ifndef CUR
+#define CUR SP_TERMTYPE
+#endif
 
-MODULE_ID("$Id: lib_has_cap.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_has_cap.c,v 1.4 2023/10/17 09:52:09 nicm Exp $")
 
+NCURSES_EXPORT(bool)
+NCURSES_SP_NAME(has_ic) (NCURSES_SP_DCL0)
+{
+    bool code = FALSE;
+
+    T((T_CALLED("has_ic(%p)"), (void *) SP_PARM));
+
+    if (HasTInfoTerminal(SP_PARM)) {
+	code = ((insert_character || parm_ich
+		 || (enter_insert_mode && exit_insert_mode))
+		&& (delete_character || parm_dch)) ? TRUE : FALSE;
+    }
+
+    returnCode(code);
+}
+
+#if NCURSES_SP_FUNCS
 NCURSES_EXPORT(bool)
 has_ic(void)
 {
-    T((T_CALLED("has_ic()")));
-    returnCode(cur_term &&
-	       (insert_character || parm_ich
-		|| (enter_insert_mode && exit_insert_mode))
-	       && (delete_character || parm_dch));
+    return NCURSES_SP_NAME(has_ic) (CURRENT_SCREEN);
+}
+#endif
+
+NCURSES_EXPORT(bool)
+NCURSES_SP_NAME(has_il) (NCURSES_SP_DCL0)
+{
+    bool code = FALSE;
+    T((T_CALLED("has_il(%p)"), (void *) SP_PARM));
+    if (HasTInfoTerminal(SP_PARM)) {
+	code = ((insert_line || parm_insert_line)
+		&& (delete_line || parm_delete_line)) ? TRUE : FALSE;
+    }
+
+    returnCode(code);
 }
 
+#if NCURSES_SP_FUNCS
 NCURSES_EXPORT(bool)
 has_il(void)
 {
-    T((T_CALLED("has_il()")));
-    returnCode(cur_term
-	       && (insert_line || parm_insert_line)
-	       && (delete_line || parm_delete_line));
+    return NCURSES_SP_NAME(has_il) (CURRENT_SCREEN);
 }
+#endif

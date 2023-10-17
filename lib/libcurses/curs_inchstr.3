@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_inchstr.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_inchstr.3,v 1.9 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2010,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,76 +29,87 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_inchstr.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
-.TH curs_inchstr 3 ""
+.\" $Id: curs_inchstr.3,v 1.9 2023/10/17 09:52:08 nicm Exp $
+.TH curs_inchstr 3 2023-07-01 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
+.de bP
+.ie n  .IP \(bu 4
+.el    .IP \(bu 2
+..
 .na
 .hy 0
 .SH NAME
-\fBinchstr\fR,
-\fBinchnstr\fR,
-\fBwinchstr\fR,
-\fBwinchnstr\fR,
-\fBmvinchstr\fR,
-\fBmvinchnstr\fR,
-\fBmvwinchstr\fR,
-\fBmvwinchnstr\fR - get a string of characters (and attributes) from a \fBcurses\fR window
+\fBinchstr\fP,
+\fBinchnstr\fP,
+\fBwinchstr\fP,
+\fBwinchnstr\fP,
+\fBmvinchstr\fP,
+\fBmvinchnstr\fP,
+\fBmvwinchstr\fP,
+\fBmvwinchnstr\fP \- get a string of characters (and attributes) from a \fBcurses\fP window
 .ad
 .hy
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 .sp
-\fBint inchstr(chtype *chstr);\fR
+\fBint inchstr(chtype *\fIchstr\fB);\fR
 .br
-\fBint inchnstr(chtype *chstr, int n);\fR
+\fBint inchnstr(chtype *\fIchstr\fB, int \fIn\fB);\fR
 .br
-\fBint winchstr(WINDOW *win, chtype *chstr);\fR
+\fBint winchstr(WINDOW *\fIwin\fB, chtype *\fIchstr\fB);\fR
 .br
-\fBint winchnstr(WINDOW *win, chtype *chstr, int n);\fR
+\fBint winchnstr(WINDOW *\fIwin\fB, chtype *\fIchstr\fB, int \fIn\fB);\fR
+.sp
+\fBint mvinchstr(int \fIy\fB, int \fIx\fB, chtype *\fIchstr\fB);\fR
 .br
-\fBint mvinchstr(int y, int x, chtype *chstr);\fR
+\fBint mvinchnstr(int \fIy\fB, int \fIx\fB, chtype *\fIchstr\fB, int \fIn\fB);\fR
 .br
-\fBint mvinchnstr(int y, int x, chtype *chstr, int n);\fR
+\fBint mvwinchstr(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, chtype *\fIchstr\fB);\fR
 .br
-\fBint mvwinchstr(WINDOW *win, int y, int x, chtype *chstr);\fR
-.br
-\fBint mvwinchnstr(WINDOW *win, int y, int x, chtype *chstr, int n);\fR
-.br
+\fBint mvwinchnstr(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, chtype *\fIchstr\fB, int \fIn\fB);\fR
 .SH DESCRIPTION
-These routines return a NULL-terminated array of \fBchtype\fR quantities,
+These routines return a NULL-terminated array of \fBchtype\fP quantities,
 starting at the current cursor position in the named window and ending at the
-right margin of the window.  The four functions with \fIn\fR as
-the last argument, return a leading substring at most \fIn\fR characters long
+right margin of the window.
+The four functions with \fIn\fP as
+the last argument, return a leading substring at most \fIn\fP characters long
 (exclusive of the trailing (chtype)0).
-Constants defined in \fB<curses.h>\fR can be used with the \fB&\fR (logical
+Constants defined in \fB<curses.h>\fP can be used with the \fB&\fP (logical
 AND) operator to extract the character or the attribute alone from any position
-in the \fIchstr\fR [see \fBcurs_inch\fR(3)].
+in the \fIchstr\fP [see \fBcurs_inch\fP(3)].
 .SH RETURN VALUE
-All routines return the integer \fBERR\fR upon failure and an integer value
-other than \fBERR\fR upon successful completion (the number of characters
+All routines return the integer \fBERR\fP upon failure and an integer value
+other than \fBERR\fP upon successful completion (the number of characters
 retrieved, exclusive of the trailing 0).
 .PP
-No error conditions are defined.
-If the \fIchstr\fP parameter is null,
-no data is returned,
-and the return value is zero.
+X/Open Curses defines no error conditions.
+In this implementation:
+.bP
+If the \fIwin\fP parameter is null, an error is returned,
+.bP
+If the \fIchstr\fP parameter is null, an error is returned,
+.PP
+Functions with a \*(``mv\*('' prefix first perform a cursor movement using
+\fBwmove\fP, and return an error if the position is outside the window,
+or if the window pointer is null.
 .SH NOTES
-Note that all routines except \fBwinchnstr\fR may be macros.  SVr4 does not
-document whether the result string is 0-terminated; it does not document
+Note that all routines except \fBwinchnstr\fP may be macros.
+SVr4 does not
+document whether the result string is zero-terminated; it does not document
 whether a length limit argument includes any trailing 0; and it does not
 document the meaning of the return value.
 .SH PORTABILITY
-These functions are described in the XSI Curses standard, Issue 4.  It is no
-more specific than the SVr4 documentation on the trailing 0.  It does specify
-that the successful return of the functions is \fBOK\fR.
+These functions are described in the XSI Curses standard, Issue 4.
+It is no
+more specific than the SVr4 documentation on the trailing 0.
+It does specify
+that the successful return of the functions is \fBOK\fP.
 .SH SEE ALSO
-\fBcurses\fR(3), \fBcurs_inch\fR(3).
+\fBcurses\fP(3), \fBcurs_inch\fP(3).
 .PP
 Comparable functions in the wide-character (ncursesw) library are
 described in
-\fBcurs_in_wchstr\fR(3).
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurs_in_wchstr\fP(3).

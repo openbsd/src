@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_wunctrl.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_wunctrl.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2001-2005,2007 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 2001-2011,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -37,21 +38,36 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_wunctrl.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_wunctrl.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
+NCURSES_EXPORT(wchar_t *)
+NCURSES_SP_NAME(wunctrl) (NCURSES_SP_DCLx cchar_t *wc)
+{
+    static wchar_t str[CCHARW_MAX + 1], *wsp;
+    wchar_t *result;
+
+    if (wc == 0) {
+	result = 0;
+    } else if (SP_PARM != 0 && Charable(*wc)) {
+	const char *p =
+	NCURSES_SP_NAME(unctrl) (NCURSES_SP_ARGx
+				 (unsigned) _nc_to_char((wint_t)CharOf(*wc)));
+
+	for (wsp = str; *p; ++p) {
+	    *wsp++ = (wchar_t) _nc_to_widechar(*p);
+	}
+	*wsp = 0;
+	result = str;
+    } else {
+	result = wc->chars;
+    }
+    return result;
+}
+
+#if NCURSES_SP_FUNCS
 NCURSES_EXPORT(wchar_t *)
 wunctrl(cchar_t *wc)
 {
-    static wchar_t str[CCHARW_MAX + 1], *sp;
-
-    if (Charable(*wc)) {
-	const char *p = unctrl((unsigned) _nc_to_char((wint_t) CharOf(*wc)));
-
-	for (sp = str; *p; ++p) {
-	    *sp++ = _nc_to_widechar(*p);
-	}
-	*sp = 0;
-	return str;
-    } else
-	return wc->chars;
+    return NCURSES_SP_NAME(wunctrl) (CURRENT_SCREEN, wc);
 }
+#endif

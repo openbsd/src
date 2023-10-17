@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_max.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_max.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2019-2020,2021 Thomas E. Dickey                                *
+ * Copyright 1998-2012,2013 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,22 +34,22 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_max.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_max.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int set_max_field(FIELD *field, int maxgrow)
-|   
+|
 |   Description   :  Set the maximum growth for a dynamic field. If maxgrow=0
 |                    the field may grow to any possible size.
 |
 |   Return Values :  E_OK           - success
 |                    E_BAD_ARGUMENT - invalid argument
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 set_max_field(FIELD *field, int maxgrow)
 {
-  T((T_CALLED("set_max_field(%p,%d)"), field, maxgrow));
+  T((T_CALLED("set_max_field(%p,%d)"), (void *)field, maxgrow));
 
   if (!field || (maxgrow < 0))
     RETURN(E_BAD_ARGUMENT);
@@ -58,18 +59,23 @@ set_max_field(FIELD *field, int maxgrow)
 
       if (maxgrow > 0)
 	{
-	  if ((single_line_field && (maxgrow < field->dcols)) ||
-	      (!single_line_field && (maxgrow < field->drows)))
+	  if (((single_line_field && (maxgrow < field->dcols)) ||
+	       (!single_line_field && (maxgrow < field->drows))) &&
+	      !Field_Has_Option(field, O_INPUT_LIMIT))
 	    RETURN(E_BAD_ARGUMENT);
 	}
       field->maxgrow = maxgrow;
-      field->status &= ~_MAY_GROW;
-      if (!(field->opts & O_STATIC))
+      /* shrink */
+      if (maxgrow > 0 && Field_Has_Option(field, O_INPUT_LIMIT) &&
+	  field->dcols > maxgrow)
+	field->dcols = maxgrow;
+      ClrStatus(field, _MAY_GROW);
+      if (!((unsigned)field->opts & O_STATIC))
 	{
 	  if ((maxgrow == 0) ||
 	      (single_line_field && (field->dcols < maxgrow)) ||
 	      (!single_line_field && (field->drows < maxgrow)))
-	    field->status |= _MAY_GROW;
+	    SetStatus(field, _MAY_GROW);
 	}
     }
   RETURN(E_OK);

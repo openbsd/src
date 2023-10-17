@@ -1,7 +1,8 @@
-/* $OpenBSD: doalloc.c,v 1.7 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: doalloc.c,v 1.8 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2002,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,15 +42,18 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: doalloc.c,v 1.7 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: doalloc.c,v 1.8 2023/10/17 09:52:09 nicm Exp $")
 
-NCURSES_EXPORT(void *)
+void *
 _nc_doalloc(void *oldp, size_t amount)
 {
     void *newp;
 
-    if (oldp != 0) {
-	if ((newp = realloc(oldp, amount)) == 0) {
+    if (oldp != NULL) {
+	if (amount == 0) {
+	    free(oldp);
+	    newp = NULL;
+	} else if ((newp = realloc(oldp, amount)) == 0) {
 	    free(oldp);
 	    errno = ENOMEM;	/* just in case 'free' reset */
 	}
@@ -58,22 +62,3 @@ _nc_doalloc(void *oldp, size_t amount)
     }
     return newp;
 }
-
-#if !HAVE_STRDUP
-NCURSES_EXPORT(char *)
-_nc_strdup(const char *src)
-{
-    char *dst;
-    size_t dsize;
-    if (src != 0) {
-	dsize = strlen(src) + 1;
-	dst = typeMalloc(char, strlen(src) + 1);
-	if (dst != 0) {
-	    (void) strlcpy(dst, src, dsize);
-	}
-    } else {
-	dst = 0;
-    }
-    return dst;
-}
-#endif

@@ -1,6 +1,7 @@
-/*	$OpenBSD: frm_sub.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: frm_sub.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -28,48 +29,57 @@
  ****************************************************************************/
 
 /****************************************************************************
- *   Author:  Juergen Pfeifer, 1995,1997                                    *
+ *   Author:  Juergen Pfeifer, 1995-1997,2009                               *
  ****************************************************************************/
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_sub.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: frm_sub.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int set_form_sub(FORM *form, WINDOW *win)
-|   
-|   Description   :  Set the subwindow of the form to win. 
+|
+|   Description   :  Set the subwindow of the form to win.
 |
 |   Return Values :  E_OK       - success
 |                    E_POSTED   - form is posted
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 set_form_sub(FORM *form, WINDOW *win)
 {
-  T((T_CALLED("set_form_sub(%p,%p)"), form, win));
+  T((T_CALLED("set_form_sub(%p,%p)"), (void *)form, (void *)win));
 
   if (form && (form->status & _POSTED))
     RETURN(E_POSTED);
+  else
+    {
+#if NCURSES_SP_FUNCS
+      FORM *f = Normalize_Form(form);
 
-  Normalize_Form(form)->sub = win;
-  RETURN(E_OK);
+      f->sub = win ? win : StdScreen(Get_Form_Screen(f));
+      RETURN(E_OK);
+#else
+      Normalize_Form(form)->sub = win;
+      RETURN(E_OK);
+#endif
+    }
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  WINDOW *form_sub(const FORM *)
-|   
+|
 |   Description   :  Retrieve the window of the form.
 |
 |   Return Values :  The pointer to the Subwindow.
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(WINDOW *)
+FORM_EXPORT(WINDOW *)
 form_sub(const FORM *form)
 {
   const FORM *f;
 
-  T((T_CALLED("form_sub(%p)"), form));
+  T((T_CALLED("form_sub(%p)"), (const void *)form));
 
   f = Normalize_Form(form);
   returnWin(Get_Form_Window(f));

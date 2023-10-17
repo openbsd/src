@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_freeall.c,v 1.5 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_freeall.c,v 1.6 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2018-2020,2021 Thomas E. Dickey                                *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,7 +34,6 @@
  ****************************************************************************/
 
 #include <curses.priv.h>
-#include <term_entry.h>
 #include <tic.h>
 
 #if HAVE_NC_FREEALL
@@ -42,50 +42,70 @@
 extern int malloc_errfd;	/* FIXME */
 #endif
 
-MODULE_ID("$Id: lib_freeall.c,v 1.5 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_freeall.c,v 1.6 2023/10/17 09:52:08 nicm Exp $")
 
 /*
  * Free all ncurses data.  This is used for testing only (there's no practical
  * use for it as an extension).
  */
 NCURSES_EXPORT(void)
-_nc_freeall(void)
+NCURSES_SP_NAME(_nc_freeall) (NCURSES_SP_DCL0)
 {
-    WINDOWLIST *p, *q;
     static va_list empty_va;
 
     T((T_CALLED("_nc_freeall()")));
 #if NO_LEAKS
-    if (SP != 0) {
-	if (SP->_oldnum_list != 0) {
-	    FreeAndNull(SP->_oldnum_list);
+    _nc_globals.leak_checking = TRUE;
+    if (SP_PARM != 0) {
+	if (SP_PARM->_oldnum_list != 0) {
+	    FreeAndNull(SP_PARM->_oldnum_list);
 	}
-	if (SP->_panelHook.destroy != 0) {
-	    SP->_panelHook.destroy(SP->_panelHook.stdscr_pseudo_panel);
+	if (SP_PARM->_panelHook.destroy != 0) {
+	    SP_PARM->_panelHook.destroy(SP_PARM->_panelHook.stdscr_pseudo_panel);
 	}
+#if NCURSES_EXT_COLORS
+	_nc_new_pair_leaks(SP_PARM);
+#endif
     }
 #endif
-    if (SP != 0) {
+    if (SP_PARM != 0) {
 	_nc_lock_global(curses);
 
-	while (_nc_windows != 0) {
+	while (WindowList(SP_PARM) != 0) {
+	    WINDOWLIST *p, *q;
 	    bool deleted = FALSE;
 
 	    /* Delete only windows that're not a parent */
-	    for (each_window(p)) {
+	    for (each_window(SP_PARM, p)) {
+		WINDOW *p_win = &(p->win);
 		bool found = FALSE;
 
-		for (each_window(q)) {
+		if (IS_PAD(p_win))
+		    continue;
+
+#ifndef USE_SP_WINDOWLIST
+		if (p->screen != SP_PARM)
+		    continue;
+#endif
+
+		for (each_window(SP_PARM, q)) {
+		    WINDOW *q_win = &(q->win);
+
+#ifndef USE_SP_WINDOWLIST
+		    if (q->screen != SP_PARM)
+			continue;
+#endif
+
 		    if ((p != q)
-			&& (q->win._flags & _SUBWIN)
-			&& (&(p->win) == q->win._parent)) {
+			&& IS_SUBWIN(q_win)
+			&& (p_win == q_win->_parent)) {
 			found = TRUE;
 			break;
 		    }
 		}
 
 		if (!found) {
-		    if (delwin(&(p->win)) != ERR)
+		    if (delwin(p_win) != ERR)
 			deleted = TRUE;
 		    break;
 		}
@@ -97,15 +117,13 @@ _nc_freeall(void)
 	    if (!deleted)
 		break;
 	}
-	delscreen(SP);
+	delscreen(SP_PARM);
 	_nc_unlock_global(curses);
     }
-    if (cur_term != 0)
-	del_curterm(cur_term);
 
     (void) _nc_printf_string(0, empty_va);
 #ifdef TRACE
-    (void) _nc_trace_buf(-1, 0);
+    (void) _nc_trace_buf(-1, (size_t) 0);
 #endif
 #if USE_WIDEC_SUPPORT
     FreeIfNeeded(_nc_wacs);
@@ -123,37 +141,63 @@ _nc_freeall(void)
     returnVoid;
 }
 
+#if NCURSES_SP_FUNCS
 NCURSES_EXPORT(void)
-_nc_free_and_exit(int code)
+_nc_freeall(void)
 {
-    char *last_setbuf = (SP != 0) ? SP->_setbuf : 0;
+    NCURSES_SP_NAME(_nc_freeall) (CURRENT_SCREEN);
+}
+#endif
 
-    _nc_freeall();
+NCURSES_EXPORT(void)
+NCURSES_SP_NAME(_nc_free_and_exit) (NCURSES_SP_DCLx int code)
+{
+    T((T_CALLED("_nc_free_and_exit(%d)"), code));
+    NCURSES_SP_NAME(_nc_flush) (NCURSES_SP_ARG);
+    NCURSES_SP_NAME(_nc_freeall) (NCURSES_SP_ARG);
 #ifdef TRACE
-    trace(0);			/* close trace file, freeing its setbuf */
+    curses_trace(0);		/* close trace file, freeing its setbuf */
     {
 	static va_list fake;
 	free(_nc_varargs("?", fake));
     }
 #endif
-    fclose(stdout);
-    FreeIfNeeded(last_setbuf);
     exit(code);
 }
 
-#else
+#else /* !HAVE_NC_FREEALL */
 NCURSES_EXPORT(void)
 _nc_freeall(void)
 {
 }
 
 NCURSES_EXPORT(void)
-_nc_free_and_exit(int code)
+NCURSES_SP_NAME(_nc_free_and_exit) (NCURSES_SP_DCLx int code)
 {
-    if (SP)
-	delscreen(SP);
-    if (cur_term != 0)
-	del_curterm(cur_term);
+    if (SP_PARM) {
+	delscreen(SP_PARM);
+    }
     exit(code);
 }
+#endif /* HAVE_NC_FREEALL */
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(void)
+_nc_free_and_exit(int code)
+{
+    NCURSES_SP_NAME(_nc_free_and_exit) (CURRENT_SCREEN, code);
+}
 #endif
+
+NCURSES_EXPORT(void)
+exit_curses(int code)
+{
+#if NO_LEAKS
+#if NCURSES_SP_FUNCS
+    NCURSES_SP_NAME(_nc_free_and_exit) (CURRENT_SCREEN, code);
+#else
+    _nc_free_and_exit(code);	/* deprecated... */
+#endif
+#endif
+    exit(code);
+}

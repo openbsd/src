@@ -1,8 +1,9 @@
 '\" t
-.\" $OpenBSD: mitem_new.3,v 1.7 2016/03/26 14:36:37 schwarze Exp $
+.\" $OpenBSD: mitem_new.3,v 1.8 2023/10/17 09:52:10 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2003,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2010,2015 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,30 +30,34 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: mitem_new.3,v 1.7 2016/03/26 14:36:37 schwarze Exp $
-.TH NEW_ITEM 3 ""
+.\" $Id: mitem_new.3,v 1.8 2023/10/17 09:52:10 nicm Exp $
+.TH mitem_new 3 2023-07-01 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBnew_item\fR, \fBfree_item\fR - create and destroy menu items
+\fBnew_item\fP,
+\fBfree_item\fP \- create and destroy menu items
 .SH SYNOPSIS
-\fB#include <menu.h>\fR
+\fB#include <menu.h>\fP
+.sp
+\fBITEM *new_item(const char *\fIname\fB, const char *\fIdescription\fB);\fR
 .br
-ITEM *new_item(const char *name, const char *description);
-.br
-int free_item(ITEM *item);
-.br
+\fBint free_item(ITEM *\fIitem\fB);\fR
 .SH DESCRIPTION
-The function \fBnew_item\fR allocates a new item and initializes it from the
-\fBname\fR and \fBdescription\fR pointers. Please notice that the item stores
-only the pointers to the name and description. Those pointers must be valid
-during the lifetime of the item. So you should be very careful with names
+The function \fBnew_item\fP allocates a new item and initializes it from the
+\fBname\fP and \fBdescription\fP pointers.
+Please notice that the item stores
+only the pointers to the name and description.
+Those pointers must be valid
+during the lifetime of the item.
+So you should be very careful with names
 or descriptions allocated on the stack of some routines.
 .br
-The function \fBfree_item\fR de-allocates an item. Please notice that it
+The function \fBfree_item\fP de-allocates an item.
+Please notice that it
 is the responsibility of the application to release the memory for the
 name or the description of the item.
 .SH RETURN VALUE
-The function \fBnew_item\fR returns \fBNULL\fR on error.
-It sets errno according to the function's failure:
+The function \fBnew_item\fP returns \fBNULL\fP on error.
+It sets \fBerrno\fP according to the function's failure:
 .TP 5
 .B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
@@ -60,7 +65,7 @@ Routine detected an incorrect or out-of-range argument.
 .B E_SYSTEM_ERROR
 System error occurred, e.g., malloc failure.
 .PP
-The function \fBfree_item\fR returns one of the following:
+The function \fBfree_item\fP returns one of the following:
 .TP 5
 .B E_OK
 The routine succeeded.
@@ -72,21 +77,16 @@ Routine detected an incorrect or out-of-range argument.
 Item is connected to a menu.
 .TP 5
 .B E_SYSTEM_ERROR
-System error occurred (see \fBerrno\fR).
+System error occurred (see \fBerrno\fP(3)).
 .SH SEE ALSO
-\fBcurses\fR(3), \fBmenu\fR(3).
+\fBcurses\fP(3), \fBmenu\fP(3).
 .SH NOTES
-The header file \fB<menu.h>\fR automatically includes the header file
-\fB<curses.h>\fR.
+The header file \fB<menu.h>\fP automatically includes the header file
+\fB<curses.h>\fP.
 .SH PORTABILITY
-These routines emulate the System V menu library.  They were not supported on
+These routines emulate the System V menu library.
+They were not supported on
 Version 7 or BSD versions.
 .SH AUTHORS
-Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
-S. Raymond.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+Juergen Pfeifer.
+Manual pages and adaptation for new curses by Eric S. Raymond.

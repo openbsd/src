@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_type.c,v 1.8 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_type.c,v 1.9 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2004,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,12 +34,12 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_type.c,v 1.8 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_type.c,v 1.9 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int set_field_type(FIELD *field, FIELDTYPE *type,...)
-|   
+|
 |   Description   :  Associate the specified fieldtype with the field.
 |                    Certain field types take additional arguments. Look
 |                    at the spec of the field types !
@@ -46,14 +47,14 @@ MODULE_ID("$Id: fld_type.c,v 1.8 2015/01/23 22:48:51 krw Exp $")
 |   Return Values :  E_OK           - success
 |                    E_SYSTEM_ERROR - system error
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-set_field_type(FIELD *field, FIELDTYPE *type,...)
+FORM_EXPORT(int)
+set_field_type(FIELD *field, FIELDTYPE *type, ...)
 {
   va_list ap;
   int res = E_SYSTEM_ERROR;
   int err = 0;
 
-  T((T_CALLED("set_field_type(%p,%p)"), field, type));
+  T((T_CALLED("set_field_type(%p,%p)"), (void *)field, (void *)type));
 
   va_start(ap, type);
 
@@ -81,17 +82,17 @@ set_field_type(FIELD *field, FIELDTYPE *type,...)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  FIELDTYPE *field_type(const FIELD *field)
-|   
+|
 |   Description   :  Retrieve the associated fieldtype for this field.
 |
 |   Return Values :  Pointer to fieldtype of NULL if none is defined.
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(FIELDTYPE *)
+FORM_EXPORT(FIELDTYPE *)
 field_type(const FIELD *field)
 {
-  T((T_CALLED("field_type(%p)"), field));
+  T((T_CALLED("field_type(%p)"), (const void *)field));
   returnFieldType(Normalize_Field(field)->type);
 }
 

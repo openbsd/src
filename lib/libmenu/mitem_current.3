@@ -1,8 +1,9 @@
 '\" t
-.\" $OpenBSD: mitem_current.3,v 1.6 2016/03/26 14:36:37 schwarze Exp $
+.\" $OpenBSD: mitem_current.3,v 1.7 2023/10/17 09:52:10 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,2006 Free Software Foundation, Inc.                   *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2006,2010 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,46 +30,46 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: mitem_current.3,v 1.6 2016/03/26 14:36:37 schwarze Exp $
-.TH SET_CURRENT_ITEM 3 ""
+.\" $Id: mitem_current.3,v 1.7 2023/10/17 09:52:10 nicm Exp $
+.TH mitem_current 3 2023-07-01 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBset_current_item\fR, \fBcurrent_item\fR,
-\fBset_top_row\fR, \fBtop_row\fR,
-\fBitem_index\fR - set and get current_menu_item
+\fBmitem_current\fP \- set and get current_menu_item
 .SH SYNOPSIS
-\fB#include <menu.h>\fR
+\fB#include <menu.h>\fP
+.sp
+\fBint set_current_item(MENU *\fImenu\fB, ITEM *\fIitem\fB);\fR
 .br
-int set_current_item(MENU *menu, const ITEM *item);
+\fBITEM *current_item(const MENU *\fImenu\fB);\fR
+.sp
+\fBint set_top_row(MENU *\fImenu\fB, int \fIrow\fB);\fR
 .br
-ITEM *current_item(const MENU *menu);
-.br
-int set_top_row(MENU *menu, int row);
-.br
-int top_row(const MENU *menu);
-.br
-int item_index(const ITEM *item);
-.br
+\fBint top_row(const MENU *\fImenu\fB);\fR
+.sp
+\fBint item_index(const ITEM *\fIitem\fB);\fR
 .SH DESCRIPTION
-The function \fBset_current_item\fR sets the current item (the item on which
-the menu cursor is positioned).  \fBcurrent_item\fR returns a pointer to the
+The function \fBset_current_item\fP sets the current item (the item on which
+the menu cursor is positioned).
+\fBcurrent_item\fP returns a pointer to the
 current item in the given menu.
 .PP
-The function \fBset_top_row\fR sets the top row of the menu to show the given
+The function \fBset_top_row\fP sets the top row of the menu to show the given
 row (the top row is initially 0, and is reset to this value whenever the
-\fBO_ROWMAJOR\fR option is toggled).  The item leftmost on the given row
-becomes current.  The function \fBtop_row\fR returns the number of the top menu
+\fBO_ROWMAJOR\fP option is toggled).
+The item leftmost on the given row
+becomes current.
+The function \fBtop_row\fP returns the number of the top menu
 row being displayed.
 .PP
-The function \fBitem_index\fR returns the (zero-origin) index of \fIitem\fR in
+The function \fBitem_index\fP returns the (zero-origin) index of \fIitem\fP in
 the menu's item pointer list.
 .SH RETURN VALUE
-\fBcurrent_item\fR returns a pointer (which may be \fBNULL\fR).
-It does not set errno.
+\fBcurrent_item\fP returns a pointer (which may be \fBNULL\fP).
+It does not set \fBerrno\fP.
 .PP
-\fBtop_row\fR and \fBitem_index\fR return \fBERR\fR (the general \fBcurses\fR
+\fBtop_row\fP and \fBitem_index\fP return \fBERR\fP (the general \fBcurses\fP
 error value) if their \fImenu\fP parameter is \fBNULL\fP.
 .PP
-\fBset_current_item\fR and \fBset_top_row\fR return one of the following:
+\fBset_current_item\fP and \fBset_top_row\fP return one of the following:
 .TP 5
 .B E_OK
 The routine succeeded.
@@ -83,24 +84,19 @@ Routine was called from an initialization or termination function.
 No items are connected to the menu.
 .TP 5
 .B E_SYSTEM_ERROR
-System error occurred (see \fBerrno\fR).
+System error occurred (see \fBerrno\fP(3)).
 .SH SEE ALSO
-\fBcurses\fR(3), \fBmenu\fR(3).
+\fBcurses\fP(3), \fBmenu\fP(3).
 .SH NOTES
-The header file \fB<menu.h>\fR automatically includes the header file
-\fB<curses.h>\fR.
+The header file \fB<menu.h>\fP automatically includes the header file
+\fB<curses.h>\fP.
 .SH PORTABILITY
-These routines emulate the System V menu library.  They were not supported on
+These routines emulate the System V menu library.
+They were not supported on
 Version 7 or BSD versions.
 .PP
-The SVr4 menu library documentation specifies the \fBtop_row\fR and
-\fBindex_item\fR error value as -1 (which is the value of \fBERR\fR).
+The SVr4 menu library documentation specifies the \fBtop_row\fP and
+\fBindex_item\fP error value as \-1 (which is the value of \fBERR\fP).
 .SH AUTHORS
-Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
-S. Raymond.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+Juergen Pfeifer.
+Manual pages and adaptation for new curses by Eric S. Raymond.

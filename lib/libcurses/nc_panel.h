@@ -1,7 +1,8 @@
-/* $OpenBSD: nc_panel.h,v 1.4 2010/01/12 23:21:59 nicm Exp $ */
+/* $OpenBSD: nc_panel.h,v 1.5 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2000,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2009,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,9 +34,8 @@
  *     and: Thomas E. Dickey                                                *
  ****************************************************************************/
 
-
 /*
- * $Id: nc_panel.h,v 1.4 2010/01/12 23:21:59 nicm Exp $
+ * $Id: nc_panel.h,v 1.5 2023/10/17 09:52:08 nicm Exp $
  *
  *	nc_panel.h
  *
@@ -46,26 +46,37 @@
 #ifndef NC_PANEL_H
 #define NC_PANEL_H 1
 
+#include <ncurses_cfg.h>
+#include <curses.h>
+
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-struct panel; /* Forward Declaration */
+  struct panel;			/* Forward Declaration */
 
-struct panelhook {
-  struct panel*   top_panel;
-  struct panel*   bottom_panel;
-  struct panel*   stdscr_pseudo_panel;
+  struct panelhook
+    {
+      struct panel *top_panel;
+      struct panel *bottom_panel;
+      struct panel *stdscr_pseudo_panel;
 #if NO_LEAKS
-  int (*destroy)(struct panel *);
+      int (*destroy) (struct panel *);
 #endif
-};
+    };
 
-/* Retrieve the panelhook of the current screen */
-extern NCURSES_EXPORT(struct panelhook*) _nc_panelhook (void);
+  struct screen;		/* Forward declaration */
+/* Retrieve the panelhook of the specified screen */
+  extern NCURSES_EXPORT(struct panelhook *)
+    _nc_panelhook (void);
+#if NCURSES_SP_FUNCS
+  extern NCURSES_EXPORT(struct panelhook *)
+    NCURSES_SP_NAME(_nc_panelhook) (SCREEN *);
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NC_PANEL_H */
+#endif				/* NC_PANEL_H */

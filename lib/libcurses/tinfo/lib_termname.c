@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_termname.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_termname.c,v 1.6 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2001,2003 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2003,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -30,17 +31,31 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_termname.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_termname.c,v 1.6 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(char *)
-termname(void)
+NCURSES_SP_NAME(termname) (NCURSES_SP_DCL0)
 {
     char *name = 0;
 
-    T((T_CALLED("termname()")));
+    T((T_CALLED("termname(%p)"), (void *) SP_PARM));
 
+#if NCURSES_SP_FUNCS
+    if (TerminalOf(SP_PARM) != 0) {
+	name = TerminalOf(SP_PARM)->_termname;
+    }
+#else
     if (cur_term != 0)
 	name = cur_term->_termname;
+#endif
 
     returnPtr(name);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(char *)
+termname(void)
+{
+    return NCURSES_SP_NAME(termname) (CURRENT_SCREEN);
+}
+#endif

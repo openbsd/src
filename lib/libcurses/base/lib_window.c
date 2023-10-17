@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_window.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_window.c,v 1.4 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_window.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_window.c,v 1.4 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(void)
 _nc_synchook(WINDOW *win)
@@ -58,33 +59,32 @@ mvderwin(WINDOW *win, int y, int x)
 /* move a derived window */
 {
     WINDOW *orig;
-    int i;
+    int rc = ERR;
 
-    T((T_CALLED("mvderwin(%p,%d,%d)"), win, y, x));
+    T((T_CALLED("mvderwin(%p,%d,%d)"), (void *) win, y, x));
 
-    if (win && (orig = win->_parent)) {
-	if (win->_parx == x && win->_pary == y)
-	    returnCode(OK);
-	if (x < 0 || y < 0)
-	    returnCode(ERR);
-	if ((x + getmaxx(win) > getmaxx(orig)) ||
-	    (y + getmaxy(win) > getmaxy(orig)))
-	    returnCode(ERR);
-    } else
-	returnCode(ERR);
-    wsyncup(win);
-    win->_parx = x;
-    win->_pary = y;
-    for (i = 0; i < getmaxy(win); i++)
-	win->_line[i].text = &(orig->_line[y++].text[x]);
-    returnCode(OK);
+    if (win != 0
+	&& (orig = win->_parent) != 0
+	&& (x >= 0 && y >= 0)
+	&& (x + getmaxx(win) <= getmaxx(orig))
+	&& (y + getmaxy(win) <= getmaxy(orig))) {
+	int i;
+
+	wsyncup(win);
+	win->_parx = x;
+	win->_pary = y;
+	for (i = 0; i < getmaxy(win); i++)
+	    win->_line[i].text = &(orig->_line[y++].text[x]);
+	rc = OK;
+    }
+    returnCode(rc);
 }
 
 NCURSES_EXPORT(int)
 syncok(WINDOW *win, bool bf)
 /* enable/disable automatic wsyncup() on each change to window */
 {
-    T((T_CALLED("syncok(%p,%d)"), win, bf));
+    T((T_CALLED("syncok(%p,%d)"), (void *) win, bf));
 
     if (win) {
 	win->_sync = bf;
@@ -100,7 +100,7 @@ wsyncup(WINDOW *win)
 {
     WINDOW *wp;
 
-    T((T_CALLED("wsyncup(%p)"), win));
+    T((T_CALLED("wsyncup(%p)"), (void *) win));
     if (win && win->_parent) {
 	for (wp = win; wp->_parent; wp = wp->_parent) {
 	    int y;
@@ -130,9 +130,9 @@ wsyncdown(WINDOW *win)
 /* mark changed every cell in win that is changed in any of its ancestors */
 /* Rewritten by J. Pfeifer, 1-Apr-96 (don't even think that...)           */
 {
-    T((T_CALLED("wsyncdown(%p)"), win));
+    T((T_CALLED("wsyncdown(%p)"), (void *) win));
 
-    if (win && win->_parent) {
+    if (win != NULL && win->_parent != NULL) {
 	WINDOW *pp = win->_parent;
 	int y;
 
@@ -169,7 +169,7 @@ wcursyncup(WINDOW *win)
 {
     WINDOW *wp;
 
-    T((T_CALLED("wcursyncup(%p)"), win));
+    T((T_CALLED("wcursyncup(%p)"), (void *) win));
     for (wp = win; wp && wp->_parent; wp = wp->_parent) {
 	wmove(wp->_parent, wp->_pary + wp->_cury, wp->_parx + wp->_curx);
     }
@@ -181,25 +181,29 @@ dupwin(WINDOW *win)
 /* make an exact duplicate of the given window */
 {
     WINDOW *nwin = 0;
-    size_t linesize;
-    int i;
 
-    T((T_CALLED("dupwin(%p)"), win));
+    T((T_CALLED("dupwin(%p)"), (void *) win));
 
     if (win != 0) {
-
+#if NCURSES_SP_FUNCS
+	SCREEN *sp = _nc_screen_of(win);
+#endif
 	_nc_lock_global(curses);
-	if (win->_flags & _ISPAD) {
-	    nwin = newpad(win->_maxy + 1,
-			  win->_maxx + 1);
+	if (IS_PAD(win)) {
+	    nwin = NCURSES_SP_NAME(newpad) (NCURSES_SP_ARGx
+					    win->_maxy + 1,
+					    win->_maxx + 1);
 	} else {
-	    nwin = newwin(win->_maxy + 1,
-			  win->_maxx + 1,
-			  win->_begy,
-			  win->_begx);
+	    nwin = NCURSES_SP_NAME(newwin) (NCURSES_SP_ARGx
+					    win->_maxy + 1,
+					    win->_maxx + 1,
+					    win->_begy,
+					    win->_begx);
 	}
 
 	if (nwin != 0) {
+	    int i;
+	    size_t linesize;
 
 	    nwin->_curx = win->_curx;
 	    nwin->_cury = win->_cury;
@@ -236,10 +240,10 @@ dupwin(WINDOW *win)
 	    nwin->_regtop = win->_regtop;
 	    nwin->_regbottom = win->_regbottom;
 
-	    if (win->_flags & _ISPAD)
+	    if (IS_PAD(win))
 		nwin->_pad = win->_pad;
 
-	    linesize = (win->_maxx + 1) * sizeof(NCURSES_CH_T);
+	    linesize = (unsigned) (win->_maxx + 1) * sizeof(NCURSES_CH_T);
 	    for (i = 0; i <= nwin->_maxy; i++) {
 		memcpy(nwin->_line[i].text, win->_line[i].text, linesize);
 		nwin->_line[i].firstchar = win->_line[i].firstchar;

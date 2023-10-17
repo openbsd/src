@@ -1,8 +1,9 @@
 '\" t
-.\" $OpenBSD: menu_post.3,v 1.8 2015/11/15 22:10:16 jmc Exp $
+.\" $OpenBSD: menu_post.3,v 1.9 2023/10/17 09:52:10 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,2006 Free Software Foundation, Inc.                   *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,25 +30,27 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: menu_post.3,v 1.8 2015/11/15 22:10:16 jmc Exp $
-.TH menu_post 3 ""
+.\" $Id: menu_post.3,v 1.9 2023/10/17 09:52:10 nicm Exp $
+.TH menu_post 3 2023-07-01 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBpost_menu\fR, \fBunpost_menu\fR
-- write or erase menus from associated subwindows
+\fBpost_menu\fP,
+\fBunpost_menu\fP \- write or erase menus from associated subwindows
 .SH SYNOPSIS
-\fB#include <menu.h>\fR
+\fB#include <menu.h>\fP
+.sp
+\fBint post_menu(MENU *\fImenu\fB);\fR
 .br
-int post_menu(MENU *menu);
-.br
-int unpost_menu(MENU *menu);
-.br
+\fBint unpost_menu(MENU *\fImenu\fB);\fR
 .SH DESCRIPTION
-The function \fBpost_menu\fR displays a menu to its associated subwindow.  To
-trigger physical display of the subwindow, use \fBrefresh\fR or some equivalent
-\fBcurses\fR routine (the implicit \fBdoupdate\fR triggered by an \fBcurses\fR
-input request will do). \fBpost_menu\fR resets the selection status of all items.
+The function \fBpost_menu\fP displays a menu to its associated subwindow.
+To
+trigger physical display of the subwindow,
+use \fBrefresh\fP(3) or some equivalent
+\fBcurses\fP routine (the implicit \fBdoupdate\fP triggered by an \fBcurses\fP
+input request will do).
+\fBpost_menu\fP resets the selection status of all items.
 .PP
-The function \fBunpost_menu\fR erases menu from its associated subwindow.
+The function \fBunpost_menu\fP erases menu from its associated subwindow.
 .SH RETURN VALUE
 These routines return one of the following:
 .TP 5
@@ -55,7 +58,7 @@ These routines return one of the following:
 The routine succeeded.
 .TP 5
 .B E_SYSTEM_ERROR
-System error occurred (see \fBerrno\fR).
+System error occurred (see \fBerrno\fP(3)).
 .TP 5
 .B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
@@ -67,8 +70,8 @@ The menu has already been posted.
 Routine was called from an initialization or termination function.
 .TP 5
 .B E_NO_ROOM
-Menu is too large for its window. You should consider to use
-\fBset_menu_format()\fR to solve the problem.
+Menu is too large for its window.
+You should consider using \fBset_menu_format\fP to solve the problem.
 .TP 5
 .B E_NOT_POSTED
 The menu has not been posted.
@@ -76,19 +79,14 @@ The menu has not been posted.
 .B E_NOT_CONNECTED
 No items are connected to the menu.
 .SH SEE ALSO
-\fBcurses\fR(3), \fBmenu\fR(3).
+\fBcurses\fP(3), \fBmenu\fP(3).
 .SH NOTES
-The header file \fB<menu.h>\fR automatically includes the header file
-\fB<curses.h>\fR.
+The header file \fB<menu.h>\fP automatically includes the header file
+\fB<curses.h>\fP.
 .SH PORTABILITY
-These routines emulate the System V menu library.  They were not supported on
+These routines emulate the System V menu library.
+They were not supported on
 Version 7 or BSD versions.
 .SH AUTHORS
-Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
-S. Raymond.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+Juergen Pfeifer.
+Manual pages and adaptation for new curses by Eric S. Raymond.

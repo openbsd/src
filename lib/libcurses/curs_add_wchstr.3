@@ -1,6 +1,7 @@
-.\" $OpenBSD: curs_add_wchstr.3,v 1.1 2010/09/06 17:26:17 nicm Exp $
+.\" $OpenBSD: curs_add_wchstr.3,v 1.2 2023/10/17 09:52:08 nicm Exp $
 .\"***************************************************************************
-.\" Copyright (c) 2002-2004,2005 Free Software Foundation, Inc.              *
+.\" Copyright 2019-2021,2022 Thomas E. Dickey                                *
+.\" Copyright 2002-2012,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -27,72 +28,97 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_add_wchstr.3,v 1.1 2010/09/06 17:26:17 nicm Exp $
-.TH curs_add_wchstr 3 ""
+.\" $Id: curs_add_wchstr.3,v 1.2 2023/10/17 09:52:08 nicm Exp $
+.TH curs_add_wchstr 3 2022-02-12 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
+.de bP
+.ie n  .IP \(bu 4
+.el    .IP \(bu 2
+..
+.na
+.hy 0
 .SH NAME
-\fBadd_wchstr\fR,
-\fBadd_wchnstr\fR,
-\fBwadd_wchstr\fR,
-\fBwadd_wchnstr\fR,
-\fBmvadd_wchstr\fR,
-\fBmvadd_wchnstr\fR,
-\fBmvwadd_wchstr\fR,
-\fBmvwadd_wchnstr\fR \- add an array of complex characters (and attributes) to a curses window
+\fBadd_wchstr\fP,
+\fBadd_wchnstr\fP,
+\fBwadd_wchstr\fP,
+\fBwadd_wchnstr\fP,
+\fBmvadd_wchstr\fP,
+\fBmvadd_wchnstr\fP,
+\fBmvwadd_wchstr\fP,
+\fBmvwadd_wchnstr\fP \- add an array of complex characters (and attributes) to a curses window
+.ad
+.hy
 .SH SYNOPSIS
-.B #include <curses.h>
-.PP
 .nf
-\fBint add_wchstr(const cchar_t *\fR\fIwchstr\fR\fB);\fR
+\fB#include <curses.h>\fP
+.PP
+\fBint add_wchstr(const cchar_t *\fIwchstr\fB);\fR
 .br
-\fBint add_wchnstr(const cchar_t *\fR\fIwchstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint add_wchnstr(const cchar_t *\fIwchstr\fB, int \fIn\fB);\fR
 .br
-\fBint wadd_wchstr(WINDOW *\fR \fIwin\fR\fB, const cchar_t *\fR\fIwchstr\fR\fB);\fR
+\fBint wadd_wchstr(WINDOW *\fR \fIwin\fB, const cchar_t *\fIwchstr\fB);\fR
 .br
-\fBint wadd_wchnstr(WINDOW *\fR \fIwin\fR\fB, const cchar_t *\fR\fIwchstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint wadd_wchnstr(WINDOW *\fR \fIwin\fB, const cchar_t *\fIwchstr\fB, int \fIn\fB);\fR
+.sp
+\fBint mvadd_wchstr(int \fIy\fB, int \fIx\fB, const cchar_t *\fIwchstr\fB);\fR
 .br
-\fBint mvadd_wchstr(int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const cchar_t *\fR\fIwchstr\fR\fB);\fR
+\fBint mvadd_wchnstr(int \fIy\fB, int \fIx\fB, const cchar_t *\fIwchstr\fB, int \fIn\fB);\fR
 .br
-\fBint mvadd_wchnstr(int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const cchar_t *\fR\fIwchstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint mvwadd_wchstr(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, const cchar_t *\fIwchstr\fB);\fR
 .br
-\fBint mvwadd_wchstr(WINDOW *\fR\fIwin\fR\fB, int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const cchar_t *\fR\fIwchstr\fR\fB);\fR
-.br
-\fBint mvwadd_wchnstr(WINDOW *\fR\fIwin\fR\fB, int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const cchar_t *\fR\fIwchstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint mvwadd_wchnstr(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, const cchar_t *\fIwchstr\fB, int \fIn\fB);\fR
 .fi
 .SH DESCRIPTION
-These routines copy the array of complex characters \fIwchstr\fR
-into the window image structure at and after the current cursor position.
-The four routines with \fIn\fR as the last
-argument copy at most \fIn\fR elements, but no more than will fit on the line.
-If \fBn\fR=\fB-1\fR then the whole array is copied,
+These functions copy the (null-terminated)
+array of complex characters \fIwchstr\fP
+into the window image structure
+starting at the current cursor position.
+The four functions with \fIn\fP as the last
+argument copy at most \fIn\fP elements,
+but no more than will fit on the line.
+If \fBn\fP=\fB\-1\fP then the whole array is copied,
 to the maximum number of characters that will fit on the line.
 .PP
-The window cursor is \fInot\fR advanced.
-These routines work faster than \fBwaddnstr\fR.
-On the other hand, they do not perform checking
+The window cursor is \fInot\fP advanced.
+These functions work faster than \fBwaddnstr\fP.
+On the other hand:
+.bP
+they do not perform checking
 (such as for the newline, backspace, or carriage return characters),
+.bP
 they do not advance the current cursor position,
-they do not expand other control characters to ^-escapes,
-and they truncate the string if it crosses the right margin,
+.bP
+they do not expand other control characters to ^-escapes, and
+.bP
+they truncate the string if it crosses the right margin,
 rather than wrapping it around to the new line.
 .PP
-These routines end successfully
-on encountering a null \fIcchar_t\fR, or
+These functions end successfully
+on encountering a null \fBcchar_t\fP, or
 when they have filled the current line.
 If a complex character cannot completely fit at the end of the current line,
 the remaining columns are filled with the background character and rendition.
+.SH RETURN VALUE
+All functions return the integer \fBERR\fP upon failure and \fBOK\fP on success.
+.PP
+X/Open does not define any error conditions.
+This implementation returns an error
+if the window pointer is null.
+.PP
+Functions with a \*(``mv\*('' prefix first perform a cursor movement using
+\fBwmove\fP, and return an error if the position is outside the window,
+or if the window pointer is null.
 .SH NOTES
-All functions except \fBwadd_wchnstr\fR may be macros.
-.SH RETURN VALUES
-All routines return the integer \fBERR\fR upon failure and \fBOK\fR on success.
+All functions except \fBwadd_wchnstr\fP may be macros.
 .SH PORTABILITY
-All these entry points are described in the XSI Curses standard, Issue 4.
+These entry points are described in the XSI Curses standard, Issue 4.
 .SH SEE ALSO
-\fBcurses\fR(3),
-\fBcurs_addchstr\fR(3),
-\fBcurs_addwstr\fR(3)
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3),
+\fBcurs_addwstr\fP(3).
+.PP
+Comparable functions in the narrow-character (ncurses) library are
+described in
+\fBcurs_addchstr\fP(3).

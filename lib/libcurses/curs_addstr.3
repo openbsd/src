@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_addstr.3,v 1.7 2010/01/12 23:21:58 nicm Exp $
+.\" $OpenBSD: curs_addstr.3,v 1.8 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2003,2005 Free Software Foundation, Inc.              *
+.\" Copyright 2019-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2012,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,72 +29,93 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_addstr.3,v 1.7 2010/01/12 23:21:58 nicm Exp $
-.TH curs_addstr 3 ""
+.\" $Id: curs_addstr.3,v 1.8 2023/10/17 09:52:08 nicm Exp $
+.TH curs_addstr 3 2023-03-11 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
+.de bP
+.ie n  .IP \(bu 4
+.el    .IP \(bu 2
+..
 .na
 .hy 0
 .SH NAME
-\fBaddstr\fR,
-\fBaddnstr\fR,
-\fBwaddstr\fR,
-\fBwaddnstr\fR,
-\fBmvaddstr\fR,
-\fBmvaddnstr\fR,
-\fBmvwaddstr\fR,
-\fBmvwaddnstr\fR - add a string of characters to a \fBcurses\fR window and advance cursor
+\fBaddstr\fP,
+\fBaddnstr\fP,
+\fBwaddstr\fP,
+\fBwaddnstr\fP,
+\fBmvaddstr\fP,
+\fBmvaddnstr\fP,
+\fBmvwaddstr\fP,
+\fBmvwaddnstr\fP \- add a string of characters to a \fBcurses\fP window and advance cursor
 .ad
 .hy
 .SH SYNOPSIS
 .nf
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 .PP
-\fBint addstr(const char *\fR\fIstr\fR\fB);\fR
+\fBint addstr(const char *\fIstr\fB);\fR
 .br
-\fBint addnstr(const char *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint addnstr(const char *\fIstr\fB, int \fIn\fB);\fR
 .br
-\fBint waddstr(WINDOW *\fR\fIwin\fR\fB, const char *\fR\fIstr\fR\fB);\fR
+\fBint waddstr(WINDOW *\fIwin\fB, const char *\fIstr\fB);\fR
 .br
-\fBint waddnstr(WINDOW *\fR\fIwin\fR\fB, const char *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint waddnstr(WINDOW *\fIwin\fB, const char *\fIstr\fB, int \fIn\fB);\fR
+.sp
+\fBint mvaddstr(int \fIy\fB, int \fIx\fB, const char *\fIstr\fB);\fR
 .br
-\fBint mvaddstr(int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const char *\fR\fIstr\fR\fB);\fR
+\fBint mvaddnstr(int \fIy\fB, int \fIx\fB, const char *\fIstr\fB, int \fIn\fB);\fR
 .br
-\fBint mvaddnstr(int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const char *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint mvwaddstr(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, const char *\fIstr\fB);\fR
 .br
-\fBint mvwaddstr(WINDOW *\fR\fIwin\fR\fB, int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const char *\fR\fIstr\fR\fB);\fR
-.br
-\fBint mvwaddnstr(WINDOW *\fR\fIwin\fR\fB, int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, const char *\fR\fIstr, int \fR\fIn\fR\fB);\fR
+\fBint mvwaddnstr(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, const char *\fIstr, int \fIn\fB);\fR
 .fi
 .SH DESCRIPTION
-These routines write the characters of the (null-terminated) character string
-\fIstr\fR on the given window.
-It is similar to calling \fBwaddch\fR once for each character in the string.
-The four routines with \fIn\fR as the last argument
-write at most \fIn\fR characters.
-If \fIn\fR is -1, then the entire string will be added,
-up to the maximum number of characters that will fit on the line,
+These functions write the (null-terminated) character string
+\fIstr\fP on the given window.
+It is similar to calling \fBwaddch\fP once for each byte in the string.
+.PP
+The \fImv\fP functions perform cursor movement once, before writing any
+characters.
+Thereafter, the cursor is advanced as a side-effect of writing to the window.
+.PP
+The four functions with \fIn\fP as the last argument
+write at most \fIn\fP bytes,
 or until a terminating null is reached.
+If \fIn\fP is \-1, then the entire string will be added.
 .SH RETURN VALUE
-All routines return the integer \fBERR\fR upon failure and \fBOK\fR on success
-(the SVr4 manuals specify only "an integer value other than \fBERR\fR") upon
-successful completion.
+All functions return the integer \fBERR\fP upon failure and \fBOK\fP on success.
 .PP
 X/Open does not define any error conditions.
 This implementation returns an error
+.bP
 if the window pointer is null or
+.bP
 if the string pointer is null or
+.bP
 if the corresponding calls to \fBwaddch\fP return an error.
+.PP
+Functions with a \*(``mv\*('' prefix first perform a cursor movement using
+\fBwmove\fP, and return an error if the position is outside the window,
+or if the window pointer is null.
+If an error is returned by the \fBwmove\fP,
+no characters are added to the window.
+.PP
+If an error is returned by \fBwaddch\fP
+(e.g.,
+because the window is not large enough,
+or an illegal byte sequence was detected)
+only part of the string may be added.
+Aside from that,
+there is a special case in \fBwaddch\fP where an error may be
+returned after successfully writing a character to the lower-right corner
+of a window when \fBscrollok\fP(3) is disabled.
 .SH NOTES
-Note that all of these routines except \fBwaddstr\fR and \fBwaddnstr\fR may be
-macros.
+All of these functions except \fBwaddnstr\fP may be macros.
 .SH PORTABILITY
-All these entry points are described in the XSI Curses standard, Issue 4.  The
-XSI errors EILSEQ and EOVERFLOW, associated with extended-level conformance,
-are not yet detected.
+These functions are described in the XSI Curses standard, Issue 4.
 .SH SEE ALSO
-\fBcurses\fR(3), \fBcurs_addch\fR(3).
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3),
+\fBcurs_addch\fP(3).

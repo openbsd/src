@@ -1,7 +1,8 @@
-/* $OpenBSD: vsscanf.c,v 1.2 2015/09/27 05:25:00 guenther Exp $ */
+/* $OpenBSD: vsscanf.c,v 1.3 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2004,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -40,7 +41,7 @@
 
 #if !HAVE_VSSCANF
 
-MODULE_ID("$Id: vsscanf.c,v 1.2 2015/09/27 05:25:00 guenther Exp $")
+MODULE_ID("$Id: vsscanf.c,v 1.3 2023/10/17 09:52:09 nicm Exp $")
 
 #if !(HAVE_VFSCANF || HAVE__DOSCAN)
 
@@ -161,6 +162,7 @@ other_ch(int ch)
 }
 #endif
 
+/*VARARGS2*/
 NCURSES_EXPORT(int)
 vsscanf(const char *str, const char *format, va_list ap)
 {
@@ -294,12 +296,12 @@ vsscanf(const char *str, const char *format, va_list ap)
 
 		/* add %n, if the format was not that */
 		if (chunk != cAssigned) {
-		    strlcat(my_fmt, "%n", len_fmt);
+		    _nc_STRCAT(my_fmt, "%n", len_fmt);
 		}
 
 		switch (chunk) {
 		case cAssigned:
-		    strlcat(my_fmt, "%n", len_fmt);
+		    _nc_STRCAT(my_fmt, "%n", len_fmt);
 		    pointer = &eaten;
 		    break;
 		case cInt:

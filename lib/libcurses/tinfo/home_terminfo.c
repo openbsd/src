@@ -1,7 +1,8 @@
-/* $OpenBSD: home_terminfo.c,v 1.9 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: home_terminfo.c,v 1.10 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2012,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +40,7 @@
 #include <curses.priv.h>
 #include <tic.h>
 
-MODULE_ID("$Id: home_terminfo.c,v 1.9 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: home_terminfo.c,v 1.10 2023/10/17 09:52:09 nicm Exp $")
 
 /* ncurses extension...fall back on user's private directory */
 
@@ -50,16 +51,15 @@ _nc_home_terminfo(void)
 {
     char *result = 0;
 #if USE_HOME_TERMINFO
-    char *home;
-
     if (use_terminfo_vars()) {
+
 	if (MyBuffer == 0) {
-	    if ((home = getenv("HOME")) != 0 && *home != '\0') {
+	    char *home;
+
+	    if ((home = getenv("HOME")) != 0) {
 		size_t want = (strlen(home) + sizeof(PRIVATE_INFO));
-		MyBuffer = typeMalloc(char, want);
-		if (MyBuffer == 0)
-		    _nc_err_abort(MSG_NO_MEMORY);
-		(void) snprintf(MyBuffer, want, PRIVATE_INFO, home);
+		TYPE_MALLOC(char, want, MyBuffer);
+		_nc_SPRINTF(MyBuffer, _nc_SLIMIT(want) PRIVATE_INFO, home);
 	    }
 	}
 	result = MyBuffer;

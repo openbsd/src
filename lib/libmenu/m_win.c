@@ -1,7 +1,8 @@
-/* $OpenBSD: m_win.c,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_win.c,v 1.8 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,28 +40,42 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_win.c,v 1.7 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_win.c,v 1.8 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  int set_menu_win(MENU *menu, WINDOW *win)
-|   
+|
 |   Description   :  Sets the window of the menu.
 |
 |   Return Values :  E_OK               - success
 |                    E_POSTED           - menu is already posted
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-set_menu_win(MENU * menu, WINDOW *win)
+MENU_EXPORT(int)
+set_menu_win(MENU *menu, WINDOW *win)
 {
-  T((T_CALLED("set_menu_win(%p,%p)"), menu, win));
+  T((T_CALLED("set_menu_win(%p,%p)"), (void *)menu, (void *)win));
 
   if (menu)
     {
       if (menu->status & _POSTED)
 	RETURN(E_POSTED);
-      menu->userwin = win;
-      _nc_Calculate_Item_Length_and_Width(menu);
+      else
+#if NCURSES_SP_FUNCS
+	{
+	  /* We ensure that userwin is never null. So even if a null
+	     WINDOW parameter is passed, we store the SCREENS stdscr.
+	     The only MENU that can have a null userwin is the static
+	     _nc_default_Menu.
+	   */
+	  SCREEN *sp = _nc_screen_of(menu->userwin);
+
+	  menu->userwin = win ? win : sp->_stdscr;
+	  _nc_Calculate_Item_Length_and_Width(menu);
+	}
+#else
+	menu->userwin = win;
+#endif
     }
   else
     _nc_Default_Menu.userwin = win;
@@ -69,20 +84,20 @@ set_menu_win(MENU * menu, WINDOW *win)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  WINDOW *menu_win(const MENU *)
-|   
+|   Facility      :  libnmenu
+|   Function      :  WINDOW* menu_win(const MENU*)
+|
 |   Description   :  Returns pointer to the window of the menu
 |
 |   Return Values :  NULL on error, otherwise pointer to window
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(WINDOW *)
-menu_win(const MENU * menu)
+MENU_EXPORT(WINDOW *)
+menu_win(const MENU *menu)
 {
   const MENU *m = Normalize_Menu(menu);
 
-  T((T_CALLED("menu_win(%p)"), menu));
-  returnWin(m->userwin ? m->userwin : stdscr);
+  T((T_CALLED("menu_win(%p)"), (const void *)menu));
+  returnWin(Get_Menu_UserWin(m));
 }
 
 /* m_win.c ends here */

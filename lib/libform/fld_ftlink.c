@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_ftlink.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_ftlink.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2004,2007 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,41 +34,41 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_ftlink.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_ftlink.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  FIELDTYPE *link_fieldtype(
 |                                FIELDTYPE *type1,
 |                                FIELDTYPE *type2)
-|   
+|
 |   Description   :  Create a new fieldtype built from the two given types.
 |                    They are connected by an logical 'OR'.
-|                    If an error occurs, errno is set to                    
+|                    If an error occurs, errno is set to
 |                       E_BAD_ARGUMENT  - invalid arguments
 |                       E_SYSTEM_ERROR  - system error (no memory)
 |
 |   Return Values :  Fieldtype pointer or NULL if error occurred.
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(FIELDTYPE *)
+FORM_EXPORT(FIELDTYPE *)
 link_fieldtype(FIELDTYPE *type1, FIELDTYPE *type2)
 {
   FIELDTYPE *nftyp = (FIELDTYPE *)0;
 
-  T((T_CALLED("link_fieldtype(%p,%p)"), type1, type2));
+  T((T_CALLED("link_fieldtype(%p,%p)"), (void *)type1, (void *)type2));
   if (type1 && type2)
     {
       nftyp = typeMalloc(FIELDTYPE, 1);
 
       if (nftyp)
 	{
-	  T((T_CREATE("fieldtype %p"), nftyp));
+	  T((T_CREATE("fieldtype %p"), (void *)nftyp));
 	  *nftyp = *_nc_Default_FieldType;
-	  nftyp->status |= _LINKED_TYPE;
+	  SetStatus(nftyp, _LINKED_TYPE);
 	  if ((type1->status & _HAS_ARGS) || (type2->status & _HAS_ARGS))
-	    nftyp->status |= _HAS_ARGS;
+	    SetStatus(nftyp, _HAS_ARGS);
 	  if ((type1->status & _HAS_CHOICE) || (type2->status & _HAS_CHOICE))
-	    nftyp->status |= _HAS_CHOICE;
+	    SetStatus(nftyp, _HAS_CHOICE);
 	  nftyp->left = type1;
 	  nftyp->right = type2;
 	  type1->ref++;

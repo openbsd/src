@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_box.c,v 1.4 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_box.c,v 1.5 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2002,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2010,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -44,7 +45,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_box.c,v 1.4 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_box.c,v 1.5 2023/10/17 09:52:08 nicm Exp $")
 
 #if USE_WIDEC_SUPPORT
 static NCURSES_INLINE chtype
@@ -53,8 +54,9 @@ _my_render(WINDOW *win, chtype ch)
     NCURSES_CH_T wch;
     SetChar2(wch, ch);
     wch = _nc_render(win, wch);
-    return CharOf(wch) | AttrOf(wch);
+    return ((attr_t) CharOf(wch)) | AttrOf(wch);
 }
+
 #define RENDER_WITH_DEFAULT(ch,def) w ## ch = _my_render(win, (ch == 0) ? def : ch)
 #else
 #define RENDER_WITH_DEFAULT(ch,def) w ## ch = _nc_render(win, (ch == 0) ? def : ch)
@@ -72,7 +74,7 @@ wborder(WINDOW *win,
     chtype wls, wrs, wts, wbs, wtl, wtr, wbl, wbr;
 
     T((T_CALLED("wborder(%p,%s,%s,%s,%s,%s,%s,%s,%s)"),
-       win,
+       (void *) win,
        _tracechtype2(1, ls),
        _tracechtype2(2, rs),
        _tracechtype2(3, ts),
@@ -115,10 +117,20 @@ wborder(WINDOW *win,
     win->_line[endy].lastchar = win->_line[0].lastchar = endx;
 
     for (i = 0; i <= endy; i++) {
+#if USE_WIDEC_SUPPORT
+	if (endx > 0 && isWidecExt(win->_line[i].text[endx])) {
+	    SetChar2(win->_line[i].text[endx - 1], ' ');
+	}
+#endif
 	SetChar2(win->_line[i].text[0], wls);
 	SetChar2(win->_line[i].text[endx], wrs);
 	win->_line[i].firstchar = 0;
 	win->_line[i].lastchar = endx;
+#if USE_WIDEC_SUPPORT
+	if (isWidecExt(win->_line[i].text[1])) {
+	    SetChar2(win->_line[i].text[1], ' ');
+	}
+#endif
     }
     SetChar2(win->_line[0].text[0], wtl);
     SetChar2(win->_line[0].text[endx], wtr);

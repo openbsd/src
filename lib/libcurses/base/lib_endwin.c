@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_endwin.c,v 1.4 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_endwin.c,v 1.5 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2014,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +32,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Juergen Pfeifer                         2009                    *
  ****************************************************************************/
 
 /*
@@ -41,22 +44,39 @@
 */
 
 #include <curses.priv.h>
-#include <term.h>
 
-MODULE_ID("$Id: lib_endwin.c,v 1.4 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_endwin.c,v 1.5 2023/10/17 09:52:08 nicm Exp $")
 
+NCURSES_EXPORT(int)
+NCURSES_SP_NAME(endwin) (NCURSES_SP_DCL0)
+{
+    int code = ERR;
+
+    T((T_CALLED("endwin(%p)"), (void *) SP_PARM));
+
+    if (SP_PARM) {
+#ifdef USE_TERM_DRIVER
+	TERMINAL_CONTROL_BLOCK *TCB = TCBOf(SP_PARM);
+
+	SP_PARM->_endwin = ewSuspend;
+	if (TCB && TCB->drv && TCB->drv->td_scexit)
+	    TCB->drv->td_scexit(SP_PARM);
+#else
+	SP_PARM->_endwin = ewSuspend;
+	SP_PARM->_mouse_wrap(SP_PARM);
+	_nc_screen_wrap();
+	_nc_mvcur_wrap();	/* wrap up cursor addressing */
+#endif
+	code = NCURSES_SP_NAME(reset_shell_mode) (NCURSES_SP_ARG);
+    }
+
+    returnCode(code);
+}
+
+#if NCURSES_SP_FUNCS
 NCURSES_EXPORT(int)
 endwin(void)
 {
-    T((T_CALLED("endwin()")));
-
-    if (SP) {
-	SP->_endwin = TRUE;
-	SP->_mouse_wrap(SP);
-	_nc_screen_wrap();
-	_nc_mvcur_wrap();	/* wrap up cursor addressing */
-	returnCode(reset_shell_mode());
-    }
-
-    returnCode(ERR);
+    return NCURSES_SP_NAME(endwin) (CURRENT_SCREEN);
 }
+#endif

@@ -1,7 +1,8 @@
-.\" $OpenBSD: define_key.3,v 1.5 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: define_key.3,v 1.6 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2004,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2021,2022 Thomas E. Dickey                                *
+.\" Copyright 1998-2010,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -30,14 +31,14 @@
 .\"
 .\" Author: Thomas E. Dickey 1997
 .\"
-.\" $Id: define_key.3,v 1.5 2010/01/12 23:21:59 nicm Exp $
-.TH define_key 3 ""
+.\" $Id: define_key.3,v 1.6 2023/10/17 09:52:08 nicm Exp $
+.TH define_key 3 2022-02-12 "ncurses 6.4" "Library calls"
 .SH NAME
 \fBdefine_key\fP \- define a keycode
 .SH SYNOPSIS
 \fB#include <curses.h>\fP
 .sp
-\fBint define_key(const char *definition, int keycode);\fP
+\fBint define_key(const char *\fIdefinition\fB, int \fIkeycode\fB);\fR
 .SH DESCRIPTION
 This is an extension to the curses library.
 It permits an application to define keycodes with their corresponding control
@@ -49,19 +50,19 @@ removed.
 Similarly, if the given keycode is negative or zero, any existing string
 for the given definition is removed.
 .SH RETURN VALUE
-The keycode must be greater than zero, else ERR is returned.
+The keycode must be greater than zero, and the string non-null,
+otherwise \fBERR\fP is returned.
+\fBERR\fP may also be returned if there is insufficient memory to allocate the
+data to store the definition.
+If no error is detected, \fBOK\fP is returned.
 .SH PORTABILITY
-These routines are specific to ncurses.  They were not supported on
-Version 7, BSD or System V implementations.  It is recommended that
+These routines are specific to ncurses.
+They were not supported on
+Version 7, BSD or System V implementations.
+It is recommended that
 any code depending on them be conditioned using NCURSES_VERSION.
 .SH SEE ALSO
-\fBkeyok\fR(3),
-\fBkey_defined\fR(3).
+\fBkeyok\fP(3),
+\fBkey_defined\fP(3).
 .SH AUTHOR
 Thomas Dickey.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:

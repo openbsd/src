@@ -1,7 +1,8 @@
-/* $OpenBSD: key_defined.c,v 1.1 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: key_defined.c,v 1.2 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2003,2006 Free Software Foundation, Inc.                   *
+ * Copyright 2020,2023 Thomas E. Dickey                                     *
+ * Copyright 2003-2006,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,8 +34,9 @@
  ****************************************************************************/
 
 #include <curses.priv.h>
+#include <tic.h>
 
-MODULE_ID("$Id: key_defined.c,v 1.1 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: key_defined.c,v 1.2 2023/10/17 09:52:08 nicm Exp $")
 
 static int
 find_definition(TRIES * tree, const char *str)
@@ -42,7 +44,7 @@ find_definition(TRIES * tree, const char *str)
     TRIES *ptr;
     int result = OK;
 
-    if (str != 0 && *str != '\0') {
+    if (VALID_STRING(str) && *str != '\0') {
 	for (ptr = tree; ptr != 0; ptr = ptr->sibling) {
 	    if (UChar(*str) == UChar(ptr->ch)) {
 		if (str[1] == '\0' && ptr->child != 0) {
@@ -67,14 +69,22 @@ find_definition(TRIES * tree, const char *str)
  * Otherwise, return the keycode's value (neither OK/ERR).
  */
 NCURSES_EXPORT(int)
-key_defined(const char *str)
+NCURSES_SP_NAME(key_defined) (NCURSES_SP_DCLx const char *str)
 {
     int code = ERR;
 
-    T((T_CALLED("key_defined(%s)"), _nc_visbuf(str)));
-    if (SP != 0 && str != 0) {
-	code = find_definition(SP->_keytry, str);
+    T((T_CALLED("key_defined(%p, %s)"), (void *) SP_PARM, _nc_visbuf(str)));
+    if (SP_PARM != 0 && str != 0) {
+	code = find_definition(SP_PARM->_keytry, str);
     }
 
     returnCode(code);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+key_defined(const char *str)
+{
+    return NCURSES_SP_NAME(key_defined) (CURRENT_SCREEN, str);
+}
+#endif

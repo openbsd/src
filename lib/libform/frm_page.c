@@ -1,6 +1,7 @@
-/*	$OpenBSD: frm_page.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: frm_page.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,12 +34,12 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_page.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: frm_page.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int set_form_page(FORM * form,int  page)
-|   
+|
 |   Description   :  Set the page number of the form.
 |
 |   Return Values :  E_OK              - success
@@ -47,19 +48,19 @@ MODULE_ID("$Id: frm_page.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
 |                    E_INVALID_FIELD   - current field can't be left
 |                    E_SYSTEM_ERROR    - system error
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 set_form_page(FORM *form, int page)
 {
   int err = E_OK;
 
-  T((T_CALLED("set_form_page(%p,%d)"), form, page));
+  T((T_CALLED("set_form_page(%p,%d)"), (void *)form, page));
 
   if (!form || (page < 0) || (page >= form->maxpage))
     RETURN(E_BAD_ARGUMENT);
 
   if (!(form->status & _POSTED))
     {
-      form->curpage = page;
+      form->curpage = (short)page;
       form->current = _nc_First_Active_Field(form);
     }
   else
@@ -88,18 +89,18 @@ set_form_page(FORM *form, int page)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int form_page(const FORM * form)
-|   
+|
 |   Description   :  Return the current page of the form.
 |
 |   Return Values :  >= 0  : current page number
 |                    -1    : invalid form pointer
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 form_page(const FORM *form)
 {
-  T((T_CALLED("form_page(%p)"), form));
+  T((T_CALLED("form_page(%p)"), (const void *)form));
 
   returnCode(Normalize_Form(form)->curpage);
 }

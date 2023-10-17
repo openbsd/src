@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_erasewchar.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_erasewchar.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2002 Free Software Foundation, Inc.                        *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 2002-2010,2014 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,46 +35,64 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_erasewchar.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_erasewchar.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 /*
  *	erasewchar()
  *
  *	Return erase character as given in cur_term->Ottyb.
- *
  */
 
 NCURSES_EXPORT(int)
-erasewchar(wchar_t * wch)
+NCURSES_SP_NAME(erasewchar) (NCURSES_SP_DCLx wchar_t *wch);
+NCURSES_EXPORT(int)
+NCURSES_SP_NAME(erasewchar) (NCURSES_SP_DCLx wchar_t *wch)
 {
     int value;
     int result = ERR;
 
     T((T_CALLED("erasewchar()")));
-    if ((value = erasechar()) != ERR) {
-	*wch = value;
+    if ((value = NCURSES_SP_NAME(erasechar) (NCURSES_SP_ARG)) != ERR) {
+	*wch = (wchar_t) value;
 	result = OK;
     }
     returnCode(result);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+erasewchar(wchar_t *wch)
+{
+    return NCURSES_SP_NAME(erasewchar) (CURRENT_SCREEN, wch);
+}
+#endif
 
 /*
  *	killwchar()
  *
  *	Return kill character as given in cur_term->Ottyb.
- *
  */
 
 NCURSES_EXPORT(int)
-killwchar(wchar_t * wch)
+NCURSES_SP_NAME(killwchar) (NCURSES_SP_DCLx wchar_t *wch);
+NCURSES_EXPORT(int)
+NCURSES_SP_NAME(killwchar) (NCURSES_SP_DCLx wchar_t *wch)
 {
     int value;
     int result = ERR;
 
     T((T_CALLED("killwchar()")));
-    if ((value = killchar()) != ERR) {
-	*wch = value;
+    if ((value = NCURSES_SP_NAME(killchar) (NCURSES_SP_ARG)) != ERR) {
+	*wch = (wchar_t) value;
 	result = OK;
     }
     returnCode(result);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+killwchar(wchar_t *wch)
+{
+    return NCURSES_SP_NAME(killwchar) (CURRENT_SCREEN, wch);
+}
+#endif

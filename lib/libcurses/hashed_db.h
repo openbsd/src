@@ -1,7 +1,8 @@
-/* $OpenBSD: hashed_db.h,v 1.1 2010/01/12 23:21:59 nicm Exp $ */
+/* $OpenBSD: hashed_db.h,v 1.2 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2006 Free Software Foundation, Inc.                        *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 2006-2014,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,19 +34,23 @@
  ****************************************************************************/
 
 /*
- * $Id: hashed_db.h,v 1.1 2010/01/12 23:21:59 nicm Exp $
+ * $Id: hashed_db.h,v 1.2 2023/10/17 09:52:08 nicm Exp $
  */
 
 #ifndef HASHED_DB_H
 #define HASHED_DB_H 1
 
+#include <ncurses_cfg.h>
+
 #include <curses.h>
 
 #if USE_HASHED_DB
 
+#define DB_DBM_HSEARCH 0	/* quiet gcc -Wundef with db6 */
+
 #include <db.h>
 
-#ifndef DBN_SUFFIX
+#ifndef DBM_SUFFIX
 #define DBM_SUFFIX ".db"
 #endif
 

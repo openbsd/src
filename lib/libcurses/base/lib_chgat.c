@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_chgat.c,v 1.3 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_chgat.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -44,27 +45,38 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_chgat.c,v 1.3 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_chgat.c,v 1.4 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
-wchgat(WINDOW *win, int n, attr_t attr, short color, const void *opts GCC_UNUSED)
+wchgat(WINDOW *win,
+       int n,
+       attr_t attr,
+       NCURSES_PAIRS_T pair_arg,
+       const void *opts GCC_UNUSED)
 {
-    int i;
+    int code = ERR;
+    int color_pair = pair_arg;
 
-    T((T_CALLED("wchgat(%p,%d,%s,%d)"), win, n, _traceattr(attr), color));
+    T((T_CALLED("wchgat(%p,%d,%s,%d)"),
+       (void *) win,
+       n,
+       _traceattr(attr),
+       color_pair));
 
+    set_extended_pair(opts, color_pair);
     if (win) {
 	struct ldat *line = &(win->_line[win->_cury]);
+	int i;
 
-	toggle_attr_on(attr, COLOR_PAIR(color));
+	toggle_attr_on(attr, ColorPair(color_pair));
 
 	for (i = win->_curx; i <= win->_maxx && (n == -1 || (n-- > 0)); i++) {
 	    SetAttr(line->text[i], attr);
-	    SetPair(line->text[i], color);
+	    SetPair(line->text[i], color_pair);
 	    CHANGED_CELL(line, i);
 	}
 
-	returnCode(OK);
-    } else
-	returnCode(ERR);
+	code = OK;
+    }
+    returnCode(code);
 }

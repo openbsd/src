@@ -1,366 +1,507 @@
-/*	$OpenBSD: tput.c,v 1.29 2023/09/06 05:04:07 jsg Exp $	*/
+/*	$OpenBSD: tput.c,v 1.30 2023/10/17 09:52:11 nicm Exp $	*/
+
+/****************************************************************************
+ * Copyright 2018-2022,2023 Thomas E. Dickey                                *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
+
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
+ ****************************************************************************/
 
 /*
- * Copyright (c) 1999 Todd C. Miller <millert@openbsd.org>
+ * tput.c -- shellscript access to terminal capabilities
  *
- * Permission to use, copy, modify, and distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
- * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
- * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
- * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-/*-
- * Copyright (c) 1980, 1988, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * by Eric S. Raymond <esr@snark.thyrsus.com>, portions based on code from
+ * Ross Ridge's mytinfo package.
  */
 
-#include <sys/wait.h>
-#include <ctype.h>
-#include <err.h>
-#include <curses.h>
-#include <term.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
-#include <limits.h>
-#include <string.h>
+#include <tparm_type.h>
+#include <clear_cmd.h>
+#include <reset_cmd.h>
 
-#define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
+#include <transform.h>
+#include <tty_settings.h>
 
-#define NUM_PARM	9	/* must match tic.h */
 
-static void   init(void);
-static char **process(char *, char *, char **);
-static void   reset(void);
-static void   set_margins(void);
-static void   usage(void);
 
-extern char  *__progname;
-extern int _nc_tparm_analyze(const char *string, char *p_is_s[NUM_PARM], int *popcount);
+#define PUTS(s)		fputs(s, stdout)
+
+const char *_nc_progname = "tput";
+
+static bool opt_v = FALSE;	/* quiet, do not show warnings */
+static bool opt_x = FALSE;	/* clear scrollback if possible */
+
+static bool is_init = FALSE;
+static bool is_reset = FALSE;
+static bool is_clear = FALSE;
+
+static GCC_NORETURN void
+quit(int status, const char *fmt, ...)
+{
+    va_list argp;
+
+    va_start(argp, fmt);
+    fprintf(stderr, "%s: ", _nc_progname);
+    vfprintf(stderr, fmt, argp);
+    fprintf(stderr, "\n");
+    va_end(argp);
+    ExitProgram(status);
+}
+
+static GCC_NORETURN void
+usage(const char *optstring)
+{
+#define KEEP(s) s "\n"
+    static const char msg[] =
+    {
+	KEEP("")
+	KEEP("Options:")
+	KEEP("  -S <<       read commands from standard input")
+	KEEP("  -T TERM     use this instead of $TERM")
+	KEEP("  -V          print curses-version")
+	KEEP("  -v          verbose, show warnings")
+	KEEP("  -x          do not try to clear scrollback")
+	KEEP("")
+	KEEP("Commands:")
+	KEEP("  clear       clear the screen")
+	KEEP("  init        initialize the terminal")
+	KEEP("  reset       reinitialize the terminal")
+	KEEP("  capname     unlike clear/init/reset, print value for capability \"capname\"")
+    };
+#undef KEEP
+    (void) fprintf(stderr, "Usage: %s [options] [command]\n", _nc_progname);
+    if (optstring != NULL) {
+	const char *s = msg;
+	while (*s != '\0') {
+	    fputc(UChar(*s), stderr);
+	    if (!strncmp(s, "  -", 3)) {
+		if (strchr(optstring, s[3]) == NULL)
+		    s = strchr(s, '\n') + 1;
+	    } else if (!strncmp(s, "\n\nC", 3))
+		break;
+	    ++s;
+	}
+    } else {
+	fputs(msg, stderr);
+    }
+    ExitProgram(ErrUsage);
+}
+
+static char *
+check_aliases(char *name, bool program)
+{
+    static char my_init[] = "init";
+    static char my_reset[] = "reset";
+    static char my_clear[] = "clear";
+
+    char *result = name;
+    if ((is_init = same_program(name, program ? PROG_INIT : my_init)))
+	result = my_init;
+    if ((is_reset = same_program(name, program ? PROG_RESET : my_reset)))
+	result = my_reset;
+    if ((is_clear = same_program(name, program ? PROG_CLEAR : my_clear)))
+	result = my_clear;
+    return result;
+}
+
+static int
+exit_code(int token, int value)
+{
+    int result = 99;
+
+    switch (token) {
+    case BOOLEAN:
+	result = !value;	/* TRUE=0, FALSE=1 */
+	break;
+    case NUMBER:
+	result = 0;		/* always zero */
+	break;
+    case STRING:
+	result = value;		/* 0=normal, 1=missing */
+	break;
+    }
+    return result;
+}
+
+/*
+ * Returns nonzero on error.
+ */
+static int
+tput_cmd(int fd, TTY * settings, int argc, char **argv, int *used)
+{
+    NCURSES_CONST char *name;
+    char *s;
+    int status;
+#if !PURE_TERMINFO
+    bool termcap = FALSE;
+#endif
+
+    name = check_aliases(argv[0], FALSE);
+    *used = 1;
+    if (is_reset || is_init) {
+	TTY oldmode = *settings;
+
+	int terasechar = -1;	/* new erase character */
+	int intrchar = -1;	/* new interrupt character */
+	int tkillchar = -1;	/* new kill character */
+
+	if (is_reset) {
+	    reset_start(stdout, TRUE, FALSE);
+	    reset_tty_settings(fd, settings, FALSE);
+	} else {
+	    reset_start(stdout, FALSE, TRUE);
+	}
+
+#if HAVE_SIZECHANGE
+	set_window_size(fd, &lines, &columns);
+#else
+	(void) fd;
+#endif
+	set_control_chars(settings, terasechar, intrchar, tkillchar);
+	set_conversions(settings);
+
+	if (send_init_strings(fd, &oldmode)) {
+	    reset_flush();
+	}
+
+	update_tty_settings(&oldmode, settings);
+	return 0;
+    }
+
+    if (strcmp(name, "longname") == 0) {
+	PUTS(longname());
+	return 0;
+    }
+#if !PURE_TERMINFO
+  retry:
+#endif
+    if (strcmp(name, "clear") == 0) {
+	return (clear_cmd(opt_x) == ERR) ? ErrUsage : 0;
+    } else if ((status = tigetflag(name)) != -1) {
+	return exit_code(BOOLEAN, status);
+    } else if ((status = tigetnum(name)) != CANCELLED_NUMERIC) {
+	(void) printf("%d\n", status);
+	return exit_code(NUMBER, 0);
+    } else if ((s = tigetstr(name)) == CANCELLED_STRING) {
+#if !PURE_TERMINFO
+	if (!termcap) {
+	    const struct name_table_entry *np;
+
+	    termcap = TRUE;
+	    if ((np = _nc_find_entry(name, _nc_get_hash_table(termcap))) != 0) {
+		switch (np->nte_type) {
+		case BOOLEAN:
+		    name = boolnames[np->nte_index];
+		    break;
+
+		case NUMBER:
+		    name = numnames[np->nte_index];
+		    break;
+
+		case STRING:
+		    name = strnames[np->nte_index];
+		    break;
+		}
+		goto retry;
+	    }
+	}
+#endif
+	quit(ErrCapName, "unknown terminfo capability '%s'", name);
+    } else if (VALID_STRING(s)) {
+	if (argc > 1) {
+	    int k;
+	    int narg;
+	    int analyzed;
+	    int provided;
+	    int popcount;
+	    long numbers[1 + NUM_PARM];
+	    char *strings[1 + NUM_PARM];
+	    char *p_is_s[NUM_PARM];
+	    TParams paramType;
+
+	    /* Nasty hack time. The tparm function needs to see numeric
+	     * parameters as numbers, not as pointers to their string
+	     * representations
+	     */
+
+	    for (k = 1; (k < argc) && (k <= NUM_PARM); k++) {
+		char *tmp = 0;
+		strings[k] = argv[k];
+		numbers[k] = strtol(argv[k], &tmp, 0);
+		if (tmp == 0 || *tmp != 0)
+		    numbers[k] = 0;
+	    }
+	    for (k = argc; k <= NUM_PARM; k++) {
+		numbers[k] = 0;
+		strings[k] = 0;
+	    }
+
+	    paramType = tparm_type(name);
+#if NCURSES_XNAMES
+	    /*
+	     * If the capability is an extended one, analyze the string.
+	     */
+	    if (paramType == Numbers) {
+		struct name_table_entry const *entry_ptr;
+		entry_ptr = _nc_find_type_entry(name, STRING, FALSE);
+		if (entry_ptr == NULL) {
+		    paramType = Other;
+		}
+	    }
+#endif
+
+	    popcount = 0;
+	    _nc_reset_tparm(NULL);
+	    /*
+	     * Count the number of numeric parameters which are provided.
+	     */
+	    provided = 0;
+	    for (narg = 1; narg < argc; ++narg) {
+		char *ending = NULL;
+		long check = strtol(argv[narg], &ending, 10);
+		if (check < 0 || ending == argv[narg] || *ending != '\0')
+		    break;
+		provided = narg;
+	    }
+	    switch (paramType) {
+	    case Str:
+		s = TPARM_1(s, strings[1]);
+		analyzed = 1;
+		if (provided == 0 && argc >= 1)
+		    provided++;
+		break;
+	    case Str_Str:
+		s = TPARM_2(s, strings[1], strings[2]);
+		analyzed = 2;
+		if (provided == 0 && argc >= 1)
+		    provided++;
+		if (provided == 1 && argc >= 2)
+		    provided++;
+		break;
+	    case Num_Str:
+		s = TPARM_2(s, numbers[1], strings[2]);
+		analyzed = 2;
+		if (provided == 1 && argc >= 2)
+		    provided++;
+		break;
+	    case Num_Str_Str:
+		s = TPARM_3(s, numbers[1], strings[2], strings[3]);
+		analyzed = 3;
+		if (provided == 1 && argc >= 2)
+		    provided++;
+		if (provided == 2 && argc >= 3)
+		    provided++;
+		break;
+	    case Numbers:
+		analyzed = _nc_tparm_analyze(NULL, s, p_is_s, &popcount);
+#define myParam(n) numbers[n]
+		s = TIPARM_9(s,
+			     myParam(1),
+			     myParam(2),
+			     myParam(3),
+			     myParam(4),
+			     myParam(5),
+			     myParam(6),
+			     myParam(7),
+			     myParam(8),
+			     myParam(9));
+#undef myParam
+		break;
+	    case Other:
+		/* FALLTHRU */
+	    default:
+		analyzed = _nc_tparm_analyze(NULL, s, p_is_s, &popcount);
+#define myParam(n) (p_is_s[n - 1] != 0 ? ((TPARM_ARG) strings[n]) : numbers[n])
+		s = TPARM_9(s,
+			    myParam(1),
+			    myParam(2),
+			    myParam(3),
+			    myParam(4),
+			    myParam(5),
+			    myParam(6),
+			    myParam(7),
+			    myParam(8),
+			    myParam(9));
+#undef myParam
+		break;
+	    }
+	    if (analyzed < popcount) {
+		analyzed = popcount;
+	    }
+	    if (opt_v && (analyzed != provided)) {
+		fprintf(stderr, "%s: %s parameters for \"%s\"\n",
+			_nc_progname,
+			(analyzed < provided ? "extra" : "missing"),
+			argv[0]);
+	    }
+	    *used += provided;
+	}
+
+	/* use putp() in order to perform padding */
+	putp(s);
+	return exit_code(STRING, 0);
+    }
+    return exit_code(STRING, 1);
+}
 
 int
-main(int argc, char *argv[])
+main(int argc, char **argv)
 {
-	int ch, exitval, n, Sflag;
-	size_t len;
-	char *p, *term, *str;
-	char **oargv;
+    char *term;
+    int errret;
+    bool cmdline = TRUE;
+    int c;
+    char buf[BUFSIZ];
+    int result = 0;
+    int fd;
+    int used;
+    TTY old_settings;
+    TTY tty_settings;
+    bool is_alias;
+    bool need_tty;
 
-	if (pledge("stdio rpath wpath tty", NULL) == -1)
-		err(1, "pledge");
+    if (pledge("stdio rpath wpath tty", NULL) == -1) {
+        perror("pledge");
+        exit(1);
+    }
 
-	oargv = argv;
-	term = NULL;
-	Sflag = exitval = 0;
-	while ((ch = getopt(argc, argv, "ST:")) != -1)
-		switch(ch) {
-		case 'T':
-			term = optarg;
-			break;
-		case 'S':
-			Sflag = 1;
-			break;
-		default:
-			usage();
-		}
+    _nc_progname = check_aliases(_nc_rootname(argv[0]), TRUE);
+    is_alias = (is_clear || is_reset || is_init);
+
+    term = getenv("TERM");
+
+    while ((c = getopt(argc, argv, is_alias ? "T:Vvx" : "ST:Vvx")) != -1) {
+	switch (c) {
+	case 'S':
+	    cmdline = FALSE;
+	    break;
+	case 'T':
+	    use_env(FALSE);
+	    use_tioctl(TRUE);
+	    term = optarg;
+	    break;
+	case 'V':
+	    puts(curses_version());
+	    ExitProgram(EXIT_SUCCESS);
+	case 'v':		/* verbose */
+	    opt_v = TRUE;
+	    break;
+	case 'x':		/* do not try to clear scrollback */
+	    opt_x = TRUE;
+	    break;
+	default:
+	    usage(is_alias ? "TVx" : NULL);
+	    /* NOTREACHED */
+	}
+    }
+
+    need_tty = ((is_reset || is_init) ||
+		(optind < argc &&
+		 (!strcmp(argv[optind], "reset") ||
+		  !strcmp(argv[optind], "init"))));
+
+    /*
+     * Modify the argument list to omit the options we processed.
+     */
+    if (is_alias) {
+	if (optind-- < argc) {
+	    argc -= optind;
+	    argv += optind;
+	}
+	argv[0] = strdup(_nc_progname);
+    } else {
 	argc -= optind;
 	argv += optind;
+    }
 
-	if (Sflag && argc > 0)
-		usage();
+    if (term == 0 || *term == '\0')
+	quit(ErrUsage, "No value for $TERM and no -T specified");
 
-	if (!term && !(term = getenv("TERM")))
-		errx(2, "No value for $TERM and no -T specified");
+    fd = save_tty_settings(&tty_settings, need_tty);
+    old_settings = tty_settings;
 
-	/*
-	 * NOTE: tgetent() will call setupterm() and set ospeed for us
-	 * (this is ncurses-specific behavior)
-	 */
-	if (tgetent(NULL, term) != 1)
-		errx(3, "Unknown terminal type `%s'", term);
+    if (setupterm(term, fd, &errret) != OK && errret <= 0)
+	quit(ErrTermType, "unknown terminal \"%s\"", term);
 
-	if (strcmp(__progname, "clear") == 0) {
-		if (Sflag)
-			usage();
-		argv = oargv;
-		*argv = __progname;
-		*(argv+1) = NULL;
+    if (cmdline) {
+	int code = 0;
+	if ((argc <= 0) && !is_alias)
+	    usage(NULL);
+	while (argc > 0) {
+	    tty_settings = old_settings;
+	    code = tput_cmd(fd, &tty_settings, argc, argv, &used);
+	    if (code != 0)
+		break;
+	    argc -= used;
+	    argv += used;
 	}
-	if (Sflag) {
-		char **av;
+	ExitProgram(code);
+    }
 
-		/* Build new argv based on stdin */
-		argc = n = 0;
-		av = NULL;
-		while ((str = fgetln(stdin, &len)) != NULL) {
-			if (str[len-1] != '\n')
-				errx(1, "premature EOF");
-			str[len-1] = '\0';
-			while ((p = strsep(&str, " \t")) != NULL) {
-				/* grow av as needed */
-				if (argc + 1 >= n) {
-					n += 64;
-					av = reallocarray(av, n,
-					    sizeof(char *));
-					if (av == NULL)
-						errx(1, "out of memory");
-				}
-				if (*p != '\0' &&
-				    (av[argc++] = strdup(p)) == NULL)
-					errx(1, "out of memory");
-			}
-		}
-		if (argc > 0) {
-			av[argc] = NULL;
-			argv = av;
-		}
-	}
-	while ((p = *argv++)) {
-		switch (*p) {
-		case 'i':
-			if (!strcmp(p, "init")) {
-				init();
-				continue;
-			}
-			break;
-		case 'l':
-			if (!strcmp(p, "longname")) {
-				puts(longname());
-				continue;
-			}
-			break;
-		case 'r':
-			if (!strcmp(p, "reset")) {
-				reset();
-				continue;
-			}
-			break;
-		}
+    while (fgets(buf, sizeof(buf), stdin) != 0) {
+	size_t need = strlen(buf);
+	char **argvec = typeCalloc(char *, need + 1);
+	char **argnow;
+	int argnum = 0;
+	char *cp;
 
-		/* First try as terminfo */
-		if ((str = tigetstr(p)) && str != (char *)-1)
-			argv = process(p, str, argv);
-		else if ((n = tigetnum(p)) != -2)
-			(void)printf("%d\n", n);
-		else if ((n = tigetflag(p)) != -1)
-			exitval = !n;
-		/* Then fall back on termcap */
-		else if ((str = tgetstr(p, NULL)))
-			argv = process(p, str, argv);
-		else if ((n = tgetnum(p)) != -1)
-			(void)printf("%d\n", n);
-		else if ((exitval = tgetflag(p)) != 0)
-			exitval = !exitval;
-		else {
-			warnx("Unknown terminfo capability `%s'", p);
-			exitval = 4;
-		}
-	}
-	exit(exitval);
-}
-
-static char **
-process(char *cap, char *str, char **argv)
-{
-	char *s, *nargv[NUM_PARM] = {0};
-	char *p_is_s[NUM_PARM];
-	int arg_need, i;
-
-	/* Count how many values we need for this capability. */
-	i = _nc_tparm_analyze(str, p_is_s, &arg_need);
-	if (arg_need == 0)
-		arg_need = i;
-	if (arg_need > NUM_PARM)
-		errx(2, "too many arguments (%d) for capability `%s'",
-		    arg_need, cap);
-	
-	for (i = 0; i < arg_need; i++) {
-		const char *errstr;
-		long l;
-
-		if (argv[i] == NULL)
-			errx(2, "not enough arguments (%d) for capability `%s'",
-			    arg_need, cap);
-
-		if (p_is_s[i] != 0) {
-			nargv[i] = argv[i];
-		} else {
-			/* convert ascii representation of numbers to longs */
-			l = strtonum(argv[i], LONG_MIN, LONG_MAX, &errstr);
-			if (errstr != NULL)
-				errx(2, "capability `%s' is %s", cap, errstr);
-			nargv[i] = (char *)l;
-		}
+	if (argvec == NULL) {
+	    quit(ErrSystem(1), strerror(errno));
 	}
 
-	s = tparm(str, nargv[0], nargv[1], nargv[2], nargv[3],
-	    nargv[4], nargv[5], nargv[6], nargv[7], nargv[8]);
-	putp(s);
-	fflush(stdout);
-
-	return (argv + arg_need);
-}
-
-static void
-init(void)
-{
-	FILE *ifile;
-	size_t len;
-	char *buf;
-	int wstatus;
-	pid_t pid;
-
-	if (init_prog && !issetugid()) {
-		switch (pid = vfork()) {
-		case -1:
-			err(4, "vfork");
-			break;
-		case 0:
-			/* child */
-			execl(init_prog, init_prog, (char *)NULL);
-			_exit(127);
-			break;
-		default:
-			while (waitpid(pid, &wstatus, 0) == -1) {
-				if (errno != EINTR)
-					break;
-			}
-			/* parent */
-			break;
-		}
+	/* split the buffer into tokens */
+	for (cp = buf; *cp; cp++) {
+	    if (isspace(UChar(*cp))) {
+		*cp = '\0';
+	    } else if (cp == buf || cp[-1] == '\0') {
+		argvec[argnum++] = cp;
+		if (argnum >= (int) need)
+		    break;
+	    }
 	}
-	if (init_1string)
-		putp(init_1string);
-	if (init_2string)
-		putp(init_2string);
-	set_margins();
-	/* always use 8 space tabs */
-	if (init_tabs != 8 && clear_all_tabs && set_tab) {
-		int i;
 
-		putp(clear_all_tabs);
-		for (i = 0; i < (columns - 1) / 8; i++) {
-			if (parm_right_cursor)
-				putp(tparm(parm_right_cursor, 8));
-			else
-				fputs("        ", stdout);
-			putp(set_tab);
-		}
+	argnow = argvec;
+	while (argnum > 0) {
+	    int code;
+	    tty_settings = old_settings;
+	    code = tput_cmd(fd, &tty_settings, argnum, argnow, &used);
+	    if (code != 0) {
+		if (result == 0)
+		    result = ErrSystem(0);	/* will return value >4 */
+		++result;
+	    }
+	    argnum -= used;
+	    argnow += used;
 	}
-	if (init_file && !issetugid() && (ifile = fopen(init_file, "r"))) {
-		while ((buf = fgetln(ifile, &len)) != NULL) {
-			if (buf[len-1] != '\n')
-				errx(1, "premature EOF reading %s", init_file);
-			buf[len-1] = '\0';
-			putp(buf);
-		}
-		fclose(ifile);
-	}
-	if (init_3string)
-		putp(init_3string);
-	fflush(stdout);
-}
+	free(argvec);
+    }
 
-static void
-reset(void)
-{
-	FILE *rfile;
-	size_t len;
-	char *buf;
-
-	if (reset_1string)
-		putp(reset_1string);
-	if (reset_2string)
-		putp(reset_2string);
-	set_margins();
-	if (reset_file && !issetugid() && (rfile = fopen(reset_file, "r"))) {
-		while ((buf = fgetln(rfile, &len)) != NULL) {
-			if (buf[len-1] != '\n')
-				errx(1, "premature EOF reading %s", reset_file);
-			buf[len-1] = '\0';
-			putp(buf);
-		}
-		fclose(rfile);
-	}
-	if (reset_3string)
-		putp(reset_3string);
-	fflush(stdout);
-}
-
-static void
-set_margins(void)
-{
-
-	/*
-	 * Four possibilities:
-	 *	1) we have set_lr_margin and can set things with one call
-	 *	2) we have set_{left,right}_margin_parm, use two calls
-	 *	3) we have set_{left,right}_margin, set based on position
-	 *	4) none of the above, leave things the way they are
-	 */
-	if (set_lr_margin) {
-		putp(tparm(set_lr_margin, 0, columns - 1));
-	} else if (set_left_margin_parm && set_right_margin_parm) {
-		putp(tparm(set_left_margin_parm, 0));
-		putp(tparm(set_right_margin_parm, columns - 1));
-	} else if (set_left_margin && set_right_margin && clear_margins) {
-		putp(clear_margins);
-
-		/* go to column 0 and set the left margin */
-		putp(carriage_return ? carriage_return : "\r");
-		putp(set_left_margin);
-
-		/* go to last column and set the right margin */
-		if (parm_right_cursor)
-			putp(tparm(parm_right_cursor, columns - 1));
-		else
-			printf("%*s", columns - 1, " ");
-		putp(set_right_margin);
-		putp(carriage_return ? carriage_return : "\r");
-	}
-	fflush(stdout);
-}
-
-static void
-usage(void)
-{
-
-	if (strcmp(__progname, "clear") == 0)
-		(void)fprintf(stderr, "usage: %s [-T term]\n", __progname);
-	else
-		(void)fprintf(stderr,
-		    "usage: %s [-T term] attribute [attribute-arg ...] ...\n"
-		    "       %s [-T term] -S\n", __progname, __progname);
-	exit(1);
+    ExitProgram(result);
 }

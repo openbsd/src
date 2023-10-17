@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_hline.c,v 1.5 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_hline.c,v 1.6 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2001,2006 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +32,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Sven Verdoolaege                        2001                    *
  ****************************************************************************/
 
 /*
@@ -42,23 +45,21 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_hline.c,v 1.5 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_hline.c,v 1.6 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
 whline(WINDOW *win, chtype ch, int n)
 {
     int code = ERR;
-    NCURSES_SIZE_T start;
-    NCURSES_SIZE_T end;
 
-    T((T_CALLED("whline(%p,%s,%d)"), win, _tracechtype(ch), n));
+    T((T_CALLED("whline(%p,%s,%d)"), (void *) win, _tracechtype(ch), n));
 
     if (win) {
 	struct ldat *line = &(win->_line[win->_cury]);
 	NCURSES_CH_T wch;
+	int start = win->_curx;
+	int end = start + n - 1;
 
-	start = win->_curx;
-	end = start + n - 1;
 	if (end > win->_maxx)
 	    end = win->_maxx;
 
@@ -70,6 +71,14 @@ whline(WINDOW *win, chtype ch, int n)
 	    SetChar2(wch, ch);
 	wch = _nc_render(win, wch);
 
+#if USE_WIDEC_SUPPORT
+	if (start > 0 && isWidecExt(line->text[start])) {
+	    SetChar2(line->text[start - 1], ' ');
+	}
+	if (end < win->_maxx && isWidecExt(line->text[end + 1])) {
+	    SetChar2(line->text[end + 1], ' ');
+	}
+#endif
 	while (end >= start) {
 	    line->text[end] = wch;
 	    end--;

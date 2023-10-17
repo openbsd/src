@@ -1,7 +1,8 @@
-/* $OpenBSD: m_pad.c,v 1.5 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_pad.c,v 1.6 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,39 +40,39 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_pad.c,v 1.5 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_pad.c,v 1.6 2023/10/17 09:52:10 nicm Exp $")
 
 /* Macro to redraw menu if it is posted and changed */
 #define Refresh_Menu(menu) \
    if ( (menu) && ((menu)->status & _POSTED) )\
    {\
       _nc_Draw_Menu( menu );\
-      _nc_Show_Menu( menu );\
+      _nc_Show_Menu( menu ); \
    }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int set_menu_pad(MENU *menu, int pad)
-|   
+|   Facility      :  libnmenu
+|   Function      :  int set_menu_pad(MENU* menu, int pad)
+|
 |   Description   :  Set the character to be used to separate the item name
-|                    from its description. This must be a printable 
+|                    from its description. This must be a printable
 |                    character.
 |
 |   Return Values :  E_OK              - success
 |                    E_BAD_ARGUMENT    - an invalid value has been passed
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-set_menu_pad(MENU * menu, int pad)
+MENU_EXPORT(int)
+set_menu_pad(MENU *menu, int pad)
 {
-  bool do_refresh = (menu != (MENU *) 0);
+  bool do_refresh = (menu != (MENU *)0);
 
-  T((T_CALLED("set_menu_pad(%p,%d)"), menu, pad));
+  T((T_CALLED("set_menu_pad(%p,%d)"), (void *)menu, pad));
 
   if (!isprint(UChar(pad)))
     RETURN(E_BAD_ARGUMENT);
 
   Normalize_Menu(menu);
-  menu->pad = pad;
+  menu->pad = (unsigned char)pad;
 
   if (do_refresh)
     Refresh_Menu(menu);
@@ -80,17 +81,17 @@ set_menu_pad(MENU * menu, int pad)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  int menu_pad(const MENU *menu)
-|   
+|
 |   Description   :  Return the value of the padding character
 |
 |   Return Values :  The pad character
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-menu_pad(const MENU * menu)
+MENU_EXPORT(int)
+menu_pad(const MENU *menu)
 {
-  T((T_CALLED("menu_pad(%p)"), menu));
+  T((T_CALLED("menu_pad(%p)"), (const void *)menu));
   returnCode(Normalize_Menu(menu)->pad);
 }
 

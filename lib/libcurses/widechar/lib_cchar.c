@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_cchar.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_cchar.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2001-2005,2007 Free Software Foundation, Inc.              *
+ * Copyright 2019-2021,2022 Thomas E. Dickey                                *
+ * Copyright 2001-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -36,10 +37,11 @@
 */
 
 #include <curses.priv.h>
+#include <wchar.h>
 
-MODULE_ID("$Id: lib_cchar.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_cchar.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
-/* 
+/*
  * The SuSv2 description leaves some room for interpretation.  We'll assume wch
  * points to a string which is L'\0' terminated, contains at least one
  * character with strictly positive width, which must be the first, and
@@ -49,22 +51,25 @@ NCURSES_EXPORT(int)
 setcchar(cchar_t *wcval,
 	 const wchar_t *wch,
 	 const attr_t attrs,
-	 short color_pair,
+	 NCURSES_PAIRS_T pair_arg,
 	 const void *opts)
 {
-    int i;
-    int len;
     int code = OK;
+    int color_pair = pair_arg;
+    unsigned len;
 
-    TR(TRACE_CCALLS, (T_CALLED("setcchar(%p,%s,%lu,%d,%p)"),
-		      wcval, _nc_viswbuf(wch),
+    TR(TRACE_CCALLS, (T_CALLED("setcchar(%p,%s,attrs=%lu,pair=%d,%p)"),
+		      (void *) wcval, _nc_viswbuf(wch),
 		      (unsigned long) attrs, color_pair, opts));
 
-    len = wcslen(wch);
-    if (opts != NULL
-	|| (len > 1 && wcwidth(wch[0]) < 0)) {
+    set_extended_pair(opts, color_pair);
+    if (wch == NULL
+	|| ((len = (unsigned) wcslen(wch)) > 1 && _nc_wacs_width(wch[0]) < 0)
+	|| color_pair < 0) {
 	code = ERR;
     } else {
+	unsigned i;
+
 	if (len > CCHARW_MAX)
 	    len = CCHARW_MAX;
 
@@ -73,7 +78,7 @@ setcchar(cchar_t *wcval,
 	 * are only interested in adding non-spacing characters.
 	 */
 	for (i = 1; i < len; ++i) {
-	    if (wcwidth(wch[i]) != 0) {
+	    if (_nc_wacs_width(wch[i]) != 0) {
 		len = i;
 		break;
 	    }
@@ -82,7 +87,7 @@ setcchar(cchar_t *wcval,
 	memset(wcval, 0, sizeof(*wcval));
 
 	if (len != 0) {
-	    SetAttr(*wcval, attrs | COLOR_PAIR(color_pair));
+	    SetAttr(*wcval, attrs);
 	    SetPair(CHDEREF(wcval), color_pair);
 	    memcpy(&wcval->chars, wch, len * sizeof(wchar_t));
 	    TR(TRACE_CCALLS, ("copy %d wchars, first is %s", len,
@@ -98,31 +103,55 @@ NCURSES_EXPORT(int)
 getcchar(const cchar_t *wcval,
 	 wchar_t *wch,
 	 attr_t *attrs,
-	 short *color_pair,
+	 NCURSES_PAIRS_T *pair_arg,
 	 void *opts)
 {
-    wchar_t *wp;
-    int len;
     int code = ERR;
 
     TR(TRACE_CCALLS, (T_CALLED("getcchar(%p,%p,%p,%p,%p)"),
-		      wcval, wch, attrs, color_pair, opts));
+		      (const void *) wcval,
+		      (void *) wch,
+		      (void *) attrs,
+		      (void *) pair_arg,
+		      opts));
 
-    if (opts == NULL) {
-	len = (wp = wmemchr(wcval->chars, L'\0', CCHARW_MAX))
-	    ? wp - wcval->chars
-	    : CCHARW_MAX;
+#if !NCURSES_EXT_COLORS
+    if (opts != NULL) {
+	;			/* empty */
+    } else
+#endif
+    if (wcval != NULL) {
+	wchar_t *wp;
+	int len;
 
+#if HAVE_WMEMCHR
+	len = ((wp = wmemchr(wcval->chars, L'\0', (size_t) CCHARW_MAX))
+	       ? (int) (wp - wcval->chars)
+	       : CCHARW_MAX);
+#else
+	len = wcsnlen(wcval->chars, CCHARW_MAX);
+#endif
 	if (wch == NULL) {
-	    code = len;
-	} else if (attrs == 0 || color_pair == 0) {
+	    /*
+	     * If the value is a null, set the length to 1.
+	     * If the value is not a null, return the length plus 1 for null.
+	     */
+	    code = (len < CCHARW_MAX) ? (len + 1) : CCHARW_MAX;
+	} else if (attrs == 0 || pair_arg == 0) {
 	    code = ERR;
 	} else if (len >= 0) {
+	    int color_pair;
+
+	    TR(TRACE_CCALLS, ("copy %d wchars, first is %s", len,
+			      _tracecchar_t(wcval)));
 	    *attrs = AttrOf(*wcval) & A_ATTRIBUTES;
-	    *color_pair = GetPair(*wcval);
-	    wmemcpy(wch, wcval->chars, (unsigned) len);
+	    color_pair = GetPair(*wcval);
+	    get_extended_pair(opts, color_pair);
+	    *pair_arg = limit_PAIRS(color_pair);
+	    wmemcpy(wch, wcval->chars, (size_t) len);
 	    wch[len] = L'\0';
-	    code = OK;
+	    if (*pair_arg >= 0)
+		code = OK;
 	}
     }
 

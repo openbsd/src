@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_touch.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_touch.c,v 1.4 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -45,16 +46,19 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_touch.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_touch.c,v 1.4 2023/10/17 09:52:09 nicm Exp $")
+
+#undef is_linetouched
 
 NCURSES_EXPORT(bool)
 is_linetouched(WINDOW *win, int line)
 {
-    T((T_CALLED("is_linetouched(%p,%d)"), win, line));
+    T((T_CALLED("is_linetouched(%p,%d)"), (void *) win, line));
 
-    /* XSI doesn't define any error */
-    if (!win || (line > win->_maxy) || (line < 0))
-	returnCode((bool) ERR);
+    /* XSI doesn't define any error, and gcc ultimately made it impossible */
+    if (!win || (line > win->_maxy) || (line < 0)) {
+	returnCode(FALSE);
+    }
 
     returnCode(win->_line[line].firstchar != _NOCHANGE ? TRUE : FALSE);
 }
@@ -62,14 +66,15 @@ is_linetouched(WINDOW *win, int line)
 NCURSES_EXPORT(bool)
 is_wintouched(WINDOW *win)
 {
-    int i;
+    T((T_CALLED("is_wintouched(%p)"), (void *) win));
 
-    T((T_CALLED("is_wintouched(%p)"), win));
+    if (win) {
+	int i;
 
-    if (win)
 	for (i = 0; i <= win->_maxy; i++)
 	    if (win->_line[i].firstchar != _NOCHANGE)
 		returnCode(TRUE);
+    }
     returnCode(FALSE);
 }
 
@@ -78,7 +83,7 @@ wtouchln(WINDOW *win, int y, int n, int changed)
 {
     int i;
 
-    T((T_CALLED("wtouchln(%p,%d,%d,%d)"), win, y, n, changed));
+    T((T_CALLED("wtouchln(%p,%d,%d,%d)"), (void *) win, y, n, changed));
 
     if (!win || (n < 0) || (y < 0) || (y > win->_maxy))
 	returnCode(ERR);
@@ -86,8 +91,10 @@ wtouchln(WINDOW *win, int y, int n, int changed)
     for (i = y; i < y + n; i++) {
 	if (i > win->_maxy)
 	    break;
-	win->_line[i].firstchar = changed ? 0 : _NOCHANGE;
-	win->_line[i].lastchar = changed ? win->_maxx : _NOCHANGE;
+	win->_line[i].firstchar = (NCURSES_SIZE_T) (changed ? 0 : _NOCHANGE);
+	win->_line[i].lastchar = (NCURSES_SIZE_T) (changed
+						   ? win->_maxx
+						   : _NOCHANGE);
     }
     returnCode(OK);
 }

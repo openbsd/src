@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_scroll.3,v 1.9 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_scroll.3,v 1.10 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2005,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2006,2010 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,56 +29,59 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_scroll.3,v 1.9 2010/01/12 23:21:59 nicm Exp $
-.TH curs_scroll 3 ""
+.\" $Id: curs_scroll.3,v 1.10 2023/10/17 09:52:08 nicm Exp $
+.TH curs_scroll 3 2023-08-19 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
 .na
 .hy 0
 .SH NAME
-\fBscroll\fR,
-\fBscrl\fR,
-\fBwscrl\fR - scroll a \fBcurses\fR window
+\fBscroll\fP,
+\fBscrl\fP,
+\fBwscrl\fP \- scroll a \fBcurses\fP window
 .ad
 .hy
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 .sp
-\fBint scroll(WINDOW *win);\fR
+\fBint scroll(WINDOW *\fIwin\fB);\fR
+.sp
+\fBint scrl(int \fIn\fB);\fR
 .br
-\fBint scrl(int n);\fR
-.br
-\fBint wscrl(WINDOW *win, int n);\fR
-.br
+\fBint wscrl(WINDOW *\fIwin\fB, int \fIn\fB);\fR
 .SH DESCRIPTION
-The \fBscroll\fR routine scrolls the window up one line.
+The \fBscroll\fP routine scrolls the window up one line.
 This involves moving
 the lines in the window data structure.
 As an optimization, if the scrolling
-region of the window is the entire screen, the physical screen may be scrolled
-at the same time.
+region of the window is the entire screen,
+the \fIphysical screen\fP may be scrolled at the same time.
 .PP
-For positive \fIn\fR, the \fBscrl\fR and \fBwscrl\fR routines scroll the
-window up \fIn\fR lines (line \fIi\fR+\fIn\fR becomes \fIi\fR); otherwise
-scroll the window down \fIn\fR lines.
+For positive \fIn\fP, the \fBscrl\fP and \fBwscrl\fP routines scroll the
+window up \fIn\fP lines (line \fIi\fP+\fIn\fP becomes \fIi\fP); otherwise
+scroll the window down \fIn\fP lines.
 This involves moving the lines in the
 window character image structure.
 The current cursor position is not changed.
 .PP
-For these functions to work, scrolling must be enabled via \fBscrollok\fR.
+For these functions to work, scrolling must be enabled via \fBscrollok\fP(3).
 .SH RETURN VALUE
-These routines return \fBERR\fR upon failure, and \fBOK\fR (SVr4 only specifies
-"an integer value other than \fBERR\fR") upon successful completion.
+These routines return \fBERR\fP upon failure, and \fBOK\fP (SVr4 only specifies
+"an integer value other than \fBERR\fP") upon successful completion.
 .PP
 X/Open defines no error conditions.
 .PP
 This implementation returns an error
 if the window pointer is null, or
-if scrolling is not enabled in the window, e.g., with \fBscrollok\fP.
+if scrolling is not enabled in the window, e.g., with \fBscrollok\fP(3).
 .SH NOTES
-Note that \fBscrl\fR and \fBscroll\fR may be macros.
+Note that \fBscrl\fP and \fBscroll\fP may be macros.
 .PP
 The SVr4 documentation says that the optimization of physically scrolling
-immediately if the scroll region is the entire screen "is" performed, not
-"may be" performed.
+immediately if the scroll region is the entire screen \*(``is\*('' performed,
+not \*(``may be\*('' performed.
 This implementation deliberately does not guarantee
 that this will occur, to leave open the possibility of smarter
 optimization of multiple scroll actions on the next update.
@@ -89,10 +93,4 @@ Under this implementation it is.
 .SH PORTABILITY
 The XSI Curses standard, Issue 4 describes these functions.
 .SH SEE ALSO
-\fBcurses\fR(3), \fBcurs_outopts\fR(3)
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3), \fBcurs_outopts\fP(3)

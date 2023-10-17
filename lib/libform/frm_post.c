@@ -1,6 +1,7 @@
-/*	$OpenBSD: frm_post.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: frm_post.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,12 +34,12 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: frm_post.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: frm_post.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int post_form(FORM * form)
-|   
+|
 |   Description   :  Writes the form into its associated subwindow.
 |
 |   Return Values :  E_OK              - success
@@ -48,14 +49,14 @@ MODULE_ID("$Id: frm_post.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
 |                    E_NO_ROOM         - form doesn't fit into subwindow
 |                    E_SYSTEM_ERROR    - system error
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 post_form(FORM *form)
 {
   WINDOW *formwin;
   int err;
   int page;
 
-  T((T_CALLED("post_form(%p)"), form));
+  T((T_CALLED("post_form(%p)"), (void *)form));
 
   if (!form)
     RETURN(E_BAD_ARGUMENT);
@@ -70,7 +71,7 @@ post_form(FORM *form)
   if ((form->cols > getmaxx(formwin)) || (form->rows > getmaxy(formwin)))
     RETURN(E_NO_ROOM);
 
-  /* reset form->curpage to an invald value. This forces Set_Form_Page
+  /* reset form->curpage to an invalid value. This forces Set_Form_Page
      to do the page initialization which is required by post_form.
    */
   page = form->curpage;
@@ -78,7 +79,7 @@ post_form(FORM *form)
   if ((err = _nc_Set_Form_Page(form, page, form->current)) != E_OK)
     RETURN(err);
 
-  form->status |= _POSTED;
+  SetStatus(form, _POSTED);
 
   Call_Hook(form, forminit);
   Call_Hook(form, fieldinit);
@@ -88,9 +89,9 @@ post_form(FORM *form)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int unpost_form(FORM * form)
-|   
+|
 |   Description   :  Erase form from its associated subwindow.
 |
 |   Return Values :  E_OK            - success
@@ -98,10 +99,10 @@ post_form(FORM *form)
 |                    E_NOT_POSTED    - form isn't posted
 |                    E_BAD_STATE     - called from a hook routine
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 unpost_form(FORM *form)
 {
-  T((T_CALLED("unpost_form(%p)"), form));
+  T((T_CALLED("unpost_form(%p)"), (void *)form));
 
   if (!form)
     RETURN(E_BAD_ARGUMENT);
@@ -118,7 +119,7 @@ unpost_form(FORM *form)
   werase(Get_Form_Window(form));
   delwin(form->w);
   form->w = (WINDOW *)0;
-  form->status &= ~_POSTED;
+  ClrStatus(form, _POSTED);
   RETURN(E_OK);
 }
 

@@ -1,7 +1,8 @@
-/* $OpenBSD: m_cursor.c,v 1.8 2010/01/12 23:22:07 nicm Exp $ */
+/* $OpenBSD: m_cursor.c,v 1.9 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2004,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +40,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_cursor.c,v 1.8 2010/01/12 23:22:07 nicm Exp $")
+MODULE_ID("$Id: m_cursor.c,v 1.9 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu
@@ -51,16 +52,16 @@ MODULE_ID("$Id: m_cursor.c,v 1.8 2010/01/12 23:22:07 nicm Exp $")
 |                    E_BAD_ARGUMENT  - invalid menu
 |                    E_NOT_POSTED    - Menu is not posted
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-_nc_menu_cursor_pos(const MENU * menu, const ITEM * item, int *pY, int *pX)
+MENU_EXPORT(int)
+_nc_menu_cursor_pos(const MENU *menu, const ITEM *item, int *pY, int *pX)
 {
   if (!menu || !pX || !pY)
     return (E_BAD_ARGUMENT);
   else
     {
-      if ((ITEM *) 0 == item)
+      if ((ITEM *)0 == item)
 	item = menu->curitem;
-      assert(item != (ITEM *) 0);
+      assert(item != (ITEM *)0);
 
       if (!(menu->status & _POSTED))
 	return (E_NOT_POSTED);
@@ -81,19 +82,19 @@ _nc_menu_cursor_pos(const MENU * menu, const ITEM * item, int *pY, int *pX)
 |                    E_BAD_ARGUMENT  - invalid menu
 |                    E_NOT_POSTED    - Menu is not posted
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-pos_menu_cursor(const MENU * menu)
+MENU_EXPORT(int)
+pos_menu_cursor(const MENU *menu)
 {
-  WINDOW *win, *sub;
   int x = 0, y = 0;
-  int err = _nc_menu_cursor_pos(menu, (ITEM *) 0, &y, &x);
+  int err = _nc_menu_cursor_pos(menu, (ITEM *)0, &y, &x);
 
-  T((T_CALLED("pos_menu_cursor(%p)"), menu));
+  T((T_CALLED("pos_menu_cursor(%p)"), (const void *)menu));
 
   if (E_OK == err)
     {
-      win = menu->userwin ? menu->userwin : stdscr;
-      sub = menu->usersub ? menu->usersub : win;
+      WINDOW *win = Get_Menu_UserWin(menu);
+      WINDOW *sub = menu->usersub ? menu->usersub : win;
+
       assert(win && sub);
 
       if ((menu->opt & O_SHOWMATCH) && (menu->pindex > 0))

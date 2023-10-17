@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_in_wchnstr.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_in_wchnstr.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2002-2004-2007 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 2002-2007,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,14 +42,14 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_in_wchnstr.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_in_wchnstr.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
 win_wchnstr(WINDOW *win, cchar_t *wchstr, int n)
 {
     int code = OK;
 
-    T((T_CALLED("win_wchnstr(%p,%p,%d)"), win, wchstr, n));
+    T((T_CALLED("win_wchnstr(%p,%p,%d)"), (void *) win, (void *) wchstr, n));
     if (win != 0
 	&& wchstr != 0) {
 	NCURSES_CH_T *src;

@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_move.c,v 1.6 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_move.c,v 1.7 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,23 +34,23 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_move.c,v 1.6 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_move.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int move_field(FIELD *field,int frow, int fcol)
-|   
+|
 |   Description   :  Moves the disconnected field to the new location in
-|                    the forms subwindow.
+|                    the form's subwindow.
 |
 |   Return Values :  E_OK            - success
 |                    E_BAD_ARGUMENT  - invalid argument passed
 |                    E_CONNECTED     - field is connected
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 move_field(FIELD *field, int frow, int fcol)
 {
-  T((T_CALLED("move_field(%p,%d,%d)"), field, frow, fcol));
+  T((T_CALLED("move_field(%p,%d,%d)"), (void *)field, frow, fcol));
 
   if (!field || (frow < 0) || (fcol < 0))
     RETURN(E_BAD_ARGUMENT);
@@ -57,8 +58,8 @@ move_field(FIELD *field, int frow, int fcol)
   if (field->form)
     RETURN(E_CONNECTED);
 
-  field->frow = frow;
-  field->fcol = fcol;
+  field->frow = (short)frow;
+  field->fcol = (short)fcol;
   RETURN(E_OK);
 }
 

@@ -1,7 +1,8 @@
-/* $OpenBSD: dump_entry.h,v 1.6 2010/01/12 23:22:14 nicm Exp $ */
+/* $OpenBSD: dump_entry.h,v 1.7 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.              *
+ * Copyright 2018-2020,2021 Thomas E. Dickey                                *
+ * Copyright 1998-2016,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,15 +35,19 @@
  *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
-
 /*
- * $Id: dump_entry.h,v 1.6 2010/01/12 23:22:14 nicm Exp $
+ * $Id: dump_entry.h,v 1.7 2023/10/17 09:52:10 nicm Exp $
  *
  * Dump control definitions and variables
  */
 
 #ifndef DUMP_ENTRY_H
 #define DUMP_ENTRY_H 1
+
+#define NCURSES_OPAQUE    0
+#define NCURSES_INTERNALS 1
+#include <curses.h>
+#include <term.h>
 
 /* capability output formats */
 #define F_TERMINFO	0	/* use terminfo names */
@@ -64,18 +69,27 @@
 #define CMP_STRING	2	/* comparison on strings */
 #define CMP_USE		3	/* comparison on use capabilities */
 
+#ifndef _TERMSORT_H
 typedef unsigned PredType;
 typedef unsigned PredIdx;
-typedef int (*PredFunc)(PredType, PredIdx);
+#endif
+
+typedef int (*PredFunc) (PredType, PredIdx);
+typedef void (*PredHook) (PredType, PredIdx, const char *);
 
 extern NCURSES_CONST char *nametrans(const char *);
-extern int fmt_entry(TERMTYPE *, PredFunc, bool, bool, bool, int);
+extern bool has_params(const char *, bool);
+extern int fmt_entry(TERMTYPE2 *, PredFunc, int, int, int, int);
 extern int show_entry(void);
-extern void compare_entry(void (*)(PredType, PredIdx, const char *), TERMTYPE *, bool);
-extern void dump_entry(TERMTYPE *, bool, bool, int, PredFunc);
-extern void dump_init(const char *, int, int, int, int, bool);
+extern void compare_entry(PredHook, TERMTYPE2 *, bool);
+extern void dump_entry(TERMTYPE2 *, int, int, int, PredFunc);
+extern void dump_init(const char *, int, int, bool, int, int, unsigned, bool,
+		      bool, int);
 extern void dump_uses(const char *, bool);
-extern void repair_acsc(TERMTYPE * tp);
+extern void repair_acsc(TERMTYPE2 *tp);
+
+#define L_CURL "{"
+#define R_CURL "}"
 
 #define FAIL	-1
 

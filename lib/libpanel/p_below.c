@@ -1,7 +1,8 @@
-/* $OpenBSD: p_below.c,v 1.5 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: p_below.c,v 1.6 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2000,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,26 +32,57 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1995                    *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Juergen Pfeifer                         1997-1999,2008          *
  ****************************************************************************/
 
 /* p_below.c
  */
 #include "panel.priv.h"
 
-MODULE_ID("$Id: p_below.c,v 1.5 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: p_below.c,v 1.6 2023/10/17 09:52:10 nicm Exp $")
 
-NCURSES_EXPORT(PANEL *)
-panel_below(const PANEL * pan)
+#if NCURSES_SP_FUNCS
+PANEL_EXPORT(PANEL *)
+ceiling_panel(SCREEN * sp)
 {
-  T((T_CALLED("panel_below(%p)"), pan));
-  if (!pan)
+  T((T_CALLED("ceiling_panel(%p)"), (void *)sp));
+  if (sp)
     {
+      struct panelhook *ph = NCURSES_SP_NAME(_nc_panelhook) (sp);
+
       /* if top and bottom are equal, we have no or only the pseudo panel */
       returnPanel(EMPTY_STACK()? (PANEL *) 0 : _nc_top_panel);
     }
   else
     {
-      /* we must not return the pseudo panel */
-      returnPanel(Is_Pseudo(pan->below) ? (PANEL *) 0 : pan->below);
+      if (0 == CURRENT_SCREEN)
+	returnPanel(0);
+      else
+	returnPanel(ceiling_panel(CURRENT_SCREEN));
     }
+}
+#endif
+
+PANEL_EXPORT(PANEL *)
+panel_below(const PANEL * pan)
+{
+  PANEL *result;
+
+  T((T_CALLED("panel_below(%p)"), (const void *)pan));
+  if (pan)
+    {
+      GetHook(pan);
+      /* we must not return the pseudo panel */
+      result = Is_Pseudo(pan->below) ? (PANEL *) 0 : pan->below;
+    }
+  else
+    {
+#if NCURSES_SP_FUNCS
+      result = ceiling_panel(CURRENT_SCREEN);
+#else
+      /* if top and bottom are equal, we have no or only the pseudo panel */
+      result = EMPTY_STACK()? (PANEL *) 0 : _nc_top_panel;
+#endif
+    }
+  returnPanel(result);
 }

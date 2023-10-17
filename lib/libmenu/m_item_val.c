@@ -1,7 +1,8 @@
-/* $OpenBSD: m_item_val.c,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_item_val.c,v 1.8 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2004,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,30 +40,28 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_item_val.c,v 1.7 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_item_val.c,v 1.8 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  int set_item_value(ITEM *item, int value)
-|   
+|
 |   Description   :  Programmatically set the item's selection value. This is
 |                    only allowed if the item is selectable at all and if
 |                    it is not connected to a single-valued menu.
 |                    If the item is connected to a posted menu, the menu
-|                    will be redisplayed.  
+|                    will be redisplayed.
 |
 |   Return Values :  E_OK              - success
 |                    E_REQUEST_DENIED  - not selectable or single valued menu
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-set_item_value(ITEM * item, bool value)
+MENU_EXPORT(int)
+set_item_value(ITEM *item, bool value)
 {
-  MENU *menu;
-
-  T((T_CALLED("set_item_value(%p,%d)"), item, value));
+  T((T_CALLED("set_item_value(%p,%d)"), (void *)item, value));
   if (item)
     {
-      menu = item->imenu;
+      MENU *menu = item->imenu;
 
       if ((!(item->opt & O_SELECTABLE)) ||
 	  (menu && (menu->opt & O_ONEVALUE)))
@@ -88,18 +87,18 @@ set_item_value(ITEM * item, bool value)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  bool item_value(const ITEM *item)
-|   
+|
 |   Description   :  Return the selection value of the item
 |
 |   Return Values :  TRUE   - if item is selected
 |                    FALSE  - if item is not selected
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(bool)
-item_value(const ITEM * item)
+MENU_EXPORT(bool)
+item_value(const ITEM *item)
 {
-  T((T_CALLED("item_value(%p)"), item));
+  T((T_CALLED("item_value(%p)"), (const void *)item));
   returnBool((Normalize_Item(item)->value) ? TRUE : FALSE);
 }
 

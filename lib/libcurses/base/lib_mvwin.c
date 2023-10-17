@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_mvwin.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_mvwin.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2001,2006 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +32,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Juergen Pfeifer                                                 *
  ****************************************************************************/
 
 /*
@@ -42,14 +45,18 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_mvwin.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_mvwin.c,v 1.4 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
 mvwin(WINDOW *win, int by, int bx)
 {
-    T((T_CALLED("mvwin(%p,%d,%d)"), win, by, bx));
+#if NCURSES_SP_FUNCS
+    SCREEN *sp = _nc_screen_of(win);
+#endif
 
-    if (!win || (win->_flags & _ISPAD))
+    T((T_CALLED("mvwin(%p,%d,%d)"), (void *) win, by, bx));
+
+    if (!win || IS_PAD(win))
 	returnCode(ERR);
 
     /*
@@ -58,7 +65,7 @@ mvwin(WINDOW *win, int by, int bx)
      */
 #if 0
     /* Copying subwindows is allowed, but it is expensive... */
-    if (win->_flags & _SUBWIN) {
+    if (IS_SUBWIN(win)) {
 	int err = ERR;
 	WINDOW *parent = win->_parent;
 	if (parent) {		/* Now comes the complicated and costly part, you should really
@@ -98,8 +105,8 @@ mvwin(WINDOW *win, int by, int bx)
     }
 #endif
 
-    if (by + win->_maxy > screen_lines - 1
-	|| bx + win->_maxx > screen_columns - 1
+    if (by + win->_maxy > screen_lines(SP_PARM) - 1
+	|| bx + win->_maxx > screen_columns(SP_PARM) - 1
 	|| by < 0
 	|| bx < 0)
 	returnCode(ERR);
@@ -110,7 +117,7 @@ mvwin(WINDOW *win, int by, int bx)
      * new location.  This ensures that if the caller has refreshed another
      * window at the same location, that this one will be displayed.
      */
-    win->_begy = by;
-    win->_begx = bx;
+    win->_begy = (NCURSES_SIZE_T) by;
+    win->_begx = (NCURSES_SIZE_T) bx;
     returnCode(touchwin(win));
 }

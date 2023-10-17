@@ -1,7 +1,8 @@
-/* $OpenBSD: p_user.c,v 1.4 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: p_user.c,v 1.5 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2000,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2005,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,25 +35,25 @@
  ****************************************************************************/
 
 /* p_user.c
- * Set/Get panels user pointer 
+ * Set/Get panels user pointer
  */
 #include "panel.priv.h"
 
-MODULE_ID("$Id: p_user.c,v 1.4 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: p_user.c,v 1.5 2023/10/17 09:52:10 nicm Exp $")
 
-NCURSES_EXPORT(int)
+PANEL_EXPORT(int)
 set_panel_userptr(PANEL * pan, NCURSES_CONST void *uptr)
 {
-  T((T_CALLED("set_panel_userptr(%p,%p)"), pan, uptr));
+  T((T_CALLED("set_panel_userptr(%p,%p)"), (void *)pan, (NCURSES_CONST void *)uptr));
   if (!pan)
     returnCode(ERR);
   pan->user = uptr;
   returnCode(OK);
 }
 
-NCURSES_EXPORT(NCURSES_CONST void *)
+PANEL_EXPORT(NCURSES_CONST void *)
 panel_userptr(const PANEL * pan)
 {
-  T((T_CALLED("panel_userptr(%p)"), pan));
+  T((T_CALLED("panel_userptr(%p)"), (const void *)pan));
   returnCVoidPtr(pan ? pan->user : (NCURSES_CONST void *)0);
 }

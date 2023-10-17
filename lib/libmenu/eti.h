@@ -1,7 +1,8 @@
-/* $OpenBSD: eti.h,v 1.6 2010/01/12 23:22:07 nicm Exp $ */
+/* $OpenBSD: eti.h,v 1.7 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2002,2003 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2002,2003 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -32,7 +33,7 @@
  *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
-/* $Id: eti.h,v 1.6 2010/01/12 23:22:07 nicm Exp $ */
+/* $Id: eti.h,v 1.7 2023/10/17 09:52:10 nicm Exp $ */
 
 #ifndef NCURSES_ETI_H_incl
 #define NCURSES_ETI_H_incl 1

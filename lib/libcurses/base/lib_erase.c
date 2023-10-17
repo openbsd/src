@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_erase.c,v 1.3 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_erase.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000,2001 Free Software Foundation, Inc.              *
+ * Copyright 2020,2022 Thomas E. Dickey                                     *
+ * Copyright 1998-2009,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -43,21 +44,25 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_erase.c,v 1.3 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_erase.c,v 1.4 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
 werase(WINDOW *win)
 {
     int code = ERR;
-    int y;
-    NCURSES_CH_T blank;
-    NCURSES_CH_T *sp, *end, *start;
+    NCURSES_CH_T *start;
 
-    T((T_CALLED("werase(%p)"), win));
+    T((T_CALLED("werase(%p)"), (void *) win));
 
     if (win) {
+	NCURSES_CH_T blank;
+	NCURSES_CH_T *sp;
+	int y;
+
 	blank = win->_nc_bkgd;
 	for (y = 0; y <= win->_maxy; y++) {
+	    NCURSES_CH_T *end;
+
 	    start = win->_line[y].text;
 	    end = &start[win->_maxx];
 

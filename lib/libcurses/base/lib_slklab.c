@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_slklab.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_slklab.c,v 1.4 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2000,2003 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2003,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +32,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and:  Juergen Pfeifer,                       1998,2009               *
+ *     and:  Thomas E. Dickey                       1998-on                 *
  ****************************************************************************/
 
 /*
@@ -40,14 +43,22 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_slklab.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_slklab.c,v 1.4 2023/10/17 09:52:09 nicm Exp $")
 
+NCURSES_EXPORT(char *)
+NCURSES_SP_NAME(slk_label) (NCURSES_SP_DCLx int n)
+{
+    T((T_CALLED("slk_label(%p,%d)"), (void *) SP_PARM, n));
+
+    if (SP_PARM == 0 || SP_PARM->_slk == 0 || n < 1 || n > SP_PARM->_slk->labcnt)
+	returnPtr(0);
+    returnPtr(SP_PARM->_slk->ent[n - 1].ent_text);
+}
+
+#if NCURSES_SP_FUNCS
 NCURSES_EXPORT(char *)
 slk_label(int n)
 {
-    T((T_CALLED("slk_label(%d)"), n));
-
-    if (SP == NULL || SP->_slk == NULL || n < 1 || n > SP->_slk->labcnt)
-	returnPtr(0);
-    returnPtr(SP->_slk->ent[n - 1].ent_text);
+    return NCURSES_SP_NAME(slk_label) (CURRENT_SCREEN, n);
 }
+#endif

@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_key_name.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_key_name.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2007 Free Software Foundation, Inc.                        *
+ * Copyright 2020,2023 Thomas E. Dickey                                     *
+ * Copyright 2007-2008,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -37,7 +38,9 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_key_name.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_key_name.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
+
+#define MyData _nc_globals.key_name
 
 NCURSES_EXPORT(NCURSES_CONST char *)
 key_name(wchar_t c)
@@ -45,20 +48,22 @@ key_name(wchar_t c)
     cchar_t my_cchar;
     wchar_t *my_wchars;
     size_t len;
-
-    /* FIXME: move to _nc_globals */
-    static char result[MB_LEN_MAX + 1];
+    NCURSES_CONST char *result = NULL;
 
     memset(&my_cchar, 0, sizeof(my_cchar));
     my_cchar.chars[0] = c;
     my_cchar.chars[1] = L'\0';
 
     my_wchars = wunctrl(&my_cchar);
-    len = wcstombs(result, my_wchars, sizeof(result) - 1);
-    if (isEILSEQ(len) || (len == 0)) {
-	return 0;
+    /*
+     * wunctrl() could return a wide character rather than just a "printable"
+     * representation.  Check for that and return a corresponding multibyte
+     * character string.
+     */
+    len = wcstombs(MyData, my_wchars, sizeof(MyData) - 1);
+    if (!isEILSEQ(len) && (len != 0) && (len <= MB_LEN_MAX)) {
+	MyData[len] = '\0';
+	result = MyData;
     }
-
-    result[len] = '\0';
     return result;
 }

@@ -1,7 +1,8 @@
-/* $OpenBSD: m_spacing.c,v 1.6 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_spacing.c,v 1.7 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +40,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_spacing.c,v 1.6 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_spacing.c,v 1.7 2023/10/17 09:52:10 nicm Exp $")
 
 #define MAX_SPC_DESC ((TABSIZE) ? (TABSIZE) : 8)
 #define MAX_SPC_COLS ((TABSIZE) ? (TABSIZE) : 8)
@@ -53,12 +54,13 @@ MODULE_ID("$Id: m_spacing.c,v 1.6 2010/01/12 23:22:08 nicm Exp $")
 |
 |   Return Values :  E_OK                 - on success
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-set_menu_spacing(MENU * menu, int s_desc, int s_row, int s_col)
+MENU_EXPORT(int)
+set_menu_spacing(MENU *menu, int s_desc, int s_row, int s_col)
 {
   MENU *m;			/* split for ATAC workaround */
 
-  T((T_CALLED("set_menu_spacing(%p,%d,%d,%d)"), menu, s_desc, s_row, s_col));
+  T((T_CALLED("set_menu_spacing(%p,%d,%d,%d)"),
+     (void *)menu, s_desc, s_row, s_col));
 
   m = Normalize_Menu(menu);
 
@@ -71,9 +73,9 @@ set_menu_spacing(MENU * menu, int s_desc, int s_row, int s_col)
       ((s_col < 0) || (s_col > MAX_SPC_COLS)))
     RETURN(E_BAD_ARGUMENT);
 
-  m->spc_desc = s_desc ? s_desc : 1;
-  m->spc_rows = s_row ? s_row : 1;
-  m->spc_cols = s_col ? s_col : 1;
+  m->spc_desc = (short)(s_desc ? s_desc : 1);
+  m->spc_rows = (short)(s_row ? s_row : 1);
+  m->spc_cols = (short)(s_col ? s_col : 1);
   _nc_Calculate_Item_Length_and_Width(m);
 
   RETURN(E_OK);
@@ -87,12 +89,16 @@ set_menu_spacing(MENU * menu, int s_desc, int s_row, int s_col)
 |
 |   Return Values :  E_OK             - on success
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-menu_spacing(const MENU * menu, int *s_desc, int *s_row, int *s_col)
+MENU_EXPORT(int)
+menu_spacing(const MENU *menu, int *s_desc, int *s_row, int *s_col)
 {
   const MENU *m;		/* split for ATAC workaround */
 
-  T((T_CALLED("menu_spacing(%p,%p,%p,%p)"), menu, s_desc, s_row, s_col));
+  T((T_CALLED("menu_spacing(%p,%p,%p,%p)"),
+     (const void *)menu,
+     (void *)s_desc,
+     (void *)s_row,
+     (void *)s_col));
 
   m = Normalize_Menu(menu);
 

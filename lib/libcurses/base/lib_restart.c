@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_restart.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_restart.c,v 1.6 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020,2023 Thomas E. Dickey                                     *
+ * Copyright 1998-2012,2015 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -32,6 +33,7 @@
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Juergen Pfeifer                         2008                    *
  ****************************************************************************/
 
 /*
@@ -42,53 +44,60 @@
 
 #include <curses.priv.h>
 
-#if SVR4_TERMIO && !defined(_POSIX_SOURCE)
-#define _POSIX_SOURCE
-#endif
-
-#include <term.h>		/* lines, columns, cur_term */
-
-MODULE_ID("$Id: lib_restart.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_restart.c,v 1.6 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
-restartterm(NCURSES_CONST char *termp, int filenum, int *errret)
+NCURSES_SP_NAME(restartterm) (NCURSES_SP_DCLx
+			      NCURSES_CONST char *termp,
+			      int filenum,
+			      int *errret)
 {
     int result;
+#ifdef USE_TERM_DRIVER
+    TERMINAL *new_term = 0;
+#endif
 
-    T((T_CALLED("restartterm(%s,%d,%p)"), termp, filenum, errret));
+    START_TRACE();
+    T((T_CALLED("restartterm(%p,%s,%d,%p)"),
+       (void *) SP_PARM,
+       termp,
+       filenum,
+       (void *) errret));
 
-    if (setupterm(termp, filenum, errret) != OK) {
+    if (TINFO_SETUP_TERM(&new_term, termp, filenum, errret, FALSE) != OK) {
 	result = ERR;
-    } else if (SP != 0) {
-	int saveecho = SP->_echo;
-	int savecbreak = SP->_cbreak;
-	int saveraw = SP->_raw;
-	int savenl = SP->_nl;
+    } else if (SP_PARM != 0) {
+	TTY_FLAGS save_flags = SP_PARM->_tty_flags;
 
-	if (saveecho)
-	    echo();
-	else
-	    noecho();
-
-	if (savecbreak) {
-	    cbreak();
-	    noraw();
-	} else if (saveraw) {
-	    nocbreak();
-	    raw();
+#ifdef USE_TERM_DRIVER
+	SP_PARM->_term = new_term;
+#endif
+	if (save_flags._echo) {
+	    NCURSES_SP_NAME(echo) (NCURSES_SP_ARG);
 	} else {
-	    nocbreak();
-	    noraw();
+	    NCURSES_SP_NAME(noecho) (NCURSES_SP_ARG);
 	}
-	if (savenl)
-	    nl();
-	else
-	    nonl();
 
-	reset_prog_mode();
+	if (save_flags._cbreak) {
+	    NCURSES_SP_NAME(cbreak) (NCURSES_SP_ARG);
+	    NCURSES_SP_NAME(noraw) (NCURSES_SP_ARG);
+	} else if (save_flags._raw) {
+	    NCURSES_SP_NAME(nocbreak) (NCURSES_SP_ARG);
+	    NCURSES_SP_NAME(raw) (NCURSES_SP_ARG);
+	} else {
+	    NCURSES_SP_NAME(nocbreak) (NCURSES_SP_ARG);
+	    NCURSES_SP_NAME(noraw) (NCURSES_SP_ARG);
+	}
+	if (save_flags._nl) {
+	    NCURSES_SP_NAME(nl) (NCURSES_SP_ARG);
+	} else {
+	    NCURSES_SP_NAME(nonl) (NCURSES_SP_ARG);
+	}
+
+	NCURSES_SP_NAME(reset_prog_mode) (NCURSES_SP_ARG);
 
 #if USE_SIZECHANGE
-	_nc_update_screensize(SP);
+	_nc_update_screensize(SP_PARM);
 #endif
 
 	result = OK;
@@ -97,3 +106,12 @@ restartterm(NCURSES_CONST char *termp, int filenum, int *errret)
     }
     returnCode(result);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+restartterm(NCURSES_CONST char *termp, int filenum, int *errret)
+{
+    START_TRACE();
+    return NCURSES_SP_NAME(restartterm) (CURRENT_SCREEN, termp, filenum, errret);
+}
+#endif

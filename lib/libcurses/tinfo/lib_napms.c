@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_napms.c,v 1.8 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_napms.c,v 1.9 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2005,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2014,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +32,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Juergen Pfeifer                         2009                    *
  ****************************************************************************/
 
 /*
@@ -51,13 +54,19 @@
 #endif
 #endif
 
-MODULE_ID("$Id: lib_napms.c,v 1.8 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_napms.c,v 1.9 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
-napms(int ms)
+NCURSES_SP_NAME(napms) (NCURSES_SP_DCLx int ms)
 {
     T((T_CALLED("napms(%d)"), ms));
 
+#ifdef USE_TERM_DRIVER
+    CallDriver_1(SP_PARM, td_nap, ms);
+#else /* !USE_TERM_DRIVER */
+#if NCURSES_SP_FUNCS
+    (void) sp;
+#endif
 #if HAVE_NANOSLEEP
     {
 	struct timespec request, remaining;
@@ -68,9 +77,20 @@ napms(int ms)
 	    request = remaining;
 	}
     }
+#elif defined(_NC_WINDOWS)
+    Sleep((DWORD) ms);
 #else
     _nc_timed_wait(0, 0, ms, (int *) 0 EVENTLIST_2nd(0));
 #endif
+#endif /* !USE_TERM_DRIVER */
 
     returnCode(OK);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+napms(int ms)
+{
+    return NCURSES_SP_NAME(napms) (CURRENT_SCREEN, ms);
+}
+#endif

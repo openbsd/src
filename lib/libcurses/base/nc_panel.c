@@ -1,7 +1,8 @@
-/* $OpenBSD: nc_panel.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: nc_panel.c,v 1.4 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2000,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,10 +35,22 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: nc_panel.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: nc_panel.c,v 1.4 2023/10/17 09:52:09 nicm Exp $")
 
+NCURSES_EXPORT(struct panelhook *)
+NCURSES_SP_NAME(_nc_panelhook) (NCURSES_SP_DCL0)
+{
+    return (SP_PARM
+	    ? &(SP_PARM->_panelHook)
+	    : (CURRENT_SCREEN
+	       ? &(CURRENT_SCREEN->_panelHook)
+	       : 0));
+}
+
+#if NCURSES_SP_FUNCS
 NCURSES_EXPORT(struct panelhook *)
 _nc_panelhook(void)
 {
-    return (SP ? &(SP->_panelHook) : NULL);
+    return NCURSES_SP_NAME(_nc_panelhook) (CURRENT_SCREEN);
 }
+#endif

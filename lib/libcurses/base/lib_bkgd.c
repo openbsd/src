@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_bkgd.c,v 1.3 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_bkgd.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2006,2008 Free Software Foundation, Inc.              *
+ * Copyright 2018-2020,2021 Thomas E. Dickey                                *
+ * Copyright 1998-2014,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -38,7 +39,9 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_bkgd.c,v 1.3 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_bkgd.c,v 1.4 2023/10/17 09:52:08 nicm Exp $")
+
+static const NCURSES_CH_T blank = NewChar(BLANK_TEXT);
 
 /*
  * Set the window's background information.
@@ -50,7 +53,7 @@ static NCURSES_INLINE void
 #endif
 wbkgrndset(WINDOW *win, const ARG_CH_T ch)
 {
-    T((T_CALLED("wbkgdset(%p,%s)"), win, _tracech_t(ch)));
+    T((T_CALLED("wbkgrndset(%p,%s)"), (void *) win, _tracech_t(ch)));
 
     if (win) {
 	attr_t off = AttrOf(win->_nc_bkgd);
@@ -63,7 +66,7 @@ wbkgrndset(WINDOW *win, const ARG_CH_T ch)
 	{
 	    int pair;
 
-	    if ((pair = GetPair(win->_nc_bkgd)) != 0)
+	    if (GetPair(win->_nc_bkgd) != 0)
 		SET_WINDOW_PAIR(win, 0);
 	    if ((pair = GetPair(CHDEREF(ch))) != 0)
 		SET_WINDOW_PAIR(win, pair);
@@ -87,12 +90,13 @@ wbkgrndset(WINDOW *win, const ARG_CH_T ch)
 	    cchar_t wch;
 	    int tmp;
 
-	    wgetbkgrnd(win, &wch);
+	    memset(&wch, 0, sizeof(wch));
+	    (void) wgetbkgrnd(win, &wch);
 	    tmp = _nc_to_char((wint_t) CharOf(wch));
 
 	    win->_bkgd = (((tmp == EOF) ? ' ' : (chtype) tmp)
 			  | (AttrOf(wch) & ALL_BUT_COLOR)
-			  | COLOR_PAIR(GET_WINDOW_PAIR(win)));
+			  | (chtype) ColorPair(GET_WINDOW_PAIR(win)));
 	}
 #endif
     }
@@ -103,42 +107,147 @@ NCURSES_EXPORT(void)
 wbkgdset(WINDOW *win, chtype ch)
 {
     NCURSES_CH_T wch;
+    T((T_CALLED("wbkgdset(%p,%s)"), (void *) win, _tracechtype(ch)));
     SetChar2(wch, ch);
     wbkgrndset(win, CHREF(wch));
+    returnVoid;
 }
 
 /*
  * Set the window's background information and apply it to each cell.
  */
-#if USE_WIDEC_SUPPORT
-NCURSES_EXPORT(int)
-#else
 static NCURSES_INLINE int
-#undef wbkgrnd
-#endif
-wbkgrnd(WINDOW *win, const ARG_CH_T ch)
+_nc_background(WINDOW *win, const ARG_CH_T ch, bool narrow)
 {
+#undef  SP_PARM
+#define SP_PARM SP		/* to use Charable() */
     int code = ERR;
-    int x, y;
-    NCURSES_CH_T new_bkgd = CHDEREF(ch);
 
-    T((T_CALLED("wbkgd(%p,%s)"), win, _tracech_t(ch)));
+#if USE_WIDEC_SUPPORT
+    T((T_CALLED("%s(%p,%s)"),
+       narrow ? "wbkgd" : "wbkgrnd",
+       (void *) win,
+       _tracecchar_t(ch)));
+#define TraceChar(c) _tracecchar_t2(1, &(c))
+#else
+    T((T_CALLED("%s(%p,%s)"),
+       "wbkgd",
+       (void *) win,
+       _tracech_t(ch)));
+    (void) narrow;
+#define TraceChar(c) _tracechar(CharOf(c))
+#endif
 
-    if (win) {
-	NCURSES_CH_T old_bkgrnd;
-	wgetbkgrnd(win, &old_bkgrnd);
+    if (SP == 0) {
+	;
+    } else if (win) {
+	NCURSES_CH_T new_bkgd = CHDEREF(ch);
+	NCURSES_CH_T old_bkgd;
+	int y;
+	NCURSES_CH_T old_char;
+	attr_t old_attr;
+	int old_pair;
+	NCURSES_CH_T new_char;
+	attr_t new_attr;
+	int new_pair;
 
-	wbkgrndset(win, CHREF(new_bkgd));
-	wattrset(win, AttrOf(win->_nc_bkgd));
+	/* SVr4 trims color info if non-color terminal */
+	if (!SP->_pair_limit) {
+	    RemAttr(new_bkgd, A_COLOR);
+	    SetPair(new_bkgd, 0);
+	}
+
+	/* avoid setting background-character to a null */
+	if (CharOf(new_bkgd) == 0) {
+	    NCURSES_CH_T tmp_bkgd = blank;
+	    SetAttr(tmp_bkgd, AttrOf(new_bkgd));
+	    SetPair(tmp_bkgd, GetPair(new_bkgd));
+	    new_bkgd = tmp_bkgd;
+	}
+
+	memset(&old_bkgd, 0, sizeof(old_bkgd));
+	(void) wgetbkgrnd(win, &old_bkgd);
+
+	if (!memcmp(&old_bkgd, &new_bkgd, sizeof(new_bkgd))) {
+	    T(("...unchanged"));
+	    returnCode(OK);
+	}
+
+	old_char = old_bkgd;
+	RemAttr(old_char, ~A_CHARTEXT);
+	old_attr = AttrOf(old_bkgd);
+	old_pair = GetPair(old_bkgd);
+
+	if (!(old_attr & A_COLOR)) {
+	    old_pair = 0;
+	}
+	T(("... old background char %s, attr %s, pair %d",
+	   TraceChar(old_char), _traceattr(old_attr), old_pair));
+
+	new_char = new_bkgd;
+	RemAttr(new_char, ~A_CHARTEXT);
+	new_attr = AttrOf(new_bkgd);
+	new_pair = GetPair(new_bkgd);
+
+	/* SVr4 limits background character to printable 7-bits */
+	if (
+#if USE_WIDEC_SUPPORT
+	       narrow &&
+#endif
+	       !Charable(new_bkgd)) {
+	    new_char = old_char;
+	}
+	if (!(new_attr & A_COLOR)) {
+	    new_pair = 0;
+	}
+	T(("... new background char %s, attr %s, pair %d",
+	   TraceChar(new_char), _traceattr(new_attr), new_pair));
+
+	(void) wbkgrndset(win, CHREF(new_bkgd));
+
+	/* SVr4 updates color pair if old/new match, otherwise just attrs */
+	if ((new_pair != 0) && (new_pair == old_pair)) {
+	    WINDOW_ATTRS(win) = new_attr;
+	    SET_WINDOW_PAIR(win, new_pair);
+	} else {
+	    WINDOW_ATTRS(win) = new_attr;
+	}
 
 	for (y = 0; y <= win->_maxy; y++) {
+	    int x;
+
 	    for (x = 0; x <= win->_maxx; x++) {
-		if (CharEq(win->_line[y].text[x], old_bkgrnd)) {
-		    win->_line[y].text[x] = win->_nc_bkgd;
+		NCURSES_CH_T *cp = &(win->_line[y].text[x]);
+		int tmp_pair = GetPair(*cp);
+		attr_t tmp_attr = AttrOf(*cp);
+
+		if (CharEq(*cp, old_bkgd)) {
+#if USE_WIDEC_SUPPORT
+		    if (!narrow) {
+			if (Charable(new_bkgd)) {
+			    SetChar2(*cp, CharOf(new_char));
+			} else {
+			    SetChar(*cp, L' ', AttrOf(new_char));
+			}
+			memcpy(cp->chars,
+			       new_char.chars,
+			       CCHARW_MAX * sizeof(cp->chars[0]));
+		    } else
+#endif
+			SetChar2(*cp, CharOf(new_char));
+		}
+		if (tmp_pair != 0) {
+		    if (tmp_pair == old_pair) {
+			SetAttr(*cp, (tmp_attr & ~old_attr) | new_attr);
+			SetPair(*cp, new_pair);
+		    } else {
+			SetAttr(*cp,
+				(tmp_attr & (~old_attr | A_COLOR))
+				| (new_attr & ALL_BUT_COLOR));
+		    }
 		} else {
-		    NCURSES_CH_T wch = win->_line[y].text[x];
-		    RemAttr(wch, (~(A_ALTCHARSET | A_CHARTEXT)));
-		    win->_line[y].text[x] = _nc_render(win, wch);
+		    SetAttr(*cp, (tmp_attr & ~old_attr) | new_attr);
+		    SetPair(*cp, new_pair);
 		}
 	    }
 	}
@@ -149,10 +258,18 @@ wbkgrnd(WINDOW *win, const ARG_CH_T ch)
     returnCode(code);
 }
 
+#if USE_WIDEC_SUPPORT
+NCURSES_EXPORT(int)
+wbkgrnd(WINDOW *win, const ARG_CH_T ch)
+{
+    return _nc_background(win, ch, FALSE);
+}
+#endif
+
 NCURSES_EXPORT(int)
 wbkgd(WINDOW *win, chtype ch)
 {
     NCURSES_CH_T wch;
     SetChar2(wch, ch);
-    return wbkgrnd(win, CHREF(wch));
+    return _nc_background(win, CHREF(wch), TRUE);
 }

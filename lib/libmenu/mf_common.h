@@ -1,7 +1,8 @@
-/* $OpenBSD: mf_common.h,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: mf_common.h,v 1.8 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2005,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -32,7 +33,7 @@
  *   Author:  Juergen Pfeifer, 1995,1997                                    *
  ****************************************************************************/
 
-/* $Id: mf_common.h,v 1.7 2010/01/12 23:22:08 nicm Exp $ */
+/* $Id: mf_common.h,v 1.8 2023/10/17 09:52:10 nicm Exp $ */
 
 /* Common internal header for menu and form library */
 
@@ -65,9 +66,8 @@ extern int errno;
 #if USE_RCS_IDS
 #define MODULE_ID(id) static const char Ident[] = id;
 #else
-#define MODULE_ID(id) /*nothing*/
+#define MODULE_ID(id)		/*nothing */
 #endif
-
 
 /* Maximum regular 8-bit character code */
 #define MAX_REGULAR_CHARACTER (0xff)
@@ -82,16 +82,19 @@ extern int errno;
 #endif
 
 /* The few common values in the status fields for menus and forms */
-#define _POSTED         (0x01U)  /* menu or form is posted                  */
-#define _IN_DRIVER      (0x02U)  /* menu or form is processing hook routine */
+#define _POSTED         (0x01U)	/* menu or form is posted                  */
+#define _IN_DRIVER      (0x02U)	/* menu or form is processing hook routine */
+
+#define SetStatus(target,mask) (target)->status |= (unsigned short) (mask)
+#define ClrStatus(target,mask) (target)->status = (unsigned short) (target->status & (~mask))
 
 /* Call object hook */
 #define Call_Hook( object, handler ) \
    if ( (object) != 0 && ((object)->handler) != (void *) 0 )\
    {\
-	(object)->status |= _IN_DRIVER;\
+	SetStatus(object, _IN_DRIVER);\
 	(object)->handler(object);\
-	(object)->status &= ~_IN_DRIVER;\
+	ClrStatus(object, _IN_DRIVER);\
    }
 
 #endif /* MF_COMMON_H_incl */

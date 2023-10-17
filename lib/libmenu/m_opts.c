@@ -1,7 +1,8 @@
-/* $OpenBSD: m_opts.c,v 1.8 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_opts.c,v 1.9 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2004,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,7 +40,7 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_opts.c,v 1.8 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_opts.c,v 1.9 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
 |   Facility      :  libnmenu
@@ -54,10 +55,10 @@ MODULE_ID("$Id: m_opts.c,v 1.8 2010/01/12 23:22:08 nicm Exp $")
 |                    E_BAD_ARGUMENT - invalid menu options
 |                    E_POSTED       - menu is already posted
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-set_menu_opts(MENU * menu, Menu_Options opts)
+MENU_EXPORT(int)
+set_menu_opts(MENU *menu, Menu_Options opts)
 {
-  T((T_CALLED("set_menu_opts(%p,%d)"), menu, opts));
+  T((T_CALLED("set_menu_opts(%p,%d)"), (void *)menu, opts));
 
   opts &= ALL_MENU_OPTS;
 
@@ -87,7 +88,7 @@ set_menu_opts(MENU * menu, Menu_Options opts)
 	{
 	  ITEM **item;
 
-	  if (((item = menu->items) != (ITEM **) 0))
+	  if (((item = menu->items) != (ITEM **)0))
 	    for (; *item; item++)
 	      (*item)->value = FALSE;
 	}
@@ -114,14 +115,14 @@ set_menu_opts(MENU * menu, Menu_Options opts)
 |                    E_BAD_ARGUMENT - invalid options
 |                    E_POSTED       - menu is already posted
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-menu_opts_off(MENU * menu, Menu_Options opts)
+MENU_EXPORT(int)
+menu_opts_off(MENU *menu, Menu_Options opts)
 {
   MENU *cmenu = menu;		/* use a copy because set_menu_opts must detect
 
 				   NULL menu itself to adjust its behavior */
 
-  T((T_CALLED("menu_opts_off(%p,%d)"), menu, opts));
+  T((T_CALLED("menu_opts_off(%p,%d)"), (void *)menu, opts));
 
   opts &= ALL_MENU_OPTS;
   if (opts & ~ALL_MENU_OPTS)
@@ -147,14 +148,14 @@ menu_opts_off(MENU * menu, Menu_Options opts)
 |                    E_BAD_ARGUMENT - invalid menu options
 |                    E_POSTED       - menu is already posted
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-menu_opts_on(MENU * menu, Menu_Options opts)
+MENU_EXPORT(int)
+menu_opts_on(MENU *menu, Menu_Options opts)
 {
   MENU *cmenu = menu;		/* use a copy because set_menu_opts must detect
 
 				   NULL menu itself to adjust its behavior */
 
-  T((T_CALLED("menu_opts_on(%p,%d)"), menu, opts));
+  T((T_CALLED("menu_opts_on(%p,%d)"), (void *)menu, opts));
 
   opts &= ALL_MENU_OPTS;
   if (opts & ~ALL_MENU_OPTS)
@@ -175,10 +176,10 @@ menu_opts_on(MENU * menu, Menu_Options opts)
 |
 |   Return Values :  Menu options
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(Menu_Options)
-menu_opts(const MENU * menu)
+MENU_EXPORT(Menu_Options)
+menu_opts(const MENU *menu)
 {
-  T((T_CALLED("menu_opts(%p)"), menu));
+  T((T_CALLED("menu_opts(%p)"), (const void *)menu));
   returnMenuOpts(ALL_MENU_OPTS & Normalize_Menu(menu)->opt);
 }
 

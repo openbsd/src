@@ -1,7 +1,8 @@
-/* $OpenBSD: unctrl.h,v 1.9 2010/01/12 23:21:59 nicm Exp $ */
+/* $OpenBSD: unctrl.h,v 1.10 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2001,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,13 +42,13 @@
  * as ^?. Printable characters are displayed as is.
  */
 
-/* $Id: unctrl.h,v 1.9 2010/01/12 23:21:59 nicm Exp $ */
+/* $Id: unctrl.h,v 1.10 2023/10/17 09:52:08 nicm Exp $ */
 
 #ifndef NCURSES_UNCTRL_H_incl
 #define NCURSES_UNCTRL_H_incl	1
 
 #undef  NCURSES_VERSION
-#define NCURSES_VERSION "5.7"
+#define NCURSES_VERSION "6.4"
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,6 +58,10 @@ extern "C" {
 
 #undef unctrl
 NCURSES_EXPORT(NCURSES_CONST char *) unctrl (chtype);
+
+#if 1
+NCURSES_EXPORT(NCURSES_CONST char *) NCURSES_SP_NAME(unctrl) (SCREEN*, chtype);
+#endif
 
 #ifdef __cplusplus
 }

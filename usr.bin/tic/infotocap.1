@@ -1,6 +1,8 @@
-.\" $OpenBSD: infotocap.1,v 1.5 2010/01/12 23:22:14 nicm Exp $
+'\" t
+.\" $OpenBSD: infotocap.1,v 1.6 2023/10/17 09:52:10 nicm Exp $
 .\"***************************************************************************
-.\" Copyright (c) 1999-2004,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2021,2022 Thomas E. Dickey                                *
+.\" Copyright 1999-2010,2016 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -27,51 +29,54 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: infotocap.1,v 1.5 2010/01/12 23:22:14 nicm Exp $
-.TH infotocap 1 ""
+.\" $Id: infotocap.1,v 1.6 2023/10/17 09:52:10 nicm Exp $
+.TH infotocap 1 2022-02-12 "ncurses 6.4" "User commands"
 .ds n 5
-.ds d /usr/share/misc/terminfo
+.ds d /usr/share/terminfo
 .SH NAME
-\fBinfotocap\fR - convert a \fIterminfo\fR description into a \fItermcap\fR description
+\fBinfotocap\fP \- convert a \fIterminfo\fP description into a \fItermcap\fP description
 .SH SYNOPSIS
-\fBinfotocap\fR [\fB-v\fR\fIn\fR \fIwidth\fR]  [\fB-V\fR] [\fB-1\fR] [\fB-w\fR \fIwidth\fR] \fIfile\fR . . .
+\fBinfotocap\fR [\fB\-v\fIn\fR \fIwidth\fR]  [\fB\-V\fR] [\fB\-1\fR] [\fB\-w\fR \fIwidth\fR] \fIfile\fR ...
 .SH DESCRIPTION
-\fBinfotocap\fR looks in \fIfile\fR for \fBterminfo\fR descriptions.  For each
-one found, an equivalent \fBtermcap\fR description is written to standard
-output.  Terminfo \fBuse\fR capabilities are translated directly to termcap
-\fBtc\fR capabilities.
+\fBinfotocap\fP looks in each given text
+\fIfile\fP for \fBterminfo\fP descriptions.
+For each terminfo description found,
+an equivalent \fBtermcap\fP description is written to standard output.
+Terminfo \fBuse\fP capabilities are translated directly to termcap
+\fBtc\fP capabilities.
 .TP 5
-\fB-v\fR
+\fB\-v\fP
 print out tracing information on standard error as the program runs.
 .TP 5
-\fB-V\fR
+\fB\-V\fP
 print out the version of the program in use on standard error and exit.
 .TP 5
-\fB-1\fR
-cause the fields to print out one to a line.  Otherwise, the fields
-will be printed several to a line to a maximum width of 60
-characters.
+\fB\-1\fP
+cause the fields to print out one to a line.
+Otherwise, the fields
+will be printed several to a line to a maximum width of 60 characters.
 .TP 5
-\fB-w\fR
-change the output to \fIwidth\fR characters.
+\fB\-w\fP
+change the output to \fIwidth\fP characters.
 .SH FILES
 .TP 20
 \*d
 Compiled terminal description database.
 .SH NOTES
-This utility is actually a link to \fItic\fR, running in \fI-C\fR mode.
-You can use other \fItic\fR options such as \fB-f\fR and  \fB-x\fR.
+This utility is actually a link to \fBtic\fP, running in \fI\-C\fP mode.
+You can use other \fBtic\fP options such as \fB\-f\fP and  \fB\-x\fP.
+.SH PORTABILITY
+None of X/Open Curses, Issue 7 (2009), SVr4 or NetBSD document this application.
 .SH SEE ALSO
-\fBcurses\fR(3),
-\fBtic\fR(1),
-\fBinfocmp\fR(1),
-\fBterminfo\fR(\*n)
+\fBinfocmp\fP(1),
+\fBtic\fP(1),
+\fBcurses\fP(3),
+\fBterminfo\fP(\*n)
 .PP
-This describes \fBncurses\fR
-version 5.7.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+This describes \fBncurses\fP
+version 6.4 (patch 20230826).
+.SH AUTHOR
+Eric S. Raymond <esr@snark.thyrsus.com>
+and
+.br
+Thomas E. Dickey <dickey@invisible-island.net>

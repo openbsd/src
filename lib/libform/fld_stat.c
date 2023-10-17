@@ -1,6 +1,7 @@
-/*	$OpenBSD: fld_stat.c,v 1.8 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fld_stat.c,v 1.9 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -33,46 +34,46 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fld_stat.c,v 1.8 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fld_stat.c,v 1.9 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  int set_field_status(FIELD *field, bool status)
-|   
+|
 |   Description   :  Set or clear the 'changed' indication flag for that
-|                    fields primary buffer.
+|                    field's primary buffer.
 |
 |   Return Values :  E_OK            - success
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
+FORM_EXPORT(int)
 set_field_status(FIELD *field, bool status)
 {
-  T((T_CALLED("set_field_status(%p,%d)"), field, status));
+  T((T_CALLED("set_field_status(%p,%d)"), (void *)field, status));
 
   Normalize_Field(field);
 
   if (status)
-    field->status |= _CHANGED;
+    SetStatus(field, _CHANGED);
   else
-    field->status &= ~_CHANGED;
+    ClrStatus(field, _CHANGED);
 
   RETURN(E_OK);
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  bool field_status(const FIELD *field)
-|   
+|
 |   Description   :  Retrieve the value of the 'changed' indication flag
-|                    for that fields primary buffer. 
+|                    for that field's primary buffer.
 |
 |   Return Values :  TRUE  - buffer has been changed
 |                    FALSE - buffer has not been changed
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(bool)
+FORM_EXPORT(bool)
 field_status(const FIELD *field)
 {
-  T((T_CALLED("field_status(%p)"), field));
+  T((T_CALLED("field_status(%p)"), (const void *)field));
 
   returnBool((Normalize_Field(field)->status & _CHANGED) ? TRUE : FALSE);
 }

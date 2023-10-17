@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_get_wch.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_get_wch.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2002-2007,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 2002-2011,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,38 +43,19 @@
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$Id: lib_get_wch.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
-
-#if HAVE_MBTOWC && HAVE_MBLEN
-#define reset_mbytes(state) mblen(NULL, 0), mbtowc(NULL, NULL, 0)
-#define count_mbytes(buffer,length,state) mblen(buffer,length)
-#define check_mbytes(wch,buffer,length,state) \
-	(int) mbtowc(&wch, buffer, length)
-#define state_unused
-#elif HAVE_MBRTOWC && HAVE_MBRLEN
-#define reset_mbytes(state) init_mb(state)
-#define count_mbytes(buffer,length,state) mbrlen(buffer,length,&state)
-#define check_mbytes(wch,buffer,length,state) \
-	(int) mbrtowc(&wch, buffer, length, &state)
-#else
-make an error
-#endif
+MODULE_ID("$Id: lib_get_wch.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
 wget_wch(WINDOW *win, wint_t *result)
 {
     SCREEN *sp;
     int code;
-    char buffer[(MB_LEN_MAX * 9) + 1];	/* allow some redundant shifts */
-    int status;
-    size_t count = 0;
-    unsigned long value;
-    wchar_t wch;
+    int value = 0;
 #ifndef state_unused
     mbstate_t state;
 #endif
 
-    T((T_CALLED("wget_wch(%p)"), win));
+    T((T_CALLED("wget_wch(%p)"), (void *) win));
 
     /*
      * We can get a stream of single-byte characters and KEY_xxx codes from
@@ -81,8 +63,13 @@ wget_wch(WINDOW *win, wint_t *result)
      */
     _nc_lock_global(curses);
     sp = _nc_screen_of(win);
+
     if (sp != 0) {
+	size_t count = 0;
+
 	for (;;) {
+	    char buffer[(MB_LEN_MAX * 9) + 1];	/* allow some redundant shifts */
+
 	    T(("reading %d of %d", (int) count + 1, (int) sizeof(buffer)));
 	    code = _nc_wgetch(win, &value, TRUE EVENTLIST_2nd((_nc_eventlist
 							       *) 0));
@@ -97,23 +84,26 @@ wget_wch(WINDOW *win, wint_t *result)
 		 * whether the improvement would be worth the effort.
 		 */
 		if (count != 0) {
-		    _nc_ungetch(sp, (int) value);
+		    safe_ungetch(SP_PARM, value);
 		    code = ERR;
 		}
 		break;
 	    } else if (count + 1 >= sizeof(buffer)) {
-		_nc_ungetch(sp, (int) value);
+		safe_ungetch(SP_PARM, value);
 		code = ERR;
 		break;
 	    } else {
+		int status;
+
 		buffer[count++] = (char) UChar(value);
 		reset_mbytes(state);
 		status = count_mbytes(buffer, count, state);
 		if (status >= 0) {
+		    wchar_t wch;
 		    reset_mbytes(state);
 		    if (check_mbytes(wch, buffer, count, state) != status) {
 			code = ERR;	/* the two calls should match */
-			_nc_ungetch(sp, (int) value);
+			safe_ungetch(SP_PARM, value);
 		    }
 		    value = wch;
 		    break;
@@ -123,8 +113,11 @@ wget_wch(WINDOW *win, wint_t *result)
     } else {
 	code = ERR;
     }
-    *result = value;
+
+    if (result != 0)
+	*result = (wint_t) value;
+
     _nc_unlock_global(curses);
-    T(("result %#lo", value));
+    T(("result %#o", value));
     returnCode(code);
 }

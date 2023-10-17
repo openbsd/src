@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_inchstr.c,v 1.3 2010/01/12 23:22:05 nicm Exp $ */
+/* $OpenBSD: lib_inchstr.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000,2001 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2010,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,6 +32,7 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
 /*
@@ -42,25 +44,28 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_inchstr.c,v 1.3 2010/01/12 23:22:05 nicm Exp $")
+MODULE_ID("$Id: lib_inchstr.c,v 1.4 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
-winchnstr(WINDOW *win, chtype * str, int n)
+winchnstr(WINDOW *win, chtype *str, int n)
 {
     int i = 0;
 
-    T((T_CALLED("winchnstr(%p,%p,%d)"), win, str, n));
+    T((T_CALLED("winchnstr(%p,%p,%d)"), (void *) win, (void *) str, n));
 
-    if (!str)
-	returnCode(0);
+    if (!win || !str) {
+	i = ERR;
+    } else {
+	int row = win->_cury;
+	int col = win->_curx;
+	NCURSES_CH_T *text = win->_line[row].text;
 
-    if (win) {
-	for (; (n < 0 || (i < n)) && (win->_curx + i <= win->_maxx); i++)
-	    str[i] =
-		CharOf(win->_line[win->_cury].text[win->_curx + i]) |
-		AttrOf(win->_line[win->_cury].text[win->_curx + i]);
+	for (; (n < 0 || (i < n)) && (col + i <= win->_maxx); i++) {
+	    str[i] = (((chtype) CharOf(text[col + i]) & A_CHARTEXT) |
+		      AttrOf(text[col + i]));
+	}
+	str[i] = (chtype) 0;
     }
-    str[i] = (chtype) 0;
 
     returnCode(i);
 }

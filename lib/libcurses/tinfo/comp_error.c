@@ -1,7 +1,8 @@
-/* $OpenBSD: comp_error.c,v 1.6 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: comp_error.c,v 1.7 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2005,2007 Free Software Foundation, Inc.              *
+ * Copyright 2019-2020,2023 Thomas E. Dickey                                *
+ * Copyright 1998-2012,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -43,7 +44,7 @@
 
 #include <tic.h>
 
-MODULE_ID("$Id: comp_error.c,v 1.6 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: comp_error.c,v 1.7 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT_VAR(bool) _nc_suppress_warnings = FALSE;
 NCURSES_EXPORT_VAR(int) _nc_curr_line = 0; /* current line # in input */
@@ -61,18 +62,28 @@ _nc_get_source(void)
 NCURSES_EXPORT(void)
 _nc_set_source(const char *const name)
 {
-    SourceName = name;
+    if (name == NULL) {
+	free(SourceName);
+	SourceName = NULL;
+    } else if (SourceName == NULL) {
+	SourceName = strdup(name);
+    } else if (strcmp(name, SourceName)) {
+	free(SourceName);
+	SourceName = strdup(name);
+    }
 }
 
 NCURSES_EXPORT(void)
 _nc_set_type(const char *const name)
 {
+#define MY_SIZE (size_t) MAX_NAME_SIZE
     if (TermType == 0)
-	TermType = typeMalloc(char, MAX_NAME_SIZE + 1);
+	TermType = typeMalloc(char, MY_SIZE + 1);
     if (TermType != 0) {
 	TermType[0] = '\0';
-	if (name)
-	    strncat(TermType, name, MAX_NAME_SIZE);
+	if (name) {
+	    _nc_STRNCAT(TermType, name, MY_SIZE, MY_SIZE);
+	}
     }
 }
 
@@ -86,16 +97,16 @@ _nc_get_type(char *name)
     }
 #endif
     if (name != 0)
-        strlcpy(name, TermType != 0 ? TermType : "", MAX_NAME_SIZE + 1);
+	_nc_STRCPY(name, TermType != 0 ? TermType : "", MAX_NAME_SIZE);
 }
 
 static NCURSES_INLINE void
 where_is_problem(void)
 {
     fprintf(stderr, "\"%s\"", SourceName ? SourceName : "?");
-    if (_nc_curr_line >= 0)
+    if (_nc_curr_line > 0)
 	fprintf(stderr, ", line %d", _nc_curr_line);
-    if (_nc_curr_col >= 0)
+    if (_nc_curr_col > 0)
 	fprintf(stderr, ", col %d", _nc_curr_col);
     if (TermType != 0 && TermType[0] != '\0')
 	fprintf(stderr, ", terminal '%s'", TermType);
@@ -104,7 +115,7 @@ where_is_problem(void)
 }
 
 NCURSES_EXPORT(void)
-_nc_warning(const char *const fmt,...)
+_nc_warning(const char *const fmt, ...)
 {
     va_list argp;
 
@@ -119,7 +130,7 @@ _nc_warning(const char *const fmt,...)
 }
 
 NCURSES_EXPORT(void)
-_nc_err_abort(const char *const fmt,...)
+_nc_err_abort(const char *const fmt, ...)
 {
     va_list argp;
 
@@ -132,7 +143,7 @@ _nc_err_abort(const char *const fmt,...)
 }
 
 NCURSES_EXPORT(void)
-_nc_syserr_abort(const char *const fmt,...)
+_nc_syserr_abort(const char *const fmt, ...)
 {
     va_list argp;
 
@@ -142,14 +153,23 @@ _nc_syserr_abort(const char *const fmt,...)
     fprintf(stderr, "\n");
     va_end(argp);
 
+#if defined(TRACE) || !defined(NDEBUG)
     /* If we're debugging, try to show where the problem occurred - this
      * will dump core.
      */
-#if defined(TRACE) || !defined(NDEBUG)
-    abort();
-#else
+    if (_nc_env_access())
+	abort();
+#endif
     /* Dumping core in production code is not a good idea.
      */
     exit(EXIT_FAILURE);
-#endif
 }
+
+#if NO_LEAKS
+NCURSES_EXPORT(void)
+_nc_comp_error_leaks(void)
+{
+    FreeAndNull(SourceName);
+    FreeAndNull(TermType);
+}
+#endif

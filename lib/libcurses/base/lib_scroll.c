@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_scroll.c,v 1.4 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_scroll.c,v 1.5 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2004,2006 Free Software Foundation, Inc.              *
+ * Copyright 2019,2020 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2011 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -45,22 +46,22 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_scroll.c,v 1.4 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_scroll.c,v 1.5 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(void)
 _nc_scroll_window(WINDOW *win,
 		  int const n,
-		  NCURSES_SIZE_T const top,
-		  NCURSES_SIZE_T const bottom,
+		  int const top,
+		  int const bottom,
 		  NCURSES_CH_T blank)
 {
     int limit;
     int line;
     int j;
-    size_t to_copy = (size_t) (sizeof(NCURSES_CH_T) * (win->_maxx + 1));
+    size_t to_copy = (sizeof(NCURSES_CH_T) * (size_t) (win->_maxx + 1));
 
     TR(TRACE_MOVE, ("_nc_scroll_window(%p, %d, %ld, %ld)",
-		    win, n, (long) top, (long) bottom));
+		    (void *) win, n, (long) top, (long) bottom));
 
     if (top < 0
 	|| bottom < top
@@ -79,11 +80,13 @@ _nc_scroll_window(WINDOW *win,
      * setup cost.  So there is no point in trying to be excessively
      * clever -- esr.
      */
+#define BottomLimit(n) ((n) >= 0 && (n) >= top)
+#define TopLimit(n)    ((n) <= win->_maxy && (n) <= bottom)
 
     /* shift n lines downwards */
     if (n < 0) {
 	limit = top - n;
-	for (line = bottom; line >= limit && line >= 0; line--) {
+	for (line = bottom; line >= limit && BottomLimit(line); line--) {
 	    TR(TRACE_MOVE, ("...copying %d to %d", line + n, line));
 	    memcpy(win->_line[line].text,
 		   win->_line[line + n].text,
@@ -91,7 +94,7 @@ _nc_scroll_window(WINDOW *win,
 	    if_USE_SCROLL_HINTS(win->_line[line].oldindex =
 				win->_line[line + n].oldindex);
 	}
-	for (line = top; line < limit && line <= win->_maxy; line++) {
+	for (line = top; line < limit && TopLimit(line); line++) {
 	    TR(TRACE_MOVE, ("...filling %d", line));
 	    for (j = 0; j <= win->_maxx; j++)
 		win->_line[line].text[j] = blank;
@@ -102,14 +105,14 @@ _nc_scroll_window(WINDOW *win,
     /* shift n lines upwards */
     if (n > 0) {
 	limit = bottom - n;
-	for (line = top; line <= limit && line <= win->_maxy; line++) {
+	for (line = top; line <= limit && TopLimit(line); line++) {
 	    memcpy(win->_line[line].text,
 		   win->_line[line + n].text,
 		   to_copy);
 	    if_USE_SCROLL_HINTS(win->_line[line].oldindex =
 				win->_line[line + n].oldindex);
 	}
-	for (line = bottom; line > limit && line >= 0; line--) {
+	for (line = bottom; line > limit && BottomLimit(line); line--) {
 	    for (j = 0; j <= win->_maxx; j++)
 		win->_line[line].text[j] = blank;
 	    if_USE_SCROLL_HINTS(win->_line[line].oldindex = _NEWINDEX);
@@ -137,7 +140,7 @@ _nc_scroll_window(WINDOW *win,
 NCURSES_EXPORT(int)
 wscrl(WINDOW *win, int n)
 {
-    T((T_CALLED("wscrl(%p,%d)"), win, n));
+    T((T_CALLED("wscrl(%p,%d)"), (void *) win, n));
 
     if (!win || !win->_scroll) {
 	TR(TRACE_MOVE, ("...scrollok is false"));

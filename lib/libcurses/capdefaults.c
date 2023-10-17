@@ -1,7 +1,8 @@
-/* $OpenBSD: capdefaults.c,v 1.3 2010/01/12 23:21:58 nicm Exp $ */
+/* $OpenBSD: capdefaults.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2000,2008 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2000,2008 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,11 +35,11 @@
  *     and: Thomas E. Dickey                        1996-on                 *
  ****************************************************************************/
 
-/* $Id: capdefaults.c,v 1.3 2010/01/12 23:21:58 nicm Exp $ */
+/* $Id: capdefaults.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
     /*
      * Compute obsolete capabilities.  The reason this is an include file is
-     * that the two places where it's needed want the macros to generate
+     * that the two places where it is needed require the macros to generate
      * offsets to different structures.  See the file Caps for explanations of
      * these conversions.
      *
@@ -46,11 +47,11 @@
      * postprocess_termcap().
      */
 {
-    char *sp;
+    char *strp;
     short capval;
 
 #define EXTRACT_DELAY(str) \
-    	(short) (sp = strchr(str, '*'), sp ? atoi(sp+1) : 0)
+    	(short) (strp = strchr(str, '*'), strp ? atoi(strp+1) : 0)
 
     /* current (4.4BSD) capabilities marked obsolete */
     if (VALID_STRING(carriage_return)

@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_hline_set.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_hline_set.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2002 Free Software Foundation, Inc.                        *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 2002-2010,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -41,23 +42,21 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_hline_set.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_hline_set.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
-whline_set(WINDOW *win, const cchar_t * ch, int n)
+whline_set(WINDOW *win, const cchar_t *ch, int n)
 {
     int code = ERR;
-    NCURSES_SIZE_T start;
-    NCURSES_SIZE_T end;
 
-    T((T_CALLED("whline_set(%p,%s,%d)"), win, _tracecchar_t(ch), n));
+    T((T_CALLED("whline_set(%p,%s,%d)"), (void *) win, _tracecchar_t(ch), n));
 
     if (win) {
 	struct ldat *line = &(win->_line[win->_cury]);
 	NCURSES_CH_T wch;
+	int start = win->_curx;
+	int end = start + n - 1;
 
-	start = win->_curx;
-	end = start + n - 1;
 	if (end > win->_maxx)
 	    end = win->_maxx;
 

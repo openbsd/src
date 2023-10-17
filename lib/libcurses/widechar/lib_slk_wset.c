@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_slk_wset.c,v 1.1 2010/09/06 17:26:17 nicm Exp $ */
+/* $OpenBSD: lib_slk_wset.c,v 1.2 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 2003-2004,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 2003-2011,2016 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,32 +43,37 @@
 #include <wctype.h>
 #endif
 
-MODULE_ID("$Id: lib_slk_wset.c,v 1.1 2010/09/06 17:26:17 nicm Exp $")
+MODULE_ID("$Id: lib_slk_wset.c,v 1.2 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
 slk_wset(int i, const wchar_t *astr, int format)
 {
     int result = ERR;
-    size_t arglen;
     const wchar_t *str;
-    char *mystr;
     mbstate_t state;
 
     T((T_CALLED("slk_wset(%d, %s, %d)"), i, _nc_viswbuf(astr), format));
 
-    init_mb(state);
-    str = astr;
-    if ((arglen = wcsrtombs(NULL, &str, 0, &state)) != (size_t) -1) {
-	if ((mystr = (char *) _nc_doalloc(0, arglen + 1)) != 0) {
-	    str = astr;
-	    if (wcsrtombs(mystr, &str, arglen, &state) != (size_t) -1) {
-		/* glibc documentation claims that the terminating L'\0'
-		 * is written, but it is not...
-		 */
-		mystr[arglen] = 0;
-		result = slk_set(i, mystr, format);
+    if (astr != 0) {
+	size_t arglen;
+
+	init_mb(state);
+	str = astr;
+
+	if ((arglen = wcsrtombs(NULL, &str, (size_t) 0, &state)) != (size_t) -1) {
+	    char *mystr;
+
+	    if ((mystr = (char *) _nc_doalloc(0, arglen + 1)) != 0) {
+		str = astr;
+		if (wcsrtombs(mystr, &str, arglen, &state) != (size_t) -1) {
+		    /* glibc documentation claims that the terminating L'\0'
+		     * is written, but it is not...
+		     */
+		    mystr[arglen] = 0;
+		    result = slk_set(i, mystr, format);
+		}
+		free(mystr);
 	    }
-	    free(mystr);
 	}
     }
     returnCode(result);

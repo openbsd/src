@@ -1,6 +1,7 @@
-/*	$OpenBSD: fty_int.c,v 1.9 2015/01/23 22:48:51 krw Exp $	*/
+/*	$OpenBSD: fty_int.c,v 1.10 2023/10/17 09:52:10 nicm Exp $	*/
 /****************************************************************************
- * Copyright (c) 1998-2006,2007 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -35,7 +36,7 @@
 
 #include "form.priv.h"
 
-MODULE_ID("$Id: fty_int.c,v 1.9 2015/01/23 22:48:51 krw Exp $")
+MODULE_ID("$Id: fty_int.c,v 1.10 2023/10/17 09:52:10 nicm Exp $")
 
 #if USE_WIDEC_SUPPORT
 #define isDigit(c) (iswdigit((wint_t)(c)) || isdigit(UChar(c)))
@@ -53,10 +54,45 @@ typedef struct
   }
 thisARG;
 
+typedef struct
+  {
+    int precision;
+    long low;
+    long high;
+  }
+integerPARM;
+
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
+|   Function      :  static void *Generic_This_Type( void * arg )
+|
+|   Description   :  Allocate structure for integer type argument.
+|
+|   Return Values :  Pointer to argument structure or NULL on error
++--------------------------------------------------------------------------*/
+static void *
+Generic_This_Type(void *arg)
+{
+  thisARG *argp = (thisARG *)0;
+  thisARG *param = (thisARG *)arg;
+
+  if (param)
+    {
+      argp = typeMalloc(thisARG, 1);
+
+      if (argp)
+	{
+	  T((T_CREATE("thisARG %p"), (void *)argp));
+	  *argp = *param;
+	}
+    }
+  return (void *)argp;
+}
+
+/*---------------------------------------------------------------------------
+|   Facility      :  libnform
 |   Function      :  static void *Make_This_Type( va_list * ap )
-|   
+|
 |   Description   :  Allocate structure for integer type argument.
 |
 |   Return Values :  Pointer to argument structure or NULL on error
@@ -64,23 +100,20 @@ thisARG;
 static void *
 Make_This_Type(va_list *ap)
 {
-  thisARG *argp = typeMalloc(thisARG, 1);
+  thisARG arg;
 
-  if (argp)
-    {
-      T((T_CREATE("thisARG %p"), argp));
-      argp->precision = va_arg(*ap, int);
-      argp->low = va_arg(*ap, long);
-      argp->high = va_arg(*ap, long);
-    }
-  return (void *)argp;
+  arg.precision = va_arg(*ap, int);
+  arg.low = va_arg(*ap, long);
+  arg.high = va_arg(*ap, long);
+
+  return Generic_This_Type((void *)&arg);
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static void *Copy_This_Type(const void * argp)
-|   
-|   Description   :  Copy structure for integer type argument.  
+|
+|   Description   :  Copy structure for integer type argument.
 |
 |   Return Values :  Pointer to argument structure or NULL on error.
 +--------------------------------------------------------------------------*/
@@ -88,14 +121,15 @@ static void *
 Copy_This_Type(const void *argp)
 {
   const thisARG *ap = (const thisARG *)argp;
-  thisARG *result = (thisARG *) 0;
+  thisARG *result = (thisARG *)0;
 
   if (argp)
     {
       result = typeMalloc(thisARG, 1);
+
       if (result)
 	{
-	  T((T_CREATE("thisARG %p"), result));
+	  T((T_CREATE("thisARG %p"), (void *)result));
 	  *result = *ap;
 	}
     }
@@ -103,9 +137,9 @@ Copy_This_Type(const void *argp)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static void Free_This_Type(void * argp)
-|   
+|
 |   Description   :  Free structure for integer type argument.
 |
 |   Return Values :  -
@@ -118,11 +152,11 @@ Free_This_Type(void *argp)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static bool Check_This_Field(
 |                                                 FIELD * field,
 |                                                 const void * argp)
-|   
+|
 |   Description   :  Validate buffer content to be a valid integer value
 |
 |   Return Values :  TRUE  - field is valid
@@ -137,11 +171,9 @@ Check_This_Field(FIELD *field, const void *argp)
   int prec = argi->precision;
   unsigned char *bp = (unsigned char *)field_buffer(field, 0);
   char *s = (char *)bp;
-  long val;
-  char buf[100];
   bool result = FALSE;
 
-  while (*bp && *bp == ' ')
+  while (*bp == ' ')
     bp++;
   if (*bp)
     {
@@ -150,13 +182,14 @@ Check_This_Field(FIELD *field, const void *argp)
 #if USE_WIDEC_SUPPORT
       if (*bp)
 	{
-	  bool blank = FALSE;
 	  int len;
-	  int n;
 	  wchar_t *list = _nc_Widen_String((char *)bp, &len);
 
 	  if (list != 0)
 	    {
+	      bool blank = FALSE;
+	      int n;
+
 	      result = TRUE;
 	      for (n = 0; n < len; ++n)
 		{
@@ -194,7 +227,8 @@ Check_This_Field(FIELD *field, const void *argp)
 #endif
       if (result)
 	{
-	  val = atol(s);
+	  long val = atol(s);
+
 	  if (low < high)
 	    {
 	      if (val < low || val > high)
@@ -202,7 +236,10 @@ Check_This_Field(FIELD *field, const void *argp)
 	    }
 	  if (result)
 	    {
-	      snprintf(buf, sizeof(buf), "%.*ld", (prec > 0 ? prec : 0), val);
+	      char buf[100];
+
+	      _nc_SPRINTF(buf, _nc_SLIMIT(sizeof(buf))
+			  "%.*ld", (prec > 0 ? prec : 0), val);
 	      set_field_buffer(field, 0, buf);
 	    }
 	}
@@ -211,11 +248,11 @@ Check_This_Field(FIELD *field, const void *argp)
 }
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnform  
+|   Facility      :  libnform
 |   Function      :  static bool Check_This_Character(
 |                                      int c,
 |                                      const void * argp)
-|   
+|
 |   Description   :  Check a character for the integer type.
 |
 |   Return Values :  TRUE  - character is valid
@@ -236,12 +273,27 @@ static FIELDTYPE typeTHIS =
   Make_This_Type,
   Copy_This_Type,
   Free_This_Type,
-  Check_This_Field,
-  Check_This_Character,
-  NULL,
-  NULL
+  INIT_FT_FUNC(Check_This_Field),
+  INIT_FT_FUNC(Check_This_Character),
+  INIT_FT_FUNC(NULL),
+  INIT_FT_FUNC(NULL),
+#if NCURSES_INTEROP_FUNCS
+  Generic_This_Type
+#endif
 };
 
-NCURSES_EXPORT_VAR(FIELDTYPE*) TYPE_INTEGER = &typeTHIS;
+FORM_EXPORT_VAR(FIELDTYPE *) TYPE_INTEGER = &typeTHIS;
+
+#if NCURSES_INTEROP_FUNCS
+/* The next routines are to simplify the use of ncurses from
+   programming languages with restrictions on interop with C level
+   constructs (e.g. variable access or va_list + ellipsis constructs)
+*/
+FORM_EXPORT(FIELDTYPE *)
+_nc_TYPE_INTEGER(void)
+{
+  return TYPE_INTEGER;
+}
+#endif
 
 /* fty_int.c ends here */

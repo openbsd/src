@@ -1,6 +1,7 @@
-.\" $OpenBSD: curs_inwstr.3,v 1.1 2010/09/06 17:26:17 nicm Exp $
+.\" $OpenBSD: curs_inwstr.3,v 1.2 2023/10/17 09:52:08 nicm Exp $
 .\"***************************************************************************
-.\" Copyright (c) 2002-2005,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 2002-2012,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -27,68 +28,78 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_inwstr.3,v 1.1 2010/09/06 17:26:17 nicm Exp $
-.TH curs_inwstr 3 ""
+.\" $Id: curs_inwstr.3,v 1.2 2023/10/17 09:52:08 nicm Exp $
+.TH curs_inwstr 3 2023-07-01 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
 .SH NAME
-\fBinwstr\fR,
-\fBinnwstr\fR,
-\fBwinwstr\fR,
-\fBwinnwstr\fR,
-\fBmvinwstr\fR,
-\fBmvinnwstr\fR,
-\fBmvwinwstr\fR,
-\fBmvwinnwstr\fR \- get a string of \fBwchar_t\fR characters from a curses window
+\fBinwstr\fP,
+\fBinnwstr\fP,
+\fBwinwstr\fP,
+\fBwinnwstr\fP,
+\fBmvinwstr\fP,
+\fBmvinnwstr\fP,
+\fBmvwinwstr\fP,
+\fBmvwinnwstr\fP \- get a string of \fBwchar_t\fP characters from a curses window
 .SH SYNOPSIS
 .nf
-\fB#include <curses.h> \fR
+\fB#include <curses.h> \fP
 .sp
-\fBint inwstr(\fR\fBwchar_t *\fR\fIstr\fR\fB);\fR
+\fBint inwstr(\fBwchar_t *\fIwstr\fB);\fR
 .br
-\fBint innwstr(\fR\fBwchar_t *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint innwstr(\fBwchar_t *\fIwstr\fB, int \fIn\fB);\fR
 .br
-\fBint winwstr(\fR\fBWINDOW *\fR\fIwin\fR\fB, wchar_t *\fR\fIstr\fR\fB);\fR
+\fBint winwstr(\fBWINDOW *\fIwin\fB, wchar_t *\fIwstr\fB);\fR
 .br
-\fBint winnwstr(\fR\fBWINDOW *\fR\fIwin\fR\fB, wchar_t *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint winnwstr(\fBWINDOW *\fIwin\fB, wchar_t *\fIwstr\fB, int \fIn\fB);\fR
+.sp
+\fBint mvinwstr(\fBint \fIy\fB, int \fIx\fB, wchar_t *\fIwstr\fB);\fR
 .br
-\fBint mvinwstr(\fR\fBint \fR\fIy\fR\fB, int \fR\fIx\fR\fB, wchar_t *\fR\fIstr\fR\fB);\fR
+\fBint mvinnwstr(\fBint \fIy\fB, int \fIx\fB, wchar_t *\fIwstr\fB, int \fIn\fB);\fR
 .br
-\fBint mvinnwstr(\fR\fBint \fR\fIy\fR\fB, int \fR\fIx\fR\fB, wchar_t *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint mvwinwstr(\fBWINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, wchar_t *\fIwstr\fB);\fR
 .br
-\fBint mvwinwstr(\fR\fBWINDOW *\fR\fIwin\fR\fB, int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, wchar_t *\fR\fIstr\fR\fB);\fR
-.br
-\fBint mvwinnwstr(\fR\fBWINDOW *\fR\fIwin\fR\fB, int \fR\fIy\fR\fB, int \fR\fIx\fR\fB, wchar_t *\fR\fIstr\fR\fB, int \fR\fIn\fR\fB);\fR
+\fBint mvwinnwstr(\fBWINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, wchar_t *\fIwstr\fB, int \fIn\fB);\fR
 .fi
 .SH DESCRIPTION
-These routines return a string of \fBwchar_t\fR characters in \fIwstr\fR,
+These routines return a string of \fBwchar_t\fP wide characters in \fIwstr\fP,
 extracted starting at the current cursor position in the named window.
-Attributes are stripped from the characters.
-The four functions with \fIn\fR as the last argument return a leading substring at most
-\fIn\fR bytes long (exclusive of the trailing NUL).
-Transfer stops at the end of the current line, or when \fIn\fR bytes have
-been stored at the location referenced by \fIwstr\fR.
 .PP
-If the size \fIn\fR is not large enough to store a complete character,
+The four functions with \fIn\fP as the last argument return
+a leading substring at most \fIn\fP characters long
+(exclusive of the trailing NUL).
+Transfer stops at the end of the current line, or when \fIn\fP characters have
+been stored at the location referenced by \fIwstr\fP.
+.PP
+If the size \fIn\fP is not large enough to store a complete complex character,
 an error is generated.
 .SH NOTES
-Note that all routines except
-\fBwinnwstr\fR
+All routines except
+\fBwinnwstr\fP
 may be macros.
-.SH RETURN VALUES
+.PP
+Each cell in the window holds a complex character (i.e., base-
+and combining-characters) together with attributes and color.
+These functions store only the wide characters,
+ignoring attributes and color.
+Use \fBin_wchstr\fP to return the complex characters from a window.
+.SH RETURN VALUE
 All routines return
-\fBERR\fR
-upon failure. Upon
-successful completion, the *\fBinwstr\fR
+\fBERR\fP
+upon failure.
+Upon
+successful completion, the *\fBinwstr\fP
 routines return
-\fBOK\fR, and the *\fBinnwstr\fR
+\fBOK\fP, and the *\fBinnwstr\fP
 routines return the
 number of characters read into the string.
+.PP
+Functions with a \*(``mv\*('' prefix first perform a cursor movement using
+\fBwmove\fP, and return an error if the position is outside the window,
+or if the window pointer is null.
 .SH SEE ALSO
-\fBcurses\fR(3),
-\fBcurs_instr\fR(3),
-\fBcurs_in_wchstr\fR(3)
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3),
+\fBcurs_instr\fP(3),
+\fBcurs_in_wchstr\fP(3)

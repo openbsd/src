@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_insch.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_insch.3,v 1.9 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2003,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2010,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,49 +29,52 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_insch.3,v 1.8 2010/01/12 23:21:59 nicm Exp $
-.TH curs_insch 3 ""
+.\" $Id: curs_insch.3,v 1.9 2023/10/17 09:52:08 nicm Exp $
+.TH curs_insch 3 2023-07-01 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
 .SH NAME
-\fBinsch\fR,
-\fBwinsch\fR,
-\fBmvinsch\fR,
-\fBmvwinsch\fR - insert a character before cursor in a \fBcurses\fR window
+\fBinsch\fP,
+\fBwinsch\fP,
+\fBmvinsch\fP,
+\fBmvwinsch\fP \- insert a character before cursor in a \fBcurses\fP window
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 .sp
-\fBint insch(chtype ch);\fR
+\fBint insch(chtype \fIch\fB);\fR
 .br
-\fBint winsch(WINDOW *win, chtype ch);\fR
+\fBint winsch(WINDOW *\fIwin\fB, chtype \fIch\fB);\fR
+.sp
+\fBint mvinsch(int \fIy\fB, int \fIx\fB, chtype \fIch\fB);\fR
 .br
-\fBint mvinsch(int y, int x, chtype ch);\fR
-.br
-\fBint mvwinsch(WINDOW *win, int y, int x, chtype ch);\fR
-.br
+\fBint mvwinsch(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB, chtype \fIch\fB);\fR
 .SH DESCRIPTION
-These routines insert the character \fIch\fR before the character under the
-cursor.  All characters to the right of the cursor are moved one space to the
+These routines insert the character \fIch\fP before the character under the
+cursor.
+All characters to the right of the cursor are moved one space to the
 right, with the possibility of the rightmost character on the line being lost.
 The insertion operation does not change the cursor position.
 .SH RETURN VALUE
-All routines that return an integer return \fBERR\fR upon failure and OK (SVr4
-specifies only "an integer value other than \fBERR\fR") upon successful
-completion, unless otherwise noted in the preceding routine descriptions.
+All routines that return an integer return \fBERR\fP upon failure and \fBOK\fP
+(SVr4 specifies only "an integer value other than \fBERR\fP")
+upon successful completion,
+unless otherwise noted in the preceding routine descriptions.
+.PP
+Functions with a \*(``mv\*('' prefix first perform a cursor movement using
+\fBwmove\fP, and return an error if the position is outside the window,
+or if the window pointer is null.
 .SH NOTES
 These routines do not necessarily imply use of a hardware insert character
 feature.
 .PP
-Note that \fBinsch\fR, \fBmvinsch\fR, and \fBmvwinsch\fR may be macros.
+Note that \fBinsch\fP, \fBmvinsch\fP, and \fBmvwinsch\fP may be macros.
 .SH PORTABILITY
 These functions are described in the XSI Curses standard, Issue 4.
 .SH SEE ALSO
-\fBcurses\fR(3).
+\fBcurses\fP(3).
 .PP
 Comparable functions in the wide-character (ncursesw) library are
 described in
-\fBcurs_ins_wch\fR(3).
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurs_ins_wch\fP(3).

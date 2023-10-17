@@ -1,7 +1,8 @@
-/* $OpenBSD: safe_sprintf.c,v 1.6 2010/10/18 18:22:35 nicm Exp $ */
+/* $OpenBSD: safe_sprintf.c,v 1.7 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2007 Free Software Foundation, Inc.              *
+ * Copyright 2018-2020,2021 Thomas E. Dickey                                *
+ * Copyright 1998-2012,2013 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,13 +30,13 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author: Thomas E. Dickey <dickey@clark.net> 1997                        *
+ *  Author: Thomas E. Dickey        1997-on                                 *
  ****************************************************************************/
 
 #include <curses.priv.h>
 #include <ctype.h>
 
-MODULE_ID("$Id: safe_sprintf.c,v 1.6 2010/10/18 18:22:35 nicm Exp $")
+MODULE_ID("$Id: safe_sprintf.c,v 1.7 2023/10/17 09:52:09 nicm Exp $")
 
 #if USE_SAFE_SPRINTF
 
@@ -43,7 +44,7 @@ typedef enum {
     Flags, Width, Prec, Type, Format
 } PRINTF;
 
-#define VA_INTGR(type) ival = va_arg(ap, type)
+#define VA_INTGR(type) ival = (int) va_arg(ap, type)
 #define VA_FLOAT(type) fval = va_arg(ap, type)
 #define VA_POINT(type) pval = (void *)va_arg(ap, type)
 
@@ -57,7 +58,6 @@ _nc_printf_length(const char *fmt, va_list ap)
     size_t length = BUFSIZ;
     char *buffer;
     char *format;
-    char *tmp_format;
     int len = 0;
     size_t fmt_len;
     char fmt_arg[BUFSIZ];
@@ -112,15 +112,16 @@ _nc_printf_length(const char *fmt, va_list ap)
 		    } else if (state == Prec) {
 			prec = ival;
 		    }
-		    sprintf(fmt_arg, "%d", ival);
+		    _nc_SPRINTF(fmt_arg,
+				_nc_SLIMIT(sizeof(fmt_arg))
+				"%d", ival);
 		    fmt_len += strlen(fmt_arg);
-		    if ((tmp_format = realloc(format, fmt_len)) == 0) {
+		    if ((format = _nc_doalloc(format, fmt_len)) == 0) {
 			free(buffer);
-			free(format);
 			return -1;
 		    }
-		    format = tmp_format;
-		    strcpy(&format[--f], fmt_arg);
+		    --f;
+		    _nc_STRCPY(&format[f], fmt_arg, fmt_len - f);
 		    f = strlen(format);
 		} else if (isalpha(UChar(*fmt))) {
 		    done = TRUE;
@@ -159,9 +160,9 @@ _nc_printf_length(const char *fmt, va_list ap)
 		    case 's':
 			VA_POINT(char *);
 			if (prec < 0)
-			    prec = strlen(pval);
+			    prec = (int) strlen(pval);
 			if (prec > (int) length) {
-			    length = length + prec;
+			    length = length + (size_t) prec;
 			    buffer = typeRealloc(char, length, buffer);
 			    if (buffer == 0) {
 				free(format);
@@ -191,13 +192,13 @@ _nc_printf_length(const char *fmt, va_list ap)
 	    format[f] = '\0';
 	    switch (used) {
 	    case 'i':
-		sprintf(buffer, format, ival);
+		_nc_SPRINTF(buffer, _nc_SLIMIT(length) format, ival);
 		break;
 	    case 'f':
-		sprintf(buffer, format, fval);
+		_nc_SPRINTF(buffer, _nc_SLIMIT(length) format, fval);
 		break;
 	    default:
-		sprintf(buffer, format, pval);
+		_nc_SPRINTF(buffer, _nc_SLIMIT(length) format, pval);
 		break;
 	    }
 	    len += (int) strlen(buffer);
@@ -220,19 +221,26 @@ _nc_printf_length(const char *fmt, va_list ap)
  * Wrapper for vsprintf that allocates a buffer big enough to hold the result.
  */
 NCURSES_EXPORT(char *)
-_nc_printf_string(const char *fmt, va_list ap)
+NCURSES_SP_NAME(_nc_printf_string) (NCURSES_SP_DCLx
+				    const char *fmt,
+				    va_list ap)
 {
-    char *result = 0;
+    char *result = NULL;
 
-    if (fmt != 0) {
+    if (SP_PARM != NULL && fmt != NULL) {
 #if USE_SAFE_SPRINTF
-	int len = _nc_printf_length(fmt, ap);
+	va_list ap2;
+	int len;
+
+	begin_va_copy(ap2, ap);
+	len = _nc_printf_length(fmt, ap2);
+	end_va_copy(ap2);
 
 	if ((int) my_length < len + 1) {
-	    my_length = 2 * (len + 1);
+	    my_length = (size_t) (2 * (len + 1));
 	    my_buffer = typeRealloc(char, my_length, my_buffer);
 	}
-	if (my_buffer != 0) {
+	if (my_buffer != NULL) {
 	    *my_buffer = '\0';
 	    if (len >= 0) {
 		vsprintf(my_buffer, fmt, ap);
@@ -243,28 +251,45 @@ _nc_printf_string(const char *fmt, va_list ap)
 #define MyCols _nc_globals.safeprint_cols
 #define MyRows _nc_globals.safeprint_rows
 
-	if (screen_lines > MyRows || screen_columns > MyCols) {
-	    if (screen_lines > MyRows)
-		MyRows = screen_lines;
-	    if (screen_columns > MyCols)
-		MyCols = screen_columns;
-	    my_length = (MyRows * (MyCols + 1)) + 1;
+	if (screen_lines(SP_PARM) > MyRows || screen_columns(SP_PARM) > MyCols) {
+	    if (screen_lines(SP_PARM) > MyRows)
+		MyRows = screen_lines(SP_PARM);
+	    if (screen_columns(SP_PARM) > MyCols)
+		MyCols = screen_columns(SP_PARM);
+	    my_length = (size_t) (MyRows * (MyCols + 1)) + 1;
+	    if (my_length < 80)
+		my_length = 80;
 	    my_buffer = typeRealloc(char, my_length, my_buffer);
 	}
 
-	if (my_buffer != 0) {
+	if (my_buffer != NULL) {
 # if HAVE_VSNPRINTF
-	    vsnprintf(my_buffer, my_length, fmt, ap);	/* GNU extension */
+	    /* SUSv2, 1997 */
+	    int used;
+	    while ((used = vsnprintf(my_buffer, my_length, fmt, ap))
+		   >= (int) my_length) {
+		my_length = (size_t) ((3 * used) / 2);
+		my_buffer = typeRealloc(char, my_length, my_buffer);
+	    }
 # else
-	    vsprintf(my_buffer, fmt, ap);	/* ANSI */
+	    /* ISO/ANSI C, 1989 */
+	    vsprintf(my_buffer, fmt, ap);
 # endif
 	    result = my_buffer;
 	}
 #endif
-    } else if (my_buffer != 0) {	/* see _nc_freeall() */
+    } else if (my_buffer != NULL) {	/* see _nc_freeall() */
 	free(my_buffer);
-	my_buffer = 0;
+	my_buffer = NULL;
 	my_length = 0;
     }
     return result;
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(char *)
+_nc_printf_string(const char *fmt, va_list ap)
+{
+    return NCURSES_SP_NAME(_nc_printf_string) (CURRENT_SCREEN, fmt, ap);
+}
+#endif

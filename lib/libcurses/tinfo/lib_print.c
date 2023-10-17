@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_print.c,v 1.5 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_print.c,v 1.6 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2002,2006 Free Software Foundation, Inc.              *
+ * Copyright 2018-2021,2023 Thomas E. Dickey                                *
+ * Copyright 1998-2011,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,29 +32,37 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Thomas E. Dickey                        1996-on                 *
+ *     and: Juergen Pfeifer                                                 *
  ****************************************************************************/
 
 #include <curses.priv.h>
 
-#include <term.h>
+#ifndef CUR
+#define CUR SP_TERMTYPE
+#endif
 
-MODULE_ID("$Id: lib_print.c,v 1.5 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_print.c,v 1.6 2023/10/17 09:52:09 nicm Exp $")
 
 NCURSES_EXPORT(int)
-mcprint(char *data, int len)
+NCURSES_SP_NAME(mcprint) (NCURSES_SP_DCLx char *data, int len)
 /* ship binary character data to the printer via mc4/mc5/mc5p */
 {
-    char *mybuf, *switchon;
-    size_t onsize, offsize, res;
+    int result;
+    char *mybuf = NULL, *switchon;
+    size_t onsize, offsize;
+    size_t need;
 
     errno = 0;
-    if (!cur_term || (!prtr_non && (!prtr_on || !prtr_off))) {
+    if (!HasTInfoTerminal(SP_PARM)
+	|| len <= 0
+	|| (!prtr_non && (!prtr_on || !prtr_off))) {
 	errno = ENODEV;
 	return (ERR);
     }
 
     if (prtr_non) {
-	switchon = TPARM_1(prtr_non, len);
+	switchon = TIPARM_1(prtr_non, len);
 	onsize = strlen(switchon);
 	offsize = 0;
     } else {
@@ -62,16 +71,19 @@ mcprint(char *data, int len)
 	offsize = strlen(prtr_off);
     }
 
-    res = onsize + len + offsize + 1;
-    if (switchon == 0 || (mybuf = typeMalloc(char, res)) == 0) {
+    need = onsize + (size_t) len + offsize;
+
+    if (switchon == 0
+	|| (mybuf = typeMalloc(char, need + 1)) == 0) {
+	free(mybuf);
 	errno = ENOMEM;
 	return (ERR);
     }
 
-    (void) strlcpy(mybuf, switchon, res);
-    memcpy(mybuf + onsize, data, (unsigned) len);
+    _nc_STRCPY(mybuf, switchon, need);
+    memcpy(mybuf + onsize, data, (size_t) len);
     if (offsize)
-	(void) strlcpy(mybuf + onsize + len, prtr_off, res - onsize - len);
+	_nc_STRCPY(mybuf + onsize + len, prtr_off, need);
 
     /*
      * We're relying on the atomicity of UNIX writes here.  The
@@ -80,15 +92,24 @@ mcprint(char *data, int len)
      * data has actually been shipped to the terminal.  If the write(2)
      * operation is truly atomic we're protected from this.
      */
-    res = write(cur_term->Filedes, mybuf, onsize + len + offsize);
+    result = (int) write(SP_PARM->_ofd, mybuf, need);
 
     /*
      * By giving up our scheduler slot here we increase the odds that the
      * kernel will ship the contiguous clist items from the last write
      * immediately.
      */
+#ifndef _NC_WINDOWS
     (void) sleep(0);
-
+#endif
     free(mybuf);
-    return (res);
+    return (result);
 }
+
+#if NCURSES_SP_FUNCS && !defined(USE_TERM_DRIVER)
+NCURSES_EXPORT(int)
+mcprint(char *data, int len)
+{
+    return NCURSES_SP_NAME(mcprint) (CURRENT_SCREEN, data, len);
+}
+#endif

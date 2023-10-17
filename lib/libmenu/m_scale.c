@@ -1,7 +1,8 @@
-/* $OpenBSD: m_scale.c,v 1.5 2010/01/12 23:22:08 nicm Exp $ */
+/* $OpenBSD: m_scale.c,v 1.6 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020,2021 Thomas E. Dickey                                     *
+ * Copyright 1998-2004,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -39,23 +40,26 @@
 
 #include "menu.priv.h"
 
-MODULE_ID("$Id: m_scale.c,v 1.5 2010/01/12 23:22:08 nicm Exp $")
+MODULE_ID("$Id: m_scale.c,v 1.6 2023/10/17 09:52:10 nicm Exp $")
 
 /*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
+|   Facility      :  libnmenu
 |   Function      :  int scale_menu(const MENU *menu)
-|   
+|
 |   Description   :  Returns the minimum window size necessary for the
-|                    subwindow of menu.  
+|                    subwindow of menu.
 |
 |   Return Values :  E_OK                  - success
 |                    E_BAD_ARGUMENT        - invalid menu pointer
 |                    E_NOT_CONNECTED       - no items are connected to menu
 +--------------------------------------------------------------------------*/
-NCURSES_EXPORT(int)
-scale_menu(const MENU * menu, int *rows, int *cols)
+MENU_EXPORT(int)
+scale_menu(const MENU *menu, int *rows, int *cols)
 {
-  T((T_CALLED("scale_menu(%p,%p,%p)"), menu, rows, cols));
+  T((T_CALLED("scale_menu(%p,%p,%p)"),
+     (const void *)menu,
+     (void *)rows,
+     (void *)cols));
 
   if (!menu)
     RETURN(E_BAD_ARGUMENT);

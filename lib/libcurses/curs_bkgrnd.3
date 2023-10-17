@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_bkgrnd.3,v 1.1 2010/01/12 23:21:58 nicm Exp $
+.\" $OpenBSD: curs_bkgrnd.3,v 1.2 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 2002-2004,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 2002-2015,2017 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,40 +29,47 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_bkgrnd.3,v 1.1 2010/01/12 23:21:58 nicm Exp $
-.TH curs_bkgrnd 3 ""
+.\" $Id: curs_bkgrnd.3,v 1.2 2023/10/17 09:52:08 nicm Exp $
+.de bP
+.ie n  .IP \(bu 4
+.el    .IP \(bu 2
+..
+.TH curs_bkgrnd 3 2023-08-12 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBbkgrnd\fR,
-\fBwbkgrnd\fR,
-\fBbkgrndset\fR,
-\fBwbkgrndset\fR,
-\fBgetbkgrnd\fR,
-\fBwgetbkgrnd\fR \- \fBcurses\fR window complex background manipulation routines
+\fBbkgrnd\fP,
+\fBwbkgrnd\fP,
+\fBbkgrndset\fP,
+\fBwbkgrndset\fP,
+\fBgetbkgrnd\fP,
+\fBwgetbkgrnd\fP \- \fBcurses\fP window complex background manipulation routines
 .SH SYNOPSIS
-.PP
-.B #include <curses.h>
+\fB#include <curses.h>\fR
 .sp
-\fBint bkgrnd(\fR\fB const cchar_t *\fR\fIwch\fR\fB);\fR
+\fBint bkgrnd(\fB const cchar_t *\fIwch\fB);\fR
 .br
-\fBint wbkgrnd(\fR\fB WINDOW *\fR\fIwin\fR\fB, const cchar_t *\fR\fIwch\fR\fB);\fR
+\fBint wbkgrnd(\fB WINDOW *\fIwin\fB, const cchar_t *\fIwch\fB);\fR
+.sp
+\fBvoid bkgrndset(const cchar_t *\fIwch\fR \fB);\fR
 .br
-\fBvoid bkgrndset(const cchar_t *\fR\fIwch\fR \fB);\fR
+\fBvoid wbkgrndset(WINDOW *\fIwin\fB, const cchar_t *\fIwch\fB);\fR
+.sp
+\fBint getbkgrnd(cchar_t *\fIwch\fB);\fR
 .br
-\fBvoid wbkgrndset(WINDOW *\fR\fIwin\fR\fB, const cchar_t *\fR\fIwch\fR\fB);\fR
-.br
-\fBint getbkgrnd(cchar_t *\fR\fIwch\fR\fB);\fR
-.br
-\fBint wgetbkgrnd(WINDOW *\fR\fIwin\fR\fB, cchar_t *\fR\fIwch\fR\fB);\fR
-.br
+\fBint wgetbkgrnd(WINDOW *\fIwin\fB, cchar_t *\fIwch\fB);\fR
 .SH DESCRIPTION
-The \fBbkgrndset\fR and \fBwbkgrndset\fR routines manipulate the
+.SS bkgrndset
+The \fBbkgrndset\fP and \fBwbkgrndset\fP routines manipulate the
 background of the named window.
-The window background is a \fBcchar_t\fR consisting of
+The window background is a \fBcchar_t\fP consisting of
 any combination of attributes (i.e., rendition) and a complex character.
+.bP
 The attribute part of the background is combined (OR'ed) with all non-blank
-characters that are written into the window with \fBwaddch\fR.  Both
+characters that are written into the window with \fBwaddch\fP.
+.bP
+Both
 the character and attribute parts of the background are combined with
 the blank characters.
+.PP
 The background becomes a property of the
 character and moves with the character through any scrolling and
 insert/delete line/character operations.
@@ -69,40 +77,43 @@ insert/delete line/character operations.
 To the extent possible on a
 particular terminal, the attribute part of the background is displayed
 as the graphic rendition of the character put on the screen.
-.PP
-The \fBbkgrnd\fR and \fBwbkgrnd\fR functions
+.SS bkgrnd
+The \fBbkgrnd\fP and \fBwbkgrnd\fP functions
 set the background property of the current or specified window
 and then apply this setting to every character position in that window:
-.RS
-.PP
+.bP
 The rendition of every character on the screen is changed to
 the new background rendition.
-.PP
+.bP
 Wherever the former background character
 appears, it is changed to the new background character.
-.RE
-.PP
-The \fBgetbkgrnd\fR function returns the given window's current background
-character/attribute pair via the \fBwch\fR pointer.
-.
+.SS getbkgrnd
+The \fBgetbkgrnd\fP function returns the given window's current background
+character/attribute pair via the \fBwch\fP pointer.
+If the given window pointer is null,
+the character is not updated (but no error returned).
 .SH NOTES
 Note that
-\fBbkgrnd\fR,
-\fBbkgrndset\fR, and
-\fBgetbkgrnd\fR
+\fBbkgrnd\fP,
+\fBbkgrndset\fP, and
+\fBgetbkgrnd\fP
 may be macros.
-.SH RETURN VALUES
-The \fBbkgrndset\fR and \fBwbkgrndset\fR routines do not return a value.
 .PP
-Upon successful completion, the other functions return \fBOK\fR.
-Otherwise, they return \fBERR\fR.
+X/Open Curses does not provide details on how the rendition is changed.
+This implementation follows the approach used in SVr4 curses,
+which is explained in the manual page for \fBwbkgd\fP.
+.SH RETURN VALUE
+The \fBbkgrndset\fP and \fBwbkgrndset\fP routines do not return a value.
+.PP
+Upon successful completion, the other functions return \fBOK\fP.
+Otherwise, they return \fBERR\fP:
+.bP
 A null window pointer is treated as an error.
+.bP
+A null character pointer is treated as an error.
+.SH PORTABILITY
+These functions are described in the XSI Curses standard, Issue 4
+(X/Open Curses).
 .SH SEE ALSO
-\fBcurses\fR(3),
-\fBcurs_bkgd\fR(3)
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3),
+\fBcurs_bkgd\fP(3)

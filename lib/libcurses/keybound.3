@@ -1,7 +1,8 @@
-.\" $OpenBSD: keybound.3,v 1.3 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: keybound.3,v 1.4 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1999-2003,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2021,2022 Thomas E. Dickey                                *
+.\" Copyright 1999-2008,2010 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -30,14 +31,14 @@
 .\"
 .\" Author: Thomas E. Dickey 1999
 .\"
-.\" $Id: keybound.3,v 1.3 2010/01/12 23:21:59 nicm Exp $
-.TH keybound 3 ""
+.\" $Id: keybound.3,v 1.4 2023/10/17 09:52:08 nicm Exp $
+.TH keybound 3 2022-02-12 "ncurses 6.4" "Library calls"
 .SH NAME
 \fBkeybound\fP \- return definition of keycode
 .SH SYNOPSIS
 \fB#include <curses.h>\fP
 .sp
-\fBchar * keybound(int keycode, int count);\fP
+\fBchar * keybound(int \fIkeycode\fB, int \fIcount);\fR
 .SH DESCRIPTION
 This is an extension to the curses library.
 It permits an application to determine the string which is defined
@@ -50,17 +51,13 @@ through multiple definitions, counting from zero.
 When successful,
 the function returns a string which must be freed by the caller.
 .SH PORTABILITY
-These routines are specific to ncurses.  They were not supported on
-Version 7, BSD or System V implementations.  It is recommended that
+These routines are specific to ncurses.
+They were not supported on
+Version 7, BSD or System V implementations.
+It is recommended that
 any code depending on them be conditioned using NCURSES_VERSION.
 .SH SEE ALSO
-\fBdefine_key\fR(3),
-\fBkeyok\fR(3).
+\fBdefine_key\fP(3),
+\fBkeyok\fP(3).
 .SH AUTHOR
 Thomas Dickey.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:

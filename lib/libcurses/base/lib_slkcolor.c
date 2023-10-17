@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_slkcolor.c,v 1.4 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_slkcolor.c,v 1.5 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2005 Free Software Foundation, Inc.              *
+ * Copyright 2018,2020 Thomas E. Dickey                                     *
+ * Copyright 1998-2014,2017 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -29,8 +30,8 @@
  ****************************************************************************/
 
 /****************************************************************************
- *  Author:  Juergen Pfeifer, 1998                                          *
- *     and:  Thomas E. Dickey 2005                                          *
+ *  Author:  Juergen Pfeifer, 1998,2009                                     *
+ *     and:  Thomas E. Dickey 2005-on                                       *
  ****************************************************************************/
 
 /*
@@ -40,19 +41,53 @@
  */
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_slkcolor.c,v 1.4 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_slkcolor.c,v 1.5 2023/10/17 09:52:09 nicm Exp $")
+
+static int
+_nc_slk_color(SCREEN *sp, int pair_arg)
+{
+    int code = ERR;
+
+    T((T_CALLED("slk_color(%p,%d)"), (void *) sp, pair_arg));
+
+    if (sp != 0
+	&& sp->_slk != 0
+	&& pair_arg >= 0
+	&& pair_arg < sp->_pair_limit) {
+	TR(TRACE_ATTRS, ("... current is %s", _tracech_t(CHREF(sp->_slk->attr))));
+	SetPair(sp->_slk->attr, pair_arg);
+	TR(TRACE_ATTRS, ("new attribute is %s", _tracech_t(CHREF(sp->_slk->attr))));
+	code = OK;
+    }
+    returnCode(code);
+}
 
 NCURSES_EXPORT(int)
-slk_color(short color_pair_number)
+NCURSES_SP_NAME(slk_color) (NCURSES_SP_DCLx NCURSES_PAIRS_T pair_arg)
 {
-    T((T_CALLED("slk_color(%d)"), color_pair_number));
-
-    if (SP != 0 && SP->_slk != 0 &&
-	color_pair_number >= 0 && color_pair_number < COLOR_PAIRS) {
-	TR(TRACE_ATTRS, ("... current is %s", _tracech_t(CHREF(SP->_slk->attr))));
-	SetPair(SP->_slk->attr, color_pair_number);
-	TR(TRACE_ATTRS, ("new attribute is %s", _tracech_t(CHREF(SP->_slk->attr))));
-	returnCode(OK);
-    } else
-	returnCode(ERR);
+    return _nc_slk_color(SP_PARM, pair_arg);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+slk_color(NCURSES_PAIRS_T pair_arg)
+{
+    return NCURSES_SP_NAME(slk_color) (CURRENT_SCREEN, pair_arg);
+}
+#endif
+
+#if NCURSES_EXT_COLORS
+NCURSES_EXPORT(int)
+NCURSES_SP_NAME(extended_slk_color) (NCURSES_SP_DCLx int pair_arg)
+{
+    return _nc_slk_color(SP_PARM, pair_arg);
+}
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+extended_slk_color(int pair_arg)
+{
+    return NCURSES_SP_NAME(extended_slk_color) (CURRENT_SCREEN, pair_arg);
+}
+#endif
+#endif

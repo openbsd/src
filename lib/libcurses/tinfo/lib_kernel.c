@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_kernel.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_kernel.c,v 1.4 2023/10/17 09:52:09 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2003,2004 Free Software Foundation, Inc.              *
+ * Copyright 2020-2022,2023 Thomas E. Dickey                                *
+ * Copyright 1998-2009,2010 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,7 +32,8 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
- *     and: Thomas E. Dickey 2002                                           *
+ *     and: Thomas E. Dickey                        2002                    *
+ *     and: Juergen Pfeifer                         2009                    *
  ****************************************************************************/
 
 /*
@@ -48,10 +50,10 @@
  */
 
 #include <curses.priv.h>
-#include <term.h>		/* cur_term */
 
-MODULE_ID("$Id: lib_kernel.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_kernel.c,v 1.4 2023/10/17 09:52:09 nicm Exp $")
 
+#ifdef TERMIOS
 static int
 _nc_vdisable(void)
 {
@@ -59,9 +61,9 @@ _nc_vdisable(void)
 #if defined(_POSIX_VDISABLE) && HAVE_UNISTD_H
     value = _POSIX_VDISABLE;
 #endif
-#if defined(_PC_VDISABLE)
+#if defined(_PC_VDISABLE) && HAVE_FPATHCONF
     if (value == -1) {
-	value = fpathconf(0, _PC_VDISABLE);
+	value = (int) fpathconf(0, _PC_VDISABLE);
 	if (value == -1) {
 	    value = 0377;
 	}
@@ -72,6 +74,7 @@ _nc_vdisable(void)
 #endif
     return value;
 }
+#endif /* TERMIOS */
 
 /*
  *	erasechar()
@@ -81,22 +84,34 @@ _nc_vdisable(void)
  */
 
 NCURSES_EXPORT(char)
-erasechar(void)
+NCURSES_SP_NAME(erasechar) (NCURSES_SP_DCL0)
 {
     int result = ERR;
-    T((T_CALLED("erasechar()")));
+    TERMINAL *termp = TerminalOf(SP_PARM);
 
-    if (cur_term != 0) {
+    T((T_CALLED("erasechar(%p)"), (void *) SP_PARM));
+
+    if (termp != 0) {
 #ifdef TERMIOS
-	result = cur_term->Ottyb.c_cc[VERASE];
+	result = termp->Ottyb.c_cc[VERASE];
 	if (result == _nc_vdisable())
 	    result = ERR;
+#elif defined(EXP_WIN32_DRIVER)
+	result = ERR;
 #else
-	result = cur_term->Ottyb.sg_erase;
+	result = termp->Ottyb.sg_erase;
 #endif
     }
-    returnCode(result);
+    returnChar((char) result);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(char)
+erasechar(void)
+{
+    return NCURSES_SP_NAME(erasechar) (CURRENT_SCREEN);
+}
+#endif
 
 /*
  *	killchar()
@@ -106,51 +121,83 @@ erasechar(void)
  */
 
 NCURSES_EXPORT(char)
-killchar(void)
+NCURSES_SP_NAME(killchar) (NCURSES_SP_DCL0)
 {
     int result = ERR;
-    T((T_CALLED("killchar()")));
+    TERMINAL *termp = TerminalOf(SP_PARM);
 
-    if (cur_term != 0) {
+    T((T_CALLED("killchar(%p)"), (void *) SP_PARM));
+
+    if (termp != 0) {
 #ifdef TERMIOS
-	result = cur_term->Ottyb.c_cc[VKILL];
+	result = termp->Ottyb.c_cc[VKILL];
 	if (result == _nc_vdisable())
 	    result = ERR;
+#elif defined(EXP_WIN32_DRIVER)
+	result = ERR;
 #else
-	result = cur_term->Ottyb.sg_kill;
+	result = termp->Ottyb.sg_kill;
 #endif
     }
-    returnCode(result);
+    returnChar((char) result);
+}
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(char)
+killchar(void)
+{
+    return NCURSES_SP_NAME(killchar) (CURRENT_SCREEN);
+}
+#endif
+
+static void
+flush_input(int fd)
+{
+#ifdef TERMIOS
+    tcflush(fd, TCIFLUSH);
+#else /* !TERMIOS */
+    errno = 0;
+    do {
+#if defined(EXP_WIN32_DRIVER)
+	_nc_console_flush(_nc_console_fd2handle(fd));
+#else
+	ioctl(fd, TIOCFLUSH, 0);
+#endif
+    } while
+	(errno == EINTR);
+#endif
 }
 
 /*
  *	flushinp()
  *
- *	Flush any input on cur_term->Filedes
- *
+ *	Flush any input on tty
  */
 
 NCURSES_EXPORT(int)
-flushinp(void)
+NCURSES_SP_NAME(flushinp) (NCURSES_SP_DCL0)
 {
-    T((T_CALLED("flushinp()")));
+    T((T_CALLED("flushinp(%p)"), (void *) SP_PARM));
 
-    if (cur_term != 0) {
-#ifdef TERMIOS
-	tcflush(cur_term->Filedes, TCIFLUSH);
-#else
-	errno = 0;
-	do {
-	    ioctl(cur_term->Filedes, TIOCFLUSH, 0);
-	} while
-	    (errno == EINTR);
-#endif
-	if (SP) {
-	    SP->_fifohead = -1;
-	    SP->_fifotail = 0;
-	    SP->_fifopeek = 0;
+    if (SP_PARM != 0) {
+	if (NC_ISATTY(SP_PARM->_ifd))
+	    flush_input(SP_PARM->_ifd);
+	else if (NC_ISATTY(SP_PARM->_ofd))
+	    flush_input(SP_PARM->_ofd);
+	if (SP_PARM) {
+	    SP_PARM->_fifohead = -1;
+	    SP_PARM->_fifotail = 0;
+	    SP_PARM->_fifopeek = 0;
 	}
 	returnCode(OK);
     }
     returnCode(ERR);
 }
+
+#if NCURSES_SP_FUNCS
+NCURSES_EXPORT(int)
+flushinp(void)
+{
+    return NCURSES_SP_NAME(flushinp) (CURRENT_SCREEN);
+}
+#endif

@@ -1,8 +1,9 @@
 '\" t
-.\" $OpenBSD: menu_format.3,v 1.8 2015/11/15 22:10:16 jmc Exp $
+.\" $OpenBSD: menu_format.3,v 1.9 2023/10/17 09:52:10 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2001,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2015,2016 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,30 +30,34 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: menu_format.3,v 1.8 2015/11/15 22:10:16 jmc Exp $
-.TH menu_format 3 ""
+.\" $Id: menu_format.3,v 1.9 2023/10/17 09:52:10 nicm Exp $
+.TH menu_format 3 2023-07-01 "ncurses 6.4" "Library calls"
 .SH NAME
-\fBset_menu_format\fR, \fBmenu_format\fR - set and get menu sizes
+\fBset_menu_format\fP,
+\fBmenu_format\fP \- set and get menu sizes
 .SH SYNOPSIS
-\fB#include <menu.h>\fR
+\fB#include <menu.h>\fP
+.sp
+\fBint set_menu_format(MENU *\fImenu\fB, int \fIrows\fB, int \fIcols\fB);\fR
 .br
-int set_menu_format(MENU *menu, int rows, int cols);
-.br
-void menu_format(const MENU *menu, int *rows, int *cols);
-.br
+\fBvoid menu_format(const MENU *\fImenu\fB, int *\fIrows\fB, int *\fIcols\fB);\fR
 .SH DESCRIPTION
-The function \fBset_menu_format\fR sets the maximum display size of the given
-menu.  If this size is too small to display all menu items, the menu will be
-made scrollable. If this size is larger than the menus subwindow and the
-subwindow is too small to display all menu items, \fBpost_menu()\fR will fail.
+The function \fBset_menu_format\fP sets the maximum display size of the given
+menu.
+If this size is too small to display all menu items, the menu will be
+made scrollable.
+If this size is larger than the menus subwindow and the
+subwindow is too small to display all menu items, \fBpost_menu\fP will fail.
 .PP
-The default format is 16 rows, 1 column.  Calling \fBset_menu_format\fR with a
-null menu pointer will change this default.  A zero row or column argument to
-\fBset_menu_format\fR is interpreted as a request not to change the current
+The default format is 16 rows, 1 column.
+Calling \fBset_menu_format\fP with a
+null menu pointer will change this default.
+A zero row or column argument to
+\fBset_menu_format\fP is interpreted as a request not to change the current
 value.
 .PP
-The function \fBmenu_format\fR returns the maximum-size constraints for the
-given menu into the storage addressed by \fBrows\fR and \fBcols\fR.
+The function \fBmenu_format\fP returns the maximum-size constraints for the
+given menu into the storage addressed by \fBrows\fP and \fBcols\fP.
 .SH RETURN VALUE
 These routines returns one of the following:
 .TP 5
@@ -60,7 +65,7 @@ These routines returns one of the following:
 The routine succeeded.
 .TP 5
 .B E_SYSTEM_ERROR
-System error occurred (see \fBerrno\fR).
+System error occurred (see \fBerrno\fP(3)).
 .TP 5
 .B E_BAD_ARGUMENT
 Routine detected an incorrect or out-of-range argument.
@@ -71,19 +76,14 @@ The menu is already posted.
 .B E_NOT_CONNECTED
 No items are connected to the menu.
 .SH SEE ALSO
-\fBcurses\fR(3), \fBmenu\fR(3).
+\fBcurses\fP(3), \fBmenu\fP(3).
 .SH NOTES
-The header file \fB<menu.h>\fR automatically includes the header file
-\fB<curses.h>\fR.
+The header file \fB<menu.h>\fP automatically includes the header file
+\fB<curses.h>\fP.
 .SH PORTABILITY
-These routines emulate the System V menu library.  They were not supported on
+These routines emulate the System V menu library.
+They were not supported on
 Version 7 or BSD versions.
 .SH AUTHORS
-Juergen Pfeifer.  Manual pages and adaptation for new curses by Eric
-S. Raymond.
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+Juergen Pfeifer.
+Manual pages and adaptation for new curses by Eric S. Raymond.

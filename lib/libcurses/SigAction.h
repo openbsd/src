@@ -1,7 +1,8 @@
-/* $OpenBSD: SigAction.h,v 1.4 2010/01/12 23:21:58 nicm Exp $ */
+/* $OpenBSD: SigAction.h,v 1.5 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2003,2005 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -34,7 +35,7 @@
  ****************************************************************************/
 
 /*
- * $Id: SigAction.h,v 1.4 2010/01/12 23:21:58 nicm Exp $
+ * $Id: SigAction.h,v 1.5 2023/10/17 09:52:08 nicm Exp $
  *
  * This file exists to handle non-POSIX systems which don't have <unistd.h>,
  * and usually no sigaction() nor <termios.h>

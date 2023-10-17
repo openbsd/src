@@ -1,7 +1,8 @@
-/* $OpenBSD: lib_leaveok.c,v 1.3 2010/01/12 23:22:06 nicm Exp $ */
+/* $OpenBSD: lib_leaveok.c,v 1.4 2023/10/17 09:52:08 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2000,2009 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -42,12 +43,12 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$Id: lib_leaveok.c,v 1.3 2010/01/12 23:22:06 nicm Exp $")
+MODULE_ID("$Id: lib_leaveok.c,v 1.4 2023/10/17 09:52:08 nicm Exp $")
 
 NCURSES_EXPORT(int)
 leaveok(WINDOW *win, bool flag)
 {
-    T((T_CALLED("leaveok(%p,%d)"), win, flag));
+    T((T_CALLED("leaveok(%p,%d)"), (void *) win, flag));
 
     if (win) {
 	win->_leaveok = flag;

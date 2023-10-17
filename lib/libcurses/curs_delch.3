@@ -1,7 +1,8 @@
-.\" $OpenBSD: curs_delch.3,v 1.7 2010/01/12 23:21:59 nicm Exp $
+.\" $OpenBSD: curs_delch.3,v 1.8 2023/10/17 09:52:08 nicm Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998-2000,2006 Free Software Foundation, Inc.              *
+.\" Copyright 2018-2022,2023 Thomas E. Dickey                                *
+.\" Copyright 1998-2006,2010 Free Software Foundation, Inc.                  *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,45 +29,49 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $Id: curs_delch.3,v 1.7 2010/01/12 23:21:59 nicm Exp $
-.TH curs_delch 3 ""
+.\" $Id: curs_delch.3,v 1.8 2023/10/17 09:52:08 nicm Exp $
+.TH curs_delch 3 2023-07-01 "ncurses 6.4" "Library calls"
+.ie \n(.g .ds `` \(lq
+.el       .ds `` ``
+.ie \n(.g .ds '' \(rq
+.el       .ds '' ''
 .SH NAME
-\fBdelch\fR,
-\fBwdelch\fR,
-\fBmvdelch\fR,
-\fBmvwdelch\fR - delete character under the cursor in a \fBcurses\fR window
+\fBdelch\fP,
+\fBwdelch\fP,
+\fBmvdelch\fP,
+\fBmvwdelch\fP \- delete character under the cursor in a \fBcurses\fP window
 .SH SYNOPSIS
-\fB#include <curses.h>\fR
+\fB#include <curses.h>\fP
 .sp
-\fBint delch(void);\fR
+\fBint delch(void);\fP
 .br
-\fBint wdelch(WINDOW *win);\fR
+\fBint wdelch(WINDOW *\fIwin\fB);\fR
 .br
-\fBint mvdelch(int y, int x);\fR
+\fBint mvdelch(int \fIy\fB, int \fIx\fB);\fR
 .br
-\fBint mvwdelch(WINDOW *win, int y, int x);\fR
-.br
+\fBint mvwdelch(WINDOW *\fIwin\fB, int \fIy\fB, int \fIx\fB);\fR
 .SH DESCRIPTION
 These routines delete the character under the cursor; all characters to the
 right of the cursor on the same line are moved to the left one position and the
-last character on the line is filled with a blank.  The cursor position does
-not change (after moving to \fIy\fR, \fIx\fR, if specified).  (This does not
+last character on the line is filled with a blank.
+The cursor position does
+not change (after moving to \fIy\fP, \fIx\fP, if specified).
+(This does not
 imply use of the hardware delete character feature.)
 .SH RETURN VALUE
-All routines return the integer \fBERR\fR upon failure and an \fBOK\fR (SVr4
-specifies only "an integer value other than \fBERR\fR") upon successful
+All routines return the integer \fBERR\fP upon failure and an \fBOK\fP (SVr4
+specifies only "an integer value other than \fBERR\fP") upon successful
 completion.
+.PP
+Functions with a \*(``mv\*('' prefix first perform a cursor movement using
+\fBwmove\fP, and return an error if the position is outside the window,
+or if the window pointer is null.
 .SH NOTES
-Note that \fBdelch\fR, \fBmvdelch\fR, and \fBmvwdelch\fR may be macros.
+Note that \fBdelch\fP, \fBmvdelch\fP, and \fBmvwdelch\fP may be macros.
 .SH PORTABILITY
-These functions are described in the XSI Curses standard, Issue 4.  The
-standard specifies that they return \fBERR\fR on failure, but specifies no
+These functions are described in the XSI Curses standard, Issue 4.
+The
+standard specifies that they return \fBERR\fP on failure, but specifies no
 error conditions.
 .SH SEE ALSO
-\fBcurses\fR(3)
-.\"#
-.\"# The following sets edit modes for GNU EMACS
-.\"# Local Variables:
-.\"# mode:nroff
-.\"# fill-column:79
-.\"# End:
+\fBcurses\fP(3)

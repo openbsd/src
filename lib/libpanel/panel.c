@@ -1,7 +1,8 @@
-/* $OpenBSD: panel.c,v 1.11 2019/10/08 17:52:37 deraadt Exp $ */
+/* $OpenBSD: panel.c,v 1.12 2023/10/17 09:52:10 nicm Exp $ */
 
 /****************************************************************************
- * Copyright (c) 1998-2004,2005 Free Software Foundation, Inc.              *
+ * Copyright 2020 Thomas E. Dickey                                          *
+ * Copyright 1998-2010,2012 Free Software Foundation, Inc.                  *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -31,21 +32,23 @@
 /****************************************************************************
  *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1995                    *
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ *     and: Juergen Pfeifer                         1996-1999,2008          *
+ *     and: Thomas E. Dickey                                                *
  ****************************************************************************/
 
 /* panel.c -- implementation of panels library, some core routines */
 #include "panel.priv.h"
 
-MODULE_ID("$Id: panel.c,v 1.11 2019/10/08 17:52:37 deraadt Exp $")
+MODULE_ID("$Id: panel.c,v 1.12 2023/10/17 09:52:10 nicm Exp $")
 
 /*+-------------------------------------------------------------------------
 	_nc_retrace_panel (pan)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-NCURSES_EXPORT(PANEL *)
+PANEL_EXPORT(PANEL *)
 _nc_retrace_panel(PANEL * pan)
 {
-  T((T_RETURN("%p"), pan));
+  T((T_RETURN("%p"), (void *)pan));
   return pan;
 }
 #endif
@@ -55,16 +58,16 @@ _nc_retrace_panel(PANEL * pan)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
 #ifndef TRACE_TXT
-NCURSES_EXPORT(const char *)
-_nc_my_visbuf(const void *ptr)
+PANEL_EXPORT(const char *)
+_nc_my_visbuf(const void *ptr, int n)
 {
   char temp[32];
 
   if (ptr != 0)
-    snprintf(temp, sizeof temp, "ptr:%p", ptr);
+    _nc_SPRINTF(temp, _nc_SLIMIT(sizeof(temp)) "%p", ptr);
   else
-    strlcpy(temp, "<null>", sizeof temp);
-  return _nc_visbuf(temp);
+    _nc_STRCPY(temp, "<null>", sizeof(temp));
+  return _nc_visbuf2(n, temp);
 }
 #endif
 #endif
@@ -73,13 +76,13 @@ _nc_my_visbuf(const void *ptr)
 	dPanel(text,pan)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-NCURSES_EXPORT(void)
+PANEL_EXPORT(void)
 _nc_dPanel(const char *text, const PANEL * pan)
 {
   _tracef("%s id=%s b=%s a=%s y=%d x=%d",
-	  text, USER_PTR(pan->user),
-	  (pan->below) ? USER_PTR(pan->below->user) : "--",
-	  (pan->above) ? USER_PTR(pan->above->user) : "--",
+	  text, USER_PTR(pan->user, 1),
+	  (pan->below) ? USER_PTR(pan->below->user, 2) : "--",
+	  (pan->above) ? USER_PTR(pan->above->user, 3) : "--",
 	  PSTARTY(pan), PSTARTX(pan));
 }
 #endif
@@ -88,17 +91,19 @@ _nc_dPanel(const char *text, const PANEL * pan)
 	dStack(fmt,num,pan)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-NCURSES_EXPORT(void)
+PANEL_EXPORT(void)
 _nc_dStack(const char *fmt, int num, const PANEL * pan)
 {
   char s80[80];
 
-  snprintf(s80, sizeof s80, fmt, num, pan);
+  GetPanelHook(pan);
+
+  _nc_SPRINTF(s80, _nc_SLIMIT(sizeof(s80)) fmt, num, pan);
   _tracef("%s b=%s t=%s", s80,
-	  (_nc_bottom_panel) ? USER_PTR(_nc_bottom_panel->user) : "--",
-	  (_nc_top_panel) ? USER_PTR(_nc_top_panel->user) : "--");
+	  (_nc_bottom_panel) ? USER_PTR(_nc_bottom_panel->user, 1) : "--",
+	  (_nc_top_panel) ? USER_PTR(_nc_top_panel->user, 2) : "--");
   if (pan)
-    _tracef("pan id=%s", USER_PTR(pan->user));
+    _tracef("pan id=%s", USER_PTR(pan->user, 1));
   pan = _nc_bottom_panel;
   while (pan)
     {
@@ -112,7 +117,7 @@ _nc_dStack(const char *fmt, int num, const PANEL * pan)
 	Wnoutrefresh(pan) - debugging hook for wnoutrefresh
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-NCURSES_EXPORT(void)
+PANEL_EXPORT(void)
 _nc_Wnoutrefresh(const PANEL * pan)
 {
   dPanel("wnoutrefresh", pan);
@@ -124,7 +129,7 @@ _nc_Wnoutrefresh(const PANEL * pan)
 	Touchpan(pan)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-NCURSES_EXPORT(void)
+PANEL_EXPORT(void)
 _nc_Touchpan(const PANEL * pan)
 {
   dPanel("Touchpan", pan);
@@ -136,12 +141,12 @@ _nc_Touchpan(const PANEL * pan)
 	Touchline(pan,start,count)
 --------------------------------------------------------------------------*/
 #ifdef TRACE
-NCURSES_EXPORT(void)
+PANEL_EXPORT(void)
 _nc_Touchline(const PANEL * pan, int start, int count)
 {
   char s80[80];
 
-  snprintf(s80, sizeof s80, "Touchline s=%d c=%d", start, count);
+  _nc_SPRINTF(s80, _nc_SLIMIT(sizeof(s80)) "Touchline s=%d c=%d", start, count);
   dPanel(s80, pan);
   touchline(pan->win, start, count);
 }
