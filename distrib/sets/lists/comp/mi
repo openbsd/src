@@ -959,6 +959,7 @@
 ./usr/include/msdosfs/fat.h
 ./usr/include/msdosfs/msdosfsmount.h
 ./usr/include/ncurses.h
+./usr/include/ncurses_dll.h
 ./usr/include/ndbm.h
 ./usr/include/net
 ./usr/include/net/art.h
@@ -2375,6 +2376,7 @@
 ./usr/share/man/man3/curs_extend.3
 ./usr/share/man/man3/curs_get_wch.3
 ./usr/share/man/man3/curs_get_wstr.3
+./usr/share/man/man3/curs_getcchar.3
 ./usr/share/man/man3/curs_getch.3
 ./usr/share/man/man3/curs_getstr.3
 ./usr/share/man/man3/curs_getyx.3
@@ -2392,6 +2394,7 @@
 ./usr/share/man/man3/curs_inwstr.3
 ./usr/share/man/man3/curs_kernel.3
 ./usr/share/man/man3/curs_legacy.3
+./usr/share/man/man3/curs_memleaks.3
 ./usr/share/man/man3/curs_mouse.3
 ./usr/share/man/man3/curs_move.3
 ./usr/share/man/man3/curs_opaque.3
@@ -2405,9 +2408,12 @@
 ./usr/share/man/man3/curs_scr_dump.3
 ./usr/share/man/man3/curs_scroll.3
 ./usr/share/man/man3/curs_slk.3
+./usr/share/man/man3/curs_sp_funcs.3
 ./usr/share/man/man3/curs_termattrs.3
+./usr/share/man/man3/curs_threads.3
 ./usr/share/man/man3/curs_touch.3
 ./usr/share/man/man3/curs_util.3
+./usr/share/man/man3/curs_variables.3
 ./usr/share/man/man3/curs_window.3
 ./usr/share/man/man3/curses.3
 ./usr/share/man/man3/d2i_ASN1_NULL.3
@@ -2566,6 +2572,7 @@
 ./usr/share/man/man3/form_post.3
 ./usr/share/man/man3/form_requestname.3
 ./usr/share/man/man3/form_userptr.3
+./usr/share/man/man3/form_variables.3
 ./usr/share/man/man3/form_win.3
 ./usr/share/man/man3/fparseln.3
 ./usr/share/man/man3/fpclassify.3
@@ -2778,6 +2785,7 @@
 ./usr/share/man/man3/moncontrol.3
 ./usr/share/man/man3/nan.3
 ./usr/share/man/man3/ndbm.3
+./usr/share/man/man3/new_pair.3
 ./usr/share/man/man3/newlocale.3
 ./usr/share/man/man3/nextafter.3
 ./usr/share/man/man3/nice.3
@@ -2987,6 +2995,7 @@
 ./usr/share/man/man3/tcsendbreak.3
 ./usr/share/man/man3/tcsetattr.3
 ./usr/share/man/man3/tcsetpgrp.3
+./usr/share/man/man3/term_variables.3
 ./usr/share/man/man3/termcap.3
 ./usr/share/man/man3/terminfo.3
 ./usr/share/man/man3/time.3

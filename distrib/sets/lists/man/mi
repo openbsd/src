@@ -29,7 +29,6 @@
 ./usr/share/man/man1/cal.1
 ./usr/share/man/man1/calendar.1
 ./usr/share/man/man1/cap_mkdb.1
-./usr/share/man/man1/captoinfo.1
 ./usr/share/man/man1/cat.1
 ./usr/share/man/man1/cdio.1
 ./usr/share/man/man1/check-lib-depends.1
@@ -116,7 +115,6 @@
 ./usr/share/man/man1/info.1
 ./usr/share/man/man1/infocmp.1
 ./usr/share/man/man1/infokey.1
-./usr/share/man/man1/infotocap.1
 ./usr/share/man/man1/install-info.1
 ./usr/share/man/man1/install.1
 ./usr/share/man/man1/instmodsh.1
@@ -2303,6 +2301,7 @@
 ./usr/share/man/man5/rpc.5
 ./usr/share/man/man5/ruby-module.5
 ./usr/share/man/man5/sasyncd.conf.5
+./usr/share/man/man5/scr_dump.5
 ./usr/share/man/man5/securenet.5
 ./usr/share/man/man5/sensorsd.conf.5
 ./usr/share/man/man5/services.5
@@ -2325,6 +2324,7 @@
 ./usr/share/man/man5/tzfile.5
 ./usr/share/man/man5/unbound.conf.5
 ./usr/share/man/man5/unwind.conf.5
+./usr/share/man/man5/user_caps.5
 ./usr/share/man/man5/usermgmt.conf.5
 ./usr/share/man/man5/utmp.5
 ./usr/share/man/man5/uuencode.5
