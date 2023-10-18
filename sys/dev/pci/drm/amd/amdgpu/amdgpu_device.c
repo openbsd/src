@@ -2215,8 +2215,12 @@ static int amdgpu_device_ip_early_init(struct amdgpu_device *adev)
 		adev->flags |= AMD_IS_PX;
 
 	if (!(adev->flags & AMD_IS_APU)) {
-		parent = pci_upstream_bridge(adev->pdev);
+#ifdef notyet
+		parent = pcie_find_root_port(adev->pdev);
 		adev->has_pr3 = parent ? pci_pr3_present(parent) : false;
+#else
+		adev->has_pr3 = false;
+#endif
 	}
 
 	amdgpu_amdkfd_device_probe(adev);
