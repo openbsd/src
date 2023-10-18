@@ -1,4 +1,4 @@
-/* $OpenBSD: man_html.c,v 1.138 2023/04/28 20:14:19 schwarze Exp $ */
+/* $OpenBSD: man_html.c,v 1.139 2023/10/18 16:11:29 schwarze Exp $ */
 /*
  * Copyright (c) 2013-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -431,10 +431,12 @@ list_continues(const struct roff_node *n1, const struct roff_node *n2)
 	s2 = n2 == NULL ? "" : n2->string;
 	c1 = strcmp(s1, "*") == 0 ? '*' :
 	     strcmp(s1, "\\-") == 0 ? '-' :
-	     strcmp(s1, "\\(bu") == 0 ? 'b' : ' ';
+	     strcmp(s1, "\\(bu") == 0 ? 'b' :
+	     strcmp(s1, "\\[bu]") == 0 ? 'b' : ' ';
 	c2 = strcmp(s2, "*") == 0 ? '*' :
 	     strcmp(s2, "\\-") == 0 ? '-' :
-	     strcmp(s2, "\\(bu") == 0 ? 'b' : ' ';
+	     strcmp(s2, "\\(bu") == 0 ? 'b' :
+	     strcmp(s2, "\\[bu]") == 0 ? 'b' : ' ';
 	return c1 != c2 ? '\0' : c1 == 'b' ? '*' : c1;
 }
 
