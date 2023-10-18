@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.29 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: ip.c,v 1.30 2023/10/18 07:08:19 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -107,7 +107,7 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 {
 	size_t	 i, sz = ip->afi == AFI_IPV4 ? 4 : 16;
 	int	 inherit_v4 = 0, inherit_v6 = 0;
-	int	 has_v4 = 0, has_v6 = 0, socktype;
+	int	 has_v4 = 0, has_v6 = 0;
 
 	/*
 	 * FIXME: cache this by having a flag on the cert_ip, else we're
@@ -135,43 +135,28 @@ ip_addr_check_overlap(const struct cert_ip *ip, const char *fn,
 	     ip->type == CERT_IP_INHERIT) ||
 	    (has_v6 && ip->afi == AFI_IPV6 &&
 	     ip->type == CERT_IP_INHERIT)) {
-		if (quiet)
-			return 0;
-		warnx("%s: RFC 3779 section 2.2.3.5: "
-		    "cannot have multiple inheritance or inheritance and "
-		    "addresses of the same class", fn);
+		if (!quiet) {
+			warnx("%s: RFC 3779 section 2.2.3.5: "
+			    "cannot have multiple inheritance or inheritance "
+			    "and addresses of the same class", fn);
+		}
 		return 0;
 	}
 
 	/* Check our ranges. */
 
 	for (i = 0; i < ipsz; i++) {
-		char	 buf[64];
-
 		if (ips[i].afi != ip->afi)
 			continue;
 		if (memcmp(ips[i].max, ip->min, sz) <= 0 ||
 		    memcmp(ips[i].min, ip->max, sz) >= 0)
 			continue;
-		if (quiet)
-			return 0;
-		socktype = (ips[i].afi == AFI_IPV4) ? AF_INET : AF_INET6,
-		    warnx("%s: RFC 3779 section 2.2.3.5: "
-		    "cannot have overlapping IP addresses", fn);
-		ip_addr_print(&ip->ip, ip->afi, buf, sizeof(buf));
-		warnx("%s: certificate IP: %s", fn, buf);
-		if (inet_ntop(socktype, ip->min, buf, sizeof(buf)) == NULL)
-			err(1, "inet_ntop");
-		warnx("%s: certificate IP minimum: %s", fn, buf);
-		if (inet_ntop(socktype, ip->max, buf, sizeof(buf)) == NULL)
-			err(1, "inet_ntop");
-		warnx("%s: certificate IP maximum: %s", fn, buf);
-		if (inet_ntop(socktype, ips[i].min, buf, sizeof(buf)) == NULL)
-			err(1, "inet_ntop");
-		warnx("%s: offending IP minimum: %s", fn, buf);
-		if (inet_ntop(socktype, ips[i].max, buf, sizeof(buf)) == NULL)
-			err(1, "inet_ntop");
-		warnx("%s: offending IP maximum: %s", fn, buf);
+		if (!quiet) {
+			warnx("%s: RFC 3779 section 2.2.3.5: "
+			    "cannot have overlapping IP addresses", fn);
+			ip_warn(fn, ip, "certificate IP");
+			ip_warn(fn, &ips[i], "offending IP");
+		}
 		return 0;
 	}
 
