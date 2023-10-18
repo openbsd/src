@@ -1,4 +1,4 @@
-/* $OpenBSD: evp.h,v 1.119 2023/08/25 12:37:33 schwarze Exp $ */
+/* $OpenBSD: evp.h,v 1.120 2023/10/18 17:26:06 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1324,8 +1324,6 @@ int EVP_AEAD_CTX_open(const EVP_AEAD_CTX *ctx, unsigned char *out,
     size_t *out_len, size_t max_out_len, const unsigned char *nonce,
     size_t nonce_len, const unsigned char *in, size_t in_len,
     const unsigned char *ad, size_t ad_len);
-
-void EVP_add_alg_module(void);
 
 void ERR_load_EVP_strings(void);
 
