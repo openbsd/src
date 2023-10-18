@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.6 2023/04/17 22:28:51 krw Exp $
+#	$OpenBSD: Makefile,v 1.7 2023/10/18 01:45:42 deraadt Exp $
 
 FS=		install${OSrev}.img
-FSSIZE=		1032192
+FSSIZE=		1126400
 
 MOUNT_POINT=	/mnt
 
