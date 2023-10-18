@@ -1,4 +1,4 @@
-/* $OpenBSD: cms_dd.c,v 1.15 2022/11/26 16:08:51 tb Exp $ */
+/* $OpenBSD: cms_dd.c,v 1.16 2023/10/18 07:24:15 tb Exp $ */
 /*
  * Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
@@ -54,13 +54,14 @@
 
 #include <string.h>
 
-#include "cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/pem.h>
-#include <openssl/x509v3.h>
+#include <openssl/asn1.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/cms.h>
+#include <openssl/objects.h>
+
 #include "cms_local.h"
+#include "x509_local.h"
 
 /* CMS DigestedData Utilities */
 
@@ -85,7 +86,8 @@ cms_DigestedData_create(const EVP_MD *md)
 	dd->version = 0;
 	dd->encapContentInfo->eContentType = OBJ_nid2obj(NID_pkcs7_data);
 
-	X509_ALGOR_set_md(dd->digestAlgorithm, md);
+	if (!X509_ALGOR_set_evp_md(dd->digestAlgorithm, md))
+		goto err;
 
 	return cms;
 
