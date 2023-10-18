@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Term.pm,v 1.44 2023/06/13 09:07:18 espie Exp $
+# $OpenBSD: Term.pm,v 1.45 2023/10/18 08:50:13 espie Exp $
 #
 # Copyright (c) 2004-2007 Marc Espie <espie@openbsd.org>
 #
@@ -106,7 +106,7 @@ sub init($self)
 	};
 	if ($@) {
 		chomp $@;
-		$@ =~ s/\s+at\s+.*\s+line\s+.*//;
+		$@ =~ s/\s+at\s+\/.*\s+line\s+.*//;
 		$self->{state}->errsay("No progress meter: #1", $@);
 		bless $self, "OpenBSD::ProgressMeter::Stub";
 		return;
