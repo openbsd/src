@@ -280,7 +280,7 @@ sub Tgetent
 
     $first = 0;    # first entry (keeps term name)
 
-    $max = 32;     # max :tc=...:'s
+    $max = 64;     # max :tc=...:'s
 
     if ($entry)
     {
