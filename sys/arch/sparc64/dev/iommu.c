@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.82 2021/05/16 15:10:19 deraadt Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.83 2023/10/18 14:24:29 jan Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -1143,7 +1143,8 @@ iommu_dvmamap_insert(bus_dma_tag_t t, bus_dmamap_t map,
 	 */
 	if (i > 0) {
 		seg = &map->dm_segs[i - 1];
-		if (sgstart == seg->ds_addr + seg->ds_len) {
+		if (sgstart == seg->ds_addr + seg->ds_len &&
+		    length + seg->ds_len <= map->_dm_maxsegsz) {
 			length += seg->ds_len;
 			sgstart = seg->ds_addr;
 			sgend = sgstart + length - 1;
