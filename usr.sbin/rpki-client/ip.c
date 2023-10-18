@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.c,v 1.30 2023/10/18 07:08:19 tb Exp $ */
+/*	$OpenBSD: ip.c,v 1.31 2023/10/18 07:10:24 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -342,12 +342,12 @@ ip_warn(const char *fn, const struct cert_ip *cert, const char *msg)
 		ip_addr_print(&cert->ip, cert->afi, buf, sizeof(buf));
 		warnx("%s: %s: %s", fn, buf, msg);
 		break;
-	case CERT_IP_INHERIT:
-		warnx("%s: (inherit): %s", fn, msg);
-		break;
 	case CERT_IP_RANGE:
 		ip_addr_range_print(&cert->range, cert->afi, buf, sizeof(buf));
 		warnx("%s: %s: %s", fn, buf, msg);
+		break;
+	case CERT_IP_INHERIT:
+		warnx("%s: (inherit): %s", fn, msg);
 		break;
 	default:
 		warnx("%s: corrupt cert", fn);

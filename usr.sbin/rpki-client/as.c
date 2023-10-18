@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.14 2023/10/18 07:04:24 tb Exp $ */
+/*	$OpenBSD: as.c,v 1.15 2023/10/18 07:10:24 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -143,12 +143,12 @@ as_warn(const char *fn, const struct cert_as *cert, const char *msg)
 	case CERT_AS_ID:
 		warnx("%s: AS %u: %s", fn, cert->id, msg);
 		break;
-	case CERT_AS_INHERIT:
-		warnx("%s: AS (inherit): %s", fn, msg);
-		break;
 	case CERT_AS_RANGE:
 		warnx("%s: AS range %u--%u: %s", fn, cert->range.min,
 		    cert->range.max, msg);
+		break;
+	case CERT_AS_INHERIT:
+		warnx("%s: AS (inherit): %s", fn, msg);
 		break;
 	default:
 		warnx("%s: corrupt cert", fn);
