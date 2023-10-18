@@ -1,4 +1,4 @@
-/*	$OpenBSD: as.c,v 1.13 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: as.c,v 1.14 2023/10/18 07:04:24 tb Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -53,37 +53,29 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 
 	if (asz &&
 	    (a->type == CERT_AS_INHERIT || as[0].type == CERT_AS_INHERIT)) {
-		if (quiet)
-			return 0;
-		warnx("%s: RFC 3779 section 3.2.3.3: "
-		    "cannot have inheritance and multiple ASnum or "
-		    "multiple inheritance", fn);
+		if (!quiet) {
+			warnx("%s: RFC 3779 section 3.2.3.3: "
+			    "cannot have inheritance and multiple ASnum or "
+			    "multiple inheritance", fn);
+		}
 		return 0;
 	}
 
 	/* Now check for overlaps between singletons/ranges. */
 
-	for (i = 0; i < asz; i++)
+	for (i = 0; i < asz; i++) {
 		switch (as[i].type) {
 		case CERT_AS_ID:
 			switch (a->type) {
 			case CERT_AS_ID:
 				if (a->id != as[i].id)
-					break;
-				if (quiet)
-					return 0;
-				warnx("%s: RFC 3779 section 3.2.3.4: "
-				    "cannot have overlapping ASnum", fn);
-				return 0;
+					continue;
+				break;
 			case CERT_AS_RANGE:
 				if (as->range.min > as[i].id ||
 				    as->range.max < as[i].id)
-					break;
-				if (quiet)
-					return 0;
-				warnx("%s: RFC 3779 section 3.2.3.4: "
-				    "cannot have overlapping ASnum", fn);
-				return 0;
+					continue;
+				break;
 			default:
 				abort();
 			}
@@ -93,21 +85,13 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 			case CERT_AS_ID:
 				if (as[i].range.min > a->id ||
 				    as[i].range.max < a->id)
-					break;
-				if (quiet)
-					return 0;
-				warnx("%s: RFC 3779 section 3.2.3.4: "
-				    "cannot have overlapping ASnum", fn);
-				return 0;
+					continue;
+				break;
 			case CERT_AS_RANGE:
 				if (a->range.max < as[i].range.min ||
 				    a->range.min > as[i].range.max)
-					break;
-				if (quiet)
-					return 0;
-				warnx("%s: RFC 3779 section 3.2.3.4: "
-				    "cannot have overlapping ASnum", fn);
-				return 0;
+					continue;
+				break;
 			default:
 				abort();
 			}
@@ -115,6 +99,12 @@ as_check_overlap(const struct cert_as *a, const char *fn,
 		default:
 			abort();
 		}
+		if (!quiet) {
+			warnx("%s: RFC 3779 section 3.2.3.4: "
+			    "cannot have overlapping ASnum", fn);
+		}
+		return 0;
+	}
 
 	return 1;
 }
