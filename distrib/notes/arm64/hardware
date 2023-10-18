@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.20 2023/08/04 10:29:09 fcambus Exp $
+dnl	$OpenBSD: hardware,v 1.21 2023/10/18 07:23:58 fcambus Exp $
 The following machines are targeted by OpenBSD/MACHINE:
 
 	Allwinner A64/H5/H6
@@ -32,8 +32,11 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Apple MacBook Pro (14-inch, M1 Pro/Max, 2021)
 		Apple MacBook Pro (16-inch, M1 Pro/Max, 2021)
 		Apple Studio (M1 Max/Ultra, 2022)
-		Apple MacBook Air (M2, 2022)
+		Apple MacBook Air (13-inch, M2, 2022)
 		Apple MacBook Pro (13-inch, M2, 2022)
+		Apple MacBoot Air (15-inch, M2, 2023)
+		Apple MacBook Pro (14-inch, M2 Pro/Max, 2023)
+		Apple MacBook Pro (16-inch, M2 Pro/Max, 2023)
 	Broadcom BCM2837/BCM2711
 		Raspberry Pi 3
 		Raspberry Pi 3 Model B+
@@ -50,6 +53,7 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Acer Aspire One
 	Qualcomm Snapdragon 8cx Gen 3 (SC8280XP)
 		Lenovo ThinkPad X13s Gen 1
+		Microsoft Windows Dev Kit 2023
 	Rockchip RK3328/RK3399(pro)
 		Pine64 ROCK64
 		Pine64 ROCKPro64
@@ -57,11 +61,12 @@ The following machines are targeted by OpenBSD/MACHINE:
 		Firefly-RK3399
 		FriendlyElec NanoPC-T4
 		Theobroma Systems RK3399-Q7
-		Radxa Rock Pi N10
+		Radxa ROCK Pi N10
 	Rockchip RK3566/RK3568
 		Pine64 Quartz64 Model A
 		Pine64 Quartz64 Model B
 		ROC-RK3566-PC
 		NanoPi R5S
+		Radxa ROCK 3A
 	Socionext SC2A11
 		Socionext SynQuacer-E Developerbox
