@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.37 2021/02/01 16:39:19 sthen Exp $
+.\"	$OpenBSD: pfsync.4,v 1.38 2023/10/18 07:56:45 benno Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" Copyright (c) 2003-2004 Ryan McBride
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 1 2021 $
+.Dd $Mdocdate: October 18 2023 $
 .Dt PFSYNC 4
 .Os
 .Sh NAME
@@ -183,7 +183,10 @@ inet 192.168.0.1 255.255.255.0 192.168.0.255 \e
 .Ed
 .Pp
 .Pa /etc/hostname.pfsync0 :
-.Dl up syncdev sis2
+.Bd -literal -offset indent -compact
+syncdev sis2
+up
+.Ed
 .Pp
 .Xr pf 4
 must also be configured to allow
