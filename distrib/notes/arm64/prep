@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.18 2023/04/10 12:57:15 jsg Exp $
+dnl	$OpenBSD: prep,v 1.19 2023/10/18 06:45:45 kevlo Exp $
 To perform an installation you must be able to interact with the
 console of the machine.  In some cases this can be done by an attached
 monitor and keyboard.  In others a serial console is required.
@@ -132,3 +132,8 @@ Install on systems without a supported miniroot:
  	    of=/dev/sdXc seek=64
  	dd if=/usr/local/share/u-boot/board/u-boot.itb \
  	    of=/dev/sdXc seek=16384
+
+  For systems based on Rockchip RK356x SoCs:
+
+ 	dd if=/usr/local/share/u-boot/board/u-boot-rockchip.bin \
+ 	    of=/dev/sdXc seek=64
