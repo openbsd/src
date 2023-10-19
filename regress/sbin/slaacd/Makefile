@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2020/12/30 21:40:32 kn Exp $
+#	$OpenBSD: Makefile,v 1.11 2023/10/19 18:36:40 anton Exp $
 
 # The following ports must be installed:
 #
@@ -54,7 +54,7 @@ setup: cleanup
 
 REGRESS_CLEANUP +=	cleanup
 cleanup:
-.for iface in ${PAIR1} ${PAIR2}
+.for iface in ${PAIR1} ${PAIR2} lo${RTABLE}
 	${SUDO} ifconfig ${iface} destroy 2>/dev/null || true
 .endfor
 

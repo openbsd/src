@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.3 2017/07/07 23:55:21 bluhm Exp $
+# $OpenBSD: Makefile,v 1.4 2023/10/19 18:36:41 anton Exp $
 
 RDOMAIN?=	5
 VETHER_MAC=	fe:e1:ba:d2:a3:18
@@ -19,9 +19,11 @@ OTHER_MAC=	cc:77:55:22:aa:66
 
 .END:
 	-${SUDO} ifconfig vether10001 destroy
+	-${SUDO} ifconfig lo${RDOMAIN} destroy
 
 .INTERRUPT:
 	-${SUDO} ifconfig vether10001 destroy
+	-${SUDO} ifconfig lo${RDOMAIN} destroy
 
 .endif
 .endif

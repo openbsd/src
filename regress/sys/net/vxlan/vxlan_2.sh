@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$Id: vxlan_2.sh,v 1.3 2022/02/21 00:36:22 dlg Exp $
+#	$Id: vxlan_2.sh,v 1.4 2023/10/19 18:36:41 anton Exp $
 
 
 CAPFILE=$(mktemp -t regress_vxlan.XXXXXXX)
@@ -142,6 +142,11 @@ for id in $RDOMAINS; do
 done
 
 CLEANUP_IFS="bridge$VNETID $CLEANUP_IFS"
+
+for id in $RDOMAINS; do
+	CLEANUP_IFS="$CLEANUP_IFS lo${id}"
+done
+CLEANUP_IFS="$CLEANUP_IFS lo${VNETID}"
 
 STATUS=0
 

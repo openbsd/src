@@ -1,4 +1,4 @@
-#	$OpenBSD: ifalocal.sh,v 1.1 2015/10/26 08:04:10 vgross Exp $
+#	$OpenBSD: ifalocal.sh,v 1.2 2023/10/19 18:36:41 anton Exp $
 
 # Copyright (c) 2015 Vincent Gross <vgross@openbsd.org>
 #
@@ -51,6 +51,8 @@ cleanup()
 	ifconfig vether4 destroy
 	route -T 3 flush
 	ifconfig vether3 destroy
+	ifconfig lo5 destroy
+	ifconfig lo3 destroy
 }
 
 cleanup_and_die()

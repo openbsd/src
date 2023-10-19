@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 2023/10/11 18:07:56 anton Exp $
+#	$OpenBSD: Makefile,v 1.11 2023/10/19 18:36:40 anton Exp $
 
 # Copyright (c) 2017-2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -105,6 +105,7 @@ unconfig: stamp-stop
 	-${SUDO} /sbin/ifconfig lo$n rdomain $n
 	-${SUDO} /sbin/ifconfig lo$n inet 127.0.0.1 delete
 	-${SUDO} /sbin/ifconfig lo$n inet 127.0.0.$n delete
+	-${SUDO} /sbin/ifconfig lo$n destroy
 .endfor
 	rm -f stamp-ifconfig
 

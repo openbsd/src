@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2020/12/17 00:39:42 bluhm Exp $
+#	$OpenBSD: Makefile,v 1.8 2023/10/19 18:36:40 anton Exp $
 
 # Copyright (c) 2017 Alexander Bluhm <bluhm@openbsd.org>
 # Copyright (c) 2015 Vincent Gross <vgross@openbsd.org>
@@ -82,6 +82,8 @@ unconfig:
 	-${SUDO} /sbin/ifconfig $i$n destroy
 .endfor
 .endfor
+	-${SUDO} /sbin/ifconfig lo${N1} destroy
+	-${SUDO} /sbin/ifconfig lo${N2} destroy
 	rm -f stamp-ifconfig
 
 REGRESS_TARGETS +=	run-ping-1-2

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2023/10/11 18:07:56 anton Exp $
+#	$OpenBSD: Makefile,v 1.10 2023/10/19 18:36:40 anton Exp $
 
 # Copyright (c) 2021 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -114,6 +114,7 @@ unconfig: stamp-stop
 .for n in ${NUMS}
 	-${SUDO} /sbin/ifconfig pflog$n destroy
 .endfor
+	-${SUDO} /sbin/ifconfig lo$N destroy
 	rm -f stamp-ifconfig
 
 addr.py: Makefile

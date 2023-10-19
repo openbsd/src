@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.2 2019/03/30 06:37:10 yasuoka Exp $
+# $OpenBSD: Makefile,v 1.3 2023/10/19 18:36:41 anton Exp $
 
 ROUTE?=		/sbin/route
 RDOMAIN?=	5
@@ -13,9 +13,11 @@ NETSTAT?=	/usr/bin/netstat
 
 .BEGIN:
 	${SUDO} ifconfig vether99 destroy 2>/dev/null || true
+	${SUDO} ifconfig lo${RDOMAIN} destroy 2>/dev/null || true
 
 .END:
 	${SUDO} ifconfig vether99 destroy 2>/dev/null || true
+	${SUDO} ifconfig lo${RDOMAIN} destroy 2>/dev/null || true
 
 .endif
 .endif

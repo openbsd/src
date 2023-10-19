@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.32 2019/03/30 06:37:10 yasuoka Exp $
+# $OpenBSD: Makefile,v 1.33 2023/10/19 18:36:40 anton Exp $
 
 ROUTE?=		/sbin/route
 RDOMAIN?=	5
@@ -21,7 +21,7 @@ RDOMAIN?=	5
 	-${SUDO} ifconfig lo10004 up rdomain ${RDOMAIN} 192.0.2.4/32
 
 .END:
-.for itf in lo10001 lo10002 lo10003 lo10004 vlan99 vether99
+.for itf in lo10001 lo10002 lo10003 lo10004 vlan99 vether99 lo${RDOMAIN}
 	-${SUDO} ifconfig ${itf} destroy 2>/dev/null || true
 .endfor
 
