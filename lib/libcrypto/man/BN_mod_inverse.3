@@ -1,4 +1,4 @@
-.\"	$OpenBSD: BN_mod_inverse.3,v 1.11 2021/11/30 18:34:35 tb Exp $
+.\"	$OpenBSD: BN_mod_inverse.3,v 1.12 2023/10/19 19:17:46 tb Exp $
 .\"	OpenSSL b97fdb57 Nov 11 09:33:09 2016 +0100
 .\"
 .\" This file was written by Ulf Moeller <ulf@openssl.org>.
@@ -48,19 +48,19 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
 .\" OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 30 2021 $
+.Dd $Mdocdate: October 19 2023 $
 .Dt BN_MOD_INVERSE 3
 .Os
 .Sh NAME
 .Nm BN_mod_inverse
-.Nd compute inverse modulo n
+.Nd compute inverse modulo m
 .Sh SYNOPSIS
 .In openssl/bn.h
 .Ft BIGNUM *
 .Fo BN_mod_inverse
 .Fa "BIGNUM *r"
 .Fa "const BIGNUM *a"
-.Fa "const BIGNUM *n"
+.Fa "const BIGNUM *m"
 .Fa "BN_CTX *ctx"
 .Fc
 .Sh DESCRIPTION
@@ -68,24 +68,27 @@
 computes the inverse of
 .Fa a
 modulo
-.Fa n
+.Fa m
 and places the result in
+.Fa r ,
+so
 .Fa r
-.Pq Li (a*r)%n==1 .
+is such that
+.Li a * r == 1 (mod m) .
 If
 .Fa r
 is
 .Dv NULL ,
 a new
 .Vt BIGNUM
-is created.
+is allocated.
 .Pp
 If the flag
 .Dv BN_FLG_CONSTTIME
 is set on
 .Fa a
 or
-.Fa n ,
+.Fa m ,
 it operates in constant time.
 .Pp
 .Fa ctx
@@ -98,7 +101,7 @@ may be the same
 as
 .Fa a
 or
-.Fa n .
+.Fa m .
 .Sh RETURN VALUES
 .Fn BN_mod_inverse
 returns the
