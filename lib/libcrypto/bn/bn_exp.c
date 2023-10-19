@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.47 2023/07/08 12:21:58 beck Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.48 2023/10/19 10:17:52 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -180,16 +180,22 @@ int
 BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
     BN_CTX *ctx)
 {
-	int i, j, bits, ret = 0, wstart, wend, window, wvalue;
+	int i, j, bits, wstart, wend, window, wvalue;
 	int start = 1;
-	BIGNUM *d;
+	BIGNUM *d, *q;
 	/* Table of variables obtained from 'ctx' */
 	BIGNUM *val[TABLE_SIZE];
+	int ret = 0;
 
 	if (BN_get_flags(p, BN_FLG_CONSTTIME) != 0) {
 		/* BN_FLG_CONSTTIME only supported by BN_mod_exp_mont() */
 		BNerror(ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
 		return -1;
+	}
+
+	if (r == m) {
+		BNerror(BN_R_INVALID_ARGUMENT);
+		return 0;
 	}
 
 	bits = BN_num_bits(p);
@@ -206,16 +212,19 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	BN_CTX_start(ctx);
 	if ((d = BN_CTX_get(ctx)) == NULL)
 		goto err;
+	if ((q = BN_CTX_get(ctx)) == NULL)
+		goto err;
 	if ((val[0] = BN_CTX_get(ctx)) == NULL)
 		goto err;
 
-	if (!BN_nnmod(val[0],a,m,ctx))
+	if (!BN_nnmod(val[0], a, m, ctx))
 		goto err;		/* 1 */
 	if (BN_is_zero(val[0])) {
 		BN_zero(r);
-		ret = 1;
-		goto err;
+		goto done;
 	}
+	if (!bn_copy(q, p))
+		goto err;
 
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1) {
@@ -240,7 +249,7 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		goto err;
 
 	for (;;) {
-		if (BN_is_bit_set(p, wstart) == 0) {
+		if (BN_is_bit_set(q, wstart) == 0) {
 			if (!start)
 				if (!BN_mod_mul(r, r, r, m, ctx))
 					goto err;
@@ -259,7 +268,7 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		for (i = 1; i < window; i++) {
 			if (wstart - i < 0)
 				break;
-			if (BN_is_bit_set(p, wstart - i)) {
+			if (BN_is_bit_set(q, wstart - i)) {
 				wvalue <<= (i - wend);
 				wvalue |= 1;
 				wend = i;
@@ -286,11 +295,14 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		if (wstart < 0)
 			break;
 	}
+
+ done:
 	ret = 1;
 
-err:
+ err:
 	BN_CTX_end(ctx);
-	return (ret);
+
+	return ret;
 }
 LCRYPTO_ALIAS(BN_mod_exp_simple);
 
