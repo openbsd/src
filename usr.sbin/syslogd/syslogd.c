@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.278 2023/10/12 22:36:54 bluhm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.279 2023/10/19 22:16:10 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2014-2021 Alexander Bluhm <bluhm@genua.de>
@@ -241,6 +241,7 @@ int	NoVerify = 0;		/* do not verify TLS server x509 certificate */
 const char *ClientCertfile = NULL;
 const char *ClientKeyfile = NULL;
 const char *ServerCAfile = NULL;
+int	udpsend_dropped = 0;	/* messages dropped due to UDP not ready */
 int	tcpbuf_dropped = 0;	/* count messages dropped from TCP or TLS */
 int	file_dropped = 0;	/* messages dropped due to file system full */
 int	init_dropped = 0;	/* messages dropped during initialization */
@@ -1820,6 +1821,7 @@ logmsg(struct msg *msg, int flags, char *from)
 		    (f->f_type != F_PIPE && f->f_type != F_FORWUDP &&
 		    f->f_type != F_FORWTCP && f->f_type != F_FORWTLS))) &&
 		    (flags & MARK) == 0 && msglen == f->f_prevlen &&
+		    f->f_dropped == 0 &&
 		    !strcmp(msg->m_msg, f->f_prevline) &&
 		    !strcmp(from, f->f_prevhost)) {
 			strlcpy(f->f_lasttime, msg->m_timestamp,
@@ -2005,14 +2007,14 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	switch (f->f_type) {
 	case F_UNUSED:
-		log_debug("%s", "");
+		log_debug("");
 		break;
 
 	case F_FORWUDP:
-		log_debug(" %s", f->f_un.f_forw.f_loghost);
+		log_debugadd(" %s", f->f_un.f_forw.f_loghost);
 		if (f->f_un.f_forw.f_addr.ss_family == AF_UNSPEC) {
-			log_warnx("not resolved \"%s\"",
-			    f->f_un.f_forw.f_loghost);
+			log_debug(" (dropped not resolved)");
+			f->f_dropped++;
 			break;
 		}
 		l = iov[0].iov_len + iov[1].iov_len + iov[2].iov_len +
@@ -2040,13 +2042,29 @@ fprintlog(struct filed *f, int flags, char *msg)
 			case ENETUNREACH:
 			case ENOBUFS:
 			case EWOULDBLOCK:
+				log_debug(" (dropped send error)");
+				f->f_dropped++;
 				/* silently dropped */
 				break;
 			default:
+				log_debug(" (dropped permanent send error)");
+				f->f_dropped++;
 				f->f_type = F_UNUSED;
-				log_warn("sendmsg to \"%s\"",
+				snprintf(ebuf, sizeof(ebuf),
+				    "to udp loghost \"%s\"",
+				    f->f_un.f_forw.f_loghost);
+				dropped_warn(&f->f_dropped, ebuf);
+				log_warn("loghost \"%s\" disabled, sendmsg",
 				    f->f_un.f_forw.f_loghost);
 				break;
+			}
+		} else {
+			log_debug("");
+			if (f->f_dropped > 0) {
+				snprintf(ebuf, sizeof(ebuf),
+				    "to udp loghost \"%s\"",
+				    f->f_un.f_forw.f_loghost);
+				dropped_warn(&f->f_dropped, ebuf);
 			}
 		}
 		break;
@@ -2056,7 +2074,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		log_debugadd(" %s", f->f_un.f_forw.f_loghost);
 		if (EVBUFFER_LENGTH(f->f_un.f_forw.f_bufev->output) >=
 		    MAX_TCPBUF) {
-			log_debug(" (dropped)");
+			log_debug(" (dropped tcpbuf full)");
 			f->f_dropped++;
 			break;
 		}
@@ -2077,12 +2095,12 @@ fprintlog(struct filed *f, int flags, char *msg)
 		    (char *)iov[3].iov_base, (char *)iov[4].iov_base,
 		    (char *)iov[5].iov_base, (char *)iov[6].iov_base);
 		if (l < 0) {
-			log_debug(" (dropped evbuffer_add_printf)");
+			log_debug(" (dropped evbuffer add)");
 			f->f_dropped++;
 			break;
 		}
 		bufferevent_enable(f->f_un.f_forw.f_bufev, EV_WRITE);
-		log_debug("%s", "");
+		log_debug("");
 		break;
 
 	case F_CONSOLE:
@@ -2165,7 +2183,7 @@ fprintlog(struct filed *f, int flags, char *msg)
 		} else {
 			if (flags & SYNC_FILE)
 				(void)fsync(f->f_file);
-			if (f->f_dropped && f->f_type == F_FILE) {
+			if (f->f_dropped > 0 && f->f_type == F_FILE) {
 				snprintf(ebuf, sizeof(ebuf), "to file \"%s\"",
 				    f->f_un.f_fname);
 				dropped_warn(&f->f_dropped, ebuf);
@@ -2175,12 +2193,12 @@ fprintlog(struct filed *f, int flags, char *msg)
 
 	case F_USERS:
 	case F_WALL:
-		log_debug("%s", "");
+		log_debug("");
 		wallmsg(f, iov);
 		break;
 
 	case F_MEMBUF:
-		log_debug("%s", "");
+		log_debug("");
 		l = snprintf(line, sizeof(line),
 		    "%s%s%s%s%s%s%s", (char *)iov[0].iov_base,
 		    (char *)iov[1].iov_base, (char *)iov[2].iov_base,
@@ -2293,8 +2311,9 @@ init_signalcb(int signum, short event, void *arg)
 	init();
 	log_info(LOG_INFO, "restart");
 
-	dropped_warn(&file_dropped, "to file");
+	dropped_warn(&udpsend_dropped, "to udp loghost");
 	dropped_warn(&tcpbuf_dropped, "to remote loghost");
+	dropped_warn(&file_dropped, "to file");
 	log_debug("syslogd: restarted");
 }
 
@@ -2327,6 +2346,10 @@ die(int signo)
 		/* flush any pending output */
 		if (f->f_prevcount)
 			fprintlog(f, 0, (char *)NULL);
+		if (f->f_type == F_FORWUDP) {
+			udpsend_dropped += f->f_dropped;
+			f->f_dropped = 0;
+		}
 		if (f->f_type == F_FORWTLS || f->f_type == F_FORWTCP) {
 			tcpbuf_dropped += f->f_dropped +
 			    tcpbuf_countmsg(f->f_un.f_forw.f_bufev);
@@ -2338,8 +2361,9 @@ die(int signo)
 		}
 	}
 	dropped_warn(&init_dropped, "during initialization");
-	dropped_warn(&file_dropped, "to file");
+	dropped_warn(&udpsend_dropped, "to udp loghost");
 	dropped_warn(&tcpbuf_dropped, "to remote loghost");
+	dropped_warn(&file_dropped, "to file");
 
 	if (signo)
 		log_info(LOG_ERR, "exiting on signal %d", signo);
@@ -2383,6 +2407,8 @@ init(void)
 		switch (f->f_type) {
 		case F_FORWUDP:
 			evtimer_del(&f->f_un.f_forw.f_ev);
+			udpsend_dropped += f->f_dropped;
+			f->f_dropped = 0;
 			free(f->f_un.f_forw.f_ipproto);
 			free(f->f_un.f_forw.f_host);
 			free(f->f_un.f_forw.f_port);
@@ -2403,10 +2429,9 @@ init(void)
 			free(f->f_un.f_forw.f_port);
 			/* FALLTHROUGH */
 		case F_FILE:
-			if (f->f_type == F_FILE) {
+			if (f->f_type == F_FILE)
 				file_dropped += f->f_dropped;
-				f->f_dropped = 0;
-			}
+			f->f_dropped = 0;
 			/* FALLTHROUGH */
 		case F_TTY:
 		case F_CONSOLE:
