@@ -31,7 +31,7 @@ our %args = (
 	loggrep => {
 	    get_between2loggrep(),
 	    get_charlog() => 400,
-	    qr/ \(dropped\)/ => '~61',
+	    qr/ \(dropped tcpbuf full\)/ => '~61',
 	},
     },
     server => {
