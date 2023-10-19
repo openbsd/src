@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr_proto.c,v 1.17 2023/08/16 08:26:35 claudio Exp $ */
+/*	$OpenBSD: rtr_proto.c,v 1.18 2023/10/19 11:12:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -233,24 +233,21 @@ rtr_newmsg(struct rtr_session *rs, enum rtr_pdu_type type, uint32_t len,
     uint16_t session_id)
 {
 	struct ibuf *buf;
-	struct rtr_header rh;
 
 	if (len > RTR_MAX_LEN) {
 		errno = ERANGE;
 		return NULL;
 	}
-	len += sizeof(rh);
+	len += sizeof(struct rtr_header);
 	if ((buf = ibuf_open(len)) == NULL)
 		return NULL;
 
-	memset(&rh, 0, sizeof(rh));
-	rh.version = rs->version;
-	rh.type = type;
-	rh.session_id = htons(session_id);
-	rh.length = htonl(len);
-
 	/* cannot fail with fixed buffers */
-	ibuf_add(buf, &rh, sizeof(rh));
+	ibuf_add_n8(buf, rs->version);
+	ibuf_add_n8(buf, type);
+	ibuf_add_n16(buf, session_id);
+	ibuf_add_n32(buf, len);
+
 	return buf;
 }
 
@@ -264,7 +261,6 @@ rtr_send_error(struct rtr_session *rs, enum rtr_error err, char *msg,
 {
 	struct ibuf *buf;
 	size_t mlen = 0;
-	uint32_t hdrlen;
 
 	rs->last_sent_error = err;
 	if (msg) {
@@ -273,7 +269,7 @@ rtr_send_error(struct rtr_session *rs, enum rtr_error err, char *msg,
 	} else
 		memset(rs->last_sent_msg, 0, sizeof(rs->last_sent_msg));
 
-	buf = rtr_newmsg(rs, ERROR_REPORT, 2 * sizeof(hdrlen) + len + mlen,
+	buf = rtr_newmsg(rs, ERROR_REPORT, 2 * sizeof(uint32_t) + len + mlen,
 	    err);
 	if (buf == NULL) {
 		log_warn("rtr %s: send error report", log_rtr(rs));
@@ -281,11 +277,9 @@ rtr_send_error(struct rtr_session *rs, enum rtr_error err, char *msg,
 	}
 
 	/* cannot fail with fixed buffers */
-	hdrlen = ntohl(len);
-	ibuf_add(buf, &hdrlen, sizeof(hdrlen));
+	ibuf_add_n32(buf, len);
 	ibuf_add(buf, pdu, len);
-	hdrlen = ntohl(mlen);
-	ibuf_add(buf, &hdrlen, sizeof(hdrlen));
+	ibuf_add_n32(buf, mlen);
 	ibuf_add(buf, msg, mlen);
 	ibuf_close(&rs->w, buf);
 
@@ -313,9 +307,8 @@ static void
 rtr_send_serial_query(struct rtr_session *rs)
 {
 	struct ibuf *buf;
-	uint32_t s;
 
-	buf = rtr_newmsg(rs, SERIAL_QUERY, sizeof(s), rs->session_id);
+	buf = rtr_newmsg(rs, SERIAL_QUERY, sizeof(uint32_t), rs->session_id);
 	if (buf == NULL) {
 		log_warn("rtr %s: send serial query", log_rtr(rs));
 		rtr_send_error(rs, INTERNAL_ERROR, "out of memory", NULL, 0);
@@ -323,8 +316,7 @@ rtr_send_serial_query(struct rtr_session *rs)
 	}
 
 	/* cannot fail with fixed buffers */
-	s = htonl(rs->serial);
-	ibuf_add(buf, &s, sizeof(s));
+	ibuf_add_n32(buf, rs->serial);
 	ibuf_close(&rs->w, buf);
 }
 
