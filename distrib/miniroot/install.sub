@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sub,v 1.1255 2023/08/21 14:33:55 kn Exp $
+#	$OpenBSD: install.sub,v 1.1256 2023/10/19 02:39:06 kn Exp $
 #
 # Copyright (c) 1997-2015 Todd Miller, Theo de Raadt, Ken Westerback
 # Copyright (c) 2015, Robert Peichaer <rpe@openbsd.org>
@@ -3074,8 +3074,32 @@ do_autoinstall() {
 	exec reboot
 }
 
+# Chose an existing partition as key disk and set global $KEYDISK on success,
+# otherwise return non-zero.
+pick_keydisk() {
+	KEYDISK=
+	local _disk _label
+
+	ask_which disk 'contains the key disk' '$(rmel $ROOTDISK $(get_dkdevs))'
+	[[ $resp == done ]] && return 1
+	_disk=$resp
+
+	make_dev $_disk
+	if disklabel $_disk 2>/dev/null | ! grep -qw RAID; then
+		echo "$_disk must contain a RAID partition."
+		return 1
+	fi
+
+	ask_which "$_disk partition" 'is the key disk' \
+		"\$(disklabel $_disk 2>/dev/null |
+		    sed -En 's/^  ([a-p]):.*RAID.*$/\1/p')"
+	[[ $resp == done ]] && return 1
+	_label=$resp
+	KEYDISK=$_disk$_label
+}
+
 encrypt_root() {
-	local _chunk=$ROOTDISK
+	local _args _chunk=$ROOTDISK
 
 	[[ $MDBOOTSR == y ]] || return
 
@@ -3088,13 +3112,30 @@ encrypt_root() {
 	# e.g. auto-assembled at boot or done in (S)hell.
 	[[ -z $(get_softraid_volumes) ]] || return
 
-	ask_yn 'Encrypt the root disk with a passphrase?' || return
+	while :; do
+		ask 'Encrypt the root disk with a (p)assphrase or (k)eydisk?' no
+		case $resp in
+		# Retry on failure to allow passphrase or skip.
+		[kK]*)
+			pick_keydisk || continue
+			_args=-k$KEYDISK
+			break
+			;;
+		# Do nothing, bioctl(8) will handle the passphrase.
+		[pP]*)	break
+			;;
+		[nN]*)	return
+			;;
+		*)	echo "'$resp' is not a valid choice."
+			;;
+		esac
+	done
 
 	echo "\nConfiguring the crypto chunk $_chunk...\n"
 	md_prep_fdisk $_chunk
 	echo 'RAID *' | disklabel -w -A -T- $_chunk
 
-	bioctl -Cforce -cC -l${_chunk}a softraid0 >/dev/null
+	bioctl -Cforce -cC -l${_chunk}a $_args softraid0 >/dev/null
 
 	# No volumes existed before asking, but we just created one.
 	ROOTDISK=$(get_softraid_volumes)
