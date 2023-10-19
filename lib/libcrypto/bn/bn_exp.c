@@ -1,4 +1,4 @@
-/* $OpenBSD: bn_exp.c,v 1.49 2023/10/19 10:23:00 tb Exp $ */
+/* $OpenBSD: bn_exp.c,v 1.50 2023/10/19 10:27:27 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -218,7 +218,7 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 		goto err;
 
 	if (!BN_nnmod(val[0], a, m, ctx))
-		goto err;		/* 1 */
+		goto err;
 	if (BN_is_zero(val[0])) {
 		BN_zero(r);
 		goto done;
@@ -229,7 +229,7 @@ BN_mod_exp_simple(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1) {
 		if (!BN_mod_mul(d, val[0], val[0], m, ctx))
-			goto err;				/* 2 */
+			goto err;
 		j = 1 << (window - 1);
 		for (i = 1; i < j; i++) {
 			if (((val[i] = BN_CTX_get(ctx)) == NULL) ||
@@ -710,12 +710,12 @@ BN_mod_exp_mont_internal(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p, const BIG
 		goto err;
 	}
 	if (!BN_to_montgomery(val[0], aa, mont, ctx))
-		goto err; /* 1 */
+		goto err;
 
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1) {
 		if (!BN_mod_mul_montgomery(d, val[0], val[0], mont, ctx))
-			goto err; /* 2 */
+			goto err;
 		j = 1 << (window - 1);
 		for (i = 1; i < j; i++) {
 			if (((val[i] = BN_CTX_get(ctx)) == NULL) ||
@@ -1016,7 +1016,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	}
 
 	if (!BN_nnmod(val[0], a, m, ctx))
-		goto err;		/* 1 */
+		goto err;
 	if (BN_is_zero(val[0])) {
 		BN_zero(r);
 		goto done;
@@ -1027,7 +1027,7 @@ BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, const BIGNUM *m,
 	window = BN_window_bits_for_exponent_size(bits);
 	if (window > 1) {
 		if (!BN_mod_mul_reciprocal(aa, val[0], val[0], &recp, ctx))
-			goto err;				/* 2 */
+			goto err;
 		j = 1 << (window - 1);
 		for (i = 1; i < j; i++) {
 			if (((val[i] = BN_CTX_get(ctx)) == NULL) ||
