@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.163 2023/10/16 10:25:46 claudio Exp $ */
+/*	$OpenBSD: session.h,v 1.164 2023/10/19 07:02:46 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -121,21 +121,6 @@ struct bgp_msg {
 	struct ibuf	*buf;
 	enum msg_type	 type;
 	uint16_t	 len;
-};
-
-struct msg_header {
-	u_char		 marker[MSGSIZE_HEADER_MARKER];
-	uint16_t	 len;
-	uint8_t		 type;
-};
-
-struct msg_open {
-	struct msg_header	 header;
-	uint32_t		 bgpid;
-	uint16_t		 myas;
-	uint16_t		 holdtime;
-	uint8_t			 version;
-	uint8_t			 optparamlen;
 };
 
 struct bgpd_sysdep {

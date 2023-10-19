@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.450 2023/10/17 17:58:15 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.451 2023/10/19 07:02:45 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1324,24 +1324,26 @@ session_capa_add(struct ibuf *opb, uint8_t capa_code, uint8_t capa_len)
 {
 	int errs = 0;
 
-	errs += ibuf_add(opb, &capa_code, sizeof(capa_code));
-	errs += ibuf_add(opb, &capa_len, sizeof(capa_len));
+	errs += ibuf_add_n8(opb, capa_code);
+	errs += ibuf_add_n8(opb, capa_len);
 	return (errs);
 }
 
 int
 session_capa_add_mp(struct ibuf *buf, uint8_t aid)
 {
-	uint8_t			 safi, pad = 0;
 	uint16_t		 afi;
+	uint8_t			 safi;
 	int			 errs = 0;
 
-	if (aid2afi(aid, &afi, &safi) == -1)
-		fatalx("session_capa_add_mp: bad afi/safi pair");
-	afi = htons(afi);
-	errs += ibuf_add(buf, &afi, sizeof(afi));
-	errs += ibuf_add(buf, &pad, sizeof(pad));
-	errs += ibuf_add(buf, &safi, sizeof(safi));
+	if (aid2afi(aid, &afi, &safi) == -1) {
+		log_warn("%s: bad AID", __func__);
+		return (-1);
+	}
+
+	errs += ibuf_add_n16(buf, afi);
+	errs += ibuf_add_zero(buf, 1);
+	errs += ibuf_add_n8(buf, safi);
 
 	return (errs);
 }
@@ -1355,14 +1357,13 @@ session_capa_add_afi(struct peer *p, struct ibuf *b, uint8_t aid,
 	uint8_t		safi;
 
 	if (aid2afi(aid, &afi, &safi)) {
-		log_warn("session_capa_add_afi: bad AID");
-		return (1);
+		log_warn("%s: bad AID", __func__);
+		return (-1);
 	}
 
-	afi = htons(afi);
-	errs += ibuf_add(b, &afi, sizeof(afi));
-	errs += ibuf_add(b, &safi, sizeof(safi));
-	errs += ibuf_add(b, &flags, sizeof(flags));
+	errs += ibuf_add_n16(b, afi);
+	errs += ibuf_add_n8(b, safi);
+	errs += ibuf_add_n8(b, flags);
 
 	return (errs);
 }
@@ -1370,21 +1371,19 @@ session_capa_add_afi(struct peer *p, struct ibuf *b, uint8_t aid,
 struct bgp_msg *
 session_newmsg(enum msg_type msgtype, uint16_t len)
 {
+	u_char			 marker[MSGSIZE_HEADER_MARKER];
 	struct bgp_msg		*msg;
-	struct msg_header	 hdr;
 	struct ibuf		*buf;
 	int			 errs = 0;
 
-	memset(&hdr.marker, 0xff, sizeof(hdr.marker));
-	hdr.len = htons(len);
-	hdr.type = msgtype;
+	memset(marker, 0xff, sizeof(marker));
 
 	if ((buf = ibuf_open(len)) == NULL)
 		return (NULL);
 
-	errs += ibuf_add(buf, &hdr.marker, sizeof(hdr.marker));
-	errs += ibuf_add(buf, &hdr.len, sizeof(hdr.len));
-	errs += ibuf_add(buf, &hdr.type, sizeof(hdr.type));
+	errs += ibuf_add(buf, marker, sizeof(marker));
+	errs += ibuf_add_n16(buf, len);
+	errs += ibuf_add_n8(buf, msgtype);
 
 	if (errs || (msg = calloc(1, sizeof(*msg))) == NULL) {
 		ibuf_free(buf);
@@ -1472,8 +1471,7 @@ session_open(struct peer *p)
 {
 	struct bgp_msg		*buf;
 	struct ibuf		*opb;
-	struct msg_open		 msg;
-	uint16_t		 len, optparamlen = 0;
+	uint16_t		 len, optparamlen = 0, holdtime;
 	uint8_t			 i, op_type;
 	int			 errs = 0, extlen = 0;
 	int			 mpcapa = 0;
@@ -1501,10 +1499,8 @@ session_open(struct peer *p)
 	    p->conf.role != ROLE_NONE &&
 	    (p->capa.ann.mp[AID_INET] || p->capa.ann.mp[AID_INET6] ||
 	    mpcapa == 0)) {
-		uint8_t val;
-		val = role2capa(p->conf.role);
 		errs += session_capa_add(opb, CAPA_ROLE, 1);
-		errs += ibuf_add(opb, &val, 1);
+		errs += ibuf_add_n8(opb, role2capa(p->conf.role));
 	}
 
 	/* graceful restart and End-of-RIB marker, RFC 4724 */
@@ -1520,19 +1516,14 @@ session_open(struct peer *p)
 		/* Only set the R-flag if no graceful restart is ongoing */
 		if (!rst)
 			hdr |= CAPA_GR_R_FLAG;
-		hdr = htons(hdr);
-
 		errs += session_capa_add(opb, CAPA_RESTART, sizeof(hdr));
-		errs += ibuf_add(opb, &hdr, sizeof(hdr));
+		errs += ibuf_add_n16(opb, hdr);
 	}
 
 	/* 4-bytes AS numbers, RFC6793 */
 	if (p->capa.ann.as4byte) {	/* 4 bytes data */
-		uint32_t	nas;
-
-		nas = htonl(p->conf.local_as);
-		errs += session_capa_add(opb, CAPA_AS4BYTE, sizeof(nas));
-		errs += ibuf_add(opb, &nas, sizeof(nas));
+		errs += session_capa_add(opb, CAPA_AS4BYTE, sizeof(uint32_t));
+		errs += ibuf_add_n32(opb, p->conf.local_as);
 	}
 
 	/* advertisement of multiple paths, RFC7911 */
@@ -1567,11 +1558,10 @@ session_open(struct peer *p)
 	} else if (optparamlen + 2 >= 255) {
 		/* RFC9072: 2 byte length instead of 1 + 3 byte extra header */
 		optparamlen += sizeof(op_type) + 2 + 3;
-		msg.optparamlen = 255;
+		optparamlen = 255;
 		extlen = 1;
 	} else {
 		optparamlen += sizeof(op_type) + 1;
-		msg.optparamlen = optparamlen;
 	}
 
 	len = MSGSIZE_OPEN_MIN + optparamlen;
@@ -1581,40 +1571,33 @@ session_open(struct peer *p)
 		return;
 	}
 
-	msg.version = 4;
-	msg.myas = htons(p->conf.local_short_as);
 	if (p->conf.holdtime)
-		msg.holdtime = htons(p->conf.holdtime);
+		holdtime = htons(p->conf.holdtime);
 	else
-		msg.holdtime = htons(conf->holdtime);
-	msg.bgpid = conf->bgpid;	/* is already in network byte order */
+		holdtime = htons(conf->holdtime);
 
-	errs += ibuf_add(buf->buf, &msg.version, sizeof(msg.version));
-	errs += ibuf_add(buf->buf, &msg.myas, sizeof(msg.myas));
-	errs += ibuf_add(buf->buf, &msg.holdtime, sizeof(msg.holdtime));
-	errs += ibuf_add(buf->buf, &msg.bgpid, sizeof(msg.bgpid));
-	errs += ibuf_add(buf->buf, &msg.optparamlen, 1);
+	errs += ibuf_add_n8(buf->buf, 4);
+	errs += ibuf_add_n16(buf->buf, p->conf.local_short_as);
+	errs += ibuf_add_n16(buf->buf, holdtime);
+	/* is already in network byte order */
+	errs += ibuf_add(buf->buf, &conf->bgpid, sizeof(conf->bgpid));
+	errs += ibuf_add_n8(buf->buf, optparamlen);
 
 	if (extlen) {
 		/* write RFC9072 extra header */
-		uint16_t op_extlen = htons(optparamlen - 3);
-		op_type = OPT_PARAM_EXT_LEN;
-		errs += ibuf_add(buf->buf, &op_type, 1);
-		errs += ibuf_add(buf->buf, &op_extlen, 2);
+		errs += ibuf_add_n8(buf->buf, OPT_PARAM_EXT_LEN);
+		errs += ibuf_add_n16(buf->buf, optparamlen - 3);
 	}
 
 	if (optparamlen) {
-		op_type = OPT_PARAM_CAPABILITIES;
-		errs += ibuf_add(buf->buf, &op_type, sizeof(op_type));
+		errs += ibuf_add_n8(buf->buf, OPT_PARAM_CAPABILITIES);
 
 		optparamlen = ibuf_size(opb);
 		if (extlen) {
 			/* RFC9072: 2-byte extended length */
-			uint16_t op_extlen = htons(optparamlen);
-			errs += ibuf_add(buf->buf, &op_extlen, 2);
+			errs += ibuf_add_n16(buf->buf, optparamlen);
 		} else {
-			uint8_t op_len = optparamlen;
-			errs += ibuf_add(buf->buf, &op_len, 1);
+			errs += ibuf_add_n8(buf->buf, optparamlen);
 		}
 		errs += ibuf_add_buf(buf->buf, opb);
 	}
@@ -1711,8 +1694,8 @@ session_notification(struct peer *p, uint8_t errcode, uint8_t subcode,
 		return;
 	}
 
-	errs += ibuf_add(buf->buf, &errcode, sizeof(errcode));
-	errs += ibuf_add(buf->buf, &subcode, sizeof(subcode));
+	errs += ibuf_add_n8(buf->buf, errcode);
+	errs += ibuf_add_n8(buf->buf, subcode);
 
 	if (datalen > 0)
 		errs += ibuf_add(buf->buf, data, datalen);
@@ -1784,10 +1767,9 @@ session_rrefresh(struct peer *p, uint8_t aid, uint8_t subtype)
 		return;
 	}
 
-	afi = htons(afi);
-	errs += ibuf_add(buf->buf, &afi, sizeof(afi));
-	errs += ibuf_add(buf->buf, &subtype, sizeof(subtype));
-	errs += ibuf_add(buf->buf, &safi, sizeof(safi));
+	errs += ibuf_add_n16(buf->buf, afi);
+	errs += ibuf_add_n8(buf->buf, subtype);
+	errs += ibuf_add_n8(buf->buf, safi);
 
 	if (errs) {
 		ibuf_free(buf->buf);
