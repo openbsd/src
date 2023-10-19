@@ -1,4 +1,4 @@
-/*	$OpenBSD: validate.c,v 1.67 2023/09/25 08:48:14 job Exp $ */
+/*	$OpenBSD: validate.c,v 1.68 2023/10/19 17:05:55 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -643,23 +643,12 @@ valid_uuid(const char *s)
 	}
 }
 
-int
-valid_ca_pkey(const char *fn, EVP_PKEY *pkey)
+static int
+valid_ca_pkey_rsa(const char *fn, EVP_PKEY *pkey)
 {
 	RSA		*rsa;
 	const BIGNUM	*rsa_e;
 	int		 key_bits;
-
-	if (pkey == NULL) {
-		warnx("%s: failure, pkey is NULL", fn);
-		return 0;
-	}
-
-	if (EVP_PKEY_base_id(pkey) != EVP_PKEY_RSA) {
-		warnx("%s: Expected EVP_PKEY_RSA, got %d", fn,
-		    EVP_PKEY_base_id(pkey));
-		return 0;
-	}
 
 	if ((key_bits = EVP_PKEY_bits(pkey)) != 2048) {
 		warnx("%s: RFC 7935: expected 2048-bit modulus, got %d bits",
@@ -683,4 +672,56 @@ valid_ca_pkey(const char *fn, EVP_PKEY *pkey)
 	}
 
 	return 1;
+}
+
+static int
+valid_ca_pkey_ec(const char *fn, EVP_PKEY *pkey)
+{
+	EC_KEY		*ec;
+	const EC_GROUP	*group;
+	int		 nid;
+	const char	*cname;
+
+	if ((ec = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
+		warnx("%s: failed to extract ECDSA public key", fn);
+		return 0;
+	}
+
+	if ((group = EC_KEY_get0_group(ec)) == NULL) {
+		warnx("%s: EC_KEY_get0_group failed", fn);
+		return 0;
+	}
+
+	nid = EC_GROUP_get_curve_name(group);
+	if (nid != NID_X9_62_prime256v1) {
+		if ((cname = EC_curve_nid2nist(nid)) == NULL)
+			cname = OBJ_nid2sn(nid);
+		warnx("%s: Expected P-256, got %s", fn, cname);
+		return 0;
+	}
+
+	if (!EC_KEY_check_key(ec)) {
+		warnx("%s: EC_KEY_check_key failed", fn);
+		return 0;
+	}
+
+	return 1;
+}
+
+int
+valid_ca_pkey(const char *fn, EVP_PKEY *pkey)
+{
+	if (pkey == NULL) {
+		warnx("%s: failure, pkey is NULL", fn);
+		return 0;
+	}
+
+	if (EVP_PKEY_base_id(pkey) == EVP_PKEY_RSA)
+		return valid_ca_pkey_rsa(fn, pkey);
+
+	if (EVP_PKEY_base_id(pkey) == EVP_PKEY_EC)
+		return valid_ca_pkey_ec(fn, pkey);
+
+	warnx("%s: unsupported public key algorithm", fn);
+	return 0;
 }

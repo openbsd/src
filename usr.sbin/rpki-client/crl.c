@@ -1,4 +1,4 @@
-/*	$OpenBSD: crl.c,v 1.27 2023/06/29 10:28:25 tb Exp $ */
+/*	$OpenBSD: crl.c,v 1.28 2023/10/19 17:05:54 job Exp $ */
 /*
  * Copyright (c) 2019 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -62,7 +62,11 @@ crl_parse(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 	X509_ALGOR_get0(&cobj, NULL, NULL, palg);
-	if ((nid = OBJ_obj2nid(cobj)) != NID_sha256WithRSAEncryption) {
+	nid = OBJ_obj2nid(cobj);
+	if (nid == NID_ecdsa_with_SHA256) {
+		if (verbose)
+			warn("%s: P-256 support is experimental", fn);
+	} else if (nid != NID_sha256WithRSAEncryption) {
 		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
 		    fn, OBJ_nid2ln(nid),
 		    OBJ_nid2ln(NID_sha256WithRSAEncryption));

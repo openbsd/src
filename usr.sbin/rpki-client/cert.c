@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.118 2023/10/13 12:06:49 job Exp $ */
+/*	$OpenBSD: cert.c,v 1.119 2023/10/19 17:05:54 job Exp $ */
 /*
  * Copyright (c) 2022 Theo Buehler <tb@openbsd.org>
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -762,7 +762,11 @@ cert_parse_pre(const char *fn, const unsigned char *der, size_t len)
 		goto out;
 	}
 	X509_ALGOR_get0(&cobj, NULL, NULL, palg);
-	if ((nid = OBJ_obj2nid(cobj)) != NID_sha256WithRSAEncryption) {
+	nid = OBJ_obj2nid(cobj);
+	if (nid == NID_ecdsa_with_SHA256) {
+		if (verbose)
+			warn("%s: P-256 support is experimental", fn);
+	} else if (nid != NID_sha256WithRSAEncryption) {
 		warnx("%s: RFC 7935: wrong signature algorithm %s, want %s",
 		    fn, OBJ_nid2ln(nid),
 		    OBJ_nid2ln(NID_sha256WithRSAEncryption));
