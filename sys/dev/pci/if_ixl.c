@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.91 2023/10/20 07:31:12 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.92 2023/10/20 13:21:15 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2853,21 +2853,26 @@ ixl_tx_setup_offload(struct mbuf *m0, struct ixl_tx_ring *txr,
 	if (ISSET(m0->m_pkthdr.csum_flags, M_TCP_TSO)) {
 		if (ext.tcp) {
 			struct ixl_tx_desc *ring, *txd;
-			uint64_t cmd = 0;
+			uint64_t cmd = 0, paylen, outlen;
 
 			hlen += ext.tcp->th_off << 2;
+
+			outlen = m0->m_pkthdr.ph_mss;
+			paylen = m0->m_pkthdr.len - ETHER_HDR_LEN - hlen;
+
 			ring = IXL_DMA_KVA(&txr->txr_mem);
 			txd = &ring[prod];
 
 			cmd |= IXL_TX_DESC_DTYPE_CONTEXT;
 			cmd |= IXL_TX_CTX_DESC_CMD_TSO;
-			cmd |= (uint64_t)(m0->m_pkthdr.len - ETHER_HDR_LEN
-			    - hlen) << IXL_TX_CTX_DESC_TLEN_SHIFT;
-			cmd |= (uint64_t)(m0->m_pkthdr.ph_mss)
-			    << IXL_TX_CTX_DESC_MSS_SHIFT;
+			cmd |= paylen << IXL_TX_CTX_DESC_TLEN_SHIFT;
+			cmd |= outlen << IXL_TX_CTX_DESC_MSS_SHIFT;
 
 			htolem64(&txd->addr, 0);
 			htolem64(&txd->cmd, cmd);
+
+			tcpstat_add(tcps_outpkttso,
+			    (paylen + outlen - 1) / outlen);
 		} else
 			tcpstat_inc(tcps_outbadtso);
 	}
