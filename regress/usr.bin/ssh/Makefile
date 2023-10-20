@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.127 2023/09/24 08:14:13 claudio Exp $
+#	$OpenBSD: Makefile,v 1.128 2023/10/20 06:56:45 dtucker Exp $
 
 OPENSSL?=	yes
 
@@ -103,6 +103,7 @@ LTESTS= 	connect \
 		match-subsystem
 
 INTEROP_TESTS=	putty-transfer putty-ciphers putty-kex conch-ciphers
+INTEROP_TESTS+=	dropbear-ciphers dropbear-kex
 #INTEROP_TESTS+=ssh-com ssh-com-client ssh-com-keygen ssh-com-sftp
 
 EXTRA_TESTS=	agent-pkcs11
@@ -253,5 +254,6 @@ c-${s}:
 clean: ${CLEAN_SUBDIR}
 	rm -f ${CLEANFILES}
 	rm -rf .putty
+	rm -rf .dropbear
 
 .include <bsd.regress.mk>
