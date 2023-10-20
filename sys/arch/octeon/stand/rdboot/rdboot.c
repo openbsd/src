@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdboot.c,v 1.8 2020/12/09 18:10:19 krw Exp $	*/
+/*	$OpenBSD: rdboot.c,v 1.9 2023/10/20 19:55:49 kn Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Visa Hankala
@@ -47,17 +47,17 @@
 #define KERNEL		"/bsd"
 
 int	loadrandom(void);
-void	kexec(void);
+void	kexec(int);
 
 struct cmd_state cmd;
 int octbootfd = -1;
-const char version[] = "1.3";
+const char version[] = "1.4";
 
 int
 main(void)
 {
 	char rootdev[PATH_MAX];
-	int fd, hasboot;
+	int fd, hasboot, isupgrade = 0;
 
 	fd = open(_PATH_CONSOLE, O_RDWR);
 	login_tty(fd);
@@ -91,6 +91,7 @@ main(void)
 	if (upgrade()) {
 		strlcpy(cmd.image, "/bsd.upgrade", sizeof(cmd.image));
 		printf("upgrade detected: switching to %s\n", cmd.image);
+		isupgrade = 1;
 	}
 
 	hasboot = read_conf();
@@ -105,7 +106,7 @@ main(void)
 		if (loadrandom() == 0)
 			cmd.boothowto |= RB_GOODRANDOM;
 
-		kexec();
+		kexec(isupgrade);
 
 		hasboot = 0;
 		strlcpy(cmd.image, KERNEL, sizeof(cmd.image));
@@ -163,7 +164,7 @@ loadrandom(void)
 }
 
 void
-kexec(void)
+kexec(int isupgrade)
 {
 	struct octboot_kexec_args kargs;
 	struct stat sb;
@@ -187,6 +188,13 @@ kexec(void)
 	if (!S_ISREG(sb.st_mode) || sb.st_size == 0) {
 		errno = ENOEXEC;
 		goto load_failed;
+	}
+
+	/* Prevent re-upgrade: chmod a-x bsd.upgrade */
+	if (isupgrade) {
+		sb.st_mode &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
+		if (fchmod(fd, sb.st_mode) == -1)
+			printf("fchmod a-x %s: failed\n", path);
 	}
 
 	kimg = malloc(sb.st_size);
