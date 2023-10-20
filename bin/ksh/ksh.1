@@ -1,8 +1,8 @@
-.\"	$OpenBSD: ksh.1,v 1.219 2023/06/10 07:24:21 op Exp $
+.\"	$OpenBSD: ksh.1,v 1.220 2023/10/20 18:51:09 schwarze Exp $
 .\"
 .\"	Public Domain
 .\"
-.Dd $Mdocdate: June 10 2023 $
+.Dd $Mdocdate: October 20 2023 $
 .Dt KSH 1
 .Os
 .Sh NAME
@@ -1188,8 +1188,8 @@ is printed on standard error (preceded by
 .Ar name : )
 and an error occurs (normally causing termination of a shell script, function,
 or script sourced using the
-.Sq \&.
-built-in).
+.Sq Ic \&.
+built-in command).
 If
 .Ar word
 is omitted, the string
@@ -1287,8 +1287,8 @@ keyword (i.e. a Korn shell style function).
 .It Ev 1 No ... Ev 9
 The first nine positional parameters that were supplied to the shell, function,
 or script sourced using the
-.Sq \&.
-built-in.
+.Sq Ic \&.
+built-in command.
 Further positional parameters may be accessed using
 .Pf ${ Ar number Ns } .
 .It Ev *
@@ -1412,10 +1412,10 @@ below for more information.
 .It Ev HISTCONTROL
 A colon separated list of history settings.
 If
-.Li ignoredups
+.Sy ignoredups
 is present, lines identical to the previous history line will not be saved.
 If
-.Li ignorespace
+.Sy ignorespace
 is present, lines starting with a space will not be saved.
 Unknown settings are ignored.
 .It Ev HISTFILE
@@ -1533,7 +1533,7 @@ is (so they know how far it is to the edge of the screen), escape codes in
 the prompt tend to mess things up.
 You can tell the shell not to count certain
 sequences (such as escape codes) by using the
-.Li \e[ Ns Ar ... Ns Li \e]
+.Sy \e[ Ns Ar ... Ns Sy \e]
 substitution (see below) or by prefixing your prompt with a non-printing
 character (such as control-A) followed by a carriage return and then delimiting
 the escape codes with this non-printing character.
@@ -1551,85 +1551,85 @@ The following backslash-escaped special characters can be used
 to customise the prompt:
 .Pp
 .Bl -tag -width "\eD{format}XX" -compact
-.It Li \ea
+.It Sy \ea
 Insert an ASCII bell character.
-.It Li \ed
+.It Sy \ed
 The current date, in the format
 .Dq Day Month Date
 for example
 .Dq Wed Nov 03 .
-.It Li \eD Ns Brq Ar format
+.It Sy \eD Ns Brq Ar format
 The current date, with
 .Ar format
 converted by
 .Xr strftime 3 .
 The braces must be specified.
-.It Li \ee
+.It Sy \ee
 Insert an ASCII escape character.
-.It Li \eh
+.It Sy \eh
 The hostname, minus domain name.
-.It Li \eH
+.It Sy \eH
 The full hostname, including domain name.
-.It Li \ej
+.It Sy \ej
 Current number of jobs running
 (see
 .Sx Job control
 below).
-.It Li \el
+.It Sy \el
 The controlling terminal.
-.It Li \en
+.It Sy \en
 Insert a newline character.
-.It Li \er
+.It Sy \er
 Insert a carriage return character.
-.It Li \es
+.It Sy \es
 The name of the shell.
-.It Li \et
+.It Sy \et
 The current time, in 24-hour HH:MM:SS format.
-.It Li \eT
+.It Sy \eT
 The current time, in 12-hour HH:MM:SS format.
-.It Li \e@
+.It Sy \e@
 The current time, in 12-hour HH:MM:SS AM/PM format.
-.It Li \eA
+.It Sy \eA
 The current time, in 24-hour HH:MM format.
-.It Li \eu
+.It Sy \eu
 The current user's username.
-.It Li \ev
+.It Sy \ev
 The current version of
 .Nm .
-.It Li \eV
+.It Sy \eV
 Like
-.Sq \ev ,
+.Sy \ev ,
 but more verbose.
-.It Li \ew
+.It Sy \ew
 The current working directory.
 .Dv $HOME
 is abbreviated as
 .Sq ~ .
-.It Li \eW
+.It Sy \eW
 The basename of
 the current working directory.
 .Dv $HOME
 is abbreviated as
 .Sq ~ .
-.It Li \e!
+.It Sy \e!
 The current history number.
 An unescaped
-.Ql !\&
+.Sq Sy !\&
 will produce the current history number too,
 as per the POSIX specification.
 A literal
 .Ql \&!
 can be put in the prompt by placing
-.Ql !!
+.Sq Sy !!
 in
 .Ev PS1 .
-.It Li \e#
+.It Sy \e#
 The current command number.
 This could be different to the current history number,
 if
 .Ev HISTFILE
 contains a history list from a previous session.
-.It Li \e$
+.It Sy \e$
 The default prompt character i.e.\&
 .Sq #
 if the effective UID is 0,
@@ -1640,15 +1640,15 @@ Since the shell interprets
 as a special character within double quotes,
 it is safer in this case to escape the backslash
 than to try quoting it.
-.It Li \e Ns Ar nnn
+.It Sy \e Ns Ar nnn
 The octal character
 .Ar nnn .
-.It Li \e\e
+.It Sy \e\e
 Insert a single backslash character.
-.It Li \e[
+.It Sy \e[
 Normally the shell keeps track of the number of characters in the prompt.
 Use of this sequence turns off that count.
-.It Li \e]
+.It Sy \e]
 Use of this sequence turns the count back on.
 .El
 .Pp
@@ -2337,13 +2337,13 @@ syntax or the Bourne/POSIX shell
 .Ar function-name Ns ()
 syntax (see below for the difference between the two forms).
 Functions are like
-.Li .-scripts
+.Ic \&. Ns -scripts
 (i.e. scripts sourced using the
-.Sq \&.
-built-in)
+.Sq Ic \&.
+built-in command)
 in that they are executed in the current environment.
 However, unlike
-.Li .-scripts ,
+.Ic \&. Ns -scripts,
 shell arguments (i.e. positional parameters $1, $2, etc.)\&
 are never visible inside them.
 When the shell is determining the location of a command, functions
