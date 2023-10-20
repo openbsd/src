@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.287 2023/06/23 04:36:49 gnezdo Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.288 2023/10/20 16:25:15 bluhm Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -1080,9 +1080,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 			n->m_len = 0;
 			return (n);
 		}
-		if (m->m_flags & M_EXT)
-			goto extpacket;
-		if (remain > MHLEN) {
+		if ((m->m_flags & M_EXT) == 0 && remain > MHLEN) {
 			/* m can't be the lead packet */
 			m_align(n, 0);
 			n->m_next = m_split(m, len, wait);
@@ -1094,8 +1092,7 @@ m_split(struct mbuf *m0, int len0, int wait)
 				n->m_len = 0;
 				return (n);
 			}
-		} else
-			m_align(n, remain);
+		}
 	} else if (remain == 0) {
 		n = m->m_next;
 		m->m_next = NULL;
@@ -1104,14 +1101,13 @@ m_split(struct mbuf *m0, int len0, int wait)
 		MGET(n, wait, m->m_type);
 		if (n == NULL)
 			return (NULL);
-		m_align(n, remain);
 	}
-extpacket:
 	if (m->m_flags & M_EXT) {
 		n->m_ext = m->m_ext;
 		MCLADDREFERENCE(m, n);
 		n->m_data = m->m_data + len;
 	} else {
+		m_align(n, remain);
 		memcpy(mtod(n, caddr_t), mtod(m, caddr_t) + len, remain);
 	}
 	n->m_len = remain;
