@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.1 2020/07/16 19:48:58 kettenis Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.2 2023/10/20 19:58:16 kn Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -501,6 +501,10 @@ upgrade(void)
 		return 0;
 	if (stat(path, &sb) == 0 && S_ISREG(sb.st_mode))
 		ret = 1;
+	if ((sb.st_mode & S_IXUSR) == 0) {
+		printf("/bsd.upgrade is not u+x\n");
+		ret = 0;
+	}
 	disk_close();
 
 	return ret;
