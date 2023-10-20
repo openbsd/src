@@ -1,4 +1,4 @@
-/*	$OpenBSD: drm_linux.c,v 1.103 2023/08/04 09:36:28 jsg Exp $	*/
+/*	$OpenBSD: drm_linux.c,v 1.104 2023/10/20 03:38:58 jsg Exp $	*/
 /*
  * Copyright (c) 2013 Jonathan Gray <jsg@openbsd.org>
  * Copyright (c) 2015, 2016 Mark Kettenis <kettenis@openbsd.org>
@@ -1720,6 +1720,18 @@ dma_fence_is_signaled_locked(struct dma_fence *fence)
 	}
 
 	return false;
+}
+
+ktime_t
+dma_fence_timestamp(struct dma_fence *fence)
+{
+	if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags)) {
+		while (!test_bit(DMA_FENCE_FLAG_TIMESTAMP_BIT, &fence->flags))
+			CPU_BUSY_CYCLE();
+		return fence->timestamp;
+	} else {
+		return ktime_get();
+	}
 }
 
 long

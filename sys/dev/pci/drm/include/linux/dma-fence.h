@@ -64,6 +64,7 @@ int dma_fence_signal_timestamp(struct dma_fence *, ktime_t);
 int dma_fence_signal_timestamp_locked(struct dma_fence *, ktime_t);
 bool dma_fence_is_signaled(struct dma_fence *);
 bool dma_fence_is_signaled_locked(struct dma_fence *);
+ktime_t dma_fence_timestamp(struct dma_fence *);
 long dma_fence_default_wait(struct dma_fence *, bool, long);
 long dma_fence_wait_any_timeout(struct dma_fence **, uint32_t, bool, long,
     uint32_t *);
