@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.90 2023/10/19 16:28:02 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.91 2023/10/20 07:31:12 jan Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -909,8 +909,8 @@ struct ixl_rx_wb_desc_32 {
 #define IXL_MAX_DMA_SEG_SIZE		((16 * 1024) - 1)
 
 /*
- * Our TCP/IP Stack could not handle packets greater than MAXMCLBYTES.
- * This interface could not handle packets greater than IXL_TSO_SIZE.
+ * Our TCP/IP Stack is unable handle packets greater than MAXMCLBYTES.
+ * This interface is unable handle packets greater than IXL_TSO_SIZE.
  */
 CTASSERT(MAXMCLBYTES < IXL_TSO_SIZE);
 

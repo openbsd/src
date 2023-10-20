@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ix.c,v 1.204 2023/08/21 21:45:18 bluhm Exp $	*/
+/*	$OpenBSD: if_ix.c,v 1.205 2023/10/20 07:31:12 jan Exp $	*/
 
 /******************************************************************************
 
@@ -38,8 +38,8 @@
 #include <dev/pci/ixgbe_type.h>
 
 /*
- * Our TCP/IP Stack could not handle packets greater than MAXMCLBYTES.
- * This interface could not handle packets greater than IXGBE_TSO_SIZE.
+ * Our TCP/IP Stack is unable to handle packets greater than MAXMCLBYTES.
+ * This interface is unable to handle packets greater than IXGBE_TSO_SIZE.
  */
 CTASSERT(MAXMCLBYTES <= IXGBE_TSO_SIZE);
 
