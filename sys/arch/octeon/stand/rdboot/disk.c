@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.2 2020/05/26 13:30:47 visa Exp $	*/
+/*	$OpenBSD: disk.c,v 1.3 2023/10/20 18:53:12 kettenis Exp $	*/
 
 /*
  * Copyright (c) 2019 Visa Hankala
@@ -180,11 +180,13 @@ disk_open(const char *path)
 
 	memset(&ffs_args, 0, sizeof(ffs_args));
 	ffs_args.fspec = devpath;
-	if (mount(MOUNT_FFS, "/mnt", MNT_FORCE | MNT_NOATIME,
-	    &ffs_args) == -1) {
-		fprintf(stderr, "failed to mount %s: %s\n", devpath,
-		    strerror(errno));
-		return NULL;
+	if (mount(MOUNT_FFS, "/mnt", MNT_NOATIME, &ffs_args) == -1) {
+		if (mount(MOUNT_FFS, "/mnt", MNT_RDONLY, &ffs_args) == -1) {
+			fprintf(stderr, "failed to mount %s: %s\n", devpath,
+			    strerror(errno));
+			return NULL;
+		}
+		fprintf(stderr, "%s: mounted read-only\n", devpath);
 	}
 	if (chroot("/mnt") == -1) {
 		fprintf(stderr, "failed to chroot: %s\n", strerror(errno));
