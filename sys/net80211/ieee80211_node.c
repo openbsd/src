@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.196 2023/04/11 00:45:09 jsg Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.197 2023/10/21 06:47:23 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2392,6 +2392,83 @@ ieee80211_clear_htcaps(struct ieee80211_node *ni)
 }
 #endif
 
+int
+ieee80211_40mhz_valid_secondary_above(uint8_t primary_chan)
+{
+	static const uint8_t valid_secondary_chan[] = {
+		2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+		40, 48, 56, 64, 104, 112, 120, 128, 136, 144, 153, 161
+	};
+	uint8_t secondary_chan;
+	int i;
+
+	if (primary_chan >= 1 && primary_chan <= 13)
+		secondary_chan = primary_chan + 1;
+	else if (primary_chan >= 36 && primary_chan <= 157)
+		secondary_chan = primary_chan + 4;
+	else
+		return 0;
+
+	for (i = 0; i < nitems(valid_secondary_chan); i++) {
+		if (secondary_chan == valid_secondary_chan[i])
+			return 1;
+	}
+
+	return 0;
+}
+
+int
+ieee80211_40mhz_valid_secondary_below(uint8_t primary_chan)
+{
+	static const uint8_t valid_secondary_chan[] = {
+		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+		36, 44, 52, 60, 100, 108, 116, 124, 132, 140, 149, 157
+	};
+	int8_t secondary_chan;
+	int i;
+
+	if (primary_chan >= 2 && primary_chan <= 14)
+		secondary_chan = primary_chan - 1;
+	else if (primary_chan >= 40 && primary_chan <= 161)
+		secondary_chan = primary_chan - 4;
+	else
+		return 0;
+
+	for (i = 0; i < nitems(valid_secondary_chan); i++) {
+		if (secondary_chan == valid_secondary_chan[i])
+			return 1;
+	}
+
+	return 0;
+}
+
+/*
+ * Only accept 40 MHz channel configurations that conform to
+ * regulatory operating classes as defined by the 802.11ac spec.
+ * Passing other configurations down to firmware can result in
+ * regulatory assertions being trigged, such as fatal firmware
+ * error 14FD in iwm(4).
+ *
+ * See 802.11ac 2013, page 380, Tables E-1 to E-5.
+ */
+int
+ieee80211_40mhz_center_freq_valid(uint8_t primary_chan, uint8_t htop0)
+{
+	uint8_t sco;
+
+	sco = ((htop0 & IEEE80211_HTOP0_SCO_MASK) >> IEEE80211_HTOP0_SCO_SHIFT);
+	switch (sco) {
+	case IEEE80211_HTOP0_SCO_SCN:
+		return 1;
+	case IEEE80211_HTOP0_SCO_SCA:
+		return ieee80211_40mhz_valid_secondary_above(primary_chan);
+	case IEEE80211_HTOP0_SCO_SCB:
+		return ieee80211_40mhz_valid_secondary_below(primary_chan);
+	}
+
+	return 0;
+}
+
 /*
  * Install received HT op information in the node's state block.
  */
@@ -2402,9 +2479,10 @@ ieee80211_setup_htop(struct ieee80211_node *ni, const uint8_t *data,
 	if (len != 22)
 		return 0;
 
-	ni->ni_primary_chan = data[0]; /* XXX corresponds to ni_chan */
-
+	ni->ni_primary_chan = data[0]; /* corresponds to ni_chan */
 	ni->ni_htop0 = data[1];
+	if (!ieee80211_40mhz_center_freq_valid(data[0], data[1]))
+		ni->ni_htop0 &= ~IEEE80211_HTOP0_SCO_MASK;
 	ni->ni_htop1 = (data[2] | (data[3] << 8));
 	ni->ni_htop2 = (data[3] | (data[4] << 8));
 
@@ -2442,12 +2520,39 @@ ieee80211_setup_vhtcaps(struct ieee80211_node *ni, const uint8_t *data,
 }
 
 /*
+ * Only accept 80 MHz channel configurations that conform to
+ * regulatory operating classes as defined by the 802.11ac spec.
+ * Passing other configurations down to firmware can result in
+ * regulatory assertions being trigged, such as fatal firmware
+ * error 14FD in iwm(4).
+ *
+ * See 802.11ac 2013, page 380, Tables E-1 to E-5.
+ */
+int
+ieee80211_80mhz_center_freq_valid(const uint8_t chanidx)
+{
+	static const uint8_t valid_center_chanidx[] = {
+		42, 50, 58, 106, 112, 114, 138, 155
+	};
+	int i;
+
+	for (i = 0; i < nitems(valid_center_chanidx); i++) {
+		if (chanidx == valid_center_chanidx[i])
+			return 1;
+	}
+
+	return 0;
+}
+
+/*
  * Install received VHT op information in the node's state block.
  */
 int
 ieee80211_setup_vhtop(struct ieee80211_node *ni, const uint8_t *data,
     uint8_t len, int isprobe)
 {
+	uint8_t sco;
+	int have_40mhz;
 
 	if (len != 5)
 		return 0;
@@ -2458,9 +2563,26 @@ ieee80211_setup_vhtop(struct ieee80211_node *ni, const uint8_t *data,
 	    data[0] != IEEE80211_VHTOP0_CHAN_WIDTH_8080)
 		return 0;
 
-	ni->ni_vht_chan_width = data[0];
-	ni->ni_vht_chan_center_freq_idx0 = data[1];
-	ni->ni_vht_chan_center_freq_idx1 = data[2];
+	sco = ((ni->ni_htop0 & IEEE80211_HTOP0_SCO_MASK) >>
+	    IEEE80211_HTOP0_SCO_SHIFT);
+	have_40mhz = (sco == IEEE80211_HTOP0_SCO_SCA ||
+	    sco == IEEE80211_HTOP0_SCO_SCB);
+
+	if (have_40mhz && ieee80211_80mhz_center_freq_valid(data[1])) {
+		ni->ni_vht_chan_width = data[0];
+		ni->ni_vht_chan_center_freq_idx0 = data[1];
+
+		/* Only used in non-consecutive 80-80 160MHz configs. */
+		if (data[2] && ieee80211_80mhz_center_freq_valid(data[2]))
+			ni->ni_vht_chan_center_freq_idx1 = data[2];
+		else
+			ni->ni_vht_chan_center_freq_idx1 = 0;
+	} else {
+		ni->ni_vht_chan_width = IEEE80211_VHTOP0_CHAN_WIDTH_HT;
+		ni->ni_vht_chan_center_freq_idx0 = 0;
+		ni->ni_vht_chan_center_freq_idx1 = 0;
+	}
+
 	ni->ni_vht_basic_mcs = (data[3] | data[4] << 8);
 	return 1;
 }
