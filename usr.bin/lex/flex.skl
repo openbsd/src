@@ -1,4 +1,4 @@
-/*	$OpenBSD: flex.skl,v 1.18 2021/11/30 15:50:06 millert Exp $	*/
+/*	$OpenBSD: flex.skl,v 1.19 2023/10/21 14:09:15 deraadt Exp $	*/
 
 %# -*-C-*- vi: set ft=c:
 %# This file is processed in several stages.
@@ -588,7 +588,7 @@ struct yy_buffer_state
 
     int yy_bs_lineno; /**< The line count. */
     int yy_bs_column; /**< The column count. */
-    
+
 
 	/* Whether to try to fill the input buffer when we reach the
 	 * end of it.
