@@ -1,4 +1,4 @@
-/* $OpenBSD: mandoc.h,v 1.223 2022/08/16 17:29:18 schwarze Exp $ */
+/* $OpenBSD: mandoc.h,v 1.224 2023/10/21 17:10:12 schwarze Exp $ */
 /*
  * Copyright (c) 2012-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -23,7 +23,6 @@
 #define ASCII_NBRZW	 30  /* non-breaking zero-width space */
 #define ASCII_BREAK	 29  /* breakable zero-width space */
 #define ASCII_HYPH	 28  /* breakable hyphen */
-#define ASCII_ESC	 27  /* escape sequence from copy-in processing */
 #define ASCII_TABREF	 26  /* reset tab reference position */
 
 /*

@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.268 2022/12/26 19:16:02 jmc Exp $ */
+/* $OpenBSD: roff.c,v 1.269 2023/10/21 17:10:12 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1385,7 +1385,7 @@ roff_expand(struct roff *r, struct buf *buf, int ln, int pos, char ec)
 		 */
 
 		if (buf->buf[pos] != ec) {
-			if (ec != ASCII_ESC && buf->buf[pos] == '\\') {
+			if (buf->buf[pos] == '\\') {
 				roff_expand_patch(buf, pos, "\\e", pos + 1);
 				pos++;
 			}
@@ -1630,12 +1630,7 @@ roff_getarg(struct roff *r, char **cpp, int ln, int *pos)
 				cp++;
 				break;
 			case '\\':
-				/*
-				 * Signal to roff_expand() that an escape
-				 * sequence resulted from copy-in processing
-				 * and needs to be checked or interpolated.
-				 */
-				cp[-pairs] = ASCII_ESC;
+				cp[-pairs] = '\\';
 				newesc = 1;
 				pairs++;
 				cp++;
@@ -1692,7 +1687,7 @@ roff_getarg(struct roff *r, char **cpp, int ln, int *pos)
 	buf.buf = start;
 	buf.sz = strlen(start) + 1;
 	buf.next = NULL;
-	if (roff_expand(r, &buf, ln, 0, ASCII_ESC) & ROFF_IGN) {
+	if (roff_expand(r, &buf, ln, 0, '\\') & ROFF_IGN) {
 		free(buf.buf);
 		buf.buf = mandoc_strdup("");
 	}
