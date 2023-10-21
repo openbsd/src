@@ -1,0 +1,8 @@
+.\" $OpenBSD: esc.in,v 1.1 2023/10/21 17:28:01 schwarze Exp $
+.TH ARGS-ESC 1 "October 21, 2023"
+.SH NAME
+args-esc - delayed escape sequence expansion in macro arguments
+.SH DESCRIPTION
+.ds inner content
+.ds outer \\*[inner]
+.B \\*[outer]
