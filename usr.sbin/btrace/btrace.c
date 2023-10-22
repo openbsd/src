@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.79 2023/10/12 15:16:44 cheloha Exp $ */
+/*	$OpenBSD: btrace.c,v 1.80 2023/10/22 19:30:35 cheloha Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -71,10 +71,10 @@ struct dtioc_probe_info	*dtpi_get_by_value(const char *, const char *,
  * Main loop and rule evaluation.
  */
 void			 rules_do(int);
-void			 rules_setup(int);
-void			 rules_apply(int, struct dt_evt *);
+int			 rules_setup(int);
+int			 rules_apply(int, struct dt_evt *);
 void			 rules_teardown(int);
-void			 rule_eval(struct bt_rule *, struct dt_evt *);
+int			 rule_eval(struct bt_rule *, struct dt_evt *);
 void			 rule_printmaps(struct bt_rule *);
 
 /*
@@ -84,7 +84,7 @@ uint64_t		 builtin_nsecs(struct dt_evt *);
 const char		*builtin_kstack(struct dt_evt *);
 const char		*builtin_arg(struct dt_evt *, enum bt_argtype);
 struct bt_arg		*fn_str(struct bt_arg *, struct dt_evt *, char *);
-void			 stmt_eval(struct bt_stmt *, struct dt_evt *);
+int			 stmt_eval(struct bt_stmt *, struct dt_evt *);
 void			 stmt_bucketize(struct bt_stmt *, struct dt_evt *);
 void			 stmt_clear(struct bt_stmt *);
 void			 stmt_delete(struct bt_stmt *, struct dt_evt *);
@@ -405,6 +405,7 @@ void
 rules_do(int fd)
 {
 	struct sigaction sa;
+	int halt = 0;
 
 	memset(&sa, 0, sizeof(sa));
 	sigemptyset(&sa.sa_mask);
@@ -415,9 +416,9 @@ rules_do(int fd)
 	if (sigaction(SIGTERM, &sa, NULL))
 		err(1, "sigaction");
 
-	rules_setup(fd);
+	halt = rules_setup(fd);
 
-	while (!quit_pending && g_nprobes > 0) {
+	while (!quit_pending && !halt && g_nprobes > 0) {
 		static struct dt_evt devtbuf[64];
 		ssize_t rlen;
 		size_t i;
@@ -434,8 +435,11 @@ rules_do(int fd)
 		if ((rlen % sizeof(struct dt_evt)) != 0)
 			err(1, "incorrect read");
 
-		for (i = 0; i < rlen / sizeof(struct dt_evt); i++)
-			rules_apply(fd, &devtbuf[i]);
+		for (i = 0; i < rlen / sizeof(struct dt_evt); i++) {
+			halt = rules_apply(fd, &devtbuf[i]);
+			if (halt)
+				break;
+		}
 	}
 
 	rules_teardown(fd);
@@ -484,7 +488,7 @@ rules_action_scan(struct bt_stmt *bs)
 	return evtflags;
 }
 
-void
+int
 rules_setup(int fd)
 {
 	struct dtioc_probe_info *dtpi;
@@ -493,7 +497,7 @@ rules_setup(int fd)
 	struct bt_probe *bp;
 	struct bt_stmt *bs;
 	struct bt_arg *ba;
-	int dokstack = 0, on = 1;
+	int dokstack = 0, halt = 0, on = 1;
 	uint64_t evtflags;
 
 	TAILQ_FOREACH(r, &g_rules, br_next) {
@@ -553,7 +557,7 @@ rules_setup(int fd)
 	clock_gettime(CLOCK_REALTIME, &bt_devt.dtev_tsp);
 
 	if (rbegin)
-		rule_eval(rbegin, &bt_devt);
+		halt = rule_eval(rbegin, &bt_devt);
 
 	/* Enable all probes */
 	TAILQ_FOREACH(r, &g_rules, br_next) {
@@ -571,9 +575,14 @@ rules_setup(int fd)
 		if (ioctl(fd, DTIOCRECORD, &on))
 			err(1, "DTIOCRECORD");
 	}
+
+	return halt;
 }
 
-void
+/*
+ * Returns non-zero if the program should halt.
+ */
+int
 rules_apply(int fd, struct dt_evt *dtev)
 {
 	struct bt_rule *r;
@@ -586,9 +595,11 @@ rules_apply(int fd, struct dt_evt *dtev)
 				continue;
 
 			dtai_cache(fd, &dt_dtpis[dtev->dtev_pbn - 1]);
-			rule_eval(r, dtev);
+			if (rule_eval(r, dtev))
+				return 1;
 		}
 	}
+	return 0;
 }
 
 void
@@ -637,7 +648,10 @@ rules_teardown(int fd)
 		rule_printmaps(r);
 }
 
-void
+/*
+ * Returns non-zero if the program should halt.
+ */
+int
 rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 {
 	struct bt_stmt *bs;
@@ -651,7 +665,7 @@ rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 	if (r->br_filter != NULL && r->br_filter->bf_condition != NULL) {
 		if (stmt_test(r->br_filter->bf_condition, dtev) == false) {
 			bt_filtered++;
-			return;
+			return 0;
 		}
 	}
 
@@ -660,15 +674,19 @@ rule_eval(struct bt_rule *r, struct dt_evt *dtev)
 			struct bt_stmt *bbs = (struct bt_stmt *)bs->bs_var;
 
 			while (bbs != NULL) {
-				stmt_eval(bbs, dtev);
+				if (stmt_eval(bbs, dtev))
+					return 1;
 				bbs = SLIST_NEXT(bbs, bs_next);
 			}
 
 			continue;
 		}
 
-		stmt_eval(bs, dtev);
+		if (stmt_eval(bs, dtev))
+			return 1;
 	}
+
+	return 0;
 }
 
 void
@@ -802,9 +820,14 @@ builtin_arg(struct dt_evt *dtev, enum bt_argtype dat)
 	return buf;
 }
 
-void
+/*
+ * Returns non-zero if the program should halt.
+ */
+int
 stmt_eval(struct bt_stmt *bs, struct dt_evt *dtev)
 {
+	int halt = 0;
+
 	switch (bs->bs_act) {
 	case B_AC_BUCKETIZE:
 		stmt_bucketize(bs, dtev);
@@ -816,7 +839,7 @@ stmt_eval(struct bt_stmt *bs, struct dt_evt *dtev)
 		stmt_delete(bs, dtev);
 		break;
 	case B_AC_EXIT:
-		exit(0);
+		halt = 1;
 		break;
 	case B_AC_INSERT:
 		stmt_insert(bs, dtev);
@@ -842,6 +865,7 @@ stmt_eval(struct bt_stmt *bs, struct dt_evt *dtev)
 	default:
 		xabort("no handler for action type %d", bs->bs_act);
 	}
+	return halt;
 }
 
 /*

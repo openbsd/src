@@ -6,5 +6,7 @@ BEGIN
 
 END
 {
+	printf("executed\n");
+	exit();
 	printf("not executed\n");
 }
