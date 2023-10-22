@@ -1,0 +1,10 @@
+.\" $OpenBSD: infrec.in,v 1.1 2023/10/22 16:54:19 schwarze Exp $
+.TH ARGS-INFREC 1 "October 22, 2023"
+.SH NAME
+args-infrec - infinite recursion in macro argument expansion
+.SH DESCRIPTION
+.ds mys first word
+.ds mys \\*[mys] another word
+initial text
+.RB prefix \\*[mys] postfix
+final text
