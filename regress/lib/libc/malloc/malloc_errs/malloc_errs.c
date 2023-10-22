@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc_errs.c,v 1.3 2023/06/04 06:58:33 otto Exp $	*/
+/*	$OpenBSD: malloc_errs.c,v 1.4 2023/10/22 12:20:07 otto Exp $	*/
 /*
  * Copyright (c) 2023 Otto Moerbeek <otto@drijf.net>
  *
@@ -226,6 +226,17 @@ t20(void)
 	free(p);
 }
 
+/* out-of-bound write preceding chunk */
+void
+t22(void)
+{
+	int i, j;
+	unsigned char *p = malloc(32);
+	p[32] = 0;
+	for (i = 0; i < 10000; i++)
+		p = malloc(32);
+}
+
 struct test {
 	void (*test)(void);
 	const char *flags;
@@ -253,6 +264,9 @@ struct test tests[] = {
 	{ t18, "" },
 	{ t19, "" },
 	{ t20, "C" },
+	{ t8, "FJD" }, /* t21 re-uses code from t8 */
+	{ t22, "J" },
+	{ t22, "JD" }, /* t23 re-uses code from t22 */
 };
 
 int main(int argc, char *argv[])
