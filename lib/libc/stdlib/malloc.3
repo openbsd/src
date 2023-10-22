@@ -30,9 +30,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: malloc.3,v 1.137 2023/07/01 18:35:14 otto Exp $
+.\"	$OpenBSD: malloc.3,v 1.138 2023/10/22 12:19:26 otto Exp $
 .\"
-.Dd $Mdocdate: July 1 2023 $
+.Dd $Mdocdate: October 22 2023 $
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -307,7 +307,7 @@ These malloc options imply
 .Cm D .
 .It Cm F
 .Dq Freecheck .
-Enable more extensive double free and use after free detection.
+Enable more extensive double free and write after free detection.
 All chunks in the delayed free list will be checked for double frees and
 write after frees.
 Unused pages on the freelist are read and write protected to
@@ -641,18 +641,34 @@ or
 reallocate an unallocated pointer was made.
 .It Dq double free
 There was an attempt to free an allocation that had already been freed.
-.It Dq write after free
-An allocation has been modified after it was freed.
+.It Dq write to free mem Va address Ns [ Va start Ns .. Ns Va end Ns ]@ Ns Va size
+An allocation has been modified after it was freed,
+or a chunk that was never allocated was written to.
+The
+.Va range
+at which corruption was detected is printed between [ and ].
+.Pp
+Enabling option
+.Cm D
+allows malloc to print information about where the allocation
+was done.
 .It Dq modified chunk-pointer
 The pointer passed to
 .Fn free
 or a reallocation function has been modified.
-.It Dq canary corrupted address offset@length
-A byte after the requested size has been overwritten,
+.It Dq canary corrupted Va address Ns [ Va offset Ns ]@ Ns Va length Ns / Ns Va size
+A byte after the requested
+.Va length has been overwritten,
 indicating a heap overflow.
-The offset at which corruption was detected is printed before the @,
-and the requested length of the allocation after the @.
-.It Dq recorded size oldsize inconsistent with size
+The
+.Va offset
+at which corruption was detected is printed between [ and ],
+the requested
+.Va length
+of the allocation is printed before the / and the
+.Va size
+of the allocation after the /.
+.It Dq recorded size Va oldsize No inconsistent with Va size
 .Fn recallocarray
 or
 .Fn freezero
@@ -676,7 +692,7 @@ functions nor utilize any other functions which may call
 (e.g.,
 .Xr stdio 3
 routines).
-.It Dq unknown char in MALLOC_OPTIONS
+.It Dq unknown char in Ev MALLOC_OPTIONS
 We found something we didn't understand.
 .It any other error
 .Fn malloc
