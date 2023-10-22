@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_node.c,v 1.197 2023/10/21 06:47:23 stsp Exp $	*/
+/*	$OpenBSD: ieee80211_node.c,v 1.198 2023/10/22 12:01:36 stsp Exp $	*/
 /*	$NetBSD: ieee80211_node.c,v 1.14 2004/05/09 09:18:47 dyoung Exp $	*/
 
 /*-
@@ -2396,15 +2396,14 @@ int
 ieee80211_40mhz_valid_secondary_above(uint8_t primary_chan)
 {
 	static const uint8_t valid_secondary_chan[] = {
-		2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
+		5, 6, 7, 8, 9, 10, 11, 12, 13,
 		40, 48, 56, 64, 104, 112, 120, 128, 136, 144, 153, 161
 	};
 	uint8_t secondary_chan;
 	int i;
 
-	if (primary_chan >= 1 && primary_chan <= 13)
-		secondary_chan = primary_chan + 1;
-	else if (primary_chan >= 36 && primary_chan <= 157)
+	if ((primary_chan >= 1 && primary_chan <= 9) ||
+	    (primary_chan >= 36 && primary_chan <= 157))
 		secondary_chan = primary_chan + 4;
 	else
 		return 0;
@@ -2421,15 +2420,14 @@ int
 ieee80211_40mhz_valid_secondary_below(uint8_t primary_chan)
 {
 	static const uint8_t valid_secondary_chan[] = {
-		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+		1, 2, 3, 4, 5, 6, 7, 8, 9,
 		36, 44, 52, 60, 100, 108, 116, 124, 132, 140, 149, 157
 	};
 	int8_t secondary_chan;
 	int i;
 
-	if (primary_chan >= 2 && primary_chan <= 14)
-		secondary_chan = primary_chan - 1;
-	else if (primary_chan >= 40 && primary_chan <= 161)
+	if ((primary_chan >= 5 && primary_chan <= 13) ||
+	    (primary_chan >= 40 && primary_chan <= 161))
 		secondary_chan = primary_chan - 4;
 	else
 		return 0;
