@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.c,v 1.269 2023/10/21 17:10:12 schwarze Exp $ */
+/* $OpenBSD: roff.c,v 1.270 2023/10/22 16:01:58 schwarze Exp $ */
 /*
  * Copyright (c) 2010-2015, 2017-2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008-2012, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -1687,7 +1687,7 @@ roff_getarg(struct roff *r, char **cpp, int ln, int *pos)
 	buf.buf = start;
 	buf.sz = strlen(start) + 1;
 	buf.next = NULL;
-	if (roff_expand(r, &buf, ln, 0, '\\') & ROFF_IGN) {
+	if (roff_expand(r, &buf, ln, 0, '\\') == ROFF_IGN) {
 		free(buf.buf);
 		buf.buf = mandoc_strdup("");
 	}
