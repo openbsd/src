@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wg.c,v 1.31 2023/09/26 15:16:44 sthen Exp $ */
+/*	$OpenBSD: if_wg.c,v 1.32 2023/10/23 10:22:05 mvs Exp $ */
 
 /*
  * Copyright (C) 2015-2020 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
@@ -509,6 +509,14 @@ wg_peer_destroy(struct wg_peer *peer)
 
 	NET_LOCK();
 	while (!ifq_empty(&sc->sc_if.if_snd)) {
+		/*
+		 * XXX: `if_snd' of stopped interface could still
+		 * contain packets
+		 */
+		if (!ISSET(sc->sc_if.if_flags, IFF_RUNNING)) {
+			ifq_purge(&sc->sc_if.if_snd);
+			continue;
+		}
 		NET_UNLOCK();
 		tsleep_nsec(sc, PWAIT, "wg_ifq", 1000);
 		NET_LOCK();
