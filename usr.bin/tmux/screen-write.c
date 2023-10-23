@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.222 2023/09/15 15:49:05 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.223 2023/10/23 08:12:00 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2013,7 +2013,7 @@ screen_write_combine(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 
 	/*
 	 * Check if we need to combine characters. This could be zero width
-	 * (zet above), a modifier character (with an existing Unicode
+	 * (set above), a modifier character (with an existing Unicode
 	 * character) or a previous ZWJ.
 	 */
 	if (!zero_width) {
