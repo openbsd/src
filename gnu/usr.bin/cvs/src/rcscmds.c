@@ -406,9 +406,6 @@ RCS file: ", 0);
        what the best behavior is.  Passing NULL for the `nametag' argument
        preserves the existing behavior. */
 
-    cvs_output ("retrieving revision ", 0);
-    cvs_output (rev1, 0);
-    cvs_output ("\n", 1);
     status = RCS_checkout (rcsfile, NULL, rev1, NULL, options, tmpfile1,
 			   (RCSCHECKOUTPROC)0, NULL);
     if (status > 0)
@@ -432,9 +429,6 @@ RCS file: ", 0);
     else
     {
 	tmpfile2 = cvs_temp_name ();
-	cvs_output ("retrieving revision ", 0);
-	cvs_output (rev2, 0);
-	cvs_output ("\n", 1);
 	status = RCS_checkout (rcsfile, NULL, rev2, NULL, options,
 			       tmpfile2, (RCSCHECKOUTPROC)0, NULL);
 	if (status > 0)
