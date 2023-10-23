@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.21 2023/06/20 14:50:06 espie Exp $
+# $OpenBSD: Subst.pm,v 1.22 2023/10/23 08:37:45 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -46,11 +46,15 @@ sub value($self, $k)
 
 sub parse_option($self, $opt)
 {
-	if ($opt =~ m/^([^=]+)\=(.*)$/o) {
-		my ($k, $v) = ($1, $2);
+	if ($opt =~ m/^([^=+]+)(\+?)\=(.*)$/o) {
+		my ($k, $plus, $v) = ($1, $2, $3);
 		$v =~ s/^\'(.*)\'$/$1/;
 		$v =~ s/^\"(.*)\"$/$1/;
-		$self->add($k, $v);
+		if ($plus && defined $self->{k}) {
+			$self->{$k} .= " $v"):
+		} else {
+			$self->add($k, $v);
+		}
 	} else {
 		$self->add($opt, 1);
 	}
