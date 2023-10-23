@@ -8,6 +8,13 @@ DDEESSCCRRIIPPTTIIOONN
      character: 24
      blank: 24
      text: 96
+     special: 24
+     numbered: 24
+     Unicode: 24
+     overstrike: 24
+     undefined: 24
+     zero-width: 0
+     skipchar: 48
 
    AArrgguummeenntt ddeelliimmiitteerrss
      unsupported \r: 24u
