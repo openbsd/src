@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: AddCreateDelete.pm,v 1.56 2023/10/09 07:03:49 espie Exp $
+# $OpenBSD: AddCreateDelete.pm,v 1.57 2023/10/23 08:38:14 espie Exp $
 #
 # Copyright (c) 2007-2014 Marc Espie <espie@openbsd.org>
 #
@@ -101,7 +101,8 @@ sub handle_options($state, $opt_string, @usage)
 	}
 	$state->{interactive} = $state->interactive_class($i)->new($state, $i);
 	if ($state->defines('REGRESSION_TESTING')) {
-		for my $i (split(',', $state->defines('REGRESSION_TESTING'))) {
+		for my $i (split(/[,\s]/,
+		    $state->defines('REGRESSION_TESTING'))) {
 			$state->{regression}{$i} = 1;
 			if (defined $setup->{$i}) {
 				eval "$setup->{$i}";
