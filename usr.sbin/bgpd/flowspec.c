@@ -1,4 +1,4 @@
-/*	$OpenBSD: flowspec.c,v 1.4 2023/04/19 09:31:58 claudio Exp $ */
+/*	$OpenBSD: flowspec.c,v 1.5 2023/10/23 13:07:44 claudio Exp $ */
 
 /*
  * Copyright (c) 2023 Claudio Jeker <claudio@openbsd.org>
@@ -366,7 +366,7 @@ flowspec_get_addr(const uint8_t *flow, int flowlen, int type, int is_v6,
 		if (extract_prefix(comp + 2, complen - 2, buf, xlen,
 		    sizeof(buf)) == -1)
 			return -1;
-		shift_right(addr->v6.s6_addr, buf, *olen, xlen);
+		shift_right(addr->v6.s6_addr, buf, xoff, xlen);
 		*plen = comp[0];
 		if (olen != NULL)
 			*olen = comp[1];
