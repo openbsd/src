@@ -1,4 +1,4 @@
-/*	$OpenBSD: radiusd.c,v 1.32 2023/09/08 05:56:22 yasuoka Exp $	*/
+/*	$OpenBSD: radiusd.c,v 1.33 2023/10/23 00:58:32 yasuoka Exp $	*/
 
 /*
  * Copyright (c) 2013, 2023 Internet Initiative Japan Inc.
@@ -787,7 +787,7 @@ radiusd_access_response_fixup(struct radius_query *q)
 			news = olds;
 
 		/* RFC 2865 Tunnel-Password */
-		attrlen = sizeof(attrlen);
+		attrlen = sizeof(attrbuf);
 		if (radius_get_raw_attr(q->res, RADIUS_TYPE_TUNNEL_PASSWORD,
 		    attrbuf, &attrlen) == 0) {
 			radius_attr_unhide(news, req_auth,
@@ -802,7 +802,7 @@ radiusd_access_response_fixup(struct radius_query *q)
 		}
 
 		/* RFC 2548 Microsoft MPPE-{Send,Recv}-Key */
-		attrlen = sizeof(attrlen);
+		attrlen = sizeof(attrbuf);
 		if (radius_get_vs_raw_attr(q->res, RADIUS_VENDOR_MICROSOFT,
 		    RADIUS_VTYPE_MPPE_SEND_KEY, attrbuf, &attrlen) == 0) {
 
@@ -817,7 +817,7 @@ radiusd_access_response_fixup(struct radius_query *q)
 			radius_put_vs_raw_attr(q->res, RADIUS_VENDOR_MICROSOFT,
 			    RADIUS_VTYPE_MPPE_SEND_KEY, attrbuf, attrlen);
 		}
-		attrlen = sizeof(attrlen);
+		attrlen = sizeof(attrbuf);
 		if (radius_get_vs_raw_attr(q->res, RADIUS_VENDOR_MICROSOFT,
 		    RADIUS_VTYPE_MPPE_RECV_KEY, attrbuf, &attrlen) == 0) {
 
