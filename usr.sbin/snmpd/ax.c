@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.1 2022/08/23 08:56:20 martijn Exp $ */
+/*	$OpenBSD: ax.c,v 1.2 2023/10/24 08:48:41 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -1442,6 +1442,8 @@ ax_pdutooid(struct ax_pdu_header *header, struct ax_oid *oid,
 	}
 	buf++;
 	oid->aoi_include = *buf;
+	if (oid->aoi_idlen > AX_OID_MAX_LEN)
+		goto fail;
 	for (buf += 2; i < oid->aoi_idlen; i++, buf += 4)
 		oid->aoi_id[i] = ax_pdutoh32(header, buf);
 
