@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_umb.c,v 1.55 2023/09/01 20:24:29 mvs Exp $ */
+/*	$OpenBSD: if_umb.c,v 1.56 2023/10/24 09:13:22 jmatthew Exp $ */
 
 /*
  * Copyright (c) 2016 genua mbH
@@ -1813,6 +1813,14 @@ umb_add_inet_config(struct umb_softc *sc, struct in_addr ip, u_int prefixlen,
 	struct rt_addrinfo info;
 	struct rtentry *rt;
 	int	 rv;
+
+	memset(&ifra, 0, sizeof (ifra));
+	rv = in_ioctl(SIOCDIFADDR, (caddr_t)&ifra, ifp, 1);
+	if (rv != 0 && rv != EADDRNOTAVAIL) {
+		printf("%s: unable to delete IPv4 address, error %d\n",
+		    DEVNAM(ifp->if_softc), rv);
+		return rv;
+	}
 
 	memset(&ifra, 0, sizeof (ifra));
 	sin = &ifra.ifra_addr;
