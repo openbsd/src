@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.140 2023/07/31 04:01:07 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.141 2023/10/24 13:20:09 claudio Exp $	*/
 /*	$NetBSD: locore.S,v 1.13 2004/03/25 18:33:17 drochner Exp $	*/
 
 /*
@@ -709,10 +709,7 @@ spl_lowered:
 #endif
 
 NENTRY(proc_trampoline)
-#ifdef MULTIPROCESSOR
-	call	proc_trampoline_mp
-#endif
-	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	call	proc_trampoline_mi
 	movq	%r13,%rdi
 	movq	%r12,%rax
 	call	retpoline_rax

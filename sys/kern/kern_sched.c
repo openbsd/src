@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sched.c,v 1.92 2023/09/19 11:31:51 claudio Exp $	*/
+/*	$OpenBSD: kern_sched.c,v 1.93 2023/10/24 13:20:11 claudio Exp $	*/
 /*
  * Copyright (c) 2007, 2008 Artur Grabowski <art@openbsd.org>
  *
@@ -222,8 +222,25 @@ void
 sched_exit(struct proc *p)
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+
+	LIST_INSERT_HEAD(&spc->spc_deadproc, p, p_hash);
+
+	KERNEL_ASSERT_LOCKED();
+	sched_toidle();
+}
+
+void
+sched_toidle(void)
+{
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	struct proc *idle;
 	int s;
+
+#ifdef MULTIPROCESSOR
+	/* This process no longer needs to hold the kernel lock. */
+	if (_kernel_lock_held())
+		__mp_release_all(&kernel_lock);
+#endif
 
 	if (ISSET(spc->spc_schedflags, SPCF_ITIMER)) {
 		atomic_clearbits_int(&spc->spc_schedflags, SPCF_ITIMER);
@@ -234,17 +251,16 @@ sched_exit(struct proc *p)
 		clockintr_cancel(spc->spc_profclock);
 	}
 
-	LIST_INSERT_HEAD(&spc->spc_deadproc, p, p_hash);
-
-#ifdef MULTIPROCESSOR
-	/* This process no longer needs to hold the kernel lock. */
-	KERNEL_ASSERT_LOCKED();
-	__mp_release_all(&kernel_lock);
-#endif
+	atomic_clearbits_int(&spc->spc_schedflags, SPCF_SWITCHCLEAR);
 
 	SCHED_LOCK(s);
+
 	idle = spc->spc_idleproc;
 	idle->p_stat = SRUN;
+
+	uvmexp.swtch++;
+	TRACEPOINT(sched, off__cpu, idle->p_tid + THREAD_PID_OFFSET,
+	    idle->p_p->ps_pid);
 	cpu_switchto(NULL, idle);
 	panic("cpu_switchto returned");
 }
@@ -334,14 +350,16 @@ sched_chooseproc(void)
 			}
 		}
 		p = spc->spc_idleproc;
-		KASSERT(p);
-		KASSERT(p->p_wchan == NULL);
+		if (p == NULL)
+			panic("no idleproc set on CPU%d",
+			    CPU_INFO_UNIT(curcpu()));
 		p->p_stat = SRUN;
+		KASSERT(p->p_wchan == NULL);
 		return (p);
 	}
+again:
 #endif
 
-again:
 	if (spc->spc_whichqs) {
 		queue = ffs(spc->spc_whichqs) - 1;
 		p = TAILQ_FIRST(&spc->spc_qs[queue]);
@@ -351,22 +369,9 @@ again:
 			panic("thread %d not in SRUN: %d", p->p_tid, p->p_stat);
 	} else if ((p = sched_steal_proc(curcpu())) == NULL) {
 		p = spc->spc_idleproc;
-		if (p == NULL) {
-                        int s;
-			/*
-			 * We get here if someone decides to switch during
-			 * boot before forking kthreads, bleh.
-			 * This is kind of like a stupid idle loop.
-			 */
-#ifdef MULTIPROCESSOR
-			__mp_unlock(&sched_lock);
-#endif
-			spl0();
-			delay(10);
-			SCHED_LOCK(s);
-			goto again;
-                }
-		KASSERT(p);
+		if (p == NULL)
+			panic("no idleproc set on CPU%d",
+			    CPU_INFO_UNIT(curcpu()));
 		p->p_stat = SRUN;
 	} 
 

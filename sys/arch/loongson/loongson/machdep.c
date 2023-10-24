@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.100 2022/08/10 12:20:05 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.101 2023/10/24 13:20:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2014 Miodrag Vallat.
@@ -1267,8 +1267,6 @@ intr_barrier(void *cookie)
 void
 hw_cpu_hatch(struct cpu_info *ci)
 {
-	int s;
-
 	/*
 	 * Set curcpu address on this processor.
 	 */
@@ -1315,8 +1313,7 @@ hw_cpu_hatch(struct cpu_info *ci)
 	spl0();
 	(void)updateimask(0);
 
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 
 void

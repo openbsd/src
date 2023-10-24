@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.15 2023/09/19 19:20:33 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.16 2023/10/24 13:20:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -390,16 +390,13 @@ cpu_start_secondary(void)
 	csr_clear(sstatus, SSTATUS_FS_MASK);
 	csr_set(sie, SIE_SSIE);
 
-	nanouptime(&ci->ci_schedstate.spc_runtime);
-
 	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
 	membar_producer();
 
 	spllower(IPL_NONE);
 	intr_enable();
 
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 
 void

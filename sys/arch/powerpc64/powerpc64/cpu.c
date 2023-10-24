@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.27 2023/08/19 00:47:51 gkoehler Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.28 2023/10/24 13:20:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 2020 Mark Kettenis <kettenis@openbsd.org>
@@ -355,15 +355,12 @@ cpu_start_secondary(void)
 	s = splhigh();
 	cpu_startclock();
 
-	nanouptime(&ci->ci_schedstate.spc_runtime);
-
 	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
 	membar_sync();
 
 	spllower(IPL_NONE);
 
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 
 void

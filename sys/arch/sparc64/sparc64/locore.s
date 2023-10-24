@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.201 2023/04/28 18:27:55 cheloha Exp $	*/
+/*	$OpenBSD: locore.s,v 1.202 2023/10/24 13:20:11 claudio Exp $	*/
 /*	$NetBSD: locore.s,v 1.137 2001/08/13 06:10:10 jdolecek Exp $	*/
 
 /*
@@ -6077,7 +6077,7 @@ END(snapshot)
 
 /*
  * cpu_set_kpc() and cpu_fork() arrange for proc_trampoline() to run
- * after after a process gets chosen in switch(). The stack frame will
+ * after a process gets chosen in mi_switch(). The stack frame will
  * contain a function pointer in %l0, and an argument to pass to it in %l2.
  *
  * If the function *(%l0) returns, we arrange for an immediate return
@@ -6085,13 +6085,10 @@ END(snapshot)
  * and when returning a child to user mode after a fork(2).
  */
 ENTRY(proc_trampoline)
-#ifdef MULTIPROCESSOR
 	save	%sp, -CC64FSZ, %sp
-	call	proc_trampoline_mp
+	call	proc_trampoline_mi
 	 nop
 	restore
-#endif
-	wrpr	%g0, 0, %pil		! Reset interrupt level
 	call	%l0			! re-use current frame
 	 mov	%l1, %o0
 

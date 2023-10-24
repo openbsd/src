@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.17 2022/05/27 18:55:30 kettenis Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.18 2023/10/24 13:20:10 claudio Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.53 2006/08/31 16:49:21 matt Exp $	*/
 
 /*
@@ -227,7 +227,8 @@ cpu_fork(struct proc *p1, struct proc *p2, void *stack, void *tcb,
 	 * Enable interrupt when switch frame is restored, since
 	 * kernel thread begin to run without restoring trapframe.
 	 */
-	sf->sf_sr = PSL_MD;		/* kernel mode, interrupt enable */
+	sf->sf_sr = PSL_MD |		/* kernel mode, interrupt enable */
+	    (IPL_SCHED << 4);
 
 #ifdef SH4
 	if (CPU_IS_SH4) {

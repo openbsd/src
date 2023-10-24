@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh_common.S,v 1.64 2022/12/06 18:50:59 guenther Exp $	*/
+/*   $OpenBSD: eh_common.S,v 1.65 2023/10/24 13:20:10 claudio Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -2211,12 +2211,7 @@ ASLOCAL(do_softint)
  */
 
 ENTRY(proc_trampoline)
-#ifdef MULTIPROCESSOR
-	bsr	proc_trampoline_mp
-#endif
-
-	bsr.n	setipl			/* setipl(IPL_NONE) */
-	 or	%r2,  %r0,  %r0
+	bsr	proc_trampoline_mi
 
 	ld	%r1,  %r31, 0		/* load func */
 	ld	%r2,  %r31, 4 		/* load arg */

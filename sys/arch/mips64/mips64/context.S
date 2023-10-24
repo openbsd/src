@@ -1,4 +1,4 @@
-/*	$OpenBSD: context.S,v 1.65 2023/08/05 05:46:36 guenther Exp $ */
+/*	$OpenBSD: context.S,v 1.66 2023/10/24 13:20:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2002-2003 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -282,19 +282,8 @@ LEAF(proc_trampoline, 0)
 #ifdef DDB
 	move	zero, ra
 #endif
-#ifdef MULTIPROCESSOR
-	jal	proc_trampoline_mp
+	jal	proc_trampoline_mi
 	 NOP
-#endif
-	/*
-	 * Enable interrupts, since we want kernel threads to
-	 * start at spl0 and with interrupts enabled, and these
-	 * won't ``return to userland''.
-	 */
-#ifndef MULTIPROCESSOR	/* done by proc_trampoline_mp() */
-	jal	splx
-	 xor	a0, a0
-#endif
 	jal	updateimask		# Make sure SR imask is updated
 	 xor	a0, a0			# and interrupts enabled
 

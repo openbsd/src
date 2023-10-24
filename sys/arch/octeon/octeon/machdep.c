@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.136 2023/02/04 19:19:36 cheloha Exp $ */
+/*	$OpenBSD: machdep.c,v 1.137 2023/10/24 13:20:10 claudio Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 Miodrag Vallat.
@@ -1302,8 +1302,6 @@ hw_cpu_boot_secondary(struct cpu_info *ci)
 void
 hw_cpu_hatch(struct cpu_info *ci)
 {
-	int s;
-
 	/*
 	 * Set curcpu address on this processor.
 	 */
@@ -1341,7 +1339,6 @@ hw_cpu_hatch(struct cpu_info *ci)
 	spl0();
 	(void)updateimask(0);
 
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 #endif /* MULTIPROCESSOR */

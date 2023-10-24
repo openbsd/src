@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.143 2023/06/15 22:18:07 cheloha Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.144 2023/10/24 13:20:10 claudio Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -757,14 +757,12 @@ void
 secondary_main()
 {
 	struct cpu_info *ci = curcpu();
-	int s;
 
 	cpu_configuration_print(0);
 	ncpus++;
 
 	clockqueue_init(&ci->ci_queue);
 	sched_init_cpu(ci);
-	nanouptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = NULL;
 	ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 
@@ -784,12 +782,11 @@ secondary_main()
 	clockintr_cpu_init(NULL);
 
 	spl0();
-	SCHED_LOCK(s);
 	set_psr(get_psr() & ~PSR_IND);
 
 	SET(ci->ci_flags, CIF_ALIVE);
 
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 
 #endif	/* MULTIPROCESSOR */

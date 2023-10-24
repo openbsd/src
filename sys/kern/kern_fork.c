@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.252 2023/09/13 14:25:49 claudio Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.253 2023/10/24 13:20:11 claudio Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/acct.h>
 #include <sys/ktrace.h>
 #include <sys/sched.h>
+#include <sys/smr.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
 #include <sys/mman.h>
@@ -664,20 +665,37 @@ freepid(pid_t pid)
 	oldpids[idx++ % nitems(oldpids)] = pid;
 }
 
-#if defined(MULTIPROCESSOR)
-/*
- * XXX This is a slight hack to get newly-formed processes to
- * XXX acquire the kernel lock as soon as they run.
- */
+/* Do machine independent parts of switching to a new process */
 void
-proc_trampoline_mp(void)
+proc_trampoline_mi(void)
 {
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+	struct proc *p = curproc;
+
 	SCHED_ASSERT_LOCKED();
+
+	clear_resched(curcpu());
+
+#if defined(MULTIPROCESSOR)
 	__mp_unlock(&sched_lock);
+#endif
 	spl0();
+
 	SCHED_ASSERT_UNLOCKED();
 	KERNEL_ASSERT_UNLOCKED();
+	assertwaitok();
+	smr_idle();
 
+	/* Start any optional clock interrupts needed by the thread. */
+	if (ISSET(p->p_p->ps_flags, PS_ITIMER)) {
+		atomic_setbits_int(&spc->spc_schedflags, SPCF_ITIMER);
+		clockintr_advance(spc->spc_itimer, hardclock_period);
+	}
+	if (ISSET(p->p_p->ps_flags, PS_PROFIL)) {
+		atomic_setbits_int(&spc->spc_schedflags, SPCF_PROFCLOCK);
+		clockintr_advance(spc->spc_profclock, profclock_period);
+	}
+
+	nanouptime(&spc->spc_runtime);
 	KERNEL_LOCK();
 }
-#endif

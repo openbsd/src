@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.47 2023/06/15 22:18:06 cheloha Exp $ */
+/* $OpenBSD: cpu.c,v 1.48 2023/10/24 13:20:09 claudio Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -569,7 +569,6 @@ cpu_hatch(struct cpu_info *ci)
 {
 	u_long cpu_id = cpu_number();
 	u_long cpumask = (1UL << cpu_id);
-	int s;
 
 	/* Mark the kernel pmap active on this processor. */
 	atomic_setbits_ulong(&pmap_kernel()->pm_cpus, cpumask);
@@ -600,7 +599,6 @@ cpu_hatch(struct cpu_info *ci)
 	clockqueue_init(&ci->ci_queue);
 	KERNEL_LOCK();
 	sched_init_cpu(ci);
-	nanouptime(&ci->ci_schedstate.spc_runtime);
 	ci->ci_curproc = ci->ci_fpcurproc = NULL;
 	ci->ci_randseed = (arc4random() & 0x7fffffff) + 1;
 	KERNEL_UNLOCK();
@@ -608,8 +606,7 @@ cpu_hatch(struct cpu_info *ci)
 	clockintr_cpu_init(NULL);
 
 	(void) alpha_pal_swpipl(ALPHA_PSL_IPL_0);
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 	/* NOTREACHED */
 }
 

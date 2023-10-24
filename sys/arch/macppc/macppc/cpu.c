@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.86 2023/06/15 22:18:07 cheloha Exp $ */
+/*	$OpenBSD: cpu.c,v 1.87 2023/10/24 13:20:10 claudio Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -686,7 +686,7 @@ void
 cpu_hatch(void)
 {
 	volatile struct cpu_hatch_data *h = cpu_hatch_data;
-	int intrstate, s;
+	int intrstate;
 
         /* Initialize timebase. */
 	ppc_mttb(0);
@@ -759,10 +759,6 @@ cpu_hatch(void)
 	curcpu()->ci_ipending = 0;
 	curcpu()->ci_cpl = 0;
 
-	s = splhigh();
-	nanouptime(&curcpu()->ci_schedstate.spc_runtime);
-	splx(s);
-
 	intrstate = ppc_intr_disable();
 	cpu_startclock();
 	ppc_intr_enable(intrstate);
@@ -770,7 +766,6 @@ cpu_hatch(void)
 	/* Enable inter-processor interrupts. */
 	openpic_set_priority(curcpu()->ci_cpuid, 14);
 
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 #endif

@@ -1,4 +1,4 @@
-/* $OpenBSD: cpuswitch.S,v 1.6 2022/12/08 01:25:44 guenther Exp $ */
+/* $OpenBSD: cpuswitch.S,v 1.7 2023/10/24 13:20:09 claudio Exp $ */
 /*
  * Copyright (c) 2015 Dale Rahn <drahn@dalerahn.com>
  *
@@ -81,14 +81,8 @@ ENTRY(cpu_switchto_asm)
 	ret
 
 ENTRY(proc_trampoline)
-#ifdef MULTIPROCESSOR
-	bl proc_trampoline_mp
-#endif
-	// call it or just set the variable?
-	mov x0, IPL_NONE
-	bl spllower
+	bl proc_trampoline_mi
 	mov x0, x20
 	blr x19
 	b syscall_return
 
-	

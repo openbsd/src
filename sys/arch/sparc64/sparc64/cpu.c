@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.74 2023/06/15 22:18:08 cheloha Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.75 2023/10/24 13:20:10 claudio Exp $	*/
 /*	$NetBSD: cpu.c,v 1.13 2001/05/26 21:27:15 chs Exp $ */
 
 /*
@@ -723,21 +723,15 @@ void
 cpu_hatch(void)
 {
 	struct cpu_info *ci = curcpu();
-	int s;
 
 	cpu_init(ci);
 
 	ci->ci_flags |= CPUF_RUNNING;
 	membar_sync();
 
-	s = splhigh();
-	nanouptime(&ci->ci_schedstate.spc_runtime);
-	splx(s);
-
 	cpu_start_clock();
 
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 #endif
 

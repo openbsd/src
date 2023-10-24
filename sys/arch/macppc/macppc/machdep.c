@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.199 2022/10/30 17:43:39 guenther Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.200 2023/10/24 13:20:10 claudio Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -121,7 +121,6 @@ int lid_action = 1;
 int pwr_action = 1;
 
 void dumpsys(void);
-int lcsplx(int ipl);	/* called from LCore */
 void *ppc_intr_establish(void *lcv, pci_intr_handle_t ih, int type,
     int level, int (*func)(void *), void *arg, const char *name);
 
@@ -717,12 +716,6 @@ dumpsys(void)
 #endif
 	delay(5000000);         /* 5 seconds */
 
-}
-
-int
-lcsplx(int ipl)
-{
-	return spllower(ipl);
 }
 
 /*

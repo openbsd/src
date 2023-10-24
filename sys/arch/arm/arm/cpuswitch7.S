@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpuswitch7.S,v 1.17 2022/12/08 01:25:44 guenther Exp $	*/
+/*	$OpenBSD: cpuswitch7.S,v 1.18 2023/10/24 13:20:09 claudio Exp $	*/
 /*	$NetBSD: cpuswitch.S,v 1.41 2003/11/15 08:44:18 scw Exp $	*/
 
 /*
@@ -221,11 +221,7 @@ ENTRY(savectx)
 
 
 ENTRY(proc_trampoline)
-#ifdef MULTIPROCESSOR
-	bl	proc_trampoline_mp
-#endif
-	mov	r0, #(IPL_NONE)
-	bl	_spllower
+	bl	proc_trampoline_mi
 
 	mov	r0, r5
 	mov	r1, sp

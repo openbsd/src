@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.175 2023/07/31 04:01:07 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.176 2023/10/24 13:20:09 claudio Exp $	*/
 /* $NetBSD: cpu.c,v 1.1 2003/04/26 18:39:26 fvdl Exp $ */
 
 /*-
@@ -1074,14 +1074,11 @@ cpu_hatch(void *v)
 	s = splhigh();
 	lcr8(0);
 	intr_enable();
-
-	nanouptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 
 	lapic_startclock();
 
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 
 #if defined(DDB)

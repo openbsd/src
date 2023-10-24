@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.61 2022/12/08 01:25:45 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.62 2023/10/24 13:20:10 claudio Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -845,11 +845,7 @@ rfi1:	rfi
 	.globl	proc_trampoline
 	.type	proc_trampoline,@function
 proc_trampoline:
-#ifdef MULTIPROCESSOR
-	bl	proc_trampoline_mp
-#endif
-	li	%r3,0
-	bl	lcsplx
+	bl	proc_trampoline_mi
 	mtlr	%r31
 	mr	%r3,%r30
 	blrl				/* jump indirect to r31 */

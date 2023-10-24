@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.204 2022/10/25 15:15:38 guenther Exp $	*/
+/*	$OpenBSD: locore.S,v 1.205 2023/10/24 13:20:10 claudio Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2697,16 +2697,12 @@ EXIT(cpu_idle_leave)
 
 ENTRY(proc_trampoline,0)
 	copy	r0, r3
-#ifdef MULTIPROCESSOR
 	copy	t4, r5
 	copy	arg0, r4
-	bl	proc_trampoline_mp, rp
+	bl	proc_trampoline_mi, rp
 	nop
 	copy	r4, arg0
 	copy	r5, t4
-#endif
-	mfctl	cr29, t1
-	stw	r0, CI_CPL(t1)
 	.call
 	blr	r0, rp
 	bv,n	r0(t4)

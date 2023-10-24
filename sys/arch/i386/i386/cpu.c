@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.113 2023/07/21 04:04:52 guenther Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.114 2023/10/24 13:20:10 claudio Exp $	*/
 /* $NetBSD: cpu.c,v 1.1.2.7 2000/06/26 02:04:05 sommerfeld Exp $ */
 
 /*-
@@ -721,13 +721,11 @@ cpu_hatch(void *v)
 	if (mp_verbose)
 		printf("%s: CPU at apid %ld running\n",
 		    ci->ci_dev->dv_xname, ci->ci_cpuid);
-	nanouptime(&ci->ci_schedstate.spc_runtime);
 	splx(s);
 
 	lapic_startclock();
 
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 
 void

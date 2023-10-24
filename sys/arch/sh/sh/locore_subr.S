@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore_subr.S,v 1.16 2023/08/14 07:40:08 miod Exp $	*/
+/*	$OpenBSD: locore_subr.S,v 1.17 2023/10/24 13:20:10 claudio Exp $	*/
 /*	$NetBSD: locore_subr.S,v 1.28 2006/01/23 22:52:09 uwe Exp $	*/
 
 /*
@@ -471,10 +471,15 @@ NENTRY(_cpu_spin)
  *	respectively. set by cpu_fork().
  */
 NENTRY(proc_trampoline)
+	mov.l	.L_proc_trampoline_mi, r1
+	jsr	@r1			/* proc_trampoline_mi() */
+	 nop
 	jsr	@r12
 	 mov	r11,	r4
 	__EXCEPTION_RETURN
 	/* NOTREACHED */
+.L_proc_trampoline_mi:
+	.long	proc_trampoline_mi
 	SET_ENTRY_SIZE(proc_trampoline)
 
 

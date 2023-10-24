@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.98 2023/08/10 19:29:32 kettenis Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.99 2023/10/24 13:20:09 claudio Exp $	*/
 
 /*
  * Copyright (c) 2016 Dale Rahn <drahn@dalerahn.com>
@@ -1176,15 +1176,12 @@ cpu_init_secondary(struct cpu_info *ci)
 	arm_intr_cpu_enable();
 	cpu_startclock();
 
-	nanouptime(&ci->ci_schedstate.spc_runtime);
-
 	atomic_setbits_int(&ci->ci_flags, CPUF_RUNNING);
 	__asm volatile("dsb sy; sev" ::: "memory");
 
 	spllower(IPL_NONE);
 
-	SCHED_LOCK(s);
-	cpu_switchto(NULL, sched_chooseproc());
+	sched_toidle();
 }
 
 void
