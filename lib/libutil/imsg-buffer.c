@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg-buffer.c,v 1.16 2023/06/19 17:19:50 claudio Exp $	*/
+/*	$OpenBSD: imsg-buffer.c,v 1.17 2023/10/24 14:05:23 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -294,10 +294,8 @@ ibuf_free(struct ibuf *buf)
 {
 	if (buf == NULL)
 		return;
-#ifdef NOTYET
 	if (buf->fd != -1)
 		close(buf->fd);
-#endif
 	freezero(buf->buf, buf->size);
 	free(buf);
 }
@@ -314,9 +312,7 @@ ibuf_fd_get(struct ibuf *buf)
 	int fd;
 
 	fd = buf->fd;
-#ifdef NOTYET
 	buf->fd = -1;
-#endif
 	return (fd);
 }
 
@@ -480,11 +476,6 @@ static void
 ibuf_dequeue(struct msgbuf *msgbuf, struct ibuf *buf)
 {
 	TAILQ_REMOVE(&msgbuf->bufs, buf, entry);
-
-	if (buf->fd != -1) {
-		close(buf->fd);
-		buf->fd = -1;
-	}
 
 	msgbuf->queued--;
 	ibuf_free(buf);
