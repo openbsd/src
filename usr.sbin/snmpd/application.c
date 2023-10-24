@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.17 2022/12/20 20:04:55 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.18 2023/10/24 13:28:11 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -175,7 +175,7 @@ appl_shutdown(void)
 	}
 }
 
-static struct appl_context *
+struct appl_context *
 appl_context(const char *name, int create)
 {
 	struct appl_context *ctx;

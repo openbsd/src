@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.h,v 1.5 2022/09/01 14:34:17 martijn Exp $	*/
+/*	$OpenBSD: application.h,v 1.6 2023/10/24 13:28:11 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -88,6 +88,7 @@ struct appl_varbind {
 struct snmp_message;
 enum snmp_version;
 struct appl_backend;
+struct appl_context;
 
 struct appl_backend_functions {
 	void (*ab_close)(struct appl_backend *, enum appl_close_reason);
@@ -121,6 +122,7 @@ struct appl_backend {
 void appl(void);
 void appl_init(void);
 void appl_shutdown(void);
+struct appl_context *appl_context(const char *, int);
 enum appl_error appl_register(const char *, uint32_t, uint8_t, struct ber_oid *,
     int, int, uint8_t, uint32_t, struct appl_backend *);
 enum appl_error appl_unregister(const char *, uint8_t, struct ber_oid *,

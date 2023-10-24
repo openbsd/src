@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.7 2023/10/24 12:57:40 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.8 2023/10/24 13:28:11 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -368,6 +368,12 @@ appl_agentx_recv(int fd, short event, void *cookie)
 			log_warnx("%s: %s: Invalid NON_DEFAULT_CONTEXT flag",
 			    name, ax_pdutype2string(pdu->ap_header.aph_flags));
 			error = APPL_ERROR_PARSEERROR;
+			goto fail;
+		}
+		if (appl_context(pdu->ap_context.aos_string, 0) == NULL) {
+			log_warnx("%s: %s: Unsupported context",
+			    name, ax_pdutype2string(pdu->ap_header.aph_flags));
+			error = APPL_ERROR_UNSUPPORTEDCONTEXT;
 			goto fail;
 		}
 	}
