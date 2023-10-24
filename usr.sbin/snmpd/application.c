@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.18 2023/10/24 13:28:11 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.19 2023/10/24 13:46:11 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -347,28 +347,29 @@ appl_register(const char *ctxname, uint32_t timeout, uint8_t priority,
 		    backend->ab_name, oidbuf);
 		return APPL_ERROR_PARSEERROR;
 	}
-	if (range_subid > oid->bo_n) {
-		log_warnx("%s: Can't register %s: range_subid too large",
-		    backend->ab_name, oidbuf);
-		return APPL_ERROR_PARSEERROR;
-	}
-	if (range_subid != 0 && oid->bo_id[range_subid] >= upper_bound) {
-		log_warnx("%s: Can't register %s: upper bound smaller or equal "
-		    "to range_subid", backend->ab_name, oidbuf);
-		return APPL_ERROR_PARSEERROR;
-	}
-	if (range_subid != 0)
-		lower_bound = oid->bo_id[range_subid];
 
 	if (range_subid == 0)
 		return appl_region(ctx, timeout, priority, oid, instance,
 		    subtree, backend);
 
+	range_subid--;
+	if (range_subid >= oid->bo_n) {
+		log_warnx("%s: Can't register %s: range_subid too large",
+		    backend->ab_name, oidbuf);
+		return APPL_ERROR_PARSEERROR;
+	}
+	if (oid->bo_id[range_subid] > upper_bound) {
+		log_warnx("%s: Can't register %s: upper bound smaller than "
+		    "range_subid", backend->ab_name, oidbuf);
+		return APPL_ERROR_PARSEERROR;
+	}
+
+	lower_bound = oid->bo_id[range_subid];
 	do {
 		if ((error = appl_region(ctx, timeout, priority, oid, instance,
 		    subtree, backend)) != APPL_ERROR_NOERROR)
 			goto fail;
-	} while (oid->bo_id[range_subid] != upper_bound);
+	} while (oid->bo_id[range_subid]++ != upper_bound);
 	if ((error = appl_region(ctx, timeout, priority, oid, instance, subtree,
 	    backend)) != APPL_ERROR_NOERROR)
 		goto fail;
