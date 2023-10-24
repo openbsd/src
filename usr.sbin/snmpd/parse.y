@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.78 2022/10/06 14:41:08 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.79 2023/10/24 08:41:20 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -140,7 +140,7 @@ typedef struct {
 %token	SYSTEM CONTACT DESCR LOCATION NAME OBJECTID SERVICES RTFILTER
 %token	READONLY READWRITE OCTETSTRING INTEGER COMMUNITY TRAP RECEIVER
 %token	SECLEVEL NONE AUTH ENC USER AUTHKEY ENCKEY ERROR
-%token	HANDLE DEFAULT SRCADDR TCP UDP PFADDRFILTER BLOCKLIST PORT
+%token	HANDLE DEFAULT SRCADDR TCP UDP BLOCKLIST PORT
 %token	<v.string>	STRING
 %token	<v.number>	NUMBER
 %type	<v.string>	usmuser community optcommunity
@@ -335,26 +335,6 @@ main		: LISTEN ON listen_udptcp
 				    ROUTE_FILTER(RTM_IFANNOUNCE);
 			else
 				conf->sc_rtfilter = 0;
-		}
-		/* XXX Remove after 7.4 */
-		| PFADDRFILTER yesno		{
-			struct ber_oid *blocklist;
-
-			log_warnx("filter-pf-addresses is deprecated. "
-			    "Please use blocklist pfTblAddrTable instead.");
-			if ($2) {
-				blocklist = recallocarray(conf->sc_blocklist,
-				    conf->sc_nblocklist,
-				    conf->sc_nblocklist + 1,
-				    sizeof(*blocklist));
-				if (blocklist == NULL) {
-					yyerror("malloc");
-					YYERROR;
-				}
-				conf->sc_blocklist = blocklist;
-				smi_string2oid("pfTblAddrTable",
-				    &(blocklist[conf->sc_nblocklist++]));
-			}
 		}
 		| seclevel {
 			conf->sc_min_seclevel = $1;
@@ -1195,7 +1175,6 @@ lookup(char *s)
 		{ "enc",			ENC },
 		{ "enckey",			ENCKEY },
 		{ "engineid",			ENGINEID },
-		{ "filter-pf-addresses",	PFADDRFILTER },
 		{ "filter-routes",		RTFILTER },
 		{ "group",			GROUP },
 		{ "handle",			HANDLE },
