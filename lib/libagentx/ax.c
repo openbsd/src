@@ -1,4 +1,4 @@
-/*	$OpenBSD: ax.c,v 1.9 2023/10/24 08:48:41 martijn Exp $ */
+/*	$OpenBSD: ax.c,v 1.10 2023/10/24 08:54:52 martijn Exp $ */
 /*
  * Copyright (c) 2019 Martijn van Duren <martijn@openbsd.org>
  *
@@ -553,11 +553,11 @@ ax_unregister(struct ax *ax, uint32_t sessionid,
 
 int
 ax_response(struct ax *ax, uint32_t sessionid, uint32_t transactionid,
-    uint32_t packetid, struct ax_ostring *context, uint32_t sysuptime,
-    uint16_t error, uint16_t index, struct ax_varbind *vblist, size_t nvb)
+    uint32_t packetid, uint32_t sysuptime, uint16_t error, uint16_t index,
+    struct ax_varbind *vblist, size_t nvb)
 {
 	if (ax_pdu_header(ax, AX_PDU_TYPE_RESPONSE, 0, sessionid,
-	    transactionid, packetid, context) == -1)
+	    transactionid, packetid, NULL) == -1)
 		return -1;
 
 	if (ax_pdu_add_uint32(ax, sysuptime) == -1 ||

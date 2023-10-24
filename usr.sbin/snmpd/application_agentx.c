@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.4 2022/09/01 14:34:17 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.5 2023/10/24 08:54:52 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -311,8 +311,7 @@ appl_agentx_recv(int fd, short event, void *cookie)
 			    pdu->ap_header.aph_sessionid);
 			ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 			    pdu->ap_header.aph_transactionid,
-			    pdu->ap_header.aph_packetid,
-			    &(pdu->ap_context), smi_getticks(),
+			    pdu->ap_header.aph_packetid, smi_getticks(),
 			    APPL_ERROR_NOTOPEN, 0, NULL, 0);
 			appl_agentx_send(-1, EV_WRITE, conn);
 			goto fail;
@@ -370,8 +369,8 @@ appl_agentx_recv(int fd, short event, void *cookie)
 	case AX_PDU_TYPE_PING:
 		ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 		    pdu->ap_header.aph_transactionid,
-		    pdu->ap_header.aph_packetid, &(pdu->ap_context),
-		    smi_getticks(), APPL_ERROR_NOERROR, 0, NULL, 0);
+		    pdu->ap_header.aph_packetid, smi_getticks(),
+		    APPL_ERROR_NOERROR, 0, NULL, 0);
 		appl_agentx_send(-1, EV_WRITE, conn);
 		break;
 	case AX_PDU_TYPE_INDEXALLOCATE:
@@ -380,8 +379,8 @@ appl_agentx_recv(int fd, short event, void *cookie)
 		    ax_pdutype2string(pdu->ap_header.aph_type));
 		ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 		    pdu->ap_header.aph_transactionid,
-		    pdu->ap_header.aph_packetid, &(pdu->ap_context),
-		    smi_getticks(), APPL_ERROR_PROCESSINGERROR, 1,
+		    pdu->ap_header.aph_packetid, smi_getticks(),
+		    APPL_ERROR_PROCESSINGERROR, 1,
 		    pdu->ap_payload.ap_vbl.ap_varbind,
 		    pdu->ap_payload.ap_vbl.ap_nvarbind);
 		appl_agentx_send(-1, EV_WRITE, conn);
@@ -392,8 +391,8 @@ appl_agentx_recv(int fd, short event, void *cookie)
 		    ax_pdutype2string(pdu->ap_header.aph_type));
 		ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 		    pdu->ap_header.aph_transactionid,
-		    pdu->ap_header.aph_packetid, &(pdu->ap_context),
-		    smi_getticks(), APPL_ERROR_PROCESSINGERROR, 1,
+		    pdu->ap_header.aph_packetid, smi_getticks(),
+		    APPL_ERROR_PROCESSINGERROR, 1,
 		    NULL, 0);
 		appl_agentx_send(-1, EV_WRITE, conn);
 		break;
@@ -492,16 +491,15 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 	log_info("%s: %s %s: Open", session->sess_backend.ab_name, oidbuf,
 	    session->sess_descr.aos_string);
 
-	ax_response(conn->conn_ax, session->sess_id, pdu->ap_header.aph_transactionid,
-	    pdu->ap_header.aph_packetid, NULL, smi_getticks(), APPL_ERROR_NOERROR, 0,
-	    NULL, 0);
+	ax_response(conn->conn_ax, session->sess_id,
+	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
+	    smi_getticks(), APPL_ERROR_NOERROR, 0, NULL, 0);
 	appl_agentx_send(-1, EV_WRITE, conn);
 
 	return;
  fail:
 	ax_response(conn->conn_ax, 0, pdu->ap_header.aph_transactionid,
-	    pdu->ap_header.aph_packetid, NULL, 0, APPL_ERROR_OPENFAILED, 0,
-	    NULL, 0);
+	    pdu->ap_header.aph_packetid, 0, APPL_ERROR_OPENFAILED, 0, NULL, 0);
 	appl_agentx_send(-1, EV_WRITE, conn);
 	if (session != NULL)
 		free(session->sess_descr.aos_string);
@@ -521,7 +519,7 @@ appl_agentx_close(struct appl_agentx_session *session, struct ax_pdu *pdu)
 
 	ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    &(pdu->ap_context), smi_getticks(), APPL_ERROR_NOERROR, 0, NULL, 0);
+	    smi_getticks(), APPL_ERROR_NOERROR, 0, NULL, 0);
 	appl_agentx_send(-1, EV_WRITE, conn);
 }
 
@@ -593,7 +591,7 @@ appl_agentx_register(struct appl_agentx_session *session, struct ax_pdu *pdu)
  fail:
 	ax_response(session->sess_conn->conn_ax, session->sess_id,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    &(pdu->ap_context), smi_getticks(), error, 0, NULL, 0);
+	    smi_getticks(), error, 0, NULL, 0);
 	appl_agentx_send(-1, EV_WRITE, session->sess_conn);
 }
 
@@ -620,7 +618,7 @@ appl_agentx_unregister(struct appl_agentx_session *session, struct ax_pdu *pdu)
  fail:
 	ax_response(session->sess_conn->conn_ax, session->sess_id,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    &(pdu->ap_context), smi_getticks(), error, 0, NULL, 0);
+	    smi_getticks(), error, 0, NULL, 0);
 	appl_agentx_send(-1, EV_WRITE, session->sess_conn);
 }
 
