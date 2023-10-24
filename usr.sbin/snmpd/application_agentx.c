@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.10 2023/10/24 13:41:16 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.11 2023/10/24 14:02:52 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -712,6 +712,9 @@ appl_agentx_get(struct appl_backend *backend, int32_t transactionid,
 	struct ax_searchrange *srl;
 	size_t i, j, nsr;
 
+	if (session->sess_conn->conn_ax == NULL)
+		return;
+
 	for (nsr = 0, vb = vblist; vb != NULL; vb = vb->av_next)
 		nsr++;
 
@@ -759,6 +762,9 @@ appl_agentx_getnext(struct appl_backend *backend, int32_t transactionid,
 	struct appl_varbind *vb;
 	struct ax_searchrange *srl;
 	size_t i, j, nsr;
+
+	if (session->sess_conn->conn_ax == NULL)
+		return;
 
 	for (nsr = 0, vb = vblist; vb != NULL; vb = vb->av_next)
 		nsr++;
