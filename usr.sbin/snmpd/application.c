@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.21 2023/10/24 14:06:00 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.22 2023/10/24 14:17:20 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -128,8 +128,8 @@ void appl_request_upstream_resolve(struct appl_request_upstream *);
 void appl_request_downstream_send(struct appl_request_downstream *);
 void appl_request_downstream_timeout(int, short, void *);
 void appl_request_upstream_reply(struct appl_request_upstream *);
-int appl_varbind_valid(struct appl_varbind *, struct appl_varbind *, int, int,
-    int, const char **);
+int appl_varbind_valid(struct appl_varbind *, struct appl_varbind_internal *,
+    int, int, int, const char **);
 int appl_varbind_backend(struct appl_varbind_internal *);
 void appl_varbind_error(struct appl_varbind_internal *, enum appl_error);
 void appl_report(struct snmp_message *, int32_t, struct ber_oid *,
@@ -1073,9 +1073,8 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 
 	vb = vblist;
 	for (i = 1; vb != NULL; vb = vb->av_next, i++) {
-                if (!appl_varbind_valid(vb, origvb == NULL ?
-		    NULL : &(origvb->avi_varbind), next,
-                    error != APPL_ERROR_NOERROR, backend->ab_range, &errstr)) {
+		if (!appl_varbind_valid(vb, origvb, next,
+		    error != APPL_ERROR_NOERROR, backend->ab_range, &errstr)) {
 			smi_oid2string(&(vb->av_oid), oidbuf,
 			    sizeof(oidbuf), 0);
 			log_warnx("%s: %"PRIu32" %s: %s",
@@ -1173,8 +1172,9 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 }
 
 int
-appl_varbind_valid(struct appl_varbind *varbind, struct appl_varbind *request,
-    int next, int null, int range, const char **errstr)
+appl_varbind_valid(struct appl_varbind *varbind,
+    struct appl_varbind_internal *request, int next, int null, int range,
+    const char **errstr)
 {
 	int cmp;
 	int eomv = 0;
@@ -1259,23 +1259,31 @@ appl_varbind_valid(struct appl_varbind *varbind, struct appl_varbind *request,
 	if (request == NULL)
 		return 1;
 
-	cmp = ober_oid_cmp(&(request->av_oid), &(varbind->av_oid));
-	if (next && !eomv) {
-		if (request->av_include) {
-			if (cmp > 0) {
-				*errstr = "oid not incrementing";
-				return 0;
-			}
-		} else {
-			if (cmp >= 0) {
-				*errstr = "oid not incrementing";
-				return 0;
-			}
-		}
-		if (range && ober_oid_cmp(&(varbind->av_oid),
-		    &(request->av_oid_end)) > 0) {
-			*errstr = "end oid not honoured";
+	cmp = ober_oid_cmp(&(request->avi_varbind.av_oid), &(varbind->av_oid));
+	if (next) {
+		if (request->avi_region->ar_instance &&
+		    ober_oid_cmp(&(request->avi_region->ar_oid),
+		    &(varbind->av_oid)) != 0) {
+			*errstr = "oid below instance";
 			return 0;
+		}
+		if (!eomv) {
+			if (request->avi_varbind.av_include) {
+				if (cmp > 0) {
+					*errstr = "oid not incrementing";
+					return 0;
+				}
+			} else {
+				if (cmp >= 0) {
+					*errstr = "oid not incrementing";
+					return 0;
+				}
+			}
+			if (range && ober_oid_cmp(&(varbind->av_oid),
+			    &(request->avi_varbind.av_oid_end)) > 0) {
+				*errstr = "end oid not honoured";
+				return 0;
+			}
 		}
 	} else {
 		if (cmp != 0) {
