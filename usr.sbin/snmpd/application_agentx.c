@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.11 2023/10/24 14:02:52 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.12 2023/10/24 14:11:14 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -548,6 +548,7 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 	session->sess_backend.ab_cookie = session;
 	session->sess_backend.ab_retries = 0;
 	session->sess_backend.ab_fn = &appl_agentx_functions;
+	session->sess_backend.ab_range = 1;
 	RB_INIT(&(session->sess_backend.ab_requests));
 	TAILQ_INSERT_TAIL(&(conn->conn_sessions), session, sess_conn_entry);
 
