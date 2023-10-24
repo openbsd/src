@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.5 2023/10/24 08:54:52 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.6 2023/10/24 09:00:53 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -411,9 +411,11 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 	struct appl_agentx_session *session;
 	struct ber_oid oid;
 	char oidbuf[1024];
+	enum appl_error error = APPL_ERROR_NOERROR;
 
 	if ((session = malloc(sizeof(*session))) == NULL) {
 		log_warn(NULL);
+		error = APPL_ERROR_OPENFAILED;
 		goto fail;
 	}
 	session->sess_descr.aos_string = NULL;
@@ -432,12 +434,14 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 	} else if (pdu->ap_payload.ap_open.ap_oid.aoi_idlen == 1) {
 		log_warnx("AgentX(%"PRIu32"): Invalid oid: Open Failed",
 		    conn->conn_id);
+		error = APPL_ERROR_PARSEERROR;
 		goto fail;
 	}
 	/* RFC 2742 agentxSessionDescr */
 	if (pdu->ap_payload.ap_open.ap_descr.aos_slen > 255) {
 		log_warnx("AgentX(%"PRIu32"): Invalid descr (too long): Open "
 		    "Failed", conn->conn_id);
+		error = APPL_ERROR_PARSEERROR;
 		goto fail;
 	}
 	/*
@@ -451,6 +455,7 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 	    pdu->ap_payload.ap_open.ap_descr.aos_string, 0) == (size_t)-1) {
 		log_warnx("AgentX(%"PRIu32"): Invalid descr (not UTF-8): "
 		    "Open Failed", conn->conn_id);
+		error = APPL_ERROR_PARSEERROR;
 		goto fail;
 	}
 
@@ -463,6 +468,7 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 		if (session->sess_descr.aos_string == NULL) {
 			log_warn("AgentX(%"PRIu32"): strdup: Open Failed",
 			    conn->conn_id);
+			error = APPL_ERROR_OPENFAILED;
 			goto fail;
 		}
 	}
@@ -478,6 +484,7 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 	    conn->conn_id, session->sess_id) == -1) {
 		log_warn("AgentX(%"PRIu32"): asprintf: Open Failed",
 		    conn->conn_id);
+		error = APPL_ERROR_OPENFAILED;
 		goto fail;
 	}
 	session->sess_backend.ab_cookie = session;
@@ -499,7 +506,7 @@ appl_agentx_open(struct appl_agentx_connection *conn, struct ax_pdu *pdu)
 	return;
  fail:
 	ax_response(conn->conn_ax, 0, pdu->ap_header.aph_transactionid,
-	    pdu->ap_header.aph_packetid, 0, APPL_ERROR_OPENFAILED, 0, NULL, 0);
+	    pdu->ap_header.aph_packetid, 0, error, 0, NULL, 0);
 	appl_agentx_send(-1, EV_WRITE, conn);
 	if (session != NULL)
 		free(session->sess_descr.aos_string);
