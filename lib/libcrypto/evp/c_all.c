@@ -1,4 +1,4 @@
-/* $OpenBSD: c_all.c,v 1.32 2023/07/24 10:24:58 jsing Exp $ */
+/* $OpenBSD: c_all.c,v 1.33 2023/10/24 13:09:54 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -223,6 +223,8 @@ OpenSSL_add_all_ciphers_internal(void)
 
 #ifndef OPENSSL_NO_CHACHA
 	EVP_add_cipher(EVP_chacha20());
+	EVP_add_cipher_alias(SN_chacha20, "ChaCha20");
+	EVP_add_cipher_alias(LN_chacha20, "chacha20");
 #endif
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
 	EVP_add_cipher(EVP_chacha20_poly1305());
