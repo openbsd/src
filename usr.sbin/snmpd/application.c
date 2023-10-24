@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.20 2023/10/24 13:50:47 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.21 2023/10/24 14:06:00 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -99,6 +99,7 @@ struct appl_varbind_internal {
 	enum appl_varbind_state avi_state;
 	struct appl_varbind avi_varbind;
 	struct appl_region *avi_region;
+	struct ber_oid avi_origid;
 	int16_t avi_index;
 	struct appl_request_upstream *avi_request_upstream;
 	struct appl_request_downstream *avi_request_downstream;
@@ -679,6 +680,8 @@ appl_processpdu(struct snmp_message *statereference, const char *ctxname,
 		}
 		ober_get_oid(varbind->be_sub,
 		    &(ureq->aru_vblist[i].avi_varbind.av_oid));
+		ureq->aru_vblist[i].avi_origid =
+		    ureq->aru_vblist[i].avi_varbind.av_oid;
 		if (i + 1 < ureq->aru_varbindlen) {
 			ureq->aru_vblist[i].avi_next =
 			    &(ureq->aru_vblist[i + 1]);
@@ -1008,6 +1011,10 @@ appl_request_upstream_reply(struct appl_request_upstream *ureq)
 		vb = &(ureq->aru_vblist[i]);
 		vb->avi_varbind.av_next =
 		    &(ureq->aru_vblist[i + 1].avi_varbind);
+		value = vb->avi_varbind.av_value;
+		if (value->be_class == BER_CLASS_CONTEXT &&
+		    value->be_type == APPL_EXC_ENDOFMIBVIEW)
+			vb->avi_varbind.av_oid = vb->avi_origid;
 	}
 
 	ureq->aru_vblist[i - 1].avi_varbind.av_next = NULL;
