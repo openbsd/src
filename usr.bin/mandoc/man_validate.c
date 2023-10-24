@@ -1,6 +1,6 @@
-/* $OpenBSD: man_validate.c,v 1.128 2023/04/28 20:14:19 schwarze Exp $ */
+/* $OpenBSD: man_validate.c,v 1.129 2023/10/24 20:30:49 schwarze Exp $ */
 /*
- * Copyright (c) 2010, 2012-2020 Ingo Schwarze <schwarze@openbsd.org>
+ * Copyright (c) 2010, 2012-2020, 2023 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -31,6 +31,7 @@
 
 #include "mandoc_aux.h"
 #include "mandoc.h"
+#include "mandoc_xr.h"
 #include "roff.h"
 #include "man.h"
 #include "libmandoc.h"
@@ -52,6 +53,7 @@ static	void	  post_AT(CHKARGS);
 static	void	  post_EE(CHKARGS);
 static	void	  post_EX(CHKARGS);
 static	void	  post_IP(CHKARGS);
+static	void	  post_MR(CHKARGS);
 static	void	  post_OP(CHKARGS);
 static	void	  post_SH(CHKARGS);
 static	void	  post_TH(CHKARGS);
@@ -98,6 +100,7 @@ static	const v_check man_valids[MAN_MAX - MAN_TH] = {
 	NULL,       /* UE */
 	post_UR,    /* MT */
 	NULL,       /* ME */
+	post_MR,    /* MR */
 };
 
 
@@ -542,6 +545,32 @@ post_TH(CHKARGS)
 	 * meta-data.
 	 */
 	roff_node_delete(man, man->last);
+}
+
+static void
+post_MR(CHKARGS)
+{
+	struct roff_node *nch;
+
+	if ((nch = n->child) == NULL) {
+		mandoc_msg(MANDOCERR_NM_NONAME, n->line, n->pos, "MR");
+		return;
+	}
+	if (nch->next == NULL) {
+		mandoc_msg(MANDOCERR_XR_NOSEC,
+		    n->line, n->pos, "MR %s", nch->string);
+		return;
+	}
+	if (mandoc_xr_add(nch->next->string, nch->string, nch->line, nch->pos))
+		mandoc_msg(MANDOCERR_XR_SELF, nch->line, nch->pos,
+		    "MR %s %s", nch->string, nch->next->string);
+	if ((nch = nch->next->next) == NULL || nch->next == NULL)
+		return;
+
+	mandoc_msg(MANDOCERR_ARG_EXCESS, nch->next->line, nch->next->pos,
+	    "MR ... %s", nch->next->string);
+	while (nch->next != NULL)
+		roff_node_delete(man, nch->next);
 }
 
 static void

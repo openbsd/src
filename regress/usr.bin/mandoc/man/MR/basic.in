@@ -1,0 +1,46 @@
+.\" $OpenBSD: basic.in,v 1.1 2023/10/24 20:30:49 schwarze Exp $
+.TH MR-BASIC 1 "October 24, 2023" OpenBSD
+.SH NAME
+MR-basic \- manual page cross references
+.SH DESCRIPTION
+empty:
+.MR
+prints empty name and parentheses
+.PP
+single argument:
+.MR name
+prints empty parentheses
+.PP
+two arguments:
+.MR test 1
+normal use
+.PP
+three arguments:
+.MR test 1 suffix
+with suffix
+.PP
+four arguments:
+.MR test 1 suffix excess
+warning
+.PP
+five arguments:
+.MR test 1 suffix too many
+warning
+.PP
+after setting
+.ft B
+bold
+font:
+.MR test 1 suffix
+not bold
+.PP
+in bold next-line scope:
+.B
+.MR test 1 suffix
+not bold
+.TP 5n
+first tag
+first body
+.TP
+.MR test 1 tag
+test body

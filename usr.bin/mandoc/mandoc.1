@@ -1,6 +1,6 @@
-.\" $OpenBSD: mandoc.1,v 1.191 2023/10/18 14:47:22 schwarze Exp $
+.\" $OpenBSD: mandoc.1,v 1.192 2023/10/24 20:30:49 schwarze Exp $
 .\"
-.\" Copyright (c) 2012, 2014-2022 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2012, 2014-2023 Ingo Schwarze <schwarze@openbsd.org>
 .\" Copyright (c) 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: October 18 2023 $
+.Dd $Mdocdate: October 24 2023 $
 .Dt MANDOC 1
 .Os
 .Sh NAME
@@ -1295,9 +1295,11 @@ The same standard section title occurs more than once.
 A standard section header occurs in a section of the manual
 where it normally isn't useful.
 .It Sy "cross reference to self"
-.Pq mdoc
+.Pq mdoc , man
 An
 .Ic \&Xr
+or
+.Ic \&MR
 macro refers to a name and section matching the section of the present
 manual page and a name mentioned in an
 .Ic \&Nm
@@ -1616,12 +1618,16 @@ macro is immediately followed by an
 macro on the next input line.
 Such an empty block does not produce any output.
 .It Sy "missing section argument"
-.Pq mdoc
+.Pq mdoc , man
 An
 .Ic \&Xr
+or
+.Ic \&MR
 macro lacks its second, section number argument.
-The first argument, i.e. the name, is printed, but without subsequent
-parentheses.
+The first argument, i.e. the name, is printed, but without a section number.
+In the case of
+.Ic \&Xr ,
+the parentheses are also omitted.
 .It Sy "missing -std argument, adding it"
 .Pq mdoc
 An
@@ -2152,10 +2158,12 @@ request is neither a single ASCII character
 nor a single character escape sequence.
 All arguments are ignored and printing of a margin character is disabled.
 .It Sy "missing manual name, using \(dq\(dq"
-.Pq mdoc
+.Pq mdoc , man
 The first call to
 .Ic \&Nm ,
-or any call in the NAME section, lacks the required argument.
+or any call in the NAME section, lacks the required argument, or
+.Ic \&MR
+is called without any argument.
 .It Sy "uname(3) system call failed, using UNKNOWN"
 .Pq mdoc
 The
@@ -2283,6 +2291,8 @@ or a request of the
 family with more than two arguments
 .It
 .Ic \&Dt
+or
+.Ic \&MR
 with more than three arguments
 .It
 .Ic \&TH

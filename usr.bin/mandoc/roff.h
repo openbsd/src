@@ -1,4 +1,4 @@
-/* $OpenBSD: roff.h,v 1.57 2022/04/30 15:08:56 schwarze Exp $	*/
+/* $OpenBSD: roff.h,v 1.58 2023/10/24 20:30:49 schwarze Exp $	*/
 /*
  * Copyright (c) 2013-2015,2017-2020,2022 Ingo Schwarze <schwarze@openbsd.org>
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -476,6 +476,7 @@ enum	roff_tok {
 	MAN_UE,
 	MAN_MT,
 	MAN_ME,
+	MAN_MR,
 	MAN_MAX		/* End of man(7) macros. */
 };
 

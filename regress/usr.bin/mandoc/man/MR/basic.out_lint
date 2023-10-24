@@ -1,0 +1,5 @@
+mandoc: basic.in:38:2: WARNING: line scope broken: MR breaks B
+mandoc: basic.in:7:2: ERROR: missing manual name, using "": MR
+mandoc: basic.in:11:2: WARNING: missing section argument: MR name
+mandoc: basic.in:23:19: ERROR: skipping excess arguments: MR ... excess
+mandoc: basic.in:27:19: ERROR: skipping excess arguments: MR ... too

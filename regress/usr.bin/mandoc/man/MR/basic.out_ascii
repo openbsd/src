@@ -1,0 +1,29 @@
+MR-BASIC(1)                 General Commands Manual                MR-BASIC(1)
+
+NNAAMMEE
+     MR-basic - manual page cross references
+
+DDEESSCCRRIIPPTTIIOONN
+     empty: () prints empty name and parentheses
+
+     single argument: name() prints empty parentheses
+
+     two arguments: test(1) normal use
+
+     three arguments: test(1)suffix with suffix
+
+     four arguments: test(1)suffix warning
+
+     five arguments: test(1)suffix warning
+
+     after setting bboolldd ffoonntt:: test(1)suffix not bold
+
+     in bold next-line scope: test(1)suffix not bold
+
+     first tag
+          first body
+
+     test(1)tag
+          test body
+
+OpenBSD                        October 24, 2023                    MR-BASIC(1)
