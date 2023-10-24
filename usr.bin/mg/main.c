@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.95 2023/04/14 15:34:08 tb Exp $	*/
+/*	$OpenBSD: main.c,v 1.96 2023/10/24 10:26:02 op Exp $	*/
 
 /* This file is in the public domain. */
 
@@ -167,8 +167,10 @@ main(int argc, char **argv)
 		ffclose(ffp, NULL);
 	}
 
-	if (batch)
+	if (batch) {
+		vttidy();
 		return (0);
+	}
 
 	/*
 	 * Now ensure any default buffer modes from the startup file are
