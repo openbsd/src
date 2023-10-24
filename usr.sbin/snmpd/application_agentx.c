@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.9 2023/10/24 13:37:02 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.10 2023/10/24 13:41:16 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -576,16 +576,29 @@ appl_agentx_close(struct appl_agentx_session *session, struct ax_pdu *pdu)
 {
 	struct appl_agentx_connection *conn = session->sess_conn;
 	char name[100];
+	enum appl_error error = APPL_ERROR_NOERROR;
 
 	strlcpy(name, session->sess_backend.ab_name, sizeof(name));
-	appl_agentx_session_free(session);
-	log_info("%s: Closed by subagent (%s)", name,
-	    ax_closereason2string(pdu->ap_payload.ap_close.ap_reason));
+	if (pdu->ap_payload.ap_close.ap_reason == AX_CLOSE_BYMANAGER) {
+		log_warnx("%s: Invalid close reason", name);
+		error = APPL_ERROR_PARSEERROR;
+	} else {
+		appl_agentx_session_free(session);
+		log_info("%s: Closed by subagent (%s)", name,
+		    ax_closereason2string(pdu->ap_payload.ap_close.ap_reason));
+	}
 
 	ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
-	    smi_getticks(), APPL_ERROR_NOERROR, 0, NULL, 0);
+	    smi_getticks(), error, 0, NULL, 0);
 	appl_agentx_send(-1, EV_WRITE, conn);
+	if (error == APPL_ERROR_NOERROR)
+		return;
+
+	appl_agentx_forceclose(&(session->sess_backend),
+	    APPL_CLOSE_REASONPARSEERROR);
+	if (TAILQ_EMPTY(&(conn->conn_sessions)))
+		appl_agentx_free(conn, APPL_CLOSE_REASONOTHER);
 }
 
 void
