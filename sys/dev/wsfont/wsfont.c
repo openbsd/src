@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsfont.c,v 1.64 2023/10/19 06:47:36 fcambus Exp $ */
+/*	$OpenBSD: wsfont.c,v 1.65 2023/10/24 13:52:49 fcambus Exp $ */
 /*	$NetBSD: wsfont.c,v 1.17 2001/02/07 13:59:24 ad Exp $	*/
 
 /*-
@@ -74,11 +74,6 @@
 #define HAVE_FONT 1
 #endif
 
-#ifdef FONT_BOLD8x16
-#define HAVE_FONT 1
-#include <dev/wsfont/bold8x16.h>
-#endif
-
 #ifdef FONT_GALLANT12x22
 #define HAVE_FONT 1
 #endif
@@ -144,32 +139,29 @@ static struct font builtin_fonts[] = {
 #define BUILTIN_FONT(f, c) \
 	{ .font = &(f), .cookie = (c), .lockcount = 0, \
 	  .flg = WSFONT_STATIC | WSFONT_BUILTIN }
-#ifdef FONT_BOLD8x16
-	BUILTIN_FONT(bold8x16, 1),
-#endif
 #ifdef FONT_GALLANT12x22
-	BUILTIN_FONT(gallant12x22, 2),
+	BUILTIN_FONT(gallant12x22, 1),
 #endif
 #ifdef FONT_SPLEEN5x8
-	BUILTIN_FONT(spleen5x8, 3),
+	BUILTIN_FONT(spleen5x8, 2),
 #endif
 #ifdef FONT_SPLEEN6x12
-	BUILTIN_FONT(spleen6x12, 4),
+	BUILTIN_FONT(spleen6x12, 3),
 #endif
 #ifdef FONT_SPLEEN8x16
-	BUILTIN_FONT(spleen8x16, 5),
+	BUILTIN_FONT(spleen8x16, 4),
 #endif
 #ifdef FONT_SPLEEN8x16_IBM
-	BUILTIN_FONT(spleen8x16_ibm, 6),
+	BUILTIN_FONT(spleen8x16_ibm, 5),
 #endif
 #ifdef FONT_SPLEEN12x24
-	BUILTIN_FONT(spleen12x24, 7),
+	BUILTIN_FONT(spleen12x24, 6),
 #endif
 #ifdef FONT_SPLEEN16x32
-	BUILTIN_FONT(spleen16x32, 8),
+	BUILTIN_FONT(spleen16x32, 7),
 #endif
 #ifdef FONT_SPLEEN32x64
-	BUILTIN_FONT(spleen32x64, 9),
+	BUILTIN_FONT(spleen32x64, 8),
 #endif
 #undef BUILTIN_FONT
 };
