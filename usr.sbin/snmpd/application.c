@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.22 2023/10/24 14:17:20 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.23 2023/10/24 14:19:44 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -130,6 +130,7 @@ void appl_request_downstream_timeout(int, short, void *);
 void appl_request_upstream_reply(struct appl_request_upstream *);
 int appl_varbind_valid(struct appl_varbind *, struct appl_varbind_internal *,
     int, int, int, const char **);
+int appl_error_valid(enum appl_error, enum snmp_pdutype);
 int appl_varbind_backend(struct appl_varbind_internal *);
 void appl_varbind_error(struct appl_varbind_internal *, enum appl_error);
 void appl_report(struct snmp_message *, int32_t, struct ber_oid *,
@@ -1069,6 +1070,11 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 		next = pdutype == SNMP_C_GETNEXTREQ ||
 		    pdutype == SNMP_C_GETBULKREQ;
 		origvb = dreq->ard_vblist;
+		if (!appl_error_valid(error, dreq->ard_requesttype)) {
+			log_warnx("%s: %"PRIu32" Invalid error",
+			    backend->ab_name, requestid);
+			invalid = 1;
+		}
 	}
 
 	vb = vblist;
@@ -1292,6 +1298,37 @@ appl_varbind_valid(struct appl_varbind *varbind,
 		}
 	}
 	return 1;
+}
+
+int
+appl_error_valid(enum appl_error error, enum snmp_pdutype type)
+{
+	switch (error) {
+	case APPL_ERROR_NOERROR:
+	case APPL_ERROR_TOOBIG:
+	case APPL_ERROR_NOSUCHNAME:
+	case APPL_ERROR_GENERR:
+		return 1;
+	case APPL_ERROR_BADVALUE:
+	case APPL_ERROR_READONLY:
+	case APPL_ERROR_NOACCESS:
+	case APPL_ERROR_WRONGTYPE:
+	case APPL_ERROR_WRONGLENGTH:
+	case APPL_ERROR_WRONGENCODING:
+	case APPL_ERROR_WRONGVALUE:
+	case APPL_ERROR_NOCREATION:
+	case APPL_ERROR_INCONSISTENTVALUE:
+	case APPL_ERROR_RESOURCEUNAVAILABLE:
+	case APPL_ERROR_COMMITFAILED:
+	case APPL_ERROR_UNDOFAILED:
+	case APPL_ERROR_NOTWRITABLE:
+	case APPL_ERROR_INCONSISTENTNAME:
+		return type == SNMP_C_SETREQ;
+	case APPL_ERROR_AUTHORIZATIONERROR:
+		return type == SNMP_C_GETREQ || type == SNMP_C_SETREQ;
+	default:
+		return 0;
+	}
 }
 
 int
