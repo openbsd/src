@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.5 2023/10/24 18:16:05 martijn Exp $	*/
+/*	$OpenBSD: mib.c,v 1.6 2023/10/24 18:27:26 martijn Exp $	*/
 
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
@@ -108,7 +108,9 @@ int	 kinfo_proc_comp(const void *, const void *);
 int	 kinfo_proc(u_int32_t, struct kinfo_proc **);
 void	 kinfo_timer_cb(int, short, void *);
 void	 kinfo_proc_free(void);
-int	 kinfo_args(struct kinfo_proc *, char **);
+int	 kinfo_args(struct kinfo_proc *, char ***);
+int	 kinfo_path(struct kinfo_proc *, char **);
+int	 kinfo_parameters(struct kinfo_proc *, char **);
 
 /* IF-MIB */
 struct agentx_index *ifIdx;
@@ -675,13 +677,21 @@ mib_hrswrun(struct agentx_varbind *vb)
 
 	if (obj == hrSWRunIndex)
 		agentx_varbind_integer(vb, kinfo->p_pid);
-	else if (obj == hrSWRunName || obj == hrSWRunPath)
+	else if (obj == hrSWRunName)
 		agentx_varbind_string(vb, kinfo->p_comm);
-	else if (obj == hrSWRunID)
+ 	else if (obj == hrSWRunPath) {
+		if (kinfo_path(kinfo, &s) == -1) {
+			log_warn("kinfo_path");
+			agentx_varbind_error(vb);
+			return;
+		}
+		
+		agentx_varbind_string(vb, s);
+	} else if (obj == hrSWRunID)
 		agentx_varbind_oid(vb, AGENTX_OID(0, 0));
 	else if (obj == hrSWRunParameters) {
-		if (kinfo_args(kinfo, &s) == -1) {
-			log_warn("kinfo_args");
+		if (kinfo_parameters(kinfo, &s) == -1) {
+			log_warn("kinfo_parameters");
 			agentx_varbind_error(vb);
 			return;
 		}
@@ -824,24 +834,21 @@ kinfo_proc_free(void)
 }
 
 int
-kinfo_args(struct kinfo_proc *kinfo, char **s)
+kinfo_args(struct kinfo_proc *kinfo, char ***s)
 {
-	static char		 str[128];
 	static char		*buf = NULL;
 	static size_t		 buflen = 128;
 
 	int			 mib[] = { CTL_KERN, KERN_PROC_ARGS,
 				    kinfo->p_pid, KERN_PROC_ARGV };
-	char			*nbuf, **argv;
+	char			*nbuf;
 
+	*s = NULL;
 	if (buf == NULL) {
 		buf = malloc(buflen);
 		if (buf == NULL)
 			return (-1);
 	}
-
-	str[0] = '\0';
-	*s = str;
 
 	while (sysctl(mib, nitems(mib), buf, &buflen, NULL, 0) == -1) {
 		if (errno != ENOMEM) {
@@ -857,11 +864,41 @@ kinfo_args(struct kinfo_proc *kinfo, char **s)
 		buflen += 128;
 	}
 
-	argv = (char **)buf;
-	if (argv[0] == NULL)
-		return (0);
+	*s = (char **)buf;
+	return (0);
+}
 
+int
+kinfo_path(struct kinfo_proc *kinfo, char **s)
+{
+	static char		 str[129];
+	char			**argv;
+
+	if (kinfo_args(kinfo, &argv) == -1)
+		return (-1);
+
+	str[0] = '\0';
+	*s = str;
+	if (argv != NULL && argv[0] != NULL)
+		strlcpy(str, argv[0], sizeof(str));
+	return (0);
+}
+
+int
+kinfo_parameters(struct kinfo_proc *kinfo, char **s)
+{
+	static char		 str[129];
+	char			**argv;
+
+	if (kinfo_args(kinfo, &argv) == -1)
+		return (-1);
+
+	str[0] = '\0';
+	*s = str;
+	if (argv == NULL || argv[0] == NULL)
+		return (0);
 	argv++;
+
 	while (*argv != NULL) {
 		strlcat(str, *argv, sizeof(str));
 		argv++;
