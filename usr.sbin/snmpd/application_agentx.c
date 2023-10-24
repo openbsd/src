@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.6 2023/10/24 09:00:53 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.7 2023/10/24 12:57:40 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -276,13 +276,16 @@ void
 appl_agentx_recv(int fd, short event, void *cookie)
 {
 	struct appl_agentx_connection *conn = cookie;
-	struct appl_agentx_session *session;
+	struct appl_agentx_session *session = NULL;
 	struct ax_pdu *pdu;
+	enum appl_error error;
+	char name[100];
 
+	snprintf(name, sizeof(name), "AgentX(%"PRIu32")", conn->conn_id);
 	if ((pdu = ax_recv(conn->conn_ax)) == NULL) {
 		if (errno == EAGAIN)
 			return;
-		log_warn("AgentX(%"PRIu32")", conn->conn_id);
+		log_warn("%s", name);
 		/*
 		 * Either the connection is dead, or we had garbage on the line.
 		 * Both make sure we can't continue on this stream.
@@ -306,16 +309,12 @@ appl_agentx_recv(int fd, short event, void *cookie)
 				break;
 		}
 		if (session == NULL) {
-			log_warnx("AgentX(%"PRIu32"): Session %"PRIu32" not "
-			    "found for request", conn->conn_id,
-			    pdu->ap_header.aph_sessionid);
-			ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
-			    pdu->ap_header.aph_transactionid,
-			    pdu->ap_header.aph_packetid, smi_getticks(),
-			    APPL_ERROR_NOTOPEN, 0, NULL, 0);
-			appl_agentx_send(-1, EV_WRITE, conn);
+			log_warnx("%s: Session %"PRIu32" not found for request",
+			    name, pdu->ap_header.aph_sessionid);
+			error = APPL_ERROR_NOTOPEN;
 			goto fail;
 		}
+		strlcpy(name, session->sess_backend.ab_name, sizeof(name));
 		/*
 		 * RFC2741 section 7.1.1 bullet 4 is unclear on what byte order
 		 * the response should be. My best guess is that it makes more
@@ -327,6 +326,51 @@ appl_agentx_recv(int fd, short event, void *cookie)
 		 */
 	}
 
+	if (pdu->ap_header.aph_flags & AX_PDU_FLAG_INSTANCE_REGISTRATION) {
+		if (pdu->ap_header.aph_type != AX_PDU_TYPE_REGISTER) {
+			log_warnx("%s: %s: Invalid INSTANCE_REGISTRATION flag",
+			    name, ax_pdutype2string(pdu->ap_header.aph_flags));
+			error = APPL_ERROR_PARSEERROR;
+			goto fail;
+		}
+	}
+	if (pdu->ap_header.aph_flags & AX_PDU_FLAG_NEW_INDEX) {
+		if (pdu->ap_header.aph_type != AX_PDU_TYPE_INDEXALLOCATE &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_INDEXDEALLOCATE) {
+			log_warnx("%s: %s: Invalid NEW_INDEX flag", name,
+			    ax_pdutype2string(pdu->ap_header.aph_flags));
+			error = APPL_ERROR_PARSEERROR;
+			goto fail;
+		}
+	}
+	if (pdu->ap_header.aph_flags & AX_PDU_FLAG_ANY_INDEX) {
+		if (pdu->ap_header.aph_type != AX_PDU_TYPE_INDEXALLOCATE &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_INDEXDEALLOCATE) {
+			log_warnx("%s: %s: Invalid ANY_INDEX flag", name,
+			    ax_pdutype2string(pdu->ap_header.aph_flags));
+			error = APPL_ERROR_PARSEERROR;
+			goto fail;
+		}
+	}
+	if (pdu->ap_header.aph_flags & AX_PDU_FLAG_NON_DEFAULT_CONTEXT) {
+		if (pdu->ap_header.aph_type != AX_PDU_TYPE_REGISTER &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_UNREGISTER &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_ADDAGENTCAPS &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_REMOVEAGENTCAPS &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_GET &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_GETNEXT &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_GETBULK &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_INDEXALLOCATE &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_INDEXDEALLOCATE &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_NOTIFY &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_TESTSET &&
+		    pdu->ap_header.aph_type != AX_PDU_TYPE_PING) {
+			log_warnx("%s: %s: Invalid NON_DEFAULT_CONTEXT flag",
+			    name, ax_pdutype2string(pdu->ap_header.aph_flags));
+			error = APPL_ERROR_PARSEERROR;
+			goto fail;
+		}
+	}
 	switch (pdu->ap_header.aph_type) {
 	case AX_PDU_TYPE_OPEN:
 		appl_agentx_open(conn, pdu);
@@ -347,16 +391,12 @@ appl_agentx_recv(int fd, short event, void *cookie)
 	case AX_PDU_TYPE_COMMITSET:
 	case AX_PDU_TYPE_UNDOSET:
 	case AX_PDU_TYPE_CLEANUPSET:
-		appl_agentx_forceclose(&(session->sess_backend),
-		    APPL_CLOSE_REASONPROTOCOLERROR);
-		if (!TAILQ_EMPTY(&(conn->conn_sessions)))
-			goto fail;
-
-		ax_pdu_free(pdu);
-		appl_agentx_free(conn);
-		return;
+		log_warnx("%s: %s: Not an adminsitrative message", name,
+		    ax_pdutype2string(pdu->ap_header.aph_type));
+		error = APPL_ERROR_PARSEERROR;
+		goto fail;
 	case AX_PDU_TYPE_NOTIFY:
-		log_warnx("%s: not supported",
+		log_warnx("%s: %s: not supported", name,
 		    ax_pdutype2string(pdu->ap_header.aph_type));
 		/*
 		 * RFC 2741 section 7.1.10:
@@ -375,7 +415,7 @@ appl_agentx_recv(int fd, short event, void *cookie)
 		break;
 	case AX_PDU_TYPE_INDEXALLOCATE:
 	case AX_PDU_TYPE_INDEXDEALLOCATE:
-		log_warnx("%s: not supported",
+		log_warnx("%s: %s: not supported", name,
 		    ax_pdutype2string(pdu->ap_header.aph_type));
 		ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
 		    pdu->ap_header.aph_transactionid,
@@ -387,22 +427,32 @@ appl_agentx_recv(int fd, short event, void *cookie)
 		break;
 	case AX_PDU_TYPE_ADDAGENTCAPS:
 	case AX_PDU_TYPE_REMOVEAGENTCAPS:
-		log_warnx("%s: not supported",
+		log_warnx("%s: %s: not supported", name,
 		    ax_pdutype2string(pdu->ap_header.aph_type));
-		ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
-		    pdu->ap_header.aph_transactionid,
-		    pdu->ap_header.aph_packetid, smi_getticks(),
-		    APPL_ERROR_PROCESSINGERROR, 1,
-		    NULL, 0);
-		appl_agentx_send(-1, EV_WRITE, conn);
-		break;
+		error = APPL_ERROR_PROCESSINGERROR;
+		goto fail;
 	case AX_PDU_TYPE_RESPONSE:
 		appl_agentx_response(session, pdu);
 		break;
 	}
 
- fail:
 	ax_pdu_free(pdu);
+	return;
+ fail:
+	ax_response(conn->conn_ax, pdu->ap_header.aph_sessionid,
+	    pdu->ap_header.aph_transactionid,
+	    pdu->ap_header.aph_packetid, smi_getticks(),
+	    error, 0, NULL, 0);
+	appl_agentx_send(-1, EV_WRITE, conn);
+	ax_pdu_free(pdu);
+
+	if (session == NULL || error != APPL_ERROR_PARSEERROR)
+		return;
+
+	appl_agentx_forceclose(&(session->sess_backend),
+	    APPL_CLOSE_REASONPARSEERROR);
+	if (TAILQ_EMPTY(&(conn->conn_sessions)))
+		appl_agentx_free(conn);
 }
 
 void
