@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.23 2023/10/24 14:19:44 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.24 2023/10/24 14:21:58 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -1184,6 +1184,9 @@ appl_varbind_valid(struct appl_varbind *varbind,
 {
 	int cmp;
 	int eomv = 0;
+
+	if (null)
+		next = 0;
 
 	if (varbind->av_value == NULL) {
 		if (!null) {
