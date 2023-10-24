@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pdaemon.c,v 1.107 2023/10/16 11:32:54 mpi Exp $	*/
+/*	$OpenBSD: uvm_pdaemon.c,v 1.108 2023/10/24 10:00:22 mpi Exp $	*/
 /*	$NetBSD: uvm_pdaemon.c,v 1.23 2000/08/20 10:24:14 bjh21 Exp $	*/
 
 /*
@@ -650,6 +650,11 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma,
 					    p->offset >> PAGE_SHIFT,
 					    swslot + swcpages);
 				swcpages++;
+				rw_exit(slock);
+
+				/* cluster not full yet? */
+				if (swcpages < swnpages)
+					continue;
 			}
 		} else {
 			/* if p == NULL we must be doing a last swap i/o */
@@ -666,14 +671,6 @@ uvmpd_scan_inactive(struct uvm_pmalloc *pma,
 		 * for object pages, we always do the pageout.
 		 */
 		if (swap_backed) {
-			if (p) {	/* if we just added a page to cluster */
-				rw_exit(slock);
-
-				/* cluster not full yet? */
-				if (swcpages < swnpages)
-					continue;
-			}
-
 			/* starting I/O now... set up for it */
 			npages = swcpages;
 			ppsp = swpps;
