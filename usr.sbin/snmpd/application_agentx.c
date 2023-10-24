@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.8 2023/10/24 13:28:11 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.9 2023/10/24 13:37:02 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -77,7 +77,7 @@ struct appl_agentx_session {
 
 void appl_agentx_listen(struct agentx_master *);
 void appl_agentx_accept(int, short, void *);
-void appl_agentx_free(struct appl_agentx_connection *);
+void appl_agentx_free(struct appl_agentx_connection *, enum appl_close_reason);
 void appl_agentx_recv(int, short, void *);
 void appl_agentx_open(struct appl_agentx_connection *, struct ax_pdu *);
 void appl_agentx_close(struct appl_agentx_session *, struct ax_pdu *);
@@ -178,7 +178,7 @@ appl_agentx_shutdown(void)
 	struct appl_agentx_connection *conn, *tconn;
 
 	RB_FOREACH_SAFE(conn, appl_agentx_conns, &appl_agentx_conns, tconn)
-		appl_agentx_free(conn);
+		appl_agentx_free(conn, APPL_CLOSE_REASONSHUTDOWN);
 }
 
 void
@@ -249,7 +249,8 @@ appl_agentx_backend(int fd)
 }
 
 void
-appl_agentx_free(struct appl_agentx_connection *conn)
+appl_agentx_free(struct appl_agentx_connection *conn,
+    enum appl_close_reason reason)
 {
 	struct appl_agentx_session *session;
 
@@ -261,7 +262,7 @@ appl_agentx_free(struct appl_agentx_connection *conn)
 			appl_agentx_session_free(session);
 		else
 			appl_agentx_forceclose(&(session->sess_backend),
-			    APPL_CLOSE_REASONSHUTDOWN);
+			    reason);
 	}
 
 	RB_REMOVE(appl_agentx_conns, &appl_agentx_conns, conn);
@@ -294,7 +295,8 @@ appl_agentx_recv(int fd, short event, void *cookie)
 			ax_free(conn->conn_ax);
 			conn->conn_ax = NULL;
 		}
-		appl_agentx_free(conn);
+		appl_agentx_free(conn, errno == EPROTO ?
+		    APPL_CLOSE_REASONPROTOCOLERROR : APPL_CLOSE_REASONOTHER);
 		return;
 	}
 
@@ -458,7 +460,7 @@ appl_agentx_recv(int fd, short event, void *cookie)
 	appl_agentx_forceclose(&(session->sess_backend),
 	    APPL_CLOSE_REASONPARSEERROR);
 	if (TAILQ_EMPTY(&(conn->conn_sessions)))
-		appl_agentx_free(conn);
+		appl_agentx_free(conn, APPL_CLOSE_REASONOTHER);
 }
 
 void
@@ -847,7 +849,7 @@ appl_agentx_send(int fd, short event, void *cookie)
 		log_warn("AgentX(%"PRIu32")", conn->conn_id);
 		ax_free(conn->conn_ax);
 		conn->conn_ax = NULL;
-		appl_agentx_free(conn);
+		appl_agentx_free(conn, APPL_CLOSE_REASONOTHER);
 		return;
 	case 0:
 		return;
