@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.19 2023/10/24 13:46:11 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.20 2023/10/24 13:50:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -115,6 +115,8 @@ struct snmp_target_mib {
 enum appl_error appl_region(struct appl_context *, uint32_t, uint8_t,
     struct ber_oid *, int, int, struct appl_backend *);
 void appl_region_free(struct appl_context *, struct appl_region *);
+enum appl_error appl_region_unregister_match(struct appl_context *, uint8_t,
+    struct ber_oid *, char *, struct appl_backend *, int);
 struct appl_region *appl_region_find(struct appl_context *,
     const struct ber_oid *);
 struct appl_region *appl_region_next(struct appl_context *,
@@ -400,9 +402,10 @@ enum appl_error
 appl_unregister(const char *ctxname, uint8_t priority, struct ber_oid *oid,
     uint8_t range_subid, uint32_t upper_bound, struct appl_backend *backend)
 {
-	struct appl_region *region, search;
 	struct appl_context *ctx;
 	char oidbuf[1024], subidbuf[11];
+	enum appl_error error;
+	uint32_t lower_bound;
 	size_t i;
 
 	oidbuf[0] = '\0';
@@ -444,34 +447,45 @@ appl_unregister(const char *ctxname, uint8_t priority, struct ber_oid *oid,
 		return APPL_ERROR_PARSEERROR;
 	}
 
-	if (range_subid > oid->bo_n) {
+	if (range_subid == 0)
+		return appl_region_unregister_match(ctx, priority, oid, oidbuf,
+		    backend, 1);
+
+	range_subid--;
+	if (range_subid >= oid->bo_n) {
 		log_warnx("%s: Can't unregiser %s: range_subid too large",
 		    backend->ab_name, oidbuf);
 		return APPL_ERROR_PARSEERROR;
 	}
-	if (range_subid != 0 && oid->bo_id[range_subid] >= upper_bound) {
-		log_warnx("%s: Can't unregister %s: upper bound smaller or "
-		    "equal to range_subid", backend->ab_name, oidbuf);
+	if (oid->bo_id[range_subid] > upper_bound) {
+		log_warnx("%s: Can't unregister %s: upper bound smaller than "
+		    "range_subid", backend->ab_name, oidbuf);
 		return APPL_ERROR_PARSEERROR;
 	}
 
+	lower_bound = oid->bo_id[range_subid];
+	do {
+		if ((error = appl_region_unregister_match(ctx, priority, oid,
+		    oidbuf, backend, 0)) != APPL_ERROR_NOERROR)
+			return error;
+	} while (oid->bo_id[range_subid]++ != upper_bound);
+
+	oid->bo_id[range_subid] = lower_bound;
+	do {
+		(void)appl_region_unregister_match(ctx, priority, oid, oidbuf,
+		    backend, 1);
+	} while (oid->bo_id[range_subid]++ != upper_bound);
+
+	return APPL_ERROR_NOERROR;
+}
+
+enum appl_error
+appl_region_unregister_match(struct appl_context *ctx, uint8_t priority,
+    struct ber_oid *oid, char *oidbuf, struct appl_backend *backend, int dofree)
+{
+	struct appl_region *region, search;
+
 	search.ar_oid = *oid;
-	while (range_subid != 0 &&
-	    search.ar_oid.bo_id[range_subid] != upper_bound) {
-		region = RB_FIND(appl_regions, &(ctx->ac_regions), &search);
-		while (region != NULL && region->ar_priority < priority)
-			region = region->ar_next;
-		if (region == NULL || region->ar_priority != priority) {
-			log_warnx("%s: Can't unregister %s: region not found",
-			    backend->ab_name, oidbuf);
-			return APPL_ERROR_UNKNOWNREGISTRATION;
-		}
-		if (region->ar_backend != backend) {
-			log_warnx("%s: Can't unregister %s: region not owned "
-			    "by backend", backend->ab_name, oidbuf);
-			return APPL_ERROR_UNKNOWNREGISTRATION;
-		}
-	}
 	region = RB_FIND(appl_regions, &(ctx->ac_regions), &search);
 	while (region != NULL && region->ar_priority < priority)
 		region = region->ar_next;
@@ -485,20 +499,8 @@ appl_unregister(const char *ctxname, uint8_t priority, struct ber_oid *oid,
 		    "by backend", backend->ab_name, oidbuf);
 		return APPL_ERROR_UNKNOWNREGISTRATION;
 	}
-
-	search.ar_oid = *oid;
-	while (range_subid != 0 &&
-	    search.ar_oid.bo_id[range_subid] != upper_bound) {
-		region = RB_FIND(appl_regions, &(ctx->ac_regions), &search);
-		while (region != NULL && region->ar_priority != priority)
-			region = region->ar_next;
+	if (dofree)
 		appl_region_free(ctx, region);
-	}
-	region = RB_FIND(appl_regions, &(ctx->ac_regions), &search);
-	while (region != NULL && region->ar_priority != priority)
-		region = region->ar_next;
-	appl_region_free(ctx, region);
-
 	return APPL_ERROR_NOERROR;
 }
 
