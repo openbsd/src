@@ -1,4 +1,4 @@
-/*	$OpenBSD: vscsi.c,v 1.61 2022/07/02 08:50:41 visa Exp $ */
+/*	$OpenBSD: vscsi.c,v 1.62 2023/10/25 09:36:47 mvs Exp $ */
 
 /*
  * Copyright (c) 2008 David Gwynne <dlg@openbsd.org>
@@ -27,12 +27,17 @@
 #include <sys/pool.h>
 #include <sys/task.h>
 #include <sys/ioctl.h>
-#include <sys/selinfo.h>
+#include <sys/event.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
 #include <dev/vscsivar.h>
+
+/*
+ * Locks used to protect struct members and global data
+ *	s	sc_state_mtx
+ */
 
 int		vscsi_match(struct device *, void *, void *);
 void		vscsi_attach(struct device *, struct device *, void *);
@@ -64,14 +69,13 @@ struct vscsi_softc {
 
 	struct scsi_iopool	sc_iopool;
 
-	struct vscsi_ccb_list	sc_ccb_i2t;
+	struct vscsi_ccb_list	sc_ccb_i2t;	/* [s] */
 	struct vscsi_ccb_list	sc_ccb_t2i;
 	int			sc_ccb_tag;
 	struct mutex		sc_poll_mtx;
 	struct rwlock		sc_ioc_lock;
 
-	struct selinfo		sc_sel;
-	struct mutex		sc_sel_mtx;
+	struct klist		sc_klist;	/* [s] */
 };
 
 #define DEVNAME(_s) ((_s)->sc_dev.dv_xname)
@@ -110,12 +114,16 @@ void		vscsi_ccb_put(void *, void *);
 
 void		filt_vscsidetach(struct knote *);
 int		filt_vscsiread(struct knote *, long);
+int		filt_vscsimodify(struct kevent *, struct knote *);
+int		filt_vscsiprocess(struct knote *, struct kevent *);
 
 const struct filterops vscsi_filtops = {
-	.f_flags	= FILTEROP_ISFD,
+	.f_flags	= FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach	= NULL,
 	.f_detach	= filt_vscsidetach,
 	.f_event	= filt_vscsiread,
+	.f_modify	= filt_vscsimodify,
+	.f_process	= filt_vscsiprocess,
 };
 
 
@@ -133,15 +141,15 @@ vscsi_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	mtx_init(&sc->sc_state_mtx, IPL_BIO);
+	mtx_init(&sc->sc_state_mtx, IPL_MPFLOOR);
 	sc->sc_state = VSCSI_S_CLOSED;
 
 	TAILQ_INIT(&sc->sc_ccb_i2t);
 	TAILQ_INIT(&sc->sc_ccb_t2i);
 	mtx_init(&sc->sc_poll_mtx, IPL_BIO);
-	mtx_init(&sc->sc_sel_mtx, IPL_BIO);
 	rw_init(&sc->sc_ioc_lock, "vscsiioc");
 	scsi_iopool_init(&sc->sc_iopool, sc, vscsi_ccb_get, vscsi_ccb_put);
+	klist_init_mutex(&sc->sc_klist, &sc->sc_state_mtx);
 
 	saa.saa_adapter = &vscsi_switch;
 	saa.saa_adapter_softc = sc;
@@ -181,6 +189,7 @@ vscsi_cmd(struct scsi_xfer *xs)
 		running = 1;
 		TAILQ_INSERT_TAIL(&sc->sc_ccb_i2t, ccb, ccb_entry);
 	}
+	knote_locked(&sc->sc_klist, 0);
 	mtx_leave(&sc->sc_state_mtx);
 
 	if (!running) {
@@ -188,8 +197,6 @@ vscsi_cmd(struct scsi_xfer *xs)
 		scsi_done(xs);
 		return;
 	}
-
-	selwakeup(&sc->sc_sel);
 
 	if (polled) {
 		mtx_enter(&sc->sc_poll_mtx);
@@ -530,12 +537,9 @@ int
 vscsikqfilter(dev_t dev, struct knote *kn)
 {
 	struct vscsi_softc *sc = DEV2SC(dev);
-	struct klist *klist;
 
 	if (sc == NULL)
 		return (ENXIO);
-
-	klist = &sc->sc_sel.si_note;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -547,10 +551,7 @@ vscsikqfilter(dev_t dev, struct knote *kn)
 	}
 
 	kn->kn_hook = sc;
-
-	mtx_enter(&sc->sc_sel_mtx);
-	klist_insert_locked(klist, kn);
-	mtx_leave(&sc->sc_sel_mtx);
+	klist_insert(&sc->sc_klist, kn);
 
 	/* device ref is given to the knote in the klist */
 
@@ -561,12 +562,8 @@ void
 filt_vscsidetach(struct knote *kn)
 {
 	struct vscsi_softc *sc = kn->kn_hook;
-	struct klist *klist = &sc->sc_sel.si_note;
 
-	mtx_enter(&sc->sc_sel_mtx);
-	klist_remove_locked(klist, kn);
-	mtx_leave(&sc->sc_sel_mtx);
-
+	klist_remove(&sc->sc_klist, kn);
 	device_unref(&sc->sc_dev);
 }
 
@@ -574,14 +571,34 @@ int
 filt_vscsiread(struct knote *kn, long hint)
 {
 	struct vscsi_softc *sc = kn->kn_hook;
-	int event = 0;
+
+	return (!TAILQ_EMPTY(&sc->sc_ccb_i2t));
+}
+
+int
+filt_vscsimodify(struct kevent *kev, struct knote *kn)
+{
+	struct vscsi_softc *sc = kn->kn_hook;
+	int active;
 
 	mtx_enter(&sc->sc_state_mtx);
-	if (!TAILQ_EMPTY(&sc->sc_ccb_i2t))
-		event = 1;
+	active = knote_modify(kev, kn);
 	mtx_leave(&sc->sc_state_mtx);
 
-	return (event);
+	return (active);
+}
+
+int
+filt_vscsiprocess(struct knote *kn, struct kevent *kev)
+{
+	struct vscsi_softc *sc = kn->kn_hook;
+	int active;
+
+	mtx_enter(&sc->sc_state_mtx);
+	active = knote_process(kn, kev);
+	mtx_leave(&sc->sc_state_mtx);
+
+	return (active);
 }
 
 int
