@@ -1,4 +1,4 @@
-/* $OpenBSD: mc146818.c,v 1.26 2023/04/18 10:27:38 tb Exp $ */
+/* $OpenBSD: mc146818.c,v 1.27 2023/10/25 12:44:28 dv Exp $ */
 /*
  * Copyright (c) 2016 Mike Larkin <mlarkin@openbsd.org>
  *
@@ -150,7 +150,6 @@ rtc_fireper(int fd, short type, void *arg)
 	rtc.regs[MC_REGC] |= MC_REGC_PF;
 
 	vcpu_assert_pic_irq((ptrdiff_t)arg, 0, 8);
-	vcpu_deassert_pic_irq((ptrdiff_t)arg, 0, 8);
 
 	evtimer_add(&rtc.per, &rtc.per_tv);
 }
