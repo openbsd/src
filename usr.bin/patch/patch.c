@@ -1,4 +1,4 @@
-/*	$OpenBSD: patch.c,v 1.74 2023/07/19 13:26:20 tb Exp $	*/
+/*	$OpenBSD: patch.c,v 1.75 2023/10/25 20:05:43 bluhm Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -32,6 +32,7 @@
 
 #include <ctype.h>
 #include <getopt.h>
+#include <libgen.h>
 #include <limits.h>
 #include <paths.h>
 #include <stdio.h>
@@ -213,11 +214,27 @@ main(int argc, char *argv[])
 			perror("unveil");
 			my_exit(2);
 		}
-	if (filearg[0] != NULL)
+	if (filearg[0] != NULL) {
+		char *origdir;
+
 		if (unveil(filearg[0], "rwc") == -1) {
 			perror("unveil");
 			my_exit(2);
 		}
+		if ((origdir = dirname(filearg[0])) == NULL) {
+			perror("dirname");
+			my_exit(2);
+		}
+		if (unveil(origdir, "rwc") == -1) {
+			perror("unveil");
+			my_exit(2);
+		}
+	} else {
+		if (unveil(".", "rwc") == -1) {
+			perror("unveil");
+			my_exit(2);
+		}
+	}
 	if (filearg[1] != NULL)
 		if (unveil(filearg[1], "r") == -1) {
 			perror("unveil");
@@ -228,10 +245,6 @@ main(int argc, char *argv[])
 			perror("unveil");
 			my_exit(2);
 		}
-	if (unveil(".", "rwc") == -1) {
-		perror("unveil");
-		my_exit(2);
-	}
 	if (*rejname != '\0')
 		if (unveil(rejname, "rwc") == -1) {
 			perror("unveil");
