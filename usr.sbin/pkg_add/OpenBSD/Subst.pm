@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Subst.pm,v 1.25 2023/10/24 13:28:43 naddy Exp $
+# $OpenBSD: Subst.pm,v 1.26 2023/10/25 11:14:42 espie Exp $
 #
 # Copyright (c) 2008 Marc Espie <espie@openbsd.org>
 #
@@ -50,6 +50,13 @@ sub parse_option($self, $opt)
 		my ($k, $v) = ($1, $2);
 		$v =~ s/^\'(.*)\'$/$1/;
 		$v =~ s/^\"(.*)\"$/$1/;
+		# variable name can't end with a '+',
+		# recognize this as '+=' instead
+		if ($k =~ s/\+$//) {
+			if (defined $self->{$k}) {
+				return $self->{$k} .= " $v";
+			}
+		}
 		$self->add($k, $v);
 	} else {
 		$self->add($opt, 1);
