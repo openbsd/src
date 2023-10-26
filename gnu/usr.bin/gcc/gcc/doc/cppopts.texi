@@ -355,7 +355,7 @@ The 1990 C standard plus GNU extensions.
 
 @item gnu99
 @itemx gnu9x
-The 1999 C standard plus GNU extensions  This is the default..
+The 1999 C standard plus GNU extensions.  This is the default.
 
 @item c++98
 The 1998 ISO C++ standard plus amendments.
