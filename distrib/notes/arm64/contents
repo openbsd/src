@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.7 2023/03/16 18:04:08 miod Exp $
+dnl	$OpenBSD: contents,v 1.8 2023/10/26 14:29:13 deraadt Exp $
 TopPart
 
 OpenBSDminiroot
@@ -10,8 +10,10 @@ OpenBSDbsd
 OpenBSDbsdmp
 
 OpenBSDrd
-dnl not yet...
-dnl OpenBSDcd
+
+OpenBSDinstalliso
+
+OpenBSDcd
 
 DistributionDescription(eight)
 
