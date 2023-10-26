@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.46 2023/05/12 16:43:00 kettenis Exp $	*/
+/*	$OpenBSD: conf.c,v 1.47 2023/10/26 14:13:37 jsg Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -33,6 +33,7 @@
 #include <lib/libsa/tftp.h>
 #include <lib/libsa/ufs.h>
 #include <lib/libsa/ufs2.h>
+#include <lib/libsa/cd9660.h>
 #include <dev/cons.h>
 
 #include <dev/biovar.h>
@@ -58,6 +59,8 @@ struct fs_ops file_system[] = {
 	  ufs_stat,    ufs_readdir,  ufs_fchmod },
 	{ ufs2_open,   ufs2_close,   ufs2_read,   ufs2_write,   ufs2_seek,
 	  ufs2_stat,   ufs2_readdir, ufs2_fchmod },
+	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
+	  cd9660_stat, cd9660_readdir },
 	{ esp_open,    esp_close,    esp_read,    esp_write,    esp_seek,
 	  esp_stat,    esp_readdir,  }
 };
