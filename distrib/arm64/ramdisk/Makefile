@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.28 2023/04/28 08:45:25 krw Exp $
+#	$OpenBSD: Makefile,v 1.29 2023/10/26 14:27:03 deraadt Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		88064
+CDROM=		cd${OSrev}.iso
 MOUNT_POINT=	/mnt
 MTREE=		${UTILS}/mtree.conf
 RAMDISK=	RAMDISK
@@ -40,7 +41,20 @@ PIFILES=\
 PIDTBO=\
 	disable-bt.dtbo
 
-all: ${FS}
+all: ${FS} ${CDROM}
+
+cdbr:	/usr/mdec/BOOTAA64.EFI bsd.rd
+	dd if=/dev/zero of=cdbr bs=512 count=5760
+	vnconfig -v cdbr > vnd
+	fdisk -iy -b "5744@16:c" `cat vnd` >/dev/null
+	newfs -t msdos /dev/r`cat vnd`i
+	mount ${MOUNT_ARGS_msdos} /dev/`cat vnd`i ${MOUNT_POINT}
+	mkdir -p ${MOUNT_POINT}/efi/boot
+	cp /usr/mdec/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
+	echo bootaa64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 ${FS}: bsd.rd
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
@@ -70,6 +84,21 @@ ${FS}: bsd.rd
 	umount ${MOUNT_POINT}
 	vnconfig -u `cat vnd`
 	rm -f vnd
+
+${CDROM}: ${BASE} ${XBASE} cdbr
+	rm -rf ${.OBJDIR}/cd-dir
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	mkdir -p ${.OBJDIR}/cd-dir/etc
+	echo "set image /${OSREV}/${MACHINE}/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
+	cp ${.OBJDIR}/bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp -p ${.OBJDIR}/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
+	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
+	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
+	    -p "Theo de Raadt <deraadt@openbsd.org>" \
+	    -V "OpenBSD/${MACHINE}   ${OSREV} Install CD" \
+	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
+	    ${.OBJDIR}/cd-dir
 
 bsd.rd: mr.fs
 	cp bsd bsd.rd
@@ -108,13 +137,13 @@ unconfig:
 install:
 	cp bsd.rd ${RELEASEDIR}/bsd.rd
 	chmod a+r ${RELEASEDIR}/bsd.rd
-	cp ${FS} ${RELEASEDIR}
+	cp ${FS} ${CDROM} ${RELEASEDIR}
 .endif
 
 clean cleandir:
 	rm -f *.core mr.fs instbin instbin.mk instbin.cache \
 	    lib*.a lib*.olist instbin.map *.o *.lo *.c bsd.rd
 	rm -f instbin.conf
-	rm -rf cd-dir mr.fs.d
+	rm -rf cd-dir mr.fs.d cdbr
 
 .include <bsd.obj.mk>

@@ -1,7 +1,8 @@
-#	$OpenBSD: Makefile,v 1.7 2023/10/18 01:45:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 2023/10/26 14:27:01 deraadt Exp $
 
 FS=		install${OSrev}.img
 FSSIZE=		1126400
+CDROM=		install${OSrev}.iso
 
 MOUNT_POINT=	/mnt
 
@@ -43,7 +44,20 @@ PIFILES=\
 PIDTBO=\
 	disable-bt.dtbo
 
-all: ${FS}
+all: ${FS} ${CDROM}
+
+cdbr:	${RELDIR}/BOOTAA64.EFI
+	dd if=/dev/zero of=cdbr bs=512 count=5760
+	vnconfig -v cdbr > vnd
+	fdisk -iy -b "5744@16:c" `cat vnd` >/dev/null
+	newfs -t msdos /dev/r`cat vnd`i
+	mount ${MOUNT_ARGS_msdos} /dev/`cat vnd`i ${MOUNT_POINT}
+	mkdir -p ${MOUNT_POINT}/efi/boot
+	cp ${RELDIR}/BOOTAA64.EFI ${MOUNT_POINT}/efi/boot/bootaa64.efi
+	echo bootaa64.efi > ${MOUNT_POINT}/efi/boot/startup.nsh
+	umount ${MOUNT_POINT}
+	vnconfig -u `cat vnd`
+	rm -f vnd
 
 ${FS}: ${BASE} ${XBASE}
 	dd if=/dev/zero of=${FS} bs=512 count=${FSSIZE}
@@ -82,11 +96,34 @@ ${FS}: ${BASE} ${XBASE}
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
+${CDROM}: ${BASE} ${XBASE} cdbr
+	rm -rf ${.OBJDIR}/cd-dir
+	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	mkdir -p ${.OBJDIR}/cd-dir/etc
+	echo "set image /${OSREV}/${MACHINE}/bsd.rd" > ${.OBJDIR}/cd-dir/etc/boot.conf
+
+	cp -p ${BASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+	cp -p ${XBASE} ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+
+	cat ${RELDIR}/SHA256 ${RELXDIR}/SHA256 > \
+	    ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}/SHA256
+	# XXX no SHA256.sig
+
+	cp -p ${.OBJDIR}/cdbr ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
+
+	mkhybrid -a -R -T -L -l -d -D -N -o ${.OBJDIR}/${CDROM} \
+	    -A "OpenBSD ${OSREV} ${MACHINE} Install CD" \
+	    -P "Copyright (c) `date +%Y` Theo de Raadt, The OpenBSD project" \
+	    -p "Theo de Raadt <deraadt@openbsd.org>" \
+	    -V "OpenBSD/${MACHINE}   ${OSREV} Install CD" \
+	    -b ${OSREV}/${MACHINE}/cdbr -c ${OSREV}/${MACHINE}/boot.catalog \
+	    ${.OBJDIR}/cd-dir
+
 install:
 	cp ${CDROM} ${FS} ${RELDIR}/
 
 clean cleandir:
-	rm -f ${CDROM} ${FS}
+	rm -f ${CDROM} ${FS} cdbr
 	rm -rf cd-dir
 
 .include <bsd.obj.mk>
