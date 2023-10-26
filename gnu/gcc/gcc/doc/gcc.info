@@ -1350,14 +1350,13 @@ accepts:
           deprecated.
 
     `gnu89'
-          Default, ISO C90 plus GNU extensions (including some C99
+          ISO C90 plus GNU extensions (including some C99
           features).
 
     `gnu99'
     `gnu9x'
-          ISO C99 plus GNU extensions.  When ISO C99 is fully
-          implemented in GCC, this will become the default.  The name
-          `gnu9x' is deprecated.
+          Default, ISO C99 plus GNU extensions.
+          The name `gnu9x' is deprecated.
 
     `c++98'
           The 1998 ISO C++ standard plus amendments.
@@ -6430,11 +6429,11 @@ cause the preprocessor output to be unsuitable for actual compilation.
           Before publication, this was known as C9X.
 
     `gnu89'
-          The 1990 C standard plus GNU extensions.  This is the default.
+          The 1990 C standard plus GNU extensions.
 
     `gnu99'
     `gnu9x'
-          The 1999 C standard plus GNU extensions.
+          The 1999 C standard plus GNU extensions.  This is the default.
 
     `c++98'
           The 1998 ISO C++ standard plus amendments.

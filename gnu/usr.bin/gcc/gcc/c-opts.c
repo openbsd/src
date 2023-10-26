@@ -509,7 +509,7 @@ c_common_init_options (lang)
 #endif
 
   c_language = lang;
-  parse_in = cpp_create_reader (lang == clk_c ? CLK_GNUC89 : CLK_GNUCXX);
+  parse_in = cpp_create_reader (lang == clk_c ? CLK_GNUC99 : CLK_GNUCXX);
   cpp_opts = cpp_get_options (parse_in);
   if (flag_objc)
     cpp_opts->objc = 1;
@@ -517,7 +517,12 @@ c_common_init_options (lang)
   flag_const_strings = (lang == clk_cplusplus);
   warn_pointer_arith = (lang == clk_cplusplus);
   if (lang == clk_c)
-    warn_sign_compare = -1;
+    {
+      /* The default for C is gnu99.  */
+      set_std_c99 (false /* ISO */);
+
+      warn_sign_compare = -1;
+    }
 }
 
 static char *bad_option;
