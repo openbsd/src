@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.30 2023/10/26 14:34:15 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.31 2023/10/26 17:13:50 deraadt Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		88064
@@ -85,7 +85,7 @@ ${FS}: bsd.rd
 	vnconfig -u `cat vnd`
 	rm -f vnd
 
-${CDROM}: ${BASE} ${XBASE} cdbr
+${CDROM}: ${BASE} ${XBASE} cdbr bsd.rd
 	rm -rf ${.OBJDIR}/cd-dir
 	mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/${MACHINE}
 	mkdir -p ${.OBJDIR}/cd-dir/etc
