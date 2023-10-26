@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_algor.c,v 1.5 2023/10/12 17:14:17 tb Exp $ */
+/*	$OpenBSD: x509_algor.c,v 1.6 2023/10/26 08:01:38 tb Exp $ */
 /*
  * Copyright (c) 2023 Theo Buehler <tb@openbsd.org>
  *
@@ -22,6 +22,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
 
 static int
 x509_algor_new_test(void)
