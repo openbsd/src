@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.29 2023/10/26 14:27:03 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.30 2023/10/26 14:34:15 deraadt Exp $
 
 FS=		miniroot${OSrev}.img
 FSSIZE=		88064
@@ -43,7 +43,7 @@ PIDTBO=\
 
 all: ${FS} ${CDROM}
 
-cdbr:	/usr/mdec/BOOTAA64.EFI bsd.rd
+cdbr:	/usr/mdec/BOOTAA64.EFI
 	dd if=/dev/zero of=cdbr bs=512 count=5760
 	vnconfig -v cdbr > vnd
 	fdisk -iy -b "5744@16:c" `cat vnd` >/dev/null
