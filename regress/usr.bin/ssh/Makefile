@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.128 2023/10/20 06:56:45 dtucker Exp $
+#	$OpenBSD: Makefile,v 1.129 2023/10/26 18:52:45 anton Exp $
 
 OPENSSL?=	yes
 
@@ -231,19 +231,33 @@ REGRESS_TARGETS+=t-${t}
 .endif
 .endfor
 
+# Not run by default
+.if make(interop)
+
 .for t in ${INTEROP_TESTS}
 INTEROP_TARGETS+=t-${t}
 .endfor
 
+REGRESS_TARGETS=${INTEROP_TARGETS}
+SUBDIR=
+
+interop: regress
+
+.endif
+
 # Not run by default
-interop: ${INTEROP_TARGETS}
+.if make(extra)
 
 .for t in ${EXTRA_TESTS}
 EXTRA_TARGETS+=t-${t}
 .endfor
 
-# Not run by default
-extra: ${EXTRA_TARGETS}
+REGRESS_TARGETS=${EXTRA_TARGETS}
+SUBDIR=
+
+extra: regress
+
+.endif
 
 .for s in ${SUBDIR}
 CLEAN_SUBDIR+=c-${s}
