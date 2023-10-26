@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.348 2023/04/18 13:31:14 tb Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.349 2023/10/26 16:26:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1639,7 +1639,7 @@ host(const char *s, int opts)
 	for (n = h; n != NULL; n = n->next) {
 		n->addr.type = PF_ADDR_ADDRMASK;
 		n->weight = 0;
-	}	
+	}
 
 error:
 	free(ps);
@@ -1802,7 +1802,7 @@ error:
 int
 append_addr(struct pfr_buffer *b, char *s, int test, int opts)
 {
-	static int 		 previous = 0;
+	static int		 previous = 0;
 	static int		 expect = 0;
 	struct pfr_addr		*a;
 	struct node_host	*h, *n;
@@ -1810,13 +1810,13 @@ append_addr(struct pfr_buffer *b, char *s, int test, int opts)
 	const char		*errstr;
 	int			 rv, not = 0, i = 0;
 	u_int16_t		 weight;
-	
+
 	/* skip weight if given */
 	if (strcmp(s, "weight") == 0) {
 		expect = 1;
 		return (1); /* expecting further call */
 	}
-	
+
 	/* check if previous host is set */
 	if (expect) {
 		/* parse and append load balancing weight */
@@ -1833,7 +1833,6 @@ append_addr(struct pfr_buffer *b, char *s, int test, int opts)
 				}
 			}
 		}
-		
 		expect = 0;
 		return (0);
 	}
@@ -1873,7 +1872,7 @@ append_addr_host(struct pfr_buffer *b, struct node_host *n, int test, int not)
 		addr.pfra_net = unmask(&n->addr.v.a.mask);
 		if (n->ifname) {
 			if (strlcpy(addr.pfra_ifname, n->ifname,
-		 	   sizeof(addr.pfra_ifname)) >= sizeof(addr.pfra_ifname))
+			   sizeof(addr.pfra_ifname)) >= sizeof(addr.pfra_ifname))
 				errx(1, "append_addr_host: strlcpy");
 			addr.pfra_type = PFRKE_ROUTE;
 		}

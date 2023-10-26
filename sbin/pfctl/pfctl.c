@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.391 2023/04/28 14:08:38 sashan Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.392 2023/10/26 16:26:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -367,7 +367,7 @@ pfctl_clear_interface_flags(int dev, int opts)
 int
 pfctl_clear_rules(int dev, int opts, char *anchorname)
 {
-	struct pfr_buffer 	t;
+	struct pfr_buffer	t;
 
 	memset(&t, 0, sizeof(t));
 	t.pfrb_type = PFRB_TRANS;
@@ -931,7 +931,7 @@ pfctl_show_rules(int dev, char *path, int opts, enum pfctl_show format,
 			 * the user has explicitly requested recursion,
 			 * print it recursively.
 			 */
-       		        if (pr.anchor_call[0] &&
+		        if (pr.anchor_call[0] &&
 			    (((p = strrchr(pr.anchor_call, '/')) ?
 			    p[1] == '_' : pr.anchor_call[0] == '_') ||
 			    opts & PF_OPT_RECURSE)) {
