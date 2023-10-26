@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.323 2022/09/01 14:22:55 martijn Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.324 2023/10/26 19:28:30 naddy Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 
@@ -316,82 +316,6 @@ usr
                 ..
             ..
             misc
-            ..
-
-            # ./usr/local/share/nls
-            nls
-                C
-                ..
-                da_DK.ISO_8859-1
-                ..
-                de_AT.ISO_8859-1
-                ..
-                de_CH.ISO_8859-1
-                ..
-                de_DE.ISO_8859-1
-                ..
-                el_GR.ISO_8859-7
-                ..
-                en_AU.ISO_8859-1
-                ..
-                en_CA.ISO_8859-1
-                ..
-                en_GB.ISO_8859-1
-                ..
-                en_US.ISO_8859-1
-                ..
-                es_ES.ISO_8859-1
-                ..
-                et_EE.ISO-8859-1
-                ..
-                fi_FI.ISO_8859-1
-                ..
-                fr_BE.ISO_8859-1
-                ..
-                fr_CA.ISO_8859-1
-                ..
-                fr_CH.ISO_8859-1
-                ..
-                fr_FR.ISO_8859-1
-                ..
-                hr_HR.ISO_8859-2
-                ..
-                is_IS.ISO_8859-1
-                ..
-                it_CH.ISO_8859-1
-                ..
-                it_IT.ISO_8859-1
-                ..
-                ja_JP.EUC
-                ..
-                ko_KR.EUC
-                ..
-                lt_LN.ASCII
-                ..
-                lt_LN.ISO_8859-1
-                ..
-                lt_LN.ISO_8859-2
-                ..
-                nl_BE.ISO_8859-1
-                ..
-                nl_NL.ISO_8859-1
-                ..
-                no_NO.ISO_8859-1
-                ..
-                pl_PL.ISO_8859-2
-                ..
-                pt_PT.ISO_8859-1
-                ..
-                ru_RU.CP866
-                ..
-                ru_RU.ISO_8859-5
-                ..
-                ru_RU.KOI8-R
-                ..
-                sv_SE.ISO_8859-1
-                ..
-                uk_UA.KOI8-U
-                ..
             ..
 
             # ./usr/local/share/pkgconfig
