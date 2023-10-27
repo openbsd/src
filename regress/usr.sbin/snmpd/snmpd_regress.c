@@ -36,6 +36,7 @@ const struct {
 	{ "agentx_ping_any_index", agentx_ping_any_index },
 	{ "agentx_ping_nbo_nnbo", agentx_ping_nbo_nnbo },
 	{ "agentx_ping_nnbo_nbo", agentx_ping_nnbo_nbo },
+	{ "agentx_ping_invalid_version_close", agentx_ping_invalid_version_close },
 	{ "agentx_close_notopen", agentx_close_notopen },
 	{ "agentx_close_reasonother", agentx_close_reasonother },
 	{ "agentx_close_reasonparseerror", agentx_close_reasonparseerror },

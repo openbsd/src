@@ -170,6 +170,7 @@ void agentx_ping_new_index(void);
 void agentx_ping_any_index(void);
 void agentx_ping_nbo_nnbo(void);
 void agentx_ping_nnbo_nbo(void);
+void agentx_ping_invalid_version_close(void);
 void agentx_close_notopen(void);
 void agentx_close_reasonother(void);
 void agentx_close_reasonparseerror(void);

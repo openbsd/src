@@ -706,6 +706,45 @@ agentx_ping_nnbo_nbo(void)
 	close(s);
 }
 
+/*
+ * Test that everything continues running in double exception condition
+ */
+void
+agentx_ping_invalid_version_close(void)
+{
+	struct sockaddr_storage ss;
+	struct message msg = {};
+	struct sockaddr *sa = (struct sockaddr *)&ss;
+	socklen_t salen;
+	int snmp_s, ax_s;
+	uint32_t sessionid, packetid;
+	struct varbind varbind = {
+		.type = TYPE_NULL,
+		.name = OID_STRUCT(MIB_SUBAGENT_PING, 10, 0),
+	};
+	int32_t requestid;
+	char buf[1024];
+	size_t n;
+
+	ax_s = agentx_connect(axsocket);
+	sessionid = agentx_open(ax_s, 0, 0,
+	    OID_ARG(MIB_SUBAGENT_PING, 10), __func__);
+	message_add_header(&msg, 0xFF, AGENTX_PING_PDU, INSTANCE_REGISTRATION,
+	    sessionid, 0, packetid);
+
+	agentx_write(ax_s, &msg);
+	close(ax_s);
+
+	salen = snmp_resolve(SOCK_DGRAM, hostname, servname, sa);
+	snmp_s = snmp_connect(SOCK_DGRAM, sa, salen);
+	requestid = snmpv2_get(snmp_s, community, 0, &varbind, 1);
+
+	varbind.type = TYPE_NOSUCHOBJECT;
+
+	snmpv2_response_validate(snmp_s, 1000, community, requestid, 0, 0,
+	    &varbind, 1);
+}
+
 void
 agentx_close_notopen(void)
 {
