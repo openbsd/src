@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.451 2023/10/19 07:02:45 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.452 2023/10/27 09:40:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1572,9 +1572,9 @@ session_open(struct peer *p)
 	}
 
 	if (p->conf.holdtime)
-		holdtime = htons(p->conf.holdtime);
+		holdtime = p->conf.holdtime;
 	else
-		holdtime = htons(conf->holdtime);
+		holdtime = conf->holdtime;
 
 	errs += ibuf_add_n8(buf->buf, 4);
 	errs += ibuf_add_n16(buf->buf, p->conf.local_short_as);
