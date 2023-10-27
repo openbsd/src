@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.24 2023/10/24 14:21:58 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.25 2023/10/27 10:32:11 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -710,6 +710,7 @@ appl_request_upstream_free(struct appl_request_upstream *ureq)
 	if (ureq == NULL)
 		return;
 
+	ureq->aru_locked = 1;
 	for (i = 0; i < ureq->aru_varbindlen && ureq->aru_vblist != NULL; i++) {
 		vb = &(ureq->aru_vblist[i]);
 		ober_free_elements(vb->avi_varbind.av_value);
@@ -726,7 +727,6 @@ void
 appl_request_downstream_free(struct appl_request_downstream *dreq)
 {
 	struct appl_varbind_internal *vb;
-	int retry = 0;
 
 	if (dreq == NULL)
 		return;
@@ -736,14 +736,11 @@ appl_request_downstream_free(struct appl_request_downstream *dreq)
 
 	for (vb = dreq->ard_vblist; vb != NULL; vb = vb->avi_next) {
 		vb->avi_request_downstream = NULL;
-		if (vb->avi_state == APPL_VBSTATE_PENDING) {
+		if (vb->avi_state == APPL_VBSTATE_PENDING)
 			vb->avi_state = APPL_VBSTATE_NEW;
-			retry = 1;
-		}
 	}
 
-	if (retry)
-		appl_request_upstream_resolve(dreq->ard_request);
+	appl_request_upstream_resolve(dreq->ard_request);
 	free(dreq);
 }
 
@@ -1172,9 +1169,6 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 		    backend->ab_name);
 		backend->ab_fn->ab_close(backend, APPL_CLOSE_REASONPARSEERROR);
 	}
-
-	if (ureq != NULL)
-		appl_request_upstream_resolve(ureq);
 }
 
 int
