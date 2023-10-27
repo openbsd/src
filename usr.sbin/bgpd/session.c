@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.452 2023/10/27 09:40:27 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.453 2023/10/27 14:22:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1471,8 +1471,9 @@ session_open(struct peer *p)
 {
 	struct bgp_msg		*buf;
 	struct ibuf		*opb;
-	uint16_t		 len, optparamlen = 0, holdtime;
-	uint8_t			 i, op_type;
+	size_t			 optparamlen;
+	uint16_t		 holdtime;
+	uint8_t			 i;
 	int			 errs = 0, extlen = 0;
 	int			 mpcapa = 0;
 
@@ -1556,16 +1557,16 @@ session_open(struct peer *p)
 	if (optparamlen == 0) {
 		/* nothing */
 	} else if (optparamlen + 2 >= 255) {
-		/* RFC9072: 2 byte length instead of 1 + 3 byte extra header */
-		optparamlen += sizeof(op_type) + 2 + 3;
+		/* RFC9072: use 255 as magic size and request extra header */
 		optparamlen = 255;
 		extlen = 1;
 	} else {
-		optparamlen += sizeof(op_type) + 1;
+		/* regular capabilities header */
+		optparamlen += 2;
 	}
 
-	len = MSGSIZE_OPEN_MIN + optparamlen;
-	if (errs || (buf = session_newmsg(OPEN, len)) == NULL) {
+	if (errs || (buf = session_newmsg(OPEN,
+	    MSGSIZE_OPEN_MIN + optparamlen)) == NULL) {
 		ibuf_free(opb);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
@@ -1584,20 +1585,19 @@ session_open(struct peer *p)
 	errs += ibuf_add_n8(buf->buf, optparamlen);
 
 	if (extlen) {
-		/* write RFC9072 extra header */
+		/* RFC9072 extra header which spans over the capabilities hdr */
 		errs += ibuf_add_n8(buf->buf, OPT_PARAM_EXT_LEN);
-		errs += ibuf_add_n16(buf->buf, optparamlen - 3);
+		errs += ibuf_add_n16(buf->buf, ibuf_size(opb) + 1 + 2);
 	}
 
 	if (optparamlen) {
 		errs += ibuf_add_n8(buf->buf, OPT_PARAM_CAPABILITIES);
 
-		optparamlen = ibuf_size(opb);
 		if (extlen) {
 			/* RFC9072: 2-byte extended length */
-			errs += ibuf_add_n16(buf->buf, optparamlen);
+			errs += ibuf_add_n16(buf->buf, ibuf_size(opb));
 		} else {
-			errs += ibuf_add_n8(buf->buf, optparamlen);
+			errs += ibuf_add_n8(buf->buf, ibuf_size(opb));
 		}
 		errs += ibuf_add_buf(buf->buf, opb);
 	}
