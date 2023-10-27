@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_sendmmsg.c,v 1.2 2022/09/11 20:51:44 mbuhl Exp $	*/
+/*	$OpenBSD: t_sendmmsg.c,v 1.3 2023/10/27 07:33:06 anton Exp $	*/
 /*	$NetBSD: t_sendmmsg.c,v 1.3 2019/03/16 21:46:43 christos Exp $	*/
 
 /*-
@@ -202,7 +202,7 @@ ATF_TC_BODY(sendmmsg_basic, tc)
 		ATF_REQUIRE_MSG(error != -1, "wait failed (%s)",
 		    strerror(errno));
 		ATF_REQUIRE_MSG(WIFEXITED(status) && WEXITSTATUS(status) == 0,
-		    "receiver died");
+		    "receiver died, status %d", status);
 		break;
 	}
 }
