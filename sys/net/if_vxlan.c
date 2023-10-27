@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vxlan.c,v 1.93 2023/08/03 09:49:08 mvs Exp $ */
+/*	$OpenBSD: if_vxlan.c,v 1.94 2023/10/27 20:56:48 jan Exp $ */
 
 /*
  * Copyright (c) 2021 David Gwynne <dlg@openbsd.org>
@@ -1581,6 +1581,8 @@ vxlan_set_parent(struct vxlan_softc *sc, const struct if_parent *p)
 		error = EBUSY;
 		goto put;
 	}
+
+	ifsetlro(ifp0, 0);
 
 	/* commit */
 	sc->sc_if_index0 = ifp0->if_index;

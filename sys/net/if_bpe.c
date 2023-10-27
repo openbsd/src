@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bpe.c,v 1.19 2021/11/08 04:54:44 dlg Exp $ */
+/*	$OpenBSD: if_bpe.c,v 1.20 2023/10/27 20:56:47 jan Exp $ */
 /*
  * Copyright (c) 2018 David Gwynne <dlg@openbsd.org>
  *
@@ -630,6 +630,8 @@ bpe_set_parent(struct bpe_softc *sc, const struct if_parent *p)
 		error = EBUSY;
 		goto put;
 	}
+
+	ifsetlro(ifp0, 0);
 
 	/* commit */
 	sc->sc_key.k_if = ifp0->if_index;

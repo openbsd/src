@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gre.c,v 1.174 2023/05/13 13:35:17 bluhm Exp $ */
+/*	$OpenBSD: if_gre.c,v 1.175 2023/10/27 20:56:47 jan Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -3543,6 +3543,8 @@ nvgre_set_parent(struct nvgre_softc *sc, const char *parent)
 		if_put(ifp0);
 		return (EPROTONOSUPPORT);
 	}
+
+	ifsetlro(ifp0, 0);
 
 	/* commit */
 	sc->sc_ifp0 = ifp0->if_index;
