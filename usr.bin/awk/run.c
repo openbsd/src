@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.79 2023/10/06 22:29:24 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.80 2023/10/28 22:38:22 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -986,7 +986,7 @@ Cell *substr(Node **a, int nnn)		/* substr(a[0], a[1], a[2]) */
 	if (a[2] != NULL)
 		z = execute(a[2]);
 	s = getsval(x);
-	k = strlen(s) + 1;
+	k = u8_strlen(s) + 1;
 	if (k <= 1) {
 		tempfree(x);
 		tempfree(y);
