@@ -1188,12 +1188,12 @@ ISO C99.  Note that this standard is not yet fully supported; see
 names @samp{c9x} and @samp{iso9899:199x} are deprecated.
 
 @item gnu89
-ISO C90 plus GNU extensions (including some C99 features).
+Default, ISO C90 plus GNU extensions (including some C99 features).
 
 @item gnu99
 @itemx gnu9x
-Defaults, ISO C99 plus GNU extensions.
-The name @samp{gnu9x} is deprecated.
+ISO C99 plus GNU extensions.  When ISO C99 is fully implemented in GCC,
+this will become the default.  The name @samp{gnu9x} is deprecated.
 
 @item c++98
 The 1998 ISO C++ standard plus amendments.

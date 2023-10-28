@@ -236,9 +236,6 @@ c_common_init_options (unsigned int argc, const char **argv)
 
   if (c_language == clk_c)
     {
-      /* The default for C is gnu99.  */
-      set_std_c99 (false /* ISO */);
-
       /* If preprocessing assembly language, accept any of the C-family
 	 front end options since the driver may pass them through.  */
       for (i = 1; i < argc; i++)
