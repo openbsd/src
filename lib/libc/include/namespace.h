@@ -1,4 +1,4 @@
-/*	$OpenBSD: namespace.h,v 1.15 2019/11/25 22:57:28 guenther Exp $	*/
+/*	$OpenBSD: namespace.h,v 1.16 2023/10/29 14:26:13 millert Exp $	*/
 
 #ifndef _LIBC_NAMESPACE_H_
 #define _LIBC_NAMESPACE_H_
@@ -18,6 +18,14 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+/*
+ * ISO C11 or higher is required to build libc.
+ * This must come _before_ sys/cdefs.h is included.
+ */
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 201112
+#define _ISOC11_SOURCE 1
+#endif
 
 /*
  * For explanations of how to use these, see README
