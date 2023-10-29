@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.26 2023/10/29 11:12:57 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.27 2023/10/29 11:20:06 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -1368,19 +1368,17 @@ appl_varbind_backend(struct appl_varbind_internal *ivb)
 					return -1;
 				return 0;
 			}
-			if ((region = appl_region_next(ureq->aru_ctx,
-			    &(vb->av_oid), region)) == NULL)
-				goto eomv;
 			vb->av_oid = region->ar_oid;
+			ober_oid_nextsibling(&(vb->av_oid));
 			vb->av_include = 1;
+			return appl_varbind_backend(ivb);
 		}
 	} else if (cmp == 0) {
 		if (region->ar_instance && next && !vb->av_include) {
-			if ((region = appl_region_next(ureq->aru_ctx,
-			    &(vb->av_oid), region)) == NULL)
-				goto eomv;
 			vb->av_oid = region->ar_oid;
+			ober_oid_nextsibling(&(vb->av_oid));
 			vb->av_include = 1;
+			return appl_varbind_backend(ivb);
 		}
 	}
 	ivb->avi_region = region;
