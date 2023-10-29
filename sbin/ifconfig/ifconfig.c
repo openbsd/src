@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.467 2023/06/09 12:22:01 kn Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.468 2023/10/29 14:23:04 millert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -5955,7 +5955,7 @@ wg_status(int ifaliases)
 			    wg_peer->p_txbytes, wg_peer->p_rxbytes);
 
 			if (wg_peer->p_last_handshake.tv_sec != 0) {
-				timespec_get(&now, TIME_UTC);
+				clock_gettime(CLOCK_REALTIME, &now);
 				printf("\t\tlast handshake: %lld seconds ago\n",
 				    now.tv_sec - wg_peer->p_last_handshake.tv_sec);
 			}
