@@ -293,6 +293,7 @@ void backend_getnext_stale(void);
 void backend_getnext_inclusive_backwards(void);
 void backend_getnext_toofew(void);
 void backend_getnext_toomany(void);
+void backend_getnext_response_equal_end(void);
 void backend_getbulk_nonrep_zero_maxrep_one(void);
 void backend_getbulk_nonrep_zero_maxrep_two(void);
 void backend_getbulk_nonrep_one_maxrep_one(void);

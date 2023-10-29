@@ -2633,6 +2633,62 @@ backend_getnext_toomany(void)
 }
 
 void
+backend_getnext_response_equal_end(void)
+{
+	struct sockaddr_storage ss;
+	struct sockaddr *sa = (struct sockaddr *)&ss;
+	socklen_t salen;
+	int snmp_s, ax_s;
+	uint32_t sessionid1, sessionid2;
+	struct varbind varbind[] = {
+		{
+			.type = TYPE_NULL,
+			.name = OID_STRUCT(MIB_BACKEND_GETNEXT, 26),
+			.data.int32 = 1
+		},
+	};
+	struct searchrange searchrange[] = {
+		{
+			.start = OID_STRUCT(MIB_BACKEND_GETNEXT, 26),
+			.end = OID_STRUCT(MIB_BACKEND_GETNEXT, 26, 1, 1)
+		},
+	};
+	int32_t requestid;
+	char buf[1024];
+	size_t n;
+
+	ax_s = agentx_connect(axsocket);
+	sessionid1 = agentx_open(ax_s, 0, 0,
+	    OID_ARG(MIB_SUBAGENT_BACKEND_GETNEXT, 26, 1),
+	    "backend_getnext_end_equal.1");
+	sessionid2 = agentx_open(ax_s, 0, 0,
+	    OID_ARG(MIB_SUBAGENT_BACKEND_GETNEXT, 26, 2),
+	    "backend_getnext_end_equal.2");
+	agentx_register(ax_s, sessionid1, 0, 0, 127, 0,
+	    OID_ARG(MIB_BACKEND_GETNEXT, 26), 0);
+	agentx_register(ax_s, sessionid2, 0, 0, 127, 0,
+	    OID_ARG(MIB_BACKEND_GETNEXT, 26, 1, 1), 0);
+
+	salen = snmp_resolve(SOCK_DGRAM, hostname, servname, sa);
+	snmp_s = snmp_connect(SOCK_DGRAM, sa, salen);
+	requestid = snmpv2_getnext(snmp_s, community, 0, varbind, 1);
+
+	/* Fool agentx_getnext_handle() */
+	varbind[0].name.subid[varbind[0].name.n_subid++] = 1;
+	varbind[0].type = TYPE_INTEGER;
+	n = agentx_read(ax_s, buf, sizeof(buf), 1000);
+	agentx_getnext_handle(__func__, buf, n, 0, sessionid1, searchrange,
+	    varbind, 1);
+	varbind[0].name = searchrange[0].end;
+	agentx_response(ax_s, buf, NOERROR, 0, varbind, 1);
+	varbind[0].type = TYPE_NULL;
+	varbind[0].name = OID_STRUCT(MIB_BACKEND_GETNEXT, 26),
+
+	snmpv2_response_validate(snmp_s, 1000, community, requestid, GENERR, 1,
+	    varbind, 1);
+}
+
+void
 backend_getbulk_nonrep_zero_maxrep_one(void)
 {
 	struct sockaddr_storage ss;

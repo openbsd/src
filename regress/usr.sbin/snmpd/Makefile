@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/10/27 10:26:20 martijn Exp $
+# $OpenBSD: Makefile,v 1.7 2023/10/29 11:15:09 martijn Exp $
 # Regress tests for snmpd
 
 PROG =				snmpd_regress
@@ -170,6 +170,7 @@ BACKEND_TARGETS+=		backend_getnext_stale
 BACKEND_TARGETS+=		backend_getnext_inclusive_backwards
 BACKEND_TARGETS+=		backend_getnext_toofew
 BACKEND_TARGETS+=		backend_getnext_toomany
+BACKEND_TARGETS+=		backend_getnext_response_equal_end
 BACKEND_TARGETS+=		backend_getbulk_nonrep_zero_maxrep_one
 BACKEND_TARGETS+=		backend_getbulk_nonrep_zero_maxrep_two
 BACKEND_TARGETS+=		backend_getbulk_nonrep_one_maxrep_one

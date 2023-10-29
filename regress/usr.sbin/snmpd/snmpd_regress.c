@@ -143,6 +143,7 @@ const struct {
 	{ "backend_getnext_inclusive_backwards", backend_getnext_inclusive_backwards },
 	{ "backend_getnext_toofew", backend_getnext_toofew },
 	{ "backend_getnext_toomany", backend_getnext_toomany },
+	{ "backend_getnext_response_equal_end", backend_getnext_response_equal_end },
 	{ "backend_getbulk_nonrep_zero_maxrep_one", backend_getbulk_nonrep_zero_maxrep_one },
 	{ "backend_getbulk_nonrep_zero_maxrep_two", backend_getbulk_nonrep_zero_maxrep_two },
 	{ "backend_getbulk_nonrep_one_maxrep_one", backend_getbulk_nonrep_one_maxrep_one },
