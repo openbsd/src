@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.conf.5,v 1.123 2023/08/17 07:25:57 op Exp $
+.\"	$OpenBSD: httpd.conf.5,v 1.124 2023/10/29 11:27:11 kn Exp $
 .\"
 .\" Copyright (c) 2014, 2015 Reyk Floeter <reyk@openbsd.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: August 17 2023 $
+.Dd $Mdocdate: October 29 2023 $
 .Dt HTTPD.CONF 5
 .Os
 .Sh NAME
@@ -649,7 +649,7 @@ If not specified, the default value
 will be used (strong crypto cipher suites without anonymous DH).
 See the CIPHERS section of
 .Xr openssl 1
-for information about SSL/TLS cipher suites and preference lists.
+for information about TLS cipher suites and preference lists.
 .It Ic client ca Ar cafile Oo Ic crl Ar crlfile Oc Op Ic optional
 Require
 .Po

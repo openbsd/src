@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.254 2023/07/03 09:38:08 claudio Exp $	*/
+/*	$OpenBSD: parse.y,v 1.255 2023/10/29 11:27:11 kn Exp $	*/
 
 /*
  * Copyright (c) 2007 - 2014 Reyk Floeter <reyk@openbsd.org>
@@ -175,7 +175,7 @@ typedef struct {
 %token	LOOKUP METHOD MODE NAT NO DESTINATION NODELAY NOTHING ON PARENT PATH
 %token	PFTAG PORT PREFORK PRIORITY PROTO QUERYSTR REAL REDIRECT RELAY REMOVE
 %token	REQUEST RESPONSE RETRY QUICK RETURN ROUNDROBIN ROUTE SACK SCRIPT SEND
-%token	SESSION SOCKET SPLICE SSL STICKYADDR STRIP STYLE TABLE TAG TAGGED TCP
+%token	SESSION SOCKET SPLICE STICKYADDR STRIP STYLE TABLE TAG TAGGED TCP
 %token	TIMEOUT TLS TO ROUTER RTLABEL TRANSPARENT URL WITH TTL RTABLE
 %token	MATCH PARAMS RANDOM LEASTSTATES SRCHASH KEY CERTIFICATE PASSWORD ECDHE
 %token	EDH TICKETS CONNECTION CONNECTIONS CONTEXT ERRORS STATE CHANGES CHECKS
@@ -227,21 +227,12 @@ include		: INCLUDE STRING		{
 		}
 		;
 
-ssltls		: SSL		{
-			log_warnx("%s:%d: %s",
-			    file->name, yylval.lineno,
-			    "please use the \"tls\" keyword"
-			    " instead of \"ssl\"");
-		}
-		| TLS
-		;
-
 opttls		: /*empty*/	{ $$ = 0; }
-		| ssltls	{ $$ = 1; }
+		| TLS		{ $$ = 1; }
 		;
 
 opttlsclient	: /*empty*/	{ $$ = 0; }
-		| WITH ssltls	{ $$ = 1; }
+		| WITH TLS	{ $$ = 1; }
 		;
 
 http_type	: HTTP		{ $$ = 0; }
@@ -905,7 +896,7 @@ hashkey		: /* empty */		{
 
 tablecheck	: ICMP			{ table->conf.check = CHECK_ICMP; }
 		| TCP			{ table->conf.check = CHECK_TCP; }
-		| ssltls		{
+		| TLS			{
 			table->conf.check = CHECK_TCP;
 			conf->sc_conf.flags |= F_TLS;
 			table->conf.flags |= F_TLS;
@@ -1114,7 +1105,7 @@ protopts_l	: protopts_l protoptsl nl
 		| protoptsl optnl
 		;
 
-protoptsl	: ssltls {
+protoptsl	: TLS {
 			if (!(proto->type == RELAY_PROTO_TCP ||
 			    proto->type == RELAY_PROTO_HTTP)) {
 				yyerror("can set tls options only for "
@@ -1122,7 +1113,7 @@ protoptsl	: ssltls {
 				YYERROR;
 			}
 		} tlsflags
-		| ssltls {
+		| TLS {
 			if (!(proto->type == RELAY_PROTO_TCP ||
 			    proto->type == RELAY_PROTO_HTTP)) {
 				yyerror("can set tls options only for "
@@ -2492,7 +2483,6 @@ lookup(char *s)
 		{ "socket",		SOCKET },
 		{ "source-hash",	SRCHASH },
 		{ "splice",		SPLICE },
-		{ "ssl",		SSL },
 		{ "state",		STATE },
 		{ "sticky-address",	STICKYADDR },
 		{ "strip",		STRIP },
