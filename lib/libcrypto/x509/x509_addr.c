@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509_addr.c,v 1.90 2023/09/27 11:29:22 tb Exp $ */
+/*	$OpenBSD: x509_addr.c,v 1.91 2023/10/29 13:22:37 tb Exp $ */
 /*
  * Contributed to the OpenSSL Project by the American Registry for
  * Internet Numbers ("ARIN").
@@ -1886,8 +1886,11 @@ addr_validate_path_internal(X509_STORE_CTX *ctx, STACK_OF(X509) *chain,
 	if (ext == NULL) {
 		depth = 0;
 		cert = sk_X509_value(chain, depth);
-		if ((X509_get_extension_flags(cert) & EXFLAG_INVALID) != 0)
-			goto done;
+		if ((X509_get_extension_flags(cert) & EXFLAG_INVALID) != 0) {
+			if ((ret = verify_error(ctx, cert,
+			    X509_V_ERR_INVALID_EXTENSION, depth)) == 0)
+				goto done;
+		}
 		if ((ext = cert->rfc3779_addr) == NULL)
 			goto done;
 	} else if (!X509v3_addr_is_canonical(ext)) {
