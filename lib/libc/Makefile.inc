@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.30 2022/01/01 23:47:14 guenther Exp $
+#	$OpenBSD: Makefile.inc,v 1.31 2023/10/29 23:32:52 cheloha Exp $
 #
 # This file contains make rules used to build libc
 #
@@ -50,7 +50,7 @@ AINC+=  -nostdinc -idirafter ${DESTDIR}/usr/include
 # 32-bit systems need these
 .if (${MACHINE_CPU} == "i386") || (${MACHINE_CPU} == "powerpc") || \
     (${MACHINE_CPU} == "hppa") || (${MACHINE_CPU} == "arm") || \
-    (${MACHINE_CPU} == "sparc") || (${MACHINE_CPU} == "sh") || \
+    (${MACHINE_CPU} == "sh") || \
     (${MACHINE_CPU} == "m88k")
 .include "${LIBCSRCDIR}/quad/Makefile.inc"
 .endif
