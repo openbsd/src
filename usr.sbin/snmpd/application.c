@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.25 2023/10/27 10:32:11 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.26 2023/10/29 11:12:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -1100,7 +1100,7 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 			 */
 			eomv |= !backend->ab_range && next &&
 			    ober_oid_cmp(&(vb->av_oid),
-			    &(origvb->avi_varbind.av_oid_end)) > 0;
+			    &(origvb->avi_varbind.av_oid_end)) >= 0;
 			/* RFC 3584 section 4.2.2.1 */
 			if (ureq->aru_pduversion == SNMP_V1 &&
 			    vb->av_value != NULL &&
@@ -1283,7 +1283,7 @@ appl_varbind_valid(struct appl_varbind *varbind,
 				}
 			}
 			if (range && ober_oid_cmp(&(varbind->av_oid),
-			    &(request->avi_varbind.av_oid_end)) > 0) {
+			    &(request->avi_varbind.av_oid_end)) >= 0) {
 				*errstr = "end oid not honoured";
 				return 0;
 			}
