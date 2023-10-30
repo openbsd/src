@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.52 2023/10/06 22:29:24 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.53 2023/10/30 16:14:51 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -26,6 +26,7 @@ THIS SOFTWARE.
 #define DEBUG
 #include <stdio.h>
 #include <string.h>
+#include <strings.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdlib.h>
