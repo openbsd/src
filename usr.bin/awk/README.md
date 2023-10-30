@@ -1,6 +1,15 @@
-$OpenBSD: README.md,v 1.8 2023/10/30 17:52:54 millert Exp $
+# OpenBSD Awk
 
-# The One True Awk
+This is a fork of The One True Awk, as shipped with OpenBSD.  It
+includes changes not present in the upstream version because they
+are OpenBSD-specific, are still open PRs, or were rejected by the
+upstream maintainer.  This version of `awk` relies on APIs that are
+not present in some other systems, such as `asprintf`, `pledge`,
+`reallocarray`, `srandom_deterministic` and `strlcpy`.
+
+## What is upstream? ##
+
+Upstream is the bsd-features branch of https://github.com/onetrueawk/awk.
 
 This is the version of `awk` described in _The AWK Programming Language_,
 Second Edition, by Al Aho, Brian Kernighan, and Peter Weinberger
@@ -66,30 +75,14 @@ Changes, mostly bug fixes and occasional enhancements, are listed
 in `FIXES`.  If you distribute this code further, please please please
 distribute `FIXES` with it.
 
-If you find errors, please report them
-to the current maintainer, ozan.yigit@gmail.com.
-Please _also_ open an issue in the GitHub issue tracker, to make
-it easy to track issues.
-Thanks.
+If you find errors, please report them to bugs@openbsd.org rather
+than the upstream maintainer unless you can also reproduce the
+problem with an unmodified version of the upstream awk.
 
-## Submitting Pull Requests
+## Submitting Patches
 
-Pull requests are welcome. Some guidelines:
-
-* Please do not use functions or facilities that are not standard (e.g.,
-`strlcpy()`, `fpurge()`).
-
-* Please run the test suite and make sure that your changes pass before
-posting the pull request. To do so:
-
-  1. Save the previous version of `awk` somewhere in your path. Call it `nawk` (for example).
-  1. Run `oldawk=nawk make check > check.out 2>&1`.
-  1. Search for `BAD` or `error` in the result. In general, look over it manually to make sure there are no errors.
-
-* Please create the pull request with a request
-to merge into the `staging` branch instead of into the `master` branch.
-This allows us to do testing, and to make any additional edits or changes
-after the merge but before merging to `master`.
+Patches may be submitted to the tech@openbsd.org mailing list, or
+bugs@openbsd.org if you are fixing a bug.
 
 ## Building
 
@@ -138,13 +131,6 @@ should you choose to do so.
 
 We don't usually do releases.
 
-## A Note About Maintenance
-
-NOTICE! Maintenance of this program is on a ''best effort''
-basis.  We try to get to issues and pull requests as quickly
-as we can.  Unfortunately, however, keeping this program going
-is not at the top of our priority list.
-
 #### Last Updated
 
-Sun Sep  3 09:26:43 EDT 2023
+Mon 30 Oct 2023 12:53:07 MDT
