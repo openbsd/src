@@ -1,4 +1,4 @@
-$OpenBSD: README.md,v 1.7 2023/09/17 14:49:44 millert Exp $
+$OpenBSD: README.md,v 1.8 2023/10/30 17:52:54 millert Exp $
 
 # The One True Awk
 
@@ -30,7 +30,7 @@ when expanded.
 
 The option `--csv` turns on CSV processing of input:
 fields are separated by commas, fields may be quoted with
-double-quote (`"`) characters, fields may contain embedded newlines.
+double-quote (`"`) characters, quoted fields may contain embedded newlines.
 In CSV mode, `FS` is ignored.
 
 If no explicit separator argument is provided,

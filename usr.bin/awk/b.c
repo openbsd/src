@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.44 2023/10/06 22:31:21 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.45 2023/10/30 17:52:54 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -440,7 +440,7 @@ int *cclenter(const char *argp)	/* add a character class */
 				}
 				while (c < c2) {
 					if (i >= bufsz) {
-						buf = (int *) reallocarray(buf, bufsz, sizeof(int) * 2);
+						buf = (int *) reallocarray(buf, bufsz, 2 * sizeof(int));
 						if (buf == NULL)
 							FATAL("out of space for character class [%.10s...] 2", p);
 						bufsz *= 2;
@@ -453,7 +453,7 @@ int *cclenter(const char *argp)	/* add a character class */
 			}
 		}
 		if (i >= bufsz) {
-			buf = (int *) reallocarray(buf, bufsz, sizeof(int) * 2);
+			buf = (int *) reallocarray(buf, bufsz, 2 * sizeof(int));
 			if (buf == NULL)
 				FATAL("out of space for character class [%.10s...] 2", p);
 			bufsz *= 2;

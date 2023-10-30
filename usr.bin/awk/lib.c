@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib.c,v 1.53 2023/10/30 16:14:51 millert Exp $	*/
+/*	$OpenBSD: lib.c,v 1.54 2023/10/30 17:52:54 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -247,7 +247,7 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag)	/* read one rec
 		}
 		if (found)
 			setptr(patbeg, '\0');
-		isrec = (found == 0 && *buf == '\0') ? 0 : 1;
+		isrec = (found == 0 && *buf == '\0') ? false : true;
 	} else {
 		if ((sep = *rs) == 0) {
 			sep = '\n';
@@ -277,7 +277,7 @@ int readrec(char **pbuf, int *pbufsize, FILE *inf, bool newflag)	/* read one rec
 		if (!adjbuf(&buf, &bufsize, 1+rr-buf, recsize, &rr, "readrec 3"))
 			FATAL("input record `%.30s...' too long", buf);
 		*rr = 0;
-		isrec = (c == EOF && rr == buf) ? 0 : 1;
+		isrec = (c == EOF && rr == buf) ? false : true;
 	}
 	*pbuf = buf;
 	*pbufsize = bufsize;
