@@ -1,4 +1,4 @@
-.\" $OpenBSD: pledge.2,v 1.68 2023/10/30 01:34:13 deraadt Exp $
+.\" $OpenBSD: pledge.2,v 1.69 2023/10/30 06:11:04 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Nicholas Marriott <nicm@openbsd.org>
 .\"
@@ -30,7 +30,7 @@ The
 system call forces the current process into a restricted-service operating mode.
 A few subsets are available, roughly described as computation, memory
 management, read-write operations on file descriptors, opening of files,
-networking (and notably seperate, DNS resolution).
+networking (and notably separate, DNS resolution).
 In general, these modes were selected by studying the operation
 of many programs using libc and other such interfaces, and setting
 .Fa promises
