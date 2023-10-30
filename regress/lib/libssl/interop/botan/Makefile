@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.6 2023/02/01 15:58:20 tb Exp $
+# $OpenBSD: Makefile,v 1.7 2023/10/30 17:15:21 tb Exp $
 
 .include <bsd.own.mk>
 
@@ -25,6 +25,9 @@ LIBRARIES +=		openssl11
 .endif
 .if exists(/usr/local/bin/eopenssl30)
 LIBRARIES +=		openssl30
+.endif
+.if exists(/usr/local/bin/eopenssl31)
+LIBRARIES +=		openssl31
 .endif
 
 PROGS =		client

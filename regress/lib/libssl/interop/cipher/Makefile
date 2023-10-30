@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.12 2023/04/19 15:34:23 tb Exp $
+# $OpenBSD: Makefile,v 1.13 2023/10/30 17:15:21 tb Exp $
 
 # Connect a client to a server.  Both can be current libressl, or
 # openssl 1.1 or 3.0.  Create lists of supported ciphers
@@ -23,6 +23,9 @@ LIBRARIES +=		openssl11
 .endif
 .if exists(/usr/local/bin/eopenssl30)
 LIBRARIES +=		openssl30
+.endif
+.if exists(/usr/local/bin/eopenssl31)
+LIBRARIES +=		openssl31
 .endif
 
 CLEANFILES =	*.tmp *.ciphers ciphers.mk
@@ -53,7 +56,8 @@ client-${clib}-server-${slib}.ciphers: \
 	# we are only interested in ciphers supported by libressl
 	sort $@ client-libressl.ciphers >$@.tmp
 . if "${clib}" == "openssl11" || "${slib}" == "openssl11" || \
-	"${clib}" == "openssl30" || "${slib}" == "openssl30"
+	"${clib}" == "openssl30" || "${slib}" == "openssl30" || \
+	"${clib}" == "openssl31" || "${slib}" == "openssl31"
 	# OpenSSL's SSL_CTX_set_cipher_list doesn't accept TLSv1.3 ciphers
 	sed -i '/^TLS_/d' $@.tmp
 . endif
@@ -145,7 +149,7 @@ check-cipher-${cipher}-client-${clib}-server-${slib}: \
 . endif
 . if "${clib}" == "libressl"
 	# libressl client may prefer chacha-poly if aes-ni is not supported
-.  if "${slib}" == "openssl11" || "${slib}" == "openssl30"
+.  if "${slib}" == "openssl11" || "${slib}" == "openssl30" || "${slib}" == "openssl31"
 	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out
 .  else
 	egrep -q ' Cipher *: TLS_(AES_256_GCM_SHA384|CHACHA20_POLY1305_SHA256)$$' ${@:S/^check/server/}.out
