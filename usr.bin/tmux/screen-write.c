@@ -1,4 +1,4 @@
-/* $OpenBSD: screen-write.c,v 1.223 2023/10/23 08:12:00 nicm Exp $ */
+/* $OpenBSD: screen-write.c,v 1.224 2023/10/30 16:05:30 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2024,6 +2024,10 @@ screen_write_combine(struct screen_write_ctx *ctx, const struct grid_cell *gc)
 		} else if (!utf8_has_zwj(&last.data))
 			return (0);
 	}
+
+	/* Check if this combined character would be too long. */
+	if (last.data.size + ud->size > sizeof last.data.data)
+		return (0);
 
 	/* Combining; flush any pending output. */
 	screen_write_collect_flush(ctx, 0, __func__);
