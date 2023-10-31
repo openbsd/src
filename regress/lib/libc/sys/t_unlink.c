@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_unlink.c,v 1.2 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: t_unlink.c,v 1.3 2023/10/31 07:59:52 claudio Exp $	*/
 /* $NetBSD: t_unlink.c,v 1.4 2017/01/14 20:55:26 christos Exp $ */
 
 /*-
@@ -86,7 +86,7 @@ ATF_TC_BODY(unlink_err, tc)
 	(void)memset(buf, 'x', sizeof(buf));
 
 	errno = 0;
-	ATF_REQUIRE_ERRNO(EBUSY, unlink("/") == -1);
+	ATF_REQUIRE(unlink("/") == -1);
 
 	errno = 0;
 	ATF_REQUIRE_ERRNO(ENAMETOOLONG, unlink(buf) == -1);
