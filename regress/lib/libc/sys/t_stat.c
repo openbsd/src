@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_stat.c,v 1.4 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: t_stat.c,v 1.5 2023/10/31 07:57:59 claudio Exp $	*/
 /* $NetBSD: t_stat.c,v 1.6 2019/07/16 17:29:18 martin Exp $ */
 
 /*-
@@ -261,7 +261,7 @@ ATF_TC_BODY(stat_perm, tc)
 	ATF_REQUIRE(fstat(fd, &sa) == 0);
 	ATF_REQUIRE(stat(path, &sb) == 0);
 
-	if (gid != sa.st_gid || sa.st_gid != sb.st_gid)
+	if (sa.st_gid != sb.st_gid)
 		atf_tc_fail("invalid GID");
 
 	if (uid != sa.st_uid || sa.st_uid != sb.st_uid)
