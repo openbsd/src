@@ -1,4 +1,4 @@
-/*	$OpenBSD: md5.c,v 1.97 2020/10/19 18:15:18 millert Exp $	*/
+/*	$OpenBSD: md5.c,v 1.98 2023/10/31 19:37:17 millert Exp $	*/
 
 /*
  * Copyright (c) 2001,2003,2005-2007,2010,2013,2014
@@ -352,7 +352,7 @@ main(int argc, char **argv)
 		hash_insert(&hl, hf, (hf->base64 == -1 ? 0 : bflag));
 	}
 
-	if (rflag || qflag) {
+	if ((rflag || qflag) && !cflag) {
 		const int new_style = rflag ? STYLE_CKSUM : STYLE_TERSE;
 		TAILQ_FOREACH(hf, &hl, tailq) {
 			hf->style = new_style;
@@ -628,27 +628,6 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 			}
 			if (hf->name == NULL || *checksum == '\0')
 				continue;
-			/*
-			 * Check the length to see if this could be
-			 * a valid checksum.  If hex, it will be 2x the
-			 * size of the binary data.  For base64, we have
-			 * to check both with and without the '=' padding.
-			 */
-			len = strlen(checksum);
-			if (len != hf->digestlen * 2) {
-				size_t len2;
-
-				if (checksum[len - 1] == '=') {
-					/* use padding */
-					len2 = 4 * ((hf->digestlen + 2) / 3);
-				} else {
-					/* no padding */
-					len2 = (4 * hf->digestlen + 2) / 3;
-				}
-				if (len != len2)
-					continue;
-				base64 = 1;
-			}
 		} else {
 			/* could be GNU form */
 			if ((hf = defhash) == NULL)
@@ -670,6 +649,30 @@ digest_filelist(const char *file, struct hash_function *defhash, int selcount,
 			p = strpbrk(filename, "\t\r");
 			if (p != NULL)
 				*p = '\0';
+		}
+
+		if (hf->style == STYLE_MD5) {
+			/*
+			 * Check the length to see if this could be
+			 * a valid digest.  If hex, it will be 2x the
+			 * size of the binary data.  For base64, we have
+			 * to check both with and without the '=' padding.
+			 */
+			len = strlen(checksum);
+			if (len != hf->digestlen * 2) {
+				size_t len2;
+
+				if (checksum[len - 1] == '=') {
+					/* use padding */
+					len2 = 4 * ((hf->digestlen + 2) / 3);
+				} else {
+					/* no padding */
+					len2 = (4 * hf->digestlen + 2) / 3;
+				}
+				if (len != len2)
+					continue;
+				base64 = 1;
+			}
 		}
 		found = 1;
 
