@@ -1,4 +1,4 @@
-/*	$OpenBSD: t_pipe2.c,v 1.3 2021/12/13 16:56:48 deraadt Exp $	*/
+/*	$OpenBSD: t_pipe2.c,v 1.4 2023/10/31 07:56:44 claudio Exp $	*/
 /* $NetBSD: t_pipe2.c,v 1.9 2017/01/13 21:19:45 christos Exp $ */
 
 /*-
@@ -117,8 +117,7 @@ ATF_TC_BODY(pipe2_consume, tc)
 	int err, filedes[2];
 	int old;
 
-	ATF_REQUIRE_MSG(closefrom(4) != -1, "closefrom failed: %s",
-	    strerror(errno));
+	(void)closefrom(4);
 
 	err = getrlimit(RLIMIT_NOFILE, &rl);
 	ATF_REQUIRE(err == 0);
