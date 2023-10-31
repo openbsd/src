@@ -25,6 +25,15 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the 
 second edition of the AWK book was published in September 2023.
 
+Oct 30, 2023:
+	multiple fixes and a minor code cleanup.
+	disabled utf-8 for non-multibyte locales, such as C or POSIX.
+	fixed a bad char * cast that causes incorrect results on big-endian
+	systems. also fixed an out-of-bounds read for empty CCL.
+	fixed a buffer overflow in substr with utf-8 strings.
+	many thanks to Todd C Miller.
+	
+
 Sep 24, 2023:
 	fnematch and getrune have been overhauled to solve issues around
 	unicode FS and RS. also fixed gsub null match issue with unicode.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.63 2023/10/06 22:29:24 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.64 2023/10/31 01:08:51 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-const char	*version = "version 20231001";
+const char	*version = "version 20231030";
 
 #define DEBUG
 #include <stdio.h>
@@ -35,9 +35,9 @@ const char	*version = "version 20231001";
 #include <unistd.h>
 #include "awk.h"
 
+extern	char	*__progname;
 extern	char	**environ;
 extern	int	nfields;
-extern	char	*__progname;
 
 int	dbg	= 0;
 Awkfloat	srand_seed = 1;
@@ -138,8 +138,8 @@ int main(int argc, char *argv[])
 	setlocale(LC_CTYPE, "");
 	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
 	awk_mb_cur_max = MB_CUR_MAX;
-
 	cmdname = __progname;
+
 	if (pledge("stdio rpath wpath cpath proc exec", NULL) == -1) {
 		fprintf(stderr, "%s: pledge: incorrect arguments\n",
 		    cmdname);
@@ -149,9 +149,8 @@ int main(int argc, char *argv[])
 	if (argc == 1) {
 		fprintf(stderr, "usage: %s [-safe] [-V] [-d[n]] "
 		    "[-f fs | --csv] [-v var=value]\n"
-		    "\t   [prog | -f progfile] file ...\n",
-		    cmdname);
-		exit(1);
+		    "\t   [prog | -f progfile] file ...\n", cmdname);
+		return 1;
 	}
 #ifdef SA_SIGINFO
 	{
@@ -216,7 +215,7 @@ int main(int argc, char *argv[])
 				dbg = 1;
 			printf("awk %s\n", version);
 			break;
-		case 'V':	/* added for exptools "standard" */
+		case 'V':
 			printf("awk %s\n", version);
 			return 0;
 		default:
