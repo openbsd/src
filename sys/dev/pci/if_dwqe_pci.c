@@ -1,4 +1,4 @@
-/* $OpenBSD: if_dwqe_pci.c,v 1.1 2023/10/11 12:52:01 stsp Exp $ */
+/* $OpenBSD: if_dwqe_pci.c,v 1.2 2023/10/31 05:46:36 jsg Exp $ */
 
 /*
  * Copyright (c) 2023 Stefan Sperling <stsp@openbsd.org>
@@ -21,33 +21,19 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/queue.h>
-#include <sys/socket.h>
-#include <sys/sockio.h>
-#include <sys/timeout.h>
-#include <sys/task.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_media.h>
 
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
-#include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
 #include <dev/ic/dwqereg.h>
