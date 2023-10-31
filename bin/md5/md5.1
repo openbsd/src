@@ -1,4 +1,4 @@
-.\"	$OpenBSD: md5.1,v 1.49 2023/08/18 14:10:33 kn Exp $
+.\"	$OpenBSD: md5.1,v 1.50 2023/10/31 20:42:14 millert Exp $
 .\"
 .\" Copyright (c) 2003, 2004, 2006 Todd C. Miller <millert@openbsd.org>
 .\"
@@ -18,7 +18,7 @@
 .\" Agency (DARPA) and Air Force Research Laboratory, Air Force
 .\" Materiel Command, USAF, under agreement number F39502-99-1-0512.
 .\"
-.Dd $Mdocdate: August 18 2023 $
+.Dd $Mdocdate: October 31 2023 $
 .Dt MD5 1
 .Os
 .Sh NAME
@@ -77,12 +77,16 @@ will generate an error.
 If this option is specified, the
 .Ar file
 options become checklists.
-Each checklist should contain hash results in the normal format,
-which will be verified against the specified paths.
+Each checklist should contain hash results, which will be verified
+against the specified paths.
+Both normal (BSD) and reverse (GNU) forms are supported in either
+hexadecimal or base64 format.
 Output consists of the digest used, the file name,
 and an OK, FAILED, or MISSING for the result of the comparison.
-This will validate any of the supported checksums (see
+Entries in normal format can be validated using any of the supported checksums
+(see
 .Xr cksum 1 ) .
+Entries in reverse format are validated using the default algorithm.
 If no file is given, stdin is used.
 .It Fl h Ar hashfile
 Place the checksum into
@@ -96,9 +100,13 @@ Only print the checksum (quiet mode) or if used in conjunction with the
 .Fl c
 flag, only print the failed cases.
 .It Fl r
-Reverse the format of the hash algorithm output, making
-it match the output format used by
-.Xr cksum 1 .
+Reverse the format of the hash algorithm output, similar to
+the output format used by
+.Xr cksum 1
+(but without the number of octets).
+This is also the format used by the GNU
+.Xr cksum 1
+utility.
 .It Fl s Ar string
 Print a checksum of the given
 .Ar string .
