@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.35 2023/11/01 20:25:27 tb Exp $ */
+/* $OpenBSD: x_algor.c,v 1.36 2023/11/01 20:26:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -187,6 +187,7 @@ X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int parameter_type,
 	if (alg == NULL)
 		return 0;
 
+	/* Set parameter first to preserve public API behavior on failure. */
 	if (!X509_ALGOR_set0_parameter(alg, parameter_type, parameter_value))
 		return 0;
 
