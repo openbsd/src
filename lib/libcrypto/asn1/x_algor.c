@@ -1,4 +1,4 @@
-/* $OpenBSD: x_algor.c,v 1.33 2023/11/01 20:19:16 tb Exp $ */
+/* $OpenBSD: x_algor.c,v 1.34 2023/11/01 20:22:24 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2000.
  */
@@ -164,14 +164,17 @@ X509_ALGOR_set0_parameter(X509_ALGOR *alg, int ptype, void *pval)
 	if (ptype == V_ASN1_UNDEF) {
 		ASN1_TYPE_free(alg->parameter);
 		alg->parameter = NULL;
-	} else {
-		if (alg->parameter == NULL)
-			alg->parameter = ASN1_TYPE_new();
-		if (alg->parameter == NULL)
-			return 0;
-		if (ptype != 0)
-			ASN1_TYPE_set(alg->parameter, ptype, pval);
+
+		return 1;
 	}
+
+	if (alg->parameter == NULL)
+		alg->parameter = ASN1_TYPE_new();
+	if (alg->parameter == NULL)
+		return 0;
+
+	if (ptype != 0)
+		ASN1_TYPE_set(alg->parameter, ptype, pval);
 
 	return 1;
 }
