@@ -1,4 +1,4 @@
-/* $OpenBSD: window-copy.c,v 1.344 2023/09/04 08:01:43 nicm Exp $ */
+/* $OpenBSD: window-copy.c,v 1.345 2023/11/02 10:38:14 nicm Exp $ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicholas.marriott@gmail.com>
@@ -2719,7 +2719,7 @@ static const struct {
 	},
 	{ .command = "next-prompt",
 	  .minargs = 0,
-	  .maxargs = 0,
+	  .maxargs = 1,
 	  .clear = WINDOW_COPY_CMD_CLEAR_ALWAYS,
 	  .f = window_copy_cmd_next_prompt
 	},
