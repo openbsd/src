@@ -1,4 +1,4 @@
-/* $OpenBSD: x509.h,v 1.102 2023/10/26 08:01:56 tb Exp $ */
+/* $OpenBSD: x509.h,v 1.103 2023/11/02 20:25:48 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -1083,13 +1083,10 @@ const STACK_OF(X509_ATTRIBUTE) *PKCS8_pkey_get0_attrs(const PKCS8_PRIV_KEY_INFO 
 int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
     const unsigned char *bytes, int len);
 
-int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
-					int ptype, void *pval,
-					unsigned char *penc, int penclen);
-int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
-		const unsigned char **pk, int *ppklen,
-		X509_ALGOR **pa,
-		X509_PUBKEY *pub);
+int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj, int ptype,
+    void *pval, unsigned char *penc, int penclen);
+int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg, const unsigned char **pk,
+    int *ppklen, X509_ALGOR **pa, X509_PUBKEY *pub);
 
 int X509_check_trust(X509 *x, int id, int flags);
 int X509_TRUST_get_count(void);
