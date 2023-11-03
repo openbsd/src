@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtio.c,v 1.109 2023/09/26 01:53:54 dv Exp $	*/
+/*	$OpenBSD: virtio.c,v 1.110 2023/11/03 11:16:43 dv Exp $	*/
 
 /*
  * Copyright (c) 2015 Mike Larkin <mlarkin@openbsd.org>
@@ -719,7 +719,7 @@ virtio_init(struct vmd_vm *vm, int child_cdrom,
 		}
 		vioscsi->locked = 0;
 		vioscsi->lba = 0;
-		vioscsi->n_blocks = vioscsi->sz >> 2; /* num of 2048 blocks in file */
+		vioscsi->n_blocks = vioscsi->sz / VIOSCSI_BLOCK_SIZE_CDROM;
 		vioscsi->max_xfer = VIOSCSI_BLOCK_SIZE_CDROM;
 		vioscsi->pci_id = id;
 		vioscsi->vm_id = vcp->vcp_id;
