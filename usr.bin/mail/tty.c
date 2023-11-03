@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.23 2023/03/08 04:43:11 guenther Exp $	*/
+/*	$OpenBSD: tty.c,v 1.24 2023/11/03 19:32:28 anton Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -324,7 +324,10 @@ tty_getc(struct tty *t)
 	ssize_t		n;
 	unsigned char	c;
 
-	n = read(t->fdin, &c, 1);
+	if (ttysignal != 0)
+		n = -1;
+	else
+		n = read(t->fdin, &c, 1);
 	switch (n) {
 	case -1:
 		t->flags |= TTY_ERR;
