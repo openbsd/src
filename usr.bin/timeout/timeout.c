@@ -1,4 +1,4 @@
-/* $OpenBSD: timeout.c,v 1.25 2023/01/13 06:53:04 cheloha Exp $ */
+/* $OpenBSD: timeout.c,v 1.26 2023/11/03 19:16:31 cheloha Exp $ */
 
 /*
  * Copyright (c) 2021 Job Snijders <job@openbsd.org>
@@ -260,7 +260,8 @@ main(int argc, char **argv)
 		signal(SIGTTOU, SIG_DFL);
 
 		execvp(argv[0], argv);
-		err(1, "%s", argv[0]);
+		warn("%s", argv[0]);
+		_exit(errno == ENOENT ? 127 : 126);
 	}
 
 	/* parent continues here */

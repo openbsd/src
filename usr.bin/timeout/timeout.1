@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.1,v 1.7 2023/01/12 14:08:39 jmc Exp $
+.\"	$OpenBSD: timeout.1,v 1.8 2023/11/03 19:16:31 cheloha Exp $
 .\"	$NetBSD: timeout.1,v 1.4 2016/10/13 06:22:26 dholland Exp $
 .\"
 .\" Copyright (c) 2014 Baptiste Daroussin <bapt@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/usr.bin/timeout/timeout.1 268861 2014-07-18 22:56:59Z bapt $
 .\"
-.Dd $Mdocdate: January 12 2023 $
+.Dd $Mdocdate: November 3 2023 $
 .Dt TIMEOUT 1
 .Os
 .Sh NAME
@@ -92,20 +92,29 @@ hours
 days
 .El
 .Sh EXIT STATUS
-If the timeout was not reached or
-.Fl p
-was set, the exit status of
-.Ar command
-is returned.
+The
+.Nm
+utility may return one of the following statuses:
 .Pp
-If the timeout was reached and
+.Bl -tag -width indent -compact
+.It 124
+The time limit expired and the
 .Fl p
-was not set, an exit status of 124 is returned.
-.Pp
-If
+flag was not set.
+.It 126
+The
 .Ar command
-exited after receiving a signal, the exit status returned is the signal number
-plus 128.
+was found but could not be executed.
+.It 127
+The
+.Ar command
+was not found.
+.El
+.Pp
+Otherwise,
+.Nm
+returns the exit status of the
+.Ar command .
 .Sh SEE ALSO
 .Xr kill 1 ,
 .Xr signal 3
