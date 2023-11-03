@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2022/12/18 12:53:50 tb Exp $
+#	$OpenBSD: Makefile,v 1.13 2023/11/03 14:05:30 anton Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -92,6 +92,12 @@ RUNNING_WAIT = \
 	let timeout=`date +%s`+5; \
 	while ps -xww -o comm,stat | grep -q '${NC:T} .*R'; \
 	do [[ `date +%s` -lt $$timeout ]] || { echo timeout; exit 1; }; done
+
+# Server close barrier. Since netcat only handles a single connection and then
+# terminates, issuing this command after the first request will ensure that the
+# server has terminated upon completion.
+SERVER_CLOSE_WAIT = \
+	nc localhost ${PORT} 2>/dev/null || :
 
 ### TCP ####
 
@@ -458,6 +464,7 @@ run-tls-client-bad-ca: client.crt server.crt ca.crt fake-ca.crt
 	! ${NC} -c -R ca.crt -C client.crt -K client.key -v \
 	    localhost ${PORT} ${CLIENT_LOG}
 	${CONNECT_WAIT}
+	${SERVER_CLOSE_WAIT}
 	grep 'Listening on localhost ' server.err
 	grep 'Connection received on localhost ' server.err
 	grep 'Connection to localhost .* succeeded!' client.err
