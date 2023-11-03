@@ -1,4 +1,4 @@
-/*	$OpenBSD: engine.c,v 1.38 2022/05/05 14:44:59 tb Exp $	*/
+/*	$OpenBSD: engine.c,v 1.39 2023/11/03 15:02:06 tb Exp $	*/
 
 /*
  * Copyright (c) 2017, 2021 Florian Obser <florian@openbsd.org>
@@ -860,7 +860,7 @@ parse_dhcp(struct dhcpleased_iface *iface, struct imsg_dhcp *dhcp)
 		log_dhcp_hdr(dhcp_hdr);
 
 	if (dhcp_hdr->op != DHCP_BOOTREPLY) {
-		log_warnx("%s: ignorning non-reply packet", __func__);
+		log_warnx("%s: ignoring non-reply packet", __func__);
 		return;
 	}
 
