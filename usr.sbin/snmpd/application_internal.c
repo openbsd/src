@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.3 2023/11/04 09:30:28 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.4 2023/11/04 09:38:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -47,6 +47,7 @@ void appl_internal_getnext(struct appl_backend *, int32_t, int32_t,
 struct ber_element *appl_internal_snmp(struct ber_oid *);
 struct ber_element *appl_internal_engine(struct ber_oid *);
 struct ber_element *appl_internal_usmstats(struct ber_oid *);
+struct ber_element *appl_internal_system(struct ber_oid *);
 struct appl_internal_object *appl_internal_object_parent(struct ber_oid *);
 int appl_internal_object_cmp(struct appl_internal_object *,
     struct appl_internal_object *);
@@ -73,6 +74,15 @@ RB_PROTOTYPE_STATIC(appl_internal_objects, appl_internal_object, entry,
 void
 appl_internal_init(void)
 {
+	appl_internal_region(&OID(MIB_system));
+	appl_internal_object(&OID(MIB_sysDescr), appl_internal_system, NULL);
+	appl_internal_object(&OID(MIB_sysOID), appl_internal_system, NULL);
+	appl_internal_object(&OID(MIB_sysUpTime), appl_internal_system, NULL);
+	appl_internal_object(&OID(MIB_sysContact), appl_internal_system, NULL);
+	appl_internal_object(&OID(MIB_sysName), appl_internal_system, NULL);
+	appl_internal_object(&OID(MIB_sysLocation), appl_internal_system, NULL);
+	appl_internal_object(&OID(MIB_sysServices), appl_internal_system, NULL);
+
 	appl_internal_region(&OID(MIB_snmp));
 	appl_internal_object(&OID(MIB_snmpInPkts), appl_internal_snmp, NULL);
 	appl_internal_object(&OID(MIB_snmpOutPkts), appl_internal_snmp, NULL);
@@ -438,6 +448,30 @@ appl_internal_usmstats(struct ber_oid *oid)
 	if (value != NULL)
 		ober_set_header(value, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 
+	return value;
+}
+
+struct ber_element *
+appl_internal_system(struct ber_oid *oid)
+{
+	struct snmp_system *s = &snmpd_env->sc_system;
+	struct ber_element *value = NULL;
+
+	if (ober_oid_cmp(&OID(MIB_sysDescr, 0), oid) == 0)
+		return ober_add_string(NULL, s->sys_descr);
+	else if (ober_oid_cmp(&OID(MIB_sysOID, 0), oid) == 0)
+		return ober_add_oid(NULL, &s->sys_oid);
+	else if (ober_oid_cmp(&OID(MIB_sysUpTime, 0), oid) == 0) {
+		value = ober_add_integer(NULL, smi_getticks());
+		ober_set_header(value, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
+	} else if (ober_oid_cmp(&OID(MIB_sysContact, 0), oid) == 0)
+		return ober_add_string(NULL, s->sys_contact);
+	else if (ober_oid_cmp(&OID(MIB_sysName, 0), oid) == 0)
+		return ober_add_string(NULL, s->sys_name);
+	else if (ober_oid_cmp(&OID(MIB_sysLocation, 0), oid) == 0)
+		return ober_add_string(NULL, s->sys_location);
+	else if (ober_oid_cmp(&OID(MIB_sysServices, 0), oid) == 0)
+		return ober_add_integer(NULL, s->sys_services);
 	return value;
 }
 

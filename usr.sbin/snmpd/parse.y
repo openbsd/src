@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.79 2023/10/24 08:41:20 martijn Exp $	*/
+/*	$OpenBSD: parse.y,v 1.80 2023/11/04 09:38:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
+#include <sys/utsname.h>
 
 #include <netinet/in.h>
 #include <net/if.h>
@@ -760,28 +761,87 @@ system		: SYSTEM sysmib
 		;
 
 sysmib		: CONTACT STRING		{
-			struct ber_oid	 o = OID(MIB_sysContact);
-			mps_set(&o, $2, strlen($2));
+			if (conf->sc_system.sys_contact[0] != '\0') {
+				yyerror("system contact already defined");
+				free($2);
+				YYERROR;
+			}
+			if (strlcpy(conf->sc_system.sys_contact, $2,
+			    sizeof(conf->sc_system.sys_contact)) >=
+			    sizeof(conf->sc_system.sys_contact)) {
+				yyerror("system contact too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		| DESCR STRING			{
-			struct ber_oid	 o = OID(MIB_sysDescr);
-			mps_set(&o, $2, strlen($2));
+			if (conf->sc_system.sys_descr[0] != '\0') {
+				yyerror("system description already defined");
+				free($2);
+				YYERROR;
+			}
+			if (strlcpy(conf->sc_system.sys_descr, $2,
+			    sizeof(conf->sc_system.sys_descr)) >=
+			    sizeof(conf->sc_system.sys_descr)) {
+				yyerror("system description too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		| LOCATION STRING		{
-			struct ber_oid	 o = OID(MIB_sysLocation);
-			mps_set(&o, $2, strlen($2));
+			if (conf->sc_system.sys_location[0] != '\0') {
+				yyerror("system location already defined");
+				free($2);
+				YYERROR;
+			}
+			if (strlcpy(conf->sc_system.sys_location, $2,
+			    sizeof(conf->sc_system.sys_location)) >=
+			    sizeof(conf->sc_system.sys_location)) {
+				yyerror("system location too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		| NAME STRING			{
-			struct ber_oid	 o = OID(MIB_sysName);
-			mps_set(&o, $2, strlen($2));
+			if (conf->sc_system.sys_name[0] != '\0') {
+				yyerror("system name already defined");
+				free($2);
+				YYERROR;
+			}
+			if (strlcpy(conf->sc_system.sys_name, $2,
+			    sizeof(conf->sc_system.sys_name)) >=
+			    sizeof(conf->sc_system.sys_name)) {
+				yyerror("system name too long");
+				free($2);
+				YYERROR;
+			}
+			free($2);
 		}
 		| OBJECTID oid			{
-			struct ber_oid	 o = OID(MIB_sysOID);
-			mps_set(&o, $2, sizeof(struct ber_oid));
+			if (conf->sc_system.sys_oid.bo_n != 0) {
+				yyerror("system oid already defined");
+				free($2);
+				YYERROR;
+			}
+			conf->sc_system.sys_oid = *$2;
+			free($2);
 		}
 		| SERVICES NUMBER		{
-			struct ber_oid	 o = OID(MIB_sysServices);
-			mps_set(&o, NULL, $2);
+			if (conf->sc_system.sys_services != -1) {
+				yyerror("system services already defined");
+				YYERROR;
+			}
+			if ($2 < 0) {
+				yyerror("system services too small");
+				YYERROR;
+			} else if ($2 > 127) {
+				yyerror("system services too large");
+				YYERROR;
+			}
+			conf->sc_system.sys_services = $2;
 		}
 		;
 
@@ -1575,6 +1635,7 @@ struct snmpd *
 parse_config(const char *filename, u_int flags)
 {
 	struct sockaddr_storage ss;
+	struct utsname u;
 	struct sym	*sym, *next;
 	struct address	*h;
 	struct trap_address	*tr;
@@ -1589,6 +1650,7 @@ parse_config(const char *filename, u_int flags)
 		return (NULL);
 	}
 
+	conf->sc_system.sys_services = -1;
 	conf->sc_flags = flags;
 	conf->sc_confpath = filename;
 	TAILQ_INIT(&conf->sc_addresses);
@@ -1608,6 +1670,25 @@ parse_config(const char *filename, u_int flags)
 	popfile();
 
 	endservent();
+
+	if (uname(&u) == -1)
+		fatal("uname");
+
+	if (conf->sc_system.sys_descr[0] == '\0')
+		snprintf(conf->sc_system.sys_descr,
+		    sizeof(conf->sc_system.sys_descr), "%s %s %s %s %s",
+		    u.sysname, u.nodename, u.release, u.version, u.machine);
+	if (conf->sc_system.sys_oid.bo_n == 0)
+		conf->sc_system.sys_oid = OID(MIB_SYSOID_DEFAULT);
+	if (conf->sc_system.sys_contact[0] == '\0')
+		snprintf(conf->sc_system.sys_contact,
+		    sizeof(conf->sc_system.sys_contact), "root@%s", u.nodename);
+	if (conf->sc_system.sys_name[0] == '\0')
+		snprintf(conf->sc_system.sys_name,
+		    sizeof(conf->sc_system.sys_name), "%s", u.nodename);
+	if (conf->sc_system.sys_services == -1)
+		conf->sc_system.sys_services = 0;
+
 
 	/* Must be identical to enginefmt_local:HOSTHASH */
 	if (conf->sc_engineid_len == 0) {

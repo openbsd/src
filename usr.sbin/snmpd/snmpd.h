@@ -1,4 +1,4 @@
-/*	$OpenBSD: snmpd.h,v 1.107 2023/11/04 09:22:52 martijn Exp $	*/
+/*	$OpenBSD: snmpd.h,v 1.108 2023/11/04 09:38:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -428,6 +428,15 @@ struct usmuser {
 	SLIST_ENTRY(usmuser)	 uu_next;
 };
 
+struct snmp_system {
+	char			 sys_descr[256];
+	struct ber_oid		 sys_oid;
+	char			 sys_contact[256];
+	char			 sys_name[256];
+	char			 sys_location[256];
+	int8_t			 sys_services;
+};
+
 struct snmpd {
 	u_int8_t		 sc_flags;
 #define SNMPD_F_VERBOSE		 0x01
@@ -448,6 +457,7 @@ struct snmpd {
 	size_t			 sc_engineid_len;
 
 	struct snmp_stats	 sc_stats;
+	struct snmp_system	 sc_system;
 
 	struct trap_addresslist	 sc_trapreceivers;
 

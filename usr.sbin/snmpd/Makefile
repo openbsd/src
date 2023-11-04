@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.23 2023/11/04 09:22:52 martijn Exp $
+#	$OpenBSD: Makefile,v 1.24 2023/11/04 09:38:47 martijn Exp $
 
 PROG=		snmpd
 MAN=		snmpd.8 snmpd.conf.5
 SRCS=		parse.y log.c snmpe.c application.c application_legacy.c \
 		    application_blocklist.c application_internal.c \
 		    application_agentx.c ax.c \
-		    mps.c trap.c mib.c smi.c snmpd.c \
+		    mps.c trap.c smi.c snmpd.c \
 		    proc.c usm.c traphandler.c util.c
 
 LDADD=		-levent -lutil -lcrypto

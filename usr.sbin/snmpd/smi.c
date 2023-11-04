@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.c,v 1.32 2022/10/06 14:41:08 martijn Exp $	*/
+/*	$OpenBSD: smi.c,v 1.33 2023/11/04 09:38:47 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -53,6 +53,7 @@
 RB_HEAD(oidtree, oid);
 RB_PROTOTYPE(oidtree, oid, o_element, smi_oid_cmp);
 struct oidtree smi_oidtree;
+static struct oid smi_objects[] = MIB_TREE;
 
 RB_HEAD(keytree, oid);
 RB_PROTOTYPE(keytree, oid, o_keyword, smi_key_cmp);
@@ -231,7 +232,7 @@ smi_init(void)
 {
 	/* Initialize the Structure of Managed Information (SMI) */
 	RB_INIT(&smi_oidtree);
-	mib_init();
+	smi_mibtree(smi_objects);
 	return (0);
 }
 
