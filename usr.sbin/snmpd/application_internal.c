@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.2 2023/11/04 09:28:04 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.3 2023/11/04 09:30:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -45,6 +45,8 @@ void appl_internal_get(struct appl_backend *, int32_t, int32_t, const char *,
 void appl_internal_getnext(struct appl_backend *, int32_t, int32_t,
     const char *, struct appl_varbind *);
 struct ber_element *appl_internal_snmp(struct ber_oid *);
+struct ber_element *appl_internal_engine(struct ber_oid *);
+struct ber_element *appl_internal_usmstats(struct ber_oid *);
 struct appl_internal_object *appl_internal_object_parent(struct ber_oid *);
 int appl_internal_object_cmp(struct appl_internal_object *,
     struct appl_internal_object *);
@@ -128,6 +130,29 @@ appl_internal_init(void)
 	    NULL);
 	appl_internal_object(&OID(MIB_snmpProxyDrops), appl_internal_snmp,
 	    NULL);
+
+	appl_internal_region(&OID(MIB_snmpV2));
+	appl_internal_object(&OID(MIB_snmpEngineID), appl_internal_engine,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpEngineBoots), appl_internal_engine,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpEngineTime), appl_internal_engine,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpEngineMaxMsgSize),
+	    appl_internal_engine, NULL);
+
+	appl_internal_object(&OID(MIB_usmStatsUnsupportedSecLevels),
+	    appl_internal_usmstats, NULL);
+	appl_internal_object(&OID(MIB_usmStatsNotInTimeWindow),
+	    appl_internal_usmstats, NULL);
+	appl_internal_object(&OID(MIB_usmStatsUnknownUserNames),
+	    appl_internal_usmstats, NULL);
+	appl_internal_object(&OID(MIB_usmStatsUnknownEngineId),
+	    appl_internal_usmstats, NULL);
+	appl_internal_object(&OID(MIB_usmStatsWrongDigests),
+	    appl_internal_usmstats, NULL);
+	appl_internal_object(&OID(MIB_usmStatsDecryptionErrors),
+	    appl_internal_usmstats, NULL);
 }
 
 void
@@ -373,6 +398,46 @@ appl_internal_snmp(struct ber_oid *oid)
 
 	if (value != NULL)
 		ober_set_header(value, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
+	return value;
+}
+
+struct ber_element *
+appl_internal_engine(struct ber_oid *oid)
+{
+	if (ober_oid_cmp(&OID(MIB_snmpEngineID, 0), oid) == 0)
+		return ober_add_nstring(NULL, snmpd_env->sc_engineid,
+		    snmpd_env->sc_engineid_len);
+	else if (ober_oid_cmp(&OID(MIB_snmpEngineBoots, 0), oid) == 0)
+		return ober_add_integer(NULL, snmpd_env->sc_engine_boots);
+	else if (ober_oid_cmp(&OID(MIB_snmpEngineTime, 0), oid) == 0)
+		return ober_add_integer(NULL, snmpd_engine_time());
+	else if (ober_oid_cmp(&OID(MIB_snmpEngineMaxMsgSize, 0), oid) == 0)
+		return ober_add_integer(NULL, READ_BUF_SIZE);
+	return NULL;
+}
+
+struct ber_element *
+appl_internal_usmstats(struct ber_oid *oid)
+{
+	struct snmp_stats *stats = &snmpd_env->sc_stats;
+	struct ber_element *value = NULL;
+
+	if (ober_oid_cmp(&OID(MIB_usmStatsUnsupportedSecLevels, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_usmbadseclevel);
+	else if (ober_oid_cmp(&OID(MIB_usmStatsNotInTimeWindow, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_usmtimewindow);
+	else if (ober_oid_cmp(&OID(MIB_usmStatsUnknownUserNames, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_usmnosuchuser);
+	else if (ober_oid_cmp(&OID(MIB_usmStatsUnknownEngineId, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_usmnosuchengine);
+	else if (ober_oid_cmp(&OID(MIB_usmStatsWrongDigests, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_usmwrongdigest);
+	else if (ober_oid_cmp(&OID(MIB_usmStatsDecryptionErrors, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_usmdecrypterr);
+
+	if (value != NULL)
+		ober_set_header(value, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
+
 	return value;
 }
 
