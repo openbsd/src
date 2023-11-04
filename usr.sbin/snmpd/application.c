@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.27 2023/10/29 11:20:06 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.28 2023/11/04 09:22:52 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -159,6 +159,7 @@ void
 appl_init(void)
 {
 	appl_blocklist_init();
+	appl_internal_init();
 	appl_legacy_init();
 	appl_agentx_init();
 }
@@ -169,6 +170,7 @@ appl_shutdown(void)
 	struct appl_context *ctx, *tctx;
 
 	appl_blocklist_shutdown();
+	appl_internal_shutdown();
 	appl_legacy_shutdown();
 	appl_agentx_shutdown();
 

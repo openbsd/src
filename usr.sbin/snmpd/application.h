@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.h,v 1.6 2023/10/24 13:28:11 martijn Exp $	*/
+/*	$OpenBSD: application.h,v 1.7 2023/11/04 09:22:52 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -147,3 +147,7 @@ void	 appl_agentx_backend(int);
 /* application_blocklist.c */
 void	 appl_blocklist_init(void);
 void	 appl_blocklist_shutdown(void);
+
+/* application_internal.c */
+void	 appl_internal_init(void);
+void	 appl_internal_shutdown(void);
