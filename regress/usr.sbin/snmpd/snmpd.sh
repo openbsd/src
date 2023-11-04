@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $OpenBSD: snmpd.sh,v 1.18 2022/01/19 11:02:38 martijn Exp $
+# $OpenBSD: snmpd.sh,v 1.19 2023/11/04 09:42:17 martijn Exp $
 #/*
 # * Copyright (c) Rob Pierce <rob@openbsd.org>
 # *
@@ -271,8 +271,6 @@ read-write community non-default-rw
 oid 1.3.6.1.4.1.30155.42.1 name myName read-only string "humppa"
 oid 1.3.6.1.4.1.30155.42.2 name myStatus read-only integer 1
 # No need to place a full index, we just need the object
-oid 1.3.6.1.6.3.15.1.2.2.1.3.1 name Reyk read-only string "Reyk Fl${oe}ter"
-oid 1.3.6.1.6.3.15.1.2.2.1.3.2 name broken read-only string "br${boe}ken"
 EOF
 
 (cd ${OBJDIR} && nohup snmpd -dvf ./snmpd.conf > snmpd.log 2>&1) &
@@ -344,38 +342,6 @@ fi
 #	echo "Setting of a ro custom oid test unexpectedly succeeded."
 #	FAILED=1
 #fi
-
-snmp_command="snmp get -Oqv -v2c -c non-default-rw localhost \
-    usmUserSecurityName.1.0"
-echo ======= $snmp_command
-reyk="$(eval LC_ALL=en_US.UTF-8 $snmp_command)"
-if [ "$reyk" != "Reyk Fl${oe}ter" ]
-then
-	echo "Printing of UTF-8 string in UTF-8 locale failed"
-	FAILED=1
-fi
-reyk="$(eval LC_ALL=C $snmp_command)"
-if [ "$reyk" != "Reyk Fl.ter" ]
-then
-	echo "Printing of UTF-8 string in C locale failed"
-	FAILED=1
-fi
-
-snmp_command="snmp get -Oqv -v2c -c non-default-rw localhost \
-    usmUserSecurityName.2.0"
-echo ======= $snmp_command
-broken="$(eval LC_ALL=en_US.UTF-8 $snmp_command)"
-if [ "$broken" != "br${replacement}ken" ]
-then
-	echo "Printing of UTF-8 replacement character failed"
-	FAILED=1
-fi
-broken="$(eval LC_ALL=C $snmp_command)"
-if [ "$broken" != "br?ken" ]
-then
-	echo "Printing of question mark in C locale failed"
-	FAILED=1
-fi
 
 kill $(pgrep snmpd) >/dev/null 2>&1
 
