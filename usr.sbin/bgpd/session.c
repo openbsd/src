@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.453 2023/10/27 14:22:43 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.454 2023/11/04 11:17:51 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -1471,7 +1471,7 @@ session_open(struct peer *p)
 {
 	struct bgp_msg		*buf;
 	struct ibuf		*opb;
-	size_t			 optparamlen;
+	size_t			 len, optparamlen;
 	uint16_t		 holdtime;
 	uint8_t			 i;
 	int			 errs = 0, extlen = 0;
@@ -1553,20 +1553,29 @@ session_open(struct peer *p)
 	if (p->capa.ann.enhanced_rr)	/* no data */
 		errs += session_capa_add(opb, CAPA_ENHANCED_RR, 0);
 
+	if (errs) {
+		ibuf_free(opb);
+		bgp_fsm(p, EVNT_CON_FATAL);
+		return;
+	}
+
 	optparamlen = ibuf_size(opb);
+	len = MSGSIZE_OPEN_MIN + optparamlen;
 	if (optparamlen == 0) {
 		/* nothing */
 	} else if (optparamlen + 2 >= 255) {
 		/* RFC9072: use 255 as magic size and request extra header */
 		optparamlen = 255;
 		extlen = 1;
+		/* 3 byte OPT_PARAM_EXT_LEN and OPT_PARAM_CAPABILITIES */
+		len += 2 * 3;
 	} else {
 		/* regular capabilities header */
 		optparamlen += 2;
+		len += 2;
 	}
 
-	if (errs || (buf = session_newmsg(OPEN,
-	    MSGSIZE_OPEN_MIN + optparamlen)) == NULL) {
+	if ((buf = session_newmsg(OPEN, len)) == NULL) {
 		ibuf_free(opb);
 		bgp_fsm(p, EVNT_CON_FATAL);
 		return;
