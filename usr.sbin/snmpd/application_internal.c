@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.1 2023/11/04 09:22:52 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.2 2023/11/04 09:28:04 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -44,6 +44,7 @@ void appl_internal_get(struct appl_backend *, int32_t, int32_t, const char *,
     struct appl_varbind *);
 void appl_internal_getnext(struct appl_backend *, int32_t, int32_t,
     const char *, struct appl_varbind *);
+struct ber_element *appl_internal_snmp(struct ber_oid *);
 struct appl_internal_object *appl_internal_object_parent(struct ber_oid *);
 int appl_internal_object_cmp(struct appl_internal_object *,
     struct appl_internal_object *);
@@ -70,6 +71,63 @@ RB_PROTOTYPE_STATIC(appl_internal_objects, appl_internal_object, entry,
 void
 appl_internal_init(void)
 {
+	appl_internal_region(&OID(MIB_snmp));
+	appl_internal_object(&OID(MIB_snmpInPkts), appl_internal_snmp, NULL);
+	appl_internal_object(&OID(MIB_snmpOutPkts), appl_internal_snmp, NULL);
+	appl_internal_object(&OID(MIB_snmpInBadVersions), appl_internal_snmp,
+	   NULL);
+	appl_internal_object(&OID(MIB_snmpInBadCommunityNames),
+	   appl_internal_snmp, NULL);
+	appl_internal_object(&OID(MIB_snmpInBadCommunityUses),
+	   appl_internal_snmp, NULL);
+	appl_internal_object(&OID(MIB_snmpInASNParseErrs), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInTooBigs), appl_internal_snmp, NULL);
+	appl_internal_object(&OID(MIB_snmpInNoSuchNames), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInBadValues), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInReadOnlys), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInReadOnlys), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInGenErrs), appl_internal_snmp, NULL);
+	appl_internal_object(&OID(MIB_snmpInTotalReqVars), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInTotalSetVars), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInGetRequests), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInGetNexts), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInSetRequests), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInGetResponses), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpInTraps), appl_internal_snmp, NULL);
+	appl_internal_object(&OID(MIB_snmpOutTooBigs), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpOutNoSuchNames), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpOutBadValues), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpOutGenErrs), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpOutGetRequests), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpOutGetNexts), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpOutSetRequests), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpOutGetResponses), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpOutTraps), appl_internal_snmp, NULL);
+	appl_internal_object(&OID(MIB_snmpEnableAuthenTraps),
+	    appl_internal_snmp, NULL);
+	appl_internal_object(&OID(MIB_snmpSilentDrops), appl_internal_snmp,
+	    NULL);
+	appl_internal_object(&OID(MIB_snmpProxyDrops), appl_internal_snmp,
+	    NULL);
 }
 
 void
@@ -243,6 +301,79 @@ appl_internal_getnext(struct appl_backend *backend,
 		ober_free_elements(vb->av_value);
 	free(resp);
 	appl_response(backend, requestid, APPL_ERROR_GENERR, i + 1, vblist);
+}
+
+struct ber_element *
+appl_internal_snmp(struct ber_oid *oid)
+{
+	struct snmp_stats *stats = &snmpd_env->sc_stats;
+	struct ber_element *value = NULL;
+
+	if (ober_oid_cmp(oid, &OID(MIB_snmpEnableAuthenTraps, 0)) == 0)
+		return ober_add_integer(NULL,
+		    stats->snmp_enableauthentraps ? 1 : 2);
+	if (ober_oid_cmp(&OID(MIB_snmpInPkts, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_inpkts);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutPkts, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outpkts);
+	else if (ober_oid_cmp(&OID(MIB_snmpInBadVersions, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_inbadversions);
+	else if (ober_oid_cmp(&OID(MIB_snmpInBadCommunityNames, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_inbadcommunitynames);
+	else if (ober_oid_cmp(&OID(MIB_snmpInBadCommunityUses, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_inbadcommunityuses);
+	else if (ober_oid_cmp(&OID(MIB_snmpInASNParseErrs, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_inasnparseerrs);
+	else if (ober_oid_cmp(&OID(MIB_snmpInTooBigs, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_intoobigs);
+	else if (ober_oid_cmp(&OID(MIB_snmpInNoSuchNames, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_innosuchnames);
+	else if (ober_oid_cmp(&OID(MIB_snmpInBadValues, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_inbadvalues);
+	else if (ober_oid_cmp(&OID(MIB_snmpInReadOnlys, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_inreadonlys);
+	else if (ober_oid_cmp(&OID(MIB_snmpInGenErrs, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_ingenerrs);
+	else if (ober_oid_cmp(&OID(MIB_snmpInTotalReqVars, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_intotalreqvars);
+	else if (ober_oid_cmp(&OID(MIB_snmpInTotalSetVars, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_intotalsetvars);
+	else if (ober_oid_cmp(&OID(MIB_snmpInGetRequests, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_ingetrequests);
+	else if (ober_oid_cmp(&OID(MIB_snmpInGetNexts, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_ingetnexts);
+	else if (ober_oid_cmp(&OID(MIB_snmpInSetRequests, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_insetrequests);
+	else if (ober_oid_cmp(&OID(MIB_snmpInGetResponses, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_ingetresponses);
+	else if (ober_oid_cmp(&OID(MIB_snmpInTraps, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_intraps);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutTooBigs, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outtoobigs);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutNoSuchNames, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outnosuchnames);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutBadValues, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outbadvalues);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutGenErrs, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outgenerrs);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutGetRequests, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outgetrequests);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutGetNexts, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outgetnexts);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutSetRequests, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outsetrequests);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutGetResponses, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outgetresponses);
+	else if (ober_oid_cmp(&OID(MIB_snmpOutTraps, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_outtraps);
+	else if (ober_oid_cmp(&OID(MIB_snmpSilentDrops, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_silentdrops);
+	else if (ober_oid_cmp(&OID(MIB_snmpProxyDrops, 0), oid) == 0)
+		value = ober_add_integer(NULL, stats->snmp_proxydrops);
+
+	if (value != NULL)
+		ober_set_header(value, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
+	return value;
 }
 
 struct appl_internal_object *

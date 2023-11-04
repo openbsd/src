@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.c,v 1.105 2022/10/06 14:41:08 martijn Exp $	*/
+/*	$OpenBSD: mib.c,v 1.106 2023/11/04 09:28:04 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 Joel Knight <joel@openbsd.org>
@@ -65,9 +65,7 @@
  */
 
 int	 mib_getsys(struct oid *, struct ber_oid *, struct ber_element **);
-int	 mib_getsnmp(struct oid *, struct ber_oid *, struct ber_element **);
 int	 mib_sysor(struct oid *, struct ber_oid *, struct ber_element **);
-int	 mib_setsnmp(struct oid *, struct ber_oid *, struct ber_element **);
 
 static struct oid mib_tree[] = MIB_TREE;
 
@@ -86,37 +84,6 @@ static struct oid base_mib[] = {
 	{ MIB(sysORID),			OID_TRD, mib_sysor },
 	{ MIB(sysORDescr),		OID_TRD, mib_sysor },
 	{ MIB(sysORUpTime),		OID_TRD, mib_sysor },
-	{ MIB(snmp),			OID_MIB },
-	{ MIB(snmpInPkts),		OID_RD, mib_getsnmp },
-	{ MIB(snmpOutPkts),		OID_RD, mib_getsnmp },
-	{ MIB(snmpInBadVersions),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInBadCommunityNames),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInBadCommunityUses),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInASNParseErrs),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInTooBigs),		OID_RD,	mib_getsnmp },
-	{ MIB(snmpInNoSuchNames),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInBadValues),		OID_RD, mib_getsnmp },
-	{ MIB(snmpInReadOnlys),		OID_RD, mib_getsnmp },
-	{ MIB(snmpInGenErrs),		OID_RD, mib_getsnmp },
-	{ MIB(snmpInTotalReqVars),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInTotalSetVars),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInGetRequests),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInGetNexts),		OID_RD, mib_getsnmp },
-	{ MIB(snmpInSetRequests),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInGetResponses),	OID_RD, mib_getsnmp },
-	{ MIB(snmpInTraps),		OID_RD, mib_getsnmp },
-	{ MIB(snmpOutTooBigs),		OID_RD, mib_getsnmp },
-	{ MIB(snmpOutNoSuchNames),	OID_RD, mib_getsnmp },
-	{ MIB(snmpOutBadValues),	OID_RD, mib_getsnmp },
-	{ MIB(snmpOutGenErrs),		OID_RD, mib_getsnmp },
-	{ MIB(snmpOutGetRequests),	OID_RD, mib_getsnmp },
-	{ MIB(snmpOutGetNexts),		OID_RD, mib_getsnmp },
-	{ MIB(snmpOutSetRequests),	OID_RD, mib_getsnmp },
-	{ MIB(snmpOutGetResponses),	OID_RD, mib_getsnmp },
-	{ MIB(snmpOutTraps),		OID_RD, mib_getsnmp },
-	{ MIB(snmpEnableAuthenTraps),	OID_RD, mib_getsnmp },
-	{ MIB(snmpSilentDrops),		OID_RD, mib_getsnmp },
-	{ MIB(snmpProxyDrops),		OID_RD, mib_getsnmp },
 	{ MIBEND }
 };
 
@@ -245,81 +212,6 @@ mib_sysor(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
 	default:
 		return (-1);
 	}
-
-	return (0);
-}
-
-int
-mib_getsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct snmp_stats	*stats = &snmpd_env->sc_stats;
-	long long		 i;
-	struct statsmap {
-		u_int8_t	 m_id;
-		u_int32_t	*m_ptr;
-	}			 mapping[] = {
-		{ 1, &stats->snmp_inpkts },
-		{ 2, &stats->snmp_outpkts },
-		{ 3, &stats->snmp_inbadversions },
-		{ 4, &stats->snmp_inbadcommunitynames },
-		{ 5, &stats->snmp_inbadcommunityuses },
-		{ 6, &stats->snmp_inasnparseerrs },
-		{ 8, &stats->snmp_intoobigs },
-		{ 9, &stats->snmp_innosuchnames },
-		{ 10, &stats->snmp_inbadvalues },
-		{ 11, &stats->snmp_inreadonlys },
-		{ 12, &stats->snmp_ingenerrs },
-		{ 13, &stats->snmp_intotalreqvars },
-		{ 14, &stats->snmp_intotalsetvars },
-		{ 15, &stats->snmp_ingetrequests },
-		{ 16, &stats->snmp_ingetnexts },
-		{ 17, &stats->snmp_insetrequests },
-		{ 18, &stats->snmp_ingetresponses },
-		{ 19, &stats->snmp_intraps },
-		{ 20, &stats->snmp_outtoobigs },
-		{ 21, &stats->snmp_outnosuchnames },
-		{ 22, &stats->snmp_outbadvalues },
-		{ 24, &stats->snmp_outgenerrs },
-		{ 25, &stats->snmp_outgetrequests },
-		{ 26, &stats->snmp_outgetnexts },
-		{ 27, &stats->snmp_outsetrequests },
-		{ 28, &stats->snmp_outgetresponses },
-		{ 29, &stats->snmp_outtraps },
-		{ 31, &stats->snmp_silentdrops },
-		{ 32, &stats->snmp_proxydrops }
-	};
-
-	switch (oid->o_oid[OIDIDX_snmp]) {
-	case 30:
-		i = stats->snmp_enableauthentraps == 1 ? 1 : 2;
-		*elm = ober_add_integer(*elm, i);
-		break;
-	default:
-		for (i = 0;
-		    (u_int)i < (sizeof(mapping) / sizeof(mapping[0])); i++) {
-			if (oid->o_oid[OIDIDX_snmp] == mapping[i].m_id) {
-				*elm = ober_add_integer(*elm, *mapping[i].m_ptr);
-				ober_set_header(*elm,
-				    BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
-				return (0);
-			}
-		}
-		return (-1);
-	}
-
-	return (0);
-}
-
-int
-mib_setsnmp(struct oid *oid, struct ber_oid *o, struct ber_element **elm)
-{
-	struct snmp_stats	*stats = &snmpd_env->sc_stats;
-	long long		 i;
-
-	if (ober_get_integer(*elm, &i) == -1)
-		return (-1);
-
-	stats->snmp_enableauthentraps = i == 1 ? 1 : 0;
 
 	return (0);
 }
