@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.101 2023/08/23 01:55:46 cheloha Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.102 2023/11/05 16:33:50 miod Exp $	*/
 
 /*
  * Copyright (c) 2000-2004 Michael Shalayeff
@@ -131,6 +131,8 @@ extern struct cpu_info cpu_info[HPPA_MAXCPUS];
 
 #define MAXCPUS		HPPA_MAXCPUS
 
+#ifdef MULTIPROCESSOR
+
 static __inline struct cpu_info *
 curcpu(void)
 {
@@ -146,6 +148,19 @@ curcpu(void)
 #define CPU_INFO_UNIT(ci)	((ci)->ci_dev ? (ci)->ci_dev->dv_unit : 0)
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_cpuid == 0)
 #define CPU_IS_RUNNING(ci)	((ci)->ci_flags & CPUF_RUNNING)
+
+#else
+
+#define	curcpu()		(&cpu_info[0])
+
+#define cpu_number()		0
+
+#define CPU_INFO_UNIT(ci)	0
+#define CPU_IS_PRIMARY(ci)	1
+#define CPU_IS_RUNNING(ci)	1
+
+#endif
+
 #define	CPU_INFO_ITERATOR	int
 #define CPU_INFO_FOREACH(cii, ci) \
 	for (cii = 0, ci = &cpu_info[0]; cii < ncpus; cii++, ci++)
