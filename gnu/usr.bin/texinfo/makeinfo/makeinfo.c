@@ -1,5 +1,5 @@
 /* makeinfo -- convert Texinfo source into other formats.
-   $Id: makeinfo.c,v 1.9 2015/11/14 23:06:06 deraadt Exp $
+   $Id: makeinfo.c,v 1.10 2023/11/05 07:39:16 op Exp $
 
    Copyright (C) 1987, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
    2000, 2001, 2002, 2003, 2004 Free Software Foundation, Inc.
@@ -3363,11 +3363,13 @@ cm_image (int arg)
         { /* Try to open foo.EXT or foo.txt.  */
           FILE *image_file;
           char *txtpath = NULL;
-          char *txtname = xmalloc (strlen (name_arg)
-                                   + (ext_arg && *ext_arg
-                                      ? strlen (ext_arg) : 4) + 1);
-          strcpy (txtname, name_arg);
-          strcat (txtname, ".txt");
+          char *txtname;
+
+          if (asprintf (&txtname, "%s.txt", name_arg) == -1) {
+            perror ("asprintf");
+            exit (1);
+          }
+
           image_file = fopen (txtname, "r");
           if (image_file == NULL)
             {
@@ -3451,6 +3453,9 @@ cm_image (int arg)
           else
             warning (_("@image file `%s' (for text) unreadable: %s"),
                         txtname, strerror (errno));
+
+          free (txtname);
+          free (txtpath);
         }
 
       free (fullname);
