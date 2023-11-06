@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.29 2023/11/06 11:00:46 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.30 2023/11/06 11:02:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -33,6 +33,9 @@
 #include "snmp.h"
 #include "snmpe.h"
 #include "mib.h"
+
+#define OID(...)		(struct ber_oid){ { __VA_ARGS__ },	\
+    (sizeof((uint32_t []) { __VA_ARGS__ }) / sizeof(uint32_t)) }
 
 TAILQ_HEAD(, appl_context) contexts = TAILQ_HEAD_INITIALIZER(contexts);
 
@@ -329,6 +332,103 @@ appl_agentcap_free(struct appl_agentcap *cap)
 	TAILQ_REMOVE(&(cap->aa_context->ac_agentcaps), cap, aa_entry);
 	cap->aa_context->ac_agentcap_lastchange = smi_getticks();
 	free(cap);
+}
+
+struct ber_element *
+appl_sysorlastchange(struct ber_oid *oid)
+{
+	struct appl_context *ctx;
+	struct ber_element *value;
+
+	ctx = appl_context(NULL, 0);
+	value = ober_add_integer(NULL, ctx->ac_agentcap_lastchange);
+	if (value != NULL)
+		ober_set_header(value, BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
+	else
+		log_warn("ober_add_integer");
+
+	return value;
+}
+
+#define SYSORIDX_POS 10
+struct ber_element *
+appl_sysortable(struct ber_oid *oid)
+{
+	struct appl_context *ctx;
+	struct appl_agentcap *cap;
+	struct ber_element *value = NULL;
+
+	if (oid->bo_n != SYSORIDX_POS + 1)
+		goto notfound;
+
+	ctx = appl_context(NULL, 0);
+	TAILQ_FOREACH(cap, &(ctx->ac_agentcaps), aa_entry) {
+		if (cap->aa_index == oid->bo_id[SYSORIDX_POS])
+			break;
+	}
+	if (cap == NULL)
+		goto notfound;
+
+	if (ober_oid_cmp(&OID(MIB_sysORID), oid) == -2)
+		value = ober_add_oid(NULL, &(cap->aa_oid));
+	else if (ober_oid_cmp(&OID(MIB_sysORDescr), oid) == -2)
+		value = ober_add_string(NULL, cap->aa_descr);
+	else if (ober_oid_cmp(&OID(MIB_sysORUpTime), oid) == -2) {
+		if ((value = ober_add_integer(NULL, cap->aa_uptime)) != NULL)
+			ober_set_header(value,
+			    BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
+	}
+	if (value == NULL)
+		log_warn("ober_add_*");
+	return value;
+
+ notfound:
+	if ((value = appl_exception(APPL_EXC_NOSUCHINSTANCE)) == NULL)
+		log_warn("appl_exception");
+	return value;
+}
+
+struct ber_element *
+appl_sysortable_getnext(int8_t include, struct ber_oid *oid)
+{
+	struct appl_context *ctx;
+	struct appl_agentcap *cap;
+	struct ber_element *value = NULL;
+
+	if (oid->bo_n < SYSORIDX_POS + 1) {
+		include = 1;
+		oid->bo_id[SYSORIDX_POS] = 0;
+	} else if (oid->bo_n < SYSORIDX_POS + 1)
+		include = 0;
+
+	ctx = appl_context(NULL, 0);
+	TAILQ_FOREACH(cap, &(ctx->ac_agentcaps), aa_entry) {
+		if (cap->aa_index > oid->bo_id[SYSORIDX_POS])
+			break;
+		if (cap->aa_index == oid->bo_id[SYSORIDX_POS] && include)
+			break;
+	}
+	if (cap == NULL) {
+		value = appl_exception(APPL_EXC_NOSUCHINSTANCE);
+		goto done;
+	}
+
+	oid->bo_id[SYSORIDX_POS] = cap->aa_index;
+	oid->bo_n = SYSORIDX_POS + 1;
+
+	if (ober_oid_cmp(&OID(MIB_sysORID), oid) == -2)
+		value = ober_add_oid(NULL, &(cap->aa_oid));
+	else if (ober_oid_cmp(&OID(MIB_sysORDescr), oid) == -2)
+		value = ober_add_string(NULL, cap->aa_descr);
+	else if (ober_oid_cmp(&OID(MIB_sysORUpTime), oid) == -2) {
+		if ((value = ober_add_integer(NULL, cap->aa_uptime)) != NULL)
+			ober_set_header(value,
+			    BER_CLASS_APPLICATION, SNMP_T_TIMETICKS);
+	}
+ done:
+	if (value == NULL)
+		log_warn("ober_add_*");
+	return value;
 }
 
 enum appl_error

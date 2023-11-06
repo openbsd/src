@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.5 2023/11/06 10:58:13 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.6 2023/11/06 11:02:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -20,6 +20,7 @@
 
 #include <event.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "application.h"
 #include "log.h"
@@ -82,6 +83,15 @@ appl_internal_init(void)
 	appl_internal_object(&OID(MIB_sysName), appl_internal_system, NULL);
 	appl_internal_object(&OID(MIB_sysLocation), appl_internal_system, NULL);
 	appl_internal_object(&OID(MIB_sysServices), appl_internal_system, NULL);
+	appl_internal_object(&OID(MIB_sysORLastChange), appl_sysorlastchange,
+	    NULL);
+
+	appl_internal_object(&OID(MIB_sysORID), appl_sysortable,
+	    appl_sysortable_getnext);
+	appl_internal_object(&OID(MIB_sysORDescr), appl_sysortable,
+	    appl_sysortable_getnext);
+	appl_internal_object(&OID(MIB_sysORUpTime), appl_sysortable,
+	    appl_sysortable_getnext);
 
 	appl_internal_region(&OID(MIB_snmp));
 	appl_internal_object(&OID(MIB_snmpInPkts), appl_internal_snmp, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.h,v 1.8 2023/11/06 11:00:46 martijn Exp $	*/
+/*	$OpenBSD: application.h,v 1.9 2023/11/06 11:02:57 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -127,6 +127,9 @@ enum appl_error appl_addagentcaps(const char *, struct ber_oid *, const char *,
     struct appl_backend *);
 enum appl_error appl_removeagentcaps(const char *, struct ber_oid *,
     struct appl_backend *);
+struct ber_element *appl_sysorlastchange(struct ber_oid *);
+struct ber_element *appl_sysortable(struct ber_oid *);
+struct ber_element *appl_sysortable_getnext(int8_t, struct ber_oid *);
 enum appl_error appl_register(const char *, uint32_t, uint8_t, struct ber_oid *,
     int, int, uint8_t, uint32_t, struct appl_backend *);
 enum appl_error appl_unregister(const char *, uint8_t, struct ber_oid *,
