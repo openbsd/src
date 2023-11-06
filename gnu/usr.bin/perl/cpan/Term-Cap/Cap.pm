@@ -276,7 +276,7 @@ sub Tgetent
 	    warn "cannot run infocmp: $!" if !defined $child;
 	    if (!$child) {
 	    	open(STDERR, ">", "/dev/null");
-		exec('infocmp', '-CTr', $tmp_term);
+		exec('infocmp', '-CTrx', '--', $tmp_term);
 		exit(1);
 	    }
 	} else {
