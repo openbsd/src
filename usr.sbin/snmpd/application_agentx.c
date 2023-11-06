@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_agentx.c,v 1.13 2023/10/27 10:23:58 martijn Exp $ */
+/*	$OpenBSD: application_agentx.c,v 1.14 2023/11/06 11:04:41 martijn Exp $ */
 /*
  * Copyright (c) 2022 Martijn van Duren <martijn@openbsd.org>
  *
@@ -89,6 +89,8 @@ void appl_agentx_get(struct appl_backend *, int32_t, int32_t, const char *,
     struct appl_varbind *);
 void appl_agentx_getnext(struct appl_backend *, int32_t, int32_t, const char *,
     struct appl_varbind *);
+void appl_agentx_addagentcaps(struct appl_agentx_session *, struct ax_pdu *);
+void appl_agentx_removeagentcaps(struct appl_agentx_session *, struct ax_pdu *);
 void appl_agentx_response(struct appl_agentx_session *, struct ax_pdu *);
 void appl_agentx_send(int, short, void *);
 struct ber_oid *appl_agentx_oid2ber_oid(struct ax_oid *, struct ber_oid *);
@@ -436,11 +438,11 @@ appl_agentx_recv(int fd, short event, void *cookie)
 		event_add(&(conn->conn_wev), NULL);
 		break;
 	case AX_PDU_TYPE_ADDAGENTCAPS:
+		appl_agentx_addagentcaps(session, pdu);
+		break;
 	case AX_PDU_TYPE_REMOVEAGENTCAPS:
-		log_warnx("%s: %s: not supported", name,
-		    ax_pdutype2string(pdu->ap_header.aph_type));
-		error = APPL_ERROR_PROCESSINGERROR;
-		goto fail;
+		appl_agentx_removeagentcaps(session, pdu);
+		break;
 	case AX_PDU_TYPE_RESPONSE:
 		appl_agentx_response(session, pdu);
 		break;
@@ -807,6 +809,57 @@ appl_agentx_getnext(struct appl_backend *backend, int32_t transactionid,
 	free(srl);
 	if (context != NULL)
 		free(context->aos_string);
+}
+
+void
+appl_agentx_addagentcaps(struct appl_agentx_session *session,
+    struct ax_pdu *pdu)
+{
+	struct ber_oid oid;
+	enum appl_error error;
+
+	if (appl_agentx_oid2ber_oid(&(pdu->ap_payload.ap_addagentcaps.ap_oid),
+	    &oid) == NULL) {
+		log_warnx("%s: Failed to add agent capabilities: oid too small",
+		    session->sess_backend.ab_name);
+		error = APPL_ERROR_PARSEERROR;
+		goto fail;
+	}
+
+	error = appl_addagentcaps(pdu->ap_context.aos_string, &oid,
+	    pdu->ap_payload.ap_addagentcaps.ap_descr.aos_string,
+	    &(session->sess_backend));
+
+ fail:
+	ax_response(session->sess_conn->conn_ax, session->sess_id,
+	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
+	    smi_getticks(), error, 0, NULL, 0);
+	event_add(&(session->sess_conn->conn_wev), NULL);
+}
+
+void
+appl_agentx_removeagentcaps(struct appl_agentx_session *session,
+    struct ax_pdu *pdu)
+{
+	struct ber_oid oid;
+	enum appl_error error;
+
+	if (appl_agentx_oid2ber_oid(&(pdu->ap_payload.ap_addagentcaps.ap_oid),
+	    &oid) == NULL) {
+		log_warnx("%s: Failed to remove agent capabilities: "
+		    "oid too small", session->sess_backend.ab_name);
+		error = APPL_ERROR_PARSEERROR;
+		goto fail;
+	}
+
+	error = appl_removeagentcaps(pdu->ap_context.aos_string, &oid,
+	    &(session->sess_backend));
+
+ fail:
+	ax_response(session->sess_conn->conn_ax, session->sess_id,
+	    pdu->ap_header.aph_transactionid, pdu->ap_header.aph_packetid,
+	    smi_getticks(), error, 0, NULL, 0);
+	event_add(&(session->sess_conn->conn_wev), NULL);
 }
 
 void
