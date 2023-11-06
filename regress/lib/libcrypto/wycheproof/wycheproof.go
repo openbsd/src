@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.149 2023/11/06 15:14:52 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.150 2023/11/06 15:17:02 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -2765,6 +2765,57 @@ func (wtg *wycheproofTestGroupX25519) run(algorithm string, variant testVariant)
 	return success
 }
 
+func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTestGroupRunner {
+	switch algorithm {
+	case "AES-CBC-PKCS5":
+		return &wycheproofTestGroupAesCbcPkcs5{}
+	case "AES-CCM", "AES-GCM":
+		return &wycheproofTestGroupAesAead{}
+	case "AES-CMAC":
+		return &wycheproofTestGroupAesCmac{}
+	case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
+		return &wycheproofTestGroupChaCha{}
+	case "DSA":
+		return &wycheproofTestGroupDSA{}
+	case "ECDH":
+		switch variant {
+		case Webcrypto:
+			return &wycheproofTestGroupECDHWebCrypto{}
+		default:
+			return &wycheproofTestGroupECDH{}
+		}
+	case "ECDSA":
+		switch variant {
+		case Webcrypto:
+			return &wycheproofTestGroupECDSAWebCrypto{}
+		default:
+			return &wycheproofTestGroupECDSA{}
+		}
+	case "EDDSA":
+		return &wycheproofTestGroupEdDSA{}
+	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
+		return &wycheproofTestGroupHkdf{}
+	case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
+		return &wycheproofTestGroupHmac{}
+	case "KW":
+		return &wycheproofTestGroupKW{}
+	case "PrimalityTest":
+		return &wycheproofTestGroupPrimality{}
+	case "RSAES-OAEP":
+		return &wycheproofTestGroupRsaesOaep{}
+	case "RSAES-PKCS1-v1_5":
+		return &wycheproofTestGroupRsaesPkcs1{}
+	case "RSASSA-PSS":
+		return &wycheproofTestGroupRsassa{}
+	case "RSASSA-PKCS1-v1_5", "RSASig":
+		return &wycheproofTestGroupRSA{}
+	case "XDH", "X25519":
+		return &wycheproofTestGroupX25519{}
+	default:
+		return nil
+	}
+}
+
 func runTestVectors(path string, variant testVariant) bool {
 	b, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -2781,55 +2832,8 @@ func runTestVectors(path string, variant testVariant) bool {
 	for _, tg := range wtv.TestGroups {
 		testGroupJSON := tg
 		testc.runTest(func() bool {
-			var wtg wycheproofTestGroupRunner
-			switch wtv.Algorithm {
-			case "AES-CBC-PKCS5":
-				wtg = &wycheproofTestGroupAesCbcPkcs5{}
-			case "AES-CCM":
-				wtg = &wycheproofTestGroupAesAead{}
-			case "AES-CMAC":
-				wtg = &wycheproofTestGroupAesCmac{}
-			case "AES-GCM":
-				wtg = &wycheproofTestGroupAesAead{}
-			case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
-				wtg = &wycheproofTestGroupChaCha{}
-			case "DSA":
-				wtg = &wycheproofTestGroupDSA{}
-			case "ECDH":
-				switch variant {
-				case Webcrypto:
-					wtg = &wycheproofTestGroupECDHWebCrypto{}
-				default:
-					wtg = &wycheproofTestGroupECDH{}
-				}
-			case "ECDSA":
-				switch variant {
-				case Webcrypto:
-					wtg = &wycheproofTestGroupECDSAWebCrypto{}
-				default:
-					wtg = &wycheproofTestGroupECDSA{}
-				}
-			case "EDDSA":
-				wtg = &wycheproofTestGroupEdDSA{}
-			case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
-				wtg = &wycheproofTestGroupHkdf{}
-			case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
-				wtg = &wycheproofTestGroupHmac{}
-			case "KW":
-				wtg = &wycheproofTestGroupKW{}
-			case "PrimalityTest":
-				wtg = &wycheproofTestGroupPrimality{}
-			case "RSAES-OAEP":
-				wtg = &wycheproofTestGroupRsaesOaep{}
-			case "RSAES-PKCS1-v1_5":
-				wtg = &wycheproofTestGroupRsaesPkcs1{}
-			case "RSASSA-PSS":
-				wtg = &wycheproofTestGroupRsassa{}
-			case "RSASSA-PKCS1-v1_5", "RSASig":
-				wtg = &wycheproofTestGroupRSA{}
-			case "XDH", "X25519":
-				wtg = &wycheproofTestGroupX25519{}
-			default:
+			wtg := testGroupFromAlgorithm(wtv.Algorithm, variant)
+			if wtg == nil {
 				log.Printf("INFO: Unknown test vector algorithm %q", wtv.Algorithm)
 				return false
 			}
