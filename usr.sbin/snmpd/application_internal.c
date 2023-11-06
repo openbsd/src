@@ -1,4 +1,4 @@
-/*	$OpenBSD: application_internal.c,v 1.4 2023/11/04 09:38:47 martijn Exp $	*/
+/*	$OpenBSD: application_internal.c,v 1.5 2023/11/06 10:58:13 martijn Exp $	*/
 
 /*
  * Copyright (c) 2023 Martijn van Duren <martijn@openbsd.org>
@@ -311,7 +311,19 @@ appl_internal_getnext(struct appl_backend *backend,
 				break;
 			}
 			/* non-scalar */
-			fatalx("%s: not implemented", backend->ab_name);
+			if (ober_oid_cmp(&object->oid, &resp[i].av_oid) > 0) {
+				include = 1;
+				resp[i].av_oid = object->oid;
+			}
+
+			resp[i].av_value =
+			    object->getnext(include, &resp[i].av_oid);
+			if (resp[i].av_value == NULL ||
+			    resp[i].av_value->be_class != BER_CLASS_CONTEXT)
+				break;
+			/* endOfMibView */
+			ober_free_elements(resp[i].av_value);
+			resp[i].av_value = NULL;
 		}
 		if (ober_oid_cmp(&resp[i].av_oid, &vb->av_oid_end) >= 0 ||
 		    object == NULL) {
