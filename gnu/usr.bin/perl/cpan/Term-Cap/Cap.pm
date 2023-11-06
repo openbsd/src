@@ -222,13 +222,12 @@ sub Tgetent
     $tmp_term = $self->{TERM};
     my $seen = {};
 
-    my $foo = ( exists $ENV{TERMCAP} ? $ENV{TERMCAP} : '' );
-
-    # $entry is the extracted termcap entry
-    if ( ( $foo !~ m:^/:s ) && ( $foo =~ m/(^|\|)\Q$tmp_term\E[:|]/s ) )
-    {
-        $entry = $foo;
-	$seen->{$tmp_term} = 1;
+    if (exists $ENV{TERMCAP}) {
+    	local $_ = $ENV{TERMCAP};
+	if ( !m:^/:s && m/(^|\|)\Q$tmp_term\E[:|]/s ) {
+	    $entry = $_;
+	    $seen->{$tmp_term} = 1;
+	}
     }
 
     my @termcap_path = termcap_path();
