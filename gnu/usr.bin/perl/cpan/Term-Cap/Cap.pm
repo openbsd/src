@@ -274,6 +274,7 @@ sub Tgetent
     $state = 1;    # 0 == finished
                    # 1 == next file
                    # 2 == search again
+		   # 3 == try infocmp
 
     $first = 0;    # first entry (keeps term name)
 
@@ -296,22 +297,30 @@ sub Tgetent
 
     while ( $state != 0 )
     {
-        if ( $state == 1 )
-        {
-
+        if ( $state == 1 ) {
             # get the next TERMCAP
-            $TERMCAP = shift @termcap_path
-              || croak "failed termcap lookup on $tmp_term";
-        }
-        else
-        {
-
+            $TERMCAP = shift @termcap_path or $state = 3;
+	} elsif ($state == 3) {
+	    croak "failed termcap lookup on $tmp_term";
+        } else {
             # do the same file again
-            # prevent endless recursion
             $state = 1;    # ok, maybe do a new file next time
         }
 
-        open(my $fh, '<', $TERMCAP) || croak "open $TERMCAP: $!";
+	my ($fh, $child);
+	if ($state == 3) {
+	    # need to do a proper fork, so that we can pass tmp_term
+	    # without having to quote it.
+	    $child = open($fh, "-|");
+	    warn "cannot run infocmp: $!" if !defined $child;
+	    if (!$child) {
+	    	open(STDERR, ">", "/dev/null");
+		system('infocmp', '-CTr', $tmp_term);
+		exit(1);
+	    }
+	} else {
+	    open($fh, '<', $TERMCAP) || croak "open $TERMCAP: $!";
+	}
 	while (<$fh>) {
 	    next if /^\t/ || /^#/;
 	    if (m/(^|\|)\Q$tmp_term\E[:|]/) {
@@ -329,6 +338,7 @@ sub Tgetent
 	defined $entry or $entry = '';
 	$entry .= $_ if $_;
         close $fh;
+	waitpid($child, 0) if defined $child;
 
         # If :tc=...: found then search this file again
 	while ($entry =~ s/:tc=([^:]+):/:/) {
