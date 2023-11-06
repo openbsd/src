@@ -312,15 +312,15 @@ sub Tgetent
             $state = 1;    # ok, maybe do a new file next time
         }
 
-        open( TERMCAP, "< $TERMCAP\0" ) || croak "open $TERMCAP: $!";
-	while (<TERMCAP>) {
+        open(my $fh, '<', $TERMCAP) || croak "open $TERMCAP: $!";
+	while (<$fh>) {
 	    next if /^\t/ || /^#/;
 	    if (m/(^|\|)\Q$tmp_term\E[:|]/) {
 		chomp;
 		s/^[^:]*:// if $first++;
 		$state = 0;
 		while (s/\\$//) {
-		    defined(my $x = <TERMCAP>) or last;
+		    defined(my $x = <$fh>) or last;
 		    $_ .= $x; chomp;
 		}
 		last;
@@ -328,7 +328,7 @@ sub Tgetent
 	}
 	defined $entry or $entry = '';
 	$entry .= $_ if $_;
-        close TERMCAP;
+        close $fh;
 
         # If :tc=...: found then search this file again
         $entry =~ s/:tc=([^:]+):/:/ && ( $tmp_term = $1, $state = 2 );
