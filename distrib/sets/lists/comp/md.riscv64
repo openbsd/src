@@ -4,6 +4,7 @@
 ./usr/include/riscv64
 ./usr/include/riscv64/_float.h
 ./usr/include/riscv64/_types.h
+./usr/include/riscv64/apmvar.h
 ./usr/include/riscv64/asm.h
 ./usr/include/riscv64/atomic.h
 ./usr/include/riscv64/bootconfig.h
