@@ -17,7 +17,6 @@ sub croak
 use strict;
 
 use vars qw($VERSION $VMS_TERMCAP);
-use vars qw($termpat $state $first $entry);
 
 $VERSION = '1.18';
 
@@ -171,7 +170,7 @@ sub Tgetent
     bless $self, $class;
 
     my ( $term, $cap, $search, $field, $max, $tmp_term, $TERMCAP );
-    local ( $termpat, $state, $first, $entry );    # used inside eval
+    my ( $state, $first, $entry ); 
     local $_;
 
     # Compute PADDING factor from OSPEED (to be used by Tpad)
@@ -222,14 +221,10 @@ sub Tgetent
     # $tmp_term is always the next term (possibly :tc=...:) we are looking for
     $tmp_term = $self->{TERM};
 
-    # protect any pattern metacharacters in $tmp_term
-    $termpat = $tmp_term;
-    $termpat =~ s/(\W)/\\$1/g;
-
     my $foo = ( exists $ENV{TERMCAP} ? $ENV{TERMCAP} : '' );
 
     # $entry is the extracted termcap entry
-    if ( ( $foo !~ m:^/:s ) && ( $foo =~ m/(^|\|)${termpat}[:|]/s ) )
+    if ( ( $foo !~ m:^/:s ) && ( $foo =~ m/(^|\|)\Q$tmp_term\E[:|]/s ) )
     {
         $entry = $foo;
     }
@@ -254,7 +249,7 @@ sub Tgetent
                     my $tmp = `infocmp -C 2>/dev/null`;
                     $tmp =~ s/^#.*\n//gm;    # remove comments
                     if (   ( $tmp !~ m%^/%s )
-                        && ( $tmp =~ /(^|\|)${termpat}[:|]/s ) )
+                        && ( $tmp =~ /(^|\|)\Q$tmp_term\E[:|]/s ) )
                     {
                         $entry = $tmp;
                     }
@@ -291,10 +286,6 @@ sub Tgetent
         if ( $entry =~ s/:tc=([^:]+):/:/ )
         {
             $tmp_term = $1;
-
-            # protect any pattern metacharacters in $tmp_term
-            $termpat = $tmp_term;
-            $termpat =~ s/(\W)/\\$1/g;
         }
         else
         {
@@ -302,24 +293,6 @@ sub Tgetent
         }
     }
 
-    # This is eval'ed inside the while loop for each file
-    $search = q{
-	while (<TERMCAP>) {
-	    next if /^\\t/ || /^#/;
-	    if ($_ =~ m/(^|\\|)${termpat}[:|]/o) {
-		chomp;
-		s/^[^:]*:// if $first++;
-		$state = 0;
-		while ($_ =~ s/\\\\$//) {
-		    defined(my $x = <TERMCAP>) or last;
-		    $_ .= $x; chomp;
-		}
-		last;
-	    }
-	}
-	defined $entry or $entry = '';
-	$entry .= $_ if $_;
-    };
 
     while ( $state != 0 )
     {
@@ -340,16 +313,25 @@ sub Tgetent
         }
 
         open( TERMCAP, "< $TERMCAP\0" ) || croak "open $TERMCAP: $!";
-        eval $search;
-        die $@ if $@;
+	while (<TERMCAP>) {
+	    next if /^\t/ || /^#/;
+	    if (m/(^|\|)\Q$tmp_term\E[:|]/) {
+		chomp;
+		s/^[^:]*:// if $first++;
+		$state = 0;
+		while (s/\\$//) {
+		    defined(my $x = <TERMCAP>) or last;
+		    $_ .= $x; chomp;
+		}
+		last;
+	    }
+	}
+	defined $entry or $entry = '';
+	$entry .= $_ if $_;
         close TERMCAP;
 
         # If :tc=...: found then search this file again
         $entry =~ s/:tc=([^:]+):/:/ && ( $tmp_term = $1, $state = 2 );
-
-        # protect any pattern metacharacters in $tmp_term
-        $termpat = $tmp_term;
-        $termpat =~ s/(\W)/\\$1/g;
     }
 
     croak "Can't find $term" if $entry eq '';
