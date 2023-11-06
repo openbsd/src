@@ -232,45 +232,6 @@ sub Tgetent
 
     my @termcap_path = termcap_path();
 
-    if ( !@termcap_path && !$entry )
-    {
-
-        # last resort--fake up a termcap from terminfo
-        local $ENV{TERM} = $term;
-
-        if ( $^O eq 'VMS' )
-        {
-            $entry = $VMS_TERMCAP;
-        }
-        else
-        {
-            if ( grep { -x "$_/infocmp" } split /:/, $ENV{PATH} )
-            {
-                eval {
-                    my $tmp = `infocmp -C 2>/dev/null`;
-                    $tmp =~ s/^#.*\n//gm;    # remove comments
-                    if (   ( $tmp !~ m%^/%s )
-                        && ( $tmp =~ /(^|\|)\Q$tmp_term\E[:|]/s ) )
-                    {
-                        $entry = $tmp;
-			$seen->{$tmp_term} = 1;
-                    }
-                };
-                warn "Can't run infocmp to get a termcap entry: $@" if $@;
-            }
-            else
-            {
-               # this is getting desperate now
-               if ( $self->{TERM} eq 'dumb' )
-               {
-                  $entry = 'dumb|80-column dumb tty::am::co#80::bl=^G:cr=^M:do=^J:sf=^J:';
-               }
-            }
-        }
-    }
-
-    croak "Can't find a valid termcap file" unless @termcap_path || $entry;
-
     $state = 1;    # 0 == finished
                    # 1 == next file
                    # 2 == search again
@@ -343,6 +304,8 @@ sub Tgetent
         close $fh;
 	waitpid($child, 0) if defined $child;
 
+	next if $state != 0;
+
         # If :tc=...: found then search this file again
 	while ($entry =~ s/:tc=([^:]+):/:/) {
 	    $tmp_term = $1;
@@ -352,7 +315,16 @@ sub Tgetent
 	}
     }
 
-    croak "Can't find $term" if $entry eq '';
+    if ( !defined $entry ) {
+        if ( $^O eq 'VMS' ) {
+            $entry = $VMS_TERMCAP;
+       # this is getting desperate now
+        } elsif ( $self->{TERM} eq 'dumb' ){
+	  $entry = 'dumb|80-column dumb tty::am::co#80::bl=^G:cr=^M:do=^J:sf=^J:';
+	}
+    }
+
+    croak "Can't find $term" if !defined $entry;
     $entry =~ s/:+\s*:+/:/g;    # cleanup $entry
     $entry =~ s/:+/:/g;         # cleanup $entry
     $self->{TERMCAP} = $entry;  # save it
