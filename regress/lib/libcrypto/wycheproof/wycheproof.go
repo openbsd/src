@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.148 2023/11/06 15:07:57 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.149 2023/11/06 15:14:52 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -506,6 +506,10 @@ type wycheproofTestGroupX25519 struct {
 	Tests []*wycheproofTestX25519 `json:"tests"`
 }
 
+type wycheproofTestGroupRunner interface {
+	run(string, testVariant) bool
+}
+
 type wycheproofTestVectors struct {
 	Algorithm        string            `json:"algorithm"`
 	GeneratorVersion string            `json:"generatorVersion"`
@@ -722,7 +726,7 @@ func runAesCbcPkcs5Test(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCbcPkcs5) bo
 	return openSuccess && sealSuccess
 }
 
-func runAesCbcPkcs5TestGroup(algorithm string, wtg *wycheproofTestGroupAesCbcPkcs5) bool {
+func (wtg *wycheproofTestGroupAesCbcPkcs5) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with IV size %d and key size %d...\n",
 		algorithm, wtg.Type, wtg.IVSize, wtg.KeySize)
 
@@ -987,7 +991,7 @@ func runAesAeadTest(algorithm string, ctx *C.EVP_CIPHER_CTX, aead *C.EVP_AEAD, w
 	return openEvp && sealEvp && openAead && sealAead
 }
 
-func runAesAeadTestGroup(algorithm string, wtg *wycheproofTestGroupAesAead) bool {
+func (wtg *wycheproofTestGroupAesAead) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with IV size %d, key size %d and tag size %d...\n",
 		algorithm, wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
 
@@ -1109,7 +1113,7 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 	return success
 }
 
-func runAesCmacTestGroup(algorithm string, wtg *wycheproofTestGroupAesCmac) bool {
+func (wtg *wycheproofTestGroupAesCmac) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d and tag size %d...\n",
 		algorithm, wtg.Type, wtg.KeySize, wtg.TagSize)
 	var cipher *C.EVP_CIPHER
@@ -1291,7 +1295,7 @@ func runChaCha20Poly1305Test(algorithm string, wt *wycheproofTestAead) bool {
 	return openSuccess && sealSuccess
 }
 
-func runChaCha20Poly1305TestGroup(algorithm string, wtg *wycheproofTestGroupChaCha) bool {
+func (wtg *wycheproofTestGroupChaCha) run(algorithm string, variant testVariant) bool {
 	// ChaCha20-Poly1305 currently only supports nonces of length 12 (96 bits)
 	if algorithm == "CHACHA20-POLY1305" && wtg.IVSize != 96 {
 		return true
@@ -1401,7 +1405,7 @@ func runDSATest(dsa *C.DSA, md *C.EVP_MD, variant testVariant, wt *wycheproofTes
 	return success
 }
 
-func runDSATestGroup(algorithm string, variant testVariant, wtg *wycheproofTestGroupDSA) bool {
+func (wtg *wycheproofTestGroupDSA) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v, key size %d and %v...\n",
 		algorithm, wtg.Type, wtg.Key.KeySize, wtg.SHA)
 
@@ -1608,7 +1612,7 @@ func runECDHTest(nid int, variant testVariant, wt *wycheproofTestECDH) bool {
 	return success
 }
 
-func runECDHTestGroup(algorithm string, variant testVariant, wtg *wycheproofTestGroupECDH) bool {
+func (wtg *wycheproofTestGroupECDH) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with curve %v and %v encoding...\n",
 		algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
 
@@ -1720,7 +1724,7 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 	return success
 }
 
-func runECDHWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDHWebCrypto) bool {
+func (wtg *wycheproofTestGroupECDHWebCrypto) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with curve %v and %v encoding...\n",
 		algorithm, wtg.Type, wtg.Curve, wtg.Encoding)
 
@@ -1784,7 +1788,7 @@ func runECDSATest(ecKey *C.EC_KEY, md *C.EVP_MD, nid int, variant testVariant, w
 	return success
 }
 
-func runECDSATestGroup(algorithm string, variant testVariant, wtg *wycheproofTestGroupECDSA) bool {
+func (wtg *wycheproofTestGroupECDSA) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with curve %v, key size %d and %v...\n",
 		algorithm, wtg.Type, wtg.Key.Curve, wtg.Key.KeySize, wtg.SHA)
 
@@ -1884,7 +1888,7 @@ func encodeECDSAWebCryptoSig(wtSig string) (*C.uchar, C.int) {
 	return cDer, derLen
 }
 
-func runECDSAWebCryptoTestGroup(algorithm string, wtg *wycheproofTestGroupECDSAWebCrypto) bool {
+func (wtg *wycheproofTestGroupECDSAWebCrypto) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with curve %v, key size %d and %v...\n",
 		algorithm, wtg.Type, wtg.Key.Curve, wtg.Key.KeySize, wtg.SHA)
 
@@ -1980,7 +1984,7 @@ func runEdDSATest(pkey *C.EVP_PKEY, wt *wycheproofTestEdDSA) bool {
 	return success
 }
 
-func runEdDSATestGroup(algorithm string, wtg *wycheproofTestGroupEdDSA) bool {
+func (wtg *wycheproofTestGroupEdDSA) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v...\n", algorithm, wtg.Type)
 
 	if wtg.Key.Curve != "edwards25519" || wtg.Key.KeySize != 255 {
@@ -2090,7 +2094,7 @@ func runHkdfTest(md *C.EVP_MD, wt *wycheproofTestHkdf) bool {
 	return wt.Result == "valid"
 }
 
-func runHkdfTestGroup(algorithm string, wtg *wycheproofTestGroupHkdf) bool {
+func (wtg *wycheproofTestGroupHkdf) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d...\n", algorithm, wtg.Type, wtg.KeySize)
 	md, err := hashEvpMdFromString(strings.TrimPrefix(algorithm, "HKDF-"))
 	if err != nil {
@@ -2160,7 +2164,7 @@ func runHmacTest(md *C.EVP_MD, tagBytes int, wt *wycheproofTestHmac) bool {
 	return success
 }
 
-func runHmacTestGroup(algorithm string, wtg *wycheproofTestGroupHmac) bool {
+func (wtg *wycheproofTestGroupHmac) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d and tag size %d...\n", algorithm, wtg.Type, wtg.KeySize, wtg.TagSize)
 	prefix := "SHA-"
 	if strings.HasPrefix(algorithm, "HMACSHA3-") {
@@ -2273,7 +2277,7 @@ func runKWTest(keySize int, wt *wycheproofTestKW) bool {
 	return wrapSuccess && unwrapSuccess
 }
 
-func runKWTestGroup(algorithm string, wtg *wycheproofTestGroupKW) bool {
+func (wtg *wycheproofTestGroupKW) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d...\n",
 		algorithm, wtg.Type, wtg.KeySize)
 
@@ -2303,7 +2307,7 @@ func runPrimalityTest(wt *wycheproofTestPrimality) bool {
 	return success
 }
 
-func runPrimalityTestGroup(algorithm string, wtg *wycheproofTestGroupPrimality) bool {
+func (wtg *wycheproofTestGroupPrimality) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group...\n", algorithm)
 
 	success := true
@@ -2378,7 +2382,7 @@ func runRsaesOaepTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproo
 	return success
 }
 
-func runRsaesOaepTestGroup(algorithm string, wtg *wycheproofTestGroupRsaesOaep) bool {
+func (wtg *wycheproofTestGroupRsaesOaep) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d MGF %v and %v...\n",
 		algorithm, wtg.Type, wtg.KeySize, wtg.MGFSHA, wtg.SHA)
 
@@ -2480,7 +2484,7 @@ func runRsaesPkcs1Test(rsa *C.RSA, wt *wycheproofTestRsaes) bool {
 	return success
 }
 
-func runRsaesPkcs1TestGroup(algorithm string, wtg *wycheproofTestGroupRsaesPkcs1) bool {
+func (wtg *wycheproofTestGroupRsaesPkcs1) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d...\n", algorithm, wtg.Type, wtg.KeySize)
 	rsa := C.RSA_new()
 	if rsa == nil {
@@ -2582,7 +2586,7 @@ func runRsassaTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLen int, wt *wy
 	return success
 }
 
-func runRsassaTestGroup(algorithm string, wtg *wycheproofTestGroupRsassa) bool {
+func (wtg *wycheproofTestGroupRsassa) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d and %v...\n",
 		algorithm, wtg.Type, wtg.KeySize, wtg.SHA)
 	rsa := C.RSA_new()
@@ -2666,7 +2670,7 @@ func runRSATest(rsa *C.RSA, md *C.EVP_MD, nid int, wt *wycheproofTestRSA) bool {
 	return success
 }
 
-func runRSATestGroup(algorithm string, wtg *wycheproofTestGroupRSA) bool {
+func (wtg *wycheproofTestGroupRSA) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d and %v...\n",
 		algorithm, wtg.Type, wtg.KeySize, wtg.SHA)
 
@@ -2749,7 +2753,7 @@ func runX25519Test(wt *wycheproofTestX25519) bool {
 	return success
 }
 
-func runX25519TestGroup(algorithm string, wtg *wycheproofTestGroupX25519) bool {
+func (wtg *wycheproofTestGroupX25519) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group with curve %v...\n", algorithm, wtg.Curve)
 
 	success := true
@@ -2777,7 +2781,7 @@ func runTestVectors(path string, variant testVariant) bool {
 	for _, tg := range wtv.TestGroups {
 		testGroupJSON := tg
 		testc.runTest(func() bool {
-			var wtg interface{}
+			var wtg wycheproofTestGroupRunner
 			switch wtv.Algorithm {
 			case "AES-CBC-PKCS5":
 				wtg = &wycheproofTestGroupAesCbcPkcs5{}
@@ -2833,57 +2837,7 @@ func runTestVectors(path string, variant testVariant) bool {
 			if err := json.Unmarshal(testGroupJSON, wtg); err != nil {
 				log.Fatalf("Failed to unmarshal test groups JSON: %v", err)
 			}
-			switch wtv.Algorithm {
-			case "AES-CBC-PKCS5":
-				return runAesCbcPkcs5TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCbcPkcs5))
-			case "AES-CCM":
-				return runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesAead))
-			case "AES-CMAC":
-				return runAesCmacTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCmac))
-			case "AES-GCM":
-				return runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesAead))
-			case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
-				return runChaCha20Poly1305TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupChaCha))
-			case "DSA":
-				return runDSATestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupDSA))
-			case "ECDH":
-				switch variant {
-				case Webcrypto:
-					return runECDHWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDHWebCrypto))
-				default:
-					return runECDHTestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupECDH))
-				}
-			case "ECDSA":
-				switch variant {
-				case Webcrypto:
-					return runECDSAWebCryptoTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupECDSAWebCrypto))
-				default:
-					return runECDSATestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupECDSA))
-				}
-			case "EDDSA":
-				return runEdDSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupEdDSA))
-			case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
-				return runHkdfTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHkdf))
-			case "HMACSHA1", "HMACSHA224", "HMACSHA256", "HMACSHA384", "HMACSHA512", "HMACSHA3-224", "HMACSHA3-256", "HMACSHA3-384", "HMACSHA3-512":
-				return runHmacTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupHmac))
-			case "KW":
-				return runKWTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupKW))
-			case "PrimalityTest":
-				return runPrimalityTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupPrimality))
-			case "RSAES-OAEP":
-				return runRsaesOaepTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsaesOaep))
-			case "RSAES-PKCS1-v1_5":
-				return runRsaesPkcs1TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsaesPkcs1))
-			case "RSASSA-PSS":
-				return runRsassaTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRsassa))
-			case "RSASSA-PKCS1-v1_5", "RSASig":
-				return runRSATestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupRSA))
-			case "XDH", "X25519":
-				return runX25519TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupX25519))
-			default:
-				log.Fatalf("Unknown test vector algorithm %q", wtv.Algorithm)
-				return false
-			}
+			return wtg.run(wtv.Algorithm, variant)
 		})
 	}
 	for _ = range wtv.TestGroups {
