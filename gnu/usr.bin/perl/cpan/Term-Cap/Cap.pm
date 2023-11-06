@@ -169,7 +169,7 @@ sub Tgetent
     $self = {} unless defined $self;
     bless $self, $class;
 
-    my ( $term, $cap, $search, $field, $max, $tmp_term, $TERMCAP );
+    my ( $term, $cap, $search, $field, $tmp_term, $TERMCAP );
     my ( $state, $first, $entry ); 
     local $_;
 
@@ -220,6 +220,7 @@ sub Tgetent
 
     # $tmp_term is always the next term (possibly :tc=...:) we are looking for
     $tmp_term = $self->{TERM};
+    my $seen = {};
 
     my $foo = ( exists $ENV{TERMCAP} ? $ENV{TERMCAP} : '' );
 
@@ -227,6 +228,7 @@ sub Tgetent
     if ( ( $foo !~ m:^/:s ) && ( $foo =~ m/(^|\|)\Q$tmp_term\E[:|]/s ) )
     {
         $entry = $foo;
+	$seen->{$tmp_term} = 1;
     }
 
     my @termcap_path = termcap_path();
@@ -252,6 +254,7 @@ sub Tgetent
                         && ( $tmp =~ /(^|\|)\Q$tmp_term\E[:|]/s ) )
                     {
                         $entry = $tmp;
+			$seen->{$tmp_term} = 1;
                     }
                 };
                 warn "Can't run infocmp to get a termcap entry: $@" if $@;
@@ -274,8 +277,6 @@ sub Tgetent
                    # 2 == search again
 
     $first = 0;    # first entry (keeps term name)
-
-    $max = 64;     # max :tc=...:'s
 
     if ($entry)
     {
@@ -308,7 +309,6 @@ sub Tgetent
 
             # do the same file again
             # prevent endless recursion
-            $max-- || croak "failed termcap loop at $tmp_term";
             $state = 1;    # ok, maybe do a new file next time
         }
 
@@ -319,6 +319,7 @@ sub Tgetent
 		chomp;
 		s/^[^:]*:// if $first++;
 		$state = 0;
+		$seen->{$tmp_term} = 1;
 		while (s/\\$//) {
 		    defined(my $x = <$fh>) or last;
 		    $_ .= $x; chomp;
@@ -331,7 +332,12 @@ sub Tgetent
         close $fh;
 
         # If :tc=...: found then search this file again
-        $entry =~ s/:tc=([^:]+):/:/ && ( $tmp_term = $1, $state = 2 );
+	while ($entry =~ s/:tc=([^:]+):/:/) {
+	    $tmp_term = $1;
+	    next if $seen->{$tmp_term};
+	    $state = 2;
+	    last;
+	}
     }
 
     croak "Can't find $term" if $entry eq '';
