@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.28 2023/11/04 09:22:52 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.29 2023/11/06 11:00:46 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -36,10 +36,24 @@
 
 TAILQ_HEAD(, appl_context) contexts = TAILQ_HEAD_INITIALIZER(contexts);
 
+struct appl_agentcap {
+	struct appl_backend *aa_backend;
+	struct appl_context *aa_context;
+	uint32_t aa_index;
+	struct ber_oid aa_oid;
+	char aa_descr[256];
+	int aa_uptime;
+
+	TAILQ_ENTRY(appl_agentcap) aa_entry;
+};
+
 struct appl_context {
 	char ac_name[APPL_CONTEXTNAME_MAX + 1];
 
 	RB_HEAD(appl_regions, appl_region) ac_regions;
+	TAILQ_HEAD(, appl_agentcap) ac_agentcaps;
+	int ac_agentcap_lastid;
+	int ac_agentcap_lastchange;
 
 	TAILQ_ENTRY(appl_context) ac_entries;
 };
@@ -113,6 +127,7 @@ struct snmp_target_mib {
 	uint32_t		snmp_unknowncontexts;
 } snmp_target_mib;
 
+void appl_agentcap_free(struct appl_agentcap *);
 enum appl_error appl_region(struct appl_context *, uint32_t, uint8_t,
     struct ber_oid *, int, int, struct appl_backend *);
 void appl_region_free(struct appl_context *, struct appl_region *);
@@ -176,6 +191,7 @@ appl_shutdown(void)
 
 	TAILQ_FOREACH_SAFE(ctx, &contexts, ac_entries, tctx) {
 		assert(RB_EMPTY(&(ctx->ac_regions)));
+		assert(TAILQ_EMPTY(&(ctx->ac_agentcaps)));
 		TAILQ_REMOVE(&contexts, ctx, ac_entries);
 		free(ctx);
 	}
@@ -210,9 +226,109 @@ appl_context(const char *name, int create)
 
 	strlcpy(ctx->ac_name, name, sizeof(ctx->ac_name));
 	RB_INIT(&(ctx->ac_regions));
+	TAILQ_INIT(&(ctx->ac_agentcaps));
+	ctx->ac_agentcap_lastid = 0;
+	ctx->ac_agentcap_lastchange = 0;
 
 	TAILQ_INSERT_TAIL(&contexts, ctx, ac_entries);
 	return ctx;
+}
+
+/* Name from RFC 2741 section 6.2.14 */
+enum appl_error
+appl_addagentcaps(const char *ctxname, struct ber_oid *oid, const char *descr,
+    struct appl_backend *backend)
+{
+	struct appl_context *ctx;
+	struct appl_agentcap *cap;
+	char oidbuf[1024];
+
+	if (ctxname == NULL)
+		ctxname = "";
+
+	(void)smi_oid2string(oid, oidbuf, sizeof(oidbuf), 0);
+	log_info("%s: Adding agent capabilities %s context(%s)",
+		backend->ab_name, oidbuf, ctxname);
+
+	if ((ctx = appl_context(ctxname, 0)) == NULL) {
+		log_info("%s: Can't add agent capabilities %s: "
+		    "Unsupported context \"%s\"", backend->ab_name, oidbuf,
+		    ctxname);
+		return APPL_ERROR_UNSUPPORTEDCONTEXT;
+	}
+
+	if ((cap = malloc(sizeof(*ctx))) == NULL) {
+		log_warn("%s: Can't add agent capabilities %s",
+		    backend->ab_name, oidbuf);
+		return APPL_ERROR_PROCESSINGERROR;
+	}
+
+	cap->aa_backend = backend;
+	cap->aa_context = ctx;
+	cap->aa_index = ++ctx->ac_agentcap_lastid;
+	cap->aa_oid = *oid;
+	cap->aa_uptime = smi_getticks();
+	if (strlcpy(cap->aa_descr, descr,
+	    sizeof(cap->aa_descr)) >= sizeof(cap->aa_descr)) {
+		log_info("%s: Can't add agent capabilities %s: "
+		    "Invalid description", backend->ab_name, oidbuf);
+		free(cap);
+		return APPL_ERROR_PARSEERROR;
+	}
+
+	TAILQ_INSERT_TAIL(&(ctx->ac_agentcaps), cap, aa_entry);
+	ctx->ac_agentcap_lastchange = cap->aa_uptime;
+
+	return APPL_ERROR_NOERROR;
+}
+
+/* Name from RFC2741 section 6.2.15 */
+enum appl_error
+appl_removeagentcaps(const char *ctxname, struct ber_oid *oid,
+    struct appl_backend *backend)
+{
+	struct appl_context *ctx;
+	struct appl_agentcap *cap, *tmp;
+	char oidbuf[1024];
+	int found = 0;
+
+	if (ctxname == NULL)
+		ctxname = "";
+
+	(void)smi_oid2string(oid, oidbuf, sizeof(oidbuf), 0);
+	log_info("%s: Removing agent capabilities %s context(%s)",
+	    backend->ab_name, oidbuf, ctxname);
+
+	if ((ctx = appl_context(ctxname, 0)) == NULL) {
+		log_info("%s: Can't remove agent capabilities %s: "
+		    "Unsupported context \"%s\"", backend->ab_name, oidbuf,
+		    ctxname);
+		return APPL_ERROR_UNSUPPORTEDCONTEXT;
+	}
+
+	TAILQ_FOREACH_SAFE(cap, &(ctx->ac_agentcaps), aa_entry, tmp) {
+		/* No duplicate oid check, just continue */
+		if (cap->aa_backend != backend ||
+		    ober_oid_cmp(oid, &(cap->aa_oid)) != 0)
+			continue;
+		found = 1;
+		appl_agentcap_free(cap);
+	}
+
+	if (found)
+		return APPL_ERROR_NOERROR;
+
+	log_info("%s: Can't remove agent capabilities %s: not found",
+	    backend->ab_name, oidbuf);
+	return APPL_ERROR_UNKNOWNAGENTCAPS;
+}
+
+void
+appl_agentcap_free(struct appl_agentcap *cap)
+{
+	TAILQ_REMOVE(&(cap->aa_context->ac_agentcaps), cap, aa_entry);
+	cap->aa_context->ac_agentcap_lastchange = smi_getticks();
+	free(cap);
 }
 
 enum appl_error
@@ -534,10 +650,15 @@ void
 appl_close(struct appl_backend *backend)
 {
 	struct appl_context *ctx;
+	struct appl_agentcap *cap, *tcap;
 	struct appl_region *region, *tregion, *nregion;
 	struct appl_request_downstream *request, *trequest;
 
 	TAILQ_FOREACH(ctx, &contexts, ac_entries) {
+		TAILQ_FOREACH_SAFE(cap, &(ctx->ac_agentcaps), aa_entry, tcap) {
+			if (cap->aa_backend == backend)
+				appl_agentcap_free(cap);
+		}
 		RB_FOREACH_SAFE(region, appl_regions,
 		    &(ctx->ac_regions), tregion) {
 			while (region != NULL) {
