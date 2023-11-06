@@ -1,0 +1,83 @@
+Revision history for Perl extension Term::Cap.
+
+undef: Thu Dec 14 20:02:42 CST 1995 by sanders@bsdi.com
+
+1.00: Thu Nov 30 23:34:29 EST 2000 by schwern@pobox.com
+		 - [PATCH] $VERSION crusade, strict, tests, etc... all over lib/
+
+1.01: Sun Oct 28 13:07:36 2001
+		 - Avoid warnings in Tgetent and Tputs
+       - Version retrieved from the Perl 5.7.2 distribution
+
+1.02: Sat Nov 17 13:50:39 2001
+       - Altered layout of the POD
+       - Added Test::More to PREREQ_PM in Makefile.PL
+       - Fixed no argument Tgetent()
+
+1.03:  Wed Nov 28 10:09:38 GMT 2001
+       - VMS Support from Charles Lane <lane@DUPHY4.Physics.Drexel.Edu>
+
+1.04:  Thu Nov 29 16:31:53 GMT 2001
+       - Fixed warnings in the test.
+
+1.05:  Mon Dec  3 15:37:43 GMT 2001
+       - Don't attempt to run infocmp if it's not there - from chromatic
+         <chromatic@rmci.net>
+
+1.06:  Thu Dec  6 19:10:15 GMT 2001
+       - More VMS fixes from Charles Lane
+       - Don't carp about setting OSPEED unless warnings are on
+
+1.07:
+       - Fixed Makefile.PL with INSTALLDIRS - from Michael Schwern
+       - Sanity check on infocmp output - from Norton Allen 
+         <allen@huarp.harvard.edu>
+
+1.08:  Sat Sep 28 11:33:15 BST 2002
+       - Late loading of 'Carp' as per Michael Schwern
+
+1.09: Tue Apr 20 12:06:51 BST 2004
+       -  Merged in changes from and to Core
+       - Core (Fri Aug 30 14:15:55 CEST 2002):
+         Cope with comments lines from 'infocmp' from Brendan O'Dea
+       - Allow for EBCDIC in Tgoto magic test.
+
+1.10: Thu Oct 18 16:52:20 BST 2007
+       - Don't use try to use $ENV{HOME} if it doesn't exist
+       - Give Win32 'dumb' if TERM isn't set
+       - Provide fallback 'dumb' termcap entry as last resort
+
+1.11: Thu Oct 25 09:33:07 BST 2007
+      - EBDIC fixes from Chun Bing Ge <gecb@cn.ibm.com>
+
+1.12: Sat Dec  8 00:08:40 GMT 2007
+      - Pending fix for tests on QNX (Matt Kraai <kraai@ftbfs.org>)
+
+1.13: Sat Oct 26 19:08:27 BST 2013
+      -  Bring everything up to date with all patches from RT
+      - Sync version with core
+
+1.14: Sat Oct 26 19:20:03 BST 2013
+      - Update versions everywhere
+      - Change email address and add the github location
+
+1.15: Sat Oct 26 21:28:29 BST 2013
+      - meta data patch from David Steinbrunner
+      - Change email in metadata
+
+1.16: Sat  5 Apr 10:19:35 BST 2014
+		- Make last resort actually work from drm00
+      - Removed change log from Cap.pm
+
+1.17-RC1: Wed  1 Jul 10:30:15 BST 2015
+		- Fix regression caused by last resort change
+		- Add support for capabilities of more than 2 characters
+
+1.17:	Mon 17 Aug 08:30:54 BST 2015
+		- No changes version bounce
+
+1.18:	Fri 10 Feb 12:43:07 GMT 2023
+		- use isnt rather than isn't (Nicolas Mendoza <mendoza@pvv.ntnu.no>)
+		- Prevent unintended parse of ':' in TERMPATH (David Farrell <davidnmfarrell@gmail.com>)
+		- Various code cleanups (Arkadiy Voronov <voronov_ao@mail.ru>)
+        - Remove indirect method calls from documentation (Dan Book <grinnz@gmail.com>)

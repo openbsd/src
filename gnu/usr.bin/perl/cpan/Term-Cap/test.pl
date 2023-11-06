@@ -121,7 +121,7 @@ SKIP: {
         $ENV{TERMPATH} = '!';
         $ENV{TERMCAP} = '';
         eval { $t = Term::Cap->Tgetent($vals) };
-        isn't( $@, '', 'Tgetent() should catch bad termcap file' );
+        isnt( $@, '', 'Tgetent() should catch bad termcap file' );
 }
 
 SKIP: {
