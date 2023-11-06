@@ -277,6 +277,7 @@ sub Tgetent
 	    if (!$child) {
 	    	open(STDERR, ">", "/dev/null");
 		exec('infocmp', '-CTr', $tmp_term);
+		exit(1);
 	    }
 	} else {
 	    open($fh, '<', $TERMCAP) || croak "open $TERMCAP: $!";
