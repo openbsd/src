@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.147 2023/11/06 14:50:12 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.148 2023/11/06 15:07:57 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -163,6 +163,9 @@ type wycheproofTestGroupAead struct {
 	Type    string                `json:"type"`
 	Tests   []*wycheproofTestAead `json:"tests"`
 }
+
+type wycheproofTestGroupAesAead wycheproofTestGroupAead
+type wycheproofTestGroupChaCha wycheproofTestGroupAead
 
 type wycheproofTestAead struct {
 	TCID    int      `json:"tcId"`
@@ -984,7 +987,7 @@ func runAesAeadTest(algorithm string, ctx *C.EVP_CIPHER_CTX, aead *C.EVP_AEAD, w
 	return openEvp && sealEvp && openAead && sealAead
 }
 
-func runAesAeadTestGroup(algorithm string, wtg *wycheproofTestGroupAead) bool {
+func runAesAeadTestGroup(algorithm string, wtg *wycheproofTestGroupAesAead) bool {
 	fmt.Printf("Running %v test group %v with IV size %d, key size %d and tag size %d...\n",
 		algorithm, wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
 
@@ -1288,7 +1291,7 @@ func runChaCha20Poly1305Test(algorithm string, wt *wycheproofTestAead) bool {
 	return openSuccess && sealSuccess
 }
 
-func runChaCha20Poly1305TestGroup(algorithm string, wtg *wycheproofTestGroupAead) bool {
+func runChaCha20Poly1305TestGroup(algorithm string, wtg *wycheproofTestGroupChaCha) bool {
 	// ChaCha20-Poly1305 currently only supports nonces of length 12 (96 bits)
 	if algorithm == "CHACHA20-POLY1305" && wtg.IVSize != 96 {
 		return true
@@ -2779,13 +2782,13 @@ func runTestVectors(path string, variant testVariant) bool {
 			case "AES-CBC-PKCS5":
 				wtg = &wycheproofTestGroupAesCbcPkcs5{}
 			case "AES-CCM":
-				wtg = &wycheproofTestGroupAead{}
+				wtg = &wycheproofTestGroupAesAead{}
 			case "AES-CMAC":
 				wtg = &wycheproofTestGroupAesCmac{}
 			case "AES-GCM":
-				wtg = &wycheproofTestGroupAead{}
+				wtg = &wycheproofTestGroupAesAead{}
 			case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
-				wtg = &wycheproofTestGroupAead{}
+				wtg = &wycheproofTestGroupChaCha{}
 			case "DSA":
 				wtg = &wycheproofTestGroupDSA{}
 			case "ECDH":
@@ -2834,13 +2837,13 @@ func runTestVectors(path string, variant testVariant) bool {
 			case "AES-CBC-PKCS5":
 				return runAesCbcPkcs5TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCbcPkcs5))
 			case "AES-CCM":
-				return runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead))
+				return runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesAead))
 			case "AES-CMAC":
 				return runAesCmacTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesCmac))
 			case "AES-GCM":
-				return runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead))
+				return runAesAeadTestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAesAead))
 			case "CHACHA20-POLY1305", "XCHACHA20-POLY1305":
-				return runChaCha20Poly1305TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupAead))
+				return runChaCha20Poly1305TestGroup(wtv.Algorithm, wtg.(*wycheproofTestGroupChaCha))
 			case "DSA":
 				return runDSATestGroup(wtv.Algorithm, variant, wtg.(*wycheproofTestGroupDSA))
 			case "ECDH":
