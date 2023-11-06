@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.150 2023/11/06 15:17:02 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.151 2023/11/06 15:21:44 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -2830,17 +2830,15 @@ func runTestVectors(path string, variant testVariant) bool {
 
 	success := true
 	for _, tg := range wtv.TestGroups {
-		testGroupJSON := tg
+		wtg := testGroupFromAlgorithm(wtv.Algorithm, variant)
+		if wtg == nil {
+			log.Printf("INFO: Unknown test vector algorithm %q", wtv.Algorithm)
+			return false
+		}
+		if err := json.Unmarshal(tg, wtg); err != nil {
+			log.Fatalf("Failed to unmarshal test groups JSON: %v", err)
+		}
 		testc.runTest(func() bool {
-			wtg := testGroupFromAlgorithm(wtv.Algorithm, variant)
-			if wtg == nil {
-				log.Printf("INFO: Unknown test vector algorithm %q", wtv.Algorithm)
-				return false
-			}
-
-			if err := json.Unmarshal(testGroupJSON, wtg); err != nil {
-				log.Fatalf("Failed to unmarshal test groups JSON: %v", err)
-			}
 			return wtg.run(wtv.Algorithm, variant)
 		})
 	}
