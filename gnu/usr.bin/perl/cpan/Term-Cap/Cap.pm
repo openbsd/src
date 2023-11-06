@@ -332,11 +332,14 @@ sub Tgetent
 		    defined(my $x = <$fh>) or last;
 		    $_ .= $x; chomp;
 		}
+		if (defined $entry) {
+		    $entry .= $_;
+		} else {
+		    $entry = $_;
+		}
 		last;
 	    }
 	}
-	defined $entry or $entry = '';
-	$entry .= $_ if $_;
         close $fh;
 	waitpid($child, 0) if defined $child;
 
