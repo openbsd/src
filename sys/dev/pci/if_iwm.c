@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwm.c,v 1.411 2023/10/21 06:41:26 stsp Exp $	*/
+/*	$OpenBSD: if_iwm.c,v 1.412 2023/11/06 08:34:41 stsp Exp $	*/
 
 /*
  * Copyright (c) 2014, 2016 genua gmbh <info@genua.de>
@@ -9294,8 +9294,17 @@ iwm_set_rate_table_vht(struct iwm_node *in, struct iwm_lq_cmd *lqcmd)
 				if (i < 2 && in->in_phyctxt->vht_chan_width >=
 				    IEEE80211_VHTOP0_CHAN_WIDTH_80)
 					tab |= IWM_RATE_MCS_CHAN_WIDTH_80;
-				else
+				else if (in->in_phyctxt->sco ==
+				    IEEE80211_HTOP0_SCO_SCA ||
+				    in->in_phyctxt->sco ==
+				    IEEE80211_HTOP0_SCO_SCB)
 					tab |= IWM_RATE_MCS_CHAN_WIDTH_40;
+				else {
+					/* no 40 MHz, fall back on MCS 8 */
+					tab &= ~IWM_RATE_VHT_MCS_RATE_CODE_MSK;
+					tab |= 8;
+				}
+					
 				tab |= IWM_RATE_MCS_RTS_REQUIRED_MSK;
 				if (i < 4) {
 					if (ieee80211_ra_vht_use_sgi(ni))
