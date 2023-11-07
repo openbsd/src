@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.154 2023/11/07 16:37:02 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.155 2023/11/07 16:46:12 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -709,24 +709,33 @@ func aeadAes(size int) (*C.EVP_AEAD, error) {
 	return nil, fmt.Errorf("invalid key size: %d", size)
 }
 
-func hashEvpDigestMessage(md *C.EVP_MD, msg []byte) ([]byte, int, error) {
+func mustHashHexMessage(md *C.EVP_MD, message string) ([]byte, int) {
 	size := C.EVP_MD_size(md)
 	if size <= 0 || size > C.EVP_MAX_MD_SIZE {
-		return nil, 0, fmt.Errorf("unexpected MD size %d", size)
+		log.Fatalf("unexpected MD size %d", size)
 	}
 
-	msgLen := len(msg)
-	if msgLen == 0 {
-		msg = append(msg, 0)
-	}
+	msg, msgLen := mustDecodeHexString(message, "for hex message digest")
 
 	digest := make([]byte, size)
 
 	if C.EVP_Digest(unsafe.Pointer(&msg[0]), C.size_t(msgLen), (*C.uchar)(unsafe.Pointer(&digest[0])), nil, md, nil) != 1 {
-		return nil, 0, fmt.Errorf("EVP_Digest failed")
+		log.Fatalf("EVP_Digest failed")
 	}
 
-	return digest, int(size), nil
+	return digest, int(size)
+}
+
+func mustDecodeHexString(str, descr string) (out []byte, outLen int) {
+	out, err := hex.DecodeString(str)
+	if err != nil {
+		log.Fatalf("Failed to decode %s %q: %v", descr, str, err)
+	}
+	outLen = len(out)
+	if outLen == 0 {
+		out = append(out, 0)
+	}
+	return out, outLen
 }
 
 func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen int,
@@ -790,37 +799,10 @@ func checkAesCbcPkcs5(ctx *C.EVP_CIPHER_CTX, doEncrypt int, key []byte, keyLen i
 }
 
 func runAesCbcPkcs5Test(ctx *C.EVP_CIPHER_CTX, wt *wycheproofTestAesCbcPkcs5) bool {
-	key, err := hex.DecodeString(wt.Key)
-	if err != nil {
-		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
-	}
-	iv, err := hex.DecodeString(wt.IV)
-	if err != nil {
-		log.Fatalf("Failed to decode IV %q: %v", wt.IV, err)
-	}
-	ct, err := hex.DecodeString(wt.CT)
-	if err != nil {
-		log.Fatalf("Failed to decode CT %q: %v", wt.CT, err)
-	}
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
-	}
-
-	keyLen, ivLen, ctLen, msgLen := len(key), len(iv), len(ct), len(msg)
-
-	if keyLen == 0 {
-		key = append(key, 0)
-	}
-	if ivLen == 0 {
-		iv = append(iv, 0)
-	}
-	if ctLen == 0 {
-		ct = append(ct, 0)
-	}
-	if msgLen == 0 {
-		msg = append(msg, 0)
-	}
+	key, keyLen := mustDecodeHexString(wt.Key, "key")
+	iv, ivLen := mustDecodeHexString(wt.IV, "iv")
+	ct, ctLen := mustDecodeHexString(wt.CT, "ct")
+	msg, msgLen := mustDecodeHexString(wt.Msg, "message")
 
 	openSuccess := checkAesCbcPkcs5(ctx, 0, key, keyLen, iv, ivLen, ct, ctLen, msg, msgLen, wt)
 	sealSuccess := checkAesCbcPkcs5(ctx, 1, key, keyLen, iv, ivLen, msg, msgLen, ct, ctLen, wt)
@@ -997,56 +979,12 @@ func checkAesAead(algorithm string, ctx *C.EVP_CIPHER_CTX, doEncrypt int,
 }
 
 func runAesAeadTest(algorithm string, ctx *C.EVP_CIPHER_CTX, aead *C.EVP_AEAD, wt *wycheproofTestAead) bool {
-	key, err := hex.DecodeString(wt.Key)
-	if err != nil {
-		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
-	}
-
-	iv, err := hex.DecodeString(wt.IV)
-	if err != nil {
-		log.Fatalf("Failed to decode IV %q: %v", wt.IV, err)
-	}
-
-	aad, err := hex.DecodeString(wt.AAD)
-	if err != nil {
-		log.Fatalf("Failed to decode AAD %q: %v", wt.AAD, err)
-	}
-
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode msg %q: %v", wt.Msg, err)
-	}
-
-	ct, err := hex.DecodeString(wt.CT)
-	if err != nil {
-		log.Fatalf("Failed to decode CT %q: %v", wt.CT, err)
-	}
-
-	tag, err := hex.DecodeString(wt.Tag)
-	if err != nil {
-		log.Fatalf("Failed to decode tag %q: %v", wt.Tag, err)
-	}
-
-	keyLen, ivLen, aadLen, msgLen, ctLen, tagLen := len(key), len(iv), len(aad), len(msg), len(ct), len(tag)
-
-	if keyLen == 0 {
-		key = append(key, 0)
-	}
-	if ivLen == 0 {
-		iv = append(iv, 0)
-	}
-	if aadLen == 0 {
-		aad = append(aad, 0)
-	}
-	if msgLen == 0 {
-		msg = append(msg, 0)
-	}
-	if ctLen == 0 {
-		ct = append(ct, 0)
-	}
-	if tagLen == 0 {
-		tag = append(tag, 0)
-	}
+	key, keyLen := mustDecodeHexString(wt.Key, "key")
+	iv, ivLen := mustDecodeHexString(wt.IV, "iv")
+	aad, aadLen := mustDecodeHexString(wt.AAD, "aad")
+	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
+	ct, ctLen := mustDecodeHexString(wt.CT, "CT")
+	tag, tagLen := mustDecodeHexString(wt.Tag, "tag")
 
 	openEvp := checkAesAead(algorithm, ctx, 0, key, keyLen, iv, ivLen, aad, aadLen, ct, ctLen, msg, msgLen, tag, tagLen, wt)
 	sealEvp := checkAesAead(algorithm, ctx, 1, key, keyLen, iv, ivLen, aad, aadLen, msg, msgLen, ct, ctLen, tag, tagLen, wt)
@@ -1110,32 +1048,9 @@ func (wtg *wycheproofTestGroupAesAead) run(algorithm string, variant testVariant
 }
 
 func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
-	key, err := hex.DecodeString(wt.Key)
-	if err != nil {
-		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
-	}
-
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode msg %q: %v", wt.Msg, err)
-	}
-
-	tag, err := hex.DecodeString(wt.Tag)
-	if err != nil {
-		log.Fatalf("Failed to decode tag %q: %v", wt.Tag, err)
-	}
-
-	keyLen, msgLen, tagLen := len(key), len(msg), len(tag)
-
-	if keyLen == 0 {
-		key = append(key, 0)
-	}
-	if msgLen == 0 {
-		msg = append(msg, 0)
-	}
-	if tagLen == 0 {
-		tag = append(tag, 0)
-	}
+	key, keyLen := mustDecodeHexString(wt.Key, "key")
+	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
+	tag, tagLen := mustDecodeHexString(wt.Tag, "tag")
 
 	mdctx := C.EVP_MD_CTX_new()
 	if mdctx == nil {
@@ -1291,22 +1206,13 @@ func runChaCha20Poly1305Test(algorithm string, wt *wycheproofTestAead) bool {
 		aead = C.EVP_aead_xchacha20_poly1305()
 	}
 
-	key, err := hex.DecodeString(wt.Key)
-	if err != nil {
-		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
-	}
-	iv, err := hex.DecodeString(wt.IV)
-	if err != nil {
-		log.Fatalf("Failed to decode key %q: %v", wt.IV, err)
-	}
-	aad, err := hex.DecodeString(wt.AAD)
-	if err != nil {
-		log.Fatalf("Failed to decode AAD %q: %v", wt.AAD, err)
-	}
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode msg %q: %v", wt.Msg, err)
-	}
+	key, keyLen := mustDecodeHexString(wt.Key, "key")
+	ct, ctLen := mustDecodeHexString(wt.CT, "CT")
+	iv, ivLen := mustDecodeHexString(wt.IV, "iv")
+	aad, aadLen := mustDecodeHexString(wt.AAD, "aad")
+	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
+
+	// ct and tag are concatenated in checkAeadOpen(), so don't use mustDecodeHexString()
 	ct, err := hex.DecodeString(wt.CT)
 	if err != nil {
 		log.Fatalf("Failed to decode ct %q: %v", wt.CT, err)
@@ -1315,18 +1221,7 @@ func runChaCha20Poly1305Test(algorithm string, wt *wycheproofTestAead) bool {
 	if err != nil {
 		log.Fatalf("Failed to decode tag %q: %v", wt.Tag, err)
 	}
-
-	keyLen, ivLen, aadLen, msgLen, ctLen, tagLen := len(key), len(iv), len(aad), len(msg), len(ct), len(tag)
-
-	if ivLen == 0 {
-		iv = append(iv, 0)
-	}
-	if aadLen == 0 {
-		aad = append(aad, 0)
-	}
-	if msgLen == 0 {
-		msg = append(msg, 0)
-	}
+	ctLen, tagLen := len(ct), len(tag)
 
 	ctx := C.EVP_AEAD_CTX_new()
 	if ctx == nil {
@@ -1410,15 +1305,7 @@ func encodeDSAP1363Sig(wtSig string) (*C.uchar, C.int) {
 }
 
 func runDSATest(dsa *C.DSA, md *C.EVP_MD, variant testVariant, wt *wycheproofTestDSA) bool {
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
-	}
-
-	msg, msgLen, err := hashEvpDigestMessage(md, msg)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
+	msg, msgLen := mustHashHexMessage(md, wt.Msg)
 
 	var ret C.int
 	if variant == P1363 {
@@ -1432,14 +1319,7 @@ func runDSATest(dsa *C.DSA, md *C.EVP_MD, variant testVariant, wt *wycheproofTes
 		ret = C.DSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
 			(*C.uchar)(unsafe.Pointer(cDer)), C.int(derLen), dsa)
 	} else {
-		sig, err := hex.DecodeString(wt.Sig)
-		if err != nil {
-			log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
-		}
-		sigLen := len(sig)
-		if sigLen == 0 {
-			sig = append(msg, 0)
-		}
+		sig, sigLen := mustDecodeHexString(wt.Sig, "sig")
 		ret = C.DSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
 			(*C.uchar)(unsafe.Pointer(&sig[0])), C.int(sigLen), dsa)
 	}
@@ -1505,15 +1385,7 @@ func (wtg *wycheproofTestGroupDSA) run(algorithm string, variant testVariant) bo
 		log.Fatalf("Failed to get hash: %v", err)
 	}
 
-	der, err := hex.DecodeString(wtg.KeyDER)
-	if err != nil {
-		log.Fatalf("Failed to decode DER encoded key: %v", err)
-	}
-
-	derLen := len(der)
-	if derLen == 0 {
-		der = append(der, 0)
-	}
+	der, derLen := mustDecodeHexString(wtg.KeyDER, "DER encoded key")
 
 	Cder := (*C.uchar)(C.malloc(C.ulong(derLen)))
 	if Cder == nil {
@@ -1576,15 +1448,7 @@ func runECDHTest(nid int, variant testVariant, wt *wycheproofTestECDH) bool {
 		return false
 	}
 
-	pub, err := hex.DecodeString(wt.Public)
-	if err != nil {
-		log.Fatalf("Failed to decode public key: %v", err)
-	}
-
-	pubLen := len(pub)
-	if pubLen == 0 {
-		pub = append(pub, 0)
-	}
+	pub, pubLen := mustDecodeHexString(wt.Public, "public key")
 
 	Cpub := (*C.uchar)(C.malloc(C.ulong(pubLen)))
 	if Cpub == nil {
@@ -1634,13 +1498,10 @@ func runECDHTest(nid int, variant testVariant, wt *wycheproofTestECDH) bool {
 		return false
 	}
 
-	shared, err := hex.DecodeString(wt.Shared)
-	if err != nil {
-		log.Fatalf("Failed to decode shared secret: %v", err)
-	}
+	shared, sharedLen := mustDecodeHexString(wt.Shared, "shared secret")
 
 	// XXX The shared fields of the secp224k1 test cases have a 0 byte preprended.
-	if len(shared) == int(secLen)+1 && shared[0] == 0 {
+	if sharedLen == int(secLen)+1 && shared[0] == 0 {
 		fmt.Printf("INFO: %s - prepending 0 byte.\n", wt)
 		// shared = shared[1:];
 		zero := make([]byte, 1, secLen+1)
@@ -1750,10 +1611,7 @@ func runECDHWebCryptoTest(nid int, wt *wycheproofTestECDHWebCrypto) bool {
 		return false
 	}
 
-	shared, err := hex.DecodeString(wt.Shared)
-	if err != nil {
-		log.Fatalf("Failed to decode shared secret: %v", err)
-	}
+	shared, _ := mustDecodeHexString(wt.Shared, "shared secret")
 
 	success := true
 	if !bytes.Equal(shared, secret) {
@@ -1782,15 +1640,7 @@ func (wtg *wycheproofTestGroupECDHWebCrypto) run(algorithm string, variant testV
 }
 
 func runECDSATest(ecKey *C.EC_KEY, md *C.EVP_MD, nid int, variant testVariant, wt *wycheproofTestECDSA) bool {
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
-	}
-
-	msg, msgLen, err := hashEvpDigestMessage(md, msg)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
+	msg, msgLen := mustHashHexMessage(md, wt.Msg)
 
 	var ret C.int
 	if variant == Webcrypto || variant == P1363 {
@@ -1804,15 +1654,8 @@ func runECDSATest(ecKey *C.EC_KEY, md *C.EVP_MD, nid int, variant testVariant, w
 		ret = C.ECDSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
 			(*C.uchar)(unsafe.Pointer(cDer)), C.int(derLen), ecKey)
 	} else {
-		sig, err := hex.DecodeString(wt.Sig)
-		if err != nil {
-			log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
-		}
+		sig, sigLen := mustDecodeHexString(wt.Sig, "sig")
 
-		sigLen := len(sig)
-		if sigLen == 0 {
-			sig = append(sig, 0)
-		}
 		ret = C.ECDSA_verify(0, (*C.uchar)(unsafe.Pointer(&msg[0])), C.int(msgLen),
 			(*C.uchar)(unsafe.Pointer(&sig[0])), C.int(sigLen), ecKey)
 	}
@@ -1993,23 +1836,8 @@ func runEdDSATest(pkey *C.EVP_PKEY, wt *wycheproofTestEdDSA) bool {
 		log.Fatal("EVP_DigestVerifyInit failed")
 	}
 
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode Message %q: %v", wt.Msg, err)
-	}
-	msgLen := len(msg)
-	if msgLen == 0 {
-		msg = append(msg, 0)
-	}
-
-	sig, err := hex.DecodeString(wt.Sig)
-	if err != nil {
-		log.Fatalf("Failed to decode Signature %q: %v", wt.Sig, err)
-	}
-	sigLen := len(sig)
-	if sigLen == 0 {
-		sig = append(sig, 0)
-	}
+	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
+	sig, sigLen := mustDecodeHexString(wt.Sig, "sig")
 
 	ret := C.EVP_DigestVerify(mdctx, (*C.uchar)(unsafe.Pointer(&sig[0])), (C.size_t)(sigLen), (*C.uchar)(unsafe.Pointer(&msg[0])), (C.size_t)(msgLen))
 
@@ -2029,12 +1857,9 @@ func (wtg *wycheproofTestGroupEdDSA) run(algorithm string, variant testVariant) 
 		return false
 	}
 
-	pubKey, err := hex.DecodeString(wtg.Key.Pk)
-	if err != nil {
-		log.Fatalf("Failed to decode Pubkey %q: %v", wtg.Key.Pk, err)
-	}
+	pubKey, pubKeyLen := mustDecodeHexString(wtg.Key.Pk, "pubkey")
 
-	pkey := C.EVP_PKEY_new_raw_public_key(C.EVP_PKEY_ED25519, nil, (*C.uchar)(unsafe.Pointer(&pubKey[0])), (C.size_t)(len(pubKey)))
+	pkey := C.EVP_PKEY_new_raw_public_key(C.EVP_PKEY_ED25519, nil, (*C.uchar)(unsafe.Pointer(&pubKey[0])), (C.size_t)(pubKeyLen))
 	if pkey == nil {
 		log.Fatal("EVP_PKEY_new_raw_public_key failed")
 	}
@@ -2050,29 +1875,9 @@ func (wtg *wycheproofTestGroupEdDSA) run(algorithm string, variant testVariant) 
 }
 
 func runHkdfTest(md *C.EVP_MD, wt *wycheproofTestHkdf) bool {
-	ikm, err := hex.DecodeString(wt.Ikm)
-	if err != nil {
-		log.Fatalf("Failed to decode ikm %q: %v", wt.Ikm, err)
-	}
-	salt, err := hex.DecodeString(wt.Salt)
-	if err != nil {
-		log.Fatalf("Failed to decode salt %q: %v", wt.Salt, err)
-	}
-	info, err := hex.DecodeString(wt.Info)
-	if err != nil {
-		log.Fatalf("Failed to decode info %q: %v", wt.Info, err)
-	}
-
-	ikmLen, saltLen, infoLen := len(ikm), len(salt), len(info)
-	if ikmLen == 0 {
-		ikm = append(ikm, 0)
-	}
-	if saltLen == 0 {
-		salt = append(salt, 0)
-	}
-	if infoLen == 0 {
-		info = append(info, 0)
-	}
+	ikm, ikmLen := mustDecodeHexString(wt.Ikm, "ikm")
+	salt, saltLen := mustDecodeHexString(wt.Salt, "salt")
+	info, infoLen := mustDecodeHexString(wt.Info, "info")
 
 	outLen := wt.Size
 	out := make([]byte, outLen)
@@ -2120,10 +1925,7 @@ func runHkdfTest(md *C.EVP_MD, wt *wycheproofTestHkdf) bool {
 		return success
 	}
 
-	okm, err := hex.DecodeString(wt.Okm)
-	if err != nil {
-		log.Fatalf("Failed to decode okm %q: %v", wt.Okm, err)
-	}
+	okm, _ := mustDecodeHexString(wt.Okm, "okm")
 	if !bytes.Equal(out[:outLen], okm) {
 		fmt.Printf("FAIL: %s - expected and computed output don't match.\n", wt)
 	}
@@ -2148,25 +1950,8 @@ func (wtg *wycheproofTestGroupHkdf) run(algorithm string, variant testVariant) b
 }
 
 func runHmacTest(md *C.EVP_MD, tagBytes int, wt *wycheproofTestHmac) bool {
-	key, err := hex.DecodeString(wt.Key)
-	if err != nil {
-		log.Fatalf("failed to decode key %q: %v", wt.Key, err)
-	}
-
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("failed to decode msg %q: %v", wt.Msg, err)
-	}
-
-	keyLen, msgLen := len(key), len(msg)
-
-	if keyLen == 0 {
-		key = append(key, 0)
-	}
-
-	if msgLen == 0 {
-		msg = append(msg, 0)
-	}
+	key, keyLen := mustDecodeHexString(wt.Key, "key")
+	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
 
 	got := make([]byte, C.EVP_MAX_MD_SIZE)
 	var gotLen C.uint
@@ -2187,11 +1972,7 @@ func runHmacTest(md *C.EVP_MD, tagBytes int, wt *wycheproofTestHmac) bool {
 		return false
 	}
 
-	tag, err := hex.DecodeString(wt.Tag)
-	if err != nil {
-		log.Fatalf("failed to decode tag %q: %v", wt.Tag, err)
-	}
-
+	tag, _ := mustDecodeHexString(wt.Tag, "tag")
 	success = bytes.Equal(got[:tagBytes], tag) == (wt.Result == "valid")
 
 	if !success {
@@ -2279,30 +2060,9 @@ func runKWTestUnWrap(keySize int, key []byte, keyLen int, msg []byte, msgLen int
 }
 
 func runKWTest(keySize int, wt *wycheproofTestKW) bool {
-	key, err := hex.DecodeString(wt.Key)
-	if err != nil {
-		log.Fatalf("Failed to decode key %q: %v", wt.Key, err)
-	}
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode msg %q: %v", wt.Msg, err)
-	}
-	ct, err := hex.DecodeString(wt.CT)
-	if err != nil {
-		log.Fatalf("Failed to decode ct %q: %v", wt.CT, err)
-	}
-
-	keyLen, msgLen, ctLen := len(key), len(msg), len(ct)
-
-	if keyLen == 0 {
-		key = append(key, 0)
-	}
-	if msgLen == 0 {
-		msg = append(msg, 0)
-	}
-	if ctLen == 0 {
-		ct = append(ct, 0)
-	}
+	key, keyLen := mustDecodeHexString(wt.Key, "key")
+	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
+	ct, ctLen := mustDecodeHexString(wt.CT, "CT")
 
 	wrapSuccess := runKWTestWrap(keySize, key, keyLen, msg, msgLen, ct, ctLen, wt)
 	unwrapSuccess := runKWTestUnWrap(keySize, key, keyLen, msg, msgLen, ct, ctLen, wt)
@@ -2353,14 +2113,7 @@ func (wtg *wycheproofTestGroupPrimality) run(algorithm string, variant testVaria
 }
 
 func runRsaesOaepTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproofTestRsaes) bool {
-	ct, err := hex.DecodeString(wt.CT)
-	if err != nil {
-		log.Fatalf("Failed to decode cipher text %q: %v", wt.CT, err)
-	}
-	ctLen := len(ct)
-	if ctLen == 0 {
-		ct = append(ct, 0)
-	}
+	ct, ctLen := mustDecodeHexString(wt.CT, "CT")
 
 	rsaSize := C.RSA_size(rsa)
 	decrypted := make([]byte, rsaSize)
@@ -2378,20 +2131,8 @@ func runRsaesOaepTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproo
 		return success
 	}
 
-	label, err := hex.DecodeString(wt.Label)
-	if err != nil {
-		log.Fatalf("Failed to decode label %q: %v", wt.Label, err)
-	}
-	labelLen := len(label)
-	if labelLen == 0 {
-		label = append(label, 0)
-	}
-
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
-	}
-	msgLen := len(msg)
+	label, labelLen := mustDecodeHexString(wt.Label, "label")
+	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
 
 	to := make([]byte, rsaSize)
 
@@ -2407,7 +2148,7 @@ func runRsaesOaepTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, wt *wycheproo
 	}
 
 	to = to[:msgLen]
-	if !bytes.Equal(msg, to) {
+	if !bytes.Equal(msg[:msgLen], to) {
 		success = false
 		fmt.Printf("FAIL: %s - expected and calculated message differ.\n", wt)
 	}
@@ -2476,14 +2217,7 @@ func (wtg *wycheproofTestGroupRsaesOaep) run(algorithm string, variant testVaria
 }
 
 func runRsaesPkcs1Test(rsa *C.RSA, wt *wycheproofTestRsaes) bool {
-	ct, err := hex.DecodeString(wt.CT)
-	if err != nil {
-		log.Fatalf("Failed to decode cipher text %q: %v", wt.CT, err)
-	}
-	ctLen := len(ct)
-	if ctLen == 0 {
-		ct = append(ct, 0)
-	}
+	ct, ctLen := mustDecodeHexString(wt.CT, "CT")
 
 	rsaSize := C.RSA_size(rsa)
 	decrypted := make([]byte, rsaSize)
@@ -2501,15 +2235,12 @@ func runRsaesPkcs1Test(rsa *C.RSA, wt *wycheproofTestRsaes) bool {
 		return success
 	}
 
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
-	}
+	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
 
-	if int(ret) != len(msg) {
+	if int(ret) != msgLen {
 		success = false
-		fmt.Printf("FAIL: %s - got %d, want %d.\n", wt, ret, len(msg))
-	} else if !bytes.Equal(msg, decrypted[:len(msg)]) {
+		fmt.Printf("FAIL: %s - got %d, want %d\n", wt, ret, len(msg))
+	} else if !bytes.Equal(msg[:msgLen], decrypted[:msgLen]) {
 		success = false
 		fmt.Printf("FAIL: %s - expected and calculated message differ.\n", wt)
 	}
@@ -2566,25 +2297,8 @@ func (wtg *wycheproofTestGroupRsaesPkcs1) run(algorithm string, variant testVari
 }
 
 func runRsassaTest(rsa *C.RSA, sha *C.EVP_MD, mgfSha *C.EVP_MD, sLen int, wt *wycheproofTestRsassa) bool {
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
-	}
-
-	msg, _, err = hashEvpDigestMessage(sha, msg)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	sig, err := hex.DecodeString(wt.Sig)
-	if err != nil {
-		log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
-	}
-
-	sigLen := len(sig)
-	if sigLen == 0 {
-		sig = append(sig, 0)
-	}
+	msg, _ := mustHashHexMessage(sha, wt.Msg)
+	sig, sigLen := mustDecodeHexString(wt.Sig, "sig")
 
 	sigOut := make([]byte, C.RSA_size(rsa)-11)
 	if sigLen == 0 {
@@ -2668,25 +2382,8 @@ func (wtg *wycheproofTestGroupRsassa) run(algorithm string, variant testVariant)
 }
 
 func runRSATest(rsa *C.RSA, md *C.EVP_MD, nid int, wt *wycheproofTestRSA) bool {
-	msg, err := hex.DecodeString(wt.Msg)
-	if err != nil {
-		log.Fatalf("Failed to decode message %q: %v", wt.Msg, err)
-	}
-
-	msg, msgLen, err := hashEvpDigestMessage(md, msg)
-	if err != nil {
-		log.Fatalf("%v", err)
-	}
-
-	sig, err := hex.DecodeString(wt.Sig)
-	if err != nil {
-		log.Fatalf("Failed to decode signature %q: %v", wt.Sig, err)
-	}
-
-	sigLen := len(sig)
-	if sigLen == 0 {
-		sig = append(sig, 0)
-	}
+	msg, msgLen := mustHashHexMessage(md, wt.Msg)
+	sig, sigLen := mustDecodeHexString(wt.Sig, "sig")
 
 	ret := C.RSA_verify(C.int(nid), (*C.uchar)(unsafe.Pointer(&msg[0])), C.uint(msgLen),
 		(*C.uchar)(unsafe.Pointer(&sig[0])), C.uint(sigLen), rsa)
@@ -2751,18 +2448,9 @@ func (wtg *wycheproofTestGroupRSA) run(algorithm string, variant testVariant) bo
 }
 
 func runX25519Test(wt *wycheproofTestX25519) bool {
-	public, err := hex.DecodeString(wt.Public)
-	if err != nil {
-		log.Fatalf("Failed to decode public %q: %v", wt.Public, err)
-	}
-	private, err := hex.DecodeString(wt.Private)
-	if err != nil {
-		log.Fatalf("Failed to decode private %q: %v", wt.Private, err)
-	}
-	shared, err := hex.DecodeString(wt.Shared)
-	if err != nil {
-		log.Fatalf("Failed to decode shared %q: %v", wt.Shared, err)
-	}
+	public, _ := mustDecodeHexString(wt.Public, "public")
+	private, _ := mustDecodeHexString(wt.Private, "private")
+	shared, _ := mustDecodeHexString(wt.Shared, "shared")
 
 	got := make([]byte, C.X25519_KEY_LENGTH)
 	result := true
