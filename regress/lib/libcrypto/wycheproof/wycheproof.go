@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.158 2023/11/07 21:20:48 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.159 2023/11/07 21:22:34 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022,2023 Theo Buehler <tb@openbsd.org>
@@ -2204,7 +2204,7 @@ func runRsaesPkcs1Test(rsa *C.RSA, wt *wycheproofTestRsaes) bool {
 
 	if int(ret) != msgLen {
 		success = false
-		fmt.Printf("FAIL: %s - got %d, want %d\n", wt, ret, len(msg))
+		fmt.Printf("FAIL: %s - got %d, want %d.\n", wt, ret, msgLen)
 	} else if !bytes.Equal(msg[:msgLen], decrypted[:msgLen]) {
 		success = false
 		fmt.Printf("FAIL: %s - expected and calculated message differ.\n", wt)
