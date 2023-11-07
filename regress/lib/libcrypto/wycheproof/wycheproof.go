@@ -1,7 +1,7 @@
-/* $OpenBSD: wycheproof.go,v 1.156 2023/11/07 16:54:43 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.157 2023/11/07 16:56:12 tb Exp $ */
 /*
- * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
- * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
+ * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
+ * Copyright (c) 2018,2019,2022,2023 Theo Buehler <tb@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -1185,7 +1185,6 @@ func runChaCha20Poly1305Test(algorithm string, wt *wycheproofTestAead) bool {
 	}
 
 	key, keyLen := mustDecodeHexString(wt.Key, "key")
-	ct, ctLen := mustDecodeHexString(wt.CT, "CT")
 	iv, ivLen := mustDecodeHexString(wt.IV, "iv")
 	aad, aadLen := mustDecodeHexString(wt.AAD, "aad")
 	msg, msgLen := mustDecodeHexString(wt.Msg, "msg")
