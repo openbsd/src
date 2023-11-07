@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.38 2023/11/07 16:09:13 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.39 2023/11/07 16:12:36 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -673,17 +673,17 @@ rsa_algor_to_md(X509_ALGOR *alg)
  * suitable for setting an AlgorithmIdentifier.
  */
 static RSA_PSS_PARAMS *
-rsa_ctx_to_pss(EVP_PKEY_CTX *pkctx)
+rsa_ctx_to_pss(EVP_PKEY_CTX *pkey_ctx)
 {
 	const EVP_MD *sigmd, *mgf1md;
-	EVP_PKEY *pk = EVP_PKEY_CTX_get0_pkey(pkctx);
+	EVP_PKEY *pk = EVP_PKEY_CTX_get0_pkey(pkey_ctx);
 	int saltlen;
 
-	if (EVP_PKEY_CTX_get_signature_md(pkctx, &sigmd) <= 0)
+	if (EVP_PKEY_CTX_get_signature_md(pkey_ctx, &sigmd) <= 0)
 		return NULL;
-	if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkctx, &mgf1md) <= 0)
+	if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkey_ctx, &mgf1md) <= 0)
 		return NULL;
-	if (!EVP_PKEY_CTX_get_rsa_pss_saltlen(pkctx, &saltlen))
+	if (!EVP_PKEY_CTX_get_rsa_pss_saltlen(pkey_ctx, &saltlen))
 		return NULL;
 	if (saltlen == -1) {
 		saltlen = EVP_MD_size(sigmd);
@@ -735,9 +735,9 @@ rsa_pss_params_create(const EVP_MD *sigmd, const EVP_MD *mgf1md, int saltlen)
 }
 
 static ASN1_STRING *
-rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx)
+rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkey_ctx)
 {
-	RSA_PSS_PARAMS *pss = rsa_ctx_to_pss(pkctx);
+	RSA_PSS_PARAMS *pss = rsa_ctx_to_pss(pkey_ctx);
 	ASN1_STRING *os;
 
 	if (pss == NULL)
@@ -751,11 +751,11 @@ rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx)
 /*
  * From PSS AlgorithmIdentifier set public key parameters. If pkey isn't NULL
  * then the EVP_MD_CTX is setup and initialised. If it is NULL parameters are
- * passed to pkctx instead.
+ * passed to pkey_ctx instead.
  */
 
 static int
-rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
+rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkey_ctx,
     X509_ALGOR *sigalg, EVP_PKEY *pkey)
 {
 	int rv = -1;
@@ -778,11 +778,11 @@ rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
 
 	/* We have all parameters now set up context */
 	if (pkey) {
-		if (!EVP_DigestVerifyInit(ctx, &pkctx, md, NULL, pkey))
+		if (!EVP_DigestVerifyInit(ctx, &pkey_ctx, md, NULL, pkey))
 			goto err;
 	} else {
 		const EVP_MD *checkmd;
-		if (EVP_PKEY_CTX_get_signature_md(pkctx, &checkmd) <= 0)
+		if (EVP_PKEY_CTX_get_signature_md(pkey_ctx, &checkmd) <= 0)
 			goto err;
 		if (EVP_MD_type(md) != EVP_MD_type(checkmd)) {
 			RSAerror(RSA_R_DIGEST_DOES_NOT_MATCH);
@@ -790,13 +790,13 @@ rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
 		}
 	}
 
-	if (EVP_PKEY_CTX_set_rsa_padding(pkctx, RSA_PKCS1_PSS_PADDING) <= 0)
+	if (EVP_PKEY_CTX_set_rsa_padding(pkey_ctx, RSA_PKCS1_PSS_PADDING) <= 0)
 		goto err;
 
-	if (EVP_PKEY_CTX_set_rsa_pss_saltlen(pkctx, saltlen) <= 0)
+	if (EVP_PKEY_CTX_set_rsa_pss_saltlen(pkey_ctx, saltlen) <= 0)
 		goto err;
 
-	if (EVP_PKEY_CTX_set_rsa_mgf1_md(pkctx, mgf1md) <= 0)
+	if (EVP_PKEY_CTX_set_rsa_mgf1_md(pkey_ctx, mgf1md) <= 0)
 		goto err;
 	/* Carry on */
 	rv = 1;
@@ -846,14 +846,14 @@ rsa_cms_verify(CMS_SignerInfo *si)
 {
 	int nid, nid2;
 	X509_ALGOR *alg;
-	EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
+	EVP_PKEY_CTX *pkey_ctx = CMS_SignerInfo_get0_pkey_ctx(si);
 
 	CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
 	nid = OBJ_obj2nid(alg->algorithm);
 	if (nid == EVP_PKEY_RSA_PSS)
-		return rsa_pss_to_ctx(NULL, pkctx, alg, NULL);
+		return rsa_pss_to_ctx(NULL, pkey_ctx, alg, NULL);
 	/* Only PSS allowed for PSS keys */
-	if (pkey_ctx_is_pss(pkctx)) {
+	if (pkey_ctx_is_pss(pkey_ctx)) {
 		RSAerror(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
 		return 0;
 	}
@@ -921,12 +921,12 @@ rsa_alg_set_pss_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 static int
 rsa_cms_sign(CMS_SignerInfo *si)
 {
-	EVP_PKEY_CTX *pkctx;
+	EVP_PKEY_CTX *pkey_ctx;
 	X509_ALGOR *alg;
 	int pad_mode = RSA_PKCS1_PADDING;
 
-	if ((pkctx = CMS_SignerInfo_get0_pkey_ctx(si)) != NULL) {
-		if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
+	if ((pkey_ctx = CMS_SignerInfo_get0_pkey_ctx(si)) != NULL) {
+		if (EVP_PKEY_CTX_get_rsa_padding(pkey_ctx, &pad_mode) <= 0)
 			return 0;
 	}
 
@@ -934,7 +934,7 @@ rsa_cms_sign(CMS_SignerInfo *si)
 	if (pad_mode == RSA_PKCS1_PADDING)
 		return rsa_alg_set_pkcs1_padding(alg);
 	if (pad_mode == RSA_PKCS1_PSS_PADDING)
-		return rsa_alg_set_pss_padding(alg, pkctx);
+		return rsa_alg_set_pss_padding(alg, pkey_ctx);
 
 	return 0;
 }
@@ -944,18 +944,18 @@ static int
 rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     X509_ALGOR *alg1, X509_ALGOR *alg2, ASN1_BIT_STRING *sig)
 {
-	EVP_PKEY_CTX *pkctx = ctx->pctx;
+	EVP_PKEY_CTX *pkey_ctx = ctx->pctx;
 	int pad_mode;
 
-	if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
+	if (EVP_PKEY_CTX_get_rsa_padding(pkey_ctx, &pad_mode) <= 0)
 		return 0;
 	if (pad_mode == RSA_PKCS1_PADDING)
 		return 2;
 	if (pad_mode == RSA_PKCS1_PSS_PADDING) {
-		if (!rsa_alg_set_pss_padding(alg1, pkctx))
+		if (!rsa_alg_set_pss_padding(alg1, pkey_ctx))
 			return 0;
 		if (alg2 != NULL) {
-			if (!rsa_alg_set_pss_padding(alg2, pkctx))
+			if (!rsa_alg_set_pss_padding(alg2, pkey_ctx))
 				return 0;
 		}
 		return 3;
