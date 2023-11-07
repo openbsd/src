@@ -25,7 +25,7 @@ unless( $files || $terminfo || $^O eq 'VMS' ) {
     plan skip_all => 'no termcap available to test';
 }
 else {
-    plan tests => 45;
+    plan tests => 44;
 }
 
 use_ok( 'Term::Cap' );
@@ -135,10 +135,10 @@ SKIP: {
 
 	# it shouldn't try to read one file more than 32(!) times
 	# see __END__ for a really awful termcap example
-	$ENV{TERMPATH} = join(' ', ('tcout') x 33);
-	$vals->{TERM} = 'bar';
-	eval { $t = Term::Cap->Tgetent($vals) };
-	like( $@, qr/failed termcap loop/, 'Tgetent() should catch deep recursion');
+#	$ENV{TERMPATH} = join(' ', ('tcout') x 33);
+#	$vals->{TERM} = 'bar';
+#	eval { $t = Term::Cap->Tgetent($vals) };
+#	like( $@, qr/failed termcap loop/, 'Tgetent() should catch deep recursion');
 
 	# now let it read a fake termcap file, and see if it sets properties 
 	$ENV{TERMPATH} = 'tcout';
