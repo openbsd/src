@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.37 2023/11/07 16:04:12 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.38 2023/11/07 16:09:13 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -921,16 +921,16 @@ rsa_alg_set_pss_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 static int
 rsa_cms_sign(CMS_SignerInfo *si)
 {
-	int pad_mode = RSA_PKCS1_PADDING;
+	EVP_PKEY_CTX *pkctx;
 	X509_ALGOR *alg;
-	EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
+	int pad_mode = RSA_PKCS1_PADDING;
 
-	CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
-	if (pkctx) {
+	if ((pkctx = CMS_SignerInfo_get0_pkey_ctx(si)) != NULL) {
 		if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
 			return 0;
 	}
 
+	CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
 	if (pad_mode == RSA_PKCS1_PADDING)
 		return rsa_alg_set_pkcs1_padding(alg);
 	if (pad_mode == RSA_PKCS1_PSS_PADDING)
