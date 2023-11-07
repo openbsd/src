@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.41 2023/11/07 22:32:09 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.42 2023/11/07 22:35:03 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -1065,17 +1065,20 @@ rsa_cms_encrypt(CMS_RecipientInfo *ri)
 	int pad_mode = RSA_PKCS1_PADDING, rv = 0, labellen;
 	unsigned char *label;
 
-	if (CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &alg) <= 0)
-		return 0;
 	if ((pkctx = CMS_RecipientInfo_get0_pkey_ctx(ri)) != NULL) {
 		if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
 			return 0;
 	}
+
+	if (!CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &alg))
+		return 0;
 	if (pad_mode == RSA_PKCS1_PADDING)
 		return rsa_alg_set_pkcs1_padding(alg);
+
 	/* Not supported */
 	if (pad_mode != RSA_PKCS1_OAEP_PADDING)
 		return 0;
+
 	if (EVP_PKEY_CTX_get_rsa_oaep_md(pkctx, &md) <= 0)
 		goto err;
 	if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkctx, &mgf1md) <= 0)
