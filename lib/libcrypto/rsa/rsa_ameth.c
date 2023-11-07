@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.36 2023/11/07 15:59:29 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.37 2023/11/07 16:04:12 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -952,22 +952,12 @@ rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 	if (pad_mode == RSA_PKCS1_PADDING)
 		return 2;
 	if (pad_mode == RSA_PKCS1_PSS_PADDING) {
-		ASN1_STRING *os1 = NULL;
-		os1 = rsa_ctx_to_pss_string(pkctx);
-		if (!os1)
+		if (!rsa_alg_set_pss_padding(alg1, pkctx))
 			return 0;
-		/* Duplicate parameters if we have to */
-		if (alg2) {
-			ASN1_STRING *os2 = ASN1_STRING_dup(os1);
-			if (!os2) {
-				ASN1_STRING_free(os1);
+		if (alg2 != NULL) {
+			if (!rsa_alg_set_pss_padding(alg2, pkctx))
 				return 0;
-			}
-			X509_ALGOR_set0(alg2, OBJ_nid2obj(EVP_PKEY_RSA_PSS),
-			    V_ASN1_SEQUENCE, os2);
 		}
-		X509_ALGOR_set0(alg1, OBJ_nid2obj(EVP_PKEY_RSA_PSS),
-		    V_ASN1_SEQUENCE, os1);
 		return 3;
 	}
 	return 2;
