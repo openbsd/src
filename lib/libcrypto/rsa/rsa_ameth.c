@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.35 2023/11/07 15:45:41 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.36 2023/11/07 15:59:29 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -894,6 +894,29 @@ rsa_alg_set_pkcs1_padding(X509_ALGOR *alg)
 	return X509_ALGOR_set0_by_nid(alg, NID_rsaEncryption, V_ASN1_NULL, NULL);
 }
 
+static int
+rsa_alg_set_pss_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
+{
+	ASN1_STRING *astr = NULL;
+	int ret = 0;
+
+	if (pkey_ctx == NULL)
+		goto err;
+
+	if ((astr = rsa_ctx_to_pss_string(pkey_ctx)) == NULL)
+		goto err;
+	if (!X509_ALGOR_set0_by_nid(alg, EVP_PKEY_RSA_PSS, V_ASN1_SEQUENCE, astr))
+		goto err;
+	astr = NULL;
+
+	ret = 1;
+
+ err:
+	ASN1_STRING_free(astr);
+
+	return ret;
+}
+
 #ifndef OPENSSL_NO_CMS
 static int
 rsa_cms_sign(CMS_SignerInfo *si)
@@ -901,23 +924,19 @@ rsa_cms_sign(CMS_SignerInfo *si)
 	int pad_mode = RSA_PKCS1_PADDING;
 	X509_ALGOR *alg;
 	EVP_PKEY_CTX *pkctx = CMS_SignerInfo_get0_pkey_ctx(si);
-	ASN1_STRING *os = NULL;
 
 	CMS_SignerInfo_get0_algs(si, NULL, NULL, NULL, &alg);
 	if (pkctx) {
 		if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
 			return 0;
 	}
+
 	if (pad_mode == RSA_PKCS1_PADDING)
 		return rsa_alg_set_pkcs1_padding(alg);
-	/* We don't support it */
-	if (pad_mode != RSA_PKCS1_PSS_PADDING)
-		return 0;
-	os = rsa_ctx_to_pss_string(pkctx);
-	if (!os)
-		return 0;
-	X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_PKEY_RSA_PSS), V_ASN1_SEQUENCE, os);
-	return 1;
+	if (pad_mode == RSA_PKCS1_PSS_PADDING)
+		return rsa_alg_set_pss_padding(alg, pkctx);
+
+	return 0;
 }
 #endif
 
