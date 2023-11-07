@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.153 2023/11/07 16:35:55 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.154 2023/11/07 16:37:02 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -642,17 +642,17 @@ func nidFromString(ns string) (int, error) {
 }
 
 var evpMds = map[string]*C.EVP_MD{
-	"SHA-1": C.EVP_sha1(),
-	"SHA-224": C.EVP_sha224(),
-	"SHA-256": C.EVP_sha256(),
-	"SHA-384": C.EVP_sha384(),
-	"SHA-512": C.EVP_sha512(),
+	"SHA-1":       C.EVP_sha1(),
+	"SHA-224":     C.EVP_sha224(),
+	"SHA-256":     C.EVP_sha256(),
+	"SHA-384":     C.EVP_sha384(),
+	"SHA-512":     C.EVP_sha512(),
 	"SHA-512/224": C.EVP_sha512_224(),
 	"SHA-512/256": C.EVP_sha512_256(),
-	"SHA3-224": C.EVP_sha3_224(),
-	"SHA3-256": C.EVP_sha3_256(),
-	"SHA3-384": C.EVP_sha3_384(),
-	"SHA3-512": C.EVP_sha3_512(),
+	"SHA3-224":    C.EVP_sha3_224(),
+	"SHA3-256":    C.EVP_sha3_256(),
+	"SHA3-384":    C.EVP_sha3_384(),
+	"SHA3-512":    C.EVP_sha3_512(),
 }
 
 func hashEvpMdFromString(hs string) (*C.EVP_MD, error) {
@@ -661,6 +661,52 @@ func hashEvpMdFromString(hs string) (*C.EVP_MD, error) {
 		return md, nil
 	}
 	return nil, fmt.Errorf("unknown hash %q", hs)
+}
+
+var aesCbcs = map[int]*C.EVP_CIPHER{
+	128: C.EVP_aes_128_cbc(),
+	192: C.EVP_aes_192_cbc(),
+	256: C.EVP_aes_256_cbc(),
+}
+
+var aesCcms = map[int]*C.EVP_CIPHER{
+	128: C.EVP_aes_128_ccm(),
+	192: C.EVP_aes_192_ccm(),
+	256: C.EVP_aes_256_ccm(),
+}
+
+var aesGcms = map[int]*C.EVP_CIPHER{
+	128: C.EVP_aes_128_gcm(),
+	192: C.EVP_aes_192_gcm(),
+	256: C.EVP_aes_256_gcm(),
+}
+
+var aeses = map[string]map[int]*C.EVP_CIPHER{
+	"AES-CBC": aesCbcs,
+	"AES-CCM": aesCcms,
+	"AES-GCM": aesGcms,
+}
+
+func cipherAes(algorithm string, size int) (*C.EVP_CIPHER, error) {
+	cipher, ok := aeses[algorithm][size]
+	if ok {
+		return cipher, nil
+	}
+	return nil, fmt.Errorf("invalid key size: %d", size)
+}
+
+var aesAeads = map[int]*C.EVP_AEAD{
+	128: C.EVP_aead_aes_128_gcm(),
+	192: nil,
+	256: C.EVP_aead_aes_256_gcm(),
+}
+
+func aeadAes(size int) (*C.EVP_AEAD, error) {
+	aead, ok := aesAeads[size]
+	if ok {
+		return aead, nil
+	}
+	return nil, fmt.Errorf("invalid key size: %d", size)
 }
 
 func hashEvpDigestMessage(md *C.EVP_MD, msg []byte) ([]byte, int, error) {
@@ -786,16 +832,9 @@ func (wtg *wycheproofTestGroupAesCbcPkcs5) run(algorithm string, variant testVar
 	fmt.Printf("Running %v test group %v with IV size %d and key size %d...\n",
 		algorithm, wtg.Type, wtg.IVSize, wtg.KeySize)
 
-	var cipher *C.EVP_CIPHER
-	switch wtg.KeySize {
-	case 128:
-		cipher = C.EVP_aes_128_cbc()
-	case 192:
-		cipher = C.EVP_aes_192_cbc()
-	case 256:
-		cipher = C.EVP_aes_256_cbc()
-	default:
-		log.Fatalf("Unsupported key size: %d", wtg.KeySize)
+	cipher, err := cipherAes("AES-CBC", wtg.KeySize)
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	ctx := C.EVP_CIPHER_CTX_new()
@@ -1040,37 +1079,17 @@ func (wtg *wycheproofTestGroupAesAead) run(algorithm string, variant testVariant
 	fmt.Printf("Running %v test group %v with IV size %d, key size %d and tag size %d...\n",
 		algorithm, wtg.Type, wtg.IVSize, wtg.KeySize, wtg.TagSize)
 
-	var cipher *C.EVP_CIPHER
+	cipher, err := cipherAes(algorithm, wtg.KeySize)
+	if err != nil {
+		fmt.Printf("INFO: Skipping tests with %s\n", err)
+		return true
+	}
 	var aead *C.EVP_AEAD
-	switch algorithm {
-	case "AES-CCM":
-		switch wtg.KeySize {
-		case 128:
-			cipher = C.EVP_aes_128_ccm()
-		case 192:
-			cipher = C.EVP_aes_192_ccm()
-		case 256:
-			cipher = C.EVP_aes_256_ccm()
-		default:
-			fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
-			return true
+	if algorithm == "AES-GCM" {
+		aead, err = aeadAes(wtg.KeySize)
+		if err != nil {
+			log.Fatalf("%s", err)
 		}
-	case "AES-GCM":
-		switch wtg.KeySize {
-		case 128:
-			cipher = C.EVP_aes_128_gcm()
-			aead = C.EVP_aead_aes_128_gcm()
-		case 192:
-			cipher = C.EVP_aes_192_gcm()
-		case 256:
-			cipher = C.EVP_aes_256_gcm()
-			aead = C.EVP_aead_aes_256_gcm()
-		default:
-			fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
-			return true
-		}
-	default:
-		log.Fatalf("runAesAeadTestGroup() - unhandled algorithm: %v", algorithm)
 	}
 
 	ctx := C.EVP_CIPHER_CTX_new()
@@ -1158,17 +1177,10 @@ func runAesCmacTest(cipher *C.EVP_CIPHER, wt *wycheproofTestAesCmac) bool {
 func (wtg *wycheproofTestGroupAesCmac) run(algorithm string, variant testVariant) bool {
 	fmt.Printf("Running %v test group %v with key size %d and tag size %d...\n",
 		algorithm, wtg.Type, wtg.KeySize, wtg.TagSize)
-	var cipher *C.EVP_CIPHER
 
-	switch wtg.KeySize {
-	case 128:
-		cipher = C.EVP_aes_128_cbc()
-	case 192:
-		cipher = C.EVP_aes_192_cbc()
-	case 256:
-		cipher = C.EVP_aes_256_cbc()
-	default:
-		fmt.Printf("INFO: Skipping tests with invalid key size %d\n", wtg.KeySize)
+	cipher, err := cipherAes("AES-CBC", wtg.KeySize)
+	if err != nil {
+		fmt.Printf("INFO: Skipping tests with %d.\n", err)
 		return true
 	}
 
