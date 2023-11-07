@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.34 2023/10/26 07:57:54 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.35 2023/11/07 15:45:41 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -82,6 +82,8 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
 
 static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg);
+
+static int rsa_alg_set_pkcs1_padding(X509_ALGOR *alg);
 
 /* Set any parameters associated with pkey */
 static int
@@ -568,9 +570,8 @@ rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 		return -2;
 	}
 
-	if (alg)
-		X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption),
-		    V_ASN1_NULL, 0);
+	if (alg != NULL)
+		return rsa_alg_set_pkcs1_padding(alg);
 
 	return 1;
 }
@@ -887,6 +888,12 @@ rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 	return -1;
 }
 
+static int
+rsa_alg_set_pkcs1_padding(X509_ALGOR *alg)
+{
+	return X509_ALGOR_set0_by_nid(alg, NID_rsaEncryption, V_ASN1_NULL, NULL);
+}
+
 #ifndef OPENSSL_NO_CMS
 static int
 rsa_cms_sign(CMS_SignerInfo *si)
@@ -901,10 +908,8 @@ rsa_cms_sign(CMS_SignerInfo *si)
 		if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
 			return 0;
 	}
-	if (pad_mode == RSA_PKCS1_PADDING) {
-		X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption), V_ASN1_NULL, 0);
-		return 1;
-	}
+	if (pad_mode == RSA_PKCS1_PADDING)
+		return rsa_alg_set_pkcs1_padding(alg);
 	/* We don't support it */
 	if (pad_mode != RSA_PKCS1_PSS_PADDING)
 		return 0;
@@ -1067,10 +1072,8 @@ rsa_cms_encrypt(CMS_RecipientInfo *ri)
 		if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
 			return 0;
 	}
-	if (pad_mode == RSA_PKCS1_PADDING) {
-		X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption), V_ASN1_NULL, 0);
-		return 1;
-	}
+	if (pad_mode == RSA_PKCS1_PADDING)
+		return rsa_alg_set_pkcs1_padding(alg);
 	/* Not supported */
 	if (pad_mode != RSA_PKCS1_OAEP_PADDING)
 		return 0;
