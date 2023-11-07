@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.157 2023/11/07 16:56:12 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.158 2023/11/07 21:20:48 tb Exp $ */
 /*
  * Copyright (c) 2018,2023 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022,2023 Theo Buehler <tb@openbsd.org>
@@ -2443,6 +2443,12 @@ func (wtg *wycheproofTestGroupX25519) run(algorithm string, variant testVariant)
 }
 
 func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTestGroupRunner {
+	if algorithm == "ECDH" && variant == Webcrypto {
+		return &wycheproofTestGroupECDHWebCrypto{}
+	}
+	if algorithm == "ECDSA" && variant == Webcrypto {
+		return &wycheproofTestGroupECDSAWebCrypto{}
+	}
 	switch algorithm {
 	case "AES-CBC-PKCS5":
 		return &wycheproofTestGroupAesCbcPkcs5{}
@@ -2455,19 +2461,9 @@ func testGroupFromAlgorithm(algorithm string, variant testVariant) wycheproofTes
 	case "DSA":
 		return &wycheproofTestGroupDSA{}
 	case "ECDH":
-		switch variant {
-		case Webcrypto:
-			return &wycheproofTestGroupECDHWebCrypto{}
-		default:
-			return &wycheproofTestGroupECDH{}
-		}
+		return &wycheproofTestGroupECDH{}
 	case "ECDSA":
-		switch variant {
-		case Webcrypto:
-			return &wycheproofTestGroupECDSAWebCrypto{}
-		default:
-			return &wycheproofTestGroupECDSA{}
-		}
+		return &wycheproofTestGroupECDSA{}
 	case "EDDSA":
 		return &wycheproofTestGroupEdDSA{}
 	case "HKDF-SHA-1", "HKDF-SHA-256", "HKDF-SHA-384", "HKDF-SHA-512":
