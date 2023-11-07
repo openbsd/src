@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.39 2023/11/07 16:12:36 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.40 2023/11/07 16:22:04 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -734,20 +734,6 @@ rsa_pss_params_create(const EVP_MD *sigmd, const EVP_MD *mgf1md, int saltlen)
 	return NULL;
 }
 
-static ASN1_STRING *
-rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkey_ctx)
-{
-	RSA_PSS_PARAMS *pss = rsa_ctx_to_pss(pkey_ctx);
-	ASN1_STRING *os;
-
-	if (pss == NULL)
-		return NULL;
-
-	os = ASN1_item_pack(pss, &RSA_PSS_PARAMS_it, NULL);
-	RSA_PSS_PARAMS_free(pss);
-	return os;
-}
-
 /*
  * From PSS AlgorithmIdentifier set public key parameters. If pkey isn't NULL
  * then the EVP_MD_CTX is setup and initialised. If it is NULL parameters are
@@ -897,13 +883,16 @@ rsa_alg_set_pkcs1_padding(X509_ALGOR *alg)
 static int
 rsa_alg_set_pss_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 {
+	RSA_PSS_PARAMS *pss = NULL;
 	ASN1_STRING *astr = NULL;
 	int ret = 0;
 
 	if (pkey_ctx == NULL)
 		goto err;
 
-	if ((astr = rsa_ctx_to_pss_string(pkey_ctx)) == NULL)
+	if ((pss = rsa_ctx_to_pss(pkey_ctx)) == NULL)
+		goto err;
+	if ((astr = ASN1_item_pack(pss, &RSA_PSS_PARAMS_it, NULL)) == NULL)
 		goto err;
 	if (!X509_ALGOR_set0_by_nid(alg, EVP_PKEY_RSA_PSS, V_ASN1_SEQUENCE, astr))
 		goto err;
@@ -913,6 +902,7 @@ rsa_alg_set_pss_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 
  err:
 	ASN1_STRING_free(astr);
+	RSA_PSS_PARAMS_free(pss);
 
 	return ret;
 }
