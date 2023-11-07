@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.611 2023/10/16 10:25:45 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.612 2023/11/07 11:18:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -360,7 +360,7 @@ struct filter_set_head	session_set = TAILQ_HEAD_INITIALIZER(session_set);
 struct filter_set_head	parent_set = TAILQ_HEAD_INITIALIZER(parent_set);
 
 void
-rde_dispatch_imsg_session(struct imsgbuf *ibuf)
+rde_dispatch_imsg_session(struct imsgbuf *imsgbuf)
 {
 	static struct flowspec	*curflow;
 	struct imsg		 imsg;
@@ -381,8 +381,8 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	uint16_t		 len;
 	uint8_t			 aid;
 
-	while (ibuf) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+	while (imsgbuf) {
+		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
 			fatal("rde_dispatch_imsg_session: imsg_get error");
 		if (n == 0)
 			break;
@@ -820,7 +820,7 @@ badnetdel:
 }
 
 void
-rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
+rde_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 {
 	static struct rde_prefixset	*last_prefixset;
 	static struct as_set	*last_as_set;
@@ -844,8 +844,8 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	int			 n, fd, rv;
 	uint16_t		 rid;
 
-	while (ibuf) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+	while (imsgbuf) {
+		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
 			fatal("rde_dispatch_imsg_parent: imsg_get error");
 		if (n == 0)
 			break;
@@ -1250,7 +1250,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 }
 
 void
-rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
+rde_dispatch_imsg_rtr(struct imsgbuf *imsgbuf)
 {
 	static struct aspa_set	*aspa;
 	struct imsg		 imsg;
@@ -1258,8 +1258,8 @@ rde_dispatch_imsg_rtr(struct imsgbuf *ibuf)
 	struct aspa_prep	 ap;
 	int			 n;
 
-	while (ibuf) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+	while (imsgbuf) {
+		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
 			fatal("rde_dispatch_imsg_parent: imsg_get error");
 		if (n == 0)
 			break;

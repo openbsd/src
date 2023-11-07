@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.454 2023/11/04 11:17:51 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.455 2023/11/07 11:18:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004, 2005 Henning Brauer <henning@openbsd.org>
@@ -2950,7 +2950,7 @@ capa_neg_calc(struct peer *p, uint8_t *suberr)
 }
 
 void
-session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
+session_dispatch_imsg(struct imsgbuf *imsgbuf, int idx, u_int *listener_cnt)
 {
 	struct imsg		 imsg;
 	struct mrt		 xmrt;
@@ -2965,8 +2965,8 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx, u_int *listener_cnt)
 	uint16_t		 t;
 	uint8_t			 aid, errcode, subcode;
 
-	while (ibuf) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+	while (imsgbuf) {
+		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
 			fatal("session_dispatch_imsg: imsg_get error");
 
 		if (n == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtr.c,v 1.16 2023/08/16 08:26:35 claudio Exp $ */
+/*	$OpenBSD: rtr.c,v 1.17 2023/11/07 11:18:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2020 Claudio Jeker <claudio@openbsd.org>
@@ -303,7 +303,7 @@ rtr_main(int debug, int verbose)
 }
 
 static void
-rtr_dispatch_imsg_parent(struct imsgbuf *ibuf)
+rtr_dispatch_imsg_parent(struct imsgbuf *imsgbuf)
 {
 	static struct aspa_set	*aspa;
 	struct imsg		 imsg;
@@ -311,8 +311,8 @@ rtr_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	struct rtr_session	*rs;
 	int			 n, fd;
 
-	while (ibuf) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+	while (imsgbuf) {
+		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
 			fatal("%s: imsg_get error", __func__);
 		if (n == 0)
 			break;
@@ -450,13 +450,13 @@ rtr_dispatch_imsg_parent(struct imsgbuf *ibuf)
 }
 
 static void
-rtr_dispatch_imsg_rde(struct imsgbuf *ibuf)
+rtr_dispatch_imsg_rde(struct imsgbuf *imsgbuf)
 {
 	struct imsg	imsg;
 	int		n;
 
-	while (ibuf) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+	while (imsgbuf) {
+		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
 			fatal("%s: imsg_get error", __func__);
 		if (n == 0)
 			break;

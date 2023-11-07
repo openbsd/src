@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.113 2023/09/28 07:01:26 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.114 2023/11/07 11:18:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -606,20 +606,20 @@ control_result(struct ctl_conn *c, u_int code)
 
 /* This should go into libutil, from smtpd/mproc.c */
 ssize_t
-imsg_read_nofd(struct imsgbuf *ibuf)
+imsg_read_nofd(struct imsgbuf *imsgbuf)
 {
 	ssize_t	 n;
 	char	*buf;
 	size_t	 len;
 
-	buf = ibuf->r.buf + ibuf->r.wpos;
-	len = sizeof(ibuf->r.buf) - ibuf->r.wpos;
+	buf = imsgbuf->r.buf + imsgbuf->r.wpos;
+	len = sizeof(imsgbuf->r.buf) - imsgbuf->r.wpos;
 
-	while ((n = recv(ibuf->fd, buf, len, 0)) == -1) {
+	while ((n = recv(imsgbuf->fd, buf, len, 0)) == -1) {
 		if (errno != EINTR)
 			return (n);
 	}
 
-	ibuf->r.wpos += n;
+	imsgbuf->r.wpos += n;
 	return (n);
 }

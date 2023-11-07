@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.259 2023/08/16 08:26:35 claudio Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.260 2023/11/07 11:18:35 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -829,7 +829,7 @@ send_config(struct bgpd_config *conf)
 }
 
 int
-dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
+dispatch_imsg(struct imsgbuf *imsgbuf, int idx, struct bgpd_config *conf)
 {
 	struct imsg		 imsg;
 	struct peer		*p;
@@ -839,8 +839,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx, struct bgpd_config *conf)
 	int			 rv, verbose;
 
 	rv = 0;
-	while (ibuf) {
-		if ((n = imsg_get(ibuf, &imsg)) == -1)
+	while (imsgbuf) {
+		if ((n = imsg_get(imsgbuf, &imsg)) == -1)
 			return (-1);
 
 		if (n == 0)
