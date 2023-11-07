@@ -1,4 +1,4 @@
-/* $OpenBSD: wycheproof.go,v 1.152 2023/11/07 16:27:56 tb Exp $ */
+/* $OpenBSD: wycheproof.go,v 1.153 2023/11/07 16:35:55 tb Exp $ */
 /*
  * Copyright (c) 2018 Joel Sing <jsing@openbsd.org>
  * Copyright (c) 2018,2019,2022 Theo Buehler <tb@openbsd.org>
@@ -641,33 +641,26 @@ func nidFromString(ns string) (int, error) {
 	return -1, fmt.Errorf("unknown NID %q", ns)
 }
 
+var evpMds = map[string]*C.EVP_MD{
+	"SHA-1": C.EVP_sha1(),
+	"SHA-224": C.EVP_sha224(),
+	"SHA-256": C.EVP_sha256(),
+	"SHA-384": C.EVP_sha384(),
+	"SHA-512": C.EVP_sha512(),
+	"SHA-512/224": C.EVP_sha512_224(),
+	"SHA-512/256": C.EVP_sha512_256(),
+	"SHA3-224": C.EVP_sha3_224(),
+	"SHA3-256": C.EVP_sha3_256(),
+	"SHA3-384": C.EVP_sha3_384(),
+	"SHA3-512": C.EVP_sha3_512(),
+}
+
 func hashEvpMdFromString(hs string) (*C.EVP_MD, error) {
-	switch hs {
-	case "SHA-1":
-		return C.EVP_sha1(), nil
-	case "SHA-224":
-		return C.EVP_sha224(), nil
-	case "SHA-256":
-		return C.EVP_sha256(), nil
-	case "SHA-384":
-		return C.EVP_sha384(), nil
-	case "SHA-512":
-		return C.EVP_sha512(), nil
-	case "SHA-512/224":
-		return C.EVP_sha512_224(), nil
-	case "SHA-512/256":
-		return C.EVP_sha512_256(), nil
-	case "SHA3-224":
-		return C.EVP_sha3_224(), nil
-	case "SHA3-256":
-		return C.EVP_sha3_256(), nil
-	case "SHA3-384":
-		return C.EVP_sha3_384(), nil
-	case "SHA3-512":
-		return C.EVP_sha3_512(), nil
-	default:
-		return nil, fmt.Errorf("unknown hash %q", hs)
+	md, ok := evpMds[hs]
+	if ok {
+		return md, nil
 	}
+	return nil, fmt.Errorf("unknown hash %q", hs)
 }
 
 func hashEvpDigestMessage(md *C.EVP_MD, msg []byte) ([]byte, int, error) {
