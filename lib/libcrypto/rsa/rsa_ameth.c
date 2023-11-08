@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.46 2023/11/08 16:42:18 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.47 2023/11/08 17:07:07 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -953,7 +953,7 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 	}
 	/* create string with pss parameter encoding. */
 	if ((astr = ASN1_item_pack(oaep, &RSA_OAEP_PARAMS_it, NULL)) == NULL)
-		 goto err;
+		goto err;
 	X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, astr);
 	astr = NULL;
 
