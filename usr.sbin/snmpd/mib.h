@@ -1,4 +1,4 @@
-/*	$OpenBSD: mib.h,v 1.41 2022/01/19 10:26:37 martijn Exp $	*/
+/*	$OpenBSD: mib.h,v 1.42 2023/11/08 19:43:29 martijn Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Reyk Floeter <reyk@openbsd.org>
@@ -853,6 +853,32 @@
 	{ MIBDECL(usmStatsUnknownEngineId) },		\
 	{ MIBDECL(usmStatsWrongDigests) },		\
 	{ MIBDECL(usmStatsDecryptionErrors) },		\
+							\
+	{ MIBDECL(snmpTargetMIB) },			\
+	{ MIBDECL(snmpTargetObjects) },			\
+	{ MIBDECL(snmpTargetSpinLock) },		\
+	{ MIBDECL(snmpTargetAddrTable) },		\
+	{ MIBDECL(snmpTargetAddrEntry) },		\
+	{ MIBDECL(snmpTargetAddrName) },		\
+	{ MIBDECL(snmpTargetAddrTDomain) },		\
+	{ MIBDECL(snmpTargetAddrTAddress) },		\
+	{ MIBDECL(snmpTargetAddrTimeout) },		\
+	{ MIBDECL(snmpTargetAddrRetryCount) },		\
+	{ MIBDECL(snmpTargetAddrTagList) },		\
+	{ MIBDECL(snmpTargetAddrParams) },		\
+	{ MIBDECL(snmpTargetAddrStorageType) },		\
+	{ MIBDECL(snmpTargetAddrRowStatus) },		\
+	{ MIBDECL(snmpTargetParamsTable) },		\
+	{ MIBDECL(snmpTargetParamsEntry) },		\
+	{ MIBDECL(snmpTargetParamsName) },		\
+	{ MIBDECL(snmpTargetParamsMPModel) },		\
+	{ MIBDECL(snmpTargetParamsSecurityModel) },	\
+	{ MIBDECL(snmpTargetParamsSecurityName) },	\
+	{ MIBDECL(snmpTargetParamsSecurityLevel) },	\
+	{ MIBDECL(snmpTargetParamsStorageType) },	\
+	{ MIBDECL(snmpTargetParamsRowStatus) },		\
+	{ MIBDECL(snmpUnavailableContexts) },		\
+	{ MIBDECL(snmpUnknownContexts) },		\
 							\
 	{ MIBDECL(host) },				\
 	{ MIBDECL(hrSystem) },				\
