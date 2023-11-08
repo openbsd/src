@@ -1,4 +1,4 @@
-/*	$OpenBSD: httpd.h,v 1.163 2023/07/12 12:37:27 tb Exp $	*/
+/*	$OpenBSD: httpd.h,v 1.164 2023/11/08 19:19:10 millert Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2015 Reyk Floeter <reyk@openbsd.org>
@@ -350,6 +350,7 @@ struct client {
 	int			 clt_done;
 	int			 clt_chunk;
 	int			 clt_inflight;
+	int			 clt_fcgi_count;
 	struct range_data	 clt_ranges;
 	struct fcgi_data	 clt_fcgi;
 	const char		*clt_fcgi_error;
