@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.48 2023/11/08 19:14:43 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.49 2023/11/08 19:30:38 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -938,8 +938,7 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 	/* XXX - why do we not set oaep->maskHash here? */
 
 	if (labellen > 0) {
-		oaep->pSourceFunc = X509_ALGOR_new();
-		if (oaep->pSourceFunc == NULL)
+		if ((oaep->pSourceFunc = X509_ALGOR_new()) == NULL)
 			goto err;
 		if ((ostr = ASN1_OCTET_STRING_new()) == NULL)
 			goto err;
@@ -949,7 +948,7 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 		    V_ASN1_OCTET_STRING, ostr);
 		ostr = NULL;
 	}
-	/* create string with pss parameter encoding. */
+
 	if ((astr = ASN1_item_pack(oaep, &RSA_OAEP_PARAMS_it, NULL)) == NULL)
 		goto err;
 	X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, astr);
