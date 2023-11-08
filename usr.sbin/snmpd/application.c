@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.30 2023/11/06 11:02:57 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.31 2023/11/08 19:46:28 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -428,6 +428,23 @@ appl_sysortable_getnext(int8_t include, struct ber_oid *oid)
  done:
 	if (value == NULL)
 		log_warn("ober_add_*");
+	return value;
+}
+
+struct ber_element *
+appl_targetmib(struct ber_oid *oid)
+{
+	struct ber_element *value = NULL;
+
+	if (ober_oid_cmp(oid, &OID(MIB_snmpUnavailableContexts, 0)) == 0)
+		value = ober_add_integer(NULL,
+		    snmp_target_mib.snmp_unavailablecontexts);
+	else if (ober_oid_cmp(oid, &OID(MIB_snmpUnknownContexts, 0)) == 0)
+		value = ober_add_integer(NULL,
+		    snmp_target_mib.snmp_unknowncontexts);
+
+	if (value != NULL)
+		ober_set_header(value, BER_CLASS_APPLICATION, SNMP_T_COUNTER32);
 	return value;
 }
 
