@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.51 2022/02/05 20:31:26 daniel Exp $	*/
+/*	$OpenBSD: param.h,v 1.52 2023/11/08 18:59:01 mglocker Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  * Maximum size of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
  */
-#define	NKMEMPAGES_MAX_DEFAULT	((64 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 #define __HAVE_ACPI
 
