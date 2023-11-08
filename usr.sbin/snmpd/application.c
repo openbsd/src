@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.34 2023/11/08 20:02:52 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.35 2023/11/08 20:07:14 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -152,7 +152,6 @@ int appl_varbind_valid(struct appl_varbind *, struct appl_varbind_internal *,
 int appl_error_valid(enum appl_error, enum snmp_pdutype);
 int appl_varbind_backend(struct appl_varbind_internal *);
 void appl_varbind_error(struct appl_varbind_internal *, enum appl_error);
-void appl_report(struct snmp_message *, int32_t, struct ber_oid *);
 void appl_pdu_log(struct appl_backend *, enum snmp_pdutype, int32_t, uint16_t,
     uint16_t, struct appl_varbind *);
 void ober_oid_nextsibling(struct ber_oid *);

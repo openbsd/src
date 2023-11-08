@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.26 2023/05/08 12:25:23 gerhard Exp $	*/
+/*	$OpenBSD: usm.c,v 1.27 2023/11/08 20:07:14 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -39,6 +39,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 
+#include "application.h"
 #include "snmpd.h"
 #include "mib.h"
 
@@ -569,16 +570,7 @@ usm_finalize_digest(struct snmp_message *msg, char *buf, ssize_t len)
 void
 usm_make_report(struct snmp_message *msg)
 {
-	struct ber_oid		 usmstat = OID(MIB_usmStats, 0, 0);
-
-	msg->sm_pdutype = SNMP_C_REPORT;
-	usmstat.bo_id[OIDIDX_usmStats] = msg->sm_usmerr;
-	usmstat.bo_n = OIDIDX_usmStats + 2;
-	if (msg->sm_varbindresp != NULL)
-		ober_free_elements(msg->sm_varbindresp);
-	msg->sm_varbindresp = ober_add_sequence(NULL);
-	mps_getreq(NULL, msg->sm_varbindresp, &usmstat, msg->sm_version);
-	return;
+	appl_report(msg, 0, &OID(MIB_usmStats, msg->sm_usmerr, 0));
 }
 
 int
