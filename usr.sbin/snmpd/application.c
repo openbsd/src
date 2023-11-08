@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.32 2023/11/08 19:54:52 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.33 2023/11/08 19:59:46 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -88,7 +88,6 @@ struct appl_request_upstream {
 	int aru_locked; /* Prevent recursion through appl_request_send */
 
 	enum snmp_version aru_pduversion;
-	struct ber_element *aru_pdu; /* Original requested pdu */
 };
 
 struct appl_request_downstream {
@@ -892,7 +891,6 @@ appl_processpdu(struct snmp_message *statereference, const char *ctxname,
 	ureq->aru_varbindlen = 0;
 	ureq->aru_locked = 0;
 	ureq->aru_pduversion = pduversion;
-	ureq->aru_pdu = pdu;
 
 	varbind = varbindlist->be_sub;
 	for (; varbind != NULL; varbind = varbind->be_next)
@@ -1216,14 +1214,15 @@ appl_request_upstream_reply(struct appl_request_upstream *ureq)
 	}
 	/* RFC 3416 section 4.2.{1,2,3} reset original varbinds */
 	if (ureq->aru_error != APPL_ERROR_NOERROR) {
-		ober_scanf_elements(ureq->aru_pdu, "{SSS{e", &varbind);
-		for (varbindlen = 0; varbind != NULL;
-		    varbindlen++, varbind = varbind->be_next) {
-			vb = &(ureq->aru_vblist[varbindlen]);
-			ober_get_oid(varbind->be_sub,
-			    &(vb->avi_varbind.av_oid));
+		if (ureq->aru_requesttype == SNMP_C_GETBULKREQ)
+			varbindlen =
+			    (ureq->aru_varbindlen - ureq->aru_nonrepeaters) /
+			    ureq->aru_maxrepetitions;
+		for (i = 0; i < varbindlen; i++) {
+			vb = &(ureq->aru_vblist[i]);
+			vb->avi_varbind.av_oid = vb->avi_origid;
 			ober_free_elements(vb->avi_varbind.av_value);
-			vb->avi_varbind.av_value = ober_add_null(NULL);;
+			vb->avi_varbind.av_value = ober_add_null(NULL);
 		}
 	/* RFC 3416 section 4.2.3: Strip excessive EOMV */
 	} else if (ureq->aru_requesttype == SNMP_C_GETBULKREQ) {
