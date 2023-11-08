@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.43 2023/11/08 16:02:41 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.44 2023/11/08 16:05:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -914,8 +914,9 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkctx)
 	const EVP_MD *md, *mgf1md;
 	RSA_OAEP_PARAMS *oaep = NULL;
 	ASN1_STRING *os = NULL;
-	int rv = 0, labellen;
 	unsigned char *label;
+	int labellen;
+	int ret = 0;
 
 	if (EVP_PKEY_CTX_get_rsa_oaep_md(pkctx, &md) <= 0)
 		goto err;
@@ -955,11 +956,14 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkctx)
 		 goto err;
 	X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, os);
 	os = NULL;
-	rv = 1;
+
+	ret = 1;
+
  err:
 	RSA_OAEP_PARAMS_free(oaep);
 	ASN1_STRING_free(os);
-	return rv;
+
+	return ret;
 }
 
 static int
