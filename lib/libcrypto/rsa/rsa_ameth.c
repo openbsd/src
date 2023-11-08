@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.45 2023/11/08 16:07:59 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.46 2023/11/08 16:42:18 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -913,7 +913,7 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 {
 	const EVP_MD *md, *mgf1md;
 	RSA_OAEP_PARAMS *oaep = NULL;
-	ASN1_STRING *os = NULL;
+	ASN1_STRING *astr = NULL;
 	unsigned char *label;
 	int labellen;
 	int ret = 0;
@@ -952,16 +952,16 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 		    V_ASN1_OCTET_STRING, los);
 	}
 	/* create string with pss parameter encoding. */
-	if (!ASN1_item_pack(oaep, &RSA_OAEP_PARAMS_it, &os))
+	if ((astr = ASN1_item_pack(oaep, &RSA_OAEP_PARAMS_it, NULL)) == NULL)
 		 goto err;
-	X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, os);
-	os = NULL;
+	X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, astr);
+	astr = NULL;
 
 	ret = 1;
 
  err:
 	RSA_OAEP_PARAMS_free(oaep);
-	ASN1_STRING_free(os);
+	ASN1_STRING_free(astr);
 
 	return ret;
 }
