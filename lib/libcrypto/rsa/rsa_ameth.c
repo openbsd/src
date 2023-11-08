@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.47 2023/11/08 17:07:07 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.48 2023/11/08 19:14:43 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -914,6 +914,7 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 	const EVP_MD *md, *mgf1md;
 	RSA_OAEP_PARAMS *oaep = NULL;
 	ASN1_STRING *astr = NULL;
+	ASN1_OCTET_STRING *ostr = NULL;
 	unsigned char *label;
 	int labellen;
 	int ret = 0;
@@ -937,19 +938,16 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 	/* XXX - why do we not set oaep->maskHash here? */
 
 	if (labellen > 0) {
-		ASN1_OCTET_STRING *los;
 		oaep->pSourceFunc = X509_ALGOR_new();
 		if (oaep->pSourceFunc == NULL)
 			goto err;
-		los = ASN1_OCTET_STRING_new();
-		if (los == NULL)
+		if ((ostr = ASN1_OCTET_STRING_new()) == NULL)
 			goto err;
-		if (!ASN1_OCTET_STRING_set(los, label, labellen)) {
-			ASN1_OCTET_STRING_free(los);
+		if (!ASN1_OCTET_STRING_set(ostr, label, labellen))
 			goto err;
-		}
 		X509_ALGOR_set0(oaep->pSourceFunc, OBJ_nid2obj(NID_pSpecified),
-		    V_ASN1_OCTET_STRING, los);
+		    V_ASN1_OCTET_STRING, ostr);
+		ostr = NULL;
 	}
 	/* create string with pss parameter encoding. */
 	if ((astr = ASN1_item_pack(oaep, &RSA_OAEP_PARAMS_it, NULL)) == NULL)
@@ -962,6 +960,7 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
  err:
 	RSA_OAEP_PARAMS_free(oaep);
 	ASN1_STRING_free(astr);
+	ASN1_OCTET_STRING_free(ostr);
 
 	return ret;
 }
