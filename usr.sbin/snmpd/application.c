@@ -1,4 +1,4 @@
-/*	$OpenBSD: application.c,v 1.31 2023/11/08 19:46:28 martijn Exp $	*/
+/*	$OpenBSD: application.c,v 1.32 2023/11/08 19:54:52 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -76,6 +76,7 @@ struct appl_region {
 struct appl_request_upstream {
 	struct appl_context *aru_ctx;
 	struct snmp_message *aru_statereference;
+	enum snmp_pdutype aru_requesttype;
 	int32_t aru_requestid; /* upstream requestid */
 	int32_t aru_transactionid; /* RFC 2741 section 6.1 */
 	uint16_t aru_nonrepeaters;
@@ -882,6 +883,7 @@ appl_processpdu(struct snmp_message *statereference, const char *ctxname,
 	ureq->aru_ctx = ctx;
 	ureq->aru_statereference = statereference;
 	ureq->aru_transactionid = transactionid++;
+	ureq->aru_requesttype = pdu->be_type;
 	ureq->aru_requestid = requestid;
 	ureq->aru_error = APPL_ERROR_NOERROR;
 	ureq->aru_index = 0;
@@ -1000,7 +1002,7 @@ appl_request_upstream_resolve(struct appl_request_upstream *ureq)
 		return;
 	ureq->aru_locked = 1;
 
-	if (ureq->aru_pdu->be_type == SNMP_C_SETREQ) {
+	if (ureq->aru_requesttype == SNMP_C_SETREQ) {
 		ureq->aru_error = APPL_ERROR_NOTWRITABLE;
 		ureq->aru_index = 1;
 		appl_request_upstream_reply(ureq);
@@ -1061,7 +1063,7 @@ appl_request_upstream_resolve(struct appl_request_upstream *ureq)
 			dreq->ard_vblist = vb;
 			dreq->ard_backend = vb->avi_region->ar_backend;
 			dreq->ard_retries = dreq->ard_backend->ab_retries;
-			dreq->ard_requesttype = ureq->aru_pdu->be_type;
+			dreq->ard_requesttype = ureq->aru_requesttype;
 			/*
 			 * We don't yet fully handle bulkrequest responses.
 			 * It's completely valid to map onto getrequest.
@@ -1224,7 +1226,7 @@ appl_request_upstream_reply(struct appl_request_upstream *ureq)
 			vb->avi_varbind.av_value = ober_add_null(NULL);;
 		}
 	/* RFC 3416 section 4.2.3: Strip excessive EOMV */
-	} else if (ureq->aru_pdu->be_type == SNMP_C_GETBULKREQ) {
+	} else if (ureq->aru_requesttype == SNMP_C_GETBULKREQ) {
 		repvarbinds = (ureq->aru_varbindlen - ureq->aru_nonrepeaters) /
 		    ureq->aru_maxrepetitions;
 		for (i = ureq->aru_nonrepeaters;
@@ -1286,7 +1288,6 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 	struct appl_request_upstream *ureq = NULL;
 	const char *errstr;
 	char oidbuf[1024];
-	enum snmp_pdutype pdutype;
 	struct appl_varbind *vb;
 	struct appl_varbind_internal *origvb = NULL;
 	int invalid = 0;
@@ -1303,9 +1304,8 @@ appl_response(struct appl_backend *backend, int32_t requestid,
 		/* Continue to verify validity */
 	} else {
 		ureq = dreq->ard_request;
-		pdutype = ureq->aru_pdu->be_type;
-		next = pdutype == SNMP_C_GETNEXTREQ ||
-		    pdutype == SNMP_C_GETBULKREQ;
+		next = ureq->aru_requesttype == SNMP_C_GETNEXTREQ ||
+		    ureq->aru_requesttype == SNMP_C_GETBULKREQ;
 		origvb = dreq->ard_vblist;
 		if (!appl_error_valid(error, dreq->ard_requesttype)) {
 			log_warnx("%s: %"PRIu32" Invalid error",
@@ -1577,8 +1577,8 @@ appl_varbind_backend(struct appl_varbind_internal *ivb)
 	struct ber_oid oid, nextsibling;
 	int next, cmp;
 
-	next = ureq->aru_pdu->be_type == SNMP_C_GETNEXTREQ ||
-	    ureq->aru_pdu->be_type == SNMP_C_GETBULKREQ;
+	next = ureq->aru_requesttype == SNMP_C_GETNEXTREQ ||
+	    ureq->aru_requesttype == SNMP_C_GETBULKREQ;
 
 	region = appl_region_find(ureq->aru_ctx, &(vb->av_oid));
 	if (region == NULL) {
