@@ -1,4 +1,4 @@
-/*	$OpenBSD: smi.h,v 1.2 2022/06/30 09:42:19 martijn Exp $	*/
+/*	$OpenBSD: smi.h,v 1.3 2023/11/08 20:02:52 martijn Exp $	*/
 
 /*
  * Copyright (c) 2021 Martijn van Duren <martijn@openbsd.org>
@@ -18,9 +18,6 @@
 
 #include <ber.h>
 #include <stdint.h>
-
-#define BER_OID(...) (struct ber_oid) { { __VA_ARGS__ }, \
-    (sizeof((u_int32_t []) { __VA_ARGS__ }) / sizeof(u_int32_t)) }
 
 char	*smi_oid2string(struct ber_oid *, char *, size_t, size_t);
 u_long	 smi_getticks(void);
