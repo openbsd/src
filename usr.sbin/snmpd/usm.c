@@ -1,4 +1,4 @@
-/*	$OpenBSD: usm.c,v 1.27 2023/11/08 20:07:14 martijn Exp $	*/
+/*	$OpenBSD: usm.c,v 1.28 2023/11/08 20:09:18 martijn Exp $	*/
 
 /*
  * Copyright (c) 2012 GeNUA mbH
@@ -399,14 +399,16 @@ usm_decode(struct snmp_message *msg, struct ber_element *elm, const char **errp)
 		ober_replace_elements(elm, decr);
 	}
 
-	now = snmpd_engine_time();
-	if (engine_boots != snmpd_env->sc_engine_boots ||
-	    engine_time < (long long)(now - SNMP_MAX_TIMEWINDOW) ||
-	    engine_time > (long long)(now + SNMP_MAX_TIMEWINDOW)) {
-		*errp = "out of time window";
-		msg->sm_usmerr = OIDVAL_usmErrTimeWindow;
-		stats->snmp_usmtimewindow++;
-		goto done;
+	if (MSG_HAS_AUTH(msg)) {
+		now = snmpd_engine_time();
+		if (engine_boots != snmpd_env->sc_engine_boots ||
+		    engine_time < (long long)(now - SNMP_MAX_TIMEWINDOW) ||
+		    engine_time > (long long)(now + SNMP_MAX_TIMEWINDOW)) {
+			*errp = "out of time window";
+			msg->sm_usmerr = OIDVAL_usmErrTimeWindow;
+			stats->snmp_usmtimewindow++;
+			goto done;
+		}
 	}
 
 	next = elm->be_next;
