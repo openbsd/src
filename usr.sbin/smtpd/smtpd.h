@@ -1,4 +1,4 @@
-/*	$OpenBSD: smtpd.h,v 1.678 2023/09/29 18:30:14 op Exp $	*/
+/*	$OpenBSD: smtpd.h,v 1.679 2023/11/08 08:46:35 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -1026,6 +1026,8 @@ enum dns_error {
 	DNS_EINVAL,
 	DNS_ENONAME,
 	DNS_ENOTFOUND,
+	/* RFC 7505 */
+	DNS_NULLMX,
 };
 
 enum lka_resp_status {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dns.c,v 1.90 2021/06/14 17:58:15 eric Exp $	*/
+/*	$OpenBSD: dns.c,v 1.91 2023/11/08 08:46:34 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
@@ -232,10 +232,10 @@ dns_dispatch_mx(struct asr_result *ar, void *arg)
 	struct dns_rr		 rr;
 	char			 buf[512];
 	size_t			 found;
+	int			 nullmx = 0;
 
 	if (ar->ar_h_errno && ar->ar_h_errno != NO_DATA &&
 	    ar->ar_h_errno != NOTIMP) {
-
 		m_create(s->p,  IMSG_MTA_DNS_HOST_END, 0, 0, -1);
 		m_add_id(s->p, s->reqid);
 		if (ar->ar_rcode == NXDOMAIN)
@@ -259,12 +259,28 @@ dns_dispatch_mx(struct asr_result *ar, void *arg)
 		unpack_rr(&pack, &rr);
 		if (rr.rr_type != T_MX)
 			continue;
+
 		print_dname(rr.rr.mx.exchange, buf, sizeof(buf));
 		buf[strlen(buf) - 1] = '\0';
+
+		if (rr.rr.mx.preference == 0 && !strcmp(buf, "")) {
+			nullmx = 1;
+			continue;
+		}
+
 		dns_lookup_host(s, buf, rr.rr.mx.preference);
 		found++;
 	}
 	free(ar->ar_data);
+
+	if (nullmx && found == 0) {
+		m_create(s->p, IMSG_MTA_DNS_HOST_END, 0, 0, -1);
+		m_add_id(s->p, s->reqid);
+		m_add_int(s->p, DNS_NULLMX);
+		m_close(s->p);
+		free(s);
+		return;
+	}
 
 	/* fallback to host if no MX is found. */
 	if (found == 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mta.c,v 1.245 2023/05/31 16:51:46 op Exp $	*/
+/*	$OpenBSD: mta.c,v 1.246 2023/11/08 08:46:35 op Exp $	*/
 
 /*
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
@@ -1087,6 +1087,10 @@ mta_on_mx(void *tag, void *arg, void *data)
 			relay->failstr = "Host not found";
 		else
 			relay->failstr = "No MX found for domain";
+		break;
+	case DNS_NULLMX:
+		relay->fail = IMSG_MTA_DELIVERY_PERMFAIL;
+		relay->failstr = "Domain does not accept mail";
 		break;
 	default:
 		fatalx("bad DNS lookup error code");
