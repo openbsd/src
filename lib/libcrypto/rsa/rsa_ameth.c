@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.44 2023/11/08 16:05:18 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.45 2023/11/08 16:07:59 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -909,7 +909,7 @@ rsa_alg_set_pss_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 
 #ifndef OPENSSL_NO_CMS
 static int
-rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkctx)
+rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 {
 	const EVP_MD *md, *mgf1md;
 	RSA_OAEP_PARAMS *oaep = NULL;
@@ -918,11 +918,11 @@ rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkctx)
 	int labellen;
 	int ret = 0;
 
-	if (EVP_PKEY_CTX_get_rsa_oaep_md(pkctx, &md) <= 0)
+	if (EVP_PKEY_CTX_get_rsa_oaep_md(pkey_ctx, &md) <= 0)
 		goto err;
-	if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkctx, &mgf1md) <= 0)
+	if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkey_ctx, &mgf1md) <= 0)
 		goto err;
-	labellen = EVP_PKEY_CTX_get0_rsa_oaep_label(pkctx, &label);
+	labellen = EVP_PKEY_CTX_get0_rsa_oaep_label(pkey_ctx, &label);
 	if (labellen < 0)
 		goto err;
 
@@ -1116,11 +1116,11 @@ static int
 rsa_cms_encrypt(CMS_RecipientInfo *ri)
 {
 	X509_ALGOR *alg;
-	EVP_PKEY_CTX *pkctx;
+	EVP_PKEY_CTX *pkey_ctx;
 	int pad_mode = RSA_PKCS1_PADDING;
 
-	if ((pkctx = CMS_RecipientInfo_get0_pkey_ctx(ri)) != NULL) {
-		if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
+	if ((pkey_ctx = CMS_RecipientInfo_get0_pkey_ctx(ri)) != NULL) {
+		if (EVP_PKEY_CTX_get_rsa_padding(pkey_ctx, &pad_mode) <= 0)
 			return 0;
 	}
 
@@ -1129,7 +1129,7 @@ rsa_cms_encrypt(CMS_RecipientInfo *ri)
 	if (pad_mode == RSA_PKCS1_PADDING)
 		return rsa_alg_set_pkcs1_padding(alg);
 	if (pad_mode == RSA_PKCS1_OAEP_PADDING)
-		return rsa_alg_set_oaep_padding(alg, pkctx);
+		return rsa_alg_set_oaep_padding(alg, pkey_ctx);
 
 	return 0;
 }
