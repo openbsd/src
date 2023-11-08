@@ -1,4 +1,4 @@
-/* $OpenBSD: rsa_ameth.c,v 1.42 2023/11/07 22:35:03 tb Exp $ */
+/* $OpenBSD: rsa_ameth.c,v 1.43 2023/11/08 16:02:41 tb Exp $ */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project 2006.
  */
@@ -909,6 +909,60 @@ rsa_alg_set_pss_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkey_ctx)
 
 #ifndef OPENSSL_NO_CMS
 static int
+rsa_alg_set_oaep_padding(X509_ALGOR *alg, EVP_PKEY_CTX *pkctx)
+{
+	const EVP_MD *md, *mgf1md;
+	RSA_OAEP_PARAMS *oaep = NULL;
+	ASN1_STRING *os = NULL;
+	int rv = 0, labellen;
+	unsigned char *label;
+
+	if (EVP_PKEY_CTX_get_rsa_oaep_md(pkctx, &md) <= 0)
+		goto err;
+	if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkctx, &mgf1md) <= 0)
+		goto err;
+	labellen = EVP_PKEY_CTX_get0_rsa_oaep_label(pkctx, &label);
+	if (labellen < 0)
+		goto err;
+
+	if ((oaep = RSA_OAEP_PARAMS_new()) == NULL)
+		goto err;
+
+	if (!rsa_md_to_algor(md, &oaep->hashFunc))
+		goto err;
+	if (!rsa_mgf1md_to_maskGenAlgorithm(mgf1md, &oaep->maskGenFunc))
+		goto err;
+
+	/* XXX - why do we not set oaep->maskHash here? */
+
+	if (labellen > 0) {
+		ASN1_OCTET_STRING *los;
+		oaep->pSourceFunc = X509_ALGOR_new();
+		if (oaep->pSourceFunc == NULL)
+			goto err;
+		los = ASN1_OCTET_STRING_new();
+		if (los == NULL)
+			goto err;
+		if (!ASN1_OCTET_STRING_set(los, label, labellen)) {
+			ASN1_OCTET_STRING_free(los);
+			goto err;
+		}
+		X509_ALGOR_set0(oaep->pSourceFunc, OBJ_nid2obj(NID_pSpecified),
+		    V_ASN1_OCTET_STRING, los);
+	}
+	/* create string with pss parameter encoding. */
+	if (!ASN1_item_pack(oaep, &RSA_OAEP_PARAMS_it, &os))
+		 goto err;
+	X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, os);
+	os = NULL;
+	rv = 1;
+ err:
+	RSA_OAEP_PARAMS_free(oaep);
+	ASN1_STRING_free(os);
+	return rv;
+}
+
+static int
 rsa_cms_sign(CMS_SignerInfo *si)
 {
 	EVP_PKEY_CTX *pkey_ctx;
@@ -1057,13 +1111,9 @@ rsa_cms_decrypt(CMS_RecipientInfo *ri)
 static int
 rsa_cms_encrypt(CMS_RecipientInfo *ri)
 {
-	const EVP_MD *md, *mgf1md;
-	RSA_OAEP_PARAMS *oaep = NULL;
-	ASN1_STRING *os = NULL;
 	X509_ALGOR *alg;
 	EVP_PKEY_CTX *pkctx;
-	int pad_mode = RSA_PKCS1_PADDING, rv = 0, labellen;
-	unsigned char *label;
+	int pad_mode = RSA_PKCS1_PADDING;
 
 	if ((pkctx = CMS_RecipientInfo_get0_pkey_ctx(ri)) != NULL) {
 		if (EVP_PKEY_CTX_get_rsa_padding(pkctx, &pad_mode) <= 0)
@@ -1074,54 +1124,10 @@ rsa_cms_encrypt(CMS_RecipientInfo *ri)
 		return 0;
 	if (pad_mode == RSA_PKCS1_PADDING)
 		return rsa_alg_set_pkcs1_padding(alg);
+	if (pad_mode == RSA_PKCS1_OAEP_PADDING)
+		return rsa_alg_set_oaep_padding(alg, pkctx);
 
-	/* Not supported */
-	if (pad_mode != RSA_PKCS1_OAEP_PADDING)
-		return 0;
-
-	if (EVP_PKEY_CTX_get_rsa_oaep_md(pkctx, &md) <= 0)
-		goto err;
-	if (EVP_PKEY_CTX_get_rsa_mgf1_md(pkctx, &mgf1md) <= 0)
-		goto err;
-	labellen = EVP_PKEY_CTX_get0_rsa_oaep_label(pkctx, &label);
-	if (labellen < 0)
-		goto err;
-
-	if ((oaep = RSA_OAEP_PARAMS_new()) == NULL)
-		goto err;
-
-	if (!rsa_md_to_algor(md, &oaep->hashFunc))
-		goto err;
-	if (!rsa_mgf1md_to_maskGenAlgorithm(mgf1md, &oaep->maskGenFunc))
-		goto err;
-
-	/* XXX - why do we not set oaep->maskHash here? */
-
-	if (labellen > 0) {
-		ASN1_OCTET_STRING *los;
-		oaep->pSourceFunc = X509_ALGOR_new();
-		if (oaep->pSourceFunc == NULL)
-			goto err;
-		los = ASN1_OCTET_STRING_new();
-		if (los == NULL)
-			goto err;
-		if (!ASN1_OCTET_STRING_set(los, label, labellen)) {
-			ASN1_OCTET_STRING_free(los);
-			goto err;
-		}
-		X509_ALGOR_set0(oaep->pSourceFunc, OBJ_nid2obj(NID_pSpecified),
-		    V_ASN1_OCTET_STRING, los);
-	}
-	/* create string with pss parameter encoding. */
-	if (!ASN1_item_pack(oaep, &RSA_OAEP_PARAMS_it, &os))
-		 goto err;
-	X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaesOaep), V_ASN1_SEQUENCE, os);
-	os = NULL;
-	rv = 1;
- err:
-	RSA_OAEP_PARAMS_free(oaep);
-	ASN1_STRING_free(os);
-	return rv;
+	return 0;
 }
 #endif
 
