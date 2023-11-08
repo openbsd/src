@@ -1,4 +1,4 @@
-/*	$OpenBSD: xbf.c,v 1.52 2022/04/16 19:19:59 naddy Exp $	*/
+/*	$OpenBSD: xbf.c,v 1.53 2023/11/08 12:01:21 krw Exp $	*/
 
 /*
  * Copyright (c) 2016, 2017 Mike Belopuhov
@@ -57,6 +57,7 @@
 #define XBF_MAX_ISGE		8
 
 #define XBF_SEC_SHIFT		9
+#define XBF_SEC_SIZE		(1 << XBF_SEC_SHIFT)
 
 #define XBF_CDROM		1
 #define XBF_REMOVABLE		2
@@ -662,6 +663,10 @@ xbf_submit_cmd(struct scsi_xfer *xs)
 		nblk = _4btol(rw16->length);
 	}
 
+	/* SCSI lba/nblk are sc_block_size. ccb's need XBF_SEC_SIZE. */
+	lba *= sc->sc_block_size / XBF_SEC_SIZE;
+	nblk *= sc->sc_block_size / XBF_SEC_SIZE;
+
 	ccb->ccb_want = ccb->ccb_seen = 0;
 
 	do {
@@ -856,7 +861,8 @@ xbf_scsi_capacity(struct scsi_xfer *xs)
 
 	bzero(&rcd, sizeof(rcd));
 
-	capacity = sc->sc_disk_size - 1;
+	/* [addr|length] are sc_block_size. sc->sc_disk_size is XBF_SEC_SIZE. */
+	capacity = (sc->sc_disk_size * XBF_SEC_SIZE) / sc->sc_block_size - 1;
 	if (capacity > 0xffffffff)
 		capacity = 0xffffffff;
 
@@ -873,10 +879,13 @@ xbf_scsi_capacity16(struct scsi_xfer *xs)
 {
 	struct xbf_softc *sc = xs->sc_link->bus->sb_adapter_softc;
 	struct scsi_read_cap_data_16 rcd;
+	uint64_t capacity;
 
 	bzero(&rcd, sizeof(rcd));
 
-	_lto8b(sc->sc_disk_size - 1, rcd.addr);
+	/* [addr|length] are sc_block_size. sc->sc_disk_size is XBF_SEC_SIZE. */
+	capacity = (sc->sc_disk_size * XBF_SEC_SIZE) / sc->sc_block_size - 1;
+	_lto8b(capacity, rcd.addr);
 	_lto4b(sc->sc_block_size, rcd.length);
 
 	bcopy(&rcd, xs->data, MIN(sizeof(rcd), xs->datalen));
