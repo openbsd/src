@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ether.c,v 1.265 2023/05/12 12:40:49 bluhm Exp $	*/
+/*	$OpenBSD: if_ether.c,v 1.266 2023/11/09 21:45:18 bluhm Exp $	*/
 /*	$NetBSD: if_ether.c,v 1.31 1996/05/11 12:59:58 mycroft Exp $	*/
 
 /*
@@ -149,7 +149,8 @@ arpinit(void)
 	pool_init(&arp_pool, sizeof(struct llinfo_arp), 0,
 	    IPL_SOFTNET, 0, "arp", NULL);
 
-	timeout_set_proc(&arptimer_to, arptimer, &arptimer_to);
+	timeout_set_flags(&arptimer_to, arptimer, &arptimer_to,
+	    KCLOCK_NONE, TIMEOUT_PROC | TIMEOUT_MPSAFE);
 	timeout_add_sec(&arptimer_to, arpt_prune);
 }
 
