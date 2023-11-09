@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.158 2023/08/21 01:37:56 visa Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.159 2023/11/09 15:43:28 kn Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -88,6 +88,7 @@ int needtid, tail, basecol;
 char *tracefile = DEF_TRACEFILE;
 struct ktr_header ktr_header;
 pid_t pid_opt = -1;
+const char *program;
 char* utracefilter;
 
 #define eqs(s1, s2)	(strcmp((s1), (s2)) == 0)
@@ -169,7 +170,7 @@ main(int argc, char *argv[])
 			screenwidth = 80;
 	}
 
-	while ((ch = getopt(argc, argv, "f:dHlm:np:RTt:u:xX")) != -1)
+	while ((ch = getopt(argc, argv, "f:dHlm:nP:p:RTt:u:xX")) != -1)
 		switch (ch) {
 		case 'f':
 			tracefile = optarg;
@@ -190,6 +191,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':
 			fancy = 0;
+			break;
+		case 'P':
+			program = optarg;
 			break;
 		case 'p':
 			pid_opt = strtonum(optarg, 1, INT_MAX, &errstr);
@@ -251,6 +255,9 @@ main(int argc, char *argv[])
 	while (fread_tail(&ktr_header, sizeof(struct ktr_header), 1)) {
 		silent = 0;
 		if (pid_opt != -1 && pid_opt != ktr_header.ktr_pid)
+			silent = 1;
+		if (program != NULL &&
+		    strcmp(ktr_header.ktr_comm, program) != 0)
 			silent = 1;
 		if (utracefilter == NULL && silent == 0 &&
 		    trpoints & (1<<ktr_header.ktr_type))
@@ -1490,8 +1497,8 @@ usage(void)
 
 	extern char *__progname;
 	fprintf(stderr, "usage: %s "
-	    "[-dHlnRTXx] [-f file] [-m maxdata] [-p pid] [-t trstr] "
-	    "[-u label]\n", __progname);
+	    "[-dHlnRTXx] [-f file] [-m maxdata] [-P program] [-p pid] "
+	    "[-t trstr]\n\t[-u label]\n", __progname);
 	exit(1);
 }
 

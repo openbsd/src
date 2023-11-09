@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.38 2023/09/30 13:03:40 naddy Exp $
+.\"	$OpenBSD: kdump.1,v 1.39 2023/11/09 15:43:28 kn Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)kdump.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd $Mdocdate: September 30 2023 $
+.Dd $Mdocdate: November 9 2023 $
 .Dt KDUMP 1
 .Os
 .Sh NAME
@@ -40,6 +40,7 @@
 .Op Fl dHlnRTXx
 .Op Fl f Ar file
 .Op Fl m Ar maxdata
+.Op Fl P Ar program
 .Op Fl p Ar pid
 .Op Fl t Ar trstr
 .Op Fl u Ar label
@@ -88,6 +89,10 @@ values are replaced with the
 string.
 Suppressing this feature yields a more consistent output format and is
 easily amenable to further processing.
+.It Fl P Ar program
+Show output only for processes with
+.Ar program
+as their command name.
 .It Fl p Ar pid
 Show output only for the
 .Ar pid
