@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecx_methods.c,v 1.9 2023/07/22 19:33:25 tb Exp $ */
+/*	$OpenBSD: ecx_methods.c,v 1.10 2023/11/09 11:39:13 tb Exp $ */
 /*
  * Copyright (c) 2022 Joel Sing <jsing@openbsd.org>
  *
@@ -27,6 +27,7 @@
 #include "bytestring.h"
 #include "curve25519_internal.h"
 #include "evp_local.h"
+#include "x509_local.h"
 
 /*
  * EVP PKEY and PKEY ASN.1 methods Ed25519 and X25519.
@@ -729,16 +730,12 @@ static int
 ecx_item_sign(EVP_MD_CTX *md_ctx, const ASN1_ITEM *it, void *asn,
     X509_ALGOR *algor1, X509_ALGOR *algor2, ASN1_BIT_STRING *abs)
 {
-	ASN1_OBJECT *aobj;
-
-	if ((aobj = OBJ_nid2obj(NID_ED25519)) == NULL)
-		return 0;
-
-	if (!X509_ALGOR_set0(algor1, aobj, V_ASN1_UNDEF, NULL))
+	if (!X509_ALGOR_set0_by_nid(algor1, NID_ED25519, V_ASN1_UNDEF, NULL))
 		return 0;
 
 	if (algor2 != NULL) {
-		if (!X509_ALGOR_set0(algor2, aobj, V_ASN1_UNDEF, NULL))
+		if (!X509_ALGOR_set0_by_nid(algor2, NID_ED25519, V_ASN1_UNDEF,
+		    NULL))
 			return 0;
 	}
 
