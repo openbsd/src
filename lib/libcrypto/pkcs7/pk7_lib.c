@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.27 2023/11/09 19:00:53 tb Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.28 2023/11/09 19:08:07 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -394,7 +394,7 @@ PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	/*
 	 * Do not use X509_ALGOR_set_evp_md() to match historical behavior.
 	 * A mistranslation of the ASN.1 from 1988 to 1997 syntax lost the
-	 * OPTIONAL field, cf. the NOTE above RFC 5254, 2.1.
+	 * OPTIONAL field, cf. the NOTE above RFC 5754, 2.1.
 	 * Using X509_ALGOR_set_evp_md() would change encoding of the SHAs.
 	 */
 	nid = EVP_MD_type(dgst);
