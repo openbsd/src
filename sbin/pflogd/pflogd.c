@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.63 2023/05/09 00:01:59 dlg Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.64 2023/11/09 18:36:19 dlg Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -160,18 +160,21 @@ usage(void)
 void
 sig_close(int sig)
 {
+	pcap_breakloop(hpcap);
 	gotsig_close = 1;
 }
 
 void
 sig_hup(int sig)
 {
+	pcap_breakloop(hpcap);
 	gotsig_hup = 1;
 }
 
 void
 sig_alrm(int sig)
 {
+	pcap_breakloop(hpcap);
 	gotsig_alrm = 1;
 }
 
@@ -685,10 +688,15 @@ main(int argc, char **argv)
 	setproctitle("[initializing]");
 	/* Process is now unprivileged and inside a chroot */
 	signal(SIGTERM, sig_close);
+	siginterrupt(SIGTERM, 1);
 	signal(SIGINT, sig_close);
+	siginterrupt(SIGTERM, 1);
 	signal(SIGQUIT, sig_close);
+	siginterrupt(SIGTERM, 1);
 	signal(SIGALRM, sig_alrm);
+	siginterrupt(SIGTERM, 1);
 	signal(SIGHUP, sig_hup);
+	siginterrupt(SIGTERM, 1);
 	alarm(delay);
 
 	if (priv_init_pcap(snaplen))
