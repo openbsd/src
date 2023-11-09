@@ -1,4 +1,4 @@
-/* $OpenBSD: pk7_lib.c,v 1.26 2023/02/16 08:38:17 tb Exp $ */
+/* $OpenBSD: pk7_lib.c,v 1.27 2023/11/09 19:00:53 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -370,6 +370,7 @@ int
 PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
     const EVP_MD *dgst)
 {
+	int nid;
 	int ret;
 
 	/* We now need to add another PKCS7_SIGNER_INFO entry */
@@ -390,10 +391,15 @@ PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	CRYPTO_add(&pkey->references, 1, CRYPTO_LOCK_EVP_PKEY);
 	p7i->pkey = pkey;
 
-	/* Set the algorithms */
-
-	X509_ALGOR_set0(p7i->digest_alg, OBJ_nid2obj(EVP_MD_type(dgst)),
-	    V_ASN1_NULL, NULL);
+	/*
+	 * Do not use X509_ALGOR_set_evp_md() to match historical behavior.
+	 * A mistranslation of the ASN.1 from 1988 to 1997 syntax lost the
+	 * OPTIONAL field, cf. the NOTE above RFC 5254, 2.1.
+	 * Using X509_ALGOR_set_evp_md() would change encoding of the SHAs.
+	 */
+	nid = EVP_MD_type(dgst);
+	if (!X509_ALGOR_set0_by_nid(p7i->digest_alg, nid, V_ASN1_NULL, NULL))
+		return 0;
 
 	if (pkey->ameth && pkey->ameth->pkey_ctrl) {
 		ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_SIGN,
