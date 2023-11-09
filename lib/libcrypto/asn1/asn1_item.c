@@ -1,4 +1,4 @@
-/* $OpenBSD: asn1_item.c,v 1.17 2023/07/13 20:59:10 tb Exp $ */
+/* $OpenBSD: asn1_item.c,v 1.18 2023/11/09 11:36:39 tb Exp $ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -118,6 +118,7 @@
 
 #include "asn1_local.h"
 #include "evp_local.h"
+#include "x509_local.h"
 
 int
 ASN1_item_digest(const ASN1_ITEM *it, const EVP_MD *type, void *asn,
@@ -235,7 +236,6 @@ asn1_item_set_algorithm_identifiers(EVP_MD_CTX *ctx, X509_ALGOR *algor1,
     X509_ALGOR *algor2)
 {
 	EVP_PKEY *pkey;
-	ASN1_OBJECT *aobj;
 	const EVP_MD *md;
 	int sign_id, sign_param;
 
@@ -254,21 +254,17 @@ asn1_item_set_algorithm_identifiers(EVP_MD_CTX *ctx, X509_ALGOR *algor1,
 		ASN1error(ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
 		return 0;
 	}
-	if ((aobj = OBJ_nid2obj(sign_id)) == NULL) {
-		ASN1error(ASN1_R_UNKNOWN_OBJECT_TYPE);
-		return 0;
-	}
 
 	sign_param = V_ASN1_UNDEF;
 	if (pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL)
 		sign_param = V_ASN1_NULL;
 
 	if (algor1 != NULL) {
-		if (!X509_ALGOR_set0(algor1, aobj, sign_param, NULL))
+		if (!X509_ALGOR_set0_by_nid(algor1, sign_id, sign_param, NULL))
 			return 0;
 	}
 	if (algor2 != NULL) {
-		if (!X509_ALGOR_set0(algor2, aobj, sign_param, NULL))
+		if (!X509_ALGOR_set0_by_nid(algor2, sign_id, sign_param, NULL))
 			return 0;
 	}
 
