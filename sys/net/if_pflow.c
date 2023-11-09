@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pflow.c,v 1.99 2023/04/13 02:19:05 jsg Exp $	*/
+/*	$OpenBSD: if_pflow.c,v 1.100 2023/11/09 08:53:20 mvs Exp $	*/
 
 /*
  * Copyright (c) 2011 Florian Obser <florian@narrans.de>
@@ -71,7 +71,6 @@ void	pflow_output_process(void *);
 int	pflow_clone_create(struct if_clone *, int);
 int	pflow_clone_destroy(struct ifnet *);
 int	pflow_set(struct pflow_softc *, struct pflowreq *);
-void	pflow_init_timeouts(struct pflow_softc *);
 int	pflow_calc_mtu(struct pflow_softc *, int, int);
 void	pflow_setmtu(struct pflow_softc *, int);
 int	pflowvalidsockaddr(const struct sockaddr *, int);
@@ -255,7 +254,11 @@ pflow_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_flags &= ~IFF_RUNNING;	/* not running, need receiver */
 	mq_init(&pflowif->sc_outputqueue, 8192, IPL_SOFTNET);
 	pflow_setmtu(pflowif, ETHERMTU);
-	pflow_init_timeouts(pflowif);
+
+	timeout_set_proc(&pflowif->sc_tmo, pflow_timeout, pflowif);
+	timeout_set_proc(&pflowif->sc_tmo6, pflow_timeout6, pflowif);
+	timeout_set_proc(&pflowif->sc_tmo_tmpl, pflow_timeout_tmpl, pflowif);
+
 	if_counters_alloc(ifp);
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
@@ -282,12 +285,10 @@ pflow_clone_destroy(struct ifnet *ifp)
 	SLIST_REMOVE(&pflowif_list, sc, pflow_softc, sc_next);
 	NET_UNLOCK();
 
-	if (timeout_initialized(&sc->sc_tmo))
-		timeout_del(&sc->sc_tmo);
-	if (timeout_initialized(&sc->sc_tmo6))
-		timeout_del(&sc->sc_tmo6);
-	if (timeout_initialized(&sc->sc_tmo_tmpl))
-		timeout_del(&sc->sc_tmo_tmpl);
+	timeout_del(&sc->sc_tmo);
+	timeout_del(&sc->sc_tmo6);
+	timeout_del(&sc->sc_tmo_tmpl);
+
 	pflow_flush(sc);
 	task_del(net_tq(ifp->if_index), &sc->sc_outputtask);
 	taskq_barrier(net_tq(ifp->if_index));
@@ -465,7 +466,18 @@ pflow_set(struct pflow_softc *sc, struct pflowreq *pflowr)
 		sc->sc_version = pflowr->version;
 
 	pflow_setmtu(sc, ETHERMTU);
-	pflow_init_timeouts(sc);
+
+	switch (sc->sc_version) {
+	case PFLOW_PROTO_5:
+		timeout_del(&sc->sc_tmo6);
+		timeout_del(&sc->sc_tmo_tmpl);
+		break;
+	case PFLOW_PROTO_10:
+		timeout_add_sec(&sc->sc_tmo_tmpl, PFLOW_TMPL_TIMEOUT);
+		break;
+	default: /* NOTREACHED */
+		break;
+	}
 
 	return (0);
 }
@@ -558,34 +570,6 @@ pflowioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		return (ENOTTY);
 	}
 	return (0);
-}
-
-void
-pflow_init_timeouts(struct pflow_softc *sc)
-{
-	switch (sc->sc_version) {
-	case PFLOW_PROTO_5:
-		if (timeout_initialized(&sc->sc_tmo6))
-			timeout_del(&sc->sc_tmo6);
-		if (timeout_initialized(&sc->sc_tmo_tmpl))
-			timeout_del(&sc->sc_tmo_tmpl);
-		if (!timeout_initialized(&sc->sc_tmo))
-			timeout_set_proc(&sc->sc_tmo, pflow_timeout, sc);
-		break;
-	case PFLOW_PROTO_10:
-		if (!timeout_initialized(&sc->sc_tmo_tmpl))
-			timeout_set_proc(&sc->sc_tmo_tmpl, pflow_timeout_tmpl,
-			    sc);
-		if (!timeout_initialized(&sc->sc_tmo))
-			timeout_set_proc(&sc->sc_tmo, pflow_timeout, sc);
-		if (!timeout_initialized(&sc->sc_tmo6))
-			timeout_set_proc(&sc->sc_tmo6, pflow_timeout6, sc);
-
-		timeout_add_sec(&sc->sc_tmo_tmpl, PFLOW_TMPL_TIMEOUT);
-		break;
-	default: /* NOTREACHED */
-		break;
-	}
 }
 
 int
