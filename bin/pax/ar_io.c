@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.63 2019/06/28 13:34:59 deraadt Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.64 2023/11/09 18:54:15 kn Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -1261,9 +1261,16 @@ ar_start_gzip(int fd, const char *path, int wr)
 		close(fds[1]);
 
 		if (pmode == 0 || (act != EXTRACT && act != COPY)) {
-		    if (pledge("stdio rpath wpath cpath fattr dpath getpw proc tape",
-			NULL) == -1)
-				err(1, "pledge");
+			if (act == LIST) {
+				if (pledge("stdio rpath getpw proc tape",
+				   NULL) == -1)
+					err(1, "pledge");
+			/* can not gzip while appending */
+			} else {
+				if (pledge("stdio rpath wpath cpath fattr dpath getpw proc tape",
+				   NULL) == -1)
+					err(1, "pledge");
+			}
 		}
 	} else {
 		if (wr) {
