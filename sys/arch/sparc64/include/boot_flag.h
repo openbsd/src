@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot_flag.h,v 1.7 2020/05/25 15:31:59 kettenis Exp $	*/
+/*	$OpenBSD: boot_flag.h,v 1.8 2023/11/09 14:26:34 kn Exp $	*/
 /*	$NetBSD: boot_flag.h,v 1.3 2001/07/01 02:56:21 gmcgarry Exp $	*/
 
 /*-
@@ -45,7 +45,6 @@ struct openbsd_bootdata {
 } __packed;
 
 #define BOOTDATA_VERSION	1
-#define BOOTDATA_LEN_SOFTRAID	64
 #define BOOTDATA_LEN_BOOTHOWTO	68
 
 #endif /* _MACHINE_BOOT_FLAG_H_ */
