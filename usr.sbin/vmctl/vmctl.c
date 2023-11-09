@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmctl.c,v 1.88 2023/05/02 13:02:51 jsg Exp $	*/
+/*	$OpenBSD: vmctl.c,v 1.89 2023/11/09 12:26:08 dv Exp $	*/
 
 /*
  * Copyright (c) 2014 Mike Larkin <mlarkin@openbsd.org>
@@ -77,6 +77,7 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 {
 	struct vmop_create_params *vmc;
 	struct vm_create_params *vcp;
+	struct stat sb;
 	unsigned int flags = 0;
 	int i;
 	const char *s;
@@ -188,6 +189,11 @@ vm_start(uint32_t start_id, const char *name, size_t memsize, int nnics,
 		vmc->vmc_kernel = open(kernel, O_RDONLY);
 		if (vmc->vmc_kernel == -1)
 			err(1, "cannot open kernel '%s'", kernel);
+		memset(&sb, 0, sizeof(sb));
+		if (fstat(vmc->vmc_kernel, &sb) == -1)
+			err(1, "fstat kernel");
+		if (!S_ISREG(sb.st_mode))
+			errx(1, "kernel must be a regular file");
 	}
 	if (iso != NULL)
 		if (strlcpy(vmc->vmc_cdrom, iso,
