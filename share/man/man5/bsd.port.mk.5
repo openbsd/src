@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.639 2023/11/10 12:35:54 caspar Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.640 2023/11/10 16:51:01 jca Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1317,6 +1317,18 @@ Many ports ignore it.
 See also
 .Ev COPTS ,
 .Ev CDIAGFLAGS .
+.It Ev CFLAGS_${CHOSEN_COMPILER}
+Additional CFLAGS that will be appended to CFLAGS depending on the value
+of CHOSEN_COMPILER.
+Common usage pattern:
+.Bd -literal -offset indent
+CFLAGS_base-clang =      -Wno-error=unused-but-set-variable
+.Ed
+.Pp
+See also
+.Ev COMPILER
+and
+.Ev CHOSEN_COMPILER .
 .It Ev CHECK_LIB_DEPENDS
 User settings.
 If set to
@@ -1608,6 +1620,13 @@ is set.
 .It Ev CXXFLAGS
 Default flags passed to the C++ compiler for building.
 Many ports ignore it.
+.It Ev CXXFLAGS_${CHOSEN_COMPILER}
+Additional CXXFLAGS that will be appended to CXXFLAGS depending on the
+value of CHOSEN_COMPILER.
+See also
+.Ev COMPILER
+and
+.Ev CHOSEN_COMPILER .
 .It Ev CXXOPTS
 User settings.
 Supplementary options appended to ${CXXFLAGS} for building.
