@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.640 2023/11/10 16:51:01 jca Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.641 2023/11/10 17:37:20 jca Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -1318,15 +1318,17 @@ See also
 .Ev COPTS ,
 .Ev CDIAGFLAGS .
 .It Ev CFLAGS_${CHOSEN_COMPILER}
-Additional CFLAGS that will be appended to CFLAGS depending on the value
-of CHOSEN_COMPILER.
+Additional flags that will be appended to
+.Ev CFLAGS
+depending on the value of
+.Ev CHOSEN_COMPILER .
 Common usage pattern:
 .Bd -literal -offset indent
 CFLAGS_base-clang =      -Wno-error=unused-but-set-variable
 .Ed
 .Pp
 See also
-.Ev COMPILER
+.Ev COMPILER , COMPILER_LANGS
 and
 .Ev CHOSEN_COMPILER .
 .It Ev CHECK_LIB_DEPENDS
@@ -1621,10 +1623,13 @@ is set.
 Default flags passed to the C++ compiler for building.
 Many ports ignore it.
 .It Ev CXXFLAGS_${CHOSEN_COMPILER}
-Additional CXXFLAGS that will be appended to CXXFLAGS depending on the
-value of CHOSEN_COMPILER.
+Additional flags that will be appended to
+.Ev CXXFLAGS
+depending on the
+value of
+.Ev CHOSEN_COMPILER .
 See also
-.Ev COMPILER
+.Ev COMPILER , COMPILER_LANGS
 and
 .Ev CHOSEN_COMPILER .
 .It Ev CXXOPTS
