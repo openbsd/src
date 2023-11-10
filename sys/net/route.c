@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.422 2023/04/28 20:03:14 mvs Exp $	*/
+/*	$OpenBSD: route.c,v 1.423 2023/11/10 20:05:22 bluhm Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ rt_clone(struct rtentry **rtp, struct sockaddr *dst, unsigned int rtableid)
 } while (0)
 
 int
-rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
+rt_hash(struct rtentry *rt, const struct sockaddr *dst, uint32_t *src)
 {
 	uint32_t a, b, c;
 
@@ -307,12 +307,12 @@ rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
 	switch (dst->sa_family) {
 	case AF_INET:
 	    {
-		struct sockaddr_in *sin;
+		const struct sockaddr_in *sin;
 
 		if (!ipmultipath)
 			return (-1);
 
-		sin = satosin(dst);
+		sin = satosin_const(dst);
 		a += sin->sin_addr.s_addr;
 		b += src[0];
 		mix(a, b, c);
@@ -321,12 +321,12 @@ rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
 #ifdef INET6
 	case AF_INET6:
 	    {
-		struct sockaddr_in6 *sin6;
+		const struct sockaddr_in6 *sin6;
 
 		if (!ip6_multipath)
 			return (-1);
 
-		sin6 = satosin6(dst);
+		sin6 = satosin6_const(dst);
 		a += sin6->sin6_addr.s6_addr32[0];
 		b += sin6->sin6_addr.s6_addr32[2];
 		c += src[0];

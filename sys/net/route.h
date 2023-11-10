@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.199 2023/04/26 19:54:35 mvs Exp $	*/
+/*	$OpenBSD: route.h,v 1.200 2023/11/10 20:05:22 bluhm Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -467,7 +467,7 @@ int	 rt_mpls_set(struct rtentry *, struct sockaddr *, uint8_t);
 void	 rt_mpls_clear(struct rtentry *);
 
 int	 rtisvalid(struct rtentry *);
-int	 rt_hash(struct rtentry *, struct sockaddr *, uint32_t *);
+int	 rt_hash(struct rtentry *, const struct sockaddr *, uint32_t *);
 struct	 rtentry *rtalloc_mpath(struct sockaddr *, uint32_t *, u_int);
 struct	 rtentry *rtalloc(struct sockaddr *, int, unsigned int);
 void	 rtref(struct rtentry *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtable.c,v 1.82 2023/04/19 17:42:47 bluhm Exp $ */
+/*	$OpenBSD: rtable.c,v 1.83 2023/11/10 20:05:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2014-2016 Martin Pieuchot
@@ -349,7 +349,8 @@ rtable_l2set(unsigned int rtableid, unsigned int rdomain, unsigned int loifidx)
 }
 
 
-static inline uint8_t	*satoaddr(struct art_root *, struct sockaddr *);
+static inline const uint8_t *satoaddr(struct art_root *,
+    const struct sockaddr *);
 
 int	an_match(struct art_node *, struct sockaddr *, int);
 void	rtentry_ref(void *, void *);
@@ -421,7 +422,7 @@ rtable_lookup(unsigned int rtableid, struct sockaddr *dst,
 	struct art_node			*an;
 	struct rtentry			*rt = NULL;
 	struct srp_ref			 sr, nsr;
-	uint8_t				*addr;
+	const uint8_t			*addr;
 	int				 plen;
 
 	ar = rtable_get(rtableid, dst->sa_family);
@@ -470,13 +471,13 @@ out:
 }
 
 struct rtentry *
-rtable_match(unsigned int rtableid, struct sockaddr *dst, uint32_t *src)
+rtable_match(unsigned int rtableid, const struct sockaddr *dst, uint32_t *src)
 {
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct rtentry			*rt = NULL;
 	struct srp_ref			 sr, nsr;
-	uint8_t				*addr;
+	const uint8_t			*addr;
 	int				 hash;
 
 	ar = rtable_get(rtableid, dst->sa_family);
@@ -551,7 +552,7 @@ rtable_insert(unsigned int rtableid, struct sockaddr *dst,
 	struct srp_ref			 sr;
 	struct art_root			*ar;
 	struct art_node			*an, *prev;
-	uint8_t				*addr;
+	const uint8_t			*addr;
 	int				 plen;
 	unsigned int			 rt_flags;
 	int				 error = 0;
@@ -655,7 +656,7 @@ rtable_delete(unsigned int rtableid, struct sockaddr *dst,
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct srp_ref			 sr;
-	uint8_t				*addr;
+	const uint8_t			*addr;
 	int				 plen;
 	struct rtentry			*mrt;
 	int				 npaths = 0;
@@ -795,7 +796,7 @@ rtable_mpath_reprio(unsigned int rtableid, struct sockaddr *dst,
 	struct art_root			*ar;
 	struct art_node			*an;
 	struct srp_ref			 sr;
-	uint8_t				*addr;
+	const uint8_t			*addr;
 	int				 error = 0;
 
 	ar = rtable_get(rtableid, dst->sa_family);
@@ -901,10 +902,10 @@ rtentry_unref(void *null, void *xrt)
  * BSD radix tree needed to skip the non-address fields from the flavor
  * of "struct sockaddr" used by this routing table.
  */
-static inline uint8_t *
-satoaddr(struct art_root *at, struct sockaddr *sa)
+static inline const uint8_t *
+satoaddr(struct art_root *at, const struct sockaddr *sa)
 {
-	return (((uint8_t *)sa) + at->ar_off);
+	return (((const uint8_t *)sa) + at->ar_off);
 }
 
 /*

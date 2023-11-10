@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.144 2023/05/13 13:35:17 bluhm Exp $	*/
+/*	$OpenBSD: in.h,v 1.145 2023/11/10 20:05:22 bluhm Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -808,6 +808,12 @@ static inline struct sockaddr_in *
 satosin(struct sockaddr *sa)
 {
 	return ((struct sockaddr_in *)(sa));
+}
+
+static inline const struct sockaddr_in *
+satosin_const(const struct sockaddr *sa)
+{
+	return ((const struct sockaddr_in *)(sa));
 }
 
 static inline struct sockaddr *

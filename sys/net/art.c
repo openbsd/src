@@ -1,4 +1,4 @@
-/*	$OpenBSD: art.c,v 1.29 2020/11/12 15:25:28 mpi Exp $ */
+/*	$OpenBSD: art.c,v 1.30 2023/11/10 20:05:22 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -37,7 +37,7 @@
 
 #include <net/art.h>
 
-int			 art_bindex(struct art_table *, uint8_t *, int);
+int			 art_bindex(struct art_table *, const uint8_t *, int);
 void			 art_allot(struct art_table *at, int, struct art_node *,
 			     struct art_node *);
 struct art_table	*art_table_get(struct art_root *, struct art_table *,
@@ -149,7 +149,7 @@ art_check_duplicate(struct art_root *ar, struct art_node *old,
  * prefix length is > 24.
  */
 int
-art_bindex(struct art_table *at, uint8_t *addr, int plen)
+art_bindex(struct art_table *at, const uint8_t *addr, int plen)
 {
 	uint8_t			boff, bend;
 	uint32_t		k;
@@ -204,7 +204,7 @@ art_bindex(struct art_table *at, uint8_t *addr, int plen)
  * corresponding to the range covered by the table ``at''.
  */
 static inline int
-art_findex(struct art_table *at, uint8_t *addr)
+art_findex(struct art_table *at, const uint8_t *addr)
 {
 	return art_bindex(at, addr, (at->at_offset + at->at_bits));
 }
@@ -215,7 +215,7 @@ art_findex(struct art_table *at, uint8_t *addr)
  * Return the best existing match for a destination.
  */
 struct art_node *
-art_match(struct art_root *ar, void *addr, struct srp_ref *nsr)
+art_match(struct art_root *ar, const void *addr, struct srp_ref *nsr)
 {
 	struct srp_ref		dsr, ndsr;
 	void			*entry;
@@ -278,7 +278,7 @@ done:
  * it does not exist.
  */
 struct art_node *
-art_lookup(struct art_root *ar, void *addr, int plen, struct srp_ref *nsr)
+art_lookup(struct art_root *ar, const void *addr, int plen, struct srp_ref *nsr)
 {
 	void			*entry;
 	struct art_table	*at;
@@ -336,7 +336,7 @@ done:
  * same destination/mask pair is already present.
  */
 struct art_node *
-art_insert(struct art_root *ar, struct art_node *an, void *addr, int plen)
+art_insert(struct art_root *ar, struct art_node *an, const void *addr, int plen)
 {
 	struct art_table	*at, *child;
 	struct art_node		*node;
@@ -440,7 +440,7 @@ art_table_insert(struct art_root *ar, struct art_table *at, int i,
  * Deletion API function.
  */
 struct art_node *
-art_delete(struct art_root *ar, struct art_node *an, void *addr, int plen)
+art_delete(struct art_root *ar, struct art_node *an, const void *addr, int plen)
 {
 	struct art_table	*at;
 	struct art_node		*node;
