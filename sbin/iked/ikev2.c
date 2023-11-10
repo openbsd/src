@@ -1,4 +1,4 @@
-/*	$OpenBSD: ikev2.c,v 1.378 2023/08/11 11:24:55 tobhe Exp $	*/
+/*	$OpenBSD: ikev2.c,v 1.379 2023/11/10 08:03:02 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
@@ -118,7 +118,8 @@ void	 ikev2_ike_sa_rekey_schedule_fast(struct iked *, struct iked_sa *);
 void	 ikev2_ike_sa_alive(struct iked *, void *);
 void	 ikev2_ike_sa_keepalive(struct iked *, void *);
 
-int	 ikev2_sa_negotiate_common(struct iked *, struct iked_sa *, struct iked_message *);
+int	 ikev2_sa_negotiate_common(struct iked *, struct iked_sa *,
+	    struct iked_message *, int);
 int	 ikev2_sa_initiator(struct iked *, struct iked_sa *,
 	    struct iked_sa *, struct iked_message *);
 int	 ikev2_sa_responder(struct iked *, struct iked_sa *, struct iked_sa *,
@@ -5443,13 +5444,14 @@ ikev2_sa_initiator_dh(struct iked_sa *sa, struct iked_message *msg,
 }
 
 int
-ikev2_sa_negotiate_common(struct iked *env, struct iked_sa *sa, struct iked_message *msg)
+ikev2_sa_negotiate_common(struct iked *env, struct iked_sa *sa,
+    struct iked_message *msg, int groupid)
 {
 	struct iked_transform	*xform;
 
 	/* XXX we need a better way to get this */
 	if (proposals_negotiate(&sa->sa_proposals,
-	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0, -1) != 0) {
+	    &msg->msg_policy->pol_proposals, &msg->msg_proposals, 0, groupid) != 0) {
 		log_info("%s: proposals_negotiate", __func__);
 		ikestat_inc(env, ikes_sa_proposals_negotiate_failures);
 		return (-1);
@@ -5543,7 +5545,7 @@ ikev2_sa_initiator(struct iked *env, struct iked_sa *sa,
 		msg->msg_nonce = NULL;
 	}
 
-	if (ikev2_sa_negotiate_common(env, sa, msg) != 0)
+	if (ikev2_sa_negotiate_common(env, sa, msg, -1) != 0)
 		return (-1);
 
 	ibuf_free(sa->sa_2ndmsg);
@@ -5655,7 +5657,7 @@ ikev2_sa_responder(struct iked *env, struct iked_sa *sa, struct iked_sa *osa,
 	sa->sa_inonce = msg->msg_nonce;
 	msg->msg_nonce = NULL;
 
-	if (ikev2_sa_negotiate_common(env, sa, msg) != 0)
+	if (ikev2_sa_negotiate_common(env, sa, msg, msg->msg_dhgroup) != 0)
 		return (-1);
 
 	if (ikev2_sa_responder_dh(&sa->sa_kex, &sa->sa_proposals, msg, 0) < 0)
