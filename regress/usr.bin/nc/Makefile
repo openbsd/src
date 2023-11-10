@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2023/11/03 14:05:30 anton Exp $
+#	$OpenBSD: Makefile,v 1.14 2023/11/10 06:15:50 anton Exp $
 
 # Copyright (c) 2020 Alexander Bluhm <bluhm@openbsd.org>
 #
@@ -554,6 +554,7 @@ run-tls-client-bad-hash: client.crt server.crt ca.crt ca.hash
 	    localhost ${PORT} ${CLIENT_BG}
 	${CONNECT_WAIT}
 	${TLS_WAIT}
+	${SERVER_CLOSE_WAIT}
 	grep 'Listening on localhost ' server.err
 	grep 'Connection received on localhost ' server.err
 	grep 'Connection to localhost .* succeeded!' client.err
