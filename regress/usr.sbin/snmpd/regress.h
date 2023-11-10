@@ -81,6 +81,9 @@ enum close_reason {
 };
 
 struct varbind {
+	int		typeunknown;
+	int		nameunknown;
+	int		dataunknown;
 	enum type	type;
 	struct oid	name;
 	union data {
@@ -124,10 +127,12 @@ char *oid_print(struct oid *, char *, size_t);
 #define MIB_SUBAGENT_REGISTER MIB_SUBAGENTS, 4
 #define MIB_SUBAGENT_UNREGISTER MIB_SUBAGENTS, 4
 #define MIB_SUBAGENT_BACKEND MIB_SUBAGENTS, 5
+#define MIB_SUBAGENT_SNMP MIB_SUBAGENTS, 6
 /* Region used for registration testing */
 #define MIB_REGISTER MIB_OPENBSD_REGRESS, 2
 #define MIB_UNREGISTER MIB_OPENBSD_REGRESS, 3
 #define MIB_BACKEND MIB_OPENBSD_REGRESS, 4
+#define MIB_SNMP MIB_OPENBSD_REGRESS, 5
 
 #define SYSORTABLE 1, 3, 6, 1, 2, 1, 1, 9
 
@@ -359,3 +364,4 @@ void backend_error_getnext_parseerror(void);
 void backend_error_getnext_requestdenied(void);
 void backend_error_getnext_processingerror(void);
 void backend_error_getnext_nonstandard(void);
+void snmp_v3_usm_noauthpriv(void);

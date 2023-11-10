@@ -208,6 +208,7 @@ const struct {
 	{ "backend_error_getnext_requestdenied", backend_error_getnext_requestdenied },
 	{ "backend_error_getnext_processingerror", backend_error_getnext_processingerror },
 	{ "backend_error_getnext_nonstandard", backend_error_getnext_nonstandard },
+	{ "snmp_v3_usm_noauthpriv", snmp_v3_usm_noauthpriv},
 	{ NULL, NULL }
 };
 

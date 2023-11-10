@@ -22,6 +22,21 @@
 
 #define SNMP_R_COMMUNITY "public"
 
+#define MIB_SNMP_V3 MIB_SNMP, 1
+#define MIB_SNMP_USM MIB_SNMP_V3, 1
+
+#define MIB_SUBAGENT_V3 MIB_SUBAGENT_SNMP, 1
+#define MIB_SUBAGENT_USM MIB_SUBAGENT_V3, 1
+
+#define SNMPMODULES 1, 3, 6, 1, 6, 3
+#define SNMPUSMMIB SNMPMODULES, 15
+#define USMMIBOBJECTS SNMPUSMMIB, 1
+#define USMSTATS USMMIBOBJECTS, 1
+#define USMSTATSUNKNOWNENGINEIDS USMSTATS, 4
+
+#define BER_OID(...) (struct ber_oid){ {__VA_ARGS__},	\
+    (sizeof((uint32_t []){__VA_ARGS__}) / sizeof(uint32_t)) }
+
 enum snmp_application {
         APPLICATION_IPADDR = 0,
         APPLICATION_COUNTER32 = 1,
@@ -51,9 +66,59 @@ enum snmp_request {
 	REQUEST_REPORT = 8
 };
 
+enum security_model {
+	SM_USM = 3,
+	SM_TSM = 4
+};
+
+struct usm {
+	char engineid[32];
+	size_t engineidlen;
+	int engineboots;
+	int enginetime;
+	char username[33];
+};
+
+union securityparams {
+	struct usm usm;
+};
+
+#define MSGFLAG_AUTH (1 << 0)
+#define MSGFLAG_PRIV (1 << 1)
+#define MSG_NOAUTHNOPRIV 0
+#define MSG_AUTHNOPRIV MSGFLAG_AUTH
+#define MSG_AUTHPRIV (MSGFLAG_AUTH | MSGFLAG_PRIV)
+#define MSGFLAG_REPORTABLE (1 << 2)
+#define MSGFLAG_ALL (MSGFLAG_AUTH | MSGFLAG_PRIV | MSGFLAG_REPORTABLE)
+struct headerdata {
+	int32_t msgid;
+	int32_t msgmaxsize;
+	int8_t msgflags;
+	enum security_model msgsm;
+	char engineid[32];
+	size_t engineidlen;
+	char contextname[256];
+};
+
 int32_t snmpv2_send(int, const char *, enum snmp_request, int32_t, int32_t,
     int32_t, struct varbind *, size_t);
-struct ber_element *snmp_v2_recv(int, int);
+int32_t snmpv3_get(int, int, struct headerdata *, union securityparams *,
+    int32_t, struct varbind *, size_t);
+int32_t snmpv3_send(int, int, struct headerdata *, union securityparams *,
+    enum snmp_request, int32_t, int32_t, int32_t, struct varbind *, size_t);
+int32_t snmpv3_usm_send(int, int, struct headerdata *, struct usm *, int32_t,
+    struct varbind *, size_t);
+void snmpv3_usm_discovery(int, int, struct headerdata *, struct usm *);
+void snmpv3_encode(int, struct ber *, struct headerdata *,
+    union securityparams *, struct ber_element *);
+void snmpv3_usm_encode(int, struct ber *, struct usm *);
+struct ber_element *snmpv3_decode(int, void *, size_t, struct ber_element *,
+    struct headerdata *, union securityparams *);
+void snmpv3_response_validate(int, int, struct headerdata *,
+    union securityparams *, int32_t, int32_t, int32_t, struct varbind *,
+    size_t);
+void snmpv3_usm_decode(int, void *, size_t, void *, size_t, struct usm *);
+struct ber_element *snmp_recv(int, int, void *buf, size_t *);
 struct ber_element *snmp_pdu(enum snmp_request, int32_t, int32_t, int32_t,
     struct varbind *, size_t);
 struct ber_element *snmp_varbindlist(struct varbind *, size_t);
@@ -66,6 +131,54 @@ void smi_debug_elements(struct ber_element *);
 struct ber_element *v2cmps(struct ber_element *, const char *);
 void snmp_pdu_validate(struct ber_element *, enum snmp_request, int32_t,
     int32_t, int32_t, struct varbind *, size_t);
+
+void
+snmp_v3_usm_noauthpriv(void)
+{
+	struct sockaddr_storage ss;
+	struct sockaddr *sa = (struct sockaddr *)&ss;
+	socklen_t salen;
+	int snmp_s, ax_s;
+	uint32_t sessionid;
+	struct varbind varbind = {
+		.type = TYPE_NULL,
+		.name = OID_STRUCT(MIB_SNMP_USM, 1, 0),
+		.data.int32 = 1
+	};
+	struct headerdata hd = {
+		.msgid = 0,
+		.msgmaxsize = 0,
+		.msgflags = MSG_NOAUTHNOPRIV | MSGFLAG_REPORTABLE,
+		.msgsm = SM_USM
+	};
+	union securityparams params = {
+		.usm.engineidlen = 0,
+		.usm.engineboots = 0,
+		.usm.enginetime = 0,
+		.usm.username = "noauthpriv"
+	};
+	int32_t requestid;
+	char buf[1024];
+	size_t n;
+
+	ax_s = agentx_connect(axsocket);
+	sessionid = agentx_open(ax_s, 0, 0,
+	    OID_ARG(MIB_SUBAGENT_USM, 1), __func__);
+	agentx_register(ax_s, sessionid, 0, 0, 127, 0,
+	    OID_ARG(MIB_SNMP_USM, 1), 0);
+
+	salen = snmp_resolve(SOCK_DGRAM, hostname, servname, sa);
+	snmp_s = snmp_connect(SOCK_DGRAM, sa, salen);
+	requestid = snmpv3_get(snmp_s, 1000, &hd, &params, 0, &varbind, 1);
+
+	n = agentx_read(ax_s, buf, sizeof(buf), 1000);
+	varbind.type = TYPE_INTEGER;
+	agentx_get_handle(__func__, buf, n, 0, sessionid, &varbind, 1);
+	agentx_response(ax_s, buf, 0, NOERROR, &varbind, 1);
+
+	snmpv3_response_validate(snmp_s, 1000, &hd, &params, requestid, 0, 0,
+	    &varbind, 1);
+}
 
 socklen_t
 snmp_resolve(int type, const char *hostname, const char *servname, struct sockaddr *sa)
@@ -174,8 +287,10 @@ snmpv2_response_validate(int s, int timeout, const char *community,
     struct varbind *varbindlist, size_t nvarbind)
 {
 	struct ber_element *message, *pdu;
+	char buf[1024];
+	size_t buflen = sizeof(buf);
 
-	message = snmp_v2_recv(s, timeout);
+	message = snmp_recv(s, timeout, buf, &buflen);
 
 	if (community == NULL)
 		community = SNMP_R_COMMUNITY;
@@ -186,13 +301,12 @@ snmpv2_response_validate(int s, int timeout, const char *community,
 }
 
 struct ber_element *
-snmp_v2_recv(int s, int timeout)
+snmp_recv(int s, int timeout, void *buf, size_t *buflen)
 {
 	struct pollfd pfd = {
 		.fd = s,
 		.events = POLLIN
 	};
-	char buf[1024];
 	struct ber ber = {};
 	struct ber_element *message;
 	ssize_t n;
@@ -202,13 +316,16 @@ snmp_v2_recv(int s, int timeout)
 		err(1, "poll");
 	if (ret == 0)
 		errx(1, "%s: timeout", __func__);
-	if ((n = read(s, buf, sizeof(buf))) == -1)
+	if ((n = read(s, buf, *buflen)) == -1)
 		err(1, "agentx read");
+
+	*buflen = n;
 
 	ober_set_application(&ber, smi_application);
 	ober_set_readbuf(&ber, buf, n);
 
-	message = ober_read_elements(&ber, NULL);
+	if ((message = ober_read_elements(&ber, NULL)) == NULL)
+		errx(1, "%s: unable to decode message", __func__);
 	if (verbose) {
 		printf("SNMP received(%d):\n", s);
 		smi_debug_elements(message);
@@ -217,6 +334,293 @@ snmp_v2_recv(int s, int timeout)
 	ober_free(&ber);
 
 	return message;
+}
+
+int32_t
+snmpv3_get(int s, int timeout, struct headerdata *hd,
+    union securityparams *params, int32_t requestid,
+    struct varbind *varbindlist, size_t nvarbind)
+{
+	return snmpv3_send(s, timeout, hd, params, REQUEST_GET, requestid,
+	    0, 0, varbindlist, nvarbind);
+}
+
+int32_t
+snmpv3_send(int s, int timeout, struct headerdata *hd,
+    union securityparams *params, enum snmp_request request, int32_t requestid,
+    int32_t error, int32_t index, struct varbind *varbindlist, size_t nvarbind)
+{
+	struct ber ber;
+	void *buf;
+	ssize_t buflen, writelen;
+
+	if (hd->msgid == 0)
+		hd->msgid = arc4random();
+	if (hd->msgmaxsize == 0)
+		hd->msgmaxsize = 484;
+	if (requestid == 0)
+		requestid = arc4random();
+
+	if (hd->msgsm == SM_USM)
+		snmpv3_usm_discovery(s, timeout, hd, &params->usm);
+
+	snmpv3_encode(s, &ber, hd, params, snmp_pdu(request, requestid, error,
+	    index, varbindlist, nvarbind));
+
+	buflen = ober_get_writebuf(&ber, &buf);
+	if ((writelen = write(s, buf, buflen)) == -1)
+		err(1, "write");
+	if (writelen != buflen)
+		errx(1, "write: short write");
+
+	ober_free(&ber);
+
+	return requestid;
+}
+
+void
+snmpv3_usm_discovery(int s, int timeout, struct headerdata *hd,
+    struct usm *params)
+{
+	struct ber_element *message, *pdu;
+	struct ber_oid oid;
+	struct ber ber;
+	struct headerdata hdd;
+	union securityparams sp = {
+		.usm = *params
+	};
+	void *buf;
+	char rbuf[1024];
+	size_t rbuflen = sizeof(rbuf);
+	int8_t msgflags;
+	size_t buflen, writelen;
+	char oidbuf[1024];
+	struct varbind vb = {
+		.type = TYPE_COUNTER32,
+		.dataunknown = 1
+	};
+
+	hdd = *hd;
+	hdd.msgid = arc4random();
+	if (params->engineidlen == 0) {
+		hdd.msgflags = MSGFLAG_REPORTABLE;
+		sp.usm.username[0] = '\0';
+	} else if (hd->msgflags & MSGFLAG_AUTH && params->engineboots == 0 &&
+	    params->enginetime == 0)
+		hdd.msgflags = MSGFLAG_AUTH | MSGFLAG_REPORTABLE;
+	else
+		return;
+
+	pdu = snmp_pdu(REQUEST_GET, 0, 0, 0, NULL, 0);
+	snmpv3_encode(s, &ber, &hdd, &sp, pdu);
+	buflen = ober_get_writebuf(&ber, &buf);
+	if ((writelen = write(s, buf, buflen)) == -1)
+		err(1, "write");
+	if (writelen != buflen)
+		errx(1, "write: short write");
+
+ retry:
+	message = snmp_recv(s, timeout, rbuf, &rbuflen);
+
+	hdd.msgflags &= ~MSGFLAG_REPORTABLE;
+	pdu = snmpv3_decode(s, rbuf, rbuflen, message, &hdd, &sp);
+
+	if (params->engineidlen == 0) {
+		vb.name = OID_STRUCT(USMSTATSUNKNOWNENGINEIDS, 0);
+		snmp_pdu_validate(pdu, REQUEST_REPORT, 0, 0, 0, &vb, 1);
+		memcpy(params->engineid, sp.usm.engineid, sp.usm.engineidlen);
+		params->engineidlen = sp.usm.engineidlen;
+		if (hd->msgflags & MSGFLAG_AUTH)
+			snmpv3_usm_discovery(s, timeout, hd, params);
+	}
+
+	ober_free(&ber);
+	ober_free_elements(message);
+
+	return;
+}
+
+void
+snmpv3_encode(int s, struct ber *ber, struct headerdata *hd,
+    union securityparams *params, struct ber_element *pdu)
+{
+	struct ber_element *message;
+	void *sp;
+	size_t splen;
+
+	switch (hd->msgsm) {
+	case SM_USM:
+		snmpv3_usm_encode(s, ber, &params->usm);
+		break;
+	default:
+		errx(1, "%s: unsupported securityModel %d",
+		    __func__, hd->msgsm);
+	}
+
+	splen = ober_get_writebuf(ber, &sp);
+	if ((message = ober_printf_elements(NULL, "{d{ddxd}x{xse}}", 3,
+	    hd->msgid, hd->msgmaxsize, &hd->msgflags, sizeof(hd->msgflags),
+	    hd->msgsm, sp, splen, hd->engineid, hd->engineidlen,
+	    hd->contextname, pdu)) == NULL)
+		err(1, NULL);
+	ober_free(ber);
+	*ber = (struct ber){};
+	ober_set_application(ber, smi_application);
+	if (ober_write_elements(ber, message) == -1)
+		err(1, NULL);
+	if (verbose) {
+		printf("SNMP send(%d):\n", s);
+		smi_debug_elements(message);
+	}
+	ober_free_elements(message);
+}
+
+void
+snmpv3_usm_encode(int s, struct ber *ber, struct usm *params)
+{
+	struct ber_element *sp;
+
+	*ber = (struct ber){};
+	ober_set_application(ber, smi_application);
+	if ((sp = ober_printf_elements(NULL, "{xddxss}", params->engineid,
+	    params->engineidlen, params->engineboots, params->enginetime,
+	    params->username, strlen(params->username), "", "")) == NULL)
+		err(1, NULL);
+	if (ober_write_elements(ber, sp) == -1)
+		err(1, NULL);
+	if (verbose) {
+		printf("USM params send(%d):\n", s);
+		smi_debug_elements(sp);
+	}
+	ober_free_elements(sp);
+}
+
+struct ber_element *
+snmpv3_decode(int s, void *buf, size_t buflen, struct ber_element *message,
+    struct headerdata *hd, union securityparams *sp)
+{
+	struct ber_element *pdu;
+	int32_t version, msgid, msgmaxsize, sm;
+	char *msgflags, *spstr, *engineid, *name;
+	size_t msgflagslen, spstrlen, engineidlen, namelen;
+	int class;
+	unsigned int type;
+
+	if (ober_scanf_elements(message, "{d{ddxd$}x{xxe}",
+	    &version, &msgid, &msgmaxsize, &msgflags, &msgflagslen,
+	    &sm, &spstr, &spstrlen, &engineid, &engineidlen, &name, &namelen,
+	    &pdu) == -1)
+		errx(1, "%s: ober_scanf_elements", __func__);
+	if (version != 3)
+		errx(1, "%s: invalid version", __func__);
+	if (msgid != hd->msgid)
+		errx(1, "%s: unexpected msgid", __func__);
+	if (msgmaxsize < 484 || msgmaxsize > 2147483647)
+		errx(1, "%s: invalid msgmaxsize", __func__);
+	if (msgflagslen != 1 || msgflags[0] != hd->msgflags)
+		errx(1, "%s: invalid msgflags", __func__);
+	if (sm != hd->msgsm)
+		errx(1, "%s: unexpected security model", __func__);
+	if (engineidlen < 5 || engineidlen > 32)
+		errx(1, "%s: invalid contextEngineID", __func__);
+	if (hd->engineidlen != 0) {
+		if (hd->engineidlen != engineidlen ||
+		    memcmp(hd->engineid, engineid, engineidlen) != 0)
+			errx(1, "%s: unexpected engineid", __func__);
+	} else {
+		hd->engineidlen = engineidlen;
+		memcpy(hd->engineid, engineid, engineidlen);
+	}
+	if (namelen > 255)
+		errx(1, "%s: invalid ctxnamelen", __func__);
+	if (strcmp(hd->contextname, name) != 0)
+		errx(1, "%s: unexpected context", __func__);
+
+	switch (sm) {
+	case SM_USM:
+		snmpv3_usm_decode(s, buf, buflen, spstr, spstrlen, &sp->usm);
+	}
+	return pdu;
+}
+
+void
+snmpv3_usm_decode(int s, void *buf, size_t buflen, void *spstr, size_t spstrlen,
+    struct usm *usm)
+{
+	struct ber ber = {};
+	struct ber_element *sp;
+	char *engineid, *username, *authparams, *privparams;
+	size_t engineidlen, usernamelen, authparamslen, privparamslen;
+	int32_t engineboots, enginetime;
+
+	ober_set_application(&ber, smi_application);
+	ober_set_readbuf(&ber, spstr, spstrlen);
+	if ((sp = ober_read_elements(&ber, NULL)) == NULL)
+		errx(1, "%s: ober_read_elements", __func__);
+	if (verbose) {
+		printf("USM params received(%d):\n", s);
+		smi_debug_elements(sp);
+	}
+
+	if (ober_scanf_elements(sp, "{xddxxx}", &engineid, &engineidlen,
+	    &engineboots, &enginetime, &username, &usernamelen, &authparams,
+	    &authparamslen, &privparams, &privparamslen) == -1)
+		errx(1, "%s: ober_scanf_elements", __func__);
+
+	if (engineidlen < 5 || engineidlen > 32)
+		errx(1, "%s: invalid msgAuthoritativeEngineID", __func__);
+	if (engineboots < 0 || engineboots > 2147483647)
+		errx(1, "%s: invalid msgAuthoritativeEngineBoots", __func__);
+	if (enginetime < 0 || enginetime > 2147483647)
+		errx(1, "%s: invalid msgAuthoritativeEngineTime", __func__);
+	if (usernamelen < 0 || usernamelen > 32)
+		errx(1, "%s: invalid msgUserName", __func__);
+
+	if (usm->engineidlen == 0) {
+		memcpy(usm->engineid, engineid, engineidlen);
+		usm->engineidlen = engineidlen;
+	} else {
+		if (usm->engineidlen != engineidlen ||
+		    memcmp(usm->engineid, engineid, engineidlen) != 0)
+			errx(1, "%s: unexpected engineid", __func__);
+	}
+	if (usm->engineboots == 0 && usm->enginetime == 0) {
+		usm->engineboots = engineboots;
+		usm->enginetime = enginetime;
+	} else {
+		if (usm->engineboots < engineboots)
+			errx(1, "%s: engineboots decremented", __func__);
+		else if (usm->engineboots == engineboots) {
+			if (enginetime < usm->enginetime - 150 ||
+			    enginetime > usm->enginetime + 150)
+				errx(1, "%s: enginetime out of window",
+				    __func__);
+		} else {
+			if (enginetime > 150)
+				errx(1, "%s: enginetime out of window",
+				    __func__);
+		}
+	}
+	if (strcmp(username, usm->username) != 0)
+		errx(1, "unexpected username");
+}
+
+void
+snmpv3_response_validate(int s, int timeout, struct headerdata *hd,
+    union securityparams *sp, int32_t requestid, int32_t error, int32_t index,
+    struct varbind *varbindlist, size_t nvarbind)
+{
+	struct ber_element *message, *pdu;
+	char buf[1024];
+	size_t buflen = sizeof(buf);
+	hd->msgflags &= ~MSGFLAG_REPORTABLE;
+
+	message = snmp_recv(s, timeout, buf, &buflen);
+	pdu = snmpv3_decode(1, buf, sizeof(buf), message, hd, sp);
+	snmp_pdu_validate(pdu, REQUEST_RESPONSE, requestid, error, index,
+	    varbindlist, nvarbind);
+
+	ober_free_elements(message);
 }
 
 void
@@ -753,101 +1157,123 @@ snmp_pdu_validate(struct ber_element *pdu, enum snmp_request request,
 		if (i >= nvarbind)
 			continue;
 		snmp_oid2ber_oid(&varbindlist[i].name, &oid);
-		if (ober_oid_cmp(&moid, &oid) != 0)
+		if (!varbindlist[i].nameunknown && ober_oid_cmp(&moid, &oid) != 0)
 			errx(1, "%s: unexpected oid (%s/%s)", __func__,
 			    smi_oid2string(&moid, oidbuf1, sizeof(oidbuf1)),
 			    smi_oid2string(&oid, oidbuf2, sizeof(oidbuf2)));
-		switch (varbindlist[i].type) {
-		case TYPE_INTEGER:
-			if (value->be_class != BER_CLASS_UNIVERSAL ||
-			    value->be_type != BER_TYPE_INTEGER ||
-			    value->be_numeric != varbindlist[i].data.int32)
+		if (value->be_class == BER_CLASS_UNIVERSAL &&
+		    value->be_type == BER_TYPE_INTEGER) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_INTEGER)
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_OCTETSTRING:
-			if (value->be_class != BER_CLASS_UNIVERSAL ||
-			    value->be_type != BER_TYPE_OCTETSTRING ||
-			    value->be_len !=
-			    varbindlist[i].data.octetstring.len ||
+			if (!varbindlist[i].dataunknown &&
+			    varbindlist[i].data.int32 != value->be_numeric)
+				errx(1, "%s: unexpected value", __func__);
+		} else if (value->be_class == BER_CLASS_UNIVERSAL &&
+		    value->be_type == BER_TYPE_OCTETSTRING) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_OCTETSTRING)
+				errx(1, "%s: unexpected value", __func__);
+			if (!varbindlist[i].dataunknown && (
+			    varbindlist[i].data.octetstring.len !=
+			    value->be_len ||
 			    memcmp(varbindlist[i].data.octetstring.string,
-			    value->be_val, value->be_len) != 0)
+			    value->be_val, value->be_len) != 0))
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_NULL:
-			if (value->be_class != BER_CLASS_UNIVERSAL ||
-			    value->be_type != BER_TYPE_NULL)
+		} else if (value->be_class == BER_CLASS_UNIVERSAL &&
+		    value->be_type == BER_TYPE_NULL) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_NULL)
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_OBJECTIDENTIFIER:
-			if (value->be_class != BER_CLASS_UNIVERSAL ||
-			    value->be_type != BER_TYPE_OBJECT)
+		} else if (value->be_class == BER_CLASS_UNIVERSAL &&
+		    value->be_type == BER_TYPE_OBJECT) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_OBJECTIDENTIFIER)
 				errx(1, "%s: unexpected value", __func__);
-			if (ober_get_oid(value, &moid) == -1)
+			if (!varbindlist[i].dataunknown) {
+				if (ober_get_oid(value, &moid) == -1)
+					errx(1, "%s: unexpected value",
+					    __func__);
+				snmp_oid2ber_oid(&varbindlist[i].data.oid,
+				    &oid);
+				if (ober_oid_cmp(&oid, &moid) != 0)
+					errx(1, "%s: unexpected value",
+					    __func__);
+			}
+		} else if (value->be_class == BER_CLASS_APPLICATION &&
+		    value->be_type == APPLICATION_IPADDR) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_IPADDRESS)
 				errx(1, "%s: unexpected value", __func__);
-			snmp_oid2ber_oid(&varbindlist[i].data.oid, &oid);
-			if (ober_oid_cmp(&oid, &moid) != 0)
+			if (value->be_len != 4)
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_IPADDRESS:
-			if (value->be_class != BER_CLASS_APPLICATION ||
-			    value->be_type != APPLICATION_IPADDR ||
-			    value->be_len !=
-			    varbindlist[i].data.octetstring.len ||
+			if (!varbindlist[i].dataunknown) {
+				if (memcmp(value->be_val,
+				    varbindlist[i].data.octetstring.string,
+				    value->be_len) != 0)
+					errx(1, "%s: unexpected value",
+					    __func__);
+			}
+		} else if (value->be_class == BER_CLASS_APPLICATION &&
+		    value->be_type == APPLICATION_COUNTER32) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_COUNTER32)
+				errx(1, "%s: unexpected value", __func__);
+			if (!varbindlist[i].dataunknown &&
+			    varbindlist[i].data.uint32 != value->be_numeric)
+				errx(1, "%s: unexpected value", __func__);
+		} else if (value->be_class == BER_CLASS_APPLICATION &&
+		    value->be_type == APPLICATION_GAUGE32) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_GAUGE32)
+				errx(1, "%s: unexpected value", __func__);
+			if (!varbindlist[i].dataunknown &&
+			    varbindlist[i].data.uint32 != value->be_numeric)
+				errx(1, "%s: unexpected value", __func__);
+		} else if (value->be_class == BER_CLASS_APPLICATION &&
+		    value->be_type == APPLICATION_TIMETICKS) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_TIMETICKS)
+				errx(1, "%s: unexpected value", __func__);
+			if (!varbindlist[i].dataunknown &&
+			    varbindlist[i].data.uint32 != value->be_numeric)
+				errx(1, "%s: unexpected value", __func__);
+		} else if (value->be_class == BER_CLASS_APPLICATION &&
+		    value->be_type == APPLICATION_OPAQUE) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_OPAQUE)
+				errx(1, "%s: unexpected value", __func__);
+			if (!varbindlist[i].dataunknown && (
+			    varbindlist[i].data.octetstring.len !=
+			    value->be_len ||
 			    memcmp(varbindlist[i].data.octetstring.string,
-			    value->be_val, value->be_len) != 0)
+			    value->be_val, value->be_len) != 0))
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_COUNTER32:
-			if (value->be_class != BER_CLASS_APPLICATION ||
-			    value->be_type != APPLICATION_COUNTER32 ||
-			    value->be_numeric != varbindlist[i].data.uint32)
+		} else if (value->be_class == BER_CLASS_APPLICATION &&
+		    value->be_type == APPLICATION_COUNTER64) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_COUNTER64)
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_GAUGE32:
-			if (value->be_class != BER_CLASS_APPLICATION ||
-			    value->be_type != APPLICATION_GAUGE32 ||
-			    value->be_numeric != varbindlist[i].data.uint32)
+			if (!varbindlist[i].dataunknown &&
+			    varbindlist[i].data.uint64 != value->be_numeric)
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_TIMETICKS:
-			if (value->be_class != BER_CLASS_APPLICATION ||
-			    value->be_type != APPLICATION_TIMETICKS ||
-			    value->be_numeric != varbindlist[i].data.uint32)
+		} else if (value->be_class == BER_CLASS_CONTEXT &&
+		    value->be_type == EXCEPTION_NOSUCHOBJECT) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_NOSUCHOBJECT)
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_OPAQUE:
-			if (value->be_class != BER_CLASS_APPLICATION ||
-			    value->be_type != APPLICATION_OPAQUE ||
-			    value->be_len !=
-			    varbindlist[i].data.octetstring.len ||
-			    memcmp(varbindlist[i].data.octetstring.string,
-			    value->be_val, value->be_len) != 0)
+		} else if (value->be_class == BER_CLASS_CONTEXT &&
+		    value->be_type == EXCEPTION_NOSUCHINSTANCE) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_NOSUCHINSTANCE)
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_COUNTER64:
-			if (value->be_class != BER_CLASS_APPLICATION ||
-			    value->be_type != APPLICATION_COUNTER64 ||
-			    value->be_numeric != varbindlist[i].data.uint64)
+		} else if (value->be_class == BER_CLASS_CONTEXT &&
+		    value->be_type == EXCEPTION_ENDOFMIBVIEW) {
+			if (!varbindlist[i].typeunknown &&
+			    varbindlist[i].type != TYPE_ENDOFMIBVIEW)
 				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_NOSUCHOBJECT:
-			if (value->be_class != BER_CLASS_CONTEXT ||
-			    value->be_type != EXCEPTION_NOSUCHOBJECT)
-				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_NOSUCHINSTANCE:
-			if (value->be_class != BER_CLASS_CONTEXT ||
-			    value->be_type != EXCEPTION_NOSUCHINSTANCE)
-				errx(1, "%s: unexpected value", __func__);
-			break;
-		case TYPE_ENDOFMIBVIEW:
-			if (value->be_class != BER_CLASS_CONTEXT ||
-			    value->be_type != EXCEPTION_ENDOFMIBVIEW)
-				errx(1, "%s: unexpected value", __func__);
-			break;
-		default:
-			errx(1, "%s: unexpected type", __func__);
-		}
+		} else
+			errx(1, "%s: unexpected value", __func__);
 	}
 	if (i != nvarbind)
 		errx(1, "%s: unexpected amount of varbind (%zu/%zu)", __func__,
