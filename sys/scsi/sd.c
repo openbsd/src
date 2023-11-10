@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.334 2023/05/10 15:28:26 krw Exp $	*/
+/*	$OpenBSD: sd.c,v 1.335 2023/11/10 17:43:39 krw Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -1332,12 +1332,11 @@ sddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
 			nwrt = totwrt;
 
 #ifndef	SD_DUMP_NOT_TRUSTED
-		xs = scsi_xs_get(sc->sc_link, SCSI_NOSLEEP);
+		xs = scsi_xs_get(sc->sc_link, SCSI_NOSLEEP | SCSI_DATA_OUT);
 		if (xs == NULL)
 			return ENOMEM;
 
 		xs->timeout = 10000;
-		SET(xs->flags, SCSI_DATA_OUT);
 		xs->data = va;
 		xs->datalen = nwrt * sectorsize;
 
@@ -1864,7 +1863,7 @@ sd_flush(struct sd_softc *sc, int flags)
 	 * that the command is not supported by the device.
 	 */
 
-	xs = scsi_xs_get(link, flags);
+	xs = scsi_xs_get(link, flags | SCSI_IGNORE_ILLEGAL_REQUEST);
 	if (xs == NULL) {
 		SC_DEBUG(link, SDEV_DB1, ("cache sync failed to get xs\n"));
 		return EIO;
@@ -1875,7 +1874,6 @@ sd_flush(struct sd_softc *sc, int flags)
 
 	xs->cmdlen = sizeof(*cmd);
 	xs->timeout = 100000;
-	SET(xs->flags, SCSI_IGNORE_ILLEGAL_REQUEST);
 
 	error = scsi_xs_sync(xs);
 
