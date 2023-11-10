@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.118 2023/05/07 13:03:03 krw Exp $
+.\"	$OpenBSD: fdisk.8,v 1.119 2023/11/10 15:41:11 krw Exp $
 .\"
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd $Mdocdate: May 7 2023 $
+.Dd $Mdocdate: November 10 2023 $
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -320,23 +320,20 @@ The special size value
 .Sq *
 causes the partition to be sized to use the remainder of the disk.
 .It Cm flag Ar # Op Ar value
-Sets the partition entry's flag value.
+Set the partition's flag (MBR) or attribute (GPT) value.
+.Ar value
+can be a positive integer or a hex string.
+An MBR partition will accept values from 0 to 0xff.
+A GPT partition will accept values from 0 to 0xfffffffffffffff.
 If
 .Ar value
-is not provided the partition entry is flagged as being bootable
-and all other partition entries are flagged as not bootable.
-Partition entries flagged as bootable are printed with a
+is not provided the partition's bootable flag is set
+and all other partitions have their bootable flags reset.
+MBR partitions with the bootable flag set are printed with a
 .Sq *
 prefix.
-.Pp
-If
-.Ar value
-is provided the partition entry's flag value is set to
-.Ar value
-and no other partition entry is modified.
-A
-.Ar value
-of 0 is used to clear the bootable flag.
+GPT partitions with the bootable flag set display 'bootable' in
+their attributes list.
 .It Cm update
 Updates the MBR bootcode.
 If a bootcode file is present (see

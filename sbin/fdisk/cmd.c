@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.176 2023/04/10 19:44:43 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.177 2023/11/10 15:41:11 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -20,6 +20,7 @@
 #include <sys/disklabel.h>
 
 #include <err.h>
+#include <errno.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -40,6 +41,7 @@ int		 edit(const int, struct mbr *);
 int		 gsetpid(const int);
 int		 setpid(const int, struct mbr *);
 int		 parsepn(const char *);
+int		 parseflag(const char *, uint64_t *);
 
 int		 ask_num(const char *, int, int, int);
 int		 ask_pid(const int);
@@ -170,6 +172,38 @@ parsepn(const char *pnstr)
 	}
 
 	return pn;
+}
+
+int
+parseflag(const char *flagstr, uint64_t *flagvalue)
+{
+	const char		*errstr;
+	char			*ep;
+	uint64_t		 val;
+
+	if (flagstr[0] == '0' && (flagstr[1] == 'x' || flagstr[1] == 'X')) {
+		errno = 0;
+		val = strtoull(flagstr, &ep, 16);
+		if (errno || ep == flagstr || *ep != '\0' ||
+		    (gh.gh_sig != GPTSIGNATURE && val > 0xff)) {
+			printf("flag value is invalid: %s\n", flagstr);
+			return -1;
+		}
+		goto done;
+	}
+
+	if (gh.gh_sig == GPTSIGNATURE)
+		val = strtonum(flagstr, 0, INT64_MAX, &errstr);
+	else
+		val = strtonum(flagstr, 0, 0xff, &errstr);
+	if (errstr) {
+		printf("flag value is %s: %s\n", errstr, flagstr);
+		return -1;
+	}
+
+ done:
+	*flagvalue = val;
+	return 0;
 }
 
 int
@@ -453,9 +487,8 @@ int
 Xflag(const char *args, struct mbr *mbr)
 {
 	char			 lbuf[LINEBUFSZ];
-	const char		*errstr;
 	char			*part, *flag;
-	long long		 val = -1;
+	uint64_t		 val;
 	int			 i, pn;
 
 	if (strlcpy(lbuf, args, sizeof(lbuf)) >= sizeof(lbuf)) {
@@ -471,14 +504,8 @@ Xflag(const char *args, struct mbr *mbr)
 		return CMD_CONT;
 
 	if (flag != NULL) {
-		if (gh.gh_sig == GPTSIGNATURE)
-			val = strtonum(flag, 0, INT64_MAX, &errstr);
-		else
-			val = strtonum(flag, 0, 0xff, &errstr);
-		if (errstr) {
-			printf("flag value is %s: %s.\n", errstr, flag);
+		if (parseflag(flag, &val) == -1)
 			return CMD_CONT;
-		}
 		if (gh.gh_sig == GPTSIGNATURE)
 			gp[pn].gp_attrs = val;
 		else
