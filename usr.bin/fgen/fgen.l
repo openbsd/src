@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: fgen.l,v 1.15 2022/12/26 19:16:00 jmc Exp $	*/
+/*	$OpenBSD: fgen.l,v 1.16 2023/11/10 16:02:47 jasper Exp $	*/
 /*	$NetBSD: fgen.l,v 1.37 2016/03/08 20:13:44 christos Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
@@ -79,7 +79,6 @@ static char *outbuf = NULL;
 static char *outfile, *infile;
 #define BUFCLICK	(1024*1024)
 static size_t outbufsiz = 0;
-static char *myname = NULL;
 static int offsetsize = 8;
 static int defining = 0;
 static int tokenizer = 0;
@@ -2063,7 +2062,7 @@ tokenize(YY_BUFFER_STATE yinput)
 #else
 				token_err(yylineno, infile, yytext,
 					"%s: undefined token `%s'\n",
-					myname, token->text);
+					__func__, token->text);
 #endif
 			}
 			break;
