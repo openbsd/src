@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.2051 2023/09/25 15:37:36 deraadt Exp $
+$OpenBSD: pcidevs,v 1.2052 2023/11/10 12:14:04 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
 
 /*
@@ -1282,6 +1282,7 @@ product ATI PPB_1		0x1478	PCIE
 product ATI PPB_2		0x1479	PCIE
 product ATI MENDOCINO		0x1506	Mendocino
 product ATI PHOENIX		0x15bf	Phoenix
+product ATI PHOENIX2		0x15c8	Phoenix 2
 product ATI PICASSO		0x15d8	Picasso
 product ATI RAVEN_VEGA		0x15dd	Radeon Vega
 product ATI RAVEN_VEGA_HDA	0x15de	Radeon Vega HD Audio
