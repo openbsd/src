@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.638 2023/11/02 16:14:46 paco Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.639 2023/11/10 12:35:54 caspar Exp $
 .\"
 .\" Copyright (c) 2000-2008 Marc Espie
 .\"
@@ -24,7 +24,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: November 2 2023 $
+.Dd $Mdocdate: November 10 2023 $
 .Dt BSD.PORT.MK 5
 .Os
 .Sh NAME
@@ -2523,6 +2523,13 @@ See also
 .Ev IGNORE
 and
 .Ev TRY_BROKEN .
+.It Ev NO_SCCACHE
+Set to
+.Sq Yes
+to prevent sccache from being used when building a certain port,
+even when
+.Ev USE_SCCACHE
+is set.
 .It Ev NO_TEST
 Port does not have any regression tests.
 Only set to
@@ -3171,6 +3178,15 @@ The corresponding packages will be built right before the
 stage, and
 .Xr pkg_add 1
 will take care of installing them.
+.It Ev SCCACHE_DIR
+Sets the cache directory used when
+.Ev USE_SCCACHE
+is set to yes.
+Defaults to ${WRKOBJDIR}/.sccache.
+.It Ev SCCACHE_ENV
+Sets additional environment variables when
+.Ev USE_SCCACHE
+is set to yes.
 .It Ev SEPARATE_BUILD
 Many GNU configure ports can be built in a directory distinct from the
 place they were unpacked.
@@ -3656,6 +3672,11 @@ adding
 .Fl -no-execute-only .
 Use when a port does not work with execute-only (unreadable) code sections
 which are used by default by the linker on some architectures.
+.It Ev USE_SCCACHE
+User settings.
+Set to
+.Sq Yes
+to use sccache when building Rust ports.
 .It Ev USE_WXNEEDED
 If set to
 .Sq Yes ,
