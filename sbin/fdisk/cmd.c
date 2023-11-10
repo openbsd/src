@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.177 2023/11/10 15:41:11 krw Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.178 2023/11/10 16:20:52 krw Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -517,7 +517,7 @@ Xflag(const char *args, struct mbr *mbr)
 				if (i == pn)
 					gp[i].gp_attrs = GPTPARTATTR_BOOTABLE;
 				else
-					gp[i].gp_attrs = 0;
+					gp[i].gp_attrs &= ~GPTPARTATTR_BOOTABLE;
 			}
 		} else {
 			for (i = 0; i < nitems(mbr->mbr_prt); i++) {
