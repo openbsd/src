@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.5 2023/05/12 14:14:16 claudio Exp $ */
+/*	$OpenBSD: ksyms.c,v 1.6 2023/11/10 18:56:21 jasper Exp $ */
 
 /*
  * Copyright (c) 2016 Martin Pieuchot <mpi@openbsd.org>
@@ -20,11 +20,9 @@
 
 #include <sys/types.h>
 
-#include <assert.h>
 #include <err.h>
 #include <fcntl.h>
 #include <gelf.h>
-#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

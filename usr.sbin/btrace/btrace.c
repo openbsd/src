@@ -1,4 +1,4 @@
-/*	$OpenBSD: btrace.c,v 1.80 2023/10/22 19:30:35 cheloha Exp $ */
+/*	$OpenBSD: btrace.c,v 1.81 2023/11/10 18:56:21 jasper Exp $ */
 
 /*
  * Copyright (c) 2019 - 2023 Martin Pieuchot <mpi@openbsd.org>
@@ -17,7 +17,6 @@
  */
 
 #include <sys/ioctl.h>
-#include <sys/exec_elf.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
 #include <sys/queue.h>
