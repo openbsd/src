@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.79 2022/09/01 21:15:54 job Exp $	*/
+/*	$OpenBSD: ps.c,v 1.80 2023/11/10 09:17:02 kn Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -226,11 +226,24 @@ main(int argc, char *argv[])
 			ttydev = sb.st_rdev;
 			break;
 		}
-		case 'U':
-			if (uid_from_user(optarg, &uid) == -1)
-				errx(1, "%s: no such user", optarg);
+		case 'U': {
+			int found = 0;
+
+			if (uid_from_user(optarg, &uid) == 0)
+				found = 1;
+			else {
+				const char *errstr;
+
+				uid = strtonum(optarg, 0, UID_MAX, &errstr);
+				if (errstr == NULL &&
+				    user_from_uid(uid, 1) != NULL)
+					found = 1;
+			}
+			if (!found)
+				errx(1, "%s: unknown user", optarg);
 			Uflag = xflg = 1;
 			break;
+		}
 		case 'u':
 			parsefmt(ufmt);
 			sortby = SORTCPU;
@@ -480,11 +493,12 @@ kludge_oldps_options(char *s)
 	memmove(ns, s, (size_t)(cp - s));	/* copy up to trailing number */
 	ns += cp - s;
 	/*
-	 * if there's a trailing number, and not a preceding 'p' (pid) or
-	 * 't' (tty) flag, then assume it's a pid and insert a 'p' flag.
+	 * if there's a trailing number, and not a preceding 'p' (pid),
+	 * 't' (tty) or 'U' (user) flag,
+	 * then assume it's a pid and insert a 'p' flag.
 	 */
 	if (isdigit((unsigned char)*cp) &&
-	    (cp == s || (cp[-1] != 't' && cp[-1] != 'p' &&
+	    (cp == s || (cp[-1] != 't' && cp[-1] != 'p' && cp[-1] != 'U' &&
 	    (cp - 1 == s || cp[-2] != 't'))))
 		*ns++ = 'p';
 	/* and append the number */
@@ -611,7 +625,7 @@ usage(void)
 {
 	fprintf(stderr, "usage: %s [-AacefHhjkLlmrSTuvwx] [-M core] [-N system]"
 	    " [-O fmt] [-o fmt] [-p pid]\n", __progname);
-	fprintf(stderr, "%-*s[-t tty] [-U username] [-W swap]\n",
+	fprintf(stderr, "%-*s[-t tty] [-U user] [-W swap]\n",
 	    (int)strlen(__progname) + 8, "");
 	exit(1);
 }
