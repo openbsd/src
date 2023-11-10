@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_age.c,v 1.38 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_age.c,v 1.39 2023/11/10 15:51:20 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -220,7 +220,7 @@ age_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = age_ioctl;
 	ifp->if_start = age_start;
 	ifp->if_watchdog = age_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, AGE_TX_RING_CNT - 1);
+	ifq_init_maxlen(&ifp->if_snd, AGE_TX_RING_CNT - 1);
 	bcopy(sc->age_eaddr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 

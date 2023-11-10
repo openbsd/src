@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqe.c,v 1.14 2023/10/11 12:52:00 stsp Exp $	*/
+/*	$OpenBSD: dwqe.c,v 1.15 2023/11/10 15:51:20 bluhm Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -117,7 +117,7 @@ dwqe_attach(struct dwqe_softc *sc)
 	ifp->if_ioctl = dwqe_ioctl;
 	ifp->if_qstart = dwqe_start;
 	ifp->if_watchdog = dwqe_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, DWQE_NTXDESC - 1);
+	ifq_init_maxlen(&ifp->if_snd, DWQE_NTXDESC - 1);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

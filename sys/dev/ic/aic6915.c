@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic6915.c,v 1.24 2022/01/09 05:42:38 jsg Exp $	*/
+/*	$OpenBSD: aic6915.c,v 1.25 2023/11/10 15:51:20 bluhm Exp $	*/
 /*	$NetBSD: aic6915.c,v 1.15 2005/12/24 20:27:29 perry Exp $	*/
 
 /*-
@@ -289,7 +289,7 @@ sf_attach(struct sf_softc *sc)
 	ifp->if_ioctl = sf_ioctl;
 	ifp->if_start = sf_start;
 	ifp->if_watchdog = sf_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, SF_NTXDESC_MASK);
+	ifq_init_maxlen(&ifp->if_snd, SF_NTXDESC_MASK);
 
 	/*
 	 * Attach the interface.

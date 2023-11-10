@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rge.c,v 1.21 2022/12/21 02:31:09 kevlo Exp $	*/
+/*	$OpenBSD: if_rge.c,v 1.22 2023/11/10 15:51:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2019, 2020 Kevin Lo <kevlo@openbsd.org>
@@ -288,7 +288,7 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = rge_ioctl;
 	ifp->if_qstart = rge_start;
 	ifp->if_watchdog = rge_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, RGE_TX_LIST_CNT - 1);
+	ifq_init_maxlen(&ifp->if_snd, RGE_TX_LIST_CNT - 1);
 	ifp->if_hardmtu = RGE_JUMBO_MTU;
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |

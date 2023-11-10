@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_stge.c,v 1.72 2022/03/11 18:00:48 mpi Exp $	*/
+/*	$OpenBSD: if_stge.c,v 1.73 2023/11/10 15:51:24 bluhm Exp $	*/
 /*	$NetBSD: if_stge.c,v 1.27 2005/05/16 21:35:32 bouyer Exp $	*/
 
 /*-
@@ -361,7 +361,7 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 #ifdef STGE_JUMBO
 	ifp->if_hardmtu = STGE_JUMBO_MTU;
 #endif
-	ifq_set_maxlen(&ifp->if_snd, STGE_NTXDESC - 1);
+	ifq_init_maxlen(&ifp->if_snd, STGE_NTXDESC - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

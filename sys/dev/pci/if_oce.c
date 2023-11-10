@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_oce.c,v 1.107 2023/04/28 10:18:58 bluhm Exp $	*/
+/*	$OpenBSD: if_oce.c,v 1.108 2023/11/10 15:51:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2012 Mike Belopuhov
@@ -823,7 +823,7 @@ oce_attach_ifp(struct oce_softc *sc)
 	ifp->if_watchdog = oce_watchdog;
 	ifp->if_hardmtu = OCE_MAX_MTU;
 	ifp->if_softc = sc;
-	ifq_set_maxlen(&ifp->if_snd, sc->sc_tx_ring_size - 1);
+	ifq_init_maxlen(&ifp->if_snd, sc->sc_tx_ring_size - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
 	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;

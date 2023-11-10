@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.138 2022/02/22 01:15:01 guenther Exp $	*/
+/*	$OpenBSD: xl.c,v 1.139 2023/11/10 15:51:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2461,7 +2461,7 @@ xl_attach(struct xl_softc *sc)
 		ifp->if_start = xl_start;
 	ifp->if_watchdog = xl_watchdog;
 	ifp->if_baudrate = 10000000;
-	ifq_set_maxlen(&ifp->if_snd, XL_TX_LIST_CNT - 1);
+	ifq_init_maxlen(&ifp->if_snd, XL_TX_LIST_CNT - 1);
 	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.129 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.130 2023/11/10 15:51:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -213,7 +213,7 @@ txp_attachhook(struct device *self)
 	ifp->if_start = txp_start;
 	ifp->if_watchdog = txp_watchdog;
 	ifp->if_baudrate = IF_Mbps(10);
-	ifq_set_maxlen(&ifp->if_snd, TX_ENTRIES);
+	ifq_init_maxlen(&ifp->if_snd, TX_ENTRIES);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	txp_capabilities(sc);

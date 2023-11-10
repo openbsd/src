@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.77 2023/04/11 00:45:08 jsg Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.78 2023/11/10 15:51:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1962,7 +1962,7 @@ tl_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = tl_ioctl;
 	ifp->if_start = tl_start;
 	ifp->if_watchdog = tl_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, TL_TX_LIST_CNT - 1);
+	ifq_init_maxlen(&ifp->if_snd, TL_TX_LIST_CNT - 1);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

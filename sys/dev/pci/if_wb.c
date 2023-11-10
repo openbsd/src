@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.74 2022/03/11 18:00:50 mpi Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.75 2023/11/10 15:51:24 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -758,7 +758,7 @@ wb_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = wb_ioctl;
 	ifp->if_start = wb_start;
 	ifp->if_watchdog = wb_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, WB_TX_LIST_CNT - 1);
+	ifq_init_maxlen(&ifp->if_snd, WB_TX_LIST_CNT - 1);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 

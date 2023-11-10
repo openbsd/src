@@ -1,4 +1,4 @@
-/*	$OpenBSD: sxie.c,v 1.33 2021/10/24 17:52:28 mpi Exp $	*/
+/*	$OpenBSD: sxie.c,v 1.34 2023/11/10 15:51:19 bluhm Exp $	*/
 /*
  * Copyright (c) 2012-2013 Patrick Wildt <patrick@blueri.se>
  * Copyright (c) 2013 Artturi Alm
@@ -262,7 +262,7 @@ sxie_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = sxie_watchdog;
 	ifp->if_capabilities = IFCAP_VLAN_MTU; /* XXX status check in recv? */
 
-	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
+	ifq_init_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 
 	/* Initialize MII/media info. */
 	mii = &sc->sc_mii;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dwge.c,v 1.19 2023/08/15 08:27:30 miod Exp $	*/
+/*	$OpenBSD: if_dwge.c,v 1.20 2023/11/10 15:51:19 bluhm Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017 Patrick Wildt <patrick@blueri.se>
@@ -512,7 +512,7 @@ dwge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = dwge_ioctl;
 	ifp->if_qstart = dwge_start;
 	ifp->if_watchdog = dwge_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, DWGE_NTXDESC - 1);
+	ifq_init_maxlen(&ifp->if_snd, DWGE_NTXDESC - 1);
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

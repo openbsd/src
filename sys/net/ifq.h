@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.h,v 1.40 2023/10/08 07:44:52 claudio Exp $ */
+/*	$OpenBSD: ifq.h,v 1.41 2023/11/10 15:51:24 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -435,6 +435,7 @@ void		 ifq_deq_commit(struct ifqueue *, struct mbuf *);
 void		 ifq_deq_rollback(struct ifqueue *, struct mbuf *);
 struct mbuf	*ifq_dequeue(struct ifqueue *);
 int		 ifq_hdatalen(struct ifqueue *);
+void		 ifq_init_maxlen(struct ifqueue *, unsigned int);
 void		 ifq_mfreem(struct ifqueue *, struct mbuf *);
 void		 ifq_mfreeml(struct ifqueue *, struct mbuf_list *);
 unsigned int	 ifq_purge(struct ifqueue *);
@@ -448,9 +449,8 @@ int		 ifq_deq_sleep(struct ifqueue *, struct mbuf **, int, int,
 		     const char *, volatile unsigned int *,
 		     volatile unsigned int *);
 
-#define	ifq_len(_ifq)			((_ifq)->ifq_len)
-#define	ifq_empty(_ifq)			(ifq_len(_ifq) == 0)
-#define	ifq_set_maxlen(_ifq, _l)	((_ifq)->ifq_maxlen = (_l))
+#define ifq_len(_ifq)		READ_ONCE((_ifq)->ifq_len)
+#define ifq_empty(_ifq)		(ifq_len(_ifq) == 0)
 
 static inline int
 ifq_is_priq(struct ifqueue *ifq)
@@ -490,8 +490,8 @@ int		 ifiq_input(struct ifiqueue *, struct mbuf_list *);
 int		 ifiq_enqueue(struct ifiqueue *, struct mbuf *);
 void		 ifiq_add_data(struct ifiqueue *, struct if_data *);
 
-#define	ifiq_len(_ifiq)			ml_len(&(_ifiq)->ifiq_ml)
-#define	ifiq_empty(_ifiq)		ml_empty(&(_ifiq)->ifiq_ml)
+#define ifiq_len(_ifiq)		READ_ONCE(ml_len(&(_ifiq)->ifiq_ml))
+#define ifiq_empty(_ifiq)	(ifiq_len(_ifiq) == 0)
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bnx.c,v 1.132 2022/03/11 18:00:45 mpi Exp $	*/
+/*	$OpenBSD: if_bnx.c,v 1.133 2023/11/10 15:51:20 bluhm Exp $	*/
 
 /*-
  * Copyright (c) 2006 Broadcom Corporation
@@ -877,7 +877,7 @@ bnx_attachhook(struct device *self)
 	ifp->if_watchdog = bnx_watchdog;
 	ifp->if_hardmtu = BNX_MAX_JUMBO_ETHER_MTU_VLAN -
 	    sizeof(struct ether_header);
-	ifq_set_maxlen(&ifp->if_snd, USABLE_TX_BD - 1);
+	ifq_init_maxlen(&ifp->if_snd, USABLE_TX_BD - 1);
 	bcopy(sc->eaddr, sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 	bcopy(sc->bnx_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 

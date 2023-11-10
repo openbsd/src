@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifq.c,v 1.52 2023/10/08 07:44:52 claudio Exp $ */
+/*	$OpenBSD: ifq.c,v 1.53 2023/11/10 15:51:24 bluhm Exp $ */
 
 /*
  * Copyright (c) 2015 David Gwynne <dlg@openbsd.org>
@@ -287,7 +287,7 @@ ifq_init(struct ifqueue *ifq, struct ifnet *ifp, unsigned int idx)
 	task_set(&ifq->ifq_restart, ifq_restart_task, ifq);
 
 	if (ifq->ifq_maxlen == 0)
-		ifq_set_maxlen(ifq, IFQ_MAXLEN);
+		ifq_init_maxlen(ifq, IFQ_MAXLEN);
 
 	ifq->ifq_idx = idx;
 
@@ -527,6 +527,13 @@ ifq_hdatalen(struct ifqueue *ifq)
 	}
 
 	return (len);
+}
+
+void
+ifq_init_maxlen(struct ifqueue *ifq, unsigned int maxlen)
+{
+	/* this is not MP safe, use only during attach */
+	ifq->ifq_maxlen = maxlen;
 }
 
 unsigned int

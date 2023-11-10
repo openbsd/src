@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 ***************************************************************************/
 
-/* $OpenBSD: if_ixgb.c,v 1.75 2022/03/11 18:00:45 mpi Exp $ */
+/* $OpenBSD: if_ixgb.c,v 1.76 2023/11/10 15:51:20 bluhm Exp $ */
 
 #include <dev/pci/if_ixgb.h>
 
@@ -1011,7 +1011,7 @@ ixgb_setup_interface(struct ixgb_softc *sc)
 	ifp->if_watchdog = ixgb_watchdog;
 	ifp->if_hardmtu =
 		IXGB_MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN - ETHER_CRC_LEN;
-	ifq_set_maxlen(&ifp->if_snd, sc->num_tx_desc - 1);
+	ifq_init_maxlen(&ifp->if_snd, sc->num_tx_desc - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

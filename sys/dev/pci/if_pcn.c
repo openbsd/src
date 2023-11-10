@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pcn.c,v 1.48 2022/07/10 21:13:41 bluhm Exp $	*/
+/*	$OpenBSD: if_pcn.c,v 1.49 2023/11/10 15:51:20 bluhm Exp $	*/
 /*	$NetBSD: if_pcn.c,v 1.26 2005/05/07 09:15:44 is Exp $	*/
 
 /*
@@ -769,7 +769,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_ioctl = pcn_ioctl;
 	ifp->if_start = pcn_start;
 	ifp->if_watchdog = pcn_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, PCN_NTXDESC -1);
+	ifq_init_maxlen(&ifp->if_snd, PCN_NTXDESC -1);
 
 	/* Attach the interface. */
 	if_attach(ifp);

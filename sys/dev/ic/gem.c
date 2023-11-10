@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.127 2022/07/12 22:08:17 bluhm Exp $	*/
+/*	$OpenBSD: gem.c,v 1.128 2023/11/10 15:51:20 bluhm Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -222,7 +222,7 @@ gem_config(struct gem_softc *sc)
 	ifp->if_qstart = gem_start;
 	ifp->if_ioctl = gem_ioctl;
 	ifp->if_watchdog = gem_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, GEM_NTXDESC - 1);
+	ifq_init_maxlen(&ifp->if_snd, GEM_NTXDESC - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

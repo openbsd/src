@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
+/*	$OpenBSD: if_igc.c,v 1.14 2023/11/10 15:51:20 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
  *
@@ -786,7 +786,7 @@ igc_setup_interface(struct igc_softc *sc)
 	ifp->if_watchdog = igc_watchdog;
 	ifp->if_hardmtu = sc->hw.mac.max_frame_size - ETHER_HDR_LEN -
 	    ETHER_CRC_LEN;
-	ifq_set_maxlen(&ifp->if_snd, sc->num_tx_desc - 1);
+	ifq_init_maxlen(&ifp->if_snd, sc->num_tx_desc - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

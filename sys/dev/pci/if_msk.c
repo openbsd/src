@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_msk.c,v 1.142 2022/03/11 18:00:46 mpi Exp $	*/
+/*	$OpenBSD: if_msk.c,v 1.143 2023/11/10 15:51:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -1068,7 +1068,7 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sk_type != SK_YUKON_FE &&
 	    sc->sk_type != SK_YUKON_FE_P)
 		ifp->if_hardmtu = SK_JUMBO_MTU;
-	ifq_set_maxlen(&ifp->if_snd, MSK_TX_RING_CNT - 1);
+	ifq_init_maxlen(&ifp->if_snd, MSK_TX_RING_CNT - 1);
 	bcopy(sc_if->sk_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

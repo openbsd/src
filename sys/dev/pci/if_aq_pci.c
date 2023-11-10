@@ -1,4 +1,4 @@
-/* $OpenBSD: if_aq_pci.c,v 1.25 2023/10/01 09:03:14 kettenis Exp $ */
+/* $OpenBSD: if_aq_pci.c,v 1.26 2023/11/10 15:51:20 bluhm Exp $ */
 /*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
 
 /*
@@ -1365,7 +1365,7 @@ aq_attach(struct device *parent, struct device *self, void *aux)
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
-	ifq_set_maxlen(&ifp->if_snd, AQ_TXD_NUM);
+	ifq_init_maxlen(&ifp->if_snd, AQ_TXD_NUM);
 
 	ifmedia_init(&sc->sc_media, IFM_IMASK, aq_ifmedia_change,
 	    aq_ifmedia_status);

@@ -1,4 +1,4 @@
-/* $OpenBSD: bcmgenet.c,v 1.6 2022/05/02 06:30:45 anton Exp $ */
+/* $OpenBSD: bcmgenet.c,v 1.7 2023/11/10 15:51:20 bluhm Exp $ */
 /* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
@@ -984,7 +984,7 @@ genet_attach(struct genet_softc *sc)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = genet_start;
 	ifp->if_ioctl = genet_ioctl;
-	ifq_set_maxlen(&ifp->if_snd, IFQ_MAXLEN);
+	ifq_init_maxlen(&ifp->if_snd, IFQ_MAXLEN);
 
 	/* 802.1Q VLAN-sized frames are supported */
 	ifp->if_capabilities = IFCAP_VLAN_MTU;

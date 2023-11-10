@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ngbe.c,v 1.1 2023/03/31 08:19:41 kevlo Exp $	*/
+/*	$OpenBSD: if_ngbe.c,v 1.2 2023/11/10 15:51:20 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2015-2017 Beijing WangXun Technology Co., Ltd.
@@ -1024,7 +1024,7 @@ ngbe_setup_interface(struct ngbe_softc *sc)
 	ifp->if_watchdog = ngbe_watchdog;
 	ifp->if_hardmtu = NGBE_MAX_JUMBO_FRAME_SIZE - ETHER_HDR_LEN - 
 	    ETHER_CRC_LEN;
-	ifq_set_maxlen(&ifp->if_snd, sc->num_tx_desc - 1);
+	ifq_init_maxlen(&ifp->if_snd, sc->num_tx_desc - 1);
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU;
 

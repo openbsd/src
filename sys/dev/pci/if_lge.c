@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.79 2022/10/09 02:32:02 kevlo Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.80 2023/11/10 15:51:20 bluhm Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -499,7 +499,7 @@ lge_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = lge_start;
 	ifp->if_watchdog = lge_watchdog;
 	ifp->if_hardmtu = LGE_JUMBO_MTU;
-	ifq_set_maxlen(&ifp->if_snd, LGE_TX_LIST_CNT - 1);
+	ifq_init_maxlen(&ifp->if_snd, LGE_TX_LIST_CNT - 1);
 	DPRINTFN(5, ("bcopy\n"));
 	bcopy(sc->sc_dv.dv_xname, ifp->if_xname, IFNAMSIZ);
 

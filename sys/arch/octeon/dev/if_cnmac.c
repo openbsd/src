@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cnmac.c,v 1.84 2022/12/28 01:39:21 yasuoka Exp $	*/
+/*	$OpenBSD: if_cnmac.c,v 1.85 2023/11/10 15:51:19 bluhm Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -313,7 +313,7 @@ cnmac_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_qstart = cnmac_start;
 	ifp->if_watchdog = cnmac_watchdog;
 	ifp->if_hardmtu = CNMAC_MAX_MTU;
-	ifq_set_maxlen(&ifp->if_snd, max(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
+	ifq_init_maxlen(&ifp->if_snd, max(GATHER_QUEUE_SIZE, IFQ_MAXLEN));
 
 	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_TCPv4 |
 	    IFCAP_CSUM_UDPv4 | IFCAP_CSUM_TCPv6 | IFCAP_CSUM_UDPv6;

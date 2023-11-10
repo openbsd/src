@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_mvneta.c,v 1.30 2023/04/13 02:19:05 jsg Exp $	*/
+/*	$OpenBSD: if_mvneta.c,v 1.31 2023/11/10 15:51:19 bluhm Exp $	*/
 /*	$NetBSD: if_mvneta.c,v 1.41 2015/04/15 10:15:40 hsuenaga Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
@@ -720,7 +720,7 @@ mvneta_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_capabilities &= ~IFCAP_CSUM_TCPv4;
 #endif
 
-	ifq_set_maxlen(&ifp->if_snd, max(MVNETA_TX_RING_CNT - 1, IFQ_MAXLEN));
+	ifq_init_maxlen(&ifp->if_snd, max(MVNETA_TX_RING_CNT - 1, IFQ_MAXLEN));
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, sizeof(ifp->if_xname));
 
 	/*

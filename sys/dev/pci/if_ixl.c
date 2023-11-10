@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ixl.c,v 1.92 2023/10/20 13:21:15 jan Exp $ */
+/*	$OpenBSD: if_ixl.c,v 1.93 2023/11/10 15:51:20 bluhm Exp $ */
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1967,7 +1967,7 @@ ixl_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = ixl_watchdog;
 	ifp->if_hardmtu = IXL_HARDMTU;
 	strlcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
-	ifq_set_maxlen(&ifp->if_snd, sc->sc_tx_ring_ndescs);
+	ifq_init_maxlen(&ifp->if_snd, sc->sc_tx_ring_ndescs);
 
 	ifp->if_capabilities = IFCAP_VLAN_HWTAGGING;
 	ifp->if_capabilities |= IFCAP_CSUM_IPv4 |

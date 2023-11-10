@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.191 2022/01/02 22:36:03 jsg Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.192 2023/11/10 15:51:24 bluhm Exp $	*/
 /*
  * Synchronous PPP link level subroutines.
  *
@@ -713,7 +713,7 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_if.if_type = IFT_PPP;
 	sp->pp_if.if_output = sppp_output;
 	sp->pp_if.if_rtrequest = sppp_rtrequest;
-	ifq_set_maxlen(&sp->pp_if.if_snd, 50);
+	ifq_init_maxlen(&sp->pp_if.if_snd, 50);
 	mq_init(&sp->pp_cpq, 50, IPL_NET);
 	sp->pp_loopcnt = 0;
 	sp->pp_alivecnt = 0;

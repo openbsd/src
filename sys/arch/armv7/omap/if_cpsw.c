@@ -1,4 +1,4 @@
-/* $OpenBSD: if_cpsw.c,v 1.52 2021/10/24 17:52:27 mpi Exp $ */
+/* $OpenBSD: if_cpsw.c,v 1.53 2023/11/10 15:51:19 bluhm Exp $ */
 /*	$NetBSD: if_cpsw.c,v 1.3 2013/04/17 14:36:34 bouyer Exp $	*/
 
 /*
@@ -444,7 +444,7 @@ cpsw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_start = cpsw_start;
 	ifp->if_ioctl = cpsw_ioctl;
 	ifp->if_watchdog = cpsw_watchdog;
-	ifq_set_maxlen(&ifp->if_snd, CPSW_NTXDESCS - 1);
+	ifq_init_maxlen(&ifp->if_snd, CPSW_NTXDESCS - 1);
 	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
 
 	cpsw_stop(ifp);
