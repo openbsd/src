@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.2051 2023/09/25 15:37:36 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.2052 2023/11/10 12:14:04 jsg Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $	*/
@@ -3266,6 +3266,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PHOENIX,
 	    "Phoenix",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PHOENIX2,
+	    "Phoenix 2",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_PICASSO,
