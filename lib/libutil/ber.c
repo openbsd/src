@@ -1,4 +1,4 @@
-/*	$OpenBSD: ber.c,v 1.25 2023/08/22 12:50:27 gerhard Exp $ */
+/*	$OpenBSD: ber.c,v 1.26 2023/11/10 12:12:02 martijn Exp $ */
 
 /*
  * Copyright (c) 2007, 2012 Reyk Floeter <reyk@openbsd.org>
@@ -576,20 +576,25 @@ ober_get_oid(struct ber_element *elm, struct ber_oid *o)
 	return (0);
 }
 
+#define _MAX_SEQ		 128
 struct ber_element *
 ober_printf_elements(struct ber_element *ber, char *fmt, ...)
 {
 	va_list			 ap;
-	int			 d, class;
+	int			 d, class, level = 0;
 	size_t			 len;
 	unsigned int		 type;
 	long long		 i;
 	char			*s;
 	void			*p;
 	struct ber_oid		*o;
-	struct ber_element	*sub = ber, *e;
+	struct ber_element	*parent[_MAX_SEQ], *e;
+	struct ber_element	*origber = ber, *firstber = NULL;
+
+	memset(parent, 0, sizeof(struct ber_element *) * _MAX_SEQ);
 
 	va_start(ap, fmt);
+	
 	while (*fmt) {
 		switch (*fmt++) {
 		case 'B':
@@ -653,16 +658,24 @@ ober_printf_elements(struct ber_element *ber, char *fmt, ...)
 				goto fail;
 			break;
 		case '{':
-			if ((ber = sub = ober_add_sequence(ber)) == NULL)
+			if (level >= _MAX_SEQ-1)
 				goto fail;
+			if ((ber= ober_add_sequence(ber)) == NULL)
+				goto fail;
+			parent[level++] = ber;
 			break;
 		case '(':
-			if ((ber = sub = ober_add_set(ber)) == NULL)
+			if (level >= _MAX_SEQ-1)
 				goto fail;
+			if ((ber = ober_add_set(ber)) == NULL)
+				goto fail;
+			parent[level++] = ber;
 			break;
 		case '}':
 		case ')':
-			ber = sub;
+			if (level <= 0 || parent[level - 1] == NULL)
+				goto fail;
+			ber = parent[--level];
 			break;
 		case '.':
 			if ((e = ober_add_eoc(ber)) == NULL)
@@ -672,19 +685,22 @@ ober_printf_elements(struct ber_element *ber, char *fmt, ...)
 		default:
 			break;
 		}
+		if (firstber == NULL)
+			firstber = ber;
 	}
 	va_end(ap);
 
 	return (ber);
  fail:
-	ober_free_elements(ber);
+	if (origber != NULL)
+		ober_unlink_elements(origber);
+	ober_free_elements(firstber);
 	return (NULL);
 }
 
 int
 ober_scanf_elements(struct ber_element *ber, char *fmt, ...)
 {
-#define _MAX_SEQ		 128
 	va_list			 ap;
 	int			*d, level = -1;
 	unsigned int		*t;
