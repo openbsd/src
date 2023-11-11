@@ -16,11 +16,11 @@
 #include <cstdint>
 #include <vector>
 
-namespace lld {
-namespace coff {
+namespace lld::coff {
 static const int pageSize = 4096;
+class COFFLinkerContext;
 
-void writeResult();
+void writeResult(COFFLinkerContext &ctx);
 
 class PartialSection {
 public:
@@ -45,13 +45,10 @@ public:
   void insertChunkAtStart(Chunk *c);
   void merge(OutputSection *other);
   void setPermissions(uint32_t c);
-  uint64_t getRVA() { return header.VirtualAddress; }
-  uint64_t getFileOff() { return header.PointerToRawData; }
-  void writeHeaderTo(uint8_t *buf);
+  uint64_t getRVA() const { return header.VirtualAddress; }
+  uint64_t getFileOff() const { return header.PointerToRawData; }
+  void writeHeaderTo(uint8_t *buf, bool isDebug);
   void addContributingPartialSection(PartialSection *sec);
-
-  // Clear the output sections static container.
-  static void clear();
 
   // Returns the size of this section in an executable memory image.
   // This may be smaller than the raw size (the raw size is multiple
@@ -82,7 +79,6 @@ private:
   uint32_t stringTableOff = 0;
 };
 
-} // namespace coff
-} // namespace lld
+} // namespace lld::coff
 
 #endif

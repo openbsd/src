@@ -17,8 +17,7 @@
 #include <limits>
 #include <vector>
 
-namespace lld {
-namespace macho {
+namespace lld::macho {
 
 namespace segment_names {
 
@@ -56,6 +55,7 @@ public:
   StringRef name;
   uint32_t maxProt = 0;
   uint32_t initProt = 0;
+  uint32_t flags = 0;
   uint8_t index;
 
   llvm::TinyPtrVector<Defined *> segmentStartSymbols;
@@ -68,10 +68,10 @@ private:
 extern std::vector<OutputSegment *> outputSegments;
 
 void sortOutputSegments();
+void resetOutputSegments();
 
 OutputSegment *getOrCreateOutputSegment(StringRef name);
 
-} // namespace macho
-} // namespace lld
+} // namespace lld::macho
 
 #endif

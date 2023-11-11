@@ -14,6 +14,7 @@
 #include "WriterUtils.h"
 #include "lld/Common/LLVM.h"
 #include "llvm/Object/Wasm.h"
+#include <optional>
 
 namespace lld {
 namespace wasm {
@@ -27,8 +28,8 @@ protected:
 
 public:
   StringRef getName() const { return name; }
-  uint32_t getAssignedIndex() const { return assignedIndex.getValue(); }
-  bool hasAssignedIndex() const { return assignedIndex.hasValue(); }
+  uint32_t getAssignedIndex() const { return *assignedIndex; }
+  bool hasAssignedIndex() const { return assignedIndex.has_value(); }
   void assignIndex(uint32_t index) {
     assert(!hasAssignedIndex());
     assignedIndex = index;
@@ -39,17 +40,18 @@ public:
 
 protected:
   StringRef name;
-  llvm::Optional<uint32_t> assignedIndex;
+  std::optional<uint32_t> assignedIndex;
 };
 
 inline WasmInitExpr intConst(uint64_t value, bool is64) {
   WasmInitExpr ie;
+  ie.Extended = false;
   if (is64) {
-    ie.Opcode = llvm::wasm::WASM_OPCODE_I64_CONST;
-    ie.Value.Int64 = static_cast<int64_t>(value);
+    ie.Inst.Opcode = llvm::wasm::WASM_OPCODE_I64_CONST;
+    ie.Inst.Value.Int64 = static_cast<int64_t>(value);
   } else {
-    ie.Opcode = llvm::wasm::WASM_OPCODE_I32_CONST;
-    ie.Value.Int32 = static_cast<int32_t>(value);
+    ie.Inst.Opcode = llvm::wasm::WASM_OPCODE_I32_CONST;
+    ie.Inst.Value.Int32 = static_cast<int32_t>(value);
   }
   return ie;
 }
@@ -63,7 +65,7 @@ public:
   const WasmInitExpr &getInitExpr() const { return initExpr; }
 
   void setPointerValue(uint64_t value) {
-    initExpr = intConst(value, config->is64.getValueOr(false));
+    initExpr = intConst(value, config->is64.value_or(false));
   }
 
 private:
@@ -74,14 +76,9 @@ private:
 class InputTag : public InputElement {
 public:
   InputTag(const WasmSignature &s, const WasmTag &t, ObjFile *f)
-      : InputElement(t.SymbolName, f), signature(s), type(t.Type) {}
-
-  const WasmTagType &getType() const { return type; }
+      : InputElement(t.SymbolName, f), signature(s) {}
 
   const WasmSignature &signature;
-
-private:
-  WasmTagType type;
 };
 
 class InputTable : public InputElement {

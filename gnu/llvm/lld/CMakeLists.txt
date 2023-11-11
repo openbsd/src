@@ -1,62 +1,60 @@
-# Check if lld is built as a standalone project.
+cmake_minimum_required(VERSION 3.13.4)
+
+if(NOT DEFINED LLVM_COMMON_CMAKE_UTILS)
+  set(LLVM_COMMON_CMAKE_UTILS ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
+endif()
+include(${LLVM_COMMON_CMAKE_UTILS}/Modules/CMakePolicy.cmake
+  NO_POLICY_SCOPE)
+
+# If we are not building as a part of LLVM, build LLD as an
+# standalone project, using LLVM as an external library:
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   project(lld)
-  cmake_minimum_required(VERSION 3.13.4)
+  set(LLD_BUILT_STANDALONE TRUE)
+  if ("${CMAKE_VERSION}" VERSION_LESS "3.20.0")
+    message(WARNING
+      "Your CMake version is ${CMAKE_VERSION}. Starting with LLVM 17.0.0, the "
+      "minimum version of CMake required to build LLVM will become 3.20.0, and "
+      "using an older CMake will become an error. Please upgrade your CMake to "
+      "at least 3.20.0 now to avoid issues in the future!")
+  endif()
+endif()
+
+# Must go below project(..)
+include(GNUInstallDirs)
+
+if(LLD_BUILT_STANDALONE)
+  set(CMAKE_CXX_STANDARD 17 CACHE STRING "C++ standard to conform to")
+  set(CMAKE_CXX_STANDARD_REQUIRED YES)
+  set(CMAKE_CXX_EXTENSIONS NO)
 
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
-  set(LLD_BUILT_STANDALONE TRUE)
 
-  find_program(LLVM_CONFIG_PATH "llvm-config" DOC "Path to llvm-config binary")
-  if(NOT LLVM_CONFIG_PATH)
-    message(FATAL_ERROR "llvm-config not found: specify LLVM_CONFIG_PATH")
-  endif()
+  find_package(LLVM REQUIRED HINTS "${LLVM_CMAKE_DIR}")
+  list(APPEND CMAKE_MODULE_PATH "${LLVM_DIR}")
 
-  execute_process(COMMAND "${LLVM_CONFIG_PATH}"
-                          "--obj-root"
-                          "--includedir"
-                          "--cmakedir"
-                          "--src-root"
-                  RESULT_VARIABLE HAD_ERROR
-                  OUTPUT_VARIABLE LLVM_CONFIG_OUTPUT
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if(HAD_ERROR)
-    message(FATAL_ERROR "llvm-config failed with status ${HAD_ERROR}")
-  endif()
+  # Turn into CACHE PATHs for overwriting
+  set(LLVM_INCLUDE_DIRS ${LLVM_INCLUDE_DIRS} CACHE PATH "Path to llvm/include and any other header dirs needed")
+  set(LLVM_BINARY_DIR "${LLVM_BINARY_DIR}" CACHE PATH "Path to LLVM build tree")
+  set(LLVM_MAIN_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../llvm" CACHE PATH "Path to LLVM source tree")
 
-  string(REGEX REPLACE "[ \t]*[\r\n]+[ \t]*" ";" LLVM_CONFIG_OUTPUT "${LLVM_CONFIG_OUTPUT}")
+  find_program(LLVM_TABLEGEN_EXE "llvm-tblgen" ${LLVM_TOOLS_BINARY_DIR}
+    NO_DEFAULT_PATH)
 
-  list(GET LLVM_CONFIG_OUTPUT 0 OBJ_ROOT)
-  list(GET LLVM_CONFIG_OUTPUT 1 MAIN_INCLUDE_DIR)
-  list(GET LLVM_CONFIG_OUTPUT 2 LLVM_CMAKE_PATH)
-  list(GET LLVM_CONFIG_OUTPUT 3 MAIN_SRC_DIR)
-
-  set(LLVM_OBJ_ROOT ${OBJ_ROOT} CACHE PATH "path to LLVM build tree")
-  set(LLVM_MAIN_INCLUDE_DIR ${MAIN_INCLUDE_DIR} CACHE PATH "path to llvm/include")
-  set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
-
-  file(TO_CMAKE_PATH ${LLVM_OBJ_ROOT} LLVM_BINARY_DIR)
-  file(TO_CMAKE_PATH ${LLVM_CMAKE_PATH} LLVM_CMAKE_PATH)
-
-  if(NOT EXISTS "${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
-    message(FATAL_ERROR "LLVMConfig.cmake not found")
-  endif()
-  include("${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
-
-  list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
-
-  set(PACKAGE_VERSION "${LLVM_PACKAGE_VERSION}")
-  include_directories("${LLVM_BINARY_DIR}/include" ${LLVM_INCLUDE_DIRS})
-  link_directories(${LLVM_LIBRARY_DIRS})
-
-  set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${LLVM_LIBDIR_SUFFIX})
+  # They are used as destination of target generators.
   set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
-  find_program(LLVM_TABLEGEN_EXE "llvm-tblgen" ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH)
+  set(LLVM_LIBRARY_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib${LLVM_LIBDIR_SUFFIX})
 
   include(AddLLVM)
   include(TableGen)
   include(HandleLLVMOptions)
   include(GetErrcMessages)
   include(CheckAtomic)
+
+  set(PACKAGE_VERSION "${LLVM_PACKAGE_VERSION}")
+
+  include_directories(${LLVM_INCLUDE_DIRS})
+  link_directories(${LLVM_LIBRARY_DIRS})
 
   if(LLVM_INCLUDE_TESTS)
     find_package(Python3 ${LLVM_MINIMUM_PYTHON_VERSION} REQUIRED
@@ -77,11 +75,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
         set(LLVM_UTILS_PROVIDED ON)
         set(LLD_TEST_DEPS FileCheck not)
       endif()
-      set(UNITTEST_DIR ${LLVM_MAIN_SRC_DIR}/utils/unittest)
+      set(UNITTEST_DIR ${LLVM_THIRD_PARTY_DIR}/unittest)
       if(EXISTS ${UNITTEST_DIR}/googletest/include/gtest/gtest.h
           AND NOT EXISTS ${LLVM_LIBRARY_DIR}/${CMAKE_STATIC_LIBRARY_PREFIX}gtest${CMAKE_STATIC_LIBRARY_SUFFIX}
           AND EXISTS ${UNITTEST_DIR}/CMakeLists.txt)
-        add_subdirectory(${UNITTEST_DIR} utils/unittest)
+        add_subdirectory(${UNITTEST_DIR} third-party/unittest)
       endif()
     else()
       # Seek installed Lit.
@@ -114,7 +112,11 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   if(LLVM_HAVE_LIBXAR)
     set(XAR_LIB xar)
   endif()
-endif()
+endif() # standalone
+
+set(LLD_TOOLS_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}" CACHE PATH
+    "Path for binary subdirectory (defaults to '${CMAKE_INSTALL_BINDIR}')")
+mark_as_advanced(LLD_TOOLS_INSTALL_DIR)
 
 set(LLD_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(LLD_INCLUDE_DIR ${LLD_SOURCE_DIR}/include )
@@ -151,7 +153,11 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
 "`CMakeFiles'. Please delete them.")
 endif()
 
-list (APPEND CMAKE_MODULE_PATH "${LLD_SOURCE_DIR}/cmake/modules")
+# Add path for custom modules.
+list(INSERT CMAKE_MODULE_PATH 0
+  "${LLD_SOURCE_DIR}/cmake/modules"
+  "${LLVM_COMMON_CMAKE_UTILS}/Modules"
+  )
 
 include(AddLLD)
 
@@ -188,19 +194,17 @@ include_directories(BEFORE
 
 if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
   install(DIRECTORY include/
-    DESTINATION include
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     FILES_MATCHING
     PATTERN "*.h"
     )
 endif()
 
 add_subdirectory(Common)
-add_subdirectory(lib)
 add_subdirectory(tools/lld)
 
 if (LLVM_INCLUDE_TESTS)
   add_subdirectory(test)
-  add_subdirectory(unittests)
 endif()
 
 add_subdirectory(docs)

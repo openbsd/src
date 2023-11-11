@@ -9,7 +9,6 @@
 #include "lld/Common/Strings.h"
 #include "lld/Common/ErrorHandler.h"
 #include "lld/Common/LLVM.h"
-#include "llvm/Demangle/Demangle.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/GlobPattern.h"
 #include <algorithm>
@@ -18,18 +17,6 @@
 
 using namespace llvm;
 using namespace lld;
-
-// Returns the demangled C++ symbol name for name.
-std::string lld::demangleItanium(StringRef name) {
-  // demangleItanium() can be called for all symbols. Only demangle C++ symbols,
-  // to avoid getting unexpected result for a C symbol that happens to match a
-  // mangled type name such as "Pi" (which would demangle to "int*").
-  if (!name.startswith("_Z") && !name.startswith("__Z") &&
-      !name.startswith("___Z") && !name.startswith("____Z"))
-    return std::string(name);
-
-  return demangle(std::string(name));
-}
 
 SingleStringMatcher::SingleStringMatcher(StringRef Pattern) {
   if (Pattern.size() > 2 && Pattern.startswith("\"") &&
@@ -59,8 +46,8 @@ bool StringMatcher::match(StringRef s) const {
 }
 
 // Converts a hex string (e.g. "deadbeef") to a vector.
-std::vector<uint8_t> lld::parseHex(StringRef s) {
-  std::vector<uint8_t> hex;
+SmallVector<uint8_t, 0> lld::parseHex(StringRef s) {
+  SmallVector<uint8_t, 0> hex;
   while (!s.empty()) {
     StringRef b = s.substr(0, 2);
     s = s.substr(2);

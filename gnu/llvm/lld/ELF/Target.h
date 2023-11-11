@@ -9,9 +9,11 @@
 #ifndef LLD_ELF_TARGET_H
 #define LLD_ELF_TARGET_H
 
+#include "Config.h"
 #include "InputSection.h"
 #include "lld/Common/ErrorHandler.h"
 #include "llvm/Object/ELF.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/MathExtras.h"
 #include <array>
 
@@ -87,6 +89,10 @@ public:
   void relocateNoSym(uint8_t *loc, RelType type, uint64_t val) const {
     relocate(loc, Relocation{R_NONE, type, 0, 0, nullptr}, val);
   }
+  virtual void relocateAlloc(InputSectionBase &sec, uint8_t *buf) const;
+
+  // Do a linker relaxation pass and return true if we changed something.
+  virtual bool relaxOnce(int pass) const { return false; }
 
   virtual void applyJumpInstrMod(uint8_t *loc, JumpModType type,
                                  JumpModType val) const {}
@@ -109,11 +115,11 @@ public:
   uint64_t getImageBase() const;
 
   // True if _GLOBAL_OFFSET_TABLE_ is relative to .got.plt, false if .got.
-  bool gotBaseSymInGotPlt = true;
+  bool gotBaseSymInGotPlt = false;
 
+  static constexpr RelType noneRel = 0;
   RelType copyRel;
   RelType gotRel;
-  RelType noneRel;
   RelType pltRel;
   RelType relativeRel;
   RelType iRelativeRel;
@@ -142,7 +148,7 @@ public:
 
   // Stores the NOP instructions of different sizes for the target and is used
   // to pad sections that are relaxed.
-  llvm::Optional<std::vector<std::vector<uint8_t>>> nopInstrs;
+  std::optional<std::vector<std::vector<uint8_t>>> nopInstrs;
 
   // If a target needs to rewrite calls to __morestack to instead call
   // __morestack_non_split when a split-stack enabled caller calls a
@@ -152,16 +158,6 @@ public:
   virtual RelExpr adjustTlsExpr(RelType type, RelExpr expr) const;
   virtual RelExpr adjustGotPcExpr(RelType type, int64_t addend,
                                   const uint8_t *loc) const;
-  virtual void relaxGot(uint8_t *loc, const Relocation &rel,
-                        uint64_t val) const;
-  virtual void relaxTlsGdToIe(uint8_t *loc, const Relocation &rel,
-                              uint64_t val) const;
-  virtual void relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
-                              uint64_t val) const;
-  virtual void relaxTlsIeToLe(uint8_t *loc, const Relocation &rel,
-                              uint64_t val) const;
-  virtual void relaxTlsLdToLe(uint8_t *loc, const Relocation &rel,
-                              uint64_t val) const;
 
 protected:
   // On FreeBSD x86_64 the first page cannot be mmaped.
@@ -188,6 +184,7 @@ template <class ELFT> TargetInfo *getMipsTargetInfo();
 struct ErrorPlace {
   InputSectionBase *isec;
   std::string loc;
+  std::string srcLoc;
 };
 
 // Returns input section and corresponding source string for the given location.
@@ -199,7 +196,6 @@ static inline std::string getErrorLocation(const uint8_t *loc) {
 
 void writePPC32GlinkSection(uint8_t *buf, size_t numEntries);
 
-bool tryRelaxPPC64TocIndirection(const Relocation &rel, uint8_t *bufLoc);
 unsigned getPPCDFormOp(unsigned secondaryOp);
 
 // In the PowerPC64 Elf V2 abi a function can have 2 entry points.  The first
@@ -211,10 +207,6 @@ unsigned getPPCDFormOp(unsigned secondaryOp);
 // to the local entry-point.
 unsigned getPPC64GlobalEntryToLocalEntryOffset(uint8_t stOther);
 
-// Returns true if a relocation is a small code model relocation that accesses
-// the .toc section.
-bool isPPC64SmallCodeModelTocReloc(RelType type);
-
 // Write a prefixed instruction, which is a 4-byte prefix followed by a 4-byte
 // instruction (regardless of endianness). Therefore, the prefix is always in
 // lower memory than the instruction.
@@ -223,8 +215,10 @@ void writePrefixedInstruction(uint8_t *loc, uint64_t insn);
 void addPPC64SaveRestore();
 uint64_t getPPC64TocBase();
 uint64_t getAArch64Page(uint64_t expr);
+void riscvFinalizeRelax(int passes);
+void mergeRISCVAttributesSections();
 
-extern const TargetInfo *target;
+LLVM_LIBRARY_VISIBILITY extern const TargetInfo *target;
 TargetInfo *getTarget();
 
 template <class ELFT> bool isMipsPIC(const Defined *sym);
@@ -290,5 +284,26 @@ inline void write64(void *p, uint64_t v) {
 }
 } // namespace elf
 } // namespace lld
+
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wgnu-zero-variadic-macro-arguments"
+#endif
+#define invokeELFT(f, ...)                                                     \
+  switch (config->ekind) {                                                     \
+  case ELF32LEKind:                                                            \
+    f<ELF32LE>(__VA_ARGS__);                                                   \
+    break;                                                                     \
+  case ELF32BEKind:                                                            \
+    f<ELF32BE>(__VA_ARGS__);                                                   \
+    break;                                                                     \
+  case ELF64LEKind:                                                            \
+    f<ELF64LE>(__VA_ARGS__);                                                   \
+    break;                                                                     \
+  case ELF64BEKind:                                                            \
+    f<ELF64BE>(__VA_ARGS__);                                                   \
+    break;                                                                     \
+  default:                                                                     \
+    llvm_unreachable("unknown config->ekind");                                 \
+  }
 
 #endif

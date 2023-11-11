@@ -20,6 +20,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/BinaryFormat/WasmTraits.h"
+#include <optional>
 
 #define DEBUG_TYPE "lld"
 
@@ -71,11 +72,11 @@ protected:
 // Create the custom "dylink" section containing information for the dynamic
 // linker.
 // See
-// https://github.com/WebAssembly/tool-conventions/blob/master/DynamicLinking.md
+// https://github.com/WebAssembly/tool-conventions/blob/main/DynamicLinking.md
 class DylinkSection : public SyntheticSection {
 public:
-  DylinkSection() : SyntheticSection(llvm::wasm::WASM_SEC_CUSTOM, "dylink") {}
-  bool isNeeded() const override { return config->isPic; }
+  DylinkSection() : SyntheticSection(llvm::wasm::WASM_SEC_CUSTOM, "dylink.0") {}
+  bool isNeeded() const override;
   void writeBody() override;
 
   uint32_t memAlign = 0;
@@ -107,15 +108,15 @@ public:
 
 public:
   T type;
-  llvm::Optional<StringRef> importModule;
-  llvm::Optional<StringRef> importName;
+  std::optional<StringRef> importModule;
+  std::optional<StringRef> importName;
   State state;
 
 public:
   ImportKey(T type) : type(type), state(State::Plain) {}
   ImportKey(T type, State state) : type(type), state(state) {}
-  ImportKey(T type, llvm::Optional<StringRef> importModule,
-            llvm::Optional<StringRef> importName)
+  ImportKey(T type, std::optional<StringRef> importModule,
+            std::optional<StringRef> importName)
       : type(type), importModule(importModule), importName(importName),
         state(State::Plain) {}
 };
@@ -198,6 +199,7 @@ protected:
   llvm::DenseMap<ImportKey<WasmGlobalType>, uint32_t> importedGlobals;
   llvm::DenseMap<ImportKey<WasmSignature>, uint32_t> importedFunctions;
   llvm::DenseMap<ImportKey<WasmTableType>, uint32_t> importedTables;
+  llvm::DenseMap<ImportKey<WasmSignature>, uint32_t> importedTags;
 };
 
 class FunctionSection : public SyntheticSection {
@@ -229,7 +231,7 @@ class MemorySection : public SyntheticSection {
 public:
   MemorySection() : SyntheticSection(llvm::wasm::WASM_SEC_MEMORY) {}
 
-  bool isNeeded() const override { return !config->importMemory; }
+  bool isNeeded() const override { return !config->memoryImport.has_value(); }
   void writeBody() override;
 
   uint64_t numMemoryPages = 0;
@@ -286,10 +288,19 @@ public:
   // specific relocation types combined with linker relaxation which could
   // transform a `global.get` to an `i32.const`.
   void addInternalGOTEntry(Symbol *sym);
-  bool needsRelocations() { return internalGotSymbols.size(); }
-  void generateRelocationCode(raw_ostream &os) const;
+  bool needsRelocations() {
+    if (config->extendedConst)
+      return false;
+    return llvm::any_of(internalGotSymbols,
+                        [=](Symbol *sym) { return !sym->isTLS(); });
+  }
+  bool needsTLSRelocations() {
+    return llvm::any_of(internalGotSymbols,
+                        [=](Symbol *sym) { return sym->isTLS(); });
+  }
+  void generateRelocationCode(raw_ostream &os, bool TLS) const;
 
-  std::vector<const DefinedData *> dataAddressGlobals;
+  std::vector<DefinedData *> dataAddressGlobals;
   std::vector<InputGlobal *> inputGlobals;
   std::vector<Symbol *> internalGotSymbols;
 

@@ -11,9 +11,8 @@
 #include "Symbols.h"
 #include "SyntheticSections.h"
 #include "Target.h"
-#include "Thunks.h"
 #include "lld/Common/ErrorHandler.h"
-#include "llvm/Object/ELF.h"
+#include "llvm/BinaryFormat/ELF.h"
 
 using namespace llvm;
 using namespace llvm::object;
@@ -46,11 +45,9 @@ public:
 template <class ELFT> MIPS<ELFT>::MIPS() {
   gotPltHeaderEntriesNum = 2;
   defaultMaxPageSize = 65536;
-  gotBaseSymInGotPlt = false;
   pltEntrySize = 16;
   pltHeaderSize = 32;
   copyRel = R_MIPS_COPY;
-  noneRel = R_MIPS_NONE;
   pltRel = R_MIPS_JUMP_SLOT;
   needsThunks = true;
 
@@ -128,18 +125,19 @@ RelExpr MIPS<ELFT>::getRelExpr(RelType type, const Symbol &s,
       return R_MIPS_GOT_GP_PC;
     if (&s == ElfSym::mipsLocalGp)
       return R_MIPS_GOT_GP;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case R_MIPS_32:
   case R_MIPS_64:
   case R_MIPS_GOT_OFST:
   case R_MIPS_SUB:
+    return R_ABS;
   case R_MIPS_TLS_DTPREL_HI16:
   case R_MIPS_TLS_DTPREL_LO16:
   case R_MIPS_TLS_DTPREL32:
   case R_MIPS_TLS_DTPREL64:
   case R_MICROMIPS_TLS_DTPREL_HI16:
   case R_MICROMIPS_TLS_DTPREL_LO16:
-    return R_ABS;
+    return R_DTPREL;
   case R_MIPS_TLS_TPREL_HI16:
   case R_MIPS_TLS_TPREL_LO16:
   case R_MIPS_TLS_TPREL32:
@@ -166,7 +164,7 @@ RelExpr MIPS<ELFT>::getRelExpr(RelType type, const Symbol &s,
   case R_MICROMIPS_GOT16:
     if (s.isLocal())
       return R_MIPS_GOT_LOCAL_PAGE;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case R_MIPS_CALL16:
   case R_MIPS_GOT_DISP:
   case R_MIPS_TLS_GOTTPREL:
@@ -629,7 +627,7 @@ void MIPS<ELFT>::relocate(uint8_t *loc, const Relocation &rel,
   case R_MIPS_TLS_GOTTPREL:
   case R_MIPS_TLS_LDM:
     checkInt(loc, val, 16, rel);
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case R_MIPS_CALL_LO16:
   case R_MIPS_GOT_LO16:
   case R_MIPS_GOT_OFST:

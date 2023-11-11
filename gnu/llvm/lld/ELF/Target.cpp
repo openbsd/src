@@ -91,40 +91,31 @@ TargetInfo *elf::getTarget() {
   llvm_unreachable("unknown target machine");
 }
 
-template <class ELFT> static ErrorPlace getErrPlace(const uint8_t *loc) {
+ErrorPlace elf::getErrorPlace(const uint8_t *loc) {
   assert(loc != nullptr);
-  for (InputSectionBase *d : inputSections) {
-    auto *isec = cast<InputSection>(d);
-    if (!isec->getParent() || (isec->type & SHT_NOBITS))
+  for (InputSectionBase *d : ctx.inputSections) {
+    auto *isec = dyn_cast<InputSection>(d);
+    if (!isec || !isec->getParent() || (isec->type & SHT_NOBITS))
       continue;
 
     const uint8_t *isecLoc =
         Out::bufferStart
             ? (Out::bufferStart + isec->getParent()->offset + isec->outSecOff)
-            : isec->data().data();
+            : isec->contentMaybeDecompress().data();
     if (isecLoc == nullptr) {
       assert(isa<SyntheticSection>(isec) && "No data but not synthetic?");
       continue;
     }
-    if (isecLoc <= loc && loc < isecLoc + isec->getSize())
-      return {isec, isec->template getLocation<ELFT>(loc - isecLoc) + ": "};
+    if (isecLoc <= loc && loc < isecLoc + isec->getSize()) {
+      std::string objLoc = isec->getLocation(loc - isecLoc);
+      // Return object file location and source file location.
+      // TODO: Refactor getSrcMsg not to take a variable.
+      Undefined dummy(nullptr, "", STB_LOCAL, 0, 0);
+      return {isec, objLoc + ": ",
+              isec->file ? isec->getSrcMsg(dummy, loc - isecLoc) : ""};
+    }
   }
   return {};
-}
-
-ErrorPlace elf::getErrorPlace(const uint8_t *loc) {
-  switch (config->ekind) {
-  case ELF32LEKind:
-    return getErrPlace<ELF32LE>(loc);
-  case ELF32BEKind:
-    return getErrPlace<ELF32BE>(loc);
-  case ELF64LEKind:
-    return getErrPlace<ELF64LE>(loc);
-  case ELF64BEKind:
-    return getErrPlace<ELF64BE>(loc);
-  default:
-    llvm_unreachable("unknown ELF type");
-  }
 }
 
 TargetInfo::~TargetInfo() {}
@@ -161,33 +152,24 @@ RelExpr TargetInfo::adjustGotPcExpr(RelType type, int64_t addend,
   return R_GOT_PC;
 }
 
-void TargetInfo::relaxGot(uint8_t *loc, const Relocation &rel,
-                          uint64_t val) const {
-  llvm_unreachable("Should not have claimed to be relaxable");
-}
-
-void TargetInfo::relaxTlsGdToLe(uint8_t *loc, const Relocation &rel,
-                                uint64_t val) const {
-  llvm_unreachable("Should not have claimed to be relaxable");
-}
-
-void TargetInfo::relaxTlsGdToIe(uint8_t *loc, const Relocation &rel,
-                                uint64_t val) const {
-  llvm_unreachable("Should not have claimed to be relaxable");
-}
-
-void TargetInfo::relaxTlsIeToLe(uint8_t *loc, const Relocation &rel,
-                                uint64_t val) const {
-  llvm_unreachable("Should not have claimed to be relaxable");
-}
-
-void TargetInfo::relaxTlsLdToLe(uint8_t *loc, const Relocation &rel,
-                                uint64_t val) const {
-  llvm_unreachable("Should not have claimed to be relaxable");
+void TargetInfo::relocateAlloc(InputSectionBase &sec, uint8_t *buf) const {
+  const unsigned bits = config->is64 ? 64 : 32;
+  uint64_t secAddr = sec.getOutputSection()->addr;
+  if (auto *s = dyn_cast<InputSection>(&sec))
+    secAddr += s->outSecOff;
+  for (const Relocation &rel : sec.relocs()) {
+    uint8_t *loc = buf + rel.offset;
+    const uint64_t val = SignExtend64(
+        sec.getRelocTargetVA(sec.file, rel.type, rel.addend,
+                             secAddr + rel.offset, *rel.sym, rel.expr),
+        bits);
+    if (rel.expr != R_RELAX_HINT)
+      relocate(loc, rel, val);
+  }
 }
 
 uint64_t TargetInfo::getImageBase() const {
-  // Use -image-base if set. Fall back to the target default if not.
+  // Use --image-base if set. Fall back to the target default if not.
   if (config->imageBase)
     return *config->imageBase;
   return config->isPic ? 0 : defaultImageBase;

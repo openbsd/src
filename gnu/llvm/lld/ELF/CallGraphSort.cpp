@@ -41,9 +41,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "CallGraphSort.h"
-#include "OutputSections.h"
-#include "SymbolTable.h"
+#include "InputFiles.h"
+#include "InputSection.h"
 #include "Symbols.h"
+#include "llvm/Support/FileSystem.h"
 
 #include <numeric>
 
@@ -114,8 +115,8 @@ CallGraphSort::CallGraphSort() {
 
   // Create the graph.
   for (std::pair<SectionPair, uint64_t> &c : profile) {
-    const auto *fromSB = cast<InputSectionBase>(c.first.first->repl);
-    const auto *toSB = cast<InputSectionBase>(c.first.second->repl);
+    const auto *fromSB = cast<InputSectionBase>(c.first.first);
+    const auto *toSB = cast<InputSectionBase>(c.first.second);
     uint64_t weight = c.second;
 
     // Ignore edges between input sections belonging to different output
@@ -155,7 +156,7 @@ static bool isNewDensityBad(Cluster &a, Cluster &b) {
 // Find the leader of V's belonged cluster (represented as an equivalence
 // class). We apply union-find path-halving technique (simple to implement) in
 // the meantime as it decreases depths and the time complexity.
-static int getLeader(std::vector<int> &leaders, int v) {
+static int getLeader(int *leaders, int v) {
   while (leaders[v] != v) {
     leaders[v] = leaders[leaders[v]];
     v = leaders[v];
@@ -180,9 +181,9 @@ static void mergeClusters(std::vector<Cluster> &cs, Cluster &into, int intoIdx,
 // then sort the clusters by density.
 DenseMap<const InputSectionBase *, int> CallGraphSort::run() {
   std::vector<int> sorted(clusters.size());
-  std::vector<int> leaders(clusters.size());
+  std::unique_ptr<int[]> leaders(new int[clusters.size()]);
 
-  std::iota(leaders.begin(), leaders.end(), 0);
+  std::iota(leaders.get(), leaders.get() + clusters.size(), 0);
   std::iota(sorted.begin(), sorted.end(), 0);
   llvm::stable_sort(sorted, [&](int a, int b) {
     return clusters[a].getDensity() > clusters[b].getDensity();
@@ -197,7 +198,7 @@ DenseMap<const InputSectionBase *, int> CallGraphSort::run() {
     if (c.bestPred.from == -1 || c.bestPred.weight * 10 <= c.initialWeight)
       continue;
 
-    int predL = getLeader(leaders, c.bestPred.from);
+    int predL = getLeader(leaders.get(), c.bestPred.from);
     if (l == predL)
       continue;
 
@@ -259,7 +260,7 @@ DenseMap<const InputSectionBase *, int> CallGraphSort::run() {
   return orderMap;
 }
 
-// Sort sections by the profile data provided by -callgraph-profile-file
+// Sort sections by the profile data provided by --callgraph-profile-file.
 //
 // This first builds a call graph based on the profile data then merges sections
 // according to the C³ heuristic. All clusters are then sorted by a density

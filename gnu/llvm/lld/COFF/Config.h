@@ -10,17 +10,19 @@
 #define LLD_COFF_CONFIG_H
 
 #include "llvm/ADT/MapVector.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/COFF.h"
 #include "llvm/Support/CachePruning.h"
+#include "llvm/Support/VirtualFileSystem.h"
 #include <cstdint>
 #include <map>
 #include <set>
 #include <string>
 
-namespace lld {
-namespace coff {
+namespace lld::coff {
 
 using llvm::COFF::IMAGE_FILE_MACHINE_UNKNOWN;
 using llvm::COFF::WindowsSubsystem;
@@ -42,6 +44,7 @@ static const auto I386 = llvm::COFF::IMAGE_FILE_MACHINE_I386;
 struct Export {
   StringRef name;       // N in /export:N or /export:E=N
   StringRef extName;    // E in /export:E=N
+  StringRef aliasTarget; // GNU specific: N in "alias == N"
   Symbol *sym = nullptr;
   uint16_t ordinal = 0;
   bool noname = false;
@@ -62,6 +65,7 @@ struct Export {
 
   bool operator==(const Export &e) {
     return (name == e.name && extName == e.extName &&
+            aliasTarget == e.aliasTarget &&
             ordinal == e.ordinal && noname == e.noname &&
             data == e.data && isPrivate == e.isPrivate);
   }
@@ -91,8 +95,8 @@ enum class ICFLevel {
 
 // Global configuration.
 struct Configuration {
-  enum ManifestKind { SideBySide, Embed, No };
-  bool is64() { return machine == AMD64 || machine == ARM64; }
+  enum ManifestKind { Default, SideBySide, Embed, No };
+  bool is64() const { return machine == AMD64 || machine == ARM64; }
 
   llvm::COFF::MachineTypes machine = IMAGE_FILE_MACHINE_UNKNOWN;
   size_t wordsize;
@@ -120,9 +124,11 @@ struct Configuration {
   bool showTiming = false;
   bool showSummary = false;
   unsigned debugTypes = static_cast<unsigned>(DebugType::None);
+  llvm::SmallVector<llvm::StringRef, 0> mllvmOpts;
   std::vector<std::string> natvisFiles;
   llvm::StringMap<std::string> namedStreams;
   llvm::SmallString<128> pdbAltPath;
+  int pdbPageSize = 4096;
   llvm::SmallString<128> pdbPath;
   llvm::SmallString<128> pdbSourcePath;
   std::vector<llvm::StringRef> argv;
@@ -136,6 +142,7 @@ struct Configuration {
   // True if we are creating a DLL.
   bool dll = false;
   StringRef implib;
+  bool noimplib = false;
   std::vector<Export> exports;
   bool hadExplicitExports;
   std::set<std::string> delayLoads;
@@ -166,8 +173,6 @@ struct Configuration {
   // Used for /opt:lldltocachepolicy=policy
   llvm::CachePruningPolicy ltoCachePolicy;
 
-  // Used for /opt:[no]ltonewpassmanager
-  bool ltoNewPassManager = false;
   // Used for /opt:[no]ltodebugpassmanager
   bool ltoDebugPassManager = false;
 
@@ -178,9 +183,9 @@ struct Configuration {
   std::map<StringRef, uint32_t> section;
 
   // Options for manifest files.
-  ManifestKind manifest = No;
+  ManifestKind manifest = Default;
   int manifestID = 1;
-  StringRef manifestDependency;
+  llvm::SetVector<StringRef> manifestDependencies;
   bool manifestUAC = true;
   std::vector<std::string> manifestInput;
   StringRef manifestLevel = "'asInvoker'";
@@ -205,6 +210,9 @@ struct Configuration {
   // Used for /map.
   std::string mapFile;
 
+  // Used for /mapinfo.
+  bool mapInfo = false;
+
   // Used for /thinlto-index-only:
   llvm::StringRef thinLTOIndexOnlyArg;
 
@@ -223,6 +231,9 @@ struct Configuration {
   // Used for /lto-cs-profile-path
   llvm::StringRef ltoCSProfileFile;
 
+  // Used for /lto-pgo-warn-mismatch:
+  bool ltoPGOWarnMismatch = true;
+
   // Used for /call-graph-ordering-file:
   llvm::MapVector<std::pair<const SectionChunk *, const SectionChunk *>,
                   uint64_t>
@@ -231,6 +242,9 @@ struct Configuration {
 
   // Used for /print-symbol-order:
   StringRef printSymbolOrder;
+
+  // Used for /vfsoverlay:
+  std::unique_ptr<llvm::vfs::FileSystem> vfs;
 
   uint64_t align = 4096;
   uint64_t imageBase = -1;
@@ -275,11 +289,9 @@ struct Configuration {
   bool autoImport = false;
   bool pseudoRelocs = false;
   bool stdcallFixup = false;
+  bool writeCheckSum = false;
 };
 
-extern Configuration *config;
-
-} // namespace coff
-} // namespace lld
+} // namespace lld::coff
 
 #endif

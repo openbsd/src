@@ -9,15 +9,17 @@
 #ifndef LLD_MACHO_ICF_H
 #define LLD_MACHO_ICF_H
 
+#include "InputFiles.h"
 #include "lld/Common/LLVM.h"
 #include <vector>
 
-namespace lld {
-namespace macho {
+namespace lld::macho {
+class Symbol;
 
-void foldIdenticalSections();
+void markAddrSigSymbols();
+void markSymAsAddrSig(Symbol *s);
+void foldIdenticalSections(bool onlyCfStrings);
 
-} // namespace macho
-} // namespace lld
+} // namespace lld::macho
 
 #endif
