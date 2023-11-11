@@ -1,4 +1,4 @@
-# $OpenBSD: RAMDISK,v 1.209 2023/07/22 22:43:53 patrick Exp $
+# $OpenBSD: RAMDISK,v 1.210 2023/11/11 17:20:21 patrick Exp $
 
 machine		arm64
 maxusers	4
@@ -22,6 +22,7 @@ option		MSDOSFS
 option		INET6
 option		EXT2FS
 option		NFSCLIENT
+option		CD9660
 option		CRYPTO
 
 makeoptions	KERNEL_BASE_PHYS="0x00200000"
