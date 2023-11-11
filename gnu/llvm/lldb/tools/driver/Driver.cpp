@@ -15,15 +15,14 @@
 #include "lldb/API/SBFile.h"
 #include "lldb/API/SBHostOS.h"
 #include "lldb/API/SBLanguageRuntime.h"
-#include "lldb/API/SBReproducer.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBStringList.h"
+#include "lldb/API/SBStructuredData.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/InitLLVM.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/Process.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/WithColor.h"
 #include "llvm/Support/raw_ostream.h"
@@ -43,14 +42,6 @@
 #include <cstring>
 #include <fcntl.h>
 
-// Includes for pipe()
-#if defined(_WIN32)
-#include <fcntl.h>
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-
 #if !defined(__APPLE__)
 #include "llvm/Support/DataTypes.h"
 #endif
@@ -68,11 +59,14 @@ enum ID {
 #undef OPTION
 };
 
-#define PREFIX(NAME, VALUE) const char *const NAME[] = VALUE;
+#define PREFIX(NAME, VALUE)                                                    \
+  static constexpr StringLiteral NAME##_init[] = VALUE;                        \
+  static constexpr ArrayRef<StringLiteral> NAME(NAME##_init,                   \
+                                                std::size(NAME##_init) - 1);
 #include "Options.inc"
 #undef PREFIX
 
-const opt::OptTable::Info InfoTable[] = {
+static constexpr opt::OptTable::Info InfoTable[] = {
 #define OPTION(PREFIX, NAME, ID, KIND, GROUP, ALIAS, ALIASARGS, FLAGS, PARAM,  \
                HELPTEXT, METAVAR, VALUES)                                      \
   {                                                                            \
@@ -84,15 +78,17 @@ const opt::OptTable::Info InfoTable[] = {
 #undef OPTION
 };
 
-class LLDBOptTable : public opt::OptTable {
+class LLDBOptTable : public opt::GenericOptTable {
 public:
-  LLDBOptTable() : OptTable(InfoTable) {}
+  LLDBOptTable() : opt::GenericOptTable(InfoTable) {}
 };
 } // namespace
 
 static void reset_stdin_termios();
 static bool g_old_stdin_termios_is_valid = false;
 static struct termios g_old_stdin_termios;
+
+static bool disable_color(const raw_ostream &OS) { return false; }
 
 static Driver *g_driver = nullptr;
 
@@ -194,12 +190,21 @@ SBError Driver::ProcessArgs(const opt::InputArgList &args, bool &exiting) {
   m_debugger.SkipLLDBInitFiles(false);
   m_debugger.SkipAppInitFiles(false);
 
+  if (args.hasArg(OPT_no_use_colors)) {
+    m_debugger.SetUseColor(false);
+    WithColor::setAutoDetectFunction(disable_color);
+    m_option_data.m_debug_mode = true;
+  }
+
   if (args.hasArg(OPT_version)) {
     m_option_data.m_print_version = true;
   }
 
   if (args.hasArg(OPT_python_path)) {
     m_option_data.m_print_python_path = true;
+  }
+  if (args.hasArg(OPT_print_script_interpreter_info)) {
+    m_option_data.m_print_script_interpreter_info = true;
   }
 
   if (args.hasArg(OPT_batch)) {
@@ -230,11 +235,6 @@ SBError Driver::ProcessArgs(const opt::InputArgList &args, bool &exiting) {
   if (args.hasArg(OPT_local_lldbinit)) {
     lldb::SBDebugger::SetInternalVariable("target.load-cwd-lldbinit", "true",
                                           m_debugger.GetInstanceName());
-  }
-
-  if (args.hasArg(OPT_no_use_colors)) {
-    m_debugger.SetUseColor(false);
-    m_option_data.m_debug_mode = true;
   }
 
   if (auto *arg = args.getLastArg(OPT_file)) {
@@ -301,6 +301,7 @@ SBError Driver::ProcessArgs(const opt::InputArgList &args, bool &exiting) {
                                      arg_value);
       return error;
     }
+    m_debugger.SetREPLLanguage(m_option_data.m_repl_lang);
   }
 
   if (args.hasArg(OPT_repl)) {
@@ -398,61 +399,23 @@ SBError Driver::ProcessArgs(const opt::InputArgList &args, bool &exiting) {
     return error;
   }
 
+  if (m_option_data.m_print_script_interpreter_info) {
+    SBStructuredData info =
+        m_debugger.GetScriptInterpreterInfo(m_debugger.GetScriptLanguage());
+    if (!info) {
+      error.SetErrorString("no script interpreter.");
+    } else {
+      SBStream stream;
+      error = info.GetAsJSON(stream);
+      if (error.Success()) {
+        llvm::outs() << stream.GetData() << '\n';
+      }
+    }
+    exiting = true;
+    return error;
+  }
+
   return error;
-}
-
-static inline int OpenPipe(int fds[2], std::size_t size) {
-#ifdef _WIN32
-  return _pipe(fds, size, O_BINARY);
-#else
-  (void)size;
-  return pipe(fds);
-#endif
-}
-
-static ::FILE *PrepareCommandsForSourcing(const char *commands_data,
-                                          size_t commands_size) {
-  enum PIPES { READ, WRITE }; // Indexes for the read and write fds
-  int fds[2] = {-1, -1};
-
-  if (OpenPipe(fds, commands_size) != 0) {
-    WithColor::error()
-        << "can't create pipe file descriptors for LLDB commands\n";
-    return nullptr;
-  }
-
-  ssize_t nrwr = write(fds[WRITE], commands_data, commands_size);
-  if (size_t(nrwr) != commands_size) {
-    WithColor::error()
-        << format(
-               "write(%i, %p, %" PRIu64
-               ") failed (errno = %i) when trying to open LLDB commands pipe",
-               fds[WRITE], static_cast<const void *>(commands_data),
-               static_cast<uint64_t>(commands_size), errno)
-        << '\n';
-    llvm::sys::Process::SafelyCloseFileDescriptor(fds[READ]);
-    llvm::sys::Process::SafelyCloseFileDescriptor(fds[WRITE]);
-    return nullptr;
-  }
-
-  // Close the write end of the pipe, so that the command interpreter will exit
-  // when it consumes all the data.
-  llvm::sys::Process::SafelyCloseFileDescriptor(fds[WRITE]);
-
-  // Open the read file descriptor as a FILE * that we can return as an input
-  // handle.
-  ::FILE *commands_file = fdopen(fds[READ], "rb");
-  if (commands_file == nullptr) {
-    WithColor::error() << format("fdopen(%i, \"rb\") failed (errno = %i) "
-                                 "when trying to open LLDB commands pipe",
-                                 fds[READ], errno)
-                       << '\n';
-    llvm::sys::Process::SafelyCloseFileDescriptor(fds[READ]);
-    return nullptr;
-  }
-
-  // 'commands_file' now owns the read descriptor.
-  return commands_file;
 }
 
 std::string EscapeString(std::string arg) {
@@ -494,9 +457,14 @@ int Driver::MainLoop() {
 
   SBCommandInterpreter sb_interpreter = m_debugger.GetCommandInterpreter();
 
-  // Before we handle any options from the command line, we parse the
-  // REPL init file or the default file in the user's home directory.
+  // Process lldbinit files before handling any options from the command line.
   SBCommandReturnObject result;
+  sb_interpreter.SourceInitFileInGlobalDirectory(result);
+  if (m_option_data.m_debug_mode) {
+    result.PutError(m_debugger.GetErrorFile());
+    result.PutOutput(m_debugger.GetOutputFile());
+  }
+
   sb_interpreter.SourceInitFileInHomeDirectory(result, m_option_data.m_repl);
   if (m_option_data.m_debug_mode) {
     result.PutError(m_debugger.GetErrorFile());
@@ -584,20 +552,14 @@ int Driver::MainLoop() {
   // Check if we have any data in the commands stream, and if so, save it to a
   // temp file
   // so we can then run the command interpreter using the file contents.
-  const char *commands_data = commands_stream.GetData();
-  const size_t commands_size = commands_stream.GetSize();
-
   bool go_interactive = true;
-  if ((commands_data != nullptr) && (commands_size != 0u)) {
-    FILE *commands_file =
-        PrepareCommandsForSourcing(commands_data, commands_size);
-
-    if (commands_file == nullptr) {
-      // We should have already printed an error in PrepareCommandsForSourcing.
+  if ((commands_stream.GetData() != nullptr) &&
+      (commands_stream.GetSize() != 0u)) {
+    SBError error = m_debugger.SetInputString(commands_stream.GetData());
+    if (error.Fail()) {
+      WithColor::error() << error.GetCString() << '\n';
       return 1;
     }
-
-    m_debugger.SetInputFileHandle(commands_file, true);
 
     // Set the debugger into Sync mode when running the command file. Otherwise
     // command files that run the target won't run in a sensible way.
@@ -609,6 +571,7 @@ int Driver::MainLoop() {
     options.SetSpawnThread(false);
     options.SetStopOnError(true);
     options.SetStopOnCrash(m_option_data.m_batch);
+    options.SetEchoCommands(!m_option_data.m_source_quietly);
 
     SBCommandInterpreterRunResult results =
         m_debugger.RunCommandInterpreter(options);
@@ -630,12 +593,9 @@ int Driver::MainLoop() {
       SBStream crash_commands_stream;
       WriteCommandsForSourcing(eCommandPlacementAfterCrash,
                                crash_commands_stream);
-      const char *crash_commands_data = crash_commands_stream.GetData();
-      const size_t crash_commands_size = crash_commands_stream.GetSize();
-      commands_file =
-          PrepareCommandsForSourcing(crash_commands_data, crash_commands_size);
-      if (commands_file != nullptr) {
-        m_debugger.SetInputFileHandle(commands_file, true);
+      SBError error =
+          m_debugger.SetInputString(crash_commands_stream.GetData());
+      if (error.Success()) {
         SBCommandInterpreterRunResult local_results =
             m_debugger.RunCommandInterpreter(options);
         if (local_results.GetResult() ==
@@ -713,31 +673,30 @@ void sigint_handler(int signo) {
   _exit(signo);
 }
 
-void sigtstp_handler(int signo) {
+#ifndef _WIN32
+static void sigtstp_handler(int signo) {
   if (g_driver != nullptr)
     g_driver->GetDebugger().SaveInputTerminalState();
 
+  // Unblock the signal and remove our handler.
+  sigset_t set;
+  sigemptyset(&set);
+  sigaddset(&set, signo);
+  pthread_sigmask(SIG_UNBLOCK, &set, nullptr);
   signal(signo, SIG_DFL);
-  kill(getpid(), signo);
-  signal(signo, sigtstp_handler);
-}
 
-void sigcont_handler(int signo) {
+  // Now re-raise the signal. We will immediately suspend...
+  raise(signo);
+  // ... and resume after a SIGCONT.
+
+  // Now undo the modifications.
+  pthread_sigmask(SIG_BLOCK, &set, nullptr);
+  signal(signo, sigtstp_handler);
+
   if (g_driver != nullptr)
     g_driver->GetDebugger().RestoreInputTerminalState();
-
-  signal(signo, SIG_DFL);
-  kill(getpid(), signo);
-  signal(signo, sigcont_handler);
 }
-
-void reproducer_handler(void *finalize_cmd) {
-  if (SBReproducer::Generate()) {
-    int result = std::system(static_cast<const char *>(finalize_cmd));
-    (void)result;
-    fflush(stdout);
-  }
-}
+#endif
 
 static void printHelp(LLDBOptTable &table, llvm::StringRef tool_name) {
   std::string usage_str = tool_name.str() + " [options]";
@@ -785,88 +744,6 @@ EXAMPLES:
   llvm::outs() << examples << '\n';
 }
 
-static llvm::Optional<int> InitializeReproducer(llvm::StringRef argv0,
-                                                opt::InputArgList &input_args) {
-  if (auto *finalize_path = input_args.getLastArg(OPT_reproducer_finalize)) {
-    if (const char *error = SBReproducer::Finalize(finalize_path->getValue())) {
-      WithColor::error() << "reproducer finalization failed: " << error << '\n';
-      return 1;
-    }
-
-    llvm::outs() << "********************\n";
-    llvm::outs() << "Crash reproducer for ";
-    llvm::outs() << lldb::SBDebugger::GetVersionString() << '\n';
-    llvm::outs() << '\n';
-    llvm::outs() << "Reproducer written to '" << SBReproducer::GetPath()
-                 << "'\n";
-    llvm::outs() << '\n';
-    llvm::outs() << "Before attaching the reproducer to a bug report:\n";
-    llvm::outs() << " - Look at the directory to ensure you're willing to "
-                    "share its content.\n";
-    llvm::outs()
-        << " - Make sure the reproducer works by replaying the reproducer.\n";
-    llvm::outs() << '\n';
-    llvm::outs() << "Replay the reproducer with the following command:\n";
-    llvm::outs() << argv0 << " -replay " << finalize_path->getValue() << "\n";
-    llvm::outs() << "********************\n";
-    return 0;
-  }
-
-  if (auto *replay_path = input_args.getLastArg(OPT_replay)) {
-    SBReplayOptions replay_options;
-    replay_options.SetCheckVersion(!input_args.hasArg(OPT_no_version_check));
-    replay_options.SetVerify(!input_args.hasArg(OPT_no_verification));
-    if (const char *error =
-            SBReproducer::Replay(replay_path->getValue(), replay_options)) {
-      WithColor::error() << "reproducer replay failed: " << error << '\n';
-      return 1;
-    }
-    return 0;
-  }
-
-  bool capture = input_args.hasArg(OPT_capture);
-  bool generate_on_exit = input_args.hasArg(OPT_generate_on_exit);
-  auto *capture_path = input_args.getLastArg(OPT_capture_path);
-
-  if (generate_on_exit && !capture) {
-    WithColor::warning()
-        << "-reproducer-generate-on-exit specified without -capture\n";
-  }
-
-  if (capture || capture_path) {
-    if (capture_path) {
-      if (!capture)
-        WithColor::warning() << "-capture-path specified without -capture\n";
-      if (const char *error = SBReproducer::Capture(capture_path->getValue())) {
-        WithColor::error() << "reproducer capture failed: " << error << '\n';
-        return 1;
-      }
-    } else {
-      const char *error = SBReproducer::Capture();
-      if (error) {
-        WithColor::error() << "reproducer capture failed: " << error << '\n';
-        return 1;
-      }
-    }
-    if (generate_on_exit)
-      SBReproducer::SetAutoGenerate(true);
-
-    // Register the reproducer signal handler.
-    if (!input_args.hasArg(OPT_no_generate_on_signal)) {
-      if (const char *reproducer_path = SBReproducer::GetPath()) {
-        static std::string *finalize_cmd = new std::string(argv0);
-        finalize_cmd->append(" --reproducer-finalize '");
-        finalize_cmd->append(reproducer_path);
-        finalize_cmd->append("'");
-        llvm::sys::AddSignalHandler(reproducer_handler,
-                                    const_cast<char *>(finalize_cmd->c_str()));
-      }
-    }
-  }
-
-  return llvm::None;
-}
-
 int main(int argc, char const *argv[]) {
   // Editline uses for example iswprint which is dependent on LC_CTYPE.
   std::setlocale(LC_ALL, "");
@@ -880,7 +757,7 @@ int main(int argc, char const *argv[]) {
   LLDBOptTable T;
   unsigned MissingArgIndex;
   unsigned MissingArgCount;
-  ArrayRef<const char *> arg_arr = makeArrayRef(argv + 1, argc - 1);
+  ArrayRef<const char *> arg_arr = ArrayRef(argv + 1, argc - 1);
   opt::InputArgList input_args =
       T.ParseArgs(arg_arr, MissingArgIndex, MissingArgCount);
   llvm::StringRef argv0 = llvm::sys::path::filename(argv[0]);
@@ -908,24 +785,23 @@ int main(int argc, char const *argv[]) {
     return 1;
   }
 
-  if (auto exit_code = InitializeReproducer(argv[0], input_args)) {
-    return *exit_code;
-  }
-
   SBError error = SBDebugger::InitializeWithErrorHandling();
   if (error.Fail()) {
     WithColor::error() << "initialization failed: " << error.GetCString()
                        << '\n';
     return 1;
   }
+
+  // Setup LLDB signal handlers once the debugger has been initialized.
+  SBDebugger::PrintDiagnosticsOnError();
+
   SBHostOS::ThreadCreated("<lldb.driver.main-thread>");
 
   signal(SIGINT, sigint_handler);
-#if !defined(_MSC_VER)
+#if !defined(_WIN32)
   signal(SIGPIPE, SIG_IGN);
   signal(SIGWINCH, sigwinch_handler);
   signal(SIGTSTP, sigtstp_handler);
-  signal(SIGCONT, sigcont_handler);
 #endif
 
   int exit_code = 0;

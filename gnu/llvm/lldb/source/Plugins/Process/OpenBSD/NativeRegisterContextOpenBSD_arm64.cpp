@@ -18,12 +18,12 @@
 
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Utility/DataBufferHeap.h"
-#include "lldb/Utility/Log.h"
 #include "lldb/Utility/RegisterValue.h"
 #include "lldb/Utility/Status.h"
 #include "llvm/ADT/APInt.h"
 
 #include "Plugins/Process/Utility/RegisterInfoPOSIX_arm64.h"
+#include "Plugins/Process/POSIX/ProcessPOSIXLog.h"
 
 // clang-format off
 #include <sys/types.h>
@@ -102,7 +102,7 @@ Status
 NativeRegisterContextOpenBSD_arm64::ReadRegister(const RegisterInfo *reg_info,
                                                  RegisterValue &reg_value) {
   Status error;
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+  Log *log = GetLog(POSIXLog::Registers);
 
   if (!reg_info) {
     error.SetErrorString("reg_info NULL");
@@ -142,7 +142,7 @@ NativeRegisterContextOpenBSD_arm64::ReadRegister(const RegisterInfo *reg_info,
     offset = reg_info->byte_offset - GetRegisterInfo().GetPAuthOffset();
     reg_value = (uint64_t)m_pacmask[offset > 0];
     if (reg_value.GetByteSize() > reg_info->byte_size) {
-      reg_value.SetType(reg_info);
+      reg_value.SetType(*reg_info);
     }
 
     return error;
@@ -241,7 +241,7 @@ NativeRegisterContextOpenBSD_arm64::ReadRegister(const RegisterInfo *reg_info,
   }
 
   if (reg_value.GetByteSize() > reg_info->byte_size) {
-    reg_value.SetType(reg_info);
+    reg_value.SetType(*reg_info);
   }
 
   return error;
@@ -251,7 +251,7 @@ Status NativeRegisterContextOpenBSD_arm64::WriteRegister(
     const RegisterInfo *reg_info, const RegisterValue &reg_value) {
 
   Status error;
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+  Log *log = GetLog(POSIXLog::Registers);
 
   if (!reg_info) {
     error.SetErrorString("reg_info NULL");
@@ -385,7 +385,7 @@ Status NativeRegisterContextOpenBSD_arm64::WriteRegister(
 }
 
 Status NativeRegisterContextOpenBSD_arm64::ReadAllRegisterValues(
-    lldb::DataBufferSP &data_sp) {
+    lldb::WritableDataBufferSP &data_sp) {
   Status error;
 
   data_sp.reset(new DataBufferHeap(REG_CONTEXT_SIZE, 0));
@@ -440,7 +440,7 @@ Status NativeRegisterContextOpenBSD_arm64::WriteAllRegisterValues(
     return error;
   }
 
-  uint8_t *src = data_sp->GetBytes();
+  const uint8_t *src = data_sp->GetBytes();
   if (src == nullptr) {
     error.SetErrorStringWithFormat("NativeRegisterContextOpenBSD_arm64::%s "
                                    "DataBuffer::GetBytes() returned a null "

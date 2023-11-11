@@ -598,7 +598,7 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteRegister(
 }
 
 Status NativeRegisterContextOpenBSD_x86_64::ReadAllRegisterValues(
-    lldb::DataBufferSP &data_sp) {
+    lldb::WritableDataBufferSP &data_sp) {
   Status error;
 
   data_sp.reset(new DataBufferHeap(REG_CONTEXT_SIZE, 0));
@@ -651,7 +651,7 @@ Status NativeRegisterContextOpenBSD_x86_64::WriteAllRegisterValues(
     return error;
   }
 
-  uint8_t *src = data_sp->GetBytes();
+  const uint8_t *src = data_sp->GetBytes();
   if (src == nullptr) {
     error.SetErrorStringWithFormat("NativeRegisterContextOpenBSD_x86_64::%s "
                                    "DataBuffer::GetBytes() returned a null "
