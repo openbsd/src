@@ -1,4 +1,4 @@
-/*	$OpenBSD: atomic.h,v 1.22 2022/08/29 02:01:18 jsg Exp $	*/
+/*	$OpenBSD: atomic.h,v 1.23 2023/11/11 18:47:02 jca Exp $	*/
 /*	$NetBSD: atomic.h,v 1.1 2003/04/26 18:39:37 fvdl Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  * to interrupts and multiple processors.
  *
  * void atomic_setbits_int(volatile u_int *a, u_int mask) { *a |= mask; }
- * void atomic_clearbits_int(volatile u_int *a, u_int mas) { *a &= ~mask; }
+ * void atomic_clearbits_int(volatile u_int *a, u_int mask) { *a &= ~mask; }
  */
 
 #if !defined(_LOCORE)
