@@ -13,15 +13,16 @@
 #ifndef LLVM_CLANG_AST_INTERP_TYPE_H
 #define LLVM_CLANG_AST_INTERP_TYPE_H
 
+#include "Integral.h"
 #include <climits>
 #include <cstddef>
 #include <cstdint>
-#include "Boolean.h"
-#include "Integral.h"
-#include "Pointer.h"
 
 namespace clang {
 namespace interp {
+
+class Pointer;
+class Boolean;
 
 /// Enumeration of the primitive types of the VM.
 enum PrimType : unsigned {
@@ -58,6 +59,13 @@ constexpr size_t align(size_t Size) {
   return ((Size + alignof(void *) - 1) / alignof(void *)) * alignof(void *);
 }
 
+constexpr bool aligned(uintptr_t Value) { return Value == align(Value); }
+static_assert(aligned(sizeof(void *)));
+
+static inline bool aligned(const void *P) {
+  return aligned(reinterpret_cast<uintptr_t>(P));
+}
+
 inline bool isPrimitiveIntegral(PrimType Type) {
   switch (Type) {
   case PT_Bool:
@@ -81,35 +89,27 @@ inline bool isPrimitiveIntegral(PrimType Type) {
 /// Helper macro to simplify type switches.
 /// The macro implicitly exposes a type T in the scope of the inner block.
 #define TYPE_SWITCH_CASE(Name, B) \
-  case Name: { using T = PrimConv<Name>::T; do {B;} while(0); break; }
+  case Name: { using T = PrimConv<Name>::T; B; break; }
 #define TYPE_SWITCH(Expr, B)                                                   \
-  switch (Expr) {                                                              \
-    TYPE_SWITCH_CASE(PT_Sint8, B)                                              \
-    TYPE_SWITCH_CASE(PT_Uint8, B)                                              \
-    TYPE_SWITCH_CASE(PT_Sint16, B)                                             \
-    TYPE_SWITCH_CASE(PT_Uint16, B)                                             \
-    TYPE_SWITCH_CASE(PT_Sint32, B)                                             \
-    TYPE_SWITCH_CASE(PT_Uint32, B)                                             \
-    TYPE_SWITCH_CASE(PT_Sint64, B)                                             \
-    TYPE_SWITCH_CASE(PT_Uint64, B)                                             \
-    TYPE_SWITCH_CASE(PT_Bool, B)                                               \
-    TYPE_SWITCH_CASE(PT_Ptr, B)                                                \
-  }
+  do {                                                                         \
+    switch (Expr) {                                                            \
+      TYPE_SWITCH_CASE(PT_Sint8, B)                                            \
+      TYPE_SWITCH_CASE(PT_Uint8, B)                                            \
+      TYPE_SWITCH_CASE(PT_Sint16, B)                                           \
+      TYPE_SWITCH_CASE(PT_Uint16, B)                                           \
+      TYPE_SWITCH_CASE(PT_Sint32, B)                                           \
+      TYPE_SWITCH_CASE(PT_Uint32, B)                                           \
+      TYPE_SWITCH_CASE(PT_Sint64, B)                                           \
+      TYPE_SWITCH_CASE(PT_Uint64, B)                                           \
+      TYPE_SWITCH_CASE(PT_Bool, B)                                             \
+      TYPE_SWITCH_CASE(PT_Ptr, B)                                              \
+    }                                                                          \
+  } while (0)
 #define COMPOSITE_TYPE_SWITCH(Expr, B, D)                                      \
-  switch (Expr) {                                                              \
-    TYPE_SWITCH_CASE(PT_Ptr, B)                                                \
-    default: do { D; } while(0); break;                                        \
-  }
-#define INT_TYPE_SWITCH(Expr, B)                                               \
-  switch (Expr) {                                                              \
-    TYPE_SWITCH_CASE(PT_Sint8, B)                                              \
-    TYPE_SWITCH_CASE(PT_Uint8, B)                                              \
-    TYPE_SWITCH_CASE(PT_Sint16, B)                                             \
-    TYPE_SWITCH_CASE(PT_Uint16, B)                                             \
-    TYPE_SWITCH_CASE(PT_Sint32, B)                                             \
-    TYPE_SWITCH_CASE(PT_Uint32, B)                                             \
-    TYPE_SWITCH_CASE(PT_Sint64, B)                                             \
-    TYPE_SWITCH_CASE(PT_Uint64, B)                                             \
-    default: llvm_unreachable("not an integer");                               \
-  }
+  do {                                                                         \
+    switch (Expr) {                                                            \
+      TYPE_SWITCH_CASE(PT_Ptr, B)                                              \
+      default: { D; break; }                                                   \
+    }                                                                          \
+  } while (0)
 #endif

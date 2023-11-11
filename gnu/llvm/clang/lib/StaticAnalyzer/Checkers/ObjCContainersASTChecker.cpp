@@ -72,7 +72,7 @@ class WalkAST : public StmtVisitor<WalkAST> {
 public:
   WalkAST(BugReporter &br, const CheckerBase *checker, AnalysisDeclContext *ac)
       : BR(br), Checker(checker), AC(ac), ASTC(AC->getASTContext()),
-        PtrWidth(ASTC.getTargetInfo().getPointerWidth(0)) {}
+        PtrWidth(ASTC.getTargetInfo().getPointerWidth(LangAS::Default)) {}
 
   // Statement visitor methods.
   void VisitChildren(Stmt *S);
@@ -135,9 +135,9 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
     llvm::raw_svector_ostream Os(Buf);
     // Use "second" and "third" since users will expect 1-based indexing
     // for parameter names when mentioned in prose.
-    Os << " The "<< ((ArgNum == 1) ? "second" : "third") << " argument to '"
-        << Name << "' must be a C array of pointer-sized values, not '"
-        << Arg->getType().getAsString() << "'";
+    Os << " The " << ((ArgNum == 1) ? "second" : "third") << " argument to '"
+       << Name << "' must be a C array of pointer-sized values, not '"
+       << Arg->getType() << "'";
 
     PathDiagnosticLocation CELoc =
         PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);

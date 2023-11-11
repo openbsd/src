@@ -108,9 +108,22 @@ public:
     UNW_Libgcc
   };
 
+  enum class UnwindTableLevel {
+    None,
+    Synchronous,
+    Asynchronous,
+  };
+
   enum RTTIMode {
     RM_Enabled,
     RM_Disabled,
+  };
+
+  struct BitCodeLibraryInfo {
+    std::string Path;
+    bool ShouldInternalize;
+    BitCodeLibraryInfo(StringRef Path, bool ShouldInternalize = true)
+        : Path(Path), ShouldInternalize(ShouldInternalize) {}
   };
 
   enum FileType { FT_Object, FT_Static, FT_Shared };
@@ -143,7 +156,8 @@ private:
   mutable std::unique_ptr<Tool> StaticLibTool;
   mutable std::unique_ptr<Tool> IfsMerge;
   mutable std::unique_ptr<Tool> OffloadBundler;
-  mutable std::unique_ptr<Tool> OffloadWrapper;
+  mutable std::unique_ptr<Tool> OffloadPackager;
+  mutable std::unique_ptr<Tool> LinkerWrapper;
 
   Tool *getClang() const;
   Tool *getFlang() const;
@@ -153,9 +167,10 @@ private:
   Tool *getIfsMerge() const;
   Tool *getClangAs() const;
   Tool *getOffloadBundler() const;
-  Tool *getOffloadWrapper() const;
+  Tool *getOffloadPackager() const;
+  Tool *getLinkerWrapper() const;
 
-  mutable std::unique_ptr<SanitizerArgs> SanitizerArguments;
+  mutable bool SanitizerArgsChecked = false;
   mutable std::unique_ptr<XRayArgs> XRayArguments;
 
   /// The effective clang triple for the current Job.
@@ -166,9 +181,9 @@ private:
     EffectiveTriple = std::move(ET);
   }
 
-  mutable llvm::Optional<CXXStdlibType> cxxStdlibType;
-  mutable llvm::Optional<RuntimeLibType> runtimeLibType;
-  mutable llvm::Optional<UnwindLibType> unwindLibType;
+  mutable std::optional<CXXStdlibType> cxxStdlibType;
+  mutable std::optional<RuntimeLibType> runtimeLibType;
+  mutable std::optional<UnwindLibType> unwindLibType;
 
 protected:
   MultilibSet Multilibs;
@@ -176,6 +191,10 @@ protected:
 
   ToolChain(const Driver &D, const llvm::Triple &T,
             const llvm::opt::ArgList &Args);
+
+  /// Executes the given \p Executable and returns the stdout.
+  llvm::Expected<std::unique_ptr<llvm::MemoryBuffer>>
+  executeToolChainProgram(StringRef Executable) const;
 
   void setTripleEnvironment(llvm::Triple::EnvironmentType Env);
 
@@ -204,6 +223,9 @@ protected:
   static void addSystemIncludes(const llvm::opt::ArgList &DriverArgs,
                                 llvm::opt::ArgStringList &CC1Args,
                                 ArrayRef<StringRef> Paths);
+
+  static std::string concat(StringRef Path, const Twine &A, const Twine &B = "",
+                            const Twine &C = "", const Twine &D = "");
   ///@}
 
 public:
@@ -246,6 +268,10 @@ public:
     return EffectiveTriple;
   }
 
+  bool hasEffectiveTriple() const {
+    return !EffectiveTriple.getTriple().empty();
+  }
+
   path_list &getLibraryPaths() { return LibraryPaths; }
   const path_list &getLibraryPaths() const { return LibraryPaths; }
 
@@ -259,7 +285,7 @@ public:
 
   const Multilib &getMultilib() const { return SelectedMultilib; }
 
-  const SanitizerArgs& getSanitizerArgs() const;
+  SanitizerArgs getSanitizerArgs(const llvm::opt::ArgList &JobArgs) const;
 
   const XRayArgs& getXRayArgs() const;
 
@@ -341,10 +367,7 @@ public:
   /// is LLD. If it's set, it can be assumed that the linker is LLD built
   /// at the same revision as clang, and clang can make assumptions about
   /// LLD's supported flags, error output, etc.
-  /// If LinkerIsLLDDarwinNew is non-nullptr, it's set if the linker is
-  /// the new version in lld/MachO.
-  std::string GetLinkerPath(bool *LinkerIsLLD = nullptr,
-                            bool *LinkerIsLLDDarwinNew = nullptr) const;
+  std::string GetLinkerPath(bool *LinkerIsLLD = nullptr) const;
 
   /// Returns the linker path for emitting a static library.
   std::string GetStaticLibToolPath() const;
@@ -377,8 +400,23 @@ public:
   /// by default.
   virtual bool IsIntegratedAssemblerDefault() const { return false; }
 
+  /// IsIntegratedBackendDefault - Does this tool chain enable
+  /// -fintegrated-objemitter by default.
+  virtual bool IsIntegratedBackendDefault() const { return true; }
+
+  /// IsIntegratedBackendSupported - Does this tool chain support
+  /// -fintegrated-objemitter.
+  virtual bool IsIntegratedBackendSupported() const { return true; }
+
+  /// IsNonIntegratedBackendSupported - Does this tool chain support
+  /// -fno-integrated-objemitter.
+  virtual bool IsNonIntegratedBackendSupported() const { return false; }
+
   /// Check if the toolchain should use the integrated assembler.
   virtual bool useIntegratedAs() const;
+
+  /// Check if the toolchain should use the integrated backend.
+  virtual bool useIntegratedBackend() const;
 
   /// Check if the toolchain should use AsmParser to parse inlineAsm when
   /// integrated assembler is not default.
@@ -401,6 +439,9 @@ public:
 
   /// Check whether to enable x86 relax relocations by default.
   virtual bool useRelaxRelocations() const;
+
+  /// Check whether use IEEE binary128 as long double format by default.
+  bool defaultToIEEELongDouble() const;
 
   /// GetDefaultStackProtectorLevel - Get the default stack protector level for
   /// this tool chain.
@@ -445,11 +486,11 @@ public:
                                     StringRef Component,
                                     FileType Type = ToolChain::FT_Static) const;
 
-  // Returns target specific runtime path if it exists.
-  virtual std::string getRuntimePath() const;
+  // Returns target specific runtime paths.
+  path_list getRuntimePaths() const;
 
-  // Returns target specific standard library path if it exists.
-  virtual std::string getStdlibPath() const;
+  // Returns target specific standard library paths.
+  path_list getStdlibPaths() const;
 
   // Returns <ResourceDir>/lib/<OSName>/<arch>.  This is used by runtimes (such
   // as OpenMP) to find arch-specific libraries.
@@ -464,9 +505,9 @@ public:
   /// Returns true if gcov instrumentation (-fprofile-arcs or --coverage) is on.
   static bool needsGCovInstrumentation(const llvm::opt::ArgList &Args);
 
-  /// IsUnwindTablesDefault - Does this tool chain use -funwind-tables
-  /// by default.
-  virtual bool IsUnwindTablesDefault(const llvm::opt::ArgList &Args) const;
+  /// How detailed should the unwind tables be by default.
+  virtual UnwindTableLevel
+  getDefaultUnwindTableLevel(const llvm::opt::ArgList &Args) const;
 
   /// Test whether this toolchain supports outline atomics by default.
   virtual bool
@@ -478,15 +519,12 @@ public:
   virtual bool isPICDefault() const = 0;
 
   /// Test whether this toolchain defaults to PIE.
-  virtual bool isPIEDefault() const = 0;
-
-  /// Test whether this toolchaind defaults to non-executable stacks.
-  virtual bool isNoExecStackDefault() const;
+  virtual bool isPIEDefault(const llvm::opt::ArgList &Args) const = 0;
 
   /// Tests whether this toolchain forces its default for PIC, PIE or
   /// non-PIC.  If this returns true, any PIC related flags should be ignored
-  /// and instead the results of \c isPICDefault() and \c isPIEDefault() are
-  /// used exclusively.
+  /// and instead the results of \c isPICDefault() and \c isPIEDefault(const
+  /// llvm::opt::ArgList &Args) are used exclusively.
   virtual bool isPICDefaultForced() const = 0;
 
   /// SupportsProfiling - Does this tool chain support -pg.
@@ -504,9 +542,12 @@ public:
   /// compile unit information.
   virtual bool UseDwarfDebugFlags() const { return false; }
 
+  /// Add an additional -fdebug-prefix-map entry.
+  virtual std::string GetGlobalDebugPathRemapping() const { return {}; }
+
   // Return the DWARF version to emit, in the absence of arguments
   // to the contrary.
-  virtual unsigned GetDefaultDwarfVersion() const { return 4; }
+  virtual unsigned GetDefaultDwarfVersion() const { return 5; }
 
   // Some toolchains may have different restrictions on the DWARF version and
   // may need to adjust it. E.g. NVPTX may need to enforce DWARF2 even when host
@@ -545,6 +586,9 @@ public:
 
   /// isThreadModelSupported() - Does this target support a thread model?
   virtual bool isThreadModelSupported(const StringRef Model) const;
+
+  /// isBareMetal - Is this a bare metal target.
+  virtual bool isBareMetal() const { return false; }
 
   virtual std::string getMultiarchTriple(const Driver &D,
                                          const llvm::Triple &TargetTriple,
@@ -596,6 +640,11 @@ public:
   virtual void addClangTargetOptions(const llvm::opt::ArgList &DriverArgs,
                                      llvm::opt::ArgStringList &CC1Args,
                                      Action::OffloadKind DeviceOffloadKind) const;
+
+  /// Add options that need to be passed to cc1as for this target.
+  virtual void
+  addClangCC1ASTargetOptions(const llvm::opt::ArgList &Args,
+                             llvm::opt::ArgStringList &CC1ASArgs) const;
 
   /// Add warning options that need to be passed to cc1 for this target.
   virtual void addClangWarningOptions(llvm::opt::ArgStringList &CC1Args) const;
@@ -659,6 +708,10 @@ public:
   bool addFastMathRuntimeIfAvailable(
     const llvm::opt::ArgList &Args, llvm::opt::ArgStringList &CmdArgs) const;
 
+  /// getSystemGPUArchs - Use a tool to detect the user's availible GPUs.
+  virtual Expected<SmallVector<std::string>>
+  getSystemGPUArchs(const llvm::opt::ArgList &Args) const;
+
   /// addProfileRTLibs - When -fprofile-instr-profile is specified, try to pass
   /// a suitable profile runtime library to the linker.
   virtual void addProfileRTLibs(const llvm::opt::ArgList &Args,
@@ -680,9 +733,14 @@ public:
   virtual VersionTuple computeMSVCVersion(const Driver *D,
                                           const llvm::opt::ArgList &Args) const;
 
-  /// Get paths of HIP device libraries.
-  virtual llvm::SmallVector<std::string, 12>
-  getHIPDeviceLibs(const llvm::opt::ArgList &Args) const;
+  /// Get paths for device libraries.
+  virtual llvm::SmallVector<BitCodeLibraryInfo, 12>
+  getDeviceLibs(const llvm::opt::ArgList &Args) const;
+
+  /// Add the system specific linker arguments to use
+  /// for the given HIP runtime library type.
+  virtual void AddHIPRuntimeLibArgs(const llvm::opt::ArgList &Args,
+                                    llvm::opt::ArgStringList &CmdArgs) const {}
 
   /// Return sanitizers which are available in this toolchain.
   virtual SanitizerMask getSupportedSanitizers() const;
@@ -703,6 +761,22 @@ public:
       const llvm::opt::ArgList &DriverArgs, const JobAction &JA,
       const llvm::fltSemantics *FPType = nullptr) const {
     return llvm::DenormalMode::getIEEE();
+  }
+
+  // We want to expand the shortened versions of the triples passed in to
+  // the values used for the bitcode libraries.
+  static llvm::Triple getOpenMPTriple(StringRef TripleStr) {
+    llvm::Triple TT(TripleStr);
+    if (TT.getVendor() == llvm::Triple::UnknownVendor ||
+        TT.getOS() == llvm::Triple::UnknownOS) {
+      if (TT.getArch() == llvm::Triple::nvptx)
+        return llvm::Triple("nvptx-nvidia-cuda");
+      if (TT.getArch() == llvm::Triple::nvptx64)
+        return llvm::Triple("nvptx64-nvidia-cuda");
+      if (TT.getArch() == llvm::Triple::amdgcn)
+        return llvm::Triple("amdgcn-amd-amdhsa");
+    }
+    return TT;
   }
 };
 

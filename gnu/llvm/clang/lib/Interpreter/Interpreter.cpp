@@ -30,13 +30,13 @@
 #include "clang/Lex/PreprocessorOptions.h"
 
 #include "llvm/IR/Module.h"
+#include "llvm/Support/Errc.h"
 #include "llvm/Support/Host.h"
 
 using namespace clang;
 
 // FIXME: Figure out how to unify with namespace init_convenience from
-//        tools/clang-import-test/clang-import-test.cpp and
-//        examples/clang-interpreter/main.cpp
+//        tools/clang-import-test/clang-import-test.cpp
 namespace {
 /// Retrieves the clang CC1 specific flags out of the compilation's jobs.
 /// \returns NULL on error.
@@ -47,14 +47,14 @@ GetCC1Arguments(DiagnosticsEngine *Diagnostics,
   // failed. Extract that job from the Compilation.
   const driver::JobList &Jobs = Compilation->getJobs();
   if (!Jobs.size() || !isa<driver::Command>(*Jobs.begin()))
-    return llvm::createStringError(std::errc::state_not_recoverable,
+    return llvm::createStringError(llvm::errc::not_supported,
                                    "Driver initialization failed. "
                                    "Unable to create a driver job");
 
   // The one job we find should be to invoke clang again.
   const driver::Command *Cmd = cast<driver::Command>(&(*Jobs.begin()));
   if (llvm::StringRef(Cmd->getCreator().getName()) != "clang")
-    return llvm::createStringError(std::errc::state_not_recoverable,
+    return llvm::createStringError(llvm::errc::not_supported,
                                    "Driver initialization failed");
 
   return &Cmd->getArguments();
@@ -77,8 +77,7 @@ CreateCI(const llvm::opt::ArgStringList &Argv) {
   TextDiagnosticBuffer *DiagsBuffer = new TextDiagnosticBuffer;
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagsBuffer);
   bool Success = CompilerInvocation::CreateFromArgs(
-      Clang->getInvocation(), llvm::makeArrayRef(Argv.begin(), Argv.size()),
-      Diags);
+      Clang->getInvocation(), llvm::ArrayRef(Argv.begin(), Argv.size()), Diags);
 
   // Infer the builtin include path if unspecified.
   if (Clang->getHeaderSearchOpts().UseBuiltinIncludes &&
@@ -89,13 +88,13 @@ CreateCI(const llvm::opt::ArgStringList &Argv) {
   // Create the actual diagnostics engine.
   Clang->createDiagnostics();
   if (!Clang->hasDiagnostics())
-    return llvm::createStringError(std::errc::state_not_recoverable,
+    return llvm::createStringError(llvm::errc::not_supported,
                                    "Initialization failed. "
                                    "Unable to create diagnostics engine");
 
   DiagsBuffer->FlushDiagnostics(Clang->getDiagnostics());
   if (!Success)
-    return llvm::createStringError(std::errc::state_not_recoverable,
+    return llvm::createStringError(llvm::errc::not_supported,
                                    "Initialization failed. "
                                    "Unable to flush diagnostics");
 
@@ -106,11 +105,18 @@ CreateCI(const llvm::opt::ArgStringList &Argv) {
   Clang->setTarget(TargetInfo::CreateTargetInfo(
       Clang->getDiagnostics(), Clang->getInvocation().TargetOpts));
   if (!Clang->hasTarget())
-    return llvm::createStringError(std::errc::state_not_recoverable,
+    return llvm::createStringError(llvm::errc::not_supported,
                                    "Initialization failed. "
                                    "Target is missing");
 
   Clang->getTarget().adjust(Clang->getDiagnostics(), Clang->getLangOpts());
+
+  // Don't clear the AST before backend codegen since we do codegen multiple
+  // times, reusing the same AST.
+  Clang->getCodeGenOpts().ClearASTBeforeBackend = false;
+
+  Clang->getFrontendOpts().DisableFree = false;
+  Clang->getCodeGenOpts().DisableFree = false;
 
   return std::move(Clang);
 }
@@ -131,36 +137,28 @@ IncrementalCompilerBuilder::create(std::vector<const char *> &ClangArgv) {
   // specified. By prepending we allow users to override the default
   // action and use other actions in incremental mode.
   // FIXME: Print proper driver diagnostics if the driver flags are wrong.
-  ClangArgv.insert(ClangArgv.begin() + 1, "-c");
-
-  if (!llvm::is_contained(ClangArgv, " -x")) {
-    // We do C++ by default; append right after argv[0] if no "-x" given
-    ClangArgv.push_back("-x");
-    ClangArgv.push_back("c++");
-  }
+  // We do C++ by default; append right after argv[0] if no "-x" given
+  ClangArgv.insert(ClangArgv.end(), "-xc++");
+  ClangArgv.insert(ClangArgv.end(), "-Xclang");
+  ClangArgv.insert(ClangArgv.end(), "-fincremental-extensions");
+  ClangArgv.insert(ClangArgv.end(), "-c");
 
   // Put a dummy C++ file on to ensure there's at least one compile job for the
   // driver to construct.
   ClangArgv.push_back("<<< inputs >>>");
 
-  CompilerInvocation Invocation;
   // Buffer diagnostics from argument parsing so that we can output them using a
   // well formed diagnostic object.
   IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts =
+      CreateAndPopulateDiagOpts(ClangArgv);
   TextDiagnosticBuffer *DiagsBuffer = new TextDiagnosticBuffer;
   DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagsBuffer);
-  unsigned MissingArgIndex, MissingArgCount;
-  const llvm::opt::OptTable &Opts = driver::getDriverOptTable();
-  llvm::opt::InputArgList ParsedArgs =
-      Opts.ParseArgs(ArrayRef<const char *>(ClangArgv).slice(1),
-                     MissingArgIndex, MissingArgCount);
-  ParseDiagnosticArgs(*DiagOpts, ParsedArgs, &Diags);
 
   driver::Driver Driver(/*MainBinaryName=*/ClangArgv[0],
                         llvm::sys::getProcessTriple(), Diags);
   Driver.setCheckInputsExist(false); // the input comes from mem buffers
-  llvm::ArrayRef<const char *> RF = llvm::makeArrayRef(ClangArgv);
+  llvm::ArrayRef<const char *> RF = llvm::ArrayRef(ClangArgv);
   std::unique_ptr<driver::Compilation> Compilation(Driver.BuildCompilation(RF));
 
   if (Compilation->getArgs().hasArg(driver::options::OPT_v))
@@ -182,7 +180,14 @@ Interpreter::Interpreter(std::unique_ptr<CompilerInstance> CI,
                                                    *TSCtx->getContext(), Err);
 }
 
-Interpreter::~Interpreter() {}
+Interpreter::~Interpreter() {
+  if (IncrExecutor) {
+    if (llvm::Error Err = IncrExecutor->cleanUp())
+      llvm::report_fatal_error(
+          llvm::Twine("Failed to clean up IncrementalExecutor: ") +
+          toString(std::move(Err)));
+  }
+}
 
 llvm::Expected<std::unique_ptr<Interpreter>>
 Interpreter::create(std::unique_ptr<CompilerInstance> CI) {
@@ -198,6 +203,12 @@ const CompilerInstance *Interpreter::getCompilerInstance() const {
   return IncrParser->getCI();
 }
 
+const llvm::orc::LLJIT *Interpreter::getExecutionEngine() const {
+  if (IncrExecutor)
+    return IncrExecutor->getExecutionEngine();
+  return nullptr;
+}
+
 llvm::Expected<PartialTranslationUnit &>
 Interpreter::Parse(llvm::StringRef Code) {
   return IncrParser->Parse(Code);
@@ -206,20 +217,69 @@ Interpreter::Parse(llvm::StringRef Code) {
 llvm::Error Interpreter::Execute(PartialTranslationUnit &T) {
   assert(T.TheModule);
   if (!IncrExecutor) {
-    const llvm::Triple &Triple =
-        getCompilerInstance()->getASTContext().getTargetInfo().getTriple();
+    const clang::TargetInfo &TI =
+        getCompilerInstance()->getASTContext().getTargetInfo();
     llvm::Error Err = llvm::Error::success();
-    IncrExecutor = std::make_unique<IncrementalExecutor>(*TSCtx, Err, Triple);
+    IncrExecutor = std::make_unique<IncrementalExecutor>(*TSCtx, Err, TI);
 
     if (Err)
       return Err;
   }
   // FIXME: Add a callback to retain the llvm::Module once the JIT is done.
-  if (auto Err = IncrExecutor->addModule(std::move(T.TheModule)))
+  if (auto Err = IncrExecutor->addModule(T))
     return Err;
 
   if (auto Err = IncrExecutor->runCtors())
     return Err;
 
+  return llvm::Error::success();
+}
+
+llvm::Expected<llvm::JITTargetAddress>
+Interpreter::getSymbolAddress(GlobalDecl GD) const {
+  if (!IncrExecutor)
+    return llvm::make_error<llvm::StringError>("Operation failed. "
+                                               "No execution engine",
+                                               std::error_code());
+  llvm::StringRef MangledName = IncrParser->GetMangledName(GD);
+  return getSymbolAddress(MangledName);
+}
+
+llvm::Expected<llvm::JITTargetAddress>
+Interpreter::getSymbolAddress(llvm::StringRef IRName) const {
+  if (!IncrExecutor)
+    return llvm::make_error<llvm::StringError>("Operation failed. "
+                                               "No execution engine",
+                                               std::error_code());
+
+  return IncrExecutor->getSymbolAddress(IRName, IncrementalExecutor::IRName);
+}
+
+llvm::Expected<llvm::JITTargetAddress>
+Interpreter::getSymbolAddressFromLinkerName(llvm::StringRef Name) const {
+  if (!IncrExecutor)
+    return llvm::make_error<llvm::StringError>("Operation failed. "
+                                               "No execution engine",
+                                               std::error_code());
+
+  return IncrExecutor->getSymbolAddress(Name, IncrementalExecutor::LinkerName);
+}
+
+llvm::Error Interpreter::Undo(unsigned N) {
+
+  std::list<PartialTranslationUnit> &PTUs = IncrParser->getPTUs();
+  if (N > PTUs.size())
+    return llvm::make_error<llvm::StringError>("Operation failed. "
+                                               "Too many undos",
+                                               std::error_code());
+  for (unsigned I = 0; I < N; I++) {
+    if (IncrExecutor) {
+      if (llvm::Error Err = IncrExecutor->removeModule(PTUs.back()))
+        return Err;
+    }
+
+    IncrParser->CleanUpPTU(PTUs.back());
+    PTUs.pop_back();
+  }
   return llvm::Error::success();
 }

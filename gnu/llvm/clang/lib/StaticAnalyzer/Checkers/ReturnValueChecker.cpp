@@ -14,10 +14,11 @@
 #include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CallDescription.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/SmallVector.h"
+#include <optional>
 
 using namespace clang;
 using namespace ento;
@@ -58,7 +59,7 @@ private:
 } // namespace
 
 static std::string getName(const CallEvent &Call) {
-  std::string Name = "";
+  std::string Name;
   if (const auto *MD = dyn_cast<CXXMethodDecl>(Call.getDecl()))
     if (const CXXRecordDecl *RD = MD->getParent())
       Name += RD->getNameAsString() + "::";
@@ -69,11 +70,11 @@ static std::string getName(const CallEvent &Call) {
 
 // The predefinitions ('CDM') could break due to the ever growing code base.
 // Check for the expected invariants and see whether they apply.
-static Optional<bool> isInvariantBreak(bool ExpectedValue, SVal ReturnV,
-                                       CheckerContext &C) {
+static std::optional<bool> isInvariantBreak(bool ExpectedValue, SVal ReturnV,
+                                            CheckerContext &C) {
   auto ReturnDV = ReturnV.getAs<DefinedOrUnknownSVal>();
   if (!ReturnDV)
-    return None;
+    return std::nullopt;
 
   if (ExpectedValue)
     return C.getState()->isNull(*ReturnDV).isConstrainedTrue();
@@ -89,7 +90,8 @@ void ReturnValueChecker::checkPostCall(const CallEvent &Call,
 
   SVal ReturnV = Call.getReturnValue();
   bool ExpectedValue = *RawExpectedValue;
-  Optional<bool> IsInvariantBreak = isInvariantBreak(ExpectedValue, ReturnV, C);
+  std::optional<bool> IsInvariantBreak =
+      isInvariantBreak(ExpectedValue, ReturnV, C);
   if (!IsInvariantBreak)
     return;
 
@@ -136,7 +138,8 @@ void ReturnValueChecker::checkEndFunction(const ReturnStmt *RS,
 
   SVal ReturnV = State->getSVal(RS->getRetValue(), C.getLocationContext());
   bool ExpectedValue = *RawExpectedValue;
-  Optional<bool> IsInvariantBreak = isInvariantBreak(ExpectedValue, ReturnV, C);
+  std::optional<bool> IsInvariantBreak =
+      isInvariantBreak(ExpectedValue, ReturnV, C);
   if (!IsInvariantBreak)
     return;
 

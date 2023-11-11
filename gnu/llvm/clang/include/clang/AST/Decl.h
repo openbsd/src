@@ -35,7 +35,6 @@
 #include "clang/Basic/Visibility.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/StringRef.h"
@@ -46,6 +45,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -53,7 +53,6 @@ namespace clang {
 
 class ASTContext;
 struct ASTTemplateArgumentListInfo;
-class Attr;
 class CompoundStmt;
 class DependentFunctionTemplateSpecializationInfo;
 class EnumDecl;
@@ -74,7 +73,6 @@ class TemplateArgumentList;
 class TemplateArgumentListInfo;
 class TemplateParameterList;
 class TypeAliasTemplateDecl;
-class TypeLoc;
 class UnresolvedSetImpl;
 class VarTemplateDecl;
 
@@ -293,7 +291,9 @@ public:
 
   /// Pretty-print the unqualified name of this declaration. Can be overloaded
   /// by derived classes to provide a more user-friendly name when appropriate.
-  virtual void printName(raw_ostream &os) const;
+  virtual void printName(raw_ostream &OS, const PrintingPolicy &Policy) const;
+  /// Calls printName() with the ASTContext printing policy from the decl.
+  void printName(raw_ostream &OS) const;
 
   /// Get the actual, stored name of the declaration, which may be a special
   /// name.
@@ -437,7 +437,7 @@ public:
 
   /// If visibility was explicitly specified for this
   /// declaration, return that visibility.
-  Optional<Visibility>
+  std::optional<Visibility>
   getExplicitVisibility(ExplicitVisibilityKind kind) const;
 
   /// True if the computed linkage is valid. Used for consistency
@@ -542,6 +542,9 @@ public:
 class NamespaceDecl : public NamedDecl, public DeclContext,
                       public Redeclarable<NamespaceDecl>
 {
+
+  enum Flags : unsigned { F_Inline = 1 << 0, F_Nested = 1 << 1 };
+
   /// The starting location of the source range, pointing
   /// to either the namespace or the inline keyword.
   SourceLocation LocStart;
@@ -553,11 +556,12 @@ class NamespaceDecl : public NamedDecl, public DeclContext,
   /// this namespace or to the first namespace in the chain (the latter case
   /// only when this is not the first in the chain), along with a
   /// boolean value indicating whether this is an inline namespace.
-  llvm::PointerIntPair<NamespaceDecl *, 1, bool> AnonOrFirstNamespaceAndInline;
+  llvm::PointerIntPair<NamespaceDecl *, 2, unsigned>
+      AnonOrFirstNamespaceAndFlags;
 
   NamespaceDecl(ASTContext &C, DeclContext *DC, bool Inline,
                 SourceLocation StartLoc, SourceLocation IdLoc,
-                IdentifierInfo *Id, NamespaceDecl *PrevDecl);
+                IdentifierInfo *Id, NamespaceDecl *PrevDecl, bool Nested);
 
   using redeclarable_base = Redeclarable<NamespaceDecl>;
 
@@ -569,10 +573,10 @@ public:
   friend class ASTDeclReader;
   friend class ASTDeclWriter;
 
-  static NamespaceDecl *Create(ASTContext &C, DeclContext *DC,
-                               bool Inline, SourceLocation StartLoc,
-                               SourceLocation IdLoc, IdentifierInfo *Id,
-                               NamespaceDecl *PrevDecl);
+  static NamespaceDecl *Create(ASTContext &C, DeclContext *DC, bool Inline,
+                               SourceLocation StartLoc, SourceLocation IdLoc,
+                               IdentifierInfo *Id, NamespaceDecl *PrevDecl,
+                               bool Nested);
 
   static NamespaceDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
@@ -601,12 +605,33 @@ public:
 
   /// Returns true if this is an inline namespace declaration.
   bool isInline() const {
-    return AnonOrFirstNamespaceAndInline.getInt();
+    return AnonOrFirstNamespaceAndFlags.getInt() & F_Inline;
   }
 
   /// Set whether this is an inline namespace declaration.
   void setInline(bool Inline) {
-    AnonOrFirstNamespaceAndInline.setInt(Inline);
+    unsigned F = AnonOrFirstNamespaceAndFlags.getInt();
+    if (Inline)
+      AnonOrFirstNamespaceAndFlags.setInt(F | F_Inline);
+    else
+      AnonOrFirstNamespaceAndFlags.setInt(F & ~F_Inline);
+  }
+
+  /// Returns true if this is a nested namespace declaration.
+  /// \code
+  /// namespace outer::nested { }
+  /// \endcode
+  bool isNested() const {
+    return AnonOrFirstNamespaceAndFlags.getInt() & F_Nested;
+  }
+
+  /// Set whether this is a nested namespace declaration.
+  void setNested(bool Nested) {
+    unsigned F = AnonOrFirstNamespaceAndFlags.getInt();
+    if (Nested)
+      AnonOrFirstNamespaceAndFlags.setInt(F | F_Nested);
+    else
+      AnonOrFirstNamespaceAndFlags.setInt(F & ~F_Nested);
   }
 
   /// Returns true if the inline qualifier for \c Name is redundant.
@@ -614,7 +639,9 @@ public:
     if (!isInline())
       return false;
     auto X = lookup(Name);
-    auto Y = getParent()->lookup(Name);
+    // We should not perform a lookup within a transparent context, so find a
+    // non-transparent parent context.
+    auto Y = getParent()->getNonTransparentContext()->lookup(Name);
     return std::distance(X.begin(), X.end()) ==
       std::distance(Y.begin(), Y.end());
   }
@@ -633,11 +660,11 @@ public:
   /// Retrieve the anonymous namespace nested inside this namespace,
   /// if any.
   NamespaceDecl *getAnonymousNamespace() const {
-    return getOriginalNamespace()->AnonOrFirstNamespaceAndInline.getPointer();
+    return getOriginalNamespace()->AnonOrFirstNamespaceAndFlags.getPointer();
   }
 
   void setAnonymousNamespace(NamespaceDecl *D) {
-    getOriginalNamespace()->AnonOrFirstNamespaceAndInline.setPointer(D);
+    getOriginalNamespace()->AnonOrFirstNamespaceAndFlags.setPointer(D);
   }
 
   /// Retrieves the canonical declaration of this namespace.
@@ -668,6 +695,8 @@ public:
   }
 };
 
+class VarDecl;
+
 /// Represent the declaration of a variable (in which case it is
 /// an lvalue) a function (in which case it is a function designator) or
 /// an enum constant.
@@ -688,6 +717,18 @@ public:
   /// Determine whether this symbol is weakly-imported,
   ///        or declared with the weak or weak-ref attr.
   bool isWeak() const;
+
+  /// Whether this variable is the implicit variable for a lambda init-capture.
+  /// Only VarDecl can be init captures, but both VarDecl and BindingDecl
+  /// can be captured.
+  bool isInitCapture() const;
+
+  // If this is a VarDecl, or a BindindDecl with an
+  // associated decomposed VarDecl, return that VarDecl.
+  VarDecl *getPotentiallyDecomposedVarDecl();
+  const VarDecl *getPotentiallyDecomposedVarDecl() const {
+    return const_cast<ValueDecl *>(this)->getPotentiallyDecomposedVarDecl();
+  }
 
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
@@ -882,7 +923,10 @@ public:
     CallInit,
 
     /// Direct list-initialization (C++11)
-    ListInit
+    ListInit,
+
+    /// Parenthesized list-initialization (C++20)
+    ParenListInit
   };
 
   /// Kinds of thread-local storage.
@@ -1041,7 +1085,7 @@ protected:
   };
 
   VarDecl(Kind DK, ASTContext &C, DeclContext *DC, SourceLocation StartLoc,
-          SourceLocation IdLoc, IdentifierInfo *Id, QualType T,
+          SourceLocation IdLoc, const IdentifierInfo *Id, QualType T,
           TypeSourceInfo *TInfo, StorageClass SC);
 
   using redeclarable_base = Redeclarable<VarDecl>;
@@ -1071,8 +1115,8 @@ public:
 
   static VarDecl *Create(ASTContext &C, DeclContext *DC,
                          SourceLocation StartLoc, SourceLocation IdLoc,
-                         IdentifierInfo *Id, QualType T, TypeSourceInfo *TInfo,
-                         StorageClass S);
+                         const IdentifierInfo *Id, QualType T,
+                         TypeSourceInfo *TInfo, StorageClass S);
 
   static VarDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
@@ -1591,6 +1635,20 @@ public:
   /// kind?
   QualType::DestructionKind needsDestruction(const ASTContext &Ctx) const;
 
+  /// Whether this variable has a flexible array member initialized with one
+  /// or more elements. This can only be called for declarations where
+  /// hasInit() is true.
+  ///
+  /// (The standard doesn't allow initializing flexible array members; this is
+  /// a gcc/msvc extension.)
+  bool hasFlexibleArrayInit(const ASTContext &Ctx) const;
+
+  /// If hasFlexibleArrayInit is true, compute the number of additional bytes
+  /// necessary to store those elements. Otherwise, returns zero.
+  ///
+  /// This can only be called for declarations where hasInit() is true.
+  CharUnits getFlexibleArrayInitChars(const ASTContext &Ctx) const;
+
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K >= firstVar && K <= lastVar; }
@@ -1618,6 +1676,9 @@ public:
 
     /// Parameter for captured context
     CapturedContext,
+
+    /// Parameter for Thread private variable
+    ThreadPrivateVar,
 
     /// Other implicit parameter
     Other,
@@ -1838,7 +1899,9 @@ enum class MultiVersionKind {
   None,
   Target,
   CPUSpecific,
-  CPUDispatch
+  CPUDispatch,
+  TargetClones,
+  TargetVersion
 };
 
 /// Represents a function declaration or definition.
@@ -1872,7 +1935,10 @@ public:
     TK_FunctionTemplateSpecialization,
     // A function template specialization that hasn't yet been resolved to a
     // particular specialized function template.
-    TK_DependentFunctionTemplateSpecialization
+    TK_DependentFunctionTemplateSpecialization,
+    // A non-template function which is in a dependent scope.
+    TK_DependentNonTemplate
+
   };
 
   /// Stashed information about a defaulted function definition whose body has
@@ -1918,23 +1984,26 @@ private:
   /// EndRangeLoc.
   SourceLocation EndRangeLoc;
 
+  SourceLocation DefaultKWLoc;
+
   /// The template or declaration that this declaration
   /// describes or was instantiated from, respectively.
   ///
-  /// For non-templates, this value will be NULL. For function
-  /// declarations that describe a function template, this will be a
-  /// pointer to a FunctionTemplateDecl. For member functions
-  /// of class template specializations, this will be a MemberSpecializationInfo
+  /// For non-templates this value will be NULL, unless this declaration was
+  /// declared directly inside of a function template, in which case it will
+  /// have a pointer to a FunctionDecl, stored in the NamedDecl. For function
+  /// declarations that describe a function template, this will be a pointer to
+  /// a FunctionTemplateDecl, stored in the NamedDecl. For member functions of
+  /// class template specializations, this will be a MemberSpecializationInfo
   /// pointer containing information about the specialization.
   /// For function template specializations, this will be a
   /// FunctionTemplateSpecializationInfo, which contains information about
   /// the template being specialized and the template arguments involved in
   /// that specialization.
-  llvm::PointerUnion<FunctionTemplateDecl *,
-                     MemberSpecializationInfo *,
+  llvm::PointerUnion<NamedDecl *, MemberSpecializationInfo *,
                      FunctionTemplateSpecializationInfo *,
                      DependentFunctionTemplateSpecializationInfo *>
-    TemplateOrSpecialization;
+      TemplateOrSpecialization;
 
   /// Provides source/type location info for the declaration name embedded in
   /// the DeclaratorDecl base class.
@@ -1990,8 +2059,8 @@ private:
 protected:
   FunctionDecl(Kind DK, ASTContext &C, DeclContext *DC, SourceLocation StartLoc,
                const DeclarationNameInfo &NameInfo, QualType T,
-               TypeSourceInfo *TInfo, StorageClass S, bool isInlineSpecified,
-               ConstexprSpecKind ConstexprKind,
+               TypeSourceInfo *TInfo, StorageClass S, bool UsesFPIntrin,
+               bool isInlineSpecified, ConstexprSpecKind ConstexprKind,
                Expr *TrailingRequiresClause = nullptr);
 
   using redeclarable_base = Redeclarable<FunctionDecl>;
@@ -2025,23 +2094,23 @@ public:
   static FunctionDecl *
   Create(ASTContext &C, DeclContext *DC, SourceLocation StartLoc,
          SourceLocation NLoc, DeclarationName N, QualType T,
-         TypeSourceInfo *TInfo, StorageClass SC, bool isInlineSpecified = false,
-         bool hasWrittenPrototype = true,
+         TypeSourceInfo *TInfo, StorageClass SC, bool UsesFPIntrin = false,
+         bool isInlineSpecified = false, bool hasWrittenPrototype = true,
          ConstexprSpecKind ConstexprKind = ConstexprSpecKind::Unspecified,
          Expr *TrailingRequiresClause = nullptr) {
     DeclarationNameInfo NameInfo(N, NLoc);
     return FunctionDecl::Create(C, DC, StartLoc, NameInfo, T, TInfo, SC,
-                                isInlineSpecified, hasWrittenPrototype,
-                                ConstexprKind, TrailingRequiresClause);
+                                UsesFPIntrin, isInlineSpecified,
+                                hasWrittenPrototype, ConstexprKind,
+                                TrailingRequiresClause);
   }
 
-  static FunctionDecl *Create(ASTContext &C, DeclContext *DC,
-                              SourceLocation StartLoc,
-                              const DeclarationNameInfo &NameInfo, QualType T,
-                              TypeSourceInfo *TInfo, StorageClass SC,
-                              bool isInlineSpecified, bool hasWrittenPrototype,
-                              ConstexprSpecKind ConstexprKind,
-                              Expr *TrailingRequiresClause);
+  static FunctionDecl *
+  Create(ASTContext &C, DeclContext *DC, SourceLocation StartLoc,
+         const DeclarationNameInfo &NameInfo, QualType T, TypeSourceInfo *TInfo,
+         StorageClass SC, bool UsesFPIntrin, bool isInlineSpecified,
+         bool hasWrittenPrototype, ConstexprSpecKind ConstexprKind,
+         Expr *TrailingRequiresClause);
 
   static FunctionDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
@@ -2223,6 +2292,16 @@ public:
     FunctionDeclBits.IsExplicitlyDefaulted = ED;
   }
 
+  SourceLocation getDefaultLoc() const {
+    return isExplicitlyDefaulted() ? DefaultKWLoc : SourceLocation();
+  }
+
+  void setDefaultLoc(SourceLocation NewLoc) {
+    assert((NewLoc.isInvalid() || isExplicitlyDefaulted()) &&
+           "Can't set default loc is function isn't explicitly defaulted");
+    DefaultKWLoc = NewLoc;
+  }
+
   /// True if this method is user-declared and was not
   /// deleted or defaulted on its first declaration.
   bool isUserProvided() const {
@@ -2231,6 +2310,13 @@ public:
       DeclAsWritten = Pattern;
     return !(DeclAsWritten->isDeleted() ||
              DeclAsWritten->getCanonicalDecl()->isDefaulted());
+  }
+
+  bool isIneligibleOrNotSelected() const {
+    return FunctionDeclBits.IsIneligibleOrNotSelected;
+  }
+  void setIneligibleOrNotSelected(bool II) {
+    FunctionDeclBits.IsIneligibleOrNotSelected = II;
   }
 
   /// Whether falling off this function implicitly returns null/zero.
@@ -2388,7 +2474,7 @@ public:
   /// If this function is an allocation/deallocation function that takes
   /// the `std::nothrow_t` tag, return true through IsNothrow,
   bool isReplaceableGlobalAllocationFunction(
-      Optional<unsigned> *AlignmentParam = nullptr,
+      std::optional<unsigned> *AlignmentParam = nullptr,
       bool *IsNothrow = nullptr) const;
 
   /// Determine if this function provides an inline implementation of a builtin.
@@ -2440,6 +2526,19 @@ public:
     getCanonicalDecl()->FunctionDeclBits.IsMultiVersion = V;
   }
 
+  // Sets that this is a constrained friend where the constraint refers to an
+  // enclosing template.
+  void setFriendConstraintRefersToEnclosingTemplate(bool V = true) {
+    getCanonicalDecl()
+        ->FunctionDeclBits.FriendConstraintRefersToEnclosingTemplate = V;
+  }
+  // Indicates this function is a constrained friend, where the constraint
+  // refers to an enclosing template for hte purposes of [temp.friend]p9.
+  bool FriendConstraintRefersToEnclosingTemplate() const {
+    return getCanonicalDecl()
+        ->FunctionDeclBits.FriendConstraintRefersToEnclosingTemplate;
+  }
+
   /// Gets the kind of multiversioning attribute this declaration has. Note that
   /// this can return a value even if the function is not multiversion, such as
   /// the case of 'target'.
@@ -2456,6 +2555,10 @@ public:
   /// True if this function is a multiversioned dispatch function as a part of
   /// the target functionality.
   bool isTargetMultiVersion() const;
+
+  /// True if this function is a multiversioned dispatch function as a part of
+  /// the target-clones functionality.
+  bool isTargetClonesMultiVersion() const;
 
   /// \brief Get the associated-constraints of this function declaration.
   /// Currently, this will either be a vector of size 1 containing the
@@ -2594,6 +2697,14 @@ public:
     FunctionDeclBits.IsInline = I;
   }
 
+  /// Determine whether the function was declared in source context
+  /// that requires constrained FP intrinsics
+  bool UsesFPIntrin() const { return FunctionDeclBits.UsesFPIntrin; }
+
+  /// Set whether the function was declared in source context
+  /// that requires constrained FP intrinsics
+  void setUsesFPIntrin(bool I) { FunctionDeclBits.UsesFPIntrin = I; }
+
   /// Flag that this function is implicitly inline.
   void setImplicitlyInline(bool I = true) { FunctionDeclBits.IsInline = I; }
 
@@ -2657,6 +2768,13 @@ public:
                                         TemplateSpecializationKind TSK) {
     setInstantiationOfMemberFunction(getASTContext(), FD, TSK);
   }
+
+  /// Specify that this function declaration was instantiated from a
+  /// FunctionDecl FD. This is only used if this is a function declaration
+  /// declared locally inside of a function template.
+  void setInstantiatedFromDecl(FunctionDecl *FD);
+
+  FunctionDecl *getInstantiatedFromDecl() const;
 
   /// Retrieves the function template that is described by this
   /// function declaration.
@@ -3099,7 +3217,7 @@ public:
   using chain_iterator = ArrayRef<NamedDecl *>::const_iterator;
 
   ArrayRef<NamedDecl *> chain() const {
-    return llvm::makeArrayRef(Chaining, ChainingSize);
+    return llvm::ArrayRef(Chaining, ChainingSize);
   }
   chain_iterator chain_begin() const { return chain().begin(); }
   chain_iterator chain_end() const { return chain().end(); }
@@ -3473,6 +3591,24 @@ public:
   /// parameters.
   bool isDependentType() const { return isDependentContext(); }
 
+  /// Whether this declaration was a definition in some module but was forced
+  /// to be a declaration.
+  ///
+  /// Useful for clients checking if a module has a definition of a specific
+  /// symbol and not interested in the final AST with deduplicated definitions.
+  bool isThisDeclarationADemotedDefinition() const {
+    return TagDeclBits.IsThisDeclarationADemotedDefinition;
+  }
+
+  /// Mark a definition as a declaration and maintain information it _was_
+  /// a definition.
+  void demoteThisDefinitionToDeclaration() {
+    assert(isCompleteDefinition() &&
+           "Should demote definitions only, not forward declarations");
+    setCompleteDefinition(false);
+    TagDeclBits.IsThisDeclarationADemotedDefinition = true;
+  }
+
   /// Starts the definition of this tag declaration.
   ///
   /// This method should be invoked at the beginning of the definition
@@ -3557,6 +3693,8 @@ public:
     assert(i < getNumTemplateParameterLists());
     return getExtInfo()->TemplParamLists[i];
   }
+
+  void printName(raw_ostream &OS, const PrintingPolicy &Policy) const override;
 
   void setTemplateParameterListsInfo(ASTContext &Context,
                                      ArrayRef<TemplateParameterList *> TPLists);
@@ -3691,6 +3829,10 @@ public:
                           bool IsFixed);
   static EnumDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
+  /// Overrides to provide correct range when there's an enum-base specifier
+  /// with forward declarations.
+  SourceRange getSourceRange() const override LLVM_READONLY;
+
   /// When created, the EnumDecl corresponds to a
   /// forward-declared enum. This method is used to mark the
   /// declaration as being defined; its enumerators have already been
@@ -3772,6 +3914,11 @@ public:
   ///                     -101     1001011                     8
   unsigned getNumNegativeBits() const { return EnumDeclBits.NumNegativeBits; }
 
+  /// Calculates the [Min,Max) values the enum can store based on the
+  /// NumPositiveBits and NumNegativeBits. This matters for enums that do not
+  /// have a fixed underlying type.
+  void getValueRange(llvm::APInt &Max, llvm::APInt &Min) const;
+
   /// Returns true if this is a C++11 scoped enumeration.
   bool isScoped() const { return EnumDeclBits.IsScoped; }
 
@@ -3851,6 +3998,7 @@ class RecordDecl : public TagDecl {
   // to save some space. Use the provided accessors to access it.
 public:
   friend class DeclContext;
+  friend class ASTDeclReader;
   /// Enum that represents the different ways arguments are passed to and
   /// returned from function calls. This takes into account the target-specific
   /// and version-specific rules along with the rules determined by the
@@ -4016,6 +4164,12 @@ public:
     RecordDeclBits.ParamDestroyedInCallee = V;
   }
 
+  bool isRandomized() const { return RecordDeclBits.IsRandomized; }
+
+  void setIsRandomized(bool V) { RecordDeclBits.IsRandomized = V; }
+
+  void reorderDecls(const SmallVectorImpl<Decl *> &Decls);
+
   /// Determines whether this declaration represents the
   /// injected class name.
   ///
@@ -4100,9 +4254,16 @@ public:
   /// nullptr is returned if no named data member exists.
   const FieldDecl *findFirstNamedDataMember() const;
 
+  /// Get precomputed ODRHash or add a new one.
+  unsigned getODRHash();
+
 private:
   /// Deserialize just the fields.
   void LoadFieldsFromExternalStorage() const;
+
+  /// True if a valid hash is stored in ODRHash.
+  bool hasODRHash() const { return RecordDeclBits.ODRHash; }
+  void setODRHash(unsigned Hash) { RecordDeclBits.ODRHash = Hash; }
 };
 
 class FileScopeAsmDecl : public Decl {
@@ -4135,6 +4296,34 @@ public:
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classofKind(Kind K) { return K == FileScopeAsm; }
+};
+
+/// A declaration that models statements at global scope. This declaration
+/// supports incremental and interactive C/C++.
+///
+/// \note This is used in libInterpreter, clang -cc1 -fincremental-extensions
+/// and in tools such as clang-repl.
+class TopLevelStmtDecl : public Decl {
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+
+  Stmt *Statement = nullptr;
+
+  TopLevelStmtDecl(DeclContext *DC, SourceLocation L, Stmt *S)
+      : Decl(TopLevelStmt, DC, L), Statement(S) {}
+
+  virtual void anchor();
+
+public:
+  static TopLevelStmtDecl *Create(ASTContext &C, Stmt *Statement);
+  static TopLevelStmtDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+
+  SourceRange getSourceRange() const override LLVM_READONLY;
+  Stmt *getStmt() { return Statement; }
+  const Stmt *getStmt() const { return Statement; }
+
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == TopLevelStmt; }
 };
 
 /// Represents a block literal declaration, which is like an
@@ -4432,6 +4621,16 @@ public:
 ///   @import std.vector;
 /// \endcode
 ///
+/// A C++20 module import declaration imports the named module or partition.
+/// Periods are permitted in C++20 module names, but have no semantic meaning.
+/// For example:
+/// \code
+///   import NamedModule;
+///   import :SomePartition; // Must be a partition of the current module.
+///   import Names.Like.this; // Allowed.
+///   import :and.Also.Partition.names;
+/// \endcode
+///
 /// Import declarations can also be implicitly generated from
 /// \#include/\#import directives.
 class ImportDecl final : public Decl,
@@ -4575,11 +4774,56 @@ public:
   static bool classofKind(Kind K) { return K == Empty; }
 };
 
+/// HLSLBufferDecl - Represent a cbuffer or tbuffer declaration.
+class HLSLBufferDecl final : public NamedDecl, public DeclContext {
+  /// LBraceLoc - The ending location of the source range.
+  SourceLocation LBraceLoc;
+  /// RBraceLoc - The ending location of the source range.
+  SourceLocation RBraceLoc;
+  /// KwLoc - The location of the cbuffer or tbuffer keyword.
+  SourceLocation KwLoc;
+  /// IsCBuffer - Whether the buffer is a cbuffer (and not a tbuffer).
+  bool IsCBuffer;
+
+  HLSLBufferDecl(DeclContext *DC, bool CBuffer, SourceLocation KwLoc,
+                 IdentifierInfo *ID, SourceLocation IDLoc,
+                 SourceLocation LBrace);
+
+public:
+  static HLSLBufferDecl *Create(ASTContext &C, DeclContext *LexicalParent,
+                                bool CBuffer, SourceLocation KwLoc,
+                                IdentifierInfo *ID, SourceLocation IDLoc,
+                                SourceLocation LBrace);
+  static HLSLBufferDecl *CreateDeserialized(ASTContext &C, unsigned ID);
+
+  SourceRange getSourceRange() const override LLVM_READONLY {
+    return SourceRange(getLocStart(), RBraceLoc);
+  }
+  SourceLocation getLocStart() const LLVM_READONLY { return KwLoc; }
+  SourceLocation getLBraceLoc() const { return LBraceLoc; }
+  SourceLocation getRBraceLoc() const { return RBraceLoc; }
+  void setRBraceLoc(SourceLocation L) { RBraceLoc = L; }
+  bool isCBuffer() const { return IsCBuffer; }
+
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Decl *D) { return classofKind(D->getKind()); }
+  static bool classofKind(Kind K) { return K == HLSLBuffer; }
+  static DeclContext *castToDeclContext(const HLSLBufferDecl *D) {
+    return static_cast<DeclContext *>(const_cast<HLSLBufferDecl *>(D));
+  }
+  static HLSLBufferDecl *castFromDeclContext(const DeclContext *DC) {
+    return static_cast<HLSLBufferDecl *>(const_cast<DeclContext *>(DC));
+  }
+
+  friend class ASTDeclReader;
+  friend class ASTDeclWriter;
+};
+
 /// Insertion operator for diagnostics.  This allows sending NamedDecl's
 /// into a diagnostic with <<.
 inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &PD,
                                              const NamedDecl *ND) {
-  PD.AddTaggedVal(reinterpret_cast<intptr_t>(ND),
+  PD.AddTaggedVal(reinterpret_cast<uint64_t>(ND),
                   DiagnosticsEngine::ak_nameddecl);
   return PD;
 }

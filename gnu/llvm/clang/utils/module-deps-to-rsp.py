@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 # Converts clang-scan-deps output into response files.
-#   * For modules, arguments in the resulting response file are enough to build a PCM.
-#   * For translation units, the response file needs to be added to the original Clang invocation from compilation
-#     database.
 #
 # Usage:
 #
@@ -11,7 +8,7 @@
 #   module-deps-to-rsp.py deps.json --module-name=ModuleName > module_name.cc1.rsp
 #   module-deps-to-rsp.py deps.json --tu-index=0 > tu.rsp
 #   clang @module_name.cc1.rsp
-#   clang ... @tu.rsp
+#   clang @tu.rsp
 
 import argparse
 import json
@@ -51,6 +48,9 @@ def main():
                       type=str)
   action.add_argument("--tu-index", help="The index of the translation unit to get arguments for",
                       type=int)
+  parser.add_argument("--tu-cmd-index",
+                      help="The index of the command within the translation unit (default=0)",
+                      type=int, default=0)
   args = parser.parse_args()
 
   full_deps = parseFullDeps(json.load(open(args.full_deps_file, 'r')))
@@ -61,7 +61,8 @@ def main():
     if args.module_name:
       cmd = findModule(args.module_name, full_deps)['command-line']
     elif args.tu_index != None:
-      cmd = full_deps.translation_units[args.tu_index]['command-line']
+      tu = full_deps.translation_units[args.tu_index]
+      cmd = tu['commands'][args.tu_cmd_index]['command-line']
 
     print(" ".join(map(quote, cmd)))
   except:

@@ -75,15 +75,16 @@ include "DiagnosticGroups.td"
 
 
 // All diagnostics emitted by the compiler are an indirect subclass of this.
-class Diagnostic<string text, DiagClass DC, Severity defaultmapping> {
+class Diagnostic<string summary, DiagClass DC, Severity defaultmapping> {
   /// Component is specified by the file with a big let directive.
   string         Component = ?;
-  string         Text = text;
+  string         Summary = summary;
   DiagClass      Class = DC;
   SFINAEResponse SFINAE = SFINAE_Suppress;
   bit            AccessControl = 0;
   bit            WarningNoWerror = 0;
   bit            ShowInSystemHeader = 0;
+  bit            ShowInSystemMacro = 1;
   bit            Deferrable = 0;
   Severity       DefaultSeverity = defaultmapping;
   DiagGroup      Group;
@@ -106,6 +107,14 @@ class ShowInSystemHeader {
 
 class SuppressInSystemHeader {
   bit ShowInSystemHeader = 0;
+}
+
+class ShowInSystemMacro {
+  bit ShowInSystemMacro = 1;
+}
+
+class SuppressInSystemMacro {
+  bit ShowInSystemMacro = 0;
 }
 
 class Deferrable {
@@ -159,4 +168,3 @@ include "DiagnosticParseKinds.td"
 include "DiagnosticRefactoringKinds.td"
 include "DiagnosticSemaKinds.td"
 include "DiagnosticSerializationKinds.td"
-

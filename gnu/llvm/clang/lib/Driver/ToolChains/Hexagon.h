@@ -94,9 +94,6 @@ public:
                            llvm::opt::ArgStringList &CmdArgs) const override;
 
   StringRef GetGCCLibAndIncVersion() const { return GCCLibAndIncVersion.Text; }
-  bool IsIntegratedAssemblerDefault() const override {
-    return true;
-  }
 
   std::string getHexagonTargetDir(
       const std::string &InstalledDir,
@@ -104,12 +101,14 @@ public:
   void getHexagonLibraryPaths(const llvm::opt::ArgList &Args,
       ToolChain::path_list &LibPaths) const;
 
-  static bool isAutoHVXEnabled(const llvm::opt::ArgList &Args);
-  static const StringRef GetDefaultCPU();
-  static const StringRef GetTargetCPUVersion(const llvm::opt::ArgList &Args);
+  std::string getCompilerRTPath() const override;
 
-  static Optional<unsigned> getSmallDataThreshold(
-      const llvm::opt::ArgList &Args);
+  static bool isAutoHVXEnabled(const llvm::opt::ArgList &Args);
+  static StringRef GetDefaultCPU();
+  static StringRef GetTargetCPUVersion(const llvm::opt::ArgList &Args);
+
+  static std::optional<unsigned>
+  getSmallDataThreshold(const llvm::opt::ArgList &Args);
 };
 
 } // end namespace toolchains

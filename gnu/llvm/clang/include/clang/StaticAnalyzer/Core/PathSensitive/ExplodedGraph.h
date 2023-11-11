@@ -30,7 +30,6 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/Support/Allocator.h"
@@ -38,6 +37,7 @@
 #include <cassert>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -161,15 +161,13 @@ public:
     return getLocationContext()->getParentMap();
   }
 
-  template <typename T>
-  T &getAnalysis() const {
+  template <typename T> T &getAnalysis() const {
     return *getLocationContext()->getAnalysis<T>();
   }
 
   const ProgramStateRef &getState() const { return State; }
 
-  template <typename T>
-  Optional<T> getLocationAs() const LLVM_LVALUE_FUNCTION {
+  template <typename T> std::optional<T> getLocationAs() const & {
     return Location.getAs<T>();
   }
 

@@ -121,9 +121,7 @@ static bool hasFeature(StringRef Feature, const LangOptions &LangOpts,
                         .Default(Target.hasFeature(Feature) ||
                                  isPlatformEnvironment(Target, Feature));
   if (!HasFeature)
-    HasFeature = std::find(LangOpts.ModuleFeatures.begin(),
-                           LangOpts.ModuleFeatures.end(),
-                           Feature) != LangOpts.ModuleFeatures.end();
+    HasFeature = llvm::is_contained(LangOpts.ModuleFeatures, Feature);
   return HasFeature;
 }
 
@@ -148,6 +146,26 @@ bool Module::isUnimportable(const LangOptions &LangOpts,
   }
 
   llvm_unreachable("could not find a reason why module is unimportable");
+}
+
+// The -fmodule-name option tells the compiler to textually include headers in
+// the specified module, meaning Clang won't build the specified module. This
+// is useful in a number of situations, for instance, when building a library
+// that vends a module map, one might want to avoid hitting intermediate build
+// products containing the module map or avoid finding the system installed
+// modulemap for that library.
+bool Module::isForBuilding(const LangOptions &LangOpts) const {
+  StringRef TopLevelName = getTopLevelModuleName();
+  StringRef CurrentModule = LangOpts.CurrentModule;
+
+  // When building framework Foo, we want to make sure that Foo *and*
+  // Foo_Private are textually included and no modules are built for both.
+  if (getTopLevelModule()->IsFramework &&
+      CurrentModule == LangOpts.ModuleName &&
+      !CurrentModule.endswith("_Private") && TopLevelName.endswith("_Private"))
+    TopLevelName = TopLevelName.drop_back(8);
+
+  return TopLevelName == CurrentModule;
 }
 
 bool Module::isAvailable(const LangOptions &LangOpts, const TargetInfo &Target,
@@ -203,7 +221,7 @@ static void printModuleId(raw_ostream &OS, InputIter Begin, InputIter End,
       OS << ".";
 
     StringRef Name = getModuleNameFromComponent(*It);
-    if (!AllowStringLiterals || isValidIdentifier(Name))
+    if (!AllowStringLiterals || isValidAsciiIdentifier(Name))
       OS << Name;
     else {
       OS << '"';
@@ -266,10 +284,10 @@ ArrayRef<const FileEntry *> Module::getTopHeaders(FileManager &FileMgr) {
     TopHeaderNames.clear();
   }
 
-  return llvm::makeArrayRef(TopHeaders.begin(), TopHeaders.end());
+  return llvm::ArrayRef(TopHeaders.begin(), TopHeaders.end());
 }
 
-bool Module::directlyUses(const Module *Requested) const {
+bool Module::directlyUses(const Module *Requested) {
   auto *Top = getTopLevelModule();
 
   // A top-level module implicitly uses itself.
@@ -283,6 +301,9 @@ bool Module::directlyUses(const Module *Requested) const {
   // Anyone is allowed to use our builtin stddef.h and its accompanying module.
   if (!Requested->Parent && Requested->Name == "_Builtin_stddef_max_align_t")
     return true;
+
+  if (NoUndeclaredIncludes)
+    UndeclaredUses.insert(Requested);
 
   return false;
 }
@@ -632,7 +653,9 @@ LLVM_DUMP_METHOD void Module::dump() const {
 
 void VisibleModuleSet::setVisible(Module *M, SourceLocation Loc,
                                   VisibleCallback Vis, ConflictCallback Cb) {
-  assert(Loc.isValid() && "setVisible expects a valid import location");
+  // We can't import a global module fragment so the location can be invalid.
+  assert((M->isGlobalModule() || Loc.isValid()) &&
+         "setVisible expects a valid import location");
   if (isVisible(M))
     return;
 
@@ -652,7 +675,7 @@ void VisibleModuleSet::setVisible(Module *M, SourceLocation Loc,
       return;
 
     ImportLocs[ID] = Loc;
-    Vis(M);
+    Vis(V.M);
 
     // Make any exported modules visible.
     SmallVector<Module *, 16> Exports;

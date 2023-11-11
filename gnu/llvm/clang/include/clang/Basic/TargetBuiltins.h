@@ -27,6 +27,7 @@ namespace clang {
   enum {
     LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#define TARGET_BUILTIN(ID, TYPE, ATTRS, FEATURE) BI##ID,
 #include "clang/Basic/BuiltinsNEON.def"
     FirstTSBuiltin
   };
@@ -121,18 +122,44 @@ namespace clang {
 
   /// VE builtins
   namespace VE {
-  enum { LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1, LastTSBuiltin };
+  enum {
+    LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "clang/Basic/BuiltinsVE.def"
+    LastTSBuiltin
+  };
+  }
+
+  namespace RISCVVector {
+  enum {
+    LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "clang/Basic/BuiltinsRISCVVector.def"
+    FirstTSBuiltin,
+  };
   }
 
   /// RISCV builtins
   namespace RISCV {
   enum {
     LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
+    FirstRVVBuiltin = clang::Builtin::FirstTSBuiltin,
+    LastRVVBuiltin = RISCVVector::FirstTSBuiltin - 1,
 #define BUILTIN(ID, TYPE, ATTRS) BI##ID,
 #include "clang/Basic/BuiltinsRISCV.def"
     LastTSBuiltin
   };
   } // namespace RISCV
+
+  /// LoongArch builtins
+  namespace LoongArch {
+  enum {
+    LastTIBuiltin = clang::Builtin::FirstTSBuiltin - 1,
+#define BUILTIN(ID, TYPE, ATTRS) BI##ID,
+#include "clang/Basic/BuiltinsLoongArch.def"
+    LastTSBuiltin
+  };
+  } // namespace LoongArch
 
   /// Flags to identify the types for overloaded Neon builtins.
   ///

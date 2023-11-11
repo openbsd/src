@@ -52,7 +52,9 @@ public:
     return Feature == "pnacl";
   }
 
-  ArrayRef<Builtin::Info> getTargetBuiltins() const override { return None; }
+  ArrayRef<Builtin::Info> getTargetBuiltins() const override {
+    return std::nullopt;
+  }
 
   BuiltinVaListKind getBuiltinVaListKind() const override {
     return TargetInfo::PNaClABIBuiltinVaList;
@@ -69,7 +71,7 @@ public:
 
   const char *getClobbers() const override { return ""; }
 
-  bool hasExtIntType() const override { return true; }
+  bool hasBitIntType() const override { return true; }
 };
 
 // We attempt to use PNaCl (le32) frontend and Mips32EL backend.

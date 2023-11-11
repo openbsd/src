@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # A tool to parse ASTMatchers.h and update the documentation in
 # ../LibASTMatchersReference.html automatically. Run from the
 # directory in which this file is located to update the docs.
@@ -9,6 +9,12 @@ try:
     from urllib.request import urlopen
 except ImportError:
     from urllib2 import urlopen
+
+CLASS_INDEX_PAGE_URL = 'https://clang.llvm.org/doxygen/classes.html'
+try:
+  CLASS_INDEX_PAGE = urlopen(CLASS_INDEX_PAGE_URL).read().decode('utf-8')
+except Exception as e:
+  raise Exception('Unable to get %s: %s' % (CLASS_INDEX_PAGE_URL, e))
 
 MATCHERS_FILE = '../../include/clang/ASTMatchers/ASTMatchers.h'
 
@@ -40,15 +46,18 @@ def esc(text):
   text = re.sub(r'<', '&lt;', text)
   text = re.sub(r'>', '&gt;', text)
   def link_if_exists(m):
+    """Wrap a likely AST node name in a link to its clang docs.
+
+       We want to do this only if the page exists, in which case it will be
+       referenced from the class index page.
+    """
     name = m.group(1)
     url = 'https://clang.llvm.org/doxygen/classclang_1_1%s.html' % name
     if url not in doxygen_probes:
-      try:
-        print('Probing %s...' % url)
-        urlopen(url)
-        doxygen_probes[url] = True
-      except:
-        doxygen_probes[url] = False
+      search_str = 'href="classclang_1_1%s.html"' % name
+      doxygen_probes[url] = search_str in CLASS_INDEX_PAGE
+      if not doxygen_probes[url]:
+        print('Did not find %s in class index page' % name)
     if doxygen_probes[url]:
       return r'Matcher&lt;<a href="%s">%s</a>&gt;' % (url, name)
     else:
@@ -413,7 +422,7 @@ Flags can be combined with '|' example \"IgnoreCase | BasicRegex\"
       m = re.match(r'(?:^|.*\s+)internal::(?:Bindable)?Matcher<([^>]+)>$', result)
       if m:
         result_types = [m.group(1)]
-        if template_name and len(result_types) is 1 and result_types[0] == template_name:
+        if template_name and len(result_types) == 1 and result_types[0] == template_name:
           result_types = ['*']
       else:
         result_types = extract_result_types(comment)
@@ -493,6 +502,6 @@ reference = re.sub(r'<!-- START_NARROWING_MATCHERS.*END_NARROWING_MATCHERS -->',
 reference = re.sub(r'<!-- START_TRAVERSAL_MATCHERS.*END_TRAVERSAL_MATCHERS -->',
                    traversal_matcher_table, reference, flags=re.S)
 
-with open('../LibASTMatchersReference.html', 'wb') as output:
+with open('../LibASTMatchersReference.html', 'w', newline='\n') as output:
   output.write(reference)
 

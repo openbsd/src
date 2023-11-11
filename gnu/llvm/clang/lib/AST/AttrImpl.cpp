@@ -14,6 +14,7 @@
 #include "clang/AST/Attr.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
+#include <optional>
 using namespace clang;
 
 void LoopHintAttr::printPrettyPragma(raw_ostream &OS,
@@ -60,7 +61,7 @@ std::string LoopHintAttr::getValueString(const PrintingPolicy &Policy) const {
   else
     OS << "disable";
   OS << ")";
-  return OS.str();
+  return ValueName;
 }
 
 // Return a string suitable for identifying this attribute in diagnostics.
@@ -137,14 +138,21 @@ void OMPDeclareTargetDeclAttr::printPrettyPragma(
   // Use fake syntax because it is for testing and debugging purpose only.
   if (getDevType() != DT_Any)
     OS << " device_type(" << ConvertDevTypeTyToStr(getDevType()) << ")";
-  if (getMapType() != MT_To)
+  if (getMapType() != MT_To && getMapType() != MT_Enter)
     OS << ' ' << ConvertMapTypeTyToStr(getMapType());
+  if (Expr *E = getIndirectExpr()) {
+    OS << " indirect(";
+    E->printPretty(OS, nullptr, Policy);
+    OS << ")";
+  } else if (getIndirect()) {
+    OS << " indirect";
+  }
 }
 
-llvm::Optional<OMPDeclareTargetDeclAttr *>
+std::optional<OMPDeclareTargetDeclAttr *>
 OMPDeclareTargetDeclAttr::getActiveAttr(const ValueDecl *VD) {
   if (!VD->hasAttrs())
-    return llvm::None;
+    return std::nullopt;
   unsigned Level = 0;
   OMPDeclareTargetDeclAttr *FoundAttr = nullptr;
   for (auto *Attr : VD->specific_attrs<OMPDeclareTargetDeclAttr>()) {
@@ -155,31 +163,31 @@ OMPDeclareTargetDeclAttr::getActiveAttr(const ValueDecl *VD) {
   }
   if (FoundAttr)
     return FoundAttr;
-  return llvm::None;
+  return std::nullopt;
 }
 
-llvm::Optional<OMPDeclareTargetDeclAttr::MapTypeTy>
+std::optional<OMPDeclareTargetDeclAttr::MapTypeTy>
 OMPDeclareTargetDeclAttr::isDeclareTargetDeclaration(const ValueDecl *VD) {
-  llvm::Optional<OMPDeclareTargetDeclAttr *> ActiveAttr = getActiveAttr(VD);
-  if (ActiveAttr.hasValue())
-    return ActiveAttr.getValue()->getMapType();
-  return llvm::None;
+  std::optional<OMPDeclareTargetDeclAttr *> ActiveAttr = getActiveAttr(VD);
+  if (ActiveAttr)
+    return (*ActiveAttr)->getMapType();
+  return std::nullopt;
 }
 
-llvm::Optional<OMPDeclareTargetDeclAttr::DevTypeTy>
+std::optional<OMPDeclareTargetDeclAttr::DevTypeTy>
 OMPDeclareTargetDeclAttr::getDeviceType(const ValueDecl *VD) {
-  llvm::Optional<OMPDeclareTargetDeclAttr *> ActiveAttr = getActiveAttr(VD);
-  if (ActiveAttr.hasValue())
-    return ActiveAttr.getValue()->getDevType();
-  return llvm::None;
+  std::optional<OMPDeclareTargetDeclAttr *> ActiveAttr = getActiveAttr(VD);
+  if (ActiveAttr)
+    return (*ActiveAttr)->getDevType();
+  return std::nullopt;
 }
 
-llvm::Optional<SourceLocation>
+std::optional<SourceLocation>
 OMPDeclareTargetDeclAttr::getLocation(const ValueDecl *VD) {
-  llvm::Optional<OMPDeclareTargetDeclAttr *> ActiveAttr = getActiveAttr(VD);
-  if (ActiveAttr.hasValue())
-    return ActiveAttr.getValue()->getRange().getBegin();
-  return llvm::None;
+  std::optional<OMPDeclareTargetDeclAttr *> ActiveAttr = getActiveAttr(VD);
+  if (ActiveAttr)
+    return (*ActiveAttr)->getRange().getBegin();
+  return std::nullopt;
 }
 
 namespace clang {
@@ -195,6 +203,40 @@ void OMPDeclareVariantAttr::printPrettyPragma(
     OS << ")";
   }
   OS << " match(" << traitInfos << ")";
+
+  auto PrintExprs = [&OS, &Policy](Expr **Begin, Expr **End) {
+    for (Expr **I = Begin; I != End; ++I) {
+      assert(*I && "Expected non-null Stmt");
+      if (I != Begin)
+        OS << ",";
+      (*I)->printPretty(OS, nullptr, Policy);
+    }
+  };
+  if (adjustArgsNothing_size()) {
+    OS << " adjust_args(nothing:";
+    PrintExprs(adjustArgsNothing_begin(), adjustArgsNothing_end());
+    OS << ")";
+  }
+  if (adjustArgsNeedDevicePtr_size()) {
+    OS << " adjust_args(need_device_ptr:";
+    PrintExprs(adjustArgsNeedDevicePtr_begin(), adjustArgsNeedDevicePtr_end());
+    OS << ")";
+  }
+
+  auto PrintInteropInfo = [&OS](OMPInteropInfo *Begin, OMPInteropInfo *End) {
+    for (OMPInteropInfo *I = Begin; I != End; ++I) {
+      if (I != Begin)
+        OS << ", ";
+      OS << "interop(";
+      OS << getInteropTypeString(I);
+      OS << ")";
+    }
+  };
+  if (appendArgs_size()) {
+    OS << " append_args(";
+    PrintInteropInfo(appendArgs_begin(), appendArgs_end());
+    OS << ")";
+  }
 }
 
 #include "clang/AST/AttrImpl.inc"

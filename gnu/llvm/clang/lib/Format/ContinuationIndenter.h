@@ -20,6 +20,7 @@
 #include "clang/Format/Format.h"
 #include "llvm/Support/Regex.h"
 #include <map>
+#include <optional>
 #include <tuple>
 
 namespace clang {
@@ -41,9 +42,9 @@ struct RawStringFormatStyleManager {
 
   RawStringFormatStyleManager(const FormatStyle &CodeStyle);
 
-  llvm::Optional<FormatStyle> getDelimiterStyle(StringRef Delimiter) const;
+  std::optional<FormatStyle> getDelimiterStyle(StringRef Delimiter) const;
 
-  llvm::Optional<FormatStyle>
+  std::optional<FormatStyle>
   getEnclosingFunctionStyle(StringRef EnclosingFunction) const;
 };
 
@@ -120,8 +121,8 @@ private:
 
   /// If \p Current is a raw string that is configured to be reformatted,
   /// return the style to be used.
-  llvm::Optional<FormatStyle> getRawStringStyle(const FormatToken &Current,
-                                                const LineState &State);
+  std::optional<FormatStyle> getRawStringStyle(const FormatToken &Current,
+                                               const LineState &State);
 
   /// If the current token sticks out over the end of the line, break
   /// it if possible.
@@ -203,15 +204,15 @@ struct ParenState {
              bool AvoidBinPacking, bool NoLineBreak)
       : Tok(Tok), Indent(Indent), LastSpace(LastSpace),
         NestedBlockIndent(Indent), IsAligned(false),
-        BreakBeforeClosingBrace(false), AvoidBinPacking(AvoidBinPacking),
-        BreakBeforeParameter(false), NoLineBreak(NoLineBreak),
-        NoLineBreakInOperand(false), LastOperatorWrapped(true),
-        ContainsLineBreak(false), ContainsUnwrappedBuilder(false),
-        AlignColons(true), ObjCSelectorNameFound(false),
-        HasMultipleNestedBlocks(false), NestedBlockInlined(false),
-        IsInsideObjCArrayLiteral(false), IsCSharpGenericTypeConstraint(false),
-        IsChainedConditional(false), IsWrappedConditional(false),
-        UnindentOperator(false) {}
+        BreakBeforeClosingBrace(false), BreakBeforeClosingParen(false),
+        AvoidBinPacking(AvoidBinPacking), BreakBeforeParameter(false),
+        NoLineBreak(NoLineBreak), NoLineBreakInOperand(false),
+        LastOperatorWrapped(true), ContainsLineBreak(false),
+        ContainsUnwrappedBuilder(false), AlignColons(true),
+        ObjCSelectorNameFound(false), HasMultipleNestedBlocks(false),
+        NestedBlockInlined(false), IsInsideObjCArrayLiteral(false),
+        IsCSharpGenericTypeConstraint(false), IsChainedConditional(false),
+        IsWrappedConditional(false), UnindentOperator(false) {}
 
   /// \brief The token opening this parenthesis level, or nullptr if this level
   /// is opened by fake parenthesis.
@@ -276,6 +277,13 @@ struct ParenState {
   /// We only want to insert a newline before the closing brace if there also
   /// was a newline after the beginning left brace.
   bool BreakBeforeClosingBrace : 1;
+
+  /// Whether a newline needs to be inserted before the block's closing
+  /// paren.
+  ///
+  /// We only want to insert a newline before the closing paren if there also
+  /// was a newline after the beginning left paren.
+  bool BreakBeforeClosingParen : 1;
 
   /// Avoid bin packing, i.e. multiple parameters/elements on multiple
   /// lines, in this context.
@@ -362,6 +370,8 @@ struct ParenState {
       return IsAligned;
     if (BreakBeforeClosingBrace != Other.BreakBeforeClosingBrace)
       return BreakBeforeClosingBrace;
+    if (BreakBeforeClosingParen != Other.BreakBeforeClosingParen)
+      return BreakBeforeClosingParen;
     if (QuestionColumn != Other.QuestionColumn)
       return QuestionColumn < Other.QuestionColumn;
     if (AvoidBinPacking != Other.AvoidBinPacking)
@@ -410,9 +420,6 @@ struct LineState {
   /// The token that needs to be next formatted.
   FormatToken *NextToken;
 
-  /// \c true if this line contains a continued for-loop section.
-  bool LineContainsContinuedForLoopSection;
-
   /// \c true if \p NextToken should not continue this line.
   bool NoContinuation;
 
@@ -428,7 +435,7 @@ struct LineState {
 
   /// A stack keeping track of properties applying to parenthesis
   /// levels.
-  std::vector<ParenState> Stack;
+  SmallVector<ParenState> Stack;
 
   /// Ignore the stack of \c ParenStates for state comparison.
   ///
@@ -459,9 +466,6 @@ struct LineState {
       return NextToken < Other.NextToken;
     if (Column != Other.Column)
       return Column < Other.Column;
-    if (LineContainsContinuedForLoopSection !=
-        Other.LineContainsContinuedForLoopSection)
-      return LineContainsContinuedForLoopSection;
     if (NoContinuation != Other.NoContinuation)
       return NoContinuation;
     if (StartOfLineLevel != Other.StartOfLineLevel)

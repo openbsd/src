@@ -306,7 +306,7 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
       }
     } else
       D.Diag(diag::err_drv_unsupported_option_argument)
-          << A->getOption().getName() << Val;
+          << A->getSpelling() << Val;
   }
 
   if (Arg *A = Args.getLastArg(options::OPT_mabs_EQ)) {
@@ -327,7 +327,7 @@ void mips::getMIPSTargetFeatures(const Driver &D, const llvm::Triple &Triple,
       }
     } else {
       D.Diag(diag::err_drv_unsupported_option_argument)
-          << A->getOption().getName() << Val;
+          << A->getSpelling() << Val;
     }
   }
 
@@ -441,7 +441,8 @@ bool mips::isUCLibc(const ArgList &Args) {
   return A && A->getOption().matches(options::OPT_muclibc);
 }
 
-bool mips::isNaN2008(const ArgList &Args, const llvm::Triple &Triple) {
+bool mips::isNaN2008(const Driver &D, const ArgList &Args,
+                     const llvm::Triple &Triple) {
   if (Arg *NaNArg = Args.getLastArg(options::OPT_mnan_EQ))
     return llvm::StringSwitch<bool>(NaNArg->getValue())
         .Case("2008", true)
@@ -449,7 +450,7 @@ bool mips::isNaN2008(const ArgList &Args, const llvm::Triple &Triple) {
         .Default(false);
 
   // NaN2008 is the default for MIPS32r6/MIPS64r6.
-  return llvm::StringSwitch<bool>(getCPUName(Args, Triple))
+  return llvm::StringSwitch<bool>(getCPUName(D, Args, Triple))
       .Cases("mips32r6", "mips64r6", true)
       .Default(false);
 }

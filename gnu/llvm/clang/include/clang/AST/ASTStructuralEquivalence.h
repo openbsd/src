@@ -17,7 +17,7 @@
 #include "clang/AST/DeclBase.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
-#include "llvm/ADT/Optional.h"
+#include <optional>
 #include <queue>
 #include <utility>
 
@@ -114,10 +114,10 @@ struct StructuralEquivalenceContext {
   ///
   /// FIXME: This is needed by ASTImporter and ASTStructureEquivalence. It
   /// probably makes more sense in some other common place then here.
-  static llvm::Optional<unsigned>
+  static std::optional<unsigned>
   findUntaggedStructOrUnionIndex(RecordDecl *Anon);
 
-  // If ErrorOnTagTypeMismatch is set, return the the error, otherwise get the
+  // If ErrorOnTagTypeMismatch is set, return the error, otherwise get the
   // relevant warning for the input error diagnostic.
   unsigned getApplicableDiagnostic(unsigned ErrorDiagnostic);
 

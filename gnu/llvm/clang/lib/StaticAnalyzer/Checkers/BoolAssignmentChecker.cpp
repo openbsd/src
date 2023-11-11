@@ -12,10 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
+#include "clang/StaticAnalyzer/Checkers/Taint.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
+#include <optional>
 
 using namespace clang;
 using namespace ento;
@@ -23,20 +25,23 @@ using namespace ento;
 namespace {
   class BoolAssignmentChecker : public Checker< check::Bind > {
     mutable std::unique_ptr<BuiltinBug> BT;
-    void emitReport(ProgramStateRef state, CheckerContext &C) const;
+    void emitReport(ProgramStateRef state, CheckerContext &C,
+                    bool IsTainted = false) const;
+
   public:
     void checkBind(SVal loc, SVal val, const Stmt *S, CheckerContext &C) const;
   };
 } // end anonymous namespace
 
-void BoolAssignmentChecker::emitReport(ProgramStateRef state,
-                                       CheckerContext &C) const {
+void BoolAssignmentChecker::emitReport(ProgramStateRef state, CheckerContext &C,
+                                       bool IsTainted) const {
   if (ExplodedNode *N = C.generateNonFatalErrorNode(state)) {
     if (!BT)
       BT.reset(new BuiltinBug(this, "Assignment of a non-Boolean value"));
 
-    C.emitReport(
-        std::make_unique<PathSensitiveBugReport>(*BT, BT->getDescription(), N));
+    StringRef Msg = IsTainted ? "Might assign a tainted non-Boolean value"
+                              : "Assignment of a non-Boolean value";
+    C.emitReport(std::make_unique<PathSensitiveBugReport>(*BT, Msg, N));
   }
 }
 
@@ -70,7 +75,7 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
   // Get the value of the right-hand side.  We only care about values
   // that are defined (UnknownVals and UndefinedVals are handled by other
   // checkers).
-  Optional<NonLoc> NV = val.getAs<NonLoc>();
+  std::optional<NonLoc> NV = val.getAs<NonLoc>();
   if (!NV)
     return;
 
@@ -90,6 +95,8 @@ void BoolAssignmentChecker::checkBind(SVal loc, SVal val, const Stmt *S,
 
   if (!StIn)
     emitReport(StOut, C);
+  if (StIn && StOut && taint::isTainted(state, *NV))
+    emitReport(StOut, C, /*IsTainted=*/true);
 }
 
 void ento::registerBoolAssignmentChecker(CheckerManager &mgr) {

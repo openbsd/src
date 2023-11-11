@@ -8,111 +8,104 @@
 
 #include "clang/Tooling/DependencyScanning/DependencyScanningTool.h"
 #include "clang/Frontend/Utils.h"
+#include <optional>
 
-namespace clang{
-namespace tooling{
-namespace dependencies{
+using namespace clang;
+using namespace tooling;
+using namespace dependencies;
 
-std::vector<std::string> FullDependencies::getAdditionalArgs(
-    std::function<StringRef(ModuleID)> LookupPCMPath,
-    std::function<const ModuleDeps &(ModuleID)> LookupModuleDeps) const {
-  std::vector<std::string> Ret = getAdditionalArgsWithoutModulePaths();
+static std::vector<std::string>
+makeTUCommandLineWithoutPaths(ArrayRef<std::string> OriginalCommandLine) {
+  std::vector<std::string> Args = OriginalCommandLine;
 
-  std::vector<std::string> PCMPaths;
-  std::vector<std::string> ModMapPaths;
-  dependencies::detail::collectPCMAndModuleMapPaths(
-      ClangModuleDeps, LookupPCMPath, LookupModuleDeps, PCMPaths, ModMapPaths);
-  for (const std::string &PCMPath : PCMPaths)
-    Ret.push_back("-fmodule-file=" + PCMPath);
-  for (const std::string &ModMapPath : ModMapPaths)
-    Ret.push_back("-fmodule-map-file=" + ModMapPath);
+  Args.push_back("-fno-implicit-modules");
+  Args.push_back("-fno-implicit-module-maps");
 
-  return Ret;
-}
-
-std::vector<std::string>
-FullDependencies::getAdditionalArgsWithoutModulePaths() const {
-  std::vector<std::string> Args{
-      "-fno-implicit-modules",
-      "-fno-implicit-module-maps",
-  };
-
-  for (const PrebuiltModuleDep &PMD : PrebuiltModuleDeps) {
-    Args.push_back("-fmodule-file=" + PMD.ModuleName + "=" + PMD.PCMFile);
-    Args.push_back("-fmodule-map-file=" + PMD.ModuleMapFile);
-  }
+  // These arguments are unused in explicit compiles.
+  llvm::erase_if(Args, [](StringRef Arg) {
+    if (Arg.consume_front("-fmodules-")) {
+      return Arg.startswith("cache-path=") ||
+             Arg.startswith("prune-interval=") ||
+             Arg.startswith("prune-after=") ||
+             Arg == "validate-once-per-build-session";
+    }
+    return Arg.startswith("-fbuild-session-file=");
+  });
 
   return Args;
 }
 
 DependencyScanningTool::DependencyScanningTool(
-    DependencyScanningService &Service)
-    : Worker(Service) {}
+    DependencyScanningService &Service,
+    llvm::IntrusiveRefCntPtr<llvm::vfs::FileSystem> FS)
+    : Worker(Service, std::move(FS)) {}
+
+namespace {
+/// Prints out all of the gathered dependencies into a string.
+class MakeDependencyPrinterConsumer : public DependencyConsumer {
+public:
+  void handleBuildCommand(Command) override {}
+
+  void
+  handleDependencyOutputOpts(const DependencyOutputOptions &Opts) override {
+    this->Opts = std::make_unique<DependencyOutputOptions>(Opts);
+  }
+
+  void handleFileDependency(StringRef File) override {
+    Dependencies.push_back(std::string(File));
+  }
+
+  void handlePrebuiltModuleDependency(PrebuiltModuleDep PMD) override {
+    // Same as `handleModuleDependency`.
+  }
+
+  void handleModuleDependency(ModuleDeps MD) override {
+    // These are ignored for the make format as it can't support the full
+    // set of deps, and handleFileDependency handles enough for implicitly
+    // built modules to work.
+  }
+
+  void handleContextHash(std::string Hash) override {}
+
+  std::string lookupModuleOutput(const ModuleID &ID,
+                                 ModuleOutputKind Kind) override {
+    llvm::report_fatal_error("unexpected call to lookupModuleOutput");
+  }
+
+  void printDependencies(std::string &S) {
+    assert(Opts && "Handled dependency output options.");
+
+    class DependencyPrinter : public DependencyFileGenerator {
+    public:
+      DependencyPrinter(DependencyOutputOptions &Opts,
+                        ArrayRef<std::string> Dependencies)
+          : DependencyFileGenerator(Opts) {
+        for (const auto &Dep : Dependencies)
+          addDependency(Dep);
+      }
+
+      void printDependencies(std::string &S) {
+        llvm::raw_string_ostream OS(S);
+        outputDependencyFile(OS);
+      }
+    };
+
+    DependencyPrinter Generator(*Opts, Dependencies);
+    Generator.printDependencies(S);
+  }
+
+protected:
+  std::unique_ptr<DependencyOutputOptions> Opts;
+  std::vector<std::string> Dependencies;
+};
+} // anonymous namespace
 
 llvm::Expected<std::string> DependencyScanningTool::getDependencyFile(
-    const tooling::CompilationDatabase &Compilations, StringRef CWD) {
-  /// Prints out all of the gathered dependencies into a string.
-  class MakeDependencyPrinterConsumer : public DependencyConsumer {
-  public:
-    void
-    handleDependencyOutputOpts(const DependencyOutputOptions &Opts) override {
-      this->Opts = std::make_unique<DependencyOutputOptions>(Opts);
-    }
-
-    void handleFileDependency(StringRef File) override {
-      Dependencies.push_back(std::string(File));
-    }
-
-    void handlePrebuiltModuleDependency(PrebuiltModuleDep PMD) override {
-      // Same as `handleModuleDependency`.
-    }
-
-    void handleModuleDependency(ModuleDeps MD) override {
-      // These are ignored for the make format as it can't support the full
-      // set of deps, and handleFileDependency handles enough for implicitly
-      // built modules to work.
-    }
-
-    void handleContextHash(std::string Hash) override {}
-
-    void printDependencies(std::string &S) {
-      assert(Opts && "Handled dependency output options.");
-
-      class DependencyPrinter : public DependencyFileGenerator {
-      public:
-        DependencyPrinter(DependencyOutputOptions &Opts,
-                          ArrayRef<std::string> Dependencies)
-            : DependencyFileGenerator(Opts) {
-          for (const auto &Dep : Dependencies)
-            addDependency(Dep);
-        }
-
-        void printDependencies(std::string &S) {
-          llvm::raw_string_ostream OS(S);
-          outputDependencyFile(OS);
-        }
-      };
-
-      DependencyPrinter Generator(*Opts, Dependencies);
-      Generator.printDependencies(S);
-    }
-
-  private:
-    std::unique_ptr<DependencyOutputOptions> Opts;
-    std::vector<std::string> Dependencies;
-  };
-
-  // We expect a single command here because if a source file occurs multiple
-  // times in the original CDB, then `computeDependencies` would run the
-  // `DependencyScanningAction` once for every time the input occured in the
-  // CDB. Instead we split up the CDB into single command chunks to avoid this
-  // behavior.
-  assert(Compilations.getAllCompileCommands().size() == 1 &&
-         "Expected a compilation database with a single command!");
-  std::string Input = Compilations.getAllCompileCommands().front().Filename;
-
+    const std::vector<std::string> &CommandLine, StringRef CWD,
+    std::optional<StringRef> ModuleName) {
   MakeDependencyPrinterConsumer Consumer;
-  auto Result = Worker.computeDependencies(Input, CWD, Compilations, Consumer);
+  auto Result =
+      Worker.computeDependencies(CWD, CommandLine, Consumer, ModuleName);
   if (Result)
     return std::move(Result);
   std::string Output;
@@ -120,89 +113,146 @@ llvm::Expected<std::string> DependencyScanningTool::getDependencyFile(
   return Output;
 }
 
-llvm::Expected<FullDependenciesResult>
-DependencyScanningTool::getFullDependencies(
-    const tooling::CompilationDatabase &Compilations, StringRef CWD,
-    const llvm::StringSet<> &AlreadySeen) {
-  class FullDependencyPrinterConsumer : public DependencyConsumer {
+llvm::Expected<P1689Rule> DependencyScanningTool::getP1689ModuleDependencyFile(
+    const CompileCommand &Command, StringRef CWD,
+    std::string &MakeformatOutput, std::string &MakeformatOutputPath) {
+  class P1689ModuleDependencyPrinterConsumer
+      : public MakeDependencyPrinterConsumer {
   public:
-    FullDependencyPrinterConsumer(const llvm::StringSet<> &AlreadySeen)
-        : AlreadySeen(AlreadySeen) {}
-
-    void
-    handleDependencyOutputOpts(const DependencyOutputOptions &Opts) override {}
-
-    void handleFileDependency(StringRef File) override {
-      Dependencies.push_back(std::string(File));
+    P1689ModuleDependencyPrinterConsumer(P1689Rule &Rule,
+                                         const CompileCommand &Command)
+        : Filename(Command.Filename), Rule(Rule) {
+      Rule.PrimaryOutput = Command.Output;
     }
 
-    void handlePrebuiltModuleDependency(PrebuiltModuleDep PMD) override {
-      PrebuiltModuleDeps.emplace_back(std::move(PMD));
+    void handleProvidedAndRequiredStdCXXModules(
+        std::optional<P1689ModuleInfo> Provided,
+        std::vector<P1689ModuleInfo> Requires) override {
+      Rule.Provides = Provided;
+      if (Rule.Provides)
+        Rule.Provides->SourcePath = Filename.str();
+      Rule.Requires = Requires;
     }
 
-    void handleModuleDependency(ModuleDeps MD) override {
-      ClangModuleDeps[MD.ID.ContextHash + MD.ID.ModuleName] = std::move(MD);
-    }
-
-    void handleContextHash(std::string Hash) override {
-      ContextHash = std::move(Hash);
-    }
-
-    FullDependenciesResult getFullDependencies() const {
-      FullDependencies FD;
-
-      FD.ID.ContextHash = std::move(ContextHash);
-
-      FD.FileDeps.assign(Dependencies.begin(), Dependencies.end());
-
-      for (auto &&M : ClangModuleDeps) {
-        auto &MD = M.second;
-        if (MD.ImportedByMainFile)
-          FD.ClangModuleDeps.push_back(MD.ID);
-      }
-
-      FD.PrebuiltModuleDeps = std::move(PrebuiltModuleDeps);
-
-      FullDependenciesResult FDR;
-
-      for (auto &&M : ClangModuleDeps) {
-        // TODO: Avoid handleModuleDependency even being called for modules
-        //   we've already seen.
-        if (AlreadySeen.count(M.first))
-          continue;
-        FDR.DiscoveredModules.push_back(std::move(M.second));
-      }
-
-      FDR.FullDeps = std::move(FD);
-      return FDR;
+    StringRef getMakeFormatDependencyOutputPath() {
+      if (Opts->OutputFormat != DependencyOutputFormat::Make)
+        return {};
+      return Opts->OutputFile;
     }
 
   private:
-    std::vector<std::string> Dependencies;
-    std::vector<PrebuiltModuleDep> PrebuiltModuleDeps;
-    std::unordered_map<std::string, ModuleDeps> ClangModuleDeps;
-    std::string ContextHash;
-    std::vector<std::string> OutputPaths;
-    const llvm::StringSet<> &AlreadySeen;
+    StringRef Filename;
+    P1689Rule &Rule;
   };
 
-  // We expect a single command here because if a source file occurs multiple
-  // times in the original CDB, then `computeDependencies` would run the
-  // `DependencyScanningAction` once for every time the input occured in the
-  // CDB. Instead we split up the CDB into single command chunks to avoid this
-  // behavior.
-  assert(Compilations.getAllCompileCommands().size() == 1 &&
-         "Expected a compilation database with a single command!");
-  std::string Input = Compilations.getAllCompileCommands().front().Filename;
-
-  FullDependencyPrinterConsumer Consumer(AlreadySeen);
-  llvm::Error Result =
-      Worker.computeDependencies(Input, CWD, Compilations, Consumer);
+  P1689Rule Rule;
+  P1689ModuleDependencyPrinterConsumer Consumer(Rule, Command);
+  auto Result = Worker.computeDependencies(CWD, Command.CommandLine, Consumer);
   if (Result)
     return std::move(Result);
-  return Consumer.getFullDependencies();
+
+  MakeformatOutputPath = Consumer.getMakeFormatDependencyOutputPath();
+  if (!MakeformatOutputPath.empty())
+    Consumer.printDependencies(MakeformatOutput);
+  return Rule;
 }
 
-} // end namespace dependencies
-} // end namespace tooling
-} // end namespace clang
+llvm::Expected<FullDependenciesResult>
+DependencyScanningTool::getFullDependencies(
+    const std::vector<std::string> &CommandLine, StringRef CWD,
+    const llvm::StringSet<> &AlreadySeen,
+    LookupModuleOutputCallback LookupModuleOutput,
+    std::optional<StringRef> ModuleName) {
+  FullDependencyConsumer Consumer(AlreadySeen, LookupModuleOutput,
+                                  Worker.shouldEagerLoadModules());
+  llvm::Error Result =
+      Worker.computeDependencies(CWD, CommandLine, Consumer, ModuleName);
+  if (Result)
+    return std::move(Result);
+  return Consumer.takeFullDependencies();
+}
+
+llvm::Expected<FullDependenciesResult>
+DependencyScanningTool::getFullDependenciesLegacyDriverCommand(
+    const std::vector<std::string> &CommandLine, StringRef CWD,
+    const llvm::StringSet<> &AlreadySeen,
+    LookupModuleOutputCallback LookupModuleOutput,
+    std::optional<StringRef> ModuleName) {
+  FullDependencyConsumer Consumer(AlreadySeen, LookupModuleOutput,
+                                  Worker.shouldEagerLoadModules());
+  llvm::Error Result =
+      Worker.computeDependencies(CWD, CommandLine, Consumer, ModuleName);
+  if (Result)
+    return std::move(Result);
+  return Consumer.getFullDependenciesLegacyDriverCommand(CommandLine);
+}
+
+FullDependenciesResult FullDependencyConsumer::takeFullDependencies() {
+  FullDependenciesResult FDR;
+  FullDependencies &FD = FDR.FullDeps;
+
+  FD.ID.ContextHash = std::move(ContextHash);
+  FD.FileDeps = std::move(Dependencies);
+  FD.PrebuiltModuleDeps = std::move(PrebuiltModuleDeps);
+  FD.Commands = std::move(Commands);
+
+  for (auto &&M : ClangModuleDeps) {
+    auto &MD = M.second;
+    if (MD.ImportedByMainFile)
+      FD.ClangModuleDeps.push_back(MD.ID);
+    // TODO: Avoid handleModuleDependency even being called for modules
+    //   we've already seen.
+    if (AlreadySeen.count(M.first))
+      continue;
+    FDR.DiscoveredModules.push_back(std::move(MD));
+  }
+
+  return FDR;
+}
+
+FullDependenciesResult
+FullDependencyConsumer::getFullDependenciesLegacyDriverCommand(
+    const std::vector<std::string> &OriginalCommandLine) const {
+  FullDependencies FD;
+
+  FD.DriverCommandLine = makeTUCommandLineWithoutPaths(
+      ArrayRef<std::string>(OriginalCommandLine).slice(1));
+
+  FD.ID.ContextHash = std::move(ContextHash);
+
+  FD.FileDeps.assign(Dependencies.begin(), Dependencies.end());
+
+  for (const PrebuiltModuleDep &PMD : PrebuiltModuleDeps)
+    FD.DriverCommandLine.push_back("-fmodule-file=" + PMD.PCMFile);
+
+  for (auto &&M : ClangModuleDeps) {
+    auto &MD = M.second;
+    if (MD.ImportedByMainFile) {
+      FD.ClangModuleDeps.push_back(MD.ID);
+      auto PCMPath = LookupModuleOutput(MD.ID, ModuleOutputKind::ModuleFile);
+      if (EagerLoadModules) {
+        FD.DriverCommandLine.push_back("-fmodule-file=" + PCMPath);
+      } else {
+        FD.DriverCommandLine.push_back("-fmodule-map-file=" +
+                                       MD.ClangModuleMapFile);
+        FD.DriverCommandLine.push_back("-fmodule-file=" + MD.ID.ModuleName +
+                                       "=" + PCMPath);
+      }
+    }
+  }
+
+  FD.PrebuiltModuleDeps = std::move(PrebuiltModuleDeps);
+
+  FullDependenciesResult FDR;
+
+  for (auto &&M : ClangModuleDeps) {
+    // TODO: Avoid handleModuleDependency even being called for modules
+    //   we've already seen.
+    if (AlreadySeen.count(M.first))
+      continue;
+    FDR.DiscoveredModules.push_back(std::move(M.second));
+  }
+
+  FDR.FullDeps = std::move(FD);
+  return FDR;
+}

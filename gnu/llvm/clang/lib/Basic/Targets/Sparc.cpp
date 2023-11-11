@@ -33,7 +33,7 @@ const char *const SparcTargetInfo::GCCRegNames[] = {
 };
 
 ArrayRef<const char *> SparcTargetInfo::getGCCRegNames() const {
-  return llvm::makeArrayRef(GCCRegNames);
+  return llvm::ArrayRef(GCCRegNames);
 }
 
 const TargetInfo::GCCRegAlias SparcTargetInfo::GCCRegAliases[] = {
@@ -48,7 +48,7 @@ const TargetInfo::GCCRegAlias SparcTargetInfo::GCCRegAliases[] = {
 };
 
 ArrayRef<TargetInfo::GCCRegAlias> SparcTargetInfo::getGCCRegAliases() const {
-  return llvm::makeArrayRef(GCCRegAliases);
+  return llvm::ArrayRef(GCCRegAliases);
 }
 
 bool SparcTargetInfo::hasFeature(StringRef Feature) const {
@@ -156,8 +156,6 @@ void SparcV8TargetInfo::getTargetDefines(const LangOptions &Opts,
       Builder.defineMacro("__sparcv8__");
       break;
     case CG_V9:
-      Builder.defineMacro("__sparcv9");
-      Builder.defineMacro("__sparcv9__");
       Builder.defineMacro("__sparc_v9__");
       break;
     }

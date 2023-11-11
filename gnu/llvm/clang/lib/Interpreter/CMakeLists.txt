@@ -5,6 +5,7 @@ set(LLVM_LINK_COMPONENTS
    OrcJit
    Support
    Target
+   TargetParser
   )
 
 add_clang_library(clangInterpreter
@@ -14,6 +15,7 @@ add_clang_library(clangInterpreter
 
   DEPENDS
   intrinsics_gen
+  ClangDriverOptions
 
   LINK_LIBS
   clangAST

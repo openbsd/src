@@ -49,7 +49,6 @@ class MoveChecker
     : public Checker<check::PreCall, check::PostCall,
                      check::DeadSymbols, check::RegionChanges> {
 public:
-  void checkEndFunction(const ReturnStmt *RS, CheckerContext &C) const;
   void checkPreCall(const CallEvent &MC, CheckerContext &C) const;
   void checkPostCall(const CallEvent &MC, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SR, CheckerContext &C) const;
@@ -310,7 +309,7 @@ MoveChecker::MovedBugVisitor::VisitNode(const ExplodedNode *N,
 
       // If it's not a dereference, we don't care if it was reset to null
       // or that it is even a smart pointer.
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case SK_NonStd:
     case SK_Safe:
       OS << "Object";
@@ -553,8 +552,8 @@ MoveChecker::classifyObject(const MemRegion *MR,
   // For the purposes of this checker, we classify move-safe STL types
   // as not-"STL" types, because that's how the checker treats them.
   MR = unwrapRValueReferenceIndirection(MR);
-  bool IsLocal =
-      MR && isa<VarRegion>(MR) && isa<StackSpaceRegion>(MR->getMemorySpace());
+  bool IsLocal = isa_and_nonnull<VarRegion>(MR) &&
+                 isa<StackSpaceRegion>(MR->getMemorySpace());
 
   if (!RD || !RD->getDeclContext()->isStdNamespace())
     return { IsLocal, SK_NonStd };
@@ -588,7 +587,7 @@ void MoveChecker::explainObject(llvm::raw_ostream &OS, const MemRegion *MR,
         break;
 
       // We only care about the type if it's a dereference.
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case SK_Unsafe:
       OS << " of type '" << RD->getQualifiedNameAsString() << "'";
       break;
@@ -619,10 +618,6 @@ void MoveChecker::checkPreCall(const CallEvent &Call, CheckerContext &C) const {
   if (!IC)
     return;
 
-  // Calling a destructor on a moved object is fine.
-  if (isa<CXXDestructorCall>(IC))
-    return;
-
   const MemRegion *ThisRegion = IC->getCXXThisVal().getAsRegion();
   if (!ThisRegion)
     return;
@@ -630,6 +625,10 @@ void MoveChecker::checkPreCall(const CallEvent &Call, CheckerContext &C) const {
   // The remaining part is check only for method call on a moved-from object.
   const auto MethodDecl = dyn_cast_or_null<CXXMethodDecl>(IC->getDecl());
   if (!MethodDecl)
+    return;
+
+  // Calling a destructor on a moved object is fine.
+  if (isa<CXXDestructorDecl>(MethodDecl))
     return;
 
   // We want to investigate the whole object, not only sub-object of a parent
@@ -712,12 +711,9 @@ ProgramStateRef MoveChecker::checkRegionChanges(
     // directly, but not all of them end up being invalidated.
     // But when they do, they appear in the InvalidatedRegions array as well.
     for (const auto *Region : RequestedRegions) {
-      if (ThisRegion != Region) {
-        if (llvm::find(InvalidatedRegions, Region) !=
-            std::end(InvalidatedRegions)) {
-          State = removeFromState(State, Region);
-        }
-      }
+      if (ThisRegion != Region &&
+          llvm::is_contained(InvalidatedRegions, Region))
+        State = removeFromState(State, Region);
     }
   } else {
     // For invalidations that aren't caused by calls, assume nothing. In

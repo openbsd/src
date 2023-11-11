@@ -19,6 +19,7 @@
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaInternal.h"
 #include "llvm/ADT/StringExtras.h"
+#include <optional>
 
 using namespace clang;
 using namespace sema;
@@ -175,17 +176,22 @@ static Attr *handleLoopHintAttr(Sema &S, Stmt *St, const ParsedAttr &A,
 
 namespace {
 class CallExprFinder : public ConstEvaluatedExprVisitor<CallExprFinder> {
-  bool FoundCallExpr = false;
+  bool FoundAsmStmt = false;
+  std::vector<const CallExpr *> CallExprs;
 
 public:
   typedef ConstEvaluatedExprVisitor<CallExprFinder> Inherited;
 
   CallExprFinder(Sema &S, const Stmt *St) : Inherited(S.Context) { Visit(St); }
 
-  bool foundCallExpr() { return FoundCallExpr; }
+  bool foundCallExpr() { return !CallExprs.empty(); }
+  const std::vector<const CallExpr *> &getCallExprs() { return CallExprs; }
 
-  void VisitCallExpr(const CallExpr *E) { FoundCallExpr = true; }
-  void VisitAsmStmt(const AsmStmt *S) { FoundCallExpr = true; }
+  bool foundAsmStmt() { return FoundAsmStmt; }
+
+  void VisitCallExpr(const CallExpr *E) { CallExprs.push_back(E); }
+
+  void VisitAsmStmt(const AsmStmt *S) { FoundAsmStmt = true; }
 
   void Visit(const Stmt *St) {
     if (!St)
@@ -200,13 +206,65 @@ static Attr *handleNoMergeAttr(Sema &S, Stmt *St, const ParsedAttr &A,
   NoMergeAttr NMA(S.Context, A);
   CallExprFinder CEF(S, St);
 
-  if (!CEF.foundCallExpr()) {
-    S.Diag(St->getBeginLoc(), diag::warn_nomerge_attribute_ignored_in_stmt)
-        << NMA.getSpelling();
+  if (!CEF.foundCallExpr() && !CEF.foundAsmStmt()) {
+    S.Diag(St->getBeginLoc(), diag::warn_attribute_ignored_no_calls_in_stmt)
+        << A;
     return nullptr;
   }
 
   return ::new (S.Context) NoMergeAttr(S.Context, A);
+}
+
+static Attr *handleNoInlineAttr(Sema &S, Stmt *St, const ParsedAttr &A,
+                                SourceRange Range) {
+  NoInlineAttr NIA(S.Context, A);
+  if (!NIA.isClangNoInline()) {
+    S.Diag(St->getBeginLoc(), diag::warn_function_attribute_ignored_in_stmt)
+        << "[[clang::noinline]]";
+    return nullptr;
+  }
+
+  CallExprFinder CEF(S, St);
+  if (!CEF.foundCallExpr()) {
+    S.Diag(St->getBeginLoc(), diag::warn_attribute_ignored_no_calls_in_stmt)
+        << A;
+    return nullptr;
+  }
+
+  for (const auto *CallExpr : CEF.getCallExprs()) {
+    const Decl *Decl = CallExpr->getCalleeDecl();
+    if (Decl->hasAttr<AlwaysInlineAttr>() || Decl->hasAttr<FlattenAttr>())
+      S.Diag(St->getBeginLoc(), diag::warn_function_stmt_attribute_precedence)
+          << A << (Decl->hasAttr<AlwaysInlineAttr>() ? 0 : 1);
+  }
+
+  return ::new (S.Context) NoInlineAttr(S.Context, A);
+}
+
+static Attr *handleAlwaysInlineAttr(Sema &S, Stmt *St, const ParsedAttr &A,
+                                    SourceRange Range) {
+  AlwaysInlineAttr AIA(S.Context, A);
+  if (!AIA.isClangAlwaysInline()) {
+    S.Diag(St->getBeginLoc(), diag::warn_function_attribute_ignored_in_stmt)
+        << "[[clang::always_inline]]";
+    return nullptr;
+  }
+
+  CallExprFinder CEF(S, St);
+  if (!CEF.foundCallExpr()) {
+    S.Diag(St->getBeginLoc(), diag::warn_attribute_ignored_no_calls_in_stmt)
+        << A;
+    return nullptr;
+  }
+
+  for (const auto *CallExpr : CEF.getCallExprs()) {
+    const Decl *Decl = CallExpr->getCalleeDecl();
+    if (Decl->hasAttr<NoInlineAttr>() || Decl->hasAttr<FlattenAttr>())
+      S.Diag(St->getBeginLoc(), diag::warn_function_stmt_attribute_precedence)
+          << A << (Decl->hasAttr<NoInlineAttr>() ? 2 : 1);
+  }
+
+  return ::new (S.Context) AlwaysInlineAttr(S.Context, A);
 }
 
 static Attr *handleMustTailAttr(Sema &S, Stmt *St, const ParsedAttr &A,
@@ -249,21 +307,33 @@ CheckForIncompatibleAttributes(Sema &S,
   if (!DiagnoseMutualExclusions(S, Attrs))
     return;
 
-  // There are 6 categories of loop hints attributes: vectorize, interleave,
-  // unroll, unroll_and_jam, pipeline and distribute. Except for distribute they
-  // come in two variants: a state form and a numeric form.  The state form
-  // selectively defaults/enables/disables the transformation for the loop
-  // (for unroll, default indicates full unrolling rather than enabling the
-  // transformation). The numeric form form provides an integer hint (for
-  // example, unroll count) to the transformer. The following array accumulates
-  // the hints encountered while iterating through the attributes to check for
-  // compatibility.
+  enum CategoryType {
+    // For the following categories, they come in two variants: a state form and
+    // a numeric form. The state form may be one of default, enable, and
+    // disable. The numeric form provides an integer hint (for example, unroll
+    // count) to the transformer.
+    Vectorize,
+    Interleave,
+    UnrollAndJam,
+    Pipeline,
+    // For unroll, default indicates full unrolling rather than enabling the
+    // transformation.
+    Unroll,
+    // The loop distribution transformation only has a state form that is
+    // exposed by #pragma clang loop distribute (enable | disable).
+    Distribute,
+    // The vector predication only has a state form that is exposed by
+    // #pragma clang loop vectorize_predicate (enable | disable).
+    VectorizePredicate,
+    // This serves as a indicator to how many category are listed in this enum.
+    NumberOfCategories
+  };
+  // The following array accumulates the hints encountered while iterating
+  // through the attributes to check for compatibility.
   struct {
     const LoopHintAttr *StateAttr;
     const LoopHintAttr *NumericAttr;
-  } HintAttrs[] = {{nullptr, nullptr}, {nullptr, nullptr}, {nullptr, nullptr},
-                   {nullptr, nullptr}, {nullptr, nullptr}, {nullptr, nullptr},
-                   {nullptr, nullptr}};
+  } HintAttrs[CategoryType::NumberOfCategories] = {};
 
   for (const auto *I : Attrs) {
     const LoopHintAttr *LH = dyn_cast<LoopHintAttr>(I);
@@ -272,16 +342,8 @@ CheckForIncompatibleAttributes(Sema &S,
     if (!LH)
       continue;
 
+    CategoryType Category = CategoryType::NumberOfCategories;
     LoopHintAttr::OptionType Option = LH->getOption();
-    enum {
-      Vectorize,
-      Interleave,
-      Unroll,
-      UnrollAndJam,
-      Distribute,
-      Pipeline,
-      VectorizePredicate
-    } Category;
     switch (Option) {
     case LoopHintAttr::Vectorize:
     case LoopHintAttr::VectorizeWidth:
@@ -312,7 +374,7 @@ CheckForIncompatibleAttributes(Sema &S,
       break;
     };
 
-    assert(Category < sizeof(HintAttrs) / sizeof(HintAttrs[0]));
+    assert(Category != NumberOfCategories && "Unhandled loop hint option");
     auto &CategoryState = HintAttrs[Category];
     const LoopHintAttr *PrevAttr;
     if (Option == LoopHintAttr::Vectorize ||
@@ -363,7 +425,7 @@ static Attr *handleOpenCLUnrollHint(Sema &S, Stmt *St, const ParsedAttr &A,
   unsigned UnrollFactor = 0;
   if (A.getNumArgs() == 1) {
     Expr *E = A.getArgAsExpr(0);
-    Optional<llvm::APSInt> ArgVal;
+    std::optional<llvm::APSInt> ArgVal;
 
     if (!(ArgVal = E->getIntegerConstantExpr(S.Context))) {
       S.Diag(A.getLoc(), diag::err_attribute_argument_type)
@@ -408,6 +470,8 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const ParsedAttr &A,
     return nullptr;
 
   switch (A.getKind()) {
+  case ParsedAttr::AT_AlwaysInline:
+    return handleAlwaysInlineAttr(S, St, A, Range);
   case ParsedAttr::AT_FallThrough:
     return handleFallThroughAttr(S, St, A, Range);
   case ParsedAttr::AT_LoopHint:
@@ -418,6 +482,8 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const ParsedAttr &A,
     return handleSuppressAttr(S, St, A, Range);
   case ParsedAttr::AT_NoMerge:
     return handleNoMergeAttr(S, St, A, Range);
+  case ParsedAttr::AT_NoInline:
+    return handleNoInlineAttr(S, St, A, Range);
   case ParsedAttr::AT_MustTail:
     return handleMustTailAttr(S, St, A, Range);
   case ParsedAttr::AT_Likely:
@@ -434,8 +500,7 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const ParsedAttr &A,
   }
 }
 
-void Sema::ProcessStmtAttributes(Stmt *S,
-                                 const ParsedAttributesWithRange &InAttrs,
+void Sema::ProcessStmtAttributes(Stmt *S, const ParsedAttributes &InAttrs,
                                  SmallVectorImpl<const Attr *> &OutAttrs) {
   for (const ParsedAttr &AL : InAttrs) {
     if (const Attr *A = ProcessStmtAttribute(*this, S, AL, InAttrs.Range))

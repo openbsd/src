@@ -25,12 +25,12 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState_Fwd.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/PointerUnion.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/Casting.h"
 #include <cassert>
 #include <memory>
+#include <optional>
 
 using namespace clang;
 using namespace ento;
@@ -50,8 +50,7 @@ ExplodedGraph::~ExplodedGraph() = default;
 bool ExplodedGraph::isInterestingLValueExpr(const Expr *Ex) {
   if (!Ex->isLValue())
     return false;
-  return isa<DeclRefExpr>(Ex) || isa<MemberExpr>(Ex) ||
-         isa<ObjCIvarRefExpr>(Ex) || isa<ArraySubscriptExpr>(Ex);
+  return isa<DeclRefExpr, MemberExpr, ObjCIvarRefExpr, ArraySubscriptExpr>(Ex);
 }
 
 bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
@@ -140,7 +139,7 @@ bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
 
   // Condition 10.
   const ProgramPoint SuccLoc = succ->getLocation();
-  if (Optional<StmtPoint> SP = SuccLoc.getAs<StmtPoint>())
+  if (std::optional<StmtPoint> SP = SuccLoc.getAs<StmtPoint>())
     if (CallEvent::isCallStmt(SP->getStmt()))
       return false;
 

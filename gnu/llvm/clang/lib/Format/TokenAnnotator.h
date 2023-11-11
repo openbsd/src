@@ -19,8 +19,6 @@
 #include "clang/Format/Format.h"
 
 namespace clang {
-class SourceManager;
-
 namespace format {
 
 enum LineType {
@@ -33,18 +31,23 @@ enum LineType {
   LT_PreprocessorDirective,
   LT_VirtualFunctionDecl,
   LT_ArrayOfStructInitializer,
+  LT_CommentAbovePPDirective,
 };
 
 class AnnotatedLine {
 public:
   AnnotatedLine(const UnwrappedLine &Line)
       : First(Line.Tokens.front().Tok), Level(Line.Level),
+        PPLevel(Line.PPLevel),
         MatchingOpeningBlockLineIndex(Line.MatchingOpeningBlockLineIndex),
         MatchingClosingBlockLineIndex(Line.MatchingClosingBlockLineIndex),
         InPPDirective(Line.InPPDirective),
+        InPragmaDirective(Line.InPragmaDirective),
+        InMacroBody(Line.InMacroBody),
         MustBeDeclaration(Line.MustBeDeclaration), MightBeFunctionDecl(false),
         IsMultiVariableDeclStmt(false), Affected(false),
         LeadingEmptyLinesAffected(false), ChildrenAffected(false),
+        ReturnTypeWrapped(false), IsContinuation(Line.IsContinuation),
         FirstStartColumn(Line.FirstStartColumn) {
     assert(!Line.Tokens.empty());
 
@@ -53,12 +56,9 @@ public:
     // left them in a different state.
     First->Previous = nullptr;
     FormatToken *Current = First;
-    for (std::list<UnwrappedLineNode>::const_iterator I = ++Line.Tokens.begin(),
-                                                      E = Line.Tokens.end();
-         I != E; ++I) {
-      const UnwrappedLineNode &Node = *I;
-      Current->Next = I->Tok;
-      I->Tok->Previous = Current;
+    for (const UnwrappedLineNode &Node : llvm::drop_begin(Line.Tokens)) {
+      Current->Next = Node.Tok;
+      Node.Tok->Previous = Current;
       Current = Current->Next;
       Current->Children.clear();
       for (const auto &Child : Node.Children) {
@@ -71,15 +71,18 @@ public:
   }
 
   ~AnnotatedLine() {
-    for (unsigned i = 0, e = Children.size(); i != e; ++i) {
-      delete Children[i];
-    }
+    for (AnnotatedLine *Child : Children)
+      delete Child;
     FormatToken *Current = First;
     while (Current) {
       Current->Children.clear();
       Current->Role.reset();
       Current = Current->Next;
     }
+  }
+
+  bool isComment() const {
+    return First && First->is(tok::comment) && !First->getNextNonComment();
   }
 
   /// \c true if this line starts with the given tokens in order, ignoring
@@ -127,9 +130,12 @@ public:
 
   LineType Type;
   unsigned Level;
+  unsigned PPLevel;
   size_t MatchingOpeningBlockLineIndex;
   size_t MatchingClosingBlockLineIndex;
   bool InPPDirective;
+  bool InPragmaDirective;
+  bool InMacroBody;
   bool MustBeDeclaration;
   bool MightBeFunctionDecl;
   bool IsMultiVariableDeclStmt;
@@ -144,6 +150,13 @@ public:
 
   /// \c True if one of this line's children intersects with an input range.
   bool ChildrenAffected;
+
+  /// \c True if breaking after last attribute group in function return type.
+  bool ReturnTypeWrapped;
+
+  /// \c True if this line should be indented by ContinuationIndent in addition
+  /// to the normal indention level.
+  bool IsContinuation;
 
   unsigned FirstStartColumn;
 
@@ -163,43 +176,46 @@ public:
   /// Adapts the indent levels of comment lines to the indent of the
   /// subsequent line.
   // FIXME: Can/should this be done in the UnwrappedLineParser?
-  void setCommentLineLevels(SmallVectorImpl<AnnotatedLine *> &Lines);
+  void setCommentLineLevels(SmallVectorImpl<AnnotatedLine *> &Lines) const;
 
-  void annotate(AnnotatedLine &Line);
-  void calculateFormattingInformation(AnnotatedLine &Line);
+  void annotate(AnnotatedLine &Line) const;
+  void calculateFormattingInformation(AnnotatedLine &Line) const;
 
 private:
   /// Calculate the penalty for splitting before \c Tok.
   unsigned splitPenalty(const AnnotatedLine &Line, const FormatToken &Tok,
-                        bool InFunctionDecl);
+                        bool InFunctionDecl) const;
 
   bool spaceRequiredBeforeParens(const FormatToken &Right) const;
 
   bool spaceRequiredBetween(const AnnotatedLine &Line, const FormatToken &Left,
-                            const FormatToken &Right);
+                            const FormatToken &Right) const;
 
-  bool spaceRequiredBefore(const AnnotatedLine &Line, const FormatToken &Right);
+  bool spaceRequiredBefore(const AnnotatedLine &Line,
+                           const FormatToken &Right) const;
 
-  bool mustBreakBefore(const AnnotatedLine &Line, const FormatToken &Right);
+  bool mustBreakBefore(const AnnotatedLine &Line,
+                       const FormatToken &Right) const;
 
-  bool canBreakBefore(const AnnotatedLine &Line, const FormatToken &Right);
+  bool canBreakBefore(const AnnotatedLine &Line,
+                      const FormatToken &Right) const;
 
   bool mustBreakForReturnType(const AnnotatedLine &Line) const;
 
-  void printDebugInfo(const AnnotatedLine &Line);
+  void printDebugInfo(const AnnotatedLine &Line) const;
 
-  void calculateUnbreakableTailLengths(AnnotatedLine &Line);
+  void calculateUnbreakableTailLengths(AnnotatedLine &Line) const;
 
-  void calculateArrayInitializerColumnList(AnnotatedLine &Line);
+  void calculateArrayInitializerColumnList(AnnotatedLine &Line) const;
 
   FormatToken *calculateInitializerColumnList(AnnotatedLine &Line,
                                               FormatToken *CurrentToken,
-                                              unsigned Depth);
+                                              unsigned Depth) const;
   FormatStyle::PointerAlignmentStyle
-  getTokenReferenceAlignment(const FormatToken &PointerOrReference);
+  getTokenReferenceAlignment(const FormatToken &PointerOrReference) const;
 
-  FormatStyle::PointerAlignmentStyle
-  getTokenPointerOrReferenceAlignment(const FormatToken &PointerOrReference);
+  FormatStyle::PointerAlignmentStyle getTokenPointerOrReferenceAlignment(
+      const FormatToken &PointerOrReference) const;
 
   const FormatStyle &Style;
 

@@ -18,12 +18,10 @@
 
 #include "InterpStack.h"
 #include "clang/AST/APValue.h"
-#include "llvm/ADT/PointerIntPair.h"
 
 namespace clang {
 class ASTContext;
 class LangOptions;
-class Stmt;
 class FunctionDecl;
 class VarDecl;
 
@@ -34,7 +32,7 @@ class State;
 enum PrimType : unsigned;
 
 /// Holds all information required to evaluate constexpr code in a module.
-class Context {
+class Context final {
 public:
   /// Initialises the constexpr VM.
   Context(ASTContext &Ctx);
@@ -61,16 +59,15 @@ public:
   unsigned getCharBit() const;
 
   /// Classifies an expression.
-  llvm::Optional<PrimType> classify(QualType T);
+  std::optional<PrimType> classify(QualType T) const;
 
 private:
   /// Runs a function.
   bool Run(State &Parent, Function *Func, APValue &Result);
 
-  /// Checks a result fromt the interpreter.
+  /// Checks a result from the interpreter.
   bool Check(State &Parent, llvm::Expected<bool> &&R);
 
-private:
   /// Current compilation context.
   ASTContext &Ctx;
   /// Interpreter stack, shared across invocations.

@@ -15,6 +15,7 @@
 
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Basic/TokenKinds.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
 
@@ -99,9 +100,8 @@ public:
   bool isOneOf(tok::TokenKind K1, tok::TokenKind K2) const {
     return is(K1) || is(K2);
   }
-  template <typename... Ts>
-  bool isOneOf(tok::TokenKind K1, tok::TokenKind K2, Ts... Ks) const {
-    return is(K1) || isOneOf(K2, Ks...);
+  template <typename... Ts> bool isOneOf(tok::TokenKind K1, Ts... Ks) const {
+    return is(K1) || isOneOf(Ks...);
   }
 
   /// Return true if this is a raw identifier (when lexing
@@ -175,6 +175,8 @@ public:
     UintData = 0;
     Loc = SourceLocation().getRawEncoding();
   }
+
+  bool hasPtrData() const { return PtrData != nullptr; }
 
   IdentifierInfo *getIdentifierInfo() const {
     assert(isNot(tok::raw_identifier) &&
@@ -329,6 +331,12 @@ struct PPConditionalInfo {
   bool FoundElse;
 };
 
+// Extra information needed for annonation tokens.
+struct PragmaLoopHintInfo {
+  Token PragmaName;
+  Token Option;
+  ArrayRef<Token> Toks;
+};
 } // end namespace clang
 
 #endif // LLVM_CLANG_LEX_TOKEN_H

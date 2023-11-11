@@ -18,6 +18,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <map>
+#include <optional>
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -33,7 +34,7 @@ struct StaticDiagInfoRec;
 // platforms. See "How To Write Shared Libraries" by Ulrich Drepper.
 struct StaticDiagInfoDescriptionStringTable {
 #define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
-             SHOWINSYSHEADER, DEFERRABLE, CATEGORY)                            \
+             SHOWINSYSHEADER, SHOWINSYSMACRO, DEFERRABLE, CATEGORY)            \
   char ENUM##_desc[sizeof(DESC)];
   // clang-format off
 #include "clang/Basic/DiagnosticCommonKinds.inc"
@@ -54,7 +55,7 @@ struct StaticDiagInfoDescriptionStringTable {
 
 const StaticDiagInfoDescriptionStringTable StaticDiagInfoDescriptions = {
 #define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
-             SHOWINSYSHEADER, DEFERRABLE, CATEGORY)                            \
+             SHOWINSYSHEADER, SHOWINSYSMACRO, DEFERRABLE, CATEGORY)            \
   DESC,
 // clang-format off
 #include "clang/Basic/DiagnosticCommonKinds.inc"
@@ -79,7 +80,7 @@ extern const StaticDiagInfoRec StaticDiagInfo[];
 // StaticDiagInfoRec would have extra padding on 64-bit platforms.
 const uint32_t StaticDiagInfoDescriptionOffsets[] = {
 #define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
-             SHOWINSYSHEADER, DEFERRABLE, CATEGORY)                            \
+             SHOWINSYSHEADER, SHOWINSYSMACRO, DEFERRABLE, CATEGORY)            \
   offsetof(StaticDiagInfoDescriptionStringTable, ENUM##_desc),
 // clang-format off
 #include "clang/Basic/DiagnosticCommonKinds.inc"
@@ -115,6 +116,7 @@ struct StaticDiagInfoRec {
   uint8_t Category : 6;
   uint8_t WarnNoWerror : 1;
   uint8_t WarnShowInSystemHeader : 1;
+  uint8_t WarnShowInSystemMacro : 1;
 
   uint16_t OptionGroupIndex : 15;
   uint16_t Deferrable : 1;
@@ -170,7 +172,7 @@ VALIDATE_DIAG_SIZE(REFACTORING)
 const StaticDiagInfoRec StaticDiagInfo[] = {
 // clang-format off
 #define DIAG(ENUM, CLASS, DEFAULT_SEVERITY, DESC, GROUP, SFINAE, NOWERROR,     \
-             SHOWINSYSHEADER, DEFERRABLE, CATEGORY)                            \
+             SHOWINSYSHEADER, SHOWINSYSMACRO, DEFERRABLE, CATEGORY)            \
   {                                                                            \
       diag::ENUM,                                                              \
       DEFAULT_SEVERITY,                                                        \
@@ -179,6 +181,7 @@ const StaticDiagInfoRec StaticDiagInfo[] = {
       CATEGORY,                                                                \
       NOWERROR,                                                                \
       SHOWINSYSHEADER,                                                         \
+      SHOWINSYSMACRO,                                                          \
       GROUP,                                                                   \
 	    DEFERRABLE,                                                              \
       STR_SIZE(DESC, uint16_t)},
@@ -200,7 +203,7 @@ const StaticDiagInfoRec StaticDiagInfo[] = {
 
 } // namespace
 
-static const unsigned StaticDiagInfoSize = llvm::array_lengthof(StaticDiagInfo);
+static const unsigned StaticDiagInfoSize = std::size(StaticDiagInfo);
 
 /// GetDiagInfo - Return the StaticDiagInfoRec entry for the specified DiagID,
 /// or null if the ID is invalid.
@@ -315,7 +318,7 @@ static const StaticDiagCategoryRec CategoryNameTable[] = {
 
 /// getNumberOfCategories - Return the number of categories
 unsigned DiagnosticIDs::getNumberOfCategories() {
-  return llvm::array_lengthof(CategoryNameTable) - 1;
+  return std::size(CategoryNameTable) - 1;
 }
 
 /// getCategoryNameFromID - Given a category ID, return the name of the
@@ -544,7 +547,7 @@ DiagnosticIDs::getDiagnosticSeverity(unsigned DiagID, SourceLocation Loc,
   if (Result == diag::Severity::Ignored)
     return Result;
 
-  // Honor -w: this disables all messages which which are not Error/Fatal by
+  // Honor -w: this disables all messages which are not Error/Fatal by
   // default (disregarding attempts to upgrade severity from Warning to Error),
   // as well as disabling all messages which are currently mapped to Warning
   // (whether by default or downgraded from Error via e.g. -Wno-error or #pragma
@@ -586,6 +589,13 @@ DiagnosticIDs::getDiagnosticSeverity(unsigned DiagID, SourceLocation Loc,
           Diag.getSourceManager().getExpansionLoc(Loc)))
     return diag::Severity::Ignored;
 
+  // We also ignore warnings due to system macros
+  bool ShowInSystemMacro =
+      !GetDiagInfo(DiagID) || GetDiagInfo(DiagID)->WarnShowInSystemMacro;
+  if (State->SuppressSystemWarnings && !ShowInSystemMacro && Loc.isValid() &&
+      Diag.getSourceManager().isInSystemMacro(Loc))
+    return diag::Severity::Ignored;
+
   return Result;
 }
 
@@ -598,6 +608,7 @@ namespace {
     uint16_t NameOffset;
     uint16_t Members;
     uint16_t SubGroups;
+    StringRef Documentation;
 
     // String is stored with a pascal-style length byte.
     StringRef getName() const {
@@ -609,22 +620,47 @@ namespace {
 
 // Second the table of options, sorted by name for fast binary lookup.
 static const WarningOption OptionTable[] = {
-#define GET_DIAG_TABLE
+#define DIAG_ENTRY(GroupName, FlagNameOffset, Members, SubGroups, Docs)        \
+  {FlagNameOffset, Members, SubGroups, Docs},
 #include "clang/Basic/DiagnosticGroups.inc"
-#undef GET_DIAG_TABLE
+#undef DIAG_ENTRY
 };
+
+/// Given a diagnostic group ID, return its documentation.
+StringRef DiagnosticIDs::getWarningOptionDocumentation(diag::Group Group) {
+  return OptionTable[static_cast<int>(Group)].Documentation;
+}
+
+StringRef DiagnosticIDs::getWarningOptionForGroup(diag::Group Group) {
+  return OptionTable[static_cast<int>(Group)].getName();
+}
+
+std::optional<diag::Group>
+DiagnosticIDs::getGroupForWarningOption(StringRef Name) {
+  const auto *Found = llvm::partition_point(
+      OptionTable, [=](const WarningOption &O) { return O.getName() < Name; });
+  if (Found == std::end(OptionTable) || Found->getName() != Name)
+    return std::nullopt;
+  return static_cast<diag::Group>(Found - OptionTable);
+}
+
+std::optional<diag::Group> DiagnosticIDs::getGroupForDiag(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return static_cast<diag::Group>(Info->getOptionGroupIndex());
+  return std::nullopt;
+}
 
 /// getWarningOptionForDiag - Return the lowest-level warning option that
 /// enables the specified diagnostic.  If there is no -Wfoo flag that controls
 /// the diagnostic, this returns null.
 StringRef DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
-  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return OptionTable[Info->getOptionGroupIndex()].getName();
+  if (auto G = getGroupForDiag(DiagID))
+    return getWarningOptionForGroup(*G);
   return StringRef();
 }
 
 std::vector<std::string> DiagnosticIDs::getDiagnosticFlags() {
-  std::vector<std::string> Res;
+  std::vector<std::string> Res{"-W", "-Wno-"};
   for (size_t I = 1; DiagGroupNames[I] != '\0';) {
     std::string Diag(DiagGroupNames + I + 1, DiagGroupNames[I]);
     I += DiagGroupNames[I] + 1;
@@ -668,12 +704,10 @@ static bool getDiagnosticsInGroup(diag::Flavor Flavor,
 bool
 DiagnosticIDs::getDiagnosticsInGroup(diag::Flavor Flavor, StringRef Group,
                                      SmallVectorImpl<diag::kind> &Diags) const {
-  auto Found = llvm::partition_point(
-      OptionTable, [=](const WarningOption &O) { return O.getName() < Group; });
-  if (Found == std::end(OptionTable) || Found->getName() != Group)
-    return true; // Option not found.
-
-  return ::getDiagnosticsInGroup(Flavor, Found, Diags);
+  if (std::optional<diag::Group> G = getGroupForWarningOption(Group))
+    return ::getDiagnosticsInGroup(
+        Flavor, &OptionTable[static_cast<unsigned>(*G)], Diags);
+  return true;
 }
 
 void DiagnosticIDs::getAllDiagnostics(diag::Flavor Flavor,
@@ -686,7 +720,7 @@ void DiagnosticIDs::getAllDiagnostics(diag::Flavor Flavor,
 StringRef DiagnosticIDs::getNearestOption(diag::Flavor Flavor,
                                           StringRef Group) {
   StringRef Best;
-  unsigned BestDistance = Group.size() + 1; // Sanity threshold.
+  unsigned BestDistance = Group.size() + 1; // Maximum threshold.
   for (const WarningOption &O : OptionTable) {
     // Don't suggest ignored warning flags.
     if (!O.Members && !O.SubGroups)

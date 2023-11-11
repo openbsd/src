@@ -22,9 +22,9 @@ using namespace clang;
 /// Declarator is a well formed C++ inline method definition. Now lex its body
 /// and store its tokens for parsing after the C++ class is complete.
 NamedDecl *Parser::ParseCXXInlineMethodDef(
-    AccessSpecifier AS, ParsedAttributes &AccessAttrs, ParsingDeclarator &D,
-    const ParsedTemplateInfo &TemplateInfo, const VirtSpecifiers &VS,
-    SourceLocation PureSpecLoc) {
+    AccessSpecifier AS, const ParsedAttributesView &AccessAttrs,
+    ParsingDeclarator &D, const ParsedTemplateInfo &TemplateInfo,
+    const VirtSpecifiers &VS, SourceLocation PureSpecLoc) {
   assert(D.isFunctionDeclarator() && "This isn't a function declarator!");
   assert(Tok.isOneOf(tok::l_brace, tok::colon, tok::kw_try, tok::equal) &&
          "Current token not a '{', ':', '=', or 'try'!");
@@ -140,8 +140,22 @@ NamedDecl *Parser::ParseCXXInlineMethodDef(
   // function body.
   if (ConsumeAndStoreFunctionPrologue(Toks)) {
     // We didn't find the left-brace we expected after the
-    // constructor initializer; we already printed an error, and it's likely
-    // impossible to recover, so don't try to parse this method later.
+    // constructor initializer.
+
+    // If we're code-completing and the completion point was in the broken
+    // initializer, we want to parse it even though that will fail.
+    if (PP.isCodeCompletionEnabled() &&
+        llvm::any_of(Toks, [](const Token &Tok) {
+          return Tok.is(tok::code_completion);
+        })) {
+      // If we gave up at the completion point, the initializer list was
+      // likely truncated, so don't eat more tokens. We'll hit some extra
+      // errors, but they should be ignored in code completion.
+      return FnD;
+    }
+
+    // We already printed an error, and it's likely impossible to recover,
+    // so don't try to parse this method later.
     // Skip over the rest of the decl and back to somewhere that looks
     // reasonable.
     SkipMalformedDecl();
@@ -452,13 +466,14 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
     CXXMethodDecl *Method;
     if (FunctionTemplateDecl *FunTmpl
           = dyn_cast<FunctionTemplateDecl>(LM.Method))
-      Method = cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
+      Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
     else
-      Method = cast<CXXMethodDecl>(LM.Method);
+      Method = dyn_cast<CXXMethodDecl>(LM.Method);
 
-    Sema::CXXThisScopeRAII ThisScope(Actions, Method->getParent(),
-                                     Method->getMethodQualifiers(),
-                                     getLangOpts().CPlusPlus11);
+    Sema::CXXThisScopeRAII ThisScope(
+        Actions, Method ? Method->getParent() : nullptr,
+        Method ? Method->getMethodQualifiers() : Qualifiers{},
+        Method && getLangOpts().CPlusPlus11);
 
     // Parse the exception-specification.
     SourceRange SpecificationRange;
@@ -633,6 +648,11 @@ void Parser::ParseLexedMemberInitializer(LateParsedMemberInitializer &MI) {
 
   Actions.ActOnStartCXXInClassMemberInitializer();
 
+  // The initializer isn't actually potentially evaluated unless it is
+  // used.
+  EnterExpressionEvaluationContext Eval(
+      Actions, Sema::ExpressionEvaluationContext::PotentiallyEvaluatedIfUsed);
+
   ExprResult Init = ParseCXXMemberInitializer(MI.Field, /*IsFunction=*/false,
                                               EqualLoc);
 
@@ -705,7 +725,6 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
   ConsumeAnyToken(/*ConsumeCodeCompletionTok=*/true);
 
   ParsedAttributes Attrs(AttrFactory);
-  SourceLocation endLoc;
 
   if (LA.Decls.size() > 0) {
     Decl *D = LA.Decls[0];
@@ -728,7 +747,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
         Actions.ActOnReenterFunctionContext(Actions.CurScope, D);
       }
 
-      ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc,
+      ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, nullptr,
                             nullptr, SourceLocation(), ParsedAttr::AS_GNU,
                             nullptr);
 
@@ -737,7 +756,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
     } else {
       // If there are multiple decls, then the decl cannot be within the
       // function scope.
-      ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc,
+      ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, nullptr,
                             nullptr, SourceLocation(), ParsedAttr::AS_GNU,
                             nullptr);
     }
@@ -781,7 +800,7 @@ void Parser::ParseLexedPragma(LateParsedPragma &LP) {
   case tok::annot_attr_openmp:
   case tok::annot_pragma_openmp: {
     AccessSpecifier AS = LP.getAccessSpecifier();
-    ParsedAttributesWithRange Attrs(AttrFactory);
+    ParsedAttributes Attrs(AttrFactory);
     (void)ParseOpenMPDeclarativeDirectiveWithExtDecl(AS, Attrs);
     break;
   }
@@ -802,7 +821,7 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
   // We always want this function to consume at least one token if the first
   // token isn't T and if not at EOF.
   bool isFirstTokenConsumed = true;
-  while (1) {
+  while (true) {
     // If we found one of the tokens, stop and return true.
     if (Tok.is(T1) || Tok.is(T2)) {
       if (ConsumeFinalToken) {
@@ -866,7 +885,7 @@ bool Parser::ConsumeAndStoreUntil(tok::TokenKind T1, tok::TokenKind T2,
     case tok::semi:
       if (StopAtSemi)
         return false;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     default:
       // consume this token.
       Toks.push_back(Tok);
@@ -1158,7 +1177,7 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
   unsigned AngleCount = 0;
   unsigned KnownTemplateCount = 0;
 
-  while (1) {
+  while (true) {
     switch (Tok.getKind()) {
     case tok::comma:
       // If we might be in a template, perform a tentative parse to check.
@@ -1244,13 +1263,13 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
         goto consume_token;
       if (AngleCount) --AngleCount;
       if (KnownTemplateCount) --KnownTemplateCount;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case tok::greatergreater:
       if (!getLangOpts().CPlusPlus11)
         goto consume_token;
       if (AngleCount) --AngleCount;
       if (KnownTemplateCount) --KnownTemplateCount;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case tok::greater:
       if (AngleCount) --AngleCount;
       if (KnownTemplateCount) --KnownTemplateCount;
@@ -1355,7 +1374,7 @@ bool Parser::ConsumeAndStoreInitializer(CachedTokens &Toks,
     case tok::semi:
       if (CIK == CIK_DefaultInitializer)
         return true; // End of the default initializer.
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     default:
     consume_token:
       Toks.push_back(Tok);

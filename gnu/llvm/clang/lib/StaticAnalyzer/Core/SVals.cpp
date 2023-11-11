@@ -25,12 +25,12 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/SValVisitor.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymExpr.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
-#include "llvm/ADT/Optional.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
+#include <optional>
 
 using namespace clang;
 using namespace ento;
@@ -43,27 +43,8 @@ using namespace ento;
 // Utility methods.
 //===----------------------------------------------------------------------===//
 
-bool SVal::hasConjuredSymbol() const {
-  if (Optional<nonloc::SymbolVal> SV = getAs<nonloc::SymbolVal>()) {
-    SymbolRef sym = SV->getSymbol();
-    if (isa<SymbolConjured>(sym))
-      return true;
-  }
-
-  if (Optional<loc::MemRegionVal> RV = getAs<loc::MemRegionVal>()) {
-    const MemRegion *R = RV->getRegion();
-    if (const auto *SR = dyn_cast<SymbolicRegion>(R)) {
-      SymbolRef sym = SR->getSymbol();
-      if (isa<SymbolConjured>(sym))
-        return true;
-    }
-  }
-
-  return false;
-}
-
 const FunctionDecl *SVal::getAsFunctionDecl() const {
-  if (Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>()) {
+  if (std::optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>()) {
     const MemRegion* R = X->getRegion();
     if (const FunctionCodeRegion *CTR = R->getAs<FunctionCodeRegion>())
       if (const auto *FD = dyn_cast<FunctionDecl>(CTR->getDecl()))
@@ -97,7 +78,7 @@ SymbolRef SVal::getAsLocSymbol(bool IncludeBaseRegions) const {
 
 /// Get the symbol in the SVal or its base region.
 SymbolRef SVal::getLocSymbolInBase() const {
-  Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>();
+  std::optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>();
 
   if (!X)
     return nullptr;
@@ -122,17 +103,25 @@ SymbolRef SVal::getLocSymbolInBase() const {
 /// should continue to the base regions if the region is not symbolic.
 SymbolRef SVal::getAsSymbol(bool IncludeBaseRegions) const {
   // FIXME: should we consider SymbolRef wrapped in CodeTextRegion?
-  if (Optional<nonloc::SymbolVal> X = getAs<nonloc::SymbolVal>())
+  if (std::optional<nonloc::SymbolVal> X = getAs<nonloc::SymbolVal>())
     return X->getSymbol();
 
   return getAsLocSymbol(IncludeBaseRegions);
 }
 
+const llvm::APSInt *SVal::getAsInteger() const {
+  if (auto CI = getAs<nonloc::ConcreteInt>())
+    return &CI->getValue();
+  if (auto CI = getAs<loc::ConcreteInt>())
+    return &CI->getValue();
+  return nullptr;
+}
+
 const MemRegion *SVal::getAsRegion() const {
-  if (Optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>())
+  if (std::optional<loc::MemRegionVal> X = getAs<loc::MemRegionVal>())
     return X->getRegion();
 
-  if (Optional<nonloc::LocAsInteger> X = getAs<nonloc::LocAsInteger>())
+  if (std::optional<nonloc::LocAsInteger> X = getAs<nonloc::LocAsInteger>())
     return X->getLoc().getAsRegion();
 
   return nullptr;
@@ -155,6 +144,8 @@ public:
   }
   template <class ConcreteInt> QualType VisitConcreteInt(ConcreteInt CI) {
     const llvm::APSInt &Value = CI.getValue();
+    if (1 == Value.getBitWidth())
+      return Context.BoolTy;
     return Context.getIntTypeForBitwidth(Value.getBitWidth(), Value.isSigned());
   }
   QualType VisitLocConcreteInt(loc::ConcreteInt CI) {
@@ -196,8 +187,7 @@ QualType SVal::getType(const ASTContext &Context) const {
 }
 
 const MemRegion *loc::MemRegionVal::stripCasts(bool StripBaseCasts) const {
-  const MemRegion *R = getRegion();
-  return R ?  R->StripCasts(StripBaseCasts) : nullptr;
+  return getRegion()->StripCasts(StripBaseCasts);
 }
 
 const void *nonloc::LazyCompoundVal::getStore() const {
@@ -261,58 +251,15 @@ bool SVal::isConstant() const {
 }
 
 bool SVal::isConstant(int I) const {
-  if (Optional<loc::ConcreteInt> LV = getAs<loc::ConcreteInt>())
+  if (std::optional<loc::ConcreteInt> LV = getAs<loc::ConcreteInt>())
     return LV->getValue() == I;
-  if (Optional<nonloc::ConcreteInt> NV = getAs<nonloc::ConcreteInt>())
+  if (std::optional<nonloc::ConcreteInt> NV = getAs<nonloc::ConcreteInt>())
     return NV->getValue() == I;
   return false;
 }
 
 bool SVal::isZeroConstant() const {
   return isConstant(0);
-}
-
-//===----------------------------------------------------------------------===//
-// Transfer function dispatch for Non-Locs.
-//===----------------------------------------------------------------------===//
-
-SVal nonloc::ConcreteInt::evalBinOp(SValBuilder &svalBuilder,
-                                    BinaryOperator::Opcode Op,
-                                    const nonloc::ConcreteInt& R) const {
-  const llvm::APSInt* X =
-    svalBuilder.getBasicValueFactory().evalAPSInt(Op, getValue(), R.getValue());
-
-  if (X)
-    return nonloc::ConcreteInt(*X);
-  else
-    return UndefinedVal();
-}
-
-nonloc::ConcreteInt
-nonloc::ConcreteInt::evalComplement(SValBuilder &svalBuilder) const {
-  return svalBuilder.makeIntVal(~getValue());
-}
-
-nonloc::ConcreteInt
-nonloc::ConcreteInt::evalMinus(SValBuilder &svalBuilder) const {
-  return svalBuilder.makeIntVal(-getValue());
-}
-
-//===----------------------------------------------------------------------===//
-// Transfer function dispatch for Locs.
-//===----------------------------------------------------------------------===//
-
-SVal loc::ConcreteInt::evalBinOp(BasicValueFactory& BasicVals,
-                                 BinaryOperator::Opcode Op,
-                                 const loc::ConcreteInt& R) const {
-  assert(BinaryOperator::isComparisonOp(Op) || Op == BO_Sub);
-
-  const llvm::APSInt *X = BasicVals.evalAPSInt(Op, getValue(), R.getValue());
-
-  if (X)
-    return nonloc::ConcreteInt(*X);
-  else
-    return UndefinedVal();
 }
 
 //===----------------------------------------------------------------------===//
@@ -401,7 +348,7 @@ void NonLoc::dumpToStream(raw_ostream &os) const {
         else
           os << ", ";
 
-        os << (*I).getType().getAsString();
+        os << I->getType();
       }
 
       os << '}';

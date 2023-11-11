@@ -1,5 +1,6 @@
 set(LLVM_LINK_COMPONENTS
   Support
+  TargetParser
   )
 
 find_first_existing_vc_file("${LLVM_MAIN_SRC_DIR}" llvm_vc)
@@ -8,7 +9,7 @@ find_first_existing_vc_file("${CLANG_SOURCE_DIR}" clang_vc)
 # The VC revision include that we want to generate.
 set(version_inc "${CMAKE_CURRENT_BINARY_DIR}/VCSVersion.inc")
 
-set(generate_vcs_version_script "${LLVM_CMAKE_PATH}/GenerateVersionFromVCS.cmake")
+set(generate_vcs_version_script "${LLVM_CMAKE_DIR}/GenerateVersionFromVCS.cmake")
 
 if(llvm_vc AND LLVM_APPEND_VC_REV)
   set(llvm_source_dir ${LLVM_MAIN_SRC_DIR})
@@ -39,6 +40,7 @@ endif()
 add_clang_library(clangBasic
   Attributes.cpp
   Builtins.cpp
+  CLWarnings.cpp
   CharInfo.cpp
   CodeGenOptions.cpp
   Cuda.cpp
@@ -53,6 +55,7 @@ add_clang_library(clangBasic
   IdentifierTable.cpp
   LangOptions.cpp
   LangStandards.cpp
+  MakeSupport.cpp
   Module.cpp
   ObjCRuntime.cpp
   OpenCLOptions.cpp
@@ -62,6 +65,7 @@ add_clang_library(clangBasic
   NoSanitizeList.cpp
   SanitizerSpecialCaseList.cpp
   Sanitizers.cpp
+  Sarif.cpp
   SourceLocation.cpp
   SourceManager.cpp
   Stack.cpp
@@ -74,9 +78,12 @@ add_clang_library(clangBasic
   Targets/ARM.cpp
   Targets/AVR.cpp
   Targets/BPF.cpp
+  Targets/CSKY.cpp
+  Targets/DirectX.cpp
   Targets/Hexagon.cpp
   Targets/Lanai.cpp
   Targets/Le64.cpp
+  Targets/LoongArch.cpp
   Targets/M68k.cpp
   Targets/MSP430.cpp
   Targets/Mips.cpp
@@ -103,5 +110,10 @@ add_clang_library(clangBasic
 
   DEPENDS
   omp_gen
+  RISCVTargetParserTableGen
   )
 
+target_link_libraries(clangBasic
+  PRIVATE
+  ${LLVM_ATOMIC_LIB}
+)

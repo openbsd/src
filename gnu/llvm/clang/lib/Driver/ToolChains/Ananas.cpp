@@ -71,7 +71,7 @@ void ananas::Linker::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-export-dynamic");
     if (Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back("-Bshareable");
-    } else {
+    } else if (!Args.hasArg(options::OPT_r)) {
       Args.AddAllArgs(CmdArgs, options::OPT_pie);
       CmdArgs.push_back("-dynamic-linker");
       CmdArgs.push_back("/lib/ld-ananas.so");
@@ -85,7 +85,8 @@ void ananas::Linker::ConstructJob(Compilation &C, const JobAction &JA,
     assert(Output.isNothing() && "Invalid output.");
   }
 
-  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles)) {
+  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles,
+                   options::OPT_r)) {
     if (!Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crt0.o")));
     }
@@ -111,12 +112,15 @@ void ananas::Linker::ConstructJob(Compilation &C, const JobAction &JA,
 
   AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs, JA);
 
-  if (ToolChain.ShouldLinkCXXStdlib(Args))
-    ToolChain.AddCXXStdlibLibArgs(Args, CmdArgs);
-  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs))
+  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nodefaultlibs,
+                   options::OPT_r)) {
+    if (ToolChain.ShouldLinkCXXStdlib(Args))
+      ToolChain.AddCXXStdlibLibArgs(Args, CmdArgs);
     CmdArgs.push_back("-lc");
+  }
 
-  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles)) {
+  if (!Args.hasArg(options::OPT_nostdlib, options::OPT_nostartfiles,
+                   options::OPT_r)) {
     if (Args.hasArg(options::OPT_shared) || Args.hasArg(options::OPT_pie))
       CmdArgs.push_back(Args.MakeArgString(ToolChain.GetFilePath("crtendS.o")));
     else

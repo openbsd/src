@@ -1,9 +1,8 @@
 //===--- FileIndexRecord.cpp - Index data per file --------------*- C++ -*-===//
 //
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 
@@ -46,13 +45,11 @@ void FileIndexRecord::addMacroOccurence(SymbolRoleSet Roles, unsigned Offset,
 }
 
 void FileIndexRecord::removeHeaderGuardMacros() {
-  auto It =
-      std::remove_if(Decls.begin(), Decls.end(), [](const DeclOccurrence &D) {
-        if (const auto *MI = D.DeclOrMacro.dyn_cast<const MacroInfo *>())
-          return MI->isUsedForHeaderGuard();
-        return false;
-      });
-  Decls.erase(It, Decls.end());
+  llvm::erase_if(Decls, [](const DeclOccurrence &D) {
+    if (const auto *MI = D.DeclOrMacro.dyn_cast<const MacroInfo *>())
+      return MI->isUsedForHeaderGuard();
+    return false;
+  });
 }
 
 void FileIndexRecord::print(llvm::raw_ostream &OS, SourceManager &SM) const {

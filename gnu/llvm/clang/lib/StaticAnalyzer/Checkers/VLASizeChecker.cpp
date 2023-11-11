@@ -13,9 +13,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "Taint.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/StaticAnalyzer/Checkers/BuiltinCheckerRegistration.h"
+#include "clang/StaticAnalyzer/Checkers/Taint.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
@@ -24,6 +24,7 @@
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
+#include <optional>
 
 using namespace clang;
 using namespace ento;
@@ -192,7 +193,7 @@ ProgramStateRef VLASizeChecker::checkVLAIndexSize(CheckerContext &C,
   DefinedOrUnknownSVal Zero = SVB.makeZeroVal(SizeTy);
 
   SVal LessThanZeroVal = SVB.evalBinOp(State, BO_LT, SizeD, Zero, SizeTy);
-  if (Optional<DefinedSVal> LessThanZeroDVal =
+  if (std::optional<DefinedSVal> LessThanZeroDVal =
           LessThanZeroVal.getAs<DefinedSVal>()) {
     ConstraintManager &CM = C.getConstraintManager();
     ProgramStateRef StatePos, StateNeg;
@@ -278,8 +279,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   if (!State)
     return;
 
-  auto ArraySizeNL = ArraySize.getAs<NonLoc>();
-  if (!ArraySizeNL) {
+  if (!isa<NonLoc>(ArraySize)) {
     // Array size could not be determined but state may contain new assumptions.
     C.addTransition(State);
     return;
@@ -289,7 +289,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   if (VD) {
     State =
         setDynamicExtent(State, State->getRegion(VD, C.getLocationContext()),
-                         ArraySize.castAs<DefinedOrUnknownSVal>(), SVB);
+                         ArraySize.castAs<NonLoc>(), SVB);
   }
 
   // Remember our assumptions!

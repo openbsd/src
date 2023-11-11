@@ -203,7 +203,7 @@ std::string html::EscapeText(StringRef s, bool EscapeSpaces, bool ReplaceTabs) {
     }
   }
 
-  return os.str();
+  return Str;
 }
 
 static void AddLineNumber(RewriteBuffer &RB, unsigned LineNo,
@@ -371,6 +371,7 @@ h1 { font-size:14pt }
 .msg { border-radius:5px }
 .msg { font-family:Helvetica, sans-serif; font-size:8pt }
 .msg { float:left }
+.msg { position:relative }
 .msg { padding:0.25em 1ex 0.25em 1ex }
 .msg { margin-top:10px; margin-bottom:10px }
 .msg { font-weight:bold }
@@ -391,7 +392,7 @@ h1 { font-size:14pt }
 .CodeInsertionHint { font-weight: bold; background-color: #10dd10 }
 .CodeRemovalHint { background-color:#de1010 }
 .CodeRemovalHint { border-bottom:1px solid #6F9DBE }
-.selected{ background-color:orange !important; }
+.msg.selected{ background-color:orange !important; }
 
 table.simpletable {
   padding: 5px;
@@ -487,14 +488,14 @@ void html::SyntaxHighlight(Rewriter &R, FileID FID, const Preprocessor &PP) {
       ++TokOffs;
       --TokLen;
       // FALL THROUGH to chop the 8
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case tok::wide_string_literal:
     case tok::utf16_string_literal:
     case tok::utf32_string_literal:
       // Chop off the L, u, U or 8 prefix
       ++TokOffs;
       --TokLen;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case tok::string_literal:
       // FIXME: Exclude the optional ud-suffix from the highlighted range.
       HighlightRange(RB, TokOffs, TokOffs+TokLen, BufferStart,
@@ -541,7 +542,7 @@ void html::HighlightMacros(Rewriter &R, FileID FID, const Preprocessor& PP) {
 
   // Lex all the tokens in raw mode, to avoid entering #includes or expanding
   // macros.
-  while (1) {
+  while (true) {
     Token Tok;
     L.LexFromRawLexer(Tok);
 

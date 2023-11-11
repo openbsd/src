@@ -5,9 +5,12 @@ set(LLVM_LINK_COMPONENTS
   Core
   Coroutines
   Coverage
+  Demangle
   Extensions
+  FrontendHLSL
   FrontendOpenMP
   IPO
+  IRPrinter
   IRReader
   AggressiveInstCombine
   InstCombine
@@ -23,6 +26,7 @@ set(LLVM_LINK_COMPONENTS
   ScalarOpts
   Support
   Target
+  TargetParser
   TransformUtils
   )
 
@@ -50,6 +54,7 @@ add_clang_library(clangCodeGen
   CGExprConstant.cpp
   CGExprScalar.cpp
   CGGPUBuiltin.cpp
+  CGHLSLRuntime.cpp
   CGLoopInfo.cpp
   CGNonTrivialStruct.cpp
   CGObjC.cpp
@@ -58,9 +63,7 @@ add_clang_library(clangCodeGen
   CGObjCRuntime.cpp
   CGOpenCLRuntime.cpp
   CGOpenMPRuntime.cpp
-  CGOpenMPRuntimeAMDGCN.cpp
   CGOpenMPRuntimeGPU.cpp
-  CGOpenMPRuntimeNVPTX.cpp
   CGRecordLayoutBuilder.cpp
   CGStmt.cpp
   CGStmtOpenMP.cpp

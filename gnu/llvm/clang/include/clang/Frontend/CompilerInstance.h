@@ -26,6 +26,7 @@
 #include <cassert>
 #include <list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -41,8 +42,6 @@ class ASTReader;
 class CodeCompleteConsumer;
 class DiagnosticsEngine;
 class DiagnosticConsumer;
-class ExternalASTSource;
-class FileEntry;
 class FileManager;
 class FrontendAction;
 class InMemoryModuleCache;
@@ -166,9 +165,10 @@ class CompilerInstance : public ModuleLoader {
   /// failed.
   struct OutputFile {
     std::string Filename;
-    Optional<llvm::sys::fs::TempFile> File;
+    std::optional<llvm::sys::fs::TempFile> File;
 
-    OutputFile(std::string filename, Optional<llvm::sys::fs::TempFile> file)
+    OutputFile(std::string filename,
+               std::optional<llvm::sys::fs::TempFile> file)
         : Filename(std::move(filename)), File(std::move(file)) {}
   };
 
@@ -218,6 +218,9 @@ public:
   // FIXME: Eliminate the llvm_shutdown requirement, that should either be part
   // of the context or else not CompilerInstance specific.
   bool ExecuteAction(FrontendAction &Act);
+
+  /// Load the list of plugins requested in the \c FrontendOptions.
+  void LoadRequestedPlugins();
 
   /// }
   /// @name Compiler Invocation and Options

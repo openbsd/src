@@ -17,8 +17,9 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TargetOptions.h"
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/ARMTargetParser.h"
+#include "llvm/Support/ARMTargetParserCommon.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/TargetParser.h"
 
 namespace clang {
 namespace targets {
@@ -78,6 +79,9 @@ class LLVM_LIBRARY_VISIBILITY ARMTargetInfo : public TargetInfo {
   unsigned Unaligned : 1;
   unsigned DotProd : 1;
   unsigned HasMatMul : 1;
+  unsigned FPRegsDisabled : 1;
+  unsigned HasPAC : 1;
+  unsigned HasBTI : 1;
 
   enum {
     LDREX_B = (1 << 0), /// byte (8-bit)
@@ -95,8 +99,6 @@ class LLVM_LIBRARY_VISIBILITY ARMTargetInfo : public TargetInfo {
     HW_FP_DP = (1 << 3), /// double (64-bit)
   };
   uint32_t HW_FP;
-
-  static const Builtin::Info BuiltinInfo[];
 
   void setABIAAPCS();
   void setABIAPCS(bool IsAAPCS16);
@@ -121,6 +123,11 @@ public:
 
   StringRef getABI() const override;
   bool setABI(const std::string &Name) override;
+
+  bool isBranchProtectionSupportedArch(StringRef Arch) const override;
+  bool validateBranchProtection(StringRef Spec, StringRef Arch,
+                                BranchProtectionInfo &BPI,
+                                StringRef &Err) const override;
 
   // FIXME: This should be based on Arch attributes, not CPU names.
   bool
@@ -187,8 +194,8 @@ public:
 
   bool hasSjLjLowering() const override;
 
-  bool hasExtIntType() const override { return true; }
-  
+  bool hasBitIntType() const override { return true; }
+
   const char *getBFloat16Mangling() const override { return "u6__bf16"; };
 };
 

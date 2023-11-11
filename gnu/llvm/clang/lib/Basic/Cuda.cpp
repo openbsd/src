@@ -1,60 +1,68 @@
 #include "clang/Basic/Cuda.h"
 
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/VersionTuple.h"
 
 namespace clang {
 
-const char *CudaVersionToString(CudaVersion V) {
-  switch (V) {
-  case CudaVersion::UNKNOWN:
-    return "unknown";
-  case CudaVersion::CUDA_70:
-    return "7.0";
-  case CudaVersion::CUDA_75:
-    return "7.5";
-  case CudaVersion::CUDA_80:
-    return "8.0";
-  case CudaVersion::CUDA_90:
-    return "9.0";
-  case CudaVersion::CUDA_91:
-    return "9.1";
-  case CudaVersion::CUDA_92:
-    return "9.2";
-  case CudaVersion::CUDA_100:
-    return "10.0";
-  case CudaVersion::CUDA_101:
-    return "10.1";
-  case CudaVersion::CUDA_102:
-    return "10.2";
-  case CudaVersion::CUDA_110:
-    return "11.0";
-  case CudaVersion::CUDA_111:
-    return "11.1";
-  case CudaVersion::CUDA_112:
-    return "11.2";
+struct CudaVersionMapEntry {
+  const char *Name;
+  CudaVersion Version;
+  llvm::VersionTuple TVersion;
+};
+#define CUDA_ENTRY(major, minor)                                               \
+  {                                                                            \
+#major "." #minor, CudaVersion::CUDA_##major##minor,                       \
+        llvm::VersionTuple(major, minor)                                       \
   }
-  llvm_unreachable("invalid enum");
+
+static const CudaVersionMapEntry CudaNameVersionMap[] = {
+    CUDA_ENTRY(7, 0),
+    CUDA_ENTRY(7, 5),
+    CUDA_ENTRY(8, 0),
+    CUDA_ENTRY(9, 0),
+    CUDA_ENTRY(9, 1),
+    CUDA_ENTRY(9, 2),
+    CUDA_ENTRY(10, 0),
+    CUDA_ENTRY(10, 1),
+    CUDA_ENTRY(10, 2),
+    CUDA_ENTRY(11, 0),
+    CUDA_ENTRY(11, 1),
+    CUDA_ENTRY(11, 2),
+    CUDA_ENTRY(11, 3),
+    CUDA_ENTRY(11, 4),
+    CUDA_ENTRY(11, 5),
+    CUDA_ENTRY(11, 6),
+    CUDA_ENTRY(11, 7),
+    CUDA_ENTRY(11, 8),
+    {"", CudaVersion::NEW, llvm::VersionTuple(std::numeric_limits<int>::max())},
+    {"unknown", CudaVersion::UNKNOWN, {}} // End of list tombstone.
+};
+#undef CUDA_ENTRY
+
+const char *CudaVersionToString(CudaVersion V) {
+  for (auto *I = CudaNameVersionMap; I->Version != CudaVersion::UNKNOWN; ++I)
+    if (I->Version == V)
+      return I->Name;
+
+  return CudaVersionToString(CudaVersion::UNKNOWN);
 }
 
 CudaVersion CudaStringToVersion(const llvm::Twine &S) {
-  return llvm::StringSwitch<CudaVersion>(S.str())
-      .Case("7.0", CudaVersion::CUDA_70)
-      .Case("7.5", CudaVersion::CUDA_75)
-      .Case("8.0", CudaVersion::CUDA_80)
-      .Case("9.0", CudaVersion::CUDA_90)
-      .Case("9.1", CudaVersion::CUDA_91)
-      .Case("9.2", CudaVersion::CUDA_92)
-      .Case("10.0", CudaVersion::CUDA_100)
-      .Case("10.1", CudaVersion::CUDA_101)
-      .Case("10.2", CudaVersion::CUDA_102)
-      .Case("11.0", CudaVersion::CUDA_110)
-      .Case("11.1", CudaVersion::CUDA_111)
-      .Case("11.2", CudaVersion::CUDA_112)
-      .Default(CudaVersion::UNKNOWN);
+  std::string VS = S.str();
+  for (auto *I = CudaNameVersionMap; I->Version != CudaVersion::UNKNOWN; ++I)
+    if (I->Name == VS)
+      return I->Version;
+  return CudaVersion::UNKNOWN;
+}
+
+CudaVersion ToCudaVersion(llvm::VersionTuple Version) {
+  for (auto *I = CudaNameVersionMap; I->Version != CudaVersion::UNKNOWN; ++I)
+    if (I->TVersion == Version)
+      return I->Version;
+  return CudaVersion::UNKNOWN;
 }
 
 namespace {
@@ -80,6 +88,9 @@ static const CudaArchToStringMap arch_names[] = {
     SM(70), SM(72),                  // Volta
     SM(75),                          // Turing
     SM(80), SM(86),                  // Ampere
+    SM(87),                          // Jetson/Drive AGX Orin
+    SM(89),                          // Ada Lovelace
+    SM(90),                          // Hopper
     GFX(600),  // gfx600
     GFX(601),  // gfx601
     GFX(602),  // gfx602
@@ -102,6 +113,7 @@ static const CudaArchToStringMap arch_names[] = {
     GFX(909),  // gfx909
     GFX(90a),  // gfx90a
     GFX(90c),  // gfx90c
+    GFX(940),  // gfx940
     GFX(1010), // gfx1010
     GFX(1011), // gfx1011
     GFX(1012), // gfx1012
@@ -112,6 +124,12 @@ static const CudaArchToStringMap arch_names[] = {
     GFX(1033), // gfx1033
     GFX(1034), // gfx1034
     GFX(1035), // gfx1035
+    GFX(1036), // gfx1036
+    GFX(1100), // gfx1100
+    GFX(1101), // gfx1101
+    GFX(1102), // gfx1102
+    GFX(1103), // gfx1103
+    {CudaArch::Generic, "generic", ""},
     // clang-format on
 };
 #undef SM
@@ -178,6 +196,11 @@ CudaVersion MinVersionForCudaArch(CudaArch A) {
     return CudaVersion::CUDA_110;
   case CudaArch::SM_86:
     return CudaVersion::CUDA_111;
+  case CudaArch::SM_87:
+    return CudaVersion::CUDA_114;
+  case CudaArch::SM_89:
+  case CudaArch::SM_90:
+    return CudaVersion::CUDA_118;
   default:
     llvm_unreachable("invalid enum");
   }
@@ -186,7 +209,7 @@ CudaVersion MinVersionForCudaArch(CudaArch A) {
 CudaVersion MaxVersionForCudaArch(CudaArch A) {
   // AMD GPUs do not depend on CUDA versions.
   if (IsAMDGpuArch(A))
-    return CudaVersion::LATEST;
+    return CudaVersion::NEW;
 
   switch (A) {
   case CudaArch::UNKNOWN:
@@ -194,41 +217,10 @@ CudaVersion MaxVersionForCudaArch(CudaArch A) {
   case CudaArch::SM_20:
   case CudaArch::SM_21:
     return CudaVersion::CUDA_80;
-  default:
-    return CudaVersion::LATEST;
-  }
-}
-
-CudaVersion ToCudaVersion(llvm::VersionTuple Version) {
-  int IVer =
-      Version.getMajor() * 10 + Version.getMinor().getValueOr(0);
-  switch(IVer) {
-  case 70:
-    return CudaVersion::CUDA_70;
-  case 75:
-    return CudaVersion::CUDA_75;
-  case 80:
-    return CudaVersion::CUDA_80;
-  case 90:
-    return CudaVersion::CUDA_90;
-  case 91:
-    return CudaVersion::CUDA_91;
-  case 92:
-    return CudaVersion::CUDA_92;
-  case 100:
-    return CudaVersion::CUDA_100;
-  case 101:
-    return CudaVersion::CUDA_101;
-  case 102:
-    return CudaVersion::CUDA_102;
-  case 110:
+  case CudaArch::SM_30:
     return CudaVersion::CUDA_110;
-  case 111:
-    return CudaVersion::CUDA_111;
-  case 112:
-    return CudaVersion::CUDA_112;
   default:
-    return CudaVersion::UNKNOWN;
+    return CudaVersion::NEW;
   }
 }
 

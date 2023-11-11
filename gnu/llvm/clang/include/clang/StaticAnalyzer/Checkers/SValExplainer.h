@@ -32,13 +32,25 @@ private:
     std::string Str;
     llvm::raw_string_ostream OS(Str);
     S->printPretty(OS, nullptr, PrintingPolicy(ACtx.getLangOpts()));
-    return OS.str();
+    return Str;
   }
 
   bool isThisObject(const SymbolicRegion *R) {
     if (auto S = dyn_cast<SymbolRegionValue>(R->getSymbol()))
       if (isa<CXXThisRegion>(S->getRegion()))
         return true;
+    return false;
+  }
+
+  bool isThisObject(const ElementRegion *R) {
+    if (const auto *Idx = R->getIndex().getAsInteger()) {
+      if (const auto *SR = R->getSuperRegion()->getAs<SymbolicRegion>()) {
+        QualType Ty = SR->getPointeeStaticType();
+        bool IsNotReinterpretCast = R->getValueType() == Ty;
+        if (Idx->isZero() && IsNotReinterpretCast)
+          return isThisObject(SR);
+      }
+    }
     return false;
   }
 
@@ -69,7 +81,7 @@ public:
     std::string Str;
     llvm::raw_string_ostream OS(Str);
     OS << "concrete memory address '" << I << "'";
-    return OS.str();
+    return Str;
   }
 
   std::string VisitNonLocSymbolVal(nonloc::SymbolVal V) {
@@ -82,7 +94,7 @@ public:
     llvm::raw_string_ostream OS(Str);
     OS << (I.isSigned() ? "signed " : "unsigned ") << I.getBitWidth()
        << "-bit integer '" << I << "'";
-    return OS.str();
+    return Str;
   }
 
   std::string VisitNonLocLazyCompoundVal(nonloc::LazyCompoundVal V) {
@@ -123,7 +135,7 @@ public:
     OS << "(" << Visit(S->getLHS()) << ") "
        << std::string(BinaryOperator::getOpcodeStr(S->getOpcode())) << " "
        << S->getRHS();
-    return OS.str();
+    return Str;
   }
 
   // TODO: IntSymExpr doesn't appear in practice.
@@ -135,11 +147,16 @@ public:
            " (" + Visit(S->getRHS()) + ")";
   }
 
+  std::string VisitUnarySymExpr(const UnarySymExpr *S) {
+    return std::string(UnaryOperator::getOpcodeStr(S->getOpcode())) + " (" +
+           Visit(S->getOperand()) + ")";
+  }
+
   // TODO: SymbolCast doesn't appear in practice.
   // Add the relevant code once it does.
 
   std::string VisitSymbolicRegion(const SymbolicRegion *R) {
-    // Explain 'this' object here.
+    // Explain 'this' object here - if it's not wrapped by an ElementRegion.
     // TODO: Explain CXXThisRegion itself, find a way to test it.
     if (isThisObject(R))
       return "'this' object";
@@ -169,15 +186,21 @@ public:
   std::string VisitElementRegion(const ElementRegion *R) {
     std::string Str;
     llvm::raw_string_ostream OS(Str);
-    OS << "element of type '" << R->getElementType().getAsString()
-       << "' with index ";
+
+    // Explain 'this' object here.
+    // They are represented by a SymRegion wrapped by an ElementRegion; so
+    // match and handle it here.
+    if (isThisObject(R))
+      return "'this' object";
+
+    OS << "element of type '" << R->getElementType() << "' with index ";
     // For concrete index: omit type of the index integer.
     if (auto I = R->getIndex().getAs<nonloc::ConcreteInt>())
       OS << I->getValue();
     else
       OS << "'" << Visit(R->getIndex()) << "'";
     OS << " of " + Visit(R->getSuperRegion());
-    return OS.str();
+    return Str;
   }
 
   std::string VisitNonParamVarRegion(const NonParamVarRegion *R) {

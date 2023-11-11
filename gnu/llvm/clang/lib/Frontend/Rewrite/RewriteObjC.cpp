@@ -500,7 +500,7 @@ namespace {
       QualType StrType = Context->getConstantArrayType(
           Context->CharTy, llvm::APInt(32, Str.size() + 1), nullptr,
           ArrayType::Normal, 0);
-      return StringLiteral::Create(*Context, Str, StringLiteral::Ascii,
+      return StringLiteral::Create(*Context, Str, StringLiteral::Ordinary,
                                    /*Pascal=*/false, StrType, SourceLocation());
     }
   };
@@ -569,7 +569,7 @@ static bool IsHeaderFile(const std::string &Filename) {
     return false;
   }
 
-  std::string Ext = std::string(Filename.begin()+DotPos+1, Filename.end());
+  std::string Ext = Filename.substr(DotPos + 1);
   // C header: .h
   // C++ header: .hh or .H;
   return Ext == "h" || Ext == "hh" || Ext == "H";

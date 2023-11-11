@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/raw_ostream.h"
+#include <optional>
 
 using namespace clang;
 using namespace ento;
@@ -59,7 +60,7 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
     if (D != P.getLocationContext()->getDecl())
       continue;
 
-    if (Optional<BlockEntrance> BE = P.getAs<BlockEntrance>()) {
+    if (std::optional<BlockEntrance> BE = P.getAs<BlockEntrance>()) {
       const CFGBlock *CB = BE->getBlock();
       reachable.insert(CB);
     }
@@ -93,11 +94,10 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
   if (!Loc.isValid())
     return;
 
-  if (isa<FunctionDecl>(D) || isa<ObjCMethodDecl>(D)) {
+  if (isa<FunctionDecl, ObjCMethodDecl>(D)) {
     const NamedDecl *ND = cast<NamedDecl>(D);
     output << *ND;
-  }
-  else if (isa<BlockDecl>(D)) {
+  } else if (isa<BlockDecl>(D)) {
     output << "block(line:" << Loc.getLine() << ":col:" << Loc.getColumn();
   }
 
@@ -124,7 +124,7 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
     if (Exit->empty())
       continue;
     const CFGElement &CE = Exit->front();
-    if (Optional<CFGStmt> CS = CE.getAs<CFGStmt>()) {
+    if (std::optional<CFGStmt> CS = CE.getAs<CFGStmt>()) {
       SmallString<128> bufI;
       llvm::raw_svector_ostream outputI(bufI);
       outputI << "(" << NameOfRootFunction << ")" <<

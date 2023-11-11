@@ -51,7 +51,7 @@ protected:
   const std::map<options::ID, const StringRef> OptionsDefault;
 
   Tool *buildLinker() const override;
-  const StringRef getOptionDefault(options::ID OptID) const {
+  StringRef getOptionDefault(options::ID OptID) const {
     auto opt = OptionsDefault.find(OptID);
     assert(opt != OptionsDefault.end() && "No Default for Option");
     return opt->second;
@@ -60,14 +60,14 @@ protected:
 public:
   AMDGPUToolChain(const Driver &D, const llvm::Triple &Triple,
                   const llvm::opt::ArgList &Args);
-  unsigned GetDefaultDwarfVersion() const override { return 4; }
-  bool IsIntegratedAssemblerDefault() const override { return true; }
-  bool IsMathErrnoDefault() const override { return false; }
+  unsigned GetDefaultDwarfVersion() const override { return 5; }
 
-  bool useIntegratedAs() const override { return true; }
+  bool IsMathErrnoDefault() const override { return false; }
   bool isCrossCompiling() const override { return true; }
   bool isPICDefault() const override { return false; }
-  bool isPIEDefault() const override { return false; }
+  bool isPIEDefault(const llvm::opt::ArgList &Args) const override {
+    return false;
+  }
   bool isPICDefaultForced() const override { return false; }
   bool SupportsProfiling() const override { return false; }
 
@@ -100,10 +100,10 @@ public:
   /// Should skip argument.
   bool shouldSkipArgument(const llvm::opt::Arg *Arg) const;
 
-  /// Uses amdgpu_arch tool to get arch of the system GPU. Will return error
+  /// Uses amdgpu-arch tool to get arch of the system GPU. Will return error
   /// if unable to find one.
-  llvm::Error getSystemGPUArch(const llvm::opt::ArgList &Args,
-                               std::string &GPUArch) const;
+  virtual Expected<SmallVector<std::string>>
+  getSystemGPUArchs(const llvm::opt::ArgList &Args) const override;
 
 protected:
   /// Check and diagnose invalid target ID specified by -mcpu.
@@ -111,9 +111,9 @@ protected:
 
   /// The struct type returned by getParsedTargetID.
   struct ParsedTargetIDType {
-    Optional<std::string> OptionalTargetID;
-    Optional<std::string> OptionalGPUArch;
-    Optional<llvm::StringMap<bool>> OptionalFeatures;
+    std::optional<std::string> OptionalTargetID;
+    std::optional<std::string> OptionalGPUArch;
+    std::optional<llvm::StringMap<bool>> OptionalFeatures;
   };
 
   /// Get target ID, GPU arch, and target ID features if the target ID is
@@ -124,8 +124,6 @@ protected:
   /// Get GPU arch from -mcpu without checking.
   StringRef getGPUArch(const llvm::opt::ArgList &DriverArgs) const;
 
-  llvm::Error detectSystemGPUs(const llvm::opt::ArgList &Args,
-                               SmallVector<std::string, 1> &GPUArchs) const;
 };
 
 class LLVM_LIBRARY_VISIBILITY ROCMToolChain : public AMDGPUToolChain {
@@ -140,7 +138,8 @@ public:
   // Returns a list of device library names shared by different languages
   llvm::SmallVector<std::string, 12>
   getCommonDeviceLibNames(const llvm::opt::ArgList &DriverArgs,
-                          const std::string &GPUArch) const;
+                          const std::string &GPUArch,
+                          bool isOpenMP = false) const;
 };
 
 } // end namespace toolchains

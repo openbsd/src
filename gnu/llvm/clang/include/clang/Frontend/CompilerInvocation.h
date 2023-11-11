@@ -50,6 +50,11 @@ class HeaderSearchOptions;
 class PreprocessorOptions;
 class TargetOptions;
 
+// This lets us create the DiagnosticsEngine with a properly-filled-out
+// DiagnosticOptions instance.
+std::unique_ptr<DiagnosticOptions>
+CreateAndPopulateDiagOpts(ArrayRef<const char *> Argv);
+
 /// Fill out Opts based on the options given in Args.
 ///
 /// Args must have been created from the OptTable returned by
@@ -214,25 +219,12 @@ public:
   /// executable), for finding the builtin compiler path.
   static std::string GetResourcesPath(const char *Argv0, void *MainAddr);
 
-  /// Set language defaults for the given input language and
-  /// language standard in the given LangOptions object.
-  ///
-  /// \param Opts - The LangOptions object to set up.
-  /// \param IK - The input language.
-  /// \param T - The target triple.
-  /// \param Includes - The affected list of included files.
-  /// \param LangStd - The input language standard.
-  static void
-  setLangDefaults(LangOptions &Opts, InputKind IK, const llvm::Triple &T,
-                  std::vector<std::string> &Includes,
-                  LangStandard::Kind LangStd = LangStandard::lang_unspecified);
-
   /// Retrieve a module hash string that is suitable for uniquely
   /// identifying the conditions under which the module was built.
   std::string getModuleHash() const;
 
   using StringAllocator = llvm::function_ref<const char *(const llvm::Twine &)>;
-  /// Generate a cc1-compatible command line arguments from this instance.
+  /// Generate cc1-compatible command line arguments from this instance.
   ///
   /// \param [out] Args - The generated arguments. Note that the caller is
   /// responsible for inserting the path to the clang executable and "-cc1" if
@@ -242,6 +234,20 @@ public:
   /// The returned pointer is what gets appended to Args.
   void generateCC1CommandLine(llvm::SmallVectorImpl<const char *> &Args,
                               StringAllocator SA) const;
+
+  /// Generate cc1-compatible command line arguments from this instance,
+  /// wrapping the result as a std::vector<std::string>.
+  ///
+  /// This is a (less-efficient) wrapper over generateCC1CommandLine().
+  std::vector<std::string> getCC1CommandLine() const;
+
+  /// Reset all of the options that are not considered when building a
+  /// module.
+  void resetNonModularOptions();
+
+  /// Disable implicit modules and canonicalize options that are only used by
+  /// implicit modules.
+  void clearImplicitModuleBuildOptions();
 
 private:
   static bool CreateFromArgsImpl(CompilerInvocation &Res,
@@ -287,6 +293,11 @@ createVFSFromCompilerInvocation(const CompilerInvocation &CI,
 IntrusiveRefCntPtr<llvm::vfs::FileSystem> createVFSFromCompilerInvocation(
     const CompilerInvocation &CI, DiagnosticsEngine &Diags,
     IntrusiveRefCntPtr<llvm::vfs::FileSystem> BaseFS);
+
+IntrusiveRefCntPtr<llvm::vfs::FileSystem>
+createVFSFromOverlayFiles(ArrayRef<std::string> VFSOverlayFiles,
+                          DiagnosticsEngine &Diags,
+                          IntrusiveRefCntPtr<llvm::vfs::FileSystem> BaseFS);
 
 } // namespace clang
 

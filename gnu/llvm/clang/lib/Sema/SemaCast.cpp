@@ -451,6 +451,7 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
 
   case InitializationSequence::FK_ConstructorOverloadFailed:
   case InitializationSequence::FK_UserConversionOverloadFailed:
+  case InitializationSequence::FK_ParenthesizedListInitFailed:
     break;
   }
 
@@ -1059,11 +1060,19 @@ static bool argTypeIsABIEquivalent(QualType SrcType, QualType DestType,
   return Context.hasSameUnqualifiedType(SrcType, DestType);
 }
 
-static bool checkCastFunctionType(Sema &Self, const ExprResult &SrcExpr,
-                                  QualType DestType) {
-  if (Self.Diags.isIgnored(diag::warn_cast_function_type,
-                           SrcExpr.get()->getExprLoc()))
-    return true;
+static unsigned int checkCastFunctionType(Sema &Self, const ExprResult &SrcExpr,
+                                          QualType DestType) {
+  unsigned int DiagID = 0;
+  const unsigned int DiagList[] = {diag::warn_cast_function_type_strict,
+                                   diag::warn_cast_function_type};
+  for (auto ID : DiagList) {
+    if (!Self.Diags.isIgnored(ID, SrcExpr.get()->getExprLoc())) {
+      DiagID = ID;
+      break;
+    }
+  }
+  if (!DiagID)
+    return 0;
 
   QualType SrcType = SrcExpr.get()->getType();
   const FunctionType *SrcFTy = nullptr;
@@ -1078,9 +1087,16 @@ static bool checkCastFunctionType(Sema &Self, const ExprResult &SrcExpr,
     SrcFTy = SrcType->castAs<FunctionType>();
     DstFTy = DestType.getNonReferenceType()->castAs<FunctionType>();
   } else {
-    return true;
+    return 0;
   }
   assert(SrcFTy && DstFTy);
+
+  if (Self.Context.hasSameType(SrcFTy, DstFTy))
+    return 0;
+
+  // For strict checks, ensure we have an exact match.
+  if (DiagID == diag::warn_cast_function_type_strict)
+    return DiagID;
 
   auto IsVoidVoid = [](const FunctionType *T) {
     if (!T->getReturnType()->isVoidType())
@@ -1092,16 +1108,16 @@ static bool checkCastFunctionType(Sema &Self, const ExprResult &SrcExpr,
 
   // Skip if either function type is void(*)(void)
   if (IsVoidVoid(SrcFTy) || IsVoidVoid(DstFTy))
-    return true;
+    return 0;
 
   // Check return type.
   if (!argTypeIsABIEquivalent(SrcFTy->getReturnType(), DstFTy->getReturnType(),
                               Self.Context))
-    return false;
+    return DiagID;
 
   // Check if either has unspecified number of parameters
   if (SrcFTy->isFunctionNoProtoType() || DstFTy->isFunctionNoProtoType())
-    return true;
+    return 0;
 
   // Check parameter types.
 
@@ -1114,19 +1130,19 @@ static bool checkCastFunctionType(Sema &Self, const ExprResult &SrcExpr,
   unsigned DstNumParams = DstFPTy->getNumParams();
   if (NumParams > DstNumParams) {
     if (!DstFPTy->isVariadic())
-      return false;
+      return DiagID;
     NumParams = DstNumParams;
   } else if (NumParams < DstNumParams) {
     if (!SrcFPTy->isVariadic())
-      return false;
+      return DiagID;
   }
 
   for (unsigned i = 0; i < NumParams; ++i)
     if (!argTypeIsABIEquivalent(SrcFPTy->getParamType(i),
                                 DstFPTy->getParamType(i), Self.Context))
-      return false;
+      return DiagID;
 
-  return true;
+  return 0;
 }
 
 /// CheckReinterpretCast - Check that a reinterpret_cast\<DestType\>(SrcExpr) is
@@ -1167,8 +1183,8 @@ void CastOperation::CheckReinterpretCast() {
       checkObjCConversion(Sema::CCK_OtherCast);
     DiagnoseReinterpretUpDownCast(Self, SrcExpr.get(), DestType, OpRange);
 
-    if (!checkCastFunctionType(Self, SrcExpr, DestType))
-      Self.Diag(OpRange.getBegin(), diag::warn_cast_function_type)
+    if (unsigned DiagID = checkCastFunctionType(Self, SrcExpr, DestType))
+      Self.Diag(OpRange.getBegin(), DiagID)
           << SrcExpr.get()->getType() << DestType << OpRange;
   } else {
     SrcExpr = ExprError();
@@ -1313,7 +1329,9 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
   // lvalue-to-rvalue, array-to-pointer, function-to-pointer, and boolean
   // conversions, subject to further restrictions.
   // Also, C++ 5.2.9p1 forbids casting away constness, which makes reversal
-  // of qualification conversions impossible.
+  // of qualification conversions impossible. (In C++20, adding an array bound
+  // would be the reverse of a qualification conversion, but adding permission
+  // to add an array bound in a static_cast is a wording oversight.)
   // In the CStyle case, the earlier attempt to const_cast should have taken
   // care of reverse qualification conversions.
 
@@ -1354,7 +1372,7 @@ static TryCastResult TryStaticCast(Sema &Self, ExprResult &SrcExpr,
     if (SrcType->isIntegralOrEnumerationType()) {
       // [expr.static.cast]p10 If the enumeration type has a fixed underlying
       // type, the value is first converted to that type by integral conversion
-      const EnumType *Enum = DestType->getAs<EnumType>();
+      const EnumType *Enum = DestType->castAs<EnumType>();
       Kind = Enum->getDecl()->isFixed() &&
                      Enum->getDecl()->getIntegerType()->isBooleanType()
                  ? CK_IntegralToBoolean
@@ -2543,7 +2561,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
 static TryCastResult TryAddressSpaceCast(Sema &Self, ExprResult &SrcExpr,
                                          QualType DestType, bool CStyle,
                                          unsigned &msg, CastKind &Kind) {
-  if (!Self.getLangOpts().OpenCL)
+  if (!Self.getLangOpts().OpenCL && !Self.getLangOpts().SYCLIsDevice)
     // FIXME: As compiler doesn't have any information about overlapping addr
     // spaces at the moment we have to be permissive here.
     return TC_NotApplicable;
@@ -2637,6 +2655,19 @@ bool Sema::ShouldSplatAltivecScalarInCast(const VectorType *VecTy) {
   return false;
 }
 
+bool Sema::CheckAltivecInitFromScalar(SourceRange R, QualType VecTy,
+                                      QualType SrcTy) {
+  bool SrcCompatGCC = this->getLangOpts().getAltivecSrcCompat() ==
+                      LangOptions::AltivecSrcCompatKind::GCC;
+  if (this->getLangOpts().AltiVec && SrcCompatGCC) {
+    this->Diag(R.getBegin(),
+               diag::err_invalid_conversion_between_vector_and_integer)
+        << VecTy << SrcTy << R;
+    return true;
+  }
+  return false;
+}
+
 void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
                                        bool ListInitialization) {
   assert(Self.getLangOpts().CPlusPlus);
@@ -2690,7 +2721,12 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
   }
 
   // AltiVec vector initialization with a single literal.
-  if (const VectorType *vecTy = DestType->getAs<VectorType>())
+  if (const VectorType *vecTy = DestType->getAs<VectorType>()) {
+    if (Self.CheckAltivecInitFromScalar(OpRange, DestType,
+                                        SrcExpr.get()->getType())) {
+      SrcExpr = ExprError();
+      return;
+    }
     if (Self.ShouldSplatAltivecScalarInCast(vecTy) &&
         (SrcExpr.get()->getType()->isIntegerType() ||
          SrcExpr.get()->getType()->isFloatingType())) {
@@ -2698,6 +2734,7 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
       SrcExpr = Self.prepareVectorSplat(DestType, SrcExpr.get());
       return;
     }
+  }
 
   // C++ [expr.cast]p5: The conversions performed by
   //   - a const_cast,
@@ -2776,8 +2813,8 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
     if (Kind == CK_BitCast)
       checkCastAlign();
 
-    if (!checkCastFunctionType(Self, SrcExpr, DestType))
-      Self.Diag(OpRange.getBegin(), diag::warn_cast_function_type)
+    if (unsigned DiagID = checkCastFunctionType(Self, SrcExpr, DestType))
+      Self.Diag(OpRange.getBegin(), DiagID)
           << SrcExpr.get()->getType() << DestType << OpRange;
 
   } else {
@@ -2964,6 +3001,37 @@ void CastOperation::CheckCStyleCast() {
     return;
   }
 
+  // C2x 6.5.4p4:
+  //   The type nullptr_t shall not be converted to any type other than void,
+  //   bool, or a pointer type. No type other than nullptr_t shall be converted
+  //   to nullptr_t.
+  if (SrcType->isNullPtrType()) {
+    // FIXME: 6.3.2.4p2 says that nullptr_t can be converted to itself, but
+    // 6.5.4p4 is a constraint check and nullptr_t is not void, bool, or a
+    // pointer type. We're not going to diagnose that as a constraint violation.
+    if (!DestType->isVoidType() && !DestType->isBooleanType() &&
+        !DestType->isPointerType() && !DestType->isNullPtrType()) {
+      Self.Diag(SrcExpr.get()->getExprLoc(), diag::err_nullptr_cast)
+          << /*nullptr to type*/ 0 << DestType;
+      SrcExpr = ExprError();
+      return;
+    }
+    if (!DestType->isNullPtrType()) {
+      // Implicitly cast from the null pointer type to the type of the
+      // destination.
+      CastKind CK = DestType->isPointerType() ? CK_NullToPointer : CK_BitCast;
+      SrcExpr = ImplicitCastExpr::Create(Self.Context, DestType, CK,
+                                         SrcExpr.get(), nullptr, VK_PRValue,
+                                         Self.CurFPFeatureOverrides());
+    }
+  }
+  if (DestType->isNullPtrType() && !SrcType->isNullPtrType()) {
+    Self.Diag(SrcExpr.get()->getExprLoc(), diag::err_nullptr_cast)
+        << /*type to nullptr*/ 1 << SrcType;
+    SrcExpr = ExprError();
+    return;
+  }
+
   if (DestType->isExtVectorType()) {
     SrcExpr = Self.CheckExtVectorCast(OpRange, DestType, SrcExpr.get(), Kind);
     return;
@@ -2976,6 +3044,10 @@ void CastOperation::CheckCStyleCast() {
   }
 
   if (const VectorType *DestVecTy = DestType->getAs<VectorType>()) {
+    if (Self.CheckAltivecInitFromScalar(OpRange, DestType, SrcType)) {
+      SrcExpr = ExprError();
+      return;
+    }
     if (Self.ShouldSplatAltivecScalarInCast(DestVecTy) &&
         (SrcType->isIntegerType() || SrcType->isFloatingType())) {
       Kind = CK_VectorSplat;
@@ -3100,9 +3172,25 @@ void CastOperation::CheckCStyleCast() {
     }
   }
 
-  if (!checkCastFunctionType(Self, SrcExpr, DestType))
-    Self.Diag(OpRange.getBegin(), diag::warn_cast_function_type)
-        << SrcType << DestType << OpRange;
+  if (unsigned DiagID = checkCastFunctionType(Self, SrcExpr, DestType))
+    Self.Diag(OpRange.getBegin(), DiagID) << SrcType << DestType << OpRange;
+
+  if (isa<PointerType>(SrcType) && isa<PointerType>(DestType)) {
+    QualType SrcTy = cast<PointerType>(SrcType)->getPointeeType();
+    QualType DestTy = cast<PointerType>(DestType)->getPointeeType();
+
+    const RecordDecl *SrcRD = SrcTy->getAsRecordDecl();
+    const RecordDecl *DestRD = DestTy->getAsRecordDecl();
+
+    if (SrcRD && DestRD && SrcRD->hasAttr<RandomizeLayoutAttr>() &&
+        SrcRD != DestRD) {
+      // The struct we are casting the pointer from was randomized.
+      Self.Diag(OpRange.getBegin(), diag::err_cast_from_randomized_struct)
+          << SrcType << DestType;
+      SrcExpr = ExprError();
+      return;
+    }
+  }
 
   DiagnoseCastOfObjCSEL(Self, SrcExpr, DestType);
   DiagnoseCallingConvCast(Self, SrcExpr, DestType, OpRange);

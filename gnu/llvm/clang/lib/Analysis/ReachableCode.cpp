@@ -24,6 +24,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallVector.h"
+#include <optional>
 
 using namespace clang;
 
@@ -73,7 +74,7 @@ static bool isBuiltinAssumeFalse(const CFGBlock *B, const Stmt *S,
     // (e.g. a CFGBlock containing only a goto).
     return false;
   }
-  if (Optional<CFGStmt> CS = B->back().getAs<CFGStmt>()) {
+  if (std::optional<CFGStmt> CS = B->back().getAs<CFGStmt>()) {
     if (const auto *CE = dyn_cast<CallExpr>(CS->getStmt())) {
       return CE->getCallee()->IgnoreCasts() == S && CE->isBuiltinAssumeFalse(C);
     }
@@ -87,10 +88,8 @@ static bool isDeadReturn(const CFGBlock *B, const Stmt *S) {
   // block, or may be in a subsequent block because of destructors.
   const CFGBlock *Current = B;
   while (true) {
-    for (CFGBlock::const_reverse_iterator I = Current->rbegin(),
-                                          E = Current->rend();
-         I != E; ++I) {
-      if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
+    for (const CFGElement &CE : llvm::reverse(*Current)) {
+      if (std::optional<CFGStmt> CS = CE.getAs<CFGStmt>()) {
         if (const ReturnStmt *RS = dyn_cast<ReturnStmt>(CS->getStmt())) {
           if (RS == S)
             return true;
@@ -220,14 +219,15 @@ static bool isConfigurationValue(const Stmt *S,
       return isConfigurationValue(cast<DeclRefExpr>(S)->getDecl(), PP);
     case Stmt::ObjCBoolLiteralExprClass:
       IgnoreYES_NO = true;
-      LLVM_FALLTHROUGH;
+      [[fallthrough]];
     case Stmt::CXXBoolLiteralExprClass:
     case Stmt::IntegerLiteralClass: {
       const Expr *E = cast<Expr>(S);
       if (IncludeIntegers) {
         if (SilenceableCondVal && !SilenceableCondVal->getBegin().isValid())
           *SilenceableCondVal = E->getSourceRange();
-        return WrappedInParens || isExpandedFromConfigurationMacro(E, PP, IgnoreYES_NO);
+        return WrappedInParens ||
+               isExpandedFromConfigurationMacro(E, PP, IgnoreYES_NO);
       }
       return false;
     }
@@ -300,6 +300,12 @@ static bool shouldTreatSuccessorsAsReachable(const CFGBlock *B,
     if (isa<BinaryOperator>(Term)) {
       return isConfigurationValue(Term, PP);
     }
+    // Do not treat constexpr if statement successors as unreachable in warnings
+    // since the point of these statements is to determine branches at compile
+    // time.
+    if (const auto *IS = dyn_cast<IfStmt>(Term);
+        IS != nullptr && IS->isConstexpr())
+      return true;
   }
 
   const Stmt *Cond = B->getTerminatorCondition(/* stripParens */ false);
@@ -334,7 +340,7 @@ static unsigned scanFromBlock(const CFGBlock *Start,
     // This allows us to potentially uncover some "always unreachable" code
     // within the "sometimes unreachable" code.
     // Look at the successors and mark then reachable.
-    Optional<bool> TreatAllSuccessorsAsReachable;
+    std::optional<bool> TreatAllSuccessorsAsReachable;
     if (!IncludeSometimesUnreachableEdges)
       TreatAllSuccessorsAsReachable = false;
 
@@ -346,13 +352,13 @@ static unsigned scanFromBlock(const CFGBlock *Start,
         if (!UB)
           break;
 
-        if (!TreatAllSuccessorsAsReachable.hasValue()) {
+        if (!TreatAllSuccessorsAsReachable) {
           assert(PP);
           TreatAllSuccessorsAsReachable =
             shouldTreatSuccessorsAsReachable(item, *PP);
         }
 
-        if (TreatAllSuccessorsAsReachable.getValue()) {
+        if (*TreatAllSuccessorsAsReachable) {
           B = UB;
           break;
         }
@@ -456,7 +462,7 @@ static bool isValidDeadStmt(const Stmt *S) {
 
 const Stmt *DeadCodeScan::findDeadCode(const clang::CFGBlock *Block) {
   for (CFGBlock::const_iterator I = Block->begin(), E = Block->end(); I!=E; ++I)
-    if (Optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
+    if (std::optional<CFGStmt> CS = I->getAs<CFGStmt>()) {
       const Stmt *S = CS->getStmt();
       if (isValidDeadStmt(S))
         return S;
@@ -530,12 +536,11 @@ unsigned DeadCodeScan::scanBackwards(const clang::CFGBlock *Start,
   // earliest location.
   if (!DeferredLocs.empty()) {
     llvm::array_pod_sort(DeferredLocs.begin(), DeferredLocs.end(), SrcCmp);
-    for (DeferredLocsTy::iterator I = DeferredLocs.begin(),
-         E = DeferredLocs.end(); I != E; ++I) {
-      const CFGBlock *Block = I->first;
+    for (const auto &I : DeferredLocs) {
+      const CFGBlock *Block = I.first;
       if (Reachable[Block->getBlockID()])
         continue;
-      reportDeadCode(Block, I->second, CB);
+      reportDeadCode(Block, I.second, CB);
       count += scanMaybeReachableFromBlock(Block, PP, Reachable);
     }
   }
@@ -694,18 +699,15 @@ void FindUnreachableCode(AnalysisDeclContext &AC, Preprocessor &PP,
   // If there aren't explicit EH edges, we should include the 'try' dispatch
   // blocks as roots.
   if (!AC.getCFGBuildOptions().AddEHEdges) {
-    for (CFG::try_block_iterator I = cfg->try_blocks_begin(),
-         E = cfg->try_blocks_end() ; I != E; ++I) {
-      numReachable += scanMaybeReachableFromBlock(*I, PP, reachable);
-    }
+    for (const CFGBlock *B : cfg->try_blocks())
+      numReachable += scanMaybeReachableFromBlock(B, PP, reachable);
     if (numReachable == cfg->getNumBlockIDs())
       return;
   }
 
   // There are some unreachable blocks.  We need to find the root blocks that
   // contain code that should be considered unreachable.
-  for (CFG::iterator I = cfg->begin(), E = cfg->end(); I != E; ++I) {
-    const CFGBlock *block = *I;
+  for (const CFGBlock *block : *cfg) {
     // A block may have been marked reachable during this loop.
     if (reachable[block->getBlockID()])
       continue;

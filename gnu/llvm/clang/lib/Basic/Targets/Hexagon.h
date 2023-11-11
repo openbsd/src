@@ -24,7 +24,6 @@ namespace targets {
 // Hexagon abstract base class
 class LLVM_LIBRARY_VISIBILITY HexagonTargetInfo : public TargetInfo {
 
-  static const Builtin::Info BuiltinInfo[];
   static const char *const GCCRegNames[];
   static const TargetInfo::GCCRegAlias GCCRegAliases[];
   std::string CPU;
@@ -139,7 +138,7 @@ public:
     return CPU.find('t') != std::string::npos;
   }
 
-  bool hasExtIntType() const override { return true; }
+  bool hasBitIntType() const override { return true; }
 };
 } // namespace targets
 } // namespace clang

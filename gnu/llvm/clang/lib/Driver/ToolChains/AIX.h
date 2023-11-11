@@ -63,15 +63,25 @@ public:
     return ParseInlineAsmUsingAsmParser;
   }
   bool isPICDefault() const override { return true; }
-  bool isPIEDefault() const override { return false; }
+  bool isPIEDefault(const llvm::opt::ArgList &Args) const override {
+    return false;
+  }
   bool isPICDefaultForced() const override { return true; }
+  bool HasNativeLLVMSupport() const override { return true; }
 
   void
   AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                             llvm::opt::ArgStringList &CC1Args) const override;
 
+  void AddClangCXXStdlibIncludeArgs(
+      const llvm::opt::ArgList &DriverArgs,
+      llvm::opt::ArgStringList &CC1Args) const override;
+
   void AddCXXStdlibLibArgs(const llvm::opt::ArgList &Args,
                            llvm::opt::ArgStringList &CmdArgs) const override;
+
+  void addProfileRTLibs(const llvm::opt::ArgList &Args,
+                        llvm::opt::ArgStringList &CmdArgs) const override;
 
   CXXStdlibType GetDefaultCXXStdlibType() const override;
 

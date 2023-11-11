@@ -140,7 +140,7 @@ struct EffectiveContext {
 
   bool includesClass(const CXXRecordDecl *R) const {
     R = R->getCanonicalDecl();
-    return llvm::find(Records, R) != Records.end();
+    return llvm::is_contained(Records, R);
   }
 
   /// Retrieves the innermost "useful" context.  Can be null if we're
@@ -1493,6 +1493,8 @@ void Sema::HandleDelayedAccessCheck(DelayedDiagnostic &DD, Decl *D) {
   } else if (TemplateDecl *TD = dyn_cast<TemplateDecl>(D)) {
     if (isa<DeclContext>(TD->getTemplatedDecl()))
       DC = cast<DeclContext>(TD->getTemplatedDecl());
+  } else if (auto *RD = dyn_cast<RequiresExprBodyDecl>(D)) {
+    DC = RD;
   }
 
   EffectiveContext EC(DC);
@@ -1649,7 +1651,8 @@ Sema::AccessResult Sema::CheckConstructorAccess(SourceLocation UseLoc,
        << Entity.getBaseSpecifier()->getType() << getSpecialMember(Constructor);
     break;
 
-  case InitializedEntity::EK_Member: {
+  case InitializedEntity::EK_Member:
+  case InitializedEntity::EK_ParenAggInitMember: {
     const FieldDecl *Field = cast<FieldDecl>(Entity.getDecl());
     PD = PDiag(diag::err_access_field_ctor);
     PD << Field->getType() << getSpecialMember(Constructor);
@@ -1761,14 +1764,11 @@ Sema::CheckStructuredBindingMemberAccess(SourceLocation UseLoc,
   return CheckAccess(*this, UseLoc, Entity);
 }
 
-/// Checks access to an overloaded member operator, including
-/// conversion operators.
 Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
                                                    Expr *ObjectExpr,
-                                                   Expr *ArgExpr,
+                                                   const SourceRange &Range,
                                                    DeclAccessPair Found) {
-  if (!getLangOpts().AccessControl ||
-      Found.getAccess() == AS_public)
+  if (!getLangOpts().AccessControl || Found.getAccess() == AS_public)
     return AR_accessible;
 
   const RecordType *RT = ObjectExpr->getType()->castAs<RecordType>();
@@ -1776,11 +1776,33 @@ Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
 
   AccessTarget Entity(Context, AccessTarget::Member, NamingClass, Found,
                       ObjectExpr->getType());
-  Entity.setDiag(diag::err_access)
-    << ObjectExpr->getSourceRange()
-    << (ArgExpr ? ArgExpr->getSourceRange() : SourceRange());
+  Entity.setDiag(diag::err_access) << ObjectExpr->getSourceRange() << Range;
 
   return CheckAccess(*this, OpLoc, Entity);
+}
+
+/// Checks access to an overloaded member operator, including
+/// conversion operators.
+Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
+                                                   Expr *ObjectExpr,
+                                                   Expr *ArgExpr,
+                                                   DeclAccessPair Found) {
+  return CheckMemberOperatorAccess(
+      OpLoc, ObjectExpr, ArgExpr ? ArgExpr->getSourceRange() : SourceRange(),
+      Found);
+}
+
+Sema::AccessResult Sema::CheckMemberOperatorAccess(SourceLocation OpLoc,
+                                                   Expr *ObjectExpr,
+                                                   ArrayRef<Expr *> ArgExprs,
+                                                   DeclAccessPair FoundDecl) {
+  SourceRange R;
+  if (!ArgExprs.empty()) {
+    R = SourceRange(ArgExprs.front()->getBeginLoc(),
+                    ArgExprs.back()->getEndLoc());
+  }
+
+  return CheckMemberOperatorAccess(OpLoc, ObjectExpr, R, FoundDecl);
 }
 
 /// Checks access to the target of a friend declaration.

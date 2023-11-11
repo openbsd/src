@@ -21,18 +21,18 @@
 #include "llvm/Support/ManagedStatic.h" // llvm_shutdown
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/TargetSelect.h" // llvm::Initialize*
+#include <optional>
 
 static llvm::cl::list<std::string>
-    ClangArgs("Xcc", llvm::cl::ZeroOrMore,
+    ClangArgs("Xcc",
               llvm::cl::desc("Argument to pass to the CompilerInvocation"),
               llvm::cl::CommaSeparated);
 static llvm::cl::opt<bool> OptHostSupportsJit("host-supports-jit",
                                               llvm::cl::Hidden);
 static llvm::cl::list<std::string> OptInputs(llvm::cl::Positional,
-                                             llvm::cl::ZeroOrMore,
                                              llvm::cl::desc("[code to run]"));
 
-static void LLVMErrorHandler(void *UserData, const std::string &Message,
+static void LLVMErrorHandler(void *UserData, const char *Message,
                              bool GenCrashDiag) {
   auto &Diags = *static_cast<clang::DiagnosticsEngine *>(UserData);
 
@@ -49,10 +49,29 @@ static void LLVMErrorHandler(void *UserData, const std::string &Message,
   exit(GenCrashDiag ? 70 : 1);
 }
 
+// If we are running with -verify a reported has to be returned as unsuccess.
+// This is relevant especially for the test suite.
+static int checkDiagErrors(const clang::CompilerInstance *CI, bool HasError) {
+  unsigned Errs = CI->getDiagnostics().getClient()->getNumErrors();
+  if (CI->getDiagnosticOpts().VerifyDiagnostics) {
+    // If there was an error that came from the verifier we must return 1 as
+    // an exit code for the process. This will make the test fail as expected.
+    clang::DiagnosticConsumer *Client = CI->getDiagnostics().getClient();
+    Client->EndSourceFile();
+    Errs = Client->getNumErrors();
+
+    // The interpreter expects BeginSourceFile/EndSourceFiles to be balanced.
+    Client->BeginSourceFile(CI->getLangOpts(), &CI->getPreprocessor());
+  }
+  return (Errs || HasError) ? EXIT_FAILURE : EXIT_SUCCESS;
+}
+
 llvm::ExitOnError ExitOnErr;
 int main(int argc, const char **argv) {
   ExitOnErr.setBanner("clang-repl: ");
   llvm::cl::ParseCommandLineOptions(argc, argv);
+
+  llvm::llvm_shutdown_obj Y; // Call llvm_shutdown() on exit.
 
   std::vector<const char *> ClangArgv(ClangArgs.size());
   std::transform(ClangArgs.begin(), ClangArgs.end(), ClangArgv.begin(),
@@ -80,20 +99,35 @@ int main(int argc, const char **argv) {
   llvm::install_fatal_error_handler(LLVMErrorHandler,
                                     static_cast<void *>(&CI->getDiagnostics()));
 
+  // Load any requested plugins.
+  CI->LoadRequestedPlugins();
+
   auto Interp = ExitOnErr(clang::Interpreter::create(std::move(CI)));
   for (const std::string &input : OptInputs) {
     if (auto Err = Interp->ParseAndExecute(input))
       llvm::logAllUnhandledErrors(std::move(Err), llvm::errs(), "error: ");
   }
 
+  bool HasError = false;
+
   if (OptInputs.empty()) {
     llvm::LineEditor LE("clang-repl");
     // FIXME: Add LE.setListCompleter
-    while (llvm::Optional<std::string> Line = LE.readLine()) {
-      if (*Line == "quit")
+    while (std::optional<std::string> Line = LE.readLine()) {
+      if (*Line == R"(%quit)")
         break;
-      if (auto Err = Interp->ParseAndExecute(*Line))
+      if (*Line == R"(%undo)") {
+        if (auto Err = Interp->Undo()) {
+          llvm::logAllUnhandledErrors(std::move(Err), llvm::errs(), "error: ");
+          HasError = true;
+        }
+        continue;
+      }
+
+      if (auto Err = Interp->ParseAndExecute(*Line)) {
         llvm::logAllUnhandledErrors(std::move(Err), llvm::errs(), "error: ");
+        HasError = true;
+      }
     }
   }
 
@@ -102,7 +136,5 @@ int main(int argc, const char **argv) {
   // later errors use the default handling behavior instead.
   llvm::remove_fatal_error_handler();
 
-  llvm::llvm_shutdown();
-
-  return 0;
+  return checkDiagErrors(Interp->getCompilerInstance(), HasError);
 }

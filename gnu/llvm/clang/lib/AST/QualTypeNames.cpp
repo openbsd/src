@@ -80,8 +80,12 @@ static bool getFullyQualifiedTemplateName(const ASTContext &Ctx,
         Ctx, ArgTDecl, true, WithGlobalNsPrefix);
   }
   if (NNS) {
-    TName = Ctx.getQualifiedTemplateName(NNS,
-                                         /*TemplateKeyword=*/false, ArgTDecl);
+    TemplateName UnderlyingTN(ArgTDecl);
+    if (UsingShadowDecl *USD = TName.getAsUsingShadowDecl())
+      UnderlyingTN = TemplateName(USD);
+    TName =
+        Ctx.getQualifiedTemplateName(NNS,
+                                     /*TemplateKeyword=*/false, UnderlyingTN);
     Changed = true;
   }
   return Changed;
@@ -125,11 +129,9 @@ static const Type *getFullyQualifiedTemplateType(const ASTContext &Ctx,
   if (const auto *TST = dyn_cast<const TemplateSpecializationType>(TypePtr)) {
     bool MightHaveChanged = false;
     SmallVector<TemplateArgument, 4> FQArgs;
-    for (TemplateSpecializationType::iterator I = TST->begin(), E = TST->end();
-         I != E; ++I) {
-      // Cheap to copy and potentially modified by
-      // getFullyQualifedTemplateArgument.
-      TemplateArgument Arg(*I);
+    // Cheap to copy and potentially modified by
+    // getFullyQualifedTemplateArgument.
+    for (TemplateArgument Arg : TST->template_arguments()) {
       MightHaveChanged |= getFullyQualifiedTemplateArgument(
           Ctx, Arg, WithGlobalNsPrefix);
       FQArgs.push_back(Arg);
@@ -296,7 +298,7 @@ static NestedNameSpecifier *createNestedNameSpecifierForScopeOf(
     } else if (const auto *TD = dyn_cast<TagDecl>(Outer)) {
       return createNestedNameSpecifier(
           Ctx, TD, FullyQualified, WithGlobalNsPrefix);
-    } else if (dyn_cast<TranslationUnitDecl>(Outer)) {
+    } else if (isa<TranslationUnitDecl>(Outer)) {
       // Context is the TU. Nothing needs to be done.
       return nullptr;
     } else {
@@ -444,6 +446,14 @@ QualType getFullyQualifiedType(QualType QT, const ASTContext &Ctx,
     assert(!QT.hasLocalQualifiers());
     Keyword = ETypeInput->getKeyword();
   }
+
+  // We don't consider the alias introduced by `using a::X` as a new type.
+  // The qualified name is still a::X.
+  if (const auto *UT = QT->getAs<UsingType>()) {
+    QT = Ctx.getQualifiedType(UT->getUnderlyingType(), PrefixQualifiers);
+    return getFullyQualifiedType(QT, Ctx, WithGlobalNsPrefix);
+  }
+
   // Create a nested name specifier if needed.
   Prefix = createNestedNameSpecifierForScopeOf(Ctx, QT.getTypePtr(),
                                                true /*FullyQualified*/,

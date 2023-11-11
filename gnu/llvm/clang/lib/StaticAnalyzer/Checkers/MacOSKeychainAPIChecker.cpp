@@ -21,6 +21,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
+#include <optional>
 
 using namespace clang;
 using namespace ento;
@@ -160,7 +161,7 @@ static bool isEnclosingFunctionParam(const Expr *E) {
   E = E->IgnoreParenCasts();
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
     const ValueDecl *VD = DRE->getDecl();
-    if (isa<ImplicitParamDecl>(VD) || isa<ParmVarDecl>(VD))
+    if (isa<ImplicitParamDecl, ParmVarDecl>(VD))
       return true;
   }
   return false;
@@ -199,8 +200,7 @@ unsigned MacOSKeychainAPIChecker::getTrackedFunctionIndex(StringRef Name,
 static bool isBadDeallocationArgument(const MemRegion *Arg) {
   if (!Arg)
     return false;
-  return isa<AllocaRegion>(Arg) || isa<BlockDataRegion>(Arg) ||
-         isa<TypedRegion>(Arg);
+  return isa<AllocaRegion, BlockDataRegion, TypedRegion>(Arg);
 }
 
 /// Given the address expression, retrieve the value it's pointing to. Assume
@@ -210,7 +210,7 @@ static SymbolRef getAsPointeeSymbol(const Expr *Expr,
   ProgramStateRef State = C.getState();
   SVal ArgV = C.getSVal(Expr);
 
-  if (Optional<loc::MemRegionVal> X = ArgV.getAs<loc::MemRegionVal>()) {
+  if (std::optional<loc::MemRegionVal> X = ArgV.getAs<loc::MemRegionVal>()) {
     StoreManager& SM = C.getStoreManager();
     SymbolRef sym = SM.getBinding(State->getStore(), *X).getAsLocSymbol();
     if (sym)

@@ -15,6 +15,7 @@
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/ToolChain.h"
+#include "llvm/WindowsDriver/MSVCPaths.h"
 
 namespace clang {
 namespace driver {
@@ -50,9 +51,10 @@ public:
                 Action::OffloadKind DeviceOffloadKind) const override;
 
   bool IsIntegratedAssemblerDefault() const override;
-  bool IsUnwindTablesDefault(const llvm::opt::ArgList &Args) const override;
+  UnwindTableLevel
+  getDefaultUnwindTableLevel(const llvm::opt::ArgList &Args) const override;
   bool isPICDefault() const override;
-  bool isPIEDefault() const override;
+  bool isPIEDefault(const llvm::opt::ArgList &Args) const override;
   bool isPICDefaultForced() const override;
 
   /// Set CodeView as the default debug info format for non-MachO binary
@@ -69,28 +71,18 @@ public:
     return llvm::DebuggerKind::Default;
   }
 
-  enum class SubDirectoryType {
-    Bin,
-    Include,
-    Lib,
-  };
-  std::string getSubDirectoryPath(SubDirectoryType Type,
-                                  llvm::StringRef SubdirParent,
-                                  llvm::Triple::ArchType TargetArch) const;
-
-  // Convenience overload.
-  // Uses the current target arch.
-  std::string getSubDirectoryPath(SubDirectoryType Type,
-                                  llvm::StringRef SubdirParent = "") const {
-    return getSubDirectoryPath(Type, SubdirParent, getArch());
+  unsigned GetDefaultDwarfVersion() const override {
+    return 4;
   }
 
-  enum class ToolsetLayout {
-    OlderVS,
-    VS2017OrNewer,
-    DevDivInternal,
-  };
-  bool getIsVS2017OrNewer() const { return VSLayout == ToolsetLayout::VS2017OrNewer; }
+  std::string getSubDirectoryPath(llvm::SubDirectoryType Type,
+                                  llvm::StringRef SubdirParent = "") const;
+  std::string getSubDirectoryPath(llvm::SubDirectoryType Type,
+                                  llvm::Triple::ArchType TargetArch) const;
+
+  bool getIsVS2017OrNewer() const {
+    return VSLayout == llvm::ToolsetLayout::VS2017OrNewer;
+  }
 
   void
   AddClangSystemIncludeArgs(const llvm::opt::ArgList &DriverArgs,
@@ -104,6 +96,9 @@ public:
 
   void AddHIPIncludeArgs(const llvm::opt::ArgList &DriverArgs,
                          llvm::opt::ArgStringList &CC1Args) const override;
+
+  void AddHIPRuntimeLibArgs(const llvm::opt::ArgList &Args,
+                            llvm::opt::ArgStringList &CmdArgs) const override;
 
   bool getWindowsSDKLibraryPath(
       const llvm::opt::ArgList &Args, std::string &path) const;
@@ -138,8 +133,9 @@ protected:
   Tool *buildLinker() const override;
   Tool *buildAssembler() const override;
 private:
+  std::optional<llvm::StringRef> WinSdkDir, WinSdkVersion, WinSysRoot;
   std::string VCToolChainPath;
-  ToolsetLayout VSLayout = ToolsetLayout::OlderVS;
+  llvm::ToolsetLayout VSLayout = llvm::ToolsetLayout::OlderVS;
   CudaInstallationDetector CudaInstallation;
   RocmInstallationDetector RocmInstallation;
 };

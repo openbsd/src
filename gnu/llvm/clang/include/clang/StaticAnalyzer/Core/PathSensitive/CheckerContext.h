@@ -16,6 +16,7 @@
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
+#include <optional>
 
 namespace clang {
 namespace ento {
@@ -84,6 +85,8 @@ public:
     return Eng.getContext();
   }
 
+  const ASTContext &getASTContext() const { return Eng.getContext(); }
+
   const LangOptions &getLangOpts() const {
     return Eng.getContext().getLangOpts();
   }
@@ -137,7 +140,7 @@ public:
   /// example, for finding variables that the given symbol was assigned to.
   static const MemRegion *getLocationRegionIfPostStore(const ExplodedNode *N) {
     ProgramPoint L = N->getLocation();
-    if (Optional<PostStore> PSL = L.getAs<PostStore>())
+    if (std::optional<PostStore> PSL = L.getAs<PostStore>())
       return reinterpret_cast<const MemRegion*>(PSL->getLocationValue());
     return nullptr;
   }
@@ -210,6 +213,22 @@ public:
   }
 
   /// Generate a transition to a node that will be used to report
+  /// an error. This node will be a sink. That is, it will stop exploration of
+  /// the given path.
+  ///
+  /// @param State The state of the generated node.
+  /// @param Pred The transition will be generated from the specified Pred node
+  ///             to the newly generated node.
+  /// @param Tag The tag to uniquely identify the creation site. If null,
+  ///        the default tag for the checker will be used.
+  ExplodedNode *generateErrorNode(ProgramStateRef State,
+                                  ExplodedNode *Pred,
+                                  const ProgramPointTag *Tag = nullptr) {
+    return generateSink(State, Pred,
+                       (Tag ? Tag : Location.getTag()));
+  }
+
+  /// Generate a transition to a node that will be used to report
   /// an error. This node will not be a sink. That is, exploration will
   /// continue along this path.
   ///
@@ -254,6 +273,7 @@ public:
   /// @param IsPrunable Whether the note is prunable. It allows BugReporter
   ///        to omit the note from the report if it would make the displayed
   ///        bug path significantly shorter.
+  LLVM_ATTRIBUTE_RETURNS_NONNULL
   const NoteTag *getNoteTag(NoteTag::Callback &&Cb, bool IsPrunable = false) {
     return Eng.getDataTags().make<NoteTag>(std::move(Cb), IsPrunable);
   }

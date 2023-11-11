@@ -10,13 +10,17 @@
 #define LLVM_CLANG_DRIVER_DRIVER_H
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/HeaderInclude.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Driver/Action.h"
+#include "clang/Driver/DriverDiagnostic.h"
+#include "clang/Driver/InputInfo.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/Phases.h"
 #include "clang/Driver/ToolChain.h"
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Option/Arg.h"
@@ -26,11 +30,15 @@
 #include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace llvm {
 class Triple;
 namespace vfs {
 class FileSystem;
+}
+namespace cl {
+class ExpansionContext;
 }
 } // namespace llvm
 
@@ -38,13 +46,12 @@ namespace clang {
 
 namespace driver {
 
-  class Command;
-  class Compilation;
-  class InputInfo;
-  class JobList;
-  class JobAction;
-  class SanitizerArgs;
-  class ToolChain;
+typedef SmallVector<InputInfo, 4> InputInfoList;
+
+class Command;
+class Compilation;
+class JobAction;
+class ToolChain;
 
 /// Describes the kind of LTO mode selected via -f(no-)?lto(=.*)? options.
 enum LTOKind {
@@ -52,6 +59,16 @@ enum LTOKind {
   LTOK_Full,
   LTOK_Thin,
   LTOK_Unknown
+};
+
+/// Whether headers used to construct C++20 module units should be looked
+/// up by the path supplied on the command line, or in the user or system
+/// search paths.
+enum ModuleHeaderMode {
+  HeaderMode_None,
+  HeaderMode_Default,
+  HeaderMode_User,
+  HeaderMode_System
 };
 
 /// Driver - Encapsulate logic for constructing compilation processes
@@ -66,7 +83,8 @@ class Driver {
     GXXMode,
     CPPMode,
     CLMode,
-    FlangMode
+    FlangMode,
+    DXCMode
   } Mode;
 
   enum SaveTempsMode {
@@ -80,6 +98,19 @@ class Driver {
     EmbedMarker,
     EmbedBitcode
   } BitcodeEmbed;
+
+  enum OffloadMode {
+    OffloadHostDevice,
+    OffloadHost,
+    OffloadDevice,
+  } Offload;
+
+  /// Header unit mode set by -fmodule-header={user,system}.
+  ModuleHeaderMode CXX20HeaderType;
+
+  /// Set if we should process inputs and jobs with C++20 module
+  /// interpretation.
+  bool ModulesModeCXX20;
 
   /// LTO mode selected via -f(no-)?lto(=.*)? options.
   LTOKind LTOMode;
@@ -171,9 +202,11 @@ public:
   /// The file to log CC_LOG_DIAGNOSTICS output to, if enabled.
   std::string CCLogDiagnosticsFilename;
 
+  /// An input type and its arguments.
+  using InputTy = std::pair<types::ID, const llvm::opt::Arg *>;
+
   /// A list of inputs and their types for the given arguments.
-  typedef SmallVector<std::pair<types::ID, const llvm::opt::Arg *>, 16>
-      InputList;
+  using InputList = SmallVector<InputTy, 16>;
 
   /// Whether the driver should follow g++ like behavior.
   bool CCCIsCXX() const { return Mode == GXXMode; }
@@ -191,6 +224,9 @@ public:
   /// Other modes fall back to calling gcc which in turn calls gfortran.
   bool IsFlangMode() const { return Mode == FlangMode; }
 
+  /// Whether the driver should follow dxc.exe like behavior.
+  bool IsDXCMode() const { return Mode == DXCMode; }
+
   /// Only print tool bindings, don't build any jobs.
   unsigned CCCPrintBindings : 1;
 
@@ -198,9 +234,16 @@ public:
   /// CCPrintOptionsFilename or to stderr.
   unsigned CCPrintOptions : 1;
 
-  /// Set CC_PRINT_HEADERS mode, which causes the frontend to log header include
-  /// information to CCPrintHeadersFilename or to stderr.
-  unsigned CCPrintHeaders : 1;
+  /// The format of the header information that is emitted. If CC_PRINT_HEADERS
+  /// is set, the format is textual. Otherwise, the format is determined by the
+  /// enviroment variable CC_PRINT_HEADERS_FORMAT.
+  HeaderIncludeFormatKind CCPrintHeadersFormat = HIFMT_None;
+
+  /// This flag determines whether clang should filter the header information
+  /// that is emitted. If enviroment variable CC_PRINT_HEADERS_FILTERING is set
+  /// to "only-direct-system", only system headers that are directly included
+  /// from non-system headers are emitted.
+  HeaderIncludeFilteringKind CCPrintHeadersFiltering = HIFIL_None;
 
   /// Set CC_LOG_DIAGNOSTICS mode, which causes the frontend to log diagnostics
   /// to CCLogDiagnosticsFilename or to stderr, in a stable machine readable
@@ -228,8 +271,8 @@ private:
   /// Name to use when invoking gcc/g++.
   std::string CCCGenericGCCName;
 
-  /// Name of configuration file if used.
-  std::string ConfigFile;
+  /// Paths to configuration files used.
+  std::vector<std::string> ConfigFiles;
 
   /// Allocator for string saver.
   llvm::BumpPtrAllocator Alloc;
@@ -246,12 +289,18 @@ private:
   /// Whether to check that input files exist when constructing compilation
   /// jobs.
   unsigned CheckInputsExist : 1;
+  /// Whether to probe for PCH files on disk, in order to upgrade
+  /// -include foo.h to -include-pch foo.h.pch.
+  unsigned ProbePrecompiled : 1;
 
 public:
-  /// Force clang to emit reproducer for driver invocation. This is enabled
-  /// indirectly by setting FORCE_CLANG_DIAGNOSTICS_CRASH environment variable
-  /// or when using the -gen-reproducer driver flag.
-  unsigned GenReproducer : 1;
+  // getFinalPhase - Determine which compilation mode we are in and record
+  // which option we used to determine the final phase.
+  // TODO: Much of what getFinalPhase returns are not actually true compiler
+  //       modes. Fold this functionality into Types::getCompilationPhases and
+  //       handleArguments.
+  phases::ID getFinalPhase(const llvm::opt::DerivedArgList &DAL,
+                           llvm::opt::Arg **FinalPhaseArg = nullptr) const;
 
 private:
   /// Certain options suppress the 'no input files' warning.
@@ -264,19 +313,16 @@ private:
   /// stored in it, and will clean them up when torn down.
   mutable llvm::StringMap<std::unique_ptr<ToolChain>> ToolChains;
 
+  /// Cache of known offloading architectures for the ToolChain already derived.
+  /// This should only be modified when we first initialize the offloading
+  /// toolchains.
+  llvm::DenseMap<const ToolChain *, llvm::DenseSet<llvm::StringRef>> KnownArchs;
+
 private:
   /// TranslateInputArgs - Create a new derived argument list from the input
   /// arguments, after applying the standard argument translations.
   llvm::opt::DerivedArgList *
   TranslateInputArgs(const llvm::opt::InputArgList &Args) const;
-
-  // getFinalPhase - Determine which compilation mode we are in and record
-  // which option we used to determine the final phase.
-  // TODO: Much of what getFinalPhase returns are not actually true compiler
-  //       modes. Fold this functionality into Types::getCompilationPhases and
-  //       handleArguments.
-  phases::ID getFinalPhase(const llvm::opt::DerivedArgList &DAL,
-                           llvm::opt::Arg **FinalPhaseArg = nullptr) const;
 
   // handleArguments - All code related to claiming and printing diagnostics
   // related to arguments to the driver are done here.
@@ -320,7 +366,9 @@ public:
   /// Name to use when invoking gcc/g++.
   const std::string &getCCCGenericGCCName() const { return CCCGenericGCCName; }
 
-  const std::string &getConfigFile() const { return ConfigFile; }
+  llvm::ArrayRef<std::string> getConfigFiles() const {
+    return ConfigFiles;
+  }
 
   const llvm::opt::OptTable &getOpts() const { return getDriverOptTable(); }
 
@@ -331,6 +379,9 @@ public:
   bool getCheckInputsExist() const { return CheckInputsExist; }
 
   void setCheckInputsExist(bool Value) { CheckInputsExist = Value; }
+
+  bool getProbePrecompiled() const { return ProbePrecompiled; }
+  void setProbePrecompiled(bool Value) { ProbePrecompiled = Value; }
 
   void setTargetAndMode(const ParsedClangName &TM) { ClangNameParts = TM; }
 
@@ -358,6 +409,9 @@ public:
   bool embedBitcodeEnabled() const { return BitcodeEmbed != EmbedNone; }
   bool embedBitcodeInObject() const { return (BitcodeEmbed == EmbedBitcode); }
   bool embedBitcodeMarkerOnly() const { return (BitcodeEmbed == EmbedMarker); }
+
+  bool offloadHostOnly() const { return Offload == OffloadHost; }
+  bool offloadDeviceOnly() const { return Offload == OffloadDevice; }
 
   /// Compute the desired OpenMP runtime from the flags provided.
   OpenMPRuntimeKind getOpenMPRuntime(const llvm::opt::ArgList &Args) const;
@@ -413,6 +467,26 @@ public:
   void BuildUniversalActions(Compilation &C, const ToolChain &TC,
                              const InputList &BAInputs) const;
 
+  /// BuildOffloadingActions - Construct the list of actions to perform for the
+  /// offloading toolchain that will be embedded in the host.
+  ///
+  /// \param C - The compilation that is being built.
+  /// \param Args - The input arguments.
+  /// \param Input - The input type and arguments
+  /// \param HostAction - The host action used in the offloading toolchain.
+  Action *BuildOffloadingActions(Compilation &C,
+                                 llvm::opt::DerivedArgList &Args,
+                                 const InputTy &Input,
+                                 Action *HostAction) const;
+
+  /// Returns the set of bound architectures active for this offload kind.
+  /// If there are no bound architctures we return a set containing only the
+  /// empty string. The \p SuppressError option is used to suppress errors.
+  llvm::DenseSet<StringRef>
+  getOffloadArchs(Compilation &C, const llvm::opt::DerivedArgList &Args,
+                  Action::OffloadKind Kind, const ToolChain *TC,
+                  bool SuppressError = false) const;
+
   /// Check that the file referenced by Value exists. If it doesn't,
   /// issue a diagnostic and return false.
   /// If TypoCorrect is true and the file does not exist, see if it looks
@@ -449,6 +523,35 @@ public:
       Compilation &C, const Command &FailingCommand,
       StringRef AdditionalInformation = "",
       CompilationDiagnosticReport *GeneratedReport = nullptr);
+
+  enum class CommandStatus {
+    Crash = 1,
+    Error,
+    Ok,
+  };
+
+  enum class ReproLevel {
+    Off = 0,
+    OnCrash = static_cast<int>(CommandStatus::Crash),
+    OnError = static_cast<int>(CommandStatus::Error),
+    Always = static_cast<int>(CommandStatus::Ok),
+  };
+
+  bool maybeGenerateCompilationDiagnostics(
+      CommandStatus CS, ReproLevel Level, Compilation &C,
+      const Command &FailingCommand, StringRef AdditionalInformation = "",
+      CompilationDiagnosticReport *GeneratedReport = nullptr) {
+    if (static_cast<int>(CS) > static_cast<int>(Level))
+      return false;
+    if (CS != CommandStatus::Crash)
+      Diags.Report(diag::err_drv_force_crash)
+          << !::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH");
+    // Hack to ensure that diagnostic notes get emitted.
+    Diags.setLastDiagnosticIgnored(false);
+    generateCompilationDiagnostics(C, FailingCommand, AdditionalInformation,
+                                   GeneratedReport);
+    return true;
+  }
 
   /// @}
   /// @name Helper Methods
@@ -503,16 +606,20 @@ public:
   /// BuildJobsForAction - Construct the jobs to perform for the action \p A and
   /// return an InputInfo for the result of running \p A.  Will only construct
   /// jobs for a given (Action, ToolChain, BoundArch, DeviceKind) tuple once.
-  InputInfo
-  BuildJobsForAction(Compilation &C, const Action *A, const ToolChain *TC,
-                     StringRef BoundArch, bool AtTopLevel, bool MultipleArchs,
-                     const char *LinkingOutput,
-                     std::map<std::pair<const Action *, std::string>, InputInfo>
-                         &CachedResults,
-                     Action::OffloadKind TargetDeviceOffloadKind) const;
+  InputInfoList BuildJobsForAction(
+      Compilation &C, const Action *A, const ToolChain *TC, StringRef BoundArch,
+      bool AtTopLevel, bool MultipleArchs, const char *LinkingOutput,
+      std::map<std::pair<const Action *, std::string>, InputInfoList>
+          &CachedResults,
+      Action::OffloadKind TargetDeviceOffloadKind) const;
 
   /// Returns the default name for linked images (e.g., "a.out").
   const char *getDefaultImageName() const;
+
+  // Creates a temp file with $Prefix-%%%%%%.$Suffix
+  const char *CreateTempFile(Compilation &C, StringRef Prefix, StringRef Suffix,
+                             bool MultipleArchs = false,
+                             StringRef BoundArch = {}) const;
 
   /// GetNamedOutputPath - Return the name to use for the output of
   /// the action \p JA. The result is appended to the compilation's
@@ -555,6 +662,12 @@ public:
   /// ShouldEmitStaticLibrary - Should the linker emit a static library.
   bool ShouldEmitStaticLibrary(const llvm::opt::ArgList &Args) const;
 
+  /// Returns true if the user has indicated a C++20 header unit mode.
+  bool hasHeaderMode() const { return CXX20HeaderType != HeaderMode_None; }
+
+  /// Get the mode for handling headers as set by fmodule-header{=}.
+  ModuleHeaderMode getModuleHeaderMode() const { return CXX20HeaderType; }
+
   /// Returns true if we are performing any kind of LTO.
   bool isUsingLTO(bool IsOffload = false) const {
     return getLTOMode(IsOffload) != LTOK_None;
@@ -567,16 +680,23 @@ public:
 
 private:
 
-  /// Tries to load options from configuration file.
+  /// Tries to load options from configuration files.
   ///
   /// \returns true if error occurred.
-  bool loadConfigFile();
+  bool loadConfigFiles();
+
+  /// Tries to load options from default configuration files (deduced from
+  /// executable filename).
+  ///
+  /// \returns true if error occurred.
+  bool loadDefaultConfigFiles(llvm::cl::ExpansionContext &ExpCtx);
 
   /// Read options from the specified file.
   ///
   /// \param [in] FileName File to read.
+  /// \param [in] Search and expansion options.
   /// \returns true, if error occurred while reading.
-  bool readConfigFile(StringRef FileName);
+  bool readConfigFile(StringRef FileName, llvm::cl::ExpansionContext &ExpCtx);
 
   /// Set the driver mode (cl, gcc, etc) from the value of the `--driver-mode`
   /// option.
@@ -595,6 +715,21 @@ private:
 
   /// @}
 
+  /// Retrieves a ToolChain for a particular device \p Target triple
+  ///
+  /// \param[in] HostTC is the host ToolChain paired with the device
+  ///
+  /// \param[in] TargetDeviceOffloadKind (e.g. OFK_Cuda/OFK_OpenMP/OFK_SYCL) is
+  /// an Offloading action that is optionally passed to a ToolChain (used by
+  /// CUDA, to specify if it's used in conjunction with OpenMP)
+  ///
+  /// Will cache ToolChains for the life of the driver object, and create them
+  /// on-demand.
+  const ToolChain &getOffloadingDeviceToolChain(
+      const llvm::opt::ArgList &Args, const llvm::Triple &Target,
+      const ToolChain &HostTC,
+      const Action::OffloadKind &TargetDeviceOffloadKind) const;
+
   /// Get bitmasks for which option flags to include and exclude based on
   /// the driver mode.
   std::pair<unsigned, unsigned> getIncludeExcludeOptionFlagMasks(bool IsClCompatMode) const;
@@ -602,12 +737,15 @@ private:
   /// Helper used in BuildJobsForAction.  Doesn't use the cache when building
   /// jobs specifically for the given action, but will use the cache when
   /// building jobs for the Action's inputs.
-  InputInfo BuildJobsForActionNoCache(
+  InputInfoList BuildJobsForActionNoCache(
       Compilation &C, const Action *A, const ToolChain *TC, StringRef BoundArch,
       bool AtTopLevel, bool MultipleArchs, const char *LinkingOutput,
-      std::map<std::pair<const Action *, std::string>, InputInfo>
+      std::map<std::pair<const Action *, std::string>, InputInfoList>
           &CachedResults,
       Action::OffloadKind TargetDeviceOffloadKind) const;
+
+  /// Return the typical executable name for the specified driver \p Mode.
+  static const char *getExecutableForDriverMode(DriverMode Mode);
 
 public:
   /// GetReleaseVersion - Parse (([0-9]+)(.([0-9]+)(.([0-9]+)?))?)? and

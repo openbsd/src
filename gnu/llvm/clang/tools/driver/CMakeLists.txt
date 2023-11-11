@@ -13,11 +13,10 @@ set( LLVM_LINK_COMPONENTS
   Option
   ScalarOpts
   Support
+  TargetParser
   TransformUtils
   Vectorize
   )
-
-option(CLANG_PLUGIN_SUPPORT "Build clang with plugin support" ON)
 
 # Support plugins.
 if(CLANG_PLUGIN_SUPPORT)
@@ -33,6 +32,7 @@ add_clang_tool(clang
   DEPENDS
   intrinsics_gen
   ${support_plugins}
+  GENERATE_DRIVER
   )
 
 clang_target_link_libraries(clang
@@ -62,7 +62,11 @@ if(NOT CLANG_LINKS_TO_CREATE)
   set(CLANG_LINKS_TO_CREATE clang++ clang-cl clang-cpp)
 endif()
 
-foreach(link ${CLANG_LINKS_TO_CREATE})
+if (CLANG_ENABLE_HLSL)
+  set(HLSL_LINK clang-dxc)
+endif()
+
+foreach(link ${CLANG_LINKS_TO_CREATE} ${HLSL_LINK})
   add_clang_symlink(${link} clang)
 endforeach()
 
@@ -82,7 +86,7 @@ if (APPLE)
   set(TOOL_INFO_PLIST_OUT "${CMAKE_CURRENT_BINARY_DIR}/${TOOL_INFO_PLIST}")
   target_link_libraries(clang
     PRIVATE
-    "-Wl,-sectcreate,__TEXT,__info_plist,${TOOL_INFO_PLIST_OUT}")
+    "-Wl,-sectcreate,__TEXT,__info_plist,\"${TOOL_INFO_PLIST_OUT}\"")
   configure_file("${TOOL_INFO_PLIST}.in" "${TOOL_INFO_PLIST_OUT}" @ONLY)
 
   set(TOOL_INFO_UTI)
@@ -95,7 +99,7 @@ if(CLANG_ORDER_FILE AND
     (LLVM_LINKER_IS_LD64 OR LLVM_LINKER_IS_GOLD OR LLVM_LINKER_IS_LLD))
   include(LLVMCheckLinkerFlag)
 
-  if (LLVM_LINKER_IS_LD64)
+  if (LLVM_LINKER_IS_LD64 OR (LLVM_LINKER_IS_LLD AND APPLE))
     set(LINKER_ORDER_FILE_OPTION "-Wl,-order_file,${CLANG_ORDER_FILE}")
   elseif (LLVM_LINKER_IS_GOLD)
     set(LINKER_ORDER_FILE_OPTION "-Wl,--section-ordering-file,${CLANG_ORDER_FILE}")

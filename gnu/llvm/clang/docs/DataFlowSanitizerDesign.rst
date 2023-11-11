@@ -51,7 +51,7 @@ file ``sanitizer/dfsan_interface.h``.
   /// Retrieves the label associated with the data at the given address.
   dfsan_label dfsan_read_label(const void *addr, size_t size);
 
-  /// Returns whether the given label label contains the label elem.
+  /// Returns whether the given label contains the label elem.
   int dfsan_has_label(dfsan_label label, dfsan_label elem);
 
   /// Computes the union of \c l1 and \c l2, resulting in a union label.
@@ -139,7 +139,7 @@ Origin tracking trace representation
 ------------------------------------
 
 An origin tracking trace is a list of chains. Each chain has a stack trace
-where the DFSan runtime records a label propapation, and a pointer to its
+where the DFSan runtime records a label propagation, and a pointer to its
 previous chain. The very first chain does not point to any chain.
 
 Every four 4-bytes aligned application bytes share a 4-byte origin trace ID. A

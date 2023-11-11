@@ -34,19 +34,26 @@ module Clang_Basic {
   textual header "Basic/AArch64SVEACLETypes.def"
   textual header "Basic/BuiltinsAArch64.def"
   textual header "Basic/BuiltinsAMDGPU.def"
+  textual header "Basic/BuiltinsAArch64NeonSVEBridge.def"
+  textual header "Basic/BuiltinsAArch64NeonSVEBridge_cg.def"
   textual header "Basic/BuiltinsARM.def"
   textual header "Basic/BuiltinsBPF.def"
   textual header "Basic/Builtins.def"
+  textual header "Basic/BuiltinHeaders.def"
   textual header "Basic/BuiltinsHexagon.def"
   textual header "Basic/BuiltinsHexagonDep.def"
   textual header "Basic/BuiltinsHexagonMapCustomDep.def"
+  textual header "Basic/BuiltinsLoongArch.def"
   textual header "Basic/BuiltinsMips.def"
   textual header "Basic/BuiltinsNEON.def"
   textual header "Basic/BuiltinsNVPTX.def"
   textual header "Basic/BuiltinsPPC.def"
   textual header "Basic/BuiltinsRISCV.def"
+  textual header "Basic/BuiltinsRISCVVector.def"
   textual header "Basic/BuiltinsSVE.def"
   textual header "Basic/BuiltinsSystemZ.def"
+  textual header "Basic/BuiltinsVE.def"
+  textual header "Basic/BuiltinsVEVL.gen.def"
   textual header "Basic/BuiltinsWebAssembly.def"
   textual header "Basic/BuiltinsX86.def"
   textual header "Basic/BuiltinsX86_64.def"
@@ -66,10 +73,17 @@ module Clang_Basic {
   textual header "Basic/RISCVVTypes.def"
   textual header "Basic/Sanitizers.def"
   textual header "Basic/TargetCXXABI.def"
-  textual header "Basic/TokenKinds.def"
-  textual header "Basic/X86Target.def"
+  textual header "Basic/TransformTypeTraits.def"
 
   module * { export * }
+}
+module Clang_Basic_TokenKinds {
+  requires cplusplus
+
+  header "Basic/TokenKinds.h"
+  textual header "Basic/TokenKinds.def"
+
+  export *
 }
 
 module Clang_CodeGen { requires cplusplus umbrella "CodeGen" module * { export * } }
@@ -81,7 +95,7 @@ module Clang_Diagnostics {
   requires cplusplus
 
   module All { header "Basic/AllDiagnostics.h" export * }
-  module Analysis { header "Analysis/AnalysisDiagnostic.h" export * }
+  module Analysis { textual header "Analysis/Analyses/UnsafeBufferUsageGadgets.def" }
   module AST { header "AST/ASTDiagnostic.h" export * }
   module Comment { header "AST/CommentDiagnostic.h" export * }
   module Driver { header "Driver/DriverDiagnostic.h" export * }
@@ -178,5 +192,8 @@ module Clang_ToolingCore {
 
 module Clang_ToolingInclusions {
   requires cplusplus
-  umbrella "Tooling/Inclusions" module * { export * }
+  umbrella "Tooling/Inclusions"
+  textual header "Tooling/Inclusions/CSymbolMap.inc"
+  textual header "Tooling/Inclusions/StdSymbolMap.inc"
+  module * { export * }
 }

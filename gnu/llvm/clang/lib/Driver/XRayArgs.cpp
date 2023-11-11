@@ -40,6 +40,7 @@ XRayArgs::XRayArgs(const ToolChain &TC, const ArgList &Args) {
     case llvm::Triple::x86_64:
     case llvm::Triple::arm:
     case llvm::Triple::aarch64:
+    case llvm::Triple::hexagon:
     case llvm::Triple::ppc64le:
     case llvm::Triple::mips:
     case llvm::Triple::mipsel:
@@ -78,8 +79,7 @@ XRayArgs::XRayArgs(const ToolChain &TC, const ArgList &Args) {
 
   XRayInstrument = true;
   if (const Arg *A =
-          Args.getLastArg(options::OPT_fxray_instruction_threshold_,
-                          options::OPT_fxray_instruction_threshold_EQ)) {
+          Args.getLastArg(options::OPT_fxray_instruction_threshold_EQ)) {
     StringRef S = A->getValue();
     if (S.getAsInteger(0, InstructionThreshold) || InstructionThreshold < 0)
       D.Diag(clang::diag::err_drv_invalid_value) << A->getAsString(Args) << S;

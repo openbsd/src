@@ -7,8 +7,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "IndexingContext.h"
-#include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/ASTConcept.h"
 #include "clang/AST/ASTLambda.h"
+#include "clang/AST/DeclCXX.h"
+#include "clang/AST/ExprConcepts.h"
+#include "clang/AST/RecursiveASTVisitor.h"
+#include "clang/AST/Type.h"
 
 using namespace clang;
 using namespace clang::index;
@@ -455,22 +459,34 @@ public:
   }
 
   bool VisitParmVarDecl(ParmVarDecl* D) {
-    // Index the parameters of lambda expression.
+    // Index the parameters of lambda expression and requires expression.
     if (IndexCtx.shouldIndexFunctionLocalSymbols()) {
       const auto *DC = D->getDeclContext();
-      if (DC && isLambdaCallOperator(DC))
+      if (DC && (isLambdaCallOperator(DC) || isa<RequiresExprBodyDecl>(DC)))
         IndexCtx.handleDecl(D);
     }
     return true;
   }
 
-  bool VisitUnresolvedLookupExpr(UnresolvedLookupExpr *E) {
+  bool VisitOverloadExpr(OverloadExpr *E) {
     SmallVector<SymbolRelation, 4> Relations;
     SymbolRoleSet Roles = getRolesForRef(E, Relations);
     for (auto *D : E->decls())
       IndexCtx.handleReference(D, E->getNameLoc(), Parent, ParentDC, Roles,
                                Relations, E);
     return true;
+  }
+
+  bool VisitConceptSpecializationExpr(ConceptSpecializationExpr *R) {
+    IndexCtx.handleReference(R->getNamedConcept(), R->getConceptNameLoc(),
+                             Parent, ParentDC);
+    return true;
+  }
+
+  bool TraverseTypeConstraint(const TypeConstraint *C) {
+    IndexCtx.handleReference(C->getNamedConcept(), C->getConceptNameLoc(),
+                             Parent, ParentDC);
+    return RecursiveASTVisitor::TraverseTypeConstraint(C);
   }
 };
 

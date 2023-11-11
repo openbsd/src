@@ -24,7 +24,6 @@
 #include "clang/Basic/OpenMPKinds.h"
 #include "clang/Basic/Sanitizers.h"
 #include "clang/Basic/SourceLocation.h"
-#include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/VersionTuple.h"
 #include "llvm/Support/raw_ostream.h"
@@ -34,12 +33,7 @@
 namespace clang {
 class ASTContext;
 class AttributeCommonInfo;
-class IdentifierInfo;
-class ObjCInterfaceDecl;
-class Expr;
-class QualType;
 class FunctionDecl;
-class TypeSourceInfo;
 class OMPTraitInfo;
 
 /// Attr - This represents one attribute.
@@ -109,6 +103,8 @@ public:
 
   // Pretty print this attribute.
   void printPretty(raw_ostream &OS, const PrintingPolicy &Policy) const;
+
+  static StringRef getDocumentation(attr::Kind);
 };
 
 class TypeAttr : public Attr {
@@ -190,6 +186,22 @@ public:
   static bool classof(const Attr *A) {
     return A->getKind() >= attr::FirstInheritableParamAttr &&
            A->getKind() <= attr::LastInheritableParamAttr;
+  }
+};
+
+class HLSLAnnotationAttr : public InheritableAttr {
+protected:
+  HLSLAnnotationAttr(ASTContext &Context, const AttributeCommonInfo &CommonInfo,
+                     attr::Kind AK, bool IsLateParsed,
+                     bool InheritEvenIfAlreadyPresent)
+      : InheritableAttr(Context, CommonInfo, AK, IsLateParsed,
+                        InheritEvenIfAlreadyPresent) {}
+
+public:
+  // Implement isa/cast/dyncast/etc.
+  static bool classof(const Attr *A) {
+    return A->getKind() >= attr::FirstHLSLAnnotationAttr &&
+           A->getKind() <= attr::LastHLSLAnnotationAttr;
   }
 };
 
@@ -350,30 +362,11 @@ public:
 static_assert(sizeof(ParamIdx) == sizeof(ParamIdx::SerialType),
               "ParamIdx does not fit its serialization type");
 
-/// Contains information gathered from parsing the contents of TargetAttr.
-struct ParsedTargetAttr {
-  std::vector<std::string> Features;
-  StringRef Architecture;
-  StringRef Tune;
-  StringRef BranchProtection;
-  bool DuplicateArchitecture = false;
-  bool DuplicateTune = false;
-  bool operator ==(const ParsedTargetAttr &Other) const {
-    return DuplicateArchitecture == Other.DuplicateArchitecture &&
-           DuplicateTune == Other.DuplicateTune &&
-           Architecture == Other.Architecture &&
-           Tune == Other.Tune &&
-           BranchProtection == Other.BranchProtection &&
-           Features == Other.Features;
-  }
-};
-
 #include "clang/AST/Attrs.inc"
 
 inline const StreamingDiagnostic &operator<<(const StreamingDiagnostic &DB,
                                              const Attr *At) {
-  DB.AddTaggedVal(reinterpret_cast<intptr_t>(At),
-                  DiagnosticsEngine::ak_attr);
+  DB.AddTaggedVal(reinterpret_cast<uint64_t>(At), DiagnosticsEngine::ak_attr);
   return DB;
 }
 }  // end namespace clang

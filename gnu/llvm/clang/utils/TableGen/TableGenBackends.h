@@ -61,6 +61,7 @@ void EmitClangAttrTextNodeDump(llvm::RecordKeeper &Records,
                                llvm::raw_ostream &OS);
 void EmitClangAttrNodeTraverse(llvm::RecordKeeper &Records,
                                llvm::raw_ostream &OS);
+void EmitClangAttrDocTable(llvm::RecordKeeper &Records, llvm::raw_ostream &OS);
 
 void EmitClangDiagsDefs(llvm::RecordKeeper &Records, llvm::raw_ostream &OS,
                         const std::string &Component);
@@ -109,6 +110,7 @@ void EmitMveBuiltinAliases(llvm::RecordKeeper &Records, llvm::raw_ostream &OS);
 void EmitRVVHeader(llvm::RecordKeeper &Records, llvm::raw_ostream &OS);
 void EmitRVVBuiltins(llvm::RecordKeeper &Records, llvm::raw_ostream &OS);
 void EmitRVVBuiltinCG(llvm::RecordKeeper &Records, llvm::raw_ostream &OS);
+void EmitRVVBuiltinSema(llvm::RecordKeeper &Records, llvm::raw_ostream &OS);
 
 void EmitCdeHeader(llvm::RecordKeeper &Records, llvm::raw_ostream &OS);
 void EmitCdeBuiltinDef(llvm::RecordKeeper &Records, llvm::raw_ostream &OS);

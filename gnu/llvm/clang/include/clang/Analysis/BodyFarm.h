@@ -11,20 +11,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_LIB_ANALYSIS_BODYFARM_H
-#define LLVM_CLANG_LIB_ANALYSIS_BODYFARM_H
+#ifndef LLVM_CLANG_ANALYSIS_BODYFARM_H
+#define LLVM_CLANG_ANALYSIS_BODYFARM_H
 
 #include "clang/AST/DeclBase.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/Optional.h"
+#include <optional>
 
 namespace clang {
 
 class ASTContext;
 class FunctionDecl;
 class ObjCMethodDecl;
-class ObjCPropertyDecl;
 class Stmt;
 class CodeInjector;
 
@@ -42,7 +41,7 @@ public:
   BodyFarm(const BodyFarm &other) = delete;
 
 private:
-  typedef llvm::DenseMap<const Decl *, Optional<Stmt *>> BodyMap;
+  typedef llvm::DenseMap<const Decl *, std::optional<Stmt *>> BodyMap;
 
   ASTContext &C;
   BodyMap Bodies;

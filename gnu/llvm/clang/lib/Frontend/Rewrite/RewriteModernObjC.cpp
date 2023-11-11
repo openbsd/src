@@ -24,6 +24,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -600,7 +601,7 @@ namespace {
       QualType StrType = Context->getConstantArrayType(
           Context->CharTy, llvm::APInt(32, Str.size() + 1), nullptr,
           ArrayType::Normal, 0);
-      return StringLiteral::Create(*Context, Str, StringLiteral::Ascii,
+      return StringLiteral::Create(*Context, Str, StringLiteral::Ordinary,
                                    /*Pascal=*/false, StrType, SourceLocation());
     }
   };
@@ -633,7 +634,7 @@ static bool IsHeaderFile(const std::string &Filename) {
     return false;
   }
 
-  std::string Ext = std::string(Filename.begin()+DotPos+1, Filename.end());
+  std::string Ext = Filename.substr(DotPos + 1);
   // C header: .h
   // C++ header: .hh or .H;
   return Ext == "h" || Ext == "hh" || Ext == "H";
@@ -852,7 +853,7 @@ RewriteModernObjC::getIvarAccessString(ObjCIvarDecl *D) {
   if (D->isBitField())
     IvarT = GetGroupRecordTypeForObjCIvarBitfield(D);
 
-  if (!isa<TypedefType>(IvarT) && IvarT->isRecordType()) {
+  if (!IvarT->getAs<TypedefType>() && IvarT->isRecordType()) {
     RecordDecl *RD = IvarT->castAs<RecordType>()->getDecl();
     RD = RD->getDefinition();
     if (RD && !RD->getDeclName().getAsIdentifierInfo()) {
@@ -1957,15 +1958,15 @@ Stmt *RewriteModernObjC::RewriteObjCTryStmt(ObjCAtTryStmt *S) {
     // @try -> try
     ReplaceText(startLoc, 1, "");
 
-  for (unsigned I = 0, N = S->getNumCatchStmts(); I != N; ++I) {
-    ObjCAtCatchStmt *Catch = S->getCatchStmt(I);
+  for (ObjCAtCatchStmt *Catch : S->catch_stmts()) {
     VarDecl *catchDecl = Catch->getCatchParamDecl();
 
     startLoc = Catch->getBeginLoc();
     bool AtRemoved = false;
     if (catchDecl) {
       QualType t = catchDecl->getType();
-      if (const ObjCObjectPointerType *Ptr = t->getAs<ObjCObjectPointerType>()) {
+      if (const ObjCObjectPointerType *Ptr =
+              t->getAs<ObjCObjectPointerType>()) {
         // Should be a pointer to a class.
         ObjCInterfaceDecl *IDecl = Ptr->getObjectType()->getInterface();
         if (IDecl) {
@@ -3628,7 +3629,7 @@ bool RewriteModernObjC::IsTagDefinedInsideClass(ObjCContainerDecl *IDecl,
 /// It handles elaborated types, as well as enum types in the process.
 bool RewriteModernObjC::RewriteObjCFieldDeclType(QualType &Type,
                                                  std::string &Result) {
-  if (isa<TypedefType>(Type)) {
+  if (Type->getAs<TypedefType>()) {
     Result += "\t";
     return false;
   }
@@ -3723,7 +3724,7 @@ void RewriteModernObjC::RewriteObjCFieldDecl(FieldDecl *fieldDecl,
 void RewriteModernObjC::RewriteLocallyDefinedNamedAggregates(FieldDecl *fieldDecl,
                                              std::string &Result) {
   QualType Type = fieldDecl->getType();
-  if (isa<TypedefType>(Type))
+  if (Type->getAs<TypedefType>())
     return;
   if (Type->isArrayType())
     Type = Context->getBaseElementType(Type);
@@ -5356,16 +5357,15 @@ Stmt *RewriteModernObjC::SynthBlockInitExpr(BlockExpr *Exp,
       Exp = new (Context) DeclRefExpr(*Context, FD, false, FD->getType(),
                                       VK_LValue, SourceLocation());
       bool isNestedCapturedVar = false;
-      if (block)
-        for (const auto &CI : block->captures()) {
-          const VarDecl *variable = CI.getVariable();
-          if (variable == ND && CI.isNested()) {
-            assert (CI.isByRef() &&
-                    "SynthBlockInitExpr - captured block variable is not byref");
-            isNestedCapturedVar = true;
-            break;
-          }
+      for (const auto &CI : block->captures()) {
+        const VarDecl *variable = CI.getVariable();
+        if (variable == ND && CI.isNested()) {
+          assert(CI.isByRef() &&
+                 "SynthBlockInitExpr - captured block variable is not byref");
+          isNestedCapturedVar = true;
+          break;
         }
+      }
       // captured nested byref variable has its address passed. Do not take
       // its address again.
       if (!isNestedCapturedVar)
@@ -6723,7 +6723,7 @@ static void Write_IvarOffsetVar(RewriteModernObjC &RewriteObj,
                                 std::string &Result,
                                 ArrayRef<ObjCIvarDecl *> Ivars,
                                 ObjCInterfaceDecl *CDecl) {
-  // FIXME. visibilty of offset symbols may have to be set; for Darwin
+  // FIXME. visibility of offset symbols may have to be set; for Darwin
   // this is what happens:
   /**
    if (Ivar->getAccessControl() == ObjCIvarDecl::Private ||
@@ -7496,7 +7496,7 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
       if (D->isBitField())
         IvarT = GetGroupRecordTypeForObjCIvarBitfield(D);
 
-      if (!isa<TypedefType>(IvarT) && IvarT->isRecordType()) {
+      if (!IvarT->getAs<TypedefType>() && IvarT->isRecordType()) {
         RecordDecl *RD = IvarT->castAs<RecordType>()->getDecl();
         RD = RD->getDefinition();
         if (RD && !RD->getDeclName().getAsIdentifierInfo()) {

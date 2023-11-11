@@ -20,6 +20,7 @@
 #include "clang/Serialization/ASTBitCodes.h"
 #include "clang/Serialization/ContinuousRangeMap.h"
 #include "clang/Serialization/ModuleFileExtension.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SetVector.h"
@@ -58,6 +59,17 @@ enum ModuleKind {
   MK_PrebuiltModule
 };
 
+/// The input file info that has been loaded from an AST file.
+struct InputFileInfo {
+  std::string Filename;
+  uint64_t ContentHash;
+  off_t StoredSize;
+  time_t StoredTime;
+  bool Overridden;
+  bool Transient;
+  bool TopLevelModuleMap;
+};
+
 /// The input file that has been loaded from this AST file, along with
 /// bools indicating whether this was an overridden buffer or if it was
 /// out-of-date or not-found.
@@ -93,7 +105,7 @@ public:
   OptionalFileEntryRefDegradesToFileEntryPtr getFile() const {
     if (auto *P = Val.getPointer())
       return FileEntryRef(*P);
-    return None;
+    return std::nullopt;
   }
   bool isOverridden() const { return Val.getInt() == Overridden; }
   bool isOutOfDate() const { return Val.getInt() == OutOfDate; }
@@ -147,10 +159,6 @@ public:
   /// build this AST file.
   FileID OriginalSourceFileID;
 
-  /// The directory that the PCH was originally created in. Used to
-  /// allow resolving headers even after headers+PCH was moved to a new path.
-  std::string OriginalDir;
-
   std::string ModuleMapPath;
 
   /// Whether this precompiled header is a relocatable PCH file.
@@ -172,6 +180,9 @@ public:
   /// The signature of the AST block of the module file, this can be used to
   /// unique module files based on AST contents.
   ASTFileSignature ASTBlockHash;
+
+  /// The bit vector denoting usage of each header search entry (true = used).
+  llvm::BitVector SearchPathUsage;
 
   /// Whether this module has been directly imported by the
   /// user.
@@ -234,6 +245,9 @@ public:
 
   /// The input files that have been loaded from this AST file.
   std::vector<InputFile> InputFilesLoaded;
+
+  /// The input file infos that have been loaded from this AST file.
+  std::vector<InputFileInfo> InputFileInfosLoaded;
 
   // All user input files reside at the index range [0, NumUserInputFiles), and
   // system input files reside at [NumUserInputFiles, InputFilesLoaded.size()).

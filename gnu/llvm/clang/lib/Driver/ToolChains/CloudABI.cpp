@@ -47,7 +47,7 @@ void cloudabi::Linker::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("--no-dynamic-linker");
 
   // Provide PIE linker flags in case PIE is default for the architecture.
-  if (ToolChain.isPIEDefault()) {
+  if (ToolChain.isPIEDefault(Args)) {
     CmdArgs.push_back("-pie");
     CmdArgs.push_back("-zrelro");
   }
@@ -117,6 +117,8 @@ void CloudABI::addLibCxxIncludePaths(const llvm::opt::ArgList &DriverArgs,
 void CloudABI::AddCXXStdlibLibArgs(const ArgList &Args,
                                    ArgStringList &CmdArgs) const {
   CmdArgs.push_back("-lc++");
+  if (Args.hasArg(options::OPT_fexperimental_library))
+    CmdArgs.push_back("-lc++experimental");
   CmdArgs.push_back("-lc++abi");
   CmdArgs.push_back("-lunwind");
 }
@@ -125,7 +127,7 @@ Tool *CloudABI::buildLinker() const {
   return new tools::cloudabi::Linker(*this);
 }
 
-bool CloudABI::isPIEDefault() const {
+bool CloudABI::isPIEDefault(const llvm::opt::ArgList &Args) const {
   // Only enable PIE on architectures that support PC-relative
   // addressing. PC-relative addressing is required, as the process
   // startup code must be able to relocate itself.
