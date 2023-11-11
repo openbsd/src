@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2023/07/07 20:38:17 bluhm Exp $ */
+/*	$OpenBSD: util.c,v 1.14 2023/11/11 07:34:54 anton Exp $ */
 
 /*
  * Copyright (c) 2015 Martin Pieuchot
@@ -516,7 +516,7 @@ static uint32_t		rt_hashjitter;
 } while (0)
 
 int
-rt_hash(struct rtentry *rt, struct sockaddr *dst, uint32_t *src)
+rt_hash(struct rtentry *rt, const struct sockaddr *dst, uint32_t *src)
 {
 	uint32_t a, b, c;
 

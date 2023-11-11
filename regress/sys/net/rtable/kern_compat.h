@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_compat.h,v 1.15 2023/07/07 20:38:17 bluhm Exp $	*/
+/*	$OpenBSD: kern_compat.h,v 1.16 2023/11/11 07:34:54 anton Exp $	*/
 
 #ifndef _KERN_COMPAT_H_
 #define _KERN_COMPAT_H_
@@ -88,6 +88,6 @@ extern struct domain *domains[];
 
 struct rtentry;
 
-int	 rt_hash(struct rtentry *, struct sockaddr *, uint32_t *);
+int	 rt_hash(struct rtentry *, const struct sockaddr *, uint32_t *);
 
 #endif /* _KERN_COMPAT_H_ */
