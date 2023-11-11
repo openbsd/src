@@ -33,15 +33,6 @@ void ObjectContainerUniversalMachO::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
 
-lldb_private::ConstString ObjectContainerUniversalMachO::GetPluginNameStatic() {
-  static ConstString g_name("mach-o");
-  return g_name;
-}
-
-const char *ObjectContainerUniversalMachO::GetPluginDescriptionStatic() {
-  return "Universal mach-o object container reader.";
-}
-
 ObjectContainer *ObjectContainerUniversalMachO::CreateInstance(
     const lldb::ModuleSP &module_sp, DataBufferSP &data_sp,
     lldb::offset_t data_offset, const FileSpec *file,
@@ -125,29 +116,6 @@ bool ObjectContainerUniversalMachO::ParseHeader(
   return success;
 }
 
-void ObjectContainerUniversalMachO::Dump(Stream *s) const {
-  s->Printf("%p: ", static_cast<const void *>(this));
-  s->Indent();
-  const size_t num_archs = GetNumArchitectures();
-  const size_t num_objects = GetNumObjects();
-  s->Printf("ObjectContainerUniversalMachO, num_archs = %zu, num_objects = %zu",
-            num_archs, num_objects);
-  uint32_t i;
-  ArchSpec arch;
-  s->IndentMore();
-  for (i = 0; i < num_archs; i++) {
-    s->Indent();
-    GetArchitectureAtIndex(i, arch);
-    s->Printf("arch[%u] = %s\n", i, arch.GetArchitectureName());
-  }
-  for (i = 0; i < num_objects; i++) {
-    s->Indent();
-    s->Printf("object[%u] = %s\n", i, GetObjectNameAtIndex(i));
-  }
-  s->IndentLess();
-  s->EOL();
-}
-
 size_t ObjectContainerUniversalMachO::GetNumArchitectures() const {
   return m_header.nfat_arch;
 }
@@ -204,13 +172,6 @@ ObjectContainerUniversalMachO::GetObjectFile(const FileSpec *file) {
   }
   return ObjectFileSP();
 }
-
-// PluginInterface protocol
-lldb_private::ConstString ObjectContainerUniversalMachO::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t ObjectContainerUniversalMachO::GetPluginVersion() { return 1; }
 
 size_t ObjectContainerUniversalMachO::GetModuleSpecifications(
     const lldb_private::FileSpec &file, lldb::DataBufferSP &data_sp,

@@ -7,6 +7,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "MemoryTagManagerAArch64MTE.h"
+#include "llvm/Support/Error.h"
+#include <assert.h>
 
 using namespace lldb_private;
 
@@ -20,7 +22,7 @@ MemoryTagManagerAArch64MTE::GetLogicalTag(lldb::addr_t addr) const {
 }
 
 lldb::addr_t
-MemoryTagManagerAArch64MTE::RemoveNonAddressBits(lldb::addr_t addr) const {
+MemoryTagManagerAArch64MTE::RemoveTagBits(lldb::addr_t addr) const {
   // Here we're ignoring the whole top byte. If you've got MTE
   // you must also have TBI (top byte ignore).
   // The other 4 bits could contain other extension bits or
@@ -30,7 +32,7 @@ MemoryTagManagerAArch64MTE::RemoveNonAddressBits(lldb::addr_t addr) const {
 
 ptrdiff_t MemoryTagManagerAArch64MTE::AddressDiff(lldb::addr_t addr1,
                                                   lldb::addr_t addr2) const {
-  return RemoveNonAddressBits(addr1) - RemoveNonAddressBits(addr2);
+  return RemoveTagBits(addr1) - RemoveTagBits(addr2);
 }
 
 lldb::addr_t MemoryTagManagerAArch64MTE::GetGranuleSize() const {
@@ -66,6 +68,15 @@ MemoryTagManagerAArch64MTE::ExpandToGranule(TagRange range) const {
   return TagRange(new_start, new_len);
 }
 
+static llvm::Error MakeInvalidRangeErr(lldb::addr_t addr,
+                                       lldb::addr_t end_addr) {
+  return llvm::createStringError(
+      llvm::inconvertibleErrorCode(),
+      "End address (0x%" PRIx64
+      ") must be greater than the start address (0x%" PRIx64 ")",
+      end_addr, addr);
+}
+
 llvm::Expected<MemoryTagManager::TagRange>
 MemoryTagManagerAArch64MTE::MakeTaggedRange(
     lldb::addr_t addr, lldb::addr_t end_addr,
@@ -74,17 +85,12 @@ MemoryTagManagerAArch64MTE::MakeTaggedRange(
   // We must remove tags here otherwise an address with a higher
   // tag value will always be > the other.
   ptrdiff_t len = AddressDiff(end_addr, addr);
-  if (len <= 0) {
-    return llvm::createStringError(
-        llvm::inconvertibleErrorCode(),
-        "End address (0x%" PRIx64
-        ") must be greater than the start address (0x%" PRIx64 ")",
-        end_addr, addr);
-  }
+  if (len <= 0)
+    return MakeInvalidRangeErr(addr, end_addr);
 
   // Region addresses will not have memory tags. So when searching
   // we must use an untagged address.
-  MemoryRegionInfo::RangeType tag_range(RemoveNonAddressBits(addr), len);
+  MemoryRegionInfo::RangeType tag_range(RemoveTagBits(addr), len);
   tag_range = ExpandToGranule(tag_range);
 
   // Make a copy so we can use the original for errors and the final return.
@@ -123,6 +129,91 @@ MemoryTagManagerAArch64MTE::MakeTaggedRange(
   return tag_range;
 }
 
+llvm::Expected<std::vector<MemoryTagManager::TagRange>>
+MemoryTagManagerAArch64MTE::MakeTaggedRanges(
+    lldb::addr_t addr, lldb::addr_t end_addr,
+    const lldb_private::MemoryRegionInfos &memory_regions) const {
+  // First check that the range is not inverted.
+  // We must remove tags here otherwise an address with a higher
+  // tag value will always be > the other.
+  ptrdiff_t len = AddressDiff(end_addr, addr);
+  if (len <= 0)
+    return MakeInvalidRangeErr(addr, end_addr);
+
+  std::vector<MemoryTagManager::TagRange> tagged_ranges;
+  // No memory regions means no tagged memory at all
+  if (memory_regions.empty())
+    return tagged_ranges;
+
+  // For the logic to work regions must be in ascending order
+  // which is what you'd have if you used GetMemoryRegions.
+  assert(std::is_sorted(
+      memory_regions.begin(), memory_regions.end(),
+      [](const MemoryRegionInfo &lhs, const MemoryRegionInfo &rhs) {
+        return lhs.GetRange().GetRangeBase() < rhs.GetRange().GetRangeBase();
+      }));
+
+  // If we're debugging userspace in an OS like Linux that uses an MMU,
+  // the only reason we'd get overlapping regions is incorrect data.
+  // It is possible that won't hold for embedded with memory protection
+  // units (MPUs) that allow overlaps.
+  //
+  // For now we're going to assume the former, as there is no good way
+  // to handle overlaps. For example:
+  // < requested range >
+  // [--  region 1   --]
+  //           [-- region 2--]
+  // Where the first region will reduce the requested range to nothing
+  // and exit early before it sees the overlap.
+  MemoryRegionInfos::const_iterator overlap = std::adjacent_find(
+      memory_regions.begin(), memory_regions.end(),
+      [](const MemoryRegionInfo &lhs, const MemoryRegionInfo &rhs) {
+        return rhs.GetRange().DoesIntersect(lhs.GetRange());
+      });
+  UNUSED_IF_ASSERT_DISABLED(overlap);
+  assert(overlap == memory_regions.end());
+
+  // Region addresses will not have memory tags so when searching
+  // we must use an untagged address.
+  MemoryRegionInfo::RangeType range(RemoveTagBits(addr), len);
+  range = ExpandToGranule(range);
+
+  // While there are regions to check and the range has non zero length
+  for (const MemoryRegionInfo &region : memory_regions) {
+    // If range we're checking has been reduced to zero length, exit early
+    if (!range.IsValid())
+      break;
+
+    // If the region doesn't overlap the range at all, ignore it.
+    if (!region.GetRange().DoesIntersect(range))
+      continue;
+
+    // If it's tagged record this sub-range.
+    // (assuming that it's already granule aligned)
+    if (region.GetMemoryTagged()) {
+      // The region found may extend outside the requested range.
+      // For example the first region might start before the range.
+      // We must only add what covers the requested range.
+      lldb::addr_t start =
+          std::max(range.GetRangeBase(), region.GetRange().GetRangeBase());
+      lldb::addr_t end =
+          std::min(range.GetRangeEnd(), region.GetRange().GetRangeEnd());
+      tagged_ranges.push_back(MemoryTagManager::TagRange(start, end - start));
+    }
+
+    // Move the range up to start at the end of the region.
+    lldb::addr_t old_end = range.GetRangeEnd();
+    // This "slides" the range so it moves the end as well.
+    range.SetRangeBase(region.GetRange().GetRangeEnd());
+    // So we set the end back to the original end address after sliding it up.
+    range.SetRangeEnd(old_end);
+    // (if the above were to try to set end < begin the range will just be set
+    // to 0 size)
+  }
+
+  return tagged_ranges;
+}
+
 llvm::Expected<std::vector<lldb::addr_t>>
 MemoryTagManagerAArch64MTE::UnpackTagsData(const std::vector<uint8_t> &tags,
                                            size_t granules /*=0*/) const {
@@ -154,6 +245,71 @@ MemoryTagManagerAArch64MTE::UnpackTagsData(const std::vector<uint8_t> &tags,
   }
 
   return unpacked;
+}
+
+std::vector<lldb::addr_t>
+MemoryTagManagerAArch64MTE::UnpackTagsFromCoreFileSegment(
+    CoreReaderFn reader, lldb::addr_t tag_segment_virtual_address,
+    lldb::addr_t tag_segment_data_address, lldb::addr_t addr,
+    size_t len) const {
+  // We can assume by now that addr and len have been granule aligned by a tag
+  // manager. However because we have 2 tags per byte we need to round the range
+  // up again to align to 2 granule boundaries.
+  const size_t granule = GetGranuleSize();
+  const size_t two_granules = granule * 2;
+  lldb::addr_t aligned_addr = addr;
+  size_t aligned_len = len;
+
+  // First align the start address down.
+  if (aligned_addr % two_granules) {
+    assert(aligned_addr % two_granules == granule);
+    aligned_addr -= granule;
+    aligned_len += granule;
+  }
+
+  // Then align the length up.
+  bool aligned_length_up = false;
+  if (aligned_len % two_granules) {
+    assert(aligned_len % two_granules == granule);
+    aligned_len += granule;
+    aligned_length_up = true;
+  }
+
+  // ProcessElfCore should have validated this when it found the segment.
+  assert(aligned_addr >= tag_segment_virtual_address);
+
+  // By now we know that aligned_addr is aligned to a 2 granule boundary.
+  const size_t offset_granules =
+      (aligned_addr - tag_segment_virtual_address) / granule;
+  // 2 tags per byte.
+  const size_t file_offset_in_bytes = offset_granules / 2;
+
+  // By now we know that aligned_len is at least 2 granules.
+  const size_t tag_bytes_to_read = aligned_len / granule / 2;
+  std::vector<uint8_t> tag_data(tag_bytes_to_read);
+  const size_t bytes_copied =
+      reader(tag_segment_data_address + file_offset_in_bytes, tag_bytes_to_read,
+             tag_data.data());
+  UNUSED_IF_ASSERT_DISABLED(bytes_copied);
+  assert(bytes_copied == tag_bytes_to_read);
+
+  std::vector<lldb::addr_t> tags;
+  tags.reserve(2 * tag_data.size());
+  // No need to check the range of the tag value here as each occupies only 4
+  // bits.
+  for (auto tag_byte : tag_data) {
+    tags.push_back(tag_byte & 0xf);
+    tags.push_back(tag_byte >> 4);
+  }
+
+  // If we aligned the address down, don't return the extra first tag.
+  if (addr != aligned_addr)
+    tags.erase(tags.begin());
+  // If we aligned the length up, don't return the extra last tag.
+  if (aligned_length_up)
+    tags.pop_back();
+
+  return tags;
 }
 
 llvm::Expected<std::vector<uint8_t>> MemoryTagManagerAArch64MTE::PackTags(

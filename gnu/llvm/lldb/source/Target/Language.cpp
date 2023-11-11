@@ -108,10 +108,21 @@ void Language::ForEach(std::function<bool(Language *)> callback) {
     }
   });
 
-  std::lock_guard<std::mutex> guard(GetLanguagesMutex());
-  LanguagesMap &map(GetLanguagesMap());
-  for (const auto &entry : map) {
-    if (!callback(entry.second.get()))
+  // callback may call a method in Language that attempts to acquire the same
+  // lock (such as Language::ForEach or Language::FindPlugin). To avoid a
+  // deadlock, we do not use callback while holding the lock.
+  std::vector<Language *> loaded_plugins;
+  {
+    std::lock_guard<std::mutex> guard(GetLanguagesMutex());
+    LanguagesMap &map(GetLanguagesMap());
+    for (const auto &entry : map) {
+      if (entry.second)
+        loaded_plugins.push_back(entry.second.get());
+    }
+  }
+
+  for (auto *lang : loaded_plugins) {
+    if (!callback(lang))
       break;
   }
 }
@@ -133,7 +144,7 @@ Language::GetHardcodedSynthetics() {
   return {};
 }
 
-std::vector<ConstString>
+std::vector<FormattersMatchCandidate>
 Language::GetPossibleFormattersMatches(ValueObject &valobj,
                                        lldb::DynamicValueType use_dynamic) {
   return {};
@@ -208,6 +219,17 @@ const char *Language::GetNameForLanguageType(LanguageType language) {
     return language_names[language].name;
   else
     return language_names[eLanguageTypeUnknown].name;
+}
+
+void Language::PrintSupportedLanguagesForExpressions(Stream &s,
+                                                     llvm::StringRef prefix,
+                                                     llvm::StringRef suffix) {
+  auto supported = Language::GetLanguagesSupportingTypeSystemsForExpressions();
+  for (size_t idx = 0; idx < num_languages; ++idx) {
+    auto const &lang = language_names[idx];
+    if (supported[lang.type])
+      s << prefix << lang.name << suffix;
+  }
 }
 
 void Language::PrintAllLanguages(Stream &s, const char *prefix,
@@ -415,6 +437,14 @@ bool Language::GetFormatterPrefixSuffix(ValueObject &valobj,
                                         std::string &prefix,
                                         std::string &suffix) {
   return false;
+}
+
+bool Language::DemangledNameContainsPath(llvm::StringRef path, 
+                                         ConstString demangled) const {
+  // The base implementation does a simple contains comparision:
+  if (path.empty())
+    return false;
+  return demangled.GetStringRef().contains(path);                                         
 }
 
 DumpValueObjectOptions::DeclPrintingHelper Language::GetDeclPrintingHelper() {

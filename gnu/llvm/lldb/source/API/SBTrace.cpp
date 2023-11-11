@@ -6,9 +6,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "SBReproducerPrivate.h"
 #include "lldb/Target/Process.h"
+#include "lldb/Utility/Instrumentation.h"
 
+#include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBStructuredData.h"
 #include "lldb/API/SBThread.h"
 #include "lldb/API/SBTrace.h"
@@ -19,36 +20,87 @@
 
 using namespace lldb;
 using namespace lldb_private;
+using namespace llvm;
 
-SBTrace::SBTrace() { LLDB_RECORD_CONSTRUCTOR_NO_ARGS(SBTrace); }
+SBTrace::SBTrace() { LLDB_INSTRUMENT_VA(this); }
 
 SBTrace::SBTrace(const lldb::TraceSP &trace_sp) : m_opaque_sp(trace_sp) {
-  LLDB_RECORD_CONSTRUCTOR(SBTrace, (const lldb::TraceSP &), trace_sp);
+  LLDB_INSTRUMENT_VA(this, trace_sp);
+}
+
+SBTrace SBTrace::LoadTraceFromFile(SBError &error, SBDebugger &debugger,
+                                   const SBFileSpec &trace_description_file) {
+  LLDB_INSTRUMENT_VA(error, debugger, trace_description_file);
+
+  Expected<lldb::TraceSP> trace_or_err = Trace::LoadPostMortemTraceFromFile(
+      debugger.ref(), trace_description_file.ref());
+
+  if (!trace_or_err) {
+    error.SetErrorString(toString(trace_or_err.takeError()).c_str());
+    return SBTrace();
+  }
+
+  return SBTrace(trace_or_err.get());
+}
+
+SBTraceCursor SBTrace::CreateNewCursor(SBError &error, SBThread &thread) {
+  LLDB_INSTRUMENT_VA(this, error, thread);
+
+  if (!m_opaque_sp) {
+    error.SetErrorString("error: invalid trace");
+    return SBTraceCursor();
+  }
+  if (!thread.get()) {
+    error.SetErrorString("error: invalid thread");
+    return SBTraceCursor();
+  }
+
+  if (llvm::Expected<lldb::TraceCursorSP> trace_cursor_sp =
+          m_opaque_sp->CreateNewCursor(*thread.get())) {
+    return SBTraceCursor(std::move(*trace_cursor_sp));
+  } else {
+    error.SetErrorString(llvm::toString(trace_cursor_sp.takeError()).c_str());
+    return SBTraceCursor();
+  }
+}
+
+SBFileSpec SBTrace::SaveToDisk(SBError &error, const SBFileSpec &bundle_dir,
+                               bool compact) {
+  LLDB_INSTRUMENT_VA(this, error, bundle_dir, compact);
+
+  error.Clear();
+  SBFileSpec file_spec;
+
+  if (!m_opaque_sp)
+    error.SetErrorString("error: invalid trace");
+  else if (Expected<FileSpec> desc_file =
+               m_opaque_sp->SaveToDisk(bundle_dir.ref(), compact))
+    file_spec.SetFileSpec(*desc_file);
+  else
+    error.SetErrorString(llvm::toString(desc_file.takeError()).c_str());
+
+  return file_spec;
 }
 
 const char *SBTrace::GetStartConfigurationHelp() {
-  LLDB_RECORD_METHOD_NO_ARGS(const char *, SBTrace, GetStartConfigurationHelp);
-  return LLDB_RECORD_RESULT(
-      m_opaque_sp ? m_opaque_sp->GetStartConfigurationHelp() : nullptr);
+  LLDB_INSTRUMENT_VA(this);
+  return m_opaque_sp ? m_opaque_sp->GetStartConfigurationHelp() : nullptr;
 }
 
 SBError SBTrace::Start(const SBStructuredData &configuration) {
-  LLDB_RECORD_METHOD(SBError, SBTrace, Start, (const SBStructuredData &),
-                     configuration);
+  LLDB_INSTRUMENT_VA(this, configuration);
   SBError error;
   if (!m_opaque_sp)
     error.SetErrorString("error: invalid trace");
   else if (llvm::Error err =
                m_opaque_sp->Start(configuration.m_impl_up->GetObjectSP()))
     error.SetErrorString(llvm::toString(std::move(err)).c_str());
-  return LLDB_RECORD_RESULT(error);
+  return error;
 }
 
 SBError SBTrace::Start(const SBThread &thread,
                        const SBStructuredData &configuration) {
-  LLDB_RECORD_METHOD(SBError, SBTrace, Start,
-                     (const SBThread &, const SBStructuredData &), thread,
-                     configuration);
+  LLDB_INSTRUMENT_VA(this, thread, configuration);
 
   SBError error;
   if (!m_opaque_sp)
@@ -60,55 +112,35 @@ SBError SBTrace::Start(const SBThread &thread,
       error.SetErrorString(llvm::toString(std::move(err)).c_str());
   }
 
-  return LLDB_RECORD_RESULT(error);
+  return error;
 }
 
 SBError SBTrace::Stop() {
-  LLDB_RECORD_METHOD_NO_ARGS(SBError, SBTrace, Stop);
+  LLDB_INSTRUMENT_VA(this);
   SBError error;
   if (!m_opaque_sp)
     error.SetErrorString("error: invalid trace");
   else if (llvm::Error err = m_opaque_sp->Stop())
     error.SetErrorString(llvm::toString(std::move(err)).c_str());
-  return LLDB_RECORD_RESULT(error);
+  return error;
 }
 
 SBError SBTrace::Stop(const SBThread &thread) {
-  LLDB_RECORD_METHOD(SBError, SBTrace, Stop, (const SBThread &), thread);
+  LLDB_INSTRUMENT_VA(this, thread);
   SBError error;
   if (!m_opaque_sp)
     error.SetErrorString("error: invalid trace");
   else if (llvm::Error err = m_opaque_sp->Stop({thread.GetThreadID()}))
     error.SetErrorString(llvm::toString(std::move(err)).c_str());
-  return LLDB_RECORD_RESULT(error);
+  return error;
 }
 
 bool SBTrace::IsValid() {
-  LLDB_RECORD_METHOD_NO_ARGS(bool, SBTrace, IsValid);
+  LLDB_INSTRUMENT_VA(this);
   return this->operator bool();
 }
 
 SBTrace::operator bool() const {
-  LLDB_RECORD_METHOD_CONST_NO_ARGS(bool, SBTrace, operator bool);
+  LLDB_INSTRUMENT_VA(this);
   return (bool)m_opaque_sp;
-}
-
-namespace lldb_private {
-namespace repro {
-
-template <>
-void RegisterMethods<SBTrace>(Registry &R) {
-  LLDB_REGISTER_CONSTRUCTOR(SBTrace, ());
-  LLDB_REGISTER_CONSTRUCTOR(SBTrace, (const lldb::TraceSP &));
-  LLDB_REGISTER_METHOD(SBError, SBTrace, Start, (const SBStructuredData &));
-  LLDB_REGISTER_METHOD(SBError, SBTrace, Start,
-                       (const SBThread &, const SBStructuredData &));
-  LLDB_REGISTER_METHOD(SBError, SBTrace, Stop, (const SBThread &));
-  LLDB_REGISTER_METHOD(SBError, SBTrace, Stop, ());
-  LLDB_REGISTER_METHOD(bool, SBTrace, IsValid, ());
-  LLDB_REGISTER_METHOD(const char *, SBTrace, GetStartConfigurationHelp, ());
-  LLDB_REGISTER_METHOD_CONST(bool, SBTrace, operator bool, ());
-}
-
-}
 }

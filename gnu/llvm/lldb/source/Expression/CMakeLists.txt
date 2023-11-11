@@ -1,6 +1,7 @@
 add_lldb_library(lldbExpression
   DiagnosticManager.cpp
   DWARFExpression.cpp
+  DWARFExpressionList.cpp
   Expression.cpp
   ExpressionVariable.cpp
   FunctionCaller.cpp
@@ -23,7 +24,6 @@ add_lldb_library(lldbExpression
     lldbSymbol
     lldbTarget
     lldbUtility
-    lldbPluginCPlusPlusLanguage
     lldbPluginObjectFileJIT
 
   LINK_COMPONENTS

@@ -64,6 +64,11 @@ public:
   explicit Status(const char *format, ...)
       __attribute__((format(printf, 2, 3)));
 
+  template <typename... Args>
+  static Status createWithFormat(const char *format, Args &&...args) {
+    return Status(llvm::formatv(format, std::forward<Args>(args)...));
+  }
+
   ~Status();
 
   // llvm::Error support
@@ -184,22 +189,17 @@ public:
   ///     success (non-erro), \b false otherwise.
   bool Success() const;
 
-  /// Test for a failure due to a generic interrupt.
-  ///
-  /// Returns true if the error code in this object was caused by an
-  /// interrupt. At present only supports Posix EINTR.
-  ///
-  /// \return
-  ///     \b true if this object contains an value that describes
-  ///     failure due to interrupt, \b false otherwise.
-  bool WasInterrupted() const;
-
 protected:
   /// Member variables
   ValueType m_code = 0; ///< Status code as an integer value.
   lldb::ErrorType m_type =
       lldb::eErrorTypeInvalid;  ///< The type of the above error code.
   mutable std::string m_string; ///< A string representation of the error code.
+private:
+  explicit Status(const llvm::formatv_object_base &payload) {
+    SetErrorToGenericError();
+    m_string = payload.str();
+  }
 };
 
 } // namespace lldb_private

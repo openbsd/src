@@ -54,11 +54,6 @@ void InstrumentationRuntimeMainThreadChecker::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
 
-lldb_private::ConstString
-InstrumentationRuntimeMainThreadChecker::GetPluginNameStatic() {
-  return ConstString("MainThreadChecker");
-}
-
 lldb::InstrumentationRuntimeType
 InstrumentationRuntimeMainThreadChecker::GetTypeStatic() {
   return eInstrumentationRuntimeTypeMainThreadChecker;
@@ -105,14 +100,14 @@ InstrumentationRuntimeMainThreadChecker::RetrieveReportData(
   if (!apiname_ptr)
     return StructuredData::ObjectSP();
 
-  std::string apiName = "";
+  std::string apiName;
   Status read_error;
   target.ReadCStringFromMemory(apiname_ptr, apiName, read_error);
   if (read_error.Fail())
     return StructuredData::ObjectSP();
 
-  std::string className = "";
-  std::string selector = "";
+  std::string className;
+  std::string selector;
   if (apiName.substr(0, 2) == "-[") {
     size_t spacePos = apiName.find(' ');
     if (spacePos != std::string::npos) {
@@ -219,8 +214,9 @@ void InstrumentationRuntimeMainThreadChecker::Activate() {
           .CreateBreakpoint(symbol_address, /*internal=*/true,
                             /*hardware=*/false)
           .get();
+  const bool sync = false;
   breakpoint->SetCallback(
-      InstrumentationRuntimeMainThreadChecker::NotifyBreakpointHit, this, true);
+      InstrumentationRuntimeMainThreadChecker::NotifyBreakpointHit, this, sync);
   breakpoint->SetBreakpointKind("main-thread-checker-report");
   SetBreakpointID(breakpoint->GetID());
 

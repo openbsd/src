@@ -8,20 +8,25 @@
 
 #include "lldb/Symbol/LocateSymbolFile.h"
 
+#include "lldb/Core/Debugger.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/ModuleSpec.h"
+#include "lldb/Core/Progress.h"
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/DataBuffer.h"
 #include "lldb/Utility/DataExtractor.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
-#include "lldb/Utility/Reproducer.h"
 #include "lldb/Utility/StreamString.h"
 #include "lldb/Utility/Timer.h"
 #include "lldb/Utility/UUID.h"
 
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/ThreadPool.h"
 
 // From MacOSX system header "mach/machine.h"
 typedef int cpu_type_t;
@@ -128,7 +133,8 @@ static bool LookForDsymNextToExecutablePath(const ModuleSpec &mod_spec,
 
   if (FileSystem::Instance().Exists(dsym_yaa_fspec)) {
     ModuleSpec mutable_mod_spec = mod_spec;
-    if (Symbols::DownloadObjectAndSymbolFile(mutable_mod_spec, true) &&
+    Status error;
+    if (Symbols::DownloadObjectAndSymbolFile(mutable_mod_spec, error, true) &&
         FileSystem::Instance().Exists(mutable_mod_spec.GetSymbolFileSpec())) {
       dsym_fspec = mutable_mod_spec.GetSymbolFileSpec();
       return true;
@@ -152,7 +158,7 @@ static bool LookForDsymNextToExecutablePath(const ModuleSpec &mod_spec,
 
 static bool LocateDSYMInVincinityOfExecutable(const ModuleSpec &module_spec,
                                               FileSpec &dsym_fspec) {
-  Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+  Log *log = GetLog(LLDBLog::Host);
   const FileSpec &exec_fspec = module_spec.GetFileSpec();
   if (exec_fspec) {
     if (::LookForDsymNextToExecutablePath(module_spec, exec_fspec,
@@ -261,6 +267,10 @@ Symbols::LocateExecutableSymbolFile(const ModuleSpec &module_spec,
       FileSystem::Instance().Exists(symbol_file_spec))
     return symbol_file_spec;
 
+  Progress progress(llvm::formatv(
+      "Locating external symbol file for {0}",
+      module_spec.GetFileSpec().GetFilename().AsCString("<Unknown>")));
+
   FileSpecList debug_file_search_paths = default_search_paths;
 
   // Add module directory.
@@ -355,23 +365,68 @@ Symbols::LocateExecutableSymbolFile(const ModuleSpec &module_spec,
         lldb_private::ModuleSpecList specs;
         const size_t num_specs =
             ObjectFile::GetModuleSpecifications(file_spec, 0, 0, specs);
-        assert(num_specs <= 1 &&
-               "Symbol Vendor supports only a single architecture");
-        if (num_specs == 1) {
-          ModuleSpec mspec;
-          if (specs.GetModuleSpecAtIndex(0, mspec)) {
-            // Skip the uuids check if module_uuid is invalid. For example,
-            // this happens for *.dwp files since at the moment llvm-dwp
-            // doesn't output build ids, nor does binutils dwp.
-            if (!module_uuid.IsValid() || module_uuid == mspec.GetUUID())
-              return file_spec;
+        ModuleSpec mspec;
+        bool valid_mspec = false;
+        if (num_specs == 2) {
+          // Special case to handle both i386 and i686 from ObjectFilePECOFF
+          ModuleSpec mspec2;
+          if (specs.GetModuleSpecAtIndex(0, mspec) &&
+              specs.GetModuleSpecAtIndex(1, mspec2) &&
+              mspec.GetArchitecture().GetTriple().isCompatibleWith(
+                  mspec2.GetArchitecture().GetTriple())) {
+            valid_mspec = true;
           }
+        }
+        if (!valid_mspec) {
+          assert(num_specs <= 1 &&
+                 "Symbol Vendor supports only a single architecture");
+          if (num_specs == 1) {
+            if (specs.GetModuleSpecAtIndex(0, mspec)) {
+              valid_mspec = true;
+            }
+          }
+        }
+        if (valid_mspec) {
+          // Skip the uuids check if module_uuid is invalid. For example,
+          // this happens for *.dwp files since at the moment llvm-dwp
+          // doesn't output build ids, nor does binutils dwp.
+          if (!module_uuid.IsValid() || module_uuid == mspec.GetUUID())
+            return file_spec;
         }
       }
     }
   }
 
   return LocateExecutableSymbolFileDsym(module_spec);
+}
+
+void Symbols::DownloadSymbolFileAsync(const UUID &uuid) {
+  if (!ModuleList::GetGlobalModuleListProperties().GetEnableBackgroundLookup())
+    return;
+
+  static llvm::SmallSet<UUID, 8> g_seen_uuids;
+  static std::mutex g_mutex;
+  Debugger::GetThreadPool().async([=]() {
+    {
+      std::lock_guard<std::mutex> guard(g_mutex);
+      if (g_seen_uuids.count(uuid))
+        return;
+      g_seen_uuids.insert(uuid);
+    }
+
+    Status error;
+    ModuleSpec module_spec;
+    module_spec.GetUUID() = uuid;
+    if (!Symbols::DownloadObjectAndSymbolFile(module_spec, error,
+                                              /*force_lookup=*/true,
+                                              /*copy_executable=*/false))
+      return;
+
+    if (error.Fail())
+      return;
+
+    Debugger::ReportSymbolChange(module_spec);
+  });
 }
 
 #if !defined(__APPLE__)
@@ -384,7 +439,8 @@ FileSpec Symbols::FindSymbolFileInBundle(const FileSpec &symfile_bundle,
 }
 
 bool Symbols::DownloadObjectAndSymbolFile(ModuleSpec &module_spec,
-                                          bool force_lookup) {
+                                          Status &error, bool force_lookup,
+                                          bool copy_executable) {
   // Fill in the module_spec.GetFileSpec() for the object file and/or the
   // module_spec.GetSymbolFileSpec() for the debug symbols file.
   return false;

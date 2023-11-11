@@ -13,17 +13,22 @@
 #include <algorithm>
 #include <memory>
 #include <mutex>
+#include <optional>
 
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/BreakpointSite.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
+#include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Host/XML.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/OptionValueProperties.h"
+#include "lldb/Interpreter/OptionValueString.h"
+#include "lldb/Interpreter/Options.h"
 #include "lldb/Symbol/LocateSymbolFile.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolFile.h"
@@ -31,6 +36,7 @@
 #include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/ProcessInfo.h"
 #include "lldb/Utility/Status.h"
@@ -47,14 +53,136 @@
 using namespace lldb;
 using namespace lldb_private;
 
-/// Default Constructor
-PlatformDarwin::PlatformDarwin(bool is_host) : PlatformPOSIX(is_host) {}
+static Status ExceptionMaskValidator(const char *string, void *unused) {
+  Status error;
+  llvm::StringRef str_ref(string);
+  llvm::SmallVector<llvm::StringRef> candidates;
+  str_ref.split(candidates, '|');
+  for (auto candidate : candidates) {
+    if (!(candidate == "EXC_BAD_ACCESS"
+          || candidate == "EXC_BAD_INSTRUCTION"
+          || candidate == "EXC_ARITHMETIC"
+          || candidate == "EXC_RESOURCE"
+          || candidate == "EXC_GUARD")) {
+      error.SetErrorStringWithFormat("invalid exception type: '%s'",
+          candidate.str().c_str());
+      return error;
+    }
+  }
+  return {};
+}
 
 /// Destructor.
 ///
 /// The destructor is virtual since this class is designed to be
 /// inherited from by the plug-in instance.
 PlatformDarwin::~PlatformDarwin() = default;
+
+// Static Variables
+static uint32_t g_initialize_count = 0;
+
+void PlatformDarwin::Initialize() {
+  Platform::Initialize();
+
+  if (g_initialize_count++ == 0) {
+    PluginManager::RegisterPlugin(PlatformDarwin::GetPluginNameStatic(),
+                                  PlatformDarwin::GetDescriptionStatic(),
+                                  PlatformDarwin::CreateInstance,
+                                  PlatformDarwin::DebuggerInitialize);
+  }
+}
+
+void PlatformDarwin::Terminate() {
+  if (g_initialize_count > 0) {
+    if (--g_initialize_count == 0) {
+      PluginManager::UnregisterPlugin(PlatformDarwin::CreateInstance);
+    }
+  }
+
+  Platform::Terminate();
+}
+
+llvm::StringRef PlatformDarwin::GetDescriptionStatic() {
+  return "Darwin platform plug-in.";
+}
+
+PlatformSP PlatformDarwin::CreateInstance(bool force, const ArchSpec *arch) {
+   // We only create subclasses of the PlatformDarwin plugin.
+   return PlatformSP();
+}
+
+#define LLDB_PROPERTIES_platformdarwin
+#include "PlatformMacOSXProperties.inc"
+
+#define LLDB_PROPERTIES_platformdarwin
+enum {
+#include "PlatformMacOSXPropertiesEnum.inc"
+};
+
+class PlatformDarwinProperties : public Properties {
+public:
+  static ConstString &GetSettingName() {
+    static ConstString g_setting_name("darwin");
+    return g_setting_name;
+  }
+
+  PlatformDarwinProperties() : Properties() {
+    m_collection_sp = std::make_shared<OptionValueProperties>(GetSettingName());
+    m_collection_sp->Initialize(g_platformdarwin_properties);
+  }
+
+  ~PlatformDarwinProperties() override = default;
+
+  const char *GetIgnoredExceptions() const {
+    const uint32_t idx = ePropertyIgnoredExceptions;
+    const OptionValueString *option_value =
+        m_collection_sp->GetPropertyAtIndexAsOptionValueString(nullptr, false,
+                                                               idx);
+    assert(option_value);
+    return option_value->GetCurrentValue();
+  }
+
+  OptionValueString *GetIgnoredExceptionValue() {
+    const uint32_t idx = ePropertyIgnoredExceptions;
+    OptionValueString *option_value =
+        m_collection_sp->GetPropertyAtIndexAsOptionValueString(nullptr, false,
+                                                               idx);
+    assert(option_value);
+    return option_value;
+  }
+};
+
+static PlatformDarwinProperties &GetGlobalProperties() {
+  static PlatformDarwinProperties g_settings;
+  return g_settings;
+}
+
+void PlatformDarwin::DebuggerInitialize(
+    lldb_private::Debugger &debugger) {
+  if (!PluginManager::GetSettingForPlatformPlugin(
+          debugger, PlatformDarwinProperties::GetSettingName())) {
+    const bool is_global_setting = false;
+    PluginManager::CreateSettingForPlatformPlugin(
+        debugger, GetGlobalProperties().GetValueProperties(),
+        ConstString("Properties for the Darwin platform plug-in."),
+        is_global_setting);
+    OptionValueString *value = GetGlobalProperties().GetIgnoredExceptionValue();
+    value->SetValidator(ExceptionMaskValidator);
+  }
+}
+
+Args
+PlatformDarwin::GetExtraStartupCommands() {
+  std::string ignored_exceptions
+      = GetGlobalProperties().GetIgnoredExceptions();
+  if (ignored_exceptions.empty())
+    return {};
+  Args ret_args;
+  std::string packet = "QSetIgnoredExceptions:";
+  packet.append(ignored_exceptions);
+  ret_args.AppendArgument(packet);
+  return ret_args;
+}
 
 lldb_private::Status
 PlatformDarwin::PutFile(const lldb_private::FileSpec &source,
@@ -87,8 +215,8 @@ FileSpecList PlatformDarwin::LocateExecutableScriptingResources(
         if (objfile) {
           FileSpec symfile_spec(objfile->GetFileSpec());
           if (symfile_spec &&
-              strcasestr(symfile_spec.GetPath().c_str(),
-                         ".dSYM/Contents/Resources/DWARF") != nullptr &&
+              llvm::StringRef(symfile_spec.GetPath())
+                  .contains_insensitive(".dSYM/Contents/Resources/DWARF") &&
               FileSystem::Instance().Exists(symfile_spec)) {
             while (module_spec.GetFilename()) {
               std::string module_basename(
@@ -181,7 +309,7 @@ FileSpecList PlatformDarwin::LocateExecutableScriptingResources(
               if (module_spec.GetFilename() == filename_no_extension)
                 break;
 
-              module_spec.GetFilename() = filename_no_extension;
+              module_spec.SetFilename(filename_no_extension);
             }
           }
         }
@@ -200,167 +328,6 @@ Status PlatformDarwin::ResolveSymbolFile(Target &target,
                                                sym_spec.GetArchitecturePtr());
   }
   return {};
-}
-
-static lldb_private::Status
-MakeCacheFolderForFile(const FileSpec &module_cache_spec) {
-  FileSpec module_cache_folder =
-      module_cache_spec.CopyByRemovingLastPathComponent();
-  return llvm::sys::fs::create_directory(module_cache_folder.GetPath());
-}
-
-static lldb_private::Status
-BringInRemoteFile(Platform *platform,
-                  const lldb_private::ModuleSpec &module_spec,
-                  const FileSpec &module_cache_spec) {
-  MakeCacheFolderForFile(module_cache_spec);
-  Status err = platform->GetFile(module_spec.GetFileSpec(), module_cache_spec);
-  return err;
-}
-
-lldb_private::Status PlatformDarwin::GetSharedModuleWithLocalCache(
-    const lldb_private::ModuleSpec &module_spec, lldb::ModuleSP &module_sp,
-    const lldb_private::FileSpecList *module_search_paths_ptr,
-    llvm::SmallVectorImpl<lldb::ModuleSP> *old_modules, bool *did_create_ptr) {
-
-  Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-  LLDB_LOGF(log,
-            "[%s] Trying to find module %s/%s - platform path %s/%s symbol "
-            "path %s/%s",
-            (IsHost() ? "host" : "remote"),
-            module_spec.GetFileSpec().GetDirectory().AsCString(),
-            module_spec.GetFileSpec().GetFilename().AsCString(),
-            module_spec.GetPlatformFileSpec().GetDirectory().AsCString(),
-            module_spec.GetPlatformFileSpec().GetFilename().AsCString(),
-            module_spec.GetSymbolFileSpec().GetDirectory().AsCString(),
-            module_spec.GetSymbolFileSpec().GetFilename().AsCString());
-
-  Status err;
-
-  if (IsHost()) {
-    // When debugging on the host, we are most likely using the same shared
-    // cache as our inferior. The dylibs from the shared cache might not
-    // exist on the filesystem, so let's use the images in our own memory
-    // to create the modules.
-
-    // Check if the requested image is in our shared cache.
-    SharedCacheImageInfo image_info =
-        HostInfo::GetSharedCacheImageInfo(module_spec.GetFileSpec().GetPath());
-
-    // If we found it and it has the correct UUID, let's proceed with
-    // creating a module from the memory contents.
-    if (image_info.uuid &&
-        (!module_spec.GetUUID() || module_spec.GetUUID() == image_info.uuid)) {
-      ModuleSpec shared_cache_spec(module_spec.GetFileSpec(), image_info.uuid,
-                                   image_info.data_sp);
-      err = ModuleList::GetSharedModule(shared_cache_spec, module_sp,
-                                        module_search_paths_ptr, old_modules,
-                                        did_create_ptr);
-      if (module_sp)
-        return err;
-    }
-  }
-
-  err = ModuleList::GetSharedModule(module_spec, module_sp,
-                                    module_search_paths_ptr, old_modules,
-                                    did_create_ptr);
-  if (module_sp)
-    return err;
-
-  if (!IsHost()) {
-    std::string cache_path(GetLocalCacheDirectory());
-    // Only search for a locally cached file if we have a valid cache path
-    if (!cache_path.empty()) {
-      std::string module_path(module_spec.GetFileSpec().GetPath());
-      cache_path.append(module_path);
-      FileSpec module_cache_spec(cache_path);
-
-      // if rsync is supported, always bring in the file - rsync will be very
-      // efficient when files are the same on the local and remote end of the
-      // connection
-      if (this->GetSupportsRSync()) {
-        err = BringInRemoteFile(this, module_spec, module_cache_spec);
-        if (err.Fail())
-          return err;
-        if (FileSystem::Instance().Exists(module_cache_spec)) {
-          Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-          LLDB_LOGF(log, "[%s] module %s/%s was rsynced and is now there",
-                    (IsHost() ? "host" : "remote"),
-                    module_spec.GetFileSpec().GetDirectory().AsCString(),
-                    module_spec.GetFileSpec().GetFilename().AsCString());
-          ModuleSpec local_spec(module_cache_spec,
-                                module_spec.GetArchitecture());
-          module_sp = std::make_shared<Module>(local_spec);
-          module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
-          return Status();
-        }
-      }
-
-      // try to find the module in the cache
-      if (FileSystem::Instance().Exists(module_cache_spec)) {
-        // get the local and remote MD5 and compare
-        if (m_remote_platform_sp) {
-          // when going over the *slow* GDB remote transfer mechanism we first
-          // check the hashes of the files - and only do the actual transfer if
-          // they differ
-          uint64_t high_local, high_remote, low_local, low_remote;
-          auto MD5 = llvm::sys::fs::md5_contents(module_cache_spec.GetPath());
-          if (!MD5)
-            return Status(MD5.getError());
-          std::tie(high_local, low_local) = MD5->words();
-
-          m_remote_platform_sp->CalculateMD5(module_spec.GetFileSpec(),
-                                             low_remote, high_remote);
-          if (low_local != low_remote || high_local != high_remote) {
-            // bring in the remote file
-            Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-            LLDB_LOGF(log,
-                      "[%s] module %s/%s needs to be replaced from remote copy",
-                      (IsHost() ? "host" : "remote"),
-                      module_spec.GetFileSpec().GetDirectory().AsCString(),
-                      module_spec.GetFileSpec().GetFilename().AsCString());
-            Status err =
-                BringInRemoteFile(this, module_spec, module_cache_spec);
-            if (err.Fail())
-              return err;
-          }
-        }
-
-        ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
-        module_sp = std::make_shared<Module>(local_spec);
-        module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
-        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-        LLDB_LOGF(log, "[%s] module %s/%s was found in the cache",
-                  (IsHost() ? "host" : "remote"),
-                  module_spec.GetFileSpec().GetDirectory().AsCString(),
-                  module_spec.GetFileSpec().GetFilename().AsCString());
-        return Status();
-      }
-
-      // bring in the remote module file
-      LLDB_LOGF(log, "[%s] module %s/%s needs to come in remotely",
-                (IsHost() ? "host" : "remote"),
-                module_spec.GetFileSpec().GetDirectory().AsCString(),
-                module_spec.GetFileSpec().GetFilename().AsCString());
-      Status err = BringInRemoteFile(this, module_spec, module_cache_spec);
-      if (err.Fail())
-        return err;
-      if (FileSystem::Instance().Exists(module_cache_spec)) {
-        Log *log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_PLATFORM));
-        LLDB_LOGF(log, "[%s] module %s/%s is now cached and fine",
-                  (IsHost() ? "host" : "remote"),
-                  module_spec.GetFileSpec().GetDirectory().AsCString(),
-                  module_spec.GetFileSpec().GetFilename().AsCString());
-        ModuleSpec local_spec(module_cache_spec, module_spec.GetArchitecture());
-        module_sp = std::make_shared<Module>(local_spec);
-        module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
-        return Status();
-      } else
-        return Status("unable to obtain valid module file");
-    } else
-      return Status("no cache path");
-  } else
-    return Status("unable to resolve module");
 }
 
 Status PlatformDarwin::GetSharedModule(
@@ -462,7 +429,7 @@ PlatformDarwin::GetSoftwareBreakpointTrapOpcode(Target &target,
 
   case llvm::Triple::thumb:
     bp_is_thumb = true;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case llvm::Triple::arm: {
     static const uint8_t g_arm_breakpoint_opcode[] = {0xFE, 0xDE, 0xFF, 0xE7};
     static const uint8_t g_thumb_breakpooint_opcode[] = {0xFE, 0xDE};
@@ -514,632 +481,138 @@ bool PlatformDarwin::ModuleIsExcludedForUnconstrainedSearches(
   return obj_type == ObjectFile::eTypeDynamicLinker;
 }
 
-bool PlatformDarwin::x86GetSupportedArchitectureAtIndex(uint32_t idx,
-                                                        ArchSpec &arch) {
+void PlatformDarwin::x86GetSupportedArchitectures(
+    std::vector<ArchSpec> &archs) {
   ArchSpec host_arch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
+  archs.push_back(host_arch);
+
   if (host_arch.GetCore() == ArchSpec::eCore_x86_64_x86_64h) {
-    switch (idx) {
-    case 0:
-      arch = host_arch;
-      return true;
-
-    case 1:
-      arch.SetTriple("x86_64-apple-macosx");
-      return true;
-
-    case 2:
-      arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
-      return true;
-
-    default:
-      return false;
-    }
+    archs.push_back(ArchSpec("x86_64-apple-macosx"));
+    archs.push_back(HostInfo::GetArchitecture(HostInfo::eArchKind32));
   } else {
-    if (idx == 0) {
-      arch = HostInfo::GetArchitecture(HostInfo::eArchKindDefault);
-      return arch.IsValid();
-    } else if (idx == 1) {
-      ArchSpec platform_arch(
-          HostInfo::GetArchitecture(HostInfo::eArchKindDefault));
-      ArchSpec platform_arch64(
-          HostInfo::GetArchitecture(HostInfo::eArchKind64));
-      if (platform_arch.IsExactMatch(platform_arch64)) {
-        // This macosx platform supports both 32 and 64 bit. Since we already
-        // returned the 64 bit arch for idx == 0, return the 32 bit arch for
-        // idx == 1
-        arch = HostInfo::GetArchitecture(HostInfo::eArchKind32);
-        return arch.IsValid();
-      }
-    }
+    ArchSpec host_arch64 = HostInfo::GetArchitecture(HostInfo::eArchKind64);
+    if (host_arch.IsExactMatch(host_arch64))
+      archs.push_back(HostInfo::GetArchitecture(HostInfo::eArchKind32));
   }
-  return false;
 }
 
-// The architecture selection rules for arm processors These cpu subtypes have
-// distinct names (e.g. armv7f) but armv7 binaries run fine on an armv7f
-// processor.
-
-bool PlatformDarwin::ARMGetSupportedArchitectureAtIndex(uint32_t idx,
-                                                        ArchSpec &arch) {
-  ArchSpec system_arch(GetSystemArchitecture());
-
-// When lldb is running on a watch or tv, set the arch OS name appropriately.
-#if defined(TARGET_OS_TV) && TARGET_OS_TV == 1
-#define OSNAME "tvos"
-#elif defined(TARGET_OS_WATCH) && TARGET_OS_WATCH == 1
-#define OSNAME "watchos"
-#elif defined(TARGET_OS_BRIDGE) && TARGET_OS_BRIDGE == 1
-#define OSNAME "bridgeos"
-#else
-#define OSNAME "ios"
-#endif
-
-#if TARGET_OS_OSX
-  if (IsHost()) {
-    if (idx == 0) {
-      arch.SetTriple("arm64e-apple-macosx");
-      return true;
-    } else if (idx == 1) {
-      arch.SetTriple("arm64-apple-macosx");
-      return true;
-    }
-    return false;
-  }
-#endif
-
-  const ArchSpec::Core system_core = system_arch.GetCore();
-  switch (system_core) {
+static llvm::ArrayRef<const char *> GetCompatibleArchs(ArchSpec::Core core) {
+  switch (core) {
   default:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("arm64-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv7-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv7f-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("armv7k-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("armv7s-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("armv7m-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("armv7em-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("armv6m-apple-" OSNAME);
-      return true;
-    case 8:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 9:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 10:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 11:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 12:
-      arch.SetTriple("thumbv7-apple-" OSNAME);
-      return true;
-    case 13:
-      arch.SetTriple("thumbv7f-apple-" OSNAME);
-      return true;
-    case 14:
-      arch.SetTriple("thumbv7k-apple-" OSNAME);
-      return true;
-    case 15:
-      arch.SetTriple("thumbv7s-apple-" OSNAME);
-      return true;
-    case 16:
-      arch.SetTriple("thumbv7m-apple-" OSNAME);
-      return true;
-    case 17:
-      arch.SetTriple("thumbv7em-apple-" OSNAME);
-      return true;
-    case 18:
-      arch.SetTriple("thumbv6m-apple-" OSNAME);
-      return true;
-    case 19:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 20:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 21:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 22:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_arm64:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("arm64-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv7s-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv7f-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("armv7m-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("armv7em-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("armv7-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("armv6m-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 8:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 9:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 10:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 11:
-      arch.SetTriple("thumbv7-apple-" OSNAME);
-      return true;
-    case 12:
-      arch.SetTriple("thumbv7f-apple-" OSNAME);
-      return true;
-    case 13:
-      arch.SetTriple("thumbv7k-apple-" OSNAME);
-      return true;
-    case 14:
-      arch.SetTriple("thumbv7s-apple-" OSNAME);
-      return true;
-    case 15:
-      arch.SetTriple("thumbv7m-apple-" OSNAME);
-      return true;
-    case 16:
-      arch.SetTriple("thumbv7em-apple-" OSNAME);
-      return true;
-    case 17:
-      arch.SetTriple("thumbv6m-apple-" OSNAME);
-      return true;
-    case 18:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 19:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 20:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 21:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv7f:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv7f-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv7-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv6m-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("thumbv7f-apple-" OSNAME);
-      return true;
-    case 8:
-      arch.SetTriple("thumbv7-apple-" OSNAME);
-      return true;
-    case 9:
-      arch.SetTriple("thumbv6m-apple-" OSNAME);
-      return true;
-    case 10:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 11:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 12:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 13:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv7k:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv7k-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv7-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv6m-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("thumbv7k-apple-" OSNAME);
-      return true;
-    case 8:
-      arch.SetTriple("thumbv7-apple-" OSNAME);
-      return true;
-    case 9:
-      arch.SetTriple("thumbv6m-apple-" OSNAME);
-      return true;
-    case 10:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 11:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 12:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 13:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv7s:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv7s-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv7-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv6m-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("thumbv7s-apple-" OSNAME);
-      return true;
-    case 8:
-      arch.SetTriple("thumbv7-apple-" OSNAME);
-      return true;
-    case 9:
-      arch.SetTriple("thumbv6m-apple-" OSNAME);
-      return true;
-    case 10:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 11:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 12:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 13:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv7m:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv7m-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv7-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv6m-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("thumbv7m-apple-" OSNAME);
-      return true;
-    case 8:
-      arch.SetTriple("thumbv7-apple-" OSNAME);
-      return true;
-    case 9:
-      arch.SetTriple("thumbv6m-apple-" OSNAME);
-      return true;
-    case 10:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 11:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 12:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 13:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv7em:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv7em-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv7-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv6m-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("thumbv7em-apple-" OSNAME);
-      return true;
-    case 8:
-      arch.SetTriple("thumbv7-apple-" OSNAME);
-      return true;
-    case 9:
-      arch.SetTriple("thumbv6m-apple-" OSNAME);
-      return true;
-    case 10:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 11:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 12:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 13:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv7:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv7-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv6m-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("thumbv7-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("thumbv6m-apple-" OSNAME);
-      return true;
-    case 8:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 9:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 10:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 11:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv6m:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv6m-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("thumbv6m-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 8:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 9:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv6:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv6-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("thumbv6-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 6:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 7:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv5:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv5-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("thumbv5-apple-" OSNAME);
-      return true;
-    case 4:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 5:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
-
-  case ArchSpec::eCore_arm_armv4:
-    switch (idx) {
-    case 0:
-      arch.SetTriple("armv4-apple-" OSNAME);
-      return true;
-    case 1:
-      arch.SetTriple("arm-apple-" OSNAME);
-      return true;
-    case 2:
-      arch.SetTriple("thumbv4t-apple-" OSNAME);
-      return true;
-    case 3:
-      arch.SetTriple("thumb-apple-" OSNAME);
-      return true;
-    default:
-      break;
-    }
-    break;
+    [[fallthrough]];
+  case ArchSpec::eCore_arm_arm64e: {
+    static const char *g_arm64e_compatible_archs[] = {
+        "arm64e",    "arm64",    "armv7",    "armv7f",   "armv7k",   "armv7s",
+        "armv7m",    "armv7em",  "armv6m",   "armv6",    "armv5",    "armv4",
+        "arm",       "thumbv7",  "thumbv7f", "thumbv7k", "thumbv7s", "thumbv7m",
+        "thumbv7em", "thumbv6m", "thumbv6",  "thumbv5",  "thumbv4t", "thumb",
+    };
+    return {g_arm64e_compatible_archs};
   }
-  arch.Clear();
-  return false;
+  case ArchSpec::eCore_arm_arm64: {
+    static const char *g_arm64_compatible_archs[] = {
+        "arm64",    "armv7",    "armv7f",   "armv7k",   "armv7s",   "armv7m",
+        "armv7em",  "armv6m",   "armv6",    "armv5",    "armv4",    "arm",
+        "thumbv7",  "thumbv7f", "thumbv7k", "thumbv7s", "thumbv7m", "thumbv7em",
+        "thumbv6m", "thumbv6",  "thumbv5",  "thumbv4t", "thumb",
+    };
+    return {g_arm64_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv7: {
+    static const char *g_armv7_compatible_archs[] = {
+        "armv7",   "armv6m",   "armv6",   "armv5",   "armv4",    "arm",
+        "thumbv7", "thumbv6m", "thumbv6", "thumbv5", "thumbv4t", "thumb",
+    };
+    return {g_armv7_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv7f: {
+    static const char *g_armv7f_compatible_archs[] = {
+        "armv7f",  "armv7",   "armv6m",   "armv6",   "armv5",
+        "armv4",   "arm",     "thumbv7f", "thumbv7", "thumbv6m",
+        "thumbv6", "thumbv5", "thumbv4t", "thumb",
+    };
+    return {g_armv7f_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv7k: {
+    static const char *g_armv7k_compatible_archs[] = {
+        "armv7k",  "armv7",   "armv6m",   "armv6",   "armv5",
+        "armv4",   "arm",     "thumbv7k", "thumbv7", "thumbv6m",
+        "thumbv6", "thumbv5", "thumbv4t", "thumb",
+    };
+    return {g_armv7k_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv7s: {
+    static const char *g_armv7s_compatible_archs[] = {
+        "armv7s",  "armv7",   "armv6m",   "armv6",   "armv5",
+        "armv4",   "arm",     "thumbv7s", "thumbv7", "thumbv6m",
+        "thumbv6", "thumbv5", "thumbv4t", "thumb",
+    };
+    return {g_armv7s_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv7m: {
+    static const char *g_armv7m_compatible_archs[] = {
+        "armv7m",  "armv7",   "armv6m",   "armv6",   "armv5",
+        "armv4",   "arm",     "thumbv7m", "thumbv7", "thumbv6m",
+        "thumbv6", "thumbv5", "thumbv4t", "thumb",
+    };
+    return {g_armv7m_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv7em: {
+    static const char *g_armv7em_compatible_archs[] = {
+        "armv7em", "armv7",   "armv6m",    "armv6",   "armv5",
+        "armv4",   "arm",     "thumbv7em", "thumbv7", "thumbv6m",
+        "thumbv6", "thumbv5", "thumbv4t",  "thumb",
+    };
+    return {g_armv7em_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv6m: {
+    static const char *g_armv6m_compatible_archs[] = {
+        "armv6m",   "armv6",   "armv5",   "armv4",    "arm",
+        "thumbv6m", "thumbv6", "thumbv5", "thumbv4t", "thumb",
+    };
+    return {g_armv6m_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv6: {
+    static const char *g_armv6_compatible_archs[] = {
+        "armv6",   "armv5",   "armv4",    "arm",
+        "thumbv6", "thumbv5", "thumbv4t", "thumb",
+    };
+    return {g_armv6_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv5: {
+    static const char *g_armv5_compatible_archs[] = {
+        "armv5", "armv4", "arm", "thumbv5", "thumbv4t", "thumb",
+    };
+    return {g_armv5_compatible_archs};
+  }
+  case ArchSpec::eCore_arm_armv4: {
+    static const char *g_armv4_compatible_archs[] = {
+        "armv4",
+        "arm",
+        "thumbv4t",
+        "thumb",
+    };
+    return {g_armv4_compatible_archs};
+  }
+  }
+  return {};
+}
+
+/// The architecture selection rules for arm processors These cpu subtypes have
+/// distinct names (e.g. armv7f) but armv7 binaries run fine on an armv7f
+/// processor.
+void PlatformDarwin::ARMGetSupportedArchitectures(
+    std::vector<ArchSpec> &archs, std::optional<llvm::Triple::OSType> os) {
+  const ArchSpec system_arch = GetSystemArchitecture();
+  const ArchSpec::Core system_core = system_arch.GetCore();
+  for (const char *arch : GetCompatibleArchs(system_core)) {
+    llvm::Triple triple;
+    triple.setArchName(arch);
+    triple.setVendor(llvm::Triple::VendorType::Apple);
+    if (os)
+      triple.setOS(*os);
+    archs.push_back(ArchSpec(triple));
+  }
 }
 
 static FileSpec GetXcodeSelectPath() {
@@ -1180,7 +653,7 @@ BreakpointSP PlatformDarwin::SetThreadCreationBreakpoint(Target &target) {
                                        "libSystem.B.dylib"};
 
   FileSpecList bp_modules;
-  for (size_t i = 0; i < llvm::array_lengthof(g_bp_modules); i++) {
+  for (size_t i = 0; i < std::size(g_bp_modules); i++) {
     const char *bp_module = g_bp_modules[i];
     bp_modules.EmplaceBack(bp_module);
   }
@@ -1189,9 +662,9 @@ BreakpointSP PlatformDarwin::SetThreadCreationBreakpoint(Target &target) {
   bool hardware = false;
   LazyBool skip_prologue = eLazyBoolNo;
   bp_sp = target.CreateBreakpoint(&bp_modules, nullptr, g_bp_names,
-                                  llvm::array_lengthof(g_bp_names),
-                                  eFunctionNameTypeFull, eLanguageTypeUnknown,
-                                  0, skip_prologue, internal, hardware);
+                                  std::size(g_bp_names), eFunctionNameTypeFull,
+                                  eLanguageTypeUnknown, 0, skip_prologue,
+                                  internal, hardware);
   bp_sp->SetBreakpointKind("thread-creation");
 
   return bp_sp;
@@ -1226,12 +699,9 @@ PlatformDarwin::GetResumeCountForLaunchInfo(ProcessLaunchInfo &launch_info) {
     return 1;
 }
 
-lldb::ProcessSP
-PlatformDarwin::DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger,
-                             Target *target, // Can be NULL, if NULL create
-                                             // a new target, else use existing
-                                             // one
-                             Status &error) {
+lldb::ProcessSP PlatformDarwin::DebugProcess(ProcessLaunchInfo &launch_info,
+                                             Debugger &debugger, Target &target,
+                                             Status &error) {
   ProcessSP process_sp;
 
   if (IsHost()) {
@@ -1239,9 +709,8 @@ PlatformDarwin::DebugProcess(ProcessLaunchInfo &launch_info, Debugger &debugger,
     // charge of setting the exit status.  However, we still need to reap it
     // from lldb. So, make sure we use a exit callback which does not set exit
     // status.
-    const bool monitor_signals = false;
     launch_info.SetMonitorProcessCallback(
-        &ProcessLaunchInfo::NoOpMonitorCallback, monitor_signals);
+        &ProcessLaunchInfo::NoOpMonitorCallback);
     process_sp = Platform::DebugProcess(launch_info, debugger, target, error);
   } else {
     if (m_remote_platform_sp)
@@ -1356,7 +825,7 @@ FileSpec PlatformDarwin::GetSDKDirectoryForModules(XcodeSDK::Type sdk_type) {
         FileSpec native_sdk_spec = sdks_spec;
         StreamString native_sdk_name;
         native_sdk_name.Printf("MacOSX%u.%u.sdk", version.getMajor(),
-                               version.getMinor().getValueOr(0));
+                               version.getMinor().value_or(0));
         native_sdk_spec.AppendPathComponent(native_sdk_name.GetString());
 
         if (FileSystem::Instance().Exists(native_sdk_spec)) {
@@ -1389,26 +858,25 @@ PlatformDarwin::ParseVersionBuildDir(llvm::StringRef dir) {
 
 llvm::Expected<StructuredData::DictionarySP>
 PlatformDarwin::FetchExtendedCrashInformation(Process &process) {
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
-
-  StructuredData::ArraySP annotations = ExtractCrashInfoAnnotations(process);
-
-  if (!annotations || !annotations->GetSize()) {
-    LLDB_LOG(log, "Couldn't extract crash information annotations");
-    return nullptr;
-  }
-
   StructuredData::DictionarySP extended_crash_info =
       std::make_shared<StructuredData::Dictionary>();
 
-  extended_crash_info->AddItem("crash-info annotations", annotations);
+  StructuredData::ArraySP annotations = ExtractCrashInfoAnnotations(process);
+  if (annotations && annotations->GetSize())
+    extended_crash_info->AddItem("Crash-Info Annotations", annotations);
 
-  return extended_crash_info;
+  StructuredData::DictionarySP app_specific_info =
+      ExtractAppSpecificInfo(process);
+  if (app_specific_info && app_specific_info->GetSize())
+    extended_crash_info->AddItem("Application Specific Information",
+                                 app_specific_info);
+
+  return extended_crash_info->GetSize() ? extended_crash_info : nullptr;
 }
 
 StructuredData::ArraySP
 PlatformDarwin::ExtractCrashInfoAnnotations(Process &process) {
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+  Log *log = GetLog(LLDBLog::Process);
 
   ConstString section_name("__crash_info");
   Target &target = process.GetTarget();
@@ -1510,6 +978,38 @@ PlatformDarwin::ExtractCrashInfoAnnotations(Process &process) {
   return array_sp;
 }
 
+StructuredData::DictionarySP
+PlatformDarwin::ExtractAppSpecificInfo(Process &process) {
+  StructuredData::DictionarySP metadata_sp = process.GetMetadata();
+
+  if (!metadata_sp || !metadata_sp->GetSize() || !metadata_sp->HasKey("asi"))
+    return {};
+
+  StructuredData::Dictionary *asi;
+  if (!metadata_sp->GetValueForKeyAsDictionary("asi", asi))
+    return {};
+
+  StructuredData::DictionarySP dict_sp =
+      std::make_shared<StructuredData::Dictionary>();
+
+  auto flatten_asi_dict = [&dict_sp](ConstString key,
+                                     StructuredData::Object *val) -> bool {
+    if (!val)
+      return false;
+
+    StructuredData::Array *arr = val->GetAsArray();
+    if (!arr || !arr->GetSize())
+      return false;
+
+    dict_sp->AddItem(key.AsCString(), arr->GetItemAtIndex(0));
+    return true;
+  };
+
+  asi->ForEach(flatten_asi_dict);
+
+  return dict_sp;
+}
+
 void PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(
     Target *target, std::vector<std::string> &options, XcodeSDK::Type sdk_type) {
   const std::vector<std::string> apple_arguments = {
@@ -1556,14 +1056,14 @@ void PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(
   // Only add the version-min options if we got a version from somewhere
   if (!version.empty() && sdk_type != XcodeSDK::Type::Linux) {
 #define OPTION(PREFIX, NAME, VAR, ...)                                         \
-  const char *opt_##VAR = NAME;                                                \
+  llvm::StringRef opt_##VAR = NAME;                                            \
   (void)opt_##VAR;
 #include "clang/Driver/Options.inc"
 #undef OPTION
     minimum_version_option << '-';
     switch (sdk_type) {
     case XcodeSDK::Type::MacOSX:
-      minimum_version_option << opt_mmacosx_version_min_EQ;
+      minimum_version_option << opt_mmacos_version_min_EQ;
       break;
     case XcodeSDK::Type::iPhoneSimulator:
       minimum_version_option << opt_mios_simulator_version_min_EQ;
@@ -1586,11 +1086,10 @@ void PlatformDarwin::AddClangModuleCompilationOptionsForSDKType(
     case XcodeSDK::Type::bridgeOS:
     case XcodeSDK::Type::Linux:
     case XcodeSDK::Type::unknown:
-      if (lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST)) {
+      if (Log *log = GetLog(LLDBLog::Host)) {
         XcodeSDK::Info info;
         info.type = sdk_type;
-        LLDB_LOGF(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST),
-                  "Clang modules on %s are not supported",
+        LLDB_LOGF(log, "Clang modules on %s are not supported",
                   XcodeSDK::GetCanonicalName(info).c_str());
       }
       return;
@@ -1622,7 +1121,7 @@ ConstString PlatformDarwin::GetFullNameForDylib(ConstString basename) {
 }
 
 llvm::VersionTuple PlatformDarwin::GetOSVersion(Process *process) {
-  if (process && strstr(GetPluginName().GetCString(), "-simulator")) {
+  if (process && GetPluginName().contains("-simulator")) {
     lldb_private::ProcessInstanceInfo proc_info;
     if (Host::GetProcessInfo(process->GetID(), proc_info)) {
       const Environment &env = proc_info.GetEnvironment();
@@ -1671,7 +1170,7 @@ lldb_private::FileSpec PlatformDarwin::LocateExecutable(const char *basename) {
       xcode_lldb_resources.AppendPathComponent("Resources");
       if (FileSystem::Instance().Exists(xcode_lldb_resources)) {
         FileSpec dir;
-        dir.GetDirectory().SetCString(xcode_lldb_resources.GetPath().c_str());
+        dir.SetDirectory(xcode_lldb_resources.GetPathAsConstString());
         g_executable_dirs.push_back(dir);
       }
     }
@@ -1684,8 +1183,7 @@ lldb_private::FileSpec PlatformDarwin::LocateExecutable(const char *basename) {
       cmd_line_lldb_resources.AppendPathComponent("Resources");
       if (FileSystem::Instance().Exists(cmd_line_lldb_resources)) {
         FileSpec dir;
-        dir.GetDirectory().SetCString(
-            cmd_line_lldb_resources.GetPath().c_str());
+        dir.SetDirectory(cmd_line_lldb_resources.GetPathAsConstString());
         g_executable_dirs.push_back(dir);
       }
     }
@@ -1695,8 +1193,8 @@ lldb_private::FileSpec PlatformDarwin::LocateExecutable(const char *basename) {
   // are looking for
   for (const auto &executable_dir : g_executable_dirs) {
     FileSpec executable_file;
-    executable_file.GetDirectory() = executable_dir.GetDirectory();
-    executable_file.GetFilename().SetCString(basename);
+    executable_file.SetDirectory(executable_dir.GetDirectory());
+    executable_file.SetFilename(basename);
     if (FileSystem::Instance().Exists(executable_file))
       return executable_file;
   }
@@ -1753,7 +1251,7 @@ lldb_private::Status PlatformDarwin::FindBundleBinaryInExecSearchPaths(
 
     size_t num_module_search_paths = module_search_paths_ptr->GetSize();
     for (size_t i = 0; i < num_module_search_paths; ++i) {
-      Log *log_verbose = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+      Log *log_verbose = GetLog(LLDBLog::Host);
       LLDB_LOGF(
           log_verbose,
           "PlatformRemoteDarwinDevice::GetSharedModule searching for binary in "
@@ -1825,4 +1323,24 @@ FileSpec PlatformDarwin::GetCurrentCommandLineToolsDirectory() {
   if (FileSpec fspec = HostInfo::GetShlibDir())
     return FileSpec(FindComponentInPath(fspec.GetPath(), "CommandLineTools"));
   return {};
+}
+
+llvm::Triple::OSType PlatformDarwin::GetHostOSType() {
+#if !defined(__APPLE__)
+  return llvm::Triple::MacOSX;
+#else
+#if TARGET_OS_OSX
+  return llvm::Triple::MacOSX;
+#elif TARGET_OS_IOS
+  return llvm::Triple::IOS;
+#elif TARGET_OS_WATCH
+  return llvm::Triple::WatchOS;
+#elif TARGET_OS_TV
+  return llvm::Triple::TvOS;
+#elif TARGET_OS_BRIDGE
+  return llvm::Triple::BridgeOS;
+#else
+#error "LLDB being compiled for an unrecognized Darwin OS"
+#endif
+#endif // __APPLE__
 }

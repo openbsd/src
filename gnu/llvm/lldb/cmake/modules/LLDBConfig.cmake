@@ -25,7 +25,7 @@ endif()
 
 macro(add_optional_dependency variable description package found)
   cmake_parse_arguments(ARG
-    ""
+    "QUIET"
     "VERSION"
     ""
     ${ARGN})
@@ -45,27 +45,36 @@ macro(add_optional_dependency variable description package found)
   endif()
 
   if(${find_package})
-    find_package(${package} ${ARG_VERSION} ${maybe_required})
+    set(maybe_quiet)
+    if(ARG_QUIET)
+      set(maybe_quiet QUIET)
+    endif()
+    find_package(${package} ${ARG_VERSION} ${maybe_required} ${maybe_quiet})
     set(${variable} "${${found}}")
   endif()
 
   message(STATUS "${description}: ${${variable}}")
 endmacro()
 
+add_optional_dependency(LLDB_ENABLE_SWIG "Enable SWIG to generate LLDB bindings" SWIG SWIG_FOUND VERSION 3)
 add_optional_dependency(LLDB_ENABLE_LIBEDIT "Enable editline support in LLDB" LibEdit LibEdit_FOUND)
 add_optional_dependency(LLDB_ENABLE_CURSES "Enable curses support in LLDB" CursesAndPanel CURSESANDPANEL_FOUND)
 add_optional_dependency(LLDB_ENABLE_LZMA "Enable LZMA compression support in LLDB" LibLZMA LIBLZMA_FOUND)
 add_optional_dependency(LLDB_ENABLE_LUA "Enable Lua scripting support in LLDB" LuaAndSwig LUAANDSWIG_FOUND)
 add_optional_dependency(LLDB_ENABLE_PYTHON "Enable Python scripting support in LLDB" PythonAndSwig PYTHONANDSWIG_FOUND)
 add_optional_dependency(LLDB_ENABLE_LIBXML2 "Enable Libxml 2 support in LLDB" LibXml2 LIBXML2_FOUND VERSION 2.8)
+add_optional_dependency(LLDB_ENABLE_FBSDVMCORE "Enable libfbsdvmcore support in LLDB" FBSDVMCore FBSDVMCore_FOUND QUIET)
 
-option(LLDB_USE_SYSTEM_SIX "Use six.py shipped with system and do not install a copy of it" OFF)
 option(LLDB_USE_ENTITLEMENTS "When codesigning, use entitlements if available" ON)
 option(LLDB_BUILD_FRAMEWORK "Build LLDB.framework (Darwin only)" OFF)
 option(LLDB_NO_INSTALL_DEFAULT_RPATH "Disable default RPATH settings in binaries" OFF)
 option(LLDB_USE_SYSTEM_DEBUGSERVER "Use the system's debugserver for testing (Darwin only)." OFF)
 option(LLDB_SKIP_STRIP "Whether to skip stripping of binaries when installing lldb." OFF)
 option(LLDB_SKIP_DSYM "Whether to skip generating a dSYM when installing lldb." OFF)
+
+set(LLDB_GLOBAL_INIT_DIRECTORY "" CACHE STRING
+  "Path to the global lldbinit directory. Relative paths are resolved relative to the
+  directory containing the LLDB library.")
 
 if (LLDB_USE_SYSTEM_DEBUGSERVER)
   # The custom target for the system debugserver has no install target, so we
@@ -91,6 +100,20 @@ if(LLDB_BUILD_FRAMEWORK)
   # Essentially, emit the framework's dSYM outside of the framework directory.
   set(LLDB_DEBUGINFO_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin CACHE STRING
       "Directory to emit dSYM files stripped from executables and libraries (Darwin Only)")
+
+  # Custom target to remove the targets (binaries, directories) that were
+  # copied into LLDB.framework in the build tree.
+  #
+  # These targets need to be removed before the install phase because otherwise
+  # because otherwise they may overwrite already installed binaries with the
+  # wrong RPATH (i.e. build RPATH instead of install RPATH).
+  #
+  # This target needs to be created here (rather than in API/CMakeLists.txt)
+  # because add_lldb_tool creates the custom rules to copy the binaries before
+  # the framework target exists and that's the only place where this is
+  # tracked.
+  add_custom_target(lldb-framework-cleanup
+    COMMENT "Cleaning up build-tree frameworks in preparation for install")
 endif()
 
 if(APPLE AND CMAKE_GENERATOR STREQUAL Xcode)
@@ -159,22 +182,30 @@ else ()
 endif ()
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/../clang/include")
 
+# GCC silently accepts any -Wno-<foo> option, but warns about those options
+# being unrecognized only if the compilation triggers other warnings to be
+# printed. Therefore, check for whether the compiler supports options in the
+# form -W<foo>, and if supported, add the corresponding -Wno-<foo> option.
+
 # Disable GCC warnings
-check_cxx_compiler_flag("-Wno-deprecated-declarations" CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS)
-append_if(CXX_SUPPORTS_NO_DEPRECATED_DECLARATIONS "-Wno-deprecated-declarations" CMAKE_CXX_FLAGS)
+check_cxx_compiler_flag("-Wdeprecated-declarations" CXX_SUPPORTS_DEPRECATED_DECLARATIONS)
+append_if(CXX_SUPPORTS_DEPRECATED_DECLARATIONS "-Wno-deprecated-declarations" CMAKE_CXX_FLAGS)
 
-check_cxx_compiler_flag("-Wno-unknown-pragmas" CXX_SUPPORTS_NO_UNKNOWN_PRAGMAS)
-append_if(CXX_SUPPORTS_NO_UNKNOWN_PRAGMAS "-Wno-unknown-pragmas" CMAKE_CXX_FLAGS)
+check_cxx_compiler_flag("-Wunknown-pragmas" CXX_SUPPORTS_UNKNOWN_PRAGMAS)
+append_if(CXX_SUPPORTS_UNKNOWN_PRAGMAS "-Wno-unknown-pragmas" CMAKE_CXX_FLAGS)
 
-check_cxx_compiler_flag("-Wno-strict-aliasing" CXX_SUPPORTS_NO_STRICT_ALIASING)
-append_if(CXX_SUPPORTS_NO_STRICT_ALIASING "-Wno-strict-aliasing" CMAKE_CXX_FLAGS)
+check_cxx_compiler_flag("-Wstrict-aliasing" CXX_SUPPORTS_STRICT_ALIASING)
+append_if(CXX_SUPPORTS_STRICT_ALIASING "-Wno-strict-aliasing" CMAKE_CXX_FLAGS)
+
+check_cxx_compiler_flag("-Wstringop-truncation" CXX_SUPPORTS_STRINGOP_TRUNCATION)
+append_if(CXX_SUPPORTS_STRINGOP_TRUNCATION "-Wno-stringop-truncation" CMAKE_CXX_FLAGS)
 
 # Disable Clang warnings
-check_cxx_compiler_flag("-Wno-deprecated-register" CXX_SUPPORTS_NO_DEPRECATED_REGISTER)
-append_if(CXX_SUPPORTS_NO_DEPRECATED_REGISTER "-Wno-deprecated-register" CMAKE_CXX_FLAGS)
+check_cxx_compiler_flag("-Wdeprecated-register" CXX_SUPPORTS_DEPRECATED_REGISTER)
+append_if(CXX_SUPPORTS_DEPRECATED_REGISTER "-Wno-deprecated-register" CMAKE_CXX_FLAGS)
 
-check_cxx_compiler_flag("-Wno-vla-extension" CXX_SUPPORTS_NO_VLA_EXTENSION)
-append_if(CXX_SUPPORTS_NO_VLA_EXTENSION "-Wno-vla-extension" CMAKE_CXX_FLAGS)
+check_cxx_compiler_flag("-Wvla-extension" CXX_SUPPORTS_VLA_EXTENSION)
+append_if(CXX_SUPPORTS_VLA_EXTENSION "-Wno-vla-extension" CMAKE_CXX_FLAGS)
 
 # Disable MSVC warnings
 if( MSVC )
@@ -226,7 +257,7 @@ include_directories(BEFORE
 if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
   install(DIRECTORY include/
     COMPONENT lldb-headers
-    DESTINATION include
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     FILES_MATCHING
     PATTERN "*.h"
     PATTERN ".cmake" EXCLUDE
@@ -234,7 +265,7 @@ if (NOT LLVM_INSTALL_TOOLCHAIN_ONLY)
 
   install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
     COMPONENT lldb-headers
-    DESTINATION include
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     FILES_MATCHING
     PATTERN "*.h"
     PATTERN ".cmake" EXCLUDE
@@ -254,12 +285,12 @@ endif()
 # directory that LLDB is using for its embedded Clang instance needs to point
 # to the resource directory of the used Clang installation.
 if (NOT TARGET clang-resource-headers)
-  set(LLDB_CLANG_RESOURCE_DIR_NAME "${LLVM_VERSION_MAJOR}.${LLVM_VERSION_MINOR}.${LLVM_VERSION_PATCH}")
+  set(LLDB_CLANG_RESOURCE_DIR_NAME "${LLVM_VERSION_MAJOR}")
   # Iterate over the possible places where the external resource directory
   # could be and pick the first that exists.
   foreach(CANDIDATE "${Clang_DIR}/../.." "${LLVM_DIR}" "${LLVM_LIBRARY_DIRS}"
                     "${LLVM_BUILD_LIBRARY_DIR}"
-                    "${LLVM_BINARY_DIR}/lib${LLVM_LIBDIR_SUFFIX}")
+                    "${LLVM_LIBRARY_DIR}")
     # Build the resource directory path by appending 'clang/<version number>'.
     set(CANDIDATE_RESOURCE_DIR "${CANDIDATE}/clang/${LLDB_CLANG_RESOURCE_DIR_NAME}")
     if (IS_DIRECTORY "${CANDIDATE_RESOURCE_DIR}")

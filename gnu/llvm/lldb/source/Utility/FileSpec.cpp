@@ -21,6 +21,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <algorithm>
+#include <optional>
 #include <system_error>
 #include <vector>
 
@@ -43,9 +44,7 @@ static constexpr FileSpec::Style GetNativeStyle() {
 }
 
 bool PathStyleIsPosix(FileSpec::Style style) {
-  return (style == FileSpec::Style::posix ||
-          (style == FileSpec::Style::native &&
-           GetNativeStyle() == FileSpec::Style::posix));
+  return llvm::sys::path::is_style_posix(style);
 }
 
 const char *GetPathSeparators(FileSpec::Style style) {
@@ -172,9 +171,7 @@ void FileSpec::SetFile(llvm::StringRef pathname) { SetFile(pathname, m_style); }
 // up into a directory and filename and stored as uniqued string values for
 // quick comparison and efficient memory usage.
 void FileSpec::SetFile(llvm::StringRef pathname, Style style) {
-  m_filename.Clear();
-  m_directory.Clear();
-  m_is_resolved = false;
+  Clear();
   m_style = (style == Style::native) ? GetNativeStyle() : style;
 
   if (pathname.empty())
@@ -261,6 +258,7 @@ Stream &lldb_private::operator<<(Stream &s, const FileSpec &f) {
 void FileSpec::Clear() {
   m_directory.Clear();
   m_filename.Clear();
+  PathWasModified();
 }
 
 // Compare two FileSpec objects. If "full" is true, then both the directory and
@@ -307,15 +305,17 @@ bool FileSpec::Match(const FileSpec &pattern, const FileSpec &file) {
   return true;
 }
 
-llvm::Optional<FileSpec::Style> FileSpec::GuessPathStyle(llvm::StringRef absolute_path) {
+std::optional<FileSpec::Style>
+FileSpec::GuessPathStyle(llvm::StringRef absolute_path) {
   if (absolute_path.startswith("/"))
     return Style::posix;
   if (absolute_path.startswith(R"(\\)"))
     return Style::windows;
-  if (absolute_path.size() > 3 && llvm::isAlpha(absolute_path[0]) &&
-      absolute_path.substr(1, 2) == R"(:\)")
+  if (absolute_path.size() >= 3 && llvm::isAlpha(absolute_path[0]) &&
+      (absolute_path.substr(1, 2) == R"(:\)" ||
+       absolute_path.substr(1, 2) == R"(:/)"))
     return Style::windows;
-  return llvm::None;
+  return std::nullopt;
 }
 
 // Dump the object to the supplied stream. If the object contains a valid
@@ -331,17 +331,35 @@ void FileSpec::Dump(llvm::raw_ostream &s) const {
 
 FileSpec::Style FileSpec::GetPathStyle() const { return m_style; }
 
-// Directory string get accessor.
-ConstString &FileSpec::GetDirectory() { return m_directory; }
+void FileSpec::SetDirectory(ConstString directory) {
+  m_directory = directory;
+  PathWasModified();
+}
 
-// Directory string const get accessor.
-ConstString FileSpec::GetDirectory() const { return m_directory; }
+void FileSpec::SetDirectory(llvm::StringRef directory) {
+  m_directory = ConstString(directory);
+  PathWasModified();
+}
 
-// Filename string get accessor.
-ConstString &FileSpec::GetFilename() { return m_filename; }
+void FileSpec::SetFilename(ConstString filename) {
+  m_filename = filename;
+  PathWasModified();
+}
 
-// Filename string const get accessor.
-ConstString FileSpec::GetFilename() const { return m_filename; }
+void FileSpec::SetFilename(llvm::StringRef filename) {
+  m_filename = ConstString(filename);
+  PathWasModified();
+}
+
+void FileSpec::ClearFilename() {
+  m_filename.Clear();
+  PathWasModified();
+}
+
+void FileSpec::ClearDirectory() {
+  m_directory.Clear();
+  PathWasModified();
+}
 
 // Extract the directory and path into a fixed buffer. This is needed as the
 // directory and path are stored in separate string values.
@@ -358,11 +376,11 @@ size_t FileSpec::GetPath(char *path, size_t path_max_len,
 std::string FileSpec::GetPath(bool denormalize) const {
   llvm::SmallString<64> result;
   GetPath(result, denormalize);
-  return std::string(result.begin(), result.end());
+  return static_cast<std::string>(result);
 }
 
-const char *FileSpec::GetCString(bool denormalize) const {
-  return ConstString{GetPath(denormalize)}.AsCString(nullptr);
+ConstString FileSpec::GetPathAsConstString(bool denormalize) const {
+  return ConstString{GetPath(denormalize)};
 }
 
 void FileSpec::GetPath(llvm::SmallVectorImpl<char> &path,
@@ -477,18 +495,22 @@ bool FileSpec::IsRelative() const {
 }
 
 bool FileSpec::IsAbsolute() const {
-  llvm::SmallString<64> current_path;
-  GetPath(current_path, false);
+  // Check if we have cached if this path is absolute to avoid recalculating.
+  if (m_absolute != Absolute::Calculate)
+    return m_absolute == Absolute::Yes;
 
-  // Early return if the path is empty.
-  if (current_path.empty())
-    return false;
+  m_absolute = Absolute::No;
 
-  // We consider paths starting with ~ to be absolute.
-  if (current_path[0] == '~')
-    return true;
+  llvm::SmallString<64> path;
+  GetPath(path, false);
 
-  return llvm::sys::path::is_absolute(current_path, m_style);
+  if (!path.empty()) {
+    // We consider paths starting with ~ to be absolute.
+    if (path[0] == '~' || llvm::sys::path::is_absolute(path, m_style))
+      m_absolute = Absolute::Yes;
+  }
+
+  return m_absolute == Absolute::Yes;
 }
 
 void FileSpec::MakeAbsolute(const FileSpec &dir) {
@@ -536,20 +558,4 @@ void llvm::format_provider<FileSpec>::format(const FileSpec &F,
 
   if (!file.empty())
     Stream << file;
-}
-
-void llvm::yaml::ScalarEnumerationTraits<FileSpecStyle>::enumeration(
-    IO &io, FileSpecStyle &value) {
-  io.enumCase(value, "windows", FileSpecStyle(FileSpec::Style::windows));
-  io.enumCase(value, "posix", FileSpecStyle(FileSpec::Style::posix));
-  io.enumCase(value, "native", FileSpecStyle(FileSpec::Style::native));
-}
-
-void llvm::yaml::MappingTraits<FileSpec>::mapping(IO &io, FileSpec &f) {
-  io.mapRequired("directory", f.m_directory);
-  io.mapRequired("file", f.m_filename);
-  io.mapRequired("resolved", f.m_is_resolved);
-  FileSpecStyle style = f.m_style;
-  io.mapRequired("style", style);
-  f.m_style = style;
 }

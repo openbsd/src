@@ -60,7 +60,7 @@
                               {LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       \
                                LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,       \
                                dbg_##reg##i },                                 \
-                               NULL, NULL, NULL, 0
+                               NULL, NULL,         
 #define REG_CONTEXT_SIZE                                                       \
   (sizeof(RegisterInfoPOSIX_arm64::GPR) +                                      \
    sizeof(RegisterInfoPOSIX_arm64::FPU) +                                      \
@@ -71,6 +71,12 @@
 #include "RegisterInfos_arm64.h"
 #include "RegisterInfos_arm64_sve.h"
 #undef DECLARE_REGISTER_INFOS_ARM64_STRUCT
+
+static lldb_private::RegisterInfo g_register_infos_pauth[] = {
+    DEFINE_EXTENSION_REG(data_mask), DEFINE_EXTENSION_REG(code_mask)};
+
+static lldb_private::RegisterInfo g_register_infos_mte[] = {
+    DEFINE_EXTENSION_REG(mte_ctrl)};
 
 // Number of register sets provided by this context.
 enum {
@@ -178,10 +184,10 @@ static const lldb_private::RegisterSet g_reg_sets_arm64[k_num_register_sets] = {
      g_sve_regnums_arm64}};
 
 static const lldb_private::RegisterSet g_reg_set_pauth_arm64 = {
-    "Pointer Authentication Registers", "pauth", k_num_pauth_register, NULL};
+    "Pointer Authentication Registers", "pauth", k_num_pauth_register, nullptr};
 
 static const lldb_private::RegisterSet g_reg_set_mte_arm64 = {
-    "MTE Control Register", "mte", k_num_mte_register, NULL};
+    "MTE Control Register", "mte", k_num_mte_register, nullptr};
 
 RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
     const lldb_private::ArchSpec &target_arch, lldb_private::Flags opt_regsets)
@@ -211,9 +217,9 @@ RegisterInfoPOSIX_arm64::RegisterInfoPOSIX_arm64(
 
     if (m_opt_regsets.AnySet(eRegsetMaskDynamic)) {
       llvm::ArrayRef<lldb_private::RegisterInfo> reg_infos_ref =
-          llvm::makeArrayRef(m_register_info_p, m_register_info_count);
+          llvm::ArrayRef(m_register_info_p, m_register_info_count);
       llvm::ArrayRef<lldb_private::RegisterSet> reg_sets_ref =
-          llvm::makeArrayRef(m_register_set_p, m_register_set_count);
+          llvm::ArrayRef(m_register_set_p, m_register_set_count);
       llvm::copy(reg_infos_ref, std::back_inserter(m_dynamic_reg_infos));
       llvm::copy(reg_sets_ref, std::back_inserter(m_dynamic_reg_sets));
 
@@ -239,7 +245,7 @@ uint32_t RegisterInfoPOSIX_arm64::GetRegisterCount() const {
   return m_register_info_count;
 }
 
-size_t RegisterInfoPOSIX_arm64::GetGPRSize() const {
+size_t RegisterInfoPOSIX_arm64::GetGPRSizeStatic() {
   return sizeof(struct RegisterInfoPOSIX_arm64::GPR);
 }
 
@@ -327,7 +333,7 @@ uint32_t RegisterInfoPOSIX_arm64::ConfigureVectorLength(uint32_t sve_vq) {
       m_per_vq_reg_infos[sve_vq];
 
   if (reg_info_ref.empty()) {
-    reg_info_ref = llvm::makeArrayRef(m_register_info_p, m_register_info_count);
+    reg_info_ref = llvm::ArrayRef(m_register_info_p, m_register_info_count);
 
     uint32_t offset = SVE_REGS_DEFAULT_OFFSET_LINUX;
     reg_info_ref[fpu_fpsr].byte_offset = offset;
@@ -390,15 +396,11 @@ bool RegisterInfoPOSIX_arm64::IsSVERegVG(unsigned reg) const {
 }
 
 bool RegisterInfoPOSIX_arm64::IsPAuthReg(unsigned reg) const {
-  return std::find(pauth_regnum_collection.begin(),
-                   pauth_regnum_collection.end(),
-                   reg) != pauth_regnum_collection.end();
+  return llvm::is_contained(pauth_regnum_collection, reg);
 }
 
 bool RegisterInfoPOSIX_arm64::IsMTEReg(unsigned reg) const {
-  return std::find(m_mte_regnum_collection.begin(),
-                   m_mte_regnum_collection.end(),
-                   reg) != m_mte_regnum_collection.end();
+  return llvm::is_contained(m_mte_regnum_collection, reg);
 }
 
 uint32_t RegisterInfoPOSIX_arm64::GetRegNumSVEZ0() const { return sve_z0; }

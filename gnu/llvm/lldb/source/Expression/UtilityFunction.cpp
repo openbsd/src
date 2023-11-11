@@ -6,13 +6,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Host/Config.h"
-
 #include <cstdio>
-#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
-
 
 #include "lldb/Core/Module.h"
 #include "lldb/Core/StreamFile.h"
@@ -67,6 +62,13 @@ FunctionCaller *UtilityFunction::MakeFunctionCaller(
   ProcessSP process_sp = m_jit_process_wp.lock();
   if (!process_sp) {
     error.SetErrorString("Can't make a function caller without a process.");
+    return nullptr;
+  }
+  // Since we might need to call allocate memory and maybe call code to make
+  // the caller, we need to be stopped.
+  if (process_sp->GetState() != lldb::eStateStopped) {
+    error.SetErrorString("Can't make a function caller while the process is " 
+                         "running");
     return nullptr;
   }
 

@@ -8,7 +8,11 @@
 
 #include "CommandObjectThreadTraceExportCTF.h"
 
+#include "../common/TraceHTR.h"
 #include "lldb/Host/OptionParser.h"
+#include "lldb/Interpreter/CommandOptionArgumentTable.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/Trace.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -27,6 +31,10 @@ Status CommandObjectThreadTraceExportCTF::CommandOptions::SetOptionValue(
   const int short_option = m_getopt_table[option_idx].val;
 
   switch (short_option) {
+  case 'f': {
+    m_file.assign(std::string(option_arg));
+    break;
+  }
   case 't': {
     int64_t thread_index;
     if (option_arg.empty() || option_arg.getAsInteger(0, thread_index) ||
@@ -45,22 +53,47 @@ Status CommandObjectThreadTraceExportCTF::CommandOptions::SetOptionValue(
 
 void CommandObjectThreadTraceExportCTF::CommandOptions::OptionParsingStarting(
     ExecutionContext *execution_context) {
-  m_thread_index = None;
+  m_file.clear();
+  m_thread_index = std::nullopt;
 }
 
 llvm::ArrayRef<OptionDefinition>
 CommandObjectThreadTraceExportCTF::CommandOptions::GetDefinitions() {
-  return llvm::makeArrayRef(g_thread_trace_export_ctf_options);
+  return llvm::ArrayRef(g_thread_trace_export_ctf_options);
 }
 
 bool CommandObjectThreadTraceExportCTF::DoExecute(Args &command,
                                                   CommandReturnObject &result) {
-  Stream &s = result.GetOutputStream();
-  // TODO: create an actual instance of the exporter and invoke it
-  if (m_options.m_thread_index)
-    s.Printf("got thread index %d\n", (int)m_options.m_thread_index.getValue());
-  else
-    s.Printf("didn't get a thread index\n");
+  const TraceSP &trace_sp = m_exe_ctx.GetTargetSP()->GetTrace();
+  Process *process = m_exe_ctx.GetProcessPtr();
+  Thread *thread = m_options.m_thread_index
+                       ? process->GetThreadList()
+                             .FindThreadByIndexID(*m_options.m_thread_index)
+                             .get()
+                       : GetDefaultThread();
 
-  return result.Succeeded();
+  if (thread == nullptr) {
+    const uint32_t num_threads = process->GetThreadList().GetSize();
+    size_t tid = m_options.m_thread_index.value_or(LLDB_INVALID_THREAD_ID);
+    result.AppendErrorWithFormatv(
+        "Thread index {0} is out of range (valid values are 1 - {1}).\n", tid,
+        num_threads);
+    return false;
+  } else {
+    auto do_work = [&]() -> Error {
+      Expected<TraceCursorSP> cursor = trace_sp->CreateNewCursor(*thread);
+      if (!cursor)
+        return cursor.takeError();
+      TraceHTR htr(*thread, **cursor);
+      htr.ExecutePasses();
+      return htr.Export(m_options.m_file);
+    };
+
+    if (llvm::Error err = do_work()) {
+      result.AppendErrorWithFormat("%s\n", toString(std::move(err)).c_str());
+      return false;
+    } else {
+      return true;
+    }
+  }
 }

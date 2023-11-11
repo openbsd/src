@@ -33,7 +33,11 @@ public:
 
 class LLDB_API SBDebugger {
 public:
-  FLAGS_ANONYMOUS_ENUM(){eBroadcastBitProgress = (1 << 0)};
+  FLAGS_ANONYMOUS_ENUM(){
+      eBroadcastBitProgress = (1 << 0),
+      eBroadcastBitWarning = (1 << 1),
+      eBroadcastBitError = (1 << 2),
+  };
 
   SBDebugger();
 
@@ -79,11 +83,18 @@ public:
                                           uint64_t &completed, uint64_t &total,
                                           bool &is_debugger_specific);
 
+  static lldb::SBStructuredData
+  GetDiagnosticFromEvent(const lldb::SBEvent &event);
+
   lldb::SBDebugger &operator=(const lldb::SBDebugger &rhs);
 
   static void Initialize();
 
   static lldb::SBError InitializeWithErrorHandling();
+
+  static void PrintStackTraceOnError();
+
+  static void PrintDiagnosticsOnError();
 
   static void Terminate();
 
@@ -106,6 +117,21 @@ public:
 
   void Clear();
 
+  /// Getting a specific setting value into SBStructuredData format.
+  /// Client can specify empty string or null to get all settings.
+  ///
+  /// Example usages:
+  /// lldb::SBStructuredData settings = debugger.GetSetting();
+  /// lldb::SBStructuredData settings = debugger.GetSetting(nullptr);
+  /// lldb::SBStructuredData settings = debugger.GetSetting("");
+  /// lldb::SBStructuredData settings = debugger.GetSetting("target.arg0");
+  /// lldb::SBStructuredData settings = debugger.GetSetting("target");
+  ///
+  /// \param[out] setting
+  ///   Property setting path to retrieve values. e.g "target.source-map"
+  ///
+  lldb::SBStructuredData GetSetting(const char *setting = nullptr);
+
   void SetAsync(bool b);
 
   bool GetAsync();
@@ -125,6 +151,8 @@ public:
   FILE *GetOutputFileHandle();
 
   FILE *GetErrorFileHandle();
+
+  SBError SetInputString(const char *data);
 
   SBError SetInputFile(SBFile file);
 
@@ -247,6 +275,8 @@ public:
 
   lldb::ScriptLanguage GetScriptingLanguage(const char *script_language_name);
 
+  SBStructuredData GetScriptInterpreterInfo(ScriptLanguage);
+
   static const char *GetVersionString();
 
   static const char *StateAsCString(lldb::StateType state);
@@ -301,6 +331,10 @@ public:
   lldb::ScriptLanguage GetScriptLanguage() const;
 
   void SetScriptLanguage(lldb::ScriptLanguage script_lang);
+
+  lldb::LanguageType GetREPLLanguage() const;
+
+  void SetREPLLanguage(lldb::LanguageType repl_lang);
 
   bool GetCloseInputOnEOF() const;
 
@@ -374,6 +408,17 @@ public:
 
   SBError RunREPL(lldb::LanguageType language, const char *repl_options);
 
+  /// Load a trace from a trace description file and create Targets,
+  /// Processes and Threads based on the contents of such file.
+  ///
+  /// \param[out] error
+  ///   An error if the trace could not be created.
+  ///
+  /// \param[in] trace_description_file
+  ///   The file containing the necessary information to load the trace.
+  SBTrace LoadTraceFromFile(SBError &error,
+                            const SBFileSpec &trace_description_file);
+
 private:
   friend class SBCommandInterpreter;
   friend class SBInputReader;
@@ -381,6 +426,7 @@ private:
   friend class SBProcess;
   friend class SBSourceManager;
   friend class SBTarget;
+  friend class SBTrace;
 
   lldb::SBTarget FindTargetWithLLDBProcess(const lldb::ProcessSP &processSP);
 

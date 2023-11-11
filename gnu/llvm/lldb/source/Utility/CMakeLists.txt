@@ -35,28 +35,26 @@ add_lldb_library(lldbUtility
   DataBufferLLVM.cpp
   DataEncoder.cpp
   DataExtractor.cpp
+  Diagnostics.cpp
   Environment.cpp
   Event.cpp
   FileSpec.cpp
   GDBRemote.cpp
   IOObject.cpp
   LLDBAssert.cpp
+  LLDBLog.cpp
   Listener.cpp
   Log.cpp
-  Logging.cpp
   NameMatches.cpp
   ProcessInfo.cpp
   RegisterValue.cpp
   RegularExpression.cpp
-  Reproducer.cpp
-  ReproducerInstrumentation.cpp
-  ReproducerProvider.cpp
+  Instrumentation.cpp
   Scalar.cpp
   SelectHelper.cpp
   State.cpp
   Status.cpp
   Stream.cpp
-  StreamCallback.cpp
   StreamString.cpp
   StringExtractor.cpp
   StringExtractorGDBRemote.cpp
@@ -83,4 +81,5 @@ add_lldb_library(lldbUtility
   LINK_COMPONENTS
     BinaryFormat
     Support
+    TargetParser
   )

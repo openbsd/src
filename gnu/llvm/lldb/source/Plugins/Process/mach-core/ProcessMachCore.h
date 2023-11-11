@@ -35,9 +35,9 @@ public:
 
   static void Terminate();
 
-  static lldb_private::ConstString GetPluginNameStatic();
+  static llvm::StringRef GetPluginNameStatic() { return "mach-o-core"; }
 
-  static const char *GetPluginDescriptionStatic();
+  static llvm::StringRef GetPluginDescriptionStatic();
 
   // Check if a given Process
   bool CanDebug(lldb::TargetSP target_sp,
@@ -49,9 +49,7 @@ public:
   lldb_private::DynamicLoader *GetDynamicLoader() override;
 
   // PluginInterface protocol
-  lldb_private::ConstString GetPluginName() override;
-
-  uint32_t GetPluginVersion() override;
+  llvm::StringRef GetPluginName() override { return GetPluginNameStatic(); }
 
   // Process Control
   lldb_private::Status DoDestroy() override;
@@ -70,10 +68,6 @@ public:
   size_t DoReadMemory(lldb::addr_t addr, void *buf, size_t size,
                       lldb_private::Status &error) override;
 
-  lldb_private::Status
-  GetMemoryRegionInfo(lldb::addr_t load_addr,
-                      lldb_private::MemoryRegionInfo &region_info) override;
-
   lldb::addr_t GetImageInfoAddress() override;
 
 protected:
@@ -86,8 +80,19 @@ protected:
 
   lldb_private::ObjectFile *GetCoreObjectFile();
 
+  lldb_private::Status
+  DoGetMemoryRegionInfo(lldb::addr_t load_addr,
+                        lldb_private::MemoryRegionInfo &region_info) override;
+
 private:
-  bool GetDynamicLoaderAddress(lldb::addr_t addr);
+  void CreateMemoryRegions();
+  void LoadBinariesViaMetadata();
+  void LoadBinariesViaExhaustiveSearch();
+  void LoadBinariesAndSetDYLD();
+  void CleanupMemoryRegionPermissions();
+
+  bool CheckAddressForDyldOrKernel(lldb::addr_t addr, lldb::addr_t &dyld,
+                                   lldb::addr_t &kernel);
 
   enum CorefilePreference { eUserProcessCorefile, eKernelCorefile };
 
@@ -120,7 +125,7 @@ private:
   lldb_private::FileSpec m_core_file;
   lldb::addr_t m_dyld_addr;
   lldb::addr_t m_mach_kernel_addr;
-  lldb_private::ConstString m_dyld_plugin_name;
+  llvm::StringRef m_dyld_plugin_name;
 };
 
 #endif // LLDB_SOURCE_PLUGINS_PROCESS_MACH_CORE_PROCESSMACHCORE_H

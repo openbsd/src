@@ -85,6 +85,16 @@ public:
       return Address();
   }
 
+  /// Get the raw value of the symbol from the symbol table.
+  ///
+  /// If the symbol's value is an address, return the file address, else return
+  /// the raw value that is stored in the m_addr_range. If the base address has
+  /// no section, then getting the file address will return the correct value
+  /// as it will return the offset in the base address which is the value.
+  uint64_t GetRawValue() const {
+    return m_addr_range.GetBaseAddress().GetFileAddress();
+  }
+
   // When a symbol's value isn't an address, we need to access the raw value.
   // This function will ensure this symbol's value isn't an address and return
   // the integer value if this checks out, otherwise it will return
@@ -234,6 +244,46 @@ public:
   static llvm::StringRef GetSyntheticSymbolPrefix() {
     return "___lldb_unnamed_symbol";
   }
+
+  /// Decode a serialized version of this object from data.
+  ///
+  /// \param data
+  ///   The decoder object that references the serialized data.
+  ///
+  /// \param offset_ptr
+  ///   A pointer that contains the offset from which the data will be decoded
+  ///   from that gets updated as data gets decoded.
+  ///
+  /// \param section_list
+  ///   A section list that allows lldb_private::Address objects to be filled
+  ///   in. The address information for symbols are serilized as file addresses
+  ///   and must be converted into Address objects with the right section and
+  ///   offset.
+  ///
+  /// \param strtab
+  ///   All strings in cache files are put into string tables for efficiency
+  ///   and cache file size reduction. Strings are stored as uint32_t string
+  ///   table offsets in the cache data.
+  ///
+  /// \return
+  ///   True if the symbol is successfully decoded, false otherwise.
+  bool Decode(const DataExtractor &data, lldb::offset_t *offset_ptr,
+              const SectionList *section_list, const StringTableReader &strtab);
+
+  /// Encode this object into a data encoder object.
+  ///
+  /// This allows this object to be serialized to disk.
+  ///
+  /// \param encoder
+  ///   A data encoder object that serialized bytes will be encoded into.
+  ///
+  /// \param strtab
+  ///   All strings in cache files are put into string tables for efficiency
+  ///   and cache file size reduction. Strings are stored as uint32_t string
+  ///   table offsets in the cache data.
+  void Encode(DataEncoder &encoder, ConstStringTable &strtab) const;
+
+  bool operator==(const Symbol &rhs) const;
 
 protected:
   // This is the internal guts of ResolveReExportedSymbol, it assumes

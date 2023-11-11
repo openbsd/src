@@ -11,6 +11,7 @@
 #include <cstring>
 #include <dirent.h>
 #include <fcntl.h>
+#include <optional>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -20,6 +21,7 @@
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/ScopedPrinter.h"
 
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/ProcessInfo.h"
 #include "lldb/Utility/Status.h"
@@ -56,7 +58,7 @@ class ProcessLaunchInfo;
 static bool GetStatusInfo(::pid_t Pid, ProcessInstanceInfo &ProcessInfo,
                           ProcessState &State, ::pid_t &TracerPid,
                           ::pid_t &Tgid) {
-  Log *log = GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+  Log *log = GetLog(LLDBLog::Host);
 
   auto BufferOrError = getProcFile(Pid, "status");
   if (!BufferOrError)
@@ -126,7 +128,7 @@ static bool IsDirNumeric(const char *dname) {
 }
 
 static ArchSpec GetELFProcessCPUType(llvm::StringRef exe_path) {
-  Log *log = GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+  Log *log = GetLog(LLDBLog::Host);
 
   auto buffer_sp = FileSystem::Instance().CreateDataBuffer(exe_path, 0x20, 0);
   if (!buffer_sp)
@@ -134,7 +136,8 @@ static ArchSpec GetELFProcessCPUType(llvm::StringRef exe_path) {
 
   uint8_t exe_class =
       llvm::object::getElfArchType(
-          {buffer_sp->GetChars(), size_t(buffer_sp->GetByteSize())})
+          {reinterpret_cast<const char *>(buffer_sp->GetBytes()),
+           size_t(buffer_sp->GetByteSize())})
           .first;
 
   switch (exe_class) {
@@ -165,7 +168,7 @@ static void GetProcessArgs(::pid_t pid, ProcessInstanceInfo &process_info) {
 }
 
 static void GetExePathAndArch(::pid_t pid, ProcessInstanceInfo &process_info) {
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_PROCESS));
+  Log *log = GetLog(LLDBLog::Process);
   std::string ExePath(PATH_MAX, '\0');
 
   // We can't use getProcFile here because proc/[pid]/exe is a symbolic link.
@@ -315,13 +318,13 @@ Status Host::ShellExpandArguments(ProcessLaunchInfo &launch_info) {
   return Status("unimplemented");
 }
 
-llvm::Optional<lldb::pid_t> lldb_private::getPIDForTID(lldb::pid_t tid) {
+std::optional<lldb::pid_t> lldb_private::getPIDForTID(lldb::pid_t tid) {
   ::pid_t tracerpid, tgid = LLDB_INVALID_PROCESS_ID;
   ProcessInstanceInfo process_info;
   ProcessState state;
 
   if (!GetStatusInfo(tid, process_info, state, tracerpid, tgid) ||
       tgid == LLDB_INVALID_PROCESS_ID)
-    return llvm::None;
+    return std::nullopt;
   return tgid;
 }

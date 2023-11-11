@@ -10,6 +10,7 @@
 #define LLDB_SOURCE_PLUGINS_SYMBOLFILE_DWARF_DWARFASTPARSERCLANG_H
 
 #include "clang/AST/CharUnits.h"
+#include "clang/AST/Type.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
@@ -24,6 +25,7 @@
 #include "Plugins/ExpressionParser/Clang/ClangASTImporter.h"
 #include "Plugins/TypeSystem/Clang/TypeSystemClang.h"
 
+#include <optional>
 #include <vector>
 
 namespace lldb_private {
@@ -45,9 +47,13 @@ public:
                                   const DWARFDIE &die,
                                   bool *type_is_new_ptr) override;
 
+  lldb_private::ConstString
+  ConstructDemangledNameFromDWARF(const DWARFDIE &die) override;
+
   lldb_private::Function *
   ParseFunctionFromDWARF(lldb_private::CompileUnit &comp_unit,
-                         const DWARFDIE &die) override;
+                         const DWARFDIE &die,
+                         const lldb_private::AddressRange &func_range) override;
 
   bool
   CompleteTypeFromDWARF(const DWARFDIE &die, lldb_private::Type *type,
@@ -67,13 +73,41 @@ public:
 
   lldb_private::ClangASTImporter &GetClangASTImporter();
 
+  /// Extracts an value for a given Clang integer type from a DWARFFormValue.
+  ///
+  /// \param int_type The Clang type that defines the bit size and signedness
+  ///                 of the integer that should be extracted. Has to be either
+  ///                 an integer type or an enum type. For enum types the
+  ///                 underlying integer type will be considered as the
+  ///                 expected integer type that should be extracted.
+  /// \param form_value The DWARFFormValue that contains the integer value.
+  /// \return An APInt containing the same integer value as the given
+  ///         DWARFFormValue with the bit width of the given integer type.
+  ///         Returns an error if the value in the DWARFFormValue does not fit
+  ///         into the given integer type or the integer type isn't supported.
+  llvm::Expected<llvm::APInt>
+  ExtractIntFromFormValue(const lldb_private::CompilerType &int_type,
+                          const DWARFFormValue &form_value) const;
+
+  /// Returns the template parameters of a class DWARFDIE as a string.
+  ///
+  /// This is mostly useful for -gsimple-template-names which omits template
+  /// parameters from the DIE name and instead always adds template parameter
+  /// children DIEs.
+  ///
+  /// \param die The struct/class DWARFDIE containing template parameters.
+  /// \return A string, including surrounding '<>', of the template parameters.
+  /// If the DIE's name already has '<>', returns an empty ConstString because
+  /// it's assumed that the caller is using the DIE name anyway.
+  lldb_private::ConstString
+  GetDIEClassTemplateParams(const DWARFDIE &die) override;
+
 protected:
   /// Protected typedefs and members.
   /// @{
   class DelayedAddObjCClassProperty;
   typedef std::vector<DelayedAddObjCClassProperty> DelayedPropertyList;
 
-  typedef llvm::SmallPtrSet<const DWARFDebugInfoEntry *, 4> DIEPointerSet;
   typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::DeclContext *>
       DIEToDeclContextMap;
   typedef std::multimap<const clang::DeclContext *, const DWARFDIE>
@@ -83,11 +117,9 @@ protected:
       DIEToModuleMap;
   typedef llvm::DenseMap<const DWARFDebugInfoEntry *, clang::Decl *>
       DIEToDeclMap;
-  typedef llvm::DenseMap<const clang::Decl *, DIEPointerSet> DeclToDIEMap;
 
   lldb_private::TypeSystemClang &m_ast;
   DIEToDeclMap m_die_to_decl;
-  DeclToDIEMap m_decl_to_die;
   DIEToDeclContextMap m_die_to_decl_ctx;
   DeclContextToDIEMap m_decl_ctx_to_die;
   DIEToModuleMap m_die_to_module;
@@ -103,17 +135,20 @@ protected:
   bool ParseTemplateDIE(const DWARFDIE &die,
                         lldb_private::TypeSystemClang::TemplateParameterInfos
                             &template_param_infos);
+
   bool ParseTemplateParameterInfos(
       const DWARFDIE &parent_die,
       lldb_private::TypeSystemClang::TemplateParameterInfos
           &template_param_infos);
+
+  std::string GetCPlusPlusQualifiedName(const DWARFDIE &die);
 
   bool ParseChildMembers(
       const DWARFDIE &die, lldb_private::CompilerType &class_compiler_type,
       std::vector<std::unique_ptr<clang::CXXBaseSpecifier>> &base_classes,
       std::vector<DWARFDIE> &member_function_dies,
       DelayedPropertyList &delayed_properties,
-      lldb::AccessType &default_accessibility,
+      const lldb::AccessType default_accessibility,
       lldb_private::ClangASTImporter::LayoutInfo &layout_info);
 
   size_t
@@ -190,11 +225,26 @@ private:
     }
   };
 
+  /// Parses a DW_TAG_APPLE_property DIE and appends the parsed data to the
+  /// list of delayed Objective-C properties.
+  ///
+  /// Note: The delayed property needs to be finalized to actually create the
+  /// property declarations in the module AST.
+  ///
+  /// \param die The DW_TAG_APPLE_property DIE that will be parsed.
+  /// \param parent_die The parent DIE.
+  /// \param class_clang_type The Objective-C class that will contain the
+  /// created property.
+  /// \param delayed_properties The list of delayed properties that the result
+  /// will be appended to.
+  void ParseObjCProperty(const DWARFDIE &die, const DWARFDIE &parent_die,
+                         const lldb_private::CompilerType &class_clang_type,
+                         DelayedPropertyList &delayed_properties);
+
   void
   ParseSingleMember(const DWARFDIE &die, const DWARFDIE &parent_die,
                     const lldb_private::CompilerType &class_clang_type,
                     lldb::AccessType default_accessibility,
-                    DelayedPropertyList &delayed_properties,
                     lldb_private::ClangASTImporter::LayoutInfo &layout_info,
                     FieldInfo &last_field_info);
 
@@ -210,11 +260,32 @@ private:
                          const DWARFDIE &die, ParsedDWARFTypeAttributes &attrs);
   lldb::TypeSP ParseSubroutine(const DWARFDIE &die,
                                ParsedDWARFTypeAttributes &attrs);
-  // FIXME: attrs should be passed as a const reference.
   lldb::TypeSP ParseArrayType(const DWARFDIE &die,
-                              ParsedDWARFTypeAttributes &attrs);
+                              const ParsedDWARFTypeAttributes &attrs);
   lldb::TypeSP ParsePointerToMemberType(const DWARFDIE &die,
                                         const ParsedDWARFTypeAttributes &attrs);
+
+  /// Parses a DW_TAG_inheritance DIE into a base/super class.
+  ///
+  /// \param die The DW_TAG_inheritance DIE to parse.
+  /// \param parent_die The parent DIE of the given DIE.
+  /// \param class_clang_type The C++/Objective-C class representing parent_die.
+  /// For an Objective-C class this method sets the super class on success. For
+  /// a C++ class this will *not* add the result as a base class.
+  /// \param default_accessibility The default accessibility that is given to
+  /// base classes if they don't have an explicit accessibility set.
+  /// \param module_sp The current Module.
+  /// \param base_classes The list of C++ base classes that will be appended
+  /// with the parsed base class on success.
+  /// \param layout_info The layout information that will be updated for C++
+  /// base classes with the base offset.
+  void ParseInheritance(
+      const DWARFDIE &die, const DWARFDIE &parent_die,
+      const lldb_private::CompilerType class_clang_type,
+      const lldb::AccessType default_accessibility,
+      const lldb::ModuleSP &module_sp,
+      std::vector<std::unique_ptr<clang::CXXBaseSpecifier>> &base_classes,
+      lldb_private::ClangASTImporter::LayoutInfo &layout_info);
 };
 
 /// Parsed form of all attributes that are relevant for type reconstruction.
@@ -245,11 +316,15 @@ struct ParsedDWARFTypeAttributes {
   DWARFFormValue specification;
   DWARFFormValue type;
   lldb::LanguageType class_language = lldb::eLanguageTypeUnknown;
-  llvm::Optional<uint64_t> byte_size;
+  std::optional<uint64_t> byte_size;
   size_t calling_convention = llvm::dwarf::DW_CC_normal;
   uint32_t bit_stride = 0;
   uint32_t byte_stride = 0;
   uint32_t encoding = 0;
+  clang::RefQualifierKind ref_qual =
+      clang::RQ_None; ///< Indicates ref-qualifier of
+                      ///< C++ member function if present.
+                      ///< Is RQ_None otherwise.
 };
 
 #endif // LLDB_SOURCE_PLUGINS_SYMBOLFILE_DWARF_DWARFASTPARSERCLANG_H

@@ -15,42 +15,13 @@
 #include "lldb/Core/IOHandler.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandOptionArgumentTable.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/OptionArgParser.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
-
-// FIXME: "script-type" needs to have its contents determined dynamically, so
-// somebody can add a new scripting language to lldb and have it pickable here
-// without having to change this enumeration by hand and rebuild lldb proper.
-static constexpr OptionEnumValueElement g_script_option_enumeration[] = {
-    {
-        eScriptLanguageNone,
-        "command",
-        "Commands are in the lldb command interpreter language",
-    },
-    {
-        eScriptLanguagePython,
-        "python",
-        "Commands are in the Python language.",
-    },
-    {
-        eScriptLanguageLua,
-        "lua",
-        "Commands are in the Lua language.",
-    },
-    {
-        eSortOrderByName,
-        "default-script",
-        "Commands are in the default scripting language.",
-    },
-};
-
-static constexpr OptionEnumValues ScriptOptionEnum() {
-  return OptionEnumValues(g_script_option_enumeration);
-}
 
 #define LLDB_OPTIONS_watchpoint_command_add
 #include "CommandOptions.inc"
@@ -66,8 +37,7 @@ public:
                             "commands previously added to it.",
                             nullptr, eCommandRequiresTarget),
         IOHandlerDelegateMultiline("DONE",
-                                   IOHandlerDelegate::Completion::LLDBCommand),
-        m_options() {
+                                   IOHandlerDelegate::Completion::LLDBCommand) {
     SetHelpLong(
         R"(
 General information about entering watchpoint commands
@@ -314,7 +284,7 @@ are no syntax errors may indicate that a function was declared but never called.
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options(), m_one_liner(), m_function_name() {}
+    CommandOptions() = default;
 
     ~CommandOptions() override = default;
 
@@ -379,7 +349,7 @@ are no syntax errors may indicate that a function was declared but never called.
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return llvm::makeArrayRef(g_watchpoint_command_add_options);
+      return llvm::ArrayRef(g_watchpoint_command_add_options);
     }
 
     // Instance variables to hold the values for command options.

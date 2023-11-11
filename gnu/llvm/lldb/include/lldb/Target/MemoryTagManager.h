@@ -35,8 +35,8 @@ public:
   // you get will have been shifted down 56 before being returned.
   virtual lldb::addr_t GetLogicalTag(lldb::addr_t addr) const = 0;
 
-  // Remove non address bits from a pointer
-  virtual lldb::addr_t RemoveNonAddressBits(lldb::addr_t addr) const = 0;
+  // Remove tag bits from a pointer
+  virtual lldb::addr_t RemoveTagBits(lldb::addr_t addr) const = 0;
 
   // Return the difference between two addresses, ignoring any logical tags they
   // have. If your tags are just part of a larger set of ignored bits, this
@@ -64,11 +64,28 @@ public:
   //   (which may include one or more memory regions)
   //
   // If so, return a modified range which will have been expanded
-  // to be granule aligned.
+  // to be granule aligned. Otherwise return an error.
   //
   // Tags in the input addresses are ignored and not present
   // in the returned range.
   virtual llvm::Expected<TagRange> MakeTaggedRange(
+      lldb::addr_t addr, lldb::addr_t end_addr,
+      const lldb_private::MemoryRegionInfos &memory_regions) const = 0;
+
+  // Given a range addr to end_addr, check that end_addr >= addr.
+  // If it is not, return an error saying so.
+  // Otherwise, granule align it and return a set of ranges representing
+  // subsections of the aligned range that have memory tagging enabled.
+  //
+  // Basically a sparse version of MakeTaggedRange. Use this when you
+  // want to know which parts of a larger range have memory tagging.
+  //
+  // Regions in memory_regions should be sorted in ascending order and
+  // not overlap. (use Process GetMemoryRegions)
+  //
+  // Tags in the input addresses are ignored and not present
+  // in the returned ranges.
+  virtual llvm::Expected<std::vector<TagRange>> MakeTaggedRanges(
       lldb::addr_t addr, lldb::addr_t end_addr,
       const lldb_private::MemoryRegionInfos &memory_regions) const = 0;
 
@@ -95,6 +112,21 @@ public:
   virtual llvm::Expected<std::vector<lldb::addr_t>>
   UnpackTagsData(const std::vector<uint8_t> &tags,
                  size_t granules = 0) const = 0;
+
+  // Unpack tags from a corefile segment containing compressed tags
+  // (compression that may be different from the one used for GDB transport).
+  //
+  // This method asumes that:
+  // * addr and len have been granule aligned by a tag manager
+  // * addr >= tag_segment_virtual_address
+  //
+  // 'reader' will always be a wrapper around a CoreFile in real use
+  // but allows testing without having to mock a CoreFile.
+  typedef std::function<size_t(lldb::offset_t, size_t, void *)> CoreReaderFn;
+  std::vector<lldb::addr_t> virtual UnpackTagsFromCoreFileSegment(
+      CoreReaderFn reader, lldb::addr_t tag_segment_virtual_address,
+      lldb::addr_t tag_segment_data_address, lldb::addr_t addr,
+      size_t len) const = 0;
 
   // Pack uncompressed tags into their storage format (e.g. for gdb QMemTags).
   // Checks that each tag is within the expected value range.
@@ -127,7 +159,7 @@ public:
   RepeatTagsForRange(const std::vector<lldb::addr_t> &tags,
                      TagRange range) const = 0;
 
-  virtual ~MemoryTagManager() {}
+  virtual ~MemoryTagManager() = default;
 };
 
 } // namespace lldb_private

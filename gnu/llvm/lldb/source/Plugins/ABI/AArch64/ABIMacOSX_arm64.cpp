@@ -8,6 +8,7 @@
 
 #include "ABIMacOSX_arm64.h"
 
+#include <optional>
 #include <vector>
 
 #include "llvm/ADT/STLExtras.h"
@@ -23,6 +24,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Utility/ConstString.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/RegisterValue.h"
 #include "lldb/Utility/Scalar.h"
@@ -62,7 +64,7 @@ bool ABIMacOSX_arm64::PrepareTrivialCall(
   if (!reg_ctx)
     return false;
 
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
+  Log *log = GetLog(LLDBLog::Expressions);
 
   if (log) {
     StreamString s;
@@ -140,7 +142,7 @@ bool ABIMacOSX_arm64::GetArgumentValues(Thread &thread,
       return false;
 
     CompilerType value_type = value->GetCompilerType();
-    llvm::Optional<uint64_t> bit_size = value_type.GetBitSize(&thread);
+    std::optional<uint64_t> bit_size = value_type.GetBitSize(&thread);
     if (!bit_size)
       return false;
 
@@ -303,7 +305,7 @@ ABIMacOSX_arm64::SetReturnValueObject(lldb::StackFrameSP &frame_sp,
             if (byte_size <= 16) {
               if (byte_size <= RegisterValue::GetMaxByteSize()) {
                 RegisterValue reg_value;
-                error = reg_value.SetValueFromData(v0_info, data, 0, true);
+                error = reg_value.SetValueFromData(*v0_info, data, 0, true);
                 if (error.Success()) {
                   if (!reg_ctx->WriteRegister(v0_info, reg_value))
                     error.SetErrorString("failed to write register v0");
@@ -330,7 +332,7 @@ ABIMacOSX_arm64::SetReturnValueObject(lldb::StackFrameSP &frame_sp,
         if (v0_info) {
           if (byte_size <= v0_info->byte_size) {
             RegisterValue reg_value;
-            error = reg_value.SetValueFromData(v0_info, data, 0, true);
+            error = reg_value.SetValueFromData(*v0_info, data, 0, true);
             if (error.Success()) {
               if (!reg_ctx->WriteRegister(v0_info, reg_value))
                 error.SetErrorString("failed to write register v0");
@@ -402,7 +404,7 @@ bool ABIMacOSX_arm64::CreateDefaultUnwindPlan(UnwindPlan &unwind_plan) {
 // volatile (and specifically only the lower 8 bytes of these regs), the rest
 // of the fp/SIMD registers are volatile.
 //
-// v. https://github.com/ARM-software/abi-aa/blob/master/aapcs64/
+// v. https://github.com/ARM-software/abi-aa/blob/main/aapcs64/
 
 // We treat x29 as callee preserved also, else the unwinder won't try to
 // retrieve fp saves.
@@ -493,7 +495,7 @@ static bool LoadValueFromConsecutiveGPRRegisters(
     uint32_t &NGRN,       // NGRN (see ABI documentation)
     uint32_t &NSRN,       // NSRN (see ABI documentation)
     DataExtractor &data) {
-  llvm::Optional<uint64_t> byte_size =
+  std::optional<uint64_t> byte_size =
       value_type.GetByteSize(exe_ctx.GetBestExecutionContextScope());
   if (!byte_size || *byte_size == 0)
     return false;
@@ -511,7 +513,7 @@ static bool LoadValueFromConsecutiveGPRRegisters(
     if (NSRN < 8 && (8 - NSRN) >= homogeneous_count) {
       if (!base_type)
         return false;
-      llvm::Optional<uint64_t> base_byte_size =
+      std::optional<uint64_t> base_byte_size =
           base_type.GetByteSize(exe_ctx.GetBestExecutionContextScope());
       if (!base_byte_size)
         return false;
@@ -536,8 +538,8 @@ static bool LoadValueFromConsecutiveGPRRegisters(
         // Make sure we have enough room in "heap_data_up"
         if ((data_offset + *base_byte_size) <= heap_data_up->GetByteSize()) {
           const size_t bytes_copied = reg_value.GetAsMemoryData(
-              reg_info, heap_data_up->GetBytes() + data_offset, *base_byte_size,
-              byte_order, error);
+              *reg_info, heap_data_up->GetBytes() + data_offset,
+              *base_byte_size, byte_order, error);
           if (bytes_copied != *base_byte_size)
             return false;
           data_offset += bytes_copied;
@@ -576,7 +578,7 @@ static bool LoadValueFromConsecutiveGPRRegisters(
 
       const size_t curr_byte_size = std::min<size_t>(8, bytes_left);
       const size_t bytes_copied = reg_value.GetAsMemoryData(
-          reg_info, heap_data_up->GetBytes() + data_offset, curr_byte_size,
+          *reg_info, heap_data_up->GetBytes() + data_offset, curr_byte_size,
           byte_order, error);
       if (bytes_copied == 0)
         return false;
@@ -589,9 +591,10 @@ static bool LoadValueFromConsecutiveGPRRegisters(
   } else {
     const RegisterInfo *reg_info = nullptr;
     if (is_return_value) {
-      // We are assuming we are decoding this immediately after returning from
-      // a function call and that the address of the structure is in x8
-      reg_info = reg_ctx->GetRegisterInfoByName("x8", 0);
+      // The Darwin arm64 ABI doesn't write the return location back to x8
+      // before returning from the function the way the x86_64 ABI does.  So
+      // we can't reconstruct stack based returns on exit from the function:
+      return false;
     } else {
       // We are assuming we are stopped at the first instruction in a function
       // and that the ABI is being respected so all parameters appear where
@@ -609,9 +612,6 @@ static bool LoadValueFromConsecutiveGPRRegisters(
         return false;
       ++NGRN;
     }
-
-    if (reg_info == nullptr)
-      return false;
 
     const lldb::addr_t value_addr =
         reg_ctx->ReadRegisterAsUnsigned(reg_info, LLDB_INVALID_ADDRESS);
@@ -648,8 +648,7 @@ ValueObjectSP ABIMacOSX_arm64::GetReturnValueObjectImpl(
   if (!reg_ctx)
     return return_valobj_sp;
 
-  llvm::Optional<uint64_t> byte_size =
-      return_compiler_type.GetByteSize(&thread);
+  std::optional<uint64_t> byte_size = return_compiler_type.GetByteSize(&thread);
   if (!byte_size)
     return return_valobj_sp;
 
@@ -690,10 +689,10 @@ ValueObjectSP ABIMacOSX_arm64::GetReturnValueObjectImpl(
                       reg_ctx->ReadRegister(x1_reg_info, x1_reg_value)) {
                     Status error;
                     if (x0_reg_value.GetAsMemoryData(
-                            x0_reg_info, heap_data_up->GetBytes() + 0, 8,
+                            *x0_reg_info, heap_data_up->GetBytes() + 0, 8,
                             byte_order, error) &&
                         x1_reg_value.GetAsMemoryData(
-                            x1_reg_info, heap_data_up->GetBytes() + 8, 8,
+                            *x1_reg_info, heap_data_up->GetBytes() + 8, 8,
                             byte_order, error)) {
                       DataExtractor data(
                           DataBufferSP(heap_data_up.release()), byte_order,
@@ -786,7 +785,7 @@ ValueObjectSP ABIMacOSX_arm64::GetReturnValueObjectImpl(
           RegisterValue reg_value;
           if (reg_ctx->ReadRegister(v0_info, reg_value)) {
             Status error;
-            if (reg_value.GetAsMemoryData(v0_info, heap_data_up->GetBytes(),
+            if (reg_value.GetAsMemoryData(*v0_info, heap_data_up->GetBytes(),
                                           heap_data_up->GetByteSize(),
                                           byte_order, error)) {
               DataExtractor data(DataBufferSP(heap_data_up.release()),
@@ -817,6 +816,16 @@ ValueObjectSP ABIMacOSX_arm64::GetReturnValueObjectImpl(
 
 lldb::addr_t ABIMacOSX_arm64::FixAddress(addr_t pc, addr_t mask) {
   lldb::addr_t pac_sign_extension = 0x0080000000000000ULL;
+  // Darwin systems originally couldn't determine the proper value
+  // dynamically, so the most common value was hardcoded.  This has
+  // largely been cleaned up, but there are still a handful of
+  // environments that assume the default value is set to this value
+  // and there's no dynamic value to correct it.
+  // When no mask is specified, set it to 39 bits of addressing (0..38).
+  if (mask == 0) {
+    // ~((1ULL<<39)-1)
+    mask = 0xffffff8000000000;
+  }
   return (pc & pac_sign_extension) ? pc | mask : pc & (~mask);
 }
 
@@ -828,12 +837,3 @@ void ABIMacOSX_arm64::Initialize() {
 void ABIMacOSX_arm64::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
-
-// PluginInterface protocol
-
-ConstString ABIMacOSX_arm64::GetPluginNameStatic() {
-  static ConstString g_plugin_name("ABIMacOSX_arm64");
-  return g_plugin_name;
-}
-
-uint32_t ABIMacOSX_arm64::GetPluginVersion() { return 1; }

@@ -20,6 +20,7 @@
 #include "lldb/Host/FileSystem.h"
 #include "lldb/Host/HostInfo.h"
 #include "lldb/Utility/FileSpec.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 
 #include <string>
@@ -29,7 +30,7 @@ using namespace lldb_private;
 static bool VerifyClangPath(const llvm::Twine &clang_path) {
   if (FileSystem::Instance().IsDirectory(clang_path))
     return true;
-  Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+  Log *log = GetLog(LLDBLog::Host);
   LLDB_LOGF(log,
             "VerifyClangPath(): "
             "failed to stat clang resource directory at \"%s\"",
@@ -47,18 +48,18 @@ static bool VerifyClangPath(const llvm::Twine &clang_path) {
 static bool DefaultComputeClangResourceDirectory(FileSpec &lldb_shlib_spec,
                                                  FileSpec &file_spec,
                                                  bool verify) {
-  Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+  Log *log = GetLog(LLDBLog::Host);
   std::string raw_path = lldb_shlib_spec.GetPath();
   llvm::StringRef parent_dir = llvm::sys::path::parent_path(raw_path);
 
   static const llvm::StringRef kResourceDirSuffixes[] = {
       // LLVM.org's build of LLDB uses the clang resource directory placed
       // in $install_dir/lib{,64}/clang/$clang_version.
-      "lib" CLANG_LIBDIR_SUFFIX "/clang/" CLANG_VERSION_STRING,
+      CLANG_INSTALL_LIBDIR_BASENAME "/clang/" CLANG_VERSION_MAJOR_STRING,
       // swift-lldb uses the clang resource directory copied from swift, which
       // by default is placed in $install_dir/lib{,64}/lldb/clang. LLDB places
-      // it there, so we use LLDB_LIBDIR_SUFFIX.
-      "lib" LLDB_LIBDIR_SUFFIX "/lldb/clang",
+      // it there, so we use LLDB_INSTALL_LIBDIR_BASENAME.
+      LLDB_INSTALL_LIBDIR_BASENAME "/lldb/clang",
   };
 
   for (const auto &Suffix : kResourceDirSuffixes) {
@@ -71,7 +72,7 @@ static bool DefaultComputeClangResourceDirectory(FileSpec &lldb_shlib_spec,
                "DefaultComputeClangResourceDir: Setting ClangResourceDir "
                "to \"{0}\", verify = {1}",
                clang_dir.str(), verify ? "true" : "false");
-      file_spec.GetDirectory().SetString(clang_dir);
+      file_spec.SetDirectory(clang_dir);
       FileSystem::Instance().Resolve(file_spec);
       return true;
     }
@@ -118,7 +119,7 @@ bool lldb_private::ComputeClangResourceDirectory(FileSpec &lldb_shlib_spec,
                             "Developer/Toolchains/XcodeDefault.xctoolchain",
                             swift_clang_resource_dir);
     if (!verify || VerifyClangPath(clang_path)) {
-      file_spec.GetDirectory().SetString(clang_path.c_str());
+      file_spec.SetDirectory(clang_path);
       FileSystem::Instance().Resolve(file_spec);
       return true;
     }
@@ -133,7 +134,7 @@ bool lldb_private::ComputeClangResourceDirectory(FileSpec &lldb_shlib_spec,
       raw_path.resize(parent - r_end);
       llvm::sys::path::append(clang_path, raw_path, swift_clang_resource_dir);
       if (!verify || VerifyClangPath(clang_path)) {
-        file_spec.GetDirectory().SetString(clang_path.c_str());
+        file_spec.SetDirectory(clang_path);
         FileSystem::Instance().Resolve(file_spec);
         return true;
       }
@@ -144,7 +145,7 @@ bool lldb_private::ComputeClangResourceDirectory(FileSpec &lldb_shlib_spec,
   raw_path = lldb_shlib_spec.GetPath();
   raw_path.resize(rev_it - r_end);
   raw_path.append("LLDB.framework/Resources/Clang");
-  file_spec.GetDirectory().SetString(raw_path.c_str());
+  file_spec.SetDirectory(raw_path);
   FileSystem::Instance().Resolve(file_spec);
   return true;
 #endif // __APPLE__
@@ -157,7 +158,7 @@ FileSpec lldb_private::GetClangResourceDir() {
     if (FileSpec lldb_file_spec = HostInfo::GetShlibDir())
       ComputeClangResourceDirectory(lldb_file_spec, g_cached_resource_dir,
                                     true);
-    Log *log = lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST);
+    Log *log = GetLog(LLDBLog::Host);
     LLDB_LOGF(log, "GetClangResourceDir() => '%s'",
               g_cached_resource_dir.GetPath().c_str());
   });

@@ -24,6 +24,7 @@
 #include "lldb/Target/ThreadPlan.h"
 #include "lldb/Target/ThreadPlanCallFunction.h"
 #include "lldb/Utility/DataExtractor.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/State.h"
 
@@ -43,7 +44,8 @@ FunctionCaller::FunctionCaller(ExecutionContextScope &exe_scope,
       m_function_return_type(return_type),
       m_wrapper_function_name("__lldb_caller_function"),
       m_wrapper_struct_name("__lldb_caller_struct"), m_wrapper_args_addrs(),
-      m_struct_valid(false), m_arg_values(arg_value_list), m_compiled(false),
+      m_struct_valid(false), m_struct_size(0), m_return_size(0),
+      m_return_offset(0), m_arg_values(arg_value_list), m_compiled(false),
       m_JITted(false) {
   m_jit_process_wp = lldb::ProcessWP(exe_scope.CalculateProcess());
   // Can't make a FunctionCaller without a process.
@@ -64,17 +66,31 @@ bool FunctionCaller::WriteFunctionWrapper(
     ExecutionContext &exe_ctx, DiagnosticManager &diagnostic_manager) {
   Process *process = exe_ctx.GetProcessPtr();
 
-  if (!process)
+  if (!process) {
+    diagnostic_manager.Printf(eDiagnosticSeverityError, "no process.");
     return false;
-
+  }
+  
   lldb::ProcessSP jit_process_sp(m_jit_process_wp.lock());
 
-  if (process != jit_process_sp.get())
+  if (process != jit_process_sp.get()) {
+    diagnostic_manager.Printf(eDiagnosticSeverityError,
+                             "process does not match the stored process.");
     return false;
-
-  if (!m_compiled)
+  }
+    
+  if (process->GetState() != lldb::eStateStopped) {
+    diagnostic_manager.Printf(eDiagnosticSeverityError, 
+                              "process is not stopped");
     return false;
+  }
 
+  if (!m_compiled) {
+    diagnostic_manager.Printf(eDiagnosticSeverityError, 
+                              "function not compiled");
+    return false;
+  }
+  
   if (m_JITted)
     return true;
 
@@ -97,10 +113,10 @@ bool FunctionCaller::WriteFunctionWrapper(
     if (jit_module_sp) {
       ConstString const_func_name(FunctionName());
       FileSpec jit_file;
-      jit_file.GetFilename() = const_func_name;
+      jit_file.SetFilename(const_func_name);
       jit_module_sp->SetFileSpecAndObjectName(jit_file, ConstString());
       m_jit_module_wp = jit_module_sp;
-      process->GetTarget().GetImages().Append(jit_module_sp, 
+      process->GetTarget().GetImages().Append(jit_module_sp,
                                               true /* notify */);
     }
   }
@@ -211,6 +227,17 @@ bool FunctionCaller::WriteFunctionArguments(
 bool FunctionCaller::InsertFunction(ExecutionContext &exe_ctx,
                                     lldb::addr_t &args_addr_ref,
                                     DiagnosticManager &diagnostic_manager) {
+  // Since we might need to call allocate memory and maybe call code to make
+  // the caller, we need to be stopped.
+  Process *process = exe_ctx.GetProcessPtr();
+  if (!process) {
+    diagnostic_manager.PutString(eDiagnosticSeverityError, "no process");
+    return false;
+  }
+  if (process->GetState() != lldb::eStateStopped) {
+    diagnostic_manager.PutString(eDiagnosticSeverityError, "process running");
+    return false;
+  }
   if (CompileFunction(exe_ctx.GetThreadSP(), diagnostic_manager) != 0)
     return false;
   if (!WriteFunctionWrapper(exe_ctx, diagnostic_manager))
@@ -218,7 +245,7 @@ bool FunctionCaller::InsertFunction(ExecutionContext &exe_ctx,
   if (!WriteFunctionArguments(exe_ctx, args_addr_ref, diagnostic_manager))
     return false;
 
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_STEP));
+  Log *log = GetLog(LLDBLog::Step);
   LLDB_LOGF(log, "Call Address: 0x%" PRIx64 " Struct Address: 0x%" PRIx64 ".\n",
             m_jit_start_addr, args_addr_ref);
 
@@ -229,8 +256,7 @@ lldb::ThreadPlanSP FunctionCaller::GetThreadPlanToCallFunction(
     ExecutionContext &exe_ctx, lldb::addr_t args_addr,
     const EvaluateExpressionOptions &options,
     DiagnosticManager &diagnostic_manager) {
-  Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_EXPRESSIONS |
-                                                  LIBLLDB_LOG_STEP));
+  Log *log(GetLog(LLDBLog::Expressions | LLDBLog::Step));
 
   LLDB_LOGF(log,
             "-- [FunctionCaller::GetThreadPlanToCallFunction] Creating "
@@ -254,7 +280,7 @@ lldb::ThreadPlanSP FunctionCaller::GetThreadPlanToCallFunction(
 
   lldb::ThreadPlanSP new_plan_sp(new ThreadPlanCallFunction(
       *thread, wrapper_address, CompilerType(), args, options));
-  new_plan_sp->SetIsMasterPlan(true);
+  new_plan_sp->SetIsControllingPlan(true);
   new_plan_sp->SetOkayToDiscard(false);
   return new_plan_sp;
 }
@@ -269,8 +295,7 @@ bool FunctionCaller::FetchFunctionResults(ExecutionContext &exe_ctx,
   // then use GetReturnValueObject
   // to fetch the value.  That way we can fetch any values we need.
 
-  Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_EXPRESSIONS |
-                                                  LIBLLDB_LOG_STEP));
+  Log *log(GetLog(LLDBLog::Expressions | LLDBLog::Step));
 
   LLDB_LOGF(log,
             "-- [FunctionCaller::FetchFunctionResults] Fetching function "
@@ -343,8 +368,7 @@ lldb::ExpressionResults FunctionCaller::ExecuteFunction(
       return lldb::eExpressionSetupError;
   }
 
-  Log *log(lldb_private::GetLogIfAnyCategoriesSet(LIBLLDB_LOG_EXPRESSIONS |
-                                                  LIBLLDB_LOG_STEP));
+  Log *log(GetLog(LLDBLog::Expressions | LLDBLog::Step));
 
   LLDB_LOGF(log,
             "== [FunctionCaller::ExecuteFunction] Executing function \"%s\" ==",

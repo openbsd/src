@@ -16,6 +16,7 @@
 #include <CoreFoundation/CoreFoundation.h>
 #include <mach-o/loader.h>
 #include <mach/mach.h>
+#include <optional>
 #include <pthread.h>
 #include <sys/signal.h>
 #include <uuid/uuid.h>
@@ -34,6 +35,7 @@
 #include "PThreadCondition.h"
 #include "PThreadEvent.h"
 #include "PThreadMutex.h"
+#include "RNBContext.h"
 #include "ThreadInfo.h"
 
 class DNBThreadResumeActions;
@@ -72,20 +74,25 @@ public:
     uint64_t load_address;
     uint64_t mod_date; // may not be available - 0 if so
     struct mach_o_information macho_info;
+    bool is_valid_mach_header;
 
     binary_image_information()
-        : filename(), load_address(INVALID_NUB_ADDRESS), mod_date(0) {}
+        : filename(), load_address(INVALID_NUB_ADDRESS), mod_date(0),
+          is_valid_mach_header(false) {}
   };
 
   // Child process control
-  pid_t AttachForDebug(pid_t pid, bool unmask_signals, char *err_str,
+  pid_t AttachForDebug(pid_t pid,
+                       const RNBContext::IgnoredExceptions &ignored_exceptions,
+                       char *err_str,
                        size_t err_len);
   pid_t LaunchForDebug(const char *path, char const *argv[], char const *envp[],
                        const char *working_directory, const char *stdin_path,
                        const char *stdout_path, const char *stderr_path,
                        bool no_stdio, nub_launch_flavor_t launch_flavor,
                        int disable_aslr, const char *event_data,
-                       bool unmask_signals, DNBError &err);
+                       const RNBContext::IgnoredExceptions &ignored_exceptions,
+                       DNBError &err);
 
   static uint32_t GetCPUTypeForLocalProcess(pid_t pid);
   static pid_t ForkChildForPTraceDebugging(const char *path, char const *argv[],
@@ -109,7 +116,8 @@ public:
   pid_t BoardServiceLaunchForDebug(const char *app_bundle_path,
                                    char const *argv[], char const *envp[],
                                    bool no_stdio, bool disable_aslr,
-                                   const char *event_data, bool unmask_signals,
+                                   const char *event_data,
+                                   const RNBContext::IgnoredExceptions &ignored_exceptions,
                                    DNBError &launch_err);
   pid_t BoardServiceForkChildForPTraceDebugging(
       const char *path, char const *argv[], char const *envp[], bool no_stdio,
@@ -245,7 +253,7 @@ public:
   DeploymentInfo GetDeploymentInfo(const struct load_command &,
                                    uint64_t load_command_address,
                                    bool is_executable);
-  static const char *GetPlatformString(unsigned char platform);
+  static std::optional<std::string> GetPlatformString(unsigned char platform);
   bool GetMachOInformationFromMemory(uint32_t platform,
                                      nub_addr_t mach_o_header_addr,
                                      int wordsize,
@@ -354,6 +362,8 @@ public:
 
   DNBProfileDataScanType GetProfileScanType() { return m_profile_scan_type; }
 
+  JSONGenerator::ObjectSP GetDyldProcessState();
+
 private:
   enum {
     eMachProcessFlagsNone = 0,
@@ -460,6 +470,7 @@ private:
   void (*m_dyld_process_info_release)(void *info);
   void (*m_dyld_process_info_get_cache)(void *info, void *cacheInfo);
   uint32_t (*m_dyld_process_info_get_platform)(void *info);
+  void (*m_dyld_process_info_get_state)(void *info, void *stateInfo);
 };
 
 #endif // LLDB_TOOLS_DEBUGSERVER_SOURCE_MACOSX_MACHPROCESS_H

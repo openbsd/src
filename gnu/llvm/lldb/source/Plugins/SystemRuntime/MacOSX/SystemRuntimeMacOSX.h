@@ -39,9 +39,9 @@ public:
 
   static void Terminate();
 
-  static lldb_private::ConstString GetPluginNameStatic();
-
-  static const char *GetPluginDescriptionStatic();
+  static llvm::StringRef GetPluginNameStatic() {
+    return "systemruntime-macosx";
+  }
 
   static lldb_private::SystemRuntime *
   CreateInstance(lldb_private::Process *process);
@@ -98,9 +98,7 @@ public:
   bool SafeToCallFunctionsOnThisThread(lldb::ThreadSP thread_sp) override;
 
   // PluginInterface protocol
-  lldb_private::ConstString GetPluginName() override;
-
-  uint32_t GetPluginVersion() override;
+  llvm::StringRef GetPluginName() override { return GetPluginNameStatic(); }
 
 protected:
   lldb::user_id_t m_break_id;
@@ -176,6 +174,14 @@ private:
       dqo_target_queue = UINT16_MAX;
       dqo_target_queue = UINT16_MAX;
       dqo_priority = UINT16_MAX;
+      dqo_label_size = 0;
+      dqo_flags_size = 0;
+      dqo_serialnum_size = 0;
+      dqo_width_size = 0;
+      dqo_running_size = 0;
+      dqo_suspend_cnt_size = 0;
+      dqo_target_queue_size = 0;
+      dqo_priority_size = 0;
     }
 
     bool IsValid() { return dqo_version != UINT16_MAX; }

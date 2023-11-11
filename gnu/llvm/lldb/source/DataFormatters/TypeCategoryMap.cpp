@@ -9,8 +9,8 @@
 #include "lldb/DataFormatters/TypeCategoryMap.h"
 
 #include "lldb/DataFormatters/FormatClasses.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
-
 
 using namespace lldb;
 using namespace lldb_private;
@@ -154,14 +154,15 @@ bool TypeCategoryMap::Get(uint32_t pos, ValueSP &entry) {
 }
 
 bool TypeCategoryMap::AnyMatches(
-    ConstString type_name, TypeCategoryImpl::FormatCategoryItems items,
-    bool only_enabled, const char **matching_category,
+    const FormattersMatchCandidate &candidate_type,
+    TypeCategoryImpl::FormatCategoryItems items, bool only_enabled,
+    const char **matching_category,
     TypeCategoryImpl::FormatCategoryItems *matching_type) {
   std::lock_guard<std::recursive_mutex> guard(m_map_mutex);
 
   MapIterator pos, end = m_map.end();
   for (pos = m_map.begin(); pos != end; pos++) {
-    if (pos->second->AnyMatches(type_name, items, only_enabled,
+    if (pos->second->AnyMatches(candidate_type, items, only_enabled,
                                 matching_category, matching_type))
       return true;
   }
@@ -174,7 +175,7 @@ void TypeCategoryMap::Get(FormattersMatchData &match_data, ImplSP &retval) {
 
   ActiveCategoriesIterator begin, end = m_active_categories.end();
 
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS));
+  Log *log = GetLog(LLDBLog::DataFormatters);
 
   if (log) {
     for (auto match : match_data.GetMatchesVector()) {

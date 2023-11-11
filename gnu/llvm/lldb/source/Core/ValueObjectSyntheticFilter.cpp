@@ -12,11 +12,12 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/DataFormatters/TypeSynthetic.h"
 #include "lldb/Target/ExecutionContext.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
-#include "lldb/Utility/Logging.h"
 #include "lldb/Utility/Status.h"
 
 #include "llvm/ADT/STLExtras.h"
+#include <optional>
 
 namespace lldb_private {
 class Declaration;
@@ -81,7 +82,7 @@ ConstString ValueObjectSynthetic::GetDisplayTypeName() {
 }
 
 size_t ValueObjectSynthetic::CalculateNumChildren(uint32_t max) {
-  Log *log = GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS);
+  Log *log = GetLog(LLDBLog::DataFormatters);
 
   UpdateValueIfNeeded();
   if (m_synthetic_children_count < UINT32_MAX)
@@ -121,7 +122,7 @@ bool ValueObjectSynthetic::MightHaveChildren() {
   return (m_might_have_children != eLazyBoolNo);
 }
 
-llvm::Optional<uint64_t> ValueObjectSynthetic::GetByteSize() {
+std::optional<uint64_t> ValueObjectSynthetic::GetByteSize() {
   return m_parent->GetByteSize();
 }
 
@@ -148,7 +149,7 @@ void ValueObjectSynthetic::CreateSynthFilter() {
 }
 
 bool ValueObjectSynthetic::UpdateValue() {
-  Log *log = GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS);
+  Log *log = GetLog(LLDBLog::DataFormatters);
 
   SetValueIsValid(false);
   m_error.Clear();
@@ -234,7 +235,7 @@ bool ValueObjectSynthetic::UpdateValue() {
 
 lldb::ValueObjectSP ValueObjectSynthetic::GetChildAtIndex(size_t idx,
                                                           bool can_create) {
-  Log *log = GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS);
+  Log *log = GetLog(LLDBLog::DataFormatters);
 
   LLDB_LOGF(log,
             "[ValueObjectSynthetic::GetChildAtIndex] name=%s, retrieving "

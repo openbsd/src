@@ -36,7 +36,6 @@ import sys
 import tempfile
 
 # Third-party modules
-import six
 import unittest2
 
 # LLDB Modules
@@ -281,6 +280,16 @@ def parseOptionsAndInitTestdirs():
         logging.warning('No valid FileCheck executable; some tests may fail...')
         logging.warning('(Double-check the --llvm-tools-dir argument to dotest.py)')
 
+    if args.libcxx_include_dir or args.libcxx_library_dir:
+        if args.lldb_platform_name:
+            logging.warning('Custom libc++ is not supported for remote runs: ignoring --libcxx arguments')
+        elif not (args.libcxx_include_dir and args.libcxx_library_dir):
+            logging.error('Custom libc++ requires both --libcxx-include-dir and --libcxx-library-dir')
+            sys.exit(-1)
+    configuration.libcxx_include_dir = args.libcxx_include_dir
+    configuration.libcxx_include_target_dir = args.libcxx_include_target_dir
+    configuration.libcxx_library_dir = args.libcxx_library_dir
+
     if args.channels:
         lldbtest_config.channels = args.channels
 
@@ -357,7 +366,7 @@ def parseOptionsAndInitTestdirs():
 
     if args.executable:
         # lldb executable is passed explicitly
-        lldbtest_config.lldbExec = os.path.realpath(args.executable)
+        lldbtest_config.lldbExec = os.path.abspath(args.executable)
         if not is_exe(lldbtest_config.lldbExec):
             lldbtest_config.lldbExec = which(args.executable)
         if not is_exe(lldbtest_config.lldbExec):
@@ -393,16 +402,6 @@ def parseOptionsAndInitTestdirs():
     if do_help:
         usage(parser)
 
-    # Reproducer arguments
-    if args.capture_path and args.replay_path:
-        logging.error('Cannot specify both a capture and a replay path.')
-        sys.exit(-1)
-
-    if args.capture_path:
-        configuration.capture_path = args.capture_path
-
-    if args.replay_path:
-        configuration.replay_path = args.replay_path
     if args.lldb_platform_name:
         configuration.lldb_platform_name = args.lldb_platform_name
     if args.lldb_platform_url:
@@ -832,9 +831,9 @@ def checkObjcSupport():
         configuration.skip_categories.append("objc")
 
 def checkDebugInfoSupport():
-    import lldb
+    from lldbsuite.test import lldbplatformutil
 
-    platform = lldb.selected_platform.GetTriple().split('-')[2]
+    platform = lldbplatformutil.getPlatform()
     compiler = configuration.compiler
     for cat in test_categories.debug_info_categories:
         if cat in configuration.categories_list:
@@ -888,21 +887,12 @@ def run_suite():
 
     setupSysPath()
 
-    import lldbconfig
-    if configuration.capture_path or configuration.replay_path:
-        lldbconfig.INITIALIZE = False
     import lldb
-
-    if configuration.capture_path:
-        lldb.SBReproducer.Capture(configuration.capture_path)
-        lldb.SBReproducer.SetAutoGenerate(True)
-    elif configuration.replay_path:
-        lldb.SBReproducer.PassiveReplay(configuration.replay_path)
-
-    if not lldbconfig.INITIALIZE:
-        lldb.SBDebugger.Initialize()
+    lldb.SBDebugger.Initialize()
+    lldb.SBDebugger.PrintStackTraceOnError()
 
     # Use host platform by default.
+    lldb.remote_platform = None
     lldb.selected_platform = lldb.SBPlatform.GetHostPlatform()
 
     # Now we can also import lldbutil
@@ -913,6 +903,7 @@ def run_suite():
               (configuration.lldb_platform_name))
         lldb.remote_platform = lldb.SBPlatform(
             configuration.lldb_platform_name)
+        lldb.selected_platform = lldb.remote_platform
         if not lldb.remote_platform.IsValid():
             print(
                 "error: unable to create the LLDB platform named '%s'." %
@@ -929,7 +920,6 @@ def run_suite():
             err = lldb.remote_platform.ConnectRemote(platform_connect_options)
             if err.Success():
                 print("Connected.")
-                lldb.selected_platform = lldb.remote_platform
             else:
                 print("error: failed to connect to remote platform using URL '%s': %s" % (
                     configuration.lldb_platform_url, err))
@@ -967,6 +957,7 @@ def run_suite():
     checkObjcSupport()
     checkForkVForkSupport()
 
+    skipped_categories_list = ", ".join(configuration.skip_categories)
     print("Skipping the following test categories: {}".format(configuration.skip_categories))
 
     for testdir in configuration.testdirs:

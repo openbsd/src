@@ -31,7 +31,7 @@ static UUID GetPDBUUID(InfoStream &IS) {
   UUID::CvRecordPdb70 debug_info;
   memcpy(&debug_info.Uuid, IS.getGuid().Guid, sizeof(debug_info.Uuid));
   debug_info.Age = IS.getAge();
-  return UUID::fromCvRecord(debug_info);
+  return UUID(debug_info);
 }
 
 char ObjectFilePDB::ID;
@@ -44,11 +44,6 @@ void ObjectFilePDB::Initialize() {
 
 void ObjectFilePDB::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
-}
-
-ConstString ObjectFilePDB::GetPluginNameStatic() {
-  static ConstString g_name("pdb");
-  return g_name;
 }
 
 ArchSpec ObjectFilePDB::GetArchitecture() {
@@ -92,7 +87,7 @@ bool ObjectFilePDB::initPDBFile() {
 }
 
 ObjectFile *
-ObjectFilePDB::CreateInstance(const ModuleSP &module_sp, DataBufferSP &data_sp,
+ObjectFilePDB::CreateInstance(const ModuleSP &module_sp, DataBufferSP data_sp,
                               offset_t data_offset, const FileSpec *file,
                               offset_t file_offset, offset_t length) {
   auto objfile_up = std::make_unique<ObjectFilePDB>(
@@ -103,7 +98,7 @@ ObjectFilePDB::CreateInstance(const ModuleSP &module_sp, DataBufferSP &data_sp,
 }
 
 ObjectFile *ObjectFilePDB::CreateMemoryInstance(const ModuleSP &module_sp,
-                                                DataBufferSP &data_sp,
+                                                WritableDataBufferSP data_sp,
                                                 const ProcessSP &process_sp,
                                                 addr_t header_addr) {
   return nullptr;
@@ -141,8 +136,6 @@ size_t ObjectFilePDB::GetModuleSpecifications(
     break;
   case PDB_Machine::x86:
     module_arch.SetTriple("i386-pc-windows");
-    specs.Append(module_spec);
-    module_arch.SetTriple("i686-pc-windows");
     specs.Append(module_spec);
     break;
   case PDB_Machine::ArmNT:

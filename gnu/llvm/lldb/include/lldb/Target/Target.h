@@ -21,6 +21,7 @@
 #include "lldb/Core/Architecture.h"
 #include "lldb/Core/Disassembler.h"
 #include "lldb/Core/ModuleList.h"
+#include "lldb/Core/StructuredDataImpl.h"
 #include "lldb/Core/UserSettingsController.h"
 #include "lldb/Expression/Expression.h"
 #include "lldb/Host/ProcessLaunchInfo.h"
@@ -28,6 +29,7 @@
 #include "lldb/Target/ExecutionContextScope.h"
 #include "lldb/Target/PathMappingList.h"
 #include "lldb/Target/SectionLoadHistory.h"
+#include "lldb/Target/Statistics.h"
 #include "lldb/Target/ThreadSpec.h"
 #include "lldb/Utility/ArchSpec.h"
 #include "lldb/Utility/Broadcaster.h"
@@ -57,16 +59,17 @@ enum LoadCWDlldbinitFile {
   eLoadCWDlldbinitWarn
 };
 
-enum LoadDependentFiles {
-  eLoadDependentsDefault,
-  eLoadDependentsYes,
-  eLoadDependentsNo,
-};
-
 enum ImportStdModule {
   eImportStdModuleFalse,
   eImportStdModuleFallback,
   eImportStdModuleTrue,
+};
+
+enum DynamicClassInfoHelper {
+  eDynamicClassInfoHelperAuto,
+  eDynamicClassInfoHelperRealizedClassesStruct,
+  eDynamicClassInfoHelperCopyRealizedClassList,
+  eDynamicClassInfoHelperGetRealizedClassList,
 };
 
 class TargetExperimentalProperties : public Properties {
@@ -122,12 +125,23 @@ public:
 
   void SetRunArguments(const Args &args);
 
+  // Get the whole environment including the platform inherited environment and
+  // the target specific environment, excluding the unset environment variables.
   Environment GetEnvironment() const;
+  // Get the platform inherited environment, excluding the unset environment
+  // variables.
+  Environment GetInheritedEnvironment() const;
+  // Get the target specific environment only, without the platform inherited
+  // environment.
+  Environment GetTargetEnvironment() const;
+  // Set the target specific environment.
   void SetEnvironment(Environment env);
 
   bool GetSkipPrologue() const;
 
   PathMappingList &GetSourcePathMap() const;
+
+  bool GetAutoSourceMapRelative() const;
 
   FileSpecList GetExecutableSearchPaths();
 
@@ -141,19 +155,30 @@ public:
 
   ImportStdModule GetImportStdModule() const;
 
+  DynamicClassInfoHelper GetDynamicClassInfoHelper() const;
+
   bool GetEnableAutoApplyFixIts() const;
 
   uint64_t GetNumberOfRetriesWithFixits() const;
 
   bool GetEnableNotifyAboutFixIts() const;
 
-  bool GetEnableSaveObjects() const;
+  FileSpec GetSaveJITObjectsDir() const;
 
   bool GetEnableSyntheticValue() const;
 
   uint32_t GetMaxZeroPaddingInFloatFormat() const;
 
   uint32_t GetMaximumNumberOfChildrenToDisplay() const;
+
+  /// Get the max depth value, augmented with a bool to indicate whether the
+  /// depth is the default.
+  ///
+  /// When the user has customized the max depth, the bool will be false.
+  ///
+  /// \returns the max depth, and true if the max depth is the system default,
+  /// otherwise false.
+  std::pair<uint32_t, bool> GetMaximumDepthOfChildrenToDisplay() const;
 
   uint32_t GetMaximumSizeOfStringSummary() const;
 
@@ -197,10 +222,6 @@ public:
 
   void SetUserSpecifiedTrapHandlerNames(const Args &args);
 
-  bool GetNonStopModeEnabled() const;
-
-  void SetNonStopModeEnabled(bool b);
-
   bool GetDisplayRuntimeSupportValues() const;
 
   void SetDisplayRuntimeSupportValues(bool b);
@@ -241,6 +262,9 @@ private:
   void DisableASLRValueChangedCallback();
   void InheritTCCValueChangedCallback();
   void DisableSTDIOValueChangedCallback();
+
+  // Settings checker for target.jit-save-objects-dir:
+  void CheckJITObjectsDir();
 
   Environment ComputeEnvironment() const;
 
@@ -431,14 +455,14 @@ private:
 
   lldb::DynamicValueType m_use_dynamic = lldb::eNoDynamicValues;
   Timeout<std::micro> m_timeout = default_timeout;
-  Timeout<std::micro> m_one_thread_timeout = llvm::None;
+  Timeout<std::micro> m_one_thread_timeout = std::nullopt;
   lldb::ExpressionCancelCallback m_cancel_callback = nullptr;
   void *m_cancel_callback_baton = nullptr;
   // If m_pound_line_file is not empty and m_pound_line_line is non-zero, use
   // #line %u "%s" before the expression content to remap where the source
   // originates
   mutable std::string m_pound_line_file;
-  mutable uint32_t m_pound_line_line;
+  mutable uint32_t m_pound_line_line = 0;
 };
 
 // Target
@@ -457,7 +481,8 @@ public:
     eBroadcastBitModulesLoaded = (1 << 1),
     eBroadcastBitModulesUnloaded = (1 << 2),
     eBroadcastBitWatchpointChanged = (1 << 3),
-    eBroadcastBitSymbolsLoaded = (1 << 4)
+    eBroadcastBitSymbolsLoaded = (1 << 4),
+    eBroadcastBitSymbolsChanged = (1 << 5),
   };
 
   // These two functions fill out the Broadcaster interface:
@@ -557,7 +582,7 @@ public:
 
   // Settings accessors
 
-  static const lldb::TargetPropertiesSP &GetGlobalProperties();
+  static TargetProperties &GetGlobalProperties();
 
   std::recursive_mutex &GetAPIMutex();
 
@@ -732,8 +757,7 @@ public:
                                const BreakpointName::Permissions &permissions);
   void ApplyNameToBreakpoints(BreakpointName &bp_name);
 
-  // This takes ownership of the name obj passed in.
-  void AddBreakpointName(BreakpointName *bp_name);
+  void AddBreakpointName(std::unique_ptr<BreakpointName> bp_name);
 
   void GetBreakpointNames(std::vector<std::string> &names);
 
@@ -756,6 +780,9 @@ public:
   bool EnableBreakpointByID(lldb::break_id_t break_id);
 
   bool RemoveBreakpointByID(lldb::break_id_t break_id);
+
+  /// Resets the hit count of all breakpoints.
+  void ResetBreakpointHitCounts();
 
   // The flag 'end_to_end', default to true, signifies that the operation is
   // performed end to end, for both the debugger and the debuggee.
@@ -960,6 +987,9 @@ public:
 
   const ArchSpec &GetArchitecture() const { return m_arch.GetSpec(); }
 
+  /// Returns the name of the target's ABI plugin.
+  llvm::StringRef GetABIName() const;
+
   /// Set the architecture for this target.
   ///
   /// If the current target has no Images read in, then this just sets the
@@ -983,9 +1013,14 @@ public:
   ///     currently selected platform isn't compatible (in case it might be
   ///     manually set following this function call).
   ///
+  /// \param[in] merged
+  ///     If true, arch_spec is merged with the current
+  ///     architecture. Otherwise it's replaced.
+  ///
   /// \return
-  ///     \b true if the architecture was successfully set, \bfalse otherwise.
-  bool SetArchitecture(const ArchSpec &arch_spec, bool set_platform = false);
+  ///     \b true if the architecture was successfully set, \b false otherwise.
+  bool SetArchitecture(const ArchSpec &arch_spec, bool set_platform = false,
+                       bool merge = true);
 
   bool MergeArchitecture(const ArchSpec &arch_spec);
 
@@ -1012,10 +1047,42 @@ public:
                     lldb::addr_t *load_addr_ptr = nullptr);
 
   size_t ReadCStringFromMemory(const Address &addr, std::string &out_str,
-                               Status &error);
+                               Status &error, bool force_live_memory = false);
 
   size_t ReadCStringFromMemory(const Address &addr, char *dst,
-                               size_t dst_max_len, Status &result_error);
+                               size_t dst_max_len, Status &result_error,
+                               bool force_live_memory = false);
+
+  /// Read a NULL terminated string from memory
+  ///
+  /// This function will read a cache page at a time until a NULL string
+  /// terminator is found. It will stop reading if an aligned sequence of NULL
+  /// termination \a type_width bytes is not found before reading \a
+  /// cstr_max_len bytes.  The results are always guaranteed to be NULL
+  /// terminated, and that no more than (max_bytes - type_width) bytes will be
+  /// read.
+  ///
+  /// \param[in] addr
+  ///     The address to start the memory read.
+  ///
+  /// \param[in] dst
+  ///     A character buffer containing at least max_bytes.
+  ///
+  /// \param[in] max_bytes
+  ///     The maximum number of bytes to read.
+  ///
+  /// \param[in] error
+  ///     The error status of the read operation.
+  ///
+  /// \param[in] type_width
+  ///     The size of the null terminator (1 to 4 bytes per
+  ///     character).  Defaults to 1.
+  ///
+  /// \return
+  ///     The error status or the number of bytes prior to the null terminator.
+  size_t ReadStringFromMemory(const Address &addr, char *dst, size_t max_bytes,
+                              Status &error, size_t type_width,
+                              bool force_live_memory = true);
 
   size_t ReadScalarIntegerFromMemory(const Address &addr, uint32_t byte_size,
                                      bool is_signed, Scalar &scalar,
@@ -1051,11 +1118,12 @@ public:
 
   PathMappingList &GetImageSearchPathList();
 
-  llvm::Expected<TypeSystem &>
+  llvm::Expected<lldb::TypeSystemSP>
   GetScratchTypeSystemForLanguage(lldb::LanguageType language,
                                   bool create_on_demand = true);
 
-  std::vector<TypeSystem *> GetScratchTypeSystems(bool create_on_demand = true);
+  std::vector<lldb::TypeSystemSP>
+  GetScratchTypeSystems(bool create_on_demand = true);
 
   PersistentExpressionState *
   GetPersistentExpressionStateForLanguage(lldb::LanguageType language);
@@ -1235,7 +1303,7 @@ public:
 
   class StopHookCommandLine : public StopHook {
   public:
-    virtual ~StopHookCommandLine() = default;
+    ~StopHookCommandLine() override = default;
 
     StringList &GetCommands() { return m_commands; }
     void SetActionFromString(const std::string &strings);
@@ -1258,7 +1326,7 @@ public:
 
   class StopHookScripted : public StopHook {
   public:
-    virtual ~StopHookScripted() = default;
+    ~StopHookScripted() override = default;
     StopHookResult HandleStop(ExecutionContext &exc_ctx,
                               lldb::StreamSP output) override;
 
@@ -1272,8 +1340,7 @@ public:
     std::string m_class_name;
     /// This holds the dictionary of keys & values that can be used to
     /// parametrize any given callback's behavior.
-    StructuredDataImpl *m_extra_args; // We own this structured data,
-                                      // but the SD itself manages the UP.
+    StructuredDataImpl m_extra_args;
     /// This holds the python callback object.
     StructuredData::GenericSP m_implementation_sp;
 
@@ -1361,6 +1428,42 @@ public:
     return *m_frame_recognizer_manager_up;
   }
 
+  /// Add a signal for the target.  This will get copied over to the process
+  /// if the signal exists on that target.  Only the values with Yes and No are
+  /// set, Calculate values will be ignored.
+protected:
+  struct DummySignalValues {
+    LazyBool pass = eLazyBoolCalculate;
+    LazyBool notify = eLazyBoolCalculate;
+    LazyBool stop = eLazyBoolCalculate;
+    DummySignalValues(LazyBool pass, LazyBool notify, LazyBool stop)
+        : pass(pass), notify(notify), stop(stop) {}
+    DummySignalValues() = default;
+  };
+  using DummySignalElement = llvm::StringMapEntry<DummySignalValues>;
+  static bool UpdateSignalFromDummy(lldb::UnixSignalsSP signals_sp,
+                                    const DummySignalElement &element);
+  static bool ResetSignalFromDummy(lldb::UnixSignalsSP signals_sp,
+                                   const DummySignalElement &element);
+
+public:
+  /// Add a signal to the Target's list of stored signals/actions.  These
+  /// values will get copied into any processes launched from
+  /// this target.
+  void AddDummySignal(llvm::StringRef name, LazyBool pass, LazyBool print,
+                      LazyBool stop);
+  /// Updates the signals in signals_sp using the stored dummy signals.
+  /// If warning_stream_sp is not null, if any stored signals are not found in
+  /// the current process, a warning will be emitted here.
+  void UpdateSignalsFromDummy(lldb::UnixSignalsSP signals_sp,
+                              lldb::StreamSP warning_stream_sp);
+  /// Clear the dummy signals in signal_names from the target, or all signals
+  /// if signal_names is empty.  Also remove the behaviors they set from the
+  /// process's signals if it exists.
+  void ClearDummySignals(Args &signal_names);
+  /// Print all the signals set in this target.
+  void PrintDummySignals(Stream &strm, Args &signals);
+
 protected:
   /// Implementing of ModuleList::Notifier.
 
@@ -1390,6 +1493,7 @@ protected:
     ArchSpec m_spec;
     std::unique_ptr<Architecture> m_plugin_up;
   };
+
   // Member variables.
   Debugger &m_debugger;
   lldb::PlatformSP m_platform_sp; ///< The platform for this target.
@@ -1407,7 +1511,8 @@ protected:
   SectionLoadHistory m_section_load_history;
   BreakpointList m_breakpoint_list;
   BreakpointList m_internal_breakpoint_list;
-  using BreakpointNameList = std::map<ConstString, BreakpointName *>;
+  using BreakpointNameList =
+      std::map<ConstString, std::unique_ptr<BreakpointName>>;
   BreakpointNameList m_breakpoint_names;
 
   lldb::BreakpointSP m_last_created_breakpoint;
@@ -1440,29 +1545,32 @@ protected:
   lldb::TraceSP m_trace_sp;
   /// Stores the frame recognizers of this target.
   lldb::StackFrameRecognizerManagerUP m_frame_recognizer_manager_up;
+  /// These are used to set the signal state when you don't have a process and
+  /// more usefully in the Dummy target where you can't know exactly what
+  /// signals you will have.
+  llvm::StringMap<DummySignalValues> m_dummy_signals;
 
   static void ImageSearchPathsChanged(const PathMappingList &path_list,
                                       void *baton);
 
   // Utilities for `statistics` command.
 private:
-  std::vector<uint32_t> m_stats_storage;
-  bool m_collecting_stats = false;
+  // Target metrics storage.
+  TargetStats m_stats;
 
 public:
-  void SetCollectingStats(bool v) { m_collecting_stats = v; }
+  /// Get metrics associated with this target in JSON format.
+  ///
+  /// Target metrics help measure timings and information that is contained in
+  /// a target. These are designed to help measure performance of a debug
+  /// session as well as represent the current state of the target, like
+  /// information on the currently modules, currently set breakpoints and more.
+  ///
+  /// \return
+  ///     Returns a JSON value that contains all target metrics.
+  llvm::json::Value ReportStatistics();
 
-  bool GetCollectingStats() { return m_collecting_stats; }
-
-  void IncrementStats(lldb_private::StatisticKind key) {
-    if (!GetCollectingStats())
-      return;
-    lldbassert(key < lldb_private::StatisticKind::StatisticMax &&
-               "invalid statistics!");
-    m_stats_storage[key] += 1;
-  }
-
-  std::vector<uint32_t> GetStatistics() { return m_stats_storage; }
+  TargetStats &GetStatistics() { return m_stats; }
 
 private:
   /// Construct with optional file and arch.
@@ -1484,6 +1592,10 @@ private:
   void AddBreakpoint(lldb::BreakpointSP breakpoint_sp, bool internal);
 
   void FinalizeFileActions(ProcessLaunchInfo &info);
+
+  /// Return a recommended size for memory reads at \a addr, optimizing for
+  /// cache usage.
+  lldb::addr_t GetReasonableReadSize(const Address &addr);
 
   Target(const Target &) = delete;
   const Target &operator=(const Target &) = delete;

@@ -40,12 +40,7 @@ void SymbolVendorELF::Terminate() {
   PluginManager::UnregisterPlugin(CreateInstance);
 }
 
-lldb_private::ConstString SymbolVendorELF::GetPluginNameStatic() {
-  static ConstString g_name("ELF");
-  return g_name;
-}
-
-const char *SymbolVendorELF::GetPluginDescriptionStatic() {
+llvm::StringRef SymbolVendorELF::GetPluginDescriptionStatic() {
   return "Symbol vendor for ELF that looks for dSYM files that match "
          "executables.";
 }
@@ -79,7 +74,7 @@ SymbolVendorELF::CreateInstance(const lldb::ModuleSP &module_sp,
   FileSpec fspec = module_sp->GetSymbolFileFileSpec();
   // Otherwise, try gnu_debuglink, if one exists.
   if (!fspec)
-    fspec = obj_file->GetDebugLink().getValueOr(FileSpec());
+    fspec = obj_file->GetDebugLink().value_or(FileSpec());
 
   LLDB_SCOPED_TIMERF("SymbolVendorELF::CreateInstance (module = %s)",
                      module_sp->GetFileSpec().GetPath().c_str());
@@ -144,8 +139,3 @@ SymbolVendorELF::CreateInstance(const lldb::ModuleSP &module_sp,
   symbol_vendor->AddSymbolFileRepresentation(dsym_objfile_sp);
   return symbol_vendor;
 }
-
-// PluginInterface protocol
-ConstString SymbolVendorELF::GetPluginName() { return GetPluginNameStatic(); }
-
-uint32_t SymbolVendorELF::GetPluginVersion() { return 1; }

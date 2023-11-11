@@ -18,6 +18,7 @@
 #include "lldb/Core/ValueObject.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandOptionArgumentTable.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Symbol/Variable.h"
 #include "lldb/Symbol/VariableList.h"
@@ -56,7 +57,7 @@ static int32_t WithRSAIndex(llvm::StringRef Arg) {
 
   uint32_t i;
   for (i = 0; i < 4; ++i)
-    if (Arg.find(RSA[i]) != llvm::StringRef::npos)
+    if (Arg.contains(RSA[i]))
       return i;
   return -1;
 }
@@ -149,8 +150,7 @@ public:
       : CommandObjectParsed(
             interpreter, "watchpoint list",
             "List all watchpoints at configurable levels of detail.", nullptr,
-            eCommandRequiresTarget),
-        m_options() {
+            eCommandRequiresTarget) {
     CommandArgumentEntry arg;
     CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID,
                                       eArgTypeWatchpointIDRange);
@@ -165,7 +165,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {}
+    CommandOptions() = default;
 
     ~CommandOptions() override = default;
 
@@ -196,7 +196,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return llvm::makeArrayRef(g_watchpoint_list_options);
+      return llvm::ArrayRef(g_watchpoint_list_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -432,8 +432,7 @@ public:
       : CommandObjectParsed(interpreter, "watchpoint delete",
                             "Delete the specified watchpoint(s).  If no "
                             "watchpoints are specified, delete them all.",
-                            nullptr, eCommandRequiresTarget),
-        m_options() {
+                            nullptr, eCommandRequiresTarget) {
     CommandArgumentEntry arg;
     CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID,
                                       eArgTypeWatchpointIDRange);
@@ -456,7 +455,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {}
+    CommandOptions() = default;
 
     ~CommandOptions() override = default;
 
@@ -480,7 +479,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return llvm::makeArrayRef(g_watchpoint_delete_options);
+      return llvm::ArrayRef(g_watchpoint_delete_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -556,8 +555,7 @@ public:
       : CommandObjectParsed(interpreter, "watchpoint ignore",
                             "Set ignore count on the specified watchpoint(s).  "
                             "If no watchpoints are specified, set them all.",
-                            nullptr, eCommandRequiresTarget),
-        m_options() {
+                            nullptr, eCommandRequiresTarget) {
     CommandArgumentEntry arg;
     CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID,
                                       eArgTypeWatchpointIDRange);
@@ -580,7 +578,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {}
+    CommandOptions() = default;
 
     ~CommandOptions() override = default;
 
@@ -607,7 +605,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return llvm::makeArrayRef(g_watchpoint_ignore_options);
+      return llvm::ArrayRef(g_watchpoint_ignore_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -682,8 +680,7 @@ public:
             "If no watchpoint is specified, act on the last created "
             "watchpoint.  "
             "Passing an empty argument clears the modification.",
-            nullptr, eCommandRequiresTarget),
-        m_options() {
+            nullptr, eCommandRequiresTarget) {
     CommandArgumentEntry arg;
     CommandObject::AddIDsArgumentData(arg, eArgTypeWatchpointID,
                                       eArgTypeWatchpointIDRange);
@@ -706,7 +703,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options(), m_condition() {}
+    CommandOptions() = default;
 
     ~CommandOptions() override = default;
 
@@ -733,7 +730,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return llvm::makeArrayRef(g_watchpoint_modify_options);
+      return llvm::ArrayRef(g_watchpoint_modify_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -813,8 +810,7 @@ public:
             "to free up resources.",
             nullptr,
             eCommandRequiresFrame | eCommandTryTargetAPILock |
-                eCommandProcessMustBeLaunched | eCommandProcessMustBePaused),
-        m_option_group(), m_option_watchpoint() {
+                eCommandProcessMustBeLaunched | eCommandProcessMustBePaused) {
     SetHelpLong(
         R"(
 Examples:
@@ -934,7 +930,7 @@ protected:
         // We're in business.
         // Find out the size of this variable.
         size = m_option_watchpoint.watch_size == 0
-                   ? valobj_sp->GetByteSize().getValueOr(0)
+                   ? valobj_sp->GetByteSize().value_or(0)
                    : m_option_watchpoint.watch_size;
       }
       compiler_type = valobj_sp->GetCompilerType();
@@ -1006,8 +1002,7 @@ public:
             "to free up resources.",
             "",
             eCommandRequiresFrame | eCommandTryTargetAPILock |
-                eCommandProcessMustBeLaunched | eCommandProcessMustBePaused),
-        m_option_group(), m_option_watchpoint() {
+                eCommandProcessMustBeLaunched | eCommandProcessMustBePaused) {
     SetHelpLong(
         R"(
 Examples:
@@ -1088,7 +1083,7 @@ protected:
     options.SetUnwindOnError(true);
     options.SetKeepInMemory(false);
     options.SetTryAllThreads(true);
-    options.SetTimeout(llvm::None);
+    options.SetTimeout(std::nullopt);
 
     ExpressionResults expr_result =
         target->EvaluateExpression(expr, frame, valobj_sp, options);

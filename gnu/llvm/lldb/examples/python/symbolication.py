@@ -26,7 +26,6 @@
 #   PYTHONPATH=/path/to/LLDB.framework/Resources/Python ./crashlog.py ~/Library/Logs/DiagnosticReports/a.crash
 #----------------------------------------------------------------------
 
-from __future__ import print_function
 import lldb
 import optparse
 import os
@@ -379,7 +378,7 @@ class Image:
                     return None
                 resolved_path = self.get_resolved_path()
                 self.module = target.AddModule(
-                    resolved_path, str(self.arch), uuid_str, self.symfile)
+                    resolved_path, None, uuid_str, self.symfile)
             if not self.module:
                 return 'error: unable to get module for (%s) "%s"' % (
                     self.arch, self.get_resolved_path())

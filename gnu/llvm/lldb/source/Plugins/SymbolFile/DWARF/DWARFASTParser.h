@@ -14,6 +14,8 @@
 #include "lldb/Symbol/SymbolFile.h"
 #include "lldb/Symbol/CompilerDecl.h"
 #include "lldb/Symbol/CompilerDeclContext.h"
+#include "lldb/lldb-enumerations.h"
+#include <optional>
 
 class DWARFDIE;
 namespace lldb_private {
@@ -30,9 +32,13 @@ public:
                                           const DWARFDIE &die,
                                           bool *type_is_new_ptr) = 0;
 
+  virtual lldb_private::ConstString
+  ConstructDemangledNameFromDWARF(const DWARFDIE &die) = 0;
+
   virtual lldb_private::Function *
   ParseFunctionFromDWARF(lldb_private::CompileUnit &comp_unit,
-                         const DWARFDIE &die) = 0;
+                         const DWARFDIE &die,
+                         const lldb_private::AddressRange &range) = 0;
 
   virtual bool
   CompleteTypeFromDWARF(const DWARFDIE &die, lldb_private::Type *type,
@@ -50,9 +56,14 @@ public:
   virtual void EnsureAllDIEsInDeclContextHaveBeenParsed(
       lldb_private::CompilerDeclContext decl_context) = 0;
 
-  static llvm::Optional<lldb_private::SymbolFile::ArrayInfo>
+  virtual lldb_private::ConstString
+  GetDIEClassTemplateParams(const DWARFDIE &die) = 0;
+
+  static std::optional<lldb_private::SymbolFile::ArrayInfo>
   ParseChildArrayInfo(const DWARFDIE &parent_die,
                       const lldb_private::ExecutionContext *exe_ctx = nullptr);
+
+  static lldb::AccessType GetAccessTypeFromDWARF(uint32_t dwarf_accessibility);
 };
 
 #endif // LLDB_SOURCE_PLUGINS_SYMBOLFILE_DWARF_DWARFASTPARSER_H

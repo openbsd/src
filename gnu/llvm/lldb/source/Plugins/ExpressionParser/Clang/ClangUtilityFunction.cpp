@@ -6,8 +6,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lldb/Host/Config.h"
-
 #include "ClangUtilityFunction.h"
 #include "ClangExpressionDeclMap.h"
 #include "ClangExpressionParser.h"
@@ -15,9 +13,7 @@
 #include "ClangPersistentVariables.h"
 
 #include <cstdio>
-#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif
 
 
 #include "lldb/Core/Module.h"
@@ -49,7 +45,7 @@ ClangUtilityFunction::ClangUtilityFunction(ExecutionContextScope &exe_scope,
     llvm::SmallString<128> result_path;
     llvm::sys::fs::createTemporaryFile("lldb", "expr", temp_fd, result_path);
     if (temp_fd != -1) {
-      lldb_private::NativeFile file(temp_fd, File::eOpenOptionWrite, true);
+      lldb_private::NativeFile file(temp_fd, File::eOpenOptionWriteOnly, true);
       text = "#line 1 \"" + std::string(result_path) + "\"\n" + text;
       size_t bytes_written = text.size();
       file.Write(text.c_str(), bytes_written);
@@ -103,6 +99,12 @@ bool ClangUtilityFunction::Install(DiagnosticManager &diagnostic_manager,
     return false;
   }
 
+  // Since we might need to call allocate memory and maybe call code to make
+  // the caller, we need to be stopped.
+  if (process->GetState() != lldb::eStateStopped) {
+    diagnostic_manager.PutString(eDiagnosticSeverityError, "process running");
+    return false;
+  }
   //////////////////////////
   // Parse the expression
   //
@@ -148,7 +150,7 @@ bool ClangUtilityFunction::Install(DiagnosticManager &diagnostic_manager,
       if (jit_module_sp) {
         ConstString const_func_name(FunctionName());
         FileSpec jit_file;
-        jit_file.GetFilename() = const_func_name;
+        jit_file.SetFilename(const_func_name);
         jit_module_sp->SetFileSpecAndObjectName(jit_file, ConstString());
         m_jit_module_wp = jit_module_sp;
         target->GetImages().Append(jit_module_sp);

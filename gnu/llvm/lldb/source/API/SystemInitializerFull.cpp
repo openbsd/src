@@ -15,7 +15,6 @@
 #include "lldb/Initialization/SystemInitializerCommon.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Target/ProcessTrace.h"
-#include "lldb/Utility/Reproducer.h"
 #include "lldb/Utility/Timer.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/TargetSelect.h"
@@ -39,7 +38,7 @@ constexpr lldb_private::HostInfo::SharedLibraryDirectoryHelper
 
 #else
 constexpr lldb_private::HostInfo::SharedLibraryDirectoryHelper
-    *g_shlib_dir_helper = 0;
+    *g_shlib_dir_helper = nullptr;
 #endif
 
 using namespace lldb_private;
@@ -50,15 +49,8 @@ SystemInitializerFull::~SystemInitializerFull() = default;
 
 llvm::Error SystemInitializerFull::Initialize() {
   llvm::Error error = SystemInitializerCommon::Initialize();
-  if (error) {
-    // During active replay, the ::Initialize call is replayed like any other
-    // SB API call and the return value is ignored. Since we can't intercept
-    // this, we terminate here before the uninitialized debugger inevitably
-    // crashes.
-    if (repro::Reproducer::Instance().IsReplaying())
-      llvm::report_fatal_error(std::move(error));
+  if (error)
     return error;
-  }
 
   // Initialize LLVM and Clang
   llvm::InitializeAllTargets();

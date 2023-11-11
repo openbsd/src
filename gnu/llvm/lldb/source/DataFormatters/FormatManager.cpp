@@ -8,15 +8,15 @@
 
 #include "lldb/DataFormatters/FormatManager.h"
 
-#include "llvm/ADT/STLExtras.h"
-
-
 #include "lldb/Core/Debugger.h"
 #include "lldb/DataFormatters/FormattersHelpers.h"
 #include "lldb/DataFormatters/LanguageCategory.h"
+#include "lldb/Interpreter/ScriptInterpreter.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Language.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -77,7 +77,7 @@ static_assert((sizeof(g_format_infos) / sizeof(g_format_infos[0])) ==
                   kNumFormats,
               "All formats must have a corresponding info entry.");
 
-static uint32_t g_num_format_infos = llvm::array_lengthof(g_format_infos);
+static uint32_t g_num_format_infos = std::size(g_format_infos);
 
 static bool GetFormatFromFormatChar(char format_char, Format &format) {
   for (uint32_t i = 0; i < g_num_format_infos; ++i) {
@@ -90,11 +90,11 @@ static bool GetFormatFromFormatChar(char format_char, Format &format) {
   return false;
 }
 
-static bool GetFormatFromFormatName(const char *format_name,
+static bool GetFormatFromFormatName(llvm::StringRef format_name,
                                     bool partial_match_ok, Format &format) {
   uint32_t i;
   for (i = 0; i < g_num_format_infos; ++i) {
-    if (strcasecmp(g_format_infos[i].format_name, format_name) == 0) {
+    if (format_name.equals_insensitive(g_format_infos[i].format_name)) {
       format = g_format_infos[i].format;
       return true;
     }
@@ -102,8 +102,8 @@ static bool GetFormatFromFormatName(const char *format_name,
 
   if (partial_match_ok) {
     for (i = 0; i < g_num_format_infos; ++i) {
-      if (strcasestr(g_format_infos[i].format_name, format_name) ==
-          g_format_infos[i].format_name) {
+      if (llvm::StringRef(g_format_infos[i].format_name)
+              .startswith_insensitive(format_name)) {
         format = g_format_infos[i].format;
         return true;
       }
@@ -176,60 +176,56 @@ void FormatManager::DisableAllCategories() {
 void FormatManager::GetPossibleMatches(
     ValueObject &valobj, CompilerType compiler_type,
     lldb::DynamicValueType use_dynamic, FormattersMatchVector &entries,
-    bool did_strip_ptr, bool did_strip_ref, bool did_strip_typedef,
-    bool root_level) {
+    FormattersMatchCandidate::Flags current_flags, bool root_level) {
   compiler_type = compiler_type.GetTypeForFormatters();
   ConstString type_name(compiler_type.GetTypeName());
+  ScriptInterpreter *script_interpreter =
+      valobj.GetTargetSP()->GetDebugger().GetScriptInterpreter();
   if (valobj.GetBitfieldBitSize() > 0) {
     StreamString sstring;
     sstring.Printf("%s:%d", type_name.AsCString(), valobj.GetBitfieldBitSize());
     ConstString bitfieldname(sstring.GetString());
-    entries.push_back(
-        {bitfieldname, did_strip_ptr, did_strip_ref, did_strip_typedef});
+    entries.push_back({bitfieldname, script_interpreter,
+                       TypeImpl(compiler_type), current_flags});
   }
 
   if (!compiler_type.IsMeaninglessWithoutDynamicResolution()) {
-    entries.push_back(
-        {type_name, did_strip_ptr, did_strip_ref, did_strip_typedef});
+    entries.push_back({type_name, script_interpreter, TypeImpl(compiler_type),
+                       current_flags});
 
     ConstString display_type_name(compiler_type.GetTypeName());
     if (display_type_name != type_name)
-      entries.push_back({display_type_name, did_strip_ptr,
-                         did_strip_ref, did_strip_typedef});
+      entries.push_back({display_type_name, script_interpreter,
+                         TypeImpl(compiler_type), current_flags});
   }
 
   for (bool is_rvalue_ref = true, j = true;
        j && compiler_type.IsReferenceType(nullptr, &is_rvalue_ref); j = false) {
     CompilerType non_ref_type = compiler_type.GetNonReferenceType();
-    GetPossibleMatches(
-        valobj, non_ref_type,
-        use_dynamic, entries, did_strip_ptr, true, did_strip_typedef);
+    GetPossibleMatches(valobj, non_ref_type, use_dynamic, entries,
+                       current_flags.WithStrippedReference());
     if (non_ref_type.IsTypedefType()) {
       CompilerType deffed_referenced_type = non_ref_type.GetTypedefedType();
       deffed_referenced_type =
           is_rvalue_ref ? deffed_referenced_type.GetRValueReferenceType()
                         : deffed_referenced_type.GetLValueReferenceType();
+      // this is not exactly the usual meaning of stripping typedefs
       GetPossibleMatches(
           valobj, deffed_referenced_type,
-          use_dynamic, entries, did_strip_ptr, did_strip_ref,
-          true); // this is not exactly the usual meaning of stripping typedefs
+          use_dynamic, entries, current_flags.WithStrippedTypedef());
     }
   }
 
   if (compiler_type.IsPointerType()) {
     CompilerType non_ptr_type = compiler_type.GetPointeeType();
-    GetPossibleMatches(
-        valobj, non_ptr_type,
-        use_dynamic, entries, true, did_strip_ref, did_strip_typedef);
+    GetPossibleMatches(valobj, non_ptr_type, use_dynamic, entries,
+                       current_flags.WithStrippedPointer());
     if (non_ptr_type.IsTypedefType()) {
       CompilerType deffed_pointed_type =
           non_ptr_type.GetTypedefedType().GetPointerType();
-      const bool stripped_typedef = true;
-      GetPossibleMatches(
-          valobj, deffed_pointed_type,
-          use_dynamic, entries, did_strip_ptr, did_strip_ref,
-          stripped_typedef); // this is not exactly the usual meaning of
-                             // stripping typedefs
+      // this is not exactly the usual meaning of stripping typedefs
+      GetPossibleMatches(valobj, deffed_pointed_type, use_dynamic, entries,
+                         current_flags.WithStrippedTypedef());
     }
   }
 
@@ -245,23 +241,19 @@ void FormatManager::GetPossibleMatches(
       // from it.
       CompilerType deffed_array_type =
           element_type.GetTypedefedType().GetArrayType(array_size);
-      const bool stripped_typedef = true;
+      // this is not exactly the usual meaning of stripping typedefs
       GetPossibleMatches(
           valobj, deffed_array_type,
-          use_dynamic, entries, did_strip_ptr, did_strip_ref,
-          stripped_typedef); // this is not exactly the usual meaning of
-                             // stripping typedefs
+          use_dynamic, entries, current_flags.WithStrippedTypedef());
     }
   }
 
   for (lldb::LanguageType language_type :
        GetCandidateLanguages(valobj.GetObjectRuntimeLanguage())) {
     if (Language *language = Language::FindPlugin(language_type)) {
-      for (ConstString candidate :
+      for (const FormattersMatchCandidate& candidate :
            language->GetPossibleFormattersMatches(valobj, use_dynamic)) {
-        entries.push_back(
-            {candidate,
-             did_strip_ptr, did_strip_ref, did_strip_typedef});
+        entries.push_back(candidate);
       }
     }
   }
@@ -269,9 +261,8 @@ void FormatManager::GetPossibleMatches(
   // try to strip typedef chains
   if (compiler_type.IsTypedefType()) {
     CompilerType deffed_type = compiler_type.GetTypedefedType();
-    GetPossibleMatches(
-        valobj, deffed_type,
-        use_dynamic, entries, did_strip_ptr, did_strip_ref, true);
+    GetPossibleMatches(valobj, deffed_type, use_dynamic, entries,
+                       current_flags.WithStrippedTypedef());
   }
 
   if (root_level) {
@@ -285,19 +276,17 @@ void FormatManager::GetPossibleMatches(
         break;
       if (unqual_compiler_ast_type.GetOpaqueQualType() !=
           compiler_type.GetOpaqueQualType())
-        GetPossibleMatches(valobj, unqual_compiler_ast_type,
-                           use_dynamic, entries, did_strip_ptr, did_strip_ref,
-                           did_strip_typedef);
+        GetPossibleMatches(valobj, unqual_compiler_ast_type, use_dynamic,
+                           entries, current_flags);
     } while (false);
 
     // if all else fails, go to static type
     if (valobj.IsDynamic()) {
       lldb::ValueObjectSP static_value_sp(valobj.GetStaticValue());
       if (static_value_sp)
-        GetPossibleMatches(
-            *static_value_sp.get(), static_value_sp->GetCompilerType(),
-            use_dynamic, entries, did_strip_ptr, did_strip_ref,
-            did_strip_typedef, true);
+        GetPossibleMatches(*static_value_sp.get(),
+                           static_value_sp->GetCompilerType(), use_dynamic,
+                           entries, current_flags, true);
     }
   }
 }
@@ -614,7 +603,7 @@ ImplSP FormatManager::Get(ValueObject &valobj,
   if (ImplSP retval_sp = GetCached<ImplSP>(match_data))
     return retval_sp;
 
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS));
+  Log *log = GetLog(LLDBLog::DataFormatters);
 
   LLDB_LOGF(log, "[%s] Search failed. Giving language a chance.", __FUNCTION__);
   for (lldb::LanguageType lang_type : match_data.GetCandidateLanguages()) {
@@ -637,7 +626,7 @@ ImplSP FormatManager::Get(ValueObject &valobj,
 template <typename ImplSP>
 ImplSP FormatManager::GetCached(FormattersMatchData &match_data) {
   ImplSP retval_sp;
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_DATAFORMATTERS));
+  Log *log = GetLog(LLDBLog::DataFormatters);
   if (match_data.GetTypeForCache()) {
     LLDB_LOGF(log, "\n\n[%s] Looking into cache for type %s", __FUNCTION__,
               match_data.GetTypeForCache().AsCString("<invalid>"));
@@ -722,19 +711,16 @@ void FormatManager::LoadSystemFormatters() {
       new StringSummaryFormat(string_flags, "${var%s}"));
 
   lldb::TypeSummaryImplSP string_array_format(
-      new StringSummaryFormat(string_array_flags, "${var%s}"));
-
-  RegularExpression any_size_char_arr(llvm::StringRef("char \\[[0-9]+\\]"));
+      new StringSummaryFormat(string_array_flags, "${var%char[]}"));
 
   TypeCategoryImpl::SharedPointer sys_category_sp =
       GetCategory(m_system_category_name);
 
-  sys_category_sp->GetTypeSummariesContainer()->Add(ConstString("char *"),
-                                                    string_format);
-  sys_category_sp->GetTypeSummariesContainer()->Add(
-      ConstString("unsigned char *"), string_format);
-  sys_category_sp->GetRegexTypeSummariesContainer()->Add(
-      std::move(any_size_char_arr), string_array_format);
+  sys_category_sp->AddTypeSummary(R"(^(unsigned )?char ?(\*|\[\])$)",
+                                  eFormatterMatchRegex, string_format);
+
+  sys_category_sp->AddTypeSummary(R"(^((un)?signed )?char ?\[[0-9]+\]$)",
+                                  eFormatterMatchRegex, string_array_format);
 
   lldb::TypeSummaryImplSP ostype_summary(
       new StringSummaryFormat(TypeSummaryImpl::Flags()
@@ -747,8 +733,8 @@ void FormatManager::LoadSystemFormatters() {
                                   .SetHideItemNames(false),
                               "${var%O}"));
 
-  sys_category_sp->GetTypeSummariesContainer()->Add(ConstString("OSType"),
-                                                    ostype_summary);
+  sys_category_sp->AddTypeSummary("OSType", eFormatterMatchExact,
+                                  ostype_summary);
 
   TypeFormatImpl::Flags fourchar_flags;
   fourchar_flags.SetCascades(true).SetSkipPointers(true).SetSkipReferences(
@@ -773,12 +759,11 @@ void FormatManager::LoadVectorFormatters() {
 
   AddStringSummary(vectors_category_sp, "${var.uint128}",
                    ConstString("builtin_type_vec128"), vector_flags);
-
-  AddStringSummary(vectors_category_sp, "", ConstString("float [4]"),
+  AddStringSummary(vectors_category_sp, "", ConstString("float[4]"),
                    vector_flags);
-  AddStringSummary(vectors_category_sp, "", ConstString("int32_t [4]"),
+  AddStringSummary(vectors_category_sp, "", ConstString("int32_t[4]"),
                    vector_flags);
-  AddStringSummary(vectors_category_sp, "", ConstString("int16_t [8]"),
+  AddStringSummary(vectors_category_sp, "", ConstString("int16_t[8]"),
                    vector_flags);
   AddStringSummary(vectors_category_sp, "", ConstString("vDouble"),
                    vector_flags);

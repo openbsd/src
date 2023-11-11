@@ -4,9 +4,6 @@ from __future__ import absolute_import
 import os
 import sys
 
-# Third-party modules
-import six
-
 # LLDB Modules
 import lldb
 from .lldbtest import *
@@ -23,12 +20,21 @@ class PExpectTest(TestBase):
     def expect_prompt(self):
         self.child.expect_exact(self.PROMPT)
 
-    def launch(self, executable=None, extra_args=None, timeout=30, dimensions=None):
+    def launch(self, executable=None, extra_args=None, timeout=60,
+               dimensions=None, run_under=None, post_spawn=None,
+               use_colors=False):
         logfile = getattr(sys.stdout, 'buffer',
                             sys.stdout) if self.TraceOn() else None
 
-        args = ['--no-lldbinit', '--no-use-colors']
+        args = []
+        if run_under is not None:
+            args += run_under
+        args += [lldbtest_config.lldbExec, '--no-lldbinit']
+        if not use_colors:
+            args.append('--no-use-colors')
         for cmd in self.setUpCommands():
+            if "use-color false" in cmd and use_colors:
+                continue
             args += ['-O', cmd]
         if executable is not None:
             args += ['--file', executable]
@@ -36,14 +42,22 @@ class PExpectTest(TestBase):
             args.extend(extra_args)
 
         env = dict(os.environ)
-        env["TERM"]="vt100"
+        env["TERM"] = "vt100"
+        env["HOME"] = self.getBuildDir()
 
         import pexpect
         self.child = pexpect.spawn(
-                lldbtest_config.lldbExec, args=args, logfile=logfile,
+                args[0], args=args[1:], logfile=logfile,
                 timeout=timeout, dimensions=dimensions, env=env)
+        self.child.ptyproc.delayafterclose = timeout/10
+        self.child.ptyproc.delayafterterminate = timeout/10
+
+        if post_spawn is not None:
+            post_spawn()
         self.expect_prompt()
         for cmd in self.setUpCommands():
+            if "use-color false" in cmd and use_colors:
+                continue
             self.child.expect_exact(cmd)
             self.expect_prompt()
         if executable is not None:
@@ -55,7 +69,7 @@ class PExpectTest(TestBase):
         self.assertNotIn('\n', cmd)
         # If 'substrs' is a string then this code would just check that every
         # character of the string is in the output.
-        assert not isinstance(substrs, six.string_types), \
+        assert not isinstance(substrs, str), \
             "substrs must be a collection of strings"
 
         self.child.sendline(cmd)

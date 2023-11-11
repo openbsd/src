@@ -39,7 +39,8 @@ protected:
 
 public:
   ProcessStructReader(Process *process, lldb::addr_t base_addr,
-                      CompilerType struct_type) {
+                      CompilerType struct_type)
+      : m_byte_order(lldb::eByteOrderInvalid), m_addr_byte_size(0) {
     if (!process)
       return;
     if (base_addr == 0 || base_addr == LLDB_INVALID_ADDRESS)
@@ -69,7 +70,7 @@ public:
     auto total_size = struct_type.GetByteSize(nullptr);
     if (!total_size)
       return;
-    lldb::DataBufferSP buffer_sp(new DataBufferHeap(*total_size, 0));
+    lldb::WritableDataBufferSP buffer_sp(new DataBufferHeap(*total_size, 0));
     Status error;
     process->ReadMemoryFromInferior(base_addr, buffer_sp->GetBytes(),
                                     *total_size, error);

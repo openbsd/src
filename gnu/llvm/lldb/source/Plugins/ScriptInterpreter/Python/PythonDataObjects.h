@@ -71,28 +71,16 @@ class PythonDictionary;
 class PythonInteger;
 class PythonException;
 
-class StructuredPythonObject : public StructuredData::Generic {
+class GIL {
 public:
-  StructuredPythonObject() : StructuredData::Generic() {}
-
-  StructuredPythonObject(void *obj) : StructuredData::Generic(obj) {
-    Py_XINCREF(GetValue());
+  GIL() {
+    m_state = PyGILState_Ensure();
+    assert(!PyErr_Occurred());
   }
+  ~GIL() { PyGILState_Release(m_state); }
 
-  ~StructuredPythonObject() override {
-    if (Py_IsInitialized())
-      Py_XDECREF(GetValue());
-    SetValue(nullptr);
-  }
-
-  bool IsValid() const override { return GetValue() && GetValue() != Py_None; }
-
-  void Serialize(llvm::json::OStream &s) const override;
-
-private:
-  StructuredPythonObject(const StructuredPythonObject &) = delete;
-  const StructuredPythonObject &
-  operator=(const StructuredPythonObject &) = delete;
+protected:
+  PyGILState_STATE m_state;
 };
 
 enum class PyObjectType {
@@ -193,32 +181,38 @@ inline llvm::Error keyError() {
                                  "key not in dict");
 }
 
-#if PY_MAJOR_VERSION < 3
-// The python 2 API declares some arguments as char* that should
-// be const char *, but it doesn't actually modify them.
-inline char *py2_const_cast(const char *s) { return const_cast<char *>(s); }
-#else
 inline const char *py2_const_cast(const char *s) { return s; }
-#endif
 
 enum class PyInitialValue { Invalid, Empty };
 
+// DOC: https://docs.python.org/3/c-api/arg.html#building-values
 template <typename T, typename Enable = void> struct PythonFormat;
 
-template <> struct PythonFormat<unsigned long long> {
-  static constexpr char format = 'K';
-  static auto get(unsigned long long value) { return value; }
+template <typename T, char F> struct PassthroughFormat {
+  static constexpr char format = F;
+  static constexpr T get(T t) { return t; }
 };
 
-template <> struct PythonFormat<long long> {
-  static constexpr char format = 'L';
-  static auto get(long long value) { return value; }
-};
-
-template <> struct PythonFormat<PyObject *> {
-  static constexpr char format = 'O';
-  static auto get(PyObject *value) { return value; }
-};
+template <> struct PythonFormat<char *> : PassthroughFormat<char *, 's'> {};
+template <> struct PythonFormat<char> : PassthroughFormat<char, 'b'> {};
+template <>
+struct PythonFormat<unsigned char> : PassthroughFormat<unsigned char, 'B'> {};
+template <> struct PythonFormat<short> : PassthroughFormat<short, 'h'> {};
+template <>
+struct PythonFormat<unsigned short> : PassthroughFormat<unsigned short, 'H'> {};
+template <> struct PythonFormat<int> : PassthroughFormat<int, 'i'> {};
+template <>
+struct PythonFormat<unsigned int> : PassthroughFormat<unsigned int, 'I'> {};
+template <> struct PythonFormat<long> : PassthroughFormat<long, 'l'> {};
+template <>
+struct PythonFormat<unsigned long> : PassthroughFormat<unsigned long, 'k'> {};
+template <>
+struct PythonFormat<long long> : PassthroughFormat<long long, 'L'> {};
+template <>
+struct PythonFormat<unsigned long long>
+    : PassthroughFormat<unsigned long long, 'K'> {};
+template <>
+struct PythonFormat<PyObject *> : PassthroughFormat<PyObject *, 'O'> {};
 
 template <typename T>
 struct PythonFormat<
@@ -251,11 +245,7 @@ public:
 
   ~PythonObject() { Reset(); }
 
-  void Reset() {
-    if (m_py_obj && Py_IsInitialized())
-      Py_DECREF(m_py_obj);
-    m_py_obj = nullptr;
-  }
+  void Reset();
 
   void Dump() const {
     if (m_py_obj)
@@ -407,14 +397,9 @@ llvm::Expected<std::string> As<std::string>(llvm::Expected<PythonObject> &&obj);
 
 template <class T> class TypedPythonObject : public PythonObject {
 public:
-  // override to perform implicit type conversions on Reset
-  // This can be eliminated once we drop python 2 support.
-  static void Convert(PyRefType &type, PyObject *&py_obj) {}
-
   TypedPythonObject(PyRefType type, PyObject *py_obj) {
     if (!py_obj)
       return;
-    T::Convert(type, py_obj);
     if (T::Check(py_obj))
       PythonObject::operator=(PythonObject(type, py_obj));
     else if (type == PyRefType::Owned)
@@ -469,7 +454,6 @@ public:
   explicit PythonString(llvm::StringRef string); // safe, null on error
 
   static bool Check(PyObject *py_obj);
-  static void Convert(PyRefType &type, PyObject *&py_obj);
 
   llvm::StringRef GetString() const; // safe, empty string on error
 
@@ -491,7 +475,6 @@ public:
   explicit PythonInteger(int64_t value);
 
   static bool Check(PyObject *py_obj);
-  static void Convert(PyRefType &type, PyObject *&py_obj);
 
   void SetInteger(int64_t value);
 
@@ -665,7 +648,7 @@ public:
   const char *toCString() const;
   PythonException(const char *caller = nullptr);
   void Restore();
-  ~PythonException();
+  ~PythonException() override;
   void log(llvm::raw_ostream &OS) const override;
   std::error_code convertToErrorCode() const override;
   bool Matches(PyObject *exc) const;
@@ -753,6 +736,30 @@ public:
       return std::move(error);
     return function.Call(std::forward<Args>(args)...);
   }
+};
+
+class StructuredPythonObject : public StructuredData::Generic {
+public:
+  StructuredPythonObject() : StructuredData::Generic() {}
+
+  // Take ownership of the object we received.
+  StructuredPythonObject(PythonObject obj)
+      : StructuredData::Generic(obj.release()) {}
+
+  ~StructuredPythonObject() override {
+    // Hand ownership back to a (temporary) PythonObject instance and let it
+    // take care of releasing it.
+    PythonObject(PyRefType::Owned, static_cast<PyObject *>(GetValue()));
+  }
+
+  bool IsValid() const override { return GetValue() && GetValue() != Py_None; }
+
+  void Serialize(llvm::json::OStream &s) const override;
+
+private:
+  StructuredPythonObject(const StructuredPythonObject &) = delete;
+  const StructuredPythonObject &
+  operator=(const StructuredPythonObject &) = delete;
 };
 
 } // namespace python

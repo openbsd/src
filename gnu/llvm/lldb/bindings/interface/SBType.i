@@ -229,7 +229,7 @@ public:
       function returns ``0``.
     * C++: Same as in C.
     * Objective-C: Same as in C. For Objective-C classes this always returns
-      `0`` as the actual size depends on runtime information.
+      ``0`` as the actual size depends on runtime information.
     ") GetByteSize;
     uint64_t
     GetByteSize();
@@ -353,6 +353,18 @@ public:
     ") IsScopedEnumerationType;
     bool
     IsScopedEnumerationType ();
+
+    %feature("docstring",
+    "Returns true if this type is an aggregate type.
+
+    Language-specific behaviour:
+
+    * C: Returns true for struct values, arrays, and vectors.
+    * C++: Same a C. Also includes class instances.
+    * Objective-C: Same as C. Also includes class instances.
+    ") IsAggregateType;
+    bool
+    IsAggregateType ();
 
     %feature("docstring",
     "Returns a type that represents a pointer to this type.
@@ -494,7 +506,7 @@ public:
 
     Language-specific behaviour:
 
-    * C: Returns a constant-size array `T[size]` for any non-void type.
+    * C: Returns a constant-size array ``T[size]`` for any non-void type.
     * C++: Same as in C.
     * Objective-C: Same as in C.
 
@@ -525,8 +537,8 @@ public:
     "Returns the `BasicType` value that is most appropriate to this type.
 
     Returns `eBasicTypeInvalid` if no appropriate `BasicType` was found or this
-    type is invalid. See the `BasicType` documentation for the language-specific m
-    aning of each `BasicType` value.
+    type is invalid. See the `BasicType` documentation for the language-specific
+    meaning of each `BasicType` value.
 
     **Overload behaviour:** When called with a `BasicType` parameter, the
     following behaviour applies:
@@ -719,8 +731,8 @@ public:
 
     * C: Always returns ``0``.
     * C++: If this type is a class template instantiation then this returns the
-      number of template parameters that were used in this instantiation. This i
-      cludes both explicit and implicit template parameters.
+      number of template parameters that were used in this instantiation. This
+      includes both explicit and implicit template parameters.
     * Objective-C: Always returns ``0``.
     ") GetNumberOfTemplateArguments;
     uint32_t
@@ -837,6 +849,21 @@ public:
     lldb::SBTypeMemberFunction
     GetMemberFunctionAtIndex (uint32_t idx);
 
+    %feature("docstring",
+    "Returns true if the type is completely defined.
+
+    Language-specific behaviour:
+
+    * C: Returns false for struct types that were only forward declared in the
+      type's `SBTarget`/`SBModule`. Otherwise returns true.
+    * C++: Returns false for template/non-template struct/class types and
+      scoped enums that were only forward declared inside the type's
+      `SBTarget`/`SBModule`. Otherwise returns true.
+    * Objective-C: Follows the same behavior as C for struct types. Objective-C
+      classes are considered complete unless they were only forward declared via
+      ``@class ClassName`` in the type's `SBTarget`/`SBModule`. Otherwise
+      returns true.
+    ") IsTypeComplete;
     bool
     IsTypeComplete ();
 

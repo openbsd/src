@@ -9,6 +9,8 @@
 #include "HashedNameToDIE.h"
 #include "llvm/ADT/StringRef.h"
 
+using namespace lldb_private::dwarf;
+
 bool DWARFMappedHash::ExtractDIEArray(
     const DIEInfoArray &die_info_array,
     llvm::function_ref<bool(DIERef ref)> callback) {
@@ -172,7 +174,7 @@ void DWARFMappedHash::Prologue::AppendAtom(AtomType type, dw_form_t form) {
   case DW_FORM_GNU_addr_index:
   case DW_FORM_GNU_str_index:
     hash_data_has_fixed_byte_size = false;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case DW_FORM_flag:
   case DW_FORM_data1:
   case DW_FORM_ref1:
@@ -182,7 +184,7 @@ void DWARFMappedHash::Prologue::AppendAtom(AtomType type, dw_form_t form) {
 
   case DW_FORM_block2:
     hash_data_has_fixed_byte_size = false;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case DW_FORM_data2:
   case DW_FORM_ref2:
     min_hash_data_byte_size += 2;
@@ -190,7 +192,7 @@ void DWARFMappedHash::Prologue::AppendAtom(AtomType type, dw_form_t form) {
 
   case DW_FORM_block4:
     hash_data_has_fixed_byte_size = false;
-    LLVM_FALLTHROUGH;
+    [[fallthrough]];
   case DW_FORM_data4:
   case DW_FORM_ref4:
   case DW_FORM_addr:

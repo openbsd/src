@@ -18,7 +18,7 @@ namespace lldb_private {
 class OptionValueArray : public Cloneable<OptionValueArray, OptionValue> {
 public:
   OptionValueArray(uint32_t type_mask = UINT32_MAX, bool raw_value_dump = false)
-      : m_type_mask(type_mask), m_values(), m_raw_value_dump(raw_value_dump) {}
+      : m_type_mask(type_mask), m_raw_value_dump(raw_value_dump) {}
 
   ~OptionValueArray() override = default;
 
@@ -28,6 +28,8 @@ public:
 
   void DumpValue(const ExecutionContext *exe_ctx, Stream &strm,
                  uint32_t dump_mask) override;
+
+  llvm::json::Value ToJSON(const ExecutionContext *exe_ctx) override;
 
   Status
   SetValueFromString(llvm::StringRef value,

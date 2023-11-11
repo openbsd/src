@@ -266,10 +266,8 @@ public:
       0x1001; ///< ValueObject::GetError() returns this if there is no result
               /// from the expression.
 
-  const char *GetFixedText() {
-    if (m_fixed_text.empty())
-      return nullptr;
-    return m_fixed_text.c_str();
+  llvm::StringRef GetFixedText() {
+    return m_fixed_text;
   }
 
 protected:
@@ -281,6 +279,23 @@ protected:
 
   static lldb::addr_t GetObjectPointer(lldb::StackFrameSP frame_sp,
                                        ConstString &object_name, Status &err);
+
+  /// Return ValueObject for a given variable name in the current stack frame
+  ///
+  /// \param[in] frame Current stack frame. When passed a 'nullptr', this
+  ///                  function returns an empty ValueObjectSP.
+  ///
+  /// \param[in] object_name Name of the variable in the current stack frame
+  ///                        for which we want the ValueObjectSP.
+  ///
+  /// \param[out] err Status object which will get set on error.
+  ///
+  /// \returns On success returns a ValueObjectSP corresponding to the variable
+  ///          with 'object_name' in the current 'frame'. Otherwise, returns
+  ///          'nullptr' (and sets the error status parameter 'err').
+  static lldb::ValueObjectSP
+  GetObjectPointerValueObject(lldb::StackFrameSP frame,
+                              ConstString const &object_name, Status &err);
 
   /// Populate m_in_cplusplus_method and m_in_objectivec_method based on the
   /// environment.

@@ -32,6 +32,7 @@
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/Thread.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/State.h"
 #include "lldb/Utility/StringExtractor.h"
@@ -65,7 +66,7 @@ enum {
 class PluginProperties : public Properties {
 public:
   static ConstString GetSettingName() {
-    return ProcessKDP::GetPluginNameStatic();
+    return ConstString(ProcessKDP::GetPluginNameStatic());
   }
 
   PluginProperties() : Properties() {
@@ -73,7 +74,7 @@ public:
     m_collection_sp->Initialize(g_processkdp_properties);
   }
 
-  virtual ~PluginProperties() = default;
+  ~PluginProperties() override = default;
 
   uint64_t GetPacketTimeout() {
     const uint32_t idx = ePropertyKDPPacketTimeout;
@@ -82,25 +83,16 @@ public:
   }
 };
 
-typedef std::shared_ptr<PluginProperties> ProcessKDPPropertiesSP;
+} // namespace
 
-static const ProcessKDPPropertiesSP &GetGlobalPluginProperties() {
-  static ProcessKDPPropertiesSP g_settings_sp;
-  if (!g_settings_sp)
-    g_settings_sp = std::make_shared<PluginProperties>();
-  return g_settings_sp;
+static PluginProperties &GetGlobalPluginProperties() {
+  static PluginProperties g_settings;
+  return g_settings;
 }
-
-} // anonymous namespace end
 
 static const lldb::tid_t g_kernel_tid = 1;
 
-ConstString ProcessKDP::GetPluginNameStatic() {
-  static ConstString g_name("kdp-remote");
-  return g_name;
-}
-
-const char *ProcessKDP::GetPluginDescriptionStatic() {
+llvm::StringRef ProcessKDP::GetPluginDescriptionStatic() {
   return "KDP Remote protocol based debugging plug-in for darwin kernel "
          "debugging.";
 }
@@ -154,14 +146,14 @@ ProcessKDP::ProcessKDP(TargetSP target_sp, ListenerSP listener_sp)
     : Process(target_sp, listener_sp),
       m_comm("lldb.process.kdp-remote.communication"),
       m_async_broadcaster(NULL, "lldb.process.kdp-remote.async-broadcaster"),
-      m_dyld_plugin_name(), m_kernel_load_addr(LLDB_INVALID_ADDRESS),
-      m_command_sp(), m_kernel_thread_wp() {
+      m_kernel_load_addr(LLDB_INVALID_ADDRESS), m_command_sp(),
+      m_kernel_thread_wp() {
   m_async_broadcaster.SetEventName(eBroadcastBitAsyncThreadShouldExit,
                                    "async thread should exit");
   m_async_broadcaster.SetEventName(eBroadcastBitAsyncContinue,
                                    "async thread continue");
   const uint64_t timeout_seconds =
-      GetGlobalPluginProperties()->GetPacketTimeout();
+      GetGlobalPluginProperties().GetPacketTimeout();
   if (timeout_seconds > 0)
     m_comm.SetPacketTimeout(std::chrono::seconds(timeout_seconds));
 }
@@ -176,28 +168,21 @@ ProcessKDP::~ProcessKDP() {
   Finalize();
 }
 
-// PluginInterface
-lldb_private::ConstString ProcessKDP::GetPluginName() {
-  return GetPluginNameStatic();
-}
-
-uint32_t ProcessKDP::GetPluginVersion() { return 1; }
-
-Status ProcessKDP::WillLaunch(Module *module) {
+Status ProcessKDP::DoWillLaunch(Module *module) {
   Status error;
   error.SetErrorString("launching not supported in kdp-remote plug-in");
   return error;
 }
 
-Status ProcessKDP::WillAttachToProcessWithID(lldb::pid_t pid) {
+Status ProcessKDP::DoWillAttachToProcessWithID(lldb::pid_t pid) {
   Status error;
   error.SetErrorString(
       "attaching to a by process ID not supported in kdp-remote plug-in");
   return error;
 }
 
-Status ProcessKDP::WillAttachToProcessWithName(const char *process_name,
-                                               bool wait_for_launch) {
+Status ProcessKDP::DoWillAttachToProcessWithName(const char *process_name,
+                                                 bool wait_for_launch) {
   Status error;
   error.SetErrorString(
       "attaching to a by process name not supported in kdp-remote plug-in");
@@ -279,8 +264,7 @@ Status ProcessKDP::DoConnectRemote(llvm::StringRef remote_url) {
             // Select an invalid plugin name for the dynamic loader so one
             // doesn't get used since EFI does its own manual loading via
             // python scripting
-            static ConstString g_none_dynamic_loader("none");
-            m_dyld_plugin_name = g_none_dynamic_loader;
+            m_dyld_plugin_name = "none";
 
             if (kernel_uuid.IsValid()) {
               // If EFI passed in a UUID= try to lookup UUID The slide will not
@@ -306,8 +290,11 @@ Status ProcessKDP::DoConnectRemote(llvm::StringRef remote_url) {
                 }
               }
               if (!module_spec.GetSymbolFileSpec() ||
-                  !module_spec.GetSymbolFileSpec())
-                Symbols::DownloadObjectAndSymbolFile(module_spec, true);
+                  !module_spec.GetSymbolFileSpec()) {
+                Status symbl_error;
+                Symbols::DownloadObjectAndSymbolFile(module_spec, symbl_error,
+                                                     true);
+              }
 
               if (FileSystem::Instance().Exists(module_spec.GetFileSpec())) {
                 ModuleSP module_sp(new Module(module_spec));
@@ -398,7 +385,7 @@ ProcessKDP::DoAttachToProcessWithName(const char *process_name,
 void ProcessKDP::DidAttach(ArchSpec &process_arch) {
   Process::DidAttach(process_arch);
 
-  Log *log(ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
+  Log *log = GetLog(KDPLog::Process);
   LLDB_LOGF(log, "ProcessKDP::DidAttach()");
   if (GetID() != LLDB_INVALID_PROCESS_ID) {
     GetHostArchitecture(process_arch);
@@ -409,9 +396,7 @@ addr_t ProcessKDP::GetImageInfoAddress() { return m_kernel_load_addr; }
 
 lldb_private::DynamicLoader *ProcessKDP::GetDynamicLoader() {
   if (m_dyld_up.get() == NULL)
-    m_dyld_up.reset(DynamicLoader::FindPlugin(
-        this,
-        m_dyld_plugin_name.IsEmpty() ? NULL : m_dyld_plugin_name.GetCString()));
+    m_dyld_up.reset(DynamicLoader::FindPlugin(this, m_dyld_plugin_name));
   return m_dyld_up.get();
 }
 
@@ -419,7 +404,7 @@ Status ProcessKDP::WillResume() { return Status(); }
 
 Status ProcessKDP::DoResume() {
   Status error;
-  Log *log(ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
+  Log *log = GetLog(KDPLog::Process);
   // Only start the async thread if we try to do any process control
   if (!m_async_thread.IsJoinable())
     StartAsyncThread();
@@ -511,7 +496,7 @@ lldb::ThreadSP ProcessKDP::GetKernelThread() {
 bool ProcessKDP::DoUpdateThreadList(ThreadList &old_thread_list,
                                     ThreadList &new_thread_list) {
   // locker will keep a mutex locked until it goes out of scope
-  Log *log(ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_THREAD));
+  Log *log = GetLog(KDPLog::Thread);
   LLDB_LOGV(log, "pid = {0}", GetID());
 
   // Even though there is a CPU mask, it doesn't mean we can see each CPU
@@ -549,7 +534,7 @@ Status ProcessKDP::DoHalt(bool &caused_stop) {
 
 Status ProcessKDP::DoDetach(bool keep_stopped) {
   Status error;
-  Log *log(ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
+  Log *log = GetLog(KDPLog::Process);
   LLDB_LOGF(log, "ProcessKDP::DoDetach(keep_stopped = %i)", keep_stopped);
 
   if (m_comm.IsRunning()) {
@@ -727,14 +712,14 @@ void ProcessKDP::DebuggerInitialize(lldb_private::Debugger &debugger) {
           debugger, PluginProperties::GetSettingName())) {
     const bool is_global_setting = true;
     PluginManager::CreateSettingForProcessPlugin(
-        debugger, GetGlobalPluginProperties()->GetValueProperties(),
+        debugger, GetGlobalPluginProperties().GetValueProperties(),
         ConstString("Properties for the kdp-remote process plug-in."),
         is_global_setting);
   }
 }
 
 bool ProcessKDP::StartAsyncThread() {
-  Log *log(ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
+  Log *log = GetLog(KDPLog::Process);
 
   LLDB_LOGF(log, "ProcessKDP::StartAsyncThread ()");
 
@@ -742,11 +727,10 @@ bool ProcessKDP::StartAsyncThread() {
     return true;
 
   llvm::Expected<HostThread> async_thread = ThreadLauncher::LaunchThread(
-      "<lldb.process.kdp-remote.async>", ProcessKDP::AsyncThread, this);
+      "<lldb.process.kdp-remote.async>", [this] { return AsyncThread(); });
   if (!async_thread) {
-    LLDB_LOG(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_HOST),
-             "failed to launch host thread: {}",
-             llvm::toString(async_thread.takeError()));
+    LLDB_LOG_ERROR(GetLog(LLDBLog::Host), async_thread.takeError(),
+                   "failed to launch host thread: {}");
     return false;
   }
   m_async_thread = *async_thread;
@@ -754,7 +738,7 @@ bool ProcessKDP::StartAsyncThread() {
 }
 
 void ProcessKDP::StopAsyncThread() {
-  Log *log(ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
+  Log *log = GetLog(KDPLog::Process);
 
   LLDB_LOGF(log, "ProcessKDP::StopAsyncThread ()");
 
@@ -765,32 +749,28 @@ void ProcessKDP::StopAsyncThread() {
     m_async_thread.Join(nullptr);
 }
 
-void *ProcessKDP::AsyncThread(void *arg) {
-  ProcessKDP *process = (ProcessKDP *)arg;
+void *ProcessKDP::AsyncThread() {
+  const lldb::pid_t pid = GetID();
 
-  const lldb::pid_t pid = process->GetID();
-
-  Log *log(ProcessKDPLog::GetLogIfAllCategoriesSet(KDP_LOG_PROCESS));
+  Log *log = GetLog(KDPLog::Process);
   LLDB_LOGF(log,
-            "ProcessKDP::AsyncThread (arg = %p, pid = %" PRIu64
-            ") thread starting...",
-            arg, pid);
+            "ProcessKDP::AsyncThread(pid = %" PRIu64 ") thread starting...",
+            pid);
 
   ListenerSP listener_sp(Listener::MakeListener("ProcessKDP::AsyncThread"));
   EventSP event_sp;
   const uint32_t desired_event_mask =
       eBroadcastBitAsyncContinue | eBroadcastBitAsyncThreadShouldExit;
 
-  if (listener_sp->StartListeningForEvents(&process->m_async_broadcaster,
-                                           desired_event_mask) ==
-      desired_event_mask) {
+  if (listener_sp->StartListeningForEvents(
+          &m_async_broadcaster, desired_event_mask) == desired_event_mask) {
     bool done = false;
     while (!done) {
       LLDB_LOGF(log,
                 "ProcessKDP::AsyncThread (pid = %" PRIu64
                 ") listener.WaitForEvent (NULL, event_sp)...",
                 pid);
-      if (listener_sp->GetEvent(event_sp, llvm::None)) {
+      if (listener_sp->GetEvent(event_sp, std::nullopt)) {
         uint32_t event_type = event_sp->GetType();
         LLDB_LOGF(log,
                   "ProcessKDP::AsyncThread (pid = %" PRIu64
@@ -806,9 +786,9 @@ void *ProcessKDP::AsyncThread(void *arg) {
           switch (event_type) {
           case eBroadcastBitAsyncContinue: {
             is_running = true;
-            if (process->m_comm.WaitForPacketWithTimeoutMicroSeconds(
+            if (m_comm.WaitForPacketWithTimeoutMicroSeconds(
                     exc_reply_packet, 1 * USEC_PER_SEC)) {
-              ThreadSP thread_sp(process->GetKernelThread());
+              ThreadSP thread_sp(GetKernelThread());
               if (thread_sp) {
                 lldb::RegisterContextSP reg_ctx_sp(
                     thread_sp->GetRegisterContext());
@@ -820,7 +800,7 @@ void *ProcessKDP::AsyncThread(void *arg) {
 
               // TODO: parse the stop reply packet
               is_running = false;
-              process->SetPrivateState(eStateStopped);
+              SetPrivateState(eStateStopped);
             } else {
               // Check to see if we are supposed to exit. There is no way to
               // interrupt a running kernel, so all we can do is wait for an
@@ -862,12 +842,10 @@ void *ProcessKDP::AsyncThread(void *arg) {
     }
   }
 
-  LLDB_LOGF(log,
-            "ProcessKDP::AsyncThread (arg = %p, pid = %" PRIu64
-            ") thread exiting...",
-            arg, pid);
+  LLDB_LOGF(log, "ProcessKDP::AsyncThread(pid = %" PRIu64 ") thread exiting...",
+            pid);
 
-  process->m_async_thread.Reset();
+  m_async_thread.Reset();
   return NULL;
 }
 
@@ -902,90 +880,84 @@ public:
     m_option_group.Finalize();
   }
 
-  ~CommandObjectProcessKDPPacketSend() = default;
+  ~CommandObjectProcessKDPPacketSend() override = default;
 
   bool DoExecute(Args &command, CommandReturnObject &result) override {
-    const size_t argc = command.GetArgumentCount();
-    if (argc == 0) {
-      if (!m_command_byte.GetOptionValue().OptionWasSet()) {
-        result.AppendError(
-            "the --command option must be set to a valid command byte");
-      } else {
-        const uint64_t command_byte =
-            m_command_byte.GetOptionValue().GetUInt64Value(0);
-        if (command_byte > 0 && command_byte <= UINT8_MAX) {
-          ProcessKDP *process =
-              (ProcessKDP *)m_interpreter.GetExecutionContext().GetProcessPtr();
-          if (process) {
-            const StateType state = process->GetState();
+    if (!m_command_byte.GetOptionValue().OptionWasSet()) {
+      result.AppendError(
+          "the --command option must be set to a valid command byte");
+    } else {
+      const uint64_t command_byte =
+          m_command_byte.GetOptionValue().GetUInt64Value(0);
+      if (command_byte > 0 && command_byte <= UINT8_MAX) {
+        ProcessKDP *process =
+            (ProcessKDP *)m_interpreter.GetExecutionContext().GetProcessPtr();
+        if (process) {
+          const StateType state = process->GetState();
 
-            if (StateIsStoppedState(state, true)) {
-              std::vector<uint8_t> payload_bytes;
-              const char *ascii_hex_bytes_cstr =
-                  m_packet_data.GetOptionValue().GetCurrentValue();
-              if (ascii_hex_bytes_cstr && ascii_hex_bytes_cstr[0]) {
-                StringExtractor extractor(ascii_hex_bytes_cstr);
-                const size_t ascii_hex_bytes_cstr_len =
-                    extractor.GetStringRef().size();
-                if (ascii_hex_bytes_cstr_len & 1) {
-                  result.AppendErrorWithFormat("payload data must contain an "
-                                               "even number of ASCII hex "
-                                               "characters: '%s'",
-                                               ascii_hex_bytes_cstr);
-                  return false;
-                }
-                payload_bytes.resize(ascii_hex_bytes_cstr_len / 2);
-                if (extractor.GetHexBytes(payload_bytes, '\xdd') !=
-                    payload_bytes.size()) {
-                  result.AppendErrorWithFormat("payload data must only contain "
-                                               "ASCII hex characters (no "
-                                               "spaces or hex prefixes): '%s'",
-                                               ascii_hex_bytes_cstr);
-                  return false;
-                }
-              }
-              Status error;
-              DataExtractor reply;
-              process->GetCommunication().SendRawRequest(
-                  command_byte,
-                  payload_bytes.empty() ? NULL : payload_bytes.data(),
-                  payload_bytes.size(), reply, error);
-
-              if (error.Success()) {
-                // Copy the binary bytes into a hex ASCII string for the result
-                StreamString packet;
-                packet.PutBytesAsRawHex8(
-                    reply.GetDataStart(), reply.GetByteSize(),
-                    endian::InlHostByteOrder(), endian::InlHostByteOrder());
-                result.AppendMessage(packet.GetString());
-                result.SetStatus(eReturnStatusSuccessFinishResult);
-                return true;
-              } else {
-                const char *error_cstr = error.AsCString();
-                if (error_cstr && error_cstr[0])
-                  result.AppendError(error_cstr);
-                else
-                  result.AppendErrorWithFormat("unknown error 0x%8.8x",
-                                               error.GetError());
+          if (StateIsStoppedState(state, true)) {
+            std::vector<uint8_t> payload_bytes;
+            const char *ascii_hex_bytes_cstr =
+                m_packet_data.GetOptionValue().GetCurrentValue();
+            if (ascii_hex_bytes_cstr && ascii_hex_bytes_cstr[0]) {
+              StringExtractor extractor(ascii_hex_bytes_cstr);
+              const size_t ascii_hex_bytes_cstr_len =
+                  extractor.GetStringRef().size();
+              if (ascii_hex_bytes_cstr_len & 1) {
+                result.AppendErrorWithFormat("payload data must contain an "
+                                             "even number of ASCII hex "
+                                             "characters: '%s'",
+                                             ascii_hex_bytes_cstr);
                 return false;
               }
+              payload_bytes.resize(ascii_hex_bytes_cstr_len / 2);
+              if (extractor.GetHexBytes(payload_bytes, '\xdd') !=
+                  payload_bytes.size()) {
+                result.AppendErrorWithFormat("payload data must only contain "
+                                             "ASCII hex characters (no "
+                                             "spaces or hex prefixes): '%s'",
+                                             ascii_hex_bytes_cstr);
+                return false;
+              }
+            }
+            Status error;
+            DataExtractor reply;
+            process->GetCommunication().SendRawRequest(
+                command_byte,
+                payload_bytes.empty() ? NULL : payload_bytes.data(),
+                payload_bytes.size(), reply, error);
+
+            if (error.Success()) {
+              // Copy the binary bytes into a hex ASCII string for the result
+              StreamString packet;
+              packet.PutBytesAsRawHex8(
+                  reply.GetDataStart(), reply.GetByteSize(),
+                  endian::InlHostByteOrder(), endian::InlHostByteOrder());
+              result.AppendMessage(packet.GetString());
+              result.SetStatus(eReturnStatusSuccessFinishResult);
+              return true;
             } else {
-              result.AppendErrorWithFormat("process must be stopped in order "
-                                           "to send KDP packets, state is %s",
-                                           StateAsCString(state));
+              const char *error_cstr = error.AsCString();
+              if (error_cstr && error_cstr[0])
+                result.AppendError(error_cstr);
+              else
+                result.AppendErrorWithFormat("unknown error 0x%8.8x",
+                                             error.GetError());
+              return false;
             }
           } else {
-            result.AppendError("invalid process");
+            result.AppendErrorWithFormat("process must be stopped in order "
+                                         "to send KDP packets, state is %s",
+                                         StateAsCString(state));
           }
         } else {
-          result.AppendErrorWithFormat("invalid command byte 0x%" PRIx64
-                                       ", valid values are 1 - 255",
-                                       command_byte);
+          result.AppendError("invalid process");
         }
+      } else {
+        result.AppendErrorWithFormat("invalid command byte 0x%" PRIx64
+                                     ", valid values are 1 - 255",
+                                     command_byte);
       }
-    } else {
-      result.AppendErrorWithFormat("'%s' takes no arguments, only options.",
-                                   m_cmd_name.c_str());
     }
     return false;
   }
@@ -1003,7 +975,7 @@ public:
         CommandObjectSP(new CommandObjectProcessKDPPacketSend(interpreter)));
   }
 
-  ~CommandObjectProcessKDPPacket() = default;
+  ~CommandObjectProcessKDPPacket() override = default;
 };
 
 class CommandObjectMultiwordProcessKDP : public CommandObjectMultiword {
@@ -1017,7 +989,7 @@ public:
                                  interpreter)));
   }
 
-  ~CommandObjectMultiwordProcessKDP() = default;
+  ~CommandObjectMultiwordProcessKDP() override = default;
 };
 
 CommandObject *ProcessKDP::GetPluginCommandObject() {

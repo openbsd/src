@@ -7,6 +7,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LibStdcpp.h"
+#include "LibCxx.h"
 
 #include "Plugins/TypeSystem/Clang/TypeSystemClang.h"
 #include "lldb/Core/ValueObject.h"
@@ -18,6 +19,7 @@
 #include "lldb/Utility/Endian.h"
 #include "lldb/Utility/Status.h"
 #include "lldb/Utility/Stream.h"
+#include <optional>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -53,7 +55,7 @@ public:
 
 private:
   ExecutionContextRef m_exe_ctx_ref;
-  lldb::addr_t m_pair_address;
+  lldb::addr_t m_pair_address = 0;
   CompilerType m_pair_type;
   lldb::ValueObjectSP m_pair_sp;
 };
@@ -77,8 +79,8 @@ public:
 
 LibstdcppMapIteratorSyntheticFrontEnd::LibstdcppMapIteratorSyntheticFrontEnd(
     lldb::ValueObjectSP valobj_sp)
-    : SyntheticChildrenFrontEnd(*valobj_sp), m_exe_ctx_ref(), m_pair_address(0),
-      m_pair_type(), m_pair_sp() {
+    : SyntheticChildrenFrontEnd(*valobj_sp), m_exe_ctx_ref(), m_pair_type(),
+      m_pair_sp() {
   if (valobj_sp)
     Update();
 }
@@ -169,19 +171,16 @@ lldb_private::formatters::LibstdcppMapIteratorSyntheticFrontEndCreator(
 SyntheticChildrenFrontEnd *
 lldb_private::formatters::LibStdcppVectorIteratorSyntheticFrontEndCreator(
     CXXSyntheticChildren *, lldb::ValueObjectSP valobj_sp) {
-  static ConstString g_item_name;
-  if (!g_item_name)
-    g_item_name.SetCString("_M_current");
-  return (valobj_sp
-              ? new VectorIteratorSyntheticFrontEnd(valobj_sp, g_item_name)
-              : nullptr);
+  return (valobj_sp ? new VectorIteratorSyntheticFrontEnd(
+                          valobj_sp, {ConstString("_M_current")})
+                    : nullptr);
 }
 
 lldb_private::formatters::VectorIteratorSyntheticFrontEnd::
     VectorIteratorSyntheticFrontEnd(lldb::ValueObjectSP valobj_sp,
-                                    ConstString item_name)
+                                    llvm::ArrayRef<ConstString> item_names)
     : SyntheticChildrenFrontEnd(*valobj_sp), m_exe_ctx_ref(),
-      m_item_name(item_name), m_item_sp() {
+      m_item_names(item_names), m_item_sp() {
   if (valobj_sp)
     Update();
 }
@@ -196,7 +195,8 @@ bool VectorIteratorSyntheticFrontEnd::Update() {
   if (!valobj_sp)
     return false;
 
-  ValueObjectSP item_ptr(valobj_sp->GetChildMemberWithName(m_item_name, true));
+  ValueObjectSP item_ptr =
+      formatters::GetChildMemberWithName(*valobj_sp, m_item_names);
   if (!item_ptr)
     return false;
   if (item_ptr->GetValueAsUnsigned(0) == 0)
@@ -250,7 +250,7 @@ bool lldb_private::formatters::LibStdcppStringSummaryProvider(
           addr_of_data == LLDB_INVALID_ADDRESS)
         return false;
       options.SetLocation(addr_of_data);
-      options.SetProcessSP(process_sp);
+      options.SetTargetSP(valobj.GetTargetSP());
       options.SetStream(&stream);
       options.SetNeedsZeroTermination(false);
       options.SetBinaryZeroIsTerminator(true);
@@ -298,7 +298,7 @@ bool lldb_private::formatters::LibStdcppWStringSummaryProvider(
         return false;
 
       // Safe to pass nullptr for exe_scope here.
-      llvm::Optional<uint64_t> size = wchar_compiler_type.GetBitSize(nullptr);
+      std::optional<uint64_t> size = wchar_compiler_type.GetBitSize(nullptr);
       if (!size)
         return false;
       const uint32_t wchar_size = *size;
@@ -311,7 +311,7 @@ bool lldb_private::formatters::LibStdcppWStringSummaryProvider(
           addr_of_data == LLDB_INVALID_ADDRESS)
         return false;
       options.SetLocation(addr_of_data);
-      options.SetProcessSP(process_sp);
+      options.SetTargetSP(valobj.GetTargetSP());
       options.SetStream(&stream);
       options.SetNeedsZeroTermination(false);
       options.SetBinaryZeroIsTerminator(false);

@@ -148,7 +148,7 @@ public:
 
     Entry(Type t = Type::Invalid, const char *s = nullptr,
           const char *f = nullptr)
-        : string(s ? s : ""), printf_format(f ? f : ""), children(), type(t) {}
+        : string(s ? s : ""), printf_format(f ? f : ""), type(t) {}
 
     Entry(llvm::StringRef s);
     Entry(char ch);
@@ -240,6 +240,17 @@ public:
   static bool FormatFileSpec(const FileSpec &file, Stream &s,
                              llvm::StringRef elements,
                              llvm::StringRef element_format);
+
+  /// For each variable in 'args' this function writes the variable
+  /// name and it's pretty-printed value representation to 'out_stream'
+  /// in following format:
+  ///
+  /// \verbatim
+  /// name_1=repr_1, name_2=repr_2 ...
+  /// \endverbatim
+  static void PrettyPrintFunctionArguments(Stream &out_stream,
+                                           VariableList const &args,
+                                           ExecutionContextScope *exe_scope);
 
 protected:
   static Status ParseInternal(llvm::StringRef &format, Entry &parent_entry,

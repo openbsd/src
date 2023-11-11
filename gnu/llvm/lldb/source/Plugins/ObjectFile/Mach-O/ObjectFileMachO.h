@@ -17,17 +17,19 @@
 #include "lldb/Utility/RangeMap.h"
 #include "lldb/Utility/StreamString.h"
 #include "lldb/Utility/UUID.h"
+#include <optional>
 
 // This class needs to be hidden as eventually belongs in a plugin that
 // will export the ObjectFile protocol
 class ObjectFileMachO : public lldb_private::ObjectFile {
 public:
-  ObjectFileMachO(const lldb::ModuleSP &module_sp, lldb::DataBufferSP &data_sp,
+  ObjectFileMachO(const lldb::ModuleSP &module_sp, lldb::DataBufferSP data_sp,
                   lldb::offset_t data_offset,
                   const lldb_private::FileSpec *file, lldb::offset_t offset,
                   lldb::offset_t length);
 
-  ObjectFileMachO(const lldb::ModuleSP &module_sp, lldb::DataBufferSP &data_sp,
+  ObjectFileMachO(const lldb::ModuleSP &module_sp,
+                  lldb::WritableDataBufferSP data_sp,
                   const lldb::ProcessSP &process_sp, lldb::addr_t header_addr);
 
   ~ObjectFileMachO() override = default;
@@ -37,17 +39,19 @@ public:
 
   static void Terminate();
 
-  static lldb_private::ConstString GetPluginNameStatic();
+  static llvm::StringRef GetPluginNameStatic() { return "mach-o"; }
 
-  static const char *GetPluginDescriptionStatic();
+  static llvm::StringRef GetPluginDescriptionStatic() {
+    return "Mach-o object file reader (32 and 64 bit)";
+  }
 
   static lldb_private::ObjectFile *
-  CreateInstance(const lldb::ModuleSP &module_sp, lldb::DataBufferSP &data_sp,
+  CreateInstance(const lldb::ModuleSP &module_sp, lldb::DataBufferSP data_sp,
                  lldb::offset_t data_offset, const lldb_private::FileSpec *file,
                  lldb::offset_t file_offset, lldb::offset_t length);
 
   static lldb_private::ObjectFile *CreateMemoryInstance(
-      const lldb::ModuleSP &module_sp, lldb::DataBufferSP &data_sp,
+      const lldb::ModuleSP &module_sp, lldb::WritableDataBufferSP data_sp,
       const lldb::ProcessSP &process_sp, lldb::addr_t header_addr);
 
   static size_t GetModuleSpecifications(const lldb_private::FileSpec &file,
@@ -62,7 +66,7 @@ public:
                        lldb::SaveCoreStyle &core_style,
                        lldb_private::Status &error);
 
-  static bool MagicBytesMatch(lldb::DataBufferSP &data_sp, lldb::addr_t offset,
+  static bool MagicBytesMatch(lldb::DataBufferSP data_sp, lldb::addr_t offset,
                               lldb::addr_t length);
 
   // LLVM RTTI support
@@ -84,11 +88,13 @@ public:
 
   bool IsDynamicLoader() const;
 
+  bool IsSharedCacheBinary() const;
+
   uint32_t GetAddressByteSize() const override;
 
   lldb_private::AddressClass GetAddressClass(lldb::addr_t file_addr) override;
 
-  lldb_private::Symtab *GetSymtab() override;
+  void ParseSymtab(lldb_private::Symtab &symtab) override;
 
   bool IsStripped() override;
 
@@ -116,7 +122,7 @@ public:
 
   lldb::addr_t GetAddressMask() override;
 
-  bool GetCorefileMainBinaryInfo(lldb::addr_t &address,
+  bool GetCorefileMainBinaryInfo(lldb::addr_t &value, bool &value_is_offset,
                                  lldb_private::UUID &uuid,
                                  ObjectFile::BinaryType &type) override;
 
@@ -137,6 +143,8 @@ public:
 
   bool GetIsDynamicLinkEditor() override;
 
+  bool CanTrustAddressRanges() override;
+
   static bool ParseHeader(lldb_private::DataExtractor &data,
                           lldb::offset_t *data_offset_ptr,
                           llvm::MachO::mach_header &header);
@@ -144,9 +152,7 @@ public:
   bool AllowAssemblyEmulationUnwindPlans() override;
 
   // PluginInterface protocol
-  lldb_private::ConstString GetPluginName() override;
-
-  uint32_t GetPluginVersion() override;
+  llvm::StringRef GetPluginName() override { return GetPluginNameStatic(); }
 
 protected:
   static lldb_private::UUID
@@ -223,7 +229,8 @@ protected:
     std::string filename;
     lldb_private::UUID uuid;
     lldb::addr_t load_address = LLDB_INVALID_ADDRESS;
-    bool currently_executing;
+    lldb::addr_t slide = 0;
+    bool currently_executing = false;
     std::vector<std::tuple<lldb_private::ConstString, lldb::addr_t>>
         segment_load_addresses;
   };
@@ -262,13 +269,13 @@ protected:
   llvm::MachO::dysymtab_command m_dysymtab;
   std::vector<llvm::MachO::segment_command_64> m_mach_segments;
   std::vector<llvm::MachO::section_64> m_mach_sections;
-  llvm::Optional<llvm::VersionTuple> m_min_os_version;
-  llvm::Optional<llvm::VersionTuple> m_sdk_versions;
+  std::optional<llvm::VersionTuple> m_min_os_version;
+  std::optional<llvm::VersionTuple> m_sdk_versions;
   typedef lldb_private::RangeVector<uint32_t, uint32_t> FileRangeArray;
   lldb_private::Address m_entry_point_address;
   FileRangeArray m_thread_context_offsets;
-  lldb::offset_t m_linkedit_original_offset;
-  lldb::addr_t m_text_address;
+  lldb::offset_t m_linkedit_original_offset = 0;
+  lldb::addr_t m_text_address = LLDB_INVALID_ADDRESS;
   bool m_thread_context_offsets_valid;
   lldb_private::FileSpecList m_reexported_dylibs;
   bool m_allow_assembly_emulation_unwind_plans;

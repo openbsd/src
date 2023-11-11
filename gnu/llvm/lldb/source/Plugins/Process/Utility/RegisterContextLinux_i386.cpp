@@ -89,26 +89,25 @@ struct UserArea {
 RegisterContextLinux_i386::RegisterContextLinux_i386(
     const ArchSpec &target_arch)
     : RegisterInfoInterface(target_arch) {
-  RegisterInfo orig_ax = {"orig_eax",
-                          nullptr,
-                          sizeof(((GPR *)nullptr)->orig_eax),
-                          (LLVM_EXTENSION offsetof(GPR, orig_eax)),
-                          eEncodingUint,
-                          eFormatHex,
-                          {LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,
-                           LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,
-                           LLDB_INVALID_REGNUM},
-                          nullptr,
-                          nullptr,
-                          nullptr,
-                          0};
+  RegisterInfo orig_ax = {
+      "orig_eax",
+      nullptr,
+      sizeof(((GPR *)nullptr)->orig_eax),
+      (LLVM_EXTENSION offsetof(GPR, orig_eax)),
+      eEncodingUint,
+      eFormatHex,
+      {LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM,
+       LLDB_INVALID_REGNUM, LLDB_INVALID_REGNUM},
+      nullptr,
+      nullptr,
+  };
   d_register_infos.push_back(orig_ax);
 }
 
-size_t RegisterContextLinux_i386::GetGPRSize() const { return sizeof(GPR); }
+size_t RegisterContextLinux_i386::GetGPRSizeStatic() { return sizeof(GPR); }
 
 const RegisterInfo *RegisterContextLinux_i386::GetRegisterInfo() const {
-  switch (m_target_arch.GetMachine()) {
+  switch (GetTargetArchitecture().GetMachine()) {
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
     return g_register_infos_i386;

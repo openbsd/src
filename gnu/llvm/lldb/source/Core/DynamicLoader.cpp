@@ -13,11 +13,15 @@
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Symbol/LocateSymbolFile.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/MemoryRegionInfo.h"
+#include "lldb/Target/Platform.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Utility/ConstString.h"
+#include "lldb/Utility/LLDBLog.h"
+#include "lldb/Utility/Log.h"
 #include "lldb/lldb-private-interfaces.h"
 
 #include "llvm/ADT/StringRef.h"
@@ -30,13 +34,11 @@ using namespace lldb;
 using namespace lldb_private;
 
 DynamicLoader *DynamicLoader::FindPlugin(Process *process,
-                                         const char *plugin_name) {
+                                         llvm::StringRef plugin_name) {
   DynamicLoaderCreateInstance create_callback = nullptr;
-  if (plugin_name) {
-    ConstString const_plugin_name(plugin_name);
+  if (!plugin_name.empty()) {
     create_callback =
-        PluginManager::GetDynamicLoaderCreateCallbackForPluginName(
-            const_plugin_name);
+        PluginManager::GetDynamicLoaderCreateCallbackForPluginName(plugin_name);
     if (create_callback) {
       std::unique_ptr<DynamicLoader> instance_up(
           create_callback(process, true));
@@ -60,7 +62,7 @@ DynamicLoader *DynamicLoader::FindPlugin(Process *process,
 
 DynamicLoader::DynamicLoader(Process *process) : m_process(process) {}
 
-// Accessosors to the global setting as to whether to stop at image (shared
+// Accessors to the global setting as to whether to stop at image (shared
 // library) loading/unloading.
 
 bool DynamicLoader::GetStopWhenImagesChange() const {
@@ -147,69 +149,127 @@ DynamicLoader::GetSectionListFromModule(const ModuleSP module) const {
   return sections;
 }
 
+ModuleSP DynamicLoader::FindModuleViaTarget(const FileSpec &file) {
+  Target &target = m_process->GetTarget();
+  ModuleSpec module_spec(file, target.GetArchitecture());
+
+  if (ModuleSP module_sp = target.GetImages().FindFirstModule(module_spec))
+    return module_sp;
+
+  if (ModuleSP module_sp = target.GetOrCreateModule(module_spec, false))
+    return module_sp;
+
+  return nullptr;
+}
+
 ModuleSP DynamicLoader::LoadModuleAtAddress(const FileSpec &file,
                                             addr_t link_map_addr,
                                             addr_t base_addr,
                                             bool base_addr_is_offset) {
-  Target &target = m_process->GetTarget();
-  ModuleList &modules = target.GetImages();
-  ModuleSpec module_spec(file, target.GetArchitecture());
+  if (ModuleSP module_sp = FindModuleViaTarget(file)) {
+    UpdateLoadedSections(module_sp, link_map_addr, base_addr,
+                         base_addr_is_offset);
+    return module_sp;
+  }
+
+  return nullptr;
+}
+
+static ModuleSP ReadUnnamedMemoryModule(Process *process, addr_t addr,
+                                        llvm::StringRef name) {
+  char namebuf[80];
+  if (name.empty()) {
+    snprintf(namebuf, sizeof(namebuf), "memory-image-0x%" PRIx64, addr);
+    name = namebuf;
+  }
+  return process->ReadModuleFromMemory(FileSpec(name), addr);
+}
+
+ModuleSP DynamicLoader::LoadBinaryWithUUIDAndAddress(
+    Process *process, llvm::StringRef name, UUID uuid, addr_t value,
+    bool value_is_offset, bool force_symbol_search, bool notify) {
+  ModuleSP memory_module_sp;
   ModuleSP module_sp;
+  PlatformSP platform_sp = process->GetTarget().GetPlatform();
+  Target &target = process->GetTarget();
+  Status error;
+  ModuleSpec module_spec;
+  module_spec.GetUUID() = uuid;
 
-  if ((module_sp = modules.FindFirstModule(module_spec))) {
-    UpdateLoadedSections(module_sp, link_map_addr, base_addr,
-                         base_addr_is_offset);
-    return module_sp;
+  if (!uuid.IsValid() && !value_is_offset) {
+    memory_module_sp = ReadUnnamedMemoryModule(process, value, name);
+
+    if (memory_module_sp)
+      uuid = memory_module_sp->GetUUID();
   }
 
-  if ((module_sp = target.GetOrCreateModule(module_spec, 
-                                            true /* notify */))) {
-    UpdateLoadedSections(module_sp, link_map_addr, base_addr,
-                         base_addr_is_offset);
-    return module_sp;
-  }
+  if (uuid.IsValid()) {
+    ModuleSpec module_spec;
+    module_spec.GetUUID() = uuid;
 
-  bool check_alternative_file_name = true;
-  if (base_addr_is_offset) {
-    // Try to fetch the load address of the file from the process as we need
-    // absolute load address to read the file out of the memory instead of a
-    // load bias.
-    bool is_loaded = false;
-    lldb::addr_t load_addr;
-    Status error = m_process->GetFileLoadAddress(file, is_loaded, load_addr);
-    if (error.Success() && is_loaded) {
-      check_alternative_file_name = false;
-      base_addr = load_addr;
-    }
-  }
+    if (!module_sp)
+      module_sp = target.GetOrCreateModule(module_spec, false, &error);
 
-  // We failed to find the module based on its name. Lets try to check if we
-  // can find a different name based on the memory region info.
-  if (check_alternative_file_name) {
-    MemoryRegionInfo memory_info;
-    Status error = m_process->GetMemoryRegionInfo(base_addr, memory_info);
-    if (error.Success() && memory_info.GetMapped() &&
-        memory_info.GetRange().GetRangeBase() == base_addr && 
-        !(memory_info.GetName().IsEmpty())) {
-      ModuleSpec new_module_spec(FileSpec(memory_info.GetName().GetStringRef()),
-                                 target.GetArchitecture());
-
-      if ((module_sp = modules.FindFirstModule(new_module_spec))) {
-        UpdateLoadedSections(module_sp, link_map_addr, base_addr, false);
-        return module_sp;
-      }
-
-      if ((module_sp = target.GetOrCreateModule(new_module_spec, 
-                                                true /* notify */))) {
-        UpdateLoadedSections(module_sp, link_map_addr, base_addr, false);
-        return module_sp;
+    // If we haven't found a binary, or we don't have a SymbolFile, see
+    // if there is an external search tool that can find it.
+    if (force_symbol_search &&
+        (!module_sp || !module_sp->GetSymbolFileFileSpec())) {
+      Symbols::DownloadObjectAndSymbolFile(module_spec, error, true);
+      if (FileSystem::Instance().Exists(module_spec.GetFileSpec())) {
+        module_sp = std::make_shared<Module>(module_spec);
       }
     }
   }
 
-  if ((module_sp = m_process->ReadModuleFromMemory(file, base_addr))) {
-    UpdateLoadedSections(module_sp, link_map_addr, base_addr, false);
-    target.GetImages().AppendIfNeeded(module_sp);
+  // If we couldn't find the binary anywhere else, as a last resort,
+  // read it out of memory.
+  if (!module_sp.get() && value != LLDB_INVALID_ADDRESS && !value_is_offset) {
+    if (!memory_module_sp)
+      memory_module_sp = ReadUnnamedMemoryModule(process, value, name);
+    if (memory_module_sp)
+      module_sp = memory_module_sp;
+  }
+
+  Log *log = GetLog(LLDBLog::DynamicLoader);
+  if (module_sp.get()) {
+    // Ensure the Target has an architecture set in case
+    // we need it while processing this binary/eh_frame/debug info.
+    if (!target.GetArchitecture().IsValid())
+      target.SetArchitecture(module_sp->GetArchitecture());
+    target.GetImages().AppendIfNeeded(module_sp, false);
+
+    bool changed = false;
+    if (module_sp->GetObjectFile()) {
+      if (value != LLDB_INVALID_ADDRESS) {
+        LLDB_LOGF(log, "Loading binary UUID %s at %s 0x%" PRIx64,
+                  uuid.GetAsString().c_str(),
+                  value_is_offset ? "offset" : "address", value);
+        module_sp->SetLoadAddress(target, value, value_is_offset, changed);
+      } else {
+        // No address/offset/slide, load the binary at file address,
+        // offset 0.
+        LLDB_LOGF(log, "Loading binary UUID %s at file address",
+                  uuid.GetAsString().c_str());
+        module_sp->SetLoadAddress(target, 0, true /* value_is_slide */,
+                                  changed);
+      }
+    } else {
+      // In-memory image, load at its true address, offset 0.
+      LLDB_LOGF(log, "Loading binary UUID %s from memory at address 0x%" PRIx64,
+                uuid.GetAsString().c_str(), value);
+      module_sp->SetLoadAddress(target, 0, true /* value_is_slide */, changed);
+    }
+
+    if (notify) {
+      ModuleList added_module;
+      added_module.Append(module_sp, false);
+      target.ModulesDidLoad(added_module);
+    }
+  } else {
+    LLDB_LOGF(log, "Unable to find binary with UUID %s and load it at "
+                  "%s 0x%" PRIx64,
+                  uuid.GetAsString().c_str(),
+                  value_is_offset ? "offset" : "address", value);
   }
 
   return module_sp;

@@ -25,6 +25,7 @@ using namespace lldb_private;
 REPL::REPL(LLVMCastKind kind, Target &target) : m_target(target), m_kind(kind) {
   // Make sure all option values have sane defaults
   Debugger &debugger = m_target.GetDebugger();
+  debugger.SetShowProgress(false);
   auto exe_ctx = debugger.GetCommandInterpreter().GetExecutionContext();
   m_format_options.OptionParsingStarting(&exe_ctx);
   m_varobj_options.OptionParsingStarting(&exe_ctx);
@@ -39,7 +40,11 @@ lldb::REPLSP REPL::Create(Status &err, lldb::LanguageType language,
   lldb::REPLSP ret;
 
   while (REPLCreateInstance create_instance =
-             PluginManager::GetREPLCreateCallbackAtIndex(idx++)) {
+             PluginManager::GetREPLCreateCallbackAtIndex(idx)) {
+    LanguageSet supported_languages =
+        PluginManager::GetREPLSupportedLanguagesAtIndex(idx++);
+    if (!supported_languages[language])
+      continue;
     ret = (*create_instance)(err, language, debugger, target, repl_options);
     if (ret) {
       break;
@@ -53,7 +58,7 @@ std::string REPL::GetSourcePath() {
   ConstString file_basename = GetSourceFileBasename();
   FileSpec tmpdir_file_spec = HostInfo::GetProcessTempDir();
   if (tmpdir_file_spec) {
-    tmpdir_file_spec.GetFilename() = file_basename;
+    tmpdir_file_spec.SetFilename(file_basename);
     m_repl_source_path = tmpdir_file_spec.GetPath();
   } else {
     tmpdir_file_spec = FileSpec("/tmp");
@@ -74,7 +79,7 @@ lldb::IOHandlerSP REPL::GetIOHandler() {
         true,                  // Multi-line
         true,                  // The REPL prompt is always colored
         1,                     // Line number
-        *this, nullptr);
+        *this);
 
     // Don't exit if CTRL+C is pressed
     static_cast<IOHandlerEditline *>(m_io_handler_sp.get())
@@ -373,7 +378,7 @@ void REPL::IOHandlerInputComplete(IOHandler &io_handler, std::string &code) {
           case lldb::eExpressionSetupError:
           case lldb::eExpressionParseError:
             add_to_code = false;
-            LLVM_FALLTHROUGH;
+            [[fallthrough]];
           case lldb::eExpressionDiscarded:
             error_sp->Printf("%s\n", error.AsCString());
             break;
@@ -445,7 +450,7 @@ void REPL::IOHandlerInputComplete(IOHandler &io_handler, std::string &code) {
           if (!m_repl_source_path.empty()) {
             auto file = FileSystem::Instance().Open(
                 FileSpec(m_repl_source_path),
-                File::eOpenOptionWrite | File::eOpenOptionTruncate |
+                File::eOpenOptionWriteOnly | File::eOpenOptionTruncate |
                     File::eOpenOptionCanCreate,
                 lldb::eFilePermissionsFileDefault);
             if (file) {

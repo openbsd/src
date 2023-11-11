@@ -27,6 +27,7 @@
 #include "lldb/Target/Target.h"
 #include "lldb/Target/UnixSignals.h"
 #include "lldb/Utility/LLDBAssert.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
 #include "lldb/Utility/State.h"
 #include "llvm/BinaryFormat/Magic.h"
@@ -36,6 +37,7 @@
 #include "Plugins/Process/Utility/StopInfoMachException.h"
 
 #include <memory>
+#include <optional>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -63,8 +65,9 @@ public:
   static ConstString GetStaticPluginName() {
     return ConstString("placeholder");
   }
-  ConstString GetPluginName() override { return GetStaticPluginName(); }
-  uint32_t GetPluginVersion() override { return 1; }
+  llvm::StringRef GetPluginName() override {
+    return GetStaticPluginName().GetStringRef();
+  }
   bool ParseHeader() override { return true; }
   Type CalculateType() override { return eTypeUnknown; }
   Strata CalculateStrata() override { return eStrataUnknown; }
@@ -72,7 +75,7 @@ public:
   bool IsExecutable() const override { return false; }
   ArchSpec GetArchitecture() override { return m_arch; }
   UUID GetUUID() override { return m_uuid; }
-  Symtab *GetSymtab() override { return m_symtab_up.get(); }
+  void ParseSymtab(lldb_private::Symtab &symtab) override {}
   bool IsStripped() override { return true; }
   ByteOrder GetByteOrder() const override { return m_arch.GetByteOrder(); }
 
@@ -189,12 +192,7 @@ void HashElfTextSection(ModuleSP module_sp, std::vector<uint8_t> &breakpad_uuid,
 
 } // namespace
 
-ConstString ProcessMinidump::GetPluginNameStatic() {
-  static ConstString g_name("minidump");
-  return g_name;
-}
-
-const char *ProcessMinidump::GetPluginDescriptionStatic() {
+llvm::StringRef ProcessMinidump::GetPluginDescriptionStatic() {
   return "Minidump plug-in.";
 }
 
@@ -236,7 +234,8 @@ ProcessMinidump::ProcessMinidump(lldb::TargetSP target_sp,
                                  const FileSpec &core_file,
                                  DataBufferSP core_data)
     : PostMortemProcess(target_sp, listener_sp), m_core_file(core_file),
-      m_core_data(std::move(core_data)), m_is_wow64(false) {}
+      m_core_data(std::move(core_data)), m_active_exception(nullptr),
+      m_is_wow64(false) {}
 
 ProcessMinidump::~ProcessMinidump() {
   Clear();
@@ -292,22 +291,19 @@ Status ProcessMinidump::DoLoadCore() {
   SetUnixSignals(UnixSignals::Create(GetArchitecture()));
 
   ReadModuleList();
-
-  llvm::Optional<lldb::pid_t> pid = m_minidump_parser->GetPid();
+  if (ModuleSP module = GetTarget().GetExecutableModule())
+    GetTarget().MergeArchitecture(module->GetArchitecture());
+  std::optional<lldb::pid_t> pid = m_minidump_parser->GetPid();
   if (!pid) {
-    GetTarget().GetDebugger().GetAsyncErrorStream()->PutCString(
-        "Unable to retrieve process ID from minidump file, setting process ID "
-        "to 1.\n");
+    Debugger::ReportWarning("unable to retrieve process ID from minidump file, "
+                            "setting process ID to 1",
+                            GetTarget().GetDebugger().GetID());
     pid = 1;
   }
-  SetID(pid.getValue());
+  SetID(*pid);
 
   return error;
 }
-
-ConstString ProcessMinidump::GetPluginName() { return GetPluginNameStatic(); }
-
-uint32_t ProcessMinidump::GetPluginVersion() { return 1; }
 
 Status ProcessMinidump::DoDestroy() { return Status(); }
 
@@ -447,8 +443,8 @@ void ProcessMinidump::BuildMemoryRegions() {
   llvm::sort(*m_memory_regions);
 }
 
-Status ProcessMinidump::GetMemoryRegionInfo(lldb::addr_t load_addr,
-                                            MemoryRegionInfo &region) {
+Status ProcessMinidump::DoGetMemoryRegionInfo(lldb::addr_t load_addr,
+                                              MemoryRegionInfo &region) {
   BuildMemoryRegions();
   region = MinidumpParser::GetMemoryRegionInfo(*m_memory_regions, load_addr);
   return Status();
@@ -488,7 +484,7 @@ bool ProcessMinidump::DoUpdateThreadList(ThreadList &old_thread_list,
 ModuleSP ProcessMinidump::GetOrCreateModule(UUID minidump_uuid,
                                             llvm::StringRef name,
                                             ModuleSpec module_spec) {
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
+  Log *log = GetLog(LLDBLog::DynamicLoader);
   Status error;
 
   ModuleSP module_sp =
@@ -536,7 +532,7 @@ void ProcessMinidump::ReadModuleList() {
   std::vector<const minidump::Module *> filtered_modules =
       m_minidump_parser->GetFilteredModuleList();
 
-  Log *log(GetLogIfAllCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
+  Log *log = GetLog(LLDBLog::DynamicLoader);
 
   for (auto module : filtered_modules) {
     std::string name = cantFail(m_minidump_parser->GetMinidumpFile().getString(
@@ -574,7 +570,7 @@ void ProcessMinidump::ReadModuleList() {
       partial_module_spec.GetUUID().Clear();
       module_sp = GetOrCreateModule(uuid, name, partial_module_spec);
       if (!module_sp) {
-        partial_module_spec.GetFileSpec().GetDirectory().Clear();
+        partial_module_spec.GetFileSpec().ClearDirectory();
         module_sp = GetOrCreateModule(uuid, name, partial_module_spec);
       }
     }
@@ -584,8 +580,9 @@ void ProcessMinidump::ReadModuleList() {
       // we don't then we will end up setting the load address of a different
       // PlaceholderObjectFile and an assertion will fire.
       auto *objfile = module_sp->GetObjectFile();
-      if (objfile && objfile->GetPluginName() ==
-          PlaceholderObjectFile::GetStaticPluginName()) {
+      if (objfile &&
+          objfile->GetPluginName() ==
+              PlaceholderObjectFile::GetStaticPluginName().GetStringRef()) {
         if (((PlaceholderObjectFile *)objfile)->GetBaseImageAddress() !=
             load_addr)
           module_sp.reset();

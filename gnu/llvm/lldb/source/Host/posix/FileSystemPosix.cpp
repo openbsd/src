@@ -35,7 +35,7 @@ const char *FileSystem::DEV_NULL = "/dev/null";
 
 Status FileSystem::Symlink(const FileSpec &src, const FileSpec &dst) {
   Status error;
-  if (::symlink(dst.GetCString(), src.GetCString()) == -1)
+  if (::symlink(dst.GetPath().c_str(), src.GetPath().c_str()) == -1)
     error.SetErrorToErrno();
   return error;
 }
@@ -56,7 +56,8 @@ Status FileSystem::Readlink(const FileSpec &src, FileSpec &dst) {
 Status FileSystem::ResolveSymbolicLink(const FileSpec &src, FileSpec &dst) {
   char resolved_path[PATH_MAX];
   if (!src.GetPath(resolved_path, sizeof(resolved_path))) {
-    return Status("Couldn't get the canonical path for %s", src.GetCString());
+    return Status("Couldn't get the canonical path for %s",
+                  src.GetPath().c_str());
   }
 
   char real_path[PATH_MAX + 1];
@@ -72,11 +73,9 @@ Status FileSystem::ResolveSymbolicLink(const FileSpec &src, FileSpec &dst) {
 }
 
 FILE *FileSystem::Fopen(const char *path, const char *mode) {
-  Collect(path);
   return llvm::sys::RetryAfterSignal(nullptr, ::fopen, path, mode);
 }
 
 int FileSystem::Open(const char *path, int flags, int mode) {
-  Collect(path);
   return llvm::sys::RetryAfterSignal(-1, ::open, path, flags, mode);
 }

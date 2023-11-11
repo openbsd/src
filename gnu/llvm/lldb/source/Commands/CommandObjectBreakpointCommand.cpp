@@ -14,6 +14,7 @@
 #include "lldb/Core/IOHandler.h"
 #include "lldb/Host/OptionParser.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Interpreter/CommandOptionArgumentTable.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/OptionArgParser.h"
 #include "lldb/Interpreter/OptionGroupPythonClassWithDict.h"
@@ -21,36 +22,6 @@
 
 using namespace lldb;
 using namespace lldb_private;
-
-// FIXME: "script-type" needs to have its contents determined dynamically, so
-// somebody can add a new scripting language to lldb and have it pickable here
-// without having to change this enumeration by hand and rebuild lldb proper.
-static constexpr OptionEnumValueElement g_script_option_enumeration[] = {
-    {
-        eScriptLanguageNone,
-        "command",
-        "Commands are in the lldb command interpreter language",
-    },
-    {
-        eScriptLanguagePython,
-        "python",
-        "Commands are in the Python language.",
-    },
-    {
-        eScriptLanguageLua,
-        "lua",
-        "Commands are in the Lua language.",
-    },
-    {
-        eScriptLanguageDefault,
-        "default-script",
-        "Commands are in the default scripting language.",
-    },
-};
-
-static constexpr OptionEnumValues ScriptOptionEnum() {
-  return OptionEnumValues(g_script_option_enumeration);
-}
 
 #define LLDB_OPTIONS_breakpoint_command_add
 #include "CommandOptions.inc"
@@ -69,7 +40,7 @@ public:
                             nullptr),
         IOHandlerDelegateMultiline("DONE",
                                    IOHandlerDelegate::Completion::LLDBCommand),
-        m_options(), m_func_options("breakpoint command", false, 'F') {
+        m_func_options("breakpoint command", false, 'F') {
     SetHelpLong(
         R"(
 General information about entering breakpoint commands
@@ -281,7 +252,7 @@ are no syntax errors may indicate that a function was declared but never called.
 
   class CommandOptions : public OptionGroup {
   public:
-    CommandOptions() : OptionGroup(), m_one_liner() {}
+    CommandOptions() = default;
 
     ~CommandOptions() override = default;
 
@@ -346,7 +317,7 @@ are no syntax errors may indicate that a function was declared but never called.
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return llvm::makeArrayRef(g_breakpoint_command_add_options);
+      return llvm::ArrayRef(g_breakpoint_command_add_options);
     }
 
     // Instance variables to hold the values for command options.
@@ -479,8 +450,7 @@ public:
   CommandObjectBreakpointCommandDelete(CommandInterpreter &interpreter)
       : CommandObjectParsed(interpreter, "delete",
                             "Delete the set of commands from a breakpoint.",
-                            nullptr),
-        m_options() {
+                            nullptr) {
     CommandArgumentEntry arg;
     CommandArgumentData bp_id_arg;
 
@@ -502,7 +472,7 @@ public:
 
   class CommandOptions : public Options {
   public:
-    CommandOptions() : Options() {}
+    CommandOptions() = default;
 
     ~CommandOptions() override = default;
 
@@ -528,7 +498,7 @@ public:
     }
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return llvm::makeArrayRef(g_breakpoint_command_delete_options);
+      return llvm::ArrayRef(g_breakpoint_command_delete_options);
     }
 
     // Instance variables to hold the values for command options.

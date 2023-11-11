@@ -9,13 +9,24 @@
 #ifndef LLDB_SOURCE_PLUGINS_PROCESS_UTILITY_STOPINFOMACHEXCEPTION_H
 #define LLDB_SOURCE_PLUGINS_PROCESS_UTILITY_STOPINFOMACHEXCEPTION_H
 
+#include <optional>
 #include <string>
 
 #include "lldb/Target/StopInfo.h"
 
+#if defined(__APPLE__)
+// Needed for the EXC_* defines
+#include <mach/exception.h>
+#endif
+
 namespace lldb_private {
 
 class StopInfoMachException : public StopInfo {
+  /// Determine the pointer-authentication related failure that caused this
+  /// exception. Returns true and fills out the failure description if there
+  /// is auth-related failure, and returns false otherwise.
+  bool DeterminePtrauthFailure(ExecutionContext &exe_ctx);
+
 public:
   // Constructors and Destructors
   StopInfoMachException(Thread &thread, uint32_t exc_type,
@@ -31,6 +42,13 @@ public:
   }
 
   const char *GetDescription() override;
+
+#if defined(__APPLE__)
+  struct MachException {
+    static const char *Name(exception_type_t exc_type);
+    static std::optional<exception_type_t> ExceptionCode(const char *name);
+  };
+#endif
 
   // Since some mach exceptions will be reported as breakpoints, signals,
   // or trace, we use this static accessor which will translate the mach

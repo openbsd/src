@@ -352,7 +352,7 @@ nub_process_t DNBProcessLaunch(
     pid_t pid = processSP->LaunchForDebug(
         path, argv, envp, working_directory, stdin_path, stdout_path,
         stderr_path, no_stdio, ctx->LaunchFlavor(), disable_aslr, event_data,
-        ctx->GetUnmaskSignals(), launch_err);
+        ctx->GetIgnoredExceptions(), launch_err);
     if (err_str) {
       *err_str = '\0';
       if (launch_err.Fail()) {
@@ -412,7 +412,8 @@ nub_process_t DNBProcessGetPIDByName(const char *name) {
 }
 
 nub_process_t DNBProcessAttachByName(const char *name, struct timespec *timeout,
-                                     bool unmask_signals, char *err_str,
+                                     const RNBContext::IgnoredExceptions 
+                                             &ignored_exceptions, char *err_str,
                                      size_t err_len) {
   if (err_str && err_len > 0)
     err_str[0] = '\0';
@@ -434,11 +435,13 @@ nub_process_t DNBProcessAttachByName(const char *name, struct timespec *timeout,
   }
 
   return DNBProcessAttach(matching_proc_infos[0].kp_proc.p_pid, timeout,
-                          unmask_signals, err_str, err_len);
+                          ignored_exceptions, err_str, err_len);
 }
 
 nub_process_t DNBProcessAttach(nub_process_t attach_pid,
-                               struct timespec *timeout, bool unmask_signals,
+                               struct timespec *timeout, 
+                               const RNBContext::IgnoredExceptions 
+                                       &ignored_exceptions,
                                char *err_str, size_t err_len) {
   if (err_str && err_len > 0)
     err_str[0] = '\0';
@@ -477,13 +480,18 @@ nub_process_t DNBProcessAttach(nub_process_t attach_pid,
     }
   }
 
+  if (DNBDebugserverIsTranslated()) {
+    return INVALID_NUB_PROCESS_ARCH;
+  }
+
   pid_t pid = INVALID_NUB_PROCESS;
   MachProcessSP processSP(new MachProcess);
   if (processSP.get()) {
     DNBLogThreadedIf(LOG_PROCESS, "(DebugNub) attaching to pid %d...",
                      attach_pid);
     pid =
-        processSP->AttachForDebug(attach_pid, unmask_signals, err_str, err_len);
+        processSP->AttachForDebug(attach_pid, ignored_exceptions, err_str, 
+                                  err_len);
 
     if (pid != INVALID_NUB_PROCESS) {
       bool res = AddProcessToMap(pid, processSP);
@@ -589,6 +597,14 @@ size_t DNBGetAllInfos(std::vector<struct kinfo_proc> &proc_infos) {
   // Trim down our array to fit what we actually got back
   proc_infos.resize(size / sizeof(struct kinfo_proc));
   return proc_infos.size();
+}
+
+JSONGenerator::ObjectSP DNBGetDyldProcessState(nub_process_t pid) {
+  MachProcessSP procSP;
+  if (GetProcessSP(pid, procSP)) {
+    return procSP->GetDyldProcessState();
+  }
+  return {};
 }
 
 static size_t
@@ -778,7 +794,8 @@ DNBProcessAttachWait(RNBContext *ctx, const char *waitfor_process_name,
     DNBLogThreadedIf(LOG_PROCESS, "Attaching to %s with pid %i...\n",
                      waitfor_process_name, waitfor_pid);
     waitfor_pid = DNBProcessAttach(waitfor_pid, timeout_abstime,
-                                   ctx->GetUnmaskSignals(), err_str, err_len);
+                                   ctx->GetIgnoredExceptions(), err_str, 
+                                   err_len);
   }
 
   bool success = waitfor_pid != INVALID_NUB_PROCESS;
@@ -1424,12 +1441,11 @@ nub_bool_t DNBProcessSharedLibrariesUpdated(nub_process_t pid) {
   return false;
 }
 
-const char *DNBGetDeploymentInfo(nub_process_t pid, bool is_executable,
-                                 const struct load_command &lc,
-                                 uint64_t load_command_address,
-                                 uint32_t &major_version,
-                                 uint32_t &minor_version,
-                                 uint32_t &patch_version) {
+std::optional<std::string>
+DNBGetDeploymentInfo(nub_process_t pid, bool is_executable,
+                     const struct load_command &lc,
+                     uint64_t load_command_address, uint32_t &major_version,
+                     uint32_t &minor_version, uint32_t &patch_version) {
   MachProcessSP procSP;
   if (GetProcessSP(pid, procSP)) {
     // FIXME: This doesn't return the correct result when xctest (a
@@ -1814,4 +1830,20 @@ bool DNBDebugserverIsTranslated() {
   if (sysctlbyname("sysctl.proc_translated", &ret, &size, NULL, 0) == -1)
     return false;
   return ret == 1;
+}
+
+bool DNBGetAddressingBits(uint32_t &addressing_bits) {
+  static uint32_t g_addressing_bits = 0;
+  static std::once_flag g_once_flag;
+  std::call_once(g_once_flag, [&](){
+    size_t len = sizeof(uint32_t);
+    if (::sysctlbyname("machdep.virtual_address_size", &g_addressing_bits, &len,
+                       NULL, 0) != 0) {
+      g_addressing_bits = 0;
+    }
+  });
+
+  addressing_bits = g_addressing_bits;
+
+  return addressing_bits > 0;
 }

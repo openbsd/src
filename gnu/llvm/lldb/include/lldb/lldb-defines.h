@@ -11,18 +11,6 @@
 
 #include "lldb/lldb-types.h"
 
-#if defined(_WIN32)
-#if defined(EXPORT_LIBLLDB)
-#define LLDB_API __declspec(dllexport)
-#elif defined(IMPORT_LIBLLDB)
-#define LLDB_API __declspec(dllimport)
-#else
-#define LLDB_API
-#endif
-#else // defined (_WIN32)
-#define LLDB_API
-#endif
-
 #if !defined(INT32_MAX)
 #define INT32_MAX 2147483647
 #endif
@@ -57,7 +45,7 @@
 #define LLDB_WATCH_TYPE_READ (1u << 0)
 #define LLDB_WATCH_TYPE_WRITE (1u << 1)
 #define LLDB_WATCH_TYPE_IS_VALID(type)                                         \
-  ((type | LLDB_WATCH_TYPE_READ) || (type | LLDB_WATCH_TYPE_WRITE))
+  ((type & LLDB_WATCH_TYPE_READ) || (type & LLDB_WATCH_TYPE_WRITE))
 
 // Generic Register Numbers
 #define LLDB_REGNUM_GENERIC_PC 0    // Program Counter
@@ -98,6 +86,7 @@
 #define LLDB_INVALID_LINE_NUMBER UINT32_MAX
 #define LLDB_INVALID_COLUMN_NUMBER 0
 #define LLDB_INVALID_QUEUE_ID 0
+#define LLDB_INVALID_CPU_ID UINT32_MAX
 
 /// CPU Type definitions
 #define LLDB_ARCH_DEFAULT "systemArch"

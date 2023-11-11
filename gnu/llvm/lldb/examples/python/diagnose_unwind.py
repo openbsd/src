@@ -5,7 +5,6 @@
 # information about the stack frames, and tries an alternate unwind
 # algorithm, that will help to understand why lldb's unwind algorithm
 # did not succeed.
-from __future__ import print_function
 
 import optparse
 import lldb
@@ -308,7 +307,8 @@ def create_diagnose_unwind_options():
         usage=usage)
     return parser
 
-lldb.debugger.HandleCommand(
-    'command script add -f %s.diagnose_unwind diagnose-unwind' %
-    __name__)
-print('The "diagnose-unwind" command has been installed, type "help diagnose-unwind" for detailed help.')
+def __lldb_init_module(debugger, internal_dict):
+    debugger.HandleCommand(
+        'command script add -o -f %s.diagnose_unwind diagnose-unwind' %
+        __name__)
+    print('The "diagnose-unwind" command has been installed, type "help diagnose-unwind" for detailed help.')

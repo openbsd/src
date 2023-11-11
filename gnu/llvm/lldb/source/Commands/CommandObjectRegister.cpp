@@ -10,6 +10,7 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/DumpRegisterValue.h"
 #include "lldb/Host/OptionParser.h"
+#include "lldb/Interpreter/CommandOptionArgumentTable.h"
 #include "lldb/Interpreter/CommandReturnObject.h"
 #include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionValueArray.h"
@@ -43,8 +44,7 @@ public:
             nullptr,
             eCommandRequiresFrame | eCommandRequiresRegContext |
                 eCommandProcessMustBeLaunched | eCommandProcessMustBePaused),
-        m_option_group(), m_format_options(eFormatDefault),
-        m_command_options() {
+        m_format_options(eFormatDefault) {
     CommandArgumentEntry arg;
     CommandArgumentData register_arg;
 
@@ -94,7 +94,8 @@ public:
         bool prefix_with_altname = (bool)m_command_options.alternate_name;
         bool prefix_with_name = !prefix_with_altname;
         DumpRegisterValue(reg_value, &strm, reg_info, prefix_with_name,
-                          prefix_with_altname, m_format_options.GetFormat(), 8);
+                          prefix_with_altname, m_format_options.GetFormat(), 8,
+                          exe_ctx.GetBestExecutionContextScope());
         if ((reg_info->encoding == eEncodingUint) ||
             (reg_info->encoding == eEncodingSint)) {
           Process *process = exe_ctx.GetProcessPtr();
@@ -232,15 +233,14 @@ protected:
   class CommandOptions : public OptionGroup {
   public:
     CommandOptions()
-        : OptionGroup(),
-          set_indexes(OptionValue::ConvertTypeToMask(OptionValue::eTypeUInt64)),
+        : set_indexes(OptionValue::ConvertTypeToMask(OptionValue::eTypeUInt64)),
           dump_all_sets(false, false), // Initial and default values are false
           alternate_name(false, false) {}
 
     ~CommandOptions() override = default;
 
     llvm::ArrayRef<OptionDefinition> GetDefinitions() override {
-      return llvm::makeArrayRef(g_register_read_options);
+      return llvm::ArrayRef(g_register_read_options);
     }
 
     void OptionParsingStarting(ExecutionContext *execution_context) override {

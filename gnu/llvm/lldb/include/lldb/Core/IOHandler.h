@@ -23,6 +23,7 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -31,10 +32,7 @@
 
 namespace lldb_private {
 class Debugger;
-namespace repro {
-class DataRecorder;
-}
-}
+} // namespace lldb_private
 
 namespace curses {
 class Application;
@@ -63,8 +61,7 @@ public:
 
   IOHandler(Debugger &debugger, IOHandler::Type type,
             const lldb::FileSP &input_sp, const lldb::StreamFileSP &output_sp,
-            const lldb::StreamFileSP &error_sp, uint32_t flags,
-            repro::DataRecorder *data_recorder);
+            const lldb::StreamFileSP &error_sp, uint32_t flags);
 
   virtual ~IOHandler();
 
@@ -85,11 +82,11 @@ public:
 
   virtual void GotEOF() = 0;
 
-  virtual bool IsActive() { return m_active && !m_done; }
+  bool IsActive() { return m_active && !m_done; }
 
-  virtual void SetIsDone(bool b) { m_done = b; }
+  void SetIsDone(bool b) { m_done = b; }
 
-  virtual bool GetIsDone() { return m_done; }
+  bool GetIsDone() { return m_done; }
 
   Type GetType() const { return m_type; }
 
@@ -163,17 +160,16 @@ public:
 
   void WaitForPop();
 
-  virtual void PrintAsync(Stream *stream, const char *s, size_t len) {
-    stream->Write(s, len);
-    stream->Flush();
-  }
+  virtual void PrintAsync(const char *s, size_t len, bool is_stdout);
+
+  std::recursive_mutex &GetOutputMutex() { return m_output_mutex; }
 
 protected:
   Debugger &m_debugger;
   lldb::FileSP m_input_sp;
   lldb::StreamFileSP m_output_sp;
   lldb::StreamFileSP m_error_sp;
-  repro::DataRecorder *m_data_recorder;
+  std::recursive_mutex m_output_mutex;
   Predicate<bool> m_popped;
   Flags m_flags;
   Type m_type;
@@ -205,8 +201,8 @@ public:
 
   virtual void IOHandlerDeactivated(IOHandler &io_handler) {}
 
-  virtual llvm::Optional<std::string> IOHandlerSuggestion(IOHandler &io_handler,
-                                                          llvm::StringRef line);
+  virtual std::optional<std::string> IOHandlerSuggestion(IOHandler &io_handler,
+                                                         llvm::StringRef line);
 
   virtual void IOHandlerComplete(IOHandler &io_handler,
                                  CompletionRequest &request);
@@ -338,8 +334,7 @@ public:
                     uint32_t line_number_start, // If non-zero show line numbers
                                                 // starting at
                                                 // 'line_number_start'
-                    IOHandlerDelegate &delegate,
-                    repro::DataRecorder *data_recorder);
+                    IOHandlerDelegate &delegate);
 
   IOHandlerEditline(Debugger &debugger, IOHandler::Type type,
                     const lldb::FileSP &input_sp,
@@ -351,8 +346,7 @@ public:
                     uint32_t line_number_start, // If non-zero show line numbers
                                                 // starting at
                                                 // 'line_number_start'
-                    IOHandlerDelegate &delegate,
-                    repro::DataRecorder *data_recorder);
+                    IOHandlerDelegate &delegate);
 
   IOHandlerEditline(Debugger &, IOHandler::Type, const char *, const char *,
                     const char *, bool, bool, uint32_t,
@@ -415,7 +409,7 @@ public:
 
   uint32_t GetCurrentLineIndex() const;
 
-  void PrintAsync(Stream *stream, const char *s, size_t len) override;
+  void PrintAsync(const char *s, size_t len, bool is_stdout) override;
 
 private:
 #if LLDB_ENABLE_LIBEDIT
@@ -424,7 +418,7 @@ private:
   int FixIndentationCallback(Editline *editline, const StringList &lines,
                              int cursor_position);
 
-  llvm::Optional<std::string> SuggestionCallback(llvm::StringRef line);
+  std::optional<std::string> SuggestionCallback(llvm::StringRef line);
 
   void AutoCompleteCallback(CompletionRequest &request);
 #endif
@@ -442,8 +436,6 @@ protected:
   bool m_multi_line;
   bool m_color_prompts;
   bool m_interrupt_exits;
-  bool m_editing; // Set to true when fetching a line manually (not using
-                  // libedit)
   std::string m_line_buffer;
 };
 
@@ -542,7 +534,7 @@ public:
     return ((m_top != nullptr) ? m_top->GetHelpPrologue() : nullptr);
   }
 
-  void PrintAsync(Stream *stream, const char *s, size_t len);
+  bool PrintAsync(const char *s, size_t len, bool is_stdout);
 
 protected:
   typedef std::vector<lldb::IOHandlerSP> collection;

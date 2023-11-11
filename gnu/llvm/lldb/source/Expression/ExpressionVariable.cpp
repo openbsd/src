@@ -9,14 +9,16 @@
 #include "lldb/Expression/ExpressionVariable.h"
 #include "lldb/Expression/IRExecutionUnit.h"
 #include "lldb/Target/Target.h"
+#include "lldb/Utility/LLDBLog.h"
 #include "lldb/Utility/Log.h"
+#include <optional>
 
 using namespace lldb_private;
 
 ExpressionVariable::~ExpressionVariable() = default;
 
 uint8_t *ExpressionVariable::GetValueBytes() {
-  llvm::Optional<uint64_t> byte_size = m_frozen_sp->GetByteSize();
+  std::optional<uint64_t> byte_size = m_frozen_sp->GetByteSize();
   if (byte_size && *byte_size) {
     if (m_frozen_sp->GetDataExtractor().GetByteSize() < *byte_size) {
       m_frozen_sp->GetValue().ResizeData(*byte_size);
@@ -41,7 +43,7 @@ lldb::addr_t PersistentExpressionState::LookupSymbol(ConstString name) {
 
 void PersistentExpressionState::RegisterExecutionUnit(
     lldb::IRExecutionUnitSP &execution_unit_sp) {
-  Log *log(lldb_private::GetLogIfAllCategoriesSet(LIBLLDB_LOG_EXPRESSIONS));
+  Log *log = GetLog(LLDBLog::Expressions);
 
   m_execution_units.insert(execution_unit_sp);
 

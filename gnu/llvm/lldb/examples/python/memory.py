@@ -9,8 +9,6 @@
 #   (lldb) command script import /path/to/cmdtemplate.py
 #----------------------------------------------------------------------
 
-from __future__ import print_function
-
 import platform
 import os
 import re
@@ -270,8 +268,9 @@ def memfind(target, options, args, result):
 
 if __name__ == '__main__':
     print('error: this script is designed to be used within the embedded script interpreter in LLDB')
-elif getattr(lldb, 'debugger', None):
+
+def __lldb_init_module(debugger, internal_dict):
     memfind_command.__doc__ = create_memfind_options().format_help()
-    lldb.debugger.HandleCommand(
-        'command script add -f memory.memfind_command memfind')
+    debugger.HandleCommand(
+        'command script add -o -f memory.memfind_command memfind')
     print('"memfind" command installed, use the "--help" option for detailed help')
