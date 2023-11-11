@@ -1,7 +1,9 @@
-.\" $OpenBSD: mbtowc.3,v 1.6 2016/02/27 14:07:04 schwarze Exp $
+.\" $OpenBSD: mbtowc.3,v 1.7 2023/11/11 01:28:41 schwarze Exp $
 .\" $NetBSD: mbtowc.3,v 1.5 2003/09/08 17:54:31 wiz Exp $
 .\"
-.\" Copyright (c)2002 Citrus Project,
+.\" Copyright (c) 2016, 2023 Ingo Schwarze <schwarze@openbsd.org>
+.\" Copyright (c) 2010, 2015 Stefan Sperling <stsp@openbsd.org>
+.\" Copyright (c) 2002 Citrus Project,
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd $Mdocdate: February 27 2016 $
+.Dd $Mdocdate: November 11 2023 $
 .Dt MBTOWC 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -61,13 +63,16 @@ be undefined.
 .Pp
 If a call to
 .Fn mbtowc
-resulted in an undefined internal state,
+results in an undefined internal state, parsing of the string starting at
+.Fa s
+cannot continue, not even at a later byte, and
 .Fn mbtowc
 must be called with
 .Ar s
 set to
 .Dv NULL
-to reset the internal state before it can safely be used again.
+to reset the internal state before it can safely be used again
+on a different string.
 .Pp
 The behaviour of
 .Fn mbtowc
@@ -164,6 +169,55 @@ The current encoding is state-independent.
 The current encoding is state-dependent.
 .El
 .\" ----------------------------------------------------------------------
+.Sh EXAMPLES
+The following program parses a UTF-8 string and reports encoding errors:
+.Bd -literal
+#include <limits.h>
+#include <locale.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int
+main(void)
+{
+	char	 s[LINE_MAX];
+	wchar_t	 wc;
+	int	 i, len;
+
+	setlocale(LC_CTYPE, "C.UTF-8");
+	if (fgets(s, sizeof(s), stdin) == NULL)
+		*s = '\e0';
+	for (i = 0, len = 1; len != 0; i += len) {
+		switch (len = mbtowc(&wc, s + i, MB_CUR_MAX)) {
+		case 0:
+			printf("byte %d end of string 0x00\en", i);
+			break;
+		case -1:
+			printf("byte %d invalid 0x%0.2hhx\en", i, s[i]);
+			len = 1;
+			break;
+		default:
+			printf("byte %d U+%0.4X %lc\en", i, wc, wc);
+			break;
+		}
+	}
+	return 0;
+}
+.Ed
+.Pp
+Recovering from encoding errors and continuing to parse the rest of the
+string as shown above is only possible for state-independent character
+encodings.
+For full generality, the error handling can be modified
+to reset the internal state.
+In that case, the rest of the string has to be skipped
+if the encoding is state-dependent:
+.Bd -literal
+		case -1:
+			printf("byte %d invalid 0x%0.2hhx\en", i, s[i]);
+			len = !mbtowc(NULL, NULL, MB_CUR_MAX);
+			break;
+.Ed
 .Sh ERRORS
 .Fn mbtowc
 will set
