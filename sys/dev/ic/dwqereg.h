@@ -1,4 +1,4 @@
-/*	$OpenBSD: dwqereg.h,v 1.4 2023/10/11 12:32:46 stsp Exp $	*/
+/*	$OpenBSD: dwqereg.h,v 1.5 2023/11/11 16:32:56 stsp Exp $	*/
 /*
  * Copyright (c) 2008, 2019 Mark Kettenis <kettenis@openbsd.org>
  * Copyright (c) 2017, 2022 Patrick Wildt <patrick@blueri.se>
@@ -159,13 +159,13 @@
 #define GMAC_CHAN_CONTROL(x)		(GMAC_CHAN_BASE_ADDR(x) + 0x0)
 #define  GMAC_CHAN_CONTROL_8XPBL		(1 << 16)
 #define GMAC_CHAN_TX_CONTROL(x)		(GMAC_CHAN_BASE_ADDR(x) + 0x4)
-#define  GMAC_CHAN_TX_CONTROL_PBL_MASK		(0x3f << 8)
-#define  GMAC_CHAN_TX_CONTROL_PBL_SHIFT		8
+#define  GMAC_CHAN_TX_CONTROL_PBL_MASK		(0x3f << 16)
+#define  GMAC_CHAN_TX_CONTROL_PBL_SHIFT		16
 #define  GMAC_CHAN_TX_CONTROL_OSP		(1 << 4)
 #define  GMAC_CHAN_TX_CONTROL_ST		(1 << 0)
 #define GMAC_CHAN_RX_CONTROL(x)		(GMAC_CHAN_BASE_ADDR(x) + 0x8)
-#define  GMAC_CHAN_RX_CONTROL_RPBL_MASK		(0x3f << 17)
-#define  GMAC_CHAN_RX_CONTROL_RPBL_SHIFT	17
+#define  GMAC_CHAN_RX_CONTROL_RPBL_MASK		(0x3f << 16)
+#define  GMAC_CHAN_RX_CONTROL_RPBL_SHIFT	16
 #define  GMAC_CHAN_RX_CONTROL_SR		(1 << 0)
 #define GMAC_CHAN_TX_BASE_ADDR_HI(x)	(GMAC_CHAN_BASE_ADDR(x) + 0x10)
 #define GMAC_CHAN_TX_BASE_ADDR(x)	(GMAC_CHAN_BASE_ADDR(x) + 0x14)
